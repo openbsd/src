@@ -16,11 +16,11 @@ use 5.006;
 use strict;
 use warnings;
 
-use Carp ();
+use Carp qw< carp croak >;
 
 use Math::BigFloat 1.999718;
 
-our $VERSION = '0.2613';
+our $VERSION = '0.2614';
 
 our @ISA = qw(Math::BigFloat);
 
@@ -41,7 +41,6 @@ use overload
 
   '/'     =>      sub { $_[2] ? ref($_[0]) -> new($_[1]) -> bdiv($_[0])
                               : $_[0] -> copy() -> bdiv($_[1]); },
-
 
   '%'     =>      sub { $_[2] ? ref($_[0]) -> new($_[1]) -> bmod($_[0])
                               : $_[0] -> copy() -> bmod($_[1]); },
@@ -68,7 +67,6 @@ use overload
   '%='    =>      sub { $_[0]->bmod($_[1]); },
 
   '**='   =>      sub { $_[0]->bpow($_[1]); },
-
 
   '<<='   =>      sub { $_[0]->blsft($_[1]); },
 
@@ -207,7 +205,7 @@ BEGIN {
     # only one library loaded)
     *_e_add = \&Math::BigFloat::_e_add;
     *_e_sub = \&Math::BigFloat::_e_sub;
-    *as_int = \&as_number;
+    *as_number = \&as_int;
     *is_pos = \&is_positive;
     *is_neg = \&is_negative;
 }
@@ -226,8 +224,7 @@ $downgrade  = undef;
 $_trap_nan = 0;                         # are NaNs ok? set w/ config()
 $_trap_inf = 0;                         # are infs ok? set w/ config()
 
-# the package we are using for our private parts, defaults to:
-# Math::BigInt->config()->{lib}
+# the math backend library
 
 my $LIB = 'Math::BigInt::Calc';
 
@@ -249,17 +246,17 @@ sub new {
     # Check the way we are called.
 
     if ($protoref) {
-        Carp::croak("new() is a class method, not an instance method");
+        croak("new() is a class method, not an instance method");
     }
 
     if (@_ < 1) {
-        #Carp::carp("Using new() with no argument is deprecated;",
+        #carp("Using new() with no argument is deprecated;",
         #           " use bzero() or new(0) instead");
         return $class -> bzero();
     }
 
     if (@_ > 2) {
-        Carp::carp("Superfluous arguments to new() ignored.");
+        carp("Superfluous arguments to new() ignored.");
     }
 
     # Get numerator and denominator. If any of the arguments is undefined,
@@ -270,7 +267,7 @@ sub new {
     if (@_ == 1 && !defined $n ||
         @_ == 2 && (!defined $n || !defined $d))
     {
-        #Carp::carp("Use of uninitialized value in new()");
+        #carp("Use of uninitialized value in new()");
         return $class -> bzero();
     }
 
@@ -553,7 +550,7 @@ sub bnan {
     $self = bless {}, $class unless $selfref;
 
     if ($_trap_nan) {
-        Carp::croak ("Tried to set a variable to NaN in $class->bnan()");
+        croak ("Tried to set a variable to NaN in $class->bnan()");
     }
 
     $self -> {sign} = $nan;
@@ -577,7 +574,7 @@ sub binf {
     $sign = defined($sign) && substr($sign, 0, 1) eq '-' ? '-inf' : '+inf';
 
     if ($_trap_inf) {
-        Carp::croak ("Tried to set a variable to +-inf in $class->binf()");
+        croak ("Tried to set a variable to +-inf in $class->binf()");
     }
 
     $self -> {sign} = $sign;
@@ -685,10 +682,10 @@ sub bnorm {
 
     # Both parts must be objects of whatever we are using today.
     if (my $c = $LIB->_check($x->{_n})) {
-        Carp::croak("n did not pass the self-check ($c) in bnorm()");
+        croak("n did not pass the self-check ($c) in bnorm()");
     }
     if (my $c = $LIB->_check($x->{_d})) {
-        Carp::croak("d did not pass the self-check ($c) in bnorm()");
+        croak("d did not pass the self-check ($c) in bnorm()");
     }
 
     # no normalize for NaN, inf etc.
@@ -742,7 +739,7 @@ sub _bnan {
         # partial object (happens under trap_nan), so fix it beforehand
         $self->{_d} = $LIB->_zero() unless defined $self->{_d};
         $self->{_n} = $LIB->_zero() unless defined $self->{_n};
-        Carp::croak ("Tried to set $self to NaN in $class\::_bnan()");
+        croak ("Tried to set $self to NaN in $class\::_bnan()");
     }
     $self->{_n} = $LIB->_zero();
     $self->{_d} = $LIB->_zero();
@@ -758,7 +755,7 @@ sub _binf {
         # partial object (happens under trap_nan), so fix it beforehand
         $self->{_d} = $LIB->_zero() unless defined $self->{_d};
         $self->{_n} = $LIB->_zero() unless defined $self->{_n};
-        Carp::croak ("Tried to set $self to inf in $class\::_binf()");
+        croak ("Tried to set $self to inf in $class\::_binf()");
     }
     $self->{_n} = $LIB->_zero();
     $self->{_d} = $LIB->_zero();
@@ -1137,9 +1134,11 @@ sub is_one {
     # return true if arg (BRAT or num_str) is +1 or -1 if signis given
     my ($class, $x) = ref($_[0]) ? (undef, $_[0]) : objectify(1, @_);
 
-    my $sign = $_[2] || ''; $sign = '+' if $sign ne '-';
-    return 1
-      if ($x->{sign} eq $sign && $LIB->_is_one($x->{_n}) && $LIB->_is_one($x->{_d}));
+    croak "too many arguments for is_one()" if @_ > 2;
+    my $sign = $_[1] || '';
+    $sign = '+' if $sign ne '-';
+    return 1 if ($x->{sign} eq $sign &&
+                 $LIB->_is_one($x->{_n}) && $LIB->_is_one($x->{_d}));
     0;
 }
 
@@ -1280,69 +1279,62 @@ sub bpow {
         ($class, $x, $y, @r) = objectify(2, @_);
     }
 
-    return $x if $x->{sign} =~ /^[+-]inf$/; # -inf/+inf ** x
-    return $x->bnan() if $x->{sign} eq $nan || $y->{sign} eq $nan;
-    return $x->bone(@r) if $y->is_zero();
-    return $x->round(@r) if $x->is_one() || $y->is_one();
+    # $x and/or $y is a NaN
+    return $x->bnan() if $x->is_nan() || $y->is_nan();
 
-    if ($x->{sign} eq '-' && $LIB->_is_one($x->{_n}) && $LIB->_is_one($x->{_d})) {
-        # if $x == -1 and odd/even y => +1/-1
-        return $y->is_odd() ? $x->round(@r) : $x->babs()->round(@r);
-        # my Casio FX-5500L has a bug here: -1 ** 2 is -1, but -1 * -1 is 1;
+    # $x and/or $y is a +/-Inf
+    if ($x->is_inf("-")) {
+        return $x->bzero()   if $y->is_negative();
+        return $x->bnan()    if $y->is_zero();
+        return $x            if $y->is_odd();
+        return $x->bneg();
+    } elsif ($x->is_inf("+")) {
+        return $x->bzero()   if $y->is_negative();
+        return $x->bnan()    if $y->is_zero();
+        return $x;
+    } elsif ($y->is_inf("-")) {
+        return $x->bnan()    if $x -> is_one("-");
+        return $x->binf("+") if $x > -1 && $x < 1;
+        return $x->bone()    if $x -> is_one("+");
+        return $x->bzero();
+    } elsif ($y->is_inf("+")) {
+        return $x->bnan()    if $x -> is_one("-");
+        return $x->bzero()   if $x > -1 && $x < 1;
+        return $x->bone()    if $x -> is_one("+");
+        return $x->binf("+");
     }
-    # 1 ** -y => 1 / (1 ** |y|)
-    # so do test for negative $y after above's clause
 
-    return $x->round(@r) if $x->is_zero(); # 0**y => 0 (if not y <= 0)
+    if ($x->is_zero()) {
+        return $x->binf()    if $y->is_negative();
+        return $x->bone("+") if $y->is_zero();
+        return $x;
+    } elsif ($x->is_one()) {
+        return $x->round(@r) if $y->is_odd();   # x is -1, y is odd => -1
+        return $x->babs()->round(@r);           # x is -1, y is even => 1
+    } elsif ($y->is_zero()) {
+        return $x->bone(@r);                    # x^0 and x != 0 => 1
+    } elsif ($y->is_one()) {
+        return $x->round(@r);                   # x^1 => x
+    }
 
-    # shortcut if y == 1/N (is then sqrt() respective broot())
-    if ($LIB->_is_one($y->{_n})) {
+    # we don't support complex numbers, so return NaN
+    return $x->bnan() if $x->is_negative() && !$y->is_int();
+
+    # (a/b)^-(c/d) = (b/a)^(c/d)
+    ($x->{_n}, $x->{_d}) = ($x->{_d}, $x->{_n}) if $y->is_negative();
+
+    unless ($LIB->_is_one($y->{_n})) {
+        $x->{_n} = $LIB->_pow($x->{_n}, $y->{_n});
+        $x->{_d} = $LIB->_pow($x->{_d}, $y->{_n});
+        $x->{sign} = '+' if $x->{sign} eq '-' && $LIB->_is_even($y->{_n});
+    }
+
+    unless ($LIB->_is_one($y->{_d})) {
         return $x->bsqrt(@r) if $LIB->_is_two($y->{_d}); # 1/2 => sqrt
         return $x->broot($LIB->_str($y->{_d}), @r);      # 1/N => root(N)
     }
 
-    # shortcut y/1 (and/or x/1)
-    if ($LIB->_is_one($y->{_d})) {
-        # shortcut for x/1 and y/1
-        if ($LIB->_is_one($x->{_d})) {
-            $x->{_n} = $LIB->_pow($x->{_n}, $y->{_n}); # x/1 ** y/1 => (x ** y)/1
-            if ($y->{sign} eq '-') {
-                # 0.2 ** -3 => 1/(0.2 ** 3)
-                ($x->{_n}, $x->{_d}) = ($x->{_d}, $x->{_n}); # swap
-            }
-            # correct sign; + ** + => +
-            if ($x->{sign} eq '-') {
-                # - * - => +, - * - * - => -
-                $x->{sign} = '+' if $x->{sign} eq '-' && $LIB->_is_even($y->{_n});
-            }
-            return $x->round(@r);
-        }
-
-        # x/z ** y/1
-        $x->{_n} = $LIB->_pow($x->{_n}, $y->{_n}); # 5/2 ** y/1 => 5 ** y / 2 ** y
-        $x->{_d} = $LIB->_pow($x->{_d}, $y->{_n});
-        if ($y->{sign} eq '-') {
-            # 0.2 ** -3 => 1/(0.2 ** 3)
-            ($x->{_n}, $x->{_d}) = ($x->{_d}, $x->{_n}); # swap
-        }
-        # correct sign; + ** + => +
-
-        $x->{sign} = '+' if $x->{sign} eq '-' && $LIB->_is_even($y->{_n});
-        return $x->round(@r);
-    }
-
-    #  print STDERR "# $x $y\n";
-
-    # otherwise:
-
-    #      n/d     n  ______________
-    # a/b       =  -\/  (a/b) ** d
-
-    # (a/b) ** n == (a ** n) / (b ** n)
-    $LIB->_pow($x->{_n}, $y->{_n});
-    $LIB->_pow($x->{_d}, $y->{_n});
-
-    return $x->broot($LIB->_str($y->{_d}), @r); # n/d => root(n)
+    return $x->round(@r);
 }
 
 sub blog {
@@ -1616,16 +1608,38 @@ sub bsqrt {
     return $x if $x->{sign} eq '+inf';         # sqrt(inf) == inf
     return $x->round(@r) if $x->is_zero() || $x->is_one();
 
-    local $Math::BigFloat::upgrade = undef;
+    my $n = $x -> {_n};
+    my $d = $x -> {_d};
+
+    # Look for an exact solution. For the numerator and the denominator, take
+    # the square root and square it and see if we got the original value. If we
+    # did, for both the numerator and the denominator, we have an exact
+    # solution.
+
+    {
+        my $nsqrt = $LIB -> _sqrt($LIB -> _copy($n));
+        my $n2    = $LIB -> _mul($LIB -> _copy($nsqrt), $nsqrt);
+        if ($LIB -> _acmp($n, $n2) == 0) {
+            my $dsqrt = $LIB -> _sqrt($LIB -> _copy($d));
+            my $d2    = $LIB -> _mul($LIB -> _copy($dsqrt), $dsqrt);
+            if ($LIB -> _acmp($d, $d2) == 0) {
+                $x -> {_n} = $nsqrt;
+                $x -> {_d} = $dsqrt;
+                return $x->round(@r);
+            }
+        }
+    }
+
+    local $Math::BigFloat::upgrade   = undef;
     local $Math::BigFloat::downgrade = undef;
     local $Math::BigFloat::precision = undef;
-    local $Math::BigFloat::accuracy = undef;
-    local $Math::BigInt::upgrade = undef;
-    local $Math::BigInt::precision = undef;
-    local $Math::BigInt::accuracy = undef;
+    local $Math::BigFloat::accuracy  = undef;
+    local $Math::BigInt::upgrade     = undef;
+    local $Math::BigInt::precision   = undef;
+    local $Math::BigInt::accuracy    = undef;
 
-    my $xn = Math::BigFloat -> new($LIB -> _str($x->{_n}));
-    my $xd = Math::BigFloat -> new($LIB -> _str($x->{_d}));
+    my $xn = Math::BigFloat -> new($LIB -> _str($n));
+    my $xd = Math::BigFloat -> new($LIB -> _str($d));
 
     my $xtmp = Math::BigRat -> new($xn -> bdiv($xd) -> bsqrt() -> bsstr());
 
@@ -1671,8 +1685,8 @@ sub band {
     my $xref  = ref($x);
     my $class = $xref || $x;
 
-    Carp::croak 'band() is an instance method, not a class method' unless $xref;
-    Carp::croak 'Not enough arguments for band()' if @_ < 1;
+    croak 'band() is an instance method, not a class method' unless $xref;
+    croak 'Not enough arguments for band()' if @_ < 1;
 
     my $y = shift;
     $y = $class -> new($y) unless ref($y);
@@ -1695,8 +1709,8 @@ sub bior {
     my $xref  = ref($x);
     my $class = $xref || $x;
 
-    Carp::croak 'bior() is an instance method, not a class method' unless $xref;
-    Carp::croak 'Not enough arguments for bior()' if @_ < 1;
+    croak 'bior() is an instance method, not a class method' unless $xref;
+    croak 'Not enough arguments for bior()' if @_ < 1;
 
     my $y = shift;
     $y = $class -> new($y) unless ref($y);
@@ -1719,8 +1733,8 @@ sub bxor {
     my $xref  = ref($x);
     my $class = $xref || $x;
 
-    Carp::croak 'bxor() is an instance method, not a class method' unless $xref;
-    Carp::croak 'Not enough arguments for bxor()' if @_ < 1;
+    croak 'bxor() is an instance method, not a class method' unless $xref;
+    croak 'Not enough arguments for bxor()' if @_ < 1;
 
     my $y = shift;
     $y = $class -> new($y) unless ref($y);
@@ -1743,7 +1757,7 @@ sub bnot {
     my $xref  = ref($x);
     my $class = $xref || $x;
 
-    Carp::croak 'bnot() is an instance method, not a class method' unless $xref;
+    croak 'bnot() is an instance method, not a class method' unless $xref;
 
     my @r = @_;
 
@@ -1852,8 +1866,8 @@ sub beq {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
-    Carp::croak 'beq() is an instance method, not a class method' unless $selfref;
-    Carp::croak 'Wrong number of arguments for beq()' unless @_ == 1;
+    croak 'beq() is an instance method, not a class method' unless $selfref;
+    croak 'Wrong number of arguments for beq()' unless @_ == 1;
 
     my $cmp = $self -> bcmp(shift);
     return defined($cmp) && ! $cmp;
@@ -1864,8 +1878,8 @@ sub bne {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
-    Carp::croak 'bne() is an instance method, not a class method' unless $selfref;
-    Carp::croak 'Wrong number of arguments for bne()' unless @_ == 1;
+    croak 'bne() is an instance method, not a class method' unless $selfref;
+    croak 'Wrong number of arguments for bne()' unless @_ == 1;
 
     my $cmp = $self -> bcmp(shift);
     return defined($cmp) && ! $cmp ? '' : 1;
@@ -1876,8 +1890,8 @@ sub blt {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
-    Carp::croak 'blt() is an instance method, not a class method' unless $selfref;
-    Carp::croak 'Wrong number of arguments for blt()' unless @_ == 1;
+    croak 'blt() is an instance method, not a class method' unless $selfref;
+    croak 'Wrong number of arguments for blt()' unless @_ == 1;
 
     my $cmp = $self -> bcmp(shift);
     return defined($cmp) && $cmp < 0;
@@ -1888,8 +1902,8 @@ sub ble {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
-    Carp::croak 'ble() is an instance method, not a class method' unless $selfref;
-    Carp::croak 'Wrong number of arguments for ble()' unless @_ == 1;
+    croak 'ble() is an instance method, not a class method' unless $selfref;
+    croak 'Wrong number of arguments for ble()' unless @_ == 1;
 
     my $cmp = $self -> bcmp(shift);
     return defined($cmp) && $cmp <= 0;
@@ -1900,8 +1914,8 @@ sub bgt {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
-    Carp::croak 'bgt() is an instance method, not a class method' unless $selfref;
-    Carp::croak 'Wrong number of arguments for bgt()' unless @_ == 1;
+    croak 'bgt() is an instance method, not a class method' unless $selfref;
+    croak 'Wrong number of arguments for bgt()' unless @_ == 1;
 
     my $cmp = $self -> bcmp(shift);
     return defined($cmp) && $cmp > 0;
@@ -1912,9 +1926,9 @@ sub bge {
     my $selfref = ref $self;
     my $class   = $selfref || $self;
 
-    Carp::croak 'bge() is an instance method, not a class method'
+    croak 'bge() is an instance method, not a class method'
         unless $selfref;
-    Carp::croak 'Wrong number of arguments for bge()' unless @_ == 1;
+    croak 'Wrong number of arguments for bge()' unless @_ == 1;
 
     my $cmp = $self -> bcmp(shift);
     return defined($cmp) && $cmp >= 0;
@@ -1941,7 +1955,7 @@ sub numify {
     return $x->{sign} eq '-' ? 0 - $abs : 0 + $abs;
 }
 
-sub as_number {
+sub as_int {
     my ($self, $x) = ref($_[0]) ? (undef, $_[0]) : objectify(1, @_);
 
     # NaN, inf etc
@@ -2076,13 +2090,13 @@ sub import {
     # LIB already loaded, so feed it our lib arguments
     Math::BigInt->import(@import);
 
-    $LIB = Math::BigFloat->config()->{lib};
+    $LIB = Math::BigFloat->config("lib");
 
     # register us with LIB to get notified of future lib changes
     Math::BigInt::_register_callback($class, sub { $LIB = $_[0]; });
 
-    # any non :constant stuff is handled by our parent, Exporter (loaded
-    # by Math::BigFloat, even if @_ is empty, to give it a chance
+    # any non :constant stuff is handled by Exporter (loaded by parent class)
+    # even if @_ is empty, to give it a chance
     $class->SUPER::import(@a);           # for subclasses
     $class->export_to_level(1, $class, @a); # need this, too
 }
@@ -2193,7 +2207,7 @@ BigInts.
 
 Returns the object as a scalar. This will lose some data if the object
 cannot be represented by a normal Perl scalar (integer or float), so
-use L<as_int()|/"as_int()/as_number()"> or L</as_float()> instead.
+use L</as_int()> or L</as_float()> instead.
 
 This routine is automatically used whenever a scalar is required:
 
@@ -2201,7 +2215,9 @@ This routine is automatically used whenever a scalar is required:
     @array = (0, 1, 2, 3);
     $y = $array[$x];                # set $y to 3
 
-=item as_int()/as_number()
+=item as_int()
+
+=item as_number()
 
     $x = Math::BigRat->new('13/7');
     print $x->as_int(), "\n";               # '1'
@@ -2642,21 +2658,19 @@ This method was added in v0.20 of Math::BigRat (May 2007).
 
 =item config()
 
-    use Data::Dumper;
+    Math::BigRat->config("trap_nan" => 1);      # set
+    $accu = Math::BigRat->config("accuracy");   # get
 
-    print Dumper ( Math::BigRat->config() );
-    print Math::BigRat->config()->{lib}, "\n";
+Set or get configuration parameter values. Read-only parameters are marked as
+RO. Read-write parameters are marked as RW. The following parameters are
+supported.
 
-Returns a hash containing the configuration, e.g. the version number, lib
-loaded etc. The following hash keys are currently filled in with the
-appropriate information.
-
-    key             RO/RW   Description
+    Parameter       RO/RW   Description
                             Example
     ============================================================
-    lib             RO      Name of the Math library
+    lib             RO      Name of the math backend library
                             Math::BigInt::Calc
-    lib_version     RO      Version of 'lib'
+    lib_version     RO      Version of the math backend library
                             0.30
     class           RO      The class of config you just called
                             Math::BigRat
@@ -2672,16 +2686,12 @@ appropriate information.
                             undef
     round_mode      RW      Global round mode
                             even
-    div_scale       RW      Fallback accuracy for div
+    div_scale       RW      Fallback accuracy for div, sqrt etc.
                             40
-    trap_nan        RW      Trap creation of NaN (undef = no)
+    trap_nan        RW      Trap NaNs
                             undef
-    trap_inf        RW      Trap creation of +inf/-inf (undef = no)
+    trap_inf        RW      Trap +inf/-inf
                             undef
-
-By passing a reference to a hash you may set the configuration values. This
-works only for values that a marked with a C<RW> above, anything else is
-read-only.
 
 =back
 

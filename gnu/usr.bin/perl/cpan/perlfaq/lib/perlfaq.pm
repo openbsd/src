@@ -1,5 +1,7 @@
 use strict;
 use warnings;
 package perlfaq;
-$perlfaq::VERSION = '5.021011';
+
+our $VERSION = '5.20190126';
+
 1;

@@ -609,6 +609,7 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 #    define utime		PerlLIO_utime
 #    define write		PerlLIO_write
 #    define malloc		PerlMem_malloc
+#    define calloc              PerlMem_calloc
 #    define realloc		PerlMem_realloc
 #    define free		PerlMem_free
 #    define abort		PerlProc_abort

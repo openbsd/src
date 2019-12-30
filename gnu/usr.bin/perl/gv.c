@@ -1636,7 +1636,7 @@ S_parse_gv_stash_name(pTHX_ HV **stash, GV **gv, const char **name,
             if (!*stash)
                 *stash = PL_defstash;
             if (!*stash || !SvREFCNT(*stash)) /* symbol table under destruction */
-                return FALSE;
+                goto notok;
 
             *len = name_cursor - *name;
             if (name_cursor > nambeg) { /* Skip for initial :: or ' */
@@ -1665,8 +1665,7 @@ S_parse_gv_stash_name(pTHX_ HV **stash, GV **gv, const char **name,
                 gvp = (GV**)hv_fetch(*stash, key, is_utf8 ? -((I32)*len) : (I32)*len, add);
                 *gv = gvp ? *gvp : NULL;
                 if (!*gv || *gv == (const GV *)&PL_sv_undef) {
-                    Safefree(tmpfullbuf); /* free our tmpfullbuf if it was used */
-                    return FALSE;
+                    goto notok;
                 }
                 /* here we know that *gv && *gv != &PL_sv_undef */
                 if (SvTYPE(*gv) != SVt_PVGV)
@@ -1707,14 +1706,19 @@ S_parse_gv_stash_name(pTHX_ HV **stash, GV **gv, const char **name,
 			    MUTABLE_HV(SvREFCNT_inc_simple(PL_defstash));
 		    }
 		}
-                Safefree(tmpfullbuf); /* free our tmpfullbuf if it was used */
-                return TRUE;
+                goto ok;
             }
         }
     }
     *len = name_cursor - *name;
+  ok:
+    Safefree(tmpfullbuf); /* free our tmpfullbuf if it was used */
     return TRUE;
+  notok:
+    Safefree(tmpfullbuf); /* free our tmpfullbuf if it was used */
+    return FALSE;
 }
+
 
 /* Checks if an unqualified name is in the main stash */
 PERL_STATIC_INLINE bool
@@ -1880,7 +1884,7 @@ S_find_default_stash(pTHX_ HV **stash, const char *name, STRLEN len,
  * a new GV.
  * Note that it does not insert the GV into the stash prior to
  * magicalization, which some variables require need in order
- * to work (like $[, %+, %-, %!), so callers must take care of
+ * to work (like %+, %-, %!), so callers must take care of
  * that.
  * 
  * It returns true if the gv did turn out to be magical one; i.e.,
@@ -2203,25 +2207,16 @@ S_gv_magicalize(pTHX_ GV *gv, HV *stash, const char *name, STRLEN len,
             break;
 	case '*':		/* $* */
 	case '#':		/* $# */
-	    if (sv_type == SVt_PV)
-		/* diag_listed_as: $* is no longer supported. Its use will be fatal in Perl 5.30 */
-		Perl_ck_warner_d(aTHX_ packWARN2(WARN_DEPRECATED, WARN_SYNTAX),
-				 "$%c is no longer supported. Its use "
-                                 "will be fatal in Perl 5.30", *name);
-	    break;
+        if (sv_type == SVt_PV)
+            /* diag_listed_as: $* is no longer supported as of Perl 5.30 */
+            Perl_croak(aTHX_ "$%c is no longer supported as of Perl 5.30", *name);
+        break;
 	case '\010':	/* $^H */
 	    {
 		HV *const hv = GvHVn(gv);
 		hv_magic(hv, NULL, PERL_MAGIC_hints);
 	    }
 	    goto magicalize;
-	case '[':		/* $[ */
-	    if ((sv_type == SVt_PV || sv_type == SVt_PVGV)
-	     && FEATURE_ARYBASE_IS_ENABLED) {
-                require_tie_mod_s(gv,'[',"arybase",0);
-	    }
-	    else goto magicalize;
-            break;
 	case '\023':	/* $^S */
 	ro_magicalize:
 	    SvREADONLY_on(GvSVn(gv));
@@ -2240,6 +2235,7 @@ S_gv_magicalize(pTHX_ GV *gv, HV *stash, const char *name, STRLEN len,
 	case '/':		/* $/ */
 	case '|':		/* $| */
 	case '$':		/* $$ */
+	case '[':		/* $[ */
 	case '\001':	/* $^A */
 	case '\003':	/* $^C */
 	case '\004':	/* $^D */
@@ -2317,18 +2313,12 @@ S_maybe_multimagic_gv(pTHX_ GV *gv, const char *name, const svtype sv_type)
             require_tie_mod_s(gv, *name, "Tie::Hash::NamedCapture", 0);
     } else if (sv_type == SVt_PV) {
         if (*name == '*' || *name == '#') {
-            /* diag_listed_as: $# is no longer supported. Its use will be fatal in Perl 5.30 */
-            Perl_ck_warner_d(aTHX_ packWARN2(WARN_DEPRECATED,
-                                             WARN_SYNTAX),
-                             "$%c is no longer supported. Its use "
-                             "will be fatal in Perl 5.30", *name);
+            /* diag_listed_as: $* is no longer supported as of Perl 5.30 */
+            Perl_croak(aTHX_ "$%c is no longer supported as of Perl 5.30", *name);
         }
     }
     if (sv_type==SVt_PV || sv_type==SVt_PVGV) {
       switch (*name) {
-      case '[':
-          require_tie_mod_s(gv,'[',"arybase",0);
-          break;
 #ifdef PERL_SAWAMPERSAND
       case '`':
           PL_sawampersand |= SAWAMPERSAND_LEFT;
@@ -2952,8 +2942,6 @@ Perl_gv_handler(pTHX_ HV *stash, I32 id)
 /* Implement tryAMAGICun_MG macro.
    Do get magic, then see if the stack arg is overloaded and if so call it.
    Flags:
-	AMGf_set     return the arg using SETs rather than assigning to
-		     the targ
 	AMGf_numeric apply sv_2num to the stack arg.
 */
 
@@ -2969,18 +2957,21 @@ Perl_try_amagic_un(pTHX_ int method, int flags) {
 					      AMGf_noright | AMGf_unary
 					    | (flags & AMGf_numarg))))
     {
-	if (flags & AMGf_set) {
-	    SETs(tmpsv);
-	}
-	else {
-	    dTARGET;
-	    if (SvPADMY(TARG)) {
-		sv_setsv(TARG, tmpsv);
-		SETTARG;
-	    }
-	    else
-		SETs(tmpsv);
-	}
+        /* where the op is of the form:
+         *    $lex = $x op $y (where the assign is optimised away)
+         * then assign the returned value to targ and return that;
+         * otherwise return the value directly
+         */
+        if (   (PL_opargs[PL_op->op_type] & OA_TARGLEX)
+            && (PL_op->op_private & OPpTARGET_MY))
+        {
+            dTARGET;
+            sv_setsv(TARG, tmpsv);
+            SETTARG;
+        }
+        else
+            SETs(tmpsv);
+
 	PUTBACK;
 	return TRUE;
     }
@@ -2995,8 +2986,6 @@ Perl_try_amagic_un(pTHX_ int method, int flags) {
    Do get magic, then see if the two stack args are overloaded and if so
    call it.
    Flags:
-	AMGf_set     return the arg using SETs rather than assigning to
-		     the targ
 	AMGf_assign  op may be called as mutator (eg +=)
 	AMGf_numeric apply sv_2num to the stack arg.
 */
@@ -3012,28 +3001,38 @@ Perl_try_amagic_bin(pTHX_ int method, int flags) {
 	SvGETMAGIC(right);
 
     if (SvAMAGIC(left) || SvAMAGIC(right)) {
-	SV * const tmpsv = amagic_call(left, right, method,
-		    ((flags & AMGf_assign) && opASSIGN ? AMGf_assign: 0)
+	SV * tmpsv;
+        /* STACKED implies mutator variant, e.g. $x += 1 */
+        bool mutator = (flags & AMGf_assign) && (PL_op->op_flags & OPf_STACKED);
+
+	tmpsv = amagic_call(left, right, method,
+		    (mutator ? AMGf_assign: 0)
 		  | (flags & AMGf_numarg));
 	if (tmpsv) {
-	    if (flags & AMGf_set) {
-		(void)POPs;
-		SETs(tmpsv);
-	    }
-	    else {
-		dATARGET;
-		(void)POPs;
-		if (opASSIGN || SvPADMY(TARG)) {
-		    sv_setsv(TARG, tmpsv);
-		    SETTARG;
-		}
-		else
-		    SETs(tmpsv);
-	    }
+            (void)POPs;
+            /* where the op is one of the two forms:
+             *    $x op= $y
+             *    $lex = $x op $y (where the assign is optimised away)
+             * then assign the returned value to targ and return that;
+             * otherwise return the value directly
+             */
+            if (   mutator
+                || (   (PL_opargs[PL_op->op_type] & OA_TARGLEX)
+                    && (PL_op->op_private & OPpTARGET_MY)))
+            {
+                dTARG;
+                TARG = mutator ? *SP : PAD_SV(PL_op->op_targ);
+                sv_setsv(TARG, tmpsv);
+                SETTARG;
+            }
+            else
+                SETs(tmpsv);
+
 	    PUTBACK;
 	    return TRUE;
 	}
     }
+
     if(left==right && SvGMAGICAL(left)) {
 	SV * const left = sv_newmortal();
 	*(sp-1) = left;

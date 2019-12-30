@@ -11,7 +11,7 @@ use Symbol;
 
 our $VERSION;
 BEGIN {
-  $VERSION = '3.39';
+  $VERSION = '3.40';
   require ExtUtils::ParseXS::Constants; ExtUtils::ParseXS::Constants->VERSION($VERSION);
   require ExtUtils::ParseXS::CountLines; ExtUtils::ParseXS::CountLines->VERSION($VERSION);
   require ExtUtils::ParseXS::Utilities; ExtUtils::ParseXS::Utilities->VERSION($VERSION);
@@ -467,7 +467,7 @@ EOM
         $self->{defaults}->{$args[$i]} = $2;
         $self->{defaults}->{$args[$i]} =~ s/"/\\"/g;
       }
-      $self->{proto_arg}->[$i+1] = '$';
+      $self->{proto_arg}->[$i+1] = '$' unless $only_C_inlist_ref->{$args[$i]};
     }
     my $min_args = $num_args - $extra_args;
     $report_args =~ s/"/\\"/g;

@@ -215,6 +215,11 @@ for my $char ("٠", "٥", "٩") {
         'qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ]) compiles and properly matches');
 }
 
+{   # [perl #133889]    Caused assertion failure
+    fresh_perl_like('no warnings "experimental::regex_sets";
+        qr/(?[\P{Is0}])/', qr/\QUnknown user-defined property name "Is0"/, {}, "[perl #133889]");
+}
+
 done_testing();
 
 1;

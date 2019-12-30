@@ -593,7 +593,7 @@ type information to select a suitable comparison mechanism.
 
 The C<~~> operator compares its operands "polymorphically", determining how
 to compare them according to their actual types (numeric, string, array,
-hash, etc.)  Like the equality operators with which it shares the same
+hash, etc.).  Like the equality operators with which it shares the same
 precedence, C<~~> returns 1 for true and C<""> for false.  It is often best
 read aloud as "in", "inside of", or "is contained in", because the left
 operand is often looked for I<inside> the right operand.  That makes the
@@ -1443,7 +1443,7 @@ is a word character (meaning it matches C</\w/>):
     qXfooX  # WRONG!
 
 The following escape sequences are available in constructs that interpolate,
-and in transliterations:
+and in transliterations whose delimiters aren't single quotes (C<"'">).
 X<\t> X<\n> X<\r> X<\f> X<\b> X<\a> X<\e> X<\x> X<\0> X<\c> X<\N> X<\N{}>
 X<\o{}>
 
@@ -1660,7 +1660,7 @@ and although they often accept just C<"\012">, they seldom tolerate just
 C<"\015">.  If you get in the habit of using C<"\n"> for networking,
 you may be burned some day.
 X<newline> X<line terminator> X<eol> X<end of line>
-X<\r>
+X<\n> X<\r> X<\r\n>
 
 For constructs that do interpolate, variables beginning with "C<$>"
 or "C<@>" are interpolated.  Subscripted variables such as C<$a[3]> or
@@ -2211,6 +2211,10 @@ Examples:
 
     s/([^ ]*) *([^ ]*)/$2 $1/;	# reverse 1st two fields
 
+    $foo !~ s/A/a/g;    # Lowercase all A's in $foo; return
+                        # 0 if any were found and changed;
+                        # otherwise return 1
+
 Note the use of C<$> instead of C<\> in the last example.  Unlike
 B<sed>, we use the \<I<digit>> form only in the left hand side.
 Anywhere else it's $<I<digit>>.
@@ -2366,6 +2370,8 @@ output of the command, for example:
   use open IN => ":encoding(UTF-8)";
   my $x = `cmd-producing-utf-8`;
 
+C<qx//> can also be called like a function with L<perlfunc/readpipe>.
+
 See L</"I/O Operators"> for more discussion.
 
 =item C<qw/I<STRING>/>
@@ -2403,10 +2409,14 @@ X<tr> X<y> X<transliterate> X</c> X</d> X</s>
 
 =item C<y/I<SEARCHLIST>/I<REPLACEMENTLIST>/cdsr>
 
-Transliterates all occurrences of the characters found in the search list
-with the corresponding character in the replacement list.  It returns
-the number of characters replaced or deleted.  If no string is
-specified via the C<=~> or C<!~> operator, the C<$_> string is transliterated.
+Transliterates all occurrences of the characters found (or not found
+if the C</c> modifier is specified) in the search list with the
+positionally corresponding character in the replacement list, possibly
+deleting some, depending on the modifiers specified.  It returns the
+number of characters replaced or deleted.  If no string is specified via
+the C<=~> or C<!~> operator, the C<$_> string is transliterated.
+
+For B<sed> devotees, C<y> is provided as a synonym for C<tr>.
 
 If the C</r> (non-destructive) option is present, a new copy of the string
 is made and its characters transliterated, and this copy is returned no
@@ -2418,19 +2428,26 @@ Unless the C</r> option is used, the string specified with C<=~> must be a
 scalar variable, an array element, a hash element, or an assignment to one
 of those; in other words, an lvalue.
 
-A character range may be specified with a hyphen, so C<tr/A-J/0-9/>
-does the same replacement as C<tr/ACEGIBDFHJ/0246813579/>.
-For B<sed> devotees, C<y> is provided as a synonym for C<tr>.  If the
-I<SEARCHLIST> is delimited by bracketing quotes, the I<REPLACEMENTLIST>
-must have its own pair of quotes, which may or may not be bracketing
-quotes; for example, C<tr[aeiouy][yuoiea]> or C<tr(+\-*/)/ABCD/>.
+If the characters delimiting I<SEARCHLIST> and I<REPLACEMENTLIST>
+are single quotes (C<tr'I<SEARCHLIST>'I<REPLACEMENTLIST>'>), the only
+interpolation is removal of C<\> from pairs of C<\\>.
 
-Characters may be literals or any of the escape sequences accepted in
-double-quoted strings.  But there is no variable interpolation, so C<"$">
-and C<"@"> are treated as literals.  A hyphen at the beginning or end, or
-preceded by a backslash is considered a literal.  Escape sequence
-details are in L<the table near the beginning of this section|/Quote and
-Quote-like Operators>.
+Otherwise, a character range may be specified with a hyphen, so
+C<tr/A-J/0-9/> does the same replacement as
+C<tr/ACEGIBDFHJ/0246813579/>.
+
+If the I<SEARCHLIST> is delimited by bracketing quotes, the
+I<REPLACEMENTLIST> must have its own pair of quotes, which may or may
+not be bracketing quotes; for example, C<tr[aeiouy][yuoiea]> or
+C<tr(+\-*/)/ABCD/>.
+
+Characters may be literals, or (if the delimiters aren't single quotes)
+any of the escape sequences accepted in double-quoted strings.  But
+there is never any variable interpolation, so C<"$"> and C<"@"> are
+always treated as literals.  A hyphen at the beginning or end, or
+preceded by a backslash is also always considered a literal.  Escape
+sequence details are in L<the table near the beginning of this
+section|/Quote and Quote-like Operators>.
 
 Note that C<tr> does B<not> do regular expression character classes such as
 C<\d> or C<\pL>.  The C<tr> operator is not equivalent to the C<L<tr(1)>>
@@ -2469,85 +2486,128 @@ range's end points are expressed as C<\N{...}>
 removes from C<$string> all the platform's characters which are
 equivalent to any of Unicode U+0020, U+0021, ... U+007D, U+007E.  This
 is a portable range, and has the same effect on every platform it is
-run on.  It turns out that in this example, these are the ASCII
+run on.  In this example, these are the ASCII
 printable characters.  So after this is run, C<$string> has only
 controls and characters which have no ASCII equivalents.
 
 But, even for portable ranges, it is not generally obvious what is
-included without having to look things up.  A sound principle is to use
-only ranges that begin from and end at either ASCII alphabetics of equal
-case (C<b-e>, C<B-E>), or digits (C<1-4>).  Anything else is unclear
-(and unportable unless C<\N{...}> is used).  If in doubt, spell out the
-character sets in full.
+included without having to look things up in the manual.  A sound
+principle is to use only ranges that both begin from, and end at, either
+ASCII alphabetics of equal case (C<b-e>, C<B-E>), or digits (C<1-4>).
+Anything else is unclear (and unportable unless C<\N{...}> is used).  If
+in doubt, spell out the character sets in full.
 
 Options:
 
     c	Complement the SEARCHLIST.
     d	Delete found but unreplaced characters.
-    s	Squash duplicate replaced characters.
     r	Return the modified string and leave the original string
 	untouched.
+    s	Squash duplicate replaced characters.
 
-If the C</c> modifier is specified, the I<SEARCHLIST> character set
-is complemented. So for example these two are equivalent (the exact
-maximum number will depend on your platform):
+If the C</d> modifier is specified, any characters specified by
+I<SEARCHLIST>  not found in I<REPLACEMENTLIST> are deleted.  (Note that
+this is slightly more flexible than the behavior of some B<tr> programs,
+which delete anything they find in the I<SEARCHLIST>, period.)
 
-    tr/\x00-\xfd/ABCD/c
-    tr/\xfe-\x{7fffffff}/ABCD/
+If the C</s> modifier is specified, sequences of characters, all in a
+row, that were transliterated to the same character are squashed down to
+a single instance of that character.
 
-If the C</d> modifier is specified, any characters
-specified by I<SEARCHLIST> not found in I<REPLACEMENTLIST> are deleted.
-(Note that this is slightly more flexible than the behavior of some
-B<tr> programs, which delete anything they find in the I<SEARCHLIST>,
-period.)
-
-If the C</s> modifier is specified, runs of the same character in the
-result, where each those characters were substituted by the
-transliteration, are squashed down to a single instance of the character.
+ my $a = "aaaba"
+ $a =~ tr/a/a/s     # $a now is "aba"
 
 If the C</d> modifier is used, the I<REPLACEMENTLIST> is always interpreted
 exactly as specified.  Otherwise, if the I<REPLACEMENTLIST> is shorter
-than the I<SEARCHLIST>, the final character is replicated till it is long
-enough.  If the I<REPLACEMENTLIST> is empty, the I<SEARCHLIST> is replicated.
-This latter is useful for counting characters in a class or for
-squashing character sequences in a class. For example, each of these pairs
-are equivalent:
+than the I<SEARCHLIST>, the final character, if any, is replicated until
+it is long enough.  There won't be a final character if and only if the
+I<REPLACEMENTLIST> is empty, in which case I<REPLACEMENTLIST> is
+copied from I<SEARCHLIST>.    An empty I<REPLACEMENTLIST> is useful
+for counting characters in a class, or for squashing character sequences
+in a class.
 
     tr/abcd//            tr/abcd/abcd/
     tr/abcd/AB/          tr/abcd/ABBB/
     tr/abcd//d           s/[abcd]//g
     tr/abcd/AB/d         (tr/ab/AB/ + s/[cd]//g)  - but run together
 
+If the C</c> modifier is specified, the characters to be transliterated
+are the ones NOT in I<SEARCHLIST>, that is, it is complemented.  If
+C</d> and/or C</s> are also specified, they apply to the complemented
+I<SEARCHLIST>.  Recall, that if I<REPLACEMENTLIST> is empty (except
+under C</d>) a copy of I<SEARCHLIST> is used instead.  That copy is made
+after complementing under C</c>.  I<SEARCHLIST> is sorted by code point
+order after complementing, and any I<REPLACEMENTLIST>  is applied to
+that sorted result.  This means that under C</c>, the order of the
+characters specified in I<SEARCHLIST> is irrelevant.  This can
+lead to different results on EBCDIC systems if I<REPLACEMENTLIST>
+contains more than one character, hence it is generally non-portable to
+use C</c> with such a I<REPLACEMENTLIST>.
+
+Another way of describing the operation is this:
+If C</c> is specified, the I<SEARCHLIST> is sorted by code point order,
+then complemented.  If I<REPLACEMENTLIST> is empty and C</d> is not
+specified, I<REPLACEMENTLIST> is replaced by a copy of I<SEARCHLIST> (as
+modified under C</c>), and these potentially modified lists are used as
+the basis for what follows.  Any character in the target string that
+isn't in I<SEARCHLIST> is passed through unchanged.  Every other
+character in the target string is replaced by the character in
+I<REPLACEMENTLIST> that positionally corresponds to its mate in
+I<SEARCHLIST>, except that under C</s>, the 2nd and following characters
+are squeezed out in a sequence of characters in a row that all translate
+to the same character.  If I<SEARCHLIST> is longer than
+I<REPLACEMENTLIST>, characters in the target string that match a
+character in I<SEARCHLIST> that doesn't have a correspondence in
+I<REPLACEMENTLIST> are either deleted from the target string if C</d> is
+specified; or replaced by the final character in I<REPLACEMENTLIST> if
+C</d> isn't specified.
+
 Some examples:
 
-    $ARGV[1] =~ tr/A-Z/a-z/;	# canonicalize to lower case ASCII
+ $ARGV[1] =~ tr/A-Z/a-z/;   # canonicalize to lower case ASCII
 
-    $cnt = tr/*/*/;		# count the stars in $_
+ $cnt = tr/*/*/;            # count the stars in $_
+ $cnt = tr/*//;             # same thing
 
-    $cnt = $sky =~ tr/*/*/;	# count the stars in $sky
+ $cnt = $sky =~ tr/*/*/;    # count the stars in $sky
+ $cnt = $sky =~ tr/*//;     # same thing
 
-    $cnt = tr/0-9//;		# count the digits in $_
+ $cnt = $sky =~ tr/*//c;    # count all the non-stars in $sky
+ $cnt = $sky =~ tr/*/*/c;   # same, but transliterate each non-star
+                            # into a star, leaving the already-stars
+                            # alone.  Afterwards, everything in $sky
+                            # is a star.
 
-    tr/a-zA-Z//s;		# bookkeeper -> bokeper
+ $cnt = tr/0-9//;           # count the ASCII digits in $_
 
-    ($HOST = $host) =~ tr/a-z/A-Z/;
-     $HOST = $host  =~ tr/a-z/A-Z/r;   # same thing
+ tr/a-zA-Z//s;              # bookkeeper -> bokeper
+ tr/o/o/s;                  # bookkeeper -> bokkeeper
+ tr/oe/oe/s;                # bookkeeper -> bokkeper
+ tr/oe//s;                  # bookkeeper -> bokkeper
+ tr/oe/o/s;                 # bookkeeper -> bokkopor
 
-    $HOST = $host =~ tr/a-z/A-Z/r    # chained with s///r
-                  =~ s/:/ -p/r;
+ ($HOST = $host) =~ tr/a-z/A-Z/;
+  $HOST = $host  =~ tr/a-z/A-Z/r; # same thing
 
-    tr/a-zA-Z/ /cs;		# change non-alphas to single space
+ $HOST = $host =~ tr/a-z/A-Z/r   # chained with s///r
+               =~ s/:/ -p/r;
 
-    @stripped = map tr/a-zA-Z/ /csr, @original;
-				# /r with map
+ tr/a-zA-Z/ /cs;                 # change non-alphas to single space
 
-    tr [\200-\377]
-       [\000-\177];		# wickedly delete 8th bit
+ @stripped = map tr/a-zA-Z/ /csr, @original;
+                                 # /r with map
+
+ tr [\200-\377]
+    [\000-\177];                 # wickedly delete 8th bit
+
+ $foo !~ tr/A/a/    # transliterate all the A's in $foo to 'a',
+                    # return 0 if any were found and changed.
+                    # Otherwise return 1
 
 If multiple transliterations are given for a character, only the
 first one is used:
 
-    tr/AAA/XYZ/
+ tr/AAA/XYZ/
 
 will transliterate any A to X.
 
@@ -2556,10 +2616,10 @@ the I<SEARCHLIST> nor the I<REPLACEMENTLIST> are subjected to double quote
 interpolation.  That means that if you want to use variables, you
 must use an C<eval()>:
 
-    eval "tr/$oldlist/$newlist/";
-    die $@ if $@;
+ eval "tr/$oldlist/$newlist/";
+ die $@ if $@;
 
-    eval "tr/$oldlist/$newlist/, 1" or die $@;
+ eval "tr/$oldlist/$newlist/, 1" or die $@;
 
 =item C<< <<I<EOF> >>
 X<here-doc> X<heredoc> X<here-document> X<<< << >>>
@@ -2575,10 +2635,9 @@ want to use L</Indented Here-docs> (see below).
 The terminating string may be either an identifier (a word), or some
 quoted text.  An unquoted identifier works like double quotes.
 There may not be a space between the C<< << >> and the identifier,
-unless the identifier is explicitly quoted.  (If you put a space it
-will be treated as a null identifier, which is valid, and matches the
-first empty line.)  The terminating string must appear by itself
-(unquoted and with no surrounding whitespace) on the terminating line.
+unless the identifier is explicitly quoted.  The terminating string
+must appear by itself (unquoted and with no surrounding whitespace)
+on the terminating line.
 
 If the terminating string is quoted, the type of quotes used determine
 the treatment of the text.
@@ -3088,7 +3147,8 @@ Unlike in B<csh>, no translation is done on the return data--newlines
 remain newlines.  Unlike in any of the shells, single quotes do not
 hide variable names in the command from interpretation.  To pass a
 literal dollar-sign through to the shell you need to hide it with a
-backslash.  The generalized form of backticks is C<qx//>.  (Because
+backslash.  The generalized form of backticks is C<qx//>, or you can
+call the L<perlfunc/readpipe> function.  (Because
 backticks always undergo shell expansion as well, see L<perlsec> for
 security concerns.)
 X<qx> X<`> X<``> X<backtick> X<glob>

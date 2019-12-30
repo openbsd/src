@@ -2,13 +2,13 @@ package User::grent;
 use strict;
 
 use 5.006_001;
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
-our ($gr_name, $gr_gid, $gr_passwd, $gr_mem, @gr_members);
+our ($gr_name, $gr_gid, $gr_passwd, @gr_members);
 BEGIN { 
     use Exporter   ();
     @EXPORT      = qw(getgrent getgrgid getgrnam getgr);
-    @EXPORT_OK   = qw($gr_name $gr_gid $gr_passwd $gr_mem @gr_members);
+    @EXPORT_OK   = qw($gr_name $gr_gid $gr_passwd @gr_members);
     %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
 }
 
@@ -61,7 +61,7 @@ User::grent - by-name interface to Perl's built-in getgr*() functions
 
 =head1 DESCRIPTION
 
-This module's default exports override the core getgrent(), getgruid(),
+This module's default exports override the core getgrent(), getgrgid(),
 and getgrnam() functions, replacing them with versions that return
 "User::grent" objects.  This object has methods that return the similarly
 named structure field name from the C's passwd structure from F<grp.h>; 
@@ -76,8 +76,8 @@ to $gr_gid if you import the fields.  Array references are available as
 regular array variables, so C<@{ $group_obj-E<gt>members() }> would be
 simply @gr_members.
 
-The getpw() function is a simple front-end that forwards
-a numeric argument to getpwuid() and the rest to getpwnam().
+The getgr() function is a simple front-end that forwards a numeric
+argument to getgrgid() and the rest to getgrnam().
 
 To access this functionality without the core overrides,
 pass the C<use> an empty import list, and then access

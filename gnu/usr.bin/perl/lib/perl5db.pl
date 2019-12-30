@@ -529,7 +529,7 @@ BEGIN {
 use vars qw($VERSION $header);
 
 # bump to X.XX in blead, only use X.XX_XX in maint
-$VERSION = '1.53';
+$VERSION = '1.55';
 
 $header = "perl5db.pl version $VERSION";
 
@@ -2931,7 +2931,7 @@ and then we look up the line in the magical C<%dbline> hash.
 =head4 C<-> - back one window
 
 We change C<$start> to be one window back; if we go back past the first line,
-we set it to be the first line. We ser C<$incr> to put us back at the
+we set it to be the first line. We set C<$incr> to put us back at the
 currently-executing line, and then put a C<l $start +> (list one window from
 C<$start>) in C<$cmd> to be executed later.
 
@@ -4144,23 +4144,7 @@ sub _print_frame_message {
 }
 
 sub DB::sub {
-    # lock ourselves under threads
-    lock($DBGR);
-
-    # Whether or not the autoloader was running, a scalar to put the
-    # sub's return value in (if needed), and an array to put the sub's
-    # return value in (if needed).
     my ( $al, $ret, @ret ) = "";
-    if ($sub eq 'threads::new' && $ENV{PERL5DB_THREADED}) {
-        print "creating new thread\n";
-    }
-
-    # If the last ten characters are '::AUTOLOAD', note we've traced
-    # into AUTOLOAD for $sub.
-    if ( length($sub) > 10 && substr( $sub, -10, 10 ) eq '::AUTOLOAD' ) {
-        no strict 'refs';
-        $al = " for $$sub" if defined $$sub;
-    }
 
     # We stack the stack pointer and then increment it to protect us
     # from a situation that might unwind a whole bunch of call frames
@@ -4168,40 +4152,49 @@ sub DB::sub {
     # unwind the same amount when multiple stack frames are unwound.
     local $stack_depth = $stack_depth + 1;    # Protect from non-local exits
 
-    # Expand @stack.
-    $#stack = $stack_depth;
+    {
+        # lock ourselves under threads
+        # While lock() permits recursive locks, there's two cases where it's bad
+        # that we keep a hold on the lock while we call the sub:
+        #  - during cloning, Package::CLONE might be called in the context of the new
+        #    thread, which will deadlock if we hold the lock across the threads::new call
+        #  - for any function that waits any significant time
+        # This also deadlocks if the parent thread joins(), since holding the lock
+        # will prevent any child threads passing this point.
+        # So release the lock for the function call.
+        lock($DBGR);
 
-    # Save current single-step setting.
-    $stack[-1] = $single;
-
-    # Turn off all flags except single-stepping.
-    $single &= 1;
-
-    # If we've gotten really deeply recursed, turn on the flag that will
-    # make us stop with the 'deep recursion' message.
-    $single |= 4 if $stack_depth == $deep;
-
-    # If frame messages are on ...
-
-    _print_frame_message($al);
-    # standard frame entry message
-
-    my $print_exit_msg = sub {
-        # Check for exit trace messages...
-        if ($frame & 2)
-        {
-            if ($frame & 4)    # Extended exit message
-            {
-                _indent_print_line_info(0, "out ");
-                print_trace( $LINEINFO, 0, 1, 1, "$sub$al" );
-            }
-            else
-            {
-                _indent_print_line_info(0, "exited $sub$al\n" );
-            }
+        # Whether or not the autoloader was running, a scalar to put the
+        # sub's return value in (if needed), and an array to put the sub's
+        # return value in (if needed).
+        if ($sub eq 'threads::new' && $ENV{PERL5DB_THREADED}) {
+            print "creating new thread\n";
         }
-        return;
-    };
+
+        # If the last ten characters are '::AUTOLOAD', note we've traced
+        # into AUTOLOAD for $sub.
+        if ( length($sub) > 10 && substr( $sub, -10, 10 ) eq '::AUTOLOAD' ) {
+            no strict 'refs';
+            $al = " for $$sub" if defined $$sub;
+        }
+
+        # Expand @stack.
+        $#stack = $stack_depth;
+
+        # Save current single-step setting.
+        $stack[-1] = $single;
+
+        # Turn off all flags except single-stepping.
+        $single &= 1;
+
+        # If we've gotten really deeply recursed, turn on the flag that will
+        # make us stop with the 'deep recursion' message.
+        $single |= 4 if $stack_depth == $deep;
+
+        # If frame messages are on ...
+
+        _print_frame_message($al);
+    }
 
     # Determine the sub's return type, and capture appropriately.
     if (wantarray) {
@@ -4209,99 +4202,84 @@ sub DB::sub {
         # Called in array context. call sub and capture output.
         # DB::DB will recursively get control again if appropriate; we'll come
         # back here when the sub is finished.
-        {
-            no strict 'refs';
-            @ret = &$sub;
-        }
+        no strict 'refs';
+        @ret = &$sub;
+    }
+    elsif ( defined wantarray ) {
+        no strict 'refs';
+        # Save the value if it's wanted at all.
+        $ret = &$sub;
+    }
+    else {
+        no strict 'refs';
+        # Void return, explicitly.
+        &$sub;
+        undef $ret;
+    }
+
+    {
+        lock($DBGR);
 
         # Pop the single-step value back off the stack.
         $single |= $stack[ $stack_depth-- ];
 
-        $print_exit_msg->();
-
-        # Print the return info if we need to.
-        if ( $doret eq $stack_depth or $frame & 16 ) {
-
-            # Turn off output record separator.
-            local $\ = '';
-            my $fh = ( $doret eq $stack_depth ? $OUT : $LINEINFO );
-
-            # Indent if we're printing because of $frame tracing.
-            if ($frame & 16)
-            {
-                print {$fh} ' ' x $stack_depth;
+        if ($frame & 2) {
+            if ($frame & 4) {   # Extended exit message
+                _indent_print_line_info(0, "out ");
+                print_trace( $LINEINFO, -1, 1, 1, "$sub$al" );
             }
+            else {
+                _indent_print_line_info(0, "exited $sub$al\n" );
+            }
+        }
 
-            # Print the return value.
-            print {$fh} "list context return from $sub:\n";
-            dumpit( $fh, \@ret );
+        if (wantarray) {
+            # Print the return info if we need to.
+            if ( $doret eq $stack_depth or $frame & 16 ) {
 
-            # And don't print it again.
-            $doret = -2;
-        } ## end if ($doret eq $stack_depth...
+                # Turn off output record separator.
+                local $\ = '';
+                my $fh = ( $doret eq $stack_depth ? $OUT : $LINEINFO );
+
+                # Indent if we're printing because of $frame tracing.
+                if ($frame & 16)
+                  {
+                      print {$fh} ' ' x $stack_depth;
+                  }
+
+                # Print the return value.
+                print {$fh} "list context return from $sub:\n";
+                dumpit( $fh, \@ret );
+
+                # And don't print it again.
+                $doret = -2;
+            } ## end if ($doret eq $stack_depth...
             # And we have to return the return value now.
-        @ret;
-    } ## end if (wantarray)
-
-    # Scalar context.
-    else {
-        if ( defined wantarray ) {
-            no strict 'refs';
-            # Save the value if it's wanted at all.
-            $ret = &$sub;
-        }
+            @ret;
+        } ## end if (wantarray)
+        # Scalar context.
         else {
-            no strict 'refs';
-            # Void return, explicitly.
-            &$sub;
-            undef $ret;
-        }
+            # If we are supposed to show the return value... same as before.
+            if ( $doret eq $stack_depth or $frame & 16 and defined wantarray ) {
+                local $\ = '';
+                my $fh = ( $doret eq $stack_depth ? $OUT : $LINEINFO );
+                print $fh ( ' ' x $stack_depth ) if $frame & 16;
+                print $fh (
+                           defined wantarray
+                           ? "scalar context return from $sub: "
+                           : "void context return from $sub\n"
+                          );
+                dumpit( $fh, $ret ) if defined wantarray;
+                $doret = -2;
+            } ## end if ($doret eq $stack_depth...
 
-        # Pop the single-step value off the stack.
-        $single |= $stack[ $stack_depth-- ];
-
-        # If we're doing exit messages...
-        $print_exit_msg->();
-
-        # If we are supposed to show the return value... same as before.
-        if ( $doret eq $stack_depth or $frame & 16 and defined wantarray ) {
-            local $\ = '';
-            my $fh = ( $doret eq $stack_depth ? $OUT : $LINEINFO );
-            print $fh ( ' ' x $stack_depth ) if $frame & 16;
-            print $fh (
-                defined wantarray
-                ? "scalar context return from $sub: "
-                : "void context return from $sub\n"
-            );
-            dumpit( $fh, $ret ) if defined wantarray;
-            $doret = -2;
-        } ## end if ($doret eq $stack_depth...
-
-        # Return the appropriate scalar value.
-        $ret;
-    } ## end else [ if (wantarray)
+            # Return the appropriate scalar value.
+            $ret;
+        } ## end else [ if (wantarray)
+    }
 } ## end sub _sub
 
 sub lsub : lvalue {
-
-    no strict 'refs';
-
-    # lock ourselves under threads
-    lock($DBGR);
-
-    # Whether or not the autoloader was running, a scalar to put the
-    # sub's return value in (if needed), and an array to put the sub's
-    # return value in (if needed).
-    my ( $al, $ret, @ret ) = "";
-    if ($sub =~ /^threads::new$/ && $ENV{PERL5DB_THREADED}) {
-        print "creating new thread\n";
-    }
-
-    # If the last ten characters are C'::AUTOLOAD', note we've traced
-    # into AUTOLOAD for $sub.
-    if ( length($sub) > 10 && substr( $sub, -10, 10 ) eq '::AUTOLOAD' ) {
-        $al = " for $$sub";
-    }
 
     # We stack the stack pointer and then increment it to protect us
     # from a situation that might unwind a whole bunch of call frames
@@ -4320,12 +4298,32 @@ sub lsub : lvalue {
     # stack for us.
     local $single = $single & 1;
 
-    # If we've gotten really deeply recursed, turn on the flag that will
-    # make us stop with the 'deep recursion' message.
-    $single |= 4 if $stack_depth == $deep;
+    no strict 'refs';
+    {
+        # lock ourselves under threads
+        lock($DBGR);
 
-    # If frame messages are on ...
-    _print_frame_message($al);
+        # Whether or not the autoloader was running, a scalar to put the
+        # sub's return value in (if needed), and an array to put the sub's
+        # return value in (if needed).
+        my ( $al, $ret, @ret ) = "";
+        if ($sub =~ /^threads::new$/ && $ENV{PERL5DB_THREADED}) {
+            print "creating new thread\n";
+        }
+
+        # If the last ten characters are C'::AUTOLOAD', note we've traced
+        # into AUTOLOAD for $sub.
+        if ( length($sub) > 10 && substr( $sub, -10, 10 ) eq '::AUTOLOAD' ) {
+            $al = " for $$sub";
+        }
+
+        # If we've gotten really deeply recursed, turn on the flag that will
+        # make us stop with the 'deep recursion' message.
+        $single |= 4 if $stack_depth == $deep;
+
+        # If frame messages are on ...
+        _print_frame_message($al);
+    }
 
     # call the original lvalue sub.
     &$sub;

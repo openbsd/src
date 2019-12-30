@@ -18,7 +18,7 @@ BEGIN {
 use warnings;
 use strict;
 
-plan 63;
+plan 65;
 
 
 # check that strict refs hint is handled
@@ -233,3 +233,14 @@ sub defer {}
     is $x[qw(rt131627)->$*], 11, 'RT #131627: $a[qw(var)->$*]';
 }
 
+# this used to leak - run the code for ASan to spot any problems
+{
+    package Foo;
+    our %FIELDS = ();
+    my Foo $f;
+    eval q{ my $x = $f->{c}; };
+    ::pass("S_maybe_multideref() shouldn't leak on croak");
+}
+
+fresh_perl_is('0for%{scalar local$0[0]}', '', {},
+              "RT #134045 assertion on the OP_SCALAR");

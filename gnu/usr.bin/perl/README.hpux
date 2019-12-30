@@ -63,8 +63,7 @@ To see what is installed on your system:
 HP porting centre tries to keep up with customer demand and release
 updates from the Open Source community. Having precompiled Perl binaries
 available is obvious, though "up-to-date" is something relative. At the
-moment of writing only perl-5.10.1 was available (with 5.16.3 being the
-latest stable release from the porters point of view).
+moment of writing perl-5.10.1 and 5.28.0 were available.
 
 The HP porting centres are limited in what systems they are allowed
 to port to and they usually choose the two most recent OS versions
@@ -75,11 +74,12 @@ from /opt to /usr/local, so binaries produced since the start
 of July 2002 are located in /usr/local.
 
 One of HP porting centres URL's is L<http://hpux.connect.org.uk/>
-The port currently available is built with GNU gcc.
+The port currently available is built with GNU gcc. As porting modern
+GNU gcc is extremely hard on HP-UX, they are stuck at version gcc-4.2.3.
 
 =head2 Other prebuilt perl binaries
 
-To get even more recent perl depots for the whole range of HP-UX, visit
+To get more perl depots for the whole range of HP-UX, visit
 H.Merijn Brand's site at L<http://mirrors.develooper.com/hpux/#Perl>.
 Carefully read the notes to see if the available versions suit your needs.
 
@@ -100,17 +100,21 @@ details.
 
 =head2 PA-RISC
 
+The last and final version of PA-RISC is 2.0, HP no longer sells any
+system with these CPU's.
+
 HP's HP9000 Unix systems run on HP's own Precision Architecture
 (PA-RISC) chip.  HP-UX used to run on the Motorola MC68000 family of
 chips, but any machine with this chip in it is quite obsolete and this
 document will not attempt to address issues for compiling Perl on the
-Motorola chipset.
+Motorola chipset. Even though PA-RISC hardware is not sold anymore, a
+lot of machines still running on these CPU's can be found in the wild.
 
-The version of PA-RISC at the time of this document's last update is 2.0,
-which is also the last there will be. HP PA-RISC systems are usually
-referred to with model description "HP 9000". The last CPU in this series
-is the PA-8900.  Support for PA-RISC architectured machines officially
-ends as shown in the following table:
+The last order date for HP 9000 systems was December 31, 2008.
+
+HP PA-RISC systems are usually referred to with model description "HP 9000".
+The last CPU in this series is the PA-8900.  Support for PA-RISC
+architectured machines officially ended as shown in the following table:
 
    PA-RISC End-of-Life Roadmap
  +--------+----------------+----------------+-----------------+
@@ -133,10 +137,6 @@ ends as shown in the following table:
  | cores  |                | PA-8900/rp34x0 | 2014            |
  +--------+----------------+----------------+-----------------+
 
-From L<http://www.hp.com/products1/evolution/9000/faqs.html>
-
- The last order date for HP 9000 systems was December 31, 2008.
-
 A complete list of models at the time the OS was built is in the file
 /usr/sam/lib/mo/sched.models. The first column corresponds to the last
 part of the output of the "model" command.  The second column is the
@@ -147,19 +147,6 @@ PA-RISC version and the third column is the exact chip type used.
   9000/800/L1000-44
   # grep L1000-44 /usr/sam/lib/mo/sched.models
   L1000-44        2.0     PA8500
-
-=head2 Portability Between PA-RISC Versions
-
-An executable compiled on a PA-RISC 2.0 platform will not execute on a
-PA-RISC 1.1 platform, even if they are running the same version of
-HP-UX.  If you are building Perl on a PA-RISC 2.0 platform and want that
-Perl to also run on a PA-RISC 1.1, the compiler flags +DAportable and
-+DS32 should be used.
-
-It is no longer possible to compile PA-RISC 1.0 executables on either
-the PA-RISC 1.1 or 2.0 platforms.  The command-line flags are accepted,
-but the resulting executable will not run when transferred to a PA-RISC
-1.0 system.
 
 =head2 PA-RISC 1.0
 
@@ -235,12 +222,25 @@ The current naming convention is:
           b = blade
           sa = appliance
 
+=head2 Portability Between PA-RISC Versions
+
+An executable compiled on a PA-RISC 2.0 platform will not execute on a
+PA-RISC 1.1 platform, even if they are running the same version of
+HP-UX.  If you are building Perl on a PA-RISC 2.0 platform and want that
+Perl to also run on a PA-RISC 1.1, the compiler flags +DAportable and
++DS32 should be used.
+
+It is no longer possible to compile PA-RISC 1.0 executables on either
+the PA-RISC 1.1 or 2.0 platforms.  The command-line flags are accepted,
+but the resulting executable will not run when transferred to a PA-RISC
+1.0 system.
+
 =head2 Itanium Processor Family (IPF) and HP-UX
 
-HP-UX also runs on the new Itanium processor.  This requires the use
-of a different version of HP-UX (currently 11.23 or 11i v2), and with
-the exception of a few differences detailed below and in later sections,
-Perl should compile with no problems.
+HP-UX also runs on the newer Itanium processor.  This requires the use
+of HP-UX version 11.23 (11i v2) or 11.31 (11i v3), and with the exception
+of a few differences detailed below and in later sections, Perl should
+compile with no problems.
 
 Although PA-RISC binaries can run on Itanium systems, you should not
 attempt to use a PA-RISC version of Perl on an Itanium system.  This is
@@ -280,10 +280,10 @@ support all versions of HP-UX, here is a short list
   11.11  11i v1  32/64   PA           31-Dec-2015
   11.22  11i v2     64        IPF     30-Apr-2004
   11.23  11i v2     64   PA & IPF     31-Dec-2015
-  11.31  11i v3     64   PA & IPF     31-Dec-2020 (PA) 31-Dec-2022 (IPF)
+  11.31  11i v3     64   PA & IPF     31-Dec-2020 (PA) 31-Dec-2025 (IPF)
 
 See for the full list of hardware/OS support and expected end-of-life
-L<http://www.hp.com/go/hpuxservermatrix>
+L<https://h20195.www2.hpe.com/V2/getpdf.aspx/4AA4-7673ENW.pdf>
 
 =head2 Building Dynamic Extensions on HP-UX
 
@@ -412,10 +412,10 @@ for updates/patches. Enter "ANSI" as keyword.
 =head2 The GNU C Compiler
 
 When you are going to use the GNU C compiler (gcc), and you don't have
-gcc yet, you can either build it yourself from the sources (available
-from e.g. L<http://gcc.gnu.org/mirrors.html>) or fetch
-a prebuilt binary from the HP porting center
-at L<http://hpux.connect.org.uk/hppd/cgi-bin/search?term=gcc&Search=Search>
+gcc yet, you can either build it yourself (if you feel masochistic enough)
+from the sources (available from e.g. L<http://gcc.gnu.org/mirrors.html>)
+or fetch a prebuilt binary from the HP porting center at
+L<http://hpux.connect.org.uk/hppd/cgi-bin/search?term=gcc&Search=Search>
 or from the DSPP (you need to be a member) at
 L<http://h21007.www2.hp.com/portal/site/dspp/menuitem.863c3e4cbcdc3f3515b49c108973a801?ciid=2a08725cc2f02110725cc2f02110275d6e10RCRD&jumpid=reg_r1002_usen_c-001_title_r0001>
 (Browse through the list, because there are often multiple versions of

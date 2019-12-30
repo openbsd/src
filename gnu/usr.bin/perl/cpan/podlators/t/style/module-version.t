@@ -8,6 +8,8 @@
 #
 # When given the --update option, instead fixes all of the Perl modules found
 # to have the correct version.
+#
+# SPDX-License-Identifier: MIT
 
 use 5.006;
 use strict;
@@ -118,9 +120,9 @@ Russ Allbery <eagle@eyrie.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2014, 2015, 2016 Russ Allbery <eagle@eyrie.org>
+Copyright 2014-2016 Russ Allbery <eagle@eyrie.org>
 
-Copyright 2013, 2014 The Board of Trustees of the Leland Stanford Junior
+Copyright 2013-2014 The Board of Trustees of the Leland Stanford Junior
 University
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -147,3 +149,7 @@ This module is maintained in the rra-c-util package.  The current version
 is available from L<https://www.eyrie.org/~eagle/software/rra-c-util/>.
 
 =cut
+
+# Local Variables:
+# copyright-at-end-flag: t
+# End:

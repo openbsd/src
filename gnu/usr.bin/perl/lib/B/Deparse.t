@@ -1718,11 +1718,6 @@ my @x;
 @x = ($#{<}, $#{.}, $#{>}, $#{/}, $#{?}, $#{=}, $#+, $#{\}, $#{|}, $#-);
 @x = ($#{;}, $#{:}, $#{1}), $#_;
 ####
-# ${#} interpolated
-# It's a known TODO that warnings are deparsed as bits, not textually.
-no warnings;
-() = "${#}a";
-####
 # [perl #86060] $( $| $) in regexps need braces
 /${(}/;
 /${|}/;
@@ -2049,7 +2044,7 @@ no warnings "experimental::lexical_subs";
 my sub f {}
 print f();
 >>>>
-BEGIN {${^WARNING_BITS} = "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x55"}
+BEGIN {${^WARNING_BITS} = "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x55\x55"}
 my sub f {
     
 }
@@ -2062,7 +2057,7 @@ no warnings 'experimental::lexical_subs';
 state sub f {}
 print f();
 >>>>
-BEGIN {${^WARNING_BITS} = "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x55"}
+BEGIN {${^WARNING_BITS} = "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x55\x55"}
 state sub f {
     
 }
@@ -3063,3 +3058,7 @@ $l = $s->$#*;
 $s->$#* = 1;
 $l = $#{@$s;};
 $#{$s;} = 1;
+####
+# TODO doesn't preserve backslash
+my @a;
+my $s = "$a[0]\[1]";

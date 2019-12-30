@@ -4,7 +4,7 @@ use strict;
 use warnings;
 # ABSTRACT: A small, simple, correct HTTP/1.1 client
 
-our $VERSION = '0.070';
+our $VERSION = '0.076';
 
 sub _croak { require Carp; Carp::croak(@_) }
 
@@ -327,6 +327,10 @@ sub mirror {
 #pod 'PUT', etc.) on the given URL.  The URL must have unsafe characters escaped and
 #pod international domain names encoded.
 #pod
+#pod B<NOTE>: Method names are B<case-sensitive> per the HTTP/1.1 specification.
+#pod Don't use C<get> when you really want C<GET>.  See L<LIMITATIONS> for
+#pod how this applies to redirection.
+#pod
 #pod If the URL includes a "user:password" stanza, they will be used for Basic-style
 #pod authorization headers.  (Authorization headers will not be included in a
 #pod redirected request.) For example:
@@ -360,7 +364,9 @@ sub mirror {
 #pod     Override host resolution and force all connections to go only to a
 #pod     specific peer address, regardless of the URL of the request.  This will
 #pod     include any redirections!  This options should be used with extreme
-#pod     caution (e.g. debugging or very special circumstances).
+#pod     caution (e.g. debugging or very special circumstances). It can be given as
+#pod     either a scalar or a code reference that will receive the hostname and
+#pod     whose response will be taken as the address.
 #pod
 #pod The C<Host> header is generated from the URL in accordance with RFC 2616.  It
 #pod is a fatal error to specify C<Host> in the C<headers> option.  Other headers
@@ -402,6 +408,9 @@ sub mirror {
 #pod     A hashref of header fields.  All header field names will be normalized
 #pod     to be lower case. If a header is repeated, the value will be an arrayref;
 #pod     it will otherwise be a scalar string containing the value
+#pod * C<protocol> -
+#pod     If this field exists, it is the protocol of the response
+#pod     such as HTTP/1.0 or HTTP/1.1
 #pod * C<redirects>
 #pod     If this field exists, it is an arrayref of response hash references from
 #pod     redirects in the same order that redirections occurred.  If it does
@@ -609,6 +618,11 @@ sub _request {
     };
 
     my $peer = $args->{peer} || $host;
+
+    # Allow 'peer' to be a coderef.
+    if ('CODE' eq ref $peer) {
+        $peer = $peer->($host);
+    }
 
     # We remove the cached handle so it is not reused in the case of redirect.
     # If all is well, it will be recached at the end of _request.  We only
@@ -982,7 +996,7 @@ sub _uri_escape {
             if ( length $str == do { use bytes; length $str } );
         $str = pack("C*", unpack("C*", $str)); # clear UTF-8 flag
     }
-    $str =~ s/($unsafe_char)/$escapes{$1}/ge;
+    $str =~ s/($unsafe_char)/$escapes{$1}/g;
     return $str;
 }
 
@@ -1658,7 +1672,7 @@ HTTP::Tiny - A small, simple, correct HTTP/1.1 client
 
 =head1 VERSION
 
-version 0.070
+version 0.076
 
 =head1 SYNOPSIS
 
@@ -1834,6 +1848,10 @@ Executes an HTTP request of the given method type ('GET', 'HEAD', 'POST',
 'PUT', etc.) on the given URL.  The URL must have unsafe characters escaped and
 international domain names encoded.
 
+B<NOTE>: Method names are B<case-sensitive> per the HTTP/1.1 specification.
+Don't use C<get> when you really want C<GET>.  See L<LIMITATIONS> for
+how this applies to redirection.
+
 If the URL includes a "user:password" stanza, they will be used for Basic-style
 authorization headers.  (Authorization headers will not be included in a
 redirected request.) For example:
@@ -1869,7 +1887,7 @@ C<data_callback> — A code reference that will be called for each chunks of the
 
 =item *
 
-C<peer> — Override host resolution and force all connections to go only to a specific peer address, regardless of the URL of the request.  This will include any redirections!  This options should be used with extreme caution (e.g. debugging or very special circumstances).
+C<peer> — Override host resolution and force all connections to go only to a specific peer address, regardless of the URL of the request.  This will include any redirections!  This options should be used with extreme caution (e.g. debugging or very special circumstances). It can be given as either a scalar or a code reference that will receive the hostname and whose response will be taken as the address.
 
 =back
 
@@ -1919,6 +1937,10 @@ C<content> — The body of the response.  If the response does not have any cont
 =item *
 
 C<headers> — A hashref of header fields.  All header field names will be normalized to be lower case. If a header is repeated, the value will be an arrayref; it will otherwise be a scalar string containing the value
+
+=item *
+
+C<protocol> - If this field exists, it is the protocol of the response such as HTTP/1.0 or HTTP/1.1
 
 =item *
 
@@ -2281,7 +2303,7 @@ David Golden <dagolden@cpan.org>
 
 =head1 CONTRIBUTORS
 
-=for stopwords Alan Gardner Alessandro Ghedini A. Sinan Unur Brad Gilbert brian m. carlson Chris Nehren Weyl Claes Jakobsson Clinton Gormley Craig Berry David Golden Dean Pearce Edward Zborowski James Raspass Jeremy Mates Jess Robinson Karen Etheridge Lukas Eklund Martin J. Evans Martin-Louis Bright Mike Doherty Nicolas Rochelemagne Olaf Alders Olivier Mengué Petr Písař SkyMarshal Sören Kornetzki Steve Grazzini Syohei YOSHIDA Tatsuhiko Miyagawa Tom Hukins Tony Cook
+=for stopwords Alan Gardner Alessandro Ghedini A. Sinan Unur Brad Gilbert brian m. carlson Chris Nehren Weyl Claes Jakobsson Clinton Gormley Craig Berry David Golden Mitchell Dean Pearce Edward Zborowski Felipe Gasper James Raspass Jeremy Mates Jess Robinson Karen Etheridge Lukas Eklund Martin J. Evans Martin-Louis Bright Mike Doherty Nicolas Rochelemagne Olaf Alders Olivier Mengué Petr Písař Serguei Trouchelle Shoichi Kaji SkyMarshal Sören Kornetzki Steve Grazzini Syohei YOSHIDA Tatsuhiko Miyagawa Tom Hukins Tony Cook
 
 =over 4
 
@@ -2327,7 +2349,15 @@ Craig A. Berry <craigberry@mac.com>
 
 =item *
 
+Craig Berry <cberry@cpan.org>
+
+=item *
+
 David Golden <xdg@xdg.me>
+
+=item *
+
+David Mitchell <davem@iabyn.com>
 
 =item *
 
@@ -2336,6 +2366,10 @@ Dean Pearce <pearce@pythian.com>
 =item *
 
 Edward Zborowski <ed@rubensteintech.com>
+
+=item *
+
+Felipe Gasper <felipe@felipegasper.com>
 
 =item *
 
@@ -2387,6 +2421,14 @@ Petr Písař <ppisar@redhat.com>
 
 =item *
 
+Serguei Trouchelle <stro@cpan.org>
+
+=item *
+
+Shoichi Kaji <skaji@cpan.org>
+
+=item *
+
 SkyMarshal <skymarshal1729@gmail.com>
 
 =item *
@@ -2417,7 +2459,7 @@ Tony Cook <tony@develop-help.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2016 by Christian Hansen.
+This software is copyright (c) 2018 by Christian Hansen.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

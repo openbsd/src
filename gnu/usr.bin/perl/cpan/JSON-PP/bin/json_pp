@@ -10,7 +10,7 @@ use JSON::PP ();
 
 my %allow_json_opt = map { $_ => 1 } qw(
     ascii latin1 utf8 pretty indent space_before space_after relaxed canonical allow_nonref
-    allow_singlequote allow_barekey allow_bignum loose escape_slash
+    allow_singlequote allow_barekey allow_bignum loose escape_slash indent_length
 );
 
 
@@ -31,12 +31,20 @@ if ( $version ) {
 
 $json_opt = '' if $json_opt eq '-';
 
-my @json_opt = grep { $allow_json_opt{ $_ } or die "'$_' is not a valid json option" } split/,/, $json_opt;
+my %json_opt;
+for my $opt (split /,/, $json_opt) {
+    my ($key, $value) = split /=/, $opt, 2;
+    $value = 1 unless defined $value;
+    die "'$_' is not a valid json option" unless $allow_json_opt{$key};
+    $json_opt{$key} = $value;
+}
 
 my %F = (
    'json' => sub {
       my $json = JSON::PP->new;
-      $json->$_() for @json_opt;
+      for my $key (keys %json_opt) {
+        $json->$key($json_opt{$key});
+      }
       $json->decode( $_ );
    },
    'eval' => sub {
@@ -51,7 +59,10 @@ my %T = (
    'null' => sub { "" },
    'json' => sub {
       my $json = JSON::PP->new->utf8;
-      $json->$_() for @json_opt;
+      for my $key (keys %json_opt) {
+        $json->$key($json_opt{$key});
+      }
+      $json->canonical if $json_opt{pretty};
       $json->encode( $_ );
    },
    'dumper' => sub {

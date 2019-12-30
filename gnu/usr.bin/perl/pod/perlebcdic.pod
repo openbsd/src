@@ -143,6 +143,9 @@ accordingly to that platform.  If the platform uses a character set that is not
 one of the three Perl knows about, Perl will either fail to compile, or
 mistakenly and silently choose one of the three.
 
+The Line Feed (LF) character is actually a 14th variant character, and
+Perl checks for that as well.
+
 =head3 EBCDIC code sets recognized by Perl
 
 =over

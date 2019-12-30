@@ -6,7 +6,7 @@ require 5.006 ;
 use strict ;
 use warnings;
 
-use IO::Compress::Base::Common 2.074 ;
+use IO::Compress::Base::Common 2.084 ;
 
 use IO::File (); ;
 use Scalar::Util ();
@@ -20,7 +20,7 @@ use Symbol();
 our (@ISA, $VERSION);
 @ISA    = qw(IO::File Exporter);
 
-$VERSION = '2.074';
+$VERSION = '2.084';
 
 #Can't locate object method "SWASHNEW" via package "utf8" (perhaps you forgot to load "utf8"?) at .../ext/Compress-Zlib/Gzip/blib/lib/Compress/Zlib/Common.pm line 16.
 
@@ -90,7 +90,7 @@ sub writeAt
 
     if (defined *$self->{FH}) {
         my $here = tell(*$self->{FH});
-        return $self->saveErrorString(undef, "Cannot seek to end of output filehandle: $!", $!) 
+        return $self->saveErrorString(undef, "Cannot seek to end of output filehandle: $!", $!)
             if $here < 0 ;
         seek(*$self->{FH}, $offset, IO::Handle::SEEK_SET)
             or return $self->saveErrorString(undef, "Cannot seek to end of output filehandle: $!", $!) ;
@@ -120,7 +120,7 @@ sub output
     my $data = shift ;
     my $last = shift ;
 
-    return 1 
+    return 1
         if length $data == 0 && ! $last ;
 
     if ( *$self->{FilterContainer} ) {
@@ -131,7 +131,7 @@ sub output
     if (length $data) {
         if ( defined *$self->{FH} ) {
                 defined *$self->{FH}->write( $data, length $data )
-                or return $self->saveErrorString(0, $!, $!); 
+                or return $self->saveErrorString(0, $!, $!);
         }
         else {
                 ${ *$self->{Buffer} } .= $data ;
@@ -157,7 +157,7 @@ our %PARAMS = (
 
             'filtercontainer' => [IO::Compress::Base::Common::Parse_code,  undef],
         );
-        
+
 sub checkParams
 {
     my $self = shift ;
@@ -171,9 +171,9 @@ sub checkParams
 
 
             $self->getExtraParams(),
-            *$self->{OneShot} ? $self->getOneShotParams() 
+            *$self->{OneShot} ? $self->getOneShotParams()
                               : (),
-        }, 
+        },
         @_) or $self->croakError("${class}: " . $got->getError())  ;
 
     return $got ;
@@ -237,15 +237,15 @@ sub _create
     $obj->ckParams($got)
         or $obj->croakError("${class}: " . $obj->error());
 
-    if ($got->getValue('encode')) { 
+    if ($got->getValue('encode')) {
         my $want_encoding = $got->getValue('encode');
         *$obj->{Encoding} = IO::Compress::Base::Common::getEncoding($obj, $class, $want_encoding);
-        my $x = *$obj->{Encoding}; 
+        my $x = *$obj->{Encoding};
     }
     else {
-        *$obj->{Encoding} = undef; 
+        *$obj->{Encoding} = undef;
     }
-    
+
     $obj->saveStatus(STATUS_OK) ;
 
     my $status ;
@@ -253,7 +253,7 @@ sub _create
     {
         *$obj->{Compress} = $obj->mkComp($got)
             or return undef;
-        
+
         *$obj->{UnCompSize} = new U64 ;
         *$obj->{CompSize} = new U64 ;
 
@@ -274,14 +274,14 @@ sub _create
 
                 }
             }
-            elsif ($outType eq 'filename') {    
+            elsif ($outType eq 'filename') {
                 no warnings;
                 my $mode = '>' ;
                 $mode = '>>'
                     if $appendOutput;
-                *$obj->{FH} = new IO::File "$mode $outValue" 
+                *$obj->{FH} = new IO::File "$mode $outValue"
                     or return $obj->saveErrorString(undef, "cannot open file '$outValue': $!", $!) ;
-                *$obj->{StdIO} = ($outValue eq '-'); 
+                *$obj->{StdIO} = ($outValue eq '-');
                 setBinModeOutput(*$obj->{FH}) ;
             }
         }
@@ -307,7 +307,7 @@ sub _create
     return $obj ;
 }
 
-sub ckOutputParam 
+sub ckOutputParam
 {
     my $self = shift ;
     my $from = shift ;
@@ -321,15 +321,15 @@ sub ckOutputParam
 
     $self->croakError("$from: output buffer is read-only")
         if $outType eq 'buffer' && Scalar::Util::readonly(${ $_[0] });
-    
-    return 1;    
+
+    return 1;
 }
 
 
 sub _def
 {
     my $obj = shift ;
-    
+
     my $class= (caller)[0] ;
     my $name = (caller(1))[3] ;
 
@@ -356,7 +356,7 @@ sub _def
 #    {
 #        while (my($k, $v) = each %$input)
 #        {
-#            $v = \$input->{$k} 
+#            $v = \$input->{$k}
 #                unless defined $v ;
 #
 #            $obj->_singleTarget($x, 1, $k, $v, @_)
@@ -381,11 +381,11 @@ sub _def
 
     if (! $x->{oneOutput} )
     {
-        my $inFile = ($x->{inType} eq 'filenames' 
+        my $inFile = ($x->{inType} eq 'filenames'
                         || $x->{inType} eq 'filename');
 
         $x->{inType} = $inFile ? 'filename' : 'buffer';
-        
+
         foreach my $in ($x->{oneInput} ? $input : @$input)
         {
             my $out ;
@@ -416,7 +416,7 @@ sub _singleTarget
     my $x               = shift ;
     my $inputIsFilename = shift;
     my $input           = shift;
-    
+
     if ($x->{oneInput})
     {
         $obj->getFileInfo($x->{Got}, $input)
@@ -426,7 +426,7 @@ sub _singleTarget
             or return undef ;
 
 
-        defined $z->_wr2($input, $inputIsFilename) 
+        defined $z->_wr2($input, $inputIsFilename)
             or return $z->closeError(undef) ;
 
         return $z->close() ;
@@ -456,7 +456,7 @@ sub _singleTarget
                     or return undef ;
             }
 
-            defined $obj->_wr2($element, $isFilename) 
+            defined $obj->_wr2($element, $isFilename)
                 or return $obj->closeError(undef) ;
 
             *$obj->{Got} = $keep->clone();
@@ -476,7 +476,7 @@ sub _wr2
     my $input = $source ;
     if (! $inputIsFilename)
     {
-        $input = \$source 
+        $input = \$source
             if ! ref $source;
     }
 
@@ -496,23 +496,23 @@ sub _wr2
             $fh = new IO::File "<$input"
                 or return $self->saveErrorString(undef, "cannot open file '$input': $!", $!) ;
         }
-        binmode $fh if *$self->{Got}->valueOrDefault('binmodein') ;
+        binmode $fh ;
 
         my $status ;
         my $buff ;
         my $count = 0 ;
         while ($status = read($fh, $buff, 16 * 1024)) {
             $count += length $buff;
-            defined $self->syswrite($buff, @_) 
+            defined $self->syswrite($buff, @_)
                 or return undef ;
         }
 
-        return $self->saveErrorString(undef, $!, $!) 
+        return $self->saveErrorString(undef, $!, $!)
             if ! defined $status ;
 
         if ( (!$isFilehandle || *$self->{AutoClose}) && $input ne '-')
-        {    
-            $fh->close() 
+        {
+            $fh->close()
                 or return undef ;
         }
 
@@ -555,7 +555,7 @@ sub TIEHANDLE
     return $_[0] if ref($_[0]);
     die "OOPS\n" ;
 }
-  
+
 sub UNTIE
 {
     my $self = shift ;
@@ -565,10 +565,10 @@ sub DESTROY
 {
     my $self = shift ;
     local ($., $@, $!, $^E, $?);
-    
+
     $self->close() ;
 
-    # TODO - memory leak with 5.8.0 - this isn't called until 
+    # TODO - memory leak with 5.8.0 - this isn't called until
     #        global destruction
     #
     %{ *$self } = () ;
@@ -603,7 +603,7 @@ sub syswrite
 
         if (@_ > 2) {
             $offset = $_[2] || 0;
-            $self->croakError(*$self->{ClassName} . "::write: offset outside string") 
+            $self->croakError(*$self->{ClassName} . "::write: offset outside string")
                 if $offset > $slen;
             if ($offset < 0) {
                 $offset += $slen;
@@ -617,20 +617,20 @@ sub syswrite
     }
 
     return 0 if (! defined $$buffer || length $$buffer == 0) && ! *$self->{FlushPending};
-    
+
 #    *$self->{Pending} .= $$buffer ;
-#    
+#
 #    return length $$buffer
 #        if (length *$self->{Pending} < 1024 * 16 && ! *$self->{FlushPending}) ;
 #
-#    $$buffer = *$self->{Pending} ; 
+#    $$buffer = *$self->{Pending} ;
 #    *$self->{Pending} = '';
-    
-    if (*$self->{Encoding}) {      
+
+    if (*$self->{Encoding}) {
         $$buffer = *$self->{Encoding}->encode($$buffer);
     }
     else {
-        $] >= 5.008 and ( utf8::downgrade($$buffer, 1) 
+        $] >= 5.008 and ( utf8::downgrade($$buffer, 1)
             or Carp::croak "Wide character in " .  *$self->{ClassName} . "::write:");
     }
 
@@ -642,7 +642,7 @@ sub syswrite
     my $outBuffer='';
     my $status = *$self->{Compress}->compr($buffer, $outBuffer) ;
 
-    return $self->saveErrorString(undef, *$self->{Compress}{Error}, 
+    return $self->saveErrorString(undef, *$self->{Compress}{Error},
                                          *$self->{Compress}{ErrorNo})
         if $status == STATUS_ERROR;
 
@@ -690,7 +690,7 @@ sub _flushCompressed
 
     my $outBuffer='';
     my $status = *$self->{Compress}->flush($outBuffer, @_) ;
-    return $self->saveErrorString(0, *$self->{Compress}{Error}, 
+    return $self->saveErrorString(0, *$self->{Compress}{Error},
                                     *$self->{Compress}{ErrorNo})
         if $status == STATUS_ERROR;
 
@@ -702,19 +702,19 @@ sub _flushCompressed
 
     $self->outputPayload($outBuffer)
         or return 0;
-    return 1;        
+    return 1;
 }
 
 sub flush
-{   
+{
     my $self = shift ;
 
     $self->_flushCompressed(@_)
-        or return 0;        
+        or return 0;
 
     if ( defined *$self->{FH} ) {
         defined *$self->{FH}->flush()
-            or return $self->saveErrorString(0, $!, $!); 
+            or return $self->saveErrorString(0, $!, $!);
     }
 
     return 1;
@@ -737,21 +737,21 @@ sub _newStream
     $self->ckParams($got)
         or $self->croakError("newStream: $self->{Error}");
 
-    if ($got->getValue('encode')) { 
+    if ($got->getValue('encode')) {
         my $want_encoding = $got->getValue('encode');
         *$self->{Encoding} = IO::Compress::Base::Common::getEncoding($self, $class, $want_encoding);
     }
     else {
         *$self->{Encoding} = undef;
     }
-    
+
     *$self->{Compress} = $self->mkComp($got)
         or return 0;
 
     *$self->{Header} = $self->mkHeader($got) ;
     $self->output(*$self->{Header} )
         or return 0;
-    
+
     *$self->{UnCompSize}->reset();
     *$self->{CompSize}->reset();
 
@@ -763,9 +763,9 @@ sub _newStream
 sub newStream
 {
     my $self = shift ;
-  
+
     my $got = $self->checkParams('newStream', *$self->{Got}, @_)
-        or return 0 ;    
+        or return 0 ;
 
     $self->_newStream($got);
 
@@ -775,7 +775,7 @@ sub newStream
 #    *$self->{Header} = $self->mkHeader($got) ;
 #    $self->output(*$self->{Header} )
 #        or return 0;
-#    
+#
 #    *$self->{UnCompSize}->reset();
 #    *$self->{CompSize}->reset();
 #
@@ -797,6 +797,7 @@ sub _writeTrailer
     my $trailer = '';
 
     my $status = *$self->{Compress}->close($trailer) ;
+
     return $self->saveErrorString(0, *$self->{Compress}{Error}, *$self->{Compress}{ErrorNo})
         if $status == STATUS_ERROR;
 
@@ -805,7 +806,6 @@ sub _writeTrailer
     $trailer .= $self->mkTrailer();
     defined $trailer
       or return 0;
-
     return $self->output($trailer);
 }
 
@@ -822,7 +822,7 @@ sub close
     return 1 if *$self->{Closed} || ! *$self->{Compress} ;
     *$self->{Closed} = 1 ;
 
-    untie *$self 
+    untie *$self
         if $] >= 5.008 ;
 
     *$self->{FlushPending} = 1 ;
@@ -840,7 +840,7 @@ sub close
         if ((! *$self->{Handle} || *$self->{AutoClose}) && ! *$self->{StdIO}) {
             $! = 0 ;
             *$self->{FH}->close()
-                or return $self->saveErrorString(0, $!, $!); 
+                or return $self->saveErrorString(0, $!, $!);
         }
         delete *$self->{FH} ;
         # This delete can set $! in older Perls, so reset the errno
@@ -924,7 +924,7 @@ sub seek
     }
 
     # short circuit if seeking to current offset
-    return 1 if $target == $here ;    
+    return 1 if $target == $here ;
 
     # Outlaw any attempt to seek backwards
     $self->croakError(*$self->{ClassName} . "::seek: cannot seek backwards")
@@ -944,16 +944,16 @@ sub binmode
 {
     1;
 #    my $self     = shift ;
-#    return defined *$self->{FH} 
-#            ? binmode *$self->{FH} 
+#    return defined *$self->{FH}
+#            ? binmode *$self->{FH}
 #            : 1 ;
 }
 
 sub fileno
 {
     my $self     = shift ;
-    return defined *$self->{FH} 
-            ? *$self->{FH}->fileno() 
+    return defined *$self->{FH}
+            ? *$self->{FH}->fileno()
             : undef ;
 }
 
@@ -966,8 +966,8 @@ sub opened
 sub autoflush
 {
     my $self     = shift ;
-    return defined *$self->{FH} 
-            ? *$self->{FH}->autoflush(@_) 
+    return defined *$self->{FH}
+            ? *$self->{FH}->autoflush(@_)
             : undef ;
 }
 
@@ -995,7 +995,7 @@ sub _notAvailable
 *PRINTF   = \&printf;
 *WRITE    = \&syswrite;
 *write    = \&syswrite;
-*SEEK     = \&seek; 
+*SEEK     = \&seek;
 *TELL     = \&tell;
 *EOF      = \&eof;
 *CLOSE    = \&close;
@@ -1004,13 +1004,13 @@ sub _notAvailable
 #*sysread  = \&_notAvailable;
 #*syswrite = \&_write;
 
-1; 
+1;
 
 __END__
 
 =head1 NAME
 
-IO::Compress::Base - Base Class for IO::Compress modules 
+IO::Compress::Base - Base Class for IO::Compress modules
 
 =head1 SYNOPSIS
 
@@ -1023,7 +1023,7 @@ purpose is to be sub-classed by IO::Compress modules.
 
 =head1 SEE ALSO
 
-L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
+L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzip>, L<IO::Uncompress::UnLzip>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Compress::Zstd>, L<IO::Uncompress::UnZstd>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
 
 L<IO::Compress::FAQ|IO::Compress::FAQ>
 
@@ -1033,7 +1033,7 @@ L<IO::Zlib|IO::Zlib>
 
 =head1 AUTHOR
 
-This module was written by Paul Marquess, C<pmqs@cpan.org>. 
+This module was written by Paul Marquess, C<pmqs@cpan.org>.
 
 =head1 MODIFICATION HISTORY
 
@@ -1041,7 +1041,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2017 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2019 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

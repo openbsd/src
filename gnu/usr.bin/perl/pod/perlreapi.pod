@@ -710,9 +710,10 @@ used in the future for all engines for optimisations.
 
 =head2 C<nparens>, C<lastparen>, and C<lastcloseparen>
 
-These fields are used to keep track of how many paren groups could be matched
-in the pattern, which was the last open paren to be entered, and which was
-the last close paren to be entered.
+These fields are used to keep track of: how many paren capture groups
+there are in the pattern; which was the highest paren to be closed (see
+L<perlvar/$+>); and which was the most recent paren to be closed (see
+L<perlvar/$^N>).
 
 =head2 C<intflags>
 

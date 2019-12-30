@@ -11,7 +11,12 @@ use File::Basename;
 use Cwd ();
 use File::Path;
 
-plan tests => 70;
+use lib 't/lib';
+use GeneratePackage;
+
+my $tmpdir = GeneratePackage::tmpdir();
+
+plan tests => 71;
 
 require_ok('Module::Metadata');
 
@@ -24,29 +29,6 @@ require_ok('Module::Metadata');
 
 #########################
 
-BEGIN {
-  my $cwd = File::Spec->rel2abs(Cwd::cwd);
-  sub original_cwd { return $cwd }
-}
-
-# Set up a temp directory
-sub tmpdir {
-  my (@args) = @_;
-  my $dir = $ENV{PERL_CORE} ? original_cwd : File::Spec->tmpdir;
-  return File::Temp::tempdir('MMD-XXXXXXXX', CLEANUP => 0, DIR => $dir, @args);
-}
-
-my $tmp;
-BEGIN { $tmp = tmpdir; note "using temp dir $tmp"; }
-
-END {
-  die "tests failed; leaving temp dir $tmp behind"
-    if $ENV{AUTHOR_TESTING} and not Test::Builder->new->is_passing;
-  note "removing temp dir $tmp";
-  chdir original_cwd;
-  File::Path::rmtree($tmp);
-}
-
 # generates a new distribution:
 # files => { relative filename => $content ... }
 # returns the name of the distribution (not including version),
@@ -57,7 +39,7 @@ END {
     my %opts = @_;
 
     my $distname = 'Simple' . $test_num++;
-    my $distdir = File::Spec->catdir($tmp, $distname);
+    my $distdir = File::Spec->catdir($tmpdir, $distname);
     note "using dist $distname in $distdir";
 
     File::Path::mkpath($distdir) or die "failed to create '$distdir'";
@@ -214,7 +196,8 @@ foreach my $script ( @scripts ) {
   is( $pm_info->version, '0.01', "correct script version ($i of $n)" ) or $errs++;
   $i++;
 
-  diag 'parsed module: ', explain($pm_info) if !$ENV{PERL_CORE} && $errs;
+  diag 'parsed module: ', explain($pm_info) if $errs and not $ENV{PERL_CORE}
+    and ($ENV{AUTHOR_TESTING} or $ENV{AUTOMATED_TESTING});
 }
 
 {
@@ -328,11 +311,8 @@ our $VERSION = '1.23';
   is( $pm_info->version, '1.23', 'version for default package' );
 }
 
-my $tmpdir = GeneratePackage::tmpdir();
 my $undef;
 my $test_num = 0;
-use lib 't/lib';
-use GeneratePackage;
 
 {
   # and now a real pod file
@@ -372,7 +352,8 @@ Hello, this is pod.
   )
   or $errs++;
 
-  diag 'parsed module: ', explain($pm_info) if !$ENV{PERL_CORE} && $errs;
+  diag 'parsed module: ', explain($pm_info) if $errs and not $ENV{PERL_CORE}
+    and ($ENV{AUTHOR_TESTING} or $ENV{AUTOMATED_TESTING});
 }
 
 {
@@ -453,9 +434,16 @@ Simple Simon
     }
   };
 
-  my $got_pvfd = Module::Metadata->package_versions_from_directory('lib');
+  my $dir = "lib";
+  my $got_pvfd = Module::Metadata->package_versions_from_directory($dir);
 
   is_deeply( $got_pvfd, $exp_pvfd, "package_version_from_directory()" )
+    or diag explain $got_pvfd;
+
+  my $absolute_file = File::Spec->rel2abs($exp_pvfd->{Simple}{file}, $dir);
+  my $got_pvfd2 = Module::Metadata->package_versions_from_directory($dir, [$absolute_file]);
+
+  is_deeply( $got_pvfd2, $exp_pvfd, "package_version_from_directory() with provided absolute file path" )
     or diag explain $got_pvfd;
 
 {

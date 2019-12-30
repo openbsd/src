@@ -268,16 +268,6 @@ much easier to later edit the documentation.  Note that many existing
 translators will do the wrong thing with e-mail addresses when wrapped in
 LE<lt>E<gt>, so don't do that.
 
-=head1 SEE ALSO
-
-For additional information that may be more accurate for your specific
-system, see either L<man(5)> or L<man(7)> depending on your system manual
-section numbering conventions.
-
-This documentation is maintained as part of the podlators distribution.
-The current version is always available from its web site at
-L<http://www.eyrie.org/~eagle/software/podlators/>.
-
 =head1 AUTHOR
 
 Russ Allbery <rra@cpan.org>, with large portions of this documentation
@@ -286,12 +276,24 @@ Larry Wall and Tom Christiansen.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2015 Russ Allbery
-<rra@cpan.org>
+Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2015, 2018 Russ
+Allbery <rra@cpan.org>
 
 Copying and distribution of this file, with or without modification, are
 permitted in any medium without royalty provided the copyright notice and
 this notice are preserved.  This file is offered as-is, without any
 warranty.
+
+SPDX-License-Identifier: FSFAP
+
+=head1 SEE ALSO
+
+For additional information that may be more accurate for your specific
+system, see either L<man(5)> or L<man(7)> depending on your system manual
+section numbering conventions.
+
+This documentation is maintained as part of the podlators distribution.
+The current version is always available from its web site at
+L<https://www.eyrie.org/~eagle/software/podlators/>.
 
 =cut

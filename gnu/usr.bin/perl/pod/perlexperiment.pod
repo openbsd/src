@@ -127,7 +127,7 @@ C<experimental::script_run>.
 
 See also: L<perlre/Script Runs>
 
-=item Alpabetic assertions
+=item Alphabetic assertions
 
 Introduced in Perl 5.28.0
 

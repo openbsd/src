@@ -83,40 +83,24 @@ custom sub
 # SKIP ? not defined DynaLoader::boot_DynaLoader
 no feature;
 use feature ":default";
+$[ = 0;
 $[ = 1;
-print qw[a b c][2], "\n";
-use feature ":5.16"; # should not disable anything; no feature ':all' does that
-print qw[a b c][2], "\n";
-no feature ':all';
-print qw[a b c][2], "\n";
-use feature ":5.16";
-print qw[a b c][2], "\n";
 EXPECT
-Use of assignment to $[ is deprecated, and will be fatal in Perl 5.30 at - line 4.
-b
-b
-c
-c
+Assigning non-zero to $[ is no longer possible at - line 5.
 ########
 # "no feature"
 use feature ':5.16'; # turns array_base off
-no feature; # resets to :default, thus turns array_base on
+no feature; # resets to :default, thus would turn array_base on, if it still existed
+$[ = 0;
 $[ = 1;
-print qw[a b c][2], "\n";
 EXPECT
-Use of assignment to $[ is deprecated, and will be fatal in Perl 5.30 at - line 4.
-b
+Assigning non-zero to $[ is no longer possible at - line 5.
 ########
 # "no feature 'all"
-$[ = 1;
-print qw[a b c][2], "\n";
 no feature ':all'; # turns array_base (and everything else) off
 $[ = 1;
-print qw[a b c][2], "\n";
 EXPECT
-Use of assignment to $[ is deprecated, and will be fatal in Perl 5.30 at - line 2.
-Assigning non-zero to $[ is no longer possible at - line 5.
-b
+Assigning non-zero to $[ is no longer possible at - line 3.
 ########
 # NAME $^H accidentally enabling all features
 eval 'BEGIN { $^H |= 0x1c020000 } $_ = evalbytes 12345';

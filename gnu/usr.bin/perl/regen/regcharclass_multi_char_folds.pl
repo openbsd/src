@@ -132,7 +132,7 @@ sub multi_char_folds ($) {
     # case could be added here if necessary.
     #
     # No combinations of this with 's' need be added, as any of these
-    # containing 's' are prohibted under /iaa.
+    # containing 's' are prohibited under /iaa.
     push @folds, '"\x{17F}\x{17F}"' if $all_folds;
 
 

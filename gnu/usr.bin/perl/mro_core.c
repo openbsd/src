@@ -863,7 +863,7 @@ Perl_mro_package_moved(pTHX_ HV * const stash, HV * const oldstash,
 	       mro_gather_and_rename set aside for us) this way, in case
 	       one class in this list is a superclass of a another class
 	       that we have already encountered. In such a case, meta->isa
-
+	       will have been overwritten without old entries being deleted
 	       from PL_isarev. */
 	    struct mro_meta * const meta = HvMROMETA(stash);
 	    if(meta->isa != (HV *)HeVAL(iter)){

@@ -210,7 +210,7 @@ The build system that Perl uses is called metaconfig. This system is
 maintained separately from the Perl core.
 
 The metaconfig system has its own git repository. Please see its README
-file in L<http://perl5.git.perl.org/metaconfig.git/> for more details.
+file in L<https://github.com/Perl/metaconfig> for more details.
 
 The F<Cross> directory contains various files related to
 cross-compiling Perl. See F<Cross/README> for more details.

@@ -4,7 +4,7 @@ perlfaq7 - General Perl Language Issues
 
 =head1 VERSION
 
-version 5.021011
+version 5.20190126
 
 =head1 DESCRIPTION
 
@@ -695,19 +695,19 @@ details, see L<perlsub>.
 
 =head2 How do I create a switch or case statement?
 
-In Perl 5.10, use the C<given-when> construct described in L<perlsyn>:
+There is a given/when statement in Perl, but it is experimental and
+likely to change in future. See L<perlsyn> for more details.
 
-    use 5.010;
+The general answer is to use a CPAN module such as L<Switch::Plain>:
 
-    given ( $string ) {
-        when( 'Fred' )        { say "I found Fred!" }
-        when( 'Barney' )      { say "I found Barney!" }
-        when( /Bamm-?Bamm/ )  { say "I found Bamm-Bamm!" }
-        default               { say "I don't recognize the name!" }
-    };
+    use Switch::Plain;
+    sswitch($variable_holding_a_string) {
+        case 'first': { }
+        case 'second': { }
+        default: { }
+    }
 
-If one wants to use pure Perl and to be compatible with Perl versions
-prior to 5.10, the general answer is to use C<if-elsif-else>:
+or for more complicated comparisons, C<if-elsif-else>:
 
     for ($variable_to_test) {
         if    (/pat1/)  { }     # do something

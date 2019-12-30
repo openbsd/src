@@ -1151,7 +1151,7 @@ do_spawn_ve(pTHX_ SV *really, const char **argv, U32 flag, U32 execf, char *inic
 			   documentation, DosQueryAppType sometimes (?)
 			   does not append ".exe", so we could have
 			   reached this place). */
-			sv_catpv(scrsv, ".exe");
+			sv_catpvs(scrsv, ".exe");
 	                argv[0] = scr = SvPV(scrsv, n_a);	/* Reload */
                         if (PerlLIO_stat(scr,&statbuf) >= 0
                             && !S_ISDIR(statbuf.st_mode)) {	/* Found */

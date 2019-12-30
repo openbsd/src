@@ -246,7 +246,7 @@
     Perl_pregfree(aTHX_ (prog))
 
 #define CALLREGFREE_PVT(prog) \
-    if(prog) RX_ENGINE(prog)->rxfree(aTHX_ (prog))
+    if(prog && RX_ENGINE(prog)) RX_ENGINE(prog)->rxfree(aTHX_ (prog))
 
 #define CALLREG_NUMBUF_FETCH(rx,paren,usesv)                                \
     RX_ENGINE(rx)->numbered_buff_FETCH(aTHX_ (rx),(paren),(usesv))
@@ -447,6 +447,19 @@
 #define CLANG_DIAG_RESTORE_DECL CLANG_DIAG_RESTORE dNOOP
 #define CLANG_DIAG_IGNORE_STMT(x) CLANG_DIAG_IGNORE(x) NOOP
 #define CLANG_DIAG_RESTORE_STMT CLANG_DIAG_RESTORE NOOP
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1300)
+#  define MSVC_DIAG_IGNORE(x) __pragma(warning(push)) \
+                              __pragma(warning(disable : x))
+#  define MSVC_DIAG_RESTORE   __pragma(warning(pop))
+#else
+#  define MSVC_DIAG_IGNORE(x)
+#  define MSVC_DIAG_RESTORE
+#endif
+#define MSVC_DIAG_IGNORE_DECL(x) MSVC_DIAG_IGNORE(x) dNOOP
+#define MSVC_DIAG_RESTORE_DECL MSVC_DIAG_RESTORE dNOOP
+#define MSVC_DIAG_IGNORE_STMT(x) MSVC_DIAG_IGNORE(x) NOOP
+#define MSVC_DIAG_RESTORE_STMT MSVC_DIAG_RESTORE NOOP
 
 #define NOOP /*EMPTY*/(void)0
 #define dNOOP struct Perl___notused_struct
@@ -719,10 +732,33 @@
 #   include <xlocale.h>
 #endif
 
-#if !defined(NO_LOCALE) && defined(HAS_SETLOCALE)
-#   define USE_LOCALE
+/* If not forbidden, we enable locale handling if either 1) the POSIX 2008
+ * functions are available, or 2) just the setlocale() function.  This logic is
+ * repeated in t/loc_tools.pl and makedef.pl;  The three should be kept in
+ * sync. */
+#if   ! defined(NO_LOCALE)
+
+#  if ! defined(NO_POSIX_2008_LOCALE)           \
+   &&   defined(HAS_NEWLOCALE)                  \
+   &&   defined(HAS_USELOCALE)                  \
+   &&   defined(HAS_DUPLOCALE)                  \
+   &&   defined(HAS_FREELOCALE)                 \
+   &&   defined(LC_ALL_MASK)
+
+    /* For simplicity, the code is written to assume that any platform advanced
+     * enough to have the Posix 2008 locale functions has LC_ALL.  The final
+     * test above makes sure that assumption is valid */
+
+#    define HAS_POSIX_2008_LOCALE
+#    define USE_LOCALE
+#  elif defined(HAS_SETLOCALE)
+#    define USE_LOCALE
+#  endif
+#endif
+
+#ifdef USE_LOCALE
 #   define HAS_SKIP_LOCALE_INIT /* Solely for XS code to test for this
-                                   capability */
+                                   #define */
 #   if !defined(NO_LOCALE_COLLATE) && defined(LC_COLLATE) \
        && defined(HAS_STRXFRM)
 #	define USE_LOCALE_COLLATE
@@ -757,29 +793,25 @@
 #   if !defined(NO_LOCALE_TELEPHONE) && defined(LC_TELEPHONE)
 #	define USE_LOCALE_TELEPHONE
 #   endif
-#endif /* !NO_LOCALE && HAS_SETLOCALE */
 
 /* XXX The next few defines are unfortunately duplicated in makedef.pl, and
  * changes here MUST also be made there */
 
-#ifdef USE_LOCALE /* These locale things are all subject to change */
-#  if      defined(HAS_NEWLOCALE)               \
-      &&   defined(LC_ALL_MASK)                 \
-      &&   defined(HAS_FREELOCALE)              \
-      &&   defined(HAS_USELOCALE)               \
-      && ! defined(NO_POSIX_2008_LOCALE)
-
-    /* For simplicity, the code is written to assume that any platform advanced
-     * enough to have the Posix 2008 locale functions has LC_ALL.  The test
-     * above makes sure that assumption is valid */
-
-#    define HAS_POSIX_2008_LOCALE
-#  endif
-#  if     defined(USE_ITHREADS)                                             \
-      && (    defined(HAS_POSIX_2008_LOCALE)                                \
-          || (defined(WIN32) && defined(_MSC_VER) && _MSC_VER >= 1400))     \
-      && ! defined(NO_THREAD_SAFE_LOCALE)
-#    define USE_THREAD_SAFE_LOCALE
+#  if ! defined(HAS_SETLOCALE) && defined(HAS_POSIX_2008_LOCALE)
+#      define USE_POSIX_2008_LOCALE
+#      ifndef USE_THREAD_SAFE_LOCALE
+#        define USE_THREAD_SAFE_LOCALE
+#      endif
+                                   /* If compiled with
+                                    * -DUSE_THREAD_SAFE_LOCALE, will do so even
+                                    * on unthreaded builds */
+#  elif   (defined(USE_ITHREADS) || defined(USE_THREAD_SAFE_LOCALE))         \
+       && (    defined(HAS_POSIX_2008_LOCALE)                                \
+           || (defined(WIN32) && defined(_MSC_VER) && _MSC_VER >= 1400))     \
+       && ! defined(NO_THREAD_SAFE_LOCALE)
+#    ifndef USE_THREAD_SAFE_LOCALE
+#      define USE_THREAD_SAFE_LOCALE
+#    endif
 #    ifdef HAS_POSIX_2008_LOCALE
 #      define USE_POSIX_2008_LOCALE
 #    endif
@@ -1050,9 +1082,18 @@ EXTERN_C int usleep(unsigned int);
 #  define STRUCT_OFFSET(s,m)  offsetof(s,m)
 #endif
 
-/* ptrdiff_t is C11, so undef it under pedantic builds */
+/* ptrdiff_t is C11, so undef it under pedantic builds.  (Actually it is
+ * in C89, but apparently there are platforms where it doesn't exist.  See
+ * thread beginning at http://nntp.perl.org/group/perl.perl5.porters/251541.)
+ * */
 #ifdef PERL_GCC_PEDANTIC
 #   undef HAS_PTRDIFF_T
+#endif
+
+#ifdef HAS_PTRDIFF_T
+#  define Ptrdiff_t ptrdiff_t
+#else
+#  define Ptrdiff_t SSize_t
 #endif
 
 #ifndef __SYMBIAN32__
@@ -1079,7 +1120,7 @@ EXTERN_C int usleep(unsigned int);
 #  define saferealloc Perl_realloc
 #  define safefree    Perl_mfree
 #  define CHECK_MALLOC_TOO_LATE_FOR_(code)	STMT_START {		\
-	if (!PL_tainting && MallocCfg_ptr[MallocCfg_cfg_env_read])	\
+	if (!TAINTING_get && MallocCfg_ptr[MallocCfg_cfg_env_read])	\
 		code;							\
     } STMT_END
 #  define CHECK_MALLOC_TOO_LATE_FOR(ch)				\
@@ -1943,6 +1984,7 @@ extern long double Perl_my_frexpl(long double x, int *e);
 #   define Perl_fmod fmodq
 #   define Perl_log logq
 #   define Perl_log10 log10q
+#   define Perl_signbit signbitq
 #   define Perl_pow powq
 #   define Perl_sin sinq
 #   define Perl_sinh sinhq
@@ -2190,7 +2232,7 @@ extern long double Perl_my_frexpl(long double x, int *e);
 #endif
 
 /* Win32: _fpclass(), _isnan(), _finite(). */
-#ifdef WIN32
+#ifdef _MSC_VER
 #  ifndef Perl_isnan
 #    define Perl_isnan(x) _isnan(x)
 #  endif
@@ -2328,11 +2370,12 @@ int isnan(double d);
 
 #ifdef USE_PERL_ATOF
 #   define Perl_atof(s) Perl_my_atof(s)
-#   define Perl_atof2(s, n) Perl_my_atof2(aTHX_ (s), &(n))
+#   define Perl_atof2(s, n) Perl_my_atof3(aTHX_ (s), &(n), 0)
 #else
 #   define Perl_atof(s) (NV)atof(s)
 #   define Perl_atof2(s, n) ((n) = atof(s))
 #endif
+#define my_atof2(a,b) my_atof3(a,b,0)
 
 /*
  * CHAR_MIN and CHAR_MAX are not included here, as the (char) type may be
@@ -3671,11 +3714,10 @@ typedef struct magic_state MGS;	/* struct magic_state defined in mg.c */
 struct scan_data_t;
 typedef struct regnode_charclass regnode_charclass;
 
-struct regnode_charclass_class;
-
 /* A hopefully less confusing name.  The sub-classes are all Posix classes only
  * used under /l matching */
-typedef struct regnode_charclass_class regnode_charclass_posixl;
+typedef struct regnode_charclass_posixl regnode_charclass_class;
+typedef struct regnode_charclass_posixl regnode_charclass_posixl;
 
 typedef struct regnode_ssc regnode_ssc;
 typedef struct RExC_state_t RExC_state_t;
@@ -3837,7 +3879,9 @@ my_swap16(const U16 x) {
 #define U_L(what) U_32(what)
 
 #ifdef HAS_SIGNBIT
-#  define Perl_signbit signbit
+#  ifndef Perl_signbit
+#    define Perl_signbit signbit
+#  endif
 #endif
 
 /* These do not care about the fractional part, only about the range. */
@@ -4008,11 +4052,11 @@ Gid_t getegid (void);
 
 #  define DEBUG_f(a) DEBUG__(DEBUG_f_TEST, a)
 
-#ifndef PERL_EXT_RE_BUILD
-#  define DEBUG_r(a) DEBUG__(DEBUG_r_TEST, a)
-#else
-#  define DEBUG_r(a) STMT_START {a;} STMT_END
-#endif /* PERL_EXT_RE_BUILD */
+#  ifndef PERL_EXT_RE_BUILD
+#    define DEBUG_r(a) DEBUG__(DEBUG_r_TEST, a)
+#  else
+#    define DEBUG_r(a) STMT_START {a;} STMT_END
+#  endif /* PERL_EXT_RE_BUILD */
 
 #  define DEBUG_x(a) DEBUG__(DEBUG_x_TEST, a)
 #  define DEBUG_u(a) DEBUG__(DEBUG_u_TEST, a)
@@ -4036,7 +4080,7 @@ Gid_t getegid (void);
 #  define DEBUG_L(a) DEBUG__(DEBUG_L_TEST, a)
 #  define DEBUG_i(a) DEBUG__(DEBUG_i_TEST, a)
 
-#else /* DEBUGGING */
+#else /* ! DEBUGGING below */
 
 #  define DEBUG_p_TEST (0)
 #  define DEBUG_s_TEST (0)
@@ -4437,6 +4481,11 @@ EXTCONST char PL_Zero[]
 EXTCONST char PL_hexdigit[]
   INIT("0123456789abcdef0123456789ABCDEF");
 
+EXTCONST STRLEN PL_WARN_ALL
+  INIT(0);
+EXTCONST STRLEN PL_WARN_NONE
+  INIT(0);
+
 /* This is constant on most architectures, a global on OS/2 */
 #ifndef OS2
 EXTCONST char PL_sh_path[]
@@ -4673,7 +4722,7 @@ EXTCONST unsigned char PL_latin1_lc[];
 
 #ifndef PERL_GLOBAL_STRUCT /* or perlvars.h */
 #ifdef DOINIT
-EXT unsigned char PL_fold_locale[] = { /* Unfortunately not EXTCONST. */
+EXT unsigned char PL_fold_locale[256] = { /* Unfortunately not EXTCONST. */
 	0,	1,	2,	3,	4,	5,	6,	7,
 	8,	9,	10,	11,	12,	13,	14,	15,
 	16,	17,	18,	19,	20,	21,	22,	23,
@@ -4708,7 +4757,7 @@ EXT unsigned char PL_fold_locale[] = { /* Unfortunately not EXTCONST. */
 	248,	249,	250,	251,	252,	253,	254,	255
 };
 #else
-EXT unsigned char PL_fold_locale[]; /* Unfortunately not EXTCONST. */
+EXT unsigned char PL_fold_locale[256]; /* Unfortunately not EXTCONST. */
 #endif
 #endif /* !PERL_GLOBAL_STRUCT */
 
@@ -5429,6 +5478,425 @@ EXTCONST bool PL_valid_types_NV_set[];
 #  define PERL_SET_THX(t)		NOOP
 #endif
 
+#ifndef EBCDIC
+
+/* The tables below are adapted from
+ * http://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which requires this copyright
+ * notice:
+
+Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+#  ifdef DOINIT
+#    if 0       /* This is the original table given in
+                   http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ */
+static U8 utf8d_C9[] = {
+  /* The first part of the table maps bytes to character classes that
+   * to reduce the size of the transition table and create bitmasks. */
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /*-1F*/
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /*-3F*/
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /*-5F*/
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /*-7F*/
+   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,  9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, /*-9F*/
+   7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, /*-BF*/
+   8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /*-DF*/
+  10,3,3,3,3,3,3,3,3,3,3,3,3,4,3,3, 11,6,6,6,5,8,8,8,8,8,8,8,8,8,8,8, /*-FF*/
+
+  /* The second part is a transition table that maps a combination
+   * of a state of the automaton and a character class to a state. */
+   0,12,24,36,60,96,84,12,12,12,48,72, 12,12,12,12,12,12,12,12,12,12,12,12,
+  12, 0,12,12,12,12,12, 0,12, 0,12,12, 12,24,12,12,12,12,12,24,12,24,12,12,
+  12,12,12,12,12,12,12,24,12,12,12,12, 12,24,12,12,12,12,12,12,12,24,12,12,
+  12,12,12,12,12,12,12,36,12,36,12,12, 12,36,12,12,12,12,12,36,12,36,12,12,
+  12,36,12,12,12,12,12,12,12,12,12,12
+};
+
+#    endif
+
+/* This is a version of the above table customized for Perl that doesn't
+ * exclude surrogates and accepts start bytes up through FD (FE on 64-bit
+ * machines).  The classes have been renumbered so that the patterns are more
+ * evident in the table.  The class numbers for start bytes are constrained so
+ * that they can be used as a shift count for masking off the leading one bits.
+ * It would make the code simpler if start byte FF could also be handled, but
+ * doing so would mean adding nodes for each of continuation bytes 6-12
+ * remaining, and two more nodes for overlong detection (a total of 9), and
+ * there is room only for 4 more nodes unless we make the array U16 instead of
+ * U8.
+ *
+ * The classes are
+ *      00-7F           0
+ *      80-81           7   Not legal immediately after start bytes E0 F0 F8 FC
+ *                          FE
+ *      82-83           8   Not legal immediately after start bytes E0 F0 F8 FC
+ *      84-87           9   Not legal immediately after start bytes E0 F0 F8
+ *      88-8F          10   Not legal immediately after start bytes E0 F0
+ *      90-9F          11   Not legal immediately after start byte E0
+ *      A0-BF          12
+ *      C0,C1           1
+ *      C2-DF           2
+ *      E0             13
+ *      E1-EF           3
+ *      F0             14
+ *      F1-F7           4
+ *      F8             15
+ *      F9-FB           5
+ *      FC             16
+ *      FD              6
+ *      FE             17  (or 1 on 32-bit machines, since it overflows)
+ *      FF              1
+ */
+
+EXTCONST U8 PL_extended_utf8_dfa_tab[] = {
+    /* The first part of the table maps bytes to character classes to reduce
+     * the size of the transition table and create bitmasks. */
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*00-0F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*10-1F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*20-2F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*30-3F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*40-4F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*50-5F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*60-6F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*70-7F*/
+   7, 7, 8, 8, 9, 9, 9, 9,10,10,10,10,10,10,10,10, /*80-8F*/
+  11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11, /*90-9F*/
+  12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12, /*A0-AF*/
+  12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12, /*B0-BF*/
+   1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /*C0-CF*/
+   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /*D0-DF*/
+  13, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, /*E0-EF*/
+  14, 4, 4, 4, 4, 4, 4, 4,15, 5, 5, 5,16, 6,       /*F0-FD*/
+#    ifdef UV_IS_QUAD
+                                            17,    /*FE*/
+#    else
+                                             1,    /*FE*/
+#    endif
+                                                1, /*FF*/
+
+/* The second part is a transition table that maps a combination
+ * of a state of the automaton and a character class to a new state, called a
+ * node.  The nodes are:
+ * N0     The initial state, and final accepting one.
+ * N1     Any one continuation byte (80-BF) left.  This is transitioned to
+ *        immediately when the start byte indicates a two-byte sequence
+ * N2     Any two continuation bytes left.
+ * N3     Any three continuation bytes left.
+ * N4     Any four continuation bytes left.
+ * N5     Any five continuation bytes left.
+ * N6     Start byte is E0.  Continuation bytes 80-9F are illegal (overlong);
+ *        the other continuations transition to N1
+ * N7     Start byte is F0.  Continuation bytes 80-8F are illegal (overlong);
+ *        the other continuations transition to N2
+ * N8     Start byte is F8.  Continuation bytes 80-87 are illegal (overlong);
+ *        the other continuations transition to N3
+ * N9     Start byte is FC.  Continuation bytes 80-83 are illegal (overlong);
+ *        the other continuations transition to N4
+ * N10    Start byte is FE.  Continuation bytes 80-81 are illegal (overlong);
+ *        the other continuations transition to N5
+ * 1      Reject.  All transitions not mentioned above (except the single
+ *        byte ones (as they are always legal) are to this state.
+ */
+
+#    define NUM_CLASSES 18
+#    define N0 0
+#    define N1 ((N0)   + NUM_CLASSES)
+#    define N2 ((N1)   + NUM_CLASSES)
+#    define N3 ((N2)   + NUM_CLASSES)
+#    define N4 ((N3)   + NUM_CLASSES)
+#    define N5 ((N4)   + NUM_CLASSES)
+#    define N6 ((N5)   + NUM_CLASSES)
+#    define N7 ((N6)   + NUM_CLASSES)
+#    define N8 ((N7)   + NUM_CLASSES)
+#    define N9 ((N8)   + NUM_CLASSES)
+#    define N10 ((N9)  + NUM_CLASSES)
+
+/*Class: 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17  */
+/*N0*/   0, 1,N1,N2,N3,N4,N5, 1, 1, 1, 1, 1, 1,N6,N7,N8,N9,N10,
+/*N1*/   1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+/*N2*/   1, 1, 1, 1, 1, 1, 1,N1,N1,N1,N1,N1,N1, 1, 1, 1, 1, 1,
+/*N3*/   1, 1, 1, 1, 1, 1, 1,N2,N2,N2,N2,N2,N2, 1, 1, 1, 1, 1,
+/*N4*/   1, 1, 1, 1, 1, 1, 1,N3,N3,N3,N3,N3,N3, 1, 1, 1, 1, 1,
+/*N5*/   1, 1, 1, 1, 1, 1, 1,N4,N4,N4,N4,N4,N4, 1, 1, 1, 1, 1,
+
+/*N6*/   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,N1, 1, 1, 1, 1, 1,
+/*N7*/   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,N2,N2, 1, 1, 1, 1, 1,
+/*N8*/   1, 1, 1, 1, 1, 1, 1, 1, 1, 1,N3,N3,N3, 1, 1, 1, 1, 1,
+/*N9*/   1, 1, 1, 1, 1, 1, 1, 1, 1,N4,N4,N4,N4, 1, 1, 1, 1, 1,
+/*N10*/  1, 1, 1, 1, 1, 1, 1, 1,N5,N5,N5,N5,N5, 1, 1, 1, 1, 1,
+};
+
+/* And below is a version of the above table that accepts only strict UTF-8.
+ * Hence no surrogates nor non-characters, nor non-Unicode.  Thus, if the input
+ * passes this dfa, it will be for a well-formed, non-problematic code point
+ * that can be returned immediately.
+ *
+ * The "Implementation details" portion of
+ * http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ shows how
+ * the first portion of the table maps each possible byte into a character
+ * class.  And that the classes for those bytes which are start bytes have been
+ * carefully chosen so they serve as well to be used as a shift value to mask
+ * off the leading 1 bits of the start byte.  Unfortunately the addition of
+ * being able to distinguish non-characters makes this not fully work.  This is
+ * because, now, the start bytes E1-EF have to be broken into 3 classes instead
+ * of 2:
+ *  1) ED because it could be a surrogate
+ *  2) EF because it could be a non-character
+ *  3) the rest, which can never evaluate to a problematic code point.
+ *
+ * Each of E1-EF has three leading 1 bits, then a 0.  That means we could use a
+ * shift (and hence class number) of either 3 or 4 to get a mask that works.
+ * But that only allows two categories, and we need three.  khw made the
+ * decision to therefore treat the ED start byte as an error, so that the dfa
+ * drops out immediately for that.  In the dfa, classes 3 and 4 are used to
+ * distinguish EF vs the rest.  Then special code is used to deal with ED,
+ * that's executed only when the dfa drops out.  The code points started by ED
+ * are half surrogates, and half hangul syllables.  This means that 2048 of the
+ * the hangul syllables (about 18%) take longer than all other non-problematic
+ * code points to handle.
+ *
+ * The changes to handle non-characters requires the addition of states and
+ * classes to the dfa.  (See the section on "Mapping bytes to character
+ * classes" in the linked-to document for further explanation of the original
+ * dfa.)
+ *
+ * The classes are
+ *      00-7F           0
+ *      80-8E           9
+ *      8F             10
+ *      90-9E          11
+ *      9F             12
+ *      A0-AE          13
+ *      AF             14
+ *      B0-B6          15
+ *      B7             16
+ *      B8-BD          15
+ *      BE             17
+ *      BF             18
+ *      C0,C1           1
+ *      C2-DF           2
+ *      E0              7
+ *      E1-EC           3
+ *      ED              1
+ *      EE              3
+ *      EF              4
+ *      F0              8
+ *      F1-F3           6  (6 bits can be stripped)
+ *      F4              5  (only 5 can be stripped)
+ *      F5-FF           1
+ */
+
+EXTCONST U8 PL_strict_utf8_dfa_tab[] = {
+    /* The first part of the table maps bytes to character classes to reduce
+     * the size of the transition table and create bitmasks. */
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*00-0F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*10-1F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*20-2F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*30-3F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*40-4F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*50-5F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*60-6F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*70-7F*/
+   9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,10, /*80-8F*/
+  11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,12, /*90-9F*/
+  13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,14, /*A0-AF*/
+  15,15,15,15,15,15,15,16,15,15,15,15,15,15,17,18, /*B0-BF*/
+   1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /*C0-CF*/
+   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /*D0-DF*/
+   7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 4, /*E0-EF*/
+   8, 6, 6, 6, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /*F0-FF*/
+
+/* The second part is a transition table that maps a combination
+ * of a state of the automaton and a character class to a new state, called a
+ * node.  The nodes are:
+ * N0     The initial state, and final accepting one.
+ * N1     Any one continuation byte (80-BF) left.  This is transitioned to
+ *        immediately when the start byte indicates a two-byte sequence
+ * N2     Any two continuation bytes left.
+ * N3     Start byte is E0.  Continuation bytes 80-9F are illegal (overlong);
+ *        the other continuations transition to state N1
+ * N4     Start byte is EF.  Continuation byte B7 transitions to N8; BF to N9;
+ *        the other continuations transitions to N1
+ * N5     Start byte is F0.  Continuation bytes 80-8F are illegal (overlong);
+ *        [9AB]F transition to N10; the other continuations to N2.
+ * N6     Start byte is F[123].  Continuation bytes [89AB]F transition
+ *        to N10; the other continuations to N2.
+ * N7     Start byte is F4.  Continuation bytes 90-BF are illegal
+ *        (non-unicode); 8F transitions to N10; the other continuations to N2
+ * N8     Initial sequence is EF B7.  Continuation bytes 90-AF are illegal
+ *        (non-characters); the other continuations transition to N0.
+ * N9     Initial sequence is EF BF.  Continuation bytes BE and BF are illegal
+ *        (non-characters); the other continuations transition to N0.
+ * N10    Initial sequence is one of: F0 [9-B]F; F[123] [8-B]F; or F4 8F.
+ *        Continuation byte BF transitions to N11; the other continuations to
+ *        N1
+ * N11    Initial sequence is the two bytes given in N10 followed by BF.
+ *        Continuation bytes BE and BF are illegal (non-characters); the other
+ *        continuations transition to N0.
+ * 1      Reject.  All transitions not mentioned above (except the single
+ *        byte ones (as they are always legal) are to this state.
+ */
+
+#    undef N0
+#    undef N1
+#    undef N2
+#    undef N3
+#    undef N4
+#    undef N5
+#    undef N6
+#    undef N7
+#    undef N8
+#    undef N9
+#    undef NUM_CLASSES
+#    define NUM_CLASSES 19
+#    define N0 0
+#    define N1  ((N0)  + NUM_CLASSES)
+#    define N2  ((N1)  + NUM_CLASSES)
+#    define N3  ((N2)  + NUM_CLASSES)
+#    define N4  ((N3)  + NUM_CLASSES)
+#    define N5  ((N4)  + NUM_CLASSES)
+#    define N6  ((N5)  + NUM_CLASSES)
+#    define N7  ((N6)  + NUM_CLASSES)
+#    define N8  ((N7)  + NUM_CLASSES)
+#    define N9  ((N8)  + NUM_CLASSES)
+#    define N10 ((N9)  + NUM_CLASSES)
+#    define N11 ((N10) + NUM_CLASSES)
+
+/*Class: 0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18 */
+/*N0*/   0,  1, N1, N2, N4, N7, N6, N3, N5,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+/*N1*/   1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+/*N2*/   1,  1,  1,  1,  1,  1,  1,  1,  1, N1, N1, N1, N1, N1, N1, N1, N1, N1, N1,
+
+/*N3*/   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, N1, N1, N1, N1, N1, N1,
+/*N4*/   1,  1,  1,  1,  1,  1,  1,  1,  1, N1, N1, N1, N1, N1, N1, N1, N8, N1, N9,
+/*N5*/   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, N2,N10, N2,N10, N2, N2, N2,N10,
+/*N6*/   1,  1,  1,  1,  1,  1,  1,  1,  1, N2,N10, N2,N10, N2,N10, N2, N2, N2,N10,
+/*N7*/   1,  1,  1,  1,  1,  1,  1,  1,  1, N2,N10,  1,  1,  1,  1,  1,  1,  1,  1,
+/*N8*/   1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  1,  1,  1,  1,  0,  0,  0,  0,
+/*N9*/   1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,
+/*N10*/  1,  1,  1,  1,  1,  1,  1,  1,  1, N1, N1, N1, N1, N1, N1, N1, N1, N1,N11,
+/*N11*/  1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,
+};
+
+/* And below is yet another version of the above tables that accepts only UTF-8
+ * as defined by Corregidum #9.  Hence no surrogates nor non-Unicode, but
+ * it allows non-characters.  This is isomorphic to the original table
+ * in http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *
+ * The classes are
+ *      00-7F           0
+ *      80-8F           9
+ *      90-9F          10
+ *      A0-BF          11
+ *      C0,C1           1
+ *      C2-DF           2
+ *      E0              7
+ *      E1-EC           3
+ *      ED              4
+ *      EE-EF           3
+ *      F0              8
+ *      F1-F3           6  (6 bits can be stripped)
+ *      F4              5  (only 5 can be stripped)
+ *      F5-FF           1
+ */
+
+EXTCONST U8 PL_c9_utf8_dfa_tab[] = {
+    /* The first part of the table maps bytes to character classes to reduce
+     * the size of the transition table and create bitmasks. */
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*00-0F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*10-1F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*20-2F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*30-3F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*40-4F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*50-5F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*60-6F*/
+   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*70-7F*/
+   9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, /*80-8F*/
+  10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10, /*90-9F*/
+  11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11, /*A0-AF*/
+  11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11, /*B0-BF*/
+   1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /*C0-CF*/
+   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, /*D0-DF*/
+   7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, /*E0-EF*/
+   8, 6, 6, 6, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /*F0-FF*/
+
+/* The second part is a transition table that maps a combination
+ * of a state of the automaton and a character class to a new state, called a
+ * node.  The nodes are:
+ * N0     The initial state, and final accepting one.
+ * N1     Any one continuation byte (80-BF) left.  This is transitioned to
+ *        immediately when the start byte indicates a two-byte sequence
+ * N2     Any two continuation bytes left.
+ * N3     Any three continuation bytes left.
+ * N4     Start byte is E0.  Continuation bytes 80-9F are illegal (overlong);
+ *        the other continuations transition to state N1
+ * N5     Start byte is ED.  Continuation bytes A0-BF all lead to surrogates,
+ *        so are illegal.  The other continuations transition to state N1.
+ * N6     Start byte is F0.  Continuation bytes 80-8F are illegal (overlong);
+ *        the other continuations transition to N2
+ * N7     Start byte is F4.  Continuation bytes 90-BF are illegal
+ *        (non-unicode); the other continuations transition to N2
+ * 1      Reject.  All transitions not mentioned above (except the single
+ *        byte ones (as they are always legal) are to this state.
+ */
+
+#    undef N0
+#    undef N1
+#    undef N2
+#    undef N3
+#    undef N4
+#    undef N5
+#    undef N6
+#    undef N7
+#    undef NUM_CLASSES
+#    define NUM_CLASSES 12
+#    define N0 0
+#    define N1  ((N0)  + NUM_CLASSES)
+#    define N2  ((N1)  + NUM_CLASSES)
+#    define N3  ((N2)  + NUM_CLASSES)
+#    define N4  ((N3)  + NUM_CLASSES)
+#    define N5  ((N4)  + NUM_CLASSES)
+#    define N6  ((N5)  + NUM_CLASSES)
+#    define N7  ((N6)  + NUM_CLASSES)
+
+/*Class: 0   1   2   3   4   5   6   7   8   9  10  11 */
+/*N0*/   0,  1, N1, N2, N5, N7, N3, N4, N6,  1,  1,  1,
+/*N1*/   1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  0,
+/*N2*/   1,  1,  1,  1,  1,  1,  1,  1,  1, N1, N1, N1,
+/*N3*/   1,  1,  1,  1,  1,  1,  1,  1,  1, N2, N2, N2,
+
+/*N4*/   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, N1,
+/*N5*/   1,  1,  1,  1,  1,  1,  1,  1,  1, N1, N1,  1,
+/*N6*/   1,  1,  1,  1,  1,  1,  1,  1,  1,  1, N2, N2,
+/*N7*/   1,  1,  1,  1,  1,  1,  1,  1,  1, N2,  1,  1,
+};
+
+#  else     /* End of is DOINIT */
+
+EXTCONST U8 PL_extended_utf8_dfa_tab[];
+EXTCONST U8 PL_strict_utf8_dfa_tab[];
+EXTCONST U8 PL_c9_utf8_dfa_tab[];
+
+#  endif
+#endif    /* end of isn't EBCDIC */
 
 #ifndef PERL_NO_INLINE_FUNCTIONS
 /* Static inline funcs that depend on includes and declarations above.
@@ -5550,11 +6018,19 @@ typedef struct am_table_short AMTS;
 #  define KEYWORD_PLUGIN_MUTEX_LOCK    MUTEX_LOCK(&PL_keyword_plugin_mutex)
 #  define KEYWORD_PLUGIN_MUTEX_UNLOCK  MUTEX_UNLOCK(&PL_keyword_plugin_mutex)
 #  define KEYWORD_PLUGIN_MUTEX_TERM    MUTEX_DESTROY(&PL_keyword_plugin_mutex)
+#  define USER_PROP_MUTEX_INIT    MUTEX_INIT(&PL_user_prop_mutex)
+#  define USER_PROP_MUTEX_LOCK    MUTEX_LOCK(&PL_user_prop_mutex)
+#  define USER_PROP_MUTEX_UNLOCK  MUTEX_UNLOCK(&PL_user_prop_mutex)
+#  define USER_PROP_MUTEX_TERM    MUTEX_DESTROY(&PL_user_prop_mutex)
 #else
 #  define KEYWORD_PLUGIN_MUTEX_INIT    NOOP
 #  define KEYWORD_PLUGIN_MUTEX_LOCK    NOOP
 #  define KEYWORD_PLUGIN_MUTEX_UNLOCK  NOOP
 #  define KEYWORD_PLUGIN_MUTEX_TERM    NOOP
+#  define USER_PROP_MUTEX_INIT    NOOP
+#  define USER_PROP_MUTEX_LOCK    NOOP
+#  define USER_PROP_MUTEX_UNLOCK  NOOP
+#  define USER_PROP_MUTEX_TERM    NOOP
 #endif
 
 #ifdef USE_LOCALE /* These locale things are all subject to change */
@@ -5631,7 +6107,7 @@ typedef struct am_table_short AMTS;
 #    define _CHECK_AND_OUTPUT_WIDE_LOCALE_UTF8_MSG(s, send)                 \
 	STMT_START { /* Check if to warn before doing the conversion work */\
             if (! PL_in_utf8_CTYPE_locale && ckWARN(WARN_LOCALE)) {         \
-                UV cp = utf8_to_uvchr_buf((U8 *) s, (U8 *) send, NULL);     \
+                UV cp = utf8_to_uvchr_buf((U8 *) (s), (U8 *) (send), NULL); \
                 Perl_warner(aTHX_ packWARN(WARN_LOCALE),                    \
                     "Wide character (U+%" UVXf ") in %s",                   \
                     (cp == 0)                                               \
@@ -5669,7 +6145,7 @@ typedef struct am_table_short AMTS;
  && (! defined(USE_THREAD_SAFE_LOCALE) || defined(TS_W32_BROKEN_LOCALECONV))
 
 /* We have a locale object holding the 'C' locale for Posix 2008 */
-#ifndef USE_POSIX_2008_LOCALE
+#  ifndef USE_POSIX_2008_LOCALE
 #    define _LOCALE_TERM_POSIX_2008  NOOP
 #  else
 #    define _LOCALE_TERM_POSIX_2008                                         \
@@ -5944,8 +6420,8 @@ expression, but with an empty argument list, like this:
 #  define STORE_LC_NUMERIC_SET_TO_NEEDED()                                  \
         STMT_START {                                                        \
             LC_NUMERIC_LOCK(                                                \
-                          (IN_LC(LC_NUMERIC) && _NOT_IN_NUMERIC_UNDERLYING) \
-                      || _NOT_IN_NUMERIC_STANDARD);                         \
+                    (   (  IN_LC(LC_NUMERIC) && _NOT_IN_NUMERIC_UNDERLYING) \
+                     || (! IN_LC(LC_NUMERIC) && _NOT_IN_NUMERIC_STANDARD)));\
             if (IN_LC(LC_NUMERIC)) {                                        \
                 if (_NOT_IN_NUMERIC_UNDERLYING) {                           \
                     Perl_set_numeric_underlying(aTHX);                      \
@@ -6052,17 +6528,13 @@ expression, but with an empty argument list, like this:
 #endif /* !USE_LOCALE_NUMERIC */
 
 #define Atof				my_atof
+#define Strtod                          my_strtod
 
-#ifdef USE_QUADMATH
-#  define Perl_strtod(s, e) strtoflt128(s, e)
-#elif defined(HAS_LONG_DOUBLE) && defined(USE_LONG_DOUBLE)
-#  if defined(HAS_STRTOLD)
-#    define Perl_strtod(s, e) strtold(s, e)
-#  elif defined(HAS_STRTOD)
-#    define Perl_strtod(s, e) (NV)strtod(s, e) /* Unavoidable loss. */
-#  endif
-#elif defined(HAS_STRTOD)
-#  define Perl_strtod(s, e) strtod(s, e)
+#if    defined(HAS_STRTOD)                                          \
+   ||  defined(USE_QUADMATH)                                        \
+   || (defined(HAS_STRTOLD) && defined(HAS_LONG_DOUBLE)             \
+                            && defined(USE_LONG_DOUBLE))
+#  define Perl_strtod   Strtod
 #endif
 
 #if !defined(Strtol) && defined(USE_64_BIT_INT) && defined(IV_IS_QUAD) && \

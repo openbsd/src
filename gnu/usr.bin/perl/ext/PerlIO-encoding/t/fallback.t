@@ -23,6 +23,7 @@ use Test::More tests => 10;
 my $file = "fallback$$.txt";
 
 {
+    use warnings;
     my $message = '';
     local $SIG{__WARN__} = sub { $message = $_[0] };
     $PerlIO::encoding::fallback = Encode::PERLQQ;

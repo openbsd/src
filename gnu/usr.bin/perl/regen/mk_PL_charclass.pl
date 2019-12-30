@@ -4,11 +4,12 @@ use strict;
 use warnings;
 require './regen/regen_lib.pl';
 require './regen/charset_translations.pl';
+use Unicode::UCD 'prop_invlist';
 
 # This program outputs l1_charclass_tab.h, which defines the guts of the
 # PL_charclass table.  Each line is a bit map of properties that the Unicode
 # code point at the corresponding position in the table array has.  The first
-# line corresponds to code point U+0000, NULL, the last line to U+00FF.  For
+# line corresponds to code point 0x0, NULL, the last line to 0xFF.  For
 # an application to see if the code point "i" has a particular property, it
 # just does
 #    'PL_charclass[i] & BIT'
@@ -22,255 +23,264 @@ require './regen/charset_translations.pl';
 # This program need be run only when adding new properties to it, or upon a
 # new Unicode release, to make sure things haven't been changed by it.
 
-my @properties = qw(
-    NONLATIN1_SIMPLE_FOLD
-    NONLATIN1_FOLD
-    ALPHANUMERIC
-    ALPHA
-    ASCII
-    BLANK
-    CASED
-    CHARNAME_CONT
-    CNTRL
-    DIGIT
-    GRAPH
-    IDFIRST
-    LOWER
-    NON_FINAL_FOLD
-    PRINT
-    PUNCT
-    QUOTEMETA
-    SPACE
-    UPPER
-    WORDCHAR
-    XDIGIT
-    VERTSPACE
-    IS_IN_SOME_FOLD
-    MNEMONIC_CNTRL
+# keys are the names of the bits; values are what generates the code points
+# that have the bit set, or 0 if \p{key} is the generator
+my %bit_names = (
+            NONLATIN1_SIMPLE_FOLD   => \&Non_Latin1_Simple_Folds,
+            NONLATIN1_FOLD          => \&Non_Latin1_Folds,
+            ALPHANUMERIC            => 'Alnum',    # Like \w, but no underscore
+            ALPHA                   => 'XPosixAlpha',
+            ASCII                   => 0,
+            BLANK                   => 0,
+            CASED                   => 0,
+            CHARNAME_CONT           => '_Perl_Charname_Continue',
+            CNTRL                   => 0,
+            DIGIT                   => 0,
+            GRAPH                   => 0,
+            IDFIRST                 => \&Id_First,
+            LOWER                   => 'XPosixLower',
+            NON_FINAL_FOLD          => \&Non_Final_Folds,
+            PRINT                   => 0,
+            PUNCT                   => \&Punct_and_Symbols,
+            QUOTEMETA               => '_Perl_Quotemeta',
+            SPACE                   => 'XPerlSpace',
+            UPPER                   => 'XPosixUpper',
+            WORDCHAR                => 'XPosixWord',
+            XDIGIT                  => 0,
+            VERTSPACE               => 0,
+            IS_IN_SOME_FOLD         => '_Perl_Any_Folds',
+
+            # These are the control characters that there are mnemonics for
+            MNEMONIC_CNTRL          => [ ord "\a", ord "\b", ord "\e", ord "\f",
+                                         ord "\n", ord "\r", ord "\t" ],
 );
+
+sub uniques {
+    # Returns non-duplicated input values.  From "Perl Best Practices:
+    # Encapsulated Cleverness".  p. 455 in first edition.
+
+    my %seen;
+    return grep { ! $seen{$_}++ } @_;
+}
+
+sub expand_invlist {
+    # Return the code points that are in the inversion list given by the
+    # argument
+
+    my $invlist_ref = shift;
+    my $i;
+    my @full_list;
+
+    for (my $i = 0; $i < @$invlist_ref; $i += 2) {
+        my $upper = ($i + 1) < @$invlist_ref
+                    ? $invlist_ref->[$i+1] - 1      # In range
+                    : $Unicode::UCD::MAX_CP;  # To infinity.
+        for my $j ($invlist_ref->[$i] .. $upper) {
+            push @full_list, $j;
+        }
+    }
+
+    return @full_list;
+}
 
 # Read in the case fold mappings.
 my %folded_closure;
 my %simple_folded_closure;
-my @hex_non_final_folds;
+my @non_final_folds;
 my @non_latin1_simple_folds;
 my @folds;
 use Unicode::UCD;
 
-BEGIN { # Have to do this at compile time because using user-defined \p{property}
+# Use the Unicode data file if we are on an ASCII platform (which its data
+# is for), and it is in the modern format (starting in Unicode 3.1.0) and
+# it is available.  This avoids being affected by potential bugs
+# introduced by other layers of Perl
+my $file="lib/unicore/CaseFolding.txt";
 
-    # Use the Unicode data file if we are on an ASCII platform (which its data
-    # is for), and it is in the modern format (starting in Unicode 3.1.0) and
-    # it is available.  This avoids being affected by potential bugs
-    # introduced by other layers of Perl
-    my $file="lib/unicore/CaseFolding.txt";
+if (ord('A') == 65
+    && pack("C*", split /\./, Unicode::UCD::UnicodeVersion()) ge v3.1.0
+    && open my $fh, "<", $file)
+{
+    @folds = <$fh>;
+}
+else {
+    my ($invlist_ref, $invmap_ref, undef, $default)
+                                = Unicode::UCD::prop_invmap('Case_Folding');
+    for my $i (0 .. @$invlist_ref - 1 - 1) {
+        next if $invmap_ref->[$i] == $default;
+        my $adjust = -1;
+        for my $j ($invlist_ref->[$i] .. $invlist_ref->[$i+1] -1) {
+            $adjust++;
 
-    if (ord('A') == 65
-        && pack("C*", split /\./, Unicode::UCD::UnicodeVersion()) ge v3.1.0
-        && open my $fh, "<", $file)
-    {
-        @folds = <$fh>;
-    }
-    else {
-        my ($invlist_ref, $invmap_ref, undef, $default)
-                                    = Unicode::UCD::prop_invmap('Case_Folding');
-        for my $i (0 .. @$invlist_ref - 1 - 1) {
-            next if $invmap_ref->[$i] == $default;
-            my $adjust = -1;
-            for my $j ($invlist_ref->[$i] .. $invlist_ref->[$i+1] -1) {
-                $adjust++;
-
-                # Single-code point maps go to a 'C' type
-                if (! ref $invmap_ref->[$i]) {
-                    push @folds, sprintf("%04X; C; %04X\n",
-                                        $j,
-                                        $invmap_ref->[$i] + $adjust);
-                }
-                else {  # Multi-code point maps go to 'F'.  prop_invmap()
-                        # guarantees that no adjustment is needed for these,
-                        # as the range will contain just one element
-                    push @folds, sprintf("%04X; F; %s\n",
-                                        $j,
-                                        join " ", map { sprintf "%04X", $_ }
-                                                        @{$invmap_ref->[$i]});
-                }
+            # Single-code point maps go to a 'C' type
+            if (! ref $invmap_ref->[$i]) {
+                push @folds, sprintf("%04X; C; %04X\n",
+                                    $j,
+                                    $invmap_ref->[$i] + $adjust);
             }
-        }
-    }
-
-    for (@folds) {
-        chomp;
-
-        # Lines look like (without the initial '#'
-        #0130; F; 0069 0307; # LATIN CAPITAL LETTER I WITH DOT ABOVE
-        # Get rid of comments, ignore blank or comment-only lines
-        my $line = $_ =~ s/ (?: \s* \# .* )? $ //rx;
-        next unless length $line;
-        my ($hex_from, $fold_type, @folded) = split /[\s;]+/, $line;
-
-        my $from = hex $hex_from;
-
-        # Perl only deals with S, C, and F folds
-        next if $fold_type ne 'C' and $fold_type ne 'F' and $fold_type ne 'S';
-
-        # Get each code point in the range that participates in this line's fold.
-        # The hash has keys of each code point in the range, and values of what it
-        # folds to and what folds to it
-        for my $i (0 .. @folded - 1) {
-            my $hex_fold = $folded[$i];
-            my $fold = hex $hex_fold;
-            if ($fold < 256) {
-                push @{$folded_closure{$fold}}, $from;
-                push @{$simple_folded_closure{$fold}}, $from if $fold_type ne 'F';
-            }
-            if ($from < 256) {
-                push @{$folded_closure{$from}}, $fold;
-                push @{$simple_folded_closure{$from}}, $fold if $fold_type ne 'F';
-            }
-
-            if (($fold_type eq 'C' || $fold_type eq 'S')
-                && ($fold < 256 != $from < 256))
-            {
-                # Fold is simple (hence can't be a non-final fold, so the 'if'
-                # above is mutualy exclusive from the 'if below) and crosses
-                # 255/256 boundary.  We keep track of the Latin1 code points
-                # in such folds.
-                push @non_latin1_simple_folds, ($fold < 256)
-                                                ? $fold
-                                                : $from;
-            }
-            elsif ($i < @folded-1
-                   && $fold < 256
-                   && ! grep { $_ eq $hex_fold } @hex_non_final_folds)
-            {
-                push @hex_non_final_folds, $hex_fold;
-
-                # Also add the upper case, which in the latin1 range folds to
-                # $fold
-                push @hex_non_final_folds, sprintf "%04X", ord uc chr $fold;
-            }
-        }
-    }
-
-    # Now having read all the lines, combine them into the full closure of each
-    # code point in the range by adding lists together that share a common
-    # element
-    foreach my $folded (keys %folded_closure) {
-        foreach my $from (grep { $_ < 256 } @{$folded_closure{$folded}}) {
-            push @{$folded_closure{$from}}, @{$folded_closure{$folded}};
-        }
-    }
-    foreach my $folded (keys %simple_folded_closure) {
-        foreach my $from (grep { $_ < 256 } @{$simple_folded_closure{$folded}}) {
-            push @{$simple_folded_closure{$from}}, @{$simple_folded_closure{$folded}};
-        }
-    }
-
-    # We have the single-character folds that cross the 255/256, like KELVIN
-    # SIGN => 'k', but we need the closure, so add like 'K' to it
-    foreach my $folded (@non_latin1_simple_folds) {
-        foreach my $fold (@{$simple_folded_closure{$folded}}) {
-            if ($fold < 256 && ! grep { $fold == $_ } @non_latin1_simple_folds) {
-                push @non_latin1_simple_folds, $fold;
+            else {  # Multi-code point maps go to 'F'.  prop_invmap()
+                    # guarantees that no adjustment is needed for these,
+                    # as the range will contain just one element
+                push @folds, sprintf("%04X; F; %s\n",
+                                    $j,
+                                    join " ", map { sprintf "%04X", $_ }
+                                                    @{$invmap_ref->[$i]});
             }
         }
     }
 }
 
-sub Is_Non_Latin1_Fold {
+for (@folds) {
+    chomp;
+
+    # Lines look like (without the initial '#'
+    #0130; F; 0069 0307; # LATIN CAPITAL LETTER I WITH DOT ABOVE
+    # Get rid of comments, ignore blank or comment-only lines
+    my $line = $_ =~ s/ (?: \s* \# .* )? $ //rx;
+    next unless length $line;
+    my ($hex_from, $fold_type, @folded) = split /[\s;]+/, $line;
+
+    my $from = hex $hex_from;
+
+    # Perl only deals with S, C, and F folds
+    next if $fold_type ne 'C' and $fold_type ne 'F' and $fold_type ne 'S';
+
+    # Get each code point in the range that participates in this line's fold.
+    # The hash has keys of each code point in the range, and values of what it
+    # folds to and what folds to it
+    for my $i (0 .. @folded - 1) {
+        my $fold = hex $folded[$i];
+        if ($fold < 256) {
+            push @{$folded_closure{$fold}}, $from;
+            push @{$simple_folded_closure{$fold}}, $from if $fold_type ne 'F';
+        }
+        if ($from < 256) {
+            push @{$folded_closure{$from}}, $fold;
+            push @{$simple_folded_closure{$from}}, $fold if $fold_type ne 'F';
+        }
+
+        if (($fold_type eq 'C' || $fold_type eq 'S')
+            && ($fold < 256 != $from < 256))
+        {
+            # Fold is simple (hence can't be a non-final fold, so the 'if'
+            # above is mutualy exclusive from the 'if below) and crosses
+            # 255/256 boundary.  We keep track of the Latin1 code points
+            # in such folds.
+            push @non_latin1_simple_folds, ($fold < 256)
+                                            ? $fold
+                                            : $from;
+        }
+        elsif ($i < @folded-1
+                && $fold < 256
+                && ! grep { $_ == $fold } @non_final_folds)
+        {
+            push @non_final_folds, $fold;
+
+            # Also add the upper case, which in the latin1 range folds to
+            # $fold
+            push @non_final_folds, ord uc chr $fold;
+        }
+    }
+}
+
+# Now having read all the lines, combine them into the full closure of each
+# code point in the range by adding lists together that share a common
+# element
+foreach my $folded (keys %folded_closure) {
+    foreach my $from (grep { $_ < 256 } @{$folded_closure{$folded}}) {
+        push @{$folded_closure{$from}}, @{$folded_closure{$folded}};
+    }
+}
+foreach my $folded (keys %simple_folded_closure) {
+    foreach my $from (grep { $_ < 256 } @{$simple_folded_closure{$folded}}) {
+        push @{$simple_folded_closure{$from}}, @{$simple_folded_closure{$folded}};
+    }
+}
+
+# We have the single-character folds that cross the 255/256, like KELVIN
+# SIGN => 'k', but we need the closure, so add like 'K' to it
+foreach my $folded (@non_latin1_simple_folds) {
+    foreach my $fold (@{$simple_folded_closure{$folded}}) {
+        if ($fold < 256 && ! grep { $fold == $_ } @non_latin1_simple_folds) {
+            push @non_latin1_simple_folds, $fold;
+        }
+    }
+}
+
+sub Id_First {
+    my @alpha_invlist = prop_invlist("XPosixAlpha");
+    my @ids = expand_invlist(\@alpha_invlist);
+    push @ids, ord "_";
+    return sort { $a <=> $b } uniques @ids;
+}
+
+sub Non_Latin1_Folds {
     my @return;
 
     foreach my $folded (keys %folded_closure) {
-        push @return, sprintf("%X", $folded), if grep { $_ > 255 }
-                                                     @{$folded_closure{$folded}};
+        push @return, $folded if grep { $_ > 255 } @{$folded_closure{$folded}};
     }
-    return join("\n", @return) . "\n";
+    return @return;
 }
 
-sub Is_Non_Latin1_Simple_Fold { # Latin1 code points that are folded to by
-                                # non-Latin1 code points as single character
-                                # folds
-    return join("\n", map { sprintf "%X", $_ } @non_latin1_simple_folds) . "\n";
+sub Non_Latin1_Simple_Folds { # Latin1 code points that are folded to by
+                              # non-Latin1 code points as single character
+                              # folds
+    return @non_latin1_simple_folds;
 }
 
-sub Is_Non_Final_Fold {
-    return join("\n", @hex_non_final_folds) . "\n";
+sub Non_Final_Folds {
+    return @non_final_folds;
 }
 
-my @bits;   # Bit map for each code point
+sub Punct_and_Symbols {
+    # Sadly, this is inconsistent: \pP and \pS for the ascii range;
+    # just \pP outside it.
 
-# For each character, calculate which properties it matches.
-for my $ord (0..255) {
-    my $char = chr($ord);
-    utf8::upgrade($char);   # Important to use Unicode rules!
+    my @punct_invlist = prop_invlist("Punct");
+    my @return = expand_invlist(\@punct_invlist);
 
-    # Look at all the properties we care about here.
-    for my $property (@properties) {
-        my $name = $property;
-
-        # Remove the suffix to get the actual property name.
-        # Currently the suffixes are '_L1', '_A', and none.
-        # If is a latin1 version, no further checking is needed.
-        if (! ($name =~ s/_L1$//)) {
-
-            # Here, isn't an _L1.  If its _A, it's automatically false for
-            # non-ascii.  The only current ones (besides ASCII) without a
-            # suffix are valid over the whole range.
-            next if $name =~ s/_A$// && $char !~ /\p{ASCII}/;
-        }
-        my $re;
-        if ($name eq 'PUNCT') {;
-
-            # Sadly, this is inconsistent: \pP and \pS for the ascii range,
-            # just \pP outside it.
-            $re = qr/\p{Punct}|[^\P{Symbol}\P{ASCII}]/;
-        } elsif ($name eq 'CHARNAME_CONT') {;
-            $re = qr/\p{_Perl_Charname_Continue}/,
-        } elsif ($name eq 'SPACE') {;
-            $re = qr/\p{XPerlSpace}/;
-        } elsif ($name eq 'IDFIRST') {
-            $re = qr/[_\p{XPosixAlpha}]/;
-        } elsif ($name eq 'WORDCHAR') {
-            $re = qr/\p{XPosixWord}/;
-        } elsif ($name eq 'LOWER') {
-            $re = qr/\p{XPosixLower}/;
-        } elsif ($name eq 'UPPER') {
-            $re = qr/\p{XPosixUpper}/;
-        } elsif ($name eq 'ALPHANUMERIC') {
-            # Like \w, but no underscore
-            $re = qr/\p{Alnum}/;
-        } elsif ($name eq 'ALPHA') {
-            $re = qr/\p{XPosixAlpha}/;
-        } elsif ($name eq 'QUOTEMETA') {
-            $re = qr/\p{_Perl_Quotemeta}/;
-        } elsif ($name eq 'NONLATIN1_FOLD') {
-            $re = qr/\p{Is_Non_Latin1_Fold}/;
-        } elsif ($name eq 'NONLATIN1_SIMPLE_FOLD') {
-            $re = qr/\p{Is_Non_Latin1_Simple_Fold}/;
-        } elsif ($name eq 'NON_FINAL_FOLD') {
-            $re = qr/\p{Is_Non_Final_Fold}/;
-        } elsif ($name eq 'IS_IN_SOME_FOLD') {
-            $re = qr/\p{_Perl_Any_Folds}/;
-        } elsif ($name eq 'MNEMONIC_CNTRL') {
-            # These are the control characters that there are mnemonics for
-            $re = qr/[\a\b\e\f\n\r\t]/;
-        } else {    # The remainder have the same name and values as Unicode
-            $re = eval "qr/\\p{$name}/";
-            use Carp;
-            carp $@ if ! defined $re;
-        }
-        #print STDERR __LINE__, ": $ord, $name $property, $re\n";
-        if ($char =~ $re) {  # Add this property if matches
-            $bits[$ord] .= '|' if $bits[$ord];
-            $bits[$ord] .= "(1U<<_CC_$property)";
-        }
+    my @symbols_invlist = prop_invlist("Symbol");
+    my @symbols = expand_invlist(\@symbols_invlist);
+    foreach my $cp (@symbols) {
+        last if $cp > 0x7f;
+        push @return, $cp;
     }
-    #print __LINE__, " $ord $char $bits[$ord]\n";
+
+    return sort { $a <=> $b } uniques @return;
+}
+
+my @bits;   # Each element is a bit map for a single code point
+
+# For each bit type, calculate which code points should have it set
+foreach my $bit_name (sort keys %bit_names) {
+    my @code_points;
+
+    my $property = $bit_name;   # The bit name is the same as its property,
+                                # unless overridden
+    $property = $bit_names{$bit_name} if $bit_names{$bit_name};
+
+    if (! ref $property) {
+        my @invlist = prop_invlist($property, '_perl_core_internal_ok');
+        @code_points = expand_invlist(\@invlist);
+    }
+    elsif (ref $property eq 'CODE') {
+        @code_points = &$property;
+    }
+    elsif (ref $property eq 'ARRAY') {
+        @code_points = @{$property};
+    }
+
+    foreach my $cp (@code_points) {
+        last if $cp > 0xFF;
+        $bits[$cp] .= '|' if $bits[$cp];
+        $bits[$cp] .= "(1U<<_CC_$bit_name)";
+    }
 }
 
 my $out_fh = open_new('l1_char_class_tab.h', '>',
 		      {style => '*', by => $0,
-                      from => "property definitions"});
+                      from => "Unicode::UCD"});
 
 print $out_fh <<END;
 /* For code points whose position is not the same as Unicode,  both are shown

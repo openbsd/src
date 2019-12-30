@@ -1,6 +1,6 @@
-# PropertyAliases-10.0.0.txt
-# Date: 2017-02-14, 04:26:16 GMT
-# © 2017 Unicode®, Inc.
+# PropertyAliases-12.1.0.txt
+# Date: 2019-03-10, 10:53:18 GMT
+# © 2019 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -18,9 +18,14 @@
 #
 # Each line has two or more fields, separated by semicolons.
 #
-# First Field: The first field is an abbreviated name for the property.
+# First Field: The first field is the short name for the property.
+# It is typically an abbreviation, but in a number of cases it is simply
+# a duplicate of the "long name" in the second field.
+# For Unihan database tags, the short name is actually a longer string than
+# the tag specified in the second field.
 #
-# Second Field: The second field is a long name
+# Second Field: The second field is the long name for the property,
+# typically the formal name used in documentation about the property.
 #
 # The above are the preferred aliases. Other aliases may be listed in additional fields.
 #
@@ -43,7 +48,8 @@
 #
 # The combination of property value and property name is, however, unique.
 #
-# For more information, see UTS #18: Unicode Regular Expressions
+# For more information, see UAX #44, Unicode Character Database, and
+# UTS #18, Unicode Regular Expressions.
 # ================================================
 
 
@@ -87,6 +93,7 @@ cjkIRG_TSource           ; kIRG_TSource
 cjkIRG_USource           ; kIRG_USource
 cjkIRG_VSource           ; kIRG_VSource
 cjkRSUnicode             ; kRSUnicode                  ; Unicode_Radical_Stroke; URS
+EqUIdeo                  ; Equivalent_Unified_Ideograph
 isc                      ; ISO_Comment
 JSN                      ; Jamo_Short_Name
 na                       ; Name
@@ -192,6 +199,6 @@ XO_NFKC                  ; Expands_On_NFKC
 XO_NFKD                  ; Expands_On_NFKD
 
 # ================================================
-# Total:    120
+# Total:    121
 
 # EOF

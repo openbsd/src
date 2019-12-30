@@ -1,5 +1,5 @@
 #
-# $Id: Encode.pm,v 2.97 2018/02/21 12:14:24 dankogai Exp $
+# $Id: Encode.pm,v 3.01 2019/03/13 00:25:25 dankogai Exp $
 #
 package Encode;
 use strict;
@@ -7,13 +7,14 @@ use warnings;
 use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
 our $VERSION;
 BEGIN {
-    $VERSION = sprintf "%d.%02d", q$Revision: 2.97 $ =~ /(\d+)/g;
+    $VERSION = sprintf "%d.%02d", q$Revision: 3.01 $ =~ /(\d+)/g;
     require XSLoader;
     XSLoader::load( __PACKAGE__, $VERSION );
 }
 
 use Exporter 5.57 'import';
 
+use Carp ();
 our @CARP_NOT = qw(Encode::Encoder);
 
 # Public, encouraged API is exported by default
@@ -168,134 +169,6 @@ sub clone_encoding($) {
     my $obj = find_encoding(shift);
     ref $obj or return;
     return Storable::dclone($obj);
-}
-
-sub encode($$;$) {
-    my ( $name, $string, $check ) = @_;
-    return undef unless defined $string;
-    $string .= '';    # stringify;
-    $check ||= 0;
-    unless ( defined $name ) {
-        require Carp;
-        Carp::croak("Encoding name should not be undef");
-    }
-    my $enc = find_encoding($name);
-    unless ( defined $enc ) {
-        require Carp;
-        Carp::croak("Unknown encoding '$name'");
-    }
-    # For Unicode, warnings need to be caught and re-issued at this level
-    # so that callers can disable utf8 warnings lexically.
-    my $octets;
-    if ( ref($enc) eq 'Encode::Unicode' ) {
-        my $warn = '';
-        {
-            local $SIG{__WARN__} = sub { $warn = shift };
-            $octets = $enc->encode( $string, $check );
-        }
-        warnings::warnif('utf8', $warn) if length $warn;
-    }
-    else {
-        $octets = $enc->encode( $string, $check );
-    }
-    $_[1] = $string if $check and !ref $check and !( $check & LEAVE_SRC );
-    return $octets;
-}
-*str2bytes = \&encode;
-
-sub decode($$;$) {
-    my ( $name, $octets, $check ) = @_;
-    return undef unless defined $octets;
-    $octets .= '';
-    $check ||= 0;
-    my $enc = find_encoding($name);
-    unless ( defined $enc ) {
-        require Carp;
-        Carp::croak("Unknown encoding '$name'");
-    }
-    # For Unicode, warnings need to be caught and re-issued at this level
-    # so that callers can disable utf8 warnings lexically.
-    my $string;
-    if ( ref($enc) eq 'Encode::Unicode' ) {
-        my $warn = '';
-        {
-            local $SIG{__WARN__} = sub { $warn = shift };
-            $string = $enc->decode( $octets, $check );
-        }
-        warnings::warnif('utf8', $warn) if length $warn;
-    }
-    else {
-        $string = $enc->decode( $octets, $check );
-    }
-    $_[1] = $octets if $check and !ref $check and !( $check & LEAVE_SRC );
-    return $string;
-}
-*bytes2str = \&decode;
-
-sub from_to($$$;$) {
-    my ( $string, $from, $to, $check ) = @_;
-    return undef unless defined $string;
-    $check ||= 0;
-    my $f = find_encoding($from);
-    unless ( defined $f ) {
-        require Carp;
-        Carp::croak("Unknown encoding '$from'");
-    }
-    my $t = find_encoding($to);
-    unless ( defined $t ) {
-        require Carp;
-        Carp::croak("Unknown encoding '$to'");
-    }
-
-    # For Unicode, warnings need to be caught and re-issued at this level
-    # so that callers can disable utf8 warnings lexically.
-    my $uni;
-    if ( ref($f) eq 'Encode::Unicode' ) {
-        my $warn = '';
-        {
-            local $SIG{__WARN__} = sub { $warn = shift };
-            $uni = $f->decode($string);
-        }
-        warnings::warnif('utf8', $warn) if length $warn;
-    }
-    else {
-        $uni = $f->decode($string);
-    }
-
-    if ( ref($t) eq 'Encode::Unicode' ) {
-        my $warn = '';
-        {
-            local $SIG{__WARN__} = sub { $warn = shift };
-            $_[0] = $string = $t->encode( $uni, $check );
-        }
-        warnings::warnif('utf8', $warn) if length $warn;
-    }
-    else {
-        $_[0] = $string = $t->encode( $uni, $check );
-    }
-
-    return undef if ( $check && length($uni) );
-    return defined( $_[0] ) ? length($string) : undef;
-}
-
-sub encode_utf8($) {
-    my ($str) = @_;
-    return undef unless defined $str;
-    utf8::encode($str);
-    return $str;
-}
-
-my $utf8enc;
-
-sub decode_utf8($;$) {
-    my ( $octets, $check ) = @_;
-    return undef unless defined $octets;
-    $octets .= '';
-    $check   ||= 0;
-    $utf8enc ||= find_encoding('utf8');
-    my $string = $utf8enc->decode( $octets, $check );
-    $_[0] = $octets if $check and !ref $check and !( $check & LEAVE_SRC );
-    return $string;
 }
 
 onBOOT;
@@ -823,6 +696,12 @@ code to do exactly that:
 
 This is the same as C<FB_QUIET> above, except that instead of being silent
 on errors, it issues a warning.  This is handy for when you are debugging.
+
+B<CAVEAT>: All warnings from Encode module are reported, independently of
+L<pragma warnings|warnings> settings. If you want to follow settings of
+lexical warnings configured by L<pragma warnings|warnings> then append
+also check value C<ENCODE::ONLY_PRAGMA_WARNINGS>. This value is available
+since Encode version 2.99.
 
 =head3 FB_PERLQQ FB_HTMLCREF FB_XMLCREF
 

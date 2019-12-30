@@ -403,13 +403,13 @@ died, add a short obituary here.
 
 XXX Generate this with:
 
-  perl Porting/acknowledgements.pl v5.27.11..HEAD
+  perl Porting/acknowledgements.pl v5.30.1..HEAD
 
 =head1 Reporting Bugs
 
 If you find what you think is a bug, you might check the perl bug database
-at L<https://rt.perl.org/> .  There may also be information at
-L<http://www.perl.org/> , the Perl Home Page.
+at L<https://rt.perl.org/>.  There may also be information at
+L<http://www.perl.org/>, the Perl Home Page.
 
 If you believe you have an unreported bug, please run the L<perlbug> program
 included with your release.  Be sure to trim your bug down to a tiny but

@@ -35,7 +35,7 @@ plan skip_all => 'Perl is built with PERL_DISABLE_PMC' unless $pmc;
 
 plan tests => 3;
 
-use vars qw($got_here);
+our $got_here;
 
 my $res = eval q{
     package MyTest;

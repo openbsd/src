@@ -128,6 +128,7 @@ DllExport  char*	win32_getenv(const char *name);
 DllExport  int		win32_putenv(const char *name);
 
 DllExport  unsigned 	win32_sleep(unsigned int);
+DllExport  int		win32_pause(void);
 DllExport  int		win32_times(struct tms *timebuf);
 DllExport  unsigned 	win32_alarm(unsigned int sec);
 DllExport  char*	win32_longpath(char *path);
@@ -429,7 +430,7 @@ END_EXTERN_C
  */
 
 #define pipe(fd)		win32_pipe((fd), 512, O_BINARY)
-#define pause()			win32_sleep((32767L << 16) + 32767)
+#define pause			win32_pause
 #define sleep			win32_sleep
 #define times			win32_times
 #define ioctl			win32_ioctl

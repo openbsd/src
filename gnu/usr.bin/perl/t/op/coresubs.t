@@ -37,7 +37,7 @@ my %args_for = (
   splice   =>)[0,1,2,1,3,1,4,1,5,1],
 );
 my %desc = (
-  pos => 'match position',
+  #pos => 'match position',
 );
 
 use File::Spec::Functions;

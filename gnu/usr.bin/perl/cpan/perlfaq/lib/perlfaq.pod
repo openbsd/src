@@ -1,10 +1,10 @@
 =head1 NAME
 
-perlfaq - frequently asked questions about Perl
+perlfaq - Frequently asked questions about Perl
 
 =head1 VERSION
 
-version 5.021011
+version 5.20190126
 
 =head1 DESCRIPTION
 
@@ -697,15 +697,15 @@ How can I use a filehandle indirectly?
 
 =item *
 
+How can I open a filehandle to a string?
+
+=item *
+
 How can I set up a footer format to be used with write()?
 
 =item *
 
 How can I write() into a string?
-
-=item *
-
-How can I open a filehandle to a string?
 
 =item *
 
@@ -725,7 +725,7 @@ Why do I sometimes get an "Argument list too long" when I use E<lt>*E<gt>?
 
 =item *
 
-How can I open a file with a leading "E<gt>" or trailing blanks?
+How can I open a file named with a leading "E<gt>" or trailing blanks?
 
 =item *
 

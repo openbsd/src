@@ -3,7 +3,7 @@ use strict;
 use Exporter;
 
 
-our $VERSION = '3.74';
+our $VERSION = '3.78';
 my $xs_version = $VERSION;
 $VERSION =~ tr/_//d;
 
@@ -171,7 +171,7 @@ if($^O ne 'MSWin32') {
 if ($^O =~ /android/) {
     # If targetsh is executable, then we're either a full
     # perl, or a miniperl for a native build.
-    if (-x $Config::Config{targetsh}) {
+    if ( exists($Config::Config{targetsh}) && -x $Config::Config{targetsh}) {
         $pwd_cmd = "$Config::Config{targetsh} -c pwd"
     }
     else {
@@ -658,6 +658,10 @@ if (exists $METHOD_MAP{$^O}) {
     *{$name} = \&{$map->{$name}};
   }
 }
+
+# built-in from 5.30
+*getcwd = \&Internals::getcwd
+  if !defined &getcwd && defined &Internals::getcwd;
 
 # In case the XS version doesn't load.
 *abs_path = \&_perl_abs_path unless defined &abs_path;

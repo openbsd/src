@@ -4,16 +4,16 @@ use strict;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common 2.074 ();
+use IO::Compress::Base::Common 2.084 ();
 
-use IO::Uncompress::Base 2.074 ;
+use IO::Uncompress::Base 2.084 ;
 
 
 require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $AnyUncompressError);
 
-$VERSION = '2.074';
+$VERSION = '2.084';
 $AnyUncompressError = '';
 
 @ISA = qw(IO::Uncompress::Base Exporter);
@@ -29,22 +29,27 @@ BEGIN
 {
    local @INC = @INC;
    pop @INC if $INC[-1] eq '.';
-   eval ' use IO::Uncompress::Adapter::Inflate 2.074 ;';
-   eval ' use IO::Uncompress::Adapter::Bunzip2 2.074 ;';
-   eval ' use IO::Uncompress::Adapter::LZO 2.074 ;';
-   eval ' use IO::Uncompress::Adapter::Lzf 2.074 ;';
-   eval ' use IO::Uncompress::Adapter::UnLzma 2.074 ;';
-   eval ' use IO::Uncompress::Adapter::UnXz 2.074 ;';
+   eval ' use IO::Uncompress::Adapter::Inflate 2.084 ;';
+   eval ' use IO::Uncompress::Adapter::Bunzip2 2.084 ;';
+   eval ' use IO::Uncompress::Adapter::LZO 2.084 ;';
+   eval ' use IO::Uncompress::Adapter::Lzf 2.084 ;';
+   eval ' use IO::Uncompress::Adapter::UnLzma 2.084 ;';
+   eval ' use IO::Uncompress::Adapter::UnXz 2.084 ;';
+   eval ' use IO::Uncompress::Adapter::UnZstd 2.083 ;';
+   eval ' use IO::Uncompress::Adapter::UnLzip 2.084 ;';
 
-   eval ' use IO::Uncompress::Bunzip2 2.074 ;';
-   eval ' use IO::Uncompress::UnLzop 2.074 ;';
-   eval ' use IO::Uncompress::Gunzip 2.074 ;';
-   eval ' use IO::Uncompress::Inflate 2.074 ;';
-   eval ' use IO::Uncompress::RawInflate 2.074 ;';
-   eval ' use IO::Uncompress::Unzip 2.074 ;';
-   eval ' use IO::Uncompress::UnLzf 2.074 ;';
-   eval ' use IO::Uncompress::UnLzma 2.074 ;';
-   eval ' use IO::Uncompress::UnXz 2.074 ;';
+   eval ' use IO::Uncompress::Bunzip2 2.084 ;';
+   eval ' use IO::Uncompress::UnLzop 2.084 ;';
+   eval ' use IO::Uncompress::Gunzip 2.084 ;';
+   eval ' use IO::Uncompress::Inflate 2.084 ;';
+   eval ' use IO::Uncompress::RawInflate 2.084 ;';
+   eval ' use IO::Uncompress::Unzip 2.084 ;';
+   eval ' use IO::Uncompress::UnLzf 2.084 ;';
+   eval ' use IO::Uncompress::UnLzma 2.084 ;';
+   eval ' use IO::Uncompress::UnXz 2.084 ;';
+   eval ' use IO::Uncompress::UnZstd 2.084 ;';
+   eval ' use IO::Uncompress::UnLzip 2.084 ;';
+
 }
 
 sub new
@@ -191,6 +196,39 @@ sub mkUncomp
          return 1;
      }
 
+     if (defined $IO::Uncompress::UnZstd::VERSION and
+            $magic = $self->ckMagic('UnZstd')) {
+
+        *$self->{Info} = $self->readHeader($magic)
+            or return undef ;
+
+        my ($obj, $errstr, $errno) = IO::Uncompress::Adapter::Zstd::mkUncompObject();
+
+        return $self->saveErrorString(undef, $errstr, $errno)
+            if ! defined $obj;
+
+        *$self->{Uncomp} = $obj;
+
+         return 1;
+     }
+
+
+     if (defined $IO::Uncompress::UnLzip::VERSION and
+            $magic = $self->ckMagic('UnLzip')) {
+
+        *$self->{Info} = $self->readHeader($magic)
+            or return undef ;
+
+        my ($obj, $errstr, $errno) = IO::Uncompress::Adapter::UnLzip::mkUncompObject(*$self->{Info}{DictSize});
+
+        return $self->saveErrorString(undef, $errstr, $errno)
+            if ! defined $obj;
+
+        *$self->{Uncomp} = $obj;
+
+         return 1;
+     }
+
      return 0 ;
 }
 
@@ -237,7 +275,7 @@ IO::Uncompress::AnyUncompress - Uncompress gzip, zip, bzip2 or lzop file/buffer
     my $status = anyuncompress $input => $output [,OPTS]
         or die "anyuncompress failed: $AnyUncompressError\n";
 
-    my $z = new IO::Uncompress::AnyUncompress $input [OPTS] 
+    my $z = new IO::Uncompress::AnyUncompress $input [OPTS]
         or die "anyuncompress failed: $AnyUncompressError\n";
 
     $status = $z->read($buffer)
@@ -299,6 +337,8 @@ The formats supported are:
 
 =item lzma
 
+=item lzip
+
 =item xz
 
 =back
@@ -315,7 +355,7 @@ section.
 
     use IO::Uncompress::AnyUncompress qw(anyuncompress $AnyUncompressError) ;
 
-    anyuncompress $input_filename_or_reference => $output_filename_or_reference [,OPTS] 
+    anyuncompress $input_filename_or_reference => $output_filename_or_reference [,OPTS]
         or die "anyuncompress failed: $AnyUncompressError\n";
 
 The functional interface needs Perl5.005 or better.
@@ -328,7 +368,7 @@ C<$input_filename_or_reference> and C<$output_filename_or_reference>.
 =head3 The C<$input_filename_or_reference> parameter
 
 The parameter, C<$input_filename_or_reference>, is used to define the
-source of the compressed data. 
+source of the compressed data.
 
 It can take one of the following forms:
 
@@ -346,17 +386,17 @@ If the C<$input_filename_or_reference> parameter is a filehandle, the input
 data will be read from it.  The string '-' can be used as an alias for
 standard input.
 
-=item A scalar reference 
+=item A scalar reference
 
 If C<$input_filename_or_reference> is a scalar reference, the input data
 will be read from C<$$input_filename_or_reference>.
 
-=item An array reference 
+=item An array reference
 
 If C<$input_filename_or_reference> is an array reference, each element in
 the array must be a filename.
 
-The input data will be read from each file in turn. 
+The input data will be read from each file in turn.
 
 The complete array will be walked to ensure that it only
 contains valid filenames before any data is uncompressed.
@@ -364,8 +404,8 @@ contains valid filenames before any data is uncompressed.
 =item An Input FileGlob string
 
 If C<$input_filename_or_reference> is a string that is delimited by the
-characters "<" and ">" C<anyuncompress> will assume that it is an 
-I<input fileglob string>. The input is the list of files that match the 
+characters "<" and ">" C<anyuncompress> will assume that it is an
+I<input fileglob string>. The input is the list of files that match the
 fileglob.
 
 See L<File::GlobMapper|File::GlobMapper> for more details.
@@ -386,7 +426,7 @@ these forms.
 =item A filename
 
 If the C<$output_filename_or_reference> parameter is a simple scalar, it is
-assumed to be a filename.  This file will be opened for writing and the 
+assumed to be a filename.  This file will be opened for writing and the
 uncompressed data will be written to it.
 
 =item A filehandle
@@ -395,14 +435,14 @@ If the C<$output_filename_or_reference> parameter is a filehandle, the
 uncompressed data will be written to it.  The string '-' can be used as
 an alias for standard output.
 
-=item A scalar reference 
+=item A scalar reference
 
 If C<$output_filename_or_reference> is a scalar reference, the
 uncompressed data will be stored in C<$$output_filename_or_reference>.
 
 =item An Array Reference
 
-If C<$output_filename_or_reference> is an array reference, 
+If C<$output_filename_or_reference> is an array reference,
 the uncompressed data will be pushed onto the array.
 
 =item An Output FileGlob
@@ -441,7 +481,7 @@ L</"Constructor Options"> section below.
 
 =item C<< AutoClose => 0|1 >>
 
-This option applies to any input or output data streams to 
+This option applies to any input or output data streams to
 C<anyuncompress> that are filehandles.
 
 If C<AutoClose> is specified, and the value is true, it will result in all
@@ -452,10 +492,7 @@ This parameter defaults to 0.
 
 =item C<< BinModeOut => 0|1 >>
 
-When writing to a file or filehandle, set C<binmode> before writing to the
-file.
-
-Defaults to 0.
+This option is now a no-op. All files will be written  in binmode.
 
 =item C<< Append => 0|1 >>
 
@@ -484,7 +521,7 @@ written to it.  Otherwise the file pointer will not be moved.
 
 =back
 
-When C<Append> is specified, and set to true, it will I<append> all uncompressed 
+When C<Append> is specified, and set to true, it will I<append> all uncompressed
 data to the output data stream.
 
 So when the output is a filehandle it will carry out a seek to the eof
@@ -512,7 +549,7 @@ Defaults to 0.
 =item C<< TrailingData => $scalar >>
 
 Returns the data, if any, that is present immediately after the compressed
-data stream once uncompression is complete. 
+data stream once uncompression is complete.
 
 This option can be used when there is useful information immediately
 following the compressed data stream, and you don't know the length of the
@@ -524,7 +561,7 @@ end of the compressed data stream to the end of the buffer.
 If the input is a filehandle, C<trailingData> will return the data that is
 left in the filehandle input buffer once the end of the compressed data
 stream has been reached. You can then use the filehandle to read the rest
-of the input file. 
+of the input file.
 
 Don't bother using C<trailingData> if the input is a filename.
 
@@ -559,7 +596,7 @@ uncompressed data to a buffer, C<$buffer>.
     my $input = new IO::File "<file1.txt.Compressed"
         or die "Cannot open 'file1.txt.Compressed': $!\n" ;
     my $buffer ;
-    anyuncompress $input => \$buffer 
+    anyuncompress $input => \$buffer
         or die "anyuncompress failed: $AnyUncompressError\n";
 
 To uncompress all files in the directory "/my/home" that match "*.txt.Compressed" and store the compressed data in the same directory
@@ -581,7 +618,7 @@ and if you want to compress each file one at a time, this will do the trick
     {
         my $output = $input;
         $output =~ s/.Compressed// ;
-        anyuncompress $input => $output 
+        anyuncompress $input => $output
             or die "Error compressing '$input': $AnyUncompressError\n";
     }
 
@@ -622,7 +659,7 @@ If the C<$input> parameter is a filehandle, the compressed data will be
 read from it.
 The string '-' can be used as an alias for standard input.
 
-=item A scalar reference 
+=item A scalar reference
 
 If C<$input> is a scalar reference, the compressed data will be read from
 C<$$input>.
@@ -697,7 +734,7 @@ When present this option will limit the number of compressed bytes read
 from the input file/buffer to C<$size>. This option can be used in the
 situation where there is useful data directly after the compressed data
 stream and you know beforehand the exact length of the compressed data
-stream. 
+stream.
 
 This option is mostly used when reading from a filehandle, in which case
 the file pointer will be left pointing to the first byte directly after the
@@ -728,7 +765,7 @@ The default for this option is off.
 =item C<< RawInflate => 0|1 >>
 
 When auto-detecting the compressed format, try to test for raw-deflate (RFC
-1951) content using the C<IO::Uncompress::RawInflate> module. 
+1951) content using the C<IO::Uncompress::RawInflate> module.
 
 The reason this is not default behaviour is because RFC 1951 content can
 only be detected by attempting to uncompress it. This process is error
@@ -739,7 +776,7 @@ Defaults to 0.
 =item C<< UnLzma => 0|1 >>
 
 When auto-detecting the compressed format, try to test for lzma_alone
-content using the C<IO::Uncompress::UnLzma> module. 
+content using the C<IO::Uncompress::UnLzma> module.
 
 The reason this is not default behaviour is because lzma_alone content can
 only be detected by attempting to uncompress it. This process is error
@@ -753,7 +790,7 @@ Defaults to 0.
 
 TODO
 
-=head1 Methods 
+=head1 Methods
 
 =head2 read
 
@@ -797,16 +834,16 @@ Usage is
     $line = $z->getline()
     $line = <$z>
 
-Reads a single line. 
+Reads a single line.
 
 This method fully supports the use of the variable C<$/> (or
 C<$INPUT_RECORD_SEPARATOR> or C<$RS> when C<English> is in use) to
 determine what constitutes an end of line. Paragraph mode, record mode and
-file slurp mode are all supported. 
+file slurp mode are all supported.
 
 =head2 getc
 
-Usage is 
+Usage is
 
     $char = $z->getc()
 
@@ -881,7 +918,7 @@ This is a noop provided for completeness.
 
     $z->opened()
 
-Returns true if the object currently refers to a opened file/buffer. 
+Returns true if the object currently refers to a opened file/buffer.
 
 =head2 autoflush
 
@@ -928,7 +965,7 @@ C<undef>.
     $z->close() ;
     close $z ;
 
-Closes the output file/buffer. 
+Closes the output file/buffer.
 
 For most versions of Perl this method will be automatically invoked if
 the IO::Uncompress::AnyUncompress object is destroyed (either explicitly or by the
@@ -982,7 +1019,7 @@ end of the compressed data stream to the end of the buffer.
 If the input is a filehandle, C<trailingData> will return the data that is
 left in the filehandle input buffer once the end of the compressed data
 stream has been reached. You can then use the filehandle to read the rest
-of the input file. 
+of the input file.
 
 Don't bother using C<trailingData> if the input is a filename.
 
@@ -990,9 +1027,9 @@ If you know the length of the compressed data stream before you start
 uncompressing, you can avoid having to use C<trailingData> by setting the
 C<InputLength> option in the constructor.
 
-=head1 Importing 
+=head1 Importing
 
-No symbolic constants are required by this IO::Uncompress::AnyUncompress at present. 
+No symbolic constants are required by this IO::Uncompress::AnyUncompress at present.
 
 =over 5
 
@@ -1009,7 +1046,7 @@ Same as doing this
 
 =head1 SEE ALSO
 
-L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Uncompress::AnyInflate>
+L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzip>, L<IO::Uncompress::UnLzip>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Compress::Zstd>, L<IO::Uncompress::UnZstd>, L<IO::Uncompress::AnyInflate>
 
 L<IO::Compress::FAQ|IO::Compress::FAQ>
 
@@ -1019,7 +1056,7 @@ L<IO::Zlib|IO::Zlib>
 
 =head1 AUTHOR
 
-This module was written by Paul Marquess, C<pmqs@cpan.org>. 
+This module was written by Paul Marquess, C<pmqs@cpan.org>.
 
 =head1 MODIFICATION HISTORY
 
@@ -1027,7 +1064,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2017 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2019 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

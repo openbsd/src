@@ -410,7 +410,6 @@ d_clearenv=''
 d_closedir=''
 d_void_closedir=''
 d_cmsghdr_s=''
-d_const=''
 d_copysign=''
 d_copysignl=''
 d_cplusplus=''
@@ -763,7 +762,9 @@ d_sethostent_r=''
 sethostent_r_proto=''
 d_setitimer=''
 d_setlinebuf=''
+d_has_C_UTF8=''
 d_setlocale=''
+d_setlocale_accepts_any_locale_name=''
 d_setlocale_r=''
 setlocale_r_proto=''
 d_setnent=''
@@ -905,6 +906,8 @@ clocktype=''
 d_times=''
 d_tmpnam_r=''
 tmpnam_r_proto=''
+d_towlower=''
+d_towupper=''
 d_trunc=''
 d_truncate=''
 d_truncl=''
@@ -1073,6 +1076,7 @@ i_ustat=''
 i_utime=''
 i_vfork=''
 i_wchar=''
+i_wctype=''
 d_inc_version_list=''
 inc_version_list=''
 inc_version_list_init=''
@@ -3499,6 +3503,9 @@ EOM
 			;;
 		MiNT)	osname=mint
 			;;
+		minix)	osname=minix
+			osvers=`$uname -r`
+			;;
 		netbsd*) osname=netbsd
 			osvers="$3"
 			;;
@@ -5476,25 +5483,6 @@ default|recommended)
 		eval $checkccflag
 		;;
 	esac
-	case "$gccversion" in
-	1*) ;;
-	2*) ;;
-	?*) 	echo " "
-		echo "Checking if your compiler accepts -fno-delete-null-pointer-checks" 2>&1
-		echo 'int main(void) { return 0; }' > gcctest.c
-		if $cc -O2 -fno-delete-null-pointer-checks -o gcctest gcctest.c; then
-			echo "Yes, it does." 2>&1
-			case "$ccflags" in
-			*delete-null-pointer-checks*)
-				echo "Leaving current flags $ccflags alone." 2>&1
-				;;
-			*) dflt="$dflt -fno-delete-null-pointer-checks" ;;
-			esac
-		else
-			echo "Nope, it doesn't, but that's ok." 2>&1
-		fi
-		;;
-	esac
 	# For gcc, adding -pipe speeds up compilations for some, but apparently
 	# some assemblers can't read from stdin.  (It also slows down compilations
 	# in other cases, but those are apparently rarer these days.)  AD 5/2004.
@@ -5802,7 +5790,7 @@ $cc -o ${mc_file} $optimize $ccflags $ldflags $* ${mc_file}.c $libs > /dev/null 
 compile_ok='
 mc_file=$1;
 shift;
-$cc -o ${mc_file} $optimize $ccflags $ldflags $* ${mc_file}.c $libs;'
+$cc -o ${mc_file} $optimize $ccflags $ldflags $* ${mc_file}.c $libs > /dev/null 2>&1;'
 
 : stub, used only to satisfy other units
 i_stdlib='define'
@@ -8822,7 +8810,7 @@ if "$useshrplib"; then
 	solaris)
 		xxx="-R $shrpdir"
 		;;
-	freebsd|mirbsd|netbsd|openbsd|interix|dragonfly|bitrig)
+	freebsd|minix|mirbsd|netbsd|openbsd|interix|dragonfly|bitrig)
 		xxx="-Wl,-R$shrpdir"
 		;;
 	bsdos|linux|irix*|dec_osf|gnu*|haiku)
@@ -12070,27 +12058,6 @@ case "$d_cmsghdr_s" in
 "$define")      echo "Yes, it does."   ;;
 *)              echo "No, it doesn't." ;;
 esac
-
-: check for const keyword
-echo " "
-echo 'Checking to see if your C compiler knows about "const"...' >&4
-$cat >const.c <<'EOCP'
-typedef struct spug { int drokk; } spug;
-int main()
-{
-	const char *foo;
-	const spug y = { 0 };
-}
-EOCP
-if $cc -c $ccflags const.c >/dev/null 2>&1 ; then
-	val="$define"
-	echo "Yup, it does."
-else
-	val="$undef"
-	echo "Nope, it doesn't."
-fi
-set d_const
-eval $setvar
 
 : see if copysign exists
 set copysign d_copysign
@@ -17822,13 +17789,187 @@ eval $inlibc
 set setlinebuf d_setlinebuf
 eval $inlibc
 
-: see if setlocale exists
-set setlocale d_setlocale
-eval $inlibc
-
 : see if locale.h is available
 set locale.h i_locale
 eval $inhdr
+
+: see if this system has wctype.h
+set wctype.h i_wctype
+eval $inhdr
+
+: see if towupper exists
+set towupper d_towupper
+eval $inlibc
+
+: check for setlocale function and behavior
+$cat <<EOM
+
+Checking to see if you have setlocale() and its behavior
+EOM
+$cat >try.c <<EOCP
+#include <stdlib.h>
+#include <string.h>
+#$i_locale I_LOCALE
+#ifdef I_LOCALE
+#  include <locale.h>
+#endif
+#$i_wctype I_WCTYPE
+#ifdef I_WCTYPE
+#  include <wctype.h>
+#endif
+
+int main() {
+    const char * invalid_name = "\a";   /* This is really invalid! */
+    int accepts_any_locale_name = 0;
+    int has_C_UTF8 = 0;
+    unsigned char bad_setlocale = 255;
+
+    /* If LC_CTYPE isn't defined the compilation will fail, and locales will be
+     * disabled.  It's hard to imagine an instance where meaningful locale
+     * handling could be done without LC_CTYPE */
+    const char *  name = setlocale(LC_CTYPE, "C");
+
+    if (name == NULL || strcmp(name, "C") != 0) {
+        exit(bad_setlocale);
+    }
+
+    name = setlocale(LC_CTYPE, invalid_name);
+    if (name != NULL) {
+
+        /* Let it pass if it accepts the name but gives back one of the C
+         * locales */
+        if (strcmp(name, "C") != 0 && strcmp(name, "C.UTF-8") != 0) {
+            accepts_any_locale_name = 1;
+        }
+    }
+
+    name = setlocale(LC_CTYPE, "C.UTF-8");
+    if (name != NULL) {
+        unsigned char y_with_diaeresis = ('A' == 193) ? 0xDF : 0xFF;
+
+#$d_towupper HAS_TOWUPPER
+#ifdef HAS_TOWUPPER
+
+        /* We assume that if the machine doesn't have the C99 towupper, it
+         * doesn't have C.UTF-8, even if we successfully changed locales to
+         * include it.  This seems safer even on platforms that didn't accept
+         * the really invalid name */
+
+        if (towupper(y_with_diaeresis) == 0x178) {
+            has_C_UTF8 = 1;
+        }
+
+#endif
+
+    }
+
+#if 0
+
+    /* Currently unused code to determine if LC_ALL with disparate values uses
+     * category = value pairs or positional, and to determine the separator
+     * between the categories.  We could add code so that if the separator were
+     * > '9', we subtract 10; similarly for 'Z' and 'z', and then just about
+     * every possible ASCII separator would fit in the 5 bits available in the
+     * exit code.  This would not be true in EBCDIC.  And then if LC_ALL is
+     * positional, we probably would want to know the order of the categories.
+     * Using a file between the C program and the shell script would really be
+     * require to do that */
+#ifdef LC_ALL
+
+    unsigned char min_separator = ' ' - 1;
+    unsigned char separator = min_separator;
+    int uses_name_value_pair_names = 0;
+
+    name = setlocale(LC_ALL, "C");
+    if (name == NULL || strcmp(name, "C") != 0) {
+        exit(bad_setlocale);
+    }
+
+    if (has_C_UTF8) {
+        char * pos;
+
+        name = setlocale(LC_CTYPE, "C.UTF-8");
+        if (name == NULL) {
+            exit(bad_setlocale);
+        }
+        name = setlocale(LC_ALL, NULL);
+        if (name == NULL) {
+            exit(bad_setlocale);
+        }
+
+        pos = strstr(name, "LC_CTYPE" "=C.UTF-8");
+        if (pos != NULL) {
+            uses_name_value_pair_names = 1;
+            if (pos == name) {
+                separator = name[sizeof("LC_CTYPE=C.UTF-8") - 1];
+            }
+            else {
+                separator = *(pos - 1);
+            }
+        }
+        else {
+            pos = strstr(name, "C.UTF-8");
+            if (pos == NULL) {
+                /* bad */
+            }
+            else if (pos == name) {
+                separator = name[sizeof("C.UTF-8") - 1];
+            }
+            else {
+                separator = *(pos - 1);
+            }
+        }
+    }
+
+#endif
+#endif
+
+    exit( 0 /* (separator - min_separator) << 3
+        | uses_name_value_pair_names      << 2
+          */
+        | has_C_UTF8                      << 1
+        | accepts_any_locale_name);
+
+}
+EOCP
+set try
+if eval $compile; then
+    echo "Your system has setlocale()..." >&4
+    $run ./try
+    case $? in
+        0) echo "and it seems sane" >&4
+           d_setlocale="$define"
+           d_setlocale_accepts_any_locale_name="$undef"
+           d_has_C_UTF8="false"
+           ;;
+        1) echo "and it seems sane, but accepts any locale name as valid" >&4
+           d_setlocale="$define"
+           d_setlocale_accepts_any_locale_name="$define"
+           d_has_C_UTF8="false"
+           ;;
+        2) echo "and it seems sane" >&4
+           d_setlocale="$define"
+           d_setlocale_accepts_any_locale_name="$undef"
+           d_has_C_UTF8="true"
+           ;;
+        3) echo "and it seems sane, but accepts any locale name as valid" >&4
+           d_setlocale="$define"
+           d_setlocale_accepts_any_locale_name="$define"
+           d_has_C_UTF8="true"
+           ;;
+        *) echo "but it doesn't seem to work, so we won't use it." >&4
+           d_setlocale="$undef"
+           d_setlocale_accepts_any_locale_name="$undef"
+           d_has_C_UTF8="false"
+           ;;
+    esac
+else
+    echo "your system does not have setlocale()" >&4
+    d_setlocale="$undef"
+    d_setlocale_accepts_any_locale_name="$undef"
+    d_has_C_UTF8="false"
+fi
+$rm_try
 
 : see if setlocale_r exists
 set setlocale_r d_setlocale_r
@@ -19385,6 +19526,10 @@ case "$d_tmpnam_r" in
 	;;
 esac
 
+: see if towlower exists
+set towlower d_towlower
+eval $inlibc
+
 : see if trunc exists
 set trunc d_trunc
 eval $inlibc
@@ -19941,10 +20086,6 @@ $define)
 	echo " "
 	echo "Checking Berkeley DB version ..." >&4
 	$cat >try.c <<EOCP
-#$d_const HASCONST
-#ifndef HASCONST
-#define const
-#endif
 #include <sys/types.h>
 #include <stdio.h>
 #$i_stdlib I_STDLIB
@@ -20035,16 +20176,13 @@ define)
 	echo " "
 	echo "Checking return type needed for hash for Berkeley DB ..." >&4
 	$cat >try.c <<EOCP
-#$d_const HASCONST
-#ifndef HASCONST
-#define const
-#endif
 #include <sys/types.h>
 #include <db.h>
 
 #ifndef DB_VERSION_MAJOR
 u_int32_t hash_cb (const void* ptr, size_t size)
 {
+	return 0;
 }
 HASHINFO info;
 int main()
@@ -20078,16 +20216,13 @@ define)
 	echo " "
 	echo "Checking return type needed for prefix for Berkeley DB ..." >&4
 	cat >try.c <<EOCP
-#$d_const HASCONST
-#ifndef HASCONST
-#define const
-#endif
 #include <sys/types.h>
 #include <db.h>
 
 #ifndef DB_VERSION_MAJOR
 size_t prefix_cb (const DBT *key1, const DBT *key2)
 {
+	return 0;
 }
 BTREEINFO info;
 int main()
@@ -20439,9 +20574,9 @@ case "$ccflags" in
 	;;
 esac
 
-randfunc=drand48
-drand01="drand48()"
-seedfunc="srand48"
+randfunc=Perl_drand48
+drand01="Perl_drand48()"
+seedfunc="Perl_drand48_init"
 randbits=48
 randseedtype=U32
 
@@ -23045,7 +23180,7 @@ fi
 
 : add -D_FORTIFY_SOURCE if feasible and not already there
 case "$gccversion" in
-[4567].*)	case "$optimize$ccflags" in
+[456789].*)	case "$optimize$ccflags" in
 	*-O*)	case "$ccflags$cppsymbols" in
 		*_FORTIFY_SOURCE=*) # Don't add it again.
 			echo "You seem to have -D_FORTIFY_SOURCE already, not adding it." >&4
@@ -23292,7 +23427,6 @@ xs_extensions=''
 find_extensions='
     for xxx in *; do
 	case "$xxx" in
-	    CVS) ;;
 	    DynaLoader|dynaload) ;;
 	    *)
 	    this_ext=`echo "$xxx" | $sed -e s/-/\\\//g`;
@@ -23530,8 +23664,6 @@ esac
 nonxs_ext=''
 for xxx in $nonxs_extensions ; do
 	case "$xxx" in
-	CVS|RCS|SCCS|.svn)
-		;;
 	VMS*)
 		;;
 	*)	nonxs_ext="$nonxs_ext $xxx"
@@ -23929,7 +24061,6 @@ d_class='$d_class'
 d_clearenv='$d_clearenv'
 d_closedir='$d_closedir'
 d_cmsghdr_s='$d_cmsghdr_s'
-d_const='$d_const'
 d_copysign='$d_copysign'
 d_copysignl='$d_copysignl'
 d_cplusplus='$d_cplusplus'
@@ -24092,6 +24223,7 @@ d_gmtime64='$d_gmtime64'
 d_gmtime_r='$d_gmtime_r'
 d_gnulibc='$d_gnulibc'
 d_grpasswd='$d_grpasswd'
+d_has_C_UTF8='$d_has_C_UTF8'
 d_hasmntopt='$d_hasmntopt'
 d_htonl='$d_htonl'
 d_hypot='$d_hypot'
@@ -24279,6 +24411,7 @@ d_sethostent_r='$d_sethostent_r'
 d_setitimer='$d_setitimer'
 d_setlinebuf='$d_setlinebuf'
 d_setlocale='$d_setlocale'
+d_setlocale_accepts_any_locale_name='$d_setlocale_accepts_any_locale_name'
 d_setlocale_r='$d_setlocale_r'
 d_setnent='$d_setnent'
 d_setnetent_r='$d_setnetent_r'
@@ -24386,6 +24519,8 @@ d_times='$d_times'
 d_tm_tm_gmtoff='$d_tm_tm_gmtoff'
 d_tm_tm_zone='$d_tm_tm_zone'
 d_tmpnam_r='$d_tmpnam_r'
+d_towlower='$d_towlower'
+d_towupper='$d_towupper'
 d_trunc='$d_trunc'
 d_truncate='$d_truncate'
 d_truncl='$d_truncl'
@@ -24605,6 +24740,7 @@ i_ustat='$i_ustat'
 i_utime='$i_utime'
 i_vfork='$i_vfork'
 i_wchar='$i_wchar'
+i_wctype='$i_wctype'
 i_xlocale='$i_xlocale'
 ignore_versioned_solibs='$ignore_versioned_solibs'
 inc_version_list='$inc_version_list'

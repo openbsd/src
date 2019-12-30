@@ -120,15 +120,11 @@ SKIP: {
 
     SKIP: {
         skip "hard links not that hard in $^O", 1 if $^O eq 'amigaos';
-	skip "no mode checks", 1 if $skip_mode_checks;
+        skip "no mode checks", 1 if $skip_mode_checks;
 
-#      if ($^O eq 'cygwin') { # new files on cygwin get rwx instead of rw-
-#          is($mode & 0777, 0777, "mode of triply-linked file");
-#      } else {
-            is(sprintf("0%o", $mode & 0777), 
-               sprintf("0%o", $a_mode & 0777), 
-               "mode of triply-linked file");
-#      }
+        is(sprintf("0%o", $mode & 0777),
+            sprintf("0%o", $a_mode & 0777),
+            "mode of triply-linked file");
     }
 }
 
@@ -197,7 +193,7 @@ SKIP: {
     }
     is(chmod($newmode, "a"), 1, "fchmod");
     $mode = (stat $fh)[2];
-    SKIP: { 
+    SKIP: {
         skip "no mode checks", 1 if $skip_mode_checks;
         is($mode & 0777, $newmode, "perm restored");
     }
@@ -247,86 +243,31 @@ is($ino, undef, "ino of renamed file a should be undef");
 $delta = $accurate_timestamps ? 1 : 2;	# Granularity of time on the filesystem
 chmod 0777, 'b';
 
-$foo = (utime 500000000,500000000 + $delta,'b');
+$ut = 500000000;
+
+note("basic check of atime and mtime");
+$foo = (utime $ut,$ut + $delta,'b');
 is($foo, 1, "utime");
-check_utime_result();
+check_utime_result($ut, $accurate_timestamps, $delta);
 
 utime undef, undef, 'b';
 ($atime,$mtime) = (stat 'b')[8,9];
-print "# utime undef, undef --> $atime, $mtime\n";
-isnt($atime, 500000000, 'atime');
-isnt($mtime, 500000000 + $delta, 'mtime');
+note("# utime undef, undef --> $atime, $mtime");
+isnt($atime, $ut,          'atime: utime called with two undefs');
+isnt($mtime, $ut + $delta, 'mtime: utime called with two undefs');
 
 SKIP: {
     skip "no futimes", 6 unless ($Config{d_futimes} || "") eq "define";
+    note("check futimes");
     open(my $fh, "<", 'b');
-    $foo = (utime 500000000,500000000 + $delta, $fh);
+    $foo = (utime $ut,$ut + $delta, $fh);
     is($foo, 1, "futime");
-    check_utime_result();
+    check_utime_result($ut, $accurate_timestamps, $delta);
     # [perl #122703]
     close $fh;
-    ok(!utime(500000000,500000000 + $delta, $fh),
+    ok(!utime($ut,$ut + $delta, $fh),
        "utime fails on a closed file handle");
     isnt($!+0, 0, "and errno was set");
-}
-
-
-sub check_utime_result {
-    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-     $blksize,$blocks) = stat('b');
-
- SKIP: {
-	skip "bogus inode num", 1 if ($^O eq 'MSWin32') || ($^O eq 'NetWare');
-
-	ok($ino,    'non-zero inode num');
-    }
-
- SKIP: {
-	skip "filesystem atime/mtime granularity too low", 2
-	    unless $accurate_timestamps;
-
-     if ($^O eq 'vos') {
-	    skip ("# TODO - hit VOS bug posix-2055 - access time does not follow POSIX rules for an open file.", 2);
-     }
-
-	print "# atime - $atime  mtime - $mtime  delta - $delta\n";
-	if($atime == 500000000 && $mtime == 500000000 + $delta) {
-	    pass('atime');
-	    pass('mtime');
-	}
-	else {
-	    if ($^O =~ /\blinux\b/i) {
-		print "# Maybe stat() cannot get the correct atime, ".
-		    "as happens via NFS on linux?\n";
-		$foo = (utime 400000000,500000000 + 2*$delta,'b');
-		my ($new_atime, $new_mtime) = (stat('b'))[8,9];
-		print "# newatime - $new_atime  nemtime - $new_mtime\n";
-		if ($new_atime == $atime && $new_mtime - $mtime == $delta) {
-		    pass("atime - accounted for possible NFS/glibc2.2 bug on linux");
-		    pass("mtime - accounted for possible NFS/glibc2.2 bug on linux");
-		}
-		else {
-		    fail("atime - $atime/$new_atime $mtime/$new_mtime");
-		    fail("mtime - $atime/$new_atime $mtime/$new_mtime");
-		}
-	    }
-	    elsif ($^O eq 'VMS') {
-		# why is this 1 second off?
-		is( $atime, 500000001,          'atime' );
-		is( $mtime, 500000000 + $delta, 'mtime' );
-	    }
-	    elsif ($^O eq 'haiku') {
-            SKIP: {
-		    skip "atime not updated", 1;
-		}
-		is($mtime, 500000001, 'mtime');
-	    }
-	    else {
-		fail("atime");
-		fail("mtime");
-	    }
-	}
-    }
 }
 
 SKIP: {
@@ -532,3 +473,62 @@ SKIP: {
 
 # need to remove $tmpdir if rename() in test 28 failed!
 END { rmdir $tmpdir1; rmdir $tmpdir; }
+
+sub check_utime_result {
+    ($ut, $accurate_timestamps, $delta) = @_;
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('b');
+
+    SKIP: {
+        skip "bogus inode num", 1 if ($^O eq 'MSWin32') || ($^O eq 'NetWare');
+        ok($ino,    'non-zero inode num');
+    }
+
+    SKIP: {
+        skip "filesystem atime/mtime granularity too low", 2
+            unless $accurate_timestamps;
+
+        if ($^O eq 'vos') {
+            skip ("# TODO - hit VOS bug posix-2055 - access time does not follow POSIX rules for an open file.", 2);
+        }
+
+        note("# atime - $atime  mtime - $mtime  delta - $delta");
+        if($atime == $ut && $mtime == $ut + $delta) {
+            pass('atime: granularity test');
+            pass('mtime: granularity test');
+        }
+        else {
+            # Operating systems whose filesystems may be mounted with the noatime option
+            # RT 132663
+            my %noatime_oses = map { $_ => 1 } ( qw| haiku netbsd | );
+            if ($^O =~ /\blinux\b/i) {
+                note("# Maybe stat() cannot get the correct atime, ".
+                    "as happens via NFS on linux?");
+                $foo = (utime 400000000,$ut + 2*$delta,'b');
+                my ($new_atime, $new_mtime) = (stat('b'))[8,9];
+                note("# newatime - $new_atime  nemtime - $new_mtime");
+                if ($new_atime == $atime && $new_mtime - $mtime == $delta) {
+                    pass("atime - accounted for possible NFS/glibc2.2 bug on linux");
+                    pass("mtime - accounted for possible NFS/glibc2.2 bug on linux");
+                }
+                else {
+                    fail("atime - $atime/$new_atime $mtime/$new_mtime");
+                    fail("mtime - $atime/$new_atime $mtime/$new_mtime");
+                }
+            }
+            elsif ($^O eq 'VMS') {
+                # why is this 1 second off?
+                is( $atime, $ut + 1,      'atime: VMS' );
+                is( $mtime, $ut + $delta, 'mtime: VMS' );
+            }
+            elsif ($noatime_oses{$^O}) {
+                pass("atime not updated");
+                is($mtime, 500000001, 'mtime');
+            }
+            else {
+                fail("atime: default case");
+                fail("mtime: default case");
+            }
+        } # END failed atime mtime 'else' block
+    } # END granularity SKIP block
+}

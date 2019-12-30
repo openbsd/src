@@ -453,6 +453,8 @@ jesse                                   jesse\100bestpractical.com
 +                                       jesse\100fsck.com
 +                                       jesse\100perl.org
 merijn                                  h.m.brand\100xs4all.nl
++                                       h.m.brand\100procura.nl
++                                       merijn.brand\100procura.nl
 +                                       h.m.brand\100hccnet.nl
 +                                       merijn\100l1.procura.nl
 +                                       merijn\100a5.(none)
@@ -527,6 +529,7 @@ allen\100huarp.harvard.edu              nort\100bottesini.harvard.edu
 +                                       nort\100qnx.com
 allens\100cpan.org                      easmith\100beatrice.rutgers.edu
 +                                       root\100dogberry.rutgers.edu
+ambs\100cpan.org                        hashashin\100gmail.com
 andreas.koenig\100anima.de              andreas.koenig.gmwojprw\100franz.ak.mind.de
 +                                       andreas.koenig.7os6vvqr\100franz.ak.mind.de
 +                                       a.koenig\100mind.de
@@ -610,6 +613,7 @@ dev-perl\100pimb.org                    knew-p5p\100pimb.org
 +                                       lists-p5p\100pimb.org
 djberg86\100attbi.com                   djberg96\100attbi.com
 dk\100tetsuo.karasik.eu.org             dmitry\100karasik.eu.org
+dom\100earth.li                         dom\100semmle.com
 domo\100computer.org                    shouldbedomo\100mac.com
 +                                       domo\100slipper.ip.lu
 +                                       domo\100tcp.ip.lu
@@ -901,6 +905,8 @@ simon\100simon-cozens.org               simon\100pembro4.pmb.ox.ac.uk
 +                                       simon\100othersideofthe.earth.li
 +                                       simon\100cozens.net
 +                                       simon\100netthink.co.uk
+sisyphus\100cpan.org                    sisyphus1\100optusnet.com.au
++                                       sisyphus359\100gmail.com
 lannings\100who.int                     lannings\100gmail.com
 +                                       slanning\100cpan.org
 slaven\100rezic.de                      slaven.rezic\100berlin.de
@@ -931,7 +937,6 @@ stef\100mongueurs.net                   stef\100payrard.net
 stevan\100cpan.org                      stevan.little\100gmail.com
 +                                       stevan.little\100iinteractive.com
 sthoenna\100efn.org                     ysth\100raven.shiftboard.com
-sisyphus1\100optusnet.com.au            sisyphus\100cpan.org
 
 tassilo.parseval\100post.rwth-aachen.de tassilo.von.parseval\100rwth-aachen.de
 tchrist\100perl.com                     tchrist\100mox.perl.com

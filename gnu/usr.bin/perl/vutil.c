@@ -571,6 +571,11 @@ Perl_upg_version2(pTHX_ SV *ver, bool qv)
 Perl_upg_version(pTHX_ SV *ver, bool qv)
 #endif
 {
+
+#ifdef dVAR
+    dVAR;
+#endif
+
     const char *version, *s;
 #ifdef SvVOK
     const MAGIC *mg;
@@ -609,11 +614,7 @@ VER_NV:
 
 	/* may get too much accuracy */ 
 	char tbuf[64];
-#ifdef __vax__
-	SV *sv = SvNVX(ver) > 10e37 ? newSV(64) : 0;
-#else
 	SV *sv = SvNVX(ver) > 10e50 ? newSV(64) : 0;
-#endif
 	char *buf;
 
 #if PERL_VERSION_GE(5,19,0)

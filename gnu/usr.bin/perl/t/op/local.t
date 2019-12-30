@@ -609,8 +609,8 @@ while (/(o.+?),/gc) {
     sub STORE { die "write \$_ forbidden" }
     tie $_, __PACKAGE__;
     my @tests = (
-	"Nesting"     => sub { print '#'; for (1..3) { print }
-			       print "\n" },			1,
+	"Nesting"     => sub { my $x = '#'; for (1..3) { $x .= $_ }
+			       print "$x\n" },			1,
 	"Reading"     => sub { print },				0,
 	"Matching"    => sub { $x = /badness/ },		0,
 	"Concat"      => sub { $_ .= "a" },			0,

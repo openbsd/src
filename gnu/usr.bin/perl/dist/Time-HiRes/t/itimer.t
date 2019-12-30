@@ -51,7 +51,9 @@ ok(defined $virt && abs($virt / 0.5) - 1 < $limit,
 printf("# getitimer: %s\n", join(" ",
        Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL)));
 
-while (Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL)) {
+# burn CPU until the VTALRM signal handler sets the repeat interval to
+# zero, indicating that the timer has fired 4 times.
+while ((Time::HiRes::getitimer(&Time::HiRes::ITIMER_VIRTUAL))[1]) {
     my $j;
     for (1..1000) { $j++ } # Can't be unbreakable, must test getitimer().
 }

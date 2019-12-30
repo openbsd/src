@@ -50,7 +50,7 @@
 %token <opval> BAREWORD METHOD FUNCMETH THING PMFUNC PRIVATEREF QWLIST
 %token <opval> FUNC0OP FUNC0SUB UNIOPSUB LSTOPSUB
 %token <opval> PLUGEXPR PLUGSTMT
-%token <pval> LABEL
+%token <opval> LABEL
 %token <ival> FORMAT SUB SIGSUB ANONSUB ANON_SIGSUB PACKAGE USE
 %token <ival> WHILE UNTIL IF UNLESS ELSE ELSIF CONTINUE FOR
 %token <ival> GIVEN WHEN DEFAULT
@@ -253,11 +253,17 @@ fullstmt:	barestmt
 
 labfullstmt:	LABEL barestmt
 			{
-			  $$ = newSTATEOP(SVf_UTF8 * $1[strlen($1)+1], $1, $2);
+                          SV *label = cSVOPx_sv($1);
+			  $$ = newSTATEOP(SvFLAGS(label) & SVf_UTF8,
+                                            savepv(SvPVX_const(label)), $2);
+                          op_free($1);
 			}
 	|	LABEL labfullstmt
 			{
-			  $$ = newSTATEOP(SVf_UTF8 * $1[strlen($1)+1], $1, $2);
+                          SV *label = cSVOPx_sv($1);
+			  $$ = newSTATEOP(SvFLAGS(label) & SVf_UTF8,
+                                            savepv(SvPVX_const(label)), $2);
+                          op_free($1);
 			}
 	;
 

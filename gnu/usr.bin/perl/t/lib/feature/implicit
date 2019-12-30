@@ -73,38 +73,6 @@ yes
 evalbytes sub
 say sub
 ########
-# No $[ under 5.15
-# SKIP ? not defined DynaLoader::boot_DynaLoader
-use v5.14;
-no warnings 'deprecated';
-$[ = 1;
-print qw[a b c][2], "\n";
-use v5.15;
-print qw[a b c][2], "\n";
-EXPECT
-b
-c
-########
-# $[ under < 5.10
-# SKIP ? not defined DynaLoader::boot_DynaLoader
-use feature 'say'; # make sure it is loaded and modifies %^H; we are test-
-use v5.8.8;        # ing to make sure it does not disable $[
-no warnings 'deprecated';
-$[ = 1;
-print qw[a b c][2], "\n";
-EXPECT
-b
-########
-# $[ under < 5.10 after use v5.15
-# SKIP ? not defined DynaLoader::boot_DynaLoader
-use v5.15;
-use v5.8.8;
-no warnings 'deprecated';
-$[ = 1;
-print qw[a b c][2], "\n";
-EXPECT
-b
-########
 # Implicit unicode_string feature
 use v5.14;
 my $sharp_s = chr utf8::unicode_to_native(0xdf);

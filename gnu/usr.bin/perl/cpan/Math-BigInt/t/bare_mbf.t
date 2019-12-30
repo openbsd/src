@@ -3,14 +3,14 @@
 use strict;
 use warnings;
 
-use Test::More tests => 2482;
+use Test::More tests => 2818;
 
 use lib 't';
 
 use Math::BigFloat lib => 'BareCalc';
 
-our ($CLASS, $CALC);
+our ($CLASS, $LIB);
 $CLASS = "Math::BigFloat";
-$CALC  = "Math::BigInt::BareCalc";      # backend
+$LIB   = "Math::BigInt::BareCalc";      # backend
 
-require 't/bigfltpm.inc';	        # all tests here for sharing
+require './t/bigfltpm.inc';             # all tests here for sharing

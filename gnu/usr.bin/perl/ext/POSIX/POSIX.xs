@@ -64,6 +64,13 @@ static int not_here(const char *s);
 # include <sys/resource.h>
 #endif
 
+/* Cygwin's stdio.h doesn't make cuserid() visible with -D_GNU_SOURCE,
+   unlike Linux.
+*/
+#ifdef __CYGWIN__
+# undef HAS_CUSERID
+#endif
+
 #if defined(USE_QUADMATH) && defined(I_QUADMATH)
 
 #  undef M_E
@@ -565,7 +572,7 @@ static int not_here(const char *s);
 #  undef c99_trunc
 #endif
 
-#ifdef WIN32
+#ifdef _MSC_VER
 
 /* Some APIs exist under Win32 with "underbar" names. */
 #  undef c99_hypot
@@ -2416,7 +2423,7 @@ acos(x)
 #endif
 	    break;
 	case 17:
-	    RETVAL = log10(x); /* C89 math */
+	    RETVAL = Perl_log10(x); /* C89 math */
 	    break;
 	case 18:
 #ifdef c99_log1p
@@ -2828,6 +2835,10 @@ NV
 ldexp(x,exp)
 	NV		x
 	int		exp
+    CODE:
+        RETVAL = Perl_ldexp(x, exp);
+    OUTPUT:
+        RETVAL
 
 void
 modf(x)
@@ -3318,10 +3329,15 @@ mblen(s, n)
 #endif
     CODE:
 #if defined(USE_ITHREADS) && defined(HAS_MBRLEN)
-        PERL_UNUSED_RESULT(mbrlen(NULL, 0, &ps));   /* Initialize state */
+        memset(&ps, 0, sizeof(ps)); /* Initialize state */
         RETVAL = mbrlen(s, n, &ps); /* Prefer reentrant version */
 #else
+        /* This might prevent some races, but locales can be switched out
+         * without locking, so this isn't a cure all */
+        LOCALE_LOCK;
+
         RETVAL = mblen(s, n);
+        LOCALE_UNLOCK;
 #endif
     OUTPUT:
         RETVAL
@@ -3421,7 +3437,7 @@ strtol(str, base = 0)
 	long num;
 	char *unparsed;
     PPCODE:
-	if (base == 0 || (base >= 2 && base <= 36)) {
+	if (base == 0 || inRANGE(base, 2, 36)) {
             num = strtol(str, &unparsed, base);
 #if IVSIZE < LONGSIZE
             if (num < IV_MIN || num > IV_MAX)
@@ -3455,7 +3471,7 @@ strtoul(str, base = 0)
     PPCODE:
 	PERL_UNUSED_VAR(str);
 	PERL_UNUSED_VAR(base);
-	if (base == 0 || (base >= 2 && base <= 36)) {
+	if (base == 0 || inRANGE(base, 2, 36)) {
             num = strtoul(str, &unparsed, base);
 #if IVSIZE <= LONGSIZE
             if (num > IV_MAX)
@@ -3658,7 +3674,8 @@ strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
 #else   /* If can't check directly, at least can see if script is consistent,
            under UTF-8, which gives us an extra measure of confidence. */
 
-                        && isSCRIPT_RUN((const U8 *) buf, buf + len,
+                        && isSCRIPT_RUN((const U8 *) buf,
+                                        (const U8 *) buf + len,
                                         TRUE) /* Means assume UTF-8 */
 #endif
                 )) {

@@ -1,21 +1,17 @@
 #!/usr/bin/perl
 # binary search maximum stack depth for arrays and hashes
-# and store it in lib/Storable/Limit.pm
+# and report it to stdout as code to set the limits
 
 use Config;
 use Cwd;
 use File::Spec;
 use strict;
 
--d "lib" or mkdir "lib";
--d "lib/Storable" or mkdir "lib/Storable";
-
-my $fn = "lib/Storable/Limit.pm";
 my $ptrsize = $Config{ptrsize};
 my ($bad1, $bad2) = (65001, 25000);
 sub QUIET () {
     (defined $ENV{MAKEFLAGS} and $ENV{MAKEFLAGS} =~ /\b(s|silent|quiet)\b/
-     and !defined($ENV{TRAVIS}))
+     and !defined($ENV{TRAVIS})) || @ARGV && $ARGV[0] eq "-q"
       ? 1 : 0
 }
 sub PARALLEL () {
@@ -32,11 +28,7 @@ sub is_miniperl {
 }
 
 if (is_miniperl()) {
-    if ($Config{usecrosscompile}) {
-        write_limits(500, 265);
-        exit;
-    }
-    die "Should not run during miniperl\n";
+    die "Should not run using miniperl\n";
 }
 my $prefix = "";
 if ($^O eq "MSWin32") {
@@ -51,58 +43,28 @@ elsif (system("ulimit -c 0 ;") == 0) {
     # try to prevent core dumps
     $prefix = "ulimit -c 0 ; ";
 }
-if (@ARGV and $ARGV[0] eq '--core') {
-    $ENV{PERL_CORE} = 1;
-}
 my $PERL = $^X;
-if ($ENV{PERL_CORE}) {
-    my $path;
-    my $ldlib = $Config{ldlibpthname};
-    if (-d 'dist/Storable') {
-        chdir 'dist/Storable';
-        $PERL = "../../$PERL" unless $PERL =~ m|^/|;
-    }
-    if ($ldlib) {
-        $path = getcwd()."/../..";
-    }
-    if ($^O eq 'MSWin32' and -d '../dist/Storable') {
-        chdir '..\dist\Storable';
-        $PERL = "..\\..\\$PERL" unless $PERL =~ /^[A-Za-z]:\\/;
-    }
-    $PERL = "\"$PERL\"" if $PERL =~ / /;
-    if ($ldlib and $ldlib ne 'PATH') {
-        $PERL = "$ldlib=$path $PERL";
-    }
-}
-
 if ($^O eq "MSWin32") {
     require Win32;
     my ($str, $major, $minor) = Win32::GetOSVersion();
     if ($major < 6 || $major == 6 && $minor < 1) {
-	print "Using defaults for older Win32\n";
+	print "# Using defaults for older Win32\n";
 	write_limits(500, 256);
 	exit;
     }
 }
 my ($n, $good, $bad, $found) =
     (65000, 100, $bad1, undef);
-print "probe for max. stack sizes...\n" unless QUIET;
+print "# probe for max. stack sizes...\n" unless QUIET;
 # -I. since we're run before pm_to_blib (which is going to copy the
 # file we create) and need to load our Storable.pm, not the already
 # installed Storable.pm
-my $mblib = '-Mblib -I.';
-if ($ENV{PERL_CORE}) {
-    if ($^O eq 'MSWin32') {
-        $mblib = '-I..\..\lib\auto -I..\..\lib';
-    } else {
-        $mblib = '-I../../lib/auto -I../../lib';
-    }
+my $mblib = '';
+if (-d 'blib') {
+    $mblib = '-Mblib -I.';
 }
-if (PARALLEL) {
-    # problem with parallel builds. wait for INST_DYNAMIC linking to be done.
-    # the problem is the RM_F INST_DYNAMIC race.
-    print "parallel build race - wait for linker ...\n" unless QUIET;
-    sleep(2.0);
+elsif (-f "Configure") {
+    $mblib = '-Ilib';
 }
 
 sub cmd {
@@ -117,7 +79,7 @@ sub cmd {
 sub good {
     my $i = shift; # this passed
     my $j = $i + abs(int(($bad - $i) / 2));
-    print "Storable: determining recursion limit: $i passed, try more $j ...\n" unless QUIET;
+    print "# Storable: determining recursion limit: $i passed, try more $j ...\n" unless QUIET;
     $good = $i;
     if ($j <= $i) {
         $found++;
@@ -128,7 +90,7 @@ sub good {
 sub bad {
     my $i = shift; # this failed
     my $j = $i - abs(int(($i - $good) / 2));
-    print "Storable: determining recursion limit: $i too big, try less $j ...\n" unless QUIET;
+    print "# Storable: determining recursion limit: $i too big, try less $j ...\n" unless QUIET;
     $bad = $i;
     if ($j >= $i) {
         $j = $good;
@@ -162,7 +124,7 @@ while (!$found) {
         $n = bad($n);
     }
 }
-print "MAX_DEPTH = $n\n" unless QUIET;
+print "# MAX_DEPTH = $n\n" unless QUIET;
 my $max_depth = $n;
 
 ($n, $good, $bad, $found) =
@@ -186,13 +148,13 @@ if ($max_depth == $bad1-1
     and $n == $bad2-1)
 {
     # more likely the shell. travis docker ubuntu, mingw e.g.
-    print "Error: Apparently your system(SHELLSTRING) cannot catch stack overflows\n"
+    print "# Apparently your system(SHELLSTRING) cannot catch stack overflows\n"
       unless QUIET;
     $max_depth = 512;
     $n = 256;
     print "MAX_DEPTH = $max_depth\n" unless QUIET;
 }
-print "MAX_DEPTH_HASH = $n\n" unless QUIET;
+print "# MAX_DEPTH_HASH = $n\n" unless QUIET;
 my $max_depth_hash = $n;
 
 # Previously this calculation was done in the macro, calculate it here
@@ -203,7 +165,7 @@ my $max_depth_hash = $n;
 # several apparently random failures here, eg. working in one
 # configuration, but not in a very similar configuration.
 $max_depth = int(0.6 * $max_depth);
-$max_depth_hash = int(0.6 * $max_depth);
+$max_depth_hash = int(0.6 * $max_depth_hash);
 
 my $stack_reserve = $^O eq "MSWin32" ? 32 : 16;
 if ($] ge "5.016" && !($^O eq "cygwin" && $ptrsize == 8)) {
@@ -221,16 +183,11 @@ write_limits($max_depth, $max_depth_hash);
 
 sub write_limits {
     my ($max_depth, $max_depth_hash) = @_;
-    my $f;
-    open $f, ">", $fn or die "$fn $!";
-    print $f <<EOS;
+    print <<EOS;
 # bisected by stacksize
 \$Storable::recursion_limit = $max_depth
   unless defined \$Storable::recursion_limit;
 \$Storable::recursion_limit_hash = $max_depth_hash
   unless defined \$Storable::recursion_limit_hash;
-1;
 EOS
-    close $f
-      or die "Failed to close $fn: $!\n";
 }

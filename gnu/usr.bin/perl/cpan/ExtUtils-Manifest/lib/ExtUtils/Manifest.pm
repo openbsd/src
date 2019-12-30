@@ -1,4 +1,4 @@
-package ExtUtils::Manifest;
+package ExtUtils::Manifest; # git description: 1.71-18-g17b7919
 
 require Exporter;
 use Config;
@@ -10,7 +10,7 @@ use Carp;
 use strict;
 use warnings;
 
-our $VERSION = '1.70';
+our $VERSION = '1.72';
 our @ISA = ('Exporter');
 our @EXPORT_OK = qw(mkmanifest
                 manicheck  filecheck  fullcheck  skipcheck
@@ -61,11 +61,11 @@ our $DEFAULT_MSKIP = File::Spec->catfile( dirname(__FILE__), "$MANIFEST.SKIP" );
 
 =head1 NAME
 
-ExtUtils::Manifest - utilities to write and check a MANIFEST file
+ExtUtils::Manifest - Utilities to write and check a MANIFEST file
 
 =head1 VERSION
 
-version 1.70
+version 1.72
 
 =head1 SYNOPSIS
 
@@ -89,14 +89,14 @@ version 1.70
 
 =head1 DESCRIPTION
 
-=head2 Functions
+...
+
+=head1 FUNCTIONS
 
 ExtUtils::Manifest exports no functions by default.  The following are
-exported on request
+exported on request:
 
-=over 4
-
-=item mkmanifest
+=head2 mkmanifest
 
     mkmanifest();
 
@@ -175,7 +175,7 @@ sub clean_up_filename {
 }
 
 
-=item manifind
+=head2 manifind
 
     my $found = manifind();
 
@@ -206,7 +206,7 @@ sub manifind {
 }
 
 
-=item manicheck
+=head2 manicheck
 
     my @missing_files = manicheck();
 
@@ -224,7 +224,7 @@ sub manicheck {
 }
 
 
-=item filecheck
+=head2 filecheck
 
     my @extra_files = filecheck();
 
@@ -242,7 +242,7 @@ sub filecheck {
 }
 
 
-=item fullcheck
+=head2 fullcheck
 
     my($missing, $extra) = fullcheck();
 
@@ -256,7 +256,7 @@ sub fullcheck {
 }
 
 
-=item skipcheck
+=head2 skipcheck
 
     my @skipped = skipcheck();
 
@@ -328,7 +328,7 @@ sub _check_manifest {
 }
 
 
-=item maniread
+=head2 maniread
 
     my $manifest = maniread();
     my $manifest = maniread($manifest_file);
@@ -395,7 +395,7 @@ sub maniread {
     $read;
 }
 
-=item maniskip
+=head2 maniskip
 
     my $skipchk = maniskip();
     my $skipchk = maniskip($manifest_skip_file);
@@ -512,7 +512,7 @@ sub _include_mskip_file {
     return @lines;
 }
 
-=item manicopy
+=head2 manicopy
 
     manicopy(\%src, $dest_dir);
     manicopy(\%src, $dest_dir, $how);
@@ -677,7 +677,7 @@ sub _unmacify {
 }
 
 
-=item maniadd
+=head2 maniadd
 
   maniadd({ $file => $comment, ...});
 
@@ -694,7 +694,7 @@ sub maniadd {
     _fix_manifest($MANIFEST);
 
     my $manifest = maniread();
-    my @needed = grep { !exists $manifest->{$_} } keys %$additions;
+    my @needed = grep !exists $manifest->{$_}, keys %$additions;
     return 1 unless @needed;
 
     open(MANIFEST, ">>$MANIFEST") or
@@ -754,9 +754,6 @@ sub _fix_manifest {
 sub _normalize {
     return;
 }
-
-
-=back
 
 =head2 MANIFEST
 

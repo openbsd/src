@@ -132,6 +132,7 @@ Perl_safesysmalloc(MEM_SIZE size)
     dTHX;
 #endif
     Malloc_t ptr;
+    dSAVEDERRNO;
 
 #ifdef USE_MDH
     if (size + PERL_MEMORY_DEBUG_HEADER_SIZE < size)
@@ -143,6 +144,7 @@ Perl_safesysmalloc(MEM_SIZE size)
 	Perl_croak_nocontext("panic: malloc, size=%" UVuf, (UV) size);
 #endif
     if (!size) size = 1;	/* malloc(0) is NASTY on our system */
+    SAVE_ERRNO;
 #ifdef PERL_DEBUG_READONLY_COW
     if ((ptr = mmap(0, size, PROT_READ|PROT_WRITE,
 		    MAP_ANON|MAP_PRIVATE, -1, 0)) == MAP_FAILED) {
@@ -182,6 +184,11 @@ Perl_safesysmalloc(MEM_SIZE size)
 	ptr = (Malloc_t)((char*)ptr+PERL_MEMORY_DEBUG_HEADER_SIZE);
 	DEBUG_m(PerlIO_printf(Perl_debug_log, "0x%" UVxf ": (%05ld) malloc %ld bytes\n",PTR2UV(ptr),(long)PL_an++,(long)size));
 
+        /* malloc() can modify errno() even on success, but since someone
+	   writing perl code doesn't have any control over when perl calls
+	   malloc() we need to hide that.
+	*/
+        RESTORE_ERRNO;
     }
     else {
 #ifdef USE_MDH
@@ -223,6 +230,7 @@ Perl_safesysrealloc(Malloc_t where,MEM_SIZE size)
 	ptr = safesysmalloc(size);
     }
     else {
+        dSAVE_ERRNO;
 #ifdef USE_MDH
 	where = (Malloc_t)((char*)where-PERL_MEMORY_DEBUG_HEADER_SIZE);
         if (size + PERL_MEMORY_DEBUG_HEADER_SIZE < size)
@@ -296,6 +304,12 @@ Perl_safesysrealloc(Malloc_t where,MEM_SIZE size)
 	    maybe_protect_ro(header->prev);
 #endif
 	    ptr = (Malloc_t)((char*)ptr+PERL_MEMORY_DEBUG_HEADER_SIZE);
+
+	    /* realloc() can modify errno() even on success, but since someone
+	       writing perl code doesn't have any control over when perl calls
+	       realloc() we need to hide that.
+	    */
+	    RESTORE_ERRNO;
 	}
 
     /* In particular, must do that fixup above before logging anything via
@@ -439,7 +453,7 @@ Perl_safesyscalloc(MEM_SIZE count, MEM_SIZE size)
 	ptr = (Malloc_t)PerlMem_calloc(count ? count : 1, size ? size : 1);
 #endif
     PERL_ALLOC_CHECK(ptr);
-    DEBUG_m(PerlIO_printf(Perl_debug_log, "0x%" UVxf ": (%05ld) calloc %ld x %ld bytes\n",PTR2UV(ptr),(long)PL_an++,(long)count,(long)total_size));
+    DEBUG_m(PerlIO_printf(Perl_debug_log, "0x%" UVxf ": (%05ld) calloc %zu x %zu = %zu bytes\n",PTR2UV(ptr),(long)PL_an++, count, size, total_size));
     if (ptr != NULL) {
 #ifdef USE_MDH
 	{
@@ -1527,6 +1541,7 @@ S_with_queued_errors(pTHX_ SV *ex)
 STATIC bool
 S_invoke_exception_hook(pTHX_ SV *ex, bool warn)
 {
+    dVAR;
     HV *stash;
     GV *gv;
     CV *cv;
@@ -1534,7 +1549,7 @@ S_invoke_exception_hook(pTHX_ SV *ex, bool warn)
     /* sv_2cv might call Perl_croak() or Perl_warner() */
     SV * const oldhook = *hook;
 
-    if (!oldhook)
+    if (!oldhook || oldhook == PERL_WARNHOOK_FATAL)
 	return FALSE;
 
     ENTER;
@@ -1578,13 +1593,8 @@ The function never actually returns.
 =cut
 */
 
-#ifdef _MSC_VER
-#  pragma warning( push )
-#  pragma warning( disable : 4646 ) /* warning C4646: function declared with
-    __declspec(noreturn) has non-void return type */
-#  pragma warning( disable : 4645 ) /* warning C4645: function declared with
-__declspec(noreturn) has a return statement */
-#endif
+/* silence __declspec(noreturn) warnings */
+MSVC_DIAG_IGNORE(4646 4645)
 OP *
 Perl_die_sv(pTHX_ SV *baseex)
 {
@@ -1593,9 +1603,7 @@ Perl_die_sv(pTHX_ SV *baseex)
     /* NOTREACHED */
     NORETURN_FUNCTION_END;
 }
-#ifdef _MSC_VER
-#  pragma warning( pop )
-#endif
+MSVC_DIAG_RESTORE
 
 /*
 =for apidoc Am|OP *|die|const char *pat|...
@@ -1608,13 +1616,9 @@ The function never actually returns.
 */
 
 #if defined(PERL_IMPLICIT_CONTEXT)
-#ifdef _MSC_VER
-#  pragma warning( push )
-#  pragma warning( disable : 4646 ) /* warning C4646: function declared with
-    __declspec(noreturn) has non-void return type */
-#  pragma warning( disable : 4645 ) /* warning C4645: function declared with
-__declspec(noreturn) has a return statement */
-#endif
+
+/* silence __declspec(noreturn) warnings */
+MSVC_DIAG_IGNORE(4646 4645)
 OP *
 Perl_die_nocontext(const char* pat, ...)
 {
@@ -1626,18 +1630,12 @@ Perl_die_nocontext(const char* pat, ...)
     va_end(args);
     NORETURN_FUNCTION_END;
 }
-#ifdef _MSC_VER
-#  pragma warning( pop )
-#endif
+MSVC_DIAG_RESTORE
+
 #endif /* PERL_IMPLICIT_CONTEXT */
 
-#ifdef _MSC_VER
-#  pragma warning( push )
-#  pragma warning( disable : 4646 ) /* warning C4646: function declared with
-    __declspec(noreturn) has non-void return type */
-#  pragma warning( disable : 4645 ) /* warning C4645: function declared with
-__declspec(noreturn) has a return statement */
-#endif
+/* silence __declspec(noreturn) warnings */
+MSVC_DIAG_IGNORE(4646 4645)
 OP *
 Perl_die(pTHX_ const char* pat, ...)
 {
@@ -1648,9 +1646,7 @@ Perl_die(pTHX_ const char* pat, ...)
     va_end(args);
     NORETURN_FUNCTION_END;
 }
-#ifdef _MSC_VER
-#  pragma warning( pop )
-#endif
+MSVC_DIAG_RESTORE
 
 /*
 =for apidoc Am|void|croak_sv|SV *baseex
@@ -2060,12 +2056,24 @@ Perl_new_warnings_bitfield(pTHX_ STRLEN *buffer, const char *const bits,
    Copy(val, s+(nlen+1), vlen, char); \
    *(s+(nlen+1+vlen)) = '\0'
 
+
+
 #ifdef USE_ENVIRON_ARRAY
+/* NB: VMS' my_setenv() is in vms.c */
+
+/* Configure doesn't test for HAS_SETENV yet, so decide based on platform.
+ * For Solaris, setenv() and unsetenv() were introduced in Solaris 9, so
+ * testing for HAS UNSETENV is sufficient.
+ */
+#  if defined(__CYGWIN__)|| defined(__SYMBIAN32__) || defined(__riscos__) || (defined(__sun) && defined(HAS_UNSETENV)) || defined(PERL_DARWIN)
+#    define MY_HAS_SETENV
+#  endif
 
 /* small wrapper for use by Perl_my_setenv that mallocs, or reallocs if
  * 'current' is non-null, with up to three sizes that are added together.
  * It handles integer overflow.
  */
+#  ifndef MY_HAS_SETENV
 static char *
 S_env_alloc(void *current, Size_t l1, Size_t l2, Size_t l3, Size_t size)
 {
@@ -2090,24 +2098,26 @@ S_env_alloc(void *current, Size_t l1, Size_t l2, Size_t l3, Size_t size)
   panic:
     croak_memory_wrap();
 }
+#  endif
 
 
-/* VMS' my_setenv() is in vms.c */
-#if !defined(WIN32) && !defined(NETWARE)
+#  if !defined(WIN32) && !defined(NETWARE)
 
 void
 Perl_my_setenv(pTHX_ const char *nam, const char *val)
 {
   dVAR;
-#ifdef __amigaos4__
+#    ifdef __amigaos4__
   amigaos4_obtain_environ(__FUNCTION__);
-#endif
-#ifdef USE_ITHREADS
+#    endif
+
+#    ifdef USE_ITHREADS
   /* only parent thread can modify process environment */
   if (PL_curinterp == aTHX)
-#endif
+#    endif
   {
-#ifndef PERL_USE_SAFE_PUTENV
+
+#    ifndef PERL_USE_SAFE_PUTENV
     if (!PL_use_safe_putenv) {
         /* most putenv()s leak, so we manipulate environ directly */
         UV i;
@@ -2126,28 +2136,33 @@ Perl_my_setenv(pTHX_ const char *nam, const char *val)
             max = i;
             while (environ[max])
                 max++;
+
             /* XXX shouldn't that be max+1 rather than max+2 ??? - DAPM */
             tmpenv = (char**)S_env_alloc(NULL, max, 2, 0, sizeof(char*));
+
             for (j=0; j<max; j++) {         /* copy environment */
                 const Size_t len = strlen(environ[j]);
                 tmpenv[j] = S_env_alloc(NULL, len, 1, 0, 1);
                 Copy(environ[j], tmpenv[j], len+1, char);
             }
+
             tmpenv[max] = NULL;
             environ = tmpenv;               /* tell exec where it is now */
         }
+
         if (!val) {
             safesysfree(environ[i]);
             while (environ[i]) {
                 environ[i] = environ[i+1];
                 i++;
             }
-#ifdef __amigaos4__
+#      ifdef __amigaos4__
             goto my_setenv_out;
-#else
+#      else
             return;
-#endif
+#      endif
         }
+
         if (!environ[i]) {                 /* does not exist yet */
             environ = (char**)S_env_alloc(environ, i, 2, 0, sizeof(char*));
             environ[i+1] = NULL;    /* make sure it's null terminated */
@@ -2160,23 +2175,24 @@ Perl_my_setenv(pTHX_ const char *nam, const char *val)
         environ[i] = S_env_alloc(NULL, nlen, vlen, 2, 1);
         /* all that work just for this */
         my_setenv_format(environ[i], nam, nlen, val, vlen);
-    } else {
-# endif
-    /* This next branch should only be called #if defined(HAS_SETENV), but
-       Configure doesn't test for that yet.  For Solaris, setenv() and unsetenv()
-       were introduced in Solaris 9, so testing for HAS UNSETENV is sufficient.
-    */
-#   if defined(__CYGWIN__)|| defined(__SYMBIAN32__) || defined(__riscos__) || (defined(__sun) && defined(HAS_UNSETENV)) || defined(PERL_DARWIN)
-#       if defined(HAS_UNSETENV)
+    }
+    else {
+
+#    endif /* !PERL_USE_SAFE_PUTENV */
+
+#    ifdef MY_HAS_SETENV
+#      if defined(HAS_UNSETENV)
         if (val == NULL) {
             (void)unsetenv(nam);
         } else {
             (void)setenv(nam, val, 1);
         }
-#       else /* ! HAS_UNSETENV */
+#      else /* ! HAS_UNSETENV */
         (void)setenv(nam, val, 1);
-#       endif /* HAS_UNSETENV */
-#   elif defined(HAS_UNSETENV)
+#      endif /* HAS_UNSETENV */
+
+#    elif defined(HAS_UNSETENV)
+
         if (val == NULL) {
             if (environ) /* old glibc can crash with null environ */
                 (void)unsetenv(nam);
@@ -2187,7 +2203,9 @@ Perl_my_setenv(pTHX_ const char *nam, const char *val)
             my_setenv_format(new_env, nam, nlen, val, vlen);
             (void)putenv(new_env);
         }
-#   else /* ! HAS_UNSETENV */
+
+#    else /* ! HAS_UNSETENV */
+
         char *new_env;
 	const Size_t nlen = strlen(nam);
 	Size_t vlen;
@@ -2199,18 +2217,21 @@ Perl_my_setenv(pTHX_ const char *nam, const char *val)
         /* all that work just for this */
         my_setenv_format(new_env, nam, nlen, val, vlen);
         (void)putenv(new_env);
-#   endif /* __CYGWIN__ */
-#ifndef PERL_USE_SAFE_PUTENV
+
+#    endif /* MY_HAS_SETENV */
+
+#    ifndef PERL_USE_SAFE_PUTENV
     }
-#endif
+#    endif
   }
-#ifdef __amigaos4__
+
+#    ifdef __amigaos4__
 my_setenv_out:
   amigaos4_release_environ(__FUNCTION__);
-#endif
+#    endif
 }
 
-#else /* WIN32 || NETWARE */
+#  else /* WIN32 || NETWARE */
 
 void
 Perl_my_setenv(pTHX_ const char *nam, const char *val)
@@ -2230,9 +2251,12 @@ Perl_my_setenv(pTHX_ const char *nam, const char *val)
     Safefree(envstr);
 }
 
-#endif /* WIN32 || NETWARE */
+#  endif /* WIN32 || NETWARE */
 
-#endif /* !VMS */
+#endif /* USE_ENVIRON_ARRAY */
+
+
+
 
 #ifdef UNLINK_ALL_VERSIONS
 I32
@@ -4354,7 +4378,7 @@ Perl_parse_unicode_opts(pTHX_ const char **popt)
 
   if (*p) {
        if (isDIGIT(*p)) {
-            const char* endptr;
+            const char* endptr = p + strlen(p);
             UV uv;
             if (grok_atoUV(p, &uv, &endptr) && uv <= U32_MAX) {
                 opt = (U32)uv;
@@ -4425,9 +4449,6 @@ Perl_parse_unicode_opts(pTHX_ const char **popt)
 U32
 Perl_seed(pTHX)
 {
-#if defined(__OpenBSD__)
-	return arc4random();
-#else
     /*
      * This is really just a quick hack which grabs various garbage
      * values.  It really should be a real hash algorithm which
@@ -4496,7 +4517,6 @@ Perl_seed(pTHX)
     u += SEED_C5 * (U32)PTR2UV(&when);
 #endif
     return u;
-#endif
 }
 
 void
@@ -4745,7 +4765,7 @@ S_mem_log_common(enum mem_log_type mlt, const UV n,
 	 * timeval. */
 	{
 	    STRLEN len;
-            const char* endptr;
+            const char* endptr = pmlenv + strlen(pmlenv);
 	    int fd;
             UV uv;
             if (grok_atoUV(pmlenv, &uv, &endptr) /* Ignore endptr. */
@@ -5179,50 +5199,12 @@ Perl_my_clearenv(pTHX)
 
 #ifdef PERL_IMPLICIT_CONTEXT
 
-/* Implements the MY_CXT_INIT macro. The first time a module is loaded,
-the global PL_my_cxt_index is incremented, and that value is assigned to
-that module's static my_cxt_index (who's address is passed as an arg).
-Then, for each interpreter this function is called for, it makes sure a
-void* slot is available to hang the static data off, by allocating or
-extending the interpreter's PL_my_cxt_list array */
 
-#ifndef PERL_GLOBAL_STRUCT_PRIVATE
-void *
-Perl_my_cxt_init(pTHX_ int *index, size_t size)
-{
-    dVAR;
-    void *p;
-    PERL_ARGS_ASSERT_MY_CXT_INIT;
-    if (*index == -1) {
-	/* this module hasn't been allocated an index yet */
-	MUTEX_LOCK(&PL_my_ctx_mutex);
-	*index = PL_my_cxt_index++;
-	MUTEX_UNLOCK(&PL_my_ctx_mutex);
-    }
-    
-    /* make sure the array is big enough */
-    if (PL_my_cxt_size <= *index) {
-	if (PL_my_cxt_size) {
-            IV new_size = PL_my_cxt_size;
-	    while (new_size <= *index)
-		new_size *= 2;
-	    Renew(PL_my_cxt_list, new_size, void *);
-            PL_my_cxt_size = new_size;
-	}
-	else {
-	    PL_my_cxt_size = 16;
-	    Newx(PL_my_cxt_list, PL_my_cxt_size, void *);
-	}
-    }
-    /* newSV() allocates one more than needed */
-    p = (void*)SvPVX(newSV(size-1));
-    PL_my_cxt_list[*index] = p;
-    Zero(p, size, char);
-    return p;
-}
+#  ifdef PERL_GLOBAL_STRUCT_PRIVATE
 
-#else /* #ifndef PERL_GLOBAL_STRUCT_PRIVATE */
-
+/* rather than each module having a static var holding its index,
+ * use a global array of name to index mappings
+ */
 int
 Perl_my_cxt_index(pTHX_ const char *my_cxt_key)
 {
@@ -5241,9 +5223,22 @@ Perl_my_cxt_index(pTHX_ const char *my_cxt_key)
     }
     return -1;
 }
+#  endif
+
+
+/* Implements the MY_CXT_INIT macro. The first time a module is loaded,
+the global PL_my_cxt_index is incremented, and that value is assigned to
+that module's static my_cxt_index (who's address is passed as an arg).
+Then, for each interpreter this function is called for, it makes sure a
+void* slot is available to hang the static data off, by allocating or
+extending the interpreter's PL_my_cxt_list array */
 
 void *
+#  ifdef PERL_GLOBAL_STRUCT_PRIVATE
 Perl_my_cxt_init(pTHX_ const char *my_cxt_key, size_t size)
+#  else
+Perl_my_cxt_init(pTHX_ int *indexp, size_t size)
+#  endif
 {
     dVAR;
     void *p;
@@ -5251,44 +5246,81 @@ Perl_my_cxt_init(pTHX_ const char *my_cxt_key, size_t size)
 
     PERL_ARGS_ASSERT_MY_CXT_INIT;
 
+#  ifdef PERL_GLOBAL_STRUCT_PRIVATE
     index = Perl_my_cxt_index(aTHX_ my_cxt_key);
+#  else
+    index = *indexp;
+#  endif
+    /* do initial check without locking.
+     * -1:    not allocated or another thread currently allocating
+     *  other: already allocated by another thread
+     */
     if (index == -1) {
-	/* this module hasn't been allocated an index yet */
 	MUTEX_LOCK(&PL_my_ctx_mutex);
-	index = PL_my_cxt_index++;
+        /*now a stricter check with locking */
+#  ifdef PERL_GLOBAL_STRUCT_PRIVATE
+        index = Perl_my_cxt_index(aTHX_ my_cxt_key);
+#  else
+        index = *indexp;
+#  endif
+        if (index == -1)
+            /* this module hasn't been allocated an index yet */
+#  ifdef PERL_GLOBAL_STRUCT_PRIVATE
+            index = PL_my_cxt_index++;
+
+        /* Store the index in a global MY_CXT_KEY string to index mapping
+         * table. This emulates the perl-module static my_cxt_index var on
+         * builds which don't allow static vars */
+        if (PL_my_cxt_keys_size <= index) {
+            int old_size = PL_my_cxt_keys_size;
+            int i;
+            if (PL_my_cxt_keys_size) {
+                IV new_size = PL_my_cxt_keys_size;
+                while (new_size <= index)
+                    new_size *= 2;
+                PL_my_cxt_keys = (const char **)PerlMemShared_realloc(
+                                        PL_my_cxt_keys,
+                                        new_size * sizeof(const char *));
+                PL_my_cxt_keys_size = new_size;
+            }
+            else {
+                PL_my_cxt_keys_size = 16;
+                PL_my_cxt_keys = (const char **)PerlMemShared_malloc(
+                            PL_my_cxt_keys_size * sizeof(const char *));
+            }
+            for (i = old_size; i < PL_my_cxt_keys_size; i++) {
+                PL_my_cxt_keys[i] = 0;
+            }
+        }
+        PL_my_cxt_keys[index] = my_cxt_key;
+#  else
+            *indexp = PL_my_cxt_index++;
+        index = *indexp;
+#  endif
 	MUTEX_UNLOCK(&PL_my_ctx_mutex);
     }
 
     /* make sure the array is big enough */
     if (PL_my_cxt_size <= index) {
-	int old_size = PL_my_cxt_size;
-	int i;
 	if (PL_my_cxt_size) {
             IV new_size = PL_my_cxt_size;
 	    while (new_size <= index)
 		new_size *= 2;
 	    Renew(PL_my_cxt_list, new_size, void *);
-	    Renew(PL_my_cxt_keys, new_size, const char *);
             PL_my_cxt_size = new_size;
 	}
 	else {
 	    PL_my_cxt_size = 16;
 	    Newx(PL_my_cxt_list, PL_my_cxt_size, void *);
-	    Newx(PL_my_cxt_keys, PL_my_cxt_size, const char *);
-	}
-	for (i = old_size; i < PL_my_cxt_size; i++) {
-	    PL_my_cxt_keys[i] = 0;
-	    PL_my_cxt_list[i] = 0;
 	}
     }
-    PL_my_cxt_keys[index] = my_cxt_key;
     /* newSV() allocates one more than needed */
     p = (void*)SvPVX(newSV(size-1));
     PL_my_cxt_list[index] = p;
     Zero(p, size, char);
     return p;
 }
-#endif /* #ifndef PERL_GLOBAL_STRUCT_PRIVATE */
+
 #endif /* PERL_IMPLICIT_CONTEXT */
 
 
@@ -6027,7 +6059,7 @@ static const char* atos_parse(const char* p,
      * The matched regular expression is roughly "\(.*:\d+\)\s*$" */
     const char* source_number_start;
     const char* source_name_end;
-    const char* source_line_end;
+    const char* source_line_end = start;
     const char* close_paren;
     UV uv;
 

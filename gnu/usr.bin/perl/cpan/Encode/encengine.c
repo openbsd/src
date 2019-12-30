@@ -24,7 +24,7 @@ The process can be considered as pseudo perl:
 my $dst = '';
 while (length($src))
  {
-  my $size    = $count($src);
+  my $size    = src_count($src);
   my $in_seq  = substr($src,0,$size,'');
   my $out_seq = $s2d_hash{$in_seq};
   if (defined $out_seq)
@@ -101,6 +101,8 @@ do_encode(const encpage_t * enc, const U8 * src, STRLEN * slen, U8 * dst,
     U8 *d = dst;
     U8 *dend = d + dlen, *dlast = d;
     int code = 0;
+    if (!dst)
+      return ENCODE_NOSPACE;
     while (s < send) {
         const encpage_t *e = enc;
         U8 byte = *s;

@@ -19,7 +19,7 @@ use Time::HiRes;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(pingecho);
 our @EXPORT_OK = qw(wakeonlan);
-our $VERSION = "2.62";
+our $VERSION = "2.71";
 
 # Globals
 
@@ -27,7 +27,7 @@ our $def_timeout = 5;           # Default timeout to wait for a reply
 our $def_proto = "tcp";         # Default protocol to use for pinging
 our $def_factor = 1.2;          # Default exponential backoff rate.
 our $def_family = AF_INET;      # Default family.
-our $max_datasize = 1024;       # Maximum data bytes in a packet
+our $max_datasize = 65535;      # Maximum data bytes. recommended: 1472 (Ethernet MTU: 1500)
 # The data we exchange with the server for the stream protocol
 our $pingstring = "pingschwingping!\n";
 our $source_verify = 1;         # Default is to verify source endpoint
@@ -40,9 +40,11 @@ my $AF_UNSPEC = eval { Socket::AF_UNSPEC() };
 my $AI_NUMERICHOST = eval { Socket::AI_NUMERICHOST() } || 4;
 my $NI_NUMERICHOST = eval { Socket::NI_NUMERICHOST() } || 2;
 my $IPPROTO_IPV6   = eval { Socket::IPPROTO_IPV6() }   || 41;
+my $NIx_NOSERV = eval { Socket::NIx_NOSERV() } || 2;
 #my $IPV6_HOPLIMIT  = eval { Socket::IPV6_HOPLIMIT() };  # ping6 -h 0-255
 my $qr_family = qr/^(?:(?:(:?ip)?v?(?:4|6))|${\AF_INET}|$AF_INET6)$/;
 my $qr_family4 = qr/^(?:(?:(:?ip)?v?4)|${\AF_INET})$/;
+my $Socket_VERSION = eval { $Socket::VERSION };
 
 if ($^O =~ /Win32/i) {
   # Hack to avoid this Win32 spewage:
@@ -130,7 +132,7 @@ sub new
     unless $proto =~ m/^(icmp|icmpv6|udp|tcp|syn|stream|external)$/;
   $self->{proto} = $proto;
 
-  $timeout = $def_timeout unless $timeout;    # Determine the timeout
+  $timeout = $def_timeout unless defined $timeout;    # Determine the timeout
   croak("Default timeout for ping must be greater than 0 seconds")
     if $timeout <= 0;
   $self->{timeout} = $timeout;
@@ -141,8 +143,8 @@ sub new
 
   if ($self->{'host'}) {
     my $host = $self->{'host'};
-    my $ip = _resolv($host)
-      or croak("could not resolve host $host");
+    my $ip = _resolv($host) or
+      carp("could not resolve host $host");
     $self->{host} = $ip;
     $self->{family} = $ip->{family};
   }
@@ -150,7 +152,7 @@ sub new
   if ($self->{bind}) {
     my $addr = $self->{bind};
     my $ip = _resolv($addr)
-      or croak("could not resolve local addr $addr");
+      or carp("could not resolve local addr $addr");
     $self->{local_addr} = $ip;
   } else {
     $self->{local_addr} = undef;              # Don't bind by default
@@ -173,11 +175,16 @@ sub new
       croak('Family must be "ipv4" or "ipv6"')
     }
   } else {
-    $self->{family} = $def_family;
+    if ($self->{proto} eq 'icmpv6') {
+      $self->{family} = $AF_INET6;
+    } else {
+      $self->{family} = $def_family;
+    }
   }
 
   $min_datasize = ($proto eq "udp") ? 1 : 0;  # Determine data size
   $data_size = $min_datasize unless defined($data_size) && $proto ne "tcp";
+  # allow for fragmented packets if data_size>1472 (MTU 1500)
   croak("Data for ping must be from $min_datasize to $max_datasize bytes")
     if ($data_size < $min_datasize) || ($data_size > $max_datasize);
   $data_size-- if $self->{proto} eq "udp";  # We provide the first byte
@@ -225,7 +232,7 @@ sub new
   }
   elsif ($self->{proto} eq "icmpv6")
   {
-    croak("icmpv6 ping requires root privilege") if !_isroot();
+    #croak("icmpv6 ping requires root privilege") if !_isroot();
     croak("Wrong family $self->{family} for icmpv6 protocol")
       if $self->{family} and $self->{family} != $AF_INET6;
     $self->{family} = $AF_INET6;
@@ -321,7 +328,7 @@ sub bind
     ($self->{proto} eq "udp" || $self->{proto} eq "icmp");
 
   $ip = $self->_resolv($local_addr);
-  croak("nonexistent local address $local_addr") unless defined($ip);
+  carp("nonexistent local address $local_addr") unless defined($ip);
   $self->{local_addr} = $ip;
 
   if (($self->{proto} ne "udp") && 
@@ -636,11 +643,32 @@ use constant ICMP_ECHO        => 8;
 use constant ICMPv6_ECHO      => 128;
 use constant ICMP_TIME_EXCEEDED => 11; # ICMP packet types
 use constant ICMP_PARAMETER_PROBLEM => 12; # ICMP packet types
+use constant ICMP_TIMESTAMP   => 13;
+use constant ICMP_TIMESTAMP_REPLY => 14;
 use constant ICMP_STRUCT      => "C2 n3 A"; # Structure of a minimal ICMP packet
+use constant ICMP_TIMESTAMP_STRUCT => "C2 n3 N3"; # Structure of a minimal timestamp ICMP packet
 use constant SUBCODE          => 0; # No ICMP subcode for ECHO and ECHOREPLY
 use constant ICMP_FLAGS       => 0; # No special flags for send or recv
 use constant ICMP_PORT        => 0; # No port with ICMP
 use constant IP_MTU_DISCOVER  => 10; # linux only
+
+sub message_type
+{
+  my ($self,
+      $type
+      ) = @_;
+
+  croak "Setting message type only supported on 'icmp' protocol"
+    unless $self->{proto} eq 'icmp';
+
+  return $self->{message_type} || 'echo'
+    unless defined($type);
+
+  croak "Supported icmp message type are limited to 'echo' and 'timestamp': '$type' not supported"
+    unless $type =~ /^echo|timestamp$/i;
+
+  $self->{message_type} = lc($type);
+}
 
 sub ping_icmp
 {
@@ -662,6 +690,7 @@ sub ping_icmp
       $from_saddr,        # sockaddr_in of sender
       $from_port,         # Port packet was sent from
       $from_ip,           # Packed IP of sender
+      $timestamp_msg,     # ICMP timestamp message type
       $from_type,         # ICMP type
       $from_subcode,      # ICMP subcode
       $from_chk,          # ICMP packet checksum
@@ -672,6 +701,7 @@ sub ping_icmp
 
   $ip = $self->{host} if !defined $ip and $self->{host};
   $timeout = $self->{timeout} if !defined $timeout and $self->{timeout};
+  $timestamp_msg = $self->{message_type} && $self->{message_type} eq 'timestamp' ? 1 : 0;
 
   socket($self->{fh}, $ip->{family}, SOCK_RAW, $self->{proto_num}) ||
     croak("icmp socket error - $!");
@@ -685,19 +715,29 @@ sub ping_icmp
   $self->{seq} = ($self->{seq} + 1) % 65536; # Increment sequence
   $checksum = 0;                          # No checksum for starters
   if ($ip->{family} == AF_INET) {
-    $msg = pack(ICMP_STRUCT . $self->{data_size}, ICMP_ECHO, SUBCODE,
-                $checksum, $self->{pid}, $self->{seq}, $self->{data});
+    if ($timestamp_msg) {
+      $msg = pack(ICMP_TIMESTAMP_STRUCT, ICMP_TIMESTAMP, SUBCODE,
+                  $checksum, $self->{pid}, $self->{seq}, 0, 0, 0);
+    } else {
+      $msg = pack(ICMP_STRUCT . $self->{data_size}, ICMP_ECHO, SUBCODE,
+                  $checksum, $self->{pid}, $self->{seq}, $self->{data});
+    }
   } else {
                                           # how to get SRC
-    my $pseudo_header = pack('a16a16Nnn', $ip->{addr_in}, $ip->{addr_in}, 8+length($self->{data}), "\0", 0x003a);
+    my $pseudo_header = pack('a16a16Nnn', $ip->{addr_in}, $ip->{addr_in}, 8+length($self->{data}), 0, 0x003a);
     $msg = pack(ICMP_STRUCT . $self->{data_size}, ICMPv6_ECHO, SUBCODE,
                 $checksum, $self->{pid}, $self->{seq}, $self->{data});
     $msg = $pseudo_header.$msg
   }
   $checksum = Net::Ping->checksum($msg);
   if ($ip->{family} == AF_INET) {
-    $msg = pack(ICMP_STRUCT . $self->{data_size}, ICMP_ECHO, SUBCODE,
-                $checksum, $self->{pid}, $self->{seq}, $self->{data});
+    if ($timestamp_msg) {
+      $msg = pack(ICMP_TIMESTAMP_STRUCT, ICMP_TIMESTAMP, SUBCODE,
+                  $checksum, $self->{pid}, $self->{seq}, 0, 0, 0);
+    } else {
+      $msg = pack(ICMP_STRUCT . $self->{data_size}, ICMP_ECHO, SUBCODE,
+                  $checksum, $self->{pid}, $self->{seq}, $self->{data});
+    }
   } else {
     $msg = pack(ICMP_STRUCT . $self->{data_size}, ICMPv6_ECHO, SUBCODE,
                 $checksum, $self->{pid}, $self->{seq}, $self->{data});
@@ -731,14 +771,29 @@ sub ping_icmp
       $from_saddr = recv($self->{fh}, $recv_msg, 1500, ICMP_FLAGS);
       ($from_port, $from_ip) = _unpack_sockaddr_in($from_saddr, $ip->{family});
       ($from_type, $from_subcode) = unpack("C2", substr($recv_msg, 20, 2));
-      if ($from_type == ICMP_ECHOREPLY) {
+      if ($from_type == ICMP_TIMESTAMP_REPLY) {
         ($from_pid, $from_seq) = unpack("n3", substr($recv_msg, 24, 4))
           if length $recv_msg >= 28;
+      } elsif ($from_type == ICMP_ECHOREPLY) {
+        #warn "ICMP_ECHOREPLY: ", $ip->{family}, " ",$recv_msg, ":", length($recv_msg);
+        ($from_pid, $from_seq) = unpack("n2", substr($recv_msg, 24, 4))
+          if ($ip->{family} == AF_INET && length $recv_msg == 28);
+        ($from_pid, $from_seq) = unpack("n2", substr($recv_msg, 4, 4))
+          if ($ip->{family} == $AF_INET6 && length $recv_msg == 8);
       } elsif ($from_type == ICMPv6_ECHOREPLY) {
-        ($from_pid, $from_seq) = unpack("n3", substr($recv_msg, 24, 4))
-          if length $recv_msg >= 28;
+        #($from_pid, $from_seq) = unpack("n3", substr($recv_msg, 24, 4))
+        #  if length $recv_msg >= 28;
+        #($from_pid, $from_seq) = unpack("n2", substr($recv_msg, 24, 4))
+        #  if ($ip->{family} == AF_INET && length $recv_msg == 28);
+        #warn "ICMPv6_ECHOREPLY: ", $ip->{family}, " ",$recv_msg, ":", length($recv_msg);
+        ($from_pid, $from_seq) = unpack("n2", substr($recv_msg, 4, 4))
+          if ($ip->{family} == $AF_INET6 && length $recv_msg == 8);
+      #} elsif ($from_type == ICMPv6_NI_REPLY) {
+      #  ($from_pid, $from_seq) = unpack("n2", substr($recv_msg, 4, 4))
+      #    if ($ip->{family} == $AF_INET6 && length $recv_msg == 8);
       } else {
-        ($from_pid, $from_seq) = unpack("n3", substr($recv_msg, 52, 4))
+        #warn "ICMP: ", $from_type, " ",$ip->{family}, " ",$recv_msg, ":", length($recv_msg);
+        ($from_pid, $from_seq) = unpack("n2", substr($recv_msg, 52, 4))
           if length $recv_msg >= 56;
       }
       $self->{from_ip} = $from_ip;
@@ -747,7 +802,10 @@ sub ping_icmp
       next if ($from_pid != $self->{pid});
       next if ($from_seq != $self->{seq});
       if (! $source_verify || ($self->ntop($from_ip) eq $self->ntop($ip))) { # Does the packet check out?
-        if (($from_type == ICMP_ECHOREPLY) || ($from_type == ICMPv6_ECHOREPLY)) {
+        if (!$timestamp_msg && (($from_type == ICMP_ECHOREPLY) || ($from_type == ICMPv6_ECHOREPLY))) {
+          $ret = 1;
+          $done = 1;
+        } elsif ($timestamp_msg && $from_type == ICMP_TIMESTAMP_REPLY) {
           $ret = 1;
           $done = 1;
         } elsif (($from_type == ICMP_UNREACHABLE) || ($from_type == ICMPv6_UNREACHABLE)) {
@@ -1130,13 +1188,14 @@ sub open
     $self->{family_local} = $self->{family};
   }
 
-  $ip = $self->_resolv($host);
   $timeout = $self->{timeout} unless $timeout;
+  $ip = $self->_resolv($host);
 
-  if($self->{proto} eq "stream") {
-    if(defined($self->{fh}->fileno())) {
+  if ($self->{proto} eq "stream") {
+    if (defined($self->{fh}->fileno())) {
       croak("socket is already open");
     } else {
+      return () unless $ip;
       $self->tcp_connect($ip, $timeout);
     }
   }
@@ -1793,12 +1852,13 @@ sub _resolv {
   # Clean up port
   if (defined($h{port}) && (($h{port} !~ /^\d{1,5}$/) || ($h{port} < 1) || ($h{port} > 65535))) {
     croak("Invalid port `$h{port}' in `$name'");
+    return undef;
   }
 # END - host:port
 
   # address check
   # new way
-  if ($Socket::VERSION >= 1.94) {
+  if ($Socket_VERSION > 1.94) {
     my %hints = (
       family   => $AF_UNSPEC,
       protocol => IPPROTO_TCP,
@@ -1831,7 +1891,7 @@ sub _resolv {
 
   # resolve
   # new way
-  if ($Socket::VERSION >= 1.94) {
+  if ($Socket_VERSION >= 1.94) {
     my %hints = (
       family   => $family,
       protocol => IPPROTO_TCP
@@ -1839,7 +1899,7 @@ sub _resolv {
 
     my ($err, @getaddr) = Socket::getaddrinfo($h{host}, undef, \%hints);
     if (defined($getaddr[0])) {
-      my ($err, $address) = Socket::getnameinfo($getaddr[0]->{addr}, $NI_NUMERICHOST);
+      my ($err, $address) = Socket::getnameinfo($getaddr[0]->{addr}, $NI_NUMERICHOST, $NIx_NOSERV);
       if (defined($address)) {
         $h{addr} = $address;
         $h{addr} =~ s/\%(.)*$//; # remove %ifID if IPv6
@@ -1849,18 +1909,21 @@ sub _resolv {
         } else {
           (undef, $h{addr_in}, undef, undef) = Socket::unpack_sockaddr_in6 $getaddr[0]->{addr};
         }
-        return \%h
+        return \%h;
       } else {
-        croak("getnameinfo($getaddr[0]->{addr}) failed - $err");
+        carp("getnameinfo($getaddr[0]->{addr}) failed - $err");
+        return undef;
       }
     } else {
-      croak(sprintf("getaddrinfo($h{host},,%s) failed - $err",
+      warn(sprintf("getaddrinfo($h{host},,%s) failed - $err",
                     $family == AF_INET ? "AF_INET" : "AF_INET6"));
+      return undef;
     }
   # old way
   } else {
     if ($family == $AF_INET6) {
       croak("Socket >= 1.94 required for IPv6 - found Socket $Socket::VERSION");
+      return undef;
     }
 
     my @gethost = gethostbyname($h{host});
@@ -1870,9 +1933,11 @@ sub _resolv {
       $h{family} = AF_INET;
       return \%h
     } else {
-      croak("gethostbyname($h{host}) failed - $^E");
+      carp("gethostbyname($h{host}) failed - $^E");
+      return undef;
     }
   }
+  return undef;
 }
 
 sub _pack_sockaddr_in($$) {
@@ -1907,12 +1972,12 @@ sub _inet_ntoa {
       ) = @_;
 
   my $ret;
-  if ($Socket::VERSION >= 1.94) {
+  if ($Socket_VERSION >= 1.94) {
     my ($err, $address) = Socket::getnameinfo($addr, $NI_NUMERICHOST);
     if (defined($address)) {
       $ret = $address;
     } else {
-      croak("getnameinfo($addr) failed - $err");
+      carp("getnameinfo($addr) failed - $err");
     }
   } else {
     $ret = inet_ntoa($addr)
@@ -2022,7 +2087,7 @@ utility to perform the ping, and generally produces relatively
 accurate results. If C<Net::Ping::External> if not installed on your
 system, specifying the "external" protocol will result in an error.
 
-If the "syn" protocol is specified, the ping() method will only
+If the "syn" protocol is specified, the L</ping> method will only
 send a TCP SYN packet to the remote host then immediately return.
 If the syn packet was sent successfully, it will return a true value,
 otherwise it will return false.  NOTE: Unlike the other protocols,
@@ -2030,12 +2095,10 @@ the return value does NOT determine if the remote host is alive or
 not since the full TCP three-way handshake may not have completed
 yet.  The remote host is only considered reachable if it receives
 a TCP ACK within the timeout specified.  To begin waiting for the
-ACK packets, use the ack() method as explained below.  Use the
+ACK packets, use the L</ack> method as explained below.  Use the
 "syn" protocol instead the "tcp" protocol to determine reachability
 of multiple destinations simultaneously by sending parallel TCP
 SYN packets.  It will not block while testing each remote host.
-demo/fping is provided in this distribution to demonstrate the
-"syn" protocol as an example.
 This protocol does not require any special privileges.
 
 =head2 Functions
@@ -2046,6 +2109,7 @@ This protocol does not require any special privileges.
                       host, port, bind, gateway, retrans, pingstring,
                       source_verify econnrefused dontfrag
                       IPV6_USE_MIN_MTU IPV6_RECVPATHMTU])
+X<new>
 
 Create a new ping object.  All of the parameters are optional and can
 be passed as hash ref.  All options besides the first 7 must be passed
@@ -2064,7 +2128,8 @@ are included in the ping packet sent to the remote host. The number of
 data bytes is ignored if the protocol is "tcp".  The minimum (and
 default) number of data bytes is 1 if the protocol is "udp" and 0
 otherwise.  The maximum number of data bytes that can be specified is
-1024.
+65535, but staying below the MTU (1472 bytes for ICMP) is recommended.
+Many small devices cannot deal with fragmented ICMP packets.
 
 If C<device> is given, this device is used to bind the source endpoint
 before sending the ping packet.  I believe this only works with
@@ -2105,6 +2170,7 @@ IP_PMTUDISC_DO but need we don't chunk oversized packets. You need to
 set $data_size manually.
 
 =item $p->ping($host [, $timeout [, $family]]);
+X<ping>
 
 Ping the remote host and wait for a response.  $host can be either the
 hostname or the IP number of the remote host.  The optional timeout
@@ -2120,6 +2186,7 @@ be a float, as returned by the Time::HiRes::time() function, if hires()
 has been previously called, otherwise it is returned as an integer.
 
 =item $p->source_verify( { 0 | 1 } );
+X<source_verify>
 
 Allows source endpoint verification to be enabled or disabled.
 This is useful for those remote destinations with multiples
@@ -2130,6 +2197,7 @@ This only affects udp and icmp protocol pings.
 This is enabled by default.
 
 =item $p->service_check( { 0 | 1 } );
+X<service_check>
 
 Set whether or not the connect behavior should enforce
 remote service availability as well as reachability.  Normally,
@@ -2154,28 +2222,34 @@ This affects the "udp", "tcp", and "syn" protocols.
 This is disabled by default.
 
 =item $p->tcp_service_check( { 0 | 1 } );
+X<tcp_service_check>
 
 Deprecated method, but does the same as service_check() method.
 
 =item $p->hires( { 0 | 1 } );
+X<hires>
 
 With 1 causes this module to use Time::HiRes module, allowing milliseconds
 to be returned by subsequent calls to ping().
 
 =item $p->time
+X<time>
 
 The current time, hires or not.
 
 =item $p->socket_blocking_mode( $fh, $mode );
+X<socket_blocking_mode>
 
 Sets or clears the O_NONBLOCK flag on a file handle.
 
 =item $p->IPV6_USE_MIN_MTU
+X<IPV6_USE_MIN_MTU>
 
 With argument sets the option.
 Without returns the option value.
 
 =item $p->IPV6_RECVPATHMTU
+X<IPV6_RECVPATHMTU>
 
 Notify an according IPv6 MTU.
 
@@ -2183,11 +2257,13 @@ With argument sets the option.
 Without returns the option value.
 
 =item $p->IPV6_HOPLIMIT
+X<IPV6_HOPLIMIT>
 
 With argument sets the option.
 Without returns the option value.
 
 =item $p->IPV6_REACHCONF I<NYI>
+X<IPV6_REACHCONF>
 
 Sets ipv6 reachability
 IPV6_REACHCONF was removed in RFC3542. ping6 -R supports it.
@@ -2199,6 +2275,7 @@ Without returns the option value.
 Not yet implemented.
 
 =item $p->bind($local_addr);
+X<bind>
 
 Sets the source address from which pings will be sent.  This must be
 the address of one of the interfaces on the local host.  $local_addr
@@ -2215,7 +2292,17 @@ object.
 The bind() call can be omitted when specifying the C<bind> option to
 new().
 
+=item $p->message_type([$ping_type]);
+X<message_type>
+
+When you are using the "icmp" protocol, this call permit to change the
+message type to 'echo' or 'timestamp' (only for IPv4, see RFC 792).
+
+Without argument, it returns the currently used icmp protocol message type.
+By default, it returns 'echo'.
+
 =item $p->open($host);
+X<open>
 
 When you are using the "stream" protocol, this call pre-opens the
 tcp socket.  It's only necessary to do this if you want to
@@ -2230,6 +2317,7 @@ The $host argument can be omitted when specifying the C<host> option to
 new().
 
 =item $p->ack( [ $host ] );
+X<ack>
 
 When using the "syn" protocol, use this method to determine
 the reachability of the remote host.  This method is meant
@@ -2243,57 +2331,66 @@ host is not listening on the port attempted, then the TCP
 connection will not be established and ack() will return
 undef.  In list context, the host, the ack time, the dotted ip 
 string, and the port number will be returned instead of just the host.
-If the optional $host argument is specified, the return
+If the optional C<$host> argument is specified, the return
 value will be pertaining to that host only.
 This call simply does nothing if you are using any protocol
-other than syn.
+other than "syn".
 
-When new() had a host option, this host will be used.
-Without host argument, all hosts are scanned.
+When L</new> had a host option, this host will be used.
+Without C<$host> argument, all hosts are scanned.
 
 =item $p->nack( $failed_ack_host );
+X<nack>
 
-The reason that host $failed_ack_host did not receive a
-valid ACK.  Useful to find out why when ack( $fail_ack_host )
+The reason that C<host $failed_ack_host> did not receive a
+valid ACK.  Useful to find out why when C<ack($fail_ack_host)>
 returns a false value.
 
 =item $p->ack_unfork($host)
+X<ack_unfork>
 
-The variant called by ack() with the syn protocol and $syn_forking
+The variant called by L</ack> with the "syn" protocol and C<$syn_forking>
 enabled.
 
 =item $p->ping_icmp([$host, $timeout, $family])
+X<ping_icmp>
 
-The ping() method used with the icmp protocol.
+The L</ping> method used with the icmp protocol.
 
 =item $p->ping_icmpv6([$host, $timeout, $family]) I<NYI>
+X<ping_icmpv6>
 
-The ping() method used with the icmpv6 protocol.
+The L</ping> method used with the icmpv6 protocol.
 
 =item $p->ping_stream([$host, $timeout, $family])
+X<ping_stream>
 
-The ping() method used with the stream protocol.
+The L</ping> method used with the stream protocol.
 
 Perform a stream ping.  If the tcp connection isn't
 already open, it opens it.  It then sends some data and waits for
 a reply.  It leaves the stream open on exit.
 
 =item $p->ping_syn([$host, $ip, $start_time, $stop_time])
+X<ping_syn>
 
-The ping() method used with the syn protocol.
+The L</ping> method used with the syn protocol.
 Sends a TCP SYN packet to host specified.
 
 =item $p->ping_syn_fork([$host, $timeout, $family])
+X<ping_syn_fork>
 
-The ping() method used with the forking syn protocol.
+The L</ping> method used with the forking syn protocol.
 
 =item $p->ping_tcp([$host, $timeout, $family])
+X<ping_tcp>
 
-The ping() method used with the tcp protocol.
+The L</ping> method used with the tcp protocol.
 
 =item $p->ping_udp([$host, $timeout, $family])
+X<ping_udp>
 
-The ping() method used with the udp protocol.
+The L</ping> method used with the udp protocol.
 
 Perform a udp echo ping.  Construct a message of
 at least the one-byte sequence number and any additional data bytes.
@@ -2303,21 +2400,25 @@ done.  Otherwise go back and wait for the message until we run out
 of time.  Return the result of our efforts.
 
 =item $p->ping_external([$host, $timeout, $family])
+X<ping_external>
 
-The ping() method used with the external protocol.
-Uses Net::Ping::External to do an external ping.
+The L</ping> method used with the external protocol.
+Uses L<Net::Ping::External> to do an external ping.
 
 =item $p->tcp_connect([$ip, $timeout])
+X<tcp_connect>
 
 Initiates a TCP connection, for a tcp ping.
 
 =item $p->tcp_echo([$ip, $timeout, $pingstring])
+X<tcp_echo>
 
 Performs a TCP echo.
 It writes the given string to the socket and then reads it
 back.  It returns 1 on success, 0 on failure.
 
 =item $p->close();
+X<close>
 
 Close the network connection for this ping object.  The network
 connection is also closed by "undef $p".  The network connection is
@@ -2325,45 +2426,52 @@ automatically closed if the ping object goes out of scope (e.g. $p is
 local to a subroutine and you leave the subroutine).
 
 =item $p->port_number([$port_number])
+X<port_number>
 
 When called with a port number, the port number used to ping is set to
-$port_number rather than using the echo port.  It also has the effect
+C<$port_number> rather than using the echo port.  It also has the effect
 of calling C<$p-E<gt>service_check(1)> causing a ping to return a successful
 response only if that specific port is accessible.  This function returns
-the value of the port that C<ping()> will connect to.
+the value of the port that L</ping> will connect to.
 
 =item $p->mselect
+X<mselect>
 
-A select() wrapper that compensates for platform
+A C<select()> wrapper that compensates for platform
 peculiarities.
 
 =item $p->ntop
+X<ntop>
 
-Platform abstraction over inet_ntop()
+Platform abstraction over C<inet_ntop()>
 
 =item $p->checksum($msg)
+X<checksum>
 
 Do a checksum on the message.  Basically sum all of
 the short words and fold the high order bits into the low order bits.
 
 =item $p->icmp_result
+X<icmp_result>
 
 Returns a list of addr, type, subcode.
 
 =item pingecho($host [, $timeout]);
+X<pingecho>
 
 To provide backward compatibility with the previous version of
-Net::Ping, a pingecho() subroutine is available with the same
-functionality as before.  pingecho() uses the tcp protocol.  The
-return values and parameters are the same as described for the ping()
+L<Net::Ping>, a C<pingecho()> subroutine is available with the same
+functionality as before.  C<pingecho()> uses the tcp protocol.  The
+return values and parameters are the same as described for the L</ping>
 method.  This subroutine is obsolete and may be removed in a future
-version of Net::Ping.
+version of L<Net::Ping>.
 
 =item wakeonlan($mac, [$host, [$port]])
+X<wakeonlan>
 
 Emit the popular wake-on-lan magic udp packet to wake up a local
 device.  See also L<Net::Wake>, but this has the mac address as 1st arg.
-$host should be the local gateway. Without it will broadcast.
+C<$host> should be the local gateway. Without it will broadcast.
 
 Default host: '255.255.255.255'
 Default port: 9
@@ -2406,7 +2514,7 @@ kinds of ICMP packets.
 
 The latest source tree is available via git:
 
-  git clone https://github.com/rurban/net-ping.git Net-Ping
+  git clone https://github.com/rurban/Net-Ping.git
   cd Net-Ping
 
 The tarball can be created as follows:
@@ -2420,18 +2528,12 @@ The latest Net::Ping releases are included in cperl and perl5.
 For a list of known issues, visit:
 
 L<https://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-Ping>
+and
+L<https://github.com/rurban/Net-Ping/issues>
 
 To report a new bug, visit:
 
-L<https://rt.cpan.org/NoAuth/ReportBug.html?Queue=Net-Ping> (stale)
-
-or call:
-
-  perlbug
-
-resp.:
-
-  cperlbug
+L<https://github.com/rurban/Net-Ping/issues>
 
 =head1 AUTHORS
 
@@ -2460,6 +2562,8 @@ resp.:
     mose@ns.ccsn.edu (Russell Mosemann)
 
 =head1 COPYRIGHT
+
+Copyright (c) 2017-2018, Reini Urban.  All rights reserved.
 
 Copyright (c) 2016, cPanel Inc.  All rights reserved.
 

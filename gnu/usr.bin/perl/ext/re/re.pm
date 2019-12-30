@@ -4,7 +4,7 @@ package re;
 use strict;
 use warnings;
 
-our $VERSION     = "0.36";
+our $VERSION     = "0.37";
 our @ISA         = qw(Exporter);
 our @EXPORT_OK   = ('regmust',
                     qw(is_regexp regexp_pattern
@@ -629,7 +629,9 @@ These are useful shortcuts to save on the typing.
 =item ALL
 
 Enable all options at once except OFFSETS, OFFSETSDBG and BUFFERS.
-(To get every single option without exception, use both ALL and EXTRA.)
+(To get every single option without exception, use both ALL and EXTRA, or
+starting in 5.30 on a C<-DDEBUGGING>-enabled perl interpreter, use
+the B<-Drv> command-line switches.)
 
 =item All
 

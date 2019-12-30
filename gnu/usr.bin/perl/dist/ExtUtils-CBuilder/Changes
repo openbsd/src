@@ -1,5 +1,12 @@
 Revision history for Perl extension ExtUtils::CBuilder.
 
+0.280231 - 2019-03-31
+
+  Fixed:
+
+  - Protected RE interpolation in Base.pm
+
+
 0.280230 - 2017-11-22
 
   Fixed:

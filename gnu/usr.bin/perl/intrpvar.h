@@ -21,7 +21,7 @@
 
 /* New variables must be added to the very end for binary compatibility. */
 
-/* Don't forget to add your variable also to perl_clone()! (in sv.c) */
+/* DON'T FORGET to add your variable also to perl_clone()! (in sv.c) */
 
 /* The 'I' prefix is only needed for vars that need appropriate #defines
  * generated when built with or without MULTIPLICITY.  It is also used
@@ -262,6 +262,7 @@ PERLVAR(I, exit_flags,	U8)		/* was exit() unexpected, etc. */
 PERLVAR(I, utf8locale,	bool)		/* utf8 locale detected */
 PERLVAR(I, in_utf8_CTYPE_locale, bool)
 PERLVAR(I, in_utf8_COLLATE_locale, bool)
+PERLVAR(I, in_utf8_turkic_locale, bool)
 #if defined(USE_ITHREADS) && ! defined(USE_THREAD_SAFE_LOCALE)
 PERLVARI(I, lc_numeric_mutex_depth, int, 0)   /* Emulate general semaphore */
 #endif
@@ -640,11 +641,7 @@ PERLVARI(I, underlying_numeric_obj, locale_t, NULL)
 #  endif
 #endif /* !USE_LOCALE_NUMERIC */
 
-/* Unicode inversion lists */
-PERLVAR(I, InBitmap,	SV *)
-
 /* utf8 character class swashes */
-PERLVAR(I, utf8_mark,	SV *)
 PERLVAR(I, seen_deprecated_macro, HV *)
 
 PERLVAR(I, last_swash_hv, HV *)
@@ -775,9 +772,6 @@ PERLVARI(I, globhook,	globhook_t, NULL)
 #ifdef PERL_IMPLICIT_CONTEXT
 PERLVARI(I, my_cxt_list, void **, NULL) /* per-module array of MY_CXT pointers */
 PERLVARI(I, my_cxt_size, int,	0)	/* size of PL_my_cxt_list */
-#  ifdef PERL_GLOBAL_STRUCT_PRIVATE
-PERLVARI(I, my_cxt_keys, const char **, NULL) /* per-module array of pointers to MY_CXT_KEY constants */
-#  endif
 #endif
 
 #if defined(PERL_IMPLICIT_CONTEXT) || defined(PERL_DEBUG_READONLY_COW)

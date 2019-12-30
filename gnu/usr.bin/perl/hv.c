@@ -260,7 +260,9 @@ if all your code does is create SVs then store them in a hash, C<hv_store>
 will own the only reference to the new SV, and your code doesn't need to do
 anything further to tidy up.  Note that C<hv_store_ent> only reads the C<key>;
 unlike C<val> it does not take ownership of it, so maintaining the correct
-reference count on C<key> is entirely the caller's responsibility.  C<hv_store>
+reference count on C<key> is entirely the caller's responsibility.  The reason
+it does not take ownership, is that C<key> is not used after this function
+returns, and so can be freed immediately.  C<hv_store>
 is not implemented as a call to C<hv_store_ent>, and does not create a temporary
 SV for the key, so if your key data is not already in SV form then use
 C<hv_store> in preference to C<hv_store_ent>.
@@ -1295,7 +1297,7 @@ S_hv_delete_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
                             SV **svp, **end;
                         strip_magic:
                             svp = AvARRAY(isa);
-                            end = svp + AvFILLp(isa)+1;
+                            end = svp + (AvFILLp(isa)+1);
                             while (svp < end) {
                                 if (*svp)
                                     mg_free_type(*svp, PERL_MAGIC_isaelem);

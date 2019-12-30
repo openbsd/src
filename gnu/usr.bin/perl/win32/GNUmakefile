@@ -7,7 +7,7 @@
 #	Windows SDK 64-bit compiler and tools
 #
 # This is set up to build a perl.exe that runs off a shared library
-# (perl528.dll).  Also makes individual DLLs for the XS extensions.
+# (perl530.dll).  Also makes individual DLLs for the XS extensions.
 #
 # The easiest way to customize the build process is to use parameters like this:
 #
@@ -64,7 +64,7 @@ INST_TOP := $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-#INST_VER	:= \5.28.2
+#INST_VER	:= \5.30.1
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -166,7 +166,7 @@ DEFAULT_INC_EXCLUDES_DOT := define
 #CCTYPE		:= MSVC70
 # Visual C++ Toolkit 2003 (aka Visual C++ 7.1) (free command-line tools)
 #CCTYPE		:= MSVC70FREE
-# Windows Server 2003 SP1 Platform SDK (April 2005)
+# Windows Server 2003 SP1 Platform SDK (April 2005) (64-bit compiler and tools)
 #CCTYPE		:= SDK2003SP1
 # Visual C++ 2005 (aka Visual C++ 8.0) (full version or Express Edition)
 #CCTYPE		:= MSVC80
@@ -182,6 +182,8 @@ DEFAULT_INC_EXCLUDES_DOT := define
 #CCTYPE		:= MSVC140
 # Visual C++ 2017 (aka Visual C++ 14.1) (full version or Community Edition)
 #CCTYPE		:= MSVC141
+# Visual C++ 2019 (aka Visual C++ 14.2) (full version or Community Edition)
+#CCTYPE		:= MSVC142
 # MinGW or mingw-w64 with gcc-3.4.5 or later
 #CCTYPE		:= GCC
 
@@ -189,6 +191,11 @@ DEFAULT_INC_EXCLUDES_DOT := define
 # If you are using Intel C++ Compiler uncomment this
 #
 #__ICC		:= define
+
+#
+# Uncomment this if you want to build everything in C++ mode
+#
+#USE_CPLUSPLUS	:= define
 
 #
 # uncomment next line if you want debug version of perl (big/slow)
@@ -226,7 +233,7 @@ DEFAULT_INC_EXCLUDES_DOT := define
 # set this to additionally provide a statically linked perl-static.exe.
 # Note that dynamic loading will not work with this perl, so you must
 # include required modules statically using the STATIC_EXT or ALL_STATIC
-# variables below. A static library perl528s.lib will also be created.
+# variables below. A static library perl530s.lib will also be created.
 # Ordinary perl.exe is not affected by this option.
 #
 #BUILD_STATIC	:= define
@@ -244,6 +251,9 @@ DEFAULT_INC_EXCLUDES_DOT := define
 # set the install locations of the compiler
 # Running VCVARS32.BAT, VCVARSALL.BAT or similar is *required* when using
 # Visual C++.
+#
+# For GCC builds this should be the directory containing the bin, include,
+# lib directories for your compiler.
 #
 #CCHOME		:= C:\MinGW
 
@@ -349,12 +359,32 @@ GCCTARGET	:= $(shell $(GCCBIN) -dumpmachine 2>NUL)
 ifneq ($(GCCTARGET),)
 CCTYPE		:= GCC
 else
+WIN64		:= $(shell for /f "tokens=3 delims=.^ " \
+	%%i in ('cl ^2^>^&1') do @if "%%i" == "32-bit" echo undef)
+#major version of CL has diff position based on 32 vs 64
+#Microsoft (R) C/C++ Optimizing Compiler Version 15.00.30729.01 for x64
+#Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 15.00.30729.01 for 80x86
 #use var to capture 1st line only, not 8th token of lines 2 & 3 in cl.exe output
-#rmving the cmd /c causes the var2b undef4echo but!4"set MSVCVER", cmd.exe bug?
-MSVCVER		:= $(shell (set MSVCVER=) & (for /f "tokens=8 delims=.^ " \
-	%%i in ('cl ^2^>^&1') do if not defined MSVCVER set /A "MSVCVER=%%i-6") \
-	& cmd /c echo %%MSVCVER%%)
-CCTYPE		:= MSVC$(MSVCVER)0
+#removing the cmd /c (extra scope) on the echo causes the env var to be undef
+#when echo executes but it isn't undef for the "set MSVCVER", gmake or
+#cmd.exe bug?
+ifeq ($(WIN64),undef)
+MSVCVER		:= $(shell (set MSVCVER=) & (for /f "tokens=8,9 delims=.^ " \
+	%%i in ('cl ^2^>^&1') do if not defined MSVCVER if %%i%% geq 19 \
+	(set /A "MSVCVER=((%%i-5)*10)+(%%j/10)") \
+	else (set /A "MSVCVER=(%%i-6)*10")) & cmd /c echo %%MSVCVER%%)
+else
+MSVCVER		:= $(shell (set MSVCVER=) & (for /f "tokens=7,8 delims=.^ " \
+	%%i in ('cl ^2^>^&1') do if not defined MSVCVER if %%i%% geq 19 \
+	(set /A "MSVCVER=((%%i-5)*10)+(%%j/10)") \
+	else (set /A "MSVCVER=(%%i-6)*10")) & cmd /c echo %%MSVCVER%%)
+endif
+#autodetect failed, reset to empty string
+ifeq ($(MSVCVER),-50)
+CCTYPE		:= 
+else
+CCTYPE		:= MSVC$(MSVCVER)
+endif
 endif
 endif
 
@@ -371,6 +401,8 @@ CCHOME		:= $(MSVCDir)
 else ifeq ($(CCTYPE),MSVC70FREE)
 CCHOME		:= $(MSVCDir)
 else ifeq ($(CCTYPE),MSVC141)
+CCHOME		:= $(VCToolsInstallDir)
+else ifeq ($(CCTYPE),MSVC142)
 CCHOME		:= $(VCToolsInstallDir)
 else
 CCHOME		:= $(VCINSTALLDIR)
@@ -487,6 +519,12 @@ CCLIBDIR := $(CCHOME)\lib\x64
 else
 CCLIBDIR := $(CCHOME)\lib\x86
 endif
+else ifeq ($(CCTYPE),MSVC142)
+ifeq ($(WIN64),define)
+CCLIBDIR := $(CCHOME)\lib\x64
+else
+CCLIBDIR := $(CCHOME)\lib\x86
+endif
 else
 ifeq ($(WIN64),define)
 CCLIBDIR := $(CCHOME)\lib\amd64
@@ -588,6 +626,9 @@ LINK_DBG	= -s
 endif
 
 EXTRACFLAGS	=
+ifeq ($(USE_CPLUSPLUS),define)
+EXTRACFLAGS	+= $(CXX_FLAG)
+endif
 CFLAGS		= $(EXTRACFLAGS) $(INCLUDES) $(DEFINES) $(LOCDEFS) $(OPTIMIZE)
 LINK_FLAGS	= $(LINK_DBG) -L"$(INST_COREDIR)" -L"$(CCLIBDIR)"
 OBJOUT_FLAG	= -o
@@ -665,6 +706,8 @@ ifeq ($(CCTYPE),MSVC140)
 LIBC		= ucrt.lib
 else ifeq ($(CCTYPE),MSVC141)
 LIBC		= ucrt.lib
+else ifeq ($(CCTYPE),MSVC142)
+LIBC		= ucrt.lib
 else
 LIBC		= msvcrt.lib
 endif
@@ -679,6 +722,8 @@ else ifeq ($(CFG),DebugFull)
 ifeq ($(CCTYPE),MSVC140)
 LIBC		= ucrtd.lib
 else ifeq ($(CCTYPE),MSVC141)
+LIBC		= ucrtd.lib
+else ifeq ($(CCTYPE),MSVC142)
 LIBC		= ucrtd.lib
 else
 LIBC		= msvcrtd.lib
@@ -719,6 +764,8 @@ endif
 ifeq ($(CCTYPE),MSVC140)
 DEFINES		+= -D_WINSOCK_DEPRECATED_NO_WARNINGS
 else ifeq ($(CCTYPE),MSVC141)
+DEFINES		+= -D_WINSOCK_DEPRECATED_NO_WARNINGS
+else ifeq ($(CCTYPE),MSVC142)
 DEFINES		+= -D_WINSOCK_DEPRECATED_NO_WARNINGS
 endif
 
@@ -762,6 +809,12 @@ LIBBASEFILES	+= msvcrtd.lib vcruntimed.lib
 else
 LIBBASEFILES	+= msvcrt.lib vcruntime.lib
 endif
+else ifeq ($(CCTYPE),MSVC142)
+ifeq ($(CFG),DebugFull)
+LIBBASEFILES	+= msvcrtd.lib vcruntimed.lib
+else
+LIBBASEFILES	+= msvcrt.lib vcruntime.lib
+endif
 endif
 
 # Avoid __intel_new_proc_init link error for libircmt.
@@ -772,11 +825,11 @@ ifeq ($(__ICC),define)
 LIBBASEFILES	+= libircmt.lib libmmd.lib
 endif
 
-# The 64 bit Windows Server 2003 SP1 SDK compilers link against MSVCRT.dll, which
+# The Windows Server 2003 SP1 SDK compiler links against MSVCRT.dll, which
 # doesn't include the buffer overrun verification code used by the /GS switch.
 # Since the code links against libraries that are compiled with /GS, this
 # "security cookie verification" code must be included via bufferoverflow.lib.
-ifeq ("$(WIN64) $(CCTYPE)","define SDK2003SP1")
+ifeq ($(CCTYPE),SDK2003SP1)
 LIBBASEFILES    += bufferoverflowU.lib
 endif
 
@@ -826,6 +879,20 @@ LINK_FLAGS	+= -subsystem:console,"5.01"
 endif
 
 else ifeq ($(CCTYPE),MSVC140)
+ifeq ($(WIN64),define)
+LINK_FLAGS	+= -subsystem:console,"5.02"
+else
+LINK_FLAGS	+= -subsystem:console,"5.01"
+endif
+
+else ifeq ($(CCTYPE),MSVC141)
+ifeq ($(WIN64),define)
+LINK_FLAGS	+= -subsystem:console,"5.02"
+else
+LINK_FLAGS	+= -subsystem:console,"5.01"
+endif
+
+else ifeq ($(CCTYPE),MSVC142)
 ifeq ($(WIN64),define)
 LINK_FLAGS	+= -subsystem:console,"5.02"
 else
@@ -953,9 +1020,9 @@ ifeq ($(CCTYPE),GCC)
 
 CFGSH_TMPL	= config.gc
 CFGH_TMPL	= config_H.gc
-PERLIMPLIB	= $(COREDIR)\libperl528$(a)
-PERLIMPLIBBASE	= libperl528$(a)
-PERLSTATICLIB	= ..\libperl528s$(a)
+PERLIMPLIB	= $(COREDIR)\libperl530$(a)
+PERLIMPLIBBASE	= libperl530$(a)
+PERLSTATICLIB	= ..\libperl530s$(a)
 INT64		= long long
 
 else
@@ -968,12 +1035,12 @@ endif
 
 # makedef.pl must be updated if this changes, and this should normally
 # only change when there is an incompatible revision of the public API.
-PERLIMPLIB	?= $(COREDIR)\perl528$(a)
-PERLIMPLIBBASE	?= perl528$(a)
-PERLEXPLIB	?= $(COREDIR)\perl528.exp
-PERLSTATICLIB	?= ..\perl528s$(a)
-PERLDLL		= ..\perl528.dll
-PERLDLLBASE	= perl528.dll
+PERLIMPLIB	?= $(COREDIR)\perl530$(a)
+PERLIMPLIBBASE	?= perl530$(a)
+PERLEXPLIB	?= $(COREDIR)\perl530.exp
+PERLSTATICLIB	?= ..\perl530s$(a)
+PERLDLL		= ..\perl530.dll
+PERLDLLBASE	= perl530.dll
 
 # don't let "gmake -n all" try to run "miniperl.exe make_ext.pl"
 PLMAKE		= gmake
@@ -1177,20 +1244,26 @@ CFG_VARS	=					\
 
 .PHONY: all info
 
-all : info rebasePE Extensions_nonxs $(PERLSTATIC) PostExt
+all : info rebasePE Extensions_nonxs $(PERLSTATIC)
 
 info :
-	@echo # CCTYPE=$(CCTYPE)
 ifeq ($(CCTYPE),GCC)
-	@echo # GCCBIN=$(GCCBIN)
-	@echo # GCCVER=$(GCCVER1).$(GCCVER2).$(GCCVER3)
-	@echo # GCCTARGET=$(GCCTARGET)
-	@echo # GCCCROSS=$(GCCCROSS)
+	@echo # CCTYPE=$(CCTYPE)&& \
+	echo # GCCBIN=$(GCCBIN)&& \
+	echo # GCCVER=$(GCCVER1).$(GCCVER2).$(GCCVER3)&& \
+	echo # GCCTARGET=$(GCCTARGET)&& \
+	echo # GCCCROSS=$(GCCCROSS)&& \
+	echo # WIN64=$(WIN64)&& \
+	echo # ARCHITECTURE=$(ARCHITECTURE)&& \
+	echo # ARCHNAME=$(ARCHNAME)&& \
+	echo # MAKE=$(PLMAKE)
+else
+	@echo # CCTYPE=$(CCTYPE)&& \
+	echo # WIN64=$(WIN64)&& \
+	echo # ARCHITECTURE=$(ARCHITECTURE)&& \
+	echo # ARCHNAME=$(ARCHNAME)&& \
+	echo # MAKE=$(PLMAKE)
 endif
-	@echo # WIN64=$(WIN64)
-	@echo # ARCHITECTURE=$(ARCHITECTURE)
-	@echo # ARCHNAME=$(ARCHNAME)
-	@echo # MAKE=$(PLMAKE)
 ifeq ($(CCTYPE),)
 	@echo Unable to detect gcc and/or architecture!
 	@exit 1
@@ -1314,7 +1387,8 @@ $(MINIDIR)\.exists : $(CFGH_TMPL)
 	echo #undef NVef&& \
 	echo #undef NVff&& \
 	echo #undef NVgf&& \
-	echo #undef USE_LONG_DOUBLE)>> config.h
+	echo #undef USE_LONG_DOUBLE&& \
+	echo #undef USE_CPLUSPLUS)>> config.h
 ifeq ($(CCTYPE),MSVC140)
 	@(echo #undef FILE_ptr&& \
 	echo #undef FILE_cnt&& \
@@ -1326,6 +1400,16 @@ ifeq ($(CCTYPE),MSVC140)
 	echo #define FILE_bufsiz^(fp^) ^(PERLIO_FILE_cnt^(fp^) + PERLIO_FILE_ptr^(fp^) - PERLIO_FILE_base^(fp^)^)&& \
 	echo #define I_STDBOOL)>> config.h
 else ifeq ($(CCTYPE),MSVC141)
+	@(echo #undef FILE_ptr&& \
+	echo #undef FILE_cnt&& \
+	echo #undef FILE_base&& \
+	echo #undef FILE_bufsiz&& \
+	echo #define FILE_ptr^(fp^) PERLIO_FILE_ptr^(fp^)&& \
+	echo #define FILE_cnt^(fp^) PERLIO_FILE_cnt^(fp^)&& \
+	echo #define FILE_base^(fp^) PERLIO_FILE_base^(fp^)&& \
+	echo #define FILE_bufsiz^(fp^) ^(PERLIO_FILE_cnt^(fp^) + PERLIO_FILE_ptr^(fp^) - PERLIO_FILE_base^(fp^)^)&& \
+	echo #define I_STDBOOL)>> config.h
+else ifeq ($(CCTYPE),MSVC142)
 	@(echo #undef FILE_ptr&& \
 	echo #undef FILE_cnt&& \
 	echo #undef FILE_base&& \
@@ -1449,7 +1533,7 @@ else
 	echo #endif)>> config.h
 endif
 #separate line since this is sentinal that this target is done
-	rem. > $(MINIDIR)\.exists
+	@rem. > $(MINIDIR)\.exists
 
 $(MINICORE_OBJ) : $(CORE_NOCFG_H)
 	$(CC) -c $(CFLAGS) $(MINIBUILDOPT) -DPERL_EXTERNAL_GLOB -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ $(PDBOUT) ..\$(*F).c
@@ -1621,16 +1705,6 @@ Extensions_clean :
 Extensions_realclean :
 	-if exist $(MINIPERL) $(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(PLMAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) --all --target=realclean
 
-PostExt : ..\lib\Storable\Limit.pm
-
-# we need the exe, perl(ver).dll, and the Exporter, Storable, Win32 extensions
-# rebasePE most of that, including adjustment for static builds, so we
-# just need non-xs extensions
-..\lib\Storable\Limit.pm : rebasePE Extensions_nonxs
-	$(PLMAKE) -C ..\dist\Storable lib\Storable\Limit.pm
-	if not exist ..\lib\Storable mkdir ..\lib\Storable
-	copy ..\dist\Storable\lib\Storable\Limit.pm ..\lib\Storable\Limit.pm
-
 # all PE files need to be built by the time this target runs, PP files can still
 # be running in parallel like UNIDATAFILES, this target a placeholder for the
 # future
@@ -1688,7 +1762,7 @@ utils: $(HAVEMINIPERL) ..\utils\Makefile
 	copy ..\README.tw       ..\pod\perltw.pod
 	copy ..\README.vos      ..\pod\perlvos.pod
 	copy ..\README.win32    ..\pod\perlwin32.pod
-	copy ..\pod\perldelta.pod ..\pod\perl5282delta.pod
+	copy ..\pod\perldelta.pod ..\pod\perl5301delta.pod
 	$(MINIPERL) -I..\lib $(PL2BAT) $(UTILS)
 	$(MINIPERL) -I..\lib ..\autodoc.pl ..
 	$(MINIPERL) -I..\lib ..\pod\perlmodlib.PL -q ..
@@ -1760,7 +1834,6 @@ distclean: realclean
 	-if exist $(LIBDIR)\MIME rmdir /s /q $(LIBDIR)\MIME
 	-if exist $(LIBDIR)\Module rmdir /s /q $(LIBDIR)\Module
 	-if exist $(LIBDIR)\Net\FTP rmdir /s /q $(LIBDIR)\Net\FTP
-	-if exist $(LIBDIR)\OpenBSD rmdir /s /q $(LIBDIR)\OpenBSD
 	-if exist $(LIBDIR)\Params rmdir /s /q $(LIBDIR)\Params
 	-if exist $(LIBDIR)\Parse rmdir /s /q $(LIBDIR)\Parse
 	-if exist $(LIBDIR)\Perl rmdir /s /q $(LIBDIR)\Perl
@@ -1787,7 +1860,7 @@ distclean: realclean
 	-if exist $(LIBDIR)\Win32API rmdir /s /q $(LIBDIR)\Win32API
 	-if exist $(LIBDIR)\XS rmdir /s /q $(LIBDIR)\XS
 	-cd $(PODDIR) && del /f *.html *.bat roffitall \
-	    perl5282delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
+	    perl5301delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
 	    perlapi.pod perlbs2000.pod perlce.pod perlcn.pod perlcygwin.pod \
 	    perldos.pod perlfreebsd.pod perlhaiku.pod perlhpux.pod \
 	    perlhurd.pod perlintern.pod perlirix.pod perljp.pod perlko.pod \
@@ -1795,7 +1868,8 @@ distclean: realclean
 	    perlnetware.pod perlopenbsd.pod perlos2.pod perlos390.pod \
 	    perlos400.pod perlplan9.pod perlqnx.pod perlriscos.pod \
 	    perlsolaris.pod perlsymbian.pod perlsynology.pod perltoc.pod \
-	    perltru64.pod perltw.pod perlvos.pod perlwin32.pod
+	    perltru64.pod perltw.pod perluniprops.pod perlvos.pod \
+	    perlwin32.pod
 	-cd ..\utils && del /f h2ph splain perlbug pl2pm h2xs \
 	    perldoc perlivp libnetcfg enc2xs encguess piconv cpan *.bat \
 	    xsubpp pod2html instmodsh json_pp prove ptar ptardiff ptargrep shasum corelist zipdetails

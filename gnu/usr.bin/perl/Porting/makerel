@@ -206,7 +206,7 @@ if ($have_7z) {
 }
 
 if ($opts{x}) {
-    print "Creating and compressing the tar.gz file with 7z...\n";
+    print "Creating and compressing the tar.xz file with xz...\n";
     $cmd = "tar cf - $reldir | xz -z -c > $reldir.tar.xz";
     system($cmd) == 0 or die "$cmd failed";
 }

@@ -986,6 +986,25 @@ XS(XS_re_regexp_pattern)
     NOT_REACHED; /* NOTREACHED */
 }
 
+#ifdef HAS_GETCWD
+
+XS(XS_Internals_getcwd)
+{
+    dXSARGS;
+    SV *sv = sv_newmortal();
+
+    if (items != 0)
+        croak_xs_usage(cv, "");
+
+    (void)getcwd_sv(sv);
+
+    SvTAINTED_on(sv);
+    PUSHs(sv);
+    XSRETURN(1);
+}
+
+#endif
+
 #include "vutil.h"
 #include "vxs.inc"
 
@@ -995,7 +1014,7 @@ struct xsub_details {
     const char *proto;
 };
 
-static const struct xsub_details details[] = {
+static const struct xsub_details these_details[] = {
     {"UNIVERSAL::isa", XS_UNIVERSAL_isa, NULL},
     {"UNIVERSAL::can", XS_UNIVERSAL_can, NULL},
     {"UNIVERSAL::DOES", XS_UNIVERSAL_DOES, NULL},
@@ -1020,6 +1039,9 @@ static const struct xsub_details details[] = {
     {"re::regnames", XS_re_regnames, ";$"},
     {"re::regnames_count", XS_re_regnames_count, ""},
     {"re::regexp_pattern", XS_re_regexp_pattern, "$"},
+#ifdef HAS_GETCWD
+    {"Internals::getcwd", XS_Internals_getcwd, ""},
+#endif
 };
 
 STATIC OP*
@@ -1075,8 +1097,8 @@ void
 Perl_boot_core_UNIVERSAL(pTHX)
 {
     static const char file[] = __FILE__;
-    const struct xsub_details *xsub = details;
-    const struct xsub_details *end = C_ARRAY_END(details);
+    const struct xsub_details *xsub = these_details;
+    const struct xsub_details *end = C_ARRAY_END(these_details);
 
     do {
 	newXS_flags(xsub->name, xsub->xsub, file, xsub->proto, 0);

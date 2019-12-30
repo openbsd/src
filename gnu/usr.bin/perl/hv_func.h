@@ -47,7 +47,7 @@
 # define __PERL_HASH_SEED_STATE(seed,state) S_perl_siphash_seed_state(seed,state)
 # define __PERL_HASH_WITH_STATE(state,str,len) S_perl_hash_siphash_1_3_with_state((state),(U8*)(str),(len))
 #elif defined(PERL_HASH_FUNC_STADTX)
-# define __PERL_HASH_FUNC "STATDX"
+# define __PERL_HASH_FUNC "STADTX"
 # define __PERL_HASH_SEED_BYTES 16
 # define __PERL_HASH_STATE_BYTES 32
 # define __PERL_HASH_SEED_STATE(seed,state) stadtx_seed_state(seed,state)

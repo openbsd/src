@@ -72,7 +72,7 @@ our @EXPORT_OK = qw(
 	YESSTR
 );
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 XSLoader::load();
 
@@ -92,7 +92,7 @@ I18N::Langinfo - query locale information
 The langinfo() function queries various locale information that can be
 used to localize output and user interfaces.  It uses the current underlying
 locale, regardless of whether or not it was called from within the scope of
-S<C<use locale>>.  The langinfo() requires
+S<C<use locale>>.  The langinfo() function requires
 one numeric argument that identifies the locale constant to query:
 if no argument is supplied, C<$_> is used.  The numeric constants
 appropriate to be used as arguments are exportable from I18N::Langinfo.
@@ -273,7 +273,7 @@ workaround for this; patches welcome: see L<perlapi/switch_to_global_locale>.
 
 L<perllocale>, L<POSIX/localeconv>, L<POSIX/setlocale>, L<nl_langinfo(3)>.
 
-The langinfo() is just a wrapper for the C nl_langinfo() interface.
+The langinfo() function is just a wrapper for the C nl_langinfo() interface.
 
 =head1 AUTHOR
 

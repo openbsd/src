@@ -563,7 +563,8 @@ At any given time, exactly one of these modifiers is in effect.  Their
 existence allows Perl to keep the originally compiled behavior of a
 regular expression, regardless of what rules are in effect when it is
 actually executed.  And if it is interpolated into a larger regex, the
-original's rules continue to apply to it, and only it.
+original's rules continue to apply to it, and don't affect the other
+parts.
 
 The C</l> and C</u> modifiers are automatically selected for
 regular expressions compiled within the scope of various pragmas,
@@ -649,11 +650,16 @@ possible matches.  And some of those digits look like some of the 10
 ASCII digits, but mean a different number, so a human could easily think
 a number is a different quantity than it really is.  For example,
 C<BENGALI DIGIT FOUR> (U+09EA) looks very much like an
-C<ASCII DIGIT EIGHT> (U+0038).  And, C<\d+>, may match strings of digits
-that are a mixture from different writing systems, creating a security
-issue.  L<Unicode::UCD/num()> can be used to sort
-this out.  Or the C</a> modifier can be used to force C<\d> to match
-just the ASCII 0 through 9.
+C<ASCII DIGIT EIGHT> (U+0038), and C<LEPCHA DIGIT SIX> (U+1C46) looks
+very much like an C<ASCII DIGIT FIVE> (U+0035).  And, C<\d+>, may match
+strings of digits that are a mixture from different writing systems,
+creating a security issue.  A fraudulent website, for example, could
+display the price of something using U+1C46, and it would appear to the
+user that something cost 500 units, but it really costs 600.  A browser
+that enforced script runs (L</Script Runs>) would prevent that
+fraudulent display.  L<Unicode::UCD/num()> can also be used to sort this
+out.  Or the C</a> modifier can be used to force C<\d> to match just the
+ASCII 0 through 9.
 
 Also, under this modifier, case-insensitive matching works on the full
 set of Unicode
@@ -715,8 +721,8 @@ the pattern uses L<C<(*script_run: ...)>|/Script Runs>
 Another mnemonic for this modifier is "Depends", as the rules actually
 used depend on various things, and as a result you can get unexpected
 results.  See L<perlunicode/The "Unicode Bug">.  The Unicode Bug has
-become rather infamous, leading to yet another (printable) name for this
-modifier, "Dodgy".
+become rather infamous, leading to yet another (without swearing) name
+for this modifier, "Dodgy".
 
 Unless the pattern or string are encoded in UTF-8, only ASCII characters
 can match positively.
@@ -920,13 +926,13 @@ string" problem can be most efficiently performed when written as:
 
 as we know that if the final quote does not match, backtracking will not
 help. See the independent subexpression
-L</C<< (?>pattern) >>> for more details;
+L</C<< (?>I<pattern>) >>> for more details;
 possessive quantifiers are just syntactic sugar for that construct. For
 instance the above example could also be written as follows:
 
    /"(?>(?:(?>[^"\\]+)|\\.)*)"/
 
-Note that the possessive quantifier modifier can not be be combined
+Note that the possessive quantifier modifier can not be combined
 with the non-greedy modifier. This is because it would make no sense.
 Consider the follow equivalency table:
 
@@ -1014,7 +1020,7 @@ See L<perlrecharclass/POSIX Character Classes> for details.
 
 =item [3]
 
-See L<perlrecharclass/Backslash sequences> for details.
+See L<perlunicode/Unicode Character Properties> for details
 
 =item [4]
 
@@ -1030,8 +1036,9 @@ See L</Extended Patterns> below for details.
 
 =item [7]
 
-Note that C<\N> has two meanings.  When of the form C<\N{NAME}>, it matches the
-character or character sequence whose name is C<NAME>; and similarly
+Note that C<\N> has two meanings.  When of the form C<\N{I<NAME>}>, it
+matches the character or character sequence whose name is I<NAME>; and
+similarly
 when of the form C<\N{U+I<hex>}>, it matches the character whose Unicode
 code point is I<hex>.  Otherwise it matches any character but C<\n>.
 
@@ -1332,10 +1339,10 @@ expressions, and 2) whenever you see one, you should stop and
 
 =over 4
 
-=item C<(?#text)>
+=item C<(?#I<text>)>
 X<(?#)>
 
-A comment.  The text is ignored.
+A comment.  The I<text> is ignored.
 Note that Perl closes
 the comment as soon as it sees a C<")">, so there is no way to put a literal
 C<")"> in the comment.  The pattern's closing delimiter must be escaped by
@@ -1369,7 +1376,7 @@ an escape sequence.   Examples:
 =item C<(?^alupimnsx)>
 X<(?)> X<(?^)>
 
-One or more embedded pattern-match modifiers, to be turned on (or
+Zero or more embedded pattern-match modifiers, to be turned on (or
 turned off if preceded by C<"-">) for the remainder of the pattern or
 the remainder of the enclosing pattern group (if any).
 
@@ -1397,8 +1404,8 @@ repetition of the previous word, assuming the C</x> modifier, and no C</i>
 modifier outside this group.
 
 These modifiers do not carry over into named subpatterns called in the
-enclosing group. In other words, a pattern such as C<((?i)(?&NAME))> does not
-change the case-sensitivity of the C<"NAME"> pattern.
+enclosing group. In other words, a pattern such as C<((?i)(?&I<NAME>))> does not
+change the case-sensitivity of the I<NAME> pattern.
 
 A modifier is overridden by later occurrences of this construct in the
 same scope containing the same modifier, so that
@@ -1443,12 +1450,16 @@ C<(?-d:...)> and C<(?dl:...)> are fatal errors.
 Note also that the C<"p"> modifier is special in that its presence
 anywhere in a pattern has a global effect.
 
-=item C<(?:pattern)>
+Having zero modifiers makes this a no-op (so why did you specify it,
+unless it's generated code), and starting in v5.30, warns under L<C<use
+re 'strict'>|re/'strict' mode>.
+
+=item C<(?:I<pattern>)>
 X<(?:)>
 
-=item C<(?adluimnsx-imnsx:pattern)>
+=item C<(?adluimnsx-imnsx:I<pattern>)>
 
-=item C<(?^aluimnsx:pattern)>
+=item C<(?^aluimnsx:I<pattern>)>
 X<(?^:)>
 
 This is for clustering, not capturing; it groups subexpressions like
@@ -1513,7 +1524,7 @@ redundant.
 Mnemonic for C<(?^...)>:  A fresh beginning since the usual use of a caret is
 to match at the beginning.
 
-=item C<(?|pattern)>
+=item C<(?|I<pattern>)>
 X<(?|)> X<Branch reset>
 
 This is the "branch reset" pattern, which has the special property
@@ -1569,11 +1580,11 @@ lookahead matches text following the current match position.
 
 =over 4
 
-=item C<(?=pattern)>
+=item C<(?=I<pattern>)>
 
-=item C<(*pla:pattern)>
+=item C<(*pla:I<pattern>)>
 
-=item C<(*positive_lookahead:pattern)>
+=item C<(*positive_lookahead:I<pattern>)>
 X<(?=)>
 X<(*pla>
 X<(*positive_lookahead>
@@ -1585,11 +1596,11 @@ matches a word followed by a tab, without including the tab in C<$&>.
 The alphabetic forms are experimental; using them yields a warning in the
 C<experimental::alpha_assertions> category.
 
-=item C<(?!pattern)>
+=item C<(?!I<pattern>)>
 
-=item C<(*nla:pattern)>
+=item C<(*nla:I<pattern>)>
 
-=item C<(*negative_lookahead:pattern)>
+=item C<(*negative_lookahead:I<pattern>)>
 X<(?!)>
 X<(*nla>
 X<(*negative_lookahead>
@@ -1608,13 +1619,13 @@ match.  Use lookbehind instead (see below).
 The alphabetic forms are experimental; using them yields a warning in the
 C<experimental::alpha_assertions> category.
 
-=item C<(?<=pattern)>
+=item C<(?<=I<pattern>)>
 
 =item C<\K>
 
-=item C<(*plb:pattern)>
+=item C<(*plb:I<pattern>)>
 
-=item C<(*positive_lookbehind:pattern)>
+=item C<(*positive_lookbehind:I<pattern>)>
 X<(?<=)>
 X<(*plb>
 X<(*positive_lookbehind>
@@ -1622,13 +1633,38 @@ X<look-behind, positive> X<lookbehind, positive> X<\K>
 
 A zero-width positive lookbehind assertion.  For example, C</(?<=\t)\w+/>
 matches a word that follows a tab, without including the tab in C<$&>.
-Works only for fixed-width lookbehind.
 
-There is a special form of this construct, called C<\K> (available since
-Perl 5.10.0), which causes the
+Prior to Perl 5.30, it worked only for fixed-width lookbehind, but
+starting in that release, it can handle variable lengths from 1 to 255
+characters as an experimental feature.  The feature is enabled
+automatically if you use a variable length lookbehind assertion, but
+will raise a warning at pattern compilation time, unless turned off, in
+the C<experimental::vlb> category.  This is to warn you that the exact
+behavior is subject to change should feedback from actual use in the
+field indicate to do so; or even complete removal if the problems found
+are not practically surmountable.  You can achieve close to pre-5.30
+behavior by fatalizing warnings in this category.
+
+There is a special form of this construct, called C<\K>
+(available since Perl 5.10.0), which causes the
 regex engine to "keep" everything it had matched prior to the C<\K> and
-not include it in C<$&>. This effectively provides variable-length
-lookbehind. The use of C<\K> inside of another lookaround assertion
+not include it in C<$&>. This effectively provides non-experimental
+variable-length lookbehind of any length.
+
+And, there is a technique that can be used to handle variable length
+lookbehinds on earlier releases, and longer than 255 characters.  It is
+described in
+L<http://www.drregex.com/2019/02/variable-length-lookbehinds-actually.html>.
+
+Note that under C</i>, a few single characters match two or three other
+characters.  This makes them variable length, and the 255 length applies
+to the maximum number of characters in the match.  For
+example C<qr/\N{LATIN SMALL LETTER SHARP S}/i> matches the sequence
+C<"ss">.  Your lookbehind assertion could contain 127 Sharp S
+characters under C</i>, but adding a 128th would generate a compilation
+error, as that could match 256 C<"s"> characters in a row.
+
+The use of C<\K> inside of another lookaround assertion
 is allowed, but the behaviour is currently not well defined.
 
 For various reasons C<\K> may be significantly more efficient than the
@@ -1642,44 +1678,74 @@ can be rewritten as the much more efficient
 
   s/foo\Kbar//g;
 
+Use of the non-greedy modifier C<"?"> may not give you the expected
+results if it is within a capturing group within the construct.
+
 The alphabetic forms (not including C<\K> are experimental; using them
 yields a warning in the C<experimental::alpha_assertions> category.
 
-=item C<(?<!pattern)>
+=item C<(?<!I<pattern>)>
 
-=item C<(*nlb:pattern)>
+=item C<(*nlb:I<pattern>)>
 
-=item C<(*negative_lookbehind:pattern)>
+=item C<(*negative_lookbehind:I<pattern>)>
 X<(?<!)>
 X<(*nlb>
 X<(*negative_lookbehind>
 X<look-behind, negative> X<lookbehind, negative>
 
 A zero-width negative lookbehind assertion.  For example C</(?<!bar)foo/>
-matches any occurrence of "foo" that does not follow "bar".  Works
-only for fixed-width lookbehind.
+matches any occurrence of "foo" that does not follow "bar".
+
+Prior to Perl 5.30, it worked only for fixed-width lookbehind, but
+starting in that release, it can handle variable lengths from 1 to 255
+characters as an experimental feature.  The feature is enabled
+automatically if you use a variable length lookbehind assertion, but
+will raise a warning at pattern compilation time, unless turned off, in
+the C<experimental::vlb> category.  This is to warn you that the exact
+behavior is subject to change should feedback from actual use in the
+field indicate to do so; or even complete removal if the problems found
+are not practically surmountable.  You can achieve close to pre-5.30
+behavior by fatalizing warnings in this category.
+
+There is a technique that can be used to handle variable length
+lookbehinds on earlier releases, and longer than 255 characters.  It is
+described in
+L<http://www.drregex.com/2019/02/variable-length-lookbehinds-actually.html>.
+
+Note that under C</i>, a few single characters match two or three other
+characters.  This makes them variable length, and the 255 length applies
+to the maximum number of characters in the match.  For
+example C<qr/\N{LATIN SMALL LETTER SHARP S}/i> matches the sequence
+C<"ss">.  Your lookbehind assertion could contain 127 Sharp S
+characters under C</i>, but adding a 128th would generate a compilation
+error, as that could match 256 C<"s"> characters in a row.
+
+Use of the non-greedy modifier C<"?"> may not give you the expected
+results if it is within a capturing group within the construct.
 
 The alphabetic forms are experimental; using them yields a warning in the
 C<experimental::alpha_assertions> category.
 
 =back
 
-=item C<< (?<NAME>pattern) >>
+=item C<< (?<I<NAME>>I<pattern>) >>
 
-=item C<(?'NAME'pattern)>
+=item C<(?'I<NAME>'I<pattern>)>
 X<< (?<NAME>) >> X<(?'NAME')> X<named capture> X<capture>
 
 A named capture group. Identical in every respect to normal capturing
 parentheses C<()> but for the additional fact that the group
 can be referred to by name in various regular expression
-constructs (like C<\g{NAME}>) and can be accessed by name
+constructs (like C<\g{I<NAME>}>) and can be accessed by name
 after a successful match via C<%+> or C<%->. See L<perlvar>
 for more details on the C<%+> and C<%-> hashes.
 
 If multiple distinct capture groups have the same name, then
-C<$+{NAME}> will refer to the leftmost defined group in the match.
+C<$+{I<NAME>}> will refer to the leftmost defined group in the match.
 
-The forms C<(?'NAME'pattern)> and C<< (?<NAME>pattern) >> are equivalent.
+The forms C<(?'I<NAME>'I<pattern>)> and C<< (?<I<NAME>>I<pattern>) >>
+are equivalent.
 
 B<NOTE:> While the notation of this construct is the same as the similar
 function in .NET regexes, the behavior is not. In Perl the groups are
@@ -1688,7 +1754,7 @@ pattern
 
   /(x)(?<foo>y)(z)/
 
-C<$+{I<foo>}> will be the same as C<$2>, and C<$3> will contain 'z' instead of
+C<$+{foo}> will be the same as C<$2>, and C<$3> will contain 'z' instead of
 the opposite which is what a .NET regex hacker might expect.
 
 Currently I<NAME> is restricted to simple identifiers only.
@@ -1697,29 +1763,30 @@ its Unicode extension (see L<utf8>),
 though it isn't extended by the locale (see L<perllocale>).
 
 B<NOTE:> In order to make things easier for programmers with experience
-with the Python or PCRE regex engines, the pattern C<< (?PE<lt>NAMEE<gt>pattern) >>
-may be used instead of C<< (?<NAME>pattern) >>; however this form does not
+with the Python or PCRE regex engines, the pattern C<<
+(?PE<lt>I<NAME>E<gt>I<pattern>) >>
+may be used instead of C<< (?<I<NAME>>I<pattern>) >>; however this form does not
 support the use of single quotes as a delimiter for the name.
 
-=item C<< \k<NAME> >>
+=item C<< \k<I<NAME>> >>
 
-=item C<< \k'NAME' >>
+=item C<< \k'I<NAME>' >>
 
 Named backreference. Similar to numeric backreferences, except that
 the group is designated by name and not number. If multiple groups
 have the same name then it refers to the leftmost defined group in
 the current match.
 
-It is an error to refer to a name not defined by a C<< (?<NAME>) >>
+It is an error to refer to a name not defined by a C<< (?<I<NAME>>) >>
 earlier in the pattern.
 
 Both forms are equivalent.
 
 B<NOTE:> In order to make things easier for programmers with experience
-with the Python or PCRE regex engines, the pattern C<< (?P=NAME) >>
-may be used instead of C<< \k<NAME> >>.
+with the Python or PCRE regex engines, the pattern C<< (?P=I<NAME>) >>
+may be used instead of C<< \k<I<NAME>> >>.
 
-=item C<(?{ code })>
+=item C<(?{ I<code> })>
 X<(?{})> X<regex, code in> X<regexp, code in> X<regular expression, code in>
 
 B<WARNING>: Using this feature safely requires that you understand its
@@ -1823,9 +1890,9 @@ This assertion may be used as the condition in a
 
     (?(condition)yes-pattern|no-pattern)
 
-switch.  If I<not> used in this way, the result of evaluation of C<code>
+switch.  If I<not> used in this way, the result of evaluation of I<code>
 is put into the special variable C<$^R>.  This happens immediately, so
-C<$^R> can be used from other C<(?{ code })> assertions inside the same
+C<$^R> can be used from other C<(?{ I<code> })> assertions inside the same
 regular expression.
 
 The assignment to C<$^R> above is properly localized, so the old
@@ -1841,7 +1908,7 @@ keep track of the number of nested parentheses. For example:
   print "color = $color, animal = $animal\n";
 
 
-=item C<(??{ code })>
+=item C<(??{ I<code> })>
 X<(??{})>
 X<regex, postponed> X<regexp, postponed> X<regular expression, postponed>
 
@@ -1852,7 +1919,7 @@ optimisations in the regex engine.  For more information on this, see
 L</Embedded Code Execution Frequency>.
 
 This is a "postponed" regular subexpression.  It behaves in I<exactly> the
-same way as a C<(?{ code })> code block as described above, except that
+same way as a C<(?{ I<code> })> code block as described above, except that
 its return value, rather than being assigned to C<$^R>, is treated as a
 pattern, compiled if it's a string (or used as-is if its a qr// object),
 then matched as if it were inserted instead of this construct.
@@ -1888,7 +1955,7 @@ The following pattern matches a parenthesized group:
          }x;
 
 See also
-L<C<(?I<PARNO>)>|/(?PARNO) (?-PARNO) (?+PARNO) (?R) (?0)>
+L<C<(?I<PARNO>)>|/(?I<PARNO>) (?-I<PARNO>) (?+I<PARNO>) (?R) (?0)>
 for a different, more efficient way to accomplish
 the same task.
 
@@ -1908,11 +1975,11 @@ the current position in the string. Information about capture state from
 the caller for things like backreferences is available to the subpattern,
 but capture buffers set by the subpattern are not visible to the caller.
 
-Similar to C<(??{ code })> except that it does not involve executing any
+Similar to C<(??{ I<code> })> except that it does not involve executing any
 code or potentially compiling a returned pattern string; instead it treats
 the part of the current pattern contained within a specified capture group
 as an independent pattern that must match at the current position. Also
-different is the treatment of capture buffers, unlike C<(??{ code })>
+different is the treatment of capture buffers, unlike C<(??{ I<code> })>
 recursive patterns have access to their caller's match state, so one can
 use backreferences safely.
 
@@ -1980,7 +2047,7 @@ as atomic. Also, modifiers are resolved at compile time, so constructs
 like C<(?i:(?1))> or C<(?:(?i)(?1))> do not affect how the sub-pattern will
 be processed.
 
-=item C<(?&NAME)>
+=item C<(?&I<NAME>)>
 X<(?&NAME)>
 
 Recurse to a named subpattern. Identical to C<(?I<PARNO>)> except that the
@@ -1991,19 +2058,19 @@ It is an error to refer to a name that is not declared somewhere in the
 pattern.
 
 B<NOTE:> In order to make things easier for programmers with experience
-with the Python or PCRE regex engines the pattern C<< (?P>NAME) >>
-may be used instead of C<< (?&NAME) >>.
+with the Python or PCRE regex engines the pattern C<< (?P>I<NAME>) >>
+may be used instead of C<< (?&I<NAME>) >>.
 
-=item C<(?(condition)yes-pattern|no-pattern)>
+=item C<(?(I<condition>)I<yes-pattern>|I<no-pattern>)>
 X<(?()>
 
-=item C<(?(condition)yes-pattern)>
+=item C<(?(I<condition>)I<yes-pattern>)>
 
-Conditional expression. Matches C<yes-pattern> if C<condition> yields
-a true value, matches C<no-pattern> otherwise. A missing pattern always
+Conditional expression. Matches I<yes-pattern> if I<condition> yields
+a true value, matches I<no-pattern> otherwise. A missing pattern always
 matches.
 
-C<(condition)> should be one of:
+C<(I<condition>)> should be one of:
 
 =over 4
 
@@ -2023,7 +2090,7 @@ matched);
 (true when evaluated inside of recursion or eval).  Additionally the
 C<"R"> may be
 followed by a number, (which will be true when evaluated when recursing
-inside of the appropriate group), or by C<&NAME>, in which case it will
+inside of the appropriate group), or by C<&I<NAME>>, in which case it will
 be true only when evaluated during recursion in the named group.
 
 =back
@@ -2046,17 +2113,17 @@ Full syntax: C<< (?(<name>)then|else) >>
 
 Checks whether the pattern matches (or does not match, for the C<"!">
 variants).
-Full syntax: C<< (?(?=lookahead)then|else) >>
+Full syntax: C<< (?(?=I<lookahead>)I<then>|I<else>) >>
 
 =item C<(?{ I<CODE> })>
 
 Treats the return value of the code block as the condition.
-Full syntax: C<< (?(?{ code })then|else) >>
+Full syntax: C<< (?(?{ I<code> })I<then>|I<else>) >>
 
 =item C<(R)>
 
 Checks if the expression has been evaluated inside of recursion.
-Full syntax: C<< (?(R)then|else) >>
+Full syntax: C<< (?(R)I<then>|I<else>) >>
 
 =item C<(R1)> C<(R2)> ...
 
@@ -2067,7 +2134,7 @@ inside of the n-th capture group. This check is the regex equivalent of
 
 In other words, it does not check the full recursion stack.
 
-Full syntax: C<< (?(R1)then|else) >>
+Full syntax: C<< (?(R1)I<then>|I<else>) >>
 
 =item C<(R&I<NAME>)>
 
@@ -2075,14 +2142,14 @@ Similar to C<(R1)>, this predicate checks to see if we're executing
 directly inside of the leftmost group with a given name (this is the same
 logic used by C<(?&I<NAME>)> to disambiguate). It does not check the full
 stack, but only the name of the innermost active recursion.
-Full syntax: C<< (?(R&name)then|else) >>
+Full syntax: C<< (?(R&I<name>)I<then>|I<else>) >>
 
 =item C<(DEFINE)>
 
 In this case, the yes-pattern is never directly executed, and no
 no-pattern is allowed. Similar in spirit to C<(?{0})> but more efficient.
 See below for details.
-Full syntax: C<< (?(DEFINE)definitions...) >>
+Full syntax: C<< (?(DEFINE)I<definitions>...) >>
 
 =back
 
@@ -2135,15 +2202,15 @@ Will output 2, not 1. This is particularly important if you intend to
 compile the definitions with the C<qr//> operator, and later
 interpolate them in another pattern.
 
-=item C<< (?>pattern) >>
+=item C<< (?>I<pattern>) >>
 
-=item C<< (*atomic:pattern) >>
+=item C<< (*atomic:I<pattern>) >>
 X<(?E<gt>pattern)>
 X<(*atomic>
 X<backtrack> X<backtracking> X<atomic> X<possessive>
 
 An "independent" subexpression, one which matches the substring
-that a I<standalone> C<pattern> would match if anchored at the given
+that a standalone I<pattern> would match if anchored at the given
 position, and it matches I<nothing other than this substring>.  This
 construct is useful for optimizations of what would otherwise be
 "eternal" matches, because it will not backtrack (see L</"Backtracking">).
@@ -2159,12 +2226,12 @@ group C<ab> (see L</"Backtracking">).  In particular, C<a*> inside
 C<a*ab> will match fewer characters than a standalone C<a*>, since
 this makes the tail match.
 
-C<< (?>pattern) >> does not disable backtracking altogether once it has
+C<< (?>I<pattern>) >> does not disable backtracking altogether once it has
 matched. It is still possible to backtrack past the construct, but not
 into it. So C<< ((?>a*)|(?>b*))ar >> will still match "bar".
 
-An effect similar to C<< (?>pattern) >> may be achieved by writing
-C<(?=(pattern))\g{-1}>.  This matches the same substring as a standalone
+An effect similar to C<< (?>I<pattern>) >> may be achieved by writing
+C<(?=(I<pattern>))\g{-1}>.  This matches the same substring as a standalone
 C<a+>, and the following C<\g{-1}> eats the matched string; it therefore
 makes a zero-length assertion into an analogue of C<< (?>...) >>.
 (The difference between these two constructs is that the second one
@@ -2512,8 +2579,9 @@ backtracking occurs until something all in the same script is found that
 matches, or all possibilities are exhausted.  This can cause a lot of
 backtracking, but generally, only malicious input will result in this,
 though the slow down could cause a denial of service attack.  If your
-needs permit, it is best to make the pattern atomic.  This is so likely
-to be what you want, that instead of writing this:
+needs permit, it is best to make the pattern atomic to cut down on the
+amount of backtracking.  This is so likely to be what you want, that
+instead of writing this:
 
  (*script_run:(?>pattern))
 
@@ -2522,12 +2590,15 @@ you can write either of these:
  (*atomic_script_run:pattern)
  (*asr:pattern)
 
-(See L</C<(?E<gt>pattern)>>.)
+(See L</C<(?E<gt>I<pattern>)>>.)
 
 In Taiwan, Japan, and Korea, it is common for text to have a mixture of
 characters from their native scripts and base Chinese.  Perl follows
 Unicode's UTS 39 (L<http://unicode.org/reports/tr39/>) Unicode Security
-Mechanisms in allowing such mixtures.
+Mechanisms in allowing such mixtures.  For example, the Japanese scripts
+Katakana and Hiragana are commonly mixed together in practice, along
+with some Chinese characters, and hence are treated as being in a single
+script run by Perl.
 
 The rules used for matching decimal digits are slightly stricter.  Many
 scripts have their own sets of digits equivalent to the Western C<0>
@@ -2570,12 +2641,58 @@ This feature is experimental, and the exact syntax and details of
 operation are subject to change; using it yields a warning in the
 C<experimental::script_run> category.
 
-The C<Script_Extensions> property is used as the basis for this feature.
+The C<Script_Extensions> property as modified by UTS 39
+(L<http://unicode.org/reports/tr39/>) is used as the basis for this
+feature.
+
+To summarize,
+
+=over 4
+
+=item *
+
+All length 0 or length 1 sequences are script runs.
+
+=item *
+
+A longer sequence is a script run if and only if B<all> of the following
+conditions are met:
+
+Z<>
+
+=over
+
+=item 1
+
+No code point in the sequence has the C<Script_Extension> property of
+C<Unknown>.
+
+This currently means that all code points in the sequence have been
+assigned by Unicode to be characters that aren't private use nor
+surrogate code points.
+
+=item 2
+
+All characters in the sequence come from the Common script and/or the
+Inherited script and/or a single other script.
+
+The script of a character is determined by the C<Script_Extensions>
+property as modified by UTS 39 (L<http://unicode.org/reports/tr39/>), as
+described above.
+
+=item 3
+
+All decimal digits in the sequence come from the same block of 10
+consecutive digits.
+
+=back
+
+=back
 
 =head2 Special Backtracking Control Verbs
 
-These special patterns are generally of the form C<(*I<VERB>:I<ARG>)>. Unless
-otherwise stated the I<ARG> argument is optional; in some cases, it is
+These special patterns are generally of the form C<(*I<VERB>:I<arg>)>. Unless
+otherwise stated the I<arg> argument is optional; in some cases, it is
 mandatory.
 
 Any pattern containing a special backtracking verb that allows an argument
@@ -2583,16 +2700,16 @@ has the special behaviour that when executed it sets the current package's
 C<$REGERROR> and C<$REGMARK> variables. When doing so the following
 rules apply:
 
-On failure, the C<$REGERROR> variable will be set to the I<ARG> value of the
+On failure, the C<$REGERROR> variable will be set to the I<arg> value of the
 verb pattern, if the verb was involved in the failure of the match. If the
-I<ARG> part of the pattern was omitted, then C<$REGERROR> will be set to the
-name of the last C<(*MARK:NAME)> pattern executed, or to TRUE if there was
+I<arg> part of the pattern was omitted, then C<$REGERROR> will be set to the
+name of the last C<(*MARK:I<NAME>)> pattern executed, or to TRUE if there was
 none. Also, the C<$REGMARK> variable will be set to FALSE.
 
 On a successful match, the C<$REGERROR> variable will be set to FALSE, and
 the C<$REGMARK> variable will be set to the name of the last
-C<(*MARK:NAME)> pattern executed.  See the explanation for the
-C<(*MARK:NAME)> verb below for more details.
+C<(*MARK:I<NAME>)> pattern executed.  See the explanation for the
+C<(*MARK:I<NAME>)> verb below for more details.
 
 B<NOTE:> C<$REGERROR> and C<$REGMARK> are not magic variables like C<$1>
 and most other regex-related variables. They are not local to a scope, nor
@@ -2611,7 +2728,7 @@ argument, then C<$REGERROR> and C<$REGMARK> are not touched at all.
 
 =over 4
 
-=item C<(*PRUNE)> C<(*PRUNE:NAME)>
+=item C<(*PRUNE)> C<(*PRUNE:I<NAME>)>
 X<(*PRUNE)> X<(*PRUNE:NAME)>
 
 This zero-width pattern prunes the backtracking tree at the current point
@@ -2656,14 +2773,14 @@ at each matching starting point like so:
 
 Any number of C<(*PRUNE)> assertions may be used in a pattern.
 
-See also C<<< L<< /(?>pattern) >> >>> and possessive quantifiers for
+See also C<<< L<< /(?>I<pattern>) >> >>> and possessive quantifiers for
 other ways to
 control backtracking. In some cases, the use of C<(*PRUNE)> can be
 replaced with a C<< (?>pattern) >> with no functional difference; however,
 C<(*PRUNE)> can be used to handle cases that cannot be expressed using a
 C<< (?>pattern) >> alone.
 
-=item C<(*SKIP)> C<(*SKIP:NAME)>
+=item C<(*SKIP)> C<(*SKIP:I<NAME>)>
 X<(*SKIP)>
 
 This zero-width pattern is similar to C<(*PRUNE)>, except that on
@@ -2673,8 +2790,8 @@ of this pattern. This effectively means that the regex engine "skips" forward
 to this position on failure and tries to match again, (assuming that
 there is sufficient room to match).
 
-The name of the C<(*SKIP:NAME)> pattern has special significance. If a
-C<(*MARK:NAME)> was encountered while matching, then it is that position
+The name of the C<(*SKIP:I<NAME>)> pattern has special significance. If a
+C<(*MARK:I<NAME>)> was encountered while matching, then it is that position
 which is used as the "skip point". If no C<(*MARK)> of that name was
 encountered, then the C<(*SKIP)> operator has no effect. When used
 without a name the "skip point" is where the match point was when
@@ -2696,7 +2813,7 @@ Once the 'aaab' at the start of the string has matched, and the C<(*SKIP)>
 executed, the next starting point will be where the cursor was when the
 C<(*SKIP)> was executed.
 
-=item C<(*MARK:NAME)> C<(*:NAME)>
+=item C<(*MARK:I<NAME>)> C<(*:I<NAME>)>
 X<(*MARK)> X<(*MARK:NAME)> X<(*:NAME)>
 
 This zero-width pattern can be used to mark the point reached in a string
@@ -2705,13 +2822,13 @@ mark may be given a name. A later C<(*SKIP)> pattern will then skip
 forward to that point if backtracked into on failure. Any number of
 C<(*MARK)> patterns are allowed, and the I<NAME> portion may be duplicated.
 
-In addition to interacting with the C<(*SKIP)> pattern, C<(*MARK:NAME)>
+In addition to interacting with the C<(*SKIP)> pattern, C<(*MARK:I<NAME>)>
 can be used to "label" a pattern branch, so that after matching, the
 program can determine which branches of the pattern were involved in the
 match.
 
 When a match is successful, the C<$REGMARK> variable will be set to the
-name of the most recently executed C<(*MARK:NAME)> that was involved
+name of the most recently executed C<(*MARK:I<NAME>)> that was involved
 in the match.
 
 This can be used to determine which branch of a pattern was matched
@@ -2723,19 +2840,19 @@ C</(?:x(*MARK:x)|y(*MARK:y)|z(*MARK:z))/>.
 When a match has failed, and unless another verb has been involved in
 failing the match and has provided its own name to use, the C<$REGERROR>
 variable will be set to the name of the most recently executed
-C<(*MARK:NAME)>.
+C<(*MARK:I<NAME>)>.
 
 See L</(*SKIP)> for more details.
 
-As a shortcut C<(*MARK:NAME)> can be written C<(*:NAME)>.
+As a shortcut C<(*MARK:I<NAME>)> can be written C<(*:I<NAME>)>.
 
-=item C<(*THEN)> C<(*THEN:NAME)>
+=item C<(*THEN)> C<(*THEN:I<NAME>)>
 
 This is similar to the "cut group" operator C<::> from Perl 6.  Like
 C<(*PRUNE)>, this verb always matches, and when backtracked into on
 failure, it causes the regex engine to try the next alternation in the
 innermost enclosing group (capturing or otherwise) that has alternations.
-The two branches of a C<(?(condition)yes-pattern|no-pattern)> do not
+The two branches of a C<(?(I<condition>)I<yes-pattern>|I<no-pattern>)> do not
 count as an alternation, as far as C<(*THEN)> is concerned.
 
 Its name comes from the observation that this operation combined with the
@@ -2764,7 +2881,7 @@ is not the same as
 as after matching the I<A> but failing on the I<B> the C<(*THEN)> verb will
 backtrack and try I<C>; but the C<(*PRUNE)> verb will simply fail.
 
-=item C<(*COMMIT)> C<(*COMMIT:args)>
+=item C<(*COMMIT)> C<(*COMMIT:I<arg>)>
 X<(*COMMIT)>
 
 This is the Perl 6 "commit pattern" C<< <commit> >> or C<:::>. It's a
@@ -2785,7 +2902,7 @@ In other words, once the C<(*COMMIT)> has been entered, and if the pattern
 does not match, the regex engine will not try any further matching on the
 rest of the string.
 
-=item C<(*FAIL)> C<(*F)> C<(*FAIL:arg)>
+=item C<(*FAIL)> C<(*F)> C<(*FAIL:I<arg>)>
 X<(*FAIL)> X<(*F)>
 
 This pattern matches nothing and always fails. It can be used to force the
@@ -2796,7 +2913,7 @@ the argument can be obtained from C<$REGERROR>.
 
 It is probably useful only when combined with C<(?{})> or C<(??{})>.
 
-=item C<(*ACCEPT)> C<(*ACCEPT:arg)>
+=item C<(*ACCEPT)> C<(*ACCEPT:I<arg>)>
 X<(*ACCEPT)>
 
 This pattern matches nothing and causes the end of successful matching at
@@ -3029,14 +3146,14 @@ else in the whole regular expression.)
 For this grouping operator there is no need to describe the ordering, since
 only whether or not C<"S"> can match is important.
 
-=item C<(??{ EXPR })>, C<(?I<PARNO>)>
+=item C<(??{ I<EXPR> })>, C<(?I<PARNO>)>
 
 The ordering is the same as for the regular expression which is
-the result of EXPR, or the pattern contained by capture group I<PARNO>.
+the result of I<EXPR>, or the pattern contained by capture group I<PARNO>.
 
-=item C<(?(condition)yes-pattern|no-pattern)>
+=item C<(?(I<condition>)I<yes-pattern>|I<no-pattern>)>
 
-Recall that which of C<yes-pattern> or C<no-pattern> actually matches is
+Recall that which of I<yes-pattern> or I<no-pattern> actually matches is
 already determined.  The ordering of the matches is the same as for the
 chosen subexpression.
 
@@ -3144,17 +3261,17 @@ Perl-specific syntax, the following are also accepted:
 
 =over 4
 
-=item C<< (?PE<lt>NAMEE<gt>pattern) >>
+=item C<< (?PE<lt>I<NAME>E<gt>I<pattern>) >>
 
-Define a named capture group. Equivalent to C<< (?<NAME>pattern) >>.
+Define a named capture group. Equivalent to C<< (?<I<NAME>>I<pattern>) >>.
 
-=item C<< (?P=NAME) >>
+=item C<< (?P=I<NAME>) >>
 
-Backreference to a named capture group. Equivalent to C<< \g{NAME} >>.
+Backreference to a named capture group. Equivalent to C<< \g{I<NAME>} >>.
 
-=item C<< (?P>NAME) >>
+=item C<< (?P>I<NAME>) >>
 
-Subroutine call to a named capture group. Equivalent to C<< (?&NAME) >>.
+Subroutine call to a named capture group. Equivalent to C<< (?&I<NAME>) >>.
 
 =back
 

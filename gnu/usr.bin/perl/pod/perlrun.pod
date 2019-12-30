@@ -414,7 +414,9 @@ B<-D14> is equivalent to B<-Dtls>):
                (eg when using -Ds)
     524288  J  show s,t,P-debug (don't Jump over) on opcodes within
                package DB
-   1048576  v  Verbose: use in conjunction with other flags
+   1048576  v  Verbose: use in conjunction with other flags to
+               increase the verbosity of the output.  Is a no-op on
+               many of the other flags
    2097152  C  Copy On Write
    4194304  A  Consistency checks on internal structures
    8388608  q  quiet - currently only suppresses the "EXECUTING"
@@ -852,8 +854,8 @@ into an executable file by using the I<undump> program (not supplied).
 This speeds startup at the expense of some disk space (which you
 can minimize by stripping the executable).  (Still, a "hello world"
 executable comes out to about 200K on my machine.)  If you want to
-execute a portion of your program before dumping, use the dump()
-operator instead.  Note: availability of I<undump> is platform
+execute a portion of your program before dumping, use the C<CORE::dump()>
+function instead.  Note: availability of I<undump> is platform
 specific and may not be available for a specific port of Perl.
 
 =item B<-U>
@@ -1025,7 +1027,7 @@ PERLLIB is consulted. The program should instead say:
 X<PERL5OPT>
 
 Command-line options (switches).  Switches in this variable are treated
-as if they were on every Perl command line.  Only the B<-[CDIMUdmtwW]>
+as if they were on every Perl command line.  Only the B<-[CDIMTUWdmtw]>
 switches are allowed.  When running taint checks (either because the
 program was running setuid or setgid, or because the B<-T> or B<-t>
 switch was used), this variable is ignored.  If PERL5OPT begins with

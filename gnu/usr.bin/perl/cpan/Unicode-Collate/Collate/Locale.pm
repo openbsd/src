@@ -5,12 +5,12 @@ use warnings;
 use Carp;
 use base qw(Unicode::Collate);
 
-our $VERSION = '1.25';
+our $VERSION = '1.27';
 
 my $PL_EXT  = '.pl';
 
 my %LocaleFile = map { ($_, $_) } qw(
-   af ar as az be bn ca cs cy da dsb ee eo es et fa fi fil fo gu
+   af ar as az be bn ca cs cu cy da dsb ee eo es et fa fi fil fo gu
    ha haw he hi hr hu hy ig is ja kk kl kn ko kok lkt ln lt lv
    mk ml mr mt nb nn nso om or pa pl ro sa se si sk sl sq sr sv
    ta te th tn to tr uk ur vi vo wae wo yo zh
@@ -256,6 +256,7 @@ a combination of return values from C<getlocale> and C<locale_version>.
       bs_Cyrl           Bosnian in Cyrillic (tailored as Serbian)
       ca                Catalan
       cs                Czech
+      cu                Church Slavic
       cy                Welsh
       da                Danish
       de__phonebook     German (umlaut as 'ae', 'oe', 'ue')
@@ -430,6 +431,7 @@ The order of any groups including scripts is not changed.
       bs_Cyrl           30 = 28 (type="standard": [import sr])
       ca                30 = 23 (alt="proposed" type="standard")
       cs                30 = 1.8.1 (type="standard")
+      cu                34 = 30 (without [reorder Cyrl])
       cy                30 = 1.8.1
       da                22.1 = 1.8.1 (type="standard")
       de__phonebook     30 = 2.0 (type="phonebook")
@@ -517,7 +519,7 @@ The order of any groups including scripts is not changed.
 
 The Unicode::Collate::Locale module for perl was written
 by SADAHIRO Tomoyuki, <SADAHIRO@cpan.org>.
-This module is Copyright(C) 2004-2017, SADAHIRO Tomoyuki. Japan.
+This module is Copyright(C) 2004-2018, SADAHIRO Tomoyuki. Japan.
 All rights reserved.
 
 This module is free software; you can redistribute it and/or

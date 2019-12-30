@@ -2,7 +2,7 @@ package utf8;
 
 $utf8::hint_bits = 0x00800000;
 
-our $VERSION = '1.21';
+our $VERSION = '1.22';
 
 sub import {
     $^H |= $utf8::hint_bits;
@@ -13,7 +13,6 @@ sub unimport {
 }
 
 sub AUTOLOAD {
-    require "utf8_heavy.pl";
     goto &$AUTOLOAD if defined &$AUTOLOAD;
     require Carp;
     Carp::croak("Undefined subroutine $AUTOLOAD called");

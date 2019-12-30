@@ -275,6 +275,24 @@ PP(pp_substcont)
                     cBOOL(cx->sb_rxtainted &
 			  (SUBST_TAINT_STR|SUBST_TAINT_PAT|SUBST_TAINT_REPL))
                 );
+
+                /* sv_magic(), when adding magic (e.g.taint magic), also
+                 * recalculates any pos() magic, converting any byte offset
+                 * to utf8 offset. Make sure pos() is reset before this
+                 * happens rather than using the now invalid value (since
+                 * we've just replaced targ's pvx buffer with the
+                 * potentially shorter dstr buffer). Normally (i.e. in
+                 * non-taint cases), pos() gets removed a few lines later
+                 * with the SvSETMAGIC().
+                 */
+                {
+                    MAGIC *mg;
+                    mg = mg_find_mglob(targ);
+                    if (mg) {
+                        MgBYTEPOS_set(mg, targ, SvPVX(targ), -1);
+                    }
+                }
+
 		SvTAINT(TARG);
 	    }
 	    /* PL_tainted must be correctly set for this mg_set */
@@ -781,7 +799,8 @@ PP(pp_formline)
 			 * for safety */
 			grow = linemax;
 			while (linemark--)
-			    s += UTF8SKIP(s);
+			    s += UTF8_SAFE_SKIP(s,
+                                            (U8 *) SvEND(PL_formtarget));
 			linemark = s - (U8*)SvPVX(PL_formtarget);
 		    }
 		    /* Easy. They agree.  */
@@ -4218,7 +4237,7 @@ S_require_file(pTHX_ SV *sv)
                         }
 
                         if (c == e && isIDFIRST_lazy_if_safe(name, e, utf8)) {
-                            sv_catpv(msg, " (you may need to install the ");
+                            sv_catpvs(msg, " (you may need to install the ");
                             for (c = name; c < e; c++) {
                                 if (*c == '/') {
                                     sv_catpvs(msg, "::");
@@ -4227,14 +4246,14 @@ S_require_file(pTHX_ SV *sv)
                                     sv_catpvn(msg, c, 1);
                                 }
                             }
-                            sv_catpv(msg, " module)");
+                            sv_catpvs(msg, " module)");
                         }
 		    }
 		    else if (memENDs(name, len, ".h")) {
-			sv_catpv(msg, " (change .h to .ph maybe?) (did you run h2ph?)");
+			sv_catpvs(msg, " (change .h to .ph maybe?) (did you run h2ph?)");
 		    }
 		    else if (memENDs(name, len, ".ph")) {
-			sv_catpv(msg, " (did you run h2ph?)");
+			sv_catpvs(msg, " (did you run h2ph?)");
 		    }
 
 		    /* diag_listed_as: Can't locate %s */

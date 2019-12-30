@@ -603,23 +603,23 @@ Similarly, because of all the subscripting that is done using single words,
 the same rule applies to any bareword that is used for subscripting a hash.
 So now, instead of writing
 
-    $array{ "aaa" }{ "bbb" }{ "ccc" }
+    $hash{ "aaa" }{ "bbb" }{ "ccc" }
 
 you can write just
 
-    $array{ aaa }{ bbb }{ ccc }
+    $hash{ aaa }{ bbb }{ ccc }
 
 and not worry about whether the subscripts are reserved words.  In the
 rare event that you do wish to do something like
 
-    $array{ shift }
+    $hash{ shift }
 
 you can force interpretation as a reserved word by adding anything that
 makes it more than a bareword:
 
-    $array{ shift() }
-    $array{ +shift }
-    $array{ shift @_ }
+    $hash{ shift() }
+    $hash{ +shift }
+    $hash{ shift @_ }
 
 The C<use warnings> pragma or the B<-w> switch will warn you if it
 interprets a reserved word as a string.

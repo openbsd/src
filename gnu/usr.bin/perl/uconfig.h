@@ -404,12 +404,6 @@
  */
 /*#define HAS_SETLINEBUF		/ **/
 
-/* HAS_SETLOCALE:
- *	This symbol, if defined, indicates that the setlocale routine is
- *	available to handle locale-specific ctype implementations.
- */
-/*#define HAS_SETLOCALE	/ **/
-
 /* HAS_SETPGID:
  *	This symbol, if defined, indicates that the setpgid(pid, gpid)
  *	routine is available to set process group ID.
@@ -1235,8 +1229,8 @@
  *	This symbol contains the ~name expanded version of ARCHLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-/*#define ARCHLIB "/usr/local/lib/perl5/5.28/unknown"		/ **/
-/*#define ARCHLIB_EXP "/usr/local/lib/perl5/5.28/unknown"		/ **/
+/*#define ARCHLIB "/usr/local/lib/perl5/5.30/unknown"		/ **/
+/*#define ARCHLIB_EXP "/usr/local/lib/perl5/5.30/unknown"		/ **/
 
 /* BIN:
  *	This symbol holds the path of the bin directory where the package will
@@ -1289,8 +1283,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/usr/local/lib/perl5/5.28"		/**/
-#define PRIVLIB_EXP "/usr/local/lib/perl5/5.28"		/**/
+#define PRIVLIB "/usr/local/lib/perl5/5.30"		/**/
+#define PRIVLIB_EXP "/usr/local/lib/perl5/5.30"		/**/
 
 /* SITEARCH:
  *	This symbol contains the name of the private library for this package.
@@ -1307,8 +1301,8 @@
  *	This symbol contains the ~name expanded version of SITEARCH, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-/*#define SITEARCH "/usr/local/lib/perl5/5.28/unknown"		/ **/
-/*#define SITEARCH_EXP "/usr/local/lib/perl5/5.28/unknown"		/ **/
+/*#define SITEARCH "/usr/local/lib/perl5/5.30/unknown"		/ **/
+/*#define SITEARCH_EXP "/usr/local/lib/perl5/5.30/unknown"		/ **/
 
 /* SITELIB:
  *	This symbol contains the name of the private library for this package.
@@ -1330,8 +1324,8 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/usr/local/lib/perl5/5.28"		/**/
-#define SITELIB_EXP "/usr/local/lib/perl5/5.28"		/**/
+#define SITELIB "/usr/local/lib/perl5/5.30"		/**/
+#define SITELIB_EXP "/usr/local/lib/perl5/5.30"		/**/
 #define SITELIB_STEM "/usr/local/lib/perl5"		/**/
 
 /* PERL_VENDORARCH:
@@ -1478,17 +1472,6 @@
  *	included to use this routine.
  */
 /*#define HAS_BACKTRACE	/ **/
-
-/* HASCONST:
- *	This symbol, if defined, indicates that this C compiler knows about
- *	the const type. There is no need to actually test for that symbol
- *	within your programs. The mere use of the "const" keyword will
- *	trigger the necessary tests.
- */
-/*#define HASCONST	/ **/
-#ifndef HASCONST
-#define const
-#endif
 
 /* HAS_CSH:
  *	This symbol, if defined, indicates that the C-shell exists.
@@ -2993,6 +2976,9 @@
  *	This symbol, if defined, indicates that the memmem routine is
  *	available to return a pointer to the start of the first occurance
  *	of a substring in a memory area (or NULL if not found).
+ *	In glibc, memmem is a GNU extension.  The function is visible in
+ *	libc, but the prototype is only visible if _GNU_SOURCE is #defined.
+ *	Thus we only define this if both the prototype and symbol are found.
  */
 /*#define HAS_MEMMEM		/ **/
 
@@ -3242,6 +3228,17 @@
  */
 /*#define HAS_SETITIMER		/ **/
 
+/* HAS_SETLOCALE:
+ *	This symbol, if defined, indicates that the setlocale routine is
+ *	available to handle locale-specific ctype implementations.
+ */
+/* SETLOCALE_ACCEPTS_ANY_LOCALE_NAME:
+ *	This symbol, if defined, indicates that the setlocale routine is
+ *	available and it accepts any input locale name as valid.
+ */
+/*#define HAS_SETLOCALE	/ **/
+/*#define SETLOCALE_ACCEPTS_ANY_LOCALE_NAME	/ **/
+
 /* HAS_SETPROCTITLE:
  *	This symbol, if defined, indicates that the setproctitle routine is
  *	available to set process title.
@@ -3469,6 +3466,18 @@
  *	available to do the opposite of gmtime ()
  */
 /*#define HAS_TIMEGM		/ **/
+
+/* HAS_TOWLOWER:
+ *	This symbol, if defined, indicates that the towlower () routine is
+ *	available to do case conversion.
+ */
+/*#define HAS_TOWLOWER		/ **/
+
+/* HAS_TOWUPPER:
+ *	This symbol, if defined, indicates that the towupper () routine is
+ *	available to do case conversion.
+ */
+/*#define HAS_TOWUPPER		/ **/
 
 /* HAS_TRUNC:
  *	This symbol, if defined, indicates that the trunc routine is
@@ -3771,6 +3780,11 @@
  *	is available for inclusion
  */
 /*#define   I_WCHAR	/ **/
+
+/* I_WCTYPE:
+ *	This symbol, if defined, indicates that <wctype.h> exists.
+ */
+/*#define	I_WCTYPE		/ **/
 
 /* DOUBLEINFBYTES:
  *	This symbol, if defined, is a comma-separated list of
@@ -5230,6 +5244,6 @@
 #endif
 
 /* Generated from:
- * 86429d6dea8cb2d81b30da9d916693eb4c04ebeb21969c8df6f470ac77cd5c92 config_h.SH
- * 472eafc083bb70e26f6130fa170fb8c4370c88404dc212129a44575e82f6c963 uconfig.sh
+ * 6608de918c3c876975f74b684da2536ab1ee23459783d691ae02ce2526a497a7 config_h.SH
+ * 2aaf18b9277e180fc5e5d60290ecb0c91fcac3531bd8825e5687a212daa586e9 uconfig.sh
  * ex: set ro: */

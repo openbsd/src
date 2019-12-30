@@ -7,7 +7,7 @@ IO::Compress::FAQ -- Frequently Asked Questions about IO::Compress
 
 Common questions answered.
 
-=head1 GENERAL 
+=head1 GENERAL
 
 =head2 Compatibility with Unix compress/uncompress.
 
@@ -104,7 +104,7 @@ recompression.
     my $gunzip = new IO::Uncompress::Gunzip $gzipFile
         or die "Cannot gunzip $gzipFile: $GunzipError\n" ;
 
-    bzip2 $gunzip => $bzipFile 
+    bzip2 $gunzip => $bzipFile
         or die "Cannot bzip2 to $bzipFile: $Bzip2Error\n" ;
 
 Note, there is a limitation of this technique. Some compression file
@@ -146,16 +146,16 @@ Only supported if the C<IO-Compress-Lzma> module is installed.
 
 Yes, both the C<IO-Compress-Zip> and C<IO-Uncompress-Unzip>  modules
 support the zip feature called I<Zip64>. That allows them to read/write
-files/buffers larger than 4Gig. 
+files/buffers larger than 4Gig.
 
 If you are creating a Zip file using the one-shot interface, and any of the
 input files is greater than 4Gig, a zip64 complaint zip file will be
-created. 
+created.
 
     zip "really-large-file" => "my.zip";
 
 Similarly with the one-shot interface, if the input is a buffer larger than
-4 Gig, a zip64 complaint zip file will be created. 
+4 Gig, a zip64 complaint zip file will be created.
 
     zip \$really_large_buffer => "my.zip";
 
@@ -174,11 +174,11 @@ detect if the zip file is zip64.
 
 If you intend to manipulate the Zip64 zip files created with
 C<IO-Compress-Zip> using an external zip/unzip, make sure that it supports
-Zip64.  
+Zip64.
 
 In particular, if you are using Info-Zip you need to have zip version 3.x
 or better to update a Zip64 archive and unzip version 6.x to read a zip64
-archive. 
+archive.
 
 =head2 Can I write more that 64K entries is a Zip files?
 
@@ -209,7 +209,7 @@ The example below illustrates this behaviour
 
     $ echo abc | gzip -c >x.gz
     $ echo def | gzip -c >>x.gz
-    $ gunzip -c x.gz 
+    $ gunzip -c x.gz
     abc
     def
 
@@ -287,7 +287,7 @@ By default C<IO::Uncompress::Bzip2> will only uncompress the first bzip2
 data stream in a pbzip2 file. To uncompress the complete pbzip2 file you
 must include the C<MultiStream> option, like this.
 
-    bunzip2 $input => \$output, MultiStream => 1 
+    bunzip2 $input => \$output, MultiStream => 1
         or die "bunzip2 failed: $Bunzip2Error\n";
 
 =head1 HTTP & NETWORK
@@ -334,7 +334,7 @@ L<http://perl.apache.org/docs/tutorials/tips/mod_perl_tricks/mod_perl_tricks.htm
       return bless { r   => $r,
                      crc =>  crc32(undef),
                      d   => $d,
-                     l   =>  0 
+                     l   =>  0
                    },$class;
   }
   
@@ -474,7 +474,7 @@ read from the FTP Server.
     gunzip $retr_fh => $outFilename, AutoClose => 1
         or die "Cannot uncompress '$compressed_file': $GunzipError\n";
 
-and this to compress a file as it is written to the FTP Server 
+and this to compress a file as it is written to the FTP Server
 
     use Net::FTP;
     use IO::Compress::Gzip qw(:all);
@@ -492,13 +492,13 @@ file/buffer and you want to read both.
 
 As an example consider the structure of a zip file. This is a well-defined
 file format that mixes both compressed and uncompressed sections of data in
-a single file. 
+a single file.
 
 For the purposes of this discussion you can think of a zip file as sequence
 of compressed data streams, each of which is prefixed by an uncompressed
 local header. The local header contains information about the compressed
 data stream, including the name of the compressed file and, in particular,
-the length of the compressed data stream. 
+the length of the compressed data stream.
 
 To illustrate how to use C<InputLength> here is a script that walks a zip
 file and prints out how many lines are in each compressed file (if you
@@ -527,7 +527,7 @@ the other C<IO::Uncompress::*> modules.
         my $buffer;
 
         my $x ;
-        ($x = $fh->read($buffer, ZIP_LOCAL_HDR_LENGTH)) == ZIP_LOCAL_HDR_LENGTH 
+        ($x = $fh->read($buffer, ZIP_LOCAL_HDR_LENGTH)) == ZIP_LOCAL_HDR_LENGTH
             or die "Truncated file: $!\n";
 
         my $signature = unpack ("V", substr($buffer, 0, 4));
@@ -539,11 +539,11 @@ the other C<IO::Uncompress::*> modules.
         my $compressedMethod   = unpack ("v", substr($buffer, 8, 2));
         my $compressedLength   = unpack ("V", substr($buffer, 18, 4));
         my $uncompressedLength = unpack ("V", substr($buffer, 22, 4));
-        my $filename_length    = unpack ("v", substr($buffer, 26, 2)); 
+        my $filename_length    = unpack ("v", substr($buffer, 26, 2));
         my $extra_length       = unpack ("v", substr($buffer, 28, 2));
 
         my $filename ;
-        $fh->read($filename, $filename_length) == $filename_length 
+        $fh->read($filename, $filename_length) == $filename_length
             or die "Truncated file\n";
 
         $fh->read($buffer, $extra_length) == $extra_length
@@ -582,7 +582,7 @@ the other C<IO::Uncompress::*> modules.
     }
 
 The majority of the code above is concerned with reading the zip local
-header data. The code that I want to focus on is at the bottom. 
+header data. The code that I want to focus on is at the bottom.
 
     while (1) {
     
@@ -613,9 +613,9 @@ the C<$fh> filehandle (The only exception is for an error case like a
 truncated file or a corrupt data stream).
 
 This means that once RawInflate is finished C<$fh> will be left at the
-byte directly after the compressed data stream. 
+byte directly after the compressed data stream.
 
-Now consider what the code looks like without C<InputLength> 
+Now consider what the code looks like without C<InputLength>
 
     while (1) {
     
@@ -654,11 +654,11 @@ application can cope with large compressed data streams.
 
 One final point -- obviously C<InputLength> can only be used whenever you
 know the length of the compressed data beforehand, like here with a zip
-file. 
+file.
 
 =head1 SEE ALSO
 
-L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
+L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzip>, L<IO::Uncompress::UnLzip>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Compress::Zstd>, L<IO::Uncompress::UnZstd>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
 
 L<IO::Compress::FAQ|IO::Compress::FAQ>
 
@@ -668,7 +668,7 @@ L<IO::Zlib|IO::Zlib>
 
 =head1 AUTHOR
 
-This module was written by Paul Marquess, C<pmqs@cpan.org>. 
+This module was written by Paul Marquess, C<pmqs@cpan.org>.
 
 =head1 MODIFICATION HISTORY
 
@@ -676,7 +676,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2017 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2019 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

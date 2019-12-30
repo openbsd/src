@@ -24,7 +24,7 @@ sub syscopy;
 sub cp;
 sub mv;
 
-$VERSION = '2.33';
+$VERSION = '2.34';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -501,7 +501,7 @@ $! will be set if an error was encountered.
 Before calling copy() or move() on a filehandle, the caller should
 close or flush() the file to avoid writes being lost. Note that this
 is the case even for move(), because it may actually copy the file,
-depending on the OS-specific inplementation, and the underlying
+depending on the OS-specific implementation, and the underlying
 filesystem(s).
 
 =head1 AUTHOR

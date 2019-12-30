@@ -20,13 +20,13 @@ use Test::More tests => 2;
 use Math::BigFloat with => 'Math::BigInt::Subclass',
                    lib  => 'BareCalc';
 
-is(Math::BigFloat->config()->{with}, 'Math::BigInt::BareCalc',
-   "Math::BigFloat->config()->{with}");
+is(Math::BigFloat->config("with"), 'Math::BigInt::BareCalc',
+   'Math::BigFloat->config("with")');
 
 # is($Math::BigInt::Subclass::lib, 'BareCalc');
 
 # it never arrives here, but that is a design decision in SubClass
-is(Math::BigInt->config()->{lib}, 'Math::BigInt::BareCalc',
-   'Math::BigInt->config()->{lib}');
+is(Math::BigInt->config("lib"), 'Math::BigInt::BareCalc',
+   'Math::BigInt->config("lib")');
 
 # all tests done

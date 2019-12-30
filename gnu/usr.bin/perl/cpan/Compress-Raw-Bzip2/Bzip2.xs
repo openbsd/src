@@ -485,7 +485,7 @@ bzdeflate (s, buf, output)
          croak("Wide character in " COMPRESS_CLASS "::bzdeflate input parameter");
 #endif         
     s->stream.next_in = (char*)SvPV_nomg(buf, origlen) ;
-    s->stream.avail_in = origlen;
+    s->stream.avail_in = (unsigned int) origlen;
      
     /* and retrieve the output buffer */
     output = deRef_l(output, "deflate") ;
@@ -735,7 +735,7 @@ bzinflate (s, buf, output)
     
     /* initialise the input buffer */
     s->stream.next_in = (char*)SvPV_nomg(buf, origlen) ;
-    s->stream.avail_in = origlen;
+    s->stream.avail_in = (unsigned int) origlen;
 	
     /* and retrieve the output buffer */
     output = deRef_l(output, "bzinflate") ;

@@ -22,7 +22,9 @@ Apache::MP3
 Apache::SmallProf
 Archive::Extract
 Array::Base
+arybase
 atan2(3)
+atoi(3)
 Attribute::Constant
 autobox
 B::Generate
@@ -160,6 +162,9 @@ Lingua::ZH::Romanize::Pinyin
 List::Gather
 listen(2)
 local::lib
+Locale::Codes
+Locale::Country
+Locale::Language
 localeconv(3)
 lockf(3)
 Log::Message
@@ -283,6 +288,7 @@ strftime(3)
 strictures
 String::Base
 String::Scanf
+strtol(3)
 Switch
 tar(1)
 Template::Declare
@@ -336,7 +342,7 @@ dist/devel-ppport/parts/inc/ppphdoc	Unknown directive: =dontwarn	1
 dist/devel-ppport/parts/inc/ppphdoc	Unknown directive: =implementation	1
 dist/devel-ppport/parts/inc/ppphdoc	Unknown directive: =provides	1
 dist/exporter/lib/exporter.pm	Verbatim line length including indents exceeds 79 by	2
-dist/net-ping/lib/net/ping.pm	Apparent broken link	1
+dist/net-ping/lib/net/ping.pm	Apparent broken link	2
 ext/amiga-exec/exec.pm	Verbatim line length including indents exceeds 79 by	1
 ext/dynaloader/dynaloader.pm	Verbatim line length including indents exceeds 79 by	1
 ext/hash-util/lib/hash/util.pm	Verbatim line length including indents exceeds 79 by	2
@@ -374,7 +380,7 @@ pod/perltie.pod	Verbatim line length including indents exceeds 79 by	3
 pod/perltru64.pod	Verbatim line length including indents exceeds 79 by	1
 pod/perlwin32.pod	Verbatim line length including indents exceeds 79 by	7
 porting/epigraphs.pod	Verbatim line length including indents exceeds 79 by	-1
-porting/release_managers_guide.pod	Verbatim line length including indents exceeds 79 by	1
+porting/release_managers_guide.pod	Verbatim line length including indents exceeds 79 by	2
 porting/todo.pod	? Should you be using F<...> or maybe L<...> instead of	1
 lib/benchmark.pm	Verbatim line length including indents exceeds 79 by	2
 lib/config.pod	? Should you be using L<...> instead of	-1

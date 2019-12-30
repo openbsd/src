@@ -17,8 +17,8 @@ my ($cfg, $x);
 foreach my $class ($mbi, $mbf) {
     # can do and defaults are okay?
     ok($class->can('config'), 'can config()');
-    is($class->config()->{trap_nan}, 0, 'trap_nan defaults to 0');
-    is($class->config()->{trap_inf}, 0, 'trap_inf defaults to 0');
+    is($class->config("trap_nan"), 0, 'trap_nan defaults to 0');
+    is($class->config("trap_inf"), 0, 'trap_inf defaults to 0');
 
     # can set?
     $cfg = $class->config( trap_nan => 1 );

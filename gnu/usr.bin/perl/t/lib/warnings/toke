@@ -109,8 +109,6 @@ toke.c	AOK
         $a =  0037777777777 ;
         $a =  0047777777777 ;
 
-    dump() better written as CORE::dump()
-
     Use of /c modifier is meaningless without /g     
 
     Use of /c modifier is meaningless in s///
@@ -1030,6 +1028,7 @@ Operator or semicolon missing before *foo at - line 8.
 Ambiguous use of * resolved as operator * at - line 8.
 Operator or semicolon missing before *foo at - line 10.
 Ambiguous use of * resolved as operator * at - line 10.
+$* is no longer supported as of Perl 5.30 at - line 14.
 ########
 # toke.c
 $^W = 0 ;
@@ -1179,40 +1178,6 @@ EXPECT
 Integer overflow in binary number at - line 5.
 Integer overflow in hexadecimal number at - line 8.
 Integer overflow in octal number at - line 11.
-########
-# toke.c
-BEGIN { $^C = 1; }
-dump;
-CORE::dump;
-EXPECT
-dump() better written as CORE::dump(). dump() will no longer be available in Perl 5.30 at - line 3.
-- syntax OK
-########
-# toke.c
-BEGIN { $^C = 1; }
-no warnings 'deprecated';
-dump;
-CORE::dump;
-EXPECT
-- syntax OK
-########
-# toke.c
-BEGIN { $^C = 1; }
-no warnings 'deprecated';
-use warnings 'misc';
-dump;
-CORE::dump;
-EXPECT
-dump() better written as CORE::dump(). dump() will no longer be available in Perl 5.30 at - line 5.
-- syntax OK
-########
-# toke.c
-use warnings 'misc';
-use subs qw/dump/;
-sub dump { print "no warning for overridden dump\n"; }
-dump;
-EXPECT
-no warning for overridden dump
 ########
 # toke.c
 use warnings 'ambiguous';
@@ -1407,7 +1372,7 @@ my $a = "\o{}";
 EXPECT
 Missing braces on \o{} at - line 3, within string
 Missing right brace on \o{ at - line 4, within string
-Number with no digits at - line 5, within string
+Empty \o{} at - line 5, within string
 BEGIN not safe after errors--compilation aborted at - line 6.
 ########
 # toke.c
@@ -1676,7 +1641,9 @@ BEGIN{
 use utf8;
 my $a = qr ̂foobar̂;
 EXPECT
-Use of unassigned code point or non-standalone grapheme for a delimiter will be a fatal error starting in Perl 5.30 at - line 8.
+Use of unassigned code point or non-standalone grapheme for a delimiter is not allowed at - line 8, near "= "
+Use of unassigned code point or non-standalone grapheme for a delimiter is not allowed at - line 8, near "= "
+Execution of - aborted due to compilation errors.
 ########
 # NAME  [perl #130567] Assertion failure
 BEGIN {
@@ -1708,3 +1675,19 @@ Execution of - aborted due to compilation errors.
 use utf8;
 qw∘foo ∞ ♥ bar∘
 EXPECT
+########
+# NAME  [perl #134064]
+BEGIN {
+    if (ord('A') == 193) {
+        print "SKIPPED\n# test is ASCII-specific, but could be extended to EBCDIC";
+        exit 0;
+    }
+}
+use utf8;
+$foo="m'\302'";
+eval $foo ;
+print "The eval did not crash the program\n"
+EXPECT
+OPTION regex
+Malformed UTF-8 character: .*non-continuation.*
+The eval did not crash the program

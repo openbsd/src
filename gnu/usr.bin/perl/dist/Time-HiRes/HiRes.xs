@@ -18,7 +18,9 @@ extern "C" {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#include "ppport.h"
+#ifdef USE_PPPORT_H
+#  include "ppport.h"
+#endif
 #if defined(__CYGWIN__) && defined(HAS_W32API_WINDOWS_H)
 # include <w32api/windows.h>
 # define CYGWIN_WITH_W32API
@@ -1442,10 +1444,16 @@ PROTOTYPE: $$@
                           "): negative time not invented yet",
                               SvNV(accessed), SvNV(modified));
 		Zero(&utbuf, sizeof utbuf, char);
+
 		utbuf[0].tv_sec = (Time_t)SvNV(accessed);  /* time accessed */
-		utbuf[0].tv_nsec = (long)( ( SvNV(accessed) - utbuf[0].tv_sec ) * 1e9 );
+		utbuf[0].tv_nsec = (long)(
+                        (SvNV(accessed) - (NV)utbuf[0].tv_sec)
+                        * NV_1E9 + (NV)0.5);
+
 		utbuf[1].tv_sec = (Time_t)SvNV(modified);  /* time modified */
-		utbuf[1].tv_nsec = (long)( ( SvNV(modified) - utbuf[1].tv_sec ) * 1e9 );
+		utbuf[1].tv_nsec = (long)(
+                        (SvNV(modified) - (NV)utbuf[1].tv_sec)
+                        * NV_1E9 + (NV)0.5);
 	}
 
 	while (items > 0) {

@@ -23,7 +23,7 @@ BEGIN {
 
 our @global;
 
-plan tests => 502;  # Update this when adding/deleting tests.
+plan tests => 506;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -1301,6 +1301,35 @@ sub run_tests {
         ok /^$qr$/,  "RT #132772 -  run time time qr//";
     }
 
+    # RT #133687
+    # mixing compile-time (?(?{code})) with run-time code blocks
+    # was failing, because the second pass through the parser
+    # (which compiles the runtime code blocks) was failing to adequately
+    # mask the compile-time code blocks to shield them from a second
+    # compile: /X(?{...})Y/ was being correctly masked as /X________Y/
+    # but /X(?(?{...}))Y/ was being incorrectly masked as
+    # /X(?________)Y/
+
+    {
+        use re 'eval';
+        my $runtime_re = '(??{ "A"; })';
+        ok "ABC" =~ /^ $runtime_re (?(?{ 1; })BC)    $/x, 'RT #133687 yes';
+        ok "ABC" =~ /^ $runtime_re (?(?{ 0; })xy|BC) $/x, 'RT #133687 yes|no';
+    }
+
+    # RT #134208
+    # when the string being matched was an SvTEMP and the re_eval died,
+    # the SV's magic was being restored after the SV was freed.
+    # Give ASan something to play with.
+
+    {
+        my $a;
+        no warnings 'uninitialized';
+        eval { "$a $1" =~ /(?{ die })/ };
+        pass("SvTEMP 1");
+        eval { sub { " " }->() =~ /(?{ die })/ };
+        pass("SvTEMP 2");
+    }
 
 } # End of sub run_tests
 

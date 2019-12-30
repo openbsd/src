@@ -129,7 +129,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #ifdef PERL_CORE
 # define CVf_SLABBED	0x0800	/* Holds refcount on op slab  */
 #endif
-#define CVf_DYNFILE	0x1000	/* The filename isn't static  */
+#define CVf_DYNFILE	0x1000	/* The filename is malloced  */
 #define CVf_AUTOLOAD	0x2000	/* SvPVX contains AUTOLOADed sub name  */
 #define CVf_HASEVAL	0x4000	/* contains string eval  */
 #define CVf_NAMED	0x8000  /* Has a name HEK */

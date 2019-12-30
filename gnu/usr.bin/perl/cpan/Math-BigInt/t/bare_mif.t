@@ -21,4 +21,4 @@ $mbf = 'Math::BigFloat';
 is(Math::BigInt->config('lib'), 'Math::BigInt::BareCalc',
    "Math::BigInt->config('lib')");
 
-require 't/mbimbf.inc';
+require './t/mbimbf.inc';

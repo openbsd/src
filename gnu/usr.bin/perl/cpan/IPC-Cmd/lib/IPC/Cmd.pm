@@ -6,6 +6,7 @@ BEGIN {
 
     use constant IS_VMS         => $^O eq 'VMS'                       ? 1 : 0;
     use constant IS_WIN32       => $^O eq 'MSWin32'                   ? 1 : 0;
+    use constant IS_HPUX        => $^O eq 'hpux'                      ? 1 : 0;
     use constant IS_WIN98       => (IS_WIN32 and !Win32::IsWinNT())   ? 1 : 0;
     use constant ALARM_CLASS    => __PACKAGE__ . '::TimeOut';
     use constant SPECIAL_CHARS  => qw[< > | &];
@@ -18,7 +19,7 @@ BEGIN {
                         $HAVE_MONOTONIC
                     ];
 
-    $VERSION        = '1.00';
+    $VERSION        = '1.02';
     $VERBOSE        = 0;
     $DEBUG          = 0;
     $WARN           = 1;
@@ -490,7 +491,7 @@ sub kill_gently {
   while ($do_wait) {
     $previous_monotonic_value = $now;
     $now = get_monotonic_time();
-    
+
     adjust_monotonic_start_time([\$wait_start_time], $now, $previous_monotonic_value);
 
     if ($now > $wait_start_time + $opts->{'wait_time'}) {
@@ -505,7 +506,7 @@ sub kill_gently {
         $do_wait = 0;
         next;
     }
-    
+
     Time::HiRes::usleep(250000); # quarter of a second
   }
 
@@ -531,7 +532,11 @@ sub open3_run {
     $child_err->autoflush(1);
 
     my $pid = open3($child_in, $child_out, $child_err, $cmd);
-    Time::HiRes::usleep(1);
+    Time::HiRes::usleep(1) if IS_HPUX;
+
+    # will consider myself orphan if my ppid changes
+    # from this one:
+    my $original_ppid = $opts->{'original_ppid'};
 
     # push my child's pid to our parent
     # so in case i am killed parent
@@ -602,7 +607,7 @@ sub open3_run {
 
         # parent was killed otherwise we would have got
         # the same signal as parent and process it same way
-        if (getppid() eq "1") {
+        if (getppid() != $original_ppid) {
 
           # end my process group with all the children
           # (i am the process group leader, so my pid
@@ -872,6 +877,7 @@ sub run_forked {
     my $start_time = get_monotonic_time();
 
     my $pid;
+    my $ppid = $$;
     if ($pid = fork) {
 
       # we are a parent
@@ -1218,6 +1224,7 @@ sub run_forked {
           'parent_stdout' => $parent_stdout_socket,
           'parent_stderr' => $parent_stderr_socket,
           'child_stdin' => $opts->{'child_stdin'},
+          'original_ppid' => $ppid,
           });
       }
       elsif (ref($cmd) eq 'CODE') {

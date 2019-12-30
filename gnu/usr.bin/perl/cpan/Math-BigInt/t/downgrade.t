@@ -9,11 +9,10 @@ use Math::BigInt   upgrade   => 'Math::BigFloat';
 use Math::BigFloat downgrade => 'Math::BigInt',
                    upgrade   => 'Math::BigInt';
 
-
-our ($CLASS, $EXPECTED_CLASS, $CALC);
+our ($CLASS, $EXPECTED_CLASS, $LIB);
 $CLASS          = "Math::BigInt";
 $EXPECTED_CLASS = "Math::BigFloat";
-$CALC           = "Math::BigInt::Calc";         # backend
+$LIB            = "Math::BigInt::Calc";         # backend
 
 # simplistic test for now
 is(Math::BigFloat->downgrade(), 'Math::BigInt', 'Math::BigFloat->downgrade()');
@@ -54,4 +53,4 @@ my $x = Math::BigFloat->new(2);    # downgrades
 is(Math::BigFloat->bpow("2", "0.5"), $x->bsqrt(),
    qq|Math::BigFloat->bpow("2", "0.5")|);
 
-#require 'upgrade.inc';	# all tests here for sharing
+#require 'upgrade.inc'; # all tests here for sharing

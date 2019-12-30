@@ -4,10 +4,11 @@ use 5.008;
 
 use strict;
 use warnings;
+use Config;
 
 use Scalar::Util qw(reftype refaddr blessed);
 
-our $VERSION = '1.58'; # Please update the pod, too.
+our $VERSION = '1.60'; # Please update the pod, too.
 my $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -18,7 +19,7 @@ $threads::shared::threads_shared = 1;
 $threads::shared::clone_warn = undef;
 
 # Load the XS code, if applicable
-if ($threads::threads) {
+if ($Config::Config{'useithreads'} && $threads::threads) {
     require XSLoader;
     XSLoader::load('threads::shared', $XS_VERSION);
 
@@ -195,7 +196,7 @@ threads::shared - Perl extension for sharing data structures between threads
 
 =head1 VERSION
 
-This document describes threads::shared version 1.58
+This document describes threads::shared version 1.60
 
 =head1 SYNOPSIS
 

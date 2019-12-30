@@ -11,21 +11,27 @@ release schedules for the next, current and previous stable versions
 of Perl.  Dates with two or more question marks will only be releases if
 deemed necessary by the Pumpking.
 
+=head2 Perl 5.32
+
+Code freezes (which happen in the 5.31.X series)
+
+  2020-01-20  5.31.8          Contentious changes freeze
+  2020-02-20  5.31.9          User-visible changes to correctly
+                              functioning programs freeze
+  2020-03-20  5.31.10         Full code freeze
+  2020-04-20  5.32.0          Stable release!
+
 =head2 Perl 5.30
 
-Code freezes (which happen in the 5.29.X series)
-
-  2019-02-20  5.29.8 ✓        Contentious changes freeze
-  2019-03-20  5.29.9 ✓        User-visible changes to correctly
-                              functioning programs freeze
-  2019-04-20  5.29.10         Full code freeze
-  2019-05-20  5.30.0          Stable release!
+  2019-05-22  5.30.0 ✓        Sawyer X
+  2019-11-10  5.30.1          Steve Hay
+  2020-03-??  5.30.2          Steve Hay
 
 =head2 Perl 5.28
 
   2018-05-20  5.28.0 ✓        Sawyer X
   2018-11-29  5.28.1 ✓        Steve Hay
-  2019-04-??  5.28.2          Steve Hay
+  2019-04-19  5.28.2 ✓        Steve Hay
 
 =head2 Perl 5.26
 
@@ -48,21 +54,21 @@ When shipping a release, you should include the schedule for (at least)
 the next four releases. If a stable version of Perl is released,
 you should reset the version numbers to the next blead series.
 
-=head2 Perl 5.29
+=head2 Perl 5.31
 
-  2018-06-26  5.29.0 ✓        Sawyer X
-  2018-07-20  5.29.1 ✓        Steve Hay
-  2018-08-20  5.29.2 ✓        Chris BinGOs Williams
-  2018-09-20  5.29.3 ✓        John Anderson (genehack)
-  2018-10-20  5.29.4 ✓        Aaron Crane
-  2018-11-20  5.29.5 ✓        Karen Etheridge (ether)
-  2018-12-18  5.29.6 ✓        Abigail
-  2019-01-20  5.29.7 ✓        Abigail
-  2019-02-20  5.29.8 ✓        Nicolas R. (atoomic)
-  2019-03-20  5.29.9 ✓        Zak B. Elep
-  2019-04-20  5.29.10         Sawyer X
+  2019-05-23  5.31.0 ✓       Sawyer X
+  2019-06-20  5.31.1 ✓       Karen Etheridge
+  2019-07-20  5.31.2 ✓       Steve Hay
+  2019-08-20  5.31.3 ✓       Tom Hukins
+  2019-09-20  5.31.4 ✓       Max Maischein
+  2019-10-20  5.31.5 ✓       Steve Hay
+  2019-11-20  5.31.6             BinGOs
+  2019-12-18  5.31.7
+  2020-01-20  5.31.8
+  2020-02-20  5.31.9         Renee Backer
+  2020-03-20  5.31.10
 
-(RC0 for 5.30.0 will be released once we think that all the blockers have been
+(RC0 for 5.32.0 will be released once we think that all the blockers have been
 addressed.  This typically means some time in April or May.)
 
 =head1 VICTIMS

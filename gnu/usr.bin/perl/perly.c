@@ -355,7 +355,7 @@ Perl_yyparse (pTHX_ int gramtype)
                 yytoken = YYTRANSLATE(NATIVE_TO_UNI(parser->yychar));
             }
 
-            /* make sure no-ones changed yychar since the last call to yylex */
+            /* make sure no-one's changed yychar since the last call to yylex */
             assert(yytoken == YYTRANSLATE(NATIVE_TO_UNI(parser->yychar)));
             YYDSYMPRINTF("lookahead token is", yytoken, &parser->yylval);
 

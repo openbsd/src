@@ -129,30 +129,41 @@ if ($define{USE_ITHREADS} && $ARGS{PLATFORM} ne 'win32' && $ARGS{PLATFORM} ne 'n
     $define{USE_REENTRANT_API} = 1;
 }
 
-if (     $define{USE_ITHREADS}
-    &&   $define{HAS_SETLOCALE}
-    && ! $define{NO_LOCALE}
-    && ! $define{NO_POSIX_2008_LOCALE})
-{
-    $define{HAS_POSIX_2008_LOCALE} = 1 if $define{HAS_NEWLOCALE}
-                                       && $define{HAS_FREELOCALE}
-                                       && $define{HAS_USELOCALE};
-    my $cctype = $ARGS{CCTYPE} =~ s/MSVC//r;
-    if (    ! $define{NO_THREAD_SAFE_LOCALE}
-        && (  $define{HAS_POSIX_2008_LOCALE}
-            || ($ARGS{PLATFORM} eq 'win32' && (   $cctype !~ /\D/
-                                               && $cctype >= 80))))
+if (! $define{NO_LOCALE}) {
+    if ( ! $define{NO_POSIX_2008_LOCALE}
+        && $define{HAS_NEWLOCALE}
+        && $define{HAS_USELOCALE}
+        && $define{HAS_DUPLOCALE}
+        && $define{HAS_FREELOCALE})
     {
-        $define{USE_THREAD_SAFE_LOCALE} = 1;
-        $define{USE_POSIX_2008_LOCALE} = 1 if $define{HAS_POSIX_2008_LOCALE};
+        $define{HAS_POSIX_2008_LOCALE} = 1;
+        $define{USE_LOCALE} = 1;
     }
+    elsif ($define{HAS_SETLOCALE}) {
+        $define{USE_LOCALE} = 1;
+    }
+}
 
-    if (   $ARGS{PLATFORM} eq 'win32'
-        && $define{USE_THREAD_SAFE_LOCALE}
-        && $cctype < 140)
-    {
-        $define{TS_W32_BROKEN_LOCALECONV} = 1;
-    }
+my $cctype = $ARGS{CCTYPE} =~ s/MSVC//r;
+if (! $define{HAS_SETLOCALE} && $define{HAS_POSIX_2008_LOCALE}) {
+    $define{USE_POSIX_2008_LOCALE} = 1;
+    $define{USE_THREAD_SAFE_LOCALE} = 1;
+}
+elsif (   ($define{USE_ITHREADS} || $define{USE_THREAD_SAFE_LOCALE})
+       && (    $define{HAS_POSIX_2008_LOCALE}
+           || ($ARGS{PLATFORM} eq 'win32' && (   $cctype !~ /\D/
+                                              && $cctype >= 80)))
+       && ! $define{NO_THREAD_SAFE_LOCALE})
+{
+    $define{USE_THREAD_SAFE_LOCALE} = 1 unless $define{USE_THREAD_SAFE_LOCALE};
+    $define{USE_POSIX_2008_LOCALE} = 1 if $define{HAS_POSIX_2008_LOCALE};
+}
+
+if (   $ARGS{PLATFORM} eq 'win32'
+    && $define{USE_THREAD_SAFE_LOCALE}
+    && $cctype < 140)
+{
+    $define{TS_W32_BROKEN_LOCALECONV} = 1;
 }
 
 # perl.h logic duplication ends
@@ -283,7 +294,6 @@ unless ($define{'DEBUGGING'}) {
 		    Perl_hv_assert
 		    PL_watchaddr
 		    PL_watchok
-		    PL_watch_pvx
 			 );
 }
 
@@ -352,6 +362,8 @@ if ($define{'PERL_USE_SAFE_PUTENV'}) {
 
 unless ($define{'USE_ITHREADS'}) {
     ++$skip{PL_thr_key};
+    ++$skip{PL_user_prop_mutex};
+    ++$skip{PL_user_def_props_aTHX};
 }
 
 # USE_5005THREADS symbols. Kept as reference for easier removal
@@ -386,7 +398,6 @@ unless ($define{'USE_ITHREADS'}) {
     ++$skip{$_} foreach qw(
                     PL_keyword_plugin_mutex
 		    PL_check_mutex
-                    PL_curlocales
 		    PL_op_mutex
 		    PL_regex_pad
 		    PL_regex_padav
@@ -425,8 +436,16 @@ unless ($define{'USE_ITHREADS'}) {
 		    Perl_stashpv_hvname_match
 		    Perl_regdupe_internal
 		    Perl_newPADOP
-                    PL_C_locale_obj
 			 );
+}
+
+if (      $define{NO_LOCALE}
+    || (! $define{USE_ITHREADS} && ! $define{USE_THREAD_SAFE_LOCALE}))
+{
+    ++$skip{$_} foreach qw(
+        PL_C_locale_obj
+        PL_curlocales
+    );
 }
 
 unless ( $define{'HAS_NEWLOCALE'}
@@ -446,6 +465,7 @@ unless ($define{'PERL_IMPLICIT_CONTEXT'}) {
 		    PL_my_cxt_list
 		    PL_my_cxt_size
 		    PL_my_cxt_keys
+		    PL_my_cxt_keys_size
 		    Perl_croak_nocontext
 		    Perl_die_nocontext
 		    Perl_deb_nocontext
@@ -470,12 +490,6 @@ if ($define{USE_THREAD_SAFE_LOCALE}) {
     if (! $define{TS_W32_BROKEN_LOCALECONV}) {
         ++$skip{PL_locale_mutex};
     }
-}
-
-unless ($define{'PERL_OP_PARENT'}) {
-    ++$skip{$_} foreach qw(
-		    Perl_op_parent
-                );
 }
 
 unless ($define{'USE_DTRACE'}) {
@@ -533,6 +547,7 @@ unless ($define{'PERL_GLOBAL_STRUCT'}) {
 unless ($define{'PERL_GLOBAL_STRUCT_PRIVATE'}) {
     ++$skip{$_} foreach qw(
 		    PL_my_cxt_keys
+		    PL_my_cxt_keys_size
 		    Perl_my_cxt_index
 			 );
 }
@@ -898,6 +913,7 @@ if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
 			    win32_realloc
 			    win32_free
 			    win32_sleep
+			    win32_pause
 			    win32_times
 			    win32_access
 			    win32_alarm

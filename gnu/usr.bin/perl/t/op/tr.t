@@ -13,7 +13,7 @@ BEGIN {
 
 use utf8;
 
-plan tests => 300;
+plan tests => 301;
 
 # Test this first before we extend the stack with other operations.
 # This caused an asan failure due to a bad write past the end of the stack.
@@ -1137,6 +1137,12 @@ for ("", nullrocow) {
     [\x{E5CD}-\x{E5DF}\x{EA80}-\x{EAFA}\x{EB0E}-\x{EB8E}\x{EAFB}-\x{EB0D}\x{E5B5}-\x{E5CC}];
 
     is $x, "\x{E5CE}", '[perl #130656]';
+
+}
+
+{
+    fresh_perl_like('y/\x{a00}0-\N{}//', qr/Unknown charname/, { },
+                    'RT #133880 illegal \N{}');
 }
 
 1;

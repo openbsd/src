@@ -1,4 +1,7 @@
 /* Mini EMBED (pair.c) */
+#ifndef PERL_SDBM_FILE_PAIR_H_
+#define PERL_SDBM_FILE_PAIR_H_
+
 #define chkpage sdbm__chkpage
 #define delpair sdbm__delpair
 #define duppair sdbm__duppair
@@ -20,3 +23,5 @@ extern void splpage(char *, char *, long);
 #ifdef SEEDUPS
 extern int duppair(char *, datum);
 #endif
+
+#endif /* PERL_SDBM_FILE_PAIR_H_ */

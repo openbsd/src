@@ -1,94 +1,35 @@
 use strict;
 use warnings;
-BEGIN {
-    if ($] < 5.014){
-        print "1..0 # Skip: Perl 5.14.0 or later required\n";
-        exit 0;
-    }
-}
+BEGIN { 'warnings'->unimport('utf8') if $] < 5.014 }; # turn off 'UTF-16 surrogate 0xd800' warnings
 
-use Encode;
-use Test::More tests => 10;
+use Test::More;
+use Encode qw(encode decode FB_CROAK LEAVE_SRC);
 
-my $valid   = "\x61\x00\x00\x00";
-my $invalid = "\x78\x56\x34\x12";
+my $script = quotemeta $0;
 
-my @warnings;
-$SIG{__WARN__} = sub {push @warnings, "@_"};
+plan tests => 12;
 
-my $enc = find_encoding("UTF32-LE");
+my @invalid;
 
-{
-    @warnings = ();
-    my $ret = Encode::Unicode::decode( $enc, $valid );
-    is("@warnings", "", "Calling decode in Encode::Unicode on valid string produces no warnings");
-}
+ok ! defined eval { encode('UTF-8', "\x{D800}", FB_CROAK | LEAVE_SRC) }, 'Surrogate codepoint \x{D800} is not encoded to strict UTF-8';
+like $@, qr/^"\\x\{d800\}" does not map to UTF-8 at $script line /, 'Error message contains strict UTF-8 name';
+@invalid = ();
+encode('UTF-8', "\x{D800}", sub { @invalid = @_; return ""; });
+is_deeply \@invalid, [ 0xD800 ], 'Fallback coderef contains invalid codepoint 0xD800';
 
+ok ! defined eval { decode('UTF-8', "\xed\xa0\x80", FB_CROAK | LEAVE_SRC) }, 'Surrogate UTF-8 byte sequence \xED\xA0\x80 is decoded with strict UTF-8 decoder';
+like $@, qr/^UTF-8 "\\xED\\xA0\\x80" does not map to Unicode at $script line /, 'Error message contains strict UTF-8 name and original (not decoded) invalid sequence';
+@invalid = ();
+decode('UTF-8', "\xed\xa0\x80", sub { @invalid = @_; return ""; });
+is_deeply \@invalid, [ 0xED, 0xA0, 0x80 ], 'Fallback coderef contains invalid byte sequence 0xED, 0xA0, 0x80';
 
+ok ! defined eval { decode('UTF-8', "\xed\xa0", FB_CROAK | LEAVE_SRC) }, 'Invalid byte sequence \xED\xA0 is not decoded with strict UTF-8 decoder';
+like $@, qr/^UTF-8 "\\xED\\xA0" does not map to Unicode at $script line /, 'Error message contains strict UTF-8 name and original (not decoded) invalid sequence';
+@invalid = ();
+decode('UTF-8', "\xed\xa0", sub { @invalid = @_; return ""; });
+is_deeply \@invalid, [ 0xED, 0xA0 ], 'Fallback coderef contains invalid byte sequence 0xED, 0xA0';
 
-{
-    @warnings = ();
-    my $ret = Encode::Unicode::decode( $enc, $invalid );
-    like("@warnings", qr/is not Unicode/, "Calling decode in Encode::Unicode on invalid string warns");
-}
-
-{
-    no warnings 'utf8';
-    @warnings = ();
-    my $ret = Encode::Unicode::decode( $enc, $invalid );
-    is("@warnings", "", "Warning from decode in Encode::Unicode can be silenced via no warnings 'utf8'");
-}
-
-{
-    no warnings;
-    @warnings = ();
-    my $ret = Encode::Unicode::decode( $enc, $invalid );
-    is("@warnings", "", "Warning from decode in Encode::Unicode can be silenced via no warnings");
-}
-
-
-
-{
-    @warnings = ();
-    my $ret = Encode::decode( $enc, $invalid );
-    like("@warnings", qr/is not Unicode/, "Calling decode in Encode on invalid string warns");
-}
-
-{
-    no warnings 'utf8';
-    @warnings = ();
-    my $ret = Encode::decode( $enc, $invalid );
-    is("@warnings", "", "Warning from decode in Encode can be silenced via no warnings 'utf8'");
-};
-
-{
-    no warnings;
-    @warnings = ();
-    my $ret = Encode::decode( $enc, $invalid );
-    is("@warnings", "", "Warning from decode in Encode can be silenced via no warnings");
-};
-
-
-
-{
-    @warnings = ();
-    my $inplace = $invalid;
-    Encode::from_to( $inplace, "UTF32-LE", "UTF-8" );
-    like("@warnings", qr/is not Unicode/, "Calling from_to in Encode on invalid string warns");
-}
-
-{
-    no warnings 'utf8';
-    @warnings = ();
-    my $inplace = $invalid;
-    Encode::from_to( $inplace, "UTF32-LE", "UTF-8" );
-    is("@warnings", "", "Warning from from_to in Encode can be silenced via no warnings 'utf8'");
-};
-
-{
-    no warnings;
-    @warnings = ();
-    my $inplace = $invalid;
-    Encode::from_to( $inplace, "UTF32-LE", "UTF-8" );
-    is("@warnings", "", "Warning from from_to in Encode can be silenced via no warnings");
-};
+ok ! defined eval { decode('utf8', "\xed\xa0", FB_CROAK | LEAVE_SRC) }, 'Invalid byte sequence \xED\xA0 is not decoded with non-strict utf8 decoder';
+like $@, qr/^utf8 "\\xED\\xA0" does not map to Unicode at $script line /, 'Error message contains non-strict utf8 name and original (not decoded) invalid sequence';
+decode('utf8', "\xed\xa0", sub { @invalid = @_; return ""; });
+is_deeply \@invalid, [ 0xED, 0xA0 ], 'Fallback coderef contains invalid byte sequence 0xED, 0xA0';

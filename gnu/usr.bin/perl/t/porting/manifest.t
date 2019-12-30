@@ -60,11 +60,11 @@ while (<$m>) {
 	next;
     } elsif ($separator !~ tr/ //c) {
 	# It's all spaces
-	fail("Spaces in entry for $file");
+	fail("Spaces in entry for $file in MANIFEST at line $.");
     } elsif ($separator =~ tr/\t//) {
-	fail("Mixed tabs and spaces in entry for $file");
+	fail("Mixed tabs and spaces in entry for $file in MANIFEST at line $.");
     } else {
-	fail("Odd whitespace in entry for $file");
+	fail("Odd whitespace in entry for $file in MANIFEST at line $.");
     }
 }
 
@@ -86,7 +86,10 @@ SKIP: {
 SKIP: {
     find_git_or_skip(6);
     my %seen; # De-dup ls-files output (can appear more than once)
-    chomp(my @repo= grep { !/\.gitignore$/ && !$seen{$_}++ } `git ls-files`);
+    chomp(my @repo= grep {
+        !m{\.gitignore$} &&
+        !$seen{$_}++
+        } `git ls-files`);
     skip("git ls-files didnt work",3)
         if !@repo;
     is( 0+@repo, 0+@files, "git ls-files gives the same number of files as MANIFEST lists");

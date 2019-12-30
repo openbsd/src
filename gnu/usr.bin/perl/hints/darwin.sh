@@ -348,6 +348,14 @@ EOM
     # macOS (10.12) deprecated syscall().
     if [ "$prodvers_minor" -ge 12 ]; then
         d_syscall='undef'
+        # If deploying to pre-10.12, suppress Time::HiRes's detection of the system clock_gettime()
+        case "$MACOSX_DEPLOYMENT_TARGET" in
+          10.[6-9]|10.10|10.11)
+          ccflags="$ccflags -Werror=partial-availability -D_DARWIN_FEATURE_CLOCK_GETTIME=0"
+          ;;
+        *)
+          ;;
+        esac
     fi
 
    lddlflags="${ldflags} -bundle -undefined dynamic_lookup"

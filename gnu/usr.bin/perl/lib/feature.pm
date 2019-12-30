@@ -5,7 +5,7 @@
 
 package feature;
 
-our $VERSION = '1.52';
+our $VERSION = '1.54';
 
 our %feature = (
     fc              => 'feature_fc',
@@ -14,7 +14,6 @@ our %feature = (
     switch          => 'feature_switch',
     bitwise         => 'feature_bitwise',
     evalbytes       => 'feature_evalbytes',
-    array_base      => 'feature_arybase',
     signatures      => 'feature_signatures',
     current_sub     => 'feature___SUB__',
     refaliasing     => 'feature_refaliasing',
@@ -25,13 +24,13 @@ our %feature = (
 );
 
 our %feature_bundle = (
-    "5.10"    => [qw(array_base say state switch)],
-    "5.11"    => [qw(array_base say state switch unicode_strings)],
+    "5.10"    => [qw(say state switch)],
+    "5.11"    => [qw(say state switch unicode_strings)],
     "5.15"    => [qw(current_sub evalbytes fc say state switch unicode_eval unicode_strings)],
     "5.23"    => [qw(current_sub evalbytes fc postderef_qq say state switch unicode_eval unicode_strings)],
     "5.27"    => [qw(bitwise current_sub evalbytes fc postderef_qq say state switch unicode_eval unicode_strings)],
-    "all"     => [qw(array_base bitwise current_sub declared_refs evalbytes fc postderef_qq refaliasing say signatures state switch unicode_eval unicode_strings)],
-    "default" => [qw(array_base)],
+    "all"     => [qw(bitwise current_sub declared_refs evalbytes fc postderef_qq refaliasing say signatures state switch unicode_eval unicode_strings)],
+    "default" => [qw()],
 );
 
 $feature_bundle{"5.12"} = $feature_bundle{"5.11"};
@@ -48,10 +47,15 @@ $feature_bundle{"5.24"} = $feature_bundle{"5.23"};
 $feature_bundle{"5.25"} = $feature_bundle{"5.23"};
 $feature_bundle{"5.26"} = $feature_bundle{"5.23"};
 $feature_bundle{"5.28"} = $feature_bundle{"5.27"};
+$feature_bundle{"5.29"} = $feature_bundle{"5.27"};
+$feature_bundle{"5.30"} = $feature_bundle{"5.27"};
 $feature_bundle{"5.9.5"} = $feature_bundle{"5.10"};
 my %noops = (
     postderef => 1,
     lexical_subs => 1,
+);
+my %removed = (
+    array_base => 1,
 );
 
 our $hint_shift   = 26;
@@ -209,9 +213,9 @@ This feature is available starting with Perl 5.16.
 
 =head2 The 'array_base' feature
 
-This feature supports the legacy C<$[> variable.  See L<perlvar/$[> and
-L<arybase>.  It is on by default but disabled under C<use v5.16> (see
-L</IMPLICIT LOADING>, below).
+This feature supported the legacy C<$[> variable.  See L<perlvar/$[>.
+It was on by default but disabled under C<use v5.16> (see
+L</IMPLICIT LOADING>, below) and unavailable since perl 5.30.
 
 This feature is available under this name starting with Perl 5.16.  In
 previous versions, it was simply on all the time, and this pragma knew
@@ -356,13 +360,13 @@ The following feature bundles are available:
 
   bundle    features included
   --------- -----------------
-  :default  array_base
+  :default
 
-  :5.10     say state switch array_base
+  :5.10     say state switch
 
-  :5.12     say state switch unicode_strings array_base
+  :5.12     say state switch unicode_strings
 
-  :5.14     say state switch unicode_strings array_base
+  :5.14     say state switch unicode_strings
 
   :5.16     say state switch unicode_strings
             unicode_eval evalbytes current_sub fc
@@ -385,6 +389,10 @@ The following feature bundles are available:
             postderef_qq
 
   :5.28     say state switch unicode_strings
+            unicode_eval evalbytes current_sub fc
+            postderef_qq bitwise
+
+  :5.30     say state switch unicode_strings
             unicode_eval evalbytes current_sub fc
             postderef_qq bitwise
 
@@ -497,6 +505,9 @@ sub __common {
         }
         if (!exists $feature{$name}) {
             if (exists $noops{$name}) {
+                next;
+            }
+            if (!$import && exists $removed{$name}) {
                 next;
             }
             unknown_feature($name);

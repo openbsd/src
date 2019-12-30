@@ -3,14 +3,14 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3942            # tests in require'd file
+use Test::More tests => 4026            # tests in require'd file
                          + 20;          # tests in this file
 
 use Math::BigInt only => 'Calc';
 
-our ($CLASS, $CALC);
+our ($CLASS, $LIB);
 $CLASS = "Math::BigInt";
-$CALC  = Math::BigInt -> config('lib');         # backend library
+$LIB   = Math::BigInt -> config('lib');         # backend library
 
 my $x;
 
@@ -78,4 +78,4 @@ is($x, "9903520314281112085086151826",
 #############################################################################
 # all the other tests
 
-require 't/bigintpm.inc';       # all tests here for sharing
+require './t/bigintpm.inc';       # all tests here for sharing

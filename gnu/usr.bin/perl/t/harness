@@ -160,18 +160,66 @@ if (@ARGV) {
 
 	my %dir;
 	my %total_time;
+        my %serials;
+        my %all_dirs;
 
+        # Preprocess the list of tests
 	for (@last) {
 	    if ($^O eq 'MSWin32') {
 		s,\\,/,g; # canonicalize path
 	    };
-	    # Treat every file matching lib/*.t as a "directory"
-	    m! \A ( \.\. / (?: lib | ext/XS-APItest/t )
+
+            # Keep a list of the distinct directory names, and another list of
+            # those which contain a file whose name begins with a 0
+            if ( m! \A \.\. /
+                                ( .*? )         # $1 is the directory path name
+                            /
+                                ( [^/]* \.t )   # $2 is the .t name
+                    \z !x)
+            {
+                my $path = $1;
+
+                $all_dirs{$path} = 1;
+                $serials{$path} = 1 if $2 =~ / \A 0 /x;
+            }
+        }
+
+        # We assume that the reason a test file's name begins with a 0 is to
+        # order its execution among the tests in its directory.  Hence, a
+        # directory containing such files should be tested in serial order.
+        #
+        # Add exceptions to the above rule
+        for (qw(ext/Pod-Html/t cpan/IO-Zlib/t)) {
+            $serials{$_} = 1;
+        }
+
+        my @nonexistent_serials = grep { not exists $all_dirs{$_} } keys %serials;
+        if (@nonexistent_serials) {
+            die "These directories to be run serially are incorrectly"
+              . " specified:\n" . join "\n", @nonexistent_serials;
+        }
+
+        # Remove the serial testing directories from the list of all
+        # directories.  The remaining ones are testable in parallel.  Make the
+        # parallel list a scalar with names separated by '|' so that below
+        # they will be added to a regular expression.
+        my $non_serials = join "|", grep { not exists $serials{$_} } keys %all_dirs;
+        undef %all_dirs;
+        undef %serials;
+
+	for (@last) {
+            # Treat every file in each non-serial directory as its own
+            # "directory", so that it can be executed in parallel
+            m! \A ( \.\. / (?: $non_serials )
                          / [^/]+ \.t \z | .* [/] ) !x
                 or die "'$_'";
 	    push @{$dir{$1}}, $_;
+
+            # This file contributes time to the total needed for the directory
+            # as a whole
 	    $total_time{$1} += $times{$_} || 0;
 	}
+        #print STDERR __LINE__, join "\n", sort { $total_time{$b} <=> $total_time{$a} } keys %dir, "  ";
 
 	push @tests, @last;
 

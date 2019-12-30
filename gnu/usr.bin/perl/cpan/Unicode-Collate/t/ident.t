@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..48\n"; }
+BEGIN { $| = 1; print "1..54\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -36,6 +36,7 @@ ok(1);
 my $Collator = Unicode::Collate->new(
     table => 'keys.txt',
     normalization => undef,
+    UCA_Version => 24,
 );
 
 # [001F] UNIT SEPARATOR
@@ -173,3 +174,22 @@ ok($Collator->viewSortKey("\x{100000}"),
     '[FFA0 8000|0002|0001|FFFF FFFF|0010 0000]');
 
 ##### 48
+
+$Collator->change(UCA_Version => 36);
+
+ok($Collator->viewSortKey("\0"),       '[| | | | 0000 0000]');
+ok($Collator->viewSortKey("\x{200B}"), '[| | | | 0000 200B]');
+
+ok($Collator->viewSortKey('a'),
+    '[0A15 | 0020 | 0002 | FFFF | 0000 0061]');
+
+ok($Collator->viewSortKey("\x{304C}"),
+    '[1926 | 0020 013D | 000E 0002 | FFFF FFFF | 0000 304C]');
+
+ok($Collator->viewSortKey("\x{4E00}"),
+    '[FB40 CE00 | 0020 | 0002 | FFFF | 0000 4E00]');
+
+ok($Collator->viewSortKey("\x{100000}"),
+    '[FBE0 8000 | 0020 | 0002 | FFFF | 0010 0000]');
+
+##### 54

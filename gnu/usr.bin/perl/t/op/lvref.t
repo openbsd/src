@@ -4,7 +4,7 @@ BEGIN {
     set_up_inc("../lib");
 }
 
-plan 156;
+plan 164;
 
 eval '\$x = \$y';
 like $@, qr/^Experimental aliasing via reference not enabled/,
@@ -602,4 +602,40 @@ pass("RT #123821");
     use warnings;
     eval q{sub{\@0[0]=0};};
     pass("RT #128252");
+}
+
+# RT #133538 slices were inadvertently always localising
+
+{
+    use feature 'refaliasing';
+    no warnings 'experimental';
+
+    my @src = (100,200,300);
+
+    my @a = (1,2,3);
+    my %h = qw(one 10 two 20 three 30);
+
+    {
+        use feature 'declared_refs';
+        local \(@a[0,1,2]) = \(@src);
+        local \(@h{qw(one two three)}) = \(@src);
+        $src[0]++;
+        is("@a", "101 200 300", "rt #133538 \@a aliased");
+        is("$h{one} $h{two} $h{three}", "101 200 300", "rt #133538 %h aliased");
+    }
+    is("@a", "1 2 3", "rt #133538 \@a restored");
+    is("$h{one} $h{two} $h{three}", "10 20 30", "rt #133538 %h restored");
+
+    {
+        \(@a[0,1,2]) = \(@src);
+        \(@h{qw(one two three)}) = \(@src);
+        $src[0]++;
+        is("@a", "102 200 300", "rt #133538 \@a aliased try 2");
+        is("$h{one} $h{two} $h{three}", "102 200 300",
+                "rt #133538 %h aliased try 2");
+    }
+    $src[2]++;
+    is("@a", "102 200 301", "rt #133538 \@a still aliased");
+    is("$h{one} $h{two} $h{three}", "102 200 301", "rt #133538 %h still aliased");
+
 }

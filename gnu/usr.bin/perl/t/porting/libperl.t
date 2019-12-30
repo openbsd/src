@@ -250,7 +250,7 @@ sub nm_parse_darwin {
             # String literals can live in different sections
             # depending on the compiler and os release, assumedly
             # also linker flags.
-            if (/^\(__TEXT,__(?:const|cstring|literal\d+)\) (?:non-)?external _?(\w+)(\.\w+)?$/) {
+            if (/^\(__TEXT,__(?:const|(?:asan_)?cstring|literal\d+)\) (?:non-)?external _?(\w+)(\.\w+)?$/) {
                 my ($symbol, $suffix) = ($1, $2);
                 # Ignore function-local constants like
                 # _Perl_av_extend_guts.oom_array_extend
@@ -330,9 +330,11 @@ ok($symbols{data}{const}{PL_no_mem}{'globals.o'}, "has PL_no_mem");
 
 my $GS  = $Config{ccflags} =~ /-DPERL_GLOBAL_STRUCT\b/ ? 1 : 0;
 my $GSP = $Config{ccflags} =~ /-DPERL_GLOBAL_STRUCT_PRIVATE/ ? 1 : 0;
+my $nocommon = $Config{ccflags} =~ /-fno-common/ ? 1 : 0;
 
 print "# GS  = $GS\n";
 print "# GSP = $GSP\n";
+print "# nocommon = $nocommon\n";
 
 my %data_symbols;
 
@@ -381,6 +383,11 @@ if ($GSP) {
     print "# -DPERL_GLOBAL_STRUCT\n";
     ok(!exists $data_symbols{PL_hash_seed}, "has no PL_hash_seed");
     ok(!exists $data_symbols{PL_ppaddr}, "has no PL_ppaddr");
+
+    if ($nocommon) {
+        $symbols{data}{common} = $symbols{data}{bss};
+        delete $symbols{data}{bss};
+    }
 
     ok(! exists $symbols{data}{bss}, "has no data bss symbols")
         or do {

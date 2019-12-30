@@ -64,23 +64,23 @@ is($dir_gid, $max_gid, "... owned by group $max_gid");
 
 {
   # invent a user and group that don't exist
-  do { ++$max_user  } while ( getpwnam( $max_user ) );
-  do { ++$max_group } while ( getgrnam( $max_group ) );
+  my $phony_user = get_phony_user();
+  my $phony_group = get_phony_group();
 
   $dir = catdir($dir_stem, 'aad');
   my $rv = _run_for_warning( sub {
       make_path(
           $dir,
-          { user => $max_user, group => $max_group }
+          { user => $phony_user, group => $phony_group }
       )
   } );
   like( $rv,
-    qr{unable to map $max_user to a uid, ownership not changed:}s,
-    "created a directory not owned by $max_user:$max_group...",
+    qr{unable to map $phony_user to a uid, ownership not changed:}s,
+    "created a directory not owned by $phony_user:$phony_group...",
   );
   like( $rv,
-    qr{unable to map $max_group to a gid, group ownership not changed:}s,
-    "created a directory not owned by $max_user:$max_group...",
+    qr{unable to map $phony_group to a gid, group ownership not changed:}s,
+    "created a directory not owned by $phony_user:$phony_group...",
   );
 }
 
@@ -137,3 +137,30 @@ sub prereq {
   return "getgrent() appears to be insane" unless $max_gid > 0;
   return undef;
 }
+
+sub get_phony_user {
+    return "getpwent() not implemented on $^O" unless $Config{d_getpwent};
+    return "not running as root" unless $< == 0;
+    my %real_users = ();
+    while(my @a=getpwent()) {
+        $real_users{$a[0]}++;
+    }
+    my $phony_stem = 'phonyuser';
+    my $phony = '';
+    do { $phony = $phony_stem . int(rand(10000)); } until (! $real_users{$phony});
+    return $phony;
+}
+
+sub get_phony_group {
+    return "getgrent() not implemented on $^O" unless $Config{d_getgrent};
+    return "not running as root" unless $< == 0;
+    my %real_groups = ();
+    while(my @a=getgrent()) {
+        $real_groups{$a[0]}++;
+    }
+    my $phony_stem = 'phonygroup';
+    my $phony = '';
+    do { $phony = $phony_stem . int(rand(10000)); } until (! $real_groups{$phony});
+    return $phony;
+}
+

@@ -76,7 +76,20 @@ my $category_re = qr/ [a-z0-9_:]+?/;    # Note: requires an initial space
 my $severity_re = qr/ . (?: \| . )* /x; # A severity is a single char, but can
                                         # be of the form 'S|P|W'
 my @same_descr;
+my $depth = 0;
 while (<$diagfh>) {
+  if (m/^=over/) {
+    $depth++;
+    next;
+  }
+  if (m/^=back/) {
+    $depth--;
+    next;
+  }
+
+  # Stuff deeper than main level is ignored
+  next if $depth != 1;
+
   if (m/^=item (.*)/) {
     $cur_entry = $1;
 
@@ -139,6 +152,11 @@ while (<$diagfh>) {
       push @same_descr, $entries{$cur_entry};
     }
   }
+}
+
+if ($depth != 0) {
+    diag ("Unbalance =over/=back.  Fix before proceeding; over - back = " . $depth);
+    exit(1);
 }
 
 foreach my $cur_entry ( keys %entries) {

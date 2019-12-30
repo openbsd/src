@@ -45,7 +45,7 @@ sub NON_ASCII_PLATFORM { ord("A") != 65 }
 # expected, a warning will be generated.  If an older version is being
 # compiled, any bounds tests that fail in the generated test file (-maketest
 # option) will be marked as TODO.
-my $version_of_mk_invlist_bounds = v10.0.0;
+my $version_of_mk_invlist_bounds = v12.1.0;
 
 ##########################################################################
 #
@@ -652,7 +652,7 @@ sub stack_trace() {
 # to use the -annotate option when using this.  Run this program on a unicore
 # containing the starting release you want to compare.  Save that output
 # structure.  Then, switching to a unicore with the ending release, change the
-# 0 in the $string_compare_versions definition just below to a string
+# "" in the $string_compare_versions definition just below to a string
 # containing a SINGLE dotted Unicode release number (e.g. "2.1") corresponding
 # to the starting release.  This program will then compile, but throw away all
 # code points introduced after the starting release.  Finally use a diff tool
@@ -660,7 +660,7 @@ sub stack_trace() {
 # common to both releases, and you can see the changes caused just by the
 # underlying release semantic changes.  For versions earlier than 3.2, you
 # must copy a version of DAge.txt into the directory.
-my $string_compare_versions = DEBUG && ""; #  e.g., "2.1";
+my $string_compare_versions = DEBUG && "";
 my $compare_versions = DEBUG
                        && $string_compare_versions
                        && pack "C*", split /\./, $string_compare_versions;
@@ -895,6 +895,19 @@ if ($v_version gt v3.2.0) {
                                 'Canonical_Combining_Class=Attached_Below_Left'
 }
 
+# Obsoleted
+if ($v_version ge v11.0.0) {
+    push @tables_that_may_be_empty, qw(
+                                       Grapheme_Cluster_Break=E_Base
+                                       Grapheme_Cluster_Break=E_Base_GAZ
+                                       Grapheme_Cluster_Break=E_Modifier
+                                       Grapheme_Cluster_Break=Glue_After_Zwj
+                                       Word_Break=E_Base
+                                       Word_Break=E_Base_GAZ
+                                       Word_Break=E_Modifier
+                                       Word_Break=Glue_After_Zwj);
+}
+
 # Enum values for to_output_map() method in the Map_Table package. (0 is don't
 # output)
 my $EXTERNAL_MAP = 1;
@@ -937,9 +950,9 @@ my %why_obsolete;    # Documentation only
     my $why_no_expand  = "Deprecated by Unicode.  These are characters that expand to more than one character in the specified normalization form, but whether they actually take up more bytes or not depends on the encoding being used.  For example, a UTF-8 encoded character may expand to a different number of bytes than a UTF-32 encoded character.";
 
     %why_deprecated = (
-        'Grapheme_Link' => 'Deprecated by Unicode:  Duplicates ccc=vr (Canonical_Combining_Class=Virama)',
+        'Grapheme_Link' => 'Duplicates ccc=vr (Canonical_Combining_Class=Virama)',
         'Jamo_Short_Name' => $contributory,
-        'Line_Break=Surrogate' => 'Deprecated by Unicode because surrogates should never appear in well-formed text, and therefore shouldn\'t be the basis for line breaking',
+        'Line_Break=Surrogate' => 'Surrogates should never appear in well-formed text, and therefore shouldn\'t be the basis for line breaking',
         'Other_Alphabetic' => $contributory,
         'Other_Default_Ignorable_Code_Point' => $contributory,
         'Other_Grapheme_Extend' => $contributory,
@@ -1436,10 +1449,10 @@ my @missing_early_files;   # Generated list of absent files that we need to
 my @files_actually_output; # List of files we generated.
 my @more_Names;            # Some code point names are compound; this is used
                            # to store the extra components of them.
-my $MIN_FRACTION_LENGTH = 3; # How many digits of a floating point number at
-                           # the minimum before we consider it equivalent to a
-                           # candidate rational
-my $MAX_FLOATING_SLOP = 10 ** - $MIN_FRACTION_LENGTH; # And in floating terms
+my $E_FLOAT_PRECISION = 2; # The minimum number of digits after the decimal
+                           # point of a normalized floating point number
+                           # needed to match before we consider it equivalent
+                           # to a candidate rational
 
 # These store references to certain commonly used property objects
 my $age;
@@ -10717,7 +10730,6 @@ END
         );
     }
 
-
     # Add any explicit cjk values
     $file->insert_lines(@cjk_property_values);
 
@@ -12954,8 +12966,45 @@ sub register_fraction($) {
 
     my $rational = shift;
 
-    my $float = eval $rational;
-    $nv_floating_to_rational{$float} = $rational;
+    my $floating = eval $rational;
+
+    my @floats = sprintf "%.*e", $E_FLOAT_PRECISION, $floating;
+
+    # See if the denominator is a power of 2.
+    $rational =~ m!.*/(.*)!;
+    my $denominator = $1;
+    if (defined $denominator && (($denominator & ($denominator - 1)) == 0)) {
+
+        # Here the denominator is a power of 2.  This means it has an exact
+        # representation in binary, so rounding could go either way.  It turns
+        # out that Windows doesn't necessarily round towards even, so output
+        # an extra entry.  This happens when the final digit we output is even
+        # and the next digits would be 50* to the precision of the machine.
+        my $extra_digit_float = sprintf "%e", $floating;
+        my $q = $E_FLOAT_PRECISION - 1;
+        if ($extra_digit_float =~ / ( .* \. \d{$q} )
+                                    ( [02468] ) 5 0* ( e .*)
+                                  /ix)
+        {
+            push @floats, $1 . ($2 + 1) . $3;
+        }
+    }
+
+    foreach my $float (@floats) {
+        # Strip off any leading zeros beyond 2 digits to make it C99
+        # compliant.  (Windows has 3 digit exponents, contrary to C99)
+        $float =~ s/ ( .* e [-+] ) 0* ( \d{2,}? ) /$1$2/x;
+
+        if (   defined $nv_floating_to_rational{$float}
+            && $nv_floating_to_rational{$float} ne $rational)
+        {
+            die Carp::my_carp_bug("Both '$rational' and"
+                            . " '$nv_floating_to_rational{$float}' evaluate to"
+                            . " the same floating point number."
+                            . "  \$E_FLOAT_PRECISION must be increased");
+        }
+        $nv_floating_to_rational{$float} = $rational;
+    }
     return;
 }
 
@@ -13462,6 +13511,24 @@ sub  filter_script_extensions_line {
     }
     $fields[1] = join " ", @full_names;
     $_ = join "; ", @fields;
+
+    return;
+}
+
+sub setup_emojidata {
+    my $prop_ref = Property->new('XPG',
+                                 Full_Name => 'Extended_Pictographic',
+    );
+    $prop_ref->set_fate($PLACEHOLDER,
+                        "Not part of the Unicode Character Database");
+}
+
+sub filter_emojidata_line {
+    # We only are interested in this single property from this non-UCD data
+    # file, and we turn it into a Perl property, so that it isn't accessible
+    # to the users
+
+    $_ = "" unless /\bExtended_Pictographic\b/;
 
     return;
 }
@@ -14469,13 +14536,6 @@ sub compile_perl() {
 
     calculate_Assigned();
 
-    # Our internal-only property should be treated as more than just a
-    # synonym; grandfather it in to the pod.
-    $perl->add_match_table('_CombAbove', Re_Pod_Entry => 1,
-                            Fate => $INTERNAL_ONLY, Status => $DISCOURAGED)
-            ->set_equivalent_to(property_ref('ccc')->table('Above'),
-                                                                Related => 1);
-
     my $ASCII = $perl->add_match_table('ASCII');
     if (defined $block) {   # This is equivalent to the block if have it.
         my $Unicode_ASCII = $block->table('Basic_Latin');
@@ -14615,56 +14675,6 @@ sub compile_perl() {
             $Unicode_Lower->table('N')->set_caseless_equivalent($notcased);
         }
         $Lower->set_caseless_equivalent($cased);
-    }
-
-    # Similarly, set up our own Case_Ignorable property if this Unicode
-    # version doesn't have it.  From Unicode 5.1: Definition D121: A character
-    # C is defined to be case-ignorable if C has the value MidLetter or the
-    # value MidNumLet for the Word_Break property or its General_Category is
-    # one of Nonspacing_Mark (Mn), Enclosing_Mark (Me), Format (Cf),
-    # Modifier_Letter (Lm), or Modifier_Symbol (Sk).
-
-    # Perl has long had an internal-only alias for this property; grandfather
-    # it in to the pod, but discourage its use.
-    my $perl_case_ignorable = $perl->add_match_table('_Case_Ignorable',
-                                                     Re_Pod_Entry => 1,
-                                                     Fate => $INTERNAL_ONLY,
-                                                     Status => $DISCOURAGED);
-    my $case_ignorable = property_ref('Case_Ignorable');
-    if (defined $case_ignorable && ! $case_ignorable->is_empty) {
-        $perl_case_ignorable->set_equivalent_to($case_ignorable->table('Y'),
-                                                                Related => 1);
-    }
-    else {
-
-        $perl_case_ignorable->initialize($gc->table('Mn') + $gc->table('Lm'));
-
-        # The following three properties are not in early releases
-        $perl_case_ignorable += $gc->table('Me') if defined $gc->table('Me');
-        $perl_case_ignorable += $gc->table('Cf') if defined $gc->table('Cf');
-        $perl_case_ignorable += $gc->table('Sk') if defined $gc->table('Sk');
-
-        # For versions 4.1 - 5.0, there is no MidNumLet property, and
-        # correspondingly the case-ignorable definition lacks that one.  For
-        # 4.0, it appears that it was meant to be the same definition, but was
-        # inadvertently omitted from the standard's text, so add it if the
-        # property actually is there
-        my $wb = property_ref('Word_Break');
-        if (defined $wb) {
-            my $midlet = $wb->table('MidLetter');
-            $perl_case_ignorable += $midlet if defined $midlet;
-            my $midnumlet = $wb->table('MidNumLet');
-            $perl_case_ignorable += $midnumlet if defined $midnumlet;
-        }
-        else {
-
-            # In earlier versions of the standard, instead of the above two
-            # properties , just the following characters were used:
-            $perl_case_ignorable +=
-                            ord("'")
-                        +   utf8::unicode_to_native(0xAD)  # SOFT HYPHEN (SHY)
-                        +   0x2019; # RIGHT SINGLE QUOTATION MARK
-        }
     }
 
     # The remaining perl defined tables are mostly based on Unicode TR 18,
@@ -14954,6 +14964,8 @@ sub compile_perl() {
     # Every character 0-255 is problematic because what each folds to depends
     # on the current locale
     $loc_problem_folds->add_range(0, 255);
+    $loc_problem_folds->add_range(0x130, 0x131);    # These are problematic in
+                                                    # Turkic locales
     $loc_problem_folds_start += $loc_problem_folds;
 
     # Also problematic are anything these fold to outside the range.  Likely
@@ -14993,8 +15005,19 @@ sub compile_perl() {
          Description =>
               "Code points whose fold is a string of more than one character",
     );
+    my $in_multi_fold = $perl->add_match_table(
+               "_Perl_Is_In_Multi_Char_Fold",
+               Description =>
+                   "Code points that are in some multiple character fold",
+    );
+    my $non_final_fold = $perl->add_match_table(
+               "_Perl_Non_Final_Folds",
+               Description => "Code points that are in some multiple character fold, but not in the final position",
+    );
     if ($v_version lt v3.0.1) {
-        push @tables_that_may_be_empty, '_Perl_Folds_To_Multi_Char';
+        push @tables_that_may_be_empty, '_Perl_Folds_To_Multi_Char',
+                                        '_Perl_Is_In_Multi_Char_Fold',
+                                        '_Perl_Non_Final_Folds';
     }
 
     # Look through all the known folds to populate these tables.
@@ -15022,6 +15045,12 @@ sub compile_perl() {
                 $loc_problem_folds->add_range($start, $end);
                 $found_locale_problematic = 1;
             }
+
+            if (@hex_folds > 1) {
+                $in_multi_fold->add_range($cp, $cp);
+                next if $i < @hex_folds - 1;
+                $non_final_fold->add_range($cp, $cp);
+            }
         }
 
         # If this is a problematic fold, add to the start chars the
@@ -15039,33 +15068,6 @@ sub compile_perl() {
         Perl_Extension => 1,
         Note => 'Union of all non-canonical decompositions',
         );
-
-    # _CanonDCIJ is equivalent to Soft_Dotted, but if on a release earlier
-    # than SD appeared, construct it ourselves, based on the first release SD
-    # was in.  A pod entry is grandfathered in for it
-    my $CanonDCIJ = $perl->add_match_table('_CanonDCIJ', Re_Pod_Entry => 1,
-                                           Perl_Extension => 1,
-                                           Fate => $INTERNAL_ONLY,
-                                           Status => $DISCOURAGED);
-    my $soft_dotted = property_ref('Soft_Dotted');
-    if (defined $soft_dotted && ! $soft_dotted->is_empty) {
-        $CanonDCIJ->set_equivalent_to($soft_dotted->table('Y'), Related => 1);
-    }
-    else {
-
-        # This list came from 3.2 Soft_Dotted; all of these code points are in
-        # all releases
-        $CanonDCIJ->initialize([ ord('i'),
-                                 ord('j'),
-                                 0x012F,
-                                 0x0268,
-                                 0x0456,
-                                 0x0458,
-                                 0x1E2D,
-                                 0x1ECB,
-                               ]);
-        $CanonDCIJ = $CanonDCIJ & $Assigned;
-    }
 
     # For backward compatibility, Perl has its own definition for IDStart.
     # It is regular XID_Start plus the underscore, but all characters must be
@@ -15522,30 +15524,49 @@ END
     }
 
     # Perl tailors the WordBreak property so that \b{wb} doesn't split
-    # adjacent spaces into separate words.  First create a copy of the regular
-    # WB property as '_Perl_WB'.  (On Unicode releases earlier than when WB
-    # was defined for, this will already have been done by the substitute file
-    # portion for 'Input_file' code for WB.)
+    # adjacent spaces into separate words.  Unicode 11.0 moved in that
+    # direction, but left TAB,  FIGURE SPACE (U+2007), and (ironically) NO
+    # BREAK SPACE as breaking, so we retained the original Perl customization.
+    # To do this, in the Perl copy of WB, simply replace the mappings of
+    # horizontal space characters that otherwise would map to the default or
+    # the 11.0 'WSegSpace' to instead map to our tailoring.
     my $perl_wb = property_ref('_Perl_WB');
-    if (! defined $perl_wb) {
-        $perl_wb = Property->new('_Perl_WB',
-                                 Fate => $INTERNAL_ONLY,
-                                 Perl_Extension => 1,
-                                 Directory => $map_directory,
-                                 Type => $STRING);
-        my $wb = property_ref('Word_Break');
-        $perl_wb->initialize($wb);
-        $perl_wb->set_default_map($wb->default_map);
-    }
-
-    # And simply replace the mappings of horizontal space characters that
-    # otherwise would map to the default to instead map to our tailoring.
     my $default = $perl_wb->default_map;
     for my $range ($Blank->ranges) {
         for my $i ($range->start .. $range->end) {
-            next unless $perl_wb->value_of($i) eq $default;
+            my $value = $perl_wb->value_of($i);
+
+            next unless $value eq $default || $value eq 'WSegSpace';
             $perl_wb->add_map($i, $i, 'Perl_Tailored_HSpace',
                               Replace => $UNCONDITIONALLY);
+        }
+    }
+
+    # Also starting in Unicode 11.0, rules for some of the boundary types are
+    # based on a non-UCD property (which we have read in if it exists).
+    # Recall that these boundary properties partition the code points into
+    # equivalence classes (represented as enums).
+    #
+    # The loop below goes through each code point that matches the non-UCD
+    # property, and for each current equivalence class containing such a code
+    # point, splits it so that those that are in both are now in a newly
+    # created equivalence class whose name is a combination of the property
+    # and the old class name, leaving unchanged everything that doesn't match
+    # the non-UCD property.
+    my $pictographic_emoji = property_ref('XPG');
+    if (defined $pictographic_emoji) {
+        foreach my $base_property (property_ref('GCB'),
+                                   property_ref('WB'))
+        {
+            my $property = property_ref('_Perl_' . $base_property->name);
+            foreach my $range ($pictographic_emoji->table('Y')->ranges) {
+                foreach my $i ($range->start .. $range->end) {
+                    my $current = $property->value_of($i);
+                    $current = $property->table($current)->short_name;
+                    $property->add_map($i, $i, 'XPG_' . $current,
+                                       Replace => $UNCONDITIONALLY);
+                }
+            }
         }
     }
 
@@ -17265,7 +17286,7 @@ Perl can provide access to all non-provisional Unicode character properties,
 though not all are enabled by default.  The omitted ones are the Unihan
 properties (accessible via the CPAN module L<Unicode::Unihan>) and certain
 deprecated or Unicode-internal properties.  (An installation may choose to
-recompile Perl's tables to change this.  See L<Unicode character
+recompile Perl's tables to change this.  See L</Unicode character
 properties that are NOT accepted by Perl>.)
 
 For most purposes, access to Unicode properties from the Perl core is through
@@ -17740,10 +17761,10 @@ $loose_to_file_of
 $nv_floating_to_rational
 );
 
-# If a floating point number doesn't have enough digits in it to get this
-# close to a fraction, it isn't considered to be that fraction even if all the
-# digits it does have match.
-\$utf8::max_floating_slop = $MAX_FLOATING_SLOP;
+# If a %e floating point number doesn't have this number of digits in it after
+# the decimal point to get this close to a fraction, it isn't considered to be
+# that fraction even if all the digits it does have match.
+\$utf8::e_precision = $E_FLOAT_PRECISION;
 
 # Deprecated tables to generate a warning for.  The key is the file containing
 # the table, so as to avoid duplication, as many property names can map to the
@@ -18091,7 +18112,7 @@ sub make_UCD () {
             next unless $alias->ucd;
             next unless $alias->ok_as_filename;
             push @{$perlprop_to_aliases{standardize($alias->name)}},
-                 @aliases_list;
+                 uniques @aliases_list;
         }
     }
 
@@ -18874,6 +18895,34 @@ EOC
     return @output;
 }
 
+sub generate_wildcard_tests($$$$$) {
+    # This used only for making the test script.  It generates wildcardl
+    # matching test cases that are expected to compile successfully in perl.
+
+    my $lhs = shift;           # The property: what's to the left of the
+                               # or equals separator
+    my $rhs = shift;           # The property value; what's to the right
+    my $valid_code = shift;    # A code point that's known to be in the
+                               # table given by LHS=RHS; undef if table is
+                               # empty
+    my $invalid_code = shift;  # A code point known to not be in the table;
+                               # undef if the table is all code points
+    my $warning = shift;
+
+    return if $lhs eq "";
+    return if $lhs =~ / ^ Is_ /x;   # These are not currently supported
+
+    # Generate a standardized pattern, with colon being the delimitter
+    my $wildcard = "$lhs=:\\A$rhs\\z:";
+
+    my @output;
+    push @output, "Expect(1, $valid_code, '\\p{$wildcard}', $warning);"
+                                                        if defined $valid_code;
+    push @output, "Expect(0, $invalid_code, '\\p{$wildcard}', $warning);"
+                                                      if defined $invalid_code;
+    return @output;
+}
+
 sub generate_error($$$) {
     # This used only for making the test script.  It generates test cases that
     # are expected to not only not match, but to be syntax or similar errors
@@ -19066,21 +19115,12 @@ sub make_property_test_script() {
 
     $t_path = 'TestProp.pl' unless defined $t_path; # the traditional name
 
-    # Keep going down an order of magnitude
-    # until find that adding this quantity to
-    # 1 remains 1; but put an upper limit on
-    # this so in case this algorithm doesn't
-    # work properly on some platform, that we
-    # won't loop forever.
-    my $digits = 0;
-    my $min_floating_slop = 1;
-    while (1+ $min_floating_slop != 1
-            && $digits++ < 50)
-    {
-        my $next = $min_floating_slop / 10;
-        last if $next == 0; # If underflows,
-                            # use previous one
-        $min_floating_slop = $next;
+    # Create a list of what the %f representation is for each rational number.
+    # This will be used below.
+    my @valid_base_floats = '0.0';
+    foreach my $e_representation (keys %nv_floating_to_rational) {
+        push @valid_base_floats,
+                            eval $nv_floating_to_rational{$e_representation};
     }
 
     # It doesn't matter whether the elements of this array contain single lines
@@ -19110,7 +19150,7 @@ EOF_CODE
                                } property_ref('*'))
     {
         # Non-binary properties should not match \p{};  Test all for that.
-        if ($property->type != $BINARY) {
+        if ($property->type != $BINARY && $property->type != $FORCED_BINARY) {
             my @property_aliases = grep { $_->status ne $INTERNAL_ALIAS }
                                                             $property->aliases;
             foreach my $property_alias ($property->aliases) {
@@ -19176,6 +19216,11 @@ EOF_CODE
                 # already guaranteed to be in error
                 my $already_error = ! $table->file_path;
 
+                # A table that begins with these could actually be a
+                # user-defined property, so won't be compile time errors, as
+                # the definitions of those can be deferred until runtime
+                next if $already_error && $table_name =~ / ^ I[ns] /x;
+
                 # Generate error cases for this alias.
                 push @output, generate_error($property_name,
                                              $table_name,
@@ -19185,7 +19230,16 @@ EOF_CODE
                 # quit now without generating success cases.
                 next if $already_error;
 
-                # Now for the success cases.
+                # Now for the success cases.  First, wildcard matching, as it
+                # shouldn't have any randomization.
+                if ($table_alias->status eq $NORMAL) {
+                    push @output, generate_wildcard_tests($property_name,
+                                                          $table_name,
+                                                          $valid,
+                                                          $invalid,
+                                                          $warning,
+                                                         );
+                }
                 my $random;
                 if ($loose_match) {
 
@@ -19206,6 +19260,15 @@ EOF_CODE
                                                      $invalid,
                                                      $warning,
                                                  );
+                        if ($table_alias->status eq $NORMAL) {
+                            push @output, generate_wildcard_tests(
+                                                     $property_name,
+                                                     $standard,
+                                                     $valid,
+                                                     $invalid,
+                                                     $warning,
+                                                 );
+                        }
                     }
                     $random = randomize_loose_name($table_name)
                 }
@@ -19224,76 +19287,111 @@ EOF_CODE
                                                  $warning,
                                              );
 
-                    # If the name is a rational number, add tests for the
-                    # floating point equivalent.
-                    if ($table_name =~ qr{/}) {
+                    if ($property->name eq 'nv') {
+                        if ($table_name !~ qr{/}) {
+                            push @output, generate_tests($property_name,
+                                                sprintf("%.15e", $table_name),
+                                                $valid,
+                                                $invalid,
+                                                $warning,
+                                            );
+                    }
+                    else {
+                        # If the name is a rational number, add tests for a
+                        # non-reduced form, and for a floating point equivalent.
 
-                        # Calculate the float, and find just the fraction.
+                        # 60 is a number divisible by a bunch of things
+                        my ($numerator, $denominator) = $table_name
+                                                        =~ m! (.+) / (.+) !x;
+                        $numerator *= 60;
+                        $denominator *= 60;
+                        push @output, generate_tests($property_name,
+                                                    "$numerator/$denominator",
+                                                    $valid,
+                                                    $invalid,
+                                                    $warning,
+                                    );
+
+                        # Calculate the float, and the %e representation
                         my $float = eval $table_name;
-                        my ($whole, $fraction)
-                                            = $float =~ / (.*) \. (.*) /x;
+                        my $e_representation = sprintf("%.*e",
+                                                $E_FLOAT_PRECISION, $float);
+                        # Parse that
+                        my ($non_zeros, $zeros, $exponent_sign, $exponent)
+                           = $e_representation
+                               =~ / -? [1-9] \. (\d*?) (0*) e ([+-]) (\d+) /x;
+                        my $min_e_precision;
+                        my $min_f_precision;
 
-                        # Starting with one digit after the decimal point,
-                        # create a test for each possible precision (number of
-                        # digits past the decimal point) until well beyond the
-                        # native number found on this machine.  (If we started
-                        # with 0 digits, it would be an integer, which could
-                        # well match an unrelated table)
-                        PLACE:
-                        for my $i (1 .. $min_floating_slop + 3) {
-                            my $table_name = sprintf("%.*f", $i, $float);
-                            if ($i < $MIN_FRACTION_LENGTH) {
+                        if ($exponent_sign eq '+' && $exponent != 0) {
+                            Carp::my_carp_bug("Not yet equipped to handle"
+                                            . " positive exponents");
+                            return;
+                        }
+                        else {
+                            # We're trying to find the minimum precision that
+                            # is needed to indicate this particular rational
+                            # for the given $E_FLOAT_PRECISION.  For %e, any
+                            # trailing zeros, like 1.500e-02 aren't needed, so
+                            # the correct value is how many non-trailing zeros
+                            # there are after the decimal point.
+                            $min_e_precision = length $non_zeros;
 
-                                # If the test case has fewer digits than the
-                                # minimum acceptable precision, it shouldn't
-                                # succeed, so we expect an error for it.
-                                # E.g., 2/3 = .7 at one decimal point, and we
-                                # shouldn't say it matches .7.  We should make
-                                # it be .667 at least before agreeing that the
-                                # intent was to match 2/3.  But at the
-                                # less-than- acceptable level of precision, it
-                                # might actually match an unrelated number.
-                                # So don't generate a test case if this
-                                # conflating is possible.  In our example, we
-                                # don't want 2/3 matching 7/10, if there is
-                                # a 7/10 code point.
+                            # For %f, like .01500, we want at least
+                            # $E_FLOAT_PRECISION digits, but any trailing
+                            # zeros aren't needed, so we can subtract the
+                            # length of those.  But we also need to include
+                            # the zeros after the decimal point, but before
+                            # the first significant digit.
+                            $min_f_precision = $E_FLOAT_PRECISION
+                                             + $exponent
+                                             - length $zeros;
+                        }
 
-                                # First, integers are not in the rationals
-                                # table.  Don't generate an error if this
-                                # rounds to an integer using the given
-                                # precision.
-                                my $round = sprintf "%.0f", $table_name;
-                                next PLACE if abs($table_name - $round)
-                                                        < $MAX_FLOATING_SLOP;
+                        # Make tests for each possible precision from 1 to
+                        # just past the worst case.
+                        my $upper_limit = ($min_e_precision > $min_f_precision)
+                                           ? $min_e_precision
+                                           : $min_f_precision;
 
-                                # Here, isn't close enough to an integer to be
-                                # confusable with one.  Now, see it it's
-                                # "close" to a known rational
-                                for my $existing
-                                        (keys %nv_floating_to_rational)
-                                {
-                                    next PLACE
-                                        if abs($table_name - $existing)
-                                                < $MAX_FLOATING_SLOP;
+                        for my $i (1 .. $upper_limit + 1) {
+                            for my $format ("e", "f") {
+                                my $this_table
+                                          = sprintf("%.*$format", $i, $float);
+
+                                # If we don't have enough precision digits,
+                                # make a fail test; otherwise a pass test.
+                                my $pass = ($format eq "e")
+                                            ? $i >= $min_e_precision
+                                            : $i >= $min_f_precision;
+                                if ($pass) {
+                                    push @output, generate_tests($property_name,
+                                                                $this_table,
+                                                                $valid,
+                                                                $invalid,
+                                                                $warning,
+                                                );
                                 }
-                                push @output, generate_error($property_name,
-                                                             $table_name,
-                                                             1   # 1 => already an error
-                                              );
-                            }
-                            else {
+                                elsif (   $format eq "e"
 
-                                # Here the number of digits exceeds the
-                                # minimum we think is needed.  So generate a
-                                # success test case for it.
-                                push @output, generate_tests($property_name,
-                                                             $table_name,
-                                                             $valid,
-                                                             $invalid,
-                                                             $warning,
-                                             );
+                                          # Here we would fail, but in the %f
+                                          # case, the representation at this
+                                          # precision could actually be a
+                                          # valid one for some other rational
+                                       || ! grep { $this_table
+                                                            =~ / ^ $_ 0* $ /x }
+                                                            @valid_base_floats)
+                                {
+                                    push @output,
+                                        generate_error($property_name,
+                                                       $this_table,
+                                                       1   # 1 => already an
+                                                           # error
+                                                );
+                                }
                             }
                         }
+                    }
                     }
                 }
             }
@@ -19770,12 +19868,7 @@ my @input_file_objects = (
                     Skip => $Documentation,
                    ),
     Input_file->new("$AUXILIARY/WordBreakProperty.txt", v4.1.0,
-                    Early => [ "WBsubst.txt", '_Perl_WB', 'ALetter',
-
-                               # Don't use _Perl_WB as a synonym for
-                               # Word_Break in later perls, as it is tailored
-                               # and isn't the same as Word_Break
-                               'ONLY_EARLY' ],
+                    Early => [ "WBsubst.txt", '_Perl_WB', 'ALetter' ],
                     Property => 'Word_Break',
                     Has_Missings_Defaults => $NOT_IGNORED,
                    ),
@@ -19918,6 +20011,10 @@ my @input_file_objects = (
                     Skip => 'Maps certain Unicode code points to their '
                           . 'legacy Japanese cell-phone values',
                    ),
+    # This file is actually not usable as-is until 6.1.0, because the property
+    # is provisional, so its name is missing from PropertyAliases.txt until
+    # that release, so that further work would have to be done to get it to
+    # work properly
     Input_file->new('ScriptExtensions.txt', v6.0.0,
                     Property => 'Script_Extensions',
                     Early => [ sub {} ], # Doesn't do anything but ensures
@@ -19930,10 +20027,9 @@ my @input_file_objects = (
                                             : $IGNORED),
                    ),
     # These two Indic files are actually not usable as-is until 6.1.0,
-    # because their property values are missing from PropValueAliases.txt
-    # until that release, so that further work would have to be done to get
-    # them to work properly, which isn't worth it because of them being
-    # provisional.
+    # because they are provisional, so their property values are missing from
+    # PropValueAliases.txt until that release, so that further work would have
+    # to be done to get them to work properly.
     Input_file->new('IndicMatraCategory.txt', v6.0.0,
                     Withdrawn => v8.0.0,
                     Property => 'Indic_Matra_Category',
@@ -19980,6 +20076,19 @@ my @input_file_objects = (
                    ),
     Input_file->new('NushuSources.txt', v10.0.0,
                     Skip => 'Specifies source material for Nushu characters',
+                   ),
+    Input_file->new('EquivalentUnifiedIdeograph.txt', v11.0.0,
+                    Property => 'Equivalent_Unified_Ideograph',
+                    Has_Missings_Defaults => $NOT_IGNORED,
+                   ),
+    Input_file->new('EmojiData.txt', v11.0.0,
+                    # Is in UAX #51 and not the UCD, so must be updated
+                    # separately, and the first line edited to indicate the
+                    # UCD release we're pretending it to be in.  The UTC says
+                    # this is a transitional state.
+                    Pre_Handler => \&setup_emojidata,
+                    Has_Missings_Defaults => $NOT_IGNORED,
+                    Each_Line_Handler => \&filter_emojidata_line,
                    ),
 );
 
@@ -20317,7 +20426,7 @@ if ($verbosity >= $NORMAL_VERBOSITY && ! $debug_skip) {
 if ($version_of_mk_invlist_bounds lt $v_version) {
     Carp::my_carp("WARNING: \\b{} algorithms (regen/mk_invlist.pl) need"
                 . " to be checked and possibly updated to Unicode"
-                . " $string_version");
+                . " $string_version.  Failing tests will be marked TODO");
 }
 
 exit(0);
@@ -20327,6 +20436,7 @@ __DATA__
 
 use strict;
 use warnings;
+no warnings 'experimental::uniprop_wildcards';
 
 # Test qr/\X/ and the \p{} regular expression constructs.  This file is
 # constructed by mktables from the tables it generates, so if mktables is

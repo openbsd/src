@@ -2,7 +2,7 @@ use strict;
 use warnings;
 # vim:ts=8:sw=2:et:sta:sts=2
 
-use Test::More 0.82;
+use Test::More 0.88;
 use Module::Metadata;
 
 use lib 't/lib';
@@ -648,7 +648,7 @@ foreach my $test_case (@modules) {
     # We want to ensure we preserve the original, as long as it's legal, so we
     # explicitly check the stringified form.
     {
-      local $TODO = !defined($got) && ($test_case->{TODO_code_sub} || $test_case->{TODO_scalar});
+      local $TODO = !defined($got) && ($test_case->{TODO_code_sub} || $test_case->{TODO_scalar}) ? 1 : undef;
       isa_ok($got, 'version') or $errs++ if defined $expected_version;
     }
 
@@ -690,7 +690,8 @@ foreach my $test_case (@modules) {
     }
 
     is( $warnings, '', "case '$test_case->{name}': no warnings from parsing" ) or $errs++;
-    diag 'parsed module: ', explain($pm_info) if !$ENV{PERL_CORE} && $errs;
+    diag 'parsed module: ', explain($pm_info) if $errs and not $ENV{PERL_CORE}
+      and ($ENV{AUTHOR_TESTING} or $ENV{AUTOMATED_TESTING});
   }
 }
 continue {

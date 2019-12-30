@@ -109,14 +109,17 @@ security issues.
 
 Some digits that C<\d> matches look like some of the [0-9] ones, but
 have different values.  For example, BENGALI DIGIT FOUR (U+09EA) looks
-very much like an ASCII DIGIT EIGHT (U+0038).  An application that
+very much like an ASCII DIGIT EIGHT (U+0038), and LEPCHA DIGIT SIX
+(U+1C46) looks very much like an ASCII DIGIT FIVE (U+0035).  An
+application that
 is expecting only the ASCII digits might be misled, or if the match is
 C<\d+>, the matched string might contain a mixture of digits from
 different writing systems that look like they signify a number different
 than they actually do.  L<Unicode::UCD/num()> can
 be used to safely
 calculate the value, returning C<undef> if the input string contains
-such a mixture.
+such a mixture.  Otherwise, for example, a displayed price might be
+deliberately different than it appears.
 
 What C<\p{Digit}> means (and hence C<\d> except under the C</a>
 modifier) is C<\p{General_Category=Decimal_Number}>, or synonymously,
@@ -356,9 +359,10 @@ C</\pLl/> is valid, but means something different.
 It matches a two character string: a letter (Unicode property C<\pL>),
 followed by a lowercase C<l>.
 
-If locale rules are not in effect, the use of
-a Unicode property will force the regular expression into using Unicode
-rules, if it isn't already.
+What a Unicode property matches is never subject to locale rules, and
+if locale rules are not otherwise in effect, the use of a Unicode
+property will force the regular expression into using Unicode rules, if
+it isn't already.
 
 Note that almost all properties are immune to case-insensitive matching.
 That is, adding a C</i> regular expression modifier does not change what
@@ -401,6 +405,9 @@ non-Unicode code points.  This could be somewhat surprising:
 
 Even though these two matches might be thought of as complements, until
 v5.20 they were so only on Unicode code points.
+
+Starting in perl v5.30, wildcards are allowed in Unicode property
+values.  See L<perlunicode/Wildcards in Property Values>.
 
 =head4 Examples
 
@@ -783,21 +790,21 @@ is valid and matches '0', '1', any alphabetic character, and the percent sign.
 
 Perl recognizes the following POSIX character classes:
 
- alpha  Any alphabetical character ("[A-Za-z]").
- alnum  Any alphanumeric character ("[A-Za-z0-9]").
+ alpha  Any alphabetical character (e.g., [A-Za-z]).
+ alnum  Any alphanumeric character (e.g., [A-Za-z0-9]).
  ascii  Any character in the ASCII character set.
  blank  A GNU extension, equal to a space or a horizontal tab ("\t").
  cntrl  Any control character.  See Note [2] below.
- digit  Any decimal digit ("[0-9]"), equivalent to "\d".
+ digit  Any decimal digit (e.g., [0-9]), equivalent to "\d".
  graph  Any printable character, excluding a space.  See Note [3] below.
- lower  Any lowercase character ("[a-z]").
+ lower  Any lowercase character (e.g., [a-z]).
  print  Any printable character, including a space.  See Note [4] below.
  punct  Any graphical character excluding "word" characters.  Note [5].
  space  Any whitespace character. "\s" including the vertical tab
         ("\cK").
- upper  Any uppercase character ("[A-Z]").
- word   A Perl extension ("[A-Za-z0-9_]"), equivalent to "\w".
- xdigit Any hexadecimal digit ("[0-9a-fA-F]").
+ upper  Any uppercase character (e.g., [A-Z]).
+ word   A Perl extension (e.g., [A-Za-z0-9_]), equivalent to "\w".
+ xdigit Any hexadecimal digit (e.g., [0-9a-fA-F]).  Note [7].
 
 Like the L<Unicode properties|/Unicode Properties>, most of the POSIX
 properties match the same regardless of whether case-insensitive (C</i>)
@@ -838,7 +845,7 @@ equivalent.
    space      \p{PosixSpace}       \p{XPosixSpace}          [6]
    upper      \p{PosixUpper}       \p{XPosixUpper}
    word       \p{PosixWord}        \p{XPosixWord}   \w
-   xdigit     \p{PosixXDigit}      \p{XPosixXDigit}
+   xdigit     \p{PosixXDigit}      \p{XPosixXDigit}         [7]
 
 =over 4
 
@@ -892,6 +899,16 @@ C<\p{XPerlSpace}> and C<\p{Space}> match identically starting with Perl
 v5.18.  In earlier versions, these differ only in that in non-locale
 matching, C<\p{XPerlSpace}> did not match the vertical tab, C<\cK>.
 Same for the two ASCII-only range forms.
+
+=item [7]
+
+Unlike C<[[:digit:]]> which matches digits in many writing systems, such
+as Thai and Devanagari, there are currently only two sets of hexadecimal
+digits, and it is unlikely that more will be added.  This is because you
+not only need the ten digits, but also the six C<[A-F]> (and C<[a-f]>)
+to correspond.  That means only the Latin script is suitable for these,
+and Unicode has only two sets of these, the familiar ASCII set, and the
+fullwidth forms starting at U+FF10 (FULLWIDTH DIGIT ZERO).
 
 =back
 
@@ -965,12 +982,6 @@ The POSIX class matches the same as the ASCII range counterpart.
 
 Which rules apply are determined as described in
 L<perlre/Which character set modifier is in effect?>.
-
-It is proposed to change this behavior in a future release of Perl so that
-whether or not Unicode rules are in effect would not change the
-behavior:  Outside of locale, the POSIX classes
-would behave like their ASCII-range counterparts.  If you wish to
-comment on this proposal, send email to C<perl5-porters@perl.org>.
 
 =head4 Negation of POSIX character classes
 X<character class, negation>
@@ -1168,8 +1179,15 @@ closing C<])> characters.
 
 Just as in all regular expressions, the pattern can be built up by
 including variables that are interpolated at regex compilation time.
-Care must be taken to ensure that you are getting what you expect.  For
-example:
+But its best to compile each sub-component.
+
+ my $thai_or_lao = qr/(?[ \p{Thai} + \p{Lao} ])/;
+ my $lower = qr/(?[ \p{Lower} + \p{Digit} ])/;
+
+When these are embedded in another pattern, what they match does not
+change, regardless of parenthesization or what modifiers are in effect
+in that outer pattern.  If you fail to compile the subcomponents, you
+can get some nasty surprises.  For example:
 
  my $thai_or_lao = '\p{Thai} + \p{Lao}';
  ...
@@ -1179,10 +1197,10 @@ compiles to
 
  qr/(?[ \p{Digit} & \p{Thai} + \p{Lao} ])/;
 
-But this does not have the effect that someone reading the code would
-likely expect, as the intersection applies just to C<\p{Thai}>,
-excluding the Laotian.  Pitfalls like this can be avoided by
-parenthesizing the component pieces:
+But this does not have the effect that someone reading the source code
+would likely expect, as the intersection applies just to C<\p{Thai}>,
+excluding the Laotian.  Its best to compile the subcomponents, but you
+could also parenthesize the component pieces:
 
  my $thai_or_lao = '( \p{Thai} + \p{Lao} )';
 
@@ -1191,15 +1209,8 @@ But any modifiers will still apply to all the components:
  my $lower = '\p{Lower} + \p{Digit}';
  qr/(?[ \p{Greek} & $lower ])/i;
 
-matches upper case things.  You can avoid surprises by making the
-components into instances of this construct by compiling them:
-
- my $thai_or_lao = qr/(?[ \p{Thai} + \p{Lao} ])/;
- my $lower = qr/(?[ \p{Lower} + \p{Digit} ])/;
-
-When these are embedded in another pattern, what they match does not
-change, regardless of parenthesization or what modifiers are in effect
-in that outer pattern.
+matches upper case things.  So just, compile the subcomponents, as
+illustrated above.
 
 Due to the way that Perl parses things, your parentheses and brackets
 may need to be balanced, even including comments.  If you run into any

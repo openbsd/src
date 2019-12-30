@@ -155,6 +155,22 @@ foreach my $test_ref (@CF) {
         # since they use '$u', they are left out of the main loop
         $test = qq[ my \$s = ":$u:"; utf8::upgrade(\$s); \$s =~ /:[_$c]:/i];
         ok eval $test, "$code - $name - $mapping - $type - $test";
+
+        my $bracketed_f = ($f =~ s/(.)/[$1]/gr);
+        $test = qq[":$c:" =~ /:$bracketed_f:/iu];
+        ok eval $test, "$code - $name - $mapping - $type - $test";
+
+        my @f_chars = ($f =~ / (.) (.) (.?) /x);
+        my $every_other_bracketed_f = "[$f_chars[0]]$f_chars[1]";
+        $every_other_bracketed_f .= "[$f_chars[2]]" if $f_chars[2];
+        $test = qq[":$c:" =~ /:$every_other_bracketed_f:/iu];
+        ok eval $test, "$code - $name - $mapping - $type - $test";
+
+        my $other_every_bracketed_f = "$f_chars[0]";
+        $other_every_bracketed_f .= "[$f_chars[1]]";
+        $other_every_bracketed_f .= "$f_chars[2]" if $f_chars[2];
+        $test = qq[":$c:" =~ /:$other_every_bracketed_f:/iu];
+        ok eval $test, "$code - $name - $mapping - $type - $test";
     }
 }
 

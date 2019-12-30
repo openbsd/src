@@ -117,16 +117,16 @@
    "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
-         "web" : "https://rt.perl.org/"
+         "web" : "https://github.com/Perl/perl5/issues"
       },
       "homepage" : "http://www.perl.org/",
       "license" : [
          "http://dev.perl.org/licenses/"
       ],
       "repository" : {
-         "url" : "http://perl5.git.perl.org/"
+         "url" : "https://github.com/Perl/perl5"
       }
    },
-   "version" : "5.028002",
-   "x_serialization_backend" : "JSON::PP version 2.97001"
+   "version" : "5.030001",
+   "x_serialization_backend" : "JSON::PP version 4.02"
 }

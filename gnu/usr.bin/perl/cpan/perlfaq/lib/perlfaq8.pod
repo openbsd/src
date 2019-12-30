@@ -4,7 +4,7 @@ perlfaq8 - System Interaction
 
 =head1 VERSION
 
-version 5.021011
+version 5.20190126
 
 =head1 DESCRIPTION
 
@@ -255,7 +255,7 @@ illustrative:
 (This question has nothing to do with the web. See a different
 FAQ for that.)
 
-There's an example of this in L<perlfunc/crypt>). First, you put the
+There's an example of this in L<perlfunc/crypt>. First, you put the
 terminal into "no echo" mode, then just read the password normally.
 You may do this with an old-style C<ioctl()> function, POSIX terminal
 control (see L<POSIX> or its documentation the Camel Book), or a call
@@ -1106,7 +1106,7 @@ available drivers on CPAN: L<http://www.cpan.org/modules/by-module/DBD/> .
 You can read more about DBI on L<http://dbi.perl.org/> .
 
 Other modules provide more specific access: L<Win32::ODBC>, L<Alzabo>,
-C<iodbc>, and others found on CPAN Search: L<http://search.cpan.org/> .
+C<iodbc>, and others found on CPAN Search: L<https://metacpan.org/> .
 
 =head2 How do I make a system() exit on control-C?
 

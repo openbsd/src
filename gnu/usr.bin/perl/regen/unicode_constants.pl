@@ -240,9 +240,7 @@ __DATA__
 U+017F string
 
 U+0300 string
-
-U+0399 string
-U+03BC string
+U+0307 string
 
 U+1E9E string_skip_if_undef
 

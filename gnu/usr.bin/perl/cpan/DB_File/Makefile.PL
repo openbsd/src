@@ -41,6 +41,10 @@ $OS2 = "-DOS2" if $Config{'osname'} eq 'os2' ;
 my $WALL = '' ;
 #$WALL = ' -Wall ';
 
+# Only want ppport.h t to be used by DB_File.xs when not 
+# building this module with the perl source distribution.
+my $CORE = $ENV{PERL_CORE} ? '' : '-D_NOT_CORE';
+
 WriteMakefile(
 	NAME 		=> 'DB_File',
 	LIBS 		=> ["-L${LIB_DIR} $LIBS"],
@@ -48,7 +52,7 @@ WriteMakefile(
     VERSION_FROM	=> 'DB_File.pm',
 	XS_VERSION      => eval MM->parse_version('DB_File.pm'),
 	XSPROTOARG	=> '-noprototypes',
-	DEFINE		=> "-D_NOT_CORE $OS2 $VER_INFO $COMPAT185 $WALL",
+	DEFINE		=> "$CORE $OS2 $VER_INFO $COMPAT185 $WALL",
 	OBJECT		=> 'version$(OBJ_EXT) DB_File$(OBJ_EXT)',
     ((ExtUtils::MakeMaker->VERSION() gt '6.30') 
         ?  ('LICENSE'  => 'perl')         

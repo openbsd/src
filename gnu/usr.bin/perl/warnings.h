@@ -18,8 +18,8 @@
 #define G_WARN_ALL_MASK		(G_WARN_ALL_ON|G_WARN_ALL_OFF)
 
 #define pWARN_STD		NULL
-#define pWARN_ALL		(((STRLEN*)0)+1)    /* use warnings 'all' */
-#define pWARN_NONE		(((STRLEN*)0)+2)    /* no  warnings 'all' */
+#define pWARN_ALL		(STRLEN *) &PL_WARN_ALL    /* use warnings 'all' */
+#define pWARN_NONE		(STRLEN *) &PL_WARN_NONE   /* no  warnings 'all' */
 
 #define specialWARN(x)		((x) == pWARN_STD || (x) == pWARN_ALL ||	\
 				 (x) == pWARN_NONE)
@@ -121,9 +121,15 @@
 #define WARN_EXPERIMENTAL__SCRIPT_RUN	 68
 #define WARN_SHADOW			 69
 
-#define WARNsize			 18
-#define WARN_ALLstring			 "\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125"
-#define WARN_NONEstring			 "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+/* Warnings Categories added in Perl 5.029 */
+
+#define WARN_EXPERIMENTAL__PRIVATE_USE	 70
+#define WARN_EXPERIMENTAL__UNIPROP_WILDCARDS 71
+#define WARN_EXPERIMENTAL__VLB		 72
+
+#define WARNsize			 19
+#define WARN_ALLstring			 "\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125"
+#define WARN_NONEstring			 "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 
 #define isLEXWARN_on \
 	cBOOL(PL_curcop && PL_curcop->cop_warnings != pWARN_STD)
@@ -133,10 +139,7 @@
 #define isWARN_on(c,x)	(IsSet((U8 *)(c + 1), 2*(x)))
 #define isWARNf_on(c,x)	(IsSet((U8 *)(c + 1), 2*(x)+1))
 
-#define DUP_WARNINGS(p)		\
-    (specialWARN(p) ? (STRLEN*)(p)	\
-    : (STRLEN*)CopyD(p, PerlMemShared_malloc(sizeof(*p)+*p), sizeof(*p)+*p, \
-		     			     char))
+#define DUP_WARNINGS(p) Perl_dup_warnings(aTHX_ p)
 
 /*
 

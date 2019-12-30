@@ -955,15 +955,11 @@ is("@{[unpack('U*', pack('U*', 100, 200))]}", "100 200");
     is("@{[pack('C0U*', map { utf8::native_to_unicode($_) } 64, 202)]}",
        pack("C*", 64, @bytes202));
 
-    # does unpack U0U on byte data warn?
-    {
-	use warnings qw(NONFATAL all);;
-
-        my $bad = pack("U0C", 202);
-        local $SIG{__WARN__} = sub { $@ = "@_" };
-        my @null = unpack('U0U', $bad);
-        like($@, qr/^Malformed UTF-8 character: /);
-    }
+    # does unpack U0U on byte data fail?
+    fresh_perl_like('my $bad = pack("U0C", 202); my @null = unpack("U0U", $bad);',
+                    qr/^Malformed UTF-8 character: /,
+                    {},
+                    "pack doesn't return malformed UTF-8");
 }
 
 {

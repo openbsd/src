@@ -51,7 +51,7 @@ sub Test {
     my %basegroup = basegroups( $pwgid, $pwgnam );
     my @extracted_supplementary_groups = remove_basegroup( \ %basegroup, \ @extracted_groups );
 
-    plan 2;
+    plan 3;
 
 
     # Test: The supplementary groups in $( should match the
@@ -120,6 +120,26 @@ sub Test {
     # multiple 0's indicate GROUPSTYPE is currently long but should be short
     $gid_count->{0} //= 0;
     ok 0 == $pwgid || $gid_count->{0} < 2, "groupstype should be type short, not long";
+
+    SKIP: {
+        # try to add a group as supplementary group
+        my $root_uid = 0;
+        skip "uid!=0", 1 if $< != $root_uid and $> != $root_uid;
+        my @groups = split ' ', $);
+        my @sup_group;
+        setgrent;
+        while(my @ent = getgrent) {
+            next if grep { $_ == $ent[2] } @groups;
+            @sup_group = @ent;
+            last;
+        }
+        endgrent;
+        skip "No group found we could add as a supplementary group", 1
+            if (!@sup_group);
+        $) = "$) @sup_group[2]";
+        my $ok = grep { $_ == $sup_group[2] } split ' ', $);
+        ok $ok, "Group `$sup_group[0]' added as supplementary group";
+    }
 
     return;
 }

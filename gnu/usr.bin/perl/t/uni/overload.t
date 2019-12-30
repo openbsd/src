@@ -9,7 +9,7 @@ BEGIN {
     set_up_inc( '../lib' );
 }
 
-plan(tests => 217);
+plan(tests => 193);
 
 package UTF8Toggle;
 use strict;
@@ -158,8 +158,8 @@ my $tmpfile = tempfile();
 
 foreach my $operator ('print', 'syswrite', 'syswrite len', 'syswrite off',
 		      'syswrite len off') {
-    foreach my $layer ('', ':utf8') {
-	open my $fh, "+>$layer", $tmpfile or die $!;
+    foreach my $layer ('', $operator =~ /syswrite/ ? () : (':utf8')) {
+	open my $fh, "+>:raw$layer", $tmpfile or die $!;
 	my $pad = $operator =~ /\boff\b/ ? "\243" : "";
 	my $trail = $operator =~ /\blen\b/ ? "!" : "";
 	my $u = UTF8Toggle->new("$pad$E_acute\n$trail");

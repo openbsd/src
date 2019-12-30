@@ -9,12 +9,12 @@ our (@ISA, $VERSION, @EXPORT_OK, %EXPORT_TAGS);
 @ISA    = qw(IO::File Exporter);
 
 
-$VERSION = '2.074';
+$VERSION = '2.084';
 
 use constant G_EOF => 0 ;
 use constant G_ERR => -1 ;
 
-use IO::Compress::Base::Common 2.074 ;
+use IO::Compress::Base::Common 2.084 ;
 
 use IO::File ;
 use Symbol;
@@ -143,11 +143,12 @@ sub smartSeek
     my $position = shift || SEEK_SET;
 
     # TODO -- need to take prime into account
+    *$self->{Prime} = '';
     if (defined *$self->{FH})
       { *$self->{FH}->seek($offset, $position) }
     else {
         if ($position == SEEK_END) {
-            *$self->{BufferOffset} = length ${ *$self->{Buffer} } + $offset ;
+            *$self->{BufferOffset} = length(${ *$self->{Buffer} }) + $offset ;
         }
         elsif ($position == SEEK_CUR) {
             *$self->{BufferOffset} += $offset ;
@@ -493,6 +494,9 @@ sub _create
 
     *$obj->{InNew} = 0;
     *$obj->{Closed} = 0;
+    
+    return $obj 
+        if *$obj->{Pause} ;
 
     if ($status) {
         # Need to try uncompressing to catch the case
@@ -691,13 +695,13 @@ sub _singleTarget
             if $x->{Got}->getValue('append') ;
         $x->{fh} = new IO::File "$mode $output" 
             or return retErr($x, "cannot open file '$output': $!") ;
-        binmode $x->{fh} if $x->{Got}->valueOrDefault('binmodeout');
+        binmode $x->{fh} ;
 
     }
 
     elsif ($x->{outType} eq 'handle') {
         $x->{fh} = $output;
-        binmode $x->{fh} if $x->{Got}->valueOrDefault('binmodeout');
+        binmode $x->{fh} ;
         if ($x->{Got}->getValue('append')) {
                 seek($x->{fh}, 0, SEEK_END)
                     or return retErr($x, "Cannot seek to end of output filehandle: $!") ;
@@ -1073,13 +1077,6 @@ sub streamCount
     return scalar @{ *$self->{InfoList} }  ;
 }
 
-#sub read
-#{
-#    my $status = myRead(@_);
-#    return undef if $status < 0;
-#    return $status;
-#}
-
 sub read
 {
     # return codes
@@ -1120,6 +1117,7 @@ sub read
 
     if (! *$self->{AppendOutput}) {
         if (! $offset) {    
+
             $$buffer = '' ;
         }
         else {
@@ -1518,7 +1516,7 @@ __END__
 
 =head1 NAME
 
-IO::Uncompress::Base - Base Class for IO::Uncompress modules 
+IO::Uncompress::Base - Base Class for IO::Uncompress modules
 
 =head1 SYNOPSIS
 
@@ -1531,7 +1529,7 @@ purpose is to be sub-classed by IO::Uncompress modules.
 
 =head1 SEE ALSO
 
-L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
+L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzip>, L<IO::Uncompress::UnLzip>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Compress::Zstd>, L<IO::Uncompress::UnZstd>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
 
 L<IO::Compress::FAQ|IO::Compress::FAQ>
 
@@ -1541,7 +1539,7 @@ L<IO::Zlib|IO::Zlib>
 
 =head1 AUTHOR
 
-This module was written by Paul Marquess, C<pmqs@cpan.org>. 
+This module was written by Paul Marquess, C<pmqs@cpan.org>.
 
 =head1 MODIFICATION HISTORY
 
@@ -1549,7 +1547,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2017 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2019 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

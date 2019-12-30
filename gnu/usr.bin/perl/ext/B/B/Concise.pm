@@ -14,7 +14,7 @@ use warnings; # uses #3 and #4, since warnings uses Carp
 
 use Exporter (); # use #5
 
-our $VERSION   = "1.003";
+our $VERSION   = "1.004";
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw( set_style set_style_standard add_callback
 		     concise_subref concise_cv concise_main
@@ -1284,7 +1284,7 @@ This is mainly a joke.
 
 =item B<-debug>
 
-Use formatting conventions reminiscent of B<B::Debug>; these aren't
+Use formatting conventions reminiscent of CPAN module B<B::Debug>; these aren't
 very concise at all.
 
 =item B<-env>

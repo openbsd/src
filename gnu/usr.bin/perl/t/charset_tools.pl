@@ -164,6 +164,12 @@ for (my $i = 0; $i < 256; $i++) {
     $native_to_i8[$i8_to_native[$i]] = $i;
 }
 
+# Use these to convert to/from UTF-8 bytes.  I8 is the encoding that
+# corresponds to UTF-8 with start bytes, continuation bytes, and invariant
+# bytes.  UTF-EBCDIC is derived from this by a mapping which causes things
+# like the start byte C5 to map to something else, as C5 is actually an 'E' in
+# EBCDIC so can't be a real start byte, as it must be an invariant; and it
+# maps 0x45 (an ASCII 'E') to C5.
 *I8_to_native = ($::IS_ASCII)
                 ? sub { return shift }
                 : sub { return join "", map { chr $i8_to_native[ord $_] }

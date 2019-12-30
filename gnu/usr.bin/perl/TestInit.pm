@@ -10,7 +10,7 @@
 # modules from an installed Perl.
 #
 # t/TEST and t/harness will invoke each test script with
-#      perl -MTestInit[=arg,arg,..] some/test.t
+#      perl -I. -MTestInit[=arg,arg,..] some/test.t
 # You may "use TestInit" in the test # programs but it is not required.
 #
 # TestInit will completely empty the current @INC and replace it with

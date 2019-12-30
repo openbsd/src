@@ -9,7 +9,7 @@ use Text::ParseWords;
 use IPC::Cmd qw(can_run);
 use File::Temp qw(tempfile);
 
-our $VERSION = '0.280230'; # VERSION
+our $VERSION = '0.280231'; # VERSION
 
 # More details about C/C++ compilers:
 # http://developers.sun.com/sunstudio/documentation/product/compiler.jsp
@@ -50,7 +50,7 @@ sub new {
     my ($ccbase, $ccpath, $ccsfx ) = fileparse($self->{config}{cc}, qr/\.[^.]*/);
 
     ## If the path is just "cc", fileparse returns $ccpath as "./"
-    $ccpath = "" if $self->{config}{cc} =~ /^$ccbase$ccsfx$/;
+    $ccpath = "" if $self->{config}{cc} =~ /^\Q$ccbase$ccsfx\E$/;
       
     foreach my $cxx (@{$cc2cxx{$ccbase}}) {
       my $cxx1 = File::Spec->catfile( $ccpath, $cxx . $ccsfx);

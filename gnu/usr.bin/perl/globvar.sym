@@ -8,9 +8,11 @@ PL_Yes
 PL_bincompat_options
 PL_bitcount
 PL_block_type
+PL_c9_utf8_dfa_tab
 PL_charclass
 PL_check
 PL_core_reg_engine
+PL_extended_utf8_dfa_tab
 PL_fold
 PL_fold_latin1
 PL_fold_locale
@@ -64,6 +66,16 @@ PL_sig_name
 PL_sig_num
 PL_simple
 PL_simple_bitmask
+PL_strategy_dup
+PL_strategy_dup2
+PL_strategy_open
+PL_strategy_open3
+PL_strategy_mkstemp
+PL_strategy_socket
+PL_strategy_accept
+PL_strategy_pipe
+PL_strategy_socketpair
+PL_strict_utf8_dfa_tab
 PL_subversion
 PL_utf8skip
 PL_uuemap
@@ -80,4 +92,6 @@ PL_warn_nl
 PL_warn_nosemi
 PL_warn_reserved
 PL_warn_uninit
+PL_WARN_ALL
+PL_WARN_NONE
 PL_watch_pvx

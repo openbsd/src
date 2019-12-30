@@ -11,7 +11,7 @@ perlhack - How to hack on Perl
 =head1 DESCRIPTION
 
 This document explains how Perl development works.  It includes details
-about the Perl 5 Porters email list, the Perl repository, the Perlbug
+about the Perl 5 Porters email list, the Perl repository, the Perl
 bug tracker, patch guidelines, and commentary on Perl development
 philosophy.
 
@@ -27,7 +27,7 @@ for a bug, comment fixes, etc., it's easy! Here's how:
 The perl source is in a git repository.  You can clone the repository
 with the following command:
 
-  % git clone git://perl5.git.perl.org/perl.git perl
+  % git clone https://github.com/Perl/perl5.git perl
 
 =item * Ensure you're following the latest advice
 
@@ -35,6 +35,13 @@ In case the advice in this guide has been updated recently, read the
 latest version directly from the perl source:
 
   % perldoc pod/perlhack.pod
+
+=item * Create a branch for your change
+
+Create a branch based on blead to commit your change to, which will
+later be used to send it to the Perl issue tracker.
+
+  % git checkout -b mychange
 
 =item * Make your change
 
@@ -61,29 +68,23 @@ Committing your work will save the change I<on your local system>:
 Make sure the commit message describes your change in a single
 sentence.  For example, "Fixed spelling errors in perlhack.pod".
 
-=item * Send your change to perlbug
+=item * Send your change to the Perl issue tracker
 
-The next step is to submit your patch to the Perl core ticket system
-via email.
+The next step is to submit your patch to the Perl core ticket system.
 
-If your changes are in a single git commit, run the following commands
-to generate the patch file and attach it to your bug report:
+Create a GitHub fork of the perl5 repository and add it as a remote,
+if you haven't already, as described in the GitHub documentation at
+L<https://help.github.com/en/articles/working-with-forks>.
 
-  % git format-patch -1
-  % ./perl -Ilib utils/perlbug -p 0001-*.patch
+  % git remote add fork git@github.com:MyUser/perl5.git
 
-The perlbug program will ask you a few questions about your email
-address and the patch you're submitting.  Once you've answered them it
-will submit your patch via email.
+Then, push your new branch to your fork.
 
-If your changes are in multiple commits, generate a patch file for each
-one and provide them to perlbug's C<-p> option separated by commas:
+  % git push -u fork mychange
 
-  % git format-patch -3
-  % ./perl -Ilib utils/perlbug -p 0001-fix1.patch,0002-fix2.patch,\
-  > 0003-fix3.patch
-
-When prompted, pick a subject that summarizes your changes.
+Finally, create a Pull Request on GitHub from your branch to blead as
+described in the GitHub documentation at
+L<https://help.github.com/en/articles/creating-a-pull-request-from-a-fork>.
 
 =item * Thank you
 
@@ -107,6 +108,7 @@ latest perl in a pristine state.  Check you don't have any local changes
 or added files in your perl check-out which you wish to keep, then run
 these commands:
 
+  % git checkout blead
   % git pull
   % git reset --hard origin/blead
   % git clean -dxf
@@ -157,7 +159,7 @@ Perl core.
 =head1 GETTING THE PERL SOURCE
 
 All of Perl's source code is kept centrally in a Git repository at
-I<perl5.git.perl.org>.  The repository contains many Perl revisions
+I<github.com>.  The repository contains many Perl revisions
 from Perl 1 onwards and all the revisions from Perforce, the previous
 version control system.
 
@@ -169,23 +171,22 @@ L<perlgit>.
 You will need a copy of Git for your computer.  You can fetch a copy of
 the repository using the git protocol:
 
-  % git clone git://perl5.git.perl.org/perl.git perl
+  % git clone git://github.com/Perl/perl5.git perl
 
 This clones the repository and makes a local copy in the F<perl>
 directory.
 
 If you cannot use the git protocol for firewall reasons, you can also
-clone via http, though this is much slower:
+clone via http:
 
-  % git clone http://perl5.git.perl.org/perl.git perl
+  % git clone https://github.com/Perl/perl5.git perl
 
 =head2 Read access via the web
 
 You may access the repository over the web.  This allows you to browse
-the tree, see recent commits, subscribe to RSS feeds for the changes,
+the tree, see recent commits, subscribe to repository notifications,
 search for particular commits and more.  You may access it at
-L<http://perl5.git.perl.org/perl.git>.  A mirror of the repository is
-found at L<https://github.com/Perl/perl5>.
+L<https://github.com/Perl/perl5>.
 
 =head2 Read access via rsync
 
@@ -219,27 +220,15 @@ Perl source.
 
 =head2 Submitting patches
 
-If you have a small patch to submit, please submit it via perlbug.  You
-can also send email directly to perlbug@perl.org.  Please note that
-messages sent to perlbug may be held in a moderation queue, so you
-won't receive a response immediately.
+If you have a small patch to submit, please submit it via the GitHub
+Pull Request workflow.  You may also send patches to the p5p list.
 
-You'll know your submission has been processed when you receive an
-email from our ticket tracking system.  This email will give you a
-ticket number.  Once your patch has made it to the ticket tracking
-system, it will also be sent to the perl5-porters@perl.org list.
-
-If your patch is related to an already-opened ticket you can also
-attach your patch to that ticket, without having to use perlbug.
-
-Patches are reviewed and discussed on the p5p list.  Simple,
+Patches are reviewed and discussed on GitHub or the p5p list.  Simple,
 uncontroversial patches will usually be applied without any discussion.
 When the patch is applied, the ticket will be updated and you will
-receive email.  In addition, an email will be sent to the p5p list.
+receive email.
 
-In other cases, the patch will need more work or discussion.  That will
-happen on the p5p list.
-
+In other cases, the patch will need more work or discussion.
 You are encouraged to participate in the discussion and advocate for
 your patch.  Sometimes your patch may get lost in the shuffle.  It's
 appropriate to send a reminder email to p5p if no action has been taken
@@ -258,6 +247,10 @@ If you are submitting a code patch there are several things that you
 can do to help the Perl 5 Porters accept your patch.
 
 =head3 Patch style
+
+Using the GitHub Pull Request workflow, your patch will automatically
+be available in a suitable format.  If you wish to submit a patch to
+the p5p list for review, make sure to create it appropriately.
 
 If you used git to check out the Perl source, then using C<git
 format-patch> will produce a patch in a style suitable for Perl.  The

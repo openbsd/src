@@ -1,6 +1,6 @@
-# StandardizedVariants-10.0.0.txt
-# Date: 2017-05-02, 01:00:00 GMT [KW, LI, RP]
-# © 2017 Unicode®, Inc.
+# StandardizedVariants-12.1.0.txt
+# Date: 2019-03-05, 23:03:00 GMT [KW, LI, RP]
+# © 2019 Unicode®, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Specification of the variation sequences that are defined in the
@@ -26,7 +26,7 @@
 #
 # For more information on standardized variation sequences,
 # see Section 23.4, Variation Selectors,
-# in The Unicode Standard, Version 10.0.
+# in The Unicode Standard, Version 12.0.
 #
 # For more information on the Ideographic Variation Database,
 # see http://www.unicode.org/ivd/
@@ -75,6 +75,26 @@
 2AAD FE00; with slanted equal; # LARGER THAN OR EQUAL TO
 2ACB FE00; with stroke through bottom members; # SUBSET OF ABOVE NOT EQUAL TO
 2ACC FE00; with stroke through bottom members; # SUPERSET OF ABOVE NOT EQUAL TO
+FF10 FE00; short diagonal stroke form; # FULLWIDTH DIGIT ZERO
+
+# East Asian punctuation positional variants
+
+3001 FE00; corner-justified form; # IDEOGRAPHIC COMMA
+3001 FE01; centered form; # IDEOGRAPHIC COMMA
+3002 FE00; corner-justified form; # IDEOGRAPHIC FULL STOP
+3002 FE01; centered form; # IDEOGRAPHIC FULL STOP
+FF01 FE00; corner-justified form; # FULLWIDTH EXCLAMATION MARK
+FF01 FE01; centered form; # FULLWIDTH EXCLAMATION MARK
+FF0C FE00; corner-justified form; # FULLWIDTH COMMA
+FF0C FE01; centered form; # FULLWIDTH COMMA
+FF0E FE00; corner-justified form; # FULLWIDTH FULL STOP
+FF0E FE01; centered form; # FULLWIDTH FULL STOP
+FF1A FE00; corner-justified form; # FULLWIDTH COLON
+FF1A FE01; centered form; # FULLWIDTH COLON
+FF1B FE00; corner-justified form; # FULLWIDTH SEMICOLON
+FF1B FE01; centered form; # FULLWIDTH SEMICOLON
+FF1F FE00; corner-justified form; # FULLWIDTH QUESTION MARK
+FF1F FE01; centered form; # FULLWIDTH QUESTION MARK
 
 # Myanmar
 

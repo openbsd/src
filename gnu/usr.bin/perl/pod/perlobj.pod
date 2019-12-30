@@ -16,7 +16,7 @@ features. If you're looking for an introduction to object-oriented
 programming in Perl, please see L<perlootut>.
 
 In order to understand Perl objects, you first need to understand
-references in Perl. See L<perlref> for details.
+references in Perl. See L<perlreftut> for details.
 
 This document describes all of Perl's object-oriented (OO) features
 from the ground up. If you're just looking to write some

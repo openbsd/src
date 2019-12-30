@@ -89,10 +89,10 @@ potential incompatibilities introduced with this release.  A few of
 the most important issues are listed below, but you should refer
 to pod/perldelta.pod for more detailed information.
 
-B<WARNING:> This version is not binary compatible with earlier versions
-of Perl.  If you have built extensions (i.e. modules that include C code)
-using an earlier version of Perl, you will need to rebuild and reinstall
-those extensions.
+B<WARNING:> This version is not binary compatible with versions of Perl
+earlier than 5.30.0.  If you have built extensions (i.e. modules that
+include C code) using an earlier version of Perl, you will need to
+rebuild and reinstall those extensions.
 
 Pure perl modules without XS or C code should continue to work fine
 without reinstallation.  See the discussion below on
@@ -389,7 +389,7 @@ terms of performance and more importantly in terms of memory. SBOX32
 requires 1k of storage per character it can hash, and it must populate that
 storage with 256 32-bit random values as well. In practice the RNG we use
 for seeding the SBOX32 storage is very efficient and populating the table
-required for hashing even fairly long keys is negligble as we only do it
+required for hashing even fairly long keys is negligible as we only do it
 during startup. By default we build with SBOX32 enabled, but you change that
 by setting
 
@@ -609,7 +609,7 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.28.2.
+By default, Configure will use the following directories for 5.30.1.
 $version is the full perl version number, including subversion, e.g.
 5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
@@ -2032,7 +2032,7 @@ will run all tests.
 If individual tests fail, you can often run them by hand (from the main
 perl directory), e.g.,
 
-	./perl -MTestInit t/op/groups.t
+	./perl -I. -MTestInit t/op/groups.t
 
 You should also read the individual tests to see if there are any helpful
 comments that apply to your system.  You may also need to setup your
@@ -2099,7 +2099,7 @@ test 85 will fail if run under either t/TEST or t/harness.
 
 Try stopping other jobs on the system and then running the test by itself:
 
-	./perl -MTestInit t/op/pat.t
+	./perl -I. -MTestInit t/op/pat.t
 
 to see if you have any better luck.  If your perl still fails this
 test, it does not necessarily mean you have a broken perl.  This test
@@ -2440,8 +2440,8 @@ http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.28.2 is not binary compatible with versions of Perl earlier than
-5.28.0.
+Perl 5.30.1 is not binary compatible with versions of Perl earlier than
+5.30.0.
 In other words, you will have to recompile your XS modules.
 
 In general, you can usually safely upgrade from one version of Perl
@@ -2516,9 +2516,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.28.2
+	sh Configure -Dprefix=/opt/perl5.30.1
 
-and adding /opt/perl5.28.2/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.30.1/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2531,13 +2531,13 @@ seriously consider using a separate directory, since development
 subversions may not have all the compatibility wrinkles ironed out
 yet.
 
-=head2 Upgrading from 5.27.11 or earlier
+=head2 Upgrading from 5.29.10 or earlier
 
-B<Perl 5.28.2 may not be binary compatible with Perl 5.27.11 or
+B<Perl 5.30.1 may not be binary compatible with Perl 5.29.10 or
 earlier Perl releases.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.28.2.  If you find you do need to rebuild an extension with
-5.28.2, you may safely do so without disturbing the older
+used with 5.30.1.  If you find you do need to rebuild an extension with
+5.30.1, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2570,15 +2570,15 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux with perl-5.28.2 is as follows (under $Config{prefix}):
+in Linux with perl-5.30.1 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.28.2/strict.pm
-  ./lib/perl5/5.28.2/warnings.pm
-  ./lib/perl5/5.28.2/i686-linux/File/Glob.pm
-  ./lib/perl5/5.28.2/feature.pm
-  ./lib/perl5/5.28.2/XSLoader.pm
-  ./lib/perl5/5.28.2/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.30.1/strict.pm
+  ./lib/perl5/5.30.1/warnings.pm
+  ./lib/perl5/5.30.1/i686-linux/File/Glob.pm
+  ./lib/perl5/5.30.1/feature.pm
+  ./lib/perl5/5.30.1/XSLoader.pm
+  ./lib/perl5/5.30.1/i686-linux/auto/File/Glob/Glob.so
 
 Secondly, for perl-5.10.1, the Debian perl-base package contains 591
 files, (of which 510 are for lib/unicore) totaling about 3.5MB in its
@@ -2694,7 +2694,7 @@ completely removed.
 X<PERL_INTERNAL_RAND_SEED>
 
 If you configure perl with C<-Accflags=-DNO_PERL_INTERNAL_RAND_SEED>,
-perl will ignore the C<PERL_INTERNAL_RAND_SEED> enviroment variable.
+perl will ignore the C<PERL_INTERNAL_RAND_SEED> environment variable.
 
 =head1 DOCUMENTATION
 

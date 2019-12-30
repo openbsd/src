@@ -106,7 +106,7 @@ Perl_grok_bslash_o(pTHX_ char **s, const char * const send, UV *uv,
     assert(* *s       == 'o');
     (*s)++;
 
-    if (**s != '{') {
+    if (send <= *s || **s != '{') {
 	*error_msg = "Missing braces on \\o{}";
 	return FALSE;
     }
@@ -126,7 +126,7 @@ Perl_grok_bslash_o(pTHX_ char **s, const char * const send, UV *uv,
     numbers_len = e - *s;
     if (numbers_len == 0) {
         (*s)++;    /* Move past the } */
-	*error_msg = "Number with no digits";
+	*error_msg = "Empty \\o{}";
 	return FALSE;
     }
 
@@ -141,7 +141,7 @@ Perl_grok_bslash_o(pTHX_ char **s, const char * const send, UV *uv,
     if (numbers_len != (STRLEN) (e - *s)) {
         if (strict) {
             *s += numbers_len;
-            *s += (UTF) ? UTF8SKIP(*s) : (STRLEN) 1;
+            *s += (UTF) ? UTF8_SAFE_SKIP(*s, send) : 1;
             *error_msg = "Non-octal character";
             return FALSE;
         }
@@ -210,7 +210,20 @@ Perl_grok_bslash_x(pTHX_ char **s, const char * const send, UV *uv,
 
     assert(*(*s - 1) == '\\');
     assert(* *s      == 'x');
+
     (*s)++;
+
+    if (send <= *s) {
+        if (strict) {
+            *error_msg = "Empty \\x";
+            return FALSE;
+        }
+
+        /* Sadly, to preserve backcompat, an empty \x at the end of string is
+         * interpreted as a NUL */
+        *uv = 0;
+        return TRUE;
+    }
 
     if (strict || ! output_warning) {
         flags |= PERL_SCAN_SILENT_ILLDIGIT;
@@ -223,7 +236,7 @@ Perl_grok_bslash_x(pTHX_ char **s, const char * const send, UV *uv,
 	*s += len;
         if (strict && len != 2) {
             if (len < 2) {
-                *s += (UTF) ? UTF8SKIP(*s) : 1;
+                *s += (UTF) ? UTF8_SAFE_SKIP(*s, send) : 1;
                 *error_msg = "Non-hex character";
             }
             else {
@@ -253,7 +266,7 @@ Perl_grok_bslash_x(pTHX_ char **s, const char * const send, UV *uv,
     if (numbers_len == 0) {
         if (strict) {
             (*s)++;    /* Move past the } */
-            *error_msg = "Number with no digits";
+            *error_msg = "Empty \\x{}";
             return FALSE;
         }
         *s = e + 1;
@@ -272,7 +285,7 @@ Perl_grok_bslash_x(pTHX_ char **s, const char * const send, UV *uv,
 
     if (strict && numbers_len != (STRLEN) (e - *s)) {
         *s += numbers_len;
-        *s += (UTF) ? UTF8SKIP(*s) : 1;
+        *s += (UTF) ? UTF8_SAFE_SKIP(*s, send) : 1;
         *error_msg = "Non-hex character";
         return FALSE;
     }

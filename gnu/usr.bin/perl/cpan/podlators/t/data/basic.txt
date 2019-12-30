@@ -265,3 +265,13 @@ VERBATIM
 CONCLUSION
     That's all, folks!
 
+COPYRIGHT AND LICENSE
+    Copyright 2001, 2004, 2016, 2018 Russ Allbery <rra@cpan.org>
+
+    Copying and distribution of this file, with or without modification, are
+    permitted in any medium without royalty provided the copyright notice
+    and this notice are preserved. This file is offered as-is, without any
+    warranty.
+
+    SPDX-License-Identifier: FSFAP
+

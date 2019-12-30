@@ -3,7 +3,7 @@ package Encode::Unicode;
 use strict;
 use warnings;
 
-our $VERSION = do { my @r = ( q$Revision: 2.17 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.18 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use XSLoader;
 XSLoader::load( __PACKAGE__, $VERSION );

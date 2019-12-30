@@ -90,46 +90,6 @@ finddepth({wanted => sub { ++$::count_taint if $_ eq 'taint.t'; } },
     File::Spec->curdir);
 is($::count_taint, 1, "'finddepth' found exactly 1 file named 'taint.t'");
 
-##### RT #122547 #####
-# Do find() and finddepth() correctly warn on invalid options?
-{
-    my $bad_option = 'foobar';
-    my $second_bad_option = 'really_foobar';
-
-    $::count_taint = 0;
-    local $SIG{__WARN__} = sub { $warn_msg = $_[0]; };
-    {
-        find(
-            {
-                wanted => sub { ++$::count_taint if $_ eq 'taint.t'; },
-                $bad_option => undef,
-            },
-            File::Spec->curdir
-        );
-    };
-    like($warn_msg, qr/Invalid option/s, "Got warning for invalid option");
-    like($warn_msg, qr/$bad_option/s, "Got warning for $bad_option");
-    is($::count_taint, 1, "count_taint incremented");
-    undef $warn_msg;
-
-    $::count_taint = 0;
-    {
-        finddepth(
-            {
-                wanted => sub { ++$::count_taint if $_ eq 'taint.t'; },
-                $bad_option => undef,
-                $second_bad_option => undef,
-            },
-            File::Spec->curdir
-        );
-    };
-    like($warn_msg, qr/Invalid option/s, "Got warning for invalid option");
-    like($warn_msg, qr/$bad_option/s, "Got warning for $bad_option");
-    like($warn_msg, qr/$second_bad_option/s, "Got warning for $second_bad_option");
-    is($::count_taint, 1, "count_taint incremented");
-    undef $warn_msg;
-}
-
 my $FastFileTests_OK = 0;
 
 sub cleanup {
@@ -283,22 +243,72 @@ sub my_postprocess {
 mkdir_ok( dir_path('for_find'), 0770 );
 ok( chdir( dir_path('for_find')), "Able to chdir to 'for_find'")
     or die("Unable to chdir to 'for_find'");
+
+my @testing_basenames = ( qw| fb_ord fba_ord fa_ord faa_ord fab_ord faba_ord | );
+
 mkdir_ok( dir_path('fa'), 0770 );
 mkdir_ok( dir_path('fb'), 0770  );
-create_file_ok( file_path('fb', 'fb_ord') );
+create_file_ok( file_path('fb', $testing_basenames[0]) );
 mkdir_ok( dir_path('fb', 'fba'), 0770  );
-create_file_ok( file_path('fb', 'fba', 'fba_ord') );
+create_file_ok( file_path('fb', 'fba', $testing_basenames[1]) );
 if ($symlink_exists) {
     symlink_ok('../fb','fa/fsl');
 }
-create_file_ok( file_path('fa', 'fa_ord') );
+create_file_ok( file_path('fa', $testing_basenames[2]) );
 
 mkdir_ok( dir_path('fa', 'faa'), 0770  );
-create_file_ok( file_path('fa', 'faa', 'faa_ord') );
+create_file_ok( file_path('fa', 'faa', $testing_basenames[3]) );
 mkdir_ok( dir_path('fa', 'fab'), 0770  );
-create_file_ok( file_path('fa', 'fab', 'fab_ord') );
+create_file_ok( file_path('fa', 'fab', $testing_basenames[4]) );
 mkdir_ok( dir_path('fa', 'fab', 'faba'), 0770  );
-create_file_ok( file_path('fa', 'fab', 'faba', 'faba_ord') );
+create_file_ok( file_path('fa', 'fab', 'faba', $testing_basenames[5]) );
+
+##### RT #122547 #####
+# Do find() and finddepth() correctly warn on invalid options?
+##### RT #133771 #####
+# When running tests in parallel, avoid clash with tests in
+# ext/File-Find/t/taint by moving into the temporary testing directory
+# before testing for warnings on invalid options.
+
+my %tb = map { $_ => 1 } @testing_basenames;
+
+{
+    my $bad_option = 'foobar';
+    my $second_bad_option = 'really_foobar';
+
+    $::count_tb = 0;
+    local $SIG{__WARN__} = sub { $warn_msg = $_[0]; };
+    {
+        find(
+            {
+                wanted => sub { ++$::count_tb if $tb{$_}; },
+                $bad_option => undef,
+            },
+            File::Spec->curdir
+        );
+    };
+    like($warn_msg, qr/Invalid option/s, "Got warning for invalid option");
+    like($warn_msg, qr/$bad_option/s, "Got warning for $bad_option");
+    is($::count_tb, scalar(@testing_basenames), "count_tb incremented");
+    undef $warn_msg;
+
+    $::count_tb = 0;
+    {
+        finddepth(
+            {
+                wanted => sub { ++$::count_tb if $tb{$_}; },
+                $bad_option => undef,
+                $second_bad_option => undef,
+            },
+            File::Spec->curdir
+        );
+    };
+    like($warn_msg, qr/Invalid option/s, "Got warning for invalid option");
+    like($warn_msg, qr/$bad_option/s, "Got warning for $bad_option");
+    like($warn_msg, qr/$second_bad_option/s, "Got warning for $second_bad_option");
+    is($::count_tb, scalar(@testing_basenames), "count_tb incremented");
+    undef $warn_msg;
+}
 
 ##### Basic tests for find() #####
 # Set up list of files we expect to find.

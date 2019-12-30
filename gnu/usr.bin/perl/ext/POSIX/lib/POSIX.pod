@@ -235,6 +235,9 @@ the exception that C<POSIX::chmod()> can only change one file at a time
 
     $c = POSIX::chmod 0664, $file1, $file2;   # throws exception
 
+As with the built-in C<chmod()>, C<$file> may be a filename or a file
+handle.
+
 =item C<chown>
 
 This is identical to Perl's builtin C<chown()> function, allowing one
@@ -307,11 +310,14 @@ Generates the path name for the controlling terminal.
 This is identical to the C function C<ctime()> and equivalent
 to C<asctime(localtime(...))>, see L</asctime> and L</localtime>.
 
-=item C<cuserid>
+=item C<cuserid> [POSIX.1-1988]
 
 Get the login name of the owner of the current process.
 
 	$name = POSIX::cuserid();
+
+Note: this function has not been specified by POSIX since 1990 and is included
+only for backwards compatibility. New code should use L<C<getlogin()>|perlfunc/getlogin> instead.
 
 =item C<difftime>
 
@@ -1377,8 +1383,8 @@ See also L</remquo>.
 
 =item C<remove>
 
-This is identical to Perl's builtin C<unlink()> function
-for removing files, see L<perlfunc/unlink>.
+Deletes a name from the filesystem.  Calls L<perlfunc/unlink> for
+files and L<perlfunc/rmdir> for directories.
 
 =item C<remquo>
 

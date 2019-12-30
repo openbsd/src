@@ -5,7 +5,7 @@ todo - Perl TO-DO list
 =head1 DESCRIPTION
 
 This is a list of wishes for Perl. The most up to date version of this file
-is at L<http://perl5.git.perl.org/perl.git/blob_plain/HEAD:/Porting/todo.pod>
+is at L<https://github.com/Perl/perl5/blob/blead/Porting/todo.pod>.
 
 The tasks we think are smaller or easier are listed first. Anyone is welcome
 to work on any of these, but it's a good idea to first contact
@@ -1050,7 +1050,7 @@ The old perltodo notes "Look at the "reification" code in C<av.c>".
 Implement a set of "vtables" that virtualizes operating system access
 (chdir(), chmod(), dbmopen(), getenv(), glob(), link(), mkdir(), open(),
 opendir(), readdir(), rename(), rmdir(), stat(), sysopen(), uname(),
-unlink(), etc.)  At the very least these interfaces should take SVs as
+unlink(), etc.).  At the very least these interfaces should take SVs as
 "name" arguments instead of bare char pointers; probably the most
 flexible and extensible way would be for the Perl-facing interfaces to
 accept HVs.  The system needs to be per-operating-system and

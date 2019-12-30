@@ -203,9 +203,9 @@ XS_unpack_anotherstructPtrPtr(SV *in)
 void
 XS_release_anotherstructPtrPtr(anotherstruct **in)
 {
-    unsigned int i = 0;
-    while (in[i] != NULL)
-        Safefree(in[i++]);
+    unsigned int i;
+    for (i = 0; in[i] != NULL; i++)
+        Safefree(in[i]);
     Safefree(in);
 }
 

@@ -20,7 +20,7 @@ use warnings;
 use 5.010;
 use Config;
 
-plan tests => 2504;  # Update this when adding/deleting tests.
+plan tests => 2510;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -1044,23 +1044,29 @@ sub run_tests {
         use charnames ":full";
         # Delayed interpolation of \N'
         my $r1 = qr/\N{THAI CHARACTER SARA I}/;
+        my $r2 = qr'\N{THAI CHARACTER SARA I}';
         my $s1 = "\x{E34}\x{E34}\x{E34}\x{E34}";
 
         # Bug #56444
         ok $s1 =~ /$r1+/, 'my $r1 = qr/\N{THAI CHARACTER SARA I}/; my $s1 = "\x{E34}\x{E34}\x{E34}\x{E34}; $s1 =~ /$r1+/';
+        ok $s1 =~ /$r2+/, 'my $r2 = qr\'\N{THAI CHARACTER SARA I}\'; my $s1 = "\x{E34}\x{E34}\x{E34}\x{E34}; $s1 =~ \'$r2+\'';
 
         # Bug #62056
         ok "${s1}A" =~ m/$s1\N{LATIN CAPITAL LETTER A}/, '"${s1}A" =~ m/$s1\N{LATIN CAPITAL LETTER A}/';
 
         ok "abbbbc" =~ m/\N{1}/ && $& eq "a", '"abbbbc" =~ m/\N{1}/ && $& eq "a"';
+        ok "abbbbc" =~ m'\N{1}' && $& eq "a", '"abbbbc" =~ m\'\N{1}\' && $& eq "a"';
         ok "abbbbc" =~ m/\N{3,4}/ && $& eq "abbb", '"abbbbc" =~ m/\N{3,4}/ && $& eq "abbb"';
+        ok "abbbbc" =~ m'\N{3,4}' && $& eq "abbb", '"abbbbc" =~ m\'\N{3,4}\' && $& eq "abbb"';
     }
 
     {
         use charnames ":full";
         my $message = '[perl #74982] Period coming after \N{}';
         ok("\x{ff08}." =~ m/\N{FULLWIDTH LEFT PARENTHESIS}./ && $& eq "\x{ff08}.", $message);
+        ok("\x{ff08}." =~ m'\N{FULLWIDTH LEFT PARENTHESIS}.' && $& eq "\x{ff08}.", $message);
         ok("\x{ff08}." =~ m/[\N{FULLWIDTH LEFT PARENTHESIS}]./ && $& eq "\x{ff08}.", $message);
+        ok("\x{ff08}." =~ m'[\N{FULLWIDTH LEFT PARENTHESIS}].' && $& eq "\x{ff08}.", $message);
     }
 
 SKIP: {
@@ -1141,6 +1147,15 @@ EOP
         ok($s=~/(foo){1,0}|(?1)/,
             "RT #130561 - allowing impossible quantifier should not break recursion");
     }
+	{
+		# RT #133892 Coredump in Perl_re_intuit_start
+		# Second match flips to checking floating substring before fixed
+		# substring, which triggers a pathway that failed to check there
+		# was a non-utf8 version of the string before trying to use it
+		# resulting in a SEGV.
+		my $result = grep /b\x{1c0}ss0/i, qw{ xxxx xxxx0 };
+		ok($result == 0);
+	}
 
 } # End of sub run_tests
 

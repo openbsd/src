@@ -40,6 +40,9 @@ XS(w32_CORE_all){
     call_pv(function, GIMME_V);
 }
 
+#ifdef __cplusplus
+extern "C"
+#endif
 XS_EXTERNAL(boot_Win32CORE)
 {
     /* This function only exists because writemain.SH, lib/ExtUtils/Embed.pm

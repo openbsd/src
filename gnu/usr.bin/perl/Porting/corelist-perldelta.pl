@@ -155,7 +155,14 @@ sub corelist_delta {
     return undef;
   };
 
-  my @unclaimedModules = qw/AnyDBM_File B B::Concise B::Deparse Benchmark Class::Struct Config::Extensions DB DBM_Filter Devel::Peek DirHandle DynaLoader English Errno ExtUtils::Embed ExtUtils::Miniperl ExtUtils::Typemaps ExtUtils::XSSymSet Fcntl File::Basename File::Compare File::Copy File::DosGlob File::Find File::Glob File::stat FileCache FileHandle FindBin GDBM_File Getopt::Std Hash::Util Hash::Util::FieldHash I18N::Langinfo IPC::Open3 NDBM_File ODBM_File Opcode PerlIO PerlIO::encoding PerlIO::mmap PerlIO::scalar PerlIO::via Pod::Functions Pod::Html POSIX SDBM_File SelectSaver Symbol Sys::Hostname Thread Tie::Array Tie::Handle Tie::Hash Tie::Hash::NamedCapture Tie::Memoize Tie::Scalar Tie::StdHandle Tie::SubstrHash Time::gmtime Time::localtime Time::tm Unicode::UCD UNIVERSAL User::grent User::pwent VMS::DCLsym VMS::Filespec VMS::Stdio XS::Typemap Win32CORE/;
+  my @unclaimedModules = qw/AnyDBM_File B B::Concise B::Deparse Benchmark Class::Struct Config::Extensions DB
+                            DBM_Filter Devel::Peek DirHandle DynaLoader English Errno ExtUtils::Embed ExtUtils::Miniperl
+                            ExtUtils::Typemaps ExtUtils::XSSymSet Fcntl File::Basename File::Compare File::Copy File::DosGlob
+                            File::Find File::Glob File::stat FileCache FileHandle FindBin GDBM_File Getopt::Std Hash::Util Hash::Util::FieldHash
+                            I18N::Langinfo IPC::Open3 NDBM_File ODBM_File Opcode PerlIO PerlIO::encoding PerlIO::mmap PerlIO::scalar PerlIO::via
+                            Pod::Functions Pod::Html POSIX SDBM_File SelectSaver Symbol Sys::Hostname Thread Tie::Array Tie::Handle Tie::Hash
+                            Tie::Hash::NamedCapture Tie::Memoize Tie::Scalar Tie::StdHandle Tie::SubstrHash Time::gmtime Time::localtime Time::tm
+                            Unicode::UCD UNIVERSAL User::grent User::pwent VMS::DCLsym VMS::Filespec VMS::Stdio XS::Typemap XS::APItest Win32CORE/;
   my @unclaimedPragmata = qw/arybase attributes blib bytes charnames deprecate diagnostics encoding feature fields filetest inc::latest integer less locale mro open ops overload overloading re sigtrap sort strict subs utf8 vars vmsish/;
   my @unclaimed = (@unclaimedModules, @unclaimedPragmata);
 
@@ -172,13 +179,6 @@ sub corelist_delta {
         'name'         => 'libnet',
         'modification' => $getModifyType->( $changes{'Net::Cmd'} ),
         'data'         => $changes{'Net::Cmd'}
-      }
-    ],
-    'Locale-Codes' => [
-      {
-        'name'         => 'Locale::Codes',
-        'modification' => $getModifyType->( $changes{'Locale::Codes'} ),
-        'data'         => $changes{'Locale::Codes'}
       }
     ],
     'PathTools' => [

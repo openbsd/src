@@ -204,32 +204,32 @@ is($x->copy()->round(undef, -1, "odd"), "123.5",
 
 # see if rounding is 'sticky'
 $x = $mbf->new("123.4567");
-$y = $x->copy()->bround();		# no-op since nowhere A or P defined
+$y = $x->copy()->bround();              # no-op since nowhere A or P defined
 
 is($y, 123.4567,
    qq|\$x = $mbf->new("123.4567"); \$y = \$x->copy()->bround()|);
 $y = $x->copy()->round(5);
 is($y->accuracy(), 5,
    q|$y = $x->copy()->round(5); $y->accuracy()|);
-is($y->precision(), undef,		# A has precedence, so P still unset
+is($y->precision(), undef,              # A has precedence, so P still unset
    q|$y = $x->copy()->round(5); $y->precision()|);
 $y = $x->copy()->round(undef, 2);
 is($y->precision(), 2,
    q|$y = $x->copy()->round(undef, 2); $y->precision()|);
-is($y->accuracy(), undef,		# P has precedence, so A still unset
+is($y->accuracy(), undef,               # P has precedence, so A still unset
    q|$y = $x->copy()->round(undef, 2); $y->accuracy()|);
 
 # see if setting A clears P and vice versa
 $x = $mbf->new("123.4567");
 is($x, "123.4567", q|$x = $mbf->new("123.4567")|);
 is($x->accuracy(4), 4, q|$x->accuracy(4)|);
-is($x->precision(-2), -2, q|$x->precision(-2)|);		# clear A
+is($x->precision(-2), -2, q|$x->precision(-2)|);                # clear A
 is($x->accuracy(), undef, q|$x->accuracy()|);
 
 $x = $mbf->new("123.4567");
 is($x, "123.4567", q|$x = $mbf->new("123.4567")|);
 is($x->precision(-2), -2, q|$x->precision(-2)|);
-is($x->accuracy(4), 4, q|$x->accuracy(4)|);			# clear P
+is($x->accuracy(4), 4, q|$x->accuracy(4)|);                     # clear P
 is($x->precision(), undef, q|$x->precision()|);
 
 # does copy work?
@@ -298,8 +298,8 @@ foreach my $class ($mbi, $mbf) {
 # it should do given non-objects, w/ or w/o objectify())
 
 foreach my $class ($mbi, $mbf) {
-    #  ${"$class\::precision"} = undef;		# reset
-    #  ${"$class\::accuracy"} = undef;		# reset
+    #  ${"$class\::precision"} = undef;         # reset
+    #  ${"$class\::accuracy"} = undef;          # reset
 
     is($class->new(123)->badd(123), 246, qq|$class->new(123)->badd(123)|);
     is($class->badd(123, 321), 444, qq|$class->badd(123, 321)|);
@@ -349,8 +349,8 @@ foreach my $class ($mbi, $mbf) {
 
 $x = $mbf->new("123.456");
 $y = $mbf->new("654.321");
-$x->{_a} = 5;		# $x->accuracy(5) would round $x straight away
-$y->{_a} = 4;		# $y->accuracy(4) would round $x straight away
+$x->{_a} = 5;           # $x->accuracy(5) would round $x straight away
+$y->{_a} = 4;           # $y->accuracy(4) would round $x straight away
 
 $z = $x + $y;
 is($z, "777.8", q|$z = $x + $y|);
@@ -385,8 +385,8 @@ is($z, 123500, q|$z++|);
 
 $x = $mbi->new(123456);
 $y = $mbi->new(654321);
-$x->{_a} = 5;		# $x->accuracy(5) would round $x straight away
-$y->{_a} = 4;		# $y->accuracy(4) would round $x straight away
+$x->{_a} = 5;           # $x->accuracy(5) would round $x straight away
+$y->{_a} = 4;           # $y->accuracy(4) would round $x straight away
 
 $z = $x + $y;
 is($z, 777800, q|$z = $x + $y|);
@@ -415,7 +415,7 @@ is($z, 62000, q|$z = $z / 2|);
 
 $x = $mbi->new(123400);
 $x->{_a} = 4;
-is($x->bnot(), -123400, q|$x->bnot()|);		# not -1234001
+is($x->bnot(), -123400, q|$x->bnot()|);         # not -1234001
 
 # both babs() and bneg() don't need to round, since the input will already
 # be rounded (either as $x or via new($string)), and they don't change the
@@ -439,25 +439,25 @@ $x = $mbi->new('123456');
 $y = $mbi->new('123456');
 $y->{_a} = 6;
 is($x->bdiv($y), 1, q|$x->bdiv($y)|);
-is($x->{_a}, 6, q|$x->{_a}|);			# carried over
+is($x->{_a}, 6, q|$x->{_a}|);                   # carried over
 
 $x = $mbi->new('123456');
 $y = $mbi->new('123456');
 $x->{_a} = 6;
 is($x->bdiv($y), 1, q|$x->bdiv($y)|);
-is($x->{_a}, 6, q|$x->{_a}|);			# carried over
+is($x->{_a}, 6, q|$x->{_a}|);                   # carried over
 
 $x = $mbi->new('123456');
 $y = $mbi->new('223456');
 $y->{_a} = 6;
 is($x->bdiv($y), 0, q|$x->bdiv($y)|);
-is($x->{_a}, 6, q|$x->{_a}|);			# carried over
+is($x->{_a}, 6, q|$x->{_a}|);                   # carried over
 
 $x = $mbi->new('123456');
 $y = $mbi->new('223456');
 $x->{_a} = 6;
 is($x->bdiv($y), 0, q|$x->bdiv($y)|);
-is($x->{_a}, 6, q|$x->{_a}|);			# carried over
+is($x->{_a}, 6, q|$x->{_a}|);                   # carried over
 
 ###############################################################################
 # test that bop(0) does the same than bop(undef)
@@ -532,10 +532,10 @@ is($x->accuracy(), 2, q|$x->accuracy()|);
 
 $mbi->round_mode('even');
 $x = $mbi->new('126025')->bsqrt(2, undef, '+inf');
-is($x, '360', q|$x = 360|);	# not 355 nor 350
+is($x, '360', q|$x = 360|);     # not 355 nor 350
 
 $x = $mbi->new('126025')->bsqrt(undef, 2);
-is($x, '400', q|$x = 400|);	 # not 355
+is($x, '400', q|$x = 400|);      # not 355
 
 ###############################################################################
 # test mixed arguments
@@ -632,7 +632,7 @@ $x = $mbf->new(10);
 $x->{_a} = 4;
 $y = $mbf->new(3);
 is($x->bdiv($y), '3.333', q|$x->bdiv($y)|);
-is($x->{_a}, 4, q|$x->{_a}|);			# set's it since no fallback
+is($x->{_a}, 4, q|$x->{_a}|);                   # set's it since no fallback
 
 # rounding to P of x
 $x = $mbf->new(10);
@@ -658,7 +658,7 @@ $y = $mbf->new(3);
 $y->{_a} = 4;
 is($x->bdiv($y), '3.333', q|$x->bdiv($y) = '3.333'|);
 is($x->{_a}, 4, q|$x->{_a} = 4|);
-is($y->{_a}, 4, q|$y->{_a} = 4|);	# set's it since no fallback
+is($y->{_a}, 4, q|$y->{_a} = 4|);       # set's it since no fallback
 is($x->{_p}, undef, q|$x->{_p} = undef|);
 is($y->{_p}, undef, q|$y->{_p} = undef|);
 
@@ -730,20 +730,20 @@ is($x->{_a}, 1, q|$x->{_a} = 1|);
 # bround(-n) should be no-op if n too big
 $x = $mbi->new(12345);
 $x->bround(-5);
-is($x, "0", q|$x = "0"|);		# scale to "big" => 0
+is($x, "0", q|$x = "0"|);               # scale to "big" => 0
 is($x->{_a}, 0, q|$x->{_a} = 0|);
 
 # bround(-n) should be no-op if n too big
 $x = $mbi->new(54321);
 $x->bround(-5);
-is($x, "100000", q|$x = "100000"|);	# used by MBF to round 0.0054321 at 0.0_6_00000
+is($x, "100000", q|$x = "100000"|);     # used by MBF to round 0.0054321 at 0.0_6_00000
 is($x->{_a}, 0, q|$x->{_a} = 0|);
 
 # bround(-n) should be no-op if n too big
 $x = $mbi->new(54321);
 $x->{_a} = 5;
 $x->bround(-6);
-is($x, "100000", q|$x = "100000"|);	# no-op
+is($x, "100000", q|$x = "100000"|);     # no-op
 is($x->{_a}, 0, q|$x->{_a} = 0|);
 
 # bround(n) should set _a
@@ -1135,7 +1135,6 @@ for my $class ($mbi, $mbf) {
     is($x->accuracy(), 5,
        qq|$class->accuracy(2); \$x = $class->new(2, 5); \$x->accuracy()|);
 
-
     SKIP: {
           skip 1, "this won't work until we have a better OO implementation";
 
@@ -1248,7 +1247,7 @@ foreach my $class ($mbi, $mbf) {
 
 my ($got, $f, $a, $p, $xp, $yp, $xa, $ya, $try, $want, @args);
 
-my $CALC = Math::BigInt->config('lib');
+my $LIB = Math::BigInt->config('lib');
 
 while (<DATA>) {
     s/#.*$//;                   # remove comments
@@ -1338,7 +1337,7 @@ sub is_valid {
         if $e eq '0' && $x->{sign} !~ /^(\+|-|\+inf|-inf|NaN)$/;
 
     $e = "-0 is invalid!" if $e ne '0' && $x->{sign} eq '-' && $x == 0;
-    $e = $CALC->_check($x->{value}) if $e eq '0';
+    $e = $LIB->_check($x->{value}) if $e eq '0';
 
     # test done, see if error did crop up
     if ($e eq '0') {

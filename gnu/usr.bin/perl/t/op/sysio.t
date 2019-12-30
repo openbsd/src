@@ -6,7 +6,7 @@ BEGIN {
   set_up_inc('../lib');
 }
 
-plan tests => 48;
+plan tests => 45;
 
 open(I, 'op/sysio.t') || die "sysio.t: cannot find myself: $!";
 binmode I;
@@ -219,32 +219,6 @@ ok(not defined sysseek(I, -1, 1));
 
 close(I);
 
-unlink_all $outfile;
-
-# Check that utf8 IO doesn't upgrade the scalar
-{
-    no warnings 'deprecated';
-    open(I, ">$outfile") || die "sysio.t: cannot write $outfile: $!";
-    # Will skip harmlessly on stdioperl
-    eval {binmode STDOUT, ":utf8"};
-    die $@ if $@ and $@ !~ /^IO layers \(like ':utf8'\) unavailable/;
-
-    # y diaresis is \w when UTF8
-    $a = chr 255;
-
-    unlike($a, qr/\w/);
-
-    syswrite I, $a;
-
-    # Should not be upgraded as a side effect of syswrite.
-    unlike($a, qr/\w/);
-
-    # This should work
-    eval {syswrite I, 2;};
-    is($@, '');
-
-    close(I);
-}
 unlink_all $outfile;
 
 chdir('..');

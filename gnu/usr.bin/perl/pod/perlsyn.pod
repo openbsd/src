@@ -335,7 +335,7 @@ conditional is about to be evaluated again.  Thus it can be used to
 increment a loop variable, even when the loop has been continued via
 the C<next> statement.
 
-When a block is preceding by a compilation phase keyword such as C<BEGIN>,
+When a block is preceded by a compilation phase keyword such as C<BEGIN>,
 C<END>, C<INIT>, C<CHECK>, or C<UNITCHECK>, then the block will run only
 during the corresponding phase of execution.  See L<perlmod> for more details.
 
@@ -581,7 +581,7 @@ between the inner and outer loops later on, the new code won't be
 accidentally executed.  The C<next> explicitly iterates the other loop
 rather than merely terminating the inner one.  And it's faster because
 Perl executes a C<foreach> statement more rapidly than it would the
-equivalent C<for> loop.
+equivalent C-style C<for> loop.
 
 Perceptive Perl hackers may have noticed that a C<for> loop has a return
 value, and that this value can be captured by wrapping the loop in a C<do>

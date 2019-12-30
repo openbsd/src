@@ -818,6 +818,14 @@ SKIP: {
         local $::TODO = "denorm literals treated as zero"
             if $f == 0.0 && $t->[2] ne '0x0p+0';
 
+        # Versions of Visual C++ earlier than 2015 (VC14, cl.exe version 19.x)
+        # fail three tests here - see perl #133982.
+        local $::TODO = "Visual C++ has problems prior to VC14"
+            if $^O eq 'MSWin32' and $Config{cc} eq 'cl' and
+               $Config{ccversion} =~ /^(\d+)/ and $1 < 19 and
+               (($t->[0] eq '3e-322' and ($t->[1] eq '%a' or $t->[1] eq '%.4a')) or
+                 $t->[0] eq '7e-322');
+
         my $s = sprintf($t->[1], $f);
         is($s, $t->[2], "subnormal @$t got $s");
     }
@@ -829,6 +837,9 @@ SKIP: {
 
     # [rt.perl.org #128889]
     is(sprintf("%.*a", -1, 1.03125), "0x1.08p+0", "[rt.perl.org #128889]");
+
+    # [rt.perl.org #134008]
+    is(sprintf("%.*a", -99999, 1.03125), "0x1.08p+0", "[rt.perl.org #134008]");
 
     # [rt.perl.org #128890]
     is(sprintf("%a", 0x1.18p+0), "0x1.18p+0");

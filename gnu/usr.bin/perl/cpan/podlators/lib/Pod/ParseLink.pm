@@ -1,19 +1,11 @@
-# Pod::ParseLink -- Parse an L<> formatting code in POD text.
-#
-# Copyright 2001, 2008, 2009, 2014 by Russ Allbery <rra@cpan.org>
-#
-# This program is free software; you may redistribute it and/or modify it
-# under the same terms as Perl itself.
+# Parse an L<> formatting code in POD text.
 #
 # This module implements parsing of the text of an L<> formatting code as
 # defined in perlpodspec.  It should be suitable for any POD formatter.  It
 # exports only one function, parselink(), which returns the five-item parse
 # defined in perlpodspec.
 #
-# Perl core hackers, please note that this module is also separately
-# maintained outside of the Perl core as part of the podlators.  Please send
-# me any patches at the address above in addition to sending them to the
-# standard Perl mailing lists.
+# SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
 ##############################################################################
 # Modules and declarations
@@ -31,7 +23,7 @@ use Exporter;
 @ISA    = qw(Exporter);
 @EXPORT = qw(parselink);
 
-$VERSION = '4.10';
+$VERSION = '4.11';
 
 ##############################################################################
 # Implementation
@@ -114,12 +106,12 @@ sub parselink {
 1;
 __END__
 
+=for stopwords
+markup Allbery URL
+
 =head1 NAME
 
 Pod::ParseLink - Parse an LE<lt>E<gt> formatting code in POD text
-
-=for stopwords
-markup Allbery URL
 
 =head1 SYNOPSIS
 
@@ -173,22 +165,26 @@ the section may be necessary depending on whether the translator wants to
 consider markup in sections to be significant when resolving links.  See
 L<perlpodspec> for more information.
 
-=head1 SEE ALSO
-
-L<Pod::Parser>
-
-The current version of this module is always available from its web site at
-L<http://www.eyrie.org/~eagle/software/podlators/>.
-
 =head1 AUTHOR
 
 Russ Allbery <rra@cpan.org>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2001, 2008, 2009 Russ Allbery <rra@cpan.org>.
+Copyright 2001, 2008, 2009, 2014, 2018 Russ Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.
 
+=head1 SEE ALSO
+
+L<Pod::Parser>
+
+The current version of this module is always available from its web site at
+L<https://www.eyrie.org/~eagle/software/podlators/>.
+
 =cut
+
+# Local Variables:
+# copyright-at-end-flag: t
+# End:

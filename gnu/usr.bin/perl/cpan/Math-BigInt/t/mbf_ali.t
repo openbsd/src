@@ -12,4 +12,4 @@ use Math::BigFloat;
 our $CLASS;
 $CLASS = 'Math::BigFloat';
 
-require 't/alias.inc';
+require './t/alias.inc';

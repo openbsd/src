@@ -404,7 +404,7 @@ sub print_B_Op_private {
     my $header = <<'EOF';
 @=head1 NAME
 @
-@B::Op_private -  OP op_private flag definitions
+@B::Op_private - OP op_private flag definitions
 @
 @=head1 SYNOPSIS
 @

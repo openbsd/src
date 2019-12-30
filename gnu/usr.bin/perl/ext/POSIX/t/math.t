@@ -76,12 +76,17 @@ sub near {
 }
 
 SKIP: {
+
     unless ($Config{d_acosh}) {
         skip "no acosh, suspecting no C99 math";
     }
-    if ($^O =~ /Win32|VMS/) {
+    if ($^O =~ /VMS/) {
         skip "running in $^O, C99 math support uneven";
     }
+    if ($Config{cc} =~ /\b(?:cl|icl)/) {
+        skip "Microsoft compiler - C99 math support uneven";
+    }
+
     near(M_SQRT2, 1.4142135623731, "M_SQRT2", 1e-9);
     near(M_E, 2.71828182845905, "M_E", 1e-9);
     near(M_PI, 3.14159265358979, "M_PI", 1e-9);

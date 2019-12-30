@@ -1675,13 +1675,6 @@ Useless localization of match position at - line 49.
 Useless localization of vec at - line 50.
 ########
 # op.c
-my $x1 if 0;
-my @x2 if 0;
-my %x3 if 0;
-my ($x4) if 0;
-my ($x5,@x6, %x7) if 0;
-0 && my $z1;
-0 && my (%z2);
 # these shouldn't warn
 our $x if 0;
 our $x unless 0;
@@ -1690,29 +1683,6 @@ if (my $w2) { $a=1 }
 if ($a && (my $w3 = 1)) {$a = 2}
 
 EXPECT
-Deprecated use of my() in false conditional. This will be a fatal error in Perl 5.30 at - line 2.
-Deprecated use of my() in false conditional. This will be a fatal error in Perl 5.30 at - line 3.
-Deprecated use of my() in false conditional. This will be a fatal error in Perl 5.30 at - line 4.
-Deprecated use of my() in false conditional. This will be a fatal error in Perl 5.30 at - line 5.
-Deprecated use of my() in false conditional. This will be a fatal error in Perl 5.30 at - line 6.
-Deprecated use of my() in false conditional. This will be a fatal error in Perl 5.30 at - line 7.
-Deprecated use of my() in false conditional. This will be a fatal error in Perl 5.30 at - line 8.
-########
-# op.c
-$[ = 1;
-($[) = 1;
-use warnings 'deprecated';
-$[ = 2;
-($[) = 2;
-$[ = 0;
-no warnings 'deprecated';
-$[ = 3;
-($[) = 3;
-EXPECT
-Use of assignment to $[ is deprecated, and will be fatal in Perl 5.30 at - line 2.
-Use of assignment to $[ is deprecated, and will be fatal in Perl 5.30 at - line 3.
-Use of assignment to $[ is deprecated, and will be fatal in Perl 5.30 at - line 5.
-Use of assignment to $[ is deprecated, and will be fatal in Perl 5.30 at - line 6.
 ########
 # op.c
 use warnings 'void';

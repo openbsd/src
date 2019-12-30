@@ -1649,10 +1649,6 @@ Like C<sv_setsv> but doesn't process magic.
 =for apidoc Am|void|sv_catsv_nomg|SV* dsv|SV* ssv
 Like C<sv_catsv> but doesn't process magic.
 
-=for apidoc Amdb|STRLEN|sv_utf8_upgrade_nomg|SV *sv
-
-Like C<sv_utf8_upgrade>, but doesn't do magic on C<sv>.
-
 =cut
 */
 
@@ -2178,6 +2174,11 @@ struct clone_params {
   PerlInterpreter *new_perl;
   AV *unreferenced;
 };
+
+/* SV_NOSTEAL prevents TEMP buffers being, well, stolen, and saves games
+   with SvTEMP_off and SvTEMP_on round a call to sv_setsv.  */
+#define newSVsv(sv) newSVsv_flags((sv), SV_GMAGIC|SV_NOSTEAL)
+#define newSVsv_nomg(sv) newSVsv_flags((sv), SV_NOSTEAL)
 
 /*
 =for apidoc Am|SV*|newSVpvn_utf8|const char* s|STRLEN len|U32 utf8

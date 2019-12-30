@@ -13,12 +13,34 @@ my %Cache;
 
 sub croak { require Carp; Carp::croak(@_) }
 
+# Digits may be separated by a single underscore
+my $digits = qr/ ( [0-9] _? )+ (?!:_) /x;
+
+# A sign can be surrounded by white space
+my $sign = qr/ \s* [+-]? \s* /x;
+
+my $f_float = qr/  $sign $digits+ \. $digits*    # e.g., 5.0, 5.
+                 | $sign $digits* \. $digits+/x; # 0.7, .7
+
+# A number may be an integer, a rational, or a float with an optional exponent
+# We (shudder) accept a signed denominator
+my $number = qr{  ^ $sign $digits+ $
+                | ^ $sign $digits+ \/ $sign $digits+ $
+                | ^ $f_float (?: [Ee] [+-]? $digits )? $}x;
+
 sub _loose_name ($) {
     # Given a lowercase property or property-value name, return its
     # standardized version that is expected for look-up in the 'loose' hashes
     # in Heavy.pl (hence, this depends on what mktables does).  This squeezes
     # out blanks, underscores and dashes.  The complication stems from the
     # grandfathered-in 'L_', which retains a single trailing underscore.
+
+# integer or float (no exponent)
+my $integer_or_float_re = qr/ ^ -? \d+ (:? \. \d+ )? $ /x;
+
+# Also includes rationals
+my $numeric_re = qr! $integer_or_float_re | ^ -? \d+ / \d+ $ !x;
+    return $_[0] if $_[0] =~ $numeric_re;
 
     (my $loose = $_[0]) =~ s/[-_ \t]//g;
 
@@ -60,9 +82,6 @@ sub _loose_name ($) {
         ##
         ## Callers of swash_init:
         ##     op.c:pmtrans             -- for tr/// and y///
-        ##     regexec.c:regclass_swash -- for /[]/, \p, and \P
-        ##     utf8.c:is_utf8_common    -- for common Unicode properties
-        ##     utf8.c:S__to_utf8_case   -- for lc, uc, ucfirst, etc. and //i
         ##     Unicode::UCD::prop_invlist
         ##     Unicode::UCD::prop_invmap
         ##
@@ -226,24 +245,13 @@ sub _loose_name ($) {
 
                     # If the rhs looks like it is a number...
                     print STDERR __LINE__, ": table=$table\n" if DEBUG;
-                    if ($table =~ m{ ^ [ \s 0-9 _  + / . -]+ $ }x) {
-                        print STDERR __LINE__, ": table=$table\n" if DEBUG;
 
-                        # Don't allow leading nor trailing slashes 
-                        if ($table =~ / ^ \/ | \/ $ /x) {
-                            pop @recursed if @recursed;
-                            return $type;
-                        }
+                    if ($table =~ $number) {
+                        print STDERR __LINE__, ": table=$table\n" if DEBUG;
 
                         # Split on slash, in case it is a rational, like \p{1/5}
                         my @parts = split m{ \s* / \s* }x, $table, -1;
                         print __LINE__, ": $type\n" if @parts > 2 && DEBUG;
-
-                        # Can have maximum of one slash
-                        if (@parts > 2) {
-                            pop @recursed if @recursed;
-                            return $type;
-                        }
 
                         foreach my $part (@parts) {
                             print __LINE__, ": part=$part\n" if DEBUG;
@@ -261,7 +269,7 @@ sub _loose_name ($) {
                             $part .= '0' if $part eq '-' || $part eq "";
 
                             # No trailing zeros after a decimal point
-                            $part =~ s/ ( \. .*? ) 0+ $ /$1/x;
+                            $part =~ s/ ( \. [0-9]*? ) 0+ $ /$1/x;
 
                             # Begin with a 0 if a leading decimal point
                             $part =~ s/ ^ ( -? ) \. /${1}0./x;
@@ -272,14 +280,6 @@ sub _loose_name ($) {
 
                             print STDERR __LINE__, ": part=$part\n" if DEBUG;
                             #return $type if $part eq "";
-                            
-                            # Result better look like a number.  (This test is
-                            # needed because, for example could have a plus in
-                            # the middle.)
-                            if ($part !~ / ^ -? [0-9]+ ( \. [0-9]+)? $ /x) {
-                                pop @recursed if @recursed;
-                                return $type;
-                            }
                         }
 
                         #  If a rational...
@@ -310,83 +310,19 @@ sub _loose_name ($) {
                             $table = $parts[0];
                         } else {
 
-                            # Here is a floating point numeric_value.  Try to
-                            # convert to rational.  First see if is in the list
-                            # of known ones.
-                            if (exists $utf8::nv_floating_to_rational{$parts[0]}) {
-                                $table = $utf8::nv_floating_to_rational{$parts[0]};
+                            # Here is a floating point numeric_value.  Convert
+                            # to rational.  Get a normalized form, like
+                            # 5.00E-01, and look that up in the hash
+
+                            my $float = sprintf "%.*e",
+                                                $utf8::e_precision,
+                                                0 + $parts[0];
+
+                            if (exists $utf8::nv_floating_to_rational{$float}) {
+                                $table = $utf8::nv_floating_to_rational{$float};
                             } else {
-
-                                # Here not in the list.  See if is close
-                                # enough to something in the list.  First
-                                # determine what 'close enough' means.  It has
-                                # to be as tight as what mktables says is the
-                                # maximum slop, and as tight as how many
-                                # digits we were passed.  That is, if the user
-                                # said .667, .6667, .66667, etc.  we match as
-                                # many digits as they passed until get to
-                                # where it doesn't matter any more due to the
-                                # machine's precision.  If they said .6666668,
-                                # we fail.
-                                (my $fraction = $parts[0]) =~ s/^.*\.//;
-                                my $epsilon = 10 ** - (length($fraction));
-                                if ($epsilon > $utf8::max_floating_slop) {
-                                    $epsilon = $utf8::max_floating_slop;
-                                }
-
-                                # But it can't be tighter than the minimum
-                                # precision for this machine.  If haven't
-                                # already calculated that minimum, do so now.
-                                if (! defined $min_floating_slop) {
-
-                                    # Keep going down an order of magnitude
-                                    # until find that adding this quantity to
-                                    # 1 remains 1; but put an upper limit on
-                                    # this so in case this algorithm doesn't
-                                    # work properly on some platform, that we
-                                    # won't loop forever.
-                                    my $count = 0;
-                                    $min_floating_slop = 1;
-                                    while (1+ $min_floating_slop != 1
-                                           && $count++ < 50)
-                                    {
-                                        my $next = $min_floating_slop / 10;
-                                        last if $next == 0; # If underflows,
-                                                            # use previous one
-                                        $min_floating_slop = $next;
-                                        print STDERR __LINE__, ": min_float_slop=$min_floating_slop\n" if DEBUG;
-                                    }
-
-                                    # Back off a couple orders of magnitude,
-                                    # just to be safe.
-                                    $min_floating_slop *= 100;
-                                }
-                                    
-                                if ($epsilon < $min_floating_slop) {
-                                    $epsilon = $min_floating_slop;
-                                }
-                                print STDERR __LINE__, ": fraction=.$fraction; epsilon=$epsilon\n" if DEBUG;
-
-                                undef $table;
-
-                                # And for each possible rational in the table,
-                                # see if it is within epsilon of the input.
-                                foreach my $official
-                                        (keys %utf8::nv_floating_to_rational)
-                                {
-                                    print STDERR __LINE__, ": epsilon=$epsilon, official=$official, diff=", abs($parts[0] - $official), "\n" if DEBUG;
-                                    if (abs($parts[0] - $official) < $epsilon) {
-                                      $table =
-                                      $utf8::nv_floating_to_rational{$official};
-                                        last;
-                                    }
-                                }
-
-                                # Quit if didn't find one.
-                                if (! defined $table) {
-                                    pop @recursed if @recursed;
-                                    return $type;
-                                }
+                                pop @recursed if @recursed;
+                                return $type;
                             }
                         }
                         print STDERR __LINE__, ": $property=$table\n" if DEBUG;

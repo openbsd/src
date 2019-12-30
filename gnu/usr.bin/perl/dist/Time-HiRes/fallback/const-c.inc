@@ -361,6 +361,7 @@ constant_19 (pTHX_ const char *name, IV *iv_return) {
       *iv_return = CLOCK_UPTIME_COARSE;
       return PERL_constant_ISIV;
 #else
+      *iv_return = 0;
       return PERL_constant_NOTDEF;
 #endif
     }
@@ -372,6 +373,7 @@ constant_19 (pTHX_ const char *name, IV *iv_return) {
       *iv_return = CLOCK_REALTIME_FAST;
       return PERL_constant_ISIV;
 #else
+      *iv_return = 0;
       return PERL_constant_NOTDEF;
 #endif
     }
@@ -383,6 +385,7 @@ constant_19 (pTHX_ const char *name, IV *iv_return) {
       *iv_return = CLOCK_MONOTONIC_RAW;
       return PERL_constant_ISIV;
 #else
+      *iv_return = 0;
       return PERL_constant_NOTDEF;
 #endif
     }

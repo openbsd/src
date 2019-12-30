@@ -6,6 +6,8 @@ BEGIN {
     set_up_inc('../lib');
 }
 
+$| = 0; # test.pl now sets it on, which causes problems here.
+
 use strict;	# Amazed that this hackery can be made strict ...
 use Tie::Scalar;
 

@@ -899,6 +899,7 @@ sub doMakefile {
 	);
 	DEFINE('ATLEASTFIVEOHOHFIVE');
     }
+    DEFINE('USE_PPPORT_H') unless $ENV{PERL_CORE};
 
     push (@makefileopts,
 	'NAME'	=> 'Time::HiRes',

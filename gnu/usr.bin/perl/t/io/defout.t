@@ -12,6 +12,8 @@ BEGIN {
     set_up_inc('../lib');
 }
 
+$|=0;   # test.pl makes it 1, and that conflicts with the below.
+
 plan tests => 16;
 
 

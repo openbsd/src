@@ -292,6 +292,7 @@ foreach my $module ( sort keys %module_to_upstream ) {
     $bug_tracker = $bug_tracker->{web} if ref($bug_tracker) eq "HASH";
 
     $bug_tracker = defined $bug_tracker ? quote($bug_tracker) : 'undef';
+    next if $bug_tracker eq "'https://github.com/Perl/perl5/issues'";
 	next if $bug_tracker eq "'http://rt.perl.org/perlbug/'";
     $tracker .= sprintf "    %-24s=> %s,\n", "'$module'", $bug_tracker;
 }

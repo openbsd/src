@@ -14,4 +14,4 @@ use Math::BigInt::Subclass;
 our $CLASS;
 $CLASS = 'Math::BigInt::Subclass';
 
-require 't/alias.inc';
+require './t/alias.inc';

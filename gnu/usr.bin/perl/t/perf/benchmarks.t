@@ -15,8 +15,13 @@ use strict;
 
 my $file = 'perf/benchmarks';
 my $benchmark_array = do $file;
-die $@ if $@;
-die "$! while trying to read '$file'" if $!;
+unless ($benchmark_array) {
+    die "Error while parsing '$file': $@\n" if $@;
+    die "Error while trying to read '$file': $!"
+        unless defined $benchmark_array;
+    die "Unknown error running '$file'\n";
+}
+
 die "'$file' did not return an array ref\n"
         unless ref $benchmark_array eq 'ARRAY';
 

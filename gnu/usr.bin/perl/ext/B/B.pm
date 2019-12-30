@@ -20,7 +20,7 @@ sub import {
 # walkoptree comes from B.xs
 
 BEGIN {
-    $B::VERSION = '1.74';
+    $B::VERSION = '1.76';
     @B::EXPORT_OK = ();
 
     # Our BOOT code needs $VERSION set, and will append to @EXPORT_OK.
@@ -1193,8 +1193,6 @@ The C<B::COP> class is used for "nextstate" and "dbstate" ops.  As of Perl
 =item file
 
 =item cop_seq
-
-=item arybase
 
 =item line
 

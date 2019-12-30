@@ -6,6 +6,40 @@ Changes - public release history for Data::Dumper
 
 =over 8
 
+=item 2.173
+
+perl #133624: Reinstate support for 5.8.8 and older.
+
+=item 2.172
+
+Prepare recent changes for CPAN release
+
+=item 2.171 (Apr 21 2018)
+
+Restore deparsing support in the XS dumper, on Perl 5.18 and earlier
+
+Test fixes on older Perl versions (notably, skip tests for Unicode glob
+names on Perl 5.14 and earlier, which had incomplete support for Unicode
+in globs)
+
+=item 2.170 (Jan 10 2018)
+
+Fix bug when dumping globs with quoting (which now happens for
+all Unicode glob names)
+
+Internal change: use strlcpy(), for safety
+
+=item 2.169 (Dec 12 2017)
+
+Behavior change: $dumper->Useqq(undef) is now treated as setting the
+"useqq" option, not getting it (and similarly for other options)
+[perl #113090]
+
+=item 2.168 (Dec  1, 2017)
+
+perl #119831: Quote glob names better; notably, Unicode globs are
+now handled correctly
+
 =item 2.167_02  (Aug  4 2017)
 
 Attempt to work around XS deparse issues on old perls.

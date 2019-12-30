@@ -18,18 +18,18 @@ Perl, including those with write access to the git repository.
 =head1 CLONING THE REPOSITORY
 
 All of Perl's source code is kept centrally in a Git repository at
-I<perl5.git.perl.org>.
+I<github.com>.
 
 You can make a read-only clone of the repository by running:
 
-  % git clone git://perl5.git.perl.org/perl.git perl
+  % git clone git://github.com/Perl/perl5.git perl
 
 This uses the git protocol (port 9418).
 
 If you cannot use the git protocol for firewall reasons, you can also
-clone via http, though this is much slower:
+clone via http:
 
-  % git clone http://perl5.git.perl.org/perl.git perl
+  % git clone https://github.com/Perl/perl5.git perl
 
 =head1 WORKING WITH THE REPOSITORY
 
@@ -220,7 +220,8 @@ git will open a text editor for you to compose the message
 interactively. This is useful when the changes are more complex than
 the sample given here, and, depending on the editor, to know that the
 first line of the commit message doesn't exceed the 50 character legal
-maximum.
+maximum. See L<perlhack/Commit message> for more information about what
+makes a good commit message.
 
 Once you've finished writing your commit message and exited your
 editor, git will write your change to disk and tell you something like
@@ -254,7 +255,25 @@ itself you can fix it up by editing the files once more and then issue:
 
   % git commit -a --amend
 
-Now you should create a patch file for all your local changes:
+Now, create a fork on GitHub to push your branch to, and add it as a
+remote if you haven't already, as described in the GitHub documentation
+at L<https://help.github.com/en/articles/working-with-forks>:
+
+  % git remote add fork git@github.com:MyUser/perl5.git
+
+And push the branch to your fork:
+
+  % git push -u fork orange
+
+You should now submit a Pull Request (PR) on GitHub from the new branch
+to blead. For more information, see the GitHub documentation at
+L<https://help.github.com/en/articles/creating-a-pull-request-from-a-fork>.
+
+You can also send patch files to
+L<perl5-porters@perl.org|mailto:perl5-porters@perl.org> directly if the
+patch is not ready to be applied, but intended for discussion.
+
+To create a patch file for all your local changes:
 
   % git format-patch -M blead..
   0001-Rename-Leon-Brocard-to-Orange-Brocard.patch
@@ -262,18 +281,6 @@ Now you should create a patch file for all your local changes:
 Or for a lot of changes, e.g. from a topic branch:
 
   % git format-patch --stdout -M blead.. > topic-branch-changes.patch
-
-You should now send an email to
-L<perlbug@perl.org|mailto:perlbug@perl.org> with a description of your
-changes, and include this patch file as an attachment. In addition to
-being tracked by RT, mail to perlbug will automatically be forwarded to
-perl5-porters (with manual moderation, so please be patient). You
-should only send patches to
-L<perl5-porters@perl.org|mailto:perl5-porters@perl.org> directly if the
-patch is not ready to be applied, but intended for discussion.
-
-Please do not use git-send-email(1) to send your patch. See L<Sending
-patch emails|/Sending patch emails> for more information.
 
 If you want to delete your temporary branch, you may do so with:
 
@@ -283,71 +290,6 @@ If you want to delete your temporary branch, you may do so with:
  If you are sure you want to delete it, run 'git branch -D orange'.
  % git branch -D orange
  Deleted branch orange.
-
-=head2 Committing your changes
-
-Assuming that you'd like to commit all the changes you've made as a
-single atomic unit, run this command:
-
-  % git commit -a
-
-(That C<-a> tells git to add every file you've changed to this commit.
-New files aren't automatically added to your commit when you use
-C<commit -a> If you want to add files or to commit some, but not all of
-your changes, have a look at the documentation for C<git add>.)
-
-Git will start up your favorite text editor, so that you can craft a
-commit message for your change. See L<perlhack/Commit message> for more
-information about what makes a good commit message.
-
-Once you've finished writing your commit message and exited your
-editor, git will write your change to disk and tell you something like
-this:
-
- Created commit daf8e63: explain git status and stuff about remotes
-  1 files changed, 83 insertions(+), 3 deletions(-)
-
-If you re-run C<git status>, you should see something like this:
-
- % git status
- On branch blead
- Your branch is ahead of 'origin/blead' by 2 commits.
-   (use "git push" to publish your local commits)
- Untracked files:
-   (use "git add <file>..." to include in what will be committed)
-
-       deliberate.untracked
-
- nothing added to commit but untracked files present (use "git add" to
-                                                                  track)
-
-When in doubt, before you do anything else, check your status and read
-it carefully, many questions are answered directly by the git status
-output.
-
-=head2 Sending patch emails
-
-After you've generated your patch you should send it
-to L<perlbug@perl.org|mailto:perlbug@perl.org> (as discussed L<in the
-previous section|/"Patch workflow">) with a normal mail client as an
-attachment, along with a description of the patch.
-
-You B<must not> use git-send-email(1) to send patches generated with
-git-format-patch(1). The RT ticketing system living behind
-L<perlbug@perl.org|mailto:perlbug@perl.org> does not respect the inline
-contents of E-Mails, sending an inline patch to RT guarantees that your
-patch will be destroyed.
-
-Someone may download your patch from RT, which will result in the
-subject (the first line of the commit message) being omitted.  See
-L<RT #74192|https://rt.perl.org/Ticket/Display.html?id=74192> and
-L<commit a4583001|http://perl5.git.perl.org/perl.git/commitdiff/a4583001>
-for an example. Alternatively someone may
-apply your patch from RT after it arrived in their mailbox, by which
-time RT will have modified the inline content of the message.  See
-L<RT #74532|https://rt.perl.org/Ticket/Display.html?id=74532> and
-L<commit f9bcfeac|http://perl5.git.perl.org/perl.git/commitdiff/f9bcfeac>
-for a bad example of this failure mode.
 
 =head2 A note on derived files
 
@@ -586,7 +528,7 @@ Once you have write access, you will need to modify the URL for the
 origin remote to enable pushing. Edit F<.git/config> with the
 git-config(1) command:
 
-  % git config remote.origin.url ssh://perl5.git.perl.org/perl.git
+  % git config remote.origin.url git@github.com:Perl/perl5.git
 
 You can also set up your user name and e-mail address. Most people do
 this once globally in their F<~/.gitconfig> by doing something like:
@@ -602,7 +544,7 @@ execute something like the following in F<perl>:
 It is also possible to keep C<origin> as a git remote, and add a new
 remote for ssh access:
 
-  % git remote add camel perl5.git.perl.org:/perl.git
+  % git remote add camel git@github.com:Perl/perl5.git
 
 This allows you to update your local repository by pulling from
 C<origin>, which is faster and doesn't require you to authenticate, and
@@ -814,35 +756,6 @@ original commit in the new commit message.
 Before pushing any change to a maint version, make sure you've
 satisfied the steps in L</Committing to blead> above.
 
-=head2 Merging from a branch via GitHub
-
-While we don't encourage the submission of patches via GitHub, that
-will still happen. Here is a guide to merging patches from a GitHub
-repository.
-
-  % git remote add avar git://github.com/avar/perl.git
-  % git fetch avar
-
-Now you can see the differences between the branch and blead:
-
-  % git diff avar/orange
-
-And you can see the commits:
-
-  % git log avar/orange
-
-If you approve of a specific commit, you can cherry pick it:
-
-  % git cherry-pick 0c24b290ae02b2ab3304f51d5e11e85eb3659eae
-
-Or you could just merge the whole branch if you like it all:
-
-  % git merge avar/orange
-
-And then push back to the repository:
-
-  % git push origin blead
-
 =head2 Using a smoke-me branch to test changes
 
 Sometimes a change affects code paths which you cannot test on the OSes
@@ -853,7 +766,7 @@ Fortunately, there is a way to get your change smoke-tested on various
 OSes: push it to a "smoke-me" branch and wait for certain automated
 smoke-testers to report the results from their OSes.
 A "smoke-me" branch is identified by the branch name: specifically, as
-seen on perl5.git.perl.org it must be a local branch whose first name
+seen on github.com it must be a local branch whose first name
 component is precisely C<smoke-me>.
 
 The procedure for doing this is roughly as follows (using the example of
@@ -917,26 +830,3 @@ Finally, you should then delete the remote smoke-me branch:
 ) and then delete your local branch:
 
   % git branch -d win32stat
-
-=head2 A note on camel and dromedary
-
-The committers have SSH access to the two servers that serve
-C<perl5.git.perl.org>. One is C<perl5.git.perl.org> itself (I<camel>),
-which is the 'master' repository. The second one is
-C<users.perl5.git.perl.org> (I<dromedary>), which can be used for
-general testing and development. Dromedary syncs the git tree from
-camel every few minutes, you should not push there. Both machines also
-have a full CPAN mirror in F</srv/CPAN>, please use this. To share files
-with the general public, dromedary serves your F<~/public_html/> as
-C<L<http://users.perl5.git.perl.org/~yourlogin/>>
-
-These hosts have fairly strict firewalls to the outside. Outgoing, only
-rsync, ssh and git are allowed. For http and ftp, you can use
-L<http://webproxy:3128> as proxy. Incoming, the firewall tries to detect
-attacks and blocks IP addresses with suspicious activity. This
-sometimes (but very rarely) has false positives and you might get
-blocked. The quickest way to get unblocked is to notify the admins.
-
-These two boxes are owned, hosted, and operated by booking.com. You can
-reach the sysadmins in #p5p on irc.perl.org or via mail to
-L<perl5-porters@perl.org|mailto:perl5-porters@perl.org>.

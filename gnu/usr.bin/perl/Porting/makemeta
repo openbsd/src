@@ -47,11 +47,11 @@ my $distmeta = {
   'dynamic_config' => 1,
   'resources' => {
     'repository' => {
-      'url' => 'http://perl5.git.perl.org/'
+      'url' => 'https://github.com/Perl/perl5'
     },
     'homepage' => 'http://www.perl.org/',
     'bugtracker' => {
-      'web' => 'https://rt.perl.org/'
+      'web' => 'https://github.com/Perl/perl5/issues'
     },
     'license' => [
       'http://dev.perl.org/licenses/'

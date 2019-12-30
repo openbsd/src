@@ -7,7 +7,7 @@ require Tie::Hash;
 require XSLoader;
 
 our @ISA = qw(Tie::Hash);
-our $VERSION = "1.15";
+our $VERSION = "1.16";
 
 XSLoader::load();
 
@@ -100,6 +100,23 @@ sets C<$!> to contain the reason the file could not be tied.
 This warning is emitted when you try to store a key or a value that
 is too long.  It means that the change was not recorded in the
 database.  See BUGS AND WARNINGS below.
+
+=head1 SECURITY AND PORTABILITY
+
+B<Do not accept ODBM files from untrusted sources.>
+
+On modern Linux systems these are typically GDBM files, which are not
+portable across platforms.
+
+The GDBM documentation doesn't imply that files from untrusted sources
+can be safely used with C<libgdbm>.
+
+Systems that don't use GDBM compatibilty for old dbm support will be
+using a platform specific library, possibly inherited from BSD
+systems, where it may or may not be safe to use an untrusted file.
+
+A maliciously crafted file might cause perl to crash or even expose a
+security vulnerability.
 
 =head1 BUGS AND WARNINGS
 

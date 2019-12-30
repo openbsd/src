@@ -105,6 +105,7 @@ sub convert_from_ascii {
 
 use strict;
 use warnings FATAL=>"all";
+no warnings 'experimental::vlb';
 our ($bang, $ffff, $nulnul); # used by the tests
 our ($qr, $skip_amp, $qr_embed, $qr_embed_thr, $regex_sets, $alpha_assertions, $no_null); # set by our callers
 

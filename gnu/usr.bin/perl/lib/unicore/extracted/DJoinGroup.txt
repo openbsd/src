@@ -1,6 +1,6 @@
-# DerivedJoiningGroup-10.0.0.txt
-# Date: 2017-02-17, 04:46:04 GMT
-# © 2017 Unicode®, Inc.
+# DerivedJoiningGroup-12.1.0.txt
+# Date: 2019-03-10, 10:53:08 GMT
+# © 2019 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -698,5 +698,22 @@
 086A          ; Malayalam_Ssa # Lo       SYRIAC LETTER MALAYALAM SSA
 
 # Total code points: 1
+
+# ================================================
+
+10D02         ; Hanifi_Rohingya_Pa # Lo       HANIFI ROHINGYA LETTER PA
+10D09         ; Hanifi_Rohingya_Pa # Lo       HANIFI ROHINGYA LETTER FA
+10D1C         ; Hanifi_Rohingya_Pa # Lo       HANIFI ROHINGYA LETTER VA
+
+# Total code points: 3
+
+# ================================================
+
+10D19         ; Hanifi_Rohingya_Kinna_Ya # Lo       HANIFI ROHINGYA LETTER KINNA YA
+10D1E         ; Hanifi_Rohingya_Kinna_Ya # Lo       HANIFI ROHINGYA VOWEL I
+10D20         ; Hanifi_Rohingya_Kinna_Ya # Lo       HANIFI ROHINGYA VOWEL E
+10D23         ; Hanifi_Rohingya_Kinna_Ya # Lo       HANIFI ROHINGYA MARK NA KHONNA
+
+# Total code points: 4
 
 # EOF

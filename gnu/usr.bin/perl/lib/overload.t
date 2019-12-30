@@ -48,7 +48,7 @@ package main;
 
 $| = 1;
 BEGIN { require './test.pl'; require './charset_tools.pl' }
-plan tests => 5362;
+plan tests => 5363;
 
 use Scalar::Util qw(tainted);
 
@@ -3173,4 +3173,23 @@ package Stringify {
         eval "$code; 1" or die $@;
         ::is $count, $stringify, $code;
     }
+}
+
+# RT #133789: in multiconcat with overload, the overloaded ref returned
+# from the overload method was being assigned to the pad targ, causing
+# a delay to the freeing of the object
+
+package RT33789 {
+    use overload
+        '.'  => sub { $_[0] }
+    ;
+
+    my $destroy = 0;
+    sub DESTROY { $destroy++ }
+
+    {
+        my $o = bless [];
+        my $result = '1' . ( '2' . ( '3' . ( '4' . ( '5' . $o ) ) ) );
+    }
+    ::is($destroy, 1, "RT #133789: delayed destroy");
 }

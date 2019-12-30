@@ -10,16 +10,16 @@ my $z;
 while (<DATA>)
   {
   chomp;
-  $_ =~ s/#.*$//;	# remove comments
-  $_ =~ s/\s+$//;	# trailing spaces
-  next if /^$/;		# skip empty lines & comments
+  $_ =~ s/#.*$//;       # remove comments
+  $_ =~ s/\s+$//;       # trailing spaces
+  next if /^$/;         # skip empty lines & comments
   if (s/^&//)
     {
     $f = $_;
     }
   elsif (/^\$/)
     {
-    $setup = $_; $setup =~ s/\$/\$${class}::/g;	# round_mode, div_scale
+    $setup = $_; $setup =~ s/\$/\$${class}::/g; # round_mode, div_scale
     #print "\$setup== $setup\n";
     }
   else
@@ -163,13 +163,13 @@ while (<DATA>)
         {
         print "# Tried: '$try'\n" if !ok ($ans1, $ans);
         if (ref($ans1) eq "$class")
-	  {
-	  # float numbers are normalized (for now), so mantissa shouldn't have
-	  # trailing zeros
-	  #print $ans1->_trailing_zeros(),"\n";
+          {
+          # float numbers are normalized (for now), so mantissa shouldn't have
+          # trailing zeros
+          #print $ans1->_trailing_zeros(),"\n";
           print "# Has trailing zeros after '$try'\n"
-	   if !ok ($CL->_zeros( $ans1->{_m}), 0);
-	  }
+           if !ok ($CL->_zeros( $ans1->{_m}), 0);
+          }
         }
       } # end pattern or string
     }
@@ -193,9 +193,9 @@ my $monster = '1e1234567890123456789012345678901234567890';
 
 # new and exponent
 ok ($class->new($monster)->bsstr(),
-		'1e+1234567890123456789012345678901234567890');
+                '1e+1234567890123456789012345678901234567890');
 ok ($class->new($monster)->exponent(),
-		'1234567890123456789012345678901234567890');
+                '1234567890123456789012345678901234567890');
 # cmp
 ok ($class->new($monster) > 0,1);
 
@@ -207,7 +207,7 @@ ok ($class->new($monster)->bmul(2)->bsstr(),
 # mantissa
 $monster = '1234567890123456789012345678901234567890e2';
 ok ($class->new($monster)->mantissa(),
-		'123456789012345678901234567890123456789');
+                '123456789012345678901234567890123456789');
 
 ###############################################################################
 # zero,inf,one,nan
@@ -230,7 +230,7 @@ ok ($class->finf('+'),'inf');
 ok ($class->finf('-'),'-inf');
 ok ($class->finf('-inf'),'-inf');
 
-$class->accuracy(undef); $class->precision(undef);	# reset
+$class->accuracy(undef); $class->precision(undef);      # reset
 
 ###############################################################################
 # bug in bsstr()/numify() showed up in after-rounding in bdiv()
@@ -242,7 +242,6 @@ ok ($x,'0.0027');
 ###############################################################################
 # fsqrt() with set global A/P or A/P enabled on $x, also a test whether fsqrt()
 # correctly modifies $x
-
 
 $x = $class->new(12); $class->precision(-2); $x->fsqrt(); ok ($x,'3.46');
 
@@ -343,10 +342,10 @@ ok ($x, 2);
 
 $x = $class->new('2');
 $y = $class->new('18.2');
-$x <<= $y;		# 2 * (2 ** 18.2);
+$x <<= $y;              # 2 * (2 ** 18.2);
 
 ok ($x->copy()->bfround(-9), '602248.763144685');
-ok ($x >>= $y, 2);	# 2 * (2 ** 18.2) / (2 ** 18.2) => 2
+ok ($x >>= $y, 2);      # 2 * (2 ** 18.2) / (2 ** 18.2) => 2
 ok ($x, 2);
 
 1; # all done

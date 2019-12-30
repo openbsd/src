@@ -109,21 +109,14 @@ sub _trylocale ($$$$) { # For use only by other functions in this file!
     # systems
     return if $locale =~ / ^ pig $ /ix;
 
-    # As of 6.3, this platform's locale handling is basically broken.  khw
-    # filed a bug report (no ticket number was returned), and it is supposedly
-    # going to change in a future release, so the statements here below sunset
-    # for any larger version, at which point this may start failing and have
-    # to be revisited.
-    #
-    # Given a legal individual category, basically whatever you set the locale
-    # to, the return from setlocale() indicates that it has taken effect, even
-    # if it hasn't.  However, the return from querying LC_ALL won't reflect
-    # this.
-    if ($Config{osname} =~ /openbsd/i && $locale !~ / ^ (?: C | POSIX ) $/ix) {
-        my ($major, $minor) = $Config{osvers} =~ / ^ ( \d+ ) \. ( \d+ ) /ax;
-        return if ! defined $major || ! defined $minor
-                         || $major < 6 || ($major == 6 && $minor <= 3);
-    }
+    # Certain platforms have a crippled locale system in which setlocale
+    # returns success for just about any possible locale name, but if anything
+    # actually happens as a result of the call, it is that the underlying
+    # locale is set to a system default, likely C or C.UTF-8.  We can't test
+    # such systems fully, but we shouldn't disable the user from using
+    # locales, as it may work out for them (or not).
+    return if    defined $Config{d_setlocale_accepts_any_locale_name}
+              && $locale !~ / ^ (?: C | POSIX | C\.UTF-8 ) $/ix;
 
     $categories = [ $categories ] unless ref $categories;
 
@@ -214,11 +207,20 @@ sub locales_enabled(;$) {
     # denoting a single category (either name or number).  No conversion into
     # a number is done in this case.
 
-    return 0 unless    $Config{d_setlocale}
-                        # I (khw) cargo-culted the '?' in the pattern on the
-                        # next line.
-                    && $Config{ccflags} !~ /\bD?NO_LOCALE\b/
-                    && $has_locale_h;
+    # khw cargo-culted the '?' in the pattern on the next line.
+    return 0 if $Config{ccflags} =~ /\bD?NO_LOCALE\b/;
+
+    # If we can't load the POSIX XS module, we can't have locales even if they
+    # normally would be available
+    return 0 if ! defined &DynaLoader::boot_DynaLoader;
+
+    if (! $Config{d_setlocale}) {
+        return 0 if $Config{ccflags} =~ /\bD?NO_POSIX_2008_LOCALE\b/;
+        return 0 unless $Config{d_newlocale};
+        return 0 unless $Config{d_uselocale};
+        return 0 unless $Config{d_duplocale};
+        return 0 unless $Config{d_freelocale};
+    }
 
     # Done with the global possibilities.  Now check if any passed in category
     # is disabled.
@@ -337,6 +339,15 @@ sub find_locales ($;$) {
     my @Locale;
     _trylocale("C", $categories, \@Locale, $allow_incompatible);
     _trylocale("POSIX", $categories, \@Locale, $allow_incompatible);
+
+    if ($Config{d_has_C_UTF8} eq 'true') {
+        _trylocale("C.UTF-8", $categories, \@Locale, $allow_incompatible);
+    }
+
+    # There's no point in looking at anything more if we know that setlocale
+    # will return success on any garbage or non-garbage name.
+    return sort @Locale if defined $Config{d_setlocale_accepts_any_locale_name};
+
     foreach (1..16) {
         _trylocale("ISO8859-$_", $categories, \@Locale, $allow_incompatible);
         _trylocale("iso8859$_", $categories, \@Locale, $allow_incompatible);
@@ -501,8 +512,8 @@ sub is_locale_utf8 ($) { # Return a boolean as to if core Perl thinks the input
     return $ret;
 }
 
-sub find_utf8_ctype_locale (;$) { # Return the name of a locale that core Perl
-                                  # thinks is a UTF-8 LC_CTYPE locale.
+sub find_utf8_ctype_locales (;$) { # Return the names of the locales that core
+                                  # Perl thinks are UTF-8 LC_CTYPE locales.
                                   # Optional parameter is a reference to a
                                   # list of locales to try; if omitted, this
                                   # tries all locales it can find on the
@@ -510,6 +521,7 @@ sub find_utf8_ctype_locale (;$) { # Return the name of a locale that core Perl
     return unless locales_enabled('LC_CTYPE');
 
     my $locales_ref = shift;
+    my @return;
 
     if (! defined $locales_ref) {
 
@@ -518,11 +530,65 @@ sub find_utf8_ctype_locale (;$) { # Return the name of a locale that core Perl
     }
 
     foreach my $locale (@$locales_ref) {
-        return $locale if is_locale_utf8($locale);
+        push @return, $locale if is_locale_utf8($locale);
+    }
+
+    return @return;
+}
+
+
+sub find_utf8_ctype_locale (;$) { # Return the name of a locale that core Perl
+                                  # thinks is a UTF-8 LC_CTYPE non-turkic
+                                  # locale.
+                                  # Optional parameter is a reference to a
+                                  # list of locales to try; if omitted, this
+                                  # tries all locales it can find on the
+                                  # platform
+    my $try_locales_ref = shift;
+
+    my @utf8_locales = find_utf8_ctype_locales($try_locales_ref);
+    my @turkic_locales = find_utf8_turkic_locales($try_locales_ref);
+
+    my %seen_turkic;
+
+    # Create undef elements in the hash for turkic locales
+    @seen_turkic{@turkic_locales} = ();
+
+    foreach my $locale (@utf8_locales) {
+        return $locale unless exists $seen_turkic{$locale};
     }
 
     return;
 }
+
+sub find_utf8_turkic_locales (;$) {
+
+    # Return the name of all the locales that core Perl thinks are UTF-8
+    # Turkic LC_CTYPE.  Optional parameter is a reference to a list of locales
+    # to try; if omitted, this tries all locales it can find on the platform
+
+    my @return;
+
+    return unless locales_enabled('LC_CTYPE');
+
+    my $save_locale = setlocale(&POSIX::LC_CTYPE());
+    foreach my $locale (find_utf8_ctype_locales(shift)) {
+        use locale;
+        setlocale(&POSIX::LC_CTYPE(), $locale);
+        push @return, $locale if uc('i') eq "\x{130}";
+    }
+    setlocale(&POSIX::LC_CTYPE(), $save_locale);
+
+    return @return;
+}
+
+sub find_utf8_turkic_locale (;$) {
+    my @turkics = find_utf8_turkic_locales(shift);
+
+    return unless @turkics;
+    return $turkics[0]
+}
+
 
 # returns full path to the directory containing the current source
 # file, inspired by mauke's Dir::Self

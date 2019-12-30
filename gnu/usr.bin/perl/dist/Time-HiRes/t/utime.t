@@ -112,7 +112,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 18;
+use Test::More tests => 22;
 BEGIN { push @INC, '.' }
 use t::Watchdog;
 use File::Temp qw( tempfile );
@@ -162,6 +162,19 @@ print "#utime \$filename\n";
             is $got_atime, $atime, "atime set correctly";
         }
 	is $got_mtime, $mtime, "mtime set correctly";
+};
+
+print "#utime \$filename round-trip\n";
+{
+	my ($fh, $filename) = tempfile( "Time-HiRes-utime-XXXXXXXXX", UNLINK => 1 );
+        # this fractional part is not exactly representable
+        my $t = 1000000000.12345;
+	is Time::HiRes::utime($t, $t, $filename), 1, "One file changed";
+	my ($got_atime, $got_mtime) = ( Time::HiRes::stat($fh) )[8, 9];
+	is Time::HiRes::utime($got_atime, $got_mtime, $filename), 1, "One file changed";
+	my ($got_atime2, $got_mtime2) = ( Time::HiRes::stat($fh) )[8, 9];
+	is $got_atime, $got_atime2, "atime round trip ok";
+	is $got_mtime, $got_mtime2, "mtime round trip ok";
 };
 
 print "utime \$filename and \$fh\n";

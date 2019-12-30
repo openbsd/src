@@ -4,7 +4,7 @@ perlfaq9 - Web, Email and Networking
 
 =head1 VERSION
 
-version 5.021011
+version 5.20190126
 
 =head1 DESCRIPTION
 
@@ -42,20 +42,20 @@ Strongly object-oriented and fully-featured with a long development history and
 a large community and addon ecosystem. It is excellent for large and complex
 applications, where you have full control over the server.
 
-=item L<Dancer>
+=item L<Dancer2>
 
-Young and free of legacy weight, providing a lightweight and easy to learn API.
+Free of legacy weight, providing a lightweight and easy to learn API.
 Has a growing addon ecosystem. It is best used for smaller projects and
 very easy to learn for beginners.
 
 =item L<Mojolicious>
 
-Fairly young with a focus on HTML5 and real-time web technologies such as
-WebSockets.
+Self-contained and powerful for both small and larger projects,
+with a focus on HTML5 and real-time web technologies such as WebSockets.
 
 =item L<Web::Simple>
 
-Currently experimental, strongly object-oriented, built for speed and intended
+Strongly object-oriented and minimal, built for speed and intended
 as a toolkit for building micro web apps, custom frameworks or for tieing
 together existing Plack-compatible web applications with one central dispatcher.
 
@@ -227,7 +227,6 @@ If you've already got some other kind of email object, consider passing
 it to L<Email::Abstract> and then using its cast method to get an
 L<Email::MIME> object:
 
-  my $mail_message_object = read_message();
   my $abstract = Email::Abstract->new($mail_message_object);
   my $email_mime_object = $abstract->cast('Email::MIME');
 
@@ -323,13 +322,7 @@ be able to use this.
 =item L<Email::Sender::Transport::SMTP>
 
 This transport contacts a remote SMTP server over TCP. It optionally
-uses SSL and can authenticate to the server via SASL.
-
-=item L<Email::Sender::Transport::SMTP::TLS>
-
-This is like the SMTP transport, but uses TLS security. You can
-authenticate with this module as well, using any mechanisms your server
-supports after STARTTLS.
+uses TLS or SSL and can authenticate to the server via SASL.
 
 =back
 

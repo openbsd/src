@@ -3,7 +3,7 @@ use 5.006;
 use strict;
 use warnings;
 use warnings::register;
-our $VERSION = '1.34';
+our $VERSION = '1.36';
 require Exporter;
 require Cwd;
 
@@ -12,8 +12,8 @@ our @EXPORT = qw(find finddepth);
 
 
 use strict;
-my $Is_VMS;
-my $Is_Win32;
+my $Is_VMS = $^O eq 'VMS';
+my $Is_Win32 = $^O eq 'MSWin32';
 
 require File::Basename;
 require File::Spec;
@@ -770,31 +770,11 @@ sub finddepth {
 $File::Find::skip_pattern    = qr/^\.{1,2}\z/;
 $File::Find::untaint_pattern = qr|^([-+@\w./]+)$|;
 
-# These are hard-coded for now, but may move to hint files.
-if ($^O eq 'VMS') {
-    $Is_VMS = 1;
-    $File::Find::dont_use_nlink = 1;
-}
-elsif ($^O eq 'MSWin32') {
-    $Is_Win32 = 1;
-}
-
 # this _should_ work properly on all platforms
 # where File::Find can be expected to work
 $File::Find::current_dir = File::Spec->curdir || '.';
 
-$File::Find::dont_use_nlink = 1
-    if $^O eq 'os2' || $^O eq 'dos' || $^O eq 'amigaos' || $Is_Win32 ||
-       $^O eq 'interix' || $^O eq 'cygwin' || $^O eq 'qnx' || $^O eq 'nto';
-
-# Set dont_use_nlink in your hint file if your system's stat doesn't
-# report the number of links in a directory as an indication
-# of the number of files.
-# See e.g. hints/haiku.sh for Haiku.
-unless ($File::Find::dont_use_nlink) {
-    require Config;
-    $File::Find::dont_use_nlink = 1 if ($Config::Config{'dont_use_nlink'});
-}
+$File::Find::dont_use_nlink = 1;
 
 # We need a function that checks if a scalar is tainted. Either use the
 # Scalar::Util module's tainted() function or our (slower) pure Perl
@@ -1106,17 +1086,15 @@ warnings.
 
 =item $dont_use_nlink
 
-You can set the variable C<$File::Find::dont_use_nlink> to 1 if you want to
-force File::Find to always stat directories. This was used for file systems
-that do not have an C<nlink> count matching the number of sub-directories.
-Examples are ISO-9660 (CD-ROM), AFS, HPFS (OS/2 file system), FAT (DOS file
-system) and a couple of others.
+You can set the variable C<$File::Find::dont_use_nlink> to 0 if you
+are sure the filesystem you are scanning reflects the number of
+subdirectories in the parent directory's C<nlink> count.
 
-You shouldn't need to set this variable, since File::Find should now detect
-such file systems on-the-fly and switch itself to using stat. This works even
-for parts of your file system, like a mounted CD-ROM.
+If you do set C<$File::Find::dont_use_nlink> to 0, you may notice an
+improvement in speed at the risk of not recursing into subdirectories
+if a filesystem doesn't populate C<nlink> as expected.
 
-If you do set C<$File::Find::dont_use_nlink> to 1, you will notice slow-downs.
+C<$File::Find::dont_use_nlink> now defaults to 1 on all platforms.
 
 =item symlinks
 

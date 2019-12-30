@@ -54,7 +54,7 @@ use strict;
 # code          Op      what code is associated with this node (???)
 # args          Op      what type of args the node has (which regnode struct)
 # flags         Op      (???)
-# longj         Op      Whether this node is a longjump
+# longj         Op      Boolean as to if this node is a longjump
 # comment       Both    Comment about node, if any
 # pod_comment   Both    Special comments for pod output (preceding lines in def)
 
@@ -89,6 +89,11 @@ sub register_node {
     $node->{id}= 0 + @all;
     push @all, $node;
     $all{ $node->{name} }= $node;
+
+    if ($node->{longj} && $node->{longj} != 1) {
+        die "longj field must be in [01] if present in ", Dumper($node);
+    }
+
 }
 
 # Parse and add an opcode definition to the global state.

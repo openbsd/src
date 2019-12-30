@@ -17,4 +17,4 @@ our ($mbi, $mbf);
 $mbi = 'Math::BigInt::Subclass';
 $mbf = 'Math::BigFloat::Subclass';
 
-require 't/mbimbf.inc';
+require './t/mbimbf.inc';

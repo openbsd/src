@@ -64,10 +64,10 @@ that are also supported by perl's makefile.
 =back
 
 The Microsoft Visual C++ compilers are also now being given away free. They are
-available as "Visual C++ Toolkit 2003" or "Visual C++ 2005-2017 Express [or
+available as "Visual C++ Toolkit 2003" or "Visual C++ 2005-2019 Express [or
 Community, from 2017] Edition" (and also as part of the ".NET Framework SDK")
 and are the same compilers that ship with "Visual C++ .NET 2003 Professional"
-or "Visual C++ 2005-2017 Professional" respectively.
+or "Visual C++ 2005-2019 Professional" respectively.
 
 This port can also be built on IA64/AMD64 using:
 
@@ -140,9 +140,9 @@ console already set up for your target architecture (x86-32 or x86-64 or IA64).
 With the newer compilers, you may also use the older batch files if you choose
 so.
 
-=item Microsoft Visual C++ 2008-2017 Express/Community Edition
+=item Microsoft Visual C++ 2008-2019 Express/Community Edition
 
-These free versions of Visual C++ 2008-2017 Professional contain the same
+These free versions of Visual C++ 2008-2019 Professional contain the same
 compilers and linkers that ship with the full versions, and also contain
 everything necessary to build Perl, rather than requiring a separate download
 of the Windows SDK like previous versions did.
@@ -152,7 +152,7 @@ L<http://www.microsoft.com/downloads/search.aspx?displaylang=en>.  (Providing ex
 links to these packages has proven a pointless task because the links keep on
 changing so often.)
 
-Install Visual C++ 2008-2017 Express/Community, then setup your environment
+Install Visual C++ 2008-2019 Express/Community, then setup your environment
 using, e.g.
 
  C:\Program Files\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat
@@ -160,7 +160,7 @@ using, e.g.
 (assuming the default installation location was chosen).
 
 Perl should now build using the win32/Makefile.  You will need to edit that
-file to set CCTYPE to one of MSVC90-MSVC141 first.
+file to set CCTYPE to one of MSVC90-MSVC142 first.
 
 =item Microsoft Visual C++ 2005 Express Edition
 
@@ -321,7 +321,7 @@ MinGW64 (version 4.4.3 or later).  It can be downloaded here:
 L<http://www.mingw.org/>
 L<http://www.mingw-w64.org/>
 
-You also need dmake.  See L</"Make"> above on how to get it.
+You also need dmake or gmake.  See L</"Make"> above on how to get it.
 
 Note that the MinGW build currently requires a MinGW runtime version earlier
 than 3.21 (check __MINGW32_MAJOR_VERSION and __MINGW32_MINOR_VERSION).
@@ -334,7 +334,7 @@ or later, and with MinGW64 64-bit 6.3.0 or later.
 Experimental support for using Intel C++ Compiler has been added. Edit
 win32/Makefile and pick the correct CCTYPE for the Visual C that Intel C was
 installed into. Also uncomment __ICC to enable Intel C on Visual C support.
-To set up the build enviroment, from the Start Menu run
+To set up the build environment, from the Start Menu run
 IA-32 Visual Studio 20__ mode or Intel 64 Visual Studio 20__ mode as
 appropriate. Then run nmake as usually in that prompt box.
 
@@ -355,14 +355,15 @@ unlike GCC.
 Make sure you are in the "win32" subdirectory under the perl toplevel.
 This directory contains a "Makefile" that will work with
 versions of nmake that come with Visual C++ or the Windows SDK, and
-a dmake "makefile.mk" that will work for all supported compilers.  The
-defaults in the dmake makefile are setup to build using MinGW/gcc.
+a GNU make "GNUmakefile" or dmake "makefile.mk" that will work for all
+supported compilers.  The defaults in the gmake and dmake makefile are
+setup to build using MinGW/gcc.
 
 =item *
 
-Edit the makefile.mk (or Makefile, if you're using nmake) and change
-the values of INST_DRV and INST_TOP.   You can also enable various
-build flags.  These are explained in the makefiles.
+Edit the GNUmakefile, makefile.mk (or Makefile, if you're using nmake)
+and change the values of INST_DRV and INST_TOP.   You can also enable
+various build flags.  These are explained in the makefiles.
 
 Note that it is generally not a good idea to try to build a perl with
 INST_DRV and INST_TOP set to a path that already exists from a previous
@@ -372,7 +373,9 @@ may end up building against the installed perl's lib/CORE directory rather
 than the one being tested.
 
 You will have to make sure that CCTYPE is set correctly and that
-CCHOME points to wherever you installed your compiler.
+CCHOME points to wherever you installed your compiler.  For GCC this
+should be the directory that contains the F<bin>, F<include> and
+F<lib> directories.
 
 If building with the cross-compiler provided by
 mingw-w64.org you'll need to uncomment the line that sets
@@ -399,10 +402,10 @@ Be sure to read the instructions near the top of the makefiles carefully.
 
 =item *
 
-Type "dmake" (or "nmake" if you are using that make).
+Type "dmake" ("gmake" for GNU make, or "nmake" if you are using that make).
 
 This should build everything.  Specifically, it will create perl.exe,
-perl528.dll at the perl toplevel, and various other extension dll's
+perl530.dll at the perl toplevel, and various other extension dll's
 under the lib\auto directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
 
@@ -411,8 +414,11 @@ of parallel jobs you want to run. A number of things in the build process will
 run in parallel, but there are serialization points where you will see just 1
 CPU maxed out. This is normal.
 
+Similarly you can build in parallel with GNU make, type "gmake -j2" to
+build with two parallel jobs, or higher for more.
+
 If you are advanced enough with building C code, here is a suggestion to speed
-up building perl, and the later C<make test>. Try to keep your PATH enviromental
+up building perl, and the later C<make test>. Try to keep your PATH environmental
 variable with the least number of folders possible (remember to keep your C
 compiler's folders there). C<C:\WINDOWS\system32> or C<C:\WINNT\system32>
 depending on your OS version should be first folder in PATH, since "cmd.exe"
@@ -422,8 +428,8 @@ is the most commonly launched program during the build and later testing.
 
 =head2 Testing Perl on Windows
 
-Type "dmake test" (or "nmake test").  This will run most of the tests from
-the testsuite (many tests will be skipped).
+Type "dmake test" (or "gmake test", "nmake test").  This will run most
+of the tests from the testsuite (many tests will be skipped).
 
 There should be no test failures.
 
@@ -435,6 +441,11 @@ later, as explained by Microsoft here:
 L<https://connect.microsoft.com/VisualStudio/feedback/details/811534/utime-sometimes-fails-to-set-the-correct-file-times-in-visual-c-2013>. In the meantime,
 if you need fixed C<stat> and C<utime> functions then have a look at the
 CPAN distribution Win32::UTCFileTime.
+
+If you build with Visual C++ 2015 or later then F<ext/XS-APItest/t/locale.t>
+may crash (after all its tests have passed). This is due to a regression in the
+Universal CRT introduced in the Windows 10 April 2018 Update, and will be fixed
+in the May 2019 Update, as explained here: L<https://developercommunity.visualstudio.com/content/problem/519486/setlocalelc-numeric-iso-latin-16-fails-then-succee.html>.
 
 If you build with certain versions (e.g. 4.8.1) of gcc from www.mingw.org then
 F<ext/POSIX/t/time.t> may fail test 17 due to a known bug in those gcc builds:
@@ -453,15 +464,22 @@ include some tools (C<type> for instance) which override the Windows
 ones and makes tests fail. Remove them from your path while testing to
 avoid these errors.
 
+To see the output of specific failing tests run the harness from the t
+directory:
+
+  # assuming you're starting from the win32 directory
+  cd ..\win32
+  .\perl harness <list of tests>
+
 Please report any other failures as described under L</BUGS AND CAVEATS>.
 
 =head2 Installation of Perl on Windows
 
-Type "dmake install" (or "nmake install").  This will put the newly
-built perl and the libraries under whatever C<INST_TOP> points to in the
-Makefile.  It will also install the pod documentation under
-C<$INST_TOP\$INST_VER\lib\pod> and HTML versions of the same under
-C<$INST_TOP\$INST_VER\lib\pod\html>.
+Type "dmake install" (or "gmake install", "nmake install").  This will
+put the newly built perl and the libraries under whatever C<INST_TOP>
+points to in the Makefile.  It will also install the pod documentation
+under C<$INST_TOP\$INST_VER\lib\pod> and HTML versions of the same
+under C<$INST_TOP\$INST_VER\lib\pod\html>.
 
 To use the Perl you just installed you will need to add a new entry to
 your PATH environment variable: C<$INST_TOP\bin>, e.g.
@@ -651,7 +669,7 @@ CPAN.
 
 L<http://www.cpan.org/modules/by-module/Make/>
 
-You may also use dmake.  See L</"Make"> above on how to get it.
+You may also use dmake or gmake.  See L</"Make"> above on how to get it.
 
 Note that MakeMaker actually emits makefiles with different syntax
 depending on what 'make' it thinks you are using.  Therefore, it is
@@ -959,6 +977,6 @@ Win9x support was added in 5.6 (Benjamin Stuhl).
 
 Support for 64-bit Windows added in 5.8 (ActiveState Corp).
 
-Last updated: 23 May 2018
+Last updated: 30 April 2019
 
 =cut

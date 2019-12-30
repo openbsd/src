@@ -553,10 +553,10 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
 
 #define AMGf_noright	1
 #define AMGf_noleft	2
-#define AMGf_assign	4
+#define AMGf_assign	4       /* op supports mutator variant, e.g. $x += 1 */
 #define AMGf_unary	8
 #define AMGf_numeric	0x10	/* for Perl_try_amagic_bin */
-#define AMGf_set	0x20	/* for Perl_try_amagic_bin */
+
 #define AMGf_want_list	0x40
 #define AMGf_numarg	0x80
 
@@ -608,7 +608,7 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
             else { /* AMGf_want_scalar */                       \
                 dATARGET; /* just use the arg's location */     \
                 sv_setsv(TARG, tmpsv);                          \
-                if (opASSIGN)                                   \
+                if (PL_op->op_flags & OPf_STACKED)              \
                     sp--;                                       \
                 SETTARG;                                        \
             }                                                   \
@@ -634,6 +634,7 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
     } STMT_END
 
 
+/* 2019: no longer used in core */
 #define opASSIGN (PL_op->op_flags & OPf_STACKED)
 
 /*

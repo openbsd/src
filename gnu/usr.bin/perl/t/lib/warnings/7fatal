@@ -278,6 +278,7 @@ EXPECT
 Reversed += operator at - line 8.
 ########
 # TODO ? !$Config{usethreads} && $::UTF8 && ($ENV{PERL_DESTRUCT_LEVEL} || 0) > 1 ? "Parser leaks OPs, which leak shared hash keys" : ''
+# SKIP ? $Config{ccflags} =~ /sanitize/
 
 use warnings 'void' ;
 
@@ -297,6 +298,7 @@ Useless use of time in void context at - line 4.
 Useless use of length in void context at - line 9.
 ########
 # TODO ? !$Config{usethreads} && $::UTF8 && ($ENV{PERL_DESTRUCT_LEVEL} || 0) > 1 ? "Parser leaks OPs, which leak shared hash keys" : ''
+# SKIP ? $Config{ccflags} =~ /sanitize/
 
 use warnings ;
 

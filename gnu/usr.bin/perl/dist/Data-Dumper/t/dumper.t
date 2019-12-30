@@ -23,6 +23,21 @@ my $XS;
 my $TNUM = 0;
 my $WANT = '';
 
+# Perl 5.16 was the first version that correctly handled Unicode in typeglob
+# names. Tests for how globs are dumped must revise their expectations
+# downwards when run on earlier Perls.
+sub change_glob_expectation {
+    my ($input) = @_;
+    if ($] < 5.016) {
+        $input =~ s<\\x\{([0-9a-f]+)\}>{
+            my $s = chr hex $1;
+            utf8::encode($s);
+            join '', map sprintf('\\%o', ord), split //, $s;
+        }ge;
+    }
+    return $input;
+}
+
 sub convert_to_native($) {
     my $input = shift;
 
@@ -98,7 +113,7 @@ sub TEST {
   $t =~ s/([A-Z]+)\(0x[0-9a-f]+\)/$1(0xdeadbeef)/g
     if ($WANT =~ /deadbeef/);
   print( ($t eq $WANT and not $@) ? "ok $TNUM -   works a 2nd time after intervening eval\n"
-    : "not ok $TNUM\n--Expected--\n$WANT\n--Got--\n$@$t\n");
+    : "not ok $TNUM -  re-evaled version \n--Expected--\n$WANT\n--Got--\n$@$t\n");
 }
 
 sub SKIP_TEST {
@@ -1743,7 +1758,7 @@ EOT
 #############
 our @globs = map { $_, \$_ } map { *$_ } map { $_, "s::$_" }
 		"foo", "\1bar", "L\x{e9}on", "m\x{100}cron", "snow\x{2603}";
-$WANT = <<'EOT';
+$WANT = change_glob_expectation(<<'EOT');
 #$globs = [
 #  *::foo,
 #  \*::foo,
@@ -1774,7 +1789,7 @@ EOT
     if $XS;
 }
 #############
-$WANT = <<'EOT';
+$WANT = change_glob_expectation(<<'EOT');
 #$v = {
 #  a => \*::ppp,
 #  b => \*{'::a/b'},
@@ -1800,6 +1815,6 @@ EOT
   TEST (q(Data::Dumper->Dumpxs([$v], ["v"])), 'glob purity: Dumpxs()') if $XS;
   $WANT =~ tr/'/"/;
   local $Data::Dumper::Useqq = 1;
-  TEST (q(Data::Dumper->Dump([$v], ["v"])), 'glob purity: Dump()');
-  TEST (q(Data::Dumper->Dumpxs([$v], ["v"])), 'glob purity: Dumpxs()') if $XS;
+  TEST (q(Data::Dumper->Dump([$v], ["v"])), 'glob purity, useqq: Dump()');
+  TEST (q(Data::Dumper->Dumpxs([$v], ["v"])), 'glob purity, useqq: Dumpxs()') if $XS;
 }

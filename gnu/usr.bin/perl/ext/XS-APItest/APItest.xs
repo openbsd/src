@@ -4197,7 +4197,6 @@ CODE:
 	/* The slab allocator does not like CvROOT being set. */
 	CvROOT(PL_compcv) = (OP *)1;
 	o = newFOROP(0, 0, newOP(OP_PUSHMARK, 0), 0, 0);
-#ifdef PERL_OP_PARENT
 	if (cLOOPx(cUNOPo->op_first)->op_last->op_sibparent
 		!= cUNOPo->op_first)
 	{
@@ -4205,7 +4204,6 @@ CODE:
 	    RETVAL = FALSE;
 	}
 	else
-#endif
 	    /* If we do not crash before returning, the test passes. */
 	    RETVAL = TRUE;
 	op_free(o);

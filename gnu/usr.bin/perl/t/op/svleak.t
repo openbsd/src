@@ -15,7 +15,7 @@ BEGIN {
 
 use Config;
 
-plan tests => 149;
+plan tests => 150;
 
 # run some code N times. If the number of SVs at the end of loop N is
 # greater than (N-1)*delta at the end of loop 1, we've got a leak
@@ -624,4 +624,24 @@ SKIP: {
     my %rh= ( qr/^foo/ => 1);
     sub Regex_Key_Leak { my ($r)= keys %rh; "foo"=~$r; }
     leak 2, 0, \&Regex_Key_Leak,"RT #132892 - regex patterns should not leak";
+}
+
+{
+    # perl #133660
+    fresh_perl_is(<<'PERL', "ok", {}, "check goto core sub doesn't leak");
+# done this way to avoid overloads for all of svleak.t
+use B;
+BEGIN {
+    *CORE::GLOBAL::open = sub (*;$@) {
+        goto \&CORE::open;
+    };
+}
+
+my $refcount;
+{
+    open(my $fh, '<', 'TEST');
+    my $sv = B::svref_2object($fh);
+    print $sv->REFCNT == 1 ? "ok" : "not ok";
+}
+PERL
 }

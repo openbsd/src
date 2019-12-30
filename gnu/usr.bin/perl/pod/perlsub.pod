@@ -973,7 +973,9 @@ Perl will print
     The array has 6 elements: 0, 1, 2, undef, undef, 5
 
 The behavior of local() on non-existent members of composite
-types is subject to change in future.
+types is subject to change in future. The behavior of local()
+on array elements specified using negative indexes is particularly
+surprising, and is very likely to change.
 
 =head3 Localized deletion of elements of composite types
 X<delete> X<local, composite type element> X<local, array element> X<local, hash element>
@@ -1947,12 +1949,13 @@ let's pretend that a function that wasn't defined should just invoke
 C<system> with those arguments.  All you'd do is:
 
     sub AUTOLOAD {
-	my $program = $AUTOLOAD;
-	$program =~ s/.*:://;
-	system($program, @_);
+        our $AUTOLOAD;              # keep 'use strict' happy
+        my $program = $AUTOLOAD;
+        $program =~ s/.*:://;
+        system($program, @_);
     }
     date();
-    who('am', 'i');
+    who();
     ls('-l');
 
 In fact, if you predeclare functions you want to call that way, you don't
@@ -1960,7 +1963,7 @@ even need parentheses:
 
     use subs qw(date who ls);
     date;
-    who "am", "i";
+    who;
     ls '-l';
 
 A more complete example of this is the Shell module on CPAN, which

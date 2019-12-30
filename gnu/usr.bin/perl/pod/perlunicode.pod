@@ -37,7 +37,7 @@ implement the Unicode standard or the accompanying technical reports
 from cover to cover, Perl does support many Unicode features.
 
 Also, the use of Unicode may present security issues that aren't
-obvious, see L</Security Implications of Unicode>.
+obvious, see L</Security Implications of Unicode> below.
 
 =over 4
 
@@ -853,8 +853,8 @@ L<perlrecharclass/POSIX Character Classes>.
 This property is used when you need to know in what Unicode version(s) a
 character is.
 
-The "*" above stands for some two digit Unicode version number, such as
-C<1.1> or C<4.0>; or the "*" can also be C<Unassigned>.  This property will
+The "*" above stands for some Unicode version number, such as
+C<1.1> or C<12.0>; or the "*" can also be C<Unassigned>.  This property will
 match the code points whose final disposition has been settled as of the
 Unicode release given by the version number; C<\p{Present_In: Unassigned}>
 will match those code points whose meaning has yet to be assigned.
@@ -921,6 +921,145 @@ L<perlrecharclass/POSIX Character Classes>.
 
 =back
 
+=head2 Wildcards in Property Values
+
+Starting in Perl 5.30, it is possible to do do something like this:
+
+ qr!\p{numeric_value=/\A[0-5]\z/}!
+
+or, by abbreviating and adding C</x>,
+
+ qr! \p{nv= /(?x) \A [0-5] \z / }!
+
+This matches all code points whose numeric value is one of 0, 1, 2, 3,
+4, or 5.  This particular example could instead have been written as
+
+ qr! \A [ \p{nv=0}\p{nv=1}\p{nv=2}\p{nv=3}\p{nv=4}\p{nv=5} ] \z !xx
+
+in earlier perls, so in this case this feature just makes things easier
+and shorter to write.  If we hadn't included the C<\A> and C<\z>, these
+would have matched things like C<1E<sol>2> because that contains a 1 (as
+well as a 2).  As written, it matches things like subscripts that have
+these numeric values.  If we only wanted the decimal digits with those
+numeric values, we could say,
+
+ qr! (?[ \d & \p{nv=/[0-5]/ ]) }!x
+
+The C<\d> gets rid of needing to anchor the pattern, since it forces the
+result to only match C<[0-9]>, and the C<[0-5]> further restricts it.
+
+The text in the above examples enclosed between the C<"E<sol>">
+characters can be just about any regular expression.  It is independent
+of the main pattern, so doesn't share any capturing groups, I<etc>.  The
+delimiters for it must be ASCII punctuation, but it may NOT be
+delimited by C<"{">, nor C<"}"> nor contain a literal C<"}">, as that
+delimits the end of the enclosing C<\p{}>.  Like any pattern, certain
+other delimiters are terminated by their mirror images.  These are
+C<"(">, C<"[>", and C<"E<lt>">.  If the delimiter is any of C<"-">,
+C<"_">, C<"+">, or C<"\">, or is the same delimiter as is used for the
+enclosing pattern, it must be be preceded by a backslash escape, both
+fore and aft.
+
+Beware of using C<"$"> to indicate to match the end of the string.  It
+can too easily be interpreted as being a punctuation variable, like
+C<$/>.
+
+No modifiers may follow the final delimiter.  Instead, use
+L<perlre/(?adlupimnsx-imnsx)> and/or
+L<perlre/(?adluimnsx-imnsx:pattern)> to specify modifiers.
+
+This feature is not available when the left-hand side is prefixed by
+C<Is_>, nor for any form that is marked as "Discouraged" in
+L<perluniprops/Discouraged>.
+
+Perl wraps your pattern with C<(?iaa: ... )>.  This is because nothing
+outside ASCII can match the Unicode property values available in this
+release, and they should match caselessly.  If your pattern has a syntax
+error, this wrapping will be shown in the error message, even though you
+didn't specify it yourself.  This could be confusing if you don't know
+about this.
+
+This experimental feature has been added to begin to implement
+L<https://www.unicode.org/reports/tr18/#Wildcard_Properties>.  Using it
+will raise a (default-on) warning in the
+C<experimental::uniprop_wildcards> category.  We reserve the right to
+change its operation as we gain experience.
+
+Your subpattern can be just about anything, but for it to have some
+utility, it should match when called with either or both of
+a) the full name of the property value with underscores (and/or spaces
+in the Block property) and some things uppercase; or b) the property
+value in all lowercase with spaces and underscores squeezed out.  For
+example,
+
+ qr!\p{Blk=/Old I.*/}!
+ qr!\p{Blk=/oldi.*/}!
+
+would match the same things.
+
+A warning is issued if none of the legal values for a property are
+matched by your pattern.  It's likely that a future release will raise a
+warning if your pattern ends up causing every possible code point to
+match.
+
+Another example that shows that within C<\p{...}>, C</x> isn't needed to
+have spaces:
+
+ qr!\p{scx= /Hebrew|Greek/ }!
+
+To be safe, we should have anchored the above example, to prevent
+matches for something like C<Hebrew_Braile>, but there aren't
+any script names like that.
+
+There are certain properties that it doesn't currently work with.  These
+are:
+
+ Bidi Mirroring Glyph
+ Bidi Paired Bracket
+ Case Folding
+ Decomposition Mapping
+ Equivalent Unified Ideograph
+ Name
+ Name Alias
+ Lowercase Mapping
+ NFKC Case Fold
+ Titlecase Mapping
+ Uppercase Mapping
+
+Nor is the C<@I<unicode_property>@> form implemented.
+
+Here's a complete example of matching IPV4 internet protocol addresses
+in any (single) script
+
+ no warnings 'experimental::script_run';
+ no warnings 'experimental::regex_sets';
+ no warnings 'experimental::uniprop_wildcards';
+
+ # Can match a substring, so this intermediate regex needs to have
+ # context or anchoring in its final use.  Using nt=de yields decimal
+ # digits.  When specifying a subset of these, we must include \d to
+ # prevent things like U+00B2 SUPERSCRIPT TWO from matching
+ my $zero_through_255 =
+  qr/ \b (*sr:                                  # All from same sript
+            (?[ \p{nv=0} & \d ])*               # Optional leading zeros
+        (                                       # Then one of:
+                                  \d{1,2}       #   0 - 99
+            | (?[ \p{nv=1} & \d ])  \d{2}       #   100 - 199
+            | (?[ \p{nv=2} & \d ])
+               (  (?[ \p{nv=:[0-4]:} & \d ]) \d #   200 - 249
+                | (?[ \p{nv=5}     & \d ])
+                  (?[ \p{nv=:[0-5]:} & \d ])    #   250 - 255
+               )
+        )
+      )
+    \b
+  /x;
+
+ my $ipv4 = qr/ \A (*sr:         $zero_through_255
+                         (?: [.] $zero_through_255 ) {3}
+                   )
+                \z
+            /x;
 
 =head2 User-Defined Character Properties
 
@@ -965,7 +1104,8 @@ A single hexadecimal number denoting a code point to include.
 =item *
 
 Two hexadecimal numbers separated by horizontal whitespace (space or
-tabular characters) denoting a range of code points to include.
+tabular characters) denoting a range of code points to include.  The
+second number must not be smaller than the first.
 
 =item *
 
@@ -1063,7 +1203,7 @@ C<&utf8::Any> must be the last line in the definition.
 Intersection is used generally for getting the common characters matched
 by two (or more) classes.  It's important to remember not to use C<"&"> for
 the first set; that would be intersecting with nothing, resulting in an
-empty set.
+empty set.  (Similarly using C<"-"> for the first set does nothing).
 
 Unlike non-user-defined C<\p{}> property matches, no warning is ever
 generated if these properties are matched against a non-Unicode code
@@ -1088,7 +1228,7 @@ The following list of Unicode supported features for regular expressions describ
 all features currently directly supported by core Perl.  The references
 to "Level I<N>" and the section numbers refer to
 L<UTS#18 "Unicode Regular Expressions"|http://www.unicode.org/reports/tr18>,
-version 13, November 2013.
+version 18, October 2016.
 
 =head3 Level 1 - Basic Unicode Support
 
@@ -1219,7 +1359,7 @@ C<U+10FFFF> but also beyond C<U+10FFFF>
  RL2.3   Default Word Boundaries         - Done          [11]
  RL2.4   Default Case Conversion         - Done
  RL2.5   Name Properties                 - Done
- RL2.6   Wildcard Properties             - Missing
+ RL2.6   Wildcards in Property Values    - Partial       [12]
  RL2.7   Full Properties                 - Done
 
 =over 4
@@ -1238,33 +1378,44 @@ Perl has C<\X> and C<\b{gcb}> but we don't have a "Grapheme Cluster Mode".
 =item [11] see
 L<UAX#29 "Unicode Text Segmentation"|http://www.unicode.org/reports/tr29>,
 
+=item [12] see
+L</Wildcards in Property Values> above.
+
 =back
 
 =head3 Level 3 - Tailored Support
 
  RL3.1   Tailored Punctuation            - Missing
- RL3.2   Tailored Grapheme Clusters      - Missing       [12]
+ RL3.2   Tailored Grapheme Clusters      - Missing       [13]
  RL3.3   Tailored Word Boundaries        - Missing
  RL3.4   Tailored Loose Matches          - Retracted by Unicode
  RL3.5   Tailored Ranges                 - Retracted by Unicode
- RL3.6   Context Matching                - Missing       [13]
+ RL3.6   Context Matching                - Partial       [14]
  RL3.7   Incremental Matches             - Missing
- RL3.8   Unicode Set Sharing             - Unicode is proposing
-                                           to retract this
+ RL3.8   Unicode Set Sharing             - Retracted by Unicode
  RL3.9   Possible Match Sets             - Missing
  RL3.10  Folded Matching                 - Retracted by Unicode
- RL3.11  Submatchers                     - Missing
+ RL3.11  Submatchers                     - Partial       [15]
 
 =over 4
 
-=item [12]
+=item [13]
 Perl has L<Unicode::Collate>, but it isn't integrated with regular
 expressions.  See
 L<UTS#10 "Unicode Collation Algorithms"|http://www.unicode.org/reports/tr10>.
 
-=item [13]
-Perl has C<(?<=x)> and C<(?=x)>, but lookaheads or lookbehinds should
-see outside of the target substring
+=item [14]
+Perl has C<(?<=x)> and C<(?=x)>, but this requirement says that it
+should be possible to specify that matches may occur only in a substring
+with the lookaheads and lookbehinds able to see beyond that matchable
+portion.
+
+=item [15]
+Perl has user-defined properties (L</"User-Defined Character
+Properties">) to look at single code points in ways beyond Unicode, and
+it might be possible, though probably not very clean, to use code blocks
+and things like C<(?(DEFINE)...)> (see L<perlre>) to do more specialized
+matching.
 
 =back
 
@@ -1325,10 +1476,10 @@ encoding of numbers up to C<0x7FFF_FFFF>.  Perl continues to allow those,
 and has extended that up to 13 bytes to encode code points up to what
 can fit in a 64-bit word.  However, Perl will warn if you output any of
 these as being non-portable; and under strict UTF-8 input protocols,
-they are forbidden.  In addition, it is deprecated to use a code point
+they are forbidden.  In addition, it is now illegal to use a code point
 larger than what a signed integer variable on your system can hold.  On
 32-bit ASCII systems, this means C<0x7FFF_FFFF> is the legal maximum
-going forward (much higher on 64-bit systems).
+(much higher on 64-bit systems).
 
 =item *
 
@@ -1512,7 +1663,7 @@ noncharacters.
 
 The maximum Unicode code point is C<U+10FFFF>, and Unicode only defines
 operations on code points up through that.  But Perl works on code
-points up to the maximum permissible unsigned number available on the
+points up to the maximum permissible signed number available on the
 platform.  However, Perl will not accept these from input streams unless
 lax rules are being used, and will warn (using the warning category
 C<"non_unicode">, which is a sub-category of C<"utf8">) if any are output.

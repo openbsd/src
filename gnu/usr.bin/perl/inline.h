@@ -5,8 +5,33 @@
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
  *
+ *    This file contains tables and code adapted from
+ *    http://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which requires this
+ *    copyright notice:
+
+Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+ *
  * This file is a home for static inline functions that cannot go in other
- * headers files, because they depend on proto.h (included after most other
+ * header files, because they depend on proto.h (included after most other
  * headers) or struct definitions.
  *
  * Each section names the header file that the functions "belong" to.
@@ -524,8 +549,8 @@ S__variant_byte_number(PERL_UINTMAX_T word)
      *  x..xx01..1      Subtract 1, turns all the trailing zeros into 1's and
      *                  the 1 just to their left into a 0; the remainder is
      *                  untouched
-     *  0..0011..1      The xor with x..xx10..0 clears that remainder, sets
-     *                  bottom to all 1
+     *  0..0011..1      The xor with the original, x..xx10..0, clears that
+     *                  remainder, sets the bottom to all 1
      *  0..0100..0      Add 1 to clear the word except for the bit in 's'
      *
      * Another method is to do 'word &= -word'; but it generates a compiler
@@ -988,6 +1013,206 @@ Perl_is_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
 
 /*
 
+=for apidoc Am|STRLEN|isUTF8_CHAR|const U8 *s|const U8 *e
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8, as extended by Perl,
+that represents some code point; otherwise it evaluates to 0.  If non-zero, the
+value gives how many bytes starting at C<s> comprise the code point's
+representation.  Any bytes remaining before C<e>, but beyond the ones needed to
+form the first code point in C<s>, are not examined.
+
+The code point can be any that will fit in an IV on this machine, using Perl's
+extension to official UTF-8 to represent those higher than the Unicode maximum
+of 0x10FFFF.  That means that this macro is used to efficiently decide if the
+next few bytes in C<s> is legal UTF-8 for a single character.
+
+Use C<L</isSTRICT_UTF8_CHAR>> to restrict the acceptable code points to those
+defined by Unicode to be fully interchangeable across applications;
+C<L</isC9_STRICT_UTF8_CHAR>> to use the L<Unicode Corrigendum
+#9|http://www.unicode.org/versions/corrigendum9.html> definition of allowable
+code points; and C<L</isUTF8_CHAR_flags>> for a more customized definition.
+
+Use C<L</is_utf8_string>>, C<L</is_utf8_string_loc>>, and
+C<L</is_utf8_string_loclen>> to check entire strings.
+
+Note also that a UTF-8 "invariant" character (i.e. ASCII on non-EBCDIC
+machines) is a valid UTF-8 character.
+
+=cut
+
+This uses an adaptation of the table and algorithm given in
+http://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides comprehensive
+documentation of the original version.  A copyright notice for the original
+version is given at the beginning of this file.  The Perl adapation is
+documented at the definition of PL_extended_utf8_dfa_tab[].
+
+*/
+
+PERL_STATIC_INLINE Size_t
+S_isUTF8_CHAR(const U8 * const s0, const U8 * const e)
+{
+    const U8 * s = s0;
+    UV state = 0;
+
+    PERL_ARGS_ASSERT_ISUTF8_CHAR;
+
+    /* This dfa is fast.  If it accepts the input, it was for a well-formed,
+     * code point, which can be returned immediately.  Otherwise, it is either
+     * malformed, or for the start byte FF which the dfa doesn't handle (except
+     * on 32-bit ASCII platforms where it trivially is an error).  Call a
+     * helper function for the other platforms. */
+
+    while (s < e && LIKELY(state != 1)) {
+        state = PL_extended_utf8_dfa_tab[256
+                                         + state
+                                         + PL_extended_utf8_dfa_tab[*s]];
+        if (state != 0) {
+            s++;
+            continue;
+        }
+
+        return s - s0 + 1;
+    }
+
+#if defined(UV_IS_QUAD) || defined(EBCDIC)
+
+    if (NATIVE_UTF8_TO_I8(*s0) == 0xFF && e - s0 >= UTF8_MAXBYTES) {
+       return _is_utf8_char_helper(s0, e, 0);
+    }
+
+#endif
+
+    return 0;
+}
+
+/*
+
+=for apidoc isSTRICT_UTF8_CHAR
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8 that represents some
+Unicode code point completely acceptable for open interchange between all
+applications; otherwise it evaluates to 0.  If non-zero, the value gives how
+many bytes starting at C<s> comprise the code point's representation.  Any
+bytes remaining before C<e>, but beyond the ones needed to form the first code
+point in C<s>, are not examined.
+
+The largest acceptable code point is the Unicode maximum 0x10FFFF, and must not
+be a surrogate nor a non-character code point.  Thus this excludes any code
+point from Perl's extended UTF-8.
+
+This is used to efficiently decide if the next few bytes in C<s> is
+legal Unicode-acceptable UTF-8 for a single character.
+
+Use C<L</isC9_STRICT_UTF8_CHAR>> to use the L<Unicode Corrigendum
+#9|http://www.unicode.org/versions/corrigendum9.html> definition of allowable
+code points; C<L</isUTF8_CHAR>> to check for Perl's extended UTF-8;
+and C<L</isUTF8_CHAR_flags>> for a more customized definition.
+
+Use C<L</is_strict_utf8_string>>, C<L</is_strict_utf8_string_loc>>, and
+C<L</is_strict_utf8_string_loclen>> to check entire strings.
+
+=cut
+
+This uses an adaptation of the tables and algorithm given in
+http://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides comprehensive
+documentation of the original version.  A copyright notice for the original
+version is given at the beginning of this file.  The Perl adapation is
+documented at the definition of strict_extended_utf8_dfa_tab[].
+
+*/
+
+PERL_STATIC_INLINE Size_t
+S_isSTRICT_UTF8_CHAR(const U8 * const s0, const U8 * const e)
+{
+    const U8 * s = s0;
+    UV state = 0;
+
+    PERL_ARGS_ASSERT_ISSTRICT_UTF8_CHAR;
+
+    while (s < e && LIKELY(state != 1)) {
+        state = PL_strict_utf8_dfa_tab[256 + state + PL_strict_utf8_dfa_tab[*s]];
+
+        if (state != 0) {
+            s++;
+            continue;
+        }
+
+        return s - s0 + 1;
+    }
+
+#ifndef EBCDIC
+
+    /* The dfa above drops out for certain Hanguls; handle them specially */
+    if (is_HANGUL_ED_utf8_safe(s0, e)) {
+        return 3;
+    }
+
+#endif
+
+    return 0;
+}
+
+/*
+
+=for apidoc Am|STRLEN|isC9_STRICT_UTF8_CHAR|const U8 *s|const U8 *e
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8 that represents some
+Unicode non-surrogate code point; otherwise it evaluates to 0.  If non-zero,
+the value gives how many bytes starting at C<s> comprise the code point's
+representation.  Any bytes remaining before C<e>, but beyond the ones needed to
+form the first code point in C<s>, are not examined.
+
+The largest acceptable code point is the Unicode maximum 0x10FFFF.  This
+differs from C<L</isSTRICT_UTF8_CHAR>> only in that it accepts non-character
+code points.  This corresponds to
+L<Unicode Corrigendum #9|http://www.unicode.org/versions/corrigendum9.html>.
+which said that non-character code points are merely discouraged rather than
+completely forbidden in open interchange.  See
+L<perlunicode/Noncharacter code points>.
+
+Use C<L</isUTF8_CHAR>> to check for Perl's extended UTF-8; and
+C<L</isUTF8_CHAR_flags>> for a more customized definition.
+
+Use C<L</is_c9strict_utf8_string>>, C<L</is_c9strict_utf8_string_loc>>, and
+C<L</is_c9strict_utf8_string_loclen>> to check entire strings.
+
+=cut
+
+This uses an adaptation of the tables and algorithm given in
+http://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides comprehensive
+documentation of the original version.  A copyright notice for the original
+version is given at the beginning of this file.  The Perl adapation is
+documented at the definition of PL_c9_utf8_dfa_tab[].
+
+*/
+
+PERL_STATIC_INLINE Size_t
+S_isC9_STRICT_UTF8_CHAR(const U8 * const s0, const U8 * const e)
+{
+    const U8 * s = s0;
+    UV state = 0;
+
+    PERL_ARGS_ASSERT_ISC9_STRICT_UTF8_CHAR;
+
+    while (s < e && LIKELY(state != 1)) {
+        state = PL_c9_utf8_dfa_tab[256 + state + PL_c9_utf8_dfa_tab[*s]];
+
+        if (state != 0) {
+            s++;
+            continue;
+        }
+
+        return s - s0 + 1;
+    }
+
+    return 0;
+}
+
+/*
+
 =for apidoc is_strict_utf8_string_loc
 
 Like C<L</is_strict_utf8_string>> but stores the location of the failure (in the
@@ -1372,9 +1597,9 @@ Perl_utf8_hop_back(const U8 *s, SSize_t off, const U8 *start)
     assert(off <= 0);
 
     while (off++ && s > start) {
-        s--;
-        while (UTF8_IS_CONTINUATION(*s) && s > start)
+        do {
             s--;
+        } while (UTF8_IS_CONTINUATION(*s) && s > start);
     }
     
     GCC_DIAG_IGNORE(-Wcast-qual)
@@ -1552,6 +1777,69 @@ S_is_utf8_fixed_width_buf_loclen_flags(const U8 * const s,
      * that the final few bytes are for a partial character */
     return    is_utf8_string_loclen_flags(s, len, ep, el, flags)
            || is_utf8_valid_partial_char_flags(*ep, s + len, flags);
+}
+
+PERL_STATIC_INLINE UV
+S_utf8n_to_uvchr_msgs(const U8 *s,
+                      STRLEN curlen,
+                      STRLEN *retlen,
+                      const U32 flags,
+                      U32 * errors,
+                      AV ** msgs)
+{
+    /* This is the inlined portion of utf8n_to_uvchr_msgs.  It handles the
+     * simple cases, and, if necessary calls a helper function to deal with the
+     * more complex ones.  Almost all well-formed non-problematic code points
+     * are considered simple, so that it's unlikely that the helper function
+     * will need to be called.
+     *
+     * This is an adaptation of the tables and algorithm given in
+     * http://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides
+     * comprehensive documentation of the original version.  A copyright notice
+     * for the original version is given at the beginning of this file.  The
+     * Perl adapation is documented at the definition of PL_strict_utf8_dfa_tab[].
+     */
+
+    const U8 * const s0 = s;
+    const U8 * send = s0 + curlen;
+    UV uv = 0;      /* The 0 silences some stupid compilers */
+    UV state = 0;
+
+    PERL_ARGS_ASSERT_UTF8N_TO_UVCHR_MSGS;
+
+    /* This dfa is fast.  If it accepts the input, it was for a well-formed,
+     * non-problematic code point, which can be returned immediately.
+     * Otherwise we call a helper function to figure out the more complicated
+     * cases. */
+
+    while (s < send && LIKELY(state != 1)) {
+        UV type = PL_strict_utf8_dfa_tab[*s];
+
+        uv = (state == 0)
+             ?  ((0xff >> type) & NATIVE_UTF8_TO_I8(*s))
+             : UTF8_ACCUMULATE(uv, *s);
+        state = PL_strict_utf8_dfa_tab[256 + state + type];
+
+        if (state != 0) {
+            s++;
+            continue;
+        }
+
+        if (retlen) {
+            *retlen = s - s0 + 1;
+        }
+        if (errors) {
+            *errors = 0;
+        }
+        if (msgs) {
+            *msgs = NULL;
+        }
+
+        return uv;
+    }
+
+    /* Here is potentially problematic.  Use the full mechanism */
+    return _utf8n_to_uvchr_msgs_helper(s0, curlen, retlen, flags, errors, msgs);
 }
 
 /* ------------------------------- perl.h ----------------------------- */
@@ -2059,10 +2347,10 @@ Perl_foldEQ(const char *s1, const char *s2, I32 len)
 PERL_STATIC_INLINE I32
 Perl_foldEQ_latin1(const char *s1, const char *s2, I32 len)
 {
-    /* Compare non-utf8 using Unicode (Latin1) semantics.  Does not work on
-     * MICRO_SIGN, LATIN_SMALL_LETTER_SHARP_S, nor
-     * LATIN_SMALL_LETTER_Y_WITH_DIAERESIS, and does not check for these.  Nor
-     * does it check that the strings each have at least 'len' characters */
+    /* Compare non-UTF-8 using Unicode (Latin1) semantics.  Works on all folds
+     * representable without UTF-8, except for LATIN_SMALL_LETTER_SHARP_S, and
+     * does not check for this.  Nor does it check that the strings each have
+     * at least 'len' characters. */
 
     const U8 *a = (const U8 *)s1;
     const U8 *b = (const U8 *)s2;

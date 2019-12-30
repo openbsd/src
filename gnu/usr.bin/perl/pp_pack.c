@@ -290,7 +290,7 @@ S_utf8_to_bytes(pTHX_ const char **s, const char *end, const char *buf, SSize_t 
 	if (from >= end) return FALSE;
 	val = utf8n_to_uvchr((U8 *) from, end-from, &retlen, flags);
 	if (retlen == (STRLEN) -1) {
-	    from += UTF8SKIP(from);
+	    from += UTF8_SAFE_SKIP(from, end);
 	    bad |= 1;
 	} else from += retlen;
 	if (val >= 0x100) {
@@ -1378,8 +1378,7 @@ S_unpack_rec(pTHX_ tempsym_t* symptr, const char *s, const char *strbeg, const c
 #if SHORTSIZE != SIZE16
 	    while (len-- > 0) {
 		unsigned short aushort;
-                SHIFT_VAR(utf8, s, strend, aushort, datumtype, needs_swap,
-                          needs_swap);
+		SHIFT_VAR(utf8, s, strend, aushort, datumtype, needs_swap);
 		if (!checksum)
 		    mPUSHu(aushort);
 		else if (checksum > bits_in_uv)
@@ -3149,6 +3148,21 @@ PP(pp_pack)
     SvUTF8_off(cat);
 
     packlist(cat, pat, patend, MARK, SP + 1);
+
+    if (SvUTF8(cat)) {
+        STRLEN result_len;
+        const char * result = SvPV_nomg(cat, result_len);
+        const U8 * error_pos;
+
+        if (! is_utf8_string_loc((U8 *) result, result_len, &error_pos)) {
+            _force_out_malformed_utf8_message(error_pos,
+                                              (U8 *) result + result_len,
+                                              0, /* no flags */
+                                              1 /* Die */
+                                            );
+            NOT_REACHED; /* NOTREACHED */
+        }
+    }
 
     SvSETMAGIC(cat);
     SP = ORIGMARK;

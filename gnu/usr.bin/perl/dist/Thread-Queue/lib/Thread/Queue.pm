@@ -3,7 +3,7 @@ package Thread::Queue;
 use strict;
 use warnings;
 
-our $VERSION = '3.12';
+our $VERSION = '3.13';
 $VERSION = eval $VERSION;
 
 use threads::shared 1.21;
@@ -318,7 +318,7 @@ Thread::Queue - Thread-safe queues
 
 =head1 VERSION
 
-This document describes Thread::Queue version 3.12
+This document describes Thread::Queue version 3.13
 
 =head1 SYNOPSIS
 

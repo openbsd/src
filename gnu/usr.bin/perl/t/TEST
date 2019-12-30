@@ -49,7 +49,6 @@ my %abs = (
 	   '../cpan/File-Fetch' => 1,
 	   '../cpan/IPC-Cmd' => 1,
 	   '../cpan/IPC-SysV' => 1,
-	   '../cpan/Locale-Codes' => 1,
 	   '../cpan/Module-Load' => 1,
 	   '../cpan/Module-Load-Conditional' => 1,
 	   '../cpan/Pod-Simple' => 1,
@@ -61,8 +60,7 @@ my %abs = (
 	   '../dist/Tie-File' => 1,
 	  );
 
-my %temp_no_core =
-    ('../cpan/B-Debug' => 1,
+my %temp_no_core = (
      '../cpan/Compress-Raw-Bzip2' => 1,
      '../cpan/Compress-Raw-Zlib' => 1,
      '../cpan/Devel-PPPort' => 1,
@@ -82,15 +80,9 @@ my %temp_no_core =
 # Ideally this # list will eventually be empty
 
 my %temp_needs_dot  = map { $_ => 1 } qw(
-    ../cpan/ExtUtils-Install
     ../cpan/Filter-Util-Call
     ../cpan/libnet
-    ../cpan/Locale-Codes
-    ../cpan/Math-BigInt
-    ../cpan/Math-BigRat
-    ../cpan/Test-Harness
     ../cpan/Test-Simple
-    ../cpan/version
 );
 
 
@@ -988,6 +980,11 @@ sub _cleanup_valgrind {
 	# cachegrind leaves a lot of cachegrind.out.$pid litter
 	# around the tree, find and delete them
 	unlink _find_files('cachegrind.out.\d+$',
+		     qw ( ../t ../cpan ../ext ../dist/ ));
+    }
+    elsif ($$toolnm eq 'valgrind') {
+	# Remove empty, hence non-error, output files
+	unlink grep { -z } _find_files('valgrind-current',
 		     qw ( ../t ../cpan ../ext ../dist/ ));
     }
 }

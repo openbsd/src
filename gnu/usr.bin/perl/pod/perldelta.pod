@@ -2,32 +2,21 @@
 
 =head1 NAME
 
-perldelta - what is new for perl v5.28.2
+perldelta - what is new for perl v5.30.1
 
 =head1 DESCRIPTION
 
-This document describes differences between the 5.28.1 release and the 5.28.2
+This document describes differences between the 5.30.0 release and the 5.30.1
 release.
 
-If you are upgrading from an earlier release such as 5.28.0, first read
-L<perl5281delta>, which describes differences between 5.28.0 and 5.28.1.
+If you are upgrading from an earlier release such as 5.29.0, first read
+L<perl5300delta>, which describes differences between 5.29.0 and 5.30.0.
 
 =head1 Incompatible Changes
 
-=head2 Any set of digits in the Common script are legal in a script run of
-another script
-
-There are several sets of digits in the Common script.  C<[0-9]> is the most
-familiar.  But there are also C<[\x{FF10}-\x{FF19}]> (FULLWIDTH DIGIT ZERO -
-FULLWIDTH DIGIT NINE), and several sets for use in mathematical notation, such
-as the MATHEMATICAL DOUBLE-STRUCK DIGITs.  Any of these sets should be able to
-appear in script runs of, say, Greek.  But the previous design overlooked all
-but the ASCII digits C<[0-9]>, so the design was flawed.  This has been fixed,
-so is both a bug fix and an incompatibility.
-
-All digits in a run still have to come from the same set of ten digits.
-
-L<[perl #133547]|https://rt.perl.org/Ticket/Display.html?id=133547>
+There are no changes intentionally incompatible with 5.30.1.  If any exist,
+they are bugs, and we request that you submit a report.  See
+L</Reporting Bugs> below.
 
 =head1 Modules and Pragmata
 
@@ -37,17 +26,38 @@ L<[perl #133547]|https://rt.perl.org/Ticket/Display.html?id=133547>
 
 =item *
 
-L<Module::CoreList> has been upgraded from version 5.20181129_28 to 5.20190419.
-
-=item *
-
-L<PerlIO::scalar> has been upgraded from version 0.29 to 0.30.
-
-=item *
-
-L<Storable> has been upgraded from version 3.08 to 3.08_01.
+L<Module::CoreList> has been upgraded from version 5.20190522 to 5.20191110.
 
 =back
+
+=head1 Documentation
+
+=head2 Changes to Existing Documentation
+
+We have attempted to update the documentation to reflect the changes listed in
+this document.  If you find any we have missed, send email to
+L<perlbug@perl.org|mailto:perlbug@perl.org>.
+
+Additionally, documentation has been updated to reference GitHub as the new
+canonical repository and to describe the new GitHub pull request workflow.
+
+=head1 Configuration and Compilation
+
+=over 4
+
+=item *
+
+The C<ECHO> macro is now defined.  This is used in a C<dtrace> rule that was
+originally changed for FreeBSD, and the FreeBSD make apparently predefines it.
+The Solaris make does not predefine C<ECHO> which broke this rule on Solaris.
+L<[perl #17057]|https://github.com/perl/perl5/issues/17057>
+
+=back
+
+=head1 Testing
+
+Tests were added and changed to reflect the other additions and changes in this
+release.
 
 =head1 Platform Support
 
@@ -55,27 +65,16 @@ L<Storable> has been upgraded from version 3.08 to 3.08_01.
 
 =over 4
 
-=item Windows
+=item Win32
 
-The Windows Server 2003 SP1 Platform SDK build, with its early x64 compiler and
-tools, was accidentally broken in Perl 5.27.9.  This has now been fixed.
+The locale tests could crash on Win32 due to a Windows bug, and separately due
+to the CRT throwing an exception if the locale name wasn't validly encoded in
+the current code page.
 
-=item Mac OS X
+For the second we now decode the locale name ourselves, and always decode it as
+UTF-8.
 
-Perl's build and testing process on Mac OS X for C<-Duseshrplib> builds is now
-compatible with Mac OS X System Integrity Protection (SIP).
-
-SIP prevents binaries in F</bin> (and a few other places) being passed the
-C<DYLD_LIBRARY_PATH> environment variable.  For our purposes this prevents
-C<DYLD_LIBRARY_PATH> from being passed to the shell, which prevents that
-variable being passed to the testing or build process, so running C<perl>
-couldn't find F<libperl.dylib>.
-
-To work around that, the initial build of the F<perl> executable expects to
-find F<libperl.dylib> in the build directory, and the library path is then
-adjusted during installation to point to the installed library.
-
-L<[perl #126706]|https://rt.perl.org/Ticket/Display.html?id=126706>
+L<[perl #16922]|https://github.com/perl/perl5/issues/16922>
 
 =back
 
@@ -85,68 +84,58 @@ L<[perl #126706]|https://rt.perl.org/Ticket/Display.html?id=126706>
 
 =item *
 
-If an in-place edit is still in progress during global destruction and the
-process exit code (as stored in C<$?>) is zero, perl will now treat the
-in-place edit as successful, replacing the input file with any output produced.
-
-This allows code like:
-
-  perl -i -ne 'print "Foo"; last'
-
-to replace the input file, while code like:
-
-  perl -i -ne 'print "Foo"; die'
-
-will not.  Partly resolves [perl #133659].
-
-L<[perl #133659]|https://rt.perl.org/Ticket/Display.html?id=133659>
+Setting C<$)> now properly sets supplementary group ids, if you have the
+necessary privileges.
+L<[perl #17031]|https://github.com/perl/perl5/issues/17031>
 
 =item *
 
-A regression in Perl 5.28 caused the following code to fail
-
- close(STDIN); open(CHILD, "|wc -l")'
-
-because the child's stdin would be closed on exec.  This has now been fixed.
-
-=item *
-
-C<pack "u", "invalid uuencoding"> now properly NUL terminates the zero-length
-SV produced.
-
-L<[perl #132655]|https://rt.perl.org/Ticket/Display.html?id=132655>
+C<readline @foo> now evaluates C<@foo> in scalar context.  Previously, it would
+be evaluated in list context, and since readline() pops only one argument from
+the stack, the stack could underflow, or be left with unexpected values on it.
+L<[perl #16929]|https://github.com/perl/perl5/issues/16929>
 
 =item *
 
-Failing to compile a format now aborts compilation.  Like other errors in
-sub-parses this could leave the parser in a strange state, possibly crashing
-perl if compilation continued.
-
-L<[perl #132158]|https://rt.perl.org/Ticket/Display.html?id=132158>
+sv_gets() now recovers better if the target SV is modified by a signal handler.
+L<[perl #16960]|https://github.com/perl/perl5/issues/16960>
 
 =item *
 
-See L</Any set of digits in the Common script are legal in a script run of
-another script>.
+Matching a non-C<SVf_UTF8> string against a regular expression containing
+Unicode literals could leak an SV on each match attempt.
+L<[perl #17140]|https://github.com/perl/perl5/issues/17140>
+
+=item *
+
+C<< sprintf("%.*a", -10000, $x) >> would cause a buffer overflow due to
+mishandling of the negative precision value.
+L<[perl #16942]|https://github.com/perl/perl5/issues/16942>
+
+=item *
+
+C<scalar()> on a reference could cause an erroneous assertion failure during
+compilation.
+L<[perl #16969]|https://github.com/perl/perl5/issues/16969>
 
 =back
 
 =head1 Acknowledgements
 
-Perl 5.28.2 represents approximately 4 months of development since Perl 5.28.1
-and contains approximately 2,500 lines of changes across 75 files from 13
+Perl 5.30.1 represents approximately 6 months of development since Perl 5.30.0
+and contains approximately 4,700 lines of changes across 67 files from 14
 authors.
 
 Excluding auto-generated files, documentation and release tools, there were
-approximately 1,200 lines of changes to 29 .pm, .t, .c and .h files.
+approximately 910 lines of changes to 20 .pm, .t, .c and .h files.
 
 Perl continues to flourish into its fourth decade thanks to a vibrant community
 of users and developers.  The following people are known to have contributed
-the improvements that became Perl 5.28.2:
+the improvements that became Perl 5.30.1:
 
-Aaron Crane, Abigail, Andy Dougherty, David Mitchell, Karen Etheridge, Karl
-Williamson, Leon Timmermans, Nicolas R., Sawyer X, Steve Hay, Tina Müller,
-Tony Cook, Zak B. Elep.
+Chris 'BinGOs' Williams, Dan Book, David Mitchell, Hugo van der Sanden, James E
+Keenan, Karen Etheridge, Karl Williamson, Manuel Mausz, Max Maischein, Nicolas
+R., Sawyer X, Steve Hay, Tom Hukins, Tony Cook.
 
 The list above is almost certainly incomplete as it is automatically generated
 from version control history.  In particular, it does not include the names of
@@ -162,9 +151,9 @@ the F<AUTHORS> file in the Perl source distribution.
 
 =head1 Reporting Bugs
 
-If you find what you think is a bug, you might check the perl bug database
-at L<https://rt.perl.org/> .  There may also be information at
-L<http://www.perl.org/> , the Perl Home Page.
+If you find what you think is a bug, you might check the perl bug database at
+L<https://rt.perl.org/>.  There may also be information at
+L<http://www.perl.org/>, the Perl Home Page.
 
 If you believe you have an unreported bug, please run the L<perlbug> program
 included with your release.  Be sure to trim your bug down to a tiny but
@@ -173,13 +162,13 @@ will be sent off to perlbug@perl.org to be analysed by the Perl porting team.
 
 If the bug you are reporting has security implications which make it
 inappropriate to send to a publicly archived mailing list, then see
-L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION>
-for details of how to report the issue.
+L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION> for details of how to
+report the issue.
 
 =head1 Give Thanks
 
-If you wish to thank the Perl 5 Porters for the work we had done in Perl 5,
-you can do so by running the C<perlthanks> program:
+If you wish to thank the Perl 5 Porters for the work we had done in Perl 5, you
+can do so by running the C<perlthanks> program:
 
     perlthanks
 

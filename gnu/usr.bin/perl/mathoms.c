@@ -518,7 +518,7 @@ int
 Perl_fprintf_nocontext(PerlIO *stream, const char *format, ...)
 {
     int ret = 0;
-    va_list(arglist);
+    va_list arglist;
 
     /* Easier to special case this here than in embed.pl. (Look at what it
        generates for proto.h) */
@@ -536,7 +536,7 @@ int
 Perl_printf_nocontext(const char *format, ...)
 {
     dTHX;
-    va_list(arglist);
+    va_list arglist;
     int ret = 0;
 
 #ifdef PERL_IMPLICIT_CONTEXT
@@ -1660,8 +1660,9 @@ Perl_is_utf8_char(const U8 *s)
 {
     PERL_ARGS_ASSERT_IS_UTF8_CHAR;
 
-    /* Assumes we have enough space, which is why this is deprecated */
-    return isUTF8_CHAR(s, s + UTF8SKIP(s));
+    /* Assumes we have enough space, which is why this is deprecated.  But the
+     * strnlen() makes it safe for the common case of NUL-terminated strings */
+    return isUTF8_CHAR(s, s + my_strnlen((char *) s, UTF8SKIP(s)));
 }
 
 /*
@@ -1752,6 +1753,12 @@ Perl_instr(const char *big, const char *little)
     PERL_ARGS_ASSERT_INSTR;
 
     return instr((char *) big, (char *) little);
+}
+
+SV *
+Perl_newSVsv(pTHX_ SV *const old)
+{
+    return newSVsv(old);
 }
 
 #endif /* NO_MATHOMS */

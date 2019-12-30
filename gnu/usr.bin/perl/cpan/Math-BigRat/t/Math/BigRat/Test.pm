@@ -11,7 +11,7 @@ use Math::BigFloat;
 our @ISA = qw(Math::BigRat Exporter);
 our $VERSION = '0.04';
 
-use overload; 		# inherit overload from BigRat
+use overload;           # inherit overload from BigRat
 
 # Globals
 our $accuracy   = undef;

@@ -1,6 +1,6 @@
-# EmojiSources-10.0.0.txt
-# Date: 2017-02-04, 00:00:00 GMT [MS, KW]
-# © 2017 Unicode®, Inc.
+# EmojiSources-12.1.0.txt
+# Date: 2019-03-08, 23:59:00 GMT [MS, KW]
+# © 2019 Unicode®, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database

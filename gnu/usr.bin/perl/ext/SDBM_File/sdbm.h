@@ -4,6 +4,9 @@
  * author: oz@nexus.yorku.ca
  * status: public domain. 
  */
+#ifndef PERL_SDBM_FILE_SDBM_H_
+#define PERL_SDBM_FILE_SDBM_H_
+
 #define DBLKSIZ 4096
 #define PBLKSIZ 1024
 #define PAIRMAX 1008			/* arbitrary on PBLKSIZ-N */
@@ -199,3 +202,4 @@ Free_t   Perl_mfree(Malloc_t where);
 
 #endif /* Include guard */
 
+#endif /* PERL_SDBM_FILE_SDBM_H_ */

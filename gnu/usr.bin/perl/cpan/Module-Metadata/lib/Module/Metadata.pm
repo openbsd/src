@@ -1,6 +1,6 @@
 # -*- mode: cperl; tab-width: 8; indent-tabs-mode: nil; basic-offset: 2 -*-
 # vim:ts=8:sw=2:et:sta:sts=2:tw=78
-package Module::Metadata; # git description: v1.000032-7-gb4e8a3f
+package Module::Metadata; # git description: v1.000035-3-gaa51be1
 # ABSTRACT: Gather package and POD information from perl module files
 
 # Adapted from Perl-licensed code originally distributed with
@@ -14,7 +14,7 @@ sub __clean_eval { eval $_[0] }
 use strict;
 use warnings;
 
-our $VERSION = '1.000033';
+our $VERSION = '1.000036';
 
 use Carp qw/croak/;
 use File::Spec;
@@ -214,7 +214,7 @@ sub new_from_module {
       unless defined $args{version};
 
     croak "provides() does not support version '$args{version}' metadata"
-        unless grep { $args{version} eq $_ } qw/1.4 2/;
+        unless grep $args{version} eq $_, qw/1.4 2/;
 
     $args{prefix} = 'lib' unless defined $args{prefix};
 
@@ -260,8 +260,8 @@ sub new_from_module {
     # separating into primary & alternative candidates
     my( %prime, %alt );
     foreach my $file (@files) {
-      my $mapped_filename = File::Spec::Unix->abs2rel( $file, $dir );
-      my @path = split( /\//, $mapped_filename );
+      my $mapped_filename = File::Spec->abs2rel( $file, $dir );
+      my @path = File::Spec->splitdir( $mapped_filename );
       (my $prime_package = join( '::', @path )) =~ s/\.pm$//;
 
       my $pm_info = $class->new_from_file( $file );
@@ -667,7 +667,7 @@ sub _parse_fh {
 sub __uniq (@)
 {
     my (%seen, $key);
-    grep { not $seen{ $key = $_ }++ } @_;
+    grep !$seen{ $key = $_ }++, @_;
 }
 
 {
@@ -818,10 +818,10 @@ sub pod {
 sub is_indexable {
   my ($self, $package) = @_;
 
-  my @indexable_packages = grep { $_ ne 'main' } $self->packages_inside;
+  my @indexable_packages = grep $_ ne 'main', $self->packages_inside;
 
   # check for specific package, if provided
-  return !! grep { $_ eq $package } @indexable_packages if $package;
+  return !! grep $_ eq $package, @indexable_packages if $package;
 
   # otherwise, check for any indexable packages at all
   return !! @indexable_packages;
@@ -841,7 +841,7 @@ Module::Metadata - Gather package and POD information from perl module files
 
 =head1 VERSION
 
-version 1.000033
+version 1.000036
 
 =head1 SYNOPSIS
 
@@ -1070,7 +1070,7 @@ assistance from David Golden (xdg) <dagolden@cpan.org>.
 
 =head1 CONTRIBUTORS
 
-=for stopwords Karen Etheridge David Golden Vincent Pit Matt S Trout Chris Nehren Graham Knop Olivier Mengué Tomas Doran Tatsuhiko Miyagawa tokuhirom Kent Fredric Peter Rabbitson Steve Hay Jerry D. Hedden Craig A. Berry Mitchell Steinbrunner Edward Zborowski Gareth Harper James Raspass 'BinGOs' Williams Josh Jore
+=for stopwords Karen Etheridge David Golden Vincent Pit Matt S Trout Chris Nehren Graham Knop Olivier Mengué Tomas Doran tokuhirom Christian Walde Tatsuhiko Miyagawa Peter Rabbitson Steve Hay Jerry D. Hedden Craig A. Berry Mitchell Steinbrunner Edward Zborowski Gareth Harper James Raspass 'BinGOs' Williams Josh Jore Kent Fredric
 
 =over 4
 
@@ -1108,15 +1108,15 @@ Tomas Doran <bobtfish@bobtfish.net>
 
 =item *
 
-Tatsuhiko Miyagawa <miyagawa@bulknews.net>
-
-=item *
-
 tokuhirom <tokuhirom@gmail.com>
 
 =item *
 
-Kent Fredric <kentnl@cpan.org>
+Christian Walde <walde.christian@googlemail.com>
+
+=item *
+
+Tatsuhiko Miyagawa <miyagawa@bulknews.net>
 
 =item *
 
@@ -1165,6 +1165,10 @@ Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
 =item *
 
 Josh Jore <jjore@cpan.org>
+
+=item *
+
+Kent Fredric <kentnl@cpan.org>
 
 =back
 

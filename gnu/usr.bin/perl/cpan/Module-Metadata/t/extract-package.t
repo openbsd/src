@@ -2,7 +2,7 @@ use strict;
 use warnings;
 # vim:ts=8:sw=2:et:sta:sts=2
 
-use Test::More 0.82;
+use Test::More 0.88;
 use Module::Metadata;
 
 use lib 't/lib';
@@ -159,7 +159,8 @@ foreach my $test_case (@pkg_names) {
             or $errs++;
   }
     is( $warnings, '', "case $test_case->{name}: no warnings from parsing" ) or $errs++;
-    diag "Got: '" . join(', ', @got) . "'\nModule contents:\n$code" if !$ENV{PERL_CORE} && $errs;
+    diag "Got: '" . join(', ', @got) . "'\nModule contents:\n$code"
+      if $errs and not $ENV{PERL_CORE} and ($ENV{AUTHOR_TESTING} or $ENV{AUTOMATED_TESTING});
 }
 continue {
   ++$test_num;

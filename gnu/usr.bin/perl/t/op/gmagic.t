@@ -62,6 +62,7 @@ chomp $c;
 expected_tie_calls(tied $c, 1, 2, 'chomping a ref');
 
 {
+    no warnings 'once'; # main::foo
     my $outfile = tempfile();
     open my $h, ">$outfile" or die  "$0 cannot close $outfile: $!";
     binmode $h;
@@ -71,15 +72,6 @@ expected_tie_calls(tied $c, 1, 2, 'chomping a ref');
     $c = *foo;                                         # 1 write
     open $h, $outfile;
     binmode $h;
-    sysread $h, $c, 3, 7;                              # 1 read; 1 write
-    is $c, "*main::bar", 'what sysread wrote';         # 1 read
-    expected_tie_calls(tied $c, 2, 2, 'calling sysread with tied buf');
-    close $h or die "$0 cannot close $outfile: $!";
-
- # Do this again, with a utf8 handle
-    $c = *foo;                                         # 1 write
-    open $h, "<:utf8", $outfile;
-    no warnings 'deprecated';
     sysread $h, $c, 3, 7;                              # 1 read; 1 write
     is $c, "*main::bar", 'what sysread wrote';         # 1 read
     expected_tie_calls(tied $c, 2, 2, 'calling sysread with tied buf');

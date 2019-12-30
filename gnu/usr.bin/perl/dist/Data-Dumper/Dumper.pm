@@ -10,7 +10,7 @@
 package Data::Dumper;
 
 BEGIN {
-    $VERSION = '2.170'; # Don't forget to set version and release
+    $VERSION = '2.174'; # Don't forget to set version and release
 }               # date in POD below!
 
 #$| = 1;
@@ -18,7 +18,7 @@ BEGIN {
 use 5.006_001;
 require Exporter;
 
-use constant IS_PRE_520_PERL => $] < 5.020;
+use constant IS_PRE_516_PERL => $] < 5.016;
 
 use Carp ();
 
@@ -226,14 +226,6 @@ sub Names {
 sub DESTROY {}
 
 sub Dump {
-  # On old versions of perl, the xs-deparse support can fail
-  # mysteriously. Barring copious spare time, it's best to revert
-  # to the previously standard behavior of using the pure perl dumper
-  # for deparsing on old perls. --Steffen
-  if (IS_PRE_520_PERL and ($Data::Dumper::Deparse or (ref($_[0]) && $_[0]->{deparse}))) {
-    return &Dumpperl;
-  }
-
   return &Dumpxs
     unless $Data::Dumper::Useperl || (ref($_[0]) && $_[0]->{useperl})
             # Use pure perl version on earlier releases on EBCDIC platforms
@@ -541,6 +533,7 @@ sub _dump {
         $sname = $name;
       }
       else {
+        local $s->{useqq} = IS_PRE_516_PERL && ($s->{useqq} || $name =~ /[^\x00-\x7f]/) ? 1 : $s->{useqq};
         $sname = $s->_dump(
           $name eq 'main::' || $] < 5.007 && $name eq "main::\0"
             ? ''
@@ -1468,13 +1461,13 @@ be to use the C<Sortkeys> filter of Data::Dumper.
 
 Gurusamy Sarathy        gsar@activestate.com
 
-Copyright (c) 1996-2017 Gurusamy Sarathy. All rights reserved.
+Copyright (c) 1996-2019 Gurusamy Sarathy. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-Version 2.170
+Version 2.174
 
 =head1 SEE ALSO
 

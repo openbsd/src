@@ -36,10 +36,10 @@ use Math::BigFloat upgrade => 'Math::BigFloat::Test';
 
 my ($x, $y, $z);
 
-our ($CLASS, $EXPECTED_CLASS, $CALC);
+our ($CLASS, $EXPECTED_CLASS, $LIB);
 $CLASS          = "Math::BigFloat";
 $EXPECTED_CLASS = "Math::BigFloat::Test";
-$CALC           = "Math::BigInt::Calc";         # backend
+$LIB            = "Math::BigInt::Calc";         # backend
 
 is(Math::BigFloat->upgrade(), $EXPECTED_CLASS,
    qq|Math::BigFloat->upgrade()|);
@@ -67,4 +67,4 @@ is($z, 321,
    . q| $z = $x->badd($y); $z|);
 
 # not yet:
-#require 't/upgrade.inc';	# all tests here for sharing
+#require './t/upgrade.inc';     # all tests here for sharing

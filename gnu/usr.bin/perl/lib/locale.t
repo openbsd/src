@@ -2167,22 +2167,12 @@ foreach my $Locale (@Locale) {
     my $first_c_test = $locales_test_number;
 
     $test_names{++$locales_test_number} = 'Verify that a different locale radix works when doing "==" with a constant';
-    if ($Config{usequadmath}) {
-        print "# Skip: no locale radix with usequadmath ($test_names{$locales_test_number})\n";
-        report_result($Locale, $locales_test_number, 1);
-    } else {
-        report_result($Locale, $locales_test_number, $ok3);
-        $problematical_tests{$locales_test_number} = 1;
-    }
+    report_result($Locale, $locales_test_number, $ok3);
+    $problematical_tests{$locales_test_number} = 1;
 
     $test_names{++$locales_test_number} = 'Verify that a different locale radix works when doing "==" with a scalar';
-    if ($Config{usequadmath}) {
-        print "# Skip: no locale radix with usequadmath ($test_names{$locales_test_number})\n";
-        report_result($Locale, $locales_test_number, 1);
-    } else {
-        report_result($Locale, $locales_test_number, $ok4);
-        $problematical_tests{$locales_test_number} = 1;
-    }
+    report_result($Locale, $locales_test_number, $ok4);
+    $problematical_tests{$locales_test_number} = 1;
 
     report_result($Locale, ++$locales_test_number, $ok5);
     $test_names{$locales_test_number} = 'Verify that a different locale radix works when doing "==" with a scalar and an intervening sprintf';
@@ -2198,13 +2188,8 @@ foreach my $Locale (@Locale) {
     $test_names{$locales_test_number} = 'Verify that "==" with a scalar still works in inner no locale';
 
     $test_names{++$locales_test_number} = 'Verify that "==" with a scalar and an intervening sprintf still works in inner no locale';
-    if ($Config{usequadmath}) {
-        print "# Skip: no locale radix with usequadmath ($test_names{$locales_test_number})\n";
-        report_result($Locale, $locales_test_number, 1);
-    } else {
-        report_result($Locale, $locales_test_number, $ok8);
-        $problematical_tests{$locales_test_number} = 1;
-    }
+    report_result($Locale, $locales_test_number, $ok8);
+    $problematical_tests{$locales_test_number} = 1;
 
     debug "$first_e_test..$locales_test_number: \$e = $e, no locale\n";
 
@@ -2218,13 +2203,8 @@ foreach my $Locale (@Locale) {
     $problematical_tests{$locales_test_number} = 1;
 
     $test_names{++$locales_test_number} = 'Verify that after a no-locale block, a different locale radix still works when doing "==" with a scalar and an intervening sprintf';
-    if ($Config{usequadmath}) {
-        print "# Skip: no locale radix with usequadmath ($test_names{$locales_test_number})\n";
-        report_result($Locale, $locales_test_number, 1);
-    } else {
-        report_result($Locale, $locales_test_number, $ok11);
-        $problematical_tests{$locales_test_number} = 1;
-    }
+    report_result($Locale, $locales_test_number, $ok11);
+    $problematical_tests{$locales_test_number} = 1;
 
     report_result($Locale, ++$locales_test_number, $ok12);
     $test_names{$locales_test_number} = 'Verify that after a no-locale block, a different locale radix can participate in an addition and function call as numeric';
@@ -2465,14 +2445,9 @@ foreach my $Locale (@Locale) {
             }
         }
 
-        if ($Config{usequadmath}) {
-            print "# Skip: no locale radix with usequadmath ($Locale)\n";
-            report_result($Locale, $locales_test_number, 1);
-        } else {
-            report_result($Locale, $locales_test_number, @f == 0);
-            if (@f) {
-                print "# failed $locales_test_number locale '$Locale' numbers @f\n"
-            }
+        report_result($Locale, $locales_test_number, @f == 0);
+        if (@f) {
+            print "# failed $locales_test_number locale '$Locale' numbers @f\n"
 	}
     }
 }
@@ -2568,7 +2543,7 @@ foreach $test_num ($first_locales_test_number..$final_locales_test_number) {
 
 $test_num = $final_locales_test_number;
 
-unless ( $os =~ m!^(dragonfly|openbsd|bitrig|mirbsd)$! ) {
+if ( ! defined $Config{d_setlocale_accepts_any_locale_name}) {
     # perl #115808
     use warnings;
     my $warned = 0;
@@ -2576,7 +2551,7 @@ unless ( $os =~ m!^(dragonfly|openbsd|bitrig|mirbsd)$! ) {
         $warned = $_[0] =~ /uninitialized/;
     };
     my $z = "y" . setlocale(&POSIX::LC_ALL, "xyzzy");
-    ok($warned, "variable set to setlocale(BAD LOCALE) is considered uninitialized");
+    ok($warned, "variable set to setlocale(\"invalid locale name\") is considered uninitialized");
 }
 
 # Test that tainting and case changing works on utf8 strings.  These tests are

@@ -40,9 +40,14 @@ Unicode, encoded in UTF-8.  Starting in v5.20, Perl fully supports
 UTF-8 locales, except for sorting and string comparisons like C<lt> and
 C<ge>.  Starting in v5.26, Perl can handle these reasonably as well,
 depending on the platform's implementation.  However, for earlier
-releases or for better control, use L<Unicode::Collate>.  Perl continues to
-support the old non UTF-8 locales as well.  There are currently no UTF-8
-locales for EBCDIC platforms.
+releases or for better control, use L<Unicode::Collate>.  There are
+actually two slightly different types of UTF-8 locales: one for Turkic
+languages and one for everything else.  Starting in Perl v5.30, Perl
+seamlessly handles both types; previously only the non-Turkic one was
+supported.
+
+Perl continues to support the old non UTF-8 locales as well.  There are
+currently no UTF-8 locales for EBCDIC platforms.
 
 (Unicode is also creating C<CLDR>, the "Common Locale Data Repository",
 L<http://cldr.unicode.org/> which includes more types of information than
@@ -68,17 +73,11 @@ for example the character used as the decimal point.
 
 =item Category C<LC_MONETARY>: Formatting of monetary amounts
 
-=for comment
-The nbsp below makes this look better (though not great)
-
-E<160>
+Z<>
 
 =item Category C<LC_TIME>: Date/Time formatting
 
-=for comment
-The nbsp below makes this look better (though not great)
-
-E<160>
+Z<>
 
 =item Category C<LC_MESSAGES>: Error and other messages
 
@@ -247,10 +246,7 @@ module or writing XS code, it is important to keep in mind that the
 underlying locale may be something other than "C", even if the program
 hasn't explicitly changed it.
 
-=for comment
-The nbsp below makes this look better (though not great)
-
-E<160>
+Z<>
 
 =item B<Lingering effects of C<S<use locale>>>
 
@@ -278,11 +274,7 @@ behavior, not if the matches are done within such a scope or not.
 
 =back
 
-=for comment
-The nbsp below makes this look better (though not great)
-
-
-E<160>
+Z<>
 
 =item B<Under C<"use locale";>>
 
@@ -495,6 +487,13 @@ doesn't actually call the system C<setlocale>.  Instead those
 thread-safe operations are used to emulate the C<setlocale> function,
 but in a thread-safe manner.
 
+You can force the thread-safe locale operations to always be used (if
+available) by recompiling perl with
+
+ -Accflags='-DUSE_THREAD_SAFE_LOCALE'
+
+added to your call to F<Configure>.
+
 For further information about the categories, consult L<setlocale(3)>.
 
 =head2 Multi-threaded operation
@@ -529,6 +528,11 @@ C<-Accflags='-DNO_POSIX_2008_LOCALE'>.  This will also keep the code
 from using thread-safe locales.
 C<${^SAFE_LOCALES}> will be 0 on systems that turn off the thread-safe
 operations.
+
+Normally on unthreaded builds, the traditional C<setlocale()> is used
+and not the thread-safe locale functions.  You can force the use of these
+on systems that have them by adding the
+C<-Accflags='-DUSE_THREAD_SAFE_LOCALE'> to F<Configure>.
 
 The initial program is started up using the locale specified from the
 environment, as currently, described in L</ENVIRONMENT>.   All newly

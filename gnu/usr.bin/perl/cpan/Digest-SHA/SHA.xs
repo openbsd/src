@@ -111,7 +111,7 @@ DESTROY(s)
 	SHA *	s
 CODE:
 	Safefree(s);
-	
+
 SV *
 sha1(...)
 ALIAS:
@@ -152,7 +152,7 @@ CODE:
 			data += MAX_WRITE_SIZE;
 			len  -= MAX_WRITE_SIZE;
 		}
-		shawrite(data, len << 3, &sha);
+		shawrite(data, (ULNG) len << 3, &sha);
 	}
 	shafinish(&sha);
 	len = 0;
@@ -203,7 +203,7 @@ CODE:
 	if (items > 0) {
 		key = (UCHR *) (SvPVbyte(ST(items-1), len));
 	}
-	if (hmacinit(&hmac, ix2alg[ix], key, len) == NULL)
+	if (hmacinit(&hmac, ix2alg[ix], key, (UINT) len) == NULL)
 		XSRETURN_UNDEF;
 	for (i = 0; i < items - 1; i++) {
 		data = (UCHR *) (SvPVbyte(ST(i), len));
@@ -212,7 +212,7 @@ CODE:
 			data += MAX_WRITE_SIZE;
 			len  -= MAX_WRITE_SIZE;
 		}
-		hmacwrite(data, len << 3, &hmac);
+		hmacwrite(data, (ULNG) len << 3, &hmac);
 	}
 	hmacfinish(&hmac);
 	len = 0;
@@ -261,7 +261,7 @@ PPCODE:
 			data += MAX_WRITE_SIZE;
 			len  -= MAX_WRITE_SIZE;
 		}
-		shawrite(data, len << 3, state);
+		shawrite(data, (ULNG) len << 3, state);
 	}
 	XSRETURN(1);
 
@@ -356,7 +356,7 @@ PREINIT:
 PPCODE:
 	if (!f || (state = getSHA(aTHX_ self)) == NULL)
 		XSRETURN_UNDEF;
-	while ((n = PerlIO_read(f, in, sizeof(in))) > 0)
+	while ((n = (int) PerlIO_read(f, in, sizeof(in))) > 0)
 		shawrite(in, (ULNG) n << 3, state);
 	XSRETURN(1);
 
@@ -374,7 +374,7 @@ PREINIT:
 PPCODE:
 	if (!f || (state = getSHA(aTHX_ self)) == NULL)
 		XSRETURN_UNDEF;
-	while ((n = PerlIO_read(f, in+1, IO_BUFFER_SIZE)) > 0) {
+	while ((n = (int) PerlIO_read(f, in+1, IO_BUFFER_SIZE)) > 0) {
 		for (dst = in, src = in + 1; n; n--) {
 			c = *src++;
 			if (!cr) {

@@ -102,9 +102,9 @@ typedef struct jmpenv JMPENV;
  * 
  * The original patches that introduces flexible exceptions were:
  *
- * http://perl5.git.perl.org/perl.git/commit/312caa8e97f1c7ee342a9895c2f0e749625b4929
- * http://perl5.git.perl.org/perl.git/commit/14dd3ad8c9bf82cf09798a22cc89a9862dfd6d1a                                        
- *  
+ * https://github.com/Perl/perl5/commit/312caa8e97f1c7ee342a9895c2f0e749625b4929
+ * https://github.com/Perl/perl5/commit/14dd3ad8c9bf82cf09798a22cc89a9862dfd6d1a
+ *
  */
 
 #define dJMPENV		JMPENV cur_env

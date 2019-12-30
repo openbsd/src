@@ -4,7 +4,7 @@ perlfaq1 - General Questions About Perl
 
 =head1 VERSION
 
-version 5.021011
+version 5.20190126
 
 =head1 DESCRIPTION
 
@@ -42,7 +42,6 @@ are a group of highly altruistic individuals committed to
 producing better software for free than you could hope to purchase for
 money. You may snoop on pending developments via the
 L<archives|http://www.nntp.perl.org/group/perl.perl5.porters/>
-or read the L<faq|http://dev.perl.org/perl5/docs/p5p-faq.html>,
 or you can subscribe to the mailing list by sending
 perl5-porters-subscribe@perl.org a subscription request
 (an empty message with no subject is fine).
@@ -58,12 +57,11 @@ users the informal support will more than suffice. See the answer to
 
 =head2 Which version of Perl should I use?
 
-(contributed by brian d foy)
+(contributed by brian d foy with updates from others)
 
 There is often a matter of opinion and taste, and there isn't any one
 answer that fits everyone. In general, you want to use either the current
 stable release, or the stable release immediately prior to that one.
-Currently, those are perl5.18.x and perl5.16.x, respectively.
 
 Beyond that, you have to consider several things and decide which is best
 for you.
@@ -81,14 +79,21 @@ The latest versions of perl have more bug fixes.
 
 =item *
 
+The latest versions of perl may contain performance improvements and
+features not present in older versions.  There have been many changes
+in perl since perl5 was first introduced.
+
+=item *
+
 The Perl community is geared toward supporting the most recent releases,
 so you'll have an easier time finding help for those.
 
 =item *
 
-Versions prior to perl5.004 had serious security problems with buffer
-overflows, and in some cases have CERT advisories (for instance,
-L<http://www.cert.org/advisories/CA-1997-17.html> ).
+Older versions of perl may have security vulnerabilities, some of which
+are serious (see L<perlsec> and search
+L<CVEs|https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=Perl> for more
+information).
 
 =item *
 
@@ -98,23 +103,23 @@ problems others have if you are risk averse.
 
 =item *
 
-The immediate, previous releases (i.e. perl5.14.x ) are usually maintained
-for a while, although not at the same level as the current releases.
-
-=item *
-
-No one is actively supporting Perl 4. Ten years ago it was a dead
-camel carcass (according to this document). Now it's barely a skeleton
-as its whitewashed bones have fractured or eroded.
+The immediate, in addition to the current stable release, the previous
+stable release is maintained.  See
+L<perlpolicy/"MAINTENANCE AND SUPPORT"> for more information.
 
 =item *
 
 There are really two tracks of perl development: a maintenance version
 and an experimental version. The maintenance versions are stable, and
-have an even number as the minor release (i.e. perl5.18.x, where 18 is the
+have an even number as the minor release (i.e. perl5.24.x, where 24 is the
 minor release). The experimental versions may include features that
 don't make it into the stable versions, and have an odd number as the
-minor release (i.e. perl5.19.x, where 19 is the minor release).
+minor release (i.e. perl5.25.x, where 25 is the minor release).
+
+=item *
+
+You can consult L<releases|http://dev.perl.org/perl5> to determine the
+current stable release of Perl.
 
 =back
 

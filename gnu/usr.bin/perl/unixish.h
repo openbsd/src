@@ -141,7 +141,7 @@ int afstat(int fd, struct stat *statb);
 #  define PERL_SYS_TERM_BODY()                         \
     HINTS_REFCNT_TERM; KEYWORD_PLUGIN_MUTEX_TERM;      \
     OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM; PERLIO_TERM;  \
-    MALLOC_TERM; LOCALE_TERM;                          \
+    MALLOC_TERM; LOCALE_TERM; USER_PROP_MUTEX_TERM;    \
     amigaos4_dispose_fork_array();
 #endif
 
@@ -154,7 +154,7 @@ int afstat(int fd, struct stat *statb);
 #  define PERL_SYS_TERM_BODY()                         \
     HINTS_REFCNT_TERM; KEYWORD_PLUGIN_MUTEX_TERM;      \
     OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM; PERLIO_TERM;  \
-    MALLOC_TERM; LOCALE_TERM;
+    MALLOC_TERM; LOCALE_TERM; USER_PROP_MUTEX_TERM;
 
 #endif
 

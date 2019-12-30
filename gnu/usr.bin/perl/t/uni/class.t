@@ -5,7 +5,7 @@ BEGIN {
     skip_all_without_unicode_tables();
 }
 
-plan tests => 11;
+plan tests => 12;
 
 my $str = join "", map { chr utf8::unicode_to_native($_) } 0x20 .. 0x6F;
 
@@ -87,6 +87,23 @@ is(($str =~ /(\P{bc=AL}+)/)[0], "\x{0711}");
 $str = "[\x{038B}\x{038C}\x{038D}]";
 
 is(($str =~ /(\p{InGreek}+)/)[0], "\x{038B}\x{038C}\x{038D}");
+
+{   # [perl #133860], compilation before data for it is available
+    package Foo;
+
+    sub make {
+        my @lines;
+        while( my($c) = splice(@_,0,1) ) {
+            push @lines, sprintf("%04X", $c);
+        }
+        return join "\n", @lines;
+    }
+
+    my @characters = ( ord("a") );
+    sub IsProperty { make(@characters); };
+
+    main::like('a', qr/\p{IsProperty}/, "foo");
+}
 
 # The other tests that are based on looking at the generated files are now
 # in t/re/uniprops.t

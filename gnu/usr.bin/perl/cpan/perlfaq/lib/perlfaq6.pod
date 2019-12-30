@@ -4,7 +4,7 @@ perlfaq6 - Regular Expressions
 
 =head1 VERSION
 
-version 5.021011
+version 5.20190126
 
 =head1 DESCRIPTION
 
@@ -118,7 +118,7 @@ be mangled by many mailers):
     $/ = '';          # read in whole paragraph, not just one line
     while ( <> ) {
         while ( /^From /gm ) { # /m makes ^ match next to \n
-        print "leading from in paragraph $.\n";
+        print "leading From in paragraph $.\n";
         }
     }
 
@@ -352,7 +352,7 @@ To escape the special meaning of C<.>, we use C<\Q>:
     $string =~ s/\Q$regex/Polyp/;
     # $string is now "Placido Polyp Octopus"
 
-The use of C<\Q> causes the <.> in the regex to be treated as a
+The use of C<\Q> causes the C<.> in the regex to be treated as a
 regular character, so that C<P.> matches a C<P> followed by a dot.
 
 =head2 What is C</o> really for?
@@ -776,26 +776,26 @@ boundary before the "P" and after the "l". As long as something other
 than a word character precedes the "P" and succeeds the "l", the
 pattern will match. These strings match /\bPerl\b/.
 
-    "Perl"    # no word char before P or after l
+    "Perl"    # no word char before "P" or after "l"
     "Perl "   # same as previous (space is not a word char)
-    "'Perl'"  # the ' char is not a word char
-    "Perl's"  # no word char before P, non-word char after "l"
+    "'Perl'"  # the "'" char is not a word char
+    "Perl's"  # no word char before "P", non-word char after "l"
 
 These strings do not match /\bPerl\b/.
 
-    "Perl_"   # _ is a word char!
-    "Perler"  # no word char before P, but one after l
+    "Perl_"   # "_" is a word char!
+    "Perler"  # no word char before "P", but one after "l"
 
 You don't have to use \b to match words though. You can look for
 non-word characters surrounded by word characters. These strings
 match the pattern /\b'\b/.
 
-    "don't"   # the ' char is surrounded by "n" and "t"
-    "qep'a'"  # the ' char is surrounded by "p" and "a"
+    "don't"   # the "'" char is surrounded by "n" and "t"
+    "qep'a'"  # the "'" char is surrounded by "p" and "a"
 
 These strings do not match /\b'\b/.
 
-    "foo'"    # there is no word char after non-word '
+    "foo'"    # there is no word char after non-word "'"
 
 You can also use the complement of \b, \B, to specify that there
 should not be a word boundary.
@@ -846,7 +846,7 @@ string where the last match left off. The regular
 expression engine cannot skip over any characters to find
 the next match with this anchor, so C<\G> is similar to the
 beginning of string anchor, C<^>. The C<\G> anchor is typically
-used with the C<g> flag. It uses the value of C<pos()>
+used with the C<g> modifier. It uses the value of C<pos()>
 as the position to start the next match. As the match
 operator makes successive matches, it updates C<pos()> with the
 position of the next character past the last match (or the
@@ -856,7 +856,7 @@ to look at it). Each string has its own C<pos()> value.
 Suppose you want to match all of consecutive pairs of digits
 in a string like "1122a44" and stop matching when you
 encounter non-digits. You want to match C<11> and C<22> but
-the letter <a> shows up between C<22> and C<44> and you want
+the letter C<a> shows up between C<22> and C<44> and you want
 to stop at C<a>. Simply matching pairs of digits skips over
 the C<a> and still matches C<44>.
 
@@ -873,7 +873,7 @@ found.
     my @pairs = m/\G(\d\d)/g; # qw( 11 22 )
 
 You can also use the C<\G> anchor in scalar context. You
-still need the C<g> flag.
+still need the C<g> modifier.
 
     $_ = "1122a44";
     while( m/\G(\d\d)/g ) {
@@ -890,7 +890,7 @@ and the next match on the same string starts at the beginning.
 
     print "Found $1 after while" if m/(\d\d)/g; # finds "11"
 
-You can disable C<pos()> resets on fail with the C<c> flag, documented
+You can disable C<pos()> resets on fail with the C<c> modifier, documented
 in L<perlop> and L<perlreref>. Subsequent matches start where the last
 successful match ended (the value of C<pos()>) even if a match on the
 same string has failed in the meantime. In this case, the match after
@@ -905,7 +905,7 @@ C<44>.
 
     print "Found $1 after while" if m/(\d\d)/g; # finds "44"
 
-Typically you use the C<\G> anchor with the C<c> flag
+Typically you use the C<\G> anchor with the C<c> modifier
 when you want to try a different match if one fails,
 such as in a tokenizer. Jeffrey Friedl offers this example
 which works in 5.004 or later.
@@ -924,7 +924,7 @@ For each line, the C<PARSER> loop first tries to match a series
 of digits followed by a word boundary. This match has to
 start at the place the last match left off (or the beginning
 of the string on the first match). Since C<m/ \G( \d+\b
-)/gcx> uses the C<c> flag, if the string does not match that
+)/gcx> uses the C<c> modifier, if the string does not match that
 regular expression, perl does not reset pos() and the next
 match starts at the same position to try a different
 pattern.

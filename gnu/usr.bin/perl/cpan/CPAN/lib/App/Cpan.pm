@@ -6,7 +6,7 @@ use vars qw($VERSION);
 
 use if $] < 5.008 => 'IO::Scalar';
 
-$VERSION = '1.67';
+$VERSION = '1.672';
 
 =head1 NAME
 
@@ -119,6 +119,8 @@ C<-l> was already taken.
 Load the file that has the CPAN configuration data. This should have the
 same format as the standard F<CPAN/Config.pm> file, which defines
 C<$CPAN::Config> as an anonymous hash.
+
+If the file does not exist, C<cpan> dies.
 
 =item -J
 
@@ -261,7 +263,7 @@ to C<1> unless it already has a value (even if that value is false).
 
 =item CPAN_OPTS
 
-As with C<PERL5OPTS>, a string of additional C<cpan(1)> options to
+As with C<PERL5OPT>, a string of additional C<cpan(1)> options to
 add to those you specify on the command line.
 
 =item CPANSCRIPT_LOGLEVEL
@@ -289,7 +291,7 @@ use CPAN 1.80 (); # needs no test
 use Config;
 use autouse Cwd => qw(cwd);
 use autouse 'Data::Dumper' => qw(Dumper);
-use File::Spec::Functions;
+use File::Spec::Functions qw(catfile file_name_is_absolute rel2abs);
 use File::Basename;
 use Getopt::Std;
 
@@ -1101,12 +1103,14 @@ sub _shell
 
 sub _load_config # -j
 	{
-	my $file = shift || '';
+	my $argument = shift;
+
+	my $file = file_name_is_absolute( $argument ) ? $argument : rel2abs( $argument );
+	croak( "cpan config file [$file] for -j does not exist!\n" ) unless -e $file;
 
 	# should I clear out any existing config here?
 	$CPAN::Config = {};
 	delete $INC{'CPAN/Config.pm'};
-	croak( "Config file [$file] does not exist!\n" ) unless -e $file;
 
 	my $rc = eval "require '$file'";
 
@@ -1165,9 +1169,9 @@ sub _download
 
 		$logger->debug( "Inst file would be $path\n" );
 
-		$paths{$arg} = _get_file( _make_path( $path ) );
+		$paths{$module} = _get_file( _make_path( $path ) );
 
-		$logger->info( "Downloaded [$arg] to [$paths{$module}]" );
+		$logger->info( "Downloaded [$arg] to [$paths{$arg}]" );
 		}
 
 	return \%paths;
@@ -1191,7 +1195,9 @@ sub _get_file
 		{
 		my $fetch_path = join "/", $site, $path;
 		$logger->debug( "Trying $fetch_path" );
-	    last if LWP::Simple::getstore( $fetch_path, $store_path );
+		my $status_code = LWP::Simple::getstore( $fetch_path, $store_path );
+		last if( 200 <= $status_code and $status_code <= 300 );
+		$logger->warn( "Could not get [$fetch_path]: Status code $status_code" );
 		}
 
 	return $store_path;
@@ -1679,13 +1685,15 @@ where this script ends up with a .bat extension
 
 David Golden helps integrate this into the C<CPAN.pm> repos.
 
+Jim Keenan fixed up various issues with _download
+
 =head1 AUTHOR
 
 brian d foy, C<< <bdfoy@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001-2015, brian d foy, All Rights Reserved.
+Copyright (c) 2001-2018, brian d foy, All Rights Reserved.
 
 You may redistribute this under the same terms as Perl itself.
 

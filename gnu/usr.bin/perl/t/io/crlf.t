@@ -18,7 +18,7 @@ my $crcr = uni_to_native("\x0d\x0d");
 my $ungetc_count = 8200;    # Somewhat over the likely buffer size
 
 {
-    plan(tests => 16 + 2 * $ungetc_count);
+    plan(tests => 21 + 2 * $ungetc_count);
     ok(open(FOO,">:crlf",$file));
     ok(print FOO 'a'.((('a' x 14).qq{\n}) x 2000) || close(FOO));
     ok(open(FOO,"<:crlf",$file));
@@ -86,6 +86,21 @@ my $ungetc_count = 8200;    # Somewhat over the likely buffer size
 	    like($foo, qr/$crlf$/);
 	    unlike($foo, qr/$crcr/);
 	}
+    }
+
+    {
+        # check binmode removes :utf8
+        # 133604 - on Win32 :crlf is the base buffer layer, so
+        # binmode doesn't remove it, but the binmode handler didn't
+        # remove :utf8 either
+        ok(open(my $fh, ">", $file), "open a file");
+        ok(binmode($fh, ":utf8"), "add :utf8");
+        ok((() = grep($_ eq "utf8", PerlIO::get_layers($fh))),
+           "check :utf8 set");
+        ok(binmode($fh), "remove :utf8");
+        ok(!(() = grep($_ eq "utf8", PerlIO::get_layers($fh))),
+           "check :utf8 removed");
+        close $fh;
     }
 }
 

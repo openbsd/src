@@ -217,3 +217,37 @@ Execution of - aborted due to compilation errors.
 EXPECT
 Type of arg 1 to each must be hash or array (not constant item) at - line 1, near "FRED ;"
 Execution of - aborted due to compilation errors.
+########
+# NAME better messages for array-ops on non-arrays
+push %a, 1;
+pop %a;
+shift %a;
+unshift %a, 1;
+push *a, 1;
+pop *a;
+shift *a;
+unshift *a, 1;
+EXPECT
+Type of arg 1 to push must be array (not hash dereference) at - line 1, near "1;"
+Type of arg 1 to pop must be array (not hash dereference) at - line 2, near "%a;"
+Type of arg 1 to shift must be array (not hash dereference) at - line 3, near "%a;"
+Type of arg 1 to unshift must be array (not hash dereference) at - line 4, near "1;"
+Type of arg 1 to push must be array (not ref-to-glob cast) at - line 5, near "1;"
+Type of arg 1 to pop must be array (not ref-to-glob cast) at - line 6, near "*a;"
+Type of arg 1 to shift must be array (not ref-to-glob cast) at - line 7, near "*a;"
+Type of arg 1 to unshift must be array (not ref-to-glob cast) at - line 8, near "1;"
+Execution of - aborted due to compilation errors.
+########
+# NAME better messages for array-ops on non-arrays (part 2)
+# to check PADHV without hitting the reported error limit
+my %a;
+push %a, 1;
+pop %a;
+shift %a;
+unshift %a, 1;
+EXPECT
+Type of arg 1 to push must be array (not private hash) at - line 3, near "1;"
+Type of arg 1 to pop must be array (not private hash) at - line 4, near "%a;"
+Type of arg 1 to shift must be array (not private hash) at - line 5, near "%a;"
+Type of arg 1 to unshift must be array (not private hash) at - line 6, near "1;"
+Execution of - aborted due to compilation errors.

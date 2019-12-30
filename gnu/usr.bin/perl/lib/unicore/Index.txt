@@ -96,6 +96,7 @@ accent, spacing acute	00B4
 accent, spacing circumflex	005E
 accent, spacing grave	0060
 accent, swedish grave	02DF
+Accessibility Symbols	1F9AE
 accident	26CC
 ACCOUNT OF	2100
 account, guest	1F464
@@ -304,8 +305,8 @@ Area, Supplementary CJK Ideographs	20000
 Area, Supplementary General Scripts	10000
 Area, Surrogates	D800
 Area, Symbols	2000
-Area-A, Supplementary Private Use	FFF80
-Area-B, Supplementary Private Use	10FF80
+Area-A, Supplementary Private Use	F0000
+Area-B, Supplementary Private Use	100000
 argentinian former currency	20B3
 ARIES	2648
 ARMENIAN ABBREVIATION MARK	055F
@@ -386,6 +387,7 @@ ASTERISM	2042
 Astrological Signs	26B3
 Astrological Signs, Tibetan	0F15
 Astrological Symbols	263D
+Astrological Symbols	28D3
 Astrological Symbols, Weather and	2600
 asymptotic to	2248
 ASYMPTOTICALLY EQUAL TO	2243
@@ -529,6 +531,7 @@ bernoulli function	212C
 BET SYMBOL	2136
 BETA SYMBOL, GREEK	03D0
 beta, curled	03D0
+Betty	BOOP
 BETWEEN	226C
 Beverage Symbols	1F375
 BEVERAGE, HOT	2615
@@ -670,9 +673,9 @@ Brackets	2983
 Brackets, CJK Angle	3008
 Brackets, CJK Corner	300C
 Brackets, Corner	2308
+Brackets, Horizontal	23B4
 Brackets, Mathematical	27E6
 Brackets, Ornamental	2768
-Brackets, Vertical	23B4
 Brahmi	11000
 Braille Patterns	2800
 brazilian currency	20A2
@@ -843,7 +846,9 @@ CHEESE WEDGE	1F9C0
 Cherokee	13A0
 Cherokee Supplement	AB70
 Chess Symbols	2654
+Chess Symbols, Chinese XiangQi	1FA60
 Chess Symbols, Japanese	2616
+Chess Symbols, Heterodox	1FA00
 chevron bracket, left	27EA
 chevron bracket, right	27EB
 chevrons	00AB
@@ -861,6 +866,7 @@ Chinese Folk Religion Symbols	1F260
 chinese fourth tone, mandarin	02CB
 chinese second tone, mandarin	02CA
 chinese third tone, mandarin	02C7
+Chinese XiangQi Chess Symbols	1FA60
 Chinese, Corner Tone Marks for	A700
 CHIPMUNK	1F43F
 choice, dijkstra	2AFE
@@ -994,6 +1000,7 @@ COLON, MODIFIER LETTER HALF TRIANGULAR	02D1
 COLON, MODIFIER LETTER TRIANGULAR	02D0
 COLON, MONGOLIAN	1804
 COLON, Z NOTATION TYPE	2982
+Colored Shapes	1F7E0
 COMBINING ACUTE ACCENT	0301
 COMBINING ACUTE ACCENT BELOW	0317
 COMBINING ACUTE TONE MARK	0341
@@ -1239,6 +1246,7 @@ Coptic Letters Derived from Demotic	03E2
 Coptic, Bohairic	2C80
 Coptic, Continuous Macrons for	FE24
 Coptic, Extended	2CB2
+COPYLEFT SYMBOL	1F12F
 COPYRIGHT SIGN	00A9
 COPYRIGHT, SOUND RECORDING	2117
 Corner Brackets	2308
@@ -1606,6 +1614,7 @@ DOES NOT EXIST, THERE	2204
 does not yield	22A3
 DOG	1F415
 DOG FACE	1F436
+Dogra	11800
 DOLLAR SIGN	0024
 DOLPHIN	1F42C
 domain restriction	25C1
@@ -1804,6 +1813,7 @@ Eastern Arabic-Indic Digits	06F0
 Editorial Symbols, New Testament	2E00
 egressive airflow	2191
 Egyptian Hieroglyphs	13000
+Egyptian Hieroglyph Format Controls	13430
 EIGHTH NOTE	266A
 EIGHTH NOTES, BEAMED	266B
 Eighths, Fractions	215B
@@ -1831,12 +1841,14 @@ ELLIPSIS, MONGOLIAN	1801
 ELLIPSIS, UP RIGHT DIAGONAL	22F0
 ELLIPSIS, VERTICAL	22EE
 elliptic function, weierstrass	2118
+Elymaic	10FE0
 EM DASH	2014
 EM QUAD	2001
 EM SPACE	2003
 EMBEDDING, LEFT-TO-RIGHT	202A
 EMBEDDING, RIGHT-TO-LEFT	202B
 emf	2130
+Emoji Components	1F9B0
 Emoji Modifiers	1F3FB
 Emoticon Faces	1F910
 Emoticons	1F600
@@ -1885,7 +1897,6 @@ ENQUIRY, SYMBOL FOR	2405
 enter key	2324
 ENTER SYMBOL	2386
 Entertainment Symbols	1F3A0
-entity &iinfin;, isotech	29DC
 ENVELOPE	2709
 ENVELOPE, BACK OF	1F582
 ENVELOPE, STAMPED	1F583
@@ -1932,6 +1943,7 @@ EQUIVALENT TO	224D
 EQUIVALENT TO, GEOMETRICALLY	224E
 EQUIVALENT TO, STRICTLY	2263
 equivalent, tautological	29E6
+Era Name, Japanese	32FF
 Era Names, Japanese	337B
 ERASE TO THE LEFT	232B
 ERASE TO THE RIGHT	2326
@@ -2099,6 +2111,7 @@ form feed	21A1
 FORM FEED, SYMBOL FOR	240C
 Format Characters	200C
 Format Characters, Directional	202A
+Format Controls, Egyptian Hieroglyph	13430
 Format Controls, Mongolian	180B
 FORMATTING, POP DIRECTIONAL	202C
 forward arrow indicator	25BB
@@ -2214,6 +2227,7 @@ Georgian Alphabet	10D0
 Georgian Capital Letters	10A0
 georgian comma	00B7
 georgian currency	20BE
+Georgian Extended	1C90
 Georgian Extensions	10F1
 georgian full stop	0589
 Georgian Khutsuri	10A0
@@ -2345,6 +2359,7 @@ Gujarati Dependent Vowel Signs	0ABE
 Gujarati Digits	0AE6
 Gujarati Independent Vowels	0A85
 GUJARATI RUPEE SIGN	0AF1
+Gunjala Gondi	11D60
 Gurmukhi	0A00
 GURMUKHI ADDAK	0A71
 Gurmukhi Consonants	0A15
@@ -2430,6 +2445,7 @@ Hangul Syllables, Circled Korean	326E
 Hangul Syllables, Parenthesized Korean	320E
 Hangul Variants, Halfwidth Korean	FFA0
 Hangzhou Numerals	3021
+Hanifi Rohingya	10D00
 Hanunoo	1720
 Harakat, Arabic	064B
 harbor symbol	2693
@@ -2459,6 +2475,7 @@ Heart Dingbats	2763
 Heart Ornaments	2763
 Heart Symbols	1F493
 HEART, BLACK	1F5A4
+HEART, WHITE	1F90D
 HEAVY BALLOT X	2718
 HEAVY CHECK MARK	2714
 HEAVY EXCLAMATION MARK ORNAMENT	2762
@@ -2495,6 +2512,8 @@ Hiragana Supplement	3095
 HIRAGANA VOICED ITERATION MARK	309E
 histogram marker	25AE
 HISTORIC SITE	26EC
+Hmong, Nyiakeng Puachue	1E100
+Hmong, Pahawh	16B00
 holler	2365
 home	21B8
 home	21F1
@@ -2509,6 +2528,7 @@ HOOK, MODIFIER LETTER RHOTIC	02DE
 hook, nasal	0328
 hoot	2364
 HORIZONTAL BAR	2015
+Horizontal Brackets	23B4
 HORIZONTAL ELLIPSIS	2026
 HORIZONTAL ELLIPSIS, MIDLINE	22EF
 Horizontal Scan Lines	23BA
@@ -2650,9 +2670,11 @@ INDIAN RUPEE SIGN	20B9
 Indic Number Forms, Common	A830
 indicator, backward arrow	25C5
 indicator, forward arrow	25BB
+Indic Siyaq Numbers	1EC70
 Inequality Signs, Equality and	2243
 Inequality Signs, Equality and	22D5
 INFINITY	221E
+INFINITY, INCOMPLETE	29DC
 infix bag count	266F
 information	1F6C8
 INFORMATION SEPARATOR FOUR	001C
@@ -2743,7 +2765,6 @@ ISOLATE, FIRST STRONG	2068
 ISOLATE, LEFT-TO-RIGHT	2066
 ISOLATE, POP DIRECTIONAL	2069
 ISOLATE, RIGHT-TO-LEFT	2067
-isotech entity &iinfin;	29DC
 israeli currency	20AA
 ISSHAR, BENGALI	09FA
 ISSHAR, ORIYA	0B70
@@ -2781,6 +2802,7 @@ Jamo Combining Alphabet, Korean Hangul	1100
 Jamo, Korean Hangul Compatibility	3130
 japanese bullet, tainome	25C9
 Japanese Chess Symbols	2616
+Japanese Era Name	32FF
 Japanese Era Names	337B
 Japanese Hiragana	3040
 japanese incorporated	337F
@@ -2816,6 +2838,7 @@ KA, HIRAGANA LETTER SMALL	3095
 kabusiki-gaisya	337F
 Kaithi	11080
 Kana Extended-A	1B100
+Kana Extension, Small	1B130
 Kana Repeat Marks	3031
 Kana Supplement	1B000
 Kanbun Ideographic Annotation, Japanese	3190
@@ -3111,6 +3134,7 @@ LENTICULAR BRACKET, RIGHT WHITE	3017
 LEO	264C
 LEOPARD	1F406
 Lepcha	1C00
+Leppard	DEAF
 LESS-THAN OR EQUAL TO	2264
 LESS-THAN SIGN	003C
 LESS-THAN, MUCH	226A
@@ -3195,6 +3219,7 @@ lira, italian	00A3
 Lisu	A4D0
 liter	2113
 LIVRE TOURNOIS SIGN	20B6
+LOBSTER	1F99E
 Lock Symbols	1F50F
 lock, caps	21EA
 lock, caps	21EC
@@ -3286,6 +3311,7 @@ MAGNIFYING GLASS, RIGHT-POINTING	1F50E
 Mahajani	11150
 Mahjong Tiles	1F000
 Mail Symbols	1F4E4
+Makasar	11EE0
 Malayalam	0D00
 malayalam chandrakkala	0D4D
 Malayalam Chillu Letters	0D7A
@@ -3369,12 +3395,14 @@ Mathematical Symbols, Script	1D49C
 Mathematical Symbols-A, Miscellaneous	27C0
 Mathematical Symbols-B, Miscellaneous	2980
 MATRIX, HERMITIAN CONJUGATE	22B9
+Mayan Numerals	1D2E0
 MC SIGN, RAISED	1F16A
 MD SIGN, RAISED	1F16B
 MEASURED ANGLE	2221
 Measured Angles, Angles and	299B
 MEASURED BY	225E
 med avdrag av	2052
+Medefaidrin	16E40
 Medieval Superscript Letter Diacritics	0363
 Medieval Superscript Letter Diacritics, Latin	1DD3
 Medievalist Punctuation	2E2A
@@ -3577,6 +3605,7 @@ Nabataean	10880
 NABLA	2207
 NAIRA SIGN	20A6
 NAND	22BC
+Nandinagari	119A0
 NARROW NO-BREAK SPACE	202F
 nasal hook	0328
 natural exponent	212F
@@ -3630,10 +3659,8 @@ non-breaking space	00A0
 NON-JOINER, ZERO WIDTH	200C
 non-spacing iota below, greek	0345
 non-theorem	22A3
-Noncharacters	*FFFE
-Noncharacters	*FFFF
-Noncharacters	FDD*
-Noncharacters	FDE*
+Noncharacters (FDD0..FDEF)	FDD0
+Noncharacters (FFFE..FFFF)	FFFE
 NOR	22BD
 NORMAL FACTOR SEMIDIRECT PRODUCT, LEFT	22C9
 NORMAL FACTOR SEMIDIRECT PRODUCT, RIGHT	22CA
@@ -3682,6 +3709,8 @@ Numbers, Circled Inverse	2776
 numbers, complex	2102
 Numbers, Double Circled	24F5
 Numbers, Ethiopic	1369
+Numbers, Indic Siyaq	1EC70
+Numbers, Ottoman Siyaq	1ED00
 Numbers, Parenthesized	2474
 numbers, rational	211A
 numbers, real	211D
@@ -3689,6 +3718,7 @@ Numbers, Runic Golden	16EE
 Numbers, Tamil	0BE7
 Numbers, White on Black Circled	24EB
 Numerals, Hangzhou	3021
+Numerals, Mayan	1D2E0
 Numerals, Old Italic	10320
 Numerals, Roman	2160
 Numerals, Suzhou	3021
@@ -3698,6 +3728,7 @@ numerics lock	21ED
 NUMERO SIGN	2116
 Nushu	1B170
 nut	2002
+Nyiakeng Puachue Hmong	1E100
 o bar, latin capital letter	019F
 o bar, latin small letter	0275
 o e, latin small letter	0153
@@ -3766,6 +3797,7 @@ Old Hungarian	10C80
 Old Italic	10300
 Old Permic	10350
 Old Persian	103A0
+Old Sogdian	10F00
 old testament, greek	1D516
 OM SYMBOL	1F549
 OM, DEVANAGARI	0950
@@ -3855,6 +3887,7 @@ orthogonal to	22A5
 Osage	104B0
 Osmanya	10480
 Osmanya Digits	104A0
+Ottoman Siyaq Numbers	1ED00
 OU, LATIN LETTER SMALL CAPITAL	1D15
 OU, LATIN SMALL LETTER	0223
 OUNCE SIGN	2125
@@ -4027,6 +4060,7 @@ PI, DOUBLE-STRUCK SMALL	213C
 PI, GREEK SMALL LETTER	03C0
 pi, mathematical constant 3.141592...	03C0
 PICK	26CF
+Pictographs Extended-A, Symbols and	1FA70
 Pictographs, Miscellaneous Symbols and	1F300
 Pictographs, Supplemental Symbols and	1F900
 Pictures for Control Codes, Graphic	2400
@@ -4172,6 +4206,7 @@ PROPORTIONAL TO	221D
 proportional to	223C
 proves	22A2
 psili, greek	0313
+PSIFISTOPARAKALESMA	1D06F
 published	2117
 pullback	27D3
 punch	1F44A
@@ -4529,6 +4564,7 @@ rlo	202E
 RNAM BCAD, TIBETAN SIGN	0F7F
 road closed	26D2
 rock in rock, paper, scissors game	270A
+Rohingya, Hanifi	10D00
 rofl	1F923
 Role Symbols	1F481
 Role Symbols, Portrait and	1F464
@@ -4854,6 +4890,8 @@ SOCCER BALL	26BD
 SOFT HYPHEN	00AD
 SOFT HYPHEN, MONGOLIAN TODO	1806
 SOFTWARE-FUNCTION SYMBOL	2394
+Sogdian	10F30
+Sogdian, Old	10F00
 solid	2588
 SOLIDUS	002F
 solidus	2044
@@ -5095,6 +5133,7 @@ Syllables, Yi	A000
 Syloti Nagri	A800
 Symbol Variants, Fullwidth	FFE0
 Symbol Variants, Halfwidth	FFE8
+Symbols and Pictographs Extended-A	1FA70
 Symbols and Pictographs, Miscellaneous	1F300
 Symbols and Pictographs, Supplemental	1F900
 Symbols and Punctuation, CJK	3000
@@ -5104,6 +5143,7 @@ Symbols for Days, Ideographic Telegraph	33E0
 Symbols for Divination, Khmer Numeric	17F0
 Symbols for Hours, Ideographic Telegraph	3358
 Symbols for Months, Ideographic Telegraph	32C0
+Symbols, Accessibility	1F9AE
 Symbols, Alchemical	1F700
 Symbols, Ancient Greek Textual	2E0E
 Symbols, Animal	1F400
@@ -5114,6 +5154,7 @@ Symbols, Area,	2000
 Symbols, Area, CJK Phonetics and	2E80
 Symbols, ASCII Punctuation and	0020
 Symbols, Astrological	263D
+Symbols, Astrological	2BD3
 Symbols, Audio and Video	1F4F7
 Symbols, Balinese Musical	1B61
 Symbols, Ballot	1F5F3
@@ -5132,6 +5173,7 @@ Symbols, Building and Map	1F3E0
 Symbols, Byzantine Musical	1D000
 Symbols, Celebration	1F380
 Symbols, Chess	2654
+Symbols, Chess	1FA00
 Symbols, Circle	29B5
 Symbols, Clock Face	1F550
 Symbols, Combining Diacritical Marks for	20D0
@@ -5328,6 +5370,7 @@ Tails, Fish	297C
 tainome japanese bullet	25C9
 TAKE, PRESCRIPTION	211E
 Takri	11680
+Tally Marks	1D372
 Tamil	0B80
 TAMIL AS ABOVE SIGN	0BF8
 tamil aytham	0B83
@@ -5349,6 +5392,7 @@ tamil patru	0BF6
 tamil rupai	0BF9
 TAMIL RUPEE SIGN	0BF9
 TAMIL SIGN VISARGA	0B83
+Tamil Supplement	11FC0
 Tamil Symbols	0BF3
 tamil varavu	0BF7
 tamil varudam	0BF5
@@ -5407,6 +5451,7 @@ Thai Digits	0E50
 Thai Marks and Signs	0E48
 Thai Vowels	0E30
 THANTHAKHAT, THAI CHARACTER	0E4C
+the	DOOD
 theater masks	1F3AD
 THERE DOES NOT EXIST	2204
 THERE EXISTS	2203
@@ -5771,7 +5816,6 @@ vertical bar, broken	00A6
 VERTICAL BAR, N-ARY WHITE	2AFF
 VERTICAL BAR, WHITE	2AFE
 vertical bowtie	29D6
-Vertical Brackets	23B4
 VERTICAL ELLIPSIS	22EE
 Vertical Form Variants	FE30
 VERTICAL FOUR DOTS	205E
@@ -5847,6 +5891,7 @@ W, LATIN LETTER SMALL CAPITAL	1D21
 W, LATIN SMALL LETTER TURNED	028D
 W, MODIFIER LETTER SMALL	02B7
 WAITING, MESSAGE	0095
+Wancho	1E2C0
 Warang Citi	118A0
 WARNING SIGN	26A0
 Warning Signs	2620
@@ -5948,6 +5993,7 @@ X, HEAVY BALLOT	2718
 X, HEAVY MULTIPLICATION	2716
 X, MODIFIER LETTER SMALL	02E3
 X, MULTIPLICATION	2715
+XiangQi Chess Symbols, Chinese	1FA60
 XOR	22BB
 Y WITH ACUTE, LATIN CAPITAL LETTER	00DD
 Y WITH ACUTE, LATIN SMALL LETTER	00FD
@@ -6017,6 +6063,7 @@ ZIGZAG ABOVE, COMBINING	035B
 Zodiac, Signs of the Asian	1F400
 Zodiacal Symbols	2648
 ZOMBIE	1F9DF
+Zorro	1D1E9
 zwj	200D
 zwnbsp	FEFF
 zwnj	200C

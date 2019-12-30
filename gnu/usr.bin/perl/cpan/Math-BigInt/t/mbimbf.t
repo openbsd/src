@@ -15,14 +15,14 @@ use Math::BigFloat;
 our $mbi = 'Math::BigInt';
 our $mbf = 'Math::BigFloat';
 
-require 't/mbimbf.inc';
+require './t/mbimbf.inc';
 
 # some tests that won't work with subclasses, since the things are only
 # guaranteed in the Math::Big(Int|Float) (unless subclass chooses to support
 # this)
 
-Math::BigInt->round_mode("even");	# reset for tests
-Math::BigFloat->round_mode("even");	# reset for tests
+Math::BigInt->round_mode("even");       # reset for tests
+Math::BigFloat->round_mode("even");     # reset for tests
 
 is($Math::BigInt::rnd_mode,   "even", '$Math::BigInt::rnd_mode = "even"');
 is($Math::BigFloat::rnd_mode, "even", '$Math::BigFloat::rnd_mode = "even"');

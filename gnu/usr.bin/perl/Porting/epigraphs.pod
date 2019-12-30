@@ -17,6 +17,227 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.31.5 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": The Daddy Long-legs and the Fly
+
+L<Announced on 2019-10-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2019/10/msg256478.html>
+
+  'O Mr Daddy Long-legs,'
+    Said Mr Floppy Fly,
+  'It's true I never go to court,
+    And I will tell you why.
+  If I had six long legs like yours,
+    At once I'd go to court!
+  But oh! I can't, because my legs
+    Are so extremely short.
+  And I'm afraid the King and Queen
+  (One in red, and one in green)
+  Would say aloud, "You are not fit,
+  You Fly, to come to court a bit!"'
+
+=head2 v5.31.4 - Ann Leckie, "The Raven Tower"
+
+L<Announced on 2019-09-20 by Max Maischein|https://www.nntp.perl.org/group/perl.perl5.porters/2019/09/msg256254.html>
+
+  Stories can be risky for someone like me. What I say must be true, or it
+will be made true, and if it cannot be made true - if I don't have the
+power, or if what I have said is an impossibility - then I will pay the
+price. I might more or less safely say, "Once there was a man who rode
+home to attend his father's funeral and claim his inheritance, but
+matters were not as he expected them to be." I do not doubt that such a
+thing has happened more than once in all the time there have been
+fathers to die and sons to succeed them. But to go any further, I must
+supply more details - the specific actions of specific people, and their
+specific consequences - and there I might blunder, all unknowing, into
+untruth. It's safer for me to speak of what I know. Or to speak only in
+the safest of generalities. Or else to say plainly at the beginning,
+"Here is a story I have heard," placing the burden of truth or not on
+the teller whose words I am merely accurately reporting.
+
+  But what is the story that I am telling? Here is another story I have
+heard:
+Once there were two brothers, and one of them wanted what the other had.
+Bent all his will to obtain what the other had, no matter the cost.
+  Here is another story: Once there was a prisoner in a tower.
+  And another:
+Once someone risked their life out of duty and loyalty to a friend.
+  Ah, there's a story that I might tell, and truthfully.
+
+=head2 v5.31.3 - Samantha Harvey, "All Is Song"
+
+L<Announced on 2019-08-20 by Tom Hukins|https://www.nntp.perl.org/group/perl.perl5.porters/2019/08/msg256012.html>
+
+We are born from unity, we divide into isolation.  We winnow ourselves
+out from the thing that first made sense of us and then expect to find
+meaning, yet a fraction makes no sense without the number of which
+it's a fractional part.  We see loss, feel grief, give ourselves
+illness, we're cells that have over-divided and we call the division
+growth; the only real growth is in the return to unity, God, the
+unifying principle.
+
+Tired to his core, he turned the video off.  The rain still poured as
+he went upstairs, and in bed as he tripped down into the deep open
+shaft of sleep he kept thinking that to divide by zero was to end up
+with infinity, as was to divide by God.  To divide by God, to divide
+by God, over and over he thought it without sense; to divide by God; I
+must tell my students that the way to pass their exams is to divide by
+God.  Then he must have slept, for it was morning.
+
+=head2 v5.31.2 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": The Duck and the Kangaroo
+
+L<Announced on 2019-07-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2019/07/msg255639.html>
+
+  Said the Duck to the Kangaroo,
+    'Good gracious! how you hop!
+  Over the fields and the water too,
+    As if you never would stop!
+  My life is a bore in this nasty pond,
+  And I long to go out in the world beyond!
+    I wish I could hop like you!'
+    Said the Duck to the Kangaroo.
+
+=head2 v5.31.1 - Kurt Vonnegut, _A Man without a Country_
+
+L<Announced on 2019-06-20 by Karen Etheridge|https://www.nntp.perl.org/group/perl.perl5.porters/2019/06/msg255243.html>
+
+On Tuesday, January 20, 2004, I sent Joel Bleifuss, my editor at _In These
+Times_, this fax:
+
+    ON ORANGE ALERT HERE.
+    ECONOMIC TERRORIST ATTACK
+    EXPECTED AT 8 PM EST. KV
+
+Worried, he called, asking what was up. I said I would tell him when I had
+more complete information on the bombs George Bush was set to deliver in his
+State of the Union address.
+
+That night I got a call from my friend, the out-of-print-science-fiction
+writer Kilgore Trout. He asked me, "Did you watch the State of the Union
+address?"
+
+"Yes, and it certainly helped to remember what the great British socialist
+playwright George Bernard Shaw said about this planet."
+
+"Which was?"
+
+"He said, 'I don't know if there are men on the moon, but if there are, they
+must be using the earth as their lunatic asylum.' And he wasn't talking
+about the germs or the elephants. He meant we the people."
+
+"Okay."
+
+"You don't think this is the Lunatic Asylum of the Universe?"
+
+"Kurt, I don't think I expressed an opinion one way of the other."
+
+"We are killing this planet as a life-support system with the poisons from
+all the thermodynamic whoopee we're making with atomic energy and fossil
+fuels, and everybody knows it, and practically nobody cares. This is how
+crazy we are. I think the planet's immune system is trying to get rid of us
+with AIDS and new strains of flu and tuberculosis, and so on. I think the
+planet should get rid of us. We're really awful animals. I mean, that dumb
+Barbra Streisand song, 'People who need people are the luckiest people in
+the world' -- she's talking about cannibals. Lots to eat. Yes, the planet is
+trying to get rid of us, but I think it's too late."
+
+And I said good-bye to my friend, hung up the phone, sat down and wrote this
+epitaph: "The good Earth -- we could have saved it, but we were too damn
+cheap and lazy."
+
+=head2 v5.31.0 - Fumiko Enchi, Masks
+
+L<Announced on 2019-05-24 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2019/05/msg254886.html>
+
+  The secrets inside her mind are like flowers in a garden at
+  nighttime, filling the darkness with perfume.
+
+=head2 v5.30.1-RC1 - Francesco Maria Piave, trans. Deutsche Grammophon GmbH, "La traviata", Act I: Brindisi
+
+L<Announced on 2019-10-27 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2019/10/msg256542.html>
+
+  ALFREDO:
+  Let's drink from the joyous chalice
+  where beauty flowers...
+  Let the fleeting hour
+  to pleasure's intoxication yield.
+  Let's drink
+  to love's sweet tremors --
+  to those eyes
+  that pierce the heart.
+  Let's drink to love -- to wine
+  that warms our kisses.
+
+=head2 v5.30.0 - Morihei Ueshiba
+
+L<Announced on 2019-05-22 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2019/05/msg254844.html>
+
+  Life is growth. If we stop growing, technically and spiritually, we
+  are as good as dead.
+
+=head2 v5.30.0-RC2 - Derek Walcott
+
+L<Announced on 2019-05-17 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2019/05/msg254824.html>
+
+  The truest writers are those who see language not as linguistic process but
+  as a living element.
+
+    -- Derek Walcott
+
+=head2 v5.30.0-RC1 - Marcel Proust
+
+L<Announced on 2019-05-11 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2019/05/msg254748.html>
+
+  If a little dreaming is dangerous, the cure for it is not to dream
+  less but to dream more, to dream all the time.
+
+    -- Marcel Proust
+
+=head2 v5.29.10 - Maya Angelou, Alone
+
+L<Announced on 2019-04-20 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2019/04/msg254467.html>
+
+  Lying, thinking
+  Last night
+  How to find my soul a home
+  Where water is not thirsty
+  And bread loaf is not stone
+  I came up with one thing
+  And I don't believe I'm wrong
+  That nobody,
+  But nobody
+  Can make it out here alone.
+
+  Alone, all alone
+  Nobody, but nobody
+  Can make it out here alone.
+
+  There are some millionaires
+  With money they can't use
+  Their wives run round like banshees
+  Their children sing the blues
+  They've got expensive doctors
+  To cure their hearts of stone.
+  But nobody
+  No, nobody
+  Can make it out here alone.
+
+  Alone, all alone
+  Nobody, but nobody
+  Can make it out here alone.
+
+  Now if you listen closely
+  I'll tell you what I know
+  Storm clouds are gathering
+  The wind is gonna blow
+  The race of man is suffering
+  And I can hear the moan,
+  'Cause nobody,
+  But nobody
+  Can make it out here alone.
+
+  Alone, all alone
+  Nobody, but nobody
+  Can make it out here alone.
+
 =head2 v5.29.9 - Sir Arthur Conan Doyle, The Adventure of the Dancing Men
 
 L<Announced on 2019-03-21 by Zak Elep|https://www.nntp.perl.org/group/perl.perl5.porters/2019/03/msg253978.html>
@@ -218,6 +439,25 @@ L<Announced on 2018-07-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl
 L<Announced on 2018-06-26 by Sawyer X|http://nntp.perl.org/group/perl.perl5.porters/251297>
 
   Courage is the only antidote for danger.
+
+=head2 v5.28.2 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": The Jumblies
+
+L<Announced on 2019-04-19 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2019/04/msg254456.html>
+
+  They went to sea in a Sieve, they did,
+    In a Sieve they went to sea:
+  In spite of all their friends could say,
+  On a winter's morn, on a stormy day,
+    In a Sieve they went to sea!
+  And when the Sieve turned round and round,
+  And every one cried, 'You'll all be drowned!'
+  They called aloud, 'Our Sieve ain't big,
+  But we don't care a button! we don't care a fig!
+    In a Sieve we'll go to sea!'
+      Far and few, far and few,
+        Are the lands where the Jumblies live;
+      Their heads are green, and their hands are blue,
+        And they went to sea in a Sieve.
 
 =head2 v5.28.2-RC1 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": The Quangle Wangle's Hat
 
@@ -2280,7 +2520,7 @@ shed tears, struck my head and was filled with regret when it was no
 longer of any use, for to me the whole world was worth no more than
 a bean.
 
-=head2 v5.20.2 - Jonathan "Jonti" Picking, L<"Magical Trevor"|http://www.weebls-stuff.com/other-toons/video/magical-trevor.html>
+=head2 v5.20.2 - Jonathan "Jonti" Picking, L<"Magical Trevor"|http://weebls-stuff.com/toons/magical-trevor-episode-01-animated-music-video-mrweebl/>
 
 L<Announced on 2015-02-14 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2015/02/msg225777.html>
 
@@ -2304,7 +2544,7 @@ L<Announced on 2015-02-14 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5
   Oh, beans, lots of beans, lots of beans, lots of beans,
   Yeah, yeah!
 
-=head2 v5.20.2-RC1 - Jonathan "Jonti" Picking, L<"Scampi"|http://www.weebls-stuff.com/other-toons/video/scampi.html>
+=head2 v5.20.2-RC1 - Jonathan "Jonti" Picking, L<"Scampi"|http://weebls-stuff.com/toons/ive-seen-things-scampi-animated-music-video-mrweebl/>
 
 L<Announced on 2015-02-01 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2015/02/msg225273.html>
 

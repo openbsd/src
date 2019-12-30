@@ -613,7 +613,7 @@ open_ifs_socket(int af, int type, int protocol)
     dTHX;
     char *s;
     unsigned long proto_buffers_len = 0;
-    int error_code;
+    int error_code, found = 0;
     SOCKET out = INVALID_SOCKET;
 
     if ((s = PerlEnv_getenv("PERL_ALLOW_NON_IFS_LSP")) && atoi(s))
@@ -645,11 +645,15 @@ open_ifs_socket(int af, int type, int protocol)
                 if ((proto_buffers[i].dwServiceFlags1 & XP1_IFS_HANDLES) == 0)
                     continue;
 
+                found = 1;
                 convert_proto_info_w2a(&(proto_buffers[i]), &proto_info);
 
                 out = WSASocket(af, type, protocol, &proto_info, 0, 0);
                 break;
             }
+
+            if (!found)
+                WSASetLastError(WSAEPROTONOSUPPORT);
         }
 
         Safefree(proto_buffers);

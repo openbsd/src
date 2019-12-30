@@ -154,5 +154,21 @@ is( $@, '', "eval of my() passes");
 eval 'my($a,$b),$x,my($c,$d)';
 pass("RT #126844");
 
+# RT # 133543
+my @false_conditionals = (
+    'my $x1 if 0;',
+    'my @x2 if 0;',
+    'my %x3 if 0;',
+    'my ($x4) if 0;',
+    'my ($x5,@x6, %x7) if 0;',
+    '0 && my $z1;',
+    '0 && my (%z2);',
+);
+for (my $i=0; $i<=$#false_conditionals; $i++) {
+    eval $false_conditionals[$i];
+    like( $@, qr/^This use of my\(\) in false conditional is no longer allowed/,
+        "RT #133543: my() in false conditional: $false_conditionals[$i]");
+}
+
 #Variable number of tests due to the way the while/for loops are tested now
 done_testing();

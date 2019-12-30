@@ -12,7 +12,7 @@ use Math::BigInt;
 use Math::BigFloat;
 
 my $class = "Math::BigInt::Subclass";
-my $CALC = "Math::BigInt::Calc";
+my $LIB   = "Math::BigInt::Calc";
 
 # Check that a subclass is still considered a Math::BigInt
 isa_ok($class->new(123), 'Math::BigInt');

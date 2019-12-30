@@ -29,8 +29,7 @@ like($@, qr/Modification of a read-only value attempted/, '[perl #19566]');
 use strict;
 my $err;
 {
-  no warnings qw(deprecated);
-  open ᕝ, '.' and sysread ᕝ, $_, 1;
+  open ᕝ, '.' and binmode ᕝ and sysread ᕝ, $_, 1;
   $err = $! + 0;
   close ᕝ;
 }

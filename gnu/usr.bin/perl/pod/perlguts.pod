@@ -681,11 +681,13 @@ macro and then check the return value.
 
 The most useful types that will be returned are:
 
-    < SVt_PVAV  Scalar
     SVt_PVAV    Array
     SVt_PVHV    Hash
     SVt_PVCV    Code
     SVt_PVGV    Glob (possibly a file handle)
+
+Any numerical value returned which is less than SVt_PVAV will be a scalar
+of some form.
 
 See L<perlapi/svtype> for more details.
 
@@ -3447,7 +3449,7 @@ is likely to be imminently called which will do a C<FREETMPS>, so there's
 no need to do that either.
 
 The next step is to pop savestack entries: C<CX_LEAVE_SCOPE(cx)> is just
-defined as C<<LEAVE_SCOPE(cx->blk_oldsaveix)>>. Note that during the
+defined as C<< LEAVE_SCOPE(cx->blk_oldsaveix) >>. Note that during the
 popping, it's possible for perl to call destructors, call C<STORE> to undo
 localisations of tied vars, and so on. Any of these can die or call
 C<exit()>. In this case, C<dounwind()> will be called, and the current
@@ -3508,6 +3510,103 @@ exiting a scope, we want to re-initialise the scope. As well as resetting
 C<PL_stack_sp> like C<nextstate>, it also resets C<PL_markstack_ptr>,
 C<PL_scopestack_ix> and C<PL_curpm>. Note that it doesn't do a
 C<FREETMPS>.
+
+
+=head1 Slab-based operator allocation
+
+B<Note:> this section describes a non-public internal API that is subject
+to change without notice.
+
+Perl's internal error-handling mechanisms implement C<die> (and its internal
+equivalents) using longjmp. If this occurs during lexing, parsing or
+compilation, we must ensure that any ops allocated as part of the compilation
+process are freed. (Older Perl versions did not adequately handle this
+situation: when failing a parse, they would leak ops that were stored in
+C C<auto> variables and not linked anywhere else.)
+
+To handle this situation, Perl uses I<op slabs> that are attached to the
+currently-compiling CV. A slab is a chunk of allocated memory. New ops are
+allocated as regions of the slab. If the slab fills up, a new one is created
+(and linked from the previous one). When an error occurs and the CV is freed,
+any ops remaining are freed.
+
+Each op is preceded by two pointers: one points to the next op in the slab, and
+the other points to the slab that owns it. The next-op pointer is needed so
+that Perl can iterate over a slab and free all its ops. (Op structures are of
+different sizes, so the slab's ops can't merely be treated as a dense array.)
+The slab pointer is needed for accessing a reference count on the slab: when
+the last op on a slab is freed, the slab itself is freed.
+
+The slab allocator puts the ops at the end of the slab first. This will tend to
+allocate the leaves of the op tree first, and the layout will therefore
+hopefully be cache-friendly. In addition, this means that there's no need to
+store the size of the slab (see below on why slabs vary in size), because Perl
+can follow pointers to find the last op.
+
+It might seem possible eliminate slab reference counts altogether, by having
+all ops implicitly attached to C<PL_compcv> when allocated and freed when the
+CV is freed. That would also allow C<op_free> to skip C<FreeOp> altogether, and
+thus free ops faster. But that doesn't work in those cases where ops need to
+survive beyond their CVs, such as re-evals.
+
+The CV also has to have a reference count on the slab. Sometimes the first op
+created is immediately freed. If the reference count of the slab reaches 0,
+then it will be freed with the CV still pointing to it.
+
+CVs use the C<CVf_SLABBED> flag to indicate that the CV has a reference count
+on the slab. When this flag is set, the slab is accessible via C<CvSTART> when
+C<CvROOT> is not set, or by subtracting two pointers C<(2*sizeof(I32 *))> from
+C<CvROOT> when it is set. The alternative to this approach of sneaking the slab
+into C<CvSTART> during compilation would be to enlarge the C<xpvcv> struct by
+another pointer. But that would make all CVs larger, even though slab-based op
+freeing is typically of benefit only for programs that make significant use of
+string eval.
+
+When the C<CVf_SLABBED> flag is set, the CV takes responsibility for freeing
+the slab. If C<CvROOT> is not set when the CV is freed or undeffed, it is
+assumed that a compilation error has occurred, so the op slab is traversed and
+all the ops are freed.
+
+Under normal circumstances, the CV forgets about its slab (decrementing the
+reference count) when the root is attached. So the slab reference counting that
+happens when ops are freed takes care of freeing the slab. In some cases, the
+CV is told to forget about the slab (C<cv_forget_slab>) precisely so that the
+ops can survive after the CV is done away with.
+
+Forgetting the slab when the root is attached is not strictly necessary, but
+avoids potential problems with C<CvROOT> being written over. There is code all
+over the place, both in core and on CPAN, that does things with C<CvROOT>, so
+forgetting the slab makes things more robust and avoids potential problems.
+
+Since the CV takes ownership of its slab when flagged, that flag is never
+copied when a CV is cloned, as one CV could free a slab that another CV still
+points to, since forced freeing of ops ignores the reference count (but asserts
+that it looks right).
+
+To avoid slab fragmentation, freed ops are marked as freed and attached to the
+slab's freed chain (an idea stolen from DBM::Deep). Those freed ops are reused
+when possible. Not reusing freed ops would be simpler, but it would result in
+significantly higher memory usage for programs with large C<if (DEBUG) {...}>
+blocks.
+
+C<SAVEFREEOP> is slightly problematic under this scheme. Sometimes it can cause
+an op to be freed after its CV. If the CV has forcibly freed the ops on its
+slab and the slab itself, then we will be fiddling with a freed slab. Making
+C<SAVEFREEOP> a no-op doesn't help, as sometimes an op can be savefreed when
+there is no compilation error, so the op would never be freed. It holds
+a reference count on the slab, so the whole slab would leak. So C<SAVEFREEOP>
+now sets a special flag on the op (C<< ->op_savefree >>). The forced freeing of
+ops after a compilation error won't free any ops thus marked.
+
+Since many pieces of code create tiny subroutines consisting of only a few ops,
+and since a huge slab would be quite a bit of baggage for those to carry
+around, the first slab is always very small. To avoid allocating too many
+slabs for a single CV, each subsequent slab is twice the size of the previous.
+
+Smartmatch expects to be able to allocate an op at run time, run it, and then
+throw it away. For that to work the op is simply malloced when PL_compcv hasn't
+been set up. So all slab-allocated ops are marked as such (C<< ->op_slabbed >>),
+to distinguish them from malloced ops.
 
 
 =head1 AUTHORS

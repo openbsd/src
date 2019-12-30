@@ -317,3 +317,13 @@ up.)
 .SH "CONCLUSION"
 .IX Header "CONCLUSION"
 That's all, folks!
+.SH "COPYRIGHT AND LICENSE"
+.IX Header "COPYRIGHT AND LICENSE"
+Copyright 2001, 2004, 2016, 2018 Russ Allbery <rra@cpan.org>
+.PP
+Copying and distribution of this file, with or without modification, are
+permitted in any medium without royalty provided the copyright notice and
+this notice are preserved.  This file is offered as-is, without any
+warranty.
+.PP
+SPDX-License-Identifier: \s-1FSFAP\s0

@@ -1605,7 +1605,7 @@ PerlProcKillpg(struct IPerlProc* piPerl, int pid, int sig)
 int
 PerlProcPauseProc(struct IPerlProc* piPerl)
 {
-    return win32_sleep((32767L << 16) + 32767);
+    return win32_pause();
 }
 
 PerlIO*

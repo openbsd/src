@@ -775,7 +775,7 @@ put the list in parentheses to avoid ambiguity.  For example:
 Lists may be assigned to only when each element of the list
 is itself legal to assign to:
 
-    ($a, $b, $c) = (1, 2, 3);
+    ($x, $y, $z) = (1, 2, 3);
 
     ($map{'red'}, $map{'blue'}, $map{'green'}) = (0x00f, 0x0f0, 0xf00);
 
@@ -868,8 +868,8 @@ only return true or false, rather than a count of matches.
 
 The final element of a list assignment may be an array or a hash:
 
-    ($a, $b, @rest) = split;
-    my($a, $b, %rest) = @_;
+    ($x, $y, @rest) = split;
+    my($x, $y, %rest) = @_;
 
 You can actually put an array or hash anywhere in the list, but the first one
 in the list will soak up all the values, and anything after it will become
@@ -983,11 +983,11 @@ Multidimensional arrays may be emulated by subscripting a hash with a
 list.  The elements of the list are joined with the subscript separator
 (see L<perlvar/$;>).
 
-    $foo{$a,$b,$c}
+    $foo{$x,$y,$z}
 
 is equivalent to
 
-    $foo{join($;, $a, $b, $c)}
+    $foo{join($;, $x, $y, $z)}
 
 The default subscript separator is "\034", the same as SUBSEP in B<awk>.
 

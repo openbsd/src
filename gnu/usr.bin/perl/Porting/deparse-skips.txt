@@ -73,7 +73,6 @@ re/overload.t             # [perl #123385] %^H output
 re/pat_advanced.t         # [perl #123417]
 re/pat_rt_report.t        # malformed utf8 constant; also /\c@/ -> /\c\@/
 re/pat.t                  # [perl #90590]
-re/regexp_unicode_prop.t
 re/regex_sets.t
 re/reg_fold.t             # [perl #123385] %^H output
 re/rxcode.t               # checks regexp stringification
@@ -157,8 +156,6 @@ uni/variables.t
 ../cpan/bignum/t/scope_r.t
 ../cpan/Math-BigInt/t/constant.t
 ../cpan/Math-BigInt/t/const_mbf.t
-../cpan/Module-Metadata/t/metadata.t
-../cpan/Scalar-List-Utils/t/subname.t
 ../cpan/Scalar-List-Utils/t/uniq.t
 ../cpan/Term-Cap/test.pl
 ../cpan/Test-Simple/t/Legacy/Builder/carp.t

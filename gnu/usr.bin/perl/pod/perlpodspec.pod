@@ -396,7 +396,7 @@ matching ">".  Examples:
 
     That's what I<you> think!
 
-    What's C<dump()> for?
+    What's C<CORE::dump()> for?
 
     X<C<chmod> and C<unlink()> Under Different Operating Systems>
 

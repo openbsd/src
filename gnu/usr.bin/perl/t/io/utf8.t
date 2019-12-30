@@ -10,7 +10,7 @@ skip_all_without_perlio();
 no utf8; # needed for use utf8 not griping about the raw octets
 
 
-plan(tests => 63);
+plan(tests => 62);
 
 $| = 1;
 
@@ -312,15 +312,13 @@ is($failed, undef);
 {
     # [perl #23428] Somethings rotten in unicode semantics
     open F, ">$a_file";
-    binmode F, ":utf8";
-    no warnings qw(deprecated);
-    syswrite(F, $a = chr(0x100));
+    binmode F;
+    $a = "A";
+    utf8::upgrade($a);
+    syswrite(F, $a);
     close F;
-    is( ord($a), 0x100, '23428 syswrite should not downgrade scalar' );
-    like( $a, qr/^\w+/, '23428 syswrite should not downgrade scalar' );
+    ok(utf8::is_utf8($a), '23428 syswrite should not downgrade scalar' );
 }
-
-# sysread() and syswrite() tested in lib/open.t since Fcntl is used
 
 {
     # <FH> on a :utf8 stream should complain immediately with -w

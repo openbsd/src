@@ -1585,3 +1585,40 @@ print "[$x][$f][$n][$s]\n";
 EXPECT
 [3][1][3][0]
 [0][2][3][0]
+########
+# dying while doing a SAVEt_DELETE dureing scope exit leaked a copy of the
+# key. Give ASan something to play with
+sub TIEHASH { bless({}, $_[0]) }
+sub EXISTS { 0 }
+sub DELETE { die; }
+sub DESTROY { print "destroy\n"; }
+
+eval {
+    my %h;
+    tie %h, "main";
+    local $h{foo};
+    print "leaving\n";
+};
+print "left\n";
+EXPECT
+leaving
+destroy
+left
+########
+# ditto for SAVEt_DELETE with an array
+sub TIEARRAY { bless({}, $_[0]) }
+sub EXISTS { 0 }
+sub DELETE { die; }
+sub DESTROY { print "destroy\n"; }
+
+eval {
+    my @a;
+    tie @a, "main";
+    delete local $a[0];
+    print "leaving\n";
+};
+print "left\n";
+EXPECT
+leaving
+destroy
+left

@@ -1,4 +1,4 @@
-# Pod::Man -- Convert POD data to formatted *roff input.
+# Convert POD data to formatted *roff input.
 #
 # This module translates POD documentation into *roff markup using the man
 # macro set, and is intended for converting POD documents written as Unix
@@ -6,18 +6,7 @@
 # a replacement for the pod2man command distributed with versions of Perl
 # prior to 5.6.
 #
-# Perl core hackers, please note that this module is also separately
-# maintained outside of the Perl core as part of the podlators.  Please send
-# me any patches at the address above in addition to sending them to the
-# standard Perl mailing lists.
-#
-# Written by Russ Allbery <rra@cpan.org>
-# Substantial contributions by Sean Burke <sburke@cpan.org>
-# Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-#     2010, 2012, 2013, 2014, 2015, 2016, 2017 Russ Allbery <rra@cpan.org>
-#
-# This program is free software; you may redistribute it and/or modify it
-# under the same terms as Perl itself.
+# SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
 ##############################################################################
 # Modules and declarations
@@ -43,7 +32,7 @@ BEGIN {
 
 @ISA = qw(Pod::Simple);
 
-$VERSION = '4.10';
+$VERSION = '4.11';
 
 # Set the debugging level.  If someone has inserted a debug function into this
 # class already, use that.  Otherwise, use any Pod::Simple debug function
@@ -140,6 +129,7 @@ sub new {
         $self->no_errata_section (0);
         $self->complain_stderr (0);
     } elsif ($$self{errors} eq 'none') {
+        $self->no_errata_section (1);
         $self->no_whining (1);
     } else {
         croak (qq(Invalid errors setting: "$$self{errors}"));
@@ -913,8 +903,6 @@ sub devise_title {
                     $cut = $i + 1;
                     $cut++ if ($dirs[$i + 1] && $dirs[$i + 1] eq 'lib');
                     last;
-                } elsif ($dirs[$i] eq 'lib' && $dirs[$i + 1] && $dirs[0] eq 'ext') {
-                    $cut = $i + 1;
                 }
             }
             if ($cut > 0) {
@@ -1653,9 +1641,9 @@ sub preamble_template {
 __END__
 
 =for stopwords
-en em ALLCAPS teeny fixedbold fixeditalic fixedbolditalic stderr utf8
-UTF-8 Allbery Sean Burke Ossanna Solaris formatters troff uppercased
-Christiansen nourls parsers Kernighan lquote rquote
+en em ALLCAPS teeny fixedbold fixeditalic fixedbolditalic stderr utf8 UTF-8
+Allbery Sean Burke Ossanna Solaris formatters troff uppercased Christiansen
+nourls parsers Kernighan lquote rquote
 
 =head1 NAME
 
@@ -2016,16 +2004,17 @@ only matters for troff output.
 
 =head1 AUTHOR
 
-Russ Allbery <rra@cpan.org>, based I<very> heavily on the original
-B<pod2man> by Tom Christiansen <tchrist@mox.perl.com>.  The modifications to
-work with Pod::Simple instead of Pod::Parser were originally contributed by
-Sean Burke (but I've since hacked them beyond recognition and all bugs are
-mine).
+Russ Allbery <rra@cpan.org>, based I<very> heavily on the original B<pod2man>
+by Tom Christiansen <tchrist@mox.perl.com>.  The modifications to work with
+Pod::Simple instead of Pod::Parser were originally contributed by Sean Burke
+<sburke@cpan.org> (but I've since hacked them beyond recognition and all bugs
+are mine).
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-2009, 2010, 2012, 2013, 2014, 2015, 2016, 2017 Russ Allbery <rra@cpan.org>
+Copyright 1999-2010, 2012-2018 Russ Allbery <rra@cpan.org>
+
+Substantial contributions by Sean Burke <sburke@cpan.org>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -2046,7 +2035,11 @@ documentation on writing manual pages if you've not done it before and
 aren't familiar with the conventions.
 
 The current version of this module is always available from its web site at
-L<http://www.eyrie.org/~eagle/software/podlators/>.  It is also part of the
+L<https://www.eyrie.org/~eagle/software/podlators/>.  It is also part of the
 Perl core distribution as of 5.6.0.
 
 =cut
+
+# Local Variables:
+# copyright-at-end-flag: t
+# End:

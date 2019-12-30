@@ -167,7 +167,7 @@ of mantissa.
 
 There seem to be various problems in this long double implementation.
 If Configure detects this brokenness, it will disable the long double support.
-This can be overriden with explicit C<-Duselongdouble> (or C<-Dusemorebits>,
+This can be overridden with explicit C<-Duselongdouble> (or C<-Dusemorebits>,
 which enables both long doubles and 64 bit integers).  If you decide to
 enable long doubles, for most of the broken things Perl has implemented
 workarounds, but the handling of the special values infinity and NaN

@@ -1161,14 +1161,14 @@ of the prime number generator.
 
 =head1 AUTHOR
 
-Dan Sugalski E<lt>dan@sidhe.org<gt>
+Dan Sugalski E<lt>dan@sidhe.orgE<gt>
 
 Slightly modified by Arthur Bergman to fit the new thread model/module.
 
-Reworked slightly by Jörg Walter E<lt>jwalt@cpan.org<gt> to be more concise
+Reworked slightly by Jörg Walter E<lt>jwalt@cpan.orgE<gt> to be more concise
 about thread-safety of Perl code.
 
-Rearranged slightly by Elizabeth Mattijsen E<lt>liz@dijkmat.nl<gt> to put
+Rearranged slightly by Elizabeth Mattijsen E<lt>liz@dijkmat.nlE<gt> to put
 less emphasis on yield().
 
 =head1 Copyrights

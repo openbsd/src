@@ -92,10 +92,17 @@ foreach my $type ('script_run', 'sr', 'atomic_script_run', 'asr') {
 }
 
     # Until fixed, this was skipping the '['
-    unlike("abc]c", qr/^ (*sr:a(*sr:[bc]*)c) $/x, "Doesn't skip parts of exact matches");
+    unlike("abc]c", qr/^ (*sr:a(*sr:[bc]*)c) $/x,
+           "Doesn't skip parts of exact matches");
 
-      like("abc", qr/(*asr:a[bc]*c)/, "Outer asr works on a run");
-    unlike("abc", qr/(*asr:a(*asr:[bc]*)c)/, "Nested asr works to exclude some things");
+    like("abc", qr/(*asr:a[bc]*c)/, "Outer asr works on a run");
+    unlike("abc", qr/(*asr:a(*asr:[bc]*)c)/,
+           "Nested asr works to exclude some things");
+
+    like("\x{0980}12\x{0993}", qr/^(*sr:.{4})/,
+         "Script with own zero works with ASCII digits"); # perl #133547
+    like("\x{3041}12\x{3041}", qr/^(*sr:.{4})/,
+         "Script without own zero works with ASCII digits");
 
     like("A\x{ff10}\x{ff19}B", qr/^(*sr:.{4})/,
          "Non-ASCII Common digits work with Latin"); # perl #133547
@@ -111,5 +118,9 @@ foreach my $type ('script_run', 'sr', 'atomic_script_run', 'asr') {
          "Non-ASCII Common digits work with Greek"); # perl #133547
     like("\x{1d7ce}αβγ", qr/^(*sr:.{4})/,
          "Non-ASCII Common digits work with Greek"); # perl #133547
+
+    fresh_perl_is('no warnings "experimental::script_run";
+                   print scalar "0" =~ m!(((*sr:()|)0)(*sr:)0|)!;',
+                  1, {}, '[perl #133997]');
 
 done_testing();

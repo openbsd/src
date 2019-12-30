@@ -77,9 +77,7 @@ my %format_qrs;
                     "("
                     . "\\s*-?\\d+\\."
                     . "\\d" x $l
-                    ."|\\s{"
-                    . ($l + 1)
-                    . ",}-)"
+                    ."|\\s*-)"
                }ge;
 
         # convert run of space chars into ' +' or ' *'

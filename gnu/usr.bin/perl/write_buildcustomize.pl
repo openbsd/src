@@ -22,6 +22,8 @@ if ( @ARGV ) {
 # needed to build the nonxs modules
 # After which, all nonxs modules are in lib, which was always sufficient to
 # allow miniperl to build everything else.
+# Getopt::Long is here because it's used by podlators, which is one of the
+# nonxs modules.
 # Term::ReadLine is not here for building but for allowing the debugger to
 # run under miniperl when nothing but miniperl will build :-(.
 
@@ -39,6 +41,7 @@ my @toolchain = qw(cpan/AutoLoader/lib
                    cpan/Text-Tabs/lib
 		   dist/constant/lib
 		   cpan/version/lib
+		   cpan/Getopt-Long/lib
 		   );
 
 # Text-ParseWords used only in ExtUtils::Liblist::Kid::_win32_ext()
@@ -47,7 +50,6 @@ my @toolchain = qw(cpan/AutoLoader/lib
 push @toolchain, qw(
 	cpan/Text-ParseWords/lib
 	dist/ExtUtils-ParseXS/lib
-	cpan/Getopt-Long/lib
 	cpan/parent/lib
 	cpan/ExtUtils-Constant/lib
 ) if $^O eq 'MSWin32';
@@ -58,6 +60,9 @@ require File::Spec::Functions;
 require Cwd;
 
 my $cwd  = Cwd::getcwd();
+
+defined $cwd
+  or die "$0: Can't determine current working directory\n";
 
 # lib must be last, as the toolchain modules write themselves into it
 # as they build, and it's important that @INC order ensures that the partially

@@ -4,7 +4,7 @@ perlfaq4 - Data Manipulation
 
 =head1 VERSION
 
-version 5.021011
+version 5.20190126
 
 =head1 DESCRIPTION
 
@@ -128,10 +128,9 @@ need yourself.
 To see why, notice how you'll still have an issue on half-way-point
 alternation:
 
-    for (my $i = 0; $i < 1.01; $i += 0.05) { printf "%.1f ",$i}
+    for (my $i = -5; $i <= 5; $i += 0.5) { printf "%.0f ",$i }
 
-    0.0 0.1 0.1 0.2 0.2 0.2 0.3 0.3 0.4 0.4 0.5 0.5 0.6 0.7 0.7
-    0.8 0.8 0.9 0.9 1.0 1.0
+    -5 -4 -4 -4 -3 -2 -2 -2 -1 -0 0 0 1 2 2 2 3 4 4 4 5
 
 Don't blame Perl. It's the same as in C. IEEE says we have to do
 this. Perl numbers whose absolute values are integers under 2**31 (on
@@ -1244,6 +1243,10 @@ indentation correctly preserved:
       And whither then? I cannot say.
         --Bilbo in /usr/src/perl/pp_ctl.c
     EVER_ON_AND_ON
+
+Beginning with Perl version 5.26, a much simpler and cleaner way to
+write indented here documents has been added to the language: the
+tilde (~) modifier. See L<perlop/"Indented Here-docs"> for details.
 
 =head1 Data: Arrays
 
@@ -2664,7 +2667,7 @@ The arrays.h/arrays.c code in the L<PGPLOT> module on CPAN does just this.
 If you're doing a lot of float or double processing, consider using
 the L<PDL> module from CPAN instead--it makes number-crunching easy.
 
-See L<http://search.cpan.org/dist/PGPLOT> for the code.
+See L<https://metacpan.org/release/PGPLOT> for the code.
 
 
 =head1 AUTHOR AND COPYRIGHT

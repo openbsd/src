@@ -13,7 +13,7 @@ require XSLoader;
 %EXPORT_TAGS = (
     'glob' => [ qw(
         GLOB_ABEND
-	GLOB_ALPHASORT
+        GLOB_ALPHASORT
         GLOB_ALTDIRFUNC
         GLOB_BRACE
         GLOB_CSH
@@ -29,15 +29,13 @@ require XSLoader;
         GLOB_QUOTE
         GLOB_TILDE
         bsd_glob
-        glob
     ) ],
 );
 $EXPORT_TAGS{bsd_glob} = [@{$EXPORT_TAGS{glob}}];
-pop @{$EXPORT_TAGS{bsd_glob}}; # no "glob"
 
 @EXPORT_OK   = (@{$EXPORT_TAGS{'glob'}}, 'csh_glob');
 
-$VERSION = '1.31';
+$VERSION = '1.32';
 
 sub import {
     require Exporter;
@@ -72,17 +70,11 @@ if ($^O =~ /^(?:MSWin32|VMS|os2|dos|riscos)$/) {
     $DEFAULT_FLAGS |= GLOB_NOCASE();
 }
 
-# File::Glob::glob() is deprecated because its prototype is different from
-# CORE::glob() (use bsd_glob() instead)
+# File::Glob::glob() removed in perl-5.30 because its prototype is different
+# from CORE::glob() (use bsd_glob() instead)
 sub glob {
-    use 5.024;
-    use warnings ();
-    warnings::warnif (deprecated =>
-         "File::Glob::glob() will disappear in perl 5.30. " .
-         "Use File::Glob::bsd_glob() instead.") unless state $warned ++;
-
-    splice @_, 1; # no flags
-    goto &bsd_glob;
+    die "File::Glob::glob() was removed in perl 5.30. " .
+         "Use File::Glob::bsd_glob() instead. $!";
 }
 
 1;

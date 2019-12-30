@@ -9,13 +9,12 @@ use Test::More tests => 19;
 
 use bignum;
 
+# Catch warnings.
+
 my @WARNINGS;
-{
-    # catch warnings:
-    require Carp;
-    no warnings 'redefine';
-    *Carp::carp = sub { push @WARNINGS, $_[0]; };
-}
+local $SIG{__WARN__} = sub {
+    push @WARNINGS, $_[0];
+};
 
 my $rc;
 

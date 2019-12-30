@@ -5,7 +5,7 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc( '../lib' );
-    plan (tests => 196); # some tests are run in BEGIN block
+    plan (tests => 195); # some tests are run in BEGIN block
 }
 
 # Test that defined() returns true for magic variables created on the fly,
@@ -613,9 +613,9 @@ SKIP: {
 }
 
 SKIP: {
-    skip_if_miniperl("No XS in miniperl", 3);
+    skip_if_miniperl("No XS in miniperl", 2);
 
-    for ( [qw( %- Tie::Hash::NamedCapture )], [qw( $[ arybase )],
+    for ( [qw( %- Tie::Hash::NamedCapture )],
           [qw( %! Errno )] ) {
 	my ($var, $mod) = @$_;
 	my $modfile = $mod =~ s|::|/|gr . ".pm";

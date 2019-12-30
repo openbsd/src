@@ -109,7 +109,7 @@ HEREDOC
 
     # [perl #125540] this asserted or crashed
     fresh_perl_like(
-	q(map d$#<<<<""),
+	q(map d<<<<""),
 	qr/Can't find string terminator "" anywhere before EOF at - line 1\./,
 	{},
 	"Don't assert parsing a here-doc if we hit EOF early"
@@ -221,7 +221,7 @@ HEREDOC
     push @tests, [
         "print <<~' EOF ';\n $string\n EOF\nEOF \n  EOF  \n EOF \n",
         " $string\n EOF\nEOF \n  EOF  \n",
-        "intented here-doc matches final delimiter correctly"
+        "indented here-doc matches final delimiter correctly"
     ];
 
     for my $test (@tests) {

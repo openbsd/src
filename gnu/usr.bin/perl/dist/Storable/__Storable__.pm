@@ -27,17 +27,17 @@ our @EXPORT_OK = qw(
 
 our ($canonical, $forgive_me);
 
-our $VERSION = '3.08_01';
+our $VERSION = '3.15';
 
 our $recursion_limit;
 our $recursion_limit_hash;
-
-do "Storable/Limit.pm";
 
 $recursion_limit = 512
   unless defined $recursion_limit;
 $recursion_limit_hash = 256
   unless defined $recursion_limit_hash;
+
+use Carp;
 
 BEGIN {
     if (eval {
@@ -54,16 +54,23 @@ BEGIN {
     # provide a fallback implementation.
     #
     unless ($Storable::{logcroak} && *{$Storable::{logcroak}}{CODE}) {
-        require Carp;
+        *logcroak = \&Carp::croak;
+    }
+    else {
+        # Log::Agent's logcroak always adds a newline to the error it is
+        # given.  This breaks refs getting thrown.  We can just discard what
+        # it throws (but keep whatever logging it does) and throw the original
+        # args.
+        no warnings 'redefine';
+        my $logcroak = \&logcroak;
         *logcroak = sub {
-            Carp::croak(@_);
+            my @args = @_;
+            eval { &$logcroak };
+            Carp::croak(@args);
         };
     }
     unless ($Storable::{logcarp} && *{$Storable::{logcarp}}{CODE}) {
-	require Carp;
-        *logcarp = sub {
-          Carp::carp(@_);
-        };
+        *logcarp = \&Carp::carp;
     }
 }
 
@@ -941,13 +948,13 @@ There are a few things you need to know, however:
 
 =item *
 
-Since Storable 3.05 we probe for the stack recursion limit for references,
+From Storable 3.05 to 3.13 we probed for the stack recursion limit for references,
 arrays and hashes to a maximal depth of ~1200-35000, otherwise we might
 fall into a stack-overflow.  On JSON::XS this limit is 512 btw.  With
 references not immediately referencing each other there's no such
 limit yet, so you might fall into such a stack-overflow segfault.
 
-This probing and the checks performed have some limitations:
+This probing and the checks we performed have some limitations:
 
 =over
 
@@ -955,7 +962,9 @@ This probing and the checks performed have some limitations:
 
 the stack size at build time might be different at run time, eg. the
 stack size may have been modified with ulimit(1).  If it's larger at
-run time Storable may fail the freeze() or thaw() unnecessarily.
+run time Storable may fail the freeze() or thaw() unnecessarily.  If
+it's larger at build time Storable may segmentation fault when
+processing a deep structure at run time.
 
 =item *
 
@@ -969,6 +978,8 @@ nested arrays within many nested hashes may exhaust the processor
 stack without triggering Storable's recursion protection.
 
 =back
+
+So these now have simple defaults rather than probing at build-time.
 
 You can control the maximum array and hash recursion depths by
 modifying C<$Storable::recursion_limit> and

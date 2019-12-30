@@ -3,14 +3,14 @@
 use strict;
 use warnings;
 
-our ($CLASS, $CALC);
+our ($CLASS, $LIB);
 
 ##############################################################################
 # for testing inheritance of _swap
 
 package Math::Foo;
 
-use Math::BigInt lib => $main::CALC;
+use Math::BigInt lib => $main::LIB;
 our @ISA = qw/Math::BigInt/;
 
 use overload
@@ -33,7 +33,7 @@ sub _swap {
 ##############################################################################
 package main;
 
-is($CLASS->config('lib'), $CALC, "$CLASS->config('lib')");
+is($CLASS->config('lib'), $LIB, "$CLASS->config('lib')");
 
 my ($x, $y, $z, @args, $try, $got, $want);
 my ($f, $round_mode, $expected_class);
@@ -559,9 +559,9 @@ is($CLASS->blsft(2**13, $CLASS->new(1)), 2**14,
 
 $z = 1050000000000000;          # may be int on systems with 64bit?
 $x = $CLASS->new($z);
-is($x->bsstr(), '105e+13',	# not 1.05e+15
+is($x->bsstr(), '105e+13',      # not 1.05e+15
    qq|\$x = $CLASS->new($z); \$x->bsstr() = "105e+13"|);
-$z = 1e+129;			# definitely a float (may fail on UTS)
+$z = 1e+129;                    # definitely a float (may fail on UTS)
 # don't compare to $z, since some Perl versions stringify $z into something
 # like '1.e+129' or something equally ugly
 SKIP:{
@@ -575,7 +575,7 @@ SKIP:{
 ###############################################################################
 # test for whitespace including newlines to be handled correctly
 
-# is($Math::BigInt::strict, 1);		# the default
+# is($Math::BigInt::strict, 1);         # the default
 
 foreach my $c (qw/1 12 123 1234 12345 123456 1234567
                   12345678 123456789 1234567890/)
@@ -651,12 +651,12 @@ is($x,        2,       "2 >>= 18 with $CLASS objects");
 # inheritance and overriding of _swap
 
 $x = Math::Foo->new(5);
-$x = $x - 8;		# 8 - 5 instead of 5-8
+$x = $x - 8;            # 8 - 5 instead of 5-8
 is($x, 3, '$x = Math::Foo->new(5); $x = $x - 8; $x = 3');
 is(ref($x), 'Math::Foo', '$x is an object of class "Math::Foo"');
 
 $x = Math::Foo->new(5);
-$x = 8 - $x;		# 5 - 8 instead of 8 - 5
+$x = 8 - $x;            # 5 - 8 instead of 8 - 5
 is($x, -3, '$x = Math::Foo->new(5); $x = 8 - $x; $x = -3');
 is(ref($x), 'Math::Foo', '$x is an object of class "Math::Foo"');
 
@@ -678,7 +678,7 @@ require Config;
 SKIP: {
     skip("no 64 bit integer support", 4)
       if ! $Config::Config{use64bitint} || ! $Config::Config{use64bitall}
-          || $] <= 5.006002;
+          || "$]" < 5.007001;
 
     # The following should not give "1.84467440737096e+19".
 
@@ -700,13 +700,13 @@ SKIP: {
 
 SKIP: {
     # skip GMP, Pari et al.
-    skip("skipping tests not intended for the backend $CALC", 50)
-      unless $CALC =~ /^Math::BigInt::(Bare|Fast)?Calc$/;
+    skip("skipping tests not intended for the backend $LIB", 50)
+      unless $LIB =~ /^Math::BigInt::(Bare|Fast)?Calc$/;
 
     ###########################################################################
     # check proper length of internal arrays
 
-    my $bl = $CALC->_base_len();
+    my $bl = $LIB->_base_len();
     my $BASE = '9' x $bl;
     my $MAX = $BASE;
     $BASE++;
@@ -784,7 +784,7 @@ SKIP: {
 
     # construct a number with a zero-hole of BASE_LEN_SMALL
     {
-        my @bl = $CALC->_base_len();
+        my @bl = $LIB->_base_len();
         my $bl = $bl[5];
 
         $x = '1' x $bl . '0' x $bl . '1' x $bl . '0' x $bl;
@@ -933,7 +933,7 @@ SKIP: {
 sub is_valid {
     my ($x, $f) = @_;
 
-    my $e = 0;			# error?
+    my $e = 0;                  # error?
 
     # allow the check to pass for all Lite, and all MBI and subclasses
     # ok as reference?
@@ -946,7 +946,7 @@ sub is_valid {
             if $e eq '0' && $x->{sign} !~ /^(\+|-|\+inf|-inf|NaN)$/;
 
         $e = "-0 is invalid!" if $e ne '0' && $x->{sign} eq '-' && $x == 0;
-        $e = $CALC->_check($x->{value}) if $e eq '0';
+        $e = $LIB->_check($x->{value}) if $e eq '0';
     }
 
     # test done, see if error did crop up
@@ -2833,71 +2833,127 @@ invalid:NaN
 69:171122452428141311372468338881272839092270544893520369393648040923257279754140647424000000000000000
 
 &bpow
+#
 abc:12:NaN
 12:abc:NaN
+#
+#
+-inf:-inf:0
+-inf:-3:0
+-inf:-2:0
+-inf:-1:0
+-inf:0:NaN
+-inf:1:-inf
+-inf:2:inf
+-inf:3:-inf
+-inf:inf:inf    # complex infinity
+-inf:NaN:NaN
+#
+-3:-inf:0
+-3:-3:NaN
+-3:-2:NaN
+-3:-1:NaN
+-3:0:1
+-3:1:-3
+-3:2:9
+-3:3:-27
+-3:inf:inf      # complex infinity
+-3:NaN:NaN
+#
+-2:-inf:0
+-2:-3:NaN
+-2:-2:NaN
+-2:-1:NaN
+-2:0:1
+-2:1:-2
+-2:2:4
+-2:3:-8
+-2:inf:inf      # complex infinity
+-2:NaN:NaN
+#
+-1:-inf:NaN
+-1:-3:-1
+-1:-2:1
+-1:-1:-1
+-1:0:1
+-1:1:-1
+-1:2:1
+-1:3:-1
+-1:inf:NaN
+-1:NaN:NaN
+#
+0:-inf:inf      # complex infinity
+0:-3:inf        # complex infinity
+0:-2:inf        # complex infinity
+0:-1:inf        # complex infinity
 0:0:1
 0:1:0
 0:2:0
-0:-1:inf
-0:-2:inf
+0:3:0
+0:inf:0
+0:NaN:NaN
+#
+1:-inf:1
+1:-3:1
+1:-2:1
+1:-1:1
 1:0:1
 1:1:1
 1:2:1
 1:3:1
-1:-1:1
-1:-2:1
-1:-3:1
+1:inf:1
+1:NaN:NaN
+#
+2:-inf:0
+2:-3:NaN
+2:-2:NaN
+2:-1:NaN
 2:0:1
 2:1:2
 2:2:4
 2:3:8
+2:inf:inf
+2:NaN:NaN
+#
+3:-inf:0
+3:-3:NaN
+3:-2:NaN
+3:-1:NaN
+3:0:1
+3:1:3
+3:2:9
 3:3:27
--2:2:4
--2:3:-8
--2:4:16
--2:5:-32
-2:-1:NaN
--2:-1:NaN
-2:-2:NaN
--2:-2:NaN
-# inf tests
+3:inf:inf
+3:NaN:NaN
+#
+inf:-inf:0
+inf:-3:0
+inf:-2:0
+inf:-1:0
+inf:0:NaN
+inf:1:inf
+inf:2:inf
+inf:3:inf
+inf:inf:inf
+inf:NaN:NaN
+#
+NaN:-inf:NaN
+NaN:-3:NaN
+NaN:-2:NaN
+NaN:-1:NaN
+NaN:0:NaN
+NaN:1:NaN
+NaN:2:NaN
+NaN:3:NaN
+NaN:inf:NaN
+NaN:NaN:NaN
+#
 +inf:1234500012:inf
 -inf:1234500012:inf
 -inf:1234500013:-inf
-+inf:-12345000123:inf
--inf:-12345000123:-inf
-#  -inf * -inf = inf
--inf:2:inf
--inf:0:NaN
--inf:-1:0
--inf:inf:NaN
-2:inf:inf
-2:-inf:0
-0:inf:0
-0:-inf:inf
--1:-inf:NaN
--1:inf:NaN
--2:inf:NaN
--2:-inf:0
-NaN:inf:NaN
-NaN:-inf:NaN
--inf:NaN:NaN
-inf:NaN:NaN
-inf:-inf:NaN
-1:inf:1
-1:-inf:1
-# 1 ** -x => 1 / (1 ** x)
--1:0:1
--2:0:1
--1:1:-1
--1:2:1
--1:3:-1
--1:4:1
--1:5:-1
--1:-1:-1
--1:-2:1
--1:-3:-1
--1:-4:1
++inf:-12345000123:0
+-inf:-12345000123:0
+#
 10:2:100
 10:3:1000
 10:4:10000
@@ -2908,11 +2964,8 @@ inf:-inf:NaN
 10:9:1000000000
 10:20:100000000000000000000
 123456:2:15241383936
--2:2:4
--2:3:-8
 -2:4:16
 -2:5:-32
--3:2:9
 -3:3:-27
 -3:4:81
 -3:5:-243

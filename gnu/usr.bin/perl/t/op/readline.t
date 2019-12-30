@@ -215,9 +215,8 @@ SKIP: {
     my $line = 'ascii';
     my ( $in, $out );
     pipe $in, $out;
-    binmode $out, ':utf8';
+    binmode $out;
     binmode $in,  ':utf8';
-    no warnings qw(deprecated);
     syswrite $out, "...\n";
     $line .= readline $in;
 
@@ -228,10 +227,11 @@ SKIP: {
     my $line = "\x{2080} utf8";;
     my ( $in, $out );
     pipe $in, $out;
-    binmode $out, ':utf8';
+    binmode $out;
     binmode $in,  ':utf8';
-    no warnings qw(deprecated);
-    syswrite $out, "\x{2080}...\n";
+    my $outdata = "\x{2080}...\n";
+    utf8::encode($outdata);
+    syswrite $out, $outdata;
     $line .= readline $in;
 
     is( $line, "\x{2080} utf8\x{2080}...\n", 'appending from utf to utf8' );

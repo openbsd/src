@@ -19,7 +19,7 @@ use Test::More;
 
 use Unicode::UCD qw(charinfo charprop charprops_all);
 
-my $expected_version = '10.0.0';
+my $expected_version = '12.1.0';
 my $current_version = Unicode::UCD::UnicodeVersion;
 my $v_unicode_version = pack "C*", split /\./, $current_version;
 my $unknown_script = ($v_unicode_version lt v5.0.0)
@@ -786,7 +786,7 @@ SKIP:
         skip("Latin range count will be wrong when using older Unicode release",
              2) if $current_version lt $expected_version;
         my $n1 = @$r1;
-        is($n1, 31, "number of ranges in Latin script (Unicode $expected_version)") if $::IS_ASCII;
+        is($n1, 32, "number of ranges in Latin script (Unicode $expected_version)") if $::IS_ASCII;
         shift @$r1 while @$r1;
         my $r2 = charscript('Latin');
         is(@$r2, $n1, "modifying results should not mess up internal caches");

@@ -24,7 +24,7 @@ ok( $base, "ExtUtils::CBuilder::Base->new() returned true value" );
 isa_ok( $base, 'ExtUtils::CBuilder::Base' );
 
 {
-  $phony = 'foobar';
+  $phony = 'foobar++';
   $base = ExtUtils::CBuilder::Base->new(
       config  => { cc => $phony },
   );

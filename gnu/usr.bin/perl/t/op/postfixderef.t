@@ -16,7 +16,7 @@ BEGIN {
 
 use strict qw(refs subs);
 
-plan(130);
+plan(128);
 
 {
     no strict 'refs';
@@ -326,13 +326,6 @@ is "@foo", "1 2 3 4 5 6 7 8 9", 'lvalue ->$#*';
 $_ = "foo";
 @foo = 7..9;
 %foo = qw( foo oof );
-{
-    no warnings 'deprecated';
-    $* = 42;
-    is "$_->$*", 'foo->42', '->$* interpolation without feature';
-    $# = 43;
-    is "$_->$#*", 'foo->43*', '->$#* interpolation without feature';
-}
 is "$_->@*", 'foo->@*', '->@* does not interpolate without feature';
 is "$_->@[0]", 'foo->@[0]', '->@[ does not interpolate without feature';
 is "$_->@{foo}", "foo->7 8 9", '->@{ does not interpolate without feature';

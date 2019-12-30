@@ -9,24 +9,24 @@ our ($CSH_GLOB);
 BEGIN
 {
     if ($] < 5.006)
-    { 
+    {
         require File::BSDGlob; import File::BSDGlob qw(:glob) ;
         $CSH_GLOB = File::BSDGlob::GLOB_CSH() ;
         *globber = \&File::BSDGlob::csh_glob;
-    }  
+    }
     else
-    { 
+    {
         require File::Glob; import File::Glob qw(:glob) ;
         $CSH_GLOB = File::Glob::GLOB_CSH() ;
         #*globber = \&File::Glob::bsd_glob;
         *globber = \&File::Glob::csh_glob;
-    }  
+    }
 }
 
 our ($Error);
 
 our ($VERSION, @EXPORT_OK);
-$VERSION = '1.000';
+$VERSION = '1.001';
 @EXPORT_OK = qw( globmap );
 
 
@@ -44,7 +44,7 @@ $matchMetaRE = '[' . quotemeta($metachars) . ']';
                 ')' => ')',
            );
 
-%wildCount = map { $_ => 1 } qw/ * ? . { ( [ /;           
+%wildCount = map { $_ => 1 } qw/ * ? . { ( [ /;
 
 sub globmap ($$;)
 {
@@ -88,7 +88,7 @@ sub new
 
     $self->_parseOutputGlob()
         or return undef ;
-    
+
     my @inputFiles = globber($self->{InputGlob}, $flags) ;
 
     if (GLOB_ERROR)
@@ -148,18 +148,18 @@ sub _parseBit
         ++ $self->{WildCount} if $wildCount{$2} ;
 
         if ($2 eq ',')
-        { 
+        {
             return _unmatched("(")
                 if $depth ;
-            
+
             $out .= '|';
         }
         elsif ($2 eq '(')
-        { 
+        {
             ++ $depth ;
         }
         elsif ($2 eq ')')
-        { 
+        {
             return _unmatched(")")
                 if ! $depth ;
 
@@ -214,11 +214,11 @@ sub _parseInputGlob
         ++ $self->{WildCount} if $wildCount{$2} ;
 
         if ($2 eq '(')
-        { 
+        {
             ++ $depth ;
         }
         elsif ($2 eq ')')
-        { 
+        {
             return _unmatched(")")
                 if ! $depth ;
 
@@ -252,8 +252,8 @@ sub _parseInputGlob
             }
             #$string =~ s#(.*?)\}##;
 
-            #my $alt = join '|', 
-            #          map { quotemeta $_ } 
+            #my $alt = join '|',
+            #          map { quotemeta $_ }
             #          split "$noPreBS,", $1 ;
             my $alt = $self->_parseBit($1);
             defined $alt or return 0 ;
@@ -426,7 +426,7 @@ Below is a possible implementation of a script to carry out the rename
         my $new = $old;
         $new =~ s#(.*)\.tar\.gz$#$1.tgz# ;
 
-        rename $old => $new 
+        rename $old => $new
             or die "Cannot rename '$old' to '$new': $!\n;
     }
 
@@ -439,14 +439,14 @@ has already done a lot of the hard work in pattern matching the filenames,
 wouldn't it be handy to be able to use the patterns in the fileglob to
 drive the new filename?
 
-Well, that's I<exactly> what C<File::GlobMapper> does. 
+Well, that's I<exactly> what C<File::GlobMapper> does.
 
 Here is same snippet of code rewritten using C<globmap>
 
     for my $pair (globmap '<*.tar.gz>' => '<#1.tgz>' )
     {
         my ($from, $to) = @$pair;
-        rename $from => $to 
+        rename $from => $to
             or die "Cannot rename '$old' to '$new': $!\n;
     }
 
@@ -454,7 +454,7 @@ So how does it work?
 
 Behind the scenes the C<globmap> function does a combination of a
 file glob to match existing filenames followed by a substitute
-to create the new filenames. 
+to create the new filenames.
 
 Notice how both parameters to C<globmap> are strings that are delimited by <>.
 This is done to make them look more like file globs - it is just syntactic
@@ -463,7 +463,7 @@ distinctive. The enclosing <> are optional, so you don't have to use them - in
 fact the first thing globmap will do is remove these delimiters if they are
 present.
 
-The first parameter to C<globmap>, C<*.tar.gz>, is an I<Input File Glob>. 
+The first parameter to C<globmap>, C<*.tar.gz>, is an I<Input File Glob>.
 Once the enclosing "< ... >" is removed, this is passed (more or
 less) unchanged to C<File::Glob> to carry out a file match.
 
@@ -472,7 +472,7 @@ full Perl regular expression, with the additional step of wrapping each
 transformed wildcard metacharacter sequence in parenthesis.
 
 In this case the input fileglob C<*.tar.gz> will be transformed into
-this Perl regular expression 
+this Perl regular expression
 
     ([^/]*)\.tar\.gz
 
@@ -598,9 +598,9 @@ filename matched by the input file glob. So
 
     *.c *.Z
 
-The second is     
+The second is
 
-Output FileGlobs take the 
+Output FileGlobs take the
 
 =over 5
 
@@ -610,7 +610,7 @@ The "*" character will be replaced with the complete input filename.
 
 =item #1
 
-Patterns of the form /#\d/ will be replaced with the 
+Patterns of the form /#\d/ will be replaced with the
 
 =back
 
@@ -645,7 +645,7 @@ source and destination filenames.
 
 
 Here is an example that renames all c files to cpp.
-    
+
     $ rename '*.c' '#1.cpp'
 
 =head2 A few example globmaps
@@ -656,7 +656,7 @@ To copy all your .c file to a backup directory
 
     '</my/home/*.c>'    '</my/backup/#1.c>'
 
-If you want to compress all    
+If you want to compress all
 
     '</my/home/*.[ch]>'    '<*.gz>'
 

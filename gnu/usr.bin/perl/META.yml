@@ -110,9 +110,9 @@ no_index:
     - vutil.h
     - vxs.inc
 resources:
-  bugtracker: https://rt.perl.org/
+  bugtracker: https://github.com/Perl/perl5/issues
   homepage: http://www.perl.org/
   license: http://dev.perl.org/licenses/
-  repository: http://perl5.git.perl.org/
-version: '5.028002'
+  repository: https://github.com/Perl/perl5
+version: '5.030001'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'

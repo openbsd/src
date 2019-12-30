@@ -103,18 +103,28 @@ END_EXTERN_C
 #define PL_AboveLatin1		(*Perl_GAboveLatin1_ptr(NULL))
 #undef  PL_Assigned_invlist
 #define PL_Assigned_invlist	(*Perl_GAssigned_invlist_ptr(NULL))
+#undef  PL_CCC_non0_non230
+#define PL_CCC_non0_non230	(*Perl_GCCC_non0_non230_ptr(NULL))
 #undef  PL_C_locale_obj
 #define PL_C_locale_obj		(*Perl_GC_locale_obj_ptr(NULL))
 #undef  PL_GCB_invlist
 #define PL_GCB_invlist		(*Perl_GGCB_invlist_ptr(NULL))
 #undef  PL_HasMultiCharFold
 #define PL_HasMultiCharFold	(*Perl_GHasMultiCharFold_ptr(NULL))
+#undef  PL_InBitmap
+#define PL_InBitmap		(*Perl_GInBitmap_ptr(NULL))
+#undef  PL_InMultiCharFold
+#define PL_InMultiCharFold	(*Perl_GInMultiCharFold_ptr(NULL))
 #undef  PL_LB_invlist
 #define PL_LB_invlist		(*Perl_GLB_invlist_ptr(NULL))
 #undef  PL_Latin1
 #define PL_Latin1		(*Perl_GLatin1_ptr(NULL))
-#undef  PL_NonL1NonFinalFold
-#define PL_NonL1NonFinalFold	(*Perl_GNonL1NonFinalFold_ptr(NULL))
+#undef  PL_NonFinalFold
+#define PL_NonFinalFold		(*Perl_GNonFinalFold_ptr(NULL))
+#undef  PL_Posix_ptrs
+#define PL_Posix_ptrs		(*Perl_GPosix_ptrs_ptr(NULL))
+#undef  PL_Private_Use
+#define PL_Private_Use		(*Perl_GPrivate_Use_ptr(NULL))
 #undef  PL_SB_invlist
 #define PL_SB_invlist		(*Perl_GSB_invlist_ptr(NULL))
 #undef  PL_SCX_invlist
@@ -151,6 +161,8 @@ END_EXTERN_C
 #define PL_hash_state		(*Perl_Ghash_state_ptr(NULL))
 #undef  PL_hints_mutex
 #define PL_hints_mutex		(*Perl_Ghints_mutex_ptr(NULL))
+#undef  PL_in_some_fold
+#define PL_in_some_fold		(*Perl_Gin_some_fold_ptr(NULL))
 #undef  PL_keyword_plugin
 #define PL_keyword_plugin	(*Perl_Gkeyword_plugin_ptr(NULL))
 #undef  PL_keyword_plugin_mutex
@@ -167,6 +179,10 @@ END_EXTERN_C
 #define PL_my_ctx_mutex		(*Perl_Gmy_ctx_mutex_ptr(NULL))
 #undef  PL_my_cxt_index
 #define PL_my_cxt_index		(*Perl_Gmy_cxt_index_ptr(NULL))
+#undef  PL_my_cxt_keys
+#define PL_my_cxt_keys		(*Perl_Gmy_cxt_keys_ptr(NULL))
+#undef  PL_my_cxt_keys_size
+#define PL_my_cxt_keys_size	(*Perl_Gmy_cxt_keys_size_ptr(NULL))
 #undef  PL_op_mutex
 #define PL_op_mutex		(*Perl_Gop_mutex_ptr(NULL))
 #undef  PL_op_seq
@@ -197,6 +213,24 @@ END_EXTERN_C
 #define PL_sig_trapped		(*Perl_Gsig_trapped_ptr(NULL))
 #undef  PL_sigfpe_saved
 #define PL_sigfpe_saved		(*Perl_Gsigfpe_saved_ptr(NULL))
+#undef  PL_strategy_accept
+#define PL_strategy_accept	(*Perl_Gstrategy_accept_ptr(NULL))
+#undef  PL_strategy_dup
+#define PL_strategy_dup		(*Perl_Gstrategy_dup_ptr(NULL))
+#undef  PL_strategy_dup2
+#define PL_strategy_dup2	(*Perl_Gstrategy_dup2_ptr(NULL))
+#undef  PL_strategy_mkstemp
+#define PL_strategy_mkstemp	(*Perl_Gstrategy_mkstemp_ptr(NULL))
+#undef  PL_strategy_open
+#define PL_strategy_open	(*Perl_Gstrategy_open_ptr(NULL))
+#undef  PL_strategy_open3
+#define PL_strategy_open3	(*Perl_Gstrategy_open3_ptr(NULL))
+#undef  PL_strategy_pipe
+#define PL_strategy_pipe	(*Perl_Gstrategy_pipe_ptr(NULL))
+#undef  PL_strategy_socket
+#define PL_strategy_socket	(*Perl_Gstrategy_socket_ptr(NULL))
+#undef  PL_strategy_socketpair
+#define PL_strategy_socketpair	(*Perl_Gstrategy_socketpair_ptr(NULL))
 #undef  PL_sv_placeholder
 #define PL_sv_placeholder	(*Perl_Gsv_placeholder_ptr(NULL))
 #undef  PL_thr_key
@@ -205,18 +239,24 @@ END_EXTERN_C
 #define PL_timesbase		(*Perl_Gtimesbase_ptr(NULL))
 #undef  PL_use_safe_putenv
 #define PL_use_safe_putenv	(*Perl_Guse_safe_putenv_ptr(NULL))
+#undef  PL_user_def_props
+#define PL_user_def_props	(*Perl_Guser_def_props_ptr(NULL))
+#undef  PL_user_def_props_aTHX
+#define PL_user_def_props_aTHX	(*Perl_Guser_def_props_aTHX_ptr(NULL))
+#undef  PL_user_prop_mutex
+#define PL_user_prop_mutex	(*Perl_Guser_prop_mutex_ptr(NULL))
 #undef  PL_utf8_charname_begin
 #define PL_utf8_charname_begin	(*Perl_Gutf8_charname_begin_ptr(NULL))
 #undef  PL_utf8_charname_continue
 #define PL_utf8_charname_continue	(*Perl_Gutf8_charname_continue_ptr(NULL))
-#undef  PL_utf8_foldable
-#define PL_utf8_foldable	(*Perl_Gutf8_foldable_ptr(NULL))
 #undef  PL_utf8_foldclosures
 #define PL_utf8_foldclosures	(*Perl_Gutf8_foldclosures_ptr(NULL))
 #undef  PL_utf8_idcont
 #define PL_utf8_idcont		(*Perl_Gutf8_idcont_ptr(NULL))
 #undef  PL_utf8_idstart
 #define PL_utf8_idstart		(*Perl_Gutf8_idstart_ptr(NULL))
+#undef  PL_utf8_mark
+#define PL_utf8_mark		(*Perl_Gutf8_mark_ptr(NULL))
 #undef  PL_utf8_perl_idcont
 #define PL_utf8_perl_idcont	(*Perl_Gutf8_perl_idcont_ptr(NULL))
 #undef  PL_utf8_perl_idstart

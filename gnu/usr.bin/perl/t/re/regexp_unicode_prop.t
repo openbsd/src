@@ -6,7 +6,14 @@
 
 use strict;
 use warnings;
-use 5.010;
+use v5.16;
+use utf8;
+
+# To verify that messages containing the expansions work on UTF-8
+my $utf8_comment;
+
+my @warnings;
+local $SIG {__WARN__} = sub {push @warnings, "@_"};
 
 BEGIN {
     chdir 't' if -d 't';
@@ -15,6 +22,27 @@ BEGIN {
 }
 
 sub run_tests;
+
+sub get_str_name($) {
+    my $char = shift;
+
+    my ($str, $name);
+
+    if ($char =~ /^\\/) {
+        $str  = eval qq ["$char"];
+        $name =      qq ["$char"];
+    }
+    elsif ($char =~ /^0x([0-9A-Fa-f]+)$/) {
+        $str  =  chr hex $1;
+        $name = "chr ($char)";
+    }
+    else {
+        $str  =      $char;
+        $name = qq ["$char"];
+    }
+
+    return ($str, $name);
+}
 
 #
 # This is the data to test.
@@ -81,38 +109,96 @@ my @CLASSES = (
 
 );
 
-my @USER_DEFINED_PROPERTIES = (
-   #
-   # User defined properties
-   #
-   InKana1                   => ['\x{3040}', '!\x{303F}'],
-   InKana2                   => ['\x{3040}', '!\x{303F}'],
-   InKana3                   => ['\x{3041}', '!\x{3040}'],
-   InNotKana                 => ['\x{3040}', '!\x{3041}'],
-   InConsonant               => ['d',        '!e'],
-   IsSyriac1                 => ['\x{0712}', '!\x{072F}'],
-   IsSyriac1KanaMark         => ['\x{309A}', '!\x{3090}'],
-   IsSyriac1KanaMark         => ['\x{0730}', '!\x{0712}'],
-   '# User-defined character properties may lack \n at the end',
-   InGreekSmall              => ['\N{GREEK SMALL LETTER PI}',
-                                 '\N{GREEK SMALL LETTER FINAL SIGMA}'],
-   InGreekCapital            => ['\N{GREEK CAPITAL LETTER PI}', '!\x{03A2}'],
-   Dash                      => ['-'],
-   ASCII_Hex_Digit           => ['!-', 'A'],
-   IsAsciiHexAndDash         => ['-', 'A'],
+my @USER_DEFINED_PROPERTIES;
+my @USER_CASELESS_PROPERTIES;
+my @USER_ERROR_PROPERTIES;
+my @DEFERRED;
+my $overflow;
+BEGIN {
+    $utf8_comment = "#\N{U+30CD}";
 
-   # This overrides the official one
+    use Config;
+    $overflow = $Config{uvsize} < 8 ? "80000000" : "80000000000000000";
+
+    # We defined these at compile time, so that the subroutines that they
+    # refer to aren't known, so that we can test properties not known until
+    # runtime
+
+    @USER_DEFINED_PROPERTIES = (
+        #
+        # User defined properties
+        #
+        InKana1                   => ['\x{3040}', '!\x{303F}'],
+        InKana2                   => ['\x{3040}', '!\x{303F}'],
+        InKana3                   => ['\x{3041}', '!\x{3040}'],
+        InNotKana                 => ['\x{3040}', '!\x{3041}'],
+        InConsonant               => ['d',        '!e'],
+        IsSyriac1                 => ['\x{0712}', '!\x{072F}'],
+        IsSyriac1KanaMark         => ['\x{309A}', '!\x{3090}'],
+        IsSyriac1KanaMark         => ['\x{0730}', '!\x{0712}'],
+        '# User-defined character properties may lack \n at the end',
+        InGreekSmall              => ['\N{GREEK SMALL LETTER PI}',
+                                        '\N{GREEK SMALL LETTER FINAL SIGMA}'],
+        InGreekCapital            => ['\N{GREEK CAPITAL LETTER PI}', '!\x{03A2}'],
+        Dash                      => ['-'],
+        ASCII_Hex_Digit           => ['!-', 'A'],
+        IsAsciiHexAndDash         => ['-', 'A'],
+    );
+
+    @USER_CASELESS_PROPERTIES = (
+        #
+        # User defined properties which differ depending on /i.  Second entry
+        # is false normally, true under /i
+        #
+        'IsMyUpper'                => ["M", "!m" ],
+        'pkg1::pkg2::IsMyLower'    => ["a", "!A" ],
+    );
+
+    @USER_ERROR_PROPERTIES = (
+        'IsOverflow'    => qr/Code point too large in (?#
+                             )"0\t$overflow$utf8_comment" in expansion of (?#
+                             )main::IsOverflow/,
+        'InRecursedA'   => qr/Infinite recursion in user-defined property (?#
+                             )"main::InRecursedA" in expansion of (?#
+                             )main::InRecursedC in expansion of (?#
+                             )main::InRecursedB in expansion of (?#
+                             )main::InRecursedA/,
+        'IsRangeReversed' => qr/Illegal range in "200 100$utf8_comment" in (?#
+                               )expansion of main::IsRangeReversed/,
+        'IsNonHex'        => qr/Can't find Unicode property definition (?#
+                               )"BEEF CAGED" in expansion of main::IsNonHex/,
+
+        # Could have \n, hence /s
+        'IsDeath'        => qr/Died.* in expansion of main::IsDeath/s,
+    );
+
+    # Now create a list of properties whose definitions won't be known at
+    # runtime.  The qr// below thus will have forward references to them, and
+    # when matched at runtime will not know what's in the property definition
+    my @DEFERRABLE_USER_DEFINED_PROPERTIES;
+    push @DEFERRABLE_USER_DEFINED_PROPERTIES, @USER_DEFINED_PROPERTIES;
+    push @DEFERRABLE_USER_DEFINED_PROPERTIES, @USER_CASELESS_PROPERTIES;
+    unshift @DEFERRABLE_USER_DEFINED_PROPERTIES, @USER_ERROR_PROPERTIES;
+    for (my $i = 0; $i < @DEFERRABLE_USER_DEFINED_PROPERTIES; $i+=2) {
+        my $property = $DEFERRABLE_USER_DEFINED_PROPERTIES[$i];
+        if ($property =~ / ^ \# /x) {
+            $i++;
+            redo;
+        }
+
+        # Only do this for the properties in the list that are user-defined
+        next if ($property !~ / ( ^ | :: ) I[ns] /x);
+
+        push @DEFERRED, qr/\p{$property}/,
+                        $DEFERRABLE_USER_DEFINED_PROPERTIES[$i+1];
+    }
+}
+
+# These override the official ones, so if found before defined, the official
+# ones prevail, so can't test deferred definition
+my @OVERRIDING_USER_DEFINED_PROPERTIES = (
    InLatin1                  => ['\x{0100}', '!\x{00FF}'],
 );
-
-my @USER_CASELESS_PROPERTIES = (
-   #
-   # User defined properties which differ depending on /i.  Second entry is
-   # false normally, true under /i
-   #
-   'IsMyUpper'                => ["M", "!m" ],
-);
-
 
 #
 # From the short properties we populate POSIX-like classes.
@@ -163,7 +249,8 @@ while (my ($class, $chars) = each %SHORT_PROPERTIES) {
 
 push @CLASSES => "# Short properties"        => %SHORT_PROPERTIES,
                  "# POSIX like properties"   => %d,
-                 "# User defined properties" => @USER_DEFINED_PROPERTIES;
+                 "# User defined properties" => @USER_DEFINED_PROPERTIES,
+                 "# Overriding user defined properties" => @OVERRIDING_USER_DEFINED_PROPERTIES;
 
 
 #
@@ -177,7 +264,10 @@ for (my $i = 0; $i < @CLASSES; $i += 2) {
 $count += 4 * @ILLEGAL_PROPERTIES;
 $count += 4 * grep {length $_ == 1} @ILLEGAL_PROPERTIES;
 $count += 8 * @USER_CASELESS_PROPERTIES;
-$count += 1;    # Test for pkg:IsMyLower
+$count += 1 * (@DEFERRED - @USER_ERROR_PROPERTIES) / 2;
+$count += 1 * @USER_ERROR_PROPERTIES;
+$count += 1;    # one bad apple
+$count += 1;    # No warnings generated
 
 plan(tests => $count);
 
@@ -188,35 +278,41 @@ sub match {
     $caseless = "" unless defined $caseless;
     $caseless = 'i' if $caseless;
 
-    my ($str, $name);
-
-    if ($char =~ /^\\/) {
-        $str  = eval qq ["$char"];
-        $name =      qq ["$char"];
-    }
-    elsif ($char =~ /^0x([0-9A-Fa-f]+)$/) {
-        $str  =  chr hex $1;
-        $name = "chr ($char)";
-    }
-    else {
-        $str  =      $char;
-        $name = qq ["$char"];
-    }
+    my ($str, $name) = get_str_name($char);
 
     undef $@;
     my $pat = "qr/$match/$caseless";
     my $match_pat = eval $pat;
-    is($@, '', "$pat compiled correctly to a regexp: $@");
-    like($str, $match_pat, "$name correctly matched");
+    if (is($@, '', "$pat compiled correctly to a regexp: $@")) {
+        like($str, $match_pat, "$name correctly matched");
+    }
 
     undef $@;
     $pat = "qr/$nomatch/$caseless";
     my $nomatch_pat = eval $pat;
-    is($@, '', "$pat compiled correctly to a regexp: $@");
-    unlike($str, $nomatch_pat, "$name correctly did not match");
+    if (is($@, '', "$pat compiled correctly to a regexp: $@")) {
+        unlike($str, $nomatch_pat, "$name correctly did not match");
+    }
 }
 
 sub run_tests {
+
+    for (my $i = 0; $i < @DEFERRED; $i+=2) {
+        if (ref $DEFERRED[$i+1] eq 'ARRAY') {
+            my ($str, $name) = get_str_name($DEFERRED[$i+1][0]);
+            like($str, $DEFERRED[$i],
+                "$name correctly matched $DEFERRED[$i] (defn. not known until runtime)");
+        }
+        else {  # Single entry rhs indicates a property that is an error
+            undef $@;
+
+            # Using block eval causes the pattern to not be recompiled, so it
+            # retains its deferred status until this is executed.
+            eval { 'A' =~ $DEFERRED[$i] };
+            like($@, $DEFERRED[$i+1],
+                                "$DEFERRED[$i] gave correct failure message (defn. not known until runtime)");
+        }
+    }
 
     while (@CLASSES) {
         my $class = shift @CLASSES;
@@ -282,15 +378,24 @@ sub run_tests {
         my $in_pat  = eval qq ['\\p{$class}'];
         my $out_pat = eval qq ['\\P{$class}'];
 
-        # Verify works as regularly for not /i
-        match $_, $in_pat,  $out_pat for @in;
-        match $_, $out_pat, $in_pat  for @out;
+        # Verify that adding /i does change the out set to match.
+        match $_, $in_pat,  $out_pat, 'i' for @out;
 
         # Verify that adding /i doesn't change the in set.
         match $_, $in_pat,  $out_pat, 'i' for @in;
 
-        # Verify that adding /i does change the out set to match.
-        match $_, $in_pat,  $out_pat, 'i' for @out;
+        # Verify works as regularly for not /i
+        match $_, $in_pat,  $out_pat for @in;
+        match $_, $out_pat, $in_pat  for @out;
+    }
+
+    print "# User-defined properties with errors in their definition\n";
+    while (my $error_property = shift @USER_ERROR_PROPERTIES) {
+        my $error_re = shift @USER_ERROR_PROPERTIES;
+
+        undef $@;
+        eval { 'A' =~ /\p{$error_property}/; };
+        like($@, $error_re, "$error_property gave correct failure message");
     }
 }
 
@@ -300,8 +405,8 @@ sub run_tests {
 #
 
 sub InKana1 {<<'--'}
-3040    309F
-30A0    30FF
+3040    309F            # A comment; next line has trailing spaces
+30A0    30FF    
 --
 
 sub InKana2 {<<'--'}
@@ -310,15 +415,18 @@ sub InKana2 {<<'--'}
 --
 
 sub InKana3 {<<'--'}
+# First line comment
 +utf8::InHiragana
+# Full line comment
 +utf8::InKatakana
 -utf8::IsCn
 --
 
 sub InNotKana {<<'--'}
-!utf8::InHiragana
--utf8::InKatakana
+!utf8::InHiragana       # A comment; next line has trailing spaces
+-utf8::InKatakana   
 +utf8::IsCn
+# Final line comment
 --
 
 sub InConsonant {
@@ -337,6 +445,18 @@ sub IsSyriac1 {<<'--'}
 0730    074A
 --
 
+sub InRecursedA {
+    return "+main::InRecursedB\n";
+}
+
+sub InRecursedB {
+    return "+main::InRecursedC\n";
+}
+
+sub InRecursedC {
+    return "+main::InRecursedA\n";
+}
+
 sub InGreekSmall   {return "03B1\t03C9"}
 sub InGreekCapital {return "0391\t03A9\n-03A2"}
 
@@ -350,32 +470,46 @@ sub InLatin1 {
 }
 
 sub IsMyUpper {
+    use feature 'state';
+
+    state $cased_count = 0;
+    state $caseless_count = 0;
+    my $ret= "+utf8::";
+
     my $caseless = shift;
-    return "+utf8::"
-           . (($caseless)
-               ? 'Alphabetic'
-               : 'Uppercase')
-           . "\n&utf8::ASCII";
-}
-
-{   # This has to be done here and not like the others, because we have to
-    # make sure that the property is not known until after the regex is
-    # compiled.  It was previously getting confused about the pkg and /i
-    # combination
-
-    my $mylower = qr/\p{pkg::IsMyLower}/i;
-
-    sub pkg::IsMyLower {
-        my $caseless = shift;
-        return "+utf8::"
-            . (($caseless)
-                ? 'Alphabetic'
-                : 'Lowercase')
-            . "\n&utf8::ASCII";
+    if($caseless) {
+        die "Called twice" if $caseless_count;
+        $caseless_count++;
+        $ret .= 'Alphabetic'
+    }
+    else {
+        die "Called twice" if $cased_count;
+        $cased_count++;
+        $ret .= 'Uppercase';
     }
 
-    like("A", $mylower, "Not available until runtime user-defined property with pkg:: and /i works");
+    return $ret . "\n&utf8::ASCII";
+}
 
+sub pkg1::pkg2::IsMyLower {
+    my $caseless = shift;
+    return "+utf8::"
+        . (($caseless)
+            ? 'Alphabetic'
+            : 'Lowercase')
+        . "\n&utf8::ASCII";
+}
+
+sub IsRangeReversed {
+    return "200 100$utf8_comment";
+}
+
+sub IsNonHex {
+    return "BEEF CAGED$utf8_comment";
+}
+
+sub IsDeath {
+    die;
 }
 
 # Verify that can use user-defined properties inside another one
@@ -396,4 +530,20 @@ sub ISfoo   { die }
 sub INfoo   { die }
 sub Is::foo { die }
 sub In::foo { die }
+
+sub IsOverflow {
+    return "0\t$overflow$utf8_comment";
+}
+
+fresh_perl_like(<<'EOP', qr/Can't find Unicode property definition "F000\\tF010" in expansion of InOneBadApple/, {}, "Just one component bad");
+# Extra backslash converts tab to backslash-t
+sub InOneBadApple { return "0100\t0110\n10000\t10010\nF000\\tF010\n0400\t0410" }
+qr/\p{InOneBadApple}/;
+EOP
+
+if (! is(@warnings, 0, "No warnings were generated")) {
+    diag join "\n", @warnings, "\n";
+}
+
+1;
 __END__

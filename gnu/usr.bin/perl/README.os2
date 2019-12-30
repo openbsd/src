@@ -619,7 +619,7 @@ C<set PERLLIB_PREFIX> in F<Config.sys>, see L</"C<PERLLIB_PREFIX>">.
 
 =item Additional Perl modules
 
-  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.28.2/
+  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.30.1/
 
 Same remark as above applies.  Additionally, if this directory is not
 one of directories on @INC (and @INC is influenced by C<PERLLIB_PREFIX>), you
@@ -695,7 +695,7 @@ currently start with C<f:/>).
 =head2 B<Warning>
 
 The automatic and manual perl installation leave precompiled paths
-inside perl executables. While these paths are overwriteable (see
+inside perl executables. While these paths are overwritable (see
 L</"C<PERLLIB_PREFIX>">, L</"C<PERL_SH_DIR>">), some people may prefer
 binary editing of paths inside the executables/DLLs.
 

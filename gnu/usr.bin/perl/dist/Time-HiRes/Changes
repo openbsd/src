@@ -1,9 +1,66 @@
 Revision history for the Perl extension Time::HiRes.
 
+{{NEXT}}
+
+1.9760 [2019-02-18]
+ - make utime() available only if we have both fd and name setting
+   [RT #133030]
+ - Adjutst Makefile.PL for windows: the DEFINE() in Makefile.PL
+   can't be be in sub init() because that sub isn't called on windows
+ - t/itimer.t: avoid race condition.
+ - don't truncate nanosec utime
+ - fallback/const-c.inc: Avoid compiler warning showing up on darwin.
+
 1.9759 [2018-03-23]
  - This version reverts the changes on CPAN that were included in 1.9754 - 1.9758.
    Several of these changes caused instability on some windows platforms. We can
    revisit these fixes if necessary in Perl 5.29.0
+
+1.9758 [2018-03-21]
+ - fix build in Win32 with Visual C by introducing a fake struct timezone
+   [rt.cpan.org #124844]
+ - in utime.t detect better being run in a noatime filesystem,
+   and if so, skip the test (for the HAMMER filesystem of DragonflyBSD)
+ - also for the HAMMER fs (if not in noatime), lower the expected subsecond
+   timestamp granularity to microseconds
+ - fix the version number typo in Changes: 1.9577 -> 1.9757
+
+1.9757 [2018-03-15]
+ - fix win32 (and cygwin?) builds which have been broken since 1.9755:
+   problem was that gettimeofday() is a macro and needs to stay such
+ - regenerate ppport.h with Perl 5.26.1 (was previously generated with
+   5.25.6) and Devel::PPPort 3.35 (previously 3.36) -- this doesn't
+   change the ppport.h, though
+
+1.9756 [2018-03-14]
+ - division by zero in new test tv_interval.t [rt.cpan.org #124775]:
+   made the test pass even if the difference is zero, but also
+   made it practically impossible to ever be zero by adding
+   a sub-second sleep.
+ - remove comments from inside qw [rt.cpan.org #124777],
+   only seemed to be caught by Perl 5.18.4
+
+1.9755 [2018-03-14]
+ - adjust the error messages of tv_interval()
+ - the NV_1EX constants now cast to be NV so that
+   tv_interval() with long double builds does not
+   produce ugly results [rt.cpan.org #106456]
+ - add tests for tv_interval()
+ - centralize the mygettimeofday() logic
+ - make the mygettimeofday() a function instead of macro
+ - add the OS X 10.12+ clock_gettime() constants
+   CLOCK_MONOTONIC_RAW_APPROX CLOCK_UPTIME_RAW_APPROX
+ - regenerate the fallback files
+
+1.9754 [2018-02-16]
+ - unify the gettimeofday() and time() forked code
+   that had near identical code paths for MacOS Classic
+   (which has two unusual features: unsigned time_t,
+   and a special tz struct member), and for non-MacOS Classic
+ - tv_interval should be implemented in XS
+   [rt.cpan.org #106456]
+   thanks to Sergey Aleynikov (suggested implementation simplified
+   by the above-mentioned MacOS Classic simplification)
 
 1.9753 [2018-01-11]
  - in t/clock.t in a fast system we need to burn more CPU,

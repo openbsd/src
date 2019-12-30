@@ -5,6 +5,8 @@
 # by both C packages with Automake and by stand-alone Perl modules.  See
 # Test::RRA::Automake for additional functions specifically for C Automake
 # distributions.
+#
+# SPDX-License-Identifier: MIT
 
 package Test::RRA;
 
@@ -34,7 +36,7 @@ BEGIN {
     # This version should match the corresponding rra-c-util release, but with
     # two digits for the minor version, including a leading zero if necessary,
     # so that it will sort properly.
-    $VERSION = '6.03';
+    $VERSION = '7.01';
 }
 
 # Compare a string to the contents of a file, similar to the standard is()
@@ -277,3 +279,7 @@ by the L<Lancaster
 Consensus|https://github.com/Perl-Toolchain-Gang/toolchain-site/blob/master/lancaster-consensus.md>.
 
 =cut
+
+# Local Variables:
+# copyright-at-end-flag: t
+# End:

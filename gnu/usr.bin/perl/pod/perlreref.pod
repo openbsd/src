@@ -256,7 +256,7 @@ There is no quantifier C<{,n}>. That's interpreted as a literal string.
    (?&name)          Recurse into a named subpattern
    (?P>name)         Recurse into a named subpattern (python syntax)
    (?(cond)yes|no)
-   (?(cond)yes)      Conditional expression, where "cond" can be:
+   (?(cond)yes)      Conditional expression, where "(cond)" can be:
                      (?=pat)   lookahead
                      (?!pat)   negative lookahead
                      (?<=pat)  lookbehind

@@ -269,6 +269,20 @@ splpage(char *pag, char *New, long int sbit)
  * reasonable, and all offsets in the index should be in order.
  * this could be made more rigorous.
  */
+/*
+  Layout of a page is:
+  Top of block:
+  number of keys/values (short)
+  Array of (number of keys/values) offsets, alternating between key offsets
+  and value offsets (shorts)
+  End of block:
+   - value/key data, last key ends at end of block (bytes)
+
+  So:
+    N key0off val0off key1off val1off ... val1 key1 val0 key0
+
+  Be careful to note N is the number of offsets, *not* the number of keys.
+ */
 int
 chkpage(char *pag)
 {
@@ -283,11 +297,17 @@ chkpage(char *pag)
                 off = PBLKSIZ;
                 for (ino++; n > 0; ino += 2) {
                         if (ino[0] > off || ino[1] > off ||
-                            ino[1] > ino[0])
+                            ino[1] > ino[0] || ino[1] <= 0)
                                 return 0;
                         off = ino[1];
                         n -= 2;
                 }
+                /* there must be an even number of offsets */
+                if (n != 0)
+                    return 0;
+                /* check the key/value offsets don't overlap the key/value data */
+                if ((char *)ino > pag + off)
+                    return 0;
         }
         return 1;
 }

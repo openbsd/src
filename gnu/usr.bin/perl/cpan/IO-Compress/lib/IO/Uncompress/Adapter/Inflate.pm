@@ -4,11 +4,11 @@ use strict;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.074 qw(:Status);
-use Compress::Raw::Zlib  2.074 qw(Z_OK Z_BUF_ERROR Z_STREAM_END Z_FINISH MAX_WBITS);
+use IO::Compress::Base::Common  2.084 qw(:Status);
+use Compress::Raw::Zlib  2.084 qw(Z_OK Z_BUF_ERROR Z_STREAM_END Z_FINISH MAX_WBITS);
 
 our ($VERSION);
-$VERSION = '2.074';
+$VERSION = '2.084';
 
 
 
@@ -62,7 +62,6 @@ sub uncompr
 
     my $status = $inf->inflate($from, $to, $eof);
     $self->{ErrorNo} = $status;
-
     if ($status != Z_OK && $status != Z_STREAM_END && $status != Z_BUF_ERROR)
     {
         $self->{Error} = "Inflation Error: $status";

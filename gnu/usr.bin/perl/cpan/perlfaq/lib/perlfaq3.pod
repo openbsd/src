@@ -4,7 +4,7 @@ perlfaq3 - Programming Tools
 
 =head1 VERSION
 
-version 5.021011
+version 5.20190126
 
 =head1 DESCRIPTION
 
@@ -940,9 +940,8 @@ You probably won't see much of a speed increase either, since most
 solutions simply bundle a Perl interpreter in the final product
 (but see L<How can I make my Perl program run faster?>).
 
-The Perl Archive Toolkit ( L<http://par.perl.org/> ) is Perl's
-analog to Java's JAR. It's freely available and on CPAN (
-L<http://search.cpan.org/dist/PAR/> ).
+The Perl Archive Toolkit is Perl's analog to Java's JAR. It's freely
+available and on CPAN ( L<https://metacpan.org/pod/PAR> ).
 
 There are also some commercial products that may work for you, although
 you have to buy a license for them.

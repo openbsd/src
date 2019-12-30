@@ -1,3 +1,37 @@
+2019-04-23 16:00:00 xsawyerx
+    version 3.15
+    * Fix leaking.
+
+unreleased
+    version 3.14
+	* (perl #133708) don't build-time probe for stack limits at all
+
+unreleased
+    version 3.12
+        * (perl #133411) don't probe for stack limits with -Dusecrosscompile
+
+2018-04-27 20:40:00 xsawyerx
+    version 3.11
+        * Fix Strawberry Perl build failures.
+
+2018-04-21 22:00:00 xsawyerx
+    Version 3.10
+        * Fix binary artifacts from distribution.
+
+2018-04-21 16:49:00 xsawyerx
+    Version 3.09
+        * Fix "provides" in metadata (META.yml/META.json) to use the Storable
+          template instead of a small other file (which also didn't exist).
+
+2018-04-21 11:23:00 xsawyerx
+    Version 3.08
+        * (perl #132849) try to disable core files when deliberatly segfaulting.
+        * (perl #127743) don't probe Storable limits so much.
+        * (perl #132893) don't probe for Storable recursion limits on old Win32.
+        * (perl #132870) workaround VC2017 compiler bug.
+        * (perl #127743) re-work for debugging builds with MSVC.
+        * (perl #133039) dont build a Storable.so/.dll with a static perl build.
+
 2018-02-07 15:08:00 tonyc
     Version 3.06
 

@@ -3,7 +3,7 @@ package Archive::Tar::Constant;
 BEGIN {
     require Exporter;
 
-    $VERSION    = '2.30';
+    $VERSION    = '2.32';
     @ISA        = qw[Exporter];
 
     require Time::Local if $^O eq "MacOS";

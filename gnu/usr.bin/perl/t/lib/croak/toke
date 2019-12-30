@@ -481,6 +481,19 @@ Bareword found where operator expected at - line 2, near "2p0"
 syntax error at - line 2, near "2p0"
 Execution of - aborted due to compilation errors.
 ########
+# NAME dump() must be written as CORE::dump() as of Perl 5.30
+BEGIN { $^C = 1; }
+dump;
+CORE::dump;
+EXPECT
+dump() must be written as CORE::dump() as of Perl 5.30 at - line 2.
+########
+# NAME check Prototype not terminated includes line number (133524)
+sub t1 {}
+sub t2 (}
+EXPECT
+Prototype not terminated at - line 2.
+########
 # NAME [perl #132158] format with syntax errors
 format=
 @

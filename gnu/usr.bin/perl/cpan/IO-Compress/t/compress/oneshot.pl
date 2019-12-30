@@ -16,11 +16,23 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 1002 + $extra ;
+    plan tests => 1007 + $extra ;
 
     use_ok('IO::Uncompress::AnyUncompress', qw(anyuncompress $AnyUncompressError)) ;
 
 }
+
+my $OriginalContent1 = <<EOM ;
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ut tempus odio id
+ dolor. Camelus perlus.  Larrius in lumen numen.  Dolor en quiquum filia
+ est.  Quintus cenum parat.
+EOM
+
+my $OriginalContent2 = <<EOM ;
+LOREM ipsum dolor sit amet, consectetuer adipiscing elit. Ut tempus odio id
+ dolor. Camelus perlus.  Larrius in lumen numen.  Dolor en quiquum filia
+ est.  Quintus cenum PARAT.
+EOM
 
 sub run
 {
@@ -286,9 +298,8 @@ sub run
             my $already = '';
             $already = 'abcde' if $append ;
 
-            for my $buffer ( undef, '', "abcde" )
+            for my $buffer ( undef, '', $OriginalContent1 )
             {
-
                 my $disp_content = defined $buffer ? $buffer : '<undef>' ;
 
                 my $keep = $buffer;
@@ -306,7 +317,6 @@ sub run
                     $got = undef if ! defined $buffer && $got eq '' ;
                     ok ! $$Error, "  no error [$$Error]" ;
                     is $got, $buffer, "  Uncompressed matches original";
-
                 }
 
                 {
@@ -520,22 +530,22 @@ sub run
 
         my $lex = new LexFile(my $file1, my $file2) ;
 
-        writeFile($file1, "data1");
-        writeFile($file2, "data2");
+        writeFile($file1, $OriginalContent1);
+        writeFile($file2, $OriginalContent2);
         my $of = new IO::File "<$file1" ;
         ok $of, "  Created output filehandle" ;
 
         #my @input = (   undef, "", $file2, \undef, \'', \"abcde", $of) ;
-        #my @expected = ("", "", $file2, "", "", "abcde", "data1");
-        #my @uexpected = ("", "", "data2", "", "", "abcde", "data1");
+        #my @expected = ("", "", $file2, "", "", "abcde", $OriginalContent1);
+        #my @uexpected = ("", "", $OriginalContent2, "", "", "abcde", $OriginalContent1);
         #my @input = (   $file2, \"abcde", $of) ;
-        #my @expected = ( $file2, "abcde", "data1");
-        #my @uexpected = ("data2", "abcde", "data1");
+        #my @expected = ( $file2, "abcde", $OriginalContent1);
+        #my @uexpected = ($OriginalContent2, "abcde", $OriginalContent1);
 
         my @input = (   $file1, $file2) ;
         #my @expected = ( $file1, $file2);
-        my @expected = ("data1", "data2");
-        my @uexpected = ("data1", "data2");
+        my @expected = ($OriginalContent1, $OriginalContent2);
+        my @uexpected = ($OriginalContent1, $OriginalContent2);
 
         my @keep = @input ;
 
@@ -618,7 +628,7 @@ sub run
             {
                 title "Truncated file";
                 skip '', 7
-                    if $CompressClass =~ /lzop|lzf|lzma/i ;
+                    if $CompressClass =~ /lzop|lzf|lzma|zstd|lzip/i ;
 
                 my @in ;
                 push @in, "abcde" x 10;
@@ -644,6 +654,33 @@ sub run
         }
     }
 
+    foreach my $bit ($CompressClass)
+    {
+
+        my $Error = getErrorRef($bit);
+        my $Func = getTopFuncRef($bit);
+        my $TopType = getTopFuncName($bit);
+
+        my $TopTypeInverse = getInverse($bit);
+        my $FuncInverse = getTopFuncRef($TopTypeInverse);
+        my $ErrorInverse = getErrorRef($TopTypeInverse);
+
+        title 'Round trip binary data that happens to include \r\n' ;
+
+        my $lex = new LexFile(my $file1, my $file2, my $file3) ;
+
+        my $original = join '', map { chr } 0x00 .. 0xff ;
+        $original .= "data1\r\ndata2\r\ndata3\r\n" ;
+
+        writeFile($file1, $original);
+        is readFile($file1), $original;
+
+        ok &$Func($file1 => $file2), '  Compressed ok' ;
+        ok &$FuncInverse($file2 => $file3), '  Uncompressed ok' ;
+        is readFile($file3), $original, "  round tripped ok";
+ 
+    }
+
     foreach my $bit ($UncompressClass,
                     #'IO::Uncompress::AnyUncompress',
                     )
@@ -660,9 +697,13 @@ sub run
         my $keep = $data ;
         my $extra = "after the main event";
 
+        SKIP:
         foreach my $fb ( qw( filehandle buffer ) )
         {
             title "Trailingdata with $TopType, from $fb";
+
+            skip "zstd doesn't support trailing data", 9
+                if $CompressClass =~ /zstd/i ;
 
             my $lex = new LexFile my $name ;
             my $input ;
@@ -1008,8 +1049,8 @@ sub run
         my $Func = getTopFuncRef($bit);
         my $TopType = getTopFuncName($bit);
 
-        my $buffer = "abcde" ;
-        my $buffer2 = "ABCDE" ;
+        my $buffer = $OriginalContent1;
+        my $buffer2 = $OriginalContent2; 
         my $keep_orig = $buffer;
 
         my $comp = compressBuffer($UncompressClass, $buffer) ;
@@ -1327,8 +1368,8 @@ sub run
 
         my $lex = new LexFile(my $file1, my $file2) ;
 
-        writeFile($file1, compressBuffer($UncompressClass,"data1"));
-        writeFile($file2, compressBuffer($UncompressClass,"data2"));
+        writeFile($file1, compressBuffer($UncompressClass, $OriginalContent1));
+        writeFile($file2, compressBuffer($UncompressClass, $OriginalContent2));
 
         my $of = new IO::File "<$file1" ;
         ok $of, "  Created output filehandle" ;
@@ -1336,7 +1377,7 @@ sub run
         #my @input    = ($file2, \$undef, \$null, \$comp, $of) ;
         #my @expected = ('data2', '',      '',    'abcde', 'data1');
         my @input    = ($file1, $file2);
-        my @expected = ('data1', 'data2');
+        my @expected = ($OriginalContent1, $OriginalContent2);
 
         my @keep = @input ;
 
@@ -1622,6 +1663,8 @@ sub run
         ok &$UncompFunc($fh_in2 => $fh_out2), '  UnCompressed ok' ;
         is $output, $input, "round trip ok" ;
     }
+
+  
 }
 
 # TODO add more error cases

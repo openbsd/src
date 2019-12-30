@@ -31,6 +31,18 @@ C<ftp.gnu.org>, but you are strongly urged to use one of the many
 mirrors.  You can obtain a list of mirror sites from
 L<http://www.gnu.org/order/ftp.html>.
 
+=head1 SECURITY AND PORTABILITY
+
+B<Do not accept GDBM files from untrusted sources.>
+
+GDBM files are not portable across platforms.
+
+The GDBM documentation doesn't imply that files from untrusted sources
+can be safely used with C<libgdbm>.
+
+A maliciously crafted file might cause perl to crash or even expose a
+security vulnerability.
+
 =head1 BUGS
 
 The available functions and the gdbm/perl interface need to be documented.
@@ -73,7 +85,7 @@ require XSLoader;
 );
 
 # This module isn't dual life, so no need for dev version numbers.
-$VERSION = '1.17';
+$VERSION = '1.18';
 
 XSLoader::load();
 

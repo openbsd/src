@@ -19,6 +19,7 @@
 # In this file, we use the latter "Baby Perl" approach, and increment
 # will be worked over by t/op/inc.t
 
+$| = 1;
 $Level = 1;
 my $test = 1;
 my $planned;
@@ -199,7 +200,9 @@ sub find_git_or_skip {
 	    $source_dir = '.'
 	}
     }
-    if ($source_dir) {
+    if ($ENV{'PERL_BUILD_PACKAGING'}) {
+	$reason = 'PERL_BUILD_PACKAGING is set';
+    } elsif ($source_dir) {
 	my $version_string = `git --version`;
 	if (defined $version_string
 	      && $version_string =~ /\Agit version (\d+\.\d+\.\d+)(.*)/) {
@@ -211,9 +214,6 @@ sub find_git_or_skip {
 	}
     } else {
 	$reason = 'not being run from a git checkout';
-    }
-    if ($ENV{'PERL_BUILD_PACKAGING'}) {
-	$reason = 'PERL_BUILD_PACKAGING is set';
     }
     skip_all($reason) if $_[0] && $_[0] eq 'all';
     skip($reason, @_);
@@ -1744,6 +1744,20 @@ WATCHDOG_VIA_ALARM:
             kill($sig, $pid_to_kill);
         };
     }
+}
+
+# Orphaned Docker or Linux containers do not necessarily attach to PID 1. They might attach to 0 instead.
+sub is_linux_container {
+
+    if ($^O eq 'linux' && open my $fh, '<', '/proc/1/cgroup') {
+        while(<$fh>) {
+            if (m{^\d+:pids:(.*)} && $1 ne '/init.scope') {
+                return 1;
+            }
+        }
+    }
+
+    return 0;
 }
 
 1;

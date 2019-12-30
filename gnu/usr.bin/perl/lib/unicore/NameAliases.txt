@@ -1,6 +1,6 @@
-# NameAliases-10.0.0.txt
-# Date: 2017-05-06, 18:10:00 GMT [KW, LI]
-# © 2017 Unicode®, Inc.
+# NameAliases-12.1.0.txt
+# Date: 2019-03-08, 23:59:00 GMT [KW, LI]
+# © 2019 Unicode®, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
@@ -315,6 +315,10 @@ FEFF;BOM;abbreviation
 FEFF;ZWNBSP;abbreviation
 122D4;CUNEIFORM SIGN NU11 TENU;correction
 122D5;CUNEIFORM SIGN NU11 OVER NU11 BUR OVER BUR;correction
+16E56;MEDEFAIDRIN CAPITAL LETTER H;correction
+16E57;MEDEFAIDRIN CAPITAL LETTER NG;correction
+16E76;MEDEFAIDRIN SMALL LETTER H;correction
+16E77;MEDEFAIDRIN SMALL LETTER NG;correction
 1B001;HENTAIGANA LETTER E-1;correction
 1D0C5;BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS;correction
 E0100;VS17;abbreviation

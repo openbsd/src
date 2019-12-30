@@ -33,6 +33,13 @@
 
 #include "perlapi.h"		/* bring in PL_force_link_funcs */
 
+/* regcomp.h * isn't #included in perl.h, as its only included within a
+ * few specific files such as regcomp.c, regexec.c.  So include it
+ * explicitly to process any data declarations within it.
+ */
+#include "regcomp.h"
+
+
 /*
  * ex: set ts=8 sts=4 sw=4 et:
  */

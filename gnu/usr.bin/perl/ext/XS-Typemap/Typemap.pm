@@ -34,7 +34,7 @@ to the test script.
 use parent qw/ Exporter /;
 require XSLoader;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 our @EXPORT = (qw/
 	   T_SV

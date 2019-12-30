@@ -45,14 +45,14 @@ plan(2);
 
 # Depending on how perl is built, there may be extraneous stuff on stderr
 # such as "Aborted", which isn't caught by the '2>&1' that
-# fresh_perl_like() does. So execute each dump() in a sub-process.
+# fresh_perl_like() does. So execute each CORE::dump() in a sub-process.
 #
 # In detail:
 # fresh_perl_like() ends up doing a `` which invokes a shell with 2 args:
 #
 #   "sh", "-c", "perl /tmp/foo 2>&1"
 #
-# When the perl process coredumps after calling dump(), the parent
+# When the perl process coredumps after calling CORE::dump(), the parent
 # sh sees that the exit of the child flags a coredump and so prints
 # something like the following to stderr:
 #
@@ -80,13 +80,12 @@ if ($pid) {
 else {
     # child
     print qq(A);
-    dump;
+    CORE::dump;
     print qq(B);
 }
 PROG
 
-fresh_perl_like(<<'PROG', qr/A(?!B\z)/, {}, "dump with label quits");
-BEGIN {$SIG {__WARN__} = sub {1;}}
+fresh_perl_like(<<'PROG', qr/A(?!B\z)/, {}, "CORE::dump with label quits"); BEGIN {$SIG {__WARN__} = sub {1;}}
 ++$|;
 my $pid = fork;
 die "fork: $!\n" unless defined $pid;
@@ -96,7 +95,7 @@ if ($pid) {
 }
 else {
     print qq(A);
-    dump foo;
+    CORE::dump foo;
     foo:
     print qq(B);
 }

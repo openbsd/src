@@ -438,7 +438,7 @@ win32_get_xlib(const char *pl, WIN32_NO_REGISTRY_M_(const char *xlib)
 	sv1 = sv2;
     } else if (sv2) {
         dTHX;
-	sv_catpv(sv1, ";");
+	sv_catpvs(sv1, ";");
 	sv_catsv(sv1, sv2);
     }
 
@@ -1684,6 +1684,8 @@ win32_longpath(char *path)
 static void
 out_of_memory(void)
 {
+    dVAR;
+
     if (PL_curinterp)
 	croak_no_mem();
     exit(1);
@@ -2453,6 +2455,14 @@ win32_sleep(unsigned int t)
 			"sleep(%lu) too large", t);
     }
     return win32_msgwait(aTHX_ 0, NULL, t * 1000, NULL) / 1000;
+}
+
+DllExport int
+win32_pause(void)
+{
+    dTHX;
+    win32_msgwait(aTHX_ 0, NULL, INFINITE, NULL);
+    return -1;
 }
 
 DllExport unsigned int
@@ -4703,6 +4713,7 @@ win32_csighandler(int sig)
 void
 Perl_sys_intern_init(pTHX)
 {
+    dVAR;
     int i;
 
     w32_perlshell_tokens	= NULL;
@@ -4752,6 +4763,8 @@ Perl_sys_intern_init(pTHX)
 void
 Perl_sys_intern_clear(pTHX)
 {
+    dVAR;
+
     Safefree(w32_perlshell_tokens);
     Safefree(w32_perlshell_vec);
     /* NOTE: w32_fdpid is freed by sv_clean_all() */

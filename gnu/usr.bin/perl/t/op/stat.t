@@ -51,6 +51,8 @@ my $Is_Dosish  = $Is_Dos || $Is_OS2 || $Is_MSWin32 || $Is_NetWare;
 
 my $ufs_no_ctime = ($Is_Dfly || $Is_Darwin) && (() = `df -t ufs . 2>/dev/null`) == 2;
 
+my $Is_linux_container = is_linux_container();
+
 if ($Is_Cygwin && !is_miniperl) {
   require Win32;
   Win32->import;
@@ -357,6 +359,7 @@ SKIP: {
 # can be set to skip the tests that need a tty.
 SKIP: {
     skip "These tests require a TTY", 4 if $ENV{PERL_SKIP_TTY_TEST};
+    skip "Skipping TTY tests on linux containers", 4 if $Is_linux_container;
 
     my $TTY = "/dev/tty";
 

@@ -17,7 +17,7 @@ use File::Spec;
 
 no warnings 'utf8';
 
-our $VERSION = '1.25';
+our $VERSION = '1.27';
 our $PACKAGE = __PACKAGE__;
 
 ### begin XS only ###
@@ -88,9 +88,9 @@ my $DefaultRearrange = [ 0x0E40..0x0E44, 0x0EC0..0x0EC4 ];
 my $HighestVCE = pack(VCE_TEMPLATE, 0, 0xFFFE, 0x20, 0x5, 0xFFFF);
 my $minimalVCE = pack(VCE_TEMPLATE, 0,      1, 0x20, 0x5, 0xFFFE);
 
-sub UCA_Version { '34' }
+sub UCA_Version { '36' }
 
-sub Base_Unicode_Version { '9.0.0' }
+sub Base_Unicode_Version { '10.0.0' }
 
 ######
 
@@ -1104,7 +1104,7 @@ If the revision (previously "tracking version") number of UCA is given,
 behavior of that revision is emulated on collating.
 If omitted, the return value of C<UCA_Version()> is used.
 
-The following revisions are supported.  The default is 34.
+The following revisions are supported.  The default is 36.
 
      UCA       Unicode Standard         DUCET (@version)
    -------------------------------------------------------
@@ -2092,7 +2092,7 @@ B<Unicode::Normalize is required to try The Conformance Test.>
 =head1 AUTHOR, COPYRIGHT AND LICENSE
 
 The Unicode::Collate module for perl was written by SADAHIRO Tomoyuki,
-<SADAHIRO@cpan.org>. This module is Copyright(C) 2001-2017,
+<SADAHIRO@cpan.org>. This module is Copyright(C) 2001-2018,
 SADAHIRO Tomoyuki. Japan. All rights reserved.
 
 This module is free software; you can redistribute it and/or

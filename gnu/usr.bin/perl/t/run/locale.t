@@ -23,6 +23,7 @@ use Config;
 my $have_strtod = $Config{d_strtod} eq 'define';
 my @locales = find_locales( [ 'LC_ALL', 'LC_CTYPE', 'LC_NUMERIC' ]);
 skip_all("no locales available") unless @locales;
+note("locales available: @locales");
 
 my $debug = 0;
 my $switches = "";
@@ -67,12 +68,13 @@ EOF
 
 my $non_C_locale;
 foreach my $locale (@locales) {
-    next if $locale eq "C" || $locale eq 'POSIX';
+    next if $locale eq "C" || $locale eq 'POSIX' || $locale eq "C.UTF-8";
     $non_C_locale = $locale;
     last;
 }
 
 if ($non_C_locale) {
+    note("using non-C locale '$non_C_locale'");
     setlocale(LC_NUMERIC, $non_C_locale);
     isnt(setlocale(LC_NUMERIC), "C", "retrieving current non-C LC_NUMERIC doesn't give 'C'");
     setlocale(LC_ALL, $non_C_locale);
@@ -80,7 +82,7 @@ if ($non_C_locale) {
 
     my @test_numeric_locales = @locales;
 
-    # Skip this locale on these cywgwin versions as the returned radix character
+    # Skip this locale on these cygwin versions as the returned radix character
     # length is wrong
     if (   $^O eq 'cygwin'
         && version->new(($Config{'osvers'} =~ /^(\d+(?:\.\d+)+)/)[0]) le v2.4.1)
@@ -164,7 +166,8 @@ EOF
                                         . " radix is marked UTF-8");
     }
 
-    if ($different) {
+    SKIP: {
+        skip("no locale available where LC_NUMERIC radix isn't '.'", 30) unless $different;
         note("using the '$different' locale for LC_NUMERIC tests");
         {
             local $ENV{LC_NUMERIC} = $different;
@@ -438,6 +441,7 @@ EOF
 EOF
                 "1,5\n2,5", { stderr => 'devnull' }, "Can do math when radix is a comma"); # [perl 115800]
 
+          SKIP: {
             unless ($have_strtod) {
                 skip("no strtod()", 1);
             }
@@ -451,10 +455,22 @@ EOF
 EOF
                 "1.5", { stderr => 'devnull' }, "POSIX::strtod() uses underlying locale");
             }
+          }
         }
     }
 
-    {
+SKIP: {
+        # Note: the setlocale Configure probe could be enhanced to give us the
+        # syntax to use, but khw doesn't think it's worth it at this time, as
+        # the current outliers seem to be skipped by the test just below
+        # anyway.  If the POSIX 2008 locale functions are being used, the
+        # syntax becomes mostly irrelevant, so do the test anyway if they are.
+        # It's a lot of trouble to figure out in a perl script.
+        if ($Config{d_setlocale_accepts_any_locale_name} eq 'true')
+        {
+            skip("Can't distinguish between valid and invalid locale names on this system", 2);
+        }
+
         my @valid_categories = valid_locale_categories();
 
         my $valid_string = "";

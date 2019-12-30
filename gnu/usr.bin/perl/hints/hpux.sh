@@ -82,13 +82,13 @@ case `$cc -v 2>&1`"" in
 		fi
 	    case "$gccversion" in
 		[012]*) # HP-UX and gcc-2.* break UINT32_MAX :-(
-			ccflags="$ccflags -DUINT32_MAX_BROKEN"
-			;;
+		    ccflags="$ccflags -DUINT32_MAX_BROKEN"
+		    ;;
 		[34]*) # GCC (both 32bit and 64bit) will define __STDC_EXT__
                        # by default when using GCC 3.0 and newer versions of
                        # the compiler.
-                       cppflags="$cc_cppflags"
-                       ;;
+		   cppflags="$cc_cppflags"
+		   ;;
 		esac
 	    case "`getconf KERNEL_BITS 2>/dev/null`" in
 		*64*)
@@ -403,6 +403,7 @@ doop_cflags=''
 op_cflags=''
 opmini_cflags=''
 perlmain_cflags=''
+pp_pack_cflags=''
     fi
 
 case "$ccisgcc" in
@@ -432,10 +433,11 @@ case "$ccisgcc" in
 	    esac
 	if [ $maxdsiz -le 64 ]; then
 	    case "$optimize" in
-		*O2*)	opt=`echo "$optimize" | sed -e 's/O2/O1/'`
-			toke_cflags="$toke_cflags;optimize=\"$opt\""
-			regexec_cflags="optimize=\"$opt\""
-			;;
+		*O2*)
+		    opt=`echo "$optimize" | sed -e 's/O2/O1/'`
+		    toke_cflags="$toke_cflags;optimize=\"$opt\""
+		    regexec_cflags="optimize=\"$opt\""
+		    ;;
 		esac
 	    fi
 	;;
@@ -458,13 +460,16 @@ case "$ccisgcc" in
 		    B.11.11.*)
 			# opmini.c and op.c with +O2 makes the compiler die
 			# of internal error, for perlmain.c only +O0 (no opt)
-                        # works.
+                        # works. Disable +Ox for pp_pack, as the optimizer
+                        # causes this unit to fail (not a limit issue)
 			case "$optimize" in
-			*O2*)	opt=`echo "$optimize" | sed -e 's/O2/O1/'`
-				opmini_cflags="optimize=\"$opt\""
-				op_cflags="optimize=\"$opt\""
-				perlmain_cflags="optimize=\"\""
-				;;
+			*O[12]*)
+			    opt=`echo "$optimize" | sed -e 's/O2/O1/' -e 's/ *+Onolimit//'`
+			    opmini_cflags="optimize=\"$opt\""
+			    op_cflags="optimize=\"$opt\""
+			    perlmain_cflags="optimize=\"\""
+			    pp_pack_cflags="optimize=\"\""
+			    ;;
 			esac
 		    esac
 		;;
@@ -487,11 +492,13 @@ case "$ccisgcc" in
 			# +Onolibcalls=strcmp
 			# passes all tests (with/without -DDEBUGGING) [Nov 17 2011]
 			case "$optimize" in
-				*O2*) optimize="$optimize +Onoprocelim +Ostore_ordering +Onolibcalls=strcmp" ;;
-				esac
+			    *O2*) optimize="$optimize +Onoprocelim +Ostore_ordering +Onolibcalls=strcmp" ;;
+			    esac
 			;;
 		    *)  doop_cflags="optimize=\"$opt\""
-			op_cflags="optimize=\"$opt\""	;;
+			op_cflags="optimize=\"$opt\""
+			#opt=`echo "$optimize" | sed -e 's/O1/O0/'`
+			globals_cflags="optimize=\"$opt\""	;;
 		    esac
 		;;
 	    esac

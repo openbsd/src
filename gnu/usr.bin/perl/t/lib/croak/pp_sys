@@ -73,3 +73,29 @@ open my $ｆｏｏ, "../harness";
 opendir $ｆｏｏ, ".";
 EXPECT
 Cannot open $ｆｏｏ as a dirhandle: it is already open as a filehandle at - line 5.
+########
+# NAME sysread() disallowed on :utf8
+open my $fh, "<:raw", "../harness" or die "# $!";
+my $buf;
+sysread $fh, $buf, 10;
+binmode $fh, ':utf8';
+sysread $fh, $buf, 10;
+EXPECT
+sysread() isn't allowed on :utf8 handles at - line 5.
+########
+# NAME syswrite() disallowed on :utf8
+my $file = "syswwarn.tmp";
+open my $fh, ">:raw", $file or die "# $!";
+syswrite $fh, 'ABC';
+binmode $fh, ':utf8';
+syswrite $fh, 'ABC';
+close $fh;
+END { unlink $file; }
+EXPECT
+syswrite() isn't allowed on :utf8 handles at - line 5.
+########
+# NAME readline() didn't scalar() its argument
+# this would assert rather than failing on the method call
+E{0;readline@0}
+EXPECT
+Can't call method "E" without a package or object reference at - line 2.

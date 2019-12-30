@@ -59,6 +59,8 @@ if ($^O eq 'VMS' || $^O eq 'MSWin32' || $^O eq 'cygwin' || $^O =~ /freebsd/ || $
 	exit 0;
 }
 
+
+
 my ($in, $out, $st, $sigst, $buf);
 
 plan(tests => 10);
@@ -96,60 +98,65 @@ alarm(0);
 ok(!$st, 'read/die: read status');
 ok(close($in), 'read/die: close status');
 
-# This used to be 1_000_000, but on Linux/ppc64 (POWER7) this kept
-# consistently failing. At exactly 0x100000 it started passing
-# again. Now we're asking the kernel what the pipe buffer is, and if
-# that fails, hoping this number is bigger than any pipe buffer.
-my $surely_this_arbitrary_number_is_fine = (eval {
-    use Fcntl qw(F_GETPIPE_SZ);
-    fcntl($out, F_GETPIPE_SZ, 0);
-} || 0xfffff) + 1;
+SKIP: {
+    skip "Tests hang on older versions of Darwin", 5
+          if $^O eq 'darwin' && $osmajmin < 16;
 
-# close during print
+    # This used to be 1_000_000, but on Linux/ppc64 (POWER7) this kept
+    # consistently failing. At exactly 0x100000 it started passing
+    # again. Now we're asking the kernel what the pipe buffer is, and if
+    # that fails, hoping this number is bigger than any pipe buffer.
+    my $surely_this_arbitrary_number_is_fine = (eval {
+        use Fcntl qw(F_GETPIPE_SZ);
+        fcntl($out, F_GETPIPE_SZ, 0);
+    } || 0xfffff) + 1;
 
-fresh_io;
-$SIG{ALRM} = sub { $sigst = close($out) ? "ok" : "nok" };
-$buf = "a" x $surely_this_arbitrary_number_is_fine . "\n";
-select $out; $| = 1; select STDOUT;
-alarm(1);
-$st = print $out $buf;
-alarm(0);
-is($sigst, 'nok', 'print/close: sig handler close status');
-ok(!$st, 'print/close: print status');
-ok(!close($out), 'print/close: close status');
+    # close during print
 
-# die during print
+    fresh_io;
+    $SIG{ALRM} = sub { $sigst = close($out) ? "ok" : "nok" };
+    $buf = "a" x $surely_this_arbitrary_number_is_fine . "\n";
+    select $out; $| = 1; select STDOUT;
+    alarm(1);
+    $st = print $out $buf;
+    alarm(0);
+    is($sigst, 'nok', 'print/close: sig handler close status');
+    ok(!$st, 'print/close: print status');
+    ok(!close($out), 'print/close: close status');
 
-fresh_io;
-$SIG{ALRM} = sub { die };
-$buf = "a" x $surely_this_arbitrary_number_is_fine . "\n";
-select $out; $| = 1; select STDOUT;
-alarm(1);
-$st = eval { print $out $buf };
-alarm(0);
-ok(!$st, 'print/die: print status');
-# the close will hang since there's data to flush, so use alarm
-alarm(1);
-ok(!eval {close($out)}, 'print/die: close status');
-alarm(0);
+    # die during print
 
-# close during close
+    fresh_io;
+    $SIG{ALRM} = sub { die };
+    $buf = "a" x $surely_this_arbitrary_number_is_fine . "\n";
+    select $out; $| = 1; select STDOUT;
+    alarm(1);
+    $st = eval { print $out $buf };
+    alarm(0);
+    ok(!$st, 'print/die: print status');
+    # the close will hang since there's data to flush, so use alarm
+    alarm(1);
+    ok(!eval {close($out)}, 'print/die: close status');
+    alarm(0);
 
-# Apparently there's nothing in standard Linux that can cause an
-# EINTR in close(2); but run the code below just in case it does on some
-# platform, just to see if it segfaults.
-fresh_io;
-$SIG{ALRM} = sub { $sigst = close($in) ? "ok" : "nok" };
-alarm(1);
-close $in;
-alarm(0);
+    # close during close
 
-# die during close
+    # Apparently there's nothing in standard Linux that can cause an
+    # EINTR in close(2); but run the code below just in case it does on some
+    # platform, just to see if it segfaults.
+    fresh_io;
+    $SIG{ALRM} = sub { $sigst = close($in) ? "ok" : "nok" };
+    alarm(1);
+    close $in;
+    alarm(0);
 
-fresh_io;
-$SIG{ALRM} = sub { die };
-alarm(1);
-eval { close $in };
-alarm(0);
+    # die during close
+
+    fresh_io;
+    $SIG{ALRM} = sub { die };
+    alarm(1);
+    eval { close $in };
+    alarm(0);
+}
 
 # vim: ts=4 sts=4 sw=4:

@@ -318,9 +318,11 @@ is($refcount_ok, 1, "check refcount");
 # Small 64bit systems fail with 1200 (c++ debugging), with gcc 3000.
 # Optimized 64bit allows up to 33.000 recursion depth.
 # with asan the limit is 255 though.
+
+local $Storable::recursion_limit = 30;
+local $Storable::recursion_limit_hash = 20;
 sub MAX_DEPTH () { Storable::stack_depth() }
 sub MAX_DEPTH_HASH () { Storable::stack_depth_hash() }
-sub OVERFLOW () { 35000 }
 {
     my $t;
     print "# max depth ", MAX_DEPTH, "\n";

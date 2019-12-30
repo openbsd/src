@@ -535,27 +535,45 @@ sub run_tests {
         like("\N{LATIN SMALL LETTER SHARP S}",
 	     qr/\N{LATIN SMALL LETTER SHARP S}/, $message);
         like("\N{LATIN SMALL LETTER SHARP S}",
+	     qr'\N{LATIN SMALL LETTER SHARP S}', $message);
+        like("\N{LATIN SMALL LETTER SHARP S}",
 	     qr/\N{LATIN SMALL LETTER SHARP S}/i, $message);
+        like("\N{LATIN SMALL LETTER SHARP S}",
+	     qr'\N{LATIN SMALL LETTER SHARP S}'i, $message);
         like("\N{LATIN SMALL LETTER SHARP S}",
 	     qr/[\N{LATIN SMALL LETTER SHARP S}]/, $message);
         like("\N{LATIN SMALL LETTER SHARP S}",
+	     qr'[\N{LATIN SMALL LETTER SHARP S}]', $message);
+        like("\N{LATIN SMALL LETTER SHARP S}",
 	     qr/[\N{LATIN SMALL LETTER SHARP S}]/i, $message);
+        like("\N{LATIN SMALL LETTER SHARP S}",
+	     qr'[\N{LATIN SMALL LETTER SHARP S}]'i, $message);
 
         like("ss", qr /\N{LATIN SMALL LETTER SHARP S}/i, $message);
+        like("ss", qr '\N{LATIN SMALL LETTER SHARP S}'i, $message);
         like("SS", qr /\N{LATIN SMALL LETTER SHARP S}/i, $message);
+        like("SS", qr '\N{LATIN SMALL LETTER SHARP S}'i, $message);
         like("ss", qr/[\N{LATIN SMALL LETTER SHARP S}]/i, $message);
+        like("ss", qr'[\N{LATIN SMALL LETTER SHARP S}]'i, $message);
         like("SS", qr/[\N{LATIN SMALL LETTER SHARP S}]/i, $message);
+        like("SS", qr'[\N{LATIN SMALL LETTER SHARP S}]'i, $message);
 
         like("\N{LATIN SMALL LETTER SHARP S}", qr/ss/i, $message);
         like("\N{LATIN SMALL LETTER SHARP S}", qr/SS/i, $message);
 
          $message = "Unoptimized named sequence in class";
         like("ss", qr/[\N{LATIN SMALL LETTER SHARP S}x]/i, $message);
+        like("ss", qr'[\N{LATIN SMALL LETTER SHARP S}x]'i, $message);
         like("SS", qr/[\N{LATIN SMALL LETTER SHARP S}x]/i, $message);
+        like("SS", qr'[\N{LATIN SMALL LETTER SHARP S}x]'i, $message);
         like("\N{LATIN SMALL LETTER SHARP S}",
 	     qr/[\N{LATIN SMALL LETTER SHARP S}x]/, $message);
         like("\N{LATIN SMALL LETTER SHARP S}",
+	     qr'[\N{LATIN SMALL LETTER SHARP S}x]', $message);
+        like("\N{LATIN SMALL LETTER SHARP S}",
 	     qr/[\N{LATIN SMALL LETTER SHARP S}x]/i, $message);
+        like("\N{LATIN SMALL LETTER SHARP S}",
+	     qr'[\N{LATIN SMALL LETTER SHARP S}x]'i, $message);
     }
 
     {
@@ -783,11 +801,11 @@ sub run_tests {
     {
         my $re = qq /^([^X]*)X/;
         utf8::upgrade ($re);
-        ok "\x{100}X" =~ /$re/, "S_cl_and ANYOF_UNICODE & ANYOF_INVERTED";
+        like "\x{100}X", qr/$re/, "S_cl_and ANYOF_UNICODE & ANYOF_INVERTED";
         my $loc_re = qq /(?l:^([^X]*)X)/;
         utf8::upgrade ($loc_re);
         no warnings 'locale';
-        ok "\x{100}X" =~ /$loc_re/, "locale, S_cl_and ANYOF_UNICODE & ANYOF_INVERTED";
+        like "\x{100}X", qr/$loc_re/, "locale, S_cl_and ANYOF_UNICODE & ANYOF_INVERTED";
     }
 
     {
@@ -825,6 +843,8 @@ sub run_tests {
             for my $tail ('\N{SNOWFLAKE}') {
                 eval qq {use charnames ':full';
                          like("$head$tail", qr/$head$tail/, \$message)};
+                eval qq {use charnames ':full';
+                         like("$head$tail", qr'$head$tail', \$message)};
 		is($@, '', $message);
             }
         }
@@ -907,7 +927,8 @@ sub run_tests {
 	BEGIN {
 	    unshift @INC, 'lib';
 	}
-        use Cname;
+        use Cname;  # Our custom charname plugin, currently found in
+                    # t/lib/Cname.pm
 
         like 'fooB', qr/\N{foo}[\N{B}\N{b}]/, "Passthrough charname";
         my $name = "foo\xDF";
@@ -937,9 +958,15 @@ sub run_tests {
         like $w, qr/Ignoring zero length/,
                  'Ignoring zero length \N{} in character class warning';
 
+        # EVIL keeps track of its calls, and appends a new character each
+        # time: A AB ABC ABCD ...
         ok 'AB'  =~ /(\N{EVIL})/ && $1 eq 'A', 'Charname caching $1';
         like 'ABC', qr/(\N{EVIL})/,              'Charname caching $1';
+        ok 'ABCD'  =~ m'(\N{EVIL})' && $1 eq 'ABC', 'Charname caching $1';
+        ok 'ABCDE'  =~ m'(\N{EVIL})',          'Charname caching $1';
         like 'xy',  qr/x\N{EMPTY-STR}y/,
+                    'Empty string charname produces NOTHING node';
+        ok 'xy'  =~ 'x\N{EMPTY-STR}y',
                     'Empty string charname produces NOTHING node';
         like '', qr/\N{EMPTY-STR}/,
                     'Empty string charname produces NOTHING node';
@@ -948,9 +975,14 @@ sub run_tests {
 
         # perlhacktips points out that these work on both ASCII and EBCDIC
         like "\xfc", qr/\N{EMPTY-STR}\xdc/i, 'Empty \N{} should change /d to /u';
+        like "\xfc", qr'\N{EMPTY-STR}\xdc'i, 'Empty \N{} should change /d to /u';
 
         eval '/(?[[\N{EMPTY-STR}]])/';
         like $@, qr/Zero length \\N\{\}/, 'Verify zero-length return from \N{} correctly fails';
+        ok "\N{LONG-STR}" =~ /^\N{LONG-STR}$/, 'Verify that long string works';
+        ok "\N{LONG-STR}" =~ '^\N{LONG-STR}$', 'Verify that long string works';
+        ok "\N{LONG-STR}" =~ /^\N{LONG-STR}$/i, 'Verify under folding that long string works';
+        ok "\N{LONG-STR}" =~ m'^\N{LONG-STR}$'i, 'Verify under folding that long string works';
 
         undef $w;
         {
@@ -2107,7 +2139,7 @@ EOP
     }
 
     # RT #82610
-    ok 'foo/file.fob' =~ m,^(?=[^\.])[^/]*/(?=[^\.])[^/]*\.fo[^/]$,;
+    like 'foo/file.fob', qr,^(?=[^\.])[^/]*/(?=[^\.])[^/]*\.fo[^/]$,;
 
     {   # This was failing unless an explicit /d was added
         my $E0 = uni_to_native("\xE0");
@@ -2176,6 +2208,33 @@ EOP
             }
         }
         ok(! $failed, "Matched multi-char fold 'ss' across EXACTF node boundaries; if failed, was at count $failed");
+
+        for my $non_finals ("t", "ft", "ift", "sift") {
+            my $base_pat = $non_finals . "enKalt";   # (The tail is taken from
+                                                     # the trouble ticket, is
+                                                     # arbitrary)
+            for my $utf8 ("non-UTF-8", "UTF-8") {
+
+                # Try at different lengths to be sure to get a node boundary
+                for my $repeat (120 .. 270) {   # [perl #133756]
+                    my $head = ("b" x $repeat) . "\xDC";
+                    my $pat = $base_pat;
+                    utf8::upgrade($pat) if $utf8 eq "UTF-8";
+                    $pat     = $head . $pat;
+                    my $text = $head . $base_pat;
+
+                    if ($text !~ /$pat/i) {
+                        $failed = $repeat;
+                        last;
+                    }
+                }
+
+                ok(! $failed, "A non-final fold character "
+                            . (length($non_finals) - 1)
+                            . " characters from the end of an EXACTFish"
+                            . " $utf8 pattern works; if failed, was at count $failed");
+            }
+        }
     }
 
     {
@@ -2286,6 +2345,10 @@ EOF
     is (scalar split(/\b{sb}/, "Don't think twice.  It's all right."),
         2, '\b{wb} splits sentences correctly');
 
+    ok "my/dir/audio_07.mp3" =~
+     qr/(.*)\/(.*)\/(.*)\.(?<=(?=(?:\.(?!\d+\b)\w{1,4}$)$)\.)(.*)$()/,
+     "[perl #133948]";
+
 
     # !!! NOTE!  Keep the following tests last -- they may crash perl
 
@@ -2344,33 +2407,34 @@ EOF
         # scoped, and want to turn them off, so have to do the match in this
         # scope.
         if ($Config{uvsize} < 8) {
-            ok(chr(0x7FFF_FFFE) =~ /\p{Is_31_Bit_Super}/,
+            like(chr(0x7FFF_FFFE), qr/\p{Is_31_Bit_Super}/,
                             "chr(0x7FFF_FFFE) can match a Unicode property");
-            ok(chr(0x7FFF_FFFF) =~ /\p{Is_31_Bit_Super}/,
+            like(chr(0x7FFF_FFFF), qr/\p{Is_31_Bit_Super}/,
                             "chr(0x7FFF_FFFF) can match a Unicode property");
             my $p = qr/^[\x{7FFF_FFFF}]$/;
-            ok(chr(0x7FFF_FFFF) =~ $p,
+            like(chr(0x7FFF_FFFF), qr/$p/,
                     "chr(0x7FFF_FFFF) can match itself in a [class]");
-            ok(chr(0x7FFF_FFFF) =~ $p, # Tests any caching
+            like(chr(0x7FFF_FFFF), qr/$p/, # Tests any caching
                     "chr(0x7FFF_FFFF) can match itself in a [class] subsequently");
         }
         else {
             no warnings 'overflow';
-            ok(chr(0x7FFF_FFFF_FFFF_FFFE) =~ qr/\p{Is_Portable_Super}/,
+            like(chr(0x7FFF_FFFF_FFFF_FFFE), qr/\p{Is_Portable_Super}/,
                     "chr(0x7FFF_FFFF_FFFF_FFFE) can match a Unicode property");
-            ok(chr(0x7FFF_FFFF_FFFF_FFFF) =~ qr/^\p{Is_Portable_Super}$/,
+            like(chr(0x7FFF_FFFF_FFFF_FFFF), qr/^\p{Is_Portable_Super}$/,
                     "chr(0x7FFF_FFFF_FFFF_FFFF) can match a Unicode property");
 
             my $p = qr/^[\x{7FFF_FFFF_FFFF_FFFF}]$/;
-            ok(chr(0x7FFF_FFFF_FFFF_FFFF) =~ $p,
+            like(chr(0x7FFF_FFFF_FFFF_FFFF), qr/$p/,
                     "chr(0x7FFF_FFFF_FFFF_FFFF) can match itself in a [class]");
-            ok(chr(0x7FFF_FFFF_FFFF_FFFF) =~ $p, # Tests any caching
+            like(chr(0x7FFF_FFFF_FFFF_FFFF), qr/$p/, # Tests any caching
                     "chr(0x7FFF_FFFF_FFFF_FFFF) can match itself in a [class] subsequently");
 
             # This test is because something was declared as 32 bits, but
             # should have been cast to 64; only a problem where
             # sizeof(STRLEN) != sizeof(UV)
-            ok(chr(0x7FFF_FFFF_FFFF_FFFE) !~ qr/\p{Is_31_Bit_Super}/, "chr(0x7FFF_FFFF_FFFF_FFFE) shouldn't match a range ending in 0x7FFF_FFFF");
+            unlike(chr(0x7FFF_FFFF_FFFF_FFFE), qr/\p{Is_31_Bit_Super}/,
+                   "chr(0x7FFF_FFFF_FFFF_FFFE) shouldn't match a range ending in 0x7FFF_FFFF");
         }
     }
 
@@ -2405,6 +2469,7 @@ EOF
     {   # [perl #126606 crashed the interpreter
         use Cname;
         like("sS", qr/\N{EMPTY-STR}Ss|/i, '\N{} with empty branch alternation works');
+        like("sS", qr'\N{EMPTY-STR}Ss|'i, '\N{} with empty branch alternation works');
     }
 
     { # Regexp:Grammars was broken:
@@ -2438,6 +2503,25 @@ EOF
 
         runperl( prog => 'A::xx(); package A; sub InFullwidth{ return qq|\n| } sub xx { split /[^\s\p{InFullwidth}]/, q|x| }' );
         ok(! $?, "User-defined pattern did not cause panic [perl 130010]");
+    }
+
+    {   # [perl #133999]    Previously assertion failure
+	fresh_perl_like('0 =~ /\p{nv:(\B(*COMMIT)C+)}/',
+                        qr/No Unicode property value wildcard matches/,
+                        {},
+                        "Assertion failure with *COMMIT and wildcard property");
+    }
+
+    {   # [perl #134029]    Previously assertion failure
+        fresh_perl_like('qr/\p{upper:]}|\337(?|ss)|)(?0/',
+                        qr/Unicode property wildcard not terminated/,
+                        {},
+                        "Assertion failure with single character wildcard");
+    }
+
+    {   # [perl #134034]    Previously assertion failure
+        fresh_perl_is('use utf8; q!Ȧिम한글💣΢ყაოსაა!=~/(?li)\b{wb}\B(*COMMIT)0/;',
+                      "", {}, "*COMMIT caused positioning beyond EOS");
     }
 
 

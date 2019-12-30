@@ -43,7 +43,7 @@ the C<__DATA__> line):
 =item C<is_WHATEVER_safe(s,e,is_utf8)>
 
 Do a lookup as appropriate based on the C<is_utf8> flag. When possible
-comparisons involving octect<128 are done before checking the C<is_utf8>
+comparisons involving octet<128 are done before checking the C<is_utf8>
 flag, hopefully saving time.
 
 The version without the C<_safe> suffix should be used only when the input is
@@ -739,44 +739,32 @@ sub calculate_mask(@) {
 
     # Consider a set of byte values, A, B, C ....  If we want to determine if
     # <c> is one of them, we can write c==A || c==B || c==C ....  If the
-    # values are consecutive, we can shorten that to A<=c && c<=Z, which uses
-    # far fewer branches.  If only some of them are consecutive we can still
-    # save some branches by creating range tests for just those that are
-    # consecutive. _cond_as_str() does this work for looking for ranges.
+    # values are consecutive, we can shorten that to inRANGE(c, 'A', 'Z'),
+    # which uses far fewer branches.  If only some of them are consecutive we
+    # can still save some branches by creating range tests for just those that
+    # are consecutive. _cond_as_str() does this work for looking for ranges.
     #
     # Another approach is to look at the bit patterns for A, B, C .... and see
     # if they have some commonalities.  That's what this function does.  For
     # example, consider a set consisting of the bytes
-    # 0xF0, 0xF1, 0xF2, and 0xF3.  We could write:
-    #   0xF0 <= c && c <= 0xF4
-    # But the following mask/compare also works, and has just one test:
-    #   (c & 0xFC) == 0xF0
-    # The reason it works is that the set consists of exactly those bytes
-    # whose first 4 bits are 1, and the next two are 0.  (The value of the
-    # other 2 bits is immaterial in determining if a byte is in the set or
-    # not.)  The mask masks out those 2 irrelevant bits, and the comparison
-    # makes sure that the result matches all bytes which match those 6
-    # material bits exactly.  In other words, the set of bytes contains
-    # exactly those whose bottom two bit positions are either 0 or 1.  The
-    # same principle applies to bit positions that are not necessarily
-    # adjacent.  And it can be applied to bytes that differ in 1 through all 8
-    # bit positions.  In order to be a candidate for this optimization, the
-    # number of bytes in the set must be a power of 2.
+    # 0x42, 0x43, 0x62, and 0x63.  We could write:
+    #   inRANGE(c, 0x42, 0x43) || inRANGE(c, 0x62, 0x63)
+    # which through the magic of casting has not 4, but 2 tests.  But the
+    # following mask/compare also works, and has just one test:
+    #   (c & 0xDE) == 0x42
+    # The reason it works is that the set consists of exactly the 4 bit
+    # patterns which have either 0 or 1 in the two bit positions that are 0 in
+    # the mask.  They have the same value in each bit position where the mask
+    # is 1.  The comparison makes sure that the result matches all bytes which
+    # match those six 1 bits exactly.  This can be applied to bytes that
+    # differ in 1 through all 8 bit positions.  In order to be a candidate for
+    # this optimization, the number of bytes in the set must be a power of 2.
     #
-    # Consider a different example, the set 0x53, 0x54, 0x73, and 0x74.  That
-    # requires 4 tests using either ranges or individual values, and even
-    # though the number in the set is a power of 2, it doesn't qualify for the
-    # mask optimization described above because the number of bits that are
-    # different is too large for that.  However, the set can be expressed as
-    # two branches with masks thusly:
-    #   (c & 0xDF) == 0x53 || (c & 0xDF) == 0x54
-    # a branch savings of 50%.  This is done by splitting the set into two
-    # subsets each of which has 2 elements, and within each set the values
-    # differ by 1 byte.
-    #
-    # This function attempts to find some way to save some branches using the
-    # mask technique.  If not, it returns an empty list; if so, it
-    # returns a list consisting of
+    # It may be that the bytes needing to be matched can't be done with a
+    # single mask.  But it may be possible to have two (or more) sets, each
+    # with a separate mask.  This function attempts to find some way to save
+    # some branches using the mask technique.  If not, it returns an empty
+    # list; if so, it returns a list consisting of
     #   [ [compare1, mask1], [compare2, mask2], ...
     #     [compare_n, undef], [compare_m, undef], ...
     #   ]
@@ -1025,7 +1013,7 @@ sub _cond_as_str {
         @ranges= map {
             ref $_
             ? sprintf(
-                "( $self->{val_fmt} <= $test && $test <= $self->{val_fmt} )",
+                "isRANGE( $test, $self->{val_fmt}, $self->{val_fmt} )",
                 @$_ )
             : sprintf( "$self->{val_fmt} == $test", $_ );
         } @ranges;
@@ -1044,9 +1032,9 @@ sub _cond_as_str {
     if (@ranges > 1) {
 
         # See if the entire set shares optimizable characteristics, and if so,
-        # return the optimization.  We delay checking for this on sets with
-        # just a single range, as there may be better optimizations available
-        # in that case.
+        # return the optimization.  There is no need to do this on sets with
+        # just a single range, as that can be expressed with a single
+        # conditional.
         @masks = calculate_mask(@$cond);
 
         # Stringify the output of calculate_mask()
@@ -1113,68 +1101,22 @@ sub _cond_as_str {
                 && (! $opts_ref->{safe} && ! $opts_ref->{no_length_checks})
                 && $opts_ref->{type} =~ / ^ (?: utf8 | high ) $ /xi)
             {
-                my $lower_limit_is_80 = ($ranges[$i]->[0] == 0x80);
-                my $upper_limit_is_BF = ($ranges[$i]->[1] == 0xBF);
-
                 # If the range is the entire legal range, it matches any legal
                 # byte, so we can omit both tests.  (This should happen only
                 # if the number of ranges is 1.)
-                if ($lower_limit_is_80 && $upper_limit_is_BF) {
+                if ($ranges[$i]->[0] == 0x80 && $ranges[$i]->[1] == 0xBF) {
                     return 1;
                 }
-                elsif ($lower_limit_is_80) { # Just use the upper limit test
-                    $output = sprintf("( $test <= $self->{val_fmt} )",
-                                        $ranges[$i]->[1]);
-                }
-                elsif ($upper_limit_is_BF) { # Just use the lower limit test
-                    $output = sprintf("( $test >= $self->{val_fmt} )",
-                                    $ranges[$i]->[0]);
-                }
             }
 
-            # If we didn't change to omit a test above, see if the number of
-            # elements is a power of 2 (only a single bit in the
-            # representation of its count will be set) and if so, it may be
-            # that a mask/compare optimization is possible.
-            if ($output eq ""
-                && pop_count($ranges[$i]->[1] - $ranges[$i]->[0] + 1) == 1)
-            {
-                my @list;
-                push @list, $_  for ($ranges[$i]->[0] .. $ranges[$i]->[1]);
-                my @this_masks = calculate_mask(@list);
-
-                # Use the mask if there is just one for the whole range.
-                # Otherwise there is no savings over the two branches that can
-                # define the range.
-                if (@this_masks == 1 && defined $this_masks[0][1]) {
-                    $output = sprintf "( $test & $self->{val_fmt} ) == $self->{val_fmt}", $this_masks[0][1], $this_masks[0][0];
-                }
-            }
-
-            if ($output ne "") {  # Prefer any optimization
-                $ranges[$i] = $output;
-            }
-            else {
-                # No optimization happened.  We need a test that the code
-                # point is within both bounds.  But, if the bounds are
-                # adjacent code points, it is cleaner to say
-                # 'first == test || second == test'
-                # than it is to say
-                # 'first <= test && test <= second'
-
-                $range_count_extra++;   # This range requires 2 branches to
-                                        # represent
-                if ($ranges[$i]->[0] + 1 == $ranges[$i]->[1]) {
-                    $ranges[$i] = "( "
-                                .  join( " || ", ( map
-                                    { sprintf "$self->{val_fmt} == $test", $_ }
-                                    @{$ranges[$i]} ) )
-                                . " )";
-                }
-                else {  # Full bounds checking
-                    $ranges[$i] = sprintf("( $self->{val_fmt} <= $test && $test <= $self->{val_fmt} )", $ranges[$i]->[0], $ranges[$i]->[1]);
-                }
-            }
+            # Here, it isn't the full range of legal continuation bytes.  We
+            # could just assume that there's nothing outside of the legal
+            # bounds.  But inRANGE() allows us to have a single conditional,
+            # so the only cost of making sure it's a legal UTF-8 continuation
+            # byte is an extra subtraction instruction, a trivial expense.
+            $ranges[$i] = sprintf("inRANGE($test, $self->{val_fmt},"
+                                                . " $self->{val_fmt} )",
+                                        $ranges[$i]->[0], $ranges[$i]->[1]);
         }
     }
 
@@ -1206,7 +1148,7 @@ sub _combine {
         }
         else {
             $cstr=
-          sprintf( "( $self->{val_fmt} <= $test && $test <= $self->{val_fmt} )",
+          sprintf( "inRANGE($test, $self->{val_fmt}, $self->{val_fmt})",
                    @$item );
         }
         $gtv= sprintf "$self->{val_fmt}", $item->[1];
@@ -1625,10 +1567,6 @@ XPERLSPACE: \p{XPerlSpace}
 => high cp_high : fast
 \p{XPerlSpace}
 
-REPLACEMENT: Unicode REPLACEMENT CHARACTER
-=> UTF8 :safe
-0xFFFD
-
 NONCHAR: Non character code points
 => UTF8 :safe
 \p{_Perl_Nchar}
@@ -1636,83 +1574,6 @@ NONCHAR: Non character code points
 SURROGATE: Surrogate code points
 => UTF8 :safe
 \p{_Perl_Surrogate}
-
-# This program was run with this enabled, and the results copied to utf8.h and
-# utfebcdic.h; then this was commented out because it takes so long to figure
-# out these 2 million code points.  The results would not change unless utf8.h
-# decides it wants a different maximum, or this program creates better
-# optimizations.  Trying with 5 bytes used too much memory to calculate.
-#
-# We don't generate code for invariants here because the EBCDIC form is too
-# complicated and would slow things down; instead the user should test for
-# invariants first.
-#
-# 0x1FFFFF was chosen because for both UTF-8 and UTF-EBCDIC, its start byte
-# is the same as 0x10FFFF, and it includes all the above-Unicode code points
-# that have that start byte.  In other words, it is the natural stopping place
-# that includes all Unicode code points.
-#
-#UTF8_CHAR: Matches legal UTF-8 variant code points up through the 0x1FFFFFF
-#=> UTF8 :no_length_checks only_ascii_platform
-#0x80 - 0x1FFFFF
-
-#UTF8_CHAR: Matches legal UTF-EBCDIC variant code points up through 0x1FFFFFF
-#=> UTF8 :no_length_checks only_ebcdic_platform
-#0xA0 - 0x1FFFFF
-
-#STRICT_UTF8_CHAR: Matches legal Unicode UTF-8 variant code points, no surrrogates nor non-character code points
-#=> UTF8 :no_length_checks only_ascii_platform
-#0x0080 - 0xD7FF
-#0xE000 - 0xFDCF
-#0xFDF0 - 0xFFFD
-#0x10000 - 0x1FFFD
-#0x20000 - 0x2FFFD
-#0x30000 - 0x3FFFD
-#0x40000 - 0x4FFFD
-#0x50000 - 0x5FFFD
-#0x60000 - 0x6FFFD
-#0x70000 - 0x7FFFD
-#0x80000 - 0x8FFFD
-#0x90000 - 0x9FFFD
-#0xA0000 - 0xAFFFD
-#0xB0000 - 0xBFFFD
-#0xC0000 - 0xCFFFD
-#0xD0000 - 0xDFFFD
-#0xE0000 - 0xEFFFD
-#0xF0000 - 0xFFFFD
-#0x100000 - 0x10FFFD
-#
-#STRICT_UTF8_CHAR: Matches legal Unicode UTF-8 variant code points, no surrrogates nor non-character code points
-#=> UTF8 :no_length_checks only_ebcdic_platform
-#0x00A0 - 0xD7FF
-#0xE000 - 0xFDCF
-#0xFDF0 - 0xFFFD
-#0x10000 - 0x1FFFD
-#0x20000 - 0x2FFFD
-#0x30000 - 0x3FFFD
-#0x40000 - 0x4FFFD
-#0x50000 - 0x5FFFD
-#0x60000 - 0x6FFFD
-#0x70000 - 0x7FFFD
-#0x80000 - 0x8FFFD
-#0x90000 - 0x9FFFD
-#0xA0000 - 0xAFFFD
-#0xB0000 - 0xBFFFD
-#0xC0000 - 0xCFFFD
-#0xD0000 - 0xDFFFD
-#0xE0000 - 0xEFFFD
-#0xF0000 - 0xFFFFD
-#0x100000 - 0x10FFFD
-
-#C9_STRICT_UTF8_CHAR: Matches legal Unicode UTF-8 variant code points, no surrogates
-#=> UTF8 :no_length_checks only_ascii_platform
-#0x0080 - 0xD7FF
-#0xE000 - 0x10FFFF
-#
-#C9_STRICT_UTF8_CHAR: Matches legal Unicode UTF-8 variant code points including non-character code points, no surrogates
-#=> UTF8 :no_length_checks only_ebcdic_platform
-#0x00A0 - 0xD7FF
-#0xE000 - 0x10FFFF
 
 QUOTEMETA: Meta-characters that \Q should quote
 => high :fast
@@ -1745,3 +1606,7 @@ PROBLEMATIC_LOCALE_FOLDEDS_START : The first folded character of folds which are
 PATWS: pattern white space
 => generic cp : safe
 \p{_Perl_PatWS}
+
+HANGUL_ED: Hangul syllables whose first character is \xED
+=> UTF8 :only_ascii_platform safe
+0xD000 - 0xD7FF

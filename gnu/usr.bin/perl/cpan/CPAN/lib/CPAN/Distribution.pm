@@ -8,7 +8,7 @@ use CPAN::InfoObj;
 use File::Path ();
 @CPAN::Distribution::ISA = qw(CPAN::InfoObj);
 use vars qw($VERSION);
-$VERSION = "2.19";
+$VERSION = "2.22";
 
 # no prepare, because prepare is not a command on the shell command line
 # TODO: clear instance cache on reload
@@ -29,7 +29,7 @@ for my $method (qw(get make test install)) {
                         $instance{$plugin}->$hookname($self);
                     }
                 } else {
-                    $CPAN::Frontend->mydie("Plugin '$plugin_proper' not found");
+                    $CPAN::Frontend->mydie("Plugin '$plugin_proper' not found for hook '$hookname'");
                 }
             }
         };
@@ -559,7 +559,8 @@ See also http://rt.cpan.org/Ticket/Display.html?id=38932\n");
         $CPAN::Frontend->mydie("Cannot create directory $builddir: $@");
     }
     my $packagedir;
-    my $eexist = $CPAN::META->has_usable("Errno") ? &Errno::EEXIST : undef;
+    my $eexist = ($CPAN::META->has_usable("Errno") && defined &Errno::EEXIST)
+        ? &Errno::EEXIST : undef;
     for(my $suffix = 0; ; $suffix++) {
         $packagedir = File::Spec->catdir($builddir, "$tdir_base-$suffix");
         my $parent = $builddir;
@@ -1658,7 +1659,7 @@ sub force {
   my $methodmatch = 0;
   my $ldebug = 0;
  PHASE: for my $phase (qw(unknown get make test install)) { # order matters
-      $methodmatch = 1 if $fforce || $phase eq $method;
+      $methodmatch = 1 if $fforce || ($method && $phase eq $method);
       next unless $methodmatch;
     ATTRIBUTE: for my $att (@{$phase_map{$phase}}) {
           if ($phase eq "get") {
@@ -1721,14 +1722,20 @@ sub isa_perl {
   my $file = File::Basename::basename($self->id);
   if ($file =~ m{ ^ perl
                   (
-                   -5\.\d+\.\d+
+                   -(5\.\d+\.\d+)
                    |
-                   5[._-]00[0-5](_[0-4][0-9])?
+                   (5)[._-](00[0-5](?:_[0-4][0-9])?)
                   )
                   \.tar[._-](?:gz|bz2)
                   (?!\n)\Z
                 }xs) {
-    return "$1.$3";
+    my $perl_version;
+    if ($2) {
+        $perl_version = $2;
+    } else {
+        $perl_version = "$3.$4";
+    }
+    return $perl_version;
   } elsif ($self->cpan_comment
            &&
            $self->cpan_comment =~ /isa_perl\(.+?\)/) {
@@ -2898,8 +2905,13 @@ sub unsat_prereq {
                 next NEED;
             }
 
-            # if they have not specified a version, we accept any installed one
-            if ( $available_file
+            # if they have not specified a version, we accept any
+            # installed one; in that case inst_file is always
+            # sufficient and available_file is sufficient on
+            # both build_requires and configure_requires
+            my $sufficient = $inst_file ||
+                ( exists $prereq_pm->{requires}{$need_module} ? 0 : $available_file );
+            if ( $sufficient
                 and ( # a few quick short circuits
                      not defined $need_version
                      or $need_version eq '0'    # "==" would trigger warning when not numeric
@@ -2945,8 +2957,9 @@ sub unsat_prereq {
                 }
             } elsif (
                 $self->{reqtype} =~ /^(r|c)$/
-                && (exists $prereq_pm->{requires}{$need_module} || exists $prereq_pm->{opt_requires} )
-                && $nmo 
+                && (   exists $prereq_pm->{requires}{$need_module}
+                    || exists $prereq_pm->{opt_requires}{$need_module} )
+                && $nmo
                 && !$inst_file
             ) {
                 # continue installing as a prereq; this may be a
@@ -2955,7 +2968,8 @@ sub unsat_prereq {
                 # wants it as a requires
                 my $need_distro = $nmo->distribution;
                 if ($need_distro->{install} && $need_distro->{install}->failed && $need_distro->{install}->text =~ /is only/) {
-                    CPAN->debug("promotion from build_requires to requires") if $CPAN::DEBUG;
+                    my $id = $need_distro->pretty_id;
+                    $CPAN::Frontend->myprint("Promoting $id from build_requires to requires due $need_module\n");
                     delete $need_distro->{install}; # promote to another installation attempt
                     $need_distro->{reqtype} = "r";
                     $need_distro->install;
@@ -3491,8 +3505,21 @@ sub _exe_files {
     if (-f $buildparams) {
         CPAN->debug("Found '$buildparams'") if $CPAN::DEBUG;
         my $x = do $buildparams;
-        for my $sf (@{$x->[2]{script_files} || []}) {
-            push @exe_files, $sf;
+        for my $sf ($x->[2]{script_files}) {
+            if (my $reftype = ref $sf) {
+                if ($reftype eq "ARRAY") {
+                    push @exe_files, @$sf;
+                }
+                elsif ($reftype eq "HASH") {
+                    push @exe_files, keys %$sf;
+                }
+                else {
+                    $CPAN::Frontend->mywarn("Invalid reftype $reftype for Build.PL 'script_files'\n");
+                }
+            }
+            elsif (defined $sf) {
+                push @exe_files, $sf;
+            }
         }
     }
     return \@exe_files;
@@ -3534,7 +3561,7 @@ sub test {
     local $ENV{PERL_MM_USE_DEFAULT} = 1 if $CPAN::Config->{use_prompt_default};
     local $ENV{NONINTERACTIVE_TESTING} = 1 if $CPAN::Config->{use_prompt_default};
 
-    $CPAN::Frontend->myprint("Running $make test\n");
+    $CPAN::Frontend->myprint(sprintf "Running %s test for %s\n", $make, $self->pretty_id);
 
     my $builddir = $self->dir or
         $CPAN::Frontend->mydie("PANIC: Cannot determine build directory\n");
@@ -3751,7 +3778,7 @@ sub _prefs_with_expect {
 sub clean {
     my($self) = @_;
     my $make = $self->{modulebuild} ? "Build" : "make";
-    $CPAN::Frontend->myprint("Running $make clean\n");
+    $CPAN::Frontend->myprint(sprintf "Running %s clean for %s\n", $make, $self->pretty_id);
     unless (exists $self->{archived}) {
         $CPAN::Frontend->mywarn("Distribution seems to have never been unzipped".
                                 "/untarred, nothing done\n");
@@ -3773,7 +3800,7 @@ sub clean {
             push @e, "make clean already called once";
         $CPAN::Frontend->myprint(join "", map {"  $_\n"} @e) and return if @e;
     }
-    chdir $self->{build_dir} or
+    chdir "$self->{build_dir}" or
         Carp::confess("Couldn't chdir to $self->{build_dir}: $!");
     $self->debug("Changed directory to $self->{build_dir}") if $CPAN::DEBUG;
 
@@ -3889,7 +3916,7 @@ sub shortcut_install {
             $CPAN::META->is_installed($self->{build_dir});
             return $self->success("Already done");
         } elsif ($text =~ /is only/) {
-            # e.g. 'is only build_requires'
+            # e.g. 'is only build_requires': may be overruled later
             return $self->goodbye($text);
         } else {
             # comment in Todo on 2006-02-11; maybe retry?
@@ -3913,19 +3940,25 @@ sub install {
 
     $self->debug("checking goto id[$self->{ID}]") if $CPAN::DEBUG;
     if (my $goto = $self->prefs->{goto}) {
-        return $self->goto($goto);
+        $self->goto($goto);
+        $self->post_install();
+        return;
     }
 
-    $self->test
-        or return;
+    unless ($self->test) {
+        $self->post_install();
+        return;
+    }
 
     if ( defined( my $sc = $self->shortcut_install ) ) {
+        $self->post_install();
         return $sc;
     }
 
     if ($CPAN::Signal) {
-      delete $self->{force_update};
-      return;
+        delete $self->{force_update};
+        $self->post_install();
+        return;
     }
 
     my $builddir = $self->dir or
@@ -3933,6 +3966,7 @@ sub install {
 
     unless (chdir $builddir) {
         $CPAN::Frontend->mywarn("Couldn't chdir to '$builddir': $!");
+        $self->post_install();
         return;
     }
 
@@ -3940,10 +3974,11 @@ sub install {
         if $CPAN::DEBUG;
 
     my $make = $self->{modulebuild} ? "Build" : "make";
-    $CPAN::Frontend->myprint("Running $make install\n");
+    $CPAN::Frontend->myprint(sprintf "Running %s install for %s\n", $make, $self->pretty_id);
 
     if ($^O eq 'MacOS') {
         Mac::BuildTools::make_install($self);
+        $self->post_install();
         return;
     }
 
@@ -3995,7 +4030,9 @@ sub install {
         my $is_only = "is only 'build_requires'";
         $self->{install} = CPAN::Distrostatus->new("NO -- $is_only");
         delete $self->{force_update};
-        return $self->goodbye("Not installing because $is_only");
+        $self->goodbye("Not installing because $is_only");
+        $self->post_install();
+        return;
     }
     local $ENV{PERL5LIB} = defined($ENV{PERL5LIB})
                            ? $ENV{PERL5LIB}
@@ -4014,6 +4051,7 @@ sub install {
         $self->{install} = CPAN::Distrostatus->new("NO");
         $CPAN::Frontend->mywarn("  $system -- NOT OK\n");
         delete $self->{force_update};
+        $self->post_install();
         return;
     }
     my($makeout) = "";
@@ -4401,6 +4439,17 @@ sub reports {
         $CPAN::Frontend->mydie("File::Temp not installed; cannot continue");
     }
 
+    my $format;
+    if ($CPAN::META->has_inst("YAML::XS") || $CPAN::META->has_inst("YAML::Syck")){
+        $format = 'yaml';
+    }
+    elsif (!$format && $CPAN::META->has_inst("JSON::PP") ) {
+        $format = 'json';
+    }
+    else {
+        $CPAN::Frontend->mydie("JSON::PP not installed, cannot continue");
+    }
+
     my $d = CPAN::DistnameInfo->new($pathname);
 
     my $dist      = $d->dist;      # "CPAN-DistnameInfo"
@@ -4410,7 +4459,7 @@ sub reports {
     my $cpanid    = $d->cpanid;    # "GBARR"
     my $distvname = $d->distvname; # "CPAN-DistnameInfo-0.02"
 
-    my $url = sprintf "http://www.cpantesters.org/show/%s.yaml", $dist;
+    my $url = sprintf "http://www.cpantesters.org/show/%s.%s", $dist, $format;
 
     CPAN::LWP::UserAgent->config;
     my $Ua;
@@ -4424,19 +4473,25 @@ sub reports {
         $CPAN::Frontend->mydie(sprintf "Could not download '%s': %s\n", $url, $resp->code);
     }
     $CPAN::Frontend->myprint("DONE\n\n");
-    my $yaml = $resp->content;
-    # what a long way round!
-    my $fh = File::Temp->new(
-                             dir      => File::Spec->tmpdir,
-                             template => 'cpan_reports_XXXX',
-                             suffix => '.yaml',
-                             unlink => 0,
-                            );
-    my $tfilename = $fh->filename;
-    print $fh $yaml;
-    close $fh or $CPAN::Frontend->mydie("Could not close '$tfilename': $!");
-    my $unserialized = CPAN->_yaml_loadfile($tfilename)->[0];
-    unlink $tfilename or $CPAN::Frontend->mydie("Could not unlink '$tfilename': $!");
+    my $unserialized;
+    if ( $format eq 'yaml' ) {
+        my $yaml = $resp->content;
+        # what a long way round!
+        my $fh = File::Temp->new(
+                                 dir      => File::Spec->tmpdir,
+                                 template => 'cpan_reports_XXXX',
+                                 suffix => '.yaml',
+                                 unlink => 0,
+                                );
+        my $tfilename = $fh->filename;
+        print $fh $yaml;
+        close $fh or $CPAN::Frontend->mydie("Could not close '$tfilename': $!");
+        $unserialized = CPAN->_yaml_loadfile($tfilename)->[0];
+        unlink $tfilename or $CPAN::Frontend->mydie("Could not unlink '$tfilename': $!");
+    } else {
+        require JSON::PP;
+        $unserialized = JSON::PP->new->utf8->decode($resp->content);
+    }
     my %other_versions;
     my $this_version_seen;
     for my $rep (@$unserialized) {
@@ -4469,7 +4524,7 @@ Reports for other versions:\n");
             $CPAN::Frontend->myprint(" $v\: $other_versions{$v}\n");
         }
     }
-    $url =~ s/\.yaml/.html/;
+    $url = substr($url,0,-4) . 'html';
     $CPAN::Frontend->myprint("See $url for details\n");
 }
 

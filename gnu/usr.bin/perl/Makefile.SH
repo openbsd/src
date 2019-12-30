@@ -184,15 +184,11 @@ esac
 
 : is Cwd static or dynamic
 static_cwd='define'
-storable_limit_dep=''
-storable_type=''
 list_util_dep='$(PERL_EXE)'
 for f in $dynamic_ext; do
    case $f in
        Cwd) static_cwd='undef' ;;
        List/Util) list_util_dep=lib/auto/List/Util/Util.$dlext ;;
-       Storable) storable_limit_dep=lib/auto/Storable/Storable.$dlext
-                 storable_type='dynamic' ;;
    esac
 done
 
@@ -229,7 +225,6 @@ for f in $static_ext; do
 $this_target: lib/auto/List/Util/Util\$(LIB_EXT)" ;;
 	Unicode/Normalize) extra_dep="$extra_dep
 $this_target: uni.data" ;;
-        Storable) storable_type='static' ;;
     esac
 done
 
@@ -284,6 +279,7 @@ LNS = $lns
 CPS = $cp
 RMS = rm -f
 ranlib = $ranlib
+ECHO = $echo
 
 # The following are mentioned only to make metaconfig include the
 # appropriate questions in Configure.  If you want to change these,
@@ -491,7 +487,7 @@ shextract=`SH_to_target $SH`
 ## In the following dollars and backticks do not need the extra backslash.
 $spitshell >>$Makefile <<!GROK!THIS!
 
-private = preplibrary \$(CONFIGPM) \$(CONFIGPOD) lib/buildcustomize.pl
+private = preplibrary \$(CONFIGPM) \$(CONFIGPOD) git_version.h lib/buildcustomize.pl
 
 # Files to be built with variable substitution before miniperl
 # is available.
@@ -591,7 +587,7 @@ esac
 
 $spitshell >>$Makefile <<'!NO!SUBS!'
 
-perltoc_pod_prereqs = extra.pods pod/perl5282delta.pod pod/perlapi.pod pod/perlintern.pod pod/perlmodlib.pod
+perltoc_pod_prereqs = extra.pods pod/perl5301delta.pod pod/perlapi.pod pod/perlintern.pod pod/perlmodlib.pod pod/perluniprops.pod
 generated_pods = pod/perltoc.pod $(perltoc_pod_prereqs)
 generated_headers = uudmap.h bitcount.h mg_data.h
 
@@ -650,16 +646,15 @@ $(MANIFEST_SRT):	MANIFEST $(PERL_EXE)
 
 .PHONY: all utilities
 
-# OpenBSD uses pre-generated lib/Config_git.pl and git_version.h files
 # Both git_version.h and lib/Config_git.pl are built
 # by make_patchnum.pl.
-#git_version.h: lib/Config_git.pl
-#
-#lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
-#	$(MINIPERL) make_patchnum.pl
-#
-## make sure that we recompile perl.c if the git version changes
-#perl$(OBJ_EXT): git_version.h
+git_version.h: lib/Config_git.pl
+
+lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
+	$(MINIPERL) make_patchnum.pl
+
+# make sure that we recompile perl.c if the git version changes
+perl$(OBJ_EXT): git_version.h
 
 !NO!SUBS!
 
@@ -825,11 +820,11 @@ CCDLFLAGS		= `echo $ccdlflags|sed -e 's@-bE:.*/perl\.exp@-bE:perl.exp@'`
 LIBPERL_NONSHR		= libperl_nonshr$(LIB_EXT)
 MINIPERL_NONSHR		= miniperl_nonshr$(EXE_EXT)
 
-#$(LIBPERL_NONSHR): $(perllib_objs)
-#	$(RMS) $(LIBPERL_NONSHR)
-#	$(AR) rc $(LIBPERL_NONSHR) $(perllib_objs)
+$(LIBPERL_NONSHR): $(perllib_objs)
+	$(RMS) $(LIBPERL_NONSHR)
+	$(AR) rc $(LIBPERL_NONSHR) $(perllib_objs)
 
-$(MINIPERL_NONSHR): miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT)  perlmini$(OBJ_EXT)
+$(MINIPERL_NONSHR): $(LIBPERL_NONSHR) miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT)  perlmini$(OBJ_EXT)
 	$(CC) $(LDFLAGS) -o $(MINIPERL_NONSHR) miniperlmain$(OBJ_EXT) \
 	    opmini$(OBJ_EXT) perlmini$(OBJ_EXT) $(LIBPERL_NONSHR) $(LIBS)
 
@@ -928,33 +923,33 @@ $(DTRACE_MAIN_O): perldtrace.d perlmain$(OBJ_EXT)
 !NO!SUBS!
 		;;
     esac
-#	$spitshell >>$Makefile <<'!NO!SUBS!'
-#$(LIBPERL): $& $(perllib_dep) $(DYNALOADER) $(LIBPERLEXPORT)
-#!NO!SUBS!
-#	case "$useshrplib" in
-#	true)
-#		$spitshell >>$Makefile <<'!NO!SUBS!'
-#	rm -f $@
-#	$(LD) -o $@ $(SHRPLDFLAGS) $(perllib_objs) $(DYNALOADER) $(libs)
-#!NO!SUBS!
-#		case "$osname" in
-#		aix)
-#			$spitshell >>$Makefile <<'!NO!SUBS!'
-#	rm -f libperl$(OBJ_EXT)
-#	mv $@ libperl$(OBJ_EXT)
-#	$(AR) qv $(LIBPERL) libperl$(OBJ_EXT)
-#!NO!SUBS!
-#			;;
-#		esac
-#		;;
-#	*)
-#		$spitshell >>$Makefile <<'!NO!SUBS!'
-#	rm -f $(LIBPERL)
-#	$(AR) rc $(LIBPERL) $(perllib_objs) $(DYNALOADER)
-#	@$(ranlib) $(LIBPERL)
-#!NO!SUBS!
-#		;;
-#	esac
+	$spitshell >>$Makefile <<'!NO!SUBS!'
+$(LIBPERL): $& $(perllib_dep) $(DYNALOADER) $(LIBPERLEXPORT)
+!NO!SUBS!
+	case "$useshrplib" in
+	true)
+		$spitshell >>$Makefile <<'!NO!SUBS!'
+	rm -f $@
+	$(LD) -o $@ $(SHRPLDFLAGS) $(perllib_objs) $(DYNALOADER) $(libs)
+!NO!SUBS!
+		case "$osname" in
+		aix)
+			$spitshell >>$Makefile <<'!NO!SUBS!'
+	rm -f libperl$(OBJ_EXT)
+	mv $@ libperl$(OBJ_EXT)
+	$(AR) qv $(LIBPERL) libperl$(OBJ_EXT)
+!NO!SUBS!
+			;;
+		esac
+		;;
+	*)
+		$spitshell >>$Makefile <<'!NO!SUBS!'
+	rm -f $(LIBPERL)
+	$(AR) rc $(LIBPERL) $(perllib_objs) $(DYNALOADER)
+	@$(ranlib) $(LIBPERL)
+!NO!SUBS!
+		;;
+	esac
 	$spitshell >>$Makefile <<'!NO!SUBS!'
 
 # How to build executables.
@@ -1020,6 +1015,10 @@ NAMESPACEFLAGS = -force_flat_namespace
 		esac
 		$spitshell >>$Makefile <<'!NO!SUBS!'
 lib/buildcustomize.pl: $& $(miniperl_objs) write_buildcustomize.pl
+	-@rm -f miniperl.xok
+	$(CC) $(CLDFLAGS) $(NAMESPACEFLAGS) -o $(MINIPERL_EXE) \
+	    $(miniperl_objs) $(libs)
+	$(LDLIBPTH) ./miniperl$(HOST_EXE_EXT) -w -Ilib -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
 	$(MINIPERL) -f write_buildcustomize.pl
 !NO!SUBS!
 		;;
@@ -1133,7 +1132,10 @@ $(CONFIGPOD): config.sh $(MINIPERL_EXE) configpm Porting/Glossary lib/Config_git
 unidatafiles $(unidatafiles) pod/perluniprops.pod: uni.data
 
 uni.data: $(MINIPERL_EXE) $(CONFIGPM) lib/unicore/mktables $(nonxs_ext)
-	touch uni.data
+	$(MINIPERL) lib/unicore/mktables -C lib/unicore -P pod -maketest -makelist -p
+#	Commented out so always runs, mktables looks at far more files than we
+#	can in this makefile to decide if needs to run or not
+#	touch uni.data
 
 # $(PERL_EXE) and ext because pod_lib.pl needs Digest::MD5
 # But also this ensures that all extensions are built before we try to scan
@@ -1149,9 +1151,9 @@ pod/perlintern.pod: $(MINIPERL_EXE) autodoc.pl embed.fnc
 pod/perlmodlib.pod: $(MINIPERL_EXE) pod/perlmodlib.PL MANIFEST
 	$(MINIPERL) pod/perlmodlib.PL -q
 
-pod/perl5282delta.pod: pod/perldelta.pod
-	$(RMS) pod/perl5282delta.pod
-	$(LNS) perldelta.pod pod/perl5282delta.pod
+pod/perl5301delta.pod: pod/perldelta.pod
+	$(RMS) pod/perl5301delta.pod
+	$(LNS) perldelta.pod pod/perl5301delta.pod
 
 extra.pods: $(MINIPERL_EXE)
 	-@test ! -f extra.pods || rm -f `cat extra.pods`
@@ -1181,26 +1183,6 @@ no_install no-install: install-notify
 
 install: install-all
 !NO!SUBS!
-
-if test "$storable_type" != "" ; then
-
-case "$static_cwd" in
-undef) storable_limit_dep="$storable_limit_dep lib/auto/Cwd/Cwd.$dlext" ;;
-esac
-
-$spitshell >>$Makefile <<EOT
-
-dist/Storable/lib/Storable/Limit.pm : \$(PERL_EXE) dist/Storable/stacksize $storable_limit_dep
-	cd dist/Storable ; \$(LDLIBPTH) \$(MAKE) lib/Storable/Limit.pm
-
-lib/Storable/Limit.pm : dist/Storable/lib/Storable/Limit.pm
-	test -d lib/Storable || mkdir lib/Storable
-	cp dist/Storable/lib/Storable/Limit.pm lib/Storable/Limit.pm
-EOT
-
-common_build_deps="$common_build_deps lib/Storable/Limit.pm"
-
-fi
 
 for name in all notify silent strip verbose; do
     flags="--$name";
@@ -1400,7 +1382,7 @@ _mopup:
 	-rm -f *perl.xok
 	-rm -f cygwin.c libperl*.def libperl*.dll cygperl*.dll *.exe.stackdump
 	-rm -f $(PERL_EXE) $(MINIPERL_EXE) $(LIBPERL) libperl.* microperl
-	-rm -f $(DTRACE_H)
+	-rm -f config.arch config.over $(DTRACE_H)
 
 _cleaner1:
 	-cd os2; rm -f Makefile
@@ -1420,6 +1402,14 @@ _cleaner1:
 # run once if nothhing is passed in. It is such a great help.
 
 # Some systems do not support "?", so keep these files separate.
+
+# The Time::HiRes Makefile *should* remove dist/Time-HiRes/xdefine for 'clean',
+# but it's possible to get a rebuilt checkout into a state where it can't run
+# distclean, and can't recover until the file is gone.
+# There's no harm in adding it to the top level 'distclean' target - it should
+# anyway by then, and miniperl is long gone.
+# Add new rules before that line - the next line (rm -f so_locations ...) is
+# used as a placeholder by a regen script.
 _cleaner2:
 	-rm -f core.*perl.*.? t/core.perl.*.? .?*.c
 	rm -f core *perl.core t/core t/*perl.core core.* t/core.*
@@ -1437,6 +1427,7 @@ _cleaner2:
 	rm -f pod2htmd.tmp
 	rm -rf pod/perlfunc pod/perlipc
 	-rmdir ext/B/lib
+	-rm -f dist/Time-HiRes/xdefine
 	rm -f so_locations $(LIBPERL_NONSHR) $(MINIPERL_NONSHR)
 	-rmdir lib/version lib/threads lib/inc/ExtUtils lib/inc lib/encoding
 	-rmdir lib/autodie/exception lib/autodie/Scope lib/autodie lib/XS
@@ -1444,22 +1435,22 @@ _cleaner2:
 	-rmdir lib/Unicode/Collate/CJK lib/Unicode/Collate lib/Tie/Hash
 	-rmdir lib/Thread lib/Text lib/Test2/Util lib/Test2/Tools
 	-rmdir lib/Test2/IPC/Driver lib/Test2/IPC lib/Test2/Hub/Interceptor
-	-rmdir lib/Test2/Hub lib/Test2/Formatter lib/Test2/EventFacet
-	-rmdir lib/Test2/Event/TAP lib/Test2/Event lib/Test2/API lib/Test2
-	-rmdir lib/Test/use lib/Test/Tester lib/Test/Builder/Tester
-	-rmdir lib/Test/Builder/IO lib/Test/Builder lib/Test lib/Term
-	-rmdir lib/TAP/Parser/YAMLish lib/TAP/Parser/SourceHandler
-	-rmdir lib/TAP/Parser/Scheduler lib/TAP/Parser/Result
-	-rmdir lib/TAP/Parser/Iterator lib/TAP/Parser lib/TAP/Harness
-	-rmdir lib/TAP/Formatter/File lib/TAP/Formatter/Console
-	-rmdir lib/TAP/Formatter lib/TAP lib/Sys/Syslog lib/Sys lib/Sub
-	-rmdir lib/Search lib/Scalar lib/Pod/Text lib/Pod/Simple
-	-rmdir lib/Pod/Perldoc lib/PerlIO/via lib/PerlIO lib/Perl
-	-rmdir lib/Parse/CPAN lib/Parse lib/Params lib/OpenBSD lib/Net/FTP
-	-rmdir lib/Module/Load lib/Module/CoreList lib/Module lib/Memoize
-	-rmdir lib/Math/BigInt lib/Math/BigFloat lib/Math lib/MIME
-	-rmdir lib/Locale/Maketext lib/Locale/Codes lib/Locale lib/List/Util
-	-rmdir lib/List lib/JSON/PP lib/JSON lib/IPC lib/IO/Uncompress/Adapter
+	-rmdir lib/Test2/Hub lib/Test2/Formatter lib/Test2/EventFacet/Info
+	-rmdir lib/Test2/EventFacet lib/Test2/Event/TAP lib/Test2/Event
+	-rmdir lib/Test2/API lib/Test2 lib/Test/use lib/Test/Tester
+	-rmdir lib/Test/Builder/Tester lib/Test/Builder/IO lib/Test/Builder
+	-rmdir lib/Test lib/Term lib/TAP/Parser/YAMLish
+	-rmdir lib/TAP/Parser/SourceHandler lib/TAP/Parser/Scheduler
+	-rmdir lib/TAP/Parser/Result lib/TAP/Parser/Iterator lib/TAP/Parser
+	-rmdir lib/TAP/Harness lib/TAP/Formatter/File
+	-rmdir lib/TAP/Formatter/Console lib/TAP/Formatter lib/TAP
+	-rmdir lib/Sys/Syslog lib/Sys lib/Sub lib/Search lib/Scalar
+	-rmdir lib/Pod/Text lib/Pod/Simple lib/Pod/Perldoc lib/PerlIO/via
+	-rmdir lib/PerlIO lib/Perl lib/Parse/CPAN lib/Parse lib/Params
+	-rmdir lib/Net/FTP lib/Module/Load lib/Module/CoreList lib/Module
+	-rmdir lib/Memoize lib/Math/BigInt lib/Math/BigFloat lib/Math lib/MIME
+	-rmdir lib/Locale/Maketext lib/Locale lib/List/Util lib/List
+	-rmdir lib/JSON/PP lib/JSON lib/IPC lib/IO/Uncompress/Adapter
 	-rmdir lib/IO/Uncompress lib/IO/Socket lib/IO/Compress/Zlib
 	-rmdir lib/IO/Compress/Zip lib/IO/Compress/Gzip lib/IO/Compress/Base
 	-rmdir lib/IO/Compress/Adapter lib/IO/Compress lib/IO

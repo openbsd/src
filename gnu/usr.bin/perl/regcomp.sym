@@ -11,8 +11,10 @@
 # Note that the order in this file is important.
 #
 # Format for first section: 
-# NAME \s+ TYPE, arg-description [num-args] [flags] [longjump-len] ; DESCRIPTION
-#   flag <S> means is REGNODE_SIMPLE; flag <V> means is REGNODE_VARIES
+# NAME \s+ TYPE, arg-description [num-args] [flags] [longjump] ; DESCRIPTION
+#   flag <S> means is REGNODE_SIMPLE; flag <V> means is REGNODE_VARIES; <.> is
+#   a placeholder
+#   longjump is 1 if the (first) argument holds the next offset.
 #
 #
 # run perl regen.pl after editing this file
@@ -45,21 +47,24 @@ GPOS        GPOS,       no        ; Matches where last m//g left off.
 # BOUND, POSIX and their complements are affected, as well as EXACTF.
 BOUND       BOUND,      no        ; Like BOUNDA for non-utf8, otherwise match "" between any Unicode \w\W or \W\w
 BOUNDL      BOUND,      no        ; Like BOUND/BOUNDU, but \w and \W are defined by current locale
-BOUNDU      BOUND,      no        ; Match "" at any boundary of a given type using Unicode rules
+BOUNDU      BOUND,      no        ; Match "" at any boundary of a given type using /u rules.
 BOUNDA      BOUND,      no        ; Match "" at any boundary between \w\W or \W\w, where \w is [_a-zA-Z0-9]
 # All NBOUND nodes are required by code in regexec.c to be greater than all BOUND ones
 NBOUND      NBOUND,     no        ; Like NBOUNDA for non-utf8, otherwise match "" between any Unicode \w\w or \W\W
 NBOUNDL     NBOUND,     no        ; Like NBOUND/NBOUNDU, but \w and \W are defined by current locale
-NBOUNDU     NBOUND,     no        ; Match "" at any non-boundary of a given type using using Unicode rules
+NBOUNDU     NBOUND,     no        ; Match "" at any non-boundary of a given type using using /u rules.
 NBOUNDA     NBOUND,     no        ; Match "" betweeen any \w\w or \W\W, where \w is [_a-zA-Z0-9]
 
 #* [Special] alternatives:
 REG_ANY     REG_ANY,    no 0 S    ; Match any one character (except newline).
 SANY        REG_ANY,    no 0 S    ; Match any one character.
-ANYOF       ANYOF,      sv 1 S    ; Match character in (or not in) this class, single char match only
-ANYOFD      ANYOF,      sv 1 S    ; Like ANYOF, but /d is in effect
-ANYOFL      ANYOF,      sv 1 S    ; Like ANYOF, but /l is in effect
+ANYOF       ANYOF,      sv charclass S    ; Match character in (or not in) this class, single char match only
+ANYOFD      ANYOF,      sv charclass S    ; Like ANYOF, but /d is in effect
+ANYOFL      ANYOF,      sv charclass S    ; Like ANYOF, but /l is in effect
+ANYOFPOSIXL ANYOF,      sv charclass_posixl S    ; Like ANYOFL, but matches [[:posix:]] classes
+ANYOFH      ANYOF,      sv 1 S    ; Like ANYOF, but only has "High" matches, none in the bitmap; non-zero flags "f" means "f" is the first UTF-8 byte shared in common by all code points matched
 ANYOFM      ANYOFM      byte 1 S  ; Like ANYOF, but matches an invariant byte as determined by the mask and arg
+NANYOFM     ANYOFM      byte 1 S  ; complement of ANYOFM
 
 #* POSIX Character Classes:
 # Order of the below is important.  See ordering comment above.
@@ -72,9 +77,6 @@ NPOSIXL     NPOSIXD,    none 0 S   ; complement of POSIXL, [[:^class:]]
 NPOSIXU     NPOSIXD,    none 0 S   ; complement of POSIXU, [[:^class:]]
 NPOSIXA     NPOSIXD,    none 0 S   ; complement of POSIXA, [[:^class:]]
 # End of order is important
-
-ASCII       ASCII,      none 0 S   ; [[:ascii:]]
-NASCII      ASCII,      none 0 S   ; [[:^ascii:]]
 
 CLUMP       CLUMP,      no 0 V    ; Match any extended grapheme cluster sequence
 
@@ -96,16 +98,30 @@ BRANCH      BRANCH,     node 0 V  ; Match this alternative, or the next...
 
 EXACT       EXACT,      str       ; Match this string (preceded by length).
 EXACTL      EXACT,      str       ; Like EXACT, but /l is in effect (used so locale-related warnings can be checked for).
-EXACTF      EXACT,      str       ; Match this non-UTF-8 string (not guaranteed to be folded) using /id rules (w/len).
-EXACTFL     EXACT,      str       ; Match this string (not guaranteed to be folded) using /il rules (w/len).
-EXACTFU     EXACT,      str	  ; Match this string (folded iff in UTF-8, length in folding doesn't change if not in UTF-8) using /iu rules (w/len).
-EXACTFAA    EXACT,      str	  ; Match this string (not guaranteed to be folded) using /iaa rules (w/len).
+EXACTF      EXACT,      str       ; Match this string using /id rules (w/len); (string not UTF-8, not guaranteed to be folded).
+EXACTFL     EXACT,      str       ; Match this string using /il rules (w/len); (string not guaranteed to be folded).
+EXACTFU     EXACT,      str	  ; Match this string using /iu rules (w/len); (string folded iff in UTF-8; non-UTF8 folded length <= unfolded).
+EXACTFAA    EXACT,      str	  ; Match this string using /iaa rules (w/len) (string folded iff in UTF-8; non-UTF8 folded length <= unfolded).
 
 # End of important relative ordering.
 
-EXACTFU_SS  EXACT,      str	  ; Match this string (folded iff in UTF-8, length in folding may change even if not in UTF-8) using /iu rules (w/len).
-EXACTFLU8   EXACT,      str	  ; Rare circumstances: like EXACTFU, but is under /l, UTF-8, folded, and everything in it is above 255.
-EXACTFAA_NO_TRIE  EXACT, str	  ; Match this string (which is not trie-able; not guaranteed to be folded) using /iaa rules (w/len).
+EXACTFUP    EXACT,      str	  ; Match this string using /iu rules (w/len); (string not UTF-8, not guaranteed to be folded; and its Problematic).
+# In order for a non-UTF-8 EXACTFAA to think the pattern is pre-folded when
+# matching a UTF-8 target string, there would have to be something like an
+# EXACTFAA_MICRO which would not be considered pre-folded for UTF-8 targets,
+# since the fold of the MICRO SIGN would not be done, and would be
+# representable in the UTF-8 target string.
+
+EXACTFLU8   EXACT,      str	  ; Like EXACTFU, but use /il, UTF-8, folded, and everything in it is above 255.
+EXACTFAA_NO_TRIE  EXACT, str	  ; Match this string using /iaa rules (w/len) (string not UTF-8, not guaranteed to be folded, not currently trie-able).
+
+
+EXACT_ONLY8 EXACT,      str       ; Like EXACT, but only UTF-8 encoded targets can match
+EXACTFU_ONLY8 EXACT,    str       ; Like EXACTFU, but only UTF-8 encoded targets can match
+# One could add EXACTFAA8 and and something that has the same effect for /l,
+# but these would be extremely uncommon
+
+EXACTFU_S_EDGE EXACT,   str       ; /di rules, but nothing in it precludes /ui, except begins and/or ends with [Ss]; (string not UTF-8; compile-time only).
 
 #*Do nothing types
 
@@ -140,29 +156,29 @@ SROPEN      SROPEN,     none      ; Same as OPEN, but for script run
 SRCLOSE     SRCLOSE,    none      ; Close preceding SROPEN
 
 REF         REF,        num 1 V   ; Match some already matched string
-REFF        REF,        num 1 V   ; Match already matched string, folded using native charset rules for non-utf8
-REFFL       REF,        num 1 V   ; Match already matched string, folded in loc.
+REFF        REF,        num 1 V   ; Match already matched string, using /di rules.
+REFFL       REF,        num 1 V   ; Match already matched string, using /li rules.
 # N?REFF[AU] could have been implemented using the FLAGS field of the
 # regnode, but by having a separate node type, we can use the existing switch
 # statement to avoid some tests
-REFFU       REF,        num 1 V   ; Match already matched string, folded using unicode rules for non-utf8
-REFFA       REF,        num 1 V   ; Match already matched string, folded using unicode rules for non-utf8, no mixing ASCII, non-ASCII
+REFFU       REF,        num 1 V   ; Match already matched string, usng /ui.
+REFFA       REF,        num 1 V   ; Match already matched string, using /aai rules.
 
 #*Named references.  Code in regcomp.c assumes that these all are after
 #*the numbered references
 NREF        REF,        no-sv 1 V ; Match some already matched string
-NREFF       REF,        no-sv 1 V ; Match already matched string, folded using native charset rules for non-utf8
-NREFFL      REF,        no-sv 1 V ; Match already matched string, folded in loc.
-NREFFU      REF,        num   1 V ; Match already matched string, folded using unicode rules for non-utf8
-NREFFA      REF,        num   1 V ; Match already matched string, folded using unicode rules for non-utf8, no mixing ASCII, non-ASCII
+NREFF       REF,        no-sv 1 V ; Match already matched string, using /di rules.
+NREFFL      REF,        no-sv 1 V ; Match already matched string, using /li rules.
+NREFFU      REF,        num   1 V ; Match already matched string, using /ui rules.
+NREFFA      REF,        num   1 V ; Match already matched string, using /aai rules.
 
 #*Support for long RE
 LONGJMP     LONGJMP,    off 1 . 1 ; Jump far away.
 BRANCHJ     BRANCHJ,    off 1 V 1 ; BRANCH with long offset.
 
 #*Special Case Regops
-IFMATCH     BRANCHJ,    off 1 . 2 ; Succeeds if the following matches.
-UNLESSM     BRANCHJ,    off 1 . 2 ; Fails if the following matches.
+IFMATCH     BRANCHJ,    off 1 . 1 ; Succeeds if the following matches; non-zero flags "f", next_off "o" means lookbehind assertion starting "f..(f-o)" characters before current
+UNLESSM     BRANCHJ,    off 1 . 1 ; Fails if the following matches; non-zero flags "f", next_off "o" means lookbehind assertion starting "f..(f-o)" characters before current
 SUSPEND     BRANCHJ,    off 1 V 1 ; "Independent" sub-RE.
 IFTHEN      BRANCHJ,    off 1 V 1 ; Switch, should be preceded by switcher.
 GROUPP      GROUPP,     num 1     ; Whether the group matched.
@@ -255,7 +271,7 @@ WHILEM          A_pre,A_min,A_max,B_min,B_max:FAIL
 BRANCH          next:FAIL
 CURLYM          A,B:FAIL
 IFMATCH         A:FAIL
-CURLY           B_min_known,B_min,B_max:FAIL
+CURLY           B_min,B_max:FAIL
 COMMIT          next:FAIL
 MARKPOINT       next:FAIL
 SKIP            next:FAIL

@@ -30,7 +30,7 @@ use vmsish qw(hushed);
 
 $| = 1;				# flush stdout
 
-$ENV{LC_ALL}   = 'C';		# Forge English error messages.
+$ENV{LC_ALL}   = 'C';		# Force English error messages.
 $ENV{LANGUAGE} = 'C';		# Ditto in GNU.
 
 my $Is_VMS   = $^O eq 'VMS';

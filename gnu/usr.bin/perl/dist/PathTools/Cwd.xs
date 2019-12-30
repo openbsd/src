@@ -7,11 +7,13 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#define NEED_croak_xs_usage
-#define NEED_sv_2pv_flags
-#define NEED_my_strlcpy
-#define NEED_my_strlcat
-#include "ppport.h"
+#ifndef NO_PPPORT_H
+#  define NEED_croak_xs_usage
+#  define NEED_sv_2pv_flags
+#  define NEED_my_strlcpy
+#  define NEED_my_strlcat
+#  include "ppport.h"
+#endif
 
 #ifdef I_UNISTD
 #   include <unistd.h>

@@ -18,7 +18,7 @@ BEGIN {
 
 use Exporter ();
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION   = '2.15';
+$VERSION   = '2.16';
 $VERSION   = eval $VERSION;
 @ISA       = qw(Exporter);
 @EXPORT    = qw(mkpath rmtree);
@@ -633,7 +633,7 @@ File::Path - Create or remove directory trees
 
 =head1 VERSION
 
-2.15 - released June 07 2017.
+2.16 - released August 31 2018.
 
 =head1 SYNOPSIS
 
@@ -1277,7 +1277,7 @@ Contributors to File::Path, in alphabetical order by first name.
 =head1 COPYRIGHT
 
 This module is copyright (C) Charles Bailey, Tim Bunce, David Landgren,
-James Keenan and Richard Elberger 1995-2017. All rights reserved.
+James Keenan and Richard Elberger 1995-2018. All rights reserved.
 
 =head1 LICENSE
 

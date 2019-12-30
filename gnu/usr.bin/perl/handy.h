@@ -255,6 +255,14 @@ typedef U64TYPE U64;
 #  endif
 #endif
 
+/* Returns a boolean as to whether the input unsigned number is a power of 2
+ * (2**0, 2**1, etc).  In other words if it has just a single bit set.
+ * If not, subtracting 1 would leave the uppermost bit set, so the & would
+ * yield non-zero */
+#if defined(PERL_CORE) || defined(PERL_EXT)
+#  define isPOWER_OF_2(n) ((n) && ((n) & ((n)-1)) == 0)
+#endif
+
 /* This is a helper macro to avoid preprocessor issues, replaced by nothing
  * unless under DEBUGGING, where it expands to an assert of its argument,
  * followed by a comma (hence the comma operator).  If we just used a straight
@@ -271,7 +279,7 @@ typedef U64TYPE U64;
 #endif
 
 /*
-=head1 SV-Body Allocation
+=head1 SV Manipulation Functions
 
 =for apidoc Ama|SV*|newSVpvs|"literal string" s
 Like C<newSVpvn>, but takes a literal string instead of a
@@ -499,8 +507,8 @@ based on the underlying C library functions):
 #define strnNE(s1,s2,l) (strncmp(s1,s2,l) != 0)
 #define strnEQ(s1,s2,l) (strncmp(s1,s2,l) == 0)
 
-#define memNE(s1,s2,l) (memcmp(s1,s2,l) != 0)
-#define memEQ(s1,s2,l) (memcmp(s1,s2,l) == 0)
+#define memEQ(s1,s2,l) (memcmp(((const void *) (s1)), ((const void *) (s2)), l) == 0)
+#define memNE(s1,s2,l) (! memEQ(s1,s2,l))
 
 /* memEQ and memNE where second comparand is a string constant */
 #define memEQs(s1, l, s2) \
@@ -513,16 +521,16 @@ based on the underlying C library functions):
 #define strBEGINs(s1,s2) (strncmp(s1,"" s2 "", sizeof(s2)-1) == 0)
 
 #define memBEGINs(s1, l, s2)                                                \
-            (   (l) >= sizeof(s2) - 1                                       \
+            (   (Ptrdiff_t) (l) >= (Ptrdiff_t) sizeof(s2) - 1               \
              && memEQ(s1, "" s2 "", sizeof(s2)-1))
 #define memBEGINPs(s1, l, s2)                                               \
-            (   (l) > sizeof(s2) - 1                                        \
+            (   (Ptrdiff_t) (l) > (Ptrdiff_t) sizeof(s2) - 1                \
              && memEQ(s1, "" s2 "", sizeof(s2)-1))
 #define memENDs(s1, l, s2)                                                  \
-            (   (l) >= sizeof(s2) - 1                                       \
+            (   (Ptrdiff_t) (l) >= (Ptrdiff_t) sizeof(s2) - 1               \
              && memEQ(s1 + (l) - (sizeof(s2) - 1), "" s2 "", sizeof(s2)-1))
 #define memENDPs(s1, l, s2)                                                 \
-            (   (l) > sizeof(s2)                                            \
+            (   (Ptrdiff_t) (l) > (Ptrdiff_t) sizeof(s2)                    \
              && memEQ(s1 + (l) - (sizeof(s2) - 1), "" s2 "", sizeof(s2)-1))
 #endif  /* End of making macros private */
 
@@ -1086,6 +1094,28 @@ patched there.  The file as of this writing is cpan/Devel-PPPort/parts/inc/misc
 #define FITS_IN_8_BITS(c) (1)
 #endif
 
+/* Returns true if c is in the range l..u, where 'l' is non-negative
+ * Written this way so that after optimization, only one conditional test is
+ * needed.
+ *
+ * This isn't fully general, except for the special cased 'signed char' (which
+ * should be resolved at compile time):  It won't work if 'c' is negative, and
+ * 'l' is larger than the max for that signed type.  Thus if 'c' is a negative
+ * int, and 'l' is larger than INT_MAX, it will fail.  To protect agains this
+ * happening, there is an assert that will generate a warning if c is larger
+ * than e.g.  INT_MAX if it is an 'unsigned int'.  This could be a false
+ * positive, but khw couldn't figure out a way to make it better.  It's good
+ * enough so far */
+#define inRANGE(c, l, u) (__ASSERT_((l) >= 0) __ASSERT_((u) >= (l))            \
+  ((sizeof(c) == 1)                                                            \
+   ? (((WIDEST_UTYPE) ((((U8) (c))|0) - (l))) <= ((WIDEST_UTYPE) ((u) - (l)))) \
+   : (__ASSERT_(   (((WIDEST_UTYPE) 1) <<  (CHARBITS * sizeof(c) - 1) & (c))   \
+                     /* sign bit of c is 0 */                             == 0 \
+                || (((~ ((WIDEST_UTYPE) 1) << ((CHARBITS * sizeof(c) - 1) - 1))\
+                   /* l not larger than largest value in c's signed type */    \
+                                          & ~ ((WIDEST_UTYPE) 0)) & (l)) == 0) \
+      ((WIDEST_UTYPE) (((c) - (l)) | 0) <= ((WIDEST_UTYPE) ((u) - (l)))))))
+
 #ifdef EBCDIC
 #   ifndef _ALL_SOURCE
         /* The native libc isascii() et.al. functions return the wrong results
@@ -1240,17 +1270,28 @@ END_EXTERN_C
         && ((PL_charclass[(U8) (c)] & _CC_mask_A(classnum))     \
                                    == _CC_mask_A(classnum)))
 
-#   define isALPHA_A(c)  _generic_isCC_A(c, _CC_ALPHA)
+/* On ASCII platforms certain classes form a single range.  It's faster to
+ * special case these.  isDIGIT is a single range on all platforms */
+#   ifdef EBCDIC
+#     define isALPHA_A(c)  _generic_isCC_A(c, _CC_ALPHA)
+#     define isGRAPH_A(c)  _generic_isCC_A(c, _CC_GRAPH)
+#     define isLOWER_A(c)  _generic_isCC_A(c, _CC_LOWER)
+#     define isPRINT_A(c)  _generic_isCC_A(c, _CC_PRINT)
+#     define isUPPER_A(c)  _generic_isCC_A(c, _CC_UPPER)
+#   else
+      /* By folding the upper and lowercase, we can use a single range */
+#     define isALPHA_A(c)  inRANGE((~('A' ^ 'a') & (c)), 'A', 'Z')
+#     define isGRAPH_A(c)  inRANGE(c, ' ' + 1, 0x7e)
+#     define isLOWER_A(c)  inRANGE(c, 'a', 'z')
+#     define isPRINT_A(c)  inRANGE(c, ' ', 0x7e)
+#     define isUPPER_A(c)  inRANGE(c, 'A', 'Z')
+#   endif
 #   define isALPHANUMERIC_A(c) _generic_isCC_A(c, _CC_ALPHANUMERIC)
 #   define isBLANK_A(c)  _generic_isCC_A(c, _CC_BLANK)
 #   define isCNTRL_A(c)  _generic_isCC_A(c, _CC_CNTRL)
-#   define isDIGIT_A(c)  _generic_isCC(c, _CC_DIGIT) /* No non-ASCII digits */
-#   define isGRAPH_A(c)  _generic_isCC_A(c, _CC_GRAPH)
-#   define isLOWER_A(c)  _generic_isCC_A(c, _CC_LOWER)
-#   define isPRINT_A(c)  _generic_isCC_A(c, _CC_PRINT)
+#   define isDIGIT_A(c)  inRANGE(c, '0', '9')
 #   define isPUNCT_A(c)  _generic_isCC_A(c, _CC_PUNCT)
 #   define isSPACE_A(c)  _generic_isCC_A(c, _CC_SPACE)
-#   define isUPPER_A(c)  _generic_isCC_A(c, _CC_UPPER)
 #   define isWORDCHAR_A(c) _generic_isCC_A(c, _CC_WORDCHAR)
 #   define isXDIGIT_A(c)  _generic_isCC(c, _CC_XDIGIT) /* No non-ASCII xdigits
                                                         */
@@ -1296,7 +1337,7 @@ END_EXTERN_C
      * hard-code various macro definitions that wouldn't otherwise be available
      * to it. Most are coded based on first principles.  These are written to
      * avoid EBCDIC vs. ASCII #ifdef's as much as possible. */
-#   define isDIGIT_A(c)  ((c) <= '9' && (c) >= '0')
+#   define isDIGIT_A(c)  inRANGE(c, '0', '9')
 #   define isBLANK_A(c)  ((c) == ' ' || (c) == '\t')
 #   define isSPACE_A(c)  (isBLANK_A(c)                                   \
                           || (c) == '\n'                                 \
@@ -1307,21 +1348,19 @@ END_EXTERN_C
      * uppercase.  The tests for those aren't necessary on ASCII, but hurt only
      * performance (if optimization isn't on), and allow the same code to be
      * used for both platform types */
-#   define isLOWER_A(c)  ((c) >= 'a' && (c) <= 'z'                      \
-                  && (    (c) <= 'i'                                    \
-                      || ((c) >= 'j' && (c) <= 'r')                     \
-                      ||  (c) >= 's'))
-#   define isUPPER_A(c)  ((c) >= 'A' && (c) <= 'Z'                      \
-                  && (    (c) <= 'I'                                    \
-                      || ((c) >= 'J' && (c) <= 'R')                     \
-                      ||  (c) >= 'S'))
+#   define isLOWER_A(c)  inRANGE((c), 'a', 'i')                         \
+                      || inRANGE((c), 'j', 'r')                         \
+                      || inRANGE((c), 's', 'z')
+#   define isUPPER_A(c)  inRANGE((c), 'A', 'I')                         \
+                      || inRANGE((c), 'J', 'R')                         \
+                      || inRANGE((c), 'S', 'Z')
 #   define isALPHA_A(c)  (isUPPER_A(c) || isLOWER_A(c))
 #   define isALPHANUMERIC_A(c) (isALPHA_A(c) || isDIGIT_A(c))
 #   define isWORDCHAR_A(c)   (isALPHANUMERIC_A(c) || (c) == '_')
 #   define isIDFIRST_A(c)    (isALPHA_A(c) || (c) == '_')
-#   define isXDIGIT_A(c) (isDIGIT_A(c)                                  \
-                          || ((c) >= 'a' && (c) <= 'f')                 \
-                          || ((c) <= 'F' && (c) >= 'A'))
+#   define isXDIGIT_A(c) (   isDIGIT_A(c)                               \
+                          || inRANGE((c), 'a', 'f')                     \
+                          || inRANGE((c), 'A', 'F')
 #   define isPUNCT_A(c)  ((c) == '-' || (c) == '!' || (c) == '"'        \
                        || (c) == '#' || (c) == '$' || (c) == '%'        \
                        || (c) == '&' || (c) == '\'' || (c) == '('       \
@@ -1343,13 +1382,13 @@ END_EXTERN_C
 #       define isCNTRL_A(c)  ((c) == '\0' || (c) == '\a' || (c) == '\b'     \
                           ||  (c) == '\f' || (c) == '\n' || (c) == '\r'     \
                           ||  (c) == '\t' || (c) == '\v'                    \
-                          || ((c) <= 3 && (c) >= 1) /* SOH, STX, ETX */     \
+                          || inRANGE((c), 1, 3)     /* SOH, STX, ETX */     \
                           ||  (c) == 7    /* U+7F DEL */                    \
-                          || ((c) <= 0x13 && (c) >= 0x0E) /* SO, SI */      \
-                                                         /* DLE, DC[1-3] */ \
+                          || inRANGE((c), 0x0E, 0x13) /* SO SI DLE          \
+                                                         DC[1-3] */         \
                           ||  (c) == 0x18 /* U+18 CAN */                    \
                           ||  (c) == 0x19 /* U+19 EOM */                    \
-                          || ((c) <= 0x1F && (c) >= 0x1C) /* [FGRU]S */     \
+                          || inRANGE((c), 0x1C, 0x1F) /* [FGRU]S */         \
                           ||  (c) == 0x26 /* U+17 ETB */                    \
                           ||  (c) == 0x27 /* U+1B ESC */                    \
                           ||  (c) == 0x2D /* U+05 ENQ */                    \
@@ -1404,8 +1443,8 @@ END_EXTERN_C
                                       || NATIVE_TO_LATIN1((U8) c) == 0xA0)))
 #   define isUPPER_L1(c)     (isUPPER_A(c)                                   \
                               || (FITS_IN_8_BITS(c)                          \
-                                  && (   NATIVE_TO_LATIN1((U8) c) >= 0xC0    \
-                                      && NATIVE_TO_LATIN1((U8) c) <= 0xDE    \
+                                  && (   IN_RANGE(NATIVE_TO_LATIN1((U8) c),  \
+                                                  0xC0, 0xDE)                \
                                       && NATIVE_TO_LATIN1((U8) c) != 0xD7)))
 #   define isWORDCHAR_L1(c)  (isIDFIRST_L1(c) || isDIGIT_A(c))
 #   define isIDFIRST_L1(c)   (isALPHA_L1(c) || NATIVE_TO_LATIN1(c) == '_')
@@ -1463,13 +1502,18 @@ END_EXTERN_C
     #define toLOWER(c) (isASCII(c) ? toLOWER_LATIN1(c) : (c))
     #define toUPPER(c) (isASCII(c) ? toUPPER_LATIN1_MOD(c) : (c))
    which uses table lookup and mask instead of subtraction.  (This would
-   work because the _MOD does not apply in the ASCII range) */
+   work because the _MOD does not apply in the ASCII range).
+
+   These actually are UTF-8 invariant casing, not just ASCII, as any non-ASCII
+   UTF-8 invariants are neither upper nor lower.  (Only on EBCDIC platforms are
+   there non-ASCII invariants, and all of them are controls.) */
 #define toLOWER(c)  (isUPPER(c) ? (U8)((c) + ('a' - 'A')) : (c))
 #define toUPPER(c)  (isLOWER(c) ? (U8)((c) - ('a' - 'A')) : (c))
 
 /* In the ASCII range, these are equivalent to what they're here defined to be.
  * But by creating these definitions, other code doesn't have to be aware of
- * this detail */
+ * this detail.  Actually this works for all UTF-8 invariants, not just the
+ * ASCII range. (EBCDIC platforms can have non-ASCII invariants.) */
 #define toFOLD(c)    toLOWER(c)
 #define toTITLE(c)   toUPPER(c)
 
@@ -1527,18 +1571,21 @@ END_EXTERN_C
                                           || (char)(c) == '_'))
 
 /* These next three are also for internal core Perl use only: case-change
- * helper macros */
+ * helper macros.  The reason for using the PL_latin arrays is in case the
+ * system function is defective; it ensures uniform results that conform to the
+ * Unicod standard.   It does not handle the anomalies in UTF-8 Turkic locales */
 #define _generic_toLOWER_LC(c, function, cast)  (! FITS_IN_8_BITS(c)           \
                                                 ? (c)                          \
                                                 : (IN_UTF8_CTYPE_LOCALE)       \
                                                   ? PL_latin1_lc[ (U8) (c) ]   \
-                                                : (cast)function((cast)(c)))
+                                                  : (cast)function((cast)(c)))
 
 /* Note that the result can be larger than a byte in a UTF-8 locale.  It
  * returns a single value, so can't adequately return the upper case of LATIN
  * SMALL LETTER SHARP S in a UTF-8 locale (which should be a string of two
  * values "SS");  instead it asserts against that under DEBUGGING, and
- * otherwise returns its input */
+ * otherwise returns its input.  It does not handle the anomalies in UTF-8
+ * Turkic locales. */
 #define _generic_toUPPER_LC(c, function, cast)                                 \
                     (! FITS_IN_8_BITS(c)                                       \
                     ? (c)                                                      \
@@ -1556,7 +1603,8 @@ END_EXTERN_C
  * returns a single value, so can't adequately return the fold case of LATIN
  * SMALL LETTER SHARP S in a UTF-8 locale (which should be a string of two
  * values "ss"); instead it asserts against that under DEBUGGING, and
- * otherwise returns its input */
+ * otherwise returns its input.  It does not handle the anomalies in UTF-8
+ * Turkic locales */
 #define _generic_toFOLD_LC(c, function, cast)                                  \
                     ((UNLIKELY((c) == MICRO_SIGN) && IN_UTF8_CTYPE_LOCALE)     \
                       ? GREEK_SMALL_LETTER_MU                                  \
@@ -1851,13 +1899,6 @@ _generic_utf8_safe(classnum, p, e, _is_utf8_FOO_with_len(classnum, p, e))
              ? 0 /* Note that doesn't check validity for latin1 */          \
              : above_latin1)
 
-/* NOTE that some of these macros have very similar ones in regcharclass.h.
- * For example, there is (at the time of this writing) an 'is_SPACE_utf8()'
- * there, differing in name only by an underscore from the one here
- * 'isSPACE_utf8().  The difference is that the ones here are probably more
- * efficient and smaller, using an O(1) array lookup for Latin1-range code
- * points; the regcharclass.h ones are implemented as a series of
- * "if-else-if-else ..." */
 
 #define isALPHA_utf8(p)         _generic_utf8(ALPHA, p)
 #define isALPHANUMERIC_utf8(p)  _generic_utf8(ALPHANUMERIC, p)

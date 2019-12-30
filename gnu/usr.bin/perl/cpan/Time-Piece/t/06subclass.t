@@ -36,6 +36,21 @@ for my $method (qw(new localtime gmtime)) {
 }
 
 {
+  my $g = $class->gmtime;
+  my $l = $class->localtime;
+
+  #via clone
+  my $l_clone = $class->new($l);
+  isa_ok($l_clone, $class, 'custom localtime via clone');
+  cmp_ok("$l_clone", 'eq', "$l", 'Clones match');
+
+  #via clone with gmtime
+  my $g_clone = $class->new($g);
+  isa_ok($g_clone, $class, 'custom gmtime via clone');
+  cmp_ok("$g_clone", 'eq', "$g", 'Clones match');
+}
+
+{
   # let's verify that we can use gmtime from T::P without the export magic
   my $piece = Time::Piece::gmtime;
   isa_ok($piece, "Time::Piece", "object created via full-qualified gmtime");

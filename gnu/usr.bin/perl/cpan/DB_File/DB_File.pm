@@ -2,7 +2,7 @@
 #
 # Written by Paul Marquess (pmqs@cpan.org)
 #
-#     Copyright (c) 1995-2016 Paul Marquess. All rights reserved.
+#     Copyright (c) 1995-2018 Paul Marquess. All rights reserved.
 #     This program is free software; you can redistribute it and/or
 #     modify it under the same terms as Perl itself.
 
@@ -162,8 +162,10 @@ our ($VERSION, @ISA, @EXPORT, $AUTOLOAD, $DB_BTREE, $DB_HASH, $DB_RECNO);
 our ($db_version, $use_XSLoader, $splice_end_array_no_length, $splice_end_array, $Error);
 use Carp;
 
+# Module not thread safe, so don't clone
+sub CLONE_SKIP { 1 } 
 
-$VERSION = "1.840" ;
+$VERSION = "1.843" ;
 $VERSION = eval $VERSION; # needed for dev releases
 
 {

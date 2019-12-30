@@ -13,7 +13,7 @@ use Archive::Tar::Constant;
 
 use vars qw[@ISA $VERSION];
 #@ISA        = qw[Archive::Tar];
-$VERSION    = '2.30';
+$VERSION    = '2.32';
 
 ### set value to 1 to oct() it during the unpack ###
 
@@ -402,7 +402,15 @@ sub _prefix_and_file {
     $file = pop @dirs if $self->is_dir and not length $file;
 
     ### splitting ../ gives you the relative path in native syntax
-    map { $_ = '..' if $_  eq '-' } @dirs if ON_VMS;
+    ### Remove the root (000000) directory
+    ### The volume from splitpath will also be in native syntax
+    if (ON_VMS) {
+        map { $_ = '..' if $_  eq '-'; $_ = '' if $_ eq '000000' } @dirs;
+        if (length($vol)) {
+            $vol = VMS::Filespec::unixify($vol);
+            unshift @dirs, $vol;
+        }
+    }
 
     my $prefix = File::Spec::Unix->catdir(@dirs);
     return( $prefix, $file );

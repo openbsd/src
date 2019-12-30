@@ -69,7 +69,16 @@ if ($] >= 5.018) {
 END
 }
 
-if ($] >= 5.021005) {
+if ($] >= 5.026000) {
+	is (eval <<'END', 1, 'declared refs compiles') or diag $@;
+	use experimental 'declared_refs';
+	my @b;
+	my \@a = \@b;
+	is(\@a, \@b, '@a and @b are the same after \@a=\@b');
+	1;
+END
+}
+elsif ($] >= 5.021005) {
 	is (eval <<'END', 1, 'ref aliasing compiles') or diag $@;
 	use experimental 'refaliasing';
 	my (@a, @b);

@@ -5,6 +5,9 @@
  */
 
 
+#ifndef PERL_FEATURE_H_
+#define PERL_FEATURE_H_
+
 #if defined(PERL_CORE) || defined (PERL_EXT)
 
 #define HINT_FEATURE_SHIFT	26
@@ -76,13 +79,6 @@
 	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_527) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
 	 FEATURE_IS_ENABLED("evalbytes")) \
-    )
-
-#define FEATURE_ARYBASE_IS_ENABLED \
-    ( \
-	CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_511 \
-     || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED("arybase")) \
     )
 
 #define FEATURE_SIGNATURES_IS_ENABLED \
@@ -168,5 +164,7 @@ S_enable_feature_bundle(pTHX_ SV *ver)
     else			    PL_hints &= ~HINT_UNI_8_BIT;
 }
 #endif /* PERL_IN_OP_C */
+
+#endif /* PERL_FEATURE_H_ */
 
 /* ex: set ro: */

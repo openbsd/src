@@ -4,10 +4,10 @@ use 5.006001;
 use strict;
 use warnings;
 
-use Carp;
+use Carp qw< carp croak >;
 use Math::BigInt::Lib;
 
-our $VERSION = '1.999811';
+our $VERSION = '1.999816';
 
 our @ISA = ('Math::BigInt::Lib');
 
@@ -104,8 +104,7 @@ sub _new {
 
     my ($class, $str) = @_;
     #unless ($str =~ /^([1-9]\d*|0)\z/) {
-    #    require Carp;
-    #    Carp::croak("Invalid input string '$str'");
+    #    croak("Invalid input string '$str'");
     #}
 
     my $input_len = length($str) - 1;
@@ -264,8 +263,7 @@ sub _str {
     my $idx = $#$ary;           # index of last element
 
     if ($idx < 0) {             # should not happen
-        require Carp;
-        Carp::croak("$_[1] has no elements");
+        croak("$_[1] has no elements");
     }
 
     # Handle first one differently, since it should not have any leading zeros.
@@ -693,7 +691,7 @@ sub _div_use_mul {
 
     my $y = $c->_copy($yorg);         # always make copy to preserve
 
-    my ($car, $bar, $prd, $dd, $xi, $yi, @q, $v2, $v1, @d, $tmp, $q, $u2, $u1, $u0);
+    my ($car, $bar, $prd, $dd, $xi, $yi, @q, $v2, $v1, $tmp, $q, $u2, $u1, $u0);
 
     $car = $bar = $prd = 0;
     if (($dd = int($BASE / ($y->[-1] + 1))) != 1) {
@@ -858,7 +856,7 @@ sub _div_use_div_64 {
 
     my $y = $c->_copy($yorg);         # always make copy to preserve
 
-    my ($car, $bar, $prd, $dd, $xi, $yi, @q, $v2, $v1, @d, $tmp, $q, $u2, $u1, $u0);
+    my ($car, $bar, $prd, $dd, $xi, $yi, @q, $v2, $v1, $tmp, $q, $u2, $u1, $u0);
 
     $car = $bar = $prd = 0;
     if (($dd = int($BASE / ($y->[-1] + 1))) != 1) {
@@ -2045,7 +2043,6 @@ sub _root {
 
     elsif ($acmp > 0) {
         $upper = $y;
-        my $zero = $c -> _zero();
         while ($acmp > 0) {
             if ($c -> _acmp($upper, $delta) <= 0) {
                 $lower = $c -> _zero();

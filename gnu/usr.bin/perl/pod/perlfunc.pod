@@ -522,6 +522,10 @@ argument is omitted, tests L<C<$_>|perlvar/$_>, except for C<-t>, which
 tests STDIN.  Unless otherwise documented, it returns C<1> for true and
 C<''> for false.  If the file doesn't exist or can't be examined, it
 returns L<C<undef>|/undef EXPR> and sets L<C<$!>|perlvar/$!> (errno).
+With the exception of the C<-l> test they all follow symbolic links
+because they use C<stat()> and not C<lstat()> (so dangling symlinks can't
+be examined and will therefore report failure).
+
 Despite the funny names, precedence is the same as any other named unary
 operator.  The operator may be any of:
 
@@ -1921,9 +1925,8 @@ be open any more when the program is reincarnated, with possible
 resulting confusion by Perl.
 
 This function is now largely obsolete, mostly because it's very hard to
-convert a core file into an executable.  That's why you should now invoke
-it as C<CORE::dump()> if you don't want to be warned against a possible
-typo.
+convert a core file into an executable.  As of Perl 5.30, it must be invoked
+as C<CORE::dump()>.
 
 Unlike most named operators, this has the same precedence as assignment.
 It is also exempt from the looks-like-a-function rule, so
@@ -6284,14 +6287,9 @@ string otherwise.  If there's an error, returns the undefined value.
 This call is actually implemented in terms of the L<recvfrom(2)> system call.
 See L<perlipc/"UDP: Message Passing"> for examples.
 
-Note the I<characters>: depending on the status of the socket, either
-(8-bit) bytes or characters are received.  By default all sockets
-operate on bytes, but for example if the socket has been changed using
-L<C<binmode>|/binmode FILEHANDLE, LAYER> to operate with the
-C<:encoding(UTF-8)> I/O layer (see the L<open> pragma), the I/O will
-operate on UTF8-encoded Unicode
-characters, not bytes.  Similarly for the C<:encoding> layer: in that
-case pretty much any characters can be read.
+Note that if the socket has been marked as C<:utf8>, C<recv> will
+throw an exception.  The C<:encoding(...)> layer implicitly introduces
+the C<:utf8> layer.  See L<C<binmode>|/binmode FILEHANDLE, LAYER>.
 
 =item redo LABEL
 X<redo>
@@ -6381,7 +6379,9 @@ C<HASH>, C<CODE>, C<FORMAT>, or C<IO>, indicating only which kind of
 object it is.  If the unblessed referent is a scalar, then the return
 value will be one of the strings C<SCALAR>, C<VSTRING>, C<REF>, C<GLOB>,
 C<LVALUE>, or C<REGEXP>, depending on the kind of value the scalar
-currently has.  Beware that these built-in type names can also be used as
+currently has.   But note that C<qr//> scalars are created already
+blessed, so C<ref qr/.../> will likely return C<Regexp>.  Beware that
+these built-in type names can also be used as
 class names, so C<ref> returning one of these names doesn't unambiguously
 indicate that the referent is of the kind to which the name refers.
 
@@ -6654,7 +6654,8 @@ Generally used in a L<C<continue>|/continue BLOCK> block at the end of a
 loop to clear variables and reset C<m?pattern?> searches so that they
 work again.  The
 expression is interpreted as a list of single characters (hyphens
-allowed for ranges).  All variables and arrays beginning with one of
+allowed for ranges).  All variables (scalars, arrays, and hashes)
+in the current package beginning with one of
 those letters are reset to their pristine state.  If the expression is
 omitted, one-match searches (C<m?pattern?>) are reset to match again.
 Only resets variables or searches in the current package.  Always returns
@@ -6667,6 +6668,7 @@ Only resets variables or searches in the current package.  Always returns
 Resetting C<"A-Z"> is not recommended because you'll wipe out your
 L<C<@ARGV>|perlvar/@ARGV> and L<C<@INC>|perlvar/@INC> arrays and your
 L<C<%ENV>|perlvar/%ENV> hash.
+
 Resets only package variables; lexical variables are unaffected, but
 they clean themselves up on scope exit anyway, so you'll probably want
 to use them instead.  See L<C<my>|/my VARLIST>.
@@ -7083,14 +7085,9 @@ case it does a L<sendto(2)> syscall.  Returns the number of characters sent,
 or the undefined value on error.  The L<sendmsg(2)> syscall is currently
 unimplemented.  See L<perlipc/"UDP: Message Passing"> for examples.
 
-Note the I<characters>: depending on the status of the socket, either
-(8-bit) bytes or characters are sent.  By default all sockets operate
-on bytes, but for example if the socket has been changed using
-L<C<binmode>|/binmode FILEHANDLE, LAYER> to operate with the
-C<:encoding(UTF-8)> I/O layer (see L<C<open>|/open FILEHANDLE,EXPR>, or
-the L<open> pragma), the I/O will operate on UTF-8
-encoded Unicode characters, not bytes.  Similarly for the C<:encoding>
-layer: in that case pretty much any characters can be sent.
+Note that if the socket has been marked as C<:utf8>, C<send> will
+throw an exception.  The C<:encoding(...)> layer implicitly introduces
+the C<:utf8> layer.  See L<C<binmode>|/binmode FILEHANDLE, LAYER>.
 
 =item setpgrp PID,PGRP
 X<setpgrp> X<group>
@@ -8068,8 +8065,8 @@ as supported by the compiler used to build Perl:
    h           interpret integer as C type "short" or
                "unsigned short"
    j           interpret integer as C type "intmax_t" on Perl
-               5.14 or later; and only with a C99 compiler
-               prior to Perl 5.30 (unportable)
+               5.14 or later; and prior to Perl 5.30, only with
+               a C99 compiler (unportable)
    l           interpret integer as C type "long" or
                "unsigned long"
    q, L, or ll interpret integer as C type "long long",
@@ -8721,12 +8718,10 @@ bytes before the result of the read is appended.
 There is no syseof() function, which is ok, since
 L<C<eof>|/eof FILEHANDLE> doesn't work well on device files (like ttys)
 anyway.  Use L<C<sysread>|/sysread FILEHANDLE,SCALAR,LENGTH,OFFSET> and
-check for a return value for 0 to decide whether you're done.
+check for a return value of 0 to decide whether you're done.
 
-Note that if the filehandle has been marked as C<:utf8>, Unicode
-characters are read instead of bytes (the LENGTH, OFFSET, and the
-return value of L<C<sysread>|/sysread FILEHANDLE,SCALAR,LENGTH,OFFSET>
-are in Unicode characters).  The C<:encoding(...)> layer implicitly
+Note that if the filehandle has been marked as C<:utf8>, C<sysread> will
+throw an exception.  The C<:encoding(...)> layer implicitly
 introduces the C<:utf8> layer.  See
 L<C<binmode>|/binmode FILEHANDLE, LAYER>,
 L<C<open>|/open FILEHANDLE,EXPR>, and the L<open> pragma.
@@ -8738,7 +8733,7 @@ X<sysseek> X<lseek>
 
 Sets FILEHANDLE's system position I<in bytes> using L<lseek(2)>.  FILEHANDLE may
 be an expression whose value gives the name of the filehandle.  The values
-for WHENCE are C<0> to set the new position to POSITION; C<1> to set the it
+for WHENCE are C<0> to set the new position to POSITION; C<1> to set it
 to the current position plus POSITION; and C<2> to set it to EOF plus
 POSITION, typically negative.
 
@@ -8887,10 +8882,7 @@ string other than the beginning.  A negative OFFSET specifies writing
 that many characters counting backwards from the end of the string.
 If SCALAR is of length zero, you can only use an OFFSET of 0.
 
-B<WARNING>: If the filehandle is marked C<:utf8>, Unicode characters
-encoded in UTF-8 are written instead of bytes, and the LENGTH, OFFSET, and
-return value of L<C<syswrite>|/syswrite FILEHANDLE,SCALAR,LENGTH,OFFSET>
-are in (UTF8-encoded Unicode) characters.
+B<WARNING>: If the filehandle is marked C<:utf8>, C<syswrite> will raise an exception.
 The C<:encoding(...)> layer implicitly introduces the C<:utf8> layer.
 Alternately, if the handle is not marked with an encoding but you
 attempt to write characters with code points over 255, raises an exception.
