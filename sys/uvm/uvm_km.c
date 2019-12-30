@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.134 2019/12/18 13:33:29 visa Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.135 2019/12/30 23:58:38 jsg Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -715,8 +715,8 @@ uvm_km_thread(void *arg)
 		mtx_enter(&uvm_km_pages.mtx);
 		if (uvm_km_pages.free >= uvm_km_pages.lowat &&
 		    uvm_km_pages.freelist == NULL) {
-			msleep(&uvm_km_pages.km_proc, &uvm_km_pages.mtx,
-			    PVM, "kmalloc", 0);
+			msleep_nsec(&uvm_km_pages.km_proc, &uvm_km_pages.mtx,
+			    PVM, "kmalloc", INFSLP);
 		}
 		allocmore = uvm_km_pages.free < uvm_km_pages.lowat;
 		fp = uvm_km_pages.freelist;
@@ -880,8 +880,8 @@ alloc_va:
 				uvm_pglistfree(&pgl);
 				return NULL;
 			}
-			msleep(&uvm_km_pages.free, &uvm_km_pages.mtx, PVM,
-			    "getpage", 0);
+			msleep_nsec(&uvm_km_pages.free, &uvm_km_pages.mtx,
+			    PVM, "getpage", INFSLP);
 		}
 		va = uvm_km_pages.page[--uvm_km_pages.free];
 		if (uvm_km_pages.free < uvm_km_pages.lowat &&

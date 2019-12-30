@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.56 2019/12/08 12:37:45 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.57 2019/12/30 23:58:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -2007,8 +2007,8 @@ uvm_pagezero_thread(void *arg)
 		while (uvmexp.zeropages >= UVM_PAGEZERO_TARGET ||
 		    (count = uvm_pmr_get1page(16, UVM_PMR_MEMTYPE_DIRTY,
 		     &pgl, 0, 0, 1)) == 0) {
-			msleep(&uvmexp.zeropages, &uvm.fpageqlock, MAXPRI,
-			    "pgzero", 0);
+			msleep_nsec(&uvmexp.zeropages, &uvm.fpageqlock,
+			    MAXPRI, "pgzero", INFSLP);
 		}
 		uvm_unlock_fpageq();
 

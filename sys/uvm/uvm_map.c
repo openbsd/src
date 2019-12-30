@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.261 2019/12/18 13:33:29 visa Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.262 2019/12/30 23:58:38 jsg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -5402,8 +5402,8 @@ vm_map_lock_ln(struct vm_map *map, char *file, int line)
 tryagain:
 			while (map->flags & VM_MAP_BUSY) {
 				map->flags |= VM_MAP_WANTLOCK;
-				msleep(&map->flags, &map->flags_lock,
-				    PVM, vmmapbsy, 0);
+				msleep_nsec(&map->flags, &map->flags_lock,
+				    PVM, vmmapbsy, INFSLP);
 			}
 			mtx_leave(&map->flags_lock);
 		} while (rw_enter(&map->lock, RW_WRITE|RW_SLEEPFAIL) != 0);

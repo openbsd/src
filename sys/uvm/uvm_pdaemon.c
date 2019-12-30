@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.84 2019/12/25 11:31:41 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.85 2019/12/30 23:58:38 jsg Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -227,8 +227,8 @@ uvm_pageout(void *arg)
 
 		uvm_lock_fpageq();
 		if (!uvm_nowait_failed && TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
-			msleep(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
-			    "pgdaemon", 0);
+			msleep_nsec(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
+			    "pgdaemon", INFSLP);
 			uvmexp.pdwoke++;
 		}
 
@@ -335,8 +335,8 @@ uvm_aiodone_daemon(void *arg)
 		 */
 		mtx_enter(&uvm.aiodoned_lock);
 		while ((bp = TAILQ_FIRST(&uvm.aio_done)) == NULL)
-			msleep(&uvm.aiodoned, &uvm.aiodoned_lock,
-			    PVM, "aiodoned", 0);
+			msleep_nsec(&uvm.aiodoned, &uvm.aiodoned_lock,
+			    PVM, "aiodoned", INFSLP);
 		/* Take the list for ourselves. */
 		TAILQ_INIT(&uvm.aio_done);
 		mtx_leave(&uvm.aiodoned_lock);
