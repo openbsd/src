@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.223 2019/12/23 23:02:53 sashan Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.224 2019/12/30 14:52:00 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -333,12 +333,6 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER, *offp);
 		m = *mp = NULL;
 		goto bad;
-	}
-
-	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
-	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
-		nxt = ip6_ours(mp, offp, nxt, af);
-		goto out;
 	}
 
 #if NPF > 0
