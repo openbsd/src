@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_smr.c,v 1.5 2019/07/03 22:39:33 cheloha Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.6 2019/12/30 23:56:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -96,8 +96,8 @@ smr_thread(void *arg)
 		mtx_enter(&smr_lock);
 		if (smr_ndeferred == 0) {
 			while (smr_ndeferred == 0)
-				msleep(&smr_ndeferred, &smr_lock, PVM,
-				    "bored", 0);
+				msleep_nsec(&smr_ndeferred, &smr_lock, PVM,
+				    "bored", INFSLP);
 		} else {
 			if (smr_expedite == 0)
 				msleep_nsec(&smr_ndeferred, &smr_lock, PVM,

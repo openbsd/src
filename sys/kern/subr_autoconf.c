@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.93 2018/12/05 15:44:22 mpi Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.94 2019/12/30 23:56:26 jsg Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -343,8 +343,8 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 
 	mtx_enter(&autoconf_attdet_mtx);
 	while (autoconf_attdet < 0)
-		msleep(&autoconf_attdet, &autoconf_attdet_mtx,
-		    PWAIT, "autoconf", 0);
+		msleep_nsec(&autoconf_attdet, &autoconf_attdet_mtx,
+		    PWAIT, "autoconf", INFSLP);
 	autoconf_attdet++;
 	mtx_leave(&autoconf_attdet_mtx);
 
@@ -510,8 +510,8 @@ config_detach(struct device *dev, int flags)
 
 	mtx_enter(&autoconf_attdet_mtx);
 	while (autoconf_attdet > 0)
-		msleep(&autoconf_attdet, &autoconf_attdet_mtx,
-		    PWAIT, "autoconf", 0);
+		msleep_nsec(&autoconf_attdet, &autoconf_attdet_mtx,
+		    PWAIT, "autoconf", INFSLP);
 	autoconf_attdet--;
 	mtx_leave(&autoconf_attdet_mtx);
 
