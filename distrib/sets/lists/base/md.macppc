@@ -332,9 +332,7 @@
 ./usr/libdata/perl5/powerpc-openbsd/Scalar
 ./usr/libdata/perl5/powerpc-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/powerpc-openbsd/Socket.pm
-./usr/libdata/perl5/powerpc-openbsd/Storable
 ./usr/libdata/perl5/powerpc-openbsd/Storable.pm
-./usr/libdata/perl5/powerpc-openbsd/Storable/Limit.pm
 ./usr/libdata/perl5/powerpc-openbsd/Sub
 ./usr/libdata/perl5/powerpc-openbsd/Sub/Util.pm
 ./usr/libdata/perl5/powerpc-openbsd/Sys
@@ -354,7 +352,6 @@
 ./usr/libdata/perl5/powerpc-openbsd/Unicode/Collate.pm
 ./usr/libdata/perl5/powerpc-openbsd/Unicode/Collate/Locale.pm
 ./usr/libdata/perl5/powerpc-openbsd/Unicode/Normalize.pm
-./usr/libdata/perl5/powerpc-openbsd/arybase.pm
 ./usr/libdata/perl5/powerpc-openbsd/attributes.pm
 ./usr/libdata/perl5/powerpc-openbsd/auto
 ./usr/libdata/perl5/powerpc-openbsd/auto/B
@@ -483,8 +480,6 @@
 ./usr/libdata/perl5/powerpc-openbsd/auto/Unicode/Collate/Collate.so
 ./usr/libdata/perl5/powerpc-openbsd/auto/Unicode/Normalize
 ./usr/libdata/perl5/powerpc-openbsd/auto/Unicode/Normalize/Normalize.so
-./usr/libdata/perl5/powerpc-openbsd/auto/arybase
-./usr/libdata/perl5/powerpc-openbsd/auto/arybase/arybase.so
 ./usr/libdata/perl5/powerpc-openbsd/auto/attributes
 ./usr/libdata/perl5/powerpc-openbsd/auto/attributes/attributes.so
 ./usr/libdata/perl5/powerpc-openbsd/auto/mro

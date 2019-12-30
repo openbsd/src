@@ -331,9 +331,7 @@
 ./usr/libdata/perl5/i386-openbsd/Scalar
 ./usr/libdata/perl5/i386-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/i386-openbsd/Socket.pm
-./usr/libdata/perl5/i386-openbsd/Storable
 ./usr/libdata/perl5/i386-openbsd/Storable.pm
-./usr/libdata/perl5/i386-openbsd/Storable/Limit.pm
 ./usr/libdata/perl5/i386-openbsd/Sub
 ./usr/libdata/perl5/i386-openbsd/Sub/Util.pm
 ./usr/libdata/perl5/i386-openbsd/Sys
@@ -353,7 +351,6 @@
 ./usr/libdata/perl5/i386-openbsd/Unicode/Collate.pm
 ./usr/libdata/perl5/i386-openbsd/Unicode/Collate/Locale.pm
 ./usr/libdata/perl5/i386-openbsd/Unicode/Normalize.pm
-./usr/libdata/perl5/i386-openbsd/arybase.pm
 ./usr/libdata/perl5/i386-openbsd/attributes.pm
 ./usr/libdata/perl5/i386-openbsd/auto
 ./usr/libdata/perl5/i386-openbsd/auto/B
@@ -482,8 +479,6 @@
 ./usr/libdata/perl5/i386-openbsd/auto/Unicode/Collate/Collate.so
 ./usr/libdata/perl5/i386-openbsd/auto/Unicode/Normalize
 ./usr/libdata/perl5/i386-openbsd/auto/Unicode/Normalize/Normalize.so
-./usr/libdata/perl5/i386-openbsd/auto/arybase
-./usr/libdata/perl5/i386-openbsd/auto/arybase/arybase.so
 ./usr/libdata/perl5/i386-openbsd/auto/attributes
 ./usr/libdata/perl5/i386-openbsd/auto/attributes/attributes.so
 ./usr/libdata/perl5/i386-openbsd/auto/mro

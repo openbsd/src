@@ -300,9 +300,7 @@
 ./usr/libdata/perl5/mips64-openbsd/Scalar
 ./usr/libdata/perl5/mips64-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/mips64-openbsd/Socket.pm
-./usr/libdata/perl5/mips64-openbsd/Storable
 ./usr/libdata/perl5/mips64-openbsd/Storable.pm
-./usr/libdata/perl5/mips64-openbsd/Storable/Limit.pm
 ./usr/libdata/perl5/mips64-openbsd/Sub
 ./usr/libdata/perl5/mips64-openbsd/Sub/Util.pm
 ./usr/libdata/perl5/mips64-openbsd/Sys
@@ -322,7 +320,6 @@
 ./usr/libdata/perl5/mips64-openbsd/Unicode/Collate.pm
 ./usr/libdata/perl5/mips64-openbsd/Unicode/Collate/Locale.pm
 ./usr/libdata/perl5/mips64-openbsd/Unicode/Normalize.pm
-./usr/libdata/perl5/mips64-openbsd/arybase.pm
 ./usr/libdata/perl5/mips64-openbsd/attributes.pm
 ./usr/libdata/perl5/mips64-openbsd/auto
 ./usr/libdata/perl5/mips64-openbsd/auto/B
@@ -451,8 +448,6 @@
 ./usr/libdata/perl5/mips64-openbsd/auto/Unicode/Collate/Collate.so
 ./usr/libdata/perl5/mips64-openbsd/auto/Unicode/Normalize
 ./usr/libdata/perl5/mips64-openbsd/auto/Unicode/Normalize/Normalize.so
-./usr/libdata/perl5/mips64-openbsd/auto/arybase
-./usr/libdata/perl5/mips64-openbsd/auto/arybase/arybase.so
 ./usr/libdata/perl5/mips64-openbsd/auto/attributes
 ./usr/libdata/perl5/mips64-openbsd/auto/attributes/attributes.so
 ./usr/libdata/perl5/mips64-openbsd/auto/mro

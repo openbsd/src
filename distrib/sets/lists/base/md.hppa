@@ -324,9 +324,7 @@
 ./usr/libdata/perl5/hppa-openbsd/Scalar
 ./usr/libdata/perl5/hppa-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/hppa-openbsd/Socket.pm
-./usr/libdata/perl5/hppa-openbsd/Storable
 ./usr/libdata/perl5/hppa-openbsd/Storable.pm
-./usr/libdata/perl5/hppa-openbsd/Storable/Limit.pm
 ./usr/libdata/perl5/hppa-openbsd/Sub
 ./usr/libdata/perl5/hppa-openbsd/Sub/Util.pm
 ./usr/libdata/perl5/hppa-openbsd/Sys
@@ -346,7 +344,6 @@
 ./usr/libdata/perl5/hppa-openbsd/Unicode/Collate.pm
 ./usr/libdata/perl5/hppa-openbsd/Unicode/Collate/Locale.pm
 ./usr/libdata/perl5/hppa-openbsd/Unicode/Normalize.pm
-./usr/libdata/perl5/hppa-openbsd/arybase.pm
 ./usr/libdata/perl5/hppa-openbsd/attributes.pm
 ./usr/libdata/perl5/hppa-openbsd/auto
 ./usr/libdata/perl5/hppa-openbsd/auto/B
@@ -475,8 +472,6 @@
 ./usr/libdata/perl5/hppa-openbsd/auto/Unicode/Collate/Collate.so
 ./usr/libdata/perl5/hppa-openbsd/auto/Unicode/Normalize
 ./usr/libdata/perl5/hppa-openbsd/auto/Unicode/Normalize/Normalize.so
-./usr/libdata/perl5/hppa-openbsd/auto/arybase
-./usr/libdata/perl5/hppa-openbsd/auto/arybase/arybase.so
 ./usr/libdata/perl5/hppa-openbsd/auto/attributes
 ./usr/libdata/perl5/hppa-openbsd/auto/attributes/attributes.so
 ./usr/libdata/perl5/hppa-openbsd/auto/mro
