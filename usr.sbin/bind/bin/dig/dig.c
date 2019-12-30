@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.25 2019/12/27 08:23:15 jmc Exp $ */
+/* $Id: dig.c,v 1.26 2019/12/30 19:39:23 jmc Exp $ */
 
 /*! \file */
 
@@ -152,7 +152,18 @@ print_usage(FILE *fp) {
 	fputs(
 "usage:  dig [@server] [-46himuv] [-b address[#port]] [-c class] [-f file]\n"
 "            [-k keyfile] [-p port] [-q name] [-t type] [-x addr]\n"
-"            [-y [hmac:]name:key] [name] [type] [class] [+queryopt ...]\n", fp);
+"            [-y [hmac:]name:key] [name] [type] [class]\n"
+"            +[no]aaonly +[no]additional +[no]adflag +[no]all +[no]answer\n"
+"            +[no]authority +[no]besteffort +bufsize=### +[no]cdflag +[no]cl\n"
+"            +[no]cmd +[no]comments +[no]cookie +[no]crypto +[no]defname\n"
+"            +[no]dnssec +domain=### +[no]edns[=###] +ednsflags=###\n"
+"            +[no]ednsnegotiation +ednsopt=###[:value] +noednsopt +[no]expire\n"
+"            +[no]fail +[no]identify +[no]idnout +[no]ignore +[no]keepopen\n"
+"            +[no]multiline +ndots=### +[no]nsid +[no]nssearch +[no]onesoa\n"
+"            +[no]opcode=### +[no]qr +[no]question +[no]recurse +retry=###\n"
+"            +[no]rrcomments +[no]search +[no]short +[no]showsearch +[no]sit\n"
+"            +[no]split=### +[no]stats +subnet=addr +[no]tcp +time=###\n"
+"            +[no]trace +tries=### +[no]ttlid +[no]vc\n", fp);
 }
 
 ISC_PLATFORM_NORETURN_PRE static void
@@ -174,103 +185,6 @@ version(void) {
 static void
 help(void) {
 	print_usage(stdout);
-	fputs(
-"Where:  domain	  is in the Domain Name System\n"
-"        q-class  is one of (in,hs,ch,...) [default: in]\n"
-"        q-type   is one of (a,any,mx,ns,soa,hinfo,axfr,txt,...) [default:a]\n"
-"                 (Use ixfr=version for type ixfr)\n"
-"        q-opt    is one of:\n"
-"                 -4                  (use IPv4 query transport only)\n"
-"                 -6                  (use IPv6 query transport only)\n"
-"                 -b address[#port]   (bind to source address/port)\n"
-"                 -c class            (specify query class)\n"
-"                 -f filename         (batch mode)\n"
-"                 -i                  (use IP6.INT for IPv6 reverse lookups)\n"
-"                 -k keyfile          (specify tsig key file)\n"
-"                 -m                  (enable memory usage debugging)\n"
-"                 -p port             (specify port number)\n"
-"                 -q name             (specify query name)\n"
-"                 -t type             (specify query type)\n"
-"                 -u                  (display times in usec instead of msec)\n"
-"                 -x dot-notation     (shortcut for reverse lookups)\n"
-"                 -y [hmac:]name:key  (specify named base64 tsig key)\n"
-"        d-opt    is of the form +keyword[=value], where keyword is:\n"
-"                 +[no]aaonly         (Set AA flag in query (+[no]aaflag))\n"
-"                 +[no]additional     (Control display of additional section)\n"
-"                 +[no]adflag         (Set AD flag in query (default on))\n"
-"                 +[no]all            (Set or clear all display flags)\n"
-"                 +[no]answer         (Control display of answer section)\n"
-"                 +[no]authority      (Control display of authority section)\n"
-"                 +[no]besteffort     (Try to parse even illegal messages)\n"
-"                 +bufsize=###        (Set EDNS0 Max UDP packet size)\n"
-"                 +[no]cdflag         (Set checking disabled flag in query)\n"
-"                 +[no]cl             (Control display of class in records)\n"
-"                 +[no]cmd            (Control display of command line)\n"
-"                 +[no]comments       (Control display of comment lines)\n"
-#ifdef ISC_PLATFORM_USESIT
-"                 +[no]cookie         (Add a COOKIE option to the request)\n"
-#endif
-"                 +[no]crypto         (Control display of cryptographic "
-				       "fields in records)\n"
-"                 +[no]defname        (Use search list (+[no]search))\n"
-"                 +[no]dnssec         (Request DNSSEC records)\n"
-"                 +domain=###         (Set default domainname)\n"
-"                 +[no]edns[=###]     (Set EDNS version) [0]\n"
-"                 +ednsflags=###      (Set EDNS flag bits)\n"
-"                 +[no]ednsnegotiation (Set EDNS version negotiation)\n"
-"                 +ednsopt=###[:value] (Send specified EDNS option)\n"
-"                 +noednsopt          (Clear list of +ednsopt options)\n"
-"                 +[no]expire         (Request time to expire)\n"
-"                 +[no]fail           (Don't try next server on SERVFAIL)\n"
-"                 +[no]identify       (ID responders in short answers)\n"
-"                 +[no]idnout         (convert IDN response)\n"
-"                 +[no]ignore         (Don't revert to TCP for TC responses.)"
-"\n"
-"                 +[no]keepopen       (Keep the TCP socket open between queries)\n"
-"                 +[no]multiline      (Print records in an expanded format)\n"
-"                 +ndots=###          (Set search NDOTS value)\n"
-"                 +[no]nsid           (Request Name Server ID)\n"
-"                 +[no]nssearch       (Search all authoritative nameservers)\n"
-"                 +[no]onesoa         (AXFR prints only one soa record)\n"
-"                 +[no]opcode=###     (Set the opcode of the request)\n"
-"                 +[no]qr             (Print question before sending)\n"
-"                 +[no]question       (Control display of question section)\n"
-"                 +[no]recurse        (Recursive mode)\n"
-"                 +retry=###          (Set number of UDP retries) [2]\n"
-"                 +[no]rrcomments     (Control display of per-record "
-				       "comments)\n"
-"                 +[no]search         (Set whether to use searchlist)\n"
-"                 +[no]short          (Display nothing except short\n"
-"                                      form of answer)\n"
-"                 +[no]showsearch     (Search with intermediate results)\n"
-#ifdef DIG_SIGCHASE
-"                 +[no]sigchase       (Chase DNSSEC signatures)\n"
-#endif
-#ifdef ISC_PLATFORM_USESIT
-"                 +[no]sit            (A synonym for +[no]cookie)\n"
-#endif
-"                 +[no]split=##       (Split hex/base64 fields into chunks)\n"
-"                 +[no]stats          (Control display of statistics)\n"
-"                 +subnet=addr        (Set edns-client-subnet option)\n"
-"                 +[no]tcp            (TCP mode (+[no]vc))\n"
-"                 +time=###           (Set query timeout) [5]\n"
-#ifdef DIG_SIGCHASE
-#if DIG_SIGCHASE_TD
-"                 +[no]topdown        (Do DNSSEC validation top down mode)\n"
-#endif
-#endif
-"                 +[no]trace          (Trace delegation down from root [+dnssec])\n"
-"                 +tries=###          (Set number of UDP attempts) [3]\n"
-#ifdef DIG_SIGCHASE
-"                 +trusted-key=####   (Trusted Key when chasing DNSSEC sigs)\n"
-#endif
-"                 +[no]ttlid          (Control display of ttls in records)\n"
-"                 +[no]vc             (TCP mode (+[no]tcp))\n"
-"        global d-opts and servers (before host name) affect all queries.\n"
-"        local d-opts and servers (after host name) affect only that lookup.\n"
-"        -h                           (print help and exit)\n"
-"        -v                           (print version and exit)\n",
-	stdout);
 }
 
 /*%
