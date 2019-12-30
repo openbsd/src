@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.7 2019/06/29 04:33:11 aoyama Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.8 2019/12/30 12:16:12 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -36,10 +36,15 @@
 #define CBUS_DEBUG
 #endif
 
+#include "ne.h"
 #include "necsb.h"
 #include "pcic.h"
 
 static struct cbus_attach_args cbus_devs[] = {
+#if NNE > 0
+	/* NE-2000 compatible ethernet */
+	{ "ne",    -1, -1, -1, -1, -1 },
+#endif
 #if NNECSB > 0
 	/* PC-9801-86 sound board */
 	{ "necsb", -1, -1, -1, -1, -1 },

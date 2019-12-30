@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 2019/06/30 00:23:22 aoyama Exp $
+#	$OpenBSD: GENERIC,v 1.24 2019/12/30 12:16:12 aoyama Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -55,6 +55,9 @@ cbus0		at mainbus0
 
 # PC-9801 extension board slot 'generic' driver
 pcex0		at cbus0
+
+# NE2000 ethernet
+#ne0		at cbus0 port 0xc8d0 int 0	# CentreCOM LA-98
 
 # NEC PC-9801-86 sound board 
 #necsb*		at cbus?
