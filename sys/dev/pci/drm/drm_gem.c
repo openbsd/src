@@ -112,8 +112,8 @@ drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 		mtx_enter(&dev->quiesce_mtx);
 		while (dev->quiesce) {
-			msleep(&dev->quiesce, &dev->quiesce_mtx,
-			    PZERO, "drmflt", 0);
+			msleep_nsec(&dev->quiesce, &dev->quiesce_mtx,
+			    PZERO, "drmflt", INFSLP);
 		}
 		mtx_leave(&dev->quiesce_mtx);
 		return(VM_PAGER_REFAULT);

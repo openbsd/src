@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.165 2019/08/18 13:11:47 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.166 2019/12/30 10:09:48 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -352,8 +352,8 @@ drm_quiesce(struct drm_device *dev)
 	mtx_enter(&dev->quiesce_mtx);
 	dev->quiesce = 1;
 	while (dev->quiesce_count > 0) {
-		msleep(&dev->quiesce_count, &dev->quiesce_mtx,
-		    PZERO, "drmqui", 0);
+		msleep_nsec(&dev->quiesce_count, &dev->quiesce_mtx,
+		    PZERO, "drmqui", INFSLP);
 	}
 	mtx_leave(&dev->quiesce_mtx);
 }
@@ -732,8 +732,8 @@ drmread(dev_t kdev, struct uio *uio, int ioflag)
 			mtx_leave(&dev->event_lock);
 			return (EAGAIN);
 		}
-		error = msleep(&file_priv->event_wait, &dev->event_lock,
-		    PWAIT | PCATCH, "drmread", 0);
+		error = msleep_nsec(&file_priv->event_wait, &dev->event_lock,
+		    PWAIT | PCATCH, "drmread", INFSLP);
 	}
 	if (error) {
 		mtx_leave(&dev->event_lock);
