@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.142 2019/12/25 20:42:04 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.143 2019/12/30 11:01:16 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -322,14 +322,18 @@ internal_print_errors()
 	dying = check_dying_signal();
 	if (dying)
 		quick_summary(dying);
+	/* Print errors grouped by file name. */
 	while (errorJobs != NULL) {
+		/* Select the first job. */
 		k = errorJobs;
 		errorJobs = NULL;
 		for (j = k; j != NULL; j = jnext) {
 			jnext = j->next;
 			if (j->location->fname == k->location->fname)
+				/* Print errors with the same filename. */
 				print_error(j);
 			else {
+				/* Keep others for the next iteration. */
 				j->next = errorJobs;
 				errorJobs = j;
 			}
