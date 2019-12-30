@@ -10,11 +10,6 @@ BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
 
 use JSON::PP;
 
-BEGIN {
-    use lib qw(t);
-    use _unicode_handling;
-}
-
 no utf8;
 
 my $json = JSON::PP->new->allow_nonref;

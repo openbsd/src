@@ -63,3 +63,10 @@ my $p00="[\\x59\\N{U+.}]"; qr/$p00/ui;
 EXPECT
 Invalid hexadecimal number in \N{U+...} in regex; marked by <-- HERE in m/[\x59\N{U+. <-- HERE }]/ at - line 1.
 ########
+# NAME ${^RE_COMPILE_RECURSION_LIMIT} [perl #131551]
+BEGIN { ${^RE_COMPILE_RECURSION_LIMIT} = ${^RE_COMPILE_RECURSION_LIMIT} = 2; }
+qr/(a)/;
+qr/((a))/;
+EXPECT
+Too many nested open parens in regex; marked by <-- HERE in m/(( <-- HERE a))/ at - line 3.
+########

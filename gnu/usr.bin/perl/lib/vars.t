@@ -8,7 +8,7 @@ BEGIN {
 
 $| = 1;
 
-print "1..27\n";
+print "1..28\n";
 
 # catch "used once" warnings
 my @warns;
@@ -103,3 +103,10 @@ print "${e}ok 26\n";
 $e = !(grep(/^Global symbol "\%w" requires explicit package name/, @errs))
 			&& 'not ';
 print "${e}ok 27\n";
+
+{
+    no strict;
+    eval 'use strict "refs"; my $zz = "abc"; use vars qw($foo$); my $y = $$zz;';
+    $e = $@ ? "" : "not ";
+    print "${e}ok 28 # use vars error check modifying other strictness\n";
+}

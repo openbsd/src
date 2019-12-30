@@ -42,7 +42,7 @@ eval {
 like($@, qr/Data for ping must be from/, "new() errors for invalid data size");
 
 eval {
-    $p = Net::Ping->new("udp", 10, 1025);
+    $p = Net::Ping->new("udp", 10, 70000);
 };
 like($@, qr/Data for ping must be from/, "new() errors for invalid data size");
 
@@ -51,7 +51,7 @@ like($@, qr/Data for ping must be from/, "new() errors for invalid data size");
 
 # force failures for tcp
 SKIP: {
-    note "Checking icmp";
+    # diag "Checking icmp";
     eval { $p = Net::Ping->new('icmp'); };
     skip "icmp ping requires root privileges.", 3
       if !Net::Ping::_isroot() or $^O eq 'MSWin32';

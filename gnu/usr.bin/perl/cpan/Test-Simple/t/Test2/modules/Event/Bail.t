@@ -25,6 +25,7 @@ is_deeply(
     {
         about => {
             package => 'Test2::Event::Bail',
+            eid     => $bail->eid,
         },
         control => {
             global    => 1,
@@ -51,6 +52,7 @@ is_deeply(
     {
         about => {
             package => 'Test2::Event::Bail',
+            eid     => $bail->eid,
         },
         control => {
             global    => 1,

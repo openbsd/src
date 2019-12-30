@@ -7,7 +7,7 @@ use Config;
 use Test::More;
 
 BEGIN {
-    if ( ( $Config{'extensions'} !~ /\sB\s/ ) ) {
+    if ( ( $Config{'extensions'} !~ /\bB\b/ ) ) {
         plan skip_all => "Perl was not compiled with B";
         exit 0;
     }

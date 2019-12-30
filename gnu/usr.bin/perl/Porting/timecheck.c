@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
-#include <values.h>
+#include <string.h>
 
 int opt_v = 0;
 int i;
@@ -36,7 +36,7 @@ void gm_check (time_t t, int min_year, int max_year)
 	if (opt_v)
 	    fprintf (stderr, "%3d:%s: %12ld-%02d-%02d %02d:%02d:%02d\n",
 		i, hex (t),
-		tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday,
+		(long)(tmp->tm_year) + 1900, tmp->tm_mon + 1, tmp->tm_mday,
 		tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
 	pt = t;
 	}
@@ -88,7 +88,7 @@ void lt_check (time_t t, int min_year, int max_year)
 	if (opt_v)
 	    fprintf (stderr, "%3d:%s: %12ld-%02d-%02d %02d:%02d:%02d\n",
 		i, hex (t),
-		tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday,
+		(long)(tmp->tm_year) + 1900, tmp->tm_mon + 1, tmp->tm_mday,
 		tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
 	pt = t;
 	}
@@ -136,7 +136,7 @@ int main (int argc, char *argv[])
 
     opt_v++;
     printf ("======================\n");
-    printf ("Sizeof time_t = %ld\n", (i = sizeof (time_t)));
+    printf ("Sizeof time_t = %d\n", (i = sizeof (time_t)));
     printf ("gmtime () boundaries:\n");
     gm_check (gm_max,    69, 0x7fffffff);
     gm_check (gm_min, -1900,         70);

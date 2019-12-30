@@ -101,8 +101,6 @@ EOM
                 }
                 ok $x->close, "  Close ok" ;
 
-                #hexDump($compressed) ;
-
                 foreach my $unc ($UncompressClass, 'IO::Uncompress::AnyUncompress') {
                     title "  Testing $CompressClass with $unc and $i streams, from $fb";
                     $cc = $output ;

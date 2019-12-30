@@ -18,7 +18,7 @@ BEGIN
     $extra = 1
         if $st ;
 
-    plan(tests => 794 + $extra) ;
+    plan(tests => 799 + $extra) ;
 }
 
 sub myGZreadFile
@@ -43,7 +43,7 @@ sub myGZreadFile
 sub run
 {
     my $CompressClass   = identify();
-    $UncompressClass = getInverse($CompressClass);
+    $UncompressClass    = getInverse($CompressClass);
     my $Error           = getErrorRef($CompressClass);
     my $UnError         = getErrorRef($UncompressClass);
 
@@ -484,10 +484,13 @@ EOM
             #print "length " . length($x) . " \n";
         }
 
+        SKIP:
         {
             # embed a compressed file in another file
             #================================
 
+            skip "zstd doesn't support trailing data", 11
+                if $CompressClass =~ /zstd/i ;
 
             my $lex = new LexFile my $name ;
 
@@ -525,7 +528,7 @@ EOM
             ok $x->binmode();
             1 while $x->read($uncomp) > 0 ;
 
-            ok $uncomp eq $hello ;
+            is $uncomp, $hello ;
             my $rest ;
             read($fh1, $rest, 5000);
             is $x->trailingData() . $rest, $trailer ;
@@ -533,10 +536,13 @@ EOM
 
         }
 
+        SKIP:
         {
             # embed a compressed file in another buffer
             #================================
 
+            skip "zstd doesn't support trailing data", 6
+                if $CompressClass =~ /zstd/i ;
 
             my $hello = <<EOM ;
 hello world
@@ -1142,7 +1148,8 @@ EOT
             my $b ;
             my $a = new $CompressClass(\$b)  ;
 
-            ok ! $a->error() ;
+            ok ! $a->error() 
+                or die $a->error() ;
             eval { $a->seek(-1, 10) ; };
             like $@, mkErr("^${CompressClass}::seek: unknown value, 10, for whence parameter");
 
@@ -1598,7 +1605,7 @@ EOT
                 $c->close();
 
                 my $comp_len = length $compressed;
-                $compressed .= $appended if $append ;
+                $compressed .= $appended if $append && $CompressClass !~ /zstd/i;
 
                 my $lex = new LexFile my $name ;
                 my $input ;
@@ -1638,7 +1645,7 @@ EOT
                 }
 
                 {
-                    # Check that read return an empty string
+                    # Check that read returns an empty string
                     if ($type eq 'filehandle')
                     {
                         my $fh = new IO::File "<$name" ;
@@ -1651,7 +1658,8 @@ EOT
                     isa_ok $x, $UncompressClass;
 
                     my $buffer;
-                    is $x->read($buffer), 0, "read 0 bytes";
+                    is $x->read($buffer), 0, "read 0 bytes"
+                        or diag "read returned $$UnError";
                     ok defined $buffer, "buffer is defined";
                     is $buffer, "", "buffer is empty string";
 
@@ -1703,6 +1711,37 @@ EOT
             }
         }
     }
+
+    {
+        # Round trip binary data that happens to contain \r\n
+        # via the filesystem
+
+        my $original = join '', map { chr } 0x00 .. 0xff ;
+        $original .= "data1\r\ndata2\r\ndata3\r\n" ;
+        
+   
+        title "$UncompressClass -- round trip test";
+
+        my $string = $original;
+
+        my $lex = new LexFile( my $name, my $compressed) ;
+        my $input ;
+        writeFile ($name, $original);
+
+        my $c = new $CompressClass($compressed);
+        isa_ok $c, $CompressClass;
+        $c->print($string);
+        $c->close();
+
+        my $u = new $UncompressClass $compressed, Transparent => 0
+            or diag "$$UnError" ;
+        isa_ok $u, $UncompressClass;
+        my $buffer;
+        is $u->read($buffer), length($original), "read bytes";
+        is $buffer, $original, "  round tripped ok";
+
+        
+    }    
 }
 
 1;

@@ -16,7 +16,7 @@ ok(1);
 # MKSTEMP - test
 
 # Create file in temp directory
-my $template = File::Spec->catfile(File::Spec->tmpdir, 'wowserXXXX');
+my $template = File::Spec->catfile(File::Temp::_wrap_file_spec_tmpdir(), 'wowserXXXX');
 
 (my $fh, $template) = mkstemp($template);
 
@@ -54,7 +54,9 @@ my $status = unlink0($fh, $template);
 if ($status) {
   ok( $status );
 } else {
-  skip("Skip test failed probably due to \$TMPDIR being on NFS",1);
+    SKIP: {
+        skip("Skip test failed probably due to \$TMPDIR being on NFS",1);
+    }
 }
 
 # MKSTEMPS
@@ -77,13 +79,15 @@ $status = unlink0($fh, $fname);
 if ($status) {
   ok($status);
 } else {
-  skip("Skip test failed probably due to cwd being on NFS",1)
+    SKIP: {
+        skip("Skip test failed probably due to cwd being on NFS",1)
+    }
 }
 
 # MKDTEMP
 # Temp directory
 
-$template = File::Spec->catdir(File::Spec->tmpdir, 'tmpdirXXXXXX');
+$template = File::Spec->catdir(File::Temp::_wrap_file_spec_tmpdir(), 'tmpdirXXXXXX');
 
 my $tmpdir = mkdtemp($template);
 
@@ -97,7 +101,7 @@ rmtree($tmpdir);
 # MKTEMP
 # Just a filename, not opened
 
-$template = File::Spec->catfile(File::Spec->tmpdir, 'mytestXXXXXX');
+$template = File::Spec->catfile(File::Temp::_wrap_file_spec_tmpdir(), 'mytestXXXXXX');
 
 my $tmpfile = mktemp($template);
 

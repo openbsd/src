@@ -55,7 +55,7 @@ unix-like systems. For windows and VMS these values are hard-coded. You can
 use timecheck.c in the Porting directory to check those values yourself,
 using the same technique that is used in Configure based on bit-shifting:
 
-  $ cd perl/Porting
+  $ cd Porting
   $ cc -O -o timecheck timecheck.c
   $ ./timecheck
   ======================

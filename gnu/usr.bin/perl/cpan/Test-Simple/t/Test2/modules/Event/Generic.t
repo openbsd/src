@@ -27,18 +27,20 @@ is_deeply(
         increments_count => 0,
         diagnostics      => 0,
         no_display       => 0,
+        _eid             => $e->eid,
         hubs             => [
             {
                 'buffered' => 0,
                 'details'  => 'Test2::Hub::Interceptor',
-                'hid'      => "$$~0~2",
+                'hid'      => $e->hubs->[0]->{hid},
                 'ipc'      => 0,
                 'nested'   => 0,
                 'pid'      => $$,
                 'tid'      => 0,
-                'uuid'     => undef
+                $e->hubs->[0]->{uuid} ? (uuid => $e->hubs->[0]->{uuid}) : (uuid => undef),
             }
         ],
+        $e->uuid ? (uuid => $e->uuid) : (),
     },
     "Defaults"
 );

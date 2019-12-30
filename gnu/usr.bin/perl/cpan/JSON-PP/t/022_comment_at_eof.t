@@ -1,6 +1,9 @@
-# the oritinal test case was provided by IKEGAMI@cpan.org
+# copied over from JSON::XS and modified to use JSON::PP
+
+# the original test case was provided by IKEGAMI@cpan.org
 
 use strict;
+use warnings;
 
 use Test::More tests => 13;
 
@@ -29,7 +32,6 @@ sub decoder {
    return Dumper($rv);
 }
 
-
 is( decoder( "[]"        ), '[]', 'array baseline' );
 is( decoder( " []"       ), '[]', 'space ignored before array' );
 is( decoder( "\n[]"      ), '[]', 'newline ignored before array' );
@@ -44,4 +46,5 @@ is( decoder( "\n"      ), 'undef', 'newline ignored before eof' );
 is( decoder( "#,foo\n" ), 'undef', 'comment ignored before eof' );
 is( decoder( "# []o\n" ), 'undef', 'comment ignored before eof' );
 
-is( decoder( qq/#\n[#foo\n"#\\n"#\n]/), '["#\n"]', 'array and string in multiple lines' );
+is( decoder(qq/#\n[#foo\n"#\\n"#\n]/), '["#\n"]', 'array and string in multiple lines' );
+

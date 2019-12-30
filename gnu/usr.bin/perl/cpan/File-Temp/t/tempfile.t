@@ -154,7 +154,7 @@ push( @still_there, File::Spec->rel2abs($tempfile) ); # check at END
 #    on NFS
 # Try to do what we can.
 # Tempfile croaks on error so we need an eval
-$fh = eval { tempfile( 'ftmpXXXXX', DIR => File::Spec->tmpdir ) };
+$fh = eval { tempfile( 'ftmpXXXXX', DIR => File::Temp::_wrap_file_spec_tmpdir() ) };
 
 if ($fh) {
 
@@ -165,8 +165,9 @@ if ($fh) {
   ok( close($fh), "Close temp file" );
 
 } else {
-  skip "Skip Failed probably due to NFS", 1;
-  skip "Skip Failed probably due to NFS", 1;
+    SKIP: {
+        skip "Skip Failed probably due to NFS", 2;
+    }
 }
 
 # Create temp directory and chdir to it; it should still be removed on exit.

@@ -27,7 +27,7 @@ $one->add_info({tag => 'xxx', details => 'yyy'});
 is_deeply(
     $one->facet_data,
     {
-        about   => {package => $CLASS, details => 'fail'},
+        about   => {package => $CLASS, details => 'fail', eid => $one->eid},
         assert  => {pass    => 0,      details => 'no soup for you'},
         amnesty => [{tag    => 'blah', details => 'blah'}],
         info    => [{tag    => 'xxx',  details => 'yyy'}],

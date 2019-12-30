@@ -1,11 +1,13 @@
 #!/usr/bin/perl -w
 #
-# text-empty.t -- Test Pod::Text with a document that produces only errors.
+# Test Pod::Text with a document that produces only errors.
 #
-# Copyright 2013 Russ Allbery <rra@cpan.org>
+# Copyright 2013, 2018 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
+#
+# SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
 BEGIN {
     chdir 't' if -d 't';

@@ -110,8 +110,8 @@ ok($h{sv}, 'Perl');
 
 # v1 is treated as a bareword in older perls...
 my $ver = do { local $SIG{'__WARN__'} = sub {}; eval qq[v1.2.0] };
-ok($] < 5.009 || $@ eq '');
-ok($] < 5.009 || Devel::PPPort::SvVSTRING_mg($ver));
+ok("$]" < 5.009 || $@ eq '');
+ok("$]" < 5.009 || Devel::PPPort::SvVSTRING_mg($ver));
 ok(!Devel::PPPort::SvVSTRING_mg(4711));
 
 my $foo = 'bar';

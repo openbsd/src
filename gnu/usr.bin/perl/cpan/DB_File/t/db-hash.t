@@ -3,6 +3,7 @@
 use warnings;
 use strict;
 use Config;
+use File::Temp qw(tempdir) ;
  
 BEGIN {
     if(-d "lib" && -f "TEST") {
@@ -82,6 +83,8 @@ sub safeUntie
     return $no_inner;
 }
 
+my $TEMPDIR = tempdir( CLEANUP => 1 );
+chdir $TEMPDIR;
 
 my $Dfile = "dbhash.tmp";
 my $Dfile2 = "dbhash2.tmp";
@@ -132,7 +135,7 @@ ok(14, $@ =~ /^DB_File::HASHINFO::FETCH - Unknown element 'fred' at/ );
 # Now check the interface to HASH
 my ($X, %h);
 ok(15, $X = tie(%h, 'DB_File',$Dfile, O_RDWR|O_CREAT, 0640, $DB_HASH ) );
-die "Could not tie: $!" unless $X;
+die "Could not tie: $!" unless defined $X;
 
 my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
    $blksize,$blocks) = stat($Dfile);

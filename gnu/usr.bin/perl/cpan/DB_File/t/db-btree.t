@@ -31,6 +31,7 @@ EOM
 
 use DB_File; 
 use Fcntl;
+use File::Temp qw(tempdir) ;
 
 print "1..197\n";
 
@@ -124,6 +125,9 @@ sub safeUntie
 my $db185mode =  ($DB_File::db_version == 1 && ! $DB_File::db_185_compat) ;
 my $null_keys_allowed = ($DB_File::db_ver < 2.004010 
 				|| $DB_File::db_ver >= 3.1 );
+
+my $TEMPDIR = tempdir( CLEANUP => 1 );
+chdir $TEMPDIR;
 
 my $Dfile = "dbbtree.tmp";
 unlink $Dfile;

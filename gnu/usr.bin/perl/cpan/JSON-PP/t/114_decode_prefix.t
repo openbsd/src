@@ -20,8 +20,8 @@ is( ( $json->decode_prefix( $garbaged_text2 ) ) [1], 13 );
 is( ( $json->decode_prefix( $garbaged_text3 ) ) [1], 13 );
 
 eval { $json->decode( "\n" ) }; ok( $@ =~ /malformed JSON/ );
-eval { $json->decode('null') }; ok $@ =~ /allow_nonref/;
+eval { $json->allow_nonref(0)->decode('null') }; ok $@ =~ /allow_nonref/;
 
 eval { $json->decode_prefix( "\n" ) }; ok( $@ =~ /malformed JSON/ );
-eval { $json->decode_prefix('null') }; ok $@ =~ /allow_nonref/;
+eval { $json->allow_nonref(0)->decode_prefix('null') }; ok $@ =~ /allow_nonref/;
 

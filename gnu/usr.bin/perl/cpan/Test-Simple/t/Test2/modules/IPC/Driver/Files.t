@@ -46,7 +46,7 @@ ok(-d $ipc->tempdir, "created temp dir");
 is($ipc->pid, $$, "stored pid");
 is($ipc->tid, get_tid(), "stored the tid");
 
-my $hid = join ipc_separator, qw'12345 1 1';
+my $hid = join ipc_separator, qw'12345 1 1 1';
 
 $ipc->add_hub($hid);
 my $hubfile = File::Spec->catfile($ipc->tempdir, "HUB" . ipc_separator . $hid);
@@ -403,49 +403,49 @@ ok(!-d $tmpdir, "cleaned up temp dir");
     );
 
     is_deeply(
-        $ipc->parse_event_filename(join ipc_separator, qw'1 1 1 123 456 789 Event Type Foo.ready.complete'),
+        $ipc->parse_event_filename(join ipc_separator, qw'1 1 1 1 123 456 789 Event Type Foo.ready.complete'),
         {
             ready    => 1,
             complete => 1,
             global   => 0,
             type     => "Event::Type::Foo",
-            hid      => "1${sep}1${sep}1",
+            hid      => "1${sep}1${sep}1${sep}1",
             pid      => "123",
             tid      => "456",
             eid      => "789",
-            file     => join ipc_separator, qw'1 1 1 123 456 789 Event Type Foo',
+            file     => join ipc_separator, qw'1 1 1 1 123 456 789 Event Type Foo',
         },
         "Parsed event complete"
     );
 
     is_deeply(
-        $ipc->parse_event_filename(join ipc_separator, qw'1 2 3 123 456 789 Event Type Foo.ready'),
+        $ipc->parse_event_filename(join ipc_separator, qw'1 2 3 4 123 456 789 Event Type Foo.ready'),
         {
             ready    => 1,
             complete => 0,
             global   => 0,
             type     => "Event::Type::Foo",
-            hid      => "1${sep}2${sep}3",
+            hid      => "1${sep}2${sep}3${sep}4",
             pid      => "123",
             tid      => "456",
             eid      => "789",
-            file     => join ipc_separator, qw'1 2 3 123 456 789 Event Type Foo',
+            file     => join ipc_separator, qw'1 2 3 4 123 456 789 Event Type Foo',
         },
         "Parsed event ready"
     );
 
     is_deeply(
-        $ipc->parse_event_filename(join ipc_separator, qw'3 2 11 123 456 789 Event'),
+        $ipc->parse_event_filename(join ipc_separator, qw'3 2 11 12 123 456 789 Event'),
         {
             ready    => 0,
             complete => 0,
             global   => 0,
             type     => "Event",
-            hid      => "3${sep}2${sep}11",
+            hid      => "3${sep}2${sep}11${sep}12",
             pid      => "123",
             tid      => "456",
             eid      => "789",
-            file     => join ipc_separator, qw'3 2 11 123 456 789 Event',
+            file     => join ipc_separator, qw'3 2 11 12 123 456 789 Event',
         },
         "Parsed event not ready"
     );
@@ -454,7 +454,7 @@ ok(!-d $tmpdir, "cleaned up temp dir");
 {
     my $ipc = Test2::IPC::Driver::Files->new();
 
-    my $hid = join ipc_separator, qw"1 1 1";
+    my $hid = join ipc_separator, qw"1 1 1 1";
 
     is_deeply(
         $ipc->should_read_event($hid, join ipc_separator, qw"GLOBAL 123 456 789 Event Type Foo.ready.complete") ? 1 : 0,

@@ -1,5 +1,5 @@
 #
-# $Id: decode.t,v 1.4 2017/10/06 22:21:53 dankogai Exp $
+# $Id: decode.t,v 1.5 2019/01/31 04:26:40 dankogai Exp $
 #
 use strict;
 use Encode qw(decode_utf8 FB_CROAK find_encoding decode);
@@ -51,9 +51,12 @@ $orig = "\xC3\x80";
 $orig =~ /(..)/;
 is(Encode::decode_utf8($1), "\N{U+C0}", 'passing magic regex to Encode::decode_utf8');
 
-$orig = "\xC3\x80";
-*a = $orig;
-is(Encode::decode_utf8(*a), "*main::\N{U+C0}", 'passing typeglob to Encode::decode_utf8');
+SKIP: {
+    skip "Perl Version ($]) is older than v5.27.1", 1 if $] < 5.027001;
+    $orig = "\xC3\x80";
+    *a = $orig;
+    is(Encode::decode_utf8(*a), "*main::\N{U+C0}", 'passing typeglob to Encode::decode_utf8');
+}
 
 $orig = "\N{U+C0}";
 $orig =~ /(.)/;

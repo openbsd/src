@@ -91,10 +91,11 @@ like($dumpstr{ar_indent_3},
     qr/\#0.+'foo'.+\#1.+42/s,
     "Indent(3) annotates array elements with their indices"
 );
+sub count_newlines { scalar $_[0] =~ tr/\n// }
 {
     no if $] < 5.011, warnings => 'deprecated';
-    is(scalar(split("\n" => $dumpstr{ar_indent_2})) + 2,
-        scalar(split("\n" => $dumpstr{ar_indent_3})),
+    is(count_newlines($dumpstr{ar_indent_2}) + 2,
+        count_newlines($dumpstr{ar_indent_3}),
         "Indent(3) runs 2 lines longer than Indent(2)");
 }
 

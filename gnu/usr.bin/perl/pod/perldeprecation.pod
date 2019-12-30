@@ -100,14 +100,66 @@ Forcing literal C<{> characters to be escaped will enable the Perl
 language to be extended in various ways in future releases.  To avoid
 needlessly breaking existing code, the restriction is is not enforced in
 contexts where there are unlikely to ever be extensions that could
-conflict with the use there of C<{> as a literal.
+conflict with the use there of C<{> as a literal.  A non-deprecation
+warning that the left brace is being taken literally is raised in
+contexts where there could be confusion about it.
 
 Literal uses of C<{> were deprecated in Perl 5.20, and some uses of it
 started to give deprecation warnings since. These cases were made fatal
 in Perl 5.26. Due to an oversight, not all cases of a use of a literal
 C<{> got a deprecation warning.  Some cases started warning in Perl 5.26,
-and they will be fatal by Perl 5.30.  Other case started in Perl 5.28,
+and were made fatal in Perl 5.30.  Other cases started in Perl 5.28,
 and will be made fatal in 5.32.
+
+=head3 In XS code, use of various macros dealing with UTF-8.
+
+These macros will require an extra parameter in Perl 5.32:
+C<isALPHANUMERIC_utf8>,
+C<isASCII_utf8>,
+C<isBLANK_utf8>,
+C<isCNTRL_utf8>,
+C<isDIGIT_utf8>,
+C<isIDFIRST_utf8>,
+C<isPSXSPC_utf8>,
+C<isSPACE_utf8>,
+C<isVERTWS_utf8>,
+C<isWORDCHAR_utf8>,
+C<isXDIGIT_utf8>,
+C<isALPHANUMERIC_LC_utf8>,
+C<isALPHA_LC_utf8>,
+C<isASCII_LC_utf8>,
+C<isBLANK_LC_utf8>,
+C<isCNTRL_LC_utf8>,
+C<isDIGIT_LC_utf8>,
+C<isGRAPH_LC_utf8>,
+C<isIDCONT_LC_utf8>,
+C<isIDFIRST_LC_utf8>,
+C<isLOWER_LC_utf8>,
+C<isPRINT_LC_utf8>,
+C<isPSXSPC_LC_utf8>,
+C<isPUNCT_LC_utf8>,
+C<isSPACE_LC_utf8>,
+C<isUPPER_LC_utf8>,
+C<isWORDCHAR_LC_utf8>,
+C<isXDIGIT_LC_utf8>,
+C<toFOLD_utf8>,
+C<toLOWER_utf8>,
+C<toTITLE_utf8>,
+and
+C<toUPPER_utf8>.
+
+There is now a macro that corresponds to each one of these, simply by
+appending C<_safe> to the name.  It takes the extra parameter.
+For example, C<isDIGIT_utf8_safe> corresponds to C<isDIGIT_utf8>, but
+takes the extra parameter, and its use doesn't generate a deprecation
+warning.  All are documented in L<perlapi/Character case changing> and
+L<perlapi/Character classification>.
+
+You can change to use these versions at any time, or, if you can live
+with the deprecation messages, wait until 5.32 and add the parameter to
+the existing calls, without changing the names.
+
+This change was originally scheduled for 5.30, but was delayed.
 
 =head2 Perl 5.30
 
@@ -134,14 +186,14 @@ error in Perl 5.30.
 To specify how numbers are formatted when printed, one is advised
 to use C<< printf >> or C<< sprintf >> instead.
 
-=head3 Assigning non-zero to C<< $[ >> will be fatal
+=head3 Assigning non-zero to C<< $[ >> is fatal
 
 This variable (and the corresponding C<array_base> feature and
-L<arybase> module) allows changing the base for array and string
+L<arybase> module) allowed changing the base for array and string
 indexing operations.
 
 Setting this to a non-zero value has been deprecated since Perl 5.12 and
-will become fatal in Perl 5.30.
+throws a fatal error as of Perl 5.30.
 
 =head3 C<< File::Glob::glob() >> will disappear
 
@@ -230,73 +282,22 @@ A grapheme is what appears to a native-speaker of a language to be a
 character.  In Unicode (and hence Perl) a grapheme may actually be
 several adjacent characters that together form a complete grapheme.  For
 example, there can be a base character, like "R" and an accent, like a
-circumflex "^", that appear when displayed to be a single character with
-the circumflex hovering over the "R".  Perl currently allows things like
-that circumflex to be delimiters of strings, patterns, I<etc>.  When
-displayed, the circumflex would look like it belongs to the character
-just to the left of it.  In order to move the language to be able to
-accept graphemes as delimiters, we have to deprecate the use of
-delimiters which aren't graphemes by themselves.  Also, a delimiter must
-already be assigned (or known to be never going to be assigned) to try
-to future-proof code, for otherwise code that works today would fail to
-compile if the currently unassigned delimiter ends up being something
-that isn't a stand-alone grapheme.  Because Unicode is never going to
-assign
-L<non-character code points|perlunicode/Noncharacter code points>, nor
-L<code points that are above the legal Unicode maximum|
-perlunicode/Beyond Unicode code points>, those can be delimiters, and
-their use won't raise this warning.
+circumflex "^", that appear to be a single character when displayed,
+with the circumflex hovering over the "R".
 
-In Perl 5.30, delimiters which are unassigned code points, or which
-are non-standalone graphemes will be fatal.
+As of Perl 5.30, use of delimiters which are non-standalone graphemes is
+fatal, in order to move the language to be able to accept
+multi-character graphemes as delimiters.
 
-=head3 In XS code, use of various macros dealing with UTF-8.
+Also, as of Perl 5.30, delimiters which are unassigned code points
+but that may someday become assigned are prohibited.  Otherwise, code
+that works today would fail to compile if the currently unassigned
+delimiter ends up being something that isn't a stand-alone grapheme.
+Because Unicode is never going to assign L<non-character code
+points|perlunicode/Noncharacter code points>, nor L<code points that are
+above the legal Unicode maximum|perlunicode/Beyond Unicode code
+points>, those can be delimiters.
 
-These macros will require an extra parameter in Perl 5.30:
-C<isALPHANUMERIC_utf8>,
-C<isASCII_utf8>,
-C<isBLANK_utf8>,
-C<isCNTRL_utf8>,
-C<isDIGIT_utf8>,
-C<isIDFIRST_utf8>,
-C<isPSXSPC_utf8>,
-C<isSPACE_utf8>,
-C<isVERTWS_utf8>,
-C<isWORDCHAR_utf8>,
-C<isXDIGIT_utf8>,
-C<isALPHANUMERIC_LC_utf8>,
-C<isALPHA_LC_utf8>,
-C<isASCII_LC_utf8>,
-C<isBLANK_LC_utf8>,
-C<isCNTRL_LC_utf8>,
-C<isDIGIT_LC_utf8>,
-C<isGRAPH_LC_utf8>,
-C<isIDCONT_LC_utf8>,
-C<isIDFIRST_LC_utf8>,
-C<isLOWER_LC_utf8>,
-C<isPRINT_LC_utf8>,
-C<isPSXSPC_LC_utf8>,
-C<isPUNCT_LC_utf8>,
-C<isSPACE_LC_utf8>,
-C<isUPPER_LC_utf8>,
-C<isWORDCHAR_LC_utf8>,
-C<isXDIGIT_LC_utf8>,
-C<toFOLD_utf8>,
-C<toLOWER_utf8>,
-C<toTITLE_utf8>,
-and
-C<toUPPER_utf8>.
-
-There is now a macro that corresponds to each one of these, simply by
-appending C<_safe> to the name.  It takes the extra parameter.
-For example, C<isDIGIT_utf8_safe> corresponds to C<isDIGIT_utf8>, but
-takes the extra parameter, and its use doesn't generate a deprecation
-warning.  All are documented in L<perlapi/Character case changing> and
-L<perlapi/Character classification>.
-
-You can change to use these versions at any time, or, if you can live
-with the deprecation messages, wait until 5.30 and add the parameter to
-the existing calls, without changing the names.
 
 =head2 Perl 5.28
 

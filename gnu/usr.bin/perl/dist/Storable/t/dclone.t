@@ -87,6 +87,8 @@ SKIP: {
 # Do not fail if Tie::Hash and/or Tie::StdHash is not available
     skip 'No Tie::StdHash available', 2
 	unless eval { require Tie::Hash; scalar keys %Tie::StdHash:: };
+    skip 'This version of perl has problems with Tie::StdHash', 2
+	if $] eq "5.008";
     tie my %tie, "Tie::StdHash" or die $!;
     $tie{array} = [1,2,3,4];
     $tie{hash} = {1,2,3,4};

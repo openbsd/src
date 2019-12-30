@@ -7,18 +7,10 @@
 
 use Test::More;
 use strict;
-
-BEGIN { plan tests => 18 };
-
+use utf8;
+BEGIN { plan tests => 17 };
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
 
-BEGIN {
-    use lib qw(t);
-    use _unicode_handling;
-}
-
-
-use utf8;
 use JSON::PP;
 
 #########################
@@ -72,7 +64,6 @@ $obj = {test => "abc\\def"};
 $str = $pc->encode($obj);
 is($str,q|{"test":"abc\\\\def"}|);
 
-
 $obj = {test => "あいうえお"};
 $str = $pc->encode($obj);
 is($str,q|{"test":"あいうえお"}|);
@@ -80,7 +71,6 @@ is($str,q|{"test":"あいうえお"}|);
 $obj = {"あいうえお" => "かきくけこ"};
 $str = $pc->encode($obj);
 is($str,q|{"あいうえお":"かきくけこ"}|);
-
 
 $obj = $pc->decode(q|{"id":"abc\ndef"}|);
 is($obj->{id},"abc\ndef",q|{"id":"abc\ndef"}|);
@@ -90,8 +80,4 @@ is($obj->{id},"abc\\ndef",q|{"id":"abc\\\ndef"}|);
 
 $obj = $pc->decode(q|{"id":"abc\\\\\ndef"}|);
 is($obj->{id},"abc\\\ndef",q|{"id":"abc\\\\\ndef"}|);
-
-$obj = {test => "\'I said\', \"She said\""};
-$str = $pc->encode($obj);
-is($str,q|{"test":"'I said', \"She said\""}|);
 

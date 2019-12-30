@@ -30,13 +30,19 @@ BEGIN {
 #   to really test the stream protocol ping.  See
 #   the end of this document on how to enable it.
 
-use Test::More tests => 22;
+use Test::More tests => 23;
 use Net::Ping;
 
 my $p = new Net::Ping "stream";
 
 # new() worked?
 isa_ok($p, 'Net::Ping', 'new() worked');
+
+# message_type can't be used
+eval {
+  $p->message_type();
+};
+like($@, qr/message type only supported on 'icmp' protocol/, "message_type() API only concern 'icmp' protocol");
 
 is($p->ping("localhost"), 1, 'Attempt to connect to the echo port');
 

@@ -854,8 +854,8 @@ EOM
             $status = $gunz->read($uncomp) while $status > 0;
             if ($strict)
             {
-                cmp_ok $status, '<', 0 ;
-                like $GunzipError, "/Trailer Error: trailer truncated. Expected 8 bytes, got $got/";
+                cmp_ok $status, '<', 0, "status 0" ;
+                like $GunzipError, "/Trailer Error: trailer truncated. Expected 8 bytes, got $got/", "got Trailer Error";
             }
             else
             {

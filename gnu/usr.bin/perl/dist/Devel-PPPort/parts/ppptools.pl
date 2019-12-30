@@ -306,6 +306,7 @@ sub parse_embed
         my @e = split /\s*\|\s*/, $line;
         if( @e >= 3 ) {
           my($flags, $ret, $name, @args) = @e;
+          next if $flags =~ /[DM]/; # Skip entries marked as deprecated or unstable
           if ($name =~ /^[^\W\d]\w*$/) {
             for (@args) {
               $_ = [trim_arg($_)];
@@ -379,7 +380,7 @@ sub parse_version
   if ($ver =~ /^(\d+)\.(\d+)\.(\d+)$/) {
     return ($1, $2, $3);
   }
-  elsif ($ver !~ /^\d+\.[\d_]+$/) {
+  elsif ($ver !~ /^\d+\.\d{3}(?:_\d{2})?$/) {
     die "cannot parse version '$ver'\n";
   }
 

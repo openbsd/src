@@ -44,17 +44,20 @@ if (opendir(D, ".")) {
    @correct = grep { !/^\./ } sort readdir(D);
    closedir D;
 }
-my @a = do {no warnings 'deprecated'; File::Glob::glob("*", 0);};
-@a = sort @a;
-if (GLOB_ERROR) {
-    fail(GLOB_ERROR);
-} else {
-    is_deeply(\@a, \@correct);
+{
+    local $@;
+    my $expect =
+        qr/File::Glob::glob\(\) was removed in perl 5\.30\. Use File::Glob::bsd_glob\(\) instead/;
+    eval { File::Glob::glob("*", 0); };
+    like $@, $expect,
+        "Got expected error message for removal of File::Glob::glob()";
 }
 chdir '..' or die "chdir .. $!";
 
 # look up the user's home directory
 # should return a list with one item, and not set ERROR
+my @a;
+
 SKIP: {
     my ($name, $home);
     skip $^O, 1 if $^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS'
@@ -69,9 +72,11 @@ SKIP: {
     @a = bsd_glob("~$name", GLOB_TILDE);
 
     if (GLOB_ERROR) {
-	fail(GLOB_ERROR);
+        fail(GLOB_ERROR);
     } else {
-	is_deeply (\@a, [$home]);
+        is_deeply (\@a, [$home],
+            "GLOB_TILDE expands patterns that start with '~' to user name home directories"
+        );
     }
 }
 # check plain tilde expansion
@@ -121,7 +126,7 @@ SKIP: {
 if (GLOB_ERROR) {
     fail(GLOB_ERROR);
 } else {
-    is_deeply(\@a, ['TEST']);
+    is_deeply(\@a, ['TEST'], "GLOB_QUOTE works as expected");
 }
 
 # check nonexistent checks
@@ -130,14 +135,14 @@ if (GLOB_ERROR) {
 @a = bsd_glob("asdfasdf", 0);
 SKIP: {
     skip $^O, 1 if $^O eq 'MSWin32' || $^O eq 'NetWare';
-    is_deeply(\@a, []);
+    is_deeply(\@a, [], "bsd_glob() works as expected for unmatched pattern and 0 flag");
 }
 
 # check bad protections
 # should return an empty list, and set ERROR
 SKIP: {
     skip $^O, 2 if $^O eq 'MSWin32' or $^O eq 'NetWare'
-	or $^O eq 'os2' or $^O eq 'VMS' or $^O eq 'cygwin';
+        or $^O eq 'os2' or $^O eq 'VMS' or $^O eq 'cygwin';
     skip "AFS", 2 if Cwd::cwd() =~ m#^$Config{'afsroot'}#s;
     skip "running as root", 2 if not $>;
 
@@ -147,13 +152,13 @@ SKIP: {
     rmdir $dir;
     local $TODO = 'hit VOS bug posix-956' if $^O eq 'vos';
 
-    isnt(GLOB_ERROR, 0);
-    is_deeply(\@a, []);
+    isnt(GLOB_ERROR, 0, "GLOB_ERROR is not 0");
+    is_deeply(\@a, [], "Got empty list as expected");
 }
 
 # check for csh style globbing
 @a = bsd_glob('{a,b}', GLOB_BRACE | GLOB_NOMAGIC);
-is_deeply(\@a, ['a', 'b']);
+is_deeply(\@a, ['a', 'b'], "Check for csh-style globbing");
 
 @a = bsd_glob(
     '{TES*,doesntexist*,a,b}',
@@ -168,13 +173,13 @@ is_deeply(\@a, ['a', 'b']);
 map { $_  =~ s/test\.?/TEST/i } @a if $^O eq 'VMS';
 print "# @a\n";
 
-is_deeply(\@a, ['TEST', 'a', 'b']);
+is_deeply(\@a, ['TEST', 'a', 'b'], "Got list of 3 elements, including 'TEST'");
 
 # "~" should expand to $ENV{HOME}
 {
     local $ENV{HOME} = "sweet home";
     @a = bsd_glob('~', GLOB_TILDE | GLOB_NOMAGIC);
-    is_deeply(\@a, [$ENV{HOME}]);
+    is_deeply(\@a, [$ENV{HOME}], "~ expands to envvar \$HOME");
 }
 
 # GLOB_ALPHASORT (default) should sort alphabetically regardless of case
@@ -201,12 +206,12 @@ my $pat = "*.pl";
 my @g_names = bsd_glob($pat, 0);
 print "# f_names = @f_names\n";
 print "# g_names = @g_names\n";
-is_deeply(\@g_names, \@f_names);
+is_deeply(\@g_names, \@f_names, "Got expected case-sensitive list of filenames");
 
 my @g_alpha = bsd_glob($pat);
 print "# f_alpha = @f_alpha\n";
 print "# g_alpha = @g_alpha\n";
-is_deeply(\@g_alpha, \@f_alpha);
+is_deeply(\@g_alpha, \@f_alpha, "Got expected case-insensitive list of filenames");
 
 unlink @f_names;
 chdir "..";
@@ -221,20 +226,21 @@ pass("Don't panic");
     use File::Spec qw();
 
     my($dir) = tempdir(CLEANUP => 1)
-	or die "Could not create temporary directory";
+        or die "Could not create temporary directory";
     for my $file (qw(a_dej a_ghj a_qej)) {
-	open my $fh, ">", File::Spec->catfile($dir, $file)
-	    or die "Could not create file $dir/$file: $!";
-	close $fh;
+        open my $fh, ">", File::Spec->catfile($dir, $file)
+            or die "Could not create file $dir/$file: $!";
+        close $fh;
     }
     my $cwd = Cwd::cwd();
     chdir $dir
-	or die "Could not chdir to $dir: $!";
+        or die "Could not chdir to $dir: $!";
     my(@glob_files) = glob("a*{d[e]}j");
     chdir $cwd
-	or die "Could not chdir back to $cwd: $!";
+        or die "Could not chdir back to $cwd: $!";
     local $TODO = "home-made glob doesn't do regexes" if $^O eq 'VMS';
-    is_deeply(\@glob_files, ['a_dej']);
+    is_deeply(\@glob_files, ['a_dej'],
+        "Got expected list: metacharacters and character class in pattern");
 }
 
 # This used to segfault.

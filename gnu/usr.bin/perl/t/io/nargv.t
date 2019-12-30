@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-print "1..6\n";
+print "1..7\n";
 
 my $j = 1;
 for $i ( 1,2,5,4,3 ) {
@@ -84,6 +84,50 @@ sub other {
     }
 }
 
+{
+    # (perl #133314) directory handle leak
+    #
+    # We process a significant number of files here to make sure any
+    # leaks are significant
+    @ARGV = mkfiles(1 .. 10);
+    for my $file (@ARGV) {
+        open my $f, ">", $file;
+        print $f "\n";
+        close $f;
+    }
+    local $^I = ".bak";
+    local $_;
+    while (<>) {
+        s/^/foo/;
+    }
+}
+
+{
+    # (perl #133314) directory handle leak
+    # We open three handles here because the file processing opened:
+    #  - the original file
+    #  - the output file, and finally
+    #  - the directory
+    # so we need to open the first two to use up the slots used for the original
+    # and output files.
+    # This test assumes fd are allocated in the typical *nix way - lowest
+    # available, which I believe is the case for the Win32 CRTs too.
+    # If this turns out not to be the case this test will need to skip on
+    # such platforms or only run on a small set of known-good platforms.
+    my $tfile = mkfiles(1);
+    open my $f, "<", $tfile
+      or die "Cannot open temp: $!";
+    open my $f2, "<", $tfile
+      or die "Cannot open temp: $!";
+    open my $f3, "<", $tfile
+      or die "Cannot open temp: $!";
+    print +(fileno($f3) < 20 ? "ok" : "not ok"), " 7 check fd leak\n";
+    close $f;
+    close $f2;
+    close $f3;
+}
+
+
 my @files;
 sub mkfiles {
     foreach (@_) {
@@ -93,4 +137,4 @@ sub mkfiles {
     return wantarray ? @results : @results[-1];
 }
 
-END { unlink_all map { ($_, "$_.bak") } mkfiles(1..5) }
+END { unlink_all map { ($_, "$_.bak") } @files }

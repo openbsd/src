@@ -2,7 +2,7 @@ package Test2::EventFacet::Render;
 use strict;
 use warnings;
 
-our $VERSION = '1.302133';
+our $VERSION = '1.302162';
 
 sub is_list { 1 }
 
@@ -53,7 +53,7 @@ Tag that should prefix/identify the main text.
 Optional, if the display text was generated from another facet this should
 state what facet it was.
 
-=item $mode = $render->[#]->mode{}
+=item $mode = $render->[#]->{mode}
 
 =item $mode = $render->[#]->mode()
 
@@ -96,7 +96,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2018 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

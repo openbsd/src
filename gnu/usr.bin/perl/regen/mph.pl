@@ -4,14 +4,36 @@ use warnings;
 use Data::Dumper;
 use Carp;
 use Text::Wrap;
+use bignum;     # Otherwise fails on 32-bit systems
 
 my $DEBUG= 0;
 my $RSHIFT= 8;
 my $FNV_CONST= 16777619;
 
+# The basic idea is that you have a two level structure, and effectively
+# hash the key twice.
+#
+# The first hash finds a bucket in the array which contains a seed which
+# is used for the second hash, which then leads to a bucket with key
+# data which is compared against to determine if the key is a match.
+#
+# If the first hash finds no seed, then the key cannot match.
+#
+# In our case we cheat a bit, and hash the key only once, but use the
+# low bits for the first lookup and the high-bits for the second.
+#
+# So for instance:
+#
+#           h= (h >> RSHIFT) ^ s;
+#
+# is how the second hash is computed. We right shift the original hash
+# value  and then xor in the seed2, which will be non-zero.
+#
+# That then gives us the bucket which contains the key data we need to
+# match for a valid key.
+
 sub _fnv {
     my ($key, $seed)= @_;
-
     my $hash = 0+$seed;
     foreach my $char (split //, $key) {
         $hash = $hash ^ ord($char);
@@ -306,7 +328,7 @@ EOF_CODE
     push @code, sprintf "STATIC const U32 ${prefix}_SEED1 = 0x%08x;\n", $seed1;
     push @code, sprintf "STATIC const U32 ${prefix}_FNV_CONST = 0x%08x;\n\n", $FNV_CONST;
 
-    push @code, "\n";
+    push @code, "/* The comments give the input key for the row it is in */\n";
     push @code, "STATIC const struct $struct_name $table_name\[${prefix}_BUCKETS] = {\n", join(",\n", @$rows)."\n};\n\n";
     push @code, <<"EOF_CODE";
 ${prefix}_VALt $match_name( const unsigned char * const key, const U16 key_len ) {
@@ -414,8 +436,6 @@ sub make_mph_from_hash {
     my $hash= shift;
 
     # we do this twice because often we can find longer prefixes on the second pass.
-    my @keys= sort {length($b) <=> length($a) || $a cmp $b } keys %$hash;
-
     my ($smart_blob, $res_to_split)= build_split_words($hash,0);
     {
         my ($smart_blob2, $res_to_split2)= build_split_words($hash,1);

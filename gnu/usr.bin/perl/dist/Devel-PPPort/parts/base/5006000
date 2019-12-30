@@ -67,54 +67,11 @@ get_hv                         # E (perl_get_hv)
 get_ppaddr                     # E
 get_sv                         # E (perl_get_sv)
 gv_dump                        # E
-init_i18nl10n                  # E (perl_init_i18nl10n)
-init_i18nl14n                  # E (perl_init_i18nl14n)
 isASCII                        # U
 isCNTRL                        # U
 isGRAPH                        # U
 isPUNCT                        # U
 isXDIGIT                       # U
-is_uni_alnum                   # E
-is_uni_alnum_lc                # E
-is_uni_alpha                   # E
-is_uni_alpha_lc                # E
-is_uni_ascii                   # E
-is_uni_ascii_lc                # E
-is_uni_cntrl                   # E
-is_uni_cntrl_lc                # E
-is_uni_digit                   # E
-is_uni_digit_lc                # E
-is_uni_graph                   # E
-is_uni_graph_lc                # E
-is_uni_idfirst                 # E
-is_uni_idfirst_lc              # E
-is_uni_lower                   # E
-is_uni_lower_lc                # E
-is_uni_print                   # E
-is_uni_print_lc                # E
-is_uni_punct                   # E
-is_uni_punct_lc                # E
-is_uni_space                   # E
-is_uni_space_lc                # E
-is_uni_upper                   # E
-is_uni_upper_lc                # E
-is_uni_xdigit                  # E
-is_uni_xdigit_lc               # E
-is_utf8_alnum                  # E
-is_utf8_alpha                  # E
-is_utf8_ascii                  # E
-is_utf8_char                   # U
-is_utf8_cntrl                  # E
-is_utf8_digit                  # E
-is_utf8_graph                  # E
-is_utf8_idfirst                # E
-is_utf8_lower                  # E
-is_utf8_mark                   # E
-is_utf8_print                  # E
-is_utf8_punct                  # E
-is_utf8_space                  # E
-is_utf8_upper                  # E
-is_utf8_xdigit                 # E
 load_module                    # E
 magic_dump                     # E
 mess                           # E (Perl_mess)
@@ -127,9 +84,6 @@ newSVpvf                       # E (Perl_newSVpvf)
 newSVuv                        # E
 newXS                          # E (Perl_newXS)
 newXSproto                     # E
-new_collate                    # E (perl_new_collate)
-new_ctype                      # E (perl_new_ctype)
-new_numeric                    # E (perl_new_numeric)
 op_dump                        # E
 perl_parse                     # E (perl_parse)
 pmop_dump                      # E
@@ -180,17 +134,11 @@ sv_setnv_mg                    # E (Perl_sv_setnv_mg)
 sv_setpvf                      # E (Perl_sv_setpvf)
 sv_setpvf_mg                   # E (Perl_sv_setpvf_mg)
 sv_setref_nv                   # E (Perl_sv_setref_nv)
-sv_utf8_decode                 # E
-sv_utf8_downgrade              # E
 sv_utf8_encode                 # E
 sv_vcatpvf                     # E
 sv_vcatpvf_mg                  # E
 sv_vsetpvf                     # E
 sv_vsetpvf_mg                  # E
-swash_init                     # E
-to_uni_lower_lc                # E
-to_uni_title_lc                # E
-to_uni_upper_lc                # E
 utf8_distance                  # E
 utf8_hop                       # U
 vcroak                         # E

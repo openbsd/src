@@ -42,7 +42,8 @@ is_deeply(
             {
                 about => {
                     details => 'pass',
-                    package => 'Test2::Event::Pass'
+                    package => 'Test2::Event::Pass',
+                    eid     => $one->subevents->[0]->eid,
                 },
                 assert => {
                     details => 'xxx',

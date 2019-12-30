@@ -12,9 +12,6 @@ gv_fetchmeth_pvn               # U
 gv_fetchmeth_pvn_autoload      # U
 gv_fetchmeth_sv                # U
 gv_fetchmeth_sv_autoload       # U
-gv_fetchmethod_pv_flags        # U
-gv_fetchmethod_pvn_flags       # U
-gv_fetchmethod_sv_flags        # U
 gv_init_pv                     # U
 gv_init_sv                     # U
 newGVgen_flags                 # U

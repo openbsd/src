@@ -34,10 +34,10 @@ cmp_ok(scalar @a, '>=', 3, 'explicit use of the GLOB_NOCASE flag');
 SKIP: {
     skip 'Not Win32 or NetWare', 3 unless $^O eq 'MSWin32' || $^O eq 'NetWare';
 
-    @a = File::Glob::glob("op\\g*.t");
+    @a = File::Glob::bsd_glob("op\\g*.t");
     cmp_ok(scalar @a, '>=', 8);
     mkdir "[]", 0;
-    @a = File::Glob::glob("\\[\\]", GLOB_QUOTE);
+    @a = File::Glob::bsd_glob("\\[\\]", GLOB_QUOTE);
     rmdir "[]";
     is(scalar @a, 1);
     @a = bsd_glob("op\\*", GLOB_QUOTE);

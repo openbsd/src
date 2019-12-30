@@ -1,7 +1,7 @@
 BEGIN {
     if ($ENV{PERL_CORE}) {
-	chdir 't' if -d 't';
-	@INC = ("../lib", "lib/compress");
+        chdir 't' if -d 't';
+        @INC = ("../lib", "lib/compress");
     }
 }
 
@@ -24,7 +24,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 216 + $extra ;
+    plan tests => 219 + $extra ;
 
     #use_ok('IO::Compress::Zip', qw(zip $ZipError :zip_method)) ;
     use_ok('IO::Compress::Zip', qw(:all)) ;
@@ -244,6 +244,31 @@ for my $stream (0, 1)
             }
         }
     }
+}
+
+{
+    title "Regression: ods streaming issue";
+
+    # The file before meta.xml in test.ods is content.xml. 
+    # Issue was triggered because content.xml was stored 
+    # as streamed and the code to walk the compressed streaming
+    # content assumed that all of the input buffer was consumed
+    # in a single call to "uncompr".
+
+    my $files = "./t/" ;
+    $files = "./" if $ENV{PERL_CORE} ;
+    $files .= "files/";
+
+    my $zipfile = "$files/test.ods" ;
+    my $file = "meta.xml";
+
+    my $got;
+
+    ok unzip($zipfile => \$got, Name => $file), "  unzip $file ok"
+        or diag $UnzipError ;
+
+    my $meta = readFile("$files/$file");
+    is $got, $meta, "  content ok";    
 }
 
 # TODO add more error cases

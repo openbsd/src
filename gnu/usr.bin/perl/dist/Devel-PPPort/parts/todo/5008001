@@ -8,7 +8,6 @@ is_utf8_string_loc             # U
 packlist                       # U
 pad_add_anon                   # U
 pad_new                        # E
-pad_tidy                       # E
 save_bool                      # U
 savestack_grow_cnt             # U
 seed                           # U

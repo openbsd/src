@@ -2,7 +2,7 @@ package Test2::Util;
 use strict;
 use warnings;
 
-our $VERSION = '1.302133';
+our $VERSION = '1.302162';
 
 use POSIX();
 use Config qw/%Config/;
@@ -28,6 +28,8 @@ our @EXPORT_OK = qw{
     IS_WIN32
 
     ipc_separator
+
+    gen_uid
 
     do_rename do_unlink
 
@@ -157,6 +159,9 @@ sub pkg_to_file {
 
 sub ipc_separator() { "~" }
 
+my $UID = 1;
+sub gen_uid() { join ipc_separator() => ($$, get_tid(), time, $UID++) }
+
 sub _check_for_sig_sys {
     my $sig_list = shift;
     return $sig_list =~ m/\bSYS\b/;
@@ -178,7 +183,7 @@ my %PERLIO_SKIP = (
 
 sub clone_io {
     my ($fh) = @_;
-    my $fileno = fileno($fh);
+    my $fileno = eval { fileno($fh) };
 
     return $fh if !defined($fileno) || !length($fileno) || $fileno < 0;
 
@@ -329,6 +334,30 @@ otherwise it returns 0.
 
 Convert a package name to a filename.
 
+=item $string = ipc_separator()
+
+Get the IPC separator. Currently this is always the string C<'~'>.
+
+=item $string = gen_uid()
+
+Generate a unique id (NOT A UUID). This will typically be the process id, the
+thread id, the time, and an incrementing integer all joined with the
+C<ipc_separator()>.
+
+These ID's are unique enough for most purposes. For identical ids to be
+generated you must have 2 processes with the same PID generate IDs at the same
+time with the same current state of the incrementing integer. This is a
+perfectly reasonable thing to expect to happen across multiple machines, but is
+quite unlikely to happen on one machine.
+
+This can fail to be unique if a process generates an id, calls exec, and does
+it again after the exec and it all happens in less than a second. It can also
+happen if the systems process id's cycle in less than a second allowing 2
+different programs that use this generator to run with the same PID in less
+than a second. Both these cases are sufficiently unlikely. If you need
+universally unique ids, or ids that are unique in these conditions, look at
+L<Data::UUID>.
+
 =item ($ok, $err) = do_rename($old_name, $new_name)
 
 Rename a file, this wraps C<rename()> in a way that makes it more reliable
@@ -409,7 +438,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2018 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

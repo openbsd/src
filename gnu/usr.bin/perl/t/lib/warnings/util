@@ -106,3 +106,32 @@ no warnings 'portable' ;
    $a =  oct "0047777777777" ;
 EXPECT
 Octal number > 037777777777 non-portable at - line 5.
+########
+# util.c
+# NAME 132683: Use of uninitialized value" in warn() with constant folding and overloaded numbers
+use strict;
+use warnings;
+
+package Foo;
+
+use overload log => sub {
+    warn "here\n";                  # Use of uninitialized value in warn
+    CORE::log($_[0]->{value});
+};
+
+sub import {
+    overload::constant
+        integer => sub { __PACKAGE__->new($_[0]) };
+}
+
+sub new {
+    my ($class, $value) = @_;
+    bless {value => $value}, $class;
+}
+
+package main;
+
+BEGIN { Foo->import }
+my $x = log(2);
+EXPECT
+here

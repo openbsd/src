@@ -24,9 +24,10 @@ ok($sigpass ne $sigfail, "Each tool got a new signature");
 
 is($events->[$_]->trace->signature, $sigfail, "Diags share failed ok's signature") for 2 .. $#$events;
 
-like($sigpass, qr/^C\d+:$$:\Q${ \get_tid() }:${ \__FILE__ }:$line\E$/, "signature is sane");
+like($sigpass, qr/$$~${ \get_tid() }~\d+~\d+:$$:\Q${ \get_tid() }:${ \__FILE__ }:$line\E$/, "signature is sane");
 
 my $trace = Test2::EventFacet::Trace->new(frame => ['main', 'foo.t', 42, 'xxx']);
+delete $trace->{cid};
 is($trace->signature, undef, "No signature without a cid");
 
 is($events->[0]->related($events->[1]), 0, "event 0 is not related to event 1");

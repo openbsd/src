@@ -1,9 +1,4 @@
 5.021007
 PadnameUTF8                    # E
 is_invariant_string            # U
-newPADNAMELIST                 # U
-newPADNAMEouter                # U
-newPADNAMEpvn                  # U
 newUNOP_AUX                    # E
-padnamelist_fetch              # U
-padnamelist_store              # U

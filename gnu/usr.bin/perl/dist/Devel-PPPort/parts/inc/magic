@@ -17,69 +17,10 @@ sv_unmagicext
 __UNDEFINED__
 /sv_\w+_mg/
 sv_magic_portable
-MUTABLE_PTR
-MUTABLE_SV
 
 =implementation
 
 __UNDEFINED__  SvGETMAGIC(x) STMT_START { if (SvGMAGICAL(x)) mg_get(x); } STMT_END
-
-/* Some random bits for sv_unmagicext. These should probably be pulled in for
-   real and organized at some point */
-
-__UNDEFINED__  HEf_SVKEY   -2
-
-#ifndef MUTABLE_PTR
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
-#  define MUTABLE_PTR(p) ({ void *_p = (p); _p; })
-#else
-#  define MUTABLE_PTR(p) ((void *) (p))
-#endif
-#endif
-
-__UNDEFINED__ MUTABLE_SV(p)   ((SV *)MUTABLE_PTR(p))
-
-/* end of random bits */
-
-__UNDEFINED__  PERL_MAGIC_sv              '\0'
-__UNDEFINED__  PERL_MAGIC_overload        'A'
-__UNDEFINED__  PERL_MAGIC_overload_elem   'a'
-__UNDEFINED__  PERL_MAGIC_overload_table  'c'
-__UNDEFINED__  PERL_MAGIC_bm              'B'
-__UNDEFINED__  PERL_MAGIC_regdata         'D'
-__UNDEFINED__  PERL_MAGIC_regdatum        'd'
-__UNDEFINED__  PERL_MAGIC_env             'E'
-__UNDEFINED__  PERL_MAGIC_envelem         'e'
-__UNDEFINED__  PERL_MAGIC_fm              'f'
-__UNDEFINED__  PERL_MAGIC_regex_global    'g'
-__UNDEFINED__  PERL_MAGIC_isa             'I'
-__UNDEFINED__  PERL_MAGIC_isaelem         'i'
-__UNDEFINED__  PERL_MAGIC_nkeys           'k'
-__UNDEFINED__  PERL_MAGIC_dbfile          'L'
-__UNDEFINED__  PERL_MAGIC_dbline          'l'
-__UNDEFINED__  PERL_MAGIC_mutex           'm'
-__UNDEFINED__  PERL_MAGIC_shared          'N'
-__UNDEFINED__  PERL_MAGIC_shared_scalar   'n'
-__UNDEFINED__  PERL_MAGIC_collxfrm        'o'
-__UNDEFINED__  PERL_MAGIC_tied            'P'
-__UNDEFINED__  PERL_MAGIC_tiedelem        'p'
-__UNDEFINED__  PERL_MAGIC_tiedscalar      'q'
-__UNDEFINED__  PERL_MAGIC_qr              'r'
-__UNDEFINED__  PERL_MAGIC_sig             'S'
-__UNDEFINED__  PERL_MAGIC_sigelem         's'
-__UNDEFINED__  PERL_MAGIC_taint           't'
-__UNDEFINED__  PERL_MAGIC_uvar            'U'
-__UNDEFINED__  PERL_MAGIC_uvar_elem       'u'
-__UNDEFINED__  PERL_MAGIC_vstring         'V'
-__UNDEFINED__  PERL_MAGIC_vec             'v'
-__UNDEFINED__  PERL_MAGIC_utf8            'w'
-__UNDEFINED__  PERL_MAGIC_substr          'x'
-__UNDEFINED__  PERL_MAGIC_defelem         'y'
-__UNDEFINED__  PERL_MAGIC_glob            '*'
-__UNDEFINED__  PERL_MAGIC_arylen          '#'
-__UNDEFINED__  PERL_MAGIC_pos             '.'
-__UNDEFINED__  PERL_MAGIC_backref         '<'
-__UNDEFINED__  PERL_MAGIC_ext             '~'
 
 /* That's the best we can do... */
 __UNDEFINED__  sv_catpvn_nomg     sv_catpvn
@@ -604,8 +545,8 @@ ok($h{sv}, 'Perl');
 
 # v1 is treated as a bareword in older perls...
 my $ver = do { local $SIG{'__WARN__'} = sub {}; eval qq[v1.2.0] };
-ok($] < 5.009 || $@ eq '');
-ok($] < 5.009 || Devel::PPPort::SvVSTRING_mg($ver));
+ok("$]" < 5.009 || $@ eq '');
+ok("$]" < 5.009 || Devel::PPPort::SvVSTRING_mg($ver));
 ok(!Devel::PPPort::SvVSTRING_mg(4711));
 
 my $foo = 'bar';

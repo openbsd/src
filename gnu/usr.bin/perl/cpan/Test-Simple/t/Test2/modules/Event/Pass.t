@@ -26,7 +26,7 @@ is_deeply(
     $one->facet_data,
     {
         trace => {frame => ['foo', 'foo.pl', 42]},
-        about   => {package => $CLASS, details => 'pass'},
+        about   => {package => $CLASS, details => 'pass', eid => $one->eid},
         assert  => {pass    => 1,      details => 'soup for you'},
         amnesty => [{tag    => 'blah', details => 'blah'}],
         info    => [{tag    => 'xxx',  details => 'yyy'}],

@@ -25,7 +25,6 @@ ok ($js->encode ($o1) eq "null");
 ok ($js->encode ($o2) eq "null");
 $js->convert_blessed;
 ok ($js->encode ($o1) eq '{"__":""}');
-
 ok ($js->encode ($o2) eq "null");
 
 $js->filter_json_object (sub { 5 });
@@ -48,6 +47,6 @@ ok (9 eq join ":", @{ $js->decode ('[{"a":9}]') });
 $js->filter_json_single_key_object ("a");
 ok (4 == $js->decode ('[{"a":4}]')->[0]{a});
 
-#$js->filter_json_single_key_object (a => sub {});
-$js->filter_json_single_key_object (a => sub { return; }); # sub {} is not suitable for Perl 5.6 
+$js->filter_json_single_key_object (a => sub { return; }); # sub {} is not suitable for Perl 5.6
 ok (4 == $js->decode ('[{"a":4}]')->[0]{a});
+

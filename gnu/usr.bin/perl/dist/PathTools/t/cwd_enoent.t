@@ -2,7 +2,7 @@ use warnings;
 use strict;
 
 use Config;
-use Errno qw(ENOENT);
+use Errno qw();
 use File::Temp qw(tempdir);
 use Test::More;
 
@@ -19,6 +19,7 @@ unless(mkdir("$tmp/testdir") && chdir("$tmp/testdir") && rmdir("$tmp/testdir")){
 plan tests => 8;
 require Cwd;
 
+my @acceptable_errnos = (&Errno::ENOENT, (defined &Errno::ESTALE ? &Errno::ESTALE : ()));
 foreach my $type (qw(regular perl)) {
     SKIP: {
 	skip "_perl_abs_path() not expected to work", 4
@@ -36,12 +37,14 @@ foreach my $type (qw(regular perl)) {
 	$res = Cwd::getcwd();
 	$eno = 0+$!;
 	is $res, undef, "$type getcwd result on non-existent directory";
-	is $eno, ENOENT, "$type getcwd errno on non-existent directory";
+	ok((grep { $eno == $_ } @acceptable_errnos), "$type getcwd errno on non-existent directory")
+	    or diag "Got errno code $eno, expected " . join(", ", @acceptable_errnos);
 	$! = 0;
 	$res = Cwd::abs_path(".");
 	$eno = 0+$!;
 	is $res, undef, "$type abs_path result on non-existent directory";
-	is $eno, ENOENT, "$type abs_path errno on non-existent directory";
+	ok((grep { $eno == $_ } @acceptable_errnos), "$type abs_path errno on non-existent directory")
+	    or diag "Got errno code $eno, expected " . join(", ", @acceptable_errnos);
     }
 }
 

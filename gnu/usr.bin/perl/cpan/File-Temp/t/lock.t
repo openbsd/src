@@ -20,7 +20,7 @@ BEGIN {
 require Symbol if $] < 5.006;
 
 # Get a tempfile with O_EXLOCK
-my $fh = new File::Temp();
+my $fh = File::Temp->new(EXLOCK => 1);
 ok( -e "$fh", "temp file is present" );
 
 # try to open it with a lock

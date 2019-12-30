@@ -14,6 +14,8 @@ BEGIN {
 
 use DB_File; 
 use Fcntl;
+use File::Temp qw(tempdir) ;
+
 our ($dbh, $Dfile, $bad_ones, $FA);
 
 # full tied array support started in Perl 5.004_57
@@ -146,6 +148,9 @@ my $splice_tests = 10 + 12 + 1; # ten regressions, plus the randoms
 my $total_tests = 181 ;
 $total_tests += $splice_tests if $FA ;
 print "1..$total_tests\n";   
+
+my $TEMPDIR = tempdir( CLEANUP => 1 );
+chdir $TEMPDIR;
 
 $Dfile = "recno.tmp";
 unlink $Dfile ;

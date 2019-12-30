@@ -1,25 +1,25 @@
+# copied over from JSON::XS and modified to use JSON::PP
+
 # use the testsuite from http://www.json.org/JSON_checker/
 # except for fail18.json, as we do not support a depth of 20 (but 16 and 32).
 
-# copied over from JSON::XS and modified to use JSON::PP
-
 use strict;
-#no warnings;
-local $^W = undef;
+no warnings;
 use Test::More;
-BEGIN { plan tests => 39 };
+BEGIN { plan tests => 38 };
+
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
 
 use JSON::PP;
 
+# emulate JSON_checker default config
 my $json = JSON::PP->new->utf8->max_depth(32)->canonical;
 
 my $vax_float = (pack("d",1) =~ /^[\x80\x10]\x40/);
 
 binmode DATA;
-my $num = 1;
-for (;;) {
 
+for (;;) {
    $/ = "\n# ";
    chomp (my $test = <DATA>)
       or last;
@@ -28,19 +28,16 @@ for (;;) {
    if ($vax_float && $name =~ /pass1.json/) {
        $test =~ s/\b23456789012E66\b/23456789012E20/;
    }
+
    if (my $perl = eval { $json->decode ($test) }) {
       ok ($name =~ /^pass/, $name);
-#print $json->encode ($perl), "\n";
       is ($json->encode ($json->decode ($json->encode ($perl))), $json->encode ($perl));
    } else {
       ok ($name =~ /^fail/, "$name ($@)");
    }
-
 }
 
 __DATA__
-"A JSON::PP payload should be an object or array, not a string."
-# fail1.json
 {"Extra value after close": true} "misplaced quoted value"
 # fail10.json
 {"Illegal expression": 1 + 2}
@@ -108,7 +105,7 @@ break"]
 {"Extra comma": true,}
 # fail9.json
 [
-    "JSON::PP Test Pattern pass1",
+    "JSON Test Pattern pass1",
     {"object with 1 member":["array with 1 element"]},
     {},
     [],
@@ -141,7 +138,7 @@ break"]
         "array":[  ],
         "object":{  },
         "address": "50 St. James Street",
-        "url": "http://www.JSON::PP.org/",
+        "url": "http://www.JSON.org/",
         "comment": "// /* <!-- --",
         "# -- --> */": " ",
         " s p a c e d " :[1,2 , 3
@@ -169,7 +166,7 @@ break"]
 [[[[[[[[[[[[[[[[[[["Not too deep"]]]]]]]]]]]]]]]]]]]
 # pass2.json
 {
-    "JSON::PP Test Pattern pass3": {
+    "JSON Test Pattern pass3": {
         "The outermost value": "must be an object or array.",
         "In this test": "It is an object."
     }

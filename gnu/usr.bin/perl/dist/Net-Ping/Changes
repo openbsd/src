@@ -1,5 +1,88 @@
 CHANGES
 -------
+
+2.71  Tue Oct 16 18:41:51 CEST 2018 (rurban)
+       Features
+       - Allow data_size > 1024, up to 65535, i.e. fragmented packets.
+         It is recommended to stay below 1472 though for the typical 1500 MTU.
+         Many simple devices do not allow fragmented ICMP packets (> 1472).
+         RT #17409
+       Bugfixes
+       - Fix the max_datasize documentation
+       Test fixes
+       - The 2 sudo tests on PERL_CORE with a shared perl lib
+
+2.70  Tue Aug  7 10:33:24 CEST 2018 (rurban)
+       Test fixes
+       - Fix broken skip count on 510_ping_udp.t (windows only)
+
+2.69  Mon Aug  6 15:13:25 CEST 2018 (rurban)
+       Test fixes
+       - Allow NET_PING_FAIL_IP override for testing an IP which should not exist,
+         RT #126006 hmbrand
+       META Changes
+       - Updated README
+
+2.68  Wed Jun 27 11:55:06 CEST 2018 (rurban)
+       Bugfixes
+       - Fixed _resolv return value on failing DNS name lookup. (GH #12 nlv02636)
+       - Fixed installation dir from CPAN. Install into site, not perl there.
+         (GH #12 nlv02636)
+
+2.67  Mon Jun 25 18:10:42 CEST 2018 (rurban)
+       Bugfixes
+       - Fixed non-core icmp ping test. PR #10 Guillaume Bougard
+       - Change croak on failing name lookup to return undef,
+         matching the documentation.
+         Fixes the regression from 2.43, RT #124830
+       - Stabilize Socket::VERSION comparisons, errored with Net::Socket
+         2.020_03, RT #125677 Smoot Carl-Mitchell
+       Features
+       - Added icmp message_type method with timestamp support.
+         PR #11 Guillaume Bougard
+
+2.66  Thu Mar  8 16:44:03 CET 2018 (rurban)
+       Bugfixes
+       - Fixed icmpv6 ICMP_ECHOREPLY: nikolas@garofil.be RT 80479
+       - Fixed icmpv6 default family
+       - Simplify t/020_external.t
+       - Seperate timeout=0 and undef RT #97884
+       Features
+       - Added icmpv6 test.
+       - Added optional local tests hosts for the icmp tests:
+         TEST_PING_HOST and TEST_PING6_HOST
+       - allow sudo tests with local .git
+       - skip sudo test with asan leak detector on linux
+
+2.65  Wed Mar  7 09:38:51 CET 2018 (rurban)
+       META Changes
+       - strip wrong Text::Template dependency and generation for the README
+         https://rt.cpan.org/Public/Bug/Display.html?id=124693
+         This is in core.
+       - Changed repo name from net-ping to Net-Ping.
+       - Changed bugtracker to https://github.com/rurban/Net-Ping/issues
+       - Made Makefile.PL more stable for the CPAN release, support older
+         perl + EUMM versions.
+       - Fixed up TODO for IPv6
+
+2.64  Sat Mar  3 15:56:14 CET 2018 (rurban)
+       Bugfixes
+        - use NIx_NOSERV flag for windows (PR #6 by chorny)
+
+2.63  Sun Nov 26 18:56:04 CET 2017 (rurban)
+       Bugfixes
+        - Keep v5.002 - v5.6 support
+        - Removed outdated demo/fping from the documentation
+          (RT #123750 by Steve Morris)
+        - Added t/420_ping_syn_port.t (#4 by Julio Fraire)
+          with fixes.
+       Features
+        - added indices and crosslinks to the documentation
+
+2.62  Tue Sep 12 13:20:25 2017 -0600 (Nicholas R)
+       Limitations (not on CPAN)
+       - Removed support for v5.002 < v5.6 by introducing our
+
 2.61  Sat Jun 17 13:12:58 CEST 2017 (rurban)
        Bugfixes
         - Fix ping_udp for a started udp echo server (PR#5 by Stephan Loyd)

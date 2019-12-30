@@ -3,8 +3,7 @@
 
 use Test::More;
 use strict;
-BEGIN { plan tests => 8 };
-
+BEGIN { plan tests => 8 + 2 };
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
 
 use JSON::PP;
@@ -31,14 +30,14 @@ $js  = q|[1.23E-4]|;
 $obj = $pc->decode($js);
 is($obj->[0], 0.000123, 'digit 1.23E-4');
 $js = $pc->encode($obj);
+is($js,'[0.000123]', 'digit 1.23E-4');
 
-if ( $js =~ /\[1/ ) { # for 5.6.2 on Darwin 8.10.0
-    like($js, qr/[1.23[eE]-04]/, 'digit 1.23E-4');
-}
-else {
-    is($js,'[0.000123]', 'digit 1.23E-4');
-}
 
+$js  = q|[1.01e+30]|;
+$obj = $pc->decode($js);
+is($obj->[0], 1.01e+30, 'digit 1.01e+30');
+$js = $pc->encode($obj);
+like($js,qr/\[(?:1.01[Ee]\+0?30|1010000000000000000000000000000)]/, 'digit 1.01e+30'); # RT-128589 (-Duselongdouble or -Dquadmath) 
 
 my $vax_float = (pack("d",1) =~ /^[\x80\x10]\x40/);
 

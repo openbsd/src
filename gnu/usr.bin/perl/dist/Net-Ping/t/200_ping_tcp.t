@@ -17,6 +17,9 @@ BEGIN {
   }
 }
 
+# Hopefully this is never a routeable host
+my $fail_ip = $ENV{NET_PING_FAIL_IP} || "172.29.249.249";
+
 # Remote network test using tcp protocol.
 #
 # NOTE:
@@ -28,12 +31,18 @@ BEGIN {
 #
 # $ PERL_CORE=1 make test
 
-use Test::More tests => 12;
+use Test::More tests => 13;
 BEGIN {use_ok('Net::Ping');}
 
 my $p = new Net::Ping "tcp",9;
 
 isa_ok($p, 'Net::Ping', 'new() worked');
+
+# message_type can't be used
+eval {
+  $p->message_type();
+};
+like($@, qr/message type only supported on 'icmp' protocol/, "message_type() API only concern 'icmp' protocol");
 
 isnt($p->ping("localhost"), 0, 'Test on the default port');
 
@@ -44,8 +53,7 @@ isnt($p->{port_num} = (getservbyname("http", "tcp") || 80), undef);
 
 isnt($p->ping("localhost"), 0, 'Test localhost on the web port');
 
-# Hopefully this is never a routeable host
-is($p->ping("172.29.249.249"), 0, "Can't reach 172.29.249.249");
+is($p->ping($fail_ip), 0, "Can't reach $fail_ip");
 
 # Test a few remote servers
 # Hopefully they are up when the tests are run.

@@ -36,9 +36,11 @@ BEGIN {
 # Try a few remote servers
 my %webs;
 BEGIN {
-  %webs = (
   # Hopefully this is never a routeable host
-  "172.29.249.249" => 0,
+  my $fail_ip = $ENV{NET_PING_FAIL_IP} || "172.29.249.249";
+
+  %webs = (
+  $fail_ip => 0,
 
   # Hopefully all these web ports are open
   "www.google.com." => 1,

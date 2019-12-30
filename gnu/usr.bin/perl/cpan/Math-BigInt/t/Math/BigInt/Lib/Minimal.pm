@@ -692,8 +692,8 @@ except that it might be much faster, depending on how the number is represented
 internally.
 
 For instance, if the object $obj represents the hexadecimal number 0xabcde,
-then C<$obj->_rsft(2, 16)> returns an object representing the number 0xabc. The
-"remainer", 0xde, is discarded and not returned.
+then C<< $obj->_rsft(2, 16) >> returns an object representing the number 0xabc.
+The "remainer", 0xde, is discarded and not returned.
 
 =item I<_lsft(OBJ, N, B)>
 

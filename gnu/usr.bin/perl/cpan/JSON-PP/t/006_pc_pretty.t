@@ -56,7 +56,7 @@ is($js,q|{"foo":[{"a":"b"},0,1,2]}|);
 
 
 $obj = {foo => "bar"};
-$pc->indent(3); # original -- $pc->indent(1);
+$pc->indent(1);
 is($pc->encode($obj), qq|{\n   "foo":"bar"\n}\n|, "nospace");
 $pc->space_after(1);
 is($pc->encode($obj), qq|{\n   "foo": "bar"\n}\n|, "after");

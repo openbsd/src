@@ -2,12 +2,13 @@ package Test2::IPC;
 use strict;
 use warnings;
 
-our $VERSION = '1.302133';
+our $VERSION = '1.302162';
 
 
 use Test2::API::Instance;
 use Test2::Util qw/get_tid/;
 use Test2::API qw{
+    test2_in_preload
     test2_init_done
     test2_ipc
     test2_has_ipc
@@ -17,6 +18,16 @@ use Test2::API qw{
     test2_tid
     context
 };
+
+# Make sure stuff is finalized before anyone tried to fork or start a new thread.
+{
+    # Avoid warnings if things are loaded at run-time
+    no warnings 'void';
+    INIT {
+        use warnings 'void';
+        context()->release() unless test2_in_preload();
+    }
+}
 
 use Carp qw/confess/;
 
@@ -139,7 +150,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2018 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

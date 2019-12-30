@@ -28,6 +28,9 @@ use strict;
 use Test::More tests => 6;
 BEGIN {use_ok 'Net::Ping'};
 
+# Hopefully this is never a routeable host
+my $fail_ip = $ENV{NET_PING_FAIL_IP} || "172.29.249.249";
+
 eval {
   my $timeout = 11;
 
@@ -42,7 +45,7 @@ eval {
     my $ping = Net::Ping->new("tcp", 2);
     # It does not matter if alive or not
     $ping->ping("127.0.0.1");
-    $ping->ping("172.29.249.249");
+    $ping->ping($fail_ip);
     die "alarm failed" if time > $start + $timeout + 1;
   }
 };

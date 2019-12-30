@@ -51,7 +51,7 @@ package main;
 my $uni = &Devel::PPPort::pv_escape_can_unicode();
 
 # sanity check
-ok($uni ? $] >= 5.006 : $] < 5.008);
+ok($uni ? "$]" >= 5.006 : "$]" < 5.008);
 
 my @r;
 

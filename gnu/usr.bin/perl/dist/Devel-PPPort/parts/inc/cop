@@ -182,7 +182,7 @@ print "# $file\n";
 ok($file =~ /cop/i);
 
 BEGIN {
-  if ($] < 5.006000) {
+  if ("$]" < 5.006000) {
     # Skip
     for (1..28) {
       ok(1, 1);

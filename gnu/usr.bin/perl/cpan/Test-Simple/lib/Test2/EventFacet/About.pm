@@ -2,10 +2,10 @@ package Test2::EventFacet::About;
 use strict;
 use warnings;
 
-our $VERSION = '1.302133';
+our $VERSION = '1.302162';
 
 BEGIN { require Test2::EventFacet; our @ISA = qw(Test2::EventFacet) }
-use Test2::Util::HashBase qw{ -package -no_display -uuid };
+use Test2::Util::HashBase qw{ -package -no_display -uuid -eid };
 
 1;
 
@@ -51,6 +51,12 @@ True if the event should be skipped by formatters.
 
 Will be set to a uuid if uuid tagging was enabled.
 
+=item $uuid = $about->{eid}
+
+=item $uuid = $about->eid()
+
+A unique (for the test job) identifier for the event.
+
 =back
 
 =head1 SOURCE
@@ -76,7 +82,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2018 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

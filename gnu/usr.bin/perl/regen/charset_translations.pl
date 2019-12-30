@@ -194,7 +194,7 @@ sub get_I8_2_utf($) {
             $indent = "";
         }
         else {
-            $indent = " " x (($indent_level * 4) - 1);
+            $indent = "  " x $indent_level;
         }
 
         die "Unknown character set '$charset'" unless exists $ebcdic_translations{$charset};
@@ -207,13 +207,18 @@ sub get_I8_2_utf($) {
             # We use all the typical variant characters to construct the #if,
             # so that it is unlikely that a different code page will match
             # this #if
-            for my $char (qw/A \\\ [ ] { } ^ ~ ! # | $ @ `/) {
+            my @variant_chars = qw/A \\\ [ ] { } ^ ~ ! # | $ @ `/;
+            push @variant_chars, "\n";
+            for my $char (@variant_chars) {
                 my $compare;
                 my $ascii_ord = ord $char;
                 my $first_time = $return eq "";
 
                 $compare = $ebcdic_translations{$charset}[$ascii_ord];
                 $return .=  " && " unless $first_time;
+                $char = '\n' if $char eq "\n";
+                die "Non-graphical character ord=" . ord($char)
+                                                      if $char !~ /[[:graph:]]/;
                 $return .= "'$char' == $compare";
                 $return .= " /* $charset */" if $first_time;
                 last if $charset eq $ascii_key;

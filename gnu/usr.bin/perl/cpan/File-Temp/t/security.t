@@ -77,7 +77,7 @@ sub test_security {
   # Create the tempfile
   my $template = "tmpXXXXX";
   my ($fh1, $fname1) = eval { tempfile ( $template, 
-				  DIR => File::Spec->tmpdir,
+				  DIR => File::Temp::_wrap_file_spec_tmpdir(),
 				  UNLINK => 1,
 				);
 			    };
@@ -89,7 +89,7 @@ sub test_security {
         push(@files, $fname1); # store for end block
     } elsif (File::Temp->safe_level() != File::Temp::STANDARD) {
         chomp($@);
-        my $msg = File::Spec->tmpdir() . " possibly insecure: $@";
+        my $msg = File::Temp::_wrap_file_spec_tmpdir() . " possibly insecure: $@";
         skip $msg, 2; # one here and one in END
     } else {
         ok(0);

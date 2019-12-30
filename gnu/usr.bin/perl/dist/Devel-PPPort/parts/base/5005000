@@ -9,7 +9,6 @@ fbm_instr                      # E (Perl_fbm_instr)
 get_op_descs                   # E
 get_op_names                   # E
 init_stacks                    # E
-mg_length                      # E
 mg_size                        # E
 newHVhv                        # E
 new_stackinfo                  # E

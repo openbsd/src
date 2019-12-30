@@ -17,7 +17,7 @@ tests _get_facet_data => sub {
     is_deeply(
         _get_facet_data($pass),
         {
-            about  => {package => 'Test2::Event::Pass', details => 'pass'},
+            about  => {package => 'Test2::Event::Pass', details => 'pass', eid => $pass->eid},
             assert => {pass    => 1,                    details => 'xxx'},
         },
         "Got facet data from event"

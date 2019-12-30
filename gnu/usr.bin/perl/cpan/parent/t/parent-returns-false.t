@@ -11,7 +11,7 @@ use strict;
 use Test::More tests => 2;
 use lib 't/lib';
 
-use vars qw($got_here);
+our $got_here;
 
 my $res = eval q{
     package MyTest;

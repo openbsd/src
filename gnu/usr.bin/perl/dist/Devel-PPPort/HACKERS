@@ -239,8 +239,10 @@ span multiple lines, like in
                 STMT_START { assert(SvTYPE(sv) >= SVt_PVMG); \
                 (((XPVMG*) SvANY(sv))->xmg_magic = (val)); } STMT_END
 
-This usually makes the code more compact and readable. And you
-only have to add C<__UNDEFINED__> to the C<=provided> section.
+This usually makes the code more compact and readable. And you only have to add
+the line C<__UNDEFINED__> to the C<=provides> section to get all macros
+implemented this way to be imported into this section, so they all get
+documented as being provided.
 
 Version checking can be tricky if you want to do it correct.
 You can use

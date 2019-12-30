@@ -395,6 +395,17 @@ my %TOP = (
                                 Raw      => 0,
                               },
 
+    'IO::Compress::Lzip' => { Inverse  => 'IO::Uncompress::UnLzip',
+                            Error    => 'LzipError',
+                            TopLevel => 'lzip',
+                            Raw      => 0,
+                          },
+    'IO::Uncompress::UnLzip' => { Inverse  => 'IO::Compress::Lzip',
+                                Error    => 'UnLzipError',
+                                TopLevel => 'unlzip',
+                                Raw      => 0,
+                              },
+
     'IO::Compress::PPMd' => { Inverse  => 'IO::Uncompress::UnPPMd',
                               Error    => 'PPMdError',
                               TopLevel => 'ppmd',
@@ -403,6 +414,16 @@ my %TOP = (
     'IO::Uncompress::UnPPMd' => { Inverse  => 'IO::Compress::PPMd',
                                   Error    => 'UnPPMdError',
                                   TopLevel => 'unppmd',
+                                  Raw      => 0,
+                                },
+    'IO::Compress::Zstd' => { Inverse  => 'IO::Uncompress::UnZstd',
+                              Error    => 'ZstdError',
+                              TopLevel => 'zstd',
+                              Raw      => 0,
+                            },
+    'IO::Uncompress::UnZstd' => { Inverse  => 'IO::Compress::Zstd',
+                                  Error    => 'UnZstdError',
+                                  TopLevel => 'unzstd',
                                   Raw      => 0,
                                 },
 
@@ -494,7 +515,7 @@ sub compressBuffer
 our ($AnyUncompressError);
 BEGIN
 {
-    eval ' use IO::Uncompress::AnyUncompress qw($AnyUncompressError); ';
+    eval ' use IO::Uncompress::AnyUncompress qw(anyuncompress $AnyUncompressError); ';
 }
 
 sub anyUncompress
@@ -555,7 +576,6 @@ sub anyUncompress
         if $o->error() ;
 
     return $out ;
-
 }
 
 sub getHeaders
@@ -718,7 +738,7 @@ sub getMultiValues
 {
     my $class = shift ;
 
-    return (0,0) if $class =~ /lzf|lzma/i;
+    return (0,0) if $class =~ /lzf|lzma|zstd/i;
     return (1,0);
 }
 

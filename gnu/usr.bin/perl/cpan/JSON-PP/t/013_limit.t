@@ -1,6 +1,7 @@
+# copied over from JSON::XS and modified to use JSON::PP
+
 use strict;
 use Test::More;
-
 BEGIN { plan tests => 11 };
 
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
@@ -11,9 +12,7 @@ use JSON::PP;
 my $def = 512;
 
 my $js = JSON::PP->new;
-
-{
-    local $^W = undef; # avoid for warning 'Deep recursion on subroutin'
+local $^W; # to silence Deep recursion warnings
 
 ok (!eval { $js->decode (("[" x ($def + 1)) . ("]" x ($def + 1))) });
 ok (ref $js->decode (("[" x $def) . ("]" x $def)));
@@ -31,4 +30,3 @@ ok (!eval { $js->encode ([[{}]]), 1 });
 ok (eval { ref $js->max_size (8)->decode ("[      ]") });
 eval { $js->max_size (8)->decode ("[       ]") }; ok ($@ =~ /max_size/);
 
-}

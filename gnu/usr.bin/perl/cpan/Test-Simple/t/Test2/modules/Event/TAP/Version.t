@@ -19,7 +19,7 @@ is($one->summary, "TAP version 13", "Got summary");
 is_deeply(
     $one->facet_data,
     {
-        about => { package => $CLASS, details => "TAP version 13"},
+        about => { package => $CLASS, details => "TAP version 13", eid => $one->eid},
         info => [{tag => 'INFO', debug => 0, details => "TAP version 13"}],
     },
     "Got facet data"

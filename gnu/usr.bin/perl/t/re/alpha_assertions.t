@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 no warnings 'once';
+no warnings 'experimental::vlb';
 
 # This tests that the alphabetic assertions, like '(*atomic:...) work
 # It just sets a flag and calls regexp.t which will run through its test

@@ -85,30 +85,30 @@ my $FastFileTests_OK = 0;
 sub cleanup {
     chdir($orig_dir_untainted);
     my $need_updir = 0;
-    if (-d dir_path('for_find')) {
-        $need_updir = 1 if chdir(dir_path('for_find'));
+    if (-d dir_path('for_find_taint')) {
+        $need_updir = 1 if chdir(dir_path('for_find_taint'));
     }
-    if (-d dir_path('fa')) {
-	unlink file_path('fa', 'fa_ord'),
-	       file_path('fa', 'fsl'),
-	       file_path('fa', 'faa', 'faa_ord'),
-	       file_path('fa', 'fab', 'fab_ord'),
-	       file_path('fa', 'fab', 'faba', 'faba_ord'),
-	       file_path('fb', 'fb_ord'),
-	       file_path('fb', 'fba', 'fba_ord');
-	rmdir dir_path('fa', 'faa');
-	rmdir dir_path('fa', 'fab', 'faba');
-	rmdir dir_path('fa', 'fab');
-	rmdir dir_path('fa');
-	rmdir dir_path('fb', 'fba');
-	rmdir dir_path('fb');
+    if (-d dir_path('fa_taint')) {
+	unlink file_path('fa_taint', 'fa_ord'),
+	       file_path('fa_taint', 'fsl'),
+	       file_path('fa_taint', 'faa', 'faa_ord'),
+	       file_path('fa_taint', 'fab', 'fab_ord'),
+	       file_path('fa_taint', 'fab', 'faba', 'faba_ord'),
+	       file_path('fb_taint', 'fb_ord'),
+	       file_path('fb_taint', 'fba', 'fba_ord');
+	rmdir dir_path('fa_taint', 'faa');
+	rmdir dir_path('fa_taint', 'fab', 'faba');
+	rmdir dir_path('fa_taint', 'fab');
+	rmdir dir_path('fa_taint');
+	rmdir dir_path('fb_taint', 'fba');
+	rmdir dir_path('fb_taint');
     }
     if ($need_updir) {
         my $updir = $^O eq 'VMS' ? File::Spec::VMS->updir() : File::Spec->updir;
         chdir($updir);
     }
-    if (-d dir_path('for_find')) {
-	rmdir dir_path('for_find') or print "# Can't rmdir for_find: $!\n";
+    if (-d dir_path('for_find_taint')) {
+	rmdir dir_path('for_find_taint') or print "# Can't rmdir for_find_taint: $!\n";
     }
 }
 
@@ -157,29 +157,29 @@ sub simple_wanted {
 *file_path_name = \&file_path;
 
 
-mkdir_ok( dir_path('for_find'), 0770 );
-ok( chdir( dir_path('for_find')), 'successful chdir() to for_find' );
+mkdir_ok( dir_path('for_find_taint'), 0770 );
+ok( chdir( dir_path('for_find_taint')), 'successful chdir() to for_find_taint' );
 
 $cwd = cwd(); # save cwd
 ( $cwd_untainted ) = $cwd =~ m|^(.+)$|; # untaint it
 
-mkdir_ok( dir_path('fa'), 0770 );
-mkdir_ok( dir_path('fb'), 0770  );
-create_file_ok( file_path('fb', 'fb_ord') );
-mkdir_ok( dir_path('fb', 'fba'), 0770  );
-create_file_ok( file_path('fb', 'fba', 'fba_ord') );
+mkdir_ok( dir_path('fa_taint'), 0770 );
+mkdir_ok( dir_path('fb_taint'), 0770  );
+create_file_ok( file_path('fb_taint', 'fb_ord') );
+mkdir_ok( dir_path('fb_taint', 'fba'), 0770  );
+create_file_ok( file_path('fb_taint', 'fba', 'fba_ord') );
 SKIP: {
 	skip "Creating symlink", 1, unless $symlink_exists;
-	ok( symlink('../fb','fa/fsl'), 'Created symbolic link' );
+	ok( symlink('../fb_taint','fa_taint/fsl'), 'Created symbolic link' );
 }
-create_file_ok( file_path('fa', 'fa_ord') );
+create_file_ok( file_path('fa_taint', 'fa_ord') );
 
-mkdir_ok( dir_path('fa', 'faa'), 0770  );
-create_file_ok( file_path('fa', 'faa', 'faa_ord') );
-mkdir_ok( dir_path('fa', 'fab'), 0770  );
-create_file_ok( file_path('fa', 'fab', 'fab_ord') );
-mkdir_ok( dir_path('fa', 'fab', 'faba'), 0770  );
-create_file_ok( file_path('fa', 'fab', 'faba', 'faba_ord') );
+mkdir_ok( dir_path('fa_taint', 'faa'), 0770  );
+create_file_ok( file_path('fa_taint', 'faa', 'faa_ord') );
+mkdir_ok( dir_path('fa_taint', 'fab'), 0770  );
+create_file_ok( file_path('fa_taint', 'fab', 'fab_ord') );
+mkdir_ok( dir_path('fa_taint', 'fab', 'faba'), 0770  );
+create_file_ok( file_path('fa_taint', 'fab', 'faba', 'faba_ord') );
 
 print "# check untainting (no follow)\n";
 
@@ -192,14 +192,14 @@ print "# check untainting (no follow)\n";
 delete $Expect_File{ file_path('fsl') } unless $symlink_exists;
 %Expect_Name = ();
 
-%Expect_Dir = ( dir_path('fa') => 1, dir_path('faa') => 1,
+%Expect_Dir = ( dir_path('fa_taint') => 1, dir_path('faa') => 1,
                 dir_path('fab') => 1, dir_path('faba') => 1,
-                dir_path('fb') => 1, dir_path('fba') => 1);
+                dir_path('fb_taint') => 1, dir_path('fba') => 1);
 
-delete @Expect_Dir{ dir_path('fb'), dir_path('fba') } unless $symlink_exists;
+delete @Expect_Dir{ dir_path('fb_taint'), dir_path('fba') } unless $symlink_exists;
 
 File::Find::find( {wanted => \&wanted_File_Dir_prune, untaint => 1,
-		   untaint_pattern => qr|^(.+)$|}, topdir('fa') );
+		   untaint_pattern => qr|^(.+)$|}, topdir('fa_taint') );
 
 is(scalar keys %Expect_File, 0, 'Found all expected files');
 
@@ -208,7 +208,7 @@ is(scalar keys %Expect_File, 0, 'Found all expected files');
 %Expect_Name = ();
 %Expect_Dir  = ();
 undef $@;
-eval {File::Find::find( {wanted => \&simple_wanted}, topdir('fa') );};
+eval {File::Find::find( {wanted => \&simple_wanted}, topdir('fa_taint') );};
 like( $@, qr|Insecure dependency|, 'Tainted directory causes death (good)' );
 chdir($cwd_untainted);
 
@@ -218,7 +218,7 @@ undef $@;
 
 eval {File::Find::find( {wanted => \&simple_wanted, untaint => 1,
                          untaint_pattern => qr|^(NO_MATCH)$|},
-                         topdir('fa') );};
+                         topdir('fa_taint') );};
 
 like( $@, qr|is still tainted|, 'Bad untaint pattern causes death (good)' );
 chdir($cwd_untainted);
@@ -230,7 +230,7 @@ undef $@;
 
 eval {File::Find::find( {wanted => \&simple_wanted, untaint => 1,
                          untaint_skip => 1, untaint_pattern =>
-                         qr|^(NO_MATCH)$|}, topdir('fa') );};
+                         qr|^(NO_MATCH)$|}, topdir('fa_taint') );};
 
 print "# $@" if $@;
 #$^D = 8;
@@ -249,31 +249,31 @@ SKIP: {
     # untainting here should work correctly
     # no_chdir is in effect, hence we use file_path_name to specify the expected paths for %Expect_File
 
-    %Expect_File = (file_path_name('fa') => 1,
-		    file_path_name('fa','fa_ord') => 1,
-		    file_path_name('fa', 'fsl') => 1,
-                    file_path_name('fa', 'fsl', 'fb_ord') => 1,
-                    file_path_name('fa', 'fsl', 'fba') => 1,
-                    file_path_name('fa', 'fsl', 'fba', 'fba_ord') => 1,
-                    file_path_name('fa', 'fab') => 1,
-                    file_path_name('fa', 'fab', 'fab_ord') => 1,
-                    file_path_name('fa', 'fab', 'faba') => 1,
-                    file_path_name('fa', 'fab', 'faba', 'faba_ord') => 1,
-                    file_path_name('fa', 'faa') => 1,
-                    file_path_name('fa', 'faa', 'faa_ord') => 1);
+    %Expect_File = (file_path_name('fa_taint') => 1,
+		    file_path_name('fa_taint','fa_ord') => 1,
+		    file_path_name('fa_taint', 'fsl') => 1,
+                    file_path_name('fa_taint', 'fsl', 'fb_ord') => 1,
+                    file_path_name('fa_taint', 'fsl', 'fba') => 1,
+                    file_path_name('fa_taint', 'fsl', 'fba', 'fba_ord') => 1,
+                    file_path_name('fa_taint', 'fab') => 1,
+                    file_path_name('fa_taint', 'fab', 'fab_ord') => 1,
+                    file_path_name('fa_taint', 'fab', 'faba') => 1,
+                    file_path_name('fa_taint', 'fab', 'faba', 'faba_ord') => 1,
+                    file_path_name('fa_taint', 'faa') => 1,
+                    file_path_name('fa_taint', 'faa', 'faa_ord') => 1);
 
     %Expect_Name = ();
 
-    %Expect_Dir = (dir_path('fa') => 1,
-		   dir_path('fa', 'faa') => 1,
-                   dir_path('fa', 'fab') => 1,
-		   dir_path('fa', 'fab', 'faba') => 1,
-		   dir_path('fb') => 1,
-		   dir_path('fb', 'fba') => 1);
+    %Expect_Dir = (dir_path('fa_taint') => 1,
+		   dir_path('fa_taint', 'faa') => 1,
+                   dir_path('fa_taint', 'fab') => 1,
+		   dir_path('fa_taint', 'fab', 'faba') => 1,
+		   dir_path('fb_taint') => 1,
+		   dir_path('fb_taint', 'fba') => 1);
 
     File::Find::find( {wanted => \&wanted_File_Dir, follow_fast => 1,
                        no_chdir => 1, untaint => 1, untaint_pattern =>
-                       qr|^(.+)$| }, topdir('fa') );
+                       qr|^(.+)$| }, topdir('fa_taint') );
 
     is( scalar(keys %Expect_File), 0, 'Found all files in symlink test' );
 
@@ -282,7 +282,7 @@ SKIP: {
     undef $@;
 
     eval {File::Find::find( {wanted => \&simple_wanted, follow => 1},
-			    topdir('fa') );};
+			    topdir('fa_taint') );};
 
     like( $@, qr|Insecure dependency|, 'Not untainting causes death (good)' );
     chdir($cwd_untainted);
@@ -292,7 +292,7 @@ SKIP: {
 
     eval {File::Find::find( {wanted => \&simple_wanted, follow => 1,
                              untaint => 1, untaint_pattern =>
-                             qr|^(NO_MATCH)$|}, topdir('fa') );};
+                             qr|^(NO_MATCH)$|}, topdir('fa_taint') );};
 
     like( $@, qr|is still tainted|, 'Bat untaint pattern causes death (good)' );
     chdir($cwd_untainted);
@@ -303,7 +303,7 @@ SKIP: {
 
     eval {File::Find::find( {wanted => \&simple_wanted, untaint => 1,
                              untaint_skip => 1, untaint_pattern =>
-                             qr|^(NO_MATCH)$|}, topdir('fa') );};
+                             qr|^(NO_MATCH)$|}, topdir('fa_taint') );};
     like( $@, qr|insecure cwd|, 'Cwd not untainted with bad pattern (good)' );
 
     chdir($cwd_untainted);

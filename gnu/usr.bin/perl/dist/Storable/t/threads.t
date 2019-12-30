@@ -28,6 +28,10 @@ sub BEGIN {
         print "1..0 # Skip: no threads\n";
         exit 0;
     }
+    if ($] eq "5.008" || $] eq "5.010000") {
+        print "1..0 # Skip: threads unreliable in perl-$]\n";
+        exit 0;
+    }
     # - is \W, so can't use \b at start. Negative look ahead and look behind
     # works at start/end of string, or where preceded/followed by spaces
     if ($] == 5.008002 and eval q{ $Config{'ccflags'} =~ /(?<!\S)-DDEBUGGING(?!\S)/ }) {

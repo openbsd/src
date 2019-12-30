@@ -100,7 +100,7 @@ ok(!defined($s[4]));
 ok(@s == 1);
 ok($s[0], "test");
 
-if ($] >= 5.008001) {
+if ("$]" >= 5.008001) {
   require utf8;
   ok(utf8::is_utf8($s[0]));
 }

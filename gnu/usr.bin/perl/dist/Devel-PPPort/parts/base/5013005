@@ -3,4 +3,3 @@ PL_rpeepp                      # E
 caller_cx                      # U
 isOCTAL                        # U
 lex_stuff_pvs                  # U
-parse_fullstmt                 # U

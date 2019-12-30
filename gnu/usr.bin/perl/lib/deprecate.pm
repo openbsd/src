@@ -1,7 +1,7 @@
 package deprecate;
 use strict;
 use warnings;
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
 # our %Config can ignore %Config::Config, e.g. for testing
 our %Config;
@@ -71,26 +71,61 @@ __END__
 
 =head1 NAME
 
-deprecate - Perl pragma for deprecating the core version of a module
+deprecate - Perl pragma for deprecating the inclusion of a module in core
 
 =head1 SYNOPSIS
 
-    use deprecate;  # always deprecate the module in which this occurs
-
-    use if $] > 5.010, 'deprecate'; # conditionally deprecate the module
+    use deprecate;  # warn about future absence if loaded from core
 
 
 =head1 DESCRIPTION
 
-This module is used using C<use deprecate;> (or something that calls
-C<< deprecate->import() >>, for example C<use if COND, deprecate;>).
+This pragma simplifies the maintenance of dual-life modules that will no longer
+be included in the Perl core in a future Perl release, but are still included
+currently.
 
-If the module that includes C<use deprecate> is located in a core library
-directory, a deprecation warning is issued, encouraging the user to use
-the version on CPAN.  If that module is located in a site library, it is
-the CPAN version, and no warning is issued.
+The purpose of the pragma is to alert users to the status of such a module by
+issuing a warning that encourages them to install the module from CPAN, so that
+a future upgrade to a perl which omits the module will not break their code.
 
-=head2 EXPORT
+This warning will only be issued if the module was loaded from a core library
+directory, which allows the C<use deprecate> line to be included in the CPAN
+version of the module. Because the pragma remains silent when the module is run
+from a non-core library directory, the pragma call does not need to be patched
+into or out of either the core or CPAN version of the module. The exact same
+code can be shipped for either purpose.
+
+=head2 Important Caveat
+
+Note that when a module installs from CPAN to a core library directory rather
+than the site library directories, the user gains no protection from having
+installed it.
+
+At the same time, this pragma cannot detect when such a module has installed
+from CPAN to the core library, and so it would endlessly and uselessly exhort
+the user to upgrade.
+
+Therefore modules that can install from CPAN to the core library must make sure
+not to call this pragma when they have done so. Generally this means that the
+exact logic from the installer must be mirrored inside the module. E.g.:
+
+    # Makefile.PL
+    WriteMakefile(
+        # ...
+        INSTALLDIRS => ( "$]" >= 5.011 ? 'site' : 'perl' ),
+    );
+
+    # lib/Foo/Bar.pm
+    use if "$]" >= 5.011, 'deprecate';
+
+(The above example shows the most important case of this: when the target is
+a Perl older than 5.12 (where the core library directories take precedence over
+the site library directories) and the module being installed was included in
+core in that Perl version. Under those circumstances, an upgrade of the module
+from CPAN is only possible by installing to the core library.)
+
+
+=head1 EXPORT
 
 None by default.  The only method is C<import>, called by C<use deprecate;>.
 

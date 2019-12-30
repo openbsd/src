@@ -1,6 +1,7 @@
 use Test::More;
 use strict;
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
+BEGIN { $ENV{PERL_JSON_PP_USE_B} = 0 }
 use JSON::PP;
 
 #SKIP_ALL_UNLESS_PP 2.90

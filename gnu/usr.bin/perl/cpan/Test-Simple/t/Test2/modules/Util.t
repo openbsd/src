@@ -1,6 +1,14 @@
 use strict;
 use warnings;
 
+our $TIME;
+BEGIN {
+    *CORE::GLOBAL::time = sub() {
+        return CORE::time() unless defined $TIME;
+        return $TIME;
+    };
+}
+
 use Config qw/%Config/;
 
 use Test2::Tools::Tiny;
@@ -14,6 +22,9 @@ use Test2::Util qw/
     CAN_FORK
     CAN_THREAD
     CAN_REALLY_FORK
+
+    ipc_separator
+    gen_uid
 
     CAN_SIGSYS
 
@@ -84,5 +95,17 @@ print $io "Test\n";
 
 is($out, "Test\n", "wrote to the scalar handle");
 
+is(ipc_separator(), '~', "Got ipc_separator");
+
+{
+    local $TIME = time;
+    my $id1 = gen_uid();
+    my $id2 = gen_uid();
+
+    like($id1, qr/^\Q$$~0~$TIME~\E\d+$/, "Got a UID ($id1)");
+    my ($inc) = ($id1 =~ m/(\d+)$/g);
+    $inc++;
+    is($id2, "$$~0~$TIME~$inc", "Next id is next in sequence ($id2)");
+}
 
 done_testing;

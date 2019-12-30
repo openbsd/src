@@ -36,7 +36,7 @@ Can't "goto" into a binary or list expression at - line 5.
 # NAME dump with computed label
 no warnings 'deprecated';
 my $label = "foo";
-dump $label;
+CORE::dump $label;
 EXPECT
 Can't find label foo at - line 3.
 ########

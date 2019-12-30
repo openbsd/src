@@ -29,8 +29,3 @@ custom_op_register             # E
 custom_op_xop                  # E
 newFOROP                       # A
 newWHILEOP                     # A
-op_lvalue                      # U
-op_scope                       # U
-parse_barestmt                 # U
-parse_block                    # U
-parse_label                    # U

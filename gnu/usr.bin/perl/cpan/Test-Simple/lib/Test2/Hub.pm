@@ -2,11 +2,11 @@ package Test2::Hub;
 use strict;
 use warnings;
 
-our $VERSION = '1.302133';
+our $VERSION = '1.302162';
 
 
 use Carp qw/carp croak confess/;
-use Test2::Util qw/get_tid ipc_separator/;
+use Test2::Util qw/get_tid gen_uid/;
 
 use Scalar::Util qw/weaken/;
 use List::Util qw/first/;
@@ -38,13 +38,12 @@ use Test2::Util::HashBase qw{
 
 my $UUID_VIA;
 
-my $ID_POSTFIX = 1;
 sub init {
     my $self = shift;
 
     $self->{+PID} = $$;
     $self->{+TID} = get_tid();
-    $self->{+HID} = join ipc_separator, $self->{+PID}, $self->{+TID}, $ID_POSTFIX++;
+    $self->{+HID} = gen_uid();
 
     $UUID_VIA ||= Test2::API::_add_uuid_via_ref();
     $self->{+UUID} = ${$UUID_VIA}->('hub') if $$UUID_VIA;
@@ -75,7 +74,7 @@ sub _tb_reset {
 
     $self->{+PID} = $$;
     $self->{+TID} = get_tid();
-    $self->{+HID} = join ipc_separator, $self->{+PID}, $self->{+TID}, $ID_POSTFIX++;
+    $self->{+HID} = gen_uid();
 
     if (my $ipc = $self->{+IPC}) {
         $ipc->add_hub($self->{+HID});
@@ -277,6 +276,8 @@ sub remove_context_release {
 sub send {
     my $self = shift;
     my ($e) = @_;
+
+    $e->eid;
 
     $e->add_hub(
         {
@@ -898,7 +899,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2018 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

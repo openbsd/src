@@ -2,12 +2,12 @@ package Test2::EventFacet::Info;
 use strict;
 use warnings;
 
-our $VERSION = '1.302133';
+our $VERSION = '1.302162';
 
 sub is_list { 1 }
 
 BEGIN { require Test2::EventFacet; our @ISA = qw(Test2::EventFacet) }
-use Test2::Util::HashBase qw{-tag -debug -important};
+use Test2::Util::HashBase qw{-tag -debug -important -table};
 
 1;
 
@@ -41,6 +41,36 @@ This facet appears in a list instead of being a single item.
 Human readable string or data structure, this is the information to display.
 Formatters are free to render the structures however they please. This may
 contain a blessed object.
+
+If the C<table> attribute (see below) is set then a renderer may choose to
+display the table instead of the details.
+
+=item $structure = $info->{table}
+
+=item $structure = $info->table()
+
+If the data the C<info> facet needs to convey can be represented as a table
+then the data may be placed in this attribute in a more raw form for better
+display. The data must also be represented in the C<details> attribute for
+renderers which do not support rendering tables directly.
+
+The table structure:
+
+    my %table = {
+        header => [ 'column 1 header', 'column 2 header', ... ], # Optional
+
+        rows => [
+            ['row 1 column 1', 'row 1, column 2', ... ],
+            ['row 2 column 1', 'row 2, column 2', ... ],
+            ...
+        ],
+
+        # Allow the renderer to hide empty columns when true, Optional
+        collapse => $BOOL,
+
+        # List by name or number columns that should never be collapsed
+        no_collapse => \@LIST,
+    }
 
 =item $short_string = $info->{tag}
 
@@ -92,7 +122,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2018 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

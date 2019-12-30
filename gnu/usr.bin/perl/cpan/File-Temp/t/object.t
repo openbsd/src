@@ -148,7 +148,7 @@ $fh = new File::Temp( TEMPLATE => 'permXXXXXXX', UNLINK => 1);
 print "# TEMPFILE: Created $fh\n";
 ok( -f "$fh", "File $fh exists?" );
 ok( close( $fh ), "Close file $fh" );
-ok( $fh->unlink_on_destroy, "should unlink (in principal)");
+ok( $fh->unlink_on_destroy, "should unlink (in principle)");
 push( @still_there, "$fh"); # check at END
 $File::Temp::KEEP_ALL = 1;
 

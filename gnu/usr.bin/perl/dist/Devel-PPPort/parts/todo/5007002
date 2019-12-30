@@ -14,4 +14,3 @@ sv_catsv_flags                 # U
 sv_setsv_flags                 # U
 sv_utf8_upgrade_flags          # U
 sv_utf8_upgrade_nomg           # U
-swash_fetch                    # E (Perl_swash_fetch)

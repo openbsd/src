@@ -54,7 +54,7 @@ pv_escape(pTHX_ SV *dsv, char const * const str,
     STRLEN wrote = 0;
     STRLEN chsize = 0;
     STRLEN readsize = 1;
-#if defined(is_utf8_string) && defined(utf8_to_uvchr)
+#if defined(is_utf8_string) && defined(utf8_to_uvchr_buf)
     bool isuni = flags & PERL_PV_ESCAPE_UNI ? 1 : 0;
 #endif
     const char *pv  = str;
@@ -64,15 +64,15 @@ pv_escape(pTHX_ SV *dsv, char const * const str,
     if (!(flags & PERL_PV_ESCAPE_NOCLEAR))
         sv_setpvs(dsv, "");
 
-#if defined(is_utf8_string) && defined(utf8_to_uvchr)
+#if defined(is_utf8_string) && defined(utf8_to_uvchr_buf)
     if ((flags & PERL_PV_ESCAPE_UNI_DETECT) && is_utf8_string((U8*)pv, count))
         isuni = 1;
 #endif
 
     for (; pv < end && (!max || wrote < max) ; pv += readsize) {
         const UV u =
-#if defined(is_utf8_string) && defined(utf8_to_uvchr)
-                     isuni ? utf8_to_uvchr((U8*)pv, &readsize) :
+#if defined(is_utf8_string) && defined(utf8_to_uvchr_buf)
+                     isuni ? utf8_to_uvchr_buf((U8*)pv, end, &readsize) :
 #endif
                              (U8)*pv;
         const U8 c = (U8)u & 0xFF;
@@ -203,7 +203,7 @@ pv_display(pTHX_ SV *dsv, const char *pv, STRLEN cur, STRLEN len, STRLEN pvlim)
 void
 pv_escape_can_unicode()
         PPCODE:
-#if defined(is_utf8_string) && defined(utf8_to_uvchr)
+#if defined(is_utf8_string) && defined(utf8_to_uvchr_buf)
                 XSRETURN_YES;
 #else
                 XSRETURN_NO;
@@ -252,7 +252,7 @@ pv_display()
 my $uni = &Devel::PPPort::pv_escape_can_unicode();
 
 # sanity check
-ok($uni ? $] >= 5.006 : $] < 5.008);
+ok($uni ? "$]" >= 5.006 : "$]" < 5.008);
 
 my @r;
 

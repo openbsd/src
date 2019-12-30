@@ -9,7 +9,7 @@ BEGIN {
     $ENV{TEST2_ACTIVE} = 1;
 }
 
-our $VERSION = '1.302133';
+our $VERSION = '1.302162';
 
 
 my $INST;
@@ -70,7 +70,7 @@ use Test2::Event::Subtest();
 
 use Carp qw/carp croak confess/;
 use Scalar::Util qw/blessed weaken/;
-use Test2::Util qw/get_tid clone_io pkg_to_file/;
+use Test2::Util qw/get_tid clone_io pkg_to_file gen_uid/;
 
 our @EXPORT_OK = qw{
     context release
@@ -98,6 +98,8 @@ our @EXPORT_OK = qw{
     test2_ipc_wait_enabled
 
     test2_add_uuid_via
+
+    test2_add_callback_testing_done
 
     test2_add_callback_context_aquire
     test2_add_callback_context_acquire
@@ -127,7 +129,6 @@ our @EXPORT_OK = qw{
     test2_ipc_set_pending
     test2_ipc_get_timeout
     test2_ipc_set_timeout
-    test2_ipc_enable_shm
 
     test2_formatter
     test2_formatters
@@ -180,6 +181,22 @@ sub test2_no_wait {
     $INST->no_wait;
 }
 
+sub test2_add_callback_testing_done {
+    my $cb = shift;
+
+    test2_add_callback_post_load(sub {
+        my $stack = test2_stack();
+        $stack->top; # Insure we have a hub
+        my ($hub) = Test2::API::test2_stack->all;
+
+        $hub->set_active(1);
+
+        $hub->follow_up($cb);
+    });
+
+    return;
+}
+
 sub test2_add_callback_context_acquire   { $INST->add_context_acquire_callback(@_) }
 sub test2_add_callback_context_aquire    { $INST->add_context_acquire_callback(@_) }
 sub test2_add_callback_context_init      { $INST->add_context_init_callback(@_) }
@@ -213,7 +230,7 @@ sub test2_ipc_get_pending     { $INST->get_ipc_pending }
 sub test2_ipc_set_pending     { $INST->set_ipc_pending(@_) }
 sub test2_ipc_set_timeout     { $INST->set_ipc_timeout(@_) }
 sub test2_ipc_get_timeout     { $INST->ipc_timeout() }
-sub test2_ipc_enable_shm      { $INST->ipc_enable_shm }
+sub test2_ipc_enable_shm      { 0 }
 
 sub test2_formatter     {
     if ($ENV{T2_FORMATTER} && $ENV{T2_FORMATTER} =~ m/^(\+)?(.*)$/) {
@@ -289,7 +306,6 @@ sub no_context(&;$) {
 };
 
 my $UUID_VIA = _add_uuid_via_ref();
-my $CID = 1;
 sub context {
     # We need to grab these before anything else to ensure they are not
     # changed.
@@ -369,7 +385,7 @@ sub context {
             frame  => [$pkg, $file, $line, $sub],
             pid    => $$,
             tid    => get_tid(),
-            cid    => 'C' . $CID++,
+            cid    => gen_uid(),
             hid    => $hid,
             nested => $hub->{nested},
             buffered => $hub->{buffered},
@@ -1281,7 +1297,7 @@ to turn this off.
 
 These functions return the filehandles that test output should be written to.
 They are primarily useful when writing a custom formatter and code that turns
-events into actual output (TAP, etc.)  They will return a dupe of the original
+events into actual output (TAP, etc.).  They will return a dupe of the original
 filehandles that formatted output can be sent to regardless of whatever state
 the currently running test may have left STDOUT and STDERR in.
 
@@ -1325,6 +1341,22 @@ from C<$exit>
 Add a callback that will be called when Test2 is finished loading. This
 means the callback will be run once, the first time a context is obtained.
 If Test2 has already finished loading then the callback will be run immediately.
+
+=item test2_add_callback_testing_done(sub { ... })
+
+This adds your coderef as a follow-up to the root hub after Test2 is finished loading.
+
+This is essentially a helper to do the following:
+
+    test2_add_callback_post_load(sub {
+        my $stack = test2_stack();
+        $stack->top; # Insure we have a hub
+        my ($hub) = Test2::API::test2_stack->all;
+
+        $hub->set_active(1);
+
+        $hub->follow_up(sub { ... }); # <-- Your coderef here
+    });
 
 =item test2_add_callback_context_acquire(sub { ... })
 
@@ -1441,8 +1473,7 @@ Turn off IPC polling.
 
 =item test2_ipc_enable_shm()
 
-Turn on IPC SHM. Only some IPC drivers use this, and most will turn it on
-themselves.
+Legacy, this is currently a no-op that returns 0;
 
 =item test2_ipc_set_pending($uniq_val)
 
@@ -1557,7 +1588,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2018 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

@@ -17,10 +17,8 @@ my_snprintf                    # U
 my_strlcat                     # U
 my_strlcpy                     # U
 my_vsnprintf                   # U
-newXS_flags                    # U
 pv_escape                      # U
 pv_pretty                      # U
-regclass_swash                 # E (Perl_regclass_swash)
 sv_does                        # U
 sv_setpvs                      # U
 sv_usepvn_flags                # U

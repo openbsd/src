@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..172\n"; }
+BEGIN { $| = 1; print "1..184\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -126,7 +126,17 @@ ok($objKk->lt("\x{42e}z", "\x{42f}"));
 
 # 84
 
+ok($objKk->eq("\x{456}", "\x{457}"));
+ok($objKk->eq("\x{406}", "\x{407}"));
+
+# 86
+
 $objKk->change(level => 2);
+
+ok($objKk->lt("\x{456}", "\x{457}"));
+ok($objKk->lt("\x{406}", "\x{407}"));
+
+# 88
 
 ok($objKk->eq("\x{430}", "\x{410}"));
 ok($objKk->eq("\x{4d9}", "\x{4d8}"));
@@ -166,12 +176,15 @@ ok($objKk->eq("\x{449}", "\x{429}"));
 ok($objKk->eq("\x{44a}", "\x{42a}"));
 ok($objKk->eq("\x{44b}", "\x{42b}"));
 ok($objKk->eq("\x{456}", "\x{406}"));
+ok($objKk->eq("\x{457}", "\x{407}"));
+ok($objKk->eq("\x{457}", "\x{a676}"));
+ok($objKk->eq("\x{a676}","\x{407}"));
 ok($objKk->eq("\x{44c}", "\x{42c}"));
 ok($objKk->eq("\x{44d}", "\x{42d}"));
 ok($objKk->eq("\x{44e}", "\x{42e}"));
 ok($objKk->eq("\x{44f}", "\x{42f}"));
 
-# 126
+# 133
 
 $objKk->change(level => 3);
 
@@ -213,16 +226,21 @@ ok($objKk->lt("\x{449}", "\x{429}"));
 ok($objKk->lt("\x{44a}", "\x{42a}"));
 ok($objKk->lt("\x{44b}", "\x{42b}"));
 ok($objKk->lt("\x{456}", "\x{406}"));
+ok($objKk->lt("\x{457}", "\x{407}"));
+ok($objKk->lt("\x{457}", "\x{a676}"));
+ok($objKk->lt("\x{a676}","\x{407}"));
 ok($objKk->lt("\x{44c}", "\x{42c}"));
 ok($objKk->lt("\x{44d}", "\x{42d}"));
 ok($objKk->lt("\x{44e}", "\x{42e}"));
 ok($objKk->lt("\x{44f}", "\x{42f}"));
 
-# 168
+# 178
 
 ok($objKk->eq("\x{451}", "\x{435}\x{308}"));
 ok($objKk->eq("\x{401}", "\x{415}\x{308}"));
 ok($objKk->eq("\x{439}", "\x{438}\x{306}"));
 ok($objKk->eq("\x{419}", "\x{418}\x{306}"));
+ok($objKk->eq("\x{457}", "\x{456}\x{308}"));
+ok($objKk->eq("\x{407}", "\x{406}\x{308}"));
 
-# 172
+# 184

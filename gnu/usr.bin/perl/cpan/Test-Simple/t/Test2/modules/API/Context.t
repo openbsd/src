@@ -447,4 +447,34 @@ sub {
     is($?,     33,    "Destroy does not restore \$?");
 }->();
 
+sub {
+    require Test2::EventFacet::Info::Table;
+
+    my $events = intercept {
+        my $ctx = context();
+
+        $ctx->fail('foo', 'bar', Test2::EventFacet::Info::Table->new(rows => [['a', 'b']]));
+        $ctx->fail_and_release('foo', 'bar', Test2::EventFacet::Info::Table->new(rows => [['a', 'b']], as_string => 'a, b'));
+    };
+
+    is(@$events, 2, "got 2 events");
+
+    is($events->[0]->{info}->[0]->{details}, 'bar', "got first diag");
+    is($events->[0]->{info}->[1]->{details}, '<TABLE NOT DISPLAYED>', "second diag has default details");
+    is_deeply(
+        $events->[0]->{info}->[1]->{table},
+        {rows => [['a', 'b']]},
+        "Got the table rows"
+    );
+
+    is($events->[1]->{info}->[0]->{details}, 'bar', "got first diag");
+    is($events->[1]->{info}->[1]->{details}, 'a, b', "second diag has custom details");
+    is_deeply(
+        $events->[1]->{info}->[1]->{table},
+        {rows => [['a', 'b']]},
+        "Got the table rows"
+    );
+
+}->();
+
 done_testing;

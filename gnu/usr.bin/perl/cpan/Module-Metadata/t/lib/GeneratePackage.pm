@@ -3,7 +3,7 @@ use warnings;
 package GeneratePackage;
 # vim:ts=8:sw=2:et:sta:sts=2
 
-use base 'Exporter';
+our @ISA = ('Exporter');
 our @EXPORT = qw(tmpdir generate_file);
 
 use Cwd;
@@ -12,13 +12,26 @@ use File::Path;
 use File::Temp;
 use IO::File;
 
-sub tmpdir {
-  File::Temp::tempdir(
-    'MMD-XXXXXXXX',
-    CLEANUP => 1,
-    DIR => ($ENV{PERL_CORE} ? File::Spec->rel2abs(Cwd::cwd) : File::Spec->tmpdir),
-  );
+BEGIN {
+  my $cwd = File::Spec->rel2abs(Cwd::cwd);
+  sub _original_cwd { return $cwd }
 }
+
+my @tmpdirs;
+sub tmpdir {
+  my (@args) = @_;
+  my $tmpdir = File::Temp::tempdir(
+    'MMD-XXXXXXXX',
+    CLEANUP => 0,
+    DIR => ($ENV{PERL_CORE} ? _original_cwd : File::Spec->tmpdir),
+    @args,
+  );
+  Test::More::note "using temp dir $tmpdir";
+  push @tmpdirs, $tmpdir;
+  return $tmpdir;
+}
+
+my $tmp;
 
 sub generate_file {
   my ($dir, $rel_filename, $content) = @_;
@@ -33,6 +46,16 @@ sub generate_file {
   close $fh;
 
   return $abs_filename;
+}
+
+END {
+  die "tests failed; leaving temp dir $tmp behind"
+    if $ENV{AUTHOR_TESTING} and not Test::Builder->new->is_passing;
+  chdir _original_cwd;
+  foreach my $tmp (@tmpdirs) {
+    Test::More::note "removing temp dir $tmp";
+    File::Path::rmtree($tmp);
+  }
 }
 
 1;

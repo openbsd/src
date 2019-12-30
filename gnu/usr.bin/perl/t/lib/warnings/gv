@@ -3,12 +3,6 @@
      Can't locate package %s for @%s::ISA
 	@ISA = qw(Fred); joe()
 
-     $# is no longer supported
-     $* is no longer supported
-
-	$a = ${"#"} ;
- 	$a = ${"*"} ;
-
      Name "main::a" used only once: possible typo
 
   Mandatory Warnings ALL TODO
@@ -30,66 +24,6 @@ no warnings 'syntax' ;
 @ISA = qw(Fred); joe()
 EXPECT
 Undefined subroutine &main::joe called at - line 3.
-########
-# gv.c
-$a = ${"#"};
-$a = ${"*"};
-no warnings 'deprecated' ;
-$a = ${"#"};
-$a = ${"*"};
-EXPECT
-$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 2.
-$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 3.
-########
-# gv.c
-$a = ${#};
-$a = ${*};
-no warnings 'deprecated' ;
-$a = ${#};
-$a = ${*};
-EXPECT
-$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 2.
-$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 3.
-########
-# gv.c
-$a = $#;
-$a = $*;
-$# = $a;
-$* = $a;
-$a = \$#;
-$a = \$*;
-no warnings 'deprecated' ;
-$a = $#;
-$a = $*;
-$# = $a;
-$* = $a;
-$a = \$#;
-$a = \$*;
-EXPECT
-$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 2.
-$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 3.
-$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 4.
-$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 5.
-$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 6.
-$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 7.
-########
-# gv.c
-@a = @#;
-@a = @*;
-$a = $#;
-$a = $*;
-EXPECT
-$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 4.
-$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 5.
-########
-# gv.c
-$a = $#;
-$a = $*;
-@a = @#;
-@a = @*;
-EXPECT
-$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 2.
-$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 3.
 ########
 # gv.c
 $a = ${^ENCODING};

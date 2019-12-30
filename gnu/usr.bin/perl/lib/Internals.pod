@@ -59,7 +59,7 @@ each internal variable type.
 =item hv_clear_placeholders(%hash)
 
 Clear any placeholders from a locked hash. Should not be used directly.
-You should use the wrapper functions providewd by Hash::Util instead.
+You should use the wrapper functions provided by Hash::Util instead.
 As of 5.25 also available as C< Hash::Util::_clear_placeholders(%hash) >
 
 =back

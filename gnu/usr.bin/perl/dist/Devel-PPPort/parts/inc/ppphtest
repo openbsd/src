@@ -75,7 +75,8 @@ ok(Devel::PPPort::GetFileContents(), $data);
 sub comment
 {
   my $c = shift;
-  $c =~ s/^/# | /mg;
+  my $x = 0;
+  $c =~ s/^/sprintf("# %2d| ", ++$x)/meg;
   $c .= "\n" unless $c =~ /[\r\n]$/;
   print $c;
 }
@@ -154,14 +155,12 @@ for $t (@tests) {
     open F, ">$f" or die "open $f: $!\n";
     print F "$txt\n";
     close F;
-    $txt =~ s/^/# | /mg;
-    print "# *** writing $f ***\n$txt\n";
+    print "# *** writing $f ***\n";
+    comment($txt);
   }
 
-  my $code = $t->{code};
-  $code =~ s/^/# | /mg;
-
-  print "# *** evaluating test code ***\n$code\n";
+  print "# *** evaluating test code ***\n";
+  comment($t->{code});
 
   eval $t->{code};
   if ($@) {

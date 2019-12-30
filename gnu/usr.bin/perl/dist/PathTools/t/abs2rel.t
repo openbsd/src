@@ -25,7 +25,7 @@ sub test_rel2abs {
         File::Spec->catdir('first_sub_dir',  'sub_sub_dir'),
         'second_sub_dir'
     );
-    mkpath(@subdirs, { mode => 0711 })
+    mkpath(\@subdirs, 0, 0711)
         or die "Unable to mkpath: $!";
 
     open my $OUT2, '>',

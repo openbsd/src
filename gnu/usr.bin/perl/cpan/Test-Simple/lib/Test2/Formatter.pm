@@ -2,7 +2,7 @@ package Test2::Formatter;
 use strict;
 use warnings;
 
-our $VERSION = '1.302133';
+our $VERSION = '1.302162';
 
 
 my %ADDED;
@@ -18,6 +18,8 @@ sub new_root {
     my $class = shift;
     return $class->new(@_);
 }
+
+sub supports_tables { 0 }
 
 sub hide_buffered { 1 }
 
@@ -61,6 +63,8 @@ A formatter is any package or object with a C<write($event, $num)> method.
 
     sub finalize { }
 
+    sub supports_tables { return $BOOL }
+
     sub new_root {
         my $class = shift;
         ...
@@ -92,11 +96,14 @@ The C<finalize> method is always the last thing called on the formatter, I<<
 except when C<terminate> is called for a Bail event >>. It is passed the
 following arguments:
 
-The C<new_root> method is called when C<Test2::API::Stack> Initializes the root
-hub for the first time. Most formatters will simply have this call C<<
-$class->new >>, which is the default behavior. Some formatters however may want
-to take extra action during construction of the root formatter, this is where
-they can do that.
+The C<supports_tables> method should be true if the formatter supports directly
+rendering table data from the C<info> facets. This is a newer feature and many
+older formatters may not support it. When not supported the formatter falls
+back to rendering C<detail> instead of the C<table> data.
+
+The C<new_root> method is used when constructing a root formatter. The default
+is to just delegate to the regular C<new()> method, most formatters can ignore
+this.
 
 =over 4
 
@@ -111,6 +118,12 @@ they can do that.
 =item * A boolean indicating whether or not this call is for a subtest
 
 =back
+
+The C<new_root> method is called when C<Test2::API::Stack> Initializes the root
+hub for the first time. Most formatters will simply have this call C<<
+$class->new >>, which is the default behavior. Some formatters however may want
+to take extra action during construction of the root formatter, this is where
+they can do that.
 
 =head1 SOURCE
 
@@ -135,7 +148,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2018 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

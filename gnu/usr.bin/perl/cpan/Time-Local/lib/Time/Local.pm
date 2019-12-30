@@ -5,12 +5,13 @@ use strict;
 use Carp ();
 use Exporter;
 
-our $VERSION = '1.25';
+our $VERSION = '1.28';
 
 use parent 'Exporter';
 
-our @EXPORT    = qw( timegm timelocal );
-our @EXPORT_OK = qw( timegm_nocheck timelocal_nocheck );
+our @EXPORT = qw( timegm timelocal );
+our @EXPORT_OK
+    = qw( timegm_modern timelocal_modern timegm_nocheck timelocal_nocheck );
 
 my @MonthDays = ( 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 );
 
@@ -62,9 +63,9 @@ if ( $^O eq 'vos' ) {
     $Epoc = _daygm( 0, 0, 0, 1, 0, 70, 4, 0 );
 }
 elsif ( $^O eq 'MacOS' ) {
-    $MaxDay *= 2 if $^O eq 'MacOS';    # time_t unsigned ... quick hack?
-          # MacOS time() is seconds since 1 Jan 1904, localtime
-          # so we need to calculate an offset to apply later
+    $MaxDay *= 2;    # time_t unsigned ... quick hack?
+                     # MacOS time() is seconds since 1 Jan 1904, localtime
+                     # so we need to calculate an offset to apply later
     $Epoc   = 693901;
     $SecOff = timelocal( localtime(0) ) - timelocal( gmtime(0) );
     $Epoc += _daygm( gmtime(0) );
@@ -73,7 +74,7 @@ else {
     $Epoc = _daygm( gmtime(0) );
 }
 
-%Cheat = ();    # clear the cache as epoc has changed
+%Cheat = ();         # clear the cache as epoc has changed
 
 sub _daygm {
 
@@ -105,11 +106,16 @@ sub _timegm {
 sub timegm {
     my ( $sec, $min, $hour, $mday, $month, $year ) = @_;
 
-    if ( $year >= 1000 ) {
+    if ( $Options{no_year_munging} ) {
         $year -= 1900;
     }
-    elsif ( $year < 100 and $year >= 0 ) {
-        $year += ( $year > $Breakpoint ) ? $Century : $NextCentury;
+    else {
+        if ( $year >= 1000 ) {
+            $year -= 1900;
+        }
+        elsif ( $year < 100 and $year >= 0 ) {
+            $year += ( $year > $Breakpoint ) ? $Century : $NextCentury;
+        }
     }
 
     unless ( $Options{no_range_check} ) {
@@ -164,6 +170,11 @@ sub timegm_nocheck {
     return &timegm;
 }
 
+sub timegm_modern {
+    local $Options{no_year_munging} = 1;
+    return &timegm;
+}
+
 sub timelocal {
     my $ref_t         = &timegm;
     my $loc_for_ref_t = _timegm( localtime($ref_t) );
@@ -184,7 +195,7 @@ sub timelocal {
         !$dst_off
         && ( ( $ref_t - SECS_PER_HOUR )
             - _timegm( localtime( $loc_t - SECS_PER_HOUR ) ) < 0 )
-        ) {
+    ) {
         return $loc_t - SECS_PER_HOUR;
     }
 
@@ -206,6 +217,11 @@ sub timelocal_nocheck {
     return &timelocal;
 }
 
+sub timelocal_modern {
+    local $Options{no_year_munging} = 1;
+    return &timelocal;
+}
+
 1;
 
 # ABSTRACT: Efficiently compute time from local and GMT time
@@ -222,7 +238,7 @@ Time::Local - Efficiently compute time from local and GMT time
 
 =head1 VERSION
 
-version 1.25
+version 1.28
 
 =head1 SYNOPSIS
 
@@ -247,6 +263,28 @@ consistent with the values returned from C<localtime()> and C<gmtime()>.
 
 =head1 FUNCTIONS
 
+=head2 C<timelocal_modern()> and C<timegm_modern()>
+
+When C<Time::Local> was first written, it was a common practice to represent
+years as a two-digit value like C<99> for C<1999> or C<1> for C<2001>. This
+caused all sorts of problems (google "Y2K problem" if you're very young) and
+developers eventually realized that this was a terrible idea.
+
+The default exports of C<timelocal()> and C<timegm()> do a complicated
+calculation when given a year value less than 1000. This leads to surprising
+results in many cases. See L</Year Value Interpretation> for details.
+
+The C<time*_modern()> subs do not do this year munging and simply take the
+year value as provided.
+
+While it would be nice to make this the default behavior, that would almost
+certainly break a lot of code, so you must explicitly import these subs and
+use them instead of the default C<timelocal()> and C<timegm()>.
+
+You are B<strongly> encouraged to use these subs in any new code which uses
+this module. It will almost certainly make your code's behavior less
+surprising.
+
 =head2 C<timelocal()> and C<timegm()>
 
 This module exports two functions by default, C<timelocal()> and C<timegm()>.
@@ -269,6 +307,9 @@ If you supply data which is not valid (month 27, second 1,000) the results
 will be unpredictable (so don't do that).
 
 =head2 Year Value Interpretation
+
+B<This does not apply to C<timelocal_modern> or C<timegm_modern>. Use those
+exports if you want to ensure consistent behavior as your code ages.>
 
 Strictly speaking, the year should be specified in a form consistent with
 C<localtime()>, i.e. the offset from 1900. In order to make the interpretation
@@ -314,9 +355,10 @@ approximate range from Dec 1901 to Jan 2038.
 Both C<timelocal()> and C<timegm()> croak if given dates outside the supported
 range.
 
-As of version 5.12.0, perl has stopped using the underlying time library of
-the operating system it's running on and has its own implementation of those
-routines with a safe range of at least +/ 2**52 (about 142 million years).
+As of version 5.12.0, perl has stopped using the time implementation of the
+operating system it's running on. Instead, it has its own implementation of
+those routines with a safe range of at least +/- 2**52 (about 142 million
+years)
 
 =head2 Ambiguous Local Times (DST)
 
@@ -378,12 +420,16 @@ The current version was written by Graham Barr.
 
 The whole scheme for interpreting two-digit years can be considered a bug.
 
-Bugs may be submitted through L<https://github.com/houseabsolute/Time-Local/issues>.
+Bugs may be submitted at L<https://github.com/houseabsolute/Time-Local/issues>.
 
 There is a mailing list available for users of this distribution,
 L<mailto:datetime@perl.org>.
 
 I am also usually active on IRC as 'autarch' on C<irc://irc.perl.org>.
+
+=head1 SOURCE
+
+The source code repository for Time-Local can be found at L<https://github.com/houseabsolute/Time-Local>.
 
 =head1 AUTHOR
 
@@ -411,9 +457,12 @@ Unknown <unknown@example.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 1997 - 2016 by Graham Barr & Dave Rolsky.
+This software is copyright (c) 1997 - 2018 by Graham Barr & Dave Rolsky.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
+
+The full text of the license can be found in the
+F<LICENSE> file included with this distribution.
 
 =cut

@@ -25,7 +25,6 @@ sv_setsv_flags                 # U
 sv_setsv_nomg                  # U
 sv_utf8_upgrade_flags          # U
 sv_utf8_upgrade_nomg           # U
-swash_fetch                    # E (Perl_swash_fetch)
 GROK_NUMERIC_RADIX             # added by devel/scanprov
 IN_LOCALE                      # added by devel/scanprov
 IN_LOCALE_COMPILETIME          # added by devel/scanprov

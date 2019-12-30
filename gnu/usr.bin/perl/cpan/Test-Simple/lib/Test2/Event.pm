@@ -2,14 +2,14 @@ package Test2::Event;
 use strict;
 use warnings;
 
-our $VERSION = '1.302133';
+our $VERSION = '1.302162';
 
 use Scalar::Util qw/blessed reftype/;
 use Carp qw/croak/;
 
-use Test2::Util::HashBase qw/trace -amnesty uuid -hubs/;
+use Test2::Util::HashBase qw/trace -amnesty uuid -_eid -hubs/;
 use Test2::Util::ExternalMeta qw/meta get_meta set_meta delete_meta/;
-use Test2::Util qw(pkg_to_file);
+use Test2::Util qw/pkg_to_file gen_uid/;
 
 use Test2::EventFacet::About();
 use Test2::EventFacet::Amnesty();
@@ -120,6 +120,8 @@ sub add_amnesty {
     }
 }
 
+sub eid { $_[0]->{+_EID} ||= gen_uid() }
+
 sub common_facet_data {
     my $self = shift;
 
@@ -129,6 +131,8 @@ sub common_facet_data {
     if (my $uuid = $self->uuid) {
         $out{about}->{uuid} = $uuid;
     }
+
+    $out{about}->{eid} = $self->{+_EID} || $self->eid;
 
     if (my $trace = $self->trace) {
         $out{trace} = { %$trace };
@@ -764,7 +768,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2018 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

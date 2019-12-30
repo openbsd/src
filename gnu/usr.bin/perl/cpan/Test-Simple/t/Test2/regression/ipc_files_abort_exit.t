@@ -1,11 +1,11 @@
 use strict;
 use warnings;
 use Test2::Tools::Tiny;
-use Test2::Util qw/CAN_FORK/;
+use Test2::Util qw/CAN_REALLY_FORK/;
 
 BEGIN {
     skip_all "Set AUTHOR_TESTING to run this test" unless $ENV{AUTHOR_TESTING};
-    skip_all "System cannot fork" unless CAN_FORK;
+    skip_all "System cannot fork" unless CAN_REALLY_FORK;
     skip_all "known to fail on $]" if $] le "5.006002";
 }
 

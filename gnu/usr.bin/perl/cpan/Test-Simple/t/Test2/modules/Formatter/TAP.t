@@ -13,7 +13,7 @@ BEGIN {
     select $old;
 
     require Test2::Formatter::TAP;
-    $CLASS = 'Test2::Formatter::TAP';
+    $CLASS   = 'Test2::Formatter::TAP';
     *OUT_STD = $CLASS->can('OUT_STD') or die "Could not get OUT_STD constant";
     *OUT_ERR = $CLASS->can('OUT_ERR') or die "Could not get OUT_ERR constant";
 }
@@ -24,7 +24,7 @@ use Test2::API qw/context/;
 BEGIN {
     eval {
         require PerlIO;
-        PerlIO->VERSION(1.02); # required for PerlIO::get_layers
+        PerlIO->VERSION(1.02);    # required for PerlIO::get_layers
     } or do {
         print "1..0 # SKIP Don't have PerlIO 1.02\n";
         exit 0;
@@ -33,8 +33,8 @@ BEGIN {
 
 sub grabber {
     my ($std, $err);
-    open( my $stdh, '>', \$std ) || die "Ooops";
-    open( my $errh, '>', \$err ) || die "Ooops";
+    open(my $stdh, '>', \$std) || die "Ooops";
+    open(my $errh, '>', \$err) || die "Ooops";
 
     my $it = $CLASS->new(
         handles => [$stdh, $errh, $stdh],
@@ -87,7 +87,7 @@ tests "IO handle stuff" => sub {
     ok($|, "AUTOFLUSH was turned on for copy-STDERR");
     select $old;
 
-    ok($CLASS->hide_buffered, "TAP will hide buffered events");
+    ok($CLASS->hide_buffered,     "TAP will hide buffered events");
     ok(!$CLASS->no_subtest_space, "Default formatter does not have subtest space");
 };
 
@@ -125,9 +125,9 @@ tests optimal_pass => sub {
     $pass = Test2::Event::Ok->new(pass => 1, name => 'xxx');
     ok($it->print_optimal_pass($pass, 1), "Printed an 'Ok' pass with a name");
 
-    $pass = Test2::Event::Pass->new(name => 'xxx', trace => { nested => 1 });
+    $pass = Test2::Event::Pass->new(name => 'xxx', trace => {nested => 1});
     ok($it->print_optimal_pass($pass, 1), "Printed a nested pass");
-    $pass = Test2::Event::Pass->new(name => 'xxx', trace => { nested => 3 });
+    $pass = Test2::Event::Pass->new(name => 'xxx', trace => {nested => 3});
     ok($it->print_optimal_pass($pass, 1), "Printed a deeply nested pass");
 
     $pass = Test2::Event::Pass->new(name => 'xxx');
@@ -154,25 +154,25 @@ tests plan_tap => sub {
     is_deeply([$it->plan_tap({})], [], "Nothing with no plan facet");
 
     is_deeply(
-        [$it->plan_tap({plan => { none => 1 }})],
+        [$it->plan_tap({plan => {none => 1}})],
         [],
         "no-plan has no output"
     );
 
     is_deeply(
-        [$it->plan_tap({plan => { count => 20 }})],
+        [$it->plan_tap({plan => {count => 20}})],
         [[OUT_STD, "1..20\n"]],
         "Wrote the plan from, count"
     );
 
     is_deeply(
-        [$it->plan_tap({plan => { count => 'anything', skip => 1 }})],
+        [$it->plan_tap({plan => {count => 'anything', skip => 1}})],
         [[OUT_STD, "1..0 # SKIP\n"]],
         "Skip, no reason"
     );
 
     is_deeply(
-        [$it->plan_tap({plan => { count => 'anything', skip => 1, details => 'I said so' }})],
+        [$it->plan_tap({plan => {count => 'anything', skip => 1, details => 'I said so'}})],
         [[OUT_STD, "1..0 # SKIP I said so\n"]],
         "Skip with reason"
     );
@@ -605,7 +605,7 @@ tests debug_tap => sub {
             $it->debug_tap(
                 {
                     assert => {details => 'foo bar', pass => 0},
-                    trace => {frame => ['foo', 'foo.t', 42]},
+                    trace   => {frame => ['foo', 'foo.t', 42]},
                     amnesty => [],
                 },
                 1
@@ -622,7 +622,7 @@ tests debug_tap => sub {
             $it->debug_tap(
                 {
                     assert => {details => 'foo bar', pass => 0},
-                    trace => {frame => ['foo', 'foo.t', 42]},
+                    trace   => {frame => ['foo', 'foo.t', 42]},
                     amnesty => [{tag => 'TODO', details => 'xxx'}],
                 },
                 1
@@ -634,32 +634,31 @@ tests debug_tap => sub {
         "Debug empty amnesty"
     );
 
-
     ok(!$$out, "No std output yet");
     ok(!$$err, "No err output yet");
 
     my $event = Test2::Event::Fail->new(trace => {frame => ['foo', 'foo.pl', 42]});
 
     {
-        local $ENV{HARNESS_ACTIVE} = 0;
+        local $ENV{HARNESS_ACTIVE}     = 0;
         local $ENV{HARNESS_IS_VERBOSE} = 0;
 
         $event->{name} = 'no harness';
         $it->write($event, 1);
 
-        $ENV{HARNESS_ACTIVE} = 0;
+        $ENV{HARNESS_ACTIVE}     = 0;
         $ENV{HARNESS_IS_VERBOSE} = 1;
 
         $event->{name} = 'no harness, but strangely verbose';
         $it->write($event, 1);
 
-        $ENV{HARNESS_ACTIVE} = 1;
+        $ENV{HARNESS_ACTIVE}     = 1;
         $ENV{HARNESS_IS_VERBOSE} = 0;
 
         $event->{name} = 'harness, but not verbose';
         $it->write($event, 1);
 
-        $ENV{HARNESS_ACTIVE} = 1;
+        $ENV{HARNESS_ACTIVE}     = 1;
         $ENV{HARNESS_IS_VERBOSE} = 1;
 
         $event->{name} = 'harness that is verbose';
@@ -681,6 +680,7 @@ not ok 1 - harness that is verbose
 
 # Failed test 'harness, but not verbose'
 # at foo.pl line 42.
+
 # Failed test 'harness that is verbose'
 # at foo.pl line 42.
     EOT
@@ -697,7 +697,7 @@ tests halt_tap => sub {
 
     is_deeply(
         [$it->halt_tap({trace => {nested => 1, buffered => 1}})],
-        [[OUT_STD, "Bail out!\n" ]],
+        [[OUT_STD, "Bail out!\n"]],
         "Got tap for nested buffered bail"
     );
 
@@ -733,19 +733,19 @@ tests summary_tap => sub {
     my ($it, $out, $err) = grabber();
 
     is_deeply(
-        [$it->summary_tap({about => { no_display => 1, details => "Should not see me"}})],
+        [$it->summary_tap({about => {no_display => 1, details => "Should not see me"}})],
         [],
         "no display"
     );
 
     is_deeply(
-        [$it->summary_tap({about => { no_display => 0, details => ""}})],
+        [$it->summary_tap({about => {no_display => 0, details => ""}})],
         [],
         "no summary"
     );
 
     is_deeply(
-        [$it->summary_tap({about => { no_display => 0, details => "foo bar"}})],
+        [$it->summary_tap({about => {no_display => 0, details => "foo bar"}})],
         [[OUT_STD, "# foo bar\n"]],
         "summary"
     );
@@ -831,7 +831,6 @@ tests error_tap => sub {
     ok(!$$out, "No std output yet");
     ok(!$$err, "No err output yet");
 };
-
 
 tests event_tap => sub {
     my ($it, $out, $err) = grabber();
@@ -919,7 +918,7 @@ tests event_tap => sub {
             $it->event_tap(
                 {
                     errors => [{details => "foo"}],
-                    about  => {details  => 'xyz'},
+                    about  => {details => 'xyz'},
                 },
                 1
             )
@@ -1015,5 +1014,115 @@ Bail out!  blah
 # xxx
     EOT
 };
+
+my $can_table      = $CLASS->supports_tables;
+my $author_testing = $ENV{AUTHOR_TESTING};
+
+if ($author_testing && !$can_table) {
+    die "This test requires Term::Table to be installed, and must be run in AUTHOR_TESTING mode";
+}
+elsif ($can_table) {
+    tests tables => sub {
+        my ($it, $out, $err) = grabber();
+
+        no warnings 'redefine';
+        local *Term::Table::Util::term_size = sub { 70 };
+
+        my %table_data = (
+            header => ['H1', 'H2'],
+            rows   => [
+                ["R1C1\n", 'R1C2'],
+                ['R2C1', 'R2C2'],
+                [('x' x 30), ('y' x 30)],
+            ],
+        );
+
+        {
+            local *Test2::Formatter::TAP::supports_tables = sub { 0 };
+            $it->write(
+                undef, 1, {
+                    info => [
+                        {
+                            tag     => 'DIAG',
+                            details => 'should see only this',
+                            debug   => 1,
+                            table   => \%table_data,
+                        },
+                        {
+                            tag     => 'NOTE',
+                            details => 'should see only this',
+                            table   => \%table_data,
+                        },
+                    ]
+                },
+            );
+        }
+
+        $it->write(
+            undef, 1, {
+                info => [
+                    {
+                        tag     => 'DIAG',
+                        details => 'should not see',
+                        debug   => 1,
+                        table   => \%table_data,
+                    },
+                    {
+                        tag     => 'NOTE',
+                        details => 'should not see',
+                        table   => \%table_data,
+                    },
+                ]
+            },
+        );
+
+        $it->write(
+            undef, 1, {
+                trace => {nested => 2},
+                info  => [
+                    {
+                        tag     => 'DIAG',
+                        details => 'should not see',
+                        debug   => 1,
+                        table   => \%table_data,
+                    },
+                    {
+                        tag     => 'NOTE',
+                        details => 'should not see',
+                        table   => \%table_data,
+                    },
+                ]
+            },
+        );
+
+        my $table1 = join "\n" => map { "# $_" } Term::Table->new(
+            %table_data,
+            max_width => Term::Table::Util::term_size() - 2,    # 2 for '# '
+            collapse  => 1,
+            sanitize  => 1,
+            mark_tail => 1,
+        )->render;
+
+        my $table2 = join "\n" => map { "        # $_" } Term::Table->new(
+            %table_data,
+            max_width => Term::Table::Util::term_size() - 10,    # 2 for '# ', 8 for indentation
+            collapse  => 1,
+            sanitize  => 1,
+            mark_tail => 1,
+        )->render;
+
+        is($$out, <<"        EOT", "Showed detail OR tables, properly sized and indented in STDOUT");
+# should see only this
+$table1
+$table2
+        EOT
+
+        is($$err, <<"        EOT", "Showed detail OR tables, properly sized and indented in STDERR");
+# should see only this
+$table1
+$table2
+        EOT
+    };
+}
 
 done_testing;

@@ -434,7 +434,7 @@ operations in.
 The easiest way to examine the op tree is to stop Perl after it has
 finished parsing, and get it to dump out the tree. This is exactly what
 the compiler backends L<B::Terse|B::Terse>, L<B::Concise|B::Concise>
-and L<B::Debug|B::Debug> do.
+and CPAN module <B::Debug do.
 
 Let's have a look at how Perl sees C<$a = $b + $c>:
 
@@ -781,26 +781,27 @@ See L<perlguts/"Localizing changes"> for how to use the save stack.
 One thing you'll notice about the Perl source is that it's full of
 macros. Some have called the pervasive use of macros the hardest thing
 to understand, others find it adds to clarity. Let's take an example,
-the code which implements the addition operator:
+a stripped-down version the code which implements the addition operator:
 
    1  PP(pp_add)
    2  {
-   3      dSP; dATARGET; tryAMAGICbin(add,opASSIGN);
-   4      {
-   5        dPOPTOPnnrl_ul;
-   6        SETn( left + right );
-   7        RETURN;
-   8      }
-   9  }
+   3      dSP; dATARGET;
+   4      tryAMAGICbin_MG(add_amg, AMGf_assign|AMGf_numeric);
+   5      {
+   6        dPOPTOPnnrl_ul;
+   7        SETn( left + right );
+   8        RETURN;
+   9      }
+  10  }
 
 Every line here (apart from the braces, of course) contains a macro.
 The first line sets up the function declaration as Perl expects for PP
 code; line 3 sets up variable declarations for the argument stack and
-the target, the return value of the operation. Finally, it tries to see
+the target, the return value of the operation. Line 4 tries to see
 if the addition operation is overloaded; if so, the appropriate
 subroutine is called.
 
-Line 5 is another variable declaration - all variable declarations
+Line 6 is another variable declaration - all variable declarations
 start with C<d> - which pops from the top of the argument stack two NVs
 (hence C<nn>) and puts them into the variables C<right> and C<left>,
 hence the C<rl>. These are the two operands to the addition operator.

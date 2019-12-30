@@ -4,7 +4,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '1.999811';
+our $VERSION = '1.999816';
 
 use Carp;
 
@@ -1076,6 +1076,261 @@ sub _or {
     return $z;
 }
 
+sub _sand {
+    my ($class, $x, $sx, $y, $sy) = @_;
+
+    return ($class -> _zero(), '+')
+      if $class -> _is_zero($x) || $class -> _is_zero($y);
+
+    my $sign = $sx eq '-' && $sy eq '-' ? '-' : '+';
+
+    my ($bx, $by);
+
+    if ($sx eq '-') {                   # if x is negative
+        # two's complement: inc (dec unsigned value) and flip all "bits" in $bx
+        $bx = $class -> _copy($x);
+        $bx = $class -> _dec($bx);
+        $bx = $class -> _as_hex($bx);
+        $bx =~ s/^-?0x//;
+        $bx =~ tr<0123456789abcdef>
+                <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    } else {                            # if x is positive
+        $bx = $class -> _as_hex($x);    # get binary representation
+        $bx =~ s/^-?0x//;
+        $bx =~ tr<fedcba9876543210>
+                 <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    }
+
+    if ($sy eq '-') {                   # if y is negative
+        # two's complement: inc (dec unsigned value) and flip all "bits" in $by
+        $by = $class -> _copy($y);
+        $by = $class -> _dec($by);
+        $by = $class -> _as_hex($by);
+        $by =~ s/^-?0x//;
+        $by =~ tr<0123456789abcdef>
+                <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    } else {
+        $by = $class -> _as_hex($y);    # get binary representation
+        $by =~ s/^-?0x//;
+        $by =~ tr<fedcba9876543210>
+                <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    }
+
+    # now we have bit-strings from X and Y, reverse them for padding
+    $bx = reverse $bx;
+    $by = reverse $by;
+
+    # padd the shorter string
+    my $xx = "\x00"; $xx = "\x0f" if $sx eq '-';
+    my $yy = "\x00"; $yy = "\x0f" if $sy eq '-';
+    my $diff = CORE::length($bx) - CORE::length($by);
+    if ($diff > 0) {
+        # if $yy eq "\x00", we can cut $bx, otherwise we need to padd $by
+        $by .= $yy x $diff;
+    } elsif ($diff < 0) {
+        # if $xx eq "\x00", we can cut $by, otherwise we need to padd $bx
+        $bx .= $xx x abs($diff);
+    }
+
+    # and the strings together
+    my $r = $bx & $by;
+
+    # and reverse the result again
+    $bx = reverse $r;
+
+    # One of $bx or $by was negative, so need to flip bits in the result. In both
+    # cases (one or two of them negative, or both positive) we need to get the
+    # characters back.
+    if ($sign eq '-') {
+        $bx =~ tr<\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>
+                 <0123456789abcdef>;
+    } else {
+        $bx =~ tr<\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>
+                 <fedcba9876543210>;
+    }
+
+    # leading zeros will be stripped by _from_hex()
+    $bx = '0x' . $bx;
+    $bx = $class -> _from_hex($bx);
+
+    $bx = $class -> _inc($bx) if $sign eq '-';
+
+    # avoid negative zero
+    $sign = '+' if $class -> _is_zero($bx);
+
+    return $bx, $sign;
+}
+
+sub _sxor {
+    my ($class, $x, $sx, $y, $sy) = @_;
+
+    return ($class -> _zero(), '+')
+      if $class -> _is_zero($x) && $class -> _is_zero($y);
+
+    my $sign = $sx ne $sy ? '-' : '+';
+
+    my ($bx, $by);
+
+    if ($sx eq '-') {                   # if x is negative
+        # two's complement: inc (dec unsigned value) and flip all "bits" in $bx
+        $bx = $class -> _copy($x);
+        $bx = $class -> _dec($bx);
+        $bx = $class -> _as_hex($bx);
+        $bx =~ s/^-?0x//;
+        $bx =~ tr<0123456789abcdef>
+                <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    } else {                            # if x is positive
+        $bx = $class -> _as_hex($x);    # get binary representation
+        $bx =~ s/^-?0x//;
+        $bx =~ tr<fedcba9876543210>
+                 <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    }
+
+    if ($sy eq '-') {                   # if y is negative
+        # two's complement: inc (dec unsigned value) and flip all "bits" in $by
+        $by = $class -> _copy($y);
+        $by = $class -> _dec($by);
+        $by = $class -> _as_hex($by);
+        $by =~ s/^-?0x//;
+        $by =~ tr<0123456789abcdef>
+                <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    } else {
+        $by = $class -> _as_hex($y);    # get binary representation
+        $by =~ s/^-?0x//;
+        $by =~ tr<fedcba9876543210>
+                <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    }
+
+    # now we have bit-strings from X and Y, reverse them for padding
+    $bx = reverse $bx;
+    $by = reverse $by;
+
+    # padd the shorter string
+    my $xx = "\x00"; $xx = "\x0f" if $sx eq '-';
+    my $yy = "\x00"; $yy = "\x0f" if $sy eq '-';
+    my $diff = CORE::length($bx) - CORE::length($by);
+    if ($diff > 0) {
+        # if $yy eq "\x00", we can cut $bx, otherwise we need to padd $by
+        $by .= $yy x $diff;
+    } elsif ($diff < 0) {
+        # if $xx eq "\x00", we can cut $by, otherwise we need to padd $bx
+        $bx .= $xx x abs($diff);
+    }
+
+    # xor the strings together
+    my $r = $bx ^ $by;
+
+    # and reverse the result again
+    $bx = reverse $r;
+
+    # One of $bx or $by was negative, so need to flip bits in the result. In both
+    # cases (one or two of them negative, or both positive) we need to get the
+    # characters back.
+    if ($sign eq '-') {
+        $bx =~ tr<\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>
+                 <0123456789abcdef>;
+    } else {
+        $bx =~ tr<\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>
+                 <fedcba9876543210>;
+    }
+
+    # leading zeros will be stripped by _from_hex()
+    $bx = '0x' . $bx;
+    $bx = $class -> _from_hex($bx);
+
+    $bx = $class -> _inc($bx) if $sign eq '-';
+
+    # avoid negative zero
+    $sign = '+' if $class -> _is_zero($bx);
+
+    return $bx, $sign;
+}
+
+sub _sor {
+    my ($class, $x, $sx, $y, $sy) = @_;
+
+    return ($class -> _zero(), '+')
+      if $class -> _is_zero($x) && $class -> _is_zero($y);
+
+    my $sign = $sx eq '-' || $sy eq '-' ? '-' : '+';
+
+    my ($bx, $by);
+
+    if ($sx eq '-') {                   # if x is negative
+        # two's complement: inc (dec unsigned value) and flip all "bits" in $bx
+        $bx = $class -> _copy($x);
+        $bx = $class -> _dec($bx);
+        $bx = $class -> _as_hex($bx);
+        $bx =~ s/^-?0x//;
+        $bx =~ tr<0123456789abcdef>
+                <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    } else {                            # if x is positive
+        $bx = $class -> _as_hex($x);     # get binary representation
+        $bx =~ s/^-?0x//;
+        $bx =~ tr<fedcba9876543210>
+                 <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    }
+
+    if ($sy eq '-') {                   # if y is negative
+        # two's complement: inc (dec unsigned value) and flip all "bits" in $by
+        $by = $class -> _copy($y);
+        $by = $class -> _dec($by);
+        $by = $class -> _as_hex($by);
+        $by =~ s/^-?0x//;
+        $by =~ tr<0123456789abcdef>
+                <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    } else {
+        $by = $class -> _as_hex($y);     # get binary representation
+        $by =~ s/^-?0x//;
+        $by =~ tr<fedcba9876543210>
+                <\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>;
+    }
+
+    # now we have bit-strings from X and Y, reverse them for padding
+    $bx = reverse $bx;
+    $by = reverse $by;
+
+    # padd the shorter string
+    my $xx = "\x00"; $xx = "\x0f" if $sx eq '-';
+    my $yy = "\x00"; $yy = "\x0f" if $sy eq '-';
+    my $diff = CORE::length($bx) - CORE::length($by);
+    if ($diff > 0) {
+        # if $yy eq "\x00", we can cut $bx, otherwise we need to padd $by
+        $by .= $yy x $diff;
+    } elsif ($diff < 0) {
+        # if $xx eq "\x00", we can cut $by, otherwise we need to padd $bx
+        $bx .= $xx x abs($diff);
+    }
+
+    # or the strings together
+    my $r = $bx | $by;
+
+    # and reverse the result again
+    $bx = reverse $r;
+
+    # One of $bx or $by was negative, so need to flip bits in the result. In both
+    # cases (one or two of them negative, or both positive) we need to get the
+    # characters back.
+    if ($sign eq '-') {
+        $bx =~ tr<\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>
+                 <0123456789abcdef>;
+    } else {
+        $bx =~ tr<\x0f\x0e\x0d\x0c\x0b\x0a\x09\x08\x07\x06\x05\x04\x03\x02\x01\x00>
+                 <fedcba9876543210>;
+    }
+
+    # leading zeros will be stripped by _from_hex()
+    $bx = '0x' . $bx;
+    $bx = $class -> _from_hex($bx);
+
+    $bx = $class -> _inc($bx) if $sign eq '-';
+
+    # avoid negative zero
+    $sign = '+' if $class -> _is_zero($bx);
+
+    return $bx, $sign;
+}
+
 sub _to_bin {
     # convert the number to a string of binary digits without prefix
     my ($class, $x) = @_;
@@ -1161,6 +1416,43 @@ sub _to_bytes {
 }
 
 *_as_bytes = \&_to_bytes;
+
+sub _to_base {
+    # convert the number to a string of digits in various bases
+    my $class = shift;
+    my $x     = shift;
+    my $base  = shift;
+    $base = $class -> _new($base) unless ref($base);
+
+    my $collseq;
+    if (@_) {
+        $collseq = shift();
+    } else {
+        if ($class -> _acmp($base, $class -> _new("62")) <= 0) {
+            $collseq = '0123456789' . 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                                    . 'abcdefghijklmnopqrstuvwxyz';
+        } else {
+            croak "When base > 62, a collation sequence must be given";
+        }
+    }
+
+    my @collseq = split '', $collseq;
+    my %collseq = map { $_ => $collseq[$_] } 0 .. $#collseq;
+
+    my $str   = '';
+    my $tmp   = $class -> _copy($x);
+    my $rem;
+    until ($class -> _is_zero($tmp)) {
+        ($tmp, $rem) = $class -> _div($tmp, $base);
+        my $num = $class -> _num($rem);
+        croak "no character to represent '$num' in collation sequence",
+          " (collation sequence is too short)" if $num > $#collseq;
+        my $chr = $collseq[$num];
+        $str = $chr . $str;
+    }
+    return "0" unless length $str;
+    return $str;
+}
 
 sub _from_hex {
     # Convert a string of hexadecimal digits to a number.
@@ -1261,6 +1553,56 @@ sub _from_bytes {
         my $byteval = $class -> _new(unpack 'C', substr($str, $i, 1));
         $x = $class -> _add($x, $byteval);
     }
+    return $x;
+}
+
+sub _from_base {
+    # convert a string to a decimal number
+    my $class = shift;
+    my $str   = shift;
+    my $base  = shift;
+    $base = $class -> _new($base) unless ref($base);
+
+    my $n = length($str);
+    my $x = $class -> _zero();
+
+    my $collseq;
+    if (@_) {
+        $collseq = shift();
+    } else {
+        if ($class -> _acmp($base, $class -> _new("36")) <= 0) {
+            $str = uc $str;
+            $collseq = '0123456789' . 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        } elsif ($class -> _acmp($base, $class -> _new("62")) <= 0) {
+            $collseq = '0123456789' . 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                                    . 'abcdefghijklmnopqrstuvwxyz';
+        } else {
+            croak "When base > 62, a collation sequence must be given";
+        }
+        $collseq = substr $collseq, 0, $class -> _num($base);
+    }
+
+    # Create a mapping from each character in the collation sequence to the
+    # corresponding integer. Check for duplicates in the collation sequence.
+
+    my @collseq = split '', $collseq;
+    my %collseq;
+    for my $num (0 .. $#collseq) {
+        my $chr = $collseq[$num];
+        die "duplicate character '$chr' in collation sequence"
+          if exists $collseq{$chr};
+        $collseq{$chr} = $num;
+    }
+
+    for (my $i = 0 ; $i < $n ; ++$i) {
+        my $chr = substr($str, $i, 1);
+        die "input character '$chr' does not exist in collation sequence"
+          unless exists $collseq{$chr};
+        $x = $class -> _mul($x, $base);
+        my $num = $class -> _new($collseq{$chr});
+        $x = $class -> _add($x, $num);
+    }
+
     return $x;
 }
 
@@ -1637,6 +1979,37 @@ Returns an object given a byte string representing the number. The byte string
 is in big endian byte order, so the two-byte input string "\x01\x00" should
 give an output value representing the number 256.
 
+=item CLASS-E<gt>_from_base(STR, BASE, COLLSEQ)
+
+Returns an object given a string STR, a base BASE, and a collation sequence
+COLLSEQ. Each character in STR represents a numerical value identical to the
+character's position in COLLSEQ. All characters in STR must be present in
+COLLSEQ.
+
+If BASE is less than or equal to 62, and a collation sequence is not specified,
+a default collation sequence consisting of the 62 characters 0..9, A..Z, and
+a..z is used. If the default collation sequence is used, and the BASE is less
+than or equal to 36, the letter case in STR is ignored.
+
+For instance, with base 3 and collation sequence "-/|", the character "-"
+represents 0, "/" represents 1, and "|" represents 2. So if STR is "/|-", the
+output is 1 * 3**2 + 2 * 3**1 + 0 * 3**0 = 15.
+
+The following examples show standard binary, octal, decimal, and hexadecimal
+conversion. All examples return 250.
+
+    $x = $class -> _from_base("11111010", 2)
+    $x = $class -> _from_base("372", 8)
+    $x = $class -> _from_base("250", 10)
+    $x = $class -> _from_base("FA", 16)
+
+Some more examples, all returning 250:
+
+    $x = $class -> _from_base("100021", 3, "012")
+    $x = $class -> _from_base("3322", 4, "0123")
+    $x = $class -> _from_base("2000", 5, "01234")
+    $x = $class -> _from_base("caaa", 5, "abcde")
+
 =back
 
 =head3 Mathematical functions
@@ -1775,11 +2148,23 @@ Returns bitwise and.
 
 =item CLASS-E<gt>_or(OBJ1, OBJ2)
 
-Return bitwise or.
+Returns bitwise or.
 
 =item CLASS-E<gt>_xor(OBJ1, OBJ2)
 
-Return bitwise exclusive or.
+Returns bitwise exclusive or.
+
+=item CLASS-E<gt>_sand(OBJ1, OBJ2, SIGN1, SIGN2)
+
+Returns bitwise signed and.
+
+=item CLASS-E<gt>_sor(OBJ1, OBJ2, SIGN1, SIGN2)
+
+Returns bitwise signed or.
+
+=item CLASS-E<gt>_sxor(OBJ1, OBJ2, SIGN1, SIGN2)
+
+Returns bitwise signed exclusive or.
 
 =back
 
@@ -1844,6 +2229,19 @@ Returns the hexadecimal string representation of the number.
 Returns a byte string representation of OBJ. The byte string is in big endian
 byte order, so if OBJ represents the number 256, the output should be the
 two-byte string "\x01\x00".
+
+=item CLASS-E<gt>_to_base(OBJ, BASE, COLLSEQ)
+
+Returns a string representation of OBJ in base BASE with collation sequence
+COLLSEQ.
+
+    $val = $class -> _new("210");
+    $str = $class -> _to_base($val, 10, "xyz")  # $str is "zyx"
+
+    $val = $class -> _new("32");
+    $str = $class -> _to_base($val, 2, "-|")  # $str is "|-----"
+
+See _from_base() for more information.
 
 =item CLASS-E<gt>_as_bin(OBJ)
 
@@ -1948,30 +2346,6 @@ Return the binomial coefficient OBJ1 over OBJ1.
 
 Return the approximate number of decimal digits of the object. The output is a
 Perl scalar.
-
-=back
-
-=head2 API optional methods
-
-The following methods are optional, and can be defined if the underlying lib
-has a fast way to do them. If undefined, Math::BigInt will use pure Perl (hence
-slow) fallback routines to emulate these:
-
-=head3 Signed bitwise operators.
-
-=over 4
-
-=item CLASS-E<gt>_signed_or(OBJ1, OBJ2, SIGN1, SIGN2)
-
-Return the signed bitwise or.
-
-=item CLASS-E<gt>_signed_and(OBJ1, OBJ2, SIGN1, SIGN2)
-
-Return the signed bitwise and.
-
-=item CLASS-E<gt>_signed_xor(OBJ1, OBJ2, SIGN1, SIGN2)
-
-Return the signed bitwise exclusive or.
 
 =back
 

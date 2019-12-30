@@ -4,7 +4,7 @@
 
 # It is too slow to be simple included in bigfltpm.inc, where it would get
 # executed 3 times. One time would be under Math::BigInt::BareCalc, which
-# shouldn't make any difference since there is no CALC->_log() function, and
+# shouldn't make any difference since there is no $LIB->_log() function, and
 # one time under a subclass, which *should* work.
 
 # But it is better to test the numerical functionality, instead of not testing

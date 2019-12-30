@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test2::Util qw/CAN_FORK/;
+use Test2::Util qw/CAN_REALLY_FORK/;
 use Test2::IPC;
 use Test2::API qw/context/;
 
@@ -18,7 +18,7 @@ sub ok($;$) {
     $ctx->release;
 }
 
-plan(0, skip_all => 'System cannot fork') unless CAN_FORK();
+plan(0, skip_all => 'System cannot fork') unless CAN_REALLY_FORK();
 
 plan(6);
 

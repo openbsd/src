@@ -2,11 +2,11 @@ package Test2::EventFacet::Trace;
 use strict;
 use warnings;
 
-our $VERSION = '1.302133';
+our $VERSION = '1.302162';
 
 BEGIN { require Test2::EventFacet; our @ISA = qw(Test2::EventFacet) }
 
-use Test2::Util qw/get_tid pkg_to_file/;
+use Test2::Util qw/get_tid pkg_to_file gen_uid/;
 use Carp qw/confess/;
 
 use Test2::Util::HashBase qw{^frame ^pid ^tid ^cid -hid -nested details -buffered -uuid -huuid};
@@ -24,8 +24,10 @@ sub init {
 
     $_[0]->{+DETAILS} = delete $_[0]->{detail} if $_[0]->{detail};
 
-    $_[0]->{+PID} = $$        unless defined $_[0]->{+PID};
-    $_[0]->{+TID} = get_tid() unless defined $_[0]->{+TID};
+    unless (defined($_[0]->{+PID}) || defined($_[0]->{+TID}) || defined($_[0]->{+CID})) {
+        $_[0]->{+PID} = $$        unless defined $_[0]->{+PID};
+        $_[0]->{+TID} = get_tid() unless defined $_[0]->{+TID};
+    }
 }
 
 sub snapshot {
@@ -239,11 +241,8 @@ Get the debug-info subroutine name.
 =item $sig = trace->signature
 
 Get a signature string that identifies this trace. This is used to check if
-multiple events are related.
-
-If UUID's are enabled then a uuid is returned. Otherwise the signature includes
-pid, tid, file, line number, and the cid which is C<'C\d+'> for traces created
-by a context, or C<'T\d+'> for traces created by C<new()>.
+multiple events are related. The signature includes pid, tid, file, line
+number, and the cid.
 
 =back
 
@@ -270,7 +269,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2018 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

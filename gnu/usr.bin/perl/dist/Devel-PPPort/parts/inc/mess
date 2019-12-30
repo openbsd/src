@@ -52,8 +52,8 @@ NEED_vmess
 #  if ( { VERSION >= 5.8.0 } && { VERSION < 5.8.9 } ) || ( { VERSION >= 5.9.0 } && { VERSION < 5.10.1 } )
 #    define D_PPP_FIX_UTF8_ERRSV(errsv, sv)                     \
         STMT_START {                                            \
-            if (sv != ERRSV)                                    \
-                SvFLAGS(ERRSV) = (SvFLAGS(ERRSV) & ~SVf_UTF8) | \
+            if (sv != errsv)                                    \
+                SvFLAGS(errsv) = (SvFLAGS(errsv) & ~SVf_UTF8) | \
                                  (SvFLAGS(sv) & SVf_UTF8);      \
         } STMT_END
 #  else
