@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.128 2019/04/01 07:00:52 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.129 2019/12/31 10:07:31 mpi Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -93,7 +93,7 @@
 #include <dev/cons.h>
 
 #include <net/if.h>
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include "ksyms.h"
 #if DDB
@@ -650,7 +650,8 @@ cpu_setup_secondary_processors()
 	 * so that we can still run in degraded mode if hell gets loose.
 	 */
 	for (cpu = 0; cpu < hatch_pending_count; cpu++)
-		hatch_stacks[cpu] = uvm_km_zalloc(kernel_map, USPACE);
+		hatch_stacks[cpu] = (vaddr_t)km_alloc(USPACE, &kv_any,
+		    &kp_zero, &kd_waitok);
 #endif
 
 	__cpu_simple_unlock(&cpu_hatch_mutex);
