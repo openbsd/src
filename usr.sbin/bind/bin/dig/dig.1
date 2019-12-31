@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.22 2019/12/30 21:25:43 jmc Exp $
+.\" $OpenBSD: dig.1,v 1.23 2019/12/31 19:18:16 jmc Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 30 2019 $
+.Dd $Mdocdate: December 31 2019 $
 .Dt DIG 1
 .Os
 .Sh NAME
@@ -334,9 +334,9 @@ The default is to display it.
 .Xc
 Attempt to display the contents of messages which are malformed.
 The default is to not display malformed answers.
-.It Cm +bufsize Ns = Ns Ar B
+.It Cm +bufsize Ns = Ns Ar #
 Set the UDP message buffer size advertised using EDNS0 to
-.Ar B
+.Ar #
 bytes.
 The maximum and minimum sizes of this buffer are 65535 and 0 respectively.
 Values outside this range are rounded up or down appropriately.
@@ -374,8 +374,8 @@ The default is to print comments.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
-.Cm cookie Ns = Ns
-.Ar value
+.Cm cookie Ns
+.Op = Ns Ar value
 .Xc
 Send a COOKIE EDNS option, containing an optional
 .Ar value .
@@ -443,9 +443,9 @@ Deprecated, treated as a synonym for
 .Xc
 Requests DNSSEC records be sent by setting the DNSSEC OK bit (DO) in the OPT
 record in the additional section of the query.
-.It Cm +domain Ns = Ns Ar somename
+.It Cm +domain Ns = Ns Ar name
 Set the search list to contain the single domain
-.Ar somename ,
+.Ar name ,
 as if specified in a
 .Ic domain
 directive in
@@ -457,7 +457,7 @@ option were given.
 .Cm + Ns
 .Op Cm no Ns
 .Cm edns Ns
-.Op = Ns Ar ###
+.Op = Ns Ar #
 .Xc
 Specify the EDNS version to query with.
 Valid values are 0 to 255.
@@ -469,7 +469,7 @@ EDNS is set to 0 by default.
 .Cm + Ns
 .Op Cm no Ns
 .Cm ednsflags Ns
-.Op = Ns Ar ###
+.Op = Ns Ar #
 .Xc
 Set the must-be-zero EDNS flags bits (Z bits) to the specified value.
 Decimal, hex and octal encodings are accepted.
@@ -563,11 +563,11 @@ The default is to print each record on a single line, to facilitate machine
 parsing of the
 .Nm
 output.
-.It Cm +ndots Ns = Ns Ar ###
+.It Cm +ndots Ns = Ns Ar #
 Set the number of dots that have to appear in
 .Ar name
 to
-.Ar ###
+.Ar #
 for it to be considered absolute.
 The default value is that defined using the ndots statement in
 .Pa /etc/resolv.conf ,
@@ -609,7 +609,7 @@ The default is to print both the starting and ending SOA records.
 .Cm + Ns
 .Op Cm no Ns
 .Cm opcode Ns = Ns
-.Ar ###
+.Ar #
 .Xc
 Set or restore the DNS message opcode to the specified value.
 The default value is QUERY (0).
@@ -652,9 +652,9 @@ Recursion is automatically disabled when the
 or
 .Cm +trace
 query options are used.
-.It Cm +retry= Ns Ar ###
+.It Cm +retry= Ns Ar #
 Sets the number of times to retry UDP queries to server to
-.Ar ###
+.Ar #
 instead of the default, 2.
 Unlike
 .Cm +tries ,
@@ -700,7 +700,7 @@ Perform a search showing intermediate results.
 .Cm + Ns
 .Op Cm no Ns
 .Cm sit Ns
-.Op = Ns Ar ###
+.Op = Ns Ar #
 .Xc
 This option is a synonym for
 .Xo
@@ -716,11 +716,15 @@ The
 .Cm sit
 .Xc
 option is deprecated.
-.It Cm +split Ns = Ns Ar ###
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm split Ns = Ns Ar #
+.Xc
 Split long hex- or base64-formatted fields in resource records into chunks of
-.Ar ###
+.Ar #
 characters (where
-.Ar ###
+.Ar #
 is rounded up to the nearest multiple of 4).
 .Cm +nosplit
 or
@@ -736,11 +740,9 @@ This query option toggles the printing of statistics:
 when the query was made, the size of the reply and so on.
 The default behavior is to print the query statistics.
 .It Xo
-.Cm + Ns
-.Op Cm no Ns
-.Cm subnet Ns = Ns
+.Cm +subnet Ns = Ns
 .Ar addr Ns
-.Op / Ns Ar prefix-length
+.Op / Ns Ar prefix
 .Xc
 Send an EDNS Client Subnet option with the specified IP address or
 network prefix.
@@ -764,13 +766,13 @@ Use TCP when querying name servers.
 The default behavior is to use UDP unless an ixfr=N query is requested, in which
 case the default is TCP.
 AXFR queries always use TCP.
-.It Cm +time= Ns Ar ###
+.It Cm +time= Ns Ar #
 Sets the timeout for a query to
-.Ar ###
+.Ar #
 seconds.
 The default timeout is 5 seconds.
 An attempt to set
-.Ar ###
+.Ar #
 to less than 1 will result in a query timeout of 1 second being applied.
 .It Xo
 .Cm + Ns
@@ -793,12 +795,12 @@ zone name servers.
 is also set when
 .Cm +trace
 is set to better emulate the default queries from a name server.
-.It Cm +tries Ns = Ns Ar ###
+.It Cm +tries Ns = Ns Ar #
 Sets the number of times to try UDP queries to server to
-.Ar ###
+.Ar #
 instead of the default, 3.
 If
-.Ar ###
+.Ar #
 is less than or equal to zero, the number of tries is silently rounded up to 1.
 .It Xo
 .Cm + Ns

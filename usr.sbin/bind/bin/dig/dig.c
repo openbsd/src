@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.26 2019/12/30 19:39:23 jmc Exp $ */
+/* $Id: dig.c,v 1.27 2019/12/31 19:18:16 jmc Exp $ */
 
 /*! \file */
 
@@ -154,16 +154,16 @@ print_usage(FILE *fp) {
 "            [-k keyfile] [-p port] [-q name] [-t type] [-x addr]\n"
 "            [-y [hmac:]name:key] [name] [type] [class]\n"
 "            +[no]aaonly +[no]additional +[no]adflag +[no]all +[no]answer\n"
-"            +[no]authority +[no]besteffort +bufsize=### +[no]cdflag +[no]cl\n"
-"            +[no]cmd +[no]comments +[no]cookie +[no]crypto +[no]defname\n"
-"            +[no]dnssec +domain=### +[no]edns[=###] +ednsflags=###\n"
-"            +[no]ednsnegotiation +ednsopt=###[:value] +noednsopt +[no]expire\n"
-"            +[no]fail +[no]identify +[no]idnout +[no]ignore +[no]keepopen\n"
-"            +[no]multiline +ndots=### +[no]nsid +[no]nssearch +[no]onesoa\n"
-"            +[no]opcode=### +[no]qr +[no]question +[no]recurse +retry=###\n"
-"            +[no]rrcomments +[no]search +[no]short +[no]showsearch +[no]sit\n"
-"            +[no]split=### +[no]stats +subnet=addr +[no]tcp +time=###\n"
-"            +[no]trace +tries=### +[no]ttlid +[no]vc\n", fp);
+"            +[no]authority +[no]besteffort +bufsize=# +[no]cdflag +[no]cl\n"
+"            +[no]cmd +[no]comments +[no]cookie[=value] +[no]crypto +[no]defname\n"
+"            +[no]dnssec +domain=name +[no]edns[=#] +[no]ednsflags[=#]\n"
+"            +[no]ednsnegotiation +[no]ednsopt[=code[:value]]\n"
+"            +[no]expire +[no]fail +[no]identify +[no]idnout +[no]ignore\n"
+"            +[no]keepopen +[no]multiline +ndots=# +[no]nsid +[no]nssearch\n"
+"            +[no]onesoa +[no]opcode=# +[no]qr +[no]question +[no]recurse\n"
+"            +retry=# +[no]rrcomments +[no]search +[no]short +[no]showsearch\n"
+"            +[no]split=# +[no]stats +subnet=addr[/prefix] +[no]tcp +time=#\n"
+"            +[no]trace +tries=# +[no]ttlid +[no]vc\n", fp);
 }
 
 ISC_PLATFORM_NORETURN_PRE static void
