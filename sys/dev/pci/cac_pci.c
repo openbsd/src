@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_pci.c,v 1.15 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: cac_pci.c,v 1.16 2019/12/31 00:16:03 jsg Exp $	*/
 /*	$NetBSD: cac_pci.c,v 1.10 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/endian.h>
+#include <sys/sensors.h>
 
 #include <machine/bus.h>
 
