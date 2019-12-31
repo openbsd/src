@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_oid_cmp.3,v 1.1 2019/10/24 12:39:26 tb Exp $
+.\" $OpenBSD: ober_oid_cmp.3,v 1.2 2019/12/31 10:34:14 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2019 $
+.Dd $Mdocdate: December 31 2019 $
 .Dt OBER_OID_CMP 3
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@ For internal representation of OIDs, the following structure
 is being used:
 .Bd -literal
 #define BER_MIN_OID_LEN		2
-#define BER_MAX_OID_LEN		32
+#define BER_MAX_OID_LEN		64
 
 struct ber_oid {
 	u_int32_t	bo_id[BER_MAX_OID_LEN + 1];
