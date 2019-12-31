@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.79 2019/08/05 08:35:59 anton Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.80 2019/12/31 13:48:32 visa Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -958,12 +958,26 @@ int filt_cd9660read(struct knote *kn, long hint);
 int filt_cd9660write(struct knote *kn, long hint);
 int filt_cd9660vnode(struct knote *kn, long hint);
 
-struct filterops cd9660read_filtops = 
-	{ 1, NULL, filt_cd9660detach, filt_cd9660read };
-struct filterops cd9660write_filtops = 
-	{ 1, NULL, filt_cd9660detach, filt_cd9660write };
-struct filterops cd9660vnode_filtops = 
-	{ 1, NULL, filt_cd9660detach, filt_cd9660vnode };
+const struct filterops cd9660read_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_cd9660detach,
+	.f_event	= filt_cd9660read,
+};
+
+const struct filterops cd9660write_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_cd9660detach,
+	.f_event	= filt_cd9660write,
+};
+
+const struct filterops cd9660vnode_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_cd9660detach,
+	.f_event	= filt_cd9660vnode,
+};
 
 int
 cd9660_kqfilter(void *v)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.69 2019/12/12 16:33:02 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.70 2019/12/31 13:48:32 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -107,10 +107,19 @@ int	filt_fiforead(struct knote *kn, long hint);
 void	filt_fifowdetach(struct knote *kn);
 int	filt_fifowrite(struct knote *kn, long hint);
 
-struct filterops fiforead_filtops =
-	{ 1, NULL, filt_fifordetach, filt_fiforead };
-struct filterops fifowrite_filtops =
-	{ 1, NULL, filt_fifowdetach, filt_fifowrite };
+const struct filterops fiforead_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_fifordetach,
+	.f_event	= filt_fiforead,
+};
+
+const struct filterops fifowrite_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_fifowdetach,
+	.f_event	= filt_fifowrite,
+};
 
 /*
  * Open called to set up a new instance of a fifo or

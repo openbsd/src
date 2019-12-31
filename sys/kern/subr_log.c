@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.60 2019/12/24 12:56:07 bluhm Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.61 2019/12/31 13:48:32 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -88,8 +88,12 @@ struct	file *syslogf;
 void filt_logrdetach(struct knote *kn);
 int filt_logread(struct knote *kn, long hint);
 
-struct filterops logread_filtops =
-	{ 1, NULL, filt_logrdetach, filt_logread};
+const struct filterops logread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_logrdetach,
+	.f_event	= filt_logread,
+};
 
 int dosendsyslog(struct proc *, const char *, size_t, int, enum uio_seg);
 void logtick(void *);

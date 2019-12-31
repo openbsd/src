@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.148 2019/07/19 00:17:15 cheloha Exp $	*/
+/*	$OpenBSD: tty.c,v 1.149 2019/12/31 13:48:32 visa Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1062,10 +1062,19 @@ ttpoll(dev_t device, int events, struct proc *p)
 	return (revents);
 }
 
-struct filterops ttyread_filtops =
-	{ 1, NULL, filt_ttyrdetach, filt_ttyread };
-struct filterops ttywrite_filtops =
-	{ 1, NULL, filt_ttywdetach, filt_ttywrite };
+const struct filterops ttyread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_ttyrdetach,
+	.f_event	= filt_ttyread,
+};
+
+const struct filterops ttywrite_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_ttywdetach,
+	.f_event	= filt_ttywrite,
+};
 
 int
 ttkqfilter(dev_t dev, struct knote *kn)

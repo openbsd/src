@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.19 2016/12/05 15:04:15 fcambus Exp $	*/
+/*	$OpenBSD: apm.c,v 1.20 2019/12/31 13:48:31 visa Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -85,8 +85,12 @@ void filt_apmrdetach(struct knote *kn);
 int filt_apmread(struct knote *kn, long hint);
 int apmkqfilter(dev_t dev, struct knote *kn);
 
-struct filterops apmread_filtops =
-	{ 1, NULL, filt_apmrdetach, filt_apmread};
+const struct filterops apmread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_apmrdetach,
+	.f_event	= filt_apmread,
+};
 
 /*
  * Flags to control kernel display

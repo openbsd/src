@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.199 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.200 2019/12/31 13:48:31 visa Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -241,10 +241,19 @@ int	filt_randomwrite(struct knote *, long);
 static void _rs_seed(u_char *, size_t);
 static void _rs_clearseed(const void *p, size_t s);
 
-struct filterops randomread_filtops =
-	{ 1, NULL, filt_randomdetach, filt_randomread };
-struct filterops randomwrite_filtops =
-	{ 1, NULL, filt_randomdetach, filt_randomwrite };
+const struct filterops randomread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_randomdetach,
+	.f_event	= filt_randomread,
+};
+
+const struct filterops randomwrite_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_randomdetach,
+	.f_event	= filt_randomwrite,
+};
 
 static inline struct rand_event *
 rnd_get(void)

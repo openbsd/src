@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.126 2019/08/05 08:35:59 anton Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.127 2019/12/31 13:48:32 visa Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1959,12 +1959,26 @@ struct vops msdosfs_vops = {
 	.vop_revoke	= vop_generic_revoke,
 };
 
-struct filterops msdosfsread_filtops =
-	{ 1, NULL, filt_msdosfsdetach, filt_msdosfsread };
-struct filterops msdosfswrite_filtops =
-	{ 1, NULL, filt_msdosfsdetach, filt_msdosfswrite };
-struct filterops msdosfsvnode_filtops =
-	{ 1, NULL, filt_msdosfsdetach, filt_msdosfsvnode };
+const struct filterops msdosfsread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_msdosfsdetach,
+	.f_event	= filt_msdosfsread,
+};
+
+const struct filterops msdosfswrite_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_msdosfsdetach,
+	.f_event	= filt_msdosfswrite,
+};
+
+const struct filterops msdosfsvnode_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_msdosfsdetach,
+	.f_event	= filt_msdosfsvnode,
+};
 
 int
 msdosfs_kqfilter(void *v)

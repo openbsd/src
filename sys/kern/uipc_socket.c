@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.237 2019/12/12 16:33:02 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.238 2019/12/31 13:48:32 visa Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -72,12 +72,26 @@ void	filt_sowdetach(struct knote *kn);
 int	filt_sowrite(struct knote *kn, long hint);
 int	filt_solisten(struct knote *kn, long hint);
 
-struct filterops solisten_filtops =
-	{ 1, NULL, filt_sordetach, filt_solisten };
-struct filterops soread_filtops =
-	{ 1, NULL, filt_sordetach, filt_soread };
-struct filterops sowrite_filtops =
-	{ 1, NULL, filt_sowdetach, filt_sowrite };
+const struct filterops solisten_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_sordetach,
+	.f_event	= filt_solisten,
+};
+
+const struct filterops soread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_sordetach,
+	.f_event	= filt_soread,
+};
+
+const struct filterops sowrite_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_sowdetach,
+	.f_event	= filt_sowrite,
+};
 
 
 #ifndef SOMINCONN

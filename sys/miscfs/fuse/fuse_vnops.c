@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.55 2019/08/05 08:35:59 anton Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.56 2019/12/31 13:48:32 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -110,12 +110,26 @@ struct vops fusefs_vops = {
 	.vop_advlock	= fusefs_advlock,
 };
 
-struct filterops fusefsread_filtops =
-	{ 1, NULL, filt_fusefsdetach, filt_fusefsread };
-struct filterops fusefswrite_filtops =
-	{ 1, NULL, filt_fusefsdetach, filt_fusefswrite };
-struct filterops fusefsvnode_filtops =
-	{ 1, NULL, filt_fusefsdetach, filt_fusefsvnode };
+const struct filterops fusefsread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_fusefsdetach,
+	.f_event	= filt_fusefsread,
+};
+
+const struct filterops fusefswrite_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_fusefsdetach,
+	.f_event	= filt_fusefswrite,
+};
+
+const struct filterops fusefsvnode_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_fusefsdetach,
+	.f_event	= filt_fusefsvnode,
+};
 
 int
 fusefs_kqfilter(void *v)

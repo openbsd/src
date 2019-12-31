@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.32 2017/03/27 18:24:08 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.33 2019/12/31 13:48:31 visa Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -93,8 +93,12 @@ int apm_getdefaultinfo(struct apm_power_info *);
 
 int apm_suspend(int state);
 
-struct filterops apmread_filtops =
-	{ 1, NULL, filt_apmrdetach, filt_apmread};
+const struct filterops apmread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_apmrdetach,
+	.f_event	= filt_apmread,
+};
 
 int (*get_apminfo)(struct apm_power_info *) = apm_getdefaultinfo;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.17 2019/12/31 10:05:32 mpi Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.18 2019/12/31 13:48:31 visa Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -38,8 +38,12 @@ static struct selinfo hotplug_sel;
 void filt_hotplugrdetach(struct knote *);
 int  filt_hotplugread(struct knote *, long);
 
-struct filterops hotplugread_filtops =
-	{ 1, NULL, filt_hotplugrdetach, filt_hotplugread};
+const struct filterops hotplugread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_hotplugrdetach,
+	.f_event	= filt_hotplugread,
+};
 
 #define EVQUEUE_NEXT(p) (p == HOTPLUG_MAXEVENTS - 1 ? 0 : p + 1)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.31 2019/12/12 16:31:06 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.32 2019/12/31 13:48:32 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -184,6 +184,8 @@ struct knote {
 };
 
 struct proc;
+
+extern const struct filterops sig_filtops;
 
 extern void	knote(struct klist *list, long hint);
 extern void	knote_activate(struct knote *);

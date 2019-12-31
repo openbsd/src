@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.166 2019/12/30 10:09:48 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.167 2019/12/31 13:48:31 visa Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -504,8 +504,12 @@ filt_drmkms(struct knote *kn, long hint)
 	return (kn->kn_fflags != 0);
 }
 
-struct filterops drm_filtops =
-	{ 1, NULL, filt_drmdetach, filt_drmkms };
+const struct filterops drm_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_drmdetach,
+	.f_event	= filt_drmkms,
+};
 
 int
 drmkqfilter(dev_t kdev, struct knote *kn)

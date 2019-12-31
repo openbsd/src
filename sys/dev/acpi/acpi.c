@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.376 2019/12/31 10:05:32 mpi Exp $ */
+/* $OpenBSD: acpi.c,v 1.377 2019/12/31 13:48:31 visa Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3449,8 +3449,11 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
 
-struct filterops acpiread_filtops = {
-	1, NULL, acpi_filtdetach, acpi_filtread
+const struct filterops acpiread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= acpi_filtdetach,
+	.f_event	= acpi_filtread,
 };
 
 int acpi_evindex;

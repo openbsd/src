@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.43 2019/12/31 10:05:32 mpi Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.44 2019/12/31 13:48:31 visa Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -116,11 +116,11 @@ void		vscsi_ccb_put(void *, void *);
 void		filt_vscsidetach(struct knote *);
 int		filt_vscsiread(struct knote *, long);
   
-struct filterops vscsi_filtops = {
-	1,
-	NULL,
-	filt_vscsidetach,
-	filt_vscsiread
+const struct filterops vscsi_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_vscsidetach,
+	.f_event	= filt_vscsiread,
 };
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.105 2019/12/27 09:29:50 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.106 2019/12/31 13:48:32 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -74,10 +74,19 @@ void	filt_pipedetach(struct knote *kn);
 int	filt_piperead(struct knote *kn, long hint);
 int	filt_pipewrite(struct knote *kn, long hint);
 
-struct filterops pipe_rfiltops =
-	{ 1, NULL, filt_pipedetach, filt_piperead };
-struct filterops pipe_wfiltops =
-	{ 1, NULL, filt_pipedetach, filt_pipewrite };
+const struct filterops pipe_rfiltops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_pipedetach,
+	.f_event	= filt_piperead,
+};
+
+const struct filterops pipe_wfiltops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_pipedetach,
+	.f_event	= filt_pipewrite,
+};
 
 /*
  * Default pipe buffer size(s), this can be kind-of large now because pipe

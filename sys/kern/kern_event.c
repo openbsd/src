@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.111 2019/12/29 07:14:06 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.112 2019/12/31 13:48:32 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -98,14 +98,33 @@ void	filt_timerdetach(struct knote *kn);
 int	filt_timer(struct knote *kn, long hint);
 void	filt_seltruedetach(struct knote *kn);
 
-struct filterops kqread_filtops =
-	{ 1, NULL, filt_kqdetach, filt_kqueue };
-struct filterops proc_filtops =
-	{ 0, filt_procattach, filt_procdetach, filt_proc };
-struct filterops file_filtops =
-	{ 1, filt_fileattach, NULL, NULL };
-struct filterops timer_filtops =
-        { 0, filt_timerattach, filt_timerdetach, filt_timer };
+const struct filterops kqread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_kqdetach,
+	.f_event	= filt_kqueue,
+};
+
+const struct filterops proc_filtops = {
+	.f_isfd		= 0,
+	.f_attach	= filt_procattach,
+	.f_detach	= filt_procdetach,
+	.f_event	= filt_proc,
+};
+
+const struct filterops file_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= filt_fileattach,
+	.f_detach	= NULL,
+	.f_event	= NULL,
+};
+
+const struct filterops timer_filtops = {
+	.f_isfd		= 0,
+	.f_attach	= filt_timerattach,
+	.f_detach	= filt_timerdetach,
+	.f_event	= filt_timer,
+};
 
 struct	pool knote_pool;
 struct	pool kqueue_pool;
@@ -114,15 +133,10 @@ int kq_timeoutmax = (4 * 1024);
 
 #define KN_HASH(val, mask)	(((val) ^ (val >> 8)) & (mask))
 
-extern struct filterops sig_filtops;
-#ifdef notyet
-extern struct filterops aio_filtops;
-#endif
-
 /*
  * Table for for all system-defined filters.
  */
-struct filterops *sysfilt_ops[] = {
+const struct filterops *const sysfilt_ops[] = {
 	&file_filtops,			/* EVFILT_READ */
 	&file_filtops,			/* EVFILT_WRITE */
 	NULL, /*&aio_filtops,*/		/* EVFILT_AIO */
@@ -415,8 +429,12 @@ filt_seltruedetach(struct knote *kn)
 	/* Nothing to do */
 }
 
-const struct filterops seltrue_filtops =
-	{ 1, NULL, filt_seltruedetach, filt_seltrue };
+const struct filterops seltrue_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_seltruedetach,
+	.f_event	= filt_seltrue,
+};
 
 int
 seltrue_kqfilter(dev_t dev, struct knote *kn)
@@ -602,7 +620,7 @@ int
 kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 {
 	struct filedesc *fdp = kq->kq_fdp;
-	struct filterops *fops = NULL;
+	const struct filterops *fops = NULL;
 	struct file *fp = NULL;
 	struct knote *kn = NULL;
 	int s, error = 0;

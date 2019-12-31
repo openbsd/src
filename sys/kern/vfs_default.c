@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.45 2019/12/27 22:17:01 bluhm Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.46 2019/12/31 13:48:32 visa Exp $  */
 
 /*
  * Portions of this code are:
@@ -185,8 +185,12 @@ vop_generic_islocked(void *v)
 	return (0);
 }
 
-struct filterops generic_filtops = 
-	{ 1, NULL, filt_generic_detach, filt_generic_readwrite };
+const struct filterops generic_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_generic_detach,
+	.f_event	= filt_generic_readwrite,
+};
 
 int
 vop_generic_kqfilter(void *v)

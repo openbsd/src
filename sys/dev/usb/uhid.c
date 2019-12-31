@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.74 2019/12/19 12:04:38 reyk Exp $ */
+/*	$OpenBSD: uhid.c,v 1.75 2019/12/31 13:48:31 visa Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -456,11 +456,19 @@ filt_uhidread(struct knote *kn, long hint)
 	return (kn->kn_data > 0);
 }
 
-struct filterops uhidread_filtops =
-	{ 1, NULL, filt_uhidrdetach, filt_uhidread };
+const struct filterops uhidread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_uhidrdetach,
+	.f_event	= filt_uhidread,
+};
 
-struct filterops uhid_seltrue_filtops =
-	{ 1, NULL, filt_uhidrdetach, filt_seltrue };
+const struct filterops uhid_seltrue_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_uhidrdetach,
+	.f_event	= filt_seltrue,
+};
 
 int
 uhidkqfilter(dev_t dev, struct knote *kn)

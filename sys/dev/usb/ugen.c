@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.99 2018/11/14 17:00:33 mpi Exp $ */
+/*	$OpenBSD: ugen.c,v 1.100 2019/12/31 13:48:31 visa Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1328,14 +1328,26 @@ filt_ugenread_isoc(struct knote *kn, long hint)
 	return (1);
 }
 
-struct filterops ugenread_intr_filtops =
-	{ 1, NULL, filt_ugenrdetach, filt_ugenread_intr };
+const struct filterops ugenread_intr_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_ugenrdetach,
+	.f_event	= filt_ugenread_intr,
+};
 
-struct filterops ugenread_isoc_filtops =
-	{ 1, NULL, filt_ugenrdetach, filt_ugenread_isoc };
+const struct filterops ugenread_isoc_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_ugenrdetach,
+	.f_event	= filt_ugenread_isoc,
+};
 
-struct filterops ugen_seltrue_filtops =
-	{ 1, NULL, filt_ugenrdetach, filt_seltrue };
+const struct filterops ugen_seltrue_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_ugenrdetach,
+	.f_event	= filt_seltrue,
+};
 
 int
 ugenkqfilter(dev_t dev, struct knote *kn)

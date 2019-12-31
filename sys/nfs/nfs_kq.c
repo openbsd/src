@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.26 2019/12/05 10:41:57 mpi Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.27 2019/12/31 13:48:32 visa Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -249,10 +249,19 @@ filt_nfsvnode(struct knote *kn, long hint)
 	return (kn->kn_fflags != 0);
 }
 
-static const struct filterops nfsread_filtops = 
-	{ 1, NULL, filt_nfsdetach, filt_nfsread };
-static const struct filterops nfsvnode_filtops = 
-	{ 1, NULL, filt_nfsdetach, filt_nfsvnode };
+static const struct filterops nfsread_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_nfsdetach,
+	.f_event	= filt_nfsread,
+};
+
+static const struct filterops nfsvnode_filtops = {
+	.f_isfd		= 1,
+	.f_attach	= NULL,
+	.f_detach	= filt_nfsdetach,
+	.f_event	= filt_nfsvnode,
+};
 
 int
 nfs_kqfilter(void *v)
