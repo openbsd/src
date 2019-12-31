@@ -17,6 +17,7 @@
 struct parse_result;
 void	show_head(struct parse_result *);
 void	show_neighbor(struct peer *, struct parse_result *);
+void	show_timer(struct ctl_timer *);
 void	show_fib(struct kroute_full *);
 void	show_fib_table(struct ktable *);
 void	show_nexthop(struct ctl_show_nexthop *);

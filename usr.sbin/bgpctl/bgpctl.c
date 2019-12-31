@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.254 2019/12/20 09:16:05 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.255 2019/12/31 14:09:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -46,7 +46,6 @@
 
 int		 main(int, char *[]);
 int		 show(struct imsg *, struct parse_result *);
-void		 print_timer(const char *, time_t);
 void		 show_attr(void *, u_int16_t, int);
 void		 show_communities(u_char *, size_t, int);
 void		 show_community(u_char *, u_int16_t);
@@ -405,7 +404,7 @@ show(struct imsg *imsg, struct parse_result *res)
 	case IMSG_CTL_SHOW_TIMER:
 		t = imsg->data;
 		if (t->type > 0 && t->type < Timer_Max)
-			print_timer(timernames[t->type], t->val);
+			show_timer(t);
 		break;
 	case IMSG_CTL_SHOW_INTERFACE:
 		iface = imsg->data;
@@ -642,17 +641,6 @@ fmt_timeframe(time_t t)
 	if (t > now)	/* time in the future is not possible */
 		t = now;
 	return (fmt_timeframe_core(now - t));
-}
-
-void
-print_timer(const char *name, time_t d)
-{
-	printf("  %-20s ", name);
-
-	if (d <= 0)
-		printf("%-20s\n", "due");
-	else
-		printf("due in %-13s\n", fmt_timeframe_core(d));
 }
 
 void

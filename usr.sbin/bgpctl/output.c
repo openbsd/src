@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.1 2019/12/20 09:16:05 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.2 2019/12/31 14:09:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -278,6 +278,17 @@ show_neighbor(struct peer *p, struct parse_result *res)
 	default:
 		break;
 	}
+}
+
+void
+show_timer(struct ctl_timer *t)
+{
+	printf("  %-20s ", timernames[t->type]);
+
+	if (t->val <= 0)
+		printf("%-20s\n", "due");
+	else
+		printf("due in %-13s\n", fmt_timeframe(time(NULL) - t->val));
 }
 
 void
