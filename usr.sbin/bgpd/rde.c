@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.493 2019/12/16 10:35:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.494 2019/12/31 11:53:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -117,7 +117,6 @@ int		 ovs_match(struct prefix *, u_int32_t);
 
 volatile sig_atomic_t	 rde_quit = 0;
 struct bgpd_config	*conf, *nconf;
-time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
 struct rde_peer		*peerself;
 struct filter_head	*out_rules, *out_rules_tmp;
@@ -799,7 +798,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
 			    sizeof(struct bgpd_config))
 				fatalx("IMSG_RECONF_CONF bad len");
-			reloadtime = time(NULL);
 			out_rules_tmp = calloc(1, sizeof(struct filter_head));
 			if (out_rules_tmp == NULL)
 				fatal(NULL);
