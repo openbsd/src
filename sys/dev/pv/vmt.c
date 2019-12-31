@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.15 2018/04/28 15:44:59 jasper Exp $ */
+/*	$OpenBSD: vmt.c,v 1.16 2019/12/31 01:26:56 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -38,6 +38,7 @@
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/task.h>
+#include <sys/sensors.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
