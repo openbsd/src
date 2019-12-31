@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.47 2019/10/16 00:16:35 daniel Exp $ */
+/*	$OpenBSD: qle.c,v 1.48 2019/12/31 22:57:07 jsg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -1496,8 +1496,8 @@ qle_mbox(struct qle_softc *sc, int maskin)
 		mtx_enter(&sc->sc_mbox_mtx);
 		sc->sc_mbox_pending = 1;
 		while (sc->sc_mbox_pending == 1) {
-			msleep(sc->sc_mbox, &sc->sc_mbox_mtx, PRIBIO,
-			    "qlembox", 0);
+			msleep_nsec(sc->sc_mbox, &sc->sc_mbox_mtx, PRIBIO,
+			    "qlembox", INFSLP);
 		}
 		result = sc->sc_mbox[0];
 		sc->sc_mbox_pending = 0;

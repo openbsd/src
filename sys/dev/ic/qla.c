@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.57 2019/08/20 22:31:28 krw Exp $ */
+/*	$OpenBSD: qla.c,v 1.58 2019/12/31 22:57:07 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1148,8 +1148,8 @@ qla_mbox(struct qla_softc *sc, int maskin)
 		mtx_enter(&sc->sc_mbox_mtx);
 		sc->sc_mbox_pending = 1;
 		while (sc->sc_mbox_pending == 1) {
-			msleep(sc->sc_mbox, &sc->sc_mbox_mtx, PRIBIO,
-			    "qlambox", 0);
+			msleep_nsec(sc->sc_mbox, &sc->sc_mbox_mtx, PRIBIO,
+			    "qlambox", INFSLP);
 		}
 		result = sc->sc_mbox[0];
 		sc->sc_mbox_pending = 0;
