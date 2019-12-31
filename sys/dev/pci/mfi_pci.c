@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.29 2014/09/09 03:08:30 dlg Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.30 2019/12/31 00:00:09 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -23,6 +23,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/rwlock.h>
+#include <sys/sensors.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
