@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.100 2019/08/08 20:06:29 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.101 2019/12/31 12:02:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -819,7 +819,7 @@ int
 mrt_dump_hdr_rde(struct ibuf **bp, u_int16_t type, u_int16_t subtype,
     u_int32_t len)
 {
-	time_t		 now;
+	struct timespec	time;
 
 	if ((*bp = ibuf_dynamic(MRT_HEADER_SIZE, MRT_HEADER_SIZE +
 	    MRT_BGP4MP_AS4_IPv6_HEADER_SIZE + MRT_BGP4MP_IPv6_ENTRY_SIZE)) ==
@@ -828,8 +828,9 @@ mrt_dump_hdr_rde(struct ibuf **bp, u_int16_t type, u_int16_t subtype,
 		return (-1);
 	}
 
-	now = time(NULL);
-	DUMP_LONG(*bp, now);
+	clock_gettime(CLOCK_REALTIME, &time);
+
+	DUMP_LONG(*bp, time.tv_sec);
 	DUMP_SHORT(*bp, type);
 	DUMP_SHORT(*bp, subtype);
 
