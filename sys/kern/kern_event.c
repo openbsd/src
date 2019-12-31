@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.112 2019/12/31 13:48:32 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.113 2019/12/31 14:09:56 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -68,6 +68,9 @@ int	kqueue_kqfilter(struct file *fp, struct knote *kn);
 int	kqueue_stat(struct file *fp, struct stat *st, struct proc *p);
 int	kqueue_close(struct file *fp, struct proc *p);
 void	kqueue_wakeup(struct kqueue *kq);
+
+static void	kqueue_expand_hash(struct kqueue *kq);
+static void	kqueue_expand_list(struct kqueue *kq, int fd);
 
 struct fileops kqueueops = {
 	.fo_read	= kqueue_read,
@@ -622,7 +625,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	struct filedesc *fdp = kq->kq_fdp;
 	const struct filterops *fops = NULL;
 	struct file *fp = NULL;
-	struct knote *kn = NULL;
+	struct knote *kn = NULL, *newkn = NULL;
+	struct klist *list = NULL;
 	int s, error = 0;
 
 	if (kev->filter < 0) {
@@ -644,28 +648,45 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		/* validate descriptor */
 		if (kev->ident > INT_MAX)
 			return (EBADF);
-		if ((fp = fd_getfile(fdp, kev->ident)) == NULL)
-			return (EBADF);
+	}
 
-		if (kev->ident < kq->kq_knlistsize) {
-			SLIST_FOREACH(kn, &kq->kq_knlist[kev->ident], kn_link) {
-				if (kev->filter == kn->kn_filter)
-					break;
-			}
+	if (kev->flags & EV_ADD)
+		newkn = pool_get(&knote_pool, PR_WAITOK);
+
+again:
+	if (fops->f_isfd) {
+		if ((fp = fd_getfile(fdp, kev->ident)) == NULL) {
+			error = EBADF;
+			goto done;
 		}
+		if (kev->flags & EV_ADD)
+			kqueue_expand_list(kq, kev->ident);
+		if (kev->ident < kq->kq_knlistsize)
+			list = &kq->kq_knlist[kev->ident];
 	} else {
+		if (kev->flags & EV_ADD)
+			kqueue_expand_hash(kq);
 		if (kq->kq_knhashmask != 0) {
-			struct klist *list;
-
 			list = &kq->kq_knhash[
 			    KN_HASH((u_long)kev->ident, kq->kq_knhashmask)];
-			SLIST_FOREACH(kn, list, kn_link) {
-				if (kev->ident == kn->kn_id &&
-				    kev->filter == kn->kn_filter)
-					break;
+		}
+	}
+	if (list != NULL) {
+		SLIST_FOREACH(kn, list, kn_link) {
+			if (kev->filter == kn->kn_filter &&
+			    kev->ident == kn->kn_id) {
+				if (knote_acquire(kn) == 0) {
+					if (fp != NULL) {
+						FRELE(fp, p);
+						fp = NULL;
+					}
+					goto again;
+				}
+				break;
 			}
 		}
 	}
+	KASSERT(kn == NULL || (kn->kn_status & KN_PROCESSING) != 0);
 
 	if (kn == NULL && ((kev->flags & EV_ADD) == 0)) {
 		error = ENOENT;
@@ -673,11 +694,15 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	}
 
 	/*
-	 * kn now contains the matching knote, or NULL if no match
+	 * kn now contains the matching knote, or NULL if no match.
+	 * If adding a new knote, sleeping is not allowed until the knote
+	 * has been inserted.
 	 */
 	if (kev->flags & EV_ADD) {
 		if (kn == NULL) {
-			kn = pool_get(&knote_pool, PR_WAITOK);
+			kn = newkn;
+			newkn = NULL;
+			kn->kn_status = KN_PROCESSING;
 			kn->kn_fp = fp;
 			kn->kn_kq = kq;
 			kn->kn_fop = fops;
@@ -739,9 +764,12 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		splx(s);
 	}
 
+	knote_release(kn);
 done:
 	if (fp != NULL)
 		FRELE(fp, p);
+	if (newkn != NULL)
+		pool_put(&knote_pool, newkn);
 	return (error);
 }
 
@@ -1001,6 +1029,51 @@ kqueue_wakeup(struct kqueue *kq)
 		KNOTE(&kq->kq_sel.si_note, 0);
 }
 
+static void
+kqueue_expand_hash(struct kqueue *kq)
+{
+	struct klist *hash;
+	u_long hashmask;
+
+	if (kq->kq_knhashmask == 0) {
+		hash = hashinit(KN_HASHSIZE, M_TEMP, M_WAITOK, &hashmask);
+		if (kq->kq_knhashmask == 0) {
+			kq->kq_knhash = hash;
+			kq->kq_knhashmask = hashmask;
+		} else {
+			/* Another thread has allocated the hash. */
+			hashfree(hash, KN_HASHSIZE, M_TEMP);
+		}
+	}
+}
+
+static void
+kqueue_expand_list(struct kqueue *kq, int fd)
+{
+	struct klist *list;
+	int size;
+
+	if (kq->kq_knlistsize <= fd) {
+		size = kq->kq_knlistsize;
+		while (size <= fd)
+			size += KQEXTENT;
+		list = mallocarray(size, sizeof(*list), M_TEMP, M_WAITOK);
+		if (kq->kq_knlistsize <= fd) {
+			memcpy(list, kq->kq_knlist,
+			    kq->kq_knlistsize * sizeof(*list));
+			memset(&list[kq->kq_knlistsize], 0,
+			    (size - kq->kq_knlistsize) * sizeof(*list));
+			free(kq->kq_knlist, M_TEMP,
+			    kq->kq_knlistsize * sizeof(*list));
+			kq->kq_knlist = list;
+			kq->kq_knlistsize = size;
+		} else {
+			/* Another thread has expanded the list. */
+			free(list, M_TEMP, size * sizeof(*list));
+		}
+	}
+}
+
 /*
  * Acquire a knote, return non-zero on success, 0 on failure.
  *
@@ -1120,35 +1193,15 @@ knote_attach(struct knote *kn)
 {
 	struct kqueue *kq = kn->kn_kq;
 	struct klist *list;
-	int size;
 
-	if (!kn->kn_fop->f_isfd) {
-		if (kq->kq_knhashmask == 0)
-			kq->kq_knhash = hashinit(KN_HASHSIZE, M_TEMP,
-			    M_WAITOK, &kq->kq_knhashmask);
+	if (kn->kn_fop->f_isfd) {
+		KASSERT(kq->kq_knlistsize > kn->kn_id);
+		list = &kq->kq_knlist[kn->kn_id];
+	} else {
+		KASSERT(kq->kq_knhashmask != 0);
 		list = &kq->kq_knhash[KN_HASH(kn->kn_id, kq->kq_knhashmask)];
-		goto done;
 	}
-
-	if (kq->kq_knlistsize <= kn->kn_id) {
-		size = kq->kq_knlistsize;
-		while (size <= kn->kn_id)
-			size += KQEXTENT;
-		list = mallocarray(size, sizeof(struct klist), M_TEMP,
-		    M_WAITOK);
-		memcpy(list, kq->kq_knlist,
-		    kq->kq_knlistsize * sizeof(struct klist));
-		memset(&list[kq->kq_knlistsize], 0,
-		    (size - kq->kq_knlistsize) * sizeof(struct klist));
-		free(kq->kq_knlist, M_TEMP,
-		    kq->kq_knlistsize * sizeof(struct klist));
-		kq->kq_knlistsize = size;
-		kq->kq_knlist = list;
-	}
-	list = &kq->kq_knlist[kn->kn_id];
-done:
 	SLIST_INSERT_HEAD(list, kn, kn_link);
-	kn->kn_status = 0;
 }
 
 /*
