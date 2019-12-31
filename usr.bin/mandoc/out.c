@@ -1,4 +1,4 @@
-/*	$OpenBSD: out.c,v 1.50 2019/03/29 21:25:43 schwarze Exp $ */
+/*	$OpenBSD: out.c,v 1.51 2019/12/31 22:49:17 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -207,13 +207,25 @@ tblcalc(struct rofftbl *tbl, const struct tbl_span *sp_first,
 	}
 
 	/*
-	 * Column spacings are needed for span width calculations,
-	 * so set the default values now.
+	 * The minimum width of columns explicitly specified
+	 * in the layout is 1n.
 	 */
 
-	for (icol = 0; icol <= maxcol; icol++)
-		if (tbl->cols[icol].spacing == SIZE_MAX || icol == maxcol)
-			tbl->cols[icol].spacing = 3;
+	if (maxcol < sp_first->opts->cols - 1)
+		maxcol = sp_first->opts->cols - 1;
+	for (icol = 0; icol <= maxcol; icol++) {
+		col = tbl->cols + icol;
+		if (col->width < 1)
+			col->width = 1;
+
+		/*
+		 * Column spacings are needed for span width
+		 * calculations, so set the default values now.
+		 */
+
+		if (col->spacing == SIZE_MAX || icol == maxcol)
+			col->spacing = 3;
+	}
 
 	/*
 	 * Replace the minimum widths with the missing widths,

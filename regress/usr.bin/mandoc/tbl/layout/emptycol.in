@@ -1,0 +1,49 @@
+.\" $OpenBSD: emptycol.in,v 1.1 2019/12/31 22:49:17 schwarze Exp $
+.TH TBL-LAYOUT-EMPTYCOL 1 "December 31, 2019"
+.SH NAME
+tbl-layout-emptycol \- empty columns in tables
+.SH DESCRIPTION
+missing final column:
+.TS
+allbox tab(:);
+L L L
+L L.
+1:2
+a:b
+.TE
+.sp
+empty final column:
+.TS
+allbox tab(:);
+L L L
+L L.
+1:2:
+a:b
+.TE
+.sp
+final column with zero-width content:
+.TS
+allbox tab(:);
+L L L
+L L.
+1:2:\&
+a:b
+.TE
+.sp
+empty middle column:
+.TS
+allbox tab(:);
+L L L
+L.
+1::3
+a
+.TE
+.sp
+span crossing empty middle column:
+.TS
+allbox tab(:);
+L L L
+L S S.
+1::3
+span
+.TE
