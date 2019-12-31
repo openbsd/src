@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.29 2019/07/19 00:17:15 cheloha Exp $	*/
+/*	$OpenBSD: magma.c,v 1.30 2019/12/31 10:05:33 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -1589,7 +1589,8 @@ mbpp_rw(dev_t dev, struct uio *uio)
 			s = spltty();	/* XXX */
 			SET(mp->mp_flags, MBPPF_DELAY);
 			timeout_add(&mp->mp_start_tmo, mp->mp_delay);
-			error = tsleep(mp, PCATCH | PZERO, "mbppdelay", 0);
+			error = tsleep_nsec(mp, PCATCH | PZERO, "mbppdelay",
+			    INFSLP);
 			splx(s);
 			if (error)
 				break;
@@ -1673,7 +1674,7 @@ mbpp_send(struct mbpp_port *mp, caddr_t ptr, int len)
 	}
 
 	/* ZZzzz... */
-	tsleep(mp, PCATCH | PZERO, "mbpp_send", 0);
+	tsleep_nsec(mp, PCATCH | PZERO, "mbpp_send", INFSLP);
 
 	/* stop transmitting */
 	if (cd) {
@@ -1724,7 +1725,7 @@ mbpp_recv(struct mbpp_port *mp, caddr_t ptr, int len)
 	}
 
 	/* ZZzzz... */
-	tsleep(mp, PCATCH | PZERO, "mbpp_recv", 0);
+	tsleep_nsec(mp, PCATCH | PZERO, "mbpp_recv", INFSLP);
 
 	/* stop receiving */
 	if (cd) {

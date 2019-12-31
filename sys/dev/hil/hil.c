@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.27 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: hil.c,v 1.28 2019/12/31 10:05:32 mpi Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -450,7 +450,8 @@ hil_thread(void *arg)
 		s = splhil();
 		if (sc->sc_pending == 0) {
 			splx(s);
-			(void)tsleep(&sc->sc_pending, PWAIT, "hil_event", 0);
+			tsleep_nsec(&sc->sc_pending, PWAIT, "hil_event",
+			    INFSLP);
 			continue;
 		}
 

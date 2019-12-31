@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.375 2019/12/31 01:38:33 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.376 2019/12/31 10:05:32 mpi Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2868,7 +2868,7 @@ acpi_thread(void *arg)
 		while (sc->sc_threadwaiting) {
 			dnprintf(10, "acpi thread going to sleep...\n");
 			rw_exit_write(&sc->sc_lck);
-			tsleep(sc, PWAIT, "acpi0", 0);
+			tsleep_nsec(sc, PWAIT, "acpi0", INFSLP);
 			rw_enter_write(&sc->sc_lck);
 		}
 		sc->sc_threadwaiting = 1;

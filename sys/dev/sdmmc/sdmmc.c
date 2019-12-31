@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.53 2019/04/02 07:08:40 stsp Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.54 2019/12/31 10:05:33 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -162,7 +162,7 @@ sdmmc_detach(struct device *self, int flags)
 	sc->sc_dying = 1;
 	while (sc->sc_task_thread != NULL) {
 		wakeup(&sc->sc_tskq);
-		tsleep(sc, PWAIT, "mmcdie", 0);
+		tsleep_nsec(sc, PWAIT, "mmcdie", INFSLP);
 	}
 
 	if (sc->sc_dmap)
@@ -226,7 +226,7 @@ restart:
 			task->func(task->arg);
 			s = splsdmmc();
 		}
-		tsleep(&sc->sc_tskq, PWAIT, "mmctsk", 0);
+		tsleep_nsec(&sc->sc_tskq, PWAIT, "mmctsk", INFSLP);
 	}
 	splx(s);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.47 2019/11/16 14:08:31 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.48 2019/12/31 10:05:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1560,7 +1560,7 @@ rtwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	 * process is tsleep'ing in it.
 	 */
 	while ((sc->sc_flags & RTWN_FLAG_BUSY) && error == 0)
-		error = tsleep(&sc->sc_flags, PCATCH, "rtwnioc", 0);
+		error = tsleep_nsec(&sc->sc_flags, PCATCH, "rtwnioc", INFSLP);
 	if (error != 0) {
 		splx(s);
 		return error;
@@ -3231,7 +3231,7 @@ rtwn_init_task(void *arg1)
 
 	s = splnet();
 	while (sc->sc_flags & RTWN_FLAG_BUSY)
-		tsleep(&sc->sc_flags, 0, "rtwnpwr", 0);
+		tsleep_nsec(&sc->sc_flags, 0, "rtwnpwr", INFSLP);
 	sc->sc_flags |= RTWN_FLAG_BUSY;
 
 	rtwn_stop(ifp);

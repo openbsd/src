@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.207 2019/11/14 21:13:58 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.208 2019/12/31 10:05:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1281,7 +1281,7 @@ mpi_wait(struct mpi_softc *sc, struct mpi_ccb *ccb)
 
 	mtx_enter(&cookie);
 	while (ccb->ccb_cookie != NULL)
-		msleep(ccb, &cookie, PRIBIO, "mpiwait", 0);
+		msleep_nsec(ccb, &cookie, PRIBIO, "mpiwait", INFSLP);
 	mtx_leave(&cookie);
 
 	done(ccb);

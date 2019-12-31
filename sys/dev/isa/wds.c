@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.43 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: wds.c,v 1.44 2019/12/31 10:05:32 mpi Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -503,7 +503,7 @@ wds_get_buf(struct wds_softc *sc, int flags)
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
 			goto out;
-		tsleep(&wds_free_buffer, PRIBIO, "wdsbuf", 0);
+		tsleep_nsec(&wds_free_buffer, PRIBIO, "wdsbuf", INFSLP);
 	}
 
 	buf->busy = 1;

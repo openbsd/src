@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.36 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.37 2019/12/31 10:05:32 mpi Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -424,7 +424,7 @@ pcic_event_thread(arg)
 		s = splhigh();
 		if ((pe = SIMPLEQ_FIRST(&h->events)) == NULL) {
 			splx(s);
-			(void) tsleep(&h->events, PWAIT, "pcicev", 0);
+			tsleep_nsec(&h->events, PWAIT, "pcicev", INFSLP);
 			continue;
 		} else {
 			splx(s);

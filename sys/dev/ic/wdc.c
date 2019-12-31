@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.135 2019/07/03 00:08:18 ians Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.136 2019/12/31 10:05:32 mpi Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1650,7 +1650,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
 				       DEBUG_FUNCS);
 
 			while ((wdc_c->flags & AT_DONE) == 0) {
-				tsleep(wdc_c, PRIBIO, "wdccmd", 0);
+				tsleep_nsec(wdc_c, PRIBIO, "wdccmd", INFSLP);
 			}
 			ret = WDC_COMPLETE;
 		} else {

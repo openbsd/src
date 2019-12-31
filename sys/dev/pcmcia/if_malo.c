@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.93 2017/10/26 15:00:28 mpi Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.94 2019/12/31 10:05:33 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -271,7 +271,7 @@ malo_pcmcia_wakeup(struct malo_softc *sc)
 	
 	s = splnet();
 	while (sc->sc_flags & MALO_BUSY)
-		tsleep(&sc->sc_flags, 0, "malopwr", 0);
+		tsleep_nsec(&sc->sc_flags, 0, "malopwr", INFSLP);
 	sc->sc_flags |= MALO_BUSY;
 
 	cmalo_init(ifp);
@@ -372,7 +372,7 @@ cmalo_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	 * process is tsleep'ing in it.
 	 */
 	while ((sc->sc_flags & MALO_BUSY) && error == 0)
-		error = tsleep(&sc->sc_flags, PCATCH, "maloioc", 0);
+		error = tsleep_nsec(&sc->sc_flags, PCATCH, "maloioc", INFSLP);
 	if (error != 0) {
 		splx(s);
 		return error;

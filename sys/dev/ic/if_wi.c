@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.170 2019/11/07 12:56:34 bluhm Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.171 2019/12/31 10:05:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1542,7 +1542,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	 * process is tsleep'ing in it.
 	 */
 	while ((sc->wi_flags & WI_FLAGS_BUSY) && error == 0)
-		error = tsleep(&sc->wi_flags, PCATCH, "wiioc", 0);
+		error = tsleep_nsec(&sc->wi_flags, PCATCH, "wiioc", INFSLP);
 	if (error != 0) {
 		splx(s);
 		return error;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpp.c,v 1.5 2016/03/14 18:01:18 stefan Exp $	*/
+/*	$OpenBSD: bpp.c,v 1.6 2019/12/31 10:05:33 mpi Exp $	*/
 /*	$NetBSD: bpp.c,v 1.25 2005/12/11 12:23:44 christos Exp $ */
 
 /*-
@@ -288,7 +288,8 @@ bppwrite(dev_t dev, struct uio *uio, int flags)
 		}
 
 		sc->sc_flags |= BPP_WANT;
-		error = tsleep(sc->sc_buf, PZERO | PCATCH, "bppwrite", 0);
+		error = tsleep_nsec(sc->sc_buf, PZERO | PCATCH, "bppwrite",
+		    INFSLP);
 		if (error != 0) {
 			splx(s);
 			return (error);
@@ -332,7 +333,8 @@ bppwrite(dev_t dev, struct uio *uio, int flags)
 			/* Enable DMA */
 			s = splbpp();
 			DMA_GO(lsi);
-			error = tsleep(sc, PZERO | PCATCH, "bppdma", 0);
+			error = tsleep_nsec(sc, PZERO | PCATCH, "bppdma",
+			    INFSLP);
 			splx(s);
 			if (error != 0)
 				goto out;

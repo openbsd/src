@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.42 2019/12/19 12:04:38 reyk Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.43 2019/12/31 10:05:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -199,7 +199,8 @@ vscsi_cmd(struct scsi_xfer *xs)
 	if (polled) {
 		mtx_enter(&sc->sc_poll_mtx);
 		while (ccb->ccb_xs != NULL)
-			msleep(ccb, &sc->sc_poll_mtx, PRIBIO, "vscsipoll", 0);
+			msleep_nsec(ccb, &sc->sc_poll_mtx, PRIBIO, "vscsipoll",
+			    INFSLP);
 		mtx_leave(&sc->sc_poll_mtx);
 		scsi_done(xs);
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.74 2015/11/24 17:11:40 mpi Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.75 2019/12/31 10:05:33 mpi Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -507,7 +507,7 @@ wi_pcmcia_wakeup(struct wi_softc *sc)
 
 	s = splnet();
 	while (sc->wi_flags & WI_FLAGS_BUSY)
-		tsleep(&sc->wi_flags, 0, "wipwr", 0);
+		tsleep_nsec(&sc->wi_flags, 0, "wipwr", INFSLP);
 	sc->wi_flags |= WI_FLAGS_BUSY;
 
 	wi_cor_reset(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.235 2019/12/31 01:26:56 jsg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.236 2019/12/31 10:05:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1653,7 +1653,7 @@ ami_drv_pt(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t *cmd,
 	ami_start(sc, ccb);
 
 	while (ccb->ccb_state != AMI_CCB_READY)
-		tsleep(ccb, PRIBIO, "ami_drv_pt", 0);
+		tsleep_nsec(ccb, PRIBIO, "ami_drv_pt", INFSLP);
 
 	bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
 	    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -1805,7 +1805,8 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 		ami_start(sc, ccb);
 		mtx_enter(&sc->sc_cmd_mtx);
 		while (ccb->ccb_state != AMI_CCB_READY)
-			msleep(ccb, &sc->sc_cmd_mtx, PRIBIO,"ami_mgmt", 0);
+			msleep_nsec(ccb, &sc->sc_cmd_mtx, PRIBIO, "ami_mgmt",
+			    INFSLP);
 		mtx_leave(&sc->sc_cmd_mtx);
 	} else {
 		/* change state must be run with id 0xfe and MUST be polled */

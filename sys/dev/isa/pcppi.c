@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.14 2019/02/20 07:00:31 anton Exp $ */
+/* $OpenBSD: pcppi.c,v 1.15 2019/12/31 10:05:32 mpi Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -243,7 +243,8 @@ pcppi_bell(self, pitch, period, slp)
 		timeout_add(&sc->sc_bell_timeout, period);
 		if (slp & PCPPI_BELL_SLEEP) {
 			sc->sc_slp = 1;
-			tsleep(pcppi_bell_stop, PCPPIPRI | PCATCH, "bell", 0);
+			tsleep_nsec(pcppi_bell_stop, PCPPIPRI | PCATCH, "bell",
+			    INFSLP);
 			sc->sc_slp = 0;
 		}
 	}

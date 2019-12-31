@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.106 2019/12/19 09:01:50 kettenis Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.107 2019/12/31 10:05:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -958,7 +958,7 @@ ipmi_cmd_wait(struct ipmi_cmd *c)
 	res = task_add(c->c_sc->sc_cmd_taskq, &t);
 	KASSERT(res == 1);
 
-	tsleep(c, PWAIT, "ipmicmd", 0);
+	tsleep_nsec(c, PWAIT, "ipmicmd", INFSLP);
 
 	res = task_del(c->c_sc->sc_cmd_taskq, &t);
 	KASSERT(res == 0);

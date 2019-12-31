@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.31 2017/01/24 02:28:17 visa Exp $ */
+/*	$OpenBSD: qlw.c,v 1.32 2019/12/31 10:05:32 mpi Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1025,7 +1025,7 @@ qlw_mbox(struct qlw_softc *sc, int maskin, int maskout)
 			}
 		}
 	} else {
-		tsleep(sc->sc_mbox, PRIBIO, "qlw_mbox", 0);
+		tsleep_nsec(sc->sc_mbox, PRIBIO, "qlw_mbox", INFSLP);
 		result = sc->sc_mbox[0];
 	}
 
