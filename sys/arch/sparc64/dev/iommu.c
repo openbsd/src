@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.77 2020/01/01 14:48:04 kn Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.78 2020/01/01 14:51:51 kn Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -1385,19 +1385,19 @@ iommu_dvmamap_validate_map(bus_dma_tag_t t, struct iommu_state *is,
 	int seg;
 
 	if (trunc_page(map->_dm_dvmastart) != map->_dm_dvmastart) {
-		printf("**** dvmastart address not page aligned: %llx",
+		printf("**** dvmastart address not page aligned: %lx",
 			map->_dm_dvmastart);
 		err = 1;
 	}
 	if (trunc_page(map->_dm_dvmasize) != map->_dm_dvmasize) {
-		printf("**** dvmasize not a multiple of page size: %llx",
+		printf("**** dvmasize not a multiple of page size: %lx",
 			map->_dm_dvmasize);
 		err = 1;
 	}
 	if (map->_dm_dvmastart < is->is_dvmabase ||
 	    (round_page(map->_dm_dvmastart + map->_dm_dvmasize) - 1) >
 	    is->is_dvmaend) {
-		printf("dvmaddr %llx len %llx out of range %x - %x\n",
+		printf("dvmaddr %lx len %lx out of range %x - %x\n",
 			    map->_dm_dvmastart, map->_dm_dvmasize,
 			    is->is_dvmabase, is->is_dvmaend);
 		err = 1;
@@ -1405,8 +1405,8 @@ iommu_dvmamap_validate_map(bus_dma_tag_t t, struct iommu_state *is,
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		if (map->dm_segs[seg].ds_addr == 0 ||
 		    map->dm_segs[seg].ds_len == 0) {
-			printf("seg %d null segment dvmaddr %llx len %llx for "
-			    "range %llx len %llx\n",
+			printf("seg %d null segment dvmaddr %lx len %lx for "
+			    "range %lx len %lx\n",
 			    seg,
 			    map->dm_segs[seg].ds_addr,
 			    map->dm_segs[seg].ds_len,
@@ -1416,8 +1416,8 @@ iommu_dvmamap_validate_map(bus_dma_tag_t t, struct iommu_state *is,
 		    round_page(map->dm_segs[seg].ds_addr +
 			map->dm_segs[seg].ds_len) >
 		    map->_dm_dvmastart + map->_dm_dvmasize) {
-			printf("seg %d dvmaddr %llx len %llx out of "
-			    "range %llx len %llx\n",
+			printf("seg %d dvmaddr %lx len %lx out of "
+			    "range %lx len %lx\n",
 			    seg,
 			    map->dm_segs[seg].ds_addr,
 			    map->dm_segs[seg].ds_len,
