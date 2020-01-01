@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.79 2020/01/01 14:56:12 kn Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.80 2020/01/01 15:00:07 kn Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -1059,7 +1059,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 				int seg_len = MIN(left, len);
 
 				printf("addr %lx len %ld/0x%lx seg_len "
-				    "%ld/0x%lx left %ld/0xl%x\n", addr,
+				    "%d/0x%x left %d/0x%x\n", addr,
 				    len, len, seg_len, seg_len, left, left);
 
 				left -= seg_len;
