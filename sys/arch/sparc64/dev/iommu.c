@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.78 2020/01/01 14:51:51 kn Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.79 2020/01/01 14:56:12 kn Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -1132,8 +1132,8 @@ iommu_dvmamap_insert(bus_dma_tag_t t, bus_dmamap_t map,
 #ifdef DEBUG
 	if (trunc_page(sgstart) != trunc_page(sgend)) {
 		printf("append range crossing page boundary! "
-		    "pa %lx length %ld/0x%lx sgstart %lx sgend %lx\n",
-		    pa, length, length, sgstart, sgend);
+		    "length %ld/0x%lx sgstart %lx sgend %lx\n",
+		    length, length, sgstart, sgend);
 	}
 #endif
 
