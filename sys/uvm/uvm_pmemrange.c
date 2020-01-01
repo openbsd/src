@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.57 2019/12/30 23:58:38 jsg Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.58 2020/01/01 01:50:00 beck Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -118,8 +118,12 @@ void			 uvm_pmr_pnaddr(struct uvm_pmemrange *pmr,
 			    struct vm_page **pg_next);
 struct vm_page		*uvm_pmr_findnextsegment(struct uvm_pmemrange *,
 			    struct vm_page *, paddr_t);
+struct vm_page		*uvm_pmr_findprevsegment(struct uvm_pmemrange *,
+			    struct vm_page *, paddr_t);
 psize_t			 uvm_pmr_remove_1strange(struct pglist *, paddr_t,
 			    struct vm_page **, int);
+psize_t			 uvm_pmr_remove_1strange_reverse(struct pglist *,
+    			    paddr_t *);
 void			 uvm_pmr_split(paddr_t);
 struct uvm_pmemrange	*uvm_pmemrange_find(paddr_t);
 struct uvm_pmemrange	*uvm_pmemrange_use_insert(struct uvm_pmemrange_use *,
@@ -176,6 +180,8 @@ pow2divide(psize_t num, psize_t denom)
  */
 #define PMR_ALIGN(pgno, align)						\
 	(((pgno) + ((align) - 1)) & ~((align) - 1))
+#define PMR_ALIGN_DOWN(pgno, align)					\
+	((pgno) & ~((align) - 1))
 
 
 /*
@@ -538,6 +544,68 @@ uvm_pmr_findnextsegment(struct uvm_pmemrange *pmr,
 }
 
 /*
+ * Find the first page that is part of this segment.
+ * => pg: the range at which to start the search.
+ * => boundary: the page number boundary specification (0 = no boundary).
+ * => pmr: the pmemrange of the page.
+ * 
+ * This function returns 1 after the previous range, so if you want to have the
+ * previous range, you need to run TAILQ_NEXT(result, pageq) after calling.
+ * The reason is that this way, the length of the segment is easily
+ * calculated using: atop(pg) - atop(result) + 1.
+ * Hence this function also never returns NULL.
+ */
+struct vm_page *
+uvm_pmr_findprevsegment(struct uvm_pmemrange *pmr,
+    struct vm_page *pg, paddr_t boundary)
+{
+	paddr_t	first_boundary;
+	struct	vm_page *next;
+	struct	vm_page *prev;
+
+	KDASSERT(pmr->low <= atop(VM_PAGE_TO_PHYS(pg)) &&
+	    pmr->high > atop(VM_PAGE_TO_PHYS(pg)));
+	if (boundary != 0) {
+		first_boundary =
+		    PMR_ALIGN_DOWN(atop(VM_PAGE_TO_PHYS(pg)), boundary);
+	} else
+		first_boundary = 0;
+
+	/*
+	 * Increase next until it hits the first page of the previous segment.
+	 *
+	 * While loop checks the following:
+	 * - next != NULL	we have not reached the end of pgl
+	 * - boundary == 0 || next >= first_boundary
+	 *			we do not cross a boundary
+	 * - atop(prev) - 1 == atop(next)
+	 *			still in the same segment
+	 * - low <= last
+	 * - high > last	still in the same memory range
+	 * - memtype is equal	allocator is unable to view different memtypes
+	 *			as part of the same segment
+	 * - prev - 1 == next	no array breakage occurs
+	 */
+	prev = pg;
+	next = TAILQ_NEXT(prev, pageq);
+	while (next != NULL &&
+	    (boundary == 0 || atop(VM_PAGE_TO_PHYS(next)) >= first_boundary) &&
+	    atop(VM_PAGE_TO_PHYS(prev)) - 1 == atop(VM_PAGE_TO_PHYS(next)) &&
+	    pmr->low <= atop(VM_PAGE_TO_PHYS(next)) &&
+	    pmr->high > atop(VM_PAGE_TO_PHYS(next)) &&
+	    uvm_pmr_pg_to_memtype(prev) == uvm_pmr_pg_to_memtype(next) &&
+	    prev - 1 == next) {
+		prev = next;
+		next = TAILQ_NEXT(prev, pageq);
+	}
+
+	/*
+	 * Start of this segment.
+	 */
+	return prev;
+}
+
+/*
  * Remove the first segment of contiguous pages from pgl.
  * A segment ends if it crosses boundary (unless boundary = 0) or
  * if it would enter a different uvm_pmemrange.
@@ -553,7 +621,7 @@ psize_t
 uvm_pmr_remove_1strange(struct pglist *pgl, paddr_t boundary,
     struct vm_page **work, int is_desperate)
 {
-	struct vm_page *start, *end, *iter, *iter_end, *inserted;
+	struct vm_page *start, *end, *iter, *iter_end, *inserted, *lowest;
 	psize_t count;
 	struct uvm_pmemrange *pmr, *pmr_iter;
 
@@ -608,6 +676,7 @@ uvm_pmr_remove_1strange(struct pglist *pgl, paddr_t boundary,
 	 * Calculate count and end of the list.
 	 */
 	count = atop(VM_PAGE_TO_PHYS(end) - VM_PAGE_TO_PHYS(start)) + 1;
+	lowest = start;
 	end = TAILQ_NEXT(end, pageq);
 
 	/*
@@ -623,8 +692,8 @@ uvm_pmr_remove_1strange(struct pglist *pgl, paddr_t boundary,
 		TAILQ_REMOVE(pgl, iter, pageq);
 	}
 
-	start->fpgsz = count;
-	inserted = uvm_pmr_insert(pmr, start, 0);
+	lowest->fpgsz = count;
+	inserted = uvm_pmr_insert(pmr, lowest, 0);
 
 	/*
 	 * If the caller was working on a range and this function modified
@@ -635,6 +704,56 @@ uvm_pmr_remove_1strange(struct pglist *pgl, paddr_t boundary,
 	    atop(VM_PAGE_TO_PHYS(inserted)) + inserted->fpgsz >
 	    atop(VM_PAGE_TO_PHYS(*work)))
 		*work = inserted;
+	return count;
+}
+
+/*
+ * Remove the first segment of contiguous pages from a pgl
+ * with the list elements in reverse order of physaddr.
+ *
+ * A segment ends if it would enter a different uvm_pmemrange.
+ *
+ * Stores starting physical address of the segment in pstart.
+ */
+psize_t
+uvm_pmr_remove_1strange_reverse(struct pglist *pgl, paddr_t *pstart)
+{
+	struct vm_page *start, *end, *iter, *iter_end, *lowest;
+	psize_t count;
+	struct uvm_pmemrange *pmr;
+
+	KASSERT(!TAILQ_EMPTY(pgl));
+
+	start = TAILQ_FIRST(pgl);
+	pmr = uvm_pmemrange_find(atop(VM_PAGE_TO_PHYS(start)));
+	end = uvm_pmr_findprevsegment(pmr, start, 0);
+
+	KASSERT(end <= start);
+
+	/*
+	 * Calculate count and end of the list.
+	 */
+	count = atop(VM_PAGE_TO_PHYS(start) - VM_PAGE_TO_PHYS(end)) + 1;
+	lowest = end;
+	end = TAILQ_NEXT(end, pageq);
+
+	/*
+	 * Actually remove the range of pages.
+	 *
+	 * Sadly, this cannot be done using pointer iteration:
+	 * vm_physseg is not guaranteed to be sorted on address, hence
+	 * uvm_page_init() may not have initialized its array sorted by
+	 * page number.
+	 */
+	for (iter = start; iter != end; iter = iter_end) {
+		iter_end = TAILQ_NEXT(iter, pageq);
+		TAILQ_REMOVE(pgl, iter, pageq);
+	}
+
+	lowest->fpgsz = count;
+	(void) uvm_pmr_insert(pmr, lowest, 0);
+
+	*pstart = VM_PAGE_TO_PHYS(lowest);
 	return count;
 }
 
@@ -1178,8 +1297,18 @@ uvm_pmr_freepageq(struct pglist *pgl)
 
 	uvm_lock_fpageq();
 	while (!TAILQ_EMPTY(pgl)) {
-		pstart = VM_PAGE_TO_PHYS(TAILQ_FIRST(pgl));
-		plen = uvm_pmr_remove_1strange(pgl, 0, NULL, 0);
+		pg = TAILQ_FIRST(pgl);
+		if (pg == TAILQ_NEXT(pg, pageq) + 1) {
+			/*
+			 * If pg is one behind the position of the
+			 * next page in the list in the page array,
+			 * try going backwards instead of forward.
+			 */
+			plen = uvm_pmr_remove_1strange_reverse(pgl, &pstart);
+		} else {
+			pstart = VM_PAGE_TO_PHYS(TAILQ_FIRST(pgl));
+			plen = uvm_pmr_remove_1strange(pgl, 0, NULL, 0);
+		}
 		uvmexp.free += plen;
 
 		uvm_wakeup_pla(pstart, ptoa(plen));
