@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.76 2019/06/25 22:30:55 dlg Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.77 2020/01/01 14:48:04 kn Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -581,7 +581,7 @@ iommu_strbuf_flush_done(struct iommu_map_state *ims)
 	
 			DPRINTF(IDB_IOMMU,
 			    ("iommu_strbuf_flush_done: flush = %llx pa = %lx "
-				"now=%lx:%lx until = %lx:%lx\n", 
+				"now=%llx:%lx until = %llx:%lx\n", 
 				ldxa(sf->sbf_flushpa, ASI_PHYS_CACHED),
 				sf->sbf_flushpa, cur.tv_sec, cur.tv_usec, 
 				flushtimeout.tv_sec, flushtimeout.tv_usec));
