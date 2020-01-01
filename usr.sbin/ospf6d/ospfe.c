@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.59 2019/12/28 09:25:24 denis Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.60 2020/01/01 10:09:34 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -174,10 +174,6 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 
 	/* remove unneeded config stuff */
 	conf_clear_redist_list(&oeconf->redist_list);
-
-	/* listen on ospfd control socket */
-	TAILQ_INIT(&ctl_conns);
-	control_listen();
 
 	if ((pkt_ptr = calloc(1, READ_BUF_SIZE)) == NULL)
 		fatal("ospfe");
