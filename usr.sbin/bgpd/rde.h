@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.227 2019/10/30 05:27:50 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.228 2020/01/01 07:25:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -76,10 +76,12 @@ LIST_HEAD(attr_list, attr);
 LIST_HEAD(aspath_head, rde_aspath);
 RB_HEAD(prefix_tree, prefix);
 RB_HEAD(prefix_index, prefix);
+struct iq;
 
 struct rde_peer {
 	LIST_ENTRY(rde_peer)		 hash_l; /* hash list over all peers */
 	LIST_ENTRY(rde_peer)		 peer_l; /* list of all peers */
+	SIMPLEQ_HEAD(, iq)		 imsg_queue;
 	struct peer_config		 conf;
 	struct bgpd_addr		 remote_addr;
 	struct bgpd_addr		 local_v4_addr;
@@ -368,6 +370,13 @@ u_int32_t	rde_local_as(void);
 int		rde_decisionflags(void);
 int		rde_as4byte(struct rde_peer *);
 struct rde_peer	*peer_get(u_int32_t);
+
+/* rde_peer.c */
+void		 peer_imsg_push(struct rde_peer *, struct imsg *);
+int		 peer_imsg_pop(struct rde_peer *, struct imsg *);
+void		 peer_imsg_queued(struct rde_peer *, void *);
+void		 peer_imsg_flush(struct rde_peer *);
+
 
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
