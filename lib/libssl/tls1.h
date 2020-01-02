@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.39 2019/03/19 16:53:03 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.40 2020/01/02 06:23:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -278,6 +278,15 @@ extern "C" {
 #define TLSEXT_TYPE_post_handshake_auth		49
 #define TLSEXT_TYPE_signature_algorithms_cert	50
 #define TLSEXT_TYPE_key_share			51
+#endif
+
+/*
+ * TLS 1.3 extension names from OpenSSL, where they decided to use a different
+ * name from that given in RFC 8446.
+ */
+#if defined(LIBRESSL_HAS_TLS1_3)
+#define TLSEXT_TYPE_psk				TLSEXT_TYPE_pre_shared_key
+#define TLSEXT_TYPE_psk_kex_modes		TLSEXT_TYPE_psk_key_exchange_modes
 #endif
 
 /* Temporary extension type */
