@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.27 2020/01/02 15:17:19 schwarze Exp $
+.\" $OpenBSD: dig.1,v 1.28 2020/01/02 15:52:44 schwarze Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -329,7 +329,8 @@ the server.
 AD=1 indicates that all records have been validated as secure and the answer is
 not from an OPT-OUT range.
 AD=0 indicates that some part of the answer was insecure or not validated.
-This bit is set by default.
+The default is
+.Cm +adflag .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
