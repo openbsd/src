@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.56 2019/10/24 12:39:27 tb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.57 2020/01/02 10:55:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -133,7 +133,7 @@ typedef struct {
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR DISABLED
-%token	SOCKET RESTRICTED AGENTX HANDLE DEFAULT SRCADDR TCP UDP
+%token	SOCKET RESTRICTED AGENTX HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
@@ -272,6 +272,9 @@ main		: LISTEN ON STRING proto	{
 				    ROUTE_FILTER(RTM_IFANNOUNCE);
 			else
 				conf->sc_rtfilter = 0;
+		}
+		| PFADDRFILTER yesno		{
+			conf->sc_pfaddrfilter = $2;
 		}
 		| SECLEVEL seclevel {
 			conf->sc_min_seclevel = $2;
@@ -628,40 +631,41 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{ "agentx",		AGENTX },
-		{ "auth",		AUTH },
-		{ "authkey",		AUTHKEY },
-		{ "community",		COMMUNITY },
-		{ "contact",		CONTACT },
-		{ "default",		DEFAULT },
-		{ "description",	DESCR },
-		{ "disabled",		DISABLED},
-		{ "enc",		ENC },
-		{ "enckey",		ENCKEY },
-		{ "filter-routes",	RTFILTER },
-		{ "handle",		HANDLE },
-		{ "include",		INCLUDE },
-		{ "integer",		INTEGER },
-		{ "listen",		LISTEN },
-		{ "location",		LOCATION },
-		{ "name",		NAME },
-		{ "none",		NONE },
-		{ "oid",		OBJECTID },
-		{ "on",			ON },
-		{ "read-only",		READONLY },
-		{ "read-write",		READWRITE },
-		{ "receiver",		RECEIVER },
-		{ "restricted",		RESTRICTED },
-		{ "seclevel",		SECLEVEL },
-		{ "services",		SERVICES },
-		{ "socket",		SOCKET },
-		{ "source-address",	SRCADDR },
-		{ "string",		OCTETSTRING },
-		{ "system",		SYSTEM },
-		{ "tcp",		TCP },
-		{ "trap",		TRAP },
-		{ "udp",		UDP },
-		{ "user",		USER }
+		{ "agentx",			AGENTX },
+		{ "auth",			AUTH },
+		{ "authkey",			AUTHKEY },
+		{ "community",			COMMUNITY },
+		{ "contact",			CONTACT },
+		{ "default",			DEFAULT },
+		{ "description",		DESCR },
+		{ "disabled",			DISABLED},
+		{ "enc",			ENC },
+		{ "enckey",			ENCKEY },
+		{ "filter-pf-addresses",	PFADDRFILTER },
+		{ "filter-routes",		RTFILTER },
+		{ "handle",			HANDLE },
+		{ "include",			INCLUDE },
+		{ "integer",			INTEGER },
+		{ "listen",			LISTEN },
+		{ "location",			LOCATION },
+		{ "name",			NAME },
+		{ "none",			NONE },
+		{ "oid",			OBJECTID },
+		{ "on",				ON },
+		{ "read-only",			READONLY },
+		{ "read-write",			READWRITE },
+		{ "receiver",			RECEIVER },
+		{ "restricted",			RESTRICTED },
+		{ "seclevel",			SECLEVEL },
+		{ "services",			SERVICES },
+		{ "socket",			SOCKET },
+		{ "source-address",		SRCADDR },
+		{ "string",			OCTETSTRING },
+		{ "system",			SYSTEM },
+		{ "tcp",			TCP },
+		{ "trap",			TRAP },
+		{ "udp",			UDP },
+		{ "user",			USER }
 	};
 	const struct keywords	*p;
 
