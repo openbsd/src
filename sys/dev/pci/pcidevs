@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1903 2019/12/28 04:38:23 kn Exp $
+$OpenBSD: pcidevs,v 1.1904 2020/01/02 22:34:41 mortimer Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -754,6 +754,7 @@ product AMD AMD64_17_CCP_2	0x1468	AMD64 17h Crypto
 product AMD AMD64_17_PCIE_4	0x1470	AMD64 17h PCIE
 product AMD AMD64_17_PCIE_5	0x1471	AMD64 17h PCIE
 product AMD AMD64_17_3X_RC	0x1480	AMD64 17h/3xh Root Complex
+product AMD AMD64_17_3X_CCP	0x1486	AMD64 17h/3xh Crypto
 product AMD AMD64_14_HB		0x1510	AMD64 14h Host
 product AMD AMD64_14_PCIE_1	0x1512	AMD64 14h PCIE
 product AMD AMD64_14_PCIE_2	0x1513	AMD64 14h PCIE
