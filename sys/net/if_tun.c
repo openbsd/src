@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.196 2019/12/31 13:48:32 visa Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.197 2020/01/02 08:56:33 claudio Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
+#include <sys/sigio.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
@@ -88,9 +89,8 @@ struct tun_softc {
 	LIST_ENTRY(tun_softc)
 			sc_entry;	/* all tunnel interfaces */
 	int		sc_unit;
-	uid_t		sc_siguid;	/* uid for process that set sc_pgid */
-	uid_t		sc_sigeuid;	/* euid for process that set sc_pgid */
-	pid_t		sc_pgid;	/* the process group - if any */
+	struct sigio_ref
+			sc_sigio;	/* async I/O registration */
 	u_short		sc_flags;	/* misc flags */
 #ifdef PIPEX
 	struct pipex_iface_context sc_pipex_iface; /* pipex context */
@@ -241,6 +241,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->sc_unit = unit;
 	sc->sc_flags = TUN_INITED|TUN_STAYUP;
+	sigio_init(&sc->sc_sigio);
 
 	ifp = &sc->sc_if;
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", ifc->ifc_name,
@@ -316,6 +317,7 @@ tun_clone_destroy(struct ifnet *ifp)
 		ether_ifdetach(ifp);
 
 	if_detach(ifp);
+	sigio_free(&sc->sc_sigio);
 
 	LIST_REMOVE(sc, sc_entry);
 	free(sc, M_DEVBUF, sizeof *sc);
@@ -462,8 +464,8 @@ tun_dev_close(struct tun_softc *sc, int flag, int mode, struct proc *p)
 	if (!(sc->sc_flags & TUN_STAYUP))
 		error = if_clone_destroy(ifp->if_xname);
 	else {
-		sc->sc_pgid = 0;
 		selwakeup(&sc->sc_rsel);
+		sigio_free(&sc->sc_sigio);
 	}
 
 	return (error);
@@ -627,10 +629,9 @@ tun_wakeup(struct tun_softc *sc)
 		sc->sc_flags &= ~TUN_RWAIT;
 		wakeup((caddr_t)sc);
 	}
-	if (sc->sc_flags & TUN_ASYNC && sc->sc_pgid)
-		csignal(sc->sc_pgid, SIGIO,
-		    sc->sc_siguid, sc->sc_sigeuid);
 	selwakeup(&sc->sc_rsel);
+	if (sc->sc_flags & TUN_ASYNC)
+		pgsigio(&sc->sc_sigio, SIGIO, 0);
 	KERNEL_UNLOCK();
 }
 
@@ -719,12 +720,11 @@ tun_dev_ioctl(struct tun_softc *sc, u_long cmd, caddr_t data, int flag,
 		*(int *)data = ifq_hdatalen(&sc->sc_if.if_snd);
 		break;
 	case TIOCSPGRP:
-		sc->sc_pgid = *(int *)data;
-		sc->sc_siguid = p->p_ucred->cr_ruid;
-		sc->sc_sigeuid = p->p_ucred->cr_uid;
-		break;
+		if (*(int *)data < 0)
+			return (EINVAL);
+		return (sigio_setown(&sc->sc_sigio, -*(int *)data));
 	case TIOCGPGRP:
-		*(int *)data = sc->sc_pgid;
+		*(int *)data = -sigio_getown(&sc->sc_sigio);
 		break;
 	case SIOCGIFADDR:
 		if (!(sc->sc_flags & TUN_LAYER2))
