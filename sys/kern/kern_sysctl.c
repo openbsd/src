@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.368 2019/12/11 07:30:09 guenther Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.369 2020/01/02 08:52:53 claudio Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -521,17 +521,20 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *ci;
 		long cp_time[CPUSTATES];
-		int i;
+		int i, n = 0;
 
 		memset(cp_time, 0, sizeof(cp_time));
 
 		CPU_INFO_FOREACH(cii, ci) {
+			if (!cpu_is_online(ci))
+				continue;
+			n++;
 			for (i = 0; i < CPUSTATES; i++)
 				cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
 		}
 
 		for (i = 0; i < CPUSTATES; i++)
-			cp_time[i] /= ncpus;
+			cp_time[i] /= n;
 
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cp_time,
 		    sizeof(cp_time)));
