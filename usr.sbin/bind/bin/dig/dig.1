@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.25 2020/01/02 10:53:32 schwarze Exp $
+.\" $OpenBSD: dig.1,v 1.26 2020/01/02 14:34:33 schwarze Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -82,7 +82,7 @@ The default is to perform a lookup for an A record.
 The query class, as documented for
 .Fl c .
 The default is
-.Dq IN .
+.Cm IN .
 .It Pf + Ar queryopt
 One or more query options,
 as documented in
@@ -151,21 +151,30 @@ from other arguments.
 The resource record type to query.
 It can be any valid query type.
 If it is a resource record type supported in BIND 9, it can be given by the
-type mnemonic (such as "NS" or "AAAA").
-The default query type is "A", unless the
+type mnemonic (such as
+.Cm NS
+or
+.Cm AAAA ) .
+The default query type is
+.Cm A ,
+unless the
 .Fl x
 option is supplied to indicate a reverse lookup.
-A zone transfer can be requested by specifying a type of AXFR.
-When an incremental zone transfer (IXFR) is required, set the
+A zone transfer can be requested by specifying a type of
+.Cm AXFR .
+When an incremental zone transfer is required, set the
 .Ar type
 to
-.Cm ixfr Ns = Ns Ar N .
+.Cm IXFR Ns = Ns Ar N .
 The incremental zone transfer will contain the changes made to the zone since
 the serial number in the zone's SOA record was
 .Ar N .
 .Pp
-All resource record types can be expressed as "TYPEnn", where
-"nn" is the number of the type.
+All resource record types can be expressed as
+.Cm TYPE Ns Ar nn ,
+where
+.Ar nn
+is the number of the type.
 If the resource record type is not supported in BIND 9, the result will be
 displayed as described in RFC 3597.
 .It Fl u
@@ -189,7 +198,11 @@ arguments.
 .Nm
 automatically performs a lookup for a name like
 .Ql 94.2.0.192.in-addr.arpa
-and sets the query type and class to PTR and IN respectively.
+and sets the query type and class to
+.Cm PTR
+and
+.Cm IN
+respectively.
 IPv6 addresses are looked up using nibble format under the IP6.ARPA domain
 (but see also the
 .Fl i
@@ -235,7 +248,11 @@ This may be visible in the output from
 or in a history file maintained by the user's shell.
 .El
 .Pp
-The IN and CH class names overlap with the IN and CH top level domain names.
+The
+.Cm IN
+and
+.Cm CH
+class names overlap with the IN and CH top level domain names.
 Either use the
 .Fl t
 and
@@ -261,7 +278,7 @@ These may be preceded by the string
 to negate the meaning of that keyword.
 Other keywords assign values to options like the timeout interval.
 They have the form
-.Cm +keyword Ns = Ns Ar value .
+.Cm + Ns Ar keyword Ns = Ns Ar value .
 Keywords may be abbreviated, provided the abbreviation is unambiguous; for
 example,
 .Cm +cd
@@ -286,7 +303,7 @@ A synonym for
 .Op Cm no Ns
 .Cm aaonly
 .Xc
-Sets the "aa" flag in the query.
+Set the "aa" flag in the query.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -441,7 +458,7 @@ Deprecated, treated as a synonym for
 .Op Cm no Ns
 .Cm dnssec
 .Xc
-Requests DNSSEC records be sent by setting the DNSSEC OK bit (DO) in the OPT
+Request DNSSEC records be sent by setting the DNSSEC OK bit (DO) in the OPT
 record in the additional section of the query.
 .It Cm +domain Ns = Ns Ar name
 Set the search list to contain the single domain
@@ -449,7 +466,7 @@ Set the search list to contain the single domain
 as if specified in a
 .Ic domain
 directive in
-.Pa /etc/resolv.conf ,
+.Xr resolv.conf 5 ,
 and enable search list processing as if the
 .Cm +search
 option were given.
@@ -570,7 +587,7 @@ to
 .Ar #
 for it to be considered absolute.
 The default value is that defined using the ndots statement in
-.Pa /etc/resolv.conf ,
+.Xr resolv.conf 5 ,
 or 1 if no ndots statement is present.
 Names with fewer dots are interpreted as relative names and will be searched
 for in the domains listed in the
@@ -578,7 +595,7 @@ for in the domains listed in the
 or
 .Cm domain
 directive in
-.Pa /etc/resolv.conf
+.Xr resolv.conf 5
 if
 .Cm +search
 is set.
@@ -603,7 +620,8 @@ zone.
 .Op Cm no Ns
 .Cm onesoa
 .Xc
-Print only one (starting) SOA record when performing an AXFR.
+Print only one (starting) SOA record when performing an
+.Cm AXFR .
 The default is to print both the starting and ending SOA records.
 .It Xo
 .Cm + Ns
@@ -653,7 +671,7 @@ or
 .Cm +trace
 query options are used.
 .It Cm +retry Ns = Ns Ar #
-Sets the number of times to retry UDP queries to server to
+Set the number of times to retry UDP queries to server to
 .Ar #
 instead of the default, 2.
 Unlike
@@ -673,12 +691,12 @@ The default is not to print record comments unless multiline mode is active.
 .Cm search
 .Xc
 Use the search list defined by the searchlist or domain directive in
-.Pa resolv.conf
-(if any).
+.Xr resolv.conf 5 ,
+if any.
 The search list is not used by default.
 .Pp
 \&'ndots' from
-.Pa resolv.conf
+.Xr resolv.conf 5
 (default 1), which may be overridden by
 .Cm +ndots ,
 determines if the name will be treated as relative or not and hence whether a
@@ -710,7 +728,9 @@ is rounded up to the nearest multiple of 4).
 or
 .Cm +split Ns =0
 causes fields not to be split at all.
-The default is 56 characters, or 44 characters when multiline mode is active.
+The default is 56 characters, or 44 characters when
+.Cm +multiline
+mode is active.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -748,7 +768,7 @@ The default behavior is to use UDP unless an
 query is requested, in which case the default is TCP.
 AXFR queries always use TCP.
 .It Cm +timeout Ns = Ns Ar #
-Sets the timeout for a query to
+Set the timeout for a query to
 .Ar #
 seconds.
 The default timeout is 5 seconds.
@@ -777,7 +797,7 @@ is also set when
 .Cm +trace
 is set to better emulate the default queries from a name server.
 .It Cm +tries Ns = Ns Ar #
-Sets the number of times to try UDP queries to server to
+Set the number of times to try UDP queries to server to
 .Ar #
 instead of the default, 3.
 If
