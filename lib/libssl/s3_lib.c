@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.187 2019/10/04 17:21:24 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.188 2020/01/02 06:37:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2242,6 +2242,16 @@ static int
 _SSL_CTX_get_extra_chain_certs(SSL_CTX *ctx, STACK_OF(X509) **certs)
 {
 	*certs = ctx->extra_certs;
+	if (*certs == NULL)
+		*certs = ctx->internal->cert->key->chain;
+
+	return 1;
+}
+
+static int
+_SSL_CTX_get_extra_chain_certs_only(SSL_CTX *ctx, STACK_OF(X509) **certs)
+{
+	*certs = ctx->extra_certs;
 	return 1;
 }
 
@@ -2325,7 +2335,10 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return _SSL_CTX_add_extra_chain_cert(ctx, parg);
 
 	case SSL_CTRL_GET_EXTRA_CHAIN_CERTS:
-		return _SSL_CTX_get_extra_chain_certs(ctx, parg);
+		if (larg == 0)
+			return _SSL_CTX_get_extra_chain_certs(ctx, parg);
+		else
+			return _SSL_CTX_get_extra_chain_certs_only(ctx, parg);
 
 	case SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS:
 		return _SSL_CTX_clear_extra_chain_certs(ctx);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.166 2019/04/04 15:03:21 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.167 2020/01/02 06:37:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1219,12 +1219,14 @@ int SSL_set_max_proto_version(SSL *ssl, uint16_t version);
 #define SSL_set1_curves_list SSL_set1_groups_list
 #endif
 
-#define SSL_CTX_add_extra_chain_cert(ctx,x509) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
-#define SSL_CTX_get_extra_chain_certs(ctx,px509) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_EXTRA_CHAIN_CERTS,0,px509)
+#define SSL_CTX_add_extra_chain_cert(ctx, x509) \
+	SSL_CTX_ctrl(ctx, SSL_CTRL_EXTRA_CHAIN_CERT, 0, (char *)x509)
+#define SSL_CTX_get_extra_chain_certs(ctx, px509) \
+	SSL_CTX_ctrl(ctx, SSL_CTRL_GET_EXTRA_CHAIN_CERTS, 0, px509)
+#define SSL_CTX_get_extra_chain_certs_only(ctx, px509) \
+	SSL_CTX_ctrl(ctx, SSL_CTRL_GET_EXTRA_CHAIN_CERTS, 1, px509)
 #define SSL_CTX_clear_extra_chain_certs(ctx) \
-	SSL_CTX_ctrl(ctx,SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS,0,NULL)
+	SSL_CTX_ctrl(ctx, SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS, 0, NULL)
 
 #define SSL_get_server_tmp_key(s, pk) \
 	SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
