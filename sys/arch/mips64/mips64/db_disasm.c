@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.19 2019/11/07 14:44:53 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.20 2020/01/02 16:00:54 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -51,7 +51,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.19 2019/11/07 14:44:53 mpi Exp $
+ *      $Id: db_disasm.c,v 1.20 2020/01/02 16:00:54 visa Exp $
  */
 
 #ifdef _KERNEL
@@ -417,7 +417,7 @@ static const char *cop1x_std[32] = {
 
 static const char *reg_name[32] = {
 	"zero",	"at",	"v0",	"v1",	"a0",	"a1",	"a2",	"a3",
-	"ta0",	"ta1",	"ta2",	"ta3",	"t0",	"t1",	"t2",	"t3",
+	"a4",	"a5",	"a6",	"a7",	"t0",	"t1",	"t2",	"t3",
 	"s0",	"s1",	"s2",	"s3",	"s4",	"s5",	"s6",	"s7",
 	"t8",	"t9",	"k0",	"k1",	"gp",	"sp",	"s8",	"ra"
 };
