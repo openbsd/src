@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.28 2020/01/02 15:52:44 schwarze Exp $
+.\" $OpenBSD: dig.1,v 1.29 2020/01/02 20:40:27 schwarze Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -359,7 +359,8 @@ The default is
 .Cm besteffort
 .Xc
 Attempt to display the contents of messages which are malformed.
-The default is to not display malformed answers.
+The default is
+.Cm +besteffort .
 .It Cm +bufsize Ns = Ns Ar #
 Set the UDP message buffer size advertised using EDNS0 to
 .Ar #
@@ -509,7 +510,8 @@ By default, no Z bits are set.
 .Cm ednsnegotiation
 .Xc
 Enable EDNS version negotiation.
-By default EDNS version negotiation is enabled.
+The default is
+.Cm +noednsnegotiation .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -796,7 +798,7 @@ AXFR queries always use TCP.
 Set the timeout for a query to
 .Ar #
 seconds.
-The default timeout is 5 seconds.
+The default is 5 seconds for UDP and 10 seconds for TCP.
 An attempt to set
 .Ar #
 to less than 1 will result in a query timeout of 1 second being applied.
