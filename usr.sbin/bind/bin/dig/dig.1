@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.24 2020/01/02 10:27:46 schwarze Exp $
+.\" $OpenBSD: dig.1,v 1.25 2020/01/02 10:53:32 schwarze Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -159,7 +159,7 @@ A zone transfer can be requested by specifying a type of AXFR.
 When an incremental zone transfer (IXFR) is required, set the
 .Ar type
 to
-.Ar ixfr=N .
+.Cm ixfr Ns = Ns Ar N .
 The incremental zone transfer will contain the changes made to the zone since
 the serial number in the zone's SOA record was
 .Ar N .
@@ -261,7 +261,7 @@ These may be preceded by the string
 to negate the meaning of that keyword.
 Other keywords assign values to options like the timeout interval.
 They have the form
-.Cm +keyword= Ns Ar value .
+.Cm +keyword Ns = Ns Ar value .
 Keywords may be abbreviated, provided the abbreviation is unambiguous; for
 example,
 .Cm +cd
@@ -652,7 +652,7 @@ Recursion is automatically disabled when the
 or
 .Cm +trace
 query options are used.
-.It Cm +retry= Ns Ar #
+.It Cm +retry Ns = Ns Ar #
 Sets the number of times to retry UDP queries to server to
 .Ar #
 instead of the default, 2.
@@ -708,7 +708,7 @@ characters (where
 is rounded up to the nearest multiple of 4).
 .Cm +nosplit
 or
-.Cm +split= Ns Ar 0
+.Cm +split Ns =0
 causes fields not to be split at all.
 The default is 56 characters, or 44 characters when multiline mode is active.
 .It Xo
@@ -728,10 +728,10 @@ Send an EDNS Client Subnet option with the specified IP address or
 network prefix.
 .Pp
 .Nm
-.Cm +subnet= Ns 0.0.0.0/0 ,
+.Cm +subnet Ns =0.0.0.0/0,
 or simply
 .Nm
-.Cm +subnet= Ns 0
+.Cm +subnet Ns =0
 for short, sends an EDNS CLIENT-SUBNET option with an empty address and a
 source prefix-length of zero, which signals a resolver that the client's address
 information must
@@ -743,8 +743,9 @@ be used when resolving this query.
 .Cm tcp
 .Xc
 Use TCP when querying name servers.
-The default behavior is to use UDP unless an ixfr=N query is requested, in which
-case the default is TCP.
+The default behavior is to use UDP unless an
+.Cm ixfr Ns = Ns Ar N
+query is requested, in which case the default is TCP.
 AXFR queries always use TCP.
 .It Cm +timeout Ns = Ns Ar #
 Sets the timeout for a query to
