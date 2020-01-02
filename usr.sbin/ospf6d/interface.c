@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.27 2019/12/23 07:33:49 denis Exp $ */
+/*	$OpenBSD: interface.c,v 1.28 2020/01/02 10:16:46 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -144,7 +144,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 
 	if (iface->state != old_state) {
 		area_track(iface->area);
-		orig_rtr_lsa(iface);
+		orig_rtr_lsa(iface->area);
 		orig_link_lsa(iface);
 
 		/* state change inform RDE */
@@ -395,7 +395,7 @@ if_act_start(struct iface *iface)
 
 	if (iface->cflags & F_IFACE_PASSIVE) {
 		/* for an update of stub network entries */
-		orig_rtr_lsa(iface);
+		orig_rtr_lsa(iface->area);
 		return (0);
 	}
 
@@ -569,7 +569,7 @@ start:
 				nbr_fsm(nbr, NBR_EVT_ADJ_OK);
 		}
 
-		orig_rtr_lsa(iface);
+		orig_rtr_lsa(iface->area);
 		if (iface->state & IF_STA_DR || old_state & IF_STA_DR)
 			orig_net_lsa(iface);
 	}
@@ -586,7 +586,7 @@ if_act_reset(struct iface *iface)
 
 	if (iface->cflags & F_IFACE_PASSIVE) {
 		/* for an update of stub network entries */
-		orig_rtr_lsa(iface);
+		orig_rtr_lsa(iface->area);
 		return (0);
 	}
 

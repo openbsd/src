@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.81 2019/12/23 07:33:49 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.82 2020/01/02 10:16:46 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -753,8 +753,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			if (prev_link_ok == link_ok)
 				break;
 
-			if (iface->area == NULL)
-				fatalx("interface lost area");
 			orig_intra_area_prefix_lsas(iface->area);
 
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.22 2019/12/28 09:25:24 denis Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.23 2020/01/02 10:16:46 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -121,7 +121,7 @@ u_int32_t	 ospfe_router_id(void);
 void		 ospfe_fib_update(int);
 void		 ospfe_iface_ctl(struct ctl_conn *, unsigned int);
 void		 ospfe_nbr_ctl(struct ctl_conn *);
-void		 orig_rtr_lsa(struct iface *);
+void		 orig_rtr_lsa(struct area *);
 void		 orig_net_lsa(struct iface *);
 void		 orig_link_lsa(struct iface *);
 void		 ospfe_demote_area(struct area *, int);

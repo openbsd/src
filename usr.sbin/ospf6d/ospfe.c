@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.60 2020/01/01 10:09:34 denis Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.61 2020/01/02 10:16:46 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,7 +45,6 @@
 void		 ospfe_sig_handler(int, short, void *);
 __dead void	 ospfe_shutdown(void);
 void		 orig_rtr_lsa_all(struct area *);
-void		 orig_rtr_lsa_area(struct area *);
 struct iface	*find_vlink(struct abr_rtr *);
 
 struct ospfd_conf	*oeconf = NULL, *nconf;
@@ -297,7 +296,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 						i->depend_ok =
 						    ifstate_is_up(ifp);
 						if (ifstate_is_up(i))
-							orig_rtr_lsa(i);
+							orig_rtr_lsa(i->area);
 					}
 				}
 			}
@@ -596,8 +595,6 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				 * flood on all area interfaces on
 				 * area 0.0.0.0 include also virtual links.
 				 */
-				if (nbr->iface->area == NULL)
-					fatalx("interface lost area");
 				LIST_FOREACH(iface,
 				    &nbr->iface->area->iface_list, entry) {
 					noack += lsa_flood(iface, nbr,
@@ -795,19 +792,11 @@ orig_rtr_lsa_all(struct area *area)
 	 */
 	LIST_FOREACH(a, &oeconf->area_list, entry)
 		if (a != area)
-			orig_rtr_lsa_area(a);
+			orig_rtr_lsa(a);
 }
 
 void
-orig_rtr_lsa(struct iface *iface)
-{
-	if (iface->area == NULL)
-		fatalx("interface lost area");
-	orig_rtr_lsa_area(iface->area);
-}
-
-void
-orig_rtr_lsa_area(struct area *area)
+orig_rtr_lsa(struct area *area)
 {
 	struct lsa_hdr		 lsa_hdr;
 	struct lsa_rtr		 lsa_rtr;

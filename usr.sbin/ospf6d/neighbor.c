@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.15 2019/12/23 07:33:49 denis Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.16 2020/01/02 10:16:46 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -202,7 +202,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 			 * neighbor changed from/to FULL
 			 * originate new rtr and net LSA
 			 */
-			orig_rtr_lsa(nbr->iface);
+			orig_rtr_lsa(nbr->iface->area);
 			if (nbr->iface->state & IF_STA_DR)
 				orig_net_lsa(nbr->iface);
 
@@ -226,7 +226,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		    nbr_state_name(nbr->state));
 
 		if (nbr->iface->type == IF_TYPE_VIRTUALLINK) {
-			orig_rtr_lsa(nbr->iface);
+			orig_rtr_lsa(nbr->iface->area);
 		}
 	}
 

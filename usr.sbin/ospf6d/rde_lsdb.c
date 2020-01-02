@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.40 2019/12/23 07:33:49 denis Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.41 2020/01/02 10:16:46 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -573,11 +573,9 @@ lsa_find(struct iface *iface, u_int16_t type, u_int32_t ls_id,
 
 	if (LSA_IS_SCOPE_AS(ntohs(type)))
 		tree = &asext_tree;
-	else if (LSA_IS_SCOPE_AREA(ntohs(type))) {
-		if (iface->area == NULL)
-			fatalx("interface lost area");
+	else if (LSA_IS_SCOPE_AREA(ntohs(type)))
 		tree = &iface->area->lsa_tree;
-	} else if (LSA_IS_SCOPE_LLOCAL(ntohs(type)))
+	else if (LSA_IS_SCOPE_LLOCAL(ntohs(type)))
 		tree = &iface->lsa_tree;
 	else
 		fatalx("unknown scope type");
