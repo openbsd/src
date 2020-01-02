@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.26 2020/01/02 14:34:33 schwarze Exp $
+.\" $OpenBSD: dig.1,v 1.27 2020/01/02 15:17:19 schwarze Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -77,7 +77,8 @@ The name of the resource record that is to be looked up.
 .It Ar type
 The type of query, as documented for
 .Fl t .
-The default is to perform a lookup for an A record.
+The default is
+.Cm A .
 .It Ar class
 The query class, as documented for
 .Fl c .
@@ -105,9 +106,13 @@ must be a valid address on one of the host's network interfaces, or
 "#<port>".
 .It Fl c Ar class
 Set the query class.
-The default
-.Ar class
-is IN; other classes are HS for Hesiod records or CH for Chaosnet records.
+The default is
+.Cm IN ;
+other classes are
+.Cm HS
+for Hesiod records and
+.Cm CH
+for Chaosnet records.
 .It Fl f Ar file
 Batch mode:
 .Nm
@@ -310,7 +315,8 @@ Set the "aa" flag in the query.
 .Cm additional
 .Xc
 Display the additional section of a reply.
-The default is to display it.
+The default is
+.Cm +additional .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -336,14 +342,16 @@ Set or clear all display flags.
 .Cm answer
 .Xc
 Display the answer section of a reply.
-The default is to display it.
+The default is
+.Cm +answer .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm authority
 .Xc
 Display the authority section of a reply.
-The default is to display it.
+The default is
+.Cm +authority .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -380,14 +388,16 @@ Toggles the printing of the initial comment in the output identifying the
 version of
 .Nm
 and the query options that have been applied.
-This comment is printed by default.
+The default is
+.Cm +cmd .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm comments
 .Xc
 Toggle the display of comment lines in the output.
-The default is to print comments.
+The default is
+.Cm +comments .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -531,8 +541,9 @@ Send an EDNS Expire option.
 .Cm fail
 .Xc
 Do not try the next server if you receive a SERVFAIL.
-The default is to not try the next server which is the reverse of normal stub
-resolver behavior.
+The default is
+.Cm +fail ,
+which is the reverse of normal stub resolver behavior.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -559,7 +570,8 @@ does not support IDN.
 .Cm ignore
 .Xc
 Ignore truncation in UDP responses instead of retrying with TCP.
-By default, TCP retries are performed.
+The default is
+.Cm +noignore .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -576,7 +588,9 @@ The default is
 .Xc
 Print records like the SOA records in a verbose multi-line format with
 human-readable comments.
-The default is to print each record on a single line, to facilitate machine
+The default is
+.Cm +nomultiline ,
+which prints each record on a single line to facilitate machine
 parsing of the
 .Nm
 output.
@@ -622,7 +636,9 @@ zone.
 .Xc
 Print only one (starting) SOA record when performing an
 .Cm AXFR .
-The default is to print both the starting and ending SOA records.
+The default is
+.Cm +noonesoa ,
+which prints both the starting and the ending SOA records.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -637,14 +653,16 @@ The default value is QUERY (0).
 .Cm qr
 .Xc
 Print the query as it is sent.
-By default, the query is not printed.
+The default is
+.Cm +noqr .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm question
 .Xc
-Print the question section of a query when an answer is returned.
-The default is to print the question section as a comment.
+Print the question section of a query as a comment when an answer is returned.
+The default is
+.Cm +question .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -662,7 +680,9 @@ A synonym for
 .Cm recurse
 .Xc
 Toggle the setting of the RD (recursion desired) bit in the query.
-This bit is set by default, which means
+The default is
+.Cm +recurse ,
+which means
 .Nm
 normally sends recursive queries.
 Recursion is automatically disabled when the
@@ -672,8 +692,8 @@ or
 query options are used.
 .It Cm +retry Ns = Ns Ar #
 Set the number of times to retry UDP queries to server to
-.Ar #
-instead of the default, 2.
+.Ar # .
+The default is 2.
 Unlike
 .Cm +tries ,
 this does not include the initial query.
@@ -693,7 +713,8 @@ The default is not to print record comments unless multiline mode is active.
 Use the search list defined by the searchlist or domain directive in
 .Xr resolv.conf 5 ,
 if any.
-The search list is not used by default.
+The default is
+.Cm +nosearch .
 .Pp
 \&'ndots' from
 .Xr resolv.conf 5
@@ -707,7 +728,9 @@ search is eventually performed or not.
 .Cm short
 .Xc
 Provide a terse answer.
-The default is to print the answer in a verbose form.
+The default is
+.Cm +noshort ,
+printing the answer in a verbose form.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -738,7 +761,8 @@ mode is active.
 .Xc
 This query option toggles the printing of statistics:
 when the query was made, the size of the reply and so on.
-The default behavior is to print the query statistics.
+The default is
+.Cm +stats .
 .It Xo
 .Cm +subnet Ns = Ns
 .Ar addr Ns
@@ -782,7 +806,9 @@ to less than 1 will result in a query timeout of 1 second being applied.
 .Xc
 Toggle tracing of the delegation path from the root name servers for the name
 being looked up.
-Tracing is disabled by default.
+The default is
+.Cm +notrace .
+.Pp
 When tracing is enabled,
 .Nm
 makes iterative queries to resolve the name being looked up.
@@ -798,8 +824,8 @@ is also set when
 is set to better emulate the default queries from a name server.
 .It Cm +tries Ns = Ns Ar #
 Set the number of times to try UDP queries to server to
-.Ar #
-instead of the default, 3.
+.Ar # .
+The default is 3.
 If
 .Ar #
 is less than or equal to zero, the number of tries is silently rounded up to 1.
