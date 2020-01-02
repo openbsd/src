@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.23 2019/12/31 19:18:16 jmc Exp $
+.\" $OpenBSD: dig.1,v 1.24 2020/01/02 10:27:46 schwarze Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 31 2019 $
+.Dd $Mdocdate: January 2 2020 $
 .Dt DIG 1
 .Os
 .Sh NAME
@@ -351,7 +351,7 @@ This requests the server to not perform DNSSEC validation of responses.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
-.Cm cl
+.Cm class
 .Xc
 Display the CLASS when printing the record.
 .It Xo
@@ -699,26 +699,6 @@ Perform a search showing intermediate results.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
-.Cm sit Ns
-.Op = Ns Ar #
-.Xc
-This option is a synonym for
-.Xo
-.Cm + Ns
-.Op Cm no Ns
-.Cm cookie
-.Xc .
-.Pp
-The
-.Xo
-.Cm + Ns
-.Op Cm no Ns
-.Cm sit
-.Xc
-option is deprecated.
-.It Xo
-.Cm + Ns
-.Op Cm no Ns
 .Cm split Ns = Ns Ar #
 .Xc
 Split long hex- or base64-formatted fields in resource records into chunks of
@@ -766,7 +746,7 @@ Use TCP when querying name servers.
 The default behavior is to use UDP unless an ixfr=N query is requested, in which
 case the default is TCP.
 AXFR queries always use TCP.
-.It Cm +time= Ns Ar #
+.It Cm +timeout Ns = Ns Ar #
 Sets the timeout for a query to
 .Ar #
 seconds.

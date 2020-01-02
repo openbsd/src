@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.27 2019/12/31 19:18:16 jmc Exp $ */
+/* $Id: dig.c,v 1.28 2020/01/02 10:27:46 schwarze Exp $ */
 
 /*! \file */
 
@@ -150,20 +150,19 @@ rcode_totext(dns_rcode_t rcode)
 static void
 print_usage(FILE *fp) {
 	fputs(
-"usage:  dig [@server] [-46himuv] [-b address[#port]] [-c class] [-f file]\n"
-"            [-k keyfile] [-p port] [-q name] [-t type] [-x addr]\n"
-"            [-y [hmac:]name:key] [name] [type] [class]\n"
-"            +[no]aaonly +[no]additional +[no]adflag +[no]all +[no]answer\n"
-"            +[no]authority +[no]besteffort +bufsize=# +[no]cdflag +[no]cl\n"
-"            +[no]cmd +[no]comments +[no]cookie[=value] +[no]crypto +[no]defname\n"
-"            +[no]dnssec +domain=name +[no]edns[=#] +[no]ednsflags[=#]\n"
-"            +[no]ednsnegotiation +[no]ednsopt[=code[:value]]\n"
-"            +[no]expire +[no]fail +[no]identify +[no]idnout +[no]ignore\n"
-"            +[no]keepopen +[no]multiline +ndots=# +[no]nsid +[no]nssearch\n"
-"            +[no]onesoa +[no]opcode=# +[no]qr +[no]question +[no]recurse\n"
-"            +retry=# +[no]rrcomments +[no]search +[no]short +[no]showsearch\n"
-"            +[no]split=# +[no]stats +subnet=addr[/prefix] +[no]tcp +time=#\n"
-"            +[no]trace +tries=# +[no]ttlid +[no]vc\n", fp);
+"usage: dig [@server] [-46himuv] [-b address[#port]] [-c class] [-f file]\n"
+"           [-k keyfile] [-p port] [-q name] [-t type] [-x addr]\n"
+"           [-y [hmac:]name:key] [name] [type] [class]\n"
+"           +[no]aaonly +[no]additional +[no]adflag +[no]all +[no]answer\n"
+"           +[no]authority +[no]besteffort +bufsize=# +[no]cdflag +[no]class\n"
+"           +[no]cmd +[no]comments +[no]cookie[=value] +[no]crypto +[no]dnssec\n"
+"           +domain=name +[no]edns[=#] +[no]ednsflags[=#] +[no]ednsnegotiation\n"
+"           +[no]ednsopt[=code[:value]] +[no]expire +[no]fail +[no]identify\n"
+"           +[no]ignore +[no]keepopen +[no]multiline +ndots=# +[no]nsid\n"
+"           +[no]nssearch +[no]onesoa +[no]opcode=# +[no]qr +[no]question\n"
+"           +[no]recurse +retry=# +[no]rrcomments +[no]search +[no]short\n"
+"           +[no]showsearch +[no]split=# +[no]stats +subnet=addr[/prefix]\n"
+"           +[no]tcp +timeout=# +[no]trace +tries=# +[no]ttlid +[no]vc\n", fp);
 }
 
 ISC_PLATFORM_NORETURN_PRE static void
