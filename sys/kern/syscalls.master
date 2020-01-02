@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.199 2019/12/24 04:23:43 visa Exp $
+;	$OpenBSD: syscalls.master,v 1.200 2020/01/02 19:03:20 anton Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -216,7 +216,7 @@
 			    socklen_t namelen); }
 99	STD		{ int sys_getdents(int fd, void *buf, size_t buflen); }
 100	STD		{ int sys_getpriority(int which, id_t who); }
-101	STD		{ int sys_pipe2(int *fdp, int flags); }
+101	STD NOLOCK	{ int sys_pipe2(int *fdp, int flags); }
 102	STD		{ int sys_dup3(int from, int to, int flags); }
 103	STD		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
 104	STD		{ int sys_bind(int s, const struct sockaddr *name, \
@@ -448,7 +448,7 @@
 260	UNIMPL
 261	UNIMPL
 262	UNIMPL
-263	STD		{ int sys_pipe(int *fdp); }
+263	STD NOLOCK	{ int sys_pipe(int *fdp); }
 264	STD		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
 265	UNIMPL
 266	UNIMPL
