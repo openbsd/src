@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1904 2020/01/02 22:34:41 mortimer Exp $
+$OpenBSD: pcidevs,v 1.1905 2020/01/03 00:51:55 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -7365,6 +7365,9 @@ product SAMSUNG2 SM951_AHCI	0xa801	SM951 AHCI
 product SAMSUNG2 SM951_NVME	0xa802	SM951/PM951 NVMe
 product SAMSUNG2 SM961_NVME	0xa804	SM961/PM961 NVMe
 product SAMSUNG2 SM981_NVME	0xa808	SM981/PM981 NVMe
+product SAMSUNG2 NVME_171X	0xa820	NVMe
+product SAMSUNG2 NVME_172X	0xa821	NVMe
+product SAMSUNG2 NVME_172X_A_B	0xa822	NVMe
 
 /* Sangoma products */
 product SANGOMA A10X		0x0300	A10x
