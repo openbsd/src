@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2019/12/28 18:36:01 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.62 2020/01/03 05:32:00 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -265,6 +265,7 @@ vmmaction(struct parse_result *res)
 	case CMD_SEND:
 		send_vm(res->id, res->name);
 		done = 1;
+		ret = 0;
 		break;
 	case CMD_RECEIVE:
 		vm_receive(res->id, res->name);
