@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.418 2019/12/21 10:23:37 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.419 2020/01/03 22:01:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -711,7 +711,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 {
 	struct smtp_session		*s;
 	struct smtp_rcpt		*rcpt;
-	char				 user[LOGIN_NAME_MAX];
+	char				 user[SMTPD_MAXMAILADDRSIZE];
 	char				 tmp[SMTP_LINE_MAX];
 	struct msg			 m;
 	const char			*line, *helo;
