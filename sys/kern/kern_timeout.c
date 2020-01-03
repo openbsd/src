@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.69 2020/01/03 02:16:38 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.70 2020/01/03 20:11:11 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -499,10 +499,9 @@ timeout_run(struct timeout *to)
 void
 softclock(void *arg)
 {
-	int delta;
 	struct circq *bucket;
 	struct timeout *to;
-	int needsproc = 0;
+	int delta, needsproc;
 
 	mtx_enter(&timeout_mutex);
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
@@ -528,13 +527,13 @@ softclock(void *arg)
 			tostat.tos_late++;
 		if (ISSET(to->to_flags, TIMEOUT_PROC)) {
 			CIRCQ_INSERT_TAIL(&timeout_proc, &to->to_list);
-			needsproc = 1;
 			continue;
 		}
 		timeout_run(to);
 		tostat.tos_run_softclock++;
 	}
 	tostat.tos_softclocks++;
+	needsproc = !CIRCQ_EMPTY(&timeout_proc);
 	mtx_leave(&timeout_mutex);
 
 	if (needsproc)
