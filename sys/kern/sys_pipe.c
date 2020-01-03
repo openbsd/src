@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.106 2019/12/31 13:48:32 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.107 2020/01/03 15:18:02 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -111,8 +111,6 @@ struct pool pipe_pool;
 struct rwlock pipe_lock = RWLOCK_INITIALIZER("pipeglk");
 
 int	dopipe(struct proc *, int *, int);
-int	pipelock(struct pipe *);
-void	pipeunlock(struct pipe *);
 void	pipeselwakeup(struct pipe *);
 
 struct pipe *pipe_create(void);
@@ -122,7 +120,9 @@ struct pipe *pipe_peer(struct pipe *);
 int	pipe_buffer_realloc(struct pipe *, u_int);
 void	pipe_buffer_free(struct pipe *);
 
-int	pipe_sleep(struct pipe *, const char *);
+int	pipe_iolock(struct pipe *);
+void	pipe_iounlock(struct pipe *);
+int	pipe_iosleep(struct pipe *, const char *);
 
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
@@ -299,10 +299,10 @@ pipe_peer(struct pipe *cpipe)
 }
 
 /*
- * lock a pipe for I/O, blocking other access
+ * Lock a pipe for exclusive I/O access.
  */
 int
-pipelock(struct pipe *cpipe)
+pipe_iolock(struct pipe *cpipe)
 {
 	int error;
 
@@ -311,7 +311,7 @@ pipelock(struct pipe *cpipe)
 	while (cpipe->pipe_state & PIPE_LOCK) {
 		cpipe->pipe_state |= PIPE_LWANT;
 		error = rwsleep_nsec(cpipe, &pipe_lock, PRIBIO | PCATCH,
-		    "pipelk", INFSLP);
+		    "pipeiolk", INFSLP);
 		if (error)
 			return (error);
 	}
@@ -320,10 +320,10 @@ pipelock(struct pipe *cpipe)
 }
 
 /*
- * unlock a pipe I/O lock
+ * Unlock a pipe I/O lock.
  */
 void
-pipeunlock(struct pipe *cpipe)
+pipe_iounlock(struct pipe *cpipe)
 {
 	rw_assert_wrlock(&pipe_lock);
 	KASSERT(cpipe->pipe_state & PIPE_LOCK);
@@ -345,15 +345,15 @@ pipeunlock(struct pipe *cpipe)
  * destroyed while sleeping.
  */
 int
-pipe_sleep(struct pipe *cpipe, const char *wmesg)
+pipe_iosleep(struct pipe *cpipe, const char *wmesg)
 {
 	int error;
 
-	pipeunlock(cpipe);
+	pipe_iounlock(cpipe);
 	error = rwsleep_nsec(cpipe, &pipe_lock, PRIBIO | PCATCH, wmesg, INFSLP);
 	if (error)
 		return (error);
-	return (pipelock(cpipe));
+	return (pipe_iolock(cpipe));
 }
 
 void
@@ -386,7 +386,7 @@ pipe_read(struct file *fp, struct uio *uio, int fflags)
 
 	rw_enter_write(&pipe_lock);
 	++rpipe->pipe_busy;
-	error = pipelock(rpipe);
+	error = pipe_iolock(rpipe);
 	if (error) {
 		--rpipe->pipe_busy;
 		pipe_rundown(rpipe);
@@ -450,12 +450,12 @@ pipe_read(struct file *fp, struct uio *uio, int fflags)
 
 			/* Wait for more data. */
 			rpipe->pipe_state |= PIPE_WANTR;
-			error = pipe_sleep(rpipe, "piperd");
+			error = pipe_iosleep(rpipe, "piperd");
 			if (error)
 				goto unlocked_error;
 		}
 	}
-	pipeunlock(rpipe);
+	pipe_iounlock(rpipe);
 
 	if (error == 0)
 		getnanotime(&rpipe->pipe_atime);
@@ -496,7 +496,7 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	}
 
 	++wpipe->pipe_busy;
-	error = pipelock(wpipe);
+	error = pipe_iolock(wpipe);
 	if (error) {
 		--wpipe->pipe_busy;
 		pipe_rundown(wpipe);
@@ -623,7 +623,7 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 			pipeselwakeup(wpipe);
 
 			wpipe->pipe_state |= PIPE_WANTW;
-			error = pipe_sleep(wpipe, "pipewr");
+			error = pipe_iosleep(wpipe, "pipewr");
 			if (error)
 				goto unlocked_error;
 
@@ -637,7 +637,7 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 			}	
 		}
 	}
-	pipeunlock(wpipe);
+	pipe_iounlock(wpipe);
 
 unlocked_error:
 	--wpipe->pipe_busy;
