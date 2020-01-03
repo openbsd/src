@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.113 2019/12/31 14:09:56 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.114 2020/01/03 05:37:00 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -721,6 +721,25 @@ again:
 
 			knote_attach(kn);
 			if ((error = fops->f_attach(kn)) != 0) {
+				knote_drop(kn, p);
+				goto done;
+			}
+
+			/*
+			 * If this is a file descriptor filter, check if
+			 * fd was closed while the knote was being added.
+			 * knote_fdclose() has missed kn if the function
+			 * ran before kn appeared in kq_knlist.
+			 */
+			if (fops->f_isfd &&
+			    fd_checkclosed(fdp, kev->ident, kn->kn_fp)) {
+				/*
+				 * Drop the knote silently without error
+				 * because another thread might already have
+				 * seen it. This corresponds to the insert
+				 * happening in full before the close.
+				 */
+				kn->kn_fop->f_detach(kn);
 				knote_drop(kn, p);
 				goto done;
 			}

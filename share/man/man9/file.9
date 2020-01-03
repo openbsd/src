@@ -1,4 +1,4 @@
-.\"     $OpenBSD: file.9,v 1.21 2019/12/31 16:59:35 visa Exp $
+.\"     $OpenBSD: file.9,v 1.22 2020/01/03 05:37:00 visa Exp $
 .\"
 .\" Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 31 2019 $
+.Dd $Mdocdate: January 3 2020 $
 .Dt FALLOC 9
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .Nm FRELE ,
 .Nm fd_getfile ,
 .Nm fd_getfile_mode ,
+.Nm fd_checkclosed ,
 .Nm getsock ,
 .Nm getvnode
 .Nd an overview of file descriptor handling
@@ -50,6 +51,8 @@
 .Fn fd_getfile "struct filedesc *fdp" "int fd"
 .Ft struct file *
 .Fn fd_getfile_mode "struct filedesc *fdp" "int fd" "int mode"
+.Ft int
+.Fn fd_checkclosed "struct filedesc *fdp" "int fd" "struct file *fp"
 .Ft int
 .Fn getsock "struct proc *p" "int fd" "struct file **fpp"
 .In sys/file.h
@@ -113,6 +116,13 @@ It also increases the descriptor's use count with
 is like
 .Fn fd_getfile
 but also checks if the file has been opened with the given mode.
+.Pp
+.Fn fd_checkclosed
+checks if file descriptor
+.Fa fd
+has been closed and no longer points to file
+.Fa fp .
+The file must have been retrieved from the descriptor previously.
 .Pp
 The files are extracted from the process context using the
 function

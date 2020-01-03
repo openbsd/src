@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.192 2019/08/05 08:35:59 anton Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.193 2020/01/03 05:37:00 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -262,6 +262,18 @@ fd_getfile_mode(struct filedesc *fdp, int fd, int mode)
 	return (fp);
 }
 
+int
+fd_checkclosed(struct filedesc *fdp, int fd, struct file *fp)
+{
+	int closed;
+
+	mtx_enter(&fdp->fd_fplock);
+	KASSERT(fd < fdp->fd_nfiles);
+	closed = (fdp->fd_ofiles[fd] != fp);
+	mtx_leave(&fdp->fd_fplock);
+	return (closed);
+}
+
 /*
  * System calls on descriptors.
  */
@@ -396,7 +408,7 @@ sys_fcntl(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	struct filedesc *fdp = p->p_fd;
-	struct file *fp, *fp2;
+	struct file *fp;
 	struct vnode *vp;
 	int i, tmp, newmin, flg = F_POSIX;
 	struct flock fl;
@@ -570,8 +582,7 @@ restart:
 			goto out;
 		}
 
-		fp2 = fd_getfile(fdp, fd);
-		if (fp != fp2) {
+		if (fd_checkclosed(fdp, fd, fp)) {
 			/*
 			 * We have lost the race with close() or dup2();
 			 * unlock, pretend that we've won the race and that
@@ -583,8 +594,6 @@ restart:
 			VOP_ADVLOCK(vp, fdp, F_UNLCK, &fl, F_POSIX);
 			fl.l_type = F_UNLCK;
 		}
-		if (fp2 != NULL)
-			FRELE(fp2, p);
 		goto out;
 
 
