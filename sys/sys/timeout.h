@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.34 2019/12/25 00:35:29 cheloha Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.35 2020/01/03 01:16:12 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -67,7 +67,7 @@ struct timeout {
 /*
  * flags in the to_flags field.
  */
-#define TIMEOUT_NEEDPROCCTX	0x01	/* needs a process context */
+#define TIMEOUT_PROC		0x01	/* needs a process context */
 #define TIMEOUT_ONQUEUE		0x02	/* on any timeout queue */
 #define TIMEOUT_INITIALIZED	0x04	/* initialized */
 #define TIMEOUT_TRIGGERED	0x08	/* running or ran */

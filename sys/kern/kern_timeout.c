@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.67 2019/12/25 00:15:36 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.68 2020/01/03 01:16:12 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -233,7 +233,7 @@ void
 timeout_set_proc(struct timeout *new, void (*fn)(void *), void *arg)
 {
 	timeout_set(new, fn, arg);
-	SET(new->to_flags, TIMEOUT_NEEDPROCCTX);
+	SET(new->to_flags, TIMEOUT_PROC);
 }
 
 int
@@ -389,7 +389,7 @@ timeout_del_barrier(struct timeout *to)
 {
 	int removed;
 
-	timeout_sync_order(ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX));
+	timeout_sync_order(ISSET(to->to_flags, TIMEOUT_PROC));
 
 	removed = timeout_del(to);
 	if (!removed)
@@ -401,7 +401,7 @@ timeout_del_barrier(struct timeout *to)
 void
 timeout_barrier(struct timeout *to)
 {
-	int needsproc = ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX);
+	int needsproc = ISSET(to->to_flags, TIMEOUT_PROC);
 
 	timeout_sync_order(needsproc);
 
@@ -476,7 +476,7 @@ timeout_run(struct timeout *to)
 
 	fn = to->to_func;
 	arg = to->to_arg;
-	needsproc = ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX);
+	needsproc = ISSET(to->to_flags, TIMEOUT_PROC);
 
 	mtx_leave(&timeout_mutex);
 	timeout_sync_enter(needsproc);
@@ -521,7 +521,7 @@ softclock(void *arg)
 		}
 		if (ISSET(to->to_flags, TIMEOUT_SCHEDULED) && delta < 0)
 			tostat.tos_late++;
-		if (ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX)) {
+		if (ISSET(to->to_flags, TIMEOUT_PROC)) {
 			CIRCQ_INSERT_TAIL(&timeout_proc, &to->to_list);
 			needsproc = 1;
 			continue;
