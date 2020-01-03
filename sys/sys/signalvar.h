@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.36 2019/05/13 19:21:31 bluhm Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.37 2020/01/03 09:46:41 claudio Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -160,7 +160,6 @@ struct sigio_ref;
  */
 int	coredump(struct proc *p);
 void	execsigs(struct proc *p);
-void	csignal(pid_t pgid, int signum, uid_t uid, uid_t euid);
 int	issignal(struct proc *p);
 void	pgsigio(struct sigio_ref *sir, int sig, int checkctty);
 void	pgsignal(struct pgrp *pgrp, int sig, int checkctty);
