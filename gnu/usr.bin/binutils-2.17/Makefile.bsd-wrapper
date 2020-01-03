@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 2019/12/21 21:40:00 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 2020/01/03 03:50:44 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -64,6 +64,7 @@ CONFIGTARGET+=--without-gnu-as
 .endif
 
 all:	config.status
+.for t in all info
 	SUBDIRS='${SUBDIRS}' \
 	  CONFIGURE_HOST_MODULES='${CONFIGURE_HOST_MODULES}' \
 	  ${MAKE} ${XCFLAGS} \
@@ -74,7 +75,8 @@ all:	config.status
 	    BSDSRCDIR=${BSDSRCDIR} \
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
-	    INFO_HOST_MODULES='${INFO_HOST_MODULES}' all info
+	    INFO_HOST_MODULES='${INFO_HOST_MODULES}' $t
+.endfor
 
 .include <bsd.own.mk>
 
@@ -115,6 +117,7 @@ config.status: do-config
 
 # Need to pass SUBDIRS because of install-info
 install: maninstall
+.for t in install install-info
 	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} \
 	    ${DESTDIR}${PREFIX}/libdata/ldscripts
 	SUBDIRS='${INST_SUBDIRS}' ${MAKE} DESTDIR='${DESTDIR}' \
@@ -126,7 +129,8 @@ install: maninstall
 	    INSTALL_PROGRAM='${INSTALL} -c ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}' \
 	    INSTALL_DATA='${INSTALL} -c -o ${DOCOWN} -g ${DOCGRP} -m ${NONBINMODE}' \
 	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
-	      install install-info
+	      $t
+.endfor
 .if ${LINKER_VERSION:L} == "bfd"
 	rm -f ${DESTDIR}${PREFIX}/bin/ld
 	ln ${DESTDIR}${PREFIX}/bin/ld.bfd ${DESTDIR}${PREFIX}/bin/ld
