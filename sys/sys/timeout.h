@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.35 2020/01/03 01:16:12 cheloha Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.36 2020/01/03 02:16:38 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -101,17 +101,20 @@ int timeout_sysctl(void *, size_t *, void *, size_t);
 #define timeout_initialized(to) ((to)->to_flags & TIMEOUT_INITIALIZED)
 #define timeout_triggered(to) ((to)->to_flags & TIMEOUT_TRIGGERED)
 
-#define TIMEOUT_INITIALIZER(_f, _a) {					\
+#define TIMEOUT_INITIALIZER_FLAGS(fn, arg, flags) {			\
 	.to_list = { NULL, NULL },					\
-	.to_func = (_f),						\
-	.to_arg = (_a),							\
+	.to_func = (fn),						\
+	.to_arg = (arg),						\
 	.to_time = 0,							\
-	.to_flags = TIMEOUT_INITIALIZED					\
+	.to_flags = (flags) | TIMEOUT_INITIALIZED			\
 }
+
+#define TIMEOUT_INITIALIZER(_f, _a) TIMEOUT_INITIALIZER_FLAGS((_f), (_a), 0)
 
 struct bintime;
 
 void timeout_set(struct timeout *, void (*)(void *), void *);
+void timeout_set_flags(struct timeout *, void (*)(void *), void *, int);
 void timeout_set_proc(struct timeout *, void (*)(void *), void *);
 int timeout_add(struct timeout *, int);
 int timeout_add_tv(struct timeout *, const struct timeval *);

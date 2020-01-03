@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.68 2020/01/03 01:16:12 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.69 2020/01/03 02:16:38 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -224,16 +224,21 @@ timeout_proc_init(void)
 void
 timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 {
-	new->to_func = fn;
-	new->to_arg = arg;
-	new->to_flags = TIMEOUT_INITIALIZED;
+	timeout_set_flags(new, fn, arg, 0);
+}
+
+void
+timeout_set_flags(struct timeout *to, void (*fn)(void *), void *arg, int flags)
+{
+	to->to_func = fn;
+	to->to_arg = arg;
+	to->to_flags = flags | TIMEOUT_INITIALIZED;
 }
 
 void
 timeout_set_proc(struct timeout *new, void (*fn)(void *), void *arg)
 {
-	timeout_set(new, fn, arg);
-	SET(new->to_flags, TIMEOUT_PROC);
+	timeout_set_flags(new, fn, arg, TIMEOUT_PROC);
 }
 
 int
