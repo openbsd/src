@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.22 2020/01/04 15:45:46 kn Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.23 2020/01/04 18:45:26 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -78,7 +78,7 @@ Only check the configuration file for validity.
 List configurations stored in non-volatile storage.
 Indicate the currently running configuration,
 and the configuration which will be used next
-(after rebooting the primary domain) if it differs from the currently running one.
+(after resetting the machine) if it differs from the currently running one.
 .It Cm list-io
 List available PCIe devices.
 .It Cm panic Ar domain
@@ -90,7 +90,7 @@ the default behaviour is to enter
 .Xr ddb 4 .
 .It Cm select Ar configuration
 Select the next logical domain configuration to use
-(after rebooting the primary domain).
+(after resetting the machine).
 .It Cm start Ar domain
 Start a guest domain.
 .It Cm status Op Ar domain
