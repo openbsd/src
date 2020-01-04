@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.29 2020/01/02 20:40:27 schwarze Exp $
+.\" $OpenBSD: dig.1,v 1.30 2020/01/04 00:27:11 schwarze Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2020 $
+.Dd $Mdocdate: January 4 2020 $
 .Dt DIG 1
 .Os
 .Sh NAME
@@ -386,8 +386,7 @@ Display the CLASS when printing the record.
 .Op Cm no Ns
 .Cm cmd
 .Xc
-Toggles the printing of the initial comment in the output identifying the
-version of
+Print an initial comment identifying the version of
 .Nm
 and the query options that have been applied.
 The default is
@@ -397,7 +396,7 @@ The default is
 .Op Cm no Ns
 .Cm comments
 .Xc
-Toggle the display of comment lines in the output.
+Display comment lines in the output.
 The default is
 .Cm +comments .
 .It Xo
@@ -448,10 +447,12 @@ for backward compatibility within the BIND 9.10 branch.
 .Op Cm no Ns
 .Cm crypto
 .Xc
-Toggle the display of cryptographic fields in DNSSEC records.
+Display cryptographic fields in DNSSEC records.
+The default is
+.Cm +crypto .
+.Pp
 The contents of these field are unnecessary to debug most DNSSEC validation
 failures and removing them makes it easier to see the common failures.
-The default is to display the fields.
 When omitted they are replaced by the string "[omitted]" or in the DNSKEY case
 the key id is displayed as the replacement, e.g. "[ key id = value ]".
 .It Xo
@@ -682,7 +683,7 @@ A synonym for
 .Op Cm no Ns
 .Cm recurse
 .Xc
-Toggle the setting of the RD (recursion desired) bit in the query.
+Set the RD (recursion desired) bit in the query.
 The default is
 .Cm +recurse ,
 which means
@@ -705,9 +706,15 @@ this does not include the initial query.
 .Op Cm no Ns
 .Cm rrcomments
 .Xc
-Toggle the display of per-record comments in the output (for example,
+Display per-record comments in the output (for example,
 human-readable key information about DNSKEY records).
-The default is not to print record comments unless multiline mode is active.
+The default is
+.Cm +rrcomments
+if
+.Cm +multiline
+mode is active or
+.Cm +norrcomments
+otherwise.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -762,7 +769,7 @@ mode is active.
 .Op Cm no Ns
 .Cm stats
 .Xc
-This query option toggles the printing of statistics:
+Print statistics:
 when the query was made, the size of the reply and so on.
 The default is
 .Cm +stats .
@@ -807,7 +814,7 @@ to less than 1 will result in a query timeout of 1 second being applied.
 .Op Cm no Ns
 .Cm trace
 .Xc
-Toggle tracing of the delegation path from the root name servers for the name
+Trace the delegation path from the root name servers for the name
 being looked up.
 The default is
 .Cm +notrace .
