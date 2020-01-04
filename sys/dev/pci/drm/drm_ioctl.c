@@ -700,14 +700,6 @@ drm_do_ioctl(struct drm_device *dev, int minor, u_long cmd, caddr_t data)
 	case FIONBIO:
 	case FIOASYNC:
 		return 0;
-
-	case TIOCSPGRP:
-		dev->buf_pgid = *(int *)data;
-		return 0;
-
-	case TIOCGPGRP:
-		*(int *)data = dev->buf_pgid;
-		return 0;
 	}
 
 	if ((nr >= DRM_CORE_IOCTL_COUNT) &&

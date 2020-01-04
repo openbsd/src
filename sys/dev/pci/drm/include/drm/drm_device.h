@@ -150,8 +150,6 @@ struct drm_device {
 
 	int			 num_crtcs;
 
-	pid_t			 buf_pgid;
-
 	struct drm_agp_head	*agp;
 	void			*dev_private;
 	struct address_space	*dev_mapping;
