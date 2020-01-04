@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.48 2016/09/15 02:00:18 dlg Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.49 2020/01/04 16:17:29 beck Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ uvm_analloc(void)
  * => we may lock the pageq's.
  */
 void
-uvm_anfree(struct vm_anon *anon)
+uvm_anfree_list(struct vm_anon *anon, struct pglist *pgl)
 {
 	struct vm_page *pg;
 
@@ -99,11 +99,20 @@ uvm_anfree(struct vm_anon *anon)
 			/* tell them to dump it when done */
 			atomic_setbits_int(&pg->pg_flags, PG_RELEASED);
 			return;
-		} 
+		}
 		pmap_page_protect(pg, PROT_NONE);
-		uvm_lock_pageq();	/* lock out pagedaemon */
-		uvm_pagefree(pg);	/* bye bye */
-		uvm_unlock_pageq();	/* free the daemon */
+		if (pgl != NULL) {
+			/*
+			 * clean page, and put on on pglist
+			 * for later freeing.
+			 */
+			uvm_pageclean(pg);
+			TAILQ_INSERT_HEAD(pgl, pg, pageq);
+		} else {
+			uvm_lock_pageq();	/* lock out pagedaemon */
+			uvm_pagefree(pg);	/* bye bye */
+			uvm_unlock_pageq();	/* free the daemon */
+		}
 	}
 	if (pg == NULL && anon->an_swslot != 0) {
 		/* this page is no longer only in swap. */
@@ -122,6 +131,12 @@ uvm_anfree(struct vm_anon *anon)
 	KASSERT(anon->an_swslot == 0);
 
 	pool_put(&uvm_anon_pool, anon);
+}
+
+void
+uvm_anfree(struct vm_anon *anon)
+{
+	uvm_anfree_list(anon, NULL);
 }
 
 /*

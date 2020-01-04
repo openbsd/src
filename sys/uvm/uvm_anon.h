@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.h,v 1.20 2016/05/08 11:52:32 stefan Exp $	*/
+/*	$OpenBSD: uvm_anon.h,v 1.21 2020/01/04 16:17:29 beck Exp $	*/
 /*	$NetBSD: uvm_anon.h,v 1.13 2000/12/27 09:17:04 chs Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ struct vm_aref {
 #ifdef _KERNEL
 struct vm_anon	*uvm_analloc(void);
 void		 uvm_anfree(struct vm_anon *);
+void 		 uvm_anfree_list(struct vm_anon *, struct pglist *);
 void		 uvm_anwait(void);
 void		 uvm_anon_init(void);
 void		 uvm_anon_dropswap(struct vm_anon *);

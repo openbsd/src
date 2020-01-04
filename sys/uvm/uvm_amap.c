@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.81 2019/07/18 23:47:33 cheloha Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.82 2020/01/04 16:17:29 beck Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -442,6 +442,7 @@ amap_wipeout(struct vm_amap *amap)
 	int slot;
 	struct vm_anon *anon;
 	struct vm_amap_chunk *chunk;
+	struct pglist pgl;
 
 	KASSERT(amap->am_ref == 0);
 
@@ -449,6 +450,9 @@ amap_wipeout(struct vm_amap *amap)
 		/* amap_swap_off will call us again. */
 		return;
 	}
+
+	TAILQ_INIT(&pgl);
+
 	amap_list_remove(amap);
 
 	AMAP_CHUNK_FOREACH(chunk, amap) {
@@ -468,10 +472,12 @@ amap_wipeout(struct vm_amap *amap)
 				 * we had the last reference to a vm_anon.
 				 * free it.
 				 */
-				uvm_anfree(anon);
+				uvm_anfree_list(anon, &pgl);
 			}
 		}
 	}
+	/* free the pages */
+	uvm_pglistfree(&pgl);
 
 	/* now we free the map */
 	amap->am_ref = 0;	/* ... was one */
