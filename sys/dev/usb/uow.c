@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.35 2016/11/06 12:58:01 mpi Exp $	*/
+/*	$OpenBSD: uow.c,v 1.36 2020/01/04 11:36:05 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -424,8 +424,8 @@ uow_cmd(struct uow_softc *sc, int type, int cmd, int param)
 	}
 
 again:
-	if (tsleep(sc->sc_regs, PRIBIO, "uowcmd",
-	    (UOW_TIMEOUT * hz) / 1000) != 0) {
+	if (tsleep_nsec(sc->sc_regs, PRIBIO, "uowcmd",
+	    MSEC_TO_NSEC(UOW_TIMEOUT)) != 0) {
 		printf("%s: cmd timeout, type 0x%02x, cmd 0x%04x, "
 		    "param 0x%04x\n", sc->sc_dev.dv_xname, type, cmd,
 		    param);
