@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.16 2019/11/19 10:28:18 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.17 2020/01/04 14:17:55 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -734,7 +734,8 @@ cms_main(int argc, char **argv)
 		}
 		if (certsoutfile) {
 			STACK_OF(X509) *allcerts;
-			allcerts = CMS_get1_certs(cms);
+			if ((allcerts = CMS_get1_certs(cms)) == NULL)
+				goto end;
 			if (!save_certs(certsoutfile, allcerts)) {
 				BIO_printf(bio_err,
 				    "Error writing certs to %s\n",
@@ -816,7 +817,8 @@ cms_main(int argc, char **argv)
 				goto end;
 			if (kparam != NULL) {
 				EVP_PKEY_CTX *pctx;
-				pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
+				if ((pctx = CMS_RecipientInfo_get0_pkey_ctx(ri)) == NULL)
+					goto end;
 				if (!cms_set_pkey_param(pctx, kparam->param))
 					goto end;
 			}
@@ -878,7 +880,8 @@ cms_main(int argc, char **argv)
 			if (!cms)
 				goto end;
 			if (econtent_type)
-				CMS_set1_eContentType(cms, econtent_type);
+				if (!CMS_set1_eContentType(cms, econtent_type))
+					goto end;
 
 			if (rr_to) {
 				rr = make_receipt_request(rr_to, rr_allorfirst,
@@ -917,7 +920,8 @@ cms_main(int argc, char **argv)
 				goto end;
 			if (kparam != NULL) {
 				EVP_PKEY_CTX *pctx;
-				pctx = CMS_SignerInfo_get0_pkey_ctx(si);
+				if ((pctx = CMS_SignerInfo_get0_pkey_ctx(si)) == NULL)
+					goto end;
 				if (!cms_set_pkey_param(pctx, kparam->param))
 					goto end;
 			}
@@ -997,7 +1001,8 @@ cms_main(int argc, char **argv)
 		}
 		if (signerfile) {
 			STACK_OF(X509) *signers;
-			signers = CMS_get0_signers(cms);
+			if ((signers = CMS_get0_signers(cms)) == NULL)
+				goto end;
 			if (!save_certs(signerfile, signers)) {
 				BIO_printf(bio_err,
 				    "Error writing signers to %s\n",
@@ -1019,8 +1024,9 @@ cms_main(int argc, char **argv)
 		}
 	} else {
 		if (noout) {
-			if (print)
-				CMS_ContentInfo_print_ctx(out, cms, 0, NULL);
+			if (print &&
+			    !CMS_ContentInfo_print_ctx(out, cms, 0, NULL))
+				goto end;
 		} else if (outformat == FORMAT_SMIME) {
 			if (to)
 				BIO_printf(out, "To: %s\n", to);
@@ -1153,7 +1159,8 @@ receipt_request_print(BIO *out, CMS_ContentInfo *cms)
 	ASN1_STRING *scid;
 	int i, rv;
 
-	sis = CMS_get0_SignerInfos(cms);
+	if ((sis = CMS_get0_SignerInfos(cms)) == NULL)
+		return;
 	for (i = 0; i < sk_CMS_SignerInfo_num(sis); i++) {
 		si = sk_CMS_SignerInfo_value(sis, i);
 		rv = CMS_get1_ReceiptRequest(si, &rr);
@@ -1242,8 +1249,11 @@ make_receipt_request(STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
 			goto err;
 	} else
 		rct_from = NULL;
-	rr = CMS_ReceiptRequest_create0(NULL, -1, rr_allorfirst, rct_from,
-	    rct_to);
+
+	if ((rr = CMS_ReceiptRequest_create0(NULL, -1, rr_allorfirst, rct_from,
+	    rct_to)) == NULL)
+		goto err;
+
 	return rr;
 
  err:
