@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.30 2020/01/04 00:27:11 schwarze Exp $
+.\" $OpenBSD: dig.1,v 1.31 2020/01/04 11:02:55 schwarze Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -314,23 +314,19 @@ Set the "aa" flag in the query.
 .Op Cm no Ns
 .Cm additional
 .Xc
-Display the additional section of a reply.
-The default is
-.Cm +additional .
+Display the additional section of a reply (on by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm adflag
 .Xc
-Set the AD (authentic data) bit in the query.
+Set the AD (authentic data) bit in the query (on by default).
 This requests the server to return whether all of the answer and authority
 sections have all been validated as secure according to the security policy of
 the server.
 AD=1 indicates that all records have been validated as secure and the answer is
 not from an OPT-OUT range.
 AD=0 indicates that some part of the answer was insecure or not validated.
-The default is
-.Cm +adflag .
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -342,25 +338,20 @@ Set or clear all display flags.
 .Op Cm no Ns
 .Cm answer
 .Xc
-Display the answer section of a reply.
-The default is
-.Cm +answer .
+Display the answer section of a reply (on by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm authority
 .Xc
-Display the authority section of a reply.
-The default is
-.Cm +authority .
+Display the authority section of a reply (on by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm besteffort
 .Xc
-Attempt to display the contents of messages which are malformed.
-The default is
-.Cm +besteffort .
+Attempt to display the contents of messages which are malformed (on by
+default).
 .It Cm +bufsize Ns = Ns Ar #
 Set the UDP message buffer size advertised using EDNS0 to
 .Ar #
@@ -388,17 +379,13 @@ Display the CLASS when printing the record.
 .Xc
 Print an initial comment identifying the version of
 .Nm
-and the query options that have been applied.
-The default is
-.Cm +cmd .
+and the query options that have been applied (on by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm comments
 .Xc
-Display comment lines in the output.
-The default is
-.Cm +comments .
+Display comment lines in the output (on by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -406,11 +393,10 @@ The default is
 .Op = Ns Ar value
 .Xc
 Send a COOKIE EDNS option, containing an optional
-.Ar value .
+.Ar value
+(off by default).
 Replaying a COOKIE from a previous response will allow the server to
 identify a previous client.
-The default is
-.Cm +nocookie .
 .Pp
 .Cm +cookie
 is automatically set when
@@ -447,10 +433,7 @@ for backward compatibility within the BIND 9.10 branch.
 .Op Cm no Ns
 .Cm crypto
 .Xc
-Display cryptographic fields in DNSSEC records.
-The default is
-.Cm +crypto .
-.Pp
+Display cryptographic fields in DNSSEC records (on by default).
 The contents of these field are unnecessary to debug most DNSSEC validation
 failures and removing them makes it easier to see the common failures.
 When omitted they are replaced by the string "[omitted]" or in the DNSKEY case
@@ -510,9 +493,7 @@ By default, no Z bits are set.
 .Op Cm no Ns
 .Cm ednsnegotiation
 .Xc
-Enable EDNS version negotiation.
-The default is
-.Cm +noednsnegotiation .
+Enable EDNS version negotiation (off by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -545,8 +526,7 @@ Send an EDNS Expire option.
 .Cm fail
 .Xc
 Do not try the next server if you receive a SERVFAIL.
-The default is
-.Cm +fail ,
+This option is on by default,
 which is the reverse of normal stub resolver behavior.
 .It Xo
 .Cm + Ns
@@ -573,18 +553,17 @@ does not support IDN.
 .Op Cm no Ns
 .Cm ignore
 .Xc
-Ignore truncation in UDP responses instead of retrying with TCP.
-The default is
-.Cm +noignore .
+Ignore truncation in UDP responses.
+This option is off by default, which means truncated responses
+cause retrying with TCP.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm keepopen
 .Xc
-Keep the TCP socket open between queries and reuse it rather than creating a new
-TCP socket for each lookup.
-The default is
-.Cm +nokeepopen .
+Keep the TCP socket open between queries and reuse it.
+This option is off by default, which means that a new TCP socket
+is created for each lookup.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -592,10 +571,8 @@ The default is
 .Xc
 Print records like the SOA records in a verbose multi-line format with
 human-readable comments.
-The default is
-.Cm +nomultiline ,
-which prints each record on a single line to facilitate machine
-parsing of the
+This option is off by default, which means that each record is
+printed on a single line to facilitate machine parsing of the
 .Nm
 output.
 .It Cm +ndots Ns = Ns Ar #
@@ -640,9 +617,8 @@ zone.
 .Xc
 Print only one (starting) SOA record when performing an
 .Cm AXFR .
-The default is
-.Cm +noonesoa ,
-which prints both the starting and the ending SOA records.
+This option is off by default, which means that both the starting
+and the ending SOA records are printed.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -656,17 +632,14 @@ The default value is QUERY (0).
 .Op Cm no Ns
 .Cm qr
 .Xc
-Print the query as it is sent.
-The default is
-.Cm +noqr .
+Print the query as it is sent (off by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm question
 .Xc
-Print the question section of a query as a comment when an answer is returned.
-The default is
-.Cm +question .
+Print the question section of a query as a comment when an answer
+is returned (on by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -683,12 +656,7 @@ A synonym for
 .Op Cm no Ns
 .Cm recurse
 .Xc
-Set the RD (recursion desired) bit in the query.
-The default is
-.Cm +recurse ,
-which means
-.Nm
-normally sends recursive queries.
+Set the RD (recursion desired) bit in the query (on by default).
 Recursion is automatically disabled when the
 .Cm +nssearch
 or
@@ -722,10 +690,7 @@ otherwise.
 .Xc
 Use the search list defined by the searchlist or domain directive in
 .Xr resolv.conf 5 ,
-if any.
-The default is
-.Cm +nosearch .
-.Pp
+if any (off by default).
 \&'ndots' from
 .Xr resolv.conf 5
 (default 1), which may be overridden by
@@ -737,10 +702,7 @@ search is eventually performed or not.
 .Op Cm no Ns
 .Cm short
 .Xc
-Provide a terse answer.
-The default is
-.Cm +noshort ,
-printing the answer in a verbose form.
+Provide a terse answer (off by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -770,9 +732,7 @@ mode is active.
 .Cm stats
 .Xc
 Print statistics:
-when the query was made, the size of the reply and so on.
-The default is
-.Cm +stats .
+when the query was made, the size of the reply and so on (on by default).
 .It Xo
 .Cm +subnet Ns = Ns
 .Ar addr Ns
@@ -815,9 +775,7 @@ to less than 1 will result in a query timeout of 1 second being applied.
 .Cm trace
 .Xc
 Trace the delegation path from the root name servers for the name
-being looked up.
-The default is
-.Cm +notrace .
+being looked up (off by default).
 .Pp
 When tracing is enabled,
 .Nm
