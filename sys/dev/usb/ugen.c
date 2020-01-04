@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.100 2019/12/31 13:48:31 visa Exp $ */
+/*	$OpenBSD: ugen.c,v 1.101 2020/01/04 11:37:33 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -510,8 +510,8 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			}
 			sce->state |= UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: sleep on %p\n", sce));
-			error = tsleep(sce, PZERO | PCATCH, "ugenri",
-			    (sce->timeout * hz) / 1000);
+			error = tsleep_nsec(sce, PZERO | PCATCH, "ugenrintr",
+			    MSEC_TO_NSEC(sce->timeout));
 			sce->state &= ~UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
 			if (usbd_is_dying(sc->sc_udev))
@@ -582,8 +582,8 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			}
 			sce->state |= UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: sleep on %p\n", sce));
-			error = tsleep(sce, PZERO | PCATCH, "ugenri",
-			    (sce->timeout * hz) / 1000);
+			error = tsleep_nsec(sce, PZERO | PCATCH, "ugenriso",
+			    MSEC_TO_NSEC(sce->timeout));
 			sce->state &= ~UGEN_ASLP;
 			DPRINTFN(5, ("ugenread: woke, error=%d\n", error));
 			if (usbd_is_dying(sc->sc_udev))
