@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.145 2019/11/25 11:33:51 mpi Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.146 2020/01/04 16:22:36 beck Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -641,7 +641,7 @@ softdep_process_worklist(struct mount *matchmnt)
 	loopcount = 1;
 	getmicrouptime(&starttime);
 	while (num_on_worklist > 0) {
-		matchcnt += process_worklist_item(matchmnt, 0);
+		matchcnt += process_worklist_item(matchmnt, LK_NOWAIT);
 
 		/*
 		 * If a umount operation wants to run the worklist
