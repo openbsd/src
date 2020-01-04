@@ -1,0 +1,155 @@
+$OpenBSD: OpenBSD::style.pod,v 1.1 2020/01/04 13:48:49 schwarze Exp $
+
+=head1 NAME
+
+OpenBSD::style - Perl source file style guide
+
+=head1 DESCRIPTION
+
+This file specifies the preferred style for Perl source files
+in the OpenBSD source tree.
+
+The suggestions in L<style(9)> also apply as far as they make sense
+for Perl code and unless they are overridden in the present manual page.
+
+Just as for L<style(9)>, indentation is an 8 character tab,
+and statements continuing on the next line are indented
+by four more spaces.
+
+=head2 Subroutines and methods
+
+Prefer object-oriented over procedural style for new code.
+Define a package under either C<OpenBSD::> or C<DPB::>.
+If no state variables are needed, call methods directly on the class name.
+Otherwise, define the state variables as member variables
+and call methods on a constructed object.
+Name the constructor new() unless there are better options.
+
+	my $pkgpath = DPB::PkgPath->new('devel/quirks');
+	say "Normalized version is ", $pkgpath->fullpkgpath;
+
+	$state->errsay(OpenBSD::Temp->last_error);
+
+Inside methods, call the object C<$self> unless there are reasons not to.
+
+For functions with multiple parameters,
+use list assignment to retrieve the arguments:
+
+	sub m3
+	{
+		my ($self, $p1, $p2) = @_;
+		...
+	}
+
+Usually, there is no need to check the number of arguments.
+
+For functions with exactly one parameter, one can alternatively
+retrieve the argument with the shift() function:
+
+	sub width
+	{
+		my $self = shift;
+		...
+	}
+
+Because it takes no argument apart from the object itself, calling
+such a method doesn't need trailing empty parentheses:
+
+	my $columns = $object->width;
+
+If a function passes on an arbitrary number of arguments
+to another function:
+
+	sub wrapper_method
+	{
+		my $self = shift;
+		...
+		do_something_with(@_);
+	}
+
+Mark the last expression at the end of a function with an explicit
+B<return> unless the function is is not intended to return anything.
+
+Avoid using the wantarray() function except as an optimzation;
+it should not change the semantics of the subroutine.
+
+
+Let methods that tweak an object return the object itself,
+such that methods can be chained:
+
+	$object->polish->paint('blue')->attach(@decorations);
+
+Since there are no access control restrictions in Perl,
+simply mark internal methods by prefixing their names with C<_>.
+
+Treat anonymous subroutines just like other code,
+indenting them by one tab:
+
+	my $s = sub {
+		my $self = shift;
+		...
+		};
+
+When passing an anonymous function as an argument, start it on a new line:
+
+	f($a1, $a2,
+	    sub {
+		my $self = shift;
+		...
+		});
+
+=head2 Files and packages
+
+Putting several closely related classes
+into the same source file is fine.
+
+Avoid multiple inheritance unless absolutely necessary
+because it almost always turns into a mess.
+Including some behavior from a different class (mixin)
+is best done on a per-method basis.
+Delegating from one method of one class to a method of another class,
+passing C<@_> completely unchanged, can be done with the following syntax:
+
+	package Borrower;
+
+	sub visit_notary
+	{
+		&Lender::visit_notary;  # no parentheses here
+	}
+
+=head2 Data structures
+
+Autovivification is welcome:
+
+	push @{$self->{list}}, $value;
+
+is fine without defining C<$self-E<gt>{list}> first.
+Note that
+
+	if (@{$self->{list}} > 0)
+
+will not autovivify C<$self-E<gt>{list}>,
+so it can be used to check that the list exists and is not empty
+without testing C<if (exists $self-E<gt>{list})> first.
+
+Don't put quotes around hash subscripts unless necessary;
+they are not necessary for simple identifiers that are not keywords.
+Avoid using keywords as hash keys.
+
+Avoid needless arrows in chained lookups.
+Rather than C<$self-E<gt>{a}-E<gt>{b}>, write:
+
+	$self->{a}{b}
+
+=head2 Syntax details
+
+This style guide makes no recommendation to put parentheses
+where they are not required.
+For example, calling built-in or prototyped functions
+does not require parentheses.
+
+Modern Perl operators are preferred.
+Rather than C<defined $value or $value = $something;>
+or C<$value = $something unless defined $value;>, write:
+
+	$value //= $something;
