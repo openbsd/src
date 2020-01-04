@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1905 2020/01/03 00:51:55 dlg Exp $
+$OpenBSD: pcidevs,v 1.1906 2020/01/04 01:34:24 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -692,143 +692,143 @@ product ALTIMA AC9100		0x03ea	AC9100
 product ALTIMA AC1003		0x03eb	AC1003
 
 /* AMD products */
-product AMD AMD64_0F_HT		0x1100	AMD64 0Fh HyperTransport
-product AMD AMD64_0F_ADDR	0x1101	AMD64 0Fh Address Map
-product AMD AMD64_0F_DRAM	0x1102	AMD64 0Fh DRAM Cfg
-product AMD AMD64_0F_MISC	0x1103	AMD64 0Fh Misc Cfg
-product AMD AMD64_10_HT		0x1200	AMD64 10h HyperTransport
-product AMD AMD64_10_ADDR	0x1201	AMD64 10h Address Map
-product AMD AMD64_10_DRAM	0x1202	AMD64 10h DRAM Cfg
-product AMD AMD64_10_MISC	0x1203	AMD64 10h Misc Cfg
-product AMD AMD64_10_LINK	0x1204	AMD64 10h Link Cfg
-product AMD AMD64_11_HT		0x1300	AMD64 11h HyperTransport
-product AMD AMD64_11_ADDR	0x1301	AMD64 11h Address Map
-product AMD AMD64_11_DRAM	0x1302	AMD64 11h DRAM Cfg
-product AMD AMD64_11_MISC	0x1303	AMD64 11h Misc Cfg
-product AMD AMD64_11_LINK	0x1304	AMD64 11h Link Cfg
-product AMD AMD64_15_1x_LINK	0x1400	AMD64 15/1xh Link Cfg
-product AMD AMD64_15_1x_ADDR	0x1401	AMD64 15/1xh Address Map
-product AMD AMD64_15_1x_DRAM	0x1402	AMD64 15/1xh DRAM Cfg
-product AMD AMD64_15_1x_MISC	0x1403	AMD64 15/1xh Misc Cfg
-product AMD AMD64_15_1x_CPU_PM	0x1404	AMD64 15/1xh CPU Power
-product AMD AMD64_15_1x_NB_PM	0x1405	AMD64 15/1xh NB Power
-product AMD AMD64_15_1x_HB	0x1410	AMD64 15/1xh Host
-product AMD AMD64_15_1x_PCIE_1	0x1412	AMD64 15/1xh PCIE
-product AMD AMD64_15_1x_PCIE_2	0x1413	AMD64 15/1xh PCIE
-product AMD AMD64_15_1x_PCIE_3	0x1414	AMD64 15/1xh PCIE
-product AMD AMD64_15_1x_PCIE_4	0x1415	AMD64 15/1xh PCIE
-product AMD AMD64_15_1x_PCIE_5	0x1416	AMD64 15/1xh PCIE
-product AMD AMD64_15_1x_PCIE_6	0x1417	AMD64 15/1xh PCIE
-product AMD AMD64_15_1x_PCIE_7	0x1418	AMD64 15/1xh PCIE
-product AMD AMD64_15_1x_IOMMU	0x1419	AMD64 15/1xh IOMMU
-product AMD AMD64_15_3X_LINK	0x141a	AMD64 15h Link Cfg
-product AMD AMD64_15_3X_ADDR	0x141b	AMD64 15h Address Map
-product AMD AMD64_15_3X_DRAM	0x141c	AMD64 15h DRAM Cfg
-product AMD AMD64_15_3X_MISC	0x141d	AMD64 15h Misc Cfg
-product AMD AMD64_15_3X_CPU_PM	0x141e	AMD64 15h CPU Power
-product AMD AMD64_15_3X_MISC_2	0x141f	AMD64 15h Misc Cfg
-product AMD AMD64_15_3X_RC	0x1422	AMD64 15h Root Complex
-product AMD AMD64_15_3X_IOMMU	0x1423	AMD64 15h IOMMU
-product AMD AMD64_15_3X_PCIE_1	0x1424	AMD64 15h PCIE
-product AMD AMD64_15_3X_PCIE_2	0x1425	AMD64 15h PCIE
-product AMD AMD64_15_3X_PCIE_3	0x1426	AMD64 15h PCIE
-product AMD AMD64_16_PCIE	0x1439	AMD64 16h PCIE
-product AMD AMD64_17_RC		0x1450	AMD64 17h Root Complex
-product AMD AMD64_17_IOMMU	0x1451	AMD64 17h IOMMU
-product AMD AMD64_17_PCIE_1	0x1452	AMD64 17h PCIE
-product AMD AMD64_17_PCIE_2	0x1453	AMD64 17h PCIE
-product AMD AMD64_17_PCIE_3	0x1454	AMD64 17h PCIE
-product AMD AMD64_17_CCP_1	0x1456	AMD64 17h Crypto
-product AMD AMD64_17_HDA	0x1457	AMD64 17h HD Audio
-product AMD AMD64_17_XHCI_1	0x145c	AMD64 17h xHCI
-product AMD AMD64_17_XHCI_2	0x145f	AMD64 17h xHCI
-product AMD AMD64_17_DF_1	0x1460	AMD64 17h Data Fabric
-product AMD AMD64_17_DF_2	0x1461	AMD64 17h Data Fabric
-product AMD AMD64_17_DF_3	0x1462	AMD64 17h Data Fabric
-product AMD AMD64_17_DF_4	0x1463	AMD64 17h Data Fabric
-product AMD AMD64_17_DF_5	0x1464	AMD64 17h Data Fabric
-product AMD AMD64_17_DF_6	0x1465	AMD64 17h Data Fabric
-product AMD AMD64_17_DF_7	0x1466	AMD64 17h Data Fabric
-product AMD AMD64_17_DF_8	0x1467	AMD64 17h Data Fabric
-product AMD AMD64_17_CCP_2	0x1468	AMD64 17h Crypto
-product AMD AMD64_17_PCIE_4	0x1470	AMD64 17h PCIE
-product AMD AMD64_17_PCIE_5	0x1471	AMD64 17h PCIE
-product AMD AMD64_17_3X_RC	0x1480	AMD64 17h/3xh Root Complex
-product AMD AMD64_17_3X_CCP	0x1486	AMD64 17h/3xh Crypto
-product AMD AMD64_14_HB		0x1510	AMD64 14h Host
-product AMD AMD64_14_PCIE_1	0x1512	AMD64 14h PCIE
-product AMD AMD64_14_PCIE_2	0x1513	AMD64 14h PCIE
-product AMD AMD64_14_PCIE_3	0x1514	AMD64 14h PCIE
-product AMD AMD64_14_PCIE_4	0x1515	AMD64 14h PCIE
-product AMD AMD64_14_PCIE_5	0x1516	AMD64 14h PCIE
-product AMD AMD64_16_LINK	0x1530	AMD64 16h Link Cfg
-product AMD AMD64_16_ADDR	0x1531	AMD64 16h Address Map
-product AMD AMD64_16_DRAM	0x1532	AMD64 16h DRAM Cfg
-product AMD AMD64_16_MISC	0x1533	AMD64 16h Misc Cfg
-product AMD AMD64_16_CPU_PM	0x1534	AMD64 16h CPU Power
-product AMD AMD64_16_HB		0x1536	AMD64 16h Host
-product AMD AMD64_16_CCP	0x1537	AMD64 16h Crypto
-product AMD AMD64_16_3X_RC	0x1566	AMD64 16h Root Complex
-product AMD AMD64_16_3X_HB	0x156b	AMD64 16h Host
-product AMD AMD64_15_6X_LINK	0x1570	AMD64 15h Link Cfg
-product AMD AMD64_15_6X_ADDR	0x1571	AMD64 15h Address Map
-product AMD AMD64_15_6X_DRAM	0x1572	AMD64 15h DRAM Cfg
-product AMD AMD64_15_6X_MISC	0x1573	AMD64 15h Misc Cfg
-product AMD AMD64_15_6X_CPU_PM	0x1574	AMD64 15h CPU Power
-product AMD AMD64_15_6X_MISC_2	0x1575	AMD64 15h Misc Cfg
-product AMD AMD64_15_6X_RC	0x1576	AMD64 15h Root Complex
-product AMD AMD64_15_6X_IOMMU	0x1577	AMD64 15h IOMMU
-product AMD AMD64_15_6X_PSP	0x1578	AMD64 15h PSP 2.0
-product AMD AMD64_15_6X_AUDIO	0x157a	AMD64 15h HD Audio
-product AMD AMD64_15_6X_HB_1	0x157b	AMD64 15h Host
-product AMD AMD64_15_6X_PCIE_1	0x157c	AMD64 15h PCIE
-product AMD AMD64_15_6X_HB_2	0x157d	AMD64 15h Host
-product AMD AMD64_16_3X_LINK	0x1580	AMD64 16h Link Cfg
-product AMD AMD64_16_3X_ADDR	0x1581	AMD64 16h Address Map
-product AMD AMD64_16_3X_DRAM	0x1582	AMD64 16h DRAM Cfg
-product AMD AMD64_16_3X_MISC	0x1583	AMD64 16h Misc Cfg
-product AMD AMD64_16_3X_CPU_PM	0x1584	AMD64 16h CPU Power
-product AMD AMD64_16_3X_MISC_2	0x1585	AMD64 16h Misc Cfg
-product AMD AMD64_17_1X_RC	0x15d0	AMD64 17h/1xh Root Complex
-product AMD AMD64_17_1X_IOMMU	0x15d1	AMD64 17h/1xh IOMMU
-product AMD AMD64_17_1X_PCIE_1	0x15d3	AMD64 17h/1xh PCIE
-product AMD AMD64_17_1X_PCIE_2	0x15db	AMD64 17h/1xh PCIE
-product AMD AMD64_17_1X_PCIE_3	0x15dc	AMD64 17h/1xh PCIE
-product AMD AMD64_17_1X_CCP	0x15df	AMD64 17h/1xh Crypto
-product AMD AMD64_17_1X_XHCI_1	0x15e0	AMD64 17h/1xh xHCI
-product AMD AMD64_17_1X_XHCI_2	0x15e1	AMD64 17h/1xh xHCI
-product AMD AMD64_17_1X_ACP	0x15e2	AMD64 17h/1xh I2S Audio
-product AMD AMD64_17_1X_HDA	0x15e3	AMD64 17h/1xh HD Audio
-product AMD AMD64_17_1X_DF_0	0x15e8	AMD64 17h/1xh Data Fabric
-product AMD AMD64_17_1X_DF_1	0x15e9	AMD64 17h/1xh Data Fabric
-product AMD AMD64_17_1X_DF_2	0x15ea	AMD64 17h/1xh Data Fabric
-product AMD AMD64_17_1X_DF_3	0x15eb	AMD64 17h/1xh Data Fabric
-product AMD AMD64_17_1X_DF_4	0x15ec	AMD64 17h/1xh Data Fabric
-product AMD AMD64_17_1X_DF_5	0x15ed	AMD64 17h/1xh Data Fabric
-product AMD AMD64_17_1X_DF_6	0x15ee	AMD64 17h/1xh Data Fabric
-product AMD AMD64_17_1X_DF_7	0x15ef	AMD64 17h/1xh Data Fabric
-product AMD AMD64_15_0x_LINK	0x1600	AMD64 15/0xh Link Cfg
-product AMD AMD64_15_0x_ADDR	0x1601	AMD64 15/0xh Address Map
-product AMD AMD64_15_0x_DRAM	0x1602	AMD64 15/0xh DRAM Cfg
-product AMD AMD64_15_0x_MISC	0x1603	AMD64 15/0xh Misc Cfg
-product AMD AMD64_15_0x_CPU_PM	0x1604	AMD64 15/0xh CPU Power
-product AMD AMD64_15_0x_HB	0x1605	AMD64 15/0xh Host
-product AMD AMD64_14_LINK	0x1700	AMD64 14h Link Cfg
-product AMD AMD64_14_ADDR	0x1701	AMD64 14h Address Map
-product AMD AMD64_14_DRAM	0x1702	AMD64 14h DRAM Cfg
-product AMD AMD64_14_MISC	0x1703	AMD64 14h Misc Cfg
-product AMD AMD64_14_CPU_PM	0x1704	AMD64 14h CPU Power
-product AMD AMD64_12_HB		0x1705	AMD64 12h Host
-product AMD AMD64_12_PCIE_1	0x1707	AMD64 12h PCIE
-product AMD AMD64_12_PCIE_2	0x1708	AMD64 12h PCIE
-product AMD AMD64_12_PCIE_3	0x1709	AMD64 12h PCIE
-product AMD AMD64_12_PCIE_4	0x170a	AMD64 12h PCIE
-product AMD AMD64_12_PCIE_5	0x170b	AMD64 12h PCIE
-product AMD AMD64_12_PCIE_6	0x170c	AMD64 12h PCIE
-product AMD AMD64_12_PCIE_7	0x170d	AMD64 12h PCIE
-product AMD AMD64_14_NB_PM	0x1716	AMD64 14h NB Power
-product AMD AMD64_14_RESERVED_1	0x1718	AMD64 14h Reserved
-product AMD AMD64_14_RESERVED_2	0x1719	AMD64 14h Reserved
+product AMD 0F_HT		0x1100	0Fh HyperTransport
+product AMD 0F_ADDR		0x1101	0Fh Address Map
+product AMD 0F_DRAM		0x1102	0Fh DRAM Cfg
+product AMD 0F_MISC		0x1103	0Fh Misc Cfg
+product AMD 10_HT		0x1200	10h HyperTransport
+product AMD 10_ADDR		0x1201	10h Address Map
+product AMD 10_DRAM		0x1202	10h DRAM Cfg
+product AMD 10_MISC		0x1203	10h Misc Cfg
+product AMD 10_LINK		0x1204	10h Link Cfg
+product AMD 11_HT		0x1300	11h HyperTransport
+product AMD 11_ADDR		0x1301	11h Address Map
+product AMD 11_DRAM		0x1302	11h DRAM Cfg
+product AMD 11_MISC		0x1303	11h Misc Cfg
+product AMD 11_LINK		0x1304	11h Link Cfg
+product AMD 15_1x_LINK		0x1400	15/1xh Link Cfg
+product AMD 15_1x_ADDR		0x1401	15/1xh Address Map
+product AMD 15_1x_DRAM		0x1402	15/1xh DRAM Cfg
+product AMD 15_1x_MISC		0x1403	15/1xh Misc Cfg
+product AMD 15_1x_CPU_PM	0x1404	15/1xh CPU Power
+product AMD 15_1x_NB_PM		0x1405	15/1xh NB Power
+product AMD 15_1x_HB		0x1410	15/1xh Host
+product AMD 15_1x_PCIE_1	0x1412	15/1xh PCIE
+product AMD 15_1x_PCIE_2	0x1413	15/1xh PCIE
+product AMD 15_1x_PCIE_3	0x1414	15/1xh PCIE
+product AMD 15_1x_PCIE_4	0x1415	15/1xh PCIE
+product AMD 15_1x_PCIE_5	0x1416	15/1xh PCIE
+product AMD 15_1x_PCIE_6	0x1417	15/1xh PCIE
+product AMD 15_1x_PCIE_7	0x1418	15/1xh PCIE
+product AMD 15_1x_IOMMU		0x1419	15/1xh IOMMU
+product AMD 15_3X_LINK		0x141a	15h Link Cfg
+product AMD 15_3X_ADDR		0x141b	15h Address Map
+product AMD 15_3X_DRAM		0x141c	15h DRAM Cfg
+product AMD 15_3X_MISC		0x141d	15h Misc Cfg
+product AMD 15_3X_CPU_PM	0x141e	15h CPU Power
+product AMD 15_3X_MISC_2	0x141f	15h Misc Cfg
+product AMD 15_3X_RC		0x1422	15h Root Complex
+product AMD 15_3X_IOMMU		0x1423	15h IOMMU
+product AMD 15_3X_PCIE_1	0x1424	15h PCIE
+product AMD 15_3X_PCIE_2	0x1425	15h PCIE
+product AMD 15_3X_PCIE_3	0x1426	15h PCIE
+product AMD 16_PCIE		0x1439	16h PCIE
+product AMD 17_RC		0x1450	17h Root Complex
+product AMD 17_IOMMU		0x1451	17h IOMMU
+product AMD 17_PCIE_1		0x1452	17h PCIE
+product AMD 17_PCIE_2		0x1453	17h PCIE
+product AMD 17_PCIE_3		0x1454	17h PCIE
+product AMD 17_CCP_1		0x1456	17h Crypto
+product AMD 17_HDA		0x1457	17h HD Audio
+product AMD 17_XHCI_1		0x145c	17h xHCI
+product AMD 17_XHCI_2		0x145f	17h xHCI
+product AMD 17_DF_1		0x1460	17h Data Fabric
+product AMD 17_DF_2		0x1461	17h Data Fabric
+product AMD 17_DF_3		0x1462	17h Data Fabric
+product AMD 17_DF_4		0x1463	17h Data Fabric
+product AMD 17_DF_5		0x1464	17h Data Fabric
+product AMD 17_DF_6		0x1465	17h Data Fabric
+product AMD 17_DF_7		0x1466	17h Data Fabric
+product AMD 17_DF_8		0x1467	17h Data Fabric
+product AMD 17_CCP_2		0x1468	17h Crypto
+product AMD 17_PCIE_4		0x1470	17h PCIE
+product AMD 17_PCIE_5		0x1471	17h PCIE
+product AMD 17_3X_RC		0x1480	17h/3xh Root Complex
+product AMD 17_3X_CCP		0x1486	17h/3xh Crypto
+product AMD 14_HB		0x1510	14h Host
+product AMD 14_PCIE_1		0x1512	14h PCIE
+product AMD 14_PCIE_2		0x1513	14h PCIE
+product AMD 14_PCIE_3		0x1514	14h PCIE
+product AMD 14_PCIE_4		0x1515	14h PCIE
+product AMD 14_PCIE_5		0x1516	14h PCIE
+product AMD 16_LINK		0x1530	16h Link Cfg
+product AMD 16_ADDR		0x1531	16h Address Map
+product AMD 16_DRAM		0x1532	16h DRAM Cfg
+product AMD 16_MISC		0x1533	16h Misc Cfg
+product AMD 16_CPU_PM		0x1534	16h CPU Power
+product AMD 16_HB		0x1536	16h Host
+product AMD 16_CCP		0x1537	16h Crypto
+product AMD 16_3X_RC		0x1566	16h Root Complex
+product AMD 16_3X_HB		0x156b	16h Host
+product AMD 15_6X_LINK		0x1570	15h Link Cfg
+product AMD 15_6X_ADDR		0x1571	15h Address Map
+product AMD 15_6X_DRAM		0x1572	15h DRAM Cfg
+product AMD 15_6X_MISC		0x1573	15h Misc Cfg
+product AMD 15_6X_CPU_PM	0x1574	15h CPU Power
+product AMD 15_6X_MISC_2	0x1575	15h Misc Cfg
+product AMD 15_6X_RC		0x1576	15h Root Complex
+product AMD 15_6X_IOMMU		0x1577	15h IOMMU
+product AMD 15_6X_PSP		0x1578	15h PSP 2.0
+product AMD 15_6X_AUDIO		0x157a	15h HD Audio
+product AMD 15_6X_HB_1		0x157b	15h Host
+product AMD 15_6X_PCIE_1	0x157c	15h PCIE
+product AMD 15_6X_HB_2		0x157d	15h Host
+product AMD 16_3X_LINK		0x1580	16h Link Cfg
+product AMD 16_3X_ADDR		0x1581	16h Address Map
+product AMD 16_3X_DRAM		0x1582	16h DRAM Cfg
+product AMD 16_3X_MISC		0x1583	16h Misc Cfg
+product AMD 16_3X_CPU_PM	0x1584	16h CPU Power
+product AMD 16_3X_MISC_2	0x1585	16h Misc Cfg
+product AMD 17_1X_RC		0x15d0	17h/1xh Root Complex
+product AMD 17_1X_IOMMU		0x15d1	17h/1xh IOMMU
+product AMD 17_1X_PCIE_1	0x15d3	17h/1xh PCIE
+product AMD 17_1X_PCIE_2	0x15db	17h/1xh PCIE
+product AMD 17_1X_PCIE_3	0x15dc	17h/1xh PCIE
+product AMD 17_1X_CCP		0x15df	17h/1xh Crypto
+product AMD 17_1X_XHCI_1	0x15e0	17h/1xh xHCI
+product AMD 17_1X_XHCI_2	0x15e1	17h/1xh xHCI
+product AMD 17_1X_ACP		0x15e2	17h/1xh I2S Audio
+product AMD 17_1X_HDA		0x15e3	17h/1xh HD Audio
+product AMD 17_1X_DF_0		0x15e8	17h/1xh Data Fabric
+product AMD 17_1X_DF_1		0x15e9	17h/1xh Data Fabric
+product AMD 17_1X_DF_2		0x15ea	17h/1xh Data Fabric
+product AMD 17_1X_DF_3		0x15eb	17h/1xh Data Fabric
+product AMD 17_1X_DF_4		0x15ec	17h/1xh Data Fabric
+product AMD 17_1X_DF_5		0x15ed	17h/1xh Data Fabric
+product AMD 17_1X_DF_6		0x15ee	17h/1xh Data Fabric
+product AMD 17_1X_DF_7		0x15ef	17h/1xh Data Fabric
+product AMD 15_0x_LINK		0x1600	15/0xh Link Cfg
+product AMD 15_0x_ADDR		0x1601	15/0xh Address Map
+product AMD 15_0x_DRAM		0x1602	15/0xh DRAM Cfg
+product AMD 15_0x_MISC		0x1603	15/0xh Misc Cfg
+product AMD 15_0x_CPU_PM	0x1604	15/0xh CPU Power
+product AMD 15_0x_HB		0x1605	15/0xh Host
+product AMD 14_LINK		0x1700	14h Link Cfg
+product AMD 14_ADDR		0x1701	14h Address Map
+product AMD 14_DRAM		0x1702	14h DRAM Cfg
+product AMD 14_MISC		0x1703	14h Misc Cfg
+product AMD 14_CPU_PM		0x1704	14h CPU Power
+product AMD 12_HB		0x1705	12h Host
+product AMD 12_PCIE_1		0x1707	12h PCIE
+product AMD 12_PCIE_2		0x1708	12h PCIE
+product AMD 12_PCIE_3		0x1709	12h PCIE
+product AMD 12_PCIE_4		0x170a	12h PCIE
+product AMD 12_PCIE_5		0x170b	12h PCIE
+product AMD 12_PCIE_6		0x170c	12h PCIE
+product AMD 12_PCIE_7		0x170d	12h PCIE
+product AMD 14_NB_PM		0x1716	14h NB Power
+product AMD 14_RESERVED_1	0x1718	14h Reserved
+product AMD 14_RESERVED_2	0x1719	14h Reserved
 product AMD A1100_HB_1		0x1a00	A1100 Host
 product AMD A1100_HB_2		0x1a01	A1100 Host
 product AMD A1100_PCIE_1	0x1a02	A1100 PCIE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksmn.c,v 1.3 2019/11/20 20:44:22 brynet Exp $	*/
+/*	$OpenBSD: ksmn.c,v 1.4 2020/01/04 01:34:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Bryan Steele <brynet@openbsd.org>
@@ -93,9 +93,9 @@ struct cfdriver ksmn_cd = {
 };
 
 static const struct pci_matchid ksmn_devices[] = {
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_RC },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_1X_RC },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_3X_RC }
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_RC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_1X_RC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_3X_RC }
 };
 
 int

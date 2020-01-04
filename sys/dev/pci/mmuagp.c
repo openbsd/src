@@ -254,7 +254,7 @@ mmuagp_attach(struct device *parent, struct device *self, void *aux)
 		tag = pci_make_tag(pa->pa_pc, 0, i, 3);
 		id = pci_conf_read(pa->pa_pc, tag, PCI_ID_REG);
 		if (PCI_VENDOR(id) == PCI_VENDOR_AMD &&
-		    PCI_PRODUCT(id) ==  PCI_PRODUCT_AMD_AMD64_0F_MISC) {
+		    PCI_PRODUCT(id) ==  PCI_PRODUCT_AMD_0F_MISC) {
 			msc->mctrl_tag[n] = tag;
 			n++;
 		}

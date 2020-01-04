@@ -1,4 +1,4 @@
-/*	$OpenBSD: amas.c,v 1.5 2014/06/15 11:43:24 sf Exp $	*/
+/*	$OpenBSD: amas.c,v 1.6 2020/01/04 01:34:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -132,9 +132,9 @@ struct cfdriver amas_cd = {
 };
 
 const struct pci_matchid amas_devices[] = {
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_0F_ADDR },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_10_ADDR },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_11_ADDR },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_0F_ADDR },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_10_ADDR },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_11_ADDR },
 };
 
 int
@@ -161,13 +161,13 @@ amas_attach(struct device *parent, struct device *self, void *aux)
 	amas->pa_pc = pa->pa_pc;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_AMD_AMD64_0F_ADDR:
+	case PCI_PRODUCT_AMD_0F_ADDR:
 		amas->family = AMAS_FAM_0Fh;
 		break;
-	case PCI_PRODUCT_AMD_AMD64_10_ADDR:
+	case PCI_PRODUCT_AMD_10_ADDR:
 		amas->family = AMAS_FAM_10h;
 		break;
-	case PCI_PRODUCT_AMD_AMD64_11_ADDR:
+	case PCI_PRODUCT_AMD_11_ADDR:
 		amas->family = AMAS_FAM_11h;
 		break;
 	}
