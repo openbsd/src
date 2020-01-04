@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.133 2019/10/15 05:21:16 jmatthew Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.134 2020/01/04 23:43:54 kn Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1455,7 +1455,7 @@ device_register(struct device *dev, void *aux)
 		u_int lun = bp->val[1];
 
 		if (bp->val[0] & 0xffffffff00000000 && bp->val[0] != -1) {
-			/* Fibre channel? */
+			/* Hardware RAID or Fibre channel? */
 			if (bp->val[0] == sl->port_wwn && lun == sl->lun) {
 				nail_bootdev(dev, bp);
 			}
