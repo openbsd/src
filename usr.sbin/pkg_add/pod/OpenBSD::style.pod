@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::style.pod,v 1.1 2020/01/04 13:48:49 schwarze Exp $
+$OpenBSD: OpenBSD::style.pod,v 1.2 2020/01/04 17:13:35 schwarze Exp $
 
 =head1 NAME
 
@@ -116,6 +116,14 @@ passing C<@_> completely unchanged, can be done with the following syntax:
 	{
 		&Lender::visit_notary;  # no parentheses here
 	}
+
+If a program often uses fork(), set
+
+	$DB::inhibit_exit = 0;
+
+right after each fork() and before the following exec(),
+such that a user trying to debug the main program isn't
+prompted each time one of the child processes exits.
 
 =head2 Data structures
 
