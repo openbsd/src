@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.17 2018/08/24 20:22:15 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.18 2020/01/04 13:57:43 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -225,6 +225,7 @@ dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 decerr:
 	DHerror(EVP_R_DECODE_ERROR);
 dherr:
+	ASN1_INTEGER_free(privkey);
 	DH_free(dh);
 	return 0;
 }
