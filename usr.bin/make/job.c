@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.145 2020/01/04 12:50:52 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.146 2020/01/04 16:16:37 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -148,6 +148,7 @@ static void may_continue_job(Job *);
 static void continue_job(Job *);
 static Job *reap_finished_job(pid_t);
 static bool reap_jobs(void);
+static void may_continue_heldback_jobs();
 
 static void loop_handle_running_jobs(void);
 static bool expensive_job(Job *);
@@ -746,9 +747,14 @@ remove_job(Job *job)
 {
 	nJobs--;
 	postprocess_job(job);
+}
+
+static void
+may_continue_heldback_jobs()
+{
 	while (!no_new_jobs) {
 		if (heldJobs != NULL) {
-			job = heldJobs;
+			Job *job = heldJobs;
 			heldJobs = heldJobs->next;
 			if (DEBUG(EXPENSIVE))
 				fprintf(stderr, "[%ld] cheap -> release %s\n",
@@ -803,6 +809,7 @@ reap_jobs(void)
 			job_handle_status(job, status);
 			determine_job_next_step(job);
 		}
+		may_continue_heldback_jobs();
 	}
 	/* sanity check, should not happen */
 	if (pid == -1 && errno == ECHILD && runningJobs != NULL)
