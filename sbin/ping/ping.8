@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.61 2018/11/10 23:44:53 dlg Exp $
+.\"	$OpenBSD: ping.8,v 1.62 2020/01/04 01:00:18 cheloha Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,7 +57,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: November 10 2018 $
+.Dd $Mdocdate: January 4 2020 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -69,7 +69,7 @@
 .Op Fl DdEefHLnqRv
 .Op Fl c Ar count
 .Op Fl I Ar ifaddr
-.Op Fl i Ar wait
+.Op Fl i Ar interval
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
 .Op Fl s Ar packetsize
@@ -83,7 +83,7 @@
 .Op Fl c Ar count
 .Op Fl h Ar hoplimit
 .Op Fl I Ar sourceaddr
-.Op Fl i Ar wait
+.Op Fl i Ar interval
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
 .Op Fl s Ar packetsize
@@ -160,13 +160,15 @@ Set the hoplimit.
 Specify the interface address to transmit from
 on machines with multiple interfaces.
 For unicast and multicast pings.
-.It Fl i Ar wait
-Wait
-.Ar wait
-seconds between sending each packet.
-The default is to wait for one second between each packet.
-The wait time may be fractional, but only the superuser may specify
-a value less than one second.
+.It Fl i Ar interval
+Send one packet every
+.Ar interval
+seconds.
+The default is one second.
+The
+.Ar interval
+may contain a fractional portion.
+Only the superuser may specify a value less than one second.
 This option is incompatible with the
 .Fl f
 option.

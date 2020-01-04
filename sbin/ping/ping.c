@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.238 2019/08/28 20:03:51 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.239 2020/01/04 01:00:18 cheloha Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -258,7 +258,7 @@ main(int argc, char *argv[])
 	char *e, *target, hbuf[NI_MAXHOST], *source = NULL;
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 	const char *errstr;
-	double intval;
+	double fraction, integral, seconds;
 	uid_t ouid, uid;
 	gid_t gid;
 	u_int rtableid = 0;
@@ -338,17 +338,21 @@ main(int argc, char *argv[])
 		case 'S':	/* deprecated */
 			source = optarg;
 			break;
-		case 'i':		/* wait between sending packets */
-			intval = strtod(optarg, &e);
-			if (*optarg == '\0' || *e != '\0')
-				errx(1, "illegal timing interval %s", optarg);
-			if (intval < 1 && ouid)
-				errx(1, "only root may use interval < 1s");
-			interval.tv_sec = (time_t)intval;
-			interval.tv_usec =
-			    (long)((intval - interval.tv_sec) * 1000000);
-			if (interval.tv_sec < 0)
-				errx(1, "illegal timing interval %s", optarg);
+		case 'i':		/* interval between packets */
+			seconds = strtod(optarg, &e);
+			if (*optarg == '\0' || *e != '\0' || seconds < 0.0)
+				errx(1, "interval is invalid: %s", optarg);
+			fraction = modf(seconds, &integral);
+			if (integral > UINT_MAX)
+				errx(1, "interval is too large: %s", optarg);
+			interval.tv_sec = integral;
+			interval.tv_usec = fraction * 1000000.0;
+			if (!timerisset(&interval))
+				errx(1, "interval is too small: %s", optarg);
+			if (interval.tv_sec < 1 && ouid != 0) {
+				errx(1, "only root may use an interval smaller"
+				    "than one second");
+			}
 			options |= F_INTERVAL;
 			break;
 		case 'L':
@@ -2182,13 +2186,13 @@ usage(void)
 	if (v6flag) {
 		fprintf(stderr,
 		    "usage: ping6 [-DdEefHLmnqv] [-c count] [-h hoplimit] "
-		    "[-I sourceaddr]\n\t[-i wait] [-l preload] [-p pattern] "
-		    "[-s packetsize] [-T toskeyword]\n\t"
-		    "[-V rtable] [-w maxwait] host\n");
+		    "[-I sourceaddr]\n\t[-i interval] [-l preload] "
+		    "[-p pattern] [-s packetsize] [-T toskeyword]\n"
+		    "\t[-V rtable] [-w maxwait] host\n");
 	} else {
 		fprintf(stderr,
-		    "usage: ping [-DdEefHLnqRv] [-c count] [-I ifaddr]"
-		    " [-i wait]\n\t[-l preload] [-p pattern] [-s packetsize]"
+		    "usage: ping [-DdEefHLnqRv] [-c count] [-I ifaddr] "
+		    "[-i interval]\n\t[-l preload] [-p pattern] [-s packetsize]"
 #ifndef	SMALL
 		    " [-T toskeyword]"
 #endif	/* SMALL */
