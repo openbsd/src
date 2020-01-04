@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.84 2019/06/14 13:20:49 kn Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.85 2020/01/04 11:35:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -906,7 +906,8 @@ upgt_eeprom_read(struct upgt_softc *sc)
 			    sc->sc_dev.dv_xname);
 			return (EIO);
 		}
-		if (tsleep(sc, 0, "eeprom_request", UPGT_USB_TIMEOUT)) {
+		if (tsleep_nsec(sc, 0, "eeprom_request",
+		    MSEC_TO_NSEC(UPGT_USB_TIMEOUT))) {
 			printf("%s: timeout while waiting for EEPROM data!\n",
 			    sc->sc_dev.dv_xname);
 			return (EIO);
