@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.77 2019/11/13 10:40:03 patrick Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.78 2020/01/04 11:40:56 mpi Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -606,6 +606,19 @@ uhidev_close(struct uhidev *scd)
 		return;
 	DPRINTF(("uhidev_close: close pipe\n"));
 
+	/* Disable interrupts. */
+	if (sc->sc_opipe != NULL) {
+		usbd_abort_pipe(sc->sc_opipe);
+		usbd_close_pipe(sc->sc_opipe);
+		sc->sc_opipe = NULL;
+	}
+
+	if (sc->sc_ipipe != NULL) {
+		usbd_abort_pipe(sc->sc_ipipe);
+		usbd_close_pipe(sc->sc_ipipe);
+		sc->sc_ipipe = NULL;
+	}
+
 	if (sc->sc_oxfer != NULL) {
 		usbd_free_xfer(sc->sc_oxfer);
 		sc->sc_oxfer = NULL;
@@ -619,19 +632,6 @@ uhidev_close(struct uhidev *scd)
 	if (sc->sc_ixfer != NULL) {
 		usbd_free_xfer(sc->sc_ixfer);
 		sc->sc_ixfer = NULL;
-	}
-
-	/* Disable interrupts. */
-	if (sc->sc_opipe != NULL) {
-		usbd_abort_pipe(sc->sc_opipe);
-		usbd_close_pipe(sc->sc_opipe);
-		sc->sc_opipe = NULL;
-	}
-
-	if (sc->sc_ipipe != NULL) {
-		usbd_abort_pipe(sc->sc_ipipe);
-		usbd_close_pipe(sc->sc_ipipe);
-		sc->sc_ipipe = NULL;
 	}
 
 	if (sc->sc_ibuf != NULL) {
