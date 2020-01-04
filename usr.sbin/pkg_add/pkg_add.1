@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.161 2019/12/04 10:53:27 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.162 2020/01/04 15:13:54 schwarze Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: December 4 2019 $
+.Dd $Mdocdate: January 4 2020 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -221,9 +221,12 @@ All paths recognize certain special sequences,
 which are expanded as follows:
 .Bl -tag -width "%m"
 .It %a
-The package architecture.
+The package architecture as returned by
+.Xr arch 1
+.Fl s .
 .It %v
-The operating system version.
+The operating system version in the format
+.Dq digit dot digit .
 .It %c
 Expands to the string
 .Qq snapshots
