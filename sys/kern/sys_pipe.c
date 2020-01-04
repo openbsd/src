@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.107 2020/01/03 15:18:02 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.108 2020/01/04 09:38:27 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -381,8 +381,8 @@ int
 pipe_read(struct file *fp, struct uio *uio, int fflags)
 {
 	struct pipe *rpipe = fp->f_data;
+	size_t nread = 0, size;
 	int error;
-	size_t size, nread = 0;
 
 	rw_enter_write(&pipe_lock);
 	++rpipe->pipe_busy;
@@ -480,11 +480,9 @@ unlocked_error:
 int
 pipe_write(struct file *fp, struct uio *uio, int fflags)
 {
-	int error = 0;
+	struct pipe *rpipe = fp->f_data, *wpipe;
 	size_t orig_resid;
-	struct pipe *wpipe, *rpipe;
-
-	rpipe = fp->f_data;
+	int error;
 
 	rw_enter_write(&pipe_lock);
 	wpipe = pipe_peer(rpipe);
