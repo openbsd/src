@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.32 2020/01/03 19:45:51 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.33 2020/01/04 15:45:46 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -129,7 +129,7 @@ usage(void)
 	fprintf(stderr, "usage:\t%1$s delete|select configuration\n"
 	    "\t%1$s download directory\n"
 	    "\t%1$s dump|list|list-io\n"
-	    "\t%1$s init-system file\n"
+	    "\t%1$s init-system [-n] file\n"
 	    "\t%1$s create-vdisk -s size file\n"
 	    "\t%1$s console|panic|start|status|stop [domain]\n", getprogname());
 	exit(EXIT_FAILURE);
@@ -241,12 +241,27 @@ dump(int argc, char **argv)
 void
 init_system(int argc, char **argv)
 {
-	if (argc != 2)
+	int ch, noaction = 0;
+
+	while ((ch = getopt(argc, argv, "n")) != -1) {
+		switch (ch) {
+		case 'n':
+			noaction = 1;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
 		usage();
 
-	hv_config();
+	if (!noaction)
+		hv_config();
 
-	build_config(argv[1]);
+	build_config(argv[0], noaction);
 }
 
 void

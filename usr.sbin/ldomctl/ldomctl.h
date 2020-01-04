@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.h,v 1.11 2019/11/28 18:03:33 kn Exp $	*/
+/*	$OpenBSD: ldomctl.h,v 1.12 2020/01/04 15:45:46 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -193,5 +193,5 @@ struct ldom_config {
 };
 
 int parse_config(const char *, struct ldom_config *);
-void build_config(const char *);
+void build_config(const char *, int);
 void list_components(void);

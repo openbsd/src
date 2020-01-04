@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.29 2019/11/28 18:40:42 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.30 2020/01/04 15:45:46 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -2759,7 +2759,7 @@ primary_init(void)
 }
 
 void
-build_config(const char *filename)
+build_config(const char *filename, int noaction)
 {
 	struct guest *primary;
 	struct guest *guest;
@@ -2781,6 +2781,8 @@ build_config(const char *filename)
 	SIMPLEQ_INIT(&conf.domain_list);
 	if (parse_config(filename, &conf) < 0)
 		exit(1);
+	if (noaction)
+		exit(0);
 
 	pri = md_read("pri");
 	if (pri == NULL)

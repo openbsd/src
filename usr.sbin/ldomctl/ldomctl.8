@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.21 2019/12/30 20:10:48 kn Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.22 2020/01/04 15:45:46 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 30 2019 $
+.Dd $Mdocdate: January 4 2020 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -63,12 +63,17 @@ The download is aborted if a configuration with the same name already exists.
 .It Cm dump
 Dump the current configuration from non-volatile storage into the current
 working directory.
-.It Cm init-system Ar file
+.It Cm init-system Oo Fl n Oc Ar file
 Generate files in the current working directory for a logical domain
 configuration
 .Ar file
 as described in
 .Xr ldom.conf 5 .
+.Bl -tag -width Fl
+.It Fl n
+Configtest mode.
+Only check the configuration file for validity.
+.El
 .It Cm list
 List configurations stored in non-volatile storage.
 Indicate the currently running configuration,
