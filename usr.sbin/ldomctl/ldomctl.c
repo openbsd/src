@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.33 2020/01/04 15:45:46 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.34 2020/01/04 17:30:41 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -616,7 +616,7 @@ void
 guest_console(int argc, char **argv)
 {
 	struct guest *guest;
-	uint64_t gid = -1;
+	uint64_t gid;
 	char console_str[8];
 
 	if (argc != 2)
@@ -629,7 +629,7 @@ guest_console(int argc, char **argv)
 		errx(1, "no console for primary domain");
 
 	TAILQ_FOREACH(guest, &guest_list, link) {
-		if (gid != -1 && guest->gid != gid)
+		if (guest->gid != gid)
 			continue;
 		snprintf(console_str, sizeof(console_str),
 		    "ttyV%llu", guest->gid - 1);
