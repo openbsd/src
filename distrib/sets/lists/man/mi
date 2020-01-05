@@ -816,6 +816,7 @@
 ./usr/share/man/man3p/OpenBSD::Ustar.3p
 ./usr/share/man/man3p/OpenBSD::Vstat.3p
 ./usr/share/man/man3p/OpenBSD::md5.3p
+./usr/share/man/man3p/OpenBSD::style.3p
 ./usr/share/man/man3p/POSIX.3p
 ./usr/share/man/man3p/Params::Check.3p
 ./usr/share/man/man3p/Parse::CPAN::Meta.3p
