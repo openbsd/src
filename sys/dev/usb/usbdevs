@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.706 2020/01/05 08:58:25 jsg Exp $
+$OpenBSD: usbdevs,v 1.707 2020/01/05 10:13:14 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -173,7 +173,6 @@ vendor ASAHIKASEI	0x0556	Asahi Kasei Microsystems
 vendor ATEN		0x0557	ATEN International
 vendor SAMSUNG		0x055d	Samsung
 vendor MUSTEK		0x055f	Mustek Systems
-vendor MUSTEK2		0x0665	Mustek Systems
 vendor TELEX		0x0562	Telex Communications
 vendor PERACOM		0x0565	Peracom Networks
 vendor ALCOR2		0x0566	Alcor Micro
@@ -200,10 +199,10 @@ vendor LACIE		0x059f	LaCie
 vendor THRUSTMASTER	0x05a4	Thrustmaster
 vendor CISCOLINKSYS3	0x05a6	Cisco-Linksys
 vendor OMNIVISION	0x05a9	OmniVision
-vendor JINGMOLD		0x05af	Jing Mold
 vendor INSYSTEM		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
 vendor YCCABLE		0x05ad	Y.C. Cable
+vendor JINGMOLD		0x05af	Jing Mold
 vendor DIGI		0x05c5	Digi International
 vendor QUALCOMM		0x05c6	Qualcomm
 vendor QTRONIX		0x05c7	Qtronix
@@ -241,6 +240,7 @@ vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
 vendor SGI		0x065e	Silicon Graphics
 vendor SANWASUPPLY	0x0663	Sanwa Supply
+vendor MUSTEK2		0x0665	Mustek Systems
 vendor LINKSYS		0x066b	Linksys
 vendor ACERSA		0x066e	Acer Semiconductor America
 vendor SIGMATEL		0x066f	Sigmatel
@@ -263,8 +263,8 @@ vendor ASIAMD		0x06be	Asia Microelectronic Development
 vendor PHIDGETS		0x06c2	Phidgets
 vendor BIZLINK		0x06c4	Bizlink International
 vendor KEYSPAN		0x06cd	Keyspan
-vendor LIEBERT		0x06da	Liebert
 vendor AASHIMA		0x06d6	Aashima Technology
+vendor LIEBERT		0x06da	Liebert
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
 vendor ALCATELM		0x06e4	Alcatel Microelectronics
@@ -325,9 +325,9 @@ vendor BEWAN		0x07fa	Bewan
 vendor ZOOM		0x0803	Zoom Telephonics
 vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
-vendor ACTIONSTAR	0x0835	Action Star Enterprise
 vendor PALM		0x0830	Palm Computing
 vendor SOURCENEXT	0x0833	SOURCENEXT
+vendor ACTIONSTAR	0x0835	Action Star Enterprise
 vendor ACCTON		0x083a	Accton Technology
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR
@@ -403,8 +403,8 @@ vendor ZYDAS		0x0ace	ZyDAS Technology
 vendor CHENSOURCE	0x0ad2	Chen-Source
 vendor NEODIO		0x0aec  Neodio
 vendor OPTION		0x0af0  Option
-vendor TODOS		0x0b0c	Todos Data System
 vendor ASUS		0x0b05	ASUS
+vendor TODOS		0x0b0c	Todos Data System
 vendor OCT		0x0b39	Omnidirectional Control Technology
 vendor TEKRAM		0x0b3b	Tekram Technology
 vendor HAL		0x0b41	HAL Corporation
@@ -458,18 +458,18 @@ vendor MEDIATEK		0x0e8d	MediaTek Inc.
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf  Pilotech
 vendor NOVATECH		0x0eb0	Nova Tech
-vendor EGALAX		0x0eef	eGalax
 vendor ITEGNO		0x0eba	iTegno
 vendor NORITAKE		0x0eda	Noritake itron Corp
+vendor EGALAX		0x0eef	eGalax
 vendor XIRING		0x0f14	XIRING
 vendor AIRPRIME		0x0f3d	Airprime
-vendor LARSENBRUSGAARD	0x0fd8	Larsen and Brusgaard
-vendor OREGONSCI	0x0fde	Oregon Scientific
-vendor UNKNOWN4		0x0fe6	Unknown Vendor
 vendor VTECH		0x0f88	VTech
 vendor FALCOM		0x0f94	Falcom Wireless Communications
 vendor RIM		0x0fca	Research In Motion
 vendor DYNASTREAM	0x0fcf	Dynastream Innovations
+vendor LARSENBRUSGAARD	0x0fd8	Larsen and Brusgaard
+vendor OREGONSCI	0x0fde	Oregon Scientific
+vendor UNKNOWN4		0x0fe6	Unknown Vendor
 vendor DVICO		0x0fe9	DViCO
 vendor QUALCOMM2	0x1004	Qualcomm
 vendor MOTOROLA4	0x100d	Motorola
@@ -554,8 +554,8 @@ vendor GOODWAY		0x1631	Good Way Technology
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor CLIPSAL		0x166a	Clipsal
-vendor ATHEROS		0x168c	Atheros Communications
 vendor CISCOLINKSYS2	0x167b	Cisco-Linksys
+vendor ATHEROS		0x168c	Atheros Communications
 vendor GIGASET		0x1690	Gigaset
 vendor GLOBALSUN	0x16ab	Global Sun Technology
 vendor VOTI		0x16c0	Van Ooijen Technische Informatica
@@ -589,13 +589,13 @@ vendor ABBOTT		0x1a61	Abbott Labs
 vendor BAYER		0x1a79	Bayer Health Care
 vendor WCH2		0x1a86	QinHeng Electronics
 vendor SEL		0x1adb	Schweitzer Engineering Laboratories
-vendor SILABS5		0x1ba4	Silicon Labs
 vendor CORSAIR		0x1b1c	Corsair
 vendor MATRIXORB	0x1b3d	Matrix Orbital
 vendor TORADEX		0x1b67	Toradex inc.
 vendor FUSHICAI		0x1b71	Fushicai
 vendor OVISLINK		0x1b75	OvisLink
 vendor TML		0x1b91	The Mobility Lab
+vendor SILABS5		0x1ba4	Silicon Labs
 vendor TCTMOBILE	0x1bbb  TCT Mobile
 vendor MDS		0x1bc8	MDS
 vendor ALTI2		0x1bc9	Alti-2
@@ -612,8 +612,8 @@ vendor SIMCOM		0x1e0e	SIMCom Wireless Solutions Co., Ltd.
 vendor FESTO		0x1e29	Festo
 vendor MODACOM		0x1eb8	Modacom
 vendor AIRTIES		0x1eda	AirTies
-vendor VERTEX		0x1fe7	Vertex Wireless Co., Ltd.
 vendor LAKESHORE	0x1fb9	Lake Shore
+vendor VERTEX		0x1fe7	Vertex Wireless Co., Ltd.
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
 vendor ENCORE		0x203d	Encore
