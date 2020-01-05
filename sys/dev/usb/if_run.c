@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.127 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.128 2020/01/05 08:58:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -137,7 +137,6 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(CONCEPTRONIC2,	RT2870_1),
 	USB_ID(CONCEPTRONIC2,	RT2870_2),
 	USB_ID(CONCEPTRONIC2,	RT2870_3),
-	USB_ID(CONCEPTRONIC2,	RT2870_4),
 	USB_ID(CONCEPTRONIC2,	RT2870_5),
 	USB_ID(CONCEPTRONIC2,	RT2870_6),
 	USB_ID(CONCEPTRONIC2,	RT2870_7),

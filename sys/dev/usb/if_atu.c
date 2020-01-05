@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.127 2019/08/27 14:57:48 stsp Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.128 2020/01/05 08:58:25 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -178,8 +178,6 @@ struct atu_type atu_devs[] = {
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_LINKSYS,	USB_PRODUCT_LINKSYS_WUSB11,
 	  RadioIntersil,	ATU_NO_QUIRK },
-	{ USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_WUSB11,
-	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_NWU11B,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_LINKSYS3,	USB_PRODUCT_LINKSYS3_WUSB11V28,

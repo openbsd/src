@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.86 2020/01/05 00:54:13 jsg Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.87 2020/01/05 08:58:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -255,7 +255,6 @@ static const struct urtwn_type {
 	URTWN_DEV_8192CU(BELKIN,	RTL8188CUS),
 	URTWN_DEV_8192CU(BELKIN,	RTL8192CU),
 	URTWN_DEV_8192CU(BELKIN,	RTL8192CU_1),
-	URTWN_DEV_8192CU(BELKIN,	RTL8192CU_2),
 	URTWN_DEV_8192CU(CHICONY,	RTL8188CUS_1),
 	URTWN_DEV_8192CU(CHICONY,	RTL8188CUS_2),
 	URTWN_DEV_8192CU(CHICONY,	RTL8188CUS_3),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.84 2018/10/02 19:49:10 stsp Exp $ */
+/*	$OpenBSD: if_url.c,v 1.85 2020/01/05 08:58:25 jsg Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -146,7 +146,6 @@ static const struct url_type {
 #define URL_EXT_PHY	0x0001
 } url_devs [] = {
 	{{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_LCS8138TX}, 0},
-	{{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_RTL8151}, 0},
 	{{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_LUAKTX }, 0},
 	{{ USB_VENDOR_MICRONET, USB_PRODUCT_MICRONET_SP128AR}, 0},
 	{{ USB_VENDOR_OQO, USB_PRODUCT_OQO_ETHER01}, 0},
