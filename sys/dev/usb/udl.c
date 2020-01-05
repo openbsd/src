@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.89 2019/11/06 20:25:14 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.90 2020/01/05 19:13:48 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -542,7 +542,7 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		d->status = UDLIO_STATUS_OK;
 		r = udl_damage(sc, sc->sc_fbmem, d->x1, d->x2, d->y1, d->y2);
 		if (r != 0) {
-			error = tsleep(sc, 0, "udlio", hz / 100);
+			error = tsleep_nsec(sc, 0, "udlio", MSEC_TO_NSEC(10));
 			if (error) {
 				d->status = UDLIO_STATUS_FAILED;
 			} else {
