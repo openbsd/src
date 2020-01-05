@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1910 2020/01/05 10:16:03 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1911 2020/01/05 12:54:21 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9776,30 +9776,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HiBMC VGA",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0002,
-	    "MCA",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0005,
-	    "CPU - Alta Lite",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0007,
-	    "CPU - Alta MP",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x000a,
-	    "ISA w/PnP",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0017,
-	    "CPU",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0018,
-	    "Auto LANStreamer",
-	},
-	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT150P,
 	    "GXT-150P",
 	},
@@ -9808,20 +9784,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82G2675",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCA,
-	    "MCA",
-	},
-	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_82351,
 	    "82351",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID,
 	    "ServeRAID",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MIAMI,
-	    "Miami/PCI",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC,

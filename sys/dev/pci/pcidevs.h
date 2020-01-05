@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1910 2020/01/05 10:16:03 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1911 2020/01/05 12:54:21 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3065,18 +3065,10 @@
 #define	PCI_PRODUCT_HUAWEI_HIBMC_VGA	0x1711		/* HiBMC VGA */
 
 /* IBM products */
-#define	PCI_PRODUCT_IBM_0x0002	0x0002		/* MCA */
-#define	PCI_PRODUCT_IBM_0x0005	0x0005		/* CPU - Alta Lite */
-#define	PCI_PRODUCT_IBM_0x0007	0x0007		/* CPU - Alta MP */
-#define	PCI_PRODUCT_IBM_0x000a	0x000a		/* ISA w/PnP */
-#define	PCI_PRODUCT_IBM_0x0017	0x0017		/* CPU */
-#define	PCI_PRODUCT_IBM_0x0018	0x0018		/* Auto LANStreamer */
 #define	PCI_PRODUCT_IBM_GXT150P	0x001b		/* GXT-150P */
 #define	PCI_PRODUCT_IBM_82G2675	0x001d		/* 82G2675 */
-#define	PCI_PRODUCT_IBM_MCA	0x0020		/* MCA */
 #define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 */
 #define	PCI_PRODUCT_IBM_SERVERAID	0x002e		/* ServeRAID */
-#define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Olympic */
 #define	PCI_PRODUCT_IBM_I82557B	0x0057		/* i82557B */
 #define	PCI_PRODUCT_IBM_RSA	0x010f		/* RSA */
