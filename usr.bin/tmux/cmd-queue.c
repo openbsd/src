@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.78 2019/12/19 09:22:33 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.79 2020/01/05 12:51:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -551,7 +551,10 @@ cmdq_error(struct cmdq_item *item, const char *fmt, ...)
 			msg = utf8_sanitize(tmp);
 			free(tmp);
 		}
-		file_error(c, "%s\n", msg);
+		if (c->flags & CLIENT_CONTROL)
+			file_print(c, "%s\n", msg);
+		else
+			file_error(c, "%s\n", msg);
 		c->retval = 1;
 	} else {
 		*msg = toupper((u_char) *msg);
