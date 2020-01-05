@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1909 2020/01/05 06:43:47 jsg Exp $
+$OpenBSD: pcidevs,v 1.1910 2020/01/05 10:16:03 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -46,9 +46,9 @@ $OpenBSD: pcidevs,v 1.1909 2020/01/05 06:43:47 jsg Exp $
  * List of known PCI vendors
  */
 
-vendor	DLINK2		0x00ec	D-Link
 vendor	MARTINMARIETTA	0x003d	Martin-Marietta
 vendor	HAUPPAUGE	0x0070	Hauppauge
+vendor	DLINK2		0x00ec	D-Link
 vendor	TTTECH		0x0357	TTTech
 vendor	DYNALINK	0x0675	Dynalink
 vendor	COREGA2		0x07aa	Corega
@@ -169,6 +169,7 @@ vendor	ZIATECH		0x1138	Ziatech
 vendor	CYCLONE		0x113c	Cyclone
 vendor	EQUINOX		0x113f	Equinox
 vendor	ALLIANCE	0x1142	Alliance
+vendor	WORKBIT		0x1145	Workbit
 vendor	SCHNEIDERKOCH	0x1148	Schneider & Koch
 vendor	DIGI		0x114f	Digi
 vendor	MUTECH		0x1159	Mutech
@@ -251,7 +252,6 @@ vendor	OXFORD2		0x1415	Oxford
 vendor	CHELSIO		0x1425	Chelsio
 vendor	EDIMAX		0x1432	Edimax
 vendor	TAMARACK	0x143d	Tamarack
-vendor	WORKBIT		0x1145	Workbit
 vendor	SAMSUNG2	0x144d	Samsung
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
@@ -294,9 +294,9 @@ vendor	GLOBALSUN	0x16ab	Global Sun
 vendor	SAFENET		0x16ae	SafeNet
 vendor	MICREL		0x16c6	Micrel
 vendor	USR2		0x16ec	US Robotics
+vendor	NETOCTAVE	0x170b	Netoctave
 vendor	VITESSE		0x1725	Vitesse
 vendor	LINKSYS		0x1737	Linksys
-vendor	NETOCTAVE	0x170b	Netoctave
 vendor	ALTIMA		0x173b	Altima
 vendor	ANTARES		0x1754	Antares Microsystems
 vendor	CAVIUM		0x177d	Cavium
@@ -368,8 +368,8 @@ vendor	ADP		0x9004	Adaptec
 vendor	ADP2		0x9005	Adaptec
 vendor	ATRONICS	0x907f	Atronics
 vendor	NETMOS		0x9710	NetMos
-vendor	PARALLELS	0xaaaa	Parallels
 vendor	3COM2		0xa727	3Com
+vendor	PARALLELS	0xaaaa	Parallels
 vendor	TIGERJET	0xe159	TigerJet Network
 vendor	ENDACE		0xeace	Endace
 vendor	BELKIN		0xec80	Belkin Components
