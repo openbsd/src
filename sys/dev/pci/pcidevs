@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1910 2020/01/05 10:16:03 jsg Exp $
+$OpenBSD: pcidevs,v 1.1911 2020/01/05 12:54:21 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3060,18 +3060,10 @@ product HP HPSAP721M		0x3356	Smart Array P721m
 product HUAWEI HIBMC_VGA	0x1711	HiBMC VGA
 
 /* IBM products */
-product IBM 0x0002		0x0002	MCA
-product IBM 0x0005		0x0005	CPU - Alta Lite
-product IBM 0x0007		0x0007	CPU - Alta MP
-product IBM 0x000a		0x000a	ISA w/PnP
-product IBM 0x0017		0x0017	CPU
-product IBM 0x0018		0x0018	Auto LANStreamer
 product IBM GXT150P		0x001b	GXT-150P
 product IBM 82G2675		0x001d	82G2675
-product IBM MCA			0x0020	MCA
 product IBM 82351		0x0022	82351
 product IBM SERVERAID		0x002e	ServeRAID
-product IBM MIAMI		0x0036	Miami/PCI
 product IBM OLYMPIC		0x003e	Olympic
 product IBM I82557B		0x0057	i82557B
 product IBM RSA			0x010f	RSA
