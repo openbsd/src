@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1909 2020/01/05 06:43:47 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1910 2020/01/05 10:16:03 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -51,9 +51,9 @@
  * List of known PCI vendors
  */
 
-#define	PCI_VENDOR_DLINK2	0x00ec		/* D-Link */
 #define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Martin-Marietta */
 #define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge */
+#define	PCI_VENDOR_DLINK2	0x00ec		/* D-Link */
 #define	PCI_VENDOR_TTTECH	0x0357		/* TTTech */
 #define	PCI_VENDOR_DYNALINK	0x0675		/* Dynalink */
 #define	PCI_VENDOR_COREGA2	0x07aa		/* Corega */
@@ -174,6 +174,7 @@
 #define	PCI_VENDOR_CYCLONE	0x113c		/* Cyclone */
 #define	PCI_VENDOR_EQUINOX	0x113f		/* Equinox */
 #define	PCI_VENDOR_ALLIANCE	0x1142		/* Alliance */
+#define	PCI_VENDOR_WORKBIT	0x1145		/* Workbit */
 #define	PCI_VENDOR_SCHNEIDERKOCH	0x1148		/* Schneider & Koch */
 #define	PCI_VENDOR_DIGI	0x114f		/* Digi */
 #define	PCI_VENDOR_MUTECH	0x1159		/* Mutech */
@@ -256,7 +257,6 @@
 #define	PCI_VENDOR_CHELSIO	0x1425		/* Chelsio */
 #define	PCI_VENDOR_EDIMAX	0x1432		/* Edimax */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack */
-#define	PCI_VENDOR_WORKBIT	0x1145		/* Workbit */
 #define	PCI_VENDOR_SAMSUNG2	0x144d		/* Samsung */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
@@ -299,9 +299,9 @@
 #define	PCI_VENDOR_SAFENET	0x16ae		/* SafeNet */
 #define	PCI_VENDOR_MICREL	0x16c6		/* Micrel */
 #define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
+#define	PCI_VENDOR_NETOCTAVE	0x170b		/* Netoctave */
 #define	PCI_VENDOR_VITESSE	0x1725		/* Vitesse */
 #define	PCI_VENDOR_LINKSYS	0x1737		/* Linksys */
-#define	PCI_VENDOR_NETOCTAVE	0x170b		/* Netoctave */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
 #define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
@@ -373,8 +373,8 @@
 #define	PCI_VENDOR_ADP2	0x9005		/* Adaptec */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_NETMOS	0x9710		/* NetMos */
-#define	PCI_VENDOR_PARALLELS	0xaaaa		/* Parallels */
 #define	PCI_VENDOR_3COM2	0xa727		/* 3Com */
+#define	PCI_VENDOR_PARALLELS	0xaaaa		/* Parallels */
 #define	PCI_VENDOR_TIGERJET	0xe159		/* TigerJet Network */
 #define	PCI_VENDOR_ENDACE	0xeace		/* Endace */
 #define	PCI_VENDOR_BELKIN	0xec80		/* Belkin Components */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1909 2020/01/05 06:43:47 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1910 2020/01/05 10:16:03 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -29300,16 +29300,16 @@ static const struct pci_known_product pci_known_products[] = {
 
 static const struct pci_known_vendor pci_known_vendors[] = {
 	{
-	    PCI_VENDOR_DLINK2,
-	    "D-Link",
-	},
-	{
 	    PCI_VENDOR_MARTINMARIETTA,
 	    "Martin-Marietta",
 	},
 	{
 	    PCI_VENDOR_HAUPPAUGE,
 	    "Hauppauge",
+	},
+	{
+	    PCI_VENDOR_DLINK2,
+	    "D-Link",
 	},
 	{
 	    PCI_VENDOR_TTTECH,
@@ -29792,6 +29792,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Alliance",
 	},
 	{
+	    PCI_VENDOR_WORKBIT,
+	    "Workbit",
+	},
+	{
 	    PCI_VENDOR_SCHNEIDERKOCH,
 	    "Schneider & Koch",
 	},
@@ -30120,10 +30124,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Tamarack",
 	},
 	{
-	    PCI_VENDOR_WORKBIT,
-	    "Workbit",
-	},
-	{
 	    PCI_VENDOR_SAMSUNG2,
 	    "Samsung",
 	},
@@ -30292,16 +30292,16 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "US Robotics",
 	},
 	{
+	    PCI_VENDOR_NETOCTAVE,
+	    "Netoctave",
+	},
+	{
 	    PCI_VENDOR_VITESSE,
 	    "Vitesse",
 	},
 	{
 	    PCI_VENDOR_LINKSYS,
 	    "Linksys",
-	},
-	{
-	    PCI_VENDOR_NETOCTAVE,
-	    "Netoctave",
 	},
 	{
 	    PCI_VENDOR_ALTIMA,
@@ -30588,12 +30588,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "NetMos",
 	},
 	{
-	    PCI_VENDOR_PARALLELS,
-	    "Parallels",
-	},
-	{
 	    PCI_VENDOR_3COM2,
 	    "3Com",
+	},
+	{
+	    PCI_VENDOR_PARALLELS,
+	    "Parallels",
 	},
 	{
 	    PCI_VENDOR_TIGERJET,
