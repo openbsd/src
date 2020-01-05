@@ -29,7 +29,6 @@
  */
 
 #include <sys/filio.h>
-#include <sys/ttycom.h> /* for TIOCSGRP */
 
 #include <drm/drm_ioctl.h>
 #include <drm/drmP.h>
