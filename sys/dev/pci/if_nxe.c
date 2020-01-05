@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.75 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.76 2020/01/05 01:07:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -834,7 +834,7 @@ int			nxe_rom_read_region(struct nxe_softc *, u_int32_t,
 /* let's go! */
 
 const struct pci_matchid nxe_devices[] = {
-	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_10GXxR },
+	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_10GXXR },
 	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_10GCX4 },
 	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_4GCU },
 	{ PCI_VENDOR_NETXEN, PCI_PRODUCT_NETXEN_NXB_IMEZ },

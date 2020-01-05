@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.23 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.24 2020/01/05 01:07:59 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -73,7 +73,7 @@ struct cfdriver wdt_cd = {
 };
 
 const struct pci_matchid wdt_devices[] = {
-	{ PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x }
+	{ PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50X }
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.358 2017/07/12 13:40:59 mikeb Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.359 2020/01/05 01:07:59 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -881,7 +881,7 @@ const struct pciide_product_desc pciide_natsemi_products[] =  {
 	  0,
 	  natsemi_chip_map
 	},
-	{ PCI_PRODUCT_NS_SCx200_IDE,	/* National Semi SCx200 IDE */
+	{ PCI_PRODUCT_NS_SCX200_IDE,	/* National Semi SCx200 IDE */
 	  0,
 	  ns_scx200_chip_map
 	}
@@ -5667,7 +5667,7 @@ ns_scx200_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 * Assume that reducing maximum segment size by one page
 	 * will be enough, and restrict boundary too for extra certainty.
 	 */
-	if (sc->sc_pp->ide_product == PCI_PRODUCT_NS_SCx200_IDE) {
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_NS_SCX200_IDE) {
 		sc->sc_dma_maxsegsz = IDEDMA_BYTE_COUNT_MAX - PAGE_SIZE;
 		sc->sc_dma_boundary = IDEDMA_BYTE_COUNT_MAX - PAGE_SIZE;
 	}

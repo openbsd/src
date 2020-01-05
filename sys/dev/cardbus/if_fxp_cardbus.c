@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.36 2015/11/24 17:11:39 mpi Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.37 2020/01/05 01:07:58 jsg Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ struct cfattach fxp_cardbus_ca = {
 };
 
 const struct pci_matchid fxp_cardbus_devices[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8255x },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8255X },
 };
 
 #ifdef CBB_DEBUG

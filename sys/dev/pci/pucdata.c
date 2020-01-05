@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.110 2019/05/08 15:23:20 jsg Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.111 2020/01/05 01:07:59 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -871,7 +871,7 @@ const struct puc_device_description puc_devs[] = {
 	 * is the lpt part of VScom 110H, 210H, 410H
 	 */
 	{   /* "VScom PCI-x10H", */
-	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCIx10H,	0, 0 },
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCIX10H,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
 		{ PUC_PORT_LPT, 0x10, 0x0000 },

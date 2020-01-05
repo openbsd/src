@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.80 2019/11/23 17:22:10 cheloha Exp $	*/
+/*	$OpenBSD: envy.c,v 1.81 2020/01/05 01:07:58 jsg Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -217,7 +217,7 @@ struct midi_hw_if envy_midi_hw_if = {
 
 struct pci_matchid envy_matchids[] = {
 	{ PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_ICE1712 },
-	{ PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_VT172x }
+	{ PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_VT172X }
 };
 
 /*
@@ -1723,7 +1723,7 @@ envyattach(struct device *parent, struct device *self, void *aux)
 	sc->ibuf.addr = sc->obuf.addr = NULL;
 	sc->ccs_iosz = 0;
 	sc->mt_iosz = 0;
-	sc->isht = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ICENSEMBLE_VT172x);
+	sc->isht = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ICENSEMBLE_VT172X);
 
 	if (pci_mapreg_map(pa, ENVY_CTL_BAR, PCI_MAPREG_TYPE_IO, 0,
 		&sc->ccs_iot, &sc->ccs_ioh, NULL, &sc->ccs_iosz, 0)) {

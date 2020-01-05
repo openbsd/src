@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.71 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.72 2020/01/05 01:07:58 jsg Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -169,7 +169,7 @@ int vge_debug = 0;
 #define DPRINTFN(n, x)	if (vge_debug >= (n)) printf x
 
 const struct pci_matchid vge_devices[] = {
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT612x },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT612X },
 };
 
 #ifdef VGE_EEPROM
