@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.58 2019/08/05 08:35:59 anton Exp $	*/
+/*	$OpenBSD: file.h,v 1.59 2020/01/05 13:46:02 visa Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ struct file {
 	short	f_type;		/* [I] descriptor type */
 	u_int	f_count;	/* [a] reference count */
 	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */
-	struct	fileops *f_ops; /* [I] file operation pointers */
+	const struct fileops *f_ops; /* [I] file operation pointers */
 	off_t	f_offset;	/* [f,v] offset */
 	void 	*f_data;	/* [I] private data */
 	int	f_iflags;	/* [k] internal flags */
@@ -131,6 +131,7 @@ foffset(struct file *fp)
 LIST_HEAD(filelist, file);
 extern int maxfiles;			/* kernel limit on number of open files */
 extern int numfiles;			/* actual number of open files */
-extern struct fileops vnops;		/* vnode operations for files */
+extern const struct fileops socketops;	/* socket operations for files */
+extern const struct fileops vnops;	/* vnode operations for files */
 
 #endif /* _KERNEL */

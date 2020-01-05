@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.114 2020/01/03 05:37:00 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.115 2020/01/05 13:46:02 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -72,7 +72,7 @@ void	kqueue_wakeup(struct kqueue *kq);
 static void	kqueue_expand_hash(struct kqueue *kq);
 static void	kqueue_expand_list(struct kqueue *kq, int fd);
 
-struct fileops kqueueops = {
+const struct fileops kqueueops = {
 	.fo_read	= kqueue_read,
 	.fo_write	= kqueue_write,
 	.fo_ioctl	= kqueue_ioctl,

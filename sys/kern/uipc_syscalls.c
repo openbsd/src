@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.182 2019/07/16 21:41:37 bluhm Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.183 2020/01/05 13:46:02 visa Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -59,11 +59,6 @@
 #include <sys/domain.h>
 #include <netinet/in.h>
 #include <net/route.h>
-
-/*
- * System call interface to the socket abstraction.
- */
-extern	struct fileops socketops;
 
 int	copyaddrout(struct proc *, struct mbuf *, struct sockaddr *, socklen_t,
 	    socklen_t *);

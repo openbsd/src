@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.108 2020/01/04 09:38:27 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.109 2020/01/05 13:46:02 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -60,7 +60,7 @@ int	pipe_kqfilter(struct file *fp, struct knote *kn);
 int	pipe_ioctl(struct file *, u_long, caddr_t, struct proc *);
 int	pipe_stat(struct file *fp, struct stat *ub, struct proc *p);
 
-static struct fileops pipeops = {
+static const struct fileops pipeops = {
 	.fo_read	= pipe_read,
 	.fo_write	= pipe_write,
 	.fo_ioctl	= pipe_ioctl,
