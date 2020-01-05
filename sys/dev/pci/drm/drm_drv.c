@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.169 2020/01/05 04:29:11 visa Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.170 2020/01/05 08:39:46 jsg Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -42,17 +42,11 @@
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
-#include <sys/filio.h>
-#include <sys/limits.h>
-#include <sys/pledge.h>
 #include <sys/poll.h>
 #include <sys/specdev.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/event.h>
-
-#include <uvm/uvm.h>
-#include <uvm/uvm_device.h>
 
 #include <machine/bus.h>
 
