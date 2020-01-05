@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.702 2019/12/07 08:45:28 kevlo Exp $
+$OpenBSD: usbdevs,v 1.703 2020/01/05 00:54:13 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1344,7 +1344,7 @@ product CLIPSAL 5800PC		0x0301	5800PC C-Bus Wireless
 product CLIPSAL 5500PCU		0x0303	5500PCU C-Bus
 product CLIPSAL 5000CT2		0x0304	5000CT2 C-Bus Touch Screen
 product CLIPSAL C5000CT2	0x0305	C5000CT2 C-Bus Touch Screen
-product CLIPSAL L51xx		0x0401	L51xx C-Bus Dimmer
+product CLIPSAL L51XX		0x0401	L51xx C-Bus Dimmer
 
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
@@ -1362,7 +1362,7 @@ product CTC CW6622		0x6622	CW6622
 product CMOTECH CNU510		0x5141	CDMA Technologies USB modem
 product CMOTECH CM5100P		0x5523	CM-5100P EVDO
 product CMOTECH CCU550		0x5533	CCU-550 EVDO
-product CMOTECH CNU550pro	0x5543	CNU-550pro EVDO
+product CMOTECH CNU550PRO	0x5543	CNU-550pro EVDO
 product CMOTECH CGU628		0x6006	CGU-628
 product CMOTECH CNU680		0x6803	CNU-680
 product CMOTECH CGU628_DISK	0xf000	CGU-628 disk mode
@@ -2163,7 +2163,7 @@ product HP KBDHUB		0x010c	Multimedia Keyboard Hub
 product HP HN210W		0x011c	HN210W
 product HP HPX9GP		0x0121	HP-x9G+
 product HP 6200C		0x0201	ScanJet 6200C
-product HP S20b			0x0202	PhotoSmart S20
+product HP S20B			0x0202	PhotoSmart S20
 product HP 815C			0x0204	DeskJet 815C
 product HP 3300C		0x0205	ScanJet 3300C
 product HP CDW8200		0x0207	CD-Writer Plus 8200e
@@ -2217,7 +2217,7 @@ product HTC ANDROID		0x0ffe	Android phone
 /* HUAWEI products */
 product HUAWEI E618		0x1001	HUAWEI Mobile E618
 product HUAWEI E220		0x1003	HUAWEI Mobile Modem
-product HUAWEI Mobile		0x1008	HUAWEI Mobile Modem
+product HUAWEI MOBILE		0x1008	HUAWEI Mobile Modem
 product HUAWEI EM770W		0x1404	HUAWEI Mobile Modem
 product HUAWEI E1750		0x1406	HUAWEI Mobile Modem
 product HUAWEI E180		0x140c	HUAWEI Mobile E180
@@ -2384,8 +2384,8 @@ product IRIVER IFP_5XX		0x1105	iFP-5xx
 product ITEGNO WM1080A		0x1080	WM1080A
 
 /* Microchip Technology, Inc. products */
-product MICROCHIP USBLCD20x2	0x0002	USB-LCD-20x2
-product MICROCHIP USBLCD256x64	0xc002	USB-LCD-256x64
+product MICROCHIP USBLCD20X2	0x0002	USB-LCD-20x2
+product MICROCHIP USBLCD256X64	0xc002	USB-LCD-256x64
 
 /* Jablotron products */
 product JABLOTRON PC60B		0x0001	PC-60B
@@ -3186,7 +3186,7 @@ product NETGEAR RTL8192CU	0x9021	RTL8192CU
 product NETGEAR WNA1100		0x9030	WNA1100
 product NETGEAR WNA1000		0x9040	WNA1000
 product NETGEAR WNA1000M	0x9041	WNA1000M
-product NETGEAR WNA1000Mv2	0x9043	WNA1000Mv2
+product NETGEAR WNA1000MV2	0x9043	WNA1000Mv2
 product NETGEAR N300MA		0xf001	N300MA
 
 /* Netgear(2) products */
