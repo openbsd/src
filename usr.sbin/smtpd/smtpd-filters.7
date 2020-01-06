@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-filters.7,v 1.3 2019/12/13 18:13:08 gilles Exp $
+.\"	$OpenBSD: smtpd-filters.7,v 1.4 2020/01/06 13:42:42 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 13 2019 $
+.Dd $Mdocdate: January 6 2020 $
 .Dt FILTERS 7
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ This allows the decision logic to rely on third-party programs.
 .Sh DESIGN
 The
 .Nm
-are programs that run as standalone processes,
+are programs that run as unique standalone processes,
 they do not share
 .Xr smtpd 8
 memory space.
