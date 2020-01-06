@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigio.h,v 1.2 2020/01/06 15:47:30 claudio Exp $	*/
+/*	$OpenBSD: sigio.h,v 1.3 2020/01/06 15:49:10 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -59,7 +59,7 @@ struct sigio_ref {
  *
  * Locking:
  *	I	immutable after creation
- *	s	sigio_lock
+ *	S	sigio_lock
  */
 struct sigio {
 	union {
