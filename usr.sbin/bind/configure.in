@@ -3272,13 +3272,10 @@ AC_TRY_COMPILE([
 [struct addrinfo a; return (0);],
 	[AC_MSG_RESULT(yes)
 	ISC_LWRES_NEEDADDRINFO="#undef ISC_LWRES_NEEDADDRINFO"
-	ISC_IRS_NEEDADDRINFO="#undef ISC_IRS_NEEDADDRINFO"
 	AC_DEFINE(HAVE_ADDRINFO)],
 	[AC_MSG_RESULT(no)
-	ISC_LWRES_NEEDADDRINFO="#define ISC_LWRES_NEEDADDRINFO 1"
-	ISC_IRS_NEEDADDRINFO="#define ISC_IRS_NEEDADDRINFO 1"])
+	ISC_LWRES_NEEDADDRINFO="#define ISC_LWRES_NEEDADDRINFO 1"])
 AC_SUBST(ISC_LWRES_NEEDADDRINFO)
-AC_SUBST(ISC_IRS_NEEDADDRINFO)
 
 #
 # Check for rrsetinfo
@@ -3365,68 +3362,6 @@ AC_TRY_COMPILE([
 	ISC_LWRES_NEEDHERRNO="#define ISC_LWRES_NEEDHERRNO 1"])
 AC_SUBST(ISC_LWRES_NEEDHERRNO)
 
-#
-# Sadly, the definitions of system-supplied getnameinfo(3) vary.  Try to catch
-# known variations here:
-#
-AC_MSG_CHECKING(for getnameinfo prototype definitions)
-AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-int getnameinfo(const struct sockaddr *, socklen_t, char *,
-		socklen_t, char *, socklen_t, unsigned int);],
-[ return (0);],
-	[AC_MSG_RESULT(socklen_t for buflen; u_int for flags)
-	 AC_DEFINE(IRS_GETNAMEINFO_SOCKLEN_T, socklen_t,
-		   [Define to the sockaddr length type used by getnameinfo(3).])
-	 AC_DEFINE(IRS_GETNAMEINFO_BUFLEN_T, socklen_t,
-		   [Define to the buffer length type used by getnameinfo(3).])
-	 AC_DEFINE(IRS_GETNAMEINFO_FLAGS_T, unsigned int,
-		   [Define to the flags type used by getnameinfo(3).])],
-[AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-int getnameinfo(const struct sockaddr *, socklen_t, char *,
-		size_t, char *, size_t, int);],
-[ return (0);],
-	[AC_MSG_RESULT(size_t for buflen; int for flags)
-	 AC_DEFINE(IRS_GETNAMEINFO_SOCKLEN_T, socklen_t)
-	 AC_DEFINE(IRS_GETNAMEINFO_BUFLEN_T, size_t)
-	 AC_DEFINE(IRS_GETNAMEINFO_FLAGS_T, int)],
-[AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-int getnameinfo(const struct sockaddr *, size_t, char *,
-		size_t, char *, size_t, int);],
-[ return (0);],
-	[AC_MSG_RESULT(size_t for buflen; int for flags)
-	 AC_DEFINE(IRS_GETNAMEINFO_SOCKLEN_T, size_t)
-	 AC_DEFINE(IRS_GETNAMEINFO_BUFLEN_T, size_t)
-	 AC_DEFINE(IRS_GETNAMEINFO_FLAGS_T, int)],
-[AC_MSG_RESULT(not match any subspecies; assume standard definition)
-AC_DEFINE(IRS_GETNAMEINFO_SOCKLEN_T, socklen_t)
-AC_DEFINE(IRS_GETNAMEINFO_BUFLEN_T, socklen_t)
-AC_DEFINE(IRS_GETNAMEINFO_FLAGS_T, int)])])])
-
-#
-# ...and same for gai_strerror().
-#
-AC_MSG_CHECKING(for gai_strerror prototype definitions)
-AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-char *gai_strerror(int ecode);],
-[ return (0); ],
-	[AC_MSG_RESULT(returning char *)
-	 AC_DEFINE([IRS_GAISTRERROR_RETURN_T], [char *],
-	 [return type of gai_strerror])],
-[AC_MSG_RESULT(not match any subspecies; assume standard definition)
-AC_DEFINE([IRS_GAISTRERROR_RETURN_T], [const char *])])
-
 AC_CHECK_FUNC(getipnodebyname,
 	[ISC_LWRES_GETIPNODEPROTO="#undef ISC_LWRES_GETIPNODEPROTO"],
 	[ISC_LWRES_GETIPNODEPROTO="#define ISC_LWRES_GETIPNODEPROTO 1"])
@@ -3441,7 +3376,6 @@ AC_CHECK_FUNC(gai_strerror, AC_DEFINE(HAVE_GAISTRERROR))
 AC_SUBST(ISC_LWRES_GETIPNODEPROTO)
 AC_SUBST(ISC_LWRES_GETADDRINFOPROTO)
 AC_SUBST(ISC_LWRES_GETNAMEINFOPROTO)
-AC_SUBST(ISC_IRS_GETNAMEINFOSOCKLEN)
 
 AC_ARG_ENABLE(getifaddrs,
 	      AS_HELP_STRING([--enable-getifaddrs],
@@ -3892,8 +3826,6 @@ AC_SUBST(ISC_PLATFORM_USEDECLSPEC)
 ISC_PLATFORM_USEDECLSPEC="#undef ISC_PLATFORM_USEDECLSPEC"
 AC_SUBST(LWRES_PLATFORM_USEDECLSPEC)
 LWRES_PLATFORM_USEDECLSPEC="#undef LWRES_PLATFORM_USEDECLSPEC"
-AC_SUBST(IRS_PLATFORM_USEDECLSPEC)
-IRS_PLATFORM_USEDECLSPEC="#undef IRS_PLATFORM_USEDECLSPEC"
 
 #
 # Random remaining OS-specific issues involving compiler warnings.
@@ -4695,7 +4627,6 @@ AC_SUBST(BIND9_ISCCFG_BUILDINCLUDE)
 AC_SUBST(BIND9_DNS_BUILDINCLUDE)
 AC_SUBST(BIND9_LWRES_BUILDINCLUDE)
 AC_SUBST(BIND9_BIND9_BUILDINCLUDE)
-AC_SUBST(BIND9_IRS_BUILDINCLUDE)
 if test "X$srcdir" != "X"; then
 	BIND9_ISC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isc/include"
 	BIND9_ISCCC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isccc/include"
@@ -4703,7 +4634,6 @@ if test "X$srcdir" != "X"; then
 	BIND9_DNS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/dns/include"
 	BIND9_LWRES_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/lwres/include"
 	BIND9_BIND9_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/bind9/include"
-	BIND9_IRS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/irs/include"
 else
 	BIND9_ISC_BUILDINCLUDE=""
 	BIND9_ISCCC_BUILDINCLUDE=""
@@ -4711,7 +4641,6 @@ else
 	BIND9_DNS_BUILDINCLUDE=""
 	BIND9_LWRES_BUILDINCLUDE=""
 	BIND9_BIND9_BUILDINCLUDE=""
-	BIND9_IRS_BUILDINCLUDE=""
 fi
 
 AC_SUBST_FILE(BIND9_MAKE_INCLUDES)
@@ -4776,9 +4705,6 @@ LIBBIND9_API="$srcdir/lib/bind9/api"
 
 AC_SUBST_FILE(LIBLWRES_API)
 LIBLWRES_API="$srcdir/lib/lwres/api"
-
-AC_SUBST_FILE(LIBIRS_API)
-LIBIRS_API="$srcdir/lib/irs/api"
 
 #
 # Configure any DLZ drivers.
@@ -5087,11 +5013,6 @@ AC_CONFIG_FILES([
 	lib/dns/include/Makefile
 	lib/dns/include/dns/Makefile
 	lib/dns/include/dst/Makefile
-	lib/irs/Makefile
-	lib/irs/include/Makefile
-	lib/irs/include/irs/Makefile
-	lib/irs/include/irs/netdb.h
-	lib/irs/include/irs/platform.h
 	lib/isc/$arch/Makefile
 	lib/isc/$arch/include/Makefile
 	lib/isc/$arch/include/isc/Makefile

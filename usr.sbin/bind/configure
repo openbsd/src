@@ -670,7 +670,6 @@ BIND9_MAJOR
 BIND9_VERSION
 BIND9_DESCRIPTION
 BIND9_PRODUCT
-BIND9_IRS_BUILDINCLUDE
 BIND9_BIND9_BUILDINCLUDE
 BIND9_LWRES_BUILDINCLUDE
 BIND9_DNS_BUILDINCLUDE
@@ -717,7 +716,6 @@ ISC_PLATFORM_HAVESTDATOMIC
 ISC_PLATFORM_HAVEIFNAMETOINDEX
 ISC_PLATFORM_HAVESTRINGSH
 ISC_PLATFORM_BRACEPTHREADONCEINIT
-IRS_PLATFORM_USEDECLSPEC
 LWRES_PLATFORM_USEDECLSPEC
 ISC_PLATFORM_USEDECLSPEC
 ISC_PLATFORM_RLIMITTYPE
@@ -746,7 +744,6 @@ LWRES_PLATFORM_NEEDSTRTOUL
 ISC_PLATFORM_NEEDSTRTOUL
 ISC_PLATFORM_NEEDMEMMOVE
 ISC_PLATFORM_NEEDSTRSEP
-ISC_IRS_GETNAMEINFOSOCKLEN
 ISC_LWRES_GETNAMEINFOPROTO
 ISC_LWRES_GETADDRINFOPROTO
 ISC_LWRES_GETIPNODEPROTO
@@ -758,7 +755,6 @@ ISC_LWRES_GETNETBYADDRINADDR
 ISC_LWRES_ENDHOSTENTINT
 ISC_LWRES_SETHOSTENTINT
 ISC_LWRES_NEEDRRSETINFO
-ISC_IRS_NEEDADDRINFO
 ISC_LWRES_NEEDADDRINFO
 ISC_PLATFORM_NEEDPORTT
 ISC_PLATFORM_MSGHDRFLAVOR
@@ -984,7 +980,6 @@ LIBDNS_API
 LIBDNS_MAPAPI
 LIBBIND9_API
 LIBLWRES_API
-LIBIRS_API
 DLZ_DRIVER_RULES'
 ac_user_opts='
 enable_option_checking
@@ -18485,17 +18480,14 @@ if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 	ISC_LWRES_NEEDADDRINFO="#undef ISC_LWRES_NEEDADDRINFO"
-	ISC_IRS_NEEDADDRINFO="#undef ISC_IRS_NEEDADDRINFO"
 	$as_echo "#define HAVE_ADDRINFO 1" >>confdefs.h
 
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	ISC_LWRES_NEEDADDRINFO="#define ISC_LWRES_NEEDADDRINFO 1"
-	ISC_IRS_NEEDADDRINFO="#define ISC_IRS_NEEDADDRINFO 1"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
 
 
 #
@@ -18711,142 +18703,6 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
-#
-# Sadly, the definitions of system-supplied getnameinfo(3) vary.  Try to catch
-# known variations here:
-#
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for getnameinfo prototype definitions" >&5
-$as_echo_n "checking for getnameinfo prototype definitions... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-int getnameinfo(const struct sockaddr *, socklen_t, char *,
-		socklen_t, char *, socklen_t, unsigned int);
-int
-main ()
-{
- return (0);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: socklen_t for buflen; u_int for flags" >&5
-$as_echo "socklen_t for buflen; u_int for flags" >&6; }
-
-$as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
-
-
-$as_echo "#define IRS_GETNAMEINFO_BUFLEN_T socklen_t" >>confdefs.h
-
-
-$as_echo "#define IRS_GETNAMEINFO_FLAGS_T unsigned int" >>confdefs.h
-
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-int getnameinfo(const struct sockaddr *, socklen_t, char *,
-		size_t, char *, size_t, int);
-int
-main ()
-{
- return (0);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: size_t for buflen; int for flags" >&5
-$as_echo "size_t for buflen; int for flags" >&6; }
-	 $as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
-
-	 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T size_t" >>confdefs.h
-
-	 $as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
-
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-int getnameinfo(const struct sockaddr *, size_t, char *,
-		size_t, char *, size_t, int);
-int
-main ()
-{
- return (0);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: size_t for buflen; int for flags" >&5
-$as_echo "size_t for buflen; int for flags" >&6; }
-	 $as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T size_t" >>confdefs.h
-
-	 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T size_t" >>confdefs.h
-
-	 $as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not match any subspecies; assume standard definition" >&5
-$as_echo "not match any subspecies; assume standard definition" >&6; }
-$as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
-
-$as_echo "#define IRS_GETNAMEINFO_BUFLEN_T socklen_t" >>confdefs.h
-
-$as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-#
-# ...and same for gai_strerror().
-#
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gai_strerror prototype definitions" >&5
-$as_echo_n "checking for gai_strerror prototype definitions... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-char *gai_strerror(int ecode);
-int
-main ()
-{
- return (0);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: returning char *" >&5
-$as_echo "returning char *" >&6; }
-
-$as_echo "#define IRS_GAISTRERROR_RETURN_T char *" >>confdefs.h
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not match any subspecies; assume standard definition" >&5
-$as_echo "not match any subspecies; assume standard definition" >&6; }
-$as_echo "#define IRS_GAISTRERROR_RETURN_T const char *" >>confdefs.h
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
 ac_fn_c_check_func "$LINENO" "getipnodebyname" "ac_cv_func_getipnodebyname"
 if test "x$ac_cv_func_getipnodebyname" = xyes; then :
   ISC_LWRES_GETIPNODEPROTO="#undef ISC_LWRES_GETIPNODEPROTO"
@@ -18875,7 +18731,6 @@ if test "x$ac_cv_func_gai_strerror" = xyes; then :
   $as_echo "#define HAVE_GAISTRERROR 1" >>confdefs.h
 
 fi
-
 
 
 
@@ -19818,8 +19673,6 @@ esac
 ISC_PLATFORM_USEDECLSPEC="#undef ISC_PLATFORM_USEDECLSPEC"
 
 LWRES_PLATFORM_USEDECLSPEC="#undef LWRES_PLATFORM_USEDECLSPEC"
-
-IRS_PLATFORM_USEDECLSPEC="#undef IRS_PLATFORM_USEDECLSPEC"
 
 #
 # Random remaining OS-specific issues involving compiler warnings.
@@ -21616,7 +21469,6 @@ BIND9_TOP_BUILDDIR=`pwd`
 
 
 
-
 if test "X$srcdir" != "X"; then
 	BIND9_ISC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isc/include"
 	BIND9_ISCCC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isccc/include"
@@ -21624,7 +21476,6 @@ if test "X$srcdir" != "X"; then
 	BIND9_DNS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/dns/include"
 	BIND9_LWRES_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/lwres/include"
 	BIND9_BIND9_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/bind9/include"
-	BIND9_IRS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/irs/include"
 else
 	BIND9_ISC_BUILDINCLUDE=""
 	BIND9_ISCCC_BUILDINCLUDE=""
@@ -21632,7 +21483,6 @@ else
 	BIND9_DNS_BUILDINCLUDE=""
 	BIND9_LWRES_BUILDINCLUDE=""
 	BIND9_BIND9_BUILDINCLUDE=""
-	BIND9_IRS_BUILDINCLUDE=""
 fi
 
 
@@ -21697,9 +21547,6 @@ LIBBIND9_API="$srcdir/lib/bind9/api"
 
 
 LIBLWRES_API="$srcdir/lib/lwres/api"
-
-
-LIBIRS_API="$srcdir/lib/irs/api"
 
 #
 # Configure any DLZ drivers.
@@ -22057,7 +21904,7 @@ DNS_CRYPTO_LIBS="$NEWFLAGS"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/dig/Makefile lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/dig/Makefile lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile"
 
 
 #
@@ -23062,11 +22909,6 @@ do
     "lib/dns/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/dns/include/Makefile" ;;
     "lib/dns/include/dns/Makefile") CONFIG_FILES="$CONFIG_FILES lib/dns/include/dns/Makefile" ;;
     "lib/dns/include/dst/Makefile") CONFIG_FILES="$CONFIG_FILES lib/dns/include/dst/Makefile" ;;
-    "lib/irs/Makefile") CONFIG_FILES="$CONFIG_FILES lib/irs/Makefile" ;;
-    "lib/irs/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/irs/include/Makefile" ;;
-    "lib/irs/include/irs/Makefile") CONFIG_FILES="$CONFIG_FILES lib/irs/include/irs/Makefile" ;;
-    "lib/irs/include/irs/netdb.h") CONFIG_FILES="$CONFIG_FILES lib/irs/include/irs/netdb.h" ;;
-    "lib/irs/include/irs/platform.h") CONFIG_FILES="$CONFIG_FILES lib/irs/include/irs/platform.h" ;;
     "lib/isc/$arch/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/$arch/Makefile" ;;
     "lib/isc/$arch/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/$arch/include/Makefile" ;;
     "lib/isc/$arch/include/isc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/$arch/include/isc/Makefile" ;;
