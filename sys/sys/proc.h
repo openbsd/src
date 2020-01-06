@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.283 2019/12/11 07:30:09 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.284 2020/01/06 10:25:10 visa Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -186,7 +186,6 @@ struct process {
 	pid_t	ps_pid;			/* Process identifier. */
 
 	struct	futex_list ps_ftlist;	/* futexes attached to this process */
-	LIST_HEAD(, kqueue) ps_kqlist;	/* kqueues attached to this process */
 	struct  mutex	ps_mtx;		/* per-process mutex */
 
 /* The following fields are all zeroed upon creation in process_new. */

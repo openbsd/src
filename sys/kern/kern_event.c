@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.115 2020/01/05 13:46:02 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.116 2020/01/06 10:25:10 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -162,10 +162,19 @@ KQREF(struct kqueue *kq)
 void
 KQRELE(struct kqueue *kq)
 {
+	struct filedesc *fdp = kq->kq_fdp;
+
 	if (--kq->kq_refs > 0)
 		return;
 
-	LIST_REMOVE(kq, kq_next);
+	if (rw_status(&fdp->fd_lock) == RW_WRITE) {
+		LIST_REMOVE(kq, kq_next);
+	} else {
+		fdplock(fdp);
+		LIST_REMOVE(kq, kq_next);
+		fdpunlock(fdp);
+	}
+
 	free(kq->kq_knlist, M_TEMP, kq->kq_knlistsize * sizeof(struct klist));
 	hashfree(kq->kq_knhash, KN_HASHSIZE, M_TEMP);
 	pool_put(&kqueue_pool, kq);
@@ -476,7 +485,7 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	KQREF(kq);
 	*retval = fd;
 	kq->kq_fdp = fdp;
-	LIST_INSERT_HEAD(&p->p_p->ps_kqlist, kq, kq_next);
+	LIST_INSERT_HEAD(&fdp->fd_kqlist, kq, kq_next);
 	fdinsert(fdp, fd, 0, fp);
 	FRELE(fp, p);
 out:
@@ -1178,12 +1187,14 @@ knote_remove(struct proc *p, struct klist *list)
 void
 knote_fdclose(struct proc *p, int fd)
 {
+	struct filedesc *fdp = p->p_p->ps_fd;
 	struct kqueue *kq;
 	struct klist *list;
 
 	KERNEL_ASSERT_LOCKED();
+	fdpassertlocked(fdp);
 
-	LIST_FOREACH(kq, &p->p_p->ps_kqlist, kq_next) {
+	LIST_FOREACH(kq, &fdp->fd_kqlist, kq_next) {
 		if (fd >= kq->kq_knlistsize)
 			continue;
 

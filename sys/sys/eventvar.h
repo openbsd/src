@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.5 2018/06/17 08:22:02 anton Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.6 2020/01/06 10:25:10 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -35,7 +35,7 @@
 #define KQEXTENT	256		/* linear growth by this amount */
 
 struct kqueue {
-	TAILQ_HEAD(kqlist, knote) kq_head;	/* list of pending event */
+	TAILQ_HEAD(, knote) kq_head;		/* list of pending event */
 	int		kq_count;		/* number of pending events */
 	int		kq_refs;		/* number of references */
 	struct		selinfo kq_sel;

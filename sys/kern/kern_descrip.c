@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.193 2020/01/03 05:37:00 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.194 2020/01/06 10:25:10 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1076,6 +1076,7 @@ fdinit(void)
 	newfdp = pool_get(&fdesc_pool, PR_WAITOK|PR_ZERO);
 	rw_init(&newfdp->fd_fd.fd_lock, "fdlock");
 	mtx_init(&newfdp->fd_fd.fd_fplock, IPL_MPFLOOR);
+	LIST_INIT(&newfdp->fd_fd.fd_kqlist);
 
 	/* Create the file descriptor table. */
 	newfdp->fd_fd.fd_refcnt = 1;
@@ -1195,6 +1196,7 @@ fdfree(struct proc *p)
 
 	if (--fdp->fd_refcnt > 0)
 		return;
+	fdplock(fdp);	/* required by knote_fdclose() */
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
 		fp = fdp->fd_ofiles[fd];
 		if (fp != NULL) {
@@ -1205,6 +1207,7 @@ fdfree(struct proc *p)
 			(void) closef(fp, p);
 		}
 	}
+	fdpunlock(fdp);
 	p->p_fd = NULL;
 	if (fdp->fd_nfiles > NDFILE)
 		free(fdp->fd_ofiles, M_FILEDESC, fdp->fd_nfiles * OFILESIZE);
