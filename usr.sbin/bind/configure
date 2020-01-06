@@ -670,7 +670,6 @@ BIND9_MAJOR
 BIND9_VERSION
 BIND9_DESCRIPTION
 BIND9_PRODUCT
-BIND9_BIND9_BUILDINCLUDE
 BIND9_LWRES_BUILDINCLUDE
 BIND9_DNS_BUILDINCLUDE
 BIND9_ISCCFG_BUILDINCLUDE
@@ -962,7 +961,6 @@ LIBISC_API
 LIBISCCFG_API
 LIBDNS_API
 LIBDNS_MAPAPI
-LIBBIND9_API
 LIBLWRES_API
 DLZ_DRIVER_RULES'
 ac_user_opts='
@@ -21407,19 +21405,16 @@ BIND9_TOP_BUILDDIR=`pwd`
 
 
 
-
 if test "X$srcdir" != "X"; then
 	BIND9_ISC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isc/include"
 	BIND9_ISCCFG_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isccfg/include"
 	BIND9_DNS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/dns/include"
 	BIND9_LWRES_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/lwres/include"
-	BIND9_BIND9_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/bind9/include"
 else
 	BIND9_ISC_BUILDINCLUDE=""
 	BIND9_ISCCFG_BUILDINCLUDE=""
 	BIND9_DNS_BUILDINCLUDE=""
 	BIND9_LWRES_BUILDINCLUDE=""
-	BIND9_BIND9_BUILDINCLUDE=""
 fi
 
 
@@ -21475,9 +21470,6 @@ LIBDNS_API="$srcdir/lib/dns/api"
 
 
 LIBDNS_MAPAPI="$srcdir/lib/dns/mapapi"
-
-
-LIBBIND9_API="$srcdir/lib/bind9/api"
 
 
 LIBLWRES_API="$srcdir/lib/lwres/api"
@@ -21838,7 +21830,7 @@ DNS_CRYPTO_LIBS="$NEWFLAGS"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/dig/Makefile lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/dig/Makefile lib/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile"
 
 
 #
@@ -22836,9 +22828,6 @@ do
     "bin/Makefile") CONFIG_FILES="$CONFIG_FILES bin/Makefile" ;;
     "bin/dig/Makefile") CONFIG_FILES="$CONFIG_FILES bin/dig/Makefile" ;;
     "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
-    "lib/bind9/Makefile") CONFIG_FILES="$CONFIG_FILES lib/bind9/Makefile" ;;
-    "lib/bind9/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/bind9/include/Makefile" ;;
-    "lib/bind9/include/bind9/Makefile") CONFIG_FILES="$CONFIG_FILES lib/bind9/include/bind9/Makefile" ;;
     "lib/dns/Makefile") CONFIG_FILES="$CONFIG_FILES lib/dns/Makefile" ;;
     "lib/dns/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/dns/include/Makefile" ;;
     "lib/dns/include/dns/Makefile") CONFIG_FILES="$CONFIG_FILES lib/dns/include/dns/Makefile" ;;

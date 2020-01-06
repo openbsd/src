@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.22 2020/01/06 17:41:29 florian Exp $ */
+/* $Id: dighost.c,v 1.23 2020/01/06 17:46:59 florian Exp $ */
 
 /*! \file
  *  \note
@@ -97,8 +97,6 @@
 #include <isccfg/namedconf.h>
 
 #include <lwres/lwres.h>
-
-#include <bind9/getaddresses.h>
 
 #include <dig/dig.h>
 
@@ -677,6 +675,68 @@ flush_server_list(void) {
 	}
 }
 
+/* this used to be bind9_getaddresses from lib/bind9 */
+static isc_result_t
+get_addresses(const char *hostname, in_port_t port,
+		   isc_sockaddr_t *addrs, int addrsize, int *addrcount)
+{
+	struct addrinfo *ai = NULL, *tmpai, hints;
+	int result, i;
+
+	REQUIRE(hostname != NULL);
+	REQUIRE(addrs != NULL);
+	REQUIRE(addrcount != NULL);
+	REQUIRE(addrsize > 0);
+
+	memset(&hints, 0, sizeof(hints));
+	if (!have_ipv6)
+		hints.ai_family = PF_INET;
+	else if (!have_ipv4)
+		hints.ai_family = PF_INET6;
+	else {
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_flags = AI_ADDRCONFIG;
+	}
+	hints.ai_socktype = SOCK_STREAM;
+
+	result = getaddrinfo(hostname, NULL, &hints, &ai);
+	switch (result) {
+	case 0:
+		break;
+	case EAI_NONAME:
+	case EAI_NODATA:
+		return (ISC_R_NOTFOUND);
+	default:
+		return (ISC_R_FAILURE);
+	}
+	for (tmpai = ai, i = 0;
+	     tmpai != NULL && i < addrsize;
+	     tmpai = tmpai->ai_next)
+	{
+		if (tmpai->ai_family != AF_INET &&
+		    tmpai->ai_family != AF_INET6)
+			continue;
+		if (tmpai->ai_family == AF_INET) {
+			struct sockaddr_in *sin;
+			sin = (struct sockaddr_in *)tmpai->ai_addr;
+			isc_sockaddr_fromin(&addrs[i], &sin->sin_addr, port);
+		} else {
+			struct sockaddr_in6 *sin6;
+			sin6 = (struct sockaddr_in6 *)tmpai->ai_addr;
+			isc_sockaddr_fromin6(&addrs[i], &sin6->sin6_addr,
+					     port);
+		}
+		i++;
+
+	}
+	freeaddrinfo(ai);
+	*addrcount = i;
+	if (*addrcount == 0)
+		return (ISC_R_NOTFOUND);
+	else
+		return (ISC_R_SUCCESS);
+}
+
 void
 set_nameserver(char *opt) {
 	isc_result_t result;
@@ -689,7 +749,7 @@ set_nameserver(char *opt) {
 	if (opt == NULL)
 		return;
 
-	result = bind9_getaddresses(opt, 0, sockaddrs,
+	result = get_addresses(opt, 0, sockaddrs,
 				    DIG_MAX_ADDRESSES, &count);
 	if (result != ISC_R_SUCCESS)
 		fatal("couldn't get address for '%s': %s",
@@ -4261,7 +4321,7 @@ get_address(char *host, in_port_t myport, isc_sockaddr_t *sockaddr) {
 	is_running = isc_app_isrunning();
 	if (is_running)
 		isc_app_block();
-	result = bind9_getaddresses(host, myport, sockaddr, 1, &count);
+	result = get_addresses(host, myport, sockaddr, 1, &count);
 	if (is_running)
 		isc_app_unblock();
 	if (result != ISC_R_SUCCESS)
@@ -4281,7 +4341,7 @@ getaddresses(dig_lookup_t *lookup, const char *host, isc_result_t *resultp) {
 	dig_server_t *srv;
 	char tmp[ISC_NETADDR_FORMATSIZE];
 
-	result = bind9_getaddresses(host, 0, sockaddrs,
+	result = get_addresses(host, 0, sockaddrs,
 				    DIG_MAX_ADDRESSES, &count);
 	if (resultp != NULL)
 		*resultp = result;

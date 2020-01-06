@@ -4581,19 +4581,16 @@ AC_SUBST(BIND9_ISC_BUILDINCLUDE)
 AC_SUBST(BIND9_ISCCFG_BUILDINCLUDE)
 AC_SUBST(BIND9_DNS_BUILDINCLUDE)
 AC_SUBST(BIND9_LWRES_BUILDINCLUDE)
-AC_SUBST(BIND9_BIND9_BUILDINCLUDE)
 if test "X$srcdir" != "X"; then
 	BIND9_ISC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isc/include"
 	BIND9_ISCCFG_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isccfg/include"
 	BIND9_DNS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/dns/include"
 	BIND9_LWRES_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/lwres/include"
-	BIND9_BIND9_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/bind9/include"
 else
 	BIND9_ISC_BUILDINCLUDE=""
 	BIND9_ISCCFG_BUILDINCLUDE=""
 	BIND9_DNS_BUILDINCLUDE=""
 	BIND9_LWRES_BUILDINCLUDE=""
-	BIND9_BIND9_BUILDINCLUDE=""
 fi
 
 AC_SUBST_FILE(BIND9_MAKE_INCLUDES)
@@ -4649,9 +4646,6 @@ LIBDNS_API="$srcdir/lib/dns/api"
 
 AC_SUBST_FILE(LIBDNS_MAPAPI)
 LIBDNS_MAPAPI="$srcdir/lib/dns/mapapi"
-
-AC_SUBST_FILE(LIBBIND9_API)
-LIBBIND9_API="$srcdir/lib/bind9/api"
 
 AC_SUBST_FILE(LIBLWRES_API)
 LIBLWRES_API="$srcdir/lib/lwres/api"
@@ -4956,9 +4950,6 @@ AC_CONFIG_FILES([
 	bin/Makefile
 	bin/dig/Makefile
 	lib/Makefile
-	lib/bind9/Makefile
-	lib/bind9/include/Makefile
-	lib/bind9/include/bind9/Makefile
 	lib/dns/Makefile
 	lib/dns/include/Makefile
 	lib/dns/include/dns/Makefile

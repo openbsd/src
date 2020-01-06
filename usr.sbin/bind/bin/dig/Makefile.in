@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.9 2019/12/18 18:42:12 deraadt Exp $
+# $Id: Makefile.in,v 1.10 2020/01/06 17:46:59 florian Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -33,24 +33,22 @@ CWARNINGS =
 
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
-BIND9LIBS =	../../lib/bind9/libbind9.@A@
 ISCLIBS =	../../lib/isc/libisc.@A@
 ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@
 LWRESLIBS =	../../lib/lwres/liblwres.@A@
 
 ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
-BIND9DEPLIBS =	../../lib/bind9/libbind9.@A@
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
 LWRESDEPLIBS =	../../lib/lwres/liblwres.@A@
 
-DEPLIBS =	${DNSDEPLIBS} ${BIND9DEPLIBS} ${ISCDEPLIBS} \
+DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS} \
 		${ISCCFGDEPLIBS} ${LWRESDEPLIBS}
 
-LIBS =		${LWRESLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
+LIBS =		${LWRESLIBS} ${ISCCFGLIBS} \
 		${ISCLIBS} @IDNLIBS@ @LIBS@
 
-NOSYMLIBS =	${LWRESLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
+NOSYMLIBS =	${LWRESLIBS} ${ISCCFGLIBS} \
 		${ISCNOSYMLIBS} @IDNLIBS@ @LIBS@
 
 SUBDIRS =
