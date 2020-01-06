@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.41 2017/07/31 16:38:33 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.42 2020/01/06 11:02:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot	<eric@openbsd.org>
@@ -219,6 +219,11 @@ cmd_run(int argc, char **argv)
 	return (node->cmd(np, np ? param : NULL));
 
 fail:
+	if (TAILQ_FIRST(&node->children) == NULL) {
+		fprintf(stderr, "invalid command\n");
+		return (-1);
+	}
+
 	fprintf(stderr, "possibilities are:\n");
 	TAILQ_FOREACH(tmp, &node->children, entry) {
 		for (j = 0; j < i; j++)
