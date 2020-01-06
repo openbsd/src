@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.165 2019/07/23 08:11:10 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.166 2020/01/06 11:03:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -945,7 +945,7 @@ do_encrypt(int argc, struct parameter *argv)
 
 	if (argv)
 		p = argv[0].u.u_str;
-	execl(PATH_ENCRYPT, "encrypt", p, (char *)NULL);
+	execl(PATH_ENCRYPT, "encrypt", "--", p, (char *)NULL);
 	errx(1, "execl");
 }
 
