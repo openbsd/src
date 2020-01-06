@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.213 2020/01/06 15:19:12 bluhm Exp $ */
+/* $OpenBSD: netcat.c,v 1.214 2020/01/06 19:39:58 bluhm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -371,13 +371,24 @@ main(int argc, char *argv[])
 			err(1, "unveil");
 		if (oflag && unveil(oflag, "r") == -1)
 			err(1, "unveil");
+	} else if (family == AF_UNIX && uflag && lflag && !kflag) {
+		/*
+		 * After recvfrom(2) from client, the server connects
+		 * to the client socket.  As the client path is determined
+		 * during runtime, we cannot unveil(2).
+		 */
 	} else {
 		if (family == AF_UNIX) {
 			if (unveil(host, "rwc") == -1)
 				err(1, "unveil");
-			if (uflag && !lflag) {
-				if (unveil(sflag ? sflag : "/tmp", "rwc") == -1)
-					err(1, "unveil");
+			if (uflag && !kflag) {
+				if (sflag) {
+					if (unveil(sflag, "rwc") == -1)
+						err(1, "unveil");
+				} else {
+					if (unveil("/tmp", "rwc") == -1)
+						err(1, "unveil");
+				}
 			}
 		} else {
 			/* no filesystem visibility */
@@ -569,6 +580,10 @@ main(int argc, char *argv[])
 			if (s == -1)
 				err(1, NULL);
 			if (uflag && kflag) {
+				if (family == AF_UNIX) {
+					if (pledge("stdio unix", NULL) == -1)
+						err(1, "pledge");
+				}
 				/*
 				 * For UDP and -k, don't connect the socket,
 				 * let it receive datagrams from multiple
@@ -595,6 +610,10 @@ main(int argc, char *argv[])
 				if (rv == -1)
 					err(1, "connect");
 
+				if (family == AF_UNIX) {
+					if (pledge("stdio unix", NULL) == -1)
+						err(1, "pledge");
+				}
 				if (vflag)
 					report_sock("Connection received",
 					    (struct sockaddr *)&z, len,
