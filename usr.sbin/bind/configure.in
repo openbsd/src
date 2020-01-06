@@ -4578,21 +4578,18 @@ AC_SUBST(BIND9_TOP_BUILDDIR)
 BIND9_TOP_BUILDDIR=`pwd`
 
 AC_SUBST(BIND9_ISC_BUILDINCLUDE)
-AC_SUBST(BIND9_ISCCC_BUILDINCLUDE)
 AC_SUBST(BIND9_ISCCFG_BUILDINCLUDE)
 AC_SUBST(BIND9_DNS_BUILDINCLUDE)
 AC_SUBST(BIND9_LWRES_BUILDINCLUDE)
 AC_SUBST(BIND9_BIND9_BUILDINCLUDE)
 if test "X$srcdir" != "X"; then
 	BIND9_ISC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isc/include"
-	BIND9_ISCCC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isccc/include"
 	BIND9_ISCCFG_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isccfg/include"
 	BIND9_DNS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/dns/include"
 	BIND9_LWRES_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/lwres/include"
 	BIND9_BIND9_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/bind9/include"
 else
 	BIND9_ISC_BUILDINCLUDE=""
-	BIND9_ISCCC_BUILDINCLUDE=""
 	BIND9_ISCCFG_BUILDINCLUDE=""
 	BIND9_DNS_BUILDINCLUDE=""
 	BIND9_LWRES_BUILDINCLUDE=""
@@ -4643,9 +4640,6 @@ AC_SUBST(BIND9_CONFIGARGS)
 
 AC_SUBST_FILE(LIBISC_API)
 LIBISC_API="$srcdir/lib/isc/api"
-
-AC_SUBST_FILE(LIBISCCC_API)
-LIBISCCC_API="$srcdir/lib/isccc/api"
 
 AC_SUBST_FILE(LIBISCCFG_API)
 LIBISCCFG_API="$srcdir/lib/isccfg/api"
@@ -4986,9 +4980,6 @@ AC_CONFIG_FILES([
 	lib/isc/unix/include/Makefile
 	lib/isc/unix/include/isc/Makefile
 	lib/isc/unix/include/pkcs11/Makefile
-	lib/isccc/Makefile
-	lib/isccc/include/Makefile
-	lib/isccc/include/isccc/Makefile
 	lib/isccfg/Makefile
 	lib/isccfg/include/Makefile
 	lib/isccfg/include/isccfg/Makefile

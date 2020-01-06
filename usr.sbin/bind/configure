@@ -674,7 +674,6 @@ BIND9_BIND9_BUILDINCLUDE
 BIND9_LWRES_BUILDINCLUDE
 BIND9_DNS_BUILDINCLUDE
 BIND9_ISCCFG_BUILDINCLUDE
-BIND9_ISCCC_BUILDINCLUDE
 BIND9_ISC_BUILDINCLUDE
 BIND9_TOP_BUILDDIR
 UNITTESTS
@@ -960,7 +959,6 @@ SHELL'
 ac_subst_files='BIND9_MAKE_INCLUDES
 BIND9_MAKE_RULES
 LIBISC_API
-LIBISCCC_API
 LIBISCCFG_API
 LIBDNS_API
 LIBDNS_MAPAPI
@@ -21410,17 +21408,14 @@ BIND9_TOP_BUILDDIR=`pwd`
 
 
 
-
 if test "X$srcdir" != "X"; then
 	BIND9_ISC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isc/include"
-	BIND9_ISCCC_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isccc/include"
 	BIND9_ISCCFG_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/isccfg/include"
 	BIND9_DNS_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/dns/include"
 	BIND9_LWRES_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/lwres/include"
 	BIND9_BIND9_BUILDINCLUDE="-I${BIND9_TOP_BUILDDIR}/lib/bind9/include"
 else
 	BIND9_ISC_BUILDINCLUDE=""
-	BIND9_ISCCC_BUILDINCLUDE=""
 	BIND9_ISCCFG_BUILDINCLUDE=""
 	BIND9_DNS_BUILDINCLUDE=""
 	BIND9_LWRES_BUILDINCLUDE=""
@@ -21471,9 +21466,6 @@ BIND9_CONFIGARGS="CONFIGARGS=${BIND9_CONFIGARGS}"
 
 
 LIBISC_API="$srcdir/lib/isc/api"
-
-
-LIBISCCC_API="$srcdir/lib/isccc/api"
 
 
 LIBISCCFG_API="$srcdir/lib/isccfg/api"
@@ -21846,7 +21838,7 @@ DNS_CRYPTO_LIBS="$NEWFLAGS"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/dig/Makefile lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/dig/Makefile lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile"
 
 
 #
@@ -22868,9 +22860,6 @@ do
     "lib/isc/unix/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/unix/include/Makefile" ;;
     "lib/isc/unix/include/isc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/unix/include/isc/Makefile" ;;
     "lib/isc/unix/include/pkcs11/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isc/unix/include/pkcs11/Makefile" ;;
-    "lib/isccc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccc/Makefile" ;;
-    "lib/isccc/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccc/include/Makefile" ;;
-    "lib/isccc/include/isccc/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccc/include/isccc/Makefile" ;;
     "lib/isccfg/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccfg/Makefile" ;;
     "lib/isccfg/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccfg/include/Makefile" ;;
     "lib/isccfg/include/isccfg/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccfg/include/isccfg/Makefile" ;;
