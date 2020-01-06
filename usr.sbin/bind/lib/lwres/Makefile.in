@@ -12,63 +12,42 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.3 2019/12/17 01:46:38 sthen Exp $
+# $Id: Makefile.in,v 1.4 2020/01/06 17:41:29 florian Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 
-VERSION=@BIND9_VERSION@
-
 @LIBLWRES_API@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	-I${srcdir}/unix/include \
-		-I. -I./include -I${srcdir}/include ${ISC_INCLUDES}
+CINCLUDES =	-I. -I./include -I${srcdir}/include ${ISC_INCLUDES}
 CDEFINES =
 CWARNINGS =
 
 # Alphabetically
-OBJS =		compat.@O@ context.@O@ \
-		gai_strerror.@O@ getaddrinfo.@O@ gethost.@O@ \
-		getipnode.@O@ getnameinfo.@O@ getrrset.@O@ herror.@O@ \
-		lwbuffer.@O@ lwconfig.@O@ lwpacket.@O@ lwresutil.@O@ \
-		lwres_gabn.@O@ lwres_gnba.@O@ lwres_grbn.@O@ lwres_noop.@O@ \
-		lwinetaton.@O@ lwinetpton.@O@ lwinetntop.@O@ print.@O@
+OBJS =		lwconfig.@O@
 
 # Alphabetically
-SRCS =		compat.c context.c gai_strerror.c getaddrinfo.c gethost.c \
-		getipnode.c getnameinfo.c getrrset.c herror.c \
-		lwbuffer.c lwconfig.c lwpacket.c lwresutil.c \
-		lwres_gabn.c lwres_gnba.c lwres_grbn.c lwres_noop.c \
-		lwinetaton.c lwinetpton.c lwinetntop.c print.c
+SRCS =		lwconfig.c
 
 LIBS =		@LIBS@
 
-SUBDIRS =	include man unix
+SUBDIRS =
 TARGETS =	timestamp
 TESTDIRS =	@UNITTESTS@
 
 @BIND9_MAKE_RULES@
 
-version.@O@: version.c
-	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
-		-DVERSION=\"${VERSION}\" \
-		-DLIBINTERFACE=${LIBINTERFACE} \
-		-DLIBREVISION=${LIBREVISION} \
-		-DLIBAGE=${LIBAGE} \
-		-c ${srcdir}/version.c
-
-liblwres.@SA@: ${OBJS} version.@O@
-	${AR} ${ARFLAGS} $@ ${OBJS} version.@O@
+liblwres.@SA@: ${OBJS}
+	${AR} ${ARFLAGS} $@ ${OBJS}
 	${RANLIB} $@
 
-liblwres.la: ${OBJS} version.@O@
+liblwres.la: ${OBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o liblwres.la -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} version.@O@ ${LIBS}
+		${OBJS} ${LIBS}
 
 timestamp: liblwres.@A@
 	touch timestamp

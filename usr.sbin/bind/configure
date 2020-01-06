@@ -716,20 +716,16 @@ ISC_PLATFORM_HAVESTDATOMIC
 ISC_PLATFORM_HAVEIFNAMETOINDEX
 ISC_PLATFORM_HAVESTRINGSH
 ISC_PLATFORM_BRACEPTHREADONCEINIT
-LWRES_PLATFORM_USEDECLSPEC
 ISC_PLATFORM_USEDECLSPEC
 ISC_PLATFORM_RLIMITTYPE
 ISC_PLATFORM_HAVESTATNSEC
 ISC_PLATFORM_HAVESYSUNH
-LWRES_PLATFORM_QUADFORMAT
 ISC_PLATFORM_QUADFORMAT
 DST_EXTRA_SRCS
 DST_EXTRA_OBJS
 USE_ISC_SPNEGO
 ISC_EXTRA_SRCS
 ISC_EXTRA_OBJS
-LWRES_PLATFORM_NEEDVSNPRINTF
-LWRES_PLATFORM_NEEDSPRINTF
 ISC_PLATFORM_NEEDVSNPRINTF
 ISC_PLATFORM_NEEDSPRINTF
 ISC_PLATFORM_NEEDFPRINTF
@@ -737,10 +733,8 @@ ISC_PLATFORM_NEEDPRINTF
 READLINE_LIB
 ISC_PLATFORM_NEEDSTRCASESTR
 ISC_PLATFORM_NEEDSTRLCAT
-LWRES_PLATFORM_NEEDSTRLCPY
 ISC_PLATFORM_NEEDSTRLCPY
 GENRANDOMLIB
-LWRES_PLATFORM_NEEDSTRTOUL
 ISC_PLATFORM_NEEDSTRTOUL
 ISC_PLATFORM_NEEDMEMMOVE
 ISC_PLATFORM_NEEDSTRSEP
@@ -758,7 +752,6 @@ ISC_LWRES_NEEDRRSETINFO
 ISC_LWRES_NEEDADDRINFO
 ISC_PLATFORM_NEEDPORTT
 ISC_PLATFORM_MSGHDRFLAVOR
-LWRES_PLATFORM_HAVESALEN
 ISC_PLATFORM_HAVESALEN
 ISC_PLATFORM_NEEDPTON
 ISC_PLATFORM_NEEDNTOP
@@ -773,17 +766,11 @@ ISC_IPV6_H
 ISC_PLATFORM_HAVESOCKADDRSTORAGE
 ISC_PLATFORM_FIXIN6ISADDR
 ISC_PLATFORM_HAVEIN6PKTINFO
-LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK
 ISC_PLATFORM_NEEDIN6ADDRLOOPBACK
-LWRES_PLATFORM_NEEDIN6ADDRANY
 ISC_PLATFORM_NEEDIN6ADDRANY
-LWRES_PLATFORM_HAVEINADDR6
 ISC_PLATFORM_HAVEINADDR6
-LWRES_PLATFORM_NEEDNETINET6IN6H
 ISC_PLATFORM_NEEDNETINET6IN6H
-LWRES_PLATFORM_NEEDNETINETIN6H
 ISC_PLATFORM_NEEDNETINETIN6H
-LWRES_PLATFORM_HAVEIPV6
 ISC_PLATFORM_HAVEIPV6
 BIND9_CO_RULE
 LIBTOOL_IN_MAIN
@@ -862,7 +849,6 @@ ISC_PLATFORM_HAVEGSSAPI
 KRB5_CONFIG
 GEOIPLINKOBJS
 GEOIPLINKSRCS
-LWRES_PLATFORM_NEEDSYSSELECTH
 ISC_PLATFORM_NEEDSYSSELECTH
 ISC_PLATFORM_HAVEDEVPOLL
 ISC_PLATFORM_HAVEEPOLL
@@ -13540,14 +13526,12 @@ if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 	 ISC_PLATFORM_NEEDSYSSELECTH="#undef ISC_PLATFORM_NEEDSYSSELECTH"
-	 LWRES_PLATFORM_NEEDSYSSELECTH="#undef LWRES_PLATFORM_NEEDSYSSELECTH"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	case $ac_cv_header_sys_select_h in
 	yes)
 	 ISC_PLATFORM_NEEDSYSSELECTH="#define ISC_PLATFORM_NEEDSYSSELECTH 1"
-	 LWRES_PLATFORM_NEEDSYSSELECTH="#define LWRES_PLATFORM_NEEDSYSSELECTH 1"
 		;;
 	no)
 		as_fn_error $? "need either working unistd.h or sys/select.h" "$LINENO" 5
@@ -13561,7 +13545,6 @@ no)
 	case $ac_cv_header_sys_select_h in
 	yes)
 	     ISC_PLATFORM_NEEDSYSSELECTH="#define ISC_PLATFORM_NEEDSYSSELECTH 1"
-	     LWRES_PLATFORM_NEEDSYSSELECTH="#define LWRES_PLATFORM_NEEDSYSSELECTH 1"
 		;;
 	no)
 		as_fn_error $? "need either unistd.h or sys/select.h" "$LINENO" 5
@@ -13569,7 +13552,6 @@ no)
 	esac
 	;;
 esac
-
 
 
 #
@@ -17947,12 +17929,10 @@ esac
 case "$host" in
 *-bsdi4.[01]*)
 	ISC_PLATFORM_NEEDNETINET6IN6H="#define ISC_PLATFORM_NEEDNETINET6IN6H 1"
-	LWRES_PLATFORM_NEEDNETINET6IN6H="#define LWRES_PLATFORM_NEEDNETINET6IN6H 1"
 	isc_netinet6in6_hack="#include <netinet6/in6.h>"
 	;;
 *)
 	ISC_PLATFORM_NEEDNETINET6IN6H="#undef ISC_PLATFORM_NEEDNETINET6IN6H"
-	LWRES_PLATFORM_NEEDNETINET6IN6H="#undef LWRES_PLATFORM_NEEDNETINET6IN6H"
 	isc_netinet6in6_hack=""
 	;;
 esac
@@ -17965,13 +17945,11 @@ case "$host" in
 *-sco-sysv*uw*|*-*-sysv*UnixWare*|*-*-sysv*OpenUNIX*)
 	# UnixWare
 	ISC_PLATFORM_NEEDNETINETIN6H="#define ISC_PLATFORM_NEEDNETINETIN6H 1"
-	LWRES_PLATFORM_NEEDNETINETIN6H="#define LWRES_PLATFORM_NEEDNETINETIN6H 1"
 	ISC_PLATFORM_FIXIN6ISADDR="#define ISC_PLATFORM_FIXIN6ISADDR 1"
 	isc_netinetin6_hack="#include <netinet/in6.h>"
 	;;
 *)
 	ISC_PLATFORM_NEEDNETINETIN6H="#undef ISC_PLATFORM_NEEDNETINETIN6H"
-	LWRES_PLATFORM_NEEDNETINETIN6H="#undef LWRES_PLATFORM_NEEDNETINETIN6H"
 	ISC_PLATFORM_FIXIN6ISADDR="#undef ISC_PLATFORM_FIXIN6ISADDR"
 	isc_netinetin6_hack=""
 	;;
@@ -17983,7 +17961,6 @@ esac
 case "$found_ipv6" in
 	yes)
 		ISC_PLATFORM_HAVEIPV6="#define ISC_PLATFORM_HAVEIPV6 1"
-		LWRES_PLATFORM_HAVEIPV6="#define LWRES_PLATFORM_HAVEIPV6 1"
 
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for in6_addr" >&5
 $as_echo_n "checking for in6_addr... " >&6; }
@@ -18008,13 +17985,11 @@ if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 		 ISC_PLATFORM_HAVEINADDR6="#undef ISC_PLATFORM_HAVEINADDR6"
-		 LWRES_PLATFORM_HAVEINADDR6="#undef LWRES_PLATFORM_HAVEINADDR6"
 		 isc_in_addr6_hack=""
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 		 ISC_PLATFORM_HAVEINADDR6="#define ISC_PLATFORM_HAVEINADDR6 1"
-		 LWRES_PLATFORM_HAVEINADDR6="#define LWRES_PLATFORM_HAVEINADDR6 1"
 		 isc_in_addr6_hack="#define in6_addr in_addr6"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
@@ -18043,12 +18018,10 @@ if ac_fn_c_try_link "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 			 ISC_PLATFORM_NEEDIN6ADDRANY="#undef ISC_PLATFORM_NEEDIN6ADDRANY"
-			 LWRES_PLATFORM_NEEDIN6ADDRANY="#undef LWRES_PLATFORM_NEEDIN6ADDRANY"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 			 ISC_PLATFORM_NEEDIN6ADDRANY="#define ISC_PLATFORM_NEEDIN6ADDRANY 1"
-			 LWRES_PLATFORM_NEEDIN6ADDRANY="#define LWRES_PLATFORM_NEEDIN6ADDRANY 1"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -18077,12 +18050,10 @@ if ac_fn_c_try_link "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 			 ISC_PLATFORM_NEEDIN6ADDRLOOPBACK="#undef ISC_PLATFORM_NEEDIN6ADDRLOOPBACK"
-			 LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK="#undef LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 			 ISC_PLATFORM_NEEDIN6ADDRLOOPBACK="#define ISC_PLATFORM_NEEDIN6ADDRLOOPBACK 1"
-			 LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK="#define LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK 1"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
@@ -18152,9 +18123,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 		;;
 	no)
 		ISC_PLATFORM_HAVEIPV6="#undef ISC_PLATFORM_HAVEIPV6"
-		LWRES_PLATFORM_HAVEIPV6="#undef LWRES_PLATFORM_HAVEIPV6"
 		ISC_PLATFORM_NEEDIN6ADDRANY="#undef ISC_PLATFORM_NEEDIN6ADDRANY"
-		LWRES_PLATFORM_NEEDIN6ADDRANY="#undef LWRES_PLATFORM_NEEDIN6ADDRANY"
 		ISC_PLATFORM_HAVEIN6PKTINFO="#undef ISC_PLATFORM_HAVEIN6PKTINFO"
 		LWRES_HAVE_SIN6_SCOPE_ID="#define LWRES_HAVE_SIN6_SCOPE_ID 1"
 		ISC_PLATFORM_HAVESCOPEID="#define ISC_PLATFORM_HAVESCOPEID 1"
@@ -18193,12 +18162,6 @@ $as_echo "no" >&6; }
 ISC_PLATFORM_HAVESOCKADDRSTORAGE="#undef ISC_PLATFORM_HAVESOCKADDRSTORAGE"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-
-
-
-
-
 
 
 
@@ -18388,15 +18351,12 @@ if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 	ISC_PLATFORM_HAVESALEN="#define ISC_PLATFORM_HAVESALEN 1"
-	LWRES_PLATFORM_HAVESALEN="#define LWRES_PLATFORM_HAVESALEN 1"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	ISC_PLATFORM_HAVESALEN="#undef ISC_PLATFORM_HAVESALEN"
-	LWRES_PLATFORM_HAVESALEN="#undef LWRES_PLATFORM_HAVESALEN"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
 
 
 #
@@ -18851,14 +18811,11 @@ fi
 ac_fn_c_check_func "$LINENO" "strtoul" "ac_cv_func_strtoul"
 if test "x$ac_cv_func_strtoul" = xyes; then :
   ISC_PLATFORM_NEEDSTRTOUL="#undef ISC_PLATFORM_NEEDSTRTOUL"
-	 LWRES_PLATFORM_NEEDSTRTOUL="#undef LWRES_PLATFORM_NEEDSTRTOUL"
 	 GENRANDOMLIB=""
 else
   ISC_PLATFORM_NEEDSTRTOUL="#define ISC_PLATFORM_NEEDSTRTOUL 1"
-	 LWRES_PLATFORM_NEEDSTRTOUL="#define LWRES_PLATFORM_NEEDSTRTOUL 1"
 	 GENRANDOMLIB='${ISCLIBS}'
 fi
-
 
 
 
@@ -18866,12 +18823,9 @@ fi
 ac_fn_c_check_func "$LINENO" "strlcpy" "ac_cv_func_strlcpy"
 if test "x$ac_cv_func_strlcpy" = xyes; then :
   ISC_PLATFORM_NEEDSTRLCPY="#undef ISC_PLATFORM_NEEDSTRLCPY"
-	 LWRES_PLATFORM_NEEDSTRLCPY="#undef LWRES_PLATFORM_NEEDSTRLCPY"
 else
   ISC_PLATFORM_NEEDSTRLCPY="#define ISC_PLATFORM_NEEDSTRLCPY 1"
-	 LWRES_PLATFORM_NEEDSTRLCPY="#define LWRES_PLATFORM_NEEDSTRLCPY 1"
 fi
-
 
 
 
@@ -19041,7 +18995,6 @@ ISC_PLATFORM_NEEDPRINTF='#undef ISC_PLATFORM_NEEDPRINTF'
 ISC_PLATFORM_NEEDFPRINTF='#undef ISC_PLATFORM_NEEDFPRINTF'
 ISC_PLATFORM_NEEDSPRINTF='#undef ISC_PLATFORM_NEEDSPRINTF'
 ISC_PLATFORM_NEEDVSNPRINTF='#undef ISC_PLATFORM_NEEDVSNPRINTF'
-LWRES_PLATFORM_NEEDVSNPRINTF='#undef LWRES_PLATFORM_NEEDVSNPRINTF'
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking sprintf return type" >&5
 $as_echo_n "checking sprintf return type... " >&6; }
@@ -19064,7 +19017,6 @@ $as_echo "char *" >&6; }
 ISC_PRINT_OBJS="print.$O"
 ISC_PRINT_SRCS="print.c"
 ISC_PLATFORM_NEEDSPRINTF="#define ISC_PLATFORM_NEEDSPRINTF"
-LWRES_PLATFORM_NEEDSPRINTF="#define LWRES_PLATFORM_NEEDSPRINTF"
 
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: int" >&5
@@ -19079,7 +19031,6 @@ else
   ISC_PRINT_OBJS="print.$O"
 	 ISC_PRINT_SRCS="print.c"
 	 ISC_PLATFORM_NEEDVSNPRINTF="#define ISC_PLATFORM_NEEDVSNPRINTF 1"
-	 LWRES_PLATFORM_NEEDVSNPRINTF="#define LWRES_PLATFORM_NEEDVSNPRINTF 1"
 fi
 
 
@@ -19116,13 +19067,10 @@ $as_echo "no" >&6; }
 	ISC_PLATFORM_NEEDFPRINTF='#define ISC_PLATFORM_NEEDFPRINTF 1'
 	ISC_PLATFORM_NEEDFSRINTF='#define ISC_PLATFORM_NEEDSPRINTF 1'
 	ISC_PLATFORM_NEEDVSNPRINTF="#define ISC_PLATFORM_NEEDVSNPRINTF 1"
-	LWRES_PLATFORM_NEEDVSNPRINTF="#define LWRES_PLATFORM_NEEDVSNPRINTF 1"
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
-
-
 
 
 
@@ -19191,7 +19139,6 @@ if test "$cross_compiling" = yes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming target platform uses ll" >&5
 $as_echo "assuming target platform uses ll" >&6; }
 	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "ll"'
-	LWRES_PLATFORM_QUADFORMAT='#define LWRES_PLATFORM_QUADFORMAT "ll"'
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -19211,17 +19158,14 @@ if ac_fn_c_try_run "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: ll" >&5
 $as_echo "ll" >&6; }
 	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "ll"'
-	LWRES_PLATFORM_QUADFORMAT='#define LWRES_PLATFORM_QUADFORMAT "ll"'
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: l" >&5
 $as_echo "l" >&6; }
 	ISC_PLATFORM_QUADFORMAT='#define ISC_PLATFORM_QUADFORMAT "l"'
-	LWRES_PLATFORM_QUADFORMAT='#define LWRES_PLATFORM_QUADFORMAT "l"'
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
-
 
 
 
@@ -19671,8 +19615,6 @@ esac
 #
 
 ISC_PLATFORM_USEDECLSPEC="#undef ISC_PLATFORM_USEDECLSPEC"
-
-LWRES_PLATFORM_USEDECLSPEC="#undef LWRES_PLATFORM_USEDECLSPEC"
 
 #
 # Random remaining OS-specific issues involving compiler warnings.
@@ -21904,7 +21846,7 @@ DNS_CRYPTO_LIBS="$NEWFLAGS"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/dig/Makefile lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/dig/Makefile lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile"
 
 
 #
@@ -22933,14 +22875,6 @@ do
     "lib/isccfg/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccfg/include/Makefile" ;;
     "lib/isccfg/include/isccfg/Makefile") CONFIG_FILES="$CONFIG_FILES lib/isccfg/include/isccfg/Makefile" ;;
     "lib/lwres/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/Makefile" ;;
-    "lib/lwres/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/include/Makefile" ;;
-    "lib/lwres/include/lwres/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/include/lwres/Makefile" ;;
-    "lib/lwres/include/lwres/netdb.h") CONFIG_FILES="$CONFIG_FILES lib/lwres/include/lwres/netdb.h" ;;
-    "lib/lwres/include/lwres/platform.h") CONFIG_FILES="$CONFIG_FILES lib/lwres/include/lwres/platform.h" ;;
-    "lib/lwres/man/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/man/Makefile" ;;
-    "lib/lwres/unix/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/unix/Makefile" ;;
-    "lib/lwres/unix/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/unix/include/Makefile" ;;
-    "lib/lwres/unix/include/lwres/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/unix/include/lwres/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
