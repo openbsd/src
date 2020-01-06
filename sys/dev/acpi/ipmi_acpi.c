@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi_acpi.c,v 1.2 2019/08/13 18:31:23 kettenis Exp $ */
+/* $OpenBSD: ipmi_acpi.c,v 1.3 2020/01/06 12:35:57 kettenis Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -46,8 +46,8 @@ struct ipmi_acpi_softc {
 	struct aml_node		*sc_devnode;
 
 	int			 sc_ift;
+	int			 sc_srv;
 
-	bus_space_tag_t		 sc_iot;
 	bus_size_t		 sc_iobase;
 	int			 sc_iospacing;
 	char			 sc_iotype;
@@ -76,7 +76,7 @@ ipmi_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct ipmi_attach_args ia;
 	struct aml_value res;
-	int64_t ift;
+	int64_t ift, srv = 0;
 	int rc;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
@@ -88,6 +88,9 @@ ipmi_acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	sc->sc_ift = ift;
+
+	aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_SRV", 0, NULL, &srv);
+	sc->sc_srv = srv;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CRS", 0, NULL, &res)) {
 		printf(": no _CRS method\n");
@@ -103,17 +106,17 @@ ipmi_acpi_attach(struct device *parent, struct device *self, void *aux)
 	aml_parse_resource(&res, ipmi_acpi_parse_crs, sc);
 	aml_freevalue(&res);
 
-	if (sc->sc_iot == NULL) {
+	if (sc->sc_iotype == 0) {
 		printf("%s: incomplete resources (ift %d)\n",
 		    DEVNAME(sc), sc->sc_ift);
 		return;
 	}
 
 	memset(&ia, 0, sizeof(ia));
-	ia.iaa_iot = sc->sc_iot;
-	ia.iaa_memt = sc->sc_iot;
+	ia.iaa_iot = sc->sc_acpi->sc_iot;
+	ia.iaa_memt = sc->sc_acpi->sc_memt;
 	ia.iaa_if_type = sc->sc_ift;
-	ia.iaa_if_rev = 0;
+	ia.iaa_if_rev = (sc->sc_srv >> 4);
 	ia.iaa_if_irq = -1;
 	ia.iaa_if_irqlvl = 0;
 	ia.iaa_if_iospacing = sc->sc_iospacing;
@@ -128,32 +131,52 @@ ipmi_acpi_parse_crs(int crsidx, union acpi_resource *crs, void *arg)
 {
 	struct ipmi_acpi_softc *sc = arg;
 	int type = AML_CRSTYPE(crs);
+	bus_size_t addr;
+	char iotype;
+
+	switch (type) {
+	case SR_IOPORT:
+		addr = crs->sr_ioport._max;
+		iotype = 'i';
+		break;
+	case LR_MEM32FIXED:
+		addr = crs->lr_m32fixed._bas;
+		iotype = 'm';
+		break;
+	case LR_EXTIRQ:
+		/* Ignore for now. */
+		return 0;
+	default:
+		printf("\n%s: unexpected resource #%d type %d",
+		    DEVNAME(sc), crsidx, type);
+		sc->sc_iotype = 0;
+		return -1;
+	}
 
 	switch (crsidx) {
 	case 0:
-		if (type != SR_IOPORT) {
-			printf("%s: Unexpected resource #%d type %d\n",
-			    DEVNAME(sc), crsidx, type);
-			break;
-		}
-		sc->sc_iot = sc->sc_acpi->sc_iot;
-		sc->sc_iobase = crs->sr_ioport._max;
+		sc->sc_iobase = addr;
 		sc->sc_iospacing = 1;
-		sc->sc_iotype = 'i';
+		sc->sc_iotype = iotype;
 		break;
 	case 1:
-		if (type != SR_IOPORT) {
-			printf("%s: Unexpected resource #%d type %d\n",
+		if (sc->sc_iotype != iotype) {
+			printf("\n%s: unexpected resource #%d type %d\n",
 			    DEVNAME(sc), crsidx, type);
-			break;
+			sc->sc_iotype = 0;
+			return -1;
 		}
-		if (crs->sr_ioport._max <= sc->sc_iobase)
-			break;
-		sc->sc_iospacing = crs->sr_ioport._max - sc->sc_iobase;
+		if (addr <= sc->sc_iobase) {
+			sc->sc_iotype = 0;
+			return -1;
+		}
+		sc->sc_iospacing = addr - sc->sc_iobase;
 		break;
 	default:
-		printf("%s: invalid resource #%d type %d (ift %d)\n",
+		printf("\n%s: invalid resource #%d type %d (ift %d)",
 		    DEVNAME(sc), crsidx, type, sc->sc_ift);
+		sc->sc_iotype = 0;
+		return -1;
 	}
 
 	return 0;
