@@ -17,9 +17,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.36 2018/06/13 13:27:37 jmc Exp $
+.\" $OpenBSD: crontab.5,v 1.37 2020/01/06 19:44:09 job Exp $
 .\"
-.Dd $Mdocdate: June 13 2018 $
+.Dd $Mdocdate: January 6 2020 $
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -307,11 +307,16 @@ MAILTO=paul
 #
 # run five minutes after midnight, every day
 5 0 * * *       $HOME/bin/daily.job >> $HOME/tmp/out 2>&1
-# run at 2:15pm on the first of every month -- output mailed to paul
-15 14 1 * *     $HOME/bin/monthly
+
+# run at 2:15pm on the first of every month -- job output will be sent
+# to paul, but only if $HOME/bin/monthly exits with a non-zero exit code
+15 14 1 * *     -n $HOME/bin/monthly
+
 # run at 10 pm on weekdays, annoy Joe
 0 22 * * 1-5	mail -s "It's 10pm" joe%Joe,%%Where are your kids?%
+
 23 0-23/2 * * * echo "run 23 minutes after midn, 2am, 4am ..., everyday"
+
 5 4 * * sun     echo "run at 5 after 4 every sunday"
 .Ed
 .Sh SEE ALSO
