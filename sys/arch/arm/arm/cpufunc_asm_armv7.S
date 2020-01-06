@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.17 2019/10/31 22:28:26 patrick Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.18 2020/01/06 19:12:39 kettenis Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -43,7 +43,6 @@ ENTRY(armv7_periphbase)
  */
 ENTRY(armv7_setttb)
 	mcr	CP15_ICIALLU		/* Flush I cache */
-	mcr	CP15_BPIALL		/* Flush BP cache */
 	dsb	sy
 	isb	sy
 
@@ -126,7 +125,6 @@ ENTRY(armv7_icache_sync_all)
 	 * into the Dcache cleaning code.
 	 */
 	mcr	CP15_ICIALLU		/* Flush I cache */
-	mcr	CP15_BPIALL		/* Flush BP cache */
 	isb	sy
 	mov	pc, lr
 
@@ -228,7 +226,6 @@ ENTRY(armv7_context_switch)
 	 * at this point.  So no need to flush them again.
 	 */
 	mcr	CP15_ICIALLU		/* Flush I cache */
-	mcr	CP15_BPIALL		/* Flush BP cache */
 	dsb	sy
 	isb	sy
 
