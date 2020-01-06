@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.101 2019/10/08 20:51:03 kn Exp $	*/
+/*	$OpenBSD: top.c,v 1.102 2020/01/06 20:05:10 zhuk Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -68,6 +68,7 @@ static void	reset_display(void);
 int		rundisplay(void);
 
 static int	max_topn;	/* maximum displayable processes */
+static int	skip;		/* how many processes to skip (scroll) */
 
 extern int ncpu;
 extern int ncpuonline;
@@ -126,6 +127,10 @@ struct statics  statics;
 #define CMD_add		21
 #define CMD_hl		22
 #define CMD_cpus	23
+#define CMD_down	24
+#define CMD_up		25
+#define CMD_pagedown	26
+#define CMD_pageup	27
 
 static void
 usage(void)
@@ -557,6 +562,15 @@ restart:
 				active_procs = topn;
 			if (active_procs > max_topn)
 				active_procs = max_topn;
+			/* determine how many process to skip, if asked to */
+			/*
+			 * this number is tweaked by user, but gets shrinked
+			 * when number of active processes lowers too much
+			 */
+			if (skip + active_procs > system_info.p_active)
+				skip = system_info.p_active - active_procs;
+			for (i = skip; i > 0; i--)
+				skip_next_process(processes);
 			/* now show the top "n" processes. */
 			for (i = 0; i < active_procs; i++) {
 				pid_t pid;
@@ -618,7 +632,7 @@ rundisplay(void)
 	char ch, *iptr;
 	int change, i;
 	struct pollfd pfd[1];
-	static char command_chars[] = "\f qh?en#sdkriIuSopCHg+P1";
+	static char command_chars[] = "\f qh?en#sdkriIuSopCHg+P109)(";
 
 	/*
 	 * assume valid command unless told
@@ -966,6 +980,21 @@ rundisplay(void)
 			combine_cpus = !combine_cpus;
 			max_topn = display_resize();
 			reset_display();
+			break;
+		case CMD_down:
+			skip++;
+			break;
+		case CMD_up:
+			if (skip > 0)
+				skip--;
+			break;
+		case CMD_pagedown:
+			skip += max_topn / 2;
+			break;
+		case CMD_pageup:
+			skip -= max_topn / 2;
+			if (skip < 0)
+				skip = 0;
 			break;
 		default:
 			new_message(MT_standout, " BAD CASE IN SWITCH!");
