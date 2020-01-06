@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.116 2020/01/06 10:25:10 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.117 2020/01/06 10:28:32 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -175,8 +175,8 @@ KQRELE(struct kqueue *kq)
 		fdpunlock(fdp);
 	}
 
-	free(kq->kq_knlist, M_TEMP, kq->kq_knlistsize * sizeof(struct klist));
-	hashfree(kq->kq_knhash, KN_HASHSIZE, M_TEMP);
+	free(kq->kq_knlist, M_KEVENT, kq->kq_knlistsize * sizeof(struct klist));
+	hashfree(kq->kq_knhash, KN_HASHSIZE, M_KEVENT);
 	pool_put(&kqueue_pool, kq);
 }
 
@@ -1064,13 +1064,13 @@ kqueue_expand_hash(struct kqueue *kq)
 	u_long hashmask;
 
 	if (kq->kq_knhashmask == 0) {
-		hash = hashinit(KN_HASHSIZE, M_TEMP, M_WAITOK, &hashmask);
+		hash = hashinit(KN_HASHSIZE, M_KEVENT, M_WAITOK, &hashmask);
 		if (kq->kq_knhashmask == 0) {
 			kq->kq_knhash = hash;
 			kq->kq_knhashmask = hashmask;
 		} else {
 			/* Another thread has allocated the hash. */
-			hashfree(hash, KN_HASHSIZE, M_TEMP);
+			hashfree(hash, KN_HASHSIZE, M_KEVENT);
 		}
 	}
 }
@@ -1085,19 +1085,19 @@ kqueue_expand_list(struct kqueue *kq, int fd)
 		size = kq->kq_knlistsize;
 		while (size <= fd)
 			size += KQEXTENT;
-		list = mallocarray(size, sizeof(*list), M_TEMP, M_WAITOK);
+		list = mallocarray(size, sizeof(*list), M_KEVENT, M_WAITOK);
 		if (kq->kq_knlistsize <= fd) {
 			memcpy(list, kq->kq_knlist,
 			    kq->kq_knlistsize * sizeof(*list));
 			memset(&list[kq->kq_knlistsize], 0,
 			    (size - kq->kq_knlistsize) * sizeof(*list));
-			free(kq->kq_knlist, M_TEMP,
+			free(kq->kq_knlist, M_KEVENT,
 			    kq->kq_knlistsize * sizeof(*list));
 			kq->kq_knlist = list;
 			kq->kq_knlistsize = size;
 		} else {
 			/* Another thread has expanded the list. */
-			free(list, M_TEMP, size * sizeof(*list));
+			free(list, M_KEVENT, size * sizeof(*list));
 		}
 	}
 }
