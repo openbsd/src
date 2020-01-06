@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.31 2020/01/04 11:02:55 schwarze Exp $
+.\" $OpenBSD: dig.1,v 1.32 2020/01/06 14:45:23 schwarze Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 4 2020 $
+.Dd $Mdocdate: January 6 2020 $
 .Dt DIG 1
 .Os
 .Sh NAME
@@ -308,7 +308,7 @@ A synonym for
 .Op Cm no Ns
 .Cm aaonly
 .Xc
-Set the "aa" flag in the query.
+Set the "aa" flag in the query (off by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -364,14 +364,14 @@ Values other than zero will cause an EDNS query to be sent.
 .Op Cm no Ns
 .Cm cdflag
 .Xc
-Set the CD (checking disabled) bit in the query.
+Set the CD (checking disabled) bit in the query (off by default).
 This requests the server to not perform DNSSEC validation of responses.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm class
 .Xc
-Display the CLASS when printing the record.
+Display the CLASS when printing the record (on by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -455,7 +455,7 @@ Deprecated, treated as a synonym for
 .Cm dnssec
 .Xc
 Request DNSSEC records be sent by setting the DNSSEC OK bit (DO) in the OPT
-record in the additional section of the query.
+record in the additional section of the query (off by default).
 .It Cm +domain Ns = Ns Ar name
 Set the search list to contain the single domain
 .Ar name ,
@@ -519,7 +519,7 @@ clears the EDNS options to be sent.
 .Op Cm no Ns
 .Cm expire
 .Xc
-Send an EDNS Expire option.
+Send an EDNS Expire option (off by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -599,17 +599,15 @@ is set.
 .Op Cm no Ns
 .Cm nsid
 .Xc
-Include an EDNS name server ID request when sending a query.
+Include an EDNS name server ID request when sending a query (off by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm nssearch
 .Xc
-When this option is set,
-.Nm
-attempts to find the authoritative name servers for the zone containing the name
-being looked up and display the SOA record that each name server has for the
-zone.
+Attempt to find the authoritative name servers for the zone
+containing the name being looked up and display the SOA record
+that each name server has for the zone (off by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -708,7 +706,7 @@ Provide a terse answer (off by default).
 .Op Cm no Ns
 .Cm showsearch
 .Xc
-Perform a search showing intermediate results.
+Perform a search showing intermediate results (off by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -802,7 +800,7 @@ is less than or equal to zero, the number of tries is silently rounded up to 1.
 .Op Cm no Ns
 .Cm ttlid
 .Xc
-Display the TTL when printing the record.
+Display the TTL when printing the record (on by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
