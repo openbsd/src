@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch7.S,v 1.14 2018/08/06 18:39:13 kettenis Exp $	*/
+/*	$OpenBSD: cpuswitch7.S,v 1.15 2020/01/06 15:53:00 kettenis Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -148,156 +148,60 @@ ENTRY(cpu_idle_leave)
  */
 
 ENTRY(cpu_switchto)
+	/* check if old context needs to be saved */
+	teq	r0, #0
+	beq	1f
+
+	/* create switchframe */
 	stmfd	sp!, {r4-r7, lr}
 	sub	sp, sp, #4
 
-	/* Get curcpu from TPIDRPRW. */
-	mrc	CP15_TPIDRPRW(r3)
-#ifdef MULTIPROCESSOR
-	str	r3, [r1, #(P_CPU)]
-#else
-	/* p->p_cpu initialized in fork1() for single-processor */
-#endif
+	mrc	CP15_TPIDRPRW(r2)		/* load curcpu */
+	ldr	r5, [r2, #(CI_CURPCB)]
 
-	/* Process is now on a processor. */
-	mov	r2, #SONPROC			/* p->p_stat = SONPROC */
-	strb	r2, [r1, #(P_STAT)]
-
-	/* We have a new curproc now so make a note it */
-	str	r1, [r3, #(CI_CURPROC)]
-
-	/* Hook in a new pcb */
-	ldr	r6, [r3, #(CI_CURPCB)]		/* Remember the old PCB */
-	ldr	r2, [r1, #(P_ADDR)]
-	str	r2, [r3, #(CI_CURPCB)]
-
-	/*
-	 * If the old proc on entry to cpu_switch was zero then the
-	 * process that called it was exiting. This means that we do
-	 * not need to save the current context (we nevertheless need
-	 * to clear the cache and TLB).
-	 */
-	teq	r0, #0x00000000
-	beq	.Lswitch_exited
-
-	/* Stage two: Save old context */
-
-	/* Save all the registers in the old proc's pcb */
-	add	r7, r6, #(PCB_R8)
-	stmia	r7, {r8-r13}
-
-.Lswitch_exited:
-	/*
-	 * NOTE: We can now use r8-r13 until it is time to restore
-	 * them for the new process.
-	 */
-
-	/* Remember the old PCB. */
-	mov	r8, r6
-
-	/* Save new proc in r6 now. */
-	mov	r6, r1
-
-	/* Get the user structure for the new process in r9 */
-	ldr	r9, [r6, #(P_ADDR)]
-
+	/* save old stack pointer */
 	mrs	r3, cpsr
 	cpsid	i, #(PSR_UND32_MODE)
+	str	sp, [r5, #(PCB_UND_SP)]
+	msr	cpsr_c, r3
 
-#ifdef notworthit
-	teq	r0, #0x00000000
-	strne	sp, [r8, #(PCB_UND_SP)]
-#else
-	str	sp, [r8, #(PCB_UND_SP)]
-#endif
+	add	r6, r5, #(PCB_R8)
+	stmia	r6, {r8-r13}
 
-	msr	cpsr_c, r3		/* Restore the old mode */
+1:
+	mrc	CP15_TPIDRPRW(r2)		/* load curcpu */
+	mov	r5, #SONPROC
+	strb	r5, [r1, #(P_STAT)]		/* mark new on cpu */
+	str	r2, [r1, #(P_CPU)]
+	ldr	r5, [r1, #(P_ADDR)]		/* load new pcb */
+	str	r5, [r2, #(CI_CURPCB)]
+	str	r1, [r2, #(CI_CURPROC)]
 
-	/* rem: r0 = old proc */
-	/* rem: r1 = r6 = new process */
-	/* rem: r8 = old PCB */
-	/* rem: r9 = new PCB */
+	ldr	r4, [r5, #(PCB_TCB)]
+	mcr	CP15_TPIDRURO(r4)		/* load user tls */
 
-	/* What else needs to be saved  Only FPA stuff when that is supported */
+	add	r6, r5, #PCB_R8
+	ldmia	r6, {r8-r13}
 
-	/* Third phase: restore saved context */
-
-	/*
-	 * Get the new L1 table pointer into r11.  If we're switching to
-	 * an LWP with the same address space as the outgoing one, we can
-	 * skip the cache purge and the TTB load.
-	 *
-	 * To avoid data dep stalls that would happen anyway, we try
-	 * and get some useful work done in the mean time.
-	 */
-	ldr	r10, [r8, #(PCB_PAGEDIR)]	/* r10 = old L1 */
-	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
-
-	/* rem: r6 = new proc */
-	/* rem: r9 = new PCB */
-	/* rem: r10 = old L1 */
-	/* rem: r11 = new L1 */
-
-	/*
-	 * At this point we need to kill IRQ's again.
-	 *
-	 * XXXSCW: Don't need to block FIQs if vectors have been relocated
-	 */
-	IRQdisableALL
-
-	cmp	r10, r11		/* Switching to the same L1? */
-	ldr	r10, .Lcpufuncs
-	beq	.Lcs_context_switched	/* Yup. */
-
-	/*
-	 * Do a full context switch, including full TLB flush.
-	 */
-	mov	r0, r11
-	mov	lr, pc
-	ldr	pc, [r10, #CF_CONTEXT_SWITCH]
-
-.Lcs_context_switched:
-
-	/* XXXSCW: Safe to re-enable FIQs here */
-
-	/* rem: r6 = new proc */
-	/* rem: r9 = new PCB */
-
-	/* stick tcb into user visable register */
-	ldr	r3, [r9, #(PCB_TCB)]
-	mcr	CP15_TPIDRURO(r3)
-
+	/* load new stack pointer */
 	mrs	r3, cpsr
 	cps	#(PSR_UND32_MODE)
+	ldr	sp, [r5, #(PCB_UND_SP)]
+	msr	cpsr_c, r3
 
-	ldr	sp, [r9, #(PCB_UND_SP)]
+	IRQdisableALL
 
-	msr	cpsr_c, r3		/* Restore the old mode */
+	ldr	r0, [r5, #(PCB_PAGEDIR)]
+	ldr	r3, .Lcpufuncs
+	mov	lr, pc
+	ldr	pc, [r3, #CF_CONTEXT_SWITCH]
 
-	/* Restore all the save registers */
-	add	r7, r9, #PCB_R8
-	ldmia	r7, {r8-r13}
-
-	sub	r7, r7, #PCB_R8		/* restore PCB pointer */
-
-	/* rem: r6 = new proc */
-	/* rem: r7 = new pcb */
-
-	/* We can enable interrupts again */
 	IRQenableALL
-
-	/* rem: r6 = new proc */
-	/* rem: r7 = new PCB */
-
-.Lswitch_return:
-	/*
-	 * Pull the registers that got pushed when either savectx() or
-	 * cpu_switch() was called and return.
-	 */
+	
 	add	sp, sp, #4
 	ldmfd	sp!, {r4-r7, pc}
 
-/* LINTSTUB: Func: void savectx(struct pcb *pcb) */
+
 ENTRY(savectx)
 	/*
 	 * r0 = pcb
@@ -314,6 +218,7 @@ ENTRY(savectx)
 	/* Pull the regs of the stack */
 	add	sp, sp, #4
 	ldmfd	sp!, {r4-r7, pc}
+
 
 ENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
