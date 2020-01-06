@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.212 2019/11/17 17:38:33 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.213 2020/01/06 15:19:12 bluhm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -597,7 +597,8 @@ main(int argc, char *argv[])
 
 				if (vflag)
 					report_sock("Connection received",
-					    (struct sockaddr *)&z, len, NULL);
+					    (struct sockaddr *)&z, len,
+					    family == AF_UNIX ? host : NULL);
 
 				readwrite(s, NULL);
 			} else {
@@ -1784,11 +1785,14 @@ report_sock(const char *msg, const struct sockaddr *sa, socklen_t salen,
 	if (nflag)
 		flags |= NI_NUMERICHOST;
 
-	if ((herr = getnameinfo(sa, salen, host, sizeof(host),
-	    port, sizeof(port), flags)) != 0) {
-		if (herr == EAI_SYSTEM)
+	herr = getnameinfo(sa, salen, host, sizeof(host), port, sizeof(port),
+	    flags);
+	switch (herr) {
+		case 0:
+			break;
+		case EAI_SYSTEM:
 			err(1, "getnameinfo");
-		else
+		default:
 			errx(1, "getnameinfo: %s", gai_strerror(herr));
 	}
 
