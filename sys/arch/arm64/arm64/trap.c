@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.26 2019/10/17 15:38:56 drahn Exp $ */
+/* $OpenBSD: trap.c,v 1.27 2020/01/06 12:37:30 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -161,7 +161,8 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 				frame->tf_elr = (register_t)pcb->pcb_onfault;
 				return;
 			}
-			panic("uvm_fault failed: %lx", frame->tf_elr);
+			panic("uvm_fault failed: %lx esr %llx far %llx",
+			    frame->tf_elr, esr, far);
 		}
 	}
 }
