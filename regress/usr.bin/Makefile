@@ -1,9 +1,22 @@
-#	$OpenBSD: Makefile,v 1.44 2018/10/15 08:08:46 otto Exp $
+#	$OpenBSD: Makefile,v 1.45 2020/01/06 23:01:16 bluhm Exp $
 
-SUBDIR+= apply basename bc calendar colrm column cut dc diff diff3 dirname
-SUBDIR+= doas file fmt fold grep gzip join
-SUBDIR+= jot lastcomm m4 mail mandoc openssl rev sdiff sed signify sort tsort
-SUBDIR+= ul wc xargs
+SUBDIR+= apply
+SUBDIR+= basename bc
+SUBDIR+= calendar colrm column cut
+SUBDIR+= dc diff diff3 dirname doas
+SUBDIR+= file fmt fold
+SUBDIR+= grep gzip
+SUBDIR+= join jot
+SUBDIR+= lastcomm
+SUBDIR+= m4 mail mandoc
+SUBDIR+= nc
+SUBDIR+= openssl
+SUBDIR+= rev
+SUBDIR+= sdiff sed signify sort
+SUBDIR+= tsort
+SUBDIR+= ul
+SUBDIR+= wc
+SUBDIR+= xargs
 
 .if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
 SUBDIR+= cap_mkdb libtool make patch pkg-config rcs ssh
