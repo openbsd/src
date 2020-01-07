@@ -8829,22 +8829,7 @@ dns_resolver_create(dns_view_t *view,
 		}
 		res->buckets[i].mctx = NULL;
 		snprintf(name, sizeof(name), "res%u", i);
-#ifdef ISC_PLATFORM_USETHREADS
-		/*
-		 * Use a separate memory context for each bucket to reduce
-		 * contention among multiple threads.  Do this only when
-		 * enabling threads because it will be require more memory.
-		 */
-		result = isc_mem_create(0, 0, &res->buckets[i].mctx);
-		if (result != ISC_R_SUCCESS) {
-			isc_task_detach(&res->buckets[i].task);
-			DESTROYLOCK(&res->buckets[i].lock);
-			goto cleanup_buckets;
-		}
-		isc_mem_setname(res->buckets[i].mctx, name, NULL);
-#else
 		isc_mem_attach(view->mctx, &res->buckets[i].mctx);
-#endif
 		isc_task_setname(res->buckets[i].task, name, res);
 		ISC_LIST_INIT(res->buckets[i].fctxs);
 		res->buckets[i].exiting = ISC_FALSE;

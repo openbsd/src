@@ -1111,195 +1111,8 @@ AC_CHECK_FUNCS(arc4random)
 AC_CHECK_FUNCS(arc4random_stir)
 AC_CHECK_FUNCS(arc4random_addrandom)
 
-sinclude(config.threads.in)dnl
-
-if $use_threads
-then
-	if test "X$GCC" = "Xyes"; then
-		case "$host" in
-		*-freebsd*)
-			CC="$CC -pthread"
-			CCOPT="$CCOPT -pthread"
-			CCNOOPT="$CCNOOPT -pthread"
-			STD_CDEFINES="$STD_CDEFINES -D_THREAD_SAFE"
-			;;
-		*-openbsd*)
-			CC="$CC -pthread"
-			CCOPT="$CCOPT -pthread"
-			CCNOOPT="$CCNOOPT -pthread"
-			;;
-		*-solaris*)
-			LIBS="$LIBS -lthread"
-			;;
-		*-ibm-aix*)
-			STD_CDEFINES="$STD_CDEFINES -D_THREAD_SAFE"
-			;;
-		esac
-	else
-		case $host in
-		*-dec-osf*)
-			CC="$CC -pthread"
-			CCOPT="$CCOPT -pthread"
-			CCNOOPT="$CCNOOPT -pthread"
-			;;
-		*-solaris*)
-			CC="$CC -mt"
-			CCOPT="$CCOPT -mt"
-			CCNOOPT="$CCNOOPT -mt"
-			;;
-		*-ibm-aix*)
-			STD_CDEFINES="$STD_CDEFINES -D_THREAD_SAFE"
-			;;
-		*-sco-sysv*uw*|*-*-sysv*UnixWare*)
-			CC="$CC -Kthread"
-			CCOPT="$CCOPT -Kthread"
-			CCNOOPT="$CCNOOPT -Kthread"
-			;;
-		*-*-sysv*OpenUNIX*)
-			CC="$CC -Kpthread"
-			CCOPT="$CCOPT -Kpthread"
-			CCNOOPT="$CCNOOPT -Kpthread"
-			;;
-		esac
-	fi
-	ALWAYS_DEFINES="-D_REENTRANT"
-	ISC_PLATFORM_USETHREADS="#define ISC_PLATFORM_USETHREADS 1"
-	THREADOPTOBJS='${THREADOPTOBJS}'
-	THREADOPTSRCS='${THREADOPTSRCS}'
-	thread_dir=pthreads
-	#
-	# We'd like to use sigwait() too
-	#
-	AC_CHECK_FUNC(sigwait,
-		      AC_DEFINE(HAVE_SIGWAIT),
-		      AC_CHECK_LIB(c, sigwait,
-		      AC_DEFINE(HAVE_SIGWAIT),
-		      AC_CHECK_LIB(pthread, sigwait,
-				   AC_DEFINE(HAVE_SIGWAIT),
-				   AC_CHECK_LIB(pthread, _Psigwait,
-						AC_DEFINE(HAVE_SIGWAIT),))))
-
-	AC_CHECK_FUNC(pthread_attr_getstacksize,
-		      AC_DEFINE(HAVE_PTHREAD_ATTR_GETSTACKSIZE),)
-
-	AC_CHECK_FUNC(pthread_attr_setstacksize,
-		      AC_DEFINE(HAVE_PTHREAD_ATTR_SETSTACKSIZE),)
-
-	AC_ARG_WITH(locktype,
-		    AS_HELP_STRING([--with-locktype=ARG],
-				   [Specify mutex lock type
-					(adaptive or standard)]),
-		    locktype="$withval", locktype="adaptive")
-
-	case "$locktype" in
-		adaptive)
-			AC_MSG_CHECKING([for PTHREAD_MUTEX_ADAPTIVE_NP])
-
-			AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-			  #ifndef _GNU_SOURCE
-			  #define _GNU_SOURCE
-			  #endif
-			  #include <pthread.h>
-			]], [[
-			  return (PTHREAD_MUTEX_ADAPTIVE_NP);
-			]])],
-			[ AC_MSG_RESULT(using adaptive lock type)
-			  AC_DEFINE([HAVE_PTHREAD_MUTEX_ADAPTIVE_NP], 1,
-				    [Support for PTHREAD_MUTEX_ADAPTIVE_NP]) ],
-			[ AC_MSG_RESULT(using standard lock type) ])
-			;;
-		standard)
-			AC_MSG_RESULT(using standard lock type)
-			;;
-		*)
-			AC_MSG_ERROR([You must specify "adaptive" or "standard" for --with-locktype.])
-			;;
-	esac
-
-	AC_CHECK_HEADERS(sched.h)
-
-	case "$host" in
-	*solaris-*)
-		AC_CHECK_LIB(rt, sched_yield)
-		;;
-	esac
-
-	AC_CHECK_FUNCS(sched_yield pthread_yield pthread_yield_np)
-
-	#
-	# Additional OS-specific issues related to pthreads and sigwait.
-	#
-	case "$host" in
-		#
-		# One more place to look for sigwait.
-		#
-		*-freebsd*)
-			AC_CHECK_LIB(c_r, sigwait, AC_DEFINE(HAVE_SIGWAIT),)
-			case $host in
-			*-freebsd5.[[012]]|*-freebsd5.[[012]].*);;
-			*-freebsd5.[[3456789]]|*-freebsd5.[[3456789]].*)
-				AC_DEFINE(NEED_PTHREAD_SCOPE_SYSTEM)
-				;;
-			*-freebsd6.*)
-				AC_DEFINE(NEED_PTHREAD_SCOPE_SYSTEM)
-				;;
-			esac
-			;;
-		#
-		# BSDI 3.0 through 4.0.1 needs pthread_init() to be
-		# called before certain pthreads calls.	 This is deprecated
-		# in BSD/OS 4.1.
-		#
-		*-bsdi3.*|*-bsdi4.0*)
-			AC_DEFINE(NEED_PTHREAD_INIT)
-			;;
-		#
-		# LinuxThreads requires some changes to the way we
-		# deal with signals.
-		#
-		*-linux*)
-			AC_DEFINE(HAVE_LINUXTHREADS)
-			;;
-		#
-		# Ensure the right sigwait() semantics on Solaris and make
-		# sure we call pthread_setconcurrency.
-		#
-		*-solaris*)
-			AC_DEFINE(_POSIX_PTHREAD_SEMANTICS)
-			AC_CHECK_FUNC(pthread_setconcurrency,
-				      AC_DEFINE(CALL_PTHREAD_SETCONCURRENCY))
-			;;
-		#
-		# UnixWare does things its own way.
-		#
-		*-sco-sysv*uw*|*-*-sysv*UnixWare*|*-*-sysv*OpenUNIX*)
-			AC_DEFINE(HAVE_UNIXWARE_SIGWAIT)
-			;;
-	esac
-
-	# Look for functions relating to thread naming
-	AC_CHECK_FUNCS(pthread_setname_np pthread_set_name_np)
-	AC_CHECK_HEADERS([pthread_np.h], [], [], [#include <pthread.h>])
-
-	#
-	# Look for sysconf to allow detection of the number of processors.
-	#
-	AC_CHECK_FUNC(sysconf, AC_DEFINE(HAVE_SYSCONF),)
-
-else
-	ISC_PLATFORM_USETHREADS="#undef ISC_PLATFORM_USETHREADS"
-	thread_dir=nothreads
-	THREADOPTOBJS=""
-	THREADOPTSRCS=""
-	ALWAYS_DEFINES=""
-fi
-
+ALWAYS_DEFINES=""
 AC_SUBST(ALWAYS_DEFINES)
-AC_SUBST(ISC_PLATFORM_USETHREADS)
-AC_SUBST(THREADOPTOBJS)
-AC_SUBST(THREADOPTSRCS)
-ISC_THREAD_DIR=$thread_dir
-AC_SUBST(ISC_THREAD_DIR)
 
 AC_MSG_CHECKING(for libtool)
 AC_ARG_WITH(libtool, AS_HELP_STRING([--with-libtool], [use GNU libtool]),
@@ -1745,15 +1558,6 @@ int main() {
 
 	AC_MSG_CHECKING(for OpenSSL GOST support)
 	have_gost=""
-	case "$use_pkcs11" in
-		auto|no)
-			;;
-		*)
-			if $use_threads; then
-				CC="$CC -pthread"
-			fi
-			;;
-	esac
 	AC_TRY_RUN([
 #include <openssl/conf.h>
 #include <openssl/engine.h>
@@ -2105,9 +1909,7 @@ case "$use_pkcs11" in
 		;;
 	yes|*)
 		AC_MSG_RESULT(yes)
-		if ! $use_threads; then
-			AC_MSG_ERROR([PKCS11 requires thread support])
-		fi
+		AC_MSG_ERROR([PKCS11 requires thread support])
 		if test "X$CRYPTO" = "X-DOPENSSL"
 		then
 			AC_MSG_CHECKING(for OpenSSL with PKCS11 support)
@@ -2468,16 +2270,6 @@ AC_CHECK_LIB(scf, smf_enable_instance)
 #
 AC_CHECK_FUNC(flockfile, AC_DEFINE(HAVE_FLOCKFILE),)
 AC_CHECK_FUNC(getc_unlocked, AC_DEFINE(HAVE_GETCUNLOCKED),)
-
-#
-# Indicate what the final decision was regarding threads.
-#
-AC_MSG_CHECKING(whether to build with threads)
-if $use_threads; then
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
 
 #
 # End of pthreads stuff.
@@ -4437,9 +4229,7 @@ AC_ARG_WITH(tuning,
 
 case "$use_tuning" in
 	large)
-		if ! $use_threads; then
-			AC_MSG_ERROR([Large-system tuning requires threads.])
-		fi
+		AC_MSG_ERROR([Large-system tuning requires threads.])
 		AC_DEFINE(TUNE_LARGE, 1, [Define to use large-system tuning.])
 		AC_MSG_RESULT(using large-system tuning)
 		;;
@@ -4860,9 +4650,9 @@ AC_CONFIG_FILES([
 	lib/isc/$arch/Makefile
 	lib/isc/$arch/include/Makefile
 	lib/isc/$arch/include/isc/Makefile
-	lib/isc/$thread_dir/Makefile
-	lib/isc/$thread_dir/include/Makefile
-	lib/isc/$thread_dir/include/isc/Makefile
+	lib/isc/nothreads/Makefile
+	lib/isc/nothreads/include/Makefile
+	lib/isc/nothreads/include/isc/Makefile
 	lib/isc/Makefile
 	lib/isc/include/Makefile
 	lib/isc/include/isc/Makefile
@@ -4916,12 +4706,6 @@ report() {
     echo "Configuration summary:"
     echo "------------------------------------------------------------------------"
     echo "Optional features enabled:"
-    if $use_threads; then
-	echo "    Multiprocessing support (--enable-threads)"
-	if test "yes" = "$enable_full_report" -o "standard" = "$locktype"; then
-	    echo "        Mutex lock type: $locktype"
-	fi
-    fi
     test "large" = "$use_tuning" && echo "    Large-system tuning (--with-tuning)"
     test "no" = "$use_gssapi" || echo "    GSS-API (--with-gssapi)"
     test "yes" = "$enable_fetchlimit" && \
@@ -4996,7 +4780,6 @@ report() {
     echo "------------------------------------------------------------------------"
 
     echo "Features disabled or unavailable on this platform:"
-    $use_threads || echo "    Multiprocessing support (--enable-threads)"
     test "no" = "$enable_ipv6" -o "no" = "$found_ipv6" && \
     	echo "    IPv6 support (--enable-ipv6)"
     test "large" = "$use_tuning" || echo "    Large-system tuning (--with-tuning)"

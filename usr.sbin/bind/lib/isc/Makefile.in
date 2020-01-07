@@ -25,7 +25,7 @@ VERSION=@BIND9_VERSION@
 PROVIDER =	@PKCS11_PROVIDER@
 
 CINCLUDES =	-I${srcdir}/unix/include \
-		-I${srcdir}/@ISC_THREAD_DIR@/include \
+		-I${srcdir}/nothreads/include \
 		-I${srcdir}/@ISC_ARCH_DIR@/include \
 		-I./include \
 		-I${srcdir}/include ${DNS_INCLUDES} @ISC_OPENSSL_INC@
@@ -42,9 +42,9 @@ UNIXOBJS =	@ISC_ISCIPV6_O@ @ISC_ISCPK11_API_O@ \
 
 NLSOBJS =	nls/msgcat.@O@
 
-THREADOPTOBJS = @ISC_THREAD_DIR@/condition.@O@ @ISC_THREAD_DIR@/mutex.@O@
+THREADOPTOBJS = nothreads/condition.@O@ nothreads/mutex.@O@
 
-THREADOBJS =	@THREADOPTOBJS@ @ISC_THREAD_DIR@/thread.@O@
+THREADOBJS =	nothreads/thread.@O@
 
 WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/errno.@O@ \
 		win32/file.@O@ win32/fsaccess.@O@ \
@@ -91,7 +91,7 @@ LIBS =		@ISC_OPENSSL_LIBS@ @LIBS@
 # Attempt to disable parallel processing.
 .NOTPARALLEL:
 .NO_PARALLEL:
-SUBDIRS =	include unix nls @ISC_THREAD_DIR@ @ISC_ARCH_DIR@
+SUBDIRS =	include unix nls nothreads @ISC_ARCH_DIR@
 TARGETS =	timestamp
 TESTDIRS =	@UNITTESTS@
 

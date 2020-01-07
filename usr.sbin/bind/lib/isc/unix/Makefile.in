@@ -17,7 +17,7 @@ VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 
 CINCLUDES =	-I${srcdir}/include \
-		-I${srcdir}/../@ISC_THREAD_DIR@/include \
+		-I${srcdir}/../nothreads/include \
 		-I../include \
 		-I${srcdir}/../include \
 		-I${srcdir}/.. @ISC_OPENSSL_INC@

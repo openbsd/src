@@ -87,11 +87,7 @@
 #include "errno2result.h"
 
 /* See task.c about the following definition: */
-#ifdef ISC_PLATFORM_USETHREADS
-#define USE_WATCHER_THREAD
-#else
 #define USE_SHARED_MANAGER
-#endif	/* ISC_PLATFORM_USETHREADS */
 
 #ifndef USE_WATCHER_THREAD
 #include "socket_p.h"
@@ -214,13 +210,8 @@ typedef enum { poll_idle, poll_active, poll_checking } pollstate_t;
 /*%
  * Size of per-FD lock buckets.
  */
-#ifdef ISC_PLATFORM_USETHREADS
-#define FDLOCK_COUNT		1024
-#define FDLOCK_ID(fd)		((fd) % FDLOCK_COUNT)
-#else
 #define FDLOCK_COUNT		1
 #define FDLOCK_ID(fd)		0
-#endif	/* ISC_PLATFORM_USETHREADS */
 
 /*%
  * Maximum number of events communicated with the kernel.  There should normally
@@ -441,9 +432,6 @@ struct isc__socketmgr {
 	int			fd_bufsize;
 #endif	/* USE_SELECT */
 	unsigned int		maxsocks;
-#ifdef ISC_PLATFORM_USETHREADS
-	int			pipe_fds[2];
-#endif
 
 	/* Locked by fdlock. */
 	isc__socket_t	       **fds;
@@ -2228,10 +2216,6 @@ socketclose(isc__socketmgr_t *manager, isc__socket_t *sock, int fd) {
 			}
 			UNLOCK(&manager->fdlock[lockid]);
 		}
-#ifdef ISC_PLATFORM_USETHREADS
-		if (manager->maxfd < manager->pipe_fds[0])
-			manager->maxfd = manager->pipe_fds[0];
-#endif
 	}
 
 	UNLOCK(&manager->lock);
@@ -2846,32 +2830,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 		}
 #endif
 	}
-#if 0 && defined(IPV6_RECVTCLASS)
-	if ((sock->pf == AF_INET6)
-	    && (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_RECVTCLASS,
-			   (void *)&on, sizeof(on)) < 0)) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "setsockopt(%d, IPV6_RECVTCLASS) "
-				 "%s: %s", sock->fd,
-				 isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-						ISC_MSG_FAILED, "failed"),
-				 strbuf);
-	}
-#endif
-#if 0 && defined(IP_RECVTOS)
-	if ((sock->pf == AF_INET)
-	    && (setsockopt(sock->fd, IPPROTO_IP, IP_RECVTOS,
-			   (void *)&on, sizeof(on)) < 0)) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "setsockopt(%d, IP_RECVTOS) "
-				 "%s: %s", sock->fd,
-				 isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-						ISC_MSG_FAILED, "failed"),
-				 strbuf);
-	}
-#endif
 #endif /* defined(USE_CMSG) || defined(SO_RCVBUF) */
 
 setup_done:

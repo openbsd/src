@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.13 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: name.c,v 1.14 2020/01/07 19:08:09 florian Exp $ */
 
 /*! \file */
 
@@ -194,15 +194,7 @@ dns_fullname_hash(dns_name_t *name, isc_boolean_t case_sensitive);
 /*
  * dns_name_t to text post-conversion procedure.
  */
-#ifdef ISC_PLATFORM_USETHREADS
-static int thread_key_initialized = 0;
-static isc_mutex_t thread_key_mutex;
-static isc_mem_t *thread_key_mctx = NULL;
-static isc_thread_key_t totext_filter_proc_key;
-static isc_once_t once = ISC_ONCE_INIT;
-#else
 static dns_name_totextfilter_t totext_filter_proc = NULL;
-#endif
 
 static void
 set_offsets(const dns_name_t *name, unsigned char *offsets,
@@ -1343,55 +1335,6 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 	return (ISC_R_SUCCESS);
 }
 
-#ifdef ISC_PLATFORM_USETHREADS
-static void
-free_specific(void *arg) {
-	dns_name_totextfilter_t *mem = arg;
-	isc_mem_put(thread_key_mctx, mem, sizeof(*mem));
-	/* Stop use being called again. */
-	(void)isc_thread_key_setspecific(totext_filter_proc_key, NULL);
-}
-
-static void
-thread_key_mutex_init(void) {
-	RUNTIME_CHECK(isc_mutex_init(&thread_key_mutex) == ISC_R_SUCCESS);
-}
-
-static isc_result_t
-totext_filter_proc_key_init(void) {
-	isc_result_t result;
-
-	/*
-	 * We need the call to isc_once_do() to support profiled mutex
-	 * otherwise thread_key_mutex could be initialized at compile time.
-	 */
-	result = isc_once_do(&once, thread_key_mutex_init);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	if (!thread_key_initialized) {
-		LOCK(&thread_key_mutex);
-		if (thread_key_mctx == NULL)
-			result = isc_mem_create2(0, 0, &thread_key_mctx, 0);
-		if (result != ISC_R_SUCCESS)
-			goto unlock;
-		isc_mem_setname(thread_key_mctx, "threadkey", NULL);
-		isc_mem_setdestroycheck(thread_key_mctx, ISC_FALSE);
-
-		if (!thread_key_initialized &&
-		     isc_thread_key_create(&totext_filter_proc_key,
-					   free_specific) != 0) {
-			result = ISC_R_FAILURE;
-			isc_mem_detach(&thread_key_mctx);
-		} else
-			thread_key_initialized = 1;
- unlock:
-		UNLOCK(&thread_key_mutex);
-	}
-	return (result);
-}
-#endif
-
 isc_result_t
 dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
 		isc_buffer_t *target)
@@ -1419,11 +1362,6 @@ dns_name_totext2(dns_name_t *name, unsigned int options, isc_buffer_t *target)
 	unsigned int labels;
 	isc_boolean_t saw_root = ISC_FALSE;
 	unsigned int oused = target->used;
-#ifdef ISC_PLATFORM_USETHREADS
-	dns_name_totextfilter_t *mem;
-	dns_name_totextfilter_t totext_filter_proc = NULL;
-	isc_result_t result;
-#endif
 	isc_boolean_t omit_final_dot =
 		ISC_TF(options & DNS_NAME_OMITFINALDOT);
 
@@ -1434,11 +1372,6 @@ dns_name_totext2(dns_name_t *name, unsigned int options, isc_buffer_t *target)
 	REQUIRE(VALID_NAME(name));
 	REQUIRE(ISC_BUFFER_VALID(target));
 
-#ifdef ISC_PLATFORM_USETHREADS
-	result = totext_filter_proc_key_init();
-	if (result != ISC_R_SUCCESS)
-		return (result);
-#endif
 	ndata = name->ndata;
 	nlen = name->length;
 	labels = name->labels;
@@ -1574,11 +1507,6 @@ dns_name_totext2(dns_name_t *name, unsigned int options, isc_buffer_t *target)
 
 	isc_buffer_add(target, tlen - trem);
 
-#ifdef ISC_PLATFORM_USETHREADS
-	mem = isc_thread_key_getspecific(totext_filter_proc_key);
-	if (mem != NULL)
-		totext_filter_proc = *mem;
-#endif
 	if (totext_filter_proc != NULL)
 		return ((*totext_filter_proc)(target, oused, saw_root));
 
@@ -2370,46 +2298,8 @@ dns_name_print(dns_name_t *name, FILE *stream) {
 
 isc_result_t
 dns_name_settotextfilter(dns_name_totextfilter_t proc) {
-#ifdef ISC_PLATFORM_USETHREADS
-	isc_result_t result;
-	dns_name_totextfilter_t *mem;
-	int res;
-
-	result = totext_filter_proc_key_init();
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	/*
-	 * If we already have been here set / clear as appropriate.
-	 * Otherwise allocate memory.
-	 */
-	mem = isc_thread_key_getspecific(totext_filter_proc_key);
-	if (mem != NULL && proc != NULL) {
-		*mem = proc;
-		return (ISC_R_SUCCESS);
-	}
-	if (proc == NULL) {
-		if (mem != NULL)
-			isc_mem_put(thread_key_mctx, mem, sizeof(*mem));
-		res = isc_thread_key_setspecific(totext_filter_proc_key, NULL);
-		if (res != 0)
-			result = ISC_R_UNEXPECTED;
-		return (result);
-	}
-
-	mem = isc_mem_get(thread_key_mctx, sizeof(*mem));
-	if (mem == NULL)
-		return (ISC_R_NOMEMORY);
-	*mem = proc;
-	if (isc_thread_key_setspecific(totext_filter_proc_key, mem) != 0) {
-		isc_mem_put(thread_key_mctx, mem, sizeof(*mem));
-		result = ISC_R_UNEXPECTED;
-	}
-	return (result);
-#else
 	totext_filter_proc = proc;
 	return (ISC_R_SUCCESS);
-#endif
 }
 
 void
@@ -2560,19 +2450,6 @@ dns_name_copy(dns_name_t *source, dns_name_t *dest, isc_buffer_t *target) {
 
 void
 dns_name_destroy(void) {
-#ifdef ISC_PLATFORM_USETHREADS
-	RUNTIME_CHECK(isc_once_do(&once, thread_key_mutex_init)
-				  == ISC_R_SUCCESS);
-
-	LOCK(&thread_key_mutex);
-	if (thread_key_initialized) {
-		isc_mem_detach(&thread_key_mctx);
-		isc_thread_key_delete(totext_filter_proc_key);
-		thread_key_initialized = 0;
-	}
-	UNLOCK(&thread_key_mutex);
-
-#endif
 }
 
 /*

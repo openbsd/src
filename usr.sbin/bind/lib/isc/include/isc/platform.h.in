@@ -221,11 +221,6 @@
  ***/
 
 /*
- * Defined if we are using threads.
- */
-@ISC_PLATFORM_USETHREADS@
-
-/*
  * Defined if unistd.h does not cause fd_set to be delared.
  */
 @ISC_PLATFORM_NEEDSYSSELECTH@

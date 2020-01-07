@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.6 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: time.c,v 1.7 2020/01/07 19:08:10 florian Exp $ */
 
 /*! \file */
 
@@ -384,9 +384,6 @@ void
 isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	time_t now;
 	unsigned int flen;
-#ifdef ISC_PLATFORM_USETHREADS
-	struct tm tm;
-#endif
 
 	REQUIRE(t != NULL);
 	INSIST(t->nanoseconds < NS_PER_S);
@@ -394,11 +391,7 @@ isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	REQUIRE(len > 0);
 
 	now = (time_t) t->seconds;
-#ifdef ISC_PLATFORM_USETHREADS
-	flen = strftime(buf, len, "%d-%b-%Y %X", localtime_r(&now, &tm));
-#else
 	flen = strftime(buf, len, "%d-%b-%Y %X", localtime(&now));
-#endif
 	INSIST(flen < len);
 	if (flen != 0) {
 		snprintf(buf + flen, len - flen,
@@ -412,9 +405,6 @@ void
 isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	time_t now;
 	unsigned int flen;
-#ifdef ISC_PLATFORM_USETHREADS
-	struct tm tm;
-#endif
 
 	REQUIRE(t != NULL);
 	INSIST(t->nanoseconds < NS_PER_S);
@@ -425,12 +415,7 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	 * 5 spaces, 1 comma, 3 GMT, 2 %d, 4 %Y, 8 %H:%M:%S, 3+ %a, 3+ %b (29+)
 	 */
 	now = (time_t)t->seconds;
-#ifdef ISC_PLATFORM_USETHREADS
-	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT",
-			gmtime_r(&now, &tm));
-#else
 	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT", gmtime(&now));
-#endif
 	INSIST(flen < len);
 }
 
@@ -457,9 +442,6 @@ void
 isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len) {
 	time_t now;
 	unsigned int flen;
-#ifdef ISC_PLATFORM_USETHREADS
-	struct tm tm;
-#endif
 
 	REQUIRE(t != NULL);
 	INSIST(t->nanoseconds < NS_PER_S);
@@ -467,10 +449,6 @@ isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len) {
 	REQUIRE(len > 0);
 
 	now = (time_t)t->seconds;
-#ifdef ISC_PLATFORM_USETHREADS
-	flen = strftime(buf, len, "%Y-%m-%dT%H:%M:%SZ", gmtime_r(&now, &tm));
-#else
 	flen = strftime(buf, len, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
-#endif
 	INSIST(flen < len);
 }

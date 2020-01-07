@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: includes.in,v 1.5 2020/01/06 17:47:00 florian Exp $
+# $Id: includes.in,v 1.6 2020/01/07 19:08:10 florian Exp $
 
 # Search for machine-generated header files in the build tree,
 # and for normal headers in the source tree (${top_srcdir}).
@@ -25,7 +25,7 @@ ISC_INCLUDES = @BIND9_ISC_BUILDINCLUDE@ \
 	-I${top_srcdir}/lib/isc \
 	-I${top_srcdir}/lib/isc/include \
 	-I${top_srcdir}/lib/isc/unix/include \
-	-I${top_srcdir}/lib/isc/@ISC_THREAD_DIR@/include \
+	-I${top_srcdir}/lib/isc/nothreads/include \
 	-I${top_srcdir}/lib/isc/@ISC_ARCH_DIR@/include
 
 ISCCFG_INCLUDES = @BIND9_ISCCFG_BUILDINCLUDE@ \
