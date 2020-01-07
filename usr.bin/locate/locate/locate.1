@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.31 2019/01/17 06:15:44 tedu Exp $
+.\"	$OpenBSD: locate.1,v 1.32 2020/01/07 11:26:25 zhuk Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 17 2019 $
+.Dd $Mdocdate: January 7 2020 $
 .Dt LOCATE 1
 .Os
 .Sh NAME
@@ -166,6 +166,9 @@ script to update the locate database
 .It Pa /var/db/locate.database
 locate database
 .El
+.Sh EXIT STATUS
+.Ex -std locate
+Zero matches are not considered an error.
 .Sh SEE ALSO
 .Xr find 1 ,
 .Xr fnmatch 3 ,
