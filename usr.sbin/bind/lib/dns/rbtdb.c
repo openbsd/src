@@ -75,14 +75,7 @@
 #include <dns/zone.h>
 #include <dns/zonekey.h>
 
-#ifndef WIN32
 #include <sys/mman.h>
-#else
-#define PROT_READ	0x01
-#define PROT_WRITE	0x02
-#define MAP_PRIVATE	0x0002
-#define MAP_FAILED	((void *)-1)
-#endif
 
 #ifdef DNS_RBTDB_VERSION64
 #include "rbtdb64.h"

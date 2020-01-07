@@ -291,16 +291,6 @@ isc__print_printf(void (*emit)(char, void *), void *arg,
 			z = 1;
 			format++;
 			goto doint;
-#ifdef WIN32
-		case 'I':
-			/* Windows has I64 as a modifier for a quad. */
-			if (format[1] == '6' && format[2] == '4') {
-				q = 1;
-				format += 3;
-				goto doint;
-			}
-			continue;
-#endif
 		case 'n':
 		case 'i':
 		case 'd':

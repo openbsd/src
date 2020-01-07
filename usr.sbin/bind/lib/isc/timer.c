@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.5 2020/01/07 19:08:09 florian Exp $ */
+/* $Id: timer.c,v 1.6 2020/01/07 19:09:26 florian Exp $ */
 
 /*! \file */
 
@@ -779,9 +779,6 @@ dispatch(isc__timermgr_t *manager, isc_time_t *now) {
 
 #ifdef USE_TIMER_THREAD
 static isc_threadresult_t
-#ifdef _WIN32			/* XXXDCL */
-WINAPI
-#endif
 run(void *uap) {
 	isc__timermgr_t *manager = uap;
 	isc_time_t now;

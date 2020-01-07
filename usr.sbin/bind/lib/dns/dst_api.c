@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.8 2020/01/07 19:08:09 florian Exp $
+ * $Id: dst_api.c,v 1.9 2020/01/07 19:09:26 florian Exp $
  */
 
 /*! \file */
@@ -598,13 +598,8 @@ dst_key_fromnamedfile(const char *filename, const char *dirname,
 	REQUIRE(keyp != NULL && *keyp == NULL);
 
 	/* If an absolute path is specified, don't use the key directory */
-#ifndef WIN32
 	if (filename[0] == '/')
 		dirname = NULL;
-#else /* WIN32 */
-	if (filename[0] == '/' || filename[0] == '\\')
-		dirname = NULL;
-#endif
 
 	newfilenamelen = strlen(filename) + 5;
 	if (dirname != NULL)

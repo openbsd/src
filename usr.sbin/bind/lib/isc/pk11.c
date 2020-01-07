@@ -124,11 +124,7 @@ static CK_C_INITIALIZE_ARGS pk11_init_args = {
 #define PK11_LIB_LOCATION	"unknown_provider"
 #endif
 
-#ifndef WIN32
 static const char *lib_name = PK11_LIB_LOCATION;
-#else
-static const char *lib_name = PK11_LIB_LOCATION ".dll";
-#endif
 
 void
 pk11_set_lib_name(const char *name) {

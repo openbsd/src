@@ -16,19 +16,6 @@
 
 /*! \file */
 
-#ifdef WIN32
-/*
- * Silence compiler warnings about using strcpy and friends.
- */
-#define _CRT_SECURE_NO_DEPRECATE 1
-/*
- * We use snprintf which was defined late in Windows even it is in C99.
- */
-#if _MSC_VER < 1900
-#define snprintf _snprintf
-#endif
-#endif
-
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -38,11 +25,7 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef WIN32
-#include "gen-win32.h"
-#else
 #include "gen-unix.h"
-#endif
 
 #define INSIST(cond) \
 	if (!(cond)) { \

@@ -67,15 +67,6 @@
  * We don't use configure for windows so enforce the OpenSSL version
  * here.  Unlike with configure we don't support overriding this test.
  */
-#ifdef WIN32
-#if !((OPENSSL_VERSION_NUMBER >= 0x009070cfL && \
-       OPENSSL_VERSION_NUMBER < 0x00908000L) || \
-      (OPENSSL_VERSION_NUMBER >= 0x0090804fL && \
-       OPENSSL_VERSION_NUMBER < 0x10002000L) || \
-      OPENSSL_VERSION_NUMBER >= 0x1000205fL)
-#error Please upgrade OpenSSL to 0.9.8d/0.9.7l or greater.
-#endif
-#endif
 
 
 	/*

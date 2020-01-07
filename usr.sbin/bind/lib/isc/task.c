@@ -1275,9 +1275,6 @@ dispatch(isc__taskmgr_t *manager) {
 
 #ifdef USE_WORKER_THREADS
 static isc_threadresult_t
-#ifdef _WIN32
-WINAPI
-#endif
 run(void *uap) {
 	isc__taskmgr_t *manager = uap;
 

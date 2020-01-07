@@ -22,10 +22,6 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
-#ifdef WIN32
-#include <windows.h>
-#endif
-
 #ifdef _MSC_VER
 #pragma optimize("", off)
 #endif
@@ -76,9 +72,7 @@ isc_safe_memwipe(void *ptr, size_t len) {
 	if (ISC_UNLIKELY(ptr == NULL || len == 0))
 		return;
 
-#ifdef WIN32
-	SecureZeroMemory(ptr, len);
-#elif HAVE_EXPLICIT_BZERO
+#if   HAVE_EXPLICIT_BZERO
 	explicit_bzero(ptr, len);
 #else
 	memset(ptr, 0, len);

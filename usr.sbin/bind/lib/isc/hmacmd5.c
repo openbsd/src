@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacmd5.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: hmacmd5.c,v 1.4 2020/01/07 19:09:26 florian Exp $ */
 
 /*! \file
  * This code implements the HMAC-MD5 keyed hash algorithm
@@ -411,16 +411,4 @@ isc_hmacmd5_check(int testing) {
 }
 
 #else /* !PK11_MD5_DISABLE */
-#ifdef WIN32
-/* Make the Visual Studio linker happy */
-#include <isc/util.h>
-
-void isc_hmacmd5_init() { INSIST(0); }
-void isc_hmacmd5_invalidate() { INSIST(0); }
-void isc_hmacmd5_sign() { INSIST(0); }
-void isc_hmacmd5_update() { INSIST(0); }
-void isc_hmacmd5_verify() { INSIST(0); }
-void isc_hmacmd5_verify2() { INSIST(0); }
-void isc_hmacmd5_check() { INSIST(0); }
-#endif
 #endif /* PK11_MD5_DISABLE */

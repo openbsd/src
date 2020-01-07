@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.h,v 1.7 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: socket.h,v 1.8 2020/01/07 19:09:26 florian Exp $ */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -65,55 +65,6 @@
 #include <isc/time.h>
 #include <isc/types.h>
 #include <isc/xml.h>
-
-#ifdef WIN32
-
-/* from the old namespace.h */
-
-#define isc_socket_create isc__socket_create
-#define isc_socket_dup isc__socket_dup
-#define isc_socket_attach isc__socket_attach
-#define isc_socket_detach isc__socket_detach
-#define isc_socketmgr_create isc__socketmgr_create
-#define isc_socketmgr_create2 isc__socketmgr_create2
-#define isc_socketmgr_destroy isc__socketmgr_destroy
-#define isc_socket_open isc__socket_open
-#define isc_socket_close isc__socket_close
-#define isc_socket_recvv isc__socket_recvv
-#define isc_socket_recv isc__socket_recv
-#define isc_socket_recv2 isc__socket_recv2
-#define isc_socket_send isc__socket_send
-#define isc_socket_sendto isc__socket_sendto
-#define isc_socket_sendv isc__socket_sendv
-#define isc_socket_sendtov isc__socket_sendtov
-#define isc_socket_sendtov2 isc__socket_sendtov2
-#define isc_socket_sendto2 isc__socket_sendto2
-#define isc_socket_cleanunix isc__socket_cleanunix
-#define isc_socket_permunix isc__socket_permunix
-#define isc_socket_bind isc__socket_bind
-#define isc_socket_filter isc__socket_filter
-#define isc_socket_listen isc__socket_listen
-#define isc_socket_accept isc__socket_accept
-#define isc_socket_connect isc__socket_connect
-#define isc_socket_getfd isc__socket_getfd
-#define isc_socket_getname isc__socket_getname
-#define isc_socket_gettag isc__socket_gettag
-#define isc_socket_getpeername isc__socket_getpeername
-#define isc_socket_getsockname isc__socket_getsockname
-#define isc_socket_cancel isc__socket_cancel
-#define isc_socket_gettype isc__socket_gettype
-#define isc_socket_isbound isc__socket_isbound
-#define isc_socket_ipv6only isc__socket_ipv6only
-#define isc_socket_setname isc__socket_setname
-#define isc_socketmgr_getmaxsockets isc__socketmgr_getmaxsockets
-#define isc_socketmgr_setstats isc__socketmgr_setstats
-#define isc_socketmgr_setreserved isc__socketmgr_setreserved
-#define isc__socketmgr_maxudp isc___socketmgr_maxudp
-#define isc_socket_fdwatchcreate isc__socket_fdwatchcreate
-#define isc_socket_fdwatchpoke isc__socket_fdwatchpoke
-#define isc_socket_dscp isc__socket_dscp
-
-#endif
 
 ISC_LANG_BEGINDECLS
 
@@ -390,13 +341,11 @@ typedef struct isc_socketmethods {
  * the definition conflict with win32/socket.c, we enable this definition only
  * for non-Win32 (i.e. Unix) platforms.
  */
-#ifndef WIN32
 struct isc_socketmgr {
 	unsigned int		impmagic;
 	unsigned int		magic;
 	isc_socketmgrmethods_t	*methods;
 };
-#endif
 
 #define ISCAPI_SOCKETMGR_MAGIC		ISC_MAGIC('A','s','m','g')
 #define ISCAPI_SOCKETMGR_VALID(m)	((m) != NULL && \
@@ -406,13 +355,11 @@ struct isc_socketmgr {
  * This is the common prefix of a socket object.  The same note as
  * that for the socketmgr structure applies.
  */
-#ifndef WIN32
 struct isc_socket {
 	unsigned int		impmagic;
 	unsigned int		magic;
 	isc_socketmethods_t	*methods;
 };
-#endif
 
 #define ISCAPI_SOCKET_MAGIC	ISC_MAGIC('A','s','c','t')
 #define ISCAPI_SOCKET_VALID(s)	((s) != NULL && \

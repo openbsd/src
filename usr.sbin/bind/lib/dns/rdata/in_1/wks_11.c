@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.7 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: wks_11.c,v 1.8 2020/01/07 19:09:26 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -70,12 +70,6 @@ mygetservbyname(const char *name, const char *proto, long *port) {
 	return (ISC_TF(se != NULL));
 }
 
-#ifdef _WIN32
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#endif
-
 static inline isc_result_t
 fromtext_in_wks(ARGS_FROMTEXT) {
 	static isc_once_t once = ISC_ONCE_INIT;
@@ -102,20 +96,6 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 
 	RUNTIME_CHECK(isc_once_do(&once, init_lock) == ISC_R_SUCCESS);
-
-#ifdef _WIN32
-	{
-		WORD wVersionRequested;
-		WSADATA wsaData;
-		int err;
-
-		wVersionRequested = MAKEWORD(2, 0);
-
-		err = WSAStartup(wVersionRequested, &wsaData );
-		if (err != 0)
-			return (ISC_R_FAILURE);
-	}
-#endif
 
 	/*
 	 * IPv4 dotted quad.
@@ -192,9 +172,6 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	result = mem_tobuffer(target, bm, n);
 
  cleanup:
-#ifdef _WIN32
-	WSACleanup();
-#endif
 
 	return (result);
 }

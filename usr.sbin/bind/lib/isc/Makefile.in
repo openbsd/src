@@ -46,11 +46,6 @@ THREADOPTOBJS = nothreads/condition.@O@ nothreads/mutex.@O@
 
 THREADOBJS =	nothreads/thread.@O@
 
-WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/errno.@O@ \
-		win32/file.@O@ win32/fsaccess.@O@ \
-		win32/once.@O@ win32/stdtime.@O@ \
-		win32/thread.@O@ win32/time.@O@
-
 # Alphabetically
 OBJS =		@ISC_EXTRA_OBJS@ @ISC_PK11_O@ @ISC_PK11_RESULT_O@ \
 		aes.@O@ assertions.@O@ backtrace.@O@ base32.@O@ base64.@O@ \

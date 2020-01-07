@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: gssapi.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: gssapi.h,v 1.4 2020/01/07 19:09:26 florian Exp $ */
 
 #ifndef DST_GSSAPI_H
 #define DST_GSSAPI_H 1
@@ -28,17 +28,9 @@
 #include <dns/types.h>
 
 #ifdef GSSAPI
-#ifdef WIN32
-/*
- * MSVC does not like macros in #include lines.
- */
-#include <gssapi/gssapi.h>
-#include <gssapi/gssapi_krb5.h>
-#else
 #include ISC_PLATFORM_GSSAPIHEADER
 #ifdef ISC_PLATFORM_GSSAPI_KRB5_HEADER
 #include ISC_PLATFORM_GSSAPI_KRB5_HEADER
-#endif
 #endif
 #ifndef GSS_SPNEGO_MECHANISM
 #define GSS_SPNEGO_MECHANISM ((void*)0)

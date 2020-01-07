@@ -33,7 +33,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $Id: dst_parse.c,v 1.3 2019/12/17 01:46:31 sthen Exp $
+ * $Id: dst_parse.c,v 1.4 2020/01/07 19:09:26 florian Exp $
  */
 
 #include <config.h>
@@ -708,13 +708,7 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 		/* File exists; warn that we are changing its permissions */
 		int level;
 
-#ifdef _WIN32
-		/* Windows security model is pretty different,
-		 * e.g., there is no umask... */
-		level = ISC_LOG_NOTICE;
-#else
 		level = ISC_LOG_WARNING;
-#endif
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_DNSSEC, level,
 			      "Permissions on the file %s "
