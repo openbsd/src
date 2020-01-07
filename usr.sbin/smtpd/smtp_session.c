@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.419 2020/01/03 22:01:29 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.420 2020/01/07 23:03:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -3096,19 +3096,39 @@ smtp_report_tx_begin(struct smtp_session *s, uint32_t msgid)
 static void
 smtp_report_tx_mail(struct smtp_session *s, uint32_t msgid, const char *address, int ok)
 {
+	char	mailaddr[SMTPD_MAXMAILADDRSIZE];
+	char    *p;
+
 	if (! SESSION_FILTERED(s))
 		return;
 
-	report_smtp_tx_mail("smtp-in", s->id, msgid, address, ok);
+	if ((p = strchr(address, '<')) == NULL)
+		return;
+	(void)strlcpy(mailaddr, p + 1, sizeof mailaddr);
+	if ((p = strchr(mailaddr, '>')) == NULL)
+		return;
+	*p = '\0';
+
+	report_smtp_tx_mail("smtp-in", s->id, msgid, mailaddr, ok);
 }
 
 static void
 smtp_report_tx_rcpt(struct smtp_session *s, uint32_t msgid, const char *address, int ok)
 {
+	char	mailaddr[SMTPD_MAXMAILADDRSIZE];
+	char    *p;
+
 	if (! SESSION_FILTERED(s))
 		return;
 
-	report_smtp_tx_rcpt("smtp-in", s->id, msgid, address, ok);
+	if ((p = strchr(address, '<')) == NULL)
+		return;
+	(void)strlcpy(mailaddr, p + 1, sizeof mailaddr);
+	if ((p = strchr(mailaddr, '>')) == NULL)
+		return;
+	*p = '\0';
+
+	report_smtp_tx_rcpt("smtp-in", s->id, msgid, mailaddr, ok);
 }
 
 static void

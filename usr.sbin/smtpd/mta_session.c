@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.126 2020/01/07 22:39:02 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.127 2020/01/07 23:03:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -812,6 +812,7 @@ again:
 			    envid_sz ? e->dsn_envid : "");
 		} else
 			mta_send(s, "MAIL FROM:<%s>", s->task->sender);
+		mta_report_tx_begin(s, s->task->msgid);
 		break;
 
 	case MTA_RCPT:
@@ -1030,7 +1031,7 @@ mta_response(struct mta_session *s, char *line)
 			mta_enter_state(s, MTA_RSET);
 			return;
 		}
-		mta_report_tx_begin(s, s->task->msgid);
+
 		mta_report_tx_mail(s, s->task->msgid, s->task->sender, 1);
 		mta_enter_state(s, MTA_RCPT);
 		break;
