@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.121 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.122 2020/01/07 10:12:16 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -785,7 +785,8 @@ zyd_cmd_read(struct zyd_softc *sc, const void *reg, size_t regsize, int olen)
 
 	if (!sc->odone) {
 		/* wait for ZYD_NOTIF_IORD interrupt */
-		if (tsleep(sc, PWAIT, "zydcmd", ZYD_INTR_TIMEOUT) != 0)
+		if (tsleep_nsec(sc, PWAIT, "zydcmd",
+		    MSEC_TO_NSEC(ZYD_INTR_TIMEOUT)) != 0)
 			printf("%s: read command failed\n",
 			    sc->sc_dev.dv_xname);
 	}
