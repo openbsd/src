@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.125 2019/12/21 17:43:49 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.126 2020/01/07 22:39:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -105,6 +105,8 @@ struct mta_session {
 	char			*helo;
 	char			*mxname;
 
+	char			*username;
+
 	int			 flags;
 
 	int			 attempt;
@@ -177,9 +179,7 @@ static void mta_report_link_greeting(struct mta_session *, const char *);
 static void mta_report_link_identify(struct mta_session *, const char *, const char *);
 static void mta_report_link_tls(struct mta_session *, const char *);
 static void mta_report_link_disconnect(struct mta_session *);
-#if 0
 static void mta_report_link_auth(struct mta_session *, const char *, const char *);
-#endif
 static void mta_report_tx_reset(struct mta_session *, uint32_t);
 static void mta_report_tx_begin(struct mta_session *, uint32_t);
 static void mta_report_tx_mail(struct mta_session *, uint32_t, const char *, int);
@@ -410,6 +410,7 @@ mta_free(struct mta_session *s)
 
 	relay = s->relay;
 	route = s->route;
+	free(s->username);
 	free(s->mxname);
 	free(s);
 	stat_decrement("mta.session", 1);
@@ -658,6 +659,14 @@ again:
 		break;
 
 	case MTA_AUTH_PLAIN:
+		memset(ibuf, 0, sizeof ibuf);
+		if (base64_decode(s->relay->secret, (unsigned char *)ibuf,
+				  sizeof(ibuf)-1) == -1) {
+			log_debug("debug: mta: %p: credentials too large on session", s);
+			mta_error(s, "Credentials too large");
+			break;
+		}
+		s->username = xstrdup(ibuf+1);
 		mta_send(s, "AUTH PLAIN %s", s->relay->secret);
 		break;
 
@@ -673,6 +682,7 @@ again:
 			mta_error(s, "Credentials too large");
 			break;
 		}
+		s->username = xstrdup(ibuf+1);
 
 		memset(obuf, 0, sizeof obuf);
 		base64_encode((unsigned char *)ibuf + 1, strlen(ibuf + 1), obuf, sizeof obuf);
@@ -967,15 +977,18 @@ mta_response(struct mta_session *s, char *line)
 	case MTA_AUTH_PLAIN:
 		if (line[0] != '2') {
 			mta_error(s, "AUTH rejected: %s", line);
+			mta_report_link_auth(s, s->username, "fail");
 			s->flags |= MTA_FREE;
 			return;
 		}
+		mta_report_link_auth(s, s->username, "pass");
 		mta_enter_state(s, MTA_READY);
 		break;
 
 	case MTA_AUTH_LOGIN:
 		if (strncmp(line, "334 ", 4) != 0) {
 			mta_error(s, "AUTH rejected: %s", line);
+			mta_report_link_auth(s, s->username, "fail");
 			s->flags |= MTA_FREE;
 			return;
 		}
@@ -985,6 +998,7 @@ mta_response(struct mta_session *s, char *line)
 	case MTA_AUTH_LOGIN_USER:
 		if (strncmp(line, "334 ", 4) != 0) {
 			mta_error(s, "AUTH rejected: %s", line);
+			mta_report_link_auth(s, s->username, "fail");
 			s->flags |= MTA_FREE;
 			return;
 		}
@@ -994,9 +1008,11 @@ mta_response(struct mta_session *s, char *line)
 	case MTA_AUTH_LOGIN_PASS:
 		if (line[0] != '2') {
 			mta_error(s, "AUTH rejected: %s", line);
+			mta_report_link_auth(s, s->username, "fail");
 			s->flags |= MTA_FREE;
 			return;
 		}
+		mta_report_link_auth(s, s->username, "pass");
 		mta_enter_state(s, MTA_READY);
 		break;
 
@@ -1883,7 +1899,6 @@ mta_report_link_disconnect(struct mta_session *s)
 	report_smtp_link_disconnect("smtp-out", s->id);
 }
 
-#if 0
 static void
 mta_report_link_auth(struct mta_session *s, const char *user, const char *result)
 {
@@ -1892,7 +1907,6 @@ mta_report_link_auth(struct mta_session *s, const char *user, const char *result
 
 	report_smtp_link_auth("smtp-out", s->id, user, result);
 }
-#endif
 
 static void
 mta_report_tx_reset(struct mta_session *s, uint32_t msgid)
