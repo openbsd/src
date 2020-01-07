@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aclconf.h,v 1.3 2019/12/17 01:46:38 sthen Exp $ */
+/* $Id: aclconf.h,v 1.4 2020/01/07 19:06:07 florian Exp $ */
 
 #ifndef ISCCFG_ACLCONF_H
 #define ISCCFG_ACLCONF_H 1
@@ -23,17 +23,11 @@
 
 #include <isccfg/cfg.h>
 
-#ifdef HAVE_GEOIP
-#include <dns/geoip.h>
-#endif
 #include <dns/types.h>
 
 typedef struct cfg_aclconfctx {
 	ISC_LIST(dns_acl_t) named_acl_cache;
 	isc_mem_t *mctx;
-#ifdef HAVE_GEOIP
-	dns_geoip_databases_t *geoip;
-#endif
 	isc_refcount_t references;
 } cfg_aclconfctx_t;
 

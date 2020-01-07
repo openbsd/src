@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: acl.c,v 1.3 2019/12/17 01:46:31 sthen Exp $ */
+/* $Id: acl.c,v 1.4 2020/01/07 19:06:07 florian Exp $ */
 
 /*! \file */
 
@@ -339,14 +339,6 @@ dns_acl_merge(dns_acl_t *dest, dns_acl_t *source, isc_boolean_t pos)
 				return result;
 		}
 
-#ifdef HAVE_GEOIP
-		/* Duplicate GeoIP data */
-		if (source->elements[i].type == dns_aclelementtype_geoip) {
-			dest->elements[nelem + i].geoip_elem =
-				source->elements[i].geoip_elem;
-		}
-#endif
-
 		/* reverse sense of positives if this is a negative acl */
 		if (!pos && source->elements[i].negative == ISC_FALSE) {
 			dest->elements[nelem + i].negative = ISC_TRUE;
@@ -416,12 +408,6 @@ dns_aclelement_match(const isc_netaddr_t *reqaddr,
 		inner = env->localnets;
 		break;
 
-#ifdef HAVE_GEOIP
-	case dns_aclelementtype_geoip:
-		if (env == NULL || env->geoip == NULL)
-			return (ISC_FALSE);
-		return (dns_geoip_match(reqaddr, env->geoip, &e->geoip_elem));
-#endif
 	default:
 		/* Should be impossible. */
 		INSIST(0);
@@ -619,9 +605,6 @@ dns_aclenv_init(isc_mem_t *mctx, dns_aclenv_t *env) {
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_localhost;
 	env->match_mapped = ISC_FALSE;
-#ifdef HAVE_GEOIP
-	env->geoip = NULL;
-#endif
 	return (ISC_R_SUCCESS);
 
  cleanup_localhost:

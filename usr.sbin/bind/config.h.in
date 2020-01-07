@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: config.h.in,v 1.11 2019/12/17 01:46:30 sthen Exp $ */
+/* $Id: config.h.in,v 1.12 2020/01/07 19:06:07 florian Exp $ */
 
 /*! \file */
 
@@ -253,15 +253,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `ftello' function. */
 #undef HAVE_FTELLO
-
-/* Build with GeoIP support */
-#undef HAVE_GEOIP
-
-/* Build with GeoIP City IPv6 support */
-#undef HAVE_GEOIP_CITY_V6
-
-/* Build with GeoIP Country IPv6 support */
-#undef HAVE_GEOIP_V6
 
 /* Define to 1 if you have the `getrandom' function. */
 #undef HAVE_GETRANDOM

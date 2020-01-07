@@ -61,8 +61,6 @@ DSTOBJS =	@DST_EXTRA_OBJS@ @OPENSSLLINKOBJS@ @PKCS11LINKOBJS@ \
 		dst_api.@O@ dst_lib.@O@ dst_parse.@O@ dst_result.@O@ \
 		gssapi_link.@O@ gssapictx.@O@ hmac_link.@O@ key.@O@
 
-GEOIPLINKOBJS = geoip.@O@
-
 # Alphabetically
 DNSOBJS =	acache.@O@ acl.@O@ adb.@O@ byaddr.@O@ \
 		cache.@O@ callbacks.@O@ clientinfo.@O@ compress.@O@ \
@@ -83,8 +81,7 @@ DNSOBJS =	acache.@O@ acl.@O@ adb.@O@ byaddr.@O@ \
 		version.@O@ view.@O@ xfrin.@O@ zone.@O@ zonekey.@O@ zt.@O@
 PORTDNSOBJS =	client.@O@ ecdb.@O@
 
-OBJS=		${DNSOBJS} ${OTHEROBJS} ${DSTOBJS} ${PORTDNSOBJS} \
-		@GEOIPLINKOBJS@
+OBJS=		${DNSOBJS} ${OTHEROBJS} ${DSTOBJS} ${PORTDNSOBJS}
 
 
 # Alphabetically
@@ -104,8 +101,6 @@ DSTSRCS =	@DST_EXTRA_SRCS@ @OPENSSLLINKSRCS@ @PKCS11LINKSRCS@ \
 		dst_result.c gssapi_link.c gssapictx.c \
 		hmac_link.c key.c
 
-GEOIOLINKSRCS = geoip.c
-
 DNSSRCS =	acache.c acl.c adb.c byaddr.c \
 		cache.c callbacks.c clientinfo.c compress.c \
 		db.c dbiterator.c dbtable.c diff.c dispatch.c \
@@ -122,7 +117,7 @@ DNSSRCS =	acache.c acl.c adb.c byaddr.c \
 		version.c view.c xfrin.c zone.c zonekey.c zt.c ${OTHERSRCS}
 PORTDNSSRCS =	client.c ecdb.c
 
-SRCS = ${DSTSRCS} ${DNSSRCS} ${PORTDNSSRCS} @GEOIPLINKSRCS@
+SRCS = ${DSTSRCS} ${DNSSRCS} ${PORTDNSSRCS}
 
 SUBDIRS =	include
 TARGETS =	timestamp

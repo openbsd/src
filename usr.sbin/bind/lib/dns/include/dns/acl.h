@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: acl.h,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: acl.h,v 1.4 2020/01/07 19:06:07 florian Exp $ */
 
 #ifndef DNS_ACL_H
 #define DNS_ACL_H 1
@@ -37,16 +37,9 @@
 #include <isc/netaddr.h>
 #include <isc/refcount.h>
 
-#ifdef HAVE_GEOIP
-#include <dns/geoip.h>
-#endif
 #include <dns/name.h>
 #include <dns/types.h>
 #include <dns/iptable.h>
-
-#ifdef HAVE_GEOIP
-#include <GeoIP.h>
-#endif
 
 /***
  *** Types
@@ -58,9 +51,6 @@ typedef enum {
 	dns_aclelementtype_nestedacl,
 	dns_aclelementtype_localhost,
 	dns_aclelementtype_localnets,
-#ifdef HAVE_GEOIP
-	dns_aclelementtype_geoip,
-#endif /* HAVE_GEOIP */
 	dns_aclelementtype_any
 } dns_aclelementtype_t;
 
@@ -75,9 +65,6 @@ struct dns_aclelement {
 	dns_aclelementtype_t	type;
 	isc_boolean_t		negative;
 	dns_name_t		keyname;
-#ifdef HAVE_GEOIP
-	dns_geoip_elem_t	geoip_elem;
-#endif /* HAVE_GEOIP */
 	dns_acl_t		*nestedacl;
 	int			node_num;
 };
@@ -100,9 +87,6 @@ struct dns_aclenv {
 	dns_acl_t *localhost;
 	dns_acl_t *localnets;
 	isc_boolean_t match_mapped;
-#ifdef HAVE_GEOIP
-	dns_geoip_databases_t *geoip;
-#endif
 };
 
 #define DNS_ACL_MAGIC		ISC_MAGIC('D','a','c','l')

@@ -845,8 +845,6 @@ ISC_PLATFORM_GSSAPI_KRB5_HEADER
 ISC_PLATFORM_GSSAPIHEADER
 ISC_PLATFORM_HAVEGSSAPI
 KRB5_CONFIG
-GEOIPLINKOBJS
-GEOIPLINKSRCS
 ISC_PLATFORM_NEEDSYSSELECTH
 ISC_PLATFORM_HAVEDEVPOLL
 ISC_PLATFORM_HAVEEPOLL
@@ -982,7 +980,6 @@ with_python_install_dir
 enable_kqueue
 enable_epoll
 enable_devpoll
-with_geoip
 with_gssapi
 with_randomdev
 enable_threads
@@ -1704,7 +1701,6 @@ Optional Packages:
   --with-python=PATH      specify path to python interpreter
   --with-python-install-dir=PATH
                           installation directory for Python modules
-  --with-geoip=PATH       Build with GeoIP support (yes|no|path)
   --with-gssapi=PATH|/path/krb5-config
                           Specify path for system-supplied GSSAPI
                           [default=yes]
@@ -13778,267 +13774,6 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
  esac
 
 
-#
-# GeoIP support?
-#
-GEOIPLINKSRCS=
-GEOIPLINKOBJS=
-
-# Check whether --with-geoip was given.
-if test "${with_geoip+set}" = set; then :
-  withval=$with_geoip; use_geoip="$withval"
-else
-  use_geoip="no"
-fi
-
-
-if test "yes" = "$use_geoip"
-then
-	for d in /usr /usr/local /opt/local
-	do
-		if test -f $d/include/GeoIP.h
-		then
-			use_geoip=$d
-			break
-		fi
-	done
-fi
-
-case "$use_geoip" in
-	no|'')
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GeoIP support" >&5
-$as_echo_n "checking for GeoIP support... " >&6; }
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
-		;;
-	*)
-		if test -d "$use_geoip" -o -L "$use_geoip"
-		then
-			CFLAGS="$CFLAGS -I$use_geoip/include"
-			CPPFLAGS="$CPPFLAGS -I$use_geoip/include"
-			LIBS="$LIBS -L$use_geoip/lib"
-			case "$host_os" in
-				netbsd*|openbsd*|solaris*)
-					LIBS="$LIBS -Wl,-rpath=$use_geoip/lib"
-					;;
-			esac
-		elif test "yes" = "$use_geoip"
-		then
-			as_fn_error $? "GeoIP path not found" "$LINENO" 5
-		else
-			as_fn_error $? "GeoIP path $use_geoip does not exist" "$LINENO" 5
-		fi
-		ac_fn_c_check_header_mongrel "$LINENO" "GeoIP.h" "ac_cv_header_GeoIP_h" "$ac_includes_default"
-if test "x$ac_cv_header_GeoIP_h" = xyes; then :
-
-else
-  as_fn_error $? "GeoIP header file not found" "$LINENO" 5
-
-fi
-
-
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing GeoIP_open" >&5
-$as_echo_n "checking for library containing GeoIP_open... " >&6; }
-if ${ac_cv_search_GeoIP_open+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char GeoIP_open ();
-int
-main ()
-{
-return GeoIP_open ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' GeoIP; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_GeoIP_open=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_GeoIP_open+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_GeoIP_open+:} false; then :
-
-else
-  ac_cv_search_GeoIP_open=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_GeoIP_open" >&5
-$as_echo "$ac_cv_search_GeoIP_open" >&6; }
-ac_res=$ac_cv_search_GeoIP_open
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-else
-  as_fn_error $? "GeoIP library not found" "$LINENO" 5
-
-fi
-
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing fabsf" >&5
-$as_echo_n "checking for library containing fabsf... " >&6; }
-if ${ac_cv_search_fabsf+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char fabsf ();
-int
-main ()
-{
-return fabsf ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' m; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_fabsf=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_fabsf+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_fabsf+:} false; then :
-
-else
-  ac_cv_search_fabsf=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_fabsf" >&5
-$as_echo "$ac_cv_search_fabsf" >&6; }
-ac_res=$ac_cv_search_fabsf
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-else
-  as_fn_error $? "Math library not found" "$LINENO" 5
-
-fi
-
-
-$as_echo "#define HAVE_GEOIP 1" >>confdefs.h
-
-		GEOIPLINKSRCS='${GEOIPLINKSRCS}'
-		GEOIPLINKOBJS='${GEOIPLINKOBJS}'
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GeoIP support" >&5
-$as_echo_n "checking for GeoIP support... " >&6; }
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GeoIP Country IPv6 support" >&5
-$as_echo_n "checking for GeoIP Country IPv6 support... " >&6; }
-		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-				#include <GeoIP.h>
-				#include <netinet/in.h>
-
-int
-main ()
-{
-
-				struct in6_addr in6;
-				GeoIP_country_name_by_ipnum_v6(NULL, in6);
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-$as_echo "#define HAVE_GEOIP_V6 1" >>confdefs.h
-
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GeoIP City IPv6 support" >&5
-$as_echo_n "checking for GeoIP City IPv6 support... " >&6; }
-		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-				#include <GeoIP.h>
-				#include <GeoIPCity.h>
-				#include <netinet/in.h>
-
-int
-main ()
-{
-
-				struct in6_addr in6;
-				int i = GEOIP_CITY_EDITION_REV0_V6;
-				GeoIP_record_by_ipnum_v6(NULL, in6);
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-$as_echo "#define HAVE_GEOIP_CITY_V6 1" >>confdefs.h
-
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-		;;
-esac
-
-
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GSSAPI library" >&5
 $as_echo_n "checking for GSSAPI library... " >&6; }
 
@@ -24168,7 +23903,6 @@ report() {
 	fi
     fi
     test "large" = "$use_tuning" && echo "    Large-system tuning (--with-tuning)"
-    test "no" = "$use_geoip" || echo "    GeoIP access control (--with-geoip)"
     test "no" = "$use_gssapi" || echo "    GSS-API (--with-gssapi)"
     test "yes" = "$enable_fetchlimit" && \
         echo "    Recursive fetch limits for DoS attack mitigation (--enable-fetchlimit)"
@@ -24247,7 +23981,6 @@ report() {
     	echo "    IPv6 support (--enable-ipv6)"
     test "large" = "$use_tuning" || echo "    Large-system tuning (--with-tuning)"
 
-    test "no" = "$use_geoip" && echo "    GeoIP access control (--with-geoip)"
     test "no" = "$use_gssapi" && echo "    GSS-API (--with-gssapi)"
     test "no" = "$enable_fetchlimit" && \
             echo "    Recursive fetch limits for DoS attack mitigation (--enable-fetchlimit)"
