@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2020/01/06 22:36:57 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/01/07 16:08:08 bluhm Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -33,8 +33,8 @@ cleanup:
 
 REGRESS_TARGETS =
 
-SERVER_NC = echo greeting | ${NC}
-CLIENT_NC = echo command | ${NC}
+SERVER_NC = rm -f server.err; echo greeting | ${NC}
+CLIENT_NC = rm -f client.err; echo command | ${NC}
 SERVER_BG = 2>&1 >server.out | tee server.err &
 CLIENT_BG = 2>&1 >client.out | tee client.err &
 SERVER_LOG = >server.out 2>server.err
@@ -56,7 +56,12 @@ BIND_WAIT = \
 
 CONNECT_WAIT = \
 	let timeout=`date +%s`+5; \
-	until grep -q 'Connection to ' client.err; \
+	until grep -q 'Connection to .* succeeded' client.err; \
+	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+
+TLS_WAIT = \
+	let timeout=`date +%s`+5; \
+	until grep -q 'Cert Hash:' client.err; \
 	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
 
 TRANSFER_WAIT = \
@@ -199,11 +204,13 @@ run-tls: 127.0.0.1.crt
 	${PORT_GET}
 	${CLIENT_NC} -c -R 127.0.0.1.crt -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
 	${CONNECT_WAIT}
+	${TLS_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
 	grep 'Listening on 127.0.0.1 ' server.err
 	grep 'Connection received on 127.0.0.1 ' server.err
+	# XXX success message should be issued after TLS handshake
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 	grep 'Subject: .*/OU=server/CN=127.0.0.1' client.err
 	grep 'Issuer: .*/OU=server/CN=127.0.0.1' client.err
@@ -216,6 +223,7 @@ run-tls6: 1.crt
 	${PORT_GET}
 	${CLIENT_NC} -c -R 1.crt -n -v ::1 ${PORT} ${CLIENT_BG}
 	${CONNECT_WAIT}
+	${TLS_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
@@ -234,6 +242,7 @@ run-tls-localhost: server.crt ca.crt
 	${PORT_GET}
 	${CLIENT_NC} -c -R ca.crt -v localhost ${PORT} ${CLIENT_BG}
 	${CONNECT_WAIT}
+	${TLS_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
@@ -250,11 +259,14 @@ run-tls-bad-ca: server.crt fake-ca.crt
 	    ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
+	# the client uses the wrong root ca to verify the server cert
 	! ${NC} -c -R fake-ca.crt -v localhost ${PORT} ${CLIENT_LOG}
 	${CONNECT_WAIT}
 	grep 'Listening on localhost ' server.err
 	grep 'Connection received on localhost ' server.err
 	grep 'certificate signature failure' client.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
 
 REGRESS_TARGETS +=	run-tls-name
 run-tls-name: server.crt ca.crt
@@ -266,6 +278,7 @@ run-tls-name: server.crt ca.crt
 	${CLIENT_NC} -c -e localhost -R ca.crt -n -v 127.0.0.1 ${PORT} \
 	    ${CLIENT_BG}
 	${CONNECT_WAIT}
+	${TLS_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
@@ -275,16 +288,35 @@ run-tls-name: server.crt ca.crt
 	grep 'Subject: .*/OU=server/CN=localhost' client.err
 	grep 'Issuer: .*/OU=ca/CN=root' client.err
 
+REGRESS_TARGETS +=	run-tls-bad-name
+run-tls-bad-name: server.crt ca.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C server.crt -K server.key -n -v -l 127.0.0.1 0 \
+	    ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# the common name in server.crt is localhost, not 127.0.0.1
+	! ${NC} -c -e 127.0.0.1 -R ca.crt -n -v 127.0.0.1 ${PORT} ${CLIENT_LOG}
+	${CONNECT_WAIT}
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	grep "name \`127.0.0.1\' not present in server certificate" client.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
+
 REGRESS_TARGETS +=	run-tls-hash
-run-tls-hash: server.crt server.hash ca.crt
+run-tls-hash: server.crt ca.crt server.hash
 	@echo '======== $@ ========'
 	${SERVER_NC} -c -C server.crt -K server.key -v -l localhost 0 \
 	    ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
-	${CLIENT_NC} -c -R ca.crt -H `cat server.hash` -v localhost ${PORT} \
+	# check that the server presents certificate with correct hash
+	${CLIENT_NC} -c -H `cat server.hash` -R ca.crt -v localhost ${PORT} \
 	    ${CLIENT_BG}
 	${CONNECT_WAIT}
+	${TLS_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
@@ -294,6 +326,211 @@ run-tls-hash: server.crt server.hash ca.crt
 	grep 'Subject: .*/OU=server/CN=localhost' client.err
 	grep 'Issuer: .*/OU=ca/CN=root' client.err
 	grep 'Cert Hash: SHA256:' client.err
+
+REGRESS_TARGETS +=	run-tls-bad-hash
+run-tls-bad-hash: server.crt ca.crt ca.hash
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C server.crt -K server.key -v -l localhost 0 \
+	    ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# server presents certificate with server.hash, ca.hash is wrong
+	! ${NC} -c -H `cat ca.hash` -R ca.crt -v localhost ${PORT} \
+	    ${CLIENT_LOG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'peer certificate is not SHA256:' client.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
+
+# TLS client certificate
+
+REGRESS_TARGETS +=	run-tls-client
+run-tls-client: client.crt server.crt ca.crt
+	@echo '======== $@ ========'
+	# use client certificate and validate at server
+	${SERVER_NC} -c -R ca.crt -C server.crt -K server.key -v -l \
+	    localhost 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R ca.crt -C client.crt -K client.key -v \
+	    localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+	grep 'Subject: .*/OU=client/CN=localhost' server.err
+	grep 'Issuer: .*/OU=ca/CN=root' server.err
+
+REGRESS_TARGETS +=	run-tls-bad-client
+run-tls-bad-client: client.crt server.crt ca.crt
+	@echo '======== $@ ========'
+	# require client certificate at server
+	${SERVER_NC} -c -T clientcert -R ca.crt -C server.crt -K server.key \
+	    -v -l localhost 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# client does not provide certificate
+	${CLIENT_NC} -c -R ca.crt -v localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+	grep 'No client certificate provided' server.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
+
+REGRESS_TARGETS +=	run-tls-client-bad-ca
+run-tls-client-bad-ca: client.crt server.crt ca.crt
+	@echo '======== $@ ========'
+	# the server uses the wrong root ca to verify the client cert
+	${SERVER_NC} -c -R fake-ca.crt -C server.crt -K server.key -v -l \
+	    localhost 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	! ${NC} -c -R ca.crt -C client.crt -K client.key -v \
+	    localhost ${PORT} ${CLIENT_LOG}
+	${CONNECT_WAIT}
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	# XXX no specific error message for bogus ca
+	grep 'CRYPTO_internal:block type is not 01' server.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
+
+REGRESS_TARGETS +=	run-tls-client-name
+run-tls-client-name: client.crt server.crt ca.crt
+	@echo '======== $@ ========'
+	# check client certificate name at server
+	${SERVER_NC} -c -e localhost -R ca.crt -C server.crt -K server.key \
+	    -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -4 -c -R ca.crt -C client.crt -K client.key -v \
+	    localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+	grep 'Subject: .*/OU=client/CN=localhost' server.err
+	grep 'Issuer: .*/OU=ca/CN=root' server.err
+
+REGRESS_TARGETS +=	run-tls-client-bad-name
+run-tls-client-bad-name: client.crt server.crt ca.crt
+	@echo '======== $@ ========'
+	# client certificate is for localhost, check with 127.0.0.1 should fail
+	${SERVER_NC} -c -e 127.0.0.1 -R ca.crt -C server.crt -K server.key \
+	    -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# client does not see any problem, TLS handshake works, wait for exit
+	${CLIENT_NC} -4 -c -R ca.crt -C client.crt -K client.key -v \
+	    localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+	grep 'Subject: .*/OU=client/CN=localhost' server.err
+	grep 'Issuer: .*/OU=ca/CN=root' server.err
+	grep 'name (127.0.0.1) not found in client cert' server.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
+
+REGRESS_TARGETS +=	run-tls-client-hash
+run-tls-client-hash: client.crt server.crt ca.crt client.hash
+	@echo '======== $@ ========'
+	# check client certificate hash at server
+	${SERVER_NC} -c -H `cat client.hash` -R ca.crt \
+	    -C server.crt -K server.key -v -l localhost 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R ca.crt -C client.crt -K client.key -v \
+	    localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+	grep 'Subject: .*/OU=client/CN=localhost' server.err
+	grep 'Issuer: .*/OU=ca/CN=root' server.err
+
+# XXX This test is broken, server does not check the client's cert hash
+REGRESS_EXPECTED_FAILURES += run-tls-client-bad-hash
+
+REGRESS_TARGETS +=	run-tls-client-bad-hash
+run-tls-client-bad-hash: client.crt server.crt ca.crt ca.hash
+	@echo '======== $@ ========'
+	# client presents certificate with client.hash, ca.hash is wrong
+	${SERVER_NC} -c -H `cat ca.hash` -R ca.crt \
+	    -C server.crt -K server.key -v -l localhost 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# client does not see any problem, TLS handshake works, wait for exit
+	${CLIENT_NC} -c -R ca.crt -C client.crt -K client.key -v \
+	    localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+	grep 'Subject: .*/OU=client/CN=localhost' server.err
+	grep 'Issuer: .*/OU=ca/CN=root' server.err
+	grep 'peer certificate is not SHA256:' server.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
+
+REGRESS_TARGETS +=	run-tls-client-no-hash
+run-tls-client-no-hash: client.crt server.crt ca.crt client.hash
+	@echo '======== $@ ========'
+	# check client certificate hash at server if available
+	${SERVER_NC} -c -H `cat client.hash` -R ca.crt \
+	    -C server.crt -K server.key -v -l localhost 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# client provides no certificate
+	${CLIENT_NC} -c -R ca.crt -v localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	${TRANSFER_WAIT}
+	# client certificate and hash is optional, transfer is successful
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+	# non existing hash is not checked
+	! grep 'Cert Hash: SHA256:' server.err
 
 ### UDP ####
 
@@ -456,7 +693,7 @@ run-unix-dgram-clientsock:
 ### create certificates for TLS
 
 CLEANFILES +=		{127.0.0.1,1}.{crt,key} \
-			ca.{crt,key,srl} fake-ca.{crt,key} \
+			ca.{crt,key,srl,hash} fake-ca.{crt,key,hash} \
 			{client,server}.{req,crt,key,hash}
 
 127.0.0.1.crt:
@@ -483,7 +720,7 @@ client.crt server.crt: ca.crt ${@:R}.req
 	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt \
 	    -req -in ${@:R}.req -out $@
 
-client.hash server.hash: ${@:R}.crt
+client.hash server.hash ca.hash: ${@:R}.crt
 	openssl x509 -in ${@:R}.crt -outform der | sha256 | sed s/^/SHA256:/ >$@
 
 .include <bsd.regress.mk>
