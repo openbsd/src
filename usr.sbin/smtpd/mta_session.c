@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.127 2020/01/07 23:03:37 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.128 2020/01/07 23:09:02 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1111,10 +1111,10 @@ mta_response(struct mta_session *s, char *line)
 
 		switch (line[0]) {
 		case '2':
-			mta_report_tx_rcpt(s,
-			    s->task->msgid, e->dest, 1);
 			mta_report_tx_envelope(s,
 			    s->task->msgid, e->id);
+			mta_report_tx_rcpt(s,
+			    s->task->msgid, e->dest, 1);
 			break;
 		case '4':
 			mta_report_tx_rcpt(s,
