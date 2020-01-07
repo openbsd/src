@@ -96,7 +96,6 @@ yes)
 	test "${with_atf+set}" = set || with_atf=yes
 	test "${enable_filter_aaaa+set}" = set || enable_filter_aaaa=yes
 	test "${with_dlz_filesystem+set}" = set || with_dlz_filesystem=yes
-	test "${enable_symtable+set}" = set || enable_symtable=all
 	test "${enable_sit+set}" = set || enable_sit=yes
 	test "${enable_fetchlimit+set}" = set || enable_fetchlimit=yes
 	test "${enable_warn_error+set}" = set || enable_warn_error=yes
@@ -2490,67 +2489,6 @@ case $use_profiler in
 esac
 
 #
-# enable/disable dumping stack backtrace.  Also check if the system supports
-# glibc-compatible backtrace() function.
-#
-AC_ARG_ENABLE(backtrace,
-	      AS_HELP_STRING([--enable-backtrace],
-			     [log stack backtrace on abort [default=yes]]),
-	      want_backtrace="$enableval",  want_backtrace="yes")
-case $want_backtrace in
-yes)
-	ISC_PLATFORM_USEBACKTRACE="#define ISC_PLATFORM_USEBACKTRACE 1"
-	AC_TRY_LINK([#include <execinfo.h>],
-	[return (backtrace((void **)0, 0));],
-	[AC_DEFINE([HAVE_LIBCTRACE], [], [if system have backtrace function])],)
-	;;
-*)
-	ISC_PLATFORM_USEBACKTRACE="#undef ISC_PLATFORM_USEBACKTRACE"
-	;;
-esac
-AC_SUBST(ISC_PLATFORM_USEBACKTRACE)
-
-AC_ARG_ENABLE(symtable,
-	      AS_HELP_STRING([--enable-symtable],
-			     [use internal symbol table for backtrace
-			      [all|minimal(default)|none]]),
-	      want_symtable="$enableval",  want_symtable="minimal")
-case $want_symtable in
-yes|all|minimal)     # "yes" is a hidden value equivalent to "minimal"
-	if test "" = "$PERL"
-	then
-		AC_MSG_ERROR([Internal symbol table requires perl but no perl is found.
-Install perl or explicitly disable the feature by --disable-symtable.])
-	fi
-	if test "yes" = "$use_libtool"; then
-		AC_MSG_WARN([Internal symbol table does not work with libtool.  Disabling symbol table.])
-	else
-		# we generate the internal symbol table only for those systems
-		# known to work to avoid unexpected build failure.  Also, warn
-		# about unsupported systems when the feature is enabled
-		#  manually.
-		case $host_os in
-		freebsd*|netbsd*|openbsd*|linux*|solaris*|darwin*)
-			MKSYMTBL_PROGRAM="$PERL"
-			if test "all" = "$want_symtable"; then
-				ALWAYS_MAKE_SYMTABLE="yes"
-			fi
-			;;
-		*)
-			if test "yes" = "$want_symtable" -o "all" = "$want_symtable"
-			then
-				AC_MSG_WARN([this system is not known to generate internal symbol table safely; disabling it])
-			fi
-		esac
-	fi
-	;;
-*)
-	;;
-esac
-AC_SUBST(MKSYMTBL_PROGRAM)
-AC_SUBST(ALWAYS_MAKE_SYMTABLE)
-
-#
 # File name extension for static archive files, for those few places
 # where they are treated differently from dynamic ones.
 #
@@ -4751,10 +4689,6 @@ report() {
 	echo "    Use libseccomp system call filtering (--enable-seccomp)"
     test "yes" = "$want_backtrace" && \
 	echo "    Print backtrace on crash (--enable-backtrace)"
-    test "minimal" = "$want_symtable" && \
-	echo "    Use symbol table for backtrace, named only (--enable-symtable)"
-    test "yes" = "$want_symtable" -o "all" = "$want_symtable" && \
-	echo "    Use symbol table for backtrace, all binaries (--enable-symtable=all)"
     test "no" = "$use_libtool" || echo "    Use GNU libtool (--with-libtool)"
     test "yes" = "$want_querytrace" && \
 	echo "    Very verbose query trace logging (--enable-querytrace)"

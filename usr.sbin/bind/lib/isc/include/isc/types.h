@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.6 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: types.h,v 1.7 2020/01/07 19:11:17 florian Exp $ */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
@@ -42,7 +42,6 @@
 /* Core Types.  Alphabetized by defined type. */
 
 typedef struct isc_appctx		isc_appctx_t;	 	/*%< Application context */
-typedef struct isc_backtrace_symmap	isc_backtrace_symmap_t; /*%< Symbol Table Entry */
 typedef struct isc_buffer		isc_buffer_t;		/*%< Buffer */
 typedef ISC_LIST(isc_buffer_t)		isc_bufferlist_t;	/*%< Buffer List */
 typedef struct isc_constregion		isc_constregion_t;	/*%< Const region */

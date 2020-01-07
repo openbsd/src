@@ -48,7 +48,7 @@ THREADOBJS =	nothreads/thread.@O@
 
 # Alphabetically
 OBJS =		@ISC_EXTRA_OBJS@ @ISC_PK11_O@ @ISC_PK11_RESULT_O@ \
-		aes.@O@ assertions.@O@ backtrace.@O@ base32.@O@ base64.@O@ \
+		aes.@O@ assertions.@O@ base32.@O@ base64.@O@ \
 		bind9.@O@ buffer.@O@ bufferlist.@O@ \
 		commandline.@O@ counter.@O@ crc64.@O@ error.@O@ event.@O@ \
 		hash.@O@ heap.@O@ hex.@O@ hmacmd5.@O@ hmacsha.@O@ \
@@ -63,11 +63,10 @@ OBJS =		@ISC_EXTRA_OBJS@ @ISC_PK11_O@ @ISC_PK11_RESULT_O@ \
 		string.@O@ strtoul.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
 		tm.@O@ timer.@O@ version.@O@ \
 		${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
-SYMTBLOBJS =	backtrace-emptytbl.@O@
 
 # Alphabetically
 SRCS =		@ISC_EXTRA_SRCS@ @ISC_PK11_C@ @ISC_PK11_RESULT_C@ \
-		aes.c assertions.c backtrace.c base32.c base64.c bind9.c \
+		aes.c assertions.c base32.c base64.c bind9.c \
 		buffer.c bufferlist.c commandline.c counter.c crc64.c \
 		error.c event.c heap.c hex.c hmacmd5.c hmacsha.c \
 		httpd.c inet_aton.c iterated_hash.c \
@@ -104,30 +103,20 @@ version.@O@: version.c
 		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
-libisc.@SA@: ${OBJS} ${SYMTBLOBJS}
-	${AR} ${ARFLAGS} $@ ${OBJS} ${SYMTBLOBJS}
-	${RANLIB} $@
-
-libisc-nosymtbl.@SA@: ${OBJS}
+libisc.@SA@: ${OBJS}
 	${AR} ${ARFLAGS} $@ ${OBJS}
 	${RANLIB} $@
 
-libisc.la: ${OBJS} ${SYMTBLOBJS}
+libisc.la: ${OBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisc.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} ${SYMTBLOBJS} ${LIBS}
-
-libisc-nosymtbl.la: ${OBJS}
-	${LIBTOOL_MODE_LINK} \
-		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisc-nosymtbl.la -rpath ${libdir} \
-		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
 		${OBJS} ${LIBS}
 
-timestamp: libisc.@A@ libisc-nosymtbl.@A@
+timestamp: libisc.@A@
 	touch timestamp
 
-testdirs: libisc.@A@ libisc-nosymtbl.@A@
+testdirs: libisc.@A@
 
 installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${libdir}
@@ -139,5 +128,5 @@ uninstall::
 	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${libdir}/libisc.@A@
 
 clean distclean::
-	rm -f libisc.@A@ libisc-nosymtbl.@A@ libisc.la \
-	libisc-nosymtbl.la timestamp
+	rm -f libisc.@A@ libisc.la \
+	timestamp

@@ -148,11 +148,6 @@
  */
 @ISC_PLATFORM_HAVEDEVPOLL@
 
-/*! \brief
- * Define if we want to log backtrace
- */
-@ISC_PLATFORM_USEBACKTRACE@
-
 /*
  *** Printing.
  ***/

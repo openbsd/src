@@ -781,9 +781,6 @@ LIBTOOL_MKDEP_SED
 SA
 A
 O
-ALWAYS_MAKE_SYMTABLE
-MKSYMTBL_PROGRAM
-ISC_PLATFORM_USEBACKTRACE
 PURIFY
 purify_path
 IRIX_DNSSEC_WARNINGS_HACK
@@ -994,8 +991,6 @@ with_libjson
 enable_largefile
 with_purify
 with_gperftools_profiler
-enable_backtrace
-enable_symtable
 enable_ipv6
 with_kame
 enable_getifaddrs
@@ -1665,9 +1660,6 @@ Optional Features:
   --enable-openssl-hash   use OpenSSL for hash functions [default=no]
   --enable-sit            enable source identity token [default=no]
   --enable-largefile      64-bit file support
-  --enable-backtrace      log stack backtrace on abort [default=yes]
-  --enable-symtable       use internal symbol table for backtrace
-                          [all|minimal(default)|none]
   --enable-ipv6           use IPv6 [default=autodetect]
   --enable-getifaddrs     enable the use of getifaddrs() [yes|no].
   --disable-isc-spnego    use SPNEGO from GSSAPI library
@@ -11412,7 +11404,6 @@ yes)
 	test "${with_atf+set}" = set || with_atf=yes
 	test "${enable_filter_aaaa+set}" = set || enable_filter_aaaa=yes
 	test "${with_dlz_filesystem+set}" = set || with_dlz_filesystem=yes
-	test "${enable_symtable+set}" = set || enable_symtable=all
 	test "${enable_sit+set}" = set || enable_sit=yes
 	test "${enable_fetchlimit+set}" = set || enable_fetchlimit=yes
 	test "${enable_warn_error+set}" = set || enable_warn_error=yes
@@ -16367,89 +16358,6 @@ $as_echo "#define HAVE_GPERFTOOLS_PROFILER 1" >>confdefs.h
 $as_echo "no" >&6; }
 		;;
 esac
-
-#
-# enable/disable dumping stack backtrace.  Also check if the system supports
-# glibc-compatible backtrace() function.
-#
-# Check whether --enable-backtrace was given.
-if test "${enable_backtrace+set}" = set; then :
-  enableval=$enable_backtrace; want_backtrace="$enableval"
-else
-  want_backtrace="yes"
-fi
-
-case $want_backtrace in
-yes)
-	ISC_PLATFORM_USEBACKTRACE="#define ISC_PLATFORM_USEBACKTRACE 1"
-	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <execinfo.h>
-int
-main ()
-{
-return (backtrace((void **)0, 0));
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-
-$as_echo "#define HAVE_LIBCTRACE /**/" >>confdefs.h
-
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-	;;
-*)
-	ISC_PLATFORM_USEBACKTRACE="#undef ISC_PLATFORM_USEBACKTRACE"
-	;;
-esac
-
-
-# Check whether --enable-symtable was given.
-if test "${enable_symtable+set}" = set; then :
-  enableval=$enable_symtable; want_symtable="$enableval"
-else
-  want_symtable="minimal"
-fi
-
-case $want_symtable in
-yes|all|minimal)     # "yes" is a hidden value equivalent to "minimal"
-	if test "" = "$PERL"
-	then
-		as_fn_error $? "Internal symbol table requires perl but no perl is found.
-Install perl or explicitly disable the feature by --disable-symtable." "$LINENO" 5
-	fi
-	if test "yes" = "$use_libtool"; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Internal symbol table does not work with libtool.  Disabling symbol table." >&5
-$as_echo "$as_me: WARNING: Internal symbol table does not work with libtool.  Disabling symbol table." >&2;}
-	else
-		# we generate the internal symbol table only for those systems
-		# known to work to avoid unexpected build failure.  Also, warn
-		# about unsupported systems when the feature is enabled
-		#  manually.
-		case $host_os in
-		freebsd*|netbsd*|openbsd*|linux*|solaris*|darwin*)
-			MKSYMTBL_PROGRAM="$PERL"
-			if test "all" = "$want_symtable"; then
-				ALWAYS_MAKE_SYMTABLE="yes"
-			fi
-			;;
-		*)
-			if test "yes" = "$want_symtable" -o "all" = "$want_symtable"
-			then
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: this system is not known to generate internal symbol table safely; disabling it" >&5
-$as_echo "$as_me: WARNING: this system is not known to generate internal symbol table safely; disabling it" >&2;}
-			fi
-		esac
-	fi
-	;;
-*)
-	;;
-esac
-
-
 
 #
 # File name extension for static archive files, for those few places
@@ -22863,10 +22771,6 @@ report() {
 	echo "    Use libseccomp system call filtering (--enable-seccomp)"
     test "yes" = "$want_backtrace" && \
 	echo "    Print backtrace on crash (--enable-backtrace)"
-    test "minimal" = "$want_symtable" && \
-	echo "    Use symbol table for backtrace, named only (--enable-symtable)"
-    test "yes" = "$want_symtable" -o "all" = "$want_symtable" && \
-	echo "    Use symbol table for backtrace, all binaries (--enable-symtable=all)"
     test "no" = "$use_libtool" || echo "    Use GNU libtool (--with-libtool)"
     test "yes" = "$want_querytrace" && \
 	echo "    Very verbose query trace logging (--enable-querytrace)"

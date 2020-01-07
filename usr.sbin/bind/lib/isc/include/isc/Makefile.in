@@ -23,7 +23,7 @@ VERSION=@BIND9_VERSION@
 # machine generated.  The latter are handled specially in the
 # install target below.
 #
-HEADERS =	aes.h app.h assertions.h backtrace.h base32.h base64.h \
+HEADERS =	aes.h app.h assertions.h base32.h base64.h \
 		bind9.h boolean.h buffer.h bufferlist.h \
 		commandline.h counter.h crc64.h entropy.h errno.h error.h \
 		event.h eventclass.h file.h formatcheck.h fsaccess.h \
