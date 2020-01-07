@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.129 2019/12/10 12:20:17 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.130 2020/01/07 15:08:28 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -165,9 +165,6 @@ struct iked_flow {
 
 	RB_ENTRY(iked_flow)		 flow_node;
 	TAILQ_ENTRY(iked_flow)		 flow_entry;
-
-	int				 flow_replacing; /* cf flow_replace() */
-	int				 flow_ipcomp;
 };
 RB_HEAD(iked_flows, iked_flow);
 TAILQ_HEAD(iked_saflows, iked_flow);
@@ -199,8 +196,7 @@ struct iked_childsa {
 
 	struct iked_childsa		*csa_peersa;	/* peer */
 
-	struct iked_childsa		*csa_parent;	/* IPCOMP parent */
-	unsigned int			 csa_children;	/* IPCOMP children */
+	struct iked_childsa		*csa_bundled;	/* IPCOMP */
 
 	RB_ENTRY(iked_childsa)		 csa_node;
 	TAILQ_ENTRY(iked_childsa)	 csa_entry;
@@ -389,6 +385,12 @@ struct iked_frag {
 
 };
 
+struct iked_ipcomp {
+	uint16_t			 ic_cpi_out;	/* outgoing CPI */
+	uint16_t			 ic_cpi_in;	/* incoming CPI */
+	uint8_t				 ic_transform;	/* transform */
+};
+
 struct iked_sa {
 	struct iked_sahdr		 sa_hdr;
 	uint32_t			 sa_msgid;	/* Last request rcvd */
@@ -473,9 +475,8 @@ struct iked_sa {
 	uint64_t			 sa_rekeyspi;	/* peerspi CSA rekey*/
 	struct ibuf			*sa_simult;	/* simultaneous rekey */
 
-	uint8_t				 sa_ipcomp;	/* IPcomp transform */
-	uint16_t			 sa_cpi_out;	/* IPcomp outgoing */
-	uint16_t			 sa_cpi_in;	/* IPcomp incoming*/
+	struct iked_ipcomp		 sa_ipcompi;	/* IPcomp initator */
+	struct iked_ipcomp		 sa_ipcompr;	/* IPcomp responder */
 
 	int				 sa_mobike;	/* MOBIKE */
 	int				 sa_frag;	/* fragmentation */
@@ -791,7 +792,6 @@ struct iked_childsa *
 	 childsa_lookup(struct iked_sa *, uint64_t, uint8_t);
 void	 flow_free(struct iked_flow *);
 int	 flow_equal(struct iked_flow *, struct iked_flow *);
-int	 flow_replace(struct iked *, struct iked_flow *);
 struct iked_sa *
 	 sa_lookup(struct iked *, uint64_t, uint64_t, unsigned int);
 struct iked_user *

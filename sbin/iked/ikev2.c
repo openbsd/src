@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.185 2019/12/28 16:27:04 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.186 2020/01/07 15:08:28 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -132,14 +132,11 @@ ssize_t	 ikev2_add_ts(struct ibuf *, struct ikev2_payload **, ssize_t,
 ssize_t	 ikev2_add_certreq(struct ibuf *, struct ikev2_payload **, ssize_t,
 	    struct ibuf *, uint8_t);
 ssize_t	 ikev2_add_ipcompnotify(struct iked *, struct ibuf *,
-	    struct ikev2_payload **, ssize_t, struct iked_sa *);
+	    struct ikev2_payload **, ssize_t, struct iked_sa *, int);
 ssize_t	 ikev2_add_ts_payload(struct ibuf *, unsigned int, struct iked_sa *);
 ssize_t	 ikev2_add_error(struct iked *, struct ibuf *, struct iked_message *);
 int	 ikev2_add_data(struct ibuf *, void *, size_t);
 int	 ikev2_add_buf(struct ibuf *buf, struct ibuf *);
-
-int	 ikev2_ipcomp_enable(struct iked *, struct iked_sa *);
-void	 ikev2_ipcomp_csa_free(struct iked *, struct iked_childsa *);
 
 int	 ikev2_cp_setaddr(struct iked *, struct iked_sa *, sa_family_t);
 int	 ikev2_cp_fixaddr(struct iked_sa *, struct iked_addr *,
@@ -1249,7 +1246,7 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 
 	/* compression */
 	if ((pol->pol_flags & IKED_POLICY_IPCOMP) &&
-	    (len = ikev2_add_ipcompnotify(env, e, &pld, len, sa)) == -1)
+	    (len = ikev2_add_ipcompnotify(env, e, &pld, len, sa, 1)) == -1)
 		goto done;
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_SA) == -1)
@@ -1652,9 +1649,11 @@ ikev2_add_certreq(struct ibuf *e, struct ikev2_payload **pld, ssize_t len,
 
 ssize_t
 ikev2_add_ipcompnotify(struct iked *env, struct ibuf *e,
-    struct ikev2_payload **pld, ssize_t len, struct iked_sa *sa)
+    struct ikev2_payload **pld, ssize_t len, struct iked_sa *sa,
+    int initiator)
 {
 	struct iked_childsa		 csa;
+	struct iked_ipcomp		*ic;
 	struct ikev2_notify		*n;
 	uint8_t				*ptr;
 	uint16_t			 cpi;
@@ -1663,15 +1662,26 @@ ikev2_add_ipcompnotify(struct iked *env, struct ibuf *e,
 
 	/* we only support deflate */
 	transform = IKEV2_IPCOMP_DEFLATE;
+	ic = initiator ? &sa->sa_ipcompi : &sa->sa_ipcompr;
 
-	bzero(&csa, sizeof(csa));
-	csa.csa_saproto = IKEV2_SAPROTO_IPCOMP;
-	csa.csa_ikesa = sa;
-	csa.csa_local = &sa->sa_peer;
-	csa.csa_peer = &sa->sa_local;
+	if (initiator) {
+		bzero(&csa, sizeof(csa));
+		csa.csa_saproto = IKEV2_SAPROTO_IPCOMP;
+		csa.csa_ikesa = sa;
+		csa.csa_local = &sa->sa_peer;
+		csa.csa_peer = &sa->sa_local;
+		if (pfkey_sa_init(env->sc_pfkey, &csa, &spi) == -1)
+			return (-1);
+		ic->ic_cpi_in = spi;
+	} else {
+		spi = ic->ic_cpi_in;
+		/* make sure IPCOMP CPIs are not reused */
+		ic->ic_transform = 0;
+		ic->ic_cpi_in = 0;
+		ic->ic_cpi_out = 0;
+	}
+	log_debug("%s: ic_cpi_in 0x%04x", __func__, spi);
 
-	if (pfkey_sa_init(env->sc_pfkey, &csa, &spi) == -1)
-		return (-1);
 	/*
 	 * We get spi == 0 if the kernel does not support IPcomp,
 	 * so just return the length of the current payload.
@@ -1695,9 +1705,6 @@ ikev2_add_ipcompnotify(struct iked *env, struct ibuf *e,
 	memcpy(ptr, &cpi, sizeof(cpi));
 	ptr += sizeof(cpi);
 	memcpy(ptr, &transform, sizeof(transform));
-
-	sa->sa_cpi_in = spi;	/* already on host byte order */
-	log_debug("%s: sa_cpi_in 0x%04x", __func__, sa->sa_cpi_in);
 
 	return (len);
 }
@@ -2456,6 +2463,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 int
 ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 {
+	struct iked_ipcomp	*ic;
 	struct iked_sa		*sa;
 	uint16_t		 group;
 
@@ -2533,8 +2541,11 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 		/* we only support deflate */
 		if ((msg->msg_policy->pol_flags & IKED_POLICY_IPCOMP) &&
 		    (msg->msg_transform == IKEV2_IPCOMP_DEFLATE)) {
-			sa->sa_ipcomp = msg->msg_transform;
-			sa->sa_cpi_out = betoh16(msg->msg_cpi);
+			ic = msg->msg_response ?
+			    &sa->sa_ipcompi :
+			    &sa->sa_ipcompr;
+			ic->ic_transform = msg->msg_transform;
+			ic->ic_cpi_out = betoh16(msg->msg_cpi);
 		}
 	}
 
@@ -2990,8 +3001,8 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 	}
 
 	/* compression */
-	if (sa->sa_ipcomp &&
-	    (len = ikev2_add_ipcompnotify(env, e, &pld, len, sa)) == -1)
+	if (sa->sa_ipcompr.ic_transform &&
+	    (len = ikev2_add_ipcompnotify(env, e, &pld, len, sa, 0)) == -1)
 		goto done;
 
 	/* MOBIKE */
@@ -3234,7 +3245,7 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 
 	/* compression */
 	if ((pol->pol_flags & IKED_POLICY_IPCOMP) &&
-	    (len = ikev2_add_ipcompnotify(env, e, &pld, 0, sa)) == -1)
+	    (len = ikev2_add_ipcompnotify(env, e, &pld, 0, sa, 1)) == -1)
 		goto done;
 
 	if (pld) {
@@ -3687,7 +3698,7 @@ done:
 int
 ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 {
-	struct iked_childsa		*csa, *nextcsa;
+	struct iked_childsa		*csa, *nextcsa, *ipcomp;
 	struct iked_flow		*flow, *nextflow;
 	struct iked_proposal		*prop, *nextprop;
 
@@ -3738,6 +3749,11 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 		} else {
 			csa->csa_local = &nsa->sa_local;
 			csa->csa_peer = &nsa->sa_peer;
+		}
+		if ((ipcomp = csa->csa_bundled) != NULL) {
+			ipcomp->csa_ikesa = nsa;
+			ipcomp->csa_local = csa->csa_local;
+			ipcomp->csa_peer = csa->csa_peer;
 		}
 	}
 	/* Transfer all non-IKE proposals */
@@ -4050,8 +4066,8 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		goto done;
 
 	/* compression (unless IKE rekeying) */
-	if (!nsa && sa->sa_ipcomp &&
-	    (len = ikev2_add_ipcompnotify(env, e, &pld, 0, sa)) == -1)
+	if (!nsa && sa->sa_ipcompr.ic_transform &&
+	    (len = ikev2_add_ipcompnotify(env, e, &pld, 0, sa, 0)) == -1)
 		goto done;
 
 	if (pld) {
@@ -4190,8 +4206,7 @@ ikev2_ike_sa_alive(struct iked *env, void *arg)
 
 	/* check for incoming traffic on any child SA */
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
-		if (!csa->csa_loaded ||
-		    csa->csa_saproto == IKEV2_SAPROTO_IPCOMP)
+		if (!csa->csa_loaded)
 			continue;
 		if (pfkey_sa_last_used(env->sc_pfkey, csa, &last_used) != 0)
 			continue;
@@ -5294,7 +5309,9 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 	struct iked_proposal	*prop;
 	struct iked_transform	*xform, *encrxf = NULL, *integrxf = NULL;
 	struct iked_childsa	*csa = NULL, *csb = NULL;
+	struct iked_childsa	*csa2 = NULL, *csb2 = NULL;
 	struct iked_flow	*flow, *saflow, *flowa, *flowb;
+	struct iked_ipcomp	*ic;
 	struct ibuf		*keymat = NULL, *seed = NULL, *dhsecret = NULL;
 	struct group		*group;
 	uint32_t		 spi = 0;
@@ -5307,6 +5324,11 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 
 	if (ikev2_sa_tag(sa, IKESA_DSTID(sa)) == -1)
 		return (-1);
+
+	ic = initiator ? &sa->sa_ipcompi : &sa->sa_ipcompr;
+	if (ic->ic_transform == 0 || ic->ic_cpi_out == 0 ||
+	    (initiator && ic->ic_cpi_in == 0))
+		ic = NULL;
 
 	/* We need to determine the key material length first */
 	TAILQ_FOREACH(prop, proposals, prop_entry) {
@@ -5392,7 +5414,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 
 			memcpy(flowa, flow, sizeof(*flow));
 			flowa->flow_dir = IPSP_DIRECTION_OUT;
-			flowa->flow_saproto = prop->prop_protoid;
+			flowa->flow_saproto = ic ? IKEV2_SAPROTO_IPCOMP :
+			    prop->prop_protoid;
 			flowa->flow_local = &sa->sa_local;
 			flowa->flow_peer = &sa->sa_peer;
 			flowa->flow_ikesa = sa;
@@ -5517,6 +5540,62 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			goto done;
 		}
 
+		if (ic && prop->prop_protoid == IKEV2_SAPROTO_ESP) {
+			/* add IPCOMP SAs */
+			if ((csa2 = calloc(1, sizeof(*csa2))) == NULL) {
+				log_debug("%s: failed to get CHILD SA", __func__);
+				goto done;
+			}
+			if ((csb2 = calloc(1, sizeof(*csb2))) == NULL) {
+				log_debug("%s: failed to get CHILD SA", __func__);
+				goto done;
+			}
+
+			csa2->csa_saproto = IKEV2_SAPROTO_IPCOMP;
+			csa2->csa_ikesa = csa->csa_ikesa;
+			csa2->csa_dir = csa->csa_dir;
+			csa2->csa_local = csa->csa_local;
+			csa2->csa_peer = csa->csa_peer;
+			if (initiator) {
+				csa2->csa_spi.spi = ic->ic_cpi_out;
+				csa2->csa_peerspi = ic->ic_cpi_in;
+				csa2->csa_allocated = 0;
+				/* make sure IPCOMP CPIs are not reused */
+				ic->ic_transform = 0;
+				ic->ic_cpi_in = ic->ic_cpi_out = 0;
+			} else {
+				if ((ret = pfkey_sa_init(env->sc_pfkey, csa2,
+				    &spi)) != 0)
+					goto done;
+				ic->ic_cpi_in = spi;
+				csa2->csa_spi.spi = ic->ic_cpi_in;
+				csa2->csa_peerspi = ic->ic_cpi_out;
+				csa2->csa_allocated = 1;
+			}
+			csa2->csa_spi.spi_size = 2;
+
+			memcpy(csb2, csa2, sizeof(*csb2));
+			csb2->csa_spi.spi = csa2->csa_peerspi;
+			csb2->csa_peerspi = csa2->csa_spi.spi;
+			csb2->csa_allocated = csa2->csa_allocated ? 0 : 1;
+			csb2->csa_dir = csa2->csa_dir == IPSP_DIRECTION_IN ?
+			    IPSP_DIRECTION_OUT : IPSP_DIRECTION_IN;
+			csb2->csa_local = csa2->csa_peer;
+			csb2->csa_peer = csa2->csa_local;
+
+			/* link IPComp and ESP SAs, switch ESP to transport */
+			csa->csa_transport = 1;
+			csa->csa_bundled = csa2;
+			csa2->csa_bundled = csa;
+			csb->csa_transport = 1;
+			csb->csa_bundled = csb2;
+			csb2->csa_bundled = csb;
+			csa2 = NULL;
+			csb2 = NULL;
+
+			ic = NULL;
+		}
+
 		TAILQ_INSERT_TAIL(&sa->sa_childsas, csa, csa_entry);
 		TAILQ_INSERT_TAIL(&sa->sa_childsas, csb, csa_entry);
 
@@ -5533,213 +5612,47 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 	ibuf_release(seed);
 	childsa_free(csa);
 	childsa_free(csb);
+	childsa_free(csa2);
+	childsa_free(csb2);
 
 	return (ret);
-}
-
-/* free a replaced IPCOMP SA */
-void
-ikev2_ipcomp_csa_free(struct iked *env, struct iked_childsa *csa)
-{
-	if (csa->csa_children)
-		fatalx("ikev2_ipcomp_csa_free: has children");
-	if (csa->csa_ikesa)
-		TAILQ_REMOVE(&csa->csa_ikesa->sa_childsas, csa,
-		    csa_entry);
-	if (csa->csa_loaded) {
-		log_debug("%s: csa %p loaded: calling pfkey_sa_delete",
-		    __func__, csa);
-		pfkey_sa_delete(env->sc_pfkey, csa);
-		RB_REMOVE(iked_activesas, &env->sc_activesas, csa);
-	}
-	childsa_free(csa);
-}
-
-int
-ikev2_ipcomp_enable(struct iked *env, struct iked_sa *sa)
-{
-	struct iked_childsa	*other, *nother, *csa = NULL, *csb = NULL;
-	struct iked_flow	*flow, *flowa = NULL, *flowb = NULL;
-	struct iked_flow	*flowc = NULL, *flowd = NULL;
-	struct iked_flow	*nflow, *oflow;
-
-	if ((csa = calloc(1, sizeof(*csa))) == NULL ||
-	    (csb = calloc(1, sizeof(*csb))) == NULL ||
-	    (flowa = calloc(1, sizeof(*flowa))) == NULL ||
-	    (flowb = calloc(1, sizeof(*flowb))) == NULL ||
-	    (flowc = calloc(1, sizeof(*flowc))) == NULL ||
-	    (flowd = calloc(1, sizeof(*flowd))) == NULL) {
-		free(csa);
-		free(csb);
-		free(flowa);
-		free(flowb);
-		free(flowc);
-		free(flowd);
-		return (-1);
-	}
-
-	/* switch ESP SAs to transport mode */
-	TAILQ_FOREACH(other, &sa->sa_childsas, csa_entry) {
-		if (!other->csa_rekey && !other->csa_loaded &&
-		    other->csa_saproto == IKEV2_SAPROTO_ESP) {
-			other->csa_transport = 1;
-			if (other->csa_dir == IPSP_DIRECTION_OUT) {
-				other->csa_parent = csa;
-				csa->csa_children++;
-			} else {
-				other->csa_parent = csb;
-				csb->csa_children++;
-			}
-		}
-	}
-
-	/* install IPCOMP SAs */
-	csa->csa_ikesa = sa;
-	csa->csa_saproto = IKEV2_SAPROTO_IPCOMP;
-	csa->csa_spi.spi_size = 2;
-	csa->csa_spi.spi = sa->sa_cpi_out;
-	csa->csa_peerspi = sa->sa_cpi_in;
-	csa->csa_dir = IPSP_DIRECTION_OUT;
-	csa->csa_local = &sa->sa_local;
-	csa->csa_peer = &sa->sa_peer;
-
-	memcpy(csb, csa, sizeof(*csb));
-	csb->csa_spi.spi = csa->csa_peerspi;
-	csb->csa_peerspi = csa->csa_spi.spi;
-	csb->csa_dir = IPSP_DIRECTION_IN;
-	csb->csa_local = csa->csa_peer;
-	csb->csa_peer = csa->csa_local;
-	csb->csa_allocated = 1;
-
-	/* remove old replaced IPCOMP SAs */
-	TAILQ_FOREACH_SAFE(other, &sa->sa_childsas, csa_entry, nother) {
-		if (other->csa_saproto != IKEV2_SAPROTO_IPCOMP ||
-		    other->csa_children != 0)
-			continue;
-		if (other->csa_dir == csa->csa_dir &&
-		    IKED_ADDR_EQ(other->csa_local, csa->csa_local) &&
-		    IKED_ADDR_EQ(other->csa_peer, csa->csa_peer)) {
-			log_debug("%s: csa %p replaces %p",
-			    __func__, csa, other);
-			ikev2_ipcomp_csa_free(env, other);
-		} else if (other->csa_dir == csb->csa_dir &&
-		    IKED_ADDR_EQ(other->csa_local, csb->csa_local) &&
-		    IKED_ADDR_EQ(other->csa_peer, csb->csa_peer)) {
-			log_debug("%s: csa %p replaces %p",
-			    __func__, csb, other);
-			ikev2_ipcomp_csa_free(env, other);
-		}
-	}
-
-	TAILQ_INSERT_TAIL(&sa->sa_childsas, csa, csa_entry);
-	TAILQ_INSERT_TAIL(&sa->sa_childsas, csb, csa_entry);
-
-	csa->csa_peersa = csb;
-	csb->csa_peersa = csa;
-
-	/* redirect flows to IPCOMP */
-	/* XXX expensive? should be merged into ikev2_childsa_negotiate() */
-	TAILQ_FOREACH_SAFE(flow, &sa->sa_flows, flow_entry, nflow) {
-		if (flow->flow_loaded || flow->flow_ipcomp ||
-		    flow->flow_saproto != IKEV2_SAPROTO_ESP)
-			continue;
-		TAILQ_FOREACH(oflow, &sa->sa_flows, flow_entry)
-			if (flow != oflow &&
-			    IKED_ADDR_EQ(&oflow->flow_src, &flow->flow_src) &&
-			    IKED_ADDR_EQ(&oflow->flow_dst, &flow->flow_dst) &&
-			    oflow->flow_dir == flow->flow_dir &&
-			    oflow->flow_saproto == IKEV2_SAPROTO_IPCOMP)
-				break;
-		if (oflow != NULL) {
-			log_debug("%s: keeping oflow %p, indentical to flow %p",
-			    __func__, oflow, flow);
-			TAILQ_REMOVE(&sa->sa_flows, flow, flow_entry);
-			flow_free(flow);
-		} else {
-			log_debug("%s: flow %p saproto %d -> %d", __func__,
-			    flow, flow->flow_saproto, IKEV2_SAPROTO_IPCOMP);
-			flow->flow_saproto = IKEV2_SAPROTO_IPCOMP;
-		}
-	}
-
-	/* setup ESP flows for gateways (IPCOMP) */
-	flowa->flow_ipcomp = 1;
-	flowa->flow_ipproto = IPPROTO_IPCOMP;
-	flowa->flow_dir = IPSP_DIRECTION_OUT;
-	flowa->flow_saproto = IKEV2_SAPROTO_ESP;
-	flowa->flow_local = &sa->sa_local;
-	flowa->flow_peer = &sa->sa_peer;
-	memcpy(&flowa->flow_src, &sa->sa_local, sizeof(sa->sa_local));
-	memcpy(&flowa->flow_dst, &sa->sa_peer, sizeof(sa->sa_peer));
-	socket_setport((struct sockaddr *)&flowa->flow_src.addr, 0);
-	socket_setport((struct sockaddr *)&flowa->flow_dst.addr, 0);
-	flowa->flow_src.addr_port = flowa->flow_dst.addr_port = 0;
-	flowa->flow_src.addr_mask = flowa->flow_dst.addr_mask =
-	    (sa->sa_local.addr_af == AF_INET) ? 32 : 128;
-	flowa->flow_ikesa = sa;
-
-	/* matching incoming flow */
-	memcpy(flowb, flowa, sizeof(*flowb));
-	flowb->flow_dir = IPSP_DIRECTION_IN;
-	memcpy(&flowb->flow_dst, &flowa->flow_src, sizeof(flowa->flow_src));
-	memcpy(&flowb->flow_src, &flowa->flow_dst, sizeof(flowa->flow_dst));
-
-	/* setup ESP flows for gateways (IPIP) */
-	memcpy(flowc, flowa, sizeof(*flowc));
-	flowc->flow_ipproto = IPPROTO_IPIP;
-
-	/* matching incoming flow */
-	memcpy(flowd, flowb, sizeof(*flowd));
-	flowd->flow_ipproto = IPPROTO_IPIP;
-
-	/* skip if flows already exists */
-	TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
-		if (flow_equal(flow, flowa) || flow_equal(flow, flowb) ||
-		    flow_equal(flow, flowc) || flow_equal(flow, flowd)) {
-			free(flowa);
-			free(flowb);
-			free(flowc);
-			free(flowd);
-			goto done;
-		}
-	}
-
-	TAILQ_INSERT_TAIL(&sa->sa_flows, flowa, flow_entry);
-	TAILQ_INSERT_TAIL(&sa->sa_flows, flowb, flow_entry);
-	TAILQ_INSERT_TAIL(&sa->sa_flows, flowc, flow_entry);
-	TAILQ_INSERT_TAIL(&sa->sa_flows, flowd, flow_entry);
-
- done:
-	/* make sure IPCOMP CPIs are not reused */
-	sa->sa_ipcomp = 0;
-	sa->sa_cpi_in = sa->sa_cpi_out = 0;
-
-	return (0);
 }
 
 int
 ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 {
-	struct iked_childsa	*csa, *ocsa;
+	struct iked_childsa	*csa, *ocsa, *ipcomp;
 	struct iked_flow	*flow, *oflow;
 	int			 peer_changed, reload;
 	struct ibuf		*spibuf = NULL;
 	struct ibuf		*flowbuf = NULL;
 	char			*buf;
 
-	if (sa->sa_ipcomp && sa->sa_cpi_in && sa->sa_cpi_out &&
-	    ikev2_ipcomp_enable(env, sa) == -1)
-		return (-1);
-
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
 		if (csa->csa_rekey || csa->csa_loaded)
 			continue;
+
+		ipcomp = csa->csa_bundled;
+		if (ipcomp && ipcomp->csa_loaded) {
+			log_info("%s: IPCOMP SA for CHILD SA spi %s"
+			    " already loaded", __func__,
+			    print_spi(csa->csa_spi.spi, csa->csa_spi.spi_size));
+			continue;
+		}
 
 		if (pfkey_sa_add(env->sc_pfkey, csa, NULL) != 0) {
 			log_debug("%s: failed to load CHILD SA spi %s",
 			    __func__, print_spi(csa->csa_spi.spi,
 			    csa->csa_spi.spi_size));
 			return (-1);
+		}
+		if (ipcomp) {
+			if (pfkey_sa_add(env->sc_pfkey, ipcomp, csa) != 0) {
+				log_debug("%s: failed to load IPCOMP spi %s",
+				    __func__, print_spi(ipcomp->csa_spi.spi,
+				    ipcomp->csa_spi.spi_size));
+				ipcomp = NULL;
+			}
 		}
 
 		if ((ocsa = RB_FIND(iked_activesas, &env->sc_activesas, csa))
@@ -5762,6 +5675,12 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 			ibuf_strcat(&spibuf, ", ");
 		ibuf_strcat(&spibuf, print_spi(csa->csa_spi.spi,
 		    csa->csa_spi.spi_size));
+		if (ipcomp) {
+			ibuf_strcat(&spibuf, "(");
+			ibuf_strcat(&spibuf, print_spi(ipcomp->csa_spi.spi,
+			    ipcomp->csa_spi.spi_size));
+			ibuf_strcat(&spibuf, ")");
+		}
 	}
 
 	peer_changed = (memcmp(&sa->sa_peer_loaded, &sa->sa_peer,
@@ -5777,10 +5696,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 				continue;
 			}
 			RB_REMOVE(iked_flows, &env->sc_activeflows, flow);
-			/* flow might be shared w/other SA */
-			if (!flow->flow_replacing ||
-			    flow_replace(env, flow) != 0)
-				(void)pfkey_flow_delete(env->sc_pfkey, flow);
+			(void)pfkey_flow_delete(env->sc_pfkey, flow);
 			flow->flow_loaded = 0; /* we did RB_REMOVE */
 			reload = 1;
 		}
@@ -5795,9 +5711,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 			log_debug("%s: replaced old flow %p with %p",
 			    __func__, oflow, flow);
 			oflow->flow_loaded = 0;
-			oflow->flow_replacing = 0;
 			RB_REMOVE(iked_flows, &env->sc_activeflows, oflow);
-			flow->flow_replacing = 1;
 		}
 
 		RB_INSERT(iked_flows, &env->sc_activeflows, flow);
@@ -5846,9 +5760,9 @@ int
 ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, uint8_t saproto,
     uint64_t spi, uint64_t *spiptr, int cleanup)
 {
-	struct iked_childsa	*csa, *nextcsa = NULL;
+	struct iked_childsa	*csa, *nextcsa = NULL, *ipcomp;
 	uint64_t		 peerspi = 0;
-	int			 found = 0, ipcomp = 0;
+	int			 found = 0;
 
 	for (csa = TAILQ_FIRST(&sa->sa_childsas); csa != NULL; csa = nextcsa) {
 		nextcsa = TAILQ_NEXT(csa, csa_entry);
@@ -5875,21 +5789,24 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, uint8_t saproto,
 		if (spi && csa->csa_spi.spi == spi)
 			peerspi = csa->csa_peerspi;
 
-		if (csa->csa_parent && csa->csa_parent->csa_children == 1)
-			ipcomp = 1;
+		ipcomp = csa->csa_bundled;
+		if (ipcomp) {
+			if (ipcomp->csa_loaded) {
+				if (pfkey_sa_delete(env->sc_pfkey, ipcomp) != 0)
+					log_info("%s: failed to delete IPCOMP"
+					    " SA spi %s", SPI_SA(sa, __func__),
+					    print_spi(ipcomp->csa_spi.spi,
+					    ipcomp->csa_spi.spi_size));
+				else
+					log_debug("%s: deleted IPCOMP SA spi %s",
+					    SPI_SA(sa, __func__),
+					    print_spi(ipcomp->csa_spi.spi,
+					    ipcomp->csa_spi.spi_size));
+			}
+			childsa_free(ipcomp);
+		}
 		TAILQ_REMOVE(&sa->sa_childsas, csa, csa_entry);
 		childsa_free(csa);
-	}
-
-	/* lookup and delete matching IPcomp SAs */
-	if (ipcomp) {
-		for (csa = TAILQ_FIRST(&sa->sa_childsas); csa != NULL;
-		    csa = nextcsa) {
-			nextcsa = TAILQ_NEXT(csa, csa_entry);
-			if (csa->csa_saproto == IKEV2_SAPROTO_IPCOMP &&
-			    csa->csa_children == 0)
-				ikev2_ipcomp_csa_free(env, csa);
-		}
 	}
 
 	if (spiptr)
@@ -6029,8 +5946,6 @@ ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 		return (0);
 	if (csa->csa_acquired)	/* Don't rekey, wait for hard expire */
 		return (0);
-	if (csa->csa_saproto == IKEV2_SAPROTO_IPCOMP)	/* no rekey */
-		return (0);
 	if ((sa = csa->csa_ikesa) == NULL) {
 		log_warnx("%s: SA %s doesn't have a parent SA", __func__,
 		    print_spi(rekey->spi, rekey->spi_size));
@@ -6068,8 +5983,7 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 		return (0);
 
 	sa = csa->csa_ikesa;
-	if (csa->csa_saproto != IKEV2_SAPROTO_IPCOMP &&
-	    sa && (sa->sa_stateflags & IKED_REQ_CHILDSA)) {
+	if (sa && (sa->sa_stateflags & IKED_REQ_CHILDSA)) {
 		/* XXXX might loop, should we add a counter? */
 		log_debug("%s: parent SA busy", __func__);
 		return (-1);	/* busy, retry later */
@@ -6080,12 +5994,6 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 	csa->csa_rekey = 1;	/* prevent re-loading */
 	if (sa == NULL) {
 		log_debug("%s: failed to find a parent SA", __func__);
-		return (0);
-	}
-	if (csa->csa_saproto == IKEV2_SAPROTO_IPCOMP) {
-		/* matching Child SAs (e.g. ESP) should have expired by now */
-		if (csa->csa_children == 0)
-			ikev2_ipcomp_csa_free(env, csa);
 		return (0);
 	}
 
@@ -6407,7 +6315,7 @@ ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
 int
 ikev2_update_sa_addresses(struct iked *env, struct iked_sa *sa)
 {
-	struct iked_childsa	*csa;
+	struct iked_childsa	*csa, *ipcomp;
 	struct iked_flow	*flow, *oflow;
 	struct iked_message	*msg;
 
@@ -6423,28 +6331,19 @@ ikev2_update_sa_addresses(struct iked *env, struct iked_sa *sa)
 			continue;
 		if (pfkey_sa_update_addresses(env->sc_pfkey, csa) != 0)
 			log_debug("%s: failed to update sa", __func__);
+		if ((ipcomp = csa->csa_bundled) != NULL &&
+		    ipcomp->csa_loaded)
+			if (pfkey_sa_update_addresses(env->sc_pfkey, ipcomp)
+			     != 0)
+				log_debug("%s: failed to update sa", __func__);
 	}
 
 	/* delete and re-add flows */
 	TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
 		if (flow->flow_loaded) {
 			RB_REMOVE(iked_flows, &env->sc_activeflows, flow);
-			/* flow might be shared w/other SA */
-			if (!flow->flow_replacing ||
-			    flow_replace(env, flow) != 0)
-				(void)pfkey_flow_delete(env->sc_pfkey, flow);
+			(void)pfkey_flow_delete(env->sc_pfkey, flow);
 			flow->flow_loaded = 0;
-		}
-		/* update IPcomp flows */
-		if (flow->flow_ipcomp) {
-			struct iked_addr *addr =
-			    (flow->flow_dir == IPSP_DIRECTION_OUT) ?
-			    &flow->flow_dst :
-			    &flow->flow_src;
-			memcpy(addr, &sa->sa_peer, sizeof(sa->sa_peer));
-			socket_setport((struct sockaddr *)&addr->addr, 0);
-			addr->addr_port = 0;
-			addr->addr_mask = (addr->addr_af == AF_INET) ? 32 : 128;
 		}
 		if (pfkey_flow_add(env->sc_pfkey, flow) != 0)
 			log_debug("%s: failed to add flow %p", __func__, flow);
@@ -6455,9 +6354,7 @@ ikev2_update_sa_addresses(struct iked *env, struct iked_sa *sa)
 			log_debug("%s: replaced old flow %p with %p",
 			    __func__, oflow, flow);
 			oflow->flow_loaded = 0;
-			oflow->flow_replacing = 0;
 			RB_REMOVE(iked_flows, &env->sc_activeflows, oflow);
-			flow->flow_replacing = 1;
 		}
 		RB_INSERT(iked_flows, &env->sc_activeflows, flow);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.53 2019/12/28 16:27:04 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.54 2020/01/07 15:08:28 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -483,45 +483,6 @@ sa_free(struct iked *env, struct iked_sa *sa)
 	config_free_sa(env, sa);
 }
 
-/* oflow did replace active flow, so we need to re-activate a matching flow */
-int
-flow_replace(struct iked *env, struct iked_flow *oflow)
-{
-	struct iked_sa		*sa;
-	struct iked_flow	*flow, *other;
-
-	if (!oflow->flow_loaded)
-		return (-1);
-	RB_FOREACH(sa, iked_sas, &env->sc_sas) {
-		if (oflow->flow_ikesa == sa ||
-		    sa->sa_state != IKEV2_STATE_ESTABLISHED)
-			continue;
-		TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
-			if (flow == oflow ||
-			    flow->flow_loaded || !flow_equal(flow, oflow))
-				continue;
-			if ((other = RB_FIND(iked_flows, &env->sc_activeflows,
-			    flow)) != NULL) {
-				/* XXX should not happen */
-				log_debug("%s: found flow %p for %p/%p",
-				    __func__, other, flow, other);
-				return (-1);
-			}
-			if (pfkey_flow_add(env->sc_pfkey, flow) != 0) {
-				log_debug("%s: failed to load flow", __func__);
-				return (-1);
-			}
-			RB_INSERT(iked_flows, &env->sc_activeflows, flow);
-			log_debug("%s: loaded flow %p replaces %p", __func__,
-			    flow, oflow);
-			/* check for matching flow if we get deleted, too */
-			flow->flow_replacing = 1;
-			return (0);
-		}
-	}
-	return (-1);
-}
-
 void
 sa_free_flows(struct iked *env, struct iked_saflows *head)
 {
@@ -535,9 +496,7 @@ sa_free_flows(struct iked *env, struct iked_saflows *head)
 		if (flow->flow_loaded)
 			RB_REMOVE(iked_flows, &env->sc_activeflows, flow);
 		TAILQ_REMOVE(head, flow, flow_entry);
-		if (!flow->flow_replacing ||
-		    flow_replace(env, flow) != 0)
-			(void)pfkey_flow_delete(env->sc_pfkey, flow);
+		(void)pfkey_flow_delete(env->sc_pfkey, flow);
 		flow_free(flow);
 	}
 }
@@ -566,14 +525,10 @@ childsa_free(struct iked_childsa *csa)
 	if (csa == NULL)
 		return;
 
-	if (csa->csa_children) {
-		/* XXX should not happen */
-		log_warnx("%s: trying to remove CSA %p children %u",
-		    __func__, csa, csa->csa_children);
-		return;
-	}
-	if (csa->csa_parent)
-		csa->csa_parent->csa_children--;
+	if (csa->csa_loaded)
+		log_info("%s: csa %p is still loaded", __func__, csa);
+	if ((csb = csa->csa_bundled) != NULL)
+		csb->csa_bundled = NULL;
 	if ((csb = csa->csa_peersa) != NULL)
 		csb->csa_peersa = NULL;
 	ibuf_release(csa->csa_encrkey);

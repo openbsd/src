@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.61 2019/11/29 22:06:19 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.62 2020/01/07 15:08:28 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -123,7 +123,7 @@ pfkey_couple(int sd, struct iked_sas *sas, int couple)
 {
 	struct iked_sa		*sa;
 	struct iked_flow	*flow;
-	struct iked_childsa	*csa;
+	struct iked_childsa	*csa, *ipcomp;
 	const char		*mode[] = { "coupled", "decoupled" };
 
 	/* Socket is not ready */
@@ -145,6 +145,12 @@ pfkey_couple(int sd, struct iked_sas *sas, int couple)
 				(void)pfkey_sa_add(sd, csa, NULL);
 			else if (csa->csa_loaded && !couple)
 				(void)pfkey_sa_delete(sd, csa);
+			if ((ipcomp = csa->csa_bundled) != NULL) {
+				if (!ipcomp->csa_loaded && couple)
+					(void)pfkey_sa_add(sd, ipcomp, csa);
+				else if (ipcomp->csa_loaded && !couple)
+					(void)pfkey_sa_delete(sd, ipcomp);
+			}
 		}
 		TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
 			if (!flow->flow_loaded && couple)
@@ -1366,7 +1372,7 @@ pfkey_sa_add(int fd, struct iked_childsa *sa, struct iked_childsa *last)
 		}
 	}
 
-	if (last && cmd == SADB_ADD) {
+	if (last != NULL) {
 		if (pfkey_sagroup(fd, satype,
 		    SADB_X_GRPSPIS, sa, last) == -1) {
 			(void)pfkey_sa_delete(fd, sa);
