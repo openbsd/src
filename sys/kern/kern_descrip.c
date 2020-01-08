@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.195 2020/01/08 16:27:41 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.196 2020/01/08 16:45:28 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1184,7 +1184,6 @@ fdfree(struct proc *p)
 
 	if (--fdp->fd_refcnt > 0)
 		return;
-	fdplock(fdp);	/* required by knote_fdclose() */
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
 		fp = fdp->fd_ofiles[fd];
 		if (fp != NULL) {
@@ -1195,7 +1194,6 @@ fdfree(struct proc *p)
 			(void) closef(fp, p);
 		}
 	}
-	fdpunlock(fdp);
 	p->p_fd = NULL;
 	if (fdp->fd_nfiles > NDFILE)
 		free(fdp->fd_ofiles, M_FILEDESC, fdp->fd_nfiles * OFILESIZE);
