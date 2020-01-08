@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.420 2020/01/07 23:03:37 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.421 2020/01/08 00:05:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -800,7 +800,6 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			s->tx->msgid = msgid;
 			s->tx->evp.id = msgid_to_evpid(msgid);
 			s->tx->rcptcount = 0;
-			smtp_report_tx_begin(s, s->tx->msgid);
 			smtp_reply(s, "250 %s Ok",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		} else {
@@ -916,9 +915,9 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 		s = tree_xpop(&wait_queue_commit, reqid);
 		if (!success) {
-			smtp_tx_free(s->tx);
 			smtp_reply(s, "421 %s Temporary failure",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
+			smtp_tx_free(s->tx);
 			smtp_enter_state(s, STATE_QUIT);
 			return;
 		}
@@ -926,6 +925,8 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		smtp_reply(s, "250 %s %08x Message accepted for delivery",
 		    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS),
 		    s->tx->msgid);
+		smtp_report_tx_commit(s, s->tx->msgid, s->tx->odatalen);
+		smtp_report_tx_reset(s, s->tx->msgid);
 
 		log_info("%016"PRIx64" smtp message "
 		    "msgid=%08x size=%zu nrcpt=%zu proto=%s",
@@ -1733,14 +1734,14 @@ smtp_filter_phase(enum filter_phase phase, struct smtp_session *s, const char *p
 static void
 smtp_proceed_rset(struct smtp_session *s, const char *args)
 {
+	smtp_reply(s, "250 %s Reset state",
+	    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
+
 	if (s->tx) {
 		if (s->tx->msgid)
 			smtp_tx_rollback(s->tx);
 		smtp_tx_free(s->tx);
 	}
-
-	smtp_reply(s, "250 %s Reset state",
-	    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 }
 
 static void
@@ -2111,12 +2112,15 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 	}
 
 	log_trace(TRACE_SMTP, "smtp: %p: >>> %s", s, buf);
+	smtp_report_protocol_server(s, buf);
 
 	switch (buf[0]) {
 	case '2':
 		if (s->tx) {
-			if (s->last_cmd == CMD_MAIL_FROM)
+			if (s->last_cmd == CMD_MAIL_FROM) {
+				smtp_report_tx_begin(s, s->tx->msgid);
 				smtp_report_tx_mail(s, s->tx->msgid, s->cmd + 10, 1);
+			}
 			else if (s->last_cmd == CMD_RCPT_TO)
 				smtp_report_tx_rcpt(s, s->tx->msgid, s->cmd + 8, 1);
 		}
@@ -2178,7 +2182,6 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 	}
 
 	io_xprintf(s->io, "%s\r\n", buf);
-	smtp_report_protocol_server(s, buf);
 }
 
 static void
@@ -2608,8 +2611,6 @@ smtp_tx_commit(struct smtp_tx *tx)
 	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
 	tree_xset(&wait_queue_commit, tx->session->id, tx->session);
-	smtp_report_tx_commit(tx->session, tx->msgid, tx->odatalen);
-	smtp_report_tx_reset(tx->session, tx->msgid);
 	smtp_filter_data_end(tx->session);
 }
 

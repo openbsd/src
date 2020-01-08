@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.128 2020/01/07 23:09:02 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.129 2020/01/08 00:05:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -812,7 +812,6 @@ again:
 			    envid_sz ? e->dsn_envid : "");
 		} else
 			mta_send(s, "MAIL FROM:<%s>", s->task->sender);
-		mta_report_tx_begin(s, s->task->msgid);
 		break;
 
 	case MTA_RCPT:
@@ -830,6 +829,7 @@ again:
 		} else
 			mta_send(s, "RCPT TO:<%s>", e->dest);
 
+		mta_report_tx_envelope(s, s->task->msgid, e->id);
 		s->rcptcount++;
 		break;
 
@@ -1024,14 +1024,11 @@ mta_response(struct mta_session *s, char *line)
 			else
 				delivery = IMSG_MTA_DELIVERY_TEMPFAIL;
 
-			mta_report_tx_mail(s, s->task->msgid, s->task->sender,
-			    delivery == IMSG_MTA_DELIVERY_TEMPFAIL ? -1 : 0);
-
 			mta_flush_task(s, delivery, line, 0, 0);
 			mta_enter_state(s, MTA_RSET);
 			return;
 		}
-
+		mta_report_tx_begin(s, s->task->msgid);
 		mta_report_tx_mail(s, s->task->msgid, s->task->sender, 1);
 		mta_enter_state(s, MTA_RCPT);
 		break;
@@ -1111,8 +1108,6 @@ mta_response(struct mta_session *s, char *line)
 
 		switch (line[0]) {
 		case '2':
-			mta_report_tx_envelope(s,
-			    s->task->msgid, e->id);
 			mta_report_tx_rcpt(s,
 			    s->task->msgid, e->dest, 1);
 			break;
