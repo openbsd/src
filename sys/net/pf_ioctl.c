@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.347 2019/11/26 19:57:52 kn Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.348 2020/01/08 21:48:59 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1806,6 +1806,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_state_key_cmp	 key;
 		int			 m = 0, direction = pnl->direction;
 		int			 sidx, didx;
+
+		switch (pnl->af) {
+		case AF_INET:
+			break;
+#ifdef INET6
+		case AF_INET6:
+			break;
+#endif /* INET6 */
+		default:
+			error = EAFNOSUPPORT;
+			goto fail;
+		}
 
 		/* NATLOOK src and dst are reversed, so reverse sidx/didx */
 		sidx = (direction == PF_IN) ? 1 : 0;
