@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2018/06/25 22:22:49 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2020/01/08 21:28:00 bluhm Exp $
 
-# Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2018-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -52,23 +52,38 @@ DST_TUNNEL6_${N2} =		${SRC_TUNNEL6_${N1}}
 .include <bsd.own.mk>
 
 .if ! (make(clean) || make(cleandir) || make(obj))
-SYSCTL_FORWARDING !=	sysctl net.inet.ip.forwarding
 
+SYSCTL_FORWARDING !=	sysctl net.inet.ip.forwarding
 .if ${SYSCTL_FORWARDING:C/.*=//} != 1
 regress:
-	@echo "${SYSCTL_FORWARDING}"
-	@echo set this sysctl to 1 for additional tests
+	@echo sysctl: "${SYSCTL_FORWARDING}"
+	@echo Set sysctl to 1 to run this regress.
 	@echo SKIPPED
 .endif
 
-PF_SKIP_IFACE !=	${SUDO} /sbin/pfctl -sI -v | sed -n 's/ (skip)//p'
-
-.if ! empty(PF_SKIP_IFACE:Mlo*:Nlo0)
+PF_STATUS !=	${SUDO} pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
+.if empty(PF_STATUS:MEnabled)
 regress:
-	@echo "${PF_SKIP_IFACE}"
+	@echo pf status: "${PF_STATUS}"
+	@echo Enable pf to run this regress.
+	@echo SKIPPED
+.endif
+PF_SKIP !=	${SUDO} pfctl -sI -v | sed -n 's/ (skip)//p'
+.if ! empty(PF_SKIP:Mlo*:Nlo0)
+regress:
+	@echo pf skip: "${PF_SKIP}"
 	@echo Do not set skip on interface lo, lo${N1}, or lo${N2}.
 	@echo SKIPPED
 .endif
+
+PF_ANCHOR !=	${SUDO} pfctl -sr | sed -n 's/^anchor "\([^"]*\)" all$$/\1/p'
+.if empty(PF_ANCHOR:Mregress)
+regress:
+	@echo pf anchor: "${PF_ANCHOR}"
+	@echo Need anchor '"regress"' in pf.conf to load additional rules.
+	@echo SKIPPED
+.endif
+
 .endif
 
 .PHONY: busy-rdomains ifconfig unconfig
@@ -83,41 +98,38 @@ busy-rdomains:
 ifconfig: unconfig
 	# create and configure loopback interfaces
 .for n in ${NUMS}
-	${SUDO} /sbin/ifconfig lo${n} rdomain ${n}
-	${SUDO} /sbin/ifconfig lo${n} inet 127.0.0.1/8
-	${SUDO} /sbin/ifconfig lo${n} inet6 ::1/128
-	${SUDO} /sbin/ifconfig lo${n} inet ${SRC_TUNNEL4_${n}} alias
-	${SUDO} /sbin/ifconfig lo${n} inet6 ${SRC_TUNNEL6_${n}} alias
-	${SUDO} /sbin/route -n -T ${n} add -inet -host ${DST_TUNNEL4_${n}}\
-	    127.0.0.1
-	${SUDO} /sbin/route -n -T ${n} add -inet6 -host ${DST_TUNNEL6_${n}}\
-	    ::1
-	${SUDO} /sbin/ifconfig gif${n}4 create rdomain ${n} tunneldomain ${n}
-	${SUDO} /sbin/ifconfig gif${n}4 tunnel ${SRC_TUNNEL4_${n}}\
-	    ${DST_TUNNEL4_${n}}
-	${SUDO} /sbin/ifconfig gif${n}4 inet ${TUNNEL4_SRC_ADDR4_${n}}/32\
+	${SUDO} ifconfig lo${n} rdomain ${n}
+	${SUDO} ifconfig lo${n} inet 127.0.0.1/8
+	${SUDO} ifconfig lo${n} inet6 ::1/128
+	${SUDO} ifconfig lo${n} inet ${SRC_TUNNEL4_${n}} alias
+	${SUDO} ifconfig lo${n} inet6 ${SRC_TUNNEL6_${n}} alias
+	${SUDO} route -n -T ${n} add -inet -host ${DST_TUNNEL4_${n}} 127.0.0.1
+	${SUDO} route -n -T ${n} add -inet6 -host ${DST_TUNNEL6_${n}} ::1
+	${SUDO} ifconfig gif${n}4 create rdomain ${n} tunneldomain ${n}
+	${SUDO} ifconfig gif${n}4 tunnel ${SRC_TUNNEL4_${n}} ${DST_TUNNEL4_${n}}
+	${SUDO} ifconfig gif${n}4 inet ${TUNNEL4_SRC_ADDR4_${n}}/32\
 	    ${TUNNEL4_DST_ADDR4_${n}}
-	${SUDO} /sbin/ifconfig gif${n}4 inet6 ${TUNNEL4_SRC_ADDR6_${n}}\
+	${SUDO} ifconfig gif${n}4 inet6 ${TUNNEL4_SRC_ADDR6_${n}}\
 	    ${TUNNEL4_DST_ADDR6_${n}}
-	${SUDO} /sbin/ifconfig gif${n}6 create rdomain ${n} tunneldomain ${n}
-	${SUDO} /sbin/ifconfig gif${n}6 tunnel ${SRC_TUNNEL6_${n}}\
+	${SUDO} ifconfig gif${n}6 create rdomain ${n} tunneldomain ${n}
+	${SUDO} ifconfig gif${n}6 tunnel ${SRC_TUNNEL6_${n}}\
 	    ${DST_TUNNEL6_${n}}
-	${SUDO} /sbin/ifconfig gif${n}6 inet ${TUNNEL6_SRC_ADDR4_${n}}/32\
+	${SUDO} ifconfig gif${n}6 inet ${TUNNEL6_SRC_ADDR4_${n}}/32\
 	    ${TUNNEL6_DST_ADDR4_${n}}
-	${SUDO} /sbin/ifconfig gif${n}6 inet6 ${TUNNEL6_SRC_ADDR6_${n}}\
+	${SUDO} ifconfig gif${n}6 inet6 ${TUNNEL6_SRC_ADDR6_${n}}\
 	    ${TUNNEL6_DST_ADDR6_${n}}
 .endfor
 
 unconfig:
 	# destroy interfaces, keep lo as routing domain cannot be destroyed
 .for n in ${NUMS}
-	-${SUDO} /sbin/ifconfig lo${n} rdomain ${n}
-	-${SUDO} /sbin/ifconfig lo${n} inet 127.0.0.1 delete
-	-${SUDO} /sbin/ifconfig lo${n} inet6 ::1 delete
-	-${SUDO} /sbin/ifconfig lo${n} inet ${SRC_TUNNEL4_${n}} delete
-	-${SUDO} /sbin/ifconfig lo${n} inet6 ${SRC_TUNNEL6_${n}} delete
-	-${SUDO} /sbin/ifconfig gif${n}4 destroy
-	-${SUDO} /sbin/ifconfig gif${n}6 destroy
+	-${SUDO} ifconfig lo${n} rdomain ${n}
+	-${SUDO} ifconfig lo${n} inet 127.0.0.1 delete
+	-${SUDO} ifconfig lo${n} inet6 ::1 delete
+	-${SUDO} ifconfig lo${n} inet ${SRC_TUNNEL4_${n}} delete
+	-${SUDO} ifconfig lo${n} inet6 ${SRC_TUNNEL6_${n}} delete
+	-${SUDO} ifconfig gif${n}4 destroy
+	-${SUDO} ifconfig gif${n}6 destroy
 .endfor
 	rm -f stamp-setup
 
@@ -143,7 +155,7 @@ addr.py: Makefile
 stamp-pfctl: addr.py pf.conf stamp-setup
 	@echo '\n======== $@ ========'
 	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
-	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} /sbin/pfctl -a regress -f -
+	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} pfctl -a regress -f -
 	# ifconfig gif inet6 DAD created tunnel states based on old pf rules
 	${SUDO} /sbin/pfctl -Fs
 	@date >$@

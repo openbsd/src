@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2017/03/03 21:34:14 bluhm Exp $
+# $OpenBSD: Makefile,v 1.8 2020/01/08 21:28:01 bluhm Exp $
 #
 #  template_v10
 #  ----------------
@@ -28,24 +28,27 @@
 
 REGRESS_TARGETS=template_v10 flow_10_4 flow_10_6 ifconfig
 
-PROG=   gen_traffic
-LDADD=  -levent
+PROG=	gen_traffic
+LDADD=	-levent
 
 .if ! (make(clean) || make(cleandir) || make(obj))
-PF_ENABLED !!=	pfctl -si | grep '^Status: Enabled ' || true
-.endif
-.if empty(PF_ENABLED)
+
+PF_STATUS !=	${SUDO} pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
+.if empty(PF_STATUS:MEnabled)
 regress:
-	@echo Enable pf on localhost to run pflow test.
+	@echo pf status: "${PF_STATUS}"
+	@echo Enable pf to run this regress.
 	@echo SKIPPED
 .endif
 
-PERL_REQUIRE !!= perl -e 'eval { require Net::Flow } or print $@'
+PERL_REQUIRE !=	perl -e 'eval { require Net::Flow } or print $@'
 .if ! empty(PERL_REQUIRE)
 regress:
 	@echo "${PERL_REQUIRE}"
 	@echo Install the p5-Net-Flow package to run pflow test.
 	@echo SKIPPED
+.endif
+
 .endif
 
 template_v10:

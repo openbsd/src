@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2018/09/28 18:57:37 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.25 2020/01/08 21:28:01 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used to distribute the configuration.
@@ -908,6 +908,8 @@ check-setup-ips:
 	ssh ${IPS_SSH} sysctl net.inet.ah.enable | fgrep =1
 	ssh ${IPS_SSH} sysctl net.inet.ipip.allow | fgrep =1
 	ssh ${IPS_SSH} sysctl net.inet.ipcomp.enable | fgrep =1
+	ssh ${IPS_SSH} sysctl net.inet.ip.forwarding | fgrep =1
+	ssh ${IPS_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
 	ssh ${IPS_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 	ssh ${IPS_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
 
@@ -940,6 +942,8 @@ check-setup-rt:
 .endfor
 .endfor
 .endfor
+	ssh ${RT_SSH} sysctl net.inet.ip.forwarding | fgrep =1
+	ssh ${RT_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
 
 check-setup-eco:
 	@echo '\n======== $@ ========'
@@ -979,5 +983,7 @@ check-setup-eco:
 .endfor
 	ssh ${ECO_SSH} netstat -na -f ${inet} -p tcp | fgrep ' *.7 '
 .endfor
+	ssh ${ECO_SSH} sysctl net.inet.ip.forwarding | fgrep =1
+	ssh ${ECO_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
 
 .include <bsd.regress.mk>

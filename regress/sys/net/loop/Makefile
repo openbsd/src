@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.5 2018/06/25 22:22:49 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2020/01/08 21:28:00 bluhm Exp $
 
-# Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2017-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -28,23 +28,39 @@ NUMS =		${N1} ${N2}
 .include <bsd.own.mk>
 
 .if ! (make(clean) || make(cleandir) || make(obj))
-SYSCTL_FORWARDING !=	sysctl net.inet.ip.forwarding
 
+SYSCTL_FORWARDING !=	sysctl net.inet.ip.forwarding
 .if ${SYSCTL_FORWARDING:C/.*=//} != 1
 regress:
-	@echo "${SYSCTL_FORWARDING}"
-	@echo set this sysctl to 1 for additional tests
+	@echo sysctl: "${SYSCTL_FORWARDING}"
+	@echo Set sysctl to 1 to run this regress.
 	@echo SKIPPED
 .endif
 
-PF_SKIP_IFACE !=	${SUDO} /sbin/pfctl -sI -v | sed -n 's/ (skip)//p'
-
-.if ! empty(PF_SKIP_IFACE:Mlo*:Nlo0)
+PF_STATUS !=	${SUDO} pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
+.if empty(PF_STATUS:MEnabled)
 regress:
-	@echo "${PF_SKIP_IFACE}"
+	@echo pf status: "${PF_STATUS}"
+	@echo Enable pf to run this regress.
+	@echo SKIPPED
+.endif
+
+PF_SKIP !=	${SUDO} pfctl -sI -v | sed -n 's/ (skip)//p'
+.if ! empty(PF_SKIP:Mlo*:Nlo0)
+regress:
+	@echo pf skip: "${PF_SKIP}"
 	@echo Do not set skip on interface lo, lo${N1}, or lo${N2}.
 	@echo SKIPPED
 .endif
+
+PF_ANCHOR !=	${SUDO} pfctl -sr | sed -n 's/^anchor "\([^"]*\)" all$$/\1/p'
+.if empty(PF_ANCHOR:Mregress)
+regress:
+	@echo pf anchor: "${PF_ANCHOR}"
+	@echo Need anchor '"regress"' in pf.conf to load additional rules.
+	@echo SKIPPED
+.endif
+
 .endif
 
 .PHONY: busy-rdomains ifconfig unconfig
@@ -59,20 +75,20 @@ busy-rdomains:
 ifconfig: unconfig
 	# create and configure loopback interfaces
 .for n in ${NUMS}
-	${SUDO} /sbin/ifconfig lo${n} rdomain ${n}
-	${SUDO} /sbin/ifconfig lo${n} inet 127.0.0.1/8
-	${SUDO} /sbin/ifconfig lo${n} inet 127.0.0.${n} alias
-	${SUDO} /sbin/route -n -T ${n} add -inet -host 10.6.6.6 127.0.0.1
-	${SUDO} /sbin/route -n -T ${n} add -inet -host 10.7.7.7 127.0.0.1
+	${SUDO} ifconfig lo${n} rdomain ${n}
+	${SUDO} ifconfig lo${n} inet 127.0.0.1/8
+	${SUDO} ifconfig lo${n} inet 127.0.0.${n} alias
+	${SUDO} route -n -T ${n} add -inet -host 10.6.6.6 127.0.0.1
+	${SUDO} route -n -T ${n} add -inet -host 10.7.7.7 127.0.0.1
 .endfor
-	${SUDO} /sbin/route -n -T ${N1} add -inet -host 127.0.0.${N2} 127.0.0.1
-	${SUDO} /sbin/route -n -T ${N2} add -inet -host 127.0.0.${N1} 127.0.0.1
+	${SUDO} route -n -T ${N1} add -inet -host 127.0.0.${N2} 127.0.0.1
+	${SUDO} route -n -T ${N2} add -inet -host 127.0.0.${N1} 127.0.0.1
 
 unconfig:
 	# destroy interfaces
 .for n in ${NUMS}
-	-${SUDO} /sbin/ifconfig lo${n} 127.0.0.1 delete
-	-${SUDO} /sbin/ifconfig lo${n} 127.0.0.${n} delete
+	-${SUDO} ifconfig lo${n} 127.0.0.1 delete
+	-${SUDO} ifconfig lo${n} 127.0.0.${n} delete
 .endfor
 	rm -f stamp-setup
 
@@ -95,7 +111,7 @@ addr.py: Makefile
 stamp-pfctl: addr.py pf.conf stamp-setup
 	@echo '\n======== $@ ========'
 	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
-	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} /sbin/pfctl -a regress -f -
+	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} pfctl -a regress -f -
 	@date >$@
 
 # run tcpdump on lo devices
