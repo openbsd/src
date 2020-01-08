@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.149 2019/12/31 13:48:32 visa Exp $	*/
+/*	$OpenBSD: tty.c,v 1.150 2020/01/08 16:27:41 visa Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -723,6 +723,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	/* If the ioctl involves modification, hang if in the background. */
 	switch (cmd) {
+	case  FIOSETOWN:
 	case  TIOCFLUSH:
 	case  TIOCDRAIN:
 	case  TIOCSBRK:
@@ -828,6 +829,11 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		s = spltty();
 		*(struct timeval *)data = tp->t_tv;
 		splx(s);
+		break;
+	case FIOGETOWN:			/* get pgrp of tty */
+		if (!isctty(pr, tp) && suser(p))
+			return (ENOTTY);
+		*(int *)data = tp->t_pgrp ? -tp->t_pgrp->pg_id : 0;
 		break;
 	case TIOCGPGRP:			/* get pgrp of tty */
 		if (!isctty(pr, tp) && suser(p))
@@ -983,6 +989,28 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		pr->ps_session->s_ttyp = tp;
 		atomic_setbits_int(&pr->ps_flags, PS_CONTROLT);
 		break;
+	case FIOSETOWN: {		/* set pgrp of tty */
+		struct pgrp *pgrp;
+		struct process *pr1;
+		pid_t pgid = *(int *)data;
+
+		if (!isctty(pr, tp))
+			return (ENOTTY);
+		if (pgid < 0) {
+			pgrp = pgfind(-pgid);
+		} else {
+			pr1 = prfind(pgid);
+			if (pr1 == NULL)
+				return (ESRCH);
+			pgrp = pr1->ps_pgrp;
+		}
+		if (pgrp == NULL)
+			return (EINVAL);
+		else if (pgrp->pg_session != pr->ps_session)
+			return (EPERM);
+		tp->t_pgrp = pgrp;
+		break;
+	}
 	case TIOCSPGRP: {		/* set pgrp of tty */
 		struct pgrp *pgrp = pgfind(*(int *)data);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.109 2020/01/05 13:46:02 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.110 2020/01/08 16:27:41 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -696,18 +696,16 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		*(int *)data = mpipe->pipe_buffer.cnt;
 		break;
 
-	case TIOCSPGRP:
-		/* FALLTHROUGH */
+	case FIOSETOWN:
 	case SIOCSPGRP:
-		error = sigio_setown(&mpipe->pipe_sigio, *(int *)data);
+	case TIOCSPGRP:
+		error = sigio_setown(&mpipe->pipe_sigio, cmd, data);
 		break;
 
+	case FIOGETOWN:
 	case SIOCGPGRP:
-		*(int *)data = sigio_getown(&mpipe->pipe_sigio);
-		break;
-
 	case TIOCGPGRP:
-		*(int *)data = -sigio_getown(&mpipe->pipe_sigio);
+		sigio_getown(&mpipe->pipe_sigio, cmd, data);
 		break;
 
 	default:

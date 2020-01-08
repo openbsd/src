@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.184 2020/01/02 16:23:01 claudio Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.185 2020/01/08 16:27:41 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -971,22 +971,14 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		d->bd_async = *(int *)addr;
 		break;
 
-	/*
-	 * N.B.  ioctl (FIOSETOWN) and fcntl (F_SETOWN) both end up doing
-	 * the equivalent of a TIOCSPGRP and hence end up here.  *However*
-	 * TIOCSPGRP's arg is a process group. Therefore there is code in
-	 * ioctl and fcntl to negate the arg before calling here.
-	 */
-	case TIOCSPGRP:		/* Process or group to send signals to */
-		if (*(int *)addr < 0) {
-			error = EINVAL;
-			break;
-		}
-		error = sigio_setown(&d->bd_sigio, -*(int *)addr);
+	case FIOSETOWN:		/* Process or group to send signals to */
+	case TIOCSPGRP:
+		error = sigio_setown(&d->bd_sigio, cmd, addr);
 		break;
 
+	case FIOGETOWN:
 	case TIOCGPGRP:
-		*(int *)addr = -sigio_getown(&d->bd_sigio);
+		sigio_getown(&d->bd_sigio, cmd, addr);
 		break;
 
 	case BIOCSRSIG:		/* Set receive signal */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.239 2020/01/03 09:46:41 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.240 2020/01/08 16:27:41 visa Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/sched.h>
 #include <sys/user.h>
 #include <sys/syslog.h>
+#include <sys/ttycom.h>
 #include <sys/pledge.h>
 #include <sys/witness.h>
 
@@ -2140,7 +2141,7 @@ sigio_freelist(struct sigiolst *sigiolst)
 }
 
 int
-sigio_setown(struct sigio_ref *sir, pid_t pgid)
+sigio_setown(struct sigio_ref *sir, u_long cmd, caddr_t data)
 {
 	struct sigiolst rmlist;
 	struct proc *p = curproc;
@@ -2148,10 +2149,17 @@ sigio_setown(struct sigio_ref *sir, pid_t pgid)
 	struct process *pr = NULL;
 	struct sigio *sigio;
 	int error;
+	pid_t pgid = *(int *)data;
 
 	if (pgid == 0) {
 		sigio_free(sir);
 		return (0);
+	}
+
+	if (cmd == TIOCSPGRP) {
+		if (pgid < 0)
+			return (EINVAL);
+		pgid = -pgid;
 	}
 
 	sigio = malloc(sizeof(*sigio), M_SIGIO, M_WAITOK);
@@ -2242,8 +2250,8 @@ fail:
 	return (error);
 }
 
-pid_t
-sigio_getown(struct sigio_ref *sir)
+void
+sigio_getown(struct sigio_ref *sir, u_long cmd, caddr_t data)
 {
 	struct sigio *sigio;
 	pid_t pgid = 0;
@@ -2254,7 +2262,10 @@ sigio_getown(struct sigio_ref *sir)
 		pgid = sigio->sio_pgid;
 	mtx_leave(&sigio_lock);
 
-	return (pgid);
+	if (cmd == TIOCGPGRP)
+		pgid = -pgid;
+
+	*(int *)data = pgid;
 }
 
 void

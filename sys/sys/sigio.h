@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigio.h,v 1.3 2020/01/06 15:49:10 claudio Exp $	*/
+/*	$OpenBSD: sigio.h,v 1.4 2020/01/08 16:27:42 visa Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -87,8 +87,8 @@ sigio_init(struct sigio_ref *sir)
 void	sigio_copy(struct sigio_ref *, struct sigio_ref *);
 void	sigio_free(struct sigio_ref *);
 void	sigio_freelist(struct sigiolst *);
-pid_t	sigio_getown(struct sigio_ref *);
-int	sigio_setown(struct sigio_ref *, pid_t);
+void	sigio_getown(struct sigio_ref *, u_long, caddr_t);
+int	sigio_setown(struct sigio_ref *, u_long, caddr_t);
 
 #endif /* _KERNEL */
 

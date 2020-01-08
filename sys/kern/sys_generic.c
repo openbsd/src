@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.126 2019/10/03 18:47:19 cheloha Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.127 2020/01/08 16:27:41 visa Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -487,30 +487,6 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 		else
 			fp->f_flag &= ~FASYNC;
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, p);
-		break;
-
-	case FIOSETOWN:
-		tmp = *(int *)data;
-
-		if (fp->f_type == DTYPE_SOCKET || fp->f_type == DTYPE_PIPE) {
-			/* nothing */
-		} else if (tmp <= 0) {
-			tmp = -tmp;
-		} else {
-			struct process *pr = prfind(tmp);
-			if (pr == NULL) {
-				error = ESRCH;
-				break;
-			}
-			tmp = pr->ps_pgrp->pg_id;
-		}
-		error = (*fp->f_ops->fo_ioctl)
-		    (fp, TIOCSPGRP, (caddr_t)&tmp, p);
-		break;
-
-	case FIOGETOWN:
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data, p);
-		*(int *)data = -*(int *)data;
 		break;
 
 	default:

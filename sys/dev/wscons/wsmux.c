@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.48 2019/05/22 19:13:34 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.49 2020/01/08 16:27:41 visa Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -501,21 +501,23 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 			return (EINVAL);
 		evar->async = *(int *)data != 0;
 		return (0);
+	case FIOGETOWN:
 	case TIOCGPGRP:
-		DPRINTF(("%s: TIOCGPGRP\n", sc->sc_base.me_dv.dv_xname));
+		DPRINTF(("%s: getown (%lu)\n", sc->sc_base.me_dv.dv_xname,
+			 cmd));
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		*(int *)data = -sigio_getown(&evar->sigio);
+		sigio_getown(&evar->sigio, cmd, data);
 		return (0);
+	case FIOSETOWN:
 	case TIOCSPGRP:
-		DPRINTF(("%s: TIOCSPGRP\n", sc->sc_base.me_dv.dv_xname));
-		if (*(int *)data < 0)
-			return (EINVAL);
+		DPRINTF(("%s: setown (%lu)\n", sc->sc_base.me_dv.dv_xname,
+			 cmd));
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		return (sigio_setown(&evar->sigio, -*(int *)data));
+		return (sigio_setown(&evar->sigio, cmd, data));
 	default:
 		DPRINTF(("%s: unknown\n", sc->sc_base.me_dv.dv_xname));
 		break;

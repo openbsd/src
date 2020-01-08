@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.197 2020/01/02 08:56:33 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.198 2020/01/08 16:27:41 visa Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -719,12 +719,12 @@ tun_dev_ioctl(struct tun_softc *sc, u_long cmd, caddr_t data, int flag,
 	case FIONREAD:
 		*(int *)data = ifq_hdatalen(&sc->sc_if.if_snd);
 		break;
+	case FIOSETOWN:
 	case TIOCSPGRP:
-		if (*(int *)data < 0)
-			return (EINVAL);
-		return (sigio_setown(&sc->sc_sigio, -*(int *)data));
+		return (sigio_setown(&sc->sc_sigio, cmd, data));
+	case FIOGETOWN:
 	case TIOCGPGRP:
-		*(int *)data = -sigio_getown(&sc->sc_sigio);
+		sigio_getown(&sc->sc_sigio, cmd, data);
 		break;
 	case SIOCGIFADDR:
 		if (!(sc->sc_flags & TUN_LAYER2))

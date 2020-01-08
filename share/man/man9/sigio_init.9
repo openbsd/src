@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigio_init.9,v 1.3 2018/11/12 18:27:31 jmc Exp $
+.\"	$OpenBSD: sigio_init.9,v 1.4 2020/01/08 16:27:40 visa Exp $
 .\"
 .\" Copyright (c) 2018 Visa Hankala
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2018 $
+.Dd $Mdocdate: January 8 2020 $
 .Dt SIGIO_INIT 9
 .Os
 .Sh NAME
@@ -33,9 +33,9 @@
 .Ft void
 .Fn "sigio_copy" "struct sigio_ref *dst" "struct sigio_ref *src"
 .Ft int
-.Fn "sigio_setown" "struct sigio_ref *sir" "pid_t pgid"
+.Fn "sigio_setown" "struct sigio_ref *sir" "u_long cmd" "caddr_t data"
 .Ft pid_t
-.Fn "sigio_getown" "struct sigio_ref *sir"
+.Fn "sigio_getown" "struct sigio_ref *sir" "u_long cmd" "caddr_t data"
 .Sh DESCRIPTION
 The asynchronous IO signal API provides a means to manage signal registrations.
 It associates a process or process group with a signal source.
@@ -60,17 +60,32 @@ to reference
 associates the reference
 .Fa sir
 with a process or process group.
+.Fa cmd
+is one of ioctl commands
+.Dv FIOSETOWN ,
+.Dv SIOCSPGRP
+and
+.Dv TIOCSPGRP .
+.Fa data
+is a pointer to a signed integer that represents the ID of the owner
+of the registration.
+For
+.Dv FIOSETOWN
+and
+.Dv SIOCSPGRP ,
+a positive ID is taken as a process ID,
+and a negative ID is taken as a process group ID.
 If
-.Fa pgid
-is positive, the ID is taken as a process ID.
-If
-.Fa pgid
-is negative, the ID is taken as a process group ID.
-The reference
+.Fa cmd
+is
+.Dv TIOCSPGRP ,
+a positive ID is taken as a process group ID,
+and negative ID values are not allowed.
+For all values of
+.Fa cmd ,
+the reference
 .Fa sir
-is cleared if
-.Fa pgid
-is zero.
+is cleared if the ID is zero.
 .Pp
 When
 .Fn sigio_setown
@@ -79,8 +94,27 @@ These credentials are checked when the reference is used with
 .Xr pgsigio 9 .
 .Pp
 .Fn sigio_getown
-returns the ID of the process or process group associated with the reference
-.Fa sir .
+stores the ID of the process or process group associated with the reference
+.Fa sir
+to the signed integer pointed by
+.Fa data .
+.Fa cmd
+is one of ioctl commands
+.Dv FIOGETOWN ,
+.Dv SIOCGPGRP
+and
+.Dv TIOCGPGRP .
+For
+.Dv FIOGETOWN
+and
+.Dv SIOCGPGRP ,
+a process ID is stored as a positive ID,
+and a process group ID is stored as a negative ID.
+For
+.Dv TIOCGPGRP ,
+a process ID is stored as a negative ID,
+and a process group ID is stored as a positive ID.
+If there is no registered owner, a zero is stored in the integer.
 .Sh CONTEXT
 .Fn sigio_init ,
 .Fn sigio_free ,
@@ -93,26 +127,17 @@ can be called during autoconf, or from process context.
 .Fn sigio_setown
 returns 0 on success.
 Otherwise, the following error values are returned:
-.Bl -tag -width [EPERM]
+.Bl -tag -width [EINVAL]
+.It Bq Er EINVAL
+The process group ID is invalid.
 .It Bq Er EPERM
 The invoking process belongs to another session than the process
-or process group
-.Fa pgid .
+or process group.
 .It Bq Er ESRCH
-The process or process group
-.Fa pgid
-does not exist.
+The process or process group does not exist.
 .It Bq Er ESRCH
-The process
-.Fa pgid
-is exiting.
+The process is exiting.
 .El
-.Pp
-The function
-.Fn sigio_getown
-returns the ID of the process or process group associated with reference
-.Fa sir ,
-or zero if no signal target has been registered.
 .Sh SEE ALSO
 .Xr pgsigio 9
 .Sh HISTORY

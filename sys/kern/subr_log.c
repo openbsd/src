@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.62 2020/01/02 20:50:06 claudio Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.63 2020/01/08 16:27:41 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -383,13 +383,13 @@ logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 			logsoftc.sc_state &= ~LOG_ASYNC;
 		break;
 
+	case FIOSETOWN:
 	case TIOCSPGRP:
-		if (*(int *)data < 0)
-			return (EINVAL);
-		return (sigio_setown(&logsoftc.sc_sigio, -*(int *)data));
+		return (sigio_setown(&logsoftc.sc_sigio, com, data));
 
+	case FIOGETOWN:
 	case TIOCGPGRP:
-		*(int *)data = -sigio_getown(&logsoftc.sc_sigio);
+		sigio_getown(&logsoftc.sc_sigio, com, data);
 		break;
 
 	case LIOCSFD:

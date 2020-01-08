@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.57 2019/08/19 21:19:38 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.58 2020/01/08 16:27:41 visa Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -483,6 +483,7 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 
 	switch (cmd) {
 	case FIOASYNC:
+	case FIOSETOWN:
 	case TIOCSPGRP:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
@@ -498,20 +499,20 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 		sc->sc_base.me_evp->async = *(int *)data != 0;
 		return (0);
 
+	case FIOGETOWN:
 	case TIOCGPGRP:
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		*(int *)data = -sigio_getown(&evar->sigio);
+		sigio_getown(&evar->sigio, cmd, data);
 		return (0);
 
+	case FIOSETOWN:
 	case TIOCSPGRP:
-		if (*(int *)data < 0)
-			return (EINVAL);
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		return (sigio_setown(&evar->sigio, -*(int *)data));
+		return (sigio_setown(&evar->sigio, cmd, data));
 
 	case WSMOUSEIO_GETPARAMS:
 	case WSMOUSEIO_SETPARAMS:
