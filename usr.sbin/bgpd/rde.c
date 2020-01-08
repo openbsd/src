@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.495 2020/01/01 07:25:04 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.496 2020/01/08 18:01:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2552,7 +2552,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		default:
 			fatalx("%s: unsupported imsg type", __func__);
 		}
-	
+
 		LIST_INSERT_HEAD(&rde_dump_h, ctx, entry);
 		return;
 	} else if ((rid = rib_find(req->rib)) == RIB_NOTFOUND) {

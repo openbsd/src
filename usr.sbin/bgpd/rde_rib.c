@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.210 2019/10/30 05:27:50 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.211 2020/01/08 18:01:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1335,7 +1335,7 @@ prefix_adjout_destroy(struct prefix *p)
 	}
 
 	RB_REMOVE(prefix_index, &peer->adj_rib_out, p);
-	
+
 	prefix_unlink(p);
 	prefix_free(p);
 }
