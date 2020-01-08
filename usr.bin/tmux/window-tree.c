@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.43 2019/12/03 10:47:23 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.44 2020/01/08 06:38:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,7 +33,7 @@ static void		 window_tree_key(struct window_mode_entry *,
 			     struct client *, struct session *,
 			     struct winlink *, key_code, struct mouse_event *);
 
-#define WINDOW_TREE_DEFAULT_COMMAND "switch-client -t '%%'"
+#define WINDOW_TREE_DEFAULT_COMMAND "switch-client -Zt '%%'"
 
 #define WINDOW_TREE_DEFAULT_FORMAT \
 	"#{?pane_format," \
