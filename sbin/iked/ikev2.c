@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.186 2020/01/07 15:08:28 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.187 2020/01/08 09:14:03 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -146,11 +146,11 @@ ssize_t	ikev2_add_sighashnotify(struct ibuf *, struct ikev2_payload **,
 	    ssize_t);
 ssize_t ikev2_add_nat_detection(struct iked *, struct ibuf *,
 	    struct ikev2_payload **, struct iked_message *, ssize_t);
-ssize_t ikev2_add_fragmentation(struct iked *, struct ibuf *,
-	    struct ikev2_payload **, struct iked_message *, ssize_t);
-
-ssize_t	 ikev2_add_mobike(struct iked *, struct ibuf *,
-	    struct ikev2_payload **, ssize_t, struct iked_sa *);
+ssize_t	 ikev2_add_notify(struct ibuf *, struct ikev2_payload **, ssize_t,
+    uint16_t);
+ssize_t	 ikev2_add_mobike(struct ibuf *, struct ikev2_payload **, ssize_t);
+ssize_t ikev2_add_fragmentation(struct ibuf *, struct ikev2_payload **,
+    struct iked_message *, ssize_t);
 int	 ikev2_update_sa_addresses(struct iked *, struct iked_sa *);
 int	 ikev2_resp_informational(struct iked *, struct iked_sa *,
 	    struct iked_message *);
@@ -1078,7 +1078,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 
 	/* Fragmentation Notify */
 	if (env->sc_frag) {
-		if ((len = ikev2_add_fragmentation(env, buf, &pld, &req, len))
+		if ((len = ikev2_add_fragmentation(buf, &pld, &req, len))
 		    == -1)
 			goto done;
 	}
@@ -1710,11 +1710,10 @@ ikev2_add_ipcompnotify(struct iked *env, struct ibuf *e,
 }
 
 ssize_t
-ikev2_add_mobike(struct iked *env, struct ibuf *e,
-    struct ikev2_payload **pld, ssize_t len, struct iked_sa *sa)
+ikev2_add_notify(struct ibuf *e, struct ikev2_payload **pld, ssize_t len,
+    uint16_t notify)
 {
 	struct ikev2_notify		*n;
-	uint8_t				*ptr;
 
 	if (*pld)
 		if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
@@ -1722,38 +1721,27 @@ ikev2_add_mobike(struct iked *env, struct ibuf *e,
 	if ((*pld = ikev2_add_payload(e)) == NULL)
 		return (-1);
 	len = sizeof(*n);
-	if ((ptr = ibuf_advance(e, len)) == NULL)
+	if ((n = ibuf_advance(e, len)) == NULL)
 		return (-1);
-	n = (struct ikev2_notify *)ptr;
 	n->n_protoid = 0;
 	n->n_spisize = 0;
-	n->n_type = htobe16(IKEV2_N_MOBIKE_SUPPORTED);
+	n->n_type = htobe16(notify);
 	log_debug("%s: done", __func__);
 
 	return (len);
 }
 
 ssize_t
-ikev2_add_fragmentation(struct iked *env, struct ibuf *buf,
-    struct ikev2_payload **pld, struct iked_message *msg, ssize_t len)
+ikev2_add_mobike(struct ibuf *e, struct ikev2_payload **pld, ssize_t len)
 {
-	struct ikev2_notify		*n;
-	uint8_t				*ptr;
+	return ikev2_add_notify(e, pld, len, IKEV2_N_MOBIKE_SUPPORTED);
+}
 
-	if (*pld != NULL)
-		if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
-			return (-1);
-	if ((*pld = ikev2_add_payload(buf)) == NULL)
-		return (-1);
-	len = sizeof(*n);
-	if ((ptr = ibuf_advance(buf, len)) == NULL)
-		return (-1);
-	n = (struct ikev2_notify *) ptr;
-	n->n_protoid = 0;
-	n->n_spisize = 0;
-	n->n_type = htobe16(IKEV2_N_FRAGMENTATION_SUPPORTED);
-
-	return (len);
+ssize_t
+ikev2_add_fragmentation(struct ibuf *buf, struct ikev2_payload **pld,
+    struct iked_message *msg, ssize_t len)
+{
+	return ikev2_add_notify(buf, pld, len, IKEV2_N_FRAGMENTATION_SUPPORTED);
 }
 
 ssize_t
@@ -2635,7 +2623,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 
 	/* Fragmentation Notify*/
 	if (sa->sa_frag) {
-		if ((len = ikev2_add_fragmentation(env, buf, &pld, &resp, len))
+		if ((len = ikev2_add_fragmentation(buf, &pld, &resp, len))
 		    == -1)
 			goto done;
 	}
@@ -3007,7 +2995,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 
 	/* MOBIKE */
 	if (sa->sa_mobike &&
-	    (len = ikev2_add_mobike(env, e, &pld, len, sa)) == -1)
+	    (len = ikev2_add_mobike(e, &pld, len)) == -1)
 		goto done;
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_SA) == -1)
