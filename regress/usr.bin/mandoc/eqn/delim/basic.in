@@ -1,4 +1,4 @@
-.\" $OpenBSD: basic.in,v 1.3 2020/01/08 10:58:09 schwarze Exp $
+.\" $OpenBSD: basic.in,v 1.4 2020/01/08 12:09:14 schwarze Exp $
 .Dd $Mdocdate: January 8 2020 $
 .Dt DELIM-BASIC 1
 .Os
@@ -19,4 +19,13 @@ inline [delta]
 delim onepsilon
 .EN
 inline [zeta]
+.EQ
+delim $$
+delim off
+.EN
+inline $eta$
+.EQ
+delim on
+.EN
+inline $theta$
 final text

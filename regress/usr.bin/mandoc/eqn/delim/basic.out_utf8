@@ -1,10 +1,10 @@
 DELIM-BASIC(1)              General Commands Manual             DELIM-BASIC(1)
 
 NNAAMMEE
-     ddeelliimm--bbaassiicc - inline eqn delimiters
+     ddeelliimm--bbaassiicc – inline eqn delimiters
 
 DDEESSCCRRIIPPTTIIOONN
-     initial text <alpha> inline <beta> <gamma> inline [delta] <epsilon>
-     inline <zeta> inline $eta$ inline <theta> final text
+     initial text α inline β γ inline [delta] ε inline ζ inline $eta$ inline θ
+     final text
 
 OpenBSD                         January 8, 2020                        OpenBSD
