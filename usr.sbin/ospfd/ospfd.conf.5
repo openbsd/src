@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.58 2019/11/19 09:55:55 remi Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.59 2020/01/08 08:21:01 remi Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 19 2019 $
+.Dd $Mdocdate: January 8 2020 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -256,11 +256,13 @@ is set to a value other than 1 or if the FIB is not coupled.
 Areas are used for grouping interfaces.
 All interface-specific parameters can
 be configured per area, overruling the global settings.
+These interface-specific parameters need to be defined before the interfaces.
 .Bl -tag -width Ds
 .It Ic area Ar id | address
 Specify an area section, grouping one or more interfaces.
 .Bd -literal -offset indent
 area 0.0.0.0 {
+	hello-interval 3
 	interface em0
 	interface em1 {
 		metric 10
