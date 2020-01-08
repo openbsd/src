@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.123 2019/04/22 18:32:09 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.124 2020/01/08 14:09:29 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -804,7 +804,7 @@ main(int argc, char **argv)
 		if (compatMake)
 			/* Compat_Init will take care of creating all the
 			 * targets as well as initializing the module.  */
-			Compat_Run(&targs);
+			outOfDate = Compat_Run(&targs);
 		else {
 			/* Traverse the graph, checking on all the targets.  */
 			outOfDate = Make_Run(&targs);

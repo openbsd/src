@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.76 2019/12/21 15:31:54 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.77 2020/01/08 14:09:29 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -572,7 +572,8 @@ Make_Run(Lst targs)		/* the initial list of targets */
 		(void)MakeStartJobs();
 	}
 
-	problem = Job_Finish();
+	if (!queryFlag)
+		problem = Job_Finish();
 
 	/*
 	 * Print the final status of each target. E.g. if it wasn't made
