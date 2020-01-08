@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.387 2019/06/24 22:26:25 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.388 2020/01/08 10:02:55 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1101,6 +1101,8 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst,
 	uint8_t			 prio = ifp->if_priority + RTP_STATIC;
 	int			 error;
 
+	KASSERT(rdomain == rtable_l2(rdomain));
+
 	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
 	info.rti_flags = flags;
@@ -1109,12 +1111,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst,
 		info.rti_info[RTAX_GATEWAY] = sdltosa(ifp->if_sadl);
 	else
 		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-
-	KASSERT(rdomain == rtable_l2(rdomain));
-	if (rdomain == rtable_l2(ifp->if_rtlabelid)) {
-		info.rti_info[RTAX_LABEL] =
-		    rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
-	}
+	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
 
 #ifdef MPLS
 	if ((flags & RTF_MPLS) == RTF_MPLS)
@@ -1158,6 +1155,8 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst,
 	uint8_t			 prio = ifp->if_priority + RTP_STATIC;
 	int			 error;
 
+	KASSERT(rdomain == rtable_l2(rdomain));
+
 	if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
 		m = m_get(M_DONTWAIT, MT_SONAME);
 		if (m == NULL)
@@ -1173,11 +1172,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst,
 	info.rti_info[RTAX_DST] = dst;
 	if ((flags & RTF_LLINFO) == 0)
 		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-
-	if (rdomain == rtable_l2(ifp->if_rtlabelid)) {
-		info.rti_info[RTAX_LABEL] =
-		    rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
-	}
+	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
 
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
