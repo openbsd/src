@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2020/01/07 16:08:08 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/01/08 13:23:48 bluhm Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -47,27 +47,37 @@ PORT = `cat server.port`
 LISTEN_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'Listening on ' server.err; \
-	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 BIND_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'Bound on ' server.err; \
-	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
+
+BIND_CLIENT_WAIT = \
+	let timeout=`date +%s`+5; \
+	until grep -q 'Bound on ' client.err; \
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 CONNECT_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'Connection to .* succeeded' client.err; \
-	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 TLS_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'Cert Hash:' client.err; \
-	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 TRANSFER_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'greeting' client.out && grep -q 'command' server.out; \
-	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
+
+TRANSFER_SERVER_WAIT = \
+	let timeout=`date +%s`+5; \
+	until grep -q 'command' server.out; \
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 ### TCP ####
 
@@ -193,6 +203,41 @@ run-tcp6-bad-localhost-client:
 	! ${NC} -6 -v 127.0.0.1 ${PORT} ${CLIENT_LOG}
 	grep 'no address associated with name' client.err
 
+# TCP keep
+
+REGRESS_TARGETS +=	run-tcp-keep
+run-tcp-keep:
+	@echo '======== $@ ========'
+	${SERVER_NC} -k -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	# kill client and reconnect with a new one
+	:> server.err
+	pkill -l -f "^${NC} .* 127.0.0.1 ${PORT}$$"
+	rm -f client.{out,err}
+	:> server.out
+	# server closes the listen socket and binds a new one with new port
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	# server sends only one greeting, do not wait for a second one
+	${TRANSFER_SERVER_WAIT}
+	! grep 'greeting' client.out
+	# truncation of log results in NUL bytes, do not match ^
+	grep 'command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
 ### TLS ###
 
 REGRESS_TARGETS +=	run-tls
@@ -265,8 +310,8 @@ run-tls-bad-ca: server.crt fake-ca.crt
 	grep 'Listening on localhost ' server.err
 	grep 'Connection received on localhost ' server.err
 	grep 'certificate signature failure' client.err
-	! grep '^greeting$$' client.out
-	! grep '^command$$' server.out
+	! grep 'greeting' client.out
+	! grep 'command' server.out
 
 REGRESS_TARGETS +=	run-tls-name
 run-tls-name: server.crt ca.crt
@@ -302,8 +347,8 @@ run-tls-bad-name: server.crt ca.crt
 	grep 'Connection received on 127.0.0.1 ' server.err
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 	grep "name \`127.0.0.1\' not present in server certificate" client.err
-	! grep '^greeting$$' client.out
-	! grep '^command$$' server.out
+	! grep 'greeting' client.out
+	! grep 'command' server.out
 
 REGRESS_TARGETS +=	run-tls-hash
 run-tls-hash: server.crt ca.crt server.hash
@@ -343,8 +388,8 @@ run-tls-bad-hash: server.crt ca.crt ca.hash
 	grep 'Connection received on localhost ' server.err
 	grep 'Connection to localhost .* succeeded!' client.err
 	grep 'peer certificate is not SHA256:' client.err
-	! grep '^greeting$$' client.out
-	! grep '^command$$' server.out
+	! grep 'greeting' client.out
+	! grep 'command' server.out
 
 # TLS client certificate
 
@@ -389,8 +434,8 @@ run-tls-bad-client: client.crt server.crt ca.crt
 	grep 'Subject: .*/OU=server/CN=localhost' client.err
 	grep 'Issuer: .*/OU=ca/CN=root' client.err
 	grep 'No client certificate provided' server.err
-	! grep '^greeting$$' client.out
-	! grep '^command$$' server.out
+	! grep 'greeting' client.out
+	! grep 'command' server.out
 
 REGRESS_TARGETS +=	run-tls-client-bad-ca
 run-tls-client-bad-ca: client.crt server.crt ca.crt
@@ -408,8 +453,8 @@ run-tls-client-bad-ca: client.crt server.crt ca.crt
 	grep 'Connection to localhost .* succeeded!' client.err
 	# XXX no specific error message for bogus ca
 	grep 'CRYPTO_internal:block type is not 01' server.err
-	! grep '^greeting$$' client.out
-	! grep '^command$$' server.out
+	! grep 'greeting' client.out
+	! grep 'command' server.out
 
 REGRESS_TARGETS +=	run-tls-client-name
 run-tls-client-name: client.crt server.crt ca.crt
@@ -455,8 +500,8 @@ run-tls-client-bad-name: client.crt server.crt ca.crt
 	grep 'Subject: .*/OU=client/CN=localhost' server.err
 	grep 'Issuer: .*/OU=ca/CN=root' server.err
 	grep 'name (127.0.0.1) not found in client cert' server.err
-	! grep '^greeting$$' client.out
-	! grep '^command$$' server.out
+	! grep 'greeting' client.out
+	! grep 'command' server.out
 
 REGRESS_TARGETS +=	run-tls-client-hash
 run-tls-client-hash: client.crt server.crt ca.crt client.hash
@@ -481,9 +526,6 @@ run-tls-client-hash: client.crt server.crt ca.crt client.hash
 	grep 'Subject: .*/OU=client/CN=localhost' server.err
 	grep 'Issuer: .*/OU=ca/CN=root' server.err
 
-# XXX This test is broken, server does not check the client's cert hash
-REGRESS_EXPECTED_FAILURES += run-tls-client-bad-hash
-
 REGRESS_TARGETS +=	run-tls-client-bad-hash
 run-tls-client-bad-hash: client.crt server.crt ca.crt ca.hash
 	@echo '======== $@ ========'
@@ -505,8 +547,8 @@ run-tls-client-bad-hash: client.crt server.crt ca.crt ca.hash
 	grep 'Subject: .*/OU=client/CN=localhost' server.err
 	grep 'Issuer: .*/OU=ca/CN=root' server.err
 	grep 'peer certificate is not SHA256:' server.err
-	! grep '^greeting$$' client.out
-	! grep '^command$$' server.out
+	! grep 'greeting' client.out
+	! grep 'command' server.out
 
 REGRESS_TARGETS +=	run-tls-client-no-hash
 run-tls-client-no-hash: client.crt server.crt ca.crt client.hash
@@ -531,6 +573,48 @@ run-tls-client-no-hash: client.crt server.crt ca.crt client.hash
 	grep 'Issuer: .*/OU=ca/CN=root' client.err
 	# non existing hash is not checked
 	! grep 'Cert Hash: SHA256:' server.err
+
+# TLS keep
+
+REGRESS_TARGETS +=	run-tls-keep
+run-tls-keep: 127.0.0.1.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -k -c -C 127.0.0.1.crt -K 127.0.0.1.key -n -v -l \
+	    127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R 127.0.0.1.crt -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=127.0.0.1' client.err
+	grep 'Issuer: .*/OU=server/CN=127.0.0.1' client.err
+	# kill client and reconnect with a new one
+	:> server.err
+	pkill -l -f "^${NC} .* 127.0.0.1 ${PORT}$$"
+	rm -f client.{out,err}
+	:> server.out
+	# server closes the listen socket and binds a new one with new port
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R 127.0.0.1.crt -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	# server sends only one greeting, do not wait for a second one
+	${TRANSFER_SERVER_WAIT}
+	! grep 'greeting' client.out
+	# truncation of log results in NUL bytes, do not match ^
+	grep 'command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=127.0.0.1' client.err
+	grep 'Issuer: .*/OU=server/CN=127.0.0.1' client.err
 
 ### UDP ####
 
@@ -562,8 +646,8 @@ run-udp6:
 	grep 'Bound on ::1 ' server.err
 	grep 'Connection received on ::1 ' server.err
 
-REGRESS_TARGETS +=	run-udp-udptest
-run-udp-udptest:
+REGRESS_TARGETS +=	run-udp-probe
+run-udp-probe:
 	@echo '======== $@ ========'
 	${SERVER_NC} -u -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${BIND_WAIT}
@@ -607,6 +691,40 @@ run-udp6-localhost:
 	grep 'Bound on localhost ' server.err
 	grep 'Connection received on localhost ' server.err
 
+# UDP keep
+
+REGRESS_TARGETS +=	run-udp-keep
+run-udp-keep:
+	@echo '======== $@ ========'
+	${SERVER_NC} -k -u -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${BIND_WAIT}
+	${PORT_GET}
+	# the -v option causes udptest() to write additional X
+	${CLIENT_NC} -u -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	# server does not connect, nothing reaches the client
+	${TRANSFER_SERVER_WAIT}
+	! grep 'greeting' client.out
+	grep '^XXXXcommand$$' server.out
+	grep 'Bound on 127.0.0.1 ' server.err
+	# client does not connect
+	! grep 'Connection received on ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	# kill client and reconnect with a new one
+	:> server.err
+	pkill -l -f "^${NC} .* 127.0.0.1 ${PORT}$$"
+	rm -f client.{out,err}
+	:> server.out
+	${CLIENT_NC} -u -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${TRANSFER_SERVER_WAIT}
+	! grep 'greeting' client.out
+	# truncation of log results in NUL bytes, do not match ^
+	grep 'XXXXcommand$$' server.out
+	# server keeps socket and does not bind again
+	! grep 'Bound on ' server.err
+	# client does not connect
+	! grep 'Connection received on ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
 ### UNIX ####
 
 REGRESS_TARGETS +=	run-unix
@@ -643,6 +761,41 @@ run-unix-namelookup:
 	# XXX message succeeded is missing
 	! grep 'Connection to server.sock .* succeeded!' client.err
 
+# UNIX keep
+
+REGRESS_TARGETS +=	run-unix-keep
+run-unix-keep:
+	@echo '======== $@ ========'
+	rm -f server.sock
+	${SERVER_NC} -k -U -n -v -l server.sock ${SERVER_BG}
+	${LISTEN_WAIT}
+	${CLIENT_NC} -U -n -v server.sock ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	# XXX message Bound and Listening is redundant
+	grep 'Bound on server.sock$$' server.err
+	grep 'Listening on server.sock$$' server.err
+	grep 'Connection received on server.sock$$' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+	# kill client and reconnect with a new one
+	:> server.err
+	pkill -l -f "^${NC} .* -v server.sock$$"
+	rm -f client.{out,err}
+	:> server.out
+	${CLIENT_NC} -U -n -v server.sock ${CLIENT_BG}
+	# server sends only one greeting, do not wait for a second one
+	${TRANSFER_SERVER_WAIT}
+	! grep 'greeting' client.out
+	# truncation of log results in NUL bytes, do not match ^
+	grep 'command$$' server.out
+	grep 'Connection received on server.sock$$' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+
+# UNIX dgram
+
 REGRESS_TARGETS +=	run-unix-dgram
 run-unix-dgram:
 	@echo '======== $@ ========'
@@ -651,6 +804,7 @@ run-unix-dgram:
 	${BIND_WAIT}
 	${CLIENT_NC} -U -u -n -v server.sock ${CLIENT_BG}
 	${TRANSFER_WAIT}
+	${BIND_CLIENT_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
 	grep 'Bound on server.sock$$' server.err
@@ -666,6 +820,7 @@ run-unix-dgram-namelookup:
 	${BIND_WAIT}
 	${CLIENT_NC} -U -u -v server.sock ${CLIENT_BG}
 	${TRANSFER_WAIT}
+	${BIND_CLIENT_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
 	grep 'Bound on server.sock$$' server.err
@@ -687,6 +842,43 @@ run-unix-dgram-clientsock:
 	grep 'Connection received on server.sock$$' server.err
 	# XXX message succeeded is missing
 	! grep 'Connection to server.sock .* succeeded!' client.err
+
+# UNIX dgram keep
+
+REGRESS_TARGETS +=	run-unix-dgram-keep
+run-unix-dgram-keep:
+	@echo '======== $@ ========'
+	rm -f {client,server}.sock
+	${SERVER_NC} -k -U -u -n -v -l server.sock ${SERVER_BG}
+	${BIND_WAIT}
+	${CLIENT_NC} -U -u -n -v server.sock ${CLIENT_BG}
+	# server does not connect, nothing reaches the client
+	${TRANSFER_SERVER_WAIT}
+	${BIND_CLIENT_WAIT}
+	! grep 'greeting' client.out
+	grep '^command$$' server.out
+	grep 'Bound on server.sock$$' server.err
+	# client does not connect
+	! grep 'Connection received on ' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+	# kill client and reconnect with a new one
+	:> server.err
+	pkill -l -f "^${NC} .* -v server.sock$$"
+	rm -f client.{out,err}
+	:> server.out
+	${CLIENT_NC} -U -u -n -v server.sock ${CLIENT_BG}
+	${TRANSFER_SERVER_WAIT}
+	${BIND_CLIENT_WAIT}
+	! grep 'greeting' client.out
+	# truncation of log results in NUL bytes, do not match ^
+	grep 'command$$' server.out
+	# server keeps socket and does not bind again
+	! grep 'Bound on ' server.err
+	# client does not connect
+	! grep 'Connection received on ' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
