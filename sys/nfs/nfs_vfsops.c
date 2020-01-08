@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.123 2019/12/26 13:28:49 bluhm Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.124 2020/01/08 15:03:10 mpi Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -522,8 +522,7 @@ nfs_decode_args(struct nfsmount *nmp, struct nfs_args *argp,
 		if (nmp->nm_sotype == SOCK_DGRAM)
 			while (nfs_connect(nmp, NULL)) {
 				printf("nfs_args: retrying connect\n");
-				(void) tsleep(&lbolt,
-					      PSOCK, "nfscon", 0);
+				tsleep_nsec(&lbolt, PSOCK, "nfscon", INFSLP);
 			}
 	}
 

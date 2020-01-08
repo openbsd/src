@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.56 2019/02/04 07:04:28 anton Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.57 2020/01/08 15:03:10 mpi Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -648,8 +648,8 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 			semptr->semncnt++;
 
 		DPRINTF(("semop:  good night!\n"));
-		error = tsleep(&sema[semid], PLOCK | PCATCH,
-		    "semwait", 0);
+		error = tsleep_nsec(&sema[semid], PLOCK | PCATCH,
+		    "semwait", INFSLP);
 		DPRINTF(("semop:  good morning (error=%d)!\n", error));
 
 		suptr = NULL;	/* sem_undo may have been reallocated */
