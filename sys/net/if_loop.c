@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.89 2019/08/06 22:57:54 bluhm Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.90 2020/01/08 09:09:10 claudio Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -196,6 +196,7 @@ int
 loop_clone_destroy(struct ifnet *ifp)
 {
 	struct ifnet	*p;
+	unsigned int	 rdomain = 0;
 
 	if (ifp->if_index == rtable_loindex(ifp->if_rdomain)) {
 		/* rdomain 0 always needs a loopback */
@@ -214,13 +215,16 @@ loop_clone_destroy(struct ifnet *ifp)
 		}
 		NET_UNLOCK();
 
-		rtable_l2set(ifp->if_rdomain, 0, 0);
+		rdomain = ifp->if_rdomain;
 	}
 
 	if_ih_remove(ifp, loinput, NULL);
 	if_detach(ifp);
 
 	free(ifp, M_DEVBUF, sizeof(*ifp));
+
+	if (rdomain)
+		rtable_l2set(rdomain, 0, 0);
 	return (0);
 }
 
