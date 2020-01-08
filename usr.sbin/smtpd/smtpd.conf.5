@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.246 2019/12/19 13:34:45 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.247 2020/01/08 01:41:11 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 19 2019 $
+.Dd $Mdocdate: January 8 2020 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -979,8 +979,10 @@ but other data must have been already submitted before they are available.
 .It rdns Pf < Ar table Ns >       Ta session has a reverse DNS in table
 .It src Pf < Ar table Ns >        Ta source address is in table
 .It helo Pf < Ar table Ns >       Ta helo name is in table
-.It mail-from Pf < Ar table Ns > Ta sender address is in table
-.It rcpt-to Pf < Ar table Ns >   Ta recipient address is in table
+.It auth			  Ta session is authenticated
+.It auth Pf < Ar table Ns >       Ta session username is in table
+.It mail-from Pf < Ar table Ns >  Ta sender address is in table
+.It rcpt-to Pf < Ar table Ns >    Ta recipient address is in table
 .El
 .Pp
 These conditions may all be negated by prefixing them with an exclamation mark:

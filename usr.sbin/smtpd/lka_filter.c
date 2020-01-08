@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.59 2020/01/08 00:33:29 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.60 2020/01/08 01:41:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -80,6 +80,7 @@ struct filter_session {
 	int fcrdns;
 
 	char *helo;
+	char *username;
 	char *mail_from;
 	
 	enum filter_phase	phase;
@@ -530,6 +531,7 @@ lka_filter_end(uint64_t reqid)
 	free(fs->rdns);
 	free(fs->helo);
 	free(fs->mail_from);
+	free(fs->username);
 	free(fs->lastparam);
 	free(fs);
 	log_trace(TRACE_FILTERS, "%016"PRIx64" filters session-end", reqid);
@@ -886,7 +888,6 @@ filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
 		param = nparam;
 		break;
 	case FILTER_STARTTLS:
-	case FILTER_AUTH:
 		/* TBD */
 		break;
 	default:
@@ -1110,6 +1111,47 @@ filter_check_helo_regex(struct filter *filter, const char *key)
 }
 
 static int
+filter_check_auth(struct filter *filter, const char *username)
+{
+	int ret = 0;
+
+	if (!filter->config->auth)
+		return 0;
+
+	ret = username ? 1 : 0;
+
+	return filter->config->not_auth < 0 ? !ret : ret;
+}
+
+static int
+filter_check_auth_table(struct filter *filter, enum table_service kind, const char *key)
+{
+	int	ret = 0;
+
+	if (filter->config->auth_table == NULL)
+		return 0;
+	
+	if (key && table_match(filter->config->auth_table, kind, key) > 0)
+		ret = 1;
+
+	return filter->config->not_auth_table < 0 ? !ret : ret;
+}
+
+static int
+filter_check_auth_regex(struct filter *filter, const char *key)
+{
+	int	ret = 0;
+
+	if (filter->config->auth_regex == NULL)
+		return 0;
+
+	if (key && table_match(filter->config->auth_regex, K_REGEX, key) > 0)
+		ret = 1;
+	return filter->config->not_auth_regex < 0 ? !ret : ret;
+}
+
+
+static int
 filter_check_mail_from_table(struct filter *filter, enum table_service kind, const char *key)
 {
 	int	ret = 0;
@@ -1211,6 +1253,10 @@ filter_builtins_global(struct filter_session *fs, struct filter *filter, uint64_
 	    filter_check_src_regex(filter, ss_to_text(&fs->ss_src)) ||
 	    filter_check_helo_table(filter, K_DOMAIN, fs->helo) ||
 	    filter_check_helo_regex(filter, fs->helo) ||
+	    filter_check_auth(filter, fs->username) ||
+	    filter_check_auth_table(filter, K_STRING, fs->username) ||
+	    filter_check_auth_table(filter, K_CREDENTIALS, fs->username) ||
+	    filter_check_auth_regex(filter, fs->username) ||
 	    filter_check_mail_from_table(filter, K_MAILADDR, fs->mail_from) ||
 	    filter_check_mail_from_regex(filter, fs->mail_from);
 }
@@ -1424,6 +1470,12 @@ void
 lka_report_smtp_link_auth(const char *direction, struct timeval *tv, uint64_t reqid,
     const char *username, const char *result)
 {
+	struct filter_session *fs;
+
+	if (strcmp(result, "pass") == 0) {
+		fs = tree_xget(&sessions, reqid);
+		fs->username = xstrdup(username);
+	}
 	report_smtp_broadcast(reqid, direction, tv, "link-auth", "%s|%s\n",
 	    username, result);
 }
