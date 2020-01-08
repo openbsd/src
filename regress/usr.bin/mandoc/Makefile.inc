@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.25 2019/09/03 18:17:50 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.26 2020/01/08 10:17:14 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -6,6 +6,7 @@
 
 DIFF = diff -au
 MANDOC ?= mandoc
+MOPTS ?= -mandoc
 
 # --- lists of targets ---
 
@@ -194,13 +195,7 @@ lint-clean:
 
 # --- the groff program ---
 
-NROFF	 = /usr/local/bin/nroff -c
-
-.ifdef MOPTS
-NOPTS	?= ${MOPTS}
-.else
-NOPTS	?= -mandoc -Wall
-.endif
+GROFF	 = /usr/local/bin/groff ${GOPTS} -mtty-char ${MOPTS} -Wall -P-c
 
 # --- the list of targets ---
 
@@ -254,7 +249,7 @@ lint-out: obj-check ${_LINTOUTFILES}
 .  if empty(SKIP_ASCII:M${t}) && empty(SKIP_ASCII:MALL)
 .    if empty(SKIP_GROFF_ASCII:M${t})
 ${t}.out_ascii: ${t}.in
-	${NROFF} ${NOPTS} -Tascii ${.ALLSRC} > ${.TARGET}
+	${GROFF} -Tascii ${.ALLSRC} > ${.TARGET}
 .    else
 .PHONY: ${t}.out_ascii
 ${t}.out_ascii:
@@ -266,7 +261,7 @@ ${t}.out_ascii:
 .for t in ${UTF8_TARGETS}
 .  if empty(SKIP_GROFF_UTF8:M${t})
 ${t}.out_utf8: ${t}.in
-	${NROFF} ${NOPTS} -Tutf8 ${.ALLSRC} > ${.TARGET}
+	${GROFF} -Tutf8 ${.ALLSRC} > ${.TARGET}
 .  else
 .PHONY: ${t}.out_utf8
 ${t}.out_utf8:

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/03/08 22:53:35 schwarze Exp $
+# $OpenBSD: Makefile,v 1.5 2020/01/08 10:17:15 schwarze Exp $
 
 REGRESS_TARGETS	 = badarg dupe late long manarg noarg order
 LINT_TARGETS	 = badarg dupe late long manarg noarg order
@@ -18,6 +18,6 @@ SKIP_GROFF	 = badarg long manarg noarg
 
 # Autodetection fails for late .Dd, so specify -mdoc explicitly.
 
-MOPTS		+= -mdoc
+MOPTS		 = -mdoc
 
 .include <bsd.regress.mk>

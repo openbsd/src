@@ -1,6 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.3 2017/03/08 22:53:35 schwarze Exp $
-
-EQN = /usr/local/bin/eqn
+# $OpenBSD: Makefile.inc,v 1.4 2020/01/08 10:17:15 schwarze Exp $
 
 SKIP_GROFF ?= ${REGRESS_TARGETS}
 SKIP_TMAN ?= ALL
