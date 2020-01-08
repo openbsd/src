@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.21 2016/09/01 13:39:50 jmc Exp $
+.\"	$OpenBSD: eeprom.8,v 1.22 2020/01/08 14:45:36 kn Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: January 8 2020 $
 .Dt EEPROM 8
 .Os
 .Sh NAME
@@ -269,6 +269,14 @@ It is unlikely that this value should ever be changed.
 An 8-bit integer specifying the number of columns on the console.
 .It Ar screen-#rows
 An 8-bit integer specifying the number of rows on the console.
+.It Ar boot-device
+Space separated list of device aliases or device paths to boot from,
+in the given order.
+.It Ar boot-file
+File to boot.
+The empty string lets the second-stage boot program
+.Sy ofwboot
+choose the default.
 .It Ar auto-boot?
 If true, the system will boot automatically at power-up.
 .It Ar watchdog-reboot?
