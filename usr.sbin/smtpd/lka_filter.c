@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.58 2020/01/08 00:30:44 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.59 2020/01/08 00:33:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -55,6 +55,7 @@ static int	filter_builtins_helo(struct filter_session *, struct filter *, uint64
 static int	filter_builtins_mail_from(struct filter_session *, struct filter *, uint64_t, const char *);
 static int	filter_builtins_rcpt_to(struct filter_session *, struct filter *, uint64_t, const char *);
 static int	filter_builtins_data(struct filter_session *, struct filter *, uint64_t, const char *);
+static int	filter_builtins_commit(struct filter_session *, struct filter *, uint64_t, const char *);
 
 static void	filter_result_proceed(uint64_t);
 static void	filter_result_junk(uint64_t);
@@ -103,7 +104,7 @@ static struct filter_exec {
 	{ FILTER_NOOP,    	"noop",		filter_builtins_notimpl },
 	{ FILTER_HELP,    	"help",		filter_builtins_notimpl },
 	{ FILTER_WIZ,    	"wiz",		filter_builtins_notimpl },
-	{ FILTER_COMMIT,    	"commit",      	filter_builtins_notimpl },
+	{ FILTER_COMMIT,    	"commit",      	filter_builtins_commit },
 };
 
 struct filter {
@@ -1242,6 +1243,12 @@ filter_builtins_rcpt_to(struct filter_session *fs, struct filter *filter, uint64
 
 static int
 filter_builtins_data(struct filter_session *fs, struct filter *filter, uint64_t reqid, const char *param)
+{
+	return filter_builtins_global(fs, filter, reqid);
+}
+
+static int
+filter_builtins_commit(struct filter_session *fs, struct filter *filter, uint64_t reqid, const char *param)
 {
 	return filter_builtins_global(fs, filter, reqid);
 }
