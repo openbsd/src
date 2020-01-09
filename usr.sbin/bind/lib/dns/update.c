@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: update.c,v 1.3 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: update.c,v 1.4 2020/01/09 18:14:48 florian Exp $ */
 
 #include <config.h>
 
@@ -25,7 +25,7 @@
 #include <isc/platform.h>
 
 #include <isc/serial.h>
-#include <isc/stats.h>
+
 #include <isc/stdtime.h>
 #include <isc/string.h>
 #include <isc/taskpool.h>

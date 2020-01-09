@@ -72,7 +72,7 @@ DNSOBJS =	acache.@O@ acl.@O@ adb.@O@ byaddr.@O@ \
 		request.@O@ resolver.@O@ result.@O@ rootns.@O@ \
 		rpz.@O@ rrl.@O@ rriterator.@O@ sdb.@O@ \
 		sdlz.@O@ soa.@O@ ssu.@O@ ssu_external.@O@ \
-		stats.@O@ tcpmsg.@O@ time.@O@ timer.@O@ tkey.@O@ \
+		tcpmsg.@O@ time.@O@ timer.@O@ tkey.@O@ \
 		tsec.@O@ tsig.@O@ ttl.@O@ update.@O@ validator.@O@ \
 		version.@O@ view.@O@ xfrin.@O@ zone.@O@ zonekey.@O@ zt.@O@
 PORTDNSOBJS =	client.@O@ ecdb.@O@
@@ -104,7 +104,7 @@ DNSSRCS =	acache.c acl.c adb.c byaddr.c \
 		rdataset.c rdatasetiter.c rdataslab.c request.c \
 		resolver.c result.c rootns.c rpz.c rrl.c rriterator.c \
 		sdb.c sdlz.c soa.c ssu.c ssu_external.c \
-		stats.c tcpmsg.c time.c timer.c tkey.c \
+		tcpmsg.c time.c timer.c tkey.c \
 		tsec.c tsig.c ttl.c update.c validator.c \
 		version.c view.c xfrin.c zone.c zonekey.c zt.c ${OTHERSRCS}
 PORTDNSSRCS =	client.c ecdb.c

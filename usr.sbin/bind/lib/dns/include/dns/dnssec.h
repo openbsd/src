@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnssec.h,v 1.4 2020/01/09 14:18:29 florian Exp $ */
+/* $Id: dnssec.h,v 1.5 2020/01/09 18:14:48 florian Exp $ */
 
 #ifndef DNS_DNSSEC_H
 #define DNS_DNSSEC_H 1
@@ -23,7 +23,7 @@
 
 #include <isc/lang.h>
 #include <isc/stdtime.h>
-#include <isc/stats.h>
+
 
 #include <dns/diff.h>
 #include <dns/types.h>

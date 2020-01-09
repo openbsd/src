@@ -57,7 +57,7 @@
 #include <isc/region.h>
 #include <isc/resource.h>
 #include <isc/socket.h>
-#include <isc/stats.h>
+
 #include <isc/strerror.h>
 #include <isc/string.h>
 #include <isc/task.h>
@@ -306,7 +306,6 @@ struct isc__socket {
 	isc__socketmgr_t	*manager;
 	isc_mutex_t		lock;
 	isc_sockettype_t	type;
-	const isc_statscounter_t	*statsindex;
 
 	/* Locked by socket lock. */
 	ISC_LINK(isc__socket_t)	link;
@@ -362,7 +361,6 @@ struct isc__socketmgr {
 	isc_mem_t	       *mctx;
 	isc_mutex_t		lock;
 	isc_mutex_t		*fdlock;
-	isc_stats_t		*stats;
 #ifdef USE_KQUEUE
 	int			kqueue_fd;
 	int			nevents;
@@ -568,8 +566,6 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 isc_result_t
 isc_socketmgr_getmaxsockets(isc_socketmgr_t *manager0, unsigned int *nsockp);
 void
-isc_socketmgr_setstats(isc_socketmgr_t *manager0, isc_stats_t *stats);
-void
 isc__socketmgr_destroy(isc_socketmgr_t **managerp);
 void
 isc__socket_setname(isc_socket_t *socket0, const char *name, void *tag);
@@ -654,97 +650,6 @@ enum {
 	STATID_RECVFAIL = 9,
 	STATID_ACTIVE = 10
 };
-static const isc_statscounter_t udp4statsindex[] = {
-	isc_sockstatscounter_udp4open,
-	isc_sockstatscounter_udp4openfail,
-	isc_sockstatscounter_udp4close,
-	isc_sockstatscounter_udp4bindfail,
-	isc_sockstatscounter_udp4connectfail,
-	isc_sockstatscounter_udp4connect,
-	-1,
-	-1,
-	isc_sockstatscounter_udp4sendfail,
-	isc_sockstatscounter_udp4recvfail,
-	isc_sockstatscounter_udp4active
-};
-static const isc_statscounter_t udp6statsindex[] = {
-	isc_sockstatscounter_udp6open,
-	isc_sockstatscounter_udp6openfail,
-	isc_sockstatscounter_udp6close,
-	isc_sockstatscounter_udp6bindfail,
-	isc_sockstatscounter_udp6connectfail,
-	isc_sockstatscounter_udp6connect,
-	-1,
-	-1,
-	isc_sockstatscounter_udp6sendfail,
-	isc_sockstatscounter_udp6recvfail,
-	isc_sockstatscounter_udp6active
-};
-static const isc_statscounter_t tcp4statsindex[] = {
-	isc_sockstatscounter_tcp4open,
-	isc_sockstatscounter_tcp4openfail,
-	isc_sockstatscounter_tcp4close,
-	isc_sockstatscounter_tcp4bindfail,
-	isc_sockstatscounter_tcp4connectfail,
-	isc_sockstatscounter_tcp4connect,
-	isc_sockstatscounter_tcp4acceptfail,
-	isc_sockstatscounter_tcp4accept,
-	isc_sockstatscounter_tcp4sendfail,
-	isc_sockstatscounter_tcp4recvfail,
-	isc_sockstatscounter_tcp4active
-};
-static const isc_statscounter_t tcp6statsindex[] = {
-	isc_sockstatscounter_tcp6open,
-	isc_sockstatscounter_tcp6openfail,
-	isc_sockstatscounter_tcp6close,
-	isc_sockstatscounter_tcp6bindfail,
-	isc_sockstatscounter_tcp6connectfail,
-	isc_sockstatscounter_tcp6connect,
-	isc_sockstatscounter_tcp6acceptfail,
-	isc_sockstatscounter_tcp6accept,
-	isc_sockstatscounter_tcp6sendfail,
-	isc_sockstatscounter_tcp6recvfail,
-	isc_sockstatscounter_tcp6active
-};
-static const isc_statscounter_t unixstatsindex[] = {
-	isc_sockstatscounter_unixopen,
-	isc_sockstatscounter_unixopenfail,
-	isc_sockstatscounter_unixclose,
-	isc_sockstatscounter_unixbindfail,
-	isc_sockstatscounter_unixconnectfail,
-	isc_sockstatscounter_unixconnect,
-	isc_sockstatscounter_unixacceptfail,
-	isc_sockstatscounter_unixaccept,
-	isc_sockstatscounter_unixsendfail,
-	isc_sockstatscounter_unixrecvfail,
-	isc_sockstatscounter_unixactive
-};
-static const isc_statscounter_t fdwatchstatsindex[] = {
-	-1,
-	-1,
-	isc_sockstatscounter_fdwatchclose,
-	isc_sockstatscounter_fdwatchbindfail,
-	isc_sockstatscounter_fdwatchconnectfail,
-	isc_sockstatscounter_fdwatchconnect,
-	-1,
-	-1,
-	isc_sockstatscounter_fdwatchsendfail,
-	isc_sockstatscounter_fdwatchrecvfail,
-	-1
-};
-static const isc_statscounter_t rawstatsindex[] = {
-	isc_sockstatscounter_rawopen,
-	isc_sockstatscounter_rawopenfail,
-	isc_sockstatscounter_rawclose,
-	-1,
-	-1,
-	-1,
-	-1,
-	-1,
-	-1,
-	isc_sockstatscounter_rawrecvfail,
-	isc_sockstatscounter_rawactive
-};
 
 #if defined(USE_KQUEUE) || defined(USE_EPOLL) || defined(USE_DEVPOLL) || \
     defined(USE_WATCHER_THREAD)
@@ -804,28 +709,6 @@ socket_log(isc__socket_t *sock, isc_sockaddr_t *address,
 			       msgcat, msgset, message,
 			       "socket %p %s: %s", sock, peerbuf, msgbuf);
 	}
-}
-
-/*%
- * Increment socket-related statistics counters.
- */
-static inline void
-inc_stats(isc_stats_t *stats, isc_statscounter_t counterid) {
-	REQUIRE(counterid != -1);
-
-	if (stats != NULL)
-		isc_stats_increment(stats, counterid);
-}
-
-/*%
- * Decrement socket-related statistics counters.
- */
-static inline void
-dec_stats(isc_stats_t *stats, isc_statscounter_t counterid) {
-	REQUIRE(counterid != -1);
-
-	if (stats != NULL)
-		isc_stats_decrement(stats, counterid);
 }
 
 static inline isc_result_t
@@ -1778,8 +1661,6 @@ doio_recv(isc__socket_t *sock, isc_socketevent_t *dev) {
 	if (recv_errno == _system) { \
 		if (sock->connected) { \
 			dev->result = _isc; \
-			inc_stats(sock->manager->stats, \
-				  sock->statsindex[STATID_RECVFAIL]); \
 			return (DOIO_HARD); \
 		} \
 		return (DOIO_SOFT); \
@@ -1787,8 +1668,6 @@ doio_recv(isc__socket_t *sock, isc_socketevent_t *dev) {
 #define ALWAYS_HARD(_system, _isc) \
 	if (recv_errno == _system) { \
 		dev->result = _isc; \
-		inc_stats(sock->manager->stats, \
-			  sock->statsindex[STATID_RECVFAIL]); \
 		return (DOIO_HARD); \
 	}
 
@@ -1816,8 +1695,6 @@ doio_recv(isc__socket_t *sock, isc_socketevent_t *dev) {
 #undef ALWAYS_HARD
 
 		dev->result = isc__errno2result(recv_errno);
-		inc_stats(sock->manager->stats,
-			  sock->statsindex[STATID_RECVFAIL]);
 		return (DOIO_HARD);
 	}
 
@@ -1972,8 +1849,6 @@ doio_send(isc__socket_t *sock, isc_socketevent_t *dev) {
 	if (send_errno == _system) { \
 		if (sock->connected) { \
 			dev->result = _isc; \
-			inc_stats(sock->manager->stats, \
-				  sock->statsindex[STATID_SENDFAIL]); \
 			return (DOIO_HARD); \
 		} \
 		return (DOIO_SOFT); \
@@ -1981,8 +1856,6 @@ doio_send(isc__socket_t *sock, isc_socketevent_t *dev) {
 #define ALWAYS_HARD(_system, _isc) \
 	if (send_errno == _system) { \
 		dev->result = _isc; \
-		inc_stats(sock->manager->stats, \
-			  sock->statsindex[STATID_SENDFAIL]); \
 		return (DOIO_HARD); \
 	}
 
@@ -2017,14 +1890,10 @@ doio_send(isc__socket_t *sock, isc_socketevent_t *dev) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__, "internal_send: %s: %s",
 				 addrbuf, strbuf);
 		dev->result = isc__errno2result(send_errno);
-		inc_stats(sock->manager->stats,
-			  sock->statsindex[STATID_SENDFAIL]);
 		return (DOIO_HARD);
 	}
 
 	if (cc == 0) {
-		inc_stats(sock->manager->stats,
-			  sock->statsindex[STATID_SENDFAIL]);
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "doio_send: send() %s 0",
 				 isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
@@ -2083,9 +1952,7 @@ socketclose(isc__socketmgr_t *manager, isc__socket_t *sock, int fd) {
 	} else
 		select_poke(manager, fd, SELECT_POKE_CLOSE);
 
-	inc_stats(manager->stats, sock->statsindex[STATID_CLOSE]);
 	if (sock->active == 1) {
-		dec_stats(manager->stats, sock->statsindex[STATID_ACTIVE]);
 		sock->active = 0;
 	}
 
@@ -2173,7 +2040,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	sock->fd = -1;
 	sock->dscp = 0;		/* TOS/TCLASS is zero until set. */
 	sock->dupped = 0;
-	sock->statsindex = NULL;
 	sock->active = 0;
 
 	ISC_LINK_INIT(sock, link);
@@ -2500,7 +2366,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 			       ISC_MSG_TOOMANYFDS,
 			       "socket: file descriptor exceeds limit (%d/%u)",
 			       sock->fd, manager->maxsocks);
-		inc_stats(manager->stats, sock->statsindex[STATID_OPENFAIL]);
 		return (ISC_R_NORESOURCES);
 	}
 
@@ -2516,8 +2381,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 				       "%s: %s", err, strbuf);
 			/* fallthrough */
 		case ENOBUFS:
-			inc_stats(manager->stats,
-				  sock->statsindex[STATID_OPENFAIL]);
 			return (ISC_R_NORESOURCES);
 
 		case EPROTONOSUPPORT:
@@ -2528,8 +2391,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 		 * EAFNOSUPPORT.
 		 */
 		case EINVAL:
-			inc_stats(manager->stats,
-				  sock->statsindex[STATID_OPENFAIL]);
 			return (ISC_R_FAMILYNOSUPPORT);
 
 		default:
@@ -2541,8 +2402,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 							ISC_MSG_FAILED,
 							"failed"),
 					 strbuf);
-			inc_stats(manager->stats,
-				  sock->statsindex[STATID_OPENFAIL]);
 			return (ISC_R_UNEXPECTED);
 		}
 	}
@@ -2553,7 +2412,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	result = make_nonblock(sock->fd);
 	if (result != ISC_R_SUCCESS) {
 		(void)close(sock->fd);
-		inc_stats(manager->stats, sock->statsindex[STATID_OPENFAIL]);
 		return (result);
 	}
 
@@ -2713,9 +2571,7 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	}
 
 setup_done:
-	inc_stats(manager->stats, sock->statsindex[STATID_OPEN]);
 	if (sock->active == 0) {
-		inc_stats(manager->stats, sock->statsindex[STATID_ACTIVE]);
 		sock->active = 1;
 	}
 
@@ -2747,20 +2603,14 @@ socket_create(isc_socketmgr_t *manager0, int pf, isc_sockettype_t type,
 
 	switch (sock->type) {
 	case isc_sockettype_udp:
-		sock->statsindex =
-			(pf == AF_INET) ? udp4statsindex : udp6statsindex;
 #define DCSPPKT(pf) ((pf == AF_INET) ? ISC_NET_DSCPPKTV4 : ISC_NET_DSCPPKTV6)
 		sock->pktdscp = (isc_net_probedscp() & DCSPPKT(pf)) != 0;
 		break;
 	case isc_sockettype_tcp:
-		sock->statsindex =
-			(pf == AF_INET) ? tcp4statsindex : tcp6statsindex;
 		break;
 	case isc_sockettype_unix:
-		sock->statsindex = unixstatsindex;
 		break;
 	case isc_sockettype_raw:
-		sock->statsindex = rawstatsindex;
 		break;
 	default:
 		INSIST(0);
@@ -2917,7 +2767,6 @@ isc__socket_fdwatchcreate(isc_socketmgr_t *manager0, int fd, int flags,
 	sock->fdwatchcb = callback;
 	sock->fdwatchflags = flags;
 	sock->fdwatchtask = task;
-	sock->statsindex = fdwatchstatsindex;
 
 	sock->common.methods = (isc_socketmethods_t *)&socketmethods;
 	sock->references = 1;
@@ -3476,8 +3325,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 		dev->address = NEWCONNSOCK(dev)->peer_address;
 
 		if (NEWCONNSOCK(dev)->active == 0) {
-			inc_stats(manager->stats,
-				  NEWCONNSOCK(dev)->statsindex[STATID_ACTIVE]);
 			NEWCONNSOCK(dev)->active = 1;
 		}
 
@@ -3505,9 +3352,7 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 
 		UNLOCK(&manager->lock);
 
-		inc_stats(manager->stats, sock->statsindex[STATID_ACCEPT]);
 	} else {
-		inc_stats(manager->stats, sock->statsindex[STATID_ACCEPTFAIL]);
 		NEWCONNSOCK(dev)->references--;
 		free_socket((isc__socket_t **)&dev->newsocket);
 	}
@@ -3526,7 +3371,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	select_poke(sock->manager, sock->fd, SELECT_POKE_ACCEPT);
 	UNLOCK(&sock->lock);
 
-	inc_stats(manager->stats, sock->statsindex[STATID_ACCEPTFAIL]);
 	return;
 }
 
@@ -4445,7 +4289,6 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 	}
 	memset(manager->epoll_events, 0, manager->maxsocks * sizeof(uint32_t));
 #endif
-	manager->stats = NULL;
 
 	manager->common.methods = &socketmgrmethods;
 	manager->common.magic = ISCAPI_SOCKETMGR_MAGIC;
@@ -4597,18 +4440,6 @@ isc_socketmgr_getmaxsockets(isc_socketmgr_t *manager0, unsigned int *nsockp) {
 }
 
 void
-isc_socketmgr_setstats(isc_socketmgr_t *manager0, isc_stats_t *stats) {
-	isc__socketmgr_t *manager = (isc__socketmgr_t *)manager0;
-
-	REQUIRE(VALID_MANAGER(manager));
-	REQUIRE(ISC_LIST_EMPTY(manager->socklist));
-	REQUIRE(manager->stats == NULL);
-	REQUIRE(isc_stats_ncounters(stats) == isc_sockstatscounter_max);
-
-	isc_stats_attach(stats, &manager->stats);
-}
-
-void
 isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 	isc__socketmgr_t *manager;
 	int i;
@@ -4693,9 +4524,6 @@ isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 		    manager->maxsocks * sizeof(isc__socket_t *));
 	isc_mem_put(manager->mctx, manager->fdstate,
 		    manager->maxsocks * sizeof(int));
-
-	if (manager->stats != NULL)
-		isc_stats_detach(&manager->stats);
 
 	if (manager->fdlock != NULL) {
 		for (i = 0; i < FDLOCK_COUNT; i++)
@@ -5329,8 +5157,6 @@ isc__socket_bind(isc_socket_t *sock0, isc_sockaddr_t *sockaddr,
  bind_socket:
 #endif
 	if (bind(sock->fd, &sockaddr->type.sa, sockaddr->length) < 0) {
-		inc_stats(sock->manager->stats,
-			  sock->statsindex[STATID_BINDFAIL]);
 
 		UNLOCK(&sock->lock);
 		switch (errno) {
@@ -5493,7 +5319,6 @@ isc__socket_accept(isc_socket_t *sock0,
 		return (ISC_R_SHUTTINGDOWN);
 	}
 	nsock->references++;
-	nsock->statsindex = sock->statsindex;
 
 	dev->ev_sender = ntask;
 	dev->newsocket = (isc_socket_t *)nsock;
@@ -5599,8 +5424,6 @@ isc__socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 				 addrbuf, errno, strbuf);
 
 		UNLOCK(&sock->lock);
-		inc_stats(sock->manager->stats,
-			  sock->statsindex[STATID_CONNECTFAIL]);
 		isc_event_free(ISC_EVENT_PTR(&dev));
 		return (ISC_R_UNEXPECTED);
 
@@ -5609,8 +5432,6 @@ isc__socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 		isc_task_send(task, ISC_EVENT_PTR(&dev));
 
 		UNLOCK(&sock->lock);
-		inc_stats(sock->manager->stats,
-			  sock->statsindex[STATID_CONNECTFAIL]);
 		return (ISC_R_SUCCESS);
 	}
 
@@ -5626,8 +5447,6 @@ isc__socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 
 		UNLOCK(&sock->lock);
 
-		inc_stats(sock->manager->stats,
-			  sock->statsindex[STATID_CONNECT]);
 
 		return (ISC_R_SUCCESS);
 	}
@@ -5727,8 +5546,6 @@ internal_connect(isc_task_t *me, isc_event_t *ev) {
 			return;
 		}
 
-		inc_stats(sock->manager->stats,
-			  sock->statsindex[STATID_CONNECTFAIL]);
 
 		/*
 		 * Translate other errors into ISC_R_* flavors.
@@ -5760,8 +5577,6 @@ internal_connect(isc_task_t *me, isc_event_t *ev) {
 					 peerbuf, strbuf);
 		}
 	} else {
-		inc_stats(sock->manager->stats,
-			  sock->statsindex[STATID_CONNECT]);
 		dev->result = ISC_R_SUCCESS;
 		sock->connected = 1;
 		sock->bound = 1;

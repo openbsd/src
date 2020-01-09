@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: dnssec.c,v 1.9 2020/01/09 14:18:29 florian Exp $
+ * $Id: dnssec.c,v 1.10 2020/01/09 18:14:48 florian Exp $
  */
 
 /*! \file */
@@ -45,12 +45,10 @@
 #include <dns/rdataset.h>
 #include <dns/rdatastruct.h>
 #include <dns/result.h>
-#include <dns/stats.h>
+
 #include <dns/tsig.h>		/* for DNS_TSIG_FUDGE */
 
 #include <dst/result.h>
-
-isc_stats_t *dns_dnssec_stats;
 
 #define is_response(msg) (msg->flags & DNS_MESSAGEFLAG_QR)
 
@@ -79,12 +77,6 @@ digest_callback(void *arg, isc_region_t *data) {
 	dst_context_t *ctx = arg;
 
 	return (dst_context_adddata(ctx, data));
-}
-
-static inline void
-inc_stat(isc_statscounter_t counter) {
-	if (dns_dnssec_stats != NULL)
-		isc_stats_increment(dns_dnssec_stats, counter);
 }
 
 /*
@@ -412,7 +404,6 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		return (DNS_R_SIGINVALID);
 
 	if (isc_serial_lt(sig.timeexpire, sig.timesigned)) {
-		inc_stat(dns_dnssecstats_fail);
 		return (DNS_R_SIGINVALID);
 	}
 
@@ -423,10 +414,8 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		 * Is SIG temporally valid?
 		 */
 		if (isc_serial_lt((isc_uint32_t)now, sig.timesigned)) {
-			inc_stat(dns_dnssecstats_fail);
 			return (DNS_R_SIGFUTURE);
 		} else if (isc_serial_lt(sig.timeexpire, (isc_uint32_t)now)) {
-			inc_stat(dns_dnssecstats_fail);
 			return (DNS_R_SIGEXPIRED);
 		}
 	}
@@ -440,19 +429,16 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	case dns_rdatatype_soa:
 	case dns_rdatatype_dnskey:
 		if (!dns_name_equal(name, &sig.signer)) {
-			inc_stat(dns_dnssecstats_fail);
 			return (DNS_R_SIGINVALID);
 		}
 		break;
 	case dns_rdatatype_ds:
 		if (dns_name_equal(name, &sig.signer)) {
-			inc_stat(dns_dnssecstats_fail);
 			return (DNS_R_SIGINVALID);
 		}
 		/* FALLTHROUGH */
 	default:
 		if (!dns_name_issubdomain(name, &sig.signer)) {
-			inc_stat(dns_dnssecstats_fail);
 			return (DNS_R_SIGINVALID);
 		}
 		break;
@@ -463,11 +449,9 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	 */
 	flags = dst_key_flags(key);
 	if (flags & DNS_KEYTYPE_NOAUTH) {
-		inc_stat(dns_dnssecstats_fail);
 		return (DNS_R_KEYUNAUTHORIZED);
 	}
 	if ((flags & DNS_KEYFLAG_OWNERMASK) != DNS_KEYOWNER_ZONE) {
-		inc_stat(dns_dnssecstats_fail);
 		return (DNS_R_KEYUNAUTHORIZED);
 	}
 
@@ -566,9 +550,7 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 			      DNS_LOGMODULE_DNSSEC, ISC_LOG_DEBUG(1),
 			      "successfully validated after lower casing "
 			      "signer '%s'", namebuf);
-		inc_stat(dns_dnssecstats_downcase);
-	} else if (ret == ISC_R_SUCCESS)
-		inc_stat(dns_dnssecstats_asis);
+	}
 
 cleanup_array:
 	isc_mem_put(mctx, rdatas, nrdatas * sizeof(dns_rdata_t));
@@ -584,15 +566,11 @@ cleanup_struct:
 	if (ret == DST_R_VERIFYFAILURE)
 		ret = DNS_R_SIGINVALID;
 
-	if (ret != ISC_R_SUCCESS)
-		inc_stat(dns_dnssecstats_fail);
-
 	if (ret == ISC_R_SUCCESS && labels - sig.labels > 0) {
 		if (wild != NULL)
 			RUNTIME_CHECK(dns_name_concatenate(dns_wildcardname,
 						 dns_fixedname_name(&fnewname),
 						 wild, NULL) == ISC_R_SUCCESS);
-		inc_stat(dns_dnssecstats_wildcard);
 		ret = DNS_R_FROMWILDCARD;
 	}
 	return (ret);

@@ -30,7 +30,7 @@
 #include <isc/refcount.h>
 #include <isc/rwlock.h>
 #include <isc/serial.h>
-#include <isc/stats.h>
+
 #include <isc/stdtime.h>
 #include <isc/strerror.h>
 #include <isc/string.h>
@@ -76,7 +76,7 @@
 #include <dns/rriterator.h>
 #include <dns/soa.h>
 #include <dns/ssu.h>
-#include <dns/stats.h>
+
 #include <dns/time.h>
 #include <dns/tsig.h>
 #include <dns/update.h>
@@ -181,17 +181,10 @@ typedef struct dns_include dns_include_t;
 	do { result = isc_mutex_trylock(&(z)->lock); } while (0)
 #endif
 
-#ifdef ISC_RWLOCK_USEATOMIC
-#define ZONEDB_INITLOCK(l)	isc_rwlock_init((l), 0, 0)
-#define ZONEDB_DESTROYLOCK(l)	isc_rwlock_destroy(l)
-#define ZONEDB_LOCK(l, t)	RWLOCK((l), (t))
-#define ZONEDB_UNLOCK(l, t)	RWUNLOCK((l), (t))
-#else
 #define ZONEDB_INITLOCK(l)	isc_mutex_init(l)
 #define ZONEDB_DESTROYLOCK(l)	DESTROYLOCK(l)
 #define ZONEDB_LOCK(l, t)	LOCK(l)
 #define ZONEDB_UNLOCK(l, t)	UNLOCK(l)
-#endif
 
 struct dns_zone {
 	/* Unlocked */
@@ -203,11 +196,7 @@ struct dns_zone {
 	isc_mem_t		*mctx;
 	isc_refcount_t		erefs;
 
-#ifdef ISC_RWLOCK_USEATOMIC
-	isc_rwlock_t		dblock;
-#else
 	isc_mutex_t		dblock;
-#endif
 	dns_db_t		*db;		/* Locked by dblock */
 
 	/* Locked */
@@ -854,15 +843,6 @@ struct np3event {
 	nsec3param_t params;
 };
 
-/*%
- * Increment resolver-related statistics counters.  Zone must be locked.
- */
-static inline void
-inc_stats(dns_zone_t *zone, isc_statscounter_t counter) {
-	if (zone->stats != NULL)
-		isc_stats_increment(zone->stats, counter);
-}
-
 /***
  ***	Public functions.
  ***/
@@ -1153,15 +1133,6 @@ zone_free(dns_zone_t *zone) {
 		isc_mem_free(zone->mctx, zone->journal);
 	}
 	zone->journal = NULL;
-	if (zone->stats != NULL) {
-		isc_stats_detach(&zone->stats);
-	}
-	if (zone->requeststats != NULL) {
-		isc_stats_detach(&zone->requeststats);
-	}
-	if (zone->rcvquerystats != NULL){
-		dns_stats_detach(&zone->rcvquerystats);
-	}
 	if (zone->db != NULL) {
 		zone_detachdb(zone);
 	}
@@ -10932,15 +10903,6 @@ notify_send_toaddr(isc_task_t *task, isc_event_t *event) {
 					options, key, timeout * 3, timeout,
 					0, notify->zone->task, notify_done,
 					notify, &notify->request);
-	if (result == ISC_R_SUCCESS) {
-		if (isc_sockaddr_pf(&notify->dst) == AF_INET) {
-			inc_stats(notify->zone,
-				  dns_zonestatscounter_notifyoutv4);
-		} else {
-			inc_stats(notify->zone,
-				  dns_zonestatscounter_notifyoutv6);
-		}
-	}
 
  cleanup_key:
 	if (key != NULL)
@@ -12245,11 +12207,6 @@ soa_query(isc_task_t *task, isc_event_t *event) {
 			      "dns_request_createvia4() failed: %s",
 			      dns_result_totext(result));
 		goto skip_master;
-	} else {
-		if (isc_sockaddr_pf(&zone->masteraddr) == PF_INET)
-			inc_stats(zone, dns_zonestatscounter_soaoutv4);
-		else
-			inc_stats(zone, dns_zonestatscounter_soaoutv6);
 	}
 	cancel = ISC_FALSE;
 
@@ -13008,10 +12965,6 @@ dns_zone_notifyreceive2(dns_zone_t *zone, isc_sockaddr_t *from,
 	/*
 	 *  We only handle NOTIFY (SOA) at the present.
 	 */
-	if (isc_sockaddr_pf(from) == PF_INET)
-		inc_stats(zone, dns_zonestatscounter_notifyinv4);
-	else
-		inc_stats(zone, dns_zonestatscounter_notifyinv6);
 	if (msg->counts[DNS_SECTION_QUESTION] == 0 ||
 	    dns_message_findname(msg, DNS_SECTION_QUESTION, &zone->origin,
 				 dns_rdatatype_soa, dns_rdatatype_none,
@@ -13068,7 +13021,6 @@ dns_zone_notifyreceive2(dns_zone_t *zone, isc_sockaddr_t *from,
 		UNLOCK_ZONE(zone);
 		dns_zone_log(zone, ISC_LOG_INFO,
 			     "refused notify from non-master: %s", fromtext);
-		inc_stats(zone, dns_zonestatscounter_notifyrej);
 		return (DNS_R_REFUSED);
 	}
 
@@ -15059,7 +15011,6 @@ zone_xfrdone(dns_zone_t *zone, isc_result_t result) {
 					     dns_result_totext(result));
 		}
 		DNS_ZONE_CLRFLAG(zone, DNS_ZONEFLG_NODELAY);
-		inc_stats(zone, dns_zonestatscounter_xfrsuccess);
 		break;
 
 	case DNS_R_BADIXFR:
@@ -15069,7 +15020,6 @@ zone_xfrdone(dns_zone_t *zone, isc_result_t result) {
 
 	case DNS_R_TOOMANYRECORDS:
 		DNS_ZONE_JITTER_ADD(&now, zone->refresh, &zone->refreshtime);
-		inc_stats(zone, dns_zonestatscounter_xfrfail);
 		break;
 
 	default:
@@ -15099,7 +15049,6 @@ zone_xfrdone(dns_zone_t *zone, isc_result_t result) {
 			DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_REFRESH);
 			again = ISC_TRUE;
 		}
-		inc_stats(zone, dns_zonestatscounter_xfrfail);
 		break;
 	}
 	zone_settimer(zone, &now);
@@ -15467,21 +15416,6 @@ got_transfer_quota(isc_task_t *task, isc_event_t *event) {
 				   dscp, zone->tsigkey, zone->mctx,
 				   zone->zmgr->timermgr, zone->zmgr->socketmgr,
 				   zone->task, zone_xfrdone, &zone->xfr);
-	if (result == ISC_R_SUCCESS) {
-		LOCK_ZONE(zone);
-		if (xfrtype == dns_rdatatype_axfr) {
-			if (isc_sockaddr_pf(&masteraddr) == PF_INET)
-				inc_stats(zone, dns_zonestatscounter_axfrreqv4);
-			else
-				inc_stats(zone, dns_zonestatscounter_axfrreqv6);
-		} else if (xfrtype == dns_rdatatype_ixfr) {
-			if (isc_sockaddr_pf(&masteraddr) == PF_INET)
-				inc_stats(zone, dns_zonestatscounter_ixfrreqv4);
-			else
-				inc_stats(zone, dns_zonestatscounter_ixfrreqv6);
-		}
-		UNLOCK_ZONE(zone);
-	}
  cleanup:
 	/*
 	 * Any failure in this function is handled like a failed
@@ -16761,96 +16695,6 @@ dns_zone_isforced(dns_zone_t *zone) {
 	REQUIRE(DNS_ZONE_VALID(zone));
 
 	return (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_FORCEXFER));
-}
-
-isc_result_t
-dns_zone_setstatistics(dns_zone_t *zone, isc_boolean_t on) {
-	/*
-	 * This function is obsoleted.
-	 */
-	UNUSED(zone);
-	UNUSED(on);
-	return (ISC_R_NOTIMPLEMENTED);
-}
-
-isc_uint64_t *
-dns_zone_getstatscounters(dns_zone_t *zone) {
-	/*
-	 * This function is obsoleted.
-	 */
-	UNUSED(zone);
-	return (NULL);
-}
-
-void
-dns_zone_setstats(dns_zone_t *zone, isc_stats_t *stats) {
-	REQUIRE(DNS_ZONE_VALID(zone));
-	REQUIRE(zone->stats == NULL);
-
-	LOCK_ZONE(zone);
-	zone->stats = NULL;
-	isc_stats_attach(stats, &zone->stats);
-	UNLOCK_ZONE(zone);
-}
-
-void
-dns_zone_setrequeststats(dns_zone_t *zone, isc_stats_t *stats) {
-
-	REQUIRE(DNS_ZONE_VALID(zone));
-
-	LOCK_ZONE(zone);
-	if (zone->requeststats_on && stats == NULL)
-		zone->requeststats_on = ISC_FALSE;
-	else if (!zone->requeststats_on && stats != NULL) {
-		if (zone->requeststats == NULL) {
-			isc_stats_attach(stats, &zone->requeststats);
-			zone->requeststats_on = ISC_TRUE;
-		}
-	}
-	UNLOCK_ZONE(zone);
-}
-
-void
-dns_zone_setrcvquerystats(dns_zone_t *zone, dns_stats_t *stats) {
-
-	REQUIRE(DNS_ZONE_VALID(zone));
-
-	LOCK_ZONE(zone);
-	if (zone->requeststats_on && stats != NULL) {
-		if (zone->rcvquerystats == NULL) {
-			dns_stats_attach(stats, &zone->rcvquerystats);
-			zone->requeststats_on = ISC_TRUE;
-		}
-	}
-	UNLOCK_ZONE(zone);
-}
-
-isc_stats_t *
-dns_zone_getrequeststats(dns_zone_t *zone) {
-	/*
-	 * We don't lock zone for efficiency reason.  This is not catastrophic
-	 * because requeststats must always be valid when requeststats_on is
-	 * true.
-	 * Some counters may be incremented while requeststats_on is becoming
-	 * false, or some cannot be incremented just after the statistics are
-	 * installed, but it shouldn't matter much in practice.
-	 */
-	if (zone->requeststats_on)
-		return (zone->requeststats);
-	else
-		return (NULL);
-}
-
-/*
- * Return the received query stats bucket
- * see note from dns_zone_getrequeststats()
- */
-dns_stats_t *
-dns_zone_getrcvquerystats(dns_zone_t *zone) {
-	if (zone->requeststats_on)
-		return (zone->rcvquerystats);
-	else
-		return (NULL);
 }
 
 void

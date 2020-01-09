@@ -14,22 +14,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: refcount.h,v 1.7 2020/01/07 19:08:09 florian Exp $ */
+/* $Id: refcount.h,v 1.8 2020/01/09 18:14:48 florian Exp $ */
 
 #ifndef ISC_REFCOUNT_H
 #define ISC_REFCOUNT_H 1
 
 #include <isc/assertions.h>
-#include <isc/atomic.h>
+
 #include <isc/error.h>
 #include <isc/lang.h>
 #include <isc/mutex.h>
 #include <isc/platform.h>
 #include <isc/types.h>
-
-#if defined(ISC_PLATFORM_HAVESTDATOMIC)
-#include <stdatomic.h>
-#endif
 
 /*! \file isc/refcount.h
  * \brief Implements a locked reference counter.

@@ -36,7 +36,7 @@ HEADERS =	aes.h app.h assertions.h base32.h base64.h \
 		radix.h ratelimiter.h refcount.h regex.h \
 		region.h resource.h result.h resultclass.h rwlock.h \
 		safe.h serial.h sha1.h sha2.h sockaddr.h socket.h \
-		stats.h stdio.h stdlib.h string.h symtab.h task.h \
+		stdio.h stdlib.h string.h symtab.h task.h \
 		taskpool.h timer.h tm.h types.h util.h version.h \
 		xml.h
 

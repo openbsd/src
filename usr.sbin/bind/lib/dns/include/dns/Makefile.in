@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.4 2020/01/07 19:06:07 florian Exp $
+# $Id: Makefile.in,v 1.5 2020/01/09 18:14:48 florian Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -32,7 +32,7 @@ HEADERS =	acache.h acl.h adb.h bit.h byaddr.h cache.h callbacks.h cert.h \
 		rbt.h rcode.h rdata.h rdataclass.h rdatalist.h \
 		rdataset.h rdatasetiter.h rdataslab.h rdatatype.h request.h \
 		resolver.h result.h rootns.h rpz.h rriterator.h rrl.h \
-		sdb.h sdlz.h secalg.h secproto.h soa.h ssu.h stats.h \
+		sdb.h sdlz.h secalg.h secproto.h soa.h ssu.h \
 		tcpmsg.h time.h timer.h tkey.h tsec.h tsig.h ttl.h types.h \
 		update.h validator.h version.h view.h xfrin.h \
 		zone.h zonekey.h zt.h

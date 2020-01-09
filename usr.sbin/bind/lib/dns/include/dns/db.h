@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: db.h,v 1.6 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: db.h,v 1.7 2020/01/09 18:14:48 florian Exp $ */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -56,7 +56,7 @@
 #include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/ondestroy.h>
-#include <isc/stats.h>
+
 #include <isc/stdtime.h>
 
 #include <dns/clientinfo.h>

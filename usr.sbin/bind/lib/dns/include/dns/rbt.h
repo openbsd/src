@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rbt.h,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: rbt.h,v 1.4 2020/01/09 18:14:48 florian Exp $ */
 
 #ifndef DNS_RBT_H
 #define DNS_RBT_H 1
@@ -45,9 +45,6 @@ ISC_LANG_BEGINDECLS
 /*@}*/
 
 #ifndef DNS_RBT_USEISCREFCOUNT
-#ifdef ISC_REFCOUNT_HAVEATOMIC
-#define DNS_RBT_USEISCREFCOUNT 1
-#endif
 #endif
 
 #define DNS_RBT_USEMAGIC 1

@@ -30,7 +30,7 @@
 
 
 #include <isc/socket.h>
-#include <isc/stats.h>
+
 #include <isc/string.h>
 #include <isc/task.h>
 #include <isc/time.h>
@@ -42,7 +42,7 @@
 #include <dns/log.h>
 #include <dns/message.h>
 #include <dns/portlist.h>
-#include <dns/stats.h>
+
 #include <dns/tcpmsg.h>
 #include <dns/types.h>
 
@@ -345,18 +345,6 @@ mgr_log(dns_dispatchmgr_t *mgr, int level, const char *fmt, ...) {
 	isc_log_write(dns_lctx,
 		      DNS_LOGCATEGORY_DISPATCH, DNS_LOGMODULE_DISPATCH,
 		      level, "dispatchmgr %p: %s", mgr, msgbuf);
-}
-
-static inline void
-inc_stats(dns_dispatchmgr_t *mgr, isc_statscounter_t counter) {
-	if (mgr->stats != NULL)
-		isc_stats_increment(mgr->stats, counter);
-}
-
-static inline void
-dec_stats(dns_dispatchmgr_t *mgr, isc_statscounter_t counter) {
-	if (mgr->stats != NULL)
-		isc_stats_decrement(mgr->stats, counter);
 }
 
 static void
@@ -1193,7 +1181,6 @@ udp_recv(isc_event_t *ev_in, dns_dispatch_t *disp, dispsocket_t *dispsock) {
 			     bucket, (resp == NULL ? "not found" : "found"));
 
 		if (resp == NULL) {
-			inc_stats(mgr, dns_resstatscounter_mismatch);
 			free_buffer(disp, ev->region.base, ev->region.length);
 			goto unlock;
 		}
@@ -1201,7 +1188,6 @@ udp_recv(isc_event_t *ev_in, dns_dispatch_t *disp, dispsocket_t *dispsock) {
 							 &resp->host)) {
 		dispatch_log(disp, LVL(90),
 			     "response to an exclusive socket doesn't match");
-		inc_stats(mgr, dns_resstatscounter_mismatch);
 		free_buffer(disp, ev->region.base, ev->region.length);
 		goto unlock;
 	}
@@ -1654,9 +1640,6 @@ destroy_mgr(dns_dispatchmgr_t **mgrp) {
 	if (mgr->blackhole != NULL)
 		dns_acl_detach(&mgr->blackhole);
 
-	if (mgr->stats != NULL)
-		isc_stats_detach(&mgr->stats);
-
 	if (mgr->v4ports != NULL) {
 		isc_mem_put(mctx, mgr->v4ports,
 			    mgr->nv4ports * sizeof(in_port_t));
@@ -2102,15 +2085,6 @@ dns_dispatchmgr_destroy(dns_dispatchmgr_t **mgrp) {
 
 	if (killit)
 		destroy_mgr(&mgr);
-}
-
-void
-dns_dispatchmgr_setstats(dns_dispatchmgr_t *mgr, isc_stats_t *stats) {
-	REQUIRE(VALID_DISPATCHMGR(mgr));
-	REQUIRE(ISC_LIST_EMPTY(mgr->list));
-	REQUIRE(mgr->stats == NULL);
-
-	isc_stats_attach(stats, &mgr->stats);
 }
 
 static int
@@ -3053,8 +3027,6 @@ dns_dispatch_addresponse3(dns_dispatch_t *disp, unsigned int options,
 				oldestresp->item_out = ISC_TRUE;
 				isc_task_send(oldestresp->task,
 					      ISC_EVENT_PTR(&rev));
-				inc_stats(disp->mgr,
-					  dns_resstatscounter_dispabort);
 			}
 		}
 
@@ -3076,7 +3048,6 @@ dns_dispatch_addresponse3(dns_dispatch_t *disp, unsigned int options,
 					&localport);
 		if (result != ISC_R_SUCCESS) {
 			UNLOCK(&disp->lock);
-			inc_stats(disp->mgr, dns_resstatscounter_dispsockfail);
 			return (result);
 		}
 	} else {
@@ -3143,10 +3114,6 @@ dns_dispatch_addresponse3(dns_dispatch_t *disp, unsigned int options,
 	ISC_LIST_APPEND(qid->qid_table[bucket], res, link);
 	UNLOCK(&qid->lock);
 
-	inc_stats(disp->mgr, (qid == disp->mgr->qid) ?
-			     dns_resstatscounter_disprequdp :
-			     dns_resstatscounter_dispreqtcp);
-
 	request_log(disp, res, LVL(90),
 		    "attached to task %p", res->task);
 
@@ -3163,10 +3130,6 @@ dns_dispatch_addresponse3(dns_dispatch_t *disp, unsigned int options,
 
 			disp->refcount--;
 			disp->requests--;
-
-			dec_stats(disp->mgr, (qid == disp->mgr->qid) ?
-					     dns_resstatscounter_disprequdp :
-					     dns_resstatscounter_dispreqtcp);
 
 			UNLOCK(&disp->lock);
 			isc_task_detach(&res->task);
@@ -3254,9 +3217,6 @@ dns_dispatch_removeresponse(dns_dispentry_t **resp,
 
 	INSIST(disp->requests > 0);
 	disp->requests--;
-	dec_stats(disp->mgr, (qid == disp->mgr->qid) ?
-			     dns_resstatscounter_disprequdp :
-			     dns_resstatscounter_dispreqtcp);
 	INSIST(disp->refcount > 0);
 	disp->refcount--;
 	if (disp->refcount == 0) {

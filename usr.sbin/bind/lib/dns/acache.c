@@ -14,12 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: acache.c,v 1.4 2020/01/09 14:24:07 florian Exp $ */
+/* $Id: acache.c,v 1.5 2020/01/09 18:14:48 florian Exp $ */
 
 #include <config.h>
 #include <stdlib.h>
 
-#include <isc/atomic.h>
+
 #include <isc/event.h>
 #include <isc/hash.h>
 #include <isc/magic.h>
@@ -44,10 +44,6 @@
 #include <dns/rdataset.h>
 #include <dns/result.h>
 #include <dns/zone.h>
-
-#if defined(ISC_PLATFORM_HAVESTDATOMIC)
-#include <stdatomic.h>
-#endif
 
 #define ACACHE_MAGIC			ISC_MAGIC('A', 'C', 'H', 'E')
 #define DNS_ACACHE_VALID(acache)	ISC_MAGIC_VALID(acache, ACACHE_MAGIC)
@@ -85,38 +81,12 @@
 
 #define DEFAULT_ACACHE_ENTRY_LOCK_COUNT	1009	 /*%< Should be prime. */
 
-#if defined(ISC_RWLOCK_USEATOMIC) &&					\
-	((defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_LONG_LOCK_FREE)) || \
-	 defined(ISC_PLATFORM_HAVEATOMICSTORE))
-#define ACACHE_USE_RWLOCK 1
-#if (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_LONG_LOCK_FREE))
-#define ACACHE_HAVESTDATOMIC 1
-#endif
-#endif
-
-#ifdef ACACHE_USE_RWLOCK
-#define ACACHE_INITLOCK(l)	isc_rwlock_init((l), 0, 0)
-#define ACACHE_DESTROYLOCK(l)	isc_rwlock_destroy(l)
-#define ACACHE_LOCK(l, t)	RWLOCK((l), (t))
-#define ACACHE_UNLOCK(l, t)	RWUNLOCK((l), (t))
-
-#ifdef ACACHE_HAVESTDATOMIC
-#define acache_storetime(entry, t) \
-	atomic_store_explicit(&(entry)->lastused, (t), \
-			      memory_order_relaxed);
-#else
-#define acache_storetime(entry, t) \
-	(isc_atomic_store((isc_int32_t *)&(entry)->lastused, (t)))
-#endif
-
-#else
 #define ACACHE_INITLOCK(l)	isc_mutex_init(l)
 #define ACACHE_DESTROYLOCK(l)	DESTROYLOCK(l)
 #define ACACHE_LOCK(l, t)	LOCK(l)
 #define ACACHE_UNLOCK(l, t)	UNLOCK(l)
 
 #define acache_storetime(entry, t) ((entry)->lastused = (t))
-#endif
 
 /* Locked by acache lock */
 typedef struct dbentry {
@@ -254,11 +224,7 @@ struct dns_acacheentry {
 	void 			*cbarg;
 
 	/* Timestamp of the last time this entry is referred to */
-#ifdef ACACHE_HAVESTDATOMIC
-	atomic_uint_fast32_t	lastused;
-#else
 	isc_stdtime32_t		lastused;
-#endif
 };
 
 /*

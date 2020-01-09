@@ -28,57 +28,6 @@
  ***/
 
 /*
- * If the "xadd" operation is available on this architecture,
- * ISC_PLATFORM_HAVEXADD will be defined.
- */
-@ISC_PLATFORM_HAVEXADD@
-
-/*
- * If the "xaddq" operation (64bit xadd) is available on this architecture,
- * ISC_PLATFORM_HAVEXADDQ will be defined.
- */
-@ISC_PLATFORM_HAVEXADDQ@
-
-/*
- * If the 32-bit "atomic swap" operation is available on this
- * architecture, ISC_PLATFORM_HAVEATOMICSTORE" will be defined.
- */
-@ISC_PLATFORM_HAVEATOMICSTORE@
-
-/*
- * If the 64-bit "atomic swap" operation is available on this
- * architecture, ISC_PLATFORM_HAVEATOMICSTORE" will be defined.
- */
-@ISC_PLATFORM_HAVEATOMICSTOREQ@
-
-/*
- * If the "compare-and-exchange" operation is available on this architecture,
- * ISC_PLATFORM_HAVECMPXCHG will be defined.
- */
-@ISC_PLATFORM_HAVECMPXCHG@
-
-/*
- * If <stdatomic.h> is available on this architecture,
- * ISC_PLATFORM_HAVESTDATOMIC will be defined.
- */
-@ISC_PLATFORM_HAVESTDATOMIC@
-
-/*
- * Define if gcc ASM extension is available
- */
-@ISC_PLATFORM_USEGCCASM@
-
-/*
- * Define if Tru64 style ASM syntax must be used.
- */
-@ISC_PLATFORM_USEOSFASM@
-
-/*
- * Define if the standard __asm function must be used.
- */
-@ISC_PLATFORM_USESTDASM@
-
-/*
  * Define if the hash functions must be provided by OpenSSL.
  */
 @ISC_PLATFORM_OPENSSLHASH@
@@ -88,12 +37,6 @@
  */
 @ISC_PLATFORM_NORETURN_PRE@
 @ISC_PLATFORM_NORETURN_POST@
-
-/*
- * Define if MacOS style of PPC assembly must be used.
- * e.g. "r6", not "6", for register six.
- */
-@ISC_PLATFORM_USEMACASM@
 
 /*
  * Tell emacs to use C mode for this file.

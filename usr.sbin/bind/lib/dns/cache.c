@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cache.c,v 1.9 2020/01/09 13:47:12 florian Exp $ */
+/* $Id: cache.c,v 1.10 2020/01/09 18:14:48 florian Exp $ */
 
 /*! \file */
 
@@ -24,7 +24,7 @@
 #include <isc/mem.h>
 
 #include <isc/string.h>
-#include <isc/stats.h>
+
 #include <isc/task.h>
 #include <isc/time.h>
 #include <isc/timer.h>
@@ -42,7 +42,7 @@
 #include <dns/rdataset.h>
 #include <dns/rdatasetiter.h>
 #include <dns/result.h>
-#include <dns/stats.h>
+
 
 #include "rbtdb.h"
 
@@ -141,7 +141,6 @@ struct dns_cache {
 	int			db_argc;
 	char			**db_argv;
 	size_t			size;
-	isc_stats_t		*stats;
 
 	/* Locked by 'filelock'. */
 	char			*filename;
@@ -242,16 +241,10 @@ dns_cache_create3(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
 	cache->live_tasks = 0;
 	cache->rdclass = rdclass;
 
-	cache->stats = NULL;
-	result = isc_stats_create(cmctx, &cache->stats,
-				  dns_cachestatscounter_max);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup_filelock;
-
 	cache->db_type = isc_mem_strdup(cmctx, db_type);
 	if (cache->db_type == NULL) {
 		result = ISC_R_NOMEMORY;
-		goto cleanup_stats;
+		goto cleanup_lock;
 	}
 
 	/*
@@ -320,11 +313,6 @@ dns_cache_create3(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_db;
 
-	result = dns_db_setcachestats(cache->db, cache->stats);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup_db;
-
-
 	*cachep = cache;
 	return (ISC_R_SUCCESS);
 
@@ -339,10 +327,7 @@ dns_cache_create3(isc_mem_t *cmctx, isc_mem_t *hmctx, isc_taskmgr_t *taskmgr,
 			    cache->db_argc * sizeof(char *));
  cleanup_dbtype:
 	isc_mem_free(cmctx, cache->db_type);
- cleanup_filelock:
 	DESTROYLOCK(&cache->filelock);
- cleanup_stats:
-	isc_stats_detach(&cache->stats);
  cleanup_lock:
 	DESTROYLOCK(&cache->lock);
  cleanup_mem:
@@ -404,9 +389,6 @@ cache_free(dns_cache_t *cache) {
 
 	if (cache->name != NULL)
 		isc_mem_free(cache->mctx, cache->name);
-
-	if (cache->stats != NULL)
-		isc_stats_detach(&cache->stats);
 
 	DESTROYLOCK(&cache->lock);
 	DESTROYLOCK(&cache->filelock);
@@ -1165,7 +1147,6 @@ dns_cache_flush(dns_cache_t *cache) {
 	}
 	olddb = cache->db;
 	cache->db = db;
-	dns_db_setcachestats(cache->db, cache->stats);
 	UNLOCK(&cache->cleaner.lock);
 	UNLOCK(&cache->lock);
 
@@ -1313,129 +1294,6 @@ dns_cache_flushnode(dns_cache_t *cache, dns_name_t *name,
  cleanup_db:
 	dns_db_detach(&db);
 	return (result);
-}
-
-isc_stats_t *
-dns_cache_getstats(dns_cache_t *cache) {
-	REQUIRE(VALID_CACHE(cache));
-	return (cache->stats);
-}
-
-void
-dns_cache_updatestats(dns_cache_t *cache, isc_result_t result) {
-	REQUIRE(VALID_CACHE(cache));
-	if (cache->stats == NULL)
-		return;
-
-	switch (result) {
-	case ISC_R_SUCCESS:
-	case DNS_R_NCACHENXDOMAIN:
-	case DNS_R_NCACHENXRRSET:
-	case DNS_R_CNAME:
-	case DNS_R_DNAME:
-	case DNS_R_GLUE:
-	case DNS_R_ZONECUT:
-		isc_stats_increment(cache->stats,
-				    dns_cachestatscounter_queryhits);
-		break;
-	default:
-		isc_stats_increment(cache->stats,
-				    dns_cachestatscounter_querymisses);
-	}
-}
-
-/*
- * XXX: Much of the following code has been copied in from statschannel.c.
- * We should refactor this into a generic function in stats.c that can be
- * called from both places.
- */
-typedef struct
-cache_dumparg {
-	isc_statsformat_t	type;
-	void			*arg;		/* type dependent argument */
-	int			ncounters;	/* for general statistics */
-	int			*counterindices; /* for general statistics */
-	isc_uint64_t		*countervalues;	 /* for general statistics */
-	isc_result_t		result;
-} cache_dumparg_t;
-
-static void
-getcounter(isc_statscounter_t counter, isc_uint64_t val, void *arg) {
-	cache_dumparg_t *dumparg = arg;
-
-	REQUIRE(counter < dumparg->ncounters);
-	dumparg->countervalues[counter] = val;
-}
-
-static void
-getcounters(isc_stats_t *stats, isc_statsformat_t type, int ncounters,
-	    int *indices, isc_uint64_t *values)
-{
-	cache_dumparg_t dumparg;
-
-	memset(values, 0, sizeof(values[0]) * ncounters);
-
-	dumparg.type = type;
-	dumparg.ncounters = ncounters;
-	dumparg.counterindices = indices;
-	dumparg.countervalues = values;
-
-	isc_stats_dump(stats, getcounter, &dumparg, ISC_STATSDUMP_VERBOSE);
-}
-
-void
-dns_cache_dumpstats(dns_cache_t *cache, FILE *fp) {
-	int indices[dns_cachestatscounter_max];
-	isc_uint64_t values[dns_cachestatscounter_max];
-
-	REQUIRE(VALID_CACHE(cache));
-
-	getcounters(cache->stats, isc_statsformat_file,
-		    dns_cachestatscounter_max, indices, values);
-
-	fprintf(fp, "%20llu %s\n",
-		values[dns_cachestatscounter_hits],
-		"cache hits");
-	fprintf(fp, "%20llu %s\n",
-		values[dns_cachestatscounter_misses],
-		"cache misses");
-	fprintf(fp, "%20llu %s\n",
-		values[dns_cachestatscounter_queryhits],
-		"cache hits (from query)");
-	fprintf(fp, "%20llu %s\n",
-		values[dns_cachestatscounter_querymisses],
-		"cache misses (from query)");
-	fprintf(fp, "%20llu %s\n",
-		values[dns_cachestatscounter_deletelru],
-		"cache records deleted due to memory exhaustion");
-	fprintf(fp, "%20llu %s\n",
-		values[dns_cachestatscounter_deletettl],
-		"cache records deleted due to TTL expiration");
-	fprintf(fp, "%20u %s\n", dns_db_nodecount(cache->db),
-		"cache database nodes");
-	fprintf(fp, "%20llu %s\n",
-		(isc_uint64_t) dns_db_hashsize(cache->db),
-		"cache database hash buckets");
-
-	fprintf(fp, "%20llu %s\n",
-		(isc_uint64_t) isc_mem_total(cache->mctx),
-		"cache tree memory total");
-	fprintf(fp, "%20llu %s\n",
-		(isc_uint64_t) isc_mem_inuse(cache->mctx),
-		"cache tree memory in use");
-	fprintf(fp, "%20llu %s\n",
-		(isc_uint64_t) isc_mem_maxinuse(cache->mctx),
-		"cache tree highest memory in use");
-
-	fprintf(fp, "%20llu %s\n",
-		(isc_uint64_t) isc_mem_total(cache->hmctx),
-		"cache heap memory total");
-	fprintf(fp, "%20llu %s\n",
-		(isc_uint64_t) isc_mem_inuse(cache->hmctx),
-		"cache heap memory in use");
-	fprintf(fp, "%20llu %s\n",
-		(isc_uint64_t) isc_mem_maxinuse(cache->hmctx),
-		"cache heap highest memory in use");
 }
 
 #ifdef HAVE_LIBXML2

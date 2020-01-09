@@ -51,7 +51,7 @@
 
 #include <isc/lang.h>
 #include <isc/socket.h>
-#include <isc/stats.h>
+
 
 #include <dns/types.h>
 #include <dns/fixedname.h>

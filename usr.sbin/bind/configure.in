@@ -4558,9 +4558,6 @@ AC_CONFIG_FILES([
 	lib/dns/include/Makefile
 	lib/dns/include/dns/Makefile
 	lib/dns/include/dst/Makefile
-	lib/isc/$arch/Makefile
-	lib/isc/$arch/include/Makefile
-	lib/isc/$arch/include/isc/Makefile
 	lib/isc/nothreads/Makefile
 	lib/isc/nothreads/include/Makefile
 	lib/isc/nothreads/include/isc/Makefile
