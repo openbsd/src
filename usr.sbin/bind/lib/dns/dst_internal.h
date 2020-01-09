@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.6 2020/01/09 14:21:27 florian Exp $ */
+/* $Id: dst_internal.h,v 1.7 2020/01/09 14:24:07 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -235,17 +235,6 @@ void dst__openssl_destroy(void);
 void * dst__mem_alloc(size_t size);
 void   dst__mem_free(void *ptr);
 void * dst__mem_realloc(void *ptr, size_t size);
-
-/*%
- * Entropy retriever using the DST entropy pool.
- */
-isc_result_t dst__entropy_getdata(void *buf, unsigned int len,
-				  isc_boolean_t pseudo);
-
-/*
- * Entropy status hook.
- */
-unsigned int dst__entropy_status(void);
 
 ISC_LANG_ENDDECLS
 

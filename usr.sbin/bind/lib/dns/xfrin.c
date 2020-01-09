@@ -14,15 +14,16 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: xfrin.c,v 1.13 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: xfrin.c,v 1.14 2020/01/09 14:24:07 florian Exp $ */
 
 /*! \file */
 
 #include <config.h>
+#include <stdlib.h>
 
 #include <isc/mem.h>
 
-#include <isc/random.h>
+
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <isc/task.h>
 #include <isc/timer.h>
@@ -848,7 +849,7 @@ xfrin_create(isc_mem_t *mctx,
 
 	dns_name_init(&xfr->name, NULL);
 	xfr->rdclass = rdclass;
-	isc_random_get(&tmp);
+	tmp = arc4random();
 	xfr->checkid = ISC_TRUE;
 	xfr->id	= (isc_uint16_t)(tmp & 0xffff);
 	xfr->reqtype = reqtype;

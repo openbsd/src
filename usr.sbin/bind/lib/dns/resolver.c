@@ -18,13 +18,14 @@
 
 #include <config.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include <isc/counter.h>
 #include <isc/log.h>
 #include <isc/platform.h>
 
 #include <isc/string.h>
-#include <isc/random.h>
+
 #include <isc/socket.h>
 #include <isc/stats.h>
 #include <isc/task.h>
@@ -973,7 +974,7 @@ fctx_cancelquery(resquery_t **queryp, dns_dispatchevent_t **deventp,
 			 * slow.  We don't know.  Increase the RTT.
 			 */
 			INSIST(no_response);
-			isc_random_get(&value);
+			value = arc4random();
 			if (query->addrinfo->srtt > 800000)
 				mask = 0x3fff;
 			else if (query->addrinfo->srtt > 400000)

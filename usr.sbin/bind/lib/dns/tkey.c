@@ -16,9 +16,10 @@
 
 /*! \file */
 #include <config.h>
+#include <stdlib.h>
 
 #include <isc/buffer.h>
-#include <isc/entropy.h>
+
 #include <isc/md5.h>
 #include <isc/mem.h>
 
@@ -68,12 +69,11 @@ tkey_log(const char *fmt, ...) {
 }
 
 isc_result_t
-dns_tkeyctx_create(isc_mem_t *mctx, isc_entropy_t *ectx, dns_tkeyctx_t **tctxp)
+dns_tkeyctx_create(isc_mem_t *mctx, dns_tkeyctx_t **tctxp)
 {
 	dns_tkeyctx_t *tctx;
 
 	REQUIRE(mctx != NULL);
-	REQUIRE(ectx != NULL);
 	REQUIRE(tctxp != NULL && *tctxp == NULL);
 
 	tctx = isc_mem_get(mctx, sizeof(dns_tkeyctx_t));
@@ -81,8 +81,6 @@ dns_tkeyctx_create(isc_mem_t *mctx, isc_entropy_t *ectx, dns_tkeyctx_t **tctxp)
 		return (ISC_R_NOMEMORY);
 	tctx->mctx = NULL;
 	isc_mem_attach(mctx, &tctx->mctx);
-	tctx->ectx = NULL;
-	isc_entropy_attach(ectx, &tctx->ectx);
 	tctx->dhkey = NULL;
 	tctx->domain = NULL;
 
@@ -107,7 +105,6 @@ dns_tkeyctx_destroy(dns_tkeyctx_t **tctxp) {
 			dns_name_free(tctx->domain, mctx);
 		isc_mem_put(mctx, tctx->domain, sizeof(dns_name_t));
 	}
-	isc_entropy_detach(&tctx->ectx);
 	isc_mem_put(mctx, tctx, sizeof(dns_tkeyctx_t));
 	isc_mem_detach(&mctx);
 	*tctxp = NULL;
@@ -306,13 +303,7 @@ process_dhtkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 	if (randomdata == NULL)
 		goto failure;
 
-	result = dst__entropy_getdata(randomdata, TKEY_RANDOM_AMOUNT,
-				      ISC_FALSE);
-	if (result != ISC_R_SUCCESS) {
-		tkey_log("process_dhtkey: failed to obtain entropy: %s",
-			 isc_result_totext(result));
-		goto failure;
-	}
+	arc4random_buf(randomdata, TKEY_RANDOM_AMOUNT);
 
 	r.base = randomdata;
 	r.length = TKEY_RANDOM_AMOUNT;
@@ -516,12 +507,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 			isc_buffer_t b;
 			unsigned int i, j;
 
-			result = isc_entropy_getdata(tctx->ectx,
-						     randomdata,
-						     sizeof(randomdata),
-						     NULL, 0);
-			if (result != ISC_R_SUCCESS)
-				goto failure;
+			arc4random_buf(randomdata, sizeof(randomdata));
 
 			for (i = 0, j = 0; i < sizeof(randomdata); i++) {
 				unsigned char val = randomdata[i];

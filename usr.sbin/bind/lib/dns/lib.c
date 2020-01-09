@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.c,v 1.4 2020/01/09 14:18:29 florian Exp $ */
+/* $Id: lib.c,v 1.5 2020/01/09 14:24:07 florian Exp $ */
 
 /*! \file */
 
@@ -92,11 +92,11 @@ initialize(void) {
 	result = dns_ecdb_register(dns_g_mctx, &dbimp);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_mctx;
-	result = isc_hash_create(dns_g_mctx, NULL, DNS_NAME_MAXWIRE);
+	result = isc_hash_create(dns_g_mctx, DNS_NAME_MAXWIRE);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_db;
 
-	result = dst_lib_init(dns_g_mctx, NULL, 0);
+	result = dst_lib_init(dns_g_mctx);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_hash;
 

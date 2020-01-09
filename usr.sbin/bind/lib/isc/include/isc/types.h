@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.7 2020/01/07 19:11:17 florian Exp $ */
+/* $Id: types.h,v 1.8 2020/01/09 14:24:08 florian Exp $ */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
@@ -48,8 +48,6 @@ typedef struct isc_constregion		isc_constregion_t;	/*%< Const region */
 typedef struct isc_consttextregion	isc_consttextregion_t;	/*%< Const Text Region */
 typedef struct isc_counter		isc_counter_t;		/*%< Counter */
 typedef isc_int16_t			isc_dscp_t;		/*%< Diffserv code point */
-typedef struct isc_entropy		isc_entropy_t;		/*%< Entropy */
-typedef struct isc_entropysource	isc_entropysource_t;	/*%< Entropy Source */
 typedef struct isc_event		isc_event_t;		/*%< Event */
 typedef ISC_LIST(isc_event_t)		isc_eventlist_t;	/*%< Event List */
 typedef unsigned int			isc_eventtype_t;	/*%< Event Type */

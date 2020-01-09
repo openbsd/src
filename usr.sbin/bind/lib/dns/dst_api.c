@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.13 2020/01/09 14:21:27 florian Exp $
+ * $Id: dst_api.c,v 1.14 2020/01/09 14:24:07 florian Exp $
  */
 
 /*! \file */
@@ -45,7 +45,7 @@
 
 #include <isc/buffer.h>
 #include <isc/dir.h>
-#include <isc/entropy.h>
+
 #include <isc/fsaccess.h>
 #include <isc/hmacsha.h>
 #include <isc/lex.h>
@@ -54,7 +54,7 @@
 #include <isc/platform.h>
 
 #include <isc/refcount.h>
-#include <isc/random.h>
+
 #include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/time.h>
@@ -80,8 +80,6 @@
 #define DST_AS_STR(t) ((t).value.as_textregion.base)
 
 static dst_func_t *dst_t_func[DST_MAX_ALGS];
-static isc_entropy_t *dst_entropy_pool = NULL;
-static unsigned int dst_entropy_flags = 0;
 static isc_boolean_t dst_initialized = ISC_FALSE;
 
 isc_mem_t *dst__memory_pool = NULL;
@@ -151,13 +149,12 @@ default_memfree(void *arg, void *ptr) {
 }
 
 isc_result_t
-dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags) {
-	return (dst_lib_init2(mctx, ectx, NULL, eflags));
+dst_lib_init(isc_mem_t *mctx) {
+	return (dst_lib_init2(mctx, NULL));
 }
 
 isc_result_t
-dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
-	      const char *engine, unsigned int eflags) {
+dst_lib_init2(isc_mem_t *mctx, const char *engine) {
 	isc_result_t result;
 
 	REQUIRE(mctx != NULL);
@@ -180,10 +177,6 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 		return (result);
 	isc_mem_setname(dst__memory_pool, "dst", NULL);
 	isc_mem_setdestroycheck(dst__memory_pool, ISC_FALSE);
-	if (ectx != NULL) {
-		isc_entropy_attach(ectx, &dst_entropy_pool);
-		dst_entropy_flags = eflags;
-	}
 
 	dst_result_register();
 
@@ -237,8 +230,6 @@ dst_lib_destroy(void) {
 	dst__openssl_destroy();
 	if (dst__memory_pool != NULL)
 		isc_mem_detach(&dst__memory_pool);
-	if (dst_entropy_pool != NULL)
-		isc_entropy_detach(&dst_entropy_pool);
 }
 
 isc_boolean_t
@@ -1767,28 +1758,6 @@ addsuffix(char *filename, int len, const char *odirname,
 	if (n >= len)
 		return (ISC_R_NOSPACE);
 	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dst__entropy_getdata(void *buf, unsigned int len, isc_boolean_t pseudo) {
-	unsigned int flags = dst_entropy_flags;
-
-	if (dst_entropy_pool == NULL)
-		return (ISC_R_FAILURE);
-
-	if (len == 0)
-		return (ISC_R_SUCCESS);
-
-	if (pseudo)
-		flags &= ~ISC_ENTROPY_GOODONLY;
-	else
-		flags |= ISC_ENTROPY_BLOCKING;
-	return (isc_entropy_getdata(dst_entropy_pool, buf, len, NULL, flags));
-}
-
-unsigned int
-dst__entropy_status(void) {
-	return (isc_entropy_status(dst_entropy_pool));
 }
 
 isc_buffer_t *

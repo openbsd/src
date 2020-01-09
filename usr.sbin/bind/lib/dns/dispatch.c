@@ -23,12 +23,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include <isc/entropy.h>
+
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/portset.h>
 
-#include <isc/random.h>
+
 #include <isc/socket.h>
 #include <isc/stats.h>
 #include <isc/string.h>
@@ -54,16 +54,6 @@ typedef ISC_LIST(dispsocket_t)		dispsocketlist_t;
 typedef struct dispportentry		dispportentry_t;
 typedef ISC_LIST(dispportentry_t)	dispportlist_t;
 
-/* ARC4 Random generator state */
-typedef struct arc4ctx {
-	isc_uint8_t	i;
-	isc_uint8_t	j;
-	isc_uint8_t	s[256];
-	int		count;
-	isc_entropy_t	*entropy;	/*%< entropy source for ARC4 */
-	isc_mutex_t	*lock;
-} arc4ctx_t;
-
 typedef struct dns_qid {
 	unsigned int	magic;
 	unsigned int	qid_nbuckets;	/*%< hash table size */
@@ -80,16 +70,11 @@ struct dns_dispatchmgr {
 	dns_acl_t		       *blackhole;
 	dns_portlist_t		       *portlist;
 	isc_stats_t		       *stats;
-	isc_entropy_t		       *entropy; /*%< entropy source */
 
 	/* Locked by "lock". */
 	isc_mutex_t			lock;
 	unsigned int			state;
 	ISC_LIST(dns_dispatch_t)	list;
-
-	/* Locked by arc4_lock. */
-	isc_mutex_t			arc4_lock;
-	arc4ctx_t			arc4ctx;    /*%< ARC4 context for QID */
 
 	/* locked by buffer lock */
 	dns_qid_t			*qid;
@@ -254,7 +239,6 @@ struct dns_dispatch {
 	unsigned int		tcpbuffers;	/*%< allocated buffers */
 	dns_tcpmsg_t		tcpmsg;		/*%< for tcp streams */
 	dns_qid_t		*qid;
-	arc4ctx_t		arc4ctx;	/*%< for QID/UDP port num */
 	dispportlist_t		*port_table;	/*%< hold ports 'owned' by us */
 	isc_mempool_t		*portpool;	/*%< port table entries  */
 };
@@ -428,169 +412,6 @@ request_log(dns_dispatch_t *disp, dns_dispentry_t *resp,
 			      "dispatch %p req/resp %p: %s", disp, resp,
 			      msgbuf);
 	}
-}
-
-/*%
- * ARC4 random number generator derived from OpenBSD.
- * Only dispatch_random() and dispatch_uniformrandom() are expected
- * to be called from general dispatch routines; the rest of them are subroutines
- * for these two.
- *
- * The original copyright follows:
- * Copyright (c) 1996, David Mazieres <dm@uun.org>
- * Copyright (c) 2008, Damien Miller <djm@openbsd.org>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-static void
-dispatch_initrandom(arc4ctx_t *actx, isc_entropy_t *entropy,
-		    isc_mutex_t *lock)
-{
-	int n;
-	for (n = 0; n < 256; n++)
-		actx->s[n] = n;
-	actx->i = 0;
-	actx->j = 0;
-	actx->count = 0;
-	actx->entropy = entropy; /* don't have to attach */
-	actx->lock = lock;
-}
-
-static void
-dispatch_arc4addrandom(arc4ctx_t *actx, unsigned char *dat, int datlen) {
-	int n;
-	isc_uint8_t si;
-
-	actx->i--;
-	for (n = 0; n < 256; n++) {
-		actx->i = (actx->i + 1);
-		si = actx->s[actx->i];
-		actx->j = (actx->j + si + dat[n % datlen]);
-		actx->s[actx->i] = actx->s[actx->j];
-		actx->s[actx->j] = si;
-	}
-	actx->j = actx->i;
-}
-
-static inline isc_uint8_t
-dispatch_arc4get8(arc4ctx_t *actx) {
-	isc_uint8_t si, sj;
-
-	actx->i = (actx->i + 1);
-	si = actx->s[actx->i];
-	actx->j = (actx->j + si);
-	sj = actx->s[actx->j];
-	actx->s[actx->i] = sj;
-	actx->s[actx->j] = si;
-
-	return (actx->s[(si + sj) & 0xff]);
-}
-
-static inline isc_uint16_t
-dispatch_arc4get16(arc4ctx_t *actx) {
-	isc_uint16_t val;
-
-	val = dispatch_arc4get8(actx) << 8;
-	val |= dispatch_arc4get8(actx);
-
-	return (val);
-}
-
-static void
-dispatch_arc4stir(arc4ctx_t *actx) {
-	int i;
-	union {
-		unsigned char rnd[128];
-		isc_uint32_t rnd32[32];
-	} rnd;
-	isc_result_t result;
-
-	if (actx->entropy != NULL) {
-		/*
-		 * We accept any quality of random data to avoid blocking.
-		 */
-		result = isc_entropy_getdata(actx->entropy, rnd.rnd,
-					     sizeof(rnd), NULL, 0);
-		RUNTIME_CHECK(result == ISC_R_SUCCESS);
-	} else {
-		for (i = 0; i < 32; i++)
-			isc_random_get(&rnd.rnd32[i]);
-	}
-	dispatch_arc4addrandom(actx, rnd.rnd, sizeof(rnd.rnd));
-
-	/*
-	 * Discard early keystream, as per recommendations in:
-	 * http://www.wisdom.weizmann.ac.il/~itsik/RC4/Papers/Rc4_ksa.ps
-	 */
-	for (i = 0; i < 256; i++)
-		(void)dispatch_arc4get8(actx);
-
-	/*
-	 * Derived from OpenBSD's implementation.  The rationale is not clear,
-	 * but should be conservative enough in safety, and reasonably large
-	 * for efficiency.
-	 */
-	actx->count = 1600000;
-}
-
-static isc_uint16_t
-dispatch_random(arc4ctx_t *actx) {
-	isc_uint16_t result;
-
-	if (actx->lock != NULL)
-		LOCK(actx->lock);
-
-	actx->count -= sizeof(isc_uint16_t);
-	if (actx->count <= 0)
-		dispatch_arc4stir(actx);
-	result = dispatch_arc4get16(actx);
-
-	if (actx->lock != NULL)
-		UNLOCK(actx->lock);
-
-	return (result);
-}
-
-static isc_uint16_t
-dispatch_uniformrandom(arc4ctx_t *actx, isc_uint16_t upper_bound) {
-	isc_uint16_t min, r;
-
-	if (upper_bound < 2)
-		return (0);
-
-	/*
-	 * Ensure the range of random numbers [min, 0xffff] be a multiple of
-	 * upper_bound and contain at least a half of the 16 bit range.
-	 */
-
-	if (upper_bound > 0x8000)
-		min = 1 + ~upper_bound; /* 0x8000 - upper_bound */
-	else
-		min = (isc_uint16_t)(0x10000 % (isc_uint32_t)upper_bound);
-
-	/*
-	 * This could theoretically loop forever but each retry has
-	 * p > 0.5 (worst case, usually far better) of selecting a
-	 * number inside the range we need, so it should rarely need
-	 * to re-roll.
-	 */
-	for (;;) {
-		r = dispatch_random(actx);
-		if (r >= min)
-			break;
-	}
-
-	return (r % upper_bound);
 }
 
 /*
@@ -878,7 +699,7 @@ get_dispsocket(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 		dispsock->disp = disp;
 		dispsock->resp = NULL;
 		dispsock->portentry = NULL;
-		isc_random_get(&r);
+		r = arc4random();
 		dispsock->task = NULL;
 		isc_task_attach(disp->task[r % disp->ntasks], &dispsock->task);
 		ISC_LINK_INIT(dispsock, link);
@@ -895,8 +716,7 @@ get_dispsocket(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 	qid = DNS_QID(disp);
 
 	for (i = 0; i < 64; i++) {
-		port = ports[dispatch_uniformrandom(DISP_ARC4CTX(disp),
-							nports)];
+		port = ports[arc4random_uniform(nports)];
 		isc_sockaddr_setport(&localaddr, port);
 
 		LOCK(&qid->lock);
@@ -1812,8 +1632,6 @@ destroy_mgr(dns_dispatchmgr_t **mgrp) {
 	DESTROYLOCK(&mgr->lock);
 	mgr->state = 0;
 
-	DESTROYLOCK(&mgr->arc4_lock);
-
 	isc_mempool_destroy(&mgr->depool);
 	isc_mempool_destroy(&mgr->rpool);
 	isc_mempool_destroy(&mgr->dpool);
@@ -1828,8 +1646,6 @@ destroy_mgr(dns_dispatchmgr_t **mgrp) {
 	DESTROYLOCK(&mgr->rpool_lock);
 	DESTROYLOCK(&mgr->depool_lock);
 
-	if (mgr->entropy != NULL)
-		isc_entropy_detach(&mgr->entropy);
 	if (mgr->qid != NULL)
 		qid_destroy(mctx, &mgr->qid);
 
@@ -1923,8 +1739,7 @@ create_default_portset(isc_mem_t *mctx, isc_portset_t **portsetp) {
  */
 
 isc_result_t
-dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
-		       dns_dispatchmgr_t **mgrp)
+dns_dispatchmgr_create(isc_mem_t *mctx, dns_dispatchmgr_t **mgrp)
 {
 	dns_dispatchmgr_t *mgr;
 	isc_result_t result;
@@ -1948,13 +1763,9 @@ dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
 	if (result != ISC_R_SUCCESS)
 		goto deallocate;
 
-	result = isc_mutex_init(&mgr->arc4_lock);
-	if (result != ISC_R_SUCCESS)
-		goto kill_lock;
-
 	result = isc_mutex_init(&mgr->buffer_lock);
 	if (result != ISC_R_SUCCESS)
-		goto kill_arc4_lock;
+		goto kill_lock;
 
 	result = isc_mutex_init(&mgr->depool_lock);
 	if (result != ISC_R_SUCCESS)
@@ -2020,7 +1831,6 @@ dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
 	mgr->maxbuffers = 0;
 	mgr->bpool = NULL;
 	mgr->spool = NULL;
-	mgr->entropy = NULL;
 	mgr->qid = NULL;
 	mgr->state = 0;
 	ISC_LIST_INIT(mgr->list);
@@ -2046,11 +1856,6 @@ dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
 	if (result != ISC_R_SUCCESS)
 		goto kill_dpool;
 
-	if (entropy != NULL)
-		isc_entropy_attach(entropy, &mgr->entropy);
-
-	dispatch_initrandom(&mgr->arc4ctx, mgr->entropy, &mgr->arc4_lock);
-
 	*mgrp = mgr;
 	return (ISC_R_SUCCESS);
 
@@ -2072,8 +1877,6 @@ dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
 	DESTROYLOCK(&mgr->depool_lock);
  kill_buffer_lock:
 	DESTROYLOCK(&mgr->buffer_lock);
- kill_arc4_lock:
-	DESTROYLOCK(&mgr->arc4_lock);
  kill_lock:
 	DESTROYLOCK(&mgr->lock);
  deallocate:
@@ -2577,7 +2380,6 @@ dispatch_allocate(dns_dispatchmgr_t *mgr, unsigned int maxrequests,
 	ISC_LIST_INIT(disp->activesockets);
 	ISC_LIST_INIT(disp->inactivesockets);
 	disp->nsockets = 0;
-	dispatch_initrandom(&disp->arc4ctx, mgr->entropy, NULL);
 	disp->port_table = NULL;
 	disp->portpool = NULL;
 	disp->dscp = -1;
@@ -2899,9 +2701,7 @@ get_udpsocket(dns_dispatchmgr_t *mgr, dns_dispatch_t *disp,
 		for (i = 0; i < 1024; i++) {
 			in_port_t prt;
 
-			prt = ports[dispatch_uniformrandom(
-					DISP_ARC4CTX(disp),
-					nports)];
+			prt = ports[arc4random_uniform(nports)];
 			isc_sockaddr_setport(&localaddr_bound, prt);
 			result = open_socket(sockmgr, &localaddr_bound,
 					     0, &sock, NULL);
@@ -3291,7 +3091,7 @@ dns_dispatch_addresponse3(dns_dispatch_t *disp, unsigned int options,
 	if ((options & DNS_DISPATCHOPT_FIXEDID) != 0)
 		id = *idp;
 	else
-		id = (dns_messageid_t)dispatch_random(DISP_ARC4CTX(disp));
+		id = arc4random();
 	ok = ISC_FALSE;
 	i = 0;
 	do {

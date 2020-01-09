@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dispatch.h,v 1.9 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: dispatch.h,v 1.10 2020/01/09 14:24:07 florian Exp $ */
 
 #ifndef DNS_DISPATCH_H
 #define DNS_DISPATCH_H 1
@@ -151,8 +151,7 @@ struct dns_dispatchset {
 #define DNS_DISPATCHOPT_FIXEDID		0x00000001U
 
 isc_result_t
-dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
-		       dns_dispatchmgr_t **mgrp);
+dns_dispatchmgr_create(isc_mem_t *mctx, dns_dispatchmgr_t **mgrp);
 /*%<
  * Creates a new dispatchmgr object.
  *
@@ -160,10 +159,6 @@ dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,
  *\li	"mctx" be a valid memory context.
  *
  *\li	mgrp != NULL && *mgrp == NULL
- *
- *\li	"entropy" may be NULL, in which case an insecure random generator
- *	will be used.  If it is non-NULL, it must be a valid entropy
- *	source.
  *
  * Returns:
  *\li	ISC_R_SUCCESS	-- all ok

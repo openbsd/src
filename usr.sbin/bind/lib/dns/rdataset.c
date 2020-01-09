@@ -22,7 +22,7 @@
 
 #include <isc/buffer.h>
 #include <isc/mem.h>
-#include <isc/random.h>
+
 #include <isc/serial.h>
 #include <isc/util.h>
 
@@ -414,10 +414,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			 * 'Random' order.
 			 */
 			for (i = 0; i < count; i++) {
-				isc_uint32_t val;
-
-				isc_random_get(&val);
-				choice = i + (val % (count - i));
+				choice = i + arc4random_uniform(count - i);
 				rdata = in[i];
 				in[i] = in[choice];
 				in[choice] = rdata;
@@ -437,7 +434,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 
 			val = rdataset->count;
 			if (val == ISC_UINT32_MAX)
-				isc_random_get(&val);
+				val = arc4random();
 			j = val % count;
 			for (i = 0; i < count; i++) {
 				if (order != NULL)

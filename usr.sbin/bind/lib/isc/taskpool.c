@@ -14,14 +14,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: taskpool.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: taskpool.c,v 1.4 2020/01/09 14:24:08 florian Exp $ */
 
 /*! \file */
 
 #include <config.h>
+#include <stdlib.h>
 
 #include <isc/mem.h>
-#include <isc/random.h>
+
 #include <isc/taskpool.h>
 #include <isc/util.h>
 
@@ -101,9 +102,7 @@ isc_taskpool_create(isc_taskmgr_t *tmgr, isc_mem_t *mctx,
 
 void
 isc_taskpool_gettask(isc_taskpool_t *pool, isc_task_t **targetp) {
-	isc_uint32_t i;
-	isc_random_get(&i);
-	isc_task_attach(pool->tasks[i % pool->ntasks], targetp);
+	isc_task_attach(pool->tasks[arc4random_uniform(pool->ntasks)], targetp);
 }
 
 int

@@ -28,7 +28,7 @@
 #endif
 
 
-#include <isc/entropy.h>
+
 #include <isc/md5.h>
 #include <isc/mem.h>
 #include <isc/safe.h>

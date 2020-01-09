@@ -18,13 +18,14 @@
 
 #include <config.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include <isc/file.h>
 #include <isc/hex.h>
 #include <isc/mutex.h>
 #include <isc/pool.h>
 
-#include <isc/random.h>
+
 #include <isc/ratelimiter.h>
 #include <isc/refcount.h>
 #include <isc/rwlock.h>
@@ -815,7 +816,7 @@ static const char *dbargv_default[] = { "rbt" };
 	do { \
 		isc_interval_t _i; \
 		isc_uint32_t _j; \
-		_j = isc_random_jitter((b), (b)/4); \
+		_j = (b) - arc4random_uniform((b)/4);	\
 		isc_interval_set(&_i, _j, 0); \
 		if (isc_time_add((a), &_i, (c)) != ISC_R_SUCCESS) { \
 			dns_zone_log(zone, ISC_LOG_WARNING, \
@@ -3518,8 +3519,7 @@ set_resigntime(dns_zone_t *zone) {
 
 	resign = rdataset.resign - zone->sigresigninginterval;
 	dns_rdataset_disassociate(&rdataset);
-	isc_random_get(&nanosecs);
-	nanosecs %= 1000000000;
+	nanosecs = arc4random_uniform(1000000000);
 	isc_time_set(&zone->resigntime, resign, nanosecs);
  cleanup:
 	dns_db_detach(&db);
@@ -4616,8 +4616,8 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 				DNS_ZONE_TIME_ADD(&now, zone->retry,
 						  &zone->expiretime);
 
-			delay = isc_random_jitter(zone->retry,
-						  (zone->retry * 3) / 4);
+			delay = zone->retry -
+			    arc4random_uniform((zone->retry * 3) / 4);
 			DNS_ZONE_TIME_ADD(&now, delay, &zone->refreshtime);
 			if (isc_time_compare(&zone->refreshtime,
 					     &zone->expiretime) >= 0)
@@ -6400,11 +6400,10 @@ zone_resigninc(dns_zone_t *zone) {
 	 * we still want some clustering to occur.
 	 */
 	if (sigvalidityinterval >= 3600U) {
-		isc_random_get(&jitter);
 		if (sigvalidityinterval > 7200U) {
-			jitter %= 3600;
+			jitter = arc4random_uniform(3600);
 		} else {
-			jitter %= 1200;
+			jitter = arc4random_uniform(1200);
 		}
 		expire = soaexpire - jitter - 1;
 	} else {
@@ -7384,11 +7383,10 @@ zone_nsec3chain(dns_zone_t *zone) {
 	 * we still want some clustering to occur.
 	 */
 	if (sigvalidityinterval >= 3600U) {
-		isc_random_get(&jitter);
 		if (sigvalidityinterval > 7200U) {
-			jitter %= 3600;
+			jitter = arc4random_uniform(3600);
 		} else {
-			jitter %= 1200;
+			jitter = arc4random_uniform(1200);
 		}
 		expire = soaexpire - jitter - 1;
 	} else {
@@ -8317,11 +8315,10 @@ zone_sign(dns_zone_t *zone) {
 	 * we still want some clustering to occur.
 	 */
 	if (sigvalidityinterval >= 3600U) {
-		isc_random_get(&jitter);
 		if (sigvalidityinterval > 7200U) {
-			jitter %= 3600;
+			jitter = arc4random_uniform(3600);
 		} else {
-			jitter %= 1200;
+			jitter = arc4random_uniform(1200);
 		}
 		expire = soaexpire - jitter - 1;
 	} else {
@@ -10086,7 +10083,7 @@ dns_zone_refresh(dns_zone_t *zone) {
 	 * Setting this to the retry time will do that.  XXXMLG
 	 * If we are successful it will be reset using zone->refresh.
 	 */
-	isc_interval_set(&i, isc_random_jitter(zone->retry, zone->retry / 4),
+	isc_interval_set(&i, zone->retry - arc4random_uniform(zone->retry / 4),
 			 0);
 	result = isc_time_nowplusinterval(&zone->refreshtime, &i);
 	if (result != ISC_R_SUCCESS)

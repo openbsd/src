@@ -22,7 +22,7 @@
 #error "ECDSA without EVP for SHA2?"
 #endif
 
-#include <isc/entropy.h>
+
 #include <isc/mem.h>
 #include <isc/safe.h>
 #include <isc/sha2.h>

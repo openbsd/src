@@ -43,7 +43,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: file.c,v 1.8 2020/01/09 14:18:30 florian Exp $ */
+/* $Id: file.c,v 1.9 2020/01/09 14:24:08 florian Exp $ */
 
 /*! \file */
 
@@ -68,7 +68,7 @@
 #include <isc/file.h>
 #include <isc/log.h>
 #include <isc/mem.h>
-#include <isc/random.h>
+
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
@@ -258,7 +258,6 @@ isc_result_t
 isc_file_renameunique(const char *file, char *templet) {
 	char *x;
 	char *cp;
-	isc_uint32_t which;
 
 	REQUIRE(file != NULL);
 	REQUIRE(templet != NULL);
@@ -271,8 +270,7 @@ isc_file_renameunique(const char *file, char *templet) {
 
 	x = cp--;
 	while (cp >= templet && *cp == 'X') {
-		isc_random_get(&which);
-		*cp = alphnum[which % (sizeof(alphnum) - 1)];
+		*cp = alphnum[arc4random_uniform(sizeof(alphnum) - 1)];
 		x = cp--;
 	}
 	while (link(file, templet) == -1) {
@@ -316,7 +314,6 @@ isc_file_openuniquemode(char *templet, int mode, FILE **fp) {
 	isc_result_t result = ISC_R_SUCCESS;
 	char *x;
 	char *cp;
-	isc_uint32_t which;
 
 	REQUIRE(templet != NULL);
 	REQUIRE(fp != NULL && *fp == NULL);
@@ -329,8 +326,7 @@ isc_file_openuniquemode(char *templet, int mode, FILE **fp) {
 
 	x = cp--;
 	while (cp >= templet && *cp == 'X') {
-		isc_random_get(&which);
-		*cp = alphnum[which % (sizeof(alphnum) - 1)];
+		*cp = alphnum[arc4random_uniform(sizeof(alphnum) - 1)];
 		x = cp--;
 	}
 

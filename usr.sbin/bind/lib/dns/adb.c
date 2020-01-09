@@ -26,11 +26,12 @@
 #include <config.h>
 
 #include <limits.h>
+#include <stdlib.h>
 
 #include <isc/mutexblock.h>
 #include <isc/netaddr.h>
 
-#include <isc/random.h>
+
 #include <isc/stats.h>
 #include <isc/string.h>         /* Required for HP/UX (and others?) */
 #include <isc/task.h>
@@ -1843,7 +1844,7 @@ new_adbentry(dns_adb_t *adb) {
 	e->to512 = 0;
 	e->sit = NULL;
 	e->sitlen = 0;
-	isc_random_get(&r);
+	r = arc4random();
 	e->srtt = (r & 0x1f) + 1;
 	e->lastage = 0;
 	e->expires = 0;

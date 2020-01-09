@@ -32,7 +32,7 @@ CWARNINGS =
 
 # Alphabetically
 UNIXOBJS =	@ISC_ISCIPV6_O@ @ISC_ISCPK11_API_O@ \
-		unix/app.@O@ unix/dir.@O@ unix/entropy.@O@ unix/errno.@O@ \
+		unix/app.@O@ unix/dir.@O@ unix/errno.@O@ \
 		unix/errno2result.@O@ unix/file.@O@ unix/fsaccess.@O@ \
 		unix/interfaceiter.@O@ unix/keyboard.@O@ unix/net.@O@ \
 		unix/os.@O@ unix/resource.@O@ unix/socket.@O@ unix/stdio.@O@ \
@@ -54,7 +54,7 @@ OBJS =		@ISC_EXTRA_OBJS@ @ISC_PK11_O@ @ISC_PK11_RESULT_O@ \
 		lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
 		md5.@O@ mem.@O@ mutexblock.@O@ \
 		netaddr.@O@ netscope.@O@ pool.@O@ ondestroy.@O@ \
-		parseint.@O@ portset.@O@ quota.@O@ radix.@O@ random.@O@ \
+		parseint.@O@ portset.@O@ quota.@O@ radix.@O@ \
 		ratelimiter.@O@ refcount.@O@ region.@O@ regex.@O@ result.@O@ \
 		rwlock.@O@ \
 		safe.@O@ serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ stats.@O@ \
@@ -71,7 +71,7 @@ SRCS =		@ISC_EXTRA_SRCS@ @ISC_PK11_C@ @ISC_PK11_RESULT_C@ \
 		lex.c lfsr.c lib.c log.c \
 		md5.c mem.c mutexblock.c \
 		netaddr.c netscope.c pool.c ondestroy.c \
-		parseint.c portset.c quota.c radix.c random.c \
+		parseint.c portset.c quota.c radix.c \
 		ratelimiter.c refcount.c region.c regex.c result.c rwlock.c \
 		safe.c serial.c sha1.c sha2.c sockaddr.c stats.c string.c \
 		symtab.c task.c taskpool.c timer.c \

@@ -18,7 +18,7 @@
 
 #if defined(OPENSSL) && defined(HAVE_OPENSSL_GOST)
 
-#include <isc/entropy.h>
+
 #include <isc/mem.h>
 #include <isc/safe.h>
 #include <isc/string.h>

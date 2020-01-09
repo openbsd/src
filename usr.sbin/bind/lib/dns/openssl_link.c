@@ -36,8 +36,8 @@
  */
 
 #include <config.h>
+#include <stdlib.h>
 
-#include <isc/entropy.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/mutexblock.h>
@@ -52,57 +52,9 @@
 #include "dst_internal.h"
 #include "dst_openssl.h"
 
-static RAND_METHOD *rm = NULL;
-
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 static isc_mutex_t *locks = NULL;
 static int nlocks;
-#endif
-
-static int
-entropy_get(unsigned char *buf, int num) {
-	isc_result_t result;
-	if (num < 0)
-		return (-1);
-	result = dst__entropy_getdata(buf, (unsigned int) num, ISC_FALSE);
-	return (result == ISC_R_SUCCESS ? 1 : -1);
-}
-
-static int
-entropy_status(void) {
-	return (dst__entropy_status() > 32);
-}
-
-static int
-entropy_getpseudo(unsigned char *buf, int num) {
-	isc_result_t result;
-	if (num < 0)
-		return (-1);
-	result = dst__entropy_getdata(buf, (unsigned int) num, ISC_TRUE);
-	return (result == ISC_R_SUCCESS ? 1 : -1);
-}
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-static void
-entropy_add(const void *buf, int num, double entropy) {
-	/*
-	 * Do nothing.  The only call to this provides no useful data anyway.
-	 */
-	UNUSED(buf);
-	UNUSED(num);
-	UNUSED(entropy);
-}
-#else
-static int
-entropy_add(const void *buf, int num, double entropy) {
-	/*
-	 * Do nothing.  The only call to this provides no useful data anyway.
-	 */
-	UNUSED(buf);
-	UNUSED(num);
-	UNUSED(entropy);
-	return (1);
-}
 #endif
 
 #if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
@@ -198,25 +150,9 @@ dst__openssl_init(const char *engine) {
 	ERR_load_crypto_strings();
 #endif
 
-	rm = mem_alloc(sizeof(RAND_METHOD) FILELINE);
-	if (rm == NULL) {
-		result = ISC_R_NOMEMORY;
-		goto cleanup_mutexinit;
-	}
-	rm->seed = NULL;
-	rm->bytes = entropy_get;
-	rm->cleanup = NULL;
-	rm->add = entropy_add;
-	rm->pseudorand = entropy_getpseudo;
-	rm->status = entropy_status;
-
-	RAND_set_rand_method(rm);
 	return (ISC_R_SUCCESS);
 
- cleanup_mutexinit:
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-	CRYPTO_set_locking_callback(NULL);
-	DESTROYMUTEXBLOCK(locks, nlocks);
  cleanup_mutexalloc:
 	mem_free(locks FILELINE);
 	locks = NULL;
@@ -228,21 +164,10 @@ void
 dst__openssl_destroy(void) {
 #if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x10100000L)
 	OPENSSL_cleanup();
-	if (rm != NULL) {
-		mem_free(rm FILELINE);
-		rm = NULL;
-	}
 #else
 	/*
 	 * Sequence taken from apps_shutdown() in <apps/apps.h>.
 	 */
-	if (rm != NULL) {
-#if OPENSSL_VERSION_NUMBER >= 0x00907000L
-		RAND_cleanup();
-#endif
-		mem_free(rm FILELINE);
-		rm = NULL;
-	}
 #if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
 	CONF_modules_free();
 #endif

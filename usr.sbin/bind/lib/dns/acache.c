@@ -14,9 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: acache.c,v 1.3 2019/12/17 01:46:31 sthen Exp $ */
+/* $Id: acache.c,v 1.4 2020/01/09 14:24:07 florian Exp $ */
 
 #include <config.h>
+#include <stdlib.h>
 
 #include <isc/atomic.h>
 #include <isc/event.h>
@@ -25,7 +26,7 @@
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/platform.h>
-#include <isc/random.h>
+
 #include <isc/refcount.h>
 #include <isc/rwlock.h>
 #include <isc/serial.h>
@@ -808,7 +809,7 @@ entry_stale(acache_cleaner_t *cleaner, dns_acacheentry_t *entry,
 
 		if (passed > interval / 2)
 			return (ISC_TRUE);
-		isc_random_get(&val);
+		val = arc4random();
 		if (passed > interval / 4)
 			return (ISC_TF(val % 4 == 0));
 		return (ISC_TF(val % 8 == 0));
@@ -1396,7 +1397,6 @@ dns_acache_createentry(dns_acache_t *acache, dns_db_t *origdb,
 {
 	dns_acacheentry_t *newentry;
 	isc_result_t result;
-	isc_uint32_t r;
 	isc_stdtime_t tmptime;
 
 	REQUIRE(DNS_ACACHE_VALID(acache));
@@ -1426,8 +1426,8 @@ dns_acache_createentry(dns_acache_t *acache, dns_db_t *origdb,
 		return (ISC_R_NOMEMORY);
 	}
 
-	isc_random_get(&r);
-	newentry->locknum = r % DEFAULT_ACACHE_ENTRY_LOCK_COUNT;
+
+	newentry->locknum = arc4random_uniform(DEFAULT_ACACHE_ENTRY_LOCK_COUNT);
 
 	result = isc_refcount_init(&newentry->references, 1);
 	if (result != ISC_R_SUCCESS) {

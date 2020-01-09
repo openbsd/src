@@ -480,7 +480,7 @@ dns_client_createx2(isc_mem_t *mctx, isc_appctx_t *actx,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
-	result = dns_dispatchmgr_create(mctx, NULL, &dispatchmgr);
+	result = dns_dispatchmgr_create(mctx, &dispatchmgr);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	client->dispatchmgr = dispatchmgr;

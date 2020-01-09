@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: hmac_link.c,v 1.4 2020/01/09 13:52:23 florian Exp $
+ * $Id: hmac_link.c,v 1.5 2020/01/09 14:24:07 florian Exp $
  */
 
 #include <config.h>
@@ -159,6 +159,7 @@ hmacsha1_generate(dst_key_t *key, int pseudorandom_ok, void (*callback)(int)) {
 	unsigned int bytes;
 	unsigned char data[ISC_SHA1_BLOCK_LENGTH];
 
+	UNUSED(pseudorandom_ok);
 	UNUSED(callback);
 
 	bytes = (key->key_size + 7) / 8;
@@ -168,10 +169,7 @@ hmacsha1_generate(dst_key_t *key, int pseudorandom_ok, void (*callback)(int)) {
 	}
 
 	memset(data, 0, ISC_SHA1_BLOCK_LENGTH);
-	ret = dst__entropy_getdata(data, bytes, ISC_TF(pseudorandom_ok != 0));
-
-	if (ret != ISC_R_SUCCESS)
-		return (ret);
+	arc4random_buf(data, bytes);
 
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
@@ -452,6 +450,7 @@ hmacsha224_generate(dst_key_t *key, int pseudorandom_ok,
 	unsigned int bytes;
 	unsigned char data[ISC_SHA224_BLOCK_LENGTH];
 
+	UNUSED(pseudorandom_ok);
 	UNUSED(callback);
 
 	bytes = (key->key_size + 7) / 8;
@@ -461,10 +460,7 @@ hmacsha224_generate(dst_key_t *key, int pseudorandom_ok,
 	}
 
 	memset(data, 0, ISC_SHA224_BLOCK_LENGTH);
-	ret = dst__entropy_getdata(data, bytes, ISC_TF(pseudorandom_ok != 0));
-
-	if (ret != ISC_R_SUCCESS)
-		return (ret);
+	arc4random_buf(data, bytes);
 
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
@@ -739,6 +735,7 @@ hmacsha256_generate(dst_key_t *key, int pseudorandom_ok,
 	unsigned int bytes;
 	unsigned char data[ISC_SHA256_BLOCK_LENGTH];
 
+	UNUSED(pseudorandom_ok);
 	UNUSED(callback);
 
 	bytes = (key->key_size + 7) / 8;
@@ -748,10 +745,7 @@ hmacsha256_generate(dst_key_t *key, int pseudorandom_ok,
 	}
 
 	memset(data, 0, ISC_SHA256_BLOCK_LENGTH);
-	ret = dst__entropy_getdata(data, bytes, ISC_TF(pseudorandom_ok != 0));
-
-	if (ret != ISC_R_SUCCESS)
-		return (ret);
+	arc4random_buf(data, bytes);
 
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
@@ -1026,6 +1020,7 @@ hmacsha384_generate(dst_key_t *key, int pseudorandom_ok,
 	unsigned int bytes;
 	unsigned char data[ISC_SHA384_BLOCK_LENGTH];
 
+	UNUSED(pseudorandom_ok);
 	UNUSED(callback);
 
 	bytes = (key->key_size + 7) / 8;
@@ -1035,10 +1030,7 @@ hmacsha384_generate(dst_key_t *key, int pseudorandom_ok,
 	}
 
 	memset(data, 0, ISC_SHA384_BLOCK_LENGTH);
-	ret = dst__entropy_getdata(data, bytes, ISC_TF(pseudorandom_ok != 0));
-
-	if (ret != ISC_R_SUCCESS)
-		return (ret);
+	arc4random_buf(data, bytes);
 
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
@@ -1313,6 +1305,7 @@ hmacsha512_generate(dst_key_t *key, int pseudorandom_ok,
 	unsigned int bytes;
 	unsigned char data[ISC_SHA512_BLOCK_LENGTH];
 
+	UNUSED(pseudorandom_ok);
 	UNUSED(callback);
 
 	bytes = (key->key_size + 7) / 8;
@@ -1322,10 +1315,7 @@ hmacsha512_generate(dst_key_t *key, int pseudorandom_ok,
 	}
 
 	memset(data, 0, ISC_SHA512_BLOCK_LENGTH);
-	ret = dst__entropy_getdata(data, bytes, ISC_TF(pseudorandom_ok != 0));
-
-	if (ret != ISC_R_SUCCESS)
-		return (ret);
+	arc4random_buf(data, bytes);
 
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);

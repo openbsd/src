@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.c,v 1.6 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: hash.c,v 1.7 2020/01/09 14:24:08 florian Exp $ */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
@@ -56,14 +56,14 @@ if advised of the possibility of such damage.
 */
 
 #include <config.h>
+#include <stdlib.h>
 
-#include <isc/entropy.h>
 #include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/magic.h>
 #include <isc/mutex.h>
 #include <isc/once.h>
-#include <isc/random.h>
+
 #include <isc/refcount.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -92,7 +92,6 @@ struct isc_hash {
 	isc_mutex_t	lock;
 	isc_boolean_t	initialized;
 	isc_refcount_t	refcnt;
-	isc_entropy_t	*entropy; /*%< entropy source */
 	size_t		limit;	/*%< upper limit of key length */
 	size_t		vectorlen; /*%< size of the vector below */
 	hash_random_t	*rndvector; /*%< random vector for universal hashing */
@@ -138,8 +137,7 @@ static unsigned char maptolower[] = {
 };
 
 isc_result_t
-isc_hash_ctxcreate(isc_mem_t *mctx, isc_entropy_t *entropy,
-		   size_t limit, isc_hash_t **hctxp)
+isc_hash_ctxcreate(isc_mem_t *mctx, size_t limit, isc_hash_t **hctxp)
 {
 	isc_result_t result;
 	isc_hash_t *hctx;
@@ -188,13 +186,9 @@ isc_hash_ctxcreate(isc_mem_t *mctx, isc_entropy_t *entropy,
 	result = isc_refcount_init(&hctx->refcnt, 1);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_lock;
-	hctx->entropy = NULL;
 	hctx->limit = limit;
 	hctx->vectorlen = vlen;
 	hctx->rndvector = rv;
-
-	if (entropy != NULL)
-		isc_entropy_attach(entropy, &hctx->entropy);
 
 	*hctxp = hctx;
 	return (ISC_R_SUCCESS);
@@ -215,7 +209,7 @@ initialize_lock(void) {
 }
 
 isc_result_t
-isc_hash_create(isc_mem_t *mctx, isc_entropy_t *entropy, size_t limit) {
+isc_hash_create(isc_mem_t *mctx, size_t limit) {
 	isc_result_t result = ISC_R_SUCCESS;
 
 	REQUIRE(mctx != NULL);
@@ -226,7 +220,7 @@ isc_hash_create(isc_mem_t *mctx, isc_entropy_t *entropy, size_t limit) {
 	LOCK(&createlock);
 
 	if (hash == NULL)
-		result = isc_hash_ctxcreate(mctx, entropy, limit, &hash);
+		result = isc_hash_ctxcreate(mctx, limit, &hash);
 
 	UNLOCK(&createlock);
 
@@ -240,33 +234,7 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 	if (hctx->initialized == ISC_TRUE)
 		goto out;
 
-	if (hctx->entropy != NULL) {
-		isc_result_t result;
-
-		result = isc_entropy_getdata(hctx->entropy,
-					     hctx->rndvector,
-					     (unsigned int)hctx->vectorlen,
-					     NULL, 0);
-		INSIST(result == ISC_R_SUCCESS);
-	} else {
-		isc_uint32_t pr;
-		size_t i, copylen;
-		unsigned char *p;
-
-		p = (unsigned char *)hctx->rndvector;
-		for (i = 0; i < hctx->vectorlen; i += copylen, p += copylen) {
-			isc_random_get(&pr);
-			if (i + sizeof(pr) <= hctx->vectorlen)
-				copylen = sizeof(pr);
-			else
-				copylen = hctx->vectorlen - i;
-
-			memmove(p, &pr, copylen);
-		}
-		INSIST(p == (unsigned char *)hctx->rndvector +
-		       hctx->vectorlen);
-	}
-
+	arc4random_buf(hctx->rndvector, hctx->vectorlen);
 	hctx->initialized = ISC_TRUE;
 
  out:
@@ -303,8 +271,6 @@ destroy(isc_hash_t **hctxp) {
 	isc_refcount_destroy(&hctx->refcnt);
 
 	mctx = hctx->mctx;
-	if (hctx->entropy != NULL)
-		isc_entropy_detach(&hctx->entropy);
 	if (hctx->rndvector != NULL)
 		isc_mem_put(mctx, hctx->rndvector, hctx->vectorlen);
 
@@ -414,7 +380,7 @@ fnv_initialize(void) {
 	 * again, it should not change fnv_offset_basis.
 	 */
 	while (fnv_offset_basis == 0) {
-		isc_random_get(&fnv_offset_basis);
+		fnv_offset_basis = arc4random();
 	}
 }
 

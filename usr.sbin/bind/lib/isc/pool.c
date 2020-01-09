@@ -14,16 +14,16 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: pool.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: pool.c,v 1.3 2020/01/09 14:24:08 florian Exp $ */
 
 /*! \file */
 
 #include <config.h>
-
+#include <stdlib.h>
 #include <string.h>
 
 #include <isc/mem.h>
-#include <isc/random.h>
+
 #include <isc/pool.h>
 #include <isc/util.h>
 
@@ -104,9 +104,7 @@ isc_pool_create(isc_mem_t *mctx, unsigned int count,
 
 void *
 isc_pool_get(isc_pool_t *pool) {
-	isc_uint32_t i;
-	isc_random_get(&i);
-	return (pool->pool[i % pool->count]);
+	return (pool->pool[arc4random_uniform(pool->count)]);
 }
 
 int

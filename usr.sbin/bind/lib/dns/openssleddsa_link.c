@@ -19,7 +19,7 @@
 #if defined(OPENSSL) && \
     (defined(HAVE_OPENSSL_ED25519) || defined(HAVE_OPENSSL_ED448))
 
-#include <isc/entropy.h>
+
 #include <isc/mem.h>
 #include <isc/safe.h>
 #include <isc/sha2.h>

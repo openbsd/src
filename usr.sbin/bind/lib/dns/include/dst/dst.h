@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst.h,v 1.4 2020/01/09 13:56:37 florian Exp $ */
+/* $Id: dst.h,v 1.5 2020/01/09 14:24:08 florian Exp $ */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -132,17 +132,15 @@ typedef struct dst_context 	dst_context_t;
  ***/
 
 isc_result_t
-dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags);
+dst_lib_init(isc_mem_t *mctx);
 
 isc_result_t
-dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
-	      const char *engine, unsigned int eflags);
+dst_lib_init2(isc_mem_t *mctx, const char *engine);
 /*%<
  * Initializes the DST subsystem.
  *
  * Requires:
  * \li 	"mctx" is a valid memory context
- * \li	"ectx" is a valid entropy context
  *
  * Returns:
  * \li	ISC_R_SUCCESS

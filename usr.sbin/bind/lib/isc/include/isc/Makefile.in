@@ -25,7 +25,7 @@ VERSION=@BIND9_VERSION@
 #
 HEADERS =	aes.h app.h assertions.h base32.h base64.h \
 		bind9.h boolean.h buffer.h bufferlist.h \
-		commandline.h counter.h crc64.h entropy.h errno.h error.h \
+		commandline.h counter.h crc64.h errno.h error.h \
 		event.h eventclass.h file.h formatcheck.h fsaccess.h \
 		hash.h heap.h hex.h hmacmd5.h hmacsha.h httpd.h \
 		interfaceiter.h @ISC_IPV6_H@ iterated_hash.h json.h \
@@ -33,7 +33,7 @@ HEADERS =	aes.h app.h assertions.h base32.h base64.h \
 		magic.h md5.h mem.h msgcat.h msgs.h mutexblock.h \
 		netaddr.h netscope.h ondestroy.h os.h parseint.h \
 		pool.h portset.h print.h queue.h quota.h \
-		radix.h random.h ratelimiter.h refcount.h regex.h \
+		radix.h ratelimiter.h refcount.h regex.h \
 		region.h resource.h result.h resultclass.h rwlock.h \
 		safe.h serial.h sha1.h sha2.h sockaddr.h socket.h \
 		stats.h stdio.h stdlib.h string.h symtab.h task.h \
