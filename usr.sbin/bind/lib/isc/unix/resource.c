@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: resource.c,v 1.4 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: resource.c,v 1.5 2020/01/09 14:18:30 florian Exp $ */
 
 #include <config.h>
 
@@ -103,7 +103,7 @@ resource2rlim(isc_resource_t resource, int *rlim_resource) {
 isc_result_t
 isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 	struct rlimit rl;
-	ISC_PLATFORM_RLIMITTYPE rlim_value;
+	rlim_t rlim_value;
 	int unixresult;
 	int unixresource;
 	isc_result_t result;
@@ -121,17 +121,17 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 		 * integer so that it could contain the maximum range of
 		 * reasonable values.  Unfortunately, this exceeds the typical
 		 * range on Unix systems.  Ensure the range of
-		 * ISC_PLATFORM_RLIMITTYPE is not overflowed.
+		 * rlim_t is not overflowed.
 		 */
 		isc_resourcevalue_t rlim_max;
 		isc_boolean_t rlim_t_is_signed =
-			ISC_TF(((double)(ISC_PLATFORM_RLIMITTYPE)-1) < 0);
+			ISC_TF(((double)(rlim_t)-1) < 0);
 
 		if (rlim_t_is_signed)
-			rlim_max = ~((ISC_PLATFORM_RLIMITTYPE)1 <<
-				     (sizeof(ISC_PLATFORM_RLIMITTYPE) * 8 - 1));
+			rlim_max = ~((rlim_t)1 <<
+				     (sizeof(rlim_t) * 8 - 1));
 		else
-			rlim_max = (ISC_PLATFORM_RLIMITTYPE)-1;
+			rlim_max = (rlim_t)-1;
 
 		if (value > rlim_max)
 			value = rlim_max;

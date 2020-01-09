@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: stats.h,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: stats.h,v 1.4 2020/01/09 14:18:29 florian Exp $ */
 
 #ifndef DNS_STATS_H
 #define DNS_STATS_H 1
@@ -152,7 +152,7 @@ enum {
 /*%<
  * (Obsoleted)
  */
-LIBDNS_EXTERNAL_DATA extern const char *dns_statscounter_names[];
+extern const char *dns_statscounter_names[];
 
 /*%
  * Attributes for statistics counters of RRset and Rdatatype types.

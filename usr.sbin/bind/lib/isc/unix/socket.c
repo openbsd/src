@@ -65,9 +65,7 @@
 #include <isc/util.h>
 #include <isc/xml.h>
 
-#ifdef ISC_PLATFORM_HAVESYSUNH
 #include <sys/un.h>
-#endif
 #include <sys/event.h>
 
 #include <netinet/tcp.h>
@@ -1579,11 +1577,9 @@ build_msghdr_recv(isc__socket_t *sock, char *cmsgbuf, isc_socketevent_t *dev,
 		} else if (sock->pf == AF_INET6) {
 			msg->msg_name = (void *)&dev->address.type.sin6;
 			msg->msg_namelen = sizeof(dev->address.type.sin6);
-#ifdef ISC_PLATFORM_HAVESYSUNH
 		} else if (sock->pf == AF_UNIX) {
 			msg->msg_name = (void *)&dev->address.type.sunix;
 			msg->msg_namelen = sizeof(dev->address.type.sunix);
-#endif
 		} else {
 			msg->msg_name = (void *)&dev->address.type.sa;
 			msg->msg_namelen = sizeof(dev->address.type);
@@ -5122,7 +5118,6 @@ isc__socket_sendto2(isc_socket_t *sock0, isc_region_t *region,
 
 void
 isc__socket_cleanunix(isc_sockaddr_t *sockaddr, isc_boolean_t active) {
-#ifdef ISC_PLATFORM_HAVESYSUNH
 	int s;
 	struct stat sb;
 	char strbuf[ISC_STRERRORSIZE];
@@ -5244,17 +5239,12 @@ isc__socket_cleanunix(isc_sockaddr_t *sockaddr, isc_boolean_t active) {
 	}
  cleanup:
 	close(s);
-#else
-	UNUSED(sockaddr);
-	UNUSED(active);
-#endif
 }
 
 isc_result_t
 isc__socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
 		    isc_uint32_t owner, isc_uint32_t group)
 {
-#ifdef ISC_PLATFORM_HAVESYSUNH
 	isc_result_t result = ISC_R_SUCCESS;
 	char strbuf[ISC_STRERRORSIZE];
 	char path[sizeof(sockaddr->type.sunix.sun_path)];
@@ -5297,13 +5287,6 @@ isc__socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
 		result = ISC_R_FAILURE;
 	}
 	return (result);
-#else
-	UNUSED(sockaddr);
-	UNUSED(perm);
-	UNUSED(owner);
-	UNUSED(group);
-	return (ISC_R_NOTIMPLEMENTED);
-#endif
 }
 
 isc_result_t

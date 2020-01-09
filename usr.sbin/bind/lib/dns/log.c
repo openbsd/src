@@ -28,7 +28,7 @@
  * When adding a new category, be sure to add the appropriate
  * \#define to <dns/log.h>.
  */
-LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
+isc_logcategory_t dns_categories[] = {
 	{ "notify", 	0 },
 	{ "database", 	0 },
 	{ "security", 	0 },
@@ -52,7 +52,7 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
  * When adding a new module, be sure to add the appropriate
  * \#define to <dns/log.h>.
  */
-LIBDNS_EXTERNAL_DATA isc_logmodule_t dns_modules[] = {
+isc_logmodule_t dns_modules[] = {
 	{ "dns/db",	 	0 },
 	{ "dns/rbtdb", 		0 },
 	{ "dns/rbtdb64", 	0 },
@@ -87,7 +87,7 @@ LIBDNS_EXTERNAL_DATA isc_logmodule_t dns_modules[] = {
 	{ NULL, 		0 }
 };
 
-LIBDNS_EXTERNAL_DATA isc_log_t *dns_lctx = NULL;
+isc_log_t *dns_lctx = NULL;
 
 void
 dns_log_init(isc_log_t *lctx) {

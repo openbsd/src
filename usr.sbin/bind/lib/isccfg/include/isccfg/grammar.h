@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: grammar.h,v 1.3 2019/12/17 01:46:38 sthen Exp $ */
+/* $Id: grammar.h,v 1.4 2020/01/09 14:18:30 florian Exp $ */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -254,42 +254,42 @@ struct cfg_parser {
 /*%
  * Predefined data representation types.
  */
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_uint32;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_uint64;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_string;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_boolean;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_map;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_list;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_tuple;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_sockaddr;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_netprefix;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_void;
-LIBISCCFG_EXTERNAL_DATA extern cfg_rep_t cfg_rep_fixedpoint;
+extern cfg_rep_t cfg_rep_uint32;
+extern cfg_rep_t cfg_rep_uint64;
+extern cfg_rep_t cfg_rep_string;
+extern cfg_rep_t cfg_rep_boolean;
+extern cfg_rep_t cfg_rep_map;
+extern cfg_rep_t cfg_rep_list;
+extern cfg_rep_t cfg_rep_tuple;
+extern cfg_rep_t cfg_rep_sockaddr;
+extern cfg_rep_t cfg_rep_netprefix;
+extern cfg_rep_t cfg_rep_void;
+extern cfg_rep_t cfg_rep_fixedpoint;
 /*@}*/
 
 /*@{*/
 /*%
  * Predefined configuration object types.
  */
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_boolean;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_uint32;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_uint64;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_qstring;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_astring;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_ustring;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sstring;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sockaddr;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sockaddrdscp;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr4;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr4wild;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr6;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr6wild;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netprefix;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_void;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_token;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_unsupported;
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_fixedpoint;
+extern cfg_type_t cfg_type_boolean;
+extern cfg_type_t cfg_type_uint32;
+extern cfg_type_t cfg_type_uint64;
+extern cfg_type_t cfg_type_qstring;
+extern cfg_type_t cfg_type_astring;
+extern cfg_type_t cfg_type_ustring;
+extern cfg_type_t cfg_type_sstring;
+extern cfg_type_t cfg_type_sockaddr;
+extern cfg_type_t cfg_type_sockaddrdscp;
+extern cfg_type_t cfg_type_netaddr;
+extern cfg_type_t cfg_type_netaddr4;
+extern cfg_type_t cfg_type_netaddr4wild;
+extern cfg_type_t cfg_type_netaddr6;
+extern cfg_type_t cfg_type_netaddr6wild;
+extern cfg_type_t cfg_type_netprefix;
+extern cfg_type_t cfg_type_void;
+extern cfg_type_t cfg_type_token;
+extern cfg_type_t cfg_type_unsupported;
+extern cfg_type_t cfg_type_fixedpoint;
 /*@}*/
 
 isc_result_t

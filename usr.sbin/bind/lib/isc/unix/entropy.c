@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: entropy.c,v 1.10 2020/01/09 13:47:14 florian Exp $ */
+/* $Id: entropy.c,v 1.11 2020/01/09 14:18:30 florian Exp $ */
 
 /* \file unix/entropy.c
  * \brief
@@ -40,9 +40,7 @@
 #include <isc/strerror.h>
 #include <isc/string.h>
 
-#ifdef ISC_PLATFORM_NEEDSYSSELECTH
 #include <sys/select.h>
-#endif
 
 #include "errno2result.h"
 

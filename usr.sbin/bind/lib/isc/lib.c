@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.c,v 1.4 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: lib.c,v 1.5 2020/01/09 14:18:30 florian Exp $ */
 
 /*! \file */
 
@@ -38,7 +38,7 @@
  *** Globals
  ***/
 
-LIBISC_EXTERNAL_DATA isc_msgcat_t *		isc_msgcat = NULL;
+isc_msgcat_t *		isc_msgcat = NULL;
 
 
 /***

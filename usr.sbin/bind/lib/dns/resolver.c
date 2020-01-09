@@ -1997,7 +1997,6 @@ add_triededns512(fetchctx_t *fctx, isc_sockaddr_t *address) {
 	ISC_LIST_INITANDAPPEND(fctx->edns512, tried, link);
 }
 
-#ifdef ISC_PLATFORM_USESIT
 static void
 compute_cc(resquery_t *query, unsigned char *cookie, size_t len) {
 #ifdef AES_SIT
@@ -2072,7 +2071,6 @@ compute_cc(resquery_t *query, unsigned char *cookie, size_t len) {
 	isc_hmacsha256_invalidate(&hmacsha256);
 #endif
 }
-#endif
 
 static isc_boolean_t
 wouldvalidate(fetchctx_t *fctx) {
@@ -2289,10 +2287,8 @@ resquery_send(resquery_t *query) {
 			unsigned int version = 0;       /* Default version. */
 			unsigned int flags = query->addrinfo->flags;
 			isc_boolean_t reqnsid = res->view->requestnsid;
-#ifdef ISC_PLATFORM_USESIT
 			isc_boolean_t reqsit = res->view->requestsit;
 			unsigned char cookie[64];
-#endif
 
 			if ((flags & FCTX_ADDRINFO_EDNSOK) != 0 &&
 			    (query->options & DNS_FETCHOPT_EDNS512) == 0) {
@@ -2336,14 +2332,10 @@ resquery_send(resquery_t *query) {
 			/* Request NSID/COOKIE for current view or peer? */
 			if (peer != NULL) {
 				(void) dns_peer_getrequestnsid(peer, &reqnsid);
-#ifdef ISC_PLATFORM_USESIT
 				(void) dns_peer_getrequestsit(peer, &reqsit);
-#endif
 			}
-#ifdef ISC_PLATFORM_USESIT
 			if (NOSIT(query->addrinfo))
 				reqsit = ISC_FALSE;
-#endif
 			if (reqnsid) {
 				INSIST(ednsopt < DNS_EDNSOPTIONS);
 				ednsopts[ednsopt].code = DNS_OPT_NSID;
@@ -2351,7 +2343,6 @@ resquery_send(resquery_t *query) {
 				ednsopts[ednsopt].value = NULL;
 				ednsopt++;
 			}
-#ifdef ISC_PLATFORM_USESIT
 			if (reqsit) {
 				INSIST(ednsopt < DNS_EDNSOPTIONS);
 				ednsopts[ednsopt].code = DNS_OPT_COOKIE;
@@ -2372,7 +2363,6 @@ resquery_send(resquery_t *query) {
 				}
 				ednsopt++;
 			}
-#endif
 			query->ednsversion = version;
 			result = fctx_addopt(fctx->qmessage, version,
 					     udpsize, ednsopts, ednsopt);
@@ -7554,12 +7544,10 @@ process_opt(resquery_t *query, dns_rdataset_t *opt) {
 	isc_result_t result;
 	isc_uint16_t optcode;
 	isc_uint16_t optlen;
-#ifdef ISC_PLATFORM_USESIT
 	unsigned char *optvalue;
 	dns_adbaddrinfo_t *addrinfo;
 	unsigned char cookie[8];
 	isc_boolean_t seen_cookie = ISC_FALSE;
-#endif
 	isc_boolean_t seen_nsid = ISC_FALSE;
 
 	result = dns_rdataset_first(opt);
@@ -7582,7 +7570,6 @@ process_opt(resquery_t *query, dns_rdataset_t *opt) {
 				isc_buffer_forward(&optbuf, optlen);
 				seen_nsid = ISC_TRUE;
 				break;
-#ifdef ISC_PLATFORM_USESIT
 			case DNS_OPT_COOKIE:
 				/*
 				 * Only process the first cookie option.
@@ -7611,7 +7598,6 @@ process_opt(resquery_t *query, dns_rdataset_t *opt) {
 					  dns_resstatscounter_sitin);
 				seen_cookie = ISC_TRUE;
 				break;
-#endif
 			default:
 				isc_buffer_forward(&optbuf, optlen);
 				break;
@@ -7847,7 +7833,6 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 		process_opt(query, opt);
 
 #ifdef notyet
-#ifdef ISC_PLATFORM_USESIT
 	if (message->sitbad) {
 		/*
 		 * If the COOKIE is bad assume it is a attack and retry.
@@ -7857,7 +7842,6 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 		FCTXTRACE("bad cookie");
 		goto done;
 	}
-#endif
 #endif
 
 	/*
@@ -8021,7 +8005,6 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 	    message->rcode != dns_rcode_nxdomain) {
 		isc_buffer_t b;
 		char code[64];
-#ifdef ISC_PLATFORM_USESIT
 		unsigned char cookie[64];
 
 		/*
@@ -8038,7 +8021,6 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 					    FCTX_ADDRINFO_NOSIT);
 			resend = ISC_TRUE;
 		} else
-#endif
 		if (((message->rcode == dns_rcode_formerr ||
 		      message->rcode == dns_rcode_notimp) ||
 		     (message->rcode == dns_rcode_servfail &&
@@ -8085,7 +8067,6 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 		} else if (message->rcode == dns_rcode_badvers) {
 			unsigned int flags, mask;
 			unsigned int version;
-#ifdef ISC_PLATFORM_USESIT
 			isc_boolean_t nosit = ISC_FALSE;
 
 			/*
@@ -8103,7 +8084,6 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 						    FCTX_ADDRINFO_NOSIT,
 						    FCTX_ADDRINFO_NOSIT);
 			}
-#endif
 
 			INSIST(opt != NULL);
 			version = (opt->ttl >> 16) & 0xff;
@@ -8129,12 +8109,10 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 			case 0:
 				dns_adb_changeflags(fctx->adb, query->addrinfo,
 						    flags, mask);
-#ifdef ISC_PLATFORM_USESIT
 				if (nosit) {
 					resend = ISC_TRUE;
 					break;
 				}
-#endif
 				/* FALLTHROUGH */
 			default:
 				broken_server = DNS_R_BADVERS;

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig.h,v 1.5 2020/01/09 13:56:37 florian Exp $ */
+/* $Id: tsig.h,v 1.6 2020/01/09 14:18:29 florian Exp $ */
 
 #ifndef DNS_TSIG_H
 #define DNS_TSIG_H 1
@@ -37,15 +37,15 @@
 /*
  * Algorithms.
  */
-LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_tsig_hmacsha1_name;
+extern dns_name_t *dns_tsig_hmacsha1_name;
 #define DNS_TSIG_HMACSHA1_NAME		dns_tsig_hmacsha1_name
-LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_tsig_hmacsha224_name;
+extern dns_name_t *dns_tsig_hmacsha224_name;
 #define DNS_TSIG_HMACSHA224_NAME	dns_tsig_hmacsha224_name
-LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_tsig_hmacsha256_name;
+extern dns_name_t *dns_tsig_hmacsha256_name;
 #define DNS_TSIG_HMACSHA256_NAME	dns_tsig_hmacsha256_name
-LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_tsig_hmacsha384_name;
+extern dns_name_t *dns_tsig_hmacsha384_name;
 #define DNS_TSIG_HMACSHA384_NAME	dns_tsig_hmacsha384_name
-LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_tsig_hmacsha512_name;
+extern dns_name_t *dns_tsig_hmacsha512_name;
 #define DNS_TSIG_HMACSHA512_NAME	dns_tsig_hmacsha512_name
 
 /*%

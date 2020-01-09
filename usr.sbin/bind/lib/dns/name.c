@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.15 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: name.c,v 1.16 2020/01/09 14:18:29 florian Exp $ */
 
 /*! \file */
 
@@ -177,7 +177,7 @@ static unsigned char root_offsets[] = { 0 };
 static dns_name_t root = DNS_NAME_INITABSOLUTE(root_ndata, root_offsets);
 
 /* XXXDCL make const? */
-LIBDNS_EXTERNAL_DATA dns_name_t *dns_rootname = &root;
+dns_name_t *dns_rootname = &root;
 
 static unsigned char wild_ndata[] = { "\001*" };
 static unsigned char wild_offsets[] = { 0 };
@@ -186,7 +186,7 @@ static dns_name_t wild =
 	DNS_NAME_INITNONABSOLUTE(wild_ndata, wild_offsets);
 
 /* XXXDCL make const? */
-LIBDNS_EXTERNAL_DATA dns_name_t *dns_wildcardname = &wild;
+dns_name_t *dns_wildcardname = &wild;
 
 unsigned int
 dns_fullname_hash(dns_name_t *name, isc_boolean_t case_sensitive);

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.c,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: lib.c,v 1.4 2020/01/09 14:18:29 florian Exp $ */
 
 /*! \file */
 
@@ -41,8 +41,8 @@
  *** Globals
  ***/
 
-LIBDNS_EXTERNAL_DATA unsigned int			dns_pps = 0U;
-LIBDNS_EXTERNAL_DATA isc_msgcat_t *			dns_msgcat = NULL;
+unsigned int			dns_pps = 0U;
+isc_msgcat_t *			dns_msgcat = NULL;
 
 
 /***

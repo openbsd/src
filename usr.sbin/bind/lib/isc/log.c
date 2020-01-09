@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.13 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: log.c,v 1.14 2020/01/09 14:18:30 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -189,7 +189,7 @@ static const int syslog_map[] = {
  * be overridden.  Since the default is always looked up as the first
  * channellist in the log context, it must come first in isc_categories[].
  */
-LIBISC_EXTERNAL_DATA isc_logcategory_t isc_categories[] = {
+isc_logcategory_t isc_categories[] = {
 	{ "default", 0 },	/* "default" must come first. */
 	{ "general", 0 },
 	{ NULL, 0 }
@@ -198,7 +198,7 @@ LIBISC_EXTERNAL_DATA isc_logcategory_t isc_categories[] = {
 /*!
  * See above comment for categories on LIBISC_EXTERNAL_DATA, and apply it to modules.
  */
-LIBISC_EXTERNAL_DATA isc_logmodule_t isc_modules[] = {
+isc_logmodule_t isc_modules[] = {
 	{ "socket", 0 },
 	{ "time", 0 },
 	{ "interface", 0 },
@@ -218,7 +218,7 @@ static isc_logchannellist_t default_channel;
 /*!
  * libisc logs to this context.
  */
-LIBISC_EXTERNAL_DATA isc_log_t *isc_lctx = NULL;
+isc_log_t *isc_lctx = NULL;
 
 /*!
  * Forward declarations.

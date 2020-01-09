@@ -715,7 +715,7 @@ ISC_PLATFORM_HAVEIFNAMETOINDEX
 ISC_PLATFORM_HAVESTRINGSH
 ISC_PLATFORM_BRACEPTHREADONCEINIT
 ISC_PLATFORM_USEDECLSPEC
-ISC_PLATFORM_RLIMITTYPE
+rlim_t
 ISC_PLATFORM_HAVESTATNSEC
 ISC_PLATFORM_HAVESYSUNH
 ISC_PLATFORM_QUADFORMAT
@@ -17900,7 +17900,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 $as_echo_n "checking st_mtim.tv_nsec... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <sys/fcntl.h>
+#include <sys/stat.h>
 int
 main ()
 {
@@ -17943,7 +17943,7 @@ _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
- ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE rlim_t"
+ rlim_t="#define ISC_PLATFORM_RLIMITTYPE rlim_t"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -17960,7 +17960,7 @@ else
   rlimtype="long long int"
 fi
 
-ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE $rlimtype"
+rlim_t="#define ISC_PLATFORM_RLIMITTYPE $rlimtype"
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: cannot determine type of rlim_cur when cross compiling - assuming $rlimtype" >&5
 $as_echo "cannot determine type of rlim_cur when cross compiling - assuming $rlimtype" >&6; }
 else
@@ -17975,7 +17975,7 @@ _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: int" >&5
 $as_echo "int" >&6; }
-ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE int"
+rlim_t="#define ISC_PLATFORM_RLIMITTYPE int"
 else
 
 if test "$cross_compiling" = yes; then :
@@ -17992,7 +17992,7 @@ _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: long int" >&5
 $as_echo "long int" >&6; }
-ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE long int"
+rlim_t="#define ISC_PLATFORM_RLIMITTYPE long int"
 else
 
 if test "$cross_compiling" = yes; then :
@@ -18009,7 +18009,7 @@ _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: long long int" >&5
 $as_echo "long long int" >&6; }
-ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE long long int"
+rlim_t="#define ISC_PLATFORM_RLIMITTYPE long long int"
 else
   as_fn_error $? "unable to determine sizeof rlim_cur" "$LINENO" 5
 

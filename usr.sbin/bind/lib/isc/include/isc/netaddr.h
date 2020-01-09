@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: netaddr.h,v 1.4 2020/01/09 14:18:30 florian Exp $ */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1
@@ -25,10 +25,8 @@
 #include <isc/net.h>
 #include <isc/types.h>
 
-#ifdef ISC_PLATFORM_HAVESYSUNH
 #include <sys/types.h>
 #include <sys/un.h>
-#endif
 
 ISC_LANG_BEGINDECLS
 
@@ -37,9 +35,7 @@ struct isc_netaddr {
 	union {
 		struct in_addr in;
 		struct in6_addr in6;
-#ifdef ISC_PLATFORM_HAVESYSUNH
 		char un[sizeof(((struct sockaddr_un *)0)->sun_path)];
-#endif
 	} type;
 	isc_uint32_t zone;
 };

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: namedconf.h,v 1.3 2019/12/17 01:46:38 sthen Exp $ */
+/* $Id: namedconf.h,v 1.4 2020/01/09 14:18:30 florian Exp $ */
 
 #ifndef ISCCFG_NAMEDCONF_H
 #define ISCCFG_NAMEDCONF_H 1
@@ -29,28 +29,28 @@
 /*
  * Configuration object types.
  */
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_namedconf;
+extern cfg_type_t cfg_type_namedconf;
 /*%< A complete named.conf file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_bindkeys;
+extern cfg_type_t cfg_type_bindkeys;
 /*%< A bind.keys file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_newzones;
+extern cfg_type_t cfg_type_newzones;
 /*%< A new-zones file (for zones added by 'rndc addzone'). */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_addzoneconf;
+extern cfg_type_t cfg_type_addzoneconf;
 /*%< A single zone passed via the addzone rndc command. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_rndcconf;
+extern cfg_type_t cfg_type_rndcconf;
 /*%< A complete rndc.conf file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_rndckey;
+extern cfg_type_t cfg_type_rndckey;
 /*%< A complete rndc.key file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sessionkey;
+extern cfg_type_t cfg_type_sessionkey;
 /*%< A complete session.key file. */
 
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_keyref;
+extern cfg_type_t cfg_type_keyref;
 /*%< A key reference, used as an ACL element */
 
 #endif /* ISCCFG_NAMEDCONF_H */

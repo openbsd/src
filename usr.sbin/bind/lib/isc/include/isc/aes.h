@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aes.h,v 1.2 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: aes.h,v 1.3 2020/01/09 14:18:30 florian Exp $ */
 
 /*! \file isc/aes.h */
 
@@ -29,8 +29,6 @@
 #define ISC_AES192_KEYLENGTH 24U
 #define ISC_AES256_KEYLENGTH 32U
 #define ISC_AES_BLOCK_LENGTH 16U
-
-#ifdef ISC_PLATFORM_WANTAES
 
 ISC_LANG_BEGINDECLS
 
@@ -47,7 +45,5 @@ isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out);
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_PLATFORM_WANTAES */
 
 #endif /* ISC_AES_H */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ssu_external.c,v 1.3 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: ssu_external.c,v 1.4 2020/01/09 14:18:29 florian Exp $ */
 
 /*
  * This implements external update-policy rules.  This allows permission
@@ -26,10 +26,8 @@
 #include <errno.h>
 #include <unistd.h>
 
-#ifdef ISC_PLATFORM_HAVESYSUNH
 #include <sys/socket.h>
 #include <sys/un.h>
-#endif
 
 #include <isc/magic.h>
 #include <isc/mem.h>
@@ -66,7 +64,6 @@ ssu_e_log(int level, const char *fmt, ...) {
 static int
 ux_socket_connect(const char *path) {
 	int fd = -1;
-#ifdef ISC_PLATFORM_HAVESYSUNH
 	struct sockaddr_un addr;
 
 	REQUIRE(path != NULL);
@@ -100,7 +97,6 @@ ux_socket_connect(const char *path) {
 		close(fd);
 		return (-1);
 	}
-#endif
 	return (fd);
 }
 

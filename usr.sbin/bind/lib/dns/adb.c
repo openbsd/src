@@ -3571,7 +3571,6 @@ dump_entry(FILE *f, dns_adb_t *adb, dns_adbentry_t *entry,
 		entry->to512, entry->plain, entry->plainto);
 	if (entry->udpsize != 0U)
 		fprintf(f, " [udpsize %u]", entry->udpsize);
-#ifdef ISC_PLATFORM_USESIT
 	if (entry->sit != NULL) {
 		unsigned int i;
 		fprintf(f, " [sit=");
@@ -3579,7 +3578,6 @@ dump_entry(FILE *f, dns_adb_t *adb, dns_adbentry_t *entry,
 			fprintf(f, "%02x", entry->sit[i]);
 		fprintf(f, "]");
 	}
-#endif
 
 	if (entry->expires != 0)
 		fprintf(f, " [ttl %d]", (int)(entry->expires - now));

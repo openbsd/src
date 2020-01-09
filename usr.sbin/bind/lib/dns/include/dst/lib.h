@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: lib.h,v 1.4 2020/01/09 14:18:30 florian Exp $ */
 
 #ifndef DST_LIB_H
 #define DST_LIB_H 1
@@ -26,7 +26,7 @@
 
 ISC_LANG_BEGINDECLS
 
-LIBDNS_EXTERNAL_DATA extern isc_msgcat_t *dst_msgcat;
+extern isc_msgcat_t *dst_msgcat;
 
 void
 dst_lib_initmsgcat(void);

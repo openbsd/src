@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.11 2020/01/09 13:47:14 florian Exp $ */
+/* $Id: sockaddr.c,v 1.12 2020/01/09 14:18:30 florian Exp $ */
 
 /*! \file */
 
@@ -473,7 +473,6 @@ isc_sockaddr_isnetzero(const isc_sockaddr_t *sockaddr) {
 
 isc_result_t
 isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
-#ifdef ISC_PLATFORM_HAVESYSUNH
 	if (strlen(path) >= sizeof(sockaddr->type.sunix.sun_path))
 		return (ISC_R_NOSPACE);
 	memset(sockaddr, 0, sizeof(*sockaddr));
@@ -484,9 +483,4 @@ isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path) {
 	strlcpy(sockaddr->type.sunix.sun_path, path,
 		sizeof(sockaddr->type.sunix.sun_path));
 	return (ISC_R_SUCCESS);
-#else
-	UNUSED(sockaddr);
-	UNUSED(path);
-	return (ISC_R_NOTIMPLEMENTED);
-#endif
 }

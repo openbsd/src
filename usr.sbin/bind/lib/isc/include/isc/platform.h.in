@@ -28,42 +28,6 @@
  ***/
 
 /*
- * Defined if unistd.h does not cause fd_set to be delared.
- */
-@ISC_PLATFORM_NEEDSYSSELECTH@
-
-/*
- * Define if the system has nanosecond-level accuracy in file stats.
- */
-@ISC_PLATFORM_HAVESTATNSEC@
-
-/*
- * Type used for resource limits.
- */
-@ISC_PLATFORM_RLIMITTYPE@
-
-/*
- * Define if your compiler supports "long long int".
- */
-@ISC_PLATFORM_HAVELONGLONG@
-
-/*
- * Define if PTHREAD_ONCE_INIT should be surrounded by braces to
- * prevent compiler warnings (such as with gcc on Solaris 2.8).
- */
-@ISC_PLATFORM_BRACEPTHREADONCEINIT@
-
-/*
- * Used to control how extern data is linked; needed for Win32 platforms.
- */
-@ISC_PLATFORM_USEDECLSPEC@
-
-/*
- * Define if the platform has <sys/un.h>.
- */
-@ISC_PLATFORM_HAVESYSUNH@
-
-/*
  * If the "xadd" operation is available on this architecture,
  * ISC_PLATFORM_HAVEXADD will be defined.
  */
@@ -115,19 +79,9 @@
 @ISC_PLATFORM_USESTDASM@
 
 /*
- * Define if the platform has <strings.h>.
- */
-@ISC_PLATFORM_HAVESTRINGSH@
-
-/*
  * Define if the hash functions must be provided by OpenSSL.
  */
 @ISC_PLATFORM_OPENSSLHASH@
-
-/*
- * Define if AES support is wanted
- */
-@ISC_PLATFORM_WANTAES@
 
 /*
  * Defines for the noreturn attribute.
@@ -136,53 +90,10 @@
 @ISC_PLATFORM_NORETURN_POST@
 
 /*
- * Defined if we are enabling SIT (Source Identity Token).
- */
-@ISC_PLATFORM_USESIT@
-
-/***
- ***	Windows dll support.
- ***/
-
-/*
  * Define if MacOS style of PPC assembly must be used.
  * e.g. "r6", not "6", for register six.
  */
 @ISC_PLATFORM_USEMACASM@
-
-#ifndef ISC_PLATFORM_USEDECLSPEC
-#define LIBISC_EXTERNAL_DATA
-#define LIBDNS_EXTERNAL_DATA
-#define LIBISCCFG_EXTERNAL_DATA
-#define LIBBIND9_EXTERNAL_DATA
-#define LIBTESTS_EXTERNAL_DATA
-#else /*! \brief ISC_PLATFORM_USEDECLSPEC */
-#ifdef LIBISC_EXPORTS
-#define LIBISC_EXTERNAL_DATA __declspec(dllexport)
-#else
-#define LIBISC_EXTERNAL_DATA __declspec(dllimport)
-#endif
-#ifdef LIBDNS_EXPORTS
-#define LIBDNS_EXTERNAL_DATA __declspec(dllexport)
-#else
-#define LIBDNS_EXTERNAL_DATA __declspec(dllimport)
-#endif
-#ifdef LIBISCCFG_EXPORTS
-#define LIBISCCFG_EXTERNAL_DATA __declspec(dllexport)
-#else
-#define LIBISCCFG_EXTERNAL_DATA __declspec(dllimport)
-#endif
-#ifdef LIBBIND9_EXPORTS
-#define LIBBIND9_EXTERNAL_DATA __declspec(dllexport)
-#else
-#define LIBBIND9_EXTERNAL_DATA __declspec(dllimport)
-#endif
-#ifdef LIBTESTS_EXPORTS
-#define LIBTESTS_EXTERNAL_DATA __declspec(dllexport)
-#else
-#define LIBTESTS_EXTERNAL_DATA __declspec(dllimport)
-#endif
-#endif /*! \brief ISC_PLATFORM_USEDECLSPEC */
 
 /*
  * Tell emacs to use C mode for this file.

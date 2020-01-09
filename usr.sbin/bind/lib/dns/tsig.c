@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.11 2020/01/09 13:56:37 florian Exp $
+ * $Id: tsig.c,v 1.12 2020/01/09 14:18:29 florian Exp $
  */
 /*! \file */
 #include <config.h>
@@ -77,31 +77,31 @@ static unsigned char hmacsha1_ndata[] = "\011hmac-sha1";
 static unsigned char hmacsha1_offsets[] = { 0, 10 };
 static dns_name_t hmacsha1 =
 	DNS_NAME_INITABSOLUTE(hmacsha1_ndata, hmacsha1_offsets);
-LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha1_name = &hmacsha1;
+dns_name_t *dns_tsig_hmacsha1_name = &hmacsha1;
 
 static unsigned char hmacsha224_ndata[] = "\013hmac-sha224";
 static unsigned char hmacsha224_offsets[] = { 0, 12 };
 static dns_name_t hmacsha224 =
 	DNS_NAME_INITABSOLUTE(hmacsha224_ndata, hmacsha224_offsets);
-LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha224_name = &hmacsha224;
+dns_name_t *dns_tsig_hmacsha224_name = &hmacsha224;
 
 static unsigned char hmacsha256_ndata[] = "\013hmac-sha256";
 static unsigned char hmacsha256_offsets[] = { 0, 12 };
 static dns_name_t hmacsha256 =
 	DNS_NAME_INITABSOLUTE(hmacsha256_ndata, hmacsha256_offsets);
-LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha256_name = &hmacsha256;
+dns_name_t *dns_tsig_hmacsha256_name = &hmacsha256;
 
 static unsigned char hmacsha384_ndata[] = "\013hmac-sha384";
 static unsigned char hmacsha384_offsets[] = { 0, 12 };
 static dns_name_t hmacsha384 =
 	DNS_NAME_INITABSOLUTE(hmacsha384_ndata, hmacsha384_offsets);
-LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha384_name = &hmacsha384;
+dns_name_t *dns_tsig_hmacsha384_name = &hmacsha384;
 
 static unsigned char hmacsha512_ndata[] = "\013hmac-sha512";
 static unsigned char hmacsha512_offsets[] = { 0, 12 };
 static dns_name_t hmacsha512 =
 	DNS_NAME_INITABSOLUTE(hmacsha512_ndata, hmacsha512_offsets);
-LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacsha512_name = &hmacsha512;
+dns_name_t *dns_tsig_hmacsha512_name = &hmacsha512;
 
 static isc_result_t
 tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg);

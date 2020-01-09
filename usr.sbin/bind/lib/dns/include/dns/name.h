@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.8 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: name.h,v 1.9 2020/01/09 14:18:29 florian Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -148,8 +148,8 @@ struct dns_name {
 #define DNS_NAME_CHECKMX		0x0010		/*%< Used by rdata. */
 #define DNS_NAME_CHECKMXFAIL		0x0020		/*%< Used by rdata. */
 
-LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_rootname;
-LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_wildcardname;
+extern dns_name_t *dns_rootname;
+extern dns_name_t *dns_wildcardname;
 
 /*%
  * Standard size of a wire format name

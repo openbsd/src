@@ -27,4 +27,4 @@
  * clients will run isc_lib_register(), which sets it to ISC_FALSE,
  * overriding certain BIND9 behaviors.
  */
-LIBISC_EXTERNAL_DATA isc_boolean_t isc_bind9 = ISC_TRUE;
+isc_boolean_t isc_bind9 = ISC_TRUE;

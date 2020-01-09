@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnsconf.h,v 1.2 2019/12/17 01:46:38 sthen Exp $ */
+/* $Id: dnsconf.h,v 1.3 2020/01/09 14:18:30 florian Exp $ */
 
 #ifndef ISCCFG_DNSCONF_H
 #define ISCCFG_DNSCONF_H 1
@@ -29,7 +29,7 @@
 /*
  * Configuration object types.
  */
-LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_dnsconf;
+extern cfg_type_t cfg_type_dnsconf;
 /*%< A complete dns.conf file. */
 
 #endif /* ISCCFG_DNSCONF_H */

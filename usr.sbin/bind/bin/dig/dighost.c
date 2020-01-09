@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.25 2020/01/09 13:52:22 florian Exp $ */
+/* $Id: dighost.c,v 1.26 2020/01/09 14:18:29 florian Exp $ */
 
 /*! \file
  *  \note
@@ -145,9 +145,7 @@ int ndots = -1;
 int tries = 3;
 int lookup_counter = 0;
 
-#ifdef ISC_PLATFORM_USESIT
 static char sitvalue[256];
-#endif
 
 #ifdef WITH_IDN
 static void		initialize_idn(void);
@@ -860,9 +858,7 @@ make_empty_lookup(void) {
 #else
 	looknew->idnout = ISC_FALSE;
 #endif
-#ifdef ISC_PLATFORM_USESIT
 	looknew->sit = ISC_FALSE;
-#endif
 #ifdef DIG_SIGCHASE
 	looknew->sigchase = ISC_FALSE;
 #if DIG_SIGCHASE_TD
@@ -900,9 +896,7 @@ make_empty_lookup(void) {
 	looknew->done_as_is = ISC_FALSE;
 	looknew->need_search = ISC_FALSE;
 	looknew->ecs_addr = NULL;
-#ifdef ISC_PLATFORM_USESIT
 	looknew->sitvalue = NULL;
-#endif
 	looknew->ednsopts = NULL;
 	looknew->ednsoptscnt = 0;
 	looknew->ednsneg = ISC_FALSE;
@@ -992,10 +986,8 @@ clone_lookup(dig_lookup_t *lookold, isc_boolean_t servers) {
 	looknew->opcode = lookold->opcode;
 	looknew->expire = lookold->expire;
 	looknew->nsid = lookold->nsid;
-#ifdef ISC_PLATFORM_USESIT
 	looknew->sit = lookold->sit;
 	looknew->sitvalue = lookold->sitvalue;
-#endif
 	if (lookold->ednsopts != NULL) {
 		cloneopts(looknew, lookold);
 	} else {
@@ -2319,14 +2311,12 @@ insert_soa(dig_lookup_t *lookup) {
 	dns_message_addname(lookup->sendmsg, soaname, DNS_SECTION_AUTHORITY);
 }
 
-#ifdef ISC_PLATFORM_USESIT
 static void
 compute_cookie(unsigned char *clientcookie, size_t len) {
 	/* XXXMPA need to fix, should be per server. */
 	INSIST(len >= 8U);
 	memmove(clientcookie, cookie_secret, 8);
 }
-#endif
 
 /*%
  * Setup the supplied lookup structure, making it ready to start sending
@@ -2345,9 +2335,7 @@ setup_lookup(dig_lookup_t *lookup) {
 	dns_compress_t cctx;
 	char store[MXNAME];
 	char ecsbuf[20];
-#ifdef ISC_PLATFORM_USESIT
 	char sitbuf[256];
-#endif
 #ifdef WITH_IDN
 	idn_result_t mr;
 	char utf8_textname[MXNAME], utf8_origin[MXNAME], idn_textname[MXNAME];
@@ -2718,7 +2706,6 @@ setup_lookup(dig_lookup_t *lookup) {
 			i++;
 		}
 
-#ifdef ISC_PLATFORM_USESIT
 		if (lookup->sit) {
 			INSIST(i < MAXOPTS);
 			opts[i].code = DNS_OPT_COOKIE;
@@ -2736,7 +2723,6 @@ setup_lookup(dig_lookup_t *lookup) {
 			}
 			i++;
 		}
-#endif
 
 		if (lookup->expire) {
 			INSIST(i < MAXOPTS);
@@ -3613,7 +3599,6 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 	return (ISC_TRUE);
 }
 
-#ifdef ISC_PLATFORM_USESIT
 static void
 process_sit(dig_lookup_t *l, dns_message_t *msg,
 	    isc_buffer_t *optbuf, size_t optlen)
@@ -3705,7 +3690,6 @@ process_opt(dig_lookup_t *l, dns_message_t *msg) {
 		}
 	}
 }
-#endif
 
 static int
 ednsvers(dns_rdataset_t *opt) {
@@ -4003,10 +3987,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	}
 	if ((msg->flags & DNS_MESSAGEFLAG_TC) != 0 &&
 	    !l->ignore && !l->tcp_mode) {
-#ifdef ISC_PLATFORM_USESIT
 		if (l->sitvalue == NULL && l->sit && msg->opt != NULL)
 			process_opt(l, msg);
-#endif
 		if (l->comments)
 			printf(";; Truncated, retrying in TCP mode.\n");
 		n = requeue_lookup(l, ISC_TRUE);
@@ -4109,7 +4091,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		}
 	}
 
-#ifdef ISC_PLATFORM_USESIT
 	if (l->sitvalue != NULL) {
 		if (msg->opt == NULL)
 			printf(";; expected opt record in response\n");
@@ -4117,7 +4098,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			process_opt(l, msg);
 	} else if (l->sit && msg->opt != NULL)
 		process_opt(l, msg);
-#endif
 
 	if (!l->doing_xfr || l->xfr_q == query) {
 		if (msg->rcode == dns_rcode_nxdomain &&

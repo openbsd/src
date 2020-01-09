@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: lib.h,v 1.4 2020/01/09 14:18:30 florian Exp $ */
 
 #ifndef ISC_LIB_H
 #define ISC_LIB_H 1
@@ -26,7 +26,7 @@
 
 ISC_LANG_BEGINDECLS
 
-LIBISC_EXTERNAL_DATA extern isc_msgcat_t *isc_msgcat;
+extern isc_msgcat_t *isc_msgcat;
 
 void
 isc_lib_initmsgcat(void);

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.3 2019/12/17 01:46:38 sthen Exp $ */
+/* $Id: log.h,v 1.4 2020/01/09 14:18:30 florian Exp $ */
 
 #ifndef ISCCFG_LOG_H
 #define ISCCFG_LOG_H 1
@@ -24,8 +24,8 @@
 #include <isc/lang.h>
 #include <isc/log.h>
 
-LIBISCCFG_EXTERNAL_DATA extern isc_logcategory_t cfg_categories[];
-LIBISCCFG_EXTERNAL_DATA extern isc_logmodule_t cfg_modules[];
+extern isc_logcategory_t cfg_categories[];
+extern isc_logmodule_t cfg_modules[];
 
 #define CFG_LOGCATEGORY_CONFIG	(&cfg_categories[0])
 

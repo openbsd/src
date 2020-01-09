@@ -3291,7 +3291,7 @@ AC_DEFINE(NEED_OPTARG, 1, [Defined if extern char *optarg is not declared.])])
 # Check for nanoseconds in file stats
 #
 AC_MSG_CHECKING(st_mtim.tv_nsec)
-AC_TRY_COMPILE([#include <sys/fcntl.h>],[struct stat s; return(s.st_mtim.tv_nsec);],
+AC_TRY_COMPILE([#include <sys/stat.h>],[struct stat s; return(s.st_mtim.tv_nsec);],
 	[AC_MSG_RESULT(yes)
 	ISC_PLATFORM_HAVESTATNSEC="#define ISC_PLATFORM_HAVESTATNSEC 1"],
 	[AC_MSG_RESULT(no)
@@ -3308,7 +3308,7 @@ AC_TRY_COMPILE([
 #include <sys/resource.h>],
 [rlim_t rl = 19671212; return (0);],
 [AC_MSG_RESULT(yes)
- ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE rlim_t"],
+ rlim_t="#define ISC_PLATFORM_RLIMITTYPE rlim_t"],
 [AC_MSG_RESULT(no)
 
 AC_MSG_CHECKING(type of rlim_cur)
@@ -3318,7 +3318,7 @@ AC_TRY_RUN([
 #include <sys/resource.h>
 main() { struct rlimit r; exit(!(sizeof(r.rlim_cur) == sizeof(int)));}],
 [AC_MSG_RESULT(int)
-ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE int"],
+rlim_t="#define ISC_PLATFORM_RLIMITTYPE int"],
 [
 AC_TRY_RUN([
 #include <sys/types.h>
@@ -3326,7 +3326,7 @@ AC_TRY_RUN([
 #include <sys/resource.h>
 main() { struct rlimit r; exit(!(sizeof(r.rlim_cur) == sizeof(long int)));}],
 [AC_MSG_RESULT(long int)
-ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE long int"],
+rlim_t="#define ISC_PLATFORM_RLIMITTYPE long int"],
 [
 AC_TRY_RUN([
 #include <sys/types.h>
@@ -3334,16 +3334,16 @@ AC_TRY_RUN([
 #include <sys/resource.h>
 main() { struct rlimit r; exit((!sizeof(r.rlim_cur) == sizeof(long long int)));}],
 [AC_MSG_RESULT(long long int)
-ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE long long int"],
+rlim_t="#define ISC_PLATFORM_RLIMITTYPE long long int"],
 [AC_MSG_ERROR([unable to determine sizeof rlim_cur])
 ],[AC_MSG_ERROR(this cannot happen)])
 ],[AC_MSG_ERROR(this cannot happen)])
 ],[
 AC_ARG_WITH(rlimtype, , rlimtype="$withval", rlimtype="long long int")
-ISC_PLATFORM_RLIMITTYPE="#define ISC_PLATFORM_RLIMITTYPE $rlimtype"
+rlim_t="#define ISC_PLATFORM_RLIMITTYPE $rlimtype"
 AC_MSG_RESULT(cannot determine type of rlim_cur when cross compiling - assuming $rlimtype)])
 ])
-AC_SUBST(ISC_PLATFORM_RLIMITTYPE)
+AC_SUBST(rlim_t)
 
 #
 # Older HP-UX doesn't have gettune

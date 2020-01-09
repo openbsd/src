@@ -14,14 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: version.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: version.h,v 1.4 2020/01/09 14:18:30 florian Exp $ */
 
 /*! \file isc/version.h */
 
 #include <isc/platform.h>
 
-LIBISC_EXTERNAL_DATA extern const char isc_version[];
+extern const char isc_version[];
 
-LIBISC_EXTERNAL_DATA extern const unsigned int isc_libinterface;
-LIBISC_EXTERNAL_DATA extern const unsigned int isc_librevision;
-LIBISC_EXTERNAL_DATA extern const unsigned int isc_libage;
+extern const unsigned int isc_libinterface;
+extern const unsigned int isc_librevision;
+extern const unsigned int isc_libage;

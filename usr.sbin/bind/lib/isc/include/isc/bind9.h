@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: bind9.h,v 1.2 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: bind9.h,v 1.3 2020/01/09 14:18:30 florian Exp $ */
 
 #ifndef ISC_BIND9_H
 #define ISC_BIND9_H 1
@@ -28,6 +28,6 @@
  * tools) it must be set to ISC_TRUE at runtime.  Export library clients
  * will call isc_lib_register(), which will set it to ISC_FALSE.
  */
-LIBISC_EXTERNAL_DATA extern isc_boolean_t isc_bind9;
+extern isc_boolean_t isc_bind9;
 
 #endif /* ISC_BIND9_H */

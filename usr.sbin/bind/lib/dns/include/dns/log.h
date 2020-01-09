@@ -23,9 +23,9 @@
 #include <isc/lang.h>
 #include <isc/log.h>
 
-LIBDNS_EXTERNAL_DATA extern isc_log_t *dns_lctx;
-LIBDNS_EXTERNAL_DATA extern isc_logcategory_t dns_categories[];
-LIBDNS_EXTERNAL_DATA extern isc_logmodule_t dns_modules[];
+extern isc_log_t *dns_lctx;
+extern isc_logcategory_t dns_categories[];
+extern isc_logmodule_t dns_modules[];
 
 #define DNS_LOGCATEGORY_NOTIFY		(&dns_categories[0])
 #define DNS_LOGCATEGORY_DATABASE	(&dns_categories[1])

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.32 2020/01/09 13:52:22 florian Exp $ */
+/* $Id: dig.c,v 1.33 2020/01/09 14:18:29 florian Exp $ */
 
 /*! \file */
 
@@ -76,9 +76,7 @@ static char *argv0;
 static int addresscount = 0;
 
 static char domainopt[DNS_NAME_MAXTEXT];
-#ifdef ISC_PLATFORM_USESIT
 static char sitvalue[256];
-#endif
 
 static isc_boolean_t short_form = ISC_FALSE, printcmd = ISC_TRUE,
 	ip6_int = ISC_FALSE, plusquest = ISC_FALSE, pluscomm = ISC_FALSE,
@@ -721,9 +719,7 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 	char *cmd, *value, *ptr, *code;
 	isc_uint32_t num;
 	isc_boolean_t state = ISC_TRUE;
-#if defined(DIG_SIGCHASE) || defined(ISC_PLATFORM_USESIT)
 	size_t n;
-#endif
 
 	strlcpy(option_store, option, sizeof(option_store));
 	ptr = option_store;
@@ -841,23 +837,19 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 			printcmd = state;
 			break;
 		case 'o': /* comments */
-#ifdef ISC_PLATFORM_USESIT
 			switch (cmd[2]) {
 			case 'o':
 				FULLCHECK("cookie");
 				goto sit;
 			case 'm':
-#endif
 				FULLCHECK("comments");
 				lookup->comments = state;
 				if (lookup == default_lookup)
 					pluscomm = state;
-#ifdef ISC_PLATFORM_USESIT
 				break;
 			default:
 				goto invalid_option;
 			}
-#endif
 			break;
 		case 'r':
 			FULLCHECK("crypto");
@@ -1185,7 +1177,6 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 				goto invalid_option;
 			}
 			break;
-#if defined(DIG_SIGCHASE) || defined(ISC_PLATFORM_USESIT)
 		case 'i':
 			switch (cmd[2]) {
 #ifdef DIG_SIGCHASE
@@ -1196,7 +1187,6 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 					lookup->dnssec = ISC_TRUE;
 				break;
 #endif
-#ifdef ISC_PLATFORM_USESIT
 			case 't': /* sit */
 				FULLCHECK("sit");
  sit:
@@ -1212,12 +1202,10 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 				} else
 					lookup->sitvalue = NULL;
 				break;
-#endif
 			default:
 				goto invalid_option;
 			}
 			break;
-#endif
 		case 'p': /* split */
 			FULLCHECK("split");
 			if (value != NULL && !state)

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnsconf.c,v 1.2 2019/12/17 01:46:38 sthen Exp $ */
+/* $Id: dnsconf.c,v 1.3 2020/01/09 14:18:30 florian Exp $ */
 
 /*! \file */
 
@@ -63,7 +63,7 @@ dnsconf_clausesets[] = {
 	NULL
 };
 
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_dnsconf = {
+cfg_type_t cfg_type_dnsconf = {
 	"dnsconf", cfg_parse_mapbody, cfg_print_mapbody, cfg_doc_mapbody,
 	&cfg_rep_map, dnsconf_clausesets
 };

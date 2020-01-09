@@ -43,7 +43,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: file.c,v 1.7 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: file.c,v 1.8 2020/01/09 14:18:30 florian Exp $ */
 
 /*! \file */
 
@@ -148,11 +148,7 @@ isc_file_getmodtime(const char *file, isc_time_t *modtime) {
 	result = file_stats(file, &stats);
 
 	if (result == ISC_R_SUCCESS)
-#ifdef ISC_PLATFORM_HAVESTATNSEC
 		isc_time_set(modtime, stats.st_mtime, stats.st_mtim.tv_nsec);
-#else
-		isc_time_set(modtime, stats.st_mtime, 0);
-#endif
 
 	return (result);
 }

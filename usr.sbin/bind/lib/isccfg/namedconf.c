@@ -1035,12 +1035,7 @@ options_clauses[] = {
 	{ "session-keyalg", &cfg_type_astring, 0 },
 	{ "session-keyfile", &cfg_type_qstringornone, 0 },
 	{ "session-keyname", &cfg_type_astring, 0 },
-#ifdef ISC_PLATFORM_USESIT
 	{ "sit-secret", &cfg_type_sstring, CFG_CLAUSEFLAG_EXPERIMENTAL },
-#else
-	{ "sit-secret", &cfg_type_sstring,
-	  CFG_CLAUSEFLAG_EXPERIMENTAL | CFG_CLAUSEFLAG_NOTCONFIGURED },
-#endif
 	{ "stacksize", &cfg_type_size, 0 },
 	{ "statistics-file", &cfg_type_qstring, 0 },
 	{ "statistics-interval", &cfg_type_uint32, CFG_CLAUSEFLAG_NYI },
@@ -1591,12 +1586,7 @@ view_clauses[] = {
 	{ "min-roots", &cfg_type_uint32, CFG_CLAUSEFLAG_NOTIMP },
 	{ "minimal-responses", &cfg_type_boolean, 0 },
 	{ "no-case-compress", &cfg_type_bracketed_aml, 0 },
-#ifdef ISC_PLATFORM_USESIT
 	{ "nosit-udp-size", &cfg_type_uint32, CFG_CLAUSEFLAG_EXPERIMENTAL },
-#else
-	{ "nosit-udp-size", &cfg_type_uint32,
-	  CFG_CLAUSEFLAG_EXPERIMENTAL | CFG_CLAUSEFLAG_NOTCONFIGURED },
-#endif
 	{ "preferred-glue", &cfg_type_astring, 0 },
 	{ "prefetch", &cfg_type_prefetch, 0 },
 	{ "provide-ixfr", &cfg_type_boolean, 0 },
@@ -1612,12 +1602,7 @@ view_clauses[] = {
 	{ "rate-limit", &cfg_type_rrl, 0 },
 	{ "recursion", &cfg_type_boolean, 0 },
 	{ "request-nsid", &cfg_type_boolean, 0 },
-#ifdef ISC_PLATFORM_USESIT
 	{ "request-sit", &cfg_type_boolean, CFG_CLAUSEFLAG_EXPERIMENTAL },
-#else
-	{ "request-sit", &cfg_type_boolean,
-	  CFG_CLAUSEFLAG_EXPERIMENTAL | CFG_CLAUSEFLAG_NOTCONFIGURED },
-#endif
 	{ "resolver-query-timeout", &cfg_type_uint32, 0 },
 	{ "response-policy", &cfg_type_rpz, 0 },
 	{ "rfc2308-type1", &cfg_type_boolean, CFG_CLAUSEFLAG_NYI },
@@ -1770,7 +1755,7 @@ namedconf_clausesets[] = {
 	namedconf_or_view_clauses,
 	NULL
 };
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_namedconf = {
+cfg_type_t cfg_type_namedconf = {
 	"namedconf", cfg_parse_mapbody, cfg_print_mapbody, cfg_doc_mapbody,
 	&cfg_rep_map, namedconf_clausesets
 };
@@ -1781,7 +1766,7 @@ bindkeys_clausesets[] = {
 	bindkeys_clauses,
 	NULL
 };
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_bindkeys = {
+cfg_type_t cfg_type_bindkeys = {
 	"bindkeys", cfg_parse_mapbody, cfg_print_mapbody, cfg_doc_mapbody,
 	&cfg_rep_map, bindkeys_clausesets
 };
@@ -1881,12 +1866,7 @@ server_clauses[] = {
 	{ "query-source-v6", &cfg_type_querysource6, 0 },
 	{ "request-ixfr", &cfg_type_boolean, 0 },
 	{ "request-nsid", &cfg_type_boolean, 0 },
-#ifdef ISC_PLATFORM_USESIT
 	{ "request-sit", &cfg_type_boolean, CFG_CLAUSEFLAG_EXPERIMENTAL },
-#else
-	{ "request-sit", &cfg_type_boolean,
-	  CFG_CLAUSEFLAG_EXPERIMENTAL | CFG_CLAUSEFLAG_NOTCONFIGURED },
-#endif
 	{ "support-ixfr", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "tcp-only", &cfg_type_boolean, 0 },
 	{ "transfer-format", &cfg_type_transferformat, 0 },
@@ -1988,7 +1968,7 @@ addzoneconf_clausesets[] = {
 	NULL
 };
 
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_addzoneconf = {
+cfg_type_t cfg_type_addzoneconf = {
 	"addzoneconf", cfg_parse_mapbody, cfg_print_mapbody, cfg_doc_mapbody,
 	&cfg_rep_map, addzoneconf_clausesets
 };
@@ -2006,7 +1986,7 @@ newzones_clausesets[] = {
 	NULL
 };
 
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_newzones = {
+cfg_type_t cfg_type_newzones = {
 	"newzones", cfg_parse_mapbody, cfg_print_mapbody, cfg_doc_mapbody,
 	&cfg_rep_map, newzones_clausesets
 };
@@ -2297,7 +2277,7 @@ static cfg_type_t cfg_type_filter_aaaa = {
 
 static keyword_type_t key_kw = { "key", &cfg_type_astring };
 
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_keyref = {
+cfg_type_t cfg_type_keyref = {
 	"keyref", parse_keyvalue, print_keyvalue, doc_keyvalue,
 	&cfg_rep_string, &key_kw
 };
@@ -3057,7 +3037,7 @@ rndcconf_clausesets[] = {
 	NULL
 };
 
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_rndcconf = {
+cfg_type_t cfg_type_rndcconf = {
 	"rndcconf", cfg_parse_mapbody, cfg_print_mapbody, cfg_doc_mapbody,
 	&cfg_rep_map, rndcconf_clausesets
 };
@@ -3074,7 +3054,7 @@ rndckey_clausesets[] = {
 	NULL
 };
 
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_rndckey = {
+cfg_type_t cfg_type_rndckey = {
 	"rndckey", cfg_parse_mapbody, cfg_print_mapbody, cfg_doc_mapbody,
 	&cfg_rep_map, rndckey_clausesets
 };
@@ -3083,7 +3063,7 @@ LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_rndckey = {
  * session.key has exactly the same syntax as rndc.key, but it's defined
  * separately for clarity (and so we can extend it someday, if needed).
  */
-LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_sessionkey = {
+cfg_type_t cfg_type_sessionkey = {
 	"sessionkey", cfg_parse_mapbody, cfg_print_mapbody, cfg_doc_mapbody,
 	&cfg_rep_map, rndckey_clausesets
 };

@@ -98,7 +98,7 @@ typedef struct dns_totext_ctx {
 	isc_boolean_t 		current_ttl_valid;
 } dns_totext_ctx_t;
 
-LIBDNS_EXTERNAL_DATA const dns_master_style_t
+const dns_master_style_t
 dns_master_style_keyzone = {
 	DNS_STYLEFLAG_OMIT_OWNER |
 	DNS_STYLEFLAG_OMIT_CLASS |
@@ -113,7 +113,7 @@ dns_master_style_keyzone = {
 	24, 24, 24, 32, 80, 8, UINT_MAX
 };
 
-LIBDNS_EXTERNAL_DATA const dns_master_style_t
+const dns_master_style_t
 dns_master_style_default = {
 	DNS_STYLEFLAG_OMIT_OWNER |
 	DNS_STYLEFLAG_OMIT_CLASS |
@@ -127,14 +127,14 @@ dns_master_style_default = {
 	24, 24, 24, 32, 80, 8, UINT_MAX
 };
 
-LIBDNS_EXTERNAL_DATA const dns_master_style_t
+const dns_master_style_t
 dns_master_style_full = {
 	DNS_STYLEFLAG_COMMENT |
 	DNS_STYLEFLAG_RESIGN,
 	46, 46, 46, 64, 120, 8, UINT_MAX
 };
 
-LIBDNS_EXTERNAL_DATA const dns_master_style_t
+const dns_master_style_t
 dns_master_style_explicitttl = {
 	DNS_STYLEFLAG_OMIT_OWNER |
 	DNS_STYLEFLAG_OMIT_CLASS |
@@ -146,7 +146,7 @@ dns_master_style_explicitttl = {
 	24, 32, 32, 40, 80, 8, UINT_MAX
 };
 
-LIBDNS_EXTERNAL_DATA const dns_master_style_t
+const dns_master_style_t
 dns_master_style_cache = {
 	DNS_STYLEFLAG_OMIT_OWNER |
 	DNS_STYLEFLAG_OMIT_CLASS |
@@ -157,7 +157,7 @@ dns_master_style_cache = {
 	24, 32, 32, 40, 80, 8, UINT_MAX
 };
 
-LIBDNS_EXTERNAL_DATA const dns_master_style_t
+const dns_master_style_t
 dns_master_style_simple = {
 	0,
 	24, 32, 32, 40, 80, 8, UINT_MAX
@@ -166,7 +166,7 @@ dns_master_style_simple = {
 /*%
  * A style suitable for dns_rdataset_totext().
  */
-LIBDNS_EXTERNAL_DATA const dns_master_style_t
+const dns_master_style_t
 dns_master_style_debug = {
 	DNS_STYLEFLAG_REL_OWNER,
 	24, 32, 40, 48, 80, 8, UINT_MAX
@@ -175,7 +175,7 @@ dns_master_style_debug = {
 /*%
  * Similar, but with each line commented out.
  */
-LIBDNS_EXTERNAL_DATA const dns_master_style_t
+const dns_master_style_t
 dns_master_style_comment = {
 	DNS_STYLEFLAG_REL_OWNER |
 	DNS_STYLEFLAG_MULTILINE |

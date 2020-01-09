@@ -86,8 +86,8 @@ typedef void (*isc_memfree_t)(void *, void *);
 #define ISC_MEMPOOL_NAMES 1
 #endif
 
-LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_debugging;
-LIBISC_EXTERNAL_DATA extern unsigned int isc_mem_defaultflags;
+extern unsigned int isc_mem_debugging;
+extern unsigned int isc_mem_defaultflags;
 
 /*@{*/
 #define ISC_MEM_DEBUGTRACE		0x00000001U

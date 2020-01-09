@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aes.c,v 1.3 2020/01/09 13:52:23 florian Exp $ */
+/* $Id: aes.c,v 1.4 2020/01/09 14:18:30 florian Exp $ */
 
 /*! \file isc/aes.c */
 
@@ -27,7 +27,6 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-#ifdef ISC_PLATFORM_WANTAES
 #if HAVE_OPENSSL_EVP_AES
 
 #include <openssl/opensslv.h>
@@ -133,4 +132,3 @@ isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
 }
 
 #endif
-#endif /* ISC_PLATFORM_WANTAES */

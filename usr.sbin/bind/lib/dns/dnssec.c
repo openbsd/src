@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: dnssec.c,v 1.8 2020/01/09 13:52:23 florian Exp $
+ * $Id: dnssec.c,v 1.9 2020/01/09 14:18:29 florian Exp $
  */
 
 /*! \file */
@@ -50,7 +50,7 @@
 
 #include <dst/result.h>
 
-LIBDNS_EXTERNAL_DATA isc_stats_t *dns_dnssec_stats;
+isc_stats_t *dns_dnssec_stats;
 
 #define is_response(msg) (msg->flags & DNS_MESSAGEFLAG_QR)
 
