@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.229 2020/01/08 18:01:22 deraadt Exp $ */
+/*	$OpenBSD: rde.h,v 1.230 2020/01/09 13:31:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -357,6 +357,9 @@ int		mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *,
 void		mrt_dump_upcall(struct rib_entry *, void *);
 
 /* rde.c */
+void		 rde_update_log(const char *, u_int16_t,
+		     const struct rde_peer *, const struct bgpd_addr *,
+		     const struct bgpd_addr *, u_int8_t);
 void		rde_send_kroute_flush(struct rib *);
 void		rde_send_kroute(struct rib *, struct prefix *, struct prefix *);
 void		rde_send_nexthop(struct bgpd_addr *, int);
@@ -369,14 +372,28 @@ void		rde_generate_updates(struct rib *, struct prefix *,
 u_int32_t	rde_local_as(void);
 int		rde_decisionflags(void);
 int		rde_as4byte(struct rde_peer *);
-struct rde_peer	*peer_get(u_int32_t);
+int		rde_match_peer(struct rde_peer *, struct ctl_neighbor *);
 
 /* rde_peer.c */
+void		 peer_init(u_int32_t);
+void		 peer_shutdown(void);
+void		 peer_foreach(void (*)(struct rde_peer *, void *), void *);
+struct rde_peer	*peer_get(u_int32_t);
+struct rde_peer *peer_match(struct ctl_neighbor *, u_int32_t);
+struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
+
 void		 peer_imsg_push(struct rde_peer *, struct imsg *);
 int		 peer_imsg_pop(struct rde_peer *, struct imsg *);
-void		 peer_imsg_queued(struct rde_peer *, void *);
+int		 peer_imsg_pending(void);
 void		 peer_imsg_flush(struct rde_peer *);
 
+int		 peer_up(struct rde_peer *, struct session_up *);
+void		 peer_down(struct rde_peer *, void *);
+void		 peer_flush(struct rde_peer *, u_int8_t, time_t);
+void		 peer_stale(struct rde_peer *, u_int8_t);
+void		 peer_dump(struct rde_peer *, u_int8_t);
+void		 peer_recv_eor(struct rde_peer *, u_int8_t);
+void		 peer_send_eor(struct rde_peer *, u_int8_t);
 
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,

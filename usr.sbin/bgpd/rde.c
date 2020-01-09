@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.497 2020/01/09 11:55:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.498 2020/01/09 13:31:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,12 +20,10 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
 #include <errno.h>
-#include <ifaddrs.h>
 #include <pwd.h>
 #include <poll.h>
 #include <signal.h>
@@ -63,9 +61,6 @@ int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int8_t,
 		     struct filterstate *);
 void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
 		     void *, u_int16_t);
-void		 rde_update_log(const char *, u_int16_t,
-		     const struct rde_peer *, const struct bgpd_addr *,
-		     const struct bgpd_addr *, u_int8_t);
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
 void		 rde_reflector(struct rde_peer *, struct rde_aspath *);
 
@@ -94,20 +89,8 @@ void		 rde_mark_prefixsets_dirty(struct rde_prefixset_head *,
 u_int8_t	 rde_roa_validity(struct rde_prefixset *,
 		     struct bgpd_addr *, u_int8_t, u_int32_t);
 
-void		 peer_init(u_int32_t);
-void		 peer_shutdown(void);
-void		 peer_foreach(void (*)(struct rde_peer *, void *), void *);
-int		 peer_imsg_pending(void);
-int		 peer_localaddrs(struct rde_peer *, struct bgpd_addr *);
-struct rde_peer *peer_match(struct ctl_neighbor *, u_int32_t);
-struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
-void		 peer_up(struct rde_peer *, struct session_up *);
-void		 peer_down(struct rde_peer *);
-void		 peer_flush(struct rde_peer *, u_int8_t, time_t);
-void		 peer_stale(struct rde_peer *, u_int8_t);
-void		 peer_dump(struct rde_peer *, u_int8_t);
-static void	 peer_recv_eor(struct rde_peer *, u_int8_t);
-static void	 peer_send_eor(struct rde_peer *, u_int8_t);
+static void	 rde_peer_recv_eor(struct rde_peer *, u_int8_t);
+static void	 rde_peer_send_eor(struct rde_peer *, u_int8_t);
 
 void		 network_add(struct network_config *, struct filterstate *);
 void		 network_delete(struct network_config *);
@@ -115,19 +98,19 @@ static void	 network_dump_upcall(struct rib_entry *, void *);
 static void	 network_flush_upcall(struct rib_entry *, void *);
 
 void		 rde_shutdown(void);
-int		 sa_cmp(struct bgpd_addr *, struct sockaddr *);
 int		 ovs_match(struct prefix *, u_int32_t);
 
 volatile sig_atomic_t	 rde_quit = 0;
 struct bgpd_config	*conf, *nconf;
-struct rde_peer_head	 peerlist;
-struct rde_peer		*peerself;
 struct filter_head	*out_rules, *out_rules_tmp;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_se_ctl;
 struct imsgbuf		*ibuf_main;
 struct rde_memstats	 rdemem;
 int			 softreconfig;
+
+extern struct rde_peer_head	 peerlist;
+extern struct rde_peer		*peerself;
 
 struct rde_dump_ctx {
 	LIST_ENTRY(rde_dump_ctx)	entry;
@@ -990,10 +973,14 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 		if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(sup))
 			fatalx("incorrect size of session request");
 		memcpy(&sup, imsg.data, sizeof(sup));
-		peer_up(peer, &sup);
+		if (peer_up(peer, &sup) == -1) {
+			peer->state = PEER_DOWN;
+			imsg_compose(ibuf_se, IMSG_SESSION_DOWN, peer->conf.id,
+			    0, -1, NULL, 0);
+		}
 		break;
 	case IMSG_SESSION_DOWN:
-		peer_down(peer);
+		peer_down(peer, NULL);
 		break;
 	case IMSG_SESSION_STALE:
 	case IMSG_SESSION_FLUSH:
@@ -1088,7 +1075,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		}
 		if (withdrawn_len == 0) {
 			/* EoR marker */
-			peer_recv_eor(peer, AID_INET);
+			rde_peer_recv_eor(peer, AID_INET);
 			return;
 		}
 	}
@@ -1200,7 +1187,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		if ((state.aspath.flags & ~F_ATTR_MP_UNREACH) == 0 &&
 		    mplen == 0) {
 			/* EoR marker */
-			peer_recv_eor(peer, aid);
+			rde_peer_recv_eor(peer, aid);
 		}
 
 		switch (aid) {
@@ -2290,7 +2277,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	}
 }
 
-static int
+int
 rde_match_peer(struct rde_peer *p, struct ctl_neighbor *n)
 {
 	char *s;
@@ -2809,61 +2796,9 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
 }
 
 static void
-rde_up_dump_upcall(struct rib_entry *re, void *ptr)
-{
-	struct rde_peer		*peer = ptr;
-
-	if (re->rib_id != peer->loc_rib_id)
-		fatalx("%s: Unexpected RIB %u != %u.", __func__, re->rib_id,
-		    peer->loc_rib_id);
-	if (re->active == NULL)
-		return;
-	up_generate_updates(out_rules, peer, re->active, NULL);
-}
-
-static void
 rde_up_flush_upcall(struct prefix *p, void *ptr)
 {
 	up_generate_updates(out_rules, prefix_peer(p), NULL, p);
-}
-
-static void
-rde_up_adjout_force_upcall(struct prefix *p, void *ptr)
-{
-	if (p->flags & PREFIX_FLAG_STALE) {
-		/* remove stale entries */
-		prefix_adjout_destroy(p);
-	} else if (p->flags & PREFIX_FLAG_DEAD) {
-		/* ignore dead prefixes, they will go away soon */
-	} else if ((p->flags & PREFIX_FLAG_MASK) == 0) {
-		/* put entries on the update queue if not allready on a queue */
-		p->flags |= PREFIX_FLAG_UPDATE;
-		if (RB_INSERT(prefix_tree, &prefix_peer(p)->updates[p->pt->aid],
-		    p) != NULL)
-			fatalx("%s: RB tree invariant violated", __func__);
-	}
-}
-
-static void
-rde_up_adjout_force_done(void *ptr, u_int8_t aid)
-{
-	struct rde_peer		*peer = ptr;
-
-	/* Adj-RIB-Out ready, unthrottle peer and inject EOR */
-	peer->throttled = 0;
-	if (peer->capa.grestart.restart)
-		prefix_add_eor(peer, aid);
-}
-
-static void
-rde_up_dump_done(void *ptr, u_int8_t aid)
-{
-	struct rde_peer		*peer = ptr;
-
-	/* force out all updates of Adj-RIB-Out for this peer */
-	if (prefix_dump_new(peer, aid, 0, peer, rde_up_adjout_force_upcall,
-	    rde_up_adjout_force_done, NULL) == -1)
-		fatal("%s: prefix_dump_new", __func__);
 }
 
 u_char	queue_buf[4096];
@@ -2939,7 +2874,7 @@ rde_update_queue_runner(void)
 				sent++;
 			}
 			if (eor)
-				peer_send_eor(peer, AID_INET);
+				rde_peer_send_eor(peer, AID_INET);
 		}
 		max -= sent;
 	} while (sent != 0 && max > 0);
@@ -2989,7 +2924,7 @@ rde_update6_queue_runner(u_int8_t aid)
 				continue;
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
 			if (up_is_eor(peer, aid)) {
-				peer_send_eor(peer, aid);
+				rde_peer_send_eor(peer, aid);
 				continue;
 			}
 			r = up_dump_mp_reach(queue_buf, len, peer, aid);
@@ -3513,411 +3448,9 @@ rde_as4byte(struct rde_peer *peer)
 	return (peer->capa.as4byte);
 }
 
-/*
- * peer functions
- */
-struct peer_table {
-	struct rde_peer_head	*peer_hashtbl;
-	u_int32_t		 peer_hashmask;
-} peertable;
-
-#define PEER_HASH(x)		\
-	&peertable.peer_hashtbl[(x) & peertable.peer_hashmask]
-
-void
-peer_init(u_int32_t hashsize)
-{
-	struct peer_config pc;
-	u_int32_t	 hs, i;
-
-	for (hs = 1; hs < hashsize; hs <<= 1)
-		;
-	peertable.peer_hashtbl = calloc(hs, sizeof(struct rde_peer_head));
-	if (peertable.peer_hashtbl == NULL)
-		fatal("peer_init");
-
-	for (i = 0; i < hs; i++)
-		LIST_INIT(&peertable.peer_hashtbl[i]);
-	LIST_INIT(&peerlist);
-
-	peertable.peer_hashmask = hs - 1;
-
-	bzero(&pc, sizeof(pc));
-	snprintf(pc.descr, sizeof(pc.descr), "LOCAL");
-	pc.id = PEER_ID_SELF;
-
-	peerself = peer_add(PEER_ID_SELF, &pc);
-	if (peerself == NULL)
-		fatalx("peer_init add self");
-
-	peerself->state = PEER_UP;
-}
-
-void
-peer_shutdown(void)
-{
-	u_int32_t	i;
-
-	for (i = 0; i <= peertable.peer_hashmask; i++)
-		if (!LIST_EMPTY(&peertable.peer_hashtbl[i]))
-			log_warnx("peer_free: free non-free table");
-
-	free(peertable.peer_hashtbl);
-}
-
-/*
- * Traverse all peers calling callback for each peer.
- */
-void
-peer_foreach(void (*callback)(struct rde_peer *, void *), void *arg)
-{
-	struct rde_peer *peer, *np;
-	u_int32_t i;
-
-	for (i = 0; i <= peertable.peer_hashmask; i++)
-		LIST_FOREACH_SAFE(peer,  &peertable.peer_hashtbl[i], hash_l, np)
-			callback(peer, arg);
-}
-
-int
-peer_imsg_pending(void)
-{
-	int pending = 0;
-
-	peer_foreach(peer_imsg_queued, &pending);
-
-	return pending;
-}
-
-struct rde_peer *
-peer_get(u_int32_t id)
-{
-	struct rde_peer_head	*head;
-	struct rde_peer		*peer;
-
-	head = PEER_HASH(id);
-
-	LIST_FOREACH(peer, head, hash_l) {
-		if (peer->conf.id == id)
-			return (peer);
-	}
-	return (NULL);
-}
-
-struct rde_peer *
-peer_match(struct ctl_neighbor *n, u_int32_t peerid)
-{
-	struct rde_peer_head	*head;
-	struct rde_peer		*peer;
-	u_int32_t		i = 0;
-
-	if (peerid != 0)
-		i = peerid & peertable.peer_hashmask;
-
-	while (i <= peertable.peer_hashmask) {
-		head = &peertable.peer_hashtbl[i];
-		LIST_FOREACH(peer, head, hash_l) {
-			/* skip peers until peerid is found */
-			if (peerid == peer->conf.id) {
-				peerid = 0;
-				continue;
-			}
-			if (peerid != 0)
-				continue;
-
-			if (rde_match_peer(peer, n))
-				return (peer);
-		}
-		i++;
-	}
-	return (NULL);
-}
-
-struct rde_peer *
-peer_add(u_int32_t id, struct peer_config *p_conf)
-{
-	struct rde_peer_head	*head;
-	struct rde_peer		*peer;
-
-	if ((peer = peer_get(id))) {
-		memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
-		return (NULL);
-	}
-
-	peer = calloc(1, sizeof(struct rde_peer));
-	if (peer == NULL)
-		fatal("peer_add");
-
-	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
-	peer->remote_bgpid = 0;
-	peer->loc_rib_id = rib_find(peer->conf.rib);
-	if (peer->loc_rib_id == RIB_NOTFOUND)
-		fatalx("King Bula's new peer met an unknown RIB");
-	peer->state = PEER_NONE;
-	SIMPLEQ_INIT(&peer->imsg_queue);
-
-	head = PEER_HASH(id);
-
-	LIST_INSERT_HEAD(head, peer, hash_l);
-	LIST_INSERT_HEAD(&peerlist, peer, peer_l);
-
-	return (peer);
-}
-
-int
-peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
-{
-	struct ifaddrs	*ifap, *ifa, *match;
-
-	if (getifaddrs(&ifap) == -1)
-		fatal("getifaddrs");
-
-	for (match = ifap; match != NULL; match = match->ifa_next)
-		if (sa_cmp(laddr, match->ifa_addr) == 0)
-			break;
-
-	if (match == NULL) {
-		log_warnx("peer_localaddrs: local address not found");
-		return (-1);
-	}
-
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family == AF_INET &&
-		    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
-			if (ifa->ifa_addr->sa_family ==
-			    match->ifa_addr->sa_family)
-				ifa = match;
-			sa2addr(ifa->ifa_addr, &peer->local_v4_addr, NULL);
-			break;
-		}
-	}
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family == AF_INET6 &&
-		    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
-			/*
-			 * only accept global scope addresses except explicitly
-			 * specified.
-			 */
-			if (ifa->ifa_addr->sa_family ==
-			    match->ifa_addr->sa_family)
-				ifa = match;
-			else if (IN6_IS_ADDR_LINKLOCAL(
-			    &((struct sockaddr_in6 *)ifa->
-			    ifa_addr)->sin6_addr) ||
-			    IN6_IS_ADDR_SITELOCAL(
-			    &((struct sockaddr_in6 *)ifa->
-			    ifa_addr)->sin6_addr))
-				continue;
-			sa2addr(ifa->ifa_addr, &peer->local_v6_addr, NULL);
-			break;
-		}
-	}
-
-	freeifaddrs(ifap);
-	return (0);
-}
-
-static void
-peer_adjout_clear_upcall(struct prefix *p, void *arg)
-{
-	prefix_adjout_destroy(p);
-}
-
-static void
-peer_adjout_stale_upcall(struct prefix *p, void *arg)
-{
-	if (p->flags & PREFIX_FLAG_DEAD) {
-		return;
-	} else if (p->flags & PREFIX_FLAG_WITHDRAW) {
-		/* no need to keep stale withdraws, they miss all attributes */
-		prefix_adjout_destroy(p);
-		return;
-	} else if (p->flags & PREFIX_FLAG_UPDATE) {
-		RB_REMOVE(prefix_tree, &prefix_peer(p)->updates[p->pt->aid], p);
-		p->flags &= ~PREFIX_FLAG_UPDATE;
-	}
-	p->flags |= PREFIX_FLAG_STALE;
-}
-
-void
-peer_up(struct rde_peer *peer, struct session_up *sup)
-{
-	u_int8_t	 i;
-
-	if (peer->state == PEER_ERR) {
-		/*
-		 * There is a race condition when doing PEER_ERR -> PEER_DOWN.
-		 * So just do a full reset of the peer here.
-		 */
-		if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
-		    peer_adjout_clear_upcall, NULL, NULL) == -1)
-			fatal("%s: prefix_dump_new", __func__);
-		peer_flush(peer, AID_UNSPEC, 0);
-		peer->prefix_cnt = 0;
-		peer->state = PEER_DOWN;
-	}
-	peer->remote_bgpid = ntohl(sup->remote_bgpid);
-	peer->short_as = sup->short_as;
-	memcpy(&peer->remote_addr, &sup->remote_addr,
-	    sizeof(peer->remote_addr));
-	memcpy(&peer->capa, &sup->capa, sizeof(peer->capa));
-
-	if (peer_localaddrs(peer, &sup->local_addr)) {
-		peer->state = PEER_DOWN;
-		imsg_compose(ibuf_se, IMSG_SESSION_DOWN, peer->conf.id, 0, -1,
-		    NULL, 0);
-		return;
-	}
-
-	peer->state = PEER_UP;
-
-	for (i = 0; i < AID_MAX; i++) {
-		if (peer->capa.mp[i])
-			peer_dump(peer, i);
-	}
-}
-
-void
-peer_down(struct rde_peer *peer)
-{
-	peer->remote_bgpid = 0;
-	peer->state = PEER_DOWN;
-	/* stop all pending dumps which may depend on this peer */
-	rib_dump_terminate(peer);
-
-	/* flush Adj-RIB-Out for this peer */
-	if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
-	    peer_adjout_clear_upcall, NULL, NULL) == -1)
-		fatal("%s: prefix_dump_new", __func__);
-
-	peer_flush(peer, AID_UNSPEC, 0);
-	peer->prefix_cnt = 0;
-
-	peer_imsg_flush(peer);
-
-	LIST_REMOVE(peer, hash_l);
-	LIST_REMOVE(peer, peer_l);
-	free(peer);
-}
-
-struct peer_flush {
-	struct rde_peer *peer;
-	time_t		 staletime;
-};
-
-static void
-peer_flush_upcall(struct rib_entry *re, void *arg)
-{
-	struct rde_peer *peer = ((struct peer_flush *)arg)->peer;
-	struct rde_aspath *asp;
-	struct bgpd_addr addr;
-	struct prefix *p, *np, *rp;
-	time_t staletime = ((struct peer_flush *)arg)->staletime;
-	u_int32_t i;
-	u_int8_t prefixlen;
-
-	pt_getaddr(re->prefix, &addr);
-	prefixlen = re->prefix->prefixlen;
-	LIST_FOREACH_SAFE(p, &re->prefix_h, entry.list.rib, np) {
-		if (peer != prefix_peer(p))
-			continue;
-		if (staletime && p->lastchange > staletime)
-			continue;
-
-		for (i = RIB_LOC_START; i < rib_size; i++) {
-			struct rib *rib = rib_byid(i);
-			if (rib == NULL)
-				continue;
-			rp = prefix_get(rib, peer, &addr, prefixlen);
-			if (rp) {
-				asp = prefix_aspath(rp);
-				if (asp->pftableid)
-					rde_send_pftable(asp->pftableid, &addr,
-					    prefixlen, 1);
-
-				prefix_destroy(rp);
-				rde_update_log("flush", i, peer, NULL,
-				    &addr, prefixlen);
-			}
-		}
-
-		prefix_destroy(p);
-		peer->prefix_cnt--;
-		break;	/* optimization, only one match per peer possible */
-	}
-}
-
-/*
- * Flush all routes older then staletime. If staletime is 0 all routes will
- * be flushed.
- */
-void
-peer_flush(struct rde_peer *peer, u_int8_t aid, time_t staletime)
-{
-	struct peer_flush pf = { peer, staletime };
-
-	/* this dump must run synchronous, too much depends on that right now */
-	if (rib_dump_new(RIB_ADJ_IN, aid, 0, &pf, peer_flush_upcall,
-	    NULL, NULL) == -1)
-		fatal("%s: rib_dump_new", __func__);
-
-	/* Deletions may have been performed in peer_flush_upcall */
-	rde_send_pftable_commit();
-
-	/* flushed no need to keep staletime */
-	if (aid == AID_UNSPEC) {
-		u_int8_t i;
-		for (i = 0; i < AID_MAX; i++)
-			peer->staletime[i] = 0;
-	} else {
-		peer->staletime[aid] = 0;
-	}
-}
-
-void
-peer_stale(struct rde_peer *peer, u_int8_t aid)
-{
-	time_t			 now;
-
-	/* flush the now even staler routes out */
-	if (peer->staletime[aid])
-		peer_flush(peer, aid, peer->staletime[aid]);
-
-	peer->staletime[aid] = now = getmonotime();
-	peer->state = PEER_DOWN;
-
-	/* mark Adj-RIB-Out stale for this peer */
-	if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
-	    peer_adjout_stale_upcall, NULL, NULL) == -1)
-		fatal("%s: prefix_dump_new", __func__);
-
-	/* make sure new prefixes start on a higher timestamp */
-	while (now >= getmonotime())
-		sleep(1);
-}
-
-void
-peer_dump(struct rde_peer *peer, u_int8_t aid)
-{
-	if (peer->conf.export_type == EXPORT_NONE) {
-		/* nothing to send apart from the marker */
-		if (peer->capa.grestart.restart)
-			prefix_add_eor(peer, aid);
-	} else if (peer->conf.export_type == EXPORT_DEFAULT_ROUTE) {
-		up_generate_default(out_rules, peer, aid);
-		rde_up_dump_done(peer, aid);
-	} else {
-		if (rib_dump_new(peer->loc_rib_id, aid, RDE_RUNNER_ROUNDS, peer,
-		    rde_up_dump_upcall, rde_up_dump_done, NULL) == -1)
-			fatal("%s: rib_dump_new", __func__);
-		/* throttle peer until dump is done */
-		peer->throttled = 1;
-	}
-}
-
 /* End-of-RIB marker, RFC 4724 */
 static void
-peer_recv_eor(struct rde_peer *peer, u_int8_t aid)
+rde_peer_recv_eor(struct rde_peer *peer, u_int8_t aid)
 {
 	peer->prefix_rcvd_eor++;
 
@@ -3931,14 +3464,14 @@ peer_recv_eor(struct rde_peer *peer, u_int8_t aid)
 	 */
 	if (imsg_compose(ibuf_se, IMSG_SESSION_RESTARTED, peer->conf.id,
 	    0, -1, &aid, sizeof(aid)) == -1)
-		fatal("%s %d imsg_compose error", __func__, __LINE__);
+		fatal("imsg_compose error while receiving EoR");
 
 	log_peer_info(&peer->conf, "received %s EOR marker",
 	    aid2str(aid));
 }
 
 static void
-peer_send_eor(struct rde_peer *peer, u_int8_t aid)
+rde_peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 {
 	u_int16_t	afi;
 	u_int8_t	safi;
@@ -3951,8 +3484,7 @@ peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 		bzero(&null, 4);
 		if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 		    0, -1, &null, 4) == -1)
-			fatal("%s %d imsg_compose error in peer_send_eor",
-			    __func__, __LINE__);
+			fatal("imsg_compose error while sending EoR");
 	} else {
 		u_int16_t	i;
 		u_char		buf[10];
@@ -4211,18 +3743,13 @@ network_flush_upcall(struct rib_entry *re, void *ptr)
 void
 rde_shutdown(void)
 {
-	struct rde_peer		*p;
-	u_int32_t		 i;
-
 	/*
 	 * the decision process is turned off if rde_quit = 1 and
 	 * rde_shutdown depends on this.
 	 */
 
 	/* First all peers go down */
-	for (i = 0; i <= peertable.peer_hashmask; i++)
-		while ((p = LIST_FIRST(&peertable.peer_hashtbl[i])) != NULL)
-			peer_down(p);
+	peer_foreach(peer_down, NULL);
 
 	/* free filters */
 	filterlist_free(out_rules);
@@ -4239,44 +3766,6 @@ rde_shutdown(void)
 	attr_shutdown();
 	pt_shutdown();
 	peer_shutdown();
-}
-
-int
-sa_cmp(struct bgpd_addr *a, struct sockaddr *b)
-{
-	struct sockaddr_in	*in_b;
-	struct sockaddr_in6	*in6_b;
-
-	if (aid2af(a->aid) != b->sa_family)
-		return (1);
-
-	switch (b->sa_family) {
-	case AF_INET:
-		in_b = (struct sockaddr_in *)b;
-		if (a->v4.s_addr != in_b->sin_addr.s_addr)
-			return (1);
-		break;
-	case AF_INET6:
-		in6_b = (struct sockaddr_in6 *)b;
-#ifdef __KAME__
-		/* directly stolen from sbin/ifconfig/ifconfig.c */
-		if (IN6_IS_ADDR_LINKLOCAL(&in6_b->sin6_addr)) {
-			in6_b->sin6_scope_id =
-			    ntohs(*(u_int16_t *)&in6_b->sin6_addr.s6_addr[2]);
-			in6_b->sin6_addr.s6_addr[2] =
-			    in6_b->sin6_addr.s6_addr[3] = 0;
-		}
-#endif
-		if (bcmp(&a->v6, &in6_b->sin6_addr,
-		    sizeof(struct in6_addr)))
-			return (1);
-		break;
-	default:
-		fatal("king bula sez: unknown address family");
-		/* NOTREACHED */
-	}
-
-	return (0);
 }
 
 struct rde_prefixset *
