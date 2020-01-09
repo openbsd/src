@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.21 2019/12/25 09:32:01 anton Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.22 2020/01/09 18:54:33 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -74,19 +74,20 @@ struct pipebuf {
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
  *	K	kernel lock
- *	P	pipe_lock
  *	S	sigio_lock
+ *	p	pipe_lock
  */
 struct pipe {
-	struct	pipebuf pipe_buffer;	/* [P] data storage */
-	struct	selinfo pipe_sel;	/* [P] for compat with select */
-	struct	timespec pipe_atime;	/* [P] time of last access */
-	struct	timespec pipe_mtime;	/* [P] time of last modify */
+	struct	rwlock *pipe_lock;
+	struct	pipebuf pipe_buffer;	/* [p] data storage */
+	struct	selinfo pipe_sel;	/* [p] for compat with select */
+	struct	timespec pipe_atime;	/* [p] time of last access */
+	struct	timespec pipe_mtime;	/* [p] time of last modify */
 	struct	timespec pipe_ctime;	/* [I] time of status change */
 	struct	sigio_ref pipe_sigio;	/* [S] async I/O registration */
-	struct	pipe *pipe_peer;	/* [P] link with other direction */
-	u_int	pipe_state;		/* [P] pipe status info */
-	int	pipe_busy;		/* [P] # readers/writers */
+	struct	pipe *pipe_peer;	/* [p] link with other direction */
+	u_int	pipe_state;		/* [p] pipe status info */
+	int	pipe_busy;		/* [p] # readers/writers */
 };
 
 #ifdef _KERNEL
