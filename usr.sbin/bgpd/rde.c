@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.496 2020/01/08 18:01:22 deraadt Exp $ */
+/*	$OpenBSD: rde.c,v 1.497 2020/01/09 11:55:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2204,7 +2204,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 
 	nexthop = prefix_nexthop(p);
 	bzero(&rib, sizeof(rib));
-	rib.lastchange = p->lastchange;
+	rib.age = getmonotime() - p->lastchange;
 	rib.local_pref = asp->lpref;
 	rib.med = asp->med;
 	rib.weight = asp->weight;
@@ -3883,7 +3883,7 @@ peer_stale(struct rde_peer *peer, u_int8_t aid)
 	if (peer->staletime[aid])
 		peer_flush(peer, aid, peer->staletime[aid]);
 
-	peer->staletime[aid] = now = time(NULL);
+	peer->staletime[aid] = now = getmonotime();
 	peer->state = PEER_DOWN;
 
 	/* mark Adj-RIB-Out stale for this peer */
@@ -3892,7 +3892,7 @@ peer_stale(struct rde_peer *peer, u_int8_t aid)
 		fatal("%s: prefix_dump_new", __func__);
 
 	/* make sure new prefixes start on a higher timestamp */
-	while (now >= time(NULL))
+	while (now >= getmonotime())
 		sleep(1);
 }
 

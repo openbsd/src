@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.396 2020/01/09 11:51:18 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.397 2020/01/09 11:55:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -711,7 +711,7 @@ struct ctl_show_rib {
 	struct bgpd_addr	prefix;
 	struct bgpd_addr	remote_addr;
 	char			descr[PEER_DESCR_LEN];
-	time_t			lastchange;
+	time_t			age;
 	u_int32_t		remote_id;
 	u_int32_t		local_pref;
 	u_int32_t		med;

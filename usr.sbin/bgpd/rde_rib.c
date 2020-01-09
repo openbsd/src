@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.211 2020/01/08 18:01:22 deraadt Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.212 2020/01/09 11:55:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -983,7 +983,7 @@ prefix_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 		    communities_equal(ncomm, prefix_communities(p)) &&
 		    path_compare(nasp, prefix_aspath(p)) == 0) {
 			/* no change, update last change */
-			p->lastchange = time(NULL);
+			p->lastchange = getmonotime();
 			p->validation_state = vstate;
 			return (0);
 		}
@@ -1058,7 +1058,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	np->nhflags = nhflags;
 	np->nexthop = nexthop_ref(nexthop);
 	nexthop_link(np);
-	np->lastchange = time(NULL);
+	np->lastchange = getmonotime();
 
 	/*
 	 * no need to update the peer prefix count because we are only moving
@@ -1168,7 +1168,7 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 			    0) {
 				/* nothing changed */
 				p->validation_state = vstate;
-				p->lastchange = time(NULL);
+				p->lastchange = getmonotime();
 				p->flags &= ~PREFIX_FLAG_STALE;
 				return 0;
 			}
@@ -1217,7 +1217,7 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 	p->nhflags = state->nhflags;
 
 	p->validation_state = vstate;
-	p->lastchange = time(NULL);
+	p->lastchange = getmonotime();
 
 	if (p->flags & PREFIX_FLAG_MASK)
 		fatalx("%s: bad flags %x", __func__, p->flags);
@@ -1244,7 +1244,7 @@ prefix_adjout_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 
 	/* already a withdraw, shortcut */
 	if (p->flags & PREFIX_FLAG_WITHDRAW) {
-		p->lastchange = time(NULL);
+		p->lastchange = getmonotime();
 		p->flags &= ~PREFIX_FLAG_STALE;
 		return (0);
 	}
@@ -1271,7 +1271,7 @@ prefix_adjout_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	p->aspath = NULL;
 	/* re already NULL */
 
-	p->lastchange = time(NULL);
+	p->lastchange = getmonotime();
 
 	p->flags |= PREFIX_FLAG_WITHDRAW;
 	if (RB_INSERT(prefix_tree, &peer->withdraws[prefix->aid], p) != NULL)
@@ -1599,7 +1599,7 @@ prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
 	p->nhflags = nhflags;
 	p->nexthop = nexthop_ref(nexthop);
 	nexthop_link(p);
-	p->lastchange = time(NULL);
+	p->lastchange = getmonotime();
 
 	/* make route decision */
 	prefix_evaluate(p, re);

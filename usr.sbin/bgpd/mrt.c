@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.102 2020/01/08 18:01:22 deraadt Exp $ */
+/*	$OpenBSD: mrt.c,v 1.103 2020/01/09 11:55:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -323,7 +323,8 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 
 	DUMP_SHORT(h2buf, 0);		/* view */
 	DUMP_SHORT(h2buf, 1);		/* status */
-	DUMP_LONG(h2buf, p->lastchange);	/* originated */
+	/* originated timestamp */
+	DUMP_LONG(h2buf, time(NULL) - (getmonotime() - p->lastchange));
 
 	pt_getaddr(p->pt, &addr);
 
@@ -459,7 +460,8 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	DUMP_BYTE(hbuf, p->pt->prefixlen);
 
 	DUMP_BYTE(hbuf, 1);		/* state */
-	DUMP_LONG(hbuf, p->lastchange);	/* originated */
+	/* originated timestamp */
+	DUMP_LONG(hbuf, time(NULL) - (getmonotime() - p->lastchange));
 	switch (p->pt->aid) {
 	case AID_INET:
 		DUMP_NLONG(hbuf, peer->remote_addr.v4.s_addr);
@@ -547,7 +549,8 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 			nh = &nexthop->exit_nexthop;
 
 		DUMP_SHORT(buf, prefix_peer(p)->mrt_idx);
-		DUMP_LONG(buf, p->lastchange); /* originated */
+		/* originated timestamp */
+		DUMP_LONG(buf, time(NULL) - (getmonotime() - p->lastchange));
 
 		if ((tbuf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
 			log_warn("%s: ibuf_dynamic", __func__);
