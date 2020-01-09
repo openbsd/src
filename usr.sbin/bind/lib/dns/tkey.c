@@ -25,7 +25,7 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
-#include <pk11/site.h>
+
 
 #include <dns/dnssec.h>
 #include <dns/fixedname.h>
@@ -48,10 +48,6 @@
 
 #define TEMP_BUFFER_SZ 8192
 #define TKEY_RANDOM_AMOUNT 16
-
-#ifdef PKCS11CRYPTO
-#include <pk11/pk11.h>
-#endif
 
 #define RETERR(x) do { \
 	result = (x); \
@@ -241,59 +237,12 @@ static isc_result_t
 compute_secret(isc_buffer_t *shared, isc_region_t *queryrandomness,
 	       isc_region_t *serverrandomness, isc_buffer_t *secret)
 {
-#ifndef PK11_MD5_DISABLE
-	isc_md5_t md5ctx;
-	isc_region_t r, r2;
-	unsigned char digests[32];
-	unsigned int i;
-
-	isc_buffer_usedregion(shared, &r);
-
-	/*
-	 * MD5 ( query data | DH value ).
-	 */
-	isc_md5_init(&md5ctx);
-	isc_md5_update(&md5ctx, queryrandomness->base,
-		       queryrandomness->length);
-	isc_md5_update(&md5ctx, r.base, r.length);
-	isc_md5_final(&md5ctx, digests);
-
-	/*
-	 * MD5 ( server data | DH value ).
-	 */
-	isc_md5_init(&md5ctx);
-	isc_md5_update(&md5ctx, serverrandomness->base,
-		       serverrandomness->length);
-	isc_md5_update(&md5ctx, r.base, r.length);
-	isc_md5_final(&md5ctx, &digests[ISC_MD5_DIGESTLENGTH]);
-
-	/*
-	 * XOR ( DH value, MD5-1 | MD5-2).
-	 */
-	isc_buffer_availableregion(secret, &r);
-	isc_buffer_usedregion(shared, &r2);
-	if (r.length < sizeof(digests) || r.length < r2.length)
-		return (ISC_R_NOSPACE);
-	if (r2.length > sizeof(digests)) {
-		memmove(r.base, r2.base, r2.length);
-		for (i = 0; i < sizeof(digests); i++)
-			r.base[i] ^= digests[i];
-		isc_buffer_add(secret, r2.length);
-	} else {
-		memmove(r.base, digests, sizeof(digests));
-		for (i = 0; i < r2.length; i++)
-			r.base[i] ^= r2.base[i];
-		isc_buffer_add(secret, sizeof(digests));
-	}
-	return (ISC_R_SUCCESS);
-#else
 	UNUSED(shared);
 	UNUSED(queryrandomness);
 	UNUSED(serverrandomness);
 	UNUSED(secret);
 
 	return (ISC_R_NOTIMPLEMENTED);
-#endif
 }
 
 static isc_result_t
@@ -322,18 +271,9 @@ process_dhtkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 		return (DNS_R_REFUSED);
 	}
 
-#ifndef PK11_MD5_DISABLE
-	if (!dns_name_equal(&tkeyin->algorithm, DNS_TSIG_HMACMD5_NAME)) {
-		tkey_log("process_dhtkey: algorithms other than "
-			 "hmac-md5 are not supported");
-		tkeyout->error = dns_tsigerror_badalg;
-		return (ISC_R_SUCCESS);
-	}
-#else
 	tkey_log("process_dhtkey: MD5 was disabled");
 	tkeyout->error = dns_tsigerror_badalg;
 	return (ISC_R_SUCCESS);
-#endif
 
 	/*
 	 * Look for a DH KEY record that will work with ours.
@@ -360,17 +300,6 @@ process_dhtkey(dns_message_t *msg, dns_name_t *signer, dns_name_t *name,
 				dns_rdata_reset(&keyrdata);
 				continue;
 			}
-#ifndef PK11_DH_DISABLE
-			if (dst_key_alg(pubkey) == DNS_KEYALG_DH) {
-				if (dst_key_paramcompare(pubkey, tctx->dhkey))
-				{
-					found_key = ISC_TRUE;
-					ttl = keyset->ttl;
-					break;
-				} else
-					found_incompatible = ISC_TRUE;
-			}
-#endif
 			dst_key_free(&pubkey);
 			dns_rdata_reset(&keyrdata);
 		}

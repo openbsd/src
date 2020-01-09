@@ -34,15 +34,10 @@ typedef struct {
 } isc_gost_t;
 
 #endif
-#ifdef HAVE_PKCS11_GOST
-#include <pk11/pk11.h>
-
-typedef pk11_context_t isc_gost_t;
-#endif
 
 ISC_LANG_BEGINDECLS
 
-#if defined(HAVE_OPENSSL_GOST) || defined(HAVE_PKCS11_GOST)
+#if defined(HAVE_OPENSSL_GOST)
 
 isc_result_t
 isc_gost_init(isc_gost_t *ctx);
@@ -58,6 +53,6 @@ isc_gost_final(isc_gost_t *ctx, unsigned char *digest);
 
 ISC_LANG_ENDDECLS
 
-#endif /* HAVE_OPENSSL_GOST || HAVE_PKCS11_GOST */
+#endif /* HAVE_OPENSSL_GOST */
 
 #endif /* DST_GOST_H */

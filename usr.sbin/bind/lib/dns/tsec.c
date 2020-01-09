@@ -14,14 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsec.c,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: tsec.c,v 1.3 2020/01/09 13:52:23 florian Exp $ */
 
 #include <config.h>
 
 #include <isc/mem.h>
 #include <isc/util.h>
 
-#include <pk11/site.h>
+
 
 #include <dns/tsec.h>
 #include <dns/tsig.h>
@@ -68,11 +68,6 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 	switch (type) {
 	case dns_tsectype_tsig:
 		switch (dst_key_alg(key)) {
-#ifndef PK11_MD5_DISABLE
-		case DST_ALG_HMACMD5:
-			algname = dns_tsig_hmacmd5_name;
-			break;
-#endif
 		case DST_ALG_HMACSHA1:
 			algname = dns_tsig_hmacsha1_name;
 			break;

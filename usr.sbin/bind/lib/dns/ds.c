@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds.c,v 1.3 2019/12/17 01:46:31 sthen Exp $ */
+/* $Id: ds.c,v 1.4 2020/01/09 13:52:23 florian Exp $ */
 
 /*! \file */
 
@@ -37,7 +37,7 @@
 
 #include <dst/dst.h>
 
-#if defined(HAVE_OPENSSL_GOST) || defined(HAVE_PKCS11_GOST)
+#if defined(HAVE_OPENSSL_GOST)
 #include "dst_gost.h"
 #endif
 
@@ -55,7 +55,7 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 	isc_sha1_t sha1;
 	isc_sha256_t sha256;
 	isc_sha384_t sha384;
-#if defined(HAVE_OPENSSL_GOST) || defined(HAVE_PKCS11_GOST)
+#if defined(HAVE_OPENSSL_GOST)
 	isc_gost_t gost;
 #endif
 
@@ -83,7 +83,7 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 		isc_sha1_final(&sha1, digest);
 		break;
 
-#if defined(HAVE_OPENSSL_GOST) || defined(HAVE_PKCS11_GOST)
+#if defined(HAVE_OPENSSL_GOST)
 #define RETERR(x) do {					\
 	isc_result_t ret = (x);				\
 	if (ret != ISC_R_SUCCESS) {			\
@@ -136,7 +136,7 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 		ds.length = ISC_SHA1_DIGESTLENGTH;
 		break;
 
-#if defined(HAVE_OPENSSL_GOST) || defined(HAVE_PKCS11_GOST)
+#if defined(HAVE_OPENSSL_GOST)
 	case DNS_DSDIGEST_GOST:
 		ds.length = ISC_GOST_DIGESTLENGTH;
 		break;

@@ -53,11 +53,7 @@ OPENSSLLINKOBJS = openssl_link.@O@ openssldh_link.@O@ openssldsa_link.@O@ \
 		  @OPENSSLECDSALINKOBJS@ @OPENSSLEDDSALINKOBJS@ \
 		  @OPENSSLGOSTLINKOBJS@ opensslrsa_link.@O@
 
-PKCS11LINKOBJS	= pkcs11dh_link.@O@ pkcs11dsa_link.@O@ pkcs11rsa_link.@O@ \
-		pkcs11ecdsa_link.@O@ pkcs11eddsa_link.@O@ \
-		pkcs11gost_link.@O@ pkcs11.@O@
-
-DSTOBJS =	@DST_EXTRA_OBJS@ @OPENSSLLINKOBJS@ @PKCS11LINKOBJS@ \
+DSTOBJS =	@DST_EXTRA_OBJS@ @OPENSSLLINKOBJS@  \
 		dst_api.@O@ dst_lib.@O@ dst_parse.@O@ dst_result.@O@ \
 		gssapi_link.@O@ gssapictx.@O@ hmac_link.@O@ key.@O@
 
@@ -92,11 +88,7 @@ OPENSSLLINKSRCS = openssl_link.c openssldh_link.c openssldsa_link.c \
 		  @OPENSSLECDSALINKSRCS@ @OPENSSLEDDSALINKSRCS@ \
 		  @OPENSSLGOSTLINKSRCS@ opensslrsa_link.c
 
-PKCS11LINKSRCS	= pkcs11dh_link.c pkcs11dsa_link.c pkcs11rsa_link.c \
-		pkcs11ecdsa_link.c pkcs11eddsa_link.c \
-		pkcs11gost_link.c pkcs11.c
-
-DSTSRCS =	@DST_EXTRA_SRCS@ @OPENSSLLINKSRCS@ @PKCS11LINKSRCS@ \
+DSTSRCS =	@DST_EXTRA_SRCS@ @OPENSSLLINKSRCS@ \
 		dst_api.c dst_lib.c dst_parse.c \
 		dst_result.c gssapi_link.c gssapictx.c \
 		hmac_link.c key.c

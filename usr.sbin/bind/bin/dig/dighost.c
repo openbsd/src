@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.24 2020/01/09 13:47:12 florian Exp $ */
+/* $Id: dighost.c,v 1.25 2020/01/09 13:52:22 florian Exp $ */
 
 /*! \file
  *  \note
@@ -92,17 +92,13 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-#include <pk11/site.h>
+
 
 #include <isccfg/namedconf.h>
 
 #include <lwres/lwres.h>
 
 #include <dig/dig.h>
-
-#ifdef PKCS11CRYPTO
-#include <pk11/result.h>
-#endif
 
 #if ! defined(NS_INADDRSZ)
 #define NS_INADDRSZ	 4
@@ -1270,14 +1266,6 @@ parse_hmac(const char *hmac) {
 
 	digestbits = 0;
 
-#ifndef PK11_MD5_DISABLE
-	if (strcasecmp(buf, "hmac-md5") == 0) {
-		hmacname = DNS_TSIG_HMACMD5_NAME;
-	} else if (strncasecmp(buf, "hmac-md5-", 9) == 0) {
-		hmacname = DNS_TSIG_HMACMD5_NAME;
-		digestbits = parse_bits(&buf[9], "digest-bits [0..128]", 128);
-	} else
-#endif
 	if (strcasecmp(buf, "hmac-sha1") == 0) {
 		hmacname = DNS_TSIG_HMACSHA1_NAME;
 		digestbits = 0;
@@ -1391,11 +1379,6 @@ setup_file_key(void) {
 	}
 
 	switch (dst_key_alg(dstkey)) {
-#ifndef PK11_MD5_DISABLE
-	case DST_ALG_HMACMD5:
-		hmacname = DNS_TSIG_HMACMD5_NAME;
-		break;
-#endif
 	case DST_ALG_HMACSHA1:
 		hmacname = DNS_TSIG_HMACSHA1_NAME;
 		break;
@@ -1586,9 +1569,6 @@ setup_libs(void) {
 
 	debug("setup_libs()");
 
-#ifdef PKCS11CRYPTO
-	pk11_result_register();
-#endif
 	dns_result_register();
 
 	result = isc_net_probeipv4();

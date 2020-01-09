@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aes.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: aes.c,v 1.3 2020/01/09 13:52:23 florian Exp $ */
 
 /*! \file isc/aes.c */
 
@@ -130,84 +130,6 @@ isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
 
 	RUNTIME_CHECK(AES_set_encrypt_key(key, 256, &k) == 0);
 	AES_encrypt(in, out, &k);
-}
-
-#elif PKCS11CRYPTO
-
-#include <pk11/pk11.h>
-#include <pk11/internal.h>
-
-static CK_BBOOL truevalue = TRUE;
-static CK_BBOOL falsevalue = FALSE;
-
-static void isc_aes_crypt(const unsigned char *key, CK_ULONG keylen,
-			  const unsigned char *in, unsigned char *out);
-
-void
-isc_aes128_crypt(const unsigned char *key, const unsigned char *in,
-		 unsigned char *out)
-{
-	isc_aes_crypt(key, ISC_AES128_KEYLENGTH, in, out);
-}
-
-void
-isc_aes192_crypt(const unsigned char *key, const unsigned char *in,
-		 unsigned char *out)
-{
-	isc_aes_crypt(key, ISC_AES192_KEYLENGTH, in, out);
-}
-
-void
-isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
-		 unsigned char *out)
-{
-	isc_aes_crypt(key, ISC_AES256_KEYLENGTH, in, out);
-}
-
-static void
-isc_aes_crypt(const unsigned char *key, CK_ULONG keylen,
-	      const unsigned char *in, unsigned char *out)
-{
-	CK_RV rv;
-	CK_MECHANISM mech = { CKM_AES_ECB, NULL, 0 };
-	CK_OBJECT_CLASS keyClass = CKO_SECRET_KEY;
-	CK_KEY_TYPE keyType = CKK_AES;
-	CK_ATTRIBUTE keyTemplate[] =
-	{
-		{ CKA_CLASS, &keyClass, (CK_ULONG) sizeof(keyClass) },
-		{ CKA_KEY_TYPE, &keyType, (CK_ULONG) sizeof(keyType) },
-		{ CKA_TOKEN, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
-		{ CKA_PRIVATE, &falsevalue, (CK_ULONG) sizeof(falsevalue) },
-		{ CKA_ENCRYPT, &truevalue, (CK_ULONG) sizeof(truevalue) },
-		{ CKA_VALUE, NULL, keylen }
-	};
-	CK_ULONG blocklen;
-	CK_BYTE_PTR pData;
-	pk11_context_t ctx;
-
-	DE_CONST(key, keyTemplate[5].pValue);
-	RUNTIME_CHECK(pk11_get_session(&ctx, OP_AES, ISC_TRUE, ISC_FALSE,
-				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
-	ctx.object = CK_INVALID_HANDLE;
-	PK11_FATALCHECK(pkcs_C_CreateObject,
-			(ctx.session, keyTemplate,
-			 (CK_ULONG) 6, &ctx.object));
-	INSIST(ctx.object != CK_INVALID_HANDLE);
-	PK11_FATALCHECK(pkcs_C_EncryptInit,
-			(ctx.session, &mech, ctx.object));
-
-	DE_CONST(in, pData);
-	blocklen = (CK_ULONG) ISC_AES_BLOCK_LENGTH;
-	PK11_FATALCHECK(pkcs_C_Encrypt,
-			(ctx.session,
-			 pData, (CK_ULONG) ISC_AES_BLOCK_LENGTH,
-			 out, &blocklen));
-	RUNTIME_CHECK(blocklen == (CK_ULONG) ISC_AES_BLOCK_LENGTH);
-
-	(void) pkcs_C_DestroyObject(ctx.session, ctx.object);
-	ctx.object = CK_INVALID_HANDLE;
-	pk11_return_session(&ctx);
-
 }
 
 #endif

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: hmacsha.h,v 1.4 2020/01/09 13:52:23 florian Exp $ */
 
 /*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,
@@ -52,15 +52,6 @@ typedef isc_hmacsha_t isc_hmacsha224_t;
 typedef isc_hmacsha_t isc_hmacsha256_t;
 typedef isc_hmacsha_t isc_hmacsha384_t;
 typedef isc_hmacsha_t isc_hmacsha512_t;
-
-#elif PKCS11CRYPTO
-#include <pk11/pk11.h>
-
-typedef pk11_context_t isc_hmacsha1_t;
-typedef pk11_context_t isc_hmacsha224_t;
-typedef pk11_context_t isc_hmacsha256_t;
-typedef pk11_context_t isc_hmacsha384_t;
-typedef pk11_context_t isc_hmacsha512_t;
 
 #else
 

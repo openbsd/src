@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.9 2020/01/09 13:47:13 florian Exp $
+ * $Id: tsig.c,v 1.10 2020/01/09 13:52:23 florian Exp $
  */
 /*! \file */
 #include <config.h>
@@ -30,7 +30,7 @@
 #include <isc/util.h>
 #include <isc/time.h>
 
-#include <pk11/site.h>
+
 
 #include <dns/keyvalues.h>
 #include <dns/log.h>
@@ -54,17 +54,6 @@
 #endif
 
 #define is_response(msg) (msg->flags & DNS_MESSAGEFLAG_QR)
-#ifndef PK11_MD5_DISABLE
-#define algname_is_allocated(algname) \
-	((algname) != dns_tsig_hmacmd5_name && \
-	 (algname) != dns_tsig_hmacsha1_name && \
-	 (algname) != dns_tsig_hmacsha224_name && \
-	 (algname) != dns_tsig_hmacsha256_name && \
-	 (algname) != dns_tsig_hmacsha384_name && \
-	 (algname) != dns_tsig_hmacsha512_name && \
-	 (algname) != dns_tsig_gssapi_name && \
-	 (algname) != dns_tsig_gssapims_name)
-#else
 #define algname_is_allocated(algname) \
 	((algname) != dns_tsig_hmacsha1_name && \
 	 (algname) != dns_tsig_hmacsha224_name && \
@@ -73,7 +62,6 @@
 	 (algname) != dns_tsig_hmacsha512_name && \
 	 (algname) != dns_tsig_gssapi_name && \
 	 (algname) != dns_tsig_gssapims_name)
-#endif
 
 #ifndef DNS_NAME_INITABSOLUTE
 #define DNS_NAME_INITABSOLUTE(A,B) { \
@@ -86,15 +74,6 @@
 #endif
 
 #define BADTIMELEN 6
-
-#ifndef PK11_MD5_DISABLE
-static unsigned char hmacmd5_ndata[] = "\010hmac-md5\007sig-alg\003reg\003int";
-static unsigned char hmacmd5_offsets[] = { 0, 9, 17, 21, 25 };
-
-static dns_name_t hmacmd5 =
-	DNS_NAME_INITABSOLUTE(hmacmd5_ndata, hmacmd5_offsets);
-LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_hmacmd5_name = &hmacmd5;
-#endif
 
 static unsigned char gsstsig_ndata[] = "\010gss-tsig";
 static unsigned char gsstsig_offsets[] = { 0, 9 };
@@ -284,15 +263,6 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 		goto cleanup_key;
 	(void)dns_name_downcase(&tkey->name, &tkey->name, NULL);
 
-#ifndef PK11_MD5_DISABLE
-	if (dns_name_equal(algorithm, DNS_TSIG_HMACMD5_NAME)) {
-		tkey->algorithm = DNS_TSIG_HMACMD5_NAME;
-		if (dstkey != NULL && dst_key_alg(dstkey) != DST_ALG_HMACMD5) {
-			ret = DNS_R_BADALG;
-			goto cleanup_name;
-		}
-	} else
-#endif
 	if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA1_NAME)) {
 		tkey->algorithm = DNS_TSIG_HMACSHA1_NAME;
 		if (dstkey != NULL && dst_key_alg(dstkey) != DST_ALG_HMACSHA1) {
@@ -511,11 +481,6 @@ destroyring(dns_tsig_keyring_t *ring) {
 
 static unsigned int
 dst_alg_fromname(dns_name_t *algorithm) {
-#ifndef PK11_MD5_DISABLE
-	if (dns_name_equal(algorithm, DNS_TSIG_HMACMD5_NAME)) {
-		return (DST_ALG_HMACMD5);
-	} else
-#endif
 	if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA1_NAME)) {
 		return (DST_ALG_HMACSHA1);
 	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA224_NAME)) {
@@ -699,23 +664,6 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 	if (length > 0)
 		REQUIRE(secret != NULL);
 
-#ifndef PK11_MD5_DISABLE
-	if (dns_name_equal(algorithm, DNS_TSIG_HMACMD5_NAME)) {
-		if (secret != NULL) {
-			isc_buffer_t b;
-
-			isc_buffer_init(&b, secret, length);
-			isc_buffer_add(&b, length);
-			result = dst_key_frombuffer(name, DST_ALG_HMACMD5,
-						    DNS_KEYOWNER_ENTITY,
-						    DNS_KEYPROTO_DNSSEC,
-						    dns_rdataclass_in,
-						    &b, mctx, &dstkey);
-				if (result != ISC_R_SUCCESS)
-					return (result);
-		}
-	} else
-#endif
 	if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA1_NAME)) {
 		if (secret != NULL) {
 			isc_buffer_t b;
@@ -1299,9 +1247,6 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 	if (
-#ifndef PK11_MD5_DISABLE
-	    alg == DST_ALG_HMACMD5 ||
-#endif
 	    alg == DST_ALG_HMACSHA1 ||
 	    alg == DST_ALG_HMACSHA224 || alg == DST_ALG_HMACSHA256 ||
 	    alg == DST_ALG_HMACSHA384 || alg == DST_ALG_HMACSHA512)
@@ -1468,9 +1413,6 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 	}
 
 	if (
-#ifndef PK11_MD5_DISABLE
-	    alg == DST_ALG_HMACMD5 ||
-#endif
 	    alg == DST_ALG_HMACSHA1 ||
 	    alg == DST_ALG_HMACSHA224 || alg == DST_ALG_HMACSHA256 ||
 	    alg == DST_ALG_HMACSHA384 || alg == DST_ALG_HMACSHA512)
@@ -1609,9 +1551,6 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 		if (ret != ISC_R_SUCCESS)
 			goto cleanup_querystruct;
 		if (
-#ifndef PK11_MD5_DISABLE
-			alg == DST_ALG_HMACMD5 ||
-#endif
 			alg == DST_ALG_HMACSHA1 ||
 			alg == DST_ALG_HMACSHA224 ||
 			alg == DST_ALG_HMACSHA256 ||
@@ -1788,9 +1727,6 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 		if (ret != ISC_R_SUCCESS)
 			goto cleanup_context;
 		if (
-#ifndef PK11_MD5_DISABLE
-			alg == DST_ALG_HMACMD5 ||
-#endif
 			alg == DST_ALG_HMACSHA1 ||
 			alg == DST_ALG_HMACSHA224 ||
 			alg == DST_ALG_HMACSHA256 ||

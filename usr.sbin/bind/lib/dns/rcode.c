@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.c,v 1.7 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: rcode.c,v 1.8 2020/01/09 13:52:23 florian Exp $ */
 
 #include <config.h>
 #include <ctype.h>
@@ -32,7 +32,7 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-#include <pk11/site.h>
+
 
 #include <dns/cert.h>
 #include <dns/ds.h>
@@ -109,26 +109,9 @@
 
 /* RFC2535 section 7, RFC3110 */
 
-#ifndef PK11_MD5_DISABLE
-#define MD5_SECALGNAMES \
-	{ DNS_KEYALG_RSAMD5, "RSAMD5", 0 }, \
-	{ DNS_KEYALG_RSAMD5, "RSA", 0 },
-#else
 #define MD5_SECALGNAMES
-#endif
-#ifndef PK11_DH_DISABLE
-#define DH_SECALGNAMES \
-	{ DNS_KEYALG_DH, "DH", 0 },
-#else
 #define DH_SECALGNAMES
-#endif
-#ifndef PK11_DSA_DISABLE
-#define DSA_SECALGNAMES \
-	{ DNS_KEYALG_DSA, "DSA", 0 }, \
-	{ DNS_KEYALG_NSEC3DSA, "NSEC3DSA", 0 },
-#else
 #define DSA_SECALGNAMES
-#endif
 
 #define SECALGNAMES \
 	MD5_SECALGNAMES \

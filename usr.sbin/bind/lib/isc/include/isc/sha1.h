@@ -17,7 +17,7 @@
 #ifndef ISC_SHA1_H
 #define ISC_SHA1_H 1
 
-/* $Id: sha1.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: sha1.h,v 1.4 2020/01/09 13:52:23 florian Exp $ */
 
 /*	$NetBSD: sha1.h,v 1.2 1998/05/29 22:55:44 thorpej Exp $	*/
 
@@ -44,11 +44,6 @@ typedef struct {
 	EVP_MD_CTX _ctx;
 #endif
 } isc_sha1_t;
-
-#elif PKCS11CRYPTO
-#include <pk11/pk11.h>
-
-typedef pk11_context_t isc_sha1_t;
 
 #else
 

@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: config.h.in,v 1.12 2020/01/07 19:06:07 florian Exp $ */
+/* $Id: config.h.in,v 1.13 2020/01/09 13:52:22 florian Exp $ */
 
 /*! \file */
 
@@ -376,18 +376,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define if your OpenSSL version supports GOST. */
 #undef HAVE_OPENSSL_GOST
-
-/* Define if your PKCS11 provider supports ECDSA. */
-#undef HAVE_PKCS11_ECDSA
-
-/* Define if your PKCS11 provider supports Ed25519. */
-#undef HAVE_PKCS11_ED25519
-
-/* Define if your PKCS11 provider supports Ed448. */
-#undef HAVE_PKCS11_ED448
-
-/* Define if your PKCS11 provider supports GOST. */
-#undef HAVE_PKCS11_GOST
 
 /* Support for PTHREAD_MUTEX_ADAPTIVE_NP */
 #undef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP

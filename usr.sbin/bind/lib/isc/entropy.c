@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: entropy.c,v 1.7 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: entropy.c,v 1.8 2020/01/09 13:52:23 florian Exp $ */
 
 /*! \file
  * \brief
@@ -46,10 +46,6 @@
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
-
-#ifdef PKCS11CRYPTO
-#include <pk11/pk11.h>
-#endif
 
 #define ENTROPY_MAGIC		ISC_MAGIC('E', 'n', 't', 'e')
 #define SOURCE_MAGIC		ISC_MAGIC('E', 'n', 't', 's')
@@ -1247,11 +1243,6 @@ isc_entropy_usebestsource(isc_entropy_t *ectx, isc_entropysource_t **source,
 	REQUIRE(use_keyboard == ISC_ENTROPY_KEYBOARDYES ||
 		use_keyboard == ISC_ENTROPY_KEYBOARDNO  ||
 		use_keyboard == ISC_ENTROPY_KEYBOARDMAYBE);
-
-#ifdef PKCS11CRYPTO
-	if (randomfile != NULL)
-		pk11_rand_seed_fromfile(randomfile);
-#endif
 
 #ifdef PATH_RANDOMDEV
 	if (randomfile == NULL) {

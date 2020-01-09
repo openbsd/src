@@ -14,10 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha1.c,v 1.6 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: sha1.c,v 1.7 2020/01/09 13:52:23 florian Exp $ */
 
 /*	$NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
-/*	$OpenBSD: sha1.c,v 1.6 2019/12/17 01:46:34 sthen Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.7 2020/01/09 13:52:23 florian Exp $	*/
 
 /*! \file
  * SHA-1 in C
@@ -43,11 +43,6 @@
 #include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>
-
-#if PKCS11CRYPTO
-#include <pk11/internal.h>
-#include <pk11/pk11.h>
-#endif
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
@@ -95,50 +90,6 @@ isc_sha1_final(isc_sha1_t *context, unsigned char *digest) {
 	RUNTIME_CHECK(EVP_DigestFinal(context->ctx, digest, NULL) == 1);
 	EVP_MD_CTX_free(context->ctx);
 	context->ctx = NULL;
-}
-
-#elif PKCS11CRYPTO
-
-void
-isc_sha1_init(isc_sha1_t *ctx) {
-	CK_RV rv;
-	CK_MECHANISM mech = { CKM_SHA_1, NULL, 0 };
-
-	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
-				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
-	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
-}
-
-void
-isc_sha1_invalidate(isc_sha1_t *ctx) {
-	CK_BYTE garbage[ISC_SHA1_DIGESTLENGTH];
-	CK_ULONG len = ISC_SHA1_DIGESTLENGTH;
-
-	if (ctx->handle == NULL)
-		return;
-	(void) pkcs_C_DigestFinal(ctx->session, garbage, &len);
-	isc_safe_memwipe(garbage, sizeof(garbage));
-	pk11_return_session(ctx);
-}
-
-void
-isc_sha1_update(isc_sha1_t *ctx, const unsigned char *buf, unsigned int len) {
-	CK_RV rv;
-	CK_BYTE_PTR pPart;
-
-	DE_CONST(buf, pPart);
-	PK11_FATALCHECK(pkcs_C_DigestUpdate,
-			(ctx->session, pPart, (CK_ULONG) len));
-}
-
-void
-isc_sha1_final(isc_sha1_t *ctx, unsigned char *digest) {
-	CK_RV rv;
-	CK_ULONG len = ISC_SHA1_DIGESTLENGTH;
-
-	PK11_FATALCHECK(pkcs_C_DigestFinal,
-			(ctx->session, (CK_BYTE_PTR) digest, &len));
-	pk11_return_session(ctx);
 }
 
 #else

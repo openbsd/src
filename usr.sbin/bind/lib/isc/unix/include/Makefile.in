@@ -12,13 +12,13 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.3 2019/12/17 01:46:37 sthen Exp $
+# $Id: Makefile.in,v 1.4 2020/01/09 13:52:23 florian Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 
-SUBDIRS =	isc pkcs11
+SUBDIRS =	isc
 TARGETS =
 
 @BIND9_MAKE_RULES@

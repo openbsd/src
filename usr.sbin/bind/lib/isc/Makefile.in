@@ -22,14 +22,12 @@ VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-PROVIDER =	@PKCS11_PROVIDER@
-
 CINCLUDES =	-I${srcdir}/unix/include \
 		-I${srcdir}/nothreads/include \
 		-I${srcdir}/@ISC_ARCH_DIR@/include \
 		-I./include \
 		-I${srcdir}/include ${DNS_INCLUDES} @ISC_OPENSSL_INC@
-CDEFINES =	@CRYPTO@ -DPK11_LIB_LOCATION=\"${PROVIDER}\"
+CDEFINES =	@CRYPTO@
 CWARNINGS =
 
 # Alphabetically
