@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: entropy.c,v 1.8 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: entropy.c,v 1.9 2020/01/09 13:45:33 florian Exp $ */
 
 /* \file unix/entropy.c
  * \brief
@@ -541,13 +541,11 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
 		memset(&sname, 0, sizeof(sname));
 		sname.sun_family = AF_UNIX;
 		strlcpy(sname.sun_path, fname, sizeof(sname.sun_path));
-#ifdef ISC_PLATFORM_HAVESALEN
 #if !defined(SUN_LEN)
 #define SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
 #endif
 		sname.sun_len = SUN_LEN(&sname);
-#endif
 
 		if (connect(fd, (struct sockaddr *) &sname,
 			    sizeof(struct sockaddr_un)) < 0) {

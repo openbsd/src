@@ -18,7 +18,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"$Id: netscope.c,v 1.3 2019/12/17 01:46:34 sthen Exp $";
+	"$Id: netscope.c,v 1.4 2020/01/09 13:45:33 florian Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -31,10 +31,8 @@ static char rcsid[] =
 isc_result_t
 isc_netscope_pton(int af, char *scopename, void *addr, isc_uint32_t *zoneid) {
 	char *ep;
-#ifdef ISC_PLATFORM_HAVEIFNAMETOINDEX
 	unsigned int ifid;
 	struct in6_addr *in6;
-#endif
 	isc_uint32_t zone;
 	isc_uint64_t llz;
 
@@ -50,13 +48,11 @@ isc_netscope_pton(int af, char *scopename, void *addr, isc_uint32_t *zoneid) {
 	 * interface names as link names, assuming one to one mapping between
 	 * interfaces and links.
 	 */
-#ifdef ISC_PLATFORM_HAVEIFNAMETOINDEX
 	in6 = (struct in6_addr *)addr;
 	if (IN6_IS_ADDR_LINKLOCAL(in6) &&
 	    (ifid = if_nametoindex((const char *)scopename)) != 0)
 		zone = (isc_uint32_t)ifid;
 	else {
-#endif
 		llz = isc_string_touint64(scopename, &ep, 10);
 		if (ep == scopename)
 			return (ISC_R_FAILURE);
@@ -65,9 +61,7 @@ isc_netscope_pton(int af, char *scopename, void *addr, isc_uint32_t *zoneid) {
 		zone = (isc_uint32_t)(llz & 0xffffffffUL);
 		if (zone != llz)
 			return (ISC_R_FAILURE);
-#ifdef ISC_PLATFORM_HAVEIFNAMETOINDEX
 	}
-#endif
 
 	*zoneid = zone;
 	return (ISC_R_SUCCESS);

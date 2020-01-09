@@ -2084,7 +2084,6 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 
 			if (inet_pton(AF_INET6, buf, &in6a) == 1) {
 				if (d != NULL) {
-#ifdef ISC_PLATFORM_HAVESCOPEID
 					isc_result_t result;
 
 					result = isc_netscope_pton(AF_INET6,
@@ -2093,9 +2092,6 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 								   &zone);
 					if (result != ISC_R_SUCCESS)
 						return (result);
-#else
-				return (ISC_R_BADADDRESSFORM);
-#endif
 				}
 
 				isc_netaddr_fromin6(na, &in6a);

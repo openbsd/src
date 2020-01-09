@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: interfaceiter.c,v 1.3 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: interfaceiter.c,v 1.4 2020/01/09 13:45:33 florian Exp $ */
 
 /*! \file */
 
@@ -67,11 +67,6 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 {
 	struct sockaddr_in6 *sa6;
 
-#if !defined(ISC_PLATFORM_HAVEIFNAMETOINDEX) || \
-    !defined(ISC_PLATFORM_HAVESCOPEID)
-	UNUSED(ifname);
-#endif
-
 	/* clear any remaining value for safety */
 	memset(dst, 0, sizeof(*dst));
 
@@ -86,7 +81,6 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 		sa6 = (struct sockaddr_in6 *)src;
 		memmove(&dst->type.in6, &sa6->sin6_addr,
 			sizeof(struct in6_addr));
-#ifdef ISC_PLATFORM_HAVESCOPEID
 		if (sa6->sin6_scope_id != 0)
 			isc_netaddr_setzone(dst, sa6->sin6_scope_id);
 		else {
@@ -113,7 +107,6 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 							    (isc_uint32_t)zone16);
 					dst->type.in6.s6_addr[2] = 0;
 					dst->type.in6.s6_addr[3] = 0;
-#ifdef ISC_PLATFORM_HAVEIFNAMETOINDEX
 				} else if (ifname != NULL) {
 					unsigned int zone;
 
@@ -128,11 +121,9 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 						isc_netaddr_setzone(dst,
 								    (isc_uint32_t)zone);
 					}
-#endif
 				}
 			}
 		}
-#endif
 		break;
 	default:
 		INSIST(0);

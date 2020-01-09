@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ifiter_ioctl.c,v 1.10 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: ifiter_ioctl.c,v 1.11 2020/01/09 13:45:33 florian Exp $ */
 
 #include <isc/print.h>
 
@@ -25,27 +25,11 @@
  */
 
 #if defined(SIOCGLIFCONF) && defined(SIOCGLIFADDR)
-#ifdef ISC_PLATFORM_HAVEIF_LADDRCONF
-#define lifc_len iflc_len
-#define lifc_buf iflc_buf
-#define lifc_req iflc_req
-#define LIFCONF if_laddrconf
-#else
 #define ISC_HAVE_LIFC_FAMILY 1
 #define ISC_HAVE_LIFC_FLAGS 1
 #define LIFCONF lifconf
-#endif
 
-#ifdef ISC_PLATFORM_HAVEIF_LADDRREQ
-#define lifr_addr iflr_addr
-#define lifr_name iflr_name
-#define lifr_dstaddr iflr_dstaddr
-#define lifr_flags iflr_flags
-#define ss_family sa_family
-#define LIFREQ if_laddrreq
-#else
 #define LIFREQ lifreq
-#endif
 #endif
 
 #define IFITER_MAGIC		ISC_MAGIC('I', 'F', 'I', 'T')
@@ -433,11 +417,7 @@ internal_current4(isc_interfaceiter_t *iter) {
 	struct ifreq ifreq;
 	int family;
 	char strbuf[ISC_STRERRORSIZE];
-#if !defined(ISC_PLATFORM_HAVEIF_LADDRREQ) && defined(SIOCGLIFADDR)
-	struct lifreq lifreq;
-#else
 	char sabuf[256];
-#endif
 	int i, bits, prefixlen;
 
 	REQUIRE(VALID_IFITER(iter));
@@ -459,11 +439,7 @@ internal_current4(isc_interfaceiter_t *iter) {
 	memmove(&ifreq, ifrp, sizeof(ifreq));
 
 	family = ifreq.ifr_addr.sa_family;
-#if defined(ISC_PLATFORM_HAVEIPV6)
 	if (family != AF_INET && family != AF_INET6)
-#else
-	if (family != AF_INET)
-#endif
 		return (ISC_R_IGNORE);
 
 	memset(&iter->current, 0, sizeof(iter->current));
@@ -524,21 +500,6 @@ internal_current4(isc_interfaceiter_t *iter) {
 	if (family == AF_INET)
 		goto inet;
 
-#if !defined(ISC_PLATFORM_HAVEIF_LADDRREQ) && defined(SIOCGLIFADDR)
-	memset(&lifreq, 0, sizeof(lifreq));
-	memmove(lifreq.lifr_name, iter->current.name, sizeof(lifreq.lifr_name));
-	memmove(&lifreq.lifr_addr, &iter->current.address.type.in6,
-	       sizeof(iter->current.address.type.in6));
-
-	if (ioctl(iter->socket, SIOCGLIFADDR, &lifreq) < 0) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "%s: getting interface address: %s",
-				 ifreq.ifr_name, strbuf);
-		return (ISC_R_IGNORE);
-	}
-	prefixlen = lifreq.lifr_addrlen;
-#else
 	isc_netaddr_format(&iter->current.address, sabuf, sizeof(sabuf));
 	isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
 		      ISC_LOGMODULE_INTERFACE,
@@ -549,7 +510,6 @@ internal_current4(isc_interfaceiter_t *iter) {
 				     "prefix length for %s is unknown "
 				     "(assume 128)"), sabuf);
 	prefixlen = 128;
-#endif
 
 	/*
 	 * Netmask already zeroed.
@@ -643,11 +603,7 @@ internal_current6(isc_interfaceiter_t *iter) {
 	memmove(&lifreq, ifrp, sizeof(lifreq));
 
 	family = lifreq.lifr_addr.ss_family;
-#ifdef ISC_PLATFORM_HAVEIPV6
 	if (family != AF_INET && family != AF_INET6)
-#else
-	if (family != AF_INET)
-#endif
 		return (ISC_R_IGNORE);
 
 	memset(&iter->current, 0, sizeof(iter->current));
@@ -812,19 +768,15 @@ internal_current(isc_interfaceiter_t *iter) {
  */
 static isc_result_t
 internal_next4(isc_interfaceiter_t *iter) {
-#ifdef ISC_PLATFORM_HAVESALEN
 	struct ifreq *ifrp;
-#endif
 
 	if (iter->pos < (unsigned int) iter->ifc.ifc_len) {
-#ifdef ISC_PLATFORM_HAVESALEN
 		ifrp = (struct ifreq *)((char *) iter->ifc.ifc_req + iter->pos);
 
 		if (ifrp->ifr_addr.sa_len > sizeof(struct sockaddr))
 			iter->pos += sizeof(ifrp->ifr_name) +
 				     ifrp->ifr_addr.sa_len;
 		else
-#endif
 			iter->pos += sizeof(struct ifreq);
 
 	} else {
@@ -841,22 +793,18 @@ internal_next4(isc_interfaceiter_t *iter) {
 #if defined(SIOCGLIFCONF) && defined(SIOCGLIFADDR)
 static isc_result_t
 internal_next6(isc_interfaceiter_t *iter) {
-#ifdef ISC_PLATFORM_HAVESALEN
 	struct LIFREQ *ifrp;
-#endif
 
 	if (iter->result6 != ISC_R_SUCCESS && iter->result6 != ISC_R_IGNORE)
 		return (iter->result6);
 
 	REQUIRE(iter->pos6 < (unsigned int) iter->lifc.lifc_len);
 
-#ifdef ISC_PLATFORM_HAVESALEN
 	ifrp = (struct LIFREQ *)((char *) iter->lifc.lifc_req + iter->pos6);
 
 	if (ifrp->lifr_addr.sa_len > sizeof(struct sockaddr))
 		iter->pos6 += sizeof(ifrp->lifr_name) + ifrp->lifr_addr.sa_len;
 	else
-#endif
 		iter->pos6 += sizeof(struct LIFREQ);
 
 	if (iter->pos6 >= (unsigned int) iter->lifc.lifc_len)

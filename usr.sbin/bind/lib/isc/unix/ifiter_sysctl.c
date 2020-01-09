@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ifiter_sysctl.c,v 1.3 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: ifiter_sysctl.c,v 1.4 2020/01/09 13:45:33 florian Exp $ */
 
 /*! \file
  * \brief
@@ -218,22 +218,8 @@ internal_current(isc_interfaceiter_t *iter) {
 				dst_sa = sa;
 				break;
 			}
-#ifdef ISC_PLATFORM_HAVESALEN
 			sa = (struct sockaddr *)((char*)(sa)
 					 + ROUNDUP(sa->sa_len));
-#else
-#ifdef sgi
-			/*
-			 * Do as the contributed SGI code does.
-			 */
-			sa = (struct sockaddr *)((char*)(sa)
-					 + ROUNDUP(_FAKE_SA_LEN_DST(sa)));
-#else
-			/* XXX untested. */
-			sa = (struct sockaddr *)((char*)(sa)
-					 + ROUNDUP(sizeof(struct sockaddr)));
-#endif
-#endif
 		}
 
 		if (addr_sa == NULL)

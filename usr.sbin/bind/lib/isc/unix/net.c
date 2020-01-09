@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.9 2019/12/19 03:57:28 deraadt Exp $ */
+/* $Id: net.c,v 1.10 2020/01/09 13:45:33 florian Exp $ */
 
 #include <config.h>
 
@@ -98,23 +98,11 @@
 
 #endif /* HAVE_SYSCTLBYNAME */
 
-#if defined(ISC_PLATFORM_HAVEIPV6)
-# if defined(ISC_PLATFORM_NEEDIN6ADDRANY)
-const struct in6_addr isc_net_in6addrany = IN6ADDR_ANY_INIT;
-# endif
-
-# if defined(ISC_PLATFORM_NEEDIN6ADDRLOOPBACK)
-const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
-# endif
-
 # if defined(WANT_IPV6)
 static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
 
-#  if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
-#  endif
 # endif /* WANT_IPV6 */
-#endif /* ISC_PLATFORM_HAVEIPV6 */
 
 #ifndef ISC_CMSG_IP_TOS
 #ifdef __APPLE__
@@ -170,9 +158,7 @@ try_proto(int domain) {
 		}
 	}
 
-#ifdef ISC_PLATFORM_HAVEIPV6
 #ifdef WANT_IPV6
-#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 	if (domain == PF_INET6) {
 		struct sockaddr_in6 sin6;
 		unsigned int len;
@@ -211,8 +197,6 @@ try_proto(int domain) {
 		}
 	}
 #endif
-#endif
-#endif
 
 	(void)close(s);
 
@@ -222,12 +206,8 @@ try_proto(int domain) {
 static void
 initialize_action(void) {
 	ipv4_result = try_proto(PF_INET);
-#ifdef ISC_PLATFORM_HAVEIPV6
 #ifdef WANT_IPV6
-#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 	ipv6_result = try_proto(PF_INET6);
-#endif
-#endif
 #endif
 }
 
@@ -254,7 +234,6 @@ isc_net_probeunix(void) {
 	return (unix_result);
 }
 
-#ifdef ISC_PLATFORM_HAVEIPV6
 #ifdef WANT_IPV6
 static void
 try_ipv6only(void) {
@@ -333,7 +312,6 @@ initialize_ipv6only(void) {
 }
 #endif /* WANT_IPV6 */
 
-#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 #ifdef WANT_IPV6
 static void
 try_ipv6pktinfo(void) {
@@ -387,31 +365,23 @@ initialize_ipv6pktinfo(void) {
 				  try_ipv6pktinfo) == ISC_R_SUCCESS);
 }
 #endif /* WANT_IPV6 */
-#endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
-#endif /* ISC_PLATFORM_HAVEIPV6 */
 
 isc_result_t
 isc_net_probe_ipv6only(void) {
-#ifdef ISC_PLATFORM_HAVEIPV6
 #ifdef WANT_IPV6
 	initialize_ipv6only();
 #else
 	ipv6only_result = ISC_R_NOTFOUND;
-#endif
 #endif
 	return (ipv6only_result);
 }
 
 isc_result_t
 isc_net_probe_ipv6pktinfo(void) {
-#ifdef ISC_PLATFORM_HAVEIPV6
-#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 #ifdef WANT_IPV6
 	initialize_ipv6pktinfo();
 #else
 	ipv6pktinfo_result = ISC_R_NOTFOUND;
-#endif
-#endif
 #endif
 	return (ipv6pktinfo_result);
 }

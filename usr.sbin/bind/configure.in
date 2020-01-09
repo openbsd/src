@@ -2794,33 +2794,6 @@ char a[16],b[64]; return(inet_ntop(AF_INET6, a, b, sizeof(b)) == (char*)0);}],
 	ISC_PLATFORM_NEEDNTOP="#undef ISC_PLATFORM_NEEDNTOP"])
 
 
-# On NetBSD 1.4.2 and maybe others, inet_pton() incorrectly accepts
-# addresses with less than four octets, like "1.2.3".  Also leading
-# zeros should also be rejected.
-
-AC_MSG_CHECKING([for working inet_pton with IPv6 support])
-AC_TRY_RUN([
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-main() { char a[16]; return (inet_pton(AF_INET, "1.2.3", a) == 1 ? 1 :
-			     inet_pton(AF_INET, "1.2.3.04", a) == 1 ? 1 :
-			     (inet_pton(AF_INET6, "::1.2.3.4", a) != 1)); }],
-	[AC_MSG_RESULT(yes)
-	ISC_PLATFORM_NEEDPTON="#undef ISC_PLATFORM_NEEDPTON"],
-	[AC_MSG_RESULT(no)
-	ISC_EXTRA_OBJS="$ISC_EXTRA_OBJS inet_pton.$O"
-	ISC_EXTRA_SRCS="$ISC_EXTRA_SRCS inet_pton.c"
-	ISC_PLATFORM_NEEDPTON="#define ISC_PLATFORM_NEEDPTON 1"],
-	[AC_MSG_RESULT(assuming inet_pton needed)
-	ISC_EXTRA_OBJS="$ISC_EXTRA_OBJS inet_pton.$O"
-	ISC_EXTRA_SRCS="$ISC_EXTRA_SRCS inet_pton.c"
-	ISC_PLATFORM_NEEDPTON="#define ISC_PLATFORM_NEEDPTON 1"])
-
-AC_SUBST(ISC_PLATFORM_NEEDNTOP)
-AC_SUBST(ISC_PLATFORM_NEEDPTON)
-
 #
 # Look for a 4.4BSD-style sa_len member in struct sockaddr.
 #

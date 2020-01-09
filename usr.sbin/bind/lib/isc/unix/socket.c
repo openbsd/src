@@ -68,19 +68,7 @@
 #ifdef ISC_PLATFORM_HAVESYSUNH
 #include <sys/un.h>
 #endif
-#ifdef ISC_PLATFORM_HAVEKQUEUE
 #include <sys/event.h>
-#endif
-#ifdef ISC_PLATFORM_HAVEEPOLL
-#include <sys/epoll.h>
-#endif
-#ifdef ISC_PLATFORM_HAVEDEVPOLL
-#if defined(HAVE_SYS_DEVPOLL_H)
-#include <sys/devpoll.h>
-#elif defined(HAVE_DEVPOLL_H)
-#include <devpoll.h>
-#endif
-#endif
 
 #include <netinet/tcp.h>
 
@@ -101,19 +89,7 @@
 /*%
  * Choose the most preferable multiplex method.
  */
-#ifdef ISC_PLATFORM_HAVEKQUEUE
 #define USE_KQUEUE
-#elif defined (ISC_PLATFORM_HAVEEPOLL)
-#define USE_EPOLL
-#elif defined (ISC_PLATFORM_HAVEDEVPOLL)
-#define USE_DEVPOLL
-typedef struct {
-	unsigned int want_read : 1,
-		want_write : 1;
-} pollinfo_t;
-#else
-#define USE_SELECT
-#endif	/* ISC_PLATFORM_HAVEKQUEUE */
 
 #ifndef USE_WATCHER_THREAD
 #if defined(USE_KQUEUE) || defined(USE_EPOLL) || defined(USE_DEVPOLL)
@@ -279,22 +255,12 @@ typedef isc_event_t intev_t;
  * to collect the destination address and interface so the client can
  * set them on outgoing packets.
  */
-#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
-#ifndef USE_CMSG
-#define USE_CMSG	1
-#endif
-#endif
 
 /*%
  * NetBSD and FreeBSD can timestamp packets.  XXXMLG Should we have
  * a setsockopt() like interface to request timestamps, and if the OS
  * doesn't do it for us, call gettimeofday() on every UDP receive?
  */
-#ifdef SO_TIMESTAMP
-#ifndef USE_CMSG
-#define USE_CMSG	1
-#endif
-#endif
 
 /*%
  * The size to raise the receive buffer to (from BIND 8).
@@ -315,23 +281,11 @@ typedef isc_event_t intev_t;
  * multiplied by 2, everything should fit. Those sizes are not
  * large enough to cause any concern.
  */
-#if defined(USE_CMSG) && defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 #define CMSG_SP_IN6PKT 40
-#else
-#define CMSG_SP_IN6PKT 0
-#endif
 
-#if defined(USE_CMSG) && defined(SO_TIMESTAMP)
 #define CMSG_SP_TIMESTAMP 32
-#else
-#define CMSG_SP_TIMESTAMP 0
-#endif
 
-#if defined(USE_CMSG) && (defined(IPV6_TCLASS) || defined(IP_TOS))
 #define CMSG_SP_TCTOS 24
-#else
-#define CMSG_SP_TCTOS 0
-#endif
 
 #define CMSG_SP_INT 24
 
@@ -1233,7 +1187,6 @@ make_nonblock(int fd) {
 	return (ISC_R_SUCCESS);
 }
 
-#ifdef USE_CMSG
 /*
  * Not all OSes support advanced CMSG macros: CMSG_LEN and CMSG_SPACE.
  * In order to ensure as much portability as possible, we provide wrapper
@@ -1284,24 +1237,15 @@ cmsg_space(ISC_SOCKADDR_LEN_T len) {
 		return (0);
 #endif
 }
-#endif /* USE_CMSG */
 
 /*
  * Process control messages received on a socket.
  */
 static void
 process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
-#ifdef ISC_NET_BSD44MSGHDR
-#ifdef USE_CMSG
 	struct cmsghdr *cmsgp;
-#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 	struct in6_pktinfo *pktinfop;
-#endif
-#ifdef SO_TIMESTAMP
 	void *timevalp;
-#endif
-#endif
-#endif
 
 	/*
 	 * sock is used only when ISC_NET_BSD44MSGHDR and USE_CMSG are defined.
@@ -1313,8 +1257,6 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 	UNUSED(msg);
 	UNUSED(dev);
 
-#ifdef ISC_NET_BSD44MSGHDR
-
 #ifdef MSG_TRUNC
 	if ((msg->msg_flags & MSG_TRUNC) == MSG_TRUNC)
 		dev->attributes |= ISC_SOCKEVENTATTR_TRUNC;
@@ -1325,18 +1267,11 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 		dev->attributes |= ISC_SOCKEVENTATTR_CTRUNC;
 #endif
 
-#ifndef USE_CMSG
-	return;
-#else
 	if (msg->msg_controllen == 0U || msg->msg_control == NULL)
 		return;
 
-#ifdef SO_TIMESTAMP
 	timevalp = NULL;
-#endif
-#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 	pktinfop = NULL;
-#endif
 
 	cmsgp = CMSG_FIRSTHDR(msg);
 	while (cmsgp != NULL) {
@@ -1344,7 +1279,6 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 			   isc_msgcat, ISC_MSGSET_SOCKET, ISC_MSG_PROCESSCMSG,
 			   "processing cmsg %p", cmsgp);
 
-#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 		if (cmsgp->cmsg_level == IPPROTO_IPV6
 		    && cmsgp->cmsg_type == IPV6_PKTINFO) {
 
@@ -1361,9 +1295,7 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 				dev->attributes |= ISC_SOCKEVENTATTR_MULTICAST;
 			goto next;
 		}
-#endif
 
-#ifdef SO_TIMESTAMP
 		if (cmsgp->cmsg_level == SOL_SOCKET
 		    && cmsgp->cmsg_type == SCM_TIMESTAMP) {
 			struct timeval tv;
@@ -1374,9 +1306,7 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 			dev->attributes |= ISC_SOCKEVENTATTR_TIMESTAMP;
 			goto next;
 		}
-#endif
 
-#ifdef IPV6_TCLASS
 		if (cmsgp->cmsg_level == IPPROTO_IPV6
 		    && cmsgp->cmsg_type == IPV6_TCLASS) {
 			dev->dscp = *(int *)CMSG_DATA(cmsgp);
@@ -1384,9 +1314,7 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 			dev->attributes |= ISC_SOCKEVENTATTR_DSCP;
 			goto next;
 		}
-#endif
 
-#ifdef IP_TOS
 		if (cmsgp->cmsg_level == IPPROTO_IP
 		    && (cmsgp->cmsg_type == IP_TOS
 #ifdef IP_RECVTOS
@@ -1398,13 +1326,10 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 			dev->attributes |= ISC_SOCKEVENTATTR_DSCP;
 			goto next;
 		}
-#endif
 	next:
 		cmsgp = CMSG_NXTHDR(msg, cmsgp);
 	}
-#endif /* USE_CMSG */
 
-#endif /* ISC_NET_BSD44MSGHDR */
 }
 
 /*
@@ -1428,9 +1353,7 @@ build_msghdr_send(isc__socket_t *sock, char* cmsgbuf, isc_socketevent_t *dev,
 	isc_region_t used;
 	size_t write_count;
 	size_t skip_count;
-#ifdef ISC_NET_BSD44MSGHDR
 	struct cmsghdr *cmsgp;
-#endif
 
 	memset(msg, 0, sizeof(*msg));
 
@@ -1493,13 +1416,10 @@ build_msghdr_send(isc__socket_t *sock, char* cmsgbuf, isc_socketevent_t *dev,
 	msg->msg_iov = iov;
 	msg->msg_iovlen = iovcount;
 
-#ifdef ISC_NET_BSD44MSGHDR
 	msg->msg_control = NULL;
 	msg->msg_controllen = 0;
 	msg->msg_flags = 0;
-#if defined(USE_CMSG)
 
-#if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 	if ((sock->type == isc_sockettype_udp) &&
 	    ((dev->attributes & ISC_SOCKEVENTATTR_PKTINFO) != 0))
 	{
@@ -1521,7 +1441,6 @@ build_msghdr_send(isc__socket_t *sock, char* cmsgbuf, isc_socketevent_t *dev,
 		pktinfop = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
 		memmove(pktinfop, &dev->pktinfo, sizeof(struct in6_pktinfo));
 	}
-#endif
 
 #if defined(IPV6_USE_MIN_MTU)
 	if ((sock->type == isc_sockettype_udp) &&
@@ -1550,7 +1469,6 @@ build_msghdr_send(isc__socket_t *sock, char* cmsgbuf, isc_socketevent_t *dev,
 			INSIST((int)sock->dscp == isc_dscp_check_value);
 	}
 
-#if defined(IP_TOS) || (defined(IPPROTO_IPV6) && defined(IPV6_TCLASS))
 	if ((sock->type == isc_sockettype_udp) &&
 	    ((dev->attributes & ISC_SOCKEVENTATTR_DSCP) != 0))
 	{
@@ -1558,7 +1476,6 @@ build_msghdr_send(isc__socket_t *sock, char* cmsgbuf, isc_socketevent_t *dev,
 
 		INSIST(dev->dscp < 0x40);
 
-#ifdef IP_TOS
 		if (sock->pf == AF_INET && sock->pktdscp) {
 			cmsgp = (struct cmsghdr *)(cmsgbuf +
 						   msg->msg_controllen);
@@ -1588,7 +1505,6 @@ build_msghdr_send(isc__socket_t *sock, char* cmsgbuf, isc_socketevent_t *dev,
 			} else
 				sock->dscp = dscp;
 		}
-#endif
 #if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS)
 		if (sock->pf == AF_INET6 && sock->pktdscp) {
 			cmsgp = (struct cmsghdr *)(cmsgbuf +
@@ -1626,12 +1542,6 @@ build_msghdr_send(isc__socket_t *sock, char* cmsgbuf, isc_socketevent_t *dev,
 			       SENDCMSGBUFLEN - msg->msg_controllen);
 		}
 	}
-#endif
-#endif /* USE_CMSG */
-#else /* ISC_NET_BSD44MSGHDR */
-	msg->msg_accrights = NULL;
-	msg->msg_accrightslen = 0;
-#endif /* ISC_NET_BSD44MSGHDR */
 
 	if (write_countp != NULL)
 		*write_countp = write_count;
@@ -1746,19 +1656,9 @@ build_msghdr_recv(isc__socket_t *sock, char *cmsgbuf, isc_socketevent_t *dev,
 	msg->msg_iov = iov;
 	msg->msg_iovlen = iovcount;
 
-#ifdef ISC_NET_BSD44MSGHDR
-#if defined(USE_CMSG)
 	msg->msg_control = cmsgbuf;
 	msg->msg_controllen = RECVCMSGBUFLEN;
-#else
-	msg->msg_control = NULL;
-	msg->msg_controllen = 0;
-#endif /* USE_CMSG */
 	msg->msg_flags = 0;
-#else /* ISC_NET_BSD44MSGHDR */
-	msg->msg_accrights = NULL;
-	msg->msg_accrightslen = 0;
-#endif /* ISC_NET_BSD44MSGHDR */
 
 	if (read_countp != NULL)
 		*read_countp = read_count;
@@ -1830,10 +1730,8 @@ dump_msg(struct msghdr *msg) {
 		printf("\t\t%u\tbase %p, len %ld\n", i,
 		       msg->msg_iov[i].iov_base,
 		       (long) msg->msg_iov[i].iov_len);
-#ifdef ISC_NET_BSD44MSGHDR
 	printf("\tcontrol %p, controllen %ld\n", msg->msg_control,
 	       (long) msg->msg_controllen);
-#endif
 }
 #endif
 
@@ -2379,7 +2277,6 @@ set_rcvbuf(void) {
 	ISC_SOCKADDR_LEN_T len;
 
 	fd = socket(AF_INET, SOCK_DGRAM | SOCK_DNS, IPPROTO_UDP);
-#if defined(ISC_PLATFORM_HAVEIPV6)
 	if (fd == -1) {
 		switch (errno) {
 		case EPROTONOSUPPORT:
@@ -2394,7 +2291,6 @@ set_rcvbuf(void) {
 			break;
 		}
 	}
-#endif
 	if (fd == -1)
 		return;
 
@@ -2504,9 +2400,7 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	char strbuf[ISC_STRERRORSIZE];
 	const char *err = "socket";
 	int tries = 0;
-#if defined(USE_CMSG) || defined(SO_BSDCOMPAT) || defined(SO_NOSIGPIPE)
 	int on = 1;
-#endif
 #if defined(SO_RCVBUF)
 	ISC_SOCKADDR_LEN_T optlen;
 	int size;
@@ -2706,11 +2600,8 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 		set_tcp_maxseg(sock, 1280 - 20 - 40); /* 1280 - TCP - IPV6 */
 	}
 
-#if defined(USE_CMSG) || defined(SO_RCVBUF)
 	if (sock->type == isc_sockettype_udp) {
 
-#if defined(USE_CMSG)
-#if defined(SO_TIMESTAMP)
 		if (setsockopt(sock->fd, SOL_SOCKET, SO_TIMESTAMP,
 			       (void *)&on, sizeof(on)) < 0
 		    && errno != ENOPROTOOPT) {
@@ -2725,10 +2616,7 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 					 strbuf);
 			/* Press on... */
 		}
-#endif /* SO_TIMESTAMP */
 
-#if defined(ISC_PLATFORM_HAVEIPV6)
-#ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 #ifdef IPV6_RECVPKTINFO
 		/* RFC 3542 */
 		if ((sock->pf == AF_INET6)
@@ -2760,7 +2648,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 					 strbuf);
 		}
 #endif /* IPV6_RECVPKTINFO */
-#endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
 #if defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DONT)
 		/*
 		 * Turn off Path MTU discovery on IPv6/UDP sockets.
@@ -2772,8 +2659,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 					 sizeof(action));
 		}
 #endif
-#endif /* ISC_PLATFORM_HAVEIPV6 */
-#endif /* defined(USE_CMSG) */
 
 #if defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DONT)
 		/*
@@ -2830,7 +2715,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 		}
 #endif
 	}
-#endif /* defined(USE_CMSG) || defined(SO_RCVBUF) */
 
 setup_done:
 	inc_stats(manager->stats, sock->statsindex[STATID_OPEN]);
@@ -6148,13 +6032,10 @@ isc__socket_ipv6only(isc_socket_t *sock0, isc_boolean_t yes) {
 
 static void
 setdscp(isc__socket_t *sock, isc_dscp_t dscp) {
-#if defined(IP_TOS) || defined(IPV6_TCLASS)
 	int value = dscp << 2;
-#endif
 
 	sock->dscp = dscp;
 
-#ifdef IP_TOS
 	if (sock->pf == AF_INET) {
 		if (setsockopt(sock->fd, IPPROTO_IP, IP_TOS,
 			       (void *)&value, sizeof(value)) < 0) {
@@ -6170,8 +6051,6 @@ setdscp(isc__socket_t *sock, isc_dscp_t dscp) {
 					 strbuf);
 		}
 	}
-#endif
-#ifdef IPV6_TCLASS
 	if (sock->pf == AF_INET6) {
 		if (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_TCLASS,
 			       (void *)&value, sizeof(value)) < 0) {
@@ -6187,7 +6066,6 @@ setdscp(isc__socket_t *sock, isc_dscp_t dscp) {
 					 strbuf);
 		}
 	}
-#endif
 }
 
 void
@@ -6197,16 +6075,12 @@ isc__socket_dscp(isc_socket_t *sock0, isc_dscp_t dscp) {
 	REQUIRE(VALID_SOCKET(sock));
 	REQUIRE(dscp < 0x40);
 
-#if !defined(IP_TOS) && !defined(IPV6_TCLASS)
-	UNUSED(dscp);
-#else
 	if (dscp < 0)
 		return;
 
 	/* The DSCP value must not be changed once it has been set. */
 	if (isc_dscp_check_value != -1)
 		INSIST(dscp == isc_dscp_check_value);
-#endif
 
 
 #ifdef notyet

@@ -751,8 +751,6 @@ ISC_LWRES_NEEDADDRINFO
 ISC_PLATFORM_NEEDPORTT
 ISC_PLATFORM_MSGHDRFLAVOR
 ISC_PLATFORM_HAVESALEN
-ISC_PLATFORM_NEEDPTON
-ISC_PLATFORM_NEEDNTOP
 ISC_PLATFORM_HAVEIF_LADDRCONF
 ISC_PLATFORM_HAVEIF_LADDRREQ
 ISC_PLATFORM_HAVESCOPEID
@@ -16838,49 +16836,6 @@ fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
-
-
-
-# On NetBSD 1.4.2 and maybe others, inet_pton() incorrectly accepts
-# addresses with less than four octets, like "1.2.3".  Also leading
-# zeros should also be rejected.
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for working inet_pton with IPv6 support" >&5
-$as_echo_n "checking for working inet_pton with IPv6 support... " >&6; }
-if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming inet_pton needed" >&5
-$as_echo "assuming inet_pton needed" >&6; }
-	ISC_EXTRA_OBJS="$ISC_EXTRA_OBJS inet_pton.$O"
-	ISC_EXTRA_SRCS="$ISC_EXTRA_SRCS inet_pton.c"
-	ISC_PLATFORM_NEEDPTON="#define ISC_PLATFORM_NEEDPTON 1"
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-main() { char a[16]; return (inet_pton(AF_INET, "1.2.3", a) == 1 ? 1 :
-			     inet_pton(AF_INET, "1.2.3.04", a) == 1 ? 1 :
-			     (inet_pton(AF_INET6, "::1.2.3.4", a) != 1)); }
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	ISC_PLATFORM_NEEDPTON="#undef ISC_PLATFORM_NEEDPTON"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	ISC_EXTRA_OBJS="$ISC_EXTRA_OBJS inet_pton.$O"
-	ISC_EXTRA_SRCS="$ISC_EXTRA_SRCS inet_pton.c"
-	ISC_PLATFORM_NEEDPTON="#define ISC_PLATFORM_NEEDPTON 1"
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-
 
 
 

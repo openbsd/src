@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.c,v 1.4 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: netaddr.c,v 1.5 2020/01/09 13:45:33 florian Exp $ */
 
 /*! \file */
 
@@ -340,11 +340,7 @@ isc_netaddr_fromsockaddr(isc_netaddr_t *t, const isc_sockaddr_t *s) {
 		break;
 	case AF_INET6:
 		memmove(&t->type.in6, &s->type.sin6.sin6_addr, 16);
-#ifdef ISC_PLATFORM_HAVESCOPEID
 		t->zone = s->type.sin6.sin6_scope_id;
-#else
-		t->zone = 0;
-#endif
 		break;
 #ifdef ISC_PLATFORM_HAVESYSUNH
 	case AF_UNIX:
