@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.212 2020/01/09 11:55:25 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.213 2020/01/09 15:50:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -701,12 +701,8 @@ path_hash(struct rde_aspath *asp)
 	u_int64_t	hash;
 
 	SipHash24_Init(&ctx, &pathtablekey);
-	SipHash24_Update(&ctx, &asp->origin, sizeof(asp->origin));
-	SipHash24_Update(&ctx, &asp->med, sizeof(asp->med));
-	SipHash24_Update(&ctx, &asp->lpref, sizeof(asp->lpref));
-	SipHash24_Update(&ctx, &asp->weight, sizeof(asp->weight));
-	SipHash24_Update(&ctx, &asp->rtlabelid, sizeof(asp->rtlabelid));
-	SipHash24_Update(&ctx, &asp->pftableid, sizeof(asp->pftableid));
+	SipHash24_Update(&ctx, &asp->aspath_hashstart,
+	    (char *)&asp->aspath_hashend - (char *)&asp->aspath_hashstart);
 
 	if (asp->aspath)
 		SipHash24_Update(&ctx, asp->aspath->data, asp->aspath->len);
