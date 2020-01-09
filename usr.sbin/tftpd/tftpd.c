@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.43 2019/07/03 03:24:03 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.44 2020/01/09 22:29:27 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -181,6 +181,7 @@ int		fput_octet(struct tftp_client *, int);
 int		fget_netascii(struct tftp_client *);
 int		fput_netascii(struct tftp_client *, int);
 void		file_read(struct tftp_client *);
+void		tftp_send(struct tftp_client *);
 int		tftp_wrq_ack_packet(struct tftp_client *);
 void		tftp_rrq_ack(int, short, void *);
 void		tftp_wrq_ack(struct tftp_client *client);
@@ -1161,6 +1162,12 @@ file_read(struct tftp_client *client)
 	client->buflen = i + 4;
 	client->retries = RETRIES;
 
+	tftp_send(client);
+}
+
+void
+tftp_send(struct tftp_client *client)
+{
 	if (send(client->sock, client->buf, client->buflen, 0) == -1) {
 		lwarn("send(block)");
 		client_free(client);
@@ -1206,12 +1213,11 @@ tftp_rrq_ack(int fd, short events, void *arg)
 	ap->th_block = ntohs((u_short)ap->th_block);
 
 	switch (ap->th_opcode) {
-	case ERROR:
-		goto done;
 	case ACK:
 		break;
-	default:
-		goto retry;
+	case ERROR:
+	default: /* assume the worst */
+		goto done;
 	}
 
 	if (ap->th_block != client->block) {
@@ -1223,7 +1229,8 @@ tftp_rrq_ack(int fd, short events, void *arg)
 		if (ap->th_block != (client->block - 1))
 			goto done;
 
-		goto retry;
+		tftp_send(client);
+		return;
 	}
 
 	if (client->buflen != client->packet_size) {
@@ -1233,10 +1240,6 @@ tftp_rrq_ack(int fd, short events, void *arg)
 
 	client->block++;
 	file_read(client);
-	return;
-
-retry:
-	event_add(&client->sev, &client->tv);
 	return;
 
 done:
@@ -1547,10 +1550,7 @@ retry(struct tftp_client *client)
 		return (-1);
 	}
 
-	if (send(client->sock, client->buf, client->buflen, 0) == -1)
-		return (-1);
-
-	event_add(&client->sev, &client->tv);
+	tftp_send(client);
 
 	return (0);
 }
