@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.107 2015/09/10 18:10:33 deraadt Exp $ */
+/*	$OpenBSD: arc.c,v 1.108 2020/01/09 14:35:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2571,7 +2571,7 @@ arc_unlock(struct arc_softc *sc)
 void
 arc_wait(struct arc_softc *sc)
 {
-	int				s;
+	int				error, s;
 	u_int32_t int_mask;
 
 	s = splbio();
@@ -2579,7 +2579,8 @@ arc_wait(struct arc_softc *sc)
 	case ARC_HBA_TYPE_A:
 		int_mask = arc_read(sc, ARC_RA_INTRMASK) & ~ARC_RA_INTRMASK_DOORBELL;
 		arc_write(sc, ARC_RA_INTRMASK, int_mask);
-		if (tsleep(sc, PWAIT, "arcdb", hz) == EWOULDBLOCK) {
+		error = tsleep_nsec(sc, PWAIT, "arcdb", SEC_TO_NSEC(1));
+		if (error == EWOULDBLOCK) {
 			int_mask = arc_read(sc, ARC_RA_INTRMASK) | ARC_RA_INTRMASK_DOORBELL;
 			arc_write(sc, ARC_RA_INTRMASK, int_mask);
 		}
@@ -2587,7 +2588,8 @@ arc_wait(struct arc_softc *sc)
 	case ARC_HBA_TYPE_C:
 		int_mask = arc_read(sc, ARC_RC_INTR_MASK) & ~ARC_RC_INTR_MASK_DOORBELL;
 		arc_write(sc, ARC_RC_INTR_MASK, int_mask);
-		if (tsleep(sc, PWAIT, "arcdb", hz) == EWOULDBLOCK) {
+		error = tsleep_nsec(sc, PWAIT, "arcdb", SEC_TO_NSEC(1));
+		if (error == EWOULDBLOCK) {
 			int_mask = arc_read(sc, ARC_RC_INTR_MASK) | ARC_RC_INTR_MASK_DOORBELL;
 			arc_write(sc, ARC_RC_INTR_MASK, int_mask);
 		}
@@ -2595,7 +2597,8 @@ arc_wait(struct arc_softc *sc)
 	case ARC_HBA_TYPE_D:
 		int_mask = arc_read(sc, ARC_RD_INTR_ENABLE) | ARC_RD_INTR_ENABLE_DOORBELL;
 		arc_write(sc, ARC_RD_INTR_ENABLE, int_mask);
-		if (tsleep(sc, PWAIT, "arcdb", hz) == EWOULDBLOCK) {
+		error = tsleep_nsec(sc, PWAIT, "arcdb", SEC_TO_NSEC(1));
+		if (error == EWOULDBLOCK) {
 			int_mask = arc_read(sc, ARC_RD_INTR_ENABLE) & ~ARC_RD_INTR_ENABLE_DOORBELL;
 			arc_write(sc, ARC_RD_INTR_ENABLE, int_mask);
 		}
@@ -2621,7 +2624,7 @@ arc_create_sensors(void *xat)
 	 * XXX * this is bollocks. the firmware has garbage coming out of it
 	 * so we have to wait a bit for it to finish spewing.
 	 */
-	tsleep(sc, PWAIT, "arcspew", 2 * hz);
+	tsleep_nsec(sc, PWAIT, "arcspew", SEC_TO_NSEC(2));
 
 	bzero(&bi, sizeof(bi));
 	if (arc_bio_inq(sc, &bi) != 0) {

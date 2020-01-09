@@ -1,4 +1,4 @@
-/* $OpenBSD: iatp.c,v 1.6 2018/07/30 15:56:30 jcs Exp $ */
+/* $OpenBSD: iatp.c,v 1.7 2020/01/09 14:35:19 mpi Exp $ */
 /*
  * Atmel maXTouch i2c touchscreen/touchpad driver
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
@@ -347,7 +347,8 @@ iatp_enable(void *v)
 {
 	struct iatp_softc *sc = v;
 
-	if (sc->sc_busy && tsleep(&sc->sc_busy, PRIBIO, "iatp", hz) != 0) {
+	if (sc->sc_busy &&
+	    tsleep_nsec(&sc->sc_busy, PRIBIO, "iatp", SEC_TO_NSEC(1)) != 0) {
 		printf("%s: trying to enable but we're busy\n",
 		    sc->sc_dev.dv_xname);
 		return 1;

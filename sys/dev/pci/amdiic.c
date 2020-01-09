@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdiic.c,v 1.11 2013/10/01 20:06:00 sf Exp $	*/
+/*	$OpenBSD: amdiic.c,v 1.12 2020/01/09 14:35:19 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -348,7 +348,8 @@ amdiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		amdiic_intr(sc);
 	} else {
 		/* Wait for interrupt */
-		if (tsleep(sc, PRIBIO, "amdiic", AMDIIC_TIMEOUT * hz))
+		if (tsleep_nsec(sc, PRIBIO, "amdiic",
+		    SEC_TO_NSEC(AMDIIC_TIMEOUT)))
 			return (1);
 	}	
 

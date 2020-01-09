@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.48 2019/12/31 10:05:32 mpi Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.49 2020/01/09 14:35:19 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1642,7 +1642,7 @@ sleep:
 		 * We must sleep for one second to let the firmware settle.
 		 * Accessing registers too early will hang the whole system.
 		 */
-		tsleep(&reg, 0, "rtwnrst", hz);
+		tsleep_nsec(&reg, 0, "rtwnrst", SEC_TO_NSEC(1));
 	}
 }
 

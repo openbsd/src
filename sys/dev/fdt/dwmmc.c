@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.21 2019/09/20 20:46:15 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.22 2020/01/09 14:35:20 mpi Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -1007,7 +1007,8 @@ dwmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	
 	if (cmd->c_datalen > 0 && cmd->c_dmamap) {
 		while (sc->sc_idsts == 0) {
-			error = tsleep(&sc->sc_idsts, PWAIT, "idsts", hz);
+			error = tsleep_nsec(&sc->sc_idsts, PWAIT, "idsts",
+			    SEC_TO_NSEC(1));
 			if (error) {
 				cmd->c_error = error;
 				dwmmc_dma_reset(sc, cmd);

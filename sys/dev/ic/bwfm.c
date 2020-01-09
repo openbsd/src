@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.67 2019/11/09 20:53:55 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.68 2020/01/09 14:35:19 mpi Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1526,7 +1526,7 @@ bwfm_proto_bcdc_txctl(struct bwfm_softc *sc, int reqid, char *buf, size_t *len)
 		return 1;
 	}
 
-	if (tsleep(ctl, PWAIT, "bwfm", hz))
+	if (tsleep_nsec(ctl, PWAIT, "bwfm", SEC_TO_NSEC(1)))
 		timeout = 1;
 
 	TAILQ_FOREACH_SAFE(ctl, &sc->sc_bcdc_rxctlq, next, tmp) {

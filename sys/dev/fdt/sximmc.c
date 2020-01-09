@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.9 2019/02/10 11:56:26 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.10 2020/01/09 14:35:20 mpi Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -551,7 +551,8 @@ sximmc_wait_rint(struct sximmc_softc *sc, uint32_t mask, int timeout)
 
 	while (retry > 0) {
 		if (sc->sc_use_dma) {
-			error = tsleep(&sc->sc_intr_rint, PWAIT, "rint", hz);
+			error = tsleep_nsec(&sc->sc_intr_rint, PWAIT, "rint",
+			    SEC_TO_NSEC(1));
 			if (error && error != EWOULDBLOCK)
 				return error;
 			if (sc->sc_intr_rint & mask)

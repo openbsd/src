@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.21 2018/02/19 08:59:52 mpi Exp $ */
+/*	$OpenBSD: cz.c,v 1.22 2020/01/09 14:35:19 mpi Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -921,7 +921,7 @@ cztty_shutdown(struct cztty_softc *sc)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		cztty_modem(sc, 0);
-		(void) tsleep(tp, TTIPRI, ttclos, hz);
+		tsleep_nsec(tp, TTIPRI, ttclos, SEC_TO_NSEC(1));
 	}
 
 	/* Disable the channel. */

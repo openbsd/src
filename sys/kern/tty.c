@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.150 2020/01/08 16:27:41 visa Exp $	*/
+/*	$OpenBSD: tty.c,v 1.151 2020/01/09 14:35:20 mpi Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1715,7 +1715,8 @@ ttycheckoutq(struct tty *tp, int wait)
 				return (0);
 			}
 			SET(tp->t_state, TS_ASLEEP);
-			tsleep(&tp->t_outq, PZERO - 1, "ttckoutq", hz);
+			tsleep_nsec(&tp->t_outq, PZERO - 1, "ttckoutq",
+			    SEC_TO_NSEC(1));
 		}
 	splx(s);
 	return (1);
