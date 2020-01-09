@@ -1,25 +1,29 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2018/01/14 22:01:48 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2020/01/09 18:42:21 bluhm Exp $
 
 ED ?=		/bin/ed
 TESTDIR =	${.CURDIR}/../../../bin/ed/test
 
 TS !=		cd ${TESTDIR} && ls *.t
 ERRS !=		cd ${TESTDIR} && ls *.err
-CLEANFILES =	*.t *.d *.ed *.err *.red *.o !.z stamp-*
+CLEANFILES =	*.t *.d *.ed *.err *.red *.o *.z
 
-run-regress-i3.red run-regress-nl.red run-regress-s2.red:
-	@echo '\n======== $t.red ========'
-	# This test currently fails, but it passes with rev 1.1 of ed.
-	# The regression should be investigated.
-	@echo DISABLED
+# from /usr/src/bin/ed/test/README, known failing tests
+REGRESS_EXPECTED_FAILURES =	run-eq.red \
+				run-a1.red \
+				run-i1.red \
+				run-k1.red \
+				run-r1.red
+
+REGRESS_TARGETS =
 
 .for t in ${TS:R}
 # from /usr/src/bin/ed/test/mkscripts.sh, converted to make rule
 $t.ed: ${TESTDIR}/$t.t ${TESTDIR}/$t.d Makefile
-	@echo '\n======== setup $t.ed ========'
+	@echo '======== $@ ========'
 	cp ${TESTDIR}/$t.t ${TESTDIR}/$t.d .
 	( \
 	    echo "#!/bin/sh -"; \
+	    echo "rm -f -- $t.o"; \
 	    echo "${ED} - <<\EOT"; \
 	    echo H; \
 	    echo "r $t.d"; \
@@ -30,21 +34,22 @@ $t.ed: ${TESTDIR}/$t.t ${TESTDIR}/$t.d Makefile
 	mv $t.tmp $t.ed
 	chmod +x $t.ed
 
-REGRESS_TARGETS +=	run-regress-$t.ed
+REGRESS_TARGETS +=	run-$t.ed
 # from /usr/src/bin/ed/test/ckscripts.sh, converted to make rule
-run-regress-$t.ed: $t.ed
-	@echo '\n======== $t.ed ========'
+run-$t.ed: $t.ed
+	@echo '======== $@ ========'
 	./$t.ed
-	cmp -s $t.o ${TESTDIR}/$t.r
+	diff -u ${TESTDIR}/$t.r $t.o
 .endfor
 
 .for t in ${ERRS:R}
 # from /usr/src/bin/ed/test/mkscripts.sh, converted to make rule
 $t.red: ${TESTDIR}/$t.err Makefile
-	@echo '\n======== setup $t.red ========'
+	@echo '======== $@ ========'
 	cp ${TESTDIR}/$t.err .
 	( \
 	    echo "#!/bin/sh -"; \
+	    echo "rm -f -- $t.o"; \
 	    echo "${ED} - <<\EOT"; \
 	    echo H; \
 	    echo "r $t.err"; \
@@ -55,20 +60,11 @@ $t.red: ${TESTDIR}/$t.err Makefile
 	mv $t.tmp $t.red
 	chmod +x $t.red
 
-REGRESS_TARGETS +=	run-regress-$t.red
+REGRESS_TARGETS +=	run-$t.red
 # from /usr/src/bin/ed/test/ckscripts.sh, converted to make rule
-run-regress-$t.red: $t.red
-	@echo '\n======== $t.red ========'
+run-$t.red: $t.red
+	@echo '======== $@ ========'
 	! ./$t.red
 .endfor
-
-# from /usr/src/bin/ed/test/README, known failing tests
-REGRESS_SKIP_TARGETS+=	run-regress-eq.red \
-			run-regress-a1.red \
-			run-regress-i1.red \
-			run-regress-k1.red \
-			run-regress-r1.red
-
-.PHONY: ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>
