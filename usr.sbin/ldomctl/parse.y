@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2019/11/28 18:40:42 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2020/01/09 09:23:57 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -110,6 +110,12 @@ grammar		: /* empty */
 		;
 
 domain		: DOMAIN STRING optnl '{' optnl	{
+			struct domain *odomain;
+			SIMPLEQ_FOREACH(odomain, &conf->domain_list, entry)
+				if (strcmp(odomain->name, $2) == 0) {
+					yyerror("duplicate domain name: %s", $2);
+					YYERROR;
+				}
 			domain = xzalloc(sizeof(struct domain));
 			domain->name = $2;
 			SIMPLEQ_INIT(&domain->vdisk_list);
@@ -118,13 +124,6 @@ domain		: DOMAIN STRING optnl '{' optnl	{
 			SIMPLEQ_INIT(&domain->iodev_list);
 		}
 		    domainopts_l '}' {
-			/* domain names need to be unique. */
-			struct domain *odomain;
-			SIMPLEQ_FOREACH(odomain, &conf->domain_list, entry)
-				if (strcmp(odomain->name, $2) == 0) {
-					yyerror("duplicate domain name: %s", $2);
-					YYERROR;
-				}
 			SIMPLEQ_INSERT_TAIL(&conf->domain_list, domain, entry);
 			domain = NULL;
 		}
