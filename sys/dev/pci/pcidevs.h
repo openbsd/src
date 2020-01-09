@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1911 2020/01/05 12:54:21 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1912 2020/01/09 00:58:28 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -341,6 +341,7 @@
 #define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
 #define	PCI_VENDOR_WCH2	0x1c00		/* Nanjing QinHeng Electronics */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
+#define	PCI_VENDOR_ADATA	0x1cc1		/* ADATA Technology */
 #define	PCI_VENDOR_UMIS	0x1cc4		/* Union Memory */
 #define	PCI_VENDOR_ROCKCHIP	0x1d87		/* Rockchip */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
@@ -510,6 +511,9 @@
 #define	PCI_PRODUCT_AD_SP21535	0x1535		/* ADSP 21535 DSP */
 #define	PCI_PRODUCT_AD_1889	0x1889		/* AD1889 Audio */
 #define	PCI_PRODUCT_AD_SP2141	0x2f44		/* SafeNet ADSP 2141 */
+
+/* ADATA products */
+#define	PCI_PRODUCT_ADATA_SX8200PRO	0x8201		/* SX8200 Pro */
 
 /* Addtron products */
 #define	PCI_PRODUCT_ADDTRON_RHINEII	0x1320		/* RhineII */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1911 2020/01/05 12:54:21 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1912 2020/01/09 00:58:28 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -470,6 +470,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AD, PCI_PRODUCT_AD_SP2141,
 	    "SafeNet ADSP 2141",
+	},
+	{
+	    PCI_VENDOR_ADATA, PCI_PRODUCT_ADATA_SX8200PRO,
+	    "SX8200 Pro",
 	},
 	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
@@ -30426,6 +30430,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SYMPHONY2,
 	    "Symphony Labs",
+	},
+	{
+	    PCI_VENDOR_ADATA,
+	    "ADATA Technology",
 	},
 	{
 	    PCI_VENDOR_UMIS,
