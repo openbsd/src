@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.141 2019/10/01 11:05:30 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.142 2020/01/09 11:51:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -167,6 +167,7 @@ struct peer_stats {
 	unsigned long long	 prefix_sent_eor;
 	time_t			 last_updown;
 	time_t			 last_read;
+	time_t			 last_write;
 	u_int32_t		 prefix_cnt;
 	u_int8_t		 last_sent_errcode;
 	u_int8_t		 last_sent_suberr;
@@ -310,7 +311,6 @@ int		 imsg_ctl_rde(int, pid_t, void *, u_int16_t);
 void		 session_stop(struct peer *, u_int8_t);
 
 /* timer.c */
-time_t			 getmonotime(void);
 struct peer_timer	*timer_get(struct peer *, enum Timer);
 struct peer_timer	*timer_nextisdue(struct peer *, time_t);
 time_t			 timer_nextduein(struct peer *, time_t);

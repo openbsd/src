@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.395 2019/10/02 08:57:00 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.396 2020/01/09 11:51:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -252,7 +252,7 @@ session_main(int debug, int verbose)
 				/* cloned peer that idled out? */
 				if (p->template && (p->state == STATE_IDLE ||
 				    p->state == STATE_ACTIVE) &&
-				    time(NULL) - p->stats.last_updown >=
+				    getmonotime() - p->stats.last_updown >=
 				    INTERVAL_HOLD_CLONED)
 					p->reconf_action = RECONF_DELETE;
 
@@ -1701,6 +1701,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 			bgp_fsm(p, EVNT_CON_FATAL);
 			return (1);
 		}
+		p->stats.last_write = getmonotime();
 		if (p->throttled && p->wbuf.queued < SESS_MSG_LOW_MARK) {
 			if (imsg_rde(IMSG_XON, p->conf.id, NULL, 0) == -1)
 				log_peer_warn(&p->conf, "imsg_compose XON");
@@ -1726,7 +1727,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 		}
 
 		p->rbuf->wpos += n;
-		p->stats.last_read = time(NULL);
+		p->stats.last_read = getmonotime();
 		return (1);
 	}
 	return (0);
@@ -3048,7 +3049,7 @@ void
 session_down(struct peer *peer)
 {
 	bzero(&peer->capa.neg, sizeof(peer->capa.neg));
-	peer->stats.last_updown = time(NULL);
+	peer->stats.last_updown = getmonotime();
 	/*
 	 * session_down is called in the exit code path so check
 	 * if the RDE is still around, if not there is no need to
@@ -3075,7 +3076,7 @@ session_up(struct peer *p)
 	sup.remote_bgpid = p->remote_bgpid;
 	sup.short_as = p->short_as;
 	memcpy(&sup.capa, &p->capa.neg, sizeof(sup.capa));
-	p->stats.last_updown = time(NULL);
+	p->stats.last_updown = getmonotime();
 	if (imsg_rde(IMSG_SESSION_UP, p->conf.id, &sup, sizeof(sup)) == -1)
 		fatalx("imsg_compose error");
 }

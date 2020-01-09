@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.395 2019/11/27 01:21:54 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.396 2020/01/09 11:51:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1290,6 +1290,9 @@ int	trie_roa_check(struct trie_head *, struct bgpd_addr *, u_int8_t,
 	    u_int32_t);
 void	trie_dump(struct trie_head *);
 int	trie_equal(struct trie_head *, struct trie_head *);
+
+/* timer.c */
+time_t			 getmonotime(void);
 
 /* util.c */
 const char	*log_addr(const struct bgpd_addr *);
