@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: dst.h,v 1.4 2020/01/09 13:56:37 florian Exp $ */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -30,8 +30,6 @@
 #include <dns/secalg.h>
 #include <dns/ds.h>
 #include <dns/dsdigest.h>
-
-#include <dst/gssapi.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -66,7 +64,6 @@ typedef struct dst_context 	dst_context_t;
 #define DST_ALG_ED25519		15
 #define DST_ALG_ED448		16
 #define DST_ALG_HMACMD5		157
-#define DST_ALG_GSSAPI		160
 #define DST_ALG_HMACSHA1	161	/* XXXMPA */
 #define DST_ALG_HMACSHA224	162	/* XXXMPA */
 #define DST_ALG_HMACSHA256	163	/* XXXMPA */
@@ -492,40 +489,6 @@ dst_key_privatefrombuffer(dst_key_t *key, isc_buffer_t *buffer);
  *
  * Ensures:
  *\li	If successful, key will contain a valid private key.
- */
-
-gss_ctx_id_t
-dst_key_getgssctx(const dst_key_t *key);
-/*%<
- * Returns the opaque key data.
- * Be cautions when using this value unless you know what you are doing.
- *
- * Requires:
- *\li	"key" is not NULL.
- *
- * Returns:
- *\li	gssctx key data, possibly NULL.
- */
-
-isc_result_t
-dst_key_fromgssapi(dns_name_t *name, gss_ctx_id_t gssctx, isc_mem_t *mctx,
-		   dst_key_t **keyp, isc_region_t *intoken);
-/*%<
- * Converts a GSSAPI opaque context id into a DST key.
- *
- * Requires:
- *\li	"name" is a valid absolute dns name.
- *\li	"gssctx" is a GSSAPI context id.
- *\li	"mctx" is a valid memory context.
- *\li	"keyp" is not NULL and "*keyp" is NULL.
- *
- * Returns:
- *\li 	ISC_R_SUCCESS
- * \li	any other result indicates failure
- *
- * Ensures:
- *\li	If successful, *keyp will contain a valid key and be responsible for
- *	the context id.
  */
 
 #ifdef DST_KEY_INTERNAL

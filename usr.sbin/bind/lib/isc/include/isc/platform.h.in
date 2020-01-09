@@ -33,24 +33,6 @@
 @ISC_PLATFORM_NEEDSYSSELECTH@
 
 /*
- * Defined to <gssapi.h> or <gssapi/gssapi.h> for how to include
- * the GSSAPI header.
- */
-@ISC_PLATFORM_GSSAPIHEADER@
-
-/*
- * Defined to <gssapi_krb5.h> or <gssapi/gssapi_krb5.h> for how to
- * include the GSSAPI KRB5 header.
- */
-@ISC_PLATFORM_GSSAPI_KRB5_HEADER@
-
-/*
- * Defined to <krb5.h> or <krb5/krb5.h> for how to include
- * the KRB5 header.
- */
-@ISC_PLATFORM_KRB5HEADER@
-
-/*
  * Define if the system has nanosecond-level accuracy in file stats.
  */
 @ISC_PLATFORM_HAVESTATNSEC@

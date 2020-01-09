@@ -1048,8 +1048,6 @@ options_clauses[] = {
 	{ "tcp-listen-queue", &cfg_type_uint32, 0 },
 	{ "tkey-dhkey", &cfg_type_tkey_dhkey, 0 },
 	{ "tkey-domain", &cfg_type_qstring, 0 },
-	{ "tkey-gssapi-credential", &cfg_type_qstring, 0 },
-	{ "tkey-gssapi-keytab", &cfg_type_qstring, 0 },
 	{ "transfers-in", &cfg_type_uint32, 0 },
 	{ "transfers-out", &cfg_type_uint32, 0 },
 	{ "transfers-per-ns", &cfg_type_uint32, 0 },

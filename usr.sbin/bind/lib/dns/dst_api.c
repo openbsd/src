@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.11 2020/01/09 13:52:23 florian Exp $
+ * $Id: dst_api.c,v 1.12 2020/01/09 13:56:37 florian Exp $
  */
 
 /*! \file */
@@ -83,8 +83,6 @@ static dst_func_t *dst_t_func[DST_MAX_ALGS];
 static isc_entropy_t *dst_entropy_pool = NULL;
 static unsigned int dst_entropy_flags = 0;
 static isc_boolean_t dst_initialized = ISC_FALSE;
-
-void gss_log(int level, const char *fmt, ...) ISC_FORMAT_PRINTF(2, 3);
 
 isc_mem_t *dst__memory_pool = NULL;
 
@@ -231,9 +229,6 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 	RETERR(dst__openssleddsa_init(&dst_t_func[DST_ALG_ED448]));
 #endif
 #endif /* if OPENSSL */
-#ifdef GSSAPI
-	RETERR(dst__gssapi_init(&dst_t_func[DST_ALG_GSSAPI]));
-#endif
 	dst_initialized = ISC_TRUE;
 	return (ISC_R_SUCCESS);
 
@@ -773,46 +768,6 @@ dst_key_privatefrombuffer(dst_key_t *key, isc_buffer_t *buffer) {
 	return (result);
 }
 
-gss_ctx_id_t
-dst_key_getgssctx(const dst_key_t *key)
-{
-	REQUIRE(key != NULL);
-
-	return (key->keydata.gssctx);
-}
-
-isc_result_t
-dst_key_fromgssapi(dns_name_t *name, gss_ctx_id_t gssctx, isc_mem_t *mctx,
-		   dst_key_t **keyp, isc_region_t *intoken)
-{
-	dst_key_t *key;
-	isc_result_t result;
-
-	REQUIRE(gssctx != NULL);
-	REQUIRE(keyp != NULL && *keyp == NULL);
-
-	key = get_key_struct(name, DST_ALG_GSSAPI, 0, DNS_KEYPROTO_DNSSEC,
-			     0, dns_rdataclass_in, 0, mctx);
-	if (key == NULL)
-		return (ISC_R_NOMEMORY);
-
-	if (intoken != NULL) {
-		/*
-		 * Keep the token for use by external ssu rules. They may need
-		 * to examine the PAC in the kerberos ticket.
-		 */
-		RETERR(isc_buffer_allocate(key->mctx, &key->key_tkeytoken,
-		       intoken->length));
-		RETERR(isc_buffer_copyregion(key->key_tkeytoken, intoken));
-	}
-
-	key->keydata.gssctx = gssctx;
-	*keyp = key;
-	result = ISC_R_SUCCESS;
-out:
-	return result;
-}
-
 isc_result_t
 dst_key_buildinternal(dns_name_t *name, unsigned int alg,
 		      unsigned int bits, unsigned int flags,
@@ -1239,9 +1194,6 @@ dst_key_sigsize(const dst_key_t *key, unsigned int *n) {
 	case DST_ALG_HMACSHA512:
 		*n = ISC_SHA512_DIGESTLENGTH;
 		break;
-	case DST_ALG_GSSAPI:
-		*n = 128; /*%< XXX */
-		break;
 	default:
 		return (DST_R_UNSUPPORTEDALG);
 	}
@@ -1548,7 +1500,6 @@ issymmetric(const dst_key_t *key) {
 	case DST_ALG_HMACSHA256:
 	case DST_ALG_HMACSHA384:
 	case DST_ALG_HMACSHA512:
-	case DST_ALG_GSSAPI:
 		return (ISC_TRUE);
 	default:
 		return (ISC_FALSE);
@@ -1864,26 +1815,6 @@ dst__entropy_getdata(void *buf, unsigned int len, isc_boolean_t pseudo) {
 
 unsigned int
 dst__entropy_status(void) {
-#ifdef GSSAPI
-	unsigned int flags = dst_entropy_flags;
-	isc_result_t ret;
-	unsigned char buf[32];
-	static isc_boolean_t first = ISC_TRUE;
-
-	if (dst_entropy_pool == NULL)
-		return (0);
-
-	if (first) {
-		/* Someone believes RAND_status() initializes the PRNG */
-		flags &= ~ISC_ENTROPY_GOODONLY;
-		ret = isc_entropy_getdata(dst_entropy_pool, buf,
-					  sizeof(buf), NULL, flags);
-		INSIST(ret == ISC_R_SUCCESS);
-		isc_entropy_putdata(dst_entropy_pool, buf,
-				    sizeof(buf), 2 * sizeof(buf));
-		first = ISC_FALSE;
-	}
-#endif
 	return (isc_entropy_status(dst_entropy_pool));
 }
 

@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.10 2020/01/09 13:52:23 florian Exp $
+ * $Id: tsig.c,v 1.11 2020/01/09 13:56:37 florian Exp $
  */
 /*! \file */
 #include <config.h>
@@ -59,9 +59,7 @@
 	 (algname) != dns_tsig_hmacsha224_name && \
 	 (algname) != dns_tsig_hmacsha256_name && \
 	 (algname) != dns_tsig_hmacsha384_name && \
-	 (algname) != dns_tsig_hmacsha512_name && \
-	 (algname) != dns_tsig_gssapi_name && \
-	 (algname) != dns_tsig_gssapims_name)
+	 (algname) != dns_tsig_hmacsha512_name)
 
 #ifndef DNS_NAME_INITABSOLUTE
 #define DNS_NAME_INITABSOLUTE(A,B) { \
@@ -74,22 +72,6 @@
 #endif
 
 #define BADTIMELEN 6
-
-static unsigned char gsstsig_ndata[] = "\010gss-tsig";
-static unsigned char gsstsig_offsets[] = { 0, 9 };
-static dns_name_t gsstsig =
-	DNS_NAME_INITABSOLUTE(gsstsig_ndata, gsstsig_offsets);
-LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_gssapi_name = &gsstsig;
-
-/*
- * Since Microsoft doesn't follow its own standard, we will use this
- * alternate name as a second guess.
- */
-static unsigned char gsstsigms_ndata[] = "\003gss\011microsoft\003com";
-static unsigned char gsstsigms_offsets[] = { 0, 4, 14, 18 };
-static dns_name_t gsstsigms =
-	DNS_NAME_INITABSOLUTE(gsstsigms_ndata, gsstsigms_offsets);
-LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_gssapims_name = &gsstsigms;
 
 static unsigned char hmacsha1_ndata[] = "\011hmac-sha1";
 static unsigned char hmacsha1_offsets[] = { 0, 10 };
@@ -297,18 +279,6 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 			ret = DNS_R_BADALG;
 			goto cleanup_name;
 		}
-	} else if (dns_name_equal(algorithm, DNS_TSIG_GSSAPI_NAME)) {
-		tkey->algorithm = DNS_TSIG_GSSAPI_NAME;
-		if (dstkey != NULL && dst_key_alg(dstkey) != DST_ALG_GSSAPI) {
-			ret = DNS_R_BADALG;
-			goto cleanup_name;
-		}
-	} else if (dns_name_equal(algorithm, DNS_TSIG_GSSAPIMS_NAME)) {
-		tkey->algorithm = DNS_TSIG_GSSAPIMS_NAME;
-		if (dstkey != NULL && dst_key_alg(dstkey) != DST_ALG_GSSAPI) {
-			ret = DNS_R_BADALG;
-			goto cleanup_name;
-		}
 	} else {
 		if (dstkey != NULL) {
 			ret = DNS_R_BADALG;
@@ -373,9 +343,7 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 	/*
 	 * Ignore this if it's a GSS key, since the key size is meaningless.
 	 */
-	if (dstkey != NULL && dst_key_size(dstkey) < 64 &&
-	    !dns_name_equal(algorithm, DNS_TSIG_GSSAPI_NAME) &&
-	    !dns_name_equal(algorithm, DNS_TSIG_GSSAPIMS_NAME)) {
+	if (dstkey != NULL && dst_key_size(dstkey) < 64) {
 		char namestr[DNS_NAME_FORMATSIZE];
 		dns_name_format(name, namestr, sizeof(namestr));
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DNSSEC,
@@ -491,10 +459,6 @@ dst_alg_fromname(dns_name_t *algorithm) {
 		return (DST_ALG_HMACSHA384);
 	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA512_NAME)) {
 		return (DST_ALG_HMACSHA512);
-	} else if (dns_name_equal(algorithm, DNS_TSIG_GSSAPI_NAME)) {
-		return (DST_ALG_GSSAPI);
-	} else if (dns_name_equal(algorithm, DNS_TSIG_GSSAPIMS_NAME)) {
-		return (DST_ALG_GSSAPI);
 	} else
 		return (0);
 }

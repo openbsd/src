@@ -139,15 +139,6 @@ typedef ISC_LIST(dns_zone_t)			dns_zonelist_t;
 typedef struct dns_zonemgr			dns_zonemgr_t;
 typedef struct dns_zt				dns_zt_t;
 
-/*
- * If we are not using GSSAPI, define the types we use as opaque types here.
- */
-#ifndef GSSAPI
-typedef struct not_defined_gss_cred_id *gss_cred_id_t;
-typedef struct not_defined_gss_ctx *gss_ctx_id_t;
-#endif
-typedef struct dst_gssapi_signverifyctx dst_gssapi_signverifyctx_t;
-
 typedef enum {
 	dns_hash_sha1 = 1
 } dns_hash_t;

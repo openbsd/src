@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.4 2020/01/09 13:52:23 florian Exp $ */
+/* $Id: dst_internal.h,v 1.5 2020/01/09 13:56:37 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -111,7 +111,6 @@ struct dst_key {
 	char		*label;		/*%< engine label (HSM) */
 	union {
 		void *generic;
-		gss_ctx_id_t gssctx;
 #ifdef OPENSSL
 #if !defined(USE_EVP) || !USE_EVP
 		RSA *rsa;
@@ -149,7 +148,6 @@ struct dst_context {
 	isc_logcategory_t *category;
 	union {
 		void *generic;
-		dst_gssapi_signverifyctx_t *gssctx;
 		isc_sha1_t *sha1ctx;
 		isc_sha256_t *sha256ctx;
 		isc_sha512_t *sha512ctx;
@@ -222,7 +220,6 @@ isc_result_t dst__hmacsha384_init(struct dst_func **funcp);
 isc_result_t dst__hmacsha512_init(struct dst_func **funcp);
 isc_result_t dst__opensslrsa_init(struct dst_func **funcp,
 				  unsigned char algorithm);
-isc_result_t dst__gssapi_init(struct dst_func **funcp);
 #ifdef HAVE_OPENSSL_ECDSA
 isc_result_t dst__opensslecdsa_init(struct dst_func **funcp);
 #endif

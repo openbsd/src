@@ -16,7 +16,7 @@
 
 /*! \file */
 /*
- * $Id: ssu.c,v 1.3 2019/12/17 01:46:32 sthen Exp $
+ * $Id: ssu.c,v 1.4 2020/01/09 13:56:37 florian Exp $
  * Principal Author: Brian Wellington
  */
 
@@ -34,7 +34,6 @@
 #include <dns/name.h>
 #include <dns/ssu.h>
 
-#include <dst/gssapi.h>
 #include <dst/dst.h>
 
 #define SSUTABLEMAGIC		ISC_MAGIC('S', 'S', 'U', 'T')
@@ -471,28 +470,20 @@ dns_ssutable_checkrules2(dns_ssutable_t *table, dns_name_t *signer,
 				continue;
 			break;
 		case DNS_SSUMATCHTYPE_SELFKRB5:
-			if (!dst_gssapi_identitymatchesrealmkrb5(signer, name,
-							       rule->identity))
-				continue;
+			continue;
 			break;
 		case DNS_SSUMATCHTYPE_SELFMS:
-			if (!dst_gssapi_identitymatchesrealmms(signer, name,
-							       rule->identity))
-				continue;
+			continue;
 			break;
 		case DNS_SSUMATCHTYPE_SUBDOMAINKRB5:
 			if (!dns_name_issubdomain(name, rule->name))
 				continue;
-			if (!dst_gssapi_identitymatchesrealmkrb5(signer, NULL,
-							       rule->identity))
-				continue;
+			continue;
 			break;
 		case DNS_SSUMATCHTYPE_SUBDOMAINMS:
 			if (!dns_name_issubdomain(name, rule->name))
 				continue;
-			if (!dst_gssapi_identitymatchesrealmms(signer, NULL,
-							       rule->identity))
-				continue;
+			continue;
 			break;
 		case DNS_SSUMATCHTYPE_TCPSELF:
 			dns_fixedname_init(&fixed);
