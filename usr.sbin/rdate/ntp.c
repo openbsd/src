@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.35 2019/06/28 13:32:50 deraadt Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.36 2020/01/09 19:37:56 tb Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -177,7 +177,7 @@ ntp_client(const char *hostname, int family, struct timeval *new,
 int
 sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 {
-	int attempts = 0, accepts = 0, rejects = 0;
+	int accepts = 0, rejects = 0;
 	int delay = MAX_DELAY, ret;
 	double deadline;
 	double a, b, x, y;
@@ -193,7 +193,7 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 		return (-1);
 	}
 
-	while (accepts < MAX_QUERIES && attempts < 2 * MAX_QUERIES) {
+	while (accepts < MAX_QUERIES) {
 		memset(&data, 0, sizeof(data));
 
 		if (current_time(JAN_1970) > deadline) {
