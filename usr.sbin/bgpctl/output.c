@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.2 2019/12/31 14:09:27 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.3 2020/01/09 11:57:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -111,7 +111,7 @@ show_summary(struct peer *p)
 	    p->stats.msg_sent_update + p->stats.msg_sent_keepalive +
 	    p->stats.msg_sent_rrefresh,
 	    p->wbuf.queued,
-	    fmt_timeframe(p->stats.last_updown));
+	    fmt_monotime(p->stats.last_updown));
 	if (p->state == STATE_ESTABLISHED) {
 		printf("%6u", p->stats.prefix_cnt);
 		if (p->conf.max_prefix != 0)
@@ -182,11 +182,12 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	if (p->stats.last_updown != 0)
 		printf(", %s for %s",
 		    p->state == STATE_ESTABLISHED ? "up" : "down",
-		    fmt_timeframe(p->stats.last_updown));
+		    fmt_monotime(p->stats.last_updown));
 	printf("\n");
 	printf("  Last read %s, holdtime %us, keepalive interval %us\n",
-	    fmt_timeframe(p->stats.last_read),
+	    fmt_monotime(p->stats.last_read),
 	    p->holdtime, p->holdtime/3);
+	printf("  Last write %s\n", fmt_monotime(p->stats.last_write));
 	for (i = 0; i < AID_MAX; i++)
 		if (p->capa.peer.mp[i])
 			hascapamp = 1;
@@ -288,7 +289,7 @@ show_timer(struct ctl_timer *t)
 	if (t->val <= 0)
 		printf("%-20s\n", "due");
 	else
-		printf("due in %-13s\n", fmt_timeframe(time(NULL) - t->val));
+		printf("due in %-13s\n", fmt_timeframe(t->val));
 }
 
 void
@@ -432,7 +433,7 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	print_flags(r->flags, 0);
 
 	printf("%c    Last update: %s ago%c", EOL0(flag0),
-	    fmt_timeframe(r->lastchange), EOL0(flag0));
+	    fmt_timeframe(r->age), EOL0(flag0));
 }
 
 void

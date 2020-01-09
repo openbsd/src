@@ -44,6 +44,7 @@ const char	*print_auth_method(enum auth_method);
 const char	*fmt_mem(long long);
 
 const char	*fmt_timeframe(time_t);
+const char	*fmt_monotime(time_t);
 char		*fmt_peer(const char *, const struct bgpd_addr *, int);
 const char	*get_errstr(u_int8_t, u_int8_t);
 
