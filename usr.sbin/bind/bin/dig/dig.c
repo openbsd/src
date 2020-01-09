@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.33 2020/01/09 14:18:29 florian Exp $ */
+/* $Id: dig.c,v 1.34 2020/01/09 14:19:49 florian Exp $ */
 
 /*! \file */
 
@@ -982,11 +982,7 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 				break;
 			case 'n':
 				FULLCHECK("idnout");
-#ifndef WITH_IDN
 				fprintf(stderr, ";; IDN support not enabled\n");
-#else
-				lookup->idnout = state;
-#endif
 				break;
 			default:
 				goto invalid_option;

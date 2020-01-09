@@ -293,9 +293,6 @@ extern isc_boolean_t keep_open;
 extern char *progname;
 extern int tries;
 extern int fatalexit;
-#ifdef WITH_IDN
-extern int idnoptions;
-#endif
 
 /*
  * Routines in dighost.c.
