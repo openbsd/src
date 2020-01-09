@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.14 2020/01/07 19:08:09 florian Exp $ */
+/* $Id: name.c,v 1.15 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file */
 
@@ -27,7 +27,7 @@
 #include <isc/hash.h>
 #include <isc/mem.h>
 #include <isc/once.h>
-#include <isc/print.h>
+
 #include <isc/random.h>
 #include <isc/string.h>
 #include <isc/thread.h>

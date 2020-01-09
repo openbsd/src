@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.23 2020/01/06 17:46:59 florian Exp $ */
+/* $Id: dighost.c,v 1.24 2020/01/09 13:47:12 florian Exp $ */
 
 /*! \file
  *  \note
@@ -80,7 +80,7 @@
 #include <isc/netaddr.h>
 #include <isc/netdb.h>
 #include <isc/parseint.h>
-#include <isc/print.h>
+
 #include <isc/random.h>
 #include <isc/result.h>
 #include <isc/safe.h>

@@ -50,7 +50,7 @@
 #include <ctype.h>
 
 #include <isc/mem.h>
-#include <isc/print.h>
+
 #include <isc/region.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -219,100 +219,4 @@ isc_string_regiondup(isc_mem_t *mctx, const isc_region_t *source) {
 	}
 
 	return (target);
-}
-
-char *
-isc_string_separate(char **stringp, const char *delim) {
-	char *string = *stringp;
-	char *s;
-	const char *d;
-	char sc, dc;
-
-	if (string == NULL)
-		return (NULL);
-
-	for (s = string; (sc = *s) != '\0'; s++)
-		for (d = delim; (dc = *d) != '\0'; d++)
-			if (sc == dc) {
-				*s++ = '\0';
-				*stringp = s;
-				return (string);
-			}
-	*stringp = NULL;
-	return (string);
-}
-
-size_t
-isc_string_strlcpy(char *dst, const char *src, size_t size)
-{
-	char *d = dst;
-	const char *s = src;
-	size_t n = size;
-
-	/* Copy as many bytes as will fit */
-	if (n != 0U && --n != 0U) {
-		do {
-			if ((*d++ = *s++) == 0)
-				break;
-		} while (--n != 0U);
-	}
-
-	/* Not enough room in dst, add NUL and traverse rest of src */
-	if (n == 0U) {
-		if (size != 0U)
-			*d = '\0';		/* NUL-terminate dst */
-		while (*s++)
-			;
-	}
-
-	return(s - src - 1);	/* count does not include NUL */
-}
-
-size_t
-isc_string_strlcat(char *dst, const char *src, size_t size)
-{
-	char *d = dst;
-	const char *s = src;
-	size_t n = size;
-	size_t dlen;
-
-	/* Find the end of dst and adjust bytes left but don't go past end */
-	while (n-- != 0U && *d != '\0')
-		d++;
-	dlen = d - dst;
-	n = size - dlen;
-
-	if (n == 0U)
-		return(dlen + strlen(s));
-	while (*s != '\0') {
-		if (n != 1U) {
-			*d++ = *s;
-			n--;
-		}
-		s++;
-	}
-	*d = '\0';
-
-	return(dlen + (s - src));	/* count does not include NUL */
-}
-
-char *
-isc_string_strcasestr(const char *str, const char *search) {
-	char c, sc, *s;
-	size_t len;
-
-	if ((c = *search++) != 0) {
-		c = tolower((unsigned char) c);
-		len = strlen(search);
-		do {
-			do {
-				if ((sc = *str++) == 0)
-					return (NULL);
-			} while ((char) tolower((unsigned char) sc) != c);
-		} while (strncasecmp(str, search, len) != 0);
-		str--;
-	}
-	DE_CONST(str, s);
-	return (s);
-
 }

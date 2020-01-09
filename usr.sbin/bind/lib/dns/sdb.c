@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sdb.c,v 1.6 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: sdb.c,v 1.7 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file */
 
@@ -28,7 +28,7 @@
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/once.h>
-#include <isc/print.h>
+
 #include <isc/region.h>
 #include <isc/util.h>
 

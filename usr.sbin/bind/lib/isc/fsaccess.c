@@ -14,14 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: fsaccess.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: fsaccess.c,v 1.4 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file
  * \brief
  * This file contains the OS-independent functionality of the API.
  */
 #include <isc/fsaccess.h>
-#include <isc/print.h>
+
 #include <isc/result.h>
 #include <isc/util.h>
 

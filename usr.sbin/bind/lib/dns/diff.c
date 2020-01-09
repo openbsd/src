@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: diff.c,v 1.3 2019/12/17 01:46:31 sthen Exp $ */
+/* $Id: diff.c,v 1.4 2020/01/09 13:47:12 florian Exp $ */
 
 /*! \file */
 
@@ -25,7 +25,7 @@
 #include <isc/buffer.h>
 #include <isc/file.h>
 #include <isc/mem.h>
-#include <isc/print.h>
+
 #include <isc/string.h>
 #include <isc/util.h>
 

@@ -22,7 +22,7 @@
 #include <isc/counter.h>
 #include <isc/log.h>
 #include <isc/platform.h>
-#include <isc/print.h>
+
 #include <isc/string.h>
 #include <isc/random.h>
 #include <isc/socket.h>
@@ -9558,8 +9558,8 @@ dns_resolver_logfetch(dns_fetch_t *fetch, isc_log_t *lctx,
 		dns_name_format(&fctx->domain, domainbuf, sizeof(domainbuf));
 		isc_log_write(lctx, category, module, level,
 			      "fetch completed at %s:%d for %s in "
-			      "%" ISC_PRINT_QUADFORMAT "u."
-			      "%06" ISC_PRINT_QUADFORMAT "u: %s/%s "
+			      "%llu."
+			      "%06llu: %s/%s "
 			      "[domain:%s,referral:%u,restart:%u,qrysent:%u,"
 			      "timeout:%u,lame:%u,"
 #ifdef ENABLE_FETCHLIMIT
@@ -9998,7 +9998,7 @@ dns_resolver_printbadcache(dns_resolver_t *resolver, FILE *fp) {
 			t = isc_time_microdiff(&bad->expire, &now);
 			t /= 1000;
 			fprintf(fp, "; %s/%s [ttl "
-				"%" ISC_PLATFORM_QUADFORMAT "u]\n",
+				"%llu]\n",
 				namebuf, typebuf, t);
 		}
 	}

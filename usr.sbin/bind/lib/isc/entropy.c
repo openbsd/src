@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: entropy.c,v 1.6 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: entropy.c,v 1.7 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file
  * \brief
@@ -39,7 +39,7 @@
 #include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/platform.h>
-#include <isc/print.h>
+
 #include <isc/region.h>
 #include <isc/safe.h>
 #include <isc/sha1.h>

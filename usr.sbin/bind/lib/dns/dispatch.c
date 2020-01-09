@@ -27,7 +27,7 @@
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/portset.h>
-#include <isc/print.h>
+
 #include <isc/random.h>
 #include <isc/socket.h>
 #include <isc/stats.h>

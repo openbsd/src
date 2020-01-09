@@ -23,7 +23,7 @@
 #include <isc/hex.h>
 #include <isc/mutex.h>
 #include <isc/pool.h>
-#include <isc/print.h>
+
 #include <isc/random.h>
 #include <isc/ratelimiter.h>
 #include <isc/refcount.h>

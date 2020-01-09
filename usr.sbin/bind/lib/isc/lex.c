@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.8 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: lex.c,v 1.9 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file */
 
@@ -30,7 +30,7 @@
 #include <isc/mem.h>
 #include <isc/msgs.h>
 #include <isc/parseint.h>
-#include <isc/print.h>
+
 #include <isc/stdio.h>
 #include <isc/string.h>
 #include <isc/util.h>

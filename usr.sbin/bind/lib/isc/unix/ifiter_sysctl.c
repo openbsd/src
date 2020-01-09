@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ifiter_sysctl.c,v 1.4 2020/01/09 13:45:33 florian Exp $ */
+/* $Id: ifiter_sysctl.c,v 1.5 2020/01/09 13:47:14 florian Exp $ */
 
 /*! \file
  * \brief
@@ -29,7 +29,7 @@
 #include <net/route.h>
 #include <net/if_dl.h>
 
-#include <isc/print.h>
+
 
 /* XXX what about Alpha? */
 #ifdef sgi

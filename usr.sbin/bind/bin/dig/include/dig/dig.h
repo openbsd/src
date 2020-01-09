@@ -30,7 +30,7 @@
 #include <isc/lang.h>
 #include <isc/list.h>
 #include <isc/mem.h>
-#include <isc/print.h>
+
 #include <isc/sockaddr.h>
 #include <isc/socket.h>
 

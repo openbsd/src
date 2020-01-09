@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: httpd.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: httpd.c,v 1.3 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file */
 
@@ -23,7 +23,7 @@
 #include <isc/buffer.h>
 #include <isc/httpd.h>
 #include <isc/mem.h>
-#include <isc/print.h>
+
 #include <isc/socket.h>
 #include <isc/string.h>
 #include <isc/task.h>

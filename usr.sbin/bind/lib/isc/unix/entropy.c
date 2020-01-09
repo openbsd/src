@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: entropy.c,v 1.9 2020/01/09 13:45:33 florian Exp $ */
+/* $Id: entropy.c,v 1.10 2020/01/09 13:47:14 florian Exp $ */
 
 /* \file unix/entropy.c
  * \brief
@@ -36,7 +36,7 @@
 #include <unistd.h>
 
 #include <isc/platform.h>
-#include <isc/print.h>
+
 #include <isc/strerror.h>
 #include <isc/string.h>
 

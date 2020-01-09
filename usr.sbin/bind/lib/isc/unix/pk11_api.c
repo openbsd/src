@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: pk11_api.c,v 1.2 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: pk11_api.c,v 1.3 2020/01/09 13:47:14 florian Exp $ */
 
 /*! \file */
 
@@ -26,7 +26,7 @@
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/once.h>
-#include <isc/print.h>
+
 #include <isc/stdio.h>
 #include <isc/thread.h>
 #include <isc/util.h>

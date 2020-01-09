@@ -29,7 +29,7 @@
 #include <isc/net.h>
 #include <isc/netaddr.h>
 #include <isc/netscope.h>
-#include <isc/print.h>
+
 #include <isc/string.h>
 #include <isc/sockaddr.h>
 #include <isc/symtab.h>
@@ -848,7 +848,7 @@ void
 cfg_print_uint64(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 	char buf[32];
 
-	snprintf(buf, sizeof(buf), "%" ISC_PRINT_QUADFORMAT "u",
+	snprintf(buf, sizeof(buf), "%llu",
 		 obj->value.uint64);
 	cfg_print_cstr(pctx, buf);
 }

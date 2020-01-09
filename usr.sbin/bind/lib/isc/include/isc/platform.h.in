@@ -23,69 +23,6 @@
  ***** Platform-dependent defines.
  *****/
 
-/*
- *** Printing.
- ***/
-
-/*! \brief
- * If this system needs vsnprintf() and snprintf(), ISC_PLATFORM_NEEDVSNPRINTF
- * will be defined.
- */
-@ISC_PLATFORM_NEEDVSNPRINTF@
-
-/*! \brief
- * If this system need a modern sprintf() that returns (int) not (char*).
- */
-@ISC_PLATFORM_NEEDSPRINTF@
-
-/*! \brief
- * If this system need a modern printf() that format size %z (size_t).
- */
-@ISC_PLATFORM_NEEDPRINTF@
-
-/*! \brief
- * If this system need a modern fprintf() that format size %z (size_t).
- */
-@ISC_PLATFORM_NEEDFPRINTF@
-
-/*! \brief
- * The printf format string modifier to use with isc_uint64_t values.
- */
-@ISC_PLATFORM_QUADFORMAT@
-
-/***
- *** String functions.
- ***/
-/*
- * If the system needs strsep(), ISC_PLATFORM_NEEDSTRSEP will be defined.
- */
-@ISC_PLATFORM_NEEDSTRSEP@
-
-/*
- * If the system needs strlcpy(), ISC_PLATFORM_NEEDSTRLCPY will be defined.
- */
-@ISC_PLATFORM_NEEDSTRLCPY@
-
-/*
- * If the system needs strlcat(), ISC_PLATFORM_NEEDSTRLCAT will be defined.
- */
-@ISC_PLATFORM_NEEDSTRLCAT@
-
-/*
- * Define if this system needs strtoul.
- */
-@ISC_PLATFORM_NEEDSTRTOUL@
-
-/*
- * Define if this system needs memmove.
- */
-@ISC_PLATFORM_NEEDMEMMOVE@
-
-/*
- * Define if this system needs strcasestr.
- */
-@ISC_PLATFORM_NEEDSTRCASESTR@
-
 /***
  *** Miscellaneous.
  ***/

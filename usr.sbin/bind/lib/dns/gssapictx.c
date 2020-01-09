@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: gssapictx.c,v 1.4 2020/01/07 19:09:26 florian Exp $ */
+/* $Id: gssapictx.c,v 1.5 2020/01/09 13:47:12 florian Exp $ */
 
 #include <config.h>
 
@@ -29,7 +29,7 @@
 #include <isc/lex.h>
 #include <isc/mem.h>
 #include <isc/once.h>
-#include <isc/print.h>
+
 #include <isc/platform.h>
 #include <isc/random.h>
 #include <isc/string.h>

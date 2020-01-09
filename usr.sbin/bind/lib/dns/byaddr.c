@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: byaddr.c,v 1.8 2019/12/17 01:46:31 sthen Exp $ */
+/* $Id: byaddr.c,v 1.9 2020/01/09 13:47:12 florian Exp $ */
 
 /*! \file */
 
@@ -22,7 +22,7 @@
 
 #include <isc/mem.h>
 #include <isc/netaddr.h>
-#include <isc/print.h>
+
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <isc/task.h>
 #include <isc/util.h>

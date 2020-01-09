@@ -24,7 +24,7 @@
 #include <isc/commandline.h>
 #include <isc/event.h>
 #include <isc/parseint.h>
-#include <isc/print.h>
+
 #include <isc/string.h>
 #include <isc/util.h>
 #include <isc/task.h>

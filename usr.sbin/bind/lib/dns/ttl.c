@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ttl.c,v 1.8 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: ttl.c,v 1.9 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file */
 
@@ -27,7 +27,7 @@
 
 #include <isc/buffer.h>
 #include <isc/parseint.h>
-#include <isc/print.h>
+
 #include <isc/region.h>
 #include <isc/string.h>
 #include <isc/util.h>

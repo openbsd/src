@@ -53,7 +53,7 @@
 #include <isc/net.h>
 #include <isc/once.h>
 #include <isc/platform.h>
-#include <isc/print.h>
+
 #include <isc/region.h>
 #include <isc/resource.h>
 #include <isc/socket.h>

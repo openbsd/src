@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: lib.c,v 1.4 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file */
 
@@ -28,7 +28,7 @@
 #include <isc/mem.h>
 #include <isc/msgs.h>
 #include <isc/once.h>
-#include <isc/print.h>
+
 #include <isc/socket.h>
 #include <isc/task.h>
 #include <isc/timer.h>

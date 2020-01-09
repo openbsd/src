@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.30 2020/01/07 19:09:26 florian Exp $ */
+/* $Id: dig.c,v 1.31 2020/01/09 13:47:12 florian Exp $ */
 
 /*! \file */
 
@@ -28,7 +28,7 @@
 #include <isc/netaddr.h>
 #include <isc/parseint.h>
 #include <isc/platform.h>
-#include <isc/print.h>
+
 #include <isc/string.h>
 #include <isc/task.h>
 #include <isc/util.h>
@@ -214,7 +214,7 @@ received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 			printf(";; WHEN: %s\n", time_str);
 		if (query->lookup->doing_xfr) {
 			printf(";; XFR size: %u records (messages %u, "
-			       "bytes %" ISC_PRINT_QUADFORMAT "u)\n",
+			       "bytes %llu)\n",
 			       query->rr_count, query->msg_count,
 			       query->byte_count);
 		} else {
@@ -232,14 +232,14 @@ received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 	} else if (query->lookup->identify && !short_form) {
 		diff = isc_time_microdiff(&query->time_recv, &query->time_sent);
 		if (use_usec)
-			printf(";; Received %" ISC_PRINT_QUADFORMAT "u bytes "
+			printf(";; Received %llu bytes "
 			       "from %s(%s) in %ld us\n\n",
 			       query->lookup->doing_xfr
 				 ? query->byte_count
 				 : (isc_uint64_t)bytes,
 			       fromtext, query->userarg, (long) diff);
 		else
-			printf(";; Received %" ISC_PRINT_QUADFORMAT "u bytes "
+			printf(";; Received %llu bytes "
 			       "from %s(%s) in %ld ms\n\n",
 			       query->lookup->doing_xfr
 				 ?  query->byte_count
@@ -292,9 +292,9 @@ say_message(dns_rdata_t *rdata, dig_query_t *query, isc_buffer_t *buf) {
 		ADD_STRING(buf, " from server ");
 		ADD_STRING(buf, query->servname);
 		if (use_usec)
-			snprintf(store, sizeof(store), " in %" ISC_PLATFORM_QUADFORMAT "u us.", diff);
+			snprintf(store, sizeof(store), " in %llu us.", diff);
 		else
-			snprintf(store, sizeof(store), " in %" ISC_PLATFORM_QUADFORMAT "u ms.", diff / 1000);
+			snprintf(store, sizeof(store), " in %llu ms.", diff / 1000);
 		ADD_STRING(buf, store);
 	}
 	ADD_STRING(buf, "\n");

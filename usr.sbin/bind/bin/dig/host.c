@@ -35,11 +35,11 @@
 #include <isc/app.h>
 #include <isc/commandline.h>
 #include <isc/netaddr.h>
-#include <isc/print.h>
+
 #include <isc/string.h>
 #include <isc/util.h>
 #include <isc/task.h>
-#include <isc/stdlib.h>
+
 
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>

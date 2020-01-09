@@ -14,14 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: keytable.c,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: keytable.c,v 1.4 2020/01/09 13:47:12 florian Exp $ */
 
 /*! \file */
 
 #include <config.h>
 
 #include <isc/mem.h>
-#include <isc/print.h>
+
 #include <isc/refcount.h>
 #include <isc/rwlock.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */

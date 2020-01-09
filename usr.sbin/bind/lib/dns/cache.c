@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cache.c,v 1.8 2019/12/17 01:46:31 sthen Exp $ */
+/* $Id: cache.c,v 1.9 2020/01/09 13:47:12 florian Exp $ */
 
 /*! \file */
 
@@ -22,7 +22,7 @@
 
 #include <isc/json.h>
 #include <isc/mem.h>
-#include <isc/print.h>
+
 #include <isc/string.h>
 #include <isc/stats.h>
 #include <isc/task.h>
@@ -1393,47 +1393,47 @@ dns_cache_dumpstats(dns_cache_t *cache, FILE *fp) {
 	getcounters(cache->stats, isc_statsformat_file,
 		    dns_cachestatscounter_max, indices, values);
 
-	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		values[dns_cachestatscounter_hits],
 		"cache hits");
-	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		values[dns_cachestatscounter_misses],
 		"cache misses");
-	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		values[dns_cachestatscounter_queryhits],
 		"cache hits (from query)");
-	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		values[dns_cachestatscounter_querymisses],
 		"cache misses (from query)");
-	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		values[dns_cachestatscounter_deletelru],
 		"cache records deleted due to memory exhaustion");
-	fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		values[dns_cachestatscounter_deletettl],
 		"cache records deleted due to TTL expiration");
 	fprintf(fp, "%20u %s\n", dns_db_nodecount(cache->db),
 		"cache database nodes");
-	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		(isc_uint64_t) dns_db_hashsize(cache->db),
 		"cache database hash buckets");
 
-	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		(isc_uint64_t) isc_mem_total(cache->mctx),
 		"cache tree memory total");
-	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		(isc_uint64_t) isc_mem_inuse(cache->mctx),
 		"cache tree memory in use");
-	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		(isc_uint64_t) isc_mem_maxinuse(cache->mctx),
 		"cache tree highest memory in use");
 
-	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		(isc_uint64_t) isc_mem_total(cache->hmctx),
 		"cache heap memory total");
-	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		(isc_uint64_t) isc_mem_inuse(cache->hmctx),
 		"cache heap memory in use");
-	fprintf(fp, "%20" ISC_PLATFORM_QUADFORMAT "u %s\n",
+	fprintf(fp, "%20llu %s\n",
 		(isc_uint64_t) isc_mem_maxinuse(cache->hmctx),
 		"cache heap highest memory in use");
 }
@@ -1448,7 +1448,7 @@ renderstat(const char *name, isc_uint64_t value, xmlTextWriterPtr writer) {
 	TRY0(xmlTextWriterWriteAttribute(writer,
 					 ISC_XMLCHAR "name", ISC_XMLCHAR name));
 	TRY0(xmlTextWriterWriteFormatString(writer,
-					    "%" ISC_PRINT_QUADFORMAT "u",
+					    "%llu",
 					    value));
 	TRY0(xmlTextWriterEndElement(writer)); /* counter */
 

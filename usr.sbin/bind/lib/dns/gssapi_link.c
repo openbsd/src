@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: gssapi_link.c,v 1.3 2019/12/17 01:46:31 sthen Exp $
+ * $Id: gssapi_link.c,v 1.4 2020/01/09 13:47:12 florian Exp $
  */
 
 #include <config.h>
@@ -25,7 +25,7 @@
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/mem.h>
-#include <isc/print.h>
+
 #include <isc/string.h>
 #include <isc/util.h>
 

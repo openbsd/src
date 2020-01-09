@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.12 2020/01/07 19:09:26 florian Exp $ */
+/* $Id: log.c,v 1.13 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -34,7 +34,7 @@
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/msgs.h>
-#include <isc/print.h>
+
 #include <isc/stat.h>
 #include <isc/stdio.h>
 #include <isc/string.h>

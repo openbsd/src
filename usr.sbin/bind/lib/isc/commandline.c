@@ -43,7 +43,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: commandline.c,v 1.7 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: commandline.c,v 1.8 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file
  * This file was adapted from the NetBSD project's source tree, RCS ID:
@@ -64,7 +64,7 @@
 
 #include <isc/commandline.h>
 #include <isc/msgs.h>
-#include <isc/print.h>
+
 #include <isc/string.h>
 #include <isc/util.h>
 

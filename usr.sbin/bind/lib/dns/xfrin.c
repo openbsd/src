@@ -14,14 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: xfrin.c,v 1.12 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: xfrin.c,v 1.13 2020/01/09 13:47:13 florian Exp $ */
 
 /*! \file */
 
 #include <config.h>
 
 #include <isc/mem.h>
-#include <isc/print.h>
+
 #include <isc/random.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <isc/task.h>
@@ -1497,7 +1497,7 @@ maybe_free(dns_xfrin_ctx_t *xfr) {
 	persec = (xfr->nbytes * 1000) / msecs;
 	xfrin_log(xfr, ISC_LOG_INFO,
 		  "Transfer completed: %d messages, %d records, "
-		  "%" ISC_PRINT_QUADFORMAT "u bytes, "
+		  "%llu bytes, "
 		  "%u.%03u secs (%u bytes/sec)",
 		  xfr->nmsg, xfr->nrecs, xfr->nbytes,
 		  (unsigned int) (msecs / 1000), (unsigned int) (msecs % 1000),
