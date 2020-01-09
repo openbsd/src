@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2020/01/09 09:23:57 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2020/01/09 22:06:23 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -124,6 +124,25 @@ domain		: DOMAIN STRING optnl '{' optnl	{
 			SIMPLEQ_INIT(&domain->iodev_list);
 		}
 		    domainopts_l '}' {
+			if (strcmp(domain->name, "primary") != 0) {
+				if (domain->vcpu == 0) {
+					yyerror("vcpu is required: %s",
+					    domain->name);
+					YYERROR;
+				}
+				if ( domain->memory == 0) {
+					yyerror("memory is required: %s",
+					    domain->name);
+					YYERROR;
+				}
+				if (SIMPLEQ_EMPTY(&domain->vdisk_list) &&
+				    SIMPLEQ_EMPTY(&domain->vnet_list) &&
+				    SIMPLEQ_EMPTY(&domain->iodev_list)) {
+					yyerror("at least one bootable device"
+					    " is required: %s", domain->name);
+					YYERROR;
+				}
+			}
 			SIMPLEQ_INSERT_TAIL(&conf->domain_list, domain, entry);
 			domain = NULL;
 		}
