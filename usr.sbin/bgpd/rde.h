@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.230 2020/01/09 13:31:52 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.231 2020/01/09 14:44:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -382,18 +382,16 @@ struct rde_peer	*peer_get(u_int32_t);
 struct rde_peer *peer_match(struct ctl_neighbor *, u_int32_t);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
 
-void		 peer_imsg_push(struct rde_peer *, struct imsg *);
-int		 peer_imsg_pop(struct rde_peer *, struct imsg *);
-int		 peer_imsg_pending(void);
-void		 peer_imsg_flush(struct rde_peer *);
-
 int		 peer_up(struct rde_peer *, struct session_up *);
 void		 peer_down(struct rde_peer *, void *);
 void		 peer_flush(struct rde_peer *, u_int8_t, time_t);
 void		 peer_stale(struct rde_peer *, u_int8_t);
 void		 peer_dump(struct rde_peer *, u_int8_t);
-void		 peer_recv_eor(struct rde_peer *, u_int8_t);
-void		 peer_send_eor(struct rde_peer *, u_int8_t);
+
+void		 peer_imsg_push(struct rde_peer *, struct imsg *);
+int		 peer_imsg_pop(struct rde_peer *, struct imsg *);
+int		 peer_imsg_pending(void);
+void		 peer_imsg_flush(struct rde_peer *);
 
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
