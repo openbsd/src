@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2016/09/01 10:02:13 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2020/01/09 19:33:19 kn Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -137,7 +137,6 @@ static void
 action(char *line)
 {
 	char *keyword, *arg, *cp;
-	struct keytabent *ktent;
 
 	keyword = strdup(line);
 	if (!keyword)
@@ -161,8 +160,6 @@ action(char *line)
 static void
 dump_prom(void)
 {
-	struct keytabent *ktent;
-
 	/*
 	 * We have a special dump routine for this.
 	 */
