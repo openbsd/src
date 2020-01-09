@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.8 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: time.c,v 1.9 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -37,7 +37,7 @@
 static const int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
 isc_result_t
-dns_time64_totext(isc_int64_t t, isc_buffer_t *target) {
+dns_time64_totext(int64_t t, isc_buffer_t *target) {
 	struct tm tm;
 	char buf[sizeof("!!!!!!YYYY!!!!!!!!MM!!!!!!!!DD!!!!!!!!HH!!!!!!!!MM!!!!!!!!SS")];
 	int secs;
@@ -102,11 +102,11 @@ dns_time64_totext(isc_int64_t t, isc_buffer_t *target) {
 	return (ISC_R_SUCCESS);
 }
 
-isc_int64_t
-dns_time64_from32(isc_uint32_t value) {
+int64_t
+dns_time64_from32(uint32_t value) {
 	isc_stdtime_t now;
-	isc_int64_t start;
-	isc_int64_t t;
+	int64_t start;
+	int64_t t;
 
 	/*
 	 * Adjust the time to the closest epoch.  This should be changed
@@ -115,7 +115,7 @@ dns_time64_from32(isc_uint32_t value) {
 	 * 2106.
 	 */
 	isc_stdtime_get(&now);
-	start = (isc_int64_t) now;
+	start = (int64_t) now;
 	if (isc_serial_gt(value, now))
 		t = start + (value - now);
 	else
@@ -125,14 +125,14 @@ dns_time64_from32(isc_uint32_t value) {
 }
 
 isc_result_t
-dns_time32_totext(isc_uint32_t value, isc_buffer_t *target) {
+dns_time32_totext(uint32_t value, isc_buffer_t *target) {
 	return (dns_time64_totext(dns_time64_from32(value), target));
 }
 
 isc_result_t
-dns_time64_fromtext(const char *source, isc_int64_t *target) {
+dns_time64_fromtext(const char *source, int64_t *target) {
 	int year, month, day, hour, minute, second;
-	isc_int64_t value;
+	int64_t value;
 	int secs;
 	int i;
 
@@ -198,13 +198,13 @@ dns_time64_fromtext(const char *source, isc_int64_t *target) {
 }
 
 isc_result_t
-dns_time32_fromtext(const char *source, isc_uint32_t *target) {
-	isc_int64_t value64;
+dns_time32_fromtext(const char *source, uint32_t *target) {
+	int64_t value64;
 	isc_result_t result;
 	result = dns_time64_fromtext(source, &value64);
 	if (result != ISC_R_SUCCESS)
 		return (result);
-	*target = (isc_uint32_t)value64;
+	*target = (uint32_t)value64;
 
 	return (ISC_R_SUCCESS);
 }

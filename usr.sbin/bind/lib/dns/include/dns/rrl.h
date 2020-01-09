@@ -91,16 +91,16 @@ typedef enum {
 #define DNS_RRL_MAX_PREFIX  64
 typedef union dns_rrl_key dns_rrl_key_t;
 struct dns__rrl_key {
-	isc_uint32_t	    ip[DNS_RRL_MAX_PREFIX/32];
-	isc_uint32_t	    qname_hash;
+	uint32_t	    ip[DNS_RRL_MAX_PREFIX/32];
+	uint32_t	    qname_hash;
 	dns_rdatatype_t	    qtype;
-	isc_uint8_t         qclass;
+	uint8_t         qclass;
 	unsigned int	    rtype   :4; /* dns_rrl_rtype_t */
 	unsigned int	    ipv6    :1;
 };
 union dns_rrl_key {
 	struct dns__rrl_key s;
-	isc_uint16_t	w[sizeof(struct dns__rrl_key)/sizeof(isc_uint16_t)];
+	uint16_t	w[sizeof(struct dns__rrl_key)/sizeof(uint16_t)];
 };
 
 /*
@@ -242,9 +242,9 @@ struct dns_rrl {
 	isc_stdtime_t	ts_bases[DNS_RRL_TS_BASES];
 
 	int		ipv4_prefixlen;
-	isc_uint32_t	ipv4_mask;
+	uint32_t	ipv4_mask;
 	int		ipv6_prefixlen;
-	isc_uint32_t	ipv6_mask[4];
+	uint32_t	ipv6_mask[4];
 
 	isc_stdtime_t	log_stops_time;
 	dns_rrl_entry_t	*last_logged;

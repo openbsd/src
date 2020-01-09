@@ -17,7 +17,7 @@
 #ifndef GENERIC_NAPTR_35_H
 #define GENERIC_NAPTR_35_H 1
 
-/* $Id: naptr_35.h,v 1.2 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: naptr_35.h,v 1.3 2020/01/09 18:17:17 florian Exp $ */
 
 /*!
  *  \brief Per RFC2915 */
@@ -25,14 +25,14 @@
 typedef struct dns_rdata_naptr {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		order;
-	isc_uint16_t		preference;
+	uint16_t		order;
+	uint16_t		preference;
 	char			*flags;
-	isc_uint8_t		flags_len;
+	uint8_t		flags_len;
 	char			*service;
-	isc_uint8_t		service_len;
+	uint8_t		service_len;
 	char			*regexp;
-	isc_uint8_t		regexp_len;
+	uint8_t		regexp_len;
 	dns_name_t		replacement;
 } dns_rdata_naptr_t;
 

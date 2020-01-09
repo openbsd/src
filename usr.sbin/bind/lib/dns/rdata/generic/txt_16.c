@@ -143,7 +143,7 @@ static inline isc_result_t
 generic_fromstruct_txt(ARGS_FROMSTRUCT) {
 	dns_rdata_txt_t *txt = source;
 	isc_region_t region;
-	isc_uint8_t length;
+	uint8_t length;
 
 	REQUIRE(source != NULL);
 	REQUIRE(txt->common.rdtype == type);
@@ -301,7 +301,7 @@ generic_txt_first(dns_rdata_txt_t *txt) {
 static isc_result_t
 generic_txt_next(dns_rdata_txt_t *txt) {
 	isc_region_t r;
-	isc_uint8_t length;
+	uint8_t length;
 
 	REQUIRE(txt != NULL);
 	REQUIRE(txt->txt != NULL && txt->txt_len != 0);

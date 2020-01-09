@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: timer.c,v 1.4 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -37,11 +37,11 @@ dns_timer_setidle(isc_timer_t *timer, unsigned int maxtime,
 		  unsigned int idletime, isc_boolean_t purge)
 {
 	isc_result_t result;
-	isc_interval_t maxinterval, idleinterval;
+	interval_t maxinterval, idleinterval;
 	isc_time_t expires;
 
 	/* Compute the time of expiry. */
-	isc_interval_set(&maxinterval, maxtime, 0);
+	interval_set(&maxinterval, maxtime, 0);
 	CHECK(isc_time_nowplusinterval(&expires, &maxinterval));
 
 	/*
@@ -49,7 +49,7 @@ dns_timer_setidle(isc_timer_t *timer, unsigned int maxtime,
 	 * work around the silly limitation of the ISC timer interface
 	 * that you cannot specify an idle interval of zero.
 	 */
-	isc_interval_set(&idleinterval, idletime, 1);
+	interval_set(&idleinterval, idletime, 1);
 
 	CHECK(isc_timer_reset(timer, isc_timertype_once,
 			      &expires, &idleinterval,

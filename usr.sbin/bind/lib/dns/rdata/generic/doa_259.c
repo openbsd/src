@@ -78,7 +78,7 @@ static inline isc_result_t
 totext_doa(ARGS_TOTEXT) {
 	char buf[sizeof("4294967295 ")];
 	isc_region_t region;
-	isc_uint32_t n;
+	uint32_t n;
 
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_doa);

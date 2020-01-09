@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: string.h,v 1.8 2020/01/09 14:18:30 florian Exp $ */
+/* $Id: string.h,v 1.9 2020/01/09 18:17:19 florian Exp $ */
 
 #ifndef ISC_STRING_H
 #define ISC_STRING_H 1
@@ -22,7 +22,7 @@
 /*! \file isc/string.h */
 
 #include <isc/formatcheck.h>
-#include <isc/int.h>
+
 #include <isc/lang.h>
 #include <isc/platform.h>
 #include <isc/types.h>
@@ -35,10 +35,10 @@
 
 ISC_LANG_BEGINDECLS
 
-isc_uint64_t
+uint64_t
 isc_string_touint64(char *source, char **endp, int base);
 /*%<
- * Convert the string pointed to by 'source' to isc_uint64_t.
+ * Convert the string pointed to by 'source' to uint64_t.
  *
  * On successful conversion 'endp' points to the first character
  * after conversion is complete.

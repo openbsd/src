@@ -18,6 +18,7 @@
 
 #include <config.h>
 
+#include <stdint.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
@@ -70,7 +71,7 @@ dns_rdataset_init(dns_rdataset_t *rdataset) {
 	rdataset->trust = 0;
 	rdataset->covers = 0;
 	rdataset->attributes = 0;
-	rdataset->count = ISC_UINT32_MAX;
+	rdataset->count = UINT32_MAX;
 	rdataset->private1 = NULL;
 	rdataset->private2 = NULL;
 	rdataset->private3 = NULL;
@@ -99,7 +100,7 @@ dns_rdataset_invalidate(dns_rdataset_t *rdataset) {
 	rdataset->trust = 0;
 	rdataset->covers = 0;
 	rdataset->attributes = 0;
-	rdataset->count = ISC_UINT32_MAX;
+	rdataset->count = UINT32_MAX;
 	rdataset->private1 = NULL;
 	rdataset->private2 = NULL;
 	rdataset->private3 = NULL;
@@ -126,7 +127,7 @@ dns_rdataset_disassociate(dns_rdataset_t *rdataset) {
 	rdataset->trust = 0;
 	rdataset->covers = 0;
 	rdataset->attributes = 0;
-	rdataset->count = ISC_UINT32_MAX;
+	rdataset->count = UINT32_MAX;
 	rdataset->private1 = NULL;
 	rdataset->private2 = NULL;
 	rdataset->private3 = NULL;
@@ -429,11 +430,11 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			/*
 			 * "Cyclic" order.
 			 */
-			isc_uint32_t val;
+			uint32_t val;
 			unsigned int j;
 
 			val = rdataset->count;
-			if (val == ISC_UINT32_MAX)
+			if (val == UINT32_MAX)
 				val = arc4random();
 			j = val % count;
 			for (i = 0; i < count; i++) {
@@ -505,7 +506,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			INSIST((target->used >= rdlen.used + 2) &&
 			       (target->used - rdlen.used - 2 < 65536));
 			isc_buffer_putuint16(&rdlen,
-					     (isc_uint16_t)(target->used -
+					     (uint16_t)(target->used -
 							    rdlen.used - 2));
 			added++;
 		}
@@ -532,13 +533,13 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
  rollback:
 	if (partial && result == ISC_R_NOSPACE) {
 		INSIST(rrbuffer.used < 65536);
-		dns_compress_rollback(cctx, (isc_uint16_t)rrbuffer.used);
+		dns_compress_rollback(cctx, (uint16_t)rrbuffer.used);
 		*countp += added;
 		*target = rrbuffer;
 		goto cleanup;
 	}
 	INSIST(savedbuffer.used < 65536);
-	dns_compress_rollback(cctx, (isc_uint16_t)savedbuffer.used);
+	dns_compress_rollback(cctx, (uint16_t)savedbuffer.used);
 	*countp = 0;
 	*target = savedbuffer;
 
@@ -782,7 +783,7 @@ dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 		     dns_rdata_rrsig_t *rrsig, isc_stdtime_t now,
 		     isc_boolean_t acceptexpired)
 {
-	isc_uint32_t ttl = 0;
+	uint32_t ttl = 0;
 
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(DNS_RDATASET_VALID(sigrdataset));

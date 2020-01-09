@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.c,v 1.8 2020/01/09 13:52:23 florian Exp $ */
+/* $Id: rcode.c,v 1.9 2020/01/09 18:17:15 florian Exp $ */
 
 #include <config.h>
 #include <ctype.h>
@@ -231,7 +231,7 @@ maybe_numeric(unsigned int *valuep, isc_textregion_t *source,
 	      unsigned int max, isc_boolean_t hex_allowed)
 {
 	isc_result_t result;
-	isc_uint32_t n;
+	uint32_t n;
 	char buffer[NUMBERSIZE];
 
 	if (! isdigit(source->base[0] & 0xff) ||

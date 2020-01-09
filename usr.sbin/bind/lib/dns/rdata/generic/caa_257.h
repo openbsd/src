@@ -17,16 +17,16 @@
 #ifndef GENERIC_CAA_257_H
 #define GENERIC_CAA_257_H 1
 
-/* $Id: caa_257.h,v 1.2 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: caa_257.h,v 1.3 2020/01/09 18:17:17 florian Exp $ */
 
 typedef struct dns_rdata_caa {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint8_t		flags;
+	uint8_t		flags;
 	unsigned char *		tag;
-	isc_uint8_t		tag_len;
+	uint8_t		tag_len;
 	unsigned char		*value;
-	isc_uint16_t		value_len;
+	uint16_t		value_len;
 } dns_rdata_caa_t;
 
 #endif /* GENERIC_CAA_257_H */

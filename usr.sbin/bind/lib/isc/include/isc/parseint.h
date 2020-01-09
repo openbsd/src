@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: parseint.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: parseint.h,v 1.4 2020/01/09 18:17:19 florian Exp $ */
 
 #ifndef ISC_PARSEINT_H
 #define ISC_PARSEINT_H 1
@@ -33,13 +33,13 @@
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-isc_parse_uint32(isc_uint32_t *uip, const char *string, int base);
+isc_parse_uint32(uint32_t *uip, const char *string, int base);
 
 isc_result_t
-isc_parse_uint16(isc_uint16_t *uip, const char *string, int base);
+isc_parse_uint16(uint16_t *uip, const char *string, int base);
 
 isc_result_t
-isc_parse_uint8(isc_uint8_t *uip, const char *string, int base);
+isc_parse_uint8(uint8_t *uip, const char *string, int base);
 /*%<
  * Parse the null-terminated string 'string' containing a base 'base'
  * integer, storing the result in '*uip'.

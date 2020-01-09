@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.35 2020/01/09 18:16:00 florian Exp $ */
+/* $Id: dig.c,v 1.36 2020/01/09 18:17:14 florian Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -83,7 +83,7 @@ static isc_boolean_t short_form = ISC_FALSE, printcmd = ISC_TRUE,
 	multiline = ISC_FALSE, nottl = ISC_FALSE, noclass = ISC_FALSE,
 	onesoa = ISC_FALSE, use_usec = ISC_FALSE, nocrypto = ISC_FALSE,
 	ipv4only = ISC_FALSE, ipv6only = ISC_FALSE;
-static isc_uint32_t splitwidth = 0xffffffff;
+static uint32_t splitwidth = 0xffffffff;
 
 /*% rrcomments are neither explicitly enabled nor disabled by default */
 static int rrcomments = 0;
@@ -189,7 +189,7 @@ help(void) {
  */
 static void
 received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
-	isc_uint64_t diff;
+	uint64_t diff;
 	time_t tnow;
 	struct tm tmnow;
 	char time_str[100];
@@ -234,14 +234,14 @@ received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 			       "from %s(%s) in %ld us\n\n",
 			       query->lookup->doing_xfr
 				 ? query->byte_count
-				 : (isc_uint64_t)bytes,
+				 : (uint64_t)bytes,
 			       fromtext, query->userarg, (long) diff);
 		else
 			printf(";; Received %llu bytes "
 			       "from %s(%s) in %ld ms\n\n",
 			       query->lookup->doing_xfr
 				 ?  query->byte_count
-				 : (isc_uint64_t)bytes,
+				 : (uint64_t)bytes,
 			       fromtext, query->userarg, (long) diff / 1000);
 	}
 }
@@ -263,7 +263,7 @@ trying(char *frm, dig_lookup_t *lookup) {
 static isc_result_t
 say_message(dns_rdata_t *rdata, dig_query_t *query, isc_buffer_t *buf) {
 	isc_result_t result;
-	isc_uint64_t diff;
+	uint64_t diff;
 	char store[sizeof(" in 18446744073709551616 us.")];
 	unsigned int styleflags = 0;
 
@@ -717,7 +717,7 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 	isc_result_t result;
 	char option_store[256];
 	char *cmd, *value, *ptr, *code;
-	isc_uint32_t num;
+	uint32_t num;
 	isc_boolean_t state = ISC_TRUE;
 	size_t n;
 
@@ -1385,7 +1385,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 	struct in6_addr in6;
 	in_port_t srcport;
 	char *hash, *cmd;
-	isc_uint32_t num;
+	uint32_t num;
 
 	while (strpbrk(option, single_dash_opts) == &option[0]) {
 		/*
@@ -1557,7 +1557,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 						"extra type option\n");
 			}
 			if (rdtype == dns_rdatatype_ixfr) {
-				isc_uint32_t serial;
+				uint32_t serial;
 				(*lookup)->rdtype = dns_rdatatype_ixfr;
 				(*lookup)->rdtypeset = ISC_TRUE;
 				result = parse_uint(&serial, &value[5],
@@ -1847,7 +1847,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 							"extra type option\n");
 					}
 					if (rdtype == dns_rdatatype_ixfr) {
-						isc_uint32_t serial;
+						uint32_t serial;
 						lookup->rdtype =
 							dns_rdatatype_ixfr;
 						lookup->rdtypeset = ISC_TRUE;

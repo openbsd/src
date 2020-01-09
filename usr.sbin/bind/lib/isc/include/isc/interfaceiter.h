@@ -14,10 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: interfaceiter.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: interfaceiter.h,v 1.4 2020/01/09 18:17:19 florian Exp $ */
 
-#ifndef ISC_INTERFACEITER_H
-#define ISC_INTERFACEITER_H 1
+#ifndef INTERFACEITER_H
+#define INTERFACEITER_H 1
 
 /*****
  ***** Module Info
@@ -47,13 +47,13 @@
  * \brief Public structure describing a network interface.
  */
 
-struct isc_interface {
+struct interface {
 	char name[32];			/*%< Interface name, null-terminated. */
 	unsigned int af;		/*%< Address family. */
 	isc_netaddr_t address;		/*%< Local address. */
 	isc_netaddr_t netmask;		/*%< Network mask. */
 	isc_netaddr_t dstaddress; 	/*%< Destination address (point-to-point only). */
-	isc_uint32_t flags;		/*%< Flags; see INTERFACE flags. */
+	uint32_t flags;		/*%< Flags; see INTERFACE flags. */
 };
 
 /*@{*/
@@ -71,7 +71,7 @@ struct isc_interface {
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp);
+interfaceiter_create(isc_mem_t *mctx, interfaceiter_t **iterp);
 /*!<
  * \brief Create an iterator for traversing the operating system's list
  * of network interfaces.
@@ -83,7 +83,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp);
  */
 
 isc_result_t
-isc_interfaceiter_first(isc_interfaceiter_t *iter);
+interfaceiter_first(interfaceiter_t *iter);
 /*!<
  * \brief Position the iterator on the first interface.
  *
@@ -93,28 +93,28 @@ isc_interfaceiter_first(isc_interfaceiter_t *iter);
  */
 
 isc_result_t
-isc_interfaceiter_current(isc_interfaceiter_t *iter,
-			  isc_interface_t *ifdata);
+interfaceiter_current(interfaceiter_t *iter,
+			  interface_t *ifdata);
 /*!<
  * \brief Get information about the interface the iterator is currently
  * positioned at and store it at *ifdata.
  *
  * Requires:
  *\li 	The iterator has been successfully positioned using
- * 	isc_interface_iter_first() / isc_interface_iter_next().
+ * 	interface_iter_first() / interface_iter_next().
  *
  * Returns:
  *\li	#ISC_R_SUCCESS		Success.
  */
 
 isc_result_t
-isc_interfaceiter_next(isc_interfaceiter_t *iter);
+interfaceiter_next(interfaceiter_t *iter);
 /*!<
  * \brief Position the iterator on the next interface.
  *
  * Requires:
  * \li	The iterator has been successfully positioned using
- * 	isc_interface_iter_first() / isc_interface_iter_next().
+ * 	interface_iter_first() / interface_iter_next().
  *
  * Returns:
  *\li	#ISC_R_SUCCESS		Success.
@@ -122,11 +122,11 @@ isc_interfaceiter_next(isc_interfaceiter_t *iter);
  */
 
 void
-isc_interfaceiter_destroy(isc_interfaceiter_t **iterp);
+interfaceiter_destroy(interfaceiter_t **iterp);
 /*!<
  * \brief Destroy the iterator.
  */
 
 ISC_LANG_ENDDECLS
 
-#endif /* ISC_INTERFACEITER_H */
+#endif /* INTERFACEITER_H */

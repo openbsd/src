@@ -3189,7 +3189,7 @@ AC_SUBST(DST_EXTRA_OBJS)
 AC_SUBST(DST_EXTRA_SRCS)
 
 # Determine the printf format characters to use when printing
-# values of type isc_int64_t. This will normally be "ll", but where
+# values of type int64_t. This will normally be "ll", but where
 # the compiler treats "long long" as a alias for "long" and printf
 # doesn't know about "long long" use "l".  Hopefully the sprintf
 # will produce a inconsistent result in the later case.  If the compiler

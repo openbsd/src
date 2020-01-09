@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.h,v 1.2 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: hip_55.h,v 1.3 2020/01/09 18:17:17 florian Exp $ */
 
 #ifndef GENERIC_HIP_5_H
 #define GENERIC_HIP_5_H 1
@@ -27,12 +27,12 @@ typedef struct dns_rdata_hip {
 	unsigned char *		hit;
 	unsigned char *		key;
 	unsigned char *		servers;
-	isc_uint8_t		algorithm;
-	isc_uint8_t		hit_len;
-	isc_uint16_t		key_len;
-	isc_uint16_t		servers_len;
+	uint8_t		algorithm;
+	uint8_t		hit_len;
+	uint16_t		key_len;
+	uint16_t		servers_len;
 	/* Private */
-	isc_uint16_t		offset;
+	uint16_t		offset;
 } dns_rdata_hip_t;
 
 isc_result_t

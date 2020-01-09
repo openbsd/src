@@ -94,7 +94,7 @@ typedef struct dns_totext_ctx {
 	dns_name_t *		origin;
 	dns_name_t *		neworigin;
 	dns_fixedname_t		origin_fixname;
-	isc_uint32_t 		current_ttl;
+	uint32_t 		current_ttl;
 	isc_boolean_t 		current_ttl_valid;
 } dns_totext_ctx_t;
 
@@ -443,7 +443,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 	isc_result_t result;
 	unsigned int column;
 	isc_boolean_t first = ISC_TRUE;
-	isc_uint32_t current_ttl;
+	uint32_t current_ttl;
 	isc_boolean_t current_ttl_valid;
 	dns_rdatatype_t type;
 	unsigned int type_start;
@@ -946,7 +946,7 @@ dump_rdatasets_text(isc_mem_t *mctx, dns_name_t *name,
 			char buf[sizeof("YYYYMMDDHHMMSS")];
 			memset(buf, 0, sizeof(buf));
 			isc_buffer_init(&b, buf, sizeof(buf) - 1);
-			dns_time64_totext((isc_uint64_t)rds->resign, &b);
+			dns_time64_totext((uint64_t)rds->resign, &b);
 			fprintf(f, "; resign=%s\n", buf);
 		}
 		dns_rdataset_disassociate(rds);
@@ -976,8 +976,8 @@ dump_rdataset_raw(isc_mem_t *mctx, dns_name_t *name, dns_rdataset_t *rdataset,
 		  isc_buffer_t *buffer, FILE *f)
 {
 	isc_result_t result;
-	isc_uint32_t totallen;
-	isc_uint16_t dlen;
+	uint32_t totallen;
+	uint16_t dlen;
 	isc_region_t r, r_hdr;
 
 	REQUIRE(buffer->length > 0);
@@ -1010,7 +1010,7 @@ dump_rdataset_raw(isc_mem_t *mctx, dns_name_t *name, dns_rdataset_t *rdataset,
 	dns_name_toregion(name, &r);
 	INSIST(isc_buffer_availablelength(buffer) >=
 	       (sizeof(dlen) + r.length));
-	dlen = (isc_uint16_t)r.length;
+	dlen = (uint16_t)r.length;
 	isc_buffer_putuint16(buffer, dlen);
 	isc_buffer_copyregion(buffer, &r);
 	totallen += sizeof(dlen) + r.length;
@@ -1021,7 +1021,7 @@ dump_rdataset_raw(isc_mem_t *mctx, dns_name_t *name, dns_rdataset_t *rdataset,
 		dns_rdataset_current(rdataset, &rdata);
 		dns_rdata_toregion(&rdata, &r);
 		INSIST(r.length <= 0xffffU);
-		dlen = (isc_uint16_t)r.length;
+		dlen = (uint16_t)r.length;
 
 		/*
 		 * Copy the rdata into the buffer.  If the buffer is too small,
@@ -1427,7 +1427,7 @@ writeheader(dns_dumpctx_t *dctx) {
 	char *bufmem;
 	isc_region_t r;
 	dns_masterrawheader_t rawheader;
-	isc_uint32_t rawversion, now32;
+	uint32_t rawversion, now32;
 
 	bufmem = isc_mem_get(dctx->mctx, initial_buffer_length);
 	if (bufmem == NULL)
@@ -1594,7 +1594,7 @@ dumptostreaminc(dns_dumpctx_t *dctx) {
 	if (dctx->nodes != 0 && result == ISC_R_SUCCESS) {
 		unsigned int pps = dns_pps;	/* packets per second */
 		unsigned int interval;
-		isc_uint64_t usecs;
+		uint64_t usecs;
 		isc_time_t end;
 
 		isc_time_now(&end);

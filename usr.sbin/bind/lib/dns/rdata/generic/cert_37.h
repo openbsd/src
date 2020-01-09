@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cert_37.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: cert_37.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
 
 #ifndef GENERIC_CERT_37_H
 #define GENERIC_CERT_37_H 1
@@ -23,10 +23,10 @@
 typedef struct dns_rdata_cert {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		type;
-	isc_uint16_t		key_tag;
-	isc_uint8_t		algorithm;
-	isc_uint16_t		length;
+	uint16_t		type;
+	uint16_t		key_tag;
+	uint8_t		algorithm;
+	uint16_t		length;
 	unsigned char		*certificate;
 } dns_rdata_cert_t;
 

@@ -17,15 +17,15 @@
 #ifndef GENERIC_URI_256_H
 #define GENERIC_URI_256_H 1
 
-/* $Id: uri_256.h,v 1.2 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: uri_256.h,v 1.3 2020/01/09 18:17:18 florian Exp $ */
 
 typedef struct dns_rdata_uri {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint16_t		priority;
-	isc_uint16_t		weight;
+	uint16_t		priority;
+	uint16_t		weight;
 	unsigned char *		target;
-	isc_uint16_t		tgt_len;
+	uint16_t		tgt_len;
 } dns_rdata_uri_t;
 
 #endif /* GENERIC_URI_256_H */

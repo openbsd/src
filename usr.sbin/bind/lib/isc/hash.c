@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.c,v 1.7 2020/01/09 14:24:08 florian Exp $ */
+/* $Id: hash.c,v 1.8 2020/01/09 18:17:19 florian Exp $ */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
@@ -81,8 +81,8 @@ if advised of the possibility of such damage.
  * Types of random seed and hash accumulator.  Perhaps they can be system
  * dependent.
  */
-typedef isc_uint32_t hash_accum_t;
-typedef isc_uint16_t hash_random_t;
+typedef uint32_t hash_accum_t;
+typedef uint16_t hash_random_t;
 /*@}*/
 
 /*% isc hash structure */
@@ -356,7 +356,7 @@ isc_hash_calc(const unsigned char *key, unsigned int keylen,
 }
 
 void
-isc__hash_setvec(const isc_uint16_t *vec) {
+isc__hash_setvec(const uint16_t *vec) {
 	int i;
 	hash_random_t *p;
 
@@ -369,7 +369,7 @@ isc__hash_setvec(const isc_uint16_t *vec) {
 	}
 }
 
-static isc_uint32_t fnv_offset_basis;
+static uint32_t fnv_offset_basis;
 static isc_once_t fnv_once = ISC_ONCE_INIT;
 
 static void
@@ -384,12 +384,12 @@ fnv_initialize(void) {
 	}
 }
 
-isc_uint32_t
+uint32_t
 isc_hash_function(const void *data, size_t length,
 		  isc_boolean_t case_sensitive,
-		  const isc_uint32_t *previous_hashp)
+		  const uint32_t *previous_hashp)
 {
-	isc_uint32_t hval;
+	uint32_t hval;
 	const unsigned char *bp;
 	const unsigned char *be;
 
@@ -416,34 +416,34 @@ isc_hash_function(const void *data, size_t length,
 
 	if (case_sensitive) {
 		while (bp < be - 4) {
-			hval ^= (isc_uint32_t) bp[0];
+			hval ^= (uint32_t) bp[0];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) bp[1];
+			hval ^= (uint32_t) bp[1];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) bp[2];
+			hval ^= (uint32_t) bp[2];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) bp[3];
+			hval ^= (uint32_t) bp[3];
 			hval *= 16777619;
 			bp += 4;
 		}
 		while (bp < be) {
-			hval ^= (isc_uint32_t) *bp++;
+			hval ^= (uint32_t) *bp++;
 			hval *= 16777619;
 		}
 	} else {
 		while (bp < be - 4) {
-			hval ^= (isc_uint32_t) maptolower[bp[0]];
+			hval ^= (uint32_t) maptolower[bp[0]];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) maptolower[bp[1]];
+			hval ^= (uint32_t) maptolower[bp[1]];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) maptolower[bp[2]];
+			hval ^= (uint32_t) maptolower[bp[2]];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) maptolower[bp[3]];
+			hval ^= (uint32_t) maptolower[bp[3]];
 			hval *= 16777619;
 			bp += 4;
 		}
 		while (bp < be) {
-			hval ^= (isc_uint32_t) maptolower[*bp++];
+			hval ^= (uint32_t) maptolower[*bp++];
 			hval *= 16777619;
 		}
 	}
@@ -451,12 +451,12 @@ isc_hash_function(const void *data, size_t length,
 	return (hval);
 }
 
-isc_uint32_t
+uint32_t
 isc_hash_function_reverse(const void *data, size_t length,
 			  isc_boolean_t case_sensitive,
-			  const isc_uint32_t *previous_hashp)
+			  const uint32_t *previous_hashp)
 {
-	isc_uint32_t hval;
+	uint32_t hval;
 	const unsigned char *bp;
 	const unsigned char *be;
 
@@ -484,33 +484,33 @@ isc_hash_function_reverse(const void *data, size_t length,
 	if (case_sensitive) {
 		while (be >= bp + 4) {
 			be -= 4;
-			hval ^= (isc_uint32_t) be[3];
+			hval ^= (uint32_t) be[3];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) be[2];
+			hval ^= (uint32_t) be[2];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) be[1];
+			hval ^= (uint32_t) be[1];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) be[0];
+			hval ^= (uint32_t) be[0];
 			hval *= 16777619;
 		}
 		while (--be >= bp) {
-			hval ^= (isc_uint32_t) *be;
+			hval ^= (uint32_t) *be;
 			hval *= 16777619;
 		}
 	} else {
 		while (be >= bp + 4) {
 			be -= 4;
-			hval ^= (isc_uint32_t) maptolower[be[3]];
+			hval ^= (uint32_t) maptolower[be[3]];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) maptolower[be[2]];
+			hval ^= (uint32_t) maptolower[be[2]];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) maptolower[be[1]];
+			hval ^= (uint32_t) maptolower[be[1]];
 			hval *= 16777619;
-			hval ^= (isc_uint32_t) maptolower[be[0]];
+			hval ^= (uint32_t) maptolower[be[0]];
 			hval *= 16777619;
 		}
 		while (--be >= bp) {
-			hval ^= (isc_uint32_t) maptolower[*be];
+			hval ^= (uint32_t) maptolower[*be];
 			hval *= 16777619;
 		}
 	}

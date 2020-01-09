@@ -20,10 +20,10 @@
 typedef struct dns_rdata_sink_t {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint8_t		meaning;
-	isc_uint8_t		coding;
-	isc_uint8_t		subcoding;
-	isc_uint16_t		datalen;
+	uint8_t		meaning;
+	uint8_t		coding;
+	uint8_t		subcoding;
+	uint16_t		datalen;
 	unsigned char *		data;
 } dns_rdata_sink_t;
 

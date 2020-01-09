@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rriterator.c,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: rriterator.c,v 1.3 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -181,7 +181,7 @@ dns_rriterator_destroy(dns_rriterator_t *it) {
 
 void
 dns_rriterator_current(dns_rriterator_t *it, dns_name_t **name,
-		       isc_uint32_t *ttl, dns_rdataset_t **rdataset,
+		       uint32_t *ttl, dns_rdataset_t **rdataset,
 		       dns_rdata_t **rdata)
 {
 	REQUIRE(name != NULL && *name == NULL);

@@ -14,17 +14,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: resource.h,v 1.4 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: resource.h,v 1.5 2020/01/09 18:17:19 florian Exp $ */
 
 #ifndef ISC_RESOURCE_H
 #define ISC_RESOURCE_H 1
 
 /*! \file isc/resource.h */
-
+#include <stdint.h>
 #include <isc/lang.h>
 #include <isc/types.h>
 
-#define ISC_RESOURCE_UNLIMITED ((isc_resourcevalue_t)ISC_UINT64_MAX)
+#define ISC_RESOURCE_UNLIMITED ((isc_resourcevalue_t)UINT64_MAX)
 
 ISC_LANG_BEGINDECLS
 
@@ -64,7 +64,7 @@ isc_resource_getlimit(isc_resource_t resource, isc_resourcevalue_t *value);
  *	behaves the same.
  *
  *\li	The current ISC libdns configuration file parser assigns a value
- *	of ISC_UINT32_MAX for a size_spec of "unlimited" and ISC_UNIT32_MAX - 1
+ *	of UINT32_MAX for a size_spec of "unlimited" and ISC_UNIT32_MAX - 1
  *	for "default", the latter of which is supposed to represent "the
  *	limit that was in force when the server started".  Since these are
  *	valid values in the middle of the range of isc_resourcevalue_t,

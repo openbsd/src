@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: update.c,v 1.4 2020/01/09 18:14:48 florian Exp $ */
+/* $Id: update.c,v 1.5 2020/01/09 18:17:15 florian Exp $ */
 
 #include <config.h>
 
@@ -186,7 +186,7 @@ typedef struct rr rr_t;
 
 struct rr {
 	/* dns_name_t name; */
-	isc_uint32_t		ttl;
+	uint32_t		ttl;
 	dns_rdata_t		rdata;
 };
 
@@ -1349,7 +1349,7 @@ add_exposed_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 isc_result_t
 dns_update_signatures(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 		      dns_dbversion_t *oldver, dns_dbversion_t *newver,
-		      dns_diff_t *diff, isc_uint32_t sigvalidityinterval)
+		      dns_diff_t *diff, uint32_t sigvalidityinterval)
 {
 	return (dns_update_signaturesinc(log, zone, db, oldver, newver, diff,
 					 sigvalidityinterval, NULL));
@@ -1375,7 +1375,7 @@ struct dns_update_state {
 isc_result_t
 dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 			 dns_dbversion_t *oldver, dns_dbversion_t *newver,
-			 dns_diff_t *diff, isc_uint32_t sigvalidityinterval,
+			 dns_diff_t *diff, uint32_t sigvalidityinterval,
 			 dns_update_state_t **statep)
 {
 	isc_result_t result = ISC_R_SUCCESS;
@@ -2038,8 +2038,8 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	return (result);
 }
 
-isc_uint32_t
-dns_update_soaserial(isc_uint32_t serial, dns_updatemethod_t method) {
+uint32_t
+dns_update_soaserial(uint32_t serial, dns_updatemethod_t method) {
 	isc_stdtime_t now;
 
 	if (method == dns_updatemethod_unixtime) {

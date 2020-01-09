@@ -61,7 +61,7 @@ static inline isc_result_t
 totext_sink(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("255 255 255")];
-	isc_uint8_t meaning, coding, subcoding;
+	uint8_t meaning, coding, subcoding;
 
 	REQUIRE(rdata->type == dns_rdatatype_sink);
 	REQUIRE(rdata->length >= 3);

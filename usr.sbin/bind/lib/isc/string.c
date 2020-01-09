@@ -57,10 +57,10 @@
 
 static const char digits[] = "0123456789abcdefghijklmnoprstuvwxyz";
 
-isc_uint64_t
+uint64_t
 isc_string_touint64(char *source, char **end, int base) {
-	isc_uint64_t tmp;
-	isc_uint64_t overflow;
+	uint64_t tmp;
+	uint64_t overflow;
 	char *s = source;
 	const char *o;
 	char c;

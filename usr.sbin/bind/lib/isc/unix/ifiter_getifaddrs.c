@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ifiter_getifaddrs.c,v 1.3 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: ifiter_getifaddrs.c,v 1.4 2020/01/09 18:17:19 florian Exp $ */
 
 /*! \file
  * \brief
@@ -33,14 +33,14 @@ static isc_boolean_t seenv6 = ISC_FALSE;
 #endif
 
 /*% Iterator structure */
-struct isc_interfaceiter {
+struct interfaceiter {
 	unsigned int		magic;		/*%< Magic number. */
 	isc_mem_t		*mctx;
 	void			*buf;		/*%< (unused) */
 	unsigned int		bufsize;	/*%< (always 0) */
 	struct ifaddrs		*ifaddrs;	/*%< List of ifaddrs */
 	struct ifaddrs		*pos;		/*%< Ptr to current ifaddr */
-	isc_interface_t		current;	/*%< Current interface data. */
+	interface_t		current;	/*%< Current interface data. */
 	isc_result_t		result;		/*%< Last result code. */
 #ifdef  __linux
 	FILE *                  proc;
@@ -50,8 +50,8 @@ struct isc_interfaceiter {
 };
 
 isc_result_t
-isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
-	isc_interfaceiter_t *iter;
+interfaceiter_create(isc_mem_t *mctx, interfaceiter_t **iterp) {
+	interfaceiter_t *iter;
 	isc_result_t result;
 	char strbuf[ISC_STRERRORSIZE];
 
@@ -94,7 +94,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 
 	/*
 	 * A newly created iterator has an undefined position
-	 * until isc_interfaceiter_first() is called.
+	 * until interfaceiter_first() is called.
 	 */
 	iter->pos = NULL;
 	iter->result = ISC_R_FAILURE;
@@ -122,7 +122,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
  */
 
 static isc_result_t
-internal_current(isc_interfaceiter_t *iter) {
+internal_current(interfaceiter_t *iter) {
 	struct ifaddrs *ifa;
 	int family;
 	unsigned int namelen;
@@ -189,13 +189,13 @@ internal_current(isc_interfaceiter_t *iter) {
 
 /*
  * Step the iterator to the next interface.  Unlike
- * isc_interfaceiter_next(), this may leave the iterator
+ * interfaceiter_next(), this may leave the iterator
  * positioned on an interface that will ultimately
  * be ignored.  Return ISC_R_NOMORE if there are no more
  * interfaces, otherwise ISC_R_SUCCESS.
  */
 static isc_result_t
-internal_next(isc_interfaceiter_t *iter) {
+internal_next(interfaceiter_t *iter) {
 
 	if (iter->pos != NULL)
 		iter->pos = iter->pos->ifa_next;
@@ -211,7 +211,7 @@ internal_next(isc_interfaceiter_t *iter) {
 }
 
 static void
-internal_destroy(isc_interfaceiter_t *iter) {
+internal_destroy(interfaceiter_t *iter) {
 
 #ifdef __linux
 	if (iter->proc != NULL)
@@ -224,7 +224,7 @@ internal_destroy(isc_interfaceiter_t *iter) {
 }
 
 static
-void internal_first(isc_interfaceiter_t *iter) {
+void internal_first(interfaceiter_t *iter) {
 
 #ifdef __linux
 	linux_if_inet6_first(iter);

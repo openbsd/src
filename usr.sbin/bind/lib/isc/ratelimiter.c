@@ -38,8 +38,8 @@ struct isc_ratelimiter {
 	int			refs;
 	isc_task_t *		task;
 	isc_timer_t *		timer;
-	isc_interval_t		interval;
-	isc_uint32_t		pertic;
+	interval_t		interval;
+	uint32_t		pertic;
 	isc_ratelimiter_state_t	state;
 	isc_event_t		shutdownevent;
 	ISC_LIST(isc_event_t)	pending;
@@ -67,7 +67,7 @@ isc_ratelimiter_create(isc_mem_t *mctx, isc_timermgr_t *timermgr,
 	rl->mctx = mctx;
 	rl->refs = 1;
 	rl->task = task;
-	isc_interval_set(&rl->interval, 0, 0);
+	interval_set(&rl->interval, 0, 0);
 	rl->timer = NULL;
 	rl->pertic = 1;
 	rl->state = isc_ratelimiter_idle;
@@ -105,7 +105,7 @@ free_mem:
 }
 
 isc_result_t
-isc_ratelimiter_setinterval(isc_ratelimiter_t *rl, isc_interval_t *interval) {
+isc_ratelimiter_setinterval(isc_ratelimiter_t *rl, interval_t *interval) {
 	isc_result_t result = ISC_R_SUCCESS;
 
 	REQUIRE(rl != NULL);
@@ -125,7 +125,7 @@ isc_ratelimiter_setinterval(isc_ratelimiter_t *rl, isc_interval_t *interval) {
 }
 
 void
-isc_ratelimiter_setpertic(isc_ratelimiter_t *rl, isc_uint32_t pertic) {
+isc_ratelimiter_setpertic(isc_ratelimiter_t *rl, uint32_t pertic) {
 
 	REQUIRE(rl != NULL);
 
@@ -192,7 +192,7 @@ ratelimiter_tick(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_ratelimiter_t *rl = (isc_ratelimiter_t *)event->ev_arg;
 	isc_event_t *p;
-	isc_uint32_t pertic;
+	uint32_t pertic;
 
 	UNUSED(task);
 

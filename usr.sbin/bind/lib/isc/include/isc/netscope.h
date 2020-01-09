@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netscope.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: netscope.h,v 1.4 2020/01/09 18:17:19 florian Exp $ */
 
 #ifndef ISC_NETSCOPE_H
 #define ISC_NETSCOPE_H 1
@@ -35,7 +35,7 @@ ISC_LANG_BEGINDECLS
  * \li	ISC_R_FAILURE: conversion fails
  */
 isc_result_t
-isc_netscope_pton(int af, char *scopename, void *addr, isc_uint32_t *zoneid);
+isc_netscope_pton(int af, char *scopename, void *addr, uint32_t *zoneid);
 
 ISC_LANG_ENDDECLS
 

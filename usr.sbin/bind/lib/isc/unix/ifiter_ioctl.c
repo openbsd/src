@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ifiter_ioctl.c,v 1.12 2020/01/09 13:47:14 florian Exp $ */
+/* $Id: ifiter_ioctl.c,v 1.13 2020/01/09 18:17:19 florian Exp $ */
 
 
 
@@ -35,7 +35,7 @@
 #define IFITER_MAGIC		ISC_MAGIC('I', 'F', 'I', 'T')
 #define VALID_IFITER(t)		ISC_MAGIC_VALID(t, IFITER_MAGIC)
 
-struct isc_interfaceiter {
+struct interfaceiter {
 	unsigned int		magic;		/* Magic number. */
 	isc_mem_t		*mctx;
 	int			mode;
@@ -65,7 +65,7 @@ struct isc_interfaceiter {
 	char			entry[ISC_IF_INET6_SZ];
 	isc_result_t		valid;
 #endif
-	isc_interface_t		current;	/* Current interface data. */
+	interface_t		current;	/* Current interface data. */
 	isc_result_t		result;		/* Last result code. */
 };
 
@@ -93,7 +93,7 @@ struct isc_interfaceiter {
 #endif
 
 static isc_result_t
-getbuf4(isc_interfaceiter_t *iter) {
+getbuf4(interfaceiter_t *iter) {
 	char strbuf[ISC_STRERRORSIZE];
 
 	iter->bufsize = IFCONF_BUFSIZE_INITIAL;
@@ -166,7 +166,7 @@ getbuf4(isc_interfaceiter_t *iter) {
 
 #if defined(SIOCGLIFCONF) && defined(SIOCGLIFADDR)
 static isc_result_t
-getbuf6(isc_interfaceiter_t *iter) {
+getbuf6(interfaceiter_t *iter) {
 	char strbuf[ISC_STRERRORSIZE];
 	isc_result_t result;
 
@@ -271,8 +271,8 @@ getbuf6(isc_interfaceiter_t *iter) {
 #endif
 
 isc_result_t
-isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
-	isc_interfaceiter_t *iter;
+interfaceiter_create(isc_mem_t *mctx, interfaceiter_t **iterp) {
+	interfaceiter_t *iter;
 	isc_result_t result;
 	char strbuf[ISC_STRERRORSIZE];
 
@@ -344,7 +344,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 
 	/*
 	 * A newly created iterator has an undefined position
-	 * until isc_interfaceiter_first() is called.
+	 * until interfaceiter_first() is called.
 	 */
 #ifdef HAVE_TRUCLUSTER
 	iter->clua_context = -1;
@@ -387,7 +387,7 @@ get_inaddr(isc_netaddr_t *dst, struct in_addr *src) {
 }
 
 static isc_result_t
-internal_current_clusteralias(isc_interfaceiter_t *iter) {
+internal_current_clusteralias(interfaceiter_t *iter) {
 	struct clua_info ci;
 	if (clua_getaliasinfo(&iter->clua_sa, &ci) != CLUA_SUCCESS)
 		return (ISC_R_IGNORE);
@@ -412,7 +412,7 @@ internal_current_clusteralias(isc_interfaceiter_t *iter) {
  */
 
 static isc_result_t
-internal_current4(isc_interfaceiter_t *iter) {
+internal_current4(interfaceiter_t *iter) {
 	struct ifreq *ifrp;
 	struct ifreq ifreq;
 	int family;
@@ -585,7 +585,7 @@ internal_current4(isc_interfaceiter_t *iter) {
 
 #if defined(SIOCGLIFCONF) && defined(SIOCGLIFADDR)
 static isc_result_t
-internal_current6(isc_interfaceiter_t *iter) {
+internal_current6(interfaceiter_t *iter) {
 	struct LIFREQ *ifrp;
 	struct LIFREQ lifreq;
 	int family;
@@ -744,7 +744,7 @@ internal_current6(isc_interfaceiter_t *iter) {
 #endif
 
 static isc_result_t
-internal_current(isc_interfaceiter_t *iter) {
+internal_current(interfaceiter_t *iter) {
 #if defined(SIOCGLIFCONF) && defined(SIOCGLIFADDR)
 	if (iter->mode == 6) {
 		iter->result6 = internal_current6(iter);
@@ -761,13 +761,13 @@ internal_current(isc_interfaceiter_t *iter) {
 
 /*
  * Step the iterator to the next interface.  Unlike
- * isc_interfaceiter_next(), this may leave the iterator
+ * interfaceiter_next(), this may leave the iterator
  * positioned on an interface that will ultimately
  * be ignored.  Return ISC_R_NOMORE if there are no more
  * interfaces, otherwise ISC_R_SUCCESS.
  */
 static isc_result_t
-internal_next4(isc_interfaceiter_t *iter) {
+internal_next4(interfaceiter_t *iter) {
 	struct ifreq *ifrp;
 
 	if (iter->pos < (unsigned int) iter->ifc.ifc_len) {
@@ -792,7 +792,7 @@ internal_next4(isc_interfaceiter_t *iter) {
 
 #if defined(SIOCGLIFCONF) && defined(SIOCGLIFADDR)
 static isc_result_t
-internal_next6(isc_interfaceiter_t *iter) {
+internal_next6(interfaceiter_t *iter) {
 	struct LIFREQ *ifrp;
 
 	if (iter->result6 != ISC_R_SUCCESS && iter->result6 != ISC_R_IGNORE)
@@ -815,7 +815,7 @@ internal_next6(isc_interfaceiter_t *iter) {
 #endif
 
 static isc_result_t
-internal_next(isc_interfaceiter_t *iter) {
+internal_next(interfaceiter_t *iter) {
 #ifdef HAVE_TRUCLUSTER
 	int clua_result;
 #endif
@@ -843,7 +843,7 @@ internal_next(isc_interfaceiter_t *iter) {
 }
 
 static void
-internal_destroy(isc_interfaceiter_t *iter) {
+internal_destroy(interfaceiter_t *iter) {
 	(void) close(iter->socket);
 #if defined(SIOCGLIFCONF) && defined(SIOCGLIFADDR)
 	if (iter->socket6 != -1)
@@ -859,7 +859,7 @@ internal_destroy(isc_interfaceiter_t *iter) {
 }
 
 static
-void internal_first(isc_interfaceiter_t *iter) {
+void internal_first(interfaceiter_t *iter) {
 #ifdef HAVE_TRUCLUSTER
 	int clua_result;
 #endif

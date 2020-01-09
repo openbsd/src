@@ -23,6 +23,9 @@
 /* #define ISC_LIST_CHECKINIT */
 
 #include <config.h>
+
+#include <stdint.h>
+
 #include <isc/mem.h>
 #include <isc/net.h>
 #include <isc/netaddr.h>
@@ -51,7 +54,7 @@ log_end(dns_rrl_t *rrl, dns_rrl_entry_t *e, isc_boolean_t early,
  */
 static int
 hash_divisor(unsigned int initial) {
-	static isc_uint16_t primes[] = {
+	static uint16_t primes[] = {
 		  3,   5,   7,  11,  13,  17,  19,  23,  29,  31,  37,  41,
 		 43,  47,  53,  59,  61,  67,  71,  73,  79,  83,  89,  97,
 #if 0
@@ -71,7 +74,7 @@ hash_divisor(unsigned int initial) {
 	};
 	int divisions, tries;
 	unsigned int result;
-	isc_uint16_t *pp, p;
+	uint16_t *pp, p;
 
 	result = initial;
 
@@ -371,9 +374,9 @@ key_cmp(const dns_rrl_key_t *a, const dns_rrl_key_t *b) {
 	return (ISC_FALSE);
 }
 
-static inline isc_uint32_t
+static inline uint32_t
 hash_key(const dns_rrl_key_t *key) {
-	isc_uint32_t hval;
+	uint32_t hval;
 	int i;
 
 	hval = key->w[0];
@@ -498,7 +501,7 @@ get_entry(dns_rrl_t *rrl, const isc_sockaddr_t *client_addr,
 	  char *log_buf, unsigned int log_buf_len)
 {
 	dns_rrl_key_t key;
-	isc_uint32_t hval;
+	uint32_t hval;
 	dns_rrl_entry_t *e;
 	dns_rrl_hash_t *hash;
 	dns_rrl_bin_t *new_bin, *old_bin;
@@ -1252,7 +1255,7 @@ dns_rrl_view_destroy(dns_view_t *view) {
 	 */
 
 	if (rrl->num_logged > 0)
-		log_stops(rrl, 0, ISC_INT32_MAX, log_buf, sizeof(log_buf));
+		log_stops(rrl, 0, INT32_MAX, log_buf, sizeof(log_buf));
 
 	for (i = 0; i < DNS_RRL_QNAMES; ++i) {
 		if (rrl->qnames[i] == NULL)

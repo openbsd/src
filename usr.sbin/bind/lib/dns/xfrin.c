@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: xfrin.c,v 1.14 2020/01/09 14:24:07 florian Exp $ */
+/* $Id: xfrin.c,v 1.15 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -142,12 +142,12 @@ struct dns_xfrin_ctx {
 	int 			difflen;	/*%< Number of pending tuples */
 
 	xfrin_state_t 		state;
-	isc_uint32_t 		end_serial;
+	uint32_t 		end_serial;
 	isc_boolean_t 		is_ixfr;
 
 	unsigned int		nmsg;		/*%< Number of messages recvd */
 	unsigned int		nrecs;		/*%< Number of records recvd */
-	isc_uint64_t		nbytes;		/*%< Number of bytes received */
+	uint64_t		nbytes;		/*%< Number of bytes received */
 
 	unsigned int		maxrecords;	/*%< The maximum number of
 						     records set for the zone */
@@ -170,8 +170,8 @@ struct dns_xfrin_ctx {
 	dns_rdatacallbacks_t	axfr;
 
 	struct {
-		isc_uint32_t 	request_serial;
-		isc_uint32_t 	current_serial;
+		uint32_t 	request_serial;
+		uint32_t 	current_serial;
 		dns_journal_t	*journal;
 
 	} ixfr;
@@ -218,7 +218,7 @@ static isc_result_t ixfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 static isc_result_t ixfr_commit(dns_xfrin_ctx_t *xfr);
 
 static isc_result_t xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name,
-			   isc_uint32_t ttl, dns_rdata_t *rdata);
+			   uint32_t ttl, dns_rdata_t *rdata);
 
 static isc_result_t xfrin_start(dns_xfrin_ctx_t *xfr);
 
@@ -315,7 +315,7 @@ axfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 static isc_result_t
 axfr_apply(dns_xfrin_ctx_t *xfr) {
 	isc_result_t result;
-	isc_uint64_t records;
+	uint64_t records;
 
 	CHECK(dns_diff_load(&xfr->diff, xfr->axfr.add, xfr->axfr.add_private));
 	xfr->difflen = 0;
@@ -413,7 +413,7 @@ ixfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 static isc_result_t
 ixfr_apply(dns_xfrin_ctx_t *xfr) {
 	isc_result_t result;
-	isc_uint64_t records;
+	uint64_t records;
 
 	if (xfr->ver == NULL) {
 		CHECK(dns_db_newversion(xfr->db, &xfr->ver));
@@ -467,7 +467,7 @@ ixfr_commit(dns_xfrin_ctx_t *xfr) {
  * state.
  */
 static isc_result_t
-xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
+xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, uint32_t ttl,
        dns_rdata_t *rdata)
 {
 	isc_result_t result;
@@ -563,7 +563,7 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 
 	case XFRST_IXFR_DEL:
 		if (rdata->type == dns_rdatatype_soa) {
-			isc_uint32_t soa_serial = dns_soa_getserial(rdata);
+			uint32_t soa_serial = dns_soa_getserial(rdata);
 			xfr->state = XFRST_IXFR_ADDSOA;
 			xfr->ixfr.current_serial = soa_serial;
 			goto redo;
@@ -579,7 +579,7 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 
 	case XFRST_IXFR_ADD:
 		if (rdata->type == dns_rdatatype_soa) {
-			isc_uint32_t soa_serial = dns_soa_getserial(rdata);
+			uint32_t soa_serial = dns_soa_getserial(rdata);
 			if (soa_serial == xfr->end_serial) {
 				CHECK(ixfr_commit(xfr));
 				xfr->state = XFRST_IXFR_END;
@@ -825,7 +825,7 @@ xfrin_create(isc_mem_t *mctx,
 {
 	dns_xfrin_ctx_t *xfr = NULL;
 	isc_result_t result;
-	isc_uint32_t tmp;
+	uint32_t tmp;
 
 	xfr = isc_mem_get(mctx, sizeof(*xfr));
 	if (xfr == NULL)
@@ -851,7 +851,7 @@ xfrin_create(isc_mem_t *mctx,
 	xfr->rdclass = rdclass;
 	tmp = arc4random();
 	xfr->checkid = ISC_TRUE;
-	xfr->id	= (isc_uint16_t)(tmp & 0xffff);
+	xfr->id	= (uint16_t)(tmp & 0xffff);
 	xfr->reqtype = reqtype;
 	xfr->dscp = dscp;
 
@@ -1466,8 +1466,8 @@ xfrin_timeout(isc_task_t *task, isc_event_t *event) {
 
 static void
 maybe_free(dns_xfrin_ctx_t *xfr) {
-	isc_uint64_t msecs;
-	isc_uint64_t persec;
+	uint64_t msecs;
+	uint64_t persec;
 	const char *result_str;
 
 	REQUIRE(VALID_XFRIN(xfr));

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: interfaceiter.c,v 1.5 2020/01/09 13:47:14 florian Exp $ */
+/* $Id: interfaceiter.c,v 1.6 2020/01/09 18:17:19 florian Exp $ */
 
 /*! \file */
 
@@ -96,7 +96,7 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 			 * we only consider unicast link-local addresses.
 			 */
 			if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
-				isc_uint16_t zone16;
+				uint16_t zone16;
 
 				memmove(&zone16, &sa6->sin6_addr.s6_addr[2],
 					sizeof(zone16));
@@ -104,7 +104,7 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 				if (zone16 != 0) {
 					/* the zone ID is embedded */
 					isc_netaddr_setzone(dst,
-							    (isc_uint32_t)zone16);
+							    (uint32_t)zone16);
 					dst->type.in6.s6_addr[2] = 0;
 					dst->type.in6.s6_addr[3] = 0;
 				} else if (ifname != NULL) {
@@ -119,7 +119,7 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 					zone = if_nametoindex(ifname);
 					if (zone != 0) {
 						isc_netaddr_setzone(dst,
-								    (isc_uint32_t)zone);
+								    (uint32_t)zone);
 					}
 				}
 			}
@@ -138,9 +138,9 @@ get_addr(unsigned int family, isc_netaddr_t *dst, struct sockaddr *src,
 #ifdef __linux
 #define ISC_IF_INET6_SZ \
     sizeof("00000000000000000000000000000001 01 80 10 80 XXXXXXloXXXXXXXX\n")
-static isc_result_t linux_if_inet6_next(isc_interfaceiter_t *);
-static isc_result_t linux_if_inet6_current(isc_interfaceiter_t *);
-static void linux_if_inet6_first(isc_interfaceiter_t *iter);
+static isc_result_t linux_if_inet6_next(interfaceiter_t *);
+static isc_result_t linux_if_inet6_current(interfaceiter_t *);
+static void linux_if_inet6_first(interfaceiter_t *iter);
 #endif
 
 #if HAVE_GETIFADDRS
@@ -153,7 +153,7 @@ static void linux_if_inet6_first(isc_interfaceiter_t *iter);
 
 #ifdef __linux
 static void
-linux_if_inet6_first(isc_interfaceiter_t *iter) {
+linux_if_inet6_first(interfaceiter_t *iter) {
 	if (iter->proc != NULL) {
 		rewind(iter->proc);
 		(void)linux_if_inet6_next(iter);
@@ -162,7 +162,7 @@ linux_if_inet6_first(isc_interfaceiter_t *iter) {
 }
 
 static isc_result_t
-linux_if_inet6_next(isc_interfaceiter_t *iter) {
+linux_if_inet6_next(interfaceiter_t *iter) {
 	if (iter->proc != NULL &&
 	    fgets(iter->entry, sizeof(iter->entry), iter->proc) != NULL)
 		iter->valid = ISC_R_SUCCESS;
@@ -172,7 +172,7 @@ linux_if_inet6_next(isc_interfaceiter_t *iter) {
 }
 
 static isc_result_t
-linux_if_inet6_current(isc_interfaceiter_t *iter) {
+linux_if_inet6_current(interfaceiter_t *iter) {
 	char address[33];
 	char name[IF_NAMESIZE+1];
 	struct in6_addr addr6;
@@ -216,7 +216,7 @@ linux_if_inet6_current(isc_interfaceiter_t *iter) {
 	isc_netaddr_fromin6(&iter->current.address, &addr6);
 	if (isc_netaddr_islinklocal(&iter->current.address)) {
 		isc_netaddr_setzone(&iter->current.address,
-				    (isc_uint32_t)ifindex);
+				    (uint32_t)ifindex);
 	}
 	for (i = 0; i < 16; i++) {
 		if (prefix > 8) {
@@ -238,8 +238,8 @@ linux_if_inet6_current(isc_interfaceiter_t *iter) {
  */
 
 isc_result_t
-isc_interfaceiter_current(isc_interfaceiter_t *iter,
-			  isc_interface_t *ifdata)
+interfaceiter_current(interfaceiter_t *iter,
+			  interface_t *ifdata)
 {
 	REQUIRE(iter->result == ISC_R_SUCCESS);
 	memmove(ifdata, &iter->current, sizeof(*ifdata));
@@ -247,7 +247,7 @@ isc_interfaceiter_current(isc_interfaceiter_t *iter,
 }
 
 isc_result_t
-isc_interfaceiter_first(isc_interfaceiter_t *iter) {
+interfaceiter_first(interfaceiter_t *iter) {
 	isc_result_t result;
 
 	REQUIRE(VALID_IFITER(iter));
@@ -266,7 +266,7 @@ isc_interfaceiter_first(isc_interfaceiter_t *iter) {
 }
 
 isc_result_t
-isc_interfaceiter_next(isc_interfaceiter_t *iter) {
+interfaceiter_next(interfaceiter_t *iter) {
 	isc_result_t result;
 
 	REQUIRE(VALID_IFITER(iter));
@@ -285,9 +285,9 @@ isc_interfaceiter_next(isc_interfaceiter_t *iter) {
 }
 
 void
-isc_interfaceiter_destroy(isc_interfaceiter_t **iterp)
+interfaceiter_destroy(interfaceiter_t **iterp)
 {
-	isc_interfaceiter_t *iter;
+	interfaceiter_t *iter;
 	REQUIRE(iterp != NULL);
 	iter = *iterp;
 	REQUIRE(VALID_IFITER(iter));

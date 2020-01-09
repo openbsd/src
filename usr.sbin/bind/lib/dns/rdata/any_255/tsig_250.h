@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig_250.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: tsig_250.h,v 1.4 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef ANY_255_TSIG_250_H
 #define ANY_255_TSIG_250_H 1
@@ -24,13 +24,13 @@ typedef struct dns_rdata_any_tsig {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
 	dns_name_t		algorithm;
-	isc_uint64_t		timesigned;
-	isc_uint16_t		fudge;
-	isc_uint16_t		siglen;
+	uint64_t		timesigned;
+	uint16_t		fudge;
+	uint16_t		siglen;
 	unsigned char *		signature;
-	isc_uint16_t		originalid;
-	isc_uint16_t		error;
-	isc_uint16_t		otherlen;
+	uint16_t		originalid;
+	uint16_t		error;
+	uint16_t		otherlen;
 	unsigned char *		other;
 } dns_rdata_any_tsig_t;
 

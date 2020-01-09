@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: journal.h,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: journal.h,v 1.4 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_JOURNAL_H
 #define DNS_JOURNAL_H 1
@@ -177,9 +177,9 @@ dns_journal_write_transaction(dns_journal_t *j, dns_diff_t *diff);
  * Reading transactions from journals.
  */
 
-isc_uint32_t
+uint32_t
 dns_journal_first_serial(dns_journal_t *j);
-isc_uint32_t
+uint32_t
 dns_journal_last_serial(dns_journal_t *j);
 /*%<
  * Get the first and last addressable serial number in the journal.
@@ -187,7 +187,7 @@ dns_journal_last_serial(dns_journal_t *j);
 
 isc_result_t
 dns_journal_iter_init(dns_journal_t *j,
-		      isc_uint32_t begin_serial, isc_uint32_t end_serial);
+		      uint32_t begin_serial, uint32_t end_serial);
 /*%<
  * Prepare to iterate over the transactions that will bring the database
  * from SOA serial number 'begin_serial' to 'end_serial'.
@@ -216,7 +216,7 @@ dns_journal_next_rr(dns_journal_t *j);
 /*@}*/
 
 void
-dns_journal_current_rr(dns_journal_t *j, dns_name_t **name, isc_uint32_t *ttl,
+dns_journal_current_rr(dns_journal_t *j, dns_name_t **name, uint32_t *ttl,
 		       dns_rdata_t **rdata);
 /*%<
  * Get the name, ttl, and rdata of the current journal RR.
@@ -277,8 +277,8 @@ dns_db_diffx(dns_diff_t *diff, dns_db_t *dba, dns_dbversion_t *dbvera,
  */
 
 isc_result_t
-dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
-		    isc_uint32_t target_size);
+dns_journal_compact(isc_mem_t *mctx, char *filename, uint32_t serial,
+		    uint32_t target_size);
 /*%<
  * Attempt to compact the journal if it is greater that 'target_size'.
  * Changes from 'serial' onwards will be preserved.  If the journal
@@ -286,9 +286,9 @@ dns_journal_compact(isc_mem_t *mctx, char *filename, isc_uint32_t serial,
  */
 
 isc_boolean_t
-dns_journal_get_sourceserial(dns_journal_t *j, isc_uint32_t *sourceserial);
+dns_journal_get_sourceserial(dns_journal_t *j, uint32_t *sourceserial);
 void
-dns_journal_set_sourceserial(dns_journal_t *j, isc_uint32_t sourceserial);
+dns_journal_set_sourceserial(dns_journal_t *j, uint32_t sourceserial);
 /*%<
  * Get and set source serial.
  *

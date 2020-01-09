@@ -17,19 +17,19 @@
 #ifndef GENERIC_LOC_29_H
 #define GENERIC_LOC_29_H 1
 
-/* $Id: loc_29.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: loc_29.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
 
 /*!
  * \brief Per RFC1876 */
 
 typedef struct dns_rdata_loc_0 {
-	isc_uint8_t	version;	/* must be first and zero */
-	isc_uint8_t	size;
-	isc_uint8_t	horizontal;
-	isc_uint8_t	vertical;
-	isc_uint32_t	latitude;
-	isc_uint32_t	longitude;
-	isc_uint32_t	altitude;
+	uint8_t	version;	/* must be first and zero */
+	uint8_t	size;
+	uint8_t	horizontal;
+	uint8_t	vertical;
+	uint32_t	latitude;
+	uint32_t	longitude;
+	uint32_t	altitude;
 } dns_rdata_loc_0_t;
 
 typedef struct dns_rdata_loc {

@@ -23,9 +23,9 @@ typedef struct dns_rdata_avc {
 	dns_rdatacommon_t       common;
 	isc_mem_t               *mctx;
 	unsigned char           *data;
-	isc_uint16_t            length;
+	uint16_t            length;
 	/* private */
-	isc_uint16_t            offset;
+	uint16_t            offset;
 } dns_rdata_avc_t;
 
 /*

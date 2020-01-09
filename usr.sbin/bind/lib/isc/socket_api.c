@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket_api.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: socket_api.c,v 1.3 2020/01/09 18:17:19 florian Exp $ */
 
 #include <config.h>
 
@@ -374,8 +374,8 @@ isc_socket_cleanunix(isc_sockaddr_t *sockaddr, isc_boolean_t active) {
 }
 
 isc_result_t
-isc_socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
-		     isc_uint32_t owner, isc_uint32_t group)
+isc_socket_permunix(isc_sockaddr_t *sockaddr, uint32_t perm,
+		     uint32_t owner, uint32_t group)
 {
 	return (isc__socket_permunix(sockaddr, perm, owner, group));
 }

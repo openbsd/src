@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rbt.h,v 1.4 2020/01/09 18:14:48 florian Exp $ */
+/* $Id: rbt.h,v 1.5 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_RBT_H
 #define DNS_RBT_H 1
@@ -180,11 +180,11 @@ typedef isc_result_t (*dns_rbtfindcallback_t)(dns_rbtnode_t *node,
 typedef isc_result_t (*dns_rbtdatawriter_t)(FILE *file,
 					    unsigned char *data,
 					    void *arg,
-					    isc_uint64_t *crc);
+					    uint64_t *crc);
 
 typedef isc_result_t (*dns_rbtdatafixer_t)(dns_rbtnode_t *rbtnode,
 					   void *base, size_t offset,
-					   void *arg, isc_uint64_t *crc);
+					   void *arg, uint64_t *crc);
 
 typedef void (*dns_rbtdeleter_t)(void *, void *);
 

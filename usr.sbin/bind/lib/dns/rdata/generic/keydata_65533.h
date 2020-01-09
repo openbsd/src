@@ -17,18 +17,18 @@
 #ifndef GENERIC_KEYDATA_65533_H
 #define GENERIC_KEYDATA_65533_H 1
 
-/* $Id: keydata_65533.h,v 1.2 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: keydata_65533.h,v 1.3 2020/01/09 18:17:17 florian Exp $ */
 
 typedef struct dns_rdata_keydata {
 	dns_rdatacommon_t	common;
 	isc_mem_t *		mctx;
-	isc_uint32_t		refresh;      /* Timer for refreshing data */
-	isc_uint32_t		addhd;	      /* Hold-down timer for adding */
-	isc_uint32_t		removehd;     /* Hold-down timer for removing */
-	isc_uint16_t		flags;	      /* Copy of DNSKEY_48 */
-	isc_uint8_t		protocol;
-	isc_uint8_t		algorithm;
-	isc_uint16_t		datalen;
+	uint32_t		refresh;      /* Timer for refreshing data */
+	uint32_t		addhd;	      /* Hold-down timer for adding */
+	uint32_t		removehd;     /* Hold-down timer for removing */
+	uint16_t		flags;	      /* Copy of DNSKEY_48 */
+	uint8_t		protocol;
+	uint8_t		algorithm;
+	uint16_t		datalen;
 	unsigned char *		data;
 } dns_rdata_keydata_t;
 

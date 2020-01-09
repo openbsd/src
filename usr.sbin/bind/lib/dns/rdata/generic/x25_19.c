@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: x25_19.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: x25_19.c,v 1.4 2020/01/09 18:17:18 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:15:57 PST 2000 by bwelling */
 
@@ -108,7 +108,7 @@ compare_x25(ARGS_COMPARE) {
 static inline isc_result_t
 fromstruct_x25(ARGS_FROMSTRUCT) {
 	dns_rdata_x25_t *x25 = source;
-	isc_uint8_t i;
+	uint8_t i;
 
 	REQUIRE(type == dns_rdatatype_x25);
 	REQUIRE(source != NULL);

@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.14 2020/01/09 14:24:07 florian Exp $
+ * $Id: dst_api.c,v 1.15 2020/01/09 18:17:14 florian Exp $
  */
 
 /*! \file */
@@ -621,15 +621,15 @@ dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
 
 	if (isc_buffer_availablelength(target) < 4)
 		return (ISC_R_NOSPACE);
-	isc_buffer_putuint16(target, (isc_uint16_t)(key->key_flags & 0xffff));
-	isc_buffer_putuint8(target, (isc_uint8_t)key->key_proto);
-	isc_buffer_putuint8(target, (isc_uint8_t)key->key_alg);
+	isc_buffer_putuint16(target, (uint16_t)(key->key_flags & 0xffff));
+	isc_buffer_putuint8(target, (uint8_t)key->key_proto);
+	isc_buffer_putuint8(target, (uint8_t)key->key_alg);
 
 	if (key->key_flags & DNS_KEYFLAG_EXTENDED) {
 		if (isc_buffer_availablelength(target) < 2)
 			return (ISC_R_NOSPACE);
 		isc_buffer_putuint16(target,
-				     (isc_uint16_t)((key->key_flags >> 16)
+				     (uint16_t)((key->key_flags >> 16)
 						    & 0xffff));
 	}
 
@@ -643,8 +643,8 @@ isc_result_t
 dst_key_fromdns(dns_name_t *name, dns_rdataclass_t rdclass,
 		isc_buffer_t *source, isc_mem_t *mctx, dst_key_t **keyp)
 {
-	isc_uint8_t alg, proto;
-	isc_uint32_t flags, extflags;
+	uint8_t alg, proto;
+	uint32_t flags, extflags;
 	dst_key_t *key = NULL;
 	dns_keytag_t id, rid;
 	isc_region_t r;
@@ -881,7 +881,7 @@ dst_key_generate2(dns_name_t *name, unsigned int alg,
 }
 
 isc_result_t
-dst_key_getnum(const dst_key_t *key, int type, isc_uint32_t *valuep)
+dst_key_getnum(const dst_key_t *key, int type, uint32_t *valuep)
 {
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(valuep != NULL);
@@ -893,7 +893,7 @@ dst_key_getnum(const dst_key_t *key, int type, isc_uint32_t *valuep)
 }
 
 void
-dst_key_setnum(dst_key_t *key, int type, isc_uint32_t value)
+dst_key_setnum(dst_key_t *key, int type, uint32_t value)
 {
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(type <= DST_MAX_NUMERIC);
@@ -1188,7 +1188,7 @@ dst_key_secretsize(const dst_key_t *key, unsigned int *n) {
  * Set the flags on a key, then recompute the key ID
  */
 isc_result_t
-dst_key_setflags(dst_key_t *key, isc_uint32_t flags) {
+dst_key_setflags(dst_key_t *key, uint32_t flags) {
 	REQUIRE(VALID_KEY(key));
 	key->key_flags = flags;
 	return (computeid(key));
@@ -1344,7 +1344,7 @@ dst_key_read_public(const char *filename, int type,
 	unsigned int opt = ISC_LEXOPT_DNSMULTILINE;
 	dns_rdataclass_t rdclass = dns_rdataclass_in;
 	isc_lexspecials_t specials;
-	isc_uint32_t ttl = 0;
+	uint32_t ttl = 0;
 	isc_result_t result;
 	dns_rdatatype_t keytype;
 

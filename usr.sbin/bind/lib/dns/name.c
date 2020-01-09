@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.17 2020/01/09 14:24:07 florian Exp $ */
+/* $Id: name.c,v 1.18 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -1915,10 +1915,10 @@ dns_name_towire(const dns_name_t *name, dns_compress_t *cctx,
 		isc_buffer_t *target)
 {
 	unsigned int methods;
-	isc_uint16_t offset;
+	uint16_t offset;
 	dns_name_t gp;	/* Global compression prefix */
 	isc_boolean_t gf;	/* Global compression target found */
-	isc_uint16_t go;	/* Global compression offset */
+	uint16_t go;	/* Global compression offset */
 	dns_offsets_t clo;
 	dns_name_t clname;
 

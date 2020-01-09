@@ -88,7 +88,7 @@
  * Use a private definition of IPv6 addresses because s6_addr32 is not
  * always defined and our IPv6 addresses are in non-standard byte order
  */
-typedef isc_uint32_t		dns_rpz_cidr_word_t;
+typedef uint32_t		dns_rpz_cidr_word_t;
 #define DNS_RPZ_CIDR_WORD_BITS	((int)sizeof(dns_rpz_cidr_word_t)*8)
 #define DNS_RPZ_CIDR_KEY_BITS	((int)sizeof(dns_rpz_cidr_key_t)*8)
 #define DNS_RPZ_CIDR_WORDS	(128/DNS_RPZ_CIDR_WORD_BITS)
@@ -546,7 +546,7 @@ fix_qname_skip_recurse(dns_rpz_zones_t *rpzs) {
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_RPZ, DNS_LOGMODULE_RBTDB,
 		      DNS_RPZ_DEBUG_QUIET,
 		      "computed RPZ qname_skip_recurse mask=0x%llx",
-		      (isc_uint64_t) mask);
+		      (uint64_t) mask);
 	rpzs->have.qname_skip_recurse = mask;
 }
 

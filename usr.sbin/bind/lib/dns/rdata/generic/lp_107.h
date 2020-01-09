@@ -21,7 +21,7 @@
 typedef struct dns_rdata_lp {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		pref;
+	uint16_t		pref;
 	dns_name_t		lp;
 } dns_rdata_lp_t;
 

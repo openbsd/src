@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: loc_29.c,v 1.7 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: loc_29.c,v 1.8 2020/01/09 18:17:17 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -675,7 +675,7 @@ compare_loc(ARGS_COMPARE) {
 static inline isc_result_t
 fromstruct_loc(ARGS_FROMSTRUCT) {
 	dns_rdata_loc_t *loc = source;
-	isc_uint8_t c;
+	uint8_t c;
 
 	REQUIRE(type == dns_rdatatype_loc);
 	REQUIRE(source != NULL);
@@ -720,7 +720,7 @@ static inline isc_result_t
 tostruct_loc(ARGS_TOSTRUCT) {
 	dns_rdata_loc_t *loc = target;
 	isc_region_t r;
-	isc_uint8_t version;
+	uint8_t version;
 
 	REQUIRE(rdata->type == dns_rdatatype_loc);
 	REQUIRE(target != NULL);

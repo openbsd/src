@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: clientinfo.h,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: clientinfo.h,v 1.3 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_CLIENTINFO_H
 #define DNS_CLIENTINFO_H 1
@@ -54,7 +54,7 @@ ISC_LANG_BEGINDECLS
 
 #define DNS_CLIENTINFO_VERSION 1
 typedef struct dns_clientinfo {
-	isc_uint16_t version;
+	uint16_t version;
 	void *data;
 } dns_clientinfo_t;
 
@@ -65,8 +65,8 @@ typedef isc_result_t (*dns_clientinfo_sourceip_t)(dns_clientinfo_t *client,
 #define DNS_CLIENTINFOMETHODS_AGE 0
 
 typedef struct dns_clientinfomethods {
-	isc_uint16_t version;
-	isc_uint16_t age;
+	uint16_t version;
+	uint16_t age;
 	dns_clientinfo_sourceip_t sourceip;
 } dns_clientinfomethods_t;
 

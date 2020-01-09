@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.3 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: time.h,v 1.4 2020/01/09 18:17:20 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -35,12 +35,12 @@
  *
  * The contents are exposed only to allow callers to avoid dynamic allocation.
  */
-struct isc_interval {
+struct interval {
 	unsigned int seconds;
 	unsigned int nanoseconds;
 };
 
-extern const isc_interval_t * const isc_interval_zero;
+extern const interval_t * const interval_zero;
 
 /*
  * ISC_FORMATHTTPTIMESTAMP_SIZE needs to be 30 in C locale and potentially
@@ -52,7 +52,7 @@ extern const isc_interval_t * const isc_interval_zero;
 ISC_LANG_BEGINDECLS
 
 void
-isc_interval_set(isc_interval_t *i,
+interval_set(interval_t *i,
 		 unsigned int seconds, unsigned int nanoseconds);
 /*%<
  * Set 'i' to a value representing an interval of 'seconds' seconds and
@@ -66,7 +66,7 @@ isc_interval_set(isc_interval_t *i,
  */
 
 isc_boolean_t
-isc_interval_iszero(const isc_interval_t *i);
+interval_iszero(const interval_t *i);
 /*%<
  * Returns ISC_TRUE iff. 'i' is the zero interval.
  *
@@ -103,7 +103,7 @@ isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds);
  *\li	The Unix version of this call is equivalent to:
  *\code
  *	isc_time_settoepoch(t);
- *	isc_interval_set(i, seconds, nanoseconds);
+ *	interval_set(i, seconds, nanoseconds);
  *	isc_time_add(t, i, t);
  *\endcode
  *
@@ -155,7 +155,7 @@ isc_time_now(isc_time_t *t);
  */
 
 isc_result_t
-isc_time_nowplusinterval(isc_time_t *t, const isc_interval_t *i);
+isc_time_nowplusinterval(isc_time_t *t, const interval_t *i);
 /*%<
  * Set *t to the current absolute time + i.
  *
@@ -198,7 +198,7 @@ isc_time_compare(const isc_time_t *t1, const isc_time_t *t2);
  */
 
 isc_result_t
-isc_time_add(const isc_time_t *t, const isc_interval_t *i, isc_time_t *result);
+isc_time_add(const isc_time_t *t, const interval_t *i, isc_time_t *result);
 /*%<
  * Add 'i' to 't', storing the result in 'result'.
  *
@@ -214,7 +214,7 @@ isc_time_add(const isc_time_t *t, const isc_interval_t *i, isc_time_t *result);
  */
 
 isc_result_t
-isc_time_subtract(const isc_time_t *t, const isc_interval_t *i,
+isc_time_subtract(const isc_time_t *t, const interval_t *i,
 		  isc_time_t *result);
 /*%<
  * Subtract 'i' from 't', storing the result in 'result'.
@@ -229,7 +229,7 @@ isc_time_subtract(const isc_time_t *t, const isc_interval_t *i,
  *		The interval is larger than the time since the epoch.
  */
 
-isc_uint64_t
+uint64_t
 isc_time_microdiff(const isc_time_t *t1, const isc_time_t *t2);
 /*%<
  * Find the difference in microseconds between time t1 and time t2.
@@ -243,7 +243,7 @@ isc_time_microdiff(const isc_time_t *t1, const isc_time_t *t2);
  *\li	The difference of t1 - t2, or 0 if t1 <= t2.
  */
 
-isc_uint32_t
+uint32_t
 isc_time_seconds(const isc_time_t *t);
 /*%<
  * Return the number of seconds since the epoch stored in a time structure.
@@ -276,7 +276,7 @@ isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp);
  *\li	Out of range
  */
 
-isc_uint32_t
+uint32_t
 isc_time_nanoseconds(const isc_time_t *t);
 /*%<
  * Return the number of nanoseconds stored in a time structure.

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: zt.c,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: zt.c,v 1.4 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -46,7 +46,7 @@ struct dns_zt {
 	void *			loaddone_arg;
 	/* Locked by lock. */
 	isc_boolean_t		flush;
-	isc_uint32_t		references;
+	uint32_t		references;
 	unsigned int		loads_pending;
 	dns_rbt_t		*table;
 };

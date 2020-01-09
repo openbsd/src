@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: ds_43.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
 
 #ifndef GENERIC_DS_43_H
 #define GENERIC_DS_43_H 1
@@ -24,10 +24,10 @@
 typedef struct dns_rdata_ds {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		key_tag;
-	isc_uint8_t		algorithm;
-	isc_uint8_t		digest_type;
-	isc_uint16_t		length;
+	uint16_t		key_tag;
+	uint8_t		algorithm;
+	uint8_t		digest_type;
+	uint16_t		length;
 	unsigned char		*digest;
 } dns_rdata_ds_t;
 

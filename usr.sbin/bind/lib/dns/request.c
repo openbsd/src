@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: request.c,v 1.4 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: request.c,v 1.5 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -54,8 +54,8 @@ struct dns_requestmgr {
 	isc_mem_t		       *mctx;
 
 	/* locked */
-	isc_int32_t			eref;
-	isc_int32_t			iref;
+	int32_t			eref;
+	int32_t			iref;
 	isc_timermgr_t		       *timermgr;
 	isc_socketmgr_t		       *socketmgr;
 	isc_taskmgr_t		       *taskmgr;
@@ -73,7 +73,7 @@ struct dns_request {
 	unsigned int			magic;
 	unsigned int			hash;
 	isc_mem_t		       *mctx;
-	isc_int32_t			flags;
+	int32_t			flags;
 	ISC_LINK(dns_request_t) 	link;
 	isc_buffer_t		       *query;
 	isc_buffer_t		       *answer;
@@ -644,13 +644,13 @@ get_dispatch(isc_boolean_t tcp, dns_requestmgr_t *requestmgr,
 static isc_result_t
 set_timer(isc_timer_t *timer, unsigned int timeout, unsigned int udpresend) {
 	isc_time_t expires;
-	isc_interval_t interval;
+	interval_t interval;
 	isc_result_t result;
 	isc_timertype_t timertype;
 
-	isc_interval_set(&interval, timeout, 0);
+	interval_set(&interval, timeout, 0);
 	result = isc_time_nowplusinterval(&expires, &interval);
-	isc_interval_set(&interval, udpresend, 0);
+	interval_set(&interval, udpresend, 0);
 
 	timertype = udpresend != 0 ? isc_timertype_limited : isc_timertype_once;
 	if (result == ISC_R_SUCCESS)
@@ -808,7 +808,7 @@ dns_request_createraw4(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	if (tcp)
-		isc_buffer_putuint16(request->query, (isc_uint16_t)r.length);
+		isc_buffer_putuint16(request->query, (uint16_t)r.length);
 	result = isc_buffer_copyregion(request->query, &r);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
@@ -1159,7 +1159,7 @@ req_render(dns_message_t *message, isc_buffer_t **bufferp,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	if (tcp)
-		isc_buffer_putuint16(buf2, (isc_uint16_t)r.length);
+		isc_buffer_putuint16(buf2, (uint16_t)r.length);
 	result = isc_buffer_copyregion(buf2, &r);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;

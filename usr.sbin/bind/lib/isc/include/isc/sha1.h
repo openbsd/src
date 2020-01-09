@@ -17,7 +17,7 @@
 #ifndef ISC_SHA1_H
 #define ISC_SHA1_H 1
 
-/* $Id: sha1.h,v 1.4 2020/01/09 13:52:23 florian Exp $ */
+/* $Id: sha1.h,v 1.5 2020/01/09 18:17:19 florian Exp $ */
 
 /*	$NetBSD: sha1.h,v 1.2 1998/05/29 22:55:44 thorpej Exp $	*/
 
@@ -48,8 +48,8 @@ typedef struct {
 #else
 
 typedef struct {
-	isc_uint32_t state[5];
-	isc_uint32_t count[2];
+	uint32_t state[5];
+	uint32_t count[2];
 	unsigned char buffer[ISC_SHA1_BLOCK_LENGTH];
 } isc_sha1_t;
 #endif

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: update.h,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: update.h,v 1.3 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_UPDATE_H
 #define DNS_UPDATE_H 1
@@ -42,8 +42,8 @@ ISC_LANG_BEGINDECLS
  ***	Functions
  ***/
 
-isc_uint32_t
-dns_update_soaserial(isc_uint32_t serial, dns_updatemethod_t method);
+uint32_t
+dns_update_soaserial(uint32_t serial, dns_updatemethod_t method);
 /*%<
  * Return the next serial number after 'serial', depending on the
  * update method 'method':
@@ -57,12 +57,12 @@ dns_update_soaserial(isc_uint32_t serial, dns_updatemethod_t method);
 isc_result_t
 dns_update_signatures(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 		      dns_dbversion_t *oldver, dns_dbversion_t *newver,
-		      dns_diff_t *diff, isc_uint32_t sigvalidityinterval);
+		      dns_diff_t *diff, uint32_t sigvalidityinterval);
 
 isc_result_t
 dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 			 dns_dbversion_t *oldver, dns_dbversion_t *newver,
-			 dns_diff_t *diff, isc_uint32_t sigvalidityinterval,
+			 dns_diff_t *diff, uint32_t sigvalidityinterval,
 			 dns_update_state_t **state);
 
 ISC_LANG_ENDDECLS

@@ -1596,7 +1596,7 @@ isc_result_t
 dns_view_adddelegationonly(dns_view_t *view, dns_name_t *name) {
 	isc_result_t result;
 	dns_name_t *item;
-	isc_uint32_t hash;
+	uint32_t hash;
 
 	REQUIRE(DNS_VIEW_VALID(view));
 
@@ -1631,7 +1631,7 @@ isc_result_t
 dns_view_excludedelegationonly(dns_view_t *view, dns_name_t *name) {
 	isc_result_t result;
 	dns_name_t *item;
-	isc_uint32_t hash;
+	uint32_t hash;
 
 	REQUIRE(DNS_VIEW_VALID(view));
 
@@ -1665,7 +1665,7 @@ dns_view_excludedelegationonly(dns_view_t *view, dns_name_t *name) {
 isc_boolean_t
 dns_view_isdelegationonly(dns_view_t *view, dns_name_t *name) {
 	dns_name_t *item;
-	isc_uint32_t hash;
+	uint32_t hash;
 
 	REQUIRE(DNS_VIEW_VALID(view));
 

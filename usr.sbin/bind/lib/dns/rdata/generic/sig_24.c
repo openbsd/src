@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sig_24.c,v 1.7 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: sig_24.c,v 1.8 2020/01/09 18:17:17 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -35,7 +35,7 @@ fromtext_sig(ARGS_FROMTEXT) {
 	isc_result_t result;
 	dns_name_t name;
 	isc_buffer_t buffer;
-	isc_uint32_t time_signed, time_expire;
+	uint32_t time_signed, time_expire;
 
 	REQUIRE(type == dns_rdatatype_sig);
 

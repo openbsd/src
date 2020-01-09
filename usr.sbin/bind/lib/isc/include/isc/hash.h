@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.h,v 1.6 2020/01/09 14:24:08 florian Exp $ */
+/* $Id: hash.h,v 1.7 2020/01/09 18:17:19 florian Exp $ */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
@@ -177,7 +177,7 @@ isc_hash_calc(const unsigned char *key, unsigned int keylen,
 /*@}*/
 
 void
-isc__hash_setvec(const isc_uint16_t *vec);
+isc__hash_setvec(const uint16_t *vec);
 
 /*!<
  * \brief Set the contents of the random vector used in hashing.
@@ -192,14 +192,14 @@ isc__hash_setvec(const isc_uint16_t *vec);
  * doing before using this function.
  */
 
-isc_uint32_t
+uint32_t
 isc_hash_function(const void *data, size_t length,
 		  isc_boolean_t case_sensitive,
-		  const isc_uint32_t *previous_hashp);
-isc_uint32_t
+		  const uint32_t *previous_hashp);
+uint32_t
 isc_hash_function_reverse(const void *data, size_t length,
 			  isc_boolean_t case_sensitive,
-			  const isc_uint32_t *previous_hashp);
+			  const uint32_t *previous_hashp);
 /*!<
  * \brief Calculate a hash over data.
  *

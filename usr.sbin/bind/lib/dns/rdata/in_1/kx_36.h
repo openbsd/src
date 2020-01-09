@@ -17,7 +17,7 @@
 #ifndef IN_1_KX_36_H
 #define IN_1_KX_36_H 1
 
-/* $Id: kx_36.h,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: kx_36.h,v 1.4 2020/01/09 18:17:18 florian Exp $ */
 
 /*!
  *  \brief Per RFC2230 */
@@ -25,7 +25,7 @@
 typedef struct dns_rdata_in_kx {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint16_t		preference;
+	uint16_t		preference;
 	dns_name_t		exchange;
 } dns_rdata_in_kx_t;
 

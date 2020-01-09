@@ -49,7 +49,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sdlz.c,v 1.4 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: sdlz.c,v 1.5 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -1717,7 +1717,7 @@ dns_sdlzssumatch(dns_name_t *signer, dns_name_t *name, isc_netaddr_t *tcpaddr,
 	char b_key[DST_KEY_FORMATSIZE];
 	isc_buffer_t *tkey_token = NULL;
 	isc_region_t token_region = { NULL, 0 };
-	isc_uint32_t token_len = 0;
+	uint32_t token_len = 0;
 	isc_boolean_t ret;
 
 	REQUIRE(driverarg != NULL);
@@ -1958,7 +1958,7 @@ dns_sdlz_putnamedrr(dns_sdlzallnodes_t *allnodes, const char *name,
 
 isc_result_t
 dns_sdlz_putsoa(dns_sdlzlookup_t *lookup, const char *mname, const char *rname,
-		isc_uint32_t serial)
+		uint32_t serial)
 {
 	char str[2 * DNS_NAME_MAXTEXT + 5 * (sizeof("2147483647")) + 7];
 	int n;

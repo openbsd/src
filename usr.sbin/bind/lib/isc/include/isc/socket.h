@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.h,v 1.8 2020/01/07 19:09:26 florian Exp $ */
+/* $Id: socket.h,v 1.9 2020/01/09 18:17:19 florian Exp $ */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -180,7 +180,7 @@ struct isc_socketevent {
 	isc_sockaddr_t		address;	/*%< source address */
 	isc_time_t		timestamp;	/*%< timestamp of packet recv */
 	struct in6_pktinfo	pktinfo;	/*%< ipv6 pktinfo */
-	isc_uint32_t		attributes;	/*%< see below */
+	uint32_t		attributes;	/*%< see below */
 	isc_eventdestructor_t   destroy;	/*%< original destructor */
 	unsigned int		dscp;		/*%< UDP dscp value */
 };
@@ -1128,8 +1128,8 @@ isc_socket_cleanunix(isc_sockaddr_t *addr, isc_boolean_t active);
  */
 
 isc_result_t
-isc_socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
-		    isc_uint32_t owner, isc_uint32_t group);
+isc_socket_permunix(isc_sockaddr_t *sockaddr, uint32_t perm,
+		    uint32_t owner, uint32_t group);
 /*%<
  * Set ownership and file permissions on the UNIX domain socket.
  *
@@ -1168,7 +1168,7 @@ int isc_socket_getfd(isc_socket_t *socket);
  */
 
 void
-isc__socketmgr_setreserved(isc_socketmgr_t *mgr, isc_uint32_t);
+isc__socketmgr_setreserved(isc_socketmgr_t *mgr, uint32_t);
 /*%<
  * Temporary.  For use by named only.
  */

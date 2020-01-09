@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: diff.c,v 1.4 2020/01/09 13:47:12 florian Exp $ */
+/* $Id: diff.c,v 1.5 2020/01/09 18:17:14 florian Exp $ */
 
 /*! \file */
 
@@ -209,7 +209,7 @@ static isc_stdtime_t
 setresign(dns_rdataset_t *modified) {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_rrsig_t sig;
-	isc_int64_t when;
+	int64_t when;
 	isc_result_t result;
 
 	result = dns_rdataset_first(modified);

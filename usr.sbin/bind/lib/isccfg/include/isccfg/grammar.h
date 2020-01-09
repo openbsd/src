@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: grammar.h,v 1.4 2020/01/09 14:18:30 florian Exp $ */
+/* $Id: grammar.h,v 1.5 2020/01/09 18:17:20 florian Exp $ */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -153,8 +153,8 @@ struct cfg_rep {
 struct cfg_obj {
 	const cfg_type_t *type;
 	union {
-		isc_uint32_t  	uint32;
-		isc_uint64_t  	uint64;
+		uint32_t  	uint32;
+		uint64_t  	uint64;
 		isc_textregion_t string; /*%< null terminated, too */
 		isc_boolean_t 	boolean;
 		cfg_map_t	map;

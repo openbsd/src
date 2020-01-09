@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a6_38.c,v 1.7 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: a6_38.c,v 1.8 2020/01/09 18:17:18 florian Exp $ */
 
 /* RFC2874 */
 
@@ -279,9 +279,9 @@ fromstruct_in_a6(ARGS_FROMSTRUCT) {
 	dns_rdata_in_a6_t *a6 = source;
 	isc_region_t region;
 	int octets;
-	isc_uint8_t bits;
-	isc_uint8_t first;
-	isc_uint8_t mask;
+	uint8_t bits;
+	uint8_t first;
+	uint8_t mask;
 
 	REQUIRE(type == dns_rdatatype_a6);
 	REQUIRE(rdclass == dns_rdataclass_in);

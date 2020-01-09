@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.14 2020/01/09 14:18:30 florian Exp $ */
+/* $Id: log.c,v 1.15 2020/01/09 18:17:19 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -1535,10 +1535,10 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 			if (write_once) {
 				isc_logmessage_t *message, *next;
 				isc_time_t oldest;
-				isc_interval_t interval;
+				interval_t interval;
 				size_t size;
 
-				isc_interval_set(&interval,
+				interval_set(&interval,
 						 lcfg->duplicate_interval, 0);
 
 				/*

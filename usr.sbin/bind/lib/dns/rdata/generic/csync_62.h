@@ -24,10 +24,10 @@
 typedef struct dns_rdata_csync {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
-	isc_uint32_t		serial;
-	isc_uint16_t		flags;
+	uint32_t		serial;
+	uint16_t		flags;
 	unsigned char		*typebits;
-	isc_uint16_t		len;
+	uint16_t		len;
 } dns_rdata_csync_t;
 
 #endif /* GENERIC_CSYNC_62_H */

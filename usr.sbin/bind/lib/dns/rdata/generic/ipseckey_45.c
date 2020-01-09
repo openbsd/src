@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipseckey_45.c,v 1.4 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: ipseckey_45.c,v 1.5 2020/01/09 18:17:17 florian Exp $ */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -285,7 +285,7 @@ static inline isc_result_t
 fromstruct_ipseckey(ARGS_FROMSTRUCT) {
 	dns_rdata_ipseckey_t *ipseckey = source;
 	isc_region_t region;
-	isc_uint32_t n;
+	uint32_t n;
 
 	REQUIRE(type == dns_rdatatype_ipseckey);
 	REQUIRE(source != NULL);
@@ -329,7 +329,7 @@ tostruct_ipseckey(ARGS_TOSTRUCT) {
 	isc_region_t region;
 	dns_rdata_ipseckey_t *ipseckey = target;
 	dns_name_t name;
-	isc_uint32_t n;
+	uint32_t n;
 
 	REQUIRE(rdata->type == dns_rdatatype_ipseckey);
 	REQUIRE(target != NULL);

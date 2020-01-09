@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.8 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: rdataset.h,v 1.9 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -145,11 +145,11 @@ struct dns_rdataset {
 	unsigned int			attributes;
 	/*%
 	 * the counter provides the starting point in the "cyclic" order.
-	 * The value ISC_UINT32_MAX has a special meaning of "picking up a
+	 * The value UINT32_MAX has a special meaning of "picking up a
 	 * random value." in order to take care of databases that do not
 	 * increment the counter.
 	 */
-	isc_uint32_t			count;
+	uint32_t			count;
 	/*
 	 * This RRSIG RRset should be re-generated around this time.
 	 * Only valid if DNS_RDATASETATTR_RESIGN is set in attributes.

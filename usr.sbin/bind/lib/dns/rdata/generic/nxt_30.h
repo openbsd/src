@@ -17,7 +17,7 @@
 #ifndef GENERIC_NXT_30_H
 #define GENERIC_NXT_30_H 1
 
-/* $Id: nxt_30.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: nxt_30.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
 
 /*!
  *  \brief RFC2535 */
@@ -27,7 +27,7 @@ typedef struct dns_rdata_nxt {
 	isc_mem_t		*mctx;
 	dns_name_t		next;
 	unsigned char		*typebits;
-	isc_uint16_t		len;
+	uint16_t		len;
 } dns_rdata_nxt_t;
 
 #endif /* GENERIC_NXT_30_H */

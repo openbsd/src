@@ -17,7 +17,7 @@
 #ifndef GENERIC_ISDN_20_H
 #define GENERIC_ISDN_20_H 1
 
-/* $Id: isdn_20.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: isdn_20.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
 
 /*!
  * \brief Per RFC1183 */
@@ -27,8 +27,8 @@ typedef struct dns_rdata_isdn {
 	isc_mem_t		*mctx;
 	char			*isdn;
 	char			*subaddress;
-	isc_uint8_t		isdn_len;
-	isc_uint8_t		subaddress_len;
+	uint8_t		isdn_len;
+	uint8_t		subaddress_len;
 } dns_rdata_isdn_t;
 
 #endif /* GENERIC_ISDN_20_H */

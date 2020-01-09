@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: zone.h,v 1.10 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: zone.h,v 1.11 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
@@ -182,9 +182,9 @@ dns_zone_getclass(dns_zone_t *zone);
  */
 
 isc_result_t
-dns_zone_getserial2(dns_zone_t *zone, isc_uint32_t *serialp);
+dns_zone_getserial2(dns_zone_t *zone, uint32_t *serialp);
 
-isc_uint32_t
+uint32_t
 dns_zone_getserial(dns_zone_t *zone);
 /*%<
  *	Returns the current serial number of the zone.  On success, the SOA
@@ -315,7 +315,7 @@ dns_zone_getfile(dns_zone_t *zone);
  */
 
 void
-dns_zone_setmaxrecords(dns_zone_t *zone, isc_uint32_t records);
+dns_zone_setmaxrecords(dns_zone_t *zone, uint32_t records);
 /*%<
  * 	Sets the maximim number of records permitted in a zone.
  *	0 implies unlimited.
@@ -327,7 +327,7 @@ dns_zone_setmaxrecords(dns_zone_t *zone, isc_uint32_t records);
  *\li	void
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getmaxrecords(dns_zone_t *zone);
 /*%<
  * 	Gets the maximim number of records permitted in a zone.
@@ -337,11 +337,11 @@ dns_zone_getmaxrecords(dns_zone_t *zone);
  *\li	'zone' to be valid initialised zone.
  *
  * Returns:
- *\li	isc_uint32_t maxrecords.
+ *\li	uint32_t maxrecords.
  */
 
 void
-dns_zone_setmaxttl(dns_zone_t *zone, isc_uint32_t maxttl);
+dns_zone_setmaxttl(dns_zone_t *zone, uint32_t maxttl);
 /*%<
  * 	Sets the max ttl of the zone.
  *
@@ -606,7 +606,7 @@ dns_zone_dumptostream2(dns_zone_t *zone, FILE *fd, dns_masterformat_t format,
 isc_result_t
 dns_zone_dumptostream3(dns_zone_t *zone, FILE *fd, dns_masterformat_t format,
 		       const dns_master_style_t *style,
-		       const isc_uint32_t rawversion);
+		       const uint32_t rawversion);
 /*%<
  *    Write the zone to stream 'fd' in the specified 'format'.
  *    If the 'format' is dns_masterformat_text (RFC1035), 'style' also
@@ -651,12 +651,12 @@ dns_zone_maintenance(dns_zone_t *zone);
 
 isc_result_t
 dns_zone_setmasters(dns_zone_t *zone, const isc_sockaddr_t *masters,
-		    isc_uint32_t count);
+		    uint32_t count);
 isc_result_t
 dns_zone_setmasterswithkeys(dns_zone_t *zone,
 			    const isc_sockaddr_t *masters,
 			    dns_name_t **keynames,
-			    isc_uint32_t count);
+			    uint32_t count);
 /*%<
  *	Set the list of master servers for the zone.
  *
@@ -679,14 +679,14 @@ dns_zone_setmasterswithkeys(dns_zone_t *zone,
 
 isc_result_t
 dns_zone_setalsonotify(dns_zone_t *zone, const isc_sockaddr_t *notify,
-		       isc_uint32_t count);
+		       uint32_t count);
 isc_result_t
 dns_zone_setalsonotifywithkeys(dns_zone_t *zone, const isc_sockaddr_t *notify,
-			       dns_name_t **keynames, isc_uint32_t count);
+			       dns_name_t **keynames, uint32_t count);
 isc_result_t
 dns_zone_setalsonotifydscpkeys(dns_zone_t *zone, const isc_sockaddr_t *notify,
 			       const isc_dscp_t *dscps, dns_name_t **keynames,
-			       isc_uint32_t count);
+			       uint32_t count);
 /*%<
  *	Set the list of additional servers to be notified when
  *	a zone changes.	 To clear the list use 'count = 0'.
@@ -769,7 +769,7 @@ dns_zone_getkeyopts(dns_zone_t *zone);
  */
 
 void
-dns_zone_setminrefreshtime(dns_zone_t *zone, isc_uint32_t val);
+dns_zone_setminrefreshtime(dns_zone_t *zone, uint32_t val);
 /*%<
  *	Set the minimum refresh time.
  *
@@ -779,7 +779,7 @@ dns_zone_setminrefreshtime(dns_zone_t *zone, isc_uint32_t val);
  */
 
 void
-dns_zone_setmaxrefreshtime(dns_zone_t *zone, isc_uint32_t val);
+dns_zone_setmaxrefreshtime(dns_zone_t *zone, uint32_t val);
 /*%<
  *	Set the maximum refresh time.
  *
@@ -789,7 +789,7 @@ dns_zone_setmaxrefreshtime(dns_zone_t *zone, isc_uint32_t val);
  */
 
 void
-dns_zone_setminretrytime(dns_zone_t *zone, isc_uint32_t val);
+dns_zone_setminretrytime(dns_zone_t *zone, uint32_t val);
 /*%<
  *	Set the minimum retry time.
  *
@@ -799,7 +799,7 @@ dns_zone_setminretrytime(dns_zone_t *zone, isc_uint32_t val);
  */
 
 void
-dns_zone_setmaxretrytime(dns_zone_t *zone, isc_uint32_t val);
+dns_zone_setmaxretrytime(dns_zone_t *zone, uint32_t val);
 /*%<
  *	Set the maximum retry time.
  *
@@ -1242,7 +1242,7 @@ dns_zone_getchecknames(dns_zone_t *zone);
  */
 
 void
-dns_zone_setjournalsize(dns_zone_t *zone, isc_int32_t size);
+dns_zone_setjournalsize(dns_zone_t *zone, int32_t size);
 /*%<
  *	Sets the journal size for the zone.
  *
@@ -1250,7 +1250,7 @@ dns_zone_setjournalsize(dns_zone_t *zone, isc_int32_t size);
  *\li	'zone' to be a valid zone.
  */
 
-isc_int32_t
+int32_t
 dns_zone_getjournalsize(dns_zone_t *zone);
 /*%<
  *	Return the journal size as set with a previous call to
@@ -1284,7 +1284,7 @@ dns_zone_notifyreceive2(dns_zone_t *zone, isc_sockaddr_t *from,
  */
 
 void
-dns_zone_setmaxxfrin(dns_zone_t *zone, isc_uint32_t maxxfrin);
+dns_zone_setmaxxfrin(dns_zone_t *zone, uint32_t maxxfrin);
 /*%<
  * Set the maximum time (in seconds) that a zone transfer in (AXFR/IXFR)
  * of this zone will use before being aborted.
@@ -1293,7 +1293,7 @@ dns_zone_setmaxxfrin(dns_zone_t *zone, isc_uint32_t maxxfrin);
  * \li	'zone' to be valid initialised zone.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getmaxxfrin(dns_zone_t *zone);
 /*%<
  * Returns the maximum transfer time for this zone.  This will be
@@ -1305,7 +1305,7 @@ dns_zone_getmaxxfrin(dns_zone_t *zone);
  */
 
 void
-dns_zone_setmaxxfrout(dns_zone_t *zone, isc_uint32_t maxxfrout);
+dns_zone_setmaxxfrout(dns_zone_t *zone, uint32_t maxxfrout);
 /*%<
  * Set the maximum time (in seconds) that a zone transfer out (AXFR/IXFR)
  * of this zone will use before being aborted.
@@ -1314,7 +1314,7 @@ dns_zone_setmaxxfrout(dns_zone_t *zone, isc_uint32_t maxxfrout);
  * \li	'zone' to be valid initialised zone.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getmaxxfrout(dns_zone_t *zone);
 /*%<
  * Returns the maximum transfer time for this zone.  This will be
@@ -1416,7 +1416,7 @@ dns_zone_replacedb(dns_zone_t *zone, dns_db_t *db, isc_boolean_t dump);
  *	Others
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getidlein(dns_zone_t *zone);
 /*%<
  * Requires:
@@ -1427,7 +1427,7 @@ dns_zone_getidlein(dns_zone_t *zone);
  */
 
 void
-dns_zone_setidlein(dns_zone_t *zone, isc_uint32_t idlein);
+dns_zone_setidlein(dns_zone_t *zone, uint32_t idlein);
 /*%<
  * \li	Set the idle timeout for transfer the.
  * \li	Zero set the default value, 1 hour.
@@ -1436,7 +1436,7 @@ dns_zone_setidlein(dns_zone_t *zone, isc_uint32_t idlein);
  * \li	'zone' to be a valid zone.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getidleout(dns_zone_t *zone);
 /*%<
  *
@@ -1448,7 +1448,7 @@ dns_zone_getidleout(dns_zone_t *zone);
  */
 
 void
-dns_zone_setidleout(dns_zone_t *zone, isc_uint32_t idleout);
+dns_zone_setidleout(dns_zone_t *zone, uint32_t idleout);
 /*%<
  * \li	Set the idle timeout for transfers out.
  * \li	Zero set the default value, 1 hour.
@@ -1494,7 +1494,7 @@ dns_zone_getmgr(dns_zone_t *zone);
  */
 
 void
-dns_zone_setsigvalidityinterval(dns_zone_t *zone, isc_uint32_t interval);
+dns_zone_setsigvalidityinterval(dns_zone_t *zone, uint32_t interval);
 /*%<
  * Set the zone's RRSIG validity interval.  This is the length of time
  * for which DNSSEC signatures created as a result of dynamic updates
@@ -1504,7 +1504,7 @@ dns_zone_setsigvalidityinterval(dns_zone_t *zone, isc_uint32_t interval);
  * \li	'zone' to be a valid zone.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getsigvalidityinterval(dns_zone_t *zone);
 /*%<
  * Get the zone's RRSIG validity interval.
@@ -1514,7 +1514,7 @@ dns_zone_getsigvalidityinterval(dns_zone_t *zone);
  */
 
 void
-dns_zone_setsigresigninginterval(dns_zone_t *zone, isc_uint32_t interval);
+dns_zone_setsigresigninginterval(dns_zone_t *zone, uint32_t interval);
 /*%<
  * Set the zone's RRSIG re-signing interval.  A dynamic zone's RRSIG's
  * will be re-signed 'interval' amount of time before they expire.
@@ -1523,7 +1523,7 @@ dns_zone_setsigresigninginterval(dns_zone_t *zone, isc_uint32_t interval);
  * \li	'zone' to be a valid zone.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getsigresigninginterval(dns_zone_t *zone);
 /*%<
  * Get the zone's RRSIG re-signing interval.
@@ -1740,7 +1740,7 @@ dns_zonemgr_releasezone(dns_zonemgr_t *zmgr, dns_zone_t *zone);
  */
 
 void
-dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, isc_uint32_t value);
+dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, uint32_t value);
 /*%<
  *	Set the maximum number of simultaneous transfers in allowed by
  *	the zone manager.
@@ -1749,7 +1749,7 @@ dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, isc_uint32_t value);
  *\li	'zmgr' to be a valid zone manager.
  */
 
-isc_uint32_t
+uint32_t
 dns_zonemgr_getttransfersin(dns_zonemgr_t *zmgr);
 /*%<
  *	Return the maximum number of simultaneous transfers in allowed.
@@ -1759,7 +1759,7 @@ dns_zonemgr_getttransfersin(dns_zonemgr_t *zmgr);
  */
 
 void
-dns_zonemgr_settransfersperns(dns_zonemgr_t *zmgr, isc_uint32_t value);
+dns_zonemgr_settransfersperns(dns_zonemgr_t *zmgr, uint32_t value);
 /*%<
  *	Set the number of zone transfers allowed per nameserver.
  *
@@ -1767,7 +1767,7 @@ dns_zonemgr_settransfersperns(dns_zonemgr_t *zmgr, isc_uint32_t value);
  *\li	'zmgr' to be a valid zone manager
  */
 
-isc_uint32_t
+uint32_t
 dns_zonemgr_getttransfersperns(dns_zonemgr_t *zmgr);
 /*%<
  *	Return the number of transfers allowed per nameserver.
@@ -1777,7 +1777,7 @@ dns_zonemgr_getttransfersperns(dns_zonemgr_t *zmgr);
  */
 
 void
-dns_zonemgr_setiolimit(dns_zonemgr_t *zmgr, isc_uint32_t iolimit);
+dns_zonemgr_setiolimit(dns_zonemgr_t *zmgr, uint32_t iolimit);
 /*%<
  *	Set the number of simultaneous file descriptors available for
  *	reading and writing masterfiles.
@@ -1787,7 +1787,7 @@ dns_zonemgr_setiolimit(dns_zonemgr_t *zmgr, isc_uint32_t iolimit);
  *\li	'iolimit' to be positive.
  */
 
-isc_uint32_t
+uint32_t
 dns_zonemgr_getiolimit(dns_zonemgr_t *zmgr);
 /*%<
  *	Get the number of simultaneous file descriptors available for
@@ -1887,7 +1887,7 @@ dns_zone_setstatistics(dns_zone_t *zone, isc_boolean_t on);
  * This function is obsoleted by dns_zone_setrequeststats().
  */
 
-isc_uint64_t *
+uint64_t *
 dns_zone_getstatscounters(dns_zone_t *zone);
 /*%<
  * This function is obsoleted by dns_zone_getrequeststats().
@@ -2054,7 +2054,7 @@ dns_zone_setcheckns(dns_zone_t *zone, dns_checknsfunc_t checkns);
  */
 
 void
-dns_zone_setnotifydelay(dns_zone_t *zone, isc_uint32_t delay);
+dns_zone_setnotifydelay(dns_zone_t *zone, uint32_t delay);
 /*%<
  * Set the minimum delay between sets of notify messages.
  *
@@ -2062,7 +2062,7 @@ dns_zone_setnotifydelay(dns_zone_t *zone, isc_uint32_t delay);
  *	'zone' to be valid.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getnotifydelay(dns_zone_t *zone);
 /*%<
  * Get the minimum delay between sets of notify messages.
@@ -2086,18 +2086,18 @@ dns_zone_setisself(dns_zone_t *zone, dns_isselffunc_t isself, void *arg);
  */
 
 void
-dns_zone_setnodes(dns_zone_t *zone, isc_uint32_t nodes);
+dns_zone_setnodes(dns_zone_t *zone, uint32_t nodes);
 /*%<
  * Set the number of nodes that will be checked per quantum.
  */
 
 void
-dns_zone_setsignatures(dns_zone_t *zone, isc_uint32_t signatures);
+dns_zone_setsignatures(dns_zone_t *zone, uint32_t signatures);
 /*%<
  * Set the number of signatures that will be generated per quantum.
  */
 
-isc_uint32_t
+uint32_t
 dns_zone_getsignatures(dns_zone_t *zone);
 /*%<
  * Get the number of signatures that will be generated per quantum.
@@ -2105,7 +2105,7 @@ dns_zone_getsignatures(dns_zone_t *zone);
 
 isc_result_t
 dns_zone_signwithkey(dns_zone_t *zone, dns_secalg_t algorithm,
-		     isc_uint16_t keyid, isc_boolean_t deleteit);
+		     uint16_t keyid, isc_boolean_t deleteit);
 /*%<
  * Initiate/resume signing of the entire zone with the zone DNSKEY(s)
  * that match the given algorithm and keyid.
@@ -2217,7 +2217,7 @@ dns_zone_isdynamic(dns_zone_t *zone, isc_boolean_t ignore_freeze);
  */
 
 isc_result_t
-dns_zone_setrefreshkeyinterval(dns_zone_t *zone, isc_uint32_t interval);
+dns_zone_setrefreshkeyinterval(dns_zone_t *zone, uint32_t interval);
 /*%
  * Sets the frequency, in minutes, with which the key repository will be
  * checked to see if the keys for this zone have been updated.  Any value
@@ -2278,8 +2278,8 @@ isc_result_t
 dns_zone_keydone(dns_zone_t *zone, const char *data);
 
 isc_result_t
-dns_zone_setnsec3param(dns_zone_t *zone, isc_uint8_t hash, isc_uint8_t flags,
-		       isc_uint16_t iter, isc_uint8_t saltlen,
+dns_zone_setnsec3param(dns_zone_t *zone, uint8_t hash, uint8_t flags,
+		       uint16_t iter, uint8_t saltlen,
 		       unsigned char *salt, isc_boolean_t replace);
 /*%
  * Set the NSEC3 parameters for the zone.

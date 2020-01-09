@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cfg.h,v 1.3 2019/12/17 01:46:38 sthen Exp $ */
+/* $Id: cfg.h,v 1.4 2020/01/09 18:17:20 florian Exp $ */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
@@ -234,7 +234,7 @@ cfg_obj_isuint32(const cfg_obj_t *obj);
  * Return true iff 'obj' is of integer type.
  */
 
-isc_uint32_t
+uint32_t
 cfg_obj_asuint32(const cfg_obj_t *obj);
 /*%<
  * Returns the value of a configuration object of 32-bit integer type.
@@ -252,7 +252,7 @@ cfg_obj_isuint64(const cfg_obj_t *obj);
  * Return true iff 'obj' is of integer type.
  */
 
-isc_uint64_t
+uint64_t
 cfg_obj_asuint64(const cfg_obj_t *obj);
 /*%<
  * Returns the value of a configuration object of 64-bit integer type.
@@ -264,7 +264,7 @@ cfg_obj_asuint64(const cfg_obj_t *obj);
  * \li     A 64-bit unsigned integer.
  */
 
-isc_uint32_t
+uint32_t
 cfg_obj_asfixedpoint(const cfg_obj_t *obj);
 /*%<
  * Returns the value of a configuration object of fixed point number.

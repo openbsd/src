@@ -43,7 +43,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: file.c,v 1.9 2020/01/09 14:24:08 florian Exp $ */
+/* $Id: file.c,v 1.10 2020/01/09 18:17:19 florian Exp $ */
 
 /*! \file */
 
@@ -201,7 +201,7 @@ isc_file_settime(const char *file, isc_time_t *when) {
 	 * we can at least cast to signed so the IRIX compiler shuts up.
 	 */
 	times[0].tv_usec = times[1].tv_usec =
-		(isc_int32_t)(isc_time_nanoseconds(when) / 1000);
+		(int32_t)(isc_time_nanoseconds(when) / 1000);
 
 	if (utimes(file, times) < 0)
 		return (isc__errno2result(errno));

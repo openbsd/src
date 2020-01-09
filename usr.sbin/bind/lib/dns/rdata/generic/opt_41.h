@@ -17,14 +17,14 @@
 #ifndef GENERIC_OPT_41_H
 #define GENERIC_OPT_41_H 1
 
-/* $Id: opt_41.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: opt_41.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
 
 /*!
  *  \brief Per RFC2671 */
 
 typedef struct dns_rdata_opt_opcode {
-		isc_uint16_t	opcode;
-		isc_uint16_t	length;
+		uint16_t	opcode;
+		uint16_t	length;
 		unsigned char	*data;
 } dns_rdata_opt_opcode_t;
 
@@ -32,9 +32,9 @@ typedef struct dns_rdata_opt {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	unsigned char		*options;
-	isc_uint16_t		length;
+	uint16_t		length;
 	/* private */
-	isc_uint16_t		offset;
+	uint16_t		offset;
 } dns_rdata_opt_t;
 
 /*

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.4 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: timer.h,v 1.5 2020/01/09 18:17:19 florian Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -109,7 +109,7 @@ typedef struct {
 	isc_result_t	(*timercreate)(isc_timermgr_t *manager,
 				       isc_timertype_t type,
 				       const isc_time_t *expires,
-				       const isc_interval_t *interval,
+				       const interval_t *interval,
 				       isc_task_t *task,
 				       isc_taskaction_t action,
 				       void *arg,
@@ -121,7 +121,7 @@ typedef struct {
 	void		(*detach)(isc_timer_t **timerp);
 	isc_result_t	(*reset)(isc_timer_t *timer, isc_timertype_t type,
 				 const isc_time_t *expires,
-				 const isc_interval_t *interval,
+				 const interval_t *interval,
 				 isc_boolean_t purge);
 	isc_result_t	(*touch)(isc_timer_t *timer);
 } isc_timermethods_t;
@@ -170,7 +170,7 @@ isc_result_t
 isc_timer_create(isc_timermgr_t *manager,
 		 isc_timertype_t type,
 		 const isc_time_t *expires,
-		 const isc_interval_t *interval,
+		 const interval_t *interval,
 		 isc_task_t *task,
 		 isc_taskaction_t action,
 		 void *arg,
@@ -234,7 +234,7 @@ isc_result_t
 isc_timer_reset(isc_timer_t *timer,
 		isc_timertype_t type,
 		const isc_time_t *expires,
-		const isc_interval_t *interval,
+		const interval_t *interval,
 		isc_boolean_t purge);
 /*%<
  * Change the timer's type, expires, and interval values to the given

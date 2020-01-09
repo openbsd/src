@@ -18,6 +18,7 @@
 
 #include <config.h>
 
+#include <stdint.h>
 #include <string.h>
 
 #include <isc/lex.h>
@@ -1995,8 +1996,8 @@ static isc_result_t
 parse_unitstring(char *str, isc_resourcevalue_t *valuep) {
 	char *endp;
 	unsigned int len;
-	isc_uint64_t value;
-	isc_uint64_t unit;
+	uint64_t value;
+	uint64_t unit;
 
 	value = isc_string_touint64(str, &endp, 10);
 	if (*endp == 0) {
@@ -2024,7 +2025,7 @@ parse_unitstring(char *str, isc_resourcevalue_t *valuep) {
 	default:
 		return (ISC_R_FAILURE);
 	}
-	if (value > ISC_UINT64_MAX / unit)
+	if (value > UINT64_MAX / unit)
 		return (ISC_R_FAILURE);
 	*valuep = value * unit;
 	return (ISC_R_SUCCESS);
@@ -2034,7 +2035,7 @@ static isc_result_t
 parse_sizeval(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
 	cfg_obj_t *obj = NULL;
-	isc_uint64_t val;
+	uint64_t val;
 
 	UNUSED(type);
 
@@ -3224,7 +3225,7 @@ static isc_result_t
 parse_ttlval(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
 	cfg_obj_t *obj = NULL;
-	isc_uint32_t ttl;
+	uint32_t ttl;
 
 	UNUSED(type);
 

@@ -18,7 +18,7 @@
 #ifndef GENERIC_NSEC3_50_H
 #define GENERIC_NSEC3_50_H 1
 
-/* $Id: nsec3_50.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: nsec3_50.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
 
 /*!
  * \brief Per RFC 5155 */
@@ -33,7 +33,7 @@ typedef struct dns_rdata_nsec3 {
 	dns_iterations_t	iterations;
 	unsigned char		salt_length;
 	unsigned char		next_length;
-	isc_uint16_t		len;
+	uint16_t		len;
 	unsigned char		*salt;
 	unsigned char		*next;
 	unsigned char		*typebits;

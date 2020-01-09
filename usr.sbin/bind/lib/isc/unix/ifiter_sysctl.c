@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ifiter_sysctl.c,v 1.5 2020/01/09 13:47:14 florian Exp $ */
+/* $Id: ifiter_sysctl.c,v 1.6 2020/01/09 18:17:19 florian Exp $ */
 
 /*! \file
  * \brief
@@ -44,7 +44,7 @@
 #define IFITER_MAGIC		ISC_MAGIC('I', 'F', 'I', 'S')
 #define VALID_IFITER(t)		ISC_MAGIC_VALID(t, IFITER_MAGIC)
 
-struct isc_interfaceiter {
+struct interfaceiter {
 	unsigned int		magic;		/* Magic number. */
 	isc_mem_t		*mctx;
 	void			*buf;		/* Buffer for sysctl data. */
@@ -52,7 +52,7 @@ struct isc_interfaceiter {
 	unsigned int		bufused;	/* Bytes used. */
 	unsigned int		pos;		/* Current offset in
 						   sysctl data. */
-	isc_interface_t		current;	/* Current interface data. */
+	interface_t		current;	/* Current interface data. */
 	isc_result_t		result;		/* Last result code. */
 };
 
@@ -66,8 +66,8 @@ static int mib[6] = {
 };
 
 isc_result_t
-isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
-	isc_interfaceiter_t *iter;
+interfaceiter_create(isc_mem_t *mctx, interfaceiter_t **iterp) {
+	interfaceiter_t *iter;
 	isc_result_t result;
 	size_t bufsize;
 	size_t bufused;
@@ -126,7 +126,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 
 	/*
 	 * A newly created iterator has an undefined position
-	 * until isc_interfaceiter_first() is called.
+	 * until interfaceiter_first() is called.
 	 */
 	iter->pos = (unsigned int) -1;
 	iter->result = ISC_R_FAILURE;
@@ -151,7 +151,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
  */
 
 static isc_result_t
-internal_current(isc_interfaceiter_t *iter) {
+internal_current(interfaceiter_t *iter) {
 	struct ifa_msghdr *ifam, *ifam_end;
 
 	REQUIRE(VALID_IFITER(iter));
@@ -255,13 +255,13 @@ internal_current(isc_interfaceiter_t *iter) {
 
 /*
  * Step the iterator to the next interface.  Unlike
- * isc_interfaceiter_next(), this may leave the iterator
+ * interfaceiter_next(), this may leave the iterator
  * positioned on an interface that will ultimately
  * be ignored.  Return ISC_R_NOMORE if there are no more
  * interfaces, otherwise ISC_R_SUCCESS.
  */
 static isc_result_t
-internal_next(isc_interfaceiter_t *iter) {
+internal_next(interfaceiter_t *iter) {
 	struct ifa_msghdr *ifam;
 	REQUIRE (iter->pos < (unsigned int) iter->bufused);
 
@@ -276,7 +276,7 @@ internal_next(isc_interfaceiter_t *iter) {
 }
 
 static void
-internal_destroy(isc_interfaceiter_t *iter) {
+internal_destroy(interfaceiter_t *iter) {
 	UNUSED(iter); /* Unused. */
 	/*
 	 * Do nothing.
@@ -284,6 +284,6 @@ internal_destroy(isc_interfaceiter_t *iter) {
 }
 
 static
-void internal_first(isc_interfaceiter_t *iter) {
+void internal_first(interfaceiter_t *iter) {
 	iter->pos = 0;
 }

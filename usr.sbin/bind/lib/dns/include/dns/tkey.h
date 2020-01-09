@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkey.h,v 1.5 2020/01/09 14:24:07 florian Exp $ */
+/* $Id: tkey.h,v 1.6 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_TKEY_H
 #define DNS_TKEY_H 1
@@ -90,7 +90,7 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 isc_result_t
 dns_tkey_builddhquery(dns_message_t *msg, dst_key_t *key, dns_name_t *name,
 		      dns_name_t *algorithm, isc_buffer_t *nonce,
-		      isc_uint32_t lifetime);
+		      uint32_t lifetime);
 /*%<
  *	Builds a query containing a TKEY that will generate a shared
  *	secret using a Diffie-Hellman key exchange.  The shared key

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: a_1.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/mx_15.h */
@@ -22,7 +22,7 @@
 #ifndef CH_3_A_1_H
 #define CH_3_A_1_H 1
 
-typedef isc_uint16_t ch_addr_t;
+typedef uint16_t ch_addr_t;
 
 typedef struct dns_rdata_ch_a {
 	dns_rdatacommon_t	common;

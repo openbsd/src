@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: soa_6.c,v 1.7 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: soa_6.c,v 1.8 2020/01/09 18:17:18 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
@@ -29,7 +29,7 @@ fromtext_soa(ARGS_FROMTEXT) {
 	dns_name_t name;
 	isc_buffer_t buffer;
 	int i;
-	isc_uint32_t n;
+	uint32_t n;
 	isc_boolean_t ok;
 
 	REQUIRE(type == dns_rdatatype_soa);

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: fsaccess.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: fsaccess.h,v 1.4 2020/01/09 18:17:19 florian Exp $ */
 
 #ifndef ISC_FSACCESS_H
 #define ISC_FSACCESS_H 1
@@ -153,7 +153,7 @@
 
 /*%
  * Adding any permission bits beyond 0x200 would mean typedef'ing
- * isc_fsaccess_t as isc_uint64_t, and redefining this value to
+ * isc_fsaccess_t as uint64_t, and redefining this value to
  * reflect the new range of permission types, Probably to 21 for
  * maximum flexibility.  The number of bits has to accommodate all of
  * the permission types, and three full sets of them have to fit

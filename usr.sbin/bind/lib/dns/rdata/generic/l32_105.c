@@ -126,7 +126,7 @@ compare_l32(ARGS_COMPARE) {
 static inline isc_result_t
 fromstruct_l32(ARGS_FROMSTRUCT) {
 	dns_rdata_l32_t *l32 = source;
-	isc_uint32_t n;
+	uint32_t n;
 
 	REQUIRE(type == dns_rdatatype_l32);
 	REQUIRE(source != NULL);
@@ -145,7 +145,7 @@ static inline isc_result_t
 tostruct_l32(ARGS_TOSTRUCT) {
 	isc_region_t region;
 	dns_rdata_l32_t *l32 = target;
-	isc_uint32_t n;
+	uint32_t n;
 
 	REQUIRE(rdata->type == dns_rdatatype_l32);
 	REQUIRE(target != NULL);

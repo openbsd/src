@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: acl.c,v 1.4 2020/01/07 19:06:07 florian Exp $ */
+/* $Id: acl.c,v 1.5 2020/01/09 18:17:14 florian Exp $ */
 
 /*! \file */
 
@@ -193,7 +193,7 @@ dns_acl_match(const isc_netaddr_t *reqaddr,
 	      int *match,
 	      const dns_aclelement_t **matchelt)
 {
-	isc_uint16_t bitlen, family;
+	uint16_t bitlen, family;
 	isc_prefix_t pfx;
 	isc_radix_node_t *node = NULL;
 	const isc_netaddr_t *addr;

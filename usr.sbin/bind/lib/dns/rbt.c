@@ -108,16 +108,16 @@ static char FILE_VERSION[32] = "\0";
 
 struct file_header {
 	char version1[32];
-	isc_uint64_t first_node_offset;	/* usually 1024 */
+	uint64_t first_node_offset;	/* usually 1024 */
 	/*
 	 * information about the system on which the map file was generated
 	 * will be used to tell if we can load the map file or not
 	 */
-	isc_uint32_t ptrsize;
+	uint32_t ptrsize;
 	unsigned int bigendian:1;	/* big or little endian system */
 	unsigned int rdataset_fixed:1;	/* compiled with --enable-rrset-fixed */
 	unsigned int nodecount;		/* shadow from rbt structure */
-	isc_uint64_t crc;
+	uint64_t crc;
 	char version2[32];  		/* repeated; must match version1 */
 };
 
@@ -144,8 +144,8 @@ static isc_result_t
 dns_rbt_zero_header(FILE *file);
 
 static isc_result_t
-write_header(FILE *file, dns_rbt_t *rbt, isc_uint64_t first_node_offset,
-	     isc_uint64_t crc);
+write_header(FILE *file, dns_rbt_t *rbt, uint64_t first_node_offset,
+	     uint64_t crc);
 
 static isc_boolean_t
 match_header_version(file_header_t *header);
@@ -153,12 +153,12 @@ match_header_version(file_header_t *header);
 static isc_result_t
 serialize_node(FILE *file, dns_rbtnode_t *node, uintptr_t left,
 	       uintptr_t right, uintptr_t down, uintptr_t parent,
-	       uintptr_t data, isc_uint64_t *crc);
+	       uintptr_t data, uint64_t *crc);
 
 static isc_result_t
 serialize_nodes(FILE *file, dns_rbtnode_t *node, uintptr_t parent,
 		dns_rbtdatawriter_t datawriter, void *writer_arg,
-		uintptr_t *where, isc_uint64_t *crc);
+		uintptr_t *where, uint64_t *crc);
 /*
  * The following functions allow you to get the actual address of a pointer
  * without having to use an if statement to check to see if that address is
@@ -461,7 +461,7 @@ static isc_result_t
 treefix(dns_rbt_t *rbt, void *base, size_t size,
 	dns_rbtnode_t *n, dns_name_t *name,
 	dns_rbtdatafixer_t datafixer, void *fixer_arg,
-	isc_uint64_t *crc);
+	uint64_t *crc);
 
 static void
 deletetreeflat(dns_rbt_t *rbt, unsigned int quantum, isc_boolean_t unhash,
@@ -515,8 +515,8 @@ init_file_version(void) {
  * here.
  */
 static isc_result_t
-write_header(FILE *file, dns_rbt_t *rbt, isc_uint64_t first_node_offset,
-	     isc_uint64_t crc)
+write_header(FILE *file, dns_rbt_t *rbt, uint64_t first_node_offset,
+	     uint64_t crc)
 {
 	file_header_t header;
 	isc_result_t result;
@@ -528,7 +528,7 @@ write_header(FILE *file, dns_rbt_t *rbt, isc_uint64_t first_node_offset,
 	memmove(header.version1, FILE_VERSION, sizeof(header.version1));
 	memmove(header.version2, FILE_VERSION, sizeof(header.version2));
 	header.first_node_offset = first_node_offset;
-	header.ptrsize = (isc_uint32_t) sizeof(void *);
+	header.ptrsize = (uint32_t) sizeof(void *);
 	header.bigendian = (1 == htonl(1)) ? 1 : 0;
 
 #ifdef DNS_RDATASET_FIXED
@@ -572,7 +572,7 @@ match_header_version(file_header_t *header) {
 static isc_result_t
 serialize_node(FILE *file, dns_rbtnode_t *node, uintptr_t left,
 	       uintptr_t right, uintptr_t down, uintptr_t parent,
-	       uintptr_t data, isc_uint64_t *crc)
+	       uintptr_t data, uint64_t *crc)
 {
 	dns_rbtnode_t temp_node;
 	off_t file_position;
@@ -642,9 +642,9 @@ serialize_node(FILE *file, dns_rbtnode_t *node, uintptr_t left,
 	hexdump("node data", node_data, datasize);
 #endif
 
-	isc_crc64_update(crc, (const isc_uint8_t *) &temp_node,
+	isc_crc64_update(crc, (const uint8_t *) &temp_node,
 			 sizeof(dns_rbtnode_t));
-	isc_crc64_update(crc, (const isc_uint8_t *) node_data, datasize);
+	isc_crc64_update(crc, (const uint8_t *) node_data, datasize);
 
  cleanup:
 	return (result);
@@ -653,7 +653,7 @@ serialize_node(FILE *file, dns_rbtnode_t *node, uintptr_t left,
 static isc_result_t
 serialize_nodes(FILE *file, dns_rbtnode_t *node, uintptr_t parent,
 		dns_rbtdatawriter_t datawriter, void *writer_arg,
-		uintptr_t *where, isc_uint64_t *crc)
+		uintptr_t *where, uint64_t *crc)
 {
 	uintptr_t left = 0, right = 0, down = 0, data = 0;
 	off_t location = 0, offset_adjust;
@@ -730,7 +730,7 @@ dns_rbt_serialize_tree(FILE *file, dns_rbt_t *rbt,
 {
 	isc_result_t result;
 	off_t header_position, node_position, end_position;
-	isc_uint64_t crc;
+	uint64_t crc;
 
 	REQUIRE(file != NULL);
 
@@ -782,7 +782,7 @@ dns_rbt_serialize_tree(FILE *file, dns_rbt_t *rbt,
 static isc_result_t
 treefix(dns_rbt_t *rbt, void *base, size_t filesize, dns_rbtnode_t *n,
 	dns_name_t *name, dns_rbtdatafixer_t datafixer,
-	void *fixer_arg, isc_uint64_t *crc)
+	void *fixer_arg, uint64_t *crc)
 {
 	isc_result_t result = ISC_R_SUCCESS;
 	dns_fixedname_t fixed;
@@ -883,9 +883,9 @@ treefix(dns_rbt_t *rbt, void *base, size_t filesize, dns_rbtnode_t *n,
 		sizeof(dns_rbtnode_t));
 	hexdump("node data", node_data, datasize);
 #endif
-	isc_crc64_update(crc, (const isc_uint8_t *) &header,
+	isc_crc64_update(crc, (const uint8_t *) &header,
 			sizeof(dns_rbtnode_t));
-	isc_crc64_update(crc, (const isc_uint8_t *) node_data,
+	isc_crc64_update(crc, (const uint8_t *) node_data,
 			datasize);
 
  cleanup:
@@ -902,7 +902,7 @@ dns_rbt_deserialize_tree(void *base_address, size_t filesize,
 	isc_result_t result = ISC_R_SUCCESS;
 	file_header_t *header;
 	dns_rbt_t *rbt = NULL;
-	isc_uint64_t crc;
+	uint64_t crc;
 	unsigned int host_big_endian;
 
 	REQUIRE(originp == NULL || *originp == NULL);
@@ -933,7 +933,7 @@ dns_rbt_deserialize_tree(void *base_address, size_t filesize,
 	}
 #endif
 
-	if (header->ptrsize != (isc_uint32_t) sizeof(void *)) {
+	if (header->ptrsize != (uint32_t) sizeof(void *)) {
 		result = ISC_R_INVALIDFILE;
 		goto cleanup;
 	}

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: nsec3_50.c,v 1.4 2020/01/09 18:17:17 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -113,7 +113,7 @@ totext_nsec3(ARGS_TOTEXT) {
 	unsigned char hash;
 	unsigned char flags;
 	char buf[sizeof("TYPE65535")];
-	isc_uint32_t iterations;
+	uint32_t iterations;
 
 	REQUIRE(rdata->type == dns_rdatatype_nsec3);
 	REQUIRE(rdata->length != 0);

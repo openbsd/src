@@ -31,7 +31,7 @@ fromtext_keydata(ARGS_FROMTEXT) {
 	dns_secalg_t alg;
 	dns_secproto_t proto;
 	dns_keyflags_t flags;
-	isc_uint32_t refresh, addhd, removehd;
+	uint32_t refresh, addhd, removehd;
 
 	REQUIRE(type == dns_rdatatype_keydata);
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.4 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: a_1.c,v 1.5 2020/01/09 18:17:17 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -71,7 +71,7 @@ totext_ch_a(ARGS_TOTEXT) {
 	dns_name_t prefix;
 	isc_boolean_t sub;
 	char buf[sizeof("0177777")];
-	isc_uint16_t addr;
+	uint16_t addr;
 
 	REQUIRE(rdata->type == dns_rdatatype_a);
 	REQUIRE(rdata->rdclass == dns_rdataclass_ch); /* 3 */

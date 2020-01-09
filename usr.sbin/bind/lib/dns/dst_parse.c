@@ -33,7 +33,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $Id: dst_parse.c,v 1.6 2020/01/09 13:52:23 florian Exp $
+ * $Id: dst_parse.c,v 1.7 2020/01/09 18:17:15 florian Exp $
  */
 
 #include <config.h>
@@ -573,7 +573,7 @@ dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
 	char buffer[MAXFIELDSIZE * 2];
 	isc_fsaccess_t access;
 	isc_stdtime_t when;
-	isc_uint32_t value;
+	uint32_t value;
 	isc_buffer_t b;
 	isc_region_t r;
 	int major, minor;

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: a_1.c,v 1.4 2020/01/09 18:17:18 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -132,7 +132,7 @@ compare_in_a(ARGS_COMPARE) {
 static inline isc_result_t
 fromstruct_in_a(ARGS_FROMSTRUCT) {
 	dns_rdata_in_a_t *a = source;
-	isc_uint32_t n;
+	uint32_t n;
 
 	REQUIRE(type == dns_rdatatype_a);
 	REQUIRE(rdclass == dns_rdataclass_in);
@@ -152,7 +152,7 @@ fromstruct_in_a(ARGS_FROMSTRUCT) {
 static inline isc_result_t
 tostruct_in_a(ARGS_TOSTRUCT) {
 	dns_rdata_in_a_t *a = target;
-	isc_uint32_t n;
+	uint32_t n;
 	isc_region_t region;
 
 	REQUIRE(rdata->type == dns_rdatatype_a);

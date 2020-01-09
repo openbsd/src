@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: serial.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: serial.h,v 1.4 2020/01/09 18:17:19 florian Exp $ */
 
 #ifndef ISC_SERIAL_H
 #define ISC_SERIAL_H 1
@@ -34,37 +34,37 @@
 ISC_LANG_BEGINDECLS
 
 isc_boolean_t
-isc_serial_lt(isc_uint32_t a, isc_uint32_t b);
+isc_serial_lt(uint32_t a, uint32_t b);
 /*%<
  *	Return true if 'a' < 'b' otherwise false.
  */
 
 isc_boolean_t
-isc_serial_gt(isc_uint32_t a, isc_uint32_t b);
+isc_serial_gt(uint32_t a, uint32_t b);
 /*%<
  *	Return true if 'a' > 'b' otherwise false.
  */
 
 isc_boolean_t
-isc_serial_le(isc_uint32_t a, isc_uint32_t b);
+isc_serial_le(uint32_t a, uint32_t b);
 /*%<
  *	Return true if 'a' <= 'b' otherwise false.
  */
 
 isc_boolean_t
-isc_serial_ge(isc_uint32_t a, isc_uint32_t b);
+isc_serial_ge(uint32_t a, uint32_t b);
 /*%<
  *	Return true if 'a' >= 'b' otherwise false.
  */
 
 isc_boolean_t
-isc_serial_eq(isc_uint32_t a, isc_uint32_t b);
+isc_serial_eq(uint32_t a, uint32_t b);
 /*%<
  *	Return true if 'a' == 'b' otherwise false.
  */
 
 isc_boolean_t
-isc_serial_ne(isc_uint32_t a, isc_uint32_t b);
+isc_serial_ne(uint32_t a, uint32_t b);
 /*%<
  *	Return true if 'a' != 'b' otherwise false.
  */

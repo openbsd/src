@@ -17,7 +17,7 @@
 #ifndef IN_1_NSAP_22_H
 #define IN_1_NSAP_22_H 1
 
-/* $Id: nsap_22.h,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: nsap_22.h,v 1.4 2020/01/09 18:17:18 florian Exp $ */
 
 /*!
  *  \brief Per RFC1706 */
@@ -26,7 +26,7 @@ typedef struct dns_rdata_in_nsap {
 	dns_rdatacommon_t	common;
 	isc_mem_t		*mctx;
 	unsigned char		*nsap;
-	isc_uint16_t		nsap_len;
+	uint16_t		nsap_len;
 } dns_rdata_in_nsap_t;
 
 #endif /* IN_1_NSAP_22_H */

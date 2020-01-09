@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: radix.h,v 1.2 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: radix.h,v 1.3 2020/01/09 18:17:19 florian Exp $ */
 
 /*
  * This source was adapted from MRT's RCS Ids:
@@ -93,7 +93,7 @@ typedef void (*isc_radix_processfunc_t)(isc_prefix_t *, void **);
 #define ISC_IS6(family) ((family) == AF_INET6 ? 1 : 0)
 typedef struct isc_radix_node {
 	isc_mem_t *mctx;
-	isc_uint32_t bit;		/* bit length of the prefix */
+	uint32_t bit;		/* bit length of the prefix */
 	isc_prefix_t *prefix;		/* who we are in radix tree */
 	struct isc_radix_node *l, *r;	/* left and right children */
 	struct isc_radix_node *parent;	/* may be used */
@@ -109,7 +109,7 @@ typedef struct isc_radix_tree {
 	unsigned int magic;
 	isc_mem_t *mctx;
 	isc_radix_node_t *head;
-	isc_uint32_t maxbits;		/* for IP, 32 bit addresses */
+	uint32_t maxbits;		/* for IP, 32 bit addresses */
 	int num_active_node;		/* for debugging purposes */
 	int num_added_node;		/* total number of nodes */
 } isc_radix_tree_t;

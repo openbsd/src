@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tcpmsg.h,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: tcpmsg.h,v 1.4 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_TCPMSG_H
 #define DNS_TCPMSG_H 1
@@ -28,7 +28,7 @@
 typedef struct dns_tcpmsg {
 	/* private (don't touch!) */
 	unsigned int		magic;
-	isc_uint16_t		size;
+	uint16_t		size;
 	isc_buffer_t		buffer;
 	unsigned int		maxsize;
 	isc_mem_t	       *mctx;

@@ -214,11 +214,11 @@ convert_keyname(const cfg_obj_t *keyobj, isc_log_t *lctx, isc_mem_t *mctx,
 static isc_result_t
 count_acl_elements(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 		   isc_log_t *lctx, cfg_aclconfctx_t *ctx, isc_mem_t *mctx,
-		   isc_uint32_t *count, isc_boolean_t *has_negative)
+		   uint32_t *count, isc_boolean_t *has_negative)
 {
 	const cfg_listelt_t *elt;
 	isc_result_t result;
-	isc_uint32_t n = 0;
+	uint32_t n = 0;
 
 	REQUIRE(count != NULL);
 
@@ -245,7 +245,7 @@ count_acl_elements(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 			n++;
 		} else if (cfg_obj_islist(ce)) {
 			isc_boolean_t negative;
-			isc_uint32_t sub;
+			uint32_t sub;
 			result = count_acl_elements(ce, cctx, lctx, ctx, mctx,
 						    &sub, &negative);
 			if (result != ISC_R_SUCCESS)
@@ -298,7 +298,7 @@ isc_result_t
 cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 		   isc_log_t *lctx, cfg_aclconfctx_t *ctx,
 		   isc_mem_t *mctx, unsigned int nest_level,
-		   isc_uint16_t family, dns_acl_t **target)
+		   uint16_t family, dns_acl_t **target)
 {
 	isc_result_t result;
 	dns_acl_t *dacl = NULL, *inneracl = NULL;
@@ -329,7 +329,7 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 		 * elements table.  (Note that if nest_level is nonzero,
 		 * *everything* goes in the elements table.)
 		 */
-		isc_uint32_t nelem;
+		uint32_t nelem;
 
 		if (nest_level == 0) {
 			result = count_acl_elements(caml, cctx, lctx, ctx,

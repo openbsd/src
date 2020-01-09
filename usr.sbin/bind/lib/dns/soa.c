@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: soa.c,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: soa.c,v 1.4 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -28,7 +28,7 @@
 #include <dns/rdatastruct.h>
 #include <dns/soa.h>
 
-static inline isc_uint32_t
+static inline uint32_t
 decode_uint32(unsigned char *p) {
 	return ((p[0] << 24) +
 		(p[1] << 16) +
@@ -37,14 +37,14 @@ decode_uint32(unsigned char *p) {
 }
 
 static inline void
-encode_uint32(isc_uint32_t val, unsigned char *p) {
-	p[0] = (isc_uint8_t)(val >> 24);
-	p[1] = (isc_uint8_t)(val >> 16);
-	p[2] = (isc_uint8_t)(val >>  8);
-	p[3] = (isc_uint8_t)(val >>  0);
+encode_uint32(uint32_t val, unsigned char *p) {
+	p[0] = (uint8_t)(val >> 24);
+	p[1] = (uint8_t)(val >> 16);
+	p[2] = (uint8_t)(val >>  8);
+	p[3] = (uint8_t)(val >>  0);
 }
 
-static isc_uint32_t
+static uint32_t
 soa_get(dns_rdata_t *rdata, int offset) {
 	INSIST(rdata->type == dns_rdatatype_soa);
 	/*
@@ -65,9 +65,9 @@ soa_get(dns_rdata_t *rdata, int offset) {
 isc_result_t
 dns_soa_buildrdata(dns_name_t *origin, dns_name_t *contact,
 		   dns_rdataclass_t rdclass,
-		   isc_uint32_t serial, isc_uint32_t refresh,
-		   isc_uint32_t retry, isc_uint32_t expire,
-		   isc_uint32_t minimum, unsigned char *buffer,
+		   uint32_t serial, uint32_t refresh,
+		   uint32_t retry, uint32_t expire,
+		   uint32_t minimum, unsigned char *buffer,
 		   dns_rdata_t *rdata) {
 	dns_rdata_soa_t soa;
 	isc_buffer_t rdatabuf;
@@ -95,29 +95,29 @@ dns_soa_buildrdata(dns_name_t *origin, dns_name_t *contact,
 				      &soa, &rdatabuf));
 }
 
-isc_uint32_t
+uint32_t
 dns_soa_getserial(dns_rdata_t *rdata) {
 	return soa_get(rdata, 0);
 }
-isc_uint32_t
+uint32_t
 dns_soa_getrefresh(dns_rdata_t *rdata) {
 	return soa_get(rdata, 4);
 }
-isc_uint32_t
+uint32_t
 dns_soa_getretry(dns_rdata_t *rdata) {
 	return soa_get(rdata, 8);
 }
-isc_uint32_t
+uint32_t
 dns_soa_getexpire(dns_rdata_t *rdata) {
 	return soa_get(rdata, 12);
 }
-isc_uint32_t
+uint32_t
 dns_soa_getminimum(dns_rdata_t *rdata) {
 	return soa_get(rdata, 16);
 }
 
 static void
-soa_set(dns_rdata_t *rdata, isc_uint32_t val, int offset) {
+soa_set(dns_rdata_t *rdata, uint32_t val, int offset) {
 	INSIST(rdata->type == dns_rdatatype_soa);
 	INSIST(rdata->length >= 20);
 	INSIST(offset >= 0 && offset <= 16);
@@ -125,22 +125,22 @@ soa_set(dns_rdata_t *rdata, isc_uint32_t val, int offset) {
 }
 
 void
-dns_soa_setserial(isc_uint32_t val, dns_rdata_t *rdata) {
+dns_soa_setserial(uint32_t val, dns_rdata_t *rdata) {
 	soa_set(rdata, val, 0);
 }
 void
-dns_soa_setrefresh(isc_uint32_t val, dns_rdata_t *rdata) {
+dns_soa_setrefresh(uint32_t val, dns_rdata_t *rdata) {
 	soa_set(rdata, val, 4);
 }
 void
-dns_soa_setretry(isc_uint32_t val, dns_rdata_t *rdata) {
+dns_soa_setretry(uint32_t val, dns_rdata_t *rdata) {
 	soa_set(rdata, val, 8);
 }
 void
-dns_soa_setexpire(isc_uint32_t val, dns_rdata_t *rdata) {
+dns_soa_setexpire(uint32_t val, dns_rdata_t *rdata) {
 	soa_set(rdata, val, 12);
 }
 void
-dns_soa_setminimum(isc_uint32_t val, dns_rdata_t *rdata) {
+dns_soa_setminimum(uint32_t val, dns_rdata_t *rdata) {
 	soa_set(rdata, val, 16);
 }

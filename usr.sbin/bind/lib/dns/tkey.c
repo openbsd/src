@@ -112,7 +112,7 @@ dns_tkeyctx_destroy(dns_tkeyctx_t **tctxp) {
 
 static isc_result_t
 add_rdata_to_list(dns_message_t *msg, dns_name_t *name, dns_rdata_t *rdata,
-		isc_uint32_t ttl, dns_namelist_t *namelist)
+		uint32_t ttl, dns_namelist_t *namelist)
 {
 	isc_result_t result;
 	isc_region_t r, newr;
@@ -684,7 +684,7 @@ buildquery(dns_message_t *msg, dns_name_t *name,
 isc_result_t
 dns_tkey_builddhquery(dns_message_t *msg, dst_key_t *key, dns_name_t *name,
 		      dns_name_t *algorithm, isc_buffer_t *nonce,
-		      isc_uint32_t lifetime)
+		      uint32_t lifetime)
 {
 	dns_rdata_tkey_t tkey;
 	dns_rdata_t *rdata = NULL;

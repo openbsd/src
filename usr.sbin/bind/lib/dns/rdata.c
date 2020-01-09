@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.15 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: rdata.c,v 1.16 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -180,27 +180,27 @@ static void
 buffer_fromregion(isc_buffer_t *buffer, isc_region_t *region);
 
 static isc_result_t
-uint32_tobuffer(isc_uint32_t, isc_buffer_t *target);
+uint32_tobuffer(uint32_t, isc_buffer_t *target);
 
 static isc_result_t
-uint16_tobuffer(isc_uint32_t, isc_buffer_t *target);
+uint16_tobuffer(uint32_t, isc_buffer_t *target);
 
 static isc_result_t
-uint8_tobuffer(isc_uint32_t, isc_buffer_t *target);
+uint8_tobuffer(uint32_t, isc_buffer_t *target);
 
 static isc_result_t
 name_tobuffer(dns_name_t *name, isc_buffer_t *target);
 
-static isc_uint32_t
+static uint32_t
 uint32_fromregion(isc_region_t *region);
 
-static isc_uint16_t
+static uint16_t
 uint16_fromregion(isc_region_t *region);
 
-static isc_uint8_t
+static uint8_t
 uint8_fromregion(isc_region_t *region);
 
-static isc_uint8_t
+static uint8_t
 uint8_consume_fromregion(isc_region_t *region);
 
 static isc_result_t
@@ -242,7 +242,7 @@ static void
 warn_badmx(isc_token_t *token, isc_lex_t *lexer,
 	   dns_rdatacallbacks_t *callbacks);
 
-static isc_uint16_t
+static uint16_t
 uint16_consume_fromregion(isc_region_t *region);
 
 static isc_result_t
@@ -770,7 +770,7 @@ dns_rdata_fromwire(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	isc_buffer_t ss;
 	isc_buffer_t st;
 	isc_boolean_t use_default = ISC_FALSE;
-	isc_uint32_t activelength;
+	uint32_t activelength;
 	unsigned int length;
 
 	REQUIRE(dctx != NULL);
@@ -865,7 +865,7 @@ dns_rdata_towire(dns_rdata_t *rdata, dns_compress_t *cctx,
 	if (result != ISC_R_SUCCESS) {
 		*target = st;
 		INSIST(target->used < 65536);
-		dns_compress_rollback(cctx, (isc_uint16_t)target->used);
+		dns_compress_rollback(cctx, (uint16_t)target->used);
 	}
 	return (result);
 }
@@ -1763,7 +1763,7 @@ buffer_fromregion(isc_buffer_t *buffer, isc_region_t *region) {
 }
 
 static isc_result_t
-uint32_tobuffer(isc_uint32_t value, isc_buffer_t *target) {
+uint32_tobuffer(uint32_t value, isc_buffer_t *target) {
 	isc_region_t region;
 
 	isc_buffer_availableregion(target, &region);
@@ -1774,7 +1774,7 @@ uint32_tobuffer(isc_uint32_t value, isc_buffer_t *target) {
 }
 
 static isc_result_t
-uint16_tobuffer(isc_uint32_t value, isc_buffer_t *target) {
+uint16_tobuffer(uint32_t value, isc_buffer_t *target) {
 	isc_region_t region;
 
 	if (value > 0xffff)
@@ -1782,12 +1782,12 @@ uint16_tobuffer(isc_uint32_t value, isc_buffer_t *target) {
 	isc_buffer_availableregion(target, &region);
 	if (region.length < 2)
 		return (ISC_R_NOSPACE);
-	isc_buffer_putuint16(target, (isc_uint16_t)value);
+	isc_buffer_putuint16(target, (uint16_t)value);
 	return (ISC_R_SUCCESS);
 }
 
 static isc_result_t
-uint8_tobuffer(isc_uint32_t value, isc_buffer_t *target) {
+uint8_tobuffer(uint32_t value, isc_buffer_t *target) {
 	isc_region_t region;
 
 	if (value > 0xff)
@@ -1795,7 +1795,7 @@ uint8_tobuffer(isc_uint32_t value, isc_buffer_t *target) {
 	isc_buffer_availableregion(target, &region);
 	if (region.length < 1)
 		return (ISC_R_NOSPACE);
-	isc_buffer_putuint8(target, (isc_uint8_t)value);
+	isc_buffer_putuint8(target, (uint8_t)value);
 	return (ISC_R_SUCCESS);
 }
 
@@ -1806,9 +1806,9 @@ name_tobuffer(dns_name_t *name, isc_buffer_t *target) {
 	return (isc_buffer_copyregion(target, &r));
 }
 
-static isc_uint32_t
+static uint32_t
 uint32_fromregion(isc_region_t *region) {
-	isc_uint32_t value;
+	uint32_t value;
 
 	REQUIRE(region->length >= 4);
 	value = region->base[0] << 24;
@@ -1818,15 +1818,15 @@ uint32_fromregion(isc_region_t *region) {
 	return(value);
 }
 
-static isc_uint16_t
+static uint16_t
 uint16_consume_fromregion(isc_region_t *region) {
-	isc_uint16_t r = uint16_fromregion(region);
+	uint16_t r = uint16_fromregion(region);
 
 	isc_region_consume(region, 2);
 	return r;
 }
 
-static isc_uint16_t
+static uint16_t
 uint16_fromregion(isc_region_t *region) {
 
 	REQUIRE(region->length >= 2);
@@ -1834,7 +1834,7 @@ uint16_fromregion(isc_region_t *region) {
 	return ((region->base[0] << 8) | region->base[1]);
 }
 
-static isc_uint8_t
+static uint8_t
 uint8_fromregion(isc_region_t *region) {
 
 	REQUIRE(region->length >= 1);
@@ -1842,9 +1842,9 @@ uint8_fromregion(isc_region_t *region) {
 	return (region->base[0]);
 }
 
-static isc_uint8_t
+static uint8_t
 uint8_consume_fromregion(isc_region_t *region) {
-	isc_uint8_t r = uint8_fromregion(region);
+	uint8_t r = uint8_fromregion(region);
 
 	isc_region_consume(region, 1);
 	return r;
@@ -1916,11 +1916,11 @@ static const char atob_digits[86] =
 
 
 struct state {
-	isc_int32_t Ceor;
-	isc_int32_t Csum;
-	isc_int32_t Crot;
-	isc_int32_t word;
-	isc_int32_t bcount;
+	int32_t Ceor;
+	int32_t Csum;
+	int32_t Crot;
+	int32_t word;
+	int32_t bcount;
 };
 
 #define Ceor state->Ceor
@@ -1954,15 +1954,15 @@ byte_atob(int c, isc_buffer_t *target, struct state *state) {
 		}
 	} else if ((s = strchr(atob_digits, c)) != NULL) {
 		if (bcount == 0) {
-			word = (isc_int32_t)(s - atob_digits);
+			word = (int32_t)(s - atob_digits);
 			++bcount;
 		} else if (bcount < 4) {
 			word = times85(word);
-			word += (isc_int32_t)(s - atob_digits);
+			word += (int32_t)(s - atob_digits);
 			++bcount;
 		} else {
 			word = times85(word);
-			word += (isc_int32_t)(s - atob_digits);
+			word += (int32_t)(s - atob_digits);
 			RETERR(putbyte((word >> 24) & 0xff, target, state));
 			RETERR(putbyte((word >> 16) & 0xff, target, state));
 			RETERR(putbyte((word >> 8) & 0xff, target, state));
@@ -2107,25 +2107,25 @@ byte_btoa(int c, isc_buffer_t *target, struct state *state) {
 			isc_buffer_add(target, 1);
 		} else {
 		    register int tmp = 0;
-		    register isc_int32_t tmpword = word;
+		    register int32_t tmpword = word;
 
 		    if (tmpword < 0) {
 			   /*
 			    * Because some don't support u_long.
 			    */
 			tmp = 32;
-			tmpword -= (isc_int32_t)(85 * 85 * 85 * 85 * 32);
+			tmpword -= (int32_t)(85 * 85 * 85 * 85 * 32);
 		    }
 		    if (tmpword < 0) {
 			tmp = 64;
-			tmpword -= (isc_int32_t)(85 * 85 * 85 * 85 * 32);
+			tmpword -= (int32_t)(85 * 85 * 85 * 85 * 32);
 		    }
 			if (tr.length < 5)
 				return (ISC_R_NOSPACE);
 			tr.base[0] = atob_digits[(tmpword /
-					      (isc_int32_t)(85 * 85 * 85 * 85))
+					      (int32_t)(85 * 85 * 85 * 85))
 						+ tmp];
-			tmpword %= (isc_int32_t)(85 * 85 * 85 * 85);
+			tmpword %= (int32_t)(85 * 85 * 85 * 85);
 			tr.base[1] = atob_digits[tmpword / (85 * 85 * 85)];
 			tmpword %= (85 * 85 * 85);
 			tr.base[2] = atob_digits[tmpword / (85 * 85)];

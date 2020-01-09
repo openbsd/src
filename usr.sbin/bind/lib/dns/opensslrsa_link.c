@@ -1069,13 +1069,13 @@ opensslrsa_todns(const dst_key_t *key, isc_buffer_t *data) {
 	if (e_bytes < 256) {	/*%< key exponent is <= 2040 bits */
 		if (r.length < 1)
 			DST_RET(ISC_R_NOSPACE);
-		isc_buffer_putuint8(data, (isc_uint8_t) e_bytes);
+		isc_buffer_putuint8(data, (uint8_t) e_bytes);
 		isc_region_consume(&r, 1);
 	} else {
 		if (r.length < 3)
 			DST_RET(ISC_R_NOSPACE);
 		isc_buffer_putuint8(data, 0);
-		isc_buffer_putuint16(data, (isc_uint16_t) e_bytes);
+		isc_buffer_putuint16(data, (uint16_t) e_bytes);
 		isc_region_consume(&r, 3);
 	}
 

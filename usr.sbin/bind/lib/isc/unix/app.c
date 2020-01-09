@@ -408,7 +408,7 @@ evloop(isc__appctx_t *ctx) {
 			if (result != ISC_R_SUCCESS)
 				tvp = NULL;
 			else {
-				isc_uint64_t us;
+				uint64_t us;
 
 				TIME_NOW(&now);
 				us = isc_time_microdiff(&when, &now);

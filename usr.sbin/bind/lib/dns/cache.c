@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cache.c,v 1.10 2020/01/09 18:14:48 florian Exp $ */
+/* $Id: cache.c,v 1.11 2020/01/09 18:17:14 florian Exp $ */
 
 /*! \file */
 
@@ -525,7 +525,7 @@ dns_cache_dump(dns_cache_t *cache) {
 
 void
 dns_cache_setcleaninginterval(dns_cache_t *cache, unsigned int t) {
-	isc_interval_t interval;
+	interval_t interval;
 	isc_result_t result;
 
 	LOCK(&cache->lock);
@@ -544,7 +544,7 @@ dns_cache_setcleaninginterval(dns_cache_t *cache, unsigned int t) {
 					 isc_timertype_inactive,
 					 NULL, NULL, ISC_TRUE);
 	} else {
-		isc_interval_set(&interval, cache->cleaner.cleaning_interval,
+		interval_set(&interval, cache->cleaner.cleaning_interval,
 				 0);
 		result = isc_timer_reset(cache->cleaner.cleaning_timer,
 					 isc_timertype_ticker,
@@ -1299,7 +1299,7 @@ dns_cache_flushnode(dns_cache_t *cache, dns_name_t *name,
 #ifdef HAVE_LIBXML2
 #define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
 static int
-renderstat(const char *name, isc_uint64_t value, xmlTextWriterPtr writer) {
+renderstat(const char *name, uint64_t value, xmlTextWriterPtr writer) {
 	int xmlrc;
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counter"));
@@ -1317,7 +1317,7 @@ error:
 int
 dns_cache_renderxml(dns_cache_t *cache, xmlTextWriterPtr writer) {
 	int indices[dns_cachestatscounter_max];
-	isc_uint64_t values[dns_cachestatscounter_max];
+	uint64_t values[dns_cachestatscounter_max];
 	int xmlrc;
 
 	REQUIRE(VALID_CACHE(cache));
@@ -1364,7 +1364,7 @@ isc_result_t
 dns_cache_renderjson(dns_cache_t *cache, json_object *cstats) {
 	isc_result_t result = ISC_R_SUCCESS;
 	int indices[dns_cachestatscounter_max];
-	isc_uint64_t values[dns_cachestatscounter_max];
+	uint64_t values[dns_cachestatscounter_max];
 	json_object *obj;
 
 	REQUIRE(VALID_CACHE(cache));

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: db.h,v 1.7 2020/01/09 18:14:48 florian Exp $ */
+/* $Id: db.h,v 1.8 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -158,8 +158,8 @@ typedef struct dns_dbmethods {
 	isc_result_t    (*getnsec3parameters)(dns_db_t *db,
 					      dns_dbversion_t *version,
 					      dns_hash_t *hash,
-					      isc_uint8_t *flags,
-					      isc_uint16_t *iterations,
+					      uint8_t *flags,
+					      uint16_t *iterations,
 					      unsigned char *salt,
 					      size_t *salt_len);
 	isc_result_t    (*findnsec3node)(dns_db_t *db, dns_name_t *name,
@@ -195,7 +195,7 @@ typedef struct dns_dbmethods {
 	isc_result_t	(*setcachestats)(dns_db_t *db, isc_stats_t *stats);
 	size_t		(*hashsize)(dns_db_t *db);
 	isc_result_t	(*getsize)(dns_db_t *db, dns_dbversion_t *version,
-				   isc_uint64_t *records, isc_uint64_t *bytes);
+				   uint64_t *records, uint64_t *bytes);
 } dns_dbmethods_t;
 
 typedef isc_result_t
@@ -220,7 +220,7 @@ struct dns_db {
 	unsigned int			magic;
 	unsigned int			impmagic;
 	dns_dbmethods_t *		methods;
-	isc_uint16_t			attributes;
+	uint16_t			attributes;
 	dns_rdataclass_t		rdclass;
 	dns_name_t			origin;
 	isc_ondestroy_t			ondest;
@@ -1331,7 +1331,7 @@ dns_db_deleterdataset(dns_db_t *db, dns_dbnode_t *node,
  */
 
 isc_result_t
-dns_db_getsoaserial(dns_db_t *db, dns_dbversion_t *ver, isc_uint32_t *serialp);
+dns_db_getsoaserial(dns_db_t *db, dns_dbversion_t *ver, uint32_t *serialp);
 /*%<
  * Get the current SOA serial number from a zone database.
  *
@@ -1462,8 +1462,8 @@ dns_db_getoriginnode(dns_db_t *db, dns_dbnode_t **nodep);
 
 isc_result_t
 dns_db_getnsec3parameters(dns_db_t *db, dns_dbversion_t *version,
-			  dns_hash_t *hash, isc_uint8_t *flags,
-			  isc_uint16_t *interations,
+			  dns_hash_t *hash, uint8_t *flags,
+			  uint16_t *interations,
 			  unsigned char *salt, size_t *salt_length);
 /*%<
  * Get the NSEC3 parameters that are associated with this zone.
@@ -1478,8 +1478,8 @@ dns_db_getnsec3parameters(dns_db_t *db, dns_dbversion_t *version,
  */
 
 isc_result_t
-dns_db_getsize(dns_db_t *db, dns_dbversion_t *version, isc_uint64_t *records,
-	       isc_uint64_t *bytes);
+dns_db_getsize(dns_db_t *db, dns_dbversion_t *version, uint64_t *records,
+	       uint64_t *bytes);
 /*%<
  * Get the number of records in the given version of the database as well
  * as the number bytes used to store those records.

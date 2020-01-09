@@ -14,10 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha1.c,v 1.7 2020/01/09 13:52:23 florian Exp $ */
+/* $Id: sha1.c,v 1.8 2020/01/09 18:17:19 florian Exp $ */
 
 /*	$NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
-/*	$OpenBSD: sha1.c,v 1.7 2020/01/09 13:52:23 florian Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.8 2020/01/09 18:17:19 florian Exp $	*/
 
 /*! \file
  * SHA-1 in C
@@ -143,14 +143,14 @@ typedef union {
 } CHAR64LONG16;
 
 #ifdef __sparc_v9__
-static void do_R01(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c,
-		   isc_uint32_t *d, isc_uint32_t *e, CHAR64LONG16 *);
-static void do_R2(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c,
-		  isc_uint32_t *d, isc_uint32_t *e, CHAR64LONG16 *);
-static void do_R3(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c,
-		  isc_uint32_t *d, isc_uint32_t *e, CHAR64LONG16 *);
-static void do_R4(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c,
-		  isc_uint32_t *d, isc_uint32_t *e, CHAR64LONG16 *);
+static void do_R01(uint32_t *a, uint32_t *b, uint32_t *c,
+		   uint32_t *d, uint32_t *e, CHAR64LONG16 *);
+static void do_R2(uint32_t *a, uint32_t *b, uint32_t *c,
+		  uint32_t *d, uint32_t *e, CHAR64LONG16 *);
+static void do_R3(uint32_t *a, uint32_t *b, uint32_t *c,
+		  uint32_t *d, uint32_t *e, CHAR64LONG16 *);
+static void do_R4(uint32_t *a, uint32_t *b, uint32_t *c,
+		  uint32_t *d, uint32_t *e, CHAR64LONG16 *);
 
 #define nR0(v,w,x,y,z,i) R0(*v,*w,*x,*y,*z,i)
 #define nR1(v,w,x,y,z,i) R1(*v,*w,*x,*y,*z,i)
@@ -159,8 +159,8 @@ static void do_R4(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c,
 #define nR4(v,w,x,y,z,i) R4(*v,*w,*x,*y,*z,i)
 
 static void
-do_R01(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c, isc_uint32_t *d,
-       isc_uint32_t *e, CHAR64LONG16 *block)
+do_R01(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d,
+       uint32_t *e, CHAR64LONG16 *block)
 {
 	nR0(a,b,c,d,e, 0); nR0(e,a,b,c,d, 1); nR0(d,e,a,b,c, 2);
 	nR0(c,d,e,a,b, 3); nR0(b,c,d,e,a, 4); nR0(a,b,c,d,e, 5);
@@ -172,8 +172,8 @@ do_R01(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c, isc_uint32_t *d,
 }
 
 static void
-do_R2(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c, isc_uint32_t *d,
-      isc_uint32_t *e, CHAR64LONG16 *block)
+do_R2(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d,
+      uint32_t *e, CHAR64LONG16 *block)
 {
 	nR2(a,b,c,d,e,20); nR2(e,a,b,c,d,21); nR2(d,e,a,b,c,22);
 	nR2(c,d,e,a,b,23); nR2(b,c,d,e,a,24); nR2(a,b,c,d,e,25);
@@ -185,8 +185,8 @@ do_R2(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c, isc_uint32_t *d,
 }
 
 static void
-do_R3(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c, isc_uint32_t *d,
-      isc_uint32_t *e, CHAR64LONG16 *block)
+do_R3(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d,
+      uint32_t *e, CHAR64LONG16 *block)
 {
 	nR3(a,b,c,d,e,40); nR3(e,a,b,c,d,41); nR3(d,e,a,b,c,42);
 	nR3(c,d,e,a,b,43); nR3(b,c,d,e,a,44); nR3(a,b,c,d,e,45);
@@ -198,8 +198,8 @@ do_R3(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c, isc_uint32_t *d,
 }
 
 static void
-do_R4(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c, isc_uint32_t *d,
-      isc_uint32_t *e, CHAR64LONG16 *block)
+do_R4(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d,
+      uint32_t *e, CHAR64LONG16 *block)
 {
 	nR4(a,b,c,d,e,60); nR4(e,a,b,c,d,61); nR4(d,e,a,b,c,62);
 	nR4(c,d,e,a,b,63); nR4(b,c,d,e,a,64); nR4(a,b,c,d,e,65);
@@ -215,8 +215,8 @@ do_R4(isc_uint32_t *a, isc_uint32_t *b, isc_uint32_t *c, isc_uint32_t *d,
  * Hash a single 512-bit block. This is the core of the algorithm.
  */
 static void
-transform(isc_uint32_t state[5], const unsigned char buffer[64]) {
-	isc_uint32_t a, b, c, d, e;
+transform(uint32_t state[5], const unsigned char buffer[64]) {
+	uint32_t a, b, c, d, e;
 	CHAR64LONG16 *block;
 	CHAR64LONG16 workspace;
 

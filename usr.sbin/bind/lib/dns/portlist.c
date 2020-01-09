@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: portlist.c,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: portlist.c,v 1.4 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -40,7 +40,7 @@
 
 typedef struct dns_element {
 	in_port_t	port;
-	isc_uint16_t	flags;
+	uint16_t	flags;
 } dns_element_t;
 
 struct dns_portlist {

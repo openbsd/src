@@ -14,17 +14,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: bit.h,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: bit.h,v 1.4 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_BIT_H
 #define DNS_BIT_H 1
 
 /*! \file dns/bit.h */
 
-#include <isc/int.h>
+
 #include <isc/boolean.h>
 
-typedef isc_uint64_t dns_bitset_t;
+typedef uint64_t dns_bitset_t;
 
 #define DNS_BIT_SET(bit, bitset) \
      (*(bitset) |= ((dns_bitset_t)1 << (bit)))

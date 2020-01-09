@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ttl.h,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: ttl.h,v 1.4 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_TTL_H
 #define DNS_TTL_H 1
@@ -35,7 +35,7 @@ ISC_LANG_BEGINDECLS
  ***/
 
 isc_result_t
-dns_ttl_totext(isc_uint32_t src, isc_boolean_t verbose,
+dns_ttl_totext(uint32_t src, isc_boolean_t verbose,
 	       isc_buffer_t *target);
 /*%<
  * Output a TTL or other time interval in a human-readable form.
@@ -53,7 +53,7 @@ dns_ttl_totext(isc_uint32_t src, isc_boolean_t verbose,
  */
 
 isc_result_t
-dns_counter_fromtext(isc_textregion_t *source, isc_uint32_t *ttl);
+dns_counter_fromtext(isc_textregion_t *source, uint32_t *ttl);
 /*%<
  * Converts a counter from either a plain number or a BIND 8 style value.
  *
@@ -63,7 +63,7 @@ dns_counter_fromtext(isc_textregion_t *source, isc_uint32_t *ttl);
  */
 
 isc_result_t
-dns_ttl_fromtext(isc_textregion_t *source, isc_uint32_t *ttl);
+dns_ttl_fromtext(isc_textregion_t *source, uint32_t *ttl);
 /*%<
  * Converts a ttl from either a plain number or a BIND 8 style value.
  *

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.28 2020/01/09 14:24:07 florian Exp $ */
+/* $Id: dighost.c,v 1.29 2020/01/09 18:17:14 florian Exp $ */
 
 /*! \file
  *  \note
@@ -1102,9 +1102,9 @@ setup_text_key(void) {
 }
 
 static isc_result_t
-parse_uint_helper(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+parse_uint_helper(uint32_t *uip, const char *value, uint32_t max,
 		  const char *desc, int base) {
-	isc_uint32_t n;
+	uint32_t n;
 	isc_result_t result = isc_parse_uint32(&n, value, base);
 	if (result == ISC_R_SUCCESS && n > max)
 		result = ISC_R_RANGE;
@@ -1118,21 +1118,21 @@ parse_uint_helper(isc_uint32_t *uip, const char *value, isc_uint32_t max,
 }
 
 isc_result_t
-parse_uint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+parse_uint(uint32_t *uip, const char *value, uint32_t max,
 	   const char *desc) {
 	return (parse_uint_helper(uip, value, max, desc, 10));
 }
 
 isc_result_t
-parse_xint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+parse_xint(uint32_t *uip, const char *value, uint32_t max,
 	   const char *desc) {
 	return (parse_uint_helper(uip, value, max, desc, 0));
 }
 
-static isc_uint32_t
-parse_bits(char *arg, const char *desc, isc_uint32_t max) {
+static uint32_t
+parse_bits(char *arg, const char *desc, uint32_t max) {
 	isc_result_t result;
-	isc_uint32_t tmp;
+	uint32_t tmp;
 
 	result = parse_uint(&tmp, arg, max, desc);
 	if (result != ISC_R_SUCCESS)
@@ -1147,7 +1147,7 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 	isc_sockaddr_t *sa = NULL;
 	struct in_addr in4;
 	struct in6_addr in6;
-	isc_uint32_t prefix_length = 0xffffffff;
+	uint32_t prefix_length = 0xffffffff;
 	char *slash = NULL;
 	isc_boolean_t parsed = ISC_FALSE;
 	isc_boolean_t prefix_parsed = ISC_FALSE;
@@ -1590,7 +1590,7 @@ setup_libs(void) {
 }
 
 typedef struct dig_ednsoptname {
-	isc_uint32_t code;
+	uint32_t code;
 	const char  *name;
 } dig_ednsoptname_t;
 
@@ -1615,7 +1615,7 @@ dig_ednsoptname_t optnames[] = {
 void
 save_opt(dig_lookup_t *lookup, char *code, char *value) {
 	isc_result_t result;
-	isc_uint32_t num = 0;
+	uint32_t num = 0;
 	isc_buffer_t b;
 	isc_boolean_t found = ISC_FALSE;
 	unsigned int i;
@@ -1671,7 +1671,7 @@ save_opt(dig_lookup_t *lookup, char *code, char *value) {
  * (e.g., NSID, SIT, client-subnet)
  */
 static void
-add_opt(dns_message_t *msg, isc_uint16_t udpsize, isc_uint16_t edns,
+add_opt(dns_message_t *msg, uint16_t udpsize, uint16_t edns,
 	unsigned int flags, dns_ednsopt_t *opts, size_t count)
 {
 	dns_rdataset_t *rdataset = NULL;
@@ -2128,7 +2128,7 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 	 * Randomize the order the nameserver will be tried.
 	 */
 	if (numLookups > 1) {
-		isc_uint32_t i, j;
+		uint32_t i, j;
 		dig_serverlist_t my_server_list;
 		dig_server_t *next;
 
@@ -2292,7 +2292,7 @@ compute_cookie(unsigned char *clientcookie, size_t len) {
 isc_boolean_t
 setup_lookup(dig_lookup_t *lookup) {
 	isc_result_t result;
-	isc_uint32_t id;
+	uint32_t id;
 	unsigned int len;
 	dig_server_t *serv;
 	dig_query_t *query;
@@ -2532,9 +2532,9 @@ setup_lookup(dig_lookup_t *lookup) {
 		}
 
 		if (lookup->ecs_addr != NULL) {
-			isc_uint8_t addr[16];
-			isc_uint16_t family;
-			isc_uint32_t plen;
+			uint8_t addr[16];
+			uint16_t family;
+			uint32_t plen;
 			struct sockaddr *sa;
 			struct sockaddr_in *sin;
 			struct sockaddr_in6 *sin6;
@@ -2548,7 +2548,7 @@ setup_lookup(dig_lookup_t *lookup) {
 
 			INSIST(i < MAXOPTS);
 			opts[i].code = DNS_OPT_CLIENT_SUBNET;
-			opts[i].length = (isc_uint16_t) addrl + 4;
+			opts[i].length = (uint16_t) addrl + 4;
 			check_result(result, "isc_buffer_allocate");
 
 			/*
@@ -2610,7 +2610,7 @@ setup_lookup(dig_lookup_t *lookup) {
 						  (unsigned)addrl);
 			}
 
-			opts[i].value = (isc_uint8_t *) ecsbuf;
+			opts[i].value = (uint8_t *) ecsbuf;
 			i++;
 		}
 
@@ -2827,7 +2827,7 @@ bringup_timer(dig_query_t *query, unsigned int default_timeout) {
 			local_timeout = timeout;
 	}
 	debug("have local timeout of %d", local_timeout);
-	isc_interval_set(&l->interval, local_timeout, 0);
+	interval_set(&l->interval, local_timeout, 0);
 	if (query->timer != NULL)
 		isc_timer_detach(&query->timer);
 	result = isc_timer_create(timermgr, isc_timertype_once, NULL,
@@ -3125,7 +3125,7 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result;
 	dig_query_t *query = NULL;
 	dig_lookup_t *l, *n;
-	isc_uint16_t length;
+	uint16_t length;
 
 	REQUIRE(event->ev_type == ISC_SOCKEVENT_RECVDONE);
 	INSIST(!free_now);
@@ -3234,7 +3234,7 @@ launch_next_query(dig_query_t *query, isc_boolean_t include_question) {
 
 	isc_buffer_clear(&query->slbuf);
 	isc_buffer_clear(&query->lengthbuf);
-	isc_buffer_putuint16(&query->slbuf, (isc_uint16_t) query->sendbuf.used);
+	isc_buffer_putuint16(&query->slbuf, (uint16_t) query->sendbuf.used);
 	ISC_LIST_INIT(query->sendlist);
 	ISC_LINK_INIT(&query->slbuf, link);
 	if (!query->first_soa_rcvd) {
@@ -3376,7 +3376,7 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 	dns_rdataset_t *rdataset = NULL;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_soa_t soa;
-	isc_uint32_t ixfr_serial = query->lookup->ixfr_serial, serial;
+	uint32_t ixfr_serial = query->lookup->ixfr_serial, serial;
 	isc_result_t result;
 	isc_boolean_t ixfr = query->lookup->rdtype == dns_rdatatype_ixfr;
 	isc_boolean_t axfr = query->lookup->rdtype == dns_rdatatype_axfr;
@@ -3566,7 +3566,7 @@ process_opt(dig_lookup_t *l, dns_message_t *msg) {
 	dns_rdata_t rdata;
 	isc_result_t result;
 	isc_buffer_t optbuf;
-	isc_uint16_t optcode, optlen;
+	uint16_t optcode, optlen;
 	dns_rdataset_t *opt = msg->opt;
 	isc_boolean_t seen_cookie = ISC_FALSE;
 
@@ -3989,7 +3989,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 					local_timeout = INT_MAX;
 			}
 			debug("have local timeout of %d", local_timeout);
-			isc_interval_set(&l->interval, local_timeout, 0);
+			interval_set(&l->interval, local_timeout, 0);
 			result = isc_timer_reset(query->timer,
 						 isc_timertype_once,
 						 NULL,

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sdb.h,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: sdb.h,v 1.4 2020/01/09 18:17:16 florian Exp $ */
 
 #ifndef DNS_SDB_H
 #define DNS_SDB_H 1
@@ -203,7 +203,7 @@ dns_sdb_putnamedrdata(dns_sdballnodes_t *allnodes, const char *name,
 
 isc_result_t
 dns_sdb_putsoa(dns_sdblookup_t *lookup, const char *mname, const char *rname,
-	       isc_uint32_t serial);
+	       uint32_t serial);
 /*%<
  * This function may optionally be called from the 'authority' callback
  * to simplify construction of the SOA record for 'zone'.  It will

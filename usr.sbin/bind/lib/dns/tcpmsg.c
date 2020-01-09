@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tcpmsg.c,v 1.4 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: tcpmsg.c,v 1.5 2020/01/09 18:17:15 florian Exp $ */
 
 /*! \file */
 
@@ -187,7 +187,7 @@ dns_tcpmsg_readmessage(dns_tcpmsg_t *tcpmsg,
 		       NULL, NULL);
 
 	region.base = (unsigned char *)&tcpmsg->size;
-	region.length = 2;  /* isc_uint16_t */
+	region.length = 2;  /* uint16_t */
 	result = isc_socket_recv(tcpmsg->sock, &region, 0,
 				 tcpmsg->task, recv_length, tcpmsg);
 

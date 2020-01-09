@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: acache.c,v 1.5 2020/01/09 18:14:48 florian Exp $ */
+/* $Id: acache.c,v 1.6 2020/01/09 18:17:14 florian Exp $ */
 
 #include <config.h>
 #include <stdlib.h>
@@ -766,7 +766,7 @@ entry_stale(acache_cleaner_t *cleaner, dns_acacheentry_t *entry,
 	 */
 	if (cleaner->overmem) {
 		unsigned int passed;
-		isc_uint32_t val;
+		uint32_t val;
 
 		if (isc_serial_ge(now32, entry->lastused))
 			passed = now32 - entry->lastused; /* <= interval */
@@ -1720,7 +1720,7 @@ dns_acache_detachentry(dns_acacheentry_t **entryp) {
 
 void
 dns_acache_setcleaninginterval(dns_acache_t *acache, unsigned int t) {
-	isc_interval_t interval;
+	interval_t interval;
 	isc_result_t result;
 
 	REQUIRE(DNS_ACACHE_VALID(acache));
@@ -1743,7 +1743,7 @@ dns_acache_setcleaninginterval(dns_acache_t *acache, unsigned int t) {
 					 isc_timertype_inactive,
 					 NULL, NULL, ISC_TRUE);
 	} else {
-		isc_interval_set(&interval, acache->cleaner.cleaning_interval,
+		interval_set(&interval, acache->cleaner.cleaning_interval,
 				 0);
 		result = isc_timer_reset(acache->cleaner.cleaning_timer,
 					 isc_timertype_ticker,
