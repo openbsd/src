@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.23 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: udl.h,v 1.24 2020/01/09 14:36:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -278,7 +278,7 @@ uint8_t udl_reg_vals_1920x1080_60[] = {	/* 138.50 MHz 59.9 Hz */
 struct udl_mode {
 	uint16_t		 hdisplay;
 	uint16_t		 vdisplay;
-	uint8_t			 hz;
+	uint8_t			 freq;
 	uint16_t		 chip;
 	uint32_t		 clock;
 #define UDL_MODE_SIZE 29
