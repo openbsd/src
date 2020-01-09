@@ -168,34 +168,6 @@ isc_dir_chdir(const char *dirname) {
 }
 
 isc_result_t
-isc_dir_chroot(const char *dirname) {
-#ifdef HAVE_CHROOT
-	void *tmp;
-#endif
-
-	REQUIRE(dirname != NULL);
-
-#ifdef HAVE_CHROOT
-	/*
-	 * Try to use getservbyname and getprotobyname before chroot.
-	 * If WKS records are used in a zone under chroot, Name Service Switch
-	 * may fail to load library in chroot.
-	 * Do not report errors if it fails, we do not need any result now.
-	 */
-	tmp = getprotobyname("udp");
-	if (tmp != NULL)
-		(void) getservbyname("domain", "udp");
-
-	if (chroot(dirname) < 0 || chdir("/") < 0)
-		return (isc__errno2result(errno));
-
-	return (ISC_R_SUCCESS);
-#else
-	return (ISC_R_NOTIMPLEMENTED);
-#endif
-}
-
-isc_result_t
 isc_dir_createunique(char *templet) {
 	isc_result_t result;
 	char *x;
