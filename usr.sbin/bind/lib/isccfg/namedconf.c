@@ -1993,7 +1993,7 @@ cfg_type_t cfg_type_newzones = {
 };
 
 static isc_result_t
-parse_unitstring(char *str, isc_resourcevalue_t *valuep) {
+parse_unitstring(char *str, uint64_t *valuep) {
 	char *endp;
 	unsigned int len;
 	uint64_t value;

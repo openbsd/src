@@ -28,13 +28,13 @@ HEADERS =	aes.h app.h assertions.h base32.h base64.h \
 		commandline.h counter.h crc64.h errno.h error.h \
 		event.h eventclass.h file.h formatcheck.h fsaccess.h \
 		hash.h heap.h hex.h hmacmd5.h hmacsha.h httpd.h \
-		interfaceiter.h @ISC_IPV6_H@ iterated_hash.h json.h \
+		@ISC_IPV6_H@ iterated_hash.h json.h \
 		lang.h lex.h lfsr.h lib.h likely.h list.h log.h \
 		magic.h md5.h mem.h msgcat.h msgs.h mutexblock.h \
-		netaddr.h netscope.h ondestroy.h os.h parseint.h \
+		netaddr.h netscope.h ondestroy.h parseint.h \
 		pool.h portset.h print.h queue.h quota.h \
 		radix.h ratelimiter.h refcount.h regex.h \
-		region.h resource.h result.h resultclass.h rwlock.h \
+		region.h result.h resultclass.h rwlock.h \
 		safe.h serial.h sha1.h sha2.h sockaddr.h socket.h \
 		stdio.h stdlib.h string.h symtab.h task.h \
 		taskpool.h timer.h tm.h types.h util.h version.h \

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.9 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: types.h,v 1.10 2020/01/09 19:50:35 florian Exp $ */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
@@ -76,7 +76,6 @@ typedef struct isc_quota		isc_quota_t;		/*%< Quota */
 typedef struct isc_random		isc_random_t;		/*%< Random */
 typedef struct isc_ratelimiter		isc_ratelimiter_t;	/*%< Rate Limiter */
 typedef struct isc_region		isc_region_t;		/*%< Region */
-typedef uint64_t			isc_resourcevalue_t;	/*%< Resource Value */
 typedef unsigned int			isc_result_t;		/*%< Result */
 typedef struct isc_rwlock		isc_rwlock_t;		/*%< Read Write Lock */
 typedef struct isc_sockaddr		isc_sockaddr_t;		/*%< Socket Address */
@@ -111,19 +110,6 @@ typedef isc_result_t (isc_httpdaction_t)(const char *url,
 					 isc_httpdfree_t **freecb,
 					 void **freecb_args);
 typedef isc_boolean_t (isc_httpdclientok_t)(const isc_sockaddr_t *, void *);
-
-/*% Resource */
-typedef enum {
-	isc_resource_coresize = 1,
-	isc_resource_cputime,
-	isc_resource_datasize,
-	isc_resource_filesize,
-	isc_resource_lockedmemory,
-	isc_resource_openfiles,
-	isc_resource_processes,
-	isc_resource_residentsize,
-	isc_resource_stacksize
-} isc_resource_t;
 
 /*% Statistics formats (text file or XML) */
 typedef enum {

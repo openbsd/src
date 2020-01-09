@@ -33,8 +33,8 @@ CWARNINGS =
 UNIXOBJS =	@ISC_ISCIPV6_O@ @ISC_ISCPK11_API_O@ \
 		unix/app.@O@ unix/dir.@O@ unix/errno.@O@ \
 		unix/errno2result.@O@ unix/file.@O@ unix/fsaccess.@O@ \
-		unix/interfaceiter.@O@ unix/keyboard.@O@ unix/net.@O@ \
-		unix/os.@O@ unix/resource.@O@ unix/socket.@O@ unix/stdio.@O@ \
+		unix/net.@O@ \
+		unix/socket.@O@ unix/stdio.@O@ \
 		unix/stdtime.@O@ unix/strerror.@O@ unix/syslog.@O@ unix/time.@O@
 
 NLSOBJS =	nls/msgcat.@O@
