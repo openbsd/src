@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1911 2020/01/05 12:54:21 jsg Exp $
+$OpenBSD: pcidevs,v 1.1912 2020/01/09 00:58:28 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -336,6 +336,7 @@ vendor	ETRON		0x1b6f	Etron
 vendor	FRESCO		0x1b73	Fresco Logic
 vendor	WCH2		0x1c00	Nanjing QinHeng Electronics
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
+vendor	ADATA		0x1cc1	ADATA Technology
 vendor	UMIS		0x1cc4	Union Memory
 vendor	ROCKCHIP	0x1d87	Rockchip
 vendor	TEKRAM2		0x1de1	Tekram
@@ -505,6 +506,9 @@ product ACER M1435		0x1435	M1435 VL-PCI
 product AD SP21535		0x1535	ADSP 21535 DSP
 product AD 1889			0x1889	AD1889 Audio
 product AD SP2141		0x2f44	SafeNet ADSP 2141
+
+/* ADATA products */
+product ADATA SX8200PRO		0x8201	SX8200 Pro
 
 /* Addtron products */
 product ADDTRON RHINEII		0x1320	RhineII
