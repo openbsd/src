@@ -31,7 +31,6 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef OPENSSL
 #ifndef USE_EVP
 #define USE_EVP 1
 #endif
@@ -40,11 +39,4 @@
 
 
 
-#else /* OPENSSL */
-
-#include <isc/util.h>
-
-EMPTY_TRANSLATION_UNIT
-
-#endif /* OPENSSL */
 /*! \file */

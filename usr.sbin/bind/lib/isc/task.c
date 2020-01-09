@@ -41,10 +41,6 @@
 #include <isc/util.h>
 #include <isc/xml.h>
 
-#ifdef OPENSSL_LEAKS
-#include <openssl/err.h>
-#endif
-
 /*%
  * For BIND9 internal applications:
  * when built with threads we use multiple worker threads shared by the whole
@@ -1285,10 +1281,6 @@ run(void *uap) {
 
 	XTHREADTRACE(isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
 				    ISC_MSG_EXITING, "exiting"));
-
-#ifdef OPENSSL_LEAKS
-	ERR_remove_state(0);
-#endif
 
 	return ((isc_threadresult_t)0);
 }

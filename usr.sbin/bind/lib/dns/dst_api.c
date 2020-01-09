@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.12 2020/01/09 13:56:37 florian Exp $
+ * $Id: dst_api.c,v 1.13 2020/01/09 14:21:27 florian Exp $
  */
 
 /*! \file */
@@ -136,7 +136,6 @@ static isc_result_t	addsuffix(char *filename, int len,
 			return (_r);		\
 	} while (0);				\
 
-#if defined(OPENSSL)
 static void *
 default_memalloc(void *arg, size_t size) {
 	UNUSED(arg);
@@ -150,7 +149,6 @@ default_memfree(void *arg, void *ptr) {
 	UNUSED(arg);
 	free(ptr);
 }
-#endif
 
 isc_result_t
 dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags) {
@@ -165,13 +163,8 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 	REQUIRE(mctx != NULL);
 	REQUIRE(dst_initialized == ISC_FALSE);
 
-#if !defined(OPENSSL)
-	UNUSED(engine);
-#endif
-
 	dst__memory_pool = NULL;
 
-#if defined(OPENSSL)
 	UNUSED(mctx);
 	/*
 	 * When using --with-openssl, there seems to be no good way of not
@@ -186,12 +179,7 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	isc_mem_setname(dst__memory_pool, "dst", NULL);
-#ifndef OPENSSL_LEAKS
 	isc_mem_setdestroycheck(dst__memory_pool, ISC_FALSE);
-#endif
-#else /* OPENSSL */
-	isc_mem_attach(mctx, &dst__memory_pool);
-#endif /* OPENSSL */
 	if (ectx != NULL) {
 		isc_entropy_attach(ectx, &dst_entropy_pool);
 		dst_entropy_flags = eflags;
@@ -205,7 +193,6 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 	RETERR(dst__hmacsha256_init(&dst_t_func[DST_ALG_HMACSHA256]));
 	RETERR(dst__hmacsha384_init(&dst_t_func[DST_ALG_HMACSHA384]));
 	RETERR(dst__hmacsha512_init(&dst_t_func[DST_ALG_HMACSHA512]));
-#ifdef OPENSSL
 	RETERR(dst__openssl_init(engine));
 	RETERR(dst__opensslrsa_init(&dst_t_func[DST_ALG_RSASHA1],
 				    DST_ALG_RSASHA1));
@@ -228,7 +215,6 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 #ifdef HAVE_OPENSSL_ED448
 	RETERR(dst__openssleddsa_init(&dst_t_func[DST_ALG_ED448]));
 #endif
-#endif /* if OPENSSL */
 	dst_initialized = ISC_TRUE;
 	return (ISC_R_SUCCESS);
 
@@ -248,9 +234,7 @@ dst_lib_destroy(void) {
 	for (i = 0; i < DST_MAX_ALGS; i++)
 		if (dst_t_func[i] != NULL && dst_t_func[i]->cleanup != NULL)
 			dst_t_func[i]->cleanup();
-#ifdef OPENSSL
 	dst__openssl_destroy();
-#endif /* if OPENSSL */
 	if (dst__memory_pool != NULL)
 		isc_mem_detach(&dst__memory_pool);
 	if (dst_entropy_pool != NULL)
@@ -1756,17 +1740,6 @@ algorithm_status(unsigned int alg) {
 
 	if (dst_algorithm_supported(alg))
 		return (ISC_R_SUCCESS);
-#if !defined(OPENSSL)
-	if (alg == DST_ALG_RSAMD5 || alg == DST_ALG_RSASHA1 ||
-	    alg == DST_ALG_DSA || alg == DST_ALG_DH ||
-	    alg == DST_ALG_HMACMD5 || alg == DST_ALG_NSEC3DSA ||
-	    alg == DST_ALG_NSEC3RSASHA1 ||
-	    alg == DST_ALG_RSASHA256 || alg == DST_ALG_RSASHA512 ||
-	    alg == DST_ALG_ECCGOST ||
-	    alg == DST_ALG_ECDSA256 || alg == DST_ALG_ECDSA384 ||
-	    alg == DST_ALG_ED25519 || alg == DST_ALG_ED448)
-		return (DST_R_NOCRYPTO);
-#endif
 	return (DST_R_UNSUPPORTEDALG);
 }
 

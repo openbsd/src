@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_openssl.h,v 1.3 2019/12/17 01:46:31 sthen Exp $ */
+/* $Id: dst_openssl.h,v 1.4 2020/01/09 14:21:27 florian Exp $ */
 
 #ifndef DST_OPENSSL_H
 #define DST_OPENSSL_H 1
@@ -72,12 +72,7 @@ isc_result_t
 dst__openssl_toresult3(isc_logcategory_t *category,
 		       const char *funcname, isc_result_t fallback);
 
-#ifdef USE_ENGINE
-ENGINE *
-dst__openssl_getengine(const char *engine);
-#else
 #define dst__openssl_getengine(x) NULL
-#endif
 
 ISC_LANG_ENDDECLS
 

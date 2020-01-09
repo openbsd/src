@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.5 2020/01/09 13:56:37 florian Exp $ */
+/* $Id: dst_internal.h,v 1.6 2020/01/09 14:21:27 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -56,12 +56,10 @@
 
 #include <dst/dst.h>
 
-#ifdef OPENSSL
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
-#endif
 
 ISC_LANG_BEGINDECLS
 
@@ -111,12 +109,10 @@ struct dst_key {
 	char		*label;		/*%< engine label (HSM) */
 	union {
 		void *generic;
-#ifdef OPENSSL
 #if !defined(USE_EVP) || !USE_EVP
 		RSA *rsa;
 #endif
 		EVP_PKEY *pkey;
-#endif
 		dst_hmacsha1_key_t *hmacsha1;
 		dst_hmacsha224_key_t *hmacsha224;
 		dst_hmacsha256_key_t *hmacsha256;
@@ -156,9 +152,7 @@ struct dst_context {
 		isc_hmacsha256_t *hmacsha256ctx;
 		isc_hmacsha384_t *hmacsha384ctx;
 		isc_hmacsha512_t *hmacsha512ctx;
-#ifdef OPENSSL
 		EVP_MD_CTX *evp_md_ctx;
-#endif
 	} ctxdata;
 };
 

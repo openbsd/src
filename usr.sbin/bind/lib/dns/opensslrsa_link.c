@@ -17,7 +17,6 @@
 /*
  * Principal Author: Brian Wellington
  */
-#ifdef OPENSSL
 #include <config.h>
 
 #ifndef USE_EVP
@@ -51,9 +50,6 @@
 #include <openssl/rsa.h>
 #if OPENSSL_VERSION_NUMBER > 0x00908000L
 #include <openssl/bn.h>
-#endif
-#ifdef USE_ENGINE
-#include <openssl/engine.h>
 #endif
 
 /*
@@ -1355,10 +1351,6 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	isc_result_t ret;
 	int i;
 	RSA *rsa = NULL, *pubrsa = NULL;
-#ifdef USE_ENGINE
-	ENGINE *ep = NULL;
-	const BIGNUM *ex = NULL;
-#endif
 	isc_mem_t *mctx = key->mctx;
 	const char *engine = NULL, *label = NULL;
 #if defined(USE_ENGINE) || USE_EVP
@@ -1414,47 +1406,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	 * See if we can fetch it.
 	 */
 	if (label != NULL) {
-#ifdef USE_ENGINE
-		if (engine == NULL)
-			DST_RET(DST_R_NOENGINE);
-		ep = dst__openssl_getengine(engine);
-		if (ep == NULL)
-			DST_RET(DST_R_NOENGINE);
-		pkey = ENGINE_load_private_key(ep, label, NULL, NULL);
-		if (pkey == NULL)
-			DST_RET(dst__openssl_toresult2(
-					"ENGINE_load_private_key",
-					ISC_R_NOTFOUND));
-		key->engine = isc_mem_strdup(key->mctx, engine);
-		if (key->engine == NULL)
-			DST_RET(ISC_R_NOMEMORY);
-		key->label = isc_mem_strdup(key->mctx, label);
-		if (key->label == NULL)
-			DST_RET(ISC_R_NOMEMORY);
-		rsa = EVP_PKEY_get1_RSA(pkey);
-		if (rsa == NULL)
-			DST_RET(dst__openssl_toresult(DST_R_OPENSSLFAILURE));
-		if (rsa_check(rsa, pubrsa) != ISC_R_SUCCESS)
-			DST_RET(DST_R_INVALIDPRIVATEKEY);
-		RSA_get0_key(rsa, NULL, &ex, NULL);
-		if (BN_num_bits(ex) > RSA_MAX_PUBEXP_BITS)
-			DST_RET(ISC_R_RANGE);
-		if (pubrsa != NULL)
-			RSA_free(pubrsa);
-		key->key_size = EVP_PKEY_bits(pkey);
-#if USE_EVP
-		key->keydata.pkey = pkey;
-		RSA_free(rsa);
-#else
-		key->keydata.rsa = rsa;
-		EVP_PKEY_free(pkey);
-#endif
-		dst__privstruct_free(&priv, mctx);
-		isc_safe_memwipe(&priv, sizeof(priv));
-		return (ISC_R_SUCCESS);
-#else
 		DST_RET(DST_R_NOENGINE);
-#endif
 	}
 
 	rsa = RSA_new();
@@ -1563,88 +1515,11 @@ static isc_result_t
 opensslrsa_fromlabel(dst_key_t *key, const char *engine, const char *label,
 		     const char *pin)
 {
-#ifdef USE_ENGINE
-	ENGINE *e = NULL;
-	isc_result_t ret;
-	EVP_PKEY *pkey = NULL;
-	RSA *rsa = NULL, *pubrsa = NULL;
-	char *colon, *tmpengine = NULL;
-	const BIGNUM *ex = NULL;
-
-	UNUSED(pin);
-
-	if (engine == NULL) {
-		if (strchr(label, ':') == NULL)
-			DST_RET(DST_R_NOENGINE);
-		tmpengine = isc_mem_strdup(key->mctx, label);
-		if (tmpengine == NULL)
-			DST_RET(ISC_R_NOMEMORY);
-		colon = strchr(tmpengine, ':');
-		INSIST(colon != NULL);
-		*colon = '\0';
-	}
-	e = dst__openssl_getengine(engine);
-	if (e == NULL)
-		DST_RET(DST_R_NOENGINE);
-	pkey = ENGINE_load_public_key(e, label, NULL, NULL);
-	if (pkey != NULL) {
-		pubrsa = EVP_PKEY_get1_RSA(pkey);
-		EVP_PKEY_free(pkey);
-		if (pubrsa == NULL)
-			DST_RET(dst__openssl_toresult(DST_R_OPENSSLFAILURE));
-	}
-	pkey = ENGINE_load_private_key(e, label, NULL, NULL);
-	if (pkey == NULL)
-		DST_RET(dst__openssl_toresult2("ENGINE_load_private_key",
-					       ISC_R_NOTFOUND));
-	if (tmpengine != NULL) {
-		key->engine = tmpengine;
-		tmpengine = NULL;
-	} else {
-		key->engine = isc_mem_strdup(key->mctx, engine);
-		if (key->engine == NULL)
-			DST_RET(ISC_R_NOMEMORY);
-	}
-	key->label = isc_mem_strdup(key->mctx, label);
-	if (key->label == NULL)
-		DST_RET(ISC_R_NOMEMORY);
-	rsa = EVP_PKEY_get1_RSA(pkey);
-	if (rsa == NULL)
-		DST_RET(dst__openssl_toresult(DST_R_OPENSSLFAILURE));
-	if (rsa_check(rsa, pubrsa) != ISC_R_SUCCESS)
-		DST_RET(DST_R_INVALIDPRIVATEKEY);
-	RSA_get0_key(rsa, NULL, &ex, NULL);
-	if (BN_num_bits(ex) > RSA_MAX_PUBEXP_BITS)
-		DST_RET(ISC_R_RANGE);
-	if (pubrsa != NULL)
-		RSA_free(pubrsa);
-	key->key_size = EVP_PKEY_bits(pkey);
-#if USE_EVP
-	key->keydata.pkey = pkey;
-	RSA_free(rsa);
-#else
-	key->keydata.rsa = rsa;
-	EVP_PKEY_free(pkey);
-#endif
-	return (ISC_R_SUCCESS);
-
- err:
-	if (tmpengine != NULL)
-		isc_mem_free(key->mctx, tmpengine);
-	if (rsa != NULL)
-		RSA_free(rsa);
-	if (pubrsa != NULL)
-		RSA_free(pubrsa);
-	if (pkey != NULL)
-		EVP_PKEY_free(pkey);
-	return (ret);
-#else
 	UNUSED(key);
 	UNUSED(engine);
 	UNUSED(label);
 	UNUSED(pin);
 	return(DST_R_NOENGINE);
-#endif
 }
 
 static dst_func_t opensslrsa_functions = {
@@ -1695,11 +1570,4 @@ dst__opensslrsa_init(dst_func_t **funcp, unsigned char algorithm) {
 	return (ISC_R_SUCCESS);
 }
 
-#else /* OPENSSL */
-
-#include <isc/util.h>
-
-EMPTY_TRANSLATION_UNIT
-
-#endif /* OPENSSL */
 /*! \file */
