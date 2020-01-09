@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.26 2019/11/07 13:16:25 mpi Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.27 2020/01/09 15:18:58 bluhm Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -288,8 +288,10 @@ void
 db_print_loc_and_inst(vaddr_t loc)
 {
 	db_printsym(loc, DB_STGY_PROC, db_printf);
-	db_printf(":\t");
-	(void) db_disasm(loc, 0);
+	if (loc != 0) {
+		db_printf(":\t");
+		db_disasm(loc, 0);
+	}
 }
 
 /* local copy is needed here so that we can trace strlcpy() in libkern */

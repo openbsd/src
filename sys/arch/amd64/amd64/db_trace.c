@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.47 2019/11/10 10:03:33 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.48 2020/01/09 15:18:58 bluhm Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			name = NULL;
 		}
 
-		if (lastframe == 0 && sym == NULL) {
+		if (lastframe == 0 && sym == NULL && callpc != 0) {
 			/* Symbol not found, peek at code */
 			unsigned long instr = db_get_value(callpc, 8, 0);
 

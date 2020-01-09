@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.77 2019/09/06 12:22:01 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.78 2020/01/09 15:18:58 bluhm Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -77,6 +77,7 @@
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
+#include <sys/stdarg.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -132,6 +133,23 @@ static inline void verify_smap(const char *_func);
 static inline void debug_trap(struct trapframe *_frame, struct proc *_p,
     long _type);
 
+static inline void
+fault(const char *format, ...)
+{
+	static char faultbuf[512];
+	va_list ap;
+
+	/*
+	 * Save the fault info for DDB.  Kernel lock protects
+	 * faultbuf from being overwritten by another CPU.
+	 */
+	va_start(ap, format);
+	vsnprintf(faultbuf, sizeof faultbuf, format, ap);
+	va_end(ap);
+	printf("%s\n", faultbuf);
+	faultstr = faultbuf;
+}
+
 /*
  * pageflttrap(frame, usermode): page fault handler
  * Returns non-zero if the fault was handled (possibly by generating
@@ -160,17 +178,21 @@ pageflttrap(struct trapframe *frame, int usermode)
 	KERNEL_LOCK();
 
 	if (!usermode) {
-		extern struct vm_map *kernel_map;
-
 		/* This will only trigger if SMEP is enabled */
-		if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I)
-			panic("attempt to execute user address %p "
+		if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I) {
+			fault("attempt to execute user address %p "
 			    "in supervisor mode", (void *)cr2);
+			/* retain kernel lock */
+			return 0;
+		}
 		/* This will only trigger if SMAP is enabled */
 		if (pcb->pcb_onfault == NULL && cr2 <= VM_MAXUSER_ADDRESS &&
-		    frame->tf_err & PGEX_P)
-			panic("attempt to access user address %p "
+		    frame->tf_err & PGEX_P) {
+			fault("attempt to access user address %p "
 			    "in supervisor mode", (void *)cr2);
+			/* retain kernel lock */
+			return 0;
+		}
 
 		/*
 		 * It is only a kernel address space fault iff:
@@ -211,17 +233,10 @@ pageflttrap(struct trapframe *frame, int usermode)
 			frame->tf_rip = (u_int64_t)pcb->pcb_onfault;
 			return 1;
 		} else {
-			/*
-			 * Bad memory access in the kernel; save the fault
-			 * info for DDB and retain the kernel lock to keep
-			 * faultbuf from being overwritten by another CPU.
-			 */
-			static char faultbuf[512];
-			snprintf(faultbuf, sizeof faultbuf,
-			    "uvm_fault(%p, 0x%llx, 0, %d) -> %x",
+			/* bad memory access in the kernel */
+			fault("uvm_fault(%p, 0x%llx, 0, %d) -> %x",
 			    map, cr2, ftype, error);
-			printf("%s\n", faultbuf);
-			faultstr = faultbuf;
+			/* retain kernel lock */
 			return 0;
 		}
 	} else {
@@ -395,7 +410,7 @@ trap_print(struct trapframe *frame, int type)
 	printf(" in %s mode\n", KERNELMODE(frame->tf_cs, frame->tf_rflags) ?
 	    "supervisor" : "user");
 	printf("trap type %d code %llx rip %llx cs %llx rflags %llx cr2 "
-	       " %llx cpl %x rsp %llx\n",
+	       "%llx cpl %x rsp %llx\n",
 	    type, frame->tf_err, frame->tf_rip, frame->tf_cs,
 	    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
 	printf("gsbase %p  kgsbase %p\n",
