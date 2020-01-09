@@ -307,9 +307,9 @@ isc_result_t
 get_reverse(char *reverse, size_t len, char *value, isc_boolean_t ip6_int,
 	    isc_boolean_t strict);
 
-ISC_PLATFORM_NORETURN_PRE void
+__dead void
 fatal(const char *format, ...)
-ISC_FORMAT_PRINTF(1, 2) ISC_PLATFORM_NORETURN_POST;
+ISC_FORMAT_PRINTF(1, 2);
 
 void
 debug(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);

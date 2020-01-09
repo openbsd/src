@@ -15,7 +15,7 @@
  */
 
 /*! \file */
-
+#include <sys/cdefs.h>
 #include <config.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -133,8 +133,8 @@ rcode_totext(dns_rcode_t rcode)
 	return totext.deconsttext;
 }
 
-ISC_PLATFORM_NORETURN_PRE static void
-show_usage(void) ISC_PLATFORM_NORETURN_POST;
+static __dead void
+show_usage(void);
 
 static void
 show_usage(void) {

@@ -15,13 +15,15 @@
  */
 
 /*
- * $Id: assertions.h,v 1.3 2019/12/17 01:46:35 sthen Exp $
+ * $Id: assertions.h,v 1.4 2020/01/09 18:16:01 florian Exp $
  */
 /*! \file isc/assertions.h
  */
 
 #ifndef ISC_ASSERTIONS_H
 #define ISC_ASSERTIONS_H 1
+
+#include <sys/cdefs.h>
 
 #include <isc/lang.h>
 #include <isc/likely.h>
@@ -41,9 +43,8 @@ typedef void (*isc_assertioncallback_t)(const char *, int, isc_assertiontype_t,
 					const char *);
 
 /* coverity[+kill] */
-ISC_PLATFORM_NORETURN_PRE
-void isc_assertion_failed(const char *, int, isc_assertiontype_t,
-			  const char *) ISC_PLATFORM_NORETURN_POST;
+__dead void isc_assertion_failed(const char *, int, isc_assertiontype_t,
+			  const char *);
 
 void
 isc_assertion_setcallback(isc_assertioncallback_t);

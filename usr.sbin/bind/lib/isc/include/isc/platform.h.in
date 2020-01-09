@@ -33,12 +33,6 @@
 @ISC_PLATFORM_OPENSSLHASH@
 
 /*
- * Defines for the noreturn attribute.
- */
-@ISC_PLATFORM_NORETURN_PRE@
-@ISC_PLATFORM_NORETURN_POST@
-
-/*
  * Tell emacs to use C mode for this file.
  *
  * Local Variables:
