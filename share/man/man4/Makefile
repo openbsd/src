@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.747 2019/12/23 08:05:42 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.748 2020/01/10 01:13:19 jsg Exp $
 
 MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -23,7 +23,7 @@ MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	cac.4 cas.4 cardbus.4 carp.4 ccp.4 ccpmic.4 cd.4 cdce.4 cfxga.4 \
 	ch.4 chvgpio.4 ciphy.4 ciss.4 clcs.4 clct.4 cmpci.4 \
 	com.4 cue.4 cy.4 cz.4 \
-	dc.4 dcphy.4 ddb.4 de.4 diskmap.4 divert.4 dpt.4 drm.4 dwctwo.4 \
+	dc.4 dcphy.4 ddb.4 de.4 diskmap.4 divert.4 drm.4 dwctwo.4 \
 	dwdog.4 dwge.4 dwiic.4 dwmmc.4 dwpcie.4 dwxe.4 \
 	eap.4 ec.4 eephy.4 ef.4 eg.4 ehci.4 eisa.4 el.4 em.4 emc.4 gcu.4 \
 	emu.4 enc.4 endrun.4 envy.4 eoip.4 ep.4 epic.4 esa.4 \

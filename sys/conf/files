@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.678 2019/12/05 15:19:33 mpi Exp $
+#	$OpenBSD: files,v 1.679 2020/01/10 01:13:19 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -137,10 +137,6 @@ file	dev/ic/aic79xx_openbsd.c	ahd
 # Adaptec AIC-6[23]60 SCSI controllers
 device	aic: scsi
 file	dev/ic/aic6360.c	aic & (aic_isa | aic_pcmcia | aic_isapnp)
-
-# DPT EATA SCSI controllers
-device	dpt: scsi
-file	dev/ic/dpt.c			dpt
 
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 device	adv: scsi
