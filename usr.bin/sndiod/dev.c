@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.62 2019/09/21 04:42:46 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.63 2020/01/10 19:01:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1501,6 +1501,7 @@ dev_mmcloc(struct dev *d, unsigned int origin)
 void
 slot_initconv(struct slot *s)
 {
+	unsigned int dev_nch;
 	struct dev *d = s->dev;
 
 	if (s->mode & MODE_PLAY) {
@@ -1518,17 +1519,23 @@ slot_initconv(struct slot *s)
 		}
 		s->mix.join = 1;
 		s->mix.expand = 1;
-		if (s->opt->dup) {
-			if (s->mix.cmap.nch > s->mix.nch)
-				s->mix.expand = s->mix.cmap.nch / s->mix.nch;
-			else if (s->mix.cmap.nch > 0)
-				s->mix.join = s->mix.nch / s->mix.cmap.nch;
+		if (s->opt->dup && s->mix.cmap.nch > 0) {
+			dev_nch = d->pchan < (s->opt->pmax + 1) ?
+			    d->pchan - s->opt->pmin :
+			    s->opt->pmax - s->opt->pmin + 1;
+			if (dev_nch > s->mix.nch)
+				s->mix.expand = dev_nch / s->mix.nch;
+			else if (s->mix.nch > dev_nch)
+				s->mix.join = s->mix.nch / dev_nch;
 		}
 	}
 
 	if (s->mode & MODE_RECMASK) {
+		unsigned int outchan = (s->mode & MODE_MON) ?
+		    d->pchan : d->rchan;
+
 		cmap_init(&s->sub.cmap,
-		    0, ((s->mode & MODE_MON) ? d->pchan : d->rchan) - 1,
+		    0, outchan - 1,
 		    s->opt->rmin, s->opt->rmax,
 		    s->opt->rmin, s->opt->rmin + s->sub.nch - 1,
 		    s->opt->rmin, s->opt->rmin + s->sub.nch - 1);
@@ -1541,11 +1548,14 @@ slot_initconv(struct slot *s)
 		}
 		s->sub.join = 1;
 		s->sub.expand = 1;
-		if (s->opt->dup) {
-			if (s->sub.cmap.nch > s->sub.nch)
-				s->sub.join = s->sub.cmap.nch / s->sub.nch;
-			else if (s->sub.cmap.nch > 0)
-				s->sub.expand = s->sub.nch / s->sub.cmap.nch;
+		if (s->opt->dup && s->sub.cmap.nch > 0) {
+			dev_nch = outchan < (s->opt->rmax + 1) ?
+			    outchan - s->opt->rmin :
+			    s->opt->rmax - s->opt->rmin + 1;
+			if (dev_nch > s->sub.nch)
+				s->sub.join = dev_nch / s->sub.nch;
+			else if (s->sub.nch > dev_nch)
+				s->sub.expand = s->sub.nch / dev_nch;
 		}
 
 		/*
