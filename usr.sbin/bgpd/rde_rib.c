@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.213 2020/01/09 15:50:34 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.214 2020/01/10 14:52:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -778,16 +778,16 @@ path_copy(struct rde_aspath *dst, const struct rde_aspath *src)
 		dst->aspath->refcnt++;
 		rdemem.aspath_refs++;
 	}
-	dst->hash = 0;
+	dst->hash = 0;		/* not linked so no hash and no refcnt */
+	dst->refcnt = 0;
+	dst->flags = src->flags & ~F_ATTR_LINKED;
+
 	dst->med = src->med;
 	dst->lpref = src->lpref;
 	dst->weight = src->weight;
-	dst->origin = src->origin;
 	dst->rtlabelid = rtlabel_ref(src->rtlabelid);
 	dst->pftableid = pftable_ref(src->pftableid);
-
-	dst->flags = src->flags & ~F_ATTR_LINKED;
-	dst->refcnt = 0;	/* not linked so no refcnt */
+	dst->origin = src->origin;
 
 	attr_copy(dst, src);
 
