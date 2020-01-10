@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.36 2020/01/09 18:17:14 florian Exp $ */
+/* $Id: dig.c,v 1.37 2020/01/10 16:13:08 schwarze Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -154,12 +154,12 @@ print_usage(FILE *fp) {
 "           +[no]aaonly +[no]additional +[no]adflag +[no]all +[no]answer\n"
 "           +[no]authority +[no]besteffort +bufsize=# +[no]cdflag +[no]class\n"
 "           +[no]cmd +[no]comments +[no]cookie[=value] +[no]crypto +[no]dnssec\n"
-"           +domain=name +[no]edns[=#] +[no]ednsflags[=#] +[no]ednsnegotiation\n"
+"           +domain=name +[no]edns[=#] +ednsflags[=#] +[no]ednsnegotiation\n"
 "           +[no]ednsopt[=code[:value]] +[no]expire +[no]fail +[no]identify\n"
 "           +[no]ignore +[no]keepopen +[no]multiline +ndots=# +[no]nsid\n"
 "           +[no]nssearch +[no]onesoa +[no]opcode=# +[no]qr +[no]question\n"
 "           +[no]recurse +retry=# +[no]rrcomments +[no]search +[no]short\n"
-"           +[no]showsearch +[no]split=# +[no]stats +subnet=addr[/prefix]\n"
+"           +[no]showsearch +[no]split=# +[no]stats +[no]subnet=addr[/prefix]\n"
 "           +[no]tcp +timeout=# +[no]trace +tries=# +[no]ttlid +[no]vc\n", fp);
 }
 

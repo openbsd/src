@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.32 2020/01/06 14:45:23 schwarze Exp $
+.\" $OpenBSD: dig.1,v 1.33 2020/01/10 16:13:08 schwarze Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 6 2020 $
+.Dd $Mdocdate: January 10 2020 $
 .Dt DIG 1
 .Os
 .Sh NAME
@@ -465,29 +465,22 @@ directive in
 .Xr resolv.conf 5 ,
 and enable search list processing as if the
 .Cm +search
-option were given.
+option were given (off by default).
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
 .Cm edns Ns
 .Op = Ns Ar #
 .Xc
-Specify the EDNS version to query with.
-Valid values are 0 to 255.
-Setting the EDNS version will cause an EDNS query to be sent.
+Use EDNS in the query (on by default).
+A version may also be specified, from 0 (the default) to 255.
 .Cm +noedns
-clears the remembered EDNS version.
-EDNS is set to 0 by default.
-.It Xo
-.Cm + Ns
-.Op Cm no Ns
-.Cm ednsflags Ns
-.Op = Ns Ar #
-.Xc
-Set the must-be-zero EDNS flags bits (Z bits) to the specified value.
+disables EDNS and clears the remembered version.
+.It Cm +ednsflags Ns Op = Ns Ar #
+Set the must-be-zero EDNS flags bits (Z bits)
+to the specified value (0 by default).
 Decimal, hex and octal encodings are accepted.
 Setting a named flag (e.g. DO) will silently be ignored.
-By default, no Z bits are set.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -533,12 +526,10 @@ which is the reverse of normal stub resolver behavior.
 .Op Cm no Ns
 .Cm identify
 .Xc
-Show the IP address and port number that supplied the answer
-when the
+Show the IP address and port number that supplied the answer (off by default).
+This option has no effect unless the
 .Cm +short
 option is enabled.
-If short form answers are requested, the default is not to show the source
-address and port number of the server that provided the answer.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -623,8 +614,14 @@ and the ending SOA records are printed.
 .Cm opcode Ns = Ns
 .Ar #
 .Xc
-Set or restore the DNS message opcode to the specified value.
-The default value is QUERY (0).
+Set or restore the DNS message opcode to the specified value,
+which can be
+.Cm QUERY Pq the default ,
+.Cm IQUERY ,
+.Cm STATUS ,
+.Cm NOTIFY ,
+.Cm UPDATE ,
+or an integer number in the range from 0 to 15.
 .It Xo
 .Cm + Ns
 .Op Cm no Ns
@@ -732,12 +729,14 @@ mode is active.
 Print statistics:
 when the query was made, the size of the reply and so on (on by default).
 .It Xo
-.Cm +subnet Ns = Ns
+.Cm + Ns
+.Op Cm no Ns
+.Cm subnet Ns = Ns
 .Ar addr Ns
 .Op / Ns Ar prefix
 .Xc
 Send an EDNS Client Subnet option with the specified IP address or
-network prefix.
+network prefix (off by default).
 .Pp
 .Nm
 .Cm +subnet Ns =0.0.0.0/0,
@@ -754,11 +753,12 @@ be used when resolving this query.
 .Op Cm no Ns
 .Cm tcp
 .Xc
-Use TCP when querying name servers.
-The default behavior is to use UDP unless an
-.Cm ixfr Ns = Ns Ar N
-query is requested, in which case the default is TCP.
-AXFR queries always use TCP.
+Use TCP when querying name servers (off by default).
+.Cm IXFR Ns = Ns Ar N
+queries use TCP unless it is explicitly disabled with
+.Cm +notcp .
+.Cm AXFR
+queries always use TCP.
 .It Cm +timeout Ns = Ns Ar #
 Set the timeout for a query to
 .Ar #
