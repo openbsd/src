@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.297 2019/12/30 13:49:40 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.298 2020/01/10 10:33:34 bluhm Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ vfs_mount_alloc(struct vnode *vp, struct vfsconf *vfsp)
 	rw_init_flags(&mp->mnt_lock, "vfslock", RWL_IS_VNODE);
 	(void)vfs_busy(mp, VB_READ|VB_NOWAIT);
 
-	LIST_INIT(&mp->mnt_vnodelist);
+	TAILQ_INIT(&mp->mnt_vnodelist);
 	mp->mnt_vnodecovered = vp;
 
 	atomic_inc_int(&vfsp->vfc_refcount);
@@ -476,12 +476,12 @@ insmntque(struct vnode *vp, struct mount *mp)
 	 * Delete from old mount point vnode list, if on one.
 	 */
 	if (vp->v_mount != NULL)
-		LIST_REMOVE(vp, v_mntvnodes);
+		TAILQ_REMOVE(&vp->v_mount->mnt_vnodelist, vp, v_mntvnodes);
 	/*
 	 * Insert into list of vnodes for the new mount point, if available.
 	 */
 	if ((vp->v_mount = mp) != NULL)
-		LIST_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
+		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 }
 
 /*
@@ -872,7 +872,7 @@ vfs_mount_foreach_vnode(struct mount *mp,
 	int error = 0;
 
 loop:
-	LIST_FOREACH_SAFE(vp , &mp->mnt_vnodelist, v_mntvnodes, nvp) {
+	TAILQ_FOREACH_SAFE(vp , &mp->mnt_vnodelist, v_mntvnodes, nvp) {
 		if (vp->v_mount != mp)
 			goto loop;
 
@@ -1299,7 +1299,7 @@ printlockedvnodes(void)
 	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (vfs_busy(mp, VB_READ|VB_NOWAIT))
 			continue;
-		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (VOP_ISLOCKED(vp))
 				vprint(NULL, vp);
 		}
@@ -2287,7 +2287,7 @@ vfs_mount_print(struct mount *mp, int full,
 	(*pr)("locked vnodes:");
 	/* XXX would take mountlist lock, except ddb has no context */
 	cnt = 0;
-	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		if (VOP_ISLOCKED(vp)) {
 			if (cnt == 0)
 				(*pr)("\n  %p", vp);
@@ -2304,7 +2304,7 @@ vfs_mount_print(struct mount *mp, int full,
 		(*pr)("all vnodes:");
 		/* XXX would take mountlist lock, except ddb has no context */
 		cnt = 0;
-		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (cnt == 0)
 				(*pr)("\n  %p", vp);
 			else if ((cnt % (72 / (sizeof(void *) * 2 + 4))) == 0)

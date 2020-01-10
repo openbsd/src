@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.153 2019/08/26 18:56:29 anton Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.154 2020/01/10 10:33:35 bluhm Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct vnode {
 	u_int	v_inflight;
 	struct	mount *v_mount;			/* ptr to vfs we are in */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
-	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
+	TAILQ_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct	buf_rb_bufs v_bufs_tree;	/* lookup of all bufs */
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */

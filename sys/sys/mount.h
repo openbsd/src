@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.145 2019/12/26 13:30:54 bluhm Exp $	*/
+/*	$OpenBSD: mount.h,v 1.146 2020/01/10 10:33:35 bluhm Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -331,8 +331,6 @@ struct statfs {
  * array of operations and an instance record.  The file systems are
  * put on a doubly linked list.
  */
-LIST_HEAD(vnodelst, vnode);
-
 struct mount {
 	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
 	SLIST_ENTRY(mount) mnt_dounmount;	/* unmount work queue */
@@ -340,7 +338,7 @@ struct mount {
 	struct vfsconf  *mnt_vfc;               /* configuration info */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
 	struct vnode    *mnt_syncer;            /* syncer vnode */
-	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
+	TAILQ_HEAD(, vnode) mnt_vnodelist;	/* list of vnodes this mount */
 	struct rwlock   mnt_lock;               /* mount structure lock */
 	int		mnt_flag;		/* flags */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */

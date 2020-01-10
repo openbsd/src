@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.140 2019/12/25 12:31:12 bluhm Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.141 2020/01/10 10:33:35 bluhm Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1515,7 +1515,7 @@ nfs_clearcommit(struct mount *mp)
 
 	s = splbio();
 loop:
-	LIST_FOREACH_SAFE(vp, &mp->mnt_vnodelist, v_mntvnodes, nvp) {
+	TAILQ_FOREACH_SAFE(vp, &mp->mnt_vnodelist, v_mntvnodes, nvp) {
 		if (vp->v_mount != mp)	/* Paranoia */
 			goto loop;
 		LIST_FOREACH_SAFE(bp, &vp->v_dirtyblkhd, b_vnbufs, nbp) {
