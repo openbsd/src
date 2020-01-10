@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.16 2019/07/19 00:17:15 cheloha Exp $ */
+/* $OpenBSD: exuart.c,v 1.17 2020/01/10 06:45:27 jsg Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -283,7 +283,7 @@ exuart_intr(void *arg)
 		if (p >= sc->sc_ibufend) {
 			sc->sc_floods++;
 			if (sc->sc_errors++ == 0)
-				timeout_add(&sc->sc_diag_tmo, 60 * hz);
+				timeout_add_sec(&sc->sc_diag_tmo, 60);
 		} else {
 			*p++ = c;
 			if (p == sc->sc_ibufhigh && ISSET(tp->t_cflag, CRTSCTS))
@@ -710,7 +710,7 @@ exuartclose(dev_t dev, int flag, int mode, struct proc *p)
 		/* tty device is waiting for carrier; drop dtr then re-raise */
 		//CLR(sc->sc_ucr3, EXUART_CR3_DSR);
 		//bus_space_write_2(iot, ioh, EXUART_UCR3, sc->sc_ucr3);
-		timeout_add(&sc->sc_dtr_tmo, hz * 2);
+		timeout_add_sec(&sc->sc_dtr_tmo, 2);
 	} else {
 		/* no one else waiting; turn off the uart */
 		exuart_pwroff(sc);
