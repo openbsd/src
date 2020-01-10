@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.4 2019/08/11 10:03:32 kettenis Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.5 2020/01/10 04:10:15 cheloha Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -225,7 +225,7 @@ pluart_intr(void *arg)
 		if (p >= sc->sc_ibufend) {
 			sc->sc_floods++;
 			if (sc->sc_errors++ == 0)
-				timeout_add(&sc->sc_diag_tmo, 60 * hz);
+				timeout_add_sec(&sc->sc_diag_tmo, 60);
 		} else {
 			*p++ = c;
 			if (p == sc->sc_ibufhigh && ISSET(tp->t_cflag, CRTSCTS)) {
@@ -428,7 +428,7 @@ pluart_softint(void *arg)
 		if (ISSET(c, IMXUART_RX_OVERRUN)) {
 			sc->sc_overflows++;
 			if (sc->sc_errors++ == 0)
-				timeout_add(&sc->sc_diag_tmo, 60 * hz);
+				timeout_add_sec(&sc->sc_diag_tmo, 60);
 		}
 		*/
 		/* This is ugly, but fast. */
@@ -605,7 +605,7 @@ pluartclose(dev_t dev, int flag, int mode, struct proc *p)
 		/* tty device is waiting for carrier; drop dtr then re-raise */
 		//CLR(sc->sc_ucr3, IMXUART_CR3_DSR);
 		//bus_space_write_4(iot, ioh, IMXUART_UCR3, sc->sc_ucr3);
-		timeout_add(&sc->sc_dtr_tmo, hz * 2);
+		timeout_add_sec(&sc->sc_dtr_tmo, 2);
 	} else {
 		/* no one else waiting; turn off the uart */
 		pluart_pwroff(sc);
