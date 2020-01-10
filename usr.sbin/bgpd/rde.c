@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.498 2020/01/09 13:31:52 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.499 2020/01/10 13:22:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3221,11 +3221,25 @@ rde_softreconfig_in_done(void *arg, u_int8_t dummy)
 	}
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
-		if (peer->reconf_out)
-			rib_byid(peer->loc_rib_id)->state = RECONF_RELOAD;
-		else if (peer->reconf_rib) {
-			u_int8_t aid;
+		u_int8_t aid;
 
+		if (peer->reconf_out) {
+			if (peer->conf.export_type == EXPORT_NONE) {
+				/* nothing to do here */
+				peer->reconf_out = 0;
+			} else if (peer->conf.export_type ==
+			    EXPORT_DEFAULT_ROUTE) {
+				/* just resend the default route */
+				for (aid = 0; aid < AID_MAX; aid++) {
+					if (peer->capa.mp[aid])
+						up_generate_default(out_rules,
+						    peer, aid);
+				}
+				peer->reconf_out = 0;
+			} else
+				rib_byid(peer->loc_rib_id)->state =
+				    RECONF_RELOAD;
+		} else if (peer->reconf_rib) {
 			/* dump the full table to neighbors that changed rib */
 			for (aid = 0; aid < AID_MAX; aid++) {
 				if (peer->capa.mp[aid])
