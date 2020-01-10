@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.7 2017/09/29 05:44:33 jsg Exp $
+dnl	$OpenBSD: prep,v 1.8 2020/01/10 08:37:31 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -71,3 +71,10 @@ Install on systems without a supported miniroot:
 
  	dd if=/usr/local/share/u-boot/board/u-boot-sunxi-with-spl.bin \
  	    of=/dev/sdXc bs=1024 seek=8
+
+  For systems based on Rockchip RK33xx SoCs:
+
+ 	dd if=/usr/local/share/u-boot/board/idbloader.img \
+ 	    of=/dev/sdXc seek=64
+ 	dd if=/usr/local/share/u-boot/board/u-boot.itb \
+ 	    of=/dev/sdXc seek=16384
