@@ -1,4 +1,4 @@
-/* $OpenBSD: xlights.c,v 1.9 2019/10/08 13:21:38 cheloha Exp $ */
+/* $OpenBSD: xlights.c,v 1.10 2020/01/10 04:13:31 cheloha Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd,org>
  *
@@ -282,7 +282,7 @@ xlights_startdma(struct xlights_softc *sc)
 	dbdma_command_t *cmdp = sc->sc_dmacmd;
 
 	sc->sc_dmasts = 1;
-	timeout_add(&sc->sc_tmo, 250);
+	timeout_add_msec(&sc->sc_tmo, 2500);
 
 	DBDMA_BUILD(cmdp, DBDMA_CMD_OUT_LAST, 0,
 	    sc->sc_bufmap->dm_segs[0].ds_len,
