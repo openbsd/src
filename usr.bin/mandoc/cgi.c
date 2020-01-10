@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.108 2020/01/10 12:53:50 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.109 2020/01/10 15:20:49 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@usta.de>
@@ -407,7 +407,8 @@ resp_searchform(const struct req *req, enum focus focus)
 {
 	int		 i;
 
-	printf("<form action=\"/%s\" method=\"get\" autocomplete=\"off\">\n"
+	printf("<form action=\"/%s\" method=\"get\" "
+	       "autocomplete=\"off\" autocapitalize=\"none\">\n"
 	       "  <fieldset>\n"
 	       "    <legend>Manual Page Search Parameters</legend>\n",
 	       scriptname);
