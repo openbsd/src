@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.118 2020/01/08 16:45:28 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.119 2020/01/10 15:49:37 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -30,6 +30,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/pledge.h>
@@ -156,17 +157,18 @@ void KQRELE(struct kqueue *);
 void
 KQREF(struct kqueue *kq)
 {
-	++kq->kq_refs;
+	atomic_inc_int(&kq->kq_refs);
 }
 
 void
 KQRELE(struct kqueue *kq)
 {
-	struct filedesc *fdp = kq->kq_fdp;
+	struct filedesc *fdp;
 
-	if (--kq->kq_refs > 0)
+	if (atomic_dec_int_nv(&kq->kq_refs) > 0)
 		return;
 
+	fdp = kq->kq_fdp;
 	if (rw_status(&fdp->fd_lock) == RW_WRITE) {
 		LIST_REMOVE(kq, kq_next);
 	} else {
@@ -185,11 +187,10 @@ void kqueue_init(void);
 void
 kqueue_init(void)
 {
-
-	pool_init(&kqueue_pool, sizeof(struct kqueue), 0, IPL_NONE, PR_WAITOK,
-	    "kqueuepl", NULL);
-	pool_init(&knote_pool, sizeof(struct knote), 0, IPL_NONE, PR_WAITOK,
-	    "knotepl", NULL);
+	pool_init(&kqueue_pool, sizeof(struct kqueue), 0, IPL_MPFLOOR,
+	    PR_WAITOK, "kqueuepl", NULL);
+	pool_init(&knote_pool, sizeof(struct knote), 0, IPL_MPFLOOR,
+	    PR_WAITOK, "knotepl", NULL);
 }
 
 int
@@ -480,11 +481,11 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	fp->f_type = DTYPE_KQUEUE;
 	fp->f_ops = &kqueueops;
 	kq = pool_get(&kqueue_pool, PR_WAITOK|PR_ZERO);
+	kq->kq_refs = 1;
+	kq->kq_fdp = fdp;
 	TAILQ_INIT(&kq->kq_head);
 	fp->f_data = kq;
-	KQREF(kq);
 	*retval = fd;
-	kq->kq_fdp = fdp;
 	LIST_INSERT_HEAD(&fdp->fd_kqlist, kq, kq_next);
 	fdinsert(fdp, fd, 0, fp);
 	FRELE(fp, p);
