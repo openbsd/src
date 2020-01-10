@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.16 2018/07/17 19:44:38 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.17 2020/01/10 09:25:51 gerhard Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -854,7 +854,6 @@ bwfm_usb_txctl(struct bwfm_softc *bwfm, void *arg)
 		    DEVNAME(sc), usbd_errstr(error));
 		free(ctl->buf, M_TEMP, ctl->len);
 		free(ctl, M_TEMP, sizeof(*ctl));
-		usbd_free_xfer(xfer);
 		return 1;
 	}
 
