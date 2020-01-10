@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.164 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.165 2020/01/10 23:09:23 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -318,11 +318,8 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		timeout_set(&sc->sc_rngto, ubsec_rng, sc);
-		if (hz >= 100)
-			sc->sc_rnghz = hz / 100;
-		else
-			sc->sc_rnghz = 1;
-		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
+		sc->sc_rngms = 10;
+		timeout_add_msec(&sc->sc_rngto, sc->sc_rngms);
 		printf(" RNG");
 skip_rng:
 	;
@@ -1455,7 +1452,7 @@ ubsec_callback2(struct ubsec_softc *sc, struct ubsec_q2 *q)
 		for (i = 0; i < UBSEC_RNG_BUFSIZ; p++, i++)
 			enqueue_randomness(*p);
 		rng->rng_used = 0;
-		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
+		timeout_add_msec(&sc->sc_rngto, sc->sc_rngms);
 		break;
 	}
 #endif
@@ -1530,7 +1527,7 @@ out:
 	 */
 	(*nqueue)--;
 	splx(s);
-	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
+	timeout_add_msec(&sc->sc_rngto, sc->sc_rngms);
 }
 #endif /* UBSEC_NO_RNG */
 

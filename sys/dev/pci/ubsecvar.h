@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.40 2014/08/15 15:37:51 mikeb Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.41 2020/01/10 23:09:23 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -147,7 +147,7 @@ struct ubsec_softc {
 	int			sc_nsessions;	/* # of sessions */
 	struct ubsec_session	*sc_sessions;	/* sessions */
 	struct timeout		sc_rngto;	/* rng timeout */
-	int			sc_rnghz;	/* rng poll time */
+	int			sc_rngms;	/* rng poll time (msecs) */
 	struct ubsec_q2_rng	sc_rng;
 	struct ubsec_dma	sc_dmaa[UBS_MAX_NQUEUE];
 	struct ubsec_q		*sc_queuea[UBS_MAX_NQUEUE];
