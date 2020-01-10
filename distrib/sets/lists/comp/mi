@@ -256,8 +256,6 @@
 ./usr/include/dev/ic/dp8390reg.h
 ./usr/include/dev/ic/dp8390var.h
 ./usr/include/dev/ic/dp8573areg.h
-./usr/include/dev/ic/dptreg.h
-./usr/include/dev/ic/dptvar.h
 ./usr/include/dev/ic/ds1286reg.h
 ./usr/include/dev/ic/ds1687reg.h
 ./usr/include/dev/ic/dwiicreg.h
