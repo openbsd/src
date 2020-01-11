@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.62 2019/09/11 12:30:34 kettenis Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.63 2020/01/11 14:30:24 mpi Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
 #define	malloc(s, t, flags)		malloc(s)
 #define	free(p, t, s)			free(p)
 
-#define	tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
+#define	tsleep_nsec(c, p, s, t)		(EWOULDBLOCK)
 #define	wakeup(chan)			((void)0)
 
 struct pool {
@@ -489,9 +489,9 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 			 */
 			if (flags & EX_WAITSPACE) {
 				ex->ex_flags |= EXF_WANTED;
-				error = tsleep(ex,
+				error = tsleep_nsec(ex,
 				    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
-				    "extnt", 0);
+				    "extnt", INFSLP);
 				if (error)
 					return (error);
 				goto alloc_start;
@@ -901,8 +901,9 @@ skip:
 	 */
 	if (flags & EX_WAITSPACE) {
 		ex->ex_flags |= EXF_WANTED;
-		error = tsleep(ex,
-		    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0), "extnt", 0);
+		error = tsleep_nsec(ex,
+		    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
+		    "extnt", INFSLP);
 		if (error)
 			return (error);
 		goto alloc_start;
@@ -1140,9 +1141,9 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 			if ((flags & EX_WAITOK) == 0)
 				return (NULL);
 			ex->ex_flags |= EXF_FLWANTED;
-			if (tsleep(&fex->fex_freelist,
+			if (tsleep_nsec(&fex->fex_freelist,
 			    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
-			    "extnt", 0))
+			    "extnt", INFSLP))
 				return (NULL);
 		}
 		rp = LIST_FIRST(&fex->fex_freelist);

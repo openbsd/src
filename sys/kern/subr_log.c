@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.63 2020/01/08 16:27:41 visa Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.64 2020/01/11 14:30:24 mpi Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -205,8 +205,7 @@ logread(dev_t dev, struct uio *uio, int flag)
 			goto out;
 		}
 		logsoftc.sc_state |= LOG_RDWAIT;
-		error = tsleep(mbp, LOG_RDPRI | PCATCH,
-			       "klog", 0);
+		error = tsleep_nsec(mbp, LOG_RDPRI | PCATCH, "klog", INFSLP);
 		if (error)
 			goto out;
 	}
