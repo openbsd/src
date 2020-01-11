@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_data.c,v 1.39 2019/02/09 16:00:06 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.40 2020/01/11 20:48:13 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2015,2017,2018,2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,6 +72,7 @@ getdata(struct tbl_node *tbl, struct tbl_span *dp,
 		if (dp->layout->last->col + 1 < dp->opts->cols) {
 			cp = mandoc_calloc(1, sizeof(*cp));
 			cp->pos = TBL_CELL_LEFT;
+			cp->spacing = SIZE_MAX;
 			dp->layout->last->next = cp;
 			cp->col = dp->layout->last->col + 1;
 			dp->layout->last = cp;
