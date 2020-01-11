@@ -1,4 +1,4 @@
-/* $OpenBSD: copystr.S,v 1.5 2019/06/19 08:00:17 patrick Exp $ */
+/* $OpenBSD: copystr.S,v 1.6 2020/01/11 16:41:30 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -18,7 +18,6 @@
 
 #include "assym.h"
 #include <machine/asm.h>
-#include <sys/errno.h>
 #include <sys/errno.h>
 
 	.text
