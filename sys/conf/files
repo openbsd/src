@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.679 2020/01/10 01:13:19 jsg Exp $
+#	$OpenBSD: files,v 1.680 2020/01/11 00:56:38 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -194,10 +194,6 @@ file	dev/ic/nvme.c			nvme needs-flag
 # LSI Logic Fusion-MPT Message Passing Interface
 device	mpi: scsi
 file	dev/ic/mpi.c			mpi
-
-# Emulex Light Pulse Fibre Channel (Service Level Interface)
-device	sli: scsi
-file	dev/ic/sli.c			sli
 
 # Silicon Image 3124/3132/3531 SATALink
 device	sili: scsi, atascsi

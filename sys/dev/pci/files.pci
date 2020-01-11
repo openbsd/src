@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.342 2020/01/10 01:13:19 jsg Exp $
+#	$OpenBSD: files.pci,v 1.343 2020/01/11 00:56:37 jsg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -225,10 +225,6 @@ file	dev/pci/mpi_pci.c		mpi_pci
 device	mpii: scsi
 attach	mpii at pci
 file	dev/pci/mpii.c			mpii
-
-# Emulex Light Pulse Fibre Channel (Service Level Interface)
-attach	sli at pci with sli_pci
-file	dev/pci/sli_pci.c		sli_pci
 
 # Silicon Image 3124/3132/3531 SATALink
 attach	sili at pci with sili_pci
