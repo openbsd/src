@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_tuner.c,v 1.8 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: bktr_tuner.c,v 1.9 2020/01/11 08:24:08 cheloha Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp $ */
 
 /*
@@ -900,7 +900,7 @@ do_afc( bktr_ptr_t bktr, int addr, int frequency )
 	origFrequency = frequency;
 
 	/* wait for first setting to take effect */
-	tsleep( BKTR_SLEEP, PZERO, "tuning", hz/8 );
+	tsleep_nsec( BKTR_SLEEP, PZERO, "tuning", MSEC_TO_NSEC(1000 / 8) );
 
 	if ( (status = i2cRead( bktr, addr + 1 )) < 0 )
 		return( -1 );
