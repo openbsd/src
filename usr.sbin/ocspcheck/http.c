@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.12 2019/06/28 13:32:49 deraadt Exp $ */
+/*	$Id: http.c,v 1.13 2020/01/11 17:37:19 sthen Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -349,6 +349,7 @@ http_open(const struct http *http, const void *p, size_t psz)
 		c = asprintf(&req,
 		    "POST %s HTTP/1.0\r\n"
 		    "Host: %s\r\n"
+		    "Content-Type: application/ocsp-request\r\n"
 		    "Content-Length: %zu\r\n"
 		    "\r\n",
 		    http->path, http->host, psz);
