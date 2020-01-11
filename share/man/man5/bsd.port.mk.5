@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.523 2019/12/13 10:23:37 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.524 2020/01/11 12:43:12 cwen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 13 2019 $
+.Dd $Mdocdate: January 11 2020 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1296,7 +1296,7 @@ clang compiler from base
 .It gcc3
 gcc 3 compiler from base
 .It ports-gcc
-gcc 4.9 compiler from ports
+gcc 8.3 compiler from ports
 (heeds
 .Ev MODGCC4_ARCHS
 from the module)
@@ -1353,7 +1353,7 @@ or
 still need old modules annotations, so that it's possible
 to select, e.g.,
 .Sq gfortran
-from gcc 4.9 while having clang from base.
+from gcc 8.3 while having clang from base.
 See also
 .Ev CHOSEN_COMPILER .
 .It Ev COMPILER_LINKS
@@ -4004,7 +4004,7 @@ should be built:
 .Ed
 .Pp
 The
-.Pa lang/gcc/4.9
+.Pa lang/gcc/8
 or
 .Pa print/poppler
 ports should provide examples of proper use.
