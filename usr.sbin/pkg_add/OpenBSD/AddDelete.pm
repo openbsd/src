@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.92 2019/11/15 18:28:13 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.93 2020/01/11 13:46:39 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -80,7 +80,7 @@ sub do_the_main_work
 	local $SIG{'KILL'} = $handler;
 	local $SIG{'TERM'} = $handler;
 
-	if ($state->defines('debug')) {
+	if ($state->defines('pkg-debug')) {
 		$self->main($state);
 	} else {
 		eval { $self->main($state); };

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.47 2019/07/21 14:05:30 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.48 2020/01/11 13:46:39 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -190,7 +190,7 @@ sub handle_options
 sub try_and_run_command
 {
 	my ($self, $state) = @_;
-	if ($state->defines('debug')) {
+	if ($state->defines('pkg-debug')) {
 		$self->run_command($state);
 	} else {
 		try {
