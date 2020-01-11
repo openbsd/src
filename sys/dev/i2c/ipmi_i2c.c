@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi_i2c.c,v 1.2 2019/09/03 09:17:10 kettenis Exp $	*/
+/*	$OpenBSD: ipmi_i2c.c,v 1.3 2020/01/11 20:41:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -170,7 +170,7 @@ ssif_sendmsg(struct ipmi_cmd *c)
 	cmd[0] = 2;
 	cmd[1] = c->c_txlen;
 	for (retry = 0; retry < 5; retry++) {
-		error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		error = iic_exec(sc->sc_tag, I2C_OP_WRITE_BLOCK,
 		    sc->sc_addr, cmd, sizeof(cmd), buf, c->c_txlen, 0);
 		if (!error)
 			break;
@@ -185,28 +185,72 @@ int
 ssif_recvmsg(struct ipmi_cmd *c)
 {
 	struct ipmi_i2c_softc *sc = (struct ipmi_i2c_softc *)c->c_sc;
-	uint8_t buf[IPMI_MAX_RX + 16];
+	uint8_t buf[33];
 	uint8_t cmd[1];
+	uint8_t len;
 	int error, retry;
-
-	/* We only support single-part reads. */
-	if (c->c_maxrxlen > 32)
-		return -1;
+	int blkno = 0;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
 	cmd[0] = 3;
 	for (retry = 0; retry < 250; retry++) {
-		memset(buf, 0, c->c_maxrxlen + 1);
-		error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		    sc->sc_addr, cmd, sizeof(cmd), buf, c->c_maxrxlen + 1, 0);
-		if (!error) {
-			c->c_rxlen = buf[0];
-			memcpy(sc->sc.sc_buf, &buf[1], c->c_maxrxlen);
+		memset(buf, 0, sizeof(buf));
+		error = iic_exec(sc->sc_tag, I2C_OP_READ_BLOCK,
+		    sc->sc_addr, cmd, sizeof(cmd), buf, sizeof(buf), 0);
+		if (error)
+			continue;
+
+		if (buf[0] < 1 || buf[0] > 32) {
+			error = EIO;
+			goto release;
+		}
+
+		if (buf[0] == 32 && buf[1] == 0x00 && buf[2] == 0x01) {
+			/* Multi-part read start. */
+			c->c_rxlen = MIN(30, c->c_maxrxlen);
+			memcpy(sc->sc.sc_buf, &buf[3], c->c_rxlen);
 			break;
+		} else {
+			/* Single-part read. */
+			c->c_rxlen = MIN(buf[0], c->c_maxrxlen);
+			memcpy(sc->sc.sc_buf, &buf[1], c->c_rxlen);
+			goto release;
 		}
 	}
+	if (retry == 250)
+		goto release;
 
+	cmd[0] = 9;
+	while (buf[1] != 0xff && c->c_rxlen < c->c_maxrxlen) {
+		memset(buf, 0, sizeof(buf));
+		error = iic_exec(sc->sc_tag, I2C_OP_READ_BLOCK,
+		    sc->sc_addr, cmd, sizeof(cmd), buf, sizeof(buf), 0);
+		if (error)
+			goto release;
+
+		if (buf[0] < 1 || buf[0] > 32) {
+			error = EIO;
+			goto release;
+		}
+
+		if (buf[0] == 32 && buf[1] == blkno) {
+			/* Multi-part read middle. */
+			len = MIN(31, c->c_maxrxlen - c->c_rxlen);
+			memcpy(&sc->sc.sc_buf[c->c_rxlen], &buf[2], len);
+		} else if (buf[1] == 0xff) {
+			/* Multi-part read end. */
+			len = MIN(buf[0] - 1, c->c_maxrxlen - c->c_rxlen);
+			memcpy(&sc->sc.sc_buf[c->c_rxlen], &buf[2], len);
+		} else {
+			error = EIO;
+			goto release;
+		}
+		c->c_rxlen += len;
+		blkno++;
+	}
+
+release:
 	iic_release_bus(sc->sc_tag, 0);
 
 	return (error ? -1 : 0);
