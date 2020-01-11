@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkemmcphy.c,v 1.1 2019/11/29 22:00:54 patrick Exp $	*/
+/*	$OpenBSD: rkemmcphy.c,v 1.2 2020/01/11 10:32:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -164,9 +164,6 @@ rkemmcphy_enable(void *cookie, uint32_t *cells)
 	}
 
 	HWRITE4(sc, GRF_EMMCPHY_CON6, GRF_EMMCPHY_CON6_DR_CLR | impedance);
-	HWRITE4(sc, GRF_EMMCPHY_CON0,
-	    GRF_EMMCPHY_CON0_OTAPDLYENA_CLR | GRF_EMMCPHY_CON0_OTAPDLYENA_EN |
-	    GRF_EMMCPHY_CON0_OTAPDLYSEL_CLR | GRF_EMMCPHY_CON0_OTAPDLYSEL_4);
 
 	HWRITE4(sc, GRF_EMMCPHY_CON6,
 	    GRF_EMMCPHY_CON6_PDB_CLR | GRF_EMMCPHY_CON6_PDB_OFF |
