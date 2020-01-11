@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.94 2019/12/31 10:05:33 mpi Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.95 2020/01/11 08:23:05 cheloha Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -2026,7 +2026,7 @@ cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 		return (0);
 
 	/* wait for the command response */
-	if (tsleep(sc, 0, "malocmd", 500)) {
+	if (tsleep_nsec(sc, 0, "malocmd", SEC_TO_NSEC(5))) {
 		printf("%s: timeout while waiting for cmd response\n",
 		    sc->sc_dev.dv_xname);
 		return (EIO);
