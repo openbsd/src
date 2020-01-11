@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.44 2017/08/10 18:14:56 mikeb Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.45 2020/01/11 21:30:00 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -298,8 +298,8 @@ xs_get_msg(struct xs_softc *xs, int waitok)
 			delay(XST_DELAY * 1000 >> 2);
 			mtx_enter(&xs->xs_frqlck);
 		} else
-			msleep(chan, &xs->xs_frqlck, PRIBIO, chan,
-			    XST_DELAY * hz >> 2);
+			msleep_nsec(chan, &xs->xs_frqlck, PRIBIO, chan,
+			    SEC_TO_NSEC(XST_DELAY) >> 2);
 	}
 	mtx_leave(&xs->xs_frqlck);
 	return (xsm);
@@ -345,8 +345,10 @@ xs_poll(struct xs_softc *xs, int nosleep)
 		s = splnet();
 		xs_intr(xs);
 		splx(s);
-	} else
-		tsleep(xs->xs_wchan, PRIBIO, xs->xs_wchan, XST_DELAY * hz >> 2);
+	} else {
+		tsleep_nsec(xs->xs_wchan, PRIBIO, xs->xs_wchan,
+		    SEC_TO_NSEC(XST_DELAY) >> 2);
+	}
 }
 
 int
@@ -444,8 +446,8 @@ xs_reply(struct xs_transaction *xst, uint rid)
 			splx(s);
 			mtx_enter(&xs->xs_rsplck);
 		} else
-			msleep(xs->xs_rchan, &xs->xs_rsplck, PRIBIO,
-			    xs->xs_rchan, XST_DELAY * hz >> 2);
+			msleep_nsec(xs->xs_rchan, &xs->xs_rsplck, PRIBIO,
+			    xs->xs_rchan, SEC_TO_NSEC(XST_DELAY) >> 2);
 	}
 	mtx_leave(&xs->xs_rsplck);
 	return (xsm);
