@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.236 2019/12/31 10:05:32 mpi Exp $	*/
+/*	$OpenBSD: ami.c,v 1.237 2020/01/11 21:38:11 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1813,8 +1813,8 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 		mtx_enter(&sc->sc_cmd_mtx);
 		sc->sc_drainio = 1;
 		while (!TAILQ_EMPTY(&sc->sc_ccb_runq)) {
-			if (msleep(sc, &sc->sc_cmd_mtx, PRIBIO,
-			    "amimgmt", hz * 60) == EWOULDBLOCK) {
+			if (msleep_nsec(sc, &sc->sc_cmd_mtx, PRIBIO,
+			    "amimgmt", SEC_TO_NSEC(60)) == EWOULDBLOCK) {
 				printf("%s: drain io timeout\n", DEVNAME(sc));
 				ccb->ccb_flags |= AMI_CCB_F_ERR;
 				goto restartio;
