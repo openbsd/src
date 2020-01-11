@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.8 2019/08/18 15:52:45 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.9 2020/01/11 20:07:40 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -338,6 +338,13 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 
 		dwiic_write(sc, DW_IC_DATA_CMD, cmd);
 
+		/*
+		 * For a block read, get the byte count before
+		 * continuing to read the data bytes.
+		 */
+		if (I2C_OP_READ_P(op) && I2C_OP_BLKMODE_P(op) && readpos == 0)
+			tx_limit = 1;
+
 		tx_limit--;
 		x++;
 
@@ -374,8 +381,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 
 			if (rx_avail == 0) {
 				printf("%s: timed out reading remaining %d\n",
-				    sc->sc_dev.dv_xname,
-				    (int)(len - 1 - readpos));
+				    sc->sc_dev.dv_xname, (int)(len - readpos));
 				sc->sc_i2c_xfer.error = 1;
 				sc->sc_busy = 0;
 
@@ -394,6 +400,13 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 				}
 				rx_avail--;
 			}
+
+			/*
+			 * Update the transfer length when doing a
+			 * block read.
+			 */
+			if (I2C_OP_BLKMODE_P(op) && readpos > 0 && len > b[0])
+				len = b[0] + 1;
 
 			if (readpos >= len)
 				break;
