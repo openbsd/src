@@ -1,0 +1,13 @@
+.\" $OpenBSD: badspan.in,v 1.1 2020/01/11 20:56:26 schwarze Exp $
+.TH TBL-LAYOUT-BADSPAN 1 "January 11, 2020"
+.SH NAME
+tbl-layout-badspan \- invalid spanned cells
+.SH DESCRIPTION
+normal text
+.TS
+allbox tab(:);
+S L S S
+L L L L L L.
+span:end
+1:2:3:4:5:6
+.TE
