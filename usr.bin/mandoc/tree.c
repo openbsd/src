@@ -1,7 +1,7 @@
-/*	$OpenBSD: tree.c,v 1.51 2019/01/01 05:56:26 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.52 2020/01/11 16:02:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,7 @@
 #include "main.h"
 
 static	void	print_box(const struct eqn_box *, int);
+static	void	print_cellt(enum tbl_cellt);
 static	void	print_man(const struct roff_node *, int);
 static	void	print_meta(const struct roff_meta *);
 static	void	print_mdoc(const struct roff_node *, int);
@@ -372,10 +373,71 @@ print_box(const struct eqn_box *ep, int indent)
 }
 
 static void
+print_cellt(enum tbl_cellt pos)
+{
+	switch(pos) {
+	case TBL_CELL_LEFT:
+		putchar('L');
+		break;
+	case TBL_CELL_LONG:
+		putchar('a');
+		break;
+	case TBL_CELL_CENTRE:
+		putchar('c');
+		break;
+	case TBL_CELL_RIGHT:
+		putchar('r');
+		break;
+	case TBL_CELL_NUMBER:
+		putchar('n');
+		break;
+	case TBL_CELL_SPAN:
+		putchar('s');
+		break;
+	case TBL_CELL_DOWN:
+		putchar('^');
+		break;
+	case TBL_CELL_HORIZ:
+		putchar('-');
+		break;
+	case TBL_CELL_DHORIZ:
+		putchar('=');
+		break;
+	case TBL_CELL_MAX:
+		putchar('#');
+		break;
+	}
+}
+
+static void
 print_span(const struct tbl_span *sp, int indent)
 {
 	const struct tbl_dat *dp;
+	const struct tbl_cell *cp;
 	int		 i;
+
+	if (sp->prev == NULL) {
+		for (i = 0; i < indent; i++)
+			putchar(' ');
+		printf("%d", sp->opts->cols);
+		if (sp->opts->opts & TBL_OPT_CENTRE)
+			fputs(" center", stdout);
+		if (sp->opts->opts & TBL_OPT_EXPAND)
+			fputs(" expand", stdout);
+		if (sp->opts->opts & TBL_OPT_ALLBOX)
+			fputs(" allbox", stdout);
+		if (sp->opts->opts & TBL_OPT_BOX)
+			fputs(" box", stdout);
+		if (sp->opts->opts & TBL_OPT_DBOX)
+			fputs(" doublebox", stdout);
+		if (sp->opts->opts & TBL_OPT_NOKEEP)
+			fputs(" nokeep", stdout);
+		if (sp->opts->opts & TBL_OPT_NOSPACE)
+			fputs(" nospaces", stdout);
+		if (sp->opts->opts & TBL_OPT_NOWARN)
+			fputs(" nowarn", stdout);
+		printf(" (tbl options) %d:1\n", sp->line);
+	}
 
 	for (i = 0; i < indent; i++)
 		putchar(' ');
@@ -390,31 +452,52 @@ print_span(const struct tbl_span *sp, int indent)
 		putchar(' ');
 		break;
 	default:
+		for (cp = sp->layout->first; cp != NULL; cp = cp->next)
+			print_cellt(cp->pos);
+		putchar(' ');
 		for (dp = sp->first; dp; dp = dp->next) {
+			if ((cp = dp->layout) == NULL)
+				putchar('*');
+			else {
+				printf("%d", cp->col);
+				print_cellt(dp->layout->pos);
+				if (cp->flags & TBL_CELL_BOLD)
+					putchar('b');
+				if (cp->flags & TBL_CELL_ITALIC)
+					putchar('i');
+				if (cp->flags & TBL_CELL_TALIGN)
+					putchar('t');
+				if (cp->flags & TBL_CELL_UP)
+					putchar('u');
+				if (cp->flags & TBL_CELL_BALIGN)
+					putchar('d');
+				if (cp->flags & TBL_CELL_WIGN)
+					putchar('z');
+				if (cp->flags & TBL_CELL_EQUAL)
+					putchar('e');
+				if (cp->flags & TBL_CELL_WMAX)
+					putchar('x');
+			}
 			switch (dp->pos) {
 			case TBL_DATA_HORIZ:
 			case TBL_DATA_NHORIZ:
 				putchar('-');
-				putchar(' ');
-				continue;
+				break;
 			case TBL_DATA_DHORIZ:
 			case TBL_DATA_NDHORIZ:
 				putchar('=');
-				putchar(' ');
-				continue;
+				break;
 			default:
+				putchar(dp->block ? '{' : '[');
+				if (dp->string != NULL)
+					fputs(dp->string, stdout);
+				putchar(dp->block ? '}' : ']');
 				break;
 			}
-			printf("[\"%s\"", dp->string ? dp->string : "");
 			if (dp->hspans)
 				printf(">%d", dp->hspans);
 			if (dp->vspans)
 				printf("v%d", dp->vspans);
-			if (dp->layout == NULL)
-				putchar('*');
-			else if (dp->layout->pos == TBL_CELL_DOWN)
-				putchar('^');
-			putchar(']');
 			putchar(' ');
 		}
 		break;
