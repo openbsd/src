@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.111 2020/01/09 18:54:33 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.112 2020/01/12 09:16:57 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -481,7 +481,7 @@ unlocked_error:
 		}
 	}
 
-	if ((rpipe->pipe_buffer.size - rpipe->pipe_buffer.cnt) >= PIPE_BUF)
+	if (rpipe->pipe_buffer.size - rpipe->pipe_buffer.cnt >= PIPE_BUF)
 		pipeselwakeup(rpipe);
 
 	rw_exit_write(rpipe->pipe_lock);
@@ -519,9 +519,9 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	 * If it is advantageous to resize the pipe buffer, do
 	 * so.
 	 */
-	if ((uio->uio_resid > PIPE_SIZE) &&
-	    (wpipe->pipe_buffer.size <= PIPE_SIZE) &&
-	    (wpipe->pipe_buffer.cnt == 0)) {
+	if (uio->uio_resid > PIPE_SIZE &&
+	    wpipe->pipe_buffer.size <= PIPE_SIZE &&
+	    wpipe->pipe_buffer.cnt == 0) {
 	    	unsigned int npipe;
 
 		npipe = atomic_inc_int_nv(&nbigpipe);
@@ -543,7 +543,7 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 		space = wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt;
 
 		/* Writes of size <= PIPE_BUF must be atomic. */
-		if ((space < uio->uio_resid) && (orig_resid <= PIPE_BUF))
+		if (space < uio->uio_resid && orig_resid <= PIPE_BUF)
 			space = 0;
 
 		if (space > 0) {
@@ -664,9 +664,9 @@ unlocked_error:
 	}
 
 	/* Don't return EPIPE if I/O was successful. */
-	if ((wpipe->pipe_buffer.cnt == 0) &&
-	    (uio->uio_resid == 0) &&
-	    (error == EPIPE)) {
+	if (wpipe->pipe_buffer.cnt == 0 &&
+	    uio->uio_resid == 0 &&
+	    error == EPIPE) {
 		error = 0;
 	}
 
@@ -740,7 +740,7 @@ pipe_poll(struct file *fp, int events, struct proc *p)
 	wpipe = pipe_peer(rpipe);
 
 	if (events & (POLLIN | POLLRDNORM)) {
-		if ((rpipe->pipe_buffer.cnt > 0) ||
+		if (rpipe->pipe_buffer.cnt > 0 ||
 		    (rpipe->pipe_state & PIPE_EOF))
 			revents |= events & (POLLIN | POLLRDNORM);
 	}
@@ -749,7 +749,7 @@ pipe_poll(struct file *fp, int events, struct proc *p)
 	if ((rpipe->pipe_state & PIPE_EOF) || wpipe == NULL)
 		revents |= POLLHUP;
 	else if (events & (POLLOUT | POLLWRNORM)) {
-		if ((wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt) >= PIPE_BUF)
+		if (wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt >= PIPE_BUF)
 			revents |= events & (POLLOUT | POLLWRNORM);
 	}
 
