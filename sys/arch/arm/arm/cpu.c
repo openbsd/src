@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.52 2019/10/27 10:26:12 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.53 2020/01/12 16:55:00 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -570,6 +570,26 @@ cpu_start_secondary(struct cpu_info *ci)
 
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());
+}
+
+void
+cpu_kick(struct cpu_info *ci)
+{
+	/* force cpu to enter kernel */
+	if (ci != curcpu())
+		arm_send_ipi(ci, ARM_IPI_NOP);
+}
+
+void
+cpu_unidle(struct cpu_info *ci)
+{
+	/*
+	 * This could send IPI or SEV depending on if the other
+	 * processor is sleeping (WFI or WFE), in userland, or if the
+	 * cpu is in other possible wait states?
+	 */
+	if (ci != curcpu())
+		arm_send_ipi(ci, ARM_IPI_NOP);
 }
 
 #endif /* MULTIPROCESSOR */
