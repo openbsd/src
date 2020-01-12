@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.155 2019/11/30 11:19:17 visa Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.156 2020/01/12 00:01:12 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -166,11 +166,30 @@ tsleep_nsec(const volatile void *ident, int priority, const char *wmesg,
 		    __func__, wmesg);
 	}
 #endif
-	to_ticks = nsecs / (tick * 1000);
+	/*
+	 * We want to sleep at least nsecs nanoseconds worth of ticks.
+	 *
+	 *  - Clamp nsecs to prevent arithmetic overflow.
+	 *
+	 *  - Round nsecs up to account for any nanoseconds that do not
+	 *    divide evenly into tick_nsec, otherwise we'll lose them to
+	 *    integer division in the next step.  We add (tick_nsec - 1)
+	 *    to keep from introducing a spurious tick if there are no
+	 *    such nanoseconds, i.e. nsecs % tick_nsec == 0.
+	 *
+	 *  - Divide the rounded value to a count of ticks.  We divide
+	 *    by (tick_nsec + 1) to discard the extra tick introduced if,
+	 *    before rounding, nsecs % tick_nsec == 1.
+	 *
+	 *  - Finally, add a tick to the result.  We need to wait out
+	 *    the current tick before we can begin counting our interval,
+	 *    as we do not know how much time has elapsed since the
+	 *    current tick began.
+	 */
+	nsecs = MIN(nsecs, UINT64_MAX - tick_nsec);
+	to_ticks = (nsecs + tick_nsec - 1) / (tick_nsec + 1) + 1;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
-	if (to_ticks == 0)
-		to_ticks = 1;
 	return tsleep(ident, priority, wmesg, (int)to_ticks);
 }
 
@@ -271,11 +290,10 @@ msleep_nsec(const volatile void *ident, struct mutex *mtx, int priority,
 		    __func__, wmesg);
 	}
 #endif
-	to_ticks = nsecs / (tick * 1000);
+	nsecs = MIN(nsecs, UINT64_MAX - tick_nsec);
+	to_ticks = (nsecs + tick_nsec - 1) / (tick_nsec + 1) + 1;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
-	if (to_ticks == 0)
-		to_ticks = 1;
 	return msleep(ident, mtx, priority, wmesg, (int)to_ticks);
 }
 
@@ -322,11 +340,10 @@ rwsleep_nsec(const volatile void *ident, struct rwlock *rwl, int priority,
 		    __func__, wmesg);
 	}
 #endif
-	to_ticks = nsecs / (tick * 1000);
+	nsecs = MIN(nsecs, UINT64_MAX - tick_nsec);
+	to_ticks = (nsecs + tick_nsec - 1) / (tick_nsec + 1) + 1;
 	if (to_ticks > INT_MAX)
 		to_ticks = INT_MAX;
-	if (to_ticks == 0)
-		to_ticks = 1;
 	return 	rwsleep(ident, rwl, priority, wmesg, (int)to_ticks);
 }
 
