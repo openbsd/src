@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.112 2020/01/12 09:16:57 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.113 2020/01/12 09:18:39 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -515,10 +515,7 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	}
 
 
-	/*
-	 * If it is advantageous to resize the pipe buffer, do
-	 * so.
-	 */
+	/* If it is advantageous to resize the pipe buffer, do so. */
 	if (uio->uio_resid > PIPE_SIZE &&
 	    wpipe->pipe_buffer.size <= PIPE_SIZE &&
 	    wpipe->pipe_buffer.cnt == 0) {
