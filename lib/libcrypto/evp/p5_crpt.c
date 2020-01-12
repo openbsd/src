@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p5_crpt.c,v 1.19 2020/01/12 07:11:13 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -108,6 +108,7 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 		iter = 1;
 	else if ((iter = ASN1_INTEGER_get(pbe->iter)) <= 0) {
 		EVPerror(EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS);
+		PBEPARAM_free(pbe);
 		return 0;
 	}
 	salt = pbe->salt->data;
