@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.22 2020/01/09 18:54:33 anton Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.23 2020/01/12 09:19:54 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -71,7 +71,7 @@ struct pipebuf {
  * Per-pipe data structure.
  * Two of these are linked together to produce bi-directional pipes.
  *
- *  Locks used to protect struct members in this file:
+ * Locking:
  *	I	immutable after creation
  *	K	kernel lock
  *	S	sigio_lock
