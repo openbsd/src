@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.8 2019/10/06 16:18:16 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.9 2020/01/12 22:00:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -47,6 +47,7 @@
 #define G12A_FCLK_DIV2P5	99
 #define G12A_CPU_CLK		187
 #define G12A_PCIE_PLL		201
+#define G12A_TS			212
 #define G12A_SYS1_PLL		214
 #define G12A_CPUB_CLK		224
 
@@ -59,6 +60,7 @@
 #define HHI_GCLK_MPEG0		0x50
 #define HHI_GCLK_MPEG1		0x51
 #define HHI_MPEG_CLK_CNTL	0x5d
+#define HHI_TS_CLK_CNTL		0x64
 #define HHI_SYS_CPU_CLK_CNTL0	0x67
 #define  HHI_SYS_CPU_CLK_DYN_ENABLE		(1 << 26)
 #define  HHI_SYS_CPU_CLK_MUX1_DIVN_TCNT(x)	(((x) >> 20) & 0x3f)
@@ -121,6 +123,8 @@ struct amlclock_gate aml_g12a_gates[] = {
 	[G12A_SD_EMMC_A_CLK0] = { HHI_SD_EMMC_CLK_CNTL, 7 },
 	[G12A_SD_EMMC_B_CLK0] = { HHI_SD_EMMC_CLK_CNTL, 23 },
 	[G12A_SD_EMMC_C_CLK0] = { HHI_NAND_CLK_CNTL, 7 },
+
+	[G12A_TS] = { HHI_TS_CLK_CNTL, 8 },
 };
 
 struct amlclock_softc {
