@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.24 2019/07/19 15:40:11 solene Exp $	 */
+/* $OpenBSD: engine.c,v 1.25 2020/01/12 20:51:08 martijn Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -52,6 +52,7 @@ struct view_ent {
 
 useconds_t udelay = 5000000;
 int dispstart = 0;
+int humanreadable = 0;
 int interactive = 1;
 int averageonly = 0;
 int maxprint = 0;
@@ -718,6 +719,8 @@ void
 print_fld_sdiv(field_def *fld, u_int64_t size, int d)
 {
 	int len;
+	char *mult = "KMGTPE";
+	int i = -1;
 
 	if (fld == NULL)
 		return;
@@ -726,37 +729,25 @@ print_fld_sdiv(field_def *fld, u_int64_t size, int d)
 	if (len < 1)
 		return;
 
-	tb_start();
-	if (tbprintft("%llu", size) <= len)
-		goto ok;
-
-	tb_start();
-	size /= d;
-	if (tbprintft("%lluK", size) <= len)
-		goto ok;
-	if (size == 0)
+	if (humanreadable) {
+		while (size >= 10000 && sizeof(mult) >= i + 1) {
+			i++;
+			size /= d;
+		}
+		tb_start();
+		if (tbprintft("%llu%.1s", size, i == -1 ? "" : mult + i) <= len)
+			goto ok;
 		goto err;
-
-	tb_start();
-	size /= d;
-	if (tbprintft("%lluM", size) <= len)
-		goto ok;
-	if (size == 0)
-		goto err;
-
-	tb_start();
-	size /= d;
-	if (tbprintft("%lluG", size) <= len)
-		goto ok;
-	if (size == 0)
-		goto err;
-
-	tb_start();
-	size /= d;
-	if (tbprintft("%lluT", size) <= len)
-		goto ok;
-	
+	}
+	do {
+		tb_start();
+		if (tbprintft("%llu%.1s", size, i == -1 ? "" : mult + i) <= len)
+			goto ok;
+		i++;
+		size /= d;
+	} while (size != 0 && sizeof(mult) >= i);
 err:
+	tb_start();
 	print_fld_str(fld, "*");
 	tb_end();
 	return;

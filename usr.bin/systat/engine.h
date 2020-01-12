@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.11 2019/03/04 21:23:48 dlg Exp $	 */
+/* $OpenBSD: engine.h,v 1.12 2020/01/12 20:51:08 martijn Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -148,6 +148,7 @@ void foreach_view(void (*callback)(field_view *));
 extern int sortdir;
 extern useconds_t udelay;
 extern int dispstart;
+extern int humanreadable;
 extern int interactive;
 extern int averageonly;
 extern int maxprint;

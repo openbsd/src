@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.112 2019/05/08 23:54:13 tedu Exp $
+.\"	$OpenBSD: systat.1,v 1.113 2020/01/12 20:51:08 martijn Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: May 8 2019 $
+.Dd $Mdocdate: January 12 2020 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd display system statistics
 .Sh SYNOPSIS
 .Nm systat
-.Op Fl aBbiNn
+.Op Fl aBbhiNn
 .Op Fl d Ar count
 .Op Fl s Ar delay
 .Op Fl w Ar width
@@ -101,6 +101,8 @@ with statistics displayed every update.
 Exit after
 .Ar count
 screen updates.
+.It Fl h
+Human readable mode, where applicable.
 .It Fl i
 Interactive mode.
 .It Fl N
@@ -220,6 +222,8 @@ command interpreter.
 .Bl -tag -width Fl
 .It Ic help
 Print the names of the available views on the command line.
+.It Ic human
+Toggle human readable mode, where applicable.
 .It Ic order
 Print the names of the available orderings on the command line.
 .It Ic quit
