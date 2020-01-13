@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.11 2018/12/29 11:37:54 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.12 2020/01/13 13:30:00 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -148,10 +148,11 @@
 #define SDHC_WTMK_LVL_WR_WML_SHIFT		16
 #define SDHC_WTMK_LVL_WR_BRST_LEN_SHIFT		24
 
-#define SDHC_COMMAND_TIMEOUT			hz
-#define SDHC_BUFFER_TIMEOUT			hz
-#define SDHC_TRANSFER_TIMEOUT			hz
-#define SDHC_DMA_TIMEOUT			(3 * hz)
+/* timeouts in seconds */
+#define SDHC_COMMAND_TIMEOUT			1
+#define SDHC_BUFFER_TIMEOUT			1
+#define SDHC_TRANSFER_TIMEOUT			1
+#define SDHC_DMA_TIMEOUT			3
 
 #define SDHC_ADMA2_VALID			(1 << 0)
 #define SDHC_ADMA2_END				(1 << 1)
@@ -1137,7 +1138,7 @@ imxesdhc_soft_reset(struct imxesdhc_softc *sc, int mask)
 }
 
 int
-imxesdhc_wait_intr(struct imxesdhc_softc *sc, int mask, int timo)
+imxesdhc_wait_intr(struct imxesdhc_softc *sc, int mask, int secs)
 {
 	int status;
 	int s;
@@ -1152,8 +1153,8 @@ imxesdhc_wait_intr(struct imxesdhc_softc *sc, int mask, int timo)
 
 	status = sc->intr_status & mask;
 	while (status == 0) {
-		if (tsleep(&sc->intr_status, PWAIT, "hcintr", timo)
-		    == EWOULDBLOCK) {
+		if (tsleep_nsec(&sc->intr_status, PWAIT, "hcintr",
+		    SEC_TO_NSEC(secs)) == EWOULDBLOCK) {
 			status |= SDHC_INT_STATUS_ERR;
 			break;
 		}
