@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.156 2020/01/13 15:53:14 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.157 2020/01/13 15:55:57 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ static void determine_job_next_step(Job *);
 static void may_continue_job(Job *);
 static Job *reap_finished_job(pid_t);
 static bool reap_jobs(void);
-static void may_continue_heldback_jobs();
+static void may_continue_heldback_jobs(void);
 
 static bool expensive_job(Job *);
 static bool expensive_command(const char *);
