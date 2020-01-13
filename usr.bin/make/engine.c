@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.60 2019/12/24 13:57:42 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.61 2020/01/13 14:14:24 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -666,9 +666,6 @@ job_handle_status(Job *job, int status)
 			printf(" in target '%s'", job->node->name);
 		if (job->flags & JOB_ERRCHECK) {
 			job->node->built_status = ERROR;
-			/* compute expensive status if we really want it */
-			if ((job->flags & JOB_SILENT) && job == &myjob)
-				determine_expensive_job(job);
 			if (!keepgoing) {
 				if (!silent)
 					printf("\n");
@@ -679,6 +676,8 @@ job_handle_status(Job *job, int status)
 			}
 			printf(", line %lu of %s", job->location->lineno, 
 			    job->location->fname);
+			if ((job->flags & JOB_SILENT) && job == &myjob)
+				determine_expensive_job(job);
 			if ((job->flags & (JOB_SILENT | JOB_IS_EXPENSIVE)) 
 			    == JOB_SILENT)
 				printf(": %s", job->cmd);
