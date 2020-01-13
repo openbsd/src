@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2019/11/19 19:57:03 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/01/13 17:06:56 bluhm Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -100,5 +100,3 @@ run-${PROG}-$n:
 .endif
 
 .include <bsd.regress.mk>
-
-clean: cleanup-t_chroot
