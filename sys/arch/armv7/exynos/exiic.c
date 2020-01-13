@@ -81,8 +81,6 @@ void exiic_attach(struct device *, struct device *, void *);
 int exiic_detach(struct device *, int);
 void exiic_scan(struct device *, struct i2cbus_attach_args *, void *);
 void exiic_setspeed(struct exiic_softc *, int);
-int exiic_intr(void *);
-int exiic_wait_intr(struct exiic_softc *, int, int);
 int exiic_wait_state(struct exiic_softc *, uint32_t, uint32_t, uint32_t);
 int exiic_start(struct exiic_softc *, int, int, void *, int);
 
@@ -133,11 +131,6 @@ exiic_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
-
-#if 0
-	sc->sc_ih = arm_intr_establish(aa->aa_dev->irq[0], IPL_BIO,
-	    exiic_intr, sc, sc->sc_dev.dv_xname);
-#endif
 
 	printf("\n");
 
@@ -209,51 +202,6 @@ exiic_setspeed(struct exiic_softc *sc, int speed)
 
 	HWRITE4(sc, I2C_CON, sc->frequency);
 }
-
-#if 0
-int
-exiic_intr(void *arg)
-{
-	struct exiic_softc *sc = arg;
-	u_int16_t status;
-	int rc = 0;
-
-	status = HREAD4(sc, I2C_CON);
-
-	if (ISSET(status, I2C_CON_INTPENDING)) {
-		/* we do not acknowledge the interrupt here */
-		rc = 1;
-
-		sc->intr_status |= status;
-		wakeup(&sc->intr_status);
-	}
-
-	return (rc);
-}
-
-int
-exiic_wait_intr(struct exiic_softc *sc, int mask, int timo)
-{
-	int status;
-	int s;
-
-	s = splbio();
-
-	status = sc->intr_status & mask;
-	while (status == 0) {
-		if (tsleep(&sc->intr_status, PWAIT, "hcintr", timo)
-		    == EWOULDBLOCK) {
-			break;
-		}
-		status = sc->intr_status & mask;
-	}
-	status = sc->intr_status & mask;
-	sc->intr_status &= ~status;
-
-	splx(s);
-	return status;
-}
-#endif
 
 int
 exiic_wait_state(struct exiic_softc *sc, uint32_t reg, uint32_t mask, uint32_t value)
