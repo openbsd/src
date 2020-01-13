@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt_long.3,v 1.21 2016/01/04 19:43:13 tb Exp $
+.\"	$OpenBSD: getopt_long.3,v 1.22 2020/01/13 18:05:10 stsp Exp $
 .\"	$NetBSD: getopt_long.3,v 1.11 2002/10/02 10:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.Dd $Mdocdate: January 4 2016 $
+.Dd $Mdocdate: January 13 2020 $
 .Dt GETOPT_LONG 3
 .Os
 .Sh NAME
@@ -97,6 +97,22 @@ Abbreviated long option names are accepted when
 .Fn getopt_long
 processes long options if the abbreviation is unique.
 An exact match is always preferred for a defined long option.
+.Pp
+By default,
+.Fn getopt_long
+permutes
+.Ar argv
+such that all option arguments are evaluated before any non-options arguments.
+If the first character of
+.Fa optstring
+is a plus sign
+.Pq Ql +
+or if the environment variable
+.Ev POSIXLY_CORRECT
+is set, then
+.Ar argv
+is processed in order and option processing stops as soon as the first
+non-option argument is encountered.
 .Pp
 The
 .Fn getopt_long
