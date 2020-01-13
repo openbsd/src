@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.77 2020/01/08 14:09:29 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.78 2020/01/13 14:05:21 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #include "suff.h"
 #include "var.h"
 #include "error.h"
+#include "expandchildren.h"
 #include "make.h"
 #include "gnode.h"
 #include "extern.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.99 2020/01/13 14:03:12 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.100 2020/01/13 14:05:21 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
  */
 
 #include <ctype.h>
-#include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -52,9 +51,7 @@
 #include "config.h"
 #include "defines.h"
 #include "dir.h"
-#include "direxpand.h"
 #include "engine.h"
-#include "arch.h"
 #include "suff.h"
 #include "var.h"
 #include "targ.h"
@@ -66,6 +63,7 @@
 #include "make.h"
 #include "stats.h"
 #include "dump.h"
+#include "expandchildren.h"
 
 /* XXX the suffixes hash is stored using a specific hash function, suitable
  * for looking up suffixes in reverse.
@@ -165,9 +163,6 @@ static bool SuffRemoveSrc(Lst);
 static void SuffAddLevel(Lst, Src *);
 static Src *SuffFindThem(Lst, Lst);
 static Src *SuffFindCmds(Src *, Lst);
-static void SuffExpandChildren(LstNode, GNode *);
-static void SuffExpandVarChildren(LstNode, GNode *, GNode *);
-static void SuffExpandWildChildren(LstNode, GNode *, GNode *);
 static bool SuffApplyTransform(GNode *, GNode *, Suff *, Suff *);
 static void SuffFindDeps(GNode *, Lst);
 static void SuffFindArchiveDeps(GNode *, Lst);
@@ -454,6 +449,18 @@ find_best_suffix(const char *s, const char *e)
 		reverse_hash_add_char(&hv, --p);
 	}
 	return best;
+}
+
+Lst
+find_best_path(const char *name)
+{
+	Suff *s = find_best_suffix(name, name + strlen(name));
+	if (s != NULL) {
+		if (DEBUG(SUFF))
+			printf("suffix is \"%s\"...", s->name);
+		return &s->searchPath;
+	} else
+		return defaultPath;
 }
 
 /*-
@@ -876,203 +883,6 @@ SuffFindCmds(Src *targ, Lst slst)
 	return NULL;
 }
 
-static void
-SuffLinkParent(GNode *cgn, GNode *pgn)
-{
-	Lst_AtEnd(&cgn->parents, pgn);
-	if (!has_been_built(cgn))
-		pgn->children_left++;
-	else if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
-		if (cgn->built_status == REBUILT)
-			pgn->child_rebuilt = true;
-		(void)Make_TimeStamp(pgn, cgn);
-	}
-}
-
-static void
-SuffExpandVarChildren(LstNode after, GNode *cgn, GNode *pgn)
-{
-	GNode *gn;		/* New source 8) */
-	char *cp;		/* Expanded value */
-	LIST members;
-
-
-	if (DEBUG(SUFF))
-		printf("Expanding \"%s\"...", cgn->name);
-
-	cp = Var_Subst(cgn->name, &pgn->localvars, true);
-	if (cp == NULL) {
-		printf("Problem substituting in %s", cgn->name);
-		printf("\n");
-		return;
-	}
-
-	Lst_Init(&members);
-
-	if (cgn->type & OP_ARCHV) {
-		/*
-		 * Node was an archive(member) target, so we want to call
-		 * on the Arch module to find the nodes for us, expanding
-		 * variables in the parent's context.
-		 */
-		const char *sacrifice = (const char *)cp;
-
-		(void)Arch_ParseArchive(&sacrifice, &members, &pgn->localvars);
-	} else {
-		/* Break the result into a vector of strings whose nodes
-		 * we can find, then add those nodes to the members list.
-		 * Unfortunately, we can't use brk_string because it
-		 * doesn't understand about variable specifications with
-		 * spaces in them...  */
-		const char *start, *cp2;
-
-		for (start = cp; *start == ' ' || *start == '\t'; start++)
-			continue;
-		for (cp2 = start; *cp2 != '\0';) {
-			if (ISSPACE(*cp2)) {
-				/* White-space -- terminate element, find the
-				 * node, add it, skip any further spaces.  */
-				gn = Targ_FindNodei(start, cp2, TARG_CREATE);
-				cp2++;
-				Lst_AtEnd(&members, gn);
-				while (ISSPACE(*cp2))
-					cp2++;
-				/* Adjust cp2 for increment at start of loop,
-				 * but set start to first non-space.  */
-				start = cp2;
-			} else if (*cp2 == '$')
-				/* Start of a variable spec -- contact variable
-				 * module to find the end so we can skip over
-				 * it.  */
-				Var_ParseSkip(&cp2, &pgn->localvars);
-			else if (*cp2 == '\\' && cp2[1] != '\0')
-				/* Escaped something -- skip over it.  */
-				cp2+=2;
-			else
-				cp2++;
-	    }
-
-	    if (cp2 != start) {
-		    /* Stuff left over -- add it to the list too.  */
-		    gn = Targ_FindNodei(start, cp2, TARG_CREATE);
-		    Lst_AtEnd(&members, gn);
-	    }
-	}
-	/* Add all elements of the members list to the parent node.  */
-	while ((gn = Lst_DeQueue(&members)) != NULL) {
-		if (DEBUG(SUFF))
-			printf("%s...", gn->name);
-		if (Lst_Member(&pgn->children, gn) == NULL) {
-			Lst_Append(&pgn->children, after, gn);
-			after = Lst_Adv(after);
-			SuffLinkParent(gn, pgn);
-		}
-	}
-	/* Free the result.  */
-	free(cp);
-	if (DEBUG(SUFF))
-		printf("\n");
-}
-
-static void
-SuffExpandWildChildren(LstNode after, GNode *cgn, GNode *pgn)
-{
-	Suff *s;
-	char *cp;	/* Expanded value */
-
-	LIST exp;	/* List of expansions */
-	Lst path;	/* Search path along which to expand */
-
-	if (DEBUG(SUFF))
-		printf("Wildcard expanding \"%s\"...", cgn->name);
-
-	/* Find a path along which to expand the word.
-	 *
-	 * If the word has a known suffix, use that path.
-	 * If it has no known suffix and we're allowed to use the null
-	 *	 suffix, use its path.
-	 * Else use the default system search path.  */
-	s = find_best_suffix(cgn->name, cgn->name + strlen(cgn->name));
-
-	if (s != NULL) {
-		if (DEBUG(SUFF))
-			printf("suffix is \"%s\"...", s->name);
-		path = &s->searchPath;
-	} else
-		/* Use default search path.  */
-		path = defaultPath;
-
-	/* Expand the word along the chosen path. */
-	Lst_Init(&exp);
-	Dir_Expand(cgn->name, path, &exp);
-
-	/* Fetch next expansion off the list and find its GNode.  */
-	while ((cp = Lst_DeQueue(&exp)) != NULL) {
-		GNode *gn;		/* New source 8) */
-		if (DEBUG(SUFF))
-			printf("%s...", cp);
-		gn = Targ_FindNode(cp, TARG_CREATE);
-
-		/* If gn isn't already a child of the parent, make it so and
-		 * up the parent's count of children to build.  */
-		if (Lst_Member(&pgn->children, gn) == NULL) {
-			Lst_Append(&pgn->children, after, gn);
-			after = Lst_Adv(after);
-			SuffLinkParent(gn, pgn);
-		}
-	}
-
-	if (DEBUG(SUFF))
-		printf("\n");
-}
-
-/*-
- *-----------------------------------------------------------------------
- * SuffExpandChildren --
- *	Expand the names of any children of a given node that contain
- *	variable invocations or file wildcards into actual targets.
- *
- * Side Effects:
- *	The expanded node is removed from the parent's list of children,
- *	and the parent's children to build counter is decremented, 
- *      but other nodes may be added.
- *-----------------------------------------------------------------------
- */
-static void
-SuffExpandChildren(LstNode ln, /* LstNode of child, so we can replace it */
-    GNode *pgn)
-{
-	GNode	*cgn = Lst_Datum(ln);
-
-	/* First do variable expansion -- this takes precedence over wildcard
-	 * expansion. If the result contains wildcards, they'll be gotten to
-	 * later since the resulting words are tacked on to the end of the
-	 * children list.  */
-	if (strchr(cgn->name, '$') != NULL)
-		SuffExpandVarChildren(ln, cgn, pgn);
-	else if (Dir_HasWildcards(cgn->name))
-		SuffExpandWildChildren(ln, cgn, pgn);
-	else
-	    /* Third case: nothing to expand.  */
-		return;
-
-	/* Since the source was expanded, remove it from the list of children to
-	 * keep it from being processed.  */
-	pgn->children_left--;
-	Lst_Remove(&pgn->children, ln);
-}
-
-void
-expand_children_from(GNode *parent, LstNode from)
-{
-	LstNode np, ln;
-
-	for (ln = from; ln != NULL; ln = np) {
-		np = Lst_Adv(ln);
-		SuffExpandChildren(ln, parent);
-	}
-}
-
 /*-
  *-----------------------------------------------------------------------
  * SuffApplyTransform --
@@ -1104,7 +914,7 @@ SuffApplyTransform(
 	if (Lst_AddNew(&tGn->children, sGn)) {
 		/* Not already linked, so form the proper links between the
 		 * target and source.  */
-		SuffLinkParent(sGn, tGn);
+		LinkParent(sGn, tGn);
 	}
 
 	if ((sGn->type & OP_OPMASK) == OP_DOUBLEDEP) {
@@ -1118,7 +928,7 @@ SuffApplyTransform(
 			if (Lst_AddNew(&tGn->children, gn)) {
 				/* Not already linked, so form the proper links
 				 * between the target and source.  */
-				SuffLinkParent(gn, tGn);
+				LinkParent(gn, tGn);
 			}
 		}
 	}
@@ -1211,7 +1021,7 @@ SuffFindArchiveDeps(
 
 	/* Create the link between the two nodes right off. */
 	if (Lst_AddNew(&gn->children, mem))
-		SuffLinkParent(mem, gn);
+		LinkParent(mem, gn);
 
 	/* Copy variables from member node to this one.  */
 	Var(TARGET_INDEX, gn) = Var(TARGET_INDEX, mem);

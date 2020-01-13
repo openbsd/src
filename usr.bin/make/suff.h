@@ -1,6 +1,6 @@
 #ifndef SUFF_H
 #define SUFF_H
-/*	$OpenBSD: suff.h,v 1.11 2020/01/13 14:03:12 espie Exp $ */
+/*	$OpenBSD: suff.h,v 1.12 2020/01/13 14:05:21 espie Exp $ */
 
 /*
  * Copyright (c) 2001-2019 Marc Espie.
@@ -59,14 +59,8 @@ extern Lst find_suffix_path(GNode *);
 /* Suff_PrintAll():
  *	displays all suffix information. */
 extern void Suff_PrintAll(void);
-/* XXX internal to suff.c, only the following macro is used elsewhere. */
-extern void expand_children_from(GNode *, LstNode);
-
-/* expand_all_children(gn):
- *	figure out all variable/wildcards expansions in gn.
- *	TODO pretty sure this is independent from the main suff module.
+/* path = find_best_path(name):
+ *	find the best path for the name, according to known suffixes.
  */
-#define expand_all_children(gn)	\
-    expand_children_from(gn, Lst_First(&(gn)->children))
-
+extern Lst find_best_path(const char *name);
 #endif
