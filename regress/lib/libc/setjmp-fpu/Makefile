@@ -1,8 +1,14 @@
-#	$OpenBSD: Makefile,v 1.2 2013/12/29 05:46:43 martynas Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/01/13 14:58:38 bluhm Exp $
 
-PROG=	setjmp-fpu
-SRCS=	_setjmp.c main.c setjmp.c sigsetjmp.c
+PROGS=	_setjmp setjmp sigsetjmp
 
 LDADD=	-lm
+
+.for p in ${PROGS}
+REGRESS_TARGETS +=	run-$p
+run-$p: $p
+	@echo '======== $@ ========'
+	./$p
+.endfor
 
 .include <bsd.regress.mk>
