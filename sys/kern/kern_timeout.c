@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.70 2020/01/03 20:11:11 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.71 2020/01/13 09:51:52 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -554,6 +554,7 @@ softclock_thread(void *arg)
 	struct cpu_info *ci;
 	struct sleep_state sls;
 	struct timeout *to;
+	int s;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -565,6 +566,7 @@ softclock_thread(void *arg)
 	KASSERT(ci != NULL);
 	sched_peg_curproc(ci);
 
+	s = splsoftclock();
 	for (;;) {
 		sleep_setup(&sls, &timeout_proc, PSWP, "bored");
 		sleep_finish(&sls, CIRCQ_EMPTY(&timeout_proc));
@@ -579,6 +581,7 @@ softclock_thread(void *arg)
 		tostat.tos_thread_wakeups++;
 		mtx_leave(&timeout_mutex);
 	}
+	splx(s);
 }
 
 #ifndef SMALL_KERNEL
