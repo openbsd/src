@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.83 2020/01/13 13:50:41 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.84 2020/01/13 15:41:53 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -275,6 +275,12 @@ Targ_Precious(GNode *gn)
 		return true;
 	else
 		return false;
+}
+
+bool
+node_is_real(GNode *gn)
+{
+	return (gn->type & OP_DUMMY) == 0;
 }
 
 void

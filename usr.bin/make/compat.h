@@ -1,6 +1,6 @@
 #ifndef COMPAT_H
 #define COMPAT_H
-/*	$OpenBSD: compat.h,v 1.4 2020/01/08 14:09:29 espie Exp $ */
+/*	$OpenBSD: compat.h,v 1.5 2020/01/13 15:41:53 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -35,9 +35,11 @@
  *	    - friendly variable substitution.
  */
 
-/* out_of_date = Compat_Run(to_create);
+/* Compat_Run(to_create, &has_errors, &out_of_date);
  *	Run the actual make engine, to create targets that need to,
- *	return true if any target is out of date. */
-extern bool Compat_Run(Lst);
+ *	return info about what we did. */
+extern void Compat_Run(Lst, bool *, bool *);
+extern void Compat_Init(void);
+extern void Compat_Update(GNode *);
 
 #endif

@@ -1,6 +1,6 @@
 #ifndef TARG_H
 #define TARG_H
-/*	$OpenBSD: targ.h,v 1.14 2020/01/13 13:50:41 espie Exp $ */
+/*	$OpenBSD: targ.h,v 1.15 2020/01/13 15:41:53 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -57,6 +57,7 @@ extern bool Targ_Precious(GNode *);
 extern void Targ_PrintCmd(void *);
 extern void Targ_PrintType(int);
 extern void Targ_PrintGraph(int);
+extern bool node_is_real(GNode *);
 
 extern GNode *begin_node, *end_node, *interrupt_node, *DEFAULT;
 struct ohash_info;

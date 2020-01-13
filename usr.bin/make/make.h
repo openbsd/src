@@ -1,7 +1,7 @@
 #ifndef _MAKE_H_
 #define _MAKE_H_
 
-/*	$OpenBSD: make.h,v 1.39 2020/01/13 15:15:17 espie Exp $ */
+/*	$OpenBSD: make.h,v 1.40 2020/01/13 15:41:53 espie Exp $ */
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -41,7 +41,8 @@
  */
 
 extern void Make_Update(GNode *);
-extern bool Make_Run(Lst);
+extern void Make_Run(Lst, bool *, bool *);
+extern void Make_Init(void);
 extern long random_delay;
 extern bool nothing_left_to_build(void);
 
