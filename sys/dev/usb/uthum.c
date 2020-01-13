@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.32 2017/01/09 14:44:28 mpi Exp $   */
+/*	$OpenBSD: uthum.c,v 1.33 2020/01/13 10:01:24 mpi Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -311,7 +311,8 @@ uthum_issue_cmd(struct uthum_softc *sc, uint8_t target_cmd, int delay)
 
 	/* wait if required */
 	if (delay > 0)
-		tsleep(&sc->sc_sensortask, 0, "uthum", (delay*hz+999)/1000 + 1);
+		tsleep_nsec(&sc->sc_sensortask, 0, "uthum",
+		    MSEC_TO_NSEC(delay));
 
 	return 0;
 }
@@ -337,7 +338,8 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 
 	/* wait if required */
 	if (delay > 0)
-		tsleep(&sc->sc_sensortask, 0, "uthum", (delay*hz+999)/1000 + 1);
+		tsleep_nsec(&sc->sc_sensortask, 0, "uthum",
+		    MSEC_TO_NSEC(delay));
 
 	/* get answer */
 	if (uhidev_get_report(sc->sc_hdev.sc_parent, UHID_FEATURE_REPORT,
