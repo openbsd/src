@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-/*	$OpenBSD: engine.h,v 1.15 2020/01/13 14:56:59 espie Exp $	*/
+/*	$OpenBSD: engine.h,v 1.16 2020/01/13 15:08:08 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -103,19 +103,19 @@ struct Job_ {
 	struct Job_ 	*next;		/* singly linked list */
 	pid_t		pid;		/* Current command process id */
 	Location	*location;
-	int		exit_type;	/* last child exit or signal */
-#define JOB_EXIT_OKAY 0
-#define JOB_EXIT_BAD 1
-#define JOB_SIGNALED 2
 	int 		code;		/* exit status or signal code */
+	unsigned short	exit_type;	/* last child exit or signal */
+#define JOB_EXIT_OKAY 	0
+#define JOB_EXIT_BAD 	1
+#define JOB_SIGNALED 	2
+	unsigned short	flags;
+#define JOB_SILENT		0x001	/* Command was silent */
+#define JOB_IS_EXPENSIVE 	0x002
+#define JOB_LOST		0x004	/* sent signal to non-existing pid ? */
+#define JOB_ERRCHECK		0x008	/* command wants errcheck */
 	LstNode		next_cmd;	/* Next command to run */
 	char		*cmd;		/* Last command run */
 	GNode		*node;	    	/* Target of this job */
-	unsigned short	flags;
-#define JOB_SILENT	0x001	/* Command was silent */
-#define JOB_IS_EXPENSIVE 0x002
-#define JOB_LOST	0x004	/* sent signal to non-existing pid ? */
-#define JOB_ERRCHECK	0x008	/* command wants errcheck */
 };
 
 /* Continuation-style running commands for the parallel engine */
