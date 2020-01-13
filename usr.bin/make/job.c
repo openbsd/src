@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.152 2020/01/13 15:12:58 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.153 2020/01/13 15:19:04 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -131,6 +131,7 @@ Job *availableJobs;		/* Pool of available jobs */
 static Job *heldJobs;		/* Jobs not running yet because of expensive */
 static pid_t mypid;		/* Used for printing debugging messages */
 static Job *extra_job;		/* Needed for .INTERRUPT */
+static bool compatMode;		/* If we're running with compat.c don't call Make_Update */
 
 static volatile sig_atomic_t got_fatal;
 
@@ -541,7 +542,8 @@ postprocess_job(Job *job)
 		 * non-zero status that we shouldn't ignore, we call
 		 * Make_Update to update the parents. */
 		job->node->built_status = REBUILT;
-		Make_Update(job->node);
+		if (!compatMode)
+			Make_Update(job->node);
 	}
 	if (job->flags & JOB_KEEPERROR) {
 		job->next = errorJobs;
@@ -871,7 +873,7 @@ loop_handle_running_jobs()
 }
 
 void
-Job_Init(int maxJobs)
+Job_Init(int maxJobs, bool compat)
 {
 	Job *j;
 	int i;
@@ -881,6 +883,7 @@ Job_Init(int maxJobs)
 	errorJobs = NULL;
 	availableJobs = NULL;
 	sequential = maxJobs == 1;
+	compatMode = compat;
 
 	/* we allocate n+1 jobs, since we may need an extra job for
 	 * running .INTERRUPT.  */

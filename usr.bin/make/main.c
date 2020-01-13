@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.125 2020/01/13 14:51:50 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.126 2020/01/13 15:19:04 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -805,7 +805,7 @@ main(int argc, char **argv)
 		else
 			Targ_FindList(&targs, create);
 
-		Job_Init(optj);
+		Job_Init(optj, compatMake);
 		/* If the user has defined a .BEGIN target, execute the commands
 		 * attached to it.  */
 		if (!queryFlag)
