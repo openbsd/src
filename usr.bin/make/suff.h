@@ -1,9 +1,9 @@
 #ifndef SUFF_H
 #define SUFF_H
-/*	$OpenBSD: suff.h,v 1.10 2012/12/06 14:30:35 espie Exp $ */
+/*	$OpenBSD: suff.h,v 1.11 2020/01/13 14:03:12 espie Exp $ */
 
 /*
- * Copyright (c) 2001 Marc Espie.
+ * Copyright (c) 2001-2019 Marc Espie.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,15 +27,45 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern void Suff_ClearSuffixes(void);
-extern GNode *Suff_ParseAsTransform(const char *, const char *);
-extern void Suff_AddSuffixi(const char *, const char *);
-extern void Suff_FindDeps(GNode *);
 extern void Suff_Init(void);
+
+/* Suff_DisableAllSuffixes():
+ *	disable current suffixes and the corresponding rules.
+ *	They may be re-activated by adding a suffix anew.  */
+extern void Suff_DisableAllSuffixes(void);
+/* gn = Suff_ParseAsTransform(line, eline):
+ *	Try parsing a [line,eline[ as a suffix transformation
+ *	(.a.b or .a). If successful, returns a gn we can add
+ *	commands to (this is actually a transform kept on a
+ * 	separate hash from normal targets).  Otherwise returns NULL. */
+extern GNode *Suff_ParseAsTransform(const char *, const char *);
+/* Suff_AddSuffixi(name, ename):
+ *	add the passed string interval [name,ename[ as a known
+ *	suffix. */
+extern void Suff_AddSuffixi(const char *, const char *);
+/* process_suffixes_after_makefile_is_read():
+ *	finish setting up the transformation graph for Suff_FindDep
+ *	and the .PATH.sfx paths get the default path appended for
+ *	find_suffix_path().  */
 extern void process_suffixes_after_makefile_is_read(void);
+/* Suff_FindDeps(gn):
+ *	find implicit dependencies for gn and fill out corresponding
+ *	fields. */
+extern void Suff_FindDeps(GNode *);
+/* l = find_suffix_path(gn):
+ *	returns the path associated with a gn, either because of its
+ *	suffix, or the default path.  */
 extern Lst find_suffix_path(GNode *);
+/* Suff_PrintAll():
+ *	displays all suffix information. */
 extern void Suff_PrintAll(void);
+/* XXX internal to suff.c, only the following macro is used elsewhere. */
 extern void expand_children_from(GNode *, LstNode);
+
+/* expand_all_children(gn):
+ *	figure out all variable/wildcards expansions in gn.
+ *	TODO pretty sure this is independent from the main suff module.
+ */
 #define expand_all_children(gn)	\
     expand_children_from(gn, Lst_First(&(gn)->children))
 

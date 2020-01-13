@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.98 2019/12/21 15:31:54 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.99 2020/01/13 14:03:12 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -39,24 +39,6 @@
  * suff.c --
  *	Functions to maintain suffix lists and find implicit dependents
  *	using suffix transformation rules
- *
- * Interface:
- *	Suff_Init		Initialize all things to do with suffixes.
- *
- *	Suff_ClearSuffixes	Clear out all the suffixes.
- *
- *	Suff_AddSuffix		Add the passed string as another known suffix.
- *
- *	Suff_ParseAsTransform	Line might be a suffix line, check it.
- *				If it's not, return NULL. Otherwise, add
- *				another transformation to the suffix graph.
- *				Returns	GNode suitable for framing, I mean,
- *				tacking commands, attributes, etc. on.
- *
- *	Suff_FindDeps		Find implicit sources for and the location of
- *				a target based on its suffix. Returns the
- *				bottom-most node added to the graph or NULL
- *				if the target had no implicit sources.
  */
 
 #include <ctype.h>
@@ -91,7 +73,7 @@
 static struct ohash suffixes;
 
 /* We remember the longest suffix, so we don't need to look beyond that.  */
-size_t maxLen;
+size_t maxLen = 0U;
 static LIST srclist;
 
 /* Transforms (.c.o) are stored in another hash, independently from suffixes.
@@ -172,7 +154,6 @@ static Suff *new_suffixi(const char *, const char *);
 static void reverse_hash_add_char(uint32_t *, const char *);
 static uint32_t reverse_hashi(const char *, const char **);
 static unsigned int reverse_slot(struct ohash *, const char *, const char **);
-static void clear_suffixes(void);
 static void record_possible_suffix(Suff *, GNode *, char *, Lst, Lst);
 static void record_possible_suffixes(GNode *, Lst, Lst);
 static Suff *find_suffix_as_suffix(Lst, const char *, const char *);
@@ -348,18 +329,11 @@ SuffInsert(Lst l, Suff *s)
 	}
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Suff_ClearSuffixes --
- *	Nuke the list of suffixes but keep all transformation
- *	rules around.
- *
- * Side Effects:
- *	Current suffixes are reset
- *-----------------------------------------------------------------------
- */
-static void
-clear_suffixes(void)
+/* Suff_DisableAllSuffixes
+ *	mark all current suffixes as inactive, and reset precedence
+ *	computation.  */
+void
+Suff_DisableAllSuffixes(void)
 {
 	unsigned int i;
 	Suff *s;
@@ -370,12 +344,6 @@ clear_suffixes(void)
 
 	order = 0;
 	maxLen = 0;
-}
-
-void
-Suff_ClearSuffixes(void)
-{
-	clear_suffixes();
 }
 
 
@@ -629,11 +597,7 @@ build_suffixes_graph(void)
  *
  * Side Effects:
  *	The searchPath field of all the suffixes is extended by the
- *	directories in defaultPath. If paths were specified for the
- *	".h" suffix, the directories are stuffed into a global variable
- *	called ".INCLUDES" with each directory preceded by a -I. The same
- *	is done for the ".a" suffix, except the variable is called
- *	".LIBS" and the flag is -L.
+ *	directories in defaultPath. 
  *-----------------------------------------------------------------------
  */
 static void
@@ -1685,19 +1649,14 @@ Suff_Init(void)
 	Static_Lst_Init(&srclist);
 	ohash_init(&transforms, 4, &gnode_info);
 
-	/*
-	 * Create null suffix for single-suffix rules (POSIX). The thing doesn't
-	 * actually go on the suffix list or everyone will think that's its
-	 * suffix.
-	 */
+	/* Create null suffix for single-suffix rules (POSIX). The thing doesn't
+	 * actually go on the suffix list as it matches everything.  */
 	emptySuff = new_suffix("");
-	make_suffix_known(emptySuff);
+	emptySuff->flags = SUFF_ACTIVE;
+	emptySuff->order = 0;
 	Dir_Concat(&emptySuff->searchPath, defaultPath);
 	ohash_init(&suffixes, 4, &suff_info);
-	order = 0;
-	clear_suffixes();
 	special_path_hack();
-
 }
 
 

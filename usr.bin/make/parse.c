@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.127 2020/01/13 13:59:24 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.128 2020/01/13 14:03:12 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -864,7 +864,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 	if (!*line) {
 		switch (specType) {
 		case SPECIAL_SUFFIXES:
-			Suff_ClearSuffixes();
+			Suff_DisableAllSuffixes();
 			break;
 		case SPECIAL_PRECIOUS:
 			allPrecious = true;
