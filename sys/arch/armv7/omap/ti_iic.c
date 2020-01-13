@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.11 2019/05/06 03:45:58 mlarkin Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.12 2020/01/13 13:32:17 mpi Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -416,8 +416,8 @@ ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
 		/* and wait for completion */
 		DPRINTF(("ti_iic_op waiting, op %#x\n", sc->sc_op));
 		while (sc->sc_op == op) {
-			if (tsleep(&sc->sc_dev, PWAIT, "tiiic", 500)
-			    == EWOULDBLOCK) {
+			if (tsleep_nsec(&sc->sc_dev, PWAIT, "tiiic",
+			    SEC_TO_NSEC(5)) == EWOULDBLOCK) {
 				/* timeout */
 				op = TI_I2CERROR;
 			}
@@ -542,7 +542,8 @@ ti_iic_wait(struct ti_iic_softc *sc, uint16_t mask, uint16_t val, int flags)
 		if (flags & I2C_F_POLL)
 			delay(50000);
 		else
-			tsleep(&sc->sc_dev, PWAIT, "tiiic", 50);
+			tsleep_nsec(&sc->sc_dev, PWAIT, "tiiic",
+			    MSEC_TO_NSEC(50));
 	}
 	DPRINTF(("ti_iic_wait done retry %#x\n", retry));
 
