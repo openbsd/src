@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.157 2020/01/13 15:55:57 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.158 2020/01/13 16:03:44 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -660,6 +660,22 @@ may_continue_job(Job *job)
 	}
 }
 
+static void
+may_continue_heldback_jobs()
+{
+	while (!no_new_jobs) {
+		if (heldJobs != NULL) {
+			Job *job = heldJobs;
+			heldJobs = heldJobs->next;
+			if (DEBUG(EXPENSIVE))
+				fprintf(stderr, "[%ld] cheap -> release %s\n",
+				    (long)mypid, job->node->name);
+			may_continue_job(job);
+		} else
+			break;
+	}
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Job_Make  --
@@ -698,22 +714,6 @@ determine_job_next_step(Job *job)
 		postprocess_job(job);
 	else
 		may_continue_job(job);
-}
-
-static void
-may_continue_heldback_jobs()
-{
-	while (!no_new_jobs) {
-		if (heldJobs != NULL) {
-			Job *job = heldJobs;
-			heldJobs = heldJobs->next;
-			if (DEBUG(EXPENSIVE))
-				fprintf(stderr, "[%ld] cheap -> release %s\n",
-				    (long)mypid, job->node->name);
-			may_continue_job(job);
-		} else
-			break;
-	}
 }
 
 /*
