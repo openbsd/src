@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.153 2020/01/13 15:19:04 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.154 2020/01/13 15:24:31 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -143,14 +143,12 @@ static sigset_t sigset, emptyset;
 static void handle_fatal_signal(int);
 static void handle_siginfo(void);
 static void postprocess_job(Job *);
-static Job *prepare_job(GNode *);
 static void determine_job_next_step(Job *);
 static void may_continue_job(Job *);
 static Job *reap_finished_job(pid_t);
 static bool reap_jobs(void);
 static void may_continue_heldback_jobs();
 
-static void loop_handle_running_jobs(void);
 static bool expensive_job(Job *);
 static bool expensive_command(const char *);
 static void setup_signal(int);
@@ -654,33 +652,6 @@ expensive_command(const char *s)
 	return false;
 }
 
-static Job *
-prepare_job(GNode *gn)
-{
-	/* a new job is prepared unless its commands are bogus (we don't
-	 * have anything for it), or if we're in touch mode.
-	 *
-	 * Note that even in noexec mode, some commands may still run
-	 * thanks to the +cmd construct.
-	 */
-	if (node_find_valid_commands(gn)) {
-		if (touchFlag) {
-			Job_Touch(gn);
-			return NULL;
-		} else {
-			Job *job = availableJobs;       	
-
-			assert(job != NULL);
-			availableJobs = availableJobs->next;
-			job_attach_node(job, gn);
-			return job;
-		}
-	} else {
-		node_failure(gn);
-		return NULL;
-	}
-}
-
 static void
 may_continue_job(Job *job)
 {
@@ -713,18 +684,17 @@ may_continue_job(Job *job)
 void
 Job_Make(GNode *gn)
 {
-	Job *job;
+	Job *job = availableJobs;       	
 
-	job = prepare_job(gn);
-	if (!job)
-		return;
+	assert(job != NULL);
+	availableJobs = availableJobs->next;
+	job_attach_node(job, gn);
 	may_continue_job(job);
 }
 
 static void
 determine_job_next_step(Job *job)
 {
-	bool okay;
 	if (job->flags & JOB_IS_EXPENSIVE) {
 		no_new_jobs = false;
 		if (DEBUG(EXPENSIVE))
@@ -846,26 +816,6 @@ handle_running_jobs(void)
 }
 
 void
-handle_one_job(Job *job)
-{
-	int stat;
-	int status;
-	sigset_t old;
-
-	sigprocmask(SIG_BLOCK, &sigset, &old);
-	while (1) {
-		handle_all_signals();
-		stat = waitpid(job->pid, &status, WNOHANG);
-		if (stat == job->pid)
-			break;
-		sigsuspend(&emptyset);
-	}
-	runningJobs = NULL;
-	handle_job_status(job, status);
-	sigprocmask(SIG_SETMASK, &old, NULL);
-}
-
-static void
 loop_handle_running_jobs()
 {
 	while (runningJobs != NULL)

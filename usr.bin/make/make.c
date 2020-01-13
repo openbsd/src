@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.79 2020/01/13 15:15:17 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.80 2020/01/13 15:24:31 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -377,7 +377,13 @@ try_to_make_node(GNode *gn)
 			return true;
 		/* SIB: this is where commands should get prepared */
 		Make_DoAllVar(gn);
-		Job_Make(gn);
+		if (node_find_valid_commands(gn)) {
+			if (touchFlag)
+				Job_Touch(gn);
+			else 
+				Job_Make(gn);
+		} else
+			node_failure(gn);
 	} else {
 		if (DEBUG(MAKE))
 			printf("up-to-date\n");

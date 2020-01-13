@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.66 2020/01/13 15:15:17 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.67 2020/01/13 15:24:31 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -703,24 +703,8 @@ run_gnode(GNode *gn)
 	if (!gn || (gn->type & OP_DUMMY))
 		return NOSUCHNODE;
 
-	assert(availableJobs != NULL);
-	j = availableJobs;
-	availableJobs = availableJobs->next;
-	job_attach_node(j, gn);
-	while (j->exit_type == JOB_EXIT_OKAY) {
-		bool finished = job_run_next(j);
-		if (finished)
-			break;
-		handle_one_job(j);
-	}
-
-	if (j->flags & JOB_KEEPERROR) {
-		j->next = errorJobs;
-		errorJobs = j;
-	} else {
-		j->next = availableJobs;
-		availableJobs = j;
-	}
+	Job_Make(gn);
+	loop_handle_running_jobs();
 	return gn->built_status;
 }
 

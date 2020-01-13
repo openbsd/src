@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.89 2020/01/08 14:09:29 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.90 2020/01/13 15:24:31 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -193,14 +193,12 @@ CompatMake(void *gnp,	/* The node to make */
 		/* copy over what we just did */
 		gn->built_status = sib->built_status;
 
-		if (gn->built_status != ERROR) {
-			/* If the node was built successfully, mark it so,
+		if (gn->built_status == REBUILT) {
+			/* If the node was built successfully, 
 			 * update its modification time and timestamp all
 			 * its parents.
 			 * This is to keep its state from affecting that of
 			 * its parent.  */
-			gn->built_status = REBUILT;
-			sib->built_status = REBUILT;
 			/* This is what Make does and it's actually a good
 			 * thing, as it allows rules like
 			 *
