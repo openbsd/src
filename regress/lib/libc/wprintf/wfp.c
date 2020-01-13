@@ -1,4 +1,4 @@
-/*	$OpenBSD: wfp.c,v 1.1 2011/04/24 08:00:22 stsp Exp $	*/
+/*	$OpenBSD: wfp.c,v 1.2 2020/01/13 16:51:04 bluhm Exp $	*/
 /*-
  * Copyright (c) 2002, 2005 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -201,18 +201,27 @@ smash_stack(void)
 }
 
 void
-_testfmt(const wchar_t *result, int line, const char *argstr, const wchar_t *fmt,...)
+_testfmt(const wchar_t *result, int line, const char *argstr,
+    const wchar_t *fmt, ...)
 {
-	wchar_t s[100];
+	wchar_t ws[100];
 	va_list ap;
 
 	va_start(ap, fmt);
 	smash_stack();
-	vswprintf(s, sizeof(s), fmt, ap);
-	if (wcscmp(result, s) != 0) {
-		fprintf(stderr,
-		    "%d: printf(\"%s\", %s) ==> [%s], expected [%s]\n",
-		    line, (char*)fmt, argstr, s, result);
-		abort();
+	vswprintf(ws, sizeof(ws)/sizeof(ws[0]), fmt, ap);
+	if (wcscmp(result, ws) != 0) {
+		const wchar_t *p = ws;
+		char f[100], s[100], r[100];
+
+		memset(f, 0, sizeof(f));
+		memset(s, 0, sizeof(s));
+		memset(r, 0, sizeof(r));
+		wcsrtombs(f, &fmt, sizeof(f) - 1, NULL);
+		wcsrtombs(s, &p, sizeof(s) - 1, NULL);
+		wcsrtombs(r, &result, sizeof(r) - 1, NULL);
+
+		errx(1, "line %d: printf(\"%s\", %s) ==> [%s], expected [%s]",
+		    line, f, argstr, s, r);
 	}
 }
