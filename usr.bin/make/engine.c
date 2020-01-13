@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.65 2020/01/13 15:12:58 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.66 2020/01/13 15:15:17 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -803,7 +803,7 @@ do_run_command(Job *job, const char *pre)
 		 * and there's nothing left to do.
 		 */
 		if (random_delay)
-			if (!(runningJobs == NULL && no_jobs_left()))
+			if (!(runningJobs == NULL && nothing_left_to_build()))
 				usleep(arc4random_uniform(random_delay));
 		run_command(cmd, errCheck);
 		/*NOTREACHED*/

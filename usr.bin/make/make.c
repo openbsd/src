@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.78 2020/01/13 14:05:21 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.79 2020/01/13 15:15:17 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ static bool randomize_queue;
 long random_delay = 0;
 
 bool
-no_jobs_left()
+nothing_left_to_build()
 {
 	return Array_IsEmpty(&to_build);
 }
