@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.200 2020/01/02 19:03:20 anton Exp $
+;	$OpenBSD: syscalls.master,v 1.201 2020/01/13 14:01:18 visa Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -458,7 +458,7 @@
 268	STD NOLOCK	{ ssize_t sys_pwritev(int fd, \
 			  const struct iovec *iovp, int iovcnt, \
 			  int pad, off_t offset); }
-269	STD		{ int sys_kqueue(void); }
+269	STD NOLOCK	{ int sys_kqueue(void); }
 270	OBSOL		t32_kevent
 271	STD		{ int sys_mlockall(int flags); }
 272	STD		{ int sys_munlockall(void); }
