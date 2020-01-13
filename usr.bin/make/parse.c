@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.126 2020/01/13 13:54:44 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.127 2020/01/13 13:59:24 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -837,6 +837,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 	Array_Reset(&gsources);
 
 	cp = parse_do_targets(&paths, &tOp, line);
+	assert(specType == SPECIAL_PATH || Lst_IsEmpty(&paths));
 	if (cp == NULL || specType == SPECIAL_ERROR) {
 		/* invalidate targets for further processing */
 		Array_Reset(&gtargets); 
@@ -855,15 +856,11 @@ ParseDoDependency(const char *line)	/* the line to parse */
 
 	line = cp;
 
-	/*
-	 * Several special targets take different actions if present with no
-	 * sources:
-	 *	a .SUFFIXES line with no sources clears out all old suffixes
-	 *	a .PRECIOUS line makes all targets precious
-	 *	a .IGNORE line ignores errors for all targets
-	 *	a .SILENT line creates silence when making all targets
-	 *	a .PATH removes all directories from the search path(s).
-	 */
+	/* Several special targets have specific semantics with no source:
+	 *	.SUFFIXES 	clears out all old suffixes
+	 *	.PRECIOUS/.IGNORE/.SILENT
+	 * 			apply to all target
+	 *	.PATH 		clears out all search paths.  */
 	if (!*line) {
 		switch (specType) {
 		case SPECIAL_SUFFIXES:
@@ -885,42 +882,26 @@ ParseDoDependency(const char *line)	/* the line to parse */
 			break;
 		}
 	} else if (specType == SPECIAL_MFLAGS) {
-		/* Call on functions in main.c to deal with these arguments */
 		Main_ParseArgLine(line);
 		return;
 	} else if (specType == SPECIAL_NOTPARALLEL) {
 		return;
 	}
 
-	/*
-	 * NOW GO FOR THE SOURCES
-	 */
+	/* NOW GO FOR THE SOURCES */
 	if (specType == SPECIAL_SUFFIXES || specType == SPECIAL_PATH ||
 	    specType == SPECIAL_NOTHING) {
 		while (*line) {
-		    /*
-		     * If the target was one that doesn't take files as its
-		     * sources but takes something like suffixes, we take each
-		     * space-separated word on the line as a something and deal
-		     * with it accordingly.
+		    /* Some special targets take a list of space-separated
+		     * words.  For each word,
 		     *
-		     * If the target was .SUFFIXES, we take each source as a
-		     * suffix and add it to the list of suffixes maintained by
-		     * the Suff module.
+		     * if .SUFFIXES, add it to the list of suffixes maintained
+		     * by suff.c.
 		     *
-		     * If the target was a .PATH, we add the source as a
-		     * directory to search on the search path.
+		     * if .PATHS, add it as a directory on the main search path.
 		     *
-		     * If it was .INCLUDES, the source is taken to be the
-		     * suffix of files which will be #included and whose search
-		     * path should be present in the .INCLUDES variable.
-		     *
-		     * If it was .LIBS, the source is taken to be the suffix of
-		     * files which are considered libraries and whose search
-		     * path should be present in the .LIBS variable.
-		     *
-		     * If it was .NULL, the source is the suffix to use when a
-		     * file has no valid suffix.
+		     * if .LIBS/.INCLUDE/.NULL... this has been deprecated,
+		     * ignore
 		     */
 		    while (*cp && !ISSPACE(*cp))
 			    cp++;
@@ -936,6 +917,7 @@ ParseDoDependency(const char *line)	/* the line to parse */
 			    	ln = Lst_Adv(ln))
 				    Dir_AddDiri(Lst_Datum(ln), line, cp);
 			    break;
+			    Lst_Destroy(&paths, NOFREE);
 			    }
 		    default:
 			    break;
@@ -946,7 +928,6 @@ ParseDoDependency(const char *line)	/* the line to parse */
 			cp++;
 		    line = cp;
 		}
-		Lst_Destroy(&paths, NOFREE);
 	} else {
 		while (*line) {
 			/*
