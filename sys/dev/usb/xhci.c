@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.109 2019/11/28 21:49:41 patrick Exp $ */
+/* $OpenBSD: xhci.c,v 1.110 2020/01/13 16:17:33 krw Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1327,6 +1327,22 @@ xhci_pipe_maxburst(struct usbd_pipe *pipe)
 	return (maxb);
 }
 
+static inline uint32_t
+xhci_last_valid_dci(struct xhci_pipe **pipes, struct xhci_pipe *ignore)
+{
+	struct xhci_pipe *lxp;
+	int i;
+
+	/* Find the last valid Endpoint Context. */
+	for (i = 30; i >= 0; i--) {
+		lxp = pipes[i];
+		if (lxp != NULL && lxp != ignore)
+			return XHCI_SCTX_DCI(lxp->dci);
+	}
+
+	return 0;
+}
+
 int
 xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 {
@@ -1395,7 +1411,7 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 
 	/* Setup the slot context */
 	sdev->slot_ctx->info_lo = htole32(
-	    XHCI_SCTX_DCI(xp->dci) | XHCI_SCTX_SPEED(speed) |
+	    xhci_last_valid_dci(sdev->pipes, NULL) | XHCI_SCTX_SPEED(speed) |
 	    XHCI_SCTX_ROUTE(route)
 	);
 	sdev->slot_ctx->info_hi = htole32(XHCI_SCTX_RHPORT(rhport));
@@ -1505,9 +1521,8 @@ void
 xhci_pipe_close(struct usbd_pipe *pipe)
 {
 	struct xhci_softc *sc = (struct xhci_softc *)pipe->device->bus;
-	struct xhci_pipe *lxp, *xp = (struct xhci_pipe *)pipe;
+	struct xhci_pipe *xp = (struct xhci_pipe *)pipe;
 	struct xhci_soft_dev *sdev = &sc->sc_sdevs[xp->slot];
-	int i;
 
 	/* Root Hub */
 	if (pipe->device->depth == 0)
@@ -1518,12 +1533,8 @@ xhci_pipe_close(struct usbd_pipe *pipe)
 	sdev->input_ctx->add_flags = 0;
 
 	/* Update last valid Endpoint Context */
-	for (i = 30; i >= 0; i--) {
-		lxp = sdev->pipes[i];
-		if (lxp != NULL && lxp != xp)
-			break;
-	}
-	sdev->slot_ctx->info_lo = htole32(XHCI_SCTX_DCI(lxp->dci));
+	sdev->slot_ctx->info_lo &= htole32(~XHCI_SCTX_DCI(31));
+	sdev->slot_ctx->info_lo |= htole32(xhci_last_valid_dci(sdev->pipes, xp));
 
 	/* Clear the Endpoint Context */
 	memset(sdev->ep_ctx[xp->dci - 1], 0, sizeof(struct xhci_epctx));
