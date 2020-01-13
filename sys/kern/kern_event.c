@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.119 2020/01/10 15:49:37 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.120 2020/01/13 13:57:19 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -473,6 +473,11 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int fd, error;
 
+	kq = pool_get(&kqueue_pool, PR_WAITOK | PR_ZERO);
+	kq->kq_refs = 1;
+	kq->kq_fdp = fdp;
+	TAILQ_INIT(&kq->kq_head);
+
 	fdplock(fdp);
 	error = falloc(p, &fp, &fd);
 	if (error)
@@ -480,17 +485,16 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	fp->f_flag = FREAD | FWRITE;
 	fp->f_type = DTYPE_KQUEUE;
 	fp->f_ops = &kqueueops;
-	kq = pool_get(&kqueue_pool, PR_WAITOK|PR_ZERO);
-	kq->kq_refs = 1;
-	kq->kq_fdp = fdp;
-	TAILQ_INIT(&kq->kq_head);
 	fp->f_data = kq;
 	*retval = fd;
 	LIST_INSERT_HEAD(&fdp->fd_kqlist, kq, kq_next);
+	kq = NULL;
 	fdinsert(fdp, fd, 0, fp);
 	FRELE(fp, p);
 out:
 	fdpunlock(fdp);
+	if (kq != NULL)
+		pool_put(&kqueue_pool, kq);
 	return (error);
 }
 
