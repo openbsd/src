@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.64 2020/01/13 14:56:59 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.65 2020/01/13 15:12:58 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -667,8 +667,7 @@ handle_job_status(Job *job, int status)
 			if (!keepgoing) {
 				if (!silent)
 					printf("\n");
-				job->next = errorJobs;
-				errorJobs = job;
+				job->flags |= JOB_KEEPERROR;
 				/* XXX don't free the command */
 				return;
 			}
@@ -715,8 +714,13 @@ run_gnode(GNode *gn)
 		handle_one_job(j);
 	}
 
-	j->next = availableJobs;
-	availableJobs = j;
+	if (j->flags & JOB_KEEPERROR) {
+		j->next = errorJobs;
+		errorJobs = j;
+	} else {
+		j->next = availableJobs;
+		availableJobs = j;
+	}
 	return gn->built_status;
 }
 

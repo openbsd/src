@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.151 2020/01/13 15:05:18 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.152 2020/01/13 15:12:58 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -537,16 +537,16 @@ postprocess_job(Job *job)
 	if (job->exit_type == JOB_EXIT_OKAY &&
 	    aborting != ABORT_ERROR &&
 	    aborting != ABORT_INTERRUPT) {
-		job->next = availableJobs;
-		availableJobs = job;
 		/* As long as we aren't aborting and the job didn't return a
 		 * non-zero status that we shouldn't ignore, we call
 		 * Make_Update to update the parents. */
 		job->node->built_status = REBUILT;
 		Make_Update(job->node);
-		job->next = availableJobs;
-		availableJobs = job;
-	} else if (job->exit_type != JOB_EXIT_OKAY && keepgoing) {
+	}
+	if (job->flags & JOB_KEEPERROR) {
+		job->next = errorJobs;
+		errorJobs = job;
+	} else {
 		job->next = availableJobs;
 		availableJobs = job;
 	}

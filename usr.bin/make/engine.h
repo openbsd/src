@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-/*	$OpenBSD: engine.h,v 1.16 2020/01/13 15:08:08 espie Exp $	*/
+/*	$OpenBSD: engine.h,v 1.17 2020/01/13 15:12:58 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -113,6 +113,7 @@ struct Job_ {
 #define JOB_IS_EXPENSIVE 	0x002
 #define JOB_LOST		0x004	/* sent signal to non-existing pid ? */
 #define JOB_ERRCHECK		0x008	/* command wants errcheck */
+#define JOB_KEEPERROR		0x010	/* should place job on error list */
 	LstNode		next_cmd;	/* Next command to run */
 	char		*cmd;		/* Last command run */
 	GNode		*node;	    	/* Target of this job */
