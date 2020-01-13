@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.36 2020/01/13 13:59:24 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.37 2020/01/13 14:07:35 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -65,18 +65,12 @@
  *	   to create this target.
  */
 
-/* constants for specials: built of two parts
- * - enumerated values (1-63U) hence SPECIAL_MASK
- * - flags that say whether it can apply to a source or a target
+/* constants for specials
  * Most of these values are only handled by parse.c.
  * In many cases, there is a corresponding OP_* flag
  */
 #define SPECIAL_NONE		0U
 #define SPECIAL_PATH		62U	/* handled by parse.c and suff.c */
-#define SPECIAL_MASK		63U
-#define SPECIAL_TARGET		64U
-#define SPECIAL_SOURCE		128U
-#define SPECIAL_TARGETSOURCE	(SPECIAL_TARGET|SPECIAL_SOURCE)
 
 #define SPECIAL_EXEC		4U
 #define SPECIAL_IGNORE		5U

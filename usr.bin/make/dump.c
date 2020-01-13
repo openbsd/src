@@ -1,4 +1,4 @@
-/* $OpenBSD: dump.c,v 1.10 2019/12/21 15:29:25 espie Exp $ */
+/* $OpenBSD: dump.c,v 1.11 2020/01/13 14:07:35 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -104,7 +104,7 @@ TargPrintNode(GNode *gn, bool full)
 {
 	if (OP_NOP(gn->type))
 		return;
-	switch((gn->special & SPECIAL_MASK)) {
+	switch(gn->special) {
 	case SPECIAL_SUFFIXES:
 	case SPECIAL_PHONY:
 	case SPECIAL_ORDER:

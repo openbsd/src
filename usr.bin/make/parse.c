@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.128 2020/01/13 14:03:12 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.129 2020/01/13 14:07:35 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -184,37 +184,37 @@ static struct {
 	unsigned int special;
 	unsigned int special_op;
 } specials[] = {
-    { P(NODE_EXEC),	SPECIAL_EXEC | SPECIAL_TARGETSOURCE,	OP_EXEC, },
-    { P(NODE_IGNORE),	SPECIAL_IGNORE | SPECIAL_TARGETSOURCE, 	OP_IGNORE, },
-    { P(NODE_INCLUDES),	SPECIAL_NOTHING | SPECIAL_TARGET,	0, },
-    { P(NODE_INVISIBLE),SPECIAL_INVISIBLE | SPECIAL_TARGETSOURCE,OP_INVISIBLE, },
-    { P(NODE_JOIN),	SPECIAL_JOIN | SPECIAL_TARGETSOURCE,	OP_JOIN, },
-    { P(NODE_LIBS),	SPECIAL_NOTHING | SPECIAL_TARGET,	0, },
-    { P(NODE_MADE),	SPECIAL_MADE | SPECIAL_TARGETSOURCE,	OP_MADE, },
-    { P(NODE_MAIN),	SPECIAL_MAIN | SPECIAL_TARGET,		0, },
-    { P(NODE_MAKE),	SPECIAL_MAKE | SPECIAL_TARGETSOURCE,	OP_MAKE, },
-    { P(NODE_MAKEFLAGS),	SPECIAL_MFLAGS | SPECIAL_TARGET,	0, },
-    { P(NODE_MFLAGS),	SPECIAL_MFLAGS | SPECIAL_TARGET,	0, },
-    { P(NODE_NOTMAIN),	SPECIAL_NOTMAIN | SPECIAL_TARGETSOURCE,	OP_NOTMAIN, },
-    { P(NODE_NOTPARALLEL),SPECIAL_NOTPARALLEL | SPECIAL_TARGET,	0, },
-    { P(NODE_NO_PARALLEL),SPECIAL_NOTPARALLEL | SPECIAL_TARGET,	0, },
-    { P(NODE_NULL),	SPECIAL_NOTHING | SPECIAL_TARGET,	0, },
-    { P(NODE_OPTIONAL),	SPECIAL_OPTIONAL | SPECIAL_TARGETSOURCE,OP_OPTIONAL, },
-    { P(NODE_ORDER),	SPECIAL_ORDER | SPECIAL_TARGET,		0, },
-    { P(NODE_PARALLEL),	SPECIAL_PARALLEL | SPECIAL_TARGET,	0, },
-    { P(NODE_PATH),	SPECIAL_PATH | SPECIAL_TARGET,		0, },
-    { P(NODE_PHONY),	SPECIAL_PHONY | SPECIAL_TARGETSOURCE,	OP_PHONY, },
-    { P(NODE_PRECIOUS),	SPECIAL_PRECIOUS | SPECIAL_TARGETSOURCE,OP_PRECIOUS, },
-    { P(NODE_RECURSIVE),SPECIAL_MAKE | SPECIAL_TARGETSOURCE,	OP_MAKE, },
-    { P(NODE_SILENT),	SPECIAL_SILENT | SPECIAL_TARGETSOURCE,	OP_SILENT, },
-    { P(NODE_SINGLESHELL),SPECIAL_NOTHING | SPECIAL_TARGET,	0, },
-    { P(NODE_SUFFIXES),	SPECIAL_SUFFIXES | SPECIAL_TARGET,	0, },
-    { P(NODE_USE),	SPECIAL_USE | SPECIAL_TARGETSOURCE,	OP_USE, },
-    { P(NODE_WAIT),	SPECIAL_WAIT | SPECIAL_TARGETSOURCE,	0 },
-    { P(NODE_CHEAP),	SPECIAL_CHEAP | SPECIAL_TARGETSOURCE,	OP_CHEAP, },
-    { P(NODE_EXPENSIVE),SPECIAL_EXPENSIVE | SPECIAL_TARGETSOURCE,OP_EXPENSIVE, },
-    { P(NODE_POSIX), SPECIAL_NOTHING | SPECIAL_TARGET, 0 },
-    { P(NODE_SCCS_GET), SPECIAL_NOTHING | SPECIAL_TARGET, 0 },
+    { P(NODE_EXEC),		SPECIAL_EXEC,		OP_EXEC },
+    { P(NODE_IGNORE),		SPECIAL_IGNORE, 	OP_IGNORE },
+    { P(NODE_INCLUDES),		SPECIAL_NOTHING,	0 },
+    { P(NODE_INVISIBLE),	SPECIAL_INVISIBLE,	OP_INVISIBLE },
+    { P(NODE_JOIN),		SPECIAL_JOIN,		OP_JOIN },
+    { P(NODE_LIBS),		SPECIAL_NOTHING,	0 },
+    { P(NODE_MADE),		SPECIAL_MADE,		OP_MADE },
+    { P(NODE_MAIN),		SPECIAL_MAIN,		0 },
+    { P(NODE_MAKE),		SPECIAL_MAKE,		OP_MAKE },
+    { P(NODE_MAKEFLAGS),	SPECIAL_MFLAGS,		0 },
+    { P(NODE_MFLAGS),		SPECIAL_MFLAGS,		0 },
+    { P(NODE_NOTMAIN),		SPECIAL_NOTMAIN,	OP_NOTMAIN },
+    { P(NODE_NOTPARALLEL),	SPECIAL_NOTPARALLEL,	0 },
+    { P(NODE_NO_PARALLEL),	SPECIAL_NOTPARALLEL,	0 },
+    { P(NODE_NULL),		SPECIAL_NOTHING,	0 },
+    { P(NODE_OPTIONAL),		SPECIAL_OPTIONAL,	OP_OPTIONAL },
+    { P(NODE_ORDER),		SPECIAL_ORDER,		0 },
+    { P(NODE_PARALLEL),		SPECIAL_PARALLEL,	0 },
+    { P(NODE_PATH),		SPECIAL_PATH,		0 },
+    { P(NODE_PHONY),		SPECIAL_PHONY,		OP_PHONY },
+    { P(NODE_PRECIOUS),		SPECIAL_PRECIOUS,	OP_PRECIOUS },
+    { P(NODE_RECURSIVE),	SPECIAL_MAKE,		OP_MAKE },
+    { P(NODE_SILENT),		SPECIAL_SILENT,		OP_SILENT },
+    { P(NODE_SINGLESHELL),	SPECIAL_NOTHING,	0 },
+    { P(NODE_SUFFIXES),		SPECIAL_SUFFIXES,	0 },
+    { P(NODE_USE),		SPECIAL_USE,		OP_USE },
+    { P(NODE_WAIT),		SPECIAL_WAIT,		0 },
+    { P(NODE_CHEAP),		SPECIAL_CHEAP,		OP_CHEAP },
+    { P(NODE_EXPENSIVE),	SPECIAL_EXPENSIVE,	OP_EXPENSIVE },
+    { P(NODE_POSIX), 		SPECIAL_NOTHING, 	0 },
+    { P(NODE_SCCS_GET), 	SPECIAL_NOTHING, 	0 },
 };
 
 #undef P
@@ -418,15 +418,13 @@ ParseDoSrc(
     const char *esrc)
 {
 	GNode *gn = Targ_FindNodei(src, esrc, TARG_CREATE);
-	if ((gn->special & SPECIAL_SOURCE) != 0) {
-		if (gn->special_op) {
-			Array_ForEach(targets, ParseDoSpecial, gn->special_op);
-			return;
-		} else {
-			assert((gn->special & SPECIAL_MASK) == SPECIAL_WAIT);
-			waiting++;
-			return;
-		}
+	if (gn->special_op) {
+		Array_ForEach(targets, ParseDoSpecial, gn->special_op);
+		return;
+	}
+	if (gn->special == SPECIAL_WAIT) {
+		waiting++;
+		return;
 	}
 
 	switch (specType) {
@@ -704,10 +702,10 @@ handle_special_targets(Lst paths)
 
 	for (i = 0; i < gtargets.n; i++) {
 		type = gtargets.a[i]->special;
-		if ((type & SPECIAL_MASK) == SPECIAL_PATH) {
+		if (type == SPECIAL_PATH) {
 			seen_path++;
 			Lst_AtEnd(paths, find_suffix_path(gtargets.a[i]));
-		} else if ((type & SPECIAL_TARGET) != 0)
+		} else if (type != 0)
 			seen_special++;
 		else
 			seen_normal++;
@@ -733,7 +731,7 @@ handle_special_targets(Lst paths)
 		dump_targets();
 		return 0;
 	} else if (seen_special == 1) {
-		specType = gtargets.a[0]->special & SPECIAL_MASK;
+		specType = gtargets.a[0]->special;
 		switch (specType) {
 		case SPECIAL_MAIN:
 			if (!Lst_IsEmpty(create)) {
