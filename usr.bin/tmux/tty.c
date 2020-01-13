@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.338 2020/01/12 22:00:20 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.339 2020/01/13 08:12:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -327,8 +327,9 @@ tty_start_tty(struct tty *tty)
 			tty->flags |= TTY_FOCUS;
 			tty_puts(tty, "\033[?1004h");
 		}
-		tty_puts(tty, "\033[c\033[1337n");
-	}
+		tty_puts(tty, "\033[c\033[1337n"); /* DA and DSR */
+	} else
+		tty->flags |= (TTY_HAVEDA|TTY_HAVEDSR);
 
 	tty->flags |= TTY_STARTED;
 	tty_invalidate(tty);
