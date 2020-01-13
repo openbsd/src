@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.9 2019/12/03 21:07:03 kn Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.10 2020/01/13 09:29:41 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 3 2019 $
+.Dd $Mdocdate: January 13 2020 $
 .Dt LDOM.CONF 5 sparc64
 .Os
 .Sh NAME
@@ -107,3 +107,18 @@ On a machine with 32 cores and 64GB physical memory, this leaves 12 cores and
 .Xr eeprom 8 ,
 .Xr ldomctl 8 ,
 .Xr ldomd 8
+.Sh BUGS
+The hypervisor requires a machine dependent amount of physical memory that is
+reserved automatically.
+Although the Physical Resource Inventory
+.Pq PRI
+seems to account for this by presenting less available memory, using the entire
+amount via
+.Ic memory
+is not always successful, e.g. the hypervisor would reject the configuration and
+fallback to
+.Dq factory-default
+upon resetting the machine.
+.Pp
+If in doubt, leave enough memory unused for the hypervisor to reserve.
+On bigger T4 based machines, 1024 megabytes has proven to suffice.
