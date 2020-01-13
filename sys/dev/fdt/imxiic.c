@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.7 2018/12/23 22:48:19 patrick Exp $ */
+/* $OpenBSD: imxiic.c,v 1.8 2020/01/13 13:28:40 mpi Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -68,8 +68,6 @@ int imxiic_match(struct device *, void *, void *);
 void imxiic_attach(struct device *, struct device *, void *);
 int imxiic_detach(struct device *, int);
 void imxiic_setspeed(struct imxiic_softc *, u_int);
-int imxiic_intr(void *);
-int imxiic_wait_intr(struct imxiic_softc *, int, int);
 int imxiic_wait_state(struct imxiic_softc *, uint32_t, uint32_t);
 int imxiic_read(struct imxiic_softc *, int, const void *, int,
     void *, int);
@@ -125,11 +123,6 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("imxiic_attach: bus_space_map failed!");
 
-#if 0
-	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
-	    imxiic_intr, sc, sc->sc_dev.dv_xname);
-#endif
-
 	printf("\n");
 
 	clock_enable(faa->fa_node, NULL);
@@ -184,51 +177,6 @@ imxiic_setspeed(struct imxiic_softc *sc, u_int speed)
 
 	HWRITE2(sc, I2C_IFDR, sc->frequency);
 }
-
-#if 0
-int
-imxiic_intr(void *arg)
-{
-	struct imxiic_softc *sc = arg;
-	u_int16_t status;
-
-	status = HREAD2(sc, I2C_I2SR);
-
-	if (ISSET(status, I2C_I2SR_IIF)) {
-		/* acknowledge the interrupts */
-		HWRITE2(sc, I2C_I2SR,
-		    HREAD2(sc, I2C_I2SR) & ~I2C_I2SR_IIF);
-
-		sc->intr_status |= status;
-		wakeup(&sc->intr_status);
-	}
-
-	return (0);
-}
-
-int
-imxiic_wait_intr(struct imxiic_softc *sc, int mask, int timo)
-{
-	int status;
-	int s;
-
-	s = splbio();
-
-	status = sc->intr_status & mask;
-	while (status == 0) {
-		if (tsleep(&sc->intr_status, PWAIT, "hcintr", timo)
-		    == EWOULDBLOCK) {
-			break;
-		}
-		status = sc->intr_status & mask;
-	}
-	status = sc->intr_status & mask;
-	sc->intr_status &= ~status;
-
-	splx(s);
-	return status;
-}
-#endif
 
 int
 imxiic_wait_state(struct imxiic_softc *sc, uint32_t mask, uint32_t value)
