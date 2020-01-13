@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.129 2020/01/13 14:07:35 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.130 2020/01/13 14:51:50 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -739,13 +739,8 @@ handle_special_targets(Lst paths)
 			}
 			break;
 		case SPECIAL_NOTPARALLEL:
-		{
-			extern int  maxJobs;
-
-			maxJobs = 1;
-			compatMake = 1;
+			set_notparallel();
 			break;
-		}
 		case SPECIAL_ORDER:
 			predecessor = NULL;
 			break;

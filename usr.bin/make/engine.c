@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.62 2020/01/13 14:15:21 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.63 2020/01/13 14:51:50 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -603,8 +603,6 @@ run_command(const char *cmd, bool errCheck)
 	_exit(1);
 }
 
-static Job myjob;
-
 void
 job_attach_node(Job *job, GNode *node)
 {
@@ -680,7 +678,7 @@ job_handle_status(Job *job, int status)
 			 * JOB_IS_EXPENSIVE, perform the computation for
 			 * sequential make to figure out whether to display the
 			 * command or not.  */
-			if ((job->flags & JOB_SILENT) && job == &myjob)
+			if ((job->flags & JOB_SILENT) && sequential)
 				determine_expensive_job(job);
 			if ((job->flags & (JOB_SILENT | JOB_IS_EXPENSIVE)) 
 			    == JOB_SILENT)
@@ -702,17 +700,23 @@ job_handle_status(Job *job, int status)
 int
 run_gnode(GNode *gn)
 {
+	Job *j;
 	if (!gn || (gn->type & OP_DUMMY))
 		return NOSUCHNODE;
 
-	job_attach_node(&myjob, gn);
-	while (myjob.exit_type == JOB_EXIT_OKAY) {
-		bool finished = job_run_next(&myjob);
+	assert(availableJobs != NULL);
+	j = availableJobs;
+	availableJobs = availableJobs->next;
+	job_attach_node(j, gn);
+	while (j->exit_type == JOB_EXIT_OKAY) {
+		bool finished = job_run_next(j);
 		if (finished)
 			break;
-		handle_one_job(&myjob);
+		handle_one_job(j);
 	}
 
+	j->next = availableJobs;
+	availableJobs = j;
 	return gn->built_status;
 }
 

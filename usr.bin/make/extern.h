@@ -1,7 +1,7 @@
 #ifndef EXTERN_H
 #define EXTERN_H
 
-/*	$OpenBSD: extern.h,v 1.43 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.44 2020/01/13 14:51:50 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
  *	from: @(#)nonints.h	8.3 (Berkeley) 3/19/94
  */
 
-extern bool	compatMake;	/* True if we are make compatible */
 extern bool	ignoreErrors;	/* True if should ignore all errors */
 extern bool	beSilent;	/* True if should print no commands */
 extern bool	noExecute;	/* True if should execute nothing */

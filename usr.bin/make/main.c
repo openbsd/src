@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.124 2020/01/08 14:09:29 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.125 2020/01/13 14:51:50 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -73,12 +73,12 @@ static LIST		to_create; 	/* Targets to be made */
 Lst create = &to_create;
 bool 		allPrecious;	/* .PRECIOUS given on line by itself */
 
-static bool		noBuiltins;	/* -r flag */
-static LIST		makefiles;	/* ordered list of makefiles to read */
-static LIST		varstoprint;	/* list of variables to print */
-int			maxJobs;	/* -j argument */
-bool 		compatMake;	/* -B argument */
-static bool		forceJobs = false;
+static bool	noBuiltins;	/* -r flag */
+static LIST	makefiles;	/* ordered list of makefiles to read */
+static LIST	varstoprint;	/* list of variables to print */
+static int	optj;		/* -j argument */
+static bool 	compatMake;	/* -B argument */
+static bool	forceJobs = false;
 int 		debug;		/* -d flag */
 bool 		noExecute;	/* -n flag */
 bool 		keepgoing;	/* -k flag */
@@ -124,6 +124,12 @@ record_option(int c, const char *arg)
 	Var_Append(MAKEFLAGS, opt);
 	if (arg != NULL)
 		Var_Append(MAKEFLAGS, arg);
+}
+
+void
+set_notparallel()
+{
+	compatMake = true;
 }
 
 static void
@@ -313,7 +319,7 @@ MainParseArgs(int argc, char **argv)
 			const char *errstr;
 
 			forceJobs = true;
-			maxJobs = strtonum(optarg, 1, INT_MAX, &errstr);
+			optj = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr != NULL) {
 				fprintf(stderr,
 				    "make: illegal argument to -j option"
@@ -676,7 +682,7 @@ main(int argc, char **argv)
 	touchFlag = false;		/* Actually update targets */
 	debug = 0;			/* No debug verbosity, please. */
 
-	maxJobs = DEFMAXJOBS;
+	optj = DEFMAXJOBS;
 	compatMake = false;		/* No compat mode */
 
 
@@ -757,6 +763,9 @@ main(int argc, char **argv)
 
 	read_all_make_rules(noBuiltins, read_depend, &makefiles, &d);
 
+	if (compatMake)
+		optj = 1;
+
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS));
 
 	/* Install all the flags into the MAKEFLAGS env variable. */
@@ -796,7 +805,7 @@ main(int argc, char **argv)
 		else
 			Targ_FindList(&targs, create);
 
-		Job_Init(maxJobs);
+		Job_Init(optj);
 		/* If the user has defined a .BEGIN target, execute the commands
 		 * attached to it.  */
 		if (!queryFlag)

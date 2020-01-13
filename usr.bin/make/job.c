@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.147 2020/01/13 14:14:24 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.148 2020/01/13 14:51:50 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -121,15 +121,16 @@ static int	aborting = 0;	    /* why is the make aborting? */
 #define ABORT_INTERRUPT 2	    /* Because it was interrupted */
 #define ABORT_WAIT	3	    /* Waiting for jobs to finish */
 
-static int	maxJobs;	/* The most children we can run at once */
-static int	nJobs;		/* Number of jobs already allocated */
 static bool	no_new_jobs;	/* Mark recursive shit so we shouldn't start
 				 * something else at the same time
 				 */
+bool sequential;
 Job *runningJobs;		/* Jobs currently running a process */
 Job *errorJobs;			/* Jobs in error at end */
+Job *availableJobs;		/* Pool of available jobs */
 static Job *heldJobs;		/* Jobs not running yet because of expensive */
 static pid_t mypid;		/* Used for printing debugging messages */
+static Job *extra_job;		/* Needed for .INTERRUPT */
 
 static volatile sig_atomic_t got_fatal;
 
@@ -538,14 +539,19 @@ postprocess_job(Job *job)
 	if (job->exit_type == JOB_EXIT_OKAY &&
 	    aborting != ABORT_ERROR &&
 	    aborting != ABORT_INTERRUPT) {
+		job->next = availableJobs;
+		availableJobs = job;
 		/* As long as we aren't aborting and the job didn't return a
 		 * non-zero status that we shouldn't ignore, we call
 		 * Make_Update to update the parents. */
 		job->node->built_status = REBUILT;
 		Make_Update(job->node);
-		free(job);
-	} else if (job->exit_type != JOB_EXIT_OKAY && keepgoing)
-		free(job);
+		job->next = availableJobs;
+		availableJobs = job;
+	} else if (job->exit_type != JOB_EXIT_OKAY && keepgoing) {
+		job->next = availableJobs;
+		availableJobs = job;
+	}
 
 	if (errorJobs != NULL && aborting != ABORT_INTERRUPT)
 		aborting = ABORT_ERROR;
@@ -662,12 +668,10 @@ prepare_job(GNode *gn)
 			Job_Touch(gn);
 			return NULL;
 		} else {
-			Job *job;       	
+			Job *job = availableJobs;       	
 
-			job = emalloc(sizeof(Job));
-			if (job == NULL)
-				Punt("can't create job: out of memory");
-
+			assert(job != NULL);
+			availableJobs = availableJobs->next;
 			job_attach_node(job, gn);
 			return job;
 		}
@@ -696,7 +700,7 @@ continue_job(Job *job)
 	bool finished = job_run_next(job);
 	if (finished)
 		remove_job(job);
-	else
+	else if (!sequential)
 		determine_expensive_job(job);
 }
 
@@ -719,7 +723,6 @@ Job_Make(GNode *gn)
 	job = prepare_job(gn);
 	if (!job)
 		return;
-	nJobs++;
 	may_continue_job(job);
 }
 
@@ -745,7 +748,6 @@ determine_job_next_step(Job *job)
 static void
 remove_job(Job *job)
 {
-	nJobs--;
 	postprocess_job(job);
 }
 
@@ -876,15 +878,26 @@ loop_handle_running_jobs()
 }
 
 void
-Job_Init(int maxproc)
+Job_Init(int maxJobs)
 {
+	Job *j;
+	int i;
+
 	runningJobs = NULL;
 	heldJobs = NULL;
 	errorJobs = NULL;
-	maxJobs = maxproc;
-	mypid = getpid();
+	availableJobs = NULL;
+	sequential = maxJobs == 1;
 
-	nJobs = 0;
+	/* we allocate n+1 jobs, since we may need an extra job for
+	 * running .INTERRUPT.  */
+	j = ereallocarray(NULL, sizeof(Job), maxJobs+1);
+	for (i = 0; i != maxJobs; i++) {
+		j[i].next = availableJobs;
+		availableJobs = &j[i];
+	}
+	extra_job = &j[maxJobs];
+	mypid = getpid();
 
 	aborting = 0;
 	setup_all_signals();
@@ -893,7 +906,7 @@ Job_Init(int maxproc)
 bool
 can_start_job(void)
 {
-	if (aborting || nJobs >= maxJobs)
+	if (aborting || availableJobs == NULL)
 		return false;
 	else
 		return true;
@@ -933,7 +946,8 @@ handle_fatal_signal(int signo)
 	if (signo == SIGINT && !touchFlag) {
 		if ((interrupt_node->type & OP_DUMMY) == 0) {
 			ignoreErrors = false;
-
+			extra_job->next = availableJobs;
+			availableJobs = extra_job;
 			Job_Make(interrupt_node);
 		}
 	}

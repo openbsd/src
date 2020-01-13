@@ -1,6 +1,6 @@
 #ifndef MAIN_H
 #define MAIN_H
-/*	$OpenBSD: main.h,v 1.5 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: main.h,v 1.6 2020/01/13 14:51:50 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -37,5 +37,8 @@ extern void Main_ParseArgLine(const char *);
 /* List of target names given on the command line. Needed to resolve
  * .if make(...) statements. */
 extern Lst	create;
+
+/* set_notparallel(): used to influence running mode from parse.c */
+extern void set_notparallel(void);
 
 #endif
