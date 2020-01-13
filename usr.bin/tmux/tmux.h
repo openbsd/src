@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.947 2020/01/13 08:12:53 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.948 2020/01/13 11:59:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1179,6 +1179,7 @@ LIST_HEAD(tty_terms, tty_term);
 
 struct tty {
 	struct client	*client;
+	struct event	 start_timer;
 
 	u_int		 sx;
 	u_int		 sy;
