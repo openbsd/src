@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.77 2019/11/11 18:07:21 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.78 2020/01/13 09:57:25 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -540,6 +540,12 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				error = ENETRESET;
 			}
 		} else {
+			if (ic->ic_des_esslen == join.i_len &&
+			    memcmp(join.i_nwid, ic->ic_des_essid,
+			    join.i_len) == 0) {
+				ieee80211_deselect_ess(ic);
+				error = ENETRESET;
+			}
 			/* save nwid for auto-join */
 			if (ieee80211_add_ess(ic, &join) == 0)
 				ic->ic_flags |= IEEE80211_F_AUTO_JOIN;
