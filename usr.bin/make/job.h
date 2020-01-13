@@ -1,7 +1,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-/*	$OpenBSD: job.h,v 1.35 2020/01/13 15:41:53 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.36 2020/01/13 16:01:47 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -64,16 +64,6 @@ extern bool can_start_job(void);
  *	wait until all jobs are finished after we build everything.
  */
 extern bool Job_Empty(void);
-
-/* Job_End();
- *	run .END target at end.
- */
-extern void Job_End(void);
-
-/* Job_Begin();
- *	similarly, run .BEGIN job at start.
- */
-extern void Job_Begin(void);
 
 extern void Job_Wait(void);
 extern void Job_AbortAll(void);
