@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.149 2020/01/13 14:57:00 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.150 2020/01/13 15:00:59 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -144,7 +144,6 @@ static void handle_siginfo(void);
 static void postprocess_job(Job *);
 static Job *prepare_job(GNode *);
 static void determine_job_next_step(Job *);
-static void remove_job(Job *);
 static void may_continue_job(Job *);
 static void continue_job(Job *);
 static Job *reap_finished_job(pid_t);
@@ -699,7 +698,7 @@ continue_job(Job *job)
 {
 	bool finished = job_run_next(job);
 	if (finished)
-		remove_job(job);
+		postprocess_job(job);
 	else if (!sequential)
 		determine_expensive_job(job);
 }
@@ -740,7 +739,7 @@ determine_job_next_step(Job *job)
 	}
 
 	if (job->exit_type != JOB_EXIT_OKAY || job->next_cmd == NULL)
-		remove_job(job);
+		postprocess_job(job);
 	else
 		may_continue_job(job);
 }
