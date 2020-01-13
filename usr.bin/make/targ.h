@@ -1,6 +1,6 @@
 #ifndef TARG_H
 #define TARG_H
-/*	$OpenBSD: targ.h,v 1.13 2013/04/23 14:32:53 espie Exp $ */
+/*	$OpenBSD: targ.h,v 1.14 2020/01/13 13:50:41 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -46,17 +46,10 @@ extern GNode *Targ_FindNodei(const char *, const char *, int);
 
 
 
-/* set of helpers for constant nodes */
-extern GNode *Targ_FindNodeih(const char *, const char *, uint32_t, int);
+/* helper for constant nodes */
+extern GNode *Targ_mk_special_node(const char *, size_t, uint32_t,
+    unsigned int, unsigned char, unsigned int);
 
-__only_inline GNode *
-Targ_FindNodeh(const char *, size_t, uint32_t, int);
-
-__only_inline GNode *
-Targ_FindNodeh(const char *name, size_t n, uint32_t hv, int flags)
-{
-	return Targ_FindNodeih(name, name + n - 1, hv, flags);
-}
 extern void Targ_FindList(Lst, Lst);
 extern bool Targ_Ignore(GNode *);
 extern bool Targ_Silent(GNode *);

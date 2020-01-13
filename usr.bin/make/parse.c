@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.124 2020/01/13 13:48:20 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.125 2020/01/13 13:50:41 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -225,10 +225,9 @@ create_special_nodes()
 	unsigned int i;
 
 	for (i = 0; i < sizeof(specials)/sizeof(specials[0]); i++) {
-		GNode *gn = Targ_FindNodeh(specials[i].keyword,
-		    specials[i].sz, specials[i].hv, TARG_CREATE);
-		gn->special = specials[i].special;
-		gn->special_op = specials[i].special_op;
+		(void)Targ_mk_special_node(specials[i].keyword,
+		    specials[i].sz, specials[i].hv,
+		    OP_ZERO, specials[i].special, specials[i].special_op);
 	}
 }
 

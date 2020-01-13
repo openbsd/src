@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.82 2019/12/22 16:53:40 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.83 2020/01/13 13:50:41 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -122,8 +122,11 @@ struct ohash_info gnode_info = {
 	offsetof(GNode, name), NULL, hash_calloc, hash_free, element_alloc
 };
 
-#define Targ_FindConstantNode(n, f) Targ_FindNodeh(n, sizeof(n), K_##n, f)
+static GNode *Targ_mk_node(const char *, const char *, unsigned int,
+    unsigned char, unsigned int);
 
+#define Targ_mk_constant(n, type) \
+    Targ_mk_special_node(n, sizeof(n), K_##n, type, SPECIAL_NONE, 0)
 
 GNode *begin_node, *end_node, *interrupt_node, *DEFAULT;
 
@@ -132,27 +135,28 @@ Targ_Init(void)
 {
 	/* A small make file already creates 200 targets.  */
 	ohash_init(&targets, 10, &gnode_info);
-	begin_node = Targ_FindConstantNode(NODE_BEGIN, TARG_CREATE);
-	begin_node->type |= OP_DUMMY | OP_NOTMAIN | OP_NODEFAULT;
-	end_node = Targ_FindConstantNode(NODE_END, TARG_CREATE);
-	end_node->type |= OP_DUMMY | OP_NOTMAIN | OP_NODEFAULT;
-	interrupt_node = Targ_FindConstantNode(NODE_INTERRUPT, TARG_CREATE);
-	interrupt_node->type |= OP_DUMMY | OP_NOTMAIN | OP_NODEFAULT;
-	DEFAULT = Targ_FindConstantNode(NODE_DEFAULT, TARG_CREATE);
-	DEFAULT->type |= OP_DUMMY | OP_NOTMAIN| OP_TRANSFORM | OP_NODEFAULT;
+	begin_node = Targ_mk_constant(NODE_BEGIN, 
+	    OP_DUMMY | OP_NOTMAIN | OP_NODEFAULT);
+	end_node = Targ_mk_constant(NODE_END, 
+	    OP_DUMMY | OP_NOTMAIN | OP_NODEFAULT);
+	interrupt_node = Targ_mk_constant(NODE_INTERRUPT,
+	    OP_DUMMY | OP_NOTMAIN | OP_NODEFAULT);
+	DEFAULT = Targ_mk_constant(NODE_DEFAULT, 
+	    OP_DUMMY | OP_NOTMAIN| OP_TRANSFORM | OP_NODEFAULT);
 
 }
 
-GNode *
-Targ_NewGNi(const char *name, const char *ename)
+static GNode *
+Targ_mk_node(const char *name, const char *ename, 
+    unsigned int type, unsigned char special, unsigned int special_op)
 {
 	GNode *gn;
 
 	gn = ohash_create_entry(&gnode_info, name, &ename);
 	gn->path = NULL;
-	gn->type = OP_ZERO;
-	gn->special = SPECIAL_NONE;
-	gn->special_op = 0;
+	gn->type = type;
+	gn->special = special;
+	gn->special_op = special_op;
 	gn->children_left = 0;
 	gn->must_make = false;
 	gn->built_status = UNKNOWN;
@@ -183,19 +187,19 @@ Targ_NewGNi(const char *name, const char *ename)
 }
 
 GNode *
-Targ_FindNodei(const char *name, const char *ename, int flags)
+Targ_NewGNi(const char *name, const char *ename)
 {
-	uint32_t hv;
-
-	hv = ohash_interval(name, &ename);
-	return Targ_FindNodeih(name, ename, hv, flags);
+	return Targ_mk_node(name, ename, OP_ZERO, SPECIAL_NONE, 0);
 }
 
 GNode *
-Targ_FindNodeih(const char *name, const char *ename, uint32_t hv, int flags)
+Targ_FindNodei(const char *name, const char *ename, int flags)
 {
+	uint32_t hv;
 	GNode *gn;
 	unsigned int slot;
+
+	hv = ohash_interval(name, &ename);
 
 	slot = ohash_lookup_interval(&targets, name, ename, hv);
 
@@ -205,6 +209,24 @@ Targ_FindNodeih(const char *name, const char *ename, uint32_t hv, int flags)
 		gn = Targ_NewGNi(name, ename);
 		ohash_insert(&targets, slot, gn);
 	}
+
+	return gn;
+}
+
+GNode *
+Targ_mk_special_node(const char *name, size_t n, uint32_t hv,
+    unsigned int type, unsigned char special, unsigned int special_op)
+{
+	GNode *gn;
+	unsigned int slot;
+	const char *ename = name + n - 1;
+
+	slot = ohash_lookup_interval(&targets, name, ename, hv);
+
+	assert(ohash_find(&targets, slot) == NULL);
+
+	gn = Targ_mk_node(name, ename, type, special, special_op);
+	ohash_insert(&targets, slot, gn);
 
 	return gn;
 }
@@ -320,10 +342,4 @@ struct ohash *
 targets_hash()
 {
 	return &targets;
-}
-
-GNode *
-Targ_FindNodeh(const char *name, size_t n, uint32_t hv, int flags)
-{
-	return Targ_FindNodeih(name, name + n - 1, hv, flags);
 }
