@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-/*	$OpenBSD: engine.h,v 1.14 2019/12/21 15:29:25 espie Exp $	*/
+/*	$OpenBSD: engine.h,v 1.15 2020/01/13 14:56:59 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -131,10 +131,10 @@ extern void job_attach_node(Job *, GNode *);
  */
 extern bool job_run_next(Job *);
 
-/* job_handle_status(job, waitstatus):
+/* handle_job_status(job, waitstatus):
  *	process a wait return value corresponding to a job, display
  *	messages and set job status accordingly.
  */
-extern void job_handle_status(Job *, int);
+extern void handle_job_status(Job *, int);
 
 #endif

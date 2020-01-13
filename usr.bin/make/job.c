@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.148 2020/01/13 14:51:50 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.149 2020/01/13 14:57:00 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -808,7 +808,7 @@ reap_jobs(void)
 		if (job == NULL) {
 			Punt("Child (%ld) not in table?", (long)pid);
 		} else {
-			job_handle_status(job, status);
+			handle_job_status(job, status);
 			determine_job_next_step(job);
 		}
 		may_continue_heldback_jobs();
@@ -866,7 +866,7 @@ handle_one_job(Job *job)
 		sigsuspend(&emptyset);
 	}
 	runningJobs = NULL;
-	job_handle_status(job, status);
+	handle_job_status(job, status);
 	sigprocmask(SIG_SETMASK, &old, NULL);
 }
 
