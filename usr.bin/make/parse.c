@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.123 2019/12/22 16:53:40 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.124 2020/01/13 13:48:20 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ static struct {
 	const char *keyword;
 	size_t sz;
 	uint32_t hv;
-	unsigned int type;
+	unsigned int special;
 	unsigned int special_op;
 } specials[] = {
     { P(NODE_EXEC),	SPECIAL_EXEC | SPECIAL_TARGETSOURCE,	OP_EXEC, },
@@ -227,7 +227,7 @@ create_special_nodes()
 	for (i = 0; i < sizeof(specials)/sizeof(specials[0]); i++) {
 		GNode *gn = Targ_FindNodeh(specials[i].keyword,
 		    specials[i].sz, specials[i].hv, TARG_CREATE);
-		gn->special = specials[i].type;
+		gn->special = specials[i].special;
 		gn->special_op = specials[i].special_op;
 	}
 }
