@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.90 2019/12/21 15:29:25 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.91 2020/01/13 13:54:44 espie Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -195,11 +195,10 @@ bool
 Arch_ParseArchive(const char **line, Lst nodes, SymTable *ctxt)
 {
 	bool result;
-	BUFFER expand;
+	static BUFFER expand;
 
-	Buf_Init(&expand, MAKE_BSIZE);
+	Buf_Reinit(&expand, MAKE_BSIZE);
 	result = parse_archive(&expand, line, nodes, ctxt);
-	Buf_Destroy(&expand);
 	return result;
 }
 

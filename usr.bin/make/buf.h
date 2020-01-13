@@ -1,7 +1,7 @@
 #ifndef _BUF_H
 #define _BUF_H
 
-/*	$OpenBSD: buf.h,v 1.23 2019/12/21 15:26:47 espie Exp $	*/
+/*	$OpenBSD: buf.h,v 1.24 2020/01/13 13:54:44 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $ */
 
 /*
@@ -106,6 +106,9 @@ extern void Buf_AddChars(Buffer, size_t, const char *);
  *	Initializes a buffer, to hold approximately init chars.
  *	Set init to 0 if you have no idea.  */
 extern void Buf_Init(Buffer, size_t);
+/* Buf_Reinit(buf, init);
+ *	Initializes/reset a static buffer */
+extern void Buf_Reinit(Buffer, size_t);
 /* Buf_Destroy(buf);
  * 	Nukes a buffer and all its resources.	*/
 #define Buf_Destroy(bp) ((void)free((bp)->buffer))

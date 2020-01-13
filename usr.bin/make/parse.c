@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.125 2020/01/13 13:50:41 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.126 2020/01/13 13:54:44 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1641,12 +1641,12 @@ Parse_File(const char *filename, FILE *stream)
 	bool expectingCommands = false;
 	bool commands_seen = false;
 
-	/* somewhat permanent spaces to shave time */
-	BUFFER buf;
-	BUFFER copy;
+	/* permanent spaces to shave time */
+	static BUFFER buf;
+	static BUFFER copy;
 
-	Buf_Init(&buf, MAKE_BSIZE);
-	Buf_Init(&copy, MAKE_BSIZE);
+	Buf_Reinit(&buf, MAKE_BSIZE);
+	Buf_Reinit(&copy, MAKE_BSIZE);
 
 	Parse_FromFile(filename, stream);
 	do {
@@ -1686,8 +1686,6 @@ Parse_File(const char *filename, FILE *stream)
 	Cond_End();
 
 	Parse_ReportErrors();
-	Buf_Destroy(&buf);
-	Buf_Destroy(&copy);
 }
 
 void
