@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.155 2020/01/13 15:41:53 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.156 2020/01/13 15:53:14 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -698,12 +698,6 @@ determine_job_next_step(Job *job)
 		postprocess_job(job);
 	else
 		may_continue_job(job);
-}
-
-static void
-remove_job(Job *job)
-{
-	postprocess_job(job);
 }
 
 static void
