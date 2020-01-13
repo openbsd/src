@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.h,v 1.2 2019/05/06 03:47:40 mlarkin Exp $	*/
+/*	$OpenBSD: efidev.h,v 1.3 2020/01/13 10:17:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -29,6 +29,7 @@
  */
 
 /* efidev.c */
+void		 efid_init(struct diskinfo *, void *handle);
 int		 efiopen(struct open_file *, ...);
 int		 efistrategy(void *, int, daddr32_t, size_t, void *, size_t *);
 int		 eficlose(struct open_file *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.25 2019/10/25 10:06:40 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.26 2020/01/13 10:17:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -19,6 +19,7 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <dev/cons.h>
 #include <sys/disklabel.h>
 
@@ -30,11 +31,13 @@
 #include <lib/libkern/libkern.h>
 #include <stand/boot/cmd.h>
 
+#include "libsa.h"
 #include "disk.h"
+
+#include "efidev.h"
 #include "efiboot.h"
 #include "eficall.h"
 #include "fdt.h"
-#include "libsa.h"
 
 EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
@@ -205,18 +208,22 @@ efi_heap_init(void)
 		panic("BS->AllocatePages()");
 }
 
-EFI_BLOCK_IO	*disk;
+struct disklist_lh disklist;
+struct diskinfo *bootdev_dip;
 
 void
 efi_diskprobe(void)
 {
-	int			 i, depth = -1;
+	int			 i, bootdev = 0, depth = -1;
 	UINTN			 sz;
 	EFI_STATUS		 status;
 	EFI_HANDLE		*handles = NULL;
 	EFI_BLOCK_IO		*blkio;
 	EFI_BLOCK_IO_MEDIA	*media;
+	struct diskinfo		*di;
 	EFI_DEVICE_PATH		*dp;
+
+	TAILQ_INIT(&disklist);
 
 	sz = 0;
 	status = EFI_CALL(BS->LocateHandle, ByProtocol, &blkio_guid, 0, &sz, 0);
@@ -249,20 +256,35 @@ efi_diskprobe(void)
 		media = blkio->Media;
 		if (media->LogicalPartition || !media->MediaPresent)
 			continue;
+		di = alloc(sizeof(struct diskinfo));
+		efid_init(di, blkio);
 
-		if (efi_bootdp == NULL || depth == -1)
-			continue;
+		if (efi_bootdp == NULL || depth == -1 || bootdev != 0)
+			goto next;
 		status = EFI_CALL(BS->HandleProtocol, handles[i], &devp_guid,
 		    (void **)&dp);
 		if (EFI_ERROR(status))
-			continue;
+			goto next;
 		if (efi_device_path_ncmp(efi_bootdp, dp, depth) == 0) {
-			disk = blkio;
-			break;
+			TAILQ_INSERT_HEAD(&disklist, di, list);
+			bootdev_dip = di;
+			bootdev = 1;
+			continue;
 		}
+next:
+		TAILQ_INSERT_TAIL(&disklist, di, list);
 	}
 
 	free(handles, sz);
+
+	/* Print available disks. */
+	i = 0;
+	printf("disks:");
+	TAILQ_FOREACH(di, &disklist, list) {
+		printf(" sd%d%s", i, di == bootdev_dip ? "*" : "");
+		i++;
+	}
+	printf("\n");
 }
 
 /*
@@ -477,10 +499,13 @@ efi_makebootargs(char *bootargs, uint32_t *board_id)
 	fdt_node_add_property(node, "bootargs", bootargs, len);
 
 	/* Pass DUID of the boot disk. */
-	memcpy(&bootduid, diskinfo.disklabel.d_uid, sizeof(bootduid));
-	if (memcmp(bootduid, zero, sizeof(bootduid)) != 0) {
-		fdt_node_add_property(node, "openbsd,bootduid", bootduid,
+	if (bootdev_dip) {
+		memcpy(&bootduid, bootdev_dip->disklabel.d_uid,
 		    sizeof(bootduid));
+		if (memcmp(bootduid, zero, sizeof(bootduid)) != 0) {
+			fdt_node_add_property(node, "openbsd,bootduid",
+			    bootduid, sizeof(bootduid));
+		}
 	}
 
 	/* Pass netboot interface address. */
@@ -662,10 +687,30 @@ getsecs(void)
 void
 devboot(dev_t dev, char *p)
 {
-	if (disk)
-		strlcpy(p, "sd0a", 5);
-	else
+	struct diskinfo *dip;
+	int sd_boot_vol = 0;
+	int part_type = FS_UNUSED;
+
+	if (bootdev_dip == NULL) {
 		strlcpy(p, "tftp0a", 7);
+		return;
+	}
+
+	TAILQ_FOREACH(dip, &disklist, list) {
+		if (bootdev_dip == dip)
+			break;
+		sd_boot_vol++;
+	}
+
+	/*
+	 * Determine the partition type for the 'a' partition of the
+	 * boot device.
+	 */
+	if ((bootdev_dip->flags & DISKINFO_FLAG_GOODLABEL) != 0)
+		part_type = bootdev_dip->disklabel.d_partitions[0].p_fstype;
+
+	strlcpy(p, "sd0a", 5);
+	p[2] = '0' + sd_boot_vol;
 }
 
 const char cdevs[][4] = { "com", "fb" };

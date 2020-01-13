@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.21 2019/10/29 02:55:51 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.22 2020/01/13 10:17:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -27,16 +27,21 @@
  */
 
 #include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/disklabel.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/tftp.h>
 #include <lib/libsa/ufs.h>
 #include <dev/cons.h>
 
+#include <efi.h>
+
+#include "disk.h"
 #include "efiboot.h"
 #include "efidev.h"
 #include "efipxe.h"
 
-const char version[] = "1.8";
+const char version[] = "1.9";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
