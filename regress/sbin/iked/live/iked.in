@@ -1,0 +1,6 @@
+ikev2 "test" active $IPCOMP esp from $LEFTGW to $RIGHTGW \
+	peer $RIGHTGW \
+	psk $PSK
+ikev2 "test" active $IPCOMP esp from $LEFTGW to $RIGHTGW \
+	peer $RIGHTGW \
+	psk $PSK
