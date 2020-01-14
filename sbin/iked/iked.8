@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.22 2019/02/27 06:33:56 sthen Exp $
+.\" $OpenBSD: iked.8,v 1.23 2020/01/14 22:28:29 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 27 2019 $
+.Dd $Mdocdate: January 14 2020 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd Internet Key Exchange version 2 (IKEv2) daemon
 .Sh SYNOPSIS
 .Nm iked
-.Op Fl 6dnSTtv
+.Op Fl dnSTtv
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
 .Sh DESCRIPTION
@@ -55,14 +55,6 @@ infrastructure.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl 6
-Disable automatic blocking of IPv6 traffic.
-By default,
-.Nm
-blocks any IPv6 traffic unless a flow for this address family has been
-negotiated.
-This option disables VPN traffic leakage prevention on dual stack hosts
-(RFC 7359).
 .It Fl D Ar macro Ns = Ns Ar value
 Define
 .Ar macro

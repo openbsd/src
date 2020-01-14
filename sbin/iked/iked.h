@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.130 2020/01/07 15:08:28 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.131 2020/01/14 22:28:29 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -950,7 +950,6 @@ int	 eap_parse(struct iked *, struct iked_sa *, void *, int);
 int	 pfkey_couple(int, struct iked_sas *, int);
 int	 pfkey_flow_add(int fd, struct iked_flow *);
 int	 pfkey_flow_delete(int fd, struct iked_flow *);
-int	 pfkey_block(int, int, unsigned int);
 int	 pfkey_sa_init(int, struct iked_childsa *, uint32_t *);
 int	 pfkey_sa_add(int, struct iked_childsa *, struct iked_childsa *);
 int	 pfkey_sa_update_addresses(int, struct iked_childsa *);

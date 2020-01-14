@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.38 2019/11/30 16:07:12 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.39 2020/01/14 22:28:29 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -56,7 +56,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-6dnSTtv] [-D macro=value] "
+	fprintf(stderr, "usage: %s [-dnSTtv] [-D macro=value] "
 	    "[-f file]\n", __progname);
 	exit(1);
 }
@@ -76,7 +76,8 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "6dD:nf:vSTt")) != -1) {
 		switch (c) {
 		case '6':
-			opts |= IKED_OPT_NOIPV6BLOCKING;
+			log_warnx("the -6 option is deprecated and will be "
+			    "removed in the future.");
 			break;
 		case 'd':
 			debug++;

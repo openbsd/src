@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.62 2020/01/07 15:08:28 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.63 2020/01/14 22:28:29 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -50,9 +50,7 @@
 
 static uint32_t sadb_msg_seq = 0;
 static unsigned int sadb_decoupled = 0;
-static unsigned int sadb_ipv6refcnt = 0;
 
-static int pfkey_blockipv6 = 0;
 static struct event pfkey_timer_ev;
 static struct timeval pfkey_timer_tv;
 
@@ -1259,12 +1257,6 @@ pfkey_flow_add(int fd, struct iked_flow *flow)
 
 	flow->flow_loaded = 1;
 
-	if (flow->flow_dst.addr_af == AF_INET6) {
-		sadb_ipv6refcnt++;
-		if (sadb_ipv6refcnt == 1)
-			return (pfkey_block(fd, AF_INET6, SADB_X_DELFLOW));
-	}
-
 	return (0);
 }
 
@@ -1283,42 +1275,6 @@ pfkey_flow_delete(int fd, struct iked_flow *flow)
 		return (-1);
 
 	flow->flow_loaded = 0;
-
-	if (flow->flow_dst.addr_af == AF_INET6) {
-		sadb_ipv6refcnt--;
-		if (sadb_ipv6refcnt == 0)
-			return (pfkey_block(fd, AF_INET6, SADB_X_ADDFLOW));
-	}
-
-	return (0);
-}
-
-int
-pfkey_block(int fd, int af, unsigned int action)
-{
-	struct iked_flow	 flow;
-
-	if (!pfkey_blockipv6)
-		return (0);
-
-	/*
-	 * Prevent VPN traffic leakages in dual-stack hosts/networks.
-	 * https://tools.ietf.org/html/draft-gont-opsec-vpn-leakages.
-	 * We forcibly block IPv6 traffic unless it is used in any of
-	 * the flows by tracking a sadb_ipv6refcnt reference counter.
-	 */
-	bzero(&flow, sizeof(flow));
-	flow.flow_src.addr_af = flow.flow_src.addr.ss_family = af;
-	flow.flow_src.addr_net = 1;
-	socket_af((struct sockaddr *)&flow.flow_src.addr, 0);
-	flow.flow_dst.addr_af = flow.flow_dst.addr.ss_family = af;
-	flow.flow_dst.addr_net = 1;
-	socket_af((struct sockaddr *)&flow.flow_dst.addr, 0);
-	flow.flow_type = SADB_X_FLOW_TYPE_DENY;
-	flow.flow_dir = IPSP_DIRECTION_OUT;
-
-	if (pfkey_flow(fd, 0, action, &flow) == -1)
-		return (-1);
 
 	return (0);
 }
@@ -1550,14 +1506,6 @@ pfkey_init(struct iked *env, int fd)
 
 	if (pfkey_write(fd, &smsg, &iov, 1, NULL, NULL))
 		fatal("pfkey_init: failed to set up AH acquires");
-
-	if (env->sc_opts & IKED_OPT_NOIPV6BLOCKING)
-		return;
-
-	/* Block all IPv6 traffic by default */
-	pfkey_blockipv6 = 1;
-	if (pfkey_block(fd, AF_INET6, SADB_X_ADDFLOW))
-		fatal("pfkey_init: failed to block IPv6 traffic");
 }
 
 void *
