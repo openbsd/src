@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.48 2020/01/01 14:09:59 bluhm Exp $	*/
+/*	$OpenBSD: time.h,v 1.49 2020/01/14 08:52:18 mpi Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -370,6 +370,14 @@ USEC_TO_NSEC(uint64_t microseconds)
 	if (microseconds > UINT64_MAX / 1000ULL)
 		return UINT64_MAX;
 	return microseconds * 1000ULL;
+}
+
+static inline uint64_t
+TIMESPEC_TO_NSEC(const struct timespec *ts)
+{
+	if (ts->tv_sec > (UINT64_MAX - ts->tv_nsec) / 1000000000ULL)
+		return UINT64_MAX;
+	return ts->tv_sec * 1000000000ULL + ts->tv_nsec;
 }
 
 #else /* !_KERNEL */

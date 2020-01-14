@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.13 2019/07/10 15:52:17 mpi Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.14 2020/01/14 08:52:18 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -213,7 +213,7 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout,
 {
 	struct proc *p = curproc;
 	struct futex *f;
-	uint64_t to_ticks = 0;
+	uint64_t nsecs = INFSLP;
 	uint32_t cval;
 	int error;
 
@@ -244,17 +244,14 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout,
 #endif
 		if (ts.tv_sec < 0 || !timespecisvalid(&ts))
 			return EINVAL;
-		to_ticks = (uint64_t)hz * ts.tv_sec +
-		    (ts.tv_nsec + tick * 1000 - 1) / (tick * 1000) + 1;
-		if (to_ticks > INT_MAX)
-			to_ticks = INT_MAX;
+		nsecs = TIMESPEC_TO_NSEC(&ts);
 	}
 
 	f = futex_get(uaddr, flags | FT_CREATE);
 	TAILQ_INSERT_TAIL(&f->ft_threads, p, p_fut_link);
 	p->p_futex = f;
 
-	error = rwsleep(p, &ftlock, PWAIT|PCATCH, "fsleep", (int)to_ticks);
+	error = rwsleep_nsec(p, &ftlock, PWAIT|PCATCH, "fsleep", nsecs);
 	if (error == ERESTART)
 		error = ECANCELED;
 	else if (error == EWOULDBLOCK) {

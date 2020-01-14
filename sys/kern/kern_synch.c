@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.156 2020/01/12 00:01:12 cheloha Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.157 2020/01/14 08:52:18 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -641,7 +641,7 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 	long ident = (long)SCARG(uap, ident);
 	struct timespec *tsp = (struct timespec *)SCARG(uap, tp);
 	void *lock = SCARG(uap, lock);
-	uint64_t to_ticks = 0;
+	uint64_t nsecs = INFSLP;
 	int abort, error;
 	clockid_t clock_id = SCARG(uap, clock_id);
 
@@ -665,10 +665,7 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 		}
 
 		timespecsub(tsp, &now, tsp);
-		to_ticks = (uint64_t)hz * tsp->tv_sec +
-		    (tsp->tv_nsec + tick * 1000 - 1) / (tick * 1000) + 1;
-		if (to_ticks > INT_MAX)
-			to_ticks = INT_MAX;
+		nsecs = TIMESPEC_TO_NSEC(tsp);
 	}
 
 	p->p_thrslpid = ident;
@@ -692,8 +689,7 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 		void *sleepaddr = &p->p_thrslpid;
 		if (ident == -1)
 			sleepaddr = &globalsleepaddr;
-		error = tsleep(sleepaddr, PWAIT|PCATCH, "thrsleep",
-		    (int)to_ticks);
+		error = tsleep_nsec(sleepaddr, PWAIT|PCATCH, "thrsleep", nsecs);
 	}
 
 out:

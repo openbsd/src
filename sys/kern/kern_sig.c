@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.240 2020/01/08 16:27:41 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.241 2020/01/14 08:52:18 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1699,7 +1699,7 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 	sigset_t *m;
 	sigset_t mask = SCARG(uap, sigmask) &~ sigcantmask;
 	siginfo_t si;
-	uint64_t to_ticks = 0;
+	uint64_t nsecs = INFSLP;
 	int timeinvalid = 0;
 	int error = 0;
 
@@ -1715,14 +1715,8 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 #endif
 		if (!timespecisvalid(&ts))
 			timeinvalid = 1;
-		else {
-			to_ticks = (uint64_t)hz * ts.tv_sec +
-			    ts.tv_nsec / (tick * 1000);
-			if (to_ticks > INT_MAX)
-				to_ticks = INT_MAX;
-			if (to_ticks == 0 && ts.tv_nsec)
-				to_ticks = 1;
-		}
+		else
+			nsecs = TIMESPEC_TO_NSEC(&ts);
 	}
 
 	dosigsuspend(p, p->p_sigmask &~ mask);
@@ -1749,14 +1743,14 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 		if (timeinvalid)
 			error = EINVAL;
 
-		if (SCARG(uap, timeout) != NULL && to_ticks == 0)
+		if (SCARG(uap, timeout) != NULL && nsecs == INFSLP)
 			error = EAGAIN;
 
 		if (error != 0)
 			break;
 
-		error = tsleep(&sigwaitsleep, PPAUSE|PCATCH, "sigwait",
-		    (int)to_ticks);
+		error = tsleep_nsec(&sigwaitsleep, PPAUSE|PCATCH, "sigwait",
+		    nsecs);
 	}
 
 	if (error == 0) {
