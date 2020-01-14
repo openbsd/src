@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.16 2019/12/14 10:57:48 patrick Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.17 2020/01/14 21:49:36 kn Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -165,7 +165,7 @@ acpivout_brightness_cycle(struct acpivout_softc *sc)
 void
 acpivout_brightness_step(struct acpivout_softc *sc, int dir)
 {
-	int level, nlevel;
+	int level, nindex;
 
 	if (sc->sc_bcl_len == 0)
 		return;
@@ -173,17 +173,17 @@ acpivout_brightness_step(struct acpivout_softc *sc, int dir)
 	if (level == -1)
 		return;
 
-	nlevel = acpivout_find_brightness(sc, level + (dir * BRIGHTNESS_STEP));
-	if (nlevel == level) {
-		if (dir == 1 && (nlevel + 1 < sc->sc_bcl_len))
-			nlevel++;
-		else if (dir == -1 && (nlevel - 1 >= 0))
-			nlevel--;
+	nindex = acpivout_find_brightness(sc, level + (dir * BRIGHTNESS_STEP));
+	if (sc->sc_bcl[nindex] == level) {
+		if (dir == 1 && (nindex + 1 < sc->sc_bcl_len))
+			nindex++;
+		else if (dir == -1 && (nindex - 1 >= 0))
+			nindex--;
 	}
-	if (nlevel == level)
+	if (sc->sc_bcl[nindex] == level)
 		return;
 
-	acpivout_set_brightness(sc, nlevel);
+	acpivout_set_brightness(sc, sc->sc_bcl[nindex]);
 }
 
 void
@@ -219,14 +219,14 @@ acpivout_find_brightness(struct acpivout_softc *sc, int level)
 	for (i = 0; i < sc->sc_bcl_len - 1; i++) {
 		mid = sc->sc_bcl[i] + (sc->sc_bcl[i + 1] - sc->sc_bcl[i]) / 2;
 		if (sc->sc_bcl[i] <= level && level <=  mid)
-			return sc->sc_bcl[i];
+			return i;
 		if  (mid < level && level <= sc->sc_bcl[i + 1])
-			return sc->sc_bcl[i + 1];
+			return i + 1;
 	}
 	if (level < sc->sc_bcl[0])
-		return sc->sc_bcl[0];
+		return 0;
 	else
-		return sc->sc_bcl[i];
+		return i;
 }
 
 void
@@ -321,7 +321,7 @@ int
 acpivout_set_param(struct wsdisplay_param *dp)
 {
 	struct acpivout_softc	*sc = NULL;
-	int i, exact;
+	int i, nindex;
 
 	switch (dp->param) {
 	case WSDISPLAYIO_PARAM_BRIGHTNESS:
@@ -335,8 +335,8 @@ acpivout_set_param(struct wsdisplay_param *dp)
 		}
 		if (sc != NULL && sc->sc_bcl_len != 0) {
 			rw_enter_write(&sc->sc_acpi->sc_lck);
-			exact = acpivout_find_brightness(sc, dp->curval);
-			acpivout_set_brightness(sc, exact);
+			nindex = acpivout_find_brightness(sc, dp->curval);
+			acpivout_set_brightness(sc, sc->sc_bcl[nindex]);
 			rw_exit_write(&sc->sc_acpi->sc_lck);
 			return 0;
 		}
