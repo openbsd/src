@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.135 2019/11/04 14:58:37 benno Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.136 2020/01/14 20:48:57 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -1232,13 +1232,6 @@ server_response(struct httpd *httpd, struct client *clt)
 			clt->clt_persist = 0;
 	}
 
-	if (clt->clt_persist >= srv_conf->maxrequests)
-		clt->clt_persist = 0;
-
-	/* pipelining should end after the first "idempotent" method */
-	if (clt->clt_pipelining && clt->clt_toread > 0)
-		clt->clt_persist = 0;
-
 	/*
 	 * Do we have a Host header and matching configuration?
 	 * XXX the Host can also appear in the URL path.
@@ -1291,6 +1284,13 @@ server_response(struct httpd *httpd, struct client *clt)
 			goto fail;
 		srv_conf = clt->clt_srv_conf;
 	}
+
+	if (clt->clt_persist >= srv_conf->maxrequests)
+		clt->clt_persist = 0;
+
+	/* pipelining should end after the first "idempotent" method */
+	if (clt->clt_pipelining && clt->clt_toread > 0)
+		clt->clt_persist = 0;
 
 	if ((desc->http_host = strdup(hostname)) == NULL)
 		goto fail;
