@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.146 2020/01/04 16:22:36 beck Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.147 2020/01/14 08:17:08 mpi Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -289,21 +289,19 @@ struct sema {
 	pid_t	holder;
 	char	*name;
 	int	prio;
-	int	timo;
 };
-STATIC	void sema_init(struct sema *, char *, int, int);
+STATIC	void sema_init(struct sema *, char *, int);
 STATIC	int sema_get(struct sema *, struct lockit *);
 STATIC	void sema_release(struct sema *);
 
 STATIC void
-sema_init(struct sema *semap, char *name, int prio, int timo)
+sema_init(struct sema *semap, char *name, int prio)
 {
 
 	semap->holder = -1;
 	semap->value = 0;
 	semap->name = name;
 	semap->prio = prio;
-	semap->timo = timo;
 }
 
 STATIC int
@@ -314,7 +312,7 @@ sema_get(struct sema *semap, struct lockit *interlock)
 	if (semap->value++ > 0) {
 		if (interlock != NULL)
 			s = FREE_LOCK_INTERLOCKED(interlock);
-		tsleep((caddr_t)semap, semap->prio, semap->name, semap->timo);
+		tsleep_nsec(semap, semap->prio, semap->name, INFSLP);
 		if (interlock != NULL) {
 			ACQUIRE_LOCK_INTERLOCKED(interlock, s);
 			FREE_LOCK(interlock);
@@ -1176,12 +1174,12 @@ softdep_initialize(void)
 	arc4random_buf(&softdep_hashkey, sizeof(softdep_hashkey));
 	pagedep_hashtbl = hashinit(initialvnodes / 5, M_PAGEDEP, M_WAITOK,
 	    &pagedep_hash);
-	sema_init(&pagedep_in_progress, "pagedep", PRIBIO, 0);
+	sema_init(&pagedep_in_progress, "pagedep", PRIBIO);
 	inodedep_hashtbl = hashinit(initialvnodes, M_INODEDEP, M_WAITOK,
 	    &inodedep_hash);
-	sema_init(&inodedep_in_progress, "inodedep", PRIBIO, 0);
+	sema_init(&inodedep_in_progress, "inodedep", PRIBIO);
 	newblk_hashtbl = hashinit(64, M_NEWBLK, M_WAITOK, &newblk_hash);
-	sema_init(&newblk_in_progress, "newblk", PRIBIO, 0);
+	sema_init(&newblk_in_progress, "newblk", PRIBIO);
 	timeout_set(&proc_waiting_timeout, pause_timer, NULL);
 	pool_init(&pagedep_pool, sizeof(struct pagedep), 0, IPL_NONE,
 	    PR_WAITOK, "pagedep", NULL);
