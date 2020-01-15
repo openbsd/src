@@ -218,10 +218,6 @@
 ./etc/rpki/ripe.tal
 ./etc/services
 ./etc/signify
-./etc/signify/openbsd-64-base.pub
-./etc/signify/openbsd-64-fw.pub
-./etc/signify/openbsd-64-pkg.pub
-./etc/signify/openbsd-64-syspatch.pub
 ./etc/signify/openbsd-65-base.pub
 ./etc/signify/openbsd-65-fw.pub
 ./etc/signify/openbsd-65-pkg.pub
