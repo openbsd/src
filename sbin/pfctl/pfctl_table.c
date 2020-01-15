@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.83 2020/01/15 15:45:49 kn Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.84 2020/01/15 22:38:31 kn Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -77,7 +77,7 @@ static const char	*istats_text[2][2][2] = {
 		    (opts & PF_OPT_DUMMYACTION)) &&			\
 		    (fct)) {						\
 			if ((opts & PF_OPT_RECURSE) == 0)		\
-				warnx("%s", pfr_strerror(errno));	\
+				warnx("%s", pf_strerror(errno));	\
 			goto _error;					\
 		}							\
 	} while (0)
@@ -90,7 +90,7 @@ static const char	*istats_text[2][2][2] = {
 		    (opts & PF_OPT_DUMMYACTION)) &&			\
 		    (pfr_add_tables(&table, 1, &nadd, flags)) &&	\
 		    (errno != EPERM)) {					\
-			warnx("%s", pfr_strerror(errno));		\
+			warnx("%s", pf_strerror(errno));		\
 			goto _error;					\
 		}							\
 		if (nadd) {						\
@@ -591,7 +591,7 @@ pfctl_show_ifaces(const char *filter, int opts)
 		pfr_buf_grow(&b, b.pfrb_size);
 		b.pfrb_size = b.pfrb_msize;
 		if (pfi_get_ifaces(filter, b.pfrb_caddr, &b.pfrb_size))
-			errx(1, "%s", pfr_strerror(errno));
+			errx(1, "%s", pf_strerror(errno));
 		if (b.pfrb_size <= b.pfrb_msize)
 			break;
 		i++;
