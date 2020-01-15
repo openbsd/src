@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.14 2015/05/11 02:01:01 guenther Exp $ */
+/*	$OpenBSD: lpt.c,v 1.15 2020/01/15 16:43:13 cheloha Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -71,8 +71,8 @@
 
 #include "lpt.h"
 
-#define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
-#define	STEP		hz/4
+#define	TIMEOUT		16000	/* wait up to 16 seconds for a ready */
+#define	STEP		250	/* 1/4 seconds */
 
 #define	LPTPRI		(PZERO+8)
 #define	LPT_BSIZE	1024
@@ -199,7 +199,8 @@ lptopen(dev_t dev, int flag, int mode, struct proc *p)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen", STEP);
+		error = tsleep_nsec(sc, LPTPRI | PCATCH, "lptopen",
+		    MSEC_TO_NSEC(STEP));
 		if (sc->sc_state == 0)
 			return (EIO);
 		if (error != EWOULDBLOCK) {
@@ -256,7 +257,7 @@ lptwakeup(void *arg)
 	splx(s);
 
 	if (sc->sc_state != 0)
-		timeout_add(&sc->sc_wakeup_tmo, STEP);
+		timeout_add_msec(&sc->sc_wakeup_tmo, STEP);
 }
 
 /*
@@ -293,7 +294,7 @@ lptpushbytes(struct lpt_softc *sc)
 	int error;
 
 	if (sc->sc_flags & LPT_NOINTR) {
-		int spin, tic;
+		int msecs, spin;
 		u_int8_t control = sc->sc_control;
 
 		while (sc->sc_count > 0) {
@@ -303,16 +304,17 @@ lptpushbytes(struct lpt_softc *sc)
 			while (NOT_READY()) {
 				if (++spin < sc->sc_spinmax)
 					continue;
-				tic = 0;
+				msecs = 0;
 				/* adapt busy-wait algorithm */
 				sc->sc_spinmax++;
 				while (NOT_READY_ERR()) {
 					/* exponential backoff */
-					tic = tic + tic + 1;
-					if (tic > TIMEOUT)
-						tic = TIMEOUT;
-					error = tsleep((caddr_t)sc,
-					    LPTPRI | PCATCH, "lptpsh", tic);
+					msecs = msecs + msecs + 10;
+					if (msecs > TIMEOUT)
+						msecs = TIMEOUT;
+					error = tsleep_nsec(sc,
+					    LPTPRI | PCATCH, "lptpsh",
+					    MSEC_TO_NSEC(msecs));
 					if (sc->sc_state == 0)
 						error = EIO;
 					if (error != EWOULDBLOCK)
@@ -345,8 +347,8 @@ lptpushbytes(struct lpt_softc *sc)
 			}
 			if (sc->sc_state == 0)
 				return (EIO);
-			error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
-			    "lptwrite2", 0);
+			error = tsleep_nsec(sc, LPTPRI | PCATCH,
+			    "lptwrite2", INFSLP);
 			if (sc->sc_state == 0)
 				error = EIO;
 			if (error)
