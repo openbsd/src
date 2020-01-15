@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.39 2020/01/14 22:28:29 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.40 2020/01/15 20:30:32 sthen Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "6dD:nf:vSTt")) != -1) {
 		switch (c) {
 		case '6':
-			log_warnx("the -6 option is deprecated and will be "
+			log_warnx("the -6 option is ignored and will be "
 			    "removed in the future.");
 			break;
 		case 'd':
