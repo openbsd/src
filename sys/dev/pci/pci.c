@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.114 2019/06/25 16:46:32 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.115 2020/01/15 14:01:19 cheloha Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -1419,8 +1419,8 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		while (pci_vga_proc != p && pci_vga_proc != NULL) {
 			if (vga->pv_lock == PCI_VGA_TRYLOCK)
 				return (EBUSY);
-			error = tsleep(&pci_vga_proc, PLOCK | PCATCH,
-			    "vgalk", 0);
+			error = tsleep_nsec(&pci_vga_proc, PLOCK | PCATCH,
+			    "vgalk", INFSLP);
 			if (error)
 				return (error);
 		}
