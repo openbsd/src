@@ -1208,6 +1208,7 @@
 ./usr/share/man/man4/amlpwm.4
 ./usr/share/man/man4/amlreset.4
 ./usr/share/man/man4/amlrng.4
+./usr/share/man/man4/amlsm.4
 ./usr/share/man/man4/amltemp.4
 ./usr/share/man/man4/amluart.4
 ./usr/share/man/man4/amlusbphy.4
