@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.379 2020/01/15 13:42:39 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.380 2020/01/15 22:31:51 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -863,7 +863,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 	if (opts & PF_OPT_SHOWALL) {
 		pr.rule.action = PF_PASS;
 		if (ioctl(dev, DIOCGETRULES, &pr) == -1) {
-			warn("DIOCGETRULES");
+			warnx("%s", pfr_strerror(errno));
 			ret = -1;
 			goto error;
 		}
@@ -878,7 +878,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 
 	pr.rule.action = PF_PASS;
 	if (ioctl(dev, DIOCGETRULES, &pr) == -1) {
-		warn("DIOCGETRULES");
+		warnx("%s", pfr_strerror(errno));
 		ret = -1;
 		goto error;
 	}
@@ -979,7 +979,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		for (nr = 0; nr < mnr; ++nr) {
 			prs.nr = nr;
 			if (ioctl(dev, DIOCGETRULESET, &prs) == -1)
-				err(1, "DIOCGETRULESET");
+				errx(1, "%s", pfr_strerror(errno));
 			INDENT(depth, !(opts & PF_OPT_VERBOSE));
 			printf("anchor \"%s\" all {\n", prs.name);
 			pfctl_show_rules(dev, npath, opts,
@@ -2219,7 +2219,7 @@ pfctl_walk_anchors(int dev, int opts, const char *anchor,
 
 		pr.nr = nr;
 		if (ioctl(dev, DIOCGETRULESET, &pr) == -1)
-			err(1, "DIOCGETRULESET");
+			errx(1, "%s", pfr_strerror(errno));
 		if (!strcmp(pr.name, PF_RESERVED_ANCHOR))
 			continue;
 		sub[0] = '\0';
@@ -2892,4 +2892,18 @@ main(int argc, char *argv[])
 		pfctl_state_load(dev, lfile);
 
 	exit(exit_val);
+}
+
+char *
+pfr_strerror(int errnum)
+{
+	switch (errnum) {
+	case ESRCH:
+		return "Table does not exist";
+	case EINVAL:
+	case ENOENT:
+		return "Anchor does not exist";
+	default:
+		return strerror(errnum);
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.36 2020/01/15 16:15:08 kn Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.37 2020/01/15 22:31:51 kn Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -559,17 +559,4 @@ pfr_next_token(char buf[BUF_SIZE], FILE *fp)
 	}
 	buf[i] = '\0';
 	return (1);
-}
-
-char *
-pfr_strerror(int errnum)
-{
-	switch (errnum) {
-	case ESRCH:
-		return "Table does not exist";
-	case ENOENT:
-		return "Anchor does not exist";
-	default:
-		return strerror(errnum);
-	}
 }
