@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.178 2019/05/08 21:09:57 sashan Exp $
+.\" $OpenBSD: pfctl.8,v 1.179 2020/01/15 13:42:38 sashan Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 8 2019 $
+.Dd $Mdocdate: January 15 2020 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -165,6 +165,13 @@ To print the main ruleset recursively, specify only
 as the anchor name:
 .Bd -literal -offset indent
 # pfctl -a '*' -sr
+.Ed
+.Pp
+To flush all rulesets and tables recursively, specify only
+.Sq *
+as the anchor name:
+.Bd -literal -offset indent
+# pfctl -a '*' -Fa
 .Ed
 .It Fl D Ar macro Ns = Ns Ar value
 Define
