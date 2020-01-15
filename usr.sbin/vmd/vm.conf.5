@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.49 2019/12/17 19:57:22 kn Exp $
+.\" $OpenBSD: vm.conf.5,v 1.50 2020/01/15 14:08:26 phessler Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2019 $
+.Dd $Mdocdate: January 15 2020 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -483,6 +483,7 @@ switch "uplink" {
 .Ed
 .Sh SEE ALSO
 .Xr vmm 4 ,
+.Xr MAKEDEV 8 ,
 .Xr vmctl 8 ,
 .Xr vmd 8
 .Sh HISTORY
@@ -495,3 +496,11 @@ file format first appeared in
 .An Mike Larkin Aq Mt mlarkin@openbsd.org
 and
 .An Reyk Floeter Aq Mt reyk@openbsd.org .
+.Sh CAVEATS
+Each guest requires one
+.Xr tap 4
+device per assigned interface and one
+.Xr pty 4
+device.
+Administrators may need to create additional devices using
+.Xr MAKEDEV 8 .
