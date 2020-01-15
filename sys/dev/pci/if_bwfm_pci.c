@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.31 2020/01/15 20:17:08 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.32 2020/01/15 21:41:02 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1380,7 +1380,7 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 	case MSGBUF_TYPE_TX_STATUS:
 		tx = (struct msgbuf_tx_status *)buf;
 		m = bwfm_pci_pktid_free(sc, &sc->sc_tx_pkts,
-		    letoh32(tx->msg.request_id));
+		    letoh32(tx->msg.request_id) - 1);
 		if (m == NULL)
 			break;
 		m_freem(m);
@@ -1837,7 +1837,7 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 	}
 	paddr += ETHER_HDR_LEN;
 
-	tx->msg.request_id = htole32(pktid);
+	tx->msg.request_id = htole32(pktid + 1);
 	tx->data_len = htole16(m->m_len - ETHER_HDR_LEN);
 	tx->data_buf_addr.high_addr = htole32((uint64_t)paddr >> 32);
 	tx->data_buf_addr.low_addr = htole32(paddr & 0xffffffff);
