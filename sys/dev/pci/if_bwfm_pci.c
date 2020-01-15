@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.30 2020/01/09 14:35:19 mpi Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.31 2020/01/15 20:17:08 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1150,7 +1150,7 @@ bwfm_pci_ring_write_reserve(struct bwfm_pci_softc *sc,
 	else
 		available = ring->r_ptr + (ring->nitem - ring->w_ptr);
 
-	if (available < 1)
+	if (available <= 1)
 		return NULL;
 
 	ret = BWFM_PCI_DMA_KVA(ring->ring) + (ring->w_ptr * ring->itemsz);
@@ -1174,7 +1174,7 @@ bwfm_pci_ring_write_reserve_multi(struct bwfm_pci_softc *sc,
 	else
 		available = ring->r_ptr + (ring->nitem - ring->w_ptr);
 
-	if (available < 1)
+	if (available <= 1)
 		return NULL;
 
 	ret = BWFM_PCI_DMA_KVA(ring->ring) + (ring->w_ptr * ring->itemsz);
