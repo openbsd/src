@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2020/01/15 12:33:11 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/01/15 13:27:05 bluhm Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -18,15 +18,15 @@ REGRESS_SETUP_ONCE =	setup_certs
 REGRESS_CLEANUP =	cleanup
 CLEANFILES =		*.conf *.cnf *.csr *.key *.crt *.srl
 
-SSHLEFT ?=
-SSHRIGHT ?=
-LEFTGW ?=
-RIGHTGW ?=
+LEFT_SSH ?=
+RIGHT_SSH ?=
+LEFT_ADDR ?=
+RIGHT_ADDR ?=
 
-.if empty (SSHLEFT) || empty (SSHRIGHT) || empty (LEFTGW) || empty (RIGHTGW)
+.if empty(LEFT_SSH) || empty(RIGHT_SSH) || empty(LEFT_ADDR) || empty(RIGHT_ADDR)
 regress:
 	@echo this test needs two remote machines to operate
-	@echo SSHLEFT SSHRIGHT RIGHTGW LEFTGW are not defined
+	@echo LEFT_SSH RIGHT_SSH RIGHT_ADDR LEFT_ADDR are not defined
 	@echo SKIPPED
 .endif
 
@@ -34,12 +34,12 @@ TEST_FLOWS = \
 	success=false; \
 	count=0; \
 	while [[ $$count -le 3 ]]; do \
-		sasleft=`ssh ${SSHLEFT} ipsecctl -sa`; \
+		sasleft=`ssh ${LEFT_SSH} ipsecctl -sa`; \
 		flowleft=`echo "$$sasleft" \
-		    | sed -n "/^flow $$flowtype in from ${RIGHTGW} to ${LEFTGW}/p"`; \
-		sasright=`ssh ${SSHRIGHT} ipsecctl -sa`; \
+		    | sed -n "/^flow $$flowtype in from ${RIGHT_ADDR} to ${LEFT_ADDR}/p"`; \
+		sasright=`ssh ${RIGHT_SSH} ipsecctl -sa`; \
 		flowright=`echo "$$sasright" \
-		    | sed -n "/^flow $$flowtype in from ${LEFTGW} to ${RIGHTGW}/p"`; \
+		    | sed -n "/^flow $$flowtype in from ${LEFT_ADDR} to ${RIGHT_ADDR}/p"`; \
 		if [[ -n "$$flowleft" && -n "$$flowright" ]]; then \
 			 success=true; \
 			 break; \
@@ -52,12 +52,12 @@ TEST_FLOWS = \
 	fi
 
 TEST_PING = \
-	dump=`ssh ${SSHLEFT} "tcpdump -c2 -i enc0 -w '/tmp/test.pcap' > /dev/null & \
-	     ping -c 5 ${RIGHTGW} > /dev/null && tcpdump -r /tmp/test.pcap" && rm -f /tmp/test.pcap`; \
+	dump=`ssh ${LEFT_SSH} "tcpdump -c2 -i enc0 -w '/tmp/test.pcap' > /dev/null & \
+	     ping -c 5 ${RIGHT_ADDR} > /dev/null && tcpdump -r /tmp/test.pcap" && rm -f /tmp/test.pcap`; \
 	rtol=`echo "$$dump" \
-	    | sed -n "/(authentic,confidential): SPI 0x[0-9a-f]\{8\}: ${LEFTGW} > ${RIGHTGW}/p"`; \
+	    | sed -n "/(authentic,confidential): SPI 0x[0-9a-f]\{8\}: ${LEFT_ADDR} > ${RIGHT_ADDR}/p"`; \
 	ltor=`echo "$$dump" \
-	    | sed -n "/(authentic,confidential): SPI 0x[0-9a-f]\{8\}: ${RIGHTGW} > ${LEFTGW}/p"`; \
+	    | sed -n "/(authentic,confidential): SPI 0x[0-9a-f]\{8\}: ${RIGHT_ADDR} > ${LEFT_ADDR}/p"`; \
 	if [[ -z "$$rtol" || -z "$$ltor" ]]; then \
 		echo "error: no esp traffic."; \
 		exit 1; \
@@ -79,31 +79,31 @@ SETUP_CONFIGS = \
 		fragstr="set fragmentation"; \
 	fi; \
 	echo "FRAGMENTATION=\"$$fragstr\"" > $@_left.conf; \
-	echo "LEFTGW=\"${LEFTGW}\"" >> $@_left.conf; \
-	echo "RIGHTGW=\"${RIGHTGW}\"" >> $@_left.conf; \
+	echo "LOCAL_ADDR=\"${LEFT_ADDR}\"" >> $@_left.conf; \
+	echo "PEER_ADDR=\"${RIGHT_ADDR}\"" >> $@_left.conf; \
 	echo "IPCOMP=\"$$ipcomp\"" >> $@_left.conf; \
 	echo "SRCID=\"left\"" >> $@_left.conf; \
 	echo "AUTH=\"$$authstr\"" >> $@_left.conf; \
 	cat ${.CURDIR}/iked.in >> $@_left.conf; \
 	chmod 0600 $@_left.conf; \
-	echo "cd /tmp\nput $@_left.conf test.conf" | sftp -q ${SSHLEFT}; \
+	echo "cd /tmp\nput $@_left.conf test.conf" | sftp -q ${LEFT_SSH}; \
 	echo "FRAGMENTATION=\"$$fragstr\"" > $@_right.conf; \
-	echo "LEFTGW=\"${RIGHTGW}\"" >> $@_right.conf; \
-	echo "RIGHTGW=\"${LEFTGW}\"" >> $@_right.conf; \
+	echo "LOCAL_ADDR=\"${RIGHT_ADDR}\"" >> $@_right.conf; \
+	echo "PEER_ADDR=\"${LEFT_ADDR}\"" >> $@_right.conf; \
 	echo "IPCOMP=\"$$ipcomp\"" >> $@_right.conf; \
 	echo "SRCID=\"right\"" >> $@_right.conf; \
 	echo "AUTH=\"$$authstr\"" >> $@_right.conf; \
 	cat ${.CURDIR}/iked.in >> $@_right.conf; \
 	chmod 0600 $@_right.conf; \
-	echo "cd /tmp\nput $@_right.conf test.conf" | sftp -q ${SSHRIGHT}
+	echo "cd /tmp\nput $@_right.conf test.conf" | sftp -q ${RIGHT_SSH}
 
 SETUP_SYSCTL = \
-	ssh ${SSHLEFT} "sysctl net.inet.ipcomp.enable=1"; \
-	ssh ${SSHRIGHT} "sysctl net.inet.ipcomp.enable=1"
+	ssh ${LEFT_SSH} "sysctl net.inet.ipcomp.enable=1"; \
+	ssh ${RIGHT_SSH} "sysctl net.inet.ipcomp.enable=1"
 
 SETUP_START = \
-	ssh ${SSHLEFT} "ipsecctl -F; pkill iked; iked -6 -f /tmp/test.conf"; \
-	ssh ${SSHRIGHT} "ipsecctl -F; pkill iked; iked -6 -f /tmp/test.conf"
+	ssh ${LEFT_SSH} "ipsecctl -F; pkill iked; iked -6 -f /tmp/test.conf"; \
+	ssh ${RIGHT_SSH} "ipsecctl -F; pkill iked; iked -6 -f /tmp/test.conf"
 
 SETUP_CERT = \
 	echo "ALTNAME = $$name" > crt_$$name.cnf; \
@@ -120,18 +120,18 @@ ca.crt:
 	openssl req -subj "/C=DE/ST=Bavaria/L=Munich/O=iked/CN=ca" -new -x509 -key ca.key -out ca.crt
 
 cleanup:
-	-ssh ${SSHLEFT} 'rm -f /tmp/test.conf; ipsecctl -F; pkill iked'
-	-ssh ${SSHRIGHT} 'rm -f /tmp/test.conf; ipsecctl -F; pkill iked'
+	-ssh ${LEFT_SSH} 'rm -f /tmp/test.conf; ipsecctl -F; pkill iked'
+	-ssh ${RIGHT_SSH} 'rm -f /tmp/test.conf; ipsecctl -F; pkill iked'
 
-REGRESS_TARGETS = 	run-cert run-psk run-fragmentation run-ipcomp
+REGRESS_TARGETS =	run-cert run-psk run-fragmentation run-ipcomp
 
 setup_certs: ca.key ca.crt
 	name=left; ${SETUP_CERT}; \
 	echo "cd /etc/iked\nput left.crt certs\nput left.key private/local.key\nput ca.crt ca\n" \
-	     | sftp ${SSHLEFT} -q; \
+	     | sftp ${LEFT_SSH} -q; \
 	name=right; ${SETUP_CERT}; \
 	echo "cd /etc/iked\nput right.crt certs\nput right.key private/local.key\nput ca.crt ca\n" \
-	     | sftp ${SSHRIGHT} -q
+	     | sftp ${RIGHT_SSH} -q
 
 run-cert:
 	@echo '======= $@ ========'
