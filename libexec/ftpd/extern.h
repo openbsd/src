@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.20 2019/05/08 23:56:48 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.21 2020/01/15 22:06:59 jan Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/04/11 02:44:49 cgd Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ void	delete(char *);
 void	dologout(int);
 void	fatal(char *);
 int	ftpd_pclose(FILE *, pid_t);
-FILE   *ftpd_ls(char *, char *, pid_t *);
+FILE   *ftpd_ls(const char *, pid_t *);
 int     get_line(char *, int, FILE *);
 void	ftpdlogwtmp(char *, char *, char *);
 void	lreply(int, const char *, ...);

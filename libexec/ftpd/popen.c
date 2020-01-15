@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.28 2019/06/28 13:32:53 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.29 2020/01/15 22:06:59 jan Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 
 #include <errno.h>
 #include <glob.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,55 +57,44 @@
  * may create a pipe to a hidden program as a side effect of a list or dir
  * command.
  */
-#define MAX_ARGV	100
-#define MAX_GARGV	1000
 
 FILE *
-ftpd_ls(char *arg, char *path, pid_t *pidptr)
+ftpd_ls(const char *path, pid_t *pidptr)
 {
 	char *cp;
 	FILE *iop;
-	int argc = 0, gargc, pdes[2];
+	int argc = 0, pdes[2];
 	pid_t pid;
-	char **pop, *argv[MAX_ARGV], *gargv[MAX_GARGV];
+	char **pop, *argv[_POSIX_ARG_MAX];
 
 	if (pipe(pdes) == -1)
 		return (NULL);
 
 	/* break up string into pieces */
 	argv[argc++] = "/bin/ls";
-	if (arg != NULL)
-		argv[argc++] = arg;
-	if (path != NULL)
-		argv[argc++] = path;
-	argv[argc] = NULL;
-	argv[MAX_ARGV-1] = NULL;
+	argv[argc++] = "-lgA";
+	argv[argc++] = "--";
 
-	/* glob each piece */
-	gargv[0] = argv[0];
-	for (gargc = argc = 1; argv[argc]; argc++) {
+	/* glob that path */
+	if (path != NULL) {
 		glob_t gl;
 
 		memset(&gl, 0, sizeof(gl));
-		if (glob(argv[argc],
+		if (glob(path,
 		    GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE|GLOB_LIMIT,
 		    NULL, &gl)) {
-			if (gargc < MAX_GARGV-1) {
-				gargv[gargc++] = strdup(argv[argc]);
-				if (gargv[gargc -1] == NULL)
-					fatal ("Out of memory.");
-			}
-
+			fatal ("Glob error.");
 		} else if (gl.gl_pathc > 0) {
-			for (pop = gl.gl_pathv; *pop && gargc < MAX_GARGV-1; pop++) {
-				gargv[gargc++] = strdup(*pop);
-				if (gargv[gargc - 1] == NULL)
+			for (pop = gl.gl_pathv; *pop && argc < _POSIX_ARG_MAX-1;
+			    pop++) {
+				argv[argc++] = strdup(*pop);
+				if (argv[argc - 1] == NULL)
 					fatal ("Out of memory.");
 			}
 		}
 		globfree(&gl);
 	}
-	gargv[gargc] = NULL;
+	argv[argc] = NULL;
 
 	iop = NULL;
 
@@ -128,15 +118,16 @@ ftpd_ls(char *arg, char *path, pid_t *pidptr)
 
 		/* reset getopt for ls_main */
 		optreset = optind = 1;
-		exit(ls_main(gargc, gargv));
+		exit(ls_main(argc, argv));
 	}
 	/* parent; assume fdopen can't fail...  */
 	iop = fdopen(pdes[0], "r");
 	(void)close(pdes[1]);
 	*pidptr = pid;
 
-pfree:	for (argc = 1; gargv[argc] != NULL; argc++)
-		free(gargv[argc]);
+ pfree:
+	for (argc = 3; argv[argc] != NULL; argc++)
+		free(argv[argc]);
 
 	return (iop);
 }

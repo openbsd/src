@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.228 2019/07/03 03:24:04 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.229 2020/01/15 22:06:59 jan Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1124,7 +1124,7 @@ retrieve(enum ret_cmd cmd, char *name)
 		fin = fopen(name, "r");
 		st.st_size = 0;
 	} else {
-		fin = ftpd_ls("-lgA", name, &pid);
+		fin = ftpd_ls(name, &pid);
 		st.st_size = -1;
 		st.st_blksize = BUFSIZ;
 	}
@@ -1730,7 +1730,7 @@ statfilecmd(char *filename)
 	int c;
 	int atstart;
 	pid_t pid;
-	fin = ftpd_ls("-lgA", filename, &pid);
+	fin = ftpd_ls(filename, &pid);
 	if (fin == NULL) {
 		reply(451, "Local resource failure");
 		return;
