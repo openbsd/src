@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.32 2020/01/15 21:41:02 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.33 2020/01/15 22:23:55 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1666,6 +1666,7 @@ bwfm_pci_flowring_create_cb(struct bwfm_softc *bwfm, void *arg)
 	struct msgbuf_tx_flowring_create_req *req;
 	struct bwfm_pci_msgring *ring;
 	uint8_t *da, *sa;
+	int s;
 
 	da = mtod(cmd->m, char *) + 0 * ETHER_ADDR_LEN;
 	sa = mtod(cmd->m, char *) + 1 * ETHER_ADDR_LEN;
@@ -1681,9 +1682,11 @@ bwfm_pci_flowring_create_cb(struct bwfm_softc *bwfm, void *arg)
 		return;
 	}
 
+	s = splnet();
 	req = bwfm_pci_ring_write_reserve(sc, &sc->sc_ctrl_submit);
 	if (req == NULL) {
 		printf("%s: cannot reserve for flowring\n", DEVNAME(sc));
+		splx(s);
 		return;
 	}
 
@@ -1711,6 +1714,7 @@ bwfm_pci_flowring_create_cb(struct bwfm_softc *bwfm, void *arg)
 	req->len_item = letoh16(48);
 
 	bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
+	splx(s);
 }
 
 void
@@ -1718,6 +1722,7 @@ bwfm_pci_flowring_delete(struct bwfm_pci_softc *sc, int flowid)
 {
 	struct msgbuf_tx_flowring_delete_req *req;
 	struct bwfm_pci_msgring *ring;
+	int s;
 
 	ring = &sc->sc_flowrings[flowid];
 	if (ring->status != RING_OPEN) {
@@ -1725,9 +1730,11 @@ bwfm_pci_flowring_delete(struct bwfm_pci_softc *sc, int flowid)
 		return;
 	}
 
+	s = splnet();
 	req = bwfm_pci_ring_write_reserve(sc, &sc->sc_ctrl_submit);
 	if (req == NULL) {
 		printf("%s: cannot reserve for flowring\n", DEVNAME(sc));
+		splx(s);
 		return;
 	}
 
@@ -1740,6 +1747,7 @@ bwfm_pci_flowring_delete(struct bwfm_pci_softc *sc, int flowid)
 	req->reason = 0;
 
 	bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
+	splx(s);
 }
 
 void
@@ -1929,6 +1937,7 @@ bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *bwfm, int ifidx,
 	uint32_t pktid;
 	paddr_t paddr;
 	size_t buflen;
+	int s;
 
 	buflen = min(*len, BWFM_DMA_H2D_IOCTL_BUF_LEN);
 	m = MCLGETI(NULL, M_DONTWAIT, NULL, buflen);
@@ -1941,14 +1950,17 @@ bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *bwfm, int ifidx,
 	else
 		memset(mtod(m, char *), 0, buflen);
 
+	s = splnet();
 	req = bwfm_pci_ring_write_reserve(sc, &sc->sc_ctrl_submit);
 	if (req == NULL) {
+		splx(s);
 		m_freem(m);
 		return 1;
 	}
 
 	if (bwfm_pci_pktid_new(sc, &sc->sc_ioctl_pkts, m, &pktid, &paddr)) {
 		bwfm_pci_ring_write_cancel(sc, &sc->sc_ctrl_submit, 1);
+		splx(s);
 		m_freem(m);
 		return 1;
 	}
@@ -1970,6 +1982,7 @@ bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *bwfm, int ifidx,
 	req->req_buf_addr.low_addr = htole32(paddr & 0xffffffff);
 
 	bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
+	splx(s);
 
 	tsleep_nsec(ctl, PWAIT, "bwfm", SEC_TO_NSEC(1));
 	TAILQ_REMOVE(&sc->sc_ioctlq, ctl, next);
