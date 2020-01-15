@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.134 2019/12/05 10:41:57 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.135 2020/01/15 13:17:35 mpi Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -315,7 +315,8 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		 * that interruptible mounts don't hang here for a long time.
 		 */
 		while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-			sosleep(so, &so->so_timeo, PSOCK, "nfscon", 2 * hz);
+			sosleep_nsec(so, &so->so_timeo, PSOCK, "nfscon",
+			    SEC_TO_NSEC(2));
 			if ((so->so_state & SS_ISCONNECTING) &&
 			    so->so_error == 0 && rep &&
 			    (error = nfs_sigintr(nmp, rep, rep->r_procp)) != 0){
@@ -333,11 +334,11 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	 * Always set receive timeout to detect server crash and reconnect.
 	 * Otherwise, we can get stuck in soreceive forever.
 	 */
-	so->so_rcv.sb_timeo = (5 * hz);
+	so->so_rcv.sb_timeo_nsecs = SEC_TO_NSEC(5);
 	if (nmp->nm_flag & (NFSMNT_SOFT | NFSMNT_INT))
-		so->so_snd.sb_timeo = (5 * hz);
+		so->so_snd.sb_timeo_nsecs = SEC_TO_NSEC(5);
 	else
-		so->so_snd.sb_timeo = 0;
+		so->so_snd.sb_timeo_nsecs = INFSLP;
 	if (nmp->nm_sotype == SOCK_DGRAM) {
 		sndreserve = nmp->nm_wsize + NFS_MAXPKTHDR;
 		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +

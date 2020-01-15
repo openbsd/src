@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.90 2019/12/12 16:33:02 visa Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.91 2020/01/15 13:17:35 mpi Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -110,11 +110,11 @@ struct socket {
 		struct mbuf *sb_mbtail;	/* the last mbuf in the chain */
 		struct mbuf *sb_lastrecord;/* first mbuf of last record in
 					      socket buffer */
-		u_short	sb_timeo;	/* timeout for read/write */
 		short	sb_flags;	/* flags, see below */
 /* End area that is zeroed on flush. */
 #define	sb_endzero	sb_flags
 		int	sb_flagsintr;	/* flags, changed atomically */
+		uint64_t sb_timeo_nsecs;/* timeout for read/write */
 		struct	selinfo sb_sel;	/* process selecting read/write */
 	} so_rcv, so_snd;
 #define	SB_MAX		(2*1024*1024)	/* default for max chars in sockbuf */
@@ -338,7 +338,7 @@ void	sorwakeup(struct socket *);
 void	sowwakeup(struct socket *);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 
-int	sosleep(struct socket *, void *, int, const char *, int);
+int	sosleep_nsec(struct socket *, void *, int, const char *, uint64_t);
 int	solock(struct socket *);
 void	sounlock(struct socket *, int);
 

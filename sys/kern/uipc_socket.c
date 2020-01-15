@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.238 2019/12/31 13:48:32 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.239 2020/01/15 13:17:35 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -155,6 +155,8 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	so->so_egid = p->p_ucred->cr_gid;
 	so->so_cpid = p->p_p->ps_pid;
 	so->so_proto = prp;
+	so->so_snd.sb_timeo_nsecs = INFSLP;
+	so->so_rcv.sb_timeo_nsecs = INFSLP;
 
 	s = solock(so);
 	error = (*prp->pr_attach)(so, proto);
@@ -265,6 +267,15 @@ sofree(struct socket *so, int s)
 	}
 }
 
+static inline uint64_t
+solinger_nsec(struct socket *so)
+{
+	if (so->so_linger == 0)
+		return INFSLP;
+
+	return SEC_TO_NSEC(so->so_linger);
+}
+
 /*
  * Close a socket on last file table reference removal.
  * Initiate disconnect if connected.
@@ -302,9 +313,9 @@ soclose(struct socket *so, int flags)
 			    (flags & MSG_DONTWAIT))
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
-				error = sosleep(so, &so->so_timeo,
+				error = sosleep_nsec(so, &so->so_timeo,
 				    PSOCK | PCATCH, "netcls",
-				    so->so_linger * hz);
+				    solinger_nsec(so));
 				if (error)
 					break;
 			}
@@ -1113,6 +1124,7 @@ sorflush(struct socket *so)
 	aso.so_rcv = *sb;
 	memset(&sb->sb_startzero, 0,
 	     (caddr_t)&sb->sb_endzero - (caddr_t)&sb->sb_startzero);
+	sb->sb_timeo_nsecs = INFSLP;
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(aso.so_rcv.sb_mb);
 	sbrelease(&aso, &aso.so_rcv);
@@ -1761,22 +1773,25 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 		case SO_RCVTIMEO:
 		    {
 			struct timeval tv;
-			int val;
+			uint64_t nsecs;
 
 			if (m == NULL || m->m_len < sizeof (tv))
 				return (EINVAL);
 			memcpy(&tv, mtod(m, struct timeval *), sizeof tv);
-			val = tvtohz(&tv);
-			if (val > USHRT_MAX)
+			if (!timerisvalid(&tv))
+				return (EINVAL);
+			nsecs = TIMEVAL_TO_NSEC(&tv);
+			if (nsecs == UINT64_MAX)
 				return (EDOM);
-
+			if (nsecs == 0)
+				nsecs = INFSLP;
 			switch (optname) {
 
 			case SO_SNDTIMEO:
-				so->so_snd.sb_timeo = val;
+				so->so_snd.sb_timeo_nsecs = nsecs;
 				break;
 			case SO_RCVTIMEO:
-				so->so_rcv.sb_timeo = val;
+				so->so_rcv.sb_timeo_nsecs = nsecs;
 				break;
 			}
 			break;
@@ -1910,13 +1925,14 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 		case SO_RCVTIMEO:
 		    {
 			struct timeval tv;
-			int val = (optname == SO_SNDTIMEO ?
-			    so->so_snd.sb_timeo : so->so_rcv.sb_timeo);
+			uint64_t nsecs = (optname == SO_SNDTIMEO ?
+			    so->so_snd.sb_timeo_nsecs :
+			    so->so_rcv.sb_timeo_nsecs);
 
 			m->m_len = sizeof(struct timeval);
 			memset(&tv, 0, sizeof(tv));
-			tv.tv_sec = val / hz;
-			tv.tv_usec = (val % hz) * tick;
+			if (nsecs != INFSLP)
+				NSEC_TO_TIMEVAL(nsecs, &tv);
 			memcpy(mtod(m, struct timeval *), &tv, sizeof tv);
 			break;
 		    }
@@ -2129,7 +2145,7 @@ sobuf_print(struct sockbuf *sb,
 	(*pr)("\tsb_sel: ...\n");
 	(*pr)("\tsb_flagsintr: %d\n", sb->sb_flagsintr);
 	(*pr)("\tsb_flags: %i\n", sb->sb_flags);
-	(*pr)("\tsb_timeo: %i\n", sb->sb_timeo);
+	(*pr)("\tsb_timeo_nsecs: %llu\n", sb->sb_timeo_nsecs);
 }
 
 void

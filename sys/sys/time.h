@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.49 2020/01/14 08:52:18 mpi Exp $	*/
+/*	$OpenBSD: time.h,v 1.50 2020/01/15 13:17:35 mpi Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -332,11 +332,26 @@ void clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 /* Traditional POSIX base year */
 #define POSIX_BASE_YEAR 1970
 
+#include <sys/stdint.h>
+
 static inline void
 NSEC_TO_TIMEVAL(uint64_t ns, struct timeval *tv)
 {
 	tv->tv_sec = ns / 1000000000L;
 	tv->tv_usec = (ns % 1000000000L) / 1000;
+}
+
+static inline uint64_t
+TIMEVAL_TO_NSEC(const struct timeval *tv)
+{
+	uint64_t nsecs;
+
+	if (tv->tv_sec > UINT64_MAX / 1000000000ULL)
+		return UINT64_MAX;
+	nsecs = tv->tv_sec * 1000000000ULL;
+	if (tv->tv_usec * 1000ULL > UINT64_MAX - nsecs)
+		return UINT64_MAX;
+	return nsecs + tv->tv_usec * 1000ULL;
 }
 
 static inline void
@@ -345,8 +360,6 @@ NSEC_TO_TIMESPEC(uint64_t ns, struct timespec *ts)
 	ts->tv_sec = ns / 1000000000L;
 	ts->tv_nsec = ns % 1000000000L;
 }
-
-#include <sys/stdint.h>
 
 static inline uint64_t
 SEC_TO_NSEC(uint64_t seconds)

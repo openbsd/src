@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.183 2020/01/05 13:46:02 visa Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.184 2020/01/15 13:17:35 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -285,8 +285,8 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 			head->so_error = ECONNABORTED;
 			break;
 		}
-		error = sosleep(head, &head->so_timeo, PSOCK | PCATCH, "netcon",
-		    0);
+		error = sosleep_nsec(head, &head->so_timeo, PSOCK | PCATCH,
+		    "netcon", INFSLP);
 		if (error)
 			goto out;
 	}
@@ -388,8 +388,8 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 		goto out;
 	}
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		error = sosleep(so, &so->so_timeo, PSOCK | PCATCH,
-		    "netcon2", 0);
+		error = sosleep_nsec(so, &so->so_timeo, PSOCK | PCATCH,
+		    "netcon2", INFSLP);
 		if (error) {
 			if (error == EINTR || error == ERESTART)
 				interrupted = 1;
