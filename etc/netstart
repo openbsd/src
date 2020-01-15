@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.201 2019/10/25 06:01:27 dlg Exp $
+#	$OpenBSD: netstart,v 1.202 2020/01/15 00:19:40 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -254,26 +254,26 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	ip6kernel=YES
 
 	# Disallow link-local unicast dest without outgoing scope identifiers.
-	route -qn add -inet6 fe80:: -prefixlen 10 ::1 -reject >/dev/null
+	route -qn add -inet6 fe80:: -prefixlen 10 ::1 -reject
 
 	# Disallow site-local unicast dest without outgoing scope identifiers.
 	# If you configure site-locals without scope id (it is permissible
 	# config for routers that are not on scope boundary), you may want
 	# to comment the line out.
-	route -qn add -inet6 fec0:: -prefixlen 10 ::1 -reject >/dev/null
+	route -qn add -inet6 fec0:: -prefixlen 10 ::1 -reject
 
 	# Disallow "internal" addresses to appear on the wire.
-	route -qn add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject >/dev/null
+	route -qn add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
 
 	# Disallow packets to malicious 6to4 prefix.
-	route -qn add -inet6 2002:e000:: -prefixlen 20 ::1 -reject >/dev/null
-	route -qn add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject >/dev/null
-	route -qn add -inet6 2002:0000:: -prefixlen 24 ::1 -reject >/dev/null
-	route -qn add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject >/dev/null
+	route -qn add -inet6 2002:e000:: -prefixlen 20 ::1 -reject
+	route -qn add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject
+	route -qn add -inet6 2002:0000:: -prefixlen 24 ::1 -reject
+	route -qn add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject
 
 	# Disallow packets without scope identifier.
-	route -qn add -inet6 ff01:: -prefixlen 16 ::1 -reject >/dev/null
-	route -qn add -inet6 ff02:: -prefixlen 16 ::1 -reject >/dev/null
+	route -qn add -inet6 ff01:: -prefixlen 16 ::1 -reject
+	route -qn add -inet6 ff02:: -prefixlen 16 ::1 -reject
 
 	# Completely disallow packets to IPv4 compatible prefix.
 	#
@@ -290,7 +290,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	#
 	# Due to rare use of IPv4 compatible addresses, and security issues
 	# with it, we disable it by default.
-	route -qn add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject >/dev/null
+	route -qn add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
 else
 	ip6kernel=NO
 fi
