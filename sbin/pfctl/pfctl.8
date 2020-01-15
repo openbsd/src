@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.179 2020/01/15 13:42:38 sashan Exp $
+.\" $OpenBSD: pfctl.8,v 1.180 2020/01/15 14:39:41 kn Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -212,6 +212,19 @@ for details.
 .It Fl F Cm all
 Flush all of the above.
 .El
+.Pp
+If
+.Fl a
+is specified as well and
+.Ar anchor
+is terminated with a
+.Sq *
+character,
+.Cm rules ,
+.Cm Tables
+and
+.Cm all
+flush the given anchor recursively.
 .It Fl f Ar file
 Replace the current ruleset with
 the rules contained in
