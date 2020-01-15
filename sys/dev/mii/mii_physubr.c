@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.45 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.46 2020/01/15 00:14:47 cheloha Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 	 */
 	if (sc->mii_flags & MIIF_AUTOTSLEEP) {
 		sc->mii_flags |= MIIF_DOINGAUTO;
-		tsleep(&sc->mii_flags, PZERO, "miiaut", hz >> 1);
+		tsleep_nsec(&sc->mii_flags, PZERO, "miiaut", MSEC_TO_NSEC(500));
 		mii_phy_auto_timeout(sc);
 	} else if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
 		sc->mii_flags |= MIIF_DOINGAUTO;
