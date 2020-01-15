@@ -1,4 +1,4 @@
-#	$OpenBSD: crt.in,v 1.1 2020/01/15 12:33:11 tobhe Exp $
+#	$OpenBSD: crt.in,v 1.2 2020/01/15 22:47:24 tobhe Exp $
 
 [ req ]
 default_bits            = 2048                  # default strength of client certificates
@@ -17,4 +17,9 @@ O=iked
 CN=${ENV::ALTNAME}
 
 [ req_cert_extensions ]
-subjectAltName          = DNS:${ENV::ALTNAME}
+subjectAltName          = @alt_names #;otherName = ${ENV::ALTNAME}-other
+
+[ alt_names ]
+DNS.1=${ENV::ALTNAME}
+DNS.2=${ENV::ALTNAME}-alternative
+email= ${ENV::ALTNAME}@openbsd.org

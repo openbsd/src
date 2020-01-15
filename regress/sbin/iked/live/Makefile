@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2020/01/15 18:34:21 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.5 2020/01/15 22:47:24 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -125,8 +125,6 @@ cleanup:
 	-ssh ${RIGHT_SSH} 'rm -f /tmp/test.conf; ipsecctl -F; pkill iked; \
 	     rm -f /etc/iked/ca/*; rm -f /etc/iked/certs/*; rm -f /etc/iked/private/*'
 
-REGRESS_TARGETS =	run-cert-single-ca run-cert-multi-ca run-psk run-fragmentation run-ipcomp
-
 setup_certs: ca-both.crt left-from-ca-both.crt left.key right-from-ca-both.crt \
     right.key ca-left.crt right-from-ca-left.crt ca-right.crt left-from-ca-right.crt
 	echo "cd /etc/iked\n \
@@ -171,6 +169,7 @@ ca-right.crt ca-right.key:
 left-from-ca-right.crt left.key: ca-right.crt ca-right.key
 	caname=ca-right; name=left; ${SETUP_CERT}
 
+REGRESS_TARGETS = run-cert-single-ca
 run-cert-single-ca:
 	@echo '======= $@ ========'
 	flowtype=esp;
@@ -181,6 +180,7 @@ run-cert-single-ca:
 	flowtype=esp; ${TEST_FLOWS}
 	${TEST_PING}
 
+REGRESS_TARGETS += run-cert-multi-ca
 run-cert-multi-ca:
 	@echo '======= $@ ========'
 	flowtype=esp; \
@@ -191,6 +191,18 @@ run-cert-multi-ca:
 	flowtype=esp; ${TEST_FLOWS}
 	${TEST_PING}
 
+REGRESS_TARGETS += run-cert-second-altname
+run-cert-second-altname:
+	@echo '======= $@ ========'
+	flowtype=esp;
+	leftid=left-from-ca-both-alternative; \
+	rightid=right-from-ca-both@openbsd.org; \
+	    ${SETUP_CONFIGS}
+	${SETUP_START}
+	flowtype=esp; ${TEST_FLOWS}
+	${TEST_PING}
+
+REGRESS_TARGETS += run-psk
 run-psk:
 	@echo '======= $@ ========'
 	auth=psk; \
@@ -202,6 +214,7 @@ run-psk:
 	flowtype=esp; ${TEST_FLOWS}
 	${TEST_PING}
 
+REGRESS_TARGETS += run-fragmentation
 run-fragmentation:
 	@echo '======= $@ ========'
 	flowtype=esp; \
@@ -213,6 +226,7 @@ run-fragmentation:
 	flowtype=esp; ${TEST_FLOWS}
 	${TEST_PING}
 
+REGRESS_TARGETS += run-ipcomp
 run-ipcomp:
 	@echo '======= $@ ========'
 	flowtype=ipcomp; \
