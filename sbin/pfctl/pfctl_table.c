@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.81 2019/04/18 22:29:41 kn Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.82 2020/01/15 11:52:50 sashan Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -77,7 +77,8 @@ static const char	*istats_text[2][2][2] = {
 		if ((!(opts & PF_OPT_NOACTION) ||	\
 		    (opts & PF_OPT_DUMMYACTION)) &&	\
 		    (fct)) {				\
-			radix_perror();			\
+			if ((opts & PF_OPT_RECURSE) == 0)\
+				radix_perror();		\
 			goto _error;			\
 		}					\
 	} while (0)
@@ -101,11 +102,17 @@ static const char	*istats_text[2][2][2] = {
 		table.pfrt_flags &= ~PFR_TFLAG_PERSIST;			\
 	} while(0)
 
-void
+int
 pfctl_clear_tables(const char *anchor, int opts)
 {
-	if (pfctl_table(0, NULL, NULL, "-F", NULL, anchor, opts) == -1)
-		exit(1);
+	int	rv;
+
+	if ((rv = pfctl_table(0, NULL, NULL, "-F", NULL, anchor, opts)) == -1) {
+		if ((opts & PF_OPT_IGNFAIL) == 0)
+			exit(1);
+	}
+
+	return (rv);
 }
 
 void

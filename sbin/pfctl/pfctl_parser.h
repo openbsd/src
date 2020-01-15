@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.115 2019/03/07 08:01:52 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.116 2020/01/15 11:52:50 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -36,21 +36,22 @@
 
 #define PF_OSFP_FILE		"/etc/pf.os"
 
-#define PF_OPT_DISABLE		0x0001
-#define PF_OPT_ENABLE		0x0002
-#define PF_OPT_VERBOSE		0x0004
-#define PF_OPT_NOACTION		0x0008
-#define PF_OPT_QUIET		0x0010
-#define PF_OPT_CLRRULECTRS	0x0020
-#define PF_OPT_USEDNS		0x0040
-#define PF_OPT_VERBOSE2		0x0080
-#define PF_OPT_DUMMYACTION	0x0100
-#define PF_OPT_DEBUG		0x0200
-#define PF_OPT_SHOWALL		0x0400
-#define PF_OPT_OPTIMIZE		0x0800
-#define PF_OPT_NODNS		0x1000
-#define PF_OPT_RECURSE		0x4000
-#define PF_OPT_PORTNAMES	0x8000
+#define PF_OPT_DISABLE		0x00001
+#define PF_OPT_ENABLE		0x00002
+#define PF_OPT_VERBOSE		0x00004
+#define PF_OPT_NOACTION		0x00008
+#define PF_OPT_QUIET		0x00010
+#define PF_OPT_CLRRULECTRS	0x00020
+#define PF_OPT_USEDNS		0x00040
+#define PF_OPT_VERBOSE2		0x00080
+#define PF_OPT_DUMMYACTION	0x00100
+#define PF_OPT_DEBUG		0x00200
+#define PF_OPT_SHOWALL		0x00400
+#define PF_OPT_OPTIMIZE		0x00800
+#define PF_OPT_NODNS		0x01000
+#define PF_OPT_RECURSE		0x04000
+#define PF_OPT_PORTNAMES	0x08000
+#define PF_OPT_IGNFAIL		0x10000
 
 #define PF_TH_ALL		0xFF
 

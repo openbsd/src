@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.26 2019/06/28 13:32:45 deraadt Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.27 2020/01/15 11:52:50 sashan Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -260,7 +260,7 @@ void
 pfctl_clear_fingerprints(int dev, int opts)
 {
 	if (ioctl(dev, DIOCOSFPFLUSH) == -1)
-		err(1, "DIOCOSFPFLUSH");
+		pfctl_err(opts, 1, "DIOCOSFPFLUSH");
 }
 
 /* flush pfctl's view of the fingerprints */
