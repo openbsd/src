@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.378 2020/01/15 11:52:50 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.379 2020/01/15 13:42:39 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2327,7 +2327,7 @@ pfctl_recurse(int dev, int opts, const char *anchorname,
 	printf("Removing:\n");
 	SLIST_FOREACH_SAFE(pfra, anchors, pfra_sle, pfra_save) {
 		printf("  %s\n", (*pfra->pfra_anchorname == '\0') ?
-		    "<root>" : pfra->pfra_anchorname);
+		    "/" : pfra->pfra_anchorname);
 		rv |= walkf(dev, opts, pfra);
 		SLIST_REMOVE(anchors, pfra, pfr_anchoritem, pfra_sle);
 		free(pfra->pfra_anchorname);
