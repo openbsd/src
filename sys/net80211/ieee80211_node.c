@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.178 2019/12/29 14:00:36 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.179 2020/01/15 09:34:27 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -72,7 +72,6 @@ int ieee80211_ess_is_better(struct ieee80211com *ic, struct ieee80211_node *,
 void ieee80211_node_set_timeouts(struct ieee80211_node *);
 void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
     const u_int8_t *);
-void ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
 struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
 void ieee80211_node_switch_bss(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_addba_request(struct ieee80211_node *, int);

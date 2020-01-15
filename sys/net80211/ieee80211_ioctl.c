@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.78 2020/01/13 09:57:25 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.79 2020/01/15 09:34:27 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -512,6 +512,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCS80211JOIN:
 		if ((error = suser(curproc)) != 0)
 			break;
+		if (ic->ic_opmode != IEEE80211_M_STA)
+			break;
 		if ((error = copyin(ifr->ifr_data, &join, sizeof(join))) != 0)
 			break;
 		if (join.i_len > IEEE80211_NWID_LEN) {
@@ -543,7 +545,13 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ic->ic_des_esslen == join.i_len &&
 			    memcmp(join.i_nwid, ic->ic_des_essid,
 			    join.i_len) == 0) {
+				struct ieee80211_node *ni;
+
 				ieee80211_deselect_ess(ic);
+				ni = ieee80211_find_node(ic,
+				    ic->ic_bss->ni_bssid);
+				if (ni != NULL)
+					ieee80211_free_node(ic, ni);
 				error = ENETRESET;
 			}
 			/* save nwid for auto-join */
