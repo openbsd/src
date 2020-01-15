@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.49 2020/01/15 17:38:55 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.50 2020/01/15 21:47:57 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -65,8 +65,11 @@ int	 ca_validate_cert(struct iked *, struct iked_static_id *,
 int	 ca_privkey_to_method(struct iked_id *);
 struct ibuf *
 	 ca_x509_serialize(X509 *);
+int	 ca_x509_subjectaltname_do(X509 *, int, const char *,
+	    struct iked_static_id *, struct iked_id *);
 int	 ca_x509_subjectaltname_cmp(X509 *, struct iked_static_id *);
-int	 ca_x509_subjectaltname(X509 *cert, struct iked_id *, int);
+int	 ca_x509_subjectaltname_log(X509 *, const char *);
+int	 ca_x509_subjectaltname_get(X509 *cert, struct iked_id *);
 int	 ca_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 ca_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 
@@ -1428,103 +1431,128 @@ ca_x509_subject_cmp(X509 *cert, struct iked_static_id *id)
 	return (ret);
 }
 
+#define MODE_ALT_LOG	1
+#define MODE_ALT_GET	2
+#define MODE_ALT_CMP	3
 int
-ca_x509_subjectaltname_cmp(X509 *cert, struct iked_static_id *id)
+ca_x509_subjectaltname_do(X509 *cert, int mode, const char *logmsg,
+    struct iked_static_id *id, struct iked_id *retid)
 {
-	struct iked_id	 sanid;
-	char		 idstr[IKED_ID_SIZE];
-	int		 ret = -1, lastpos = -1;
+	STACK_OF(GENERAL_NAME) *stack = NULL;
+	GENERAL_NAME *entry;
+	ASN1_STRING *cstr;
+	char idstr[IKED_ID_SIZE];
+	int idx, ret, i, type, len;
+	uint8_t *data;
 
-	bzero(&sanid, sizeof(sanid));
-	while (ca_x509_subjectaltname(cert, &sanid, lastpos++) == 0) {
-		ikev2_print_id(&sanid, idstr, sizeof(idstr));
+	ret = -1;
+	idx = -1;
+	while ((stack = X509_get_ext_d2i(cert, NID_subject_alt_name,
+	    NULL, &idx)) != NULL) {
+		for (i = 0; i < sk_GENERAL_NAME_num(stack); i++) {
+			entry = sk_GENERAL_NAME_value(stack, i);
+			switch (entry->type) {
+			case GEN_DNS:
+				cstr = entry->d.dNSName;
+				if (ASN1_STRING_type(cstr) != V_ASN1_IA5STRING)
+					continue;
+				type = IKEV2_ID_FQDN;
+				break;
+			case GEN_EMAIL:
+				cstr = entry->d.rfc822Name;
+				if (ASN1_STRING_type(cstr) != V_ASN1_IA5STRING)
+					continue;
+				type = IKEV2_ID_UFQDN;
+				break;
+			case GEN_IPADD:
+				cstr = entry->d.iPAddress;
+				switch (ASN1_STRING_length(cstr)) {
+				case 4:
+					type = IKEV2_ID_IPV4;
+					break;
+				case 16:
+					type = IKEV2_ID_IPV6;
+					break;
+				default:
+					log_debug("%s: invalid subjectAltName"
+					   " IP address", __func__);
+					continue;
+				}
+				break;
+			default:
+				continue;
+			}
+			len = ASN1_STRING_length(cstr);
+			data = ASN1_STRING_data(cstr);
+			if (mode == MODE_ALT_LOG) {
+				struct iked_id sanid;
 
-		/* Compare id types, length and data */
-		if ((id->id_type == sanid.id_type) &&
-		    ((ssize_t)ibuf_size(sanid.id_buf) ==
-		    (id->id_length - id->id_offset)) &&
-		    (memcmp(id->id_data + id->id_offset,
-		    ibuf_data(sanid.id_buf),
-		    ibuf_size(sanid.id_buf)) == 0)) {
-			ret = 0;
-			break;
+				bzero(&sanid, sizeof(sanid));
+				sanid.id_offset = 0;
+				sanid.id_type = type;
+				if ((sanid.id_buf = ibuf_new(data, len))
+				    == NULL) {
+					log_debug("%s: failed to get id buffer",
+					     __func__);
+					continue;
+				}
+				ikev2_print_id(&sanid, idstr, sizeof(idstr));
+				log_info("%s: altname: %s", logmsg, idstr);
+				ibuf_release(sanid.id_buf);
+				sanid.id_buf = NULL;
+			}
+			/* Compare length and data */
+			if (mode == MODE_ALT_CMP) {
+				if (type == id->id_type &&
+				    (len == (id->id_length - id->id_offset)) &&
+				    (memcmp(id->id_data + id->id_offset,
+				    data, len)) == 0) {
+					ret = 0;
+					break;
+				}
+			}
+			/* Get first ID */
+			if (mode == MODE_ALT_GET) {
+				ibuf_release(retid->id_buf);
+				if ((retid->id_buf = ibuf_new(data, len)) == NULL) {
+					log_debug("%s: failed to get id buffer",
+					    __func__);
+					ret = -2;
+					break;
+				}
+				retid->id_offset = 0;
+				ikev2_print_id(retid, idstr, sizeof(idstr));
+				log_debug("%s: %s", __func__, idstr);
+				ret = 0;
+				break;
+			}
 		}
-		log_debug("%s: %s mismatched", __func__, idstr);
+		sk_GENERAL_NAME_pop_free(stack, GENERAL_NAME_free);
+		if (ret != -1)
+			break;
 	}
-
-	ibuf_release(sanid.id_buf);
-	return (ret);
+	if (idx == -1)
+		log_debug("%s: did not find subjectAltName in certificate",
+		    __func__);
+	return ret;
 }
 
 int
-ca_x509_subjectaltname(X509 *cert, struct iked_id *id, int lastpos)
+ca_x509_subjectaltname_log(X509 *cert, const char *logmsg)
 {
-	X509_EXTENSION	*san;
-	uint8_t		 sanhdr[4], *data;
-	int		 ext, santype, sanlen;
-	char		 idstr[IKED_ID_SIZE];
+	return ca_x509_subjectaltname_do(cert, MODE_ALT_LOG, logmsg, NULL, NULL);
+}
 
-	if ((ext = X509_get_ext_by_NID(cert,
-	    NID_subject_alt_name, lastpos)) == -1 ||
-	    ((san = X509_get_ext(cert, ext)) == NULL)) {
-		log_debug("%s: did not find subjectAltName in certificate",
-		    __func__);
-		return (-1);
-	}
+int
+ca_x509_subjectaltname_cmp(X509 *cert, struct iked_static_id *id)
+{
+	return ca_x509_subjectaltname_do(cert, MODE_ALT_CMP, NULL, id, NULL);
+}
 
-	if (san->value == NULL || san->value->data == NULL ||
-	    san->value->length < (int)sizeof(sanhdr)) {
-		log_debug("%s: invalid subjectAltName in certificate",
-		    __func__);
-		return (-1);
-	}
-
-	/* This is partially based on isakmpd's x509 subjectaltname code */
-	data = (uint8_t *)san->value->data;
-	memcpy(&sanhdr, data, sizeof(sanhdr));
-	santype = sanhdr[2] & 0x3f;
-	sanlen = sanhdr[3];
-
-	if ((sanlen + (int)sizeof(sanhdr)) > san->value->length) {
-		log_debug("%s: invalid subjectAltName length", __func__);
-		return (-1);
-	}
-
-	switch (santype) {
-	case GEN_DNS:
-		id->id_type = IKEV2_ID_FQDN;
-		break;
-	case GEN_EMAIL:
-		id->id_type = IKEV2_ID_UFQDN;
-		break;
-	case GEN_IPADD:
-		if (sanlen == 4)
-			id->id_type = IKEV2_ID_IPV4;
-		else if (sanlen == 16)
-			id->id_type = IKEV2_ID_IPV6;
-		else {
-			log_debug("%s: invalid subjectAltName IP address",
-			    __func__);
-			return (-1);
-		}
-		break;
-	default:
-		log_debug("%s: unsupported subjectAltName type %d",
-		    __func__, santype);
-		return (-1);
-	}
-
-	ibuf_release(id->id_buf);
-	if ((id->id_buf = ibuf_new(data + sizeof(sanhdr), sanlen)) == NULL) {
-		log_debug("%s: failed to get id buffer", __func__);
-		return (-1);
-	}
-	id->id_offset = 0;
-
-	ikev2_print_id(id, idstr, sizeof(idstr));
-	log_debug("%s: %s", __func__, idstr);
-
-	return (0);
+int
+ca_x509_subjectaltname_get(X509 *cert, struct iked_id *retid)
+{
+	return ca_x509_subjectaltname_do(cert, MODE_ALT_GET, NULL, NULL, retid);
 }
 
 void
