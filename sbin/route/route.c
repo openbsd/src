@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.246 2019/11/22 15:28:05 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.247 2020/01/15 10:26:25 kn Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -859,6 +859,7 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 		   sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255:255:255:255/128")
 		];
 		char           *sep;
+		int             error;
 
 		if (strlcpy(buf, s, sizeof buf) >= sizeof buf) {
 			errx(1, "%s: bad value", s);
@@ -871,10 +872,12 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 		hints.ai_family = afamily;	/*AF_INET6*/
 		hints.ai_flags = AI_NUMERICHOST;
 		hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
-		if (getaddrinfo(buf, "0", &hints, &res) != 0) {
+		error = getaddrinfo(buf, "0", &hints, &res);
+		if (error) {
 			hints.ai_flags = 0;
-			if (getaddrinfo(buf, "0", &hints, &res) != 0)
-				errx(1, "%s: bad value", s);
+			error = getaddrinfo(buf, "0", &hints, &res);
+			if (error)
+				errx(1, "%s: %s", s, gai_strerror(error));
 		}
 		if (res->ai_next)
 			errx(1, "%s: resolved to multiple values", s);
