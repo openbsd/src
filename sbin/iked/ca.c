@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.48 2019/07/03 03:24:01 deraadt Exp $	*/
+/*	$OpenBSD: ca.c,v 1.49 2020/01/15 17:38:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -55,6 +55,7 @@ int	 ca_getcert(struct iked *, struct imsg *);
 int	 ca_getauth(struct iked *, struct imsg *);
 X509	*ca_by_subjectpubkey(X509_STORE *, uint8_t *, size_t);
 X509	*ca_by_issuer(X509_STORE *, X509_NAME *, struct iked_static_id *);
+X509	*ca_by_subjectaltname(X509_STORE *, struct iked_static_id *);
 int	 ca_subjectpubkey_digest(X509 *, uint8_t *, unsigned int *);
 int	 ca_x509_subject_cmp(X509 *, struct iked_static_id *);
 int	 ca_validate_pubkey(struct iked *, struct iked_static_id *,
@@ -479,7 +480,9 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 				break;
 			}
 		}
-		if (ca == NULL || cert == NULL) {
+		if (cert == NULL)
+			cert = ca_by_subjectaltname(store->ca_certs, &id);
+		if (cert == NULL) {
 			log_warnx("%s: no valid local certificate found",
 			    __func__);
 			type = IKEV2_CERT_NONE;
@@ -788,6 +791,36 @@ ca_by_issuer(X509_STORE *ctx, X509_NAME *subject, struct iked_static_id *id)
 					return (cert);
 				break;
 			}
+		}
+	}
+
+	return (NULL);
+}
+
+X509 *
+ca_by_subjectaltname(X509_STORE *ctx, struct iked_static_id *id)
+{
+	STACK_OF(X509_OBJECT)	*h;
+	X509_OBJECT		*xo;
+	X509			*cert;
+	int			 i;
+
+	h = ctx->objs;
+	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
+		xo = sk_X509_OBJECT_value(h, i);
+		if (xo->type != X509_LU_X509)
+			continue;
+
+		cert = xo->data.x509;
+		switch (id->id_type) {
+		case IKEV2_ID_ASN1_DN:
+			if (ca_x509_subject_cmp(cert, id) == 0)
+				return (cert);
+			break;
+		default:
+			if (ca_x509_subjectaltname_cmp(cert, id) == 0)
+				return (cert);
+			break;
 		}
 	}
 
