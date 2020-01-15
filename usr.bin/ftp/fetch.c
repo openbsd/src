@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.185 2019/12/19 00:07:20 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.186 2020/01/15 14:49:38 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -68,6 +68,7 @@ struct tls;
 #include "ftp_var.h"
 #include "cmds.h"
 
+static int	file_get(const char *, const char *);
 static int	url_get(const char *, const char *, const char *, int);
 static int	save_chunked(FILE *, struct tls *, int , char *, size_t);
 static void	aborthttp(int);
@@ -182,6 +183,125 @@ tooslow(int signo)
 }
 
 /*
+ * Copy a local file (used by the OpenBSD installer).
+ * Returns -1 on failure, 0 on success
+ */
+static int
+file_get(const char *path, const char *outfile)
+{
+	struct stat	 st;
+	int		 fd, out, rval = -1, save_errno;
+	volatile sig_t	 oldintr, oldinti;
+	const char	*savefile;
+	char		*buf = NULL, *cp;
+	const size_t	 buflen = 128 * 1024;
+	off_t		 hashbytes;
+	ssize_t		 len, wlen;
+
+	direction = "received";
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1) {
+		warn("Can't open file %s", path);
+		return -1;
+	}
+
+	if (fstat(fd, &st) == -1)
+		filesize = -1;
+	else
+		filesize = st.st_size;
+
+	if (outfile != NULL)
+		savefile = outfile;
+	else {
+		if (path[strlen(path) - 1] == '/')	/* Consider no file */
+			savefile = NULL;		/* after dir invalid. */
+		else
+			savefile = basename(path);
+	}
+
+	if (EMPTYSTRING(savefile)) {
+		warnx("No filename after directory (use -o): %s", path);
+		goto cleanup_copy;
+	}
+
+	/* Open the output file.  */
+	if (!pipeout) {
+		out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+		if (out == -1) {
+			warn("Can't open %s", savefile);
+			goto cleanup_copy;
+		}
+	} else
+		out = fileno(stdout);
+
+	if ((buf = malloc(buflen)) == NULL)
+		errx(1, "Can't allocate memory for transfer buffer");
+
+	/* Trap signals */
+	oldintr = NULL;
+	oldinti = NULL;
+	if (setjmp(httpabort)) {
+		if (oldintr)
+			(void)signal(SIGINT, oldintr);
+		if (oldinti)
+			(void)signal(SIGINFO, oldinti);
+		goto cleanup_copy;
+	}
+	oldintr = signal(SIGINT, abortfile);
+
+	bytes = 0;
+	hashbytes = mark;
+	progressmeter(-1, path);
+
+	/* Finally, suck down the file. */
+	oldinti = signal(SIGINFO, psummary);
+	while ((len = read(fd, buf, buflen)) > 0) {
+		bytes += len;
+		for (cp = buf; len > 0; len -= wlen, cp += wlen) {
+			if ((wlen = write(out, cp, len)) == -1) {
+				warn("Writing %s", savefile);
+				signal(SIGINFO, oldinti);
+				goto cleanup_copy;
+			}
+		}
+		if (hash && !progress) {
+			while (bytes >= hashbytes) {
+				(void)putc('#', ttyout);
+				hashbytes += mark;
+			}
+			(void)fflush(ttyout);
+		}
+	}
+	save_errno = errno;
+	signal(SIGINFO, oldinti);
+	if (hash && !progress && bytes > 0) {
+		if (bytes < mark)
+			(void)putc('#', ttyout);
+		(void)putc('\n', ttyout);
+		(void)fflush(ttyout);
+	}
+	if (len == -1) {
+		warnc(save_errno, "Reading from file");
+		goto cleanup_copy;
+	}
+	progressmeter(1, NULL);
+	if (verbose)
+		ptransfer(0);
+	(void)signal(SIGINT, oldintr);
+
+	rval = 0;
+
+cleanup_copy:
+	free(buf);
+	if (out >= 0 && out != fileno(stdout))
+		close(out);
+	close(fd);
+
+	return rval;
+}
+
+/*
  * Retrieve URL, via the proxy in $proxyvar if necessary.
  * Returns -1 on failure, 0 on success
  */
@@ -191,7 +311,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST], *cp, *portnum, *path, ststr[4];
 	char *hosttail, *cause = "unknown", *newline, *host, *port, *buf = NULL;
 	char *epath, *redirurl, *loctail, *h, *p, gerror[200];
-	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
+	int error, i, isftpurl = 0, isredirect = 0, rval = -1;
 	int isunavail = 0, retryafter = -1;
 	struct addrinfo hints, *res0, *res;
 	const char * volatile savefile;
@@ -239,12 +359,6 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 #ifndef SMALL
 		scheme = FTP_URL;
 #endif /* !SMALL */
-	} else if (strncasecmp(newline, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
-		host = newline + sizeof(FILE_URL) - 1;
-		isfileurl = 1;
-#ifndef SMALL
-		scheme = FILE_URL;
-#endif /* !SMALL */
 	} else if (strncasecmp(newline, HTTPS_URL, sizeof(HTTPS_URL) - 1) == 0) {
 #ifndef NOSSL
 		host = newline + sizeof(HTTPS_URL) - 1;
@@ -256,32 +370,25 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 		scheme = HTTPS_URL;
 #endif /* !SMALL */
 	} else
-		errx(1, "url_get: Invalid URL '%s'", newline);
+		errx(1, "%s: URL not permitted", newline);
 
-	if (isfileurl && redirect_loop > 0)
-		errx(1, "Redirection to local file not permitted");
-
-	if (isfileurl) {
-		path = host;
-	} else {
-		path = strchr(host, '/');		/* Find path */
-		if (EMPTYSTRING(path)) {
-			if (outfile) {			/* No slash, but */
-				path=strchr(host,'\0');	/* we have outfile. */
-				goto noslash;
-			}
-			if (isftpurl)
-				goto noftpautologin;
-			warnx("No `/' after host (use -o): %s", origline);
-			goto cleanup_url_get;
+	path = strchr(host, '/');		/* Find path */
+	if (EMPTYSTRING(path)) {
+		if (outfile) {				/* No slash, but */
+			path = strchr(host,'\0');	/* we have outfile. */
+			goto noslash;
 		}
-		*path++ = '\0';
-		if (EMPTYSTRING(path) && !outfile) {
-			if (isftpurl)
-				goto noftpautologin;
-			warnx("No filename after host (use -o): %s", origline);
-			goto cleanup_url_get;
-		}
+		if (isftpurl)
+			goto noftpautologin;
+		warnx("No `/' after host (use -o): %s", origline);
+		goto cleanup_url_get;
+	}
+	*path++ = '\0';
+	if (EMPTYSTRING(path) && !outfile) {
+		if (isftpurl)
+			goto noftpautologin;
+		warnx("No filename after host (use -o): %s", origline);
+		goto cleanup_url_get;
 	}
 
 noslash:
@@ -324,7 +431,7 @@ noslash:
 	}
 #endif /* !SMALL */
 
-	if (!isfileurl && proxyenv != NULL) {		/* use proxy */
+	if (proxyenv != NULL) {		/* use proxy */
 #ifndef NOSSL
 		if (ishttpsurl) {
 			sslpath = strdup(path);
@@ -379,112 +486,6 @@ noslash:
 		}
 
 		path = newline;
-	}
-
-	if (isfileurl) {
-		struct stat st;
-
-		fd = open(path, O_RDONLY);
-		if (fd == -1) {
-			warn("Can't open file %s", path);
-			goto cleanup_url_get;
-		}
-
-		if (fstat(fd, &st) == -1)
-			filesize = -1;
-		else
-			filesize = st.st_size;
-
-		/* Open the output file.  */
-		if (!pipeout) {
-#ifndef SMALL
-			if (resume)
-				out = open(savefile, O_CREAT | O_WRONLY |
-					O_APPEND, 0666);
-
-			else
-#endif /* !SMALL */
-				out = open(savefile, O_CREAT | O_WRONLY |
-					O_TRUNC, 0666);
-			if (out < 0) {
-				warn("Can't open %s", savefile);
-				goto cleanup_url_get;
-			}
-		} else
-			out = fileno(stdout);
-
-#ifndef SMALL
-		if (resume) {
-			if (fstat(out, &st) == -1) {
-				warn("Can't fstat %s", savefile);
-				goto cleanup_url_get;
-			}
-			if (lseek(fd, st.st_size, SEEK_SET) == -1) {
-				warn("Can't lseek %s", path);
-				goto cleanup_url_get;
-			}
-			restart_point = st.st_size;
-		}
-#endif /* !SMALL */
-
-		/* Trap signals */
-		oldintr = NULL;
-		oldinti = NULL;
-		if (setjmp(httpabort)) {
-			if (oldintr)
-				(void)signal(SIGINT, oldintr);
-			if (oldinti)
-				(void)signal(SIGINFO, oldinti);
-			goto cleanup_url_get;
-		}
-		oldintr = signal(SIGINT, abortfile);
-
-		bytes = 0;
-		hashbytes = mark;
-		progressmeter(-1, path);
-
-		if ((buf = malloc(buflen)) == NULL)
-			errx(1, "Can't allocate memory for transfer buffer");
-
-		/* Finally, suck down the file. */
-		i = 0;
-		oldinti = signal(SIGINFO, psummary);
-		while ((len = read(fd, buf, buflen)) > 0) {
-			bytes += len;
-			for (cp = buf; len > 0; len -= i, cp += i) {
-				if ((i = write(out, cp, len)) == -1) {
-					warn("Writing %s", savefile);
-					signal(SIGINFO, oldinti);
-					goto cleanup_url_get;
-				} else if (i == 0)
-					break;
-			}
-			if (hash && !progress) {
-				while (bytes >= hashbytes) {
-					(void)putc('#', ttyout);
-					hashbytes += mark;
-				}
-				(void)fflush(ttyout);
-			}
-		}
-		signal(SIGINFO, oldinti);
-		if (hash && !progress && bytes > 0) {
-			if (bytes < mark)
-				(void)putc('#', ttyout);
-			(void)putc('\n', ttyout);
-			(void)fflush(ttyout);
-		}
-		if (len != 0) {
-			warn("Reading from file");
-			goto cleanup_url_get;
-		}
-		progressmeter(1, NULL);
-		if (verbose)
-			ptransfer(0);
-		(void)signal(SIGINT, oldintr);
-
-		rval = 0;
-		goto cleanup_url_get;
 	}
 
 	if (*host == '[' && (hosttail = strrchr(host, ']')) != NULL &&
@@ -1272,12 +1273,17 @@ auto_fetch(int argc, char *argv[], char *outfile)
 		if (url == NULL)
 			errx(1, "Can't allocate memory for auto-fetch.");
 
+		if (strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
+			if (file_get(url + sizeof(FILE_URL) - 1, outfile) == -1)
+				rval = argpos + 1;
+			continue;
+		}
+
 		/*
-		 * Try HTTP URL-style arguments first.
+		 * Try HTTP URL-style arguments next.
 		 */
 		if (strncasecmp(url, HTTP_URL, sizeof(HTTP_URL) - 1) == 0 ||
-		    strncasecmp(url, HTTPS_URL, sizeof(HTTPS_URL) -1) == 0 ||
-		    strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
+		    strncasecmp(url, HTTPS_URL, sizeof(HTTPS_URL) -1) == 0) {
 			redirect_loop = 0;
 			retried = 0;
 			if (url_get(url, httpproxy, outfile, lastfile) == -1)
