@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.35 2019/06/28 13:32:45 deraadt Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.36 2020/01/15 16:15:08 kn Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -568,7 +568,7 @@ pfr_strerror(int errnum)
 	case ESRCH:
 		return "Table does not exist";
 	case ENOENT:
-		return "Anchor or Ruleset does not exist";
+		return "Anchor does not exist";
 	default:
 		return strerror(errnum);
 	}
