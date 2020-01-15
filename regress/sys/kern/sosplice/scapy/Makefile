@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2020/01/08 21:28:00 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2020/01/15 20:47:13 bluhm Exp $
 
 # Copyright (c) 2017-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -84,7 +84,7 @@ regress:
 .MAIN: all
 
 .if make (regress) || make (all)
-.BEGIN: addr.py
+.BEGIN:
 	@echo
 	${SUDO} true
 	ssh -t ${REMOTE_SSH} true

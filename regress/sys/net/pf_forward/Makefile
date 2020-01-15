@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2020/01/08 21:28:00 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.30 2020/01/15 20:47:13 bluhm Exp $
 
 # Copyright (c) 2012-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -107,7 +107,7 @@ regress:
 
 .if ! empty (PF_SSH)
 .if make (regress) || make (all)
-.BEGIN: pf.conf addr.py
+.BEGIN:
 	@echo
 	${SUDO} true
 	ssh -t ${PF_SSH} ${SUDO} true
@@ -133,7 +133,7 @@ addr.py: Makefile
 # Load the pf rules into the kernel of the PF machine.
 # XXX pfctl does not replace variables after @.
 stamp-pfctl: addr.py pf.conf
-	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
+	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
 	    sed 's/@$$PF_IFIN /@${PF_IFIN} /;s/@$$PF_IFOUT /@${PF_IFOUT} /' | \
 	    ssh ${PF_SSH} ${SUDO} pfctl -a regress -f -

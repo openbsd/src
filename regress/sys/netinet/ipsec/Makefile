@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2020/01/08 21:28:01 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.26 2020/01/15 20:47:13 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used to distribute the configuration.
@@ -162,7 +162,7 @@ regress:
 	@echo SKIPPED
 
 .elif make (regress) || make (all)
-.BEGIN: ipsec.conf addr.py
+.BEGIN:
 	@echo
 	${SUDO} true
 	ssh -t ${IPS_SSH} ${SUDO} true
@@ -195,7 +195,7 @@ addr.py: Makefile
 # Load the ipsec sa and flow into the kernel of the SRC and IPS machine.
 stamp-ipsec: addr.py ipsec.conf
 	@echo '\n======== $@ ========'
-	cat addr.py ${.CURDIR}/ipsec.conf | ipsecctl -n -f -
+	cat addr.py ${.CURDIR}/ipsec.conf | /sbin/ipsecctl -n -f -
 	${SUDO} ipsecctl -F
 	cat addr.py ${.CURDIR}/ipsec.conf | ${SUDO} ipsecctl -f -
 	ssh ${IPS_SSH} ${SUDO} ipsecctl -F
@@ -206,7 +206,7 @@ stamp-ipsec: addr.py ipsec.conf
 # Load a pf log enc0 pass any rule into the kernel of the IPS machine.
 stamp-pfctl: addr.py pf.conf
 	@echo '\n======== $@ ========'
-	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
+	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
 	    ssh ${IPS_SSH} ${SUDO} pfctl -a regress -f -
 	@date >$@

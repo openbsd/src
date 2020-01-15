@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2019/05/10 02:22:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.13 2020/01/15 20:47:14 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -53,7 +53,7 @@ regress:
 .MAIN: all
 
 .if make (regress) || make (all)
-.BEGIN: addr.py
+.BEGIN:
 	@echo
 	${SUDO} true
 	ssh -t ${REMOTE_SSH} ${SUDO} true

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2019/05/10 02:22:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2020/01/15 20:47:13 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -6,7 +6,7 @@
 # scapy               powerful interactive packet manipulation in python
 
 .if ! exists(/usr/local/bin/python2.7) || ! exists(/usr/local/bin/scapy)
-.BEGIN: addr.py
+.BEGIN:
 	@true
 regress:
 	@echo Install python and the scapy module for additional tests.
@@ -82,7 +82,7 @@ stamp-stack:
 stamp-pf: addr.py pf.conf
 	@echo '\n======== $@ ========'
 	rm -f stamp-stack stamp-pf
-	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
+	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
 	    ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
 	-ssh ${REMOTE_SSH} ${SUDO} pfctl -e

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2020/01/08 21:28:01 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2020/01/15 20:47:13 bluhm Exp $
 
 # Copyright (c) 2016-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -77,7 +77,7 @@ regress:
 .MAIN: all
 
 .if make (regress) || make (all)
-.BEGIN: pf.conf addr.py
+.BEGIN:
 	@echo
 	${SUDO} true
 	ssh -t ${REMOTE_SSH} ${SUDO} true
@@ -97,7 +97,7 @@ addr.py: Makefile
 # load the pf rules into the kernel of the REMOTE and LOCAL machine
 REGRESS_SETUP +=	stamp-pfctl
 stamp-pfctl: addr.py pf.conf
-	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
+	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
 	    ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
 .if ! empty(PF_ANCHOR:Mregress)
