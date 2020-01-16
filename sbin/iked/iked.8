@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.23 2020/01/14 22:28:29 tobhe Exp $
+.\" $OpenBSD: iked.8,v 1.24 2020/01/16 20:05:00 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 14 2020 $
+.Dd $Mdocdate: January 16 2020 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Op Fl dnSTtv
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
+.Op Fl p Ar udpencap_port
 .Sh DESCRIPTION
 .Nm
 is an Internet Key Exchange (IKEv2) daemon which performs mutual
@@ -75,6 +76,15 @@ as the configuration file, instead of the default
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
+.It Fl p Ar udpencap-port
+Specify the listen port for encapsulated UDP that
+the daemon will bind to as well as the UDP encapsulation port set
+in resulting IPsec SAs.
+In order to receive UDP encapsulated IPsec packets on ports other
+than 4500, the
+.Em net.inet.esp.udpencap_port
+.Xr sysctl 2
+variable has to be set accordingly.
 .It Fl S
 Start
 .Nm

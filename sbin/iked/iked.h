@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.131 2020/01/14 22:28:29 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.132 2020/01/16 20:05:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -662,6 +662,7 @@ struct iked {
 	uint32_t			 sc_opts;
 	uint8_t				 sc_passive;
 	uint8_t				 sc_decoupled;
+	in_port_t			 sc_nattport;
 
 	uint8_t				 sc_mobike;	/* MOBIKE */
 	uint8_t				 sc_frag;	/* fragmentation */
@@ -767,6 +768,8 @@ int	 config_setmobike(struct iked *);
 int	 config_getmobike(struct iked *, struct imsg *);
 int	 config_setfragmentation(struct iked *);
 int	 config_getfragmentation(struct iked *, struct imsg *);
+int	 config_setnattport(struct iked *);
+int	 config_getnattport(struct iked *, struct imsg *);
 
 /* policy.c */
 void	 policy_init(struct iked *);

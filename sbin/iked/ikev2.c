@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.187 2020/01/08 09:14:03 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.188 2020/01/16 20:05:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -213,6 +213,8 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (config_getmobike(env, imsg));
 	case IMSG_CTL_FRAGMENTATION:
 		return (config_getfragmentation(env, imsg));
+	case IMSG_CTL_NATTPORT:
+		return (config_getnattport(env, imsg));
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev2_msg_cb));
 	case IMSG_PFKEY_SOCKET:
@@ -1084,7 +1086,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	}
 
 	if ((env->sc_opts & IKED_OPT_NONATT) == 0) {
-		if (ntohs(port) == IKED_NATT_PORT) {
+		if (ntohs(port) == env->sc_nattport) {
 			/* Enforce NAT-T on the initiator side */
 			log_debug("%s: enforcing NAT-T", __func__);
 			req.msg_natt = sa->sa_natt = sa->sa_udpencap = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.52 2020/01/07 15:08:28 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.53 2020/01/16 20:05:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -985,6 +985,29 @@ config_setkeys(struct iked *env)
 	EVP_PKEY_free(key);
 
 	return (ret);
+}
+
+int
+config_setnattport(struct iked *env)
+{
+	in_port_t nattport;
+
+	nattport = env->sc_nattport;
+	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CTL_NATTPORT,
+	    &nattport, sizeof(nattport));
+	return (0);
+}
+
+int
+config_getnattport(struct iked *env, struct imsg *imsg)
+{
+	in_port_t nattport;
+
+	IMSG_SIZE_CHECK(imsg, &nattport);
+	memcpy(&nattport, imsg->data, sizeof(nattport));
+	env->sc_nattport = nattport;
+	log_debug("%s: nattport %u", __func__, env->sc_nattport);
+	return (0);
 }
 
 int
