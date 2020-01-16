@@ -1,3 +1,5 @@
+/*	$OpenBSD: setjmp-fpu.c,v 1.5 2020/01/16 13:04:02 bluhm Exp $	*/
+
 #include <err.h>
 #include <fenv.h>
 #include <setjmp.h>
@@ -6,12 +8,13 @@ int
 TEST_SETJMP(void)
 {
 	JMP_BUF env;
+	fexcept_t flag;
 	int rv;
 
 	/* Set up the FPU control word register. */
 	rv = fesetround(FE_UPWARD);
 	if (rv != 0)
-		errx(1, "fesetround FE_UPWARD returned %d", rv);
+		errx(2, "fesetround FE_UPWARD returned %d", rv);
 	fedisableexcept(FE_ALL_EXCEPT);
 	feenableexcept(FE_DIVBYZERO);
 
@@ -19,25 +22,22 @@ TEST_SETJMP(void)
 
 	switch(rv) {
 	case 0: {
-		fexcept_t flag = FE_OVERFLOW;
-
 		/* Mess with the FPU control word. */
 		rv = fesetround(FE_DOWNWARD);
 		if (rv != 0)
-			errx(1, "fesetround FE_DOWNWARD returned %d", rv);
+			errx(2, "fesetround FE_DOWNWARD returned %d", rv);
 		fedisableexcept(FE_DIVBYZERO);
 
 		/* Set the FPU exception flags. */
+		flag = FE_OVERFLOW;
 		rv = fesetexceptflag(&flag, FE_ALL_EXCEPT);
 		if (rv != 0)
-			errx(1, "fesetexceptflag returned %d", rv);
+			errx(2, "fesetexceptflag returned %d", rv);
 
 		LONGJMP(env, 1);
-		errx(1, "longjmp returned");
+		errx(2, "longjmp returned");
 	}
 	case 1: {
-		fexcept_t flag = 0;
-
 		/* Verify that the FPU control word is preserved. */
 		rv = fegetround();
 		if (rv != FE_UPWARD)
@@ -48,15 +48,16 @@ TEST_SETJMP(void)
 			    rv);
 
 		/* Verify that the FPU exception flags weren't clobbered. */
+		flag = 0;
 		rv = fegetexceptflag(&flag, FE_ALL_EXCEPT);
 		if (rv != 0)
-			errx(1, "fegetexceptflag returned %d", rv);
+			errx(2, "fegetexceptflag returned %d", rv);
 		if (flag != FE_OVERFLOW)
 			errx(1, "except flag is %d, no FE_OVERFLOW", rv);
 
 		return (0);
 	}
 	default:
-		errx(1, "setjmp returned %d", rv);
+		errx(2, "setjmp returned %d", rv);
 	}
 }
