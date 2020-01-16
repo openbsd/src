@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.99 2019/09/27 10:34:54 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.100 2020/01/16 21:44:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -978,7 +978,7 @@ int
 parse_asnum(const char *word, size_t wordlen, u_int32_t *asnum)
 {
 	const char	*errstr;
-	char		*dot;
+	char		*dot, *parseword;
 	u_int32_t	 uval, uvalh = 0;
 
 	if (word == NULL)
@@ -987,20 +987,22 @@ parse_asnum(const char *word, size_t wordlen, u_int32_t *asnum)
 	if (wordlen < 1 || word[0] < '0' || word[0] > '9')
 		return (0);
 
-	if ((dot = strchr(word,'.')) != NULL) {
+	parseword = strdup(word);
+	if ((dot = strchr(parseword, '.')) != NULL) {
 		*dot++ = '\0';
-		uvalh = strtonum(word, 0, USHRT_MAX, &errstr);
+		uvalh = strtonum(parseword, 0, USHRT_MAX, &errstr);
 		if (errstr)
 			errx(1, "AS number is %s: %s", errstr, word);
 		uval = strtonum(dot, 0, USHRT_MAX, &errstr);
 		if (errstr)
 			errx(1, "AS number is %s: %s", errstr, word);
 	} else {
-		uval = strtonum(word, 0, UINT_MAX, &errstr);
+		uval = strtonum(parseword, 0, UINT_MAX, &errstr);
 		if (errstr)
 			errx(1, "AS number is %s: %s", errstr, word);
 	}
 
+	free(parseword);
 	*asnum = uval | (uvalh << 16);
 	return (1);
 }
