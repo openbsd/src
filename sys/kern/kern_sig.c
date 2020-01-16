@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.241 2020/01/14 08:52:18 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.242 2020/01/16 16:35:03 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1109,7 +1109,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * runnable and can look at the signal.  But don't make
 		 * the process runnable, leave it stopped.
 		 */
-		if (p->p_wchan && p->p_flag & P_SINTR)
+		if (p->p_flag & P_SINTR)
 			unsleep(p);
 		goto out;
 

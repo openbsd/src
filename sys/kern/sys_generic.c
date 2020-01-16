@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.127 2020/01/08 16:27:41 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.128 2020/01/16 16:35:04 mpi Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -767,7 +767,6 @@ void
 selwakeup(struct selinfo *sip)
 {
 	struct proc *p;
-	int s;
 
 	KNOTE(&sip->si_note, NOTE_SUBMIT);
 	if (sip->si_seltid == 0)
@@ -780,15 +779,10 @@ selwakeup(struct selinfo *sip)
 	p = tfind(sip->si_seltid);
 	sip->si_seltid = 0;
 	if (p != NULL) {
-		SCHED_LOCK(s);
-		if (p->p_wchan == (caddr_t)&selwait) {
-			if (p->p_stat == SSLEEP)
-				setrunnable(p);
-			else
-				unsleep(p);
+		if (wakeup_proc(p, &selwait)) {
+			/* nothing else to do */
 		} else if (p->p_flag & P_SELECT)
 			atomic_clearbits_int(&p->p_flag, P_SELECT);
-		SCHED_UNLOCK(s);
 	}
 }
 

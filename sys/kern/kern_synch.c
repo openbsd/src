@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.157 2020/01/14 08:52:18 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.158 2020/01/16 16:35:04 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -469,8 +469,7 @@ sleep_setup_signal(struct sleep_state *sls)
 	 */
 	atomic_setbits_int(&p->p_flag, P_SINTR);
 	if (p->p_p->ps_single != NULL || (sls->sls_sig = CURSIG(p)) != 0) {
-		if (p->p_wchan)
-			unsleep(p);
+		unsleep(p);
 		p->p_stat = SONPROC;
 		sls->sls_do_sleep = 0;
 	} else if (p->p_wchan == 0) {
@@ -505,6 +504,25 @@ sleep_finish_signal(struct sleep_state *sls)
 	return (error);
 }
 
+int
+wakeup_proc(struct proc *p, const volatile void *chan)
+{
+	int s, awakened = 0;
+
+	SCHED_LOCK(s);
+	if (p->p_wchan != NULL &&
+	   ((chan == NULL) || (p->p_wchan == chan))) {
+		awakened = 1;
+		if (p->p_stat == SSLEEP)
+			setrunnable(p);
+		else
+			unsleep(p);
+	}
+	SCHED_UNLOCK(s);
+
+	return awakened;
+}
+
 /*
  * Implement timeout for tsleep.
  * If process hasn't been awakened (wchan non-zero),
@@ -518,13 +536,8 @@ endtsleep(void *arg)
 	int s;
 
 	SCHED_LOCK(s);
-	if (p->p_wchan) {
-		if (p->p_stat == SSLEEP)
-			setrunnable(p);
-		else
-			unsleep(p);
+	if (wakeup_proc(p, NULL))
 		atomic_setbits_int(&p->p_flag, P_TIMEOUT);
-	}
 	SCHED_UNLOCK(s);
 }
 
@@ -536,7 +549,7 @@ unsleep(struct proc *p)
 {
 	SCHED_ASSERT_LOCKED();
 
-	if (p->p_wchan) {
+	if (p->p_wchan != NULL) {
 		TAILQ_REMOVE(&slpque[LOOKUP(p->p_wchan)], p, p_runq);
 		p->p_wchan = NULL;
 	}
@@ -570,13 +583,8 @@ wakeup_n(const volatile void *ident, int n)
 		if (p->p_stat != SSLEEP && p->p_stat != SSTOP)
 			panic("wakeup: p_stat is %d", (int)p->p_stat);
 #endif
-		if (p->p_wchan == ident) {
+		if (wakeup_proc(p, ident))
 			--n;
-			p->p_wchan = 0;
-			TAILQ_REMOVE(qp, p, p_runq);
-			if (p->p_stat == SSLEEP)
-				setrunnable(p);
-		}
 	}
 	SCHED_UNLOCK(s);
 }

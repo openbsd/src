@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.61 2019/12/08 12:29:42 mpi Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.62 2020/01/16 16:35:04 mpi Exp $  */
 
 /*
  *  Portions of this code are:
@@ -241,12 +241,8 @@ syncer_thread(void *arg)
 int
 speedup_syncer(void)
 {
-	int s;
-
-	SCHED_LOCK(s);
-	if (syncerproc && syncerproc->p_wchan == &lbolt)
-		setrunnable(syncerproc);
-	SCHED_UNLOCK(s);
+	if (syncerproc)
+		wakeup_proc(syncerproc, &lbolt);
 	if (rushjob < syncdelay / 2) {
 		rushjob += 1;
 		stat_rush_requests += 1;
