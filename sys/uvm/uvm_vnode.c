@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.105 2019/12/08 12:37:45 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.106 2020/01/16 15:35:22 kettenis Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -582,9 +582,12 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
 	struct vm_page *pp, *ptmp;
 	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT], **ppsp;
+	struct pglist dead;
 	int npages, result, lcv;
 	boolean_t retval, need_iosync, needs_clean;
 	voff_t curoff;
+
+	TAILQ_INIT(&dead);
 
 	/* get init vals and determine how we are going to traverse object */
 	need_iosync = FALSE;
@@ -675,7 +678,8 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 				} else {
 					pmap_page_protect(pp, PROT_NONE);
 					/* removed page from object */
-					uvm_pagefree(pp);
+					uvm_pageclean(pp);
+					TAILQ_INSERT_HEAD(&dead, pp, pageq);
 				}
 			}
 			continue;
@@ -802,7 +806,8 @@ ReTry:
 					retval = FALSE;
 				}
 				pmap_page_protect(ptmp, PROT_NONE);
-				uvm_pagefree(ptmp);
+				uvm_pageclean(ptmp);
+				TAILQ_INSERT_TAIL(&dead, ptmp, pageq);
 			}
 
 		}		/* end of "lcv" for loop */
@@ -822,6 +827,8 @@ ReTry:
 			wakeup(&uvn->u_flags);
 		uvn->u_flags &= ~(UVM_VNODE_IOSYNC|UVM_VNODE_IOSYNCWANTED);
 	}
+
+	uvm_pglistfree(&dead);
 
 	return(retval);
 }
