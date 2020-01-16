@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2020/01/16 21:00:11 jan Exp $
+#	$OpenBSD: Makefile,v 1.5 2020/01/16 22:24:32 jan Exp $
 
 .PHONY: setup-ftpd
 
@@ -6,6 +6,7 @@ REGRESS_TARGETS =	run-ftpd-get
 REGRESS_TARGETS +=	run-ftpd-put
 REGRESS_TARGETS +=	run-ftpd-ls
 REGRESS_TARGETS +=	run-ftpd-delete
+REGRESS_TARGETS +=	run-ftpd-mkdir
 REGRESS_ROOT_TARGETS =	${REGRESS_TARGETS}
 REGRESS_CLEANUP =	cleanup-ftpd
 REGRESS_SETUP =		setup-ftpd
@@ -66,6 +67,12 @@ run-ftpd-delete:
 	@echo '\n======== $@ ========'
 	echo delete ftpd.regress | ftp -a 127.0.0.1
 	test ! -f ${FTPDIR}/ftpd.regress
+
+run-ftpd-mkdir:
+	@echo '\n======== $@ ========'
+	echo mkdir ftpd.regress.dir.create | ftp -a 127.0.0.1
+	test -d ${FTPDIR}/ftpd.regress.dir.create
+	${SUDO} rm -r ${FTPDIR}/ftpd.regress.dir.create
 
 cleanup-ftpd:
 	${SUDO} pkill tcpserver || true
