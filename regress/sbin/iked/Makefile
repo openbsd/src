@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.2 2017/05/29 20:57:21 markus Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/01/16 11:41:14 bluhm Exp $
 
-SUBDIR=	test_helper dh parser
+SUBDIR=	test_helper dh parser live
 
 .include <bsd.subdir.mk>
