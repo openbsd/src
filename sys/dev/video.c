@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.42 2019/10/06 17:13:10 mpi Exp $	*/
+/*	$OpenBSD: video.c,v 1.43 2020/01/16 09:59:26 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -463,9 +463,6 @@ videodetach(struct device *self, int flags)
 	struct video_softc *sc = (struct video_softc *)self;
 	int maj, mn;
 
-	if (sc->sc_fbuffer != NULL)
-		free(sc->sc_fbuffer, M_DEVBUF, sc->sc_fbufferlen);
-
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == videoopen)
@@ -474,6 +471,8 @@ videodetach(struct device *self, int flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
+
+	free(sc->sc_fbuffer, M_DEVBUF, sc->sc_fbufferlen);
 
 	return (0);
 }
