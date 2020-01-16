@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.34 2020/01/04 17:30:41 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.35 2020/01/16 14:55:19 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -131,7 +131,10 @@ usage(void)
 	    "\t%1$s dump|list|list-io\n"
 	    "\t%1$s init-system [-n] file\n"
 	    "\t%1$s create-vdisk -s size file\n"
-	    "\t%1$s console|panic|start|status|stop [domain]\n", getprogname());
+	    "\t%1$s start [-c] [domain]\n"
+	    "\t%1$s console|panic|status|stop [domain]\n",
+	    getprogname());
+
 	exit(EXIT_FAILURE);
 }
 
@@ -399,15 +402,53 @@ download(int argc, char **argv)
 }
 
 void
+console_exec(uint64_t gid)
+{
+	struct guest *guest;
+	char console_str[8];
+
+	if (gid == 0)
+		errx(1, "no console for primary domain");
+
+	TAILQ_FOREACH(guest, &guest_list, link) {
+		if (guest->gid != gid)
+			continue;
+		snprintf(console_str, sizeof(console_str),
+		    "ttyV%llu", guest->gid - 1);
+
+		closefrom(STDERR_FILENO + 1);
+		execl(LDOMCTL_CU, LDOMCTL_CU, "-r", "-l", console_str,
+		    (char *)NULL);
+		err(1, "failed to open console");
+	}
+}
+
+void
 guest_start(int argc, char **argv)
 {
 	struct hvctl_msg msg;
 	ssize_t nbytes;
+	uint64_t gid;
+	int ch, console = 0;
 
-	if (argc != 2)
+	while ((ch = getopt(argc, argv, "c")) != -1) {
+		switch (ch) {
+		case 'c':
+			console = 1;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
 		usage();
 
 	hv_config();
+
+	gid = find_guest(argv[0]);
 
 	/*
 	 * Start guest domain.
@@ -415,7 +456,7 @@ guest_start(int argc, char **argv)
 	bzero(&msg, sizeof(msg));
 	msg.hdr.op = HVCTL_OP_GUEST_START;
 	msg.hdr.seq = hvctl_seq++;
-	msg.msg.guestop.guestid = find_guest(argv[1]);
+	msg.msg.guestop.guestid = gid;
 	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "write");
@@ -424,6 +465,9 @@ guest_start(int argc, char **argv)
 	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "read");
+
+	if (console)
+		console_exec(gid);
 }
 
 void
@@ -615,9 +659,7 @@ guest_status(int argc, char **argv)
 void
 guest_console(int argc, char **argv)
 {
-	struct guest *guest;
 	uint64_t gid;
-	char console_str[8];
 
 	if (argc != 2)
 		usage();
@@ -625,20 +667,8 @@ guest_console(int argc, char **argv)
 	hv_config();
 
 	gid = find_guest(argv[1]);
-	if (gid == 0)
-		errx(1, "no console for primary domain");
 
-	TAILQ_FOREACH(guest, &guest_list, link) {
-		if (guest->gid != gid)
-			continue;
-		snprintf(console_str, sizeof(console_str),
-		    "ttyV%llu", guest->gid - 1);
-
-		closefrom(STDERR_FILENO + 1);
-		execl(LDOMCTL_CU, LDOMCTL_CU, "-r", "-l", console_str,
-		    (char *)NULL);
-		err(1, "failed to open console");
-	}
+	console_exec(gid);
 }
 
 void
