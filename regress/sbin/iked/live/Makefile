@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2020/01/15 22:47:24 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.6 2020/01/16 20:06:53 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -98,12 +98,12 @@ SETUP_CONFIGS = \
 	echo "cd /tmp\nput $@_right.conf test.conf" | sftp -q ${RIGHT_SSH}
 
 SETUP_SYSCTL = \
-	ssh ${LEFT_SSH} "sysctl net.inet.ipcomp.enable=1"; \
-	ssh ${RIGHT_SSH} "sysctl net.inet.ipcomp.enable=1"
+	ssh ${LEFT_SSH} "sysctl $$sysctl"; \
+	ssh ${RIGHT_SSH} "sysctl $$sysctl"
 
 SETUP_START = \
-	ssh ${LEFT_SSH} "ipsecctl -F; pkill iked; iked -6 -f /tmp/test.conf"; \
-	ssh ${RIGHT_SSH} "ipsecctl -F; pkill iked; iked -6 -f /tmp/test.conf"
+	ssh ${LEFT_SSH} "ipsecctl -F; pkill iked; iked -6 $$iked_flags -f /tmp/test.conf"; \
+	ssh ${RIGHT_SSH} "ipsecctl -F; pkill iked; iked -6 $$iked_flags -f /tmp/test.conf"
 
 SETUP_CERT = \
 	echo "ALTNAME = $$name-from-$$caname" > $$name-from-$$caname.cnf; \
@@ -233,9 +233,26 @@ run-ipcomp:
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
 	    ${SETUP_CONFIGS}
-	${SETUP_SYSCTL}
+	sysctl="net.inet.ipcomp.enable=1"; \
+	    ${SETUP_SYSCTL}
 	${SETUP_START}
 	flowtype=ipcomp; ${TEST_FLOWS}
 	${TEST_PING}
+
+REGRESS_TARGETS += run-udpencap-port
+run-udpencap-port:
+	@echo '======= $@ ========'
+	flowtype=esp; \
+	leftid=left-from-ca-both; \
+	rightid=right-from-ca-both; \
+	    ${SETUP_CONFIGS}; \
+	sysctl="net.inet.esp.udpencap_port=9999"; \
+	    ${SETUP_SYSCTL};
+	iked_flags=-p9999; \
+	    ${SETUP_START};
+	flowtype=esp; ${TEST_FLOWS}; \
+	    ${TEST_PING}
+	sysctl="net.inet.esp.udpencap_port=4500"; \
+	    ${SETUP_SYSCTL};
 
 .include <bsd.regress.mk>
