@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.47 2016/08/20 18:44:07 schwarze Exp $
+.\"	$OpenBSD: stty.1,v 1.48 2020/01/16 16:46:46 schwarze Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)stty.1	8.5 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: August 20 2016 $
+.Dd $Mdocdate: January 16 2020 $
 .Dt STTY 1
 .Os
 .Sh NAME
@@ -97,7 +97,7 @@ terminal.
 This corresponds to the
 .Li c_cflag
 in the termios structure.
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Cm parenb Pq Fl parenb
 Enable (disable) parity generation
 and detection.
@@ -155,7 +155,7 @@ Enable (disable) RTS/CTS flow control.
 This corresponds to the
 .Li c_iflag
 in the termios structure.
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Cm ignbrk Pq Fl ignbrk
 Ignore (do not ignore) break on
 input.
@@ -237,7 +237,7 @@ the entire input and output queues to be discarded.
 This corresponds to the
 .Li c_oflag
 of the termios structure.
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Cm opost Pq Fl opost
 Post-process output (do not
 post-process output; ignore all other
@@ -276,7 +276,7 @@ in lflag is
 which corresponds to the
 .Li c_lflag
 of the termios structure.
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Cm isig Pq Fl isig
 Enable (disable) the checking of
 characters against the special control
@@ -380,7 +380,7 @@ and
 .Cm olcuc .
 .El
 .Ss Control characters
-.Bl -tag -width Fl -compact
+.Bl -tag -width Ds -compact
 .It Ar control-character Ar string
 Set
 .Ar control-character
@@ -435,7 +435,7 @@ non-canonical mode input processing
 (-icanon).
 .El
 .Ss Combination modes
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Ar saved settings
 Set the current terminal
 characteristics to the saved settings
@@ -546,7 +546,7 @@ first rows, then columns.
 .Ss Compatibility modes
 These modes remain for compatibility with the previous version of
 the stty command.
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Cm all
 Reports all the terminal modes as with
 .Cm stty Fl a
@@ -623,7 +623,7 @@ Same as the control character
 .Ss Control operations
 These operations are not modes, but rather commands to be performed by
 the tty layer.
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Cm ostart
 Performs a
 .Dq start output

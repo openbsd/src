@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs_ext2fs.8,v 1.9 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: newfs_ext2fs.8,v 1.10 2020/01/16 16:46:47 schwarze Exp $
 .\"	$NetBSD: newfs_ext2fs.8,v 1.7 2009/12/01 08:47:25 pooka Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: January 16 2020 $
 .Dt NEWFS_EXT2FS 8
 .Os
 .Sh NAME
@@ -95,7 +95,7 @@ Giga; multiply the argument by 1073741824.
 .El
 .Pp
 The following options define the general layout policies.
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Fl b Ar block-size
 The block size of the file system, in bytes.
 It must be a power of two.
@@ -249,7 +249,7 @@ different type of disk than the one on which it is initially created
 Note that changing this value from its default will make it impossible for
 .Xr fsck_ext2fs 8
 to find the alternative superblocks if the standard superblock is lost.
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Fl S Ar sector-size
 The size of a sector in bytes (almost never anything but 512).
 Defaults to 512.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.26 2015/09/12 11:59:38 schwarze Exp $
+.\"	$OpenBSD: hexdump.1,v 1.27 2020/01/16 16:46:47 schwarze Exp $
 .\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)hexdump.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: September 12 2015 $
+.Dd $Mdocdate: January 16 2020 $
 .Dt HEXDUMP 1
 .Os
 .Sh NAME
@@ -237,7 +237,7 @@ described in the C standard are supported:
 .Pp
 .Nm
 also supports the following additional conversion strings:
-.Bl -tag -width Fl
+.Bl -tag -width _A[dox]
 .It Cm \&_a Ns Op Cm dox
 Display the input offset, cumulative across input files, of the
 next byte to be displayed.

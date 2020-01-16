@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.113 2020/01/12 20:51:08 martijn Exp $
+.\"	$OpenBSD: systat.1,v 1.114 2020/01/16 16:46:47 schwarze Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: January 12 2020 $
+.Dd $Mdocdate: January 16 2020 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -168,7 +168,7 @@ The default interval is 5 seconds.
 Certain characters cause immediate action by
 .Nm .
 These are:
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Ic \&:
 Move the cursor to the command line and interpret the input
 line typed as a command.
@@ -219,7 +219,7 @@ Suspend
 The following commands are interpreted by the
 .Dq global
 command interpreter.
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Ic help
 Print the names of the available views on the command line.
 .It Ic human

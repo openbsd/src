@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.117 2019/10/23 18:07:55 jmc Exp $
+.\"	$OpenBSD: ftp.1,v 1.118 2020/01/16 16:46:47 schwarze Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: October 23 2019 $
+.Dd $Mdocdate: January 16 2020 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -328,7 +328,7 @@ is provided to the user.
 The following commands are recognized
 by
 .Nm :
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Ic \&! Oo Ar command
 .Op Ar arg ...
 .Oc
@@ -369,8 +369,7 @@ and
 .It Ic ascii
 Set the file transfer
 .Ic type
-to network
-.Tn ASCII .
+to network ASCII.
 .It Ic bell Op Ic on | off
 Arrange that a bell be sounded after each file transfer
 command is completed.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.163 2019/08/10 08:14:17 tb Exp $
+.\"	$OpenBSD: hier.7,v 1.164 2020/01/16 16:46:47 schwarze Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: August 10 2019 $
+.Dd $Mdocdate: January 16 2020 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -505,7 +505,7 @@ Multi-purpose log, temporary, transient, and spool files.
 .It account/
 System accounting files.
 .Pp
-.Bl -tag -width Fl -compact
+.Bl -tag -width acct -compact
 .It acct
 Execution accounting file (see
 .Xr acct 5 ) .
@@ -529,7 +529,7 @@ Spools and configuration files for
 and
 .Xr at 1 .
 .Pp
-.Bl -tag -width Fl -compact
+.Bl -tag -width atjobs/ -compact
 .It atjobs/
 .Xr at 1
 jobs.
@@ -550,7 +550,7 @@ Miscellaneous game status and log files.
 .It log/
 Miscellaneous system log files.
 .Pp
-.Bl -tag -width Fl -compact
+.Bl -tag -width rdist/ -compact
 .It wtmp
 Login/logout log (see
 .Xr wtmp 5 ) .
@@ -570,7 +570,7 @@ Filesystem quota information files.
 System information files describing various info about the
 system since it was booted.
 .Pp
-.Bl -tag -width Fl -compact
+.Bl -tag -width rc.d/ -compact
 .It rc.d/
 Details of currently running daemons;
 used by

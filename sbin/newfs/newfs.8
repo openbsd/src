@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.75 2019/04/23 18:13:11 schwarze Exp $
+.\"	$OpenBSD: newfs.8,v 1.76 2020/01/16 16:46:46 schwarze Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: April 23 2019 $
+.Dd $Mdocdate: January 16 2020 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -138,7 +138,7 @@ file system (or list the inode generation numbers).
 The options to
 .Nm
 are as follows:
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Fl b Ar block-size
 The block size of the file system, in bytes.
 If a disklabel is available, the default is read from it.

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.25 2020/01/16 14:55:19 kn Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.26 2020/01/16 16:46:47 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -72,7 +72,7 @@ configuration
 .Ar file
 as described in
 .Xr ldom.conf 5 .
-.Bl -tag -width Fl
+.Bl -tag -width 3n
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
@@ -96,7 +96,7 @@ Select the next logical domain configuration to use
 (after resetting the machine).
 .It Cm start Oo Fl c Oc Ar domain
 Start a guest domain.
-.Bl -tag -width Fl
+.Bl -tag -width 3n
 .It Fl c
 Automatically connect to the guest console.
 .El
