@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2020/01/08 13:23:48 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2020/01/16 21:11:17 bluhm Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -14,6 +14,11 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+PROGS =			client-tcp server-tcp
+SRCS_client-tcp =	client-tcp.c util.c
+SRCS_server-tcp =	server-tcp.c util.c
+WARNINGS =		yes
+
 NC =			./netcat-regress
 
 CLEANFILES =		${NC:T} {client,server}.{out,err,port,sock} ktrace.out
@@ -23,6 +28,7 @@ setup:
 	@echo '======== $@ ========'
 	pkill ${NC:T} || true
 	rm -f ${NC:T}
+	# copying global netcat to local name allows to pkill it during cleanup
 	cp /usr/bin/nc ${NC:T}
 	chmod 755 ${NC:T}
 
@@ -72,6 +78,11 @@ TLS_WAIT = \
 TRANSFER_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'greeting' client.out && grep -q 'command' server.out; \
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
+
+TRANSFER_CLIENT_WAIT = \
+	let timeout=`date +%s`+5; \
+	until grep -q 'greeting' client.out; \
 	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 TRANSFER_SERVER_WAIT = \
@@ -438,7 +449,7 @@ run-tls-bad-client: client.crt server.crt ca.crt
 	! grep 'command' server.out
 
 REGRESS_TARGETS +=	run-tls-client-bad-ca
-run-tls-client-bad-ca: client.crt server.crt ca.crt
+run-tls-client-bad-ca: client.crt server.crt ca.crt fake-ca.crt
 	@echo '======== $@ ========'
 	# the server uses the wrong root ca to verify the client cert
 	${SERVER_NC} -c -R fake-ca.crt -C server.crt -K server.key -v -l \
@@ -452,7 +463,9 @@ run-tls-client-bad-ca: client.crt server.crt ca.crt
 	grep 'Connection received on localhost ' server.err
 	grep 'Connection to localhost .* succeeded!' client.err
 	# XXX no specific error message for bogus ca
-	grep 'CRYPTO_internal:block type is not 01' server.err
+	egrep \
+	    'CRYPTO_internal:(block type is not 01|data too large for modulus)'\
+	    server.err
 	! grep 'greeting' client.out
 	! grep 'command' server.out
 
@@ -879,6 +892,36 @@ run-unix-dgram-keep:
 	! grep 'Connection received on ' server.err
 	# XXX message succeeded is missing
 	! grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
+### TCP with custom peer
+
+REGRESS_TARGETS +=	run-tcp-custom
+run-tcp-custom: server-tcp client-tcp
+	@echo '======== $@ ========'
+	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
+	./client-tcp -r greeting -s command 127.0.0.1 ${PORT}
+
+REGRESS_TARGETS +=	run-tcp-server
+run-tcp-server: client-tcp
+	@echo '======== $@ ========'
+	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	./client-tcp -r greeting -s command 127.0.0.1 ${PORT}
+	${TRANSFER_SERVER_WAIT}
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+
+REGRESS_TARGETS +=	run-tcp-client
+run-tcp-client: server-tcp
+	@echo '======== $@ ========'
+	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
+	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_CLIENT_WAIT}
+	grep '^greeting$$' client.out
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
