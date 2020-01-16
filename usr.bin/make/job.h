@@ -1,7 +1,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-/*	$OpenBSD: job.h,v 1.36 2020/01/13 16:01:47 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.37 2020/01/16 16:07:18 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -54,6 +54,9 @@ extern void Job_Make(GNode *);
  */
 extern void Job_Init(int);
 
+/* save signal mask at start */
+extern void Sigset_Init();
+
 /* interface with the normal build in make.c */
 /* okay = can_start_job();
  *	can we run new jobs right now ?
@@ -78,6 +81,7 @@ extern void handle_running_jobs(void);
  *	handle running jobs until they're finished.
  */
 extern void loop_handle_running_jobs(void);
+extern void reset_signal_mask(void);
 
 /* handle_all_signals();
  *	if a signal was received, react accordingly.

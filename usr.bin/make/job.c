@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.158 2020/01/13 16:03:44 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.159 2020/01/16 16:07:18 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ static volatile sig_atomic_t got_fatal;
 static volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT, got_SIGTERM, 
     got_SIGINFO;
 
-static sigset_t sigset, emptyset;
+static sigset_t sigset, emptyset, origset;
 
 static void handle_fatal_signal(int);
 static void handle_siginfo(void);
@@ -376,11 +376,17 @@ notice_signal(int sig)
 	}
 }
 
+void
+Sigset_Init()
+{
+	sigemptyset(&emptyset);
+	sigprocmask(SIG_BLOCK, &emptyset, &origset);
+}
+
 static void
 setup_all_signals(void)
 {
 	sigemptyset(&sigset);
-	sigemptyset(&emptyset);
 	/*
 	 * Catch the four signals that POSIX specifies if they aren't ignored.
 	 * handle_signal will take care of calling JobInterrupt if appropriate.
@@ -768,16 +774,21 @@ reap_jobs(void)
 	return reaped;
 }
 
+void 
+reset_signal_mask()
+{
+	sigprocmask(SIG_SETMASK, &origset, NULL);
+}
+
 void
 handle_running_jobs(void)
 {
-	sigset_t old;
 	/* reaping children in the presence of caught signals */
 
 	/* first, we make sure to hold on new signals, to synchronize
 	 * reception of new stuff on sigsuspend
 	 */
-	sigprocmask(SIG_BLOCK, &sigset, &old);
+	sigprocmask(SIG_BLOCK, &sigset, NULL);
 	/* note this will NOT loop until runningJobs == NULL.
 	 * It's merely an optimisation, namely that we don't need to go 
 	 * through the logic if no job is present. As soon as a job 
@@ -796,7 +807,7 @@ handle_running_jobs(void)
 		 */
 		sigsuspend(&emptyset);
 	}
-	sigprocmask(SIG_SETMASK, &old, NULL);
+	reset_signal_mask();
 }
 
 void

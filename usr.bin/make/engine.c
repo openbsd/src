@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.67 2020/01/13 15:24:31 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.68 2020/01/16 16:07:18 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -783,6 +783,7 @@ do_run_command(Job *job, const char *pre)
 		Punt("Could not fork");
 		/*NOTREACHED*/
 	case 0:
+		reset_signal_mask();
 		/* put a random delay unless we're the only job running
 		 * and there's nothing left to do.
 		 */
