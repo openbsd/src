@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.35 2020/01/16 14:55:19 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.36 2020/01/17 10:50:20 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -131,7 +131,7 @@ usage(void)
 	    "\t%1$s dump|list|list-io\n"
 	    "\t%1$s init-system [-n] file\n"
 	    "\t%1$s create-vdisk -s size file\n"
-	    "\t%1$s start [-c] [domain]\n"
+	    "\t%1$s start [-c] domain\n"
 	    "\t%1$s console|panic|status|stop [domain]\n",
 	    getprogname());
 
