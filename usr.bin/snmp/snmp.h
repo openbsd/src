@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.6 2019/10/03 11:02:26 martijn Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.7 2020/01/17 09:52:44 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -106,6 +106,12 @@ enum snmp_security_model {
 	SNMP_SEC_SNMPv2c	= 2,
 	SNMP_SEC_USM		= 3,
 	SNMP_SEC_TSM		= 4
+};
+
+enum snmp_application_exception {
+	SNMP_E_NOSUCHOBJECT	= 0,
+	SNMP_E_NOSUCHINSTANCE	= 1,
+	SNMP_E_ENDOFMIB		= 2
 };
 
 struct snmp_agent;

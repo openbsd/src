@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.6 2019/10/24 12:39:26 tb Exp $	*/
+/*	$OpenBSD: smi.c,v 1.7 2020/01/17 09:52:44 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -365,9 +365,19 @@ smi_print_element(struct ber_element *root, int print_hint,
 			    print_hint ? "IpAddress: " : "",
 			    inet_ntoa(*(struct in_addr *)buf)) == -1)
 				goto fail;
-		} else if (root->be_class == BER_CLASS_CONTEXT &&
-		    root->be_type == BER_TYPE_EOC) {
-			str = strdup("No Such Object available on this agent at this OID");
+		} else if (root->be_class == BER_CLASS_CONTEXT) {
+			if (root->be_type == SNMP_E_NOSUCHOBJECT)
+				str = strdup("No Such Object available on this "
+				    "agent at this OID");
+			else if (root->be_type == SNMP_E_NOSUCHINSTANCE)
+				str = strdup("No Such Instance currently "
+				    "exists at this OID");
+			else if (root->be_type == SNMP_E_ENDOFMIB)
+				str = strdup("No more variables left in this "
+				    "MIB View (It is past the end of the MIB "
+				    "tree)");
+			else
+				str = strdup("Unknown status at this OID");
 		} else {
 			for (i = 0; i < root->be_len; i++) {
 				if (!isprint(buf[i])) {
