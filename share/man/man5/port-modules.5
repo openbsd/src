@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.241 2019/08/27 14:33:24 jca Exp $
+.\"	$OpenBSD: port-modules.5,v 1.242 2020/01/17 19:23:59 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 27 2019 $
+.Dd $Mdocdate: January 17 2020 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -841,6 +841,29 @@ and
 .Cm do-install
 targets that can be overridden in the port Makefile.
 .It font
+Used for ports which primarily install fonts.
+Affects
+.Ev PKG_ARCH
+and
+.Ev EXTRACT_SUFX .
+Appends to
+.Ev CATEGORIES .
+When
+.Ev TYPEFACE
+is set in combination with
+.Ev V
+or
+.Ev VERSION
+it sets
+.Ev PKGNAME .
+Also sets
+.Ev FONTDIR ,
+.Ev FONTTYPES
+and
+.Ev FONT_DISTDIR .
+A
+.Cm do-install
+target is provided if the port tself does not provide it.
 .It fortran
 Sets
 .Ev MODFORTRAN_LIB_DEPENDS ,
