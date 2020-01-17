@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.19 2020/01/17 10:03:39 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.20 2020/01/17 10:10:32 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -71,12 +71,12 @@ struct snmp_app {
 struct snmp_app snmp_apps[] = {
 	{ "get", 1, NULL, "agent oid ...", snmpc_get },
 	{ "getnext", 1, NULL, "agent oid ...", snmpc_get },
-	{ "walk", 1, "C:", "[-C cIipt] [-C E endoid] agent [oid]", snmpc_walk },
+	{ "walk", 1, "C:", "[-C cIipt] [-C E endoid] [-C s skipoid] agent [oid]", snmpc_walk },
 	{ "bulkget", 1, "C:", "[-C n<nonrep>r<maxrep>] agent oid ...", snmpc_get },
-	{ "bulkwalk", 1, "C:", "[-C cipn<nonrep>r<maxrep>] agent [oid]", snmpc_walk },
+	{ "bulkwalk", 1, "C:", "[-C cipn<nonrep>r<maxrep>] [-C s skipoid] agent [oid]", snmpc_walk },
 	{ "set", 1, NULL, "agent oid type value [oid type value] ...", snmpc_set },
 	{ "trap", 1, NULL, "agent uptime oid [oid type value] ...", snmpc_trap },
-	{ "df", 1, "C:", "[-Ch] agent", snmpc_df },
+	{ "df", 1, "C:", "[-Ch] [-Cr<maxrep>] agent", snmpc_df },
 	{ "mibtree", 0, "O:", "[-O fnS]", snmpc_mibtree }
 };
 struct snmp_app *snmp_app = NULL;
