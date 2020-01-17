@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.9 2020/01/17 09:49:47 martijn Exp $
+.\" $OpenBSD: snmp.1,v 1.10 2020/01/17 10:03:39 martijn Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -42,6 +42,10 @@
 .Op Ar options
 .Ar agent uptime trapoid
 .Oo Ar varoid type value Oc ...
+.Nm
+.Cm df
+.Op Ar options
+.Ar agent
 .Nm
 .Cm mibtree
 .Op Fl O Ar fns
@@ -151,6 +155,16 @@ The
 is the identification OID used by the trap handler to determine its action.
 This command is not available for
 .Fl v Cm 1 .
+.It Xo
+.Nm
+.Cm df 
+.Op Ar options
+.Ar agent
+.Xc
+An SNMP based version of the
+.Xr df 1
+command.
+If no size suffix is shown the sizes are in kilobytes.
 .It Nm Cm mibtree Op Fl O Ar fnS
 Dump the tree of compiled-in MIB objects.
 .El
@@ -208,6 +222,12 @@ walk the tree up to but excluding
 The blank before
 .Ar endoid
 is mandatory.
+.It Cm h
+For
+.Cm df
+print the output in
+.Dq human-readable
+format.
 .It Cm I
 For
 .Cm walk ,
@@ -247,9 +267,10 @@ or
 also show a summary of the total variables received.
 .It Cm r Ns Ar maxrep
 For
-.Cm bulkget
+.Cm bulkget ,
+.Cm bulkwalk
 and
-.Cm bulkwalk ,
+.Cm df ,
 set the max-repetitions field in the request to the positive integer
 .Ar maxrep .
 This determines the amount of MIBs to return for each specified OID.
