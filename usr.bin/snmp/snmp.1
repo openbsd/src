@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.8 2019/10/26 17:43:52 martijn Exp $
+.\" $OpenBSD: snmp.1,v 1.9 2020/01/17 09:49:47 martijn Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2019 $
+.Dd $Mdocdate: January 17 2020 $
 .Dt SNMP 1
 .Os
 .Sh NAME
@@ -256,6 +256,17 @@ This determines the amount of MIBs to return for each specified OID.
 This value defaults to 10.
 No blank is allowed before
 .Ar maxrep .
+.It Cm s Ar skipoid
+For
+.Cm walk
+or
+.Cm bulkwalk
+don't include
+.Ar skipoid
+or its children in the walk output.
+The blank before
+.Ar skipoid
+is mandatory.
 .It Cm t
 For
 .Cm walk ,

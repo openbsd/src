@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.17 2019/10/26 19:34:15 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.18 2020/01/17 09:49:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -95,6 +95,8 @@ int smi_print_hint = 1;
 int non_repeaters = 0;
 int max_repetitions = 10;
 struct ber_oid walk_end = {{0}, 0};
+struct ber_oid *walk_skip = NULL;
+size_t walk_skip_len = 0;
 enum smi_oid_lookup oid_lookup = smi_oidl_short;
 enum smi_output_string output_string = smi_os_default;
 
@@ -327,6 +329,23 @@ main(int argc, char *argv[])
 						errx(1, "-Cr invalid argument");
 					i = strtolp - optarg - 1;
 					break;
+				case 's':
+					if (strcmp(snmp_app->name, "walk") &&
+					    strcmp(snmp_app->name, "bulkwalk"))
+						usage();
+					if ((walk_skip = recallocarray(
+					    walk_skip, walk_skip_len,
+					    walk_skip_len + 1,
+					    sizeof(*walk_skip))) == NULL)
+						errx(1, "malloc");
+					if (smi_string2oid(argv[optind],
+					    &(walk_skip[walk_skip_len])) != 0)
+						errx(1, "%s: %s",
+						    "Unknown Object Identifier",
+						    argv[optind]);
+					walk_skip_len++;
+					optind++;
+					break;
 				case 't':
 					if (strcmp(snmp_app->name, "walk"))
 						usage();
@@ -548,9 +567,10 @@ snmpc_walk(int argc, char *argv[])
 	struct timespec start, finish;
 	struct snmp_agent *agent;
 	const char *oids;
-	int n = 0, prev_cmp;
+	int n = 0, prev_cmp, skip_cmp;
 	int errorstatus, errorindex;
 	int class;
+	size_t i;
 	unsigned type;
 
 	if (strcmp(snmp_app->name, "bulkwalk") == 0 && version < SNMP_V2C)
@@ -592,6 +612,14 @@ snmpc_walk(int argc, char *argv[])
 		n++;
 	}
 	while (1) {
+		for (i = 0; i < walk_skip_len; i++) {
+			skip_cmp = ober_oid_cmp(&(walk_skip[i]), &noid);
+			if (skip_cmp == 0 || skip_cmp == 2) {
+				bcopy(&(walk_skip[i]), &noid, sizeof(noid));
+				noid.bo_id[noid.bo_n -1]++;
+				break;
+			}
+		}
 		bcopy(&noid, &loid, sizeof(loid));
 		if (strcmp(snmp_app->name, "bulkwalk") == 0) {
 			if ((pdu = snmp_getbulk(agent, &noid, 1,
@@ -617,6 +645,13 @@ snmpc_walk(int argc, char *argv[])
 			if (value->be_class == BER_CLASS_CONTEXT &&
 			    value->be_type == BER_TYPE_EOC)
 				break;
+			for (i = 0; i < walk_skip_len; i++) {
+				skip_cmp = ober_oid_cmp(&(walk_skip[i]), &noid);
+				if (skip_cmp == 0 || skip_cmp == 2)
+					break;
+			}
+			if (i < walk_skip_len)
+				continue;
 			prev_cmp = ober_oid_cmp(&loid, &noid);
 			if (walk_check_increase && prev_cmp == -1)
 				errx(1, "OID not increasing");
