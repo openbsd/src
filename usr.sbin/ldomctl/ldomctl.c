@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.36 2020/01/17 10:50:20 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.37 2020/01/17 22:49:54 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -131,8 +131,8 @@ usage(void)
 	    "\t%1$s dump|list|list-io\n"
 	    "\t%1$s init-system [-n] file\n"
 	    "\t%1$s create-vdisk -s size file\n"
-	    "\t%1$s start [-c] domain\n"
-	    "\t%1$s console|panic|status|stop [domain]\n",
+	    "\t%1$s panic|start [-c] domain\n"
+	    "\t%1$s console|status|stop [domain]\n",
 	    getprogname());
 
 	exit(EXIT_FAILURE);
@@ -503,11 +503,27 @@ guest_panic(int argc, char **argv)
 {
 	struct hvctl_msg msg;
 	ssize_t nbytes;
+	uint64_t gid;
+	int ch, console = 0;
 
-	if (argc != 2)
+	while ((ch = getopt(argc, argv, "c")) != -1) {
+		switch (ch) {
+		case 'c':
+			console = 1;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
 		usage();
 
 	hv_config();
+
+	gid = find_guest(argv[0]);
 
 	/*
 	 * Stop guest domain.
@@ -515,7 +531,7 @@ guest_panic(int argc, char **argv)
 	bzero(&msg, sizeof(msg));
 	msg.hdr.op = HVCTL_OP_GUEST_PANIC;
 	msg.hdr.seq = hvctl_seq++;
-	msg.msg.guestop.guestid = find_guest(argv[1]);
+	msg.msg.guestop.guestid = gid;
 	nbytes = write(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "write");
@@ -524,6 +540,9 @@ guest_panic(int argc, char **argv)
 	nbytes = read(hvctl_fd, &msg, sizeof(msg));
 	if (nbytes != sizeof(msg))
 		err(1, "read");
+
+	if (console)
+		console_exec(gid);
 }
 
 void

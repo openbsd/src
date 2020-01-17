@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.26 2020/01/16 16:46:47 schwarze Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.27 2020/01/17 22:49:54 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 16 2020 $
+.Dd $Mdocdate: January 17 2020 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -84,13 +84,17 @@ and the configuration which will be used next
 (after resetting the machine) if it differs from the currently running one.
 .It Cm list-io
 List available PCIe devices.
-.It Cm panic Ar domain
+.It Cm panic Oo Fl c Oc Ar domain
 Panic a guest domain.
 The exact behaviour of this command depends on the OS running in the domain.
 For
 .Ox
 the default behaviour is to enter
 .Xr ddb 4 .
+.Bl -tag -width 3n
+.It Fl c
+Automatically connect to the guest console.
+.El
 .It Cm select Ar configuration
 Select the next logical domain configuration to use
 (after resetting the machine).
