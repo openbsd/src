@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2020/01/16 20:06:53 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.7 2020/01/17 10:01:18 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -121,9 +121,11 @@ SETUP_CA = \
 
 cleanup:
 	-ssh ${LEFT_SSH} 'rm -f /tmp/test.conf; ipsecctl -F; pkill iked; \
-	     rm -f /etc/iked/ca/*; rm -f /etc/iked/certs/*; rm -f /etc/iked/private/*'
+	    rm -f /etc/iked/ca/*; rm -f /etc/iked/certs/*; rm -f /etc/iked/private/*; \
+	    sysctl "net.inet.esp.udpencap_port=4500"'
 	-ssh ${RIGHT_SSH} 'rm -f /tmp/test.conf; ipsecctl -F; pkill iked; \
-	     rm -f /etc/iked/ca/*; rm -f /etc/iked/certs/*; rm -f /etc/iked/private/*'
+	    rm -f /etc/iked/ca/*; rm -f /etc/iked/certs/*; rm -f /etc/iked/private/*; \
+	    sysctl "net.inet.esp.udpencap_port=4500"'
 
 setup_certs: ca-both.crt left-from-ca-both.crt left.key right-from-ca-both.crt \
     right.key ca-left.crt right-from-ca-left.crt ca-right.crt left-from-ca-right.crt
