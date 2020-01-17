@@ -1,8 +1,9 @@
-dnl	$OpenBSD: hardware,v 1.7 2019/10/07 19:17:33 kmos Exp $
+dnl	$OpenBSD: hardware,v 1.8 2020/01/17 15:51:35 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5
 		Pine64 Pine 64/64+
+		Pine64 Pinebook
 		NanoPi A64
 		Orange Pi PC2
 	AMD Opteron A1100 (Seattle)
@@ -22,6 +23,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Pine64 ROCK64
 		Pine64 ROCKPro64
 		Firefly-RK3399
+		FriendlyElec NanoPC-T4
 		Theobroma Systems RK3399-Q7
 	Socionext SC2A11
 		Socionext SynQuacer-E Developerbox
