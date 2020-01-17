@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2020/01/16 21:11:17 bluhm Exp $	*/
+/*	$OpenBSD: util.c,v 1.2 2020/01/17 20:45:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
@@ -28,6 +28,52 @@
 #include <unistd.h>
 
 #include "util.h"
+
+void
+task_enqueue(struct task *todo, int ch, const char *msg)
+{
+	switch (ch) {
+	case 'E':
+		todo->t_type = TEOF;
+		todo->t_msg = NULL;
+		break;
+	case 'N':
+		todo->t_type = TDWN;
+		todo->t_msg = NULL;
+		break;
+	case 'r':
+		todo->t_type = TRCV;
+		todo->t_msg = msg;
+		break;
+	case 's':
+		todo->t_type = TSND;
+		todo->t_msg = msg;
+		break;
+	}
+}
+
+void
+task_run(int s, struct task *todolist, size_t tlen)
+{
+	size_t t;
+
+	for (t = 0; t < tlen; t++) {
+		switch(todolist[t].t_type) {
+		case TEOF:
+			receive_eof(s);
+			break;
+		case TDWN:
+			send_shutdown(s);
+			break;
+		case TRCV:
+			receive_line(s, todolist[t].t_msg);
+			break;
+		case TSND:
+			send_line(s, todolist[t].t_msg);
+			break;
+		}
+	}
+}
 
 void
 alarm_timeout(void)
@@ -73,6 +119,35 @@ print_peername(int s)
 }
 
 void
+receive_eof(int s)
+{
+	char buf[100];
+	size_t len;
+	ssize_t n;
+
+	n = recv(s, buf, sizeof(buf) - 1, 0);
+	if (n == -1)
+		err(1, "recv");
+	if (n == 0) {
+		fprintf(stderr, "<<< EOF\n");
+		return;
+	}
+	len = n;
+	buf[len] = '\0';
+	if (buf[len - 1] == '\n')
+		buf[--len] = '\0';
+	fprintf(stderr, "<<< %s\n", buf);
+	errx(1, "expected receive EOF, got '%s'", buf);
+}
+
+void
+send_shutdown(int s)
+{
+	if (shutdown(s, SHUT_WR) == -1)
+		err(1, "shutdown");
+}
+
+void
 receive_line(int s, const char *msg)
 {
 	char buf[100];
@@ -80,9 +155,9 @@ receive_line(int s, const char *msg)
 	ssize_t n;
 
 	len = 0;
-	while (len < sizeof(buf)) {
+	while (len < sizeof(buf) - 1) {
 		off = len;
-		n = recv(s, buf + off, sizeof(buf) - off, 0);
+		n = recv(s, buf + off, sizeof(buf) - 1 - off, 0);
 		if (n == -1)
 			err(1, "recv");
 		if (n == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client-tcp.c,v 1.1 2020/01/16 21:11:17 bluhm Exp $	*/
+/*	$OpenBSD: client-tcp.c,v 1.2 2020/01/17 20:45:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
@@ -36,6 +36,8 @@ void __dead
 usage(void)
 {
 	fprintf(stderr, "client [-r rcvmsg] [-s sndmsg] host port\n"
+	"    -E         wait for EOF\n"
+	"    -N         shutdown write\n"
 	"    -r rcvmsg  receive from server and check message\n"
 	"    -s sndmsg  send message to server\n");
 	exit(2);
@@ -45,16 +47,20 @@ int
 main(int argc, char *argv[])
 {
 	const char *host, *port;
-	const char *rcvmsg = NULL, *sndmsg = NULL;
+	struct task todo[100];
+	size_t tlen = 0;
 	int ch, s;
 
-	while ((ch = getopt(argc, argv, "r:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "ENr:s:")) != -1) {
 		switch (ch) {
+		case 'E':
+		case 'N':
 		case 'r':
-			rcvmsg = optarg;
-			break;
 		case 's':
-			sndmsg = optarg;
+			if (tlen >= sizeof(todo) / sizeof(todo[0]))
+				errx(1, "too many tasks");
+			task_enqueue(&todo[tlen], ch, optarg);
+			tlen++;
 			break;
 		default:
 			usage();
@@ -74,11 +80,7 @@ main(int argc, char *argv[])
 	s = connect_socket(host, port);
 	print_sockname(s);
 	print_peername(s);
-	if (rcvmsg != NULL)
-		receive_line(s, rcvmsg);
-	if (sndmsg != NULL)
-		send_line(s, sndmsg);
-
+	task_run(s, todo, tlen);
 	if (close(s) == -1)
 		err(1, "close");
 

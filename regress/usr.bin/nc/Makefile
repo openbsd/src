@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2020/01/16 21:11:17 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2020/01/17 20:45:50 bluhm Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -893,13 +893,23 @@ run-unix-dgram-keep:
 	# XXX message succeeded is missing
 	! grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
-### TCP with custom peer
+### TCP with test peer
 
-REGRESS_TARGETS +=	run-tcp-custom
-run-tcp-custom: server-tcp client-tcp
+REGRESS_TARGETS +=	run-tcp-test
+run-tcp-test: server-tcp client-tcp
 	@echo '======== $@ ========'
+	# test the test tools
 	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
-	./client-tcp -r greeting -s command 127.0.0.1 ${PORT}
+	./client-tcp -r greeting -s command 127.0.0.1 ${PORT} >client.port
+
+REGRESS_TARGETS +=	run-tcp-test-shutdown
+run-tcp-test-shutdown: server-tcp client-tcp
+	@echo '======== $@ ========'
+	# test the test tools
+	./server-tcp -s greeting -N -r command -E 127.0.0.1 0 >server.port
+	./client-tcp -r greeting -E -s command -N 127.0.0.1 ${PORT} >client.port
+
+# TCP netcat server with test client
 
 REGRESS_TARGETS +=	run-tcp-server
 run-tcp-server: client-tcp
@@ -907,21 +917,131 @@ run-tcp-server: client-tcp
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
-	./client-tcp -r greeting -s command 127.0.0.1 ${PORT}
+	# test client read from netcat, then send line and exit
+	./client-tcp -r greeting -s command 127.0.0.1 ${PORT} >client.port
 	${TRANSFER_SERVER_WAIT}
 	grep '^command$$' server.out
 	grep 'Listening on 127.0.0.1 ' server.err
 	grep 'Connection received on 127.0.0.1 ' server.err
 
+REGRESS_TARGETS +=	run-tcp-server-eof
+run-tcp-server-eof: client-tcp
+	@echo '======== $@ ========'
+	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# test client read from netcat, then send line, shutdown, wait for eof
+	./client-tcp -r greeting -s command -N -E 127.0.0.1 ${PORT} >client.port
+	${TRANSFER_SERVER_WAIT}
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+
+REGRESS_TARGETS +=	run-tcp-server-reverse-eof
+run-tcp-server-reverse-eof: client-tcp
+	@echo '======== $@ ========'
+	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# test client send to netcat, shutdown, then read line, wait for eof
+	./client-tcp -s command -N -r greeting -E 127.0.0.1 ${PORT} >client.port
+	${TRANSFER_SERVER_WAIT}
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+
+REGRESS_TARGETS +=	run-tcp-server-shutdown-eof
+run-tcp-server-shutdown-eof: client-tcp
+	@echo '======== $@ ========'
+	# netcat calls shutdown on output after EOF on input
+	${SERVER_NC} -N -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# test client read from netcat, then send line, wait for eof, shutdown
+	./client-tcp -r greeting -s command -E -N 127.0.0.1 ${PORT} >client.port
+	${TRANSFER_SERVER_WAIT}
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+
+REGRESS_TARGETS +=	run-tcp-server-shutdown-reverse-eof
+run-tcp-server-shutdown-reverse-eof: client-tcp
+	@echo '======== $@ ========'
+	# netcat calls shutdown on output after EOF on input
+	${SERVER_NC} -N -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# test client send to netcat, shutdown, then read line, wait for eof
+	./client-tcp -s command -N -r greeting -E 127.0.0.1 ${PORT} >client.port
+	${TRANSFER_SERVER_WAIT}
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+
+# TCP netcat client with test server
+
 REGRESS_TARGETS +=	run-tcp-client
 run-tcp-client: server-tcp
 	@echo '======== $@ ========'
+	# test server send to netcat, then read line and exit
 	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
 	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
 	${CONNECT_WAIT}
 	${TRANSFER_CLIENT_WAIT}
 	grep '^greeting$$' client.out
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-tcp-client-eof
+run-tcp-client-eof: server-tcp
+	@echo '======== $@ ========'
+	# test server send to netcat, shutdown, then read line, wait for eof
+	./server-tcp -s greeting -N -r command -E 127.0.0.1 0 >server.port
+	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_CLIENT_WAIT}
+	grep '^greeting$$' client.out
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-tcp-client-reverse-eof
+run-tcp-client-reverse-eof: server-tcp
+	@echo '======== $@ ========'
+	# test server read from netcat, then read line, wait for eof, shutdown
+	./server-tcp -r command -s greeting -E -N 127.0.0.1 0 >server.port
+	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_CLIENT_WAIT}
+	grep '^greeting$$' client.out
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-tcp-client-shutdown-eof
+run-tcp-client-shutdown-eof: server-tcp
+	@echo '======== $@ ========'
+	# test server send to netcat, shutdown, then read line, wait for eof
+	./server-tcp -s greeting -N -r command -E 127.0.0.1 0 >server.port
+	# netcat calls shutdown on output after EOF on input
+	${CLIENT_NC} -N -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_CLIENT_WAIT}
+	grep '^greeting$$' client.out
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-tcp-client-shutdown-reverse-eof
+run-tcp-client-shutdown-reverse-eof: server-tcp
+	@echo '======== $@ ========'
+	# test server read from netcat, wait for eof, then read line, shutdown
+	./server-tcp -r command -E -s greeting -N 127.0.0.1 0 >server.port
+	# netcat calls shutdown on output after EOF on input
+	${CLIENT_NC} -N -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_CLIENT_WAIT}
+	grep '^greeting$$' client.out
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
+REGRESS_EXPECTED_FAILURES = \
+	run-tcp-server-shutdown-eof \
+	run-tcp-server-shutdown-reverse-eof \
+	run-tcp-client-shutdown-eof \
+	run-tcp-client-shutdown-reverse-eof
 
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 

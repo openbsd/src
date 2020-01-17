@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.1 2020/01/16 21:11:17 bluhm Exp $	*/
+/*	$OpenBSD: util.h,v 1.2 2020/01/17 20:45:50 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
@@ -16,8 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+struct task {
+	const char *t_msg;
+	enum { TEOF, TDWN, TRCV, TSND } t_type;
+};
+
+void task_enqueue(struct task *, int, const char *);
+void task_run(int, struct task *, size_t);
 void alarm_timeout(void);
 void print_sockname(int);
 void print_peername(int);
+void receive_eof(int);
+void send_shutdown(int);
 void receive_line(int, const char *);
 void send_line(int, const char *);
