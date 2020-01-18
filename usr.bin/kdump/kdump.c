@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.140 2019/11/27 16:50:21 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.141 2020/01/18 23:56:31 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -74,7 +74,14 @@
 #include "kdump_subr.h"
 #include "extern.h"
 
-int timestamp, decimal, iohex, fancy = 1, maxdata = INT_MAX;
+enum {
+	TIMESTAMP_NONE,
+	TIMESTAMP_ABSOLUTE,
+	TIMESTAMP_RELATIVE,
+	TIMESTAMP_ELAPSED
+} timestamp = TIMESTAMP_NONE;
+
+int decimal, iohex, fancy = 1, maxdata = INT_MAX;
 int needtid, tail, basecol;
 char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
@@ -186,10 +193,16 @@ main(int argc, char *argv[])
 				errx(1, "-p %s: %s", optarg, errstr);
 			break;
 		case 'R':	/* relative timestamp */
-			timestamp = timestamp == 1 ? 3 : 2;
+			if (timestamp == TIMESTAMP_ABSOLUTE)
+				timestamp = TIMESTAMP_ELAPSED;
+			else
+				timestamp = TIMESTAMP_RELATIVE;
 			break;
 		case 'T':
-			timestamp = timestamp == 2 ? 3 : 1;
+			if (timestamp == TIMESTAMP_RELATIVE)
+				timestamp = TIMESTAMP_ELAPSED;
+			else
+				timestamp = TIMESTAMP_ABSOLUTE;
 			break;
 		case 't':
 			trpoints = getpoints(optarg, DEF_POINTS);
@@ -354,12 +367,12 @@ dumpheader(struct ktr_header *kth)
 	if (needtid)
 		basecol += printf("/%-7ld", (long)kth->ktr_tid);
 	basecol += printf(" %-8.*s ", MAXCOMLEN, kth->ktr_comm);
-	if (timestamp) {
-		if (timestamp == 3) {
+	if (timestamp != TIMESTAMP_NONE) {
+		if (timestamp == TIMESTAMP_ELAPSED) {
 			if (prevtime.tv_sec == 0)
 				prevtime = kth->ktr_time;
 			timespecsub(&kth->ktr_time, &prevtime, &temp);
-		} else if (timestamp == 2) {
+		} else if (timestamp == TIMESTAMP_RELATIVE) {
 			timespecsub(&kth->ktr_time, &prevtime, &temp);
 			prevtime = kth->ktr_time;
 		} else
