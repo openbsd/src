@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.146 2020/01/10 10:33:35 bluhm Exp $	*/
+/*	$OpenBSD: mount.h,v 1.147 2020/01/18 08:40:19 visa Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -401,6 +401,10 @@ struct mount {
 #define MNT_WANTRDWR	0x02000000	/* want upgrade to read/write */
 #define MNT_SOFTDEP     0x04000000      /* soft dependencies being done */
 #define MNT_DOOMED	0x08000000	/* device behind filesystem is gone */
+
+#ifdef _KERNEL
+#define MNT_OP_FLAGS	(MNT_UPDATE | MNT_RELOAD | MNT_FORCE | MNT_WANTRDWR)
+#endif
 
 /*
  * Flags for various system call interfaces.

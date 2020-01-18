@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.339 2020/01/10 10:33:35 bluhm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.340 2020/01/18 08:40:19 visa Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -258,8 +258,7 @@ update:
 		vput(vp);
 		if (mp->mnt_flag & MNT_WANTRDWR)
 			mp->mnt_flag &= ~MNT_RDONLY;
-		mp->mnt_flag &=~
-		    (MNT_UPDATE | MNT_RELOAD | MNT_FORCE | MNT_WANTRDWR);
+		mp->mnt_flag &= ~MNT_OP_FLAGS;
 		if (error)
 			mp->mnt_flag = mntflag;
 
@@ -276,6 +275,7 @@ update:
 		goto fail;
 	}
 
+	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	vp->v_mountedhere = mp;
 
 	/*
