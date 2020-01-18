@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.75 2019/12/31 13:48:31 visa Exp $ */
+/*	$OpenBSD: uhid.c,v 1.76 2020/01/18 09:00:52 visa Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -167,6 +167,10 @@ uhid_detach(struct device *self, int flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
+
+	s = splusb();
+	klist_invalidate(&sc->sc_rsel.si_note);
+	splx(s);
 
 	return (0);
 }
