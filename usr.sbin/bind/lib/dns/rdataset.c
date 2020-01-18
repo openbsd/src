@@ -672,66 +672,6 @@ dns_rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
 	return((rdataset->methods->getclosest)(rdataset, name, neg, negsig));
 }
 
-/*
- * Additional cache stuff
- */
-isc_result_t
-dns_rdataset_getadditional(dns_rdataset_t *rdataset,
-			   dns_rdatasetadditional_t type,
-			   dns_rdatatype_t qtype,
-			   dns_acache_t *acache,
-			   dns_zone_t **zonep,
-			   dns_db_t **dbp,
-			   dns_dbversion_t **versionp,
-			   dns_dbnode_t **nodep,
-			   dns_name_t *fname,
-			   dns_message_t *msg,
-			   isc_stdtime_t now)
-{
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-	REQUIRE(zonep == NULL || *zonep == NULL);
-	REQUIRE(dbp != NULL && *dbp == NULL);
-	REQUIRE(versionp != NULL && *versionp == NULL);
-	REQUIRE(nodep != NULL && *nodep == NULL);
-	REQUIRE(fname != NULL);
-	REQUIRE(msg != NULL);
-
-	if (acache != NULL && rdataset->methods->getadditional != NULL) {
-		return ((rdataset->methods->getadditional)(rdataset, type,
-							   qtype, acache,
-							   zonep, dbp,
-							   versionp, nodep,
-							   fname, msg, now));
-	}
-
-	return (ISC_R_FAILURE);
-}
-
-isc_result_t
-dns_rdataset_setadditional(dns_rdataset_t *rdataset,
-			   dns_rdatasetadditional_t type,
-			   dns_rdatatype_t qtype,
-			   dns_acache_t *acache,
-			   dns_zone_t *zone,
-			   dns_db_t *db,
-			   dns_dbversion_t *version,
-			   dns_dbnode_t *node,
-			   dns_name_t *fname)
-{
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-
-	if (acache != NULL && rdataset->methods->setadditional != NULL) {
-		return ((rdataset->methods->setadditional)(rdataset, type,
-							   qtype, acache, zone,
-							   db, version,
-							   node, fname));
-	}
-
-	return (ISC_R_FAILURE);
-}
-
 isc_result_t
 dns_rdataset_putadditional(dns_acache_t *acache,
 			   dns_rdataset_t *rdataset,

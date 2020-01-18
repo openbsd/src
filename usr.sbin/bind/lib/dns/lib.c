@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.c,v 1.5 2020/01/09 14:24:07 florian Exp $ */
+/* $Id: lib.c,v 1.6 2020/01/18 16:55:00 florian Exp $ */
 
 /*! \file */
 
@@ -29,8 +29,8 @@
 #include <isc/once.h>
 #include <isc/util.h>
 
-#include <dns/db.h>
-#include <dns/ecdb.h>
+
+
 #include <dns/lib.h>
 #include <dns/result.h>
 
@@ -74,7 +74,6 @@ dns_lib_initmsgcat(void) {
 
 static isc_once_t init_once = ISC_ONCE_INIT;
 static isc_mem_t *dns_g_mctx = NULL;
-static dns_dbimplementation_t *dbimp = NULL;
 static isc_boolean_t initialize_done = ISC_FALSE;
 static isc_mutex_t reflock;
 static unsigned int references = 0;
@@ -89,12 +88,9 @@ initialize(void) {
 	if (result != ISC_R_SUCCESS)
 		return;
 	dns_result_register();
-	result = dns_ecdb_register(dns_g_mctx, &dbimp);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup_mctx;
 	result = isc_hash_create(dns_g_mctx, DNS_NAME_MAXWIRE);
 	if (result != ISC_R_SUCCESS)
-		goto cleanup_db;
+		goto cleanup_mctx;
 
 	result = dst_lib_init(dns_g_mctx);
 	if (result != ISC_R_SUCCESS)
@@ -111,9 +107,6 @@ initialize(void) {
 	dst_lib_destroy();
   cleanup_hash:
 	isc_hash_destroy();
-  cleanup_db:
-	if (dbimp != NULL)
-		dns_ecdb_unregister(&dbimp);
   cleanup_mctx:
 	if (dns_g_mctx != NULL)
 		isc_mem_detach(&dns_g_mctx);
@@ -156,8 +149,6 @@ dns_lib_shutdown(void) {
 
 	dst_lib_destroy();
 	isc_hash_destroy();
-	if (dbimp != NULL)
-		dns_ecdb_unregister(&dbimp);
 	if (dns_g_mctx != NULL)
 		isc_mem_detach(&dns_g_mctx);
 }

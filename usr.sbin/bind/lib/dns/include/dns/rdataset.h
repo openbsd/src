@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.9 2020/01/09 18:17:16 florian Exp $ */
+/* $Id: rdataset.h,v 1.10 2020/01/18 16:55:01 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -547,73 +547,6 @@ dns_rdataset_addclosest(dns_rdataset_t *rdataset, dns_name_t *name);
  * Requires:
  *\li	'rdataset' to be valid and #DNS_RDATASETATTR_CLOSEST to be set.
  *\li	'name' to be valid and have NSEC3 and RRSIG(NSEC3) rdatasets.
- */
-
-isc_result_t
-dns_rdataset_getadditional(dns_rdataset_t *rdataset,
-			   dns_rdatasetadditional_t type,
-			   dns_rdatatype_t qtype,
-			   dns_acache_t *acache,
-			   dns_zone_t **zonep,
-			   dns_db_t **dbp,
-			   dns_dbversion_t **versionp,
-			   dns_dbnode_t **nodep,
-			   dns_name_t *fname,
-			   dns_message_t *msg,
-			   isc_stdtime_t now);
-/*%<
- * Get cached additional information from the DB node for a particular
- * 'rdataset.'  'type' is one of dns_rdatasetadditional_fromauth,
- * dns_rdatasetadditional_fromcache, and dns_rdatasetadditional_fromglue,
- * which specifies the origin of the information.  'qtype' is intended to
- * be used for specifying a particular rdata type in the cached information.
- *
- * Requires:
- * \li	'rdataset' is a valid rdataset.
- * \li	'acache' can be NULL, in which case this function will simply return
- * 	ISC_R_FAILURE.
- * \li	For the other pointers, see dns_acache_getentry().
- *
- * Ensures:
- * \li	See dns_acache_getentry().
- *
- * Returns:
- * \li	#ISC_R_SUCCESS
- * \li	#ISC_R_FAILURE	- additional information caching is not supported.
- * \li	#ISC_R_NOTFOUND	- the corresponding DB node has not cached additional
- *			  information for 'rdataset.'
- * \li	Any error that dns_acache_getentry() can return.
- */
-
-isc_result_t
-dns_rdataset_setadditional(dns_rdataset_t *rdataset,
-			   dns_rdatasetadditional_t type,
-			   dns_rdatatype_t qtype,
-			   dns_acache_t *acache,
-			   dns_zone_t *zone,
-			   dns_db_t *db,
-			   dns_dbversion_t *version,
-			   dns_dbnode_t *node,
-			   dns_name_t *fname);
-/*%<
- * Set cached additional information to the DB node for a particular
- * 'rdataset.'  See dns_rdataset_getadditional for the semantics of 'type'
- * and 'qtype'.
- *
- * Requires:
- * \li	'rdataset' is a valid rdataset.
- * \li	'acache' can be NULL, in which case this function will simply return
- *	ISC_R_FAILURE.
- * \li	For the other pointers, see dns_acache_setentry().
- *
- * Ensures:
- * \li	See dns_acache_setentry().
- *
- * Returns:
- * \li	#ISC_R_SUCCESS
- * \li	#ISC_R_FAILURE	- additional information caching is not supported.
- * \li	#ISC_R_NOMEMORY
- * \li	Any error that dns_acache_setentry() can return.
  */
 
 isc_result_t

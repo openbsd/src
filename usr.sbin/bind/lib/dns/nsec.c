@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec.c,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: nsec.c,v 1.4 2020/01/18 16:55:00 florian Exp $ */
 
 /*! \file */
 
@@ -24,12 +24,12 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
-#include <dns/db.h>
+
 #include <dns/nsec.h>
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
-#include <dns/rdatasetiter.h>
+
 #include <dns/rdatastruct.h>
 #include <dns/result.h>
 
@@ -98,113 +98,6 @@ dns_nsec_compressbitmap(unsigned char *map, const unsigned char *raw,
 	return (unsigned int)(map - start);
 }
 
-isc_result_t
-dns_nsec_buildrdata(dns_db_t *db, dns_dbversion_t *version,
-		    dns_dbnode_t *node, dns_name_t *target,
-		    unsigned char *buffer, dns_rdata_t *rdata)
-{
-	isc_result_t result;
-	dns_rdataset_t rdataset;
-	isc_region_t r;
-	unsigned int i;
-
-	unsigned char *nsec_bits, *bm;
-	unsigned int max_type;
-	dns_rdatasetiter_t *rdsiter;
-
-	memset(buffer, 0, DNS_NSEC_BUFFERSIZE);
-	dns_name_toregion(target, &r);
-	memmove(buffer, r.base, r.length);
-	r.base = buffer;
-	/*
-	 * Use the end of the space for a raw bitmap leaving enough
-	 * space for the window identifiers and length octets.
-	 */
-	bm = r.base + r.length + 512;
-	nsec_bits = r.base + r.length;
-	dns_nsec_setbit(bm, dns_rdatatype_rrsig, 1);
-	dns_nsec_setbit(bm, dns_rdatatype_nsec, 1);
-	max_type = dns_rdatatype_nsec;
-	dns_rdataset_init(&rdataset);
-	rdsiter = NULL;
-	result = dns_db_allrdatasets(db, node, version, 0, &rdsiter);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	for (result = dns_rdatasetiter_first(rdsiter);
-	     result == ISC_R_SUCCESS;
-	     result = dns_rdatasetiter_next(rdsiter))
-	{
-		dns_rdatasetiter_current(rdsiter, &rdataset);
-		if (rdataset.type != dns_rdatatype_nsec &&
-		    rdataset.type != dns_rdatatype_nsec3 &&
-		    rdataset.type != dns_rdatatype_rrsig) {
-			if (rdataset.type > max_type)
-				max_type = rdataset.type;
-			dns_nsec_setbit(bm, rdataset.type, 1);
-		}
-		dns_rdataset_disassociate(&rdataset);
-	}
-
-	/*
-	 * At zone cuts, deny the existence of glue in the parent zone.
-	 */
-	if (dns_nsec_isset(bm, dns_rdatatype_ns) &&
-	    ! dns_nsec_isset(bm, dns_rdatatype_soa)) {
-		for (i = 0; i <= max_type; i++) {
-			if (dns_nsec_isset(bm, i) &&
-			    ! dns_rdatatype_iszonecutauth((dns_rdatatype_t)i))
-				dns_nsec_setbit(bm, i, 0);
-		}
-	}
-
-	dns_rdatasetiter_destroy(&rdsiter);
-	if (result != ISC_R_NOMORE)
-		return (result);
-
-	nsec_bits += dns_nsec_compressbitmap(nsec_bits, bm, max_type);
-
-	r.length = (unsigned int)(nsec_bits - r.base);
-	INSIST(r.length <= DNS_NSEC_BUFFERSIZE);
-	dns_rdata_fromregion(rdata,
-			     dns_db_class(db),
-			     dns_rdatatype_nsec,
-			     &r);
-
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_nsec_build(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
-	       dns_name_t *target, dns_ttl_t ttl)
-{
-	isc_result_t result;
-	dns_rdata_t rdata = DNS_RDATA_INIT;
-	unsigned char data[DNS_NSEC_BUFFERSIZE];
-	dns_rdatalist_t rdatalist;
-	dns_rdataset_t rdataset;
-
-	dns_rdataset_init(&rdataset);
-	dns_rdata_init(&rdata);
-
-	RETERR(dns_nsec_buildrdata(db, version, node, target, data, &rdata));
-
-	dns_rdatalist_init(&rdatalist);
-	rdatalist.rdclass = dns_db_class(db);
-	rdatalist.type = dns_rdatatype_nsec;
-	rdatalist.ttl = ttl;
-	ISC_LIST_APPEND(rdatalist.rdata, &rdata, link);
-	RETERR(dns_rdatalist_tordataset(&rdatalist, &rdataset));
-	result = dns_db_addrdataset(db, node, version, 0, &rdataset,
-				    0, NULL);
-	if (result == DNS_R_UNCHANGED)
-		result = ISC_R_SUCCESS;
-
- failure:
-	if (dns_rdataset_isassociated(&rdataset))
-		dns_rdataset_disassociate(&rdataset);
-	return (result);
-}
-
 isc_boolean_t
 dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type) {
 	dns_rdata_nsec_t nsecstruct;
@@ -238,56 +131,6 @@ dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type) {
 	}
 	dns_rdata_freestruct(&nsecstruct);
 	return (present);
-}
-
-isc_result_t
-dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version,
-		  isc_boolean_t *answer)
-{
-	dns_dbnode_t *node = NULL;
-	dns_rdataset_t rdataset;
-	dns_rdata_dnskey_t dnskey;
-	isc_result_t result;
-
-	REQUIRE(answer != NULL);
-
-	dns_rdataset_init(&rdataset);
-
-	result = dns_db_getoriginnode(db, &node);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	result = dns_db_findrdataset(db, node, version, dns_rdatatype_dnskey,
-				     0, 0, &rdataset, NULL);
-	dns_db_detachnode(db, &node);
-
-	if (result == ISC_R_NOTFOUND)
-		*answer = ISC_FALSE;
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	for (result = dns_rdataset_first(&rdataset);
-	     result == ISC_R_SUCCESS;
-	     result = dns_rdataset_next(&rdataset)) {
-		dns_rdata_t rdata = DNS_RDATA_INIT;
-
-		dns_rdataset_current(&rdataset, &rdata);
-		result = dns_rdata_tostruct(&rdata, &dnskey, NULL);
-		RUNTIME_CHECK(result == ISC_R_SUCCESS);
-
-		if (dnskey.algorithm == DST_ALG_RSAMD5 ||
-		    dnskey.algorithm == DST_ALG_RSASHA1 ||
-		    dnskey.algorithm == DST_ALG_DSA ||
-		    dnskey.algorithm == DST_ALG_ECC)
-			break;
-	}
-	dns_rdataset_disassociate(&rdataset);
-	if (result == ISC_R_SUCCESS)
-		*answer = ISC_TRUE;
-	if (result == ISC_R_NOMORE) {
-		*answer = ISC_FALSE;
-		result = ISC_R_SUCCESS;
-	}
-	return (result);
 }
 
 /*%

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ncache.h,v 1.3 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: ncache.h,v 1.4 2020/01/18 16:55:01 florian Exp $ */
 
 #ifndef DNS_NCACHE_H
 #define DNS_NCACHE_H 1
@@ -57,49 +57,6 @@ ISC_LANG_BEGINDECLS
  *      Omit DNSSEC records when rendering.
  */
 #define DNS_NCACHETOWIRE_OMITDNSSEC   0x0001
-
-isc_result_t
-dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
-	       dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t maxttl,
-	       dns_rdataset_t *addedrdataset);
-isc_result_t
-dns_ncache_addoptout(dns_message_t *message, dns_db_t *cache,
-		     dns_dbnode_t *node, dns_rdatatype_t covers,
-		     isc_stdtime_t now, dns_ttl_t maxttl,
-		     isc_boolean_t optout, dns_rdataset_t *addedrdataset);
-/*%<
- * Convert the authority data from 'message' into a negative cache
- * rdataset, and store it in 'cache' at 'node' with a TTL limited to
- * 'maxttl'.
- *
- * \li dns_ncache_add produces a negative cache entry with a trust of no
- *     more than answer
- * \li dns_ncache_addoptout produces a negative cache entry which will have
- *     a trust of secure if all the records that make up the entry are secure.
- *
- * The 'covers' argument is the RR type whose nonexistence we are caching,
- * or dns_rdatatype_any when caching a NXDOMAIN response.
- *
- * 'optout' indicates a DNS_RDATASETATTR_OPTOUT should be set.
- *
- * Note:
- *\li	If 'addedrdataset' is not NULL, then it will be attached to the added
- *	rdataset.  See dns_db_addrdataset() for more details.
- *
- * Requires:
- *\li	'message' is a valid message with a properly formatting negative cache
- *	authority section.
- *
- *\li	The requirements of dns_db_addrdataset() apply to 'cache', 'node',
- *	'now', and 'addedrdataset'.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
- *\li	#ISC_R_NOSPACE
- *
- *\li	Any result code of dns_db_addrdataset() is a possible result code
- *	of dns_ncache_add().
- */
 
 isc_result_t
 dns_ncache_towire(dns_rdataset_t *rdataset, dns_compress_t *cctx,

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnssec.h,v 1.5 2020/01/09 18:14:48 florian Exp $ */
+/* $Id: dnssec.h,v 1.6 2020/01/18 16:55:01 florian Exp $ */
 
 #ifndef DNS_DNSSEC_H
 #define DNS_DNSSEC_H 1
@@ -25,7 +25,7 @@
 #include <isc/stdtime.h>
 
 
-#include <dns/diff.h>
+
 #include <dns/types.h>
 
 #include <dst/dst.h>
@@ -166,25 +166,6 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
  *			authentication)
  *\li		DST_R_*
  */
-
-/*@{*/
-isc_result_t
-dns_dnssec_findzonekeys(dns_db_t *db, dns_dbversion_t *ver, dns_dbnode_t *node,
-			dns_name_t *name, isc_mem_t *mctx,
-			unsigned int maxkeys, dst_key_t **keys,
-			unsigned int *nkeys);
-
-isc_result_t
-dns_dnssec_findzonekeys2(dns_db_t *db, dns_dbversion_t *ver,
-			 dns_dbnode_t *node, dns_name_t *name,
-			 const char *directory, isc_mem_t *mctx,
-			 unsigned int maxkeys, dst_key_t **keys,
-			 unsigned int *nkeys);
-/*%<
- * 	Finds a set of zone keys.
- * 	XXX temporary - this should be handled in dns_zone_t.
- */
-/*@}*/
 
 isc_boolean_t
 dns_dnssec_keyactive(dst_key_t *key, isc_stdtime_t now);
@@ -327,38 +308,6 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
  * whether a key is already active in the zone.
  */
 
-isc_result_t
-dns_dnssec_updatekeys(dns_dnsseckeylist_t *keys, dns_dnsseckeylist_t *newkeys,
-		      dns_dnsseckeylist_t *removed, dns_name_t *origin,
-		      dns_ttl_t hint_ttl, dns_diff_t *diff, isc_boolean_t allzsk,
-		      isc_mem_t *mctx, void (*report)(const char *, ...));
-/*%<
- * Update the list of keys in 'keys' with new key information in 'newkeys'.
- *
- * For each key in 'newkeys', see if it has a match in 'keys'.
- * - If not, and if the metadata says the key should be published:
- *   add it to 'keys', and place a dns_difftuple into 'diff' so
- *   the key can be added to the DNSKEY set.  If the metadata says it
- *   should be active, set the first_sign flag.
- * - If so, and if the metadata says it should be removed:
- *   remove it from 'keys', and place a dns_difftuple into 'diff' so
- *   the key can be removed from the DNSKEY set.  if 'removed' is non-NULL,
- *   copy the key into that list; otherwise destroy it.
- * - Otherwise, make sure keys has current metadata.
- *
- * If 'allzsk' is true, we are allowing KSK-flagged keys to be used as
- * ZSKs.
- *
- * 'hint_ttl' is the TTL to use for the DNSKEY RRset if there is no
- * existing RRset, and if none of the keys to be added has a default TTL
- * (in which case we would use the shortest one).  If the TTL is longer
- * than the time until a new key will be activated, then we have to delay
- * the key's activation.
- *
- * 'report' points to a function for reporting status.
- *
- * On completion, any remaining keys in 'newkeys' are freed.
- */
 ISC_LANG_ENDDECLS
 
 #endif /* DNS_DNSSEC_H */

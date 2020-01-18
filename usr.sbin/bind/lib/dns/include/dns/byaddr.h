@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: byaddr.h,v 1.6 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: byaddr.h,v 1.7 2020/01/18 16:55:01 florian Exp $ */
 
 #ifndef DNS_BYADDR_H
 #define DNS_BYADDR_H 1
@@ -53,19 +53,6 @@
 
 ISC_LANG_BEGINDECLS
 
-/*%
- * A 'dns_byaddrevent_t' is returned when a byaddr completes.
- * The sender field will be set to the byaddr that completed.  If 'result'
- * is ISC_R_SUCCESS, then 'names' will contain a list of names associated
- * with the address.  The recipient of the event must not change the list
- * and must not refer to any of the name data after the event is freed.
- */
-typedef struct dns_byaddrevent {
-	ISC_EVENT_COMMON(struct dns_byaddrevent);
-	isc_result_t			result;
-	dns_namelist_t			names;
-} dns_byaddrevent_t;
-
 /*
  * This option is deprecated since we now only consider nibbles.
 #define DNS_BYADDROPT_IPV6NIBBLE	0x0001
@@ -73,10 +60,6 @@ typedef struct dns_byaddrevent {
 /*% Note DNS_BYADDROPT_IPV6NIBBLE is now deprecated. */
 #define DNS_BYADDROPT_IPV6INT		0x0002
 
-isc_result_t
-dns_byaddr_create(isc_mem_t *mctx, isc_netaddr_t *address, dns_view_t *view,
-		  unsigned int options, isc_task_t *task,
-		  isc_taskaction_t action, void *arg, dns_byaddr_t **byaddrp);
 /*%<
  * Find the domain name of 'address'.
  *
@@ -112,42 +95,6 @@ dns_byaddr_create(isc_mem_t *mctx, isc_netaddr_t *address, dns_view_t *view,
  *\li	Any resolver-related error (e.g. #ISC_R_SHUTTINGDOWN) may also be
  *	returned.
  */
-
-void
-dns_byaddr_cancel(dns_byaddr_t *byaddr);
-/*%<
- * Cancel 'byaddr'.
- *
- * Notes:
- *
- *\li	If 'byaddr' has not completed, post its #DNS_EVENT_BYADDRDONE
- *	event with a result code of #ISC_R_CANCELED.
- *
- * Requires:
- *
- *\li	'byaddr' is a valid byaddr.
- */
-
-void
-dns_byaddr_destroy(dns_byaddr_t **byaddrp);
-/*%<
- * Destroy 'byaddr'.
- *
- * Requires:
- *
- *\li	'*byaddrp' is a valid byaddr.
- *
- *\li	The caller has received the #DNS_EVENT_BYADDRDONE event (either because
- *	the byaddr completed or because dns_byaddr_cancel() was called).
- *
- * Ensures:
- *
- *\li	*byaddrp == NULL.
- */
-
-isc_result_t
-dns_byaddr_createptrname(isc_netaddr_t *address, isc_boolean_t nibble,
-			 dns_name_t *name);
 
 isc_result_t
 dns_byaddr_createptrname2(isc_netaddr_t *address, unsigned int options,

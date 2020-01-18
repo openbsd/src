@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3.h,v 1.2 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: nsec3.h,v 1.3 2020/01/18 16:55:01 florian Exp $ */
 
 #ifndef DNS_NSEC3_H
 #define DNS_NSEC3_H 1
@@ -22,8 +22,8 @@
 #include <isc/lang.h>
 #include <isc/iterated_hash.h>
 
-#include <dns/db.h>
-#include <dns/diff.h>
+
+
 #include <dns/name.h>
 #include <dns/rdatastruct.h>
 #include <dns/types.h>
@@ -46,27 +46,6 @@
 #define DNS_NSEC3_UNKNOWNALG ((dns_hash_t)245U)
 
 ISC_LANG_BEGINDECLS
-
-isc_result_t
-dns_nsec3_buildrdata(dns_db_t *db, dns_dbversion_t *version,
-		     dns_dbnode_t *node, unsigned int hashalg,
-		     unsigned int optin, unsigned int iterations,
-		     const unsigned char *salt, size_t salt_length,
-		     const unsigned char *nexthash, size_t hash_length,
-		     unsigned char *buffer, dns_rdata_t *rdata);
-/*%<
- * Build the rdata of a NSEC3 record for the data at 'node'.
- * Note: 'node' is not the node where the NSEC3 record will be stored.
- *
- * Requires:
- *	buffer	Points to a temporary buffer of at least
- * 		DNS_NSEC_BUFFERSIZE bytes.
- *	rdata	Points to an initialized dns_rdata_t.
- *
- * Ensures:
- *      *rdata	Contains a valid NSEC3 rdata.  The 'data' member refers
- *		to 'buffer'.
- */
 
 isc_boolean_t
 dns_nsec3_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type);
@@ -101,86 +80,6 @@ dns_nsec3_supportedhash(dns_hash_t hash);
  * Return whether we support this hash algorithm or not.
  */
 
-isc_result_t
-dns_nsec3_addnsec3(dns_db_t *db, dns_dbversion_t *version,
-		   dns_name_t *name, const dns_rdata_nsec3param_t *nsec3param,
-		   dns_ttl_t nsecttl, isc_boolean_t unsecure, dns_diff_t *diff);
-
-isc_result_t
-dns_nsec3_addnsec3s(dns_db_t *db, dns_dbversion_t *version,
-		    dns_name_t *name, dns_ttl_t nsecttl,
-		    isc_boolean_t unsecure, dns_diff_t *diff);
-
-isc_result_t
-dns_nsec3_addnsec3sx(dns_db_t *db, dns_dbversion_t *version,
-		     dns_name_t *name, dns_ttl_t nsecttl,
-		     isc_boolean_t unsecure, dns_rdatatype_t private,
-		     dns_diff_t *diff);
-/*%<
- * Add NSEC3 records for 'name', recording the change in 'diff'.
- * Adjust previous NSEC3 records, if any, to reflect the addition.
- * The existing NSEC3 records are removed.
- *
- * dns_nsec3_addnsec3() will only add records to the chain identified by
- * 'nsec3param'.
- *
- * 'unsecure' should be set to reflect if this is a potentially
- * unsecure delegation (no DS record).
- *
- * dns_nsec3_addnsec3s() will examine the NSEC3PARAM RRset to determine which
- * chains to be updated.  NSEC3PARAM records with the DNS_NSEC3FLAG_CREATE
- * will be preferentially chosen over NSEC3PARAM records without
- * DNS_NSEC3FLAG_CREATE set.  NSEC3PARAM records with DNS_NSEC3FLAG_REMOVE
- * set will be ignored by dns_nsec3_addnsec3s().  If DNS_NSEC3FLAG_CREATE
- * is set then the new NSEC3 will have OPTOUT set to match the that in the
- * NSEC3PARAM record otherwise OPTOUT will be inherited from the previous
- * record in the chain.
- *
- * dns_nsec3_addnsec3sx() is similar to dns_nsec3_addnsec3s() but 'private'
- * specifies the type of the private rdataset to be checked in addition to
- * the nsec3param rdataset at the zone apex.
- *
- * Requires:
- *	'db' to be valid.
- *	'version' to be valid or NULL.
- *	'name' to be valid.
- *	'nsec3param' to be valid.
- *	'diff' to be valid.
- */
-
-isc_result_t
-dns_nsec3_delnsec3(dns_db_t *db, dns_dbversion_t *version, dns_name_t *name,
-		   const dns_rdata_nsec3param_t *nsec3param, dns_diff_t *diff);
-
-isc_result_t
-dns_nsec3_delnsec3s(dns_db_t *db, dns_dbversion_t *version, dns_name_t *name,
-		    dns_diff_t *diff);
-
-isc_result_t
-dns_nsec3_delnsec3sx(dns_db_t *db, dns_dbversion_t *version, dns_name_t *name,
-		     dns_rdatatype_t private, dns_diff_t *diff);
-/*%<
- * Remove NSEC3 records for 'name', recording the change in 'diff'.
- * Adjust previous NSEC3 records, if any, to reflect the removal.
- *
- * dns_nsec3_delnsec3() performs the above for the chain identified by
- * 'nsec3param'.
- *
- * dns_nsec3_delnsec3s() examines the NSEC3PARAM RRset in a similar manner
- * to dns_nsec3_addnsec3s().  Unlike dns_nsec3_addnsec3s() updated NSEC3
- * records have the OPTOUT flag preserved.
- *
- * dns_nsec3_delnsec3sx() is similar to dns_nsec3_delnsec3s() but 'private'
- * specifies the type of the private rdataset to be checked in addition to
- * the nsec3param rdataset at the zone apex.
- *
- * Requires:
- *	'db' to be valid.
- *	'version' to be valid or NULL.
- *	'name' to be valid.
- *	'nsec3param' to be valid.
- *	'diff' to be valid.
- */
 
 isc_result_t
 dns_nsec3_active(dns_db_t *db, dns_dbversion_t *version,
@@ -250,15 +149,6 @@ dns_nsec3param_salttotext(dns_rdata_nsec3param_t *nsec3param, char *dst,
  *
  *\li 	"dst" to have enough space (as indicated by "dstlen") to hold the
  * 	resulting text and its NULL-terminating byte.
- */
-
-isc_result_t
-dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
-			    dns_zone_t *zone, isc_boolean_t nonsec,
-			    dns_diff_t *diff);
-
-/*%<
- * Mark NSEC3PARAM for deletion.
  */
 
 isc_result_t
