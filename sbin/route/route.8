@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.90 2019/04/30 16:34:19 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.91 2020/01/19 18:22:31 schwarze Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: April 30 2019 $
+.Dd $Mdocdate: January 19 2020 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -86,6 +86,7 @@ instead of a real routing socket to test route manipulation.
 (verbose) Print additional details.
 .El
 .Pp
+.Tg command
 The
 .Nm
 utility provides the following simple commands:
@@ -93,6 +94,7 @@ utility provides the following simple commands:
 .It Xo
 .Nm route
 .Op Fl T Ar rtable
+.Tg
 .Cm exec
 .Op Ar command ...
 .Xc
@@ -104,6 +106,7 @@ option.
 .Nm route
 .Op Fl nqv
 .Op Fl T Ar rtable
+.Tg
 .Cm flush
 .Op Ar modifiers
 .Xc
@@ -122,6 +125,7 @@ modifiers.
 .Nm route
 .Op Fl nv
 .Op Fl T Ar rtable
+.Tg
 .Cm get
 .Op Ar modifiers
 .Ar address
@@ -135,6 +139,7 @@ same address family as the destination are shown.
 .Nm
 .Op Fl n
 .Op Fl T Ar rtable
+.Tg
 .Cm monitor
 .Op Ar modifiers
 .Xc
@@ -156,6 +161,7 @@ only changes in that routing table will be displayed.
 .Nm route
 .Op Fl nv
 .Op Fl T Ar rtable
+.Tg
 .Cm show
 .Op Ar family
 .Op Fl gateway
@@ -191,6 +197,8 @@ If the priority is negative, then routes that do not match the numeric
 priority are shown.
 .El
 .Pp
+.Tg destination
+.Tg gateway
 The other commands relating to adding, changing, or deleting routes
 have the syntax:
 .Pp
@@ -199,6 +207,7 @@ have the syntax:
 .Nm route
 .Op Fl dnqtv
 .Op Fl T Ar rtable
+.Tg
 .Cm add
 .Op Ar modifiers
 .Ar destination gateway
@@ -207,6 +216,7 @@ have the syntax:
 .Nm route
 .Op Fl dnqtv
 .Op Fl T Ar rtable
+.Tg
 .Cm change
 .Op Ar modifiers
 .Ar destination gateway
@@ -215,6 +225,7 @@ have the syntax:
 .Nm route
 .Op Fl dnqtv
 .Op Fl T Ar rtable
+.Tg
 .Cm del Ns Op Cm ete
 .Op Ar modifiers
 .Ar destination gateway
@@ -230,12 +241,15 @@ a network by interpreting the Internet address specified as the
 .Ar destination
 argument.
 The optional modifiers
+.Tg
 .Fl net
 and
+.Tg
 .Fl host
 cause the destination to be interpreted as a network or a host, respectively.
 Otherwise, type is chosen based on the following rules:
 .Pp
+.Tg default
 The route is assumed to be to a network if any of the following apply to
 .Ar destination :
 .Pp
@@ -289,6 +303,7 @@ or alternately
 If the destination is directly reachable
 via an interface requiring
 no intermediary system to act as a gateway, the
+.Tg
 .Fl iface
 modifier should be specified;
 the gateway given is the address of this host on the common network,
@@ -296,6 +311,7 @@ indicating the interface to be used for transmission.
 .Pp
 To allow addresses to be interpreted as belonging to a particular address
 family (as well as for use in the
+.Tg
 .Ar family
 arguments to some commands), the following modifiers may be used:
 .Pp
@@ -330,6 +346,7 @@ and the names must be numeric specifications rather than
 symbolic names.
 .Pp
 The optional
+.Tg
 .Fl netmask
 qualifier is intended to manually add subnet routes with
 netmasks different from that of the implied network interface
@@ -342,10 +359,12 @@ case
 can be overridden by making sure this option follows the
 .Ar destination
 parameter.
+.Tg
 .Fl prefixlen
 is also available for a similar purpose, for IPv6/v4.
 .Pp
 A specific routing priority can be specified with the optional
+.Tg
 .Fl priority
 qualifier.
 If no priority is specified the kernel will set a priority depending on the
@@ -353,6 +372,7 @@ RTF_STATIC flag to either RTP_STATIC or RTP_DEFAULT.
 Note that priority 1 is reserved for kernel use.
 .Pp
 The optional
+.Tg
 .Fl mpath
 modifier needs to be specified with the
 .Cm add
@@ -376,6 +396,7 @@ destination regardless of source.
 When inserting MPLS routes,
 particular modifiers must be used.
 The
+.Tg
 .Fl mplslabel
 modifier needs to be specified in an ingress LSR to associate a particular
 label to an IPv4/IPv6 route.
@@ -429,6 +450,7 @@ Maximum transmission unit (MTU) size for this path.
 These may be individually locked by preceding each such modifier to
 be locked by
 the
+.Tg
 .Fl lock
 meta-modifier, or one can
 specify that all ensuing metrics may be locked by the
@@ -441,12 +463,15 @@ or
 .Cm add
 command where the destination and gateway are not sufficient to specify
 the route, the
+.Tg
 .Fl ifp
 or
+.Tg
 .Fl ifa
 modifiers may be used to determine the interface name or interface address.
 .Pp
 The optional
+.Tg
 .Fl label
 modifier specifies on route addition or modification that the route
 should have the given
