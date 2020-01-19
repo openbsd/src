@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.46 2020/01/19 00:03:46 cheloha Exp $	*/
+/*	$OpenBSD: eso.c,v 1.47 2020/01/19 00:18:34 cheloha Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -760,9 +760,8 @@ eso_halt_output(void *hdl)
 	    ESO_IO_A2DMAM_DMAENB);
 
 	sc->sc_pintr = NULL;
-	error = msleep_nsec(&sc->sc_pintr, &audio_lock, PWAIT, "esoho",
-	    MSEC_TO_NSEC(sc->sc_pdrain));
-	mtx_leave(&audio_lock);
+	error = msleep_nsec(&sc->sc_pintr, &audio_lock, PWAIT | PNORELOCK,
+	    "esoho", MSEC_TO_NSEC(sc->sc_pdrain));
 	
 	/* Shut down DMA completely. */
 	eso_write_mixreg(sc, ESO_MIXREG_A2C1, 0);
@@ -788,9 +787,8 @@ eso_halt_input(void *hdl)
 	    DMA37MD_WRITE | DMA37MD_DEMAND);
 
 	sc->sc_rintr = NULL;
-	error = msleep_nsec(&sc->sc_rintr, &audio_lock, PWAIT, "esohi",
-	    MSEC_TO_NSEC(sc->sc_rdrain));
-	mtx_leave(&audio_lock);
+	error = msleep_nsec(&sc->sc_rintr, &audio_lock, PWAIT | PNORELOCK,
+	    "esohi", MSEC_TO_NSEC(sc->sc_rdrain));
 
 	/* Shut down DMA completely. */
 	eso_write_ctlreg(sc, ESO_CTLREG_A1C2,
