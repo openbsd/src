@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.45 2019/12/14 12:49:50 fcambus Exp $	*/
+/*	$OpenBSD: eso.c,v 1.46 2020/01/19 00:03:46 cheloha Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -760,7 +760,8 @@ eso_halt_output(void *hdl)
 	    ESO_IO_A2DMAM_DMAENB);
 
 	sc->sc_pintr = NULL;
-	error = msleep(&sc->sc_pintr, &audio_lock, PWAIT, "esoho", sc->sc_pdrain);
+	error = msleep_nsec(&sc->sc_pintr, &audio_lock, PWAIT, "esoho",
+	    MSEC_TO_NSEC(sc->sc_pdrain));
 	mtx_leave(&audio_lock);
 	
 	/* Shut down DMA completely. */
@@ -787,7 +788,8 @@ eso_halt_input(void *hdl)
 	    DMA37MD_WRITE | DMA37MD_DEMAND);
 
 	sc->sc_rintr = NULL;
-	error = msleep(&sc->sc_rintr, &audio_lock, PWAIT, "esohi", sc->sc_rdrain);
+	error = msleep_nsec(&sc->sc_rintr, &audio_lock, PWAIT, "esohi",
+	    MSEC_TO_NSEC(sc->sc_rdrain));
 	mtx_leave(&audio_lock);
 
 	/* Shut down DMA completely. */
@@ -1605,8 +1607,8 @@ eso_trigger_output(void *hdl, void *start, void *end, int blksize,
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 
-	/* Compute drain timeout. */
-	sc->sc_pdrain = hz * (blksize * 3 / 2) / 
+	/* Compute drain timeout (milliseconds). */
+	sc->sc_pdrain = 1000 * (blksize * 3 / 2) / 
 	    (param->sample_rate * param->channels * param->bps);
 
 	/* DMA transfer count (in `words'!) reload using 2's complement. */
@@ -1688,8 +1690,8 @@ eso_trigger_input(void *hdl, void *start, void *end, int blksize,
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
 
-	/* Compute drain timeout. */
-	sc->sc_rdrain = hz * (blksize * 3 / 2) / 
+	/* Compute drain timeout (milliseconds). */
+	sc->sc_rdrain = 1000 * (blksize * 3 / 2) / 
 	    (param->sample_rate * param->channels * param->bps);
 
 	/* Set up ADC DMA converter parameters. */
