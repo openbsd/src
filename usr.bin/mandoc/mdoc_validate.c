@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.291 2020/01/19 16:16:33 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.292 2020/01/19 17:59:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -111,6 +111,7 @@ static	void	 post_sm(POST_ARGS);
 static	void	 post_st(POST_ARGS);
 static	void	 post_std(POST_ARGS);
 static	void	 post_sx(POST_ARGS);
+static	void	 post_tg(POST_ARGS);
 static	void	 post_useless(POST_ARGS);
 static	void	 post_xr(POST_ARGS);
 static	void	 post_xx(POST_ARGS);
@@ -236,6 +237,7 @@ static	const v_post mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	NULL,		/* %Q */
 	NULL,		/* %U */
 	NULL,		/* Ta */
+	post_tg,	/* Tg */
 };
 
 #define	RSORD_MAX 14 /* Number of `Rs' blocks. */
@@ -1075,6 +1077,41 @@ post_st(POST_ARGS)
 }
 
 static void
+post_tg(POST_ARGS)
+{
+	struct roff_node	*n, *nch;
+	size_t			len;
+
+	n = mdoc->last;
+	nch = n->child;
+	if (nch == NULL && n->next != NULL &&
+	    n->next->child->type == ROFFT_TEXT) {
+		mdoc->next = ROFF_NEXT_CHILD;
+		roff_word_alloc(mdoc, n->line, n->pos, n->next->child->string);
+		nch = mdoc->last;
+		nch->flags |= NODE_NOSRC;
+		mdoc->last = n;
+	}
+	if (nch == NULL || *nch->string == '\0') {
+		mandoc_msg(MANDOCERR_MACRO_EMPTY, n->line, n->pos, "Tg");
+		roff_node_delete(mdoc, n);
+		return;
+	}
+	len = strcspn(nch->string, " \t");
+	if (nch->string[len] != '\0')
+		mandoc_msg(MANDOCERR_TG_SPC, nch->line, nch->pos + len + 1,
+		    "Tg %s", nch->string);
+	if (nch->next != NULL) {
+		mandoc_msg(MANDOCERR_ARG_EXCESS, nch->next->line,
+		    nch->next->pos, "Tg ... %s", nch->next->string);
+		while (nch->next != NULL)
+			roff_node_delete(mdoc, nch->next);
+	}
+	if (nch->string[len] != '\0')
+		roff_node_delete(mdoc, n);
+}
+
+static void
 post_obsolete(POST_ARGS)
 {
 	struct roff_node *n;
@@ -1739,7 +1776,7 @@ post_bl(POST_ARGS)
 	while (nchild != NULL) {
 		nnext = nchild->next;
 		if (nchild->tok == MDOC_It ||
-		    (nchild->tok == MDOC_Sm &&
+		    ((nchild->tok == MDOC_Sm || nchild->tok == MDOC_Tg) &&
 		     nnext != NULL && nnext->tok == MDOC_It)) {
 			nchild = nnext;
 			continue;

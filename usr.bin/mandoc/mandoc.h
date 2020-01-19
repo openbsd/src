@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.207 2020/01/19 16:16:33 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.208 2020/01/19 17:59:01 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -223,6 +223,7 @@ enum	mandocerr {
 	MANDOCERR_SHIFT, /* excessive shift: ..., but max is ... */
 	MANDOCERR_SO_PATH, /* NOT IMPLEMENTED: .so with absolute path or ".." */
 	MANDOCERR_SO_FAIL, /* .so request failed */
+	MANDOCERR_TG_SPC, /* skipping tag containing whitespace: tag */
 	MANDOCERR_ARG_SKIP, /* skipping all arguments: macro args */
 	MANDOCERR_ARG_EXCESS, /* skipping excess arguments: macro ... args */
 	MANDOCERR_DIVZERO, /* divide by zero */

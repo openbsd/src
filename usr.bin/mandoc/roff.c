@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff.c,v 1.240 2019/12/26 19:51:47 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.241 2020/01/19 17:59:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -353,7 +353,7 @@ const char *__roff_name[MAN_MAX + 1] = {
 	"Lk",		"Mt",		"Brq",		"Bro",
 	"Brc",		"%C",		"Es",		"En",
 	"Dx",		"%Q",		"%U",		"Ta",
-	NULL,
+	"Tg",		NULL,
 	"TH",		"SH",		"SS",		"TP",
 	"TQ",
 	"LP",		"PP",		"P",		"IP",

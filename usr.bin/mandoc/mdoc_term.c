@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_term.c,v 1.273 2019/06/27 12:19:39 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.274 2020/01/19 17:59:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -117,6 +117,7 @@ static	int	  termp_pp_pre(DECL_ARGS);
 static	int	  termp_ss_pre(DECL_ARGS);
 static	int	  termp_sy_pre(DECL_ARGS);
 static	int	  termp_tag_pre(DECL_ARGS);
+static	int	  termp_tg_pre(DECL_ARGS);
 static	int	  termp_under_pre(DECL_ARGS);
 static	int	  termp_vt_pre(DECL_ARGS);
 static	int	  termp_xr_pre(DECL_ARGS);
@@ -243,6 +244,7 @@ static const struct mdoc_term_act mdoc_term_acts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, termp____post }, /* %Q */
 	{ NULL, termp____post }, /* %U */
 	{ NULL, NULL }, /* Ta */
+	{ termp_tg_pre, NULL }, /* Tg */
 };
 
 static	int	 fn_prio;
@@ -2077,6 +2079,13 @@ termp_tag_pre(DECL_ARGS)
 	      n->parent->parent->parent->tok == MDOC_It)))
 		tag_put(n->child->string, 1, p->line);
 	return 1;
+}
+
+static int
+termp_tg_pre(DECL_ARGS)
+{
+	tag_put(n->child->string, -2, p->line);
+	return 0;
 }
 
 static int

@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff.h,v 1.51 2019/03/04 13:01:52 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.52 2020/01/19 17:59:01 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -437,6 +437,7 @@ enum	roff_tok {
 	MDOC__Q,
 	MDOC__U,
 	MDOC_Ta,
+	MDOC_Tg,
 	MDOC_MAX,
 	MAN_TH,
 	MAN_SH,

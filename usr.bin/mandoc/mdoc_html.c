@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_html.c,v 1.207 2019/12/10 10:49:04 bentley Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.208 2020/01/19 17:59:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -113,6 +113,7 @@ static	int		  mdoc_ss_pre(MDOC_ARGS);
 static	int		  mdoc_st_pre(MDOC_ARGS);
 static	int		  mdoc_sx_pre(MDOC_ARGS);
 static	int		  mdoc_sy_pre(MDOC_ARGS);
+static	int		  mdoc_tg_pre(MDOC_ARGS);
 static	int		  mdoc_va_pre(MDOC_ARGS);
 static	int		  mdoc_vt_pre(MDOC_ARGS);
 static	int		  mdoc_xr_pre(MDOC_ARGS);
@@ -239,6 +240,7 @@ static const struct mdoc_html_act mdoc_html_acts[MDOC_MAX - MDOC_Dd] = {
 	{mdoc__x_pre, mdoc__x_post}, /* %Q */
 	{mdoc__x_pre, mdoc__x_post}, /* %U */
 	{NULL, NULL}, /* Ta */
+	{mdoc_tg_pre, NULL}, /* Tg */
 };
 
 
@@ -716,6 +718,16 @@ mdoc_xr_pre(MDOC_ARGS)
 	print_text(h, n->string);
 	h->flags |= HTML_NOSPACE;
 	print_text(h, ")");
+	return 0;
+}
+
+static int
+mdoc_tg_pre(MDOC_ARGS)
+{
+	char	*id;
+
+	if ((id = html_make_id(n, 1)) != NULL)
+		print_otag(h, TAG_MARK, "i", id);
 	return 0;
 }
 

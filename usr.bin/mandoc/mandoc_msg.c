@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_msg.c,v 1.7 2020/01/19 16:16:33 schwarze Exp $ */
+/*	$OpenBSD: mandoc_msg.c,v 1.8 2020/01/19 17:59:01 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -221,6 +221,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"excessive shift",
 	"NOT IMPLEMENTED: .so with absolute path or \"..\"",
 	".so request failed",
+	"skipping tag containing whitespace",
 	"skipping all arguments",
 	"skipping excess arguments",
 	"divide by zero",

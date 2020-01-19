@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.h,v 1.67 2019/09/01 15:12:03 schwarze Exp $ */
+/*	$OpenBSD: html.h,v 1.68 2020/01/19 17:59:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2017, 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -48,6 +48,7 @@ enum	htmltag {
 	TAG_SPAN,
 	TAG_VAR,
 	TAG_BR,
+	TAG_MARK,
 	TAG_MATH,
 	TAG_MROW,
 	TAG_MI,

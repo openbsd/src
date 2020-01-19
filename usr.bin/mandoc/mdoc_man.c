@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.130 2019/01/04 03:17:38 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.131 2020/01/19 17:59:01 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -260,6 +260,7 @@ static const struct mdoc_man_act mdoc_man_acts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %Q */
 	{ NULL, NULL, post_percent, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
+	{ NULL, NULL, NULL, NULL, NULL }, /* Tg */
 };
 static const struct mdoc_man_act *mdoc_man_act(enum roff_tok);
 

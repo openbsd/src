@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mdoc.7,v 1.168 2019/07/15 19:20:18 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.169 2020/01/19 17:59:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2010, 2011, 2013-2018 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010, 2011, 2013-2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2019 $
+.Dd $Mdocdate: January 19 2020 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -449,6 +449,7 @@ in the alphabetical
 .It Ic \&Ss Ta subsection header (one line)
 .It Ic \&Sx Ta internal cross reference to a section or subsection
 .It Ic \&Xr Ta cross reference to another manual page: Ar name section
+.It Ic \&Tg Ta tag the definition of a Ar term Pq <= 1 arguments
 .It Ic \&Pp Ta start a text paragraph (no arguments)
 .El
 .Ss Displays and lists
@@ -2560,6 +2561,49 @@ Table cell separator in
 .Ic \&Bl Fl column
 lists; can only be used below
 .Ic \&It .
+.It Ic \&Tg Op Ar term
+Announce that the next input line starts a definition of the
+.Ar term .
+This macro must appear alone on its own input line.
+The argument defaults to the first argument of the first macro
+on the next line.
+The argument may not contain whitespace characters, not even when it is quoted.
+This macro is a
+.Xr mandoc 1
+extension and is typically ignored by other formatters.
+.Pp
+When viewing terminal output with
+.Xr less 1 ,
+the interactive
+.Ic :t
+command can be used to go to the definition of the
+.Ar term
+as described for the
+.Ev MANPAGER
+variable in
+.Xr man 1 ;
+when producing HTML output, a fragment identifier
+.Pq Ic id No attribute
+is generated, to be used for deep linking to this place of the document.
+.Pp
+In most cases, adding a
+.Ic \&Tg
+macro would be redundant because
+.Xr mandoc 1
+is able to automatically tag most definitions.
+This macro is intended for cases where automatic tagging of a
+.Ar term
+is unsatisfactory, for example if a definition is not tagged
+automatically (false negative) or if places are tagged that do
+not define the
+.Ar term
+(false positives).
+When there is at least one
+.Ic \&Tg
+macro for a
+.Ar term ,
+no other places are automatically marked as definitions of that
+.Ar term .
 .It Ic \&Tn Ar word ...
 Supported only for compatibility, do not use this in new manuals.
 Even though the macro name
@@ -2924,6 +2968,7 @@ then the macro accepts an arbitrary number of arguments.
 .It Ic \&St  Ta    \&No     Ta    Yes      Ta    1
 .It Ic \&Sx  Ta    Yes      Ta    Yes      Ta    >0
 .It Ic \&Sy  Ta    Yes      Ta    Yes      Ta    >0
+.It Ic \&Tg  Ta    \&No     Ta    \&No     Ta    <2
 .It Ic \&Tn  Ta    Yes      Ta    Yes      Ta    >0
 .It Ic \&Ud  Ta    \&No     Ta    \&No     Ta    0
 .It Ic \&Ux  Ta    Yes      Ta    Yes      Ta    n
