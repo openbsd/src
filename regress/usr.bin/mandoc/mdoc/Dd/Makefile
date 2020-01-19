@@ -1,20 +1,12 @@
-# $OpenBSD: Makefile,v 1.5 2020/01/08 10:17:15 schwarze Exp $
+# $OpenBSD: Makefile,v 1.6 2020/01/19 16:16:33 schwarze Exp $
 
 REGRESS_TARGETS	 = badarg dupe late long manarg noarg order
 LINT_TARGETS	 = badarg dupe late long manarg noarg order
 
-# noarg output contains the date when the file is formatted
+# groff-1.22.4 prints footer fields of excessive length on top of
+# each other rather than breaking the output line.
 
-SKIP_ASCII	?= noarg
-SKIP_MARKDOWN	?= noarg
-
-# If groff finds exactly three arguments, it assumes they are month,
-# day and year without further checking.  If there are no arguments,
-# groff uses the string "Epoch".  Otherwise, it silently falls back
-# to today's date.
-# That is not at all sane behaviour, we are not going to imitate it.
-
-SKIP_GROFF	 = badarg long manarg noarg
+SKIP_GROFF	 = long
 
 # Autodetection fails for late .Dd, so specify -mdoc explicitly.
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.290 2019/09/13 19:18:48 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.291 2020/01/19 16:16:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1894,7 +1894,7 @@ post_root(POST_ARGS)
 	/* Add missing prologue data. */
 
 	if (mdoc->meta.date == NULL)
-		mdoc->meta.date = mandoc_normdate(mdoc, NULL, 0, 0);
+		mdoc->meta.date = mandoc_normdate(NULL, NULL);
 
 	if (mdoc->meta.title == NULL) {
 		mandoc_msg(MANDOCERR_DT_NOTITLE, 0, 0, "EOF");
@@ -2492,7 +2492,6 @@ static void
 post_dd(POST_ARGS)
 {
 	struct roff_node *n;
-	char		 *datestr;
 
 	n = mdoc->last;
 	n->flags |= NODE_NOPRT;
@@ -2509,10 +2508,10 @@ post_dd(POST_ARGS)
 		mandoc_msg(MANDOCERR_PROLOG_ORDER,
 		    n->line, n->pos, "Dd after Os");
 
-	datestr = NULL;
-	deroff(&datestr, n);
-	mdoc->meta.date = mandoc_normdate(mdoc, datestr, n->line, n->pos);
-	free(datestr);
+	if (mdoc->quick && n != NULL)
+		mdoc->meta.date = mandoc_strdup("");
+	else
+		mdoc->meta.date = mandoc_normdate(n->child, n);
 }
 
 static void

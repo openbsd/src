@@ -1,9 +1,9 @@
 mandoc: dupe.in:3:5: STYLE: operating system explicitly specified: Os NetBSD (NetBSD)
-mandoc: dupe.in:2:5: STYLE: Mdocdate found: Dd $Mdocdate: (NetBSD)
+mandoc: dupe.in:2:5: STYLE: Mdocdate found: Dd $Mdocdate: January 19 2020 $ (NetBSD)
 mandoc: dupe.in:4:2: WARNING: prologue macros out of order: Dt after Os
 mandoc: dupe.in:5:2: ERROR: duplicate prologue macro: Os
 mandoc: dupe.in:5:5: STYLE: operating system explicitly specified: Os FreeBSD (NetBSD)
-mandoc: dupe.in:2:5: STYLE: Mdocdate found: Dd $Mdocdate: (NetBSD)
+mandoc: dupe.in:2:5: STYLE: Mdocdate found: Dd $Mdocdate: January 19 2020 $ (NetBSD)
 mandoc: dupe.in:11:2: ERROR: duplicate prologue macro: Os
 mandoc: dupe.in:11:5: STYLE: operating system explicitly specified: Os OpenBSD (NetBSD)
 mandoc: dupe.in: STYLE: RCS id missing: (NetBSD)

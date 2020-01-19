@@ -1,2 +1,2 @@
-mandoc: badarg.in:2:2: WARNING: cannot parse date, using it verbatim: bad date
+mandoc: badarg.in:2:5: WARNING: cannot parse date, using it verbatim: Dd bad date
 mandoc: badarg.in:2:5: STYLE: Mdocdate missing: Dd bad date (OpenBSD)

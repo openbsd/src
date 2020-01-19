@@ -1,3 +1,3 @@
 mandoc: noarg.in:2:2: WARNING: missing manual title, using "": TH
 mandoc: noarg.in:2:2: WARNING: missing manual section, using "": TH 
-mandoc: noarg.in:2:2: WARNING: missing date, using today's date: TH
+mandoc: noarg.in:2:2: WARNING: missing date, using "": TH

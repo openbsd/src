@@ -1,2 +1,2 @@
 mandoc: noTH.in: WARNING: missing manual title, using ""
-mandoc: noTH.in: WARNING: missing date, using today's date
+mandoc: noTH.in: WARNING: missing date, using ""

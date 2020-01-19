@@ -1,2 +1,2 @@
 mandoc: order.in:3:2: WARNING: prologue macros out of order: Dd after Dt
-mandoc: order.in:3:5: STYLE: Mdocdate missing: Dd August (OpenBSD)
+mandoc: order.in:3:5: STYLE: Mdocdate missing: Dd August 5, 2014 (OpenBSD)

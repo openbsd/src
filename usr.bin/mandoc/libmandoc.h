@@ -1,7 +1,7 @@
-/*	$OpenBSD: libmandoc.h,v 1.62 2018/12/21 16:58:49 schwarze Exp $ */
+/*	$OpenBSD: libmandoc.h,v 1.63 2020/01/19 16:16:32 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013-2015,2017,2018,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,8 +47,9 @@ struct	buf {
 
 struct	roff;
 struct	roff_man;
+struct	roff_node;
 
-char		*mandoc_normdate(struct roff_man *, char *, int, int);
+char		*mandoc_normdate(struct roff_node *, struct roff_node *);
 int		 mandoc_eos(const char *, size_t);
 int		 mandoc_strntoi(const char *, size_t, int);
 const char	*mandoc_a2msec(const char*);

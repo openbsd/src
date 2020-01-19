@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc.h,v 1.206 2019/07/14 18:14:27 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.207 2020/01/19 16:16:33 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -83,7 +83,7 @@ enum	mandocerr {
 	MANDOCERR_TH_NOTITLE, /* missing manual title, using "": [macro] */
 	MANDOCERR_MSEC_MISSING, /* missing manual section, using "": macro */
 	MANDOCERR_MSEC_BAD, /* unknown manual section: Dt ... section */
-	MANDOCERR_DATE_MISSING, /* missing date, using today's date */
+	MANDOCERR_DATE_MISSING, /* missing date, using "": [macro] */
 	MANDOCERR_DATE_BAD, /* cannot parse date, using it verbatim: date */
 	MANDOCERR_DATE_FUTURE, /* date in the future, using it anyway: date */
 	MANDOCERR_OS_MISSING, /* missing Os macro, using "" */

@@ -1,2 +1,2 @@
-mandoc: manarg.in:2:2: STYLE: legacy man(7) date format: Dd 2014-08-07
+mandoc: manarg.in:2:5: STYLE: legacy man(7) date format: Dd 2014-08-07
 mandoc: manarg.in:2:5: STYLE: Mdocdate missing: Dd 2014-08-07 (OpenBSD)
