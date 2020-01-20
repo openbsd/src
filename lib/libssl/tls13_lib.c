@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.13 2019/11/26 23:46:18 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.14 2020/01/20 13:10:37 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -263,6 +263,7 @@ tls13_ctx_free(struct tls13_ctx *ctx)
 	if (ctx == NULL)
 		return;
 
+	tls13_error_clear(&ctx->error);
 	tls13_record_layer_free(ctx->rl);
 
 	freezero(ctx, sizeof(struct tls13_ctx));
@@ -340,6 +341,22 @@ tls13_legacy_wire_write_cb(const void *buf, size_t n, void *arg)
 	return tls13_legacy_wire_write(ctx->ssl, buf, n);
 }
 
+static void
+tls13_legacy_error(SSL *ssl)
+{
+	struct tls13_ctx *ctx = ssl->internal->tls13;
+	int reason = ERR_R_INTERNAL_ERROR;
+
+	switch (ctx->error.code) {
+	case TLS13_ERR_VERIFY_FAILED:
+		reason = SSL_R_CERTIFICATE_VERIFY_FAILED;
+		break;
+	}
+
+	ERR_put_error(ERR_LIB_SSL, (0xfff), reason, ctx->error.file,
+	    ctx->error.line);
+}
+
 int
 tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 {
@@ -359,9 +376,7 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 		return 0;
 
 	case TLS13_IO_FAILURE:
-		/* XXX - we need to record/map internal errors. */
-		if (ERR_peek_error() == 0)
-			SSLerror(ssl, ERR_R_INTERNAL_ERROR);
+		tls13_legacy_error(ssl);
 		return -1;
 
 	case TLS13_IO_WANT_POLLIN:

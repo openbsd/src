@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.36 2019/11/26 23:46:18 beck Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.37 2020/01/20 13:10:37 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -36,6 +36,8 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_IO_WANT_POLLIN	-2
 #define TLS13_IO_WANT_POLLOUT	-3
 #define TLS13_IO_USE_LEGACY	-4
+
+#define TLS13_ERR_VERIFY_FAILED	16
 
 typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
 typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *cbs);
@@ -160,7 +162,18 @@ struct tls13_handshake_stage {
 
 struct ssl_handshake_tls13_st;
 
+struct tls13_error {
+	int code;
+	int subcode;
+	int errnum;
+	const char *file;
+	int line;
+	char *msg;
+};
+
 struct tls13_ctx {
+	struct tls13_error error;
+
 	SSL *ssl;
 	struct ssl_handshake_tls13_st *hs;
 	uint8_t	mode;
@@ -260,6 +273,20 @@ int tls13_server_certificate_verify_send(struct tls13_ctx *ctx);
 int tls13_server_certificate_verify_recv(struct tls13_ctx *ctx);
 int tls13_server_finished_recv(struct tls13_ctx *ctx);
 int tls13_server_finished_send(struct tls13_ctx *ctx);
+
+void tls13_error_clear(struct tls13_error *error);
+
+int tls13_error_set(struct tls13_error *error, int code, int subcode,
+    const char *file, int line, const char *fmt, ...);
+int tls13_error_setx(struct tls13_error *error, int code, int subcode,
+    const char *file, int line, const char *fmt, ...);
+
+#define tls13_set_error(ctx, code, subcode, fmt, ...) \
+	tls13_error_set(&(ctx)->error, (code), (subcode), __FILE__, __LINE__, \
+	    (fmt), __VA_ARGS__)
+#define tls13_set_errorx(ctx, code, subcode, fmt, ...) \
+	tls13_error_setx(&(ctx)->error, (code), (subcode), __FILE__, __LINE__, \
+	    (fmt), __VA_ARGS__)
 
 __END_HIDDEN_DECLS
 
