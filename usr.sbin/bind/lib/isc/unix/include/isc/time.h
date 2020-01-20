@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.4 2020/01/09 18:17:20 florian Exp $ */
+/* $Id: time.h,v 1.5 2020/01/20 18:44:50 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -319,16 +319,6 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len);
  *\li      'len' > 0
  *\li      'buf' points to an array of at least len chars
  *
- */
-
-isc_result_t
-isc_time_parsehttptimestamp(char *input, isc_time_t *t);
-/*%<
- * Parse the time in 'input' into the isc_time_t pointed to by 't',
- * expecting a format like "Mon, 30 Aug 2000 04:06:47 GMT"
- *
- *  Requires:
- *\li      'buf' and 't' are not NULL.
  */
 
 void

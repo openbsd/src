@@ -58,7 +58,7 @@ OBJS =		@ISC_EXTRA_OBJS@ @ISC_PK11_O@ @ISC_PK11_RESULT_O@ \
 		rwlock.@O@ \
 		safe.@O@ serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ \
 		string.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
-		tm.@O@ timer.@O@ version.@O@ \
+		timer.@O@ version.@O@ \
 		${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
 
 # Alphabetically
@@ -74,7 +74,7 @@ SRCS =		@ISC_EXTRA_SRCS@ @ISC_PK11_C@ @ISC_PK11_RESULT_C@ \
 		ratelimiter.c refcount.c region.c regex.c result.c rwlock.c \
 		safe.c serial.c sha1.c sha2.c sockaddr.c string.c \
 		symtab.c task.c taskpool.c timer.c \
-		tm.c version.c
+		version.c
 
 LIBS =		@ISC_OPENSSL_LIBS@ @LIBS@
 
