@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.655 2019/11/27 17:49:09 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.656 2020/01/20 21:21:20 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2440,7 +2440,7 @@ apply_defaults(struct client_lease *lease)
 	}
 
 	if (newlease->options[DHO_STATIC_ROUTES].len != 0) {
-		log_warnx("%s: DHO_STATIC_ROUTES (option 33) not supported",
+		log_debug("%s: DHO_STATIC_ROUTES (option 33) not supported",
 		    log_procname);
 		free(newlease->options[DHO_STATIC_ROUTES].data);
 		newlease->options[DHO_STATIC_ROUTES].data = NULL;
