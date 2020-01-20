@@ -200,7 +200,7 @@ lwres_resetaddr(lwres_addr_t *addr) {
 
 /*% intializes data structure for subsequent config parsing. */
 void
-lwres_conf_init(lwres_conf_t *confdata) {
+lwres_conf_init(lwres_conf_t *confdata, int lwresflags) {
 	int i;
 
 	confdata->nsnext = 0;
@@ -211,6 +211,7 @@ lwres_conf_init(lwres_conf_t *confdata) {
 	confdata->resdebug = 0;
 	confdata->ndots = 1;
 	confdata->no_tld_query = 0;
+	confdata->flags = lwresflags;
 
 	for (i = 0; i < LWRES_CONFMAXNAMESERVERS; i++)
 		lwres_resetaddr(&confdata->nameservers[i]);
@@ -258,7 +259,7 @@ lwres_conf_clear(lwres_conf_t *confdata) {
 static lwres_result_t
 lwres_conf_parsenameserver(lwres_conf_t *confdata,  FILE *fp) {
 	char word[LWRES_CONFMAXLINELEN];
-	int res;
+	int res, use_ipv4, use_ipv6;
 	lwres_addr_t address;
 
 	if (confdata->nsnext == LWRES_CONFMAXNAMESERVERS)
@@ -274,7 +275,11 @@ lwres_conf_parsenameserver(lwres_conf_t *confdata,  FILE *fp) {
 		return (LWRES_R_FAILURE); /* Extra junk on line. */
 
 	res = lwres_create_addr(word, &address, 1);
-	if (res == LWRES_R_SUCCESS) {
+	use_ipv4 = confdata->flags & LWRES_USEIPV4;
+	use_ipv6 = confdata->flags & LWRES_USEIPV4;
+	if (res == LWRES_R_SUCCESS &&
+	    ((address.family == LWRES_ADDRTYPE_V4 && use_ipv4) ||
+	    (address.family == LWRES_ADDRTYPE_V6 && use_ipv6))) {
 		confdata->nameservers[confdata->nsnext++] = address;
 	}
 
