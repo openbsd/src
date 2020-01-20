@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.848 2019/12/17 13:08:55 reyk Exp $
+#	$OpenBSD: GENERIC,v 1.849 2020/01/20 23:21:01 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -459,7 +459,6 @@ qle*	at pci?			# QLogic ISP 2[45]xx FibreChannel
 aic0	at isa? port 0x340 irq 11 # Adaptec 152[02] SCSI controllers
 aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
 aic*	at isapnp?		# isapnp configured aic SCSI controllers
-#esp*	at pcmcia?		# PCMCIA based NCR 53C9X SCSI
 siop*	at pci?			# NCR 538XX SCSI controllers(new)
 adv*	at pci?			# AdvanSys 1200A/B and ULTRA SCSI
 adw*	at pci?			# AdvanSys ULTRA WIDE SCSI
