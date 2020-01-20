@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.708 2020/01/11 22:31:25 deraadt Exp $
+$OpenBSD: usbdevs,v 1.709 2020/01/20 07:08:20 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2329,6 +2329,7 @@ product INTEL I2011B		0x1111	Wireless 2011B
 product INTEL TESTBOARD		0x9890	82930 test board
 product INTEL2 RMH_1		0x0020	Rate Matching Hub
 product INTEL2 RMH_2		0x0024	Rate Matching Hub
+product INTEL2 BLUETOOTH3	0x0025	Bluetooth
 product INTEL2 BLUETOOTH	0x0a2a	Bluetooth
 product INTEL2 BLUETOOTH2	0x0a2b	Bluetooth
 product INTEL2 RMH_3		0x8000	Rate Matching Hub
