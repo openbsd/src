@@ -71,9 +71,6 @@
 
 #include "errno2result.h"
 
-/* See task.c about the following definition: */
-#define USE_SHARED_MANAGER
-
 #include "socket_p.h"
 #include "../task_p.h"
 
@@ -392,9 +389,7 @@ struct isc__socketmgr {
 	int			maxudp;
 };
 
-#ifdef USE_SHARED_MANAGER
 static isc__socketmgr_t *socketmgr = NULL;
-#endif /* USE_SHARED_MANAGER */
 
 #define CLOSED			0	/* this one must be zero */
 #define MANAGED			1
@@ -3706,7 +3701,6 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 
 	REQUIRE(managerp != NULL && *managerp == NULL);
 
-#ifdef USE_SHARED_MANAGER
 	if (socketmgr != NULL) {
 		/* Don't allow maxsocks to be updated */
 		if (maxsocks > 0 && socketmgr->maxsocks != maxsocks)
@@ -3716,7 +3710,6 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 		*managerp = (isc_socketmgr_t *)socketmgr;
 		return (ISC_R_SUCCESS);
 	}
-#endif /* USE_SHARED_MANAGER */
 
 	if (maxsocks == 0)
 		maxsocks = ISC_SOCKET_MAXSOCKETS;
@@ -3777,9 +3770,7 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 		}
 	}
 
-#ifdef USE_SHARED_MANAGER
 	manager->refs = 1;
-#endif /* USE_SHARED_MANAGER */
 
 	/*
 	 * Set up initial state for the select loop
@@ -3792,9 +3783,7 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 
 	isc_mem_attach(mctx, &manager->mctx);
 
-#ifdef USE_SHARED_MANAGER
 	socketmgr = manager;
-#endif /* USE_SHARED_MANAGER */
 	*managerp = (isc_socketmgr_t *)manager;
 
 	return (ISC_R_SUCCESS);
@@ -3858,14 +3847,12 @@ isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 	manager = (isc__socketmgr_t *)*managerp;
 	REQUIRE(VALID_MANAGER(manager));
 
-#ifdef USE_SHARED_MANAGER
 	manager->refs--;
 	if (manager->refs > 0) {
 		*managerp = NULL;
 		return;
 	}
 	socketmgr = NULL;
-#endif /* USE_SHARED_MANAGER */
 
 	LOCK(&manager->lock);
 
@@ -3921,9 +3908,7 @@ isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 
 	*managerp = NULL;
 
-#ifdef USE_SHARED_MANAGER
 	socketmgr = NULL;
-#endif
 }
 
 static isc_result_t
@@ -5298,10 +5283,8 @@ isc__socketmgr_waitevents(isc_socketmgr_t *manager0, struct timeval *tvp,
 
 	REQUIRE(swaitp != NULL && *swaitp == NULL);
 
-#ifdef USE_SHARED_MANAGER
 	if (manager == NULL)
 		manager = socketmgr;
-#endif
 	if (manager == NULL)
 		return (0);
 
@@ -5348,10 +5331,8 @@ isc__socketmgr_dispatch(isc_socketmgr_t *manager0, isc_socketwait_t *swait) {
 
 	REQUIRE(swait == &swait_private);
 
-#ifdef USE_SHARED_MANAGER
 	if (manager == NULL)
 		manager = socketmgr;
-#endif
 	if (manager == NULL)
 		return (ISC_R_NOTFOUND);
 

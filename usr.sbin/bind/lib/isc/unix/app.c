@@ -145,20 +145,6 @@ static struct {
 	(void *)isc__app_unblock
 };
 
-#ifdef HAVE_LINUXTHREADS
-/*!
- * Linux has sigwait(), but it appears to prevent signal handlers from
- * running, even if they're not in the set being waited for.  This makes
- * it impossible to get the default actions for SIGILL, SIGSEGV, etc.
- * Instead of messing with it, we just use sigsuspend() instead.
- */
-#undef HAVE_SIGWAIT
-/*!
- * We need to remember which thread is the main thread...
- */
-static pthread_t		main_thread;
-#endif
-
 #ifndef HAVE_SIGWAIT
 static void
 exit_action(int arg) {
@@ -515,11 +501,6 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 	isc_task_t *task;
 
 	REQUIRE(VALID_APPCTX(ctx));
-
-#ifdef HAVE_LINUXTHREADS
-	REQUIRE(main_thread == pthread_self());
-#endif
-
 	LOCK(&ctx->lock);
 
 	if (!ctx->running) {
