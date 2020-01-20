@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.5 2020/01/16 22:24:32 jan Exp $
+#	$OpenBSD: Makefile,v 1.6 2020/01/20 00:49:55 jan Exp $
 
 .PHONY: setup-ftpd
 
 REGRESS_TARGETS =	run-ftpd-get
 REGRESS_TARGETS +=	run-ftpd-put
 REGRESS_TARGETS +=	run-ftpd-ls
+REGRESS_TARGETS +=	run-ftpd-nlist
 REGRESS_TARGETS +=	run-ftpd-delete
 REGRESS_TARGETS +=	run-ftpd-mkdir
 REGRESS_ROOT_TARGETS =	${REGRESS_TARGETS}
@@ -62,6 +63,10 @@ run-ftpd-put:
 run-ftpd-ls:
 	@echo '\n======== $@ ========'
 	echo ls | ftp -a 127.0.0.1 | grep -q 'ftpd.regress'
+
+run-ftpd-nlist:
+	@echo '\n======== $@ ========'
+	echo nlist | ftp -a 127.0.0.1 | grep -q 'ftpd.regress'
 
 run-ftpd-delete:
 	@echo '\n======== $@ ========'
