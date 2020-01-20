@@ -56,10 +56,10 @@ DSTOBJS =	@DST_EXTRA_OBJS@ @OPENSSLLINKOBJS@  \
 		hmac_link.@O@ key.@O@
 
 # Alphabetically
-DNSOBJS =	acl.@O@ byaddr.@O@ \
+DNSOBJS =	byaddr.@O@ \
 		callbacks.@O@ compress.@O@ \
 		dnssec.@O@ ds.@O@ \
-		iptable.@O@  keydata.@O@ \
+		keydata.@O@ \
 		lib.@O@ log.@O@ \
 		master.@O@ masterdump.@O@ message.@O@ \
 		name.@O@ ncache.@O@ nsec.@O@ nsec3.@O@ \
@@ -87,10 +87,10 @@ DSTSRCS =	@DST_EXTRA_SRCS@ @OPENSSLLINKSRCS@ \
 		dst_result.c \
 		hmac_link.c key.c
 
-DNSSRCS =	acl.c byaddr.c \
+DNSSRCS =	byaddr.c \
 		callbacks.c compress.c \
 		dnssec.c ds.c \
-		iptable.c keydata.c lib.c log.c \
+		keydata.c lib.c log.c \
 		master.c masterdump.c message.c \
 		name.c ncache.c nsec.c nsec3.c \
 		rbt.c rcode.c rdata.c rdatalist.c \
