@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.56 2019/12/31 13:48:32 visa Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.57 2020/01/20 23:21:56 claudio Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -74,7 +74,7 @@ int	filt_fusefswrite(struct knote *, long);
 int	filt_fusefsvnode(struct knote *, long);
 void	filt_fusefsdetach(struct knote *);
 
-struct vops fusefs_vops = {
+const struct vops fusefs_vops = {
 	.vop_lookup	= fusefs_lookup,
 	.vop_create	= fusefs_create,
 	.vop_mknod	= fusefs_mknod,

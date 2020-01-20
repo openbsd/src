@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.80 2019/12/31 13:48:32 visa Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.81 2020/01/20 23:21:55 claudio Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -832,7 +832,7 @@ cd9660_pathconf(void *v)
 #define cd9660_revoke   vop_generic_revoke
 
 /* Global vfs data structures for cd9660. */
-struct vops cd9660_vops = {
+const struct vops cd9660_vops = {
 	.vop_lookup	= cd9660_lookup,
 	.vop_create	= cd9660_create,
 	.vop_mknod	= cd9660_mknod,
@@ -871,7 +871,7 @@ struct vops cd9660_vops = {
 };
 
 /* Special device vnode ops */
-struct vops cd9660_specvops = {
+const struct vops cd9660_specvops = {
 	.vop_access	= cd9660_access,
 	.vop_getattr	= cd9660_getattr,
 	.vop_setattr	= cd9660_setattr,
@@ -912,7 +912,7 @@ struct vops cd9660_specvops = {
 };
 
 #ifdef FIFO
-struct vops cd9660_fifovops = {
+const struct vops cd9660_fifovops = {
 	.vop_access	= cd9660_access,
 	.vop_getattr	= cd9660_getattr,
 	.vop_setattr	= cd9660_setattr,

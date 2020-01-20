@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.h,v 1.5 2013/12/25 14:04:50 espie Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.h,v 1.6 2020/01/20 23:21:56 claudio Exp $	*/
 /*	$NetBSD: tmpfs_vnops.h,v 1.13 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * Declarations for tmpfs_vnops.c.
  */
 
-extern struct vops tmpfs_vops, tmpfs_fifovops, tmpfs_specvops;
+extern const struct vops tmpfs_vops, tmpfs_fifovops, tmpfs_specvops;
 
 int	tmpfs_lookup		(void *);
 int	tmpfs_create		(void *);

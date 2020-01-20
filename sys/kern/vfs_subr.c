@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.298 2020/01/10 10:33:34 bluhm Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.299 2020/01/20 23:21:55 claudio Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -365,7 +365,7 @@ long numvnodes;
  * Return the next vnode from the free list.
  */
 int
-getnewvnode(enum vtagtype tag, struct mount *mp, struct vops *vops,
+getnewvnode(enum vtagtype tag, struct mount *mp, const struct vops *vops,
     struct vnode **vpp)
 {
 	struct proc *p = curproc;

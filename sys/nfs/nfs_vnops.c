@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.181 2019/07/19 00:54:59 cheloha Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.182 2020/01/20 23:21:56 claudio Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ int nfsspec_read(void *);
 int nfsspec_write(void *);
 
 /* Global vfs data structures for nfs. */
-struct vops nfs_vops = {
+const struct vops nfs_vops = {
 	.vop_lookup	= nfs_lookup,
 	.vop_create	= nfs_create,
 	.vop_mknod	= nfs_mknod,
@@ -176,7 +176,7 @@ struct vops nfs_vops = {
 };
 
 /* Special device vnode ops. */
-struct vops nfs_specvops = {
+const struct vops nfs_specvops = {
 	.vop_close	= nfsspec_close,
 	.vop_access	= nfsspec_access,
 	.vop_getattr	= nfs_getattr,
@@ -217,7 +217,7 @@ struct vops nfs_specvops = {
 };
 
 #ifdef FIFO
-struct vops nfs_fifovops = {
+const struct vops nfs_fifovops = {
 	.vop_close	= nfsfifo_close,
 	.vop_access	= nfsspec_access,
 	.vop_getattr	= nfs_getattr,

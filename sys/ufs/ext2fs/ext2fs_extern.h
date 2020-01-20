@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.37 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.38 2020/01/20 23:21:56 claudio Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -144,8 +144,8 @@ __END_DECLS
 
 #define IS_EXT2_VNODE(vp)   (vp->v_tag == VT_EXT2FS)
 
-extern struct vops ext2fs_vops;
-extern struct vops ext2fs_specvops;
+extern const struct vops ext2fs_vops;
+extern const struct vops ext2fs_specvops;
 #ifdef FIFO
-extern struct vops ext2fs_fifovops;
+extern const struct vops ext2fs_fifovops;
 #endif

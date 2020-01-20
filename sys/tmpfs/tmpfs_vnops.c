@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.37 2019/12/31 13:48:32 visa Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.38 2020/01/20 23:21:56 claudio Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ int tmpfs_kqfilter(void *v);
 /*
  * vnode operations vector used for files stored in a tmpfs file system.
  */
-struct vops tmpfs_vops = {
+const struct vops tmpfs_vops = {
 	.vop_lookup	= tmpfs_lookup,
 	.vop_create	= tmpfs_create,
 	.vop_mknod	= tmpfs_mknod,

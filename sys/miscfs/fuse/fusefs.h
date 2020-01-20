@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs.h,v 1.13 2018/07/16 13:10:53 helg Exp $ */
+/* $OpenBSD: fusefs.h,v 1.14 2020/01/20 23:21:56 claudio Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -70,7 +70,7 @@ struct fusefs_mnt {
 #define UNDEF_FLUSH	1<<11
 #define UNDEF_FSYNC	1<<12
 
-extern struct vops fusefs_vops;
+extern const struct vops fusefs_vops;
 extern struct pool fusefs_fbuf_pool;
 
 /* files helpers. */

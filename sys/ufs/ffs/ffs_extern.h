@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.44 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.45 2020/01/20 23:21:56 claudio Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -94,9 +94,9 @@ struct mbuf;
 struct cg;
 struct vop_vfree_args;
 
-extern struct vops	ffs_vops;
-extern struct vops	ffs_specvops;
-extern struct vops	ffs_fifovops;
+extern const struct vops	ffs_vops;
+extern const struct vops	ffs_specvops;
+extern const struct vops	ffs_fifovops;
 
 /* ffs_alloc.c */
 int ffs_alloc(struct inode *, daddr_t, daddr_t , int, struct ucred *,

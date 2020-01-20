@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.127 2019/12/31 13:48:32 visa Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.128 2020/01/20 23:21:56 claudio Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1921,7 +1921,7 @@ fileidhash(uint64_t fileid)
 }
 
 /* Global vfs data structures for msdosfs */
-struct vops msdosfs_vops = {
+const struct vops msdosfs_vops = {
 	.vop_lookup	= msdosfs_lookup,
 	.vop_create	= msdosfs_create,
 	.vop_mknod	= msdosfs_mknod,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.142 2020/01/14 21:38:02 bluhm Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.143 2020/01/20 23:21:56 claudio Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -937,7 +937,7 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 	struct vnode *vp = *vpp;
 	struct vattr *vap;
 	struct nfs_fattr *fp;
-	extern struct vops nfs_specvops;
+	extern const struct vops nfs_specvops;
 	struct nfsnode *np;
 	int32_t t1;
 	caddr_t cp2;
@@ -994,7 +994,7 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 #ifndef FIFO
 			return (EOPNOTSUPP);
 #else
-                        extern struct vops nfs_fifovops;
+                        extern const struct vops nfs_fifovops;
 			vp->v_op = &nfs_fifovops;
 #endif /* FIFO */
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.17 2013/11/24 16:02:30 jsing Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.18 2020/01/20 23:21:56 claudio Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -311,5 +311,5 @@ extern int ntfs_debug;
 #define DDPRINTF(x...)
 #endif
 
-extern struct vops ntfs_vops;
+extern const struct vops ntfs_vops;
 #endif

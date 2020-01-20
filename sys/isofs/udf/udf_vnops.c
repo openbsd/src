@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.67 2018/05/27 06:02:14 visa Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.68 2020/01/20 23:21:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -58,7 +58,7 @@
 
 int udf_bmap_internal(struct unode *, off_t, daddr_t *, uint32_t *);
 
-struct vops udf_vops = {
+const struct vops udf_vops = {
 	.vop_access	= udf_access,
 	.vop_bmap	= udf_bmap,
 	.vop_lookup	= udf_lookup,

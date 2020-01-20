@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.52 2019/07/25 01:43:21 cheloha Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.53 2020/01/20 23:21:57 claudio Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #include <ufs/mfs/mfs_extern.h>
 
 /* mfs vnode operations. */
-struct vops mfs_vops = {
+const struct vops mfs_vops = {
         .vop_lookup     = mfs_badop,
         .vop_create     = mfs_badop,
         .vop_mknod      = mfs_badop,

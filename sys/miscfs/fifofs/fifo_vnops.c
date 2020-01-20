@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.71 2020/01/08 15:03:10 mpi Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.72 2020/01/20 23:21:56 claudio Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ struct fifoinfo {
 	long		fi_writers;
 };
 
-struct vops fifo_vops = {
+const struct vops fifo_vops = {
 	.vop_lookup	= vop_generic_lookup,
 	.vop_create	= fifo_badop,
 	.vop_mknod	= fifo_badop,

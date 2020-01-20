@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_fifoops.c,v 1.4 2015/01/21 22:26:52 deraadt Exp $	*/
+/*	$OpenBSD: tmpfs_fifoops.c,v 1.5 2020/01/20 23:21:56 claudio Exp $	*/
 /*	$NetBSD: tmpfs_fifoops.c,v 1.9 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ int	tmpfs_fifo_fsync	(void *);
  * vnode operations vector used for fifos stored in a tmpfs file system.
  */
 
-struct vops tmpfs_fifovops = {
+const struct vops tmpfs_fifovops = {
 	.vop_lookup	= vop_generic_lookup,
 	.vop_create	= fifo_badop,
 	.vop_mknod	= fifo_badop,
