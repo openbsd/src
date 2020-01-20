@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.16 2019/11/26 23:46:18 beck Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.17 2020/01/20 22:04:17 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -223,17 +223,19 @@ tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 	 * read channel closure (close_notify) or termination (all others).
 	 */
 	if (rl->rbuf == NULL)
-		goto err;
+		return TLS13_IO_FAILURE;
+
 	if (rl->rbuf_content_type != SSL3_RT_ALERT)
-		goto err;
+		return TLS13_IO_FAILURE;
 
 	if (!CBS_get_u8(&rl->rbuf_cbs, &alert_level))
-		goto err; /* XXX - decode error alert. */
+		return tls13_send_alert(rl, TLS1_AD_DECODE_ERROR);
+
 	if (!CBS_get_u8(&rl->rbuf_cbs, &alert_desc))
-		goto err; /* XXX - decode error alert. */
+		return tls13_send_alert(rl, TLS1_AD_DECODE_ERROR);
 
 	if (CBS_len(&rl->rbuf_cbs) != 0)
-		goto err; /* XXX - decode error alert. */
+		return tls13_send_alert(rl, TLS1_AD_DECODE_ERROR);
 
 	tls13_record_layer_rbuf_free(rl);
 
@@ -252,14 +254,10 @@ tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 		rl->read_closed = 1;
 		rl->write_closed = 1;
 		ret = TLS13_IO_FAILURE; /* XXX - ALERT? */
-	} else {
-		/* XXX - decode error alert. */
-		return TLS13_IO_FAILURE;
-	}
+	} else
+		return tls13_send_alert(rl, SSL_AD_ILLEGAL_PARAMETER);
 
 	rl->alert_cb(alert_desc, rl->cb_arg);
-
- err:
 	return ret;
 }
 
@@ -735,22 +733,14 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 	 */
 	if (content_type == SSL3_RT_CHANGE_CIPHER_SPEC) {
 		/* XXX - need to check after ClientHello, before Finished. */
-		if (rl->handshake_completed || rl->change_cipher_spec_seen) {
-			/* XXX - unexpected message alert. */
-			goto err;
-		}
-		if (!tls13_record_content(rl->rrec, &cbs)) {
-			/* XXX - decode error alert. */
-			goto err;
-		}
-		if (!CBS_get_u8(&cbs, &ccs)) {
-			/* XXX - decode error alert. */
-			goto err;
-		}
-		if (ccs != 1) {
-			/* XXX - something alert. */
-			goto err;
-		}
+		if (rl->handshake_completed || rl->change_cipher_spec_seen)
+			return tls13_send_alert(rl, SSL_AD_UNEXPECTED_MESSAGE);
+		if (!tls13_record_content(rl->rrec, &cbs))
+			return tls13_send_alert(rl, TLS1_AD_DECODE_ERROR);
+		if (!CBS_get_u8(&cbs, &ccs))
+			return tls13_send_alert(rl, TLS1_AD_DECODE_ERROR);
+		if (ccs != 1)
+			return tls13_send_alert(rl, SSL_AD_ILLEGAL_PARAMETER);
 		rl->change_cipher_spec_seen = 1;
 		tls13_record_layer_rrec_free(rl);
 		return TLS13_IO_WANT_POLLIN;
@@ -761,10 +751,8 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 	 * protected application data messages (aside from the
 	 * dummy ChangeCipherSpec messages, handled above).
 	 */
-	if (rl->aead != NULL && content_type != SSL3_RT_APPLICATION_DATA) {
-		/* XXX - unexpected message alert. */
-		goto err;
-	}
+	if (rl->aead != NULL && content_type != SSL3_RT_APPLICATION_DATA)
+		return tls13_send_alert(rl, SSL3_AD_UNEXPECTED_MESSAGE);
 
 	if (!tls13_record_layer_open_record(rl))
 		goto err;
@@ -779,15 +767,12 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 		break;
 
 	case SSL3_RT_APPLICATION_DATA:
-		if (!rl->handshake_completed) {
-			/* XXX - unexpected message alert. */
-			goto err;
-		}
+		if (!rl->handshake_completed)
+			return tls13_send_alert(rl, SSL3_AD_UNEXPECTED_MESSAGE);
 		break;
 
 	default:
-		/* XXX - unexpected message alert. */
-		goto err;
+		return tls13_send_alert(rl, SSL3_AD_UNEXPECTED_MESSAGE);
 	}
 
 	return TLS13_IO_SUCCESS;
@@ -820,10 +805,8 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 	 * If we are in post handshake handshake mode, we may not see
 	 * any record type that isn't a handshake until we are done.
 	 */
-	if (rl->phh && rl->rbuf_content_type != SSL3_RT_HANDSHAKE) {
-		/* XXX send unexpected message alert */
-		return TLS13_IO_FAILURE;
-	}
+	if (rl->phh && rl->rbuf_content_type != SSL3_RT_HANDSHAKE)
+		return tls13_send_alert(rl, SSL3_AD_UNEXPECTED_MESSAGE);
 
 	if (rl->rbuf_content_type != content_type) {
 		/*
@@ -877,8 +860,7 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 			}
 		}
 
-		/* XXX - unexpected message alert. */
-		goto err;
+		return tls13_send_alert(rl, SSL3_AD_UNEXPECTED_MESSAGE);
 	}
 
 	if (n > CBS_len(&rl->rbuf_cbs))
