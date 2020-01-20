@@ -19,12 +19,13 @@
 #include <config.h>
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <isc/lex.h>
 #include <isc/mem.h>
 #include <isc/result.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 
 #include <dns/ttl.h>
@@ -1999,7 +2000,7 @@ parse_unitstring(char *str, uint64_t *valuep) {
 	uint64_t value;
 	uint64_t unit;
 
-	value = isc_string_touint64(str, &endp, 10);
+	value = strtoull(str, &endp, 10);
 	if (*endp == 0) {
 		*valuep = value;
 		return (ISC_R_SUCCESS);

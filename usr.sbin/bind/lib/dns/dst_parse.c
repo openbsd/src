@@ -33,7 +33,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $Id: dst_parse.c,v 1.7 2020/01/09 18:17:15 florian Exp $
+ * $Id: dst_parse.c,v 1.8 2020/01/20 18:49:45 florian Exp $
  */
 
 #include <config.h>
@@ -46,7 +46,7 @@
 #include <isc/mem.h>
 
 #include <isc/stdtime.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig_250.c,v 1.9 2020/01/09 18:17:16 florian Exp $ */
+/* $Id: tsig_250.c,v 1.10 2020/01/20 18:49:45 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 
@@ -57,7 +57,7 @@ fromtext_any_tsig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	sigtime = isc_string_touint64(DNS_AS_STR(token), &e, 10);
+	sigtime = strtoull(DNS_AS_STR(token), &e, 10);
 	if (*e != 0)
 		RETTOK(DNS_R_SYNTAX);
 	if ((sigtime >> 48) != 0)

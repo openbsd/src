@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: base64.c,v 1.6 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: base64.c,v 1.7 2020/01/20 18:49:45 florian Exp $ */
 
 /*! \file */
 
@@ -23,7 +23,7 @@
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/lex.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 
 #define RETERR(x) do { \

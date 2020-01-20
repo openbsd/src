@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.c,v 1.9 2020/01/09 18:17:15 florian Exp $ */
+/* $Id: rcode.c,v 1.10 2020/01/20 18:49:45 florian Exp $ */
 
 #include <config.h>
 #include <ctype.h>
@@ -28,7 +28,7 @@
 #include <isc/result.h>
 #include <isc/stdio.h>
 
-#include <isc/string.h>
+#include <string.h>
 #include <isc/types.h>
 #include <isc/util.h>
 

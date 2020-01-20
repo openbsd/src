@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.12 2020/01/18 16:55:00 florian Exp $ */
+/* $Id: message.c,v 1.13 2020/01/20 18:49:45 florian Exp $ */
 
 /*! \file */
 
@@ -28,7 +28,7 @@
 #include <isc/buffer.h>
 #include <isc/mem.h>
 
-#include <isc/string.h>		/* Required for HP/UX (and others?) */
+#include <string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
 
 #include <dns/dnssec.h>

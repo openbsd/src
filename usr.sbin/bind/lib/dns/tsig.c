@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.14 2020/01/20 18:40:55 florian Exp $
+ * $Id: tsig.c,v 1.15 2020/01/20 18:49:45 florian Exp $
  */
 /*! \file */
 #include <config.h>
@@ -26,7 +26,7 @@
 
 #include <isc/refcount.h>
 #include <isc/serial.h>
-#include <isc/string.h>		/* Required for HP/UX (and others?) */
+#include <string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
 #include <isc/time.h>
 

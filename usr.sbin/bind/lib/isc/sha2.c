@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha2.c,v 1.7 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: sha2.c,v 1.8 2020/01/20 18:49:46 florian Exp $ */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.c,v 1.2.2.2 2002/03/05 08:36:47 ume Exp $	*/
 /*	$KAME: sha2.c,v 1.8 2001/11/08 01:07:52 itojun Exp $	*/
@@ -61,7 +61,7 @@
 #include <isc/platform.h>
 #include <isc/safe.h>
 #include <isc/sha2.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 
 #if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)

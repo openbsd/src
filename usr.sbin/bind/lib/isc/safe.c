@@ -19,7 +19,7 @@
 #include <config.h>
 
 #include <isc/safe.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 
 #ifdef _MSC_VER

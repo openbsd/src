@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hex.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: hex.c,v 1.4 2020/01/20 18:49:46 florian Exp $ */
 
 /*! \file */
 
@@ -25,7 +25,7 @@
 #include <isc/buffer.h>
 #include <isc/hex.h>
 #include <isc/lex.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 
 #define RETERR(x) do { \

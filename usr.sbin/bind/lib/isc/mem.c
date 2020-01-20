@@ -31,7 +31,7 @@
 #include <isc/msgs.h>
 #include <isc/once.h>
 #include <isc/ondestroy.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/mutex.h>
 
 #include <isc/util.h>

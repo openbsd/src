@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ttl.c,v 1.10 2020/01/09 18:17:15 florian Exp $ */
+/* $Id: ttl.c,v 1.11 2020/01/20 18:49:45 florian Exp $ */
 
 /*! \file */
 
@@ -29,7 +29,7 @@
 #include <isc/parseint.h>
 
 #include <isc/region.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 
 #include <dns/result.h>

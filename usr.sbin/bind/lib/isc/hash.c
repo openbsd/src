@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.c,v 1.8 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: hash.c,v 1.9 2020/01/20 18:49:45 florian Exp $ */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
@@ -65,7 +65,7 @@ if advised of the possibility of such damage.
 #include <isc/once.h>
 
 #include <isc/refcount.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 
 #define HASH_MAGIC		ISC_MAGIC('H', 'a', 's', 'h')

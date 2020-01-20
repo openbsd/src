@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.11 2020/01/20 18:46:57 florian Exp $ */
+/* $Id: lex.c,v 1.12 2020/01/20 18:49:46 florian Exp $ */
 
 /*! \file */
 
@@ -32,7 +32,7 @@
 #include <isc/parseint.h>
 
 #include <isc/stdio.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 
 typedef struct inputsource {

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.11 2020/01/20 18:46:57 florian Exp $ */
+/* $Id: net.c,v 1.12 2020/01/20 18:49:46 florian Exp $ */
 
 #include <config.h>
 
@@ -38,7 +38,7 @@
 #include <isc/netdb.h>
 #include <isc/once.h>
 #include <isc/strerror.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 
 #ifndef ISC_SOCKADDR_LEN_T

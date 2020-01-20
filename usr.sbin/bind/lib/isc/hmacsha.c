@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.c,v 1.5 2020/01/09 13:52:23 florian Exp $ */
+/* $Id: hmacsha.c,v 1.6 2020/01/20 18:49:46 florian Exp $ */
 
 /*
  * This code implements the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256, HMAC-SHA384
@@ -30,7 +30,7 @@
 #include <isc/safe.h>
 #include <isc/sha1.h>
 #include <isc/sha2.h>
-#include <isc/string.h>
+#include <string.h>
 #include <isc/types.h>
 #include <isc/util.h>
 

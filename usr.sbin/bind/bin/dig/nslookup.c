@@ -25,7 +25,7 @@
 #include <isc/event.h>
 #include <isc/parseint.h>
 
-#include <isc/string.h>
+#include <string.h>
 #include <isc/util.h>
 #include <isc/task.h>
 #include <isc/netaddr.h>
