@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig.h,v 1.6 2020/01/09 14:18:29 florian Exp $ */
+/* $Id: tsig.h,v 1.7 2020/01/20 18:40:56 florian Exp $ */
 
 #ifndef DNS_TSIG_H
 #define DNS_TSIG_H 1
@@ -53,21 +53,6 @@ extern dns_name_t *dns_tsig_hmacsha512_name;
  */
 #define DNS_TSIG_FUDGE			300
 
-struct dns_tsig_keyring {
-	dns_rbt_t *keys;
-	unsigned int writecount;
-	isc_rwlock_t lock;
-	isc_mem_t *mctx;
-	/*
-	 * LRU list of generated key along with a count of the keys on the
-	 * list and a maximum size.
-	 */
-	unsigned int generated;
-	unsigned int maxgenerated;
-	ISC_LIST(dns_tsigkey_t) lru;
-	unsigned int references;
-};
-
 struct dns_tsigkey {
 	/* Unlocked */
 	unsigned int		magic;		/*%< Magic number. */
@@ -79,7 +64,6 @@ struct dns_tsigkey {
 	isc_boolean_t		generated;	/*%< was this generated? */
 	isc_stdtime_t		inception;	/*%< start of validity period */
 	isc_stdtime_t		expire;		/*%< end of validity period */
-	dns_tsig_keyring_t	*ring;		/*%< the enclosing keyring */
 	isc_refcount_t		refs;		/*%< reference counter */
 	ISC_LINK(dns_tsigkey_t) link;
 };
@@ -96,14 +80,14 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 		   unsigned char *secret, int length, isc_boolean_t generated,
 		   dns_name_t *creator, isc_stdtime_t inception,
 		   isc_stdtime_t expire, isc_mem_t *mctx,
-		   dns_tsig_keyring_t *ring, dns_tsigkey_t **key);
+		   dns_tsigkey_t **key);
 
 isc_result_t
 dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 			  dst_key_t *dstkey, isc_boolean_t generated,
 			  dns_name_t *creator, isc_stdtime_t inception,
 			  isc_stdtime_t expire, isc_mem_t *mctx,
-			  dns_tsig_keyring_t *ring, dns_tsigkey_t **key);
+			  dns_tsigkey_t **key);
 /*%<
  *	Creates a tsig key structure and saves it in the keyring.  If key is
  *	not NULL, *key will contain a copy of the key.  The keys validity
@@ -125,7 +109,6 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
  *\li		'dstkey' is a valid dst key or NULL
  *\li		'creator' points to a valid dns_name_t or is NULL
  *\li		'mctx' is a valid memory context
- *\li		'ring' is a valid TSIG keyring or NULL
  *\li		'key' or '*key' must be NULL
  *
  *	Returns:
@@ -159,16 +142,6 @@ dns_tsigkey_detach(dns_tsigkey_t **keyp);
  *\li		'keyp' points to NULL
  */
 
-void
-dns_tsigkey_setdeleted(dns_tsigkey_t *key);
-/*%<
- *	Prevents this key from being used again.  It will be deleted when
- *	no references exist.
- *
- *	Requires:
- *\li		'key' is a valid TSIG key on a keyring
- */
-
 isc_result_t
 dns_tsig_sign(dns_message_t *msg);
 /*%<
@@ -188,8 +161,7 @@ dns_tsig_sign(dns_message_t *msg);
  */
 
 isc_result_t
-dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
-		dns_tsig_keyring_t *ring1, dns_tsig_keyring_t *ring2);
+dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg);
 /*%<
  *	Verifies the TSIG record in this message
  *
@@ -199,7 +171,6 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
  *\li		'msg->tsigkey' is a valid TSIG key if this is a response
  *\li		'msg->tsig' is NULL
  *\li		'msg->querytsig' is not NULL if this is a response
- *\li		'ring1' and 'ring2' are each either a valid keyring or NULL
  *
  *	Returns:
  *\li		#ISC_R_SUCCESS
@@ -215,74 +186,6 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
  *					 should have been a response,
  *					 but was not.
  */
-
-isc_result_t
-dns_tsigkey_find(dns_tsigkey_t **tsigkey, dns_name_t *name,
-		 dns_name_t *algorithm, dns_tsig_keyring_t *ring);
-/*%<
- *	Returns the TSIG key corresponding to this name and (possibly)
- *	algorithm.  Also increments the key's reference counter.
- *
- *	Requires:
- *\li		'tsigkey' is not NULL
- *\li		'*tsigkey' is NULL
- *\li		'name' is a valid dns_name_t
- *\li		'algorithm' is a valid dns_name_t or NULL
- *\li		'ring' is a valid keyring
- *
- *	Returns:
- *\li		#ISC_R_SUCCESS
- *\li		#ISC_R_NOTFOUND
- */
-
-
-isc_result_t
-dns_tsigkeyring_create(isc_mem_t *mctx, dns_tsig_keyring_t **ringp);
-/*%<
- *	Create an empty TSIG key ring.
- *
- *	Requires:
- *\li		'mctx' is not NULL
- *\li		'ringp' is not NULL, and '*ringp' is NULL
- *
- *	Returns:
- *\li		#ISC_R_SUCCESS
- *\li		#ISC_R_NOMEMORY
- */
-
-isc_result_t
-dns_tsigkeyring_add(dns_tsig_keyring_t *ring, dns_name_t *name,
-		    dns_tsigkey_t *tkey);
-/*%<
- *      Place a TSIG key onto a key ring.
- *
- *	Requires:
- *\li		'ring', 'name' and 'tkey' are not NULL
- *
- *	Returns:
- *\li		#ISC_R_SUCCESS
- *\li		Any other value indicates failure.
- */
-
-
-void
-dns_tsigkeyring_attach(dns_tsig_keyring_t *source, dns_tsig_keyring_t **target);
-
-void
-dns_tsigkeyring_detach(dns_tsig_keyring_t **ringp);
-
-isc_result_t
-dns_tsigkeyring_dumpanddetach(dns_tsig_keyring_t **ringp, FILE *fp);
-
-/*%<
- *	Destroy a TSIG key ring.
- *
- *	Requires:
- *\li		'ringp' is not NULL
- */
-
-void
-dns_keyring_restore(dns_tsig_keyring_t *ring, FILE *fp);
 
 ISC_LANG_ENDDECLS
 

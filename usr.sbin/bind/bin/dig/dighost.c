@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.29 2020/01/09 18:17:14 florian Exp $ */
+/* $Id: dighost.c,v 1.30 2020/01/20 18:40:55 florian Exp $ */
 
 /*! \file
  *  \note
@@ -1088,7 +1088,7 @@ setup_text_key(void) {
 
 	result = dns_tsigkey_create(&keyname, hmacname, secretstore,
 				    (int)secretsize, ISC_FALSE, NULL, 0, 0,
-				    mctx, NULL, &tsigkey);
+				    mctx, &tsigkey);
  failure:
 	if (result != ISC_R_SUCCESS)
 		printf(";; Couldn't create key %s: %s\n",
@@ -1368,7 +1368,7 @@ setup_file_key(void) {
 	}
 	result = dns_tsigkey_createfromkey(dst_key_name(dstkey), hmacname,
 					   dstkey, ISC_FALSE, NULL, 0, 0,
-					   mctx, NULL, &tsigkey);
+					   mctx, &tsigkey);
 	if (result != ISC_R_SUCCESS) {
 		printf(";; Couldn't create key %s: %s\n",
 		       keynametext, isc_result_totext(result));
@@ -3948,7 +3948,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (tsigkey != NULL) {
-		result = dns_tsig_verify(&query->recvbuf, msg, NULL, NULL);
+		result = dns_tsig_verify(&query->recvbuf, msg);
 		if (result != ISC_R_SUCCESS) {
 			printf(";; Couldn't verify signature: %s\n",
 			       isc_result_totext(result));

@@ -63,11 +63,11 @@ DNSOBJS =	byaddr.@O@ \
 		lib.@O@ log.@O@ \
 		master.@O@ masterdump.@O@ message.@O@ \
 		name.@O@ ncache.@O@ nsec.@O@ nsec3.@O@ \
-		rbt.@O@ rcode.@O@ rdata.@O@ \
+		rcode.@O@ rdata.@O@ \
 		rdatalist.@O@ rdataset.@O@ \
 		result.@O@ \
 		soa.@O@ \
-		time.@O@ tkey.@O@ \
+		time.@O@ \
 		tsec.@O@ tsig.@O@ ttl.@O@ \
 		version.@O@
 
@@ -93,11 +93,11 @@ DNSSRCS =	byaddr.c \
 		keydata.c lib.c log.c \
 		master.c masterdump.c message.c \
 		name.c ncache.c nsec.c nsec3.c \
-		rbt.c rcode.c rdata.c rdatalist.c \
+		rcode.c rdata.c rdatalist.c \
 		rdataset.c \
 		result.c \
 		soa.c \
-		time.c tkey.c \
+		time.c \
 		tsec.c tsig.c ttl.c \
 		version.c ${OTHERSRCS}
 

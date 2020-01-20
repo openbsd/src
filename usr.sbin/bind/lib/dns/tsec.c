@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsec.c,v 1.3 2020/01/09 13:52:23 florian Exp $ */
+/* $Id: tsec.c,v 1.4 2020/01/20 18:40:55 florian Exp $ */
 
 #include <config.h>
 
@@ -89,8 +89,7 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 		}
 		result = dns_tsigkey_createfromkey(dst_key_name(key),
 						   algname, key, ISC_FALSE,
-						   NULL, 0, 0, mctx, NULL,
-						   &tsigkey);
+						   NULL, 0, 0, mctx, &tsigkey);
 		if (result != ISC_R_SUCCESS) {
 			isc_mem_put(mctx, tsec, sizeof(*tsec));
 			return (result);
