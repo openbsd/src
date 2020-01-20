@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.33 2019/11/06 07:30:08 mpi Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.34 2020/01/20 15:58:23 visa Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/stdarg.h>
 #include <sys/systm.h>
+#include <sys/stacktrace.h>
 
 #include <dev/cons.h>
 
@@ -245,7 +246,7 @@ db_stack_dump(void)
 }
 
 void
-db_print_stack_trace(struct db_stack_trace *st, int (*pr)(const char *, ...))
+stacktrace_print(struct stacktrace *st, int (*pr)(const char *, ...))
 {
 	unsigned int i;
 

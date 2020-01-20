@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.142 2019/09/06 16:22:40 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.143 2020/01/20 15:58:23 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
+#include <sys/stacktrace.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
 #include <sys/buf.h>
@@ -1476,7 +1477,7 @@ end:
 
 #ifdef DDB
 void
-db_save_stack_trace(struct db_stack_trace *st)
+stacktrace_save(struct stacktrace *st)
 {
 	extern char k_general[];
 	extern char u_general[];
@@ -1498,7 +1499,7 @@ db_save_stack_trace(struct db_stack_trace *st)
 	sp = (vaddr_t)__builtin_frame_address(0);
 
 	st->st_count = 0;
-	while (st->st_count < DB_STACK_TRACE_MAX && pc != 0) {
+	while (st->st_count < STACKTRACE_MAX && pc != 0) {
 		if (!VALID_ADDRESS(pc) || !VALID_ADDRESS(sp))
 			break;
 

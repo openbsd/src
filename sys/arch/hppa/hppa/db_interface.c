@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.46 2019/11/10 10:03:33 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.47 2020/01/20 15:58:23 visa Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -30,6 +30,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/stacktrace.h>
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>
@@ -315,7 +316,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 }
 
 void
-db_save_stack_trace(struct db_stack_trace *st)
+stacktrace_save(struct stacktrace *st)
 {
 	register_t *fp, pc, rp;
 	int	i;
@@ -325,7 +326,7 @@ db_save_stack_trace(struct db_stack_trace *st)
 	rp = fp[-5];
 
 	st->st_count = 0;
-	for (i = 0; i < DB_STACK_TRACE_MAX; i++) {
+	for (i = 0; i < STACKTRACE_MAX; i++) {
 		st->st_pc[st->st_count++] = rp;
 
 		/* next frame */

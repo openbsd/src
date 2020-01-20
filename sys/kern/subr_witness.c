@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.35 2019/11/15 15:50:14 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.36 2020/01/20 15:58:23 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -97,6 +97,7 @@
 #include <sys/percpu.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
+#include <sys/stacktrace.h>
 #include <sys/stdint.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
@@ -187,7 +188,7 @@ struct lock_class {
 
 union lock_stack {
 	union lock_stack	*ls_next;
-	struct db_stack_trace	 ls_stack;
+	struct stacktrace	 ls_stack;
 };
 
 #define	LC_SLEEPLOCK	0x00000001	/* Sleep lock. */
@@ -267,7 +268,7 @@ struct witness_lock_order_key {
 };
 
 struct witness_lock_order_data {
-	struct db_stack_trace		wlod_stack;
+	struct stacktrace		wlod_stack;
 	struct witness_lock_order_key	wlod_key;
 	struct witness_lock_order_data	*wlod_next;
 };
@@ -1069,7 +1070,7 @@ witness_checkorder(struct lock_object *lock, int flags,
 					    w->w_class->lc_name,
 					    w1->w_type->lt_name,
 					    w1->w_class->lc_name);
-					db_print_stack_trace(
+					stacktrace_print(
 					    &wlod1->wlod_stack, printf);
 				}
 				if (wlod2 != NULL) {
@@ -1079,7 +1080,7 @@ witness_checkorder(struct lock_object *lock, int flags,
 					    w1->w_class->lc_name,
 					    w->w_type->lt_name,
 					    w->w_class->lc_name);
-					db_print_stack_trace(
+					stacktrace_print(
 					    &wlod2->wlod_stack, printf);
 				}
 			}
@@ -1160,7 +1161,7 @@ witness_lock(struct lock_object *lock, int flags)
 	if (witness_locktrace) {
 		instance->li_stack = witness_lock_stack_get();
 		if (instance->li_stack != NULL)
-			db_save_stack_trace(&instance->li_stack->ls_stack);
+			stacktrace_save(&instance->li_stack->ls_stack);
 	}
 out:
 	splx(s);
@@ -1872,7 +1873,7 @@ witness_list_lock(struct lock_instance *instance,
 	    "exclusive" : "shared", LOCK_CLASS(lock)->lc_name, lock->lo_name);
 	prnt(" r = %d (%p)\n", instance->li_flags & LI_RECURSEMASK, lock);
 	if (instance->li_stack != NULL)
-		db_print_stack_trace(&instance->li_stack->ls_stack, prnt);
+		stacktrace_print(&instance->li_stack->ls_stack, prnt);
 }
 
 #ifdef DDB
@@ -2213,7 +2214,7 @@ restart:
 				    tmp_w1.w_class->lc_name,
 				    tmp_w2.w_type->lt_name,
 				    tmp_w2.w_class->lc_name);
-				db_print_stack_trace(&tmp_data1.wlod_stack,
+				stacktrace_print(&tmp_data1.wlod_stack,
 				    db_printf);
 				db_printf("\n");
 			}
@@ -2224,7 +2225,7 @@ restart:
 				    tmp_w2.w_class->lc_name,
 				    tmp_w1.w_type->lt_name,
 				    tmp_w1.w_class->lc_name);
-				db_print_stack_trace(&tmp_data2.wlod_stack,
+				stacktrace_print(&tmp_data2.wlod_stack,
 				    db_printf);
 				db_printf("\n");
 			}
@@ -2474,7 +2475,7 @@ witness_lock_order_add(struct witness *parent, struct witness *child)
 	data->wlod_key = key;
 	w_lohash.wloh_array[hash] = data;
 	w_lohash.wloh_count++;
-	db_save_stack_trace(&data->wlod_stack);
+	stacktrace_save(&data->wlod_stack);
 	return (1);
 }
 
