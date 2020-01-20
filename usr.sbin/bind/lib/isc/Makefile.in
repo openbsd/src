@@ -45,33 +45,33 @@ THREADOBJS =	nothreads/thread.@O@
 OBJS =		@ISC_EXTRA_OBJS@ @ISC_PK11_O@ @ISC_PK11_RESULT_O@ \
 		aes.@O@ assertions.@O@ base32.@O@ base64.@O@ \
 		bind9.@O@ buffer.@O@ bufferlist.@O@ \
-		commandline.@O@ counter.@O@ crc64.@O@ error.@O@ event.@O@ \
+		commandline.@O@ error.@O@ event.@O@ \
 		hash.@O@ heap.@O@ hex.@O@ hmacmd5.@O@ hmacsha.@O@ \
 		inet_aton.@O@ iterated_hash.@O@ \
-		lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
+		lex.@O@ lib.@O@ log.@O@ \
 		md5.@O@ mem.@O@ mutexblock.@O@ \
-		netaddr.@O@ netscope.@O@ pool.@O@ ondestroy.@O@ \
-		parseint.@O@ portset.@O@ quota.@O@ radix.@O@ \
-		ratelimiter.@O@ refcount.@O@ region.@O@ regex.@O@ result.@O@ \
+		netaddr.@O@ netscope.@O@ ondestroy.@O@ \
+		parseint.@O@ \
+		refcount.@O@ region.@O@ regex.@O@ result.@O@ \
 		rwlock.@O@ \
 		safe.@O@ serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ \
-		string.@O@ symtab.@O@ task.@O@ taskpool.@O@ \
+		string.@O@ symtab.@O@ task.@O@ \
 		timer.@O@ version.@O@ \
 		${UNIXOBJS} ${THREADOBJS}
 
 # Alphabetically
 SRCS =		@ISC_EXTRA_SRCS@ @ISC_PK11_C@ @ISC_PK11_RESULT_C@ \
 		aes.c assertions.c base32.c base64.c bind9.c \
-		buffer.c bufferlist.c commandline.c counter.c crc64.c \
+		buffer.c bufferlist.c commandline.c \
 		error.c event.c heap.c hex.c hmacmd5.c hmacsha.c \
 		inet_aton.c iterated_hash.c \
-		lex.c lfsr.c lib.c log.c \
+		lex.c lib.c log.c \
 		md5.c mem.c mutexblock.c \
-		netaddr.c netscope.c pool.c ondestroy.c \
-		parseint.c portset.c quota.c radix.c \
-		ratelimiter.c refcount.c region.c regex.c result.c rwlock.c \
+		netaddr.c netscope.c ondestroy.c \
+		parseint.c \
+		refcount.c region.c regex.c result.c rwlock.c \
 		safe.c serial.c sha1.c sha2.c sockaddr.c string.c \
-		symtab.c task.c taskpool.c timer.c \
+		symtab.c task.c timer.c \
 		version.c
 
 LIBS =		@ISC_OPENSSL_LIBS@ @LIBS@
