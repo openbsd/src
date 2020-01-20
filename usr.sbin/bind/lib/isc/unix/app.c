@@ -171,10 +171,7 @@ handle_signal(int sig, void (*handler)(int)) {
 	    sigaction(sig, &sa, NULL) < 0) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 isc_msgcat_get(isc_msgcat, ISC_MSGSET_APP,
-					       ISC_MSG_SIGNALSETUP,
-					       "handle_signal() %d setup: %s"),
-				 sig, strbuf);
+				 "handle_signal() %d setup: %s", sig, strbuf);
 		return (ISC_R_UNEXPECTED);
 	}
 

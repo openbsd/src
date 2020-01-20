@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: error.c,v 1.4 2020/01/09 13:47:13 florian Exp $ */
+/* $Id: error.c,v 1.5 2020/01/20 18:46:57 florian Exp $ */
 
 /*! \file */
 
@@ -79,8 +79,7 @@ isc_error_fatal(const char *file, int line, const char *format, ...) {
 void
 isc_error_runtimecheck(const char *file, int line, const char *expression) {
 	isc_error_fatal(file, line, "RUNTIME_CHECK(%s) %s", expression,
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-				       ISC_MSG_FAILED, "failed"));
+				       "failed");
 }
 
 static void
@@ -97,9 +96,7 @@ static void
 default_fatal_callback(const char *file, int line, const char *format,
 		       va_list args)
 {
-	fprintf(stderr, "%s:%d: %s: ", file, line,
-		isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-			       ISC_MSG_FATALERROR, "fatal error"));
+	fprintf(stderr, "%s:%d: %s: ", file, line, "fatal error");
 	vfprintf(stderr, format, args);
 	fprintf(stderr, "\n");
 	fflush(stderr);

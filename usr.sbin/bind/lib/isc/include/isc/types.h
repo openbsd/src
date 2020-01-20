@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.10 2020/01/09 19:50:35 florian Exp $ */
+/* $Id: types.h,v 1.11 2020/01/20 18:46:57 florian Exp $ */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
@@ -68,7 +68,6 @@ typedef struct isc_logconfig		isc_logconfig_t;	/*%< Log Configuration */
 typedef struct isc_logmodule		isc_logmodule_t;	/*%< Log Module */
 typedef struct isc_mem			isc_mem_t;		/*%< Memory */
 typedef struct isc_mempool		isc_mempool_t;		/*%< Memory Pool */
-typedef struct isc_msgcat		isc_msgcat_t;		/*%< Message Catalog */
 typedef struct isc_ondestroy		isc_ondestroy_t;	/*%< On Destroy */
 typedef struct isc_netaddr		isc_netaddr_t;		/*%< Net Address */
 typedef struct isc_portset		isc_portset_t;		/*%< Port Set */

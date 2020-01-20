@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.c,v 1.8 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: netaddr.c,v 1.9 2020/01/20 18:46:57 florian Exp $ */
 
 /*! \file */
 
@@ -195,10 +195,7 @@ isc_netaddr_format(const isc_netaddr_t *na, char *array, unsigned int size) {
 	}
 
 	if (result != ISC_R_SUCCESS) {
-		snprintf(array, size,
-			 isc_msgcat_get(isc_msgcat, ISC_MSGSET_NETADDR,
-					ISC_MSG_UNKNOWNADDR,
-					"<unknown address, family %u>"),
+		snprintf(array, size, "<unknown address, family %u>",
 			 na->family);
 		array[size - 1] = '\0';
 	}

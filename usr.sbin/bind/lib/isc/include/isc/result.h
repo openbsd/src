@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.h,v 1.4 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: result.h,v 1.5 2020/01/20 18:46:57 florian Exp $ */
 
 #ifndef ISC_RESULT_H
 #define ISC_RESULT_H 1
@@ -103,7 +103,7 @@ isc_result_totext(isc_result_t);
 
 isc_result_t
 isc_result_register(unsigned int base, unsigned int nresults,
-		    const char **text, isc_msgcat_t *msgcat, int set);
+		    const char **text, int set);
 
 ISC_LANG_ENDDECLS
 

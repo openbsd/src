@@ -373,8 +373,7 @@ task_shutdown(isc__task_t *task) {
 	XTRACE("task_shutdown");
 
 	if (! TASK_SHUTTINGDOWN(task)) {
-		XTRACE(isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-				      ISC_MSG_SHUTTINGDOWN, "shutting down"));
+		XTRACE("shutting down");
 		task->flags |= TASK_F_SHUTTINGDOWN;
 		if (task->state == task_state_idle) {
 			INSIST(EMPTY(task->events));
@@ -994,8 +993,7 @@ dispatch(isc__taskmgr_t *manager) {
 		if (total_dispatch_count >= DEFAULT_TASKMGR_QUANTUM ||
 		    empty_readyq(manager))
 			break;
-		XTHREADTRACE(isc_msgcat_get(isc_msgcat, ISC_MSGSET_TASK,
-					    ISC_MSG_WORKING, "working"));
+		XTHREADTRACE("working");
 
 		task = pop_readyq(manager);
 		if (task != NULL) {
@@ -1019,8 +1017,7 @@ dispatch(isc__taskmgr_t *manager) {
 			LOCK(&task->lock);
 			INSIST(task->state == task_state_ready);
 			task->state = task_state_running;
-			XTRACE(isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
-					      ISC_MSG_RUNNING, "running"));
+			XTRACE("running");
 			isc_stdtime_get(&task->now);
 			do {
 				if (!EMPTY(task->events)) {
@@ -1031,10 +1028,7 @@ dispatch(isc__taskmgr_t *manager) {
 					/*
 					 * Execute the event action.
 					 */
-					XTRACE(isc_msgcat_get(isc_msgcat,
-							    ISC_MSGSET_TASK,
-							    ISC_MSG_EXECUTE,
-							    "execute action"));
+					XTRACE("execute action");
 					if (event->ev_action != NULL) {
 						UNLOCK(&task->lock);
 						(event->ev_action)(
@@ -1082,20 +1076,13 @@ dispatch(isc__taskmgr_t *manager) {
 					 * Nothing else to do for this task
 					 * right now.
 					 */
-					XTRACE(isc_msgcat_get(isc_msgcat,
-							      ISC_MSGSET_TASK,
-							      ISC_MSG_EMPTY,
-							      "empty"));
+					XTRACE("empty");
 					if (task->references == 0 &&
 					    TASK_SHUTTINGDOWN(task)) {
 						/*
 						 * The task is done.
 						 */
-						XTRACE(isc_msgcat_get(
-							       isc_msgcat,
-							       ISC_MSGSET_TASK,
-							       ISC_MSG_DONE,
-							       "done"));
+						XTRACE("done");
 						finished = ISC_TRUE;
 						task->state = task_state_done;
 					} else
@@ -1112,10 +1099,7 @@ dispatch(isc__taskmgr_t *manager) {
 					 * dispatching at least one event,
 					 * so the minimum quantum is one.
 					 */
-					XTRACE(isc_msgcat_get(isc_msgcat,
-							      ISC_MSGSET_TASK,
-							      ISC_MSG_QUANTUM,
-							      "quantum"));
+					XTRACE("quantum");
 					task->state = task_state_ready;
 					requeue = ISC_TRUE;
 					done = ISC_TRUE;

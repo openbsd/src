@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.10 2020/01/20 18:45:29 florian Exp $ */
+/* $Id: timer.c,v 1.11 2020/01/20 18:46:57 florian Exp $ */
 
 /*! \file */
 
@@ -230,8 +230,7 @@ schedule(isc__timer_t *timer, isc_time_t *now, isc_boolean_t signal_ok) {
 		manager->nscheduled++;
 	}
 
-	XTRACETIMER(isc_msgcat_get(isc_msgcat, ISC_MSGSET_TIMER,
-				   ISC_MSG_SCHEDULE, "schedule"), timer, due);
+	XTRACETIMER("schedule", timer, due);
 
 	/*
 	 * If this timer is at the head of the queue, we need to ensure
@@ -635,21 +634,14 @@ dispatch(isc__timermgr_t *manager, isc_time_t *now) {
 					 * Idle timer has been touched;
 					 * reschedule.
 					 */
-					XTRACEID(isc_msgcat_get(isc_msgcat,
-								ISC_MSGSET_TIMER,
-								ISC_MSG_IDLERESCHED,
-								"idle reschedule"),
-						 timer);
+					XTRACEID("idle reschedule", timer);
 					post_event = ISC_FALSE;
 					need_schedule = ISC_TRUE;
 				}
 			}
 
 			if (post_event) {
-				XTRACEID(isc_msgcat_get(isc_msgcat,
-							ISC_MSGSET_TIMER,
-							ISC_MSG_POSTING,
-							"posting"), timer);
+				XTRACEID("posting", timer);
 				/*
 				 * XXX We could preallocate this event.
 				 */
@@ -666,11 +658,7 @@ dispatch(isc__timermgr_t *manager, isc_time_t *now) {
 						      ISC_EVENT_PTR(&event));
 				} else
 					UNEXPECTED_ERROR(__FILE__, __LINE__, "%s",
-						 isc_msgcat_get(isc_msgcat,
-							 ISC_MSGSET_TIMER,
-							 ISC_MSG_EVENTNOTALLOC,
-							 "couldn't "
-							 "allocate event"));
+						 "couldn't allocate event");
 			}
 
 			timer->index = 0;
@@ -681,13 +669,9 @@ dispatch(isc__timermgr_t *manager, isc_time_t *now) {
 				result = schedule(timer, now, ISC_FALSE);
 				if (result != ISC_R_SUCCESS)
 					UNEXPECTED_ERROR(__FILE__, __LINE__,
-							 "%s: %u",
-						isc_msgcat_get(isc_msgcat,
-							ISC_MSGSET_TIMER,
-							ISC_MSG_SCHEDFAIL,
-							"couldn't schedule "
-							"timer"),
-							 result);
+						"%s: %u",
+						"couldn't schedule timer",
+						result);
 			}
 		} else {
 			manager->due = timer->due;

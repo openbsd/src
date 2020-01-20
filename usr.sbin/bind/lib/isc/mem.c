@@ -390,10 +390,7 @@ add_trace_entry(isc__mem_t *mctx, const void *ptr, size_t size FLARG) {
 	size_t mysize = size;
 
 	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0)
-		fprintf(stderr, isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					       ISC_MSG_ADDTRACE,
-					       "add %p size %u "
-					       "file %s line %u mctx %p\n"),
+		fprintf(stderr, "add %p size %lu file %s line %u mctx %p\n",
 			ptr, size, file, line, mctx);
 
 	if (mctx->debuglist == NULL)
@@ -449,10 +446,7 @@ delete_trace_entry(isc__mem_t *mctx, const void *ptr, size_t size,
 	unsigned int i;
 
 	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0)
-		fprintf(stderr, isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					       ISC_MSG_DELTRACE,
-					       "del %p size %u "
-					       "file %s line %u mctx %p\n"),
+		fprintf(stderr, "del %p size %lu file %s line %u mctx %p\n",
 			ptr, size, file, line, mctx);
 
 	if (mctx->debuglist == NULL)
@@ -1361,14 +1355,10 @@ print_active(isc__mem_t *mctx, FILE *out) {
 		const char *format;
 		isc_boolean_t found;
 
-		fprintf(out, "%s", isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					    ISC_MSG_DUMPALLOC,
-					    "Dump of all outstanding "
-					    "memory allocations:\n"));
+		fprintf(out, "%s", "Dump of all outstanding "
+					    "memory allocations:\n");
 		found = ISC_FALSE;
-		format = isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					ISC_MSG_PTRFILELINE,
-					"\tptr %p size %u file %s line %u\n");
+		format = "\tptr %p size %u file %s line %u\n";
 		for (i = 0; i <= mctx->max_size; i++) {
 			dl = ISC_LIST_HEAD(mctx->debuglist[i]);
 
@@ -1387,8 +1377,7 @@ print_active(isc__mem_t *mctx, FILE *out) {
 			}
 		}
 		if (!found)
-			fputs(isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					     ISC_MSG_NONE, "\tNone.\n"), out);
+			fputs("\tNone.\n", out);
 	}
 }
 #endif
@@ -1430,27 +1419,10 @@ isc_mem_stats(isc_mem_t *ctx0, FILE *out) {
 	 */
 	pool = ISC_LIST_HEAD(ctx->pools);
 	if (pool != NULL) {
-		fprintf(out, "%s", isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-					    ISC_MSG_POOLSTATS,
-					    "[Pool statistics]\n"));
+		fprintf(out, "%s", "[Pool statistics]\n");
 		fprintf(out, "%15s %10s %10s %10s %10s %10s %10s %10s %1s\n",
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLNAME, "name"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLSIZE, "size"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLMAXALLOC, "maxalloc"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLALLOCATED, "allocated"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLFREECOUNT, "freecount"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLFREEMAX, "freemax"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLFILLCOUNT, "fillcount"),
-			isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
-				       ISC_MSG_POOLGETS, "gets"),
-			"L");
+			"name",	"size",	"maxalloc", "allocated", "freecount",
+			"freemax", "fillcount",	"gets",	"L");
 	}
 	while (pool != NULL) {
 		fprintf(out, "%15s %10lu %10u %10u %10u %10u %10u %10u %s\n",

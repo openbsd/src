@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.h,v 1.4 2020/01/09 14:18:30 florian Exp $ */
+/* $Id: lib.h,v 1.5 2020/01/20 18:46:57 florian Exp $ */
 
 #ifndef ISC_LIB_H
 #define ISC_LIB_H 1
@@ -25,15 +25,6 @@
 #include <isc/lang.h>
 
 ISC_LANG_BEGINDECLS
-
-extern isc_msgcat_t *isc_msgcat;
-
-void
-isc_lib_initmsgcat(void);
-/*!<
- * \brief Initialize the ISC library's message catalog, isc_msgcat, if it
- * has not already been initialized.
- */
 
 void
 isc_lib_register(void);

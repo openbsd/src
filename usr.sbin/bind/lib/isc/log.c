@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.15 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: log.c,v 1.16 2020/01/20 18:46:57 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -239,9 +239,8 @@ roll_log(isc_logchannel_t *channel);
 static void
 isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 	     isc_logmodule_t *module, int level, isc_boolean_t write_once,
-	     isc_msgcat_t *msgcat, int msgset, int msg,
 	     const char *format, va_list args)
-     ISC_FORMAT_PRINTF(9, 0);
+     ISC_FORMAT_PRINTF(6, 0);
 
 /*@{*/
 /*!
@@ -838,8 +837,7 @@ isc_log_write(isc_log_t *lctx, isc_logcategory_t *category,
 	 */
 
 	va_start(args, format);
-	isc_log_doit(lctx, category, module, level, ISC_FALSE,
-		     NULL, 0, 0, format, args);
+	isc_log_doit(lctx, category, module, level, ISC_FALSE, format, args);
 	va_end(args);
 }
 
@@ -851,8 +849,7 @@ isc_log_vwrite(isc_log_t *lctx, isc_logcategory_t *category,
 	/*
 	 * Contract checking is done in isc_log_doit().
 	 */
-	isc_log_doit(lctx, category, module, level, ISC_FALSE,
-		     NULL, 0, 0, format, args);
+	isc_log_doit(lctx, category, module, level, ISC_FALSE, format, args);
 }
 
 void
@@ -866,8 +863,7 @@ isc_log_write1(isc_log_t *lctx, isc_logcategory_t *category,
 	 */
 
 	va_start(args, format);
-	isc_log_doit(lctx, category, module, level, ISC_TRUE,
-		     NULL, 0, 0, format, args);
+	isc_log_doit(lctx, category, module, level, ISC_TRUE, format, args);
 	va_end(args);
 }
 
@@ -879,70 +875,7 @@ isc_log_vwrite1(isc_log_t *lctx, isc_logcategory_t *category,
 	/*
 	 * Contract checking is done in isc_log_doit().
 	 */
-	isc_log_doit(lctx, category, module, level, ISC_TRUE,
-		     NULL, 0, 0, format, args);
-}
-
-void
-isc_log_iwrite(isc_log_t *lctx, isc_logcategory_t *category,
-	       isc_logmodule_t *module, int level,
-	       isc_msgcat_t *msgcat, int msgset, int msg,
-	       const char *format, ...)
-{
-	va_list args;
-
-	/*
-	 * Contract checking is done in isc_log_doit().
-	 */
-
-	va_start(args, format);
-	isc_log_doit(lctx, category, module, level, ISC_FALSE,
-		     msgcat, msgset, msg, format, args);
-	va_end(args);
-}
-
-void
-isc_log_ivwrite(isc_log_t *lctx, isc_logcategory_t *category,
-	       isc_logmodule_t *module, int level,
-	       isc_msgcat_t *msgcat, int msgset, int msg,
-	       const char *format, va_list args)
-{
-	/*
-	 * Contract checking is done in isc_log_doit().
-	 */
-	isc_log_doit(lctx, category, module, level, ISC_FALSE,
-		     msgcat, msgset, msg, format, args);
-}
-
-void
-isc_log_iwrite1(isc_log_t *lctx, isc_logcategory_t *category,
-		isc_logmodule_t *module, int level,
-		isc_msgcat_t *msgcat, int msgset, int msg,
-		const char *format, ...)
-{
-	va_list args;
-
-	/*
-	 * Contract checking is done in isc_log_doit().
-	 */
-
-	va_start(args, format);
-	isc_log_doit(lctx, category, module, level, ISC_TRUE,
-		     msgcat, msgset, msg, format, args);
-	va_end(args);
-}
-
-void
-isc_log_ivwrite1(isc_log_t *lctx, isc_logcategory_t *category,
-		 isc_logmodule_t *module, int level,
-		 isc_msgcat_t *msgcat, int msgset, int msg,
-		 const char *format, va_list args)
-{
-	/*
-	 * Contract checking is done in isc_log_doit().
-	 */
-	isc_log_doit(lctx, category, module, level, ISC_TRUE,
-		     msgcat, msgset, msg, format, args);
+	isc_log_doit(lctx, category, module, level, ISC_TRUE, format, args);
 }
 
 void
@@ -1392,7 +1325,6 @@ isc_log_wouldlog(isc_log_t *lctx, int level) {
 static void
 isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 	     isc_logmodule_t *module, int level, isc_boolean_t write_once,
-	     isc_msgcat_t *msgcat, int msgset, int msg,
 	     const char *format, va_list args)
 {
 	int syslog_level;
@@ -1428,10 +1360,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 	if (! isc_log_wouldlog(lctx, level))
 		return;
 
-	if (msgcat != NULL)
-		iformat = isc_msgcat_get(msgcat, msgset, msg, format);
-	else
-		iformat = format;
+	iformat = format;
 
 	time_string[0]  = '\0';
 	level_string[0] = '\0';
@@ -1508,11 +1437,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 		    level_string[0] == '\0') {
 			if (level < ISC_LOG_CRITICAL)
 				snprintf(level_string, sizeof(level_string),
-					 isc_msgcat_get(isc_msgcat,
-							ISC_MSGSET_LOG,
-							ISC_MSG_LEVEL,
-							"level %d: "),
-					 level);
+					 "level %d: ", level);
 			else if (level > ISC_LOG_DYNAMIC)
 				snprintf(level_string, sizeof(level_string),
 					 "%s %d: ", log_level_strings[0],
