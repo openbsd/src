@@ -21,12 +21,12 @@
 
 #include <stdio.h>
 
-#include <isc/json.h>
+
 #include <isc/lang.h>
 #include <isc/mutex.h>
 #include <isc/platform.h>
 #include <isc/types.h>
-#include <isc/xml.h>
+
 
 ISC_LANG_BEGINDECLS
 
@@ -549,22 +549,6 @@ isc_mem_gettag(isc_mem_t *ctx);
  * Requires:
  *\li	'ctx' is a valid task.
  */
-
-#ifdef HAVE_LIBXML2
-int
-isc_mem_renderxml(xmlTextWriterPtr writer);
-/*%<
- * Render all contexts' statistics and status in XML for writer.
- */
-#endif /* HAVE_LIBXML2 */
-
-#ifdef HAVE_JSON
-isc_result_t
-isc_mem_renderjson(json_object *memobj);
-/*%<
- * Render all contexts' statistics and status in JSON.
- */
-#endif /* HAVE_JSON */
 
 
 /*

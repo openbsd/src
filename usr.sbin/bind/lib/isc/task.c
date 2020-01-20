@@ -28,7 +28,7 @@
 #include <isc/app.h>
 #include <isc/condition.h>
 #include <isc/event.h>
-#include <isc/json.h>
+
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/msgs.h>
@@ -39,7 +39,7 @@
 #include <isc/task.h>
 #include <isc/thread.h>
 #include <isc/util.h>
-#include <isc/xml.h>
+
 
 /*%
  * For BIND9 internal applications:
@@ -78,12 +78,6 @@ typedef enum {
 	task_state_idle, task_state_ready, task_state_running,
 	task_state_done
 } task_state_t;
-
-#if defined(HAVE_LIBXML2) || defined(HAVE_JSON)
-static const char *statenames[] = {
-	"idle", "ready", "running", "done",
-};
-#endif
 
 #define TASK_MAGIC			ISC_MAGIC('T', 'A', 'S', 'K')
 #define VALID_TASK(t)			ISC_MAGIC_VALID(t, TASK_MAGIC)
@@ -1768,202 +1762,6 @@ isc_task_exiting(isc_task_t *t) {
 	REQUIRE(VALID_TASK(task));
 	return (TASK_SHUTTINGDOWN(task));
 }
-
-
-#ifdef HAVE_LIBXML2
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
-int
-isc_taskmgr_renderxml(isc_taskmgr_t *mgr0, xmlTextWriterPtr writer) {
-	isc__taskmgr_t *mgr = (isc__taskmgr_t *)mgr0;
-	isc__task_t *task = NULL;
-	int xmlrc;
-
-	LOCK(&mgr->lock);
-
-	/*
-	 * Write out the thread-model, and some details about each depending
-	 * on which type is enabled.
-	 */
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "thread-model"));
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "type"));
-	TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR "non-threaded"));
-	TRY0(xmlTextWriterEndElement(writer)); /* type */
-
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "references"));
-	TRY0(xmlTextWriterWriteFormatString(writer, "%d", mgr->refs));
-	TRY0(xmlTextWriterEndElement(writer)); /* references */
-
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "default-quantum"));
-	TRY0(xmlTextWriterWriteFormatString(writer, "%d",
-					    mgr->default_quantum));
-	TRY0(xmlTextWriterEndElement(writer)); /* default-quantum */
-
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "tasks-running"));
-	TRY0(xmlTextWriterWriteFormatString(writer, "%d", mgr->tasks_running));
-	TRY0(xmlTextWriterEndElement(writer)); /* tasks-running */
-
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "tasks-ready"));
-	TRY0(xmlTextWriterWriteFormatString(writer, "%d", mgr->tasks_ready));
-	TRY0(xmlTextWriterEndElement(writer)); /* tasks-ready */
-
-	TRY0(xmlTextWriterEndElement(writer)); /* thread-model */
-
-	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "tasks"));
-	task = ISC_LIST_HEAD(mgr->tasks);
-	while (task != NULL) {
-		LOCK(&task->lock);
-		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "task"));
-
-		if (task->name[0] != 0) {
-			TRY0(xmlTextWriterStartElement(writer,
-						       ISC_XMLCHAR "name"));
-			TRY0(xmlTextWriterWriteFormatString(writer, "%s",
-						       task->name));
-			TRY0(xmlTextWriterEndElement(writer)); /* name */
-		}
-
-		TRY0(xmlTextWriterStartElement(writer,
-					       ISC_XMLCHAR "references"));
-		TRY0(xmlTextWriterWriteFormatString(writer, "%d",
-						    task->references));
-		TRY0(xmlTextWriterEndElement(writer)); /* references */
-
-		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "id"));
-		TRY0(xmlTextWriterWriteFormatString(writer, "%p", task));
-		TRY0(xmlTextWriterEndElement(writer)); /* id */
-
-		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "state"));
-		TRY0(xmlTextWriterWriteFormatString(writer, "%s",
-					       statenames[task->state]));
-		TRY0(xmlTextWriterEndElement(writer)); /* state */
-
-		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "quantum"));
-		TRY0(xmlTextWriterWriteFormatString(writer, "%d",
-						    task->quantum));
-		TRY0(xmlTextWriterEndElement(writer)); /* quantum */
-
-		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "events"));
-		TRY0(xmlTextWriterWriteFormatString(writer, "%d",
-						    task->nevents));
-		TRY0(xmlTextWriterEndElement(writer)); /* events */
-
-		TRY0(xmlTextWriterEndElement(writer));
-
-		UNLOCK(&task->lock);
-		task = ISC_LIST_NEXT(task, link);
-	}
-	TRY0(xmlTextWriterEndElement(writer)); /* tasks */
-
- error:
-	if (task != NULL)
-		UNLOCK(&task->lock);
-	UNLOCK(&mgr->lock);
-
-	return (xmlrc);
-}
-#endif /* HAVE_LIBXML2 */
-
-#ifdef HAVE_JSON
-#define CHECKMEM(m) do { \
-	if (m == NULL) { \
-		result = ISC_R_NOMEMORY;\
-		goto error;\
-	} \
-} while(0)
-
-isc_result_t
-isc_taskmgr_renderjson(isc_taskmgr_t *mgr0, json_object *tasks) {
-	isc_result_t result = ISC_R_SUCCESS;
-	isc__taskmgr_t *mgr = (isc__taskmgr_t *)mgr0;
-	isc__task_t *task = NULL;
-	json_object *obj = NULL, *array = NULL, *taskobj = NULL;
-
-	LOCK(&mgr->lock);
-
-	/*
-	 * Write out the thread-model, and some details about each depending
-	 * on which type is enabled.
-	 */
-	obj = json_object_new_string("non-threaded");
-	CHECKMEM(obj);
-	json_object_object_add(tasks, "thread-model", obj);
-
-	obj = json_object_new_int(mgr->refs);
-	CHECKMEM(obj);
-	json_object_object_add(tasks, "references", obj);
-
-	obj = json_object_new_int(mgr->default_quantum);
-	CHECKMEM(obj);
-	json_object_object_add(tasks, "default-quantum", obj);
-
-	obj = json_object_new_int(mgr->tasks_running);
-	CHECKMEM(obj);
-	json_object_object_add(tasks, "tasks-running", obj);
-
-	obj = json_object_new_int(mgr->tasks_ready);
-	CHECKMEM(obj);
-	json_object_object_add(tasks, "tasks-ready", obj);
-
-	array = json_object_new_array();
-	CHECKMEM(array);
-
-	for (task = ISC_LIST_HEAD(mgr->tasks);
-	     task != NULL;
-	     task = ISC_LIST_NEXT(task, link))
-	{
-		char buf[255];
-
-		LOCK(&task->lock);
-
-		taskobj = json_object_new_object();
-		CHECKMEM(taskobj);
-		json_object_array_add(array, taskobj);
-
-		snprintf(buf, sizeof(buf), "%p", task);
-		obj = json_object_new_string(buf);
-		CHECKMEM(obj);
-		json_object_object_add(taskobj, "id", obj);
-
-		if (task->name[0] != 0) {
-			obj = json_object_new_string(task->name);
-			CHECKMEM(obj);
-			json_object_object_add(taskobj, "name", obj);
-		}
-
-		obj = json_object_new_int(task->references);
-		CHECKMEM(obj);
-		json_object_object_add(taskobj, "references", obj);
-
-		obj = json_object_new_string(statenames[task->state]);
-		CHECKMEM(obj);
-		json_object_object_add(taskobj, "state", obj);
-
-		obj = json_object_new_int(task->quantum);
-		CHECKMEM(obj);
-		json_object_object_add(taskobj, "quantum", obj);
-
-		obj = json_object_new_int(task->nevents);
-		CHECKMEM(obj);
-		json_object_object_add(taskobj, "events", obj);
-
-		UNLOCK(&task->lock);
-	}
-
-	json_object_object_add(tasks, "tasks", array);
-	array = NULL;
-	result = ISC_R_SUCCESS;
-
- error:
-	if (array != NULL)
-		json_object_put(array);
-
-	if (task != NULL)
-		UNLOCK(&task->lock);
-	UNLOCK(&mgr->lock);
-
-	return (result);
-}
-#endif
 
 
 static isc_mutex_t createlock;
