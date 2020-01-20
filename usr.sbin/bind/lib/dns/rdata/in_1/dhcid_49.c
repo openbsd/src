@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dhcid_49.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: dhcid_49.c,v 1.3 2020/01/20 18:51:53 florian Exp $ */
 
 /* RFC 4701 */
 
@@ -155,11 +155,10 @@ tostruct_in_dhcid(ARGS_TOSTRUCT) {
 
 	dns_rdata_toregion(rdata, &region);
 
-	dhcid->dhcid = mem_maybedup(mctx, region.base, region.length);
+	dhcid->dhcid = mem_maybedup(region.base, region.length);
 	if (dhcid->dhcid == NULL)
 		return (ISC_R_NOMEMORY);
 
-	dhcid->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -171,12 +170,8 @@ freestruct_in_dhcid(ARGS_FREESTRUCT) {
 	REQUIRE(dhcid->common.rdtype == dns_rdatatype_dhcid);
 	REQUIRE(dhcid->common.rdclass == dns_rdataclass_in);
 
-	if (dhcid->mctx == NULL)
-		return;
-
 	if (dhcid->dhcid != NULL)
-		isc_mem_free(dhcid->mctx, dhcid->dhcid);
-	dhcid->mctx = NULL;
+		free(dhcid->dhcid);
 }
 
 static inline isc_result_t

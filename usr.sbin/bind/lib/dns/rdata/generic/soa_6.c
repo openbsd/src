@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: soa_6.c,v 1.8 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: soa_6.c,v 1.9 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
@@ -321,12 +321,12 @@ tostruct_soa(ARGS_TOSTRUCT) {
 	dns_name_fromregion(&name, &region);
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&soa->origin, NULL);
-	RETERR(name_duporclone(&name, mctx, &soa->origin));
+	RETERR(name_duporclone(&name, &soa->origin));
 
 	dns_name_fromregion(&name, &region);
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&soa->contact, NULL);
-	result = name_duporclone(&name, mctx, &soa->contact);
+	result = name_duporclone(&name, &soa->contact);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
@@ -344,12 +344,10 @@ tostruct_soa(ARGS_TOSTRUCT) {
 
 	soa->minimum = uint32_fromregion(&region);
 
-	soa->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL)
-		dns_name_free(&soa->origin, mctx);
+	dns_name_free(&soa->origin);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -360,12 +358,8 @@ freestruct_soa(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(soa->common.rdtype == dns_rdatatype_soa);
 
-	if (soa->mctx == NULL)
-		return;
-
-	dns_name_free(&soa->origin, soa->mctx);
-	dns_name_free(&soa->contact, soa->mctx);
-	soa->mctx = NULL;
+	dns_name_free(&soa->origin);
+	dns_name_free(&soa->contact);
 }
 
 static inline isc_result_t

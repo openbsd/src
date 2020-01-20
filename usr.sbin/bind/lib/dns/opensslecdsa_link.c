@@ -23,7 +23,7 @@
 #endif
 
 
-#include <isc/mem.h>
+
 #include <isc/safe.h>
 #include <isc/sha2.h>
 #include <string.h>
@@ -493,7 +493,7 @@ opensslecdsa_tofile(const dst_key_t *key, const char *directory) {
 	if (privkey == NULL)
 		DST_RET (ISC_R_FAILURE);
 
-	buf = isc_mem_get(key->mctx, BN_num_bytes(privkey));
+	buf = malloc(BN_num_bytes(privkey));
 	if (buf == NULL)
 		DST_RET (ISC_R_NOMEMORY);
 
@@ -508,7 +508,7 @@ opensslecdsa_tofile(const dst_key_t *key, const char *directory) {
 	if (eckey != NULL)
 		EC_KEY_free(eckey);
 	if (buf != NULL)
-		isc_mem_put(key->mctx, buf, BN_num_bytes(privkey));
+		free(buf);
 	return (ret);
 }
 
@@ -550,13 +550,12 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	EC_KEY *eckey = NULL;
 	BIGNUM *privkey = NULL;
 	int group_nid;
-	isc_mem_t *mctx = key->mctx;
 
 	REQUIRE(key->key_alg == DST_ALG_ECDSA256 ||
 		key->key_alg == DST_ALG_ECDSA384);
 
 	/* read private key file */
-	ret = dst__privstruct_parse(key, DST_ALG_ECDSA256, lexer, mctx, &priv);
+	ret = dst__privstruct_parse(key, DST_ALG_ECDSA256, lexer, &priv);
 	if (ret != ISC_R_SUCCESS)
 		goto err;
 
@@ -567,7 +566,7 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			DST_RET(DST_R_INVALIDPRIVATEKEY);
 		key->keydata.pkey = pub->keydata.pkey;
 		pub->keydata.pkey = NULL;
-		dst__privstruct_free(&priv, mctx);
+		dst__privstruct_free(&priv);
 		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 	}
@@ -609,7 +608,7 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		BN_clear_free(privkey);
 	if (eckey != NULL)
 		EC_KEY_free(eckey);
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }

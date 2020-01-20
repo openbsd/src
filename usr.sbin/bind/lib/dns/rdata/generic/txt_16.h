@@ -18,7 +18,7 @@
 #ifndef GENERIC_TXT_16_H
 #define GENERIC_TXT_16_H 1
 
-/* $Id: txt_16.h,v 1.4 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: txt_16.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 typedef struct dns_rdata_txt_string {
 		uint8_t    length;
@@ -27,7 +27,6 @@ typedef struct dns_rdata_txt_string {
 
 typedef struct dns_rdata_txt {
 	dns_rdatacommon_t       common;
-	isc_mem_t               *mctx;
 	unsigned char           *txt;
 	uint16_t            txt_len;
 	/* private */

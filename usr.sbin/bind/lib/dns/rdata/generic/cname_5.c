@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cname_5.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: cname_5.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 
@@ -161,8 +161,7 @@ tostruct_cname(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&cname->cname, NULL);
-	RETERR(name_duporclone(&name, mctx, &cname->cname));
-	cname->mctx = mctx;
+	RETERR(name_duporclone(&name, &cname->cname));
 	return (ISC_R_SUCCESS);
 }
 
@@ -172,11 +171,7 @@ freestruct_cname(ARGS_FREESTRUCT) {
 
 	REQUIRE(source != NULL);
 
-	if (cname->mctx == NULL)
-		return;
-
-	dns_name_free(&cname->cname, cname->mctx);
-	cname->mctx = NULL;
+	dns_name_free(&cname->cname);
 }
 
 static inline isc_result_t

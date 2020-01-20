@@ -17,14 +17,13 @@
 #ifndef IN_1_A6_38_H
 #define IN_1_A6_38_H 1
 
-/* $Id: a6_38.h,v 1.4 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: a6_38.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief Per RFC2874 */
 
 typedef struct dns_rdata_in_a6 {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	dns_name_t		prefix;
 	uint8_t		prefixlen;
 	struct in6_addr		in6_addr;

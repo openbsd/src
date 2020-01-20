@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnskey_48.c,v 1.5 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: dnskey_48.c,v 1.6 2020/01/20 18:51:53 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -108,7 +108,7 @@ tostruct_dnskey(ARGS_TOSTRUCT) {
 	dnskey->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&dnskey->common, link);
 
-	return (generic_tostruct_key(rdata, target, mctx));
+	return (generic_tostruct_key(rdata, target));
 }
 
 static inline void

@@ -183,21 +183,19 @@ tostruct_talink(ARGS_TOSTRUCT) {
 	dns_name_fromregion(&name, &region);
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&talink->prev, NULL);
-	RETERR(name_duporclone(&name, mctx, &talink->prev));
+	RETERR(name_duporclone(&name, &talink->prev));
 
 	dns_name_fromregion(&name, &region);
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&talink->next, NULL);
-	result = name_duporclone(&name, mctx, &talink->next);
+	result = name_duporclone(&name, &talink->next);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
-	talink->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL)
-		dns_name_free(&talink->prev, mctx);
+	dns_name_free(&talink->prev);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -208,12 +206,8 @@ freestruct_talink(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(talink->common.rdtype == dns_rdatatype_talink);
 
-	if (talink->mctx == NULL)
-		return;
-
-	dns_name_free(&talink->prev, talink->mctx);
-	dns_name_free(&talink->next, talink->mctx);
-	talink->mctx = NULL;
+	dns_name_free(&talink->prev);
+	dns_name_free(&talink->next);
 }
 
 static inline isc_result_t

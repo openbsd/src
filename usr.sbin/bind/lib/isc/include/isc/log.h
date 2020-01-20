@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.8 2020/01/20 18:46:57 florian Exp $ */
+/* $Id: log.h,v 1.9 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -172,7 +172,7 @@ extern isc_logmodule_t isc_modules[];
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-isc_log_create(isc_mem_t *mctx, isc_log_t **lctxp, isc_logconfig_t **lcfgp);
+isc_log_create(isc_log_t **lctxp, isc_logconfig_t **lcfgp);
 /*%<
  * Establish a new logging context, with default channels.
  *

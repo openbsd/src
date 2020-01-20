@@ -184,7 +184,7 @@ say_message(dns_name_t *name, const char *msg, dns_rdata_t *rdata,
 
 	dns_name_format(name, namestr, sizeof(namestr));
  retry:
-	result = isc_buffer_allocate(mctx, &b, bufsize);
+	result = isc_buffer_allocate(&b, bufsize);
 	check_result(result, "isc_buffer_allocate");
 	result = dns_rdata_totext(rdata, NULL, b);
 	if (result == ISC_R_NOSPACE) {
@@ -382,7 +382,7 @@ chase_cnamechain(dns_message_t *msg, dns_name_t *qname) {
 		check_result(result, "dns_rdataset_first");
 		dns_rdata_reset(&rdata);
 		dns_rdataset_current(rdataset, &rdata);
-		result = dns_rdata_tostruct(&rdata, &cname, NULL);
+		result = dns_rdata_tostruct(&rdata, &cname);
 		check_result(result, "dns_rdata_tostruct");
 		dns_name_copy(&cname.cname, qname, NULL);
 		dns_rdata_freestruct(&cname);
@@ -575,7 +575,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	return (result);
 }
 
-static const char * optstring = "46ac:dilnm:rst:vVwCDN:R:TW:";
+static const char * optstring = "46ac:dilnrst:vVwCDN:R:TW:";
 
 /*% version */
 static void
@@ -589,18 +589,6 @@ pre_parse_args(int argc, char **argv) {
 
 	while ((c = isc_commandline_parse(argc, argv, optstring)) != -1) {
 		switch (c) {
-		case 'm':
-			memdebugging = ISC_TRUE;
-			if (strcasecmp("trace", isc_commandline_argument) == 0)
-				isc_mem_debugging |= ISC_MEM_DEBUGTRACE;
-			else if (strcasecmp("record",
-					    isc_commandline_argument) == 0)
-				isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
-			else if (strcasecmp("usage",
-					    isc_commandline_argument) == 0)
-				isc_mem_debugging |= ISC_MEM_DEBUGUSAGE;
-			break;
-
 		case '4':
 			if (ipv6only)
 				fatal("only one of -4 and -6 allowed");
@@ -872,7 +860,7 @@ main(int argc, char **argv) {
 
 	parse_args(ISC_FALSE, argc, argv);
 	setup_system(ipv4only, ipv6only);
-	result = isc_app_onrun(mctx, global_task, onrun_callback, NULL);
+	result = isc_app_onrun(global_task, onrun_callback, NULL);
 	check_result(result, "isc_app_onrun");
 	isc_app_run();
 	cancel_all();

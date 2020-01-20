@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rrsig_46.c,v 1.6 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: rrsig_46.c,v 1.7 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -478,24 +478,21 @@ tostruct_rrsig(ARGS_TOSTRUCT) {
 	dns_name_init(&signer, NULL);
 	dns_name_fromregion(&signer, &sr);
 	dns_name_init(&sig->signer, NULL);
-	RETERR(name_duporclone(&signer, mctx, &sig->signer));
+	RETERR(name_duporclone(&signer, &sig->signer));
 	isc_region_consume(&sr, name_length(&sig->signer));
 
 	/*
 	 * Signature.
 	 */
 	sig->siglen = sr.length;
-	sig->signature = mem_maybedup(mctx, sr.base, sig->siglen);
+	sig->signature = mem_maybedup(sr.base, sig->siglen);
 	if (sig->signature == NULL)
 		goto cleanup;
 
-
-	sig->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL)
-		dns_name_free(&sig->signer, mctx);
+	dns_name_free(&sig->signer);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -506,13 +503,9 @@ freestruct_rrsig(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(sig->common.rdtype == dns_rdatatype_rrsig);
 
-	if (sig->mctx == NULL)
-		return;
-
-	dns_name_free(&sig->signer, sig->mctx);
+	dns_name_free(&sig->signer);
 	if (sig->signature != NULL)
-		isc_mem_free(sig->mctx, sig->signature);
-	sig->mctx = NULL;
+		free(sig->signature);
 }
 
 static inline isc_result_t

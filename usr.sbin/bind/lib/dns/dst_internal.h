@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.8 2020/01/09 18:17:14 florian Exp $ */
+/* $Id: dst_internal.h,v 1.9 2020/01/20 18:51:52 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -69,8 +69,6 @@ ISC_LANG_BEGINDECLS
 #define VALID_KEY(x) ISC_MAGIC_VALID(x, KEY_MAGIC)
 #define VALID_CTX(x) ISC_MAGIC_VALID(x, CTX_MAGIC)
 
-extern isc_mem_t *dst__memory_pool;
-
 /***
  *** Types
  ***/
@@ -104,7 +102,6 @@ struct dst_key {
 	uint16_t	key_bits;	/*%< hmac digest bits */
 	dns_rdataclass_t key_class;	/*%< class of the key record */
 	dns_ttl_t	key_ttl;	/*%< default/initial dnskey ttl */
-	isc_mem_t	*mctx;		/*%< memory context */
 	char		*engine;	/*%< engine name (HSM) */
 	char		*label;		/*%< engine label (HSM) */
 	union {
@@ -140,7 +137,6 @@ struct dst_context {
 	unsigned int magic;
 	dst_use_t use;
 	dst_key_t *key;
-	isc_mem_t *mctx;
 	isc_logcategory_t *category;
 	union {
 		void *generic;
@@ -197,7 +193,7 @@ struct dst_func {
 
 	isc_result_t (*fromlabel)(dst_key_t *key, const char *engine,
 				  const char *label, const char *pin);
-	isc_result_t (*dump)(dst_key_t *key, isc_mem_t *mctx, char **buffer,
+	isc_result_t (*dump)(dst_key_t *key, char **buffer,
 			     int *length);
 	isc_result_t (*restore)(dst_key_t *key, const char *keystr);
 };

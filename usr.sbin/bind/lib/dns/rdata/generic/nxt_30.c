@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nxt_30.c,v 1.7 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: nxt_30.c,v 1.8 2020/01/20 18:51:53 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -240,19 +240,17 @@ tostruct_nxt(ARGS_TOSTRUCT) {
 	dns_name_fromregion(&name, &region);
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&nxt->next, NULL);
-	RETERR(name_duporclone(&name, mctx, &nxt->next));
+	RETERR(name_duporclone(&name, &nxt->next));
 
 	nxt->len = region.length;
-	nxt->typebits = mem_maybedup(mctx, region.base, region.length);
+	nxt->typebits = mem_maybedup(region.base, region.length);
 	if (nxt->typebits == NULL)
 		goto cleanup;
 
-	nxt->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL)
-		dns_name_free(&nxt->next, mctx);
+	dns_name_free(&nxt->next);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -263,13 +261,10 @@ freestruct_nxt(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(nxt->common.rdtype == dns_rdatatype_nxt);
 
-	if (nxt->mctx == NULL)
-		return;
 
-	dns_name_free(&nxt->next, nxt->mctx);
+	dns_name_free(&nxt->next);
 	if (nxt->typebits != NULL)
-		isc_mem_free(nxt->mctx, nxt->typebits);
-	nxt->mctx = NULL;
+		free(nxt->typebits);
 }
 
 static inline isc_result_t

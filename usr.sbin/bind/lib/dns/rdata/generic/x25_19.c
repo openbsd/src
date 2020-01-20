@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: x25_19.c,v 1.4 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: x25_19.c,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:15:57 PST 2000 by bwelling */
 
@@ -146,11 +146,10 @@ tostruct_x25(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &r);
 	x25->x25_len = uint8_fromregion(&r);
 	isc_region_consume(&r, 1);
-	x25->x25 = mem_maybedup(mctx, r.base, x25->x25_len);
+	x25->x25 = mem_maybedup(r.base, x25->x25_len);
 	if (x25->x25 == NULL)
 		return (ISC_R_NOMEMORY);
 
-	x25->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -160,12 +159,8 @@ freestruct_x25(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(x25->common.rdtype == dns_rdatatype_x25);
 
-	if (x25->mctx == NULL)
-		return;
-
 	if (x25->x25 != NULL)
-		isc_mem_free(x25->mctx, x25->x25);
-	x25->mctx = NULL;
+		free(x25->x25);
 }
 
 static inline isc_result_t

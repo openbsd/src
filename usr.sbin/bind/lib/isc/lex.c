@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.12 2020/01/20 18:49:46 florian Exp $ */
+/* $Id: lex.c,v 1.13 2020/01/20 18:51:53 florian Exp $ */
 
 /*! \file */
 
@@ -27,7 +27,7 @@
 #include <isc/buffer.h>
 #include <isc/file.h>
 #include <isc/lex.h>
-#include <isc/mem.h>
+
 #include <isc/msgs.h>
 #include <isc/parseint.h>
 
@@ -56,7 +56,6 @@ typedef struct inputsource {
 struct isc_lex {
 	/* Unlocked. */
 	unsigned int			magic;
-	isc_mem_t *			mctx;
 	size_t				max_token;
 	char *				data;
 	unsigned int			comments;
@@ -72,14 +71,14 @@ static inline isc_result_t
 grow_data(isc_lex_t *lex, size_t *remainingp, char **currp, char **prevp) {
 	char *tmp;
 
-	tmp = isc_mem_get(lex->mctx, lex->max_token * 2 + 1);
+	tmp = malloc(lex->max_token * 2 + 1);
 	if (tmp == NULL)
 		return (ISC_R_NOMEMORY);
 	memmove(tmp, lex->data, lex->max_token + 1);
 	*currp = tmp + (*currp - lex->data);
 	if (*prevp != NULL)
 		*prevp = tmp + (*prevp - lex->data);
-	isc_mem_put(lex->mctx, lex->data, lex->max_token + 1);
+	free(lex->data);
 	lex->data = tmp;
 	*remainingp += lex->max_token;
 	lex->max_token *= 2;
@@ -87,7 +86,7 @@ grow_data(isc_lex_t *lex, size_t *remainingp, char **currp, char **prevp) {
 }
 
 isc_result_t
-isc_lex_create(isc_mem_t *mctx, size_t max_token, isc_lex_t **lexp) {
+isc_lex_create(size_t max_token, isc_lex_t **lexp) {
 	isc_lex_t *lex;
 
 	/*
@@ -98,15 +97,14 @@ isc_lex_create(isc_mem_t *mctx, size_t max_token, isc_lex_t **lexp) {
 	if (max_token == 0U)
 		max_token = 1;
 
-	lex = isc_mem_get(mctx, sizeof(*lex));
+	lex = malloc(sizeof(*lex));
 	if (lex == NULL)
 		return (ISC_R_NOMEMORY);
-	lex->data = isc_mem_get(mctx, max_token + 1);
+	lex->data = malloc(max_token + 1);
 	if (lex->data == NULL) {
-		isc_mem_put(mctx, lex, sizeof(*lex));
+		free(lex);
 		return (ISC_R_NOMEMORY);
 	}
-	lex->mctx = mctx;
 	lex->max_token = max_token;
 	lex->comments = 0;
 	lex->comment_ok = ISC_TRUE;
@@ -137,9 +135,9 @@ isc_lex_destroy(isc_lex_t **lexp) {
 	while (!EMPTY(lex->sources))
 		RUNTIME_CHECK(isc_lex_close(lex) == ISC_R_SUCCESS);
 	if (lex->data != NULL)
-		isc_mem_put(lex->mctx, lex->data, lex->max_token + 1);
+		free(lex->data);
 	lex->magic = 0;
-	isc_mem_put(lex->mctx, lex, sizeof(*lex));
+	free(lex);
 
 	*lexp = NULL;
 }
@@ -196,7 +194,7 @@ new_source(isc_lex_t *lex, isc_boolean_t is_file, isc_boolean_t need_close,
 	inputsource *source;
 	isc_result_t result;
 
-	source = isc_mem_get(lex->mctx, sizeof(*source));
+	source = malloc(sizeof(*source));
 	if (source == NULL)
 		return (ISC_R_NOMEMORY);
 	source->result = ISC_R_SUCCESS;
@@ -205,17 +203,17 @@ new_source(isc_lex_t *lex, isc_boolean_t is_file, isc_boolean_t need_close,
 	source->at_eof = ISC_FALSE;
 	source->last_was_eol = lex->last_was_eol;
 	source->input = input;
-	source->name = isc_mem_strdup(lex->mctx, name);
+	source->name = strdup(name);
 	if (source->name == NULL) {
-		isc_mem_put(lex->mctx, source, sizeof(*source));
+		free(source);
 		return (ISC_R_NOMEMORY);
 	}
 	source->pushback = NULL;
-	result = isc_buffer_allocate(lex->mctx, &source->pushback,
+	result = isc_buffer_allocate(&source->pushback,
 				     (unsigned int)lex->max_token);
 	if (result != ISC_R_SUCCESS) {
-		isc_mem_free(lex->mctx, source->name);
-		isc_mem_put(lex->mctx, source, sizeof(*source));
+		free(source->name);
+		free(source);
 		return (result);
 	}
 	source->ignored = 0;
@@ -296,9 +294,9 @@ isc_lex_close(isc_lex_t *lex) {
 		if (source->need_close)
 			(void)fclose((FILE *)(source->input));
 	}
-	isc_mem_free(lex->mctx, source->name);
+	free(source->name);
 	isc_buffer_free(&source->pushback);
-	isc_mem_put(lex->mctx, source, sizeof(*source));
+	free(source);
 
 	return (ISC_R_SUCCESS);
 }
@@ -330,7 +328,7 @@ pushback(inputsource *source, int c) {
 }
 
 static isc_result_t
-pushandgrow(isc_lex_t *lex, inputsource *source, int c) {
+pushandgrow(inputsource *source, int c) {
 	if (isc_buffer_availablelength(source->pushback) == 0) {
 		isc_buffer_t *tbuf = NULL;
 		unsigned int oldlen;
@@ -338,7 +336,7 @@ pushandgrow(isc_lex_t *lex, inputsource *source, int c) {
 		isc_result_t result;
 
 		oldlen = isc_buffer_length(source->pushback);
-		result = isc_buffer_allocate(lex->mctx, &tbuf, oldlen * 2);
+		result = isc_buffer_allocate(&tbuf, oldlen * 2);
 		if (result != ISC_R_SUCCESS)
 			return (result);
 		isc_buffer_usedregion(source->pushback, &used);
@@ -454,7 +452,7 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 				}
 			}
 			if (c != EOF) {
-				source->result = pushandgrow(lex, source, c);
+				source->result = pushandgrow(source, c);
 				if (source->result != ISC_R_SUCCESS) {
 					result = source->result;
 					goto done;
@@ -939,10 +937,10 @@ isc_lex_setsourcename(isc_lex_t *lex, const char *name) {
 
 	if (source == NULL)
 		return(ISC_R_NOTFOUND);
-	newname = isc_mem_strdup(lex->mctx, name);
+	newname = strdup(name);
 	if (newname == NULL)
 		return (ISC_R_NOMEMORY);
-	isc_mem_free(lex->mctx, source->name);
+	free(source->name);
 	source->name = newname;
 	return (ISC_R_SUCCESS);
 }

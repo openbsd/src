@@ -168,7 +168,7 @@ printsoa(dns_rdata_t *rdata) {
 	isc_result_t result;
 	char namebuf[DNS_NAME_FORMATSIZE];
 
-	result = dns_rdata_tostruct(rdata, &soa, NULL);
+	result = dns_rdata_tostruct(rdata, &soa);
 	check_result(result, "dns_rdata_tostruct");
 
 	dns_name_format(&soa.origin, namebuf, sizeof(namebuf));
@@ -220,7 +220,7 @@ printrdata(dns_rdata_t *rdata) {
 		printf("rdata_%d = ", rdata->type);
 
 	while (!done) {
-		result = isc_buffer_allocate(mctx, &b, size);
+		result = isc_buffer_allocate(&b, size);
 		if (result != ISC_R_SUCCESS)
 			check_result(result, "isc_buffer_allocate");
 		result = dns_rdata_totext(rdata, NULL, b);
@@ -768,7 +768,7 @@ get_next_command(void) {
 	char *ptr;
 
 	fflush(stdout);
-	buf = isc_mem_allocate(mctx, COMMSIZE);
+	buf = malloc(COMMSIZE);
 	if (buf == NULL)
 		fatal("memory allocation failure");
 	isc_app_block();
@@ -783,7 +783,7 @@ get_next_command(void) {
 		in_use = ISC_FALSE;
 	} else
 		do_next_command(ptr);
-	isc_mem_free(mctx, buf);
+	free(buf);
 }
 
 static void
@@ -841,14 +841,14 @@ flush_lookup_list(void) {
 			qp = q;
 			q = ISC_LIST_NEXT(q, link);
 			ISC_LIST_DEQUEUE(l->q, qp, link);
-			isc_mem_free(mctx, qp);
+			free(qp);
 		}
 		s = ISC_LIST_HEAD(l->my_server_list);
 		while (s != NULL) {
 			sp = s;
 			s = ISC_LIST_NEXT(s, link);
 			ISC_LIST_DEQUEUE(l->my_server_list, sp, link);
-			isc_mem_free(mctx, sp);
+			free(sp);
 
 		}
 		if (l->sendmsg != NULL)
@@ -856,7 +856,7 @@ flush_lookup_list(void) {
 		lp = l;
 		l = ISC_LIST_NEXT(l, link);
 		ISC_LIST_DEQUEUE(lookup_list, lp, link);
-		isc_mem_free(mctx, lp);
+		free(lp);
 	}
 }
 
@@ -918,10 +918,10 @@ main(int argc, char **argv) {
 	if (domainopt[0] != '\0')
 		set_search_domain(domainopt);
 	if (in_use)
-		result = isc_app_onrun(mctx, global_task, onrun_callback,
+		result = isc_app_onrun(global_task, onrun_callback,
 				       NULL);
 	else
-		result = isc_app_onrun(mctx, global_task, getinput, NULL);
+		result = isc_app_onrun(global_task, getinput, NULL);
 	check_result(result, "isc_app_onrun");
 	in_use = ISC_TF(!in_use);
 

@@ -18,11 +18,10 @@
 #ifndef GENERIC_NS_2_H
 #define GENERIC_NS_2_H 1
 
-/* $Id: ns_2.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: ns_2.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 typedef struct dns_rdata_ns {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	dns_name_t		name;
 } dns_rdata_ns_t;
 

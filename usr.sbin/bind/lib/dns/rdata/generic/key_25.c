@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key_25.c,v 1.6 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: key_25.c,v 1.7 2020/01/20 18:51:53 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -333,11 +333,10 @@ generic_tostruct_key(ARGS_TOSTRUCT) {
 
 	/* Data */
 	key->datalen = sr.length;
-	key->data = mem_maybedup(mctx, sr.base, key->datalen);
+	key->data = mem_maybedup(sr.base, key->datalen);
 	if (key->data == NULL)
 		return (ISC_R_NOMEMORY);
 
-	key->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -347,12 +346,7 @@ generic_freestruct_key(ARGS_FREESTRUCT) {
 
 	REQUIRE(key != NULL);
 
-	if (key->mctx == NULL)
-		return;
-
-	if (key->data != NULL)
-		isc_mem_free(key->mctx, key->data);
-	key->mctx = NULL;
+	free(key->data);
 }
 
 static inline isc_result_t
@@ -375,7 +369,7 @@ tostruct_key(ARGS_TOSTRUCT) {
 	key->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&key->common, link);
 
-	return (generic_tostruct_key(rdata, target, mctx));
+	return (generic_tostruct_key(rdata, target));
 }
 
 static inline void

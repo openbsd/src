@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.h,v 1.4 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: buffer.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef ISC_BUFFER_H
 #define ISC_BUFFER_H 1
@@ -178,7 +178,6 @@ struct isc_buffer {
 	/*! linkable */
 	ISC_LINK(isc_buffer_t)	link;
 	/*! private internal elements */
-	isc_mem_t	       *mctx;
 };
 
 /***
@@ -186,7 +185,7 @@ struct isc_buffer {
  ***/
 
 isc_result_t
-isc_buffer_allocate(isc_mem_t *mctx, isc_buffer_t **dynbuffer,
+isc_buffer_allocate(isc_buffer_t **dynbuffer,
 		    unsigned int length);
 /*!<
  * \brief Allocate a dynamic linkable buffer which has "length" bytes in the
@@ -686,7 +685,6 @@ ISC_LANG_ENDDECLS
 		(_b)->used = 0; \
 		(_b)->current = 0; \
 		(_b)->active = 0; \
-		(_b)->mctx = NULL; \
 		ISC_LINK_INIT(_b, link); \
 		(_b)->magic = ISC_BUFFER_MAGIC; \
 	} while (0)

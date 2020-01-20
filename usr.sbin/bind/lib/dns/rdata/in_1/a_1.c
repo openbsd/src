@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.4 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: a_1.c,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -158,8 +158,6 @@ tostruct_in_a(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_a);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->length == 4);
-
-	UNUSED(mctx);
 
 	a->common.rdclass = rdata->rdclass;
 	a->common.rdtype = rdata->type;

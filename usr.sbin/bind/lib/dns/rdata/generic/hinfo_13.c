@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hinfo_13.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: hinfo_13.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -137,23 +137,21 @@ tostruct_hinfo(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	hinfo->cpu_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	hinfo->cpu = mem_maybedup(mctx, region.base, hinfo->cpu_len);
+	hinfo->cpu = mem_maybedup(region.base, hinfo->cpu_len);
 	if (hinfo->cpu == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_region_consume(&region, hinfo->cpu_len);
 
 	hinfo->os_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	hinfo->os = mem_maybedup(mctx, region.base, hinfo->os_len);
+	hinfo->os = mem_maybedup(region.base, hinfo->os_len);
 	if (hinfo->os == NULL)
 		goto cleanup;
 
-	hinfo->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL && hinfo->cpu != NULL)
-		isc_mem_free(mctx, hinfo->cpu);
+	free(hinfo->cpu);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -163,14 +161,8 @@ freestruct_hinfo(ARGS_FREESTRUCT) {
 
 	REQUIRE(source != NULL);
 
-	if (hinfo->mctx == NULL)
-		return;
-
-	if (hinfo->cpu != NULL)
-		isc_mem_free(hinfo->mctx, hinfo->cpu);
-	if (hinfo->os != NULL)
-		isc_mem_free(hinfo->mctx, hinfo->os);
-	hinfo->mctx = NULL;
+	free(hinfo->cpu);
+	free(hinfo->os);
 }
 
 static inline isc_result_t

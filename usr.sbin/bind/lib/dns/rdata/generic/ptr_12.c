@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ptr_12.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: ptr_12.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 14:05:12 PST 2000 by explorer */
 
@@ -170,8 +170,7 @@ tostruct_ptr(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&ptr->ptr, NULL);
-	RETERR(name_duporclone(&name, mctx, &ptr->ptr));
-	ptr->mctx = mctx;
+	RETERR(name_duporclone(&name, &ptr->ptr));
 	return (ISC_R_SUCCESS);
 }
 
@@ -182,11 +181,7 @@ freestruct_ptr(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(ptr->common.rdtype == dns_rdatatype_ptr);
 
-	if (ptr->mctx == NULL)
-		return;
-
-	dns_name_free(&ptr->ptr, ptr->mctx);
-	ptr->mctx = NULL;
+	dns_name_free(&ptr->ptr);
 }
 
 static inline isc_result_t

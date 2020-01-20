@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap_22.c,v 1.6 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: nsap_22.c,v 1.7 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 10:41:07 PST 2000 by gson */
 
@@ -177,11 +177,10 @@ tostruct_in_nsap(ARGS_TOSTRUCT) {
 
 	dns_rdata_toregion(rdata, &r);
 	nsap->nsap_len = r.length;
-	nsap->nsap = mem_maybedup(mctx, r.base, r.length);
+	nsap->nsap = mem_maybedup(r.base, r.length);
 	if (nsap->nsap == NULL)
 		return (ISC_R_NOMEMORY);
 
-	nsap->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -193,12 +192,8 @@ freestruct_in_nsap(ARGS_FREESTRUCT) {
 	REQUIRE(nsap->common.rdclass == dns_rdataclass_in);
 	REQUIRE(nsap->common.rdtype == dns_rdatatype_nsap);
 
-	if (nsap->mctx == NULL)
-		return;
-
 	if (nsap->nsap != NULL)
-		isc_mem_free(nsap->mctx, nsap->nsap);
-	nsap->mctx = NULL;
+		free(nsap->nsap);
 }
 
 static inline isc_result_t

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: loc_29.c,v 1.8 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: loc_29.c,v 1.9 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -725,8 +725,6 @@ tostruct_loc(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_loc);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
-
-	UNUSED(mctx);
 
 	dns_rdata_toregion(rdata, &r);
 	version = uint8_fromregion(&r);

@@ -19,7 +19,6 @@
 
 typedef struct dns_rdata_openpgpkey {
 	dns_rdatacommon_t	common;
-	isc_mem_t *		mctx;
 	uint16_t		length;
 	unsigned char *		keyring;
 } dns_rdata_openpgpkey_t;

@@ -57,7 +57,7 @@ typedef void (*isc_eventdestructor_t)(isc_event_t *);
  */
 #define ISC_EVENTATTR_CANCELED		0x00000002
 
-#define ISC_EVENT_INIT(event, sz, at, ta, ty, ac, ar, sn, df, da) \
+#define ISC_EVENT_INIT(event, sz, at, ta, ty, ac, ar, sn, df) \
 do { \
 	(event)->ev_size = (sz); \
 	(event)->ev_attributes = (at); \
@@ -67,7 +67,6 @@ do { \
 	(event)->ev_arg = (ar); \
 	(event)->ev_sender = (sn); \
 	(event)->ev_destroy = (df); \
-	(event)->ev_destroy_arg = (da); \
 	ISC_LINK_INIT((event), ev_link); \
 	ISC_LINK_INIT((event), ev_ratelink); \
 } while (0)
@@ -88,10 +87,10 @@ struct isc_event {
 ISC_LANG_BEGINDECLS
 
 isc_event_t *
-isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
+isc_event_allocate(void *sender, isc_eventtype_t type,
 		   isc_taskaction_t action, void *arg, size_t size);
 isc_event_t *
-isc_event_constallocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
+isc_event_constallocate(void *sender, isc_eventtype_t type,
 			isc_taskaction_t action, const void *arg, size_t size);
 /*%<
  * Allocate an event structure.

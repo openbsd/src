@@ -147,8 +147,6 @@ tostruct_l64(ARGS_TOSTRUCT) {
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length == 10);
 
-	UNUSED(mctx);
-
 	l64->common.rdclass = rdata->rdclass;
 	l64->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&l64->common, link);

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: null_10.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: null_10.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:57:50 PST 2000 by explorer */
 
@@ -114,11 +114,10 @@ tostruct_null(ARGS_TOSTRUCT) {
 
 	dns_rdata_toregion(rdata, &r);
 	null->length = r.length;
-	null->data = mem_maybedup(mctx, r.base, r.length);
+	null->data = mem_maybedup(r.base, r.length);
 	if (null->data == NULL)
 		return (ISC_R_NOMEMORY);
 
-	null->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -129,12 +128,8 @@ freestruct_null(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(null->common.rdtype == dns_rdatatype_null);
 
-	if (null->mctx == NULL)
-		return;
-
 	if (null->data != NULL)
-		isc_mem_free(null->mctx, null->data);
-	null->mctx = NULL;
+		free(null->data);
 }
 
 static inline isc_result_t

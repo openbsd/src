@@ -151,8 +151,6 @@ tostruct_l32(ARGS_TOSTRUCT) {
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length == 6);
 
-	UNUSED(mctx);
-
 	l32->common.rdclass = rdata->rdclass;
 	l32->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&l32->common, link);

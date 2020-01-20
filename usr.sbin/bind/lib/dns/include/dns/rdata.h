@@ -350,7 +350,7 @@ dns_rdata_towire(dns_rdata_t *rdata, dns_compress_t *cctx,
 isc_result_t
 dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 		   dns_rdatatype_t type, isc_lex_t *lexer, dns_name_t *origin,
-		   unsigned int options, isc_mem_t *mctx,
+		   unsigned int options,
 		   isc_buffer_t *target, dns_rdatacallbacks_t *callbacks);
 /*%<
  * Convert the textual representation of a DNS rdata into uncompressed wire
@@ -376,8 +376,6 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
  *\li	'rdclass' and 'type' are valid.
  *
  *\li	'lexer' is a valid isc_lex_t.
- *
- *\li	'mctx' is a valid isc_mem_t.
  *
  *\li	'target' is a valid region.
  *
@@ -502,7 +500,7 @@ dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
  */
 
 isc_result_t
-dns_rdata_tostruct(const dns_rdata_t *rdata, void *target, isc_mem_t *mctx);
+dns_rdata_tostruct(const dns_rdata_t *rdata, void *target);
 /*%<
  * Convert an rdata into its C structure representation.
  *

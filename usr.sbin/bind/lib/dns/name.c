@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.19 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: name.c,v 1.20 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file */
 
@@ -25,7 +25,7 @@
 
 #include <isc/buffer.h>
 #include <isc/hash.h>
-#include <isc/mem.h>
+
 #include <isc/once.h>
 
 
@@ -2131,7 +2131,7 @@ dns_name_split(dns_name_t *name, unsigned int suffixlabels,
 }
 
 isc_result_t
-dns_name_dup(const dns_name_t *source, isc_mem_t *mctx,
+dns_name_dup(const dns_name_t *source,
 	     dns_name_t *target)
 {
 	/*
@@ -2148,7 +2148,7 @@ dns_name_dup(const dns_name_t *source, isc_mem_t *mctx,
 	 */
 	MAKE_EMPTY(target);
 
-	target->ndata = isc_mem_get(mctx, source->length);
+	target->ndata = malloc(source->length);
 	if (target->ndata == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -2171,7 +2171,7 @@ dns_name_dup(const dns_name_t *source, isc_mem_t *mctx,
 }
 
 isc_result_t
-dns_name_dupwithoffsets(dns_name_t *source, isc_mem_t *mctx,
+dns_name_dupwithoffsets(dns_name_t *source,
 			dns_name_t *target)
 {
 	/*
@@ -2190,7 +2190,7 @@ dns_name_dupwithoffsets(dns_name_t *source, isc_mem_t *mctx,
 	 */
 	MAKE_EMPTY(target);
 
-	target->ndata = isc_mem_get(mctx, source->length + source->labels);
+	target->ndata = malloc(source->length + source->labels);
 	if (target->ndata == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -2212,7 +2212,7 @@ dns_name_dupwithoffsets(dns_name_t *source, isc_mem_t *mctx,
 }
 
 void
-dns_name_free(dns_name_t *name, isc_mem_t *mctx) {
+dns_name_free(dns_name_t *name) {
 	size_t size;
 
 	/*
@@ -2225,7 +2225,7 @@ dns_name_free(dns_name_t *name, isc_mem_t *mctx) {
 	size = name->length;
 	if ((name->attributes & DNS_NAMEATTR_DYNOFFSETS) != 0)
 		size += name->labels;
-	isc_mem_put(mctx, name->ndata, size);
+	free(name->ndata);
 	dns_name_invalidate(name);
 }
 
@@ -2331,7 +2331,7 @@ dns_name_format(dns_name_t *name, char *cp, unsigned int size) {
  * memory.
  */
 isc_result_t
-dns_name_tostring(dns_name_t *name, char **target, isc_mem_t *mctx) {
+dns_name_tostring(dns_name_t *name, char **target) {
 	isc_result_t result;
 	isc_buffer_t buf;
 	isc_region_t reg;
@@ -2346,7 +2346,7 @@ dns_name_tostring(dns_name_t *name, char **target, isc_mem_t *mctx) {
 		return (result);
 
 	isc_buffer_usedregion(&buf, &reg);
-	p = isc_mem_allocate(mctx, reg.length + 1);
+	p = malloc(reg.length + 1);
 	if (p == NULL)
 		return (ISC_R_NOMEMORY);
 	memmove(p, (char *) reg.base, (int) reg.length);
@@ -2361,16 +2361,14 @@ dns_name_tostring(dns_name_t *name, char **target, isc_mem_t *mctx) {
  * allocating memory as needed
  */
 isc_result_t
-dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
-		    isc_mem_t *mctx)
+dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options)
 {
-	return (dns_name_fromstring2(target, src, dns_rootname, options, mctx));
+	return (dns_name_fromstring2(target, src, dns_rootname, options));
 }
 
 isc_result_t
 dns_name_fromstring2(dns_name_t *target, const char *src,
-		     const dns_name_t *origin, unsigned int options,
-		     isc_mem_t *mctx)
+		     const dns_name_t *origin, unsigned int options)
 {
 	isc_result_t result;
 	isc_buffer_t buf;
@@ -2393,7 +2391,7 @@ dns_name_fromstring2(dns_name_t *target, const char *src,
 		return (result);
 
 	if (name != target)
-		result = dns_name_dupwithoffsets(name, mctx, target);
+		result = dns_name_dupwithoffsets(name, target);
 	return (result);
 }
 

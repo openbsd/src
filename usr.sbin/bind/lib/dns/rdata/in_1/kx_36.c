@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: kx_36.c,v 1.7 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: kx_36.c,v 1.8 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 17:24:54 PST 2000 by explorer */
 
@@ -203,8 +203,7 @@ tostruct_in_kx(ARGS_TOSTRUCT) {
 
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&kx->exchange, NULL);
-	RETERR(name_duporclone(&name, mctx, &kx->exchange));
-	kx->mctx = mctx;
+	RETERR(name_duporclone(&name, &kx->exchange));
 	return (ISC_R_SUCCESS);
 }
 
@@ -216,11 +215,7 @@ freestruct_in_kx(ARGS_FREESTRUCT) {
 	REQUIRE(kx->common.rdclass == dns_rdataclass_in);
 	REQUIRE(kx->common.rdtype == dns_rdatatype_kx);
 
-	if (kx->mctx == NULL)
-		return;
-
-	dns_name_free(&kx->exchange, kx->mctx);
-	kx->mctx = NULL;
+	dns_name_free(&kx->exchange);
 }
 
 static inline isc_result_t

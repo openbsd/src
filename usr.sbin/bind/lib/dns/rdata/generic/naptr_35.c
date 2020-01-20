@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: naptr_35.c,v 1.2 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: naptr_35.c,v 1.3 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -463,7 +463,7 @@ tostruct_naptr(ARGS_TOSTRUCT) {
 	naptr->flags_len = uint8_fromregion(&r);
 	isc_region_consume(&r, 1);
 	INSIST(naptr->flags_len <= r.length);
-	naptr->flags = mem_maybedup(mctx, r.base, naptr->flags_len);
+	naptr->flags = mem_maybedup(r.base, naptr->flags_len);
 	if (naptr->flags == NULL)
 		goto cleanup;
 	isc_region_consume(&r, naptr->flags_len);
@@ -471,7 +471,7 @@ tostruct_naptr(ARGS_TOSTRUCT) {
 	naptr->service_len = uint8_fromregion(&r);
 	isc_region_consume(&r, 1);
 	INSIST(naptr->service_len <= r.length);
-	naptr->service = mem_maybedup(mctx, r.base, naptr->service_len);
+	naptr->service = mem_maybedup(r.base, naptr->service_len);
 	if (naptr->service == NULL)
 		goto cleanup;
 	isc_region_consume(&r, naptr->service_len);
@@ -479,7 +479,7 @@ tostruct_naptr(ARGS_TOSTRUCT) {
 	naptr->regexp_len = uint8_fromregion(&r);
 	isc_region_consume(&r, 1);
 	INSIST(naptr->regexp_len <= r.length);
-	naptr->regexp = mem_maybedup(mctx, r.base, naptr->regexp_len);
+	naptr->regexp = mem_maybedup(r.base, naptr->regexp_len);
 	if (naptr->regexp == NULL)
 		goto cleanup;
 	isc_region_consume(&r, naptr->regexp_len);
@@ -487,19 +487,15 @@ tostruct_naptr(ARGS_TOSTRUCT) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &r);
 	dns_name_init(&naptr->replacement, NULL);
-	result = name_duporclone(&name, mctx, &naptr->replacement);
+	result = name_duporclone(&name, &naptr->replacement);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
-	naptr->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL && naptr->flags != NULL)
-		isc_mem_free(mctx, naptr->flags);
-	if (mctx != NULL && naptr->service != NULL)
-		isc_mem_free(mctx, naptr->service);
-	if (mctx != NULL && naptr->regexp != NULL)
-		isc_mem_free(mctx, naptr->regexp);
+	free(naptr->flags);
+	free(naptr->service);
+	free(naptr->regexp);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -510,17 +506,10 @@ freestruct_naptr(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(naptr->common.rdtype == dns_rdatatype_naptr);
 
-	if (naptr->mctx == NULL)
-		return;
-
-	if (naptr->flags != NULL)
-		isc_mem_free(naptr->mctx, naptr->flags);
-	if (naptr->service != NULL)
-		isc_mem_free(naptr->mctx, naptr->service);
-	if (naptr->regexp != NULL)
-		isc_mem_free(naptr->mctx, naptr->regexp);
-	dns_name_free(&naptr->replacement, naptr->mctx);
-	naptr->mctx = NULL;
+	free(naptr->flags);
+	free(naptr->service);
+	free(naptr->regexp);
+	dns_name_free(&naptr->replacement);
 }
 
 static inline isc_result_t

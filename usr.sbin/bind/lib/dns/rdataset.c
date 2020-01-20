@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 #include <isc/buffer.h>
-#include <isc/mem.h>
+
 
 #include <isc/serial.h>
 #include <isc/util.h>
@@ -339,7 +339,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	REQUIRE(rdataset->methods != NULL);
 	REQUIRE(countp != NULL);
 	REQUIRE((order == NULL) == (order_arg == NULL));
-	REQUIRE(cctx != NULL && cctx->mctx != NULL);
+	REQUIRE(cctx != NULL);
 
 	if ((rdataset->attributes & DNS_RDATASETATTR_QUESTION) != 0) {
 		question = ISC_TRUE;
@@ -373,8 +373,8 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		shuffle = ISC_TRUE;
 
 	if (shuffle && count > MAX_SHUFFLE) {
-		in = isc_mem_get(cctx->mctx, count * sizeof(*in));
-		out = isc_mem_get(cctx->mctx, count * sizeof(*out));
+		in = malloc(count * sizeof(*in));
+		out = malloc(count * sizeof(*out));
 		if (in == NULL || out == NULL)
 			shuffle = ISC_FALSE;
 	} else {
@@ -545,9 +545,9 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 
  cleanup:
 	if (out != NULL && out != out_fixed)
-		isc_mem_put(cctx->mctx, out, count * sizeof(*out));
+		free(out);
 	if (in != NULL && in != in_fixed)
-		isc_mem_put(cctx->mctx, in, count * sizeof(*in));
+		free(in);
 	return (result);
 }
 

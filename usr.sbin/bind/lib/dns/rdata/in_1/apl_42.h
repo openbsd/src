@@ -18,7 +18,7 @@
 #ifndef IN_1_APL_42_H
 #define IN_1_APL_42_H 1
 
-/* $Id: apl_42.h,v 1.4 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: apl_42.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 typedef struct dns_rdata_apl_ent {
 	isc_boolean_t	negative;
@@ -30,7 +30,6 @@ typedef struct dns_rdata_apl_ent {
 
 typedef struct dns_rdata_in_apl {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	/* type & class specific elements */
 	unsigned char           *apl;
 	uint16_t            apl_len;

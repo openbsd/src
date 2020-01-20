@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: afsdb_18.c,v 1.7 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: afsdb_18.c,v 1.8 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 14:59:00 PST 2000 by explorer */
 
@@ -219,8 +219,7 @@ tostruct_afsdb(ARGS_TOSTRUCT) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &region);
 
-	RETERR(name_duporclone(&name, mctx, &afsdb->server));
-	afsdb->mctx = mctx;
+	RETERR(name_duporclone(&name, &afsdb->server));
 	return (ISC_R_SUCCESS);
 }
 
@@ -231,11 +230,7 @@ freestruct_afsdb(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(afsdb->common.rdtype == dns_rdatatype_afsdb);
 
-	if (afsdb->mctx == NULL)
-		return;
-
-	dns_name_free(&afsdb->server, afsdb->mctx);
-	afsdb->mctx = NULL;
+	dns_name_free(&afsdb->server);
 }
 
 static inline isc_result_t

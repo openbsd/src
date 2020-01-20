@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: dnssec.c,v 1.13 2020/01/20 18:49:45 florian Exp $
+ * $Id: dnssec.c,v 1.14 2020/01/20 18:51:52 florian Exp $
  */
 
 /*! \file */
@@ -26,7 +26,7 @@
 
 #include <isc/buffer.h>
 #include <isc/dir.h>
-#include <isc/mem.h>
+
 #include <isc/serial.h>
 #include <string.h>
 #include <isc/util.h>
@@ -69,7 +69,7 @@ static int
 rdata_compare_wrapper(const void *rdata1, const void *rdata2);
 
 static isc_result_t
-rdataset_to_sortedarray(dns_rdataset_t *set, isc_mem_t *mctx,
+rdataset_to_sortedarray(dns_rdataset_t *set,
 			dns_rdata_t **rdata, int *nrdata);
 
 static isc_result_t
@@ -92,7 +92,7 @@ rdata_compare_wrapper(const void *rdata1, const void *rdata2) {
  * Sort the rdataset into an array.
  */
 static isc_result_t
-rdataset_to_sortedarray(dns_rdataset_t *set, isc_mem_t *mctx,
+rdataset_to_sortedarray(dns_rdataset_t *set,
 			dns_rdata_t **rdata, int *nrdata)
 {
 	isc_result_t ret;
@@ -102,7 +102,7 @@ rdataset_to_sortedarray(dns_rdataset_t *set, isc_mem_t *mctx,
 
 	n = dns_rdataset_count(set);
 
-	data = isc_mem_get(mctx, n * sizeof(dns_rdata_t));
+	data = malloc(n * sizeof(dns_rdata_t));
 	if (data == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -111,7 +111,7 @@ rdataset_to_sortedarray(dns_rdataset_t *set, isc_mem_t *mctx,
 	ret = dns_rdataset_first(&rdataset);
 	if (ret != ISC_R_SUCCESS) {
 		dns_rdataset_disassociate(&rdataset);
-		isc_mem_put(mctx, data, n * sizeof(dns_rdata_t));
+		free(data);
 		return (ret);
 	}
 
@@ -134,7 +134,7 @@ rdataset_to_sortedarray(dns_rdataset_t *set, isc_mem_t *mctx,
 }
 
 isc_result_t
-dns_dnssec_keyfromrdata(dns_name_t *name, dns_rdata_t *rdata, isc_mem_t *mctx,
+dns_dnssec_keyfromrdata(dns_name_t *name, dns_rdata_t *rdata,
 			dst_key_t **key)
 {
 	isc_buffer_t b;
@@ -142,7 +142,6 @@ dns_dnssec_keyfromrdata(dns_name_t *name, dns_rdata_t *rdata, isc_mem_t *mctx,
 
 	INSIST(name != NULL);
 	INSIST(rdata != NULL);
-	INSIST(mctx != NULL);
 	INSIST(key != NULL);
 	INSIST(*key == NULL);
 	REQUIRE(rdata->type == dns_rdatatype_key ||
@@ -151,7 +150,7 @@ dns_dnssec_keyfromrdata(dns_name_t *name, dns_rdata_t *rdata, isc_mem_t *mctx,
 	dns_rdata_toregion(rdata, &r);
 	isc_buffer_init(&b, r.base, r.length);
 	isc_buffer_add(&b, r.length);
-	return (dst_key_fromdns(name, rdata->rdclass, &b, mctx, key));
+	return (dst_key_fromdns(name, rdata->rdclass, &b, key));
 }
 
 static isc_result_t
@@ -185,7 +184,7 @@ digest_sig(dst_context_t *ctx, isc_boolean_t downcase, dns_rdata_t *sigrdata,
 isc_result_t
 dns_dnssec_sign(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		isc_stdtime_t *inception, isc_stdtime_t *expire,
-		isc_mem_t *mctx, isc_buffer_t *buffer, dns_rdata_t *sigrdata)
+		isc_buffer_t *buffer, dns_rdata_t *sigrdata)
 {
 	dns_rdata_rrsig_t sig;
 	dns_rdata_t tmpsigrdata;
@@ -208,7 +207,6 @@ dns_dnssec_sign(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	REQUIRE(key != NULL);
 	REQUIRE(inception != NULL);
 	REQUIRE(expire != NULL);
-	REQUIRE(mctx != NULL);
 	REQUIRE(sigrdata != NULL);
 
 	if (*inception >= *expire)
@@ -223,7 +221,6 @@ dns_dnssec_sign(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	if ((flags & DNS_KEYFLAG_OWNERMASK) != DNS_KEYOWNER_ZONE)
 		return (DNS_R_KEYUNAUTHORIZED);
 
-	sig.mctx = mctx;
 	sig.common.rdclass = set->rdclass;
 	sig.common.rdtype = dns_rdatatype_rrsig;
 	ISC_LINK_INIT(&sig.common, link);
@@ -254,11 +251,11 @@ dns_dnssec_sign(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	 * The actual contents of sig.signature are not important yet, since
 	 * they're not used in digest_sig().
 	 */
-	sig.signature = isc_mem_get(mctx, sig.siglen);
+	sig.signature = malloc(sig.siglen);
 	if (sig.signature == NULL)
 		return (ISC_R_NOMEMORY);
 
-	ret = isc_buffer_allocate(mctx, &databuf, sigsize + 256 + 18);
+	ret = isc_buffer_allocate(&databuf, sigsize + 256 + 18);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_signature;
 
@@ -268,7 +265,7 @@ dns_dnssec_sign(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_databuf;
 
-	ret = dst_context_create3(key, mctx,
+	ret = dst_context_create3(key,
 				  DNS_LOGCATEGORY_DNSSEC, ISC_TRUE, &ctx);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_databuf;
@@ -295,7 +292,7 @@ dns_dnssec_sign(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	isc_buffer_putuint16(&envbuf, set->rdclass);
 	isc_buffer_putuint32(&envbuf, set->ttl);
 
-	ret = rdataset_to_sortedarray(set, mctx, &rdatas, &nrdatas);
+	ret = rdataset_to_sortedarray(set, &rdatas, &nrdatas);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_context;
 	isc_buffer_usedregion(&envbuf, &r);
@@ -351,30 +348,30 @@ dns_dnssec_sign(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 				   sig.common.rdtype, &sig, buffer);
 
 cleanup_array:
-	isc_mem_put(mctx, rdatas, nrdatas * sizeof(dns_rdata_t));
+	free(rdatas);
 cleanup_context:
 	dst_context_destroy(&ctx);
 cleanup_databuf:
 	isc_buffer_free(&databuf);
 cleanup_signature:
-	isc_mem_put(mctx, sig.signature, sig.siglen);
+	free(sig.signature);
 
 	return (ret);
 }
 
 isc_result_t
 dns_dnssec_verify2(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
-		   isc_boolean_t ignoretime, isc_mem_t *mctx,
+		   isc_boolean_t ignoretime,
 		   dns_rdata_t *sigrdata, dns_name_t *wild)
 {
-	return (dns_dnssec_verify3(name, set, key, ignoretime, 0, mctx,
+	return (dns_dnssec_verify3(name, set, key, ignoretime, 0,
 				   sigrdata, wild));
 }
 
 isc_result_t
 dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		   isc_boolean_t ignoretime, unsigned int maxbits,
-		   isc_mem_t *mctx, dns_rdata_t *sigrdata, dns_name_t *wild)
+		   dns_rdata_t *sigrdata, dns_name_t *wild)
 {
 	dns_rdata_rrsig_t sig;
 	dns_fixedname_t fnewname;
@@ -393,10 +390,9 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	REQUIRE(name != NULL);
 	REQUIRE(set != NULL);
 	REQUIRE(key != NULL);
-	REQUIRE(mctx != NULL);
 	REQUIRE(sigrdata != NULL && sigrdata->type == dns_rdatatype_rrsig);
 
-	ret = dns_rdata_tostruct(sigrdata, &sig, NULL);
+	ret = dns_rdata_tostruct(sigrdata, &sig);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 
@@ -456,7 +452,7 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	}
 
  again:
-	ret = dst_context_create4(key, mctx, DNS_LOGCATEGORY_DNSSEC,
+	ret = dst_context_create4(key, DNS_LOGCATEGORY_DNSSEC,
 				  ISC_FALSE, maxbits, &ctx);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_struct;
@@ -497,7 +493,7 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	isc_buffer_putuint16(&envbuf, set->rdclass);
 	isc_buffer_putuint32(&envbuf, sig.originalttl);
 
-	ret = rdataset_to_sortedarray(set, mctx, &rdatas, &nrdatas);
+	ret = rdataset_to_sortedarray(set, &rdatas, &nrdatas);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_context;
 
@@ -553,7 +549,7 @@ dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	}
 
 cleanup_array:
-	isc_mem_put(mctx, rdatas, nrdatas * sizeof(dns_rdata_t));
+	free(rdatas);
 cleanup_context:
 	dst_context_destroy(&ctx);
 	if (ret == DST_R_VERIFYFAILURE && !downcase) {
@@ -578,12 +574,12 @@ cleanup_struct:
 
 isc_result_t
 dns_dnssec_verify(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
-		  isc_boolean_t ignoretime, isc_mem_t *mctx,
+		  isc_boolean_t ignoretime,
 		  dns_rdata_t *sigrdata)
 {
 	isc_result_t result;
 
-	result = dns_dnssec_verify2(name, set, key, ignoretime, mctx,
+	result = dns_dnssec_verify2(name, set, key, ignoretime,
 				    sigrdata, NULL);
 	if (result == DNS_R_FROMWILDCARD)
 		result = ISC_R_SUCCESS;
@@ -659,7 +655,6 @@ dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key) {
 	isc_region_t r;
 	isc_stdtime_t now;
 	dst_context_t *ctx = NULL;
-	isc_mem_t *mctx;
 	isc_result_t result;
 	isc_boolean_t signeedsfree = ISC_TRUE;
 
@@ -669,11 +664,8 @@ dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key) {
 	if (is_response(msg))
 		REQUIRE(msg->query.base != NULL);
 
-	mctx = msg->mctx;
-
 	memset(&sig, 0, sizeof(sig));
 
-	sig.mctx = mctx;
 	sig.common.rdclass = dns_rdataclass_any;
 	sig.common.rdtype = dns_rdatatype_sig;	/* SIG(0) */
 	ISC_LINK_INIT(&sig.common, link);
@@ -697,7 +689,7 @@ dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key) {
 
 	isc_buffer_init(&databuf, data, sizeof(data));
 
-	RETERR(dst_context_create3(key, mctx,
+	RETERR(dst_context_create3(key,
 				   DNS_LOGCATEGORY_DNSSEC, ISC_TRUE, &ctx));
 
 	/*
@@ -734,7 +726,7 @@ dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key) {
 
 	RETERR(dst_key_sigsize(key, &sigsize));
 	sig.siglen = sigsize;
-	sig.signature = (unsigned char *) isc_mem_get(mctx, sig.siglen);
+	sig.signature = (unsigned char *) malloc(sig.siglen);
 	if (sig.signature == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto failure;
@@ -746,12 +738,12 @@ dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key) {
 
 	rdata = NULL;
 	RETERR(dns_message_gettemprdata(msg, &rdata));
-	RETERR(isc_buffer_allocate(msg->mctx, &dynbuf, 1024));
+	RETERR(isc_buffer_allocate( &dynbuf, 1024));
 	RETERR(dns_rdata_fromstruct(rdata, dns_rdataclass_any,
 				    dns_rdatatype_sig /* SIG(0) */,
 				    &sig, dynbuf));
 
-	isc_mem_put(mctx, sig.signature, sig.siglen);
+	free(sig.signature);
 	signeedsfree = ISC_FALSE;
 
 	dns_message_takebuffer(msg, &dynbuf);
@@ -772,7 +764,7 @@ failure:
 	if (dynbuf != NULL)
 		isc_buffer_free(&dynbuf);
 	if (signeedsfree)
-		isc_mem_put(mctx, sig.signature, sig.siglen);
+		free(sig.signature);
 	if (ctx != NULL)
 		dst_context_destroy(&ctx);
 
@@ -789,7 +781,6 @@ dns_dnssec_verifymessage(isc_buffer_t *source, dns_message_t *msg,
 	isc_region_t r, source_r, sig_r, header_r;
 	isc_stdtime_t now;
 	dst_context_t *ctx = NULL;
-	isc_mem_t *mctx;
 	isc_result_t result;
 	uint16_t addcount, addcount_n;
 	isc_boolean_t signeedsfree = ISC_FALSE;
@@ -798,7 +789,6 @@ dns_dnssec_verifymessage(isc_buffer_t *source, dns_message_t *msg,
 	REQUIRE(msg != NULL);
 	REQUIRE(key != NULL);
 
-	mctx = msg->mctx;
 
 	msg->verify_attempted = 1;
 	msg->verified_sig = 0;
@@ -814,7 +804,7 @@ dns_dnssec_verifymessage(isc_buffer_t *source, dns_message_t *msg,
 	RETERR(dns_rdataset_first(msg->sig0));
 	dns_rdataset_current(msg->sig0, &rdata);
 
-	RETERR(dns_rdata_tostruct(&rdata, &sig, NULL));
+	RETERR(dns_rdata_tostruct(&rdata, &sig));
 	signeedsfree = ISC_TRUE;
 
 	if (sig.labels != 0) {
@@ -846,7 +836,7 @@ dns_dnssec_verifymessage(isc_buffer_t *source, dns_message_t *msg,
 		goto failure;
 	}
 
-	RETERR(dst_context_create3(key, mctx,
+	RETERR(dst_context_create3(key,
 				   DNS_LOGCATEGORY_DNSSEC, ISC_FALSE, &ctx));
 
 	/*
@@ -920,7 +910,7 @@ failure:
 isc_boolean_t
 dns_dnssec_selfsigns(dns_rdata_t *rdata, dns_name_t *name,
 		     dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
-		     isc_boolean_t ignoretime, isc_mem_t *mctx)
+		     isc_boolean_t ignoretime)
 {
 	INSIST(rdataset->type == dns_rdatatype_key ||
 	       rdataset->type == dns_rdatatype_dnskey);
@@ -933,14 +923,14 @@ dns_dnssec_selfsigns(dns_rdata_t *rdata, dns_name_t *name,
 	}
 
 	return (dns_dnssec_signs(rdata, name, rdataset, sigrdataset,
-				 ignoretime, mctx));
+				 ignoretime));
 
 }
 
 isc_boolean_t
 dns_dnssec_signs(dns_rdata_t *rdata, dns_name_t *name,
 		     dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
-		     isc_boolean_t ignoretime, isc_mem_t *mctx)
+		     isc_boolean_t ignoretime)
 {
 	dst_key_t *dstkey = NULL;
 	dns_keytag_t keytag;
@@ -953,10 +943,10 @@ dns_dnssec_signs(dns_rdata_t *rdata, dns_name_t *name,
 	if (sigrdataset->covers != rdataset->type)
 		return (ISC_FALSE);
 
-	result = dns_dnssec_keyfromrdata(name, rdata, mctx, &dstkey);
+	result = dns_dnssec_keyfromrdata(name, rdata, &dstkey);
 	if (result != ISC_R_SUCCESS)
 		return (ISC_FALSE);
-	result = dns_rdata_tostruct(rdata, &key, NULL);
+	result = dns_rdata_tostruct(rdata, &key);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
 	keytag = dst_key_id(dstkey);
@@ -966,13 +956,13 @@ dns_dnssec_signs(dns_rdata_t *rdata, dns_name_t *name,
 	{
 		dns_rdata_reset(&sigrdata);
 		dns_rdataset_current(sigrdataset, &sigrdata);
-		result = dns_rdata_tostruct(&sigrdata, &sig, NULL);
+		result = dns_rdata_tostruct(&sigrdata, &sig);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
 		if (sig.algorithm == key.algorithm &&
 		    sig.keyid == keytag) {
 			result = dns_dnssec_verify2(name, rdataset, dstkey,
-						    ignoretime, mctx,
+						    ignoretime,
 						    &sigrdata, NULL);
 			if (result == ISC_R_SUCCESS) {
 				dst_key_free(&dstkey);
@@ -985,7 +975,7 @@ dns_dnssec_signs(dns_rdata_t *rdata, dns_name_t *name,
 }
 
 isc_result_t
-dns_dnsseckey_create(isc_mem_t *mctx, dst_key_t **dstkey,
+dns_dnsseckey_create(dst_key_t **dstkey,
 		     dns_dnsseckey_t **dkp)
 {
 	isc_result_t result;
@@ -993,7 +983,7 @@ dns_dnsseckey_create(isc_mem_t *mctx, dst_key_t **dstkey,
 	int major, minor;
 
 	REQUIRE(dkp != NULL && *dkp == NULL);
-	dk = isc_mem_get(mctx, sizeof(dns_dnsseckey_t));
+	dk = malloc(sizeof(dns_dnsseckey_t));
 	if (dk == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -1026,14 +1016,14 @@ dns_dnsseckey_create(isc_mem_t *mctx, dst_key_t **dstkey,
 }
 
 void
-dns_dnsseckey_destroy(isc_mem_t *mctx, dns_dnsseckey_t **dkp) {
+dns_dnsseckey_destroy(dns_dnsseckey_t **dkp) {
 	dns_dnsseckey_t *dk;
 
 	REQUIRE(dkp != NULL && *dkp != NULL);
 	dk = *dkp;
 	if (dk->key != NULL)
 		dst_key_free(&dk->key);
-	isc_mem_put(mctx, dk, sizeof(dns_dnsseckey_t));
+	free(dk);
 	*dkp = NULL;
 }
 
@@ -1135,7 +1125,7 @@ get_hints(dns_dnsseckey_t *key, isc_stdtime_t now) {
  */
 isc_result_t
 dns_dnssec_findmatchingkeys(dns_name_t *origin, const char *directory,
-			    isc_mem_t *mctx, dns_dnsseckeylist_t *keylist)
+			    dns_dnsseckeylist_t *keylist)
 {
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_boolean_t dir_open = ISC_FALSE;
@@ -1206,7 +1196,7 @@ dns_dnssec_findmatchingkeys(dns_name_t *origin, const char *directory,
 					       directory,
 					       DST_TYPE_PUBLIC |
 					       DST_TYPE_PRIVATE,
-					       mctx, &dstkey);
+					       &dstkey);
 
 		switch (alg) {
 		case DST_ALG_HMACSHA1:
@@ -1230,12 +1220,12 @@ dns_dnssec_findmatchingkeys(dns_name_t *origin, const char *directory,
 			continue;
 		}
 
-		RETERR(dns_dnsseckey_create(mctx, &dstkey, &key));
+		RETERR(dns_dnsseckey_create(&dstkey, &key));
 		key->source = dns_keysource_repository;
 		get_hints(key, now);
 
 		if (key->legacy) {
-			dns_dnsseckey_destroy(mctx, &key);
+			dns_dnsseckey_destroy(&key);
 		} else {
 			ISC_LIST_APPEND(list, key, link);
 			key = NULL;
@@ -1256,7 +1246,7 @@ dns_dnssec_findmatchingkeys(dns_name_t *origin, const char *directory,
 		ISC_LIST_UNLINK(list, key, link);
 		INSIST(key->key != NULL);
 		dst_key_free(&key->key);
-		dns_dnsseckey_destroy(mctx, &key);
+		dns_dnsseckey_destroy(&key);
 	}
 	if (dstkey != NULL)
 		dst_key_free(&dstkey);
@@ -1272,7 +1262,7 @@ dns_dnssec_findmatchingkeys(dns_name_t *origin, const char *directory,
  */
 static isc_result_t
 addkey(dns_dnsseckeylist_t *keylist, dst_key_t **newkey,
-       isc_boolean_t savekeys, isc_mem_t *mctx)
+       isc_boolean_t savekeys)
 {
 	dns_dnsseckey_t *key;
 	isc_result_t result;
@@ -1306,7 +1296,7 @@ addkey(dns_dnsseckeylist_t *keylist, dst_key_t **newkey,
 		return (ISC_R_SUCCESS);
 	}
 
-	result = dns_dnsseckey_create(mctx, newkey, &key);
+	result = dns_dnsseckey_create(newkey, &key);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	if (key->legacy || savekeys) {
@@ -1350,7 +1340,7 @@ mark_active_keys(dns_dnsseckeylist_t *keylist, dns_rdataset_t *rrsigs) {
 
 			dns_rdata_reset(&rdata);
 			dns_rdataset_current(&sigs, &rdata);
-			result = dns_rdata_tostruct(&rdata, &sig, NULL);
+			result = dns_rdata_tostruct(&rdata, &sig);
 			RUNTIME_CHECK(result == ISC_R_SUCCESS);
 			sigalg = sig.algorithm;
 			sigid = sig.keyid;
@@ -1374,7 +1364,7 @@ mark_active_keys(dns_dnsseckeylist_t *keylist, dns_rdataset_t *rrsigs) {
  */
 isc_result_t
 dns_dnssec_keylistfromrdataset(dns_name_t *origin,
-			       const char *directory, isc_mem_t *mctx,
+			       const char *directory,
 			       dns_rdataset_t *keyset, dns_rdataset_t *keysigs,
 			       dns_rdataset_t *soasigs, isc_boolean_t savekeys,
 			       isc_boolean_t publickey,
@@ -1395,7 +1385,7 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 	     result = dns_rdataset_next(&keys)) {
 		dns_rdata_reset(&rdata);
 		dns_rdataset_current(&keys, &rdata);
-		RETERR(dns_dnssec_keyfromrdata(origin, &rdata, mctx, &pubkey));
+		RETERR(dns_dnssec_keyfromrdata(origin, &rdata, &pubkey));
 		dst_key_setttl(pubkey, keys.ttl);
 
 		if (!is_zone_key(pubkey) ||
@@ -1407,7 +1397,7 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 			goto skip;
 
 		if (publickey) {
-			RETERR(addkey(keylist, &pubkey, savekeys, mctx));
+			RETERR(addkey(keylist, &pubkey, savekeys));
 			goto skip;
 		}
 
@@ -1415,7 +1405,7 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 					  dst_key_id(pubkey),
 					  dst_key_alg(pubkey),
 					  DST_TYPE_PUBLIC|DST_TYPE_PRIVATE,
-					  directory, mctx, &privkey);
+					  directory, &privkey);
 
 		/*
 		 * If the key was revoked and the private file
@@ -1434,7 +1424,7 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 							  DST_TYPE_PUBLIC|
 							  DST_TYPE_PRIVATE,
 							  directory,
-							  mctx, &privkey);
+							  &privkey);
 				if (result == ISC_R_SUCCESS &&
 				    dst_key_pubcompare(pubkey, privkey,
 						       ISC_FALSE)) {
@@ -1460,7 +1450,7 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 		}
 
 		if (result == ISC_R_FILENOTFOUND || result == ISC_R_NOPERM) {
-			RETERR(addkey(keylist, &pubkey, savekeys, mctx));
+			RETERR(addkey(keylist, &pubkey, savekeys));
 			goto skip;
 		}
 		RETERR(result);
@@ -1475,7 +1465,7 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 		 */
 		dst_key_setttl(privkey, dst_key_getttl(pubkey));
 
-		RETERR(addkey(keylist, &privkey, savekeys, mctx));
+		RETERR(addkey(keylist, &privkey, savekeys));
  skip:
 		if (pubkey != NULL)
 			dst_key_free(&pubkey);

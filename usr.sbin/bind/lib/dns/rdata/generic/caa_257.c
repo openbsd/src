@@ -275,7 +275,7 @@ tostruct_caa(ARGS_TOSTRUCT) {
 	 */
 	if (sr.length < caa->tag_len)
 		return (ISC_R_UNEXPECTEDEND);
-	caa->tag = mem_maybedup(mctx, sr.base, caa->tag_len);
+	caa->tag = mem_maybedup(sr.base, caa->tag_len);
 	if (caa->tag == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_region_consume(&sr, caa->tag_len);
@@ -284,11 +284,10 @@ tostruct_caa(ARGS_TOSTRUCT) {
 	 * Value
 	 */
 	caa->value_len = sr.length;
-	caa->value = mem_maybedup(mctx, sr.base, sr.length);
+	caa->value = mem_maybedup(sr.base, sr.length);
 	if (caa->value == NULL)
 		return (ISC_R_NOMEMORY);
 
-	caa->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -299,14 +298,8 @@ freestruct_caa(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(caa->common.rdtype == dns_rdatatype_caa);
 
-	if (caa->mctx == NULL)
-		return;
-
-	if (caa->tag != NULL)
-		isc_mem_free(caa->mctx, caa->tag);
-	if (caa->value != NULL)
-		isc_mem_free(caa->mctx, caa->value);
-	caa->mctx = NULL;
+	free(caa->tag);
+	free(caa->value);
 }
 
 static inline isc_result_t

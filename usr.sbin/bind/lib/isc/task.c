@@ -24,13 +24,13 @@
  */
 
 #include <config.h>
-
+#include <stdlib.h>
 #include <isc/app.h>
 #include <isc/condition.h>
 #include <isc/event.h>
 
 #include <isc/magic.h>
-#include <isc/mem.h>
+
 #include <isc/msgs.h>
 #include <isc/once.h>
 #include <isc/platform.h>
@@ -106,7 +106,6 @@ typedef ISC_LIST(isc__task_t)	isc__tasklist_t;
 struct isc__taskmgr {
 	/* Not locked. */
 	isc_taskmgr_t			common;
-	isc_mem_t *			mctx;
 	isc_mutex_t			lock;
 	/* Locked by task manager lock. */
 	unsigned int			default_quantum;
@@ -184,7 +183,7 @@ isc__task_gettag(isc_task_t *task0);
 void
 isc__task_getcurrenttime(isc_task_t *task0, isc_stdtime_t *t);
 isc_result_t
-isc__taskmgr_create(isc_mem_t *mctx, unsigned int workers,
+isc__taskmgr_create(unsigned int workers,
 		    unsigned int default_quantum, isc_taskmgr_t **managerp);
 void
 isc__taskmgr_destroy(isc_taskmgr_t **managerp);
@@ -278,7 +277,7 @@ task_finished(isc__task_t *task) {
 	DESTROYLOCK(&task->lock);
 	task->common.impmagic = 0;
 	task->common.magic = 0;
-	isc_mem_put(manager->mctx, task, sizeof(*task));
+	free(task);
 }
 
 isc_result_t
@@ -293,14 +292,14 @@ isc__task_create(isc_taskmgr_t *manager0, unsigned int quantum,
 	REQUIRE(VALID_MANAGER(manager));
 	REQUIRE(taskp != NULL && *taskp == NULL);
 
-	task = isc_mem_get(manager->mctx, sizeof(*task));
+	task = malloc(sizeof(*task));
 	if (task == NULL)
 		return (ISC_R_NOMEMORY);
 	XTRACE("isc_task_create");
 	task->manager = manager;
 	result = isc_mutex_init(&task->lock);
 	if (result != ISC_R_SUCCESS) {
-		isc_mem_put(manager->mctx, task, sizeof(*task));
+		free(task);
 		return (result);
 	}
 	task->state = task_state_idle;
@@ -329,7 +328,7 @@ isc__task_create(isc_taskmgr_t *manager0, unsigned int quantum,
 
 	if (exiting) {
 		DESTROYLOCK(&task->lock);
-		isc_mem_put(manager->mctx, task, sizeof(*task));
+		free(task);
 		return (ISC_R_SHUTTINGDOWN);
 	}
 
@@ -759,8 +758,7 @@ isc__task_onshutdown(isc_task_t *task0, isc_taskaction_t action,
 	REQUIRE(VALID_TASK(task));
 	REQUIRE(action != NULL);
 
-	event = isc_event_allocate(task->manager->mctx,
-				   NULL,
+	event = isc_event_allocate(NULL,
 				   ISC_TASKEVENT_SHUTDOWN,
 				   action,
 				   arg,
@@ -777,7 +775,7 @@ isc__task_onshutdown(isc_task_t *task0, isc_taskaction_t action,
 	UNLOCK(&task->lock);
 
 	if (disallowed)
-		isc_mem_put(task->manager->mctx, event, sizeof(*event));
+		free(event);
 
 	return (result);
 }
@@ -1154,21 +1152,18 @@ dispatch(isc__taskmgr_t *manager) {
 
 static void
 manager_free(isc__taskmgr_t *manager) {
-	isc_mem_t *mctx;
 
 	DESTROYLOCK(&manager->lock);
 	DESTROYLOCK(&manager->excl_lock);
 	manager->common.impmagic = 0;
 	manager->common.magic = 0;
-	mctx = manager->mctx;
-	isc_mem_put(mctx, manager, sizeof(*manager));
-	isc_mem_detach(&mctx);
+	free(manager);
 
 	taskmgr = NULL;
 }
 
 isc_result_t
-isc__taskmgr_create(isc_mem_t *mctx, unsigned int workers,
+isc__taskmgr_create(unsigned int workers,
 		    unsigned int default_quantum, isc_taskmgr_t **managerp)
 {
 	isc_result_t result;
@@ -1193,14 +1188,13 @@ isc__taskmgr_create(isc_mem_t *mctx, unsigned int workers,
 		return (ISC_R_SUCCESS);
 	}
 
-	manager = isc_mem_get(mctx, sizeof(*manager));
+	manager = malloc(sizeof(*manager));
 	if (manager == NULL)
 		return (ISC_R_NOMEMORY);
 	manager->common.methods = &taskmgrmethods;
 	manager->common.impmagic = TASK_MANAGER_MAGIC;
 	manager->common.magic = ISCAPI_TASKMGR_MAGIC;
 	manager->mode = isc_taskmgrmode_normal;
-	manager->mctx = NULL;
 	result = isc_mutex_init(&manager->lock);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_mgr;
@@ -1223,8 +1217,6 @@ isc__taskmgr_create(isc_mem_t *mctx, unsigned int workers,
 	manager->exiting = ISC_FALSE;
 	manager->excl = NULL;
 
-	isc_mem_attach(mctx, &manager->mctx);
-
 	manager->refs = 1;
 	taskmgr = manager;
 
@@ -1233,7 +1225,7 @@ isc__taskmgr_create(isc_mem_t *mctx, unsigned int workers,
 	return (ISC_R_SUCCESS);
 
  cleanup_mgr:
-	isc_mem_put(mctx, manager, sizeof(*manager));
+	free(manager);
 	return (result);
 }
 
@@ -1316,8 +1308,6 @@ isc__taskmgr_destroy(isc_taskmgr_t **managerp) {
 	UNLOCK(&manager->lock);
 	while (isc__taskmgr_ready((isc_taskmgr_t *)manager))
 		(void)isc__taskmgr_dispatch((isc_taskmgr_t *)manager);
-	if (!ISC_LIST_EMPTY(manager->tasks))
-		isc_mem_printallactive(stderr);
 	INSIST(ISC_LIST_EMPTY(manager->tasks));
 	taskmgr = NULL;
 
@@ -1497,7 +1487,7 @@ isc_task_register(isc_taskmgrcreatefunc_t createfunc) {
 }
 
 isc_result_t
-isc_taskmgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
+isc_taskmgr_createinctx(isc_appctx_t *actx,
 			unsigned int workers, unsigned int default_quantum,
 			isc_taskmgr_t **managerp)
 {
@@ -1506,7 +1496,7 @@ isc_taskmgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
 	LOCK(&createlock);
 
 	REQUIRE(taskmgr_createfunc != NULL);
-	result = (*taskmgr_createfunc)(mctx, workers, default_quantum,
+	result = (*taskmgr_createfunc)(workers, default_quantum,
 				       managerp);
 
 	UNLOCK(&createlock);
@@ -1518,18 +1508,18 @@ isc_taskmgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
 }
 
 isc_result_t
-isc_taskmgr_create(isc_mem_t *mctx, unsigned int workers,
+isc_taskmgr_create(unsigned int workers,
 		   unsigned int default_quantum, isc_taskmgr_t **managerp)
 {
 	isc_result_t result;
 
 	if (isc_bind9)
-		return (isc__taskmgr_create(mctx, workers,
+		return (isc__taskmgr_create(workers,
 					    default_quantum, managerp));
 	LOCK(&createlock);
 
 	REQUIRE(taskmgr_createfunc != NULL);
-	result = (*taskmgr_createfunc)(mctx, workers, default_quantum,
+	result = (*taskmgr_createfunc)(workers, default_quantum,
 				       managerp);
 
 	UNLOCK(&createlock);

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig.h,v 1.7 2020/01/20 18:40:56 florian Exp $ */
+/* $Id: tsig.h,v 1.8 2020/01/20 18:51:52 florian Exp $ */
 
 #ifndef DNS_TSIG_H
 #define DNS_TSIG_H 1
@@ -56,7 +56,6 @@ extern dns_name_t *dns_tsig_hmacsha512_name;
 struct dns_tsigkey {
 	/* Unlocked */
 	unsigned int		magic;		/*%< Magic number. */
-	isc_mem_t		*mctx;
 	dst_key_t		*key;		/*%< Key */
 	dns_name_t		name;		/*%< Key name */
 	dns_name_t		*algorithm;	/*%< Algorithm name */
@@ -79,14 +78,14 @@ isc_result_t
 dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 		   unsigned char *secret, int length, isc_boolean_t generated,
 		   dns_name_t *creator, isc_stdtime_t inception,
-		   isc_stdtime_t expire, isc_mem_t *mctx,
+		   isc_stdtime_t expire,
 		   dns_tsigkey_t **key);
 
 isc_result_t
 dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 			  dst_key_t *dstkey, isc_boolean_t generated,
 			  dns_name_t *creator, isc_stdtime_t inception,
-			  isc_stdtime_t expire, isc_mem_t *mctx,
+			  isc_stdtime_t expire,
 			  dns_tsigkey_t **key);
 /*%<
  *	Creates a tsig key structure and saves it in the keyring.  If key is

@@ -17,14 +17,13 @@
 #ifndef GENERIC_RT_21_H
 #define GENERIC_RT_21_H 1
 
-/* $Id: rt_21.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: rt_21.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief Per RFC1183 */
 
 typedef struct dns_rdata_rt {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	uint16_t		preference;
 	dns_name_t		host;
 } dns_rdata_rt_t;

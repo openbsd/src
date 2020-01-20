@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.h,v 1.7 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: hash.h,v 1.8 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
@@ -83,9 +83,9 @@
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-isc_hash_ctxcreate(isc_mem_t *mctx, size_t limit, isc_hash_t **hctx);
+isc_hash_ctxcreate(size_t limit, isc_hash_t **hctx);
 isc_result_t
-isc_hash_create(isc_mem_t *mctx, size_t limit);
+isc_hash_create(size_t limit);
 /*!<
  * \brief Create a new hash object.
  *

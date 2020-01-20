@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.4 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: nsec3_50.c,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -298,29 +298,28 @@ tostruct_nsec3(ARGS_TOSTRUCT) {
 	nsec3->iterations = uint16_consume_fromregion(&region);
 
 	nsec3->salt_length = uint8_consume_fromregion(&region);
-	nsec3->salt = mem_maybedup(mctx, region.base, nsec3->salt_length);
+	nsec3->salt = mem_maybedup(region.base, nsec3->salt_length);
 	if (nsec3->salt == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_region_consume(&region, nsec3->salt_length);
 
 	nsec3->next_length = uint8_consume_fromregion(&region);
-	nsec3->next = mem_maybedup(mctx, region.base, nsec3->next_length);
+	nsec3->next = mem_maybedup(region.base, nsec3->next_length);
 	if (nsec3->next == NULL)
 		goto cleanup;
 	isc_region_consume(&region, nsec3->next_length);
 
 	nsec3->len = region.length;
-	nsec3->typebits = mem_maybedup(mctx, region.base, region.length);
+	nsec3->typebits = mem_maybedup(region.base, region.length);
 	if (nsec3->typebits == NULL)
 		goto cleanup;
 
-	nsec3->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
   cleanup:
 	if (nsec3->next != NULL)
-		isc_mem_free(mctx, nsec3->next);
-	isc_mem_free(mctx, nsec3->salt);
+		free(nsec3->next);
+	free(nsec3->salt);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -331,16 +330,13 @@ freestruct_nsec3(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(nsec3->common.rdtype == dns_rdatatype_nsec3);
 
-	if (nsec3->mctx == NULL)
-		return;
 
 	if (nsec3->salt != NULL)
-		isc_mem_free(nsec3->mctx, nsec3->salt);
+		free(nsec3->salt);
 	if (nsec3->next != NULL)
-		isc_mem_free(nsec3->mctx, nsec3->next);
+		free(nsec3->next);
 	if (nsec3->typebits != NULL)
-		isc_mem_free(nsec3->mctx, nsec3->typebits);
-	nsec3->mctx = NULL;
+		free(nsec3->typebits);
 }
 
 static inline isc_result_t

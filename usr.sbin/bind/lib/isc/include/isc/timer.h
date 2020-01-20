@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.5 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: timer.h,v 1.6 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -345,11 +345,11 @@ isc_timer_gettype(isc_timer_t *timer);
  */
 
 isc_result_t
-isc_timermgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
+isc_timermgr_createinctx(isc_appctx_t *actx,
 			 isc_timermgr_t **managerp);
 
 isc_result_t
-isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
+isc_timermgr_create(isc_timermgr_t **managerp);
 /*%<
  * Create a timer manager.  isc_timermgr_createinctx() also associates
  * the new manager with the specified application context.
@@ -406,7 +406,7 @@ void isc_timermgr_poke(isc_timermgr_t *m);
  * See isc_timermgr_create() above.
  */
 typedef isc_result_t
-(*isc_timermgrcreatefunc_t)(isc_mem_t *mctx, isc_timermgr_t **managerp);
+(*isc_timermgrcreatefunc_t)(isc_timermgr_t **managerp);
 
 isc_result_t
 isc__timer_register(void);

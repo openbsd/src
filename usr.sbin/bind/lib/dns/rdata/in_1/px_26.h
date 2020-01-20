@@ -17,14 +17,13 @@
 #ifndef IN_1_PX_26_H
 #define IN_1_PX_26_H 1
 
-/* $Id: px_26.h,v 1.4 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: px_26.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief Per RFC2163 */
 
 typedef struct dns_rdata_in_px {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	uint16_t		preference;
 	dns_name_t		map822;
 	dns_name_t		mapx400;

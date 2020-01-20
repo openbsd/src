@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: spf_99.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: spf_99.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -105,7 +105,7 @@ tostruct_spf(ARGS_TOSTRUCT) {
 	spf->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&spf->common, link);
 
-	return (generic_tostruct_txt(rdata, target, mctx));
+	return (generic_tostruct_txt(rdata, target));
 }
 
 static inline void

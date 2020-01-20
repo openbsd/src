@@ -17,14 +17,13 @@
 #ifndef GENERIC_DNAME_39_H
 #define GENERIC_DNAME_39_H 1
 
-/* $Id: dname_39.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: dname_39.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief per RFC2672 */
 
 typedef struct dns_rdata_dname {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	dns_name_t		dname;
 } dns_rdata_dname_t;
 

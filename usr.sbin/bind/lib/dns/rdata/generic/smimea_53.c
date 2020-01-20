@@ -93,7 +93,7 @@ tostruct_smimea(ARGS_TOSTRUCT) {
 	txt->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&txt->common, link);
 
-	return (generic_tostruct_tlsa(rdata, target, mctx));
+	return (generic_tostruct_tlsa(rdata, target));
 }
 
 static inline void

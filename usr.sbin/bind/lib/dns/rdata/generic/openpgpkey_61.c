@@ -154,11 +154,10 @@ tostruct_openpgpkey(ARGS_TOSTRUCT) {
 	 * Keyring.
 	 */
 	sig->length = sr.length;
-	sig->keyring = mem_maybedup(mctx, sr.base, sig->length);
+	sig->keyring = mem_maybedup(sr.base, sig->length);
 	if (sig->keyring == NULL)
 		goto cleanup;
 
-	sig->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
@@ -172,12 +171,9 @@ freestruct_openpgpkey(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(sig->common.rdtype == dns_rdatatype_openpgpkey);
 
-	if (sig->mctx == NULL)
-		return;
 
 	if (sig->keyring != NULL)
-		isc_mem_free(sig->mctx, sig->keyring);
-	sig->mctx = NULL;
+		free(sig->keyring);
 }
 
 static inline isc_result_t

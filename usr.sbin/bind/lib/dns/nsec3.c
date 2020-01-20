@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3.c,v 1.5 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: nsec3.c,v 1.6 2020/01/20 18:51:52 florian Exp $ */
 
 #include <config.h>
 
@@ -66,7 +66,7 @@ dns_nsec3_typepresent(dns_rdata_t *rdata, dns_rdatatype_t type) {
 	REQUIRE(rdata->type == dns_rdatatype_nsec3);
 
 	/* This should never fail */
-	result = dns_rdata_tostruct(rdata, &nsec3, NULL);
+	result = dns_rdata_tostruct(rdata, &nsec3);
 	INSIST(result == ISC_R_SUCCESS);
 
 	present = ISC_FALSE;
@@ -290,7 +290,7 @@ dns_nsec3_noexistnodata(dns_rdatatype_t type, dns_name_t* name,
 
 	dns_rdataset_current(nsec3set, &rdata);
 
-	result = dns_rdata_tostruct(&rdata, &nsec3, NULL);
+	result = dns_rdata_tostruct(&rdata, &nsec3);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 

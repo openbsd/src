@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: isdn_20.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: isdn_20.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:53:11 PST 2000 by bwelling */
 
@@ -149,7 +149,7 @@ tostruct_isdn(ARGS_TOSTRUCT) {
 
 	isdn->isdn_len = uint8_fromregion(&r);
 	isc_region_consume(&r, 1);
-	isdn->isdn = mem_maybedup(mctx, r.base, isdn->isdn_len);
+	isdn->isdn = mem_maybedup(r.base, isdn->isdn_len);
 	if (isdn->isdn == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_region_consume(&r, isdn->isdn_len);
@@ -160,18 +160,16 @@ tostruct_isdn(ARGS_TOSTRUCT) {
 	} else {
 		isdn->subaddress_len = uint8_fromregion(&r);
 		isc_region_consume(&r, 1);
-		isdn->subaddress = mem_maybedup(mctx, r.base,
+		isdn->subaddress = mem_maybedup(r.base,
 						isdn->subaddress_len);
 		if (isdn->subaddress == NULL)
 			goto cleanup;
 	}
 
-	isdn->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL && isdn->isdn != NULL)
-		isc_mem_free(mctx, isdn->isdn);
+	free(isdn->isdn);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -181,14 +179,8 @@ freestruct_isdn(ARGS_FREESTRUCT) {
 
 	REQUIRE(source != NULL);
 
-	if (isdn->mctx == NULL)
-		return;
-
-	if (isdn->isdn != NULL)
-		isc_mem_free(isdn->mctx, isdn->isdn);
-	if (isdn->subaddress != NULL)
-		isc_mem_free(isdn->mctx, isdn->subaddress);
-	isdn->mctx = NULL;
+	free(isdn->isdn);
+	free(isdn->subaddress);
 }
 
 static inline isc_result_t

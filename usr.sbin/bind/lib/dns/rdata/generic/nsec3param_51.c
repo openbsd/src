@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3param_51.c,v 1.4 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: nsec3param_51.c,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -240,13 +240,12 @@ tostruct_nsec3param(ARGS_TOSTRUCT) {
 	nsec3param->iterations = uint16_consume_fromregion(&region);
 
 	nsec3param->salt_length = uint8_consume_fromregion(&region);
-	nsec3param->salt = mem_maybedup(mctx, region.base,
+	nsec3param->salt = mem_maybedup(region.base,
 					nsec3param->salt_length);
 	if (nsec3param->salt == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_region_consume(&region, nsec3param->salt_length);
 
-	nsec3param->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -257,12 +256,8 @@ freestruct_nsec3param(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(nsec3param->common.rdtype == dns_rdatatype_nsec3param);
 
-	if (nsec3param->mctx == NULL)
-		return;
-
 	if (nsec3param->salt != NULL)
-		isc_mem_free(nsec3param->mctx, nsec3param->salt);
-	nsec3param->mctx = NULL;
+		free(nsec3param->salt);
 }
 
 static inline isc_result_t

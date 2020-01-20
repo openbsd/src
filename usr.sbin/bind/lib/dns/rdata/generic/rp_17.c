@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rp_17.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: rp_17.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* RFC1183 */
 
@@ -215,20 +215,18 @@ tostruct_rp(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&rp->mail, NULL);
-	RETERR(name_duporclone(&name, mctx, &rp->mail));
+	RETERR(name_duporclone(&name, &rp->mail));
 	isc_region_consume(&region, name_length(&name));
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&rp->text, NULL);
-	result = name_duporclone(&name, mctx, &rp->text);
+	result = name_duporclone(&name, &rp->text);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
-	rp->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL)
-		dns_name_free(&rp->mail, mctx);
+	dns_name_free(&rp->mail);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -239,12 +237,8 @@ freestruct_rp(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(rp->common.rdtype == dns_rdatatype_rp);
 
-	if (rp->mctx == NULL)
-		return;
-
-	dns_name_free(&rp->mail, rp->mctx);
-	dns_name_free(&rp->text, rp->mctx);
-	rp->mctx = NULL;
+	dns_name_free(&rp->mail);
+	dns_name_free(&rp->text);
 }
 
 static inline isc_result_t

@@ -17,11 +17,10 @@
 #ifndef IN_1_WKS_11_H
 #define IN_1_WKS_11_H 1
 
-/* $Id: wks_11.h,v 1.4 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: wks_11.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 typedef	struct dns_rdata_in_wks {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	struct in_addr		in_addr;
 	uint16_t		protocol;
 	unsigned char		*map;

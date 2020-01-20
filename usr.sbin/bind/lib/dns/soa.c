@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: soa.c,v 1.4 2020/01/09 18:17:15 florian Exp $ */
+/* $Id: soa.c,v 1.5 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file */
 
@@ -80,7 +80,6 @@ dns_soa_buildrdata(dns_name_t *origin, dns_name_t *contact,
 
 	soa.common.rdtype = dns_rdatatype_soa;
 	soa.common.rdclass = rdclass;
-	soa.mctx = NULL;
 	soa.serial = serial;
 	soa.refresh = refresh;
 	soa.retry = retry;

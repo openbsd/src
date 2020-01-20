@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: file.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: file.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef ISC_FILE_H
 #define ISC_FILE_H 1
@@ -313,13 +313,13 @@ isc_file_safecreate(const char *filename, FILE **fp);
  */
 
 isc_result_t
-isc_file_splitpath(isc_mem_t *mctx, const char *path,
+isc_file_splitpath(const char *path,
 		   char **dirname, char const **basename);
 /*%<
  * Split a path into dirname and basename.  If 'path' contains no slash
  * (or, on windows, backslash), then '*dirname' is set to ".".
  *
- * Allocates memory for '*dirname', which can be freed with isc_mem_free().
+ * Allocates memory for '*dirname'.
  *
  * Returns:
  * - ISC_R_SUCCESS on success

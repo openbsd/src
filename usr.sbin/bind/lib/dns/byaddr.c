@@ -14,14 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: byaddr.c,v 1.11 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: byaddr.c,v 1.12 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file */
 
 #include <config.h>
 
 #include <isc/buffer.h>
-#include <isc/mem.h>
+
 #include <isc/netaddr.h>
 
 #include <string.h>		/* Required for HP/UX (and others?) */

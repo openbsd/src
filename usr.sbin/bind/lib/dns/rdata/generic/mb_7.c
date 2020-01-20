@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mb_7.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: mb_7.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 17:31:26 PST 2000 by bwelling */
 
@@ -160,8 +160,7 @@ tostruct_mb(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&mb->mb, NULL);
-	RETERR(name_duporclone(&name, mctx, &mb->mb));
-	mb->mctx = mctx;
+	RETERR(name_duporclone(&name, &mb->mb));
 	return (ISC_R_SUCCESS);
 }
 
@@ -171,11 +170,7 @@ freestruct_mb(ARGS_FREESTRUCT) {
 
 	REQUIRE(source != NULL);
 
-	if (mb->mctx == NULL)
-		return;
-
-	dns_name_free(&mb->mb, mb->mctx);
-	mb->mctx = NULL;
+	dns_name_free(&mb->mb);
 }
 
 static inline isc_result_t

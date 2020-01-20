@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: heap.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef ISC_HEAP_H
 #define ISC_HEAP_H 1
@@ -51,7 +51,7 @@ typedef void (*isc_heapaction_t)(void *, void *);
 typedef struct isc_heap isc_heap_t;
 
 isc_result_t
-isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
+isc_heap_create(isc_heapcompare_t compare,
 		isc_heapindex_t index, unsigned int size_increment,
 		isc_heap_t **heapp);
 /*!<

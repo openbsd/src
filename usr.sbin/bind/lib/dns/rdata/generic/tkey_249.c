@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkey_249.c,v 1.7 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: tkey_249.c,v 1.8 2020/01/20 18:51:53 florian Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -429,7 +429,7 @@ tostruct_tkey(ARGS_TOSTRUCT) {
 	dns_name_init(&alg, NULL);
 	dns_name_fromregion(&alg, &sr);
 	dns_name_init(&tkey->algorithm, NULL);
-	RETERR(name_duporclone(&alg, mctx, &tkey->algorithm));
+	RETERR(name_duporclone(&alg, &tkey->algorithm));
 	isc_region_consume(&sr, name_length(&tkey->algorithm));
 
 	/*
@@ -466,7 +466,7 @@ tostruct_tkey(ARGS_TOSTRUCT) {
 	 * Key.
 	 */
 	INSIST(tkey->keylen + 2U <= sr.length);
-	tkey->key = mem_maybedup(mctx, sr.base, tkey->keylen);
+	tkey->key = mem_maybedup(sr.base, tkey->keylen);
 	if (tkey->key == NULL)
 		goto cleanup;
 	isc_region_consume(&sr, tkey->keylen);
@@ -481,18 +481,16 @@ tostruct_tkey(ARGS_TOSTRUCT) {
 	 * Other.
 	 */
 	INSIST(tkey->otherlen <= sr.length);
-	tkey->other = mem_maybedup(mctx, sr.base, tkey->otherlen);
+	tkey->other = mem_maybedup(sr.base, tkey->otherlen);
 	if (tkey->other == NULL)
 		goto cleanup;
 
-	tkey->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL)
-		dns_name_free(&tkey->algorithm, mctx);
-	if (mctx != NULL && tkey->key != NULL)
-		isc_mem_free(mctx, tkey->key);
+	dns_name_free(&tkey->algorithm);
+	if (tkey->key != NULL)
+		free(tkey->key);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -502,15 +500,11 @@ freestruct_tkey(ARGS_FREESTRUCT) {
 
 	REQUIRE(source != NULL);
 
-	if (tkey->mctx == NULL)
-		return;
-
-	dns_name_free(&tkey->algorithm, tkey->mctx);
+	dns_name_free(&tkey->algorithm);
 	if (tkey->key != NULL)
-		isc_mem_free(tkey->mctx, tkey->key);
+		free(tkey->key);
 	if (tkey->other != NULL)
-		isc_mem_free(tkey->mctx, tkey->other);
-	tkey->mctx = NULL;
+		free(tkey->other);
 }
 
 static inline isc_result_t

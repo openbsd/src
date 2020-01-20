@@ -17,13 +17,12 @@
 #ifndef GENERIC_DNSSIG_46_H
 #define GENERIC_DNSSIG_46_H 1
 
-/* $Id: rrsig_46.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: rrsig_46.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief Per RFC2535 */
 typedef struct dns_rdata_rrsig {
 	dns_rdatacommon_t	common;
-	isc_mem_t *		mctx;
 	dns_rdatatype_t		covered;
 	dns_secalg_t		algorithm;
 	uint8_t		labels;

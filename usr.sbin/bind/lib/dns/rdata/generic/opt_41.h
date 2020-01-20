@@ -17,7 +17,7 @@
 #ifndef GENERIC_OPT_41_H
 #define GENERIC_OPT_41_H 1
 
-/* $Id: opt_41.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: opt_41.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief Per RFC2671 */
@@ -30,7 +30,6 @@ typedef struct dns_rdata_opt_opcode {
 
 typedef struct dns_rdata_opt {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	unsigned char		*options;
 	uint16_t		length;
 	/* private */

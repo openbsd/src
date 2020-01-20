@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.c,v 1.6 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: ds_43.c,v 1.7 2020/01/20 18:51:53 florian Exp $ */
 
 /* RFC3658 */
 
@@ -314,11 +314,10 @@ generic_tostruct_ds(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, 1);
 	ds->length = region.length;
 
-	ds->digest = mem_maybedup(mctx, region.base, region.length);
+	ds->digest = mem_maybedup(region.base, region.length);
 	if (ds->digest == NULL)
 		return (ISC_R_NOMEMORY);
 
-	ds->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -333,7 +332,7 @@ tostruct_ds(ARGS_TOSTRUCT) {
 	ds->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&ds->common, link);
 
-	return (generic_tostruct_ds(rdata, target, mctx));
+	return (generic_tostruct_ds(rdata, target));
 }
 
 static inline void
@@ -343,12 +342,7 @@ freestruct_ds(ARGS_FREESTRUCT) {
 	REQUIRE(ds != NULL);
 	REQUIRE(ds->common.rdtype == dns_rdatatype_ds);
 
-	if (ds->mctx == NULL)
-		return;
-
-	if (ds->digest != NULL)
-		isc_mem_free(ds->mctx, ds->digest);
-	ds->mctx = NULL;
+	free(ds->digest);
 }
 
 static inline isc_result_t

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.38 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: dig.c,v 1.39 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -387,21 +387,21 @@ printrdataset(dns_name_t *owner_name, dns_rdataset_t *rdataset,
 	if (multiline || (nottl && noclass))
 		result = dns_master_stylecreate2(&style, styleflags,
 						24, 24, 24, 32, 80, 8,
-						splitwidth, mctx);
+						splitwidth);
 	else if (nottl || noclass)
 		result = dns_master_stylecreate2(&style, styleflags,
 						24, 24, 32, 40, 80, 8,
-						splitwidth, mctx);
+						splitwidth);
 	else
 		result = dns_master_stylecreate2(&style, styleflags,
 						24, 32, 40, 48, 80, 8,
-						splitwidth, mctx);
+						splitwidth);
 	check_result(result, "dns_master_stylecreate");
 
 	result = dns_master_rdatasettotext(owner_name, rdataset, style, target);
 
 	if (style != NULL)
-		dns_master_styledestroy(&style, mctx);
+		dns_master_styledestroy(&style);
 
 	return(result);
 }
@@ -465,15 +465,15 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	if (multiline || (nottl && noclass))
 		result = dns_master_stylecreate2(&style, styleflags,
 						 24, 24, 24, 32, 80, 8,
-						 splitwidth, mctx);
+						 splitwidth);
 	else if (nottl || noclass)
 		result = dns_master_stylecreate2(&style, styleflags,
 						 24, 24, 32, 40, 80, 8,
-						 splitwidth, mctx);
+						 splitwidth);
 	else
 		result = dns_master_stylecreate2(&style, styleflags,
 						 24, 32, 40, 48, 80, 8,
-						 splitwidth, mctx);
+						 splitwidth);
 	check_result(result, "dns_master_stylecreate");
 
 	if (query->lookup->cmdline[0] != 0) {
@@ -496,7 +496,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	if (!query->lookup->comments)
 		flags |= DNS_MESSAGETEXTFLAG_NOCOMMENTS;
 
-	result = isc_buffer_allocate(mctx, &buf, len);
+	result = isc_buffer_allocate(&buf, len);
 	check_result(result, "isc_buffer_allocate");
 
 	if (query->lookup->comments && !short_form) {
@@ -573,7 +573,7 @@ repopulate_buffer:
 buftoosmall:
 			len += OUTPUTBUF;
 			isc_buffer_free(&buf);
-			result = isc_buffer_allocate(mctx, &buf, len);
+			result = isc_buffer_allocate(&buf, len);
 			if (result == ISC_R_SUCCESS)
 				goto repopulate_buffer;
 			else
@@ -659,7 +659,7 @@ buftoosmall:
 
 cleanup:
 	if (style != NULL)
-		dns_master_styledestroy(&style, mctx);
+		dns_master_styledestroy(&style);
 	return (result);
 }
 
@@ -1242,7 +1242,7 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 				goto need_value;
 			if (!state) {
 				if (lookup->ecs_addr != NULL) {
-					isc_mem_free(mctx, lookup->ecs_addr);
+					free(lookup->ecs_addr);
 					lookup->ecs_addr = NULL;
 				}
 				break;
@@ -1250,7 +1250,7 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 			if (lookup->edns == -1)
 				lookup->edns = 0;
 			if (lookup->ecs_addr != NULL) {
-				isc_mem_free(mctx, lookup->ecs_addr);
+				free(lookup->ecs_addr);
 				lookup->ecs_addr = NULL;
 			}
 			result = parse_netprefix(&lookup->ecs_addr, value);
@@ -1366,7 +1366,7 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 /*%
  * #ISC_TRUE returned if value was used
  */
-static const char *single_dash_opts = "46dhimnuv";
+static const char *single_dash_opts = "46dhinuv";
 static const char *dash_opts = "46bcdfhikmnptvyx";
 static isc_boolean_t
 dash_option(char *option, char *next, dig_lookup_t **lookup,
@@ -1389,7 +1389,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 
 	while (strpbrk(option, single_dash_opts) == &option[0]) {
 		/*
-		 * Since the -[46dhimnuv] options do not take an argument,
+		 * Since the -[46dhinuv] options do not take an argument,
 		 * account for them (in any number and/or combination)
 		 * if they appear as the first character(s) of a q-opt.
 		 */
@@ -1431,9 +1431,6 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 			break;
 		case 'i':
 			ip6_int = ISC_TRUE;
-			break;
-		case 'm': /* memdebug */
-			/* memdebug is handled in preparse_args() */
 			break;
 		case 'n':
 			/* deprecated */
@@ -1663,11 +1660,6 @@ preparse_args(int argc, char **argv) {
 		option = &rv[0][1];
 		while (strpbrk(option, single_dash_opts) == &option[0]) {
 			switch (option[0]) {
-			case 'm':
-				memdebugging = ISC_TRUE;
-				isc_mem_debugging = ISC_MEM_DEBUGTRACE |
-					ISC_MEM_DEBUGRECORD;
-				break;
 			case '4':
 				if (ipv6only)
 					fatal("only one of -4 and -6 allowed");
@@ -2088,7 +2080,7 @@ void dig_startup() {
 
 	debug("dig_startup()");
 
-	result = isc_app_onrun(mctx, global_task, onrun_callback, NULL);
+	result = isc_app_onrun(global_task, onrun_callback, NULL);
 	check_result(result, "isc_app_onrun");
 	isc_app_run();
 }

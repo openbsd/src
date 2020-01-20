@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.32 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: dighost.c,v 1.33 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file
  *  \note
@@ -123,7 +123,6 @@ isc_boolean_t
 in_port_t port = 53;
 unsigned int timeout = 0;
 unsigned int extrabytes;
-isc_mem_t *mctx = NULL;
 isc_log_t *lctx = NULL;
 isc_taskmgr_t *taskmgr = NULL;
 isc_task_t *global_task = NULL;
@@ -165,7 +164,6 @@ unsigned int digestbits = 0;
 isc_buffer_t *namebuf = NULL;
 dns_tsigkey_t *tsigkey = NULL;
 isc_boolean_t validated = ISC_TRUE;
-isc_mempool_t *commctx = NULL;
 isc_boolean_t debugging = ISC_FALSE;
 isc_boolean_t debugtiming = ISC_FALSE;
 isc_boolean_t memdebugging = ISC_FALSE;
@@ -202,7 +200,7 @@ isc_result_t	  sigchase_verify_ds(dns_name_t *name,
 				     dns_rdataset_t *keyrdataset,
 				     dns_rdataset_t *dsrdataset);
 void		  sigchase(dns_message_t *msg);
-void		  print_rdata(dns_rdata_t *rdata, isc_mem_t *mctx);
+void		  print_rdata(dns_rdata_t *rdata);
 void		  print_rdataset(dns_name_t *name, dns_rdataset_t *rdataset);
 void		  dup_name(dns_name_t *source, dns_name_t* target);
 void		  free_name(dns_name_t *name);
@@ -571,7 +569,7 @@ make_server(const char *servname, const char *userarg) {
 	REQUIRE(servname != NULL);
 
 	debug("make_server(%s)", servname);
-	srv = isc_mem_allocate(mctx, sizeof(struct dig_server));
+	srv = malloc(sizeof(struct dig_server));
 	if (srv == NULL)
 		fatal("memory allocation failure in %s:%d",
 		      __FILE__, __LINE__);
@@ -644,7 +642,7 @@ flush_server_list(void) {
 		ps = s;
 		s = ISC_LIST_NEXT(s, link);
 		ISC_LIST_DEQUEUE(server_list, ps, link);
-		isc_mem_free(mctx, ps);
+		free(ps);
 	}
 }
 
@@ -800,7 +798,7 @@ make_empty_lookup(void) {
 
 	INSIST(!free_now);
 
-	looknew = isc_mem_allocate(mctx, sizeof(struct dig_lookup));
+	looknew = malloc(sizeof(struct dig_lookup));
 	if (looknew == NULL)
 		fatal("memory allocation failure in %s:%d",
 		       __FILE__, __LINE__);
@@ -890,7 +888,7 @@ static void
 cloneopts(dig_lookup_t *looknew, dig_lookup_t *lookold) {
 	size_t len = sizeof(looknew->ednsopts[0]) * EDNSOPT_OPTIONS;
 	size_t i;
-	looknew->ednsopts = isc_mem_allocate(mctx, len);
+	looknew->ednsopts = malloc(len);
 	if (looknew->ednsopts == NULL)
 		fatal("out of memory");
 	for (i = 0; i < EDNSOPT_OPTIONS; i++) {
@@ -907,7 +905,7 @@ cloneopts(dig_lookup_t *looknew, dig_lookup_t *lookold) {
 		if (len != 0) {
 			INSIST(lookold->ednsopts[i].value != NULL);
 			looknew->ednsopts[i].value =
-				 isc_mem_allocate(mctx, len);
+				 malloc(len);
 			if (looknew->ednsopts[i].value == NULL)
 				fatal("out of memory");
 			memmove(looknew->ednsopts[i].value,
@@ -1007,7 +1005,7 @@ clone_lookup(dig_lookup_t *lookold, isc_boolean_t servers) {
 
 	if (lookold->ecs_addr != NULL) {
 		size_t len = sizeof(isc_sockaddr_t);
-		looknew->ecs_addr = isc_mem_allocate(mctx, len);
+		looknew->ecs_addr = malloc(len);
 		if (looknew->ecs_addr == NULL)
 			fatal("out of memory");
 		memmove(looknew->ecs_addr, lookold->ecs_addr, len);
@@ -1060,13 +1058,13 @@ setup_text_key(void) {
 	unsigned char *secretstore;
 
 	debug("setup_text_key()");
-	result = isc_buffer_allocate(mctx, &namebuf, MXNAME);
+	result = isc_buffer_allocate(&namebuf, MXNAME);
 	check_result(result, "isc_buffer_allocate");
 	dns_name_init(&keyname, NULL);
 	check_result(result, "dns_name_init");
 	isc_buffer_putstr(namebuf, keynametext);
 	secretsize = (unsigned int) strlen(keysecret) * 3 / 4;
-	secretstore = isc_mem_allocate(mctx, secretsize);
+	secretstore = malloc(secretsize);
 	if (secretstore == NULL)
 		fatal("memory allocation failure in %s:%d",
 		      __FILE__, __LINE__);
@@ -1088,7 +1086,7 @@ setup_text_key(void) {
 
 	result = dns_tsigkey_create(&keyname, hmacname, secretstore,
 				    (int)secretsize, ISC_FALSE, NULL, 0, 0,
-				    mctx, &tsigkey);
+				    &tsigkey);
  failure:
 	if (result != ISC_R_SUCCESS)
 		printf(";; Couldn't create key %s: %s\n",
@@ -1096,7 +1094,7 @@ setup_text_key(void) {
 	else
 		dst_key_setbits(tsigkey->key, digestbits);
 
-	isc_mem_free(mctx, secretstore);
+	free(secretstore);
 	dns_name_invalidate(&keyname);
 	isc_buffer_free(&namebuf);
 }
@@ -1158,7 +1156,7 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 	if (strlcpy(buf, value, sizeof(buf)) >= sizeof(buf))
 		fatal("invalid prefix '%s'\n", value);
 
-	sa = isc_mem_allocate(mctx, sizeof(*sa));
+	sa = malloc(sizeof(*sa));
 	if (sa == NULL)
 		fatal("out of memory");
 	memset(sa, 0, sizeof(*sa));
@@ -1283,7 +1281,7 @@ read_confkey(void) {
 	if (! isc_file_exists(keyfile))
 		return (ISC_R_FILENOTFOUND);
 
-	result = cfg_parser_create(mctx, NULL, &pctx);
+	result = cfg_parser_create(NULL, &pctx);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
@@ -1329,7 +1327,7 @@ setup_file_key(void) {
 
 	/* Try reading the key from a K* pair */
 	result = dst_key_fromnamedfile(keyfile, NULL,
-				       DST_TYPE_PRIVATE | DST_TYPE_KEY, mctx,
+				       DST_TYPE_PRIVATE | DST_TYPE_KEY,
 				       &dstkey);
 
 	/* If that didn't work, try reading it as a session.key keyfile */
@@ -1368,7 +1366,7 @@ setup_file_key(void) {
 	}
 	result = dns_tsigkey_createfromkey(dst_key_name(dstkey), hmacname,
 					   dstkey, ISC_FALSE, NULL, 0, 0,
-					   mctx, &tsigkey);
+					   &tsigkey);
 	if (result != ISC_R_SUCCESS) {
 		printf(";; Couldn't create key %s: %s\n",
 		       keynametext, isc_result_totext(result));
@@ -1382,7 +1380,7 @@ setup_file_key(void) {
 static dig_searchlist_t *
 make_searchlist_entry(char *domain) {
 	dig_searchlist_t *search;
-	search = isc_mem_allocate(mctx, sizeof(*search));
+	search = malloc(sizeof(*search));
 	if (search == NULL)
 		fatal("memory allocation failure in %s:%d",
 		      __FILE__, __LINE__);
@@ -1397,7 +1395,7 @@ clear_searchlist(void) {
 	dig_searchlist_t *search;
 	while ((search = ISC_LIST_HEAD(search_list)) != NULL) {
 		ISC_LIST_UNLINK(search_list, search, link);
-		isc_mem_free(mctx, search);
+		free(search);
 	}
 }
 
@@ -1546,11 +1544,7 @@ setup_libs(void) {
 	if (!have_ipv6 && !have_ipv4)
 		fatal("can't find either v4 or v6 networking");
 
-	result = isc_mem_create(0, 0, &mctx);
-	check_result(result, "isc_mem_create");
-	isc_mem_setname(mctx, "dig", NULL);
-
-	result = isc_log_create(mctx, &lctx, &logconfig);
+	result = isc_log_create(&lctx, &logconfig);
 	check_result(result, "isc_log_create");
 
 	isc_log_setcontext(lctx);
@@ -1562,34 +1556,24 @@ setup_libs(void) {
 
 	isc_log_setdebuglevel(lctx, 0);
 
-	result = isc_taskmgr_create(mctx, 1, 0, &taskmgr);
+	result = isc_taskmgr_create(1, 0, &taskmgr);
 	check_result(result, "isc_taskmgr_create");
 
 	result = isc_task_create(taskmgr, 0, &global_task);
 	check_result(result, "isc_task_create");
 	isc_task_setname(global_task, "dig", NULL);
 
-	result = isc_timermgr_create(mctx, &timermgr);
+	result = isc_timermgr_create(&timermgr);
 	check_result(result, "isc_timermgr_create");
 
-	result = isc_socketmgr_create(mctx, &socketmgr);
+	result = isc_socketmgr_create(&socketmgr);
 	check_result(result, "isc_socketmgr_create");
 
 	check_result(result, "isc_entropy_create");
 
-	result = dst_lib_init(mctx);
+	result = dst_lib_init();
 	check_result(result, "dst_lib_init");
 	is_dst_up = ISC_TRUE;
-
-	result = isc_mempool_create(mctx, COMMSIZE, &commctx);
-	check_result(result, "isc_mempool_create");
-	isc_mempool_setname(commctx, "COMMPOOL");
-	/*
-	 * 6 and 2 set as reasonable parameters for 3 or 4 nameserver
-	 * systems.
-	 */
-	isc_mempool_setfreemax(commctx, 6);
-	isc_mempool_setfillcount(commctx, 2);
 
 	result = isc_mutex_init(&lookup_lock);
 	check_result(result, "isc_mutex_init");
@@ -1648,7 +1632,7 @@ save_opt(dig_lookup_t *lookup, char *code, char *value) {
 	}
 
 	if (lookup->ednsopts[lookup->ednsoptscnt].value != NULL)
-		isc_mem_free(mctx, lookup->ednsopts[lookup->ednsoptscnt].value);
+		free(lookup->ednsopts[lookup->ednsoptscnt].value);
 
 	lookup->ednsopts[lookup->ednsoptscnt].code = num;
 	lookup->ednsopts[lookup->ednsoptscnt].length = 0;
@@ -1656,7 +1640,7 @@ save_opt(dig_lookup_t *lookup, char *code, char *value) {
 
 	if (value != NULL) {
 		char *buf;
-		buf = isc_mem_allocate(mctx, strlen(value)/2 + 1);
+		buf = malloc(strlen(value)/2 + 1);
 		if (buf == NULL)
 			fatal("out of memory");
 		isc_buffer_init(&b, buf, (unsigned int) strlen(value)/2 + 1);
@@ -1767,13 +1751,13 @@ clear_query(dig_query_t *query) {
 		sockcount--;
 		debug("sockcount=%d", sockcount);
 	}
-	isc_mempool_put(commctx, query->recvspace);
+	free(query->recvspace);
 	isc_buffer_invalidate(&query->recvbuf);
 	isc_buffer_invalidate(&query->lengthbuf);
 	if (query->waiting_senddone)
 		query->pending_free = ISC_TRUE;
 	else
-		isc_mem_free(mctx, query);
+		free(query);
 }
 
 /*%
@@ -1830,7 +1814,7 @@ destroy_lookup(dig_lookup_t *lookup) {
 		s = ISC_LIST_NEXT(s, link);
 		ISC_LIST_DEQUEUE(lookup->my_server_list,
 				 (dig_server_t *)ptr, link);
-		isc_mem_free(mctx, ptr);
+		free(ptr);
 	}
 	if (lookup->sendmsg != NULL)
 		dns_message_destroy(&lookup->sendmsg);
@@ -1839,24 +1823,24 @@ destroy_lookup(dig_lookup_t *lookup) {
 		isc_buffer_free(&lookup->querysig);
 	}
 	if (lookup->sendspace != NULL)
-		isc_mempool_put(commctx, lookup->sendspace);
+		free(lookup->sendspace);
 
 	if (lookup->tsigctx != NULL)
 		dst_context_destroy(&lookup->tsigctx);
 
 	if (lookup->ecs_addr != NULL)
-		isc_mem_free(mctx, lookup->ecs_addr);
+		free(lookup->ecs_addr);
 
 	if (lookup->ednsopts != NULL) {
 		size_t i;
 		for (i = 0; i < EDNSOPT_OPTIONS; i++) {
 			if (lookup->ednsopts[i].value != NULL)
-				isc_mem_free(mctx, lookup->ednsopts[i].value);
+				free(lookup->ednsopts[i].value);
 		}
-		isc_mem_free(mctx, lookup->ednsopts);
+		free(lookup->ednsopts);
 	}
 
-	isc_mem_free(mctx, lookup);
+	free(lookup);
 }
 
 /*%
@@ -1947,7 +1931,7 @@ start_lookup(void) {
 
 			current_lookup->trace_root_sigchase = ISC_TRUE;
 
-			result = isc_buffer_allocate(mctx, &b, BUFSIZE);
+			result = isc_buffer_allocate(&b, BUFSIZE);
 			check_result(result, "isc_buffer_allocate");
 			result = dns_name_totext(dst_key_name(dstkey),
 						 ISC_FALSE, b);
@@ -2078,7 +2062,7 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 			dns_rdataset_current(rdataset, &rdata);
 
 			query->lookup->nsfound++;
-			result = dns_rdata_tostruct(&rdata, &ns, NULL);
+			result = dns_rdata_tostruct(&rdata, &ns);
 			check_result(result, "dns_rdata_tostruct");
 			dns_name_format(&ns.name, namestr, sizeof(namestr));
 			dns_rdata_freestruct(&ns);
@@ -2193,8 +2177,7 @@ next_origin(dig_lookup_t *oldlookup) {
 	 */
 	dns_fixedname_init(&fixed);
 	name = dns_fixedname_name(&fixed);
-	result = dns_name_fromstring2(name, oldlookup->textname, NULL,
-				      0, NULL);
+	result = dns_name_fromstring2(name, oldlookup->textname, NULL, 0);
 	if (result == ISC_R_SUCCESS &&
 	    (dns_name_isabsolute(name) ||
 	     (int)dns_name_countlabels(name) > ndots))
@@ -2234,7 +2217,6 @@ insert_soa(dig_lookup_t *lookup) {
 	dns_name_t *soaname = NULL;
 
 	debug("insert_soa()");
-	soa.mctx = mctx;
 	soa.serial = lookup->ixfr_serial;
 	soa.refresh = 0;
 	soa.retry = 0;
@@ -2313,7 +2295,7 @@ setup_lookup(dig_lookup_t *lookup) {
 
 	debug("setup_lookup(%p)", lookup);
 
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER,
+	result = dns_message_create(DNS_MESSAGE_INTENTRENDER,
 				    &lookup->sendmsg);
 	check_result(result, "dns_message_create");
 
@@ -2504,11 +2486,11 @@ setup_lookup(dig_lookup_t *lookup) {
 		check_result(result, "dns_message_settsigkey");
 	}
 
-	lookup->sendspace = isc_mempool_get(commctx);
+	lookup->sendspace = malloc(COMMSIZE);
 	if (lookup->sendspace == NULL)
 		fatal("memory allocation failure");
 
-	result = dns_compress_init(&cctx, -1, mctx);
+	result = dns_compress_init(&cctx, -1);
 	check_result(result, "dns_compress_init");
 
 	debug("starting to render the message");
@@ -2684,7 +2666,7 @@ setup_lookup(dig_lookup_t *lookup) {
 	for (serv = ISC_LIST_HEAD(lookup->my_server_list);
 	     serv != NULL;
 	     serv = ISC_LIST_NEXT(serv, link)) {
-		query = isc_mem_allocate(mctx, sizeof(dig_query_t));
+		query = malloc(sizeof(dig_query_t));
 		if (query == NULL)
 			fatal("memory allocation failure in %s:%d",
 			      __FILE__, __LINE__);
@@ -2713,7 +2695,7 @@ setup_lookup(dig_lookup_t *lookup) {
 		ISC_LIST_INIT(query->recvlist);
 		ISC_LIST_INIT(query->lengthlist);
 		query->sock = NULL;
-		query->recvspace = isc_mempool_get(commctx);
+		query->recvspace = malloc(COMMSIZE);
 		if (query->recvspace == NULL)
 			fatal("memory allocation failure");
 
@@ -2762,7 +2744,7 @@ send_done(isc_task_t *_task, isc_event_t *event) {
 	      b != NULL;
 	      b = ISC_LIST_HEAD(sevent->bufferlist)) {
 		ISC_LIST_DEQUEUE(sevent->bufferlist, b, link);
-		isc_mem_free(mctx, b);
+		free(b);
 	}
 
 	query = event->ev_arg;
@@ -2779,7 +2761,7 @@ send_done(isc_task_t *_task, isc_event_t *event) {
 	isc_event_free(&event);
 
 	if (query->pending_free)
-		isc_mem_free(mctx, query);
+		free(query);
 
 	check_if_done();
 	UNLOCK_LOOKUP;
@@ -2847,7 +2829,7 @@ force_timeout(dig_query_t *query) {
 	isc_event_t *event;
 
 	debug("force_timeout ()");
-	event = isc_event_allocate(mctx, query, ISC_TIMEREVENT_IDLE,
+	event = isc_event_allocate(query, ISC_TIMEREVENT_IDLE,
 				   connect_timeout, query,
 				   sizeof(isc_event_t));
 	if (event == NULL) {
@@ -2971,7 +2953,7 @@ send_tcp_connect(dig_query_t *query) {
 static isc_buffer_t *
 clone_buffer(isc_buffer_t *source) {
 	isc_buffer_t *buffer;
-	buffer = isc_mem_allocate(mctx, sizeof(*buffer));
+	buffer = malloc(sizeof(*buffer));
 	if (buffer == NULL)
 		fatal("memory allocation failure in %s:%d",
 		      __FILE__, __LINE__);
@@ -3451,7 +3433,7 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 
 				/* Now we have an SOA.  Work with it. */
 				debug("got an SOA");
-				result = dns_rdata_tostruct(&rdata, &soa, NULL);
+				result = dns_rdata_tostruct(&rdata, &soa);
 				check_result(result, "dns_rdata_tostruct");
 				serial = soa.serial;
 				dns_rdata_freestruct(&soa);
@@ -3779,13 +3761,13 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	if (!match)
 		goto udp_mismatch;
 
-	result = dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE, &msg);
+	result = dns_message_create(DNS_MESSAGE_INTENTPARSE, &msg);
 	check_result(result, "dns_message_create");
 
 	if (tsigkey != NULL) {
 		if (l->querysig == NULL) {
 			debug("getting initial querysig");
-			result = dns_message_getquerytsig(l->sendmsg, mctx,
+			result = dns_message_getquerytsig(l->sendmsg,
 							  &l->querysig);
 			check_result(result, "dns_message_getquerytsig");
 		}
@@ -3966,7 +3948,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			debug("freeing querysig buffer %p", l->querysig);
 			isc_buffer_free(&l->querysig);
 		}
-		result = dns_message_getquerytsig(msg, mctx, &l->querysig);
+		result = dns_message_getquerytsig(msg, &l->querysig);
 		check_result(result,"dns_message_getquerytsig");
 	}
 
@@ -4069,22 +4051,21 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		}
 #ifdef DIG_SIGCHASE
 		if (do_sigchase) {
-			chase_msg = isc_mem_allocate(mctx,
-						     sizeof(dig_message_t));
+			chase_msg = malloc(sizeof(dig_message_t));
 			if (chase_msg == NULL) {
 				fatal("Memory allocation failure in %s:%d",
 				      __FILE__, __LINE__);
 			}
 			ISC_LIST_INITANDAPPEND(chase_message_list, chase_msg,
 					       link);
-			if (dns_message_create(mctx, DNS_MESSAGE_INTENTPARSE,
+			if (dns_message_create(DNS_MESSAGE_INTENTPARSE,
 					       &msg_temp) != ISC_R_SUCCESS) {
 				fatal("dns_message_create in %s:%d",
 				      __FILE__, __LINE__);
 			}
 
 			isc_buffer_usedregion(b, &r);
-			result = isc_buffer_allocate(mctx, &buf, r.length);
+			result = isc_buffer_allocate(&buf, r.length);
 
 			check_result(result, "isc_buffer_allocate");
 			result =  isc_buffer_copyregion(buf, &r);
@@ -4095,8 +4076,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			isc_buffer_free(&buf);
 			chase_msg->msg = msg_temp;
 
-			chase_msg2 = isc_mem_allocate(mctx,
-						      sizeof(dig_message_t));
+			chase_msg2 = malloc(sizeof(dig_message_t));
 			if (chase_msg2 == NULL) {
 				fatal("Memory allocation failure in %s:%d",
 				      __FILE__, __LINE__);
@@ -4369,10 +4349,6 @@ destroy_libs(void) {
 
 	dns_name_destroy();
 
-	if (commctx != NULL) {
-		debug("freeing commctx");
-		isc_mempool_destroy(&commctx);
-	}
 	if (socketmgr != NULL) {
 		debug("freeing socketmgr");
 		isc_socketmgr_destroy(&socketmgr);
@@ -4407,7 +4383,7 @@ destroy_libs(void) {
 		dns_message_destroy(&(chase_msg->msg));
 		ptr = chase_msg;
 		chase_msg = ISC_LIST_NEXT(chase_msg, link);
-		isc_mem_free(mctx, ptr);
+		free(ptr);
 	}
 
 	chase_msg = ISC_LIST_HEAD(chase_message_list2);
@@ -4417,7 +4393,7 @@ destroy_libs(void) {
 		dns_message_destroy(&(chase_msg->msg));
 		ptr = chase_msg;
 		chase_msg = ISC_LIST_NEXT(chase_msg, link);
-		isc_mem_free(mctx, ptr);
+		free(ptr);
 	}
 	if (dns_name_dynamic(&chase_name))
 		free_name(&chase_name);
@@ -4436,11 +4412,6 @@ destroy_libs(void) {
 	debug("Removing log context");
 	isc_log_destroy(&lctx);
 
-	debug("Destroy memory");
-	if (memdebugging != 0)
-		isc_mem_stats(mctx, stderr);
-	if (mctx != NULL)
-		isc_mem_destroy(&mctx);
 }
 
 #ifdef DIG_SIGCHASE
@@ -4451,7 +4422,7 @@ print_type(dns_rdatatype_t type)
 	isc_result_t result;
 	isc_region_t r;
 
-	result = isc_buffer_allocate(mctx, &b, 4000);
+	result = isc_buffer_allocate(&b, 4000);
 	check_result(result, "isc_buffer_allocate");
 
 	result = dns_rdatatype_totext(type, b);
@@ -4524,7 +4495,7 @@ search_type(dns_name_t *name, dns_rdatatype_t type, dns_rdatatype_t covers) {
 			result = dns_rdataset_first(rdataset);
 			check_result(result, "empty rdataset");
 			dns_rdataset_current(rdataset, &sigrdata);
-			result = dns_rdata_tostruct(&sigrdata, &siginfo, NULL);
+			result = dns_rdata_tostruct(&sigrdata, &siginfo);
 			check_result(result, "sigrdata tostruct siginfo");
 
 			if ((siginfo.covered == covers) ||
@@ -4630,7 +4601,7 @@ sigchase_scanname(dns_rdatatype_t type, dns_rdatatype_t covers,
 	lookup->trace_root = ISC_FALSE;
 	lookup->new_search = ISC_TRUE;
 
-	result = isc_buffer_allocate(mctx, &b, BUFSIZE);
+	result = isc_buffer_allocate(&b, BUFSIZE);
 	check_result(result, "isc_buffer_allocate");
 	result = dns_name_totext(rdata_name, ISC_FALSE, b);
 	check_result(result, "dns_name_totext");
@@ -4684,7 +4655,7 @@ insert_trustedkey(void *arg, dns_name_t *name, dns_rdataset_t *rdataset)
 		if (tk_list.nb_tk >= MAX_TRUSTED_KEY)
 			return (ISC_R_SUCCESS);
 		dstkey = NULL;
-		result = dst_key_fromdns(name, rdata.rdclass, &b, mctx, &dstkey);
+		result = dst_key_fromdns(name, rdata.rdclass, &b, &dstkey);
 		if (result != ISC_R_SUCCESS)
 			continue;
 		tk_list.key[tk_list.nb_tk++] = dstkey;
@@ -4720,7 +4691,7 @@ removetmpkey(const char *file)
 
 	tempnamekeylen = strlen(file)+10;
 
-	tempnamekey = isc_mem_allocate(mctx, tempnamekeylen);
+	tempnamekey = malloc(tempnamekeylen);
 	if (tempnamekey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -4731,7 +4702,7 @@ removetmpkey(const char *file)
 	isc_file_remove(tempnamekey);
 
 	result = isc_file_remove(tempnamekey);
-	isc_mem_free(mctx, tempnamekey);
+	free(tempnamekey);
 	return (result);
 }
 
@@ -4764,7 +4735,7 @@ get_trusted_key(void) {
 	callbacks.add = insert_trustedkey;
 	return (dns_master_loadfile(filename, dns_rootname, dns_rootname,
 				    current_lookup->rdclass, DNS_MASTER_NOTTL,
-				    &callbacks, mctx));
+				    &callbacks));
 }
 
 
@@ -4789,7 +4760,7 @@ nameFromString(const char *str, dns_name_t *p_ret) {
 	if (dns_name_dynamic(p_ret))
 		free_name(p_ret);
 
-	result = dns_name_dup(dns_fixedname_name(&fixedname), mctx, p_ret);
+	result = dns_name_dup(dns_fixedname_name(&fixedname), p_ret);
 	check_result(result, "nameFromString");
 }
 
@@ -4822,7 +4793,7 @@ prepare_lookup(dns_name_t *name)
 		s = ISC_LIST_NEXT(s, link);
 		ISC_LIST_DEQUEUE(lookup->my_server_list,
 				 (dig_server_t *)ptr, link);
-		isc_mem_free(mctx, ptr);
+		free(ptr);
 	}
 
 
@@ -4845,7 +4816,7 @@ prepare_lookup(dns_name_t *name)
 
 		dns_rdataset_current(chase_nsrdataset, &rdata);
 
-		result = dns_rdata_tostruct(&rdata, &ns, NULL);
+		result = dns_rdata_tostruct(&rdata, &ns);
 		check_result(result, "dns_rdata_tostruct");
 
 #ifdef __FOLLOW_GLUE__
@@ -4860,7 +4831,7 @@ prepare_lookup(dns_name_t *name)
 				dns_rdata_t aaaa = DNS_RDATA_INIT;
 				dns_rdataset_current(rdataset, &aaaa);
 
-				result = isc_buffer_allocate(mctx, &b, 80);
+				result = isc_buffer_allocate(&b, 80);
 				check_result(result, "isc_buffer_allocate");
 
 				dns_rdata_totext(&aaaa, &ns.name, b);
@@ -4889,7 +4860,7 @@ prepare_lookup(dns_name_t *name)
 				dns_rdata_t a = DNS_RDATA_INIT;
 				dns_rdataset_current(rdataset, &a);
 
-				result = isc_buffer_allocate(mctx, &b, 80);
+				result = isc_buffer_allocate(&b, 80);
 				check_result(result, "isc_buffer_allocate");
 
 				dns_rdata_totext(&a, &ns.name, b);
@@ -4979,7 +4950,7 @@ grandfather_pb_test(dns_name_t *zone_name, dns_rdataset_t  *sigrdataset) {
 
 		dns_rdataset_current(&mysigrdataset, &sigrdata);
 
-		result = dns_rdata_tostruct(&sigrdata, &siginfo, NULL);
+		result = dns_rdata_tostruct(&sigrdata, &siginfo);
 		check_result(result, "sigrdata tostruct siginfo");
 
 		if (dns_name_compare(&siginfo.signer, zone_name) == 0) {
@@ -5026,7 +4997,7 @@ print_rdataset(dns_name_t *name, dns_rdataset_t *rdataset)
 	isc_result_t result;
 	isc_region_t r;
 
-	result = isc_buffer_allocate(mctx, &b, 9000);
+	result = isc_buffer_allocate(&b, 9000);
 	check_result(result, "isc_buffer_allocate");
 
 	dighost_printrdataset(name, rdataset, b);
@@ -5047,13 +5018,13 @@ dup_name(dns_name_t *source, dns_name_t *target) {
 
 	if (dns_name_dynamic(target))
 		free_name(target);
-	result = dns_name_dup(source, mctx, target);
+	result = dns_name_dup(source, target);
 	check_result(result, "dns_name_dup");
 }
 
 void
 free_name(dns_name_t *name) {
-	dns_name_free(name, mctx);
+	dns_name_free(name);
 	dns_name_init(name, NULL);
 }
 
@@ -5092,7 +5063,7 @@ contains_trusted_key(dns_name_t *name, dns_rdataset_t *rdataset,
 		INSIST(rdata.type == dns_rdatatype_dnskey);
 
 		result = dns_dnssec_keyfromrdata(name, &rdata,
-						 mctx, &dnsseckey);
+						 &dnsseckey);
 		check_result(result, "dns_dnssec_keyfromrdata");
 
 		for (i = 0; i < tk_list.nb_tk; i++) {
@@ -5145,7 +5116,7 @@ sigchase_verify_sig(dns_name_t *name, dns_rdataset_t *rdataset,
 		INSIST(keyrdata.type == dns_rdatatype_dnskey);
 
 		result = dns_dnssec_keyfromrdata(name, &keyrdata,
-						 mctx, &dnsseckey);
+						 &dnsseckey);
 		check_result(result, "dns_dnssec_keyfromrdata");
 
 		result = sigchase_verify_sig_key(name, rdataset, dnsseckey,
@@ -5187,7 +5158,7 @@ sigchase_verify_sig_key(dns_name_t *name, dns_rdataset_t *rdataset,
 
 		dns_rdataset_current(&mysigrdataset, &sigrdata);
 
-		result = dns_rdata_tostruct(&sigrdata, &siginfo, NULL);
+		result = dns_rdata_tostruct(&sigrdata, &siginfo);
 		check_result(result, "sigrdata tostruct siginfo");
 
 		/*
@@ -5200,7 +5171,7 @@ sigchase_verify_sig_key(dns_name_t *name, dns_rdataset_t *rdataset,
 			check_result(result, "empty DS dataset");
 
 			result = dns_dnssec_verify(name, &myrdataset, dnsseckey,
-						   ISC_FALSE, mctx, &sigrdata);
+						   ISC_FALSE, &sigrdata);
 
 			printf(";; VERIFYING ");
 			print_type(rdataset->type);
@@ -5247,7 +5218,7 @@ sigchase_verify_ds(dns_name_t *name, dns_rdataset_t *keyrdataset,
 
 		dns_rdataset_current(&mydsrdataset, &dsrdata);
 
-		result = dns_rdata_tostruct(&dsrdata, &dsinfo, NULL);
+		result = dns_rdata_tostruct(&dsrdata, &dsinfo);
 		check_result(result, "dns_rdata_tostruct for DS");
 
 		result = dns_rdataset_first(&mykeyrdataset);
@@ -5260,7 +5231,7 @@ sigchase_verify_ds(dns_name_t *name, dns_rdataset_t *keyrdataset,
 			INSIST(keyrdata.type == dns_rdatatype_dnskey);
 
 			result = dns_dnssec_keyfromrdata(name, &keyrdata,
-							 mctx, &dnsseckey);
+							 &dnsseckey);
 			check_result(result, "dns_dnssec_keyfromrdata");
 
 			/*
@@ -5773,7 +5744,7 @@ getneededrr(dns_message_t *msg)
 	result = dns_rdataset_first(chase_sigrdataset);
 	check_result(result, "empty RRSIG dataset");
 	dns_rdataset_current(chase_sigrdataset, &sigrdata);
-	result = dns_rdata_tostruct(&sigrdata, &siginfo, NULL);
+	result = dns_rdata_tostruct(&sigrdata, &siginfo);
 	check_result(result, "sigrdata tostruct siginfo");
 	dup_name(&siginfo.signer, &chase_signame);
 	dns_rdata_freestruct(&siginfo);
@@ -6130,7 +6101,7 @@ prove_nx_domain(dns_message_t *msg,
 				return (ISC_R_FAILURE);
 			}
 
-			ret = dns_rdata_tostruct(&nsec, &nsecstruct, NULL);
+			ret = dns_rdata_tostruct(&nsec, &nsecstruct);
 			check_result(ret,"dns_rdata_tostruct");
 
 			if ((inf_name(nsecname, &nsecstruct.next) == 1 &&

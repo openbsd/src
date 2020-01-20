@@ -17,11 +17,10 @@
 #ifndef GENERIC_HINFO_13_H
 #define GENERIC_HINFO_13_H 1
 
-/* $Id: hinfo_13.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: hinfo_13.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 typedef struct dns_rdata_hinfo {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	char			*cpu;
 	char			*os;
 	uint8_t		cpu_len;

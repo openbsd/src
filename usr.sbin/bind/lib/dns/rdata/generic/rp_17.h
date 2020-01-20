@@ -17,14 +17,13 @@
 #ifndef GENERIC_RP_17_H
 #define GENERIC_RP_17_H 1
 
-/* $Id: rp_17.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: rp_17.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief Per RFC1183 */
 
 typedef struct dns_rdata_rp {
 	dns_rdatacommon_t       common;
-	isc_mem_t               *mctx;
 	dns_name_t              mail;
 	dns_name_t              text;
 } dns_rdata_rp_t;

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: minfo_14.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: minfo_14.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 
@@ -218,20 +218,18 @@ tostruct_minfo(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&minfo->rmailbox, NULL);
-	RETERR(name_duporclone(&name, mctx, &minfo->rmailbox));
+	RETERR(name_duporclone(&name, &minfo->rmailbox));
 	isc_region_consume(&region, name_length(&name));
 
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&minfo->emailbox, NULL);
-	result = name_duporclone(&name, mctx, &minfo->emailbox);
+	result = name_duporclone(&name, &minfo->emailbox);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
-	minfo->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL)
-		dns_name_free(&minfo->rmailbox, mctx);
+	dns_name_free(&minfo->rmailbox);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -242,12 +240,9 @@ freestruct_minfo(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(minfo->common.rdtype == dns_rdatatype_minfo);
 
-	if (minfo->mctx == NULL)
-		return;
 
-	dns_name_free(&minfo->rmailbox, minfo->mctx);
-	dns_name_free(&minfo->emailbox, minfo->mctx);
-	minfo->mctx = NULL;
+	dns_name_free(&minfo->rmailbox);
+	dns_name_free(&minfo->emailbox);
 }
 
 static inline isc_result_t

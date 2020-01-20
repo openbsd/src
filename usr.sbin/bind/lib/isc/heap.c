@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.c,v 1.4 2020/01/20 18:49:46 florian Exp $ */
+/* $Id: heap.c,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*! \file
  * Heap implementation of priority queues adapted from the following:
@@ -27,11 +27,10 @@
  */
 
 #include <config.h>
-
+#include <stdlib.h>
 #include <isc/heap.h>
 #include <isc/magic.h>
-#include <isc/mem.h>
-#include <string.h>		/* Required for memmove. */
+#include <string.h>
 #include <isc/util.h>
 
 /*@{*/
@@ -62,7 +61,6 @@
 /*% ISC heap structure. */
 struct isc_heap {
 	unsigned int			magic;
-	isc_mem_t *			mctx;
 	unsigned int			size;
 	unsigned int			size_increment;
 	unsigned int			last;
@@ -84,7 +82,7 @@ heap_check(isc_heap_t *heap) {
 #endif
 
 isc_result_t
-isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
+isc_heap_create(isc_heapcompare_t compare,
 		isc_heapindex_t idx, unsigned int size_increment,
 		isc_heap_t **heapp)
 {
@@ -93,13 +91,11 @@ isc_heap_create(isc_mem_t *mctx, isc_heapcompare_t compare,
 	REQUIRE(heapp != NULL && *heapp == NULL);
 	REQUIRE(compare != NULL);
 
-	heap = isc_mem_get(mctx, sizeof(*heap));
+	heap = malloc(sizeof(*heap));
 	if (heap == NULL)
 		return (ISC_R_NOMEMORY);
 	heap->magic = HEAP_MAGIC;
 	heap->size = 0;
-	heap->mctx = NULL;
-	isc_mem_attach(mctx, &heap->mctx);
 	if (size_increment == 0)
 		heap->size_increment = SIZE_INCREMENT;
 	else
@@ -122,11 +118,9 @@ isc_heap_destroy(isc_heap_t **heapp) {
 	heap = *heapp;
 	REQUIRE(VALID_HEAP(heap));
 
-	if (heap->array != NULL)
-		isc_mem_put(heap->mctx, heap->array,
-			    heap->size * sizeof(void *));
+	free(heap->array);
 	heap->magic = 0;
-	isc_mem_putanddetach(&heap->mctx, heap, sizeof(*heap));
+	free(heap);
 
 	*heapp = NULL;
 }
@@ -139,13 +133,12 @@ resize(isc_heap_t *heap) {
 	REQUIRE(VALID_HEAP(heap));
 
 	new_size = heap->size + heap->size_increment;
-	new_array = isc_mem_get(heap->mctx, new_size * sizeof(void *));
+	new_array = malloc(new_size * sizeof(void *));
 	if (new_array == NULL)
 		return (ISC_FALSE);
 	if (heap->array != NULL) {
 		memmove(new_array, heap->array, heap->size * sizeof(void *));
-		isc_mem_put(heap->mctx, heap->array,
-			    heap->size * sizeof(void *));
+		free(heap->array);
 	}
 	heap->size = new_size;
 	heap->array = new_array;

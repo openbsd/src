@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sshfp_44.c,v 1.6 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: sshfp_44.c,v 1.7 2020/01/20 18:51:53 florian Exp $ */
 
 /* RFC 4255 */
 
@@ -191,11 +191,10 @@ tostruct_sshfp(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, 1);
 	sshfp->length = region.length;
 
-	sshfp->digest = mem_maybedup(mctx, region.base, region.length);
+	sshfp->digest = mem_maybedup(region.base, region.length);
 	if (sshfp->digest == NULL)
 		return (ISC_R_NOMEMORY);
 
-	sshfp->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -206,12 +205,8 @@ freestruct_sshfp(ARGS_FREESTRUCT) {
 	REQUIRE(sshfp != NULL);
 	REQUIRE(sshfp->common.rdtype == dns_rdatatype_sshfp);
 
-	if (sshfp->mctx == NULL)
-		return;
-
 	if (sshfp->digest != NULL)
-		isc_mem_free(sshfp->mctx, sshfp->digest);
-	sshfp->mctx = NULL;
+		free(sshfp->digest);
 }
 
 static inline isc_result_t

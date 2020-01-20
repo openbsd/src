@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_parse.h,v 1.3 2019/12/17 01:46:31 sthen Exp $ */
+/* $Id: dst_parse.h,v 1.4 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file */
 #ifndef DST_DST_PARSE_H
@@ -136,11 +136,11 @@ typedef struct dst_private dst_private_t;
 ISC_LANG_BEGINDECLS
 
 void
-dst__privstruct_free(dst_private_t *priv, isc_mem_t *mctx);
+dst__privstruct_free(dst_private_t *priv);
 
 isc_result_t
 dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
-		      isc_mem_t *mctx, dst_private_t *priv);
+		      dst_private_t *priv);
 
 isc_result_t
 dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,

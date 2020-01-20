@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket_api.c,v 1.3 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: socket_api.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 #include <config.h>
 
@@ -51,7 +51,7 @@ isc_socket_register(isc_socketmgrcreatefunc_t createfunc) {
 }
 
 isc_result_t
-isc_socketmgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
+isc_socketmgr_createinctx(isc_appctx_t *actx,
 			  isc_socketmgr_t **managerp)
 {
 	isc_result_t result;
@@ -59,7 +59,7 @@ isc_socketmgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
 	LOCK(&createlock);
 
 	REQUIRE(socketmgr_createfunc != NULL);
-	result = (*socketmgr_createfunc)(mctx, managerp);
+	result = (*socketmgr_createfunc)( managerp);
 
 	UNLOCK(&createlock);
 
@@ -70,16 +70,16 @@ isc_socketmgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
 }
 
 isc_result_t
-isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
+isc_socketmgr_create(isc_socketmgr_t **managerp) {
 	isc_result_t result;
 
 	if (isc_bind9)
-		return (isc__socketmgr_create(mctx, managerp));
+		return (isc__socketmgr_create(managerp));
 
 	LOCK(&createlock);
 
 	REQUIRE(socketmgr_createfunc != NULL);
-	result = (*socketmgr_createfunc)(mctx, managerp);
+	result = (*socketmgr_createfunc)(managerp);
 
 	UNLOCK(&createlock);
 
@@ -303,10 +303,10 @@ isc_socket_close(isc_socket_t *sock) {
 }
 
 isc_result_t
-isc_socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
+isc_socketmgr_create2(isc_socketmgr_t **managerp,
 		       unsigned int maxsocks)
 {
-	return (isc__socketmgr_create2(mctx, managerp, maxsocks));
+	return (isc__socketmgr_create2(managerp, maxsocks));
 }
 
 isc_result_t

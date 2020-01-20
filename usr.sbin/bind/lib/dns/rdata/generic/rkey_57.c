@@ -98,7 +98,7 @@ tostruct_rkey(ARGS_TOSTRUCT) {
 	rkey->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&rkey->common, link);
 
-	return (generic_tostruct_key(rdata, target, mctx));
+	return (generic_tostruct_key(rdata, target));
 }
 
 static inline void

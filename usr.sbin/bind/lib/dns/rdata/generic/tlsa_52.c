@@ -229,11 +229,10 @@ generic_tostruct_tlsa(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, 1);
 	tlsa->length = region.length;
 
-	tlsa->data = mem_maybedup(mctx, region.base, region.length);
+	tlsa->data = mem_maybedup(region.base, region.length);
 	if (tlsa->data == NULL)
 		return (ISC_R_NOMEMORY);
 
-	tlsa->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -243,12 +242,8 @@ generic_freestruct_tlsa(ARGS_FREESTRUCT) {
 
 	REQUIRE(tlsa != NULL);
 
-	if (tlsa->mctx == NULL)
-		return;
-
 	if (tlsa->data != NULL)
-		isc_mem_free(tlsa->mctx, tlsa->data);
-	tlsa->mctx = NULL;
+		free(tlsa->data);
 }
 
 static inline isc_result_t
@@ -270,7 +265,7 @@ tostruct_tlsa(ARGS_TOSTRUCT) {
 	txt->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&txt->common, link);
 
-	return (generic_tostruct_tlsa(rdata, target, mctx));
+	return (generic_tostruct_tlsa(rdata, target));
 }
 
 static inline void

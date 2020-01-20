@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: master.h,v 1.7 2020/01/09 18:17:16 florian Exp $ */
+/* $Id: master.h,v 1.8 2020/01/20 18:51:52 florian Exp $ */
 
 #ifndef DNS_MASTER_H
 #define DNS_MASTER_H 1
@@ -123,8 +123,7 @@ dns_master_loadfile(const char *master_file,
 		    dns_name_t *origin,
 		    dns_rdataclass_t zclass,
 		    unsigned int options,
-		    dns_rdatacallbacks_t *callbacks,
-		    isc_mem_t *mctx);
+		    dns_rdatacallbacks_t *callbacks);
 
 isc_result_t
 dns_master_loadfile2(const char *master_file,
@@ -133,7 +132,6 @@ dns_master_loadfile2(const char *master_file,
 		     dns_rdataclass_t zclass,
 		     unsigned int options,
 		     dns_rdatacallbacks_t *callbacks,
-		     isc_mem_t *mctx,
 		     dns_masterformat_t format);
 
 isc_result_t
@@ -144,7 +142,6 @@ dns_master_loadfile3(const char *master_file,
 		     unsigned int options,
 		     uint32_t resign,
 		     dns_rdatacallbacks_t *callbacks,
-		     isc_mem_t *mctx,
 		     dns_masterformat_t format);
 
 isc_result_t
@@ -156,7 +153,7 @@ dns_master_loadfile4(const char *master_file,
 		     uint32_t resign,
 		     dns_rdatacallbacks_t *callbacks,
 		     dns_masterincludecb_t include_cb,
-		     void *include_arg, isc_mem_t *mctx,
+		     void *include_arg,
 		     dns_masterformat_t format);
 
 isc_result_t
@@ -168,7 +165,7 @@ dns_master_loadfile5(const char *master_file,
 		     uint32_t resign,
 		     dns_rdatacallbacks_t *callbacks,
 		     dns_masterincludecb_t include_cb,
-		     void *include_arg, isc_mem_t *mctx,
+		     void *include_arg,
 		     dns_masterformat_t format,
 		     dns_ttl_t maxttl);
 
@@ -178,8 +175,7 @@ dns_master_loadstream(FILE *stream,
 		      dns_name_t *origin,
 		      dns_rdataclass_t zclass,
 		      unsigned int options,
-		      dns_rdatacallbacks_t *callbacks,
-		      isc_mem_t *mctx);
+		      dns_rdatacallbacks_t *callbacks);
 
 isc_result_t
 dns_master_loadbuffer(isc_buffer_t *buffer,
@@ -187,8 +183,7 @@ dns_master_loadbuffer(isc_buffer_t *buffer,
 		      dns_name_t *origin,
 		      dns_rdataclass_t zclass,
 		      unsigned int options,
-		      dns_rdatacallbacks_t *callbacks,
-		      isc_mem_t *mctx);
+		      dns_rdatacallbacks_t *callbacks);
 
 isc_result_t
 dns_master_loadlexer(isc_lex_t *lex,
@@ -196,8 +191,7 @@ dns_master_loadlexer(isc_lex_t *lex,
 		     dns_name_t *origin,
 		     dns_rdataclass_t zclass,
 		     unsigned int options,
-		     dns_rdatacallbacks_t *callbacks,
-		     isc_mem_t *mctx);
+		     dns_rdatacallbacks_t *callbacks);
 
 isc_result_t
 dns_master_loadfileinc(const char *master_file,
@@ -208,7 +202,7 @@ dns_master_loadfileinc(const char *master_file,
 		       dns_rdatacallbacks_t *callbacks,
 		       isc_task_t *task,
 		       dns_loaddonefunc_t done, void *done_arg,
-		       dns_loadctx_t **ctxp, isc_mem_t *mctx);
+		       dns_loadctx_t **ctxp);
 
 isc_result_t
 dns_master_loadfileinc2(const char *master_file,
@@ -219,7 +213,7 @@ dns_master_loadfileinc2(const char *master_file,
 			dns_rdatacallbacks_t *callbacks,
 			isc_task_t *task,
 			dns_loaddonefunc_t done, void *done_arg,
-			dns_loadctx_t **ctxp, isc_mem_t *mctx,
+			dns_loadctx_t **ctxp,
 			dns_masterformat_t format);
 
 isc_result_t
@@ -232,7 +226,7 @@ dns_master_loadfileinc3(const char *master_file,
 			dns_rdatacallbacks_t *callbacks,
 			isc_task_t *task,
 			dns_loaddonefunc_t done, void *done_arg,
-			dns_loadctx_t **ctxp, isc_mem_t *mctx,
+			dns_loadctx_t **ctxp,
 			dns_masterformat_t format);
 
 isc_result_t
@@ -247,7 +241,7 @@ dns_master_loadfileinc4(const char *master_file,
 			dns_loaddonefunc_t done, void *done_arg,
 			dns_loadctx_t **ctxp,
 			dns_masterincludecb_t include_cb, void *include_arg,
-			isc_mem_t *mctx, dns_masterformat_t format);
+			dns_masterformat_t format);
 
 isc_result_t
 dns_master_loadfileinc5(const char *master_file,
@@ -261,7 +255,7 @@ dns_master_loadfileinc5(const char *master_file,
 			dns_loaddonefunc_t done, void *done_arg,
 			dns_loadctx_t **ctxp,
 			dns_masterincludecb_t include_cb, void *include_arg,
-			isc_mem_t *mctx, dns_masterformat_t format,
+			dns_masterformat_t format,
 			uint32_t maxttl);
 
 isc_result_t
@@ -273,7 +267,7 @@ dns_master_loadstreaminc(FILE *stream,
 			 dns_rdatacallbacks_t *callbacks,
 			 isc_task_t *task,
 			 dns_loaddonefunc_t done, void *done_arg,
-			 dns_loadctx_t **ctxp, isc_mem_t *mctx);
+			 dns_loadctx_t **ctxp);
 
 isc_result_t
 dns_master_loadbufferinc(isc_buffer_t *buffer,
@@ -284,7 +278,7 @@ dns_master_loadbufferinc(isc_buffer_t *buffer,
 			 dns_rdatacallbacks_t *callbacks,
 			 isc_task_t *task,
 			 dns_loaddonefunc_t done, void *done_arg,
-			 dns_loadctx_t **ctxp, isc_mem_t *mctx);
+			 dns_loadctx_t **ctxp);
 
 isc_result_t
 dns_master_loadlexerinc(isc_lex_t *lex,
@@ -295,7 +289,7 @@ dns_master_loadlexerinc(isc_lex_t *lex,
 			dns_rdatacallbacks_t *callbacks,
 			isc_task_t *task,
 			dns_loaddonefunc_t done, void *done_arg,
-			dns_loadctx_t **ctxp, isc_mem_t *mctx);
+			dns_loadctx_t **ctxp);
 
 /*%<
  * Loads a RFC1305 master file from a file, stream, buffer, or existing

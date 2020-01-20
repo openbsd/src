@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cert_37.c,v 1.7 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: cert_37.c,v 1.8 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 21:14:32 EST 2000 by tale */
 
@@ -208,11 +208,10 @@ tostruct_cert(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, 1);
 	cert->length = region.length;
 
-	cert->certificate = mem_maybedup(mctx, region.base, region.length);
+	cert->certificate = mem_maybedup(region.base, region.length);
 	if (cert->certificate == NULL)
 		return (ISC_R_NOMEMORY);
 
-	cert->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -223,12 +222,7 @@ freestruct_cert(ARGS_FREESTRUCT) {
 	REQUIRE(cert != NULL);
 	REQUIRE(cert->common.rdtype == dns_rdatatype_cert);
 
-	if (cert->mctx == NULL)
-		return;
-
-	if (cert->certificate != NULL)
-		isc_mem_free(cert->mctx, cert->certificate);
-	cert->mctx = NULL;
+	free(cert->certificate);
 }
 
 static inline isc_result_t

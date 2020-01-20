@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst.h,v 1.6 2020/01/09 18:17:16 florian Exp $ */
+/* $Id: dst.h,v 1.7 2020/01/20 18:51:52 florian Exp $ */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -132,10 +132,10 @@ typedef struct dst_context 	dst_context_t;
  ***/
 
 isc_result_t
-dst_lib_init(isc_mem_t *mctx);
+dst_lib_init(void);
 
 isc_result_t
-dst_lib_init2(isc_mem_t *mctx, const char *engine);
+dst_lib_init2(const char *engine);
 /*%<
  * Initializes the DST subsystem.
  *
@@ -178,19 +178,19 @@ dst_ds_digest_supported(unsigned int digest_type);
  */
 
 isc_result_t
-dst_context_create(dst_key_t *key, isc_mem_t *mctx, dst_context_t **dctxp);
+dst_context_create(dst_key_t *key, dst_context_t **dctxp);
 
 isc_result_t
-dst_context_create2(dst_key_t *key, isc_mem_t *mctx,
+dst_context_create2(dst_key_t *key,
 		    isc_logcategory_t *category, dst_context_t **dctxp);
 
 isc_result_t
-dst_context_create3(dst_key_t *key, isc_mem_t *mctx,
+dst_context_create3(dst_key_t *key,
 		    isc_logcategory_t *category, isc_boolean_t useforsigning,
 		    dst_context_t **dctxp);
 
 isc_result_t
-dst_context_create4(dst_key_t *key, isc_mem_t *mctx,
+dst_context_create4(dst_key_t *key,
 		    isc_logcategory_t *category, isc_boolean_t useforsigning,
 		    int maxbits, dst_context_t **dctxp);
 /*%<
@@ -300,7 +300,7 @@ dst_key_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 
 isc_result_t
 dst_key_fromfile(dns_name_t *name, dns_keytag_t id, unsigned int alg, int type,
-		 const char *directory, isc_mem_t *mctx, dst_key_t **keyp);
+		 const char *directory, dst_key_t **keyp);
 /*%<
  * Reads a key from permanent storage.  The key can either be a public or
  * private key, and is specified by name, algorithm, and id.  If a private key
@@ -326,7 +326,7 @@ dst_key_fromfile(dns_name_t *name, dns_keytag_t id, unsigned int alg, int type,
 
 isc_result_t
 dst_key_fromnamedfile(const char *filename, const char *dirname,
-		      int type, isc_mem_t *mctx, dst_key_t **keyp);
+		      int type, dst_key_t **keyp);
 /*%<
  * Reads a key from permanent storage.  The key can either be a public or
  * key, and is specified by filename.  If a private key is specified, the
@@ -353,8 +353,7 @@ dst_key_fromnamedfile(const char *filename, const char *dirname,
 
 
 isc_result_t
-dst_key_read_public(const char *filename, int type,
-		    isc_mem_t *mctx, dst_key_t **keyp);
+dst_key_read_public(const char *filename, int type, dst_key_t **keyp);
 /*%<
  * Reads a public key from permanent storage.  The key must be a public key.
  *
@@ -393,7 +392,7 @@ dst_key_tofile(const dst_key_t *key, int type, const char *directory);
 
 isc_result_t
 dst_key_fromdns(dns_name_t *name, dns_rdataclass_t rdclass,
-		isc_buffer_t *source, isc_mem_t *mctx, dst_key_t **keyp);
+		isc_buffer_t *source, dst_key_t **keyp);
 /*%<
  * Converts a DNS KEY record into a DST key.
  *
@@ -433,7 +432,7 @@ isc_result_t
 dst_key_frombuffer(dns_name_t *name, unsigned int alg,
 		   unsigned int flags, unsigned int protocol,
 		   dns_rdataclass_t rdclass,
-		   isc_buffer_t *source, isc_mem_t *mctx, dst_key_t **keyp);
+		   isc_buffer_t *source, dst_key_t **keyp);
 /*%<
  * Converts a buffer containing DNS KEY RDATA into a DST key.
  *
@@ -494,28 +493,28 @@ isc_result_t
 dst_key_buildinternal(dns_name_t *name, unsigned int alg,
 		      unsigned int bits, unsigned int flags,
 		      unsigned int protocol, dns_rdataclass_t rdclass,
-		      void *data, isc_mem_t *mctx, dst_key_t **keyp);
+		      void *data, dst_key_t **keyp);
 #endif
 
 isc_result_t
 dst_key_fromlabel(dns_name_t *name, int alg, unsigned int flags,
 		  unsigned int protocol, dns_rdataclass_t rdclass,
 		  const char *engine, const char *label, const char *pin,
-		  isc_mem_t *mctx, dst_key_t **keyp);
+		  dst_key_t **keyp);
 
 isc_result_t
 dst_key_generate(dns_name_t *name, unsigned int alg,
 		 unsigned int bits, unsigned int param,
 		 unsigned int flags, unsigned int protocol,
 		 dns_rdataclass_t rdclass,
-		 isc_mem_t *mctx, dst_key_t **keyp);
+		 dst_key_t **keyp);
 
 isc_result_t
 dst_key_generate2(dns_name_t *name, unsigned int alg,
 		  unsigned int bits, unsigned int param,
 		  unsigned int flags, unsigned int protocol,
 		  dns_rdataclass_t rdclass,
-		  isc_mem_t *mctx, dst_key_t **keyp,
+		  dst_key_t **keyp,
 		  void (*callback)(int));
 
 /*%<
@@ -884,12 +883,12 @@ dst_key_tkeytoken(const dst_key_t *key);
 
 
 isc_result_t
-dst_key_dump(dst_key_t *key, isc_mem_t *mctx, char **buffer, int *length);
+dst_key_dump(dst_key_t *key, char **buffer, int *length);
 /*%<
  * Allocate 'buffer' and dump the key into it in base64 format. The buffer
  * is not NUL terminated. The length of the buffer is returned in *length.
  *
- * 'buffer' needs to be freed using isc_mem_put(mctx, buffer, length);
+ * 'buffer' needs to be freed using free(buffer);
  *
  * Requires:
  *	'buffer' to be non NULL and *buffer to be NULL.
@@ -905,7 +904,7 @@ dst_key_dump(dst_key_t *key, isc_mem_t *mctx, char **buffer, int *length);
 isc_result_t
 dst_key_restore(dns_name_t *name, unsigned int alg, unsigned int flags,
 		unsigned int protocol, dns_rdataclass_t rdclass,
-		isc_mem_t *mctx, const char *keystr, dst_key_t **keyp);
+		const char *keystr, dst_key_t **keyp);
 
 isc_boolean_t
 dst_key_inactive(const dst_key_t *key);

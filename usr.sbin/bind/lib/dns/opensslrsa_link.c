@@ -30,7 +30,7 @@
 
 
 #include <isc/md5.h>
-#include <isc/mem.h>
+
 #include <isc/safe.h>
 #include <isc/sha1.h>
 #include <isc/sha2.h>
@@ -312,7 +312,7 @@ opensslrsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 		{
 			isc_sha1_t *sha1ctx;
 
-			sha1ctx = isc_mem_get(dctx->mctx, sizeof(isc_sha1_t));
+			sha1ctx = malloc(sizeof(isc_sha1_t));
 			if (sha1ctx == NULL)
 				return (ISC_R_NOMEMORY);
 			isc_sha1_init(sha1ctx);
@@ -323,8 +323,7 @@ opensslrsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 		{
 			isc_sha256_t *sha256ctx;
 
-			sha256ctx = isc_mem_get(dctx->mctx,
-						sizeof(isc_sha256_t));
+			sha256ctx = malloc(sizeof(isc_sha256_t));
 			if (sha256ctx == NULL)
 				return (ISC_R_NOMEMORY);
 			isc_sha256_init(sha256ctx);
@@ -335,8 +334,7 @@ opensslrsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 		{
 			isc_sha512_t *sha512ctx;
 
-			sha512ctx = isc_mem_get(dctx->mctx,
-						sizeof(isc_sha512_t));
+			sha512ctx = malloc(sizeof(isc_sha512_t));
 			if (sha512ctx == NULL)
 				return (ISC_R_NOMEMORY);
 			isc_sha512_init(sha512ctx);
@@ -376,8 +374,7 @@ opensslrsa_destroyctx(dst_context_t *dctx) {
 
 			if (sha1ctx != NULL) {
 				isc_sha1_invalidate(sha1ctx);
-				isc_mem_put(dctx->mctx, sha1ctx,
-					    sizeof(isc_sha1_t));
+				free(sha1ctx);
 				dctx->ctxdata.sha1ctx = NULL;
 			}
 		}
@@ -388,8 +385,7 @@ opensslrsa_destroyctx(dst_context_t *dctx) {
 
 			if (sha256ctx != NULL) {
 				isc_sha256_invalidate(sha256ctx);
-				isc_mem_put(dctx->mctx, sha256ctx,
-					    sizeof(isc_sha256_t));
+				free(sha256ctx);
 				dctx->ctxdata.sha256ctx = NULL;
 			}
 		}
@@ -400,8 +396,7 @@ opensslrsa_destroyctx(dst_context_t *dctx) {
 
 			if (sha512ctx != NULL) {
 				isc_sha512_invalidate(sha512ctx);
-				isc_mem_put(dctx->mctx, sha512ctx,
-					    sizeof(isc_sha512_t));
+				free(sha512ctx);
 				dctx->ctxdata.sha512ctx = NULL;
 			}
 		}
@@ -1209,7 +1204,7 @@ opensslrsa_tofile(const dst_key_t *key, const char *directory) {
 	}
 
 	for (i = 0; i < 8; i++) {
-		bufs[i] = isc_mem_get(key->mctx, BN_num_bytes(n));
+		bufs[i] = malloc(BN_num_bytes(n));
 		if (bufs[i] == NULL) {
 			result = ISC_R_NOMEMORY;
 			goto fail;
@@ -1302,7 +1297,7 @@ opensslrsa_tofile(const dst_key_t *key, const char *directory) {
 	for (i = 0; i < 8; i++) {
 		if (bufs[i] == NULL)
 			break;
-		isc_mem_put(key->mctx, bufs[i], BN_num_bytes(n));
+		free(bufs[i]);
 	}
 	return (result);
 }
@@ -1351,7 +1346,6 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	isc_result_t ret;
 	int i;
 	RSA *rsa = NULL, *pubrsa = NULL;
-	isc_mem_t *mctx = key->mctx;
 	const char *engine = NULL, *label = NULL;
 #if defined(USE_ENGINE) || USE_EVP
 	EVP_PKEY *pkey = NULL;
@@ -1361,7 +1355,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	BIGNUM *dmp1 = NULL, *dmq1 = NULL, *iqmp = NULL;
 
 	/* read private key file */
-	ret = dst__privstruct_parse(key, DST_ALG_RSA, lexer, mctx, &priv);
+	ret = dst__privstruct_parse(key, DST_ALG_RSA, lexer, &priv);
 	if (ret != ISC_R_SUCCESS)
 		goto err;
 
@@ -1373,7 +1367,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		key->keydata.pkey = pub->keydata.pkey;
 		pub->keydata.pkey = NULL;
 		key->key_size = pub->key_size;
-		dst__privstruct_free(&priv, mctx);
+		dst__privstruct_free(&priv);
 		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 	}
@@ -1465,7 +1459,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			}
 		}
 	}
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 
 	if (RSA_set0_key(rsa, n, e, d) == 0) {
@@ -1506,7 +1500,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	if (pubrsa != NULL)
 		RSA_free(pubrsa);
 	key->keydata.generic = NULL;
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }

@@ -17,11 +17,10 @@
 #ifndef GENERIC_URI_256_H
 #define GENERIC_URI_256_H 1
 
-/* $Id: uri_256.h,v 1.3 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: uri_256.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 typedef struct dns_rdata_uri {
 	dns_rdatacommon_t	common;
-	isc_mem_t *		mctx;
 	uint16_t		priority;
 	uint16_t		weight;
 	unsigned char *		target;

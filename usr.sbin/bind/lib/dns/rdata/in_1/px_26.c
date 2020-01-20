@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: px_26.c,v 1.7 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: px_26.c,v 1.8 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Mon Mar 20 10:44:27 PST 2000 */
 
@@ -272,19 +272,18 @@ tostruct_in_px(ARGS_TOSTRUCT) {
 	dns_name_fromregion(&name, &region);
 
 	dns_name_init(&px->map822, NULL);
-	RETERR(name_duporclone(&name, mctx, &px->map822));
+	RETERR(name_duporclone(&name, &px->map822));
 	isc_region_consume(&region, name_length(&px->map822));
 
 	dns_name_init(&px->mapx400, NULL);
-	result = name_duporclone(&name, mctx, &px->mapx400);
+	result = name_duporclone(&name, &px->mapx400);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
-	px->mctx = mctx;
 	return (result);
 
  cleanup:
-	dns_name_free(&px->map822, mctx);
+	dns_name_free(&px->map822);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -296,12 +295,8 @@ freestruct_in_px(ARGS_FREESTRUCT) {
 	REQUIRE(px->common.rdclass == dns_rdataclass_in);
 	REQUIRE(px->common.rdtype == dns_rdatatype_px);
 
-	if (px->mctx == NULL)
-		return;
-
-	dns_name_free(&px->map822, px->mctx);
-	dns_name_free(&px->mapx400, px->mctx);
-	px->mctx = NULL;
+	dns_name_free(&px->map822);
+	dns_name_free(&px->mapx400);
 }
 
 static inline isc_result_t

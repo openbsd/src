@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig_250.c,v 1.10 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: tsig_250.c,v 1.11 2020/01/20 18:51:52 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 
@@ -450,7 +450,7 @@ tostruct_any_tsig(ARGS_TOSTRUCT) {
 	dns_name_init(&alg, NULL);
 	dns_name_fromregion(&alg, &sr);
 	dns_name_init(&tsig->algorithm, NULL);
-	RETERR(name_duporclone(&alg, mctx, &tsig->algorithm));
+	RETERR(name_duporclone(&alg, &tsig->algorithm));
 
 	isc_region_consume(&sr, name_length(&tsig->algorithm));
 
@@ -482,7 +482,7 @@ tostruct_any_tsig(ARGS_TOSTRUCT) {
 	 * Signature.
 	 */
 	INSIST(sr.length >= tsig->siglen);
-	tsig->signature = mem_maybedup(mctx, sr.base, tsig->siglen);
+	tsig->signature = mem_maybedup(sr.base, tsig->siglen);
 	if (tsig->signature == NULL)
 		goto cleanup;
 	isc_region_consume(&sr, tsig->siglen);
@@ -509,18 +509,15 @@ tostruct_any_tsig(ARGS_TOSTRUCT) {
 	 * Other.
 	 */
 	INSIST(sr.length == tsig->otherlen);
-	tsig->other = mem_maybedup(mctx, sr.base, tsig->otherlen);
+	tsig->other = mem_maybedup(sr.base, tsig->otherlen);
 	if (tsig->other == NULL)
 		goto cleanup;
 
-	tsig->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL)
-		dns_name_free(&tsig->algorithm, tsig->mctx);
-	if (mctx != NULL && tsig->signature != NULL)
-		isc_mem_free(mctx, tsig->signature);
+	dns_name_free(&tsig->algorithm);
+	free(tsig->signature);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -532,15 +529,9 @@ freestruct_any_tsig(ARGS_FREESTRUCT) {
 	REQUIRE(tsig->common.rdtype == dns_rdatatype_tsig);
 	REQUIRE(tsig->common.rdclass == dns_rdataclass_any);
 
-	if (tsig->mctx == NULL)
-		return;
-
-	dns_name_free(&tsig->algorithm, tsig->mctx);
-	if (tsig->signature != NULL)
-		isc_mem_free(tsig->mctx, tsig->signature);
-	if (tsig->other != NULL)
-		isc_mem_free(tsig->mctx, tsig->other);
-	tsig->mctx = NULL;
+	dns_name_free(&tsig->algorithm);
+	free(tsig->signature);
+	free(tsig->other);
 }
 
 static inline isc_result_t

@@ -47,7 +47,7 @@
 
 #include <isc/list.h>
 #include <isc/log.h>
-#include <isc/mem.h>
+
 #include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/net.h>
@@ -350,7 +350,6 @@ struct isc__socket {
 struct isc__socketmgr {
 	/* Not locked. */
 	isc_socketmgr_t		common;
-	isc_mem_t	       *mctx;
 	isc_mutex_t		lock;
 	isc_mutex_t		*fdlock;
 #ifdef USE_KQUEUE
@@ -482,7 +481,7 @@ isc__socket_sendto2(isc_socket_t *sock, isc_region_t *region,
 		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
 		    isc_socketevent_t *event, unsigned int flags);
 isc_socketevent_t *
-isc_socket_socketevent(isc_mem_t *mctx, void *sender,
+isc_socket_socketevent(void *sender,
 		       isc_eventtype_t eventtype, isc_taskaction_t action,
 		       void *arg);
 
@@ -531,9 +530,9 @@ int
 isc__socket_getfd(isc_socket_t *sock);
 
 isc_result_t
-isc__socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp);
+isc__socketmgr_create(isc_socketmgr_t **managerp);
 isc_result_t
-isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
+isc__socketmgr_create2(isc_socketmgr_t **managerp,
 		       unsigned int maxsocks);
 isc_result_t
 isc_socketmgr_getmaxsockets(isc_socketmgr_t *manager0, unsigned int *nsockp);
@@ -1380,13 +1379,13 @@ destroy_socketevent(isc_event_t *event) {
 }
 
 static isc_socketevent_t *
-allocate_socketevent(isc_mem_t *mctx, void *sender,
+allocate_socketevent(void *sender,
 		     isc_eventtype_t eventtype, isc_taskaction_t action,
 		     void *arg)
 {
 	isc_socketevent_t *ev;
 
-	ev = (isc_socketevent_t *)isc_event_allocate(mctx, sender,
+	ev = (isc_socketevent_t *)isc_event_allocate(sender,
 						     eventtype, action, arg,
 						     sizeof(*ev));
 
@@ -1825,7 +1824,7 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	isc__socket_t *sock;
 	isc_result_t result;
 
-	sock = isc_mem_get(manager->mctx, sizeof(*sock));
+	sock = malloc(sizeof(*sock));
 
 	if (sock == NULL)
 		return (ISC_R_NOMEMORY);
@@ -1878,10 +1877,10 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	 */
 	ISC_EVENT_INIT(&sock->readable_ev, sizeof(intev_t),
 		       ISC_EVENTATTR_NOPURGE, NULL, ISC_SOCKEVENT_INTR,
-		       NULL, sock, sock, NULL, NULL);
+		       NULL, sock, sock, NULL);
 	ISC_EVENT_INIT(&sock->writable_ev, sizeof(intev_t),
 		       ISC_EVENTATTR_NOPURGE, NULL, ISC_SOCKEVENT_INTW,
-		       NULL, sock, sock, NULL, NULL);
+		       NULL, sock, sock, NULL);
 
 	sock->common.magic = ISCAPI_SOCKET_MAGIC;
 	sock->common.impmagic = SOCKET_MAGIC;
@@ -1890,7 +1889,7 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	return (ISC_R_SUCCESS);
 
  error:
-	isc_mem_put(manager->mctx, sock, sizeof(*sock));
+	free(sock);
 
 	return (result);
 }
@@ -1922,7 +1921,7 @@ free_socket(isc__socket_t **socketp) {
 
 	DESTROYLOCK(&sock->lock);
 
-	isc_mem_put(sock->manager->mctx, sock, sizeof(*sock));
+	free(sock);
 
 	*socketp = NULL;
 }
@@ -3491,7 +3490,7 @@ isc__socketmgr_maxudp(isc_socketmgr_t *manager0, int maxudp) {
  */
 
 static isc_result_t
-setup_watcher(isc_mem_t *mctx, isc__socketmgr_t *manager) {
+setup_watcher(isc__socketmgr_t *manager) {
 	isc_result_t result;
 #if defined(USE_KQUEUE) || defined(USE_EPOLL) || defined(USE_DEVPOLL)
 	char strbuf[ISC_STRERRORSIZE];
@@ -3499,7 +3498,7 @@ setup_watcher(isc_mem_t *mctx, isc__socketmgr_t *manager) {
 
 #ifdef USE_KQUEUE
 	manager->nevents = ISC_SOCKET_MAXEVENTS;
-	manager->events = isc_mem_get(mctx, sizeof(struct kevent) *
+	manager->events = malloc(sizeof(struct kevent) *
 				      manager->nevents);
 	if (manager->events == NULL)
 		return (ISC_R_NOMEMORY);
@@ -3509,14 +3508,13 @@ setup_watcher(isc_mem_t *mctx, isc__socketmgr_t *manager) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "kqueue %s: %s", "failed", strbuf);
-		isc_mem_put(mctx, manager->events,
-			    sizeof(struct kevent) * manager->nevents);
+		free(manager->events);
 		return (result);
 	}
 
 #elif defined(USE_EPOLL)
 	manager->nevents = ISC_SOCKET_MAXEVENTS;
-	manager->events = isc_mem_get(mctx, sizeof(struct epoll_event) *
+	manager->events = malloc(sizeof(struct epoll_event) *
 				      manager->nevents);
 	if (manager->events == NULL)
 		return (ISC_R_NOMEMORY);
@@ -3526,8 +3524,7 @@ setup_watcher(isc_mem_t *mctx, isc__socketmgr_t *manager) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "epoll_create %s: %s", "failed", strbuf);
-		isc_mem_put(mctx, manager->events,
-			    sizeof(struct epoll_event) * manager->nevents);
+		free(manager->events);
 		return (result);
 	}
 #elif defined(USE_SELECT)
@@ -3550,27 +3547,23 @@ setup_watcher(isc_mem_t *mctx, isc__socketmgr_t *manager) {
 	manager->write_fds = NULL;
 	manager->write_fds_copy = NULL;
 
-	manager->read_fds = isc_mem_get(mctx, manager->fd_bufsize);
+	manager->read_fds = malloc(manager->fd_bufsize);
 	if (manager->read_fds != NULL)
-		manager->read_fds_copy = isc_mem_get(mctx, manager->fd_bufsize);
+		manager->read_fds_copy = malloc(manager->fd_bufsize);
 	if (manager->read_fds_copy != NULL)
-		manager->write_fds = isc_mem_get(mctx, manager->fd_bufsize);
+		manager->write_fds = malloc(manager->fd_bufsize);
 	if (manager->write_fds != NULL) {
-		manager->write_fds_copy = isc_mem_get(mctx,
-						      manager->fd_bufsize);
+		manager->write_fds_copy = malloc(manager->fd_bufsize);
 	}
 	if (manager->write_fds_copy == NULL) {
 		if (manager->write_fds != NULL) {
-			isc_mem_put(mctx, manager->write_fds,
-				    manager->fd_bufsize);
+			free(manager->write_fds);
 		}
 		if (manager->read_fds_copy != NULL) {
-			isc_mem_put(mctx, manager->read_fds_copy,
-				    manager->fd_bufsize);
+			free(manager->read_fds_copy);
 		}
 		if (manager->read_fds != NULL) {
-			isc_mem_put(mctx, manager->read_fds,
-				    manager->fd_bufsize);
+			free(manager->read_fds);
 		}
 		return (ISC_R_NOMEMORY);
 	}
@@ -3584,35 +3577,33 @@ setup_watcher(isc_mem_t *mctx, isc__socketmgr_t *manager) {
 }
 
 static void
-cleanup_watcher(isc_mem_t *mctx, isc__socketmgr_t *manager) {
+cleanup_watcher(isc__socketmgr_t *manager) {
 
 #ifdef USE_KQUEUE
 	close(manager->kqueue_fd);
-	isc_mem_put(mctx, manager->events,
-		    sizeof(struct kevent) * manager->nevents);
+	free(manager->events);
 #elif defined(USE_EPOLL)
 	close(manager->epoll_fd);
-	isc_mem_put(mctx, manager->events,
-		    sizeof(struct epoll_event) * manager->nevents);
+	free(manager->events);
 #elif defined(USE_SELECT)
 	if (manager->read_fds != NULL)
-		isc_mem_put(mctx, manager->read_fds, manager->fd_bufsize);
+		free(manager->read_fds);
 	if (manager->read_fds_copy != NULL)
-		isc_mem_put(mctx, manager->read_fds_copy, manager->fd_bufsize);
+		free(manager->read_fds_copy);
 	if (manager->write_fds != NULL)
-		isc_mem_put(mctx, manager->write_fds, manager->fd_bufsize);
+		free(manager->write_fds);
 	if (manager->write_fds_copy != NULL)
-		isc_mem_put(mctx, manager->write_fds_copy, manager->fd_bufsize);
+		free(manager->write_fds_copy);
 #endif	/* USE_KQUEUE */
 }
 
 isc_result_t
-isc__socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
-	return (isc__socketmgr_create2(mctx, managerp, 0));
+isc__socketmgr_create(isc_socketmgr_t **managerp) {
+	return (isc__socketmgr_create2(managerp, 0));
 }
 
 isc_result_t
-isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
+isc__socketmgr_create2(isc_socketmgr_t **managerp,
 		       unsigned int maxsocks)
 {
 	int i;
@@ -3634,7 +3625,7 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 	if (maxsocks == 0)
 		maxsocks = ISC_SOCKET_MAXSOCKETS;
 
-	manager = isc_mem_get(mctx, sizeof(*manager));
+	manager = malloc(sizeof(*manager));
 	if (manager == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -3643,19 +3634,18 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 	manager->maxsocks = maxsocks;
 	manager->reserved = 0;
 	manager->maxudp = 0;
-	manager->fds = isc_mem_get(mctx,
-				   manager->maxsocks * sizeof(isc__socket_t *));
+	manager->fds = malloc(manager->maxsocks * sizeof(isc__socket_t *));
 	if (manager->fds == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto free_manager;
 	}
-	manager->fdstate = isc_mem_get(mctx, manager->maxsocks * sizeof(int));
+	manager->fdstate = malloc(manager->maxsocks * sizeof(int));
 	if (manager->fdstate == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto free_manager;
 	}
 #if defined(USE_EPOLL)
-	manager->epoll_events = isc_mem_get(mctx, (manager->maxsocks *
+	manager->epoll_events = malloc((manager->maxsocks *
 						   sizeof(uint32_t)));
 	if (manager->epoll_events == NULL) {
 		result = ISC_R_NOMEMORY;
@@ -3667,13 +3657,12 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 	manager->common.methods = &socketmgrmethods;
 	manager->common.magic = ISCAPI_SOCKETMGR_MAGIC;
 	manager->common.impmagic = SOCKET_MANAGER_MAGIC;
-	manager->mctx = NULL;
 	memset(manager->fds, 0, manager->maxsocks * sizeof(isc_socket_t *));
 	ISC_LIST_INIT(manager->socklist);
 	result = isc_mutex_init(&manager->lock);
 	if (result != ISC_R_SUCCESS)
 		goto free_manager;
-	manager->fdlock = isc_mem_get(mctx, FDLOCK_COUNT * sizeof(isc_mutex_t));
+	manager->fdlock = malloc(FDLOCK_COUNT * sizeof(isc_mutex_t));
 	if (manager->fdlock == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto cleanup_lock;
@@ -3683,8 +3672,7 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 		if (result != ISC_R_SUCCESS) {
 			while (--i >= 0)
 				DESTROYLOCK(&manager->fdlock[i]);
-			isc_mem_put(mctx, manager->fdlock,
-				    FDLOCK_COUNT * sizeof(isc_mutex_t));
+			free(manager->fdlock);
 			manager->fdlock = NULL;
 			goto cleanup_lock;
 		}
@@ -3695,13 +3683,11 @@ isc__socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 	/*
 	 * Set up initial state for the select loop
 	 */
-	result = setup_watcher(mctx, manager);
+	result = setup_watcher(manager);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
 	memset(manager->fdstate, 0, manager->maxsocks * sizeof(int));
-
-	isc_mem_attach(mctx, &manager->mctx);
 
 	socketmgr = manager;
 	*managerp = (isc_socketmgr_t *)manager;
@@ -3720,24 +3706,20 @@ cleanup_lock:
 
 free_manager:
 	if (manager->fdlock != NULL) {
-		isc_mem_put(mctx, manager->fdlock,
-			    FDLOCK_COUNT * sizeof(isc_mutex_t));
+		free(manager->fdlock);
 	}
 #if defined(USE_EPOLL)
 	if (manager->epoll_events != NULL) {
-		isc_mem_put(mctx, manager->epoll_events,
-			    manager->maxsocks * sizeof(uint32_t));
+		free(manager->epoll_events);
 	}
 #endif
 	if (manager->fdstate != NULL) {
-		isc_mem_put(mctx, manager->fdstate,
-			    manager->maxsocks * sizeof(int));
+		free(manager->fdstate);
 	}
 	if (manager->fds != NULL) {
-		isc_mem_put(mctx, manager->fds,
-			    manager->maxsocks * sizeof(isc_socket_t *));
+		free(manager->fds);
 	}
-	isc_mem_put(mctx, manager, sizeof(*manager));
+	free(manager);
 
 	return (result);
 }
@@ -3757,7 +3739,6 @@ void
 isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 	isc__socketmgr_t *manager;
 	int i;
-	isc_mem_t *mctx;
 
 	/*
 	 * Destroy a socket manager.
@@ -3797,34 +3778,27 @@ isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 	/*
 	 * Clean up.
 	 */
-	cleanup_watcher(manager->mctx, manager);
+	cleanup_watcher(manager);
 
 	for (i = 0; i < (int)manager->maxsocks; i++)
 		if (manager->fdstate[i] == CLOSE_PENDING) /* no need to lock */
 			(void)close(i);
 
 #if defined(USE_EPOLL)
-	isc_mem_put(manager->mctx, manager->epoll_events,
-		    manager->maxsocks * sizeof(uint32_t));
+	free(manager->epoll_events);
 #endif
-	isc_mem_put(manager->mctx, manager->fds,
-		    manager->maxsocks * sizeof(isc__socket_t *));
-	isc_mem_put(manager->mctx, manager->fdstate,
-		    manager->maxsocks * sizeof(int));
+	free(manager->fds);
+	free(manager->fdstate);
 
 	if (manager->fdlock != NULL) {
 		for (i = 0; i < FDLOCK_COUNT; i++)
 			DESTROYLOCK(&manager->fdlock[i]);
-		isc_mem_put(manager->mctx, manager->fdlock,
-			    FDLOCK_COUNT * sizeof(isc_mutex_t));
+		free(manager->fdlock);
 	}
 	DESTROYLOCK(&manager->lock);
 	manager->common.magic = 0;
 	manager->common.impmagic = 0;
-	mctx= manager->mctx;
-	isc_mem_put(mctx, manager, sizeof(*manager));
-
-	isc_mem_detach(&mctx);
+	free(manager);
 
 	*managerp = NULL;
 
@@ -3928,7 +3902,7 @@ isc__socket_recvv(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 
 	INSIST(sock->bound);
 
-	dev = allocate_socketevent(manager->mctx, sock,
+	dev = allocate_socketevent(sock,
 				   ISC_SOCKEVENT_RECVDONE, action, arg);
 	if (dev == NULL)
 		return (ISC_R_NOMEMORY);
@@ -3975,7 +3949,7 @@ isc__socket_recv(isc_socket_t *sock0, isc_region_t *region,
 
 	INSIST(sock->bound);
 
-	dev = allocate_socketevent(manager->mctx, sock,
+	dev = allocate_socketevent(sock,
 				   ISC_SOCKEVENT_RECVDONE, action, arg);
 	if (dev == NULL)
 		return (ISC_R_NOMEMORY);
@@ -4136,7 +4110,7 @@ isc__socket_sendto(isc_socket_t *sock0, isc_region_t *region,
 
 	INSIST(sock->bound);
 
-	dev = allocate_socketevent(manager->mctx, sock,
+	dev = allocate_socketevent(sock,
 				   ISC_SOCKEVENT_SENDDONE, action, arg);
 	if (dev == NULL)
 		return (ISC_R_NOMEMORY);
@@ -4187,7 +4161,7 @@ isc__socket_sendtov2(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 	iocount = isc_bufferlist_usedcount(buflist);
 	REQUIRE(iocount > 0);
 
-	dev = allocate_socketevent(manager->mctx, sock,
+	dev = allocate_socketevent(sock,
 				   ISC_SOCKEVENT_SENDDONE, action, arg);
 	if (dev == NULL)
 		return (ISC_R_NOMEMORY);
@@ -4572,7 +4546,7 @@ isc__socket_accept(isc_socket_t *sock0,
 	 * actual ev_sender will be touched up to be the socket.
 	 */
 	dev = (isc_socket_newconnev_t *)
-		isc_event_allocate(manager->mctx, task, ISC_SOCKEVENT_NEWCONN,
+		isc_event_allocate(task, ISC_SOCKEVENT_NEWCONN,
 				   action, arg, sizeof(*dev));
 	if (dev == NULL) {
 		UNLOCK(&sock->lock);
@@ -4648,7 +4622,7 @@ isc__socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 
 	REQUIRE(!sock->connecting);
 
-	dev = (isc_socket_connev_t *)isc_event_allocate(manager->mctx, sock,
+	dev = (isc_socket_connev_t *)isc_event_allocate(sock,
 							ISC_SOCKEVENT_CONNECT,
 							action,	arg,
 							sizeof(*dev));
@@ -5157,11 +5131,11 @@ isc__socket_dscp(isc_socket_t *sock0, isc_dscp_t dscp) {
 }
 
 isc_socketevent_t *
-isc_socket_socketevent(isc_mem_t *mctx, void *sender,
+isc_socket_socketevent(void *sender,
 			isc_eventtype_t eventtype, isc_taskaction_t action,
 			void *arg)
 {
-	return (allocate_socketevent(mctx, sender, eventtype, action, arg));
+	return (allocate_socketevent(sender, eventtype, action, arg));
 }
 
 /*

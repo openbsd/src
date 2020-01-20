@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.9 2020/01/09 14:18:29 florian Exp $ */
+/* $Id: name.h,v 1.10 2020/01/20 18:51:52 florian Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -1013,7 +1013,7 @@ dns_name_split(dns_name_t *name, unsigned int suffixlabels,
  */
 
 isc_result_t
-dns_name_dup(const dns_name_t *source, isc_mem_t *mctx,
+dns_name_dup(const dns_name_t *source,
 	     dns_name_t *target);
 /*%<
  * Make 'target' a dynamically allocated copy of 'source'.
@@ -1028,7 +1028,7 @@ dns_name_dup(const dns_name_t *source, isc_mem_t *mctx,
  */
 
 isc_result_t
-dns_name_dupwithoffsets(dns_name_t *source, isc_mem_t *mctx,
+dns_name_dupwithoffsets(dns_name_t *source,
 			dns_name_t *target);
 /*%<
  * Make 'target' a read-only dynamically allocated copy of 'source'.
@@ -1046,7 +1046,7 @@ dns_name_dupwithoffsets(dns_name_t *source, isc_mem_t *mctx,
  */
 
 void
-dns_name_free(dns_name_t *name, isc_mem_t *mctx);
+dns_name_free(dns_name_t *name);
 /*%<
  * Free 'name'.
  *
@@ -1147,10 +1147,10 @@ dns_name_format(dns_name_t *name, char *cp, unsigned int size);
  */
 
 isc_result_t
-dns_name_tostring(dns_name_t *source, char **target, isc_mem_t *mctx);
+dns_name_tostring(dns_name_t *source, char **target);
 /*%<
  * Convert 'name' to string format, allocating sufficient memory to
- * hold it (free with isc_mem_free()).
+ * hold it.
  *
  * Differs from dns_name_format in that it allocates its own memory.
  *
@@ -1169,12 +1169,10 @@ dns_name_tostring(dns_name_t *source, char **target, isc_mem_t *mctx);
  */
 
 isc_result_t
-dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options,
-		    isc_mem_t *mctx);
+dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options);
 isc_result_t
 dns_name_fromstring2(dns_name_t *target, const char *src,
-		     const dns_name_t *origin, unsigned int options,
-		     isc_mem_t *mctx);
+		     const dns_name_t *origin, unsigned int options);
 /*%<
  * Convert a string to a name and place it in target, allocating memory
  * as necessary.  'options' has the same semantics as that of

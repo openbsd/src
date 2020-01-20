@@ -18,7 +18,7 @@
 #ifndef GENERIC_NSEC3PARAM_51_H
 #define GENERIC_NSEC3PARAM_51_H 1
 
-/* $Id: nsec3param_51.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: nsec3param_51.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  * \brief Per RFC 5155 */
@@ -27,7 +27,6 @@
 
 typedef struct dns_rdata_nsec3param {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	dns_hash_t		hash;
 	unsigned char		flags;		/* DNS_NSEC3FLAG_* */
 	dns_iterations_t	iterations;

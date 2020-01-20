@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.h,v 1.4 2020/01/09 18:17:16 florian Exp $ */
+/* $Id: compress.h,v 1.5 2020/01/20 18:51:52 florian Exp $ */
 
 #ifndef DNS_COMPRESS_H
 #define DNS_COMPRESS_H 1
@@ -57,7 +57,6 @@ struct dns_compress {
 	/*% Preallocated nodes for the table. */
 	dns_compressnode_t	initialnodes[DNS_COMPRESS_INITIALNODES];
 	uint16_t		count;		/*%< Number of nodes. */
-	isc_mem_t		*mctx;		/*%< Memory context. */
 };
 
 typedef enum {
@@ -74,7 +73,7 @@ struct dns_decompress {
 };
 
 isc_result_t
-dns_compress_init(dns_compress_t *cctx, int edns, isc_mem_t *mctx);
+dns_compress_init(dns_compress_t *cctx, int edns);
 /*%<
  *	Initialise the compression context structure pointed to by 'cctx'.
  *

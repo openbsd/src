@@ -14,14 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.c,v 1.5 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: buffer.c,v 1.6 2020/01/20 18:51:53 florian Exp $ */
 
 /*! \file */
 
 #include <config.h>
-
+#include <stdlib.h>
 #include <isc/buffer.h>
-#include <isc/mem.h>
+
 #include <isc/region.h>
 #include <string.h>
 #include <isc/util.h>
@@ -75,7 +75,6 @@ isc__buffer_invalidate(isc_buffer_t *b) {
 
 	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(!ISC_LINK_LINKED(b, link));
-	REQUIRE(b->mctx == NULL);
 
 	ISC__BUFFER_INVALIDATE(b);
 }
@@ -445,7 +444,7 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r) {
 }
 
 isc_result_t
-isc_buffer_allocate(isc_mem_t *mctx, isc_buffer_t **dynbuffer,
+isc_buffer_allocate(isc_buffer_t **dynbuffer,
 		    unsigned int length)
 {
 	isc_buffer_t *dbuf;
@@ -453,13 +452,12 @@ isc_buffer_allocate(isc_mem_t *mctx, isc_buffer_t **dynbuffer,
 	REQUIRE(dynbuffer != NULL);
 	REQUIRE(*dynbuffer == NULL);
 
-	dbuf = isc_mem_get(mctx, length + sizeof(isc_buffer_t));
+	dbuf = malloc(length + sizeof(isc_buffer_t));
 	if (dbuf == NULL)
 		return (ISC_R_NOMEMORY);
 
 	isc_buffer_init(dbuf, ((unsigned char *)dbuf) + sizeof(isc_buffer_t),
 			length);
-	dbuf->mctx = mctx;
 
 	ENSURE(ISC_BUFFER_VALID(dbuf));
 
@@ -472,19 +470,15 @@ void
 isc_buffer_free(isc_buffer_t **dynbuffer) {
 	unsigned int real_length;
 	isc_buffer_t *dbuf;
-	isc_mem_t *mctx;
 
 	REQUIRE(dynbuffer != NULL);
 	REQUIRE(ISC_BUFFER_VALID(*dynbuffer));
-	REQUIRE((*dynbuffer)->mctx != NULL);
 
 	dbuf = *dynbuffer;
 	*dynbuffer = NULL;	/* destroy external reference */
 
 	real_length = dbuf->length + sizeof(isc_buffer_t);
-	mctx = dbuf->mctx;
-	dbuf->mctx = NULL;
 	isc_buffer_invalidate(dbuf);
 
-	isc_mem_put(mctx, dbuf, real_length);
+	free(dbuf);
 }

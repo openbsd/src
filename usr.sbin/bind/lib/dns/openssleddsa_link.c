@@ -20,7 +20,7 @@
     (defined(HAVE_OPENSSL_ED25519) || defined(HAVE_OPENSSL_ED448))
 
 
-#include <isc/mem.h>
+
 #include <isc/safe.h>
 #include <isc/sha2.h>
 #include <string.h>
@@ -211,7 +211,7 @@ openssleddsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 	REQUIRE(dctx->key->key_alg == DST_ALG_ED25519 ||
 		dctx->key->key_alg == DST_ALG_ED448);
 
-	result = isc_buffer_allocate(dctx->mctx, &buf, 64);
+	result = isc_buffer_allocate(&buf, 64);
 	dctx->ctxdata.generic = buf;
 
 	return (result);
@@ -244,7 +244,7 @@ openssleddsa_adddata(dst_context_t *dctx, const isc_region_t *data) {
 		return (ISC_R_SUCCESS);
 
 	length = isc_buffer_length(buf) + data->length + 64;
-	result = isc_buffer_allocate(dctx->mctx, &nbuf, length);
+	result = isc_buffer_allocate(&nbuf, length);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	isc_buffer_usedregion(buf, &r);
@@ -535,7 +535,7 @@ openssleddsa_tofile(const dst_key_t *key, const char *directory) {
 	pkey = key->keydata.pkey;
 	if (key->key_alg == DST_ALG_ED25519) {
 		len = DNS_KEY_ED25519SIZE;
-		buf = isc_mem_get(key->mctx, len);
+		buf = malloc(len);
 		if (buf == NULL)
 			return (ISC_R_NOMEMORY);
 		priv.elements[0].tag = TAG_EDDSA_PRIVATEKEY;
@@ -548,7 +548,7 @@ openssleddsa_tofile(const dst_key_t *key, const char *directory) {
 		ret = dst__privstruct_writefile(key, &priv, directory);
 	} else {
 		len = DNS_KEY_ED448SIZE;
-		buf = isc_mem_get(key->mctx, len);
+		buf = malloc(len);
 		if (buf == NULL)
 			return (ISC_R_NOMEMORY);
 		priv.elements[0].tag = TAG_EDDSA_PRIVATEKEY;
@@ -563,7 +563,7 @@ openssleddsa_tofile(const dst_key_t *key, const char *directory) {
 
  err:
 	if (buf != NULL)
-		isc_mem_put(key->mctx, buf, len);
+		free(buf);
 	return (ret);
 }
 
@@ -588,13 +588,12 @@ openssleddsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	isc_result_t ret;
 	EVP_PKEY *pkey = NULL;
 	unsigned int len;
-	isc_mem_t *mctx = key->mctx;
 
 	REQUIRE(key->key_alg == DST_ALG_ED25519 ||
 		key->key_alg == DST_ALG_ED448);
 
 	/* read private key file */
-	ret = dst__privstruct_parse(key, DST_ALG_ED25519, lexer, mctx, &priv);
+	ret = dst__privstruct_parse(key, DST_ALG_ED25519, lexer, &priv);
 	if (ret != ISC_R_SUCCESS)
 		goto err;
 
@@ -605,7 +604,7 @@ openssleddsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			DST_RET(DST_R_INVALIDPRIVATEKEY);
 		key->keydata.pkey = pub->keydata.pkey;
 		pub->keydata.pkey = NULL;
-		dst__privstruct_free(&priv, mctx);
+		dst__privstruct_free(&priv);
 		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 	}
@@ -632,7 +631,7 @@ openssleddsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	ret = ISC_R_SUCCESS;
 
  err:
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }

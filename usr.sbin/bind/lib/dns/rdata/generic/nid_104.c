@@ -147,8 +147,6 @@ tostruct_nid(ARGS_TOSTRUCT) {
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length == 10);
 
-	UNUSED(mctx);
-
 	nid->common.rdclass = rdata->rdclass;
 	nid->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&nid->common, link);

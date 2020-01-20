@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: apl_42.c,v 1.6 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: apl_42.c,v 1.7 2020/01/20 18:51:53 florian Exp $ */
 
 /* RFC3123 */
 
@@ -279,12 +279,11 @@ tostruct_in_apl(ARGS_TOSTRUCT) {
 
 	dns_rdata_toregion(rdata, &r);
 	apl->apl_len = r.length;
-	apl->apl = mem_maybedup(mctx, r.base, r.length);
+	apl->apl = mem_maybedup(r.base, r.length);
 	if (apl->apl == NULL)
 		return (ISC_R_NOMEMORY);
 
 	apl->offset = 0;
-	apl->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -296,11 +295,8 @@ freestruct_in_apl(ARGS_FREESTRUCT) {
 	REQUIRE(apl->common.rdtype == dns_rdatatype_apl);
 	REQUIRE(apl->common.rdclass == dns_rdataclass_in);
 
-	if (apl->mctx == NULL)
-		return;
 	if (apl->apl != NULL)
-		isc_mem_free(apl->mctx, apl->apl);
-	apl->mctx = NULL;
+		free(apl->apl);
 }
 
 isc_result_t

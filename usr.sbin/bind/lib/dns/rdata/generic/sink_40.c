@@ -206,11 +206,10 @@ tostruct_sink(ARGS_TOSTRUCT) {
 
 	/* Data */
 	sink->datalen = sr.length;
-	sink->data = mem_maybedup(mctx, sr.base, sink->datalen);
+	sink->data = mem_maybedup(sr.base, sink->datalen);
 	if (sink->data == NULL)
 		return (ISC_R_NOMEMORY);
 
-	sink->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -221,12 +220,8 @@ freestruct_sink(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(sink->common.rdtype == dns_rdatatype_sink);
 
-	if (sink->mctx == NULL)
-		return;
-
 	if (sink->data != NULL)
-		isc_mem_free(sink->mctx, sink->data);
-	sink->mctx = NULL;
+		free(sink->data);
 }
 
 static inline isc_result_t

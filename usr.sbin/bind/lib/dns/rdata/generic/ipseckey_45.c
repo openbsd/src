@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipseckey_45.c,v 1.5 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: ipseckey_45.c,v 1.6 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -372,25 +372,23 @@ tostruct_ipseckey(ARGS_TOSTRUCT) {
 	case 3:
 		dns_name_init(&ipseckey->gateway, NULL);
 		dns_name_fromregion(&name, &region);
-		RETERR(name_duporclone(&name, mctx, &ipseckey->gateway));
+		RETERR(name_duporclone(&name, &ipseckey->gateway));
 		isc_region_consume(&region, name_length(&name));
 		break;
 	}
 
 	ipseckey->keylength = region.length;
 	if (ipseckey->keylength != 0U) {
-		ipseckey->key = mem_maybedup(mctx, region.base,
+		ipseckey->key = mem_maybedup(region.base,
 					     ipseckey->keylength);
 		if (ipseckey->key == NULL) {
 			if (ipseckey->gateway_type == 3)
-				dns_name_free(&ipseckey->gateway,
-					      ipseckey->mctx);
+				dns_name_free(&ipseckey->gateway);
 			return (ISC_R_NOMEMORY);
 		}
 	} else
 		ipseckey->key = NULL;
 
-	ipseckey->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -401,16 +399,12 @@ freestruct_ipseckey(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(ipseckey->common.rdtype == dns_rdatatype_ipseckey);
 
-	if (ipseckey->mctx == NULL)
-		return;
-
 	if (ipseckey->gateway_type == 3)
-		dns_name_free(&ipseckey->gateway, ipseckey->mctx);
+		dns_name_free(&ipseckey->gateway);
 
 	if (ipseckey->key != NULL)
-		isc_mem_free(ipseckey->mctx, ipseckey->key);
+		free(ipseckey->key);
 
-	ipseckey->mctx = NULL;
 }
 
 static inline isc_result_t

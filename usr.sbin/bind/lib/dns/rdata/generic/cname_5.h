@@ -14,14 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cname_5.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: cname_5.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef GENERIC_CNAME_5_H
 #define GENERIC_CNAME_5_H 1
 
 typedef struct dns_rdata_cname {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	dns_name_t		cname;
 } dns_rdata_cname_t;
 

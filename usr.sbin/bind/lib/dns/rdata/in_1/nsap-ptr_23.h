@@ -17,14 +17,13 @@
 #ifndef IN_1_NSAP_PTR_23_H
 #define IN_1_NSAP_PTR_23_H 1
 
-/* $Id: nsap-ptr_23.h,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: nsap-ptr_23.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief Per RFC1348.  Obsoleted in RFC 1706 - use PTR instead. */
 
 typedef struct dns_rdata_in_nsap_ptr {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	dns_name_t		owner;
 } dns_rdata_in_nsap_ptr_t;
 

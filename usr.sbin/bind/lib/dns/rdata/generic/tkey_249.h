@@ -17,14 +17,13 @@
 #ifndef GENERIC_TKEY_249_H
 #define GENERIC_TKEY_249_H 1
 
-/* $Id: tkey_249.h,v 1.4 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: tkey_249.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief Per draft-ietf-dnsind-tkey-00.txt */
 
 typedef struct dns_rdata_tkey {
 	dns_rdatacommon_t	common;
-	isc_mem_t *		mctx;
 	dns_name_t		algorithm;
 	uint32_t		inception;
 	uint32_t		expire;

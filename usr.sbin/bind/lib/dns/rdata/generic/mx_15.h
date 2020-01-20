@@ -18,11 +18,10 @@
 #ifndef GENERIC_MX_15_H
 #define GENERIC_MX_15_H 1
 
-/* $Id: mx_15.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: mx_15.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 typedef struct dns_rdata_mx {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	uint16_t		pref;
 	dns_name_t		mx;
 } dns_rdata_mx_t;

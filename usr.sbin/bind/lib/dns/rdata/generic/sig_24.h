@@ -17,14 +17,13 @@
 #ifndef GENERIC_SIG_24_H
 #define GENERIC_SIG_24_H 1
 
-/* $Id: sig_24.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: sig_24.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief Per RFC2535 */
 
 typedef struct dns_rdata_sig_t {
 	dns_rdatacommon_t	common;
-	isc_mem_t *		mctx;
 	dns_rdatatype_t		covered;
 	dns_secalg_t		algorithm;
 	uint8_t		labels;

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.9 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: wks_11.c,v 1.10 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -27,6 +27,7 @@
 #include <isc/net.h>
 #include <isc/netdb.h>
 #include <isc/once.h>
+#include <isc/mutex.h>
 
 /*
  * Redefine CHECK here so cppcheck "sees" the define.
@@ -318,10 +319,9 @@ tostruct_in_wks(ARGS_TOSTRUCT) {
 	wks->protocol = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	wks->map_len = region.length;
-	wks->map = mem_maybedup(mctx, region.base, region.length);
+	wks->map = mem_maybedup(region.base, region.length);
 	if (wks->map == NULL)
 		return (ISC_R_NOMEMORY);
-	wks->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -333,12 +333,8 @@ freestruct_in_wks(ARGS_FREESTRUCT) {
 	REQUIRE(wks->common.rdtype == dns_rdatatype_wks);
 	REQUIRE(wks->common.rdclass == dns_rdataclass_in);
 
-	if (wks->mctx == NULL)
-		return;
-
 	if (wks->map != NULL)
-		isc_mem_free(wks->mctx, wks->map);
-	wks->mctx = NULL;
+		free(wks->map);
 }
 
 static inline isc_result_t

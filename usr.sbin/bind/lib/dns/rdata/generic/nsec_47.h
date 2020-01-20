@@ -17,14 +17,13 @@
 #ifndef GENERIC_NSEC_47_H
 #define GENERIC_NSEC_47_H 1
 
-/* $Id: nsec_47.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: nsec_47.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  * \brief Per RFC 3845 */
 
 typedef struct dns_rdata_nsec {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	dns_name_t		next;
 	unsigned char		*typebits;
 	uint16_t		len;

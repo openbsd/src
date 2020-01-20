@@ -18,11 +18,10 @@
 #ifndef IN_1_DHCID_49_H
 #define IN_1_DHCID_49_H 1
 
-/* $Id: dhcid_49.h,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: dhcid_49.h,v 1.3 2020/01/20 18:51:53 florian Exp $ */
 
 typedef struct dns_rdata_in_dhcid {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	unsigned char		*dhcid;
 	unsigned int		length;
 } dns_rdata_in_dhcid_t;

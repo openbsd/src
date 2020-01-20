@@ -14,17 +14,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.17 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: rdata.c,v 1.18 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file */
 
 #include <config.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include <isc/base64.h>
 #include <isc/hex.h>
 #include <isc/lex.h>
-#include <isc/mem.h>
+
 #include <isc/parseint.h>
 
 #include <string.h>
@@ -101,7 +102,7 @@
 #define ARGS_FROMSTRUCT	int rdclass, dns_rdatatype_t type, \
 			void *source, isc_buffer_t *target
 
-#define ARGS_TOSTRUCT	const dns_rdata_t *rdata, void *target, isc_mem_t *mctx
+#define ARGS_TOSTRUCT	const dns_rdata_t *rdata, void *target
 
 #define ARGS_FREESTRUCT void *source
 
@@ -421,21 +422,16 @@ getquad(const void *src, struct in_addr *dst,
 }
 
 static inline isc_result_t
-name_duporclone(dns_name_t *source, isc_mem_t *mctx, dns_name_t *target) {
+name_duporclone(dns_name_t *source, dns_name_t *target) {
 
-	if (mctx != NULL)
-		return (dns_name_dup(source, mctx, target));
-	dns_name_clone(source, target);
-	return (ISC_R_SUCCESS);
+	return (dns_name_dup(source, target));
 }
 
 static inline void *
-mem_maybedup(isc_mem_t *mctx, void *source, size_t length) {
+mem_maybedup(void *source, size_t length) {
 	void *copy;
 
-	if (mctx == NULL)
-		return (source);
-	copy = isc_mem_allocate(mctx, length);
+	copy = malloc(length);
 	if (copy != NULL)
 		memmove(copy, source, length);
 
@@ -892,7 +888,7 @@ rdata_validate(isc_buffer_t *src, isc_buffer_t *dest, dns_rdataclass_t rdclass,
 
 static isc_result_t
 unknown_fromtext(dns_rdataclass_t rdclass, dns_rdatatype_t type,
-		 isc_lex_t *lexer, isc_mem_t *mctx, isc_buffer_t *target)
+		 isc_lex_t *lexer, isc_buffer_t *target)
 {
 	isc_result_t result;
 	isc_buffer_t *buf = NULL;
@@ -905,7 +901,7 @@ unknown_fromtext(dns_rdataclass_t rdclass, dns_rdatatype_t type,
 					ISC_FALSE));
 	if (token.value.as_ulong > 65535U)
 		return (ISC_R_RANGE);
-	result = isc_buffer_allocate(mctx, &buf, token.value.as_ulong);
+	result = isc_buffer_allocate(&buf, token.value.as_ulong);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
@@ -939,7 +935,7 @@ unknown_fromtext(dns_rdataclass_t rdclass, dns_rdatatype_t type,
 isc_result_t
 dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 		   dns_rdatatype_t type, isc_lex_t *lexer,
-		   dns_name_t *origin, unsigned int options, isc_mem_t *mctx,
+		   dns_name_t *origin, unsigned int options,
 		   isc_buffer_t *target, dns_rdatacallbacks_t *callbacks)
 {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
@@ -999,8 +995,7 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 
 		if (result == ISC_R_SUCCESS) {
 			unknown = ISC_TRUE;
-			result = unknown_fromtext(rdclass, type, lexer,
-						  mctx, target);
+			result = unknown_fromtext(rdclass, type, lexer, target);
 		} else
 			options |= DNS_RDATA_UNKNOWNESCAPE;
 	} else
@@ -1223,7 +1218,7 @@ dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 }
 
 isc_result_t
-dns_rdata_tostruct(const dns_rdata_t *rdata, void *target, isc_mem_t *mctx) {
+dns_rdata_tostruct(const dns_rdata_t *rdata, void *target) {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
 	isc_boolean_t use_default = ISC_FALSE;
 

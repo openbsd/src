@@ -30,7 +30,7 @@ HEADERS =	aes.h app.h assertions.h base32.h base64.h \
 		hash.h heap.h hex.h hmacmd5.h hmacsha.h \
 		@ISC_IPV6_H@ iterated_hash.h \
 		lang.h lex.h lib.h likely.h list.h log.h \
-		magic.h md5.h mem.h msgs.h mutexblock.h \
+		magic.h md5.h msgs.h mutexblock.h \
 		netaddr.h netscope.h ondestroy.h parseint.h \
 		print.h queue.h \
 		refcount.h regex.h \

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.c,v 1.6 2020/01/20 18:46:57 florian Exp $ */
+/* $Id: lib.c,v 1.7 2020/01/20 18:51:53 florian Exp $ */
 
 /*! \file */
 
@@ -25,7 +25,7 @@
 
 #include <isc/app.h>
 #include <isc/lib.h>
-#include <isc/mem.h>
+
 #include <isc/msgs.h>
 #include <isc/once.h>
 
@@ -52,7 +52,6 @@ static void
 do_register(void) {
 	isc_bind9 = ISC_FALSE;
 
-	RUNTIME_CHECK(isc__mem_register() == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc__app_register() == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc__task_register() == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc__socket_register() == ISC_R_SUCCESS);

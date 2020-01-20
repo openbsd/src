@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsec.c,v 1.4 2020/01/20 18:40:55 florian Exp $ */
+/* $Id: tsec.c,v 1.5 2020/01/20 18:51:52 florian Exp $ */
 
 #include <config.h>
+#include <stdlib.h>
 
-#include <isc/mem.h>
 #include <isc/util.h>
 
 
@@ -39,7 +39,6 @@
 struct dns_tsec {
 	unsigned int		magic;
 	dns_tsectype_t		type;
-	isc_mem_t		*mctx;
 	union {
 		dns_tsigkey_t	*tsigkey;
 		dst_key_t	*key;
@@ -47,7 +46,7 @@ struct dns_tsec {
 };
 
 isc_result_t
-dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
+dns_tsec_create(dns_tsectype_t type, dst_key_t *key,
 		dns_tsec_t **tsecp)
 {
 	isc_result_t result;
@@ -55,15 +54,13 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 	dns_tsigkey_t *tsigkey = NULL;
 	dns_name_t *algname;
 
-	REQUIRE(mctx != NULL);
 	REQUIRE(tsecp != NULL && *tsecp == NULL);
 
-	tsec = isc_mem_get(mctx, sizeof(*tsec));
+	tsec = malloc(sizeof(*tsec));
 	if (tsec == NULL)
 		return (ISC_R_NOMEMORY);
 
 	tsec->type = type;
-	tsec->mctx = mctx;
 
 	switch (type) {
 	case dns_tsectype_tsig:
@@ -84,14 +81,14 @@ dns_tsec_create(isc_mem_t *mctx, dns_tsectype_t type, dst_key_t *key,
 			algname = dns_tsig_hmacsha512_name;
 			break;
 		default:
-			isc_mem_put(mctx, tsec, sizeof(*tsec));
+			free(tsec);
 			return (DNS_R_BADALG);
 		}
 		result = dns_tsigkey_createfromkey(dst_key_name(key),
 						   algname, key, ISC_FALSE,
-						   NULL, 0, 0, mctx, &tsigkey);
+						   NULL, 0, 0, &tsigkey);
 		if (result != ISC_R_SUCCESS) {
-			isc_mem_put(mctx, tsec, sizeof(*tsec));
+			free(tsec);
 			return (result);
 		}
 		tsec->ukey.tsigkey = tsigkey;
@@ -129,7 +126,7 @@ dns_tsec_destroy(dns_tsec_t **tsecp) {
 	}
 
 	tsec->magic = 0;
-	isc_mem_put(tsec->mctx, tsec, sizeof(*tsec));
+	free(tsec);
 
 	*tsecp = NULL;
 }

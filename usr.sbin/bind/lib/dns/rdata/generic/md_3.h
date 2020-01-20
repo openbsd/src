@@ -18,11 +18,10 @@
 #ifndef GENERIC_MD_3_H
 #define GENERIC_MD_3_H 1
 
-/* $Id: md_3.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: md_3.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 typedef struct dns_rdata_md {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	dns_name_t		md;
 } dns_rdata_md_t;
 

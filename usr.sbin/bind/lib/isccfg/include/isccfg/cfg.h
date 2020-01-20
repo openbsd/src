@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cfg.h,v 1.4 2020/01/09 18:17:20 florian Exp $ */
+/* $Id: cfg.h,v 1.5 2020/01/20 18:51:54 florian Exp $ */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
@@ -90,7 +90,7 @@ cfg_parser_attach(cfg_parser_t *src, cfg_parser_t **dest);
  */
 
 isc_result_t
-cfg_parser_create(isc_mem_t *mctx, isc_log_t *lctx, cfg_parser_t **ret);
+cfg_parser_create(isc_log_t *lctx, cfg_parser_t **ret);
 /*%<
  * Create a configuration file parser.  Any warning and error
  * messages will be logged to 'lctx'.

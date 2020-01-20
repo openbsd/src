@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: app.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef ISC_APP_H
 #define ISC_APP_H 1
@@ -116,7 +116,7 @@ typedef struct isc_appmethods {
 					isc_socketmgr_t *timermgr);
 	void		(*settimermgr)(isc_appctx_t *ctx,
 				       isc_timermgr_t *timermgr);
-	isc_result_t 	(*ctxonrun)(isc_appctx_t *ctx, isc_mem_t *mctx,
+	isc_result_t 	(*ctxonrun)(isc_appctx_t *ctx,
 				    isc_task_t *task, isc_taskaction_t action,
 				    void *arg);
 } isc_appmethods_t;
@@ -159,10 +159,10 @@ isc_app_start(void);
  */
 
 isc_result_t
-isc_app_ctxonrun(isc_appctx_t *ctx, isc_mem_t *mctx, isc_task_t *task,
+isc_app_ctxonrun(isc_appctx_t *ctx, isc_task_t *task,
 		 isc_taskaction_t action, void *arg);
 isc_result_t
-isc_app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
+isc_app_onrun(isc_task_t *task, isc_taskaction_t action,
 	      void *arg);
 /*!<
  * \brief Request delivery of an event when the application is run.
@@ -302,7 +302,7 @@ isc_app_unblock(void);
  */
 
 isc_result_t
-isc_appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp);
+isc_appctx_create(isc_appctx_t **ctxp);
 /*!<
  * \brief Create an application context.
  *
@@ -365,7 +365,7 @@ isc_appctx_settimermgr(isc_appctx_t *ctx, isc_timermgr_t *timermgr);
  * See isc_appctx_create() above.
  */
 typedef isc_result_t
-(*isc_appctxcreatefunc_t)(isc_mem_t *mctx, isc_appctx_t **ctxp);
+(*isc_appctxcreatefunc_t)(isc_appctx_t **ctxp);
 
 isc_result_t
 isc_app_register(isc_appctxcreatefunc_t createfunc);

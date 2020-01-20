@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: event.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: event.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  * \file
@@ -22,9 +22,9 @@
  */
 
 #include <config.h>
-
+#include <stdlib.h>
 #include <isc/event.h>
-#include <isc/mem.h>
+
 #include <isc/util.h>
 
 /***
@@ -33,13 +33,11 @@
 
 static void
 destroy(isc_event_t *event) {
-	isc_mem_t *mctx = event->ev_destroy_arg;
-
-	isc_mem_put(mctx, event, event->ev_size);
+	free(event);
 }
 
 isc_event_t *
-isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
+isc_event_allocate(void *sender, isc_eventtype_t type,
 		   isc_taskaction_t action, void *arg, size_t size)
 {
 	isc_event_t *event;
@@ -47,18 +45,18 @@ isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
 	REQUIRE(size >= sizeof(struct isc_event));
 	REQUIRE(action != NULL);
 
-	event = isc_mem_get(mctx, size);
+	event = malloc(size);
 	if (event == NULL)
 		return (NULL);
 
 	ISC_EVENT_INIT(event, size, 0, NULL, type, action, arg,
-		       sender, destroy, mctx);
+		       sender, destroy);
 
 	return (event);
 }
 
 isc_event_t *
-isc_event_constallocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
+isc_event_constallocate(void *sender, isc_eventtype_t type,
 			isc_taskaction_t action, const void *arg, size_t size)
 {
 	isc_event_t *event;
@@ -67,7 +65,7 @@ isc_event_constallocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
 	REQUIRE(size >= sizeof(struct isc_event));
 	REQUIRE(action != NULL);
 
-	event = isc_mem_get(mctx, size);
+	event = malloc(size);
 	if (event == NULL)
 		return (NULL);
 
@@ -86,7 +84,7 @@ isc_event_constallocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
 	DE_CONST(arg, deconst_arg);
 
 	ISC_EVENT_INIT(event, size, 0, NULL, type, action, deconst_arg,
-		       sender, destroy, mctx);
+		       sender, destroy);
 
 	return (event);
 }

@@ -43,7 +43,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: file.c,v 1.11 2020/01/20 18:49:46 florian Exp $ */
+/* $Id: file.c,v 1.12 2020/01/20 18:51:53 florian Exp $ */
 
 /*! \file */
 
@@ -67,7 +67,7 @@
 #include <isc/dir.h>
 #include <isc/file.h>
 #include <isc/log.h>
-#include <isc/mem.h>
+
 
 #include <string.h>
 #include <isc/time.h>
@@ -612,7 +612,7 @@ isc_file_safecreate(const char *filename, FILE **fp) {
 }
 
 isc_result_t
-isc_file_splitpath(isc_mem_t *mctx, const char *path, char **dirname,
+isc_file_splitpath(const char *path, char **dirname,
 		   char const **bname)
 {
 	char *dir;
@@ -625,22 +625,22 @@ isc_file_splitpath(isc_mem_t *mctx, const char *path, char **dirname,
 
 	if (slash == path) {
 		file = ++slash;
-		dir = isc_mem_strdup(mctx, "/");
+		dir = strdup("/");
 	} else if (slash != NULL) {
 		file = ++slash;
-		dir = isc_mem_allocate(mctx, slash - path);
+		dir = malloc(slash - path);
 		if (dir != NULL)
 			strlcpy(dir, path, slash - path);
 	} else {
 		file = path;
-		dir = isc_mem_strdup(mctx, ".");
+		dir = strdup(".");
 	}
 
 	if (dir == NULL)
 		return (ISC_R_NOMEMORY);
 
 	if (*file == '\0') {
-		isc_mem_free(mctx, dir);
+		free(dir);
 		return (ISC_R_INVALIDFILE);
 	}
 

@@ -38,7 +38,7 @@
 #include <config.h>
 #include <stdlib.h>
 
-#include <isc/mem.h>
+
 #include <isc/mutex.h>
 #include <isc/mutexblock.h>
 #include <string.h>
@@ -52,145 +52,32 @@
 #include "dst_internal.h"
 #include "dst_openssl.h"
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-static isc_mutex_t *locks = NULL;
-static int nlocks;
-#endif
-
-#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-static void
-lock_callback(int mode, int type, const char *file, int line) {
-	UNUSED(file);
-	UNUSED(line);
-	if ((mode & CRYPTO_LOCK) != 0)
-		LOCK(&locks[type]);
-	else
-		UNLOCK(&locks[type]);
-}
-#endif
-
-#if OPENSSL_VERSION_NUMBER < 0x10000000L || defined(LIBRESSL_VERSION_NUMBER)
-static unsigned long
-id_callback(void) {
-	return ((unsigned long)isc_thread_self());
-}
-#endif
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-
-#define FLARG
-#define FILELINE
-#if ISC_MEM_TRACKLINES
-#define FLARG_PASS      , __FILE__, __LINE__
-#else
-#define FLARG_PASS
-#endif
-
-#else
-
-#define FLARG           , const char *file, int line
-#define FILELINE	, __FILE__, __LINE__
-#if ISC_MEM_TRACKLINES
-#define FLARG_PASS      , file, line
-#else
-#define FLARG_PASS
-#endif
-
-#endif
-
-static void *
-mem_alloc(size_t size FLARG) {
-	INSIST(dst__memory_pool != NULL);
-	return (isc__mem_allocate(dst__memory_pool, size FLARG_PASS));
-}
-
-static void
-mem_free(void *ptr FLARG) {
-	INSIST(dst__memory_pool != NULL);
-	if (ptr != NULL)
-		isc__mem_free(dst__memory_pool, ptr FLARG_PASS);
-}
-
-static void *
-mem_realloc(void *ptr, size_t size FLARG) {
-	INSIST(dst__memory_pool != NULL);
-	return (isc__mem_reallocate(dst__memory_pool, ptr, size FLARG_PASS));
-}
-
-#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L
-static void
-_set_thread_id(CRYPTO_THREADID *id)
-{
-	CRYPTO_THREADID_set_numeric(id, (unsigned long)isc_thread_self());
-}
-#endif
-
 isc_result_t
 dst__openssl_init(const char *engine) {
 	isc_result_t result;
 
 	UNUSED(engine);
 
-	CRYPTO_set_mem_functions(mem_alloc, mem_realloc, mem_free);
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-	nlocks = CRYPTO_num_locks();
-	locks = mem_alloc(sizeof(isc_mutex_t) * nlocks FILELINE);
-	if (locks == NULL)
-		return (ISC_R_NOMEMORY);
-	result = isc_mutexblock_init(locks, nlocks);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup_mutexalloc;
-	CRYPTO_set_locking_callback(lock_callback);
-# if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L
-	CRYPTO_THREADID_set_callback(_set_thread_id);
-# else
-	CRYPTO_set_id_callback(id_callback);
-# endif
-
 	ERR_load_crypto_strings();
-#endif
 
 	return (ISC_R_SUCCESS);
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
- cleanup_mutexalloc:
-	mem_free(locks FILELINE);
-	locks = NULL;
-#endif
 	return (result);
 }
 
 void
 dst__openssl_destroy(void) {
-#if !defined(LIBRESSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x10100000L)
-	OPENSSL_cleanup();
-#else
 	/*
 	 * Sequence taken from apps_shutdown() in <apps/apps.h>.
 	 */
-#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
 	CONF_modules_free();
-#endif
 	OBJ_cleanup();
 	EVP_cleanup();
-#if (OPENSSL_VERSION_NUMBER >= 0x00907000L)
 	CRYPTO_cleanup_all_ex_data();
-#endif
 	ERR_clear_error();
-#if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L
-	ERR_remove_thread_state(NULL);
-#elif OPENSSL_VERSION_NUMBER < 0x10000000L || defined(LIBRESSL_VERSION_NUMBER)
 	ERR_remove_state(0);
-#endif
 	ERR_free_strings();
 
-	if (locks != NULL) {
-		CRYPTO_set_locking_callback(NULL);
-		DESTROYMUTEXBLOCK(locks, nlocks);
-		mem_free(locks FILELINE);
-		locks = NULL;
-	}
-#endif
 }
 
 static isc_result_t

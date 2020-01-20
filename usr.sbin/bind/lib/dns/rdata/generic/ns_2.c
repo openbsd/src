@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ns_2.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: ns_2.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:15:00 PST 2000 by bwelling */
 
@@ -168,8 +168,7 @@ tostruct_ns(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&ns->name, NULL);
-	RETERR(name_duporclone(&name, mctx, &ns->name));
-	ns->mctx = mctx;
+	RETERR(name_duporclone(&name, &ns->name));
 	return (ISC_R_SUCCESS);
 }
 
@@ -179,11 +178,7 @@ freestruct_ns(ARGS_FREESTRUCT) {
 
 	REQUIRE(source != NULL);
 
-	if (ns->mctx == NULL)
-		return;
-
-	dns_name_free(&ns->name, ns->mctx);
-	ns->mctx = NULL;
+	dns_name_free(&ns->name);
 }
 
 static inline isc_result_t

@@ -97,7 +97,7 @@ tostruct_ta(ARGS_TOSTRUCT) {
 	ds->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&ds->common, link);
 
-	return (generic_tostruct_ds(rdata, target, mctx));
+	return (generic_tostruct_ds(rdata, target));
 }
 
 static inline void
@@ -107,12 +107,8 @@ freestruct_ta(ARGS_FREESTRUCT) {
 	REQUIRE(ds != NULL);
 	REQUIRE(ds->common.rdtype == dns_rdatatype_ta);
 
-	if (ds->mctx == NULL)
-		return;
-
 	if (ds->digest != NULL)
-		isc_mem_free(ds->mctx, ds->digest);
-	ds->mctx = NULL;
+		free(ds->digest);
 }
 
 static inline isc_result_t

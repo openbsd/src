@@ -178,12 +178,11 @@ generic_tostruct_txt(ARGS_TOSTRUCT) {
 
 	dns_rdata_toregion(rdata, &r);
 	txt->txt_len = r.length;
-	txt->txt = mem_maybedup(mctx, r.base, r.length);
+	txt->txt = mem_maybedup(r.base, r.length);
 	if (txt->txt == NULL)
 		return (ISC_R_NOMEMORY);
 
 	txt->offset = 0;
-	txt->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -193,12 +192,8 @@ generic_freestruct_txt(ARGS_FREESTRUCT) {
 
 	REQUIRE(source != NULL);
 
-	if (txt->mctx == NULL)
-		return;
-
 	if (txt->txt != NULL)
-		isc_mem_free(txt->mctx, txt->txt);
-	txt->mctx = NULL;
+		free(txt->txt);
 }
 
 static inline isc_result_t
@@ -220,7 +215,7 @@ tostruct_txt(ARGS_TOSTRUCT) {
 	txt->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&txt->common, link);
 
-	return (generic_tostruct_txt(rdata, target, mctx));
+	return (generic_tostruct_txt(rdata, target));
 }
 
 static inline void

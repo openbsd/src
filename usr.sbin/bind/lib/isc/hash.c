@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.c,v 1.9 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: hash.c,v 1.10 2020/01/20 18:51:53 florian Exp $ */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
@@ -59,7 +59,7 @@ if advised of the possibility of such damage.
 #include <stdlib.h>
 
 #include <isc/hash.h>
-#include <isc/mem.h>
+
 #include <isc/magic.h>
 #include <isc/mutex.h>
 #include <isc/once.h>
@@ -88,7 +88,6 @@ typedef uint16_t hash_random_t;
 /*% isc hash structure */
 struct isc_hash {
 	unsigned int	magic;
-	isc_mem_t	*mctx;
 	isc_mutex_t	lock;
 	isc_boolean_t	initialized;
 	isc_refcount_t	refcnt;
@@ -137,7 +136,7 @@ static unsigned char maptolower[] = {
 };
 
 isc_result_t
-isc_hash_ctxcreate(isc_mem_t *mctx, size_t limit, isc_hash_t **hctxp)
+isc_hash_ctxcreate(size_t limit, isc_hash_t **hctxp)
 {
 	isc_result_t result;
 	isc_hash_t *hctx;
@@ -145,7 +144,6 @@ isc_hash_ctxcreate(isc_mem_t *mctx, size_t limit, isc_hash_t **hctxp)
 	hash_random_t *rv;
 	hash_accum_t overflow_limit;
 
-	REQUIRE(mctx != NULL);
 	REQUIRE(hctxp != NULL && *hctxp == NULL);
 
 	/*
@@ -158,12 +156,12 @@ isc_hash_ctxcreate(isc_mem_t *mctx, size_t limit, isc_hash_t **hctxp)
 	if (overflow_limit < (limit + 1) * 0xff)
 		return (ISC_R_RANGE);
 
-	hctx = isc_mem_get(mctx, sizeof(isc_hash_t));
+	hctx = malloc(sizeof(isc_hash_t));
 	if (hctx == NULL)
 		return (ISC_R_NOMEMORY);
 
 	vlen = sizeof(hash_random_t) * (limit + 1);
-	rv = isc_mem_get(mctx, vlen);
+	rv = malloc(vlen);
 	if (rv == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto errout;
@@ -180,8 +178,6 @@ isc_hash_ctxcreate(isc_mem_t *mctx, size_t limit, isc_hash_t **hctxp)
 	 * From here down, no failures will/can occur.
 	 */
 	hctx->magic = HASH_MAGIC;
-	hctx->mctx = NULL;
-	isc_mem_attach(mctx, &hctx->mctx);
 	hctx->initialized = ISC_FALSE;
 	result = isc_refcount_init(&hctx->refcnt, 1);
 	if (result != ISC_R_SUCCESS)
@@ -196,9 +192,9 @@ isc_hash_ctxcreate(isc_mem_t *mctx, size_t limit, isc_hash_t **hctxp)
  cleanup_lock:
 	DESTROYLOCK(&hctx->lock);
  errout:
-	isc_mem_put(mctx, hctx, sizeof(isc_hash_t));
+	free(hctx);
 	if (rv != NULL)
-		isc_mem_put(mctx, rv, vlen);
+		free(rv);
 
 	return (result);
 }
@@ -209,10 +205,9 @@ initialize_lock(void) {
 }
 
 isc_result_t
-isc_hash_create(isc_mem_t *mctx, size_t limit) {
+isc_hash_create(size_t limit) {
 	isc_result_t result = ISC_R_SUCCESS;
 
-	REQUIRE(mctx != NULL);
 	INSIST(hash == NULL);
 
 	RUNTIME_CHECK(isc_once_do(&once, initialize_lock) == ISC_R_SUCCESS);
@@ -220,7 +215,7 @@ isc_hash_create(isc_mem_t *mctx, size_t limit) {
 	LOCK(&createlock);
 
 	if (hash == NULL)
-		result = isc_hash_ctxcreate(mctx, limit, &hash);
+		result = isc_hash_ctxcreate(limit, &hash);
 
 	UNLOCK(&createlock);
 
@@ -260,7 +255,6 @@ isc_hash_ctxattach(isc_hash_t *hctx, isc_hash_t **hctxp) {
 static void
 destroy(isc_hash_t **hctxp) {
 	isc_hash_t *hctx;
-	isc_mem_t *mctx;
 
 	REQUIRE(hctxp != NULL && *hctxp != NULL);
 	hctx = *hctxp;
@@ -270,17 +264,15 @@ destroy(isc_hash_t **hctxp) {
 
 	isc_refcount_destroy(&hctx->refcnt);
 
-	mctx = hctx->mctx;
 	if (hctx->rndvector != NULL)
-		isc_mem_put(mctx, hctx->rndvector, hctx->vectorlen);
+		free(hctx->rndvector);
 
 	UNLOCK(&hctx->lock);
 
 	DESTROYLOCK(&hctx->lock);
 
 	memset(hctx, 0, sizeof(isc_hash_t));
-	isc_mem_put(mctx, hctx, sizeof(isc_hash_t));
-	isc_mem_detach(&mctx);
+	free(hctx);
 }
 
 void

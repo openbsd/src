@@ -33,7 +33,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $Id: dst_parse.c,v 1.8 2020/01/20 18:49:45 florian Exp $
+ * $Id: dst_parse.c,v 1.9 2020/01/20 18:51:52 florian Exp $
  */
 
 #include <config.h>
@@ -43,7 +43,7 @@
 #include <isc/file.h>
 #include <isc/fsaccess.h>
 #include <isc/lex.h>
-#include <isc/mem.h>
+
 
 #include <isc/stdtime.h>
 #include <string.h>
@@ -341,7 +341,7 @@ check_data(const dst_private_t *priv, const unsigned int alg,
 }
 
 void
-dst__privstruct_free(dst_private_t *priv, isc_mem_t *mctx) {
+dst__privstruct_free(dst_private_t *priv) {
 	int i;
 
 	if (priv == NULL)
@@ -350,14 +350,14 @@ dst__privstruct_free(dst_private_t *priv, isc_mem_t *mctx) {
 		if (priv->elements[i].data == NULL)
 			continue;
 		memset(priv->elements[i].data, 0, MAXFIELDSIZE);
-		isc_mem_put(mctx, priv->elements[i].data, MAXFIELDSIZE);
+		free(priv->elements[i].data);
 	}
 	priv->nelements = 0;
 }
 
 isc_result_t
 dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
-		      isc_mem_t *mctx, dst_private_t *priv)
+		      dst_private_t *priv)
 {
 	int n = 0, major, minor, check;
 	isc_buffer_t b;
@@ -516,7 +516,7 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 
 		priv->elements[n].tag = tag;
 
-		data = (unsigned char *) isc_mem_get(mctx, MAXFIELDSIZE);
+		data = (unsigned char *) malloc(MAXFIELDSIZE);
 		if (data == NULL)
 			goto fail;
 
@@ -556,9 +556,9 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 	return (ISC_R_SUCCESS);
 
 fail:
-	dst__privstruct_free(priv, mctx);
+	dst__privstruct_free(priv);
 	if (data != NULL)
-		isc_mem_put(mctx, data, MAXFIELDSIZE);
+		free(data);
 
 	return (ret);
 }

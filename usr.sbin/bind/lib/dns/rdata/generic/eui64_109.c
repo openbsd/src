@@ -141,8 +141,6 @@ tostruct_eui64(ARGS_TOSTRUCT) {
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length == 8);
 
-	UNUSED(mctx);
-
 	eui64->common.rdclass = rdata->rdclass;
 	eui64->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&eui64->common, link);

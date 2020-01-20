@@ -259,7 +259,7 @@ tostruct_doa(ARGS_TOSTRUCT) {
 	doa->mediatype_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	INSIST(doa->mediatype_len <= region.length);
-	doa->mediatype = mem_maybedup(mctx, region.base, doa->mediatype_len);
+	doa->mediatype = mem_maybedup(region.base, doa->mediatype_len);
 	if (doa->mediatype == NULL) {
 		goto cleanup;
 	}
@@ -271,21 +271,18 @@ tostruct_doa(ARGS_TOSTRUCT) {
 	doa->data_len = region.length;
 	doa->data = NULL;
 	if (doa->data_len > 0) {
-		doa->data = mem_maybedup(mctx, region.base, doa->data_len);
+		doa->data = mem_maybedup(region.base, doa->data_len);
 		if (doa->data == NULL) {
 			goto cleanup;
 		}
 		isc_region_consume(&region, doa->data_len);
 	}
 
-	doa->mctx = mctx;
-
 	return (ISC_R_SUCCESS);
 
 cleanup:
-	if (mctx != NULL && doa->mediatype != NULL) {
-		isc_mem_free(mctx, doa->mediatype);
-	}
+	free(doa->mediatype);
+
 	return (ISC_R_NOMEMORY);
 }
 
@@ -296,18 +293,8 @@ freestruct_doa(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(doa->common.rdtype == dns_rdatatype_doa);
 
-	if (doa->mctx == NULL) {
-		return;
-	}
-
-	if (doa->mediatype != NULL) {
-		isc_mem_free(doa->mctx, doa->mediatype);
-	}
-	if (doa->data != NULL) {
-		isc_mem_free(doa->mctx, doa->data);
-	}
-
-	doa->mctx = NULL;
+	free(doa->mediatype);
+	free(doa->data);
 }
 
 static inline isc_result_t

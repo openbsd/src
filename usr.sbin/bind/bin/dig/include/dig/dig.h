@@ -29,7 +29,7 @@
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
 #include <isc/list.h>
-#include <isc/mem.h>
+
 
 #include <isc/sockaddr.h>
 #include <isc/socket.h>
@@ -268,7 +268,6 @@ extern isc_boolean_t check_ra, have_ipv4, have_ipv6, specified_source,
 	usesearch, showsearch, qr;
 extern in_port_t port;
 extern unsigned int timeout;
-extern isc_mem_t *mctx;
 extern int sendcount;
 extern int ndots;
 extern int lookup_counter;
@@ -287,7 +286,7 @@ extern isc_boolean_t validated;
 extern isc_taskmgr_t *taskmgr;
 extern isc_task_t *global_task;
 extern isc_boolean_t free_now;
-extern isc_boolean_t debugging, debugtiming, memdebugging;
+extern isc_boolean_t debugging, debugtiming;
 extern isc_boolean_t keep_open;
 
 extern char *progname;

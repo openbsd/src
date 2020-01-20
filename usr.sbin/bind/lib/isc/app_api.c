@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app_api.c,v 1.2 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: app_api.c,v 1.3 2020/01/20 18:51:53 florian Exp $ */
 
 #include <config.h>
 
@@ -55,16 +55,16 @@ isc_app_register(isc_appctxcreatefunc_t createfunc) {
 }
 
 isc_result_t
-isc_appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp) {
+isc_appctx_create(isc_appctx_t **ctxp) {
 	isc_result_t result;
 
 	if (isc_bind9)
-		return (isc__appctx_create(mctx, ctxp));
+		return (isc__appctx_create(ctxp));
 
 	LOCK(&createlock);
 
 	REQUIRE(appctx_createfunc != NULL);
-	result = (*appctx_createfunc)(mctx, ctxp);
+	result = (*appctx_createfunc)(ctxp);
 
 	UNLOCK(&createlock);
 
@@ -104,16 +104,16 @@ isc_app_ctxrun(isc_appctx_t *ctx) {
 }
 
 isc_result_t
-isc_app_ctxonrun(isc_appctx_t *ctx, isc_mem_t *mctx,
+isc_app_ctxonrun(isc_appctx_t *ctx,
 		 isc_task_t *task, isc_taskaction_t action,
 		 void *arg)
 {
 	REQUIRE(ISCAPI_APPCTX_VALID(ctx));
 
 	if (isc_bind9)
-		return (isc__app_ctxonrun(ctx, mctx, task, action, arg));
+		return (isc__app_ctxonrun(ctx, task, action, arg));
 
-	return (ctx->methods->ctxonrun(ctx, mctx, task, action, arg));
+	return (ctx->methods->ctxonrun(ctx, task, action, arg));
 }
 
 isc_result_t
@@ -188,11 +188,11 @@ isc_app_start(void) {
 }
 
 isc_result_t
-isc_app_onrun(isc_mem_t *mctx, isc_task_t *task,
+isc_app_onrun(isc_task_t *task,
 	       isc_taskaction_t action, void *arg)
 {
 	if (isc_bind9)
-		return (isc__app_onrun(mctx, task, action, arg));
+		return (isc__app_onrun(task, action, arg));
 
 	return (ISC_R_NOTIMPLEMENTED);
 }

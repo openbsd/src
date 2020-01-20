@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: uri_256.c,v 1.2 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: uri_256.c,v 1.3 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef GENERIC_URI_256_C
 #define GENERIC_URI_256_C 1
@@ -236,11 +236,10 @@ tostruct_uri(ARGS_TOSTRUCT) {
 	 * Target URI
 	 */
 	uri->tgt_len = sr.length;
-	uri->target = mem_maybedup(mctx, sr.base, sr.length);
+	uri->target = mem_maybedup(sr.base, sr.length);
 	if (uri->target == NULL)
 		return (ISC_R_NOMEMORY);
 
-	uri->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -251,12 +250,8 @@ freestruct_uri(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(uri->common.rdtype == dns_rdatatype_uri);
 
-	if (uri->mctx == NULL)
-		return;
-
 	if (uri->target != NULL)
-		isc_mem_free(uri->mctx, uri->target);
-	uri->mctx = NULL;
+		free(uri->target);
 }
 
 static inline isc_result_t

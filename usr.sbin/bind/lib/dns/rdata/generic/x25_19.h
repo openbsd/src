@@ -17,14 +17,13 @@
 #ifndef GENERIC_X25_19_H
 #define GENERIC_X25_19_H 1
 
-/* $Id: x25_19.h,v 1.4 2020/01/09 18:17:18 florian Exp $ */
+/* $Id: x25_19.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 /*!
  *  \brief Per RFC1183 */
 
 typedef struct dns_rdata_x25 {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	unsigned char		*x25;
 	uint8_t		x25_len;
 } dns_rdata_x25_t;

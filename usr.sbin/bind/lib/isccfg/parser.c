@@ -25,7 +25,7 @@
 #include <isc/formatcheck.h>
 #include <isc/lex.h>
 #include <isc/log.h>
-#include <isc/mem.h>
+
 #include <isc/net.h>
 #include <isc/netaddr.h>
 #include <isc/netscope.h>
@@ -235,8 +235,7 @@ cfg_create_tuple(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 		nfields++;
 
 	CHECK(cfg_create_obj(pctx, type, &obj));
-	obj->value.tuple = isc_mem_get(pctx->mctx,
-				       nfields * sizeof(cfg_obj_t *));
+	obj->value.tuple = malloc(nfields * sizeof(cfg_obj_t *));
 	if (obj->value.tuple == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto cleanup;
@@ -248,7 +247,7 @@ cfg_create_tuple(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 
  cleanup:
 	if (obj != NULL)
-		isc_mem_put(pctx->mctx, obj, sizeof(*obj));
+		free(obj);
 	return (result);
 }
 
@@ -332,8 +331,7 @@ free_tuple(cfg_parser_t *pctx, cfg_obj_t *obj) {
 		CLEANUP_OBJ(obj->value.tuple[i]);
 		nfields++;
 	}
-	isc_mem_put(pctx->mctx, obj->value.tuple,
-		    nfields * sizeof(cfg_obj_t *));
+	free(obj->value.tuple);
 }
 
 isc_boolean_t
@@ -425,24 +423,20 @@ static cfg_type_t cfg_type_filelist = {
 };
 
 isc_result_t
-cfg_parser_create(isc_mem_t *mctx, isc_log_t *lctx, cfg_parser_t **ret) {
+cfg_parser_create(isc_log_t *lctx, cfg_parser_t **ret) {
 	isc_result_t result;
 	cfg_parser_t *pctx;
 	isc_lexspecials_t specials;
 
-	REQUIRE(mctx != NULL);
 	REQUIRE(ret != NULL && *ret == NULL);
 
-	pctx = isc_mem_get(mctx, sizeof(*pctx));
+	pctx = malloc(sizeof(*pctx));
 	if (pctx == NULL)
 		return (ISC_R_NOMEMORY);
 
-	pctx->mctx = NULL;
-	isc_mem_attach(mctx, &pctx->mctx);
-
 	result = isc_refcount_init(&pctx->references, 1);
 	if (result != ISC_R_SUCCESS) {
-		isc_mem_putanddetach(&pctx->mctx, pctx, sizeof(*pctx));
+		free(pctx);
 		return (result);
 	}
 
@@ -468,7 +462,7 @@ cfg_parser_create(isc_mem_t *mctx, isc_log_t *lctx, cfg_parser_t **ret) {
 	specials['"'] = 1;
 	specials['!'] = 1;
 
-	CHECK(isc_lex_create(pctx->mctx, 1024, &pctx->lexer));
+	CHECK(isc_lex_create(1024, &pctx->lexer));
 
 	isc_lex_setspecials(pctx->lexer, specials);
 	isc_lex_setcomments(pctx->lexer, (ISC_LEXCOMMENT_C |
@@ -486,7 +480,7 @@ cfg_parser_create(isc_mem_t *mctx, isc_log_t *lctx, cfg_parser_t **ret) {
 		isc_lex_destroy(&pctx->lexer);
 	CLEANUP_OBJ(pctx->open_files);
 	CLEANUP_OBJ(pctx->closed_files);
-	isc_mem_putanddetach(&pctx->mctx, pctx, sizeof(*pctx));
+	free(pctx);
 	return (result);
 }
 
@@ -639,7 +633,7 @@ cfg_parser_destroy(cfg_parser_t **pctxp) {
 		 */
 		CLEANUP_OBJ(pctx->open_files);
 		CLEANUP_OBJ(pctx->closed_files);
-		isc_mem_putanddetach(&pctx->mctx, pctx, sizeof(*pctx));
+		free(pctx);
 	}
 }
 
@@ -875,9 +869,9 @@ create_string(cfg_parser_t *pctx, const char *contents, const cfg_type_t *type,
 	CHECK(cfg_create_obj(pctx, type, &obj));
 	len = strlen(contents);
 	obj->value.string.length = len;
-	obj->value.string.base = isc_mem_get(pctx->mctx, len + 1);
+	obj->value.string.base = malloc(len + 1);
 	if (obj->value.string.base == 0) {
-		isc_mem_put(pctx->mctx, obj, sizeof(*obj));
+		free(obj);
 		return (ISC_R_NOMEMORY);
 	}
 	memmove(obj->value.string.base, contents, len);
@@ -1053,8 +1047,8 @@ print_sstring(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 
 static void
 free_string(cfg_parser_t *pctx, cfg_obj_t *obj) {
-	isc_mem_put(pctx->mctx, obj->value.string.base,
-		    obj->value.string.length + 1);
+	UNUSED(pctx);
+	free(obj->value.string.base);
 }
 
 isc_boolean_t
@@ -1192,9 +1186,10 @@ cfg_create_list(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **obj) {
 
 static isc_result_t
 create_listelt(cfg_parser_t *pctx, cfg_listelt_t **eltp) {
+	UNUSED(pctx);
 	cfg_listelt_t *elt;
 
-	elt = isc_mem_get(pctx->mctx, sizeof(*elt));
+	elt = malloc(sizeof(*elt));
 	if (elt == NULL)
 		return (ISC_R_NOMEMORY);
 	elt->obj = NULL;
@@ -1206,7 +1201,7 @@ create_listelt(cfg_parser_t *pctx, cfg_listelt_t **eltp) {
 static void
 free_list_elt(cfg_parser_t *pctx, cfg_listelt_t *elt) {
 	cfg_obj_destroy(pctx, &elt->obj);
-	isc_mem_put(pctx->mctx, elt, sizeof(*elt));
+	free(elt);
 }
 
 static void
@@ -1245,7 +1240,7 @@ cfg_parse_listelt(cfg_parser_t *pctx, const cfg_type_t *elttype,
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	isc_mem_put(pctx->mctx, elt, sizeof(*elt));
+	free(elt);
 	return (result);
 }
 
@@ -1587,8 +1582,7 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 					cfg_parser_error(pctx, CFG_LOG_NEAR,
 						     "isc_symtab_define(%s) "
 						     "failed", clause->name);
-					isc_mem_put(pctx->mctx, list,
-						    sizeof(cfg_list_t));
+					free(list);
 					goto cleanup;
 				}
 			} else {
@@ -1952,7 +1946,7 @@ parse_token(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 
 	isc_lex_getlasttokentext(pctx->lexer, &pctx->token, &r);
 
-	obj->value.string.base = isc_mem_get(pctx->mctx, r.length + 1);
+	obj->value.string.base = malloc(r.length + 1);
 	if (obj->value.string.base == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto cleanup;
@@ -1965,7 +1959,7 @@ parse_token(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 
  cleanup:
 	if (obj != NULL)
-		isc_mem_put(pctx->mctx, obj, sizeof(*obj));
+		free(obj);
 	return (result);
 }
 
@@ -2812,7 +2806,7 @@ cfg_create_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	REQUIRE(type != NULL);
 	REQUIRE(ret != NULL && *ret == NULL);
 
-	obj = isc_mem_get(pctx->mctx, sizeof(cfg_obj_t));
+	obj = malloc(sizeof(cfg_obj_t));
 	if (obj == NULL)
 		return (ISC_R_NOMEMORY);
 	obj->type = type;
@@ -2820,7 +2814,7 @@ cfg_create_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	obj->line = pctx->line;
 	result = isc_refcount_init(&obj->references, 1);
 	if (result != ISC_R_SUCCESS) {
-		isc_mem_put(pctx->mctx, obj, sizeof(cfg_obj_t));
+		free(obj);
 		return (result);
 	}
 	*ret = obj;
@@ -2849,7 +2843,7 @@ create_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	cfg_obj_t *obj = NULL;
 
 	CHECK(cfg_create_obj(pctx, type, &obj));
-	CHECK(isc_symtab_create(pctx->mctx, 5, /* XXX */
+	CHECK(isc_symtab_create(5, /* XXX */
 				map_symtabitem_destroy,
 				pctx, ISC_FALSE, &symtab));
 	obj->value.map.symtab = symtab;
@@ -2860,7 +2854,7 @@ create_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 
  cleanup:
 	if (obj != NULL)
-		isc_mem_put(pctx->mctx, obj, sizeof(*obj));
+		free(obj);
 	return (result);
 }
 
@@ -2896,7 +2890,7 @@ cfg_obj_destroy(cfg_parser_t *pctx, cfg_obj_t **objp) {
 	if (refs == 0) {
 		obj->type->rep->free(pctx, obj);
 		isc_refcount_destroy(&obj->references);
-		isc_mem_put(pctx->mctx, obj, sizeof(cfg_obj_t));
+		free(obj);
 	}
 	*objp = NULL;
 }

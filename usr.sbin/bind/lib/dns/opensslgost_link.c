@@ -19,7 +19,7 @@
 #if defined(OPENSSL) && defined(HAVE_OPENSSL_GOST)
 
 
-#include <isc/mem.h>
+
 #include <isc/safe.h>
 #include <string.h>
 #include <isc/util.h>
@@ -374,7 +374,7 @@ opensslgost_tofile(const dst_key_t *key, const char *directory) {
 	pkey = key->keydata.pkey;
 
 	len = i2d_PrivateKey(pkey, NULL);
-	der = isc_mem_get(key->mctx, (size_t) len);
+	der = malloc((size_t) len);
 	if (der == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -393,7 +393,7 @@ opensslgost_tofile(const dst_key_t *key, const char *directory) {
 	result = dst__privstruct_writefile(key, &priv, directory);
  fail:
 	if (der != NULL)
-		isc_mem_put(key->mctx, der, (size_t) len);
+		free(der);
 	return (result);
 }
 
@@ -424,7 +424,7 @@ opensslgost_tofile(const dst_key_t *key, const char *directory) {
 	if (privkey == NULL)
 		return (ISC_R_FAILURE);
 
-	buf = isc_mem_get(key->mctx, BN_num_bytes(privkey));
+	buf = malloc(BN_num_bytes(privkey));
 	if (buf == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -437,7 +437,7 @@ opensslgost_tofile(const dst_key_t *key, const char *directory) {
 	ret = dst__privstruct_writefile(key, &priv, directory);
 
 	if (buf != NULL)
-		isc_mem_put(key->mctx, buf, BN_num_bytes(privkey));
+		free(buf);
 	return (ret);
 }
 #endif
@@ -458,7 +458,6 @@ static isc_result_t
 opensslgost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t ret;
-	isc_mem_t *mctx = key->mctx;
 	EVP_PKEY *pkey = NULL;
 	EC_KEY *eckey;
 	const EC_POINT *pubkey = NULL;
@@ -466,7 +465,7 @@ opensslgost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	const unsigned char *p;
 
 	/* read private key file */
-	ret = dst__privstruct_parse(key, DST_ALG_ECCGOST, lexer, mctx, &priv);
+	ret = dst__privstruct_parse(key, DST_ALG_ECCGOST, lexer, &priv);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 
@@ -478,7 +477,7 @@ opensslgost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		key->keydata.pkey = pub->keydata.pkey;
 		pub->keydata.pkey = NULL;
 		key->key_size = pub->key_size;
-		dst__privstruct_free(&priv, mctx);
+		dst__privstruct_free(&priv);
 		isc_safe_memwipe(&priv, sizeof(priv));
 		return (ISC_R_SUCCESS);
 	}
@@ -530,7 +529,7 @@ opensslgost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	}
 	key->keydata.pkey = pkey;
 	key->key_size = EVP_PKEY_bits(pkey);
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ISC_R_SUCCESS);
 
@@ -540,7 +539,7 @@ opensslgost_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	if (pkey != NULL)
 		EVP_PKEY_free(pkey);
 	opensslgost_destroy(key);
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 	return (ret);
 }

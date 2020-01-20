@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.c,v 1.7 2020/01/20 18:46:57 florian Exp $ */
+/* $Id: lib.c,v 1.8 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file */
 
@@ -23,7 +23,7 @@
 #include <stddef.h>
 
 #include <isc/hash.h>
-#include <isc/mem.h>
+
 
 #include <isc/mutex.h>
 #include <isc/once.h>
@@ -48,7 +48,6 @@ unsigned int			dns_pps = 0U;
  ***/
 
 static isc_once_t init_once = ISC_ONCE_INIT;
-static isc_mem_t *dns_g_mctx = NULL;
 static isc_boolean_t initialize_done = ISC_FALSE;
 static isc_mutex_t reflock;
 static unsigned int references = 0;
@@ -59,15 +58,12 @@ initialize(void) {
 
 	REQUIRE(initialize_done == ISC_FALSE);
 
-	result = isc_mem_create(0, 0, &dns_g_mctx);
+	dns_result_register();
+	result = isc_hash_create(DNS_NAME_MAXWIRE);
 	if (result != ISC_R_SUCCESS)
 		return;
-	dns_result_register();
-	result = isc_hash_create(dns_g_mctx, DNS_NAME_MAXWIRE);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup_mctx;
 
-	result = dst_lib_init(dns_g_mctx);
+	result = dst_lib_init();
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_hash;
 
@@ -82,9 +78,6 @@ initialize(void) {
 	dst_lib_destroy();
   cleanup_hash:
 	isc_hash_destroy();
-  cleanup_mctx:
-	if (dns_g_mctx != NULL)
-		isc_mem_detach(&dns_g_mctx);
 }
 
 isc_result_t
@@ -124,6 +117,4 @@ dns_lib_shutdown(void) {
 
 	dst_lib_destroy();
 	isc_hash_destroy();
-	if (dns_g_mctx != NULL)
-		isc_mem_detach(&dns_g_mctx);
 }

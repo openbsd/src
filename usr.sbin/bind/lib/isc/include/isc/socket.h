@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.h,v 1.10 2020/01/20 18:43:21 florian Exp $ */
+/* $Id: socket.h,v 1.11 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -968,14 +968,14 @@ isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
 /*@}*/
 
 isc_result_t
-isc_socketmgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
+isc_socketmgr_createinctx(isc_appctx_t *actx,
 			  isc_socketmgr_t **managerp);
 
 isc_result_t
-isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp);
+isc_socketmgr_create(isc_socketmgr_t **managerp);
 
 isc_result_t
-isc_socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
+isc_socketmgr_create2(isc_socketmgr_t **managerp,
 		      unsigned int maxsocks);
 /*%<
  * Create a socket manager.  If "maxsocks" is non-zero, it specifies the
@@ -1102,7 +1102,7 @@ isc_socket_dscp(isc_socket_t *sock, isc_dscp_t dscp);
  */
 
 isc_socketevent_t *
-isc_socket_socketevent(isc_mem_t *mctx, void *sender,
+isc_socket_socketevent(void *sender,
 		       isc_eventtype_t eventtype, isc_taskaction_t action,
 		       void *arg);
 /*%<
@@ -1183,7 +1183,7 @@ isc__socketmgr_maxudp(isc_socketmgr_t *mgr, int maxudp);
  * See isc_socketmgr_create() above.
  */
 typedef isc_result_t
-(*isc_socketmgrcreatefunc_t)(isc_mem_t *mctx, isc_socketmgr_t **managerp);
+(*isc_socketmgrcreatefunc_t)(isc_socketmgr_t **managerp);
 
 isc_result_t
 isc_socket_register(isc_socketmgrcreatefunc_t createfunc);

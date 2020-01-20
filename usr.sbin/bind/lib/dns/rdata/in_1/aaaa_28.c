@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aaaa_28.c,v 1.3 2019/12/17 01:46:34 sthen Exp $ */
+/* $Id: aaaa_28.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -155,8 +155,6 @@ tostruct_in_aaaa(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length == 16);
-
-	UNUSED(mctx);
 
 	aaaa->common.rdclass = rdata->rdclass;
 	aaaa->common.rdtype = rdata->type;

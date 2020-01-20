@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec.c,v 1.5 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: nsec.c,v 1.6 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file */
 
@@ -109,7 +109,7 @@ dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type) {
 	REQUIRE(nsec->type == dns_rdatatype_nsec);
 
 	/* This should never fail */
-	result = dns_rdata_tostruct(nsec, &nsecstruct, NULL);
+	result = dns_rdata_tostruct(nsec, &nsecstruct);
 	INSIST(result == ISC_R_SUCCESS);
 
 	present = ISC_FALSE;
@@ -235,7 +235,7 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, dns_name_t *name,
 		return (ISC_R_IGNORE);
 	}
 
-	result = dns_rdata_tostruct(&rdata, &nsec, NULL);
+	result = dns_rdata_tostruct(&rdata, &nsec);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	relation = dns_name_fullcompare(&nsec.next, name, &order, &nlabels);

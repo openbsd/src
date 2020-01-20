@@ -34,7 +34,7 @@
 #include <isc/app.h>
 #include <isc/boolean.h>
 #include <isc/condition.h>
-#include <isc/mem.h>
+
 #include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/event.h>
@@ -62,7 +62,7 @@
  */
 isc_result_t isc__app_start(void);
 isc_result_t isc__app_ctxstart(isc_appctx_t *ctx);
-isc_result_t isc__app_onrun(isc_mem_t *mctx, isc_task_t *task,
+isc_result_t isc__app_onrun(isc_task_t *task,
 			    isc_taskaction_t action, void *arg);
 isc_result_t isc__app_ctxrun(isc_appctx_t *ctx);
 isc_result_t isc__app_run(void);
@@ -74,12 +74,12 @@ void isc__app_ctxfinish(isc_appctx_t *ctx);
 void isc__app_finish(void);
 void isc__app_block(void);
 void isc__app_unblock(void);
-isc_result_t isc__appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp);
+isc_result_t isc__appctx_create(isc_appctx_t **ctxp);
 void isc__appctx_destroy(isc_appctx_t **ctxp);
 void isc__appctx_settaskmgr(isc_appctx_t *ctx, isc_taskmgr_t *taskmgr);
 void isc__appctx_setsocketmgr(isc_appctx_t *ctx, isc_socketmgr_t *socketmgr);
 void isc__appctx_settimermgr(isc_appctx_t *ctx, isc_timermgr_t *timermgr);
-isc_result_t isc__app_ctxonrun(isc_appctx_t *ctx, isc_mem_t *mctx,
+isc_result_t isc__app_ctxonrun(isc_appctx_t *ctx,
 			       isc_task_t *task, isc_taskaction_t action,
 			       void *arg);
 
@@ -92,7 +92,6 @@ isc_result_t isc__app_ctxonrun(isc_appctx_t *ctx, isc_mem_t *mctx,
 
 typedef struct isc__appctx {
 	isc_appctx_t		common;
-	isc_mem_t		*mctx;
 	isc_mutex_t		lock;
 	isc_eventlist_t		on_run;
 	isc_boolean_t		shutdown_requested;
@@ -299,22 +298,21 @@ isc__app_start(void) {
 	isc_g_appctx.common.impmagic = APPCTX_MAGIC;
 	isc_g_appctx.common.magic = ISCAPI_APPCTX_MAGIC;
 	isc_g_appctx.common.methods = &appmethods.methods;
-	isc_g_appctx.mctx = NULL;
 	/* The remaining members will be initialized in ctxstart() */
 
 	return (isc__app_ctxstart((isc_appctx_t *)&isc_g_appctx));
 }
 
 isc_result_t
-isc__app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
+isc__app_onrun(isc_task_t *task, isc_taskaction_t action,
 	      void *arg)
 {
-	return (isc__app_ctxonrun((isc_appctx_t *)&isc_g_appctx, mctx,
+	return (isc__app_ctxonrun((isc_appctx_t *)&isc_g_appctx,
 				  task, action, arg));
 }
 
 isc_result_t
-isc__app_ctxonrun(isc_appctx_t *ctx0, isc_mem_t *mctx, isc_task_t *task,
+isc__app_ctxonrun(isc_appctx_t *ctx0, isc_task_t *task,
 		  isc_taskaction_t action, void *arg)
 {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
@@ -334,7 +332,7 @@ isc__app_ctxonrun(isc_appctx_t *ctx0, isc_mem_t *mctx, isc_task_t *task,
 	 * in the event's "sender" field.
 	 */
 	isc_task_attach(task, &cloned_task);
-	event = isc_event_allocate(mctx, cloned_task, ISC_APPEVENT_SHUTDOWN,
+	event = isc_event_allocate(cloned_task, ISC_APPEVENT_SHUTDOWN,
 				   action, arg, sizeof(*event));
 	if (event == NULL) {
 		isc_task_detach(&cloned_task);
@@ -640,22 +638,18 @@ isc__app_unblock(void) {
 }
 
 isc_result_t
-isc__appctx_create(isc_mem_t *mctx, isc_appctx_t **ctxp) {
+isc__appctx_create(isc_appctx_t **ctxp) {
 	isc__appctx_t *ctx;
 
-	REQUIRE(mctx != NULL);
 	REQUIRE(ctxp != NULL && *ctxp == NULL);
 
-	ctx = isc_mem_get(mctx, sizeof(*ctx));
+	ctx = malloc(sizeof(*ctx));
 	if (ctx == NULL)
 		return (ISC_R_NOMEMORY);
 
 	ctx->common.impmagic = APPCTX_MAGIC;
 	ctx->common.magic = ISCAPI_APPCTX_MAGIC;
 	ctx->common.methods = &appmethods.methods;
-
-	ctx->mctx = NULL;
-	isc_mem_attach(mctx, &ctx->mctx);
 
 	ctx->taskmgr = NULL;
 	ctx->socketmgr = NULL;
@@ -674,7 +668,7 @@ isc__appctx_destroy(isc_appctx_t **ctxp) {
 	ctx = (isc__appctx_t *)*ctxp;
 	REQUIRE(VALID_APPCTX(ctx));
 
-	isc_mem_putanddetach(&ctx->mctx, ctx, sizeof(*ctx));
+	free(ctx);
 
 	*ctxp = NULL;
 }

@@ -14,18 +14,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.11 2020/01/20 18:46:57 florian Exp $ */
+/* $Id: timer.c,v 1.12 2020/01/20 18:51:53 florian Exp $ */
 
 /*! \file */
 
 #include <config.h>
-
+#include <stdlib.h>
 #include <isc/app.h>
 #include <isc/condition.h>
 #include <isc/heap.h>
 #include <isc/log.h>
 #include <isc/magic.h>
-#include <isc/mem.h>
+
 #include <isc/msgs.h>
 #include <isc/once.h>
 #include <isc/platform.h>
@@ -87,7 +87,6 @@ struct isc__timer {
 struct isc__timermgr {
 	/* Not locked. */
 	isc_timermgr_t			common;
-	isc_mem_t *			mctx;
 	isc_mutex_t			lock;
 	/* Locked by manager lock. */
 	isc_boolean_t			done;
@@ -122,7 +121,7 @@ isc__timer_attach(isc_timer_t *timer0, isc_timer_t **timerp);
 void
 isc__timer_detach(isc_timer_t **timerp);
 isc_result_t
-isc__timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
+isc__timermgr_create(isc_timermgr_t **managerp);
 void
 isc_timermgr_poke(isc_timermgr_t *manager0);
 void
@@ -286,7 +285,7 @@ destroy(isc__timer_t *timer) {
 	DESTROYLOCK(&timer->lock);
 	timer->common.impmagic = 0;
 	timer->common.magic = 0;
-	isc_mem_put(manager->mctx, timer, sizeof(*timer));
+	free(timer);
 }
 
 isc_result_t
@@ -336,7 +335,7 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 	}
 
 
-	timer = isc_mem_get(manager->mctx, sizeof(*timer));
+	timer = malloc(sizeof(*timer));
 	if (timer == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -346,7 +345,7 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 	if (type == isc_timertype_once && !interval_iszero(interval)) {
 		result = isc_time_add(&now, interval, &timer->idle);
 		if (result != ISC_R_SUCCESS) {
-			isc_mem_put(manager->mctx, timer, sizeof(*timer));
+			free(timer);
 			return (result);
 		}
 	} else
@@ -373,7 +372,7 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 	result = isc_mutex_init(&timer->lock);
 	if (result != ISC_R_SUCCESS) {
 		isc_task_detach(&timer->task);
-		isc_mem_put(manager->mctx, timer, sizeof(*timer));
+		free(timer);
 		return (result);
 	}
 	ISC_LINK_INIT(timer, link);
@@ -402,7 +401,7 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 		timer->common.magic = 0;
 		DESTROYLOCK(&timer->lock);
 		isc_task_detach(&timer->task);
-		isc_mem_put(manager->mctx, timer, sizeof(*timer));
+		free(timer);
 		return (result);
 	}
 
@@ -645,7 +644,7 @@ dispatch(isc__timermgr_t *manager, isc_time_t *now) {
 				/*
 				 * XXX We could preallocate this event.
 				 */
-				event = (isc_timerevent_t *)isc_event_allocate(manager->mctx,
+				event = (isc_timerevent_t *)isc_event_allocate(
 							   timer,
 							   type,
 							   timer->action,
@@ -705,7 +704,7 @@ set_index(void *what, unsigned int index) {
 }
 
 isc_result_t
-isc__timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
+isc__timermgr_create(isc_timermgr_t **managerp) {
 	isc__timermgr_t *manager;
 	isc_result_t result;
 
@@ -721,32 +720,30 @@ isc__timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
 		return (ISC_R_SUCCESS);
 	}
 
-	manager = isc_mem_get(mctx, sizeof(*manager));
+	manager = malloc(sizeof(*manager));
 	if (manager == NULL)
 		return (ISC_R_NOMEMORY);
 
 	manager->common.impmagic = TIMER_MANAGER_MAGIC;
 	manager->common.magic = ISCAPI_TIMERMGR_MAGIC;
 	manager->common.methods = (isc_timermgrmethods_t *)&timermgrmethods;
-	manager->mctx = NULL;
 	manager->done = ISC_FALSE;
 	INIT_LIST(manager->timers);
 	manager->nscheduled = 0;
 	isc_time_settoepoch(&manager->due);
 	manager->heap = NULL;
-	result = isc_heap_create(mctx, sooner, set_index, 0, &manager->heap);
+	result = isc_heap_create(sooner, set_index, 0, &manager->heap);
 	if (result != ISC_R_SUCCESS) {
 		INSIST(result == ISC_R_NOMEMORY);
-		isc_mem_put(mctx, manager, sizeof(*manager));
+		free(manager);
 		return (ISC_R_NOMEMORY);
 	}
 	result = isc_mutex_init(&manager->lock);
 	if (result != ISC_R_SUCCESS) {
 		isc_heap_destroy(&manager->heap);
-		isc_mem_put(mctx, manager, sizeof(*manager));
+		free(manager);
 		return (result);
 	}
-	isc_mem_attach(mctx, &manager->mctx);
 	manager->refs = 1;
 	timermgr = manager;
 
@@ -763,7 +760,6 @@ isc_timermgr_poke(isc_timermgr_t *manager0) {
 void
 isc__timermgr_destroy(isc_timermgr_t **managerp) {
 	isc__timermgr_t *manager;
-	isc_mem_t *mctx;
 
 	/*
 	 * Destroy a timer manager.
@@ -797,9 +793,7 @@ isc__timermgr_destroy(isc_timermgr_t **managerp) {
 	isc_heap_destroy(&manager->heap);
 	manager->common.impmagic = 0;
 	manager->common.magic = 0;
-	mctx = manager->mctx;
-	isc_mem_put(mctx, manager, sizeof(*manager));
-	isc_mem_detach(&mctx);
+	free(manager);
 
 	*managerp = NULL;
 
@@ -862,7 +856,7 @@ isc_timer_register(isc_timermgrcreatefunc_t createfunc) {
 }
 
 isc_result_t
-isc_timermgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
+isc_timermgr_createinctx(isc_appctx_t *actx,
 			 isc_timermgr_t **managerp)
 {
 	isc_result_t result;
@@ -870,7 +864,7 @@ isc_timermgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
 	LOCK(&createlock);
 
 	REQUIRE(timermgr_createfunc != NULL);
-	result = (*timermgr_createfunc)(mctx, managerp);
+	result = (*timermgr_createfunc)(managerp);
 
 	UNLOCK(&createlock);
 
@@ -881,16 +875,16 @@ isc_timermgr_createinctx(isc_mem_t *mctx, isc_appctx_t *actx,
 }
 
 isc_result_t
-isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
+isc_timermgr_create(isc_timermgr_t **managerp) {
 	isc_result_t result;
 
 	if (isc_bind9)
-		return (isc__timermgr_create(mctx, managerp));
+		return (isc__timermgr_create(managerp));
 
 	LOCK(&createlock);
 
 	REQUIRE(timermgr_createfunc != NULL);
-	result = (*timermgr_createfunc)(mctx, managerp);
+	result = (*timermgr_createfunc)(managerp);
 
 	UNLOCK(&createlock);
 

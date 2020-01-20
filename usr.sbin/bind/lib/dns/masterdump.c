@@ -23,7 +23,7 @@
 #include <isc/event.h>
 #include <isc/file.h>
 #include <isc/magic.h>
-#include <isc/mem.h>
+
 
 #include <isc/stdio.h>
 #include <string.h>
@@ -729,13 +729,12 @@ isc_result_t
 dns_master_stylecreate(dns_master_style_t **stylep, unsigned int flags,
 		       unsigned int ttl_column, unsigned int class_column,
 		       unsigned int type_column, unsigned int rdata_column,
-		       unsigned int line_length, unsigned int tab_width,
-		       isc_mem_t *mctx)
+		       unsigned int line_length, unsigned int tab_width)
 {
 	return (dns_master_stylecreate2(stylep, flags, ttl_column,
 					class_column, type_column,
 					rdata_column, line_length,
-					tab_width, 0xffffffff, mctx));
+					tab_width, 0xffffffff));
 }
 
 isc_result_t
@@ -743,12 +742,12 @@ dns_master_stylecreate2(dns_master_style_t **stylep, unsigned int flags,
 			unsigned int ttl_column, unsigned int class_column,
 			unsigned int type_column, unsigned int rdata_column,
 			unsigned int line_length, unsigned int tab_width,
-			unsigned int split_width, isc_mem_t *mctx)
+			unsigned int split_width)
 {
 	dns_master_style_t *style;
 
 	REQUIRE(stylep != NULL && *stylep == NULL);
-	style = isc_mem_get(mctx, sizeof(*style));
+	style = malloc(sizeof(*style));
 	if (style == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -766,11 +765,11 @@ dns_master_stylecreate2(dns_master_style_t **stylep, unsigned int flags,
 }
 
 void
-dns_master_styledestroy(dns_master_style_t **stylep, isc_mem_t *mctx) {
+dns_master_styledestroy(dns_master_style_t **stylep) {
 	dns_master_style_t *style;
 
 	REQUIRE(stylep != NULL && *stylep != NULL);
 	style = *stylep;
 	*stylep = NULL;
-	isc_mem_put(mctx, style, sizeof(*style));
+	free(style);
 }

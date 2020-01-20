@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: hmac_link.c,v 1.6 2020/01/20 18:49:45 florian Exp $
+ * $Id: hmac_link.c,v 1.7 2020/01/20 18:51:52 florian Exp $
  */
 
 #include <config.h>
@@ -43,7 +43,7 @@
 #include <isc/hmacsha.h>
 #include <isc/md5.h>
 #include <isc/sha1.h>
-#include <isc/mem.h>
+
 #include <isc/safe.h>
 #include <string.h>
 #include <isc/util.h>
@@ -80,7 +80,7 @@ hmacsha1_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacsha1_t *hmacsha1ctx;
 	dst_hmacsha1_key_t *hkey = key->keydata.hmacsha1;
 
-	hmacsha1ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacsha1_t));
+	hmacsha1ctx = malloc(sizeof(isc_hmacsha1_t));
 	if (hmacsha1ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacsha1_init(hmacsha1ctx, hkey->key, ISC_SHA1_BLOCK_LENGTH);
@@ -94,7 +94,7 @@ hmacsha1_destroyctx(dst_context_t *dctx) {
 
 	if (hmacsha1ctx != NULL) {
 		isc_hmacsha1_invalidate(hmacsha1ctx);
-		isc_mem_put(dctx->mctx, hmacsha1ctx, sizeof(isc_hmacsha1_t));
+		free(hmacsha1ctx);
 		dctx->ctxdata.hmacsha1ctx = NULL;
 	}
 }
@@ -190,7 +190,7 @@ hmacsha1_destroy(dst_key_t *key) {
 	dst_hmacsha1_key_t *hkey = key->keydata.hmacsha1;
 
 	isc_safe_memwipe(hkey, sizeof(*hkey));
-	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
+	free(hkey);
 	key->keydata.hmacsha1 = NULL;
 }
 
@@ -222,7 +222,7 @@ hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacsha1_key_t));
+	hkey = malloc(sizeof(dst_hmacsha1_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -281,12 +281,11 @@ hmacsha1_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
 	isc_buffer_t b;
-	isc_mem_t *mctx = key->mctx;
 	unsigned int i;
 
 	UNUSED(pub);
 	/* read private key file */
-	result = dst__privstruct_parse(key, DST_ALG_HMACSHA1, lexer, mctx,
+	result = dst__privstruct_parse(key, DST_ALG_HMACSHA1, lexer,
 				       &priv);
 	if (result != ISC_R_SUCCESS)
 		return (result);
@@ -315,7 +314,7 @@ hmacsha1_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			break;
 		}
 	}
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }
@@ -369,7 +368,7 @@ hmacsha224_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacsha224_t *hmacsha224ctx;
 	dst_hmacsha224_key_t *hkey = key->keydata.hmacsha224;
 
-	hmacsha224ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacsha224_t));
+	hmacsha224ctx = malloc(sizeof(isc_hmacsha224_t));
 	if (hmacsha224ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacsha224_init(hmacsha224ctx, hkey->key, ISC_SHA224_BLOCK_LENGTH);
@@ -383,7 +382,7 @@ hmacsha224_destroyctx(dst_context_t *dctx) {
 
 	if (hmacsha224ctx != NULL) {
 		isc_hmacsha224_invalidate(hmacsha224ctx);
-		isc_mem_put(dctx->mctx, hmacsha224ctx, sizeof(isc_hmacsha224_t));
+		free(hmacsha224ctx);
 		dctx->ctxdata.hmacsha224ctx = NULL;
 	}
 }
@@ -481,7 +480,7 @@ hmacsha224_destroy(dst_key_t *key) {
 	dst_hmacsha224_key_t *hkey = key->keydata.hmacsha224;
 
 	isc_safe_memwipe(hkey, sizeof(*hkey));
-	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
+	free(hkey);
 	key->keydata.hmacsha224 = NULL;
 }
 
@@ -513,7 +512,7 @@ hmacsha224_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacsha224_key_t));
+	hkey = malloc(sizeof(dst_hmacsha224_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -572,12 +571,11 @@ hmacsha224_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
 	isc_buffer_t b;
-	isc_mem_t *mctx = key->mctx;
 	unsigned int i;
 
 	UNUSED(pub);
 	/* read private key file */
-	result = dst__privstruct_parse(key, DST_ALG_HMACSHA224, lexer, mctx,
+	result = dst__privstruct_parse(key, DST_ALG_HMACSHA224, lexer,
 				       &priv);
 	if (result != ISC_R_SUCCESS)
 		return (result);
@@ -606,7 +604,7 @@ hmacsha224_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			break;
 		}
 	}
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }
@@ -654,7 +652,7 @@ hmacsha256_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacsha256_t *hmacsha256ctx;
 	dst_hmacsha256_key_t *hkey = key->keydata.hmacsha256;
 
-	hmacsha256ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacsha256_t));
+	hmacsha256ctx = malloc(sizeof(isc_hmacsha256_t));
 	if (hmacsha256ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacsha256_init(hmacsha256ctx, hkey->key, ISC_SHA256_BLOCK_LENGTH);
@@ -668,7 +666,7 @@ hmacsha256_destroyctx(dst_context_t *dctx) {
 
 	if (hmacsha256ctx != NULL) {
 		isc_hmacsha256_invalidate(hmacsha256ctx);
-		isc_mem_put(dctx->mctx, hmacsha256ctx, sizeof(isc_hmacsha256_t));
+		free(hmacsha256ctx);
 		dctx->ctxdata.hmacsha256ctx = NULL;
 	}
 }
@@ -766,7 +764,7 @@ hmacsha256_destroy(dst_key_t *key) {
 	dst_hmacsha256_key_t *hkey = key->keydata.hmacsha256;
 
 	isc_safe_memwipe(hkey, sizeof(*hkey));
-	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
+	free(hkey);
 	key->keydata.hmacsha256 = NULL;
 }
 
@@ -798,7 +796,7 @@ hmacsha256_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacsha256_key_t));
+	hkey = malloc(sizeof(dst_hmacsha256_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -857,12 +855,11 @@ hmacsha256_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
 	isc_buffer_t b;
-	isc_mem_t *mctx = key->mctx;
 	unsigned int i;
 
 	UNUSED(pub);
 	/* read private key file */
-	result = dst__privstruct_parse(key, DST_ALG_HMACSHA256, lexer, mctx,
+	result = dst__privstruct_parse(key, DST_ALG_HMACSHA256, lexer,
 				       &priv);
 	if (result != ISC_R_SUCCESS)
 		return (result);
@@ -891,7 +888,7 @@ hmacsha256_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			break;
 		}
 	}
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }
@@ -939,7 +936,7 @@ hmacsha384_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacsha384_t *hmacsha384ctx;
 	dst_hmacsha384_key_t *hkey = key->keydata.hmacsha384;
 
-	hmacsha384ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacsha384_t));
+	hmacsha384ctx = malloc(sizeof(isc_hmacsha384_t));
 	if (hmacsha384ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacsha384_init(hmacsha384ctx, hkey->key, ISC_SHA384_BLOCK_LENGTH);
@@ -953,7 +950,7 @@ hmacsha384_destroyctx(dst_context_t *dctx) {
 
 	if (hmacsha384ctx != NULL) {
 		isc_hmacsha384_invalidate(hmacsha384ctx);
-		isc_mem_put(dctx->mctx, hmacsha384ctx, sizeof(isc_hmacsha384_t));
+		free(hmacsha384ctx);
 		dctx->ctxdata.hmacsha384ctx = NULL;
 	}
 }
@@ -1051,7 +1048,7 @@ hmacsha384_destroy(dst_key_t *key) {
 	dst_hmacsha384_key_t *hkey = key->keydata.hmacsha384;
 
 	isc_safe_memwipe(hkey, sizeof(*hkey));
-	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
+	free(hkey);
 	key->keydata.hmacsha384 = NULL;
 }
 
@@ -1083,7 +1080,7 @@ hmacsha384_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacsha384_key_t));
+	hkey = malloc(sizeof(dst_hmacsha384_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -1142,12 +1139,11 @@ hmacsha384_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
 	isc_buffer_t b;
-	isc_mem_t *mctx = key->mctx;
 	unsigned int i;
 
 	UNUSED(pub);
 	/* read private key file */
-	result = dst__privstruct_parse(key, DST_ALG_HMACSHA384, lexer, mctx,
+	result = dst__privstruct_parse(key, DST_ALG_HMACSHA384, lexer,
 				       &priv);
 	if (result != ISC_R_SUCCESS)
 		return (result);
@@ -1176,7 +1172,7 @@ hmacsha384_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			break;
 		}
 	}
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }
@@ -1224,7 +1220,7 @@ hmacsha512_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacsha512_t *hmacsha512ctx;
 	dst_hmacsha512_key_t *hkey = key->keydata.hmacsha512;
 
-	hmacsha512ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacsha512_t));
+	hmacsha512ctx = malloc(sizeof(isc_hmacsha512_t));
 	if (hmacsha512ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacsha512_init(hmacsha512ctx, hkey->key, ISC_SHA512_BLOCK_LENGTH);
@@ -1238,7 +1234,7 @@ hmacsha512_destroyctx(dst_context_t *dctx) {
 
 	if (hmacsha512ctx != NULL) {
 		isc_hmacsha512_invalidate(hmacsha512ctx);
-		isc_mem_put(dctx->mctx, hmacsha512ctx, sizeof(isc_hmacsha512_t));
+		free(hmacsha512ctx);
 		dctx->ctxdata.hmacsha512ctx = NULL;
 	}
 }
@@ -1336,7 +1332,7 @@ hmacsha512_destroy(dst_key_t *key) {
 	dst_hmacsha512_key_t *hkey = key->keydata.hmacsha512;
 
 	isc_safe_memwipe(hkey, sizeof(*hkey));
-	isc_mem_put(key->mctx, hkey, sizeof(*hkey));
+	free(hkey);
 	key->keydata.hmacsha512 = NULL;
 }
 
@@ -1368,7 +1364,7 @@ hmacsha512_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacsha512_key_t));
+	hkey = malloc(sizeof(dst_hmacsha512_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -1427,12 +1423,11 @@ hmacsha512_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
 	isc_buffer_t b;
-	isc_mem_t *mctx = key->mctx;
 	unsigned int i;
 
 	UNUSED(pub);
 	/* read private key file */
-	result = dst__privstruct_parse(key, DST_ALG_HMACSHA512, lexer, mctx,
+	result = dst__privstruct_parse(key, DST_ALG_HMACSHA512, lexer,
 				       &priv);
 	if (result != ISC_R_SUCCESS)
 		return (result);
@@ -1461,7 +1456,7 @@ hmacsha512_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 			break;
 		}
 	}
-	dst__privstruct_free(&priv, mctx);
+	dst__privstruct_free(&priv);
 	isc_safe_memwipe(&priv, sizeof(priv));
 	return (result);
 }

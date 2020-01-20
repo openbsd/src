@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dlv_32769.c,v 1.5 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: dlv_32769.c,v 1.6 2020/01/20 18:51:53 florian Exp $ */
 
 /* RFC3658 */
 
@@ -103,7 +103,7 @@ tostruct_dlv(ARGS_TOSTRUCT) {
 	dlv->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&dlv->common, link);
 
-	return (generic_tostruct_ds(rdata, target, mctx));
+	return (generic_tostruct_ds(rdata, target));
 }
 
 static inline void
@@ -113,12 +113,7 @@ freestruct_dlv(ARGS_FREESTRUCT) {
 	REQUIRE(dlv != NULL);
 	REQUIRE(dlv->common.rdtype == dns_rdatatype_dlv);
 
-	if (dlv->mctx == NULL)
-		return;
-
-	if (dlv->digest != NULL)
-		isc_mem_free(dlv->mctx, dlv->digest);
-	dlv->mctx = NULL;
+	free(dlv->digest);
 }
 
 static inline isc_result_t

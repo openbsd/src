@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.13 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: message.c,v 1.14 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file */
 
@@ -24,9 +24,10 @@
 
 #include <config.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include <isc/buffer.h>
-#include <isc/mem.h>
+
 
 #include <string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
@@ -159,7 +160,7 @@ struct dns_msgblock {
 }; /* dynamically sized */
 
 static inline dns_msgblock_t *
-msgblock_allocate(isc_mem_t *, unsigned int, unsigned int);
+msgblock_allocate(unsigned int, unsigned int);
 
 #define msgblock_get(block, type) \
 	((type *)msgblock_internalget(block, sizeof(type)))
@@ -171,14 +172,14 @@ static inline void
 msgblock_reset(dns_msgblock_t *);
 
 static inline void
-msgblock_free(isc_mem_t *, dns_msgblock_t *, unsigned int);
+msgblock_free(dns_msgblock_t *, unsigned int);
 
 /*
  * Allocate a new dns_msgblock_t, and return a pointer to it.  If no memory
  * is free, return NULL.
  */
 static inline dns_msgblock_t *
-msgblock_allocate(isc_mem_t *mctx, unsigned int sizeof_type,
+msgblock_allocate(unsigned int sizeof_type,
 		  unsigned int count)
 {
 	dns_msgblock_t *block;
@@ -186,7 +187,7 @@ msgblock_allocate(isc_mem_t *mctx, unsigned int sizeof_type,
 
 	length = sizeof(dns_msgblock_t) + (sizeof_type * count);
 
-	block = isc_mem_get(mctx, length);
+	block = malloc(length);
 	if (block == NULL)
 		return (NULL);
 
@@ -227,13 +228,13 @@ msgblock_reset(dns_msgblock_t *block) {
  * Release memory associated with a message block.
  */
 static inline void
-msgblock_free(isc_mem_t *mctx, dns_msgblock_t *block, unsigned int sizeof_type)
+msgblock_free(dns_msgblock_t *block, unsigned int sizeof_type)
 {
 	unsigned int length;
 
 	length = sizeof(dns_msgblock_t) + (sizeof_type * block->count);
 
-	isc_mem_put(mctx, block, length);
+	free(block);
 }
 
 /*
@@ -247,7 +248,7 @@ newbuffer(dns_message_t *msg, unsigned int size) {
 	isc_buffer_t *dynbuf;
 
 	dynbuf = NULL;
-	result = isc_buffer_allocate(msg->mctx, &dynbuf, size);
+	result = isc_buffer_allocate(&dynbuf, size);
 	if (result != ISC_R_SUCCESS)
 		return (ISC_R_NOMEMORY);
 
@@ -284,8 +285,7 @@ newrdata(dns_message_t *msg) {
 	msgblock = ISC_LIST_TAIL(msg->rdatas);
 	rdata = msgblock_get(msgblock, dns_rdata_t);
 	if (rdata == NULL) {
-		msgblock = msgblock_allocate(msg->mctx, sizeof(dns_rdata_t),
-					     RDATA_COUNT);
+		msgblock = msgblock_allocate(sizeof(dns_rdata_t), RDATA_COUNT);
 		if (msgblock == NULL)
 			return (NULL);
 
@@ -317,8 +317,7 @@ newrdatalist(dns_message_t *msg) {
 	msgblock = ISC_LIST_TAIL(msg->rdatalists);
 	rdatalist = msgblock_get(msgblock, dns_rdatalist_t);
 	if (rdatalist == NULL) {
-		msgblock = msgblock_allocate(msg->mctx,
-					     sizeof(dns_rdatalist_t),
+		msgblock = msgblock_allocate(sizeof(dns_rdatalist_t),
 					     RDATALIST_COUNT);
 		if (msgblock == NULL)
 			return (NULL);
@@ -342,8 +341,7 @@ newoffsets(dns_message_t *msg) {
 	msgblock = ISC_LIST_TAIL(msg->offsets);
 	offsets = msgblock_get(msgblock, dns_offsets_t);
 	if (offsets == NULL) {
-		msgblock = msgblock_allocate(msg->mctx,
-					     sizeof(dns_offsets_t),
+		msgblock = msgblock_allocate(sizeof(dns_offsets_t),
 					     OFFSET_COUNT);
 		if (msgblock == NULL)
 			return (NULL);
@@ -448,12 +446,12 @@ msgresetnames(dns_message_t *msg, unsigned int first_section) {
 
 				INSIST(dns_rdataset_isassociated(rds));
 				dns_rdataset_disassociate(rds);
-				isc_mempool_put(msg->rdspool, rds);
+				free(rds);
 				rds = next_rds;
 			}
 			if (dns_name_dynamic(name))
-				dns_name_free(name, msg->mctx);
-			isc_mempool_put(msg->namepool, name);
+				dns_name_free(name);
+			free(name);
 			name = next_name;
 		}
 	}
@@ -469,7 +467,7 @@ msgresetopt(dns_message_t *msg)
 		}
 		INSIST(dns_rdataset_isassociated(msg->opt));
 		dns_rdataset_disassociate(msg->opt);
-		isc_mempool_put(msg->rdspool, msg->opt);
+		free(msg->opt);
 		msg->opt = NULL;
 		msg->sitok = 0;
 		msg->sitbad = 0;
@@ -484,36 +482,35 @@ msgresetsigs(dns_message_t *msg, isc_boolean_t replying) {
 	}
 	if (msg->tsig != NULL) {
 		INSIST(dns_rdataset_isassociated(msg->tsig));
-		INSIST(msg->namepool != NULL);
 		if (replying) {
 			INSIST(msg->querytsig == NULL);
 			msg->querytsig = msg->tsig;
 		} else {
 			dns_rdataset_disassociate(msg->tsig);
-			isc_mempool_put(msg->rdspool, msg->tsig);
+			free(msg->tsig);
 			if (msg->querytsig != NULL) {
 				dns_rdataset_disassociate(msg->querytsig);
-				isc_mempool_put(msg->rdspool, msg->querytsig);
+				free(msg->querytsig);
 			}
 		}
 		if (dns_name_dynamic(msg->tsigname))
-			dns_name_free(msg->tsigname, msg->mctx);
-		isc_mempool_put(msg->namepool, msg->tsigname);
+			dns_name_free(msg->tsigname);
+		free(msg->tsigname);
 		msg->tsig = NULL;
 		msg->tsigname = NULL;
 	} else if (msg->querytsig != NULL && !replying) {
 		dns_rdataset_disassociate(msg->querytsig);
-		isc_mempool_put(msg->rdspool, msg->querytsig);
+		free(msg->querytsig);
 		msg->querytsig = NULL;
 	}
 	if (msg->sig0 != NULL) {
 		INSIST(dns_rdataset_isassociated(msg->sig0));
 		dns_rdataset_disassociate(msg->sig0);
-		isc_mempool_put(msg->rdspool, msg->sig0);
+		free(msg->sig0);
 		if (msg->sig0name != NULL) {
 			if (dns_name_dynamic(msg->sig0name))
-				dns_name_free(msg->sig0name, msg->mctx);
-			isc_mempool_put(msg->namepool, msg->sig0name);
+				dns_name_free(msg->sig0name);
+			free(msg->sig0name);
 		}
 		msg->sig0 = NULL;
 		msg->sig0name = NULL;
@@ -576,7 +573,7 @@ msgreset(dns_message_t *msg, isc_boolean_t everything) {
 	while (msgblock != NULL) {
 		next_msgblock = ISC_LIST_NEXT(msgblock, link);
 		ISC_LIST_UNLINK(msg->rdatas, msgblock, link);
-		msgblock_free(msg->mctx, msgblock, sizeof(dns_rdata_t));
+		msgblock_free(msgblock, sizeof(dns_rdata_t));
 		msgblock = next_msgblock;
 	}
 
@@ -592,7 +589,7 @@ msgreset(dns_message_t *msg, isc_boolean_t everything) {
 	while (msgblock != NULL) {
 		next_msgblock = ISC_LIST_NEXT(msgblock, link);
 		ISC_LIST_UNLINK(msg->rdatalists, msgblock, link);
-		msgblock_free(msg->mctx, msgblock, sizeof(dns_rdatalist_t));
+		msgblock_free(msgblock, sizeof(dns_rdatalist_t));
 		msgblock = next_msgblock;
 	}
 
@@ -604,7 +601,7 @@ msgreset(dns_message_t *msg, isc_boolean_t everything) {
 	while (msgblock != NULL) {
 		next_msgblock = ISC_LIST_NEXT(msgblock, link);
 		ISC_LIST_UNLINK(msg->offsets, msgblock, link);
-		msgblock_free(msg->mctx, msgblock, sizeof(dns_offsets_t));
+		msgblock_free(msgblock, sizeof(dns_offsets_t));
 		msgblock = next_msgblock;
 	}
 
@@ -618,16 +615,14 @@ msgreset(dns_message_t *msg, isc_boolean_t everything) {
 
 	if (msg->query.base != NULL) {
 		if (msg->free_query != 0)
-			isc_mem_put(msg->mctx, msg->query.base,
-				    msg->query.length);
+			free(msg->query.base);
 		msg->query.base = NULL;
 		msg->query.length = 0;
 	}
 
 	if (msg->saved.base != NULL) {
 		if (msg->free_saved != 0)
-			isc_mem_put(msg->mctx, msg->saved.base,
-				    msg->saved.length);
+			free(msg->saved.base);
 		msg->saved.base = NULL;
 		msg->saved.length = 0;
 	}
@@ -648,9 +643,6 @@ msgreset(dns_message_t *msg, isc_boolean_t everything) {
 	 */
 	if (!everything)
 		msginit(msg);
-
-	ENSURE(isc_mempool_getallocated(msg->namepool) == 0);
-	ENSURE(isc_mempool_getallocated(msg->rdspool) == 0);
 }
 
 static unsigned int
@@ -693,20 +685,19 @@ spacefortsig(dns_tsigkey_t *key, int otherlen) {
 }
 
 isc_result_t
-dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp)
+dns_message_create(unsigned int intent, dns_message_t **msgp)
 {
 	dns_message_t *m;
 	isc_result_t result;
 	isc_buffer_t *dynbuf;
 	unsigned int i;
 
-	REQUIRE(mctx != NULL);
 	REQUIRE(msgp != NULL);
 	REQUIRE(*msgp == NULL);
 	REQUIRE(intent == DNS_MESSAGE_INTENTPARSE
 		|| intent == DNS_MESSAGE_INTENTRENDER);
 
-	m = isc_mem_get(mctx, sizeof(dns_message_t));
+	m = malloc(sizeof(dns_message_t));
 	if (m == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -722,13 +713,8 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp)
 	for (i = 0; i < DNS_SECTION_MAX; i++)
 		ISC_LIST_INIT(m->sections[i]);
 
-	m->mctx = NULL;
-	isc_mem_attach(mctx, &m->mctx);
-
 	ISC_LIST_INIT(m->scratchpad);
 	ISC_LIST_INIT(m->cleanup);
-	m->namepool = NULL;
-	m->rdspool = NULL;
 	ISC_LIST_INIT(m->rdatas);
 	ISC_LIST_INIT(m->rdatalists);
 	ISC_LIST_INIT(m->offsets);
@@ -739,21 +725,8 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp)
 	 * Ok, it is safe to allocate (and then "goto cleanup" if failure)
 	 */
 
-	result = isc_mempool_create(m->mctx, sizeof(dns_name_t), &m->namepool);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-	isc_mempool_setfreemax(m->namepool, NAME_COUNT);
-	isc_mempool_setname(m->namepool, "msg:names");
-
-	result = isc_mempool_create(m->mctx, sizeof(dns_rdataset_t),
-				    &m->rdspool);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-	isc_mempool_setfreemax(m->rdspool, NAME_COUNT);
-	isc_mempool_setname(m->rdspool, "msg:rdataset");
-
 	dynbuf = NULL;
-	result = isc_buffer_allocate(mctx, &dynbuf, SCRATCHPAD_SIZE);
+	result = isc_buffer_allocate(&dynbuf, SCRATCHPAD_SIZE);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	ISC_LIST_APPEND(m->scratchpad, dynbuf, link);
@@ -772,12 +745,8 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp)
 		ISC_LIST_UNLINK(m->scratchpad, dynbuf, link);
 		isc_buffer_free(&dynbuf);
 	}
-	if (m->namepool != NULL)
-		isc_mempool_destroy(&m->namepool);
-	if (m->rdspool != NULL)
-		isc_mempool_destroy(&m->rdspool);
 	m->magic = 0;
-	isc_mem_putanddetach(&mctx, m, sizeof(dns_message_t));
+	free(m);
 
 	return (ISC_R_NOMEMORY);
 }
@@ -803,10 +772,8 @@ dns_message_destroy(dns_message_t **msgp) {
 	*msgp = NULL;
 
 	msgreset(msg, ISC_TRUE);
-	isc_mempool_destroy(&msg->namepool);
-	isc_mempool_destroy(&msg->rdspool);
 	msg->magic = 0;
-	isc_mem_putanddetach(&msg->mctx, msg, sizeof(dns_message_t));
+	free(msg);
 }
 
 static isc_result_t
@@ -1006,7 +973,7 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	rdatalist = NULL;
 
 	for (count = 0; count < msg->counts[DNS_SECTION_QUESTION]; count++) {
-		name = isc_mempool_get(msg->namepool);
+		name = malloc(sizeof(dns_name_t));
 		if (name == NULL)
 			return (ISC_R_NOMEMORY);
 		free_name = ISC_TRUE;
@@ -1051,7 +1018,7 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			ISC_LIST_APPEND(*section, name, link);
 			free_name = ISC_FALSE;
 		} else {
-			isc_mempool_put(msg->namepool, name);
+			free(name);
 			name = name2;
 			name2 = NULL;
 			free_name = ISC_FALSE;
@@ -1099,7 +1066,7 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			result = ISC_R_NOMEMORY;
 			goto cleanup;
 		}
-		rdataset =  isc_mempool_get(msg->rdspool);
+		rdataset =  malloc(sizeof(dns_rdataset_t));
 		if (rdataset == NULL) {
 			result = ISC_R_NOMEMORY;
 			goto cleanup;
@@ -1133,14 +1100,10 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
  cleanup:
 	if (rdataset != NULL) {
 		INSIST(!dns_rdataset_isassociated(rdataset));
-		isc_mempool_put(msg->rdspool, rdataset);
+		free(rdataset);
 	}
-#if 0
-	if (rdatalist != NULL)
-		isc_mempool_put(msg->rdlpool, rdatalist);
-#endif
 	if (free_name)
-		isc_mempool_put(msg->namepool, name);
+		free(name);
 
 	return (result);
 }
@@ -1247,7 +1210,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		skip_type_search = ISC_FALSE;
 		free_rdataset = ISC_FALSE;
 
-		name = isc_mempool_get(msg->namepool);
+		name = malloc(sizeof(dns_name_t));
 		if (name == NULL)
 			return (ISC_R_NOMEMORY);
 		free_name = ISC_TRUE;
@@ -1477,7 +1440,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			 * If it is a new name, append to the section.
 			 */
 			if (result == ISC_R_SUCCESS) {
-				isc_mempool_put(msg->namepool, name);
+				free(name);
 				name = name2;
 			} else {
 				ISC_LIST_APPEND(*section, name, link);
@@ -1529,7 +1492,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		}
 
 		if (result == ISC_R_NOTFOUND) {
-			rdataset = isc_mempool_get(msg->rdspool);
+			rdataset = malloc(sizeof(dns_rdataset_t));
 			if (rdataset == NULL) {
 				result = ISC_R_NOMEMORY;
 				goto cleanup;
@@ -1598,7 +1561,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 				((msg->opt->ttl & DNS_MESSAGE_EDNSRCODE_MASK)
 				 >> 20);
 			msg->rcode |= ercode;
-			isc_mempool_put(msg->namepool, name);
+			free(name);
 			free_name = ISC_FALSE;
 		} else if (issigzero && msg->sig0 == NULL) {
 			msg->sig0 = rdataset;
@@ -1618,9 +1581,9 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 
 		if (seen_problem) {
 			if (free_name)
-				isc_mempool_put(msg->namepool, name);
+				free(name);
 			if (free_rdataset)
-				isc_mempool_put(msg->rdspool, rdataset);
+				free(rdataset);
 			free_name = free_rdataset = ISC_FALSE;
 		}
 		INSIST(free_name == ISC_FALSE);
@@ -1646,9 +1609,9 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 
  cleanup:
 	if (free_name)
-		isc_mempool_put(msg->namepool, name);
+		free(name);
 	if (free_rdataset)
-		isc_mempool_put(msg->rdspool, rdataset);
+		free(rdataset);
 
 	return (result);
 }
@@ -1756,7 +1719,7 @@ dns_message_parse(dns_message_t *msg, isc_buffer_t *source,
 		isc_buffer_usedregion(&origsource, &msg->saved);
 	else {
 		msg->saved.length = isc_buffer_usedlength(&origsource);
-		msg->saved.base = isc_mem_get(msg->mctx, msg->saved.length);
+		msg->saved.base = malloc(msg->saved.length);
 		if (msg->saved.base == NULL)
 			return (ISC_R_NOMEMORY);
 		memmove(msg->saved.base, isc_buffer_base(&origsource),
@@ -2522,7 +2485,7 @@ dns_message_gettempname(dns_message_t *msg, dns_name_t **item) {
 	REQUIRE(DNS_MESSAGE_VALID(msg));
 	REQUIRE(item != NULL && *item == NULL);
 
-	*item = isc_mempool_get(msg->namepool);
+	*item = malloc(sizeof(dns_name_t));
 	if (*item == NULL)
 		return (ISC_R_NOMEMORY);
 	dns_name_init(*item, NULL);
@@ -2559,7 +2522,7 @@ dns_message_gettemprdataset(dns_message_t *msg, dns_rdataset_t **item) {
 	REQUIRE(DNS_MESSAGE_VALID(msg));
 	REQUIRE(item != NULL && *item == NULL);
 
-	*item = isc_mempool_get(msg->rdspool);
+	*item = malloc(sizeof(dns_rdataset_t));
 	if (*item == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -2586,8 +2549,8 @@ dns_message_puttempname(dns_message_t *msg, dns_name_t **item) {
 	REQUIRE(item != NULL && *item != NULL);
 
 	if (dns_name_dynamic(*item))
-		dns_name_free(*item, msg->mctx);
-	isc_mempool_put(msg->namepool, *item);
+		dns_name_free(*item);
+	free(*item);
 	*item = NULL;
 }
 
@@ -2606,7 +2569,7 @@ dns_message_puttemprdataset(dns_message_t *msg, dns_rdataset_t **item) {
 	REQUIRE(item != NULL && *item != NULL);
 
 	REQUIRE(!dns_rdataset_isassociated(*item));
-	isc_mempool_put(msg->rdspool, *item);
+	free(*item);
 	*item = NULL;
 }
 
@@ -2865,7 +2828,7 @@ dns_message_setquerytsig(dns_message_t *msg, isc_buffer_t *querytsig) {
 		goto cleanup;
 
 	isc_buffer_usedregion(querytsig, &r);
-	result = isc_buffer_allocate(msg->mctx, &buf, r.length);
+	result = isc_buffer_allocate(&buf, r.length);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	isc_buffer_putmem(buf, r.base, r.length);
@@ -2893,14 +2856,12 @@ dns_message_setquerytsig(dns_message_t *msg, isc_buffer_t *querytsig) {
 }
 
 isc_result_t
-dns_message_getquerytsig(dns_message_t *msg, isc_mem_t *mctx,
-			 isc_buffer_t **querytsig) {
+dns_message_getquerytsig(dns_message_t *msg, isc_buffer_t **querytsig) {
 	isc_result_t result;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_region_t r;
 
 	REQUIRE(DNS_MESSAGE_VALID(msg));
-	REQUIRE(mctx != NULL);
 	REQUIRE(querytsig != NULL && *querytsig == NULL);
 
 	if (msg->tsig == NULL)
@@ -2912,7 +2873,7 @@ dns_message_getquerytsig(dns_message_t *msg, isc_mem_t *mctx,
 	dns_rdataset_current(msg->tsig, &rdata);
 	dns_rdata_toregion(&rdata, &r);
 
-	result = isc_buffer_allocate(mctx, querytsig, r.length);
+	result = isc_buffer_allocate(querytsig, r.length);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	isc_buffer_putmem(*querytsig, r.base, r.length);
@@ -3033,7 +2994,7 @@ dns_message_signer(dns_message_t *msg, dns_name_t *signer) {
 
 	if (!dns_name_hasbuffer(signer)) {
 		isc_buffer_t *dynbuf = NULL;
-		result = isc_buffer_allocate(msg->mctx, &dynbuf, 512);
+		result = isc_buffer_allocate(&dynbuf, 512);
 		if (result != ISC_R_SUCCESS)
 			return (result);
 		dns_name_setbuffer(signer, dynbuf);
@@ -3047,7 +3008,7 @@ dns_message_signer(dns_message_t *msg, dns_name_t *signer) {
 		INSIST(result == ISC_R_SUCCESS);
 		dns_rdataset_current(msg->sig0, &rdata);
 
-		result = dns_rdata_tostruct(&rdata, &sig, NULL);
+		result = dns_rdata_tostruct(&rdata, &sig);
 		if (result != ISC_R_SUCCESS)
 			return (result);
 
@@ -3065,7 +3026,7 @@ dns_message_signer(dns_message_t *msg, dns_name_t *signer) {
 		INSIST(result == ISC_R_SUCCESS);
 		dns_rdataset_current(msg->tsig, &rdata);
 
-		result = dns_rdata_tostruct(&rdata, &tsig, NULL);
+		result = dns_rdata_tostruct(&rdata, &tsig);
 		INSIST(result == ISC_R_SUCCESS);
 		if (msg->verified_sig &&
 		    msg->tsigstatus == dns_rcode_noerror &&
@@ -3129,7 +3090,7 @@ dns_message_dumpsig(dns_message_t *msg, char *txt1) {
 		result = dns_rdataset_first(msg->tsig);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		dns_rdataset_current(msg->tsig, &querytsigrdata);
-		result = dns_rdata_tostruct(&querytsigrdata, &querytsig, NULL);
+		result = dns_rdata_tostruct(&querytsigrdata, &querytsig);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		hexdump(txt1, "TSIG", querytsig.signature,
 			querytsig.siglen);
@@ -3139,7 +3100,7 @@ dns_message_dumpsig(dns_message_t *msg, char *txt1) {
 		result = dns_rdataset_first(msg->querytsig);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		dns_rdataset_current(msg->querytsig, &querytsigrdata);
-		result = dns_rdata_tostruct(&querytsigrdata, &querytsig, NULL);
+		result = dns_rdata_tostruct(&querytsigrdata, &querytsig);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		hexdump(txt1, "QUERYTSIG", querytsig.signature,
 			querytsig.siglen);
@@ -3635,17 +3596,16 @@ dns_opcode_totext(dns_opcode_t opcode, isc_buffer_t *target) {
 void
 dns_message_logpacket(dns_message_t *message, const char *description,
 		      isc_logcategory_t *category, isc_logmodule_t *module,
-		      int level, isc_mem_t *mctx)
+		      int level)
 {
 	dns_message_logfmtpacket(message, description, category, module,
-				 &dns_master_style_debug, level, mctx);
+				 &dns_master_style_debug, level);
 }
 
 void
 dns_message_logfmtpacket(dns_message_t *message, const char *description,
 			 isc_logcategory_t *category, isc_logmodule_t *module,
-			 const dns_master_style_t *style, int level,
-			 isc_mem_t *mctx)
+			 const dns_master_style_t *style, int level)
 {
 	isc_buffer_t buffer;
 	char *buf = NULL;
@@ -3661,13 +3621,13 @@ dns_message_logfmtpacket(dns_message_t *message, const char *description,
 	 */
 
 	do {
-		buf = isc_mem_get(mctx, len);
+		buf = malloc(len);
 		if (buf == NULL)
 			break;
 		isc_buffer_init(&buffer, buf, len);
 		result = dns_message_totext(message, style, 0, &buffer);
 		if (result == ISC_R_NOSPACE) {
-			isc_mem_put(mctx, buf, len);
+			free(buf);
 			len += 1024;
 		} else if (result == ISC_R_SUCCESS)
 			isc_log_write(dns_lctx, category, module, level,
@@ -3677,7 +3637,7 @@ dns_message_logfmtpacket(dns_message_t *message, const char *description,
 	} while (result == ISC_R_NOSPACE);
 
 	if (buf != NULL)
-		isc_mem_put(mctx, buf, len);
+		free(buf);
 }
 
 isc_result_t
@@ -3730,7 +3690,7 @@ dns_message_buildopt(dns_message_t *message, dns_rdataset_t **rdatasetp,
 			goto cleanup;
 		}
 
-		result = isc_buffer_allocate(message->mctx, &buf, len);
+		result = isc_buffer_allocate(&buf, len);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 

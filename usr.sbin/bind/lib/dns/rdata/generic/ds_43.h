@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.h,v 1.4 2020/01/09 18:17:17 florian Exp $ */
+/* $Id: ds_43.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
 
 #ifndef GENERIC_DS_43_H
 #define GENERIC_DS_43_H 1
@@ -23,7 +23,6 @@
  *  \brief per draft-ietf-dnsext-delegation-signer-05.txt */
 typedef struct dns_rdata_ds {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	uint16_t		key_tag;
 	uint8_t		algorithm;
 	uint8_t		digest_type;

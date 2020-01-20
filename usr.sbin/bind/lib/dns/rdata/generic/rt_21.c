@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rt_21.c,v 1.8 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: rt_21.c,v 1.9 2020/01/20 18:51:53 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:02:31 PST 2000 by brister */
 
@@ -211,9 +211,8 @@ tostruct_rt(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, 2);
 	dns_name_fromregion(&name, &region);
 	dns_name_init(&rt->host, NULL);
-	RETERR(name_duporclone(&name, mctx, &rt->host));
+	RETERR(name_duporclone(&name, &rt->host));
 
-	rt->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -224,11 +223,7 @@ freestruct_rt(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(rt->common.rdtype == dns_rdatatype_rt);
 
-	if (rt->mctx == NULL)
-		return;
-
-	dns_name_free(&rt->host, rt->mctx);
-	rt->mctx = NULL;
+	dns_name_free(&rt->host);
 }
 
 static inline isc_result_t

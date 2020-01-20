@@ -14,15 +14,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.c,v 1.6 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: compress.c,v 1.7 2020/01/20 18:51:52 florian Exp $ */
 
 /*! \file */
 
 #define DNS_NAME_USEINLINE 1
 
 #include <config.h>
+#include <stdlib.h>
 
-#include <isc/mem.h>
 #include <string.h>
 #include <isc/util.h>
 
@@ -42,17 +42,15 @@
  ***/
 
 isc_result_t
-dns_compress_init(dns_compress_t *cctx, int edns, isc_mem_t *mctx) {
+dns_compress_init(dns_compress_t *cctx, int edns) {
 	unsigned int i;
 
 	REQUIRE(cctx != NULL);
-	REQUIRE(mctx != NULL);	/* See: rdataset.c:towiresorted(). */
 
 	cctx->allowed = 0;
 	cctx->edns = edns;
 	for (i = 0; i < DNS_COMPRESS_TABLESIZE; i++)
 		cctx->table[i] = NULL;
-	cctx->mctx = mctx;
 	cctx->count = 0;
 	cctx->magic = CCTX_MAGIC;
 	return (ISC_R_SUCCESS);
@@ -72,7 +70,7 @@ dns_compress_invalidate(dns_compress_t *cctx) {
 			cctx->table[i] = cctx->table[i]->next;
 			if (node->count < DNS_COMPRESS_INITIALNODES)
 				continue;
-			isc_mem_put(cctx->mctx, node, sizeof(*node));
+			free(node);
 		}
 	}
 	cctx->allowed = 0;
@@ -230,8 +228,7 @@ dns_compress_add(dns_compress_t *cctx, const dns_name_t *name,
 		if (cctx->count < DNS_COMPRESS_INITIALNODES)
 			node = &cctx->initialnodes[cctx->count];
 		else {
-			node = isc_mem_get(cctx->mctx,
-					   sizeof(dns_compressnode_t));
+			node = malloc(sizeof(dns_compressnode_t));
 			if (node == NULL)
 				return;
 		}
@@ -265,7 +262,7 @@ dns_compress_rollback(dns_compress_t *cctx, uint16_t offset) {
 		while (node != NULL && node->offset >= offset) {
 			cctx->table[i] = node->next;
 			if (node->count >= DNS_COMPRESS_INITIALNODES)
-				isc_mem_put(cctx->mctx, node, sizeof(*node));
+				free(node);
 			cctx->count--;
 			node = cctx->table[i];
 		}

@@ -227,10 +227,6 @@ struct dns_message {
 	isc_buffer_t		       *buffer;
 	dns_compress_t		       *cctx;
 
-	isc_mem_t		       *mctx;
-	isc_mempool_t		       *namepool;
-	isc_mempool_t		       *rdspool;
-
 	isc_bufferlist_t		scratchpad;
 	isc_bufferlist_t		cleanup;
 
@@ -273,7 +269,7 @@ struct dns_ednsopt {
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp);
+dns_message_create(unsigned int intent, dns_message_t **msgp);
 
 /*%<
  * Create msg structure.
@@ -1142,8 +1138,7 @@ dns_message_setquerytsig(dns_message_t *msg, isc_buffer_t *querytsig);
  */
 
 isc_result_t
-dns_message_getquerytsig(dns_message_t *msg, isc_mem_t *mctx,
-			 isc_buffer_t **querytsig);
+dns_message_getquerytsig(dns_message_t *msg, isc_buffer_t **querytsig);
 /*%<
  * Gets the tsig from the TSIG from the signed query 'msg'.  This is also used
  * for chained TSIGs in TCP responses.  Unlike dns_message_gettsig, this makes
@@ -1347,12 +1342,11 @@ dns_message_gettimeadjust(dns_message_t *msg);
 void
 dns_message_logpacket(dns_message_t *message, const char *description,
 		      isc_logcategory_t *category, isc_logmodule_t *module,
-		      int level, isc_mem_t *mctx);
+		      int level);
 void
 dns_message_logfmtpacket(dns_message_t *message, const char *description,
 			 isc_logcategory_t *category, isc_logmodule_t *module,
-			 const dns_master_style_t *style, int level,
-			 isc_mem_t *mctx);
+			 const dns_master_style_t *style, int level);
 /*%<
  * Log 'message' at the specified logging parameters.
  * 'description' will be emitted at the start of the message and will

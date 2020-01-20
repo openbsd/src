@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: gpos_27.c,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: gpos_27.c,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 
@@ -147,14 +147,14 @@ tostruct_gpos(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 	gpos->long_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	gpos->longitude = mem_maybedup(mctx, region.base, gpos->long_len);
+	gpos->longitude = mem_maybedup(region.base, gpos->long_len);
 	if (gpos->longitude == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_region_consume(&region, gpos->long_len);
 
 	gpos->lat_len = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	gpos->latitude = mem_maybedup(mctx, region.base, gpos->lat_len);
+	gpos->latitude = mem_maybedup(region.base, gpos->lat_len);
 	if (gpos->latitude == NULL)
 		goto cleanup_longitude;
 	isc_region_consume(&region, gpos->lat_len);
@@ -163,22 +163,19 @@ tostruct_gpos(ARGS_TOSTRUCT) {
 	isc_region_consume(&region, 1);
 	if (gpos->lat_len > 0) {
 		gpos->altitude =
-			mem_maybedup(mctx, region.base, gpos->alt_len);
+			mem_maybedup(region.base, gpos->alt_len);
 		if (gpos->altitude == NULL)
 			goto cleanup_latitude;
 	} else
 		gpos->altitude = NULL;
 
-	gpos->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup_latitude:
-	if (mctx != NULL && gpos->longitude != NULL)
-		isc_mem_free(mctx, gpos->longitude);
+	free(gpos->longitude);
 
  cleanup_longitude:
-	if (mctx != NULL && gpos->latitude != NULL)
-		isc_mem_free(mctx, gpos->latitude);
+	free(gpos->latitude);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -189,16 +186,10 @@ freestruct_gpos(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(gpos->common.rdtype == dns_rdatatype_gpos);
 
-	if (gpos->mctx == NULL)
-		return;
 
-	if (gpos->longitude != NULL)
-		isc_mem_free(gpos->mctx, gpos->longitude);
-	if (gpos->latitude != NULL)
-		isc_mem_free(gpos->mctx, gpos->latitude);
-	if (gpos->altitude != NULL)
-		isc_mem_free(gpos->mctx, gpos->altitude);
-	gpos->mctx = NULL;
+	free(gpos->longitude);
+	free(gpos->latitude);
+	free(gpos->altitude);
 }
 
 static inline isc_result_t

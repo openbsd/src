@@ -368,11 +368,10 @@ tostruct_keydata(ARGS_TOSTRUCT) {
 
 	/* Data */
 	keydata->datalen = sr.length;
-	keydata->data = mem_maybedup(mctx, sr.base, keydata->datalen);
+	keydata->data = mem_maybedup(sr.base, keydata->datalen);
 	if (keydata->data == NULL)
 		return (ISC_R_NOMEMORY);
 
-	keydata->mctx = mctx;
 	return (ISC_R_SUCCESS);
 }
 
@@ -383,12 +382,7 @@ freestruct_keydata(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(keydata->common.rdtype == dns_rdatatype_keydata);
 
-	if (keydata->mctx == NULL)
-		return;
-
-	if (keydata->data != NULL)
-		isc_mem_free(keydata->mctx, keydata->data);
-	keydata->mctx = NULL;
+	free(keydata->data);
 }
 
 static inline isc_result_t

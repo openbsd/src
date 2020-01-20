@@ -18,11 +18,10 @@
 #ifndef GENERIC_MG_8_H
 #define GENERIC_MG_8_H 1
 
-/* $Id: mg_8.h,v 1.3 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: mg_8.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
 
 typedef struct dns_rdata_mg {
 	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
 	dns_name_t		mg;
 } dns_rdata_mg_t;
 

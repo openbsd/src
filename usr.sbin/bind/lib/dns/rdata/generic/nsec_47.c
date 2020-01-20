@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec_47.c,v 1.5 2019/12/17 01:46:33 sthen Exp $ */
+/* $Id: nsec_47.c,v 1.6 2020/01/20 18:51:53 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -178,19 +178,17 @@ tostruct_nsec(ARGS_TOSTRUCT) {
 	dns_name_fromregion(&name, &region);
 	isc_region_consume(&region, name_length(&name));
 	dns_name_init(&nsec->next, NULL);
-	RETERR(name_duporclone(&name, mctx, &nsec->next));
+	RETERR(name_duporclone(&name, &nsec->next));
 
 	nsec->len = region.length;
-	nsec->typebits = mem_maybedup(mctx, region.base, region.length);
+	nsec->typebits = mem_maybedup(region.base, region.length);
 	if (nsec->typebits == NULL)
 		goto cleanup;
 
-	nsec->mctx = mctx;
 	return (ISC_R_SUCCESS);
 
  cleanup:
-	if (mctx != NULL)
-		dns_name_free(&nsec->next, mctx);
+	dns_name_free(&nsec->next);
 	return (ISC_R_NOMEMORY);
 }
 
@@ -201,13 +199,9 @@ freestruct_nsec(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 	REQUIRE(nsec->common.rdtype == dns_rdatatype_nsec);
 
-	if (nsec->mctx == NULL)
-		return;
-
-	dns_name_free(&nsec->next, nsec->mctx);
+	dns_name_free(&nsec->next);
 	if (nsec->typebits != NULL)
-		isc_mem_free(nsec->mctx, nsec->typebits);
-	nsec->mctx = NULL;
+		free(nsec->typebits);
 }
 
 static inline isc_result_t
