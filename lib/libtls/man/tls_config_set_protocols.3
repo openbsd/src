@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_config_set_protocols.3,v 1.6 2017/08/12 04:24:49 jsing Exp $
+.\" $OpenBSD: tls_config_set_protocols.3,v 1.7 2020/01/20 08:39:21 jsing Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015, 2016 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2017 $
+.Dd $Mdocdate: January 20 2020 $
 .Dt TLS_CONFIG_SET_PROTOCOLS 3
 .Os
 .Sh NAME
@@ -78,11 +78,12 @@ Possible values are the bitwise OR of:
 .It Dv TLS_PROTOCOL_TLSv1_0
 .It Dv TLS_PROTOCOL_TLSv1_1
 .It Dv TLS_PROTOCOL_TLSv1_2
+.It Dv TLS_PROTOCOL_TLSv1_3
 .El
 .Pp
 Additionally, the values
 .Dv TLS_PROTOCOL_TLSv1
-(TLSv1.0, TLSv1.1 and TLSv1.2),
+(TLSv1.0, TLSv1.1, TLSv1.2, TLSv1.3),
 .Dv TLS_PROTOCOLS_ALL
 (all supported protocols) and
 .Dv TLS_PROTOCOLS_DEFAULT
@@ -98,9 +99,9 @@ This value can then be passed to the
 .Fn tls_config_set_protocols
 function.
 The protocol string is a comma or colon separated list of keywords.
-Valid keywords are tlsv1.0, tlsv1.1, tlsv1.2, all (all supported protocols),
-default (an alias for secure), legacy (an alias for all) and secure (currently
-TLSv1.2 only).
+Valid keywords are tlsv1.0, tlsv1.1, tlsv1.2, tlsv1.3, all (all supported
+protocols), default (an alias for secure), legacy (an alias for all) and
+secure (currently TLSv1.2 only).
 If a value has a negative prefix (in the form of a leading exclamation mark)
 then it is removed from the list of available protocols, rather than being
 added to it.

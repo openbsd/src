@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.56 2019/11/02 13:37:59 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.57 2020/01/20 08:39:21 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -27,13 +27,16 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-#define TLS_API	20180210
+#define TLS_API	20200120
 
 #define TLS_PROTOCOL_TLSv1_0	(1 << 1)
 #define TLS_PROTOCOL_TLSv1_1	(1 << 2)
 #define TLS_PROTOCOL_TLSv1_2	(1 << 3)
+#define TLS_PROTOCOL_TLSv1_3	(1 << 4)
+
 #define TLS_PROTOCOL_TLSv1 \
-	(TLS_PROTOCOL_TLSv1_0|TLS_PROTOCOL_TLSv1_1|TLS_PROTOCOL_TLSv1_2)
+	(TLS_PROTOCOL_TLSv1_0|TLS_PROTOCOL_TLSv1_1|\
+	 TLS_PROTOCOL_TLSv1_2|TLS_PROTOCOL_TLSv1_3)
 
 #define TLS_PROTOCOLS_ALL TLS_PROTOCOL_TLSv1
 #define TLS_PROTOCOLS_DEFAULT TLS_PROTOCOL_TLSv1_2
