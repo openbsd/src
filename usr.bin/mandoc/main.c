@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.243 2019/07/28 19:41:01 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.244 2020/01/20 10:29:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdint.h>

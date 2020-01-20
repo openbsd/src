@@ -1,6 +1,6 @@
-/*      $OpenBSD: tag.h,v 1.9 2019/07/27 13:40:42 schwarze Exp $    */
+/*      $OpenBSD: tag.h,v 1.10 2020/01/20 10:29:31 schwarze Exp $    */
 /*
- * Copyright (c) 2015, 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2015, 2018, 2019, 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/*
+ * Tagging priorities.
+ * Lower numbers indicate higher importance.
+ */
+#define	TAG_MANUAL	1		/* Set with a .Tg macro. */
+#define	TAG_STRONG	2		/* Good automatic tagging. */
+#define	TAG_WEAK	(INT_MAX - 2)	/* Dubious automatic tagging. */
+#define	TAG_FALLBACK	(INT_MAX - 1)	/* Tag only used if unique. */
+#define	TAG_DELETE	(INT_MAX)	/* Tag not used at all. */
+
 
 struct	tag_files {
 	char	 ofn[20];
