@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.12 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: types.h,v 1.13 2020/01/20 19:12:12 florian Exp $ */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
@@ -57,7 +57,6 @@ typedef struct isc_httpd		isc_httpd_t;		/*%< HTTP client */
 typedef void (isc_httpdfree_t)(isc_buffer_t *, void *);		/*%< HTTP free function */
 typedef struct isc_httpdmgr		isc_httpdmgr_t;		/*%< HTTP manager */
 typedef struct isc_httpdurl		isc_httpdurl_t;		/*%< HTTP URL */
-typedef void (isc_httpdondestroy_t)(void *);			/*%< Callback on destroying httpd */
 typedef struct interface		interface_t;	/*%< Interface */
 typedef struct interfaceiter	interfaceiter_t;	/*%< Interface Iterator */
 typedef struct interval		interval_t;		/*%< Interval */
@@ -66,7 +65,6 @@ typedef struct isc_log 			isc_log_t;		/*%< Log */
 typedef struct isc_logcategory		isc_logcategory_t;	/*%< Log Category */
 typedef struct isc_logconfig		isc_logconfig_t;	/*%< Log Configuration */
 typedef struct isc_logmodule		isc_logmodule_t;	/*%< Log Module */
-typedef struct isc_ondestroy		isc_ondestroy_t;	/*%< On Destroy */
 typedef struct isc_netaddr		isc_netaddr_t;		/*%< Net Address */
 typedef struct isc_portset		isc_portset_t;		/*%< Port Set */
 typedef struct isc_quota		isc_quota_t;		/*%< Quota */
