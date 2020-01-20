@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.119 2019/12/23 15:03:46 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.120 2020/01/20 20:41:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -151,7 +151,8 @@ void			 resolve_done(struct uw_resolver *, void *, int, void *,
 void			 ub_resolve_done(void *, int, void *, int, int, char *,
 			     int);
 void			 asr_resolve_done(struct asr_result *, void *);
-void			 new_resolver(enum uw_resolver_type);
+void			 new_resolver(enum uw_resolver_type,
+			     enum uw_resolver_state);
 struct uw_resolver	*create_resolver(enum uw_resolver_type);
 void			 setup_unified_caches(void);
 void			 set_unified_cache(struct uw_resolver *);
@@ -653,7 +654,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			nconf = NULL;
 			for (i = 0; i < UW_RES_NONE; i++)
 				if (restart[i])
-					new_resolver(i);
+					new_resolver(i, UNKNOWN);
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
@@ -707,7 +708,7 @@ setup_query(struct query_imsg *query_imsg)
 
 	find_force(&resolver_conf->force, query_imsg->qname, &res);
 
-	if (res != NULL && res->state != DEAD) {
+	if (res != NULL && res->state != DEAD && res->state != UNKNOWN) {
 		rq->res_pref.len = 1;
 		rq->res_pref.types[0] = res->type;
 	} else if (sort_resolver_types(&rq->res_pref) == -1) {
@@ -756,7 +757,7 @@ try_next_resolver(struct running_query *rq)
 
 	while(rq->next_resolver < rq->res_pref.len &&
 	    ((res = resolvers[rq->res_pref.types[rq->next_resolver]]) == NULL ||
-	    res->state == DEAD))
+	    res->state == DEAD || res->state == UNKNOWN))
 		rq->next_resolver++;
 
 	if (res == NULL) {
@@ -1042,7 +1043,7 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 }
 
 void
-new_resolver(enum uw_resolver_type type)
+new_resolver(enum uw_resolver_type type, enum uw_resolver_state state)
 {
 	free_resolver(resolvers[type]);
 	resolvers[type] = NULL;
@@ -1089,8 +1090,20 @@ new_resolver(enum uw_resolver_type type)
 	}
 
 	resolvers[type] = create_resolver(type);
-	set_unified_cache(resolvers[type]);
-	check_resolver(resolvers[type]);
+	switch (state) {
+	case UNKNOWN:
+		check_resolver(resolvers[type]);
+		break;
+	case VALIDATING:
+		set_unified_cache(resolvers[type]);
+		/* FALLTHROUGH */
+	case RESOLVING:
+		resolvers[type]->state = state;
+		break;
+	default:
+		fatalx("%s: invalid resolver state: %s", __func__,
+		    uw_resolver_state_str[state]);
+	}
 }
 
 void
@@ -1098,6 +1111,17 @@ set_unified_cache(struct uw_resolver *res)
 {
 	if (res == NULL || res->ctx == NULL)
 		return;
+
+	if (res->ctx->env->msg_cache != NULL) {
+		if (res->ctx->env->msg_cache != unified_msg_cache ||
+		    res->ctx->env->rrset_cache != unified_rrset_cache ||
+		    res->ctx->env->key_cache != unified_key_cache ||
+		    res->ctx->env->neg_cache != unified_neg_cache)
+			fatalx("wrong unified cache set on resolver");
+		else
+			/* we are upgrading from UNKNOWN back to VALIDATING */
+			return;
+	}
 
 	res->ctx->env->msg_cache = unified_msg_cache;
 	res->ctx->env->rrset_cache = unified_rrset_cache;
@@ -1466,7 +1490,11 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	}
 
 	if (sec == SECURE) {
-		checked_resolver->state = VALIDATING;
+		if (prev_state == UNKNOWN) {
+			checked_resolver->state = VALIDATING;
+			set_unified_cache(checked_resolver);
+		} else if (prev_state != VALIDATING)
+			new_resolver(checked_resolver->type, VALIDATING);
 		if (!(evtimer_pending(&trust_anchor_timer, NULL)))
 			evtimer_add(&trust_anchor_timer, &tv);
 	 } else if (rcode == LDNS_RCODE_NOERROR &&
@@ -1479,7 +1507,10 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 			log_warnx("%s: %s", uw_resolver_type_str[
 			    checked_resolver->type], why_bogus);
 		}
-		checked_resolver->state = RESOLVING;
+		if (prev_state == UNKNOWN)
+			checked_resolver->state = RESOLVING;
+		else if (prev_state != RESOLVING)
+			new_resolver(checked_resolver->type, RESOLVING);
 	} else
 		checked_resolver->state = DEAD; /* we know the root exists */
 
@@ -1547,6 +1578,7 @@ schedule_recheck_all_resolvers(void)
 		if (resolvers[i] == NULL)
 			continue;
 		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
+		resolvers[i]->state = UNKNOWN;
 		evtimer_add(&resolvers[i]->check_ev, &tv);
 	}
 }
@@ -1667,7 +1699,8 @@ restart_ub_resolvers(void)
 
 	for (i = 0; i < UW_RES_NONE; i++)
 		if (i != UW_RES_ASR)
-			new_resolver(i);
+			new_resolver(i, resolvers[i] != NULL ?
+			    resolvers[i]->state : UNKNOWN);
 }
 
 void
@@ -1942,9 +1975,9 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 	if (changed) {
 		replace_forwarders(&new_forwarder_list,
 		    &autoconf_forwarder_list);
-		new_resolver(UW_RES_ASR);
-		new_resolver(UW_RES_DHCP);
-		new_resolver(UW_RES_ODOT_DHCP);
+		new_resolver(UW_RES_ASR, UNKNOWN);
+		new_resolver(UW_RES_DHCP, UNKNOWN);
+		new_resolver(UW_RES_ODOT_DHCP, UNKNOWN);
 	} else {
 		while ((tmp = TAILQ_FIRST(&new_forwarder_list)) != NULL) {
 			TAILQ_REMOVE(&new_forwarder_list, tmp, entry);
