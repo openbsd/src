@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1912 2020/01/09 00:58:28 jsg Exp $
+$OpenBSD: pcidevs,v 1.1913 2020/01/20 07:01:44 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5612,6 +5612,8 @@ product INTEL CORE_MANAGEMENT	0xd155	Core Management
 product INTEL CORE_SCRATCH	0xd156	Core Scratch
 product INTEL CORE_CONTROL	0xd157	Core Control
 product INTEL CORE_MISC		0xd158	Core Misc
+product INTEL NVME_2		0xf1a5	NVMe
+product INTEL NVME_3		0xf1a6	NVMe
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
