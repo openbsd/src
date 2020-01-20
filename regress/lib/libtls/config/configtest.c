@@ -1,4 +1,4 @@
-/* $OpenBSD: configtest.c,v 1.1 2017/12/09 16:43:09 jsing Exp $ */
+/* $OpenBSD: configtest.c,v 1.2 2020/01/20 08:40:16 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -59,21 +59,26 @@ struct parse_protocols_test parse_protocols_tests[] = {
 		.want_protocols = TLS_PROTOCOL_TLSv1_2,
 	},
 	{
+		.protostr = "tlsv1.3",
+		.want_return = 0,
+		.want_protocols = TLS_PROTOCOL_TLSv1_3,
+	},
+	{
 		.protostr = "",
 		.want_return = -1,
 		.want_protocols = 0,
 	},
 	{
-		.protostr = "tlsv1.0:tlsv1.1:tlsv1.2",
+		.protostr = "tlsv1.0:tlsv1.1:tlsv1.2:tlsv1.3",
 		.want_return = 0,
 		.want_protocols = TLS_PROTOCOL_TLSv1_0 | TLS_PROTOCOL_TLSv1_1 |
-		    TLS_PROTOCOL_TLSv1_2,
+		    TLS_PROTOCOL_TLSv1_2 | TLS_PROTOCOL_TLSv1_3,
 	},
 	{
-		.protostr = "tlsv1.0,tlsv1.1,tlsv1.2",
+		.protostr = "tlsv1.0,tlsv1.1,tlsv1.2,tlsv1.3",
 		.want_return = 0,
 		.want_protocols = TLS_PROTOCOL_TLSv1_0 | TLS_PROTOCOL_TLSv1_1 |
-		    TLS_PROTOCOL_TLSv1_2,
+		    TLS_PROTOCOL_TLSv1_2 | TLS_PROTOCOL_TLSv1_3,
 	},
 	{
 		.protostr = "tlsv1.1,tlsv1.2,tlsv1.0",
@@ -109,20 +114,22 @@ struct parse_protocols_test parse_protocols_tests[] = {
 	{
 		.protostr = "all,!tlsv1.0",
 		.want_return = 0,
-		.want_protocols = TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2,
+		.want_protocols = TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2 | \
+			TLS_PROTOCOL_TLSv1_3,
 	},
 	{
 		.protostr = "!tlsv1.0",
 		.want_return = 0,
-		.want_protocols = TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2,
+		.want_protocols = TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2 | \
+			TLS_PROTOCOL_TLSv1_3,
 	},
 	{
-		.protostr = "!tlsv1.0,!tlsv1.1",
+		.protostr = "!tlsv1.0,!tlsv1.1,!tlsv1.3",
 		.want_return = 0,
 		.want_protocols = TLS_PROTOCOL_TLSv1_2,
 	},
 	{
-		.protostr = "!tlsv1.0,!tlsv1.1,tlsv1.2",
+		.protostr = "!tlsv1.0,!tlsv1.1,tlsv1.2,!tlsv1.3",
 		.want_return = 0,
 		.want_protocols = TLS_PROTOCOL_TLSv1_2,
 	},
