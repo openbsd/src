@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.78 2019/01/05 18:46:36 kettenis Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.79 2020/01/20 23:45:02 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -575,6 +575,17 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_PCH_ICP_I219_V8     0x15E0
 #define E1000_DEV_ID_PCH_ICP_I219_LM9    0x15E1
 #define E1000_DEV_ID_PCH_ICP_I219_V9     0x15E2
+#define E1000_DEV_ID_PCH_CMP_I219_LM10   0x0D4E
+#define E1000_DEV_ID_PCH_CMP_I219_V10    0x0D4F
+#define E1000_DEV_ID_PCH_CMP_I219_LM11   0x0D4C
+#define E1000_DEV_ID_PCH_CMP_I219_V11    0x0D4D
+#define E1000_DEV_ID_PCH_CMP_I219_LM12   0x0D53
+#define E1000_DEV_ID_PCH_CMP_I219_V12    0x0D55
+#define E1000_DEV_ID_PCH_TGP_I219_LM13   0x15FB
+#define E1000_DEV_ID_PCH_TGP_I219_V13    0x15FC
+#define E1000_DEV_ID_PCH_TGP_I219_LM14   0x15F9
+#define E1000_DEV_ID_PCH_TGP_I219_V14    0x15FA
+#define E1000_DEV_ID_PCH_TGP_I219_LM15   0x15F4
 #define E1000_DEV_ID_82575EB_PT          0x10A7
 #define E1000_DEV_ID_82575EB_PF          0x10A9
 #define E1000_DEV_ID_82575GB_QP          0x10D6
