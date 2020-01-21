@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.134 2019/12/22 06:37:25 espie Exp $ */
+/* $OpenBSD: signify.c,v 1.135 2020/01/21 12:13:21 tb Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -78,7 +78,7 @@ usage(const char *error)
 		fprintf(stderr, "%s\n", error);
 	fprintf(stderr, "usage:"
 #ifndef VERIFYONLY
-	    "\t%1$s -C [-q] -p pubkey -x sigfile [file ...]\n"
+	    "\t%1$s -C [-q] [-p pubkey] [-t keytype] -x sigfile [file ...]\n"
 	    "\t%1$s -G [-n] [-c comment] -p pubkey -s seckey\n"
 	    "\t%1$s -S [-enz] [-x sigfile] -s seckey -m message\n"
 #endif
@@ -715,13 +715,13 @@ verifychecksums(char *msg, int argc, char **argv, int quiet)
 }
 
 static void
-check(const char *pubkeyfile, const char *sigfile, int quiet, int argc,
-    char **argv)
+check(const char *pubkeyfile, const char *sigfile, const char *keytype,
+    int quiet, int argc, char **argv)
 {
 	unsigned long long msglen;
 	uint8_t *msg;
 
-	msg = verifyembedded(pubkeyfile, sigfile, quiet, &msglen, NULL);
+	msg = verifyembedded(pubkeyfile, sigfile, quiet, &msglen, keytype);
 	verifychecksums((char *)msg, argc, argv, quiet);
 
 	free(msg);
@@ -846,7 +846,7 @@ main(int argc, char **argv)
 			err(1, "pledge");
 		if (!sigfile)
 			usage("must specify sigfile");
-		check(pubkeyfile, sigfile, quiet, argc, argv);
+		check(pubkeyfile, sigfile, keytype, quiet, argc, argv);
 		return 0;
 	}
 #endif
