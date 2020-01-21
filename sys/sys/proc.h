@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.285 2020/01/16 16:35:04 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.286 2020/01/21 15:20:47 visa Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -153,11 +153,14 @@ RBT_HEAD(unvname_rbt, unvname);
 #ifdef __need_process
 struct futex;
 LIST_HEAD(futex_list, futex);
+struct tslpentry;
+TAILQ_HEAD(tslpqueue, tslpentry);
 struct unveil;
 
 /*
- *  Locks used to protect struct members in this file:
+ * Locks used to protect struct members in this file:
  *	m	this process' `ps_mtx'
+ *	p	this process' `ps_lock'
  *	r	rlimit_lock
  */
 struct process {
@@ -186,6 +189,8 @@ struct process {
 	pid_t	ps_pid;			/* Process identifier. */
 
 	struct	futex_list ps_ftlist;	/* futexes attached to this process */
+	struct	tslpqueue ps_tslpqueue;	/* [p] queue of threads in thrsleep */
+	struct	rwlock	ps_lock;	/* per-process rwlock */
 	struct  mutex	ps_mtx;		/* per-process mutex */
 
 /* The following fields are all zeroed upon creation in process_new. */
@@ -362,8 +367,6 @@ struct proc {
 	u_int	p_sticks;		/* Statclock hits in system mode. */
 	u_int	p_iticks;		/* Statclock hits processing intr. */
 	struct	cpu_info * volatile p_cpu; /* [s] CPU we're running on. */
-
-	long 	p_thrslpid;		/* for thrsleep syscall */
 
 	struct	rusage p_ru;		/* Statistics */
 	struct	tusage p_tu;		/* accumulated times. */

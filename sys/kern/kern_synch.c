@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.158 2020/01/16 16:35:04 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.159 2020/01/21 15:20:47 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -634,7 +634,14 @@ thrsleep_unlock(void *lock)
 	return copyout(&unlocked, atomiclock, sizeof(unlocked));
 }
 
-static int globalsleepaddr;
+struct tslpentry {
+	TAILQ_ENTRY(tslpentry)	tslp_link;
+	long			tslp_ident;
+};
+
+/* thrsleep queue shared between processes */
+static struct tslpqueue thrsleep_queue = TAILQ_HEAD_INITIALIZER(thrsleep_queue);
+static struct rwlock thrsleep_lock = RWLOCK_INITIALIZER("thrsleeplk");
 
 int
 thrsleep(struct proc *p, struct sys___thrsleep_args *v)
@@ -647,10 +654,13 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 		syscallarg(const int *) abort;
 	} */ *uap = v;
 	long ident = (long)SCARG(uap, ident);
+	struct tslpentry entry;
+	struct tslpqueue *queue;
+	struct rwlock *qlock;
 	struct timespec *tsp = (struct timespec *)SCARG(uap, tp);
 	void *lock = SCARG(uap, lock);
 	uint64_t nsecs = INFSLP;
-	int abort, error;
+	int abort = 0, error;
 	clockid_t clock_id = SCARG(uap, clock_id);
 
 	if (ident == 0)
@@ -676,32 +686,41 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 		nsecs = TIMESPEC_TO_NSEC(tsp);
 	}
 
-	p->p_thrslpid = ident;
-
-	if ((error = thrsleep_unlock(lock)))
-		goto out;
-
-	if (SCARG(uap, abort) != NULL) {
-		if ((error = copyin(SCARG(uap, abort), &abort,
-		    sizeof(abort))) != 0)
-			goto out;
-		if (abort) {
-			error = EINTR;
-			goto out;
-		}
+	if (ident == -1) {
+		queue = &thrsleep_queue;
+		qlock = &thrsleep_lock;
+	} else {
+		queue = &p->p_p->ps_tslpqueue;
+		qlock = &p->p_p->ps_lock;
 	}
 
-	if (p->p_thrslpid == 0)
-		error = 0;
-	else {
-		void *sleepaddr = &p->p_thrslpid;
-		if (ident == -1)
-			sleepaddr = &globalsleepaddr;
-		error = tsleep_nsec(sleepaddr, PWAIT|PCATCH, "thrsleep", nsecs);
+	/* Interlock with wakeup. */
+	entry.tslp_ident = ident;
+	rw_enter_write(qlock);
+	TAILQ_INSERT_TAIL(queue, &entry, tslp_link);
+	rw_exit_write(qlock);
+
+	error = thrsleep_unlock(lock);
+
+	if (error == 0 && SCARG(uap, abort) != NULL)
+		error = copyin(SCARG(uap, abort), &abort, sizeof(abort));
+
+	rw_enter_write(qlock);
+	if (error != 0)
+		goto out;
+	if (abort != 0) {
+		error = EINTR;
+		goto out;
+	}
+	if (entry.tslp_ident != 0) {
+		error = rwsleep_nsec(&entry, qlock, PWAIT|PCATCH, "thrsleep",
+		    nsecs);
 	}
 
 out:
-	p->p_thrslpid = 0;
+	if (entry.tslp_ident != 0)
+		TAILQ_REMOVE(queue, &entry, tslp_link);
+	rw_exit_write(qlock);
 
 	if (error == ERESTART)
 		error = ECANCELED;
@@ -746,25 +765,48 @@ sys___thrwakeup(struct proc *p, void *v, register_t *retval)
 		syscallarg(const volatile void *) ident;
 		syscallarg(int) n;
 	} */ *uap = v;
+	struct tslpentry *entry, *tmp;
+	struct tslpqueue *queue;
+	struct rwlock *qlock;
 	long ident = (long)SCARG(uap, ident);
 	int n = SCARG(uap, n);
-	struct proc *q;
 	int found = 0;
 
 	if (ident == 0)
 		*retval = EINVAL;
-	else if (ident == -1)
-		wakeup(&globalsleepaddr);
 	else {
-		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
-			if (q->p_thrslpid == ident) {
-				wakeup_one(&q->p_thrslpid);
-				q->p_thrslpid = 0;
+		if (ident == -1) {
+			queue = &thrsleep_queue;
+			qlock = &thrsleep_lock;
+			/*
+			 * Wake up all waiters with ident -1. This is needed
+			 * because ident -1 can be shared by multiple userspace
+			 * lock state machines concurrently. The implementation
+			 * has no way to direct the wakeup to a particular
+			 * state machine.
+			 */
+			n = 0;
+		} else {
+			queue = &p->p_p->ps_tslpqueue;
+			qlock = &p->p_p->ps_lock;
+		}
+
+		rw_enter_write(qlock);
+		TAILQ_FOREACH_SAFE(entry, queue, tslp_link, tmp) {
+			if (entry->tslp_ident == ident) {
+				TAILQ_REMOVE(queue, entry, tslp_link);
+				entry->tslp_ident = 0;
+				wakeup_one(entry);
 				if (++found == n)
 					break;
 			}
 		}
-		*retval = found ? 0 : ESRCH;
+		rw_exit_write(qlock);
+
+		if (ident == -1)
+			*retval = 0;
+		else
+			*retval = found ? 0 : ESRCH;
 	}
 
 	return (0);
