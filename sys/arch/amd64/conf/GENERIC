@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.485 2020/01/20 23:21:01 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.486 2020/01/21 01:40:46 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -430,7 +430,6 @@ qla*	at pci?				# QLogic ISP 2[123]xx FibreChannel
 qle*	at pci?				# QLogic ISP 2[45]xx FibreChannel
 aic*	at pcmcia?			# PCMCIA Adaptec 152[02] SCSI
 siop*	at pci?				# NCR 538XX SCSI controllers
-#adv*	at pci?				# AdvanSys 1200A/B and ULTRA SCSI
 adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
 pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 #trm*	at pci?				# Tekram DC-3x5U SCSI Controllers
@@ -487,13 +486,10 @@ rl*	at pci?				# Realtek 81[23]9 ethernet
 rl*	at cardbus?			# Realtek 81[23]9 ethernet
 #mtd*	at pci?				# Myson MTD800/803/891
 epic*	at pci?				# SMC EPIC/100 ethernet
-#tl*	at pci?				# Compaq Thunderlan ethernet
 vr*	at pci?				# VIA Rhine ethernet
-#wb*	at pci?				# Winbond W89C840F ethernet
 sf*	at pci?				# Adaptec AIC-6915 ethernet
 sis*	at pci?				# SiS 900/7016 ethernet
 se*	at pci?				# SiS 190/191 ethernet
-#ste*	at pci?				# Sundance ST201 ethernet BORKED
 pcn*	at pci?				# AMD PCnet-PCI Ethernet
 dc*	at pci?				# 21143, "tulip" clone ethernet
 dc*	at cardbus?			# 21143, "tulip" clone ethernet
