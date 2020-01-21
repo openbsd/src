@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.2 2020/01/09 13:31:52 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.3 2020/01/21 06:22:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -486,7 +486,7 @@ peer_flush(struct rde_peer *peer, u_int8_t aid, time_t staletime)
 	/* Deletions may have been performed in peer_flush_upcall */
 	rde_send_pftable_commit();
 
-	/* flushed no need to keep staletime */
+	/* every route is gone so reset staletime */
 	if (aid == AID_UNSPEC) {
 		u_int8_t i;
 		for (i = 0; i < AID_MAX; i++)
