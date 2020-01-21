@@ -1,0 +1,20 @@
+Missing features:
+
+- automatically print variables on exit
+- if/else
+- scratch variable ($name)
+- `args', tracepoint arguments support (requires kernel work)
+- str()
+- time()
+- @ = sum(x)
+- @ = hist(x)
+- @ = lhist(x, min, max, step)
+- @ = min(x)
+- @ = max(x)
+- delete(@map[key])
+
+Improvements:
+
+- implement arithmetic operator precedence
+- rewrite stmt_printf() to not use strings internally
+- look at collision in map hash
