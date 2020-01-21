@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.9 2019/12/26 10:24:18 remi Exp $ */
+/*	$OpenBSD: printconf.c,v 1.10 2020/01/21 20:38:52 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -135,7 +135,7 @@ print_iface(struct iface *iface)
 	printf("\t\trouter-priority %d\n", iface->priority);
 	printf("\t\ttransmit-delay %d\n", iface->transmit_delay);
 
-	if (iface->p2p)
+	if (iface->type == IF_TYPE_POINTOPOINT)
 		printf("\t\ttype p2p\n");
 
 	printf("\t}\n");

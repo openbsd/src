@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.110 2019/11/23 15:05:21 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.111 2020/01/21 20:38:52 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -893,7 +893,6 @@ merge_interfaces(struct area *a, struct area *xa)
 		if (i->self)
 			i->self->priority = i->priority;
 		i->flags = xi->flags; /* needed? */
-		i->type = xi->type; /* needed? */
 		i->if_type = xi->if_type; /* needed? */
 		i->linkstate = xi->linkstate; /* needed? */
 
@@ -915,11 +914,11 @@ merge_interfaces(struct area *a, struct area *xa)
 				if_fsm(i, IF_EVT_UP);
 		}
 
-		if (i->p2p != xi->p2p) {
+		if (i->type != xi->type) {
 			/* restart interface to enable or disable DR election */
 			if (ospfd_process == PROC_OSPF_ENGINE)
 				if_fsm(i, IF_EVT_DOWN);
-			i->p2p = xi->p2p;
+			i->type = xi->type;
 			if (ospfd_process == PROC_OSPF_ENGINE)
 				if_fsm(i, IF_EVT_UP);
 		}

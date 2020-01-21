@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2019/12/26 10:24:18 remi Exp $ */
+/*	$OpenBSD: parse.y,v 1.49 2020/01/21 20:38:52 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -102,6 +102,7 @@ struct config_defaults {
 	u_int16_t	rxmt_interval;
 	u_int16_t	metric;
 	u_int8_t	priority;
+	u_int8_t	p2p;
 };
 
 struct config_defaults	 globaldefs;
@@ -449,6 +450,9 @@ defaults	: METRIC NUMBER {
 			}
 			defs->rxmt_interval = $2;
 		}
+		| TYPE P2P		{
+			defs->p2p = 1;
+		}
 		;
 
 optnl		: '\n' optnl
@@ -550,6 +554,8 @@ interface	: INTERFACE STRING	{
 			iface->metric = defs->metric;
 			iface->priority = defs->priority;
 			iface->cflags |= F_IFACE_CONFIGURED;
+			if (defs->p2p == 1)
+				iface->type = IF_TYPE_POINTOPOINT;
 			iface = NULL;
 			/* interface is always part of an area */
 			defs = &areadefs;
@@ -566,10 +572,6 @@ interfaceopts_l	: interfaceopts_l interfaceoptsl nl
 		;
 
 interfaceoptsl	: PASSIVE		{ iface->cflags |= F_IFACE_PASSIVE; }
-		| TYPE P2P		{
-			iface->p2p = 1;
-			iface->type = IF_TYPE_POINTOPOINT;
-		}
 		| DEMOTE STRING		{
 			if (strlcpy(iface->demote_group, $2,
 			    sizeof(iface->demote_group)) >=
@@ -1034,6 +1036,7 @@ parse_config(char *filename, int opts)
 	defs->rxmt_interval = DEFAULT_RXMT_INTERVAL;
 	defs->metric = DEFAULT_METRIC;
 	defs->priority = DEFAULT_PRIORITY;
+	defs->p2p = 0;
 
 	conf->spf_delay = DEFAULT_SPF_DELAY;
 	conf->spf_hold_time = DEFAULT_SPF_HOLDTIME;
