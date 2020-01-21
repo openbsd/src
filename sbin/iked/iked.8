@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.24 2020/01/16 20:05:00 tobhe Exp $
+.\" $OpenBSD: iked.8,v 1.25 2020/01/21 07:02:45 jmc Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 16 2020 $
+.Dd $Mdocdate: January 21 2020 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@ as the configuration file, instead of the default
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
-.It Fl p Ar udpencap-port
+.It Fl p Ar udpencap_port
 Specify the listen port for encapsulated UDP that
 the daemon will bind to as well as the UDP encapsulation port set
 in resulting IPsec SAs.
