@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha2.c,v 1.8 2020/01/20 18:49:46 florian Exp $ */
+/* $Id: sha2.c,v 1.9 2020/01/21 11:06:47 tb Exp $ */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.c,v 1.2.2.2 2002/03/05 08:36:47 ume Exp $	*/
 /*	$KAME: sha2.c,v 1.8 2001/11/08 01:07:52 itojun Exp $	*/
@@ -64,7 +64,7 @@
 #include <string.h>
 #include <isc/util.h>
 
-#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
+#if defined(ISC_PLATFORM_OPENSSLHASH)
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 #define EVP_MD_CTX_new() &(context->_ctx)
 #define EVP_MD_CTX_free(ptr) EVP_MD_CTX_cleanup(ptr)
@@ -1271,7 +1271,7 @@ isc_sha224_end(isc_sha224_t *context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
+#if defined(ISC_PLATFORM_OPENSSLHASH)
 		EVP_MD_CTX_reset(context->ctx);
 #else
 		isc_safe_memwipe(context, sizeof(*context));
@@ -1310,7 +1310,7 @@ isc_sha256_end(isc_sha256_t *context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
+#if defined(ISC_PLATFORM_OPENSSLHASH)
 		EVP_MD_CTX_reset(context->ctx);
 #else
 		isc_safe_memwipe(context, sizeof(*context));
@@ -1349,7 +1349,7 @@ isc_sha512_end(isc_sha512_t *context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
+#if defined(ISC_PLATFORM_OPENSSLHASH)
 		EVP_MD_CTX_reset(context->ctx);
 #else
 		isc_safe_memwipe(context, sizeof(*context));
@@ -1388,7 +1388,7 @@ isc_sha384_end(isc_sha384_t *context, char buffer[]) {
 		}
 		*buffer = (char)0;
 	} else {
-#if defined(ISC_PLATFORM_OPENSSLHASH) && !defined(LIBRESSL_VERSION_NUMBER)
+#if defined(ISC_PLATFORM_OPENSSLHASH)
 		EVP_MD_CTX_reset(context->ctx);
 #else
 		isc_safe_memwipe(context, sizeof(*context));

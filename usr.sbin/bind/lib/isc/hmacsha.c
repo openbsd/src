@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.c,v 1.6 2020/01/20 18:49:46 florian Exp $ */
+/* $Id: hmacsha.c,v 1.7 2020/01/21 11:06:47 tb Exp $ */
 
 /*
  * This code implements the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256, HMAC-SHA384
@@ -35,7 +35,7 @@
 #include <isc/util.h>
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #define HMAC_CTX_new() &(ctx->_ctx), HMAC_CTX_init(&(ctx->_ctx))
 #define HMAC_CTX_free(ptr) HMAC_CTX_cleanup(ptr)
 #endif

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.h,v 1.4 2020/01/09 13:52:23 florian Exp $ */
+/* $Id: hmacsha.h,v 1.5 2020/01/21 11:06:47 tb Exp $ */
 
 /*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,
@@ -42,7 +42,7 @@
 
 typedef struct {
 	HMAC_CTX *ctx;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	HMAC_CTX _ctx;
 #endif
 } isc_hmacsha_t;

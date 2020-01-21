@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.23 2020/01/07 19:11:17 florian Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.24 2020/01/21 11:06:47 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ CONFIGURE_OPTS=	--prefix=/usr \
 		--with-docbook-xsl=no \
 		--with-libjson=no \
 		--disable-shared \
+		--enable-openssl-hash \
 		--enable-sit
 
 PROG=	bin/dig/dig \

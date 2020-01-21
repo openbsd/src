@@ -14,10 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha1.c,v 1.9 2020/01/20 18:49:46 florian Exp $ */
+/* $Id: sha1.c,v 1.10 2020/01/21 11:06:47 tb Exp $ */
 
 /*	$NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
-/*	$OpenBSD: sha1.c,v 1.9 2020/01/20 18:49:46 florian Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.10 2020/01/21 11:06:47 tb Exp $	*/
 
 /*! \file
  * SHA-1 in C
@@ -45,7 +45,7 @@
 #include <isc/util.h>
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #define EVP_MD_CTX_new() &(context->_ctx)
 #define EVP_MD_CTX_free(ptr) EVP_MD_CTX_cleanup(ptr)
 #endif
