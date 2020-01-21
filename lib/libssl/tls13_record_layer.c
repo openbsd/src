@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.17 2020/01/20 22:04:17 beck Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.18 2020/01/21 12:08:04 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -152,6 +152,12 @@ tls13_record_layer_free(struct tls13_record_layer *rl)
 	freezero(rl->write_nonce.data, rl->write_nonce.len);
 
 	freezero(rl, sizeof(struct tls13_record_layer));
+}
+
+void
+tls13_record_layer_rbuf(struct tls13_record_layer *rl, CBS *cbs)
+{
+	CBS_dup(&rl->rbuf_cbs, cbs);
 }
 
 static int

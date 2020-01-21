@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.21 2020/01/21 03:40:05 beck Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.22 2020/01/21 12:08:04 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -115,14 +115,28 @@ tls13_use_legacy_client(struct tls13_ctx *ctx)
 	if (s->bbio != s->wbio)
 		s->wbio = BIO_push(s->bbio, s->wbio);
 
-	if (!tls13_handshake_msg_content(ctx->hs_msg, &cbs))
-		goto err;
+	/* Stash any unprocessed data from the last record. */
+	tls13_record_layer_rbuf(ctx->rl, &cbs);
+	if (CBS_len(&cbs) > 0) {
+		if (!CBS_write_bytes(&cbs,
+		    S3I(s)->rbuf.buf + SSL3_RT_HEADER_LENGTH,
+		    S3I(s)->rbuf.len - SSL3_RT_HEADER_LENGTH, NULL))
+			goto err;
 
-	if (!BUF_MEM_grow_clean(s->internal->init_buf, CBS_len(&cbs) + 4))
-		goto err;
+		S3I(s)->rbuf.offset = SSL3_RT_HEADER_LENGTH;
+		S3I(s)->rbuf.left = CBS_len(&cbs);
+		S3I(s)->rrec.type = SSL3_RT_HANDSHAKE;
+		S3I(s)->rrec.length = CBS_len(&cbs);
+		s->internal->rstate = SSL_ST_READ_BODY;
+		s->internal->packet = S3I(s)->rbuf.buf;
+		s->internal->packet_length = SSL3_RT_HEADER_LENGTH;
+		s->internal->mac_packet = 1;
+	}
 
-	if (!CBS_write_bytes(&cbs, s->internal->init_buf->data + 4,
-	    s->internal->init_buf->length - 4, NULL))
+	/* Stash the current handshake message. */
+	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
+	if (!CBS_write_bytes(&cbs, s->internal->init_buf->data,
+	    s->internal->init_buf->length, NULL))
 		goto err;
 
 	S3I(s)->tmp.reuse_message = 1;
