@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.4 2020/01/20 18:39:24 florian Exp $
+# $Id: Makefile.in,v 1.5 2020/01/21 08:06:56 florian Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -25,7 +25,7 @@ VERSION=@BIND9_VERSION@
 # machine generated.  The latter are handled specially in the
 # install target below.
 #
-HEADERS =	cfg.h dnsconf.h grammar.h log.h namedconf.h \
+HEADERS =	cfg.h dnsconf.h grammar.h namedconf.h \
 		version.h
 
 SUBDIRS =

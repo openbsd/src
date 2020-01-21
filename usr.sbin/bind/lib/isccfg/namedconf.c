@@ -33,7 +33,7 @@
 
 #include <isccfg/cfg.h>
 #include <isccfg/grammar.h>
-#include <isccfg/log.h>
+
 
 #define TOKEN_STRING(pctx) (pctx->token.value.as_textregion.base)
 

@@ -37,11 +37,14 @@
 
 #include <isccfg/cfg.h>
 #include <isccfg/grammar.h>
-#include <isccfg/log.h>
+
+
+isc_logcategory_t cfg_category = { "config",     0 };
+isc_logmodule_t cfg_module = { "isccfg/parser",      0 };
 
 /* Shorthand */
-#define CAT CFG_LOGCATEGORY_CONFIG
-#define MOD CFG_LOGMODULE_PARSER
+#define CAT &cfg_category
+#define MOD &cfg_module
 
 #define MAP_SYM 1 	/* Unique type for isc_symtab */
 
