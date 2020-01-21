@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2020/01/17 20:45:50 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2020/01/21 22:47:39 bluhm Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -88,6 +88,11 @@ TRANSFER_CLIENT_WAIT = \
 TRANSFER_SERVER_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'command' server.out; \
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
+
+RUNNING_WAIT = \
+	let timeout=`date +%s`+5; \
+	while ps -xww -o comm,stat | grep -q '${NC:T} .*R'; \
 	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 ### TCP ####
@@ -213,6 +218,25 @@ run-tcp6-bad-localhost-client:
 	${PORT_GET}
 	! ${NC} -6 -v 127.0.0.1 ${PORT} ${CLIENT_LOG}
 	grep 'no address associated with name' client.err
+
+REGRESS_TARGETS +=	run-tcp-sleep
+run-tcp-sleep:
+	@echo '======== $@ ========'
+	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	# netcat waits for the other side to terminate, check it is sleeping
+	${RUNNING_WAIT}
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -v -l 127'
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -v 127'
 
 # TCP keep
 
@@ -587,6 +611,30 @@ run-tls-client-no-hash: client.crt server.crt ca.crt client.hash
 	# non existing hash is not checked
 	! grep 'Cert Hash: SHA256:' server.err
 
+REGRESS_TARGETS +=	run-tls-sleep
+run-tls-sleep: 127.0.0.1.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C 127.0.0.1.crt -K 127.0.0.1.key -n -v -l 127.0.0.1 0 \
+	    ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R 127.0.0.1.crt -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	# XXX success message should be issued after TLS handshake
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=127.0.0.1' client.err
+	grep 'Issuer: .*/OU=server/CN=127.0.0.1' client.err
+	# netcat waits for the other side to terminate, check it is sleeping
+	${RUNNING_WAIT}
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -v -l 127'
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -v 127'
+
 # TLS keep
 
 REGRESS_TARGETS +=	run-tls-keep
@@ -737,6 +785,24 @@ run-udp-keep:
 	# client does not connect
 	! grep 'Connection received on ' server.err
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-udp-sleep
+run-udp-sleep:
+	@echo '======== $@ ========'
+	${SERVER_NC} -u -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${BIND_WAIT}
+	${PORT_GET}
+	# the -v option would cause udptest() to write additional X
+	${CLIENT_NC} -u -n 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Bound on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	# netcat waits for the other side to terminate, check it is sleeping
+	${RUNNING_WAIT}
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -v -l 127'
+	ps -xww -o comm,stat,args | grep '^${NC:T} .*S.* -n 127'
 
 ### UNIX ####
 
@@ -1041,7 +1107,10 @@ REGRESS_EXPECTED_FAILURES = \
 	run-tcp-server-shutdown-eof \
 	run-tcp-server-shutdown-reverse-eof \
 	run-tcp-client-shutdown-eof \
-	run-tcp-client-shutdown-reverse-eof
+	run-tcp-client-shutdown-reverse-eof \
+	run-tcp-sleep \
+	run-tls-sleep \
+	run-udp-sleep
 
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
