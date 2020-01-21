@@ -1,0 +1,47 @@
+.\"	$OpenBSD: dt.4,v 1.1 2020/01/21 16:18:28 mpi Exp $
+.\"
+.\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: January 21 2020 $
+.Dt DT 4
+.Os
+.Sh NAME
+.Nm dt
+.Nd dynamic tracer
+.Sh SYNOPSIS
+.Cd "pseudo-device dt"
+.Sh DESCRIPTION
+System and application tracing can happen in the kernel.
+It has to be configured and enabled through the
+.Xr ioctl 2
+interface exposed by the pseudo-device
+.Pa /dev/dt .
+.\"Sh IOCTL INTERFACE
+.\"
+.Sh FILES
+.Bl -tag -width /dev/dt -compact
+.It Pa /dev/dt
+dynamic tracing device.
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr bt 5
+and
+.Xr btrace 8 .
+.Sh HISTORY
+The
+.Nm
+dynamic tracing mechanism first appeared in
+.Ox 6.7 .
