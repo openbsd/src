@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.33 2019/03/25 18:48:12 guenther Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.34 2020/01/21 02:59:37 mlarkin Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -65,11 +65,6 @@ void x86_64_ipi_halt(struct cpu_info *);
 void x86_64_ipi_start_vmm(struct cpu_info *);
 void x86_64_ipi_stop_vmm(struct cpu_info *);
 #endif /* NVMM > 0 */
-
-#ifdef HIBERNATE
-void x86_64_ipi_halt_realmode(struct cpu_info *);
-extern void hibernate_drop_to_real_mode(void);
-#endif /* HIBERNATE */
 
 #include "pctr.h"
 #if NPCTR > 0
