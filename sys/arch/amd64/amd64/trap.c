@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.78 2020/01/09 15:18:58 bluhm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.79 2020/01/21 03:06:39 mlarkin Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -196,7 +196,7 @@ pageflttrap(struct trapframe *frame, int usermode)
 
 		/*
 		 * It is only a kernel address space fault iff:
-		 *	1. when running in ring0  and
+		 *	1. when running in ring 0 and
 		 *	2. pcb_onfault not set or
 		 *	3. pcb_onfault set but supervisor space fault
 		 * The last can occur during an exec() copyin where the
@@ -548,7 +548,7 @@ syscall(struct trapframe *frame)
 			args[3] = frame->tf_r10;
 		case 3:
 			args[2] = frame->tf_rdx;
-		case 2:	
+		case 2:
 			args[1] = frame->tf_rsi;
 		case 1:
 			args[0] = frame->tf_rdi;
