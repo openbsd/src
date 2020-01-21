@@ -93,7 +93,7 @@
 	(rsa)->flags &= ~(RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE); \
 	(rsa)->flags &= ~RSA_FLAG_BLINDING; \
 	} while (0)
-#elif OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#elif OPENSSL_VERSION_NUMBER < 0x10100000L
 #if defined(RSA_FLAG_NO_BLINDING)
 #define SET_FLAGS(rsa) \
 	do { \
