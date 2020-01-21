@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.20 2020/01/20 13:10:37 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.21 2020/01/21 03:40:05 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -241,8 +241,8 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	uint16_t cipher_suite, legacy_version;
 	uint8_t compression_method;
 	const SSL_CIPHER *cipher;
+	int alert_desc;
 	SSL *s = ctx->ssl;
-	int alert;
 
 	if (!CBS_get_u16(cbs, &legacy_version))
 		goto err;
@@ -258,8 +258,10 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	if (tls13_server_hello_is_legacy(cbs))
 		return tls13_use_legacy_client(ctx);
 
-	if (!tlsext_client_parse(s, cbs, &alert, SSL_TLSEXT_MSG_SH))
+	if (!tlsext_client_parse(s, cbs, &alert_desc, SSL_TLSEXT_MSG_SH)) {
+		ctx->alert = alert_desc;
 		goto err;
+	}
 
 	if (CBS_len(cbs) != 0)
 		goto err;
@@ -273,14 +275,14 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	 */
 	if (ctx->hs->server_version != 0) {
 		if (legacy_version != TLS1_2_VERSION) {
-			/* XXX - alert. */
+			ctx->alert = SSL_AD_PROTOCOL_VERSION;
 			goto err;
 		}
 	} else {
 		if (legacy_version < ctx->hs->min_version ||
 		    legacy_version > ctx->hs->max_version ||
 		    legacy_version > TLS1_2_VERSION) {
-			/* XXX - alert. */
+			ctx->alert = SSL_AD_PROTOCOL_VERSION;
 			goto err;
 		}
 		ctx->hs->server_version = legacy_version;
@@ -295,19 +297,19 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	cipher = ssl3_get_cipher_by_value(cipher_suite);
 	if (cipher == NULL ||
 	    sk_SSL_CIPHER_find(ssl_get_ciphers_by_id(s), cipher) < 0) {
-		/* XXX - alert. */
+		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
 		goto err;
 	}
 	if (ctx->hs->server_version == TLS1_3_VERSION &&
 	    cipher->algorithm_ssl != SSL_TLSV1_3) {
-		/* XXX - alert. */
+		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
 		goto err;
 	}
 	/* XXX - move this to hs_tls13? */
 	S3I(s)->hs.new_cipher = cipher;
 
 	if (compression_method != 0) {
-		/* XXX - alert. */
+		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
 		goto err;
 	}
 
@@ -318,8 +320,8 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	return 1;
 
  err:
-	/* XXX - send alert. */
-
+	if (ctx->alert == 0)
+		ctx->alert = TLS1_AD_DECODE_ERROR;
 	return 0;
 }
 
@@ -407,14 +409,16 @@ tls13_server_hello_recv(struct tls13_ctx *ctx)
 int
 tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx)
 {
-	int alert;
 	CBS cbs;
+	int alert_desc;
 
 	if (!tls13_handshake_msg_content(ctx->hs_msg, &cbs))
 		goto err;
 
-	if (!tlsext_client_parse(ctx->ssl, &cbs, &alert, SSL_TLSEXT_MSG_EE))
+	if (!tlsext_client_parse(ctx->ssl, &cbs, &alert_desc, SSL_TLSEXT_MSG_EE)) {
+		ctx->alert = alert_desc;
 		goto err;
+	}
 
 	if (CBS_len(&cbs) != 0)
 		goto err;
@@ -422,8 +426,8 @@ tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx)
 	return 1;
 
  err:
-	/* XXX - send alert. */
-
+	if (ctx->alert == 0)
+		ctx->alert = TLS1_AD_DECODE_ERROR;
 	return 0;
 }
 
@@ -627,13 +631,14 @@ tls13_server_certificate_verify_recv(struct tls13_ctx *ctx)
 		goto err;
 	if (EVP_DigestVerifyFinal(mdctx, CBS_data(&signature),
 	    CBS_len(&signature)) <= 0) {
-		/* XXX - send alert. */
 		goto err;
 	}
 
 	ret = 1;
 
  err:
+	if (!ret)
+		ctx->alert = TLS1_AD_DECODE_ERROR;
 	CBB_cleanup(&cbb);
 	EVP_MD_CTX_free(mdctx);
 	free(sig_content);
@@ -688,7 +693,7 @@ tls13_server_finished_recv(struct tls13_ctx *ctx)
 		goto err;
 
 	if (!CBS_mem_equal(&cbs, verify_data, verify_data_len)) {
-		/* XXX - send alert. */
+		ctx->alert = TLS1_AD_DECRYPTION_FAILED;
 		goto err;
 	}
 

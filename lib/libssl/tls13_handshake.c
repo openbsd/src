@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.37 2020/01/20 22:04:17 beck Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.38 2020/01/21 03:40:05 beck Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -291,7 +291,8 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 			ctx->handshake_completed = 1;
 			tls13_record_layer_handshake_completed(ctx->rl);
 			return TLS13_IO_SUCCESS;
-		}
+		} else if (ctx->alert)
+			return tls13_send_alert(ctx->rl, ctx->alert);
 
 		if (action->sender == ctx->mode) {
 			if ((ret = tls13_handshake_send_action(ctx, action)) <= 0)
@@ -329,6 +330,8 @@ tls13_handshake_send_action(struct tls13_ctx *ctx,
 		/* XXX - provide CBB. */
 		if (!action->send(ctx))
 			return TLS13_IO_FAILURE;
+		else if (ctx->alert)
+			return tls13_send_alert(ctx->rl, ctx->alert);
 	}
 
 	if ((ret = tls13_handshake_msg_send(ctx->hs_msg, ctx->rl)) <= 0)
@@ -389,6 +392,8 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 	ret = TLS13_IO_FAILURE;
 	if (action->recv(ctx))
 		ret = TLS13_IO_SUCCESS;
+	else if (ctx->alert)
+		ret = tls13_send_alert(ctx->rl, ctx->alert);
 
 	tls13_handshake_msg_free(ctx->hs_msg);
 	ctx->hs_msg = NULL;

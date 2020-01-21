@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.37 2020/01/20 13:10:37 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.38 2020/01/21 03:40:05 beck Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -186,6 +186,7 @@ struct tls13_ctx {
 	struct tls13_record_layer *rl;
 	struct tls13_handshake_msg *hs_msg;
 	uint8_t key_update_request;
+	uint8_t alert;
 	int phh_count;
 	time_t phh_last_seen;
 };
