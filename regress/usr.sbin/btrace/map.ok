@@ -1,0 +1,13 @@
+=> Print with one element
+@map[7]: 1
+=> Print after zero:
+@map[7]: 0
+=> Print top 2:
+@map[4]: 9999
+@map[897123]: 9997
+=> Print all map:
+@map[4]: 9999
+@map[897123]: 9997
+@map[5]: 42
+@map[7]: 2
+=> Print after clear:

@@ -1,0 +1,29 @@
+BEGIN
+{
+	@map[8 - 1] = count();
+	printf("=> Print with one element\n");
+	print(@map);
+
+	zero(@map);
+	printf("=> Print after zero:\n");
+	print(@map);
+
+	@map[7] = count();
+	@map[5] = 42;
+	@map[3 + 1] = 9999;
+	@map[897123] = 9997;
+	@top = 2;
+	printf("=> Print top %d:\n", @top);
+	print(@map, @top);
+}
+
+END
+{
+	@map[7] = count();
+	printf("=> Print all map:\n");
+	print(@map);
+
+	clear(@map);
+	printf("=> Print after clear:\n");
+	print(@map);
+}
