@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.186 2020/01/15 14:49:38 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.187 2020/01/21 05:02:53 beck Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -631,6 +631,7 @@ noslash:
 
 #ifndef NOSSL
 	if (ishttpsurl) {
+		ssize_t ret;
 		if (proxyenv && sslpath) {
 			ishttpsurl = 0;
 			proxyurl = NULL;
@@ -646,16 +647,19 @@ noslash:
 			goto cleanup_url_get;
 		}
 		if (tls_configure(tls, tls_config) != 0) {
-			fprintf(ttyout, "SSL configuration failure: %s\n",
+			fprintf(ttyout, "TLS configuration failure: %s\n",
 			    tls_error(tls));
 			goto cleanup_url_get;
 		}
 		if (tls_connect_socket(tls, fd, sslhost) != 0) {
-			fprintf(ttyout, "SSL failure: %s\n", tls_error(tls));
+			fprintf(ttyout, "TLS connect failure: %s\n", tls_error(tls));
 			goto cleanup_url_get;
 		}
-		if (tls_handshake(tls) != 0) {
-			fprintf(ttyout, "SSL failure: %s\n", tls_error(tls));
+		do {
+			ret = tls_handshake(tls);
+		} while (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT);
+		if (ret != 0) {
+			fprintf(ttyout, "TLS handshake failure: %s\n", tls_error(tls));
 			goto cleanup_url_get;
 		}
 		fin = funopen(tls, stdio_tls_read_wrapper,
