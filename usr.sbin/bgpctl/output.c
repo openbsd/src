@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.3 2020/01/09 11:57:04 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.4 2020/01/21 11:16:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -221,12 +221,16 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 		    log_shutcomm(p->stats.last_shutcomm));
 	}
 	if (p->state == STATE_IDLE) {
-		static const char	*errstr;
+		const char *errstr;
 
 		errstr = get_errstr(p->stats.last_sent_errcode,
 		    p->stats.last_sent_suberr);
 		if (errstr)
-			printf("  Last error: %s\n\n", errstr);
+			printf("  Last error sent: %s\n\n", errstr);
+		errstr = get_errstr(p->stats.last_rcvd_errcode,
+		    p->stats.last_rcvd_suberr);
+		if (errstr)
+			printf("  Last error received: %s\n\n", errstr);
 	} else {
 		printf("  Local host:  %20s, Local port:  %5u\n",
 		    log_addr(&p->local), p->local_port);
