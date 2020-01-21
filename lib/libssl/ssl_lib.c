@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.207 2019/11/17 19:07:07 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.208 2020/01/21 04:45:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -192,6 +192,9 @@ SSL_clear(SSL *s)
 	s->client_version = s->version;
 	s->internal->rwstate = SSL_NOTHING;
 	s->internal->rstate = SSL_ST_READ_HEADER;
+
+	tls13_ctx_free(s->internal->tls13);
+	s->internal->tls13 = NULL;
 
 	BUF_MEM_free(s->internal->init_buf);
 	s->internal->init_buf = NULL;
@@ -523,6 +526,8 @@ SSL_free(SSL *s)
 	if (s->rbio != s->wbio)
 		BIO_free_all(s->rbio);
 	BIO_free_all(s->wbio);
+
+	tls13_ctx_free(s->internal->tls13);
 
 	BUF_MEM_free(s->internal->init_buf);
 

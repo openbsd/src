@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.14 2020/01/20 13:10:37 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.15 2020/01/21 04:45:18 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -265,6 +265,7 @@ tls13_ctx_free(struct tls13_ctx *ctx)
 
 	tls13_error_clear(&ctx->error);
 	tls13_record_layer_free(ctx->rl);
+	tls13_handshake_msg_free(ctx->hs_msg);
 
 	freezero(ctx, sizeof(struct tls13_ctx));
 }
