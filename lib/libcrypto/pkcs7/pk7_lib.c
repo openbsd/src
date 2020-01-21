@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.20 2019/03/13 20:34:00 tb Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.21 2020/01/21 10:18:52 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -186,7 +186,6 @@ PKCS7_set_type(PKCS7 *p7, int type)
 		if ((p7->d.signed_and_enveloped =
 		    PKCS7_SIGN_ENVELOPE_new()) == NULL)
 			goto err;
-		ASN1_INTEGER_set(p7->d.signed_and_enveloped->version, 1);
 		if (!ASN1_INTEGER_set(p7->d.signed_and_enveloped->version, 1))
 			goto err;
 		p7->d.signed_and_enveloped->enc_data->content_type =
