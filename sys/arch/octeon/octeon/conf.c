@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2019/12/17 13:08:56 reyk Exp $ */
+/*	$OpenBSD: conf.c,v 1.23 2020/01/21 16:16:23 mpi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,6 +129,7 @@ cdev_decl(amdcf);
 #include "pci.h"
 cdev_decl(pci);
 
+#include "dt.h"
 #include "pf.h"
 
 #include "usb.h"
@@ -185,7 +186,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 29 */
 #endif
-	cdev_notdef(),			/* 30: */
+	cdev_dt_init(NDT,dt),		/* 30: dynamic tracer */
 	cdev_pf_init(NPF,pf),		/* 31: packet filter */
 	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
 	cdev_random_init(1,random),	/* 33: random data source */

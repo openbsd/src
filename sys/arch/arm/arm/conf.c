@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.52 2019/12/18 06:53:46 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.53 2020/01/21 16:16:22 mpi Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -68,6 +68,7 @@
  * Standard pseudo-devices
  */
 #include "bpfilter.h"
+#include "dt.h"
 #include "pf.h"
 #include "pty.h"
 #include "tun.h"
@@ -299,7 +300,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ch_init(NCH,ch),	 		/* 27: SCSI autochanger */
 	cdev_uk_init(NUK,uk),	 		/* 28: SCSI unknown */
 	cdev_notdef(),				/* 29: */
-	cdev_notdef(),				/* 30: */
+	cdev_dt_init(NDT,dt),			/* 30: dynamic tracer */
 	cdev_notdef(),				/* 31: */
 	cdev_notdef(),				/* 32: */
 	cdev_tun_init(NTUN,tun),		/* 33: network tunnel */

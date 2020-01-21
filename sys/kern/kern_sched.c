@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.62 2019/11/04 18:06:03 visa Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.63 2020/01/21 16:16:23 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -26,6 +26,7 @@
 #include <sys/mutex.h>
 #include <sys/task.h>
 #include <sys/smr.h>
+#include <sys/tracepoint.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -261,6 +262,7 @@ setrunqueue(struct cpu_info *ci, struct proc *p, uint8_t prio)
 
 	spc = &p->p_cpu->ci_schedstate;
 	spc->spc_nrun++;
+	TRACEPOINT(sched, enqueue, p->p_tid, p->p_p->ps_pid);
 
 	TAILQ_INSERT_TAIL(&spc->spc_qs[queue], p, p_runq);
 	spc->spc_whichqs |= (1 << queue);
@@ -282,6 +284,7 @@ remrunqueue(struct proc *p)
 	SCHED_ASSERT_LOCKED();
 	spc = &p->p_cpu->ci_schedstate;
 	spc->spc_nrun--;
+	TRACEPOINT(sched, dequeue, p->p_tid, p->p_p->ps_pid);
 
 	TAILQ_REMOVE(&spc->spc_qs[queue], p, p_runq);
 	if (TAILQ_EMPTY(&spc->spc_qs[queue])) {

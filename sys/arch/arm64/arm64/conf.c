@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2019/12/22 18:18:02 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 2020/01/21 16:16:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -139,6 +139,7 @@ cdev_decl(drm);
 cdev_decl(pci);
 #endif
 
+#include "dt.h"
 #include "pf.h"
 #include "hotplug.h"
 #include "vscsi.h"
@@ -182,7 +183,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 27 */
 	cdev_notdef(),			/* 28 was LKM */
 	cdev_notdef(),			/* 29 */
-	cdev_notdef(),			/* 30 */
+	cdev_dt_init(NDT,dt),		/* 30: dynamic tracer */
 	cdev_notdef(),			/* 31 */
 	cdev_notdef(),			/* 32 */
 	cdev_notdef(),			/* 33 */

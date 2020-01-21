@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.100 2019/11/02 16:56:17 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.101 2020/01/21 16:16:23 mpi Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -53,6 +53,11 @@
 
 #if defined(GPROF) || defined(DDBPROF)
 #include <sys/gmon.h>
+#endif
+
+#include "dt.h"
+#if NDT > 0
+#include <dev/dt/dtvar.h>
 #endif
 
 /*
@@ -167,6 +172,12 @@ hardclock(struct clockframe *frame)
 
 	if (--ci->ci_schedstate.spc_rrticks <= 0)
 		roundrobin(ci);
+
+#if NDT > 0
+	DT_ENTER(profile, NULL);
+	if (CPU_IS_PRIMARY(ci))
+		DT_ENTER(interval, NULL);
+#endif
 
 	/*
 	 * If we are not the primary CPU, we're not allowed to do

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.60 2019/12/11 07:30:09 guenther Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.61 2020/01/21 16:16:23 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@
 #include <sys/sched.h>
 #include <sys/timeout.h>
 #include <sys/smr.h>
+#include <sys/tracepoint.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -392,8 +393,12 @@ mi_switch(void)
 
 	if (p != nextproc) {
 		uvmexp.swtch++;
+		TRACEPOINT(sched, off__cpu, nextproc->p_tid,
+		    nextproc->p_p->ps_pid);
 		cpu_switchto(p, nextproc);
+		TRACEPOINT(sched, on__cpu, NULL);
 	} else {
+		TRACEPOINT(sched, remain__cpu, NULL);
 		p->p_stat = SONPROC;
 	}
 

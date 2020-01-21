@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.69 2019/12/17 13:08:56 reyk Exp $ */
+/*	$OpenBSD: conf.c,v 1.70 2020/01/21 16:16:23 mpi Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -116,6 +116,7 @@ cdev_decl(pci);
 #include "video.h"
 #include "midi.h"
 
+#include "dt.h"
 #include "pf.h"
 
 #include "radio.h"
@@ -159,7 +160,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 27 */
 	cdev_notdef(),			/* 28 */
 	cdev_notdef(),			/* 29 */
-	cdev_notdef(),			/* 30 */
+	cdev_dt_init(NDT,dt),		/* 30: dynamic tracer */
 	cdev_notdef(),			/* 31 */
 	cdev_notdef(),			/* 32 */
 	cdev_notdef(),			/* 33 */

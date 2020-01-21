@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.24 2019/11/29 06:34:46 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.25 2020/01/21 16:16:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,10 +33,16 @@
 
 #include <sys/param.h>
 #include <sys/pledge.h>
+#include <sys/tracepoint.h>
 #include <uvm/uvm_extern.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+
+#include "dt.h"
+#if NDT > 0
+#include <dev/dt/dtvar.h>
 #endif
 
 
@@ -58,6 +64,10 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 	KERNEL_LOCK();
 	scdebug_call(p, code, argp);
 	KERNEL_UNLOCK();
+#endif
+	TRACEPOINT(raw_syscalls, sys_enter, code, NULL);
+#if NDT > 0
+	DT_ENTER(syscall, code, callp->sy_argsize, argp);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
@@ -108,6 +118,10 @@ mi_syscall_return(struct proc *p, register_t code, int error,
 	scdebug_ret(p, code, error, retval);
 	KERNEL_UNLOCK();
 #endif
+#if NDT > 0
+	DT_LEAVE(syscall, code, error, retval[0], retval[1]);
+#endif
+	TRACEPOINT(raw_syscalls, sys_exit, code, NULL);
 
 	userret(p);
 
@@ -126,17 +140,23 @@ mi_syscall_return(struct proc *p, register_t code, int error,
 static inline void
 mi_child_return(struct proc *p)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE)
+#if defined(SYSCALL_DEBUG) || defined(KTRACE) || NDT > 0
 	int code = (p->p_flag & P_THREAD) ? SYS___tfork :
 	    (p->p_p->ps_flags & PS_PPWAIT) ? SYS_vfork : SYS_fork;
 	const register_t child_retval[2] = { 0, 1 };
 #endif
+
+	TRACEPOINT(sched, on__cpu, NULL);
 
 #ifdef SYSCALL_DEBUG
 	KERNEL_LOCK();
 	scdebug_ret(p, code, 0, child_retval);
 	KERNEL_UNLOCK();
 #endif
+#if NDT > 0
+	DT_LEAVE(syscall, code, 0, child_retval[0], child_retval[1]);
+#endif
+	TRACEPOINT(raw_syscalls, sys_exit, code, NULL);
 
 	userret(p);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.81 2019/12/17 13:08:56 reyk Exp $	*/
+/*	$OpenBSD: conf.c,v 1.82 2020/01/21 16:16:23 mpi Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -108,6 +108,7 @@ cdev_decl(pci);
 #include "ulpt.h"
 #include "ucom.h"
 
+#include "dt.h"
 #include "pf.h"
 
 #include "ksyms.h"
@@ -181,7 +182,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 27 */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
 	cdev_notdef(),			/* 29 */
-	cdev_notdef(),			/* 30: Xylogics tape */
+	cdev_dt_init(NDT,dt),		/* 30: dynamic tracer */
 	cdev_notdef(),			/* 31: /dev/cgtwo */
 	cdev_notdef(),			/* 32: should be /dev/gpone */
 	cdev_notdef(),			/* 33 */

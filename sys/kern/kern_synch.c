@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.159 2020/01/21 15:20:47 visa Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.160 2020/01/21 16:16:23 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -51,6 +51,8 @@
 #include <sys/refcnt.h>
 #include <sys/atomic.h>
 #include <sys/witness.h>
+#include <sys/tracepoint.h>
+
 #include <ddb/db_output.h>
 
 #include <machine/spinlock.h>
@@ -380,6 +382,8 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 
 	SCHED_LOCK(sls->sls_s);
 
+	TRACEPOINT(sched, sleep, NULL);
+
 	p->p_wchan = ident;
 	p->p_wmesg = wmesg;
 	p->p_slptime = 0;
@@ -552,6 +556,7 @@ unsleep(struct proc *p)
 	if (p->p_wchan != NULL) {
 		TAILQ_REMOVE(&slpque[LOOKUP(p->p_wchan)], p, p_runq);
 		p->p_wchan = NULL;
+		TRACEPOINT(sched, wakeup, p->p_tid, p->p_p->ps_pid);
 	}
 }
 
