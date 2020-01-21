@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.7 2019/09/30 20:40:54 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.8 2020/01/21 00:21:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -113,5 +113,19 @@ void	pwm_register(struct pwm_device *);
 int	pwm_init_state(uint32_t *cells, struct pwm_state *ps);
 int	pwm_get_state(uint32_t *cells, struct pwm_state *ps);
 int	pwm_set_state(uint32_t *cells, struct pwm_state *ps);
+
+/* Non-volatile memory support */
+
+struct nvmem_device {
+	int	nd_node;
+	void	*nd_cookie;
+	int	(*nd_read)(void *, bus_addr_t, void *, bus_size_t);
+
+	LIST_ENTRY(nvmem_device) nd_list;
+	uint32_t nd_phandle;
+};
+
+void	nvmem_register(struct nvmem_device *);
+int	nvmem_read(uint32_t, bus_addr_t, void *, bus_size_t);
 
 #endif /* _DEV_OFW_MISC_H_ */

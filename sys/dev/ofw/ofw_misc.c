@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.10 2019/09/30 20:40:54 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.11 2020/01/21 00:21:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -333,6 +333,36 @@ pwm_set_state(uint32_t *cells, struct pwm_state *ps)
 	LIST_FOREACH(pd, &pwm_devices, pd_list) {
 		if (pd->pd_phandle == cells[0])
 			return pd->pd_set_state(pd->pd_cookie, &cells[1], ps);
+	}
+
+	return ENXIO;
+}
+
+/*
+ * Non-volatile memory support.
+ */
+
+LIST_HEAD(, nvmem_device) nvmem_devices =
+	LIST_HEAD_INITIALIZER(nvmem_devices);
+
+void
+nvmem_register(struct nvmem_device *nd)
+{
+	nd->nd_phandle = OF_getpropint(nd->nd_node, "phandle", 0);
+	if (nd->nd_phandle == 0)
+		return;
+
+	LIST_INSERT_HEAD(&nvmem_devices, nd, nd_list);
+}
+
+int
+nvmem_read(uint32_t phandle, bus_addr_t addr, void *data, bus_size_t size)
+{
+	struct nvmem_device *nd;
+
+	LIST_FOREACH(nd, &nvmem_devices, nd_list) {
+		if (nd->nd_phandle == phandle)
+			return nd->nd_read(nd->nd_cookie, addr, data, size);
 	}
 
 	return ENXIO;
