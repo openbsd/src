@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.41 2020/01/02 10:16:46 denis Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.42 2020/01/21 15:17:13 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -38,8 +38,6 @@ int		 lsa_equal(struct lsa *, struct lsa *);
 int		 lsa_get_prefix(void *, u_int16_t, struct rt_prefix *);
 
 RB_GENERATE(lsa_tree, vertex, entry, lsa_compare)
-
-extern struct ospfd_conf	*rdeconf;
 
 void
 lsa_init(struct lsa_tree *t)
@@ -235,6 +233,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 	case LSA_TYPE_NETWORK:
 		if ((len % sizeof(u_int32_t)) ||
 		    len < sizeof(lsa->hdr) + sizeof(u_int32_t)) {
+			log_warnx("lsa_check: bad LSA network packet");
 			return (0);
 		}
 		break;
@@ -716,7 +715,7 @@ lsa_num_links(struct vertex *v)
 }
 
 void
-lsa_snap(struct rde_nbr *nbr, u_int32_t peerid)
+lsa_snap(struct rde_nbr *nbr)
 {
 	struct lsa_tree	*tree = &nbr->area->lsa_tree;
 	struct vertex	*v;
@@ -727,11 +726,13 @@ lsa_snap(struct rde_nbr *nbr, u_int32_t peerid)
 				continue;
 			lsa_age(v);
 			if (ntohs(v->lsa->hdr.age) >= MAX_AGE) {
-				rde_imsg_compose_ospfe(IMSG_LS_SNAP, peerid,
-				    0, &v->lsa->hdr, ntohs(v->lsa->hdr.len));
+				rde_imsg_compose_ospfe(IMSG_LS_SNAP,
+				    nbr->peerid, 0, &v->lsa->hdr,
+				    ntohs(v->lsa->hdr.len));
 			} else {
-				rde_imsg_compose_ospfe(IMSG_DB_SNAPSHOT, peerid,
-				    0, &v->lsa->hdr, sizeof(struct lsa_hdr));
+				rde_imsg_compose_ospfe(IMSG_DB_SNAPSHOT,
+				    nbr->peerid, 0, &v->lsa->hdr,
+				    sizeof(struct lsa_hdr));
 			}
 		}
 		if (tree == &asext_tree)

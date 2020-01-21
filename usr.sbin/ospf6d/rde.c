@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.82 2020/01/02 10:16:46 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.83 2020/01/21 15:17:12 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -345,7 +345,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (nbr == NULL)
 				break;
 
-			lsa_snap(nbr, imsg.hdr.peerid);
+			lsa_snap(nbr);
 
 			imsg_compose_event(iev_ospfe, IMSG_DB_END, imsg.hdr.peerid,
 			    0, -1, NULL, 0);
