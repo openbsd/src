@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.41 2020/01/09 14:35:19 mpi Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.42 2020/01/21 06:37:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -158,8 +158,13 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 
+		/*
+		 * AMD Bolton matches PCI_PRODUCT_AMD_HUDSON2_SMB but
+		 * uses old register layout. Therefor check PCI_REVISION.
+		 */
 		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
-		    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_HUDSON2_SMB ||
+		    ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_HUDSON2_SMB &&
+		    PCI_REVISION(pa->pa_class) >= 0x1f) ||
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_KERNCZ_SMB)) {
 			bus_space_write_1(sc->sc_iot, ioh, 0,
 			    AMDFCH41_PM_DECODE_EN);
@@ -170,6 +175,9 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 			    AMDFCH41_PM_DECODE_EN + 1);
 			val = bus_space_read_1(sc->sc_iot, ioh, 1) << 8;
 			base = val;
+
+			sc->sc_is_fch = 1;
+			numbusses = 2;
 		} else {
 			/* Read "SmBus0En" */
 			bus_space_write_1(sc->sc_iot, ioh, 0,
@@ -181,6 +189,14 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 			val |= (bus_space_read_1(sc->sc_iot, ioh, 1) << 8);
 			smb0en = val & SB800_SMB0EN_EN;
 			base = val & SB800_SMB0EN_BASE_MASK;
+
+			bus_space_write_1(sc->sc_iot, ioh, 0,
+			    SB800_PMREG_SMB0SELEN);
+			val = bus_space_read_1(sc->sc_iot, ioh, 1);
+			if (val & SB800_SMB0SELEN_EN) {
+				sc->sc_is_sb800 = 1;
+				numbusses = 4;
+			}
 		}
 
 		if (smb0en == 0) {
@@ -190,17 +206,6 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		sc->sc_sb800_ioh = ioh;
-		if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_KERNCZ_SMB) ||
-		    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_HUDSON2_SMB &&
-		    PCI_REVISION(pa->pa_class) >= 0x1f)) {
-			sc->sc_is_fch = 1;
-			numbusses = 2;
-		} else {
-			sc->sc_is_sb800 = 1;
-			numbusses = 4;
-		}
 
 		/* Map I/O space */
 		if (base == 0 || bus_space_map(sc->sc_iot, base,
@@ -213,10 +218,10 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 		/* Read configuration */
 		conf = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		    SB800_SMB_HOSTC);
-		if (conf & SB800_SMB_HOSTC_SMI)
-			conf = PIIX_SMB_HOSTC_SMI;
-		else
+		if (conf & SB800_SMB_HOSTC_INTMASK)
 			conf = PIIX_SMB_HOSTC_IRQ;
+		else
+			conf = PIIX_SMB_HOSTC_SMI;
 	} else {
 		/* Read configuration */
 		conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);

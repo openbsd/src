@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixreg.h,v 1.5 2019/12/16 21:39:40 claudio Exp $	*/
+/*	$OpenBSD: piixreg.h,v 1.6 2020/01/21 06:37:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -70,11 +70,13 @@
 #define SB800_PMREG_SIZE	2	/* index/data pair */
 #define SB800_PMREG_SMB0EN	0x2c	/* 16-bit register */
 #define SB800_PMREG_SMB0SEL	0x2e	/* bus selection */
+#define SB800_PMREG_SMB0SELEN	0x2f	/* bus selection enable */
 #define SB800_SMB0EN_EN		0x0001
 #define SB800_SMB0EN_BASE_MASK	0xffe0
+#define SB800_SMB0SELEN_EN	0x01
 
 #define SB800_SMB_HOSTC	0x10		/* I2C bus configuration */
-#define SB800_SMB_HOSTC_SMI	(1 << 0)	/* SMI */
+#define SB800_SMB_HOSTC_INTMASK	0x1	/* 0: SMI 1: IRQ */
 
 #define SB800_SMB_SIZE	0x14		/* SMBus I/O space size */
 
