@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.12 2019/12/17 13:41:01 sthen Exp $
+# $Id: Makefile.in,v 1.13 2020/01/21 00:14:43 deraadt Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -51,11 +51,3 @@ install:: installdirs
 tags:
 	rm -f TAGS
 	find lib bin -name "*.[ch]" -print | @ETAGS@ -
-
-FAQ: FAQ.xml
-	${XSLTPROC} doc/xsl/isc-docbook-text.xsl FAQ.xml | \
-	LC_ALL=C ${W3M} -T text/html -dump -cols 72 >$@.tmp
-	mv $@.tmp $@
-
-clean::
-	rm -f FAQ.tmp
