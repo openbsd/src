@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.27 2019/12/31 13:48:32 visa Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.28 2020/01/21 00:18:13 cheloha Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -173,8 +173,8 @@ next:
 		rw_exit_write(&nfskevq_lock);
 
 		/* wait a while before checking for changes again */
-		tsleep(pnfskq, PSOCK, "nfskqpw", NFS_MINATTRTIMO * hz / 2);
-
+		tsleep_nsec(pnfskq, PSOCK, "nfskqpw",
+		    SEC_TO_NSEC(NFS_MINATTRTIMO) / 2);
 	}
 }
 

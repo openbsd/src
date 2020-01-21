@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.135 2020/01/15 13:17:35 mpi Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.136 2020/01/21 00:18:13 cheloha Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -851,10 +851,9 @@ nfs_request(struct vnode *vp, int procnum, struct nfsm_info *infop)
 	struct mbuf *m;
 	u_int32_t *tl;
 	struct nfsmount *nmp;
-	struct timeval tv;
 	caddr_t cp2;
 	int t1, i, error = 0;
-	int trylater_delay;
+	int addr, trylater_delay;
 	struct nfsreq *rep;
 	struct nfsm_info info;
 
@@ -999,9 +998,8 @@ tryagain:
 			    error == NFSERR_TRYLATER) {
 				m_freem(info.nmi_mrep);
 				error = 0;
-				tv.tv_sec = trylater_delay;
-				tv.tv_usec = 0;
-				tsleep(&tv, PSOCK, "nfsretry", tvtohz(&tv));
+				tsleep_nsec(&addr, PSOCK, "nfsretry",
+				    SEC_TO_NSEC(trylater_delay));
 				trylater_delay *= NFS_TIMEOUTMUL;
 				if (trylater_delay > NFS_MAXTIMEO)
 					trylater_delay = NFS_MAXTIMEO;
@@ -1241,8 +1239,9 @@ nfs_sigintr(struct nfsmount *nmp, struct nfsreq *rep, struct proc *p)
 int
 nfs_sndlock(int *flagp, struct nfsreq *rep)
 {
+	uint64_t slptimeo = INFSLP;
 	struct proc *p;
-	int slpflag = 0, slptimeo = 0;
+	int slpflag = 0;
 
 	if (rep) {
 		p = rep->r_procp;
@@ -1254,11 +1253,10 @@ nfs_sndlock(int *flagp, struct nfsreq *rep)
 		if (rep && nfs_sigintr(rep->r_nmp, rep, p))
 			return (EINTR);
 		*flagp |= NFSMNT_WANTSND;
-		(void)tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsndlck",
-		    slptimeo);
+		tsleep_nsec(flagp, slpflag | (PZERO - 1), "nfsndlck", slptimeo);
 		if (slpflag == PCATCH) {
 			slpflag = 0;
-			slptimeo = 2 * hz;
+			slptimeo = SEC_TO_NSEC(2);
 		}
 	}
 	*flagp |= NFSMNT_SNDLOCK;
@@ -1284,8 +1282,9 @@ nfs_sndunlock(int *flagp)
 int
 nfs_rcvlock(struct nfsreq *rep)
 {
+	uint64_t slptimeo = INFSLP;
 	int *flagp = &rep->r_nmp->nm_flag;
-	int slpflag, slptimeo = 0;
+	int slpflag;
 
 	if (*flagp & NFSMNT_INT)
 		slpflag = PCATCH;
@@ -1296,8 +1295,7 @@ nfs_rcvlock(struct nfsreq *rep)
 		if (nfs_sigintr(rep->r_nmp, rep, rep->r_procp))
 			return (EINTR);
 		*flagp |= NFSMNT_WANTRCV;
-		(void)tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsrcvlk",
-		    slptimeo);
+		tsleep_nsec(flagp, slpflag | (PZERO - 1), "nfsrcvlk", slptimeo);
 		if (rep->r_mrep != NULL) {
 			/*
 			 * Don't take the lock if our reply has been received
@@ -1307,7 +1305,7 @@ nfs_rcvlock(struct nfsreq *rep)
 		}
 		if (slpflag == PCATCH) {
 			slpflag = 0;
-			slptimeo = 2 * hz;
+			slptimeo = SEC_TO_NSEC(2);
 		}
 	}
 	*flagp |= NFSMNT_RCVLOCK;
