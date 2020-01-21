@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-sk-client.c,v 1.5 2020/01/10 23:43:26 djm Exp $ */
+/* $OpenBSD: ssh-sk-client.c,v 1.6 2020/01/21 07:07:31 djm Exp $ */
 /*
  * Copyright (c) 2019 Google LLC
  *
@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 
+#include <fcntl.h>
 #include <limits.h>
 #include <errno.h>
 #include <signal.h>
@@ -54,6 +55,13 @@ start_helper(int *fdp, pid_t *pidp, void (**osigchldp)(int))
 	helper = getenv("SSH_SK_HELPER");
 	if (helper == NULL || strlen(helper) == 0)
 		helper = _PATH_SSH_SK_HELPER;
+	if (access(helper, X_OK) != 0) {
+		oerrno = errno;
+		error("%s: helper \"%s\" unusable: %s", __func__, helper,
+		    strerror(errno));
+		errno = oerrno;
+		return SSH_ERR_SYSTEM_ERROR;
+	}
 #ifdef DEBUG_SK
 	verbosity = "-vvv";
 #endif
