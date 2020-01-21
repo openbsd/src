@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.89 2019/12/17 13:08:56 reyk Exp 
-#	OpenBSD: MAKEDEV.common,v 1.107 2019/12/17 13:15:17 reyk Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.90 2020/01/21 16:20:44 mpi Exp 
+#	OpenBSD: MAKEDEV.common,v 1.108 2020/01/21 16:20:43 mpi Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -80,6 +80,7 @@
 #	diskmap	Disk mapper
 #	drm*	Direct Rendering Manager
 #	fd	fd/* nodes
+#	dt	Dynamic Tracer
 #	fuse	Userland Filesystem
 #	hotplug	devices hot plugging
 #	openprom	PROM settings
@@ -325,6 +326,10 @@ hotplug)
 
 fuse)
 	M fuse$U c 134 $U 600
+	;;
+
+dt)
+	M dt c 30 0 600
 	;;
 
 fd)
@@ -633,7 +638,7 @@ all)
 	R sd7 sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2
 	R tun3 bio pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0
 	R fd0B fd0C fd0D fd0E fd0F fd0G fd0H diskmap vscsi0 ch0 audio0
-	R audio1 audio2 bpf fuse pppx hotplug ptm local wscons pci0
+	R audio1 audio2 dt bpf fuse pppx hotplug ptm local wscons pci0
 	R pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
 	R rmidi5 rmidi6 rmidi7 video0 video1 uk0 random lpa0 lpa1 lpa2
 	R lpt0 lpt1 lpt2 tty00 tty01 tty02 tty03 tty04 tty05 tty06

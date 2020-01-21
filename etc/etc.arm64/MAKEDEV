@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.arm64/MAKEDEV.md,v 1.5 2019/12/22 18:18:02 kettenis Exp 
-#	OpenBSD: MAKEDEV.common,v 1.107 2019/12/17 13:15:17 reyk Exp 
+#	OpenBSD: etc.arm64/MAKEDEV.md,v 1.6 2020/01/21 16:20:43 mpi Exp 
+#	OpenBSD: MAKEDEV.common,v 1.108 2020/01/21 16:20:43 mpi Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -65,6 +65,7 @@
 #	bio	ioctl tunnel pseudo-device
 #	bktr*	Video frame grabbers
 #	bpf	Berkeley Packet Filter
+#	dt	Dynamic Tracer
 #	diskmap	Disk mapper
 #	drm*	Direct Rendering Manager
 #	fd	fd/* nodes
@@ -321,6 +322,10 @@ diskmap)
 	M diskmap c 90 0 640 operator
 	;;
 
+dt)
+	M dt c 30 0 600
+	;;
+
 bpf)
 	M bpf c 23 0 600
 	M bpf0 c 23 0 600
@@ -482,7 +487,7 @@ all)
 	R switch0 switch1 switch2 switch3 ipmi0 gpio0 gpio1 gpio2
 	R bktr0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
 	R sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3
-	R bio pty0 diskmap vscsi0 ch0 audio0 audio1 audio2 bpf fuse
+	R bio pty0 diskmap vscsi0 ch0 audio0 audio1 audio2 dt bpf fuse
 	R pppx hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
 	R rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	R tuner0 radio0 video0 video1 uk0 random tty00 tty01 tty02

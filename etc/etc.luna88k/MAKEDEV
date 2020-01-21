@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.32 2016/12/31 00:50:01 aoyama Exp 
-#	OpenBSD: MAKEDEV.common,v 1.105 2019/12/14 05:05:46 deraadt Exp 
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.33 2020/01/21 16:20:44 mpi Exp 
+#	OpenBSD: MAKEDEV.common,v 1.108 2020/01/21 16:20:43 mpi Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -56,6 +56,7 @@
 #	audio*	Audio devices
 #	bio	ioctl tunnel pseudo-device
 #	bpf	Berkeley Packet Filter
+#	dt	Dynamic Tracer
 #	diskmap	Disk mapper
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
@@ -272,6 +273,10 @@ diskmap)
 	M diskmap c 54 0 640 operator
 	;;
 
+dt)
+	M dt c 30 0 600
+	;;
+
 bpf)
 	M bpf c 22 0 600
 	M bpf0 c 22 0 600
@@ -403,7 +408,7 @@ all)
 	R xp pcex audio0 lcd ttya switch0 switch1 switch2 switch3
 	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tap0
 	R tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 diskmap vscsi0
-	R ch0 bpf fuse pppx ptm local wscons uk0 random tty00 tty01
+	R ch0 dt bpf fuse pppx ptm local wscons uk0 random tty00 tty01
 	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
 	R pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
