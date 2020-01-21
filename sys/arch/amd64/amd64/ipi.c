@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.16 2015/07/19 18:44:15 sf Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.17 2020/01/21 02:01:50 mlarkin Exp $	*/
 /*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
 
 /*-
@@ -32,10 +32,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
- 
+
 #include <machine/intr.h>
 #include <machine/atomic.h>
 #include <machine/cpuvar.h>
@@ -100,8 +100,8 @@ x86_ipi_handler(void)
 
 	pending = atomic_swap_uint(&ci->ci_ipis, 0);
 	for (bit = 0; bit < X86_NIPI && pending; bit++) {
-		if (pending & (1<<bit)) {
-			pending &= ~(1<<bit);
+		if (pending & (1 << bit)) {
+			pending &= ~(1 << bit);
 			(*ipifunc[bit])(ci);
 			ipi_count.ec_count++;
 		}
