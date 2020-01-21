@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.167 2020/01/02 06:37:13 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.168 2020/01/21 05:19:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2162,6 +2162,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_X509_LIB					 268
 #define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS		 269
 #define SSL_R_PEER_BEHAVING_BADLY			 666
+#define SSL_R_UNKNOWN					 999
 
 /*
  * OpenSSL compatible OPENSSL_INIT options

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.36 2018/03/20 15:28:12 tb Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.37 2020/01/21 05:19:02 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -462,7 +462,8 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_WRONG_VERSION_NUMBER)  , "wrong version number"},
 	{ERR_REASON(SSL_R_X509_LIB)              , "x509 lib"},
 	{ERR_REASON(SSL_R_X509_VERIFICATION_SETUP_PROBLEMS), "x509 verification setup problems"},
-	{ERR_REASON(SSL_R_PEER_BEHAVING_BADLY)   ,"peer is doing strange or hostile things"},
+	{ERR_REASON(SSL_R_PEER_BEHAVING_BADLY), "peer is doing strange or hostile things"},
+	{ERR_REASON(SSL_R_UNKNOWN), "unknown failure occurred"},
 	{0, NULL}
 };
 

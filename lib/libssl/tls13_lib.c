@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.15 2020/01/21 04:45:18 tb Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.16 2020/01/21 05:19:02 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -346,7 +346,7 @@ static void
 tls13_legacy_error(SSL *ssl)
 {
 	struct tls13_ctx *ctx = ssl->internal->tls13;
-	int reason = ERR_R_INTERNAL_ERROR;
+	int reason = SSL_R_UNKNOWN;
 
 	switch (ctx->error.code) {
 	case TLS13_ERR_VERIFY_FAILED:
