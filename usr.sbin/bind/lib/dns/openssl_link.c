@@ -39,8 +39,6 @@
 #include <stdlib.h>
 
 
-#include <isc/mutex.h>
-#include <isc/mutexblock.h>
 #include <string.h>
 #include <isc/thread.h>
 #include <isc/util.h>

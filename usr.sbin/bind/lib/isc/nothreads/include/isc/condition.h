@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: condition.h,v 1.3 2019/12/17 01:46:36 sthen Exp $ */
+/* $Id: condition.h,v 1.4 2020/01/21 23:59:20 tedu Exp $ */
 
 /*
  * This provides a limited subset of the isc_condition_t
@@ -30,18 +30,16 @@
 #ifndef ISC_CONDITION_H
 #define ISC_CONDITION_H 1
 
-#include <isc/mutex.h>
-
 typedef int isc_condition_t;
 
-isc_result_t isc__nothread_wait_hack(isc_condition_t *cp, isc_mutex_t *mp);
+isc_result_t isc__nothread_wait_hack(isc_condition_t *cp);
 isc_result_t isc__nothread_signal_hack(isc_condition_t *cp);
 
 #define isc_condition_init(cp) \
 	(*(cp) = 0, ISC_R_SUCCESS)
 
 #define isc_condition_wait(cp, mp) \
-	isc__nothread_wait_hack(cp, mp)
+	isc__nothread_wait_hack(cp)
 
 #define isc_condition_waituntil(cp, mp, tp) \
 	((void)(cp), (void)(mp), (void)(tp), ISC_R_NOTIMPLEMENTED)

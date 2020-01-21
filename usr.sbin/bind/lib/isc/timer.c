@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.13 2020/01/21 10:11:09 deraadt Exp $ */
+/* $Id: timer.c,v 1.14 2020/01/21 23:59:20 tedu Exp $ */
 
 /*! \file */
 
@@ -65,7 +65,6 @@ struct isc__timer {
 	/*! Not locked. */
 	isc_timer_t			common;
 	isc__timermgr_t *		manager;
-	isc_mutex_t			lock;
 	/*! Locked by timer lock. */
 	unsigned int			references;
 	isc_time_t			idle;
@@ -87,7 +86,6 @@ struct isc__timer {
 struct isc__timermgr {
 	/* Not locked. */
 	isc_timermgr_t			common;
-	isc_mutex_t			lock;
 	/* Locked by manager lock. */
 	isc_boolean_t			done;
 	LIST(isc__timer_t)		timers;
@@ -269,8 +267,6 @@ destroy(isc__timer_t *timer) {
 	 * The caller must ensure it is safe to destroy the timer.
 	 */
 
-	LOCK(&manager->lock);
-
 	(void)isc_task_purgerange(timer->task,
 				  timer,
 				  ISC_TIMEREVENT_FIRSTEVENT,
@@ -279,10 +275,7 @@ destroy(isc__timer_t *timer) {
 	deschedule(timer);
 	UNLINK(manager->timers, timer, link);
 
-	UNLOCK(&manager->lock);
-
 	isc_task_detach(&timer->task);
-	DESTROYLOCK(&timer->lock);
 	timer->common.impmagic = 0;
 	timer->common.magic = 0;
 	free(timer);
@@ -369,23 +362,10 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 	 */
 	DE_CONST(arg, timer->arg);
 	timer->index = 0;
-	result = isc_mutex_init(&timer->lock);
-	if (result != ISC_R_SUCCESS) {
-		isc_task_detach(&timer->task);
-		free(timer);
-		return (result);
-	}
 	ISC_LINK_INIT(timer, link);
 	timer->common.impmagic = TIMER_MAGIC;
 	timer->common.magic = ISCAPI_TIMER_MAGIC;
 	timer->common.methods = (isc_timermethods_t *)&timermethods;
-
-	LOCK(&manager->lock);
-
-	/*
-	 * Note we don't have to lock the timer like we normally would because
-	 * there are no external references to it yet.
-	 */
 
 	if (type != isc_timertype_inactive)
 		result = schedule(timer, &now, ISC_TRUE);
@@ -394,12 +374,9 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 	if (result == ISC_R_SUCCESS)
 		APPEND(manager->timers, timer, link);
 
-	UNLOCK(&manager->lock);
-
 	if (result != ISC_R_SUCCESS) {
 		timer->common.impmagic = 0;
 		timer->common.magic = 0;
-		DESTROYLOCK(&timer->lock);
 		isc_task_detach(&timer->task);
 		free(timer);
 		return (result);
@@ -453,9 +430,6 @@ isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
 		isc_time_settoepoch(&now);
 	}
 
-	LOCK(&manager->lock);
-	LOCK(&timer->lock);
-
 	if (purge)
 		(void)isc_task_purgerange(timer->task,
 					  timer,
@@ -480,9 +454,6 @@ isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
 			result = schedule(timer, &now, ISC_TRUE);
 	}
 
-	UNLOCK(&timer->lock);
-	UNLOCK(&manager->lock);
-
 	return (result);
 }
 
@@ -493,9 +464,7 @@ isc_timer_gettype(isc_timer_t *timer0) {
 
 	REQUIRE(VALID_TIMER(timer));
 
-	LOCK(&timer->lock);
 	t = timer->type;
-	UNLOCK(&timer->lock);
 
 	return (t);
 }
@@ -512,21 +481,8 @@ isc__timer_touch(isc_timer_t *timer0) {
 
 	REQUIRE(VALID_TIMER(timer));
 
-	LOCK(&timer->lock);
-
-	/*
-	 * We'd like to
-	 *
-	 *	REQUIRE(timer->type == isc_timertype_once);
-	 *
-	 * but we cannot without locking the manager lock too, which we
-	 * don't want to do.
-	 */
-
 	TIME_NOW(&now);
 	result = isc_time_add(&now, &timer->interval, &timer->idle);
-
-	UNLOCK(&timer->lock);
 
 	return (result);
 }
@@ -542,9 +498,7 @@ isc__timer_attach(isc_timer_t *timer0, isc_timer_t **timerp) {
 	REQUIRE(VALID_TIMER(timer));
 	REQUIRE(timerp != NULL && *timerp == NULL);
 
-	LOCK(&timer->lock);
 	timer->references++;
-	UNLOCK(&timer->lock);
 
 	*timerp = (isc_timer_t *)timer;
 }
@@ -562,12 +516,10 @@ isc__timer_detach(isc_timer_t **timerp) {
 	timer = (isc__timer_t *)*timerp;
 	REQUIRE(VALID_TIMER(timer));
 
-	LOCK(&timer->lock);
 	REQUIRE(timer->references > 0);
 	timer->references--;
 	if (timer->references == 0)
 		free_timer = ISC_TRUE;
-	UNLOCK(&timer->lock);
 
 	if (free_timer)
 		destroy(timer);
@@ -617,13 +569,11 @@ dispatch(isc__timermgr_t *manager, isc_time_t *now) {
 			} else {
 				idle = ISC_FALSE;
 
-				LOCK(&timer->lock);
 				if (!isc_time_isepoch(&timer->idle) &&
 				    isc_time_compare(now,
 						     &timer->idle) >= 0) {
 					idle = ISC_TRUE;
 				}
-				UNLOCK(&timer->lock);
 				if (idle) {
 					type = ISC_TIMEREVENT_IDLE;
 					post_event = ISC_TRUE;
@@ -738,12 +688,6 @@ isc__timermgr_create(isc_timermgr_t **managerp) {
 		free(manager);
 		return (ISC_R_NOMEMORY);
 	}
-	result = isc_mutex_init(&manager->lock);
-	if (result != ISC_R_SUCCESS) {
-		isc_heap_destroy(&manager->heap);
-		free(manager);
-		return (result);
-	}
 	manager->refs = 1;
 	timermgr = manager;
 
@@ -769,11 +713,8 @@ isc__timermgr_destroy(isc_timermgr_t **managerp) {
 	manager = (isc__timermgr_t *)*managerp;
 	REQUIRE(VALID_MANAGER(manager));
 
-	LOCK(&manager->lock);
-
 	manager->refs--;
 	if (manager->refs > 0) {
-		UNLOCK(&manager->lock);
 		*managerp = NULL;
 		return;
 	}
@@ -784,12 +725,9 @@ isc__timermgr_destroy(isc_timermgr_t **managerp) {
 	REQUIRE(EMPTY(manager->timers));
 	manager->done = ISC_TRUE;
 
-	UNLOCK(&manager->lock);
-
 	/*
 	 * Clean up.
 	 */
-	DESTROYLOCK(&manager->lock);
 	isc_heap_destroy(&manager->heap);
 	manager->common.impmagic = 0;
 	manager->common.magic = 0;
@@ -830,27 +768,16 @@ isc__timer_register(void) {
 	return (isc_timer_register(isc__timermgr_create));
 }
 
-static isc_mutex_t createlock;
-static isc_once_t once = ISC_ONCE_INIT;
 static isc_timermgrcreatefunc_t timermgr_createfunc = NULL;
-
-static void
-initialize(void) {
-	RUNTIME_CHECK(isc_mutex_init(&createlock) == ISC_R_SUCCESS);
-}
 
 isc_result_t
 isc_timer_register(isc_timermgrcreatefunc_t createfunc) {
 	isc_result_t result = ISC_R_SUCCESS;
 
-	RUNTIME_CHECK(isc_once_do(&once, initialize) == ISC_R_SUCCESS);
-
-	LOCK(&createlock);
 	if (timermgr_createfunc == NULL)
 		timermgr_createfunc = createfunc;
 	else
 		result = ISC_R_EXISTS;
-	UNLOCK(&createlock);
 
 	return (result);
 }
@@ -861,12 +788,8 @@ isc_timermgr_createinctx(isc_appctx_t *actx,
 {
 	isc_result_t result;
 
-	LOCK(&createlock);
-
 	REQUIRE(timermgr_createfunc != NULL);
 	result = (*timermgr_createfunc)(managerp);
-
-	UNLOCK(&createlock);
 
 	if (result == ISC_R_SUCCESS)
 		isc_appctx_settimermgr(actx, *managerp);

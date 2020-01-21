@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.18 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: log.c,v 1.19 2020/01/21 23:59:20 tedu Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -32,7 +32,6 @@
 #include <isc/file.h>
 #include <isc/log.h>
 #include <isc/magic.h>
-#include <isc/mutex.h>
 #include <isc/msgs.h>
 
 #include <isc/stat.h>
@@ -148,7 +147,6 @@ struct isc_log {
 	isc_logmodule_t *		modules;
 	unsigned int			module_count;
 	int				debug_level;
-	isc_mutex_t			lock;
 	/* Locked by isc_log lock. */
 	isc_logconfig_t * 		logconfig;
 	char 				buffer[LOG_BUFFER_SIZE];
@@ -279,12 +277,6 @@ isc_log_create(isc_log_t **lctxp, isc_logconfig_t **lcfgp) {
 		lctx->debug_level = 0;
 
 		ISC_LIST_INIT(lctx->messages);
-
-		result = isc_mutex_init(&lctx->lock);
-		if (result != ISC_R_SUCCESS) {
-			free(lctx);
-			return (result);
-		}
 
 		/*
 		 * Normally setting the magic number is the last step done
@@ -441,12 +433,8 @@ isc_logconfig_use(isc_log_t *lctx, isc_logconfig_t *lcfg) {
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-	LOCK(&lctx->lock);
-
 	old_cfg = lctx->logconfig;
 	lctx->logconfig = lcfg;
-
-	UNLOCK(&lctx->lock);
 
 	isc_logconfig_destroy(&old_cfg);
 
@@ -467,8 +455,6 @@ isc_log_destroy(isc_log_t **lctxp) {
 		lctx->logconfig = NULL;
 		isc_logconfig_destroy(&lcfg);
 	}
-
-	DESTROYLOCK(&lctx->lock);
 
 	while ((message = ISC_LIST_HEAD(lctx->messages)) != NULL) {
 		ISC_LIST_UNLINK(lctx->messages, message, link);
@@ -871,8 +857,6 @@ isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level) {
 
 	REQUIRE(VALID_CONTEXT(lctx));
 
-	LOCK(&lctx->lock);
-
 	lctx->debug_level = level;
 	/*
 	 * Close ISC_LOG_DEBUGONLY channels if level is zero.
@@ -887,7 +871,6 @@ isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level) {
 				(void)fclose(FILE_STREAM(channel));
 				FILE_STREAM(channel) = NULL;
 			}
-	UNLOCK(&lctx->lock);
 }
 
 unsigned int
@@ -950,7 +933,6 @@ isc_log_closefilelogs(isc_log_t *lctx) {
 
 	REQUIRE(VALID_CONTEXT(lctx));
 
-	LOCK(&lctx->lock);
 	for (channel = ISC_LIST_HEAD(lctx->logconfig->channels);
 	     channel != NULL;
 	     channel = ISC_LIST_NEXT(channel, link))
@@ -960,7 +942,6 @@ isc_log_closefilelogs(isc_log_t *lctx) {
 			(void)fclose(FILE_STREAM(channel));
 			FILE_STREAM(channel) = NULL;
 		}
-	UNLOCK(&lctx->lock);
 }
 
 /****
@@ -1280,10 +1261,6 @@ isc_log_open(isc_logchannel_t *channel) {
 isc_boolean_t
 isc_log_wouldlog(isc_log_t *lctx, int level) {
 	/*
-	 * Try to avoid locking the mutex for messages which can't
-	 * possibly be logged to any channels -- primarily debugging
-	 * messages that the debug level is not high enough to print.
-	 *
 	 * If the level is (mathematically) less than or equal to the
 	 * highest_level, or if there is a dynamic channel and the level is
 	 * less than or equal to the debug level, the main loop must be
@@ -1346,8 +1323,6 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 
 	time_string[0]  = '\0';
 	level_string[0] = '\0';
-
-	LOCK(&lctx->lock);
 
 	lctx->buffer[0] = '\0';
 
@@ -1500,10 +1475,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 					    == 0) {
 						/*
 						 * ... and it is a duplicate.
-						 * Unlock the mutex and
-						 * get the hell out of Dodge.
 						 */
-						UNLOCK(&lctx->lock);
 						return;
 					}
 
@@ -1661,6 +1633,4 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 		}
 
 	} while (1);
-
-	UNLOCK(&lctx->lock);
 }

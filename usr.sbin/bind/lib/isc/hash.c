@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.c,v 1.10 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: hash.c,v 1.11 2020/01/21 23:59:20 tedu Exp $ */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
@@ -61,7 +61,6 @@ if advised of the possibility of such damage.
 #include <isc/hash.h>
 
 #include <isc/magic.h>
-#include <isc/mutex.h>
 #include <isc/once.h>
 
 #include <isc/refcount.h>
@@ -88,7 +87,6 @@ typedef uint16_t hash_random_t;
 /*% isc hash structure */
 struct isc_hash {
 	unsigned int	magic;
-	isc_mutex_t	lock;
 	isc_boolean_t	initialized;
 	isc_refcount_t	refcnt;
 	size_t		limit;	/*%< upper limit of key length */
@@ -96,8 +94,6 @@ struct isc_hash {
 	hash_random_t	*rndvector; /*%< random vector for universal hashing */
 };
 
-static isc_mutex_t createlock;
-static isc_once_t once = ISC_ONCE_INIT;
 static isc_hash_t *hash = NULL;
 
 static unsigned char maptolower[] = {
@@ -168,13 +164,6 @@ isc_hash_ctxcreate(size_t limit, isc_hash_t **hctxp)
 	}
 
 	/*
-	 * We need a lock.
-	 */
-	result = isc_mutex_init(&hctx->lock);
-	if (result != ISC_R_SUCCESS)
-		goto errout;
-
-	/*
 	 * From here down, no failures will/can occur.
 	 */
 	hctx->magic = HASH_MAGIC;
@@ -190,7 +179,6 @@ isc_hash_ctxcreate(size_t limit, isc_hash_t **hctxp)
 	return (ISC_R_SUCCESS);
 
  cleanup_lock:
-	DESTROYLOCK(&hctx->lock);
  errout:
 	free(hctx);
 	if (rv != NULL)
@@ -199,41 +187,25 @@ isc_hash_ctxcreate(size_t limit, isc_hash_t **hctxp)
 	return (result);
 }
 
-static void
-initialize_lock(void) {
-	RUNTIME_CHECK(isc_mutex_init(&createlock) == ISC_R_SUCCESS);
-}
-
 isc_result_t
 isc_hash_create(size_t limit) {
 	isc_result_t result = ISC_R_SUCCESS;
 
 	INSIST(hash == NULL);
 
-	RUNTIME_CHECK(isc_once_do(&once, initialize_lock) == ISC_R_SUCCESS);
-
-	LOCK(&createlock);
-
 	if (hash == NULL)
 		result = isc_hash_ctxcreate(limit, &hash);
-
-	UNLOCK(&createlock);
 
 	return (result);
 }
 
 void
 isc_hash_ctxinit(isc_hash_t *hctx) {
-	LOCK(&hctx->lock);
-
 	if (hctx->initialized == ISC_TRUE)
-		goto out;
+		return
 
 	arc4random_buf(hctx->rndvector, hctx->vectorlen);
 	hctx->initialized = ISC_TRUE;
-
- out:
-	UNLOCK(&hctx->lock);
 }
 
 void
@@ -260,16 +232,10 @@ destroy(isc_hash_t **hctxp) {
 	hctx = *hctxp;
 	*hctxp = NULL;
 
-	LOCK(&hctx->lock);
-
 	isc_refcount_destroy(&hctx->refcnt);
 
 	if (hctx->rndvector != NULL)
 		free(hctx->rndvector);
-
-	UNLOCK(&hctx->lock);
-
-	DESTROYLOCK(&hctx->lock);
 
 	memset(hctx, 0, sizeof(isc_hash_t));
 	free(hctx);

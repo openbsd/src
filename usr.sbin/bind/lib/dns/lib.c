@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.c,v 1.8 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: lib.c,v 1.9 2020/01/21 23:59:20 tedu Exp $ */
 
 /*! \file */
 
@@ -25,7 +25,6 @@
 #include <isc/hash.h>
 
 
-#include <isc/mutex.h>
 #include <isc/once.h>
 #include <isc/util.h>
 
@@ -49,7 +48,6 @@ unsigned int			dns_pps = 0U;
 
 static isc_once_t init_once = ISC_ONCE_INIT;
 static isc_boolean_t initialize_done = ISC_FALSE;
-static isc_mutex_t reflock;
 static unsigned int references = 0;
 
 static void
@@ -67,15 +65,9 @@ initialize(void) {
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_hash;
 
-	result = isc_mutex_init(&reflock);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup_dst;
-
 	initialize_done = ISC_TRUE;
 	return;
 
-  cleanup_dst:
-	dst_lib_destroy();
   cleanup_hash:
 	isc_hash_destroy();
 }
@@ -96,9 +88,7 @@ dns_lib_init(void) {
 	if (!initialize_done)
 		return (ISC_R_FAILURE);
 
-	LOCK(&reflock);
 	references++;
-	UNLOCK(&reflock);
 
 	return (ISC_R_SUCCESS);
 }
@@ -107,10 +97,8 @@ void
 dns_lib_shutdown(void) {
 	isc_boolean_t cleanup_ok = ISC_FALSE;
 
-	LOCK(&reflock);
 	if (--references == 0)
 		cleanup_ok = ISC_TRUE;
-	UNLOCK(&reflock);
 
 	if (!cleanup_ok)
 		return;

@@ -36,7 +36,6 @@
 #include <isc/condition.h>
 
 #include <isc/msgs.h>
-#include <isc/mutex.h>
 #include <isc/event.h>
 #include <isc/platform.h>
 #include <isc/strerror.h>
@@ -92,7 +91,6 @@ isc_result_t isc__app_ctxonrun(isc_appctx_t *ctx,
 
 typedef struct isc__appctx {
 	isc_appctx_t		common;
-	isc_mutex_t		lock;
 	isc_eventlist_t		on_run;
 	isc_boolean_t		shutdown_requested;
 	isc_boolean_t		running;
@@ -203,10 +201,6 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 		return (ISC_R_UNEXPECTED);
 	}
 #endif
-
-	result = isc_mutex_init(&ctx->lock);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
 
 	ISC_LIST_INIT(ctx->on_run);
 
@@ -320,8 +314,6 @@ isc__app_ctxonrun(isc_appctx_t *ctx0, isc_task_t *task,
 	isc_task_t *cloned_task = NULL;
 	isc_result_t result;
 
-	LOCK(&ctx->lock);
-
 	if (ctx->running) {
 		result = ISC_R_ALREADYRUNNING;
 		goto unlock;
@@ -345,8 +337,6 @@ isc__app_ctxonrun(isc_appctx_t *ctx0, isc_task_t *task,
 	result = ISC_R_SUCCESS;
 
  unlock:
-	UNLOCK(&ctx->lock);
-
 	return (result);
 }
 
@@ -451,17 +441,13 @@ static isc_boolean_t in_recursive_evloop = ISC_FALSE;
 static isc_boolean_t signalled = ISC_FALSE;
 
 isc_result_t
-isc__nothread_wait_hack(isc_condition_t *cp, isc_mutex_t *mp) {
+isc__nothread_wait_hack(isc_condition_t *cp) {
 	isc_result_t result;
 
 	UNUSED(cp);
-	UNUSED(mp);
 
 	INSIST(!in_recursive_evloop);
 	in_recursive_evloop = ISC_TRUE;
-
-	INSIST(*mp == 1); /* Mutex must be locked on entry. */
-	--*mp;
 
 	result = evloop(&isc_g_appctx);
 	if (result == ISC_R_RELOAD)
@@ -471,7 +457,6 @@ isc__nothread_wait_hack(isc_condition_t *cp, isc_mutex_t *mp) {
 		signalled = ISC_FALSE;
 	}
 
-	++*mp;
 	in_recursive_evloop = ISC_FALSE;
 	return (ISC_R_SUCCESS);
 }
@@ -496,7 +481,6 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 	isc_task_t *task;
 
 	REQUIRE(VALID_APPCTX(ctx));
-	LOCK(&ctx->lock);
 
 	if (!ctx->running) {
 		ctx->running = ISC_TRUE;
@@ -515,8 +499,6 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 		}
 
 	}
-
-	UNLOCK(&ctx->lock);
 
 	if (ctx == &isc_g_appctx) {
 		result = handle_signal(SIGHUP, reload_action);
@@ -541,16 +523,12 @@ isc__app_ctxshutdown(isc_appctx_t *ctx0) {
 
 	REQUIRE(VALID_APPCTX(ctx));
 
-	LOCK(&ctx->lock);
-
 	REQUIRE(ctx->running);
 
 	if (ctx->shutdown_requested)
 		want_kill = ISC_FALSE;
 	else
 		ctx->shutdown_requested = ISC_TRUE;
-
-	UNLOCK(&ctx->lock);
 
 	if (want_kill) {
 		if (ctx != &isc_g_appctx)
@@ -576,8 +554,6 @@ isc__app_ctxsuspend(isc_appctx_t *ctx0) {
 
 	REQUIRE(VALID_APPCTX(ctx));
 
-	LOCK(&ctx->lock);
-
 	REQUIRE(ctx->running);
 
 	/*
@@ -585,8 +561,6 @@ isc__app_ctxsuspend(isc_appctx_t *ctx0) {
 	 */
 	if (ctx->shutdown_requested)
 		want_kill = ISC_FALSE;
-
-	UNLOCK(&ctx->lock);
 
 	if (want_kill) {
 		if (ctx != &isc_g_appctx)
@@ -610,8 +584,6 @@ isc__app_ctxfinish(isc_appctx_t *ctx0) {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
 
 	REQUIRE(VALID_APPCTX(ctx));
-
-	DESTROYLOCK(&ctx->lock);
 }
 
 void

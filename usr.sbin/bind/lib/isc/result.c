@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.c,v 1.4 2020/01/20 18:46:57 florian Exp $ */
+/* $Id: result.c,v 1.5 2020/01/21 23:59:20 tedu Exp $ */
 
 /*! \file */
 
@@ -25,7 +25,6 @@
 
 #include <isc/lib.h>
 #include <isc/msgs.h>
-#include <isc/mutex.h>
 #include <isc/once.h>
 #include <isc/resultclass.h>
 #include <isc/util.h>
@@ -110,7 +109,6 @@ static const char *description[ISC_R_NRESULTS] = {
 
 static isc_once_t 				once = ISC_ONCE_INIT;
 static ISC_LIST(resulttable)			tables;
-static isc_mutex_t				lock;
 
 static isc_result_t
 register_table(unsigned int base, unsigned int nresults, const char **text,
@@ -135,11 +133,7 @@ register_table(unsigned int base, unsigned int nresults, const char **text,
 	table->set = set;
 	ISC_LINK_INIT(table, link);
 
-	LOCK(&lock);
-
 	ISC_LIST_APPEND(tables, table, link);
-
-	UNLOCK(&lock);
 
 	return (ISC_R_SUCCESS);
 }
@@ -148,7 +142,6 @@ static void
 initialize_action(void) {
 	isc_result_t result;
 
-	RUNTIME_CHECK(isc_mutex_init(&lock) == ISC_R_SUCCESS);
 	ISC_LIST_INIT(tables);
 
 	result = register_table(ISC_RESULTCLASS_ISC, ISC_R_NRESULTS,
@@ -172,8 +165,6 @@ isc_result_totext(isc_result_t result) {
 
 	initialize();
 
-	LOCK(&lock);
-
 	text = NULL;
 	for (table = ISC_LIST_HEAD(tables);
 	     table != NULL;
@@ -186,8 +177,6 @@ isc_result_totext(isc_result_t result) {
 	}
 	if (text == NULL)
 		text = "(result code text not available)";
-
-	UNLOCK(&lock);
 
 	return (text);
 }

@@ -49,7 +49,6 @@
 #include <isc/log.h>
 
 #include <isc/msgs.h>
-#include <isc/mutex.h>
 #include <isc/net.h>
 #include <isc/once.h>
 #include <isc/platform.h>
@@ -296,7 +295,6 @@ struct isc__socket {
 	/* Not locked. */
 	isc_socket_t		common;
 	isc__socketmgr_t	*manager;
-	isc_mutex_t		lock;
 	isc_sockettype_t	type;
 
 	/* Locked by socket lock. */
@@ -350,8 +348,6 @@ struct isc__socket {
 struct isc__socketmgr {
 	/* Not locked. */
 	isc_socketmgr_t		common;
-	isc_mutex_t		lock;
-	isc_mutex_t		*fdlock;
 #ifdef USE_KQUEUE
 	int			kqueue_fd;
 	int			nevents;
@@ -367,7 +363,6 @@ struct isc__socketmgr {
 #endif	/* USE_SELECT */
 	unsigned int		maxsocks;
 
-	/* Locked by fdlock. */
 	isc__socket_t	       **fds;
 	int			*fdstate;
 #if defined(USE_EPOLL)
@@ -715,12 +710,10 @@ watch_fd(isc__socketmgr_t *manager, int fd, int msg) {
 
 	return (result);
 #elif defined(USE_SELECT)
-	LOCK(&manager->lock);
 	if (msg == SELECT_POKE_READ)
 		FD_SET(fd, manager->read_fds);
 	if (msg == SELECT_POKE_WRITE)
 		FD_SET(fd, manager->write_fds);
-	UNLOCK(&manager->lock);
 
 	return (result);
 #endif
@@ -769,12 +762,10 @@ unwatch_fd(isc__socketmgr_t *manager, int fd, int msg) {
 	}
 	return (result);
 #elif defined(USE_SELECT)
-	LOCK(&manager->lock);
 	if (msg == SELECT_POKE_READ)
 		FD_CLR(fd, manager->read_fds);
 	else if (msg == SELECT_POKE_WRITE)
 		FD_CLR(fd, manager->write_fds);
-	UNLOCK(&manager->lock);
 
 	return (result);
 #endif
@@ -783,7 +774,6 @@ unwatch_fd(isc__socketmgr_t *manager, int fd, int msg) {
 static void
 wakeup_socket(isc__socketmgr_t *manager, int fd, int msg) {
 	isc_result_t result;
-	int lockid = FDLOCK_ID(fd);
 
 	/*
 	 * This is a wakeup on a socket.  If the socket is not in the
@@ -803,27 +793,20 @@ wakeup_socket(isc__socketmgr_t *manager, int fd, int msg) {
 		return;
 	}
 
-	LOCK(&manager->fdlock[lockid]);
 	if (manager->fdstate[fd] == CLOSE_PENDING) {
-		UNLOCK(&manager->fdlock[lockid]);
 
 		/*
 		 * We accept (and ignore) any error from unwatch_fd() as we are
 		 * closing the socket, hoping it doesn't leave dangling state in
 		 * the kernel.
-		 * Note that unwatch_fd() must be called after releasing the
-		 * fdlock; otherwise it could cause deadlock due to a lock order
-		 * reversal.
 		 */
 		(void)unwatch_fd(manager, fd, SELECT_POKE_READ);
 		(void)unwatch_fd(manager, fd, SELECT_POKE_WRITE);
 		return;
 	}
 	if (manager->fdstate[fd] != MANAGED) {
-		UNLOCK(&manager->fdlock[lockid]);
 		return;
 	}
-	UNLOCK(&manager->fdlock[lockid]);
 
 	/*
 	 * Set requested bit.
@@ -1728,19 +1711,16 @@ doio_send(isc__socket_t *sock, isc_socketevent_t *dev) {
 static void
 socketclose(isc__socketmgr_t *manager, isc__socket_t *sock, int fd) {
 	isc_sockettype_t type = sock->type;
-	int lockid = FDLOCK_ID(fd);
 
 	/*
 	 * No one has this socket open, so the watcher doesn't have to be
 	 * poked, and the socket doesn't have to be locked.
 	 */
-	LOCK(&manager->fdlock[lockid]);
 	manager->fds[fd] = NULL;
 	if (type == isc_sockettype_fdwatch)
 		manager->fdstate[fd] = CLOSED;
 	else
 		manager->fdstate[fd] = CLOSE_PENDING;
-	UNLOCK(&manager->fdlock[lockid]);
 	if (type == isc_sockettype_fdwatch) {
 		/*
 		 * The caller may close the socket once this function returns,
@@ -1765,7 +1745,6 @@ socketclose(isc__socketmgr_t *manager, isc__socket_t *sock, int fd) {
 	 * efficiently)
 	 */
 #ifdef USE_SELECT
-	LOCK(&manager->lock);
 	if (manager->maxfd == fd) {
 		int i;
 
@@ -1773,17 +1752,13 @@ socketclose(isc__socketmgr_t *manager, isc__socket_t *sock, int fd) {
 		for (i = fd - 1; i >= 0; i--) {
 			lockid = FDLOCK_ID(i);
 
-			LOCK(&manager->fdlock[lockid]);
 			if (manager->fdstate[i] == MANAGED) {
 				manager->maxfd = i;
-				UNLOCK(&manager->fdlock[lockid]);
 				break;
 			}
-			UNLOCK(&manager->fdlock[lockid]);
 		}
 	}
 
-	UNLOCK(&manager->lock);
 #endif	/* USE_SELECT */
 }
 
@@ -1807,14 +1782,10 @@ destroy(isc__socket_t **sockp) {
 		socketclose(manager, sock, fd);
 	}
 
-	LOCK(&manager->lock);
-
 	ISC_LIST_UNLINK(manager->socklist, sock, link);
 
 	/* can't unlock manager as its memory context is still used */
 	free_socket(sockp);
-
-	UNLOCK(&manager->lock);
 }
 
 static isc_result_t
@@ -1822,7 +1793,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 		isc__socket_t **socketp)
 {
 	isc__socket_t *sock;
-	isc_result_t result;
 
 	sock = malloc(sizeof(*sock));
 
@@ -1863,16 +1833,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	sock->pktdscp = 0;
 
 	/*
-	 * Initialize the lock.
-	 */
-	result = isc_mutex_init(&sock->lock);
-	if (result != ISC_R_SUCCESS) {
-		sock->common.magic = 0;
-		sock->common.impmagic = 0;
-		goto error;
-	}
-
-	/*
 	 * Initialize readable and writable events.
 	 */
 	ISC_EVENT_INIT(&sock->readable_ev, sizeof(intev_t),
@@ -1887,11 +1847,6 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	*socketp = sock;
 
 	return (ISC_R_SUCCESS);
-
- error:
-	free(sock);
-
-	return (result);
 }
 
 /*
@@ -1918,8 +1873,6 @@ free_socket(isc__socket_t **socketp) {
 
 	sock->common.magic = 0;
 	sock->common.impmagic = 0;
-
-	DESTROYLOCK(&sock->lock);
 
 	free(sock);
 
@@ -2399,21 +2352,17 @@ socket_create(isc_socketmgr_t *manager0, int pf, isc_sockettype_t type,
 	 */
 
 	lockid = FDLOCK_ID(sock->fd);
-	LOCK(&manager->fdlock[lockid]);
 	manager->fds[sock->fd] = sock;
 	manager->fdstate[sock->fd] = MANAGED;
 #if defined(USE_EPOLL)
 	manager->epoll_events[sock->fd] = 0;
 #endif
-	UNLOCK(&manager->fdlock[lockid]);
 
-	LOCK(&manager->lock);
 	ISC_LIST_APPEND(manager->socklist, sock, link);
 #ifdef USE_SELECT
 	if (manager->maxfd < sock->fd)
 		manager->maxfd = sock->fd;
 #endif
-	UNLOCK(&manager->lock);
 
 	socket_log(sock, NULL, CREATION, dup_socket != NULL ? "dupped" : "created");
 
@@ -2456,10 +2405,8 @@ isc__socket_open(isc_socket_t *sock0) {
 
 	REQUIRE(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 	REQUIRE(sock->references == 1);
 	REQUIRE(sock->type != isc_sockettype_fdwatch);
-	UNLOCK(&sock->lock);
 	/*
 	 * We don't need to retain the lock hereafter, since no one else has
 	 * this socket.
@@ -2471,21 +2418,16 @@ isc__socket_open(isc_socket_t *sock0) {
 		sock->fd = -1;
 
 	if (result == ISC_R_SUCCESS) {
-		int lockid = FDLOCK_ID(sock->fd);
 
-		LOCK(&sock->manager->fdlock[lockid]);
 		sock->manager->fds[sock->fd] = sock;
 		sock->manager->fdstate[sock->fd] = MANAGED;
 #if defined(USE_EPOLL)
 		sock->manager->epoll_events[sock->fd] = 0;
 #endif
-		UNLOCK(&sock->manager->fdlock[lockid]);
 
 #ifdef USE_SELECT
-		LOCK(&sock->manager->lock);
 		if (sock->manager->maxfd < sock->fd)
 			sock->manager->maxfd = sock->fd;
-		UNLOCK(&sock->manager->lock);
 #endif
 	}
 
@@ -2534,21 +2476,17 @@ isc__socket_fdwatchcreate(isc_socketmgr_t *manager0, int fd, int flags,
 	 */
 
 	lockid = FDLOCK_ID(sock->fd);
-	LOCK(&manager->fdlock[lockid]);
 	manager->fds[sock->fd] = sock;
 	manager->fdstate[sock->fd] = MANAGED;
 #if defined(USE_EPOLL)
 	manager->epoll_events[sock->fd] = 0;
 #endif
-	UNLOCK(&manager->fdlock[lockid]);
 
-	LOCK(&manager->lock);
 	ISC_LIST_APPEND(manager->socklist, sock, link);
 #ifdef USE_SELECT
 	if (manager->maxfd < sock->fd)
 		manager->maxfd = sock->fd;
 #endif
-	UNLOCK(&manager->lock);
 
 	if (flags & ISC_SOCKFDWATCH_READ)
 		select_poke(sock->manager, sock->fd, SELECT_POKE_READ);
@@ -2580,7 +2518,6 @@ isc__socket_fdwatchpoke(isc_socket_t *sock0, int flags)
 	 */
 
 	if ((flags & (ISC_SOCKFDWATCH_READ | ISC_SOCKFDWATCH_WRITE)) != 0) {
-		LOCK(&sock->lock);
 		if (((flags & ISC_SOCKFDWATCH_READ) != 0) &&
 		    !sock->pending_recv)
 			select_poke(sock->manager, sock->fd,
@@ -2589,7 +2526,6 @@ isc__socket_fdwatchpoke(isc_socket_t *sock0, int flags)
 		    !sock->pending_send)
 			select_poke(sock->manager, sock->fd,
 				    SELECT_POKE_WRITE);
-		UNLOCK(&sock->lock);
 	}
 
 	socket_log(sock, NULL, TRACE, "fdwatch-poked flags: %d", flags);
@@ -2607,9 +2543,7 @@ isc__socket_attach(isc_socket_t *sock0, isc_socket_t **socketp) {
 	REQUIRE(VALID_SOCKET(sock));
 	REQUIRE(socketp != NULL && *socketp == NULL);
 
-	LOCK(&sock->lock);
 	sock->references++;
-	UNLOCK(&sock->lock);
 
 	*socketp = (isc_socket_t *)sock;
 }
@@ -2627,12 +2561,10 @@ isc__socket_detach(isc_socket_t **socketp) {
 	sock = (isc__socket_t *)*socketp;
 	REQUIRE(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 	REQUIRE(sock->references > 0);
 	sock->references--;
 	if (sock->references == 0)
 		kill_socket = ISC_TRUE;
-	UNLOCK(&sock->lock);
 
 	if (kill_socket)
 		destroy(&sock);
@@ -2649,7 +2581,6 @@ isc__socket_close(isc_socket_t *sock0) {
 	fflush(stdout);
 	REQUIRE(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 
 	REQUIRE(sock->references == 1);
 	REQUIRE(sock->type != isc_sockettype_fdwatch);
@@ -2676,7 +2607,6 @@ isc__socket_close(isc_socket_t *sock0) {
 	sock->bound = 0;
 	isc_sockaddr_any(&sock->peer_address);
 
-	UNLOCK(&sock->lock);
 
 	socketclose(manager, sock, fd);
 
@@ -2888,7 +2818,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	sock = ev->ev_sender;
 	INSIST(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 	socket_log(sock, NULL, TRACE,
 		   "internal_accept called, locked socket");
 
@@ -2902,7 +2831,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	INSIST(sock->references > 0);
 	sock->references--;  /* the internal event is done with this socket */
 	if (sock->references == 0) {
-		UNLOCK(&sock->lock);
 		destroy(&sock);
 		return;
 	}
@@ -2913,7 +2841,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	 */
 	dev = ISC_LIST_HEAD(sock->accept_list);
 	if (dev == NULL) {
-		UNLOCK(&sock->lock);
 		return;
 	}
 
@@ -3033,8 +2960,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	if (!ISC_LIST_EMPTY(sock->accept_list))
 		select_poke(sock->manager, sock->fd, SELECT_POKE_ACCEPT);
 
-	UNLOCK(&sock->lock);
-
 	if (fd != -1) {
 		result = make_nonblock(fd);
 		if (result != ISC_R_SUCCESS) {
@@ -3047,8 +2972,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	 * -1 means the new socket didn't happen.
 	 */
 	if (fd != -1) {
-		int lockid = FDLOCK_ID(fd);
-
 		NEWCONNSOCK(dev)->fd = fd;
 		NEWCONNSOCK(dev)->bound = 1;
 		NEWCONNSOCK(dev)->connected = 1;
@@ -3073,15 +2996,11 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 			NEWCONNSOCK(dev)->active = 1;
 		}
 
-		LOCK(&manager->fdlock[lockid]);
 		manager->fds[fd] = NEWCONNSOCK(dev);
 		manager->fdstate[fd] = MANAGED;
 #if defined(USE_EPOLL)
 		manager->epoll_events[fd] = 0;
 #endif
-		UNLOCK(&manager->fdlock[lockid]);
-
-		LOCK(&manager->lock);
 
 #ifdef USE_SELECT
 		if (manager->maxfd < fd)
@@ -3093,9 +3012,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 			   dev->newsocket);
 
 		ISC_LIST_APPEND(manager->socklist, NEWCONNSOCK(dev), link);
-
-		UNLOCK(&manager->lock);
-
 	} else {
 		NEWCONNSOCK(dev)->references--;
 		free_socket((isc__socket_t **)&dev->newsocket);
@@ -3113,7 +3029,6 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 
  soft_error:
 	select_poke(sock->manager, sock->fd, SELECT_POKE_ACCEPT);
-	UNLOCK(&sock->lock);
 
 	return;
 }
@@ -3128,7 +3043,6 @@ internal_recv(isc_task_t *me, isc_event_t *ev) {
 	sock = ev->ev_sender;
 	INSIST(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 	socket_log(sock, NULL, IOEVENT,
 		   "internal_recv: task %p got event %p", me, ev);
 
@@ -3138,7 +3052,6 @@ internal_recv(isc_task_t *me, isc_event_t *ev) {
 	INSIST(sock->references > 0);
 	sock->references--;  /* the internal event is done with this socket */
 	if (sock->references == 0) {
-		UNLOCK(&sock->lock);
 		destroy(&sock);
 		return;
 	}
@@ -3178,8 +3091,6 @@ internal_recv(isc_task_t *me, isc_event_t *ev) {
  poke:
 	if (!ISC_LIST_EMPTY(sock->recv_list))
 		select_poke(sock->manager, sock->fd, SELECT_POKE_READ);
-
-	UNLOCK(&sock->lock);
 }
 
 static void
@@ -3194,8 +3105,6 @@ internal_send(isc_task_t *me, isc_event_t *ev) {
 	 */
 	sock = (isc__socket_t *)ev->ev_sender;
 	INSIST(VALID_SOCKET(sock));
-
-	LOCK(&sock->lock);
 	socket_log(sock, NULL, IOEVENT,
 		   "internal_send: task %p got event %p", me, ev);
 
@@ -3205,7 +3114,6 @@ internal_send(isc_task_t *me, isc_event_t *ev) {
 	INSIST(sock->references > 0);
 	sock->references--;  /* the internal event is done with this socket */
 	if (sock->references == 0) {
-		UNLOCK(&sock->lock);
 		destroy(&sock);
 		return;
 	}
@@ -3232,8 +3140,6 @@ internal_send(isc_task_t *me, isc_event_t *ev) {
  poke:
 	if (!ISC_LIST_EMPTY(sock->send_list))
 		select_poke(sock->manager, sock->fd, SELECT_POKE_WRITE);
-
-	UNLOCK(&sock->lock);
 }
 
 static void
@@ -3249,31 +3155,24 @@ internal_fdwatch_write(isc_task_t *me, isc_event_t *ev) {
 	sock = (isc__socket_t *)ev->ev_sender;
 	INSIST(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 	socket_log(sock, NULL, IOEVENT,
 		   "internal_fdwatch_write: task %p got event %p", me, ev);
 
 	INSIST(sock->pending_send == 1);
 
-	UNLOCK(&sock->lock);
 	more_data = (sock->fdwatchcb)(me, (isc_socket_t *)sock,
 				      sock->fdwatcharg, ISC_SOCKFDWATCH_WRITE);
-	LOCK(&sock->lock);
-
 	sock->pending_send = 0;
 
 	INSIST(sock->references > 0);
 	sock->references--;  /* the internal event is done with this socket */
 	if (sock->references == 0) {
-		UNLOCK(&sock->lock);
 		destroy(&sock);
 		return;
 	}
 
 	if (more_data)
 		select_poke(sock->manager, sock->fd, SELECT_POKE_WRITE);
-
-	UNLOCK(&sock->lock);
 }
 
 static void
@@ -3289,31 +3188,24 @@ internal_fdwatch_read(isc_task_t *me, isc_event_t *ev) {
 	sock = (isc__socket_t *)ev->ev_sender;
 	INSIST(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 	socket_log(sock, NULL, IOEVENT,
 		   "internal_fdwatch_read: task %p got event %p", me, ev);
 
 	INSIST(sock->pending_recv == 1);
 
-	UNLOCK(&sock->lock);
 	more_data = (sock->fdwatchcb)(me, (isc_socket_t *)sock,
 				      sock->fdwatcharg, ISC_SOCKFDWATCH_READ);
-	LOCK(&sock->lock);
-
 	sock->pending_recv = 0;
 
 	INSIST(sock->references > 0);
 	sock->references--;  /* the internal event is done with this socket */
 	if (sock->references == 0) {
-		UNLOCK(&sock->lock);
 		destroy(&sock);
 		return;
 	}
 
 	if (more_data)
 		select_poke(sock->manager, sock->fd, SELECT_POKE_READ);
-
-	UNLOCK(&sock->lock);
 }
 
 /*
@@ -3325,31 +3217,23 @@ process_fd(isc__socketmgr_t *manager, int fd, isc_boolean_t readable,
 	   isc_boolean_t writeable)
 {
 	isc__socket_t *sock;
-	isc_boolean_t unlock_sock;
 	isc_boolean_t unwatch_read = ISC_FALSE, unwatch_write = ISC_FALSE;
-	int lockid = FDLOCK_ID(fd);
 
 	/*
 	 * If the socket is going to be closed, don't do more I/O.
 	 */
-	LOCK(&manager->fdlock[lockid]);
 	if (manager->fdstate[fd] == CLOSE_PENDING) {
-		UNLOCK(&manager->fdlock[lockid]);
-
 		(void)unwatch_fd(manager, fd, SELECT_POKE_READ);
 		(void)unwatch_fd(manager, fd, SELECT_POKE_WRITE);
 		return;
 	}
 
 	sock = manager->fds[fd];
-	unlock_sock = ISC_FALSE;
 	if (readable) {
 		if (sock == NULL) {
 			unwatch_read = ISC_TRUE;
 			goto check_write;
 		}
-		unlock_sock = ISC_TRUE;
-		LOCK(&sock->lock);
 		if (!SOCK_DEAD(sock)) {
 			if (sock->listener)
 				dispatch_accept(sock);
@@ -3364,10 +3248,6 @@ check_write:
 			unwatch_write = ISC_TRUE;
 			goto unlock_fd;
 		}
-		if (!unlock_sock) {
-			unlock_sock = ISC_TRUE;
-			LOCK(&sock->lock);
-		}
 		if (!SOCK_DEAD(sock)) {
 			if (sock->connecting)
 				dispatch_connect(sock);
@@ -3376,11 +3256,8 @@ check_write:
 		}
 		unwatch_write = ISC_TRUE;
 	}
-	if (unlock_sock)
-		UNLOCK(&sock->lock);
 
  unlock_fd:
-	UNLOCK(&manager->fdlock[lockid]);
 	if (unwatch_read)
 		(void)unwatch_fd(manager, fd, SELECT_POKE_READ);
 	if (unwatch_write)
@@ -3606,7 +3483,6 @@ isc_result_t
 isc__socketmgr_create2(isc_socketmgr_t **managerp,
 		       unsigned int maxsocks)
 {
-	int i;
 	isc__socketmgr_t *manager;
 	isc_result_t result;
 
@@ -3659,24 +3535,6 @@ isc__socketmgr_create2(isc_socketmgr_t **managerp,
 	manager->common.impmagic = SOCKET_MANAGER_MAGIC;
 	memset(manager->fds, 0, manager->maxsocks * sizeof(isc_socket_t *));
 	ISC_LIST_INIT(manager->socklist);
-	result = isc_mutex_init(&manager->lock);
-	if (result != ISC_R_SUCCESS)
-		goto free_manager;
-	manager->fdlock = malloc(FDLOCK_COUNT * sizeof(isc_mutex_t));
-	if (manager->fdlock == NULL) {
-		result = ISC_R_NOMEMORY;
-		goto cleanup_lock;
-	}
-	for (i = 0; i < FDLOCK_COUNT; i++) {
-		result = isc_mutex_init(&manager->fdlock[i]);
-		if (result != ISC_R_SUCCESS) {
-			while (--i >= 0)
-				DESTROYLOCK(&manager->fdlock[i]);
-			free(manager->fdlock);
-			manager->fdlock = NULL;
-			goto cleanup_lock;
-		}
-	}
 
 	manager->refs = 1;
 
@@ -3696,18 +3554,7 @@ isc__socketmgr_create2(isc_socketmgr_t **managerp,
 
 cleanup:
 
-
-cleanup_lock:
-	if (manager->fdlock != NULL) {
-		for (i = 0; i < FDLOCK_COUNT; i++)
-			DESTROYLOCK(&manager->fdlock[i]);
-	}
-	DESTROYLOCK(&manager->lock);
-
 free_manager:
-	if (manager->fdlock != NULL) {
-		free(manager->fdlock);
-	}
 #if defined(USE_EPOLL)
 	if (manager->epoll_events != NULL) {
 		free(manager->epoll_events);
@@ -3755,18 +3602,12 @@ isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 	}
 	socketmgr = NULL;
 
-	LOCK(&manager->lock);
-
 	/*
 	 * Wait for all sockets to be destroyed.
 	 */
 	while (!ISC_LIST_EMPTY(manager->socklist)) {
-		UNLOCK(&manager->lock);
 		isc__taskmgr_dispatch(NULL);
-		LOCK(&manager->lock);
 	}
-
-	UNLOCK(&manager->lock);
 
 	/*
 	 * Here, poke our select/poll thread.  Do this by closing the write
@@ -3790,12 +3631,6 @@ isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 	free(manager->fds);
 	free(manager->fdstate);
 
-	if (manager->fdlock != NULL) {
-		for (i = 0; i < FDLOCK_COUNT; i++)
-			DESTROYLOCK(&manager->fdlock[i]);
-		free(manager->fdlock);
-	}
-	DESTROYLOCK(&manager->lock);
 	manager->common.magic = 0;
 	manager->common.impmagic = 0;
 	free(manager);
@@ -3810,7 +3645,6 @@ socket_recv(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 	    unsigned int flags)
 {
 	int io_state;
-	isc_boolean_t have_lock = ISC_FALSE;
 	isc_task_t *ntask = NULL;
 	isc_result_t result = ISC_R_SUCCESS;
 
@@ -3819,9 +3653,6 @@ socket_recv(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 	if (sock->type == isc_sockettype_udp) {
 		io_state = doio_recv(sock, dev);
 	} else {
-		LOCK(&sock->lock);
-		have_lock = ISC_TRUE;
-
 		if (ISC_LIST_EMPTY(sock->recv_list))
 			io_state = doio_recv(sock, dev);
 		else
@@ -3838,11 +3669,6 @@ socket_recv(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 		 */
 		isc_task_attach(task, &ntask);
 		dev->attributes |= ISC_SOCKEVENTATTR_ATTACHED;
-
-		if (!have_lock) {
-			LOCK(&sock->lock);
-			have_lock = ISC_TRUE;
-		}
 
 		/*
 		 * Enqueue the request.  If the socket was previously not being
@@ -3870,9 +3696,6 @@ socket_recv(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 			send_recvdone_event(sock, &dev);
 		break;
 	}
-
-	if (have_lock)
-		UNLOCK(&sock->lock);
 
 	return (result);
 }
@@ -3993,7 +3816,6 @@ socket_send(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 	    unsigned int flags)
 {
 	int io_state;
-	isc_boolean_t have_lock = ISC_FALSE;
 	isc_task_t *ntask = NULL;
 	isc_result_t result = ISC_R_SUCCESS;
 
@@ -4021,9 +3843,6 @@ socket_send(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 	if (sock->type == isc_sockettype_udp)
 		io_state = doio_send(sock, dev);
 	else {
-		LOCK(&sock->lock);
-		have_lock = ISC_TRUE;
-
 		if (ISC_LIST_EMPTY(sock->send_list))
 			io_state = doio_send(sock, dev);
 		else
@@ -4039,11 +3858,6 @@ socket_send(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 		if ((flags & ISC_SOCKFLAG_NORETRY) == 0) {
 			isc_task_attach(task, &ntask);
 			dev->attributes |= ISC_SOCKEVENTATTR_ATTACHED;
-
-			if (!have_lock) {
-				LOCK(&sock->lock);
-				have_lock = ISC_TRUE;
-			}
 
 			/*
 			 * Enqueue the request.  If the socket was previously
@@ -4073,9 +3887,6 @@ socket_send(isc__socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 			send_senddone_event(sock, &dev);
 		break;
 	}
-
-	if (have_lock)
-		UNLOCK(&sock->lock);
 
 	return (result);
 }
@@ -4384,13 +4195,10 @@ isc__socket_bind(isc_socket_t *sock0, isc_sockaddr_t *sockaddr,
 
 	REQUIRE(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
-
 	INSIST(!sock->bound);
 	INSIST(!sock->dupped);
 
 	if (sock->pf != sockaddr->type.sa.sa_family) {
-		UNLOCK(&sock->lock);
 		return (ISC_R_FAMILYMISMATCH);
 	}
 
@@ -4413,8 +4221,6 @@ isc__socket_bind(isc_socket_t *sock0, isc_sockaddr_t *sockaddr,
  bind_socket:
 #endif
 	if (bind(sock->fd, &sockaddr->type.sa, sockaddr->length) < 0) {
-
-		UNLOCK(&sock->lock);
 		switch (errno) {
 		case EACCES:
 			return (ISC_R_NOPERM);
@@ -4435,7 +4241,6 @@ isc__socket_bind(isc_socket_t *sock0, isc_sockaddr_t *sockaddr,
 	socket_log(sock, sockaddr, TRACE, "bound");
 	sock->bound = 1;
 
-	UNLOCK(&sock->lock);
 	return (ISC_R_SUCCESS);
 }
 
@@ -4492,8 +4297,6 @@ isc__socket_listen(isc_socket_t *sock0, unsigned int backlog) {
 
 	REQUIRE(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
-
 	REQUIRE(!sock->listener);
 	REQUIRE(sock->bound);
 	REQUIRE(sock->type == isc_sockettype_tcp ||
@@ -4503,7 +4306,6 @@ isc__socket_listen(isc_socket_t *sock0, unsigned int backlog) {
 		backlog = SOMAXCONN;
 
 	if (listen(sock->fd, (int)backlog) < 0) {
-		UNLOCK(&sock->lock);
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 
 		UNEXPECTED_ERROR(__FILE__, __LINE__, "listen: %s", strbuf);
@@ -4513,7 +4315,6 @@ isc__socket_listen(isc_socket_t *sock0, unsigned int backlog) {
 
 	sock->listener = 1;
 
-	UNLOCK(&sock->lock);
 	return (ISC_R_SUCCESS);
 }
 
@@ -4536,8 +4337,6 @@ isc__socket_accept(isc_socket_t *sock0,
 	manager = sock->manager;
 	REQUIRE(VALID_MANAGER(manager));
 
-	LOCK(&sock->lock);
-
 	REQUIRE(sock->listener);
 
 	/*
@@ -4549,7 +4348,6 @@ isc__socket_accept(isc_socket_t *sock0,
 		isc_event_allocate(task, ISC_SOCKEVENT_NEWCONN,
 				   action, arg, sizeof(*dev));
 	if (dev == NULL) {
-		UNLOCK(&sock->lock);
 		return (ISC_R_NOMEMORY);
 	}
 	ISC_LINK_INIT(dev, ev_link);
@@ -4557,7 +4355,6 @@ isc__socket_accept(isc_socket_t *sock0,
 	result = allocate_socket(manager, sock->type, &nsock);
 	if (result != ISC_R_SUCCESS) {
 		isc_event_free(ISC_EVENT_PTR(&dev));
-		UNLOCK(&sock->lock);
 		return (result);
 	}
 
@@ -4569,7 +4366,6 @@ isc__socket_accept(isc_socket_t *sock0,
 		free_socket(&nsock);
 		isc_task_detach(&ntask);
 		isc_event_free(ISC_EVENT_PTR(&dev));
-		UNLOCK(&sock->lock);
 		return (ISC_R_SHUTTINGDOWN);
 	}
 	nsock->references++;
@@ -4590,7 +4386,6 @@ isc__socket_accept(isc_socket_t *sock0,
 	if (do_poke)
 		select_poke(manager, sock->fd, SELECT_POKE_ACCEPT);
 
-	UNLOCK(&sock->lock);
 	return (ISC_R_SUCCESS);
 }
 
@@ -4618,8 +4413,6 @@ isc__socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 	if (isc_sockaddr_ismulticast(addr))
 		return (ISC_R_MULTICAST);
 
-	LOCK(&sock->lock);
-
 	REQUIRE(!sock->connecting);
 
 	dev = (isc_socket_connev_t *)isc_event_allocate(sock,
@@ -4627,7 +4420,6 @@ isc__socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 							action,	arg,
 							sizeof(*dev));
 	if (dev == NULL) {
-		UNLOCK(&sock->lock);
 		return (ISC_R_NOMEMORY);
 	}
 	ISC_LINK_INIT(dev, ev_link);
@@ -4677,7 +4469,6 @@ isc__socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 		UNEXPECTED_ERROR(__FILE__, __LINE__, "connect(%s) %d/%s",
 				 addrbuf, errno, strbuf);
 
-		UNLOCK(&sock->lock);
 		isc_event_free(ISC_EVENT_PTR(&dev));
 		return (ISC_R_UNEXPECTED);
 
@@ -4685,7 +4476,6 @@ isc__socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 		sock->connected = 0;
 		isc_task_send(task, ISC_EVENT_PTR(&dev));
 
-		UNLOCK(&sock->lock);
 		return (ISC_R_SUCCESS);
 	}
 
@@ -4698,9 +4488,6 @@ isc__socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 		sock->bound = 1;
 		dev->result = ISC_R_SUCCESS;
 		isc_task_send(task, ISC_EVENT_PTR(&dev));
-
-		UNLOCK(&sock->lock);
-
 
 		return (ISC_R_SUCCESS);
 	}
@@ -4726,7 +4513,6 @@ isc__socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 
 	sock->connect_ev = dev;
 
-	UNLOCK(&sock->lock);
 	return (ISC_R_SUCCESS);
 }
 
@@ -4749,8 +4535,6 @@ internal_connect(isc_task_t *me, isc_event_t *ev) {
 	sock = ev->ev_sender;
 	INSIST(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
-
 	/*
 	 * When the internal event was sent the reference count was bumped
 	 * to keep the socket around for us.  Decrement the count here.
@@ -4758,7 +4542,6 @@ internal_connect(isc_task_t *me, isc_event_t *ev) {
 	INSIST(sock->references > 0);
 	sock->references--;
 	if (sock->references == 0) {
-		UNLOCK(&sock->lock);
 		destroy(&sock);
 		return;
 	}
@@ -4769,7 +4552,6 @@ internal_connect(isc_task_t *me, isc_event_t *ev) {
 	dev = sock->connect_ev;
 	if (dev == NULL) {
 		INSIST(!sock->connecting);
-		UNLOCK(&sock->lock);
 		return;
 	}
 
@@ -4795,8 +4577,6 @@ internal_connect(isc_task_t *me, isc_event_t *ev) {
 			sock->connecting = 1;
 			select_poke(sock->manager, sock->fd,
 				    SELECT_POKE_CONNECT);
-			UNLOCK(&sock->lock);
-
 			return;
 		}
 
@@ -4838,8 +4618,6 @@ internal_connect(isc_task_t *me, isc_event_t *ev) {
 
 	sock->connect_ev = NULL;
 
-	UNLOCK(&sock->lock);
-
 	task = dev->ev_sender;
 	dev->ev_sender = sock;
 	isc_task_sendanddetach(&task, ISC_EVENT_PTR(&dev));
@@ -4853,16 +4631,12 @@ isc__socket_getpeername(isc_socket_t *sock0, isc_sockaddr_t *addressp) {
 	REQUIRE(VALID_SOCKET(sock));
 	REQUIRE(addressp != NULL);
 
-	LOCK(&sock->lock);
-
 	if (sock->connected) {
 		*addressp = sock->peer_address;
 		result = ISC_R_SUCCESS;
 	} else {
 		result = ISC_R_NOTCONNECTED;
 	}
-
-	UNLOCK(&sock->lock);
 
 	return (result);
 }
@@ -4876,8 +4650,6 @@ isc__socket_getsockname(isc_socket_t *sock0, isc_sockaddr_t *addressp) {
 
 	REQUIRE(VALID_SOCKET(sock));
 	REQUIRE(addressp != NULL);
-
-	LOCK(&sock->lock);
 
 	if (!sock->bound) {
 		result = ISC_R_NOTBOUND;
@@ -4897,8 +4669,6 @@ isc__socket_getsockname(isc_socket_t *sock0, isc_sockaddr_t *addressp) {
 	addressp->length = (unsigned int)len;
 
  out:
-	UNLOCK(&sock->lock);
-
 	return (result);
 }
 
@@ -4918,8 +4688,6 @@ isc__socket_cancel(isc_socket_t *sock0, isc_task_t *task, unsigned int how) {
 	 */
 	if (how == 0)
 		return;
-
-	LOCK(&sock->lock);
 
 	/*
 	 * All of these do the same thing, more or less.
@@ -5024,7 +4792,6 @@ isc__socket_cancel(isc_socket_t *sock0, isc_task_t *task, unsigned int how) {
 		}
 	}
 
-	UNLOCK(&sock->lock);
 }
 
 isc_sockettype_t
@@ -5043,10 +4810,7 @@ isc__socket_isbound(isc_socket_t *sock0) {
 
 	REQUIRE(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 	val = ((sock->bound) ? ISC_TRUE : ISC_FALSE);
-	UNLOCK(&sock->lock);
-
 	return (val);
 }
 
@@ -5232,10 +4996,8 @@ isc__socket_setname(isc_socket_t *socket0, const char *name, void *tag) {
 
 	REQUIRE(VALID_SOCKET(sock));
 
-	LOCK(&sock->lock);
 	strlcpy(sock->name, name, sizeof(sock->name));
 	sock->tag = tag;
-	UNLOCK(&sock->lock);
 }
 
 const char *

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.10 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: wks_11.c,v 1.11 2020/01/21 23:59:20 tedu Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -26,8 +26,6 @@
 
 #include <isc/net.h>
 #include <isc/netdb.h>
-#include <isc/once.h>
-#include <isc/mutex.h>
 
 /*
  * Redefine CHECK here so cppcheck "sees" the define.
@@ -41,21 +39,13 @@
 
 #define RRTYPE_WKS_ATTRIBUTES (0)
 
-static isc_mutex_t wks_lock;
-
-static void init_lock(void) {
-	RUNTIME_CHECK(isc_mutex_init(&wks_lock) == ISC_R_SUCCESS);
-}
-
 static isc_boolean_t
 mygetprotobyname(const char *name, long *proto) {
 	struct protoent *pe;
 
-	LOCK(&wks_lock);
 	pe = getprotobyname(name);
 	if (pe != NULL)
 		*proto = pe->p_proto;
-	UNLOCK(&wks_lock);
 	return (ISC_TF(pe != NULL));
 }
 
@@ -63,17 +53,14 @@ static isc_boolean_t
 mygetservbyname(const char *name, const char *proto, long *port) {
 	struct servent *se;
 
-	LOCK(&wks_lock);
 	se = getservbyname(name, proto);
 	if (se != NULL)
 		*port = ntohs(se->s_port);
-	UNLOCK(&wks_lock);
 	return (ISC_TF(se != NULL));
 }
 
 static inline isc_result_t
 fromtext_in_wks(ARGS_FROMTEXT) {
-	static isc_once_t once = ISC_ONCE_INIT;
 	isc_token_t token;
 	isc_region_t region;
 	struct in_addr addr;
@@ -95,8 +82,6 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	UNUSED(origin);
 	UNUSED(options);
 	UNUSED(rdclass);
-
-	RUNTIME_CHECK(isc_once_do(&once, init_lock) == ISC_R_SUCCESS);
 
 	/*
 	 * IPv4 dotted quad.

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: master.c,v 1.12 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: master.c,v 1.13 2020/01/21 23:59:20 tedu Exp $ */
 
 /*! \file */
 
@@ -23,7 +23,6 @@
 #include <isc/event.h>
 #include <isc/lex.h>
 #include <isc/magic.h>
-#include <isc/mutex.h>
 
 #include <isc/serial.h>
 #include <isc/stdio.h>
@@ -152,7 +151,6 @@ struct dns_loadctx {
 	unsigned int		loop_cnt;		/*% records per quantum,
 							 * 0 => all. */
 	isc_boolean_t		canceled;
-	isc_mutex_t		lock;
 	isc_result_t		result;
 	/* locked by lock */
 	uint32_t		references;
@@ -403,11 +401,9 @@ dns_loadctx_attach(dns_loadctx_t *source, dns_loadctx_t **target) {
 	REQUIRE(target != NULL && *target == NULL);
 	REQUIRE(DNS_LCTX_VALID(source));
 
-	LOCK(&source->lock);
 	INSIST(source->references > 0);
 	source->references++;
 	INSIST(source->references != 0);	/* Overflow? */
-	UNLOCK(&source->lock);
 
 	*target = source;
 }
@@ -421,12 +417,10 @@ dns_loadctx_detach(dns_loadctx_t **lctxp) {
 	lctx = *lctxp;
 	REQUIRE(DNS_LCTX_VALID(lctx));
 
-	LOCK(&lctx->lock);
 	INSIST(lctx->references > 0);
 	lctx->references--;
 	if (lctx->references == 0)
 		need_destroy = ISC_TRUE;
-	UNLOCK(&lctx->lock);
 
 	if (need_destroy)
 		loadctx_destroy(lctx);
@@ -474,7 +468,6 @@ loadctx_destroy(dns_loadctx_t *lctx) {
 
 	if (lctx->task != NULL)
 		isc_task_detach(&lctx->task);
-	DESTROYLOCK(&lctx->lock);
 	free(lctx);
 }
 
@@ -540,11 +533,6 @@ loadctx_create(dns_masterformat_t format,
 	lctx = malloc(sizeof(*lctx));
 	if (lctx == NULL)
 		return (ISC_R_NOMEMORY);
-	result = isc_mutex_init(&lctx->lock);
-	if (result != ISC_R_SUCCESS) {
-		free(lctx);
-		return (result);
-	}
 
 	lctx->inc = NULL;
 	result = incctx_create(origin, &lctx->inc);
@@ -3220,9 +3208,7 @@ void
 dns_loadctx_cancel(dns_loadctx_t *lctx) {
 	REQUIRE(DNS_LCTX_VALID(lctx));
 
-	LOCK(&lctx->lock);
 	lctx->canceled = ISC_TRUE;
-	UNLOCK(&lctx->lock);
 }
 
 void

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.33 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: dighost.c,v 1.34 2020/01/21 23:59:20 tedu Exp $ */
 
 /*! \file
  *  \note
@@ -168,7 +168,6 @@ isc_boolean_t debugging = ISC_FALSE;
 isc_boolean_t debugtiming = ISC_FALSE;
 isc_boolean_t memdebugging = ISC_FALSE;
 char *progname = NULL;
-isc_mutex_t lookup_lock;
 dig_lookup_t *current_lookup = NULL;
 
 #ifdef DIG_SIGCHASE
@@ -312,21 +311,6 @@ struct_tk_list tk_list = { {NULL, NULL, NULL, NULL, NULL}, 0};
 #endif
 
 #define DIG_MAX_ADDRESSES 20
-
-/*%
- * Apply and clear locks at the event level in global task.
- * Can I get rid of these using shutdown events?  XXX
- */
-#define LOCK_LOOKUP {\
-	debug("lock_lookup %s:%d", __FILE__, __LINE__);\
-	check_result(isc_mutex_lock((&lookup_lock)), "isc_mutex_lock");\
-	debug("success");\
-}
-#define UNLOCK_LOOKUP {\
-	debug("unlock_lookup %s:%d", __FILE__, __LINE__);\
-	check_result(isc_mutex_unlock((&lookup_lock)),\
-		     "isc_mutex_unlock");\
-}
 
 /* dynamic callbacks */
 
@@ -1574,9 +1558,6 @@ setup_libs(void) {
 	result = dst_lib_init();
 	check_result(result, "dst_lib_init");
 	is_dst_up = ISC_TRUE;
-
-	result = isc_mutex_init(&lookup_lock);
-	check_result(result, "isc_mutex_init");
 }
 
 typedef struct dig_ednsoptname {
@@ -2733,8 +2714,6 @@ send_done(isc_task_t *_task, isc_event_t *event) {
 
 	UNUSED(_task);
 
-	LOCK_LOOKUP;
-
 	debug("send_done()");
 	sendcount--;
 	debug("sendcount=%d", sendcount);
@@ -2764,7 +2743,6 @@ send_done(isc_task_t *_task, isc_event_t *event) {
 		free(query);
 
 	check_if_done();
-	UNLOCK_LOOKUP;
 }
 
 /*%
@@ -3046,7 +3024,6 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 
 	debug("connect_timeout()");
 
-	LOCK_LOOKUP;
 	query = event->ev_arg;
 	l = query->lookup;
 	isc_event_free(&event);
@@ -3066,7 +3043,6 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 						  ISC_SOCKCANCEL_ALL);
 			send_tcp_connect(ISC_LIST_NEXT(cq, link));
 		}
-		UNLOCK_LOOKUP;
 		return;
 	}
 
@@ -3099,7 +3075,6 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 		if (exitcode < 9)
 			exitcode = 9;
 	}
-	UNLOCK_LOOKUP;
 }
 
 /*%
@@ -3122,7 +3097,6 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 
 	debug("tcp_length_done()");
 
-	LOCK_LOOKUP;
 	sevent = (isc_socketevent_t *)event;
 	query = event->ev_arg;
 
@@ -3138,7 +3112,6 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 		l = query->lookup;
 		clear_query(query);
 		check_next_lookup(l);
-		UNLOCK_LOOKUP;
 		return;
 	}
 	if (sevent->result != ISC_R_SUCCESS) {
@@ -3162,14 +3135,12 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 		clear_query(query);
 		cancel_lookup(l);
 		check_next_lookup(l);
-		UNLOCK_LOOKUP;
 		return;
 	}
 	length = isc_buffer_getuint16(b);
 	if (length == 0) {
 		isc_event_free(&event);
 		launch_next_query(query, ISC_FALSE);
-		UNLOCK_LOOKUP;
 		return;
 	}
 
@@ -3190,7 +3161,6 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 	debug("resubmitted recv request with length %d, recvcount=%d",
 	      length, recvcount);
 	isc_event_free(&event);
-	UNLOCK_LOOKUP;
 }
 
 /*%
@@ -3278,7 +3248,6 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 
 	debug("connect_done()");
 
-	LOCK_LOOKUP;
 	sevent = (isc_socketevent_t *)event;
 	query = sevent->ev_arg;
 
@@ -3303,7 +3272,6 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 		l = query->lookup;
 		clear_query(query);
 		check_next_lookup(l);
-		UNLOCK_LOOKUP;
 		return;
 	}
 	if (sevent->result != ISC_R_SUCCESS) {
@@ -3337,7 +3305,6 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 			send_tcp_connect(next);
 		} else
 			check_next_lookup(l);
-		UNLOCK_LOOKUP;
 		return;
 	}
 	if (keep_open) {
@@ -3348,7 +3315,6 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 	}
 	launch_next_query(query, ISC_TRUE);
 	isc_event_free(&event);
-	UNLOCK_LOOKUP;
 }
 
 /*%
@@ -3627,7 +3593,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 
 	debug("recv_done()");
 
-	LOCK_LOOKUP;
 	recvcount--;
 	debug("recvcount=%d", recvcount);
 	INSIST(recvcount >= 0);
@@ -3655,7 +3620,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		isc_event_free(&event);
 		clear_query(query);
 		check_next_lookup(l);
-		UNLOCK_LOOKUP;
 		return;
 	}
 
@@ -3681,7 +3645,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		clear_query(query);
 		cancel_lookup(l);
 		check_next_lookup(l);
-		UNLOCK_LOOKUP;
 		return;
 	}
 
@@ -3743,7 +3706,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 				clear_query(query);
 				cancel_lookup(l);
 				check_next_lookup(l);
-				UNLOCK_LOOKUP;
 				return;
 			}
 			match = ISC_TRUE;
@@ -3811,7 +3773,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		clear_query(query);
 		cancel_lookup(l);
 		check_next_lookup(l);
-		UNLOCK_LOOKUP;
 		return;
 	}
 	if (msg->counts[DNS_SECTION_QUESTION] != 0) {
@@ -3855,7 +3816,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 				clear_query(query);
 				cancel_lookup(l);
 				check_next_lookup(l);
-				UNLOCK_LOOKUP;
 				return;
 			} else
 				goto udp_mismatch;
@@ -3878,7 +3838,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		clear_query(query);
 		cancel_lookup(l);
 		check_next_lookup(l);
-		UNLOCK_LOOKUP;
 		return;
 	}
 	if ((msg->flags & DNS_MESSAGEFLAG_TC) != 0 &&
@@ -3896,7 +3855,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		clear_query(query);
 		cancel_lookup(l);
 		check_next_lookup(l);
-		UNLOCK_LOOKUP;
 		return;
 	}
 	if ((msg->rcode == dns_rcode_servfail && !l->servfail_stops) ||
@@ -3930,7 +3888,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			check_next_lookup(l);
 			dns_message_destroy(&msg);
 			isc_event_free(&event);
-			UNLOCK_LOOKUP;
 			return;
 		}
 	}
@@ -4101,7 +4058,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			dns_message_destroy(&msg);
 			isc_event_free(&event);
 			query->waiting_connect = ISC_FALSE;
-			UNLOCK_LOOKUP;
 			return;
 		}
 		if (!docancel)
@@ -4145,7 +4101,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			dns_message_destroy(&msg);
 	}
 	isc_event_free(&event);
-	UNLOCK_LOOKUP;
 	return;
 
  udp_mismatch:
@@ -4157,7 +4112,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	check_result(result, "isc_socket_recvv");
 	recvcount++;
 	isc_event_free(&event);
-	UNLOCK_LOOKUP;
 	return;
 }
 
@@ -4244,9 +4198,7 @@ onrun_callback(isc_task_t *task, isc_event_t *event) {
 	UNUSED(task);
 
 	isc_event_free(&event);
-	LOCK_LOOKUP;
 	start_lookup();
-	UNLOCK_LOOKUP;
 }
 
 /*%
@@ -4260,9 +4212,7 @@ cancel_all(void) {
 
 	debug("cancel_all()");
 
-	LOCK_LOOKUP;
 	if (free_now) {
-		UNLOCK_LOOKUP;
 		return;
 	}
 	cancel_now = ISC_TRUE;
@@ -4301,7 +4251,6 @@ cancel_all(void) {
 		try_clear_lookup(l);
 		l = n;
 	}
-	UNLOCK_LOOKUP;
 }
 
 /*%
@@ -4330,7 +4279,6 @@ destroy_libs(void) {
 		debug("freeing taskmgr");
 		isc_taskmgr_destroy(&taskmgr);
 	}
-	LOCK_LOOKUP;
 	REQUIRE(sockcount == 0);
 	REQUIRE(recvcount == 0);
 	REQUIRE(sendcount == 0);
@@ -4370,8 +4318,6 @@ destroy_libs(void) {
 		is_dst_up = ISC_FALSE;
 	}
 
-	UNLOCK_LOOKUP;
-	DESTROYLOCK(&lookup_lock);
 #ifdef DIG_SIGCHASE
 
 	debug("Destroy the messages kept for sigchase");

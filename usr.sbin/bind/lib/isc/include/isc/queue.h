@@ -14,12 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: queue.h,v 1.2 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: queue.h,v 1.3 2020/01/21 23:59:20 tedu Exp $ */
 
 /*
  * This is a generic implementation of a two-lock concurrent queue.
- * There are built-in mutex locks for the head and tail of the queue,
- * allowing elements to be safely added and removed at the same time.
  *
  * NULL is "end of list"
  * -1 is "not linked"
@@ -29,7 +27,6 @@
 #define ISC_QUEUE_H 1
 #include <isc/assertions.h>
 #include <isc/boolean.h>
-#include <isc/mutex.h>
 
 #ifdef ISC_QUEUE_CHECKINIT
 #define ISC_QLINK_INSIST(x) ISC_INSIST(x)
@@ -48,13 +45,10 @@
 
 #define ISC_QUEUE(type) struct { \
 	type *head, *tail; \
-	isc_mutex_t headlock, taillock; \
 }
 
 #define ISC_QUEUE_INIT(queue, link) \
 	do { \
-		(void) isc_mutex_init(&(queue).taillock); \
-		(void) isc_mutex_init(&(queue).headlock); \
 		(queue).tail = (queue).head = NULL; \
 	} while (0)
 
@@ -63,8 +57,6 @@
 #define ISC_QUEUE_DESTROY(queue) \
 	do { \
 		ISC_QLINK_INSIST(ISC_QUEUE_EMPTY(queue)); \
-		(void) isc_mutex_destroy(&(queue).taillock); \
-		(void) isc_mutex_destroy(&(queue).headlock); \
 	} while (0)
 
 /*

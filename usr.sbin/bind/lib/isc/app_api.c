@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app_api.c,v 1.4 2020/01/21 10:11:09 deraadt Exp $ */
+/* $Id: app_api.c,v 1.5 2020/01/21 23:59:20 tedu Exp $ */
 
 #include <config.h>
 
@@ -22,34 +22,21 @@
 
 #include <isc/app.h>
 #include <isc/magic.h>
-#include <isc/mutex.h>
-#include <isc/once.h>
 #include <isc/util.h>
 
-static isc_mutex_t createlock;
-static isc_once_t once = ISC_ONCE_INIT;
 static isc_appctxcreatefunc_t appctx_createfunc = NULL;
 static isc_boolean_t is_running = ISC_FALSE;
 
 #define ISCAPI_APPMETHODS_VALID(m) ISC_MAGIC_VALID(m, ISCAPI_APPMETHODS_MAGIC)
 
-static void
-initialize(void) {
-	RUNTIME_CHECK(isc_mutex_init(&createlock) == ISC_R_SUCCESS);
-}
-
 isc_result_t
 isc_app_register(isc_appctxcreatefunc_t createfunc) {
 	isc_result_t result = ISC_R_SUCCESS;
 
-	RUNTIME_CHECK(isc_once_do(&once, initialize) == ISC_R_SUCCESS);
-
-	LOCK(&createlock);
 	if (appctx_createfunc == NULL)
 		appctx_createfunc = createfunc;
 	else
 		result = ISC_R_EXISTS;
-	UNLOCK(&createlock);
 
 	return (result);
 }

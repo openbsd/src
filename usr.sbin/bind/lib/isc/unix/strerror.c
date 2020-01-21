@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: strerror.c,v 1.5 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: strerror.c,v 1.6 2020/01/21 23:59:20 tedu Exp $ */
 
 /*! \file */
 
@@ -23,35 +23,19 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <isc/mutex.h>
-#include <isc/once.h>
-
 #include <isc/strerror.h>
 #include <isc/util.h>
-
-/*%
- * We need to do this this way for profiled locks.
- */
-static isc_mutex_t isc_strerror_lock;
-static void init_lock(void) {
-	RUNTIME_CHECK(isc_mutex_init(&isc_strerror_lock) == ISC_R_SUCCESS);
-}
 
 void
 isc__strerror(int num, char *buf, size_t size) {
 	char *msg;
 	unsigned int unum = (unsigned int)num;
-	static isc_once_t once = ISC_ONCE_INIT;
 
 	REQUIRE(buf != NULL);
 
-	RUNTIME_CHECK(isc_once_do(&once, init_lock) == ISC_R_SUCCESS);
-
-	LOCK(&isc_strerror_lock);
 	msg = strerror(num);
 	if (msg != NULL)
 		snprintf(buf, size, "%s", msg);
 	else
 		snprintf(buf, size, "Unknown error: %u", unum);
-	UNLOCK(&isc_strerror_lock);
 }
