@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.397 2020/01/09 11:55:25 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.398 2020/01/21 11:10:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -574,7 +574,9 @@ enum suberr_cease {
 	ERR_CEASE_CONN_REJECT,
 	ERR_CEASE_OTHER_CHANGE,
 	ERR_CEASE_COLLISION,
-	ERR_CEASE_RSRC_EXHAUST
+	ERR_CEASE_RSRC_EXHAUST,
+	ERR_CEASE_HARD_RESET,
+	ERR_CEASE_MAX_SENT_PREFIX
 };
 
 struct kroute_node;
@@ -1432,14 +1434,16 @@ static const char * const suberr_update_names[] = {
 
 static const char * const suberr_cease_names[] = {
 	"none",
-	"max-prefix exceeded",
+	"received max-prefix exceeded",
 	"administratively down",
 	"peer unconfigured",
 	"administrative reset",
 	"connection rejected",
 	"other config change",
 	"collision",
-	"resource exhaustion"
+	"resource exhaustion",
+	"hard reset",
+	"sent max-prefix exceeded"
 };
 
 static const char * const ctl_res_strerror[] = {
