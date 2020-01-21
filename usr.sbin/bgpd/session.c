@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.396 2020/01/09 11:51:18 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.397 2020/01/21 11:12:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -610,6 +610,8 @@ bgp_fsm(struct peer *peer, enum session_events event)
 
 			peer->stats.last_sent_errcode = 0;
 			peer->stats.last_sent_suberr = 0;
+			peer->stats.last_rcvd_errcode = 0;
+			peer->stats.last_rcvd_suberr = 0;
 
 			if (!peer->depend_ok)
 				timer_stop(peer, Timer_ConnectRetry);
@@ -2189,6 +2191,8 @@ parse_notification(struct peer *peer)
 
 	log_notification(peer, errcode, subcode, p, datalen, "received");
 	peer->errcnt++;
+	peer->stats.last_rcvd_errcode = errcode;
+	peer->stats.last_rcvd_suberr = subcode;
 
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_CAPA) {
 		if (datalen == 0) {	/* zebra likes to send those.. humbug */
