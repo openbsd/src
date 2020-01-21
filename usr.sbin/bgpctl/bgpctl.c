@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.256 2020/01/09 11:57:04 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.257 2020/01/21 11:14:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1300,36 +1300,68 @@ send_filterset(struct imsgbuf *i, struct filter_set_head *set)
 const char *
 get_errstr(u_int8_t errcode, u_int8_t subcode)
 {
-	static const char	*errstr = NULL;
+	static char	 errbuf[256];
+	const char	*errstr = NULL;
+	const char	*suberr = NULL;
+	int		 uk = 0;
 
-	if (errcode && errcode < sizeof(errnames)/sizeof(char *))
+	if (errcode == 0)	/* no error */
+		return NULL;
+
+	if (errcode < sizeof(errnames)/sizeof(char *))
 		errstr = errnames[errcode];
 
 	switch (errcode) {
 	case ERR_HEADER:
-		if (subcode &&
-		    subcode < sizeof(suberr_header_names)/sizeof(char *))
-			errstr = suberr_header_names[subcode];
+		if (subcode < sizeof(suberr_header_names)/sizeof(char *))
+			suberr = suberr_header_names[subcode];
+		else
+			uk = 1;
 		break;
 	case ERR_OPEN:
-		if (subcode &&
-		    subcode < sizeof(suberr_open_names)/sizeof(char *))
-			errstr = suberr_open_names[subcode];
+		if (subcode < sizeof(suberr_open_names)/sizeof(char *))
+			suberr = suberr_open_names[subcode];
+		else
+			uk = 1;
 		break;
 	case ERR_UPDATE:
-		if (subcode &&
-		    subcode < sizeof(suberr_update_names)/sizeof(char *))
-			errstr = suberr_update_names[subcode];
+		if (subcode < sizeof(suberr_update_names)/sizeof(char *))
+			suberr = suberr_update_names[subcode];
+		else
+			uk = 1;
 		break;
 	case ERR_HOLDTIMEREXPIRED:
+		if (subcode != 0)
+			uk = 1;
+		break;
 	case ERR_FSM:
+		if (subcode < sizeof(suberr_fsm_names)/sizeof(char *))
+			suberr = suberr_fsm_names[subcode];
+		else
+			uk = 1;
+		break;
 	case ERR_CEASE:
+		if (subcode < sizeof(suberr_cease_names)/sizeof(char *))
+			suberr = suberr_cease_names[subcode];
+		else
+			uk = 1;
 		break;
 	default:
-		return ("unknown error code");
+		snprintf(errbuf, sizeof(errbuf),
+		    "unknown error code %u subcode %u", errcode, subcode);
+		return (errbuf);
 	}
 
-	return (errstr);
+	if (uk)
+		snprintf(errbuf, sizeof(errbuf),
+		    "%s, unknown subcode %u", errstr, subcode);
+	else if (suberr == NULL)
+		return (errstr);
+	else
+		snprintf(errbuf, sizeof(errbuf),
+		    "%s, %s", errstr, suberr);
+
+	return (errbuf);
 }
 
 void
