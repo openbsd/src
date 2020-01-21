@@ -518,7 +518,7 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 
 	UNLOCK(&ctx->lock);
 
-	if (isc_bind9 && ctx == &isc_g_appctx) {
+	if (ctx == &isc_g_appctx) {
 		result = handle_signal(SIGHUP, reload_action);
 		if (result != ISC_R_SUCCESS)
 			return (ISC_R_SUCCESS);
@@ -553,7 +553,7 @@ isc__app_ctxshutdown(isc_appctx_t *ctx0) {
 	UNLOCK(&ctx->lock);
 
 	if (want_kill) {
-		if (isc_bind9 && ctx != &isc_g_appctx)
+		if (ctx != &isc_g_appctx)
 			/* BIND9 internal, but using multiple contexts */
 			ctx->want_shutdown = ISC_TRUE;
 		else {
@@ -589,7 +589,7 @@ isc__app_ctxsuspend(isc_appctx_t *ctx0) {
 	UNLOCK(&ctx->lock);
 
 	if (want_kill) {
-		if (isc_bind9 && ctx != &isc_g_appctx)
+		if (ctx != &isc_g_appctx)
 			/* BIND9 internal, but using multiple contexts */
 			ctx->want_reload = ISC_TRUE;
 		else {

@@ -1511,30 +1511,14 @@ isc_result_t
 isc_taskmgr_create(unsigned int workers,
 		   unsigned int default_quantum, isc_taskmgr_t **managerp)
 {
-	isc_result_t result;
-
-	if (isc_bind9)
-		return (isc__taskmgr_create(workers,
-					    default_quantum, managerp));
-	LOCK(&createlock);
-
-	REQUIRE(taskmgr_createfunc != NULL);
-	result = (*taskmgr_createfunc)(workers, default_quantum,
-				       managerp);
-
-	UNLOCK(&createlock);
-
-	return (result);
+	return (isc__taskmgr_create(workers, default_quantum, managerp));
 }
 
 void
 isc_taskmgr_destroy(isc_taskmgr_t **managerp) {
 	REQUIRE(managerp != NULL && ISCAPI_TASKMGR_VALID(*managerp));
 
-	if (isc_bind9)
-		isc__taskmgr_destroy(managerp);
-	else
-		(*managerp)->methods->destroy(managerp);
+	isc__taskmgr_destroy(managerp);
 
 	ENSURE(*managerp == NULL);
 }
@@ -1543,20 +1527,14 @@ void
 isc_taskmgr_setmode(isc_taskmgr_t *manager, isc_taskmgrmode_t mode) {
 	REQUIRE(ISCAPI_TASKMGR_VALID(manager));
 
-	if (isc_bind9)
-		isc__taskmgr_setmode(manager, mode);
-	else
-		manager->methods->setmode(manager, mode);
+	isc__taskmgr_setmode(manager, mode);
 }
 
 isc_taskmgrmode_t
 isc_taskmgr_mode(isc_taskmgr_t *manager) {
 	REQUIRE(ISCAPI_TASKMGR_VALID(manager));
 
-	if (isc_bind9)
-		return (isc__taskmgr_mode(manager));
-
-	return (manager->methods->mode(manager));
+	return (isc__taskmgr_mode(manager));
 }
 
 isc_result_t
@@ -1566,10 +1544,7 @@ isc_task_create(isc_taskmgr_t *manager, unsigned int quantum,
 	REQUIRE(ISCAPI_TASKMGR_VALID(manager));
 	REQUIRE(taskp != NULL && *taskp == NULL);
 
-	if (isc_bind9)
-		return (isc__task_create(manager, quantum, taskp));
-
-	return (manager->methods->taskcreate(manager, quantum, taskp));
+	return (isc__task_create(manager, quantum, taskp));
 }
 
 void
@@ -1577,10 +1552,7 @@ isc_task_attach(isc_task_t *source, isc_task_t **targetp) {
 	REQUIRE(ISCAPI_TASK_VALID(source));
 	REQUIRE(targetp != NULL && *targetp == NULL);
 
-	if (isc_bind9)
-		isc__task_attach(source, targetp);
-	else
-		source->methods->attach(source, targetp);
+	isc__task_attach(source, targetp);
 
 	ENSURE(*targetp == source);
 }
@@ -1589,10 +1561,7 @@ void
 isc_task_detach(isc_task_t **taskp) {
 	REQUIRE(taskp != NULL && ISCAPI_TASK_VALID(*taskp));
 
-	if (isc_bind9)
-		isc__task_detach(taskp);
-	else
-		(*taskp)->methods->detach(taskp);
+	isc__task_detach(taskp);
 
 	ENSURE(*taskp == NULL);
 }
@@ -1602,12 +1571,7 @@ isc_task_send(isc_task_t *task, isc_event_t **eventp) {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 	REQUIRE(eventp != NULL && *eventp != NULL);
 
-	if (isc_bind9)
-		isc__task_send(task, eventp);
-	else {
-		task->methods->send(task, eventp);
-		ENSURE(*eventp == NULL);
-	}
+	isc__task_send(task, eventp);
 }
 
 void
@@ -1615,12 +1579,7 @@ isc_task_sendanddetach(isc_task_t **taskp, isc_event_t **eventp) {
 	REQUIRE(taskp != NULL && ISCAPI_TASK_VALID(*taskp));
 	REQUIRE(eventp != NULL && *eventp != NULL);
 
-	if (isc_bind9)
-		isc__task_sendanddetach(taskp, eventp);
-	else {
-		(*taskp)->methods->sendanddetach(taskp, eventp);
-		ENSURE(*eventp == NULL);
-	}
+	isc__task_sendanddetach(taskp, eventp);
 
 	ENSURE(*taskp == NULL);
 }
@@ -1631,10 +1590,7 @@ isc_task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type,
 {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
-	if (isc_bind9)
-		return (isc__task_unsend(task, sender, type, tag, events));
-
-	return (task->methods->unsend(task, sender, type, tag, events));
+	return (isc__task_unsend(task, sender, type, tag, events));
 }
 
 isc_result_t
@@ -1642,27 +1598,18 @@ isc_task_onshutdown(isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
-	if (isc_bind9)
-		return (isc__task_onshutdown(task, action, arg));
-
-	return (task->methods->onshutdown(task, action, arg));
+	return (isc__task_onshutdown(task, action, arg));
 }
 
 void
 isc_task_shutdown(isc_task_t *task) {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
-	if (isc_bind9)
-		isc__task_shutdown(task);
-	else
-		task->methods->shutdown(task);
+	isc__task_shutdown(task);
 }
 
 void
 isc_task_destroy(isc_task_t **taskp) {
-	if (!isc_bind9)
-		return;
-
 	isc__task_destroy(taskp);
 }
 
@@ -1670,10 +1617,7 @@ void
 isc_task_setname(isc_task_t *task, const char *name, void *tag) {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
-	if (isc_bind9)
-		isc__task_setname(task, name, tag);
-	else
-		task->methods->setname(task, name, tag);
+	isc__task_setname(task, name, tag);
 }
 
 unsigned int
@@ -1681,57 +1625,39 @@ isc_task_purge(isc_task_t *task, void *sender, isc_eventtype_t type, void *tag)
 {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
-	if (isc_bind9)
-		return (isc__task_purge(task, sender, type, tag));
-
-	return (task->methods->purgeevents(task, sender, type, tag));
+	return (isc__task_purge(task, sender, type, tag));
 }
 
 isc_result_t
 isc_task_beginexclusive(isc_task_t *task) {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
-	if (isc_bind9)
-		return (isc__task_beginexclusive(task));
-
-	return (task->methods->beginexclusive(task));
+	return (isc__task_beginexclusive(task));
 }
 
 void
 isc_task_endexclusive(isc_task_t *task) {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
-	if (isc_bind9)
-		isc__task_endexclusive(task);
-	else
-		task->methods->endexclusive(task);
+	isc__task_endexclusive(task);
 }
 
 void
 isc_task_setprivilege(isc_task_t *task, isc_boolean_t priv) {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
-	if (isc_bind9)
-		isc__task_setprivilege(task, priv);
-	else
-		task->methods->setprivilege(task, priv);
+	isc__task_setprivilege(task, priv);
 }
 
 isc_boolean_t
 isc_task_privilege(isc_task_t *task) {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
-	if (isc_bind9)
-		return (isc__task_privilege(task));
-
-	return (task->methods->privilege(task));
+	return (isc__task_privilege(task));
 }
 
 void
 isc_task_getcurrenttime(isc_task_t *task, isc_stdtime_t *t) {
-	if (!isc_bind9)
-		return;
-
 	isc__task_getcurrenttime(task, t);
 }
 
@@ -1745,8 +1671,5 @@ isc_task_purgerange(isc_task_t *task, void *sender, isc_eventtype_t first,
 {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
-	if (isc_bind9)
-		return (isc__task_purgerange(task, sender, first, last, tag));
-
-	return (task->methods->purgerange(task, sender, first, last, tag));
+	return (isc__task_purgerange(task, sender, first, last, tag));
 }

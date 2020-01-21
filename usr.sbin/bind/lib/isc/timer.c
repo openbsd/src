@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.12 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: timer.c,v 1.13 2020/01/21 10:11:09 deraadt Exp $ */
 
 /*! \file */
 
@@ -876,29 +876,14 @@ isc_timermgr_createinctx(isc_appctx_t *actx,
 
 isc_result_t
 isc_timermgr_create(isc_timermgr_t **managerp) {
-	isc_result_t result;
-
-	if (isc_bind9)
-		return (isc__timermgr_create(managerp));
-
-	LOCK(&createlock);
-
-	REQUIRE(timermgr_createfunc != NULL);
-	result = (*timermgr_createfunc)(managerp);
-
-	UNLOCK(&createlock);
-
-	return (result);
+	return (isc__timermgr_create(managerp));
 }
 
 void
 isc_timermgr_destroy(isc_timermgr_t **managerp) {
 	REQUIRE(*managerp != NULL && ISCAPI_TIMERMGR_VALID(*managerp));
 
-	if (isc_bind9)
-		isc__timermgr_destroy(managerp);
-	else
-		(*managerp)->methods->destroy(managerp);
+	isc__timermgr_destroy(managerp);
 
 	ENSURE(*managerp == NULL);
 }
@@ -911,13 +896,8 @@ isc_timer_create(isc_timermgr_t *manager, isc_timertype_t type,
 {
 	REQUIRE(ISCAPI_TIMERMGR_VALID(manager));
 
-	if (isc_bind9)
-		return (isc__timer_create(manager, type, expires, interval,
-					  task, action, arg, timerp));
-
-	return (manager->methods->timercreate(manager, type, expires,
-					      interval, task, action, arg,
-					      timerp));
+	return (isc__timer_create(manager, type, expires, interval,
+				  task, action, arg, timerp));
 }
 
 void
@@ -925,10 +905,7 @@ isc_timer_attach(isc_timer_t *timer, isc_timer_t **timerp) {
 	REQUIRE(ISCAPI_TIMER_VALID(timer));
 	REQUIRE(timerp != NULL && *timerp == NULL);
 
-	if (isc_bind9)
-		isc__timer_attach(timer, timerp);
-	else
-		timer->methods->attach(timer, timerp);
+	isc__timer_attach(timer, timerp);
 
 	ENSURE(*timerp == timer);
 }
@@ -937,10 +914,7 @@ void
 isc_timer_detach(isc_timer_t **timerp) {
 	REQUIRE(timerp != NULL && ISCAPI_TIMER_VALID(*timerp));
 
-	if (isc_bind9)
-		isc__timer_detach(timerp);
-	else
-		(*timerp)->methods->detach(timerp);
+	isc__timer_detach(timerp);
 
 	ENSURE(*timerp == NULL);
 }
@@ -952,19 +926,13 @@ isc_timer_reset(isc_timer_t *timer, isc_timertype_t type,
 {
 	REQUIRE(ISCAPI_TIMER_VALID(timer));
 
-	if (isc_bind9)
-		return (isc__timer_reset(timer, type, expires,
-					 interval, purge));
-
-	return (timer->methods->reset(timer, type, expires, interval, purge));
+	return (isc__timer_reset(timer, type, expires,
+				 interval, purge));
 }
 
 isc_result_t
 isc_timer_touch(isc_timer_t *timer) {
 	REQUIRE(ISCAPI_TIMER_VALID(timer));
 
-	if (isc_bind9)
-		return (isc__timer_touch(timer));
-
-	return (timer->methods->touch(timer));
+	return (isc__timer_touch(timer));
 }
