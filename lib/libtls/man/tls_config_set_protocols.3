@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_config_set_protocols.3,v 1.7 2020/01/20 08:39:21 jsing Exp $
+.\" $OpenBSD: tls_config_set_protocols.3,v 1.8 2020/01/22 06:46:34 beck Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015, 2016 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2020 $
+.Dd $Mdocdate: January 22 2020 $
 .Dt TLS_CONFIG_SET_PROTOCOLS 3
 .Os
 .Sh NAME
@@ -87,7 +87,7 @@ Additionally, the values
 .Dv TLS_PROTOCOLS_ALL
 (all supported protocols) and
 .Dv TLS_PROTOCOLS_DEFAULT
-(TLSv1.2 only) may be used.
+(TLSv1.2 and TLSv1.3) may be used.
 .Pp
 The
 .Fn tls_config_parse_protocols
@@ -101,7 +101,7 @@ function.
 The protocol string is a comma or colon separated list of keywords.
 Valid keywords are tlsv1.0, tlsv1.1, tlsv1.2, tlsv1.3, all (all supported
 protocols), default (an alias for secure), legacy (an alias for all) and
-secure (currently TLSv1.2 only).
+secure (currently TLSv1.2 and TLSv1.3).
 If a value has a negative prefix (in the form of a leading exclamation mark)
 then it is removed from the list of available protocols, rather than being
 added to it.
