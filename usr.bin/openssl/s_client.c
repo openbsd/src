@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.38 2019/06/28 13:35:02 deraadt Exp $ */
+/* $OpenBSD: s_client.c,v 1.39 2020/01/22 04:51:48 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -292,10 +292,11 @@ s_client_main(int argc, char **argv)
 {
 	unsigned int off = 0, clr = 0;
 	SSL *con = NULL;
-	int s, k, state = 0, af = AF_UNSPEC;
-	char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
+	int s, k, p, state = 0, af = AF_UNSPEC;
+	char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL, *pbuf = NULL;
 	int cbuf_len, cbuf_off;
 	int sbuf_len, sbuf_off;
+	int pbuf_len, pbuf_off;
 	char *port = PORT_STR;
 	int full_log = 1;
 	char *host = SSL_HOST_NAME;
@@ -314,6 +315,7 @@ s_client_main(int argc, char **argv)
 	int ret = 1, in_init = 1, i, nbio_test = 0;
 	int starttls_proto = PROTO_OFF;
 	int prexit = 0;
+	int peekaboo = 0;
 	X509_VERIFY_PARAM *vpm = NULL;
 	int badarg = 0;
 	const SSL_METHOD *meth = NULL;
@@ -351,6 +353,7 @@ s_client_main(int argc, char **argv)
 
 	if (((cbuf = malloc(BUFSIZZ)) == NULL) ||
 	    ((sbuf = malloc(BUFSIZZ)) == NULL) ||
+	    ((pbuf = malloc(BUFSIZZ)) == NULL) ||
 	    ((mbuf = malloc(BUFSIZZ + 1)) == NULL)) {	/* NUL byte */
 		BIO_printf(bio_err, "out of memory\n");
 		goto end;
@@ -415,6 +418,8 @@ s_client_main(int argc, char **argv)
 			verify_return_error = 1;
 		else if (strcmp(*argv, "-prexit") == 0)
 			prexit = 1;
+		else if (strcmp(*argv, "-peekaboo") == 0)
+			peekaboo = 1;
 		else if (strcmp(*argv, "-crlf") == 0)
 			crlf = 1;
 		else if (strcmp(*argv, "-quiet") == 0) {
@@ -825,6 +830,8 @@ re_start:
 	cbuf_off = 0;
 	sbuf_len = 0;
 	sbuf_off = 0;
+	pbuf_len = 0;
+	pbuf_off = 0;
 
 	/* This is an ugly hack that does a lot of assumptions */
 	/*
@@ -1114,6 +1121,47 @@ re_start:
 				}
 			}
 #endif
+			if (peekaboo) {
+				p = SSL_peek(con, pbuf, 1024 /* BUFSIZZ */ );
+
+				switch (SSL_get_error(con, k)) {
+				case SSL_ERROR_NONE:
+					if (p <= 0)
+						goto end;
+					pbuf_off = 0;
+					pbuf_len = p;
+
+					break;
+				case SSL_ERROR_WANT_WRITE:
+					BIO_printf(bio_c_out, "peek W BLOCK\n");
+					write_ssl = 1;
+					read_tty = 0;
+					break;
+				case SSL_ERROR_WANT_READ:
+					BIO_printf(bio_c_out, "peek R BLOCK\n");
+					write_tty = 0;
+					read_ssl = 1;
+					if ((read_tty == 0) && (write_ssl == 0))
+						write_ssl = 1;
+					break;
+				case SSL_ERROR_WANT_X509_LOOKUP:
+					BIO_printf(bio_c_out, "peek X BLOCK\n");
+					break;
+				case SSL_ERROR_SYSCALL:
+					ret = errno;
+					BIO_printf(bio_err, "peek:errno=%d\n", ret);
+					goto shut;
+				case SSL_ERROR_ZERO_RETURN:
+					BIO_printf(bio_c_out, "peek closed\n");
+					ret = 0;
+					goto shut;
+				case SSL_ERROR_SSL:
+					ERR_print_errors(bio_err);
+					goto shut;
+					/* break; */
+				}
+			}
+
 			k = SSL_read(con, sbuf, 1024 /* BUFSIZZ */ );
 
 			switch (SSL_get_error(con, k)) {
@@ -1122,7 +1170,21 @@ re_start:
 					goto end;
 				sbuf_off = 0;
 				sbuf_len = k;
-
+				if (peekaboo) {
+					if (k < p) {
+						ret = -1;
+						BIO_printf(bio_err,
+						    "read less than peek!\n");
+						goto shut;
+					}
+					if (p > 0 && (memcmp(sbuf, pbuf, p) != 0)) {
+						ret = -1;
+						BIO_printf(bio_err,
+						    "peek of %d different from read of %d!\n",
+						    p, k);
+						goto shut;
+					}
+				}
 				read_ssl = 0;
 				write_tty = 1;
 				break;
