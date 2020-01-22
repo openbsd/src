@@ -139,19 +139,11 @@ static struct {
 	(void *)isc__app_unblock
 };
 
-#ifndef HAVE_SIGWAIT
-static void
-exit_action(int arg) {
-	UNUSED(arg);
-	isc_g_appctx.want_shutdown = ISC_TRUE;
-}
-
 static void
 reload_action(int arg) {
 	UNUSED(arg);
 	isc_g_appctx.want_reload = ISC_TRUE;
 }
-#endif
 
 static isc_result_t
 handle_signal(int sig, void (*handler)(int)) {
@@ -194,22 +186,6 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 	ctx->want_reload = ISC_FALSE;
 	ctx->blocked = ISC_FALSE;
 
-#ifndef HAVE_SIGWAIT
-	/*
-	 * Install do-nothing handlers for SIGINT and SIGTERM.
-	 *
-	 * We install them now because BSDI 3.1 won't block
-	 * the default actions, regardless of what we do with
-	 * pthread_sigmask().
-	 */
-	result = handle_signal(SIGINT, exit_action);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-	result = handle_signal(SIGTERM, exit_action);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-#endif
-
 	/*
 	 * Always ignore SIGPIPE.
 	 */
@@ -230,14 +206,12 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
-#ifdef HAVE_SIGWAIT
 	result = handle_signal(SIGTERM, SIG_DFL);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	result = handle_signal(SIGINT, SIG_DFL);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
-#endif
 
 	/*
 	 * Unblock SIGHUP, SIGINT, SIGTERM.

@@ -21,9 +21,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-#ifdef HAVE_LOCALE_H
 #include <locale.h>
-#endif
 
 #include <isc/app.h>
 #include <isc/commandline.h>

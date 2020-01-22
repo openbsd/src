@@ -1550,30 +1550,18 @@ view_clauses[] = {
 	{ "empty-server", &cfg_type_astring, 0 },
 	{ "empty-zones-enable", &cfg_type_boolean, 0 },
 	{ "fetch-glue", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
-#ifdef ENABLE_FETCHLIMIT
-	{ "fetch-quota-params", &cfg_type_fetchquota, 0 },
-	{ "fetches-per-server", &cfg_type_fetchesper, 0 },
-	{ "fetches-per-zone", &cfg_type_fetchesper, 0 },
-#else
 	{ "fetch-quota-params", &cfg_type_fetchquota,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
 	{ "fetches-per-server", &cfg_type_fetchesper,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
 	{ "fetches-per-zone", &cfg_type_fetchesper,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
-#endif /* ENABLE_FETCHLIMIT */
-#ifdef ALLOW_FILTER_AAAA
-	{ "filter-aaaa", &cfg_type_bracketed_aml, 0 },
-	{ "filter-aaaa-on-v4", &cfg_type_filter_aaaa, 0 },
-	{ "filter-aaaa-on-v6", &cfg_type_filter_aaaa, 0 },
-#else
 	{ "filter-aaaa", &cfg_type_bracketed_aml,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
 	{ "filter-aaaa-on-v4", &cfg_type_filter_aaaa,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
 	{ "filter-aaaa-on-v6", &cfg_type_filter_aaaa,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
-#endif
 	{ "ixfr-from-differences", &cfg_type_ixfrdifftype, 0 },
 	{ "lame-ttl", &cfg_type_uint32, 0 },
 	{ "max-acache-size", &cfg_type_sizenodefault, 0 },

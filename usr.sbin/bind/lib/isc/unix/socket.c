@@ -31,9 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef HAVE_INTTYPES_H
 #include <inttypes.h> /* uintptr_t */
-#endif
 
 #include <isc/buffer.h>
 #include <isc/bufferlist.h>
@@ -159,15 +157,7 @@ typedef isc_event_t intev_t;
 /*%
  * The size to raise the receive buffer to (from BIND 8).
  */
-#ifdef TUNE_LARGE
-#ifdef sun
-#define RCVBUFSIZE (1*1024*1024)
-#else
-#define RCVBUFSIZE (16*1024*1024)
-#endif
-#else
 #define RCVBUFSIZE (32*1024)
-#endif /* TUNE_LARGE */
 
 /*%
  * Instead of calculating the cmsgbuf lengths every time we take
@@ -624,28 +614,16 @@ static isc_result_t
 make_nonblock(int fd) {
 	int ret;
 	char strbuf[ISC_STRERRORSIZE];
-#ifdef USE_FIONBIO_IOCTL
-	int on = 1;
-#else
 	int flags;
-#endif
 
-#ifdef USE_FIONBIO_IOCTL
-	ret = ioctl(fd, FIONBIO, (char *)&on);
-#else
 	flags = fcntl(fd, F_GETFL, 0);
 	flags |= O_NONBLOCK;
 	ret = fcntl(fd, F_SETFL, flags);
-#endif
 
 	if (ret == -1) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-#ifdef USE_FIONBIO_IOCTL
-				 "ioctl(%d, FIONBIO, &on): %s", fd,
-#else
 				 "fcntl(%d, F_SETFL, %d): %s", fd, flags,
-#endif
 				 strbuf);
 
 		return (ISC_R_UNEXPECTED);
@@ -1027,24 +1005,8 @@ build_msghdr_recv(isc__socket_t *sock, char *cmsgbuf, isc_socketevent_t *dev,
 
 	if (sock->type == isc_sockettype_udp) {
 		memset(&dev->address, 0, sizeof(dev->address));
-#ifdef BROKEN_RECVMSG
-		if (sock->pf == AF_INET) {
-			msg->msg_name = (void *)&dev->address.type.sin;
-			msg->msg_namelen = sizeof(dev->address.type.sin6);
-		} else if (sock->pf == AF_INET6) {
-			msg->msg_name = (void *)&dev->address.type.sin6;
-			msg->msg_namelen = sizeof(dev->address.type.sin6);
-		} else if (sock->pf == AF_UNIX) {
-			msg->msg_name = (void *)&dev->address.type.sunix;
-			msg->msg_namelen = sizeof(dev->address.type.sunix);
-		} else {
-			msg->msg_name = (void *)&dev->address.type.sa;
-			msg->msg_namelen = sizeof(dev->address.type);
-		}
-#else
 		msg->msg_name = (void *)&dev->address.type.sa;
 		msg->msg_namelen = sizeof(dev->address.type);
-#endif
 	} else { /* TCP */
 		msg->msg_name = NULL;
 		msg->msg_namelen = 0;
@@ -3751,26 +3713,10 @@ isc__socket_permunix(isc_sockaddr_t *sockaddr, uint32_t perm,
 	isc_result_t result = ISC_R_SUCCESS;
 	char strbuf[ISC_STRERRORSIZE];
 	char path[sizeof(sockaddr->type.sunix.sun_path)];
-#ifdef NEED_SECURE_DIRECTORY
-	char *slash;
-#endif
 
 	REQUIRE(sockaddr->type.sa.sa_family == AF_UNIX);
 	INSIST(strlen(sockaddr->type.sunix.sun_path) < sizeof(path));
 	strlcpy(path, sockaddr->type.sunix.sun_path, sizeof(path));
-
-#ifdef NEED_SECURE_DIRECTORY
-	slash = strrchr(path, '/');
-	if (slash != NULL) {
-		if (slash != path) {
-			*slash = '\0';
-		} else {
-			strlcpy(path, "/", sizeof(path));
-		}
-	} else {
-		strlcpy(path, ".", sizeof(path));
-	}
-#endif
 
 	if (chmod(path, perm) < 0) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));

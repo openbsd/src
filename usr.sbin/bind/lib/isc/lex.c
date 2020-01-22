@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.13 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: lex.c,v 1.14 2020/01/22 12:58:35 florian Exp $ */
 
 /*! \file */
 
@@ -416,21 +416,15 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 	prev = NULL;
 	remaining = lex->max_token;
 
-#ifdef HAVE_FLOCKFILE
 	if (source->is_file)
 		flockfile(source->input);
-#endif
 
 	do {
 		if (isc_buffer_remaininglength(source->pushback) == 0) {
 			if (source->is_file) {
 				stream = source->input;
 
-#if defined(HAVE_FLOCKFILE) && defined(HAVE_GETCUNLOCKED)
 				c = getc_unlocked(stream);
-#else
-				c = getc(stream);
-#endif
 				if (c == EOF) {
 					if (ferror(stream)) {
 						source->result = ISC_R_IOERROR;
@@ -786,10 +780,8 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 
 	result = ISC_R_SUCCESS;
  done:
-#ifdef HAVE_FLOCKFILE
 	if (source->is_file)
 		funlockfile(source->input);
-#endif
 	return (result);
 }
 

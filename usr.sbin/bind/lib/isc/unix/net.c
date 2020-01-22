@@ -14,18 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.13 2020/01/22 12:56:14 florian Exp $ */
+/* $Id: net.c,v 1.14 2020/01/22 12:58:35 florian Exp $ */
 
 #include <config.h>
 
 #include <sys/types.h>
 
-#if defined(HAVE_SYS_SYSCTL_H)
-#if defined(HAVE_SYS_PARAM_H)
 #include <sys/param.h>
-#endif
 #include <sys/sysctl.h>
-#endif
 #include <sys/uio.h>
 
 #include <errno.h>
@@ -58,29 +54,6 @@
 #define ISC_NET_PORTRANGEHIGH 65535
 #endif	/* ISC_NET_PORTRANGEHIGH */
 
-#ifdef HAVE_SYSCTLBYNAME
-
-/*%
- * sysctl variants
- */
-#if defined(__FreeBSD__) || defined(__APPLE__) || defined(__DragonFly__)
-#define USE_SYSCTL_PORTRANGE
-#define SYSCTL_V4PORTRANGE_LOW	"net.inet.ip.portrange.hifirst"
-#define SYSCTL_V4PORTRANGE_HIGH	"net.inet.ip.portrange.hilast"
-#define SYSCTL_V6PORTRANGE_LOW	"net.inet.ip.portrange.hifirst"
-#define SYSCTL_V6PORTRANGE_HIGH	"net.inet.ip.portrange.hilast"
-#endif
-
-#ifdef __NetBSD__
-#define USE_SYSCTL_PORTRANGE
-#define SYSCTL_V4PORTRANGE_LOW	"net.inet.ip.anonportmin"
-#define SYSCTL_V4PORTRANGE_HIGH	"net.inet.ip.anonportmax"
-#define SYSCTL_V6PORTRANGE_LOW	"net.inet6.ip6.anonportmin"
-#define SYSCTL_V6PORTRANGE_HIGH	"net.inet6.ip6.anonportmax"
-#endif
-
-#else /* !HAVE_SYSCTLBYNAME */
-
 #ifdef __OpenBSD__
 #define USE_SYSCTL_PORTRANGE
 #define SYSCTL_V4PORTRANGE_LOW	{ CTL_NET, PF_INET, IPPROTO_IP, \
@@ -92,13 +65,9 @@
 #define SYSCTL_V6PORTRANGE_HIGH	SYSCTL_V4PORTRANGE_HIGH
 #endif
 
-#endif /* HAVE_SYSCTLBYNAME */
-
-# if defined(WANT_IPV6)
 static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
 
 static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
-# endif /* WANT_IPV6 */
 
 #ifndef ISC_CMSG_IP_TOS
 #ifdef __APPLE__
@@ -150,7 +119,6 @@ try_proto(int domain) {
 		}
 	}
 
-#ifdef WANT_IPV6
 	if (domain == PF_INET6) {
 		struct sockaddr_in6 sin6;
 		unsigned int len;
@@ -188,7 +156,6 @@ try_proto(int domain) {
 			}
 		}
 	}
-#endif
 
 	(void)close(s);
 
@@ -198,9 +165,7 @@ try_proto(int domain) {
 static void
 initialize_action(void) {
 	ipv4_result = try_proto(PF_INET);
-#ifdef WANT_IPV6
 	ipv6_result = try_proto(PF_INET6);
-#endif
 }
 
 static void
@@ -226,7 +191,6 @@ isc_net_probeunix(void) {
 	return (unix_result);
 }
 
-#ifdef WANT_IPV6
 static void
 try_ipv6only(void) {
 #ifdef IPV6_V6ONLY
@@ -292,9 +256,7 @@ initialize_ipv6only(void) {
 	RUNTIME_CHECK(isc_once_do(&once_ipv6only,
 				  try_ipv6only) == ISC_R_SUCCESS);
 }
-#endif /* WANT_IPV6 */
 
-#ifdef WANT_IPV6
 static void
 try_ipv6pktinfo(void) {
 	int s, on;
@@ -341,25 +303,16 @@ initialize_ipv6pktinfo(void) {
 	RUNTIME_CHECK(isc_once_do(&once_ipv6pktinfo,
 				  try_ipv6pktinfo) == ISC_R_SUCCESS);
 }
-#endif /* WANT_IPV6 */
 
 isc_result_t
 isc_net_probe_ipv6only(void) {
-#ifdef WANT_IPV6
 	initialize_ipv6only();
-#else
-	ipv6only_result = ISC_R_NOTFOUND;
-#endif
 	return (ipv6only_result);
 }
 
 isc_result_t
 isc_net_probe_ipv6pktinfo(void) {
-#ifdef WANT_IPV6
 	initialize_ipv6pktinfo();
-#else
-	ipv6pktinfo_result = ISC_R_NOTFOUND;
-#endif
 	return (ipv6pktinfo_result);
 }
 

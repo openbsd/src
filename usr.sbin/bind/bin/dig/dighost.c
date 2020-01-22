@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.34 2020/01/21 23:59:20 tedu Exp $ */
+/* $Id: dighost.c,v 1.35 2020/01/22 12:58:35 florian Exp $ */
 
 /*! \file
  *  \note
@@ -32,9 +32,7 @@
 #include <string.h>
 #include <limits.h>
 
-#ifdef HAVE_LOCALE_H
 #include <locale.h>
-#endif
 
 #include <dns/byaddr.h>
 #ifdef DIG_SIGCHASE
