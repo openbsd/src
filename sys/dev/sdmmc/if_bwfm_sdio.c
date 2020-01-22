@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.29 2019/02/07 07:39:56 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.30 2020/01/22 12:08:55 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -368,8 +368,13 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 		nvname = "brcmfmac4334-sdio.nvram";
 		break;
 	case BRCM_CC_4345_CHIP_ID:
-		name = "brcmfmac43455-sdio.bin";
-		nvname = "brcmfmac43455-sdio.nvram";
+		if (bwfm->sc_chip.ch_chiprev == 9) {
+			name = "brcmfmac43456-sdio.bin";
+			nvname = "brcmfmac43456-sdio.nvram";
+		} else {
+			name = "brcmfmac43455-sdio.bin";
+			nvname = "brcmfmac43455-sdio.nvram";
+		}
 		break;
 	case BRCM_CC_43340_CHIP_ID:
 		name = "brcmfmac43340-sdio.bin";
