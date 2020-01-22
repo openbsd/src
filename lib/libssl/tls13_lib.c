@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.16 2020/01/21 05:19:02 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.17 2020/01/22 01:02:28 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -69,6 +69,7 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 	SSL *s = ctx->ssl;
 
 	if (alert_desc == SSL_AD_CLOSE_NOTIFY) {
+		ctx->close_notify_recv = 1;
 		ctx->ssl->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
 		S3I(ctx->ssl)->warn_alert = alert_desc;
 		return;
@@ -481,4 +482,53 @@ tls13_legacy_write_bytes(SSL *ssl, int type, const void *vbuf, int len)
 		sent += ret;
 		n -= ret;
 	}
+}
+
+int
+tls13_legacy_shutdown(SSL *ssl)
+{
+	struct tls13_ctx *ctx = ssl->internal->tls13;
+	uint8_t buf[512]; /* XXX */
+	ssize_t ret;
+
+	/*
+	 * We need to return 0 when we have sent a close-notify but have not
+	 * yet received one. We return 1 only once we have sent and received
+	 * close-notify alerts. All other cases return -1 and set internal
+	 * state appropriately.
+	 */
+	if (ctx == NULL || ssl->internal->quiet_shutdown) {
+		ssl->internal->shutdown = SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN;
+		return 1;
+	}
+
+	/* Send close notify. */
+	if (!ctx->close_notify_sent) {
+		ctx->close_notify_sent = 1;
+		if ((ret = tls13_send_alert(ctx->rl, SSL_AD_CLOSE_NOTIFY)) < 0)
+			return tls13_legacy_return_code(ssl, ret);
+	}
+
+	/* Ensure close notify has been sent. */
+	if ((ret = tls13_record_layer_send_pending(ctx->rl)) != TLS13_IO_SUCCESS)
+		return tls13_legacy_return_code(ssl, ret);
+
+	/* Receive close notify. */
+	if (!ctx->close_notify_recv) {
+		/*
+		 * If there is still application data pending then we have no
+		 * option but to discard it here. The application should have
+		 * continued to call SSL_read() instead of SSL_shutdown().
+		 */
+		/* XXX - tls13_drain_application_data()? */
+		if ((ret = tls13_read_application_data(ctx->rl, buf, sizeof(buf))) > 0)
+			ret = TLS13_IO_WANT_POLLIN;
+		if (ret != TLS13_IO_EOF)
+			return tls13_legacy_return_code(ssl, ret);
+	}
+
+	if (ctx->close_notify_recv)
+		return 1;
+
+	return 0;
 }

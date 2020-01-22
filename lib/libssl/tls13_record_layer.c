@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.18 2020/01/21 12:08:04 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.19 2020/01/22 01:02:28 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -51,6 +51,8 @@ struct tls13_record_layer {
 	/* Pending alert messages. */
 	uint8_t *alert_data;
 	size_t alert_len;
+	uint8_t alert_level;
+	uint8_t alert_desc;
 
 	/* Pending post-handshake handshake messages (RFC 8446, section 4.6). */
 	CBS phh_cbs;
@@ -281,12 +283,19 @@ tls13_record_layer_send_alert(struct tls13_record_layer *rl)
 	rl->alert_data = NULL;
 	rl->alert_len = 0;
 
-	/* XXX - only close write channel when sending close notify. */
-	rl->read_closed = 1;
-	rl->write_closed = 1;
+	if (rl->alert_desc == SSL_AD_CLOSE_NOTIFY) {
+		rl->write_closed = 1;
+		ret = TLS13_IO_SUCCESS;
+	} else if (rl->alert_desc == SSL_AD_USER_CANCELLED) {
+		/* Ignored at the record layer. */
+		ret = TLS13_IO_SUCCESS;
+	} else {
+		rl->read_closed = 1;
+		rl->write_closed = 1;
+		ret = TLS13_IO_SUCCESS; /* XXX - ALERT? */
+	}
 
-	/* XXX - we may want a TLS13_IO_ALERT (or handle as errors). */
-	return TLS13_IO_FAILURE;
+	return ret;
 }
 
 static ssize_t
@@ -314,7 +323,7 @@ tls13_record_layer_send_phh(struct tls13_record_layer *rl)
 	return TLS13_IO_SUCCESS;
 }
 
-static ssize_t
+ssize_t
 tls13_record_layer_send_pending(struct tls13_record_layer *rl)
 {
 	/*
@@ -353,6 +362,9 @@ tls13_record_layer_alert(struct tls13_record_layer *rl,
 		goto err;
 	if (!CBB_finish(&cbb, &rl->alert_data, &rl->alert_len))
 		goto err;
+
+	rl->alert_level = alert_level;
+	rl->alert_desc = alert_desc;
 
 	return tls13_record_layer_send_pending(rl);
 

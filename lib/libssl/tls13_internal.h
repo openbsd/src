@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.39 2020/01/21 12:08:04 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.40 2020/01/22 01:02:28 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -126,6 +126,7 @@ int tls13_record_layer_set_read_traffic_key(struct tls13_record_layer *rl,
     struct tls13_secret *read_key);
 int tls13_record_layer_set_write_traffic_key(struct tls13_record_layer *rl,
     struct tls13_secret *write_key);
+ssize_t tls13_record_layer_send_pending(struct tls13_record_layer *rl);
 ssize_t tls13_record_layer_phh(struct tls13_record_layer *rl, CBS *cbs);
 
 ssize_t tls13_read_handshake_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n);
@@ -181,6 +182,9 @@ struct tls13_ctx {
 	struct tls13_handshake_stage handshake_stage;
 	int handshake_completed;
 
+	int close_notify_sent;
+	int close_notify_recv;
+
 	const EVP_AEAD *aead;
 	const EVP_MD *hash;
 
@@ -215,6 +219,7 @@ ssize_t tls13_legacy_wire_write_cb(const void *buf, size_t n, void *arg);
 int tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len,
     int peek);
 int tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len);
+int tls13_legacy_shutdown(SSL *ssl);
 
 /*
  * Message Types - RFC 8446, Section B.3.
