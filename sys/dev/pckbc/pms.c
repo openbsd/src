@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.90 2019/09/20 21:21:47 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.91 2020/01/22 14:52:14 mpi Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -922,6 +922,7 @@ pms_sec_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return (0);
 }
 
+#ifdef DIAGNOSTIC
 static inline void
 pms_print_packet(struct pms_softc *sc)
 {
@@ -932,6 +933,7 @@ pms_print_packet(struct pms_softc *sc)
 	for (i = 0; i < size; i++)
 		printf(i == state ? " %02x |" : " %02x", sc->packet[i]);
 }
+#endif
 
 void
 pmsinput(void *vsc, int data)
