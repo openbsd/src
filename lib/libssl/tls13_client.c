@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.25 2020/01/22 03:20:09 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.26 2020/01/22 05:06:23 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -223,6 +223,7 @@ int
 tls13_client_hello_sent(struct tls13_ctx *ctx)
 {
 	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_2_VERSION);
+	tls13_record_layer_allow_ccs(ctx->rl, 1);
 
 	return 1;
 }
@@ -749,6 +750,8 @@ tls13_server_finished_recv(struct tls13_ctx *ctx)
 	if (!tls13_record_layer_set_read_traffic_key(ctx->rl,
 	    &secrets->server_application_traffic))
 		goto err;
+
+	tls13_record_layer_allow_ccs(ctx->rl, 0);
 
 	ret = 1;
 

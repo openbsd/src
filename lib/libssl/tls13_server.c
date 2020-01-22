@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.4 2020/01/22 02:21:05 beck Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.5 2020/01/22 05:06:23 tb Exp $ */
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -81,6 +81,8 @@ tls13_legacy_accept(SSL *ssl)
 int
 tls13_client_hello_recv(struct tls13_ctx *ctx)
 {
+	tls13_record_layer_allow_ccs(ctx->rl, 1);
+
 	return 0;
 }
 
@@ -135,6 +137,8 @@ tls13_client_certificate_verify_recv(struct tls13_ctx *ctx)
 int
 tls13_client_finished_recv(struct tls13_ctx *ctx)
 {
+	tls13_record_layer_allow_ccs(ctx->rl, 0);
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.42 2020/01/22 02:39:45 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.43 2020/01/22 05:06:23 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -117,6 +117,7 @@ struct tls13_record_layer *tls13_record_layer_new(tls13_read_cb wire_read,
     tls13_phh_recv_cb phh_recv_cb,
     tls13_phh_sent_cb phh_sent_cb, void *cb_arg);
 void tls13_record_layer_free(struct tls13_record_layer *rl);
+void tls13_record_layer_allow_ccs(struct tls13_record_layer *rl, int allow);
 void tls13_record_layer_rbuf(struct tls13_record_layer *rl, CBS *cbs);
 void tls13_record_layer_set_aead(struct tls13_record_layer *rl,
     const EVP_AEAD *aead);

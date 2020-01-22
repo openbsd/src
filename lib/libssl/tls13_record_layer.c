@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.20 2020/01/22 02:39:45 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.21 2020/01/22 05:06:23 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -29,7 +29,8 @@ static ssize_t tls13_record_layer_write_record(struct tls13_record_layer *rl,
 
 struct tls13_record_layer {
 	uint16_t legacy_version;
-	int change_cipher_spec_seen;
+	int ccs_allowed;
+	int ccs_seen;
 	int handshake_completed;
 	int phh;
 
@@ -197,6 +198,12 @@ tls13_record_layer_update_nonce(struct tls13_secret *nonce,
 		nonce->data[i] = iv->data[i] ^ (j >= 0 ? seq_num[j] : 0);
 
 	return 1;
+}
+
+void
+tls13_record_layer_allow_ccs(struct tls13_record_layer *rl, int allow)
+{
+	rl->ccs_allowed = allow;
 }
 
 void
@@ -756,8 +763,7 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 	 * ignored.
 	 */
 	if (content_type == SSL3_RT_CHANGE_CIPHER_SPEC) {
-		/* XXX - need to check after ClientHello, before Finished. */
-		if (rl->handshake_completed || rl->change_cipher_spec_seen)
+		if (!rl->ccs_allowed || rl->ccs_seen)
 			return tls13_send_alert(rl, SSL_AD_UNEXPECTED_MESSAGE);
 		if (!tls13_record_content(rl->rrec, &cbs))
 			return tls13_send_alert(rl, TLS1_AD_DECODE_ERROR);
@@ -765,7 +771,7 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 			return tls13_send_alert(rl, TLS1_AD_DECODE_ERROR);
 		if (ccs != 1)
 			return tls13_send_alert(rl, SSL_AD_ILLEGAL_PARAMETER);
-		rl->change_cipher_spec_seen = 1;
+		rl->ccs_seen = 1;
 		tls13_record_layer_rrec_free(rl);
 		return TLS13_IO_WANT_POLLIN;
 	}
