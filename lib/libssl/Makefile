@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.59 2020/01/22 01:21:43 jsing Exp $
+# $OpenBSD: Makefile,v 1.60 2020/01/22 07:58:27 jsing Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -80,6 +80,16 @@ SRCS= \
 HDRS=	dtls1.h srtp.h ssl.h ssl2.h ssl23.h ssl3.h tls1.h
 
 .PATH:	${.CURDIR}
+
+check_includes:
+	@cd ${.CURDIR}; for i in $(HDRS); do \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/openssl/`basename $$i` || \
+		(echo \"`basename $$i` differs from installed version; \" \
+	        \"did you forget 'make includes'?\" && false)"; \
+	    eval "$$j"; \
+	done;
+
+all: check_includes
 
 includes:
 	@test -d ${DESTDIR}/usr/include/openssl || \
