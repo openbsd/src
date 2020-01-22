@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l518d_sdmmc.c,v 1.4 2016/05/05 11:01:08 kettenis Exp $	*/
+/*	$OpenBSD: w83l518d_sdmmc.c,v 1.5 2020/01/22 03:26:02 cheloha Exp $	*/
 /*	$NetBSD: w83l518d_sdmmc.c,v 1.1 2009/09/30 20:44:50 jmcneill Exp $ */
 
 /*
@@ -578,7 +578,7 @@ wb_sdmmc_intr(struct wb_softc *wb)
 	    "\5CRC\6FIFO\7CARD\010PENDING");
 
 	if (val & WB_INT_CARD)
-		timeout_add(&wb->wb_sdmmc_to, hz / 4);
+		timeout_add_msec(&wb->wb_sdmmc_to, 250);
 
 	return 1;
 }
