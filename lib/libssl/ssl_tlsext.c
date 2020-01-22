@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.52 2020/01/22 10:28:49 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.53 2020/01/22 10:36:57 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1936,7 +1936,7 @@ tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server, uint16_t msg_type)
 	uint16_t type;
 	size_t idx;
 	uint16_t version;
-	uint8_t alert_desc;
+	int alert_desc;
 
 	S3I(s)->hs.extensions_seen = 0;
 
