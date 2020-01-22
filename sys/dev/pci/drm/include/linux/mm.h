@@ -14,8 +14,6 @@
 #include <linux/shrinker.h>
 #include <asm/pgtable.h>
 
-#define unmap_mapping_range(mapping, holebegin, holeend, even_cows)
-
 #define PageHighMem(x)	0
 
 #define page_address(x)		VM_PAGE_TO_PHYS(x)

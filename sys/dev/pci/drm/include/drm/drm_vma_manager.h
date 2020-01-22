@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_vma_manager.h,v 1.1 2019/04/14 10:14:52 jsg Exp $	*/
+/*	$OpenBSD: drm_vma_manager.h,v 1.2 2020/01/22 07:52:31 jsg Exp $	*/
 #ifndef __DRM_VMA_MANAGER_H__
 #define __DRM_VMA_MANAGER_H__
 
@@ -215,6 +215,7 @@ static inline __u64 drm_vma_node_offset_addr(struct drm_vma_offset_node *node)
 	return ((__u64)node->vm_node.start) << PAGE_SHIFT;
 }
 
+#ifdef __linux__
 /**
  * drm_vma_node_unmap() - Unmap offset node
  * @node: Offset node
@@ -235,6 +236,7 @@ static inline void drm_vma_node_unmap(struct drm_vma_offset_node *node,
 				    drm_vma_node_offset_addr(node),
 				    drm_vma_node_size(node) << PAGE_SHIFT, 1);
 }
+#endif
 
 /**
  * drm_vma_node_verify_access() - Access verification helper for TTM
