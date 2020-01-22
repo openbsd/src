@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.18 2020/01/22 02:21:05 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.19 2020/01/22 03:15:43 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -381,7 +381,8 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 		return 0;
 
 	case TLS13_IO_FAILURE:
-		tls13_legacy_error(ssl);
+		if (S3I(ssl)->fatal_alert == 0)
+			tls13_legacy_error(ssl);
 		return -1;
 
 	case TLS13_IO_WANT_POLLIN:
