@@ -125,6 +125,8 @@
 ./usr/include/dev/dec
 ./usr/include/dev/dec/clockvar.h
 ./usr/include/dev/dec/mcclockvar.h
+./usr/include/dev/dt
+./usr/include/dev/dt/dtvar.h
 ./usr/include/dev/eisa
 ./usr/include/dev/eisa/eisadevs.h
 ./usr/include/dev/eisa/eisadevs_data.h
@@ -1362,6 +1364,7 @@
 ./usr/include/sys/sockio.h
 ./usr/include/sys/specdev.h
 ./usr/include/sys/srp.h
+./usr/include/sys/stacktrace.h
 ./usr/include/sys/stat.h
 ./usr/include/sys/statvfs.h
 ./usr/include/sys/stdarg.h
@@ -1381,6 +1384,7 @@
 ./usr/include/sys/times.h
 ./usr/include/sys/timetc.h
 ./usr/include/sys/tprintf.h
+./usr/include/sys/tracepoint.h
 ./usr/include/sys/tree.h
 ./usr/include/sys/tty.h
 ./usr/include/sys/ttycom.h

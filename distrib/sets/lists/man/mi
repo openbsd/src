@@ -1323,6 +1323,7 @@
 ./usr/share/man/man4/diskmap.4
 ./usr/share/man/man4/divert.4
 ./usr/share/man/man4/drm.4
+./usr/share/man/man4/dt.4
 ./usr/share/man/man4/dwctwo.4
 ./usr/share/man/man4/dwdog.4
 ./usr/share/man/man4/dwge.4
@@ -1567,7 +1568,6 @@
 ./usr/share/man/man4/macppc/bm.4
 ./usr/share/man/man4/macppc/daca.4
 ./usr/share/man/man4/macppc/dfs.4
-./usr/share/man/man4/macppc/esp.4
 ./usr/share/man/man4/macppc/fcu.4
 ./usr/share/man/man4/macppc/hpb.4
 ./usr/share/man/man4/macppc/ht.4
