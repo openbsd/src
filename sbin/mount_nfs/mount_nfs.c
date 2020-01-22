@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.54 2018/01/05 08:13:31 mpi Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.55 2020/01/22 06:24:08 tedu Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -563,7 +563,7 @@ xdr_fh(XDR *xdrsp, struct nfhret *np)
 		if (!authfnd && (authcnt > 0 || np->auth != RPCAUTH_UNIX))
 			np->stat = EAUTH;
 		return (1);
-	};
+	}
 	return (0);
 }
 
