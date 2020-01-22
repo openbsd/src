@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: config.h.in,v 1.15 2020/01/22 08:14:10 florian Exp $ */
+/* $Id: config.h.in,v 1.16 2020/01/22 12:56:14 florian Exp $ */
 
 /*! \file */
 
@@ -38,10 +38,6 @@
 
 /** define if getc_unlocked() is available */
 #undef HAVE_GETCUNLOCKED
-
-/* Define to the length type used by the socket API (socklen_t, size_t, int). */
-#undef ISC_SOCKADDR_LEN_T
-
 
 /* Define to enable the "filter-aaaa-on-v4" and "filter-aaaa-on-v6" options.
    */
@@ -103,10 +99,6 @@
 /* Define if connect does not honour the permission on the UNIX domain socket.
    */
 #undef NEED_SECURE_DIRECTORY
-
-/* Sets which flag to pass to open/fcntl to make non-blocking
-   (O_NDELAY/O_NONBLOCK). */
-#undef PORT_NONBLOCK
 
 /* Define if GOST private keys are encoded in ASN.1. */
 #undef PREFER_GOSTASN1

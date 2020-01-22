@@ -104,9 +104,6 @@ int isc_dscp_check_value = -1;
  * Some systems define the socket length argument as an int, some as size_t,
  * some as socklen_t.  This is here so it can be easily changed if needed.
  */
-#ifndef ISC_SOCKADDR_LEN_T
-#define ISC_SOCKADDR_LEN_T unsigned int
-#endif
 
 /*%
  * Define what the possible "soft" errors can be.  These are non-fatal returns
@@ -637,7 +634,7 @@ make_nonblock(int fd) {
 	ret = ioctl(fd, FIONBIO, (char *)&on);
 #else
 	flags = fcntl(fd, F_GETFL, 0);
-	flags |= PORT_NONBLOCK;
+	flags |= O_NONBLOCK;
 	ret = fcntl(fd, F_SETFL, flags);
 #endif
 
@@ -664,24 +661,24 @@ make_nonblock(int fd) {
  * Note that cmsg_space() could run slow on OSes that do not have
  * CMSG_SPACE.
  */
-static inline ISC_SOCKADDR_LEN_T
-cmsg_len(ISC_SOCKADDR_LEN_T len) {
+static inline socklen_t
+cmsg_len(socklen_t len) {
 #ifdef CMSG_LEN
 	return (CMSG_LEN(len));
 #else
-	ISC_SOCKADDR_LEN_T hdrlen;
+	socklen_t hdrlen;
 
 	/*
 	 * Cast NULL so that any pointer arithmetic performed by CMSG_DATA
 	 * is correct.
 	 */
-	hdrlen = (ISC_SOCKADDR_LEN_T)CMSG_DATA(((struct cmsghdr *)NULL));
+	hdrlen = (socklen_t)CMSG_DATA(((struct cmsghdr *)NULL));
 	return (hdrlen + len);
 #endif
 }
 
-static inline ISC_SOCKADDR_LEN_T
-cmsg_space(ISC_SOCKADDR_LEN_T len) {
+static inline socklen_t
+cmsg_space(socklen_t len) {
 #ifdef CMSG_SPACE
 	return (CMSG_SPACE(len));
 #else
@@ -1666,7 +1663,7 @@ static void
 set_rcvbuf(void) {
 	int fd;
 	int max = rcvbuf, min;
-	ISC_SOCKADDR_LEN_T len;
+	socklen_t len;
 
 	fd = socket(AF_INET, SOCK_DGRAM | SOCK_DNS, IPPROTO_UDP);
 	if (fd == -1) {
@@ -1794,7 +1791,7 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	int tries = 0;
 	int on = 1;
 #if defined(SO_RCVBUF)
-	ISC_SOCKADDR_LEN_T optlen;
+	socklen_t optlen;
 	int size;
 #endif
 
@@ -2571,7 +2568,7 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 	isc__socketmgr_t *manager;
 	isc_socket_newconnev_t *dev;
 	isc_task_t *task;
-	ISC_SOCKADDR_LEN_T addrlen;
+	socklen_t addrlen;
 	int fd;
 	isc_result_t result = ISC_R_SUCCESS;
 	char strbuf[ISC_STRERRORSIZE];
@@ -4134,7 +4131,7 @@ internal_connect(isc_task_t *me, isc_event_t *ev) {
 	isc_socket_connev_t *dev;
 	isc_task_t *task;
 	int cc;
-	ISC_SOCKADDR_LEN_T optlen;
+	socklen_t optlen;
 	char strbuf[ISC_STRERRORSIZE];
 	char peerbuf[ISC_SOCKADDR_FORMATSIZE];
 
@@ -4253,7 +4250,7 @@ isc__socket_getpeername(isc_socket_t *sock0, isc_sockaddr_t *addressp) {
 isc_result_t
 isc__socket_getsockname(isc_socket_t *sock0, isc_sockaddr_t *addressp) {
 	isc__socket_t *sock = (isc__socket_t *)sock0;
-	ISC_SOCKADDR_LEN_T len;
+	socklen_t len;
 	isc_result_t result;
 	char strbuf[ISC_STRERRORSIZE];
 
