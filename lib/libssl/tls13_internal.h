@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.44 2020/01/22 06:23:00 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.45 2020/01/22 13:10:51 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -39,6 +39,7 @@ __BEGIN_HIDDEN_DECLS
 
 #define TLS13_ERR_VERIFY_FAILED	16
 #define TLS13_ERR_HRR_FAILED	17
+#define TLS13_ERR_TRAILING_DATA	18
 
 typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
 typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *cbs);
@@ -258,33 +259,33 @@ int tls13_handshake_perform(struct tls13_ctx *ctx);
 
 int tls13_client_hello_send(struct tls13_ctx *ctx);
 int tls13_client_hello_sent(struct tls13_ctx *ctx);
-int tls13_client_hello_recv(struct tls13_ctx *ctx);
+int tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_client_hello_retry_send(struct tls13_ctx *ctx);
-int tls13_client_hello_retry_recv(struct tls13_ctx *ctx);
+int tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_client_end_of_early_data_send(struct tls13_ctx *ctx);
-int tls13_client_end_of_early_data_recv(struct tls13_ctx *ctx);
+int tls13_client_end_of_early_data_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_client_certificate_send(struct tls13_ctx *ctx);
-int tls13_client_certificate_recv(struct tls13_ctx *ctx);
+int tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_client_certificate_verify_send(struct tls13_ctx *ctx);
-int tls13_client_certificate_verify_recv(struct tls13_ctx *ctx);
-int tls13_client_finished_recv(struct tls13_ctx *ctx);
+int tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs);
+int tls13_client_finished_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_client_finished_send(struct tls13_ctx *ctx);
 int tls13_client_finished_sent(struct tls13_ctx *ctx);
 int tls13_client_key_update_send(struct tls13_ctx *ctx);
-int tls13_client_key_update_recv(struct tls13_ctx *ctx);
-int tls13_server_hello_recv(struct tls13_ctx *ctx);
+int tls13_client_key_update_recv(struct tls13_ctx *ctx, CBS *cbs);
+int tls13_server_hello_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_server_hello_send(struct tls13_ctx *ctx);
-int tls13_server_hello_retry_recv(struct tls13_ctx *ctx);
+int tls13_server_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_server_hello_retry_send(struct tls13_ctx *ctx);
-int tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx);
+int tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx);
-int tls13_server_certificate_recv(struct tls13_ctx *ctx);
+int tls13_server_certificate_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_server_certificate_send(struct tls13_ctx *ctx);
-int tls13_server_certificate_request_recv(struct tls13_ctx *ctx);
+int tls13_server_certificate_request_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_server_certificate_request_send(struct tls13_ctx *ctx);
 int tls13_server_certificate_verify_send(struct tls13_ctx *ctx);
-int tls13_server_certificate_verify_recv(struct tls13_ctx *ctx);
-int tls13_server_finished_recv(struct tls13_ctx *ctx);
+int tls13_server_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs);
+int tls13_server_finished_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_server_finished_send(struct tls13_ctx *ctx);
 
 void tls13_error_clear(struct tls13_error *error);

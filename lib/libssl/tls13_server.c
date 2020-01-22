@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.5 2020/01/22 05:06:23 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.6 2020/01/22 13:10:51 jsing Exp $ */
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -79,7 +79,7 @@ tls13_legacy_accept(SSL *ssl)
 }
 
 int
-tls13_client_hello_recv(struct tls13_ctx *ctx)
+tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	tls13_record_layer_allow_ccs(ctx->rl, 1);
 
@@ -93,7 +93,7 @@ tls13_client_hello_retry_send(struct tls13_ctx *ctx)
 }
 
 int
-tls13_server_hello_retry_recv(struct tls13_ctx *ctx)
+tls13_server_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	return 0;
 }
@@ -105,7 +105,7 @@ tls13_client_end_of_early_data_send(struct tls13_ctx *ctx)
 }
 
 int
-tls13_client_end_of_early_data_recv(struct tls13_ctx *ctx)
+tls13_client_end_of_early_data_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	return 0;
 }
@@ -117,7 +117,7 @@ tls13_client_certificate_send(struct tls13_ctx *ctx)
 }
 
 int
-tls13_client_certificate_recv(struct tls13_ctx *ctx)
+tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	return 0;
 }
@@ -129,13 +129,13 @@ tls13_client_certificate_verify_send(struct tls13_ctx *ctx)
 }
 
 int
-tls13_client_certificate_verify_recv(struct tls13_ctx *ctx)
+tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	return 0;
 }
 
 int
-tls13_client_finished_recv(struct tls13_ctx *ctx)
+tls13_client_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	tls13_record_layer_allow_ccs(ctx->rl, 0);
 
@@ -149,7 +149,7 @@ tls13_client_key_update_send(struct tls13_ctx *ctx)
 }
 
 int
-tls13_client_key_update_recv(struct tls13_ctx *ctx)
+tls13_client_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	return 0;
 }
