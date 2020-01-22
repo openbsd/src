@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.110 2020/01/13 16:17:33 krw Exp $ */
+/* $OpenBSD: xhci.c,v 1.111 2020/01/22 02:25:11 krw Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -782,7 +782,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 
 	xfer = xp->pending_xfers[trb_idx];
 	if (xfer == NULL) {
-		printf("%s: NULL xfer pointer\n", DEVNAME(sc));
+		DPRINTF(("%s: NULL xfer pointer\n", DEVNAME(sc)));
 		return;
 	}
 
@@ -1799,15 +1799,25 @@ xhci_xfer_get_trb(struct xhci_softc *sc, struct usbd_xfer *xfer,
 	struct xhci_xfer *xx = (struct xhci_xfer *)xfer;
 
 	KASSERT(xp->free_trbs >= 1);
-
-	/* Associate this TRB to our xfer. */
-	xp->pending_xfers[xp->ring.index] = xfer;
 	xp->free_trbs--;
-
-	xx->index = (last) ? xp->ring.index : -2;
-	xx->ntrb += 1;
-
 	*togglep = xp->ring.toggle;
+
+	switch (last) {
+	case -1:	/* This will be a zero-length TD. */
+		xp->pending_xfers[xp->ring.index] = NULL;
+		break;
+	case 0:		/* This will be in a chain. */
+		xp->pending_xfers[xp->ring.index] = xfer;
+		xx->index = -2;
+		xx->ntrb += 1;
+		break;
+	case 1:		/* This will terminate a chain. */
+		xp->pending_xfers[xp->ring.index] = xfer;
+		xx->index = xp->ring.index;
+		xx->ntrb += 1;
+		break;
+	}
+
 	return (xhci_ring_produce(sc, &xp->ring));
 }
 
@@ -2899,7 +2909,7 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	uint32_t mps = UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
 	uint64_t paddr = DMAADDR(&xfer->dmabuf, 0);
 	uint8_t toggle;
-	int s, i, ntrb;
+	int s, i, ntrb, zerotd = 0;
 
 	KASSERT(!(xfer->rqflags & URQ_REQUEST));
 
@@ -2919,9 +2929,9 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 	/* If we need to append a zero length packet, we need one more. */
 	if ((xfer->flags & USBD_FORCE_SHORT_XFER || xfer->length == 0) &&
 	    (xfer->length % UE_GET_SIZE(mps) == 0))
-		ntrb++;
+		zerotd = 1;
 
-	if (xp->free_trbs < ntrb)
+	if (xp->free_trbs < (ntrb + zerotd))
 		return (USBD_NOMEM);
 
 	/* We'll toggle the first TRB once we're finished with the chain. */
@@ -2968,6 +2978,17 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 		remain -= len;
 		paddr += len;
+	}
+
+	/* Do we need to issue a zero length transfer? */
+	if (zerotd == 1) {
+		trb = xhci_xfer_get_trb(sc, xfer, &toggle, -1);
+		trb->trb_paddr = 0;
+		trb->trb_status = 0;
+		trb->trb_flags = htole32(XHCI_TRB_TYPE_NORMAL | XHCI_TRB_IOC | toggle);
+		bus_dmamap_sync(xp->ring.dma.tag, xp->ring.dma.map,
+		    TRBOFF(&xp->ring, trb), sizeof(struct xhci_trb),
+		    BUS_DMASYNC_PREWRITE);
 	}
 
 	/* First TRB. */
