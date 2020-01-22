@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.168 2020/01/21 05:19:02 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.169 2020/01/22 01:21:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,6 +165,12 @@
 
 #ifdef  __cplusplus
 extern "C" {
+#endif
+
+#if defined(LIBRESSL_HAS_TLS1_3_CLIENT) || defined(LIBRESSL_HAS_TLS1_3_SERVER)
+#define LIBRESSL_HAS_TLS1_3 1
+#else
+#define LIBRESSL_HAS_TLS1_3 0
 #endif
 
 /* SSLeay version number for ASN.1 encoding of the session information */
