@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.260 2019/12/06 13:53:26 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.261 2020/01/22 00:17:46 cheloha Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1559,6 +1559,8 @@ scsi_xs_error(struct scsi_xfer *xs)
 int
 scsi_delay(struct scsi_xfer *xs, int seconds)
 {
+	int ret;
+
 	switch (xs->flags & (SCSI_POLL | SCSI_NOSLEEP)) {
 	case SCSI_POLL:
 		delay(1000000 * seconds);
@@ -1571,12 +1573,11 @@ scsi_delay(struct scsi_xfer *xs, int seconds)
 		return EIO;
 	}
 
-	while (seconds-- > 0) {
-		if (tsleep_nsec(&lbolt, PRIBIO|PCATCH, "scbusy", INFSLP)) {
-			/* Signal == abort xs. */
-			return EIO;
-		}
-	}
+	ret = tsleep_nsec(&ret, PRIBIO|PCATCH, "scbusy", SEC_TO_NSEC(seconds));
+
+	/* Signal == abort xs. */
+	if (ret == ERESTART || ret == EINTR)
+		return EIO;
 
 	return ERESTART;
 }
