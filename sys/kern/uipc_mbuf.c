@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.273 2019/10/22 18:45:02 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.274 2020/01/22 22:56:35 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1634,6 +1634,19 @@ ml_purge(struct mbuf_list *ml)
 	return (len);
 }
 
+unsigned int
+ml_hdatalen(struct mbuf_list *ml)
+{
+	struct mbuf *m;
+
+	m = ml->ml_head;
+	if (m == NULL)
+		return (0);
+
+	KASSERT(ISSET(m->m_flags, M_PKTHDR));
+	return (m->m_pkthdr.len);
+}
+
 /*
  * mbuf queues
  */
@@ -1730,6 +1743,18 @@ mq_purge(struct mbuf_queue *mq)
 	mq_delist(mq, &ml);
 
 	return (ml_purge(&ml));
+}
+
+unsigned int
+mq_hdatalen(struct mbuf_queue *mq)
+{
+	unsigned int hdatalen;
+
+	mtx_enter(&mq->mq_mtx);
+	hdatalen = ml_hdatalen(&mq->mq_list);
+	mtx_leave(&mq->mq_mtx);
+
+	return (hdatalen);
 }
 
 int
