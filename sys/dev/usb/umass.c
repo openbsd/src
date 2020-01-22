@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.74 2017/01/09 14:44:28 mpi Exp $ */
+/*	$OpenBSD: umass.c,v 1.75 2020/01/22 03:43:13 krw Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -1152,13 +1152,9 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv, usbd_status err)
 
 		/* FALLTHROUGH, err == 0 (no data phase or successful) */
 	case TSTATE_BBB_DCLEAR: /* stall clear after data phase */
-		if (sc->transfer_dir == DIR_IN)
-			memcpy(sc->transfer_data, sc->data_buffer,
-			       sc->transfer_actlen);
-
 		DIF(UDMASS_BBB, if (sc->transfer_dir == DIR_IN)
-					umass_dump_buffer(sc, sc->transfer_data,
-						sc->transfer_datalen, 48));
+					umass_dump_buffer(sc, sc->data_buffer,
+					    sc->transfer_datalen, 48));
 
 		/* FALLTHROUGH, err == 0 (no data phase or successful) */
 	case TSTATE_BBB_SCLEAR: /* stall clear after status phase */
@@ -1304,6 +1300,12 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv, usbd_status err)
 
 		} else {	/* success */
 			sc->transfer_state = TSTATE_IDLE;
+			if (sc->transfer_dir == DIR_IN) {
+				sc->transfer_actlen = sc->transfer_datalen -
+				    UGETDW(sc->csw.dCSWDataResidue);
+				memcpy(sc->transfer_data, sc->data_buffer,
+				    sc->transfer_actlen);
+			}
 			sc->transfer_cb(sc, sc->transfer_priv,
 					UGETDW(sc->csw.dCSWDataResidue),
 					STATUS_CMD_OK);
