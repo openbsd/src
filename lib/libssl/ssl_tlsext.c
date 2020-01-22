@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.53 2020/01/22 10:36:57 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.54 2020/01/22 10:38:11 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -781,7 +781,7 @@ tlsext_ocsp_client_build(SSL *s, CBB *cbb)
 int
 tlsext_ocsp_server_parse(SSL *s, CBS *cbs, int *alert)
 {
-	int failure = SSL_AD_DECODE_ERROR;
+	int alert_desc = SSL_AD_DECODE_ERROR;
 	CBS respid_list, respid, exts;
 	const unsigned char *p;
 	uint8_t status_type;
@@ -809,7 +809,7 @@ tlsext_ocsp_server_parse(SSL *s, CBS *cbs, int *alert)
 	if (CBS_len(&respid_list) > 0) {
 		s->internal->tlsext_ocsp_ids = sk_OCSP_RESPID_new_null();
 		if (s->internal->tlsext_ocsp_ids == NULL) {
-			failure = SSL_AD_INTERNAL_ERROR;
+			alert_desc = SSL_AD_INTERNAL_ERROR;
 			goto err;
 		}
 	}
@@ -823,7 +823,7 @@ tlsext_ocsp_server_parse(SSL *s, CBS *cbs, int *alert)
 		if ((id = d2i_OCSP_RESPID(NULL, &p, CBS_len(&respid))) == NULL)
 			goto err;
 		if (!sk_OCSP_RESPID_push(s->internal->tlsext_ocsp_ids, id)) {
-			failure = SSL_AD_INTERNAL_ERROR;
+			alert_desc = SSL_AD_INTERNAL_ERROR;
 			OCSP_RESPID_free(id);
 			goto err;
 		}
@@ -848,7 +848,7 @@ tlsext_ocsp_server_parse(SSL *s, CBS *cbs, int *alert)
 	ret = 1;
  err:
 	if (ret == 0)
-		*alert = failure;
+		*alert = alert_desc;
 	return ret;
 }
 
