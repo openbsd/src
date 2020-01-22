@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: config.h.in,v 1.16 2020/01/22 12:56:14 florian Exp $ */
+/* $Id: config.h.in,v 1.17 2020/01/22 12:57:21 florian Exp $ */
 
 /*! \file */
 
@@ -53,9 +53,6 @@
 
 /* Solaris hack to get select_large_fdset. */
 #undef FD_SETSIZE
-
-/* Define to 1 if the compiler supports __builtin_expect. */
-#undef HAVE_BUILTIN_EXPECT
 
 /* Define to 1 if you have the `explicit_bzero' function. */
 #undef HAVE_EXPLICIT_BZERO

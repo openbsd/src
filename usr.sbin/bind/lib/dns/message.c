@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.14 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: message.c,v 1.15 2020/01/22 12:57:21 florian Exp $ */
 
 /*! \file */
 
@@ -832,7 +832,7 @@ dns_message_findtype(dns_name_t *name, dns_rdatatype_t type,
 	     curr != NULL;
 	     curr = ISC_LIST_PREV(curr, link)) {
 		if (curr->type == type && curr->covers == covers) {
-			if (ISC_UNLIKELY(rdataset != NULL))
+			if (rdataset != NULL)
 				*rdataset = curr;
 			return (ISC_R_SUCCESS);
 		}
@@ -2428,7 +2428,7 @@ dns_message_findname(dns_message_t *msg, dns_section_t section,
 	/*
 	 * And now look for the type.
 	 */
-	if (ISC_UNLIKELY(type == dns_rdatatype_any))
+	if (type == dns_rdatatype_any)
 		return (ISC_R_SUCCESS);
 
 	result = dns_message_findtype(foundname, type, covers, rdataset);

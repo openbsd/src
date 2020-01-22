@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: assertions.h,v 1.4 2020/01/09 18:16:01 florian Exp $
+ * $Id: assertions.h,v 1.5 2020/01/22 12:57:21 florian Exp $
  */
 /*! \file isc/assertions.h
  */
@@ -26,7 +26,7 @@
 #include <sys/cdefs.h>
 
 #include <isc/lang.h>
-#include <isc/likely.h>
+
 #include <isc/platform.h>
 
 ISC_LANG_BEGINDECLS
@@ -84,7 +84,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 
 #if ISC_CHECK_REQUIRE != 0
 #define ISC_REQUIRE(cond) \
-	((void) (ISC_LIKELY(cond) || \
+	((void) ((cond) || \
 		 ((isc_assertion_failed)(__FILE__, __LINE__, \
 					 isc_assertiontype_require, \
 					 #cond), 0)))
@@ -94,7 +94,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 
 #if ISC_CHECK_ENSURE != 0
 #define ISC_ENSURE(cond) \
-	((void) (ISC_LIKELY(cond) || \
+	((void) ((cond) || \
 		 ((isc_assertion_failed)(__FILE__, __LINE__, \
 					 isc_assertiontype_ensure, \
 					 #cond), 0)))
@@ -104,7 +104,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 
 #if ISC_CHECK_INSIST != 0
 #define ISC_INSIST(cond) \
-	((void) (ISC_LIKELY(cond) || \
+	((void) ((cond) || \
 		 ((isc_assertion_failed)(__FILE__, __LINE__, \
 					 isc_assertiontype_insist, \
 					 #cond), 0)))
@@ -114,7 +114,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 
 #if ISC_CHECK_INVARIANT != 0
 #define ISC_INVARIANT(cond) \
-	((void) (ISC_LIKELY(cond) || \
+	((void) ((cond) || \
 		 ((isc_assertion_failed)(__FILE__, __LINE__, \
 					 isc_assertiontype_invariant, \
 					 #cond), 0)))

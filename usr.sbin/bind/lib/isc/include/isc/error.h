@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: error.h,v 1.4 2020/01/09 18:16:01 florian Exp $ */
+/* $Id: error.h,v 1.5 2020/01/22 12:57:22 florian Exp $ */
 
 #ifndef ISC_ERROR_H
 #define ISC_ERROR_H 1
@@ -26,7 +26,7 @@
 
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
-#include <isc/likely.h>
+
 #include <isc/platform.h>
 
 ISC_LANG_BEGINDECLS
@@ -56,7 +56,7 @@ __dead void
 isc_error_runtimecheck(const char *, int, const char *);
 
 #define ISC_ERROR_RUNTIMECHECK(cond) \
-	((void) (ISC_LIKELY(cond) || \
+	((void) ((cond) || \
 		 ((isc_error_runtimecheck)(__FILE__, __LINE__, #cond), 0)))
 
 ISC_LANG_ENDDECLS

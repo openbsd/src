@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.c,v 1.11 2020/01/21 23:59:20 tedu Exp $ */
+/* $Id: hash.c,v 1.12 2020/01/22 12:57:21 florian Exp $ */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
@@ -354,7 +354,7 @@ isc_hash_function(const void *data, size_t length,
 	REQUIRE(length == 0 || data != NULL);
 	RUNTIME_CHECK(isc_once_do(&fnv_once, fnv_initialize) == ISC_R_SUCCESS);
 
-	hval = ISC_UNLIKELY(previous_hashp != NULL) ?
+	hval = previous_hashp != NULL ?
 		*previous_hashp : fnv_offset_basis;
 
 	if (length == 0)
@@ -421,7 +421,7 @@ isc_hash_function_reverse(const void *data, size_t length,
 	REQUIRE(length == 0 || data != NULL);
 	RUNTIME_CHECK(isc_once_do(&fnv_once, fnv_initialize) == ISC_R_SUCCESS);
 
-	hval = ISC_UNLIKELY(previous_hashp != NULL) ?
+	hval = previous_hashp != NULL ?
 		*previous_hashp : fnv_offset_basis;
 
 	if (length == 0)

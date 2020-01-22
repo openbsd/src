@@ -69,7 +69,7 @@ isc_safe_memcompare(const void *b1, const void *b2, size_t len) {
 
 void
 isc_safe_memwipe(void *ptr, size_t len) {
-	if (ISC_UNLIKELY(ptr == NULL || len == 0))
+	if (ptr == NULL || len == 0)
 		return;
 
 	explicit_bzero(ptr, len);
