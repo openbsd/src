@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.24 2020/01/22 02:39:45 tb Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.25 2020/01/22 03:20:09 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -152,12 +152,19 @@ tls13_use_legacy_client(struct tls13_ctx *ctx)
 }
 
 static int
-tls13_client_hello_build(SSL *s, CBB *cbb)
+tls13_client_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 {
 	CBB cipher_suites, compression_methods, session_id;
+	uint16_t client_version;
+	SSL *s = ctx->ssl;
 	uint8_t *sid;
 
-	if (!CBB_add_u16(cbb, TLS1_2_VERSION))
+	/* Legacy client version is capped at TLS 1.2. */
+	client_version = ctx->hs->max_version;
+	if (client_version > TLS1_2_VERSION)
+		client_version = TLS1_2_VERSION;
+
+	if (!CBB_add_u16(cbb, client_version))
 		goto err;
 	if (!CBB_add_bytes(cbb, s->s3->client_random, SSL3_RANDOM_SIZE))
 		goto err;
@@ -204,7 +211,7 @@ tls13_client_hello_send(struct tls13_ctx *ctx)
 
 	if (!tls13_handshake_msg_start(ctx->hs_msg, &body, TLS13_MT_CLIENT_HELLO))
 		return 0;
-	if (!tls13_client_hello_build(ctx->ssl, &body))
+	if (!tls13_client_hello_build(ctx, &body))
 		return 0;
 	if (!tls13_handshake_msg_finish(ctx->hs_msg))
 		return 0;
