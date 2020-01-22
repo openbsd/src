@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.23 2020/01/22 02:21:05 beck Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.24 2020/01/22 02:39:45 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -199,12 +199,23 @@ tls13_client_hello_send(struct tls13_ctx *ctx)
 {
 	CBB body;
 
+	if (ctx->hs->min_version < TLS1_2_VERSION)
+		tls13_record_layer_set_legacy_version(ctx->rl, TLS1_VERSION);
+
 	if (!tls13_handshake_msg_start(ctx->hs_msg, &body, TLS13_MT_CLIENT_HELLO))
 		return 0;
 	if (!tls13_client_hello_build(ctx->ssl, &body))
 		return 0;
 	if (!tls13_handshake_msg_finish(ctx->hs_msg))
 		return 0;
+
+	return 1;
+}
+
+int
+tls13_client_hello_sent(struct tls13_ctx *ctx)
+{
+	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_2_VERSION);
 
 	return 1;
 }

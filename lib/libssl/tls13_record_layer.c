@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.19 2020/01/22 01:02:28 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.20 2020/01/22 02:39:45 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -28,6 +28,7 @@ static ssize_t tls13_record_layer_write_record(struct tls13_record_layer *rl,
     uint8_t content_type, const uint8_t *content, size_t content_len);
 
 struct tls13_record_layer {
+	uint16_t legacy_version;
 	int change_cipher_spec_seen;
 	int handshake_completed;
 	int phh;
@@ -124,6 +125,8 @@ tls13_record_layer_new(tls13_read_cb wire_read, tls13_write_cb wire_write,
 	if ((rl = calloc(1, sizeof(struct tls13_record_layer))) == NULL)
 		return NULL;
 
+	rl->legacy_version = TLS1_2_VERSION;
+
 	rl->wire_read = wire_read;
 	rl->wire_write = wire_write;
 	rl->alert_cb = alert_cb;
@@ -208,6 +211,13 @@ tls13_record_layer_set_hash(struct tls13_record_layer *rl,
     const EVP_MD *hash)
 {
 	rl->hash = hash;
+}
+
+void
+tls13_record_layer_set_legacy_version(struct tls13_record_layer *rl,
+    uint16_t version)
+{
+	rl->legacy_version = version;
 }
 
 void
@@ -563,14 +573,10 @@ tls13_record_layer_seal_record_plaintext(struct tls13_record_layer *rl,
 {
 	uint8_t *data = NULL;
 	size_t data_len = 0;
-	uint16_t version;
 	CBB cbb, body;
 
 	if (rl->aead != NULL)
 		return 0;
-
-	/* XXX - TLS1_VERSION for first client hello... */
-	version = TLS1_2_VERSION;
 
 	/*
 	 * We're still operating in plaintext mode, so just copy the
@@ -581,7 +587,7 @@ tls13_record_layer_seal_record_plaintext(struct tls13_record_layer *rl,
 
 	if (!CBB_add_u8(&cbb, content_type))
 		goto err;
-	if (!CBB_add_u16(&cbb, version))
+	if (!CBB_add_u16(&cbb, rl->legacy_version))
 		goto err;
 	if (!CBB_add_u16_length_prefixed(&cbb, &body))
 		goto err;

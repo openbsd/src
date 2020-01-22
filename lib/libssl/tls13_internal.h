@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.41 2020/01/22 02:21:05 beck Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.42 2020/01/22 02:39:45 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -122,6 +122,8 @@ void tls13_record_layer_set_aead(struct tls13_record_layer *rl,
     const EVP_AEAD *aead);
 void tls13_record_layer_set_hash(struct tls13_record_layer *rl,
     const EVP_MD *hash);
+void tls13_record_layer_set_legacy_version(struct tls13_record_layer *rl,
+    uint16_t version);
 void tls13_record_layer_handshake_completed(struct tls13_record_layer *rl);
 int tls13_record_layer_set_read_traffic_key(struct tls13_record_layer *rl,
     struct tls13_secret *read_key);
@@ -253,6 +255,7 @@ int tls13_legacy_shutdown(SSL *ssl);
 int tls13_handshake_perform(struct tls13_ctx *ctx);
 
 int tls13_client_hello_send(struct tls13_ctx *ctx);
+int tls13_client_hello_sent(struct tls13_ctx *ctx);
 int tls13_client_hello_recv(struct tls13_ctx *ctx);
 int tls13_client_hello_retry_send(struct tls13_ctx *ctx);
 int tls13_client_hello_retry_recv(struct tls13_ctx *ctx);
