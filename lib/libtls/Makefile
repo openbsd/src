@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2020/01/22 07:58:28 jsing Exp $
+#	$OpenBSD: Makefile,v 1.35 2020/01/22 08:00:46 jsing Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -41,7 +41,7 @@ SRCS=	tls.c \
 
 check_includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
-	    j="cmp -s $$i ${DESTDIR}/usr/include/openssl/`basename $$i` || \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/`basename $$i` || \
 		(echo \"`basename $$i` differs from installed version; \" \
 	        \"did you forget 'make includes'?\" && false)"; \
 	    eval "$$j"; \
