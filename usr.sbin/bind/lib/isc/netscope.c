@@ -18,10 +18,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"$Id: netscope.c,v 1.6 2020/01/20 18:49:46 florian Exp $";
+	"$Id: netscope.c,v 1.7 2020/01/22 13:02:10 florian Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <config.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <isc/net.h>

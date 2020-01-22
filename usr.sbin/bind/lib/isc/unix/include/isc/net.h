@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.h,v 1.5 2020/01/09 18:17:20 florian Exp $ */
+/* $Id: net.h,v 1.6 2020/01/22 13:02:10 florian Exp $ */
 
 #ifndef ISC_NET_H
 #define ISC_NET_H 1
@@ -71,7 +71,7 @@
 /***
  *** Imports.
  ***/
-#include <isc/platform.h>
+
 
 #include <sys/types.h>
 #include <sys/socket.h>		/* Contractual promise. */

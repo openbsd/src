@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.14 2020/01/22 12:58:35 florian Exp $ */
+/* $Id: lex.c,v 1.15 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <ctype.h>
 #include <errno.h>

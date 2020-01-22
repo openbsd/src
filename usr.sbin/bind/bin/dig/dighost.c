@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.35 2020/01/22 12:58:35 florian Exp $ */
+/* $Id: dighost.c,v 1.36 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file
  *  \note
@@ -26,7 +26,7 @@
  * functions in most applications.
  */
 
-#include <config.h>
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.h,v 1.6 2020/01/22 06:47:15 florian Exp $ */
+/* $Id: hmacsha.h,v 1.7 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,
@@ -25,7 +25,7 @@
 #define ISC_HMACSHA_H 1
 
 #include <isc/lang.h>
-#include <isc/platform.h>
+
 #include <isc/sha1.h>
 #include <isc/sha2.h>
 #include <isc/types.h>

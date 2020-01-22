@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ttl.c,v 1.11 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: ttl.c,v 1.12 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <ctype.h>
 #include <errno.h>

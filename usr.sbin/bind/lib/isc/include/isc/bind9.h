@@ -14,13 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: bind9.h,v 1.3 2020/01/09 14:18:30 florian Exp $ */
+/* $Id: bind9.h,v 1.4 2020/01/22 13:02:10 florian Exp $ */
 
 #ifndef ISC_BIND9_H
 #define ISC_BIND9_H 1
 
 #include <isc/boolean.h>
-#include <isc/platform.h>
+
 
 /*
  * This determines whether we are using the libisc/libdns libraries

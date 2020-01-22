@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: syslog.c,v 1.4 2020/01/20 18:49:46 florian Exp $ */
+/* $Id: syslog.c,v 1.5 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <stdlib.h>
 #include <syslog.h>

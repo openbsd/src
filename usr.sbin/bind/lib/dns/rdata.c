@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.18 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: rdata.c,v 1.19 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 #include <ctype.h>
 #include <stdlib.h>
 

@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: keydata.c,v 1.5 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: keydata.c,v 1.6 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 #include <stdlib.h>
 
 #include <isc/buffer.h>

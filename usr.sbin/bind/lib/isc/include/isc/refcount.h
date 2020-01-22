@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: refcount.h,v 1.9 2020/01/21 23:59:20 tedu Exp $ */
+/* $Id: refcount.h,v 1.10 2020/01/22 13:02:10 florian Exp $ */
 
 #ifndef ISC_REFCOUNT_H
 #define ISC_REFCOUNT_H 1
@@ -23,7 +23,7 @@
 
 #include <isc/error.h>
 #include <isc/lang.h>
-#include <isc/platform.h>
+
 #include <isc/types.h>
 
 /*! \file isc/refcount.h

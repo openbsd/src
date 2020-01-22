@@ -43,11 +43,11 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: file.c,v 1.13 2020/01/22 08:17:01 tedu Exp $ */
+/* $Id: file.c,v 1.14 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <errno.h>
 #include <fcntl.h>

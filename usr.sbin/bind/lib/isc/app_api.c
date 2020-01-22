@@ -14,9 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app_api.c,v 1.5 2020/01/21 23:59:20 tedu Exp $ */
+/* $Id: app_api.c,v 1.6 2020/01/22 13:02:09 florian Exp $ */
 
-#include <config.h>
+
 
 #include <unistd.h>
 

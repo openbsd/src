@@ -14,9 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key.c,v 1.4 2020/01/09 18:17:15 florian Exp $ */
+/* $Id: key.c,v 1.5 2020/01/22 13:02:09 florian Exp $ */
 
-#include <config.h>
+
 
 #include <stddef.h>
 #include <stdlib.h>

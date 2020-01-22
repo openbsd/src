@@ -15,10 +15,10 @@
  */
 
 /*
- * $Id: tsig.c,v 1.16 2020/01/20 18:51:52 florian Exp $
+ * $Id: tsig.c,v 1.17 2020/01/22 13:02:09 florian Exp $
  */
 /*! \file */
-#include <config.h>
+
 #include <stdlib.h>
 
 #include <isc/buffer.h>

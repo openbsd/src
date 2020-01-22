@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.c,v 1.8 2020/01/22 06:47:15 florian Exp $ */
+/* $Id: hmacsha.c,v 1.9 2020/01/22 13:02:09 florian Exp $ */
 
 /*
  * This code implements the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256, HMAC-SHA384
@@ -22,11 +22,11 @@
  * draft-ietf-dnsext-tsig-sha-01.txt.
  */
 
-#include "config.h"
+
 
 #include <isc/assertions.h>
 #include <isc/hmacsha.h>
-#include <isc/platform.h>
+
 #include <isc/safe.h>
 #include <isc/sha1.h>
 #include <isc/sha2.h>

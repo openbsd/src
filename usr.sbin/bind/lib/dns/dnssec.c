@@ -15,12 +15,12 @@
  */
 
 /*
- * $Id: dnssec.c,v 1.14 2020/01/20 18:51:52 florian Exp $
+ * $Id: dnssec.c,v 1.15 2020/01/22 13:02:09 florian Exp $
  */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <stdlib.h>
 

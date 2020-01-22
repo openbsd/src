@@ -35,7 +35,7 @@
  * Principal Author: Brian Wellington
  */
 
-#include <config.h>
+
 #include <stdlib.h>
 
 

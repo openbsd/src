@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: symtab.c,v 1.5 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: symtab.c,v 1.6 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <ctype.h>
 #include <stdlib.h>

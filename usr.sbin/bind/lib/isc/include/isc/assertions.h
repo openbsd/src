@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: assertions.h,v 1.5 2020/01/22 12:57:21 florian Exp $
+ * $Id: assertions.h,v 1.6 2020/01/22 13:02:10 florian Exp $
  */
 /*! \file isc/assertions.h
  */
@@ -27,7 +27,7 @@
 
 #include <isc/lang.h>
 
-#include <isc/platform.h>
+
 
 ISC_LANG_BEGINDECLS
 

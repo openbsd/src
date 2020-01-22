@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipv6.h,v 1.6 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: ipv6.h,v 1.7 2020/01/22 13:02:10 florian Exp $ */
 
 #ifndef ISC_IPV6_H
 #define ISC_IPV6_H 1
@@ -53,7 +53,7 @@
  ***/
 
 
-#include <isc/platform.h>
+
 
 /***
  *** Types.

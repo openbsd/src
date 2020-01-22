@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.9 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: log.h,v 1.10 2020/01/22 13:02:10 florian Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -27,7 +27,7 @@
 
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
-#include <isc/platform.h>
+
 #include <isc/types.h>
 
 /*@{*/

@@ -14,10 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha1.c,v 1.11 2020/01/22 06:47:15 florian Exp $ */
+/* $Id: sha1.c,v 1.12 2020/01/22 13:02:10 florian Exp $ */
 
 /*	$NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
-/*	$OpenBSD: sha1.c,v 1.11 2020/01/22 06:47:15 florian Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.12 2020/01/22 13:02:10 florian Exp $	*/
 
 /*! \file
  * SHA-1 in C
@@ -34,10 +34,10 @@
  * \endverbatim
  */
 
-#include "config.h"
+
 
 #include <isc/assertions.h>
-#include <isc/platform.h>
+
 #include <isc/safe.h>
 #include <isc/sha1.h>
 #include <string.h>

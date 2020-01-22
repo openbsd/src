@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <config.h>
+
 
 #include <isc/file.h>
 

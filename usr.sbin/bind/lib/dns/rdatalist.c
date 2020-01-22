@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatalist.c,v 1.6 2019/12/17 01:46:32 sthen Exp $ */
+/* $Id: rdatalist.c,v 1.7 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <stddef.h>
 

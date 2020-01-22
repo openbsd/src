@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: serial.c,v 1.4 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: serial.c,v 1.5 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <isc/serial.h>
 

@@ -14,13 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.c,v 1.7 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: compress.c,v 1.8 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file */
 
 #define DNS_NAME_USEINLINE 1
 
-#include <config.h>
+
 #include <stdlib.h>
 
 #include <string.h>

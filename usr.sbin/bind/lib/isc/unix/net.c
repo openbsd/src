@@ -14,9 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.c,v 1.14 2020/01/22 12:58:35 florian Exp $ */
+/* $Id: net.c,v 1.15 2020/01/22 13:02:10 florian Exp $ */
 
-#include <config.h>
+
 
 #include <sys/types.h>
 

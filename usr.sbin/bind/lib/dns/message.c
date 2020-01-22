@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.16 2020/01/22 12:58:35 florian Exp $ */
+/* $Id: message.c,v 1.17 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file */
 
@@ -22,7 +22,7 @@
  *** Imports
  ***/
 
-#include <config.h>
+
 #include <ctype.h>
 #include <stdlib.h>
 

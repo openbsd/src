@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: md5.c,v 1.5 2020/01/09 13:52:23 florian Exp $ */
+/* $Id: md5.c,v 1.6 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file
  * This code implements the MD5 message-digest algorithm.
@@ -33,7 +33,7 @@
  * will fill a supplied 16-byte array with the digest.
  */
 
-#include "config.h"
+
 
 
 

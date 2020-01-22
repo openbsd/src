@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: assertions.c,v 1.6 2020/01/20 18:46:57 florian Exp $ */
+/* $Id: assertions.c,v 1.7 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <stdio.h>
 #include <stdlib.h>

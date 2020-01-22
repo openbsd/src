@@ -14,9 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsec.c,v 1.5 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: tsec.c,v 1.6 2020/01/22 13:02:09 florian Exp $ */
 
-#include <config.h>
+
 #include <stdlib.h>
 
 #include <isc/util.h>

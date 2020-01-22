@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: parseint.c,v 1.5 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: parseint.c,v 1.6 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <ctype.h>
 #include <errno.h>

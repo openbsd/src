@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: errno2result.c,v 1.3 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: errno2result.c,v 1.4 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <isc/result.h>
 #include <isc/strerror.h>

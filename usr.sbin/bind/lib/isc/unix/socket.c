@@ -16,7 +16,7 @@
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,7 +44,7 @@
 #include <isc/msgs.h>
 #include <isc/net.h>
 #include <isc/once.h>
-#include <isc/platform.h>
+
 
 #include <isc/region.h>
 #include <isc/socket.h>

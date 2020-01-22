@@ -14,9 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3.c,v 1.6 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: nsec3.c,v 1.7 2020/01/22 13:02:09 florian Exp $ */
 
-#include <config.h>
+
 
 #include <isc/base32.h>
 #include <isc/buffer.h>

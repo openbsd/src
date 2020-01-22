@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.c,v 1.5 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: heap.c,v 1.6 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file
  * Heap implementation of priority queues adapted from the following:
@@ -26,7 +26,7 @@
  *	ISBN 0-201-06673-4, chapter 11.
  */
 
-#include <config.h>
+
 #include <stdlib.h>
 #include <isc/heap.h>
 #include <isc/magic.h>

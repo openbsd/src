@@ -16,7 +16,7 @@
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <isc/safe.h>
 #include <string.h>

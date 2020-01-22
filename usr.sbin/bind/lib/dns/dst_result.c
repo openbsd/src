@@ -16,10 +16,10 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $Id: dst_result.c,v 1.4 2020/01/20 18:46:57 florian Exp $
+ * $Id: dst_result.c,v 1.5 2020/01/22 13:02:09 florian Exp $
  */
 
-#include <config.h>
+
 
 #include <isc/once.h>
 #include <isc/util.h>

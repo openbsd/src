@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: byaddr.c,v 1.12 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: byaddr.c,v 1.13 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <isc/buffer.h>
 

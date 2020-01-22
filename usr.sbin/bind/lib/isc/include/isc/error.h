@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: error.h,v 1.5 2020/01/22 12:57:22 florian Exp $ */
+/* $Id: error.h,v 1.6 2020/01/22 13:02:10 florian Exp $ */
 
 #ifndef ISC_ERROR_H
 #define ISC_ERROR_H 1
@@ -27,7 +27,7 @@
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
 
-#include <isc/platform.h>
+
 
 ISC_LANG_BEGINDECLS
 

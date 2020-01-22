@@ -14,12 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.19 2020/01/21 23:59:20 tedu Exp $ */
+/* $Id: log.c,v 1.20 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
 
-#include <config.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <limits.h>

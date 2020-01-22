@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ncache.c,v 1.10 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: ncache.c,v 1.11 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <isc/buffer.h>
 #include <isc/util.h>

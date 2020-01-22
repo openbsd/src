@@ -51,13 +51,8 @@ install:: installdirs
 	for i in ${HEADERS}; do \
 		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/isc ; \
 	done
-	${INSTALL_DATA} platform.h ${DESTDIR}${includedir}/isc
 
 uninstall::
-	rm -f ${DESTDIR}${includedir}/isc/platform.h
 	for i in ${HEADERS}; do \
 		rm -f ${DESTDIR}${includedir}/isc/$$i ; \
 	done
-
-distclean::
-	rm -f platform.h

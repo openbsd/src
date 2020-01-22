@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnsconf.c,v 1.3 2020/01/09 14:18:30 florian Exp $ */
+/* $Id: dnsconf.c,v 1.4 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <isccfg/cfg.h>
 #include <isccfg/grammar.h>

@@ -33,12 +33,12 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.18 2020/01/22 06:47:14 florian Exp $
+ * $Id: dst_api.c,v 1.19 2020/01/22 13:02:09 florian Exp $
  */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <stdlib.h>
 #include <time.h>
@@ -51,7 +51,7 @@
 #include <isc/lex.h>
 
 #include <isc/once.h>
-#include <isc/platform.h>
+
 
 #include <isc/refcount.h>
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aes.h,v 1.3 2020/01/09 14:18:30 florian Exp $ */
+/* $Id: aes.h,v 1.4 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file isc/aes.h */
 
@@ -22,7 +22,7 @@
 #define ISC_AES_H 1
 
 #include <isc/lang.h>
-#include <isc/platform.h>
+
 #include <isc/types.h>
 
 #define ISC_AES128_KEYLENGTH 16U

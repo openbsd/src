@@ -23,7 +23,7 @@
  * for changing states.
  */
 
-#include <config.h>
+
 #include <stdlib.h>
 #include <isc/app.h>
 #include <isc/condition.h>
@@ -33,7 +33,7 @@
 
 #include <isc/msgs.h>
 #include <isc/once.h>
-#include <isc/platform.h>
+
 
 #include <string.h>
 #include <isc/task.h>

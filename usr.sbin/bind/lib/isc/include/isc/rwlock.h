@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rwlock.h,v 1.8 2020/01/09 18:14:48 florian Exp $ */
+/* $Id: rwlock.h,v 1.9 2020/01/22 13:02:10 florian Exp $ */
 
 #ifndef ISC_RWLOCK_H
 #define ISC_RWLOCK_H 1
@@ -23,7 +23,7 @@
 
 #include <isc/condition.h>
 #include <isc/lang.h>
-#include <isc/platform.h>
+
 #include <isc/types.h>
 
 ISC_LANG_BEGINDECLS

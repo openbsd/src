@@ -14,9 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: thread.c,v 1.3 2019/12/17 01:46:36 sthen Exp $ */
+/* $Id: thread.c,v 1.4 2020/01/22 13:02:10 florian Exp $ */
 
-#include <config.h>
+
 
 #include <isc/thread.h>
 #include <isc/util.h>

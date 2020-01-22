@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha2.c,v 1.10 2020/01/22 06:47:15 florian Exp $ */
+/* $Id: sha2.c,v 1.11 2020/01/22 13:02:10 florian Exp $ */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.c,v 1.2.2.2 2002/03/05 08:36:47 ume Exp $	*/
 /*	$KAME: sha2.c,v 1.8 2001/11/08 01:07:52 itojun Exp $	*/
@@ -55,10 +55,10 @@
  */
 
 
-#include <config.h>
+
 
 #include <isc/assertions.h>
-#include <isc/platform.h>
+
 #include <isc/safe.h>
 #include <isc/sha2.h>
 #include <string.h>

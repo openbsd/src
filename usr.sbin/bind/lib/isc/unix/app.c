@@ -16,7 +16,7 @@
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <sys/param.h>	/* Openserver 5.0.6A and FD_SETSIZE */
 #include <sys/types.h>
@@ -34,7 +34,7 @@
 
 #include <isc/msgs.h>
 #include <isc/event.h>
-#include <isc/platform.h>
+
 #include <isc/strerror.h>
 #include <string.h>
 #include <isc/task.h>

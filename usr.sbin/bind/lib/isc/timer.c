@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.14 2020/01/21 23:59:20 tedu Exp $ */
+/* $Id: timer.c,v 1.15 2020/01/22 13:02:10 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 #include <stdlib.h>
 #include <isc/app.h>
 #include <isc/condition.h>
@@ -28,7 +28,7 @@
 
 #include <isc/msgs.h>
 #include <isc/once.h>
-#include <isc/platform.h>
+
 
 #include <isc/task.h>
 #include <isc/thread.h>

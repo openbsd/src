@@ -14,9 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: fsaccess.c,v 1.6 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: fsaccess.c,v 1.7 2020/01/22 13:02:10 florian Exp $ */
 
-#include <config.h>
+
 
 #include <sys/types.h>
 #include <sys/stat.h>

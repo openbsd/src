@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha2.h,v 1.7 2020/01/22 06:47:15 florian Exp $ */
+/* $Id: sha2.h,v 1.8 2020/01/22 13:02:10 florian Exp $ */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.h,v 1.1.2.1 2001/07/03 11:01:36 ume Exp $	*/
 /*	$KAME: sha2.h,v 1.3 2001/03/12 08:27:48 itojun Exp $	*/
@@ -58,7 +58,7 @@
 #define ISC_SHA2_H
 
 #include <isc/lang.h>
-#include <isc/platform.h>
+
 #include <isc/types.h>
 
 /*** SHA-224/256/384/512 Various Length Definitions ***********************/

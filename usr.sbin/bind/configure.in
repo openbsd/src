@@ -34,7 +34,6 @@ AC_DIVERT_POP()dnl
 AC_INIT(BIND, [9.10], [info@isc.org], [], [https://www.isc.org/downloads/BIND/])
 AC_PREREQ(2.59)
 
-AC_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR([libtool.m4.dir])
 
 AC_CANONICAL_HOST
@@ -4564,7 +4563,6 @@ AC_CONFIG_FILES([
 	lib/isc/Makefile
 	lib/isc/include/Makefile
 	lib/isc/include/isc/Makefile
-	lib/isc/include/isc/platform.h
 	lib/isc/unix/Makefile
 	lib/isc/unix/include/Makefile
 	lib/isc/unix/include/isc/Makefile

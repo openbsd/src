@@ -66,10 +66,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static char rcsid[] = "$Id: inet_aton.c,v 1.8 2020/01/09 18:17:19 florian Exp $";
+static char rcsid[] = "$Id: inet_aton.c,v 1.9 2020/01/22 13:02:10 florian Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <config.h>
+
 
 #include <ctype.h>
 #include <stddef.h>		/* Required for NULL. */

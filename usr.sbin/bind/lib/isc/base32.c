@@ -14,11 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: base32.c,v 1.4 2020/01/20 18:49:45 florian Exp $ */
+/* $Id: base32.c,v 1.5 2020/01/22 13:02:09 florian Exp $ */
 
 /*! \file */
 
-#include <config.h>
+
 
 #include <isc/base32.h>
 #include <isc/buffer.h>
