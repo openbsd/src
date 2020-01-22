@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.43 2020/01/22 05:06:23 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.44 2020/01/22 06:23:00 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -136,6 +136,7 @@ ssize_t tls13_record_layer_phh(struct tls13_record_layer *rl, CBS *cbs);
 ssize_t tls13_read_handshake_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n);
 ssize_t tls13_write_handshake_data(struct tls13_record_layer *rl, const uint8_t *buf,
     size_t n);
+ssize_t tls13_peek_application_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n);
 ssize_t tls13_read_application_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n);
 ssize_t tls13_write_application_data(struct tls13_record_layer *rl, const uint8_t *buf,
     size_t n);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.21 2020/01/22 05:06:23 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.22 2020/01/22 06:23:00 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -812,8 +812,8 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 }
 
 ssize_t
-tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
-    uint8_t *buf, size_t n)
+tls13_record_layer_read_internal(struct tls13_record_layer *rl,
+    uint8_t content_type, uint8_t *buf, size_t n, int peek)
 {
 	ssize_t ret;
 
@@ -898,8 +898,11 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 
 	/* XXX - CBS_memcpy? CBS_copy_bytes? */
 	memcpy(buf, CBS_data(&rl->rbuf_cbs), n);
-	if (!CBS_skip(&rl->rbuf_cbs, n))
-		goto err;
+
+	if (!peek) {
+		if (!CBS_skip(&rl->rbuf_cbs, n))
+			goto err;
+	}
 
 	if (CBS_len(&rl->rbuf_cbs) == 0)
 		tls13_record_layer_rbuf_free(rl);
@@ -908,6 +911,20 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 
  err:
 	return TLS13_IO_FAILURE;
+}
+
+ssize_t
+tls13_record_layer_peek(struct tls13_record_layer *rl, uint8_t content_type,
+    uint8_t *buf, size_t n)
+{
+	return tls13_record_layer_read_internal(rl, content_type, buf, n, 1);
+}
+
+ssize_t
+tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
+    uint8_t *buf, size_t n)
+{
+	return tls13_record_layer_read_internal(rl, content_type, buf, n, 0);
 }
 
 static ssize_t
@@ -1003,6 +1020,15 @@ tls13_write_handshake_data(struct tls13_record_layer *rl, const uint8_t *buf,
     size_t n)
 {
 	return tls13_record_layer_write(rl, SSL3_RT_HANDSHAKE, buf, n);
+}
+
+ssize_t
+tls13_peek_application_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n)
+{
+	if (!rl->handshake_completed)
+		return TLS13_IO_FAILURE;
+
+	return tls13_record_layer_peek(rl, SSL3_RT_APPLICATION_DATA, buf, n);
 }
 
 ssize_t

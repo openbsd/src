@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.19 2020/01/22 03:15:43 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.20 2020/01/22 06:23:00 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -412,12 +412,6 @@ tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int pee
 		return tls13_legacy_return_code(ssl, TLS13_IO_WANT_POLLIN);
 	}
 
-	if (peek) {
-		/* XXX - support peek... */
-		SSLerror(ssl, ERR_R_INTERNAL_ERROR);
-		return -1;
-	}
-
 	if (type != SSL3_RT_APPLICATION_DATA) {
 		SSLerror(ssl, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
@@ -427,7 +421,11 @@ tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int pee
 		return -1;
 	}
 
-	ret = tls13_read_application_data(ctx->rl, buf, len);
+	if (peek)
+		ret = tls13_peek_application_data(ctx->rl, buf, len);
+	else
+		ret = tls13_read_application_data(ctx->rl, buf, len);
+
 	return tls13_legacy_return_code(ssl, ret);
 }
 
