@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.7 2020/01/22 02:34:39 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.8 2020/01/22 15:47:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -579,7 +579,39 @@ TLSv1_2_method(void)
 	return (&TLSv1_2_method_data);
 }
 
+#ifdef LIBRESSL_HAS_TLS1_3_SERVER
 static const SSL_METHOD_INTERNAL TLS_server_method_internal_data = {
+	.version = TLS1_3_VERSION,
+	.min_version = TLS1_VERSION,
+	.max_version = TLS1_3_VERSION,
+	.ssl_new = tls1_new,
+	.ssl_clear = tls1_clear,
+	.ssl_free = tls1_free,
+	.ssl_accept = tls13_legacy_accept,
+	.ssl_connect = ssl_undefined_function,
+	.ssl_shutdown = tls13_legacy_shutdown,
+	.get_ssl_method = tls1_get_server_method,
+	.get_timeout = tls1_default_timeout,
+	.ssl_version = ssl_undefined_void_function,
+	.ssl_renegotiate = ssl_undefined_function,
+	.ssl_renegotiate_check = ssl_ok,
+	.ssl_get_message = ssl3_get_message,
+	.ssl_read_bytes = tls13_legacy_read_bytes,
+	.ssl_write_bytes = tls13_legacy_write_bytes,
+	.ssl3_enc = &TLSv1_2_enc_data,
+};
+
+static const SSL_METHOD TLS_server_method_data = {
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &TLS_server_method_internal_data,
+};
+#endif
+
+static const SSL_METHOD_INTERNAL TLS_legacy_server_method_internal_data = {
 	.version = TLS1_2_VERSION,
 	.min_version = TLS1_VERSION,
 	.max_version = TLS1_2_VERSION,
@@ -600,13 +632,13 @@ static const SSL_METHOD_INTERNAL TLS_server_method_internal_data = {
 	.ssl3_enc = &TLSv1_2_enc_data,
 };
 
-static const SSL_METHOD TLS_server_method_data = {
+static const SSL_METHOD TLS_legacy_server_method_data = {
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.num_ciphers = ssl3_num_ciphers,
 	.get_cipher = ssl3_get_cipher,
 	.get_cipher_by_char = ssl3_get_cipher_by_char,
 	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLS_server_method_internal_data,
+	.internal = &TLS_legacy_server_method_internal_data,
 };
 
 static const SSL_METHOD_INTERNAL TLSv1_server_method_internal_data = {
@@ -720,7 +752,17 @@ SSLv23_server_method(void)
 const SSL_METHOD *
 TLS_server_method(void)
 {
+#ifdef LIBRESSL_HAS_TLS1_3_SERVER
 	return (&TLS_server_method_data);
+#else
+	return tls_legacy_server_method();
+#endif
+}
+
+const SSL_METHOD *
+tls_legacy_server_method(void)
+{
+	return (&TLS_legacy_server_method_data);
 }
 
 const SSL_METHOD *

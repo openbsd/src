@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.251 2020/01/22 13:06:20 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.252 2020/01/22 15:47:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1078,6 +1078,7 @@ int ssl_cipher_is_permitted(const SSL_CIPHER *cipher, uint16_t min_ver,
     uint16_t max_ver);
 
 const SSL_METHOD *tls_legacy_client_method(void);
+const SSL_METHOD *tls_legacy_server_method(void);
 
 const SSL_METHOD *dtls1_get_client_method(int ver);
 const SSL_METHOD *dtls1_get_server_method(int ver);
