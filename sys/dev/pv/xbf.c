@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.32 2017/07/17 10:30:03 mikeb Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.33 2020/01/22 02:02:31 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -738,7 +738,7 @@ xbf_poll_cmd(struct scsi_xfer *xs)
 		if (ISSET(xs->flags, SCSI_NOSLEEP))
 			delay(10);
 		else
-			tsleep(xs, PRIBIO, "xbfpoll", 1);
+			tsleep_nsec(xs, PRIBIO, "xbfpoll", USEC_TO_NSEC(10));
 		xbf_intr(xs->sc_link->adapter_softc);
 	} while(--timo > 0);
 
