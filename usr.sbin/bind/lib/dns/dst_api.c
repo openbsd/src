@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.17 2020/01/20 18:51:52 florian Exp $
+ * $Id: dst_api.c,v 1.18 2020/01/22 06:47:14 florian Exp $
  */
 
 /*! \file */
@@ -158,19 +158,8 @@ dst_lib_init2(const char *engine) {
 				    DST_ALG_RSASHA256));
 	RETERR(dst__opensslrsa_init(&dst_t_func[DST_ALG_RSASHA512],
 				    DST_ALG_RSASHA512));
-#ifdef HAVE_OPENSSL_GOST
-	RETERR(dst__opensslgost_init(&dst_t_func[DST_ALG_ECCGOST]));
-#endif
-#ifdef HAVE_OPENSSL_ECDSA
 	RETERR(dst__opensslecdsa_init(&dst_t_func[DST_ALG_ECDSA256]));
 	RETERR(dst__opensslecdsa_init(&dst_t_func[DST_ALG_ECDSA384]));
-#endif
-#ifdef HAVE_OPENSSL_ED25519
-	RETERR(dst__openssleddsa_init(&dst_t_func[DST_ALG_ED25519]));
-#endif
-#ifdef HAVE_OPENSSL_ED448
-	RETERR(dst__openssleddsa_init(&dst_t_func[DST_ALG_ED448]));
-#endif
 	dst_initialized = ISC_TRUE;
 	return (ISC_R_SUCCESS);
 
@@ -204,16 +193,9 @@ dst_algorithm_supported(unsigned int alg) {
 
 isc_boolean_t
 dst_ds_digest_supported(unsigned int digest_type) {
-#if defined(HAVE_OPENSSL_GOST)
-	return  (ISC_TF(digest_type == DNS_DSDIGEST_SHA1 ||
-			digest_type == DNS_DSDIGEST_SHA256 ||
-			digest_type == DNS_DSDIGEST_GOST ||
-			digest_type == DNS_DSDIGEST_SHA384));
-#else
 	return  (ISC_TF(digest_type == DNS_DSDIGEST_SHA1 ||
 			digest_type == DNS_DSDIGEST_SHA256 ||
 			digest_type == DNS_DSDIGEST_SHA384));
-#endif
 }
 
 isc_result_t

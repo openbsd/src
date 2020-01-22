@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.h,v 1.5 2020/01/21 11:06:47 tb Exp $ */
+/* $Id: hmacsha.h,v 1.6 2020/01/22 06:47:15 florian Exp $ */
 
 /*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,
@@ -36,15 +36,11 @@
 #define ISC_HMACSHA384_KEYLENGTH ISC_SHA384_BLOCK_LENGTH
 #define ISC_HMACSHA512_KEYLENGTH ISC_SHA512_BLOCK_LENGTH
 
-#ifdef ISC_PLATFORM_OPENSSLHASH
 #include <openssl/opensslv.h>
 #include <openssl/hmac.h>
 
 typedef struct {
 	HMAC_CTX *ctx;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-	HMAC_CTX _ctx;
-#endif
 } isc_hmacsha_t;
 
 typedef isc_hmacsha_t isc_hmacsha1_t;
@@ -52,34 +48,6 @@ typedef isc_hmacsha_t isc_hmacsha224_t;
 typedef isc_hmacsha_t isc_hmacsha256_t;
 typedef isc_hmacsha_t isc_hmacsha384_t;
 typedef isc_hmacsha_t isc_hmacsha512_t;
-
-#else
-
-typedef struct {
-	isc_sha1_t sha1ctx;
-	unsigned char key[ISC_HMACSHA1_KEYLENGTH];
-} isc_hmacsha1_t;
-
-typedef struct {
-	isc_sha224_t sha224ctx;
-	unsigned char key[ISC_HMACSHA224_KEYLENGTH];
-} isc_hmacsha224_t;
-
-typedef struct {
-	isc_sha256_t sha256ctx;
-	unsigned char key[ISC_HMACSHA256_KEYLENGTH];
-} isc_hmacsha256_t;
-
-typedef struct {
-	isc_sha384_t sha384ctx;
-	unsigned char key[ISC_HMACSHA384_KEYLENGTH];
-} isc_hmacsha384_t;
-
-typedef struct {
-	isc_sha512_t sha512ctx;
-	unsigned char key[ISC_HMACSHA512_KEYLENGTH];
-} isc_hmacsha512_t;
-#endif
 
 ISC_LANG_BEGINDECLS
 

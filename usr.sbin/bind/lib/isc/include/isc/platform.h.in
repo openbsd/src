@@ -28,11 +28,6 @@
  ***/
 
 /*
- * Define if the hash functions must be provided by OpenSSL.
- */
-@ISC_PLATFORM_OPENSSLHASH@
-
-/*
  * Tell emacs to use C mode for this file.
  *
  * Local Variables:

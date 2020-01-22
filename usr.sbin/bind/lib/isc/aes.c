@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aes.c,v 1.6 2020/01/21 11:06:47 tb Exp $ */
+/* $Id: aes.c,v 1.7 2020/01/22 06:47:15 florian Exp $ */
 
 /*! \file isc/aes.c */
 
@@ -27,23 +27,13 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-#if HAVE_OPENSSL_EVP_AES
-
 #include <openssl/opensslv.h>
 #include <openssl/evp.h>
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define EVP_CIPHER_CTX_new() &(_context), EVP_CIPHER_CTX_init(&_context)
-#define EVP_CIPHER_CTX_free(c) RUNTIME_CHECK(EVP_CIPHER_CTX_cleanup(c) == 1)
-#endif
 
 void
 isc_aes128_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out)
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-	EVP_CIPHER_CTX _context;
-#endif
 	EVP_CIPHER_CTX *c;
 	int len;
 
@@ -61,9 +51,6 @@ void
 isc_aes192_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out)
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-	EVP_CIPHER_CTX _context;
-#endif
 	EVP_CIPHER_CTX *c;
 	int len;
 
@@ -81,9 +68,6 @@ void
 isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
 		 unsigned char *out)
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-	EVP_CIPHER_CTX _context;
-#endif
 	EVP_CIPHER_CTX *c;
 	int len;
 
@@ -97,38 +81,3 @@ isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
 	EVP_CIPHER_CTX_free(c);
 }
 
-#elif HAVE_OPENSSL_AES
-
-#include <openssl/aes.h>
-
-void
-isc_aes128_crypt(const unsigned char *key, const unsigned char *in,
-		 unsigned char *out)
-{
-	AES_KEY k;
-
-	RUNTIME_CHECK(AES_set_encrypt_key(key, 128, &k) == 0);
-	AES_encrypt(in, out, &k);
-}
-
-void
-isc_aes192_crypt(const unsigned char *key, const unsigned char *in,
-		 unsigned char *out)
-{
-	AES_KEY k;
-
-	RUNTIME_CHECK(AES_set_encrypt_key(key, 192, &k) == 0);
-	AES_encrypt(in, out, &k);
-}
-
-void
-isc_aes256_crypt(const unsigned char *key, const unsigned char *in,
-		 unsigned char *out)
-{
-	AES_KEY k;
-
-	RUNTIME_CHECK(AES_set_encrypt_key(key, 256, &k) == 0);
-	AES_encrypt(in, out, &k);
-}
-
-#endif

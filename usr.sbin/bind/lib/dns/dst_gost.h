@@ -23,36 +23,6 @@
 
 #define ISC_GOST_DIGESTLENGTH 32U
 
-#ifdef HAVE_OPENSSL_GOST
-#include <openssl/evp.h>
-
-typedef struct {
-	EVP_MD_CTX *ctx;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-	EVP_MD_CTX _ctx;
-#endif
-} isc_gost_t;
-
-#endif
-
 ISC_LANG_BEGINDECLS
-
-#if defined(HAVE_OPENSSL_GOST)
-
-isc_result_t
-isc_gost_init(isc_gost_t *ctx);
-
-void
-isc_gost_invalidate(isc_gost_t *ctx);
-
-isc_result_t
-isc_gost_update(isc_gost_t *ctx, const unsigned char *data, unsigned int len);
-
-isc_result_t
-isc_gost_final(isc_gost_t *ctx, unsigned char *digest);
-
-ISC_LANG_ENDDECLS
-
-#endif /* HAVE_OPENSSL_GOST */
 
 #endif /* DST_GOST_H */
