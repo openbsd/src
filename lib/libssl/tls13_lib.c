@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.17 2020/01/22 01:02:28 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.18 2020/01/22 02:21:05 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -352,6 +352,9 @@ tls13_legacy_error(SSL *ssl)
 	switch (ctx->error.code) {
 	case TLS13_ERR_VERIFY_FAILED:
 		reason = SSL_R_CERTIFICATE_VERIFY_FAILED;
+		break;
+	case TLS13_ERR_HRR_FAILED:
+		reason = SSL_R_NO_CIPHERS_AVAILABLE;
 		break;
 	}
 
