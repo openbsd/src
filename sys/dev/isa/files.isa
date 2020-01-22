@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.124 2018/02/14 23:51:49 jsg Exp $
+#	$OpenBSD: files.isa,v 1.125 2020/01/22 05:06:19 tedu Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -53,11 +53,6 @@ file	dev/isa/boca.c			boca
 device	addcom: commulti
 attach	addcom at isa with addcom_isa
 file	dev/isa/addcom_isa.c		addcom
-
-# IBM RT PC 4-port board
-device	rtfps: commulti
-attach	rtfps at isa
-file	dev/isa/rtfps.c			rtfps
 
 # Hostess 4-port board
 device	hsq: commulti

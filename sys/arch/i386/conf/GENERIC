@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.849 2020/01/20 23:21:01 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.850 2020/01/22 05:06:19 tedu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -408,8 +408,6 @@ com*	at ast?
 #com*	at boca?
 #addcom0	at isa? port 0x108 irq 5	# Addonics FlexPort
 #com*	at addcom?
-#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#com*	at rtfps?
 #hsq0	at isa? port 0x140 irq 10	# Hostess 4-port serial card
 #com*	at hsq?
 com*	at pcmcia?			# PCMCIA modems/serial ports
