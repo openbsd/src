@@ -1,4 +1,4 @@
-.\"	$OpenBSD: leave.1,v 1.16 2018/07/13 16:59:46 cheloha Exp $
+.\"	$OpenBSD: leave.1,v 1.17 2020/01/22 04:04:39 tedu Exp $
 .\"	$NetBSD: leave.1,v 1.5 1995/08/31 22:32:10 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,22 +30,22 @@
 .\"
 .\"	@(#)leave.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: July 13 2018 $
+.Dd $Mdocdate: January 22 2020 $
 .Dt LEAVE 1
 .Os
 .Sh NAME
 .Nm leave
-.Nd remind you when you have to leave
+.Nd print reminders when it is time to leave
 .Sh SYNOPSIS
 .Nm leave
 .Op Oo Cm + Oc Ns Ar hhmm
 .Sh DESCRIPTION
 .Nm leave
-waits until the specified time, then reminds you that you
-have to leave.
-You are reminded 5 minutes and 1 minute before the actual
+waits until the specified time, then prints a reminder
+that it is time to leave.
+Reminders are printed 5 minutes and 1 minute before the actual
 time, at the time, and every minute thereafter.
-When you log off,
+If the login session ends,
 .Nm leave
 exits just before it would have
 printed the next message.
@@ -72,8 +72,7 @@ from the current time.
 .Pp
 If no argument is given,
 .Nm leave
-prompts with "When do you
-have to leave?".
+prompts with "When do you have to leave?".
 A reply of newline causes
 .Nm leave
 to exit,
