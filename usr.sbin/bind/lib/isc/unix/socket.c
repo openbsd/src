@@ -25,11 +25,6 @@
 #include <sys/time.h>
 #include <sys/uio.h>
 
-#if defined(HAVE_LINUX_NETLINK_H) && defined(HAVE_LINUX_RTNETLINK_H)
-#include <linux/netlink.h>
-#include <linux/rtnetlink.h>
-#endif
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -73,27 +68,12 @@
 #include "socket_p.h"
 #include "../task_p.h"
 
-#if defined(SO_BSDCOMPAT) && defined(__linux__)
-#include <sys/utsname.h>
-#endif
-
-/*%
- * Choose the most preferable multiplex method.
- */
-#define USE_KQUEUE
-
-#if defined(USE_KQUEUE) || defined(USE_EPOLL) || defined(USE_DEVPOLL)
-struct isc_socketwait {
-	int nevents;
-};
-#elif defined (USE_SELECT)
 struct isc_socketwait {
 	fd_set *readset;
 	fd_set *writeset;
 	int nfds;
 	int maxfd;
 };
-#endif	/* USE_KQUEUE */
 
 /*
  * Set by the -T dscp option on the command line. If set to a value
@@ -102,38 +82,10 @@ struct isc_socketwait {
  */
 int isc_dscp_check_value = -1;
 
-/*%
- * Maximum number of allowable open sockets.  This is also the maximum
- * allowable socket file descriptor.
- *
- * Care should be taken before modifying this value for select():
- * The API standard doesn't ensure select() accept more than (the system default
- * of) FD_SETSIZE descriptors, and the default size should in fact be fine in
- * the vast majority of cases.  This constant should therefore be increased only
- * when absolutely necessary and possible, i.e., the server is exhausting all
- * available file descriptors (up to FD_SETSIZE) and the select() function
- * and FD_xxx macros support larger values than FD_SETSIZE (which may not
- * always by true, but we keep using some of them to ensure as much
- * portability as possible).  Note also that overall server performance
- * may be rather worsened with a larger value of this constant due to
- * inherent scalability problems of select().
- *
- * As a special note, this value shouldn't have to be touched if
- * this is a build for an authoritative only DNS server.
- */
 #ifndef ISC_SOCKET_MAXSOCKETS
-#if defined(USE_KQUEUE) || defined(USE_EPOLL) || defined(USE_DEVPOLL)
-#ifdef TUNE_LARGE
-#define ISC_SOCKET_MAXSOCKETS 21000
-#else
-#define ISC_SOCKET_MAXSOCKETS 4096
-#endif /* TUNE_LARGE */
-#elif defined(USE_SELECT)
 #define ISC_SOCKET_MAXSOCKETS FD_SETSIZE
-#endif	/* USE_KQUEUE... */
 #endif	/* ISC_SOCKET_MAXSOCKETS */
 
-#ifdef USE_SELECT
 /*%
  * Mac OS X needs a special definition to support larger values in select().
  * We always define this because a larger value can be specified run-time.
@@ -141,56 +93,12 @@ int isc_dscp_check_value = -1;
 #ifdef __APPLE__
 #define _DARWIN_UNLIMITED_SELECT
 #endif	/* __APPLE__ */
-#endif	/* USE_SELECT */
-
-#ifdef ISC_SOCKET_USE_POLLWATCH
-/*%
- * If this macro is defined, enable workaround for a Solaris /dev/poll kernel
- * bug: DP_POLL ioctl could keep sleeping even if socket I/O is possible for
- * some of the specified FD.  The idea is based on the observation that it's
- * likely for a busy server to keep receiving packets.  It specifically works
- * as follows: the socket watcher is first initialized with the state of
- * "poll_idle".  While it's in the idle state it keeps sleeping until a socket
- * event occurs.  When it wakes up for a socket I/O event, it moves to the
- * poll_active state, and sets the poll timeout to a short period
- * (ISC_SOCKET_POLLWATCH_TIMEOUT msec).  If timeout occurs in this state, the
- * watcher goes to the poll_checking state with the same timeout period.
- * In this state, the watcher tries to detect whether this is a break
- * during intermittent events or the kernel bug is triggered.  If the next
- * polling reports an event within the short period, the previous timeout is
- * likely to be a kernel bug, and so the watcher goes back to the active state.
- * Otherwise, it moves to the idle state again.
- *
- * It's not clear whether this is a thread-related bug, but since we've only
- * seen this with threads, this workaround is used only when enabling threads.
- */
-
-typedef enum { poll_idle, poll_active, poll_checking } pollstate_t;
-
-#ifndef ISC_SOCKET_POLLWATCH_TIMEOUT
-#define ISC_SOCKET_POLLWATCH_TIMEOUT 10
-#endif	/* ISC_SOCKET_POLLWATCH_TIMEOUT */
-#endif	/* ISC_SOCKET_USE_POLLWATCH */
 
 /*%
  * Size of per-FD lock buckets.
  */
 #define FDLOCK_COUNT		1
 #define FDLOCK_ID(fd)		0
-
-/*%
- * Maximum number of events communicated with the kernel.  There should normally
- * be no need for having a large number.
- */
-#if defined(USE_KQUEUE) || defined(USE_EPOLL) || defined(USE_DEVPOLL)
-#ifndef ISC_SOCKET_MAXEVENTS
-#ifdef TUNE_LARGE
-#define ISC_SOCKET_MAXEVENTS	2048
-#else
-#define ISC_SOCKET_MAXEVENTS	64
-#endif /* TUNE_LARGE */
-#endif
-#endif
 
 /*%
  * Some systems define the socket length argument as an int, some as size_t,
@@ -348,36 +256,19 @@ struct isc__socket {
 struct isc__socketmgr {
 	/* Not locked. */
 	isc_socketmgr_t		common;
-#ifdef USE_KQUEUE
-	int			kqueue_fd;
-	int			nevents;
-	struct kevent		*events;
-#endif	/* USE_KQUEUE */
-#ifdef USE_EPOLL
-	int			epoll_fd;
-	int			nevents;
-	struct epoll_event	*events;
-#endif	/* USE_EPOLL */
-#ifdef USE_SELECT
 	int			fd_bufsize;
-#endif	/* USE_SELECT */
 	unsigned int		maxsocks;
 
 	isc__socket_t	       **fds;
 	int			*fdstate;
-#if defined(USE_EPOLL)
-	uint32_t		*epoll_events;
-#endif
 
 	/* Locked by manager lock. */
 	ISC_LIST(isc__socket_t)	socklist;
-#ifdef USE_SELECT
 	fd_set			*read_fds;
 	fd_set			*read_fds_copy;
 	fd_set			*write_fds;
 	fd_set			*write_fds_copy;
 	int			maxfd;
-#endif	/* USE_SELECT */
 	int			reserved;	/* unlocked */
 	unsigned int		refs;
 	int			maxudp;
@@ -608,31 +499,6 @@ enum {
 	STATID_ACTIVE = 10
 };
 
-#if defined(USE_KQUEUE) || defined(USE_EPOLL) || defined(USE_DEVPOLL) || \
-    defined(USE_WATCHER_THREAD)
-static void
-manager_log(isc__socketmgr_t *sockmgr,
-	    isc_logcategory_t *category, isc_logmodule_t *module, int level,
-	    const char *fmt, ...) ISC_FORMAT_PRINTF(5, 6);
-static void
-manager_log(isc__socketmgr_t *sockmgr,
-	    isc_logcategory_t *category, isc_logmodule_t *module, int level,
-	    const char *fmt, ...)
-{
-	char msgbuf[2048];
-	va_list ap;
-
-	if (! isc_log_wouldlog(isc_lctx, level))
-		return;
-
-	va_start(ap, fmt);
-	vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap);
-	va_end(ap);
-
-	isc_log_write(isc_lctx, category, module, level,
-		      "sockmgr %p: %s", sockmgr, msgbuf);
-}
-#endif
 
 static void
 socket_log(isc__socket_t *sock, isc_sockaddr_t *address,
@@ -668,107 +534,24 @@ static inline isc_result_t
 watch_fd(isc__socketmgr_t *manager, int fd, int msg) {
 	isc_result_t result = ISC_R_SUCCESS;
 
-#ifdef USE_KQUEUE
-	struct kevent evchange;
-
-	memset(&evchange, 0, sizeof(evchange));
-	if (msg == SELECT_POKE_READ)
-		evchange.filter = EVFILT_READ;
-	else
-		evchange.filter = EVFILT_WRITE;
-	evchange.flags = EV_ADD;
-	evchange.ident = fd;
-	if (kevent(manager->kqueue_fd, &evchange, 1, NULL, 0, NULL) != 0)
-		result = isc__errno2result(errno);
-
-	return (result);
-#elif defined(USE_EPOLL)
-	struct epoll_event event;
-	uint32_t oldevents;
-	int ret;
-	int op;
-
-	oldevents = manager->epoll_events[fd];
-	if (msg == SELECT_POKE_READ)
-		manager->epoll_events[fd] |= EPOLLIN;
-	else
-		manager->epoll_events[fd] |= EPOLLOUT;
-
-	event.events = manager->epoll_events[fd];
-	memset(&event.data, 0, sizeof(event.data));
-	event.data.fd = fd;
-
-	op = (oldevents == 0U) ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
-	ret = epoll_ctl(manager->epoll_fd, op, fd, &event);
-	if (ret == -1) {
-		if (errno == EEXIST)
-			UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "epoll_ctl(ADD/MOD) returned "
-					 "EEXIST for fd %d", fd);
-		result = isc__errno2result(errno);
-	}
-
-	return (result);
-#elif defined(USE_SELECT)
 	if (msg == SELECT_POKE_READ)
 		FD_SET(fd, manager->read_fds);
 	if (msg == SELECT_POKE_WRITE)
 		FD_SET(fd, manager->write_fds);
 
 	return (result);
-#endif
 }
 
 static inline isc_result_t
 unwatch_fd(isc__socketmgr_t *manager, int fd, int msg) {
 	isc_result_t result = ISC_R_SUCCESS;
 
-#ifdef USE_KQUEUE
-	struct kevent evchange;
-
-	memset(&evchange, 0, sizeof(evchange));
-	if (msg == SELECT_POKE_READ)
-		evchange.filter = EVFILT_READ;
-	else
-		evchange.filter = EVFILT_WRITE;
-	evchange.flags = EV_DELETE;
-	evchange.ident = fd;
-	if (kevent(manager->kqueue_fd, &evchange, 1, NULL, 0, NULL) != 0)
-		result = isc__errno2result(errno);
-
-	return (result);
-#elif defined(USE_EPOLL)
-	struct epoll_event event;
-	int ret;
-	int op;
-
-	if (msg == SELECT_POKE_READ)
-		manager->epoll_events[fd] &= ~(EPOLLIN);
-	else
-		manager->epoll_events[fd] &= ~(EPOLLOUT);
-
-	event.events = manager->epoll_events[fd];
-	memset(&event.data, 0, sizeof(event.data));
-	event.data.fd = fd;
-
-	op = (event.events == 0U) ? EPOLL_CTL_DEL : EPOLL_CTL_MOD;
-	ret = epoll_ctl(manager->epoll_fd, op, fd, &event);
-	if (ret == -1 && errno != ENOENT) {
-		char strbuf[ISC_STRERRORSIZE];
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "epoll_ctl(DEL), %d: %s", fd, strbuf);
-		result = ISC_R_UNEXPECTED;
-	}
-	return (result);
-#elif defined(USE_SELECT)
 	if (msg == SELECT_POKE_READ)
 		FD_CLR(fd, manager->read_fds);
 	else if (msg == SELECT_POKE_WRITE)
 		FD_CLR(fd, manager->write_fds);
 
 	return (result);
-#endif
 }
 
 static void
@@ -1744,14 +1527,11 @@ socketclose(isc__socketmgr_t *manager, isc__socket_t *sock, int fd) {
 	 * update manager->maxfd here (XXX: this should be implemented more
 	 * efficiently)
 	 */
-#ifdef USE_SELECT
 	if (manager->maxfd == fd) {
 		int i;
 
 		manager->maxfd = 0;
 		for (i = fd - 1; i >= 0; i--) {
-			lockid = FDLOCK_ID(i);
-
 			if (manager->fdstate[i] == MANAGED) {
 				manager->maxfd = i;
 				break;
@@ -1759,7 +1539,6 @@ socketclose(isc__socketmgr_t *manager, isc__socket_t *sock, int fd) {
 		}
 	}
 
-#endif	/* USE_SELECT */
 }
 
 static void
@@ -2354,15 +2133,10 @@ socket_create(isc_socketmgr_t *manager0, int pf, isc_sockettype_t type,
 	lockid = FDLOCK_ID(sock->fd);
 	manager->fds[sock->fd] = sock;
 	manager->fdstate[sock->fd] = MANAGED;
-#if defined(USE_EPOLL)
-	manager->epoll_events[sock->fd] = 0;
-#endif
 
 	ISC_LIST_APPEND(manager->socklist, sock, link);
-#ifdef USE_SELECT
 	if (manager->maxfd < sock->fd)
 		manager->maxfd = sock->fd;
-#endif
 
 	socket_log(sock, NULL, CREATION, dup_socket != NULL ? "dupped" : "created");
 
@@ -2421,14 +2195,9 @@ isc__socket_open(isc_socket_t *sock0) {
 
 		sock->manager->fds[sock->fd] = sock;
 		sock->manager->fdstate[sock->fd] = MANAGED;
-#if defined(USE_EPOLL)
-		sock->manager->epoll_events[sock->fd] = 0;
-#endif
 
-#ifdef USE_SELECT
 		if (sock->manager->maxfd < sock->fd)
 			sock->manager->maxfd = sock->fd;
-#endif
 	}
 
 	return (result);
@@ -2478,15 +2247,10 @@ isc__socket_fdwatchcreate(isc_socketmgr_t *manager0, int fd, int flags,
 	lockid = FDLOCK_ID(sock->fd);
 	manager->fds[sock->fd] = sock;
 	manager->fdstate[sock->fd] = MANAGED;
-#if defined(USE_EPOLL)
-	manager->epoll_events[sock->fd] = 0;
-#endif
 
 	ISC_LIST_APPEND(manager->socklist, sock, link);
-#ifdef USE_SELECT
 	if (manager->maxfd < sock->fd)
 		manager->maxfd = sock->fd;
-#endif
 
 	if (flags & ISC_SOCKFDWATCH_READ)
 		select_poke(sock->manager, sock->fd, SELECT_POKE_READ);
@@ -2998,14 +2762,9 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 
 		manager->fds[fd] = NEWCONNSOCK(dev);
 		manager->fdstate[fd] = MANAGED;
-#if defined(USE_EPOLL)
-		manager->epoll_events[fd] = 0;
-#endif
 
-#ifdef USE_SELECT
 		if (manager->maxfd < fd)
 			manager->maxfd = fd;
-#endif
 
 		socket_log(sock, &NEWCONNSOCK(dev)->peer_address, CREATION,
 			   "accepted connection, new socket %p",
@@ -3265,70 +3024,6 @@ check_write:
 
 }
 
-#ifdef USE_KQUEUE
-static isc_boolean_t
-process_fds(isc__socketmgr_t *manager, struct kevent *events, int nevents) {
-	int i;
-	isc_boolean_t readable, writable;
-	isc_boolean_t done = ISC_FALSE;
-
-	if (nevents == manager->nevents) {
-		/*
-		 * This is not an error, but something unexpected.  If this
-		 * happens, it may indicate the need for increasing
-		 * ISC_SOCKET_MAXEVENTS.
-		 */
-		manager_log(manager, ISC_LOGCATEGORY_GENERAL,
-			    ISC_LOGMODULE_SOCKET, ISC_LOG_INFO,
-			    "maximum number of FD events (%d) received",
-			    nevents);
-	}
-
-	for (i = 0; i < nevents; i++) {
-		REQUIRE(events[i].ident < manager->maxsocks);
-		readable = ISC_TF(events[i].filter == EVFILT_READ);
-		writable = ISC_TF(events[i].filter == EVFILT_WRITE);
-		process_fd(manager, events[i].ident, readable, writable);
-	}
-
-	return (done);
-}
-#elif defined(USE_EPOLL)
-static isc_boolean_t
-process_fds(isc__socketmgr_t *manager, struct epoll_event *events, int nevents)
-{
-	int i;
-	isc_boolean_t done = ISC_FALSE;
-
-	if (nevents == manager->nevents) {
-		manager_log(manager, ISC_LOGCATEGORY_GENERAL,
-			    ISC_LOGMODULE_SOCKET, ISC_LOG_INFO,
-			    "maximum number of FD events (%d) received",
-			    nevents);
-	}
-
-	for (i = 0; i < nevents; i++) {
-		REQUIRE(events[i].data.fd < (int)manager->maxsocks);
-		if ((events[i].events & EPOLLERR) != 0 ||
-		    (events[i].events & EPOLLHUP) != 0) {
-			/*
-			 * epoll does not set IN/OUT bits on an erroneous
-			 * condition, so we need to try both anyway.  This is a
-			 * bit inefficient, but should be okay for such rare
-			 * events.  Note also that the read or write attempt
-			 * won't block because we use non-blocking sockets.
-			 */
-			int fd = events[i].data.fd;
-			events[i].events |= manager->epoll_events[fd];
-		}
-		process_fd(manager, events[i].data.fd,
-			   (events[i].events & EPOLLIN) != 0,
-			   (events[i].events & EPOLLOUT) != 0);
-	}
-
-	return (done);
-}
-#elif defined(USE_SELECT)
 static void
 process_fds(isc__socketmgr_t *manager, int maxfd, fd_set *readfds,
 	    fd_set *writefds)
@@ -3342,7 +3037,6 @@ process_fds(isc__socketmgr_t *manager, int maxfd, fd_set *readfds,
 			   FD_ISSET(i, writefds));
 	}
 }
-#endif
 
 void
 isc__socketmgr_setreserved(isc_socketmgr_t *manager0, uint32_t reserved) {
@@ -3369,42 +3063,7 @@ isc__socketmgr_maxudp(isc_socketmgr_t *manager0, int maxudp) {
 static isc_result_t
 setup_watcher(isc__socketmgr_t *manager) {
 	isc_result_t result;
-#if defined(USE_KQUEUE) || defined(USE_EPOLL) || defined(USE_DEVPOLL)
-	char strbuf[ISC_STRERRORSIZE];
-#endif
 
-#ifdef USE_KQUEUE
-	manager->nevents = ISC_SOCKET_MAXEVENTS;
-	manager->events = malloc(sizeof(struct kevent) *
-				      manager->nevents);
-	if (manager->events == NULL)
-		return (ISC_R_NOMEMORY);
-	manager->kqueue_fd = kqueue();
-	if (manager->kqueue_fd == -1) {
-		result = isc__errno2result(errno);
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "kqueue %s: %s", "failed", strbuf);
-		free(manager->events);
-		return (result);
-	}
-
-#elif defined(USE_EPOLL)
-	manager->nevents = ISC_SOCKET_MAXEVENTS;
-	manager->events = malloc(sizeof(struct epoll_event) *
-				      manager->nevents);
-	if (manager->events == NULL)
-		return (ISC_R_NOMEMORY);
-	manager->epoll_fd = epoll_create(manager->nevents);
-	if (manager->epoll_fd == -1) {
-		result = isc__errno2result(errno);
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "epoll_create %s: %s", "failed", strbuf);
-		free(manager->events);
-		return (result);
-	}
-#elif defined(USE_SELECT)
 	UNUSED(result);
 
 #if ISC_SOCKET_MAXSOCKETS > FD_SETSIZE
@@ -3448,7 +3107,6 @@ setup_watcher(isc__socketmgr_t *manager) {
 	memset(manager->write_fds, 0, manager->fd_bufsize);
 
 	manager->maxfd = 0;
-#endif	/* USE_KQUEUE */
 
 	return (ISC_R_SUCCESS);
 }
@@ -3456,13 +3114,6 @@ setup_watcher(isc__socketmgr_t *manager) {
 static void
 cleanup_watcher(isc__socketmgr_t *manager) {
 
-#ifdef USE_KQUEUE
-	close(manager->kqueue_fd);
-	free(manager->events);
-#elif defined(USE_EPOLL)
-	close(manager->epoll_fd);
-	free(manager->events);
-#elif defined(USE_SELECT)
 	if (manager->read_fds != NULL)
 		free(manager->read_fds);
 	if (manager->read_fds_copy != NULL)
@@ -3471,7 +3122,6 @@ cleanup_watcher(isc__socketmgr_t *manager) {
 		free(manager->write_fds);
 	if (manager->write_fds_copy != NULL)
 		free(manager->write_fds_copy);
-#endif	/* USE_KQUEUE */
 }
 
 isc_result_t
@@ -3520,15 +3170,6 @@ isc__socketmgr_create2(isc_socketmgr_t **managerp,
 		result = ISC_R_NOMEMORY;
 		goto free_manager;
 	}
-#if defined(USE_EPOLL)
-	manager->epoll_events = malloc((manager->maxsocks *
-						   sizeof(uint32_t)));
-	if (manager->epoll_events == NULL) {
-		result = ISC_R_NOMEMORY;
-		goto free_manager;
-	}
-	memset(manager->epoll_events, 0, manager->maxsocks * sizeof(uint32_t));
-#endif
 
 	manager->common.methods = &socketmgrmethods;
 	manager->common.magic = ISCAPI_SOCKETMGR_MAGIC;
@@ -3555,11 +3196,6 @@ isc__socketmgr_create2(isc_socketmgr_t **managerp,
 cleanup:
 
 free_manager:
-#if defined(USE_EPOLL)
-	if (manager->epoll_events != NULL) {
-		free(manager->epoll_events);
-	}
-#endif
 	if (manager->fdstate != NULL) {
 		free(manager->fdstate);
 	}
@@ -3625,9 +3261,6 @@ isc__socketmgr_destroy(isc_socketmgr_t **managerp) {
 		if (manager->fdstate[i] == CLOSE_PENDING) /* no need to lock */
 			(void)close(i);
 
-#if defined(USE_EPOLL)
-	free(manager->epoll_events);
-#endif
 	free(manager->fds);
 	free(manager->fdstate);
 
@@ -4022,32 +3655,8 @@ isc__socket_cleanunix(isc_sockaddr_t *sockaddr, isc_boolean_t active) {
 	if (sockaddr->type.sa.sa_family != AF_UNIX)
 		return;
 
-#ifndef S_ISSOCK
-#if defined(S_IFMT) && defined(S_IFSOCK)
-#define S_ISSOCK(mode) ((mode & S_IFMT)==S_IFSOCK)
-#elif defined(_S_IFMT) && defined(S_IFSOCK)
-#define S_ISSOCK(mode) ((mode & _S_IFMT)==S_IFSOCK)
-#endif
-#endif
-
-#ifndef S_ISFIFO
-#if defined(S_IFMT) && defined(S_IFIFO)
-#define S_ISFIFO(mode) ((mode & S_IFMT)==S_IFIFO)
-#elif defined(_S_IFMT) && defined(S_IFIFO)
-#define S_ISFIFO(mode) ((mode & _S_IFMT)==S_IFIFO)
-#endif
-#endif
-
 #if !defined(S_ISFIFO) && !defined(S_ISSOCK)
 #error You need to define S_ISFIFO and S_ISSOCK as appropriate for your platform.  See <sys/stat.h>.
-#endif
-
-#ifndef S_ISFIFO
-#define S_ISFIFO(mode) 0
-#endif
-
-#ifndef S_ISSOCK
-#define S_ISSOCK(mode) 0
 #endif
 
 	if (active) {
@@ -4915,12 +4524,6 @@ isc__socketmgr_waitevents(isc_socketmgr_t *manager0, struct timeval *tvp,
 {
 	isc__socketmgr_t *manager = (isc__socketmgr_t *)manager0;
 	int n;
-#ifdef USE_KQUEUE
-	struct timespec ts, *tsp;
-#endif
-#ifdef USE_EPOLL
-	int timeout;
-#endif
 
 	REQUIRE(swaitp != NULL && *swaitp == NULL);
 
@@ -4929,27 +4532,6 @@ isc__socketmgr_waitevents(isc_socketmgr_t *manager0, struct timeval *tvp,
 	if (manager == NULL)
 		return (0);
 
-#ifdef USE_KQUEUE
-	if (tvp != NULL) {
-		ts.tv_sec = tvp->tv_sec;
-		ts.tv_nsec = tvp->tv_usec * 1000;
-		tsp = &ts;
-	} else
-		tsp = NULL;
-	swait_private.nevents = kevent(manager->kqueue_fd, NULL, 0,
-				       manager->events, manager->nevents,
-				       tsp);
-	n = swait_private.nevents;
-#elif defined(USE_EPOLL)
-	if (tvp != NULL)
-		timeout = tvp->tv_sec * 1000 + (tvp->tv_usec + 999) / 1000;
-	else
-		timeout = -1;
-	swait_private.nevents = epoll_wait(manager->epoll_fd,
-					   manager->events,
-					   manager->nevents, timeout);
-	n = swait_private.nevents;
-#elif defined(USE_SELECT)
 	memmove(manager->read_fds_copy, manager->read_fds, manager->fd_bufsize);
 	memmove(manager->write_fds_copy, manager->write_fds,
 		manager->fd_bufsize);
@@ -4960,7 +4542,6 @@ isc__socketmgr_waitevents(isc_socketmgr_t *manager0, struct timeval *tvp,
 
 	n = select(swait_private.maxfd, swait_private.readset,
 		   swait_private.writeset, NULL, tvp);
-#endif
 
 	*swaitp = &swait_private;
 	return (n);
@@ -4977,13 +4558,8 @@ isc__socketmgr_dispatch(isc_socketmgr_t *manager0, isc_socketwait_t *swait) {
 	if (manager == NULL)
 		return (ISC_R_NOTFOUND);
 
-#if defined(USE_KQUEUE) || defined(USE_EPOLL) || defined(USE_DEVPOLL)
-	(void)process_fds(manager, manager->events, swait->nevents);
-	return (ISC_R_SUCCESS);
-#elif defined(USE_SELECT)
 	process_fds(manager, swait->maxfd, swait->readset, swait->writeset);
 	return (ISC_R_SUCCESS);
-#endif
 }
 
 void

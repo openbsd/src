@@ -27,9 +27,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/time.h>
-#ifdef HAVE_EPOLL
-#include <sys/epoll.h>
-#endif
 
 #include <isc/app.h>
 #include <isc/boolean.h>
