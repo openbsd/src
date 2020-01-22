@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.6 2020/01/22 01:21:43 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.7 2020/01/22 02:34:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -221,7 +221,7 @@ static const SSL_METHOD_INTERNAL TLS_client_method_internal_data = {
 	.ssl_free = tls1_free,
 	.ssl_accept = ssl_undefined_function,
 	.ssl_connect = tls13_legacy_connect,
-	.ssl_shutdown = ssl3_shutdown,
+	.ssl_shutdown = tls13_legacy_shutdown,
 	.get_ssl_method = tls1_get_client_method,
 	.get_timeout = tls1_default_timeout,
 	.ssl_version = ssl_undefined_void_function,
