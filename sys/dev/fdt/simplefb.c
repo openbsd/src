@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.7 2019/12/25 11:42:05 jsg Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.8 2020/01/22 05:25:05 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -110,8 +110,12 @@ simplefb_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
+	/* Don't attach if it has no address space. */
+	if (faa->fa_nreg < 1 || faa->fa_reg[0].size == 0)
+		return 0;
+
 	/* Don't attach if another driver already claimed our framebuffer. */
-	if (faa->fa_nreg > 0 && rasops_check_framebuffer(faa->fa_reg[0].addr))
+	if (rasops_check_framebuffer(faa->fa_reg[0].addr))
 		return 0;
 
 	return OF_is_compatible(faa->fa_node, "simple-framebuffer");
@@ -127,9 +131,6 @@ simplefb_attach(struct device *parent, struct device *self, void *aux)
 	const char *format;
 	int console = 0;
 	long defattr;
-
-	if (faa->fa_nreg < 1)
-		return;
 
 	format = simplefb_init(faa->fa_node, ri);
 	if (format) {
