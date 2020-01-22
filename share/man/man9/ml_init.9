@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ml_init.9,v 1.13 2016/04/15 05:05:21 dlg Exp $
+.\"     $OpenBSD: ml_init.9,v 1.14 2020/01/22 22:57:42 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 15 2016 $
+.Dd $Mdocdate: January 22 2020 $
 .Dt ML_INIT 9
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Nm ml_dechain ,
 .Nm ml_len ,
 .Nm ml_empty ,
+.Nm ml_hdatalen ,
 .Nm ml_purge ,
 .Nm MBUF_LIST_INITIALIZER ,
 .Nm MBUF_LIST_FIRST ,
@@ -47,6 +48,8 @@
 .Fn ml_len "struct mbuf_list *ml"
 .Ft int
 .Fn ml_empty "struct mbuf_list *ml"
+.Ft unsigned int
+.Fn ml_hdatalen "struct mbuf_list *ml"
 .Ft unsigned int
 .Fn ml_purge "struct mbuf_list *ml"
 .Ft struct mbuf_list
@@ -103,6 +106,10 @@ mbuf list.
 Return if the
 .Fa ml
 mbuf list is empty.
+.It Fn ml_hdatalen "struct mbuf_list *ml"
+Return the number of bytes in the packet at the head of the
+.Fa ml
+mbuf list.
 .It Fn ml_purge "struct mbuf_list *ml"
 Free all the mbufs on the
 .Fa ml
@@ -157,6 +164,9 @@ returns the number of mbufs on the list.
 .Pp
 .Fn ml_empty
 return a non-zero value if the list is empty, otherwise 0.
+.Pp
+.Fn ml_hdatalen
+returns the size of a packet on the list, or 0 if the list is empty;
 .Pp
 .Fn ml_purge
 returns the number of mbufs that were freed.

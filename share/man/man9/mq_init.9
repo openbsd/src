@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mq_init.9,v 1.9 2018/02/09 02:26:33 patrick Exp $
+.\"     $OpenBSD: mq_init.9,v 1.10 2020/01/22 22:57:42 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 9 2018 $
+.Dd $Mdocdate: January 22 2020 $
 .Dt MQ_INIT 9
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Nm mq_len ,
 .Nm mq_empty ,
 .Nm mq_full ,
+.Nm mq_hdatalen ,
 .Nm mq_purge ,
 .Nm mq_drops ,
 .Nm mq_set_maxlen ,
@@ -52,6 +53,8 @@
 .Fn mq_empty "struct mbuf_queue *mq"
 .Ft int
 .Fn mq_full "struct mbuf_queue *mq"
+.Ft unsigned int
+.Fn mq_hdatalen "struct mbuf_queue *mq"
 .Ft unsigned int
 .Fn mq_purge "struct mbuf_queue *mq"
 .Ft unsigned int
@@ -142,6 +145,10 @@ mbuf queue is empty.
 Return if the
 .Fa mq
 mbuf queue is full.
+.It Fn mq_hdatalen "struct mbuf_queue *mq"
+Return the number of bytes in the packet at the head of the
+.Fa mq
+mbuf queue.
 .It Fn mq_purge "struct mbuf_queue *mq"
 Free all the mbufs on the
 .Fa mq
@@ -208,6 +215,9 @@ length.
 .Fn mq_enlist
 returns the number of mbufs that were dropped from the list if the
 length of the queue exceeded its maximum length.
+.Pp
+.Fn mq_hdatalen
+returns the size of a packet on the queue, or 0 if the queue is empty;
 .Pp
 .Fn mq_purge
 returns the number of mbufs that were freed.
