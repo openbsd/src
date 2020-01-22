@@ -43,7 +43,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: file.c,v 1.12 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: file.c,v 1.13 2020/01/22 08:17:01 tedu Exp $ */
 
 /*! \file */
 
@@ -60,9 +60,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
-#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
-#endif
 
 #include <isc/dir.h>
 #include <isc/file.h>
@@ -654,46 +652,12 @@ void *
 isc_file_mmap(void *addr, size_t len, int prot,
 	      int flags, int fd, off_t offset)
 {
-#ifdef HAVE_MMAP
 	return (mmap(addr, len, prot, flags, fd, offset));
-#else
-	void *buf;
-	ssize_t ret;
-	off_t end;
-
-	UNUSED(addr);
-	UNUSED(prot);
-	UNUSED(flags);
-
-	end = lseek(fd, 0, SEEK_END);
-	lseek(fd, offset, SEEK_SET);
-	if (end - offset < (off_t) len)
-		len = end - offset;
-
-	buf = malloc(len);
-	if (buf == NULL)
-		return (NULL);
-
-	ret = read(fd, buf, len);
-	if (ret != (ssize_t) len) {
-		free(buf);
-		buf = NULL;
-	}
-
-	return (buf);
-#endif
 }
 
 int
 isc_file_munmap(void *addr, size_t len) {
-#ifdef HAVE_MMAP
 	return (munmap(addr, len));
-#else
-	UNUSED(len);
-
-	free(addr);
-	return (0);
-#endif
 }
 
 isc_boolean_t

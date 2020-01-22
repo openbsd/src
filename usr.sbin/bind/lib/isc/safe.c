@@ -72,9 +72,5 @@ isc_safe_memwipe(void *ptr, size_t len) {
 	if (ISC_UNLIKELY(ptr == NULL || len == 0))
 		return;
 
-#if   HAVE_EXPLICIT_BZERO
 	explicit_bzero(ptr, len);
-#else
-	memset(ptr, 0, len);
-#endif
 }
