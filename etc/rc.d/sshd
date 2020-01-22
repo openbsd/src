@@ -1,10 +1,12 @@
 #!/bin/ksh
 #
-# $OpenBSD: sshd,v 1.4 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: sshd,v 1.5 2020/01/22 13:14:51 sthen Exp $
 
 daemon="/usr/sbin/sshd"
 
 . /etc/rc.d/rc.subr
+
+pexp="sshd: \[listener\].*"
 
 rc_reload() {
 	${daemon} ${daemon_flags} -t && pkill -HUP -xf "${pexp}"
