@@ -20,7 +20,6 @@ top_srcdir =	@top_srcdir@
 .NOTPARALLEL:
 .NO_PARALLEL:
 
-VERSION=@BIND9_VERSION@
 @BIND9_MAJOR@
 
 @LIBDNS_MAPAPI@
@@ -68,8 +67,7 @@ DNSOBJS =	byaddr.@O@ \
 		result.@O@ \
 		soa.@O@ \
 		time.@O@ \
-		tsec.@O@ tsig.@O@ ttl.@O@ \
-		version.@O@
+		tsec.@O@ tsig.@O@ ttl.@O@
 
 OBJS=		${DNSOBJS} ${OTHEROBJS} ${DSTOBJS}
 
@@ -99,7 +97,7 @@ DNSSRCS =	byaddr.c \
 		soa.c \
 		time.c \
 		tsec.c tsig.c ttl.c \
-		version.c ${OTHERSRCS}
+		${OTHERSRCS}
 
 SRCS = ${DSTSRCS} ${DNSSRCS}
 
@@ -111,16 +109,6 @@ DEPENDEXTRA =	./gen -F include/dns/rdatastruct.h \
 		-s ${srcdir} -d >> Makefile ;
 
 @BIND9_MAKE_RULES@
-
-version.@O@: version.c
-	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
-		-DVERSION=\"${VERSION}\" \
-		-DMAJOR=\"${MAJOR}\" \
-		-DMAPAPI=\"${MAPAPI}\" \
-		-DLIBINTERFACE=${LIBINTERFACE} \
-		-DLIBREVISION=${LIBREVISION} \
-		-DLIBAGE=${LIBAGE} \
-		-c ${srcdir}/version.c
 
 libdns.@SA@: ${OBJS}
 	${AR} ${ARFLAGS} $@ ${OBJS}
