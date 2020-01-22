@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.45 2019/05/26 01:16:09 naddy Exp $
+.\"	$OpenBSD: awk.1,v 1.46 2020/01/22 03:47:38 deraadt Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2019 $
+.Dd $Mdocdate: January 22 2020 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -240,7 +240,10 @@ A statement can be one of the following:
 .Xc
 .It Xo Ic exit
 .Op Ar expression
-.No # exit immediately; status is Ar expression
+.No # exit processing, and perform
+.Ic END
+processing; status is
+.Ar expression
 .Xc
 .El
 .Pp
@@ -360,12 +363,12 @@ a relational expression,
 or a Boolean combination
 of these.
 .Pp
-The special patterns
+The special pattern
 .Ic BEGIN
-and
+may be used to capture control before the first input line is read.
+The special pattern
 .Ic END
-may be used to capture control before the first input line is read
-and after the last.
+may be used to capture control after processing is finished.
 .Ic BEGIN
 and
 .Ic END
