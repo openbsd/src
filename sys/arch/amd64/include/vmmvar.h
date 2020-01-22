@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.67 2019/07/17 05:51:07 pd Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.68 2020/01/22 03:29:58 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -683,7 +683,7 @@ enum {
 
 enum {
 	VMM_MEM_TYPE_REGULAR,
-	VMM_MEM_TYPE_UNKNOWN	
+	VMM_MEM_TYPE_UNKNOWN
 };
 
 /* Forward declarations */
@@ -742,7 +742,7 @@ struct vmcb {
 			uint64_t	v_pad5;			/* 0E8h-0EFh */
 			uint64_t	v_avic_logical_table;	/* 0F0h */
 			uint64_t	v_avic_phys;		/* 0F8h */
-			
+
 		};
 		uint8_t vmcb_control[0x400];
 	};
