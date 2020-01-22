@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmsgsize.c,v 1.2 2018/10/08 20:42:14 bluhm Exp $ */
+/*	$OpenBSD: cmsgsize.c,v 1.3 2020/01/22 07:52:37 deraadt Exp $ */
 /*
  * Copyright (c) 2017 Alexander Markert <alexander.markert@siemens.com>
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
@@ -102,7 +102,7 @@ int
 test_cmsgsize(int so, struct in_addr *src, struct in_addr *dst,
     unsigned int sndbuf_size, unsigned int payload_size)
 {
-	char cmsgbuf[CMSG_SPACE(sizeof(struct in_addr))];;
+	char cmsgbuf[CMSG_SPACE(sizeof(struct in_addr))];
 	struct sockaddr_in to;
 	struct in_addr *source_address;
 	struct msghdr msg;

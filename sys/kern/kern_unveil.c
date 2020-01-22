@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.35 2019/11/29 20:58:17 guenther Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.36 2020/01/22 07:52:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -95,7 +95,7 @@ unveil_save_traversed_vnode(struct nameidata *ndp, struct vnode *vp)
 void
 unvname_delete(struct unvname *name)
 {
-	free(name->un_name, M_PROC, name->un_namesize);;
+	free(name->un_name, M_PROC, name->un_namesize);
 	free(name, M_PROC, sizeof(struct unvname));
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.62 2019/04/02 07:08:40 stsp Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.63 2020/01/22 07:52:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -553,11 +553,11 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, u_int32_t ocr)
 static int
 sdhc_clock_divisor(struct sdhc_host *hp, u_int freq)
 {
-	int max_div = SDHC_SDCLK_DIV_MAX;;
+	int max_div = SDHC_SDCLK_DIV_MAX;
 	int div;
 
 	if (SDHC_SPEC_VERSION(hp->version) >= SDHC_SPEC_V3)
-		max_div = SDHC_SDCLK_DIV_MAX_V3;;
+		max_div = SDHC_SDCLK_DIV_MAX_V3;
 
 	for (div = 1; div <= max_div; div *= 2)
 		if ((hp->clkbase / div) <= freq)

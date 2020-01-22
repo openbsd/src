@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.31 2020/01/05 19:54:05 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.32 2020/01/22 07:52:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -388,7 +388,7 @@ pri_alloc_memory(uint64_t base, uint64_t size)
 			new_mblock->membase = base;
 			new_mblock->memsize = size;
 			new_mblock->resource_id = -1;
-			return new_mblock;;
+			return new_mblock;
 		}
 	}
 
@@ -1073,7 +1073,7 @@ void
 hvmd_finalize_pcie_device(struct md *md, struct device *device)
 {
 	struct rootcomplex *rootcomplex;
-	struct md_node *node, *child, *parent;;
+	struct md_node *node, *child, *parent;
 	struct component *component;
 	struct subdevice *subdevice;
 	uint64_t resource_id = 0;

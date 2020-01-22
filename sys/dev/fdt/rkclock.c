@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.48 2019/12/03 09:08:04 patrick Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.49 2020/01/22 07:52:37 deraadt Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -678,7 +678,7 @@ rk3288_get_frequency(void *cookie, uint32_t *cells)
 	case RK3288_CLK_MAC:
 		reg = HREAD4(sc, RK3288_CRU_CLKSEL_CON(21));
 		if (reg & 0x10)
-			return 125000000;;
+			return 125000000;
 		mux = (reg >> 0) & 0x3;
 		div_con = (reg >> 8) & 0x1f;
 		switch (mux) {

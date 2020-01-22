@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.61 2020/01/16 20:05:00 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.62 2020/01/22 07:52:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -740,7 +740,7 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 	struct ikev2_frag_payload	*frag;
 	sa_family_t			 sa_fam;
 	size_t				 ivlen, integrlen, blocklen;
-	size_t 				 max_len, left,  offset=0;;
+	size_t 				 max_len, left,  offset=0;
 	size_t				 frag_num = 1, frag_total;
 	uint8_t				*data;
 	uint32_t			 msgid;

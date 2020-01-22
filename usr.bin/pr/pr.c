@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.42 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.43 2020/01/22 07:52:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -1462,7 +1462,7 @@ nxtfile(int argc, char *argv[], char **fname, char *buf, int dt)
 	    *fname = FNAME;
 	if (nohead)
 	    return(inf);
-	curtime = time(NULL);;
+	curtime = time(NULL);
 	timeptr = localtime(&curtime);
     }
     for (; eoptind < argc; ++eoptind) {
