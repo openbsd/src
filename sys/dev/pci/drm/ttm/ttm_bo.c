@@ -1609,7 +1609,34 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 {
 	struct ttm_bo_device *bdev = bo->bdev;
 
+#ifdef __linux__
 	drm_vma_node_unmap(&bo->vma_node, bdev->dev_mapping);
+#else
+	if (drm_vma_node_has_offset(&bo->vma_node) &&
+	    bo->mem.bus.io_reserved_vm) {
+		struct vm_page *pg;
+		bus_addr_t addr;
+		paddr_t paddr;
+		unsigned i;
+
+		if (bo->mem.bus.is_iomem) {
+			addr = bo->mem.bus.base + bo->mem.bus.offset;
+			paddr = bus_space_mmap(bdev->memt, addr, 0, 0, 0);
+			for (i = 0; i < bo->mem.num_pages; i++) {
+				pg = PHYS_TO_VM_PAGE(paddr);
+				if (pg)
+					pmap_page_protect(pg, PROT_NONE);
+				paddr += PAGE_SIZE;
+			}
+		} else if (bo->ttm) {
+			for (i = 0; i < bo->ttm->num_pages; i++) {
+				pg = bo->ttm->pages[i];
+				if (pg)
+					pmap_page_protect(pg, PROT_NONE);
+			}
+		}
+	}
+#endif
 	ttm_mem_io_free_vm(bo);
 }
 
