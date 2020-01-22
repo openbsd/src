@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.37 2019/11/02 13:38:04 jsing Exp $
+# $OpenBSD: Makefile,v 1.38 2020/01/22 06:56:50 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -414,14 +414,7 @@ prereq: obj_mac.h
 includes: prereq
 	@test -d ${DESTDIR}/usr/include/openssl || \
 	    mkdir ${DESTDIR}/usr/include/openssl
-	@for i in $(HDRS); do \
-	    j="cmp -s $$i ${DESTDIR}/usr/include/openssl/`basename $$i` || \
-	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i\
-		${DESTDIR}/usr/include/openssl"; \
-	    echo $$j; \
-	    eval "$$j"; \
-	done; \
-	for i in $(HDRS_GEN); do \
+	@for i in $(HDRS) $(HDRS_GEN); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/openssl/`basename $$i` || \
 	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i\
 		${DESTDIR}/usr/include/openssl"; \
