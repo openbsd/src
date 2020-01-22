@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.45 2019/05/11 07:18:15 deraadt Exp $
+.\"	$OpenBSD: com.4,v 1.46 2020/01/22 05:19:24 jsg Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: May 11 2019 $
+.Dd $Mdocdate: January 22 2020 $
 .Dt COM 4
 .Os
 .Sh NAME
@@ -56,7 +56,6 @@
 .Cd "com* at ast?"
 .Cd "com* at boca?"
 .Cd "com* at hsq?"
-.Cd "com* at rtfps?"
 .Pp
 .Cd "# alpha and amd64"
 .Cd "com0 at isa? port 0x3f8 irq 4"
@@ -153,7 +152,6 @@ with the code listed.
 .Xr isapnp 4 ,
 .Xr pcmcia 4 ,
 .Xr puc 4 ,
-.Xr rtfps 4 ,
 .Xr ssio 4 ,
 .Xr tty 4
 .Sh HISTORY
