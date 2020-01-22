@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.26 2020/01/22 05:06:23 tb Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.27 2020/01/22 11:26:47 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -535,7 +535,7 @@ tls13_server_certificate_recv(struct tls13_ctx *ctx)
 	 */
 	if (ssl_verify_cert_chain(s, certs) <= 0 &&
 	    s->verify_mode != SSL_VERIFY_NONE) {
-		/* XXX send alert */
+		ctx->alert = ssl_verify_alarm_type(s->verify_result);
 		tls13_set_errorx(ctx, TLS13_ERR_VERIFY_FAILED, 0,
 		    "failed to verify peer certificate", NULL);
 		goto err;
