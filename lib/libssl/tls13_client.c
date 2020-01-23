@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.28 2020/01/22 13:10:51 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.29 2020/01/23 02:24:38 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -202,18 +202,12 @@ tls13_client_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 }
 
 int
-tls13_client_hello_send(struct tls13_ctx *ctx)
+tls13_client_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	CBB body;
-
 	if (ctx->hs->min_version < TLS1_2_VERSION)
 		tls13_record_layer_set_legacy_version(ctx->rl, TLS1_VERSION);
 
-	if (!tls13_handshake_msg_start(ctx->hs_msg, &body, TLS13_MT_CLIENT_HELLO))
-		return 0;
-	if (!tls13_client_hello_build(ctx, &body))
-		return 0;
-	if (!tls13_handshake_msg_finish(ctx->hs_msg))
+	if (!tls13_client_hello_build(ctx, cbb))
 		return 0;
 
 	return 1;
@@ -741,7 +735,7 @@ tls13_server_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_client_finished_send(struct tls13_ctx *ctx)
+tls13_client_finished_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	struct tls13_secrets *secrets = ctx->hs->secrets;
 	struct tls13_secret context = { .data = "", .len = 0 };
@@ -754,7 +748,6 @@ tls13_client_finished_send(struct tls13_ctx *ctx)
 	unsigned int hlen;
 	HMAC_CTX *hmac_ctx = NULL;
 	int ret = 0;
-	CBB body;
 
 	finished_key.data = key;
 	finished_key.len = EVP_MD_size(ctx->hash);
@@ -776,16 +769,12 @@ tls13_client_finished_send(struct tls13_ctx *ctx)
 	if (!HMAC_Update(hmac_ctx, transcript_hash, transcript_hash_len))
 		goto err;
 
-	if (!tls13_handshake_msg_start(ctx->hs_msg, &body, TLS13_MT_FINISHED))
-		goto err;
 	hmac_len = HMAC_size(hmac_ctx);
-	if (!CBB_add_space(&body, &verify_data, hmac_len))
+	if (!CBB_add_space(cbb, &verify_data, hmac_len))
 		goto err;
 	if (!HMAC_Final(hmac_ctx, verify_data, &hlen))
 		goto err;
 	if (hlen != hmac_len)
-		goto err;
-	if (!tls13_handshake_msg_finish(ctx->hs_msg))
 		goto err;
 
 	ret = 1;

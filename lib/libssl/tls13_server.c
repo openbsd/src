@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.7 2020/01/22 15:47:22 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.8 2020/01/23 02:24:38 jsing Exp $ */
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -220,7 +220,7 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_client_hello_retry_send(struct tls13_ctx *ctx)
+tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
@@ -232,7 +232,7 @@ tls13_server_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_client_end_of_early_data_send(struct tls13_ctx *ctx)
+tls13_client_end_of_early_data_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
@@ -244,7 +244,7 @@ tls13_client_end_of_early_data_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_client_certificate_send(struct tls13_ctx *ctx)
+tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
@@ -256,7 +256,7 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_client_certificate_verify_send(struct tls13_ctx *ctx)
+tls13_client_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
@@ -276,7 +276,7 @@ tls13_client_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_client_key_update_send(struct tls13_ctx *ctx)
+tls13_client_key_update_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
@@ -288,7 +288,7 @@ tls13_client_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_server_hello_send(struct tls13_ctx *ctx)
+tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	ctx->handshake_stage.hs_type |= NEGOTIATED;
 
@@ -296,37 +296,37 @@ tls13_server_hello_send(struct tls13_ctx *ctx)
 }
 
 int
-tls13_server_hello_retry_send(struct tls13_ctx *ctx)
+tls13_server_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
 
 int
-tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx)
+tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
 
 int
-tls13_server_certificate_send(struct tls13_ctx *ctx)
+tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
 
 int
-tls13_server_certificate_request_send(struct tls13_ctx *ctx)
+tls13_server_certificate_request_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
 
 int
-tls13_server_certificate_verify_send(struct tls13_ctx *ctx)
+tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
 
 int
-tls13_server_finished_send(struct tls13_ctx *ctx)
+tls13_server_finished_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
