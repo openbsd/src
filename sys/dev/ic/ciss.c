@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.77 2020/01/23 00:30:59 cheloha Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.78 2020/01/23 01:43:17 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -442,13 +442,15 @@ cissminphys(struct buf *bp, struct scsi_link *sl)
 int
 ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 {
+	struct timespec end, now, ts;
 	struct ciss_softc *sc = ccb->ccb_sc;
 	struct ciss_cmd *cmd = &ccb->ccb_cmd;
 	struct ciss_ccb *ccb1;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	u_int64_t addr;
+	uint64_t nsecs;
 	u_int32_t id;
-	int i, tohz, error = 0;
+	int i, error = 0, ret;
 
 	splassert(IPL_BIO);
 
@@ -522,29 +524,27 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	if (!(wait & SCSI_POLL))
 		return (error);
 
-	struct timeval tv;
-	int etick;
 	CISS_DPRINTF(CISS_D_CMD, ("waiting "));
 
 	i = ccb->ccb_xs? ccb->ccb_xs->timeout : 60000;
-	tv.tv_sec = i / 1000;
-	tv.tv_usec = (i % 1000) * 1000;
-	tohz = tvtohz(&tv);
-	if (tohz == 0)
-		tohz = 1;
 
 	if (!(wait & SCSI_NOSLEEP)) {
-		for (etick = tick + tohz;;) {
+		NSEC_TO_TIMESPEC(MSEC_TO_NSEC(i), &ts);
+		nanouptime(&now);
+		timespecadd(&now, &ts, &end);
+
+		for (;;) {
 			ccb->ccb_state = CISS_CCB_POLL;
-			CISS_DPRINTF(CISS_D_CMD, ("tsleep(%d) ", tohz));
-			if (tsleep(ccb, PRIBIO + 1, "ciss_cmd",
-			    tohz) == EWOULDBLOCK) {
+			nsecs = TIMESPEC_TO_NSEC(&ts);
+			CISS_DPRINTF(CISS_D_CMD, ("tsleep_nsec(%llu) ", nsecs));
+			ret = tsleep_nsec(ccb, PRIBIO + 1, "ciss_cmd", nsecs);
+			if (ret == EWOULDBLOCK)
 				break;
-			}
 			if (ccb->ccb_state != CISS_CCB_ONQ) {
-				tohz = etick - tick;
-				if (tohz <= 0)
+				nanouptime(&now);
+				if (timespeccmp(&end, &now, <=))
 					break;
+				timespecsub(&end, &now, &ts);
 				CISS_DPRINTF(CISS_D_CMD, ("T"));
 				continue;
 			}
