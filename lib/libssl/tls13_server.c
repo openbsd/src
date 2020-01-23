@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.8 2020/01/23 02:24:38 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.9 2020/01/23 06:59:11 beck Exp $ */
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -43,6 +43,8 @@ tls13_server_init(struct tls13_ctx *ctx)
 
 	if (!tls1_transcript_init(s))
 		return 0;
+
+	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
 
 	return 1;
 }
@@ -287,12 +289,47 @@ tls13_client_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 	return 0;
 }
 
+static int
+tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb)
+{
+	CBB session_id;
+	SSL *s = ctx->ssl;
+	uint16_t cipher;
+
+	cipher = SSL_CIPHER_get_value(S3I(s)->hs.new_cipher);
+
+	if (!CBB_add_u16(cbb, TLS1_2_VERSION))
+		goto err;
+	if (!CBB_add_bytes(cbb, s->s3->server_random, SSL3_RANDOM_SIZE))
+		goto err;
+	if (!CBB_add_u8_length_prefixed(cbb, &session_id))
+		goto err;
+	if (!CBB_add_bytes(&session_id, ctx->hs->legacy_session_id,
+	    ctx->hs->legacy_session_id_len))
+		goto err;
+	if (!CBB_add_u16(cbb, cipher))
+		goto err;
+	if (!CBB_add_u8(cbb, 0))
+		goto err;
+	if (!tlsext_server_build(s, cbb, SSL_TLSEXT_MSG_SH))
+		goto err;
+
+	if (!CBB_flush(cbb))
+		goto err;
+
+	return 1;
+err:
+	return 0;
+}
+
 int
 tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	ctx->handshake_stage.hs_type |= NEGOTIATED;
+	if (!tls13_server_hello_build(ctx, cbb))
+		return 0;
 
-	return 0;
+ 	ctx->handshake_stage.hs_type |= NEGOTIATED;
+	return 1;
 }
 
 int
