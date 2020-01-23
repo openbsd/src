@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.204 2020/01/23 23:30:41 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.205 2020/01/23 23:36:18 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -370,8 +370,6 @@ tun_dev_open(struct tun_softc *sc, int flag, int mode, struct proc *p)
 
 	ifp = &sc->sc_if;
 	sc->sc_flags |= TUN_OPEN;
-	if (flag & FNONBLOCK)
-		sc->sc_flags |= TUN_NBIO;
 
 	/* automatically mark the interface running on open */
 	ifp->if_flags |= IFF_RUNNING;
@@ -412,7 +410,7 @@ tun_dev_close(struct tun_softc *sc, int flag, int mode, struct proc *p)
 	struct ifnet		*ifp;
 
 	ifp = &sc->sc_if;
-	sc->sc_flags &= ~(TUN_OPEN|TUN_NBIO|TUN_ASYNC);
+	sc->sc_flags &= ~(TUN_OPEN|TUN_ASYNC);
 
 	/*
 	 * junk all pending output
@@ -659,10 +657,6 @@ tun_dev_ioctl(struct tun_softc *sc, u_long cmd, caddr_t data, int flag,
 		break;
 
 	case FIONBIO:
-		if (*(int *)data)
-			sc->sc_flags |= TUN_NBIO;
-		else
-			sc->sc_flags &= ~TUN_NBIO;
 		break;
 	case FIOASYNC:
 		if (*(int *)data)
@@ -755,7 +749,7 @@ tun_dev_read(struct tun_softc *sc, struct uio *uio, int ioflag)
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL) {
-			if (sc->sc_flags & TUN_NBIO && ioflag & IO_NDELAY)
+			if (ioflag & IO_NDELAY)
 				return (EWOULDBLOCK);
 			sc->sc_flags |= TUN_RWAIT;
 			if ((error = tsleep_nsec(sc,
