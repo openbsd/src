@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.205 2020/01/23 23:36:18 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.206 2020/01/23 23:43:49 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -724,7 +724,6 @@ tun_dev_read(struct tun_softc *sc, struct uio *uio, int ioflag)
 	struct mbuf		*m, *m0;
 	unsigned int		 ifidx;
 	int			 error = 0;
-	size_t			 len;
 
 	if ((sc->sc_flags & TUN_READY) != TUN_READY)
 		return (EHOSTDOWN);
@@ -769,20 +768,21 @@ tun_dev_read(struct tun_softc *sc, struct uio *uio, int ioflag)
 		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
-	while (m0 != NULL && uio->uio_resid > 0 && error == 0) {
-		len = ulmin(uio->uio_resid, m0->m_len);
-		if (len != 0)
-			error = uiomove(mtod(m0, caddr_t), len, uio);
-		m = m_free(m0);
-		m0 = m;
+	m = m0;
+	while (uio->uio_resid > 0) {
+		size_t len = ulmin(uio->uio_resid, m->m_len);
+		if (len > 0) {
+			error = uiomove(mtod(m, void *), len, uio);
+			if (error != 0)
+				break;
+		}
+
+		m = m->m_next;
+		if (m == NULL)
+			break;
 	}
 
-	if (m0 != NULL) {
-		TUNDEBUG(("Dropping mbuf\n"));
-		m_freem(m0);
-	}
-	if (error)
-		ifp->if_oerrors++;
+	m_freem(m0);
 
 	return (error);
 }
