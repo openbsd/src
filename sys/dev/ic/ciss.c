@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.76 2020/01/20 07:28:03 cheloha Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.77 2020/01/23 00:30:59 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -532,8 +532,9 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	tohz = tvtohz(&tv);
 	if (tohz == 0)
 		tohz = 1;
-	for (i *= 100, etick = tick + tohz; i--; ) {
-		if (!(wait & SCSI_NOSLEEP)) {
+
+	if (!(wait & SCSI_NOSLEEP)) {
+		for (etick = tick + tohz;;) {
 			ccb->ccb_state = CISS_CCB_POLL;
 			CISS_DPRINTF(CISS_D_CMD, ("tsleep(%d) ", tohz));
 			if (tsleep(ccb, PRIBIO + 1, "ciss_cmd",
@@ -548,7 +549,13 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 				continue;
 			}
 			ccb1 = ccb;
-		} else {
+
+			error = ciss_done(ccb1);
+			if (ccb1 == ccb)
+				return (error);
+		}
+	} else {
+		for (i *= 100; i--;) {
 			DELAY(10);
 
 			if (!(bus_space_read_4(sc->iot, sc->ioh,
@@ -588,11 +595,11 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 			ccb1 = sc->ccbs + (id >> 2) * sc->ccblen;
 			ccb1->ccb_cmd.id = htole32(id);
 			ccb1->ccb_cmd.id_hi = htole32(0);
-		}
 
-		error = ciss_done(ccb1);
-		if (ccb1 == ccb)
-			return (error);
+			error = ciss_done(ccb1);
+			if (ccb1 == ccb)
+				return (error);
+		}
 	}
 
 	/* if never got a chance to be done above... */
