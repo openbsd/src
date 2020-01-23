@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_thermal.c,v 1.5 2019/12/03 09:17:20 patrick Exp $	*/
+/*	$OpenBSD: ofw_thermal.c,v 1.6 2020/01/23 23:10:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -69,6 +69,7 @@ struct thermal_zone {
 	uint32_t	*tz_sensors;
 	uint32_t	tz_polling_delay;
 	uint32_t	tz_polling_delay_passive;
+	LIST_ENTRY(thermal_zone) tz_list;
 
 	struct trippoint *tz_trips;
 	int		tz_ntrips;
@@ -83,6 +84,9 @@ struct thermal_zone {
 	int32_t		tz_temperature;
 };
 
+LIST_HEAD(, thermal_zone) thermal_zones =
+	LIST_HEAD_INITIALIZER(thermal_zones);
+
 void
 thermal_sensor_register(struct thermal_sensor *ts)
 {
@@ -92,6 +96,19 @@ thermal_sensor_register(struct thermal_sensor *ts)
 		return;
 
 	LIST_INSERT_HEAD(&thermal_sensors, ts, ts_list);
+}
+
+void
+thermal_sensor_update(struct thermal_sensor *ts, uint32_t *cells)
+{
+	struct thermal_zone *tz;
+
+	LIST_FOREACH(tz, &thermal_zones, tz_list) {
+		if (tz->tz_sensors[0] == ts->ts_phandle &&
+		    memcmp(&tz->tz_sensors[1], cells,
+		    ts->ts_cells * sizeof(uint32_t)) == 0)
+			task_add(tztq, &tz->tz_poll_task);
+	}
 }
 
 void
@@ -447,6 +464,7 @@ thermal_zone_init(int node)
 	/* Start polling if we are requested to do so. */
 	if (tz->tz_polling_delay > 0)
 		timeout_add_msec(&tz->tz_poll_to, tz->tz_polling_delay);
+	LIST_INSERT_HEAD(&thermal_zones, tz, tz_list);
 }
 
 void

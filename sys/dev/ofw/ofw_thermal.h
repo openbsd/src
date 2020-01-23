@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_thermal.h,v 1.1 2019/07/02 20:12:11 kettenis Exp $	*/
+/*	$OpenBSD: ofw_thermal.h,v 1.2 2020/01/23 23:10:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -46,6 +46,7 @@ struct cooling_device {
 #define THERMAL_NO_LIMIT	0xffffffffU
 
 void	thermal_sensor_register(struct thermal_sensor *);
+void	thermal_sensor_update(struct thermal_sensor *, uint32_t *);
 void	cooling_device_register(struct cooling_device *);
 
 void	thermal_init(void);
