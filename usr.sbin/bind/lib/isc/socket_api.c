@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket_api.c,v 1.7 2020/01/22 13:02:10 florian Exp $ */
+/* $Id: socket_api.c,v 1.8 2020/01/23 08:15:04 florian Exp $ */
 
 
 
@@ -178,26 +178,6 @@ isc_socket_setname(isc_socket_t *sock, const char *name, void *tag) {
 }
 
 isc_result_t
-isc_socket_fdwatchcreate(isc_socketmgr_t *manager, int fd, int flags,
-			 isc_sockfdwatch_t callback, void *cbarg,
-			 isc_task_t *task, isc_socket_t **socketp)
-{
-	REQUIRE(ISCAPI_SOCKETMGR_VALID(manager));
-
-	return (isc__socket_fdwatchcreate(manager, fd, flags,
-						  callback, cbarg,
-						  task, socketp));
-}
-
-isc_result_t
-isc_socket_fdwatchpoke(isc_socket_t *sock, int flags)
-{
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	return (isc__socket_fdwatchpoke(sock, flags));
-}
-
-isc_result_t
 isc_socket_dup(isc_socket_t *sock, isc_socket_t **socketp) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 	REQUIRE(socketp != NULL && *socketp == NULL);
@@ -288,33 +268,9 @@ isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
 				    event, flags));
 }
 
-void
-isc_socket_cleanunix(isc_sockaddr_t *sockaddr, isc_boolean_t active) {
-	isc__socket_cleanunix(sockaddr, active);
-}
-
-isc_result_t
-isc_socket_permunix(isc_sockaddr_t *sockaddr, uint32_t perm,
-		     uint32_t owner, uint32_t group)
-{
-	return (isc__socket_permunix(sockaddr, perm, owner, group));
-}
-
 isc_result_t
 isc_socket_filter(isc_socket_t *sock, const char *filter) {
 	return (isc__socket_filter(sock, filter));
-}
-
-isc_result_t
-isc_socket_listen(isc_socket_t *sock, unsigned int backlog) {
-	return (isc__socket_listen(sock, backlog));
-}
-
-isc_result_t
-isc_socket_accept(isc_socket_t *sock, isc_task_t *task,
-		   isc_taskaction_t action, void *arg)
-{
-	return (isc__socket_accept(sock, task, action, arg));
 }
 
 isc_result_t
