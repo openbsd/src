@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.198 2020/01/08 16:27:41 visa Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.199 2020/01/23 03:10:18 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -66,10 +66,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#ifdef PIPEX
-#include <net/pipex.h>
-#endif
-
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -92,9 +88,6 @@ struct tun_softc {
 	struct sigio_ref
 			sc_sigio;	/* async I/O registration */
 	u_short		sc_flags;	/* misc flags */
-#ifdef PIPEX
-	struct pipex_iface_context sc_pipex_iface; /* pipex context */
-#endif
 };
 
 #ifdef	TUN_DEBUG
@@ -183,9 +176,6 @@ tunattach(int n)
 {
 	if_clone_attach(&tun_cloner);
 	if_clone_attach(&tap_cloner);
-#ifdef PIPEX
-	pipex_init();
-#endif
 }
 
 int
@@ -285,11 +275,6 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 		ether_ifattach(ifp);
 	}
 
-#ifdef PIPEX
-	if ((sc->sc_flags & TUN_LAYER2) == 0)
-		pipex_iface_init(&sc->sc_pipex_iface, ifp);
-#endif
-
 	return (0);
 exists:
 	free(sc, M_DEVBUF, sizeof(*sc));
@@ -302,10 +287,6 @@ tun_clone_destroy(struct ifnet *ifp)
 	struct tun_softc	*sc = ifp->if_softc;
 	int			 s;
 
-#ifdef PIPEX
-	if ((sc->sc_flags & TUN_LAYER2) == 0)
-		pipex_iface_fini(&sc->sc_pipex_iface);
-#endif
 	tun_wakeup(sc);
 
 	s = splhigh();
@@ -603,12 +584,6 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
-#ifdef PIPEX
-	if (pipex_enable && (m0 = pipex_output(m0, dst->sa_family,
-	    sizeof(u_int32_t), &sc->sc_pipex_iface)) == NULL) {
-		return (0);
-	}
-#endif
 
 	error = if_enqueue(ifp, m0);
 
@@ -740,13 +715,6 @@ tun_dev_ioctl(struct tun_softc *sc, u_long cmd, caddr_t data, int flag,
 		    sizeof(sc->sc_ac.ac_enaddr));
 		break;
 	default:
-#ifdef PIPEX
-		if (!(sc->sc_flags & TUN_LAYER2)) {
-			int ret;
-			ret = pipex_ioctl(&sc->sc_pipex_iface, cmd, data);
-			return (ret);
-		}
-#endif
 		return (ENOTTY);
 	}
 	return (0);
