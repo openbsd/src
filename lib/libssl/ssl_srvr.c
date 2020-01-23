@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.68 2019/04/22 15:12:20 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.69 2020/01/23 08:04:50 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1041,6 +1041,25 @@ ssl3_get_client_hello(SSL *s)
 	 * SessionTicket processing to use it in key derivation.
 	 */
 	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
+
+	if (s->internal->tls13 != NULL) {
+		/*
+		 * RFC 8446 section 4.1.3. If we are downgrading from TLS 1.3
+		 * we must set the last 8 bytes of the server random to magical
+		 * values to indicate we meant to downgrade.
+		 */
+		size_t index = SSL3_RANDOM_SIZE - sizeof(tls13_downgrade_12);
+		uint8_t *magic = &s->s3->server_random[index];
+		if (s->version == TLS1_2_VERSION) {
+			/* Indicate we chose to downgrade to 1.2. */
+			memcpy(magic, tls13_downgrade_12,
+			    sizeof(tls13_downgrade_12));
+		} else {
+			/* Indicate we chose to downgrade to 1.1 or lower */
+			memcpy(magic, tls13_downgrade_11,
+			    sizeof(tls13_downgrade_11));
+		}
+	}
 
 	if (!s->internal->hit && s->internal->tls_session_secret_cb) {
 		SSL_CIPHER *pref_cipher = NULL;
