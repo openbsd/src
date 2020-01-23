@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.656 2020/01/20 21:21:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.657 2020/01/23 22:39:35 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -474,23 +474,25 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "c:di:L:nrv")) != -1)
 		switch (ch) {
 		case 'c':
+			if (optarg == NULL)
+				usage();
+			cmd_opts |= OPT_CONFPATH;
 			path_dhclient_conf = optarg;
 			break;
 		case 'd':
 			cmd_opts |= OPT_FOREGROUND;
 			break;
 		case 'i':
+			if (optarg == NULL)
+				usage();
+			cmd_opts |= OPT_IGNORELIST;
 			ignore_list = strdup(optarg);
-			if (ignore_list == NULL)
-				fatal("ignore_list");
 			break;
 		case 'L':
+			if (optarg == NULL)
+				usage();
+			cmd_opts |= OPT_DBPATH;
 			path_option_db = optarg;
-			if (lstat(path_option_db, &sb) != -1) {
-				if (S_ISREG(sb.st_mode) == 0)
-					fatalx("'%s' is not a regular file",
-					    path_option_db);
-			}
 			break;
 		case 'n':
 			cmd_opts |= OPT_NOACTION;
@@ -510,6 +512,31 @@ main(int argc, char *argv[])
 
 	if (argc != 1)
 		usage();
+
+	if ((cmd_opts & OPT_DBPATH) != 0) {
+		if (lstat(path_option_db, &sb) == -1) {
+			/*
+			 * Non-existant file is OK. An attempt will be
+			 * made to create it.
+			 */
+			if (errno != ENOENT)
+				fatal("lstat(%s)", path_option_db);
+		} else if (S_ISREG(sb.st_mode) == 0)
+			fatalx("'%s' is not a regular file",
+			    path_option_db);
+	}
+	if ((cmd_opts & OPT_CONFPATH) != 0) {
+		if (lstat(path_dhclient_conf, &sb) == -1) {
+			/*
+			 * Non-existant file is OK. It lets you ignore
+			 * /etc/dhclient.conf for testing.
+			 */
+			if (errno != ENOENT)
+				fatal("lstat(%s)", path_dhclient_conf);
+		} else if (S_ISREG(sb.st_mode) == 0)
+			fatalx("'%s' is not a regular file",
+			    path_dhclient_conf);
+	}
 
 	if ((cmd_opts & (OPT_FOREGROUND | OPT_NOACTION)) != 0)
 		cmd_opts |= OPT_VERBOSE;
