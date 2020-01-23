@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.11 2020/01/23 10:48:36 beck Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.12 2020/01/23 11:47:13 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -43,6 +43,9 @@ tls13_server_init(struct tls13_ctx *ctx)
 	}
 
 	if (!tls1_transcript_init(s))
+		return 0;
+
+	if ((s->session = SSL_SESSION_new()) == NULL)
 		return 0;
 
 	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
@@ -142,8 +145,8 @@ tls13_use_legacy_server(struct tls13_ctx *ctx)
 static int
 tls13_client_hello_is_legacy(CBS *cbs)
 {
-	CBS extensions_block, extensions, extension_data;
-	uint16_t selected_version = 0;
+	CBS extensions_block, extensions, extension_data, versions;
+	uint16_t version, max_version = 0;
 	uint16_t type;
 
 	CBS_dup(cbs, &extensions_block);
@@ -159,13 +162,19 @@ tls13_client_hello_is_legacy(CBS *cbs)
 
 		if (type != TLSEXT_TYPE_supported_versions)
 			continue;
-		if (!CBS_get_u16(&extension_data, &selected_version))
+		if (!CBS_get_u8_length_prefixed(&extension_data, &versions))
 			return 1;
+		while (CBS_len(&versions) > 0) {
+			if (!CBS_get_u16(&versions, &version))
+				return 1;
+			if (version >= max_version)
+				max_version = version;
+		}
 		if (CBS_len(&extension_data) != 0)
 			return 1;
 	}
 
-	return (selected_version < TLS1_3_VERSION);
+	return (max_version < TLS1_3_VERSION);
 }
 
 static int
@@ -182,7 +191,7 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	if (!CBS_get_u8_length_prefixed(cbs, &session_id))
 		goto err;
-	if (!CBS_get_u8_length_prefixed(cbs, &cipher_suites))
+	if (!CBS_get_u16_length_prefixed(cbs, &cipher_suites))
 		goto err;
 	if (!CBS_get_u8_length_prefixed(cbs, &compression_methods))
 		goto err;
