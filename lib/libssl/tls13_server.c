@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.10 2020/01/23 08:44:31 beck Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.11 2020/01/23 10:48:36 beck Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -359,6 +359,18 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 int
 tls13_server_certificate_request_send(struct tls13_ctx *ctx, CBB *cbb)
 {
+	CBB certificate_request_context;
+
+	if (!CBB_add_u8_length_prefixed(cbb, &certificate_request_context))
+		goto err;
+	if (!tlsext_server_build(ctx->ssl, cbb, SSL_TLSEXT_MSG_CR))
+		goto err;
+
+	if (!CBB_flush(cbb))
+		goto err;
+
+	return 1;
+ err:
 	return 0;
 }
 
