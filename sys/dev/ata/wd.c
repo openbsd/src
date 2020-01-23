@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.126 2019/07/07 10:43:46 kn Exp $ */
+/*	$OpenBSD: wd.c,v 1.127 2020/01/23 05:46:44 tedu Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -228,7 +228,6 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	printf("%s: %d-sector PIO,", wd->sc_dev.dv_xname, wd->sc_multi);
 
 	/* use 48-bit LBA if enabled */
-	/* XXX: shall we use it if drive capacity < 137Gb? */
 	if ((wd->sc_params.atap_cmd2_en & ATAPI_CMD2_48AD) != 0)
 		wd->sc_flags |= WDF_LBA48;
 
