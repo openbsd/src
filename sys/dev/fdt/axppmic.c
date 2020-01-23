@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.8 2019/08/12 20:06:02 kettenis Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.9 2020/01/23 10:01:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -655,7 +655,7 @@ axppmic_set_voltage(void *cookie, uint32_t voltage)
 		return EINVAL;
 
 	reg = axppmic_read_reg(ar->ar_sc, ar->ar_vreg);
-	reg &= ar->ar_vmask;
+	reg &= ~ar->ar_vmask;
 	axppmic_write_reg(ar->ar_sc, ar->ar_vreg, reg | value);
 	return 0;
 }
