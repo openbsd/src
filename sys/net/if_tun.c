@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.203 2020/01/23 23:22:47 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.204 2020/01/23 23:30:41 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ int	tun_dev_kqfilter(struct tun_softc *, struct knote *);
 int	tun_ioctl(struct ifnet *, u_long, caddr_t);
 int	tun_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
+int	tun_enqueue(struct ifnet *, struct mbuf *);
 int	tun_clone_create(struct if_clone *, int);
 int	tap_clone_create(struct if_clone *, int);
 int	tun_create(struct if_clone *, int, int);
@@ -219,6 +220,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	ifp->if_softc = sc;
 
 	ifp->if_ioctl = tun_ioctl;
+	ifp->if_enqueue = tun_enqueue;
 	ifp->if_start = tun_start;
 	ifp->if_hardmtu = TUNMRU;
 	ifp->if_link_state = LINK_STATE_DOWN;
@@ -556,6 +558,21 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	*af = htonl(dst->sa_family);
 
 	return (if_enqueue(ifp, m0));
+}
+
+int
+tun_enqueue(struct ifnet *ifp, struct mbuf *m0)
+{
+	struct tun_softc	*sc = ifp->if_softc;
+	int			 error;
+
+	error = ifq_enqueue(&ifp->if_snd, m0);
+	if (error != 0)
+		return (error);
+
+	tun_wakeup(sc);
+
+	return (0);
 }
 
 void
