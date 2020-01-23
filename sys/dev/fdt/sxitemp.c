@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitemp.c,v 1.5 2019/09/21 15:36:57 kettenis Exp $	*/
+/*	$OpenBSD: sxitemp.c,v 1.6 2020/01/23 03:00:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -43,7 +43,9 @@
 #define  THS_INT_CTRL_THERMAL_PER(x)	(((x) & 0xfffff) << 12)
 #define THS_FILTER			0x0070
 #define  THS_FILTER_EN			(1 << 2)
-#define  THS_FILTER_TYPE(x)		((x) & 0x3) 
+#define  THS_FILTER_TYPE(x)		((x) & 0x3)
+#define THS0_1_CDATA			0x0074
+#define THS2_CDATA			0x0078
 #define THS0_DATA			0x0080
 #define THS1_DATA			0x0084
 #define THS2_DATA			0x0088
@@ -79,6 +81,7 @@ struct cfdriver sxitemp_cd = {
 	NULL, "sxitemp", DV_DULL
 };
 
+void	sxitemp_setup_calib(struct sxitemp_softc *, int);
 uint64_t sxitemp_h3_calc_temp(int64_t);
 uint64_t sxitemp_r40_calc_temp(int64_t);
 uint64_t sxitemp_a64_calc_temp(int64_t);
@@ -144,6 +147,8 @@ sxitemp_attach(struct device *parent, struct device *self, void *aux)
 		enable = THS_CTRL2_SENSE0_EN | THS_CTRL2_SENSE1_EN;
 	}
 
+	sxitemp_setup_calib(sc, node);
+
 	/* Start data acquisition. */
 	HWRITE4(sc, THS_FILTER, THS_FILTER_EN | THS_FILTER_TYPE(1));
 	HWRITE4(sc, THS_INT_CTRL, THS_INT_CTRL_THERMAL_PER(800));
@@ -181,6 +186,29 @@ sxitemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ts.ts_cookie = sc;
 	sc->sc_ts.ts_get_temperature = sxitemp_get_temperature;
 	thermal_sensor_register(&sc->sc_ts);
+}
+
+void
+sxitemp_setup_calib(struct sxitemp_softc *sc, int node)
+{
+	uint32_t calib[2];
+	bus_size_t size = sizeof(calib);
+
+	/*
+	 * The size of the calibration data depends on the number of
+	 * sensors.  Instead of trying to be clever, just try the
+	 * possible sizes.
+	 */
+	while (size > 0) {
+		if (nvmem_read_cell(node, "calibration", &calib, size) == 0)
+			break;
+		size -= sizeof(calib[0]);
+	}
+
+	if (size > 0)
+		HWRITE4(sc, THS0_1_CDATA, calib[0]);
+	if (size > 4)
+		HWRITE4(sc, THS2_CDATA, calib[1]);
 }
 
 uint64_t
