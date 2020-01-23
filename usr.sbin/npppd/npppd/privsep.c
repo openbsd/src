@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.23 2017/04/19 05:36:13 natano Exp $ */
+/*	$OpenBSD: privsep.c,v 1.24 2020/01/23 00:17:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -986,6 +986,7 @@ privsep_npppd_check_open(struct PRIVSEP_OPEN_ARG *arg)
 		{ "/dev/bpf",		0,	0 },
 		{ "/etc/resolv.conf",	0,	1 },
 		{ "/dev/tun",		1,	0 },
+		{ "/dev/pppac",		1,	0 },
 		{ "/dev/pppx",		1,	0 }
 	};
 
@@ -1069,46 +1070,42 @@ privsep_npppd_check_get_user_info(struct PRIVSEP_GET_USER_INFO_ARG *arg)
 }
 
 static int
-privsep_npppd_check_get_if_addr(struct PRIVSEP_GET_IF_ADDR_ARG *arg)
+privsep_npppd_check_ifname(const char *ifname)
 {
-	if (startswith(arg->ifname, "tun") || startswith(arg->ifname, "pppx"))
+	if (startswith(ifname, "tun") ||
+	    startswith(ifname, "pppac") ||
+	    startswith(ifname, "pppx"))
 		return (0);
 
-	return (1);
+	return (0);
+}
+
+static int
+privsep_npppd_check_get_if_addr(struct PRIVSEP_GET_IF_ADDR_ARG *arg)
+{
+	return (privsep_npppd_check_ifname(arg->ifname));
 }
 
 static int
 privsep_npppd_check_set_if_addr(struct PRIVSEP_SET_IF_ADDR_ARG *arg)
 {
-	if (startswith(arg->ifname, "tun") || startswith(arg->ifname, "pppx"))
-		return (0);
-
-	return (1);
+	return (privsep_npppd_check_ifname(arg->ifname));
 }
 
 static int
 privsep_npppd_check_del_if_addr(struct PRIVSEP_DEL_IF_ADDR_ARG *arg)
 {
-	if (startswith(arg->ifname, "tun") || startswith(arg->ifname, "pppx"))
-		return (0);
-
-	return (1);
+	return (privsep_npppd_check_ifname(arg->ifname));
 }
 
 static int
 privsep_npppd_check_get_if_flags(struct PRIVSEP_GET_IF_FLAGS_ARG *arg)
 {
-	if (startswith(arg->ifname, "tun") || startswith(arg->ifname, "pppx"))
-		return (0);
-
-	return (1);
+	return (privsep_npppd_check_ifname(arg->ifname));
 }
 
 static int
 privsep_npppd_check_set_if_flags(struct PRIVSEP_SET_IF_FLAGS_ARG *arg)
 {
-	if (startswith(arg->ifname, "tun") || startswith(arg->ifname, "pppx"))
-		return (0);
-
-	return (1);
+	return (privsep_npppd_check_ifname(arg->ifname));
 }
