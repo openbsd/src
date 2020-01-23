@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.200 2020/01/23 22:27:18 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.201 2020/01/23 22:32:07 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -78,16 +78,14 @@
 #include <net/if_tun.h>
 
 struct tun_softc {
-	struct arpcom	sc_ac;		/* ethernet common data */
-#define sc_if		sc_ac.ac_if
-	struct selinfo	sc_rsel;	/* read select */
-	struct selinfo	sc_wsel;	/* write select (not used) */
-	LIST_ENTRY(tun_softc)
-			sc_entry;	/* all tunnel interfaces */
-	int		sc_unit;
-	struct sigio_ref
-			sc_sigio;	/* async I/O registration */
-	u_short		sc_flags;	/* misc flags */
+	struct arpcom		sc_ac;		/* ethernet common data */
+#define sc_if			sc_ac.ac_if
+	struct selinfo		sc_rsel;	/* read select */
+	struct selinfo		sc_wsel;	/* write select (not used) */
+	LIST_ENTRY(tun_softc)	sc_entry;	/* all tunnel interfaces */
+	int			sc_unit;
+	struct sigio_ref	sc_sigio;	/* async I/O registration */
+	u_short			sc_flags;	/* misc flags */
 };
 
 #ifdef	TUN_DEBUG
@@ -109,7 +107,6 @@ int	tun_dev_read(struct tun_softc *, struct uio *, int);
 int	tun_dev_write(struct tun_softc *, struct uio *, int);
 int	tun_dev_poll(struct tun_softc *, int, struct proc *);
 int	tun_dev_kqfilter(struct tun_softc *, struct knote *);
-
 
 int	tun_ioctl(struct ifnet *, u_long, caddr_t);
 int	tun_output(struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -549,7 +546,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 
 	if ((sc->sc_flags & TUN_READY) != TUN_READY) {
 		TUNDEBUG(("%s: not ready %#x\n", ifp->if_xname,
-		     sc->sc_flags));
+		    sc->sc_flags));
 		m_freem(m0);
 		return (EHOSTDOWN);
 	}
