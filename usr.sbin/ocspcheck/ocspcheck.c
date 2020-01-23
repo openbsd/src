@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.25 2019/05/15 13:44:18 bcook Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.26 2020/01/23 03:53:39 tb Exp $ */
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -184,35 +184,41 @@ parse_ocsp_time(ASN1_GENERALIZEDTIME *gt)
 }
 
 static X509_STORE *
-read_cacerts(char *file)
+read_cacerts(const char *file, const char *dir)
 {
-	X509_STORE *store;
+	X509_STORE *store = NULL;
 	X509_LOOKUP *lookup;
 
+	if (file == NULL && dir == NULL) {
+		warnx("No CA certs to load");
+		goto end;
+	}
 	if ((store = X509_STORE_new()) == NULL) {
 		warnx("Malloc failed");
 		goto end;
 	}
-	if ((lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file())) ==
-	    NULL) {
-		warnx("Unable to load CA certs from file %s", file);
-		goto end;
-	}
-	if (file) {
+	if (file != NULL) {
+		if ((lookup = X509_STORE_add_lookup(store,
+		    X509_LOOKUP_file())) == NULL) {
+			warnx("Unable to load CA cert file");
+			goto end;
+		}
 		if (!X509_LOOKUP_load_file(lookup, file, X509_FILETYPE_PEM)) {
 			warnx("Unable to load CA certs from file %s", file);
 			goto end;
 		}
-	} else
-		X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
-
-	if ((lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir())) ==
-	    NULL) {
-		warnx("Unable to load CA certs from file %s", file);
-		goto end;
 	}
-	X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
-	ERR_clear_error();
+	if (dir != NULL) {
+		if ((lookup = X509_STORE_add_lookup(store,
+		    X509_LOOKUP_hash_dir())) == NULL) {
+			warnx("Unable to load CA cert directory");
+			goto end;
+		}
+		if (!X509_LOOKUP_add_dir(lookup, dir, X509_FILETYPE_PEM)) {
+			warnx("Unable to load CA certs from directory %s", dir);
+			goto end;
+		}
+	}
 	return store;
 
 end:
@@ -289,7 +295,7 @@ issuer_from_chain(STACK_OF(X509) *fullchain)
 }
 
 static ocsp_request *
-ocsp_request_new_from_cert(char *file, int nonce)
+ocsp_request_new_from_cert(const char *cadir, char *file, int nonce)
 {
 	X509 *cert = NULL;
 	int count = 0;
@@ -308,10 +314,11 @@ ocsp_request_new_from_cert(char *file, int nonce)
 		return NULL;
 
 	request->fullchain = read_fullchain(file, &count);
-	/* Drop rpath from pledge, we don't need to read anymore */
-	if (pledge("stdio inet dns", NULL) == -1)
-		err(1, "pledge");
-
+	if (cadir == NULL) {
+		/* Drop rpath from pledge, we don't need to read anymore */
+		if (pledge("stdio inet dns", NULL) == -1)
+			err(1, "pledge");
+	}
 	if (request->fullchain == NULL)
 		return NULL;
 	if (count <= 1) {
@@ -506,8 +513,9 @@ usage(void)
 int
 main(int argc, char **argv)
 {
+	const char *cafile = NULL, *cadir = NULL;
 	char *host = NULL, *path = "/", *certfile = NULL, *outfile = NULL,
-	    *cafile = NULL, *instaple = NULL, *infile = NULL;
+	    *instaple = NULL, *infile = NULL;
 	struct addr addrs[MAX_SERVERS_DNS] = {{0}};
 	struct source sources[MAX_SERVERS_DNS];
 	int i, ch, staplefd = -1, infd = -1, nonce = 1;
@@ -566,6 +574,24 @@ main(int argc, char **argv)
 		nonce = 0; /* Can't validate a nonce on a saved reply */
 	}
 
+	if (cafile == NULL) {
+		if (access(X509_get_default_cert_file(), R_OK) == 0)
+			cafile = X509_get_default_cert_file();
+		if (access(X509_get_default_cert_dir(), F_OK) == 0)
+			cadir = X509_get_default_cert_dir();
+	}
+
+	if (cafile != NULL) {
+		if (unveil(cafile, "r") == -1)
+			err(1, "unveil");
+	}
+	if (cadir != NULL) {
+		if (unveil(cadir, "r") == -1)
+			err(1, "unveil");
+	}
+	if (unveil(certfile, "r") == -1)
+		err(1, "unveil");
+
 	if (pledge("stdio inet rpath dns", NULL) == -1)
 		err(1, "pledge");
 
@@ -574,9 +600,10 @@ main(int argc, char **argv)
 	 * OCSP request based on the full certificate chain
 	 * we have been given to check.
 	 */
-	if ((castore = read_cacerts(cafile)) == NULL)
+	if ((castore = read_cacerts(cafile, cadir)) == NULL)
 		exit(1);
-	if ((request = ocsp_request_new_from_cert(certfile, nonce)) == NULL)
+	if ((request = ocsp_request_new_from_cert(cadir, certfile, nonce))
+	    == NULL)
 		exit(1);
 
 	dspew("Built an %zu byte ocsp request\n", request->size);
@@ -612,8 +639,13 @@ main(int argc, char **argv)
 		 * routines and parsing untrusted input from someone's OCSP
 		 * server.
 		 */
-		if (pledge("stdio", NULL) == -1)
-			err(1, "pledge");
+		if (cadir == NULL) {
+			if (pledge("stdio", NULL) == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio rpath", NULL) == -1)
+				err(1, "pledge");
+		}
 
 		dspew("Server at %s returns:\n", host);
 		for (i = 0; i < httphsz; i++)
@@ -641,8 +673,13 @@ main(int argc, char **argv)
 		/*
 		 * Pledge minimally before fiddling with libcrypto init
 		 */
-		if (pledge("stdio", NULL) == -1)
-			err(1, "pledge");
+		if (cadir == NULL) {
+			if (pledge("stdio", NULL) == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio rpath", NULL) == -1)
+				err(1, "pledge");
+		}
 
 		dspew("Using ocsp response saved in %s:\n", infile);
 
