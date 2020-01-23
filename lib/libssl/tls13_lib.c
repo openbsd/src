@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.22 2020/01/23 02:49:38 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.23 2020/01/23 05:08:30 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -408,6 +408,22 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 
 	SSLerror(ssl, ERR_R_INTERNAL_ERROR);
 	return -1;
+}
+
+int
+tls13_legacy_pending(const SSL *ssl)
+{
+	struct tls13_ctx *ctx = ssl->internal->tls13;
+	ssize_t ret;
+
+	if (ctx == NULL)
+		return 0;
+
+	ret = tls13_pending_application_data(ctx->rl);
+	if (ret < 0 || ret > INT_MAX)
+		return 0;
+
+	return ret;
 }
 
 int

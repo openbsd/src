@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.23 2020/01/23 02:49:38 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.24 2020/01/23 05:08:30 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -815,6 +815,15 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 }
 
 ssize_t
+tls13_record_layer_pending(struct tls13_record_layer *rl, uint8_t content_type)
+{
+	if (rl->rbuf_content_type != content_type)
+		return 0;
+
+	return CBS_len(&rl->rbuf_cbs);
+}
+
+static ssize_t
 tls13_record_layer_read_internal(struct tls13_record_layer *rl,
     uint8_t content_type, uint8_t *buf, size_t n, int peek)
 {
@@ -1023,6 +1032,15 @@ tls13_write_handshake_data(struct tls13_record_layer *rl, const uint8_t *buf,
     size_t n)
 {
 	return tls13_record_layer_write(rl, SSL3_RT_HANDSHAKE, buf, n);
+}
+
+ssize_t
+tls13_pending_application_data(struct tls13_record_layer *rl)
+{
+	if (!rl->handshake_completed)
+		return 0;
+
+	return tls13_record_layer_pending(rl, SSL3_RT_APPLICATION_DATA);
 }
 
 ssize_t

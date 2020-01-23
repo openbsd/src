@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.47 2020/01/23 02:49:38 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.48 2020/01/23 05:08:30 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -138,6 +138,7 @@ ssize_t tls13_record_layer_phh(struct tls13_record_layer *rl, CBS *cbs);
 ssize_t tls13_read_handshake_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n);
 ssize_t tls13_write_handshake_data(struct tls13_record_layer *rl, const uint8_t *buf,
     size_t n);
+ssize_t tls13_pending_application_data(struct tls13_record_layer *rl);
 ssize_t tls13_peek_application_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n);
 ssize_t tls13_read_application_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n);
 ssize_t tls13_write_application_data(struct tls13_record_layer *rl, const uint8_t *buf,
@@ -223,6 +224,7 @@ int tls13_legacy_connect(SSL *ssl);
 int tls13_legacy_return_code(SSL *ssl, ssize_t ret);
 ssize_t tls13_legacy_wire_read_cb(void *buf, size_t n, void *arg);
 ssize_t tls13_legacy_wire_write_cb(const void *buf, size_t n, void *arg);
+int tls13_legacy_pending(const SSL *ssl);
 int tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len,
     int peek);
 int tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len);

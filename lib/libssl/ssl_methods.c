@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.9 2020/01/23 03:17:40 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.10 2020/01/23 05:08:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -231,7 +231,7 @@ static const SSL_METHOD_INTERNAL TLS_client_method_internal_data = {
 	.ssl_renegotiate = ssl_undefined_function,
 	.ssl_renegotiate_check = ssl_ok,
 	.ssl_get_message = ssl3_get_message,
-	.ssl_pending = ssl3_pending,
+	.ssl_pending = tls13_legacy_pending,
 	.ssl_read_bytes = tls13_legacy_read_bytes,
 	.ssl_write_bytes = tls13_legacy_write_bytes,
 	.ssl3_enc = &TLSv1_2_enc_data,
@@ -608,7 +608,7 @@ static const SSL_METHOD_INTERNAL TLS_server_method_internal_data = {
 	.ssl_renegotiate = ssl_undefined_function,
 	.ssl_renegotiate_check = ssl_ok,
 	.ssl_get_message = ssl3_get_message,
-	.ssl_pending = ssl3_pending,
+	.ssl_pending = tls13_legacy_pending,
 	.ssl_read_bytes = tls13_legacy_read_bytes,
 	.ssl_write_bytes = tls13_legacy_write_bytes,
 	.ssl3_enc = &TLSv1_2_enc_data,
