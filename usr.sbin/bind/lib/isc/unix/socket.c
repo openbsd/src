@@ -1440,58 +1440,6 @@ free_socket(isc__socket_t **socketp) {
 	*socketp = NULL;
 }
 
-static isc_once_t	rcvbuf_once = ISC_ONCE_INIT;
-static int		rcvbuf = RCVBUFSIZE;
-
-static void
-set_rcvbuf(void) {
-	int fd;
-	int max = rcvbuf, min;
-	socklen_t len;
-
-	fd = socket(AF_INET, SOCK_DGRAM | SOCK_DNS, IPPROTO_UDP);
-	if (fd == -1) {
-		switch (errno) {
-		case EPROTONOSUPPORT:
-		case EPFNOSUPPORT:
-		case EAFNOSUPPORT:
-		/*
-		 * Linux 2.2 (and maybe others) return EINVAL instead of
-		 * EAFNOSUPPORT.
-		 */
-		case EINVAL:
-			fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-			break;
-		}
-	}
-	if (fd == -1)
-		return;
-
-	len = sizeof(min);
-	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (void *)&min, &len) >= 0 &&
-	    min < rcvbuf) {
- again:
-		if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (void *)&rcvbuf,
-			       sizeof(rcvbuf)) == -1) {
-			if (errno == ENOBUFS && rcvbuf > min) {
-				max = rcvbuf - 1;
-				rcvbuf = (rcvbuf + min) / 2;
-				goto again;
-			} else {
-				rcvbuf = min;
-				goto cleanup;
-			}
-		} else
-			min = rcvbuf;
-		if (min != max) {
-			rcvbuf = max;
-			goto again;
-		}
-	}
- cleanup:
-	close (fd);
-}
-
 static void
 use_min_mtu(isc__socket_t *sock) {
 	/* use minimum MTU */
@@ -1517,8 +1465,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 	char strbuf[ISC_STRERRORSIZE];
 	const char *err = "socket";
 	int on = 1;
-	socklen_t optlen;
-	int size;
 
 	if (dup_socket == NULL) {
 		switch (sock->type) {
@@ -1635,20 +1581,6 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock,
 					 "setsockopt(%d, IPV6_RECVPKTINFO) "
 					 "%s: %s", sock->fd, "failed",
 					 strbuf);
-		}
-
-		optlen = sizeof(size);
-		if (getsockopt(sock->fd, SOL_SOCKET, SO_RCVBUF,
-			       (void *)&size, &optlen) >= 0 && size < rcvbuf) {
-			RUNTIME_CHECK(isc_once_do(&rcvbuf_once,
-						  set_rcvbuf) == ISC_R_SUCCESS);
-			if (setsockopt(sock->fd, SOL_SOCKET, SO_RCVBUF,
-			       (void *)&rcvbuf, sizeof(rcvbuf)) == -1) {
-				isc__strerror(errno, strbuf, sizeof(strbuf));
-				UNEXPECTED_ERROR(__FILE__, __LINE__,
-					"setsockopt(%d, SO_RCVBUF, %d) %s: %s",
-					sock->fd, rcvbuf, "failed", strbuf);
-			}
 		}
 	}
 
