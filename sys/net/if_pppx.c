@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.71 2020/01/22 23:06:05 dlg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.72 2020/01/23 01:22:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -464,8 +464,9 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	case FIONBIO:
-	case FIOASYNC:
+		break;
 	case FIONREAD:
+		*(int *)addr = mq_hdatalen(&pxd->pxd_svcq);
 		break;
 
 	default:
@@ -553,7 +554,7 @@ filt_pppx_read(struct knote *kn, long hint)
 		return (1);
 	}
 
-	kn->kn_data = mq_len(&pxd->pxd_svcq);
+	kn->kn_data = mq_hdatalen(&pxd->pxd_svcq);
 
 	return (kn->kn_data > 0);
 }
