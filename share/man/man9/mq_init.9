@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mq_init.9,v 1.10 2020/01/22 22:57:42 dlg Exp $
+.\"     $OpenBSD: mq_init.9,v 1.11 2020/01/23 07:12:42 jmc Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 22 2020 $
+.Dd $Mdocdate: January 23 2020 $
 .Dt MQ_INIT 9
 .Os
 .Sh NAME
@@ -217,7 +217,7 @@ returns the number of mbufs that were dropped from the list if the
 length of the queue exceeded its maximum length.
 .Pp
 .Fn mq_hdatalen
-returns the size of a packet on the queue, or 0 if the queue is empty;
+returns the size of a packet on the queue, or 0 if the queue is empty.
 .Pp
 .Fn mq_purge
 returns the number of mbufs that were freed.
