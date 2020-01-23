@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.31 2020/01/23 07:30:55 beck Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.32 2020/01/23 11:06:59 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -656,17 +656,20 @@ tls13_server_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 		if (!EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))
 			goto err;
 	}
-	if (!EVP_DigestVerifyUpdate(mdctx, sig_content, sig_content_len))
+	if (!EVP_DigestVerifyUpdate(mdctx, sig_content, sig_content_len)) {
+		ctx->alert = TLS1_AD_DECRYPT_ERROR;
 		goto err;
+	}
 	if (EVP_DigestVerifyFinal(mdctx, CBS_data(&signature),
 	    CBS_len(&signature)) <= 0) {
+		ctx->alert = TLS1_AD_DECRYPT_ERROR;
 		goto err;
 	}
 
 	ret = 1;
 
  err:
-	if (!ret)
+	if (!ret && ctx->alert == 0)
 		ctx->alert = TLS1_AD_DECODE_ERROR;
 	CBB_cleanup(&cbb);
 	EVP_MD_CTX_free(mdctx);
