@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.70 2019/12/17 13:18:05 reyk Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.71 2020/01/23 02:59:25 dlg Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.hppa/MAKEDEV.md,v 1.61 2019/12/17 13:08:55 reyk Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.106 2019/12/17 13:08:54 reyk Exp 
+.\"	OpenBSD: etc.hppa/MAKEDEV.md,v 1.62 2020/01/23 02:47:28 dlg Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.109 2020/01/23 02:47:29 dlg Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.9 2017/06/06 08:11:23 tb Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2019 $
+.Dd $Mdocdate: January 23 2020 $
 .Dt MAKEDEV 8 hppa
 .Os
 .Sh NAME
@@ -218,6 +218,9 @@ Packet Filter, see
 .It Ar pppx*
 PPP Multiplexer, see
 .Xr pppx 4 .
+.It Ar pppac*
+PPP Access Concentrator, see
+.Xr pppac 4 .
 .It Ar *random
 In-kernel random data source, see
 .Xr random 4 .
