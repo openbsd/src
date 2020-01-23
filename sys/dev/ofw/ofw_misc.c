@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.11 2020/01/21 00:21:55 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.12 2020/01/23 02:57:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -345,14 +345,51 @@ pwm_set_state(uint32_t *cells, struct pwm_state *ps)
 LIST_HEAD(, nvmem_device) nvmem_devices =
 	LIST_HEAD_INITIALIZER(nvmem_devices);
 
+struct nvmem_cell {
+	uint32_t	nc_phandle;
+	struct nvmem_device *nc_nd;
+	bus_addr_t	nc_addr;
+	bus_size_t	nc_size;
+
+	LIST_ENTRY(nvmem_cell) nc_list;
+};
+
+LIST_HEAD(, nvmem_cell) nvmem_cells =
+	LIST_HEAD_INITIALIZER(nvmem_cells);
+
+void
+nvmem_register_child(int node, struct nvmem_device *nd)
+{
+	struct nvmem_cell *nc;
+	uint32_t phandle;
+	uint32_t reg[2];
+
+	phandle = OF_getpropint(node, "phandle", 0);
+	if (phandle == 0)
+		return;
+
+	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))
+		return;
+
+	nc = malloc(sizeof(struct nvmem_cell), M_DEVBUF, M_WAITOK);
+	nc->nc_phandle = phandle;
+	nc->nc_nd = nd;
+	nc->nc_addr = reg[0];
+	nc->nc_size = reg[1];
+	LIST_INSERT_HEAD(&nvmem_cells, nc, nc_list);
+}
+
 void
 nvmem_register(struct nvmem_device *nd)
 {
-	nd->nd_phandle = OF_getpropint(nd->nd_node, "phandle", 0);
-	if (nd->nd_phandle == 0)
-		return;
+	int node;
 
-	LIST_INSERT_HEAD(&nvmem_devices, nd, nd_list);
+	nd->nd_phandle = OF_getpropint(nd->nd_node, "phandle", 0);
+	if (nd->nd_phandle)
+		LIST_INSERT_HEAD(&nvmem_devices, nd, nd_list);
+
+	for (node = OF_child(nd->nd_node); node; node = OF_peer(node))
+		nvmem_register_child(node, nd);
 }
 
 int
@@ -366,4 +403,39 @@ nvmem_read(uint32_t phandle, bus_addr_t addr, void *data, bus_size_t size)
 	}
 
 	return ENXIO;
+}
+
+int
+nvmem_read_cell(int node, const char *name, void *data, bus_size_t size)
+{
+	struct nvmem_device *nd;
+	struct nvmem_cell *nc;
+	uint32_t phandle, *phandles;
+	int id, len;
+
+	id = OF_getindex(node, name, "nvmem-cell-names");
+	if (id < 0)
+		return ENXIO;
+
+	len = OF_getproplen(node, "nvmem-cells");
+	if (len <= 0)
+		return ENXIO;
+
+	phandles = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "nvmem-cells", phandles, len);
+	phandle = phandles[id];
+	free(phandles, M_TEMP, len);
+
+	LIST_FOREACH(nc, &nvmem_cells, nc_list) {
+		if (nc->nc_phandle == phandle)
+			break;
+	}
+	if (nc == NULL)
+		return ENXIO;
+
+	if (size > nc->nc_size)
+		return EINVAL;
+
+	nd = nc->nc_nd;
+	return nd->nd_read(nd->nd_cookie, nc->nc_addr, data, size);
 }

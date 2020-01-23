@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.8 2020/01/21 00:21:55 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.9 2020/01/23 02:57:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -127,5 +127,6 @@ struct nvmem_device {
 
 void	nvmem_register(struct nvmem_device *);
 int	nvmem_read(uint32_t, bus_addr_t, void *, bus_size_t);
+int	nvmem_read_cell(int, const char *name, void *, bus_size_t);
 
 #endif /* _DEV_OFW_MISC_H_ */
