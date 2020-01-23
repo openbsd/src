@@ -1,4 +1,4 @@
-.\"	$OpenBSD: environ.7,v 1.20 2018/10/17 05:49:43 jmc Exp $
+.\"	$OpenBSD: environ.7,v 1.21 2020/01/23 18:19:24 okan Exp $
 .\"	$NetBSD: environ.7,v 1.4 1995/07/03 19:45:07 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)environ.7	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 17 2018 $
+.Dd $Mdocdate: January 23 2020 $
 .Dt ENVIRON 7
 .Os
 .Sh NAME
@@ -99,8 +99,9 @@ but expanded to include
 .Pa /usr/sbin ,
 .Pa /sbin ,
 .Pa /usr/X11R6/bin ,
+.Pa /usr/local/bin ,
 and
-.Pa /usr/local/bin
+.Pa /usr/local/sbin
 in
 .Ox .
 .It Ev PRINTER
