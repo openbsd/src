@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.22 2019/09/21 04:42:46 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.23 2020/01/23 05:27:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -92,6 +92,7 @@ midi_new(struct midiops *ops, void *arg, int mode)
 	ep->len = 0;
 	ep->idx = 0;
 	ep->st = 0;
+	ep->last_st = 0;
 	ep->txmask = 0;
 	ep->self = 1 << i;
 	ep->tickets = 0;
@@ -305,7 +306,18 @@ midi_in(struct midi *iep, unsigned char *idata, int icount)
 				iep->msg[iep->idx++] = c;
 				iep->ops->imsg(iep->arg, iep->msg, iep->idx);
 			}
-			iep->st = 0;
+
+			/*
+			 * There are bogus MIDI sources that keep
+			 * state across sysex; Linux virmidi ports fed
+			 * by the sequencer is an example. We
+			 * workaround this by saving the current
+			 * status and restoring it at the end of the
+			 * sysex.
+			 */
+			iep->st = iep->last_st;
+			if (iep->st)
+				iep->len = voice_len[(iep->st >> 4) & 7];
 			iep->idx = 0;
 		} else if (c >= 0xf0) {
 			iep->msg[0] = c;
@@ -315,7 +327,7 @@ midi_in(struct midi *iep, unsigned char *idata, int icount)
 		} else if (c >= 0x80) {
 			iep->msg[0] = c;
 			iep->len = voice_len[(c >> 4) & 7];
-			iep->st = c;
+			iep->last_st = iep->st = c;
 			iep->idx = 1;
 		} else if (iep->st) {
 			if (iep->idx == 0 && iep->st != SYSEX_START)
