@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.53 2020/01/21 16:16:22 mpi Exp $	*/
+/*	$OpenBSD: conf.c,v 1.54 2020/01/23 02:40:21 dlg Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -381,6 +381,7 @@ struct cdevsw cdevsw[] = {
 	cdev_tun_init(NTUN,tap),		/* 104: Ethernet tap */
 	cdev_switch_init(NSWITCH,switch),	/* 105: switch(4) control interface */
 	cdev_fido_init(NFIDO,fido),		/* 106: FIDO/U2F security key */
+	cdev_pppx_init(NPPPX,pppac),		/* 107: PPP Access Concentrator */
 };
 
 int nblkdev = nitems(bdevsw);

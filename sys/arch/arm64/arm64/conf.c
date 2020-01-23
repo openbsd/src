@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 2020/01/21 16:16:22 mpi Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 2020/01/23 02:40:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -259,6 +259,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ipmi_init(NIPMI,ipmi),	/* 96: ipmi */
 	cdev_switch_init(NSWITCH,switch), /* 97: switch(4) control interface */
 	cdev_fido_init(NFIDO,fido),	/* 98: FIDO/U2F security key */
+	cdev_pppx_init(NPPPX,pppac),	/* 99: PPP Access Concentrator */
 };
 int	nchrdev = nitems(cdevsw);
 

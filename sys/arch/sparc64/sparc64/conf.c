@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.82 2020/01/21 16:16:23 mpi Exp $	*/
+/*	$OpenBSD: conf.c,v 1.83 2020/01/23 02:40:22 dlg Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -295,6 +295,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tun_init(NTUN,tap),	/* 135: Ethernet network tunnel */
 	cdev_switch_init(NSWITCH,switch), /* 136: switch(4) control interface */
 	cdev_fido_init(NFIDO,fido),	/* 137: FIDO/U2F security key */
+	cdev_pppx_init(NPPPX,pppac),	/* 138: PPP Access Concentrator */
 };
 int	nchrdev = nitems(cdevsw);
 

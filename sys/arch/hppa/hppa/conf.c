@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.67 2019/12/17 13:08:55 reyk Exp $	*/
+/*	$OpenBSD: conf.c,v 1.68 2020/01/23 02:40:21 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -188,6 +188,7 @@ struct cdevsw   cdevsw[] =
 	cdev_tun_init(NTUN,tap),	/* 59: Ethernet network tunnel */
 	cdev_switch_init(NSWITCH,switch), /* 60: switch(4) control interface */
 	cdev_fido_init(NFIDO,fido),	/* 61: FIDO/U2F security key */
+	cdev_pppx_init(NPPPX,pppac),	/* 62: PPP Access Concentrator */
 };
 int nchrdev = nitems(cdevsw);
 
