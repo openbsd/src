@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxisid.c,v 1.1 2019/10/23 20:32:20 kettenis Exp $	*/
+/*	$OpenBSD: sxisid.c,v 1.2 2020/01/23 03:27:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -26,6 +26,7 @@
 #include <machine/bus.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 #include <dev/rndvar.h>
 
@@ -47,6 +48,7 @@ struct sxisid_softc {
 	bus_space_handle_t 	sc_ioh;
 
 	bus_size_t		sc_size;
+	struct nvmem_device	sc_nd;
 };
 
 int sxisid_match(struct device *, void *, void *);
@@ -60,7 +62,7 @@ struct cfdriver sxisid_cd = {
 	NULL, "sxisid", DV_DULL
 };
 
-size_t	sxisid_read(void *, size_t, uint8_t *, size_t);
+int	sxisid_read(void *, bus_addr_t, void *, bus_size_t);
 
 int
 sxisid_match(struct device *parent, void *match, void *aux)
@@ -108,30 +110,32 @@ sxisid_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_size = 0x200;
 
-	if (sxisid_read(sc, 0, (uint8_t *)&sid, sizeof(sid)) != sizeof(sid))
+	if (sxisid_read(sc, 0, &sid, sizeof(sid)))
 		return;
 
 	for (i = 0; i < nitems(sid); i++)
 		enqueue_randomness(sid[i]);
+
+	sc->sc_nd.nd_node = faa->fa_node;
+	sc->sc_nd.nd_cookie = sc;
+	sc->sc_nd.nd_read = sxisid_read;
+	nvmem_register(&sc->sc_nd);
 }
 
-size_t
-sxisid_read(void *cookie, size_t offset, uint8_t *datap, size_t count)
+int
+sxisid_read(void *cookie, bus_addr_t addr, void *data, bus_size_t size)
 {
 	struct sxisid_softc *sc = cookie;
+	uint8_t *buf = data;
 	uint32_t val;
-	int pos, len;
-	int timo, i;
+	int pos, timo, i;
 
-	if (offset >= sc->sc_size)
-		return 0;
-	if (offset + count > sc->sc_size)
-		count = sc->sc_size - offset;
+	if (addr >= sc->sc_size || addr + size > sc->sc_size)
+		return EINVAL;
 
-	len = 0;
-	pos = offset;
-	while (len < count) {
-		HWRITE4(sc, SID_PRCTL, SID_PRCTL_OFFSET(pos) |
+	pos = 0;
+	while (pos < size) {
+		HWRITE4(sc, SID_PRCTL, SID_PRCTL_OFFSET(addr) |
 		    SID_PRCTL_OP_LOCK | SID_PRCTL_READ);
 
 		for (timo = 2500; timo > 0; timo--) {
@@ -140,15 +144,15 @@ sxisid_read(void *cookie, size_t offset, uint8_t *datap, size_t count)
 			delay(100);
 		}
 		if (timo == 0)
-			return len;
+			return EIO;
 
 		val = HREAD4(sc, SID_RDKEY);
-		for (i = 0; i < 4 && len < count; i++) {
-			datap[len++] = val & 0xff;
+		for (i = 0; i < 4 && pos < size; i++) {
+			buf[pos++] = val & 0xff;
 			val >>= 8;
-			pos++;
+			addr++;
 		}
 	}
 
-	return len;
+	return 0;
 }
