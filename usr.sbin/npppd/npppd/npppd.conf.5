@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.24 2019/04/08 18:02:48 jmc Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.25 2020/01/23 03:01:22 dlg Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 8 2019 $
+.Dd $Mdocdate: January 23 2020 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -522,7 +522,7 @@ setting is described below:
 .Ic interface Ar ifname Ic address Ar address Ic ipcp Ar ipcp
 .Pp
 Use
-.Xr tun 4
+.Xr pppac 4
 or
 .Xr pppx 4
 and
@@ -670,8 +670,8 @@ ipcp IPCP {
     pool-address 10.0.0.2-10.0.0.254
     dns-servers 8.8.8.8
 }
-interface tun0 address 10.0.0.1 ipcp IPCP
-interface tun1 address 10.0.0.1 ipcp IPCP
+interface pppac0 address 10.0.0.1 ipcp IPCP
+interface pppac1 address 10.0.0.1 ipcp IPCP
 authentication RADIUS type radius {
     username-suffix "@example.com"
     authentication-server {
@@ -685,13 +685,13 @@ authentication LOCAL type local {
     username-suffix "@local"
     users-file "/etc/npppd/npppd-users"
 }
-bind tunnel from L2TP authenticated by RADIUS to tun0
-bind tunnel from L2TP authenticated by LOCAL to tun1
+bind tunnel from L2TP authenticated by RADIUS to pppac0
+bind tunnel from L2TP authenticated by LOCAL to pppac1
 .Ed
 .Sh SEE ALSO
 .Xr pipex 4 ,
+.Xr pppac 4 ,
 .Xr pppx 4 ,
-.Xr tun 4 ,
 .Xr npppctl 8 ,
 .Xr npppd 8 ,
 .Xr sysctl 8
