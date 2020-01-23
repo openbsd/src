@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.252 2020/01/22 15:47:22 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.253 2020/01/23 03:17:40 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -391,8 +391,9 @@ typedef struct ssl_method_internal_st {
 
 	long (*ssl_get_message)(SSL *s, int st1, int stn, int mt,
 	    long max, int *ok);
-	int (*ssl_read_bytes)(SSL *s, int type, unsigned char *buf,
-	    int len, int peek);
+	int (*ssl_pending)(const SSL *s);
+	int (*ssl_read_bytes)(SSL *s, int type, unsigned char *buf, int len,
+	    int peek);
 	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
 
 	const struct ssl_method_st *(*get_ssl_method)(int version);
