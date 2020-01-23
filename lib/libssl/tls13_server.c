@@ -1,6 +1,7 @@
-/* $OpenBSD: tls13_server.c,v 1.9 2020/01/23 06:59:11 beck Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.10 2020/01/23 08:44:31 beck Exp $ */
 /*
- * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -341,6 +342,11 @@ tls13_server_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
 int
 tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx, CBB *cbb)
 {
+	if (!tlsext_server_build(ctx->ssl, cbb, SSL_TLSEXT_MSG_EE))
+		goto err;
+
+	return 1;
+ err:
 	return 0;
 }
 
