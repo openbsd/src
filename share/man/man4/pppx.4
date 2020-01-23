@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppx.4,v 1.4 2015/09/14 17:09:26 schwarze Exp $
+.\"	$OpenBSD: pppx.4,v 1.5 2020/01/23 00:31:40 dlg Exp $
 .\"
 .\" Copyright (c) 2013 YASUOKA Masahiko <yasuoka@yasuoka.net>
 .\"
@@ -14,11 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: January 23 2020 $
 .Dt PPPX 4
 .Os
 .Sh NAME
-.Nm pppx
+.Nm pppx ,
+.Nm pppac
 .Nd PPP multiplexer device
 .Sh SYNOPSIS
 .Cd "pseudo-device pppx"
@@ -28,20 +29,28 @@
 .In net/pipex.h
 .Sh DESCRIPTION
 The
-.Nm
-driver works with the
+.Nm pppx
+and
+.Nm pppac
+drivers works with the
 .Xr npppd 8
-daemon,
-allocating a network interface for each Point-to-Point Protocol (PPP)
-session by request from the daemon.
-It also works with
+daemon to provide network interfaces for Point-to-Point Protocol (PPP)
+sessions by request from the daemon.
+.Nm pppx
+operates by allocating a network interface for each PPP
+session.
+.Nm pppac
+concentrates multiple PPP sessions on a single network interface.
+The interfaces also work with
 .Xr pipex 4
-to accelerate the performance of packet forwarding and supports ioctls
-which are added by
+to accelerate the performance of data packet forwarding,
+and supports ioctls which are added by
 .Xr pipex 4 .
 .Pp
 To use
-.Nm
+.Nm pppx
+or
+.Nm pppac
 from
 .Xr npppd 8
 the administrator needs to configure the interface configuration in
@@ -65,9 +74,13 @@ using
 .Xr sysctl 8
 .Sh HISTORY
 The
-.Nm
+.Nm pppx
 driver first appeared in
 .Ox 5.3 .
+The
+.Nm pppac
+interface driver first appeared in
+.Ox 6.7 .
 .Sh AUTHORS
 .An David Gwynne Aq Mt dlg@openbsd.org
 .An Claudio Jeker Aq Mt claudio@openbsd.org
