@@ -1,6 +1,6 @@
 define(MACHINE,sparc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.90 2020/01/21 16:20:44 mpi Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.91 2020/01/23 02:47:29 dlg Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -120,6 +120,7 @@ _DEV(oppr)
 _DEV(pci, 52)
 _DEV(pf, 73)
 _DEV(pppx, 131)
+_DEV(pppac, 138)
 _DEV(rmidi, 68)
 _DEV(rnd, 119)
 _DEV(tun, 111)

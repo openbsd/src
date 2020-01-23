@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.108 2020/01/21 16:20:43 mpi Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.109 2020/01/23 02:47:29 dlg Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -162,6 +162,7 @@ target(all, local)dnl
 target(all, ptm)dnl
 target(all, hotplug)dnl
 target(all, pppx)dnl
+target(all, pppac)dnl
 target(all, fuse)dnl
 target(all, vmm)dnl
 target(all, pvbus, 0, 1)dnl
@@ -507,6 +508,8 @@ __devitem(diskmap, diskmap, Disk mapper, diskmap)dnl
 _mkdev(diskmap, diskmap, {-M diskmap c major_diskmap_c 0 640 operator-})dnl
 __devitem(pppx, pppx*, PPP Multiplexer, pppx 4)dnl
 _mcdev(pppx, pppx*, pppx, {-major_pppx_c-}, 600)dnl
+__devitem(pppac, pppac*, PPP Access Concentrator, pppac 4)dnl
+_mcdev(pppac, pppac*, pppac, {-major_pppac_c-}, 600)dnl
 __devtitle(plat, Platform-specific devices)dnl
 __devitem(bktr, bktr*, Video frame grabbers)dnl
 _mcdev(bktr, bktr*, bktr, {-major_bktr_c-}, 644)dnl
