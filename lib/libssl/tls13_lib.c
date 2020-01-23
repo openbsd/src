@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.24 2020/01/23 07:30:55 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.25 2020/01/23 10:40:59 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -23,6 +23,11 @@
 
 #include "ssl_locl.h"
 #include "tls13_internal.h"
+
+SSL3_ENC_METHOD TLSv1_3_enc_data = {
+	.enc = NULL,
+	.enc_flags = SSL_ENC_FLAG_TLS1_3_CIPHERS,
+};
 
 /*
  * RFC 8446 section 4.1.3, magic values which must be set by the

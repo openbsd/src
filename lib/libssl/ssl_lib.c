@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.209 2020/01/23 03:17:40 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.210 2020/01/23 10:40:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2006,6 +2006,9 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 		mask_a |= SSL_aRSA;
 
 	mask_a |= SSL_aNULL;
+	mask_a |= SSL_aTLS1_3;
+
+	mask_k |= SSL_kTLS1_3;
 
 	/*
 	 * An ECC certificate may be usable for ECDH and/or

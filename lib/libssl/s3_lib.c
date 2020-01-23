@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.188 2020/01/02 06:37:13 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.189 2020/01/23 10:40:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2502,13 +2502,22 @@ ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		    !SSL_USE_TLS1_2_CIPHERS(s))
 			continue;
 
+		/* Skip TLS v1.3 only ciphersuites if not supported. */
+		if ((c->algorithm_ssl & SSL_TLSV1_3) &&
+		    !SSL_USE_TLS1_3_CIPHERS(s))
+			continue;
+
+		/* If TLS v1.3, only allow TLS v1.3 ciphersuites. */
+		if (SSL_USE_TLS1_3_CIPHERS(s) &&
+		    !(c->algorithm_ssl & SSL_TLSV1_3))
+			continue;
+
 		ssl_set_cert_masks(cert, c);
 		mask_k = cert->mask_k;
 		mask_a = cert->mask_a;
 
 		alg_k = c->algorithm_mkey;
 		alg_a = c->algorithm_auth;
-
 
 		ok = (alg_k & mask_k) && (alg_a & mask_a);
 

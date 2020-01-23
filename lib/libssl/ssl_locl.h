@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.254 2020/01/23 06:15:44 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.255 2020/01/23 10:40:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -341,6 +341,10 @@ __BEGIN_HIDDEN_DECLS
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_USE_TLS1_2_CIPHERS(s) \
 	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
+
+/* Allow TLS 1.3 ciphersuites only. */
+#define SSL_USE_TLS1_3_CIPHERS(s) \
+	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_3_CIPHERS)
 
 #define SSL_PKEY_RSA_ENC	0
 #define SSL_PKEY_RSA_SIGN	1
@@ -1046,6 +1050,9 @@ typedef struct ssl3_enc_method {
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_ENC_FLAG_TLS1_2_CIPHERS     (1 << 4)
 
+/* Allow TLS 1.3 ciphersuites only. */
+#define SSL_ENC_FLAG_TLS1_3_CIPHERS     (1 << 5)
+
 /*
  * ssl_aead_ctx_st contains information about an AEAD that is being used to
  * encrypt an SSL connection.
@@ -1094,6 +1101,7 @@ extern SSL3_ENC_METHOD DTLSv1_enc_data;
 extern SSL3_ENC_METHOD TLSv1_enc_data;
 extern SSL3_ENC_METHOD TLSv1_1_enc_data;
 extern SSL3_ENC_METHOD TLSv1_2_enc_data;
+extern SSL3_ENC_METHOD TLSv1_3_enc_data;
 
 void ssl_clear_cipher_state(SSL *s);
 void ssl_clear_cipher_read_state(SSL *s);
