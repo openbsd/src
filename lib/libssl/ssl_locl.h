@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.253 2020/01/23 03:17:40 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.254 2020/01/23 06:15:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -469,6 +469,10 @@ typedef struct ssl_handshake_tls13_st {
 	/* Preserved transcript hash. */
 	uint8_t transcript_hash[EVP_MAX_MD_SIZE];
 	size_t transcript_hash_len;
+
+	/* Legacy session ID. */
+	uint8_t legacy_session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
+	size_t legacy_session_id_len;
 } SSL_HANDSHAKE_TLS13;
 
 typedef struct ssl_ctx_internal_st {

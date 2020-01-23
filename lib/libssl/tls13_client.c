@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.29 2020/01/23 02:24:38 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.30 2020/01/23 06:15:44 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -157,7 +157,6 @@ tls13_client_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 	CBB cipher_suites, compression_methods, session_id;
 	uint16_t client_version;
 	SSL *s = ctx->ssl;
-	uint8_t *sid;
 
 	/* Legacy client version is capped at TLS 1.2. */
 	client_version = ctx->hs->max_version;
@@ -170,12 +169,15 @@ tls13_client_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 		goto err;
 
 	/* Either 32-random bytes or zero length... */
-	/* XXX - session resumption for TLSv1.2? */
+	arc4random_buf(ctx->hs->legacy_session_id,
+	    sizeof(ctx->hs->legacy_session_id));
+	ctx->hs->legacy_session_id_len = sizeof(ctx->hs->legacy_session_id);
+
 	if (!CBB_add_u8_length_prefixed(cbb, &session_id))
 		goto err;
-	if (!CBB_add_space(&session_id, &sid, 32))
+	if (!CBB_add_bytes(&session_id, ctx->hs->legacy_session_id,
+	    ctx->hs->legacy_session_id_len))
 		goto err;
-	arc4random_buf(sid, 32);
 
 	if (!CBB_add_u16_length_prefixed(cbb, &cipher_suites))
 		goto err;
@@ -315,7 +317,12 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		ctx->hs->server_version = legacy_version;
 	}
 
-	/* XXX - session_id must match. */
+	/* The session_id must match. */
+	if (!CBS_mem_equal(&session_id, ctx->hs->legacy_session_id,
+	    ctx->hs->legacy_session_id_len)) {
+		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		goto err;
+	}
 
 	/*
 	 * Ensure that the cipher suite is one that we offered in the client
