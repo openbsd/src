@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.22 2020/01/22 06:23:00 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.23 2020/01/23 02:49:38 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -278,7 +278,7 @@ tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 	} else if (alert_level == SSL3_AL_FATAL) {
 		rl->read_closed = 1;
 		rl->write_closed = 1;
-		ret = TLS13_IO_FAILURE; /* XXX - ALERT? */
+		ret = TLS13_IO_ALERT;
 	} else
 		return tls13_send_alert(rl, SSL_AD_ILLEGAL_PARAMETER);
 
@@ -293,8 +293,11 @@ tls13_record_layer_send_alert(struct tls13_record_layer *rl)
 
 	/* This has to fit into a single record, per RFC 8446 section 5.1. */
 	if ((ret = tls13_record_layer_write_record(rl, SSL3_RT_ALERT,
-	    rl->alert_data, rl->alert_len)) != rl->alert_len)
+	    rl->alert_data, rl->alert_len)) != rl->alert_len) {
+		if (ret == TLS13_IO_EOF)
+			ret = TLS13_IO_ALERT;
 		return ret;
+	}
 
 	freezero(rl->alert_data, rl->alert_len);
 	rl->alert_data = NULL;
@@ -309,7 +312,7 @@ tls13_record_layer_send_alert(struct tls13_record_layer *rl)
 	} else {
 		rl->read_closed = 1;
 		rl->write_closed = 1;
-		ret = TLS13_IO_SUCCESS; /* XXX - ALERT? */
+		ret = TLS13_IO_ALERT;
 	}
 
 	return ret;

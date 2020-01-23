@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.21 2020/01/22 13:10:51 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.22 2020/01/23 02:49:38 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -349,6 +349,10 @@ tls13_legacy_error(SSL *ssl)
 	struct tls13_ctx *ctx = ssl->internal->tls13;
 	int reason = SSL_R_UNKNOWN;
 
+	/* If we received a fatal alert we already put an error on the stack. */
+	if (S3I(ssl)->fatal_alert != 0)
+		return;
+
 	switch (ctx->error.code) {
 	case TLS13_ERR_VERIFY_FAILED:
 		reason = SSL_R_CERTIFICATE_VERIFY_FAILED;
@@ -384,8 +388,11 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 		return 0;
 
 	case TLS13_IO_FAILURE:
-		if (S3I(ssl)->fatal_alert == 0)
-			tls13_legacy_error(ssl);
+		tls13_legacy_error(ssl);
+		return -1;
+
+	case TLS13_IO_ALERT:
+		tls13_legacy_error(ssl);
 		return -1;
 
 	case TLS13_IO_WANT_POLLIN:
