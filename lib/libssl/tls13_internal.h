@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.49 2020/01/23 07:30:55 beck Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.50 2020/01/23 11:57:20 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -38,9 +38,10 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_IO_WANT_POLLOUT	-4
 #define TLS13_IO_USE_LEGACY	-5
 
-#define TLS13_ERR_VERIFY_FAILED	16
-#define TLS13_ERR_HRR_FAILED	17
-#define TLS13_ERR_TRAILING_DATA	18
+#define TLS13_ERR_VERIFY_FAILED		16
+#define TLS13_ERR_HRR_FAILED		17
+#define TLS13_ERR_TRAILING_DATA		18
+#define TLS13_ERR_NO_SHARED_CIPHER	19
 
 typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
 typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *cbs);

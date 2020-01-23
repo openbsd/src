@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.25 2020/01/23 10:40:59 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.26 2020/01/23 11:57:20 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -375,6 +375,9 @@ tls13_legacy_error(SSL *ssl)
 		break;
 	case TLS13_ERR_TRAILING_DATA:
 		reason = SSL_R_EXTRA_DATA_IN_MESSAGE;
+		break;
+	case TLS13_ERR_NO_SHARED_CIPHER:
+		reason = SSL_R_NO_SHARED_CIPHER;
 		break;
 	}
 
