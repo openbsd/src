@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_pending.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: SSL_pending.3,v 1.5 2020/01/23 03:40:18 beck Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>,
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: January 23 2020 $
 .Dt SSL_PENDING 3
 .Os
 .Sh NAME
@@ -67,37 +67,18 @@ is buffered until it is read by the application via a call to
 .Xr SSL_read 3 .
 .Pp
 .Fn SSL_pending
-returns the number of bytes which are available inside
-.Fa ssl
+returns the number of bytes of application data which are available
 for immediate read.
 .Pp
 .Fn SSL_pending
 takes into account only bytes from the TLS/SSL record that is
 currently being processed (if any).
-If the
-.Fa ssl->read_ahead
-flag is set (see
-.Xr SSL_CTX_set_read_ahead 3 ) ,
-additional protocol bytes beyond the current record may have been
-read containing more TLS/SSL records.
-This also applies to DTLS.
-These additional bytes will be buffered but will remain unprocessed
-until they are needed.
-As these bytes are still in an unprocessed state,
-.Fn SSL_pending
-will ignore them.
-Therefore it is possible for no more bytes to be readable from the
-underlying BIO (because the library has already read them) and for
-.Fn SSL_pending
-to return 0, even though readable application data bytes are available
-(because the data is in unprocessed buffered records).
 .Sh RETURN VALUES
 .Fn SSL_pending
 returns the number of buffered and processed application data
 bytes that are pending and are available for immediate read.
 .Sh SEE ALSO
 .Xr ssl 3 ,
-.Xr SSL_CTX_set_read_ahead 3 ,
 .Xr SSL_read 3
 .Sh HISTORY
 .Fn SSL_pending
