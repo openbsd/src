@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.40 2020/01/22 06:40:42 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.41 2020/01/23 03:35:54 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -292,7 +292,7 @@ s_client_main(int argc, char **argv)
 {
 	unsigned int off = 0, clr = 0;
 	SSL *con = NULL;
-	int s, k, p, state = 0, af = AF_UNSPEC;
+	int s, k, p, pending, state = 0, af = AF_UNSPEC;
 	char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL, *pbuf = NULL;
 	int cbuf_len, cbuf_off;
 	int sbuf_len, sbuf_off;
@@ -1123,6 +1123,7 @@ re_start:
 #endif
 			if (peekaboo) {
 				k = p = SSL_peek(con, pbuf, 1024 /* BUFSIZZ */ );
+				pending = SSL_pending(con);
 				if (SSL_get_error(con, p) == SSL_ERROR_NONE) {
 					if (p <= 0)
 						goto end;
@@ -1142,6 +1143,12 @@ re_start:
 				sbuf_off = 0;
 				sbuf_len = k;
 				if (peekaboo) {
+					if (p != pending) {
+						ret = -1;
+						BIO_printf(bio_err,
+						    "peeked %d but pending %d!\n", p, pending);
+						goto shut;
+					}
 					if (k < p) {
 						ret = -1;
 						BIO_printf(bio_err,
