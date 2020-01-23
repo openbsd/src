@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.23 2020/01/23 05:08:30 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.24 2020/01/23 07:30:55 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -23,6 +23,14 @@
 
 #include "ssl_locl.h"
 #include "tls13_internal.h"
+
+/*
+ * RFC 8446 section 4.1.3, magic values which must be set by the
+ * server in server random if it is willing to downgrade but supports
+ * tls v1.3
+ */
+uint8_t tls13_downgrade_12[8] = {0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x01};
+uint8_t tls13_downgrade_11[8] = {0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x00};
 
 const EVP_AEAD *
 tls13_cipher_aead(const SSL_CIPHER *cipher)

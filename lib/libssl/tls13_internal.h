@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.48 2020/01/23 05:08:30 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.49 2020/01/23 07:30:55 beck Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -304,6 +304,9 @@ int tls13_error_setx(struct tls13_error *error, int code, int subcode,
 #define tls13_set_errorx(ctx, code, subcode, fmt, ...) \
 	tls13_error_setx(&(ctx)->error, (code), (subcode), __FILE__, __LINE__, \
 	    (fmt), __VA_ARGS__)
+
+extern uint8_t tls13_downgrade_12[8];
+extern uint8_t tls13_downgrade_11[8];
 
 __END_HIDDEN_DECLS
 
