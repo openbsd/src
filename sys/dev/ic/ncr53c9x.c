@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.65 2019/05/07 14:22:06 cheloha Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.66 2020/01/23 07:53:00 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -150,11 +150,8 @@ int	ncr53c9x_scsi_probe(struct scsi_link *);
 void	ncr53c9x_scsi_free(struct scsi_link *);
 
 struct scsi_adapter ncr53c9x_adapter = {
-	ncr53c9x_scsi_cmd,	/* cmd */
-	scsi_minphys,		/* minphys */
-	ncr53c9x_scsi_probe,	/* lun probe */
-	ncr53c9x_scsi_free,	/* lun free */
-	NULL			/* ioctl */
+	ncr53c9x_scsi_cmd, scsi_minphys, ncr53c9x_scsi_probe,
+	ncr53c9x_scsi_free, NULL
 };
 
 /*

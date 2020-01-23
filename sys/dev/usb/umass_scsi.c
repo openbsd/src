@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.46 2018/05/01 18:14:46 landry Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.47 2020/01/23 07:53:00 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,9 +69,7 @@ void umass_scsi_cmd(struct scsi_xfer *);
 void umass_scsi_minphys(struct buf *, struct scsi_link *);
 
 struct scsi_adapter umass_scsi_switch = {
-	umass_scsi_cmd,
-	umass_scsi_minphys,
-	umass_scsi_probe
+	umass_scsi_cmd, umass_scsi_minphys, umass_scsi_probe, NULL, NULL
 };
 
 void umass_scsi_cb(struct umass_softc *sc, void *priv, int residue,

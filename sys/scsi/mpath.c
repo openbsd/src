@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.43 2019/09/27 17:22:31 krw Exp $ */
+/*	$OpenBSD: mpath.c,v 1.44 2020/01/23 07:53:00 krw Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -98,9 +98,7 @@ void		mpath_failover_start(void *);
 void		mpath_failover_check(struct mpath_dev *);
 
 struct scsi_adapter mpath_switch = {
-	mpath_cmd,
-	scsi_minphys,
-	mpath_probe
+	mpath_cmd, scsi_minphys, mpath_probe, NULL, NULL
 };
 
 void		mpath_xs_stuffup(struct scsi_xfer *);

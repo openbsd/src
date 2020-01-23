@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.35 2019/09/03 12:13:41 kettenis Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.36 2020/01/23 07:52:59 krw Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -256,7 +256,7 @@ struct cfdriver mesh_cd = {
 };
 
 struct scsi_adapter mesh_switch = {
-	mesh_scsi_cmd, mesh_minphys, NULL, NULL
+	mesh_scsi_cmd, mesh_minphys, NULL, NULL, NULL
 };
 
 #define MESH_DATAOUT	0

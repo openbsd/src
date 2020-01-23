@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.106 2017/12/30 20:46:59 guenther Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.107 2020/01/23 07:52:59 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -159,13 +159,8 @@ void  wdc_atapi_minphys(struct buf *bp, struct scsi_link *sl);
 int   wdc_atapi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 void  wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer);
 
-static struct scsi_adapter atapiscsi_switch =
-{
-	wdc_atapi_send_cmd,
-	wdc_atapi_minphys,
-	NULL,
-	NULL,
-	wdc_atapi_ioctl
+static struct scsi_adapter atapiscsi_switch = {
+	wdc_atapi_send_cmd, wdc_atapi_minphys, NULL, NULL, wdc_atapi_ioctl
 };
 
 /* Inital version shares bus_link structure so it can easily

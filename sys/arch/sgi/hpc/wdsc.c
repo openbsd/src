@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.5 2014/06/27 17:51:08 miod Exp $	*/
+/*	$OpenBSD: wdsc.c,v 1.6 2020/01/23 07:52:59 krw Exp $	*/
 /*	$NetBSD: wdsc.c,v 1.32 2011/07/01 18:53:47 dyoung Exp $	*/
 
 /*
@@ -85,10 +85,7 @@ void	wdsc_dmastop(struct wd33c93_softc *);
 void	wdsc_reset(struct wd33c93_softc *);
 
 struct scsi_adapter wdsc_switch = {
-	wd33c93_scsi_cmd,
-	scsi_minphys,
-	NULL,
-	NULL,
+	wd33c93_scsi_cmd, scsi_minphys, NULL, NULL, NULL
 };
 
 /*

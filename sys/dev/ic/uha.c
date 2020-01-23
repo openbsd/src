@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.26 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: uha.c,v 1.27 2020/01/23 07:53:00 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -82,10 +82,7 @@ void uhaminphys(struct buf *, struct scsi_link *);
 void uha_scsi_cmd(struct scsi_xfer *);
 
 struct scsi_adapter uha_switch = {
-	uha_scsi_cmd,
-	uhaminphys,
-	0,
-	0,
+	uha_scsi_cmd, uhaminphys, NULL, NULL, NULL
 };
 
 struct cfdriver uha_cd = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.37 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: adv.c,v 1.38 2020/01/23 07:52:59 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -82,12 +82,8 @@ struct cfdriver adv_cd = {
 };
 
 
-struct scsi_adapter adv_switch =
-{
-	adv_scsi_cmd,		/* called to start/enqueue a SCSI command */
-	advminphys,		/* to limit the transfer to max device can do */
-	0,			/* IT SEEMS IT IS NOT USED YET */
-	0,			/* as above... */
+struct scsi_adapter adv_switch = {
+	adv_scsi_cmd, advminphys, NULL, NULL, NULL
 };
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.237 2020/01/11 21:38:11 cheloha Exp $	*/
+/*	$OpenBSD: ami.c,v 1.238 2020/01/23 07:53:00 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -98,13 +98,13 @@ int	ami_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 void	amiminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter ami_switch = {
-	ami_scsi_cmd, amiminphys, 0, 0, ami_scsi_ioctl
+	ami_scsi_cmd, amiminphys, NULL, NULL, ami_scsi_ioctl
 };
 
 void	ami_scsi_raw_cmd(struct scsi_xfer *);
 
 struct scsi_adapter ami_raw_switch = {
-	ami_scsi_raw_cmd, amiminphys, 0, 0,
+	ami_scsi_raw_cmd, amiminphys, NULL, NULL, NULL
 };
 
 void *		ami_get_ccb(void *);

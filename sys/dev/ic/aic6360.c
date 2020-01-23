@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.29 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.30 2020/01/23 07:52:59 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -151,7 +151,6 @@
 int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 #endif
 
-void	aic_minphys(struct buf *, struct scsi_link *);
 void 	aic_init(struct aic_softc *);
 void	aic_done(struct aic_softc *, struct aic_acb *);
 void	aic_dequeue(struct aic_softc *, struct aic_acb *);
@@ -186,14 +185,7 @@ struct cfdriver aic_cd = {
 };
 
 struct scsi_adapter aic_switch = {
-	aic_scsi_cmd,
-#ifdef notyet
-	aic_minphys,
-#else
-	scsi_minphys,
-#endif
-	0,
-	0,
+	aic_scsi_cmd, scsi_minphys, NULL, NULL, NULL
 };
 
 /*
@@ -535,21 +527,6 @@ aic_scsi_cmd(struct scsi_xfer *xs)
 			aic_timeout(acb);
 	}
 }
-
-#ifdef notyet
-/*
- * Adjust transfer size in buffer structure
- */
-void
-aic_minphys(struct buf *bp, struct scsi_link *sl)
-{
-
-	AIC_TRACE(("aic_minphys  "));
-	if (bp->b_bcount > (AIC_NSEG << PGSHIFT))
-		bp->b_bcount = (AIC_NSEG << PGSHIFT);
-	minphys(bp);
-}
-#endif
 
 /*
  * Used when interrupt driven I/O isn't allowed, e.g. during boot.

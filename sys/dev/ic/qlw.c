@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.32 2019/12/31 10:05:32 mpi Exp $ */
+/*	$OpenBSD: qlw.c,v 1.33 2020/01/23 07:53:00 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -164,11 +164,7 @@ qlw_queue_write(struct qlw_softc *sc, bus_size_t offset, u_int16_t value)
 }
 
 struct scsi_adapter qlw_switch = {
-	qlw_scsi_cmd,
-	scsi_minphys,
-	qlw_scsi_probe,
-	NULL,	/* scsi_free */
-	NULL	/* ioctl */
+	qlw_scsi_cmd, scsi_minphys, qlw_scsi_probe, NULL, NULL
 };
 
 int

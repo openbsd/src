@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.13 2019/05/26 15:20:04 sf Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.14 2020/01/23 07:53:00 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -86,8 +86,7 @@ struct cfdriver vioscsi_cd = {
 };
 
 struct scsi_adapter vioscsi_switch = {
-	vioscsi_scsi_cmd,
-	scsi_minphys,
+	vioscsi_scsi_cmd, scsi_minphys, NULL, NULL, NULL
 };
 
 const char *const vioscsi_vq_names[] = {
