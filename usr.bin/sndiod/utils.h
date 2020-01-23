@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.h,v 1.4 2019/09/21 04:42:46 ratchov Exp $	*/
+/*	$OpenBSD: utils.h,v 1.5 2020/01/23 05:40:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -38,6 +38,7 @@ void xfree(void *);
 
 void namelist_add(struct name **, char *);
 void namelist_clear(struct name **);
+char *namelist_byindex(struct name **, unsigned int);
 
 /*
  * Log levels:

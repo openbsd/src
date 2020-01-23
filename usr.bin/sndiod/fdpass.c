@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.c,v 1.7 2019/09/21 04:42:46 ratchov Exp $	*/
+/*	$OpenBSD: fdpass.c,v 1.8 2020/01/23 05:40:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -35,6 +35,7 @@ struct fdpass_msg {
 #define FDPASS_RETURN		3	/* return after above commands */
 	unsigned int cmd;		/* one of above */
 	unsigned int num;		/* audio device or midi port number */
+	unsigned int idx;		/* index in the path list */
 	unsigned int mode;		/* SIO_PLAY, SIO_REC, MIO_IN, ... */
 };
 
@@ -75,7 +76,7 @@ fdpass_log(struct fdpass *f)
 }
 
 static int
-fdpass_send(struct fdpass *f, int cmd, int num, int mode, int fd)
+fdpass_send(struct fdpass *f, int cmd, int num, int idx, int mode, int fd)
 {
 	struct fdpass_msg data;
 	struct msghdr msg;
@@ -89,6 +90,7 @@ fdpass_send(struct fdpass *f, int cmd, int num, int mode, int fd)
 
 	data.cmd = cmd;
 	data.num = num;
+	data.idx = idx;
 	data.mode = mode;
 	iov.iov_base = &data;
 	iov.iov_len = sizeof(struct fdpass_msg);
@@ -128,6 +130,8 @@ fdpass_send(struct fdpass *f, int cmd, int num, int mode, int fd)
 		log_puti(cmd);
 		log_puts(", num = ");
 		log_puti(num);
+		log_puts(", idx = ");
+		log_puti(idx);
 		log_puts(", mode = ");
 		log_puti(mode);
 		log_puts(", fd = ");
@@ -141,7 +145,7 @@ fdpass_send(struct fdpass *f, int cmd, int num, int mode, int fd)
 }
 
 static int
-fdpass_recv(struct fdpass *f, int *cmd, int *num, int *mode, int *fd)
+fdpass_recv(struct fdpass *f, int *cmd, int *num, int *idx, int *mode, int *fd)
 {
 	struct fdpass_msg data;
 	struct msghdr msg;
@@ -212,6 +216,7 @@ fdpass_recv(struct fdpass *f, int *cmd, int *num, int *mode, int *fd)
 	}
 	*cmd = data.cmd;
 	*num = data.num;
+	*idx = data.idx;
 	*mode = data.mode;
 #ifdef DEBUG
 	if (log_level >= 3) {
@@ -220,6 +225,8 @@ fdpass_recv(struct fdpass *f, int *cmd, int *num, int *mode, int *fd)
 		log_puti(*cmd);
 		log_puts(", num = ");
 		log_puti(*num);
+		log_puts(", idx = ");
+		log_puti(*idx);
 		log_puts(", mode = ");
 		log_puti(*mode);
 		log_puts(", fd = ");
@@ -235,7 +242,7 @@ fdpass_waitret(struct fdpass *f, int *retfd)
 {
 	int cmd, unused;
 
-	if (!fdpass_recv(fdpass_peer, &cmd, &unused, &unused, retfd))
+	if (!fdpass_recv(fdpass_peer, &cmd, &unused, &unused, &unused, retfd))
 		return 0;
 	if (cmd != FDPASS_RETURN) {
 		if (log_level >= 1) {
@@ -249,13 +256,13 @@ fdpass_waitret(struct fdpass *f, int *retfd)
 }
 
 struct sio_hdl *
-fdpass_sio_open(int num, unsigned int mode)
+fdpass_sio_open(int num, int idx, unsigned int mode)
 {
 	int fd;
 
 	if (fdpass_peer == NULL)
 		return NULL;
-	if (!fdpass_send(fdpass_peer, FDPASS_OPEN_SND, num, mode, -1))
+	if (!fdpass_send(fdpass_peer, FDPASS_OPEN_SND, num, idx, mode, -1))
 		return NULL;
 	if (!fdpass_waitret(fdpass_peer, &fd))
 		return NULL;
@@ -265,13 +272,13 @@ fdpass_sio_open(int num, unsigned int mode)
 }
 
 struct mio_hdl *
-fdpass_mio_open(int num, unsigned int mode)
+fdpass_mio_open(int num, int idx, unsigned int mode)
 {
 	int fd;
 
 	if (fdpass_peer == NULL)
 		return NULL;
-	if (!fdpass_send(fdpass_peer, FDPASS_OPEN_MIDI, num, mode, -1))
+	if (!fdpass_send(fdpass_peer, FDPASS_OPEN_MIDI, num, idx, mode, -1))
 		return NULL;
 	if (!fdpass_waitret(fdpass_peer, &fd))
 		return NULL;
@@ -296,13 +303,13 @@ fdpass_in_worker(void *arg)
 void
 fdpass_in_helper(void *arg)
 {
-	int cmd, num, mode, fd;
+	int cmd, num, idx, mode, fd;
 	struct fdpass *f = arg;
 	struct dev *d;
 	struct port *p;
-	struct name *path;
+	char *path;
 
-	if (!fdpass_recv(f, &cmd, &num, &mode, &fd))
+	if (!fdpass_recv(f, &cmd, &num, &idx, &mode, &fd))
 		return;
 	switch (cmd) {
 	case FDPASS_OPEN_SND:
@@ -315,11 +322,12 @@ fdpass_in_helper(void *arg)
 			fdpass_close(f);
 			return;
 		}
-		for (path = d->path_list; path != NULL; path = path->next) {
-			fd = sio_sun_getfd(path->str, mode, 1);
-			if (fd != -1)
-				break;
+		path = namelist_byindex(&d->path_list, idx);
+		if (path == NULL) {
+			fdpass_close(f);
+			return;
 		}
+		fd = sio_sun_getfd(path, mode, 1);
 		break;
 	case FDPASS_OPEN_MIDI:
 		p = port_bynum(num);
@@ -331,17 +339,18 @@ fdpass_in_helper(void *arg)
 			fdpass_close(f);
 			return;
 		}
-		for (path = p->path_list; path != NULL; path = path->next) {
-			fd = mio_rmidi_getfd(path->str, mode, 1);
-			if (fd != -1)
-				break;
+		path = namelist_byindex(&p->path_list, idx);
+		if (path == NULL) {
+			fdpass_close(f);
+			return;
 		}
+		fd = mio_rmidi_getfd(path, mode, 1);
 		break;
 	default:
 		fdpass_close(f);
 		return;
 	}
-	fdpass_send(f, FDPASS_RETURN, 0, 0, fd);
+	fdpass_send(f, FDPASS_RETURN, 0, 0, 0, fd);
 }
 
 void

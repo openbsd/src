@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.16 2019/09/21 04:42:46 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.17 2020/01/23 05:40:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -85,6 +85,37 @@ dev_sio_timeout(void *arg)
 }
 
 /*
+ * open the device using one of the provided paths
+ */
+static struct sio_hdl *
+dev_sio_openlist(struct dev *d, unsigned int mode)
+{
+	struct name *n;
+	struct sio_hdl *hdl;
+	int idx;
+
+	idx = 0;
+	n = d->path_list;
+	while (1) {
+		if (n == NULL)
+			break;
+		hdl = fdpass_sio_open(d->num, idx, mode);
+		if (hdl != NULL) {
+			if (log_level >= 2) {
+				dev_log(d);
+				log_puts(": using ");
+				log_puts(n->str);
+				log_puts("\n");
+			}
+			return hdl;
+		}
+		n = n->next;
+		idx++;
+	}
+	return NULL;
+}
+
+/*
  * open the device.
  */
 int
@@ -93,15 +124,15 @@ dev_sio_open(struct dev *d)
 	struct sio_par par;
 	unsigned int mode = d->mode & (MODE_PLAY | MODE_REC);
 
-	d->sio.hdl = fdpass_sio_open(d->num, mode);
+	d->sio.hdl = dev_sio_openlist(d, mode);
 	if (d->sio.hdl == NULL) {
 		if (mode != (SIO_PLAY | SIO_REC))
 			return 0;
-		d->sio.hdl = fdpass_sio_open(d->num, SIO_PLAY);
+		d->sio.hdl = dev_sio_openlist(d, SIO_PLAY);
 		if (d->sio.hdl != NULL)
 			mode = SIO_PLAY;
 		else {
-			d->sio.hdl = fdpass_sio_open(d->num, SIO_REC);
+			d->sio.hdl = dev_sio_openlist(d, SIO_REC);
 			if (d->sio.hdl != NULL)
 				mode = SIO_REC;
 			else
@@ -231,7 +262,7 @@ dev_sio_reopen(struct dev *d)
 	struct sio_par par;
 	struct sio_hdl *hdl;
 
-	hdl = fdpass_sio_open(d->num, d->mode & (MODE_PLAY | MODE_REC));
+	hdl = dev_sio_openlist(d, d->mode & (MODE_PLAY | MODE_REC));
 	if (hdl == NULL) {
 		if (log_level >= 1) {
 			dev_log(d);

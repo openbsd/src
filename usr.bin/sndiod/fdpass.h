@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.h,v 1.1 2015/12/20 11:38:33 ratchov Exp $	*/
+/*	$OpenBSD: fdpass.h,v 1.2 2020/01/23 05:40:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -25,7 +25,7 @@ void fdpass_close(struct fdpass *f);
 extern struct fileops worker_fileops, helper_fileops;
 extern struct fdpass *fdpass_peer;
 
-struct sio_hdl *fdpass_sio_open(int, unsigned int);
-struct mio_hdl *fdpass_mio_open(int, unsigned int);
+struct sio_hdl *fdpass_sio_open(int, int, unsigned int);
+struct mio_hdl *fdpass_mio_open(int, int, unsigned int);
 
 #endif /* !defined(FDPASS_H) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.6 2019/09/21 04:42:46 ratchov Exp $	*/
+/*	$OpenBSD: utils.c,v 1.7 2020/01/23 05:40:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -214,4 +214,21 @@ namelist_clear(struct name **list)
 		*list = n->next;
 		xfree(n);
 	}
+}
+
+char *
+namelist_byindex(struct name **list, unsigned int idx)
+{
+	struct name *n;
+
+	n = *list;
+	while (1) {
+		if (n == NULL)
+			return NULL;
+		if (idx == 0)
+			break;
+		n = n->next;
+		idx--;
+	}
+	return n->str;
 }
