@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.201 2020/01/23 22:32:07 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.202 2020/01/23 23:20:54 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -219,7 +219,6 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	ifp->if_softc = sc;
 
 	ifp->if_ioctl = tun_ioctl;
-	ifp->if_output = tun_output;
 	ifp->if_start = tun_start;
 	ifp->if_hardmtu = TUNMRU;
 	ifp->if_link_state = LINK_STATE_DOWN;
@@ -230,6 +229,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 			goto exists;
 
 		sc->sc_flags &= ~TUN_LAYER2;
+		ifp->if_output = tun_output;
 		ifp->if_mtu = ETHERMTU;
 		ifp->if_flags = (IFF_POINTOPOINT|IFF_MULTICAST);
 		ifp->if_type = IFT_TUNNEL;
@@ -534,7 +534,6 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
     struct rtentry *rt)
 {
 	struct tun_softc	*sc = ifp->if_softc;
-	int			 error;
 	u_int32_t		*af;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
@@ -551,29 +550,13 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		return (EHOSTDOWN);
 	}
 
-	if (sc->sc_flags & TUN_LAYER2)
-		return (ether_output(ifp, m0, dst, rt));
-
 	M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
 	if (m0 == NULL)
 		return (ENOBUFS);
 	af = mtod(m0, u_int32_t *);
 	*af = htonl(dst->sa_family);
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
-#endif
-
-	error = if_enqueue(ifp, m0);
-
-	if (error) {
-		ifp->if_collisions++;
-		return (error);
-	}
-
-	tun_wakeup(sc);
-	return (0);
+	return (if_enqueue(ifp, m0));
 }
 
 void
@@ -771,12 +754,10 @@ tun_dev_read(struct tun_softc *sc, struct uio *uio, int ioflag)
 		}
 	} while (m0 == NULL);
 
-	if (sc->sc_flags & TUN_LAYER2) {
 #if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
-	}
 
 	while (m0 != NULL && uio->uio_resid > 0 && error == 0) {
 		len = ulmin(uio->uio_resid, m0->m_len);
