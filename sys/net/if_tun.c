@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.199 2020/01/23 03:10:18 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.200 2020/01/23 22:27:18 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -101,23 +101,6 @@ int	tundebug = TUN_DEBUG;
 #define TUN_IFF_FLAGS (IFF_UP|IFF_POINTOPOINT|IFF_MULTICAST|IFF_BROADCAST)
 
 void	tunattach(int);
-
-/* cdev functions */
-int	tunopen(dev_t, int, int, struct proc *);
-int	tunclose(dev_t, int, int, struct proc *);
-int	tunioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	tunread(dev_t, struct uio *, int);
-int	tunwrite(dev_t, struct uio *, int);
-int	tunpoll(dev_t, int, struct proc *);
-int	tunkqfilter(dev_t, struct knote *);
-
-int	tapopen(dev_t, int, int, struct proc *);
-int	tapclose(dev_t, int, int, struct proc *);
-int	tapioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	tapread(dev_t, struct uio *, int);
-int	tapwrite(dev_t, struct uio *, int);
-int	tappoll(dev_t, int, struct proc *);
-int	tapkqfilter(dev_t, struct knote *);
 
 int	tun_dev_open(struct tun_softc *, int, int, struct proc *);
 int	tun_dev_close(struct tun_softc *, int, int, struct proc *);
