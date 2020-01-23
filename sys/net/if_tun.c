@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.202 2020/01/23 23:20:54 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.203 2020/01/23 23:22:47 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -249,7 +249,6 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 		ether_fakeaddr(ifp);
 		ifp->if_flags =
 		    (IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST);
-		ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 		if_attach(ifp);
 		ether_ifattach(ifp);
