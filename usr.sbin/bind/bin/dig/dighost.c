@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.36 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: dighost.c,v 1.37 2020/01/23 08:14:12 florian Exp $ */
 
 /*! \file
  *  \note
@@ -108,8 +108,8 @@ dig_searchlistlist_t search_list;
 
 isc_boolean_t
 	check_ra = ISC_FALSE,
-	have_ipv4 = ISC_FALSE,
-	have_ipv6 = ISC_FALSE,
+	have_ipv4 = ISC_TRUE,
+	have_ipv6 = ISC_TRUE,
 	specified_source = ISC_FALSE,
 	free_now = ISC_FALSE,
 	cancel_now = ISC_FALSE,
@@ -1515,16 +1515,6 @@ setup_libs(void) {
 	debug("setup_libs()");
 
 	dns_result_register();
-
-	result = isc_net_probeipv4();
-	if (result == ISC_R_SUCCESS)
-		have_ipv4 = ISC_TRUE;
-
-	result = isc_net_probeipv6();
-	if (result == ISC_R_SUCCESS)
-		have_ipv6 = ISC_TRUE;
-	if (!have_ipv6 && !have_ipv4)
-		fatal("can't find either v4 or v6 networking");
 
 	result = isc_log_create(&lctx, &logconfig);
 	check_result(result, "isc_log_create");
