@@ -67,7 +67,7 @@ DNSOBJS =	byaddr.@O@ \
 		result.@O@ \
 		soa.@O@ \
 		time.@O@ \
-		tsec.@O@ tsig.@O@ ttl.@O@
+		tsig.@O@ ttl.@O@
 
 OBJS=		${DNSOBJS} ${OTHEROBJS} ${DSTOBJS}
 
@@ -96,7 +96,7 @@ DNSSRCS =	byaddr.c \
 		result.c \
 		soa.c \
 		time.c \
-		tsec.c tsig.c ttl.c \
+		tsig.c ttl.c \
 		${OTHERSRCS}
 
 SRCS = ${DSTSRCS} ${DNSSRCS}
