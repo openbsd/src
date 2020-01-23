@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.16 2020/01/21 16:20:44 mpi Exp 
-#	OpenBSD: MAKEDEV.common,v 1.108 2020/01/21 16:20:43 mpi Exp 
+#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.17 2020/01/23 02:47:29 dlg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.109 2020/01/23 02:47:29 dlg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -70,6 +70,7 @@
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
+#	pppac*	PPP Access Concentrator
 #	*random	In-kernel random data source
 #	tun*	Network tunnel driver
 #	tap*	Ethernet tunnel driver
@@ -251,6 +252,10 @@ tun*)
 	M urandom c 33 0 644
 	RMlist[${#RMlist[*]}]=random
 	MKlist[${#MKlist[*]}]=";ln -s urandom random"
+	;;
+
+pppac*)
+	M pppac$U c 77 $U 600
 	;;
 
 pppx*)
@@ -441,11 +446,11 @@ all)
 	R switch0 switch1 switch2 switch3 octcf0 vnd0 vnd1 vnd2 vnd3
 	R sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0
 	R tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 pty1 pty2
-	R diskmap vscsi0 ch0 audio0 audio1 audio2 dt bpf fuse pppx
-	R hotplug ptm local wscons pci0 pci1 pci2 pci3 uall video0
-	R video1 uk0 random tty00 tty01 tty02 tty03 tty04 tty05 tty06
-	R tty07 tty08 tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std st0 st1
-	R fd
+	R diskmap vscsi0 ch0 audio0 audio1 audio2 dt bpf fuse pppac
+	R pppx hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
+	R video0 video1 uk0 random tty00 tty01 tty02 tty03 tty04 tty05
+	R tty06 tty07 tty08 tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std
+	R st0 st1 fd
 	;;
 
 octcf*|wd*|sd*)

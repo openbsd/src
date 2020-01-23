@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.arm64/MAKEDEV.md,v 1.6 2020/01/21 16:20:43 mpi Exp 
-#	OpenBSD: MAKEDEV.common,v 1.108 2020/01/21 16:20:43 mpi Exp 
+#	OpenBSD: etc.arm64/MAKEDEV.md,v 1.7 2020/01/23 02:47:28 dlg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.109 2020/01/23 02:47:29 dlg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -76,6 +76,7 @@
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	pppx*	PPP Multiplexer
+#	pppac*	PPP Access Concentrator
 #	radio*	FM tuner devices
 #	*random	In-kernel random data source
 #	rmidi*	Raw MIDI devices
@@ -275,6 +276,10 @@ rmidi*)
 radio*)
 	M radio$U	c 76 $U
 	MKlist[${#MKlist[*]}]=";[ -e radio ] || ln -s radio$U radio"
+	;;
+
+pppac*)
+	M pppac$U c 99 $U 600
 	;;
 
 pppx*)
@@ -488,7 +493,7 @@ all)
 	R bktr0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
 	R sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3
 	R bio pty0 diskmap vscsi0 ch0 audio0 audio1 audio2 dt bpf fuse
-	R pppx hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
+	R pppac pppx hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
 	R rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	R tuner0 radio0 video0 video1 uk0 random tty00 tty01 tty02
 	R tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b apm pf
