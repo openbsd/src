@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.69 2020/01/23 08:04:50 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.70 2020/01/23 10:48:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -815,7 +815,7 @@ ssl3_get_client_hello(SSL *s)
 	}
 
 	s->internal->first_packet = 1;
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_SR_CLNT_HELLO_B,
+	n = ssl3_get_message(s, SSL3_ST_SR_CLNT_HELLO_B,
 	    SSL3_ST_SR_CLNT_HELLO_C, SSL3_MT_CLIENT_HELLO,
 	    SSL3_RT_MAX_PLAIN_LENGTH, &ok);
 	if (!ok)
@@ -2060,7 +2060,7 @@ ssl3_get_client_key_exchange(SSL *s)
 	long n;
 
 	/* 2048 maxlen is a guess.  How long a key does that permit? */
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_SR_KEY_EXCH_A,
+	n = ssl3_get_message(s, SSL3_ST_SR_KEY_EXCH_A,
 	    SSL3_ST_SR_KEY_EXCH_B, SSL3_MT_CLIENT_KEY_EXCHANGE, 2048, &ok);
 	if (!ok)
 		return ((int)n);
@@ -2122,7 +2122,7 @@ ssl3_get_cert_verify(SSL *s)
 
 	EVP_MD_CTX_init(&mctx);
 
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_SR_CERT_VRFY_A,
+	n = ssl3_get_message(s, SSL3_ST_SR_CERT_VRFY_A,
 	    SSL3_ST_SR_CERT_VRFY_B, -1, SSL3_RT_MAX_PLAIN_LENGTH, &ok);
 	if (!ok)
 		return ((int)n);
@@ -2345,9 +2345,8 @@ ssl3_get_client_certificate(SSL *s)
 	const unsigned char *q;
 	STACK_OF(X509) *sk = NULL;
 
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_SR_CERT_A, SSL3_ST_SR_CERT_B,
+	n = ssl3_get_message(s, SSL3_ST_SR_CERT_A, SSL3_ST_SR_CERT_B,
 	    -1, s->internal->max_cert_list, &ok);
-
 	if (!ok)
 		return ((int)n);
 

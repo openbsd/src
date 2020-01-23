@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.82 2018/11/05 05:45:15 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.83 2020/01/23 10:48:37 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -136,9 +136,8 @@ dtls1_get_hello_verify(SSL *s)
 	uint16_t ssl_version;
 	CBS hello_verify_request, cookie;
 
-	n = s->method->internal->ssl_get_message(s, DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A,
+	n = ssl3_get_message(s, DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A,
 	    DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B, -1, s->internal->max_cert_list, &ok);
-
 	if (!ok)
 		return ((int)n);
 

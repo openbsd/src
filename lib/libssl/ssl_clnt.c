@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.61 2019/03/31 15:49:03 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.62 2020/01/23 10:48:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -811,7 +811,7 @@ ssl3_get_server_hello(SSL *s)
 	long n;
 
 	s->internal->first_packet = 1;
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_SRVR_HELLO_A,
+	n = ssl3_get_message(s, SSL3_ST_CR_SRVR_HELLO_A,
 	    SSL3_ST_CR_SRVR_HELLO_B, -1, 20000, /* ?? */ &ok);
 	if (!ok)
 		return ((int)n);
@@ -1048,9 +1048,8 @@ ssl3_get_server_certificate(SSL *s)
 	SESS_CERT		*sc;
 	EVP_PKEY		*pkey = NULL;
 
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_CERT_A,
+	n = ssl3_get_message(s, SSL3_ST_CR_CERT_A,
 	    SSL3_ST_CR_CERT_B, -1, s->internal->max_cert_list, &ok);
-
 	if (!ok)
 		return ((int)n);
 
@@ -1443,7 +1442,7 @@ ssl3_get_server_key_exchange(SSL *s)
 	 * Use same message size as in ssl3_get_certificate_request()
 	 * as ServerKeyExchange message may be skipped.
 	 */
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_KEY_EXCH_A,
+	n = ssl3_get_message(s, SSL3_ST_CR_KEY_EXCH_A,
 	    SSL3_ST_CR_KEY_EXCH_B, -1, s->internal->max_cert_list, &ok);
 	if (!ok)
 		return ((int)n);
@@ -1611,9 +1610,8 @@ ssl3_get_certificate_request(SSL *s)
 	const unsigned char	*q;
 	STACK_OF(X509_NAME)	*ca_sk = NULL;
 
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_CERT_REQ_A,
+	n = ssl3_get_message(s, SSL3_ST_CR_CERT_REQ_A,
 	    SSL3_ST_CR_CERT_REQ_B, -1, s->internal->max_cert_list, &ok);
-
 	if (!ok)
 		return ((int)n);
 
@@ -1765,7 +1763,7 @@ ssl3_get_new_session_ticket(SSL *s)
 	long			 n;
 	CBS			 cbs, session_ticket;
 
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_SESSION_TICKET_A,
+	n = ssl3_get_message(s, SSL3_ST_CR_SESSION_TICKET_A,
 	    SSL3_ST_CR_SESSION_TICKET_B, -1, 16384, &ok);
 	if (!ok)
 		return ((int)n);
@@ -1841,10 +1839,9 @@ ssl3_get_cert_status(SSL *s)
 	long			 n;
 	uint8_t			 status_type;
 
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_CERT_STATUS_A,
+	n = ssl3_get_message(s, SSL3_ST_CR_CERT_STATUS_A,
 	    SSL3_ST_CR_CERT_STATUS_B, SSL3_MT_CERTIFICATE_STATUS,
 	    16384, &ok);
-
 	if (!ok)
 		return ((int)n);
 
@@ -1913,12 +1910,12 @@ ssl3_get_server_done(SSL *s)
 	int	ok, ret = 0;
 	long	n;
 
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_SRVR_DONE_A,
+	n = ssl3_get_message(s, SSL3_ST_CR_SRVR_DONE_A,
 	    SSL3_ST_CR_SRVR_DONE_B, SSL3_MT_SERVER_DONE,
 	    30, /* should be very small, like 0 :-) */ &ok);
-
 	if (!ok)
 		return ((int)n);
+
 	if (n > 0) {
 		/* should contain no data */
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
@@ -2796,10 +2793,11 @@ ssl3_check_finished(SSL *s)
 		return (1);
 	/* this function is called when we really expect a Certificate
 	 * message, so permit appropriate message length */
-	n = s->method->internal->ssl_get_message(s, SSL3_ST_CR_CERT_A,
+	n = ssl3_get_message(s, SSL3_ST_CR_CERT_A,
 	    SSL3_ST_CR_CERT_B, -1, s->internal->max_cert_list, &ok);
 	if (!ok)
 		return ((int)n);
+
 	S3I(s)->tmp.reuse_message = 1;
 	if ((S3I(s)->tmp.message_type == SSL3_MT_FINISHED) ||
 	    (S3I(s)->tmp.message_type == SSL3_MT_NEWSESSION_TICKET))
