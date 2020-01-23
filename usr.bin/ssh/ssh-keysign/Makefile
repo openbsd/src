@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2019/12/13 19:09:10 djm Exp $
+#	$OpenBSD: Makefile,v 1.19 2020/01/23 10:24:30 dtucker Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -16,5 +16,10 @@ MAN=	ssh-keysign.8
 
 .include <bsd.prog.mk>
 
-LDADD+=	-lcrypto -lutil -lz
-DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
+LDADD+=	-lcrypto -lutil
+DPADD+=	${LIBCRYPTO} ${LIBUTIL}
+
+.if (${ZLIB:L} == "yes")
+LDADD+=	-lz
+DPADD+=	${LIBZ}
+.endif
