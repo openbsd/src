@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.38 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.39 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -251,7 +251,7 @@ ike_print (const u_int8_t *cp, u_int length)
 	return;
 
 trunc:
-	fputs(" [|isakmp]", stdout);
+	printf(" [|isakmp]");
 }
 
 void
@@ -951,7 +951,7 @@ ike_pl_print (u_int8_t type, u_int8_t *buf, u_int8_t doi)
 
 pltrunc:
 	if (doi == ISAKMP_DOI)
-		fputs(" [|isakmp]", stdout);
+		printf(" [|isakmp]");
 	else
-		fputs(" [|ipsec]", stdout);
+		printf(" [|ipsec]");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.25 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.26 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -251,12 +251,12 @@ ah_print (const u_char *bp, u_int len, const u_char *bp2)
 	    ntohl(ah->ah_spi), ntohl(ah->ah_seq), len);
 
 	if (vflag) {
-	        (void)printf(" [ ");
+	        printf(" [ ");
 
 	        pl_len = (ah->ah_pl_len + 2) << 2; /* RFC2402, sec 2.2 */
 
 		if (len <= pl_len) {
-		        (void)printf("truncated");
+		        printf("truncated");
 			goto out;
 		}
 		
@@ -297,11 +297,11 @@ ah_print (const u_char *bp, u_int len, const u_char *bp2)
 			break;
 
 		default:
-		        (void)printf("ip-proto-%d len %d", ah->ah_nxt_hdr,
-				     len - pl_len);
+		        printf("ip-proto-%d len %d",
+			    ah->ah_nxt_hdr, len - pl_len);
 		}
 out:
-		(void)printf(" ]");
+		printf(" ]");
 	}
 
 }
@@ -322,7 +322,8 @@ ipcomp_print (const u_char *bp, u_int len, const u_char *bp2)
 	ip = (const struct ip *)bp2;
 
 	printf("ipcomp %s > %s",
-	    ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst));
+	    ipaddr_string(&ip->ip_src),
+	    ipaddr_string(&ip->ip_dst));
 
 	if (plen < sizeof(struct ipcomp_hdr)) {
 		printf("[|ipcomp]");

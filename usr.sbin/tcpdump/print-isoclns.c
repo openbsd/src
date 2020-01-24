@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-isoclns.c,v 1.13 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-isoclns.c,v 1.14 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -56,8 +56,8 @@ isoclns_print(const u_char *p, u_int length, u_int caplen,
 		printf("[|iso-clns] ");
 		if (!eflag)
 			printf("%s > %s",
-			       etheraddr_string(esrc),
-			       etheraddr_string(edst));
+			    etheraddr_string(esrc),
+			    etheraddr_string(edst));
 		return;
 	}
 
@@ -67,28 +67,28 @@ isoclns_print(const u_char *p, u_int length, u_int caplen,
 		/* esis_print(&p, &length); */
 		printf("iso-clns");
 		if (!eflag)
-			(void)printf(" %s > %s",
-				     etheraddr_string(esrc),
-				     etheraddr_string(edst));
+			printf(" %s > %s",
+			    etheraddr_string(esrc),
+			    etheraddr_string(edst));
 		break;
 
 	case ESIS:
 		printf("iso-esis");
 		if (!eflag)
-			(void)printf(" %s > %s",
-				     etheraddr_string(esrc),
-				     etheraddr_string(edst));
+			printf(" %s > %s",
+			    etheraddr_string(esrc),
+			    etheraddr_string(edst));
 		esis_print(p, length);
 		return;
 
 	case ISIS:
 		printf("iso-isis");
 		if (!eflag)
-			(void)printf(" %s > %s",
-				     etheraddr_string(esrc),
-				     etheraddr_string(edst));
+			printf(" %s > %s",
+			    etheraddr_string(esrc),
+			    etheraddr_string(edst));
 		/* isis_print(&p, &length); */
-		(void)printf(" len=%d ", length);
+		printf(" len=%d ", length);
 		if (caplen > 1)
 			default_print_unaligned(p, caplen);
 		break;
@@ -96,18 +96,18 @@ isoclns_print(const u_char *p, u_int length, u_int caplen,
 	case NULLNS:
 		printf("iso-nullns");
 		if (!eflag)
-			(void)printf(" %s > %s",
-				     etheraddr_string(esrc),
-				     etheraddr_string(edst));
+			printf(" %s > %s",
+			    etheraddr_string(esrc),
+			    etheraddr_string(edst));
 		break;
 
 	default:
 		printf("iso-clns %02x", p[0]);
 		if (!eflag)
-			(void)printf(" %s > %s",
-				     etheraddr_string(esrc),
-				     etheraddr_string(edst));
-		(void)printf(" len=%d ", length);
+			printf(" %s > %s",
+			    etheraddr_string(esrc),
+			    etheraddr_string(edst));
+		printf(" len=%d ", length);
 		if (caplen > 1)
 			default_print_unaligned(p, caplen);
 		break;
@@ -182,7 +182,7 @@ esis_print(const u_char *p, u_int length)
 	off[1] = eh->cksum[1];
 	if (vflag && osi_cksum(p, li, eh->cksum, cksum, off)) {
 		printf(" bad cksum (got %02x%02x want %02x%02x)",
-		       eh->cksum[1], eh->cksum[0], cksum[1], cksum[0]);
+		    eh->cksum[1], eh->cksum[0], cksum[1], cksum[0]);
 		return;
 	}
 	if (eh->version != 1) {
@@ -252,7 +252,7 @@ esis_print(const u_char *p, u_int length)
 	}
 
 	default:
-		(void)printf(" len=%d", length);
+		printf(" len=%d", length);
 		if (length && p < snapend) {
 			length = snapend - p;
 			default_print(p, length);

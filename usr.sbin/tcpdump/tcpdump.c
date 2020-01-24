@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.91 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.92 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -656,14 +656,14 @@ default_print_unaligned(const u_char *cp, u_int length)
 		i = 0;
 		while (--nshorts >= 0) {
 			if ((i++ % 8) == 0)
-				(void)printf("\n\t\t\t");
+				printf("\n\t\t\t");
 			s = *cp++;
-			(void)printf(" %02x%02x", s, *cp++);
+			printf(" %02x%02x", s, *cp++);
 		}
 		if (length & 1) {
 			if ((i % 8) == 0)
-				(void)printf("\n\t\t\t");
-			(void)printf(" %02x", *cp);
+				printf("\n\t\t\t");
+			printf(" %02x", *cp);
 		}
 	}
 }
@@ -692,13 +692,13 @@ default_print(const u_char *bp, u_int length)
 		i = 0;
 		while (--nshorts >= 0) {
 			if ((i++ % 8) == 0)
-				(void)printf("\n\t\t\t");
-			(void)printf(" %04x", ntohs(*sp++));
+				printf("\n\t\t\t");
+			printf(" %04x", ntohs(*sp++));
 		}
 		if (length & 1) {
 			if ((i % 8) == 0)
-				(void)printf("\n\t\t\t");
-			(void)printf(" %02x", *(u_char *)sp);
+				printf("\n\t\t\t");
+			printf(" %02x", *(u_char *)sp);
 		}
 	}
 }

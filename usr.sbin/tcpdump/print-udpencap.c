@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udpencap.c,v 1.6 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-udpencap.c,v 1.7 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -36,15 +36,15 @@ udpencap_print(const u_char *bp, u_int len, const u_char *bp2)
 
 	/* Recognize NAT-T Keepalive msgs. (draft-ietf-ipsec-udp-encaps-nn) */
 	if (len == 1 && *bp == 0xFF) {
-		fputs("NAT-T Keepalive", stdout);
+		printf("NAT-T Keepalive");
 		return;
 	}
 
 	if (len < sizeof(u_int32_t)) {
-		fputs("[|udpencap]", stdout);
+		printf("[|udpencap]");
 		return;
 	}
-	fputs("udpencap: ", stdout);
+	printf("udpencap: ");
 	spi = (u_int32_t *)(bp);
 	if (*spi == 0)
 		ike_print(bp + sizeof(u_int32_t), len - sizeof(u_int32_t));

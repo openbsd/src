@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-radius.c,v 1.12 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-radius.c,v 1.13 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1997 Thomas H. Ptacek. All rights reserved.
@@ -160,15 +160,15 @@ static void r_print_att(int code, int len, const u_char *data) {
 
 	if(atp->code == -1) {
 		if(vflag > 1) {
-			fprintf(stdout, " %d =", code);
+			printf(" %d =", code);
 			atselector[RD_HEX](code, len, data);
 		} else 
-			fprintf(stdout, " %d", code);
+			printf(" %d", code);
 
 		return;
 	}
 
-	fprintf(stdout, " %s =", atp->name);
+	printf(" %s =", atp->name);
 
 	if(atp->encoding == RD_INT && *atp->values) {
 		u_int32_t k = ntohl((*(int *)data));
@@ -177,7 +177,7 @@ static void r_print_att(int code, int len, const u_char *data) {
 			/* SHOOT ME */ ;
 
 		if(k < i) {
-			fprintf(stdout, " %s", 
+			printf(" %s",
 				atp->values[k]);
 			return;
 		}
@@ -188,27 +188,27 @@ static void r_print_att(int code, int len, const u_char *data) {
 
 static void r_print_int(int code, int len, const u_char *data) {
 	if(len < 4) {
-		fputs(" ?", stdout);
+		printf(" ?");
 		return;
 	}
 
-	fprintf(stdout, " %d", ntohl((*(int *)data)));
+	printf(" %d", ntohl((*(int *)data)));
 }
 
 static void r_print_address(int code, int len, const u_char *data) {
 	if(len < 4) {
-		fputs(" ?", stdout);
+		printf(" ?");
 		return;
 	}
 
-	fprintf(stdout, " %s", inet_ntoa((*(struct in_addr *)data)));
+	printf(" %s", inet_ntoa((*(struct in_addr *)data)));
 }
 
 static void r_print_string(int code, int len, const u_char *data) {
 	char string[128];
 
 	if(!len) {
-		fputs(" ?", stdout);
+		printf(" ?");
 		return;
 	}
 
@@ -218,7 +218,7 @@ static void r_print_string(int code, int len, const u_char *data) {
 	memset(string, 0, 128);
 	memcpy(string, data, len);
 
-	fprintf(stdout, " ");
+	printf(" ");
 	safeputs(string);
 }
 
@@ -227,10 +227,10 @@ static void r_print_hex(int code, int len, const u_char *data) {
 
 	/* excuse me */
 
-	fputs(" [", stdout);
+	printf(" [");
 	
 	for(i = 0; i < len; i++)
-		fprintf(stdout, "%02x", data[i]);
+		printf("%02x", data[i]);
 
 	fputc(']', stdout);
 }
@@ -241,7 +241,7 @@ void radius_print(const u_char *data, u_int len) {
 	int first, l, ac, al;
 
 	if(len < sizeof(struct radius_header)) {
-		fputs("[|radius]", stdout);
+		printf("[|radius]");
 		return;
 	}
 
@@ -249,15 +249,15 @@ void radius_print(const u_char *data, u_int len) {
 
 	if(rhp->code > DEFINED_OPCODES ||
 	   rhp->code < 1) 
-		fprintf(stdout, "Code:%d id:%x [%d]", 
+		printf("Code:%d id:%x [%d]",
 		rhp->code, rhp->id, ntohs(rhp->len));
 	else
-		fprintf(stdout, "%s id:%x [%d]", 
+		printf("%s id:%x [%d]",
 			radius_codes[rhp->code].name,
 			rhp->id, ntohs(rhp->len));
 
 	if(ntohs(rhp->len) > len) {
-		fputs("[|radius]", stdout);
+		printf("[|radius]");
 		return;
 	}
 
@@ -278,7 +278,7 @@ void radius_print(const u_char *data, u_int len) {
 		al = *pp++;
 
 		if(al > l || al < 2) {
-			fputs(" [|radius]", stdout);
+			printf(" [|radius]");
 			return;
 		}
 	

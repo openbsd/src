@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf.c,v 1.21 2019/04/14 00:37:31 dlg Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.22 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -348,10 +348,10 @@ ospf_print_lsa(const struct lsa *lsap)
 	}
 
 								/* { (ctags) */
-	fputs(" }", stdout);
+	printf(" }");
 	return (0);
 trunc:
-	fputs(" }", stdout);
+	printf(" }");
 	return (1);
 }
 
@@ -501,7 +501,7 @@ ospf_print(const u_char *bp, u_int length, const u_char *bp2)
 	op = (struct ospfhdr *)bp;
 	ip = (struct ip *)bp2;
 	/* Print the source and destination address  */
-	(void) printf("%s > %s:",
+	printf("%s > %s:",
 	    ipaddr_string(&ip->ip_src),
 	    ipaddr_string(&ip->ip_dst));
 
@@ -591,5 +591,5 @@ ospf_print(const u_char *bp, u_int length, const u_char *bp2)
 
 	return;
 trunc:
-	fputs(tstr, stdout);
+	printf("%s", tstr);
 }

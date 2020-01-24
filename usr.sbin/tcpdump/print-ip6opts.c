@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6opts.c,v 1.6 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-ip6opts.c,v 1.7 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -122,7 +122,7 @@ hbhopt_print(const u_char *bp)
     return(hbhlen);
 
   trunc:
-    fputs("[|HBH]", stdout);
+    printf("[|HBH]");
     return(hbhlen);
 }
 
@@ -147,6 +147,6 @@ dstopt_print(const u_char *bp)
     return(dstoptlen);
 
   trunc:
-    fputs("[|DSTOPT]", stdout);
+    printf("[|DSTOPT]");
     return(dstoptlen);
 }

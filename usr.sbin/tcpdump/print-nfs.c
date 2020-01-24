@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-nfs.c,v 1.23 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-nfs.c,v 1.24 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -541,7 +541,7 @@ nfsreq_print(const u_char *bp, u_int length, const u_char *bp2)
 		printf(" symlink");
 		if ((dp = parsereq(rp, length)) != 0 &&
 		    (dp = parsefhn(dp, v3)) != 0) {
-			fputs(" ->", stdout);
+			printf(" ->");
 			if (v3 && (dp = parse_sattr3(dp, &sa3)) == 0)
 				break;
 			if (parsefn(dp) == 0)
@@ -592,7 +592,7 @@ nfsreq_print(const u_char *bp, u_int length, const u_char *bp2)
 		printf(" rename");
 		if ((dp = parsereq(rp, length)) != NULL &&
 		    (dp = parsefhn(dp, v3)) != NULL) {
-			fputs(" ->", stdout);
+			printf(" ->");
 			if (parsefhn(dp, v3) != NULL)
 				return;
 		}
@@ -602,7 +602,7 @@ nfsreq_print(const u_char *bp, u_int length, const u_char *bp2)
 		printf(" link");
 		if ((dp = parsereq(rp, length)) != NULL &&
 		    (dp = parsefh(dp, v3)) != NULL) {
-			fputs(" ->", stdout);
+			printf(" ->");
 			if (parsefhn(dp, v3) != NULL)
 				return;
 		}
@@ -697,7 +697,7 @@ nfsreq_print(const u_char *bp, u_int length, const u_char *bp2)
 
 trunc:
 	if (!nfserr)
-		fputs(" [|nfs]", stdout);
+		printf(" [|nfs]");
 }
 
 /*
@@ -729,9 +729,9 @@ nfs_printfh(const u_int32_t *dp, const u_int len)
 		if (sfsname)
 			*sfsname = 0;
 
-		(void)printf(" fh %s/%u", temp, (u_int32_t)ino);
+		printf(" fh %s/%u", temp, (u_int32_t)ino);
 	} else {
-		(void)printf(" fh %u,%u/%u",
+		printf(" fh %u,%u/%u",
 		    fsid.Fsid_dev.Major, fsid.Fsid_dev.Minor, (u_int32_t)ino);
 	}
 }
@@ -1676,5 +1676,5 @@ interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int lengt
 	}
 trunc:
 	if (!nfserr)
-		fputs(" [|nfs]", stdout);
+		printf(" [|nfs]");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rt6.c,v 1.7 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-rt6.c,v 1.8 2020/01/24 22:46:37 procter Exp $	*/
 
 
 /*
@@ -104,6 +104,6 @@ rt6_print(const u_char *bp, const u_char *bp2)
 	}
 
  trunc:
-	fputs(", [|srcrt]", stdout);
+	printf(", [|srcrt]");
 	return 65535;		/* XXX */
 }

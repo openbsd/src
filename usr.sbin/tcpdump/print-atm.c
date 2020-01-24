@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atm.c,v 1.13 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-atm.c,v 1.14 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997
@@ -120,7 +120,7 @@ atm_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 
 	case ETHERTYPE_ATALK:
 		if (vflag)
-			fputs("et1 ", stdout);
+			printf("et1 ");
 		atalk_print(p, length);
 		break;
 

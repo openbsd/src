@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.29 2019/12/03 01:43:33 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.30 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -415,7 +415,7 @@ gre_print_pptp(const u_char *p, u_int length, uint16_t flags)
 		return;
 
         if (length < len) {
-                (void)printf(" truncated-pptp - %d bytes missing!",
+		printf(" truncated-pptp - %d bytes missing!",
 		    len - length);
 		len = length;
 	}
@@ -467,7 +467,7 @@ gre_print_eoip(const u_char *p, u_int length, uint16_t flags)
 		printf(" %u", id);
 
         if (length < len) {
-                (void)printf(" truncated-eoip - %d bytes missing!",
+		printf(" truncated-eoip - %d bytes missing!",
 		    len - length);
 		len = length;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pim.c,v 1.8 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-pim.c,v 1.9 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -52,43 +52,43 @@ pim_print(const u_char *bp, u_int len)
 
     switch (type) {
     case 0:
-	(void)printf(" Query");
+	printf(" Query");
 	break;
 
     case 1:
-	(void)printf(" Register");
+	printf(" Register");
 	break;
 
     case 2:
-	(void)printf(" Register-Stop");
+	printf(" Register-Stop");
 	break;
 
     case 3:
-	(void)printf(" Join/Prune");
+	printf(" Join/Prune");
 	break;
 
     case 4:
-	(void)printf(" RP-reachable");
+	printf(" RP-reachable");
 	break;
 
     case 5:
-	(void)printf(" Assert");
+	printf(" Assert");
 	break;
 
     case 6:
-	(void)printf(" Graft");
+	printf(" Graft");
 	break;
 
     case 7:
-	(void)printf(" Graft-ACK");
+	printf(" Graft-ACK");
 	break;
 
     case 8:
-	(void)printf(" Mode");
+	printf(" Mode");
 	break;
 
     default:
-	(void)printf(" [type %d]", type);
+	printf(" [type %d]", type);
 	break;
     }
 }

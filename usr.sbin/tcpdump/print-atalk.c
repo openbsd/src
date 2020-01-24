@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.33 2017/08/30 09:23:00 otto Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.34 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -99,7 +99,7 @@ atalk_print(const u_char *bp, u_int length)
 	u_short snet;
 
 	if (length < ddpSize) {
-		(void)printf(" [|ddp %d]", length);
+		printf(" [|ddp %d]", length);
 		return;
 	}
 	dp = (const struct atDDP *)bp;
@@ -129,7 +129,7 @@ atalk_print_llap(const u_char *bp, u_int length)
 	u_short snet;
 
 	if (length < sizeof(*lp)) {
-		(void)printf(" [|llap %d]", length);
+		printf(" [|llap %d]", length);
 		return;
 	}
 
@@ -140,7 +140,7 @@ atalk_print_llap(const u_char *bp, u_int length)
 
 	case lapShortDDP:
 		if (length < ddpSSize) {
-			(void)printf(" [|sddp %d]", length);
+			printf(" [|sddp %d]", length);
 			return;
 		}
 		sdp = (const struct atShortDDP *)bp;
@@ -155,7 +155,7 @@ atalk_print_llap(const u_char *bp, u_int length)
 
 	case lapDDP:
 		if (length < ddpSize) {
-			(void)printf(" [|ddp %d]", length);
+			printf(" [|ddp %d]", length);
 			return;
 		}
 		dp = (const struct atDDP *)bp;
@@ -198,21 +198,21 @@ aarp_print(const u_char *bp, u_int length)
 		switch (ntohs(ap->op)) {
 
 		case 1:				/* request */
-			(void)printf("who-has %s tell %s",
+			printf("who-has %s tell %s",
 			    AT(pdaddr), AT(psaddr));
 			return;
 
 		case 2:				/* response */
-			(void)printf("reply %s is-at %s",
+			printf("reply %s is-at %s",
 			    AT(pdaddr), etheraddr_string(ap->hdaddr));
 			return;
 
 		case 3:				/* probe (oy!) */
-			(void)printf("probe %s tell %s",
+			printf("probe %s tell %s",
 			    AT(pdaddr), AT(psaddr));
 			return;
 		}
-	(void)printf("len %u op %u htype %u ptype %#x halen %u palen %u",
+	printf("len %u op %u htype %u ptype %#x halen %u palen %u",
 	    length, ntohs(ap->op), ntohs(ap->htype), ntohs(ap->ptype),
 	    ap->halen, ap->palen);
 }
@@ -250,7 +250,7 @@ ddp_print(const u_char *bp, u_int length, int t,
 		break;
 
 	default:
-		(void)printf(" at-%s %d", tok2str(type2str, NULL, t), length);
+		printf(" at-%s %d", tok2str(type2str, NULL, t), length);
 		break;
 	}
 }
@@ -263,88 +263,88 @@ atp_print(const struct atATP *ap, u_int length)
 
 	if ((const u_char *)(ap + 1) > snapend) {
 		/* Just bail if we don't have the whole chunk. */
-		fputs(tstr, stdout);
+		printf("%s", tstr);
 		return;
 	}
 	length -= sizeof(*ap);
 	switch (ap->control & 0xc0) {
 
 	case atpReqCode:
-		(void)printf(" atp-req%s %d",
-			     ap->control & atpXO? " " : "*",
-			     EXTRACT_16BITS(&ap->transID));
+		printf(" atp-req%s %d",
+		    ap->control & atpXO? " " : "*",
+		    EXTRACT_16BITS(&ap->transID));
 
 		atp_bitmap_print(ap->bitmap);
 
 		if (length != 0)
-			(void)printf(" [len=%d]", length);
+			printf(" [len=%d]", length);
 
 		switch (ap->control & (atpEOM|atpSTS)) {
 		case atpEOM:
-			(void)printf(" [EOM]");
+			printf(" [EOM]");
 			break;
 		case atpSTS:
-			(void)printf(" [STS]");
+			printf(" [STS]");
 			break;
 		case atpEOM|atpSTS:
-			(void)printf(" [EOM,STS]");
+			printf(" [EOM,STS]");
 			break;
 		}
 		break;
 
 	case atpRspCode:
-		(void)printf(" atp-resp%s%d:%d (%d)",
-			     ap->control & atpEOM? "*" : " ",
-			     EXTRACT_16BITS(&ap->transID), ap->bitmap, length);
+		printf(" atp-resp%s%d:%d (%d)",
+		    ap->control & atpEOM? "*" : " ",
+		    EXTRACT_16BITS(&ap->transID), ap->bitmap, length);
 		switch (ap->control & (atpXO|atpSTS)) {
 		case atpXO:
-			(void)printf(" [XO]");
+			printf(" [XO]");
 			break;
 		case atpSTS:
-			(void)printf(" [STS]");
+			printf(" [STS]");
 			break;
 		case atpXO|atpSTS:
-			(void)printf(" [XO,STS]");
+			printf(" [XO,STS]");
 			break;
 		}
 		break;
 
 	case atpRelCode:
-		(void)printf(" atp-rel  %d", EXTRACT_16BITS(&ap->transID));
+		printf(" atp-rel  %d", EXTRACT_16BITS(&ap->transID));
 
 		atp_bitmap_print(ap->bitmap);
 
 		/* length should be zero */
 		if (length)
-			(void)printf(" [len=%d]", length);
+			printf(" [len=%d]", length);
 
 		/* there shouldn't be any control flags */
 		if (ap->control & (atpXO|atpEOM|atpSTS)) {
 			c = '[';
 			if (ap->control & atpXO) {
-				(void)printf("%cXO", c);
+				printf("%cXO", c);
 				c = ',';
 			}
 			if (ap->control & atpEOM) {
-				(void)printf("%cEOM", c);
+				printf("%cEOM", c);
 				c = ',';
 			}
 			if (ap->control & atpSTS) {
-				(void)printf("%cSTS", c);
+				printf("%cSTS", c);
 				c = ',';
 			}
-			(void)printf("]");
+			printf("]");
 		}
 		break;
 
 	default:
-		(void)printf(" atp-0x%x  %d (%d)", ap->control,
-			     EXTRACT_16BITS(&ap->transID), length);
+		printf(" atp-0x%x  %d (%d)", ap->control,
+		    EXTRACT_16BITS(&ap->transID), length);
 		break;
 	}
 	data = EXTRACT_32BITS(&ap->userData);
 	if (data != 0)
-		(void)printf(" 0x%x", data);
+		printf(" 0x%x", data);
 }
 
 static void
@@ -362,19 +362,19 @@ atp_bitmap_print(u_char bm)
 		c = '<';
 		for (i = 0; bm; ++i) {
 			if (bm & 1) {
-				(void)printf("%c%d", c, i);
+				printf("%c%d", c, i);
 				c = ',';
 			}
 			bm >>= 1;
 		}
-		(void)printf(">");
+		printf(">");
 	} else {
 		for (i = 0; bm; ++i)
 			bm >>= 1;
 		if (i > 1)
-			(void)printf("<0-%d>", i - 1);
+			printf("<0-%d>", i - 1);
 		else
-			(void)printf("<0>");
+			printf("<0>");
 	}
 }
 
@@ -388,7 +388,7 @@ nbp_print(const struct atNBP *np, u_int length, u_short snet,
 	const u_char *ep;
 
 	if (length < nbpHeaderSize) {
-		(void)printf(" truncated-nbp %d", length);
+		printf(" truncated-nbp %d", length);
 		return;
 	}
 
@@ -396,30 +396,29 @@ nbp_print(const struct atNBP *np, u_int length, u_short snet,
 	if (length < 8) {
 		/* must be room for at least one tuple */
 		if (np->control == nbpNATLKerr) {
-			(void)printf(" nbp-netatalk_err");
+			printf(" nbp-netatalk_err");
 			return;
 		} else if (np->control == nbpNATLKok) {
-			(void)printf(" nbp-netatalk_ok");
+			printf(" nbp-netatalk_ok");
 			return;
 		}
-		(void)printf(" truncated-nbp nbp-0x%x  %d (%d)",
-			np->control, np->id, length + nbpHeaderSize);
+		printf(" truncated-nbp nbp-0x%x  %d (%d)",
+		    np->control, np->id, length + nbpHeaderSize);
 		return;
 	}
 	/* ep points to end of available data */
 	ep = snapend;
 	if ((const u_char *)tp > ep) {
-		fputs(tstr, stdout);
+		printf("%s", tstr);
 		return;
 	}
 	switch (i = np->control & 0xf0) {
 
 	case nbpBrRq:
 	case nbpLkUp:
-		(void)printf(i == nbpLkUp? " nbp-lkup %d:":" nbp-brRq %d:",
-			     np->id);
+		printf(i == nbpLkUp? " nbp-lkup %d:":" nbp-brRq %d:", np->id);
 		if ((const u_char *)(tp + 1) > ep) {
-			fputs(tstr, stdout);
+			printf("%s", tstr);
 			return;
 		}
 		(void)nbp_name_print(tp, ep);
@@ -429,18 +428,18 @@ nbp_print(const struct atNBP *np, u_int length, u_short snet,
 		 * address and the enumerator should be zero.
 		 */
 		if ((np->control & 0xf) != 1)
-			(void)printf(" [ntup=%d]", np->control & 0xf);
+			printf(" [ntup=%d]", np->control & 0xf);
 		if (tp->enumerator)
-			(void)printf(" [enum=%d]", tp->enumerator);
+			printf(" [enum=%d]", tp->enumerator);
 		if (EXTRACT_16BITS(&tp->net) != snet ||
 		    tp->node != snode || tp->skt != skt)
-			(void)printf(" [addr=%s.%d]",
+			printf(" [addr=%s.%d]",
 			    ataddr_string(EXTRACT_16BITS(&tp->net),
 			    tp->node), tp->skt);
 		break;
 
 	case nbpLkUpReply:
-		(void)printf(" nbp-reply %d:", np->id);
+		printf(" nbp-reply %d:", np->id);
 
 		/* print each of the tuples in the reply */
 		for (i = np->control & 0xf; --i >= 0 && tp; )
@@ -449,17 +448,17 @@ nbp_print(const struct atNBP *np, u_int length, u_short snet,
 
 	case nbpNATLKrgstr:
 	case nbpNATLKunrgstr:
-		(void)printf((i == nbpNATLKrgstr) ?
-			" nbp-netatalk_rgstr %d:" :
-			" nbp-netatalk_unrgstr %d:",
-			np->id);
+		printf((i == nbpNATLKrgstr) ?
+		    " nbp-netatalk_rgstr %d:" :
+		    " nbp-netatalk_unrgstr %d:",
+		    np->id);
 		for (i = np->control & 0xf; --i >= 0 && tp; )
 			tp = nbp_tuple_print(tp, ep, snet, snode, skt);
 		break;
 
 	default:
-		(void)printf(" nbp-0x%x  %d (%d)", np->control, np->id,
-				length);
+		printf(" nbp-0x%x  %d (%d)", np->control, np->id,
+		    length);
 		break;
 	}
 }
@@ -471,19 +470,19 @@ print_cstring(const char *cp, const u_char *ep)
 	u_int length;
 
 	if (cp >= (const char *)ep) {
-		fputs(tstr, stdout);
+		printf("%s", tstr);
 		return (0);
 	}
 	length = *cp++;
 
 	/* Spec says string can be at most 32 bytes long */
 	if (length > 32) {
-		(void)printf("[len=%d]", length);
+		printf("[len=%d]", length);
 		return (0);
 	}
 	while ((int)--length >= 0) {
 		if (cp >= (char *)ep) {
-			fputs(tstr, stdout);
+			printf("%s", tstr);
 			return (0);
 		}
 		putchar(*cp++);
@@ -500,22 +499,22 @@ nbp_tuple_print(const struct atNBPtuple *tp,
 	const struct atNBPtuple *tpn;
 
 	if ((const u_char *)(tp + 1) > ep) {
-		fputs(tstr, stdout);
+		printf("%s", tstr);
 		return 0;
 	}
 	tpn = nbp_name_print(tp, ep);
 
 	/* if the enumerator isn't 1, print it */
 	if (tp->enumerator != 1)
-		(void)printf("(%d)", tp->enumerator);
+		printf("(%d)", tp->enumerator);
 
 	/* if the socket doesn't match the src socket, print it */
 	if (tp->skt != skt)
-		(void)printf(" %d", tp->skt);
+		printf(" %d", tp->skt);
 
 	/* if the address doesn't match the src address, it's an anomaly */
 	if (EXTRACT_16BITS(&tp->net) != snet || tp->node != snode)
-		(void)printf(" [addr=%s]",
+		printf(" [addr=%s]",
 		    ataddr_string(EXTRACT_16BITS(&tp->net), tp->node));
 
 	return (tpn);

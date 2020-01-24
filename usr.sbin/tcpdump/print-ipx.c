@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipx.c,v 1.15 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-ipx.c,v 1.16 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -58,13 +58,13 @@ ipx_print(const u_char *p, u_int length)
 	const struct ipxHdr *ipx = (const struct ipxHdr *)p;
 
 	TCHECK(ipx->srcSkt);
-	(void)printf("%s.%x > ",
-		     ipxaddr_string(EXTRACT_32BITS(ipx->srcNet), ipx->srcNode),
-		     EXTRACT_16BITS(&ipx->srcSkt));
+	printf("%s.%x > ",
+	    ipxaddr_string(EXTRACT_32BITS(ipx->srcNet), ipx->srcNode),
+	    EXTRACT_16BITS(&ipx->srcSkt));
 
-	(void)printf("%s.%x:",
-		     ipxaddr_string(EXTRACT_32BITS(ipx->dstNet), ipx->dstNode),
-		     EXTRACT_16BITS(&ipx->dstSkt));
+	printf("%s.%x:",
+	    ipxaddr_string(EXTRACT_32BITS(ipx->dstNet), ipx->dstNode),
+	    EXTRACT_16BITS(&ipx->dstSkt));
 
 	/* take length from ipx header */
 	TCHECK(ipx->length);
@@ -95,7 +95,7 @@ ipx_decode(const struct ipxHdr *ipx, const u_char *datap, u_int length)
     dstSkt = EXTRACT_16BITS(&ipx->dstSkt);
     switch (dstSkt) {
       case IPX_SKT_NCP:
-	(void)printf(" ipx-ncp %d", length);
+	printf(" ipx-ncp %d", length);
 	break;
       case IPX_SKT_SAP:
 	ipx_sap_print((u_short *)datap, length);
@@ -104,13 +104,13 @@ ipx_decode(const struct ipxHdr *ipx, const u_char *datap, u_int length)
 	ipx_rip_print((u_short *)datap, length);
 	break;
       case IPX_SKT_NETBIOS:
-	(void)printf(" ipx-netbios %d", length);
+	printf(" ipx-netbios %d", length);
 	break;
       case IPX_SKT_DIAGNOSTICS:
-	(void)printf(" ipx-diags %d", length);
+	printf(" ipx-diags %d", length);
 	break;
       default:
-	(void)printf(" ipx-#%x %d", dstSkt, length);
+	printf(" ipx-#%x %d", dstSkt, length);
 	break;
     }
 }
@@ -129,13 +129,13 @@ ipx_sap_print(const u_short *ipx, u_int length)
       case 1:
       case 3:
 	if (command == 1)
-	    (void)printf("ipx-sap-req");
+	    printf("ipx-sap-req");
 	else
-	    (void)printf("ipx-sap-nearest-req");
+	    printf("ipx-sap-nearest-req");
 
 	if (length > 0) {
 	    TCHECK(ipx[1]);
-	    (void)printf(" %x '", EXTRACT_16BITS(&ipx[0]));
+	    printf(" %x '", EXTRACT_16BITS(&ipx[0]));
 	    fn_print((u_char *)&ipx[1], min(snapend, (u_char *)&ipx[1] + 48));
 	    putchar('\'');
 	}
@@ -144,13 +144,13 @@ ipx_sap_print(const u_short *ipx, u_int length)
       case 2:
       case 4:
 	if (command == 2)
-	    (void)printf("ipx-sap-resp");
+	    printf("ipx-sap-resp");
 	else
-	    (void)printf("ipx-sap-nearest-resp");
+	    printf("ipx-sap-nearest-resp");
 
 	for (i = 0; i < 8 && length > 0; i++) {
 	    TCHECK2(ipx[27], 1);
-	    (void)printf(" %x '", EXTRACT_16BITS(&ipx[0]));
+	    printf(" %x '", EXTRACT_16BITS(&ipx[0]));
 	    fn_print((u_char *)&ipx[1], min(snapend, (u_char *)&ipx[1] + 48));
 	    printf("' addr %s",
 		ipxaddr_string(EXTRACT_32BITS(&ipx[25]), (u_char *)&ipx[27]));
@@ -159,7 +159,7 @@ ipx_sap_print(const u_short *ipx, u_int length)
 	}
 	break;
       default:
-	    (void)printf("ipx-sap-?%x", command);
+	    printf("ipx-sap-?%x", command);
 	break;
     }
 	return;
@@ -179,26 +179,26 @@ ipx_rip_print(const u_short *ipx, u_int length)
 
     switch (command) {
       case 1:
-	(void)printf("ipx-rip-req");
+	printf("ipx-rip-req");
 	if (length > 0) {
 	    TCHECK(ipx[3]);
-	    (void)printf(" %u/%d.%d", EXTRACT_32BITS(&ipx[0]),
-			 EXTRACT_16BITS(&ipx[2]), EXTRACT_16BITS(&ipx[3]));
+	    printf(" %u/%d.%d", EXTRACT_32BITS(&ipx[0]),
+		EXTRACT_16BITS(&ipx[2]), EXTRACT_16BITS(&ipx[3]));
 	}
 	break;
       case 2:
-	(void)printf("ipx-rip-resp");
+	printf("ipx-rip-resp");
 	for (i = 0; i < 50 && length > 0; i++) {
 	    TCHECK(ipx[3]);
-	    (void)printf(" %u/%d.%d", EXTRACT_32BITS(&ipx[0]),
-			 EXTRACT_16BITS(&ipx[2]), EXTRACT_16BITS(&ipx[3]));
+	    printf(" %u/%d.%d", EXTRACT_32BITS(&ipx[0]),
+		EXTRACT_16BITS(&ipx[2]), EXTRACT_16BITS(&ipx[3]));
 
 	    ipx += 4;
 	    length -= 8;
 	}
 	break;
       default:
-	    (void)printf("ipx-rip-?%x", command);
+	    printf("ipx-rip-?%x", command);
     }
 	return;
 trunc:

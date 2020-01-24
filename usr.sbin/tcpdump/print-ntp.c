@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ntp.c,v 1.18 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-ntp.c,v 1.19 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -62,7 +62,7 @@ ntp_print(const u_char *cp, u_int length)
 	bp = (struct ntpdata *)cp;
 	/* Note funny sized packets */
 	if (length != sizeof(struct ntpdata))
-		(void)printf(" [len=%d]", length);
+		printf(" [len=%d]", length);
 
 	TCHECK(bp->status);
 
@@ -76,15 +76,15 @@ ntp_print(const u_char *cp, u_int length)
 		break;
 
 	case ALARM:
-		fputs(" alarm", stdout);
+		printf(" alarm");
 		break;
 
 	case PLUS_SEC:
-		fputs(" +1s", stdout);
+		printf(" +1s");
 		break;
 
 	case MINUS_SEC:
-		fputs(" -1s", stdout);
+		printf(" -1s");
 		break;
 	}
 
@@ -92,35 +92,35 @@ ntp_print(const u_char *cp, u_int length)
 	switch (mode) {
 
 	case MODE_UNSPEC:	/* unspecified */
-		fputs(" unspec", stdout);
+		printf(" unspec");
 		break;
 
 	case MODE_SYM_ACT:	/* symmetric active */
-		fputs(" sym_act", stdout);
+		printf(" sym_act");
 		break;
 
 	case MODE_SYM_PAS:	/* symmetric passive */
-		fputs(" sym_pas", stdout);
+		printf(" sym_pas");
 		break;
 
 	case MODE_CLIENT:	/* client */
-		fputs(" client", stdout);
+		printf(" client");
 		break;
 
 	case MODE_SERVER:	/* server */
-		fputs(" server", stdout);
+		printf(" server");
 		break;
 
 	case MODE_BROADCAST:	/* broadcast */
-		fputs(" bcast", stdout);
+		printf(" bcast");
 		break;
 
 	case MODE_RES1:		/* reserved */
-		fputs(" res1", stdout);
+		printf(" res1");
 		break;
 
 	case MODE_RES2:		/* reserved */
-		fputs(" res2", stdout);
+		printf(" res2");
 		break;
 
 	}
@@ -139,15 +139,15 @@ ntp_print(const u_char *cp, u_int length)
 		return;
 
 	TCHECK(bp->distance);
-	fputs(" dist ", stdout);
+	printf(" dist ");
 	p_sfix(&bp->distance);
 
 	TCHECK(bp->dispersion);
-	fputs(" disp ", stdout);
+	printf(" disp ");
 	p_sfix(&bp->dispersion);
 
 	TCHECK(bp->refid);
-	fputs(" ref ", stdout);
+	printf(" ref ");
 	/* Interpretation depends on stratum */
 	switch (bp->stratum) {
 
@@ -179,21 +179,21 @@ ntp_print(const u_char *cp, u_int length)
 	p_ntp_time(&(bp->reftime));
 
 	TCHECK(bp->org);
-	fputs(" orig ", stdout);
+	printf(" orig ");
 	p_ntp_time(&(bp->org));
 
 	TCHECK(bp->rec);
-	fputs(" rec ", stdout);
+	printf(" rec ");
 	p_ntp_delta(&(bp->org), &(bp->rec));
 
 	TCHECK(bp->xmt);
-	fputs(" xmt ", stdout);
+	printf(" xmt ");
 	p_ntp_delta(&(bp->org), &(bp->xmt));
 
 	return;
 
 trunc:
-	fputs(" [|ntp]", stdout);
+	printf(" [|ntp]");
 }
 
 static void

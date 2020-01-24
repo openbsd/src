@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp.c,v 1.25 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-icmp.c,v 1.26 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -178,9 +178,9 @@ icmp_print(const u_char *bp, u_int length, const u_char *bp2)
 	ip = (struct ip *)bp2;
 	str = buf;
 
-        (void)printf("%s > %s: ",
-		ipaddr_string(&ip->ip_src),
-		ipaddr_string(&ip->ip_dst));
+        printf("%s > %s: ",
+	    ipaddr_string(&ip->ip_src),
+	    ipaddr_string(&ip->ip_dst));
 
 	TCHECK(dp->icmp_code);
 	if (qflag) 
@@ -371,27 +371,27 @@ icmp_print(const u_char *bp, u_int length, const u_char *bp2)
 		str = tok2str(icmp2str, "type-#%u", dp->icmp_type);
 		break;
 	}
-	(void)printf("icmp: %s", str);
+	printf("icmp: %s", str);
 	if (vflag) {
 		if (TTEST2(dp->icmp_type, length)) {
 			u_int16_t sum, icmp_sum;
 			sum = in_cksum((const u_short *)dp, length, 0);
 			if (sum != 0) {
 				icmp_sum = EXTRACT_16BITS(&dp->icmp_cksum);
-				(void)printf(" [bad icmp cksum %x! -> %x]", icmp_sum,
+				printf(" [bad icmp cksum %x! -> %x]", icmp_sum,
 				    in_cksum_shouldbe(icmp_sum, sum));
 			}
 			else
-				(void)printf(" [icmp cksum ok]");
+				printf(" [icmp cksum ok]");
 		}
 	}
 	if (vflag > 1 && !ICMP_INFOTYPE(dp->icmp_type) &&
 	    TTEST(dp->icmp_ip)) {
-		(void)printf(" for ");
+		printf(" for ");
 		oip = &dp->icmp_ip;
 		ip_print((u_char *)oip, ntohs(oip->ip_len));
 	}
 	return;
 trunc:
-	fputs("[|icmp]", stdout);
+	printf("[|icmp]");
 }

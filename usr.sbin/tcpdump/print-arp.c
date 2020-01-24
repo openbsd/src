@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-arp.c,v 1.15 2015/11/18 15:36:20 mmcc Exp $	*/
+/*	$OpenBSD: print-arp.c,v 1.16 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -62,7 +62,7 @@ arp_print(const u_char *bp, u_int length, u_int caplen)
 		return;
 	}
 	if (length < sizeof(struct ether_arp)) {
-		(void)printf("truncated-arp");
+		printf("truncated-arp");
 		default_print((u_char *)ap, length);
 		return;
 	}
@@ -74,48 +74,47 @@ arp_print(const u_char *bp, u_int length, u_int caplen)
 	if ((pro != ETHERTYPE_IP && pro != ETHERTYPE_TRAIL)
 	    || ap->arp_hln != sizeof(SHA(ap))
 	    || ap->arp_pln != sizeof(SPA(ap))) {
-		(void)printf("arp-#%d for proto #%d (%d) hardware #%d (%d)",
-				op, pro, ap->arp_pln,
-				hrd, ap->arp_hln);
+		printf("arp-#%d for proto #%d (%d) hardware #%d (%d)",
+		    op, pro, ap->arp_pln, hrd, ap->arp_hln);
 		return;
 	}
 	if (pro == ETHERTYPE_TRAIL)
-		(void)printf("trailer-");
+		printf("trailer-");
 	eh = (struct ether_header *)packetp;
 	switch (op) {
 
 	case ARPOP_REQUEST:
-		(void)printf("arp who-has %s", ipaddr_string(TPA(ap)));
+		printf("arp who-has %s", ipaddr_string(TPA(ap)));
 		if (memcmp((char *)ezero, (char *)THA(ap), 6) != 0)
-			(void)printf(" (%s)", etheraddr_string(THA(ap)));
-		(void)printf(" tell %s", ipaddr_string(SPA(ap)));
+			printf(" (%s)", etheraddr_string(THA(ap)));
+		printf(" tell %s", ipaddr_string(SPA(ap)));
 		if (memcmp((char *)ESRC(eh), (char *)SHA(ap), 6) != 0)
-			(void)printf(" (%s)", etheraddr_string(SHA(ap)));
+			printf(" (%s)", etheraddr_string(SHA(ap)));
 		break;
 
 	case ARPOP_REPLY:
-		(void)printf("arp reply %s", ipaddr_string(SPA(ap)));
+		printf("arp reply %s", ipaddr_string(SPA(ap)));
 		if (memcmp((char *)ESRC(eh), (char *)SHA(ap), 6) != 0)
-			(void)printf(" (%s)", etheraddr_string(SHA(ap)));
-		(void)printf(" is-at %s", etheraddr_string(SHA(ap)));
+			printf(" (%s)", etheraddr_string(SHA(ap)));
+		printf(" is-at %s", etheraddr_string(SHA(ap)));
 		if (memcmp((char *)EDST(eh), (char *)THA(ap), 6) != 0)
-			(void)printf(" (%s)", etheraddr_string(THA(ap)));
+			printf(" (%s)", etheraddr_string(THA(ap)));
 		break;
 
 	case REVARP_REQUEST:
-		(void)printf("rarp who-is %s tell %s",
-			etheraddr_string(THA(ap)),
-			etheraddr_string(SHA(ap)));
+		printf("rarp who-is %s tell %s",
+		    etheraddr_string(THA(ap)),
+		    etheraddr_string(SHA(ap)));
 		break;
 
 	case REVARP_REPLY:
-		(void)printf("rarp reply %s at %s",
-			etheraddr_string(THA(ap)),
-			ipaddr_string(TPA(ap)));
+		printf("rarp reply %s at %s",
+		    etheraddr_string(THA(ap)),
+		    ipaddr_string(TPA(ap)));
 		break;
 
 	default:
-		(void)printf("arp-#%d", op);
+		printf("arp-#%d", op);
 		default_print((u_char *)ap, caplen);
 		return;
 	}

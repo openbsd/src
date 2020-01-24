@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-mobile.c,v 1.5 2015/01/16 06:40:21 deraadt Exp $ */
+/*	$OpenBSD: print-mobile.c,v 1.6 2020/01/24 22:46:37 procter Exp $ */
 /*	$NetBSD: print-mobile.c,v 1.3 1999/07/26 06:11:57 itojun Exp $ */
 
 /*
@@ -71,7 +71,7 @@ mobile_print(const u_char *bp, u_int length)
 	mob = (const struct mobile_ip *)bp;
 
 	if (length < MOBILE_SIZE) {
-		fputs("[|mobile]", stdout);
+		printf("[|mobile]");
 		return;
 	}
 
@@ -83,18 +83,18 @@ mobile_print(const u_char *bp, u_int length)
 	}
 	
 	if (osp)  {
-		fputs("[S] ",stdout);
+		printf("[S] ");
 		if (vflag)
-			(void)printf("%s ",ipaddr_string(&mob->osrc));
+			printf("%s ",ipaddr_string(&mob->osrc));
 	} else {
-		fputs("[] ",stdout);
+		printf("[] ");
 	}
 	if (vflag) {
-		(void)printf("> %s ",ipaddr_string(&mob->odst));
-		(void)printf("(oproto=%d)",proto>>8);
+		printf("> %s ",ipaddr_string(&mob->odst));
+		printf("(oproto=%d)",proto>>8);
 	}
 	if (mob_in_cksum((u_short *)mob, osp ? 12 : 8)!=0) {
-		(void)printf(" (bad checksum %d)",crc);
+		printf(" (bad checksum %d)",crc);
 	}
 
 	return;

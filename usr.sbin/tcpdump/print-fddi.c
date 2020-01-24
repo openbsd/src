@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-fddi.c,v 1.17 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-fddi.c,v 1.18 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -229,15 +229,15 @@ fddi_print(const struct fddi_header *fddip, u_int length,
 	dstname = etheraddr_string(fdst);
 
 	if (vflag)
-		(void) printf("%02x %s %s %d: ",
-		       fddip->fddi_fc,
-		       srcname, dstname,
-		       length);
+		printf("%02x %s %s %d: ",
+		    fddip->fddi_fc,
+		    srcname, dstname,
+		    length);
 	else if (qflag)
 		printf("%s %s %d: ", srcname, dstname, length);
 	else {
 		(void) print_fddi_fc(fddip->fddi_fc);
-		(void) printf("%s %s %d: ", srcname, dstname, length);
+		printf("%s %s %d: ", srcname, dstname, length);
 	}
 }
 

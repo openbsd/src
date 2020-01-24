@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-frag6.c,v 1.9 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-frag6.c,v 1.10 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -74,11 +74,11 @@ frag6_print(const u_char *bp, const u_char *bp2)
 		return 65535;
 	else
 	{
-		fputs(" ", stdout);
+		printf(" ");
 		return sizeof(struct ip6_frag);
 	}
 trunc:
-	fputs("[|frag]", stdout);
+	printf("[|frag]");
 	return 65535;
 #undef TCHECK
 }

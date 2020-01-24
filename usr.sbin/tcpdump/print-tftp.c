@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tftp.c,v 1.13 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-tftp.c,v 1.14 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -101,7 +101,7 @@ tftp_print(const u_char *bp, u_int length)
 #else
 		p = (u_char *)&tp->th_block;
 #endif
-		fputs(" \"", stdout);
+		printf(" \"");
 		i = fn_print(p, snapend);
 		putchar('"');
 		if (i)
@@ -134,6 +134,6 @@ tftp_print(const u_char *bp, u_int length)
 	}
 	return;
 trunc:
-	fputs(tstr, stdout);
+	printf("%s", tstr);
 	return;
 }

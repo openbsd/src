@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-krb.c,v 1.12 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-krb.c,v 1.13 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -166,7 +166,7 @@ krb4_print_hdr(const u_char *cp)
 	return(cp);
 
 trunc:
-	fputs(tstr, stdout);
+	printf("%s", tstr);
 	return (NULL);
 
 #undef PRINT
@@ -187,7 +187,7 @@ krb4_print(const u_char *cp)
 	kp = (struct krb *)cp;
 
 	if ((&kp->type) >= snapend) {
-		fputs(tstr, stdout);
+		printf("%s", tstr);
 		return;
 	}
 
@@ -245,13 +245,13 @@ krb4_print(const u_char *cp)
 		break;
 
 	default:
-		fputs("(unknown)", stdout);
+		printf("(unknown)");
 		break;
 	}
 
 	return;
 trunc:
-	fputs(tstr, stdout);
+	printf("%s", tstr);
 }
 
 void
@@ -262,7 +262,7 @@ krb_print(const u_char *dat, u_int length)
 	kp = (struct krb *)dat;
 
 	if (dat >= snapend) {
-		fputs(tstr, stdout);
+		printf("%s", tstr);
 		return;
 	}
 
@@ -281,7 +281,7 @@ krb_print(const u_char *dat, u_int length)
 
 	case 106:
 	case 107:
-		fputs("v5", stdout);
+		printf("v5");
 		/* Decode ASN.1 here "someday" */
 		break;
 	}

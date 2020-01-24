@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-timed.c,v 1.7 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-timed.c,v 1.8 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Smithurst <ben@scientia.demon.co.uk>
@@ -81,7 +81,7 @@ timed_print(const u_char *bp, u_int length)
 		if (usec < 0)
 			/* corrupt, skip the rest of the packet */
 			return;
-		fputs(" time ", stdout);
+		printf(" time ");
 		if (sec < 0 && usec != 0) {
 			sec++;
 			if (sec == 0)
@@ -92,10 +92,10 @@ timed_print(const u_char *bp, u_int length)
 	}
 
 	end = endof(tsp->tsp_name) > snapend ? snapend : endof(tsp->tsp_name);
-	fputs(" name ", stdout);
+	printf(" name ");
 	if (fn_print(tsp->tsp_name, end))
 		goto trunc;
 	return;
 trunc:
-	fputs(" [|timed]", stdout);
+	printf(" [|timed]");
 }

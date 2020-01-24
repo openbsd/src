@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.29 2019/09/19 23:23:58 dlg Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.30 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -93,19 +93,19 @@ ip6_print(const u_char *bp, u_int length)
 	}
 
 	if (length < sizeof (struct ip6_hdr)) {
-		(void)printf("truncated-ip6 %d", length);
+		printf("truncated-ip6 %d", length);
 		goto out;
 	}
 	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
-		(void)printf("bad-ip6-version %u", ip6->ip6_vfc >> 4);
+		printf("bad-ip6-version %u", ip6->ip6_vfc >> 4);
 		goto out;
 	}
 	hlen = sizeof(struct ip6_hdr);
 
 	len = ntohs(ip6->ip6_plen);
 	if (length < len + hlen)
-		(void)printf("truncated-ip6 - %d bytes missing!",
-			len + hlen - length);
+		printf("truncated-ip6 - %d bytes missing!",
+		    len + hlen - length);
 
 	cp = (const u_char *)ip6;
 	nh = ip6->ip6_nxt;
@@ -119,8 +119,8 @@ ip6_print(const u_char *bp, u_int length)
 		    nh != IPPROTO_TCP && nh != IPPROTO_UDP &&
 		    nh != IPPROTO_AH &&
 		    (vflag || (nh != IPPROTO_IPV4 && nh != IPPROTO_IPV6))) {
-			(void)printf("%s > %s: ", ip6addr_string(&ip6->ip6_src),
-				     ip6addr_string(&ip6->ip6_dst));
+			printf("%s > %s: ", ip6addr_string(&ip6->ip6_src),
+			    ip6addr_string(&ip6->ip6_dst));
 		}
 
 		switch (nh) {
@@ -163,7 +163,7 @@ ip6_print(const u_char *bp, u_int length)
 				(const u_char *)ip6);
 			goto end;
 		case IPPROTO_PIM:
-			(void)printf("PIM");
+			printf("PIM");
 			pim_print(cp, len);
 			goto end;
 #ifndef IPPROTO_OSPF
@@ -191,7 +191,7 @@ ip6_print(const u_char *bp, u_int length)
 			goto end;
 
 		case IPPROTO_NONE:
-			(void)printf("no next header");
+			printf("no next header");
 			goto end;
 
 #ifndef IPPROTO_ETHERIP
@@ -212,7 +212,7 @@ ip6_print(const u_char *bp, u_int length)
 			break;
 
 		default:
-			(void)printf("ip-proto-%d %d", ip6->ip6_nxt, len);
+			printf("ip-proto-%d %d", ip6->ip6_nxt, len);
 			goto end;
 		}
 		if (hlen == 0)
@@ -223,18 +223,18 @@ ip6_print(const u_char *bp, u_int length)
 
 	flow = ntohl(ip6->ip6_flow);
 	if (flow & 0x0ff00000)
-		(void)printf(" [class 0x%x]", (flow & 0x0ff00000) >> 20);
+		printf(" [class 0x%x]", (flow & 0x0ff00000) >> 20);
 	if (flow & 0x000fffff)
-		(void)printf(" [flowlabel 0x%x]", flow & 0x000fffff);
+		printf(" [flowlabel 0x%x]", flow & 0x000fffff);
 
 	if (ip6->ip6_hlim <= 1)
-		(void)printf(" [hlim %d]", (int)ip6->ip6_hlim);
+		printf(" [hlim %d]", (int)ip6->ip6_hlim);
 
 	if (vflag) {
 		printf(" (");
-		(void)printf("len %d", len);
+		printf("len %d", len);
 		if (ip6->ip6_hlim > 1)
-			(void)printf(", hlim %d", (int)ip6->ip6_hlim);
+			printf(", hlim %d", (int)ip6->ip6_hlim);
 		printf(")");
 	}
 

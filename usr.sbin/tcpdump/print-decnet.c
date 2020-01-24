@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-decnet.c,v 1.17 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-decnet.c,v 1.18 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -71,18 +71,18 @@ decnet_print(const u_char *ap, u_int length, u_int caplen)
 	const u_char *nspp;
 
 	if (length < sizeof(struct shorthdr)) {
-		(void)printf("[|decnet]");
+		printf("[|decnet]");
 		return;
 	}
 
 	TCHECK2(*ap, sizeof(short));
 	pktlen = EXTRACT_LE_16BITS(ap);
 	if (pktlen < sizeof(struct shorthdr)) {
-		(void)printf("[|decnet]");
+		printf("[|decnet]");
 		return;
 	}
 	if (pktlen > length) {
-		(void)printf("[|decnet]");
+		printf("[|decnet]");
 		return;
 	}
 	length = pktlen;
@@ -98,9 +98,9 @@ decnet_print(const u_char *ap, u_int length, u_int caplen)
 	    /* pad bytes of some sort in front of message */
 	    u_int padlen = mflags & RMF_PADMASK;
 	    if (vflag)
-		(void) printf("[pad:%d] ", padlen);
+		printf("[pad:%d] ", padlen);
 	    if (length < padlen + 2) {
-		(void)printf("[|decnet]");
+		printf("[|decnet]");
 		return;
 	    }
 	    TCHECK2(ap[sizeof(short)], padlen);
@@ -114,7 +114,7 @@ decnet_print(const u_char *ap, u_int length, u_int caplen)
 	}
 
 	if (mflags & RMF_FVER) {
-		(void) printf("future-version-decnet");
+		printf("future-version-decnet");
 		default_print(ap, min(length, caplen));
 		return;
 	}
@@ -129,7 +129,7 @@ decnet_print(const u_char *ap, u_int length, u_int caplen)
 	switch (mflags & RMF_MASK) {
 	case RMF_LONG:
 	    if (length < sizeof(struct longhdr)) {
-		(void)printf("[|decnet]");
+		printf("[|decnet]");
 		return;
 	    }
 	    TCHECK(rhp->rh_long);
@@ -150,21 +150,21 @@ decnet_print(const u_char *ap, u_int length, u_int caplen)
 	    nsplen = length - sizeof(struct shorthdr);
 	    break;
 	default:
-	    (void) printf("unknown message flags under mask");
+	    printf("unknown message flags under mask");
 	    default_print((u_char *)ap, min(length, caplen));
 	    return;
 	}
 
-	(void)printf("%s > %s %d ",
-			dnaddr_string(src), dnaddr_string(dst), pktlen);
+	printf("%s > %s %d ",
+	    dnaddr_string(src), dnaddr_string(dst), pktlen);
 	if (vflag) {
 	    if (mflags & RMF_RQR)
-		(void)printf("RQR ");
+		printf("RQR ");
 	    if (mflags & RMF_RTS)
-		(void)printf("RTS ");
+		printf("RTS ");
 	    if (mflags & RMF_IE)
-		(void)printf("IE ");
-	    (void)printf("%d hops ", hops);
+		printf("IE ");
+	    printf("%d hops ", hops);
 	}
 
 	if (!print_nsp(nspp, nsplen))
@@ -172,7 +172,7 @@ decnet_print(const u_char *ap, u_int length, u_int caplen)
 	return;
 
 trunc:
-	(void)printf("[|decnet]");
+	printf("[|decnet]");
 	return;
 }
 
@@ -190,7 +190,7 @@ print_decnet_ctlmsg(const union routehdr *rhp, u_int length,
 
 	switch (mflags & RMF_CTLMASK) {
 	case RMF_INIT:
-	    (void)printf("init ");
+	    printf("init ");
 	    if (length < sizeof(struct initmsg))
 		goto trunc;
 	    TCHECK(cmp->cm_init);
@@ -202,55 +202,53 @@ print_decnet_ctlmsg(const union routehdr *rhp, u_int length,
 	    ueco = EXTRACT_LE_8BITS(cmp->cm_init.in_ueco);
 	    hello = EXTRACT_LE_16BITS(cmp->cm_init.in_hello);
 	    print_t_info(info);
-	    (void)printf(
-		"src %sblksize %d vers %d eco %d ueco %d hello %d",
-			dnaddr_string(src), blksize, vers, eco, ueco,
-			hello);
+	    printf("src %sblksize %d vers %d eco %d ueco %d hello %d",
+		dnaddr_string(src), blksize, vers, eco, ueco, hello);
 
 	    ret = 1;
 	    break;
 	case RMF_VER:
-	    (void)printf("verification ");
+	    printf("verification ");
 	    if (length < sizeof(struct verifmsg))
 		goto trunc;
 	    TCHECK(cmp->cm_ver);
 	    src = EXTRACT_LE_16BITS(cmp->cm_ver.ve_src);
 	    other = EXTRACT_LE_8BITS(cmp->cm_ver.ve_fcnval);
-	    (void)printf("src %s fcnval %o", dnaddr_string(src), other);
+	    printf("src %s fcnval %o", dnaddr_string(src), other);
 	    ret = 1;
 	    break;
 	case RMF_TEST:
-	    (void)printf("test ");
+	    printf("test ");
 	    if (length < sizeof(struct testmsg))
 		goto trunc;
 	    TCHECK(cmp->cm_test);
 	    src = EXTRACT_LE_16BITS(cmp->cm_test.te_src);
 	    other = EXTRACT_LE_8BITS(cmp->cm_test.te_data);
-	    (void)printf("src %s data %o", dnaddr_string(src), other);
+	    printf("src %s data %o", dnaddr_string(src), other);
 	    ret = 1;
 	    break;
 	case RMF_L1ROUT:
-	    (void)printf("lev-1-routing ");
+	    printf("lev-1-routing ");
 	    if (length < sizeof(struct l1rout))
 		goto trunc;
 	    TCHECK(cmp->cm_l1rou);
 	    src = EXTRACT_LE_16BITS(cmp->cm_l1rou.r1_src);
-	    (void)printf("src %s ", dnaddr_string(src));
+	    printf("src %s ", dnaddr_string(src));
 	    ret = print_l1_routes(&(rhpx[sizeof(struct l1rout)]),
 				length - sizeof(struct l1rout));
 	    break;
 	case RMF_L2ROUT:
-	    (void)printf("lev-2-routing ");
+	    printf("lev-2-routing ");
 	    if (length < sizeof(struct l2rout))
 		goto trunc;
 	    TCHECK(cmp->cm_l2rout);
 	    src = EXTRACT_LE_16BITS(cmp->cm_l2rout.r2_src);
-	    (void)printf("src %s ", dnaddr_string(src));
+	    printf("src %s ", dnaddr_string(src));
 	    ret = print_l2_routes(&(rhpx[sizeof(struct l2rout)]),
 				length - sizeof(struct l2rout));
 	    break;
 	case RMF_RHELLO:
-	    (void)printf("router-hello ");
+	    printf("router-hello ");
 	    if (length < sizeof(struct rhellomsg))
 		goto trunc;
 	    TCHECK(cmp->cm_rhello);
@@ -265,15 +263,13 @@ print_decnet_ctlmsg(const union routehdr *rhp, u_int length,
 	    priority = EXTRACT_LE_8BITS(cmp->cm_rhello.rh_priority);
 	    hello = EXTRACT_LE_16BITS(cmp->cm_rhello.rh_hello);
 	    print_i_info(info);
-	    (void)printf(
-	    "vers %d eco %d ueco %d src %s blksize %d pri %d hello %d",
-			vers, eco, ueco, dnaddr_string(src),
-			blksize, priority, hello);
+	    printf("vers %d eco %d ueco %d src %s blksize %d pri %d hello %d",
+		vers, eco, ueco, dnaddr_string(src), blksize, priority, hello);
 	    ret = print_elist(&(rhpx[sizeof(struct rhellomsg)]),
 				length - sizeof(struct rhellomsg));
 	    break;
 	case RMF_EHELLO:
-	    (void)printf("endnode-hello ");
+	    printf("endnode-hello ");
 	    if (length < sizeof(struct ehellomsg))
 		goto trunc;
 	    TCHECK(cmp->cm_ehello);
@@ -292,15 +288,15 @@ print_decnet_ctlmsg(const union routehdr *rhp, u_int length,
 	    hello = EXTRACT_LE_16BITS(cmp->cm_ehello.eh_hello);
 	    other = EXTRACT_LE_8BITS(cmp->cm_ehello.eh_data);
 	    print_i_info(info);
-	    (void)printf(
+	    printf(
 	"vers %d eco %d ueco %d src %s blksize %d rtr %s hello %d data %o",
-			vers, eco, ueco, dnaddr_string(src),
-			blksize, dnaddr_string(dst), hello, other);
+		 vers, eco, ueco, dnaddr_string(src),
+		 blksize, dnaddr_string(dst), hello, other);
 	    ret = 1;
 	    break;
 
 	default:
-	    (void)printf("unknown control message");
+	    printf("unknown control message");
 	    default_print((u_char *)rhp, min(length, caplen));
 	    ret = 1;
 	    break;
@@ -316,15 +312,15 @@ print_t_info(int info)
 {
 	int ntype = info & 3;
 	switch (ntype) {
-	case 0: (void)printf("reserved-ntype? "); break;
-	case TI_L2ROUT: (void)printf("l2rout "); break;
-	case TI_L1ROUT: (void)printf("l1rout "); break;
-	case TI_ENDNODE: (void)printf("endnode "); break;
+	case 0: printf("reserved-ntype? "); break;
+	case TI_L2ROUT: printf("l2rout "); break;
+	case TI_L1ROUT: printf("l1rout "); break;
+	case TI_ENDNODE: printf("endnode "); break;
 	}
 	if (info & TI_VERIF)
-	    (void)printf("verif ");
+	    printf("verif ");
 	if (info & TI_BLOCK)
-	    (void)printf("blo ");
+	    printf("blo ");
 }
 
 static int
@@ -348,8 +344,8 @@ print_l1_routes(const char *rp, u_int len)
 	    info = EXTRACT_LE_16BITS(rp);
 	    rp += sizeof(short);
 	    len -= sizeof(short);
-	    (void)printf("{ids %d-%d cost %d hops %d} ", id, id + count,
-			    RI_COST(info), RI_HOPS(info));
+	    printf("{ids %d-%d cost %d hops %d} ", id, id + count,
+		RI_COST(info), RI_HOPS(info));
 	}
 	return (1);
 
@@ -378,8 +374,8 @@ print_l2_routes(const char *rp, u_int len)
 	    info = EXTRACT_LE_16BITS(rp);
 	    rp += sizeof(short);
 	    len -= sizeof(short);
-	    (void)printf("{areas %d-%d cost %d hops %d} ", area, area + count,
-			    RI_COST(info), RI_HOPS(info));
+	    printf("{areas %d-%d cost %d hops %d} ", area, area + count,
+		RI_COST(info), RI_HOPS(info));
 	}
 	return (1);
 
@@ -392,17 +388,17 @@ print_i_info(int info)
 {
 	int ntype = info & II_TYPEMASK;
 	switch (ntype) {
-	case 0: (void)printf("reserved-ntype? "); break;
-	case II_L2ROUT: (void)printf("l2rout "); break;
-	case II_L1ROUT: (void)printf("l1rout "); break;
-	case II_ENDNODE: (void)printf("endnode "); break;
+	case 0: printf("reserved-ntype? "); break;
+	case II_L2ROUT: printf("l2rout "); break;
+	case II_L1ROUT: printf("l1rout "); break;
+	case II_ENDNODE: printf("endnode "); break;
 	}
 	if (info & II_VERIF)
-	    (void)printf("verif ");
+	    printf("verif ");
 	if (info & II_NOMCAST)
-	    (void)printf("nomcast ");
+	    printf("nomcast ");
 	if (info & II_BLOCK)
-	    (void)printf("blo ");
+	    printf("blo ");
 }
 
 static int
@@ -447,9 +443,9 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		    ack = EXTRACT_LE_16BITS(shp->sh_seq[0]);
 		    if (ack & SGQ_ACK) {	/* acknum field */
 			if ((ack & SGQ_NAK) == SGQ_NAK)
-			    (void)printf("nak %d ", ack & SGQ_MASK);
+			    printf("nak %d ", ack & SGQ_MASK);
 			else
-			    (void)printf("ack %d ", ack & SGQ_MASK);
+			    printf("ack %d ", ack & SGQ_MASK);
 		        data_off += sizeof(short);
 			if (nsplen < data_off)
 			    goto trunc;
@@ -457,9 +453,9 @@ print_nsp(const u_char *nspp, u_int nsplen)
 			ack = EXTRACT_LE_16BITS(shp->sh_seq[1]);
 			if (ack & SGQ_OACK) {	/* ackoth field */
 			    if ((ack & SGQ_ONAK) == SGQ_ONAK)
-				(void)printf("onak %d ", ack & SGQ_MASK);
+				printf("onak %d ", ack & SGQ_MASK);
 			    else
-				(void)printf("oack %d ", ack & SGQ_MASK);
+				printf("oack %d ", ack & SGQ_MASK);
 			    data_off += sizeof(short);
 			    if (nsplen < data_off)
 				goto trunc;
@@ -467,7 +463,7 @@ print_nsp(const u_char *nspp, u_int nsplen)
 			    ack = EXTRACT_LE_16BITS(shp->sh_seq[2]);
 			}
 		    }
-		    (void)printf("seg %d ", ack & SGQ_MASK);
+		    printf("seg %d ", ack & SGQ_MASK);
 #ifdef	PRINT_NSPDATA
 		    if (nsplen > data_off) {
 			dp = &(nspp[data_off]);
@@ -493,9 +489,9 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		    ack = EXTRACT_LE_16BITS(shp->sh_seq[0]);
 		    if (ack & SGQ_ACK) {	/* acknum field */
 			if ((ack & SGQ_NAK) == SGQ_NAK)
-			    (void)printf("nak %d ", ack & SGQ_MASK);
+			    printf("nak %d ", ack & SGQ_MASK);
 			else
-			    (void)printf("ack %d ", ack & SGQ_MASK);
+			    printf("ack %d ", ack & SGQ_MASK);
 		        data_off += sizeof(short);
 			if (nsplen < data_off)
 			    goto trunc;
@@ -503,9 +499,9 @@ print_nsp(const u_char *nspp, u_int nsplen)
 			ack = EXTRACT_LE_16BITS(shp->sh_seq[1]);
 			if (ack & SGQ_OACK) {	/* ackdat field */
 			    if ((ack & SGQ_ONAK) == SGQ_ONAK)
-				(void)printf("nakdat %d ", ack & SGQ_MASK);
+				printf("nakdat %d ", ack & SGQ_MASK);
 			    else
-				(void)printf("ackdat %d ", ack & SGQ_MASK);
+				printf("ackdat %d ", ack & SGQ_MASK);
 			    data_off += sizeof(short);
 			    if (nsplen < data_off)
 				goto trunc;
@@ -513,7 +509,7 @@ print_nsp(const u_char *nspp, u_int nsplen)
 			    ack = EXTRACT_LE_16BITS(shp->sh_seq[2]);
 			}
 		    }
-		    (void)printf("seg %d ", ack & SGQ_MASK);
+		    printf("seg %d ", ack & SGQ_MASK);
 #ifdef	PRINT_NSPDATA
 		    if (nsplen > data_off) {
 			dp = &(nspp[data_off]);
@@ -524,7 +520,7 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		}
 		break;
 	    case MFS_ILS:
-		(void)printf("link-service %d>%d ", src, dst);
+		printf("link-service %d>%d ", src, dst);
 		{
 		    struct seghdr *shp = (struct seghdr *)nspp;
 		    struct lsmsg *lsmp =
@@ -538,59 +534,59 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		    ack = EXTRACT_LE_16BITS(shp->sh_seq[0]);
 		    if (ack & SGQ_ACK) {	/* acknum field */
 			if ((ack & SGQ_NAK) == SGQ_NAK)
-			    (void)printf("nak %d ", ack & SGQ_MASK);
+			    printf("nak %d ", ack & SGQ_MASK);
 			else
-			    (void)printf("ack %d ", ack & SGQ_MASK);
+			    printf("ack %d ", ack & SGQ_MASK);
 			TCHECK(shp->sh_seq[1]);
 		        ack = EXTRACT_LE_16BITS(shp->sh_seq[1]);
 			if (ack & SGQ_OACK) {	/* ackdat field */
 			    if ((ack & SGQ_ONAK) == SGQ_ONAK)
-				(void)printf("nakdat %d ", ack & SGQ_MASK);
+				printf("nakdat %d ", ack & SGQ_MASK);
 			    else
-				(void)printf("ackdat %d ", ack & SGQ_MASK);
+				printf("ackdat %d ", ack & SGQ_MASK);
 			    TCHECK(shp->sh_seq[2]);
 			    ack = EXTRACT_LE_16BITS(shp->sh_seq[2]);
 			}
 		    }
-		    (void)printf("seg %d ", ack & SGQ_MASK);
+		    printf("seg %d ", ack & SGQ_MASK);
 		    TCHECK(*lsmp);
 		    lsflags = EXTRACT_LE_8BITS(lsmp->ls_lsflags);
 		    fcval = EXTRACT_LE_8BITS(lsmp->ls_fcval);
 		    switch (lsflags & LSI_MASK) {
 		    case LSI_DATA:
-			(void)printf("dat seg count %d ", fcval);
+			printf("dat seg count %d ", fcval);
 			switch (lsflags & LSM_MASK) {
 			case LSM_NOCHANGE:
 			    break;
 			case LSM_DONOTSEND:
-			    (void)printf("donotsend-data ");
+			    printf("donotsend-data ");
 			    break;
 			case LSM_SEND:
-			    (void)printf("send-data ");
+			    printf("send-data ");
 			    break;
 			default:
-			    (void)printf("reserved-fcmod? %x", lsflags);
+			    printf("reserved-fcmod? %x", lsflags);
 			    break;
 			}
 			break;
 		    case LSI_INTR:
-			(void)printf("intr req count %d ", fcval);
+			printf("intr req count %d ", fcval);
 			break;
 		    default:
-			(void)printf("reserved-fcval-int? %x", lsflags);
+			printf("reserved-fcval-int? %x", lsflags);
 			break;
 		    }
 		}
 		break;
 	    default:
-		(void)printf("reserved-subtype? %x %d > %d", flags, src, dst);
+		printf("reserved-subtype? %x %d > %d", flags, src, dst);
 		break;
 	    }
 	    break;
 	case MFT_ACK:
 	    switch (flags & NSP_SUBMASK) {
 	    case MFS_DACK:
-		(void)printf("data-ack %d>%d ", src, dst);
+		printf("data-ack %d>%d ", src, dst);
 		{
 		    struct ackmsg *amp = (struct ackmsg *)nspp;
 		    int ack;
@@ -601,21 +597,21 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		    ack = EXTRACT_LE_16BITS(amp->ak_acknum[0]);
 		    if (ack & SGQ_ACK) {	/* acknum field */
 			if ((ack & SGQ_NAK) == SGQ_NAK)
-			    (void)printf("nak %d ", ack & SGQ_MASK);
+			    printf("nak %d ", ack & SGQ_MASK);
 			else
-			    (void)printf("ack %d ", ack & SGQ_MASK);
+			    printf("ack %d ", ack & SGQ_MASK);
 		        ack = EXTRACT_LE_16BITS(amp->ak_acknum[1]);
 			if (ack & SGQ_OACK) {	/* ackoth field */
 			    if ((ack & SGQ_ONAK) == SGQ_ONAK)
-				(void)printf("onak %d ", ack & SGQ_MASK);
+				printf("onak %d ", ack & SGQ_MASK);
 			    else
-				(void)printf("oack %d ", ack & SGQ_MASK);
+				printf("oack %d ", ack & SGQ_MASK);
 			}
 		    }
 		}
 		break;
 	    case MFS_IACK:
-		(void)printf("ils-ack %d>%d ", src, dst);
+		printf("ils-ack %d>%d ", src, dst);
 		{
 		    struct ackmsg *amp = (struct ackmsg *)nspp;
 		    int ack;
@@ -626,25 +622,25 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		    ack = EXTRACT_LE_16BITS(amp->ak_acknum[0]);
 		    if (ack & SGQ_ACK) {	/* acknum field */
 			if ((ack & SGQ_NAK) == SGQ_NAK)
-			    (void)printf("nak %d ", ack & SGQ_MASK);
+			    printf("nak %d ", ack & SGQ_MASK);
 			else
-			    (void)printf("ack %d ", ack & SGQ_MASK);
+			    printf("ack %d ", ack & SGQ_MASK);
 		        TCHECK(amp->ak_acknum[1]);
 			ack = EXTRACT_LE_16BITS(amp->ak_acknum[1]);
 			if (ack & SGQ_OACK) {	/* ackdat field */
 			    if ((ack & SGQ_ONAK) == SGQ_ONAK)
-				(void)printf("nakdat %d ", ack & SGQ_MASK);
+				printf("nakdat %d ", ack & SGQ_MASK);
 			    else
-				(void)printf("ackdat %d ", ack & SGQ_MASK);
+				printf("ackdat %d ", ack & SGQ_MASK);
 			}
 		    }
 		}
 		break;
 	    case MFS_CACK:
-		(void)printf("conn-ack %d", dst);
+		printf("conn-ack %d", dst);
 		break;
 	    default:
-		(void)printf("reserved-acktype? %x %d > %d", flags, src, dst);
+		printf("reserved-acktype? %x %d > %d", flags, src, dst);
 		break;
 	    }
 	    break;
@@ -653,10 +649,10 @@ print_nsp(const u_char *nspp, u_int nsplen)
 	    case MFS_CI:
 	    case MFS_RCI:
 		if ((flags & NSP_SUBMASK) == MFS_CI)
-		    (void)printf("conn-initiate ");
+		    printf("conn-initiate ");
 		else
-		    (void)printf("retrans-conn-initiate ");
-		(void)printf("%d>%d ", src, dst);
+		    printf("retrans-conn-initiate ");
+		printf("%d>%d ", src, dst);
 		{
 		    struct cimsg *cimp = (struct cimsg *)nspp;
 		    int services, info, segsize;
@@ -675,30 +671,30 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		    case COS_NONE:
 			break;
 		    case COS_SEGMENT:
-			(void)printf("seg ");
+			printf("seg ");
 			break;
 		    case COS_MESSAGE:
-			(void)printf("msg ");
+			printf("msg ");
 			break;
 		    case COS_CRYPTSER:
-			(void)printf("crypt ");
+			printf("crypt ");
 			break;
 		    }
 		    switch (info & COI_MASK) {
 		    case COI_32:
-			(void)printf("ver 3.2 ");
+			printf("ver 3.2 ");
 			break;
 		    case COI_31:
-			(void)printf("ver 3.1 ");
+			printf("ver 3.1 ");
 			break;
 		    case COI_40:
-			(void)printf("ver 4.0 ");
+			printf("ver 4.0 ");
 			break;
 		    case COI_41:
-			(void)printf("ver 4.1 ");
+			printf("ver 4.1 ");
 			break;
 		    }
-		    (void)printf("segsize %d ", segsize);
+		    printf("segsize %d ", segsize);
 #ifdef	PRINT_NSPDATA
 		    if (nsplen > sizeof(struct cimsg)) {
 			dp = &(nspp[sizeof(struct cimsg)]);
@@ -709,7 +705,7 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		}
 		break;
 	    case MFS_CC:
-		(void)printf("conn-confirm %d>%d ", src, dst);
+		printf("conn-confirm %d>%d ", src, dst);
 		{
 		    struct ccmsg *ccmp = (struct ccmsg *)nspp;
 		    int services, info;
@@ -730,32 +726,32 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		    case COS_NONE:
 			break;
 		    case COS_SEGMENT:
-			(void)printf("seg ");
+			printf("seg ");
 			break;
 		    case COS_MESSAGE:
-			(void)printf("msg ");
+			printf("msg ");
 			break;
 		    case COS_CRYPTSER:
-			(void)printf("crypt ");
+			printf("crypt ");
 			break;
 		    }
 		    switch (info & COI_MASK) {
 		    case COI_32:
-			(void)printf("ver 3.2 ");
+			printf("ver 3.2 ");
 			break;
 		    case COI_31:
-			(void)printf("ver 3.1 ");
+			printf("ver 3.1 ");
 			break;
 		    case COI_40:
-			(void)printf("ver 4.0 ");
+			printf("ver 4.0 ");
 			break;
 		    case COI_41:
-			(void)printf("ver 4.1 ");
+			printf("ver 4.1 ");
 			break;
 		    }
-		    (void)printf("segsize %d ", segsize);
+		    printf("segsize %d ", segsize);
 		    if (optlen) {
-			(void)printf("optlen %d ", optlen);
+			printf("optlen %d ", optlen);
 #ifdef	PRINT_NSPDATA
 			if (optlen > nsplen - sizeof(struct ccmsg))
 			    goto trunc;
@@ -767,7 +763,7 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		}
 		break;
 	    case MFS_DI:
-		(void)printf("disconn-initiate %d>%d ", src, dst);
+		printf("disconn-initiate %d>%d ", src, dst);
 		{
 		    struct dimsg *dimp = (struct dimsg *)nspp;
 		    int reason;
@@ -784,7 +780,7 @@ print_nsp(const u_char *nspp, u_int nsplen)
 
 		    print_reason(reason);
 		    if (optlen) {
-			(void)printf("optlen %d ", optlen);
+			printf("optlen %d ", optlen);
 #ifdef	PRINT_NSPDATA
 			if (optlen > nsplen - sizeof(struct dimsg))
 			    goto trunc;
@@ -796,7 +792,7 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		}
 		break;
 	    case MFS_DC:
-		(void)printf("disconn-confirm %d>%d ", src, dst);
+		printf("disconn-confirm %d>%d ", src, dst);
 		{
 		    struct dcmsg *dcmp = (struct dcmsg *)nspp;
 		    int reason;
@@ -808,12 +804,12 @@ print_nsp(const u_char *nspp, u_int nsplen)
 		}
 		break;
 	    default:
-		(void)printf("reserved-ctltype? %x %d > %d", flags, src, dst);
+		printf("reserved-ctltype? %x %d > %d", flags, src, dst);
 		break;
 	    }
 	    break;
 	default:
-	    (void)printf("reserved-type? %x %d > %d", flags, src, dst);
+	    printf("reserved-type? %x %d > %d", flags, src, dst);
 	    break;
 	}
 	return (1);

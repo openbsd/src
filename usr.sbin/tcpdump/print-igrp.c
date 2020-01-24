@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-igrp.c,v 1.8 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-igrp.c,v 1.9 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -86,7 +86,7 @@ igrp_print(const u_char *bp, u_int length, const u_char *bp2)
 	hdr = (struct igrphdr *)bp;
 	ip = (struct ip *)bp2;
 	cp = (u_char *)(hdr + 1);
-        (void)printf("%s > %s: igrp: ",
+	printf("%s > %s: igrp: ",
 	    ipaddr_string(&ip->ip_src),
 	    ipaddr_string(&ip->ip_dst));
 
@@ -96,7 +96,7 @@ igrp_print(const u_char *bp, u_int length, const u_char *bp2)
 	nsys = EXTRACT_16BITS(&hdr->ig_ns);
 	next = EXTRACT_16BITS(&hdr->ig_nx);
 
-	(void)printf(" %s V%d edit=%d AS=%d (%d/%d/%d)",
+	printf(" %s V%d edit=%d AS=%d (%d/%d/%d)",
 	    tok2str(op2str, "op-#%d", hdr->ig_op),
 	    hdr->ig_v,
 	    hdr->ig_ed,
@@ -120,7 +120,7 @@ igrp_print(const u_char *bp, u_int length, const u_char *bp2)
 			igrp_entry_print((struct igrprte *)cp, 0, 1);
 			--next;
 		} else {
-			(void)printf("[extra bytes %d]", length);
+			printf("[extra bytes %d]", length);
 			break;
 		}
 		cp += IGRP_RTE_SIZE;
@@ -129,5 +129,5 @@ igrp_print(const u_char *bp, u_int length, const u_char *bp2)
 	if (nint == 0 && nsys == 0 && next == 0)
 		return;
 trunc:
-	fputs("[|igrp]", stdout);
+	printf("[|igrp]");
 }

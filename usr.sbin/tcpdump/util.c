@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.29 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.30 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -123,31 +123,31 @@ ts_print(const struct bpf_timeval *tvp)
 	time_t t;
 
 	if (Iflag && device)
-		(void)printf("%s ", device);
+		printf("%s ", device);
 	switch(tflag){
 	case 0:
 		break;
 	case -1:
 		/* Unix timeval style */
-		(void)printf("%u.%06u ", tvp->tv_sec, tvp->tv_usec);
+		printf("%u.%06u ", tvp->tv_sec, tvp->tv_usec);
 		break;
 	case -2:
 		t = tvp->tv_sec;
 		strftime(buf, TSBUFLEN, "%b %d %T", priv_localtime(&t));
-		(void)printf("%s.%06u ", buf, tvp->tv_usec);
+		printf("%s.%06u ", buf, tvp->tv_usec);
 		break;
 	case -3: /* last frame time delta  */
 	case -4: /* first frame time delta  */
 		cur.tv_sec = tvp->tv_sec;
 		cur.tv_usec = tvp->tv_usec;
 		timersub(&cur, &last, &diff);
-		(void)printf("%lld.%06ld ", diff.tv_sec, diff.tv_usec);
+		printf("%lld.%06ld ", diff.tv_sec, diff.tv_usec);
 		if (!timerisset(&last) || tflag == -3)
 			last = cur;
 		break;
 	default:
 		s = (tvp->tv_sec + thiszone) % 86400;
-		(void)printf("%02d:%02d:%02d.%06u ",
+		printf("%02d:%02d:%02d.%06u ",
 		    s / 3600, (s % 3600) / 60, s % 60, tvp->tv_usec);
 		break;
 	}
@@ -167,12 +167,12 @@ relts_print(int secs)
 	int *s = seconds;
 
 	if (secs <= 0) {
-		(void)printf("0s");
+		printf("0s");
 		return;
 	}
 	while (secs > 0) {
 		if (secs >= *s) {
-			(void)printf("%d%s", secs / *s, *l);
+			printf("%d%s", secs / *s, *l);
 			secs -= (secs / *s) * *s;
 		}
 		s++;

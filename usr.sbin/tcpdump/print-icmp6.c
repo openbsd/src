@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.22 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.23 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -151,9 +151,9 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 		icmp6len = snapend - bp;
 
 #if 0
-        (void)printf("%s > %s: ",
-		ip6addr_string(&ip->ip6_src),
-		ip6addr_string(&ip->ip6_dst));
+        printf("%s > %s: ",
+	    ip6addr_string(&ip->ip6_src),
+	    ip6addr_string(&ip->ip6_dst));
 #endif
 
 	TCHECK(dp->icmp6_code);
@@ -163,11 +163,11 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 		switch (dp->icmp6_code) {
 		case ICMP6_DST_UNREACH_NOROUTE:
 			printf("icmp6: %s unreachable route",
-			       ip6addr_string(&oip->ip6_dst));
+			    ip6addr_string(&oip->ip6_dst));
 			break;
 		case ICMP6_DST_UNREACH_ADMIN:
 			printf("icmp6: %s unreachable prohibited",
-			       ip6addr_string(&oip->ip6_dst));
+			    ip6addr_string(&oip->ip6_dst));
 			break;
 #ifdef ICMP6_DST_UNREACH_BEYONDSCOPE
 		case ICMP6_DST_UNREACH_BEYONDSCOPE:
@@ -175,12 +175,12 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 		case ICMP6_DST_UNREACH_NOTNEIGHBOR:
 #endif
 			printf("icmp6: %s beyond scope of source address %s",
-			       ip6addr_string(&oip->ip6_dst),
-			       ip6addr_string(&oip->ip6_src));
+			    ip6addr_string(&oip->ip6_dst),
+			    ip6addr_string(&oip->ip6_src));
 			break;
 		case ICMP6_DST_UNREACH_ADDR:
 			printf("icmp6: %s unreachable address",
-			       ip6addr_string(&oip->ip6_dst));
+			    ip6addr_string(&oip->ip6_dst));
 			break;
 		case ICMP6_DST_UNREACH_NOPORT:
 			TCHECK(oip->ip6_nxt);
@@ -191,25 +191,25 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 			switch (oip->ip6_nxt) {
 			case IPPROTO_TCP:
 				printf("icmp6: %s tcp port %s unreachable",
-					ip6addr_string(&oip->ip6_dst),
-					tcpport_string(dport));
+				    ip6addr_string(&oip->ip6_dst),
+				    tcpport_string(dport));
 				break;
 			case IPPROTO_UDP:
 				printf("icmp6: %s udp port %s unreachable",
-					ip6addr_string(&oip->ip6_dst),
-					udpport_string(dport));
+				    ip6addr_string(&oip->ip6_dst),
+				    udpport_string(dport));
 				break;
 			default:
 				printf("icmp6: %s protocol %d port %d unreachable",
-					ip6addr_string(&oip->ip6_dst),
-					oip->ip6_nxt, dport);
+				    ip6addr_string(&oip->ip6_dst),
+				    oip->ip6_nxt, dport);
 				break;
 			}
 			break;
 		default:
 			printf("icmp6: %s unreachable code-#%d",
-				ip6addr_string(&oip->ip6_dst),
-				dp->icmp6_code);
+			    ip6addr_string(&oip->ip6_dst),
+			    dp->icmp6_code);
 			break;
 		}
 		break;
@@ -222,14 +222,14 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 		switch (dp->icmp6_code) {
 		case ICMP6_TIME_EXCEED_TRANSIT:
 			printf("icmp6: time exceeded in-transit for %s",
-				ip6addr_string(&oip->ip6_dst));
+			    ip6addr_string(&oip->ip6_dst));
 			break;
 		case ICMP6_TIME_EXCEED_REASSEMBLY:
 			printf("icmp6: ip6 reassembly time exceeded");
 			break;
 		default:
 			printf("icmp6: time exceeded code-#%d",
-				dp->icmp6_code);
+			    dp->icmp6_code);
 			break;
 		}
 		break;
@@ -238,19 +238,19 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 		switch (dp->icmp6_code) {
 		case ICMP6_PARAMPROB_HEADER:
 			printf("icmp6: parameter problem errorneous - octet %u",
-				(u_int32_t)ntohl(dp->icmp6_pptr));
+			    (u_int32_t)ntohl(dp->icmp6_pptr));
 			break;
 		case ICMP6_PARAMPROB_NEXTHEADER:
 			printf("icmp6: parameter problem next header - octet %u",
-				(u_int32_t)ntohl(dp->icmp6_pptr));
+			    (u_int32_t)ntohl(dp->icmp6_pptr));
 			break;
 		case ICMP6_PARAMPROB_OPTION:
 			printf("icmp6: parameter problem option - octet %u",
-				(u_int32_t)ntohl(dp->icmp6_pptr));
+			    (u_int32_t)ntohl(dp->icmp6_pptr));
 			break;
 		default:
 			printf("icmp6: parameter problem code-#%d",
-			       dp->icmp6_code);
+			    dp->icmp6_code);
 			break;
 		}
 		break;
@@ -287,8 +287,8 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 		printf("icmp6: router solicitation ");
 		if (vflag) {
 #define RTSOLLEN 8
-		        icmp6_opt_print((const u_char *)dp + RTSOLLEN,
-					icmp6len - RTSOLLEN);
+			icmp6_opt_print((const u_char *)dp + RTSOLLEN,
+			    icmp6len - RTSOLLEN);
 		}
 		break;
 	case ND_ROUTER_ADVERT:
@@ -321,11 +321,12 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 				printf("pref=rsv, ");
 				break;
 			}
-			printf("router_ltime=%d, ", ntohs(p->nd_ra_router_lifetime));
+			printf("router_ltime=%d, ",
+			    ntohs(p->nd_ra_router_lifetime));
 			printf("reachable_time=%u, ",
-				(u_int32_t)ntohl(p->nd_ra_reachable));
+			    (u_int32_t)ntohl(p->nd_ra_reachable));
 			printf("retrans_time=%u)",
-				(u_int32_t)ntohl(p->nd_ra_retransmit));
+			    (u_int32_t)ntohl(p->nd_ra_retransmit));
 #define RTADVLEN 16
 		        icmp6_opt_print((const u_char *)dp + RTADVLEN,
 					icmp6len - RTADVLEN);
@@ -340,8 +341,8 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 			ip6addr_string(&p->nd_ns_target));
 		if (vflag) {
 #define NDSOLLEN 24
-		        icmp6_opt_print((const u_char *)dp + NDSOLLEN,
-					icmp6len - NDSOLLEN);
+			icmp6_opt_print((const u_char *)dp + NDSOLLEN,
+			    icmp6len - NDSOLLEN);
 		}
 	    }
 		break;
@@ -352,7 +353,7 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 		p = (struct nd_neighbor_advert *)dp;
 		TCHECK(p->nd_na_target);
 		printf("icmp6: neighbor adv: tgt is %s",
-			ip6addr_string(&p->nd_na_target));
+		    ip6addr_string(&p->nd_na_target));
                 if (vflag) {
 #define ND_NA_FLAG_ALL	\
 	(ND_NA_FLAG_ROUTER|ND_NA_FLAG_SOLICITED|ND_NA_FLAG_OVERRIDE)
@@ -477,9 +478,9 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 				else
 					printf(",TTL=%d", ttl);
 				if (buf[12] != ep - buf - 13) {
-					(void)printf(",invalid namelen:%d/%u",
-						buf[12],
-						(unsigned int)(ep - buf - 13));
+					printf(",invalid namelen:%d/%u",
+					    buf[12],
+					    (unsigned int)(ep - buf - 13));
 				}
 			}
 		}
@@ -509,7 +510,7 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 	}
 	return;
 trunc:
-	fputs("[|icmp6]", stdout);
+	printf("[|icmp6]");
 #if 0
 #undef TCHECK
 #endif
@@ -709,7 +710,7 @@ icmp6_opt_print(const u_char *bp, int resid)
 	default:
 		opts_len = op->nd_opt_len;
 		printf("(unknown opt_type=%d, opt_len=%d)",
-		       op->nd_opt_type, opts_len);
+		    op->nd_opt_type, opts_len);
 		if (opts_len == 0)
 			opts_len = 1; /* XXX */
 		icmp6_opt_print((const u_char *)op + (opts_len << 3),
@@ -718,7 +719,7 @@ icmp6_opt_print(const u_char *bp, int resid)
 	}
 	return;
  trunc:
-	fputs("[ndp opt]", stdout);
+	printf("[ndp opt]");
 	return;
 #if 0
 #undef TCHECK
@@ -786,7 +787,7 @@ mldv2_report_print(const u_char *bp, u_int len)
 				printf(", %d source(s)", nsrcs);
 			else {
 				/* Print the sources */
-				(void)printf(" {");
+				printf(" {");
 				for (j = 0; j < nsrcs; j++) {
 					TCHECK2(bp[group +
 					    MLDV2_REPORT_MINGRPLEN +
@@ -796,7 +797,7 @@ mldv2_report_print(const u_char *bp, u_int len)
 					    MLDV2_REPORT_MINGRPLEN + j *
 					    sizeof(struct in6_addr)]));
 				}
-				(void)printf(" }");
+				printf(" }");
 			}
 			/* Next group record */
 			group += MLDV2_REPORT_MINGRPLEN + nsrcs *
@@ -806,7 +807,7 @@ mldv2_report_print(const u_char *bp, u_int len)
 	}
 	return;
 trunc:
-	(void)printf("[|icmp6]");
+	printf("[|icmp6]");
 	return;
 }
 
@@ -834,7 +835,7 @@ mldv2_query_print(const u_char *bp, u_int len)
 		mrd = mrc;
 	}
 	if (vflag) {
-		(void)printf(" [max resp delay=%d]", mrd);
+		printf(" [max resp delay=%d]", mrd);
 	} 
 	TCHECK2(bp[8], sizeof(struct in6_addr));
 	printf(" [gaddr %s", ip6addr_string(&bp[8]));
@@ -880,6 +881,6 @@ mldv2_query_print(const u_char *bp, u_int len)
 	printf("]");
 	return;
 trunc:
-	(void)printf("[|icmp6]");
+	printf("[|icmp6]");
 	return;
 }

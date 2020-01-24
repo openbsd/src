@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.21 2019/04/05 00:57:59 dlg Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.22 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -68,7 +68,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 	int ret;
 
 	if (caplen < 3) {
-		(void)printf("[|llc]");
+		printf("[|llc]");
 		default_print((u_char *)p, caplen);
 		return(0);
 	}
@@ -93,7 +93,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 	if (llc.ssap == LLCSAP_SNAP && llc.dsap == LLCSAP_SNAP
 	    && llc.llcui == LLC_UI) {
 		if (caplen < sizeof(llc)) {
-		    (void)printf("[|llc-snap]");
+		    printf("[|llc-snap]");
 		    default_print((u_char *)p, caplen);
 		    return (0);
 		}
@@ -110,7 +110,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		}
 
 		if (vflag)
-			(void)printf("snap %s ", protoid_string(llc.llcpi));
+			printf("snap %s ", protoid_string(llc.llcpi));
 
 		caplen -= sizeof(llc);
 		length -= sizeof(llc);
@@ -185,23 +185,23 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 
 	if ((llc.ssap & ~LLC_GSAP) == llc.dsap) {
 		if (eflag)
-			(void)printf("%s ", llcsap_string(llc.dsap));
+			printf("%s ", llcsap_string(llc.dsap));
 		else
-			(void)printf("%s > %s %s ",
-					etheraddr_string(esrc),
-					etheraddr_string(edst),
-					llcsap_string(llc.dsap));
+			printf("%s > %s %s ",
+			    etheraddr_string(esrc),
+			    etheraddr_string(edst),
+			    llcsap_string(llc.dsap));
 	} else {
 		if (eflag)
-			(void)printf("%s > %s ",
-				llcsap_string(llc.ssap & ~LLC_GSAP),
-				llcsap_string(llc.dsap));
+			printf("%s > %s ",
+			    llcsap_string(llc.ssap & ~LLC_GSAP),
+			    llcsap_string(llc.dsap));
 		else
-			(void)printf("%s %s > %s %s ",
-				etheraddr_string(esrc),
-				llcsap_string(llc.ssap & ~LLC_GSAP),
-				etheraddr_string(edst),
-				llcsap_string(llc.dsap));
+			printf("%s %s > %s %s ",
+			    etheraddr_string(esrc),
+			    llcsap_string(llc.ssap & ~LLC_GSAP),
+			    etheraddr_string(edst),
+			    llcsap_string(llc.dsap));
 	}
 
 	if ((llc.llcu & LLC_U_FMT) == LLC_U_FMT) {
@@ -262,20 +262,20 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 
 		if ((llc.llcu & LLC_S_FMT) == LLC_S_FMT) {
 			static char *llc_s[] = { "rr", "rej", "rnr", "03" };
-			(void)printf("%s (r=%d,%c)",
-				llc_s[LLC_S_CMD(llc.llcis)],
-				LLC_IS_NR(llc.llcis),
-				f);
+			printf("%s (r=%d,%c)",
+			    llc_s[LLC_S_CMD(llc.llcis)],
+			    LLC_IS_NR(llc.llcis),
+			    f);
 		} else {
-			(void)printf("I (s=%d,r=%d,%c)",
-				LLC_I_NS(llc.llcis),
-				LLC_IS_NR(llc.llcis),
-				f);
+			printf("I (s=%d,r=%d,%c)",
+			    LLC_I_NS(llc.llcis),
+			    LLC_IS_NR(llc.llcis),
+			    f);
 		}
 		p += 4;
 		length -= 4;
 		caplen -= 4;
 	}
-	(void)printf(" len=%d", length);
+	printf(" len=%d", length);
 	return(1);
 }

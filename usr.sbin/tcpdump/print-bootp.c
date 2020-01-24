@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bootp.c,v 1.23 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-bootp.c,v 1.24 2020/01/24 22:46:36 procter Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -138,7 +138,7 @@ bootp_print(const u_char *cp, u_int length,
 		printf(" sname \"");
 		if (fn_print(bp->bp_sname, snapend)) {
 			putchar('"');
-			fputs(tstr + 1, stdout);
+			printf("%s", tstr + 1);
 			return;
 		}
 		putchar('"');
@@ -148,7 +148,7 @@ bootp_print(const u_char *cp, u_int length,
 		printf(" file \"");
 		if (fn_print(bp->bp_file, snapend)) {
 			putchar('"');
-			fputs(tstr + 1, stdout);
+			printf("%s", tstr + 1);
 			return;
 		}
 		putchar('"');
@@ -173,7 +173,7 @@ bootp_print(const u_char *cp, u_int length,
 
 	return;
 trunc:
-	fputs(tstr, stdout);
+	printf("%s", tstr);
 }
 
 /* The first character specifies the format to print */
@@ -289,12 +289,12 @@ rfc1048_print(const u_char *bp, u_int length)
 
 		/* Get the length; check for truncation */
 		if (bp + 1 >= snapend) {
-			fputs(tstr, stdout);
+			printf("%s", tstr);
 			return;
 		}
 		len = *bp++;
 		if (bp + len >= snapend) {
-			fputs(tstr, stdout);
+			printf("%s", tstr);
 			return;
 		}
 
@@ -465,6 +465,6 @@ cmu_print(const u_char *bp, u_int length)
 	return;
 
 trunc:
-	fputs(tstr, stdout);
+	printf("%s", tstr);
 #undef PRINTCMUADDR
 }

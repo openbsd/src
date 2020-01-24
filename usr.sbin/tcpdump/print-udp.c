@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.53 2019/12/02 22:32:01 dlg Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.54 2020/01/24 22:46:37 procter Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -115,17 +115,17 @@ vat_print(const void *hdr, u_int len, const struct udphdr *up)
 	u_int ts = *(u_short *)hdr;
 	if ((ts & 0xf060) != 0) {
 		/* probably vt */
-		(void)printf("udp/vt %u %d / %d",
-			     (u_int32_t)(ntohs(up->uh_ulen) - sizeof(*up)),
-			     ts & 0x3ff, ts >> 10);
+		printf("udp/vt %u %d / %d",
+		    (u_int32_t)(ntohs(up->uh_ulen) - sizeof(*up)),
+		    ts & 0x3ff, ts >> 10);
 	} else {
 		/* probably vat */
 		u_int i0 = ntohl(((u_int *)hdr)[0]);
 		u_int i1 = ntohl(((u_int *)hdr)[1]);
 		printf("udp/vat %u c%d %u%s",
-			(u_int32_t)(ntohs(up->uh_ulen) - sizeof(*up) - 8),
-			i0 & 0xffff,
-			i1, i0 & 0x800000? "*" : "");
+		    (u_int32_t)(ntohs(up->uh_ulen) - sizeof(*up) - 8),
+		    i0 & 0xffff,
+		    i1, i0 & 0x800000? "*" : "");
 		/* audio format */
 		if (i0 & 0x1f0000)
 			printf(" f%d", (i0 >> 16) & 0x1f);
@@ -167,13 +167,8 @@ rtp_print(const void *hdr, u_int len, const struct udphdr *up)
 		len -= 1;
 	}
 	printf(" udp/%s %d c%d %s%s %d %u",
-		ptype,
-		dlen,
-		contype,
-		(hasopt || hasext)? "+" : "",
-		hasmarker? "*" : "",
-		i0 & 0xffff,
-		i1);
+	    ptype, dlen, contype, (hasopt || hasext)? "+" : "",
+	    hasmarker? "*" : "", i0 & 0xffff, i1);
 	if (vflag) {
 		printf(" %u", i1);
 		if (hasopt) {
@@ -229,7 +224,7 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 		if (len != cnt * sizeof(*rr) + sizeof(*sr) + sizeof(*rh))
 			printf(" [%d]", len);
 		if (vflag)
-		  printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
+			printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
 		if ((u_char *)(sr + 1) > ep) {
 			printf(" [|rtcp]");
 			return (ep);
@@ -247,18 +242,18 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 			printf(" [%d]", len);
 		rr = (struct rtcp_rr *)(rh + 1);
 		if (vflag)
-		  printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
+			printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
 		break;
 	case RTCP_PT_SDES:
 		printf(" sdes %d", len);
 		if (vflag)
-		  printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
+			printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
 		cnt = 0;
 		break;
 	case RTCP_PT_BYE:
 		printf(" bye %d", len);
 		if (vflag)
-		  printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
+			printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
 		cnt = 0;
 		break;
 	default:
@@ -507,7 +502,7 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 		    ((struct LAP *)cp)->type == lapDDP &&
 		    (atalk_port(sport) || atalk_port(dport))) {
 			if (vflag)
-				fputs("kip ", stdout);
+				printf("kip ");
 			atalk_print_llap(cp, length);
 			return;
 		}
