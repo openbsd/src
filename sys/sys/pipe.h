@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.23 2020/01/12 09:19:54 anton Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.24 2020/01/24 11:07:41 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -73,7 +73,6 @@ struct pipebuf {
  *
  * Locking:
  *	I	immutable after creation
- *	K	kernel lock
  *	S	sigio_lock
  *	p	pipe_lock
  */
