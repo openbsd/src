@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.260 2019/12/20 07:49:31 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.261 2020/01/24 05:27:31 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1365,6 +1365,8 @@ map_tramps(void)
 typedef void (vector)(void);
 extern vector *IDTVEC(exceptions)[];
 
+paddr_t early_pte_pages;
+
 void
 init_x86_64(paddr_t first_avail)
 {
@@ -1372,6 +1374,15 @@ init_x86_64(paddr_t first_avail)
 	bios_memmap_t *bmp;
 	int x, ist;
 	uint64_t max_dm_size = ((uint64_t)512 * NUM_L4_SLOT_DIRECT) << 30;
+
+	/*
+	 * locore0 mapped 3 pages for use before the pmap is initialized
+	 * starting at first_avail. These pages are currently used by
+	 * efifb to create early-use VAs for the framebuffer before efifb
+	 * is attached.
+	 */
+	early_pte_pages = first_avail;
+	first_avail += 3 * NBPG;
 
 	cpu_init_msrs(&cpu_info_primary);
 

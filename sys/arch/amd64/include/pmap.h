@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.76 2019/12/19 17:42:17 mpi Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.77 2020/01/24 05:27:32 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -143,10 +143,12 @@
 #define L4_SLOT_KERNBASE	511
 #define NUM_L4_SLOT_DIRECT	4
 #define L4_SLOT_DIRECT		(L4_SLOT_KERNBASE - NUM_L4_SLOT_DIRECT)
+#define L4_SLOT_EARLY		(L4_SLOT_DIRECT - 1)
 
 #define PDIR_SLOT_KERN		L4_SLOT_KERN
 #define PDIR_SLOT_PTE		L4_SLOT_PTE
 #define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
+#define PDIR_SLOT_EARLY		L4_SLOT_EARLY
 
 /*
  * the following defines give the virtual addresses of various MMU
@@ -401,6 +403,8 @@ void	pagezero(vaddr_t);
 
 int	pmap_convert(struct pmap *, int);
 void	pmap_enter_special(vaddr_t, paddr_t, vm_prot_t);
+vaddr_t	pmap_set_pml4_early(paddr_t pa);
+void	pmap_clear_pml4_early(void);
 
 /*
  * functions for flushing the cache for vaddrs and pages.

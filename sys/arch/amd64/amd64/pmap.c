@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.137 2019/12/19 17:42:17 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.138 2020/01/24 05:27:31 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -541,6 +541,78 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 
 	pmap_tlb_shootrange(pmap_kernel(), sva, eva, 1);
 	pmap_tlb_shootwait();
+}
+
+/*
+ * pmap_set_pml4_early
+ *
+ * Utility function to map 2GB of 2MB pages to 'pa'. The VA that is assigned
+ * is the pml4 entry for 'early mappings' (see pmap.h). This function is used
+ * by display drivers that need to map their framebuffers early, before the
+ * pmap is fully initialized (eg, to show panic messages).
+ *
+ * Users of this function must call pmap_clear_pml4_early to remove the
+ * mapping when finished.
+ *
+ * Parameters:
+ *  pa: phys addr to map
+ *
+ * Return value:
+ *  VA mapping to 'pa'. This mapping is 2GB in size and starts at the base
+ *   of the 2MB region containing 'va'.
+ */
+vaddr_t
+pmap_set_pml4_early(paddr_t pa)
+{
+	extern paddr_t early_pte_pages;
+	pt_entry_t *pml4e, *pte;
+	int i, j, off;
+	paddr_t curpa;
+	vaddr_t va;
+
+	pml4e = (pt_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
+	pml4e[PDIR_SLOT_EARLY] = (pd_entry_t)early_pte_pages | PG_V | PG_RW;
+
+	off = pa & PAGE_MASK_L2;
+	curpa = pa & L2_FRAME;
+
+	pte = (pt_entry_t *)PMAP_DIRECT_MAP(early_pte_pages);
+	memset(pte, 0, 3 * NBPG);
+
+	pte[0] = (early_pte_pages + NBPG) | PG_V | PG_RW;
+	pte[1] = (early_pte_pages + 2 * NBPG) | PG_V | PG_RW;
+
+	pte = (pt_entry_t *)PMAP_DIRECT_MAP(early_pte_pages + NBPG);
+	for (i = 0; i < 2; i++) {
+		/* 2 early pages of mappings */
+		for (j = 0; j < 512; j++) {
+			/* j[0..511] : 2MB mappings per page */
+			pte[(i * 512) + j] = curpa | PG_V | PG_RW | PG_PS;
+			curpa += (2 * 1024 * 1024);
+		}
+	}
+
+	va = (vaddr_t)((PDIR_SLOT_EARLY * 512ULL) << L3_SHIFT) + off;
+	return VA_SIGN_NEG(va);
+}
+
+/*
+ * pmap_clear_pml4_early
+ *
+ * Clears the mapping previously established with pmap_set_pml4_early.
+ */
+void
+pmap_clear_pml4_early(void)
+{
+	extern paddr_t early_pte_pages;
+	pt_entry_t *pml4e, *pte;
+
+	pte = (pt_entry_t *)PMAP_DIRECT_MAP(early_pte_pages);
+	memset(pte, 0, 3 * NBPG);
+
+	pml4e = (pd_entry_t *)pmap_kernel()->pm_pdir;
+	pml4e[PDIR_SLOT_EARLY] = 0;
+	tlbflush();
 }
 
 /*

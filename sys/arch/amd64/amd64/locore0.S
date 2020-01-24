@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.17 2019/02/18 08:26:20 yasuoka Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.18 2020/01/24 05:27:31 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -321,7 +321,7 @@ cont:
 #define PROC0_DMP2_OFF	(PROC0_DMP3_OFF + NDML3_ENTRIES * NBPG)
 #define TABLESIZE \
     ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES + \
-	NDML3_ENTRIES + NDML2_ENTRIES) * NBPG)
+	NDML3_ENTRIES + NDML2_ENTRIES + 3) * NBPG)
 
 #define fillkpt \
 1:	movl	%eax,(%ebx)	;	/* store phys addr */ \
@@ -669,10 +669,11 @@ longmode_hi:
 	movw	%ax,%gs
 	movw	%ax,%fs
 
-	/* XXX merge these */
 	leaq	TABLESIZE(%rsi),%rdi
-	call	_C_LABEL(init_x86_64)
+	subq	$(NBPG*3), %rdi
 
+	/* XXX merge these */
+	call	_C_LABEL(init_x86_64)
 	call	_C_LABEL(main)
 
 	.section .codepatch,"a"

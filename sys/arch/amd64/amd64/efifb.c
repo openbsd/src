@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.26 2019/11/26 02:20:50 jsg Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.27 2020/01/24 05:27:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -105,6 +105,8 @@ int	 efifb_load_font(void *, void *, struct wsdisplay_font *);
 void	 efifb_scrollback(void *, void *, int lines);
 void	 efifb_efiinfo_init(struct efifb *);
 void	 efifb_cnattach_common(void);
+vaddr_t	 efifb_early_map(paddr_t);
+void	 efifb_early_cleanup(void);
 
 struct cb_framebuffer *cb_find_fb(paddr_t);
 
@@ -430,7 +432,7 @@ efifb_cnattach_common(void)
 	struct rasops_info	*ri = &fb->rinfo;
 	long			 defattr = 0;
 
-	ri->ri_bits = (u_char *)PMAP_DIRECT_MAP(fb->paddr);
+	ri->ri_bits = (u_char *)efifb_early_map(fb->paddr);
 
 	efifb_rasops_preinit(fb);
 
@@ -459,14 +461,17 @@ efifb_cnremap(void)
 		return;
 
 	if (_bus_space_map(iot, fb->paddr, fb->psize,
-	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR, &ioh) == 0)
-		ri->ri_origbits = bus_space_vaddr(iot, ioh);
+	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR, &ioh))
+		panic("can't remap framebuffer");
+	ri->ri_origbits = bus_space_vaddr(iot, ioh);
 
 	efifb_rasops_preinit(fb);
 	ri->ri_flg &= ~RI_CLEAR;
 	ri->ri_flg |= RI_CENTER | RI_WRONLY;
 
 	rasops_init(ri, efifb_std_descr.nrows, efifb_std_descr.ncols);
+
+	efifb_early_cleanup();
 }
 
 int
@@ -636,4 +641,16 @@ efifb_stolen(void)
 {
 	struct efifb *fb = &efifb_console;
 	return fb->psize;
+}
+
+vaddr_t
+efifb_early_map(paddr_t pa)
+{
+	return pmap_set_pml4_early(pa);
+}
+
+void
+efifb_early_cleanup(void)
+{
+	pmap_clear_pml4_early();
 }
