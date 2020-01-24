@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.11 2018/11/06 05:45:50 jsing Exp $ */
+/* $OpenBSD: s_cb.c,v 1.12 2020/01/24 09:42:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -406,6 +406,9 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 	case TLS1_2_VERSION:
 		str_version = "TLS 1.2 ";
 		break;
+	case TLS1_3_VERSION:
+		str_version = "TLS 1.3 ";
+		break;
 	case DTLS1_VERSION:
 		str_version = "DTLS 1.0 ";
 		break;
@@ -469,7 +472,7 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 	}
 	if (version == SSL3_VERSION || version == TLS1_VERSION ||
 	    version == TLS1_1_VERSION || version == TLS1_2_VERSION ||
-	    version == DTLS1_VERSION) {
+	    version == TLS1_3_VERSION || version == DTLS1_VERSION) {
 		switch (content_type) {
 		case 20:
 			str_content_type = "ChangeCipherSpec";
@@ -604,6 +607,15 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 				case 3:
 					str_details1 = ", HelloVerifyRequest";
 					break;
+				case 4:
+					str_details1 = ", NewSessionTicket";
+					break;
+				case 5:
+					str_details1 = ", EndOfEarlyData";
+					break;
+				case 8:
+					str_details1 = ", EncryptedExtensions";
+					break;
 				case 11:
 					str_details1 = ", Certificate";
 					break;
@@ -624,6 +636,9 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 					break;
 				case 20:
 					str_details1 = ", Finished";
+					break;
+				case 24:
+					str_details1 = ", KeyUpdate";
 					break;
 				}
 			}
