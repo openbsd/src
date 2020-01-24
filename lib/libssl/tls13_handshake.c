@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.43 2020/01/24 06:45:09 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.44 2020/01/24 08:21:24 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -141,6 +141,7 @@ struct tls13_handshake_action state_machine[] = {
 		.recv_preserve_transcript_hash = 1,
 		.send_preserve_transcript_hash = 1,
 		.send = tls13_server_finished_send,
+		.sent = tls13_server_finished_sent,
 		.recv = tls13_server_finished_recv,
 	},
 	[APPLICATION_DATA] = {

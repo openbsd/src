@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.15 2020/01/24 04:47:13 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.16 2020/01/24 08:21:24 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -336,14 +336,6 @@ tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_client_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
-{
-	tls13_record_layer_allow_ccs(ctx->rl, 0);
-
-	return 0;
-}
-
-int
 tls13_client_key_update_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
@@ -484,12 +476,76 @@ tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx, CBB *cbb)
 	return 0;
 }
 
+static int
+tls13_cert_add(CBB *cbb, X509 *cert)
+{
+	CBB cert_data, cert_exts;
+	uint8_t *data;
+	int cert_len;
+
+	if ((cert_len = i2d_X509(cert, NULL)) < 0)
+		return 0;
+
+	if (!CBB_add_u24_length_prefixed(cbb, &cert_data))
+		return 0;
+	if (!CBB_add_space(&cert_data, &data, cert_len))
+		return 0;
+	if (i2d_X509(cert, &data) != cert_len)
+		return 0;
+
+	if (!CBB_add_u16_length_prefixed(cbb, &cert_exts))
+		return 0;
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
 int
 tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	return 0;
+	SSL *s = ctx->ssl;
+	CBB cert_request_context, cert_list;
+	STACK_OF(X509) *chain;
+	CERT_PKEY *cpk;
+	X509 *cert;
+	int i, ret = 0;
+
+	/* XXX - Need to revisit certificate selection. */
+	cpk = &s->cert->pkeys[SSL_PKEY_RSA_ENC];
+
+	if ((chain = cpk->chain) == NULL)
+		chain = s->ctx->extra_certs;
+
+	if (!CBB_add_u8_length_prefixed(cbb, &cert_request_context))
+		goto err;
+	if (!CBB_add_u24_length_prefixed(cbb, &cert_list))
+		goto err;
+
+	if (cpk->x509 == NULL)
+		goto done;
+
+	if (!tls13_cert_add(&cert_list, cpk->x509))
+		goto err;
+
+	for (i = 0; i < sk_X509_num(chain); i++) {
+		cert = sk_X509_value(chain, i);
+		if (!tls13_cert_add(&cert_list, cert))
+			goto err;
+	}
+
+ done:
+	if (!CBB_flush(cbb))
+		goto err;
+
+	ret = 1;
+
+ err:
+	return ret;
 }
 
+/* XXX - move up. */
 int
 tls13_server_certificate_request_send(struct tls13_ctx *ctx, CBB *cbb)
 {
@@ -508,14 +564,242 @@ tls13_server_certificate_request_send(struct tls13_ctx *ctx, CBB *cbb)
 	return 0;
 }
 
+/*
+ * Certificate Verify padding - RFC 8446 section 4.4.3.
+ */
+static uint8_t cert_verify_pad[64] = {
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+};
+
+static uint8_t server_cert_verify_context[] = "TLS 1.3, server CertificateVerify";
+
 int
 tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	return 0;
+	SSL *s = ctx->ssl;
+	const struct ssl_sigalg *sigalg = NULL;
+	uint8_t *sig = NULL, *sig_content = NULL;
+	size_t sig_len, sig_content_len;
+	EVP_MD_CTX *mdctx = NULL;
+	EVP_PKEY_CTX *pctx;
+	EVP_PKEY *pkey;
+	CERT_PKEY *cpk;
+	CBB sig_cbb;
+	int ret = 0;
+
+	memset(&sig_cbb, 0, sizeof(sig_cbb));
+
+	/* XXX - Need to revisit certificate selection. */
+	cpk = &s->cert->pkeys[SSL_PKEY_RSA_ENC];
+	pkey = cpk->privatekey;
+
+	if ((sigalg = ssl_sigalg_select(s, pkey)) == NULL) {
+		/* XXX - SSL_R_SIGNATURE_ALGORITHMS_ERROR */
+		goto err;
+	}
+
+	if (!CBB_init(&sig_cbb, 0))
+		goto err;
+	if (!CBB_add_bytes(&sig_cbb, cert_verify_pad, sizeof(cert_verify_pad)))
+		goto err;
+	if (!CBB_add_bytes(&sig_cbb, server_cert_verify_context,
+	    strlen(server_cert_verify_context)))
+		goto err;
+	if (!CBB_add_u8(&sig_cbb, 0))
+		goto err;
+	if (!CBB_add_bytes(&sig_cbb, ctx->hs->transcript_hash,
+	    ctx->hs->transcript_hash_len))
+		goto err;
+	if (!CBB_finish(&sig_cbb, &sig_content, &sig_content_len))
+		goto err;
+
+	if ((mdctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if (!EVP_DigestSignInit(mdctx, &pctx, sigalg->md(), NULL, pkey))
+		goto err;
+	if (sigalg->flags & SIGALG_FLAG_RSA_PSS) {
+		if (!EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING))
+			goto err;
+		if (!EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))
+			goto err;
+	}
+	if (!EVP_DigestSignUpdate(mdctx, sig_content, sig_content_len))
+		goto err;
+	if (EVP_DigestSignFinal(mdctx, NULL, &sig_len) <= 0)
+		goto err;
+	if ((sig = calloc(1, sig_len)) == NULL)
+		goto err;
+	if (EVP_DigestSignFinal(mdctx, sig, &sig_len) <= 0)
+		goto err;
+
+	if (!CBB_add_u16(cbb, sigalg->value))
+		goto err;
+	if (!CBB_add_u16_length_prefixed(cbb, &sig_cbb))
+		goto err;
+	if (!CBB_add_bytes(&sig_cbb, sig, sig_len))
+		goto err;
+
+	if (!CBB_flush(cbb))
+		goto err;
+
+	ret = 1;
+
+ err:
+	if (!ret && ctx->alert == 0)
+		ctx->alert = TLS1_AD_INTERNAL_ERROR;
+
+	CBB_cleanup(&sig_cbb);
+	EVP_MD_CTX_free(mdctx);
+	free(sig_content);
+	free(sig);
+
+	return ret;
 }
 
 int
 tls13_server_finished_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	return 0;
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+	struct tls13_secret context = { .data = "", .len = 0 };
+	struct tls13_secret finished_key;
+	uint8_t transcript_hash[EVP_MAX_MD_SIZE];
+	size_t transcript_hash_len;
+	uint8_t key[EVP_MAX_MD_SIZE];
+	uint8_t *verify_data;
+	size_t hmac_len;
+	unsigned int hlen;
+	HMAC_CTX *hmac_ctx = NULL;
+	int ret = 0;
+
+	finished_key.data = key;
+	finished_key.len = EVP_MD_size(ctx->hash);
+
+	if (!tls13_hkdf_expand_label(&finished_key, ctx->hash,
+	    &secrets->server_handshake_traffic, "finished",
+	    &context))
+		goto err;
+
+	if (!tls1_transcript_hash_value(ctx->ssl, transcript_hash,
+	    sizeof(transcript_hash), &transcript_hash_len))
+		goto err;
+
+	if ((hmac_ctx = HMAC_CTX_new()) == NULL)
+		goto err;
+	if (!HMAC_Init_ex(hmac_ctx, finished_key.data, finished_key.len,
+	    ctx->hash, NULL))
+		goto err;
+	if (!HMAC_Update(hmac_ctx, transcript_hash, transcript_hash_len))
+		goto err;
+
+	hmac_len = HMAC_size(hmac_ctx);
+	if (!CBB_add_space(cbb, &verify_data, hmac_len))
+		goto err;
+	if (!HMAC_Final(hmac_ctx, verify_data, &hlen))
+		goto err;
+	if (hlen != hmac_len)
+		goto err;
+
+	ret = 1;
+
+ err:
+	HMAC_CTX_free(hmac_ctx);
+
+	return ret;
+}
+
+int
+tls13_server_finished_sent(struct tls13_ctx *ctx)
+{
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+	struct tls13_secret context = { .data = "", .len = 0 };
+
+	/*
+	 * Derive application traffic keys.
+	 */
+	context.data = ctx->hs->transcript_hash;
+	context.len = ctx->hs->transcript_hash_len;
+
+	if (!tls13_derive_application_secrets(secrets, &context))
+		return 0;
+
+	/*
+	 * Any records following the server finished message must be encrypted
+	 * using the server application traffic keys.
+	 */
+	return tls13_record_layer_set_write_traffic_key(ctx->rl,
+	    &secrets->server_application_traffic);
+}
+
+int
+tls13_client_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
+{
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+	struct tls13_secret context = { .data = "", .len = 0 };
+	struct tls13_secret finished_key;
+	uint8_t *verify_data = NULL;
+	size_t verify_data_len;
+	uint8_t key[EVP_MAX_MD_SIZE];
+	HMAC_CTX *hmac_ctx = NULL;
+	unsigned int hlen;
+	int ret = 0;
+
+	/*
+	 * Verify client finished.
+	 */
+	finished_key.data = key;
+	finished_key.len = EVP_MD_size(ctx->hash);
+
+	if (!tls13_hkdf_expand_label(&finished_key, ctx->hash,
+	    &secrets->client_handshake_traffic, "finished",
+	    &context))
+		goto err;
+
+	if ((hmac_ctx = HMAC_CTX_new()) == NULL)
+		goto err;
+	if (!HMAC_Init_ex(hmac_ctx, finished_key.data, finished_key.len,
+	    ctx->hash, NULL))
+		goto err;
+	if (!HMAC_Update(hmac_ctx, ctx->hs->transcript_hash,
+	    ctx->hs->transcript_hash_len))
+		goto err;
+	verify_data_len = HMAC_size(hmac_ctx);
+	if ((verify_data = calloc(1, verify_data_len)) == NULL)
+		goto err;
+	if (!HMAC_Final(hmac_ctx, verify_data, &hlen))
+		goto err;
+	if (hlen != verify_data_len)
+		goto err;
+
+	if (!CBS_mem_equal(cbs, verify_data, verify_data_len)) {
+		ctx->alert = TLS1_AD_DECRYPTION_FAILED;
+		goto err;
+	}
+
+	if (!CBS_skip(cbs, verify_data_len))
+		goto err;
+
+	/*
+	 * Any records following the client finished message must be encrypted
+	 * using the client application traffic keys.
+	 */
+	if (!tls13_record_layer_set_read_traffic_key(ctx->rl,
+	    &secrets->client_application_traffic))
+		goto err;
+
+	tls13_record_layer_allow_ccs(ctx->rl, 0);
+
+	ret = 1;
+
+ err:
+	HMAC_CTX_free(hmac_ctx);
+	free(verify_data);
+
+	return ret;
 }
