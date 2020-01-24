@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.62 2020/01/23 02:47:28 dlg Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.63 2020/01/24 14:11:01 mpi Exp 
 #	OpenBSD: MAKEDEV.common,v 1.109 2020/01/23 02:47:29 dlg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -67,6 +67,7 @@
 #	bio	ioctl tunnel pseudo-device
 #	bpf	Berkeley Packet Filter
 #	diskmap	Disk mapper
+#	dt	Dynamic Tracer
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
 #	hotplug	devices hot plugging
@@ -290,6 +291,10 @@ fd)
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
 	;;
 
+dt)
+	M dt c 32 0 600
+	;;
+
 diskmap)
 	M diskmap c 56 0 640 operator
 	;;
@@ -494,7 +499,7 @@ all)
 	R sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2
 	R tap3 tun0 tun1 tun2 tun3 pty0 fd1 fd1B fd1C fd1D fd1E fd1F
 	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H diskmap
-	R vscsi0 bio ch0 audio0 audio1 audio2 bpf fuse pppac pppx
+	R vscsi0 bio ch0 audio0 audio1 audio2 dt bpf fuse pppac pppx
 	R hotplug ptm local wscons pci0 pci1 pci2 pci3 uall video0
 	R video1 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 tty00 tty01
 	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
