@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.206 2020/01/23 23:43:49 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.207 2020/01/24 01:17:22 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ int	tun_dev_open(struct tun_softc *, int, int, struct proc *);
 int	tun_dev_close(struct tun_softc *, int, int, struct proc *);
 int	tun_dev_ioctl(struct tun_softc *, u_long, caddr_t, int, struct proc *);
 int	tun_dev_read(struct tun_softc *, struct uio *, int);
-int	tun_dev_write(struct tun_softc *, struct uio *, int);
+int	tun_dev_write(struct tun_softc *, struct uio *, int, int);
 int	tun_dev_poll(struct tun_softc *, int, struct proc *);
 int	tun_dev_kqfilter(struct tun_softc *, struct knote *);
 
@@ -797,7 +797,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	if ((sc = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
-	return (tun_dev_write(sc, uio, ioflag));
+	return (tun_dev_write(sc, uio, ioflag, 0));
 }
 
 int
@@ -807,16 +807,16 @@ tapwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	if ((sc = tap_lookup(minor(dev))) == NULL)
 		return (ENXIO);
-	return (tun_dev_write(sc, uio, ioflag));
+	return (tun_dev_write(sc, uio, ioflag, ETHER_ALIGN));
 }
 
 int
-tun_dev_write(struct tun_softc *sc, struct uio *uio, int ioflag)
+tun_dev_write(struct tun_softc *sc, struct uio *uio, int ioflag, int align)
 {
 	struct ifnet		*ifp;
-	u_int32_t		*th;
-	struct mbuf		*top, **mp, *m;
-	int			error = 0, tlen;
+	uint32_t		af;
+	struct mbuf		*m0;
+	int			error = 0;
 	size_t			mlen;
 
 	ifp = &sc->sc_if;
@@ -827,112 +827,80 @@ tun_dev_write(struct tun_softc *sc, struct uio *uio, int ioflag)
 		TUNDEBUG(("%s: len=%d!\n", ifp->if_xname, uio->uio_resid));
 		return (EMSGSIZE);
 	}
-	tlen = uio->uio_resid;
 
-	/* get a header mbuf */
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (ENOBUFS);
-	mlen = MHLEN;
-	if (uio->uio_resid >= MINCLSIZE) {
-		MCLGET(m, M_DONTWAIT);
-		if (!(m->m_flags & M_EXT)) {
-			m_free(m);
-			return (ENOBUFS);
-		}
-		mlen = MCLBYTES;
-	}
+	align += max_linkhdr;
+	mlen = align + uio->uio_resid;
 
-	top = NULL;
-	mp = &top;
-	if (sc->sc_flags & TUN_LAYER2) {
-		/*
-		 * Pad so that IP header is correctly aligned
-		 * this is necessary for all strict aligned architectures.
-		 */
-		mlen -= ETHER_ALIGN;
-		m->m_data += ETHER_ALIGN;
-	}
-	while (error == 0 && uio->uio_resid > 0) {
-		m->m_len = ulmin(mlen, uio->uio_resid);
-		error = uiomove(mtod (m, caddr_t), m->m_len, uio);
-		*mp = m;
-		mp = &m->m_next;
-		if (error == 0 && uio->uio_resid > 0) {
-			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL) {
-				error = ENOBUFS;
-				break;
-			}
-			mlen = MLEN;
-			if (uio->uio_resid >= MINCLSIZE) {
-				MCLGET(m, M_DONTWAIT);
-				if (!(m->m_flags & M_EXT)) {
-					error = ENOBUFS;
-					m_free(m);
-					break;
-				}
-				mlen = MCLBYTES;
-			}
+	m0 = m_gethdr(M_DONTWAIT, MT_DATA);
+	if (m0 == NULL)
+		return (ENOMEM);
+	if (mlen > MHLEN) {
+		m_clget(m0, M_DONTWAIT, mlen);
+		if (!ISSET(m0->m_flags, M_EXT)) {
+			error = ENOMEM;
+			goto drop;
 		}
 	}
-	if (error) {
-		m_freem(top);
-		ifp->if_ierrors++;
-		return (error);
-	}
 
-	top->m_pkthdr.len = tlen;
+	m_align(m0, mlen);
+	m0->m_pkthdr.len = m0->m_len = mlen;
+	m_adj(m0, align);
+
+	error = uiomove(mtod(m0, void *), m0->m_len, uio);
+	if (error != 0)
+		goto drop;
 
 	if (sc->sc_flags & TUN_LAYER2) {
 		struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 
-		ml_enqueue(&ml, top);
+		ml_enqueue(&ml, m0);
 		if_input(ifp, &ml);
 		return (0);
 	}
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		bpf_mtap(ifp->if_bpf, top, BPF_DIRECTION_IN);
-	}
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_IN);
 #endif
 
-	th = mtod(top, u_int32_t *);
+	af = *mtod(m0, uint32_t *);
 	/* strip the tunnel header */
-	top->m_data += sizeof(*th);
-	top->m_len  -= sizeof(*th);
-	top->m_pkthdr.len -= sizeof(*th);
-	top->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-	top->m_pkthdr.ph_ifidx = ifp->if_index;
+	m_adj(m0, sizeof(af));
+
+	m0->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+	m0->m_pkthdr.ph_ifidx = ifp->if_index;
 
 	ifp->if_ipackets++;
-	ifp->if_ibytes += top->m_pkthdr.len;
+	ifp->if_ibytes += m0->m_pkthdr.len;
 
 	NET_LOCK();
 
-	switch (ntohl(*th)) {
+	switch (ntohl(af)) {
 	case AF_INET:
-		ipv4_input(ifp, top);
+		ipv4_input(ifp, m0);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ipv6_input(ifp, top);
+		ipv6_input(ifp, m0);
 		break;
 #endif
 #ifdef MPLS
 	case AF_MPLS:
-		mpls_input(ifp, top);
+		mpls_input(ifp, m0);
 		break;
 #endif
 	default:
-		m_freem(top);
+		m_freem(m0);
 		error = EAFNOSUPPORT;
 		break;
 	}
 
 	NET_UNLOCK();
 
+	return (error);
+
+drop:
+	m_freem(m0);
 	return (error);
 }
 
