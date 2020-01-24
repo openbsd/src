@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.21 2019/07/31 16:09:12 jcs Exp $ */
+/* $OpenBSD: ihidev.c,v 1.22 2020/01/24 04:03:11 cheloha Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -73,8 +73,6 @@ int	ihidev_hid_desc_parse(struct ihidev_softc *);
 int	ihidev_maxrepid(void *buf, int len);
 int	ihidev_print(void *aux, const char *pnp);
 int	ihidev_submatch(struct device *parent, void *cf, void *aux);
-
-extern int hz;
 
 struct cfattach ihidev_ca = {
 	sizeof(struct ihidev_softc),
@@ -264,15 +262,10 @@ ihidev_activate(struct device *self, int act)
 void
 ihidev_sleep(struct ihidev_softc *sc, int ms)
 {
-	int to = ms * hz / 1000;
-
 	if (cold)
 		delay(ms * 1000);
-	else {
-		if (to <= 0)
-			to = 1;
-		tsleep(&sc, PWAIT, "ihidev", to);
-	}
+	else
+		tsleep_nsec(&sc, PWAIT, "ihidev", MSEC_TO_NSEC(ms));
 }
 
 int
