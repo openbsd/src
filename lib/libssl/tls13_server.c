@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.13 2020/01/23 11:57:20 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.14 2020/01/24 04:43:09 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <openssl/curve25519.h>
 
 #include "ssl_locl.h"
 #include "ssl_tlsext.h"
@@ -41,6 +43,7 @@ tls13_server_init(struct tls13_ctx *ctx)
 		SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
 		return 0;
 	}
+	s->version = ctx->hs->max_version;
 
 	if (!tls1_transcript_init(s))
 		return 0;
@@ -382,8 +385,77 @@ tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 	if (!tls13_server_hello_build(ctx, cbb))
 		return 0;
 
- 	ctx->handshake_stage.hs_type |= NEGOTIATED;
 	return 1;
+}
+
+int
+tls13_server_hello_sent(struct tls13_ctx *ctx)
+{
+	struct tls13_secrets *secrets;
+	struct tls13_secret context;
+	unsigned char buf[EVP_MAX_MD_SIZE];
+	uint8_t *shared_key = NULL;
+	size_t hash_len;
+	SSL *s = ctx->ssl;
+	int ret = 0;
+
+	/* XXX - handle other key share types. */
+	if (ctx->hs->x25519_peer_public == NULL) {
+		/* XXX - alert. */
+		goto err;
+	}
+	if ((shared_key = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	if (!X25519(shared_key, ctx->hs->x25519_private,
+	    ctx->hs->x25519_peer_public))
+		goto err;
+
+	s->session->cipher = S3I(s)->hs.new_cipher;
+	s->session->ssl_version = ctx->hs->server_version;
+
+	if ((ctx->aead = tls13_cipher_aead(S3I(s)->hs.new_cipher)) == NULL)
+		goto err;
+	if ((ctx->hash = tls13_cipher_hash(S3I(s)->hs.new_cipher)) == NULL)
+		goto err;
+
+	if ((secrets = tls13_secrets_create(ctx->hash, 0)) == NULL)
+		goto err;
+	S3I(ctx->ssl)->hs_tls13.secrets = secrets;
+
+	/* XXX - pass in hash. */
+	if (!tls1_transcript_hash_init(s))
+		goto err;
+	if (!tls1_transcript_hash_value(s, buf, sizeof(buf), &hash_len))
+		goto err;
+	context.data = buf;
+	context.len = hash_len;
+
+	/* Early secrets. */
+	if (!tls13_derive_early_secrets(secrets, secrets->zeros.data,
+	    secrets->zeros.len, &context))
+		goto err;
+
+	/* Handshake secrets. */
+	if (!tls13_derive_handshake_secrets(ctx->hs->secrets, shared_key,
+	    X25519_KEY_LENGTH, &context))
+		goto err;
+
+	tls13_record_layer_set_aead(ctx->rl, ctx->aead);
+	tls13_record_layer_set_hash(ctx->rl, ctx->hash);
+
+	if (!tls13_record_layer_set_read_traffic_key(ctx->rl,
+	    &secrets->client_handshake_traffic))
+		goto err;
+	if (!tls13_record_layer_set_write_traffic_key(ctx->rl,
+	    &secrets->server_handshake_traffic))
+		goto err;
+
+ 	ctx->handshake_stage.hs_type |= NEGOTIATED | WITHOUT_CR;
+	ret = 1;
+
+ err:
+	freezero(shared_key, X25519_KEY_LENGTH);
+	return ret;
 }
 
 int
