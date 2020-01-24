@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.14 2020/01/24 04:43:09 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.15 2020/01/24 04:47:13 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -222,6 +222,15 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		ctx->alert = SSL_AD_PROTOCOL_VERSION;
 		goto err;
 	}
+
+	/* Store legacy session identifier so we can echo it. */
+	if (CBS_len(&session_id) > sizeof(ctx->hs->legacy_session_id)) {
+		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		goto err;
+	}
+	if (!CBS_write_bytes(&session_id, ctx->hs->legacy_session_id,
+	    sizeof(ctx->hs->legacy_session_id), &ctx->hs->legacy_session_id_len))
+		goto err;
 
 	/* Parse cipher suites list and select preferred cipher. */
 	if ((ciphers = ssl_bytes_to_cipher_list(s, &cipher_suites)) == NULL) {
