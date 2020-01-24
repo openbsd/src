@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.257 2020/01/21 11:14:26 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.258 2020/01/24 05:46:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -584,6 +584,8 @@ print_neighbor_msgstats(struct peer *p)
 	    p->stats.msg_rcvd_rrefresh);
 	printf("  Update statistics:\n");
 	printf("  %-15s %-10s %-10s\n", "", "Sent", "Received");
+	printf("  %-15s %10u %10u\n", "Prefixes",
+	    p->stats.prefix_out_cnt, p->stats.prefix_cnt);
 	printf("  %-15s %10llu %10llu\n", "Updates",
 	    p->stats.prefix_sent_update, p->stats.prefix_rcvd_update);
 	printf("  %-15s %10llu %10llu\n", "Withdraws",

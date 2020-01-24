@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.4 2020/01/21 11:16:35 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.5 2020/01/24 05:46:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -166,8 +166,16 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 		if (p->conf.max_prefix_restart)
 			printf(" (restart %u)",
 			    p->conf.max_prefix_restart);
-		printf("\n");
 	}
+	if (p->conf.max_out_prefix) {
+		printf(" Max-prefix out: %u", p->conf.max_out_prefix);
+		if (p->conf.max_out_prefix_restart)
+			printf(" (restart %u)",
+			    p->conf.max_out_prefix_restart);
+	}
+	if (p->conf.max_prefix || p->conf.max_out_prefix)
+		printf("\n");
+
 	printf("  BGP version 4, remote router-id %s",
 	    inet_ntoa(ina));
 	printf("%s\n", print_auth_method(p->auth.method));
