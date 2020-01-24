@@ -320,8 +320,6 @@
 ./usr/include/dev/ic/mpuvar.h
 ./usr/include/dev/ic/mtd8xxreg.h
 ./usr/include/dev/ic/mtd8xxvar.h
-./usr/include/dev/ic/ncr5380reg.h
-./usr/include/dev/ic/ncr5380var.h
 ./usr/include/dev/ic/ncr53c9xreg.h
 ./usr/include/dev/ic/ncr53c9xvar.h
 ./usr/include/dev/ic/ne2000reg.h
