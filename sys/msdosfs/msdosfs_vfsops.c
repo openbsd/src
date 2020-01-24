@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.92 2019/12/26 13:28:49 bluhm Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.93 2020/01/24 03:49:34 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -144,14 +144,6 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
 
 		if (args && args->fspec == NULL) {
-#ifdef	__notyet__		/* doesn't work correctly with current mountd	XXX */
-			if (args->flags & MSDOSFSMNT_MNTOPT) {
-				pmp->pm_flags &= ~MSDOSFSMNT_MNTOPT;
-				pmp->pm_flags |= args->flags & MSDOSFSMNT_MNTOPT;
-				if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
-					pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
-			}
-#endif
 			/*
 			 * Process export requests.
 			 */
