@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.96 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.97 2020/01/24 13:01:29 kurt Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -232,11 +232,15 @@ ffs_read(void *v)
 
 		if (lblktosize(fs, nextlbn) >= DIP(ip, size))
 			error = bread(vp, lbn, size, &bp);
-		else
+		else if (lbn - 1 == ip->i_ci.ci_lastr ||
+		    uio->uio_resid > xfersize) {
 			error = bread_cluster(vp, lbn, size, &bp);
+		} else
+			error = bread(vp, lbn, size, &bp);
 
 		if (error)
 			break;
+		ip->i_ci.ci_lastr = lbn;
 
 		/*
 		 * We should only get non-zero b_resid when an I/O error
