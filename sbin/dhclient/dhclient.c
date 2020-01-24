@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.657 2020/01/23 22:39:35 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.658 2020/01/24 00:54:16 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -232,7 +232,7 @@ get_link_ifa(const char *name, struct ifaddrs *ifap)
 
 	if (ifa != NULL) {
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		if (sdl->sdl_type != IFT_ETHER ||
+		if ((sdl->sdl_type != IFT_ETHER && sdl->sdl_type != IFT_CARP) ||
 		    sdl->sdl_alen != ETHER_ADDR_LEN)
 			return NULL;
 	}
