@@ -148,7 +148,6 @@
 ./usr/include/dev/fdt/sxiccmu_clocks.h
 ./usr/include/dev/fdt/sxipio_pins.h
 ./usr/include/dev/fdt/sxipiovar.h
-./usr/include/dev/flashvar.h
 ./usr/include/dev/gpio
 ./usr/include/dev/gpio/gpiovar.h
 ./usr/include/dev/hid
