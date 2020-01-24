@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.207 2020/01/24 01:17:22 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.208 2020/01/24 01:36:22 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ int	tun_dev_poll(struct tun_softc *, int, struct proc *);
 int	tun_dev_kqfilter(struct tun_softc *, struct knote *);
 
 int	tun_ioctl(struct ifnet *, u_long, caddr_t);
+int	tun_input(struct ifnet *, struct mbuf *, void *);
 int	tun_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 int	tun_enqueue(struct ifnet *, struct mbuf *);
@@ -240,9 +241,12 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 
 		if_attach(ifp);
 		if_alloc_sadl(ifp);
+
 #if NBPFILTER > 0
 		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
+
+		if_ih_insert(ifp, tun_input, NULL);
 	} else {
 		if (tun_list_insert(&tap_softc_list, sc) != 0)
 			goto exists;
@@ -275,7 +279,9 @@ tun_clone_destroy(struct ifnet *ifp)
 	klist_invalidate(&sc->sc_wsel.si_note);
 	splx(s);
 
-	if (sc->sc_flags & TUN_LAYER2)
+	if (!ISSET(sc->sc_flags, TUN_LAYER2))
+		if_ih_remove(ifp, tun_input, NULL);
+	else
 		ether_ifdetach(ifp);
 
 	if_detach(ifp);
@@ -814,10 +820,10 @@ int
 tun_dev_write(struct tun_softc *sc, struct uio *uio, int ioflag, int align)
 {
 	struct ifnet		*ifp;
-	uint32_t		af;
 	struct mbuf		*m0;
 	int			error = 0;
 	size_t			mlen;
+	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 
 	ifp = &sc->sc_if;
 	TUNDEBUG(("%s: tunwrite\n", ifp->if_xname));
@@ -850,30 +856,25 @@ tun_dev_write(struct tun_softc *sc, struct uio *uio, int ioflag, int align)
 	if (error != 0)
 		goto drop;
 
-	if (sc->sc_flags & TUN_LAYER2) {
-		struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	ml_enqueue(&ml, m0);
+	if_input(ifp, &ml);
+	return (0);
 
-		ml_enqueue(&ml, m0);
-		if_input(ifp, &ml);
-		return (0);
-	}
+drop:
+	m_freem(m0);
+	return (error);
+}
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_IN);
-#endif
+int
+tun_input(struct ifnet *ifp, struct mbuf *m0, void *cookie)
+{
+	uint32_t		af;
+
+	KASSERT(m0->m_len >= sizeof(af));
 
 	af = *mtod(m0, uint32_t *);
 	/* strip the tunnel header */
 	m_adj(m0, sizeof(af));
-
-	m0->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-	m0->m_pkthdr.ph_ifidx = ifp->if_index;
-
-	ifp->if_ipackets++;
-	ifp->if_ibytes += m0->m_pkthdr.len;
-
-	NET_LOCK();
 
 	switch (ntohl(af)) {
 	case AF_INET:
@@ -891,17 +892,10 @@ tun_dev_write(struct tun_softc *sc, struct uio *uio, int ioflag, int align)
 #endif
 	default:
 		m_freem(m0);
-		error = EAFNOSUPPORT;
 		break;
 	}
 
-	NET_UNLOCK();
-
-	return (error);
-
-drop:
-	m_freem(m0);
-	return (error);
+	return (1);
 }
 
 /*
