@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dt.4,v 1.1 2020/01/21 16:18:28 mpi Exp $
+.\"	$OpenBSD: dt.4,v 1.2 2020/01/24 15:17:16 mpi Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2020 $
+.Dd $Mdocdate: January 24 2020 $
 .Dt DT 4
 .Os
 .Sh NAME
@@ -28,6 +28,11 @@ It has to be configured and enabled through the
 .Xr ioctl 2
 interface exposed by the pseudo-device
 .Pa /dev/dt .
+.Pp
+This device can only be opened when the
+.Va kern.allowkmem
+.Xr sysctl 2
+variable is set.
 .\"Sh IOCTL INTERFACE
 .\"
 .Sh FILES
