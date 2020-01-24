@@ -1620,6 +1620,7 @@ socket_create(isc_socketmgr_t *manager0, int pf, isc_sockettype_t type,
 		sock->pktdscp = (isc_net_probedscp() & DCSPPKT(pf)) != 0;
 		break;
 	case isc_sockettype_tcp:
+		break;
 	default:
 		INSIST(0);
 	}
