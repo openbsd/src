@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.184 2019/12/18 00:27:47 cheloha Exp $	*/
+/*	$OpenBSD: audio.c,v 1.185 2020/01/24 05:38:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1755,7 +1755,7 @@ audio_mixer_devinfo(struct audio_softc *sc, struct mixer_devinfo *devinfo)
 }
 
 int
-audio_mixer_read(struct audio_softc *sc, struct mixer_ctrl *c)
+audio_mixer_get(struct audio_softc *sc, struct mixer_ctrl *c)
 {
 	if (c->dev < sc->mix_nent)
 		return sc->ops->get_port(sc->arg, c);
@@ -1774,7 +1774,7 @@ audio_mixer_read(struct audio_softc *sc, struct mixer_ctrl *c)
 }
 
 int
-audio_mixer_write(struct audio_softc *sc, struct mixer_ctrl *c, struct proc *p)
+audio_mixer_set(struct audio_softc *sc, struct mixer_ctrl *c, struct proc *p)
 {
 	int error;
 
@@ -1824,9 +1824,9 @@ audio_ioctl_mixer(struct audio_softc *sc, unsigned long cmd, void *addr,
 	case AUDIO_MIXER_DEVINFO:
 		return audio_mixer_devinfo(sc, addr);
 	case AUDIO_MIXER_READ:
-		return audio_mixer_read(sc, addr);
+		return audio_mixer_get(sc, addr);
 	case AUDIO_MIXER_WRITE:
-		return audio_mixer_write(sc, addr, p);
+		return audio_mixer_set(sc, addr, p);
 	default:
 		return ENOTTY;
 	}
