@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.9 2020/01/22 07:46:26 deraadt Exp $
+# $Id: Makefile.in,v 1.10 2020/01/24 09:04:48 florian Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -58,7 +58,7 @@ libisccfg.la: ${OBJS}
 	 ${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libisccfg.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} ${DNSLIBS} ${ISCLIBS} @DNS_CRYPTO_LIBS@ \
+		${OBJS} ${DNSLIBS} ${ISCLIBS} -lcrypto \
 		${LIBS}
 
 timestamp: libisccfg.@A@

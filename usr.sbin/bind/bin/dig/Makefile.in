@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.11 2020/01/07 19:11:17 florian Exp $
+# $Id: Makefile.in,v 1.12 2020/01/24 09:04:48 florian Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -22,17 +22,15 @@ VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
-READLINE_LIB = @READLINE_LIB@
-
 CINCLUDES =	-I${srcdir}/include ${DNS_INCLUDES} \
 		${BIND9_INCLUDES} ${ISC_INCLUDES} \
-		${LWRES_INCLUDES} ${ISCCFG_INCLUDES} @DST_OPENSSL_INC@
+		${LWRES_INCLUDES} ${ISCCFG_INCLUDES}
 
-CDEFINES =	-DVERSION=\"${VERSION}\" @CRYPTO@
+CDEFINES =	-DVERSION=\"${VERSION}\"
 CWARNINGS =
 
 ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
-DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ -lcrypto
 ISCLIBS =	../../lib/isc/libisc.@A@
 LWRESLIBS =	../../lib/lwres/liblwres.@A@
 
@@ -45,10 +43,10 @@ DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS} \
 		${ISCCFGDEPLIBS} ${LWRESDEPLIBS}
 
 LIBS =		${LWRESLIBS} ${ISCCFGLIBS} \
-		${ISCLIBS} @IDNLIBS@ @LIBS@
+		${ISCLIBS} @LIBS@
 
 NOSYMLIBS =	${LWRESLIBS} ${ISCCFGLIBS} \
-		${ISCNOSYMLIBS} @IDNLIBS@ @LIBS@
+		${ISCNOSYMLIBS} @LIBS@
 
 SUBDIRS =
 
@@ -77,7 +75,7 @@ host@EXEEXT@: host.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
 	${FINALBUILDCMD}
 
 nslookup@EXEEXT@: nslookup.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
-	export BASEOBJS="nslookup.@O@ dighost.@O@ ${READLINE_LIB} ${UOBJS}"; \
+	export BASEOBJS="nslookup.@O@ dighost.@O@ ${UOBJS}"; \
 	export LIBS0="${DNSLIBS}"; \
 	${FINALBUILDCMD}
 

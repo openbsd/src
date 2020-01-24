@@ -29,9 +29,9 @@ top_srcdir =	@top_srcdir@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I. -I${top_srcdir}/lib/dns -Iinclude ${DNS_INCLUDES} \
-		${ISC_INCLUDES} @DST_OPENSSL_INC@
+		${ISC_INCLUDES}
 
-CDEFINES =	-DUSE_MD5 @CRYPTO@
+CDEFINES =	-DUSE_MD5
 
 CWARNINGS =
 
@@ -47,10 +47,10 @@ OPENSSLGOSTLINKOBJS = opensslgost_link.@O@
 OPENSSLECDSALINKOBJS = opensslecdsa_link.@O@
 OPENSSLEDDSALINKOBJS = openssleddsa_link.@O@
 OPENSSLLINKOBJS = openssl_link.@O@ openssldh_link.@O@ openssldsa_link.@O@ \
-		  @OPENSSLECDSALINKOBJS@ @OPENSSLEDDSALINKOBJS@ \
-		  @OPENSSLGOSTLINKOBJS@ opensslrsa_link.@O@
+		  ${OPENSSLECDSALINKOBJS} \
+		  opensslrsa_link.@O@
 
-DSTOBJS =	@DST_EXTRA_OBJS@ @OPENSSLLINKOBJS@  \
+DSTOBJS =	${OPENSSLLINKOBJS} \
 		dst_api.@O@ dst_parse.@O@ dst_result.@O@ \
 		hmac_link.@O@ key.@O@
 
@@ -103,7 +103,7 @@ SRCS = ${DSTSRCS} ${DNSSRCS}
 
 SUBDIRS =	include
 TARGETS =	timestamp
-TESTDIRS =	@UNITTESTS@
+TESTDIRS =
 
 DEPENDEXTRA =	./gen -F include/dns/rdatastruct.h \
 		-s ${srcdir} -d >> Makefile ;
@@ -118,7 +118,7 @@ libdns.la: ${OBJS}
 	${LIBTOOL_MODE_LINK} \
 		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o libdns.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
-		${OBJS} ${ISCLIBS} @DNS_CRYPTO_LIBS@ ${LIBS}
+		${OBJS} ${ISCLIBS} -lcrypto ${LIBS}
 
 include: gen
 	${MAKE} include/dns/enumtype.h

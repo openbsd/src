@@ -23,12 +23,12 @@ top_srcdir =	@top_srcdir@
 CINCLUDES =	-I${srcdir}/unix/include \
 		-I${srcdir}/nothreads/include \
 		-I./include \
-		-I${srcdir}/include ${DNS_INCLUDES} @ISC_OPENSSL_INC@
-CDEFINES =	@CRYPTO@
+		-I${srcdir}/include ${DNS_INCLUDES}
+CDEFINES =
 CWARNINGS =
 
 # Alphabetically
-UNIXOBJS =	@ISC_ISCIPV6_O@ @ISC_ISCPK11_API_O@ \
+UNIXOBJS =	 \
 		unix/app.@O@ unix/dir.@O@ unix/errno.@O@ \
 		unix/errno2result.@O@ unix/file.@O@ unix/fsaccess.@O@ \
 		unix/net.@O@ \
@@ -40,7 +40,7 @@ THREADOPTOBJS = nothreads/condition.@O@
 THREADOBJS =	nothreads/thread.@O@
 
 # Alphabetically
-OBJS =		@ISC_EXTRA_OBJS@ @ISC_PK11_O@ @ISC_PK11_RESULT_O@ \
+OBJS =		 \
 		aes.@O@ assertions.@O@ base32.@O@ base64.@O@ \
 		buffer.@O@ bufferlist.@O@ \
 		commandline.@O@ error.@O@ event.@O@ \
@@ -58,7 +58,7 @@ OBJS =		@ISC_EXTRA_OBJS@ @ISC_PK11_O@ @ISC_PK11_RESULT_O@ \
 		${UNIXOBJS} ${THREADOBJS}
 
 # Alphabetically
-SRCS =		@ISC_EXTRA_SRCS@ @ISC_PK11_C@ @ISC_PK11_RESULT_C@ \
+SRCS =		 \
 		aes.c assertions.c base32.c base64.c \
 		buffer.c bufferlist.c commandline.c \
 		error.c event.c heap.c hex.c hmacmd5.c hmacsha.c \

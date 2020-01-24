@@ -20,13 +20,13 @@ CINCLUDES =	-I${srcdir}/include \
 		-I${srcdir}/../nothreads/include \
 		-I../include \
 		-I${srcdir}/../include \
-		-I${srcdir}/.. @ISC_OPENSSL_INC@
+		-I${srcdir}/..
 
-CDEFINES =	@CRYPTO@
+CDEFINES =
 CWARNINGS =
 
 # Alphabetically
-OBJS =		@ISC_IPV6_O@ @ISC_PK11_API_O@ \
+OBJS =		 \
 		app.@O@ dir.@O@ errno.@O@ errno2result.@O@ \
 		file.@O@ fsaccess.@O@ \
 		net.@O@ \
