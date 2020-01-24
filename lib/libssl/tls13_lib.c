@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.27 2020/01/24 04:36:29 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.28 2020/01/24 04:39:44 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -26,7 +26,7 @@
 
 SSL3_ENC_METHOD TLSv1_3_enc_data = {
 	.enc = NULL,
-	.enc_flags = SSL_ENC_FLAG_TLS1_3_CIPHERS,
+	.enc_flags = SSL_ENC_FLAG_SIGALGS|SSL_ENC_FLAG_TLS1_3_CIPHERS,
 };
 
 /*
