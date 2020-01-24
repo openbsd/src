@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.208 2020/01/24 01:36:22 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.209 2020/01/24 01:45:31 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -226,6 +226,8 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	ifp->if_hardmtu = TUNMRU;
 	ifp->if_link_state = LINK_STATE_DOWN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+
+	if_counters_alloc(ifp);
 
 	if ((flags & TUN_LAYER2) == 0) {
 		if (tun_list_insert(&tun_softc_list, sc) != 0)
@@ -823,7 +825,6 @@ tun_dev_write(struct tun_softc *sc, struct uio *uio, int ioflag, int align)
 	struct mbuf		*m0;
 	int			error = 0;
 	size_t			mlen;
-	struct mbuf_list	ml = MBUF_LIST_INITIALIZER();
 
 	ifp = &sc->sc_if;
 	TUNDEBUG(("%s: tunwrite\n", ifp->if_xname));
@@ -856,8 +857,10 @@ tun_dev_write(struct tun_softc *sc, struct uio *uio, int ioflag, int align)
 	if (error != 0)
 		goto drop;
 
-	ml_enqueue(&ml, m0);
-	if_input(ifp, &ml);
+	NET_RLOCK();
+	if_vinput(ifp, m0);
+	NET_RUNLOCK();
+
 	return (0);
 
 drop:
