@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.28 2020/01/24 04:39:44 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.29 2020/01/24 05:11:34 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -493,7 +493,7 @@ tls13_legacy_write_bytes(SSL *ssl, int type, const void *vbuf, int len)
 		SSLerror(ssl, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
 	}
-	if (len <= 0) {
+	if (len < 0) {
 		SSLerror(ssl, SSL_R_BAD_LENGTH); 
 		return -1;
 	}
