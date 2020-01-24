@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.80 2019/12/19 19:09:53 bluhm Exp $	 */
+/* $OpenBSD: monitor.c,v 1.81 2020/01/24 02:14:08 yasuoka Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -146,7 +146,7 @@ monitor_init(int debug)
 void
 monitor_exit(int code)
 {
-	int status;
+	int status = 0, gotstatus = 0;
 	pid_t pid;
 
 	if (m_state.pid != 0) {
@@ -156,6 +156,8 @@ monitor_exit(int code)
 		do {
 			pid = waitpid(m_state.pid, &status, 0);
 		} while (pid == -1 && errno == EINTR);
+		if (pid != -1)
+			gotstatus = 1;
 
 		/* Remove FIFO and pid files.  */
 		unlink(ui_fifo);
@@ -163,7 +165,10 @@ monitor_exit(int code)
 	}
 
 	close(m_state.s);
-	exit(code);
+	if (code == 0 && gotstatus)
+		exit(WIFEXITED(status)? WEXITSTATUS(status) : 1);
+	else
+		exit(code);
 }
 
 int
