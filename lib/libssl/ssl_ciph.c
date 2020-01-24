@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.108 2019/04/04 16:44:24 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.109 2020/01/24 04:38:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1383,6 +1383,9 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_kGOST:
 		kx = "GOST";
 		break;
+	case SSL_kTLS1_3:
+		au = "TLSv1.3";
+		break;
 	default:
 		kx = "unknown";
 	}
@@ -1402,6 +1405,9 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_aGOST01:
 		au = "GOST01";
+		break;
+	case SSL_aTLS1_3:
+		au = "TLSv1.3";
 		break;
 	default:
 		au = "unknown";
