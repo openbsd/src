@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.72 2020/01/23 01:22:59 dlg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.73 2020/01/24 06:42:13 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -81,6 +81,11 @@
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#include "pf.h"
+#if NPF > 0
+#include <net/pfvar.h>
 #endif
 
 #include <net/ppp_defs.h>
