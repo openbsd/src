@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.91 2020/01/21 01:41:47 tedu Exp $
+#	$OpenBSD: files.macppc,v 1.92 2020/01/24 04:44:14 krw Exp $
 
 #
 # macppc-specific configuration info
@@ -115,10 +115,6 @@ file	arch/macppc/pci/macobio.c			macobio
 device	kauaiata {}
 attach	kauaiata at pci 
 file	arch/macppc/pci/kauaiata.c			kauaiata
-
-device	mesh: scsi
-attach	mesh at macobio
-file	arch/macppc/dev/mesh.c				mesh
 
 device	mc: ifnet, ether
 attach	mc at macobio

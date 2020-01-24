@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.270 2020/01/21 01:41:47 tedu Exp $g
+#	$OpenBSD: GENERIC,v 1.271 2020/01/24 04:44:14 krw Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -138,7 +138,6 @@ openpic*	at macobio?	# openpic interrupt controller
 bm*		at macobio?	# BMAC ethernet
 xlights*	at macobio?	# Xserve front panel LEDs
 mc*		at macobio?	# MACE ethernet
-mesh*		at macobio? flags 0xffff # MESH SCSI
 adb*		at macobio?	# Apple Desktop Bus
 apm0		at adb?		# APM emulation
 piic0		at adb?		# PMU I2C
