@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.229 2020/01/23 14:38:59 cheloha Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.230 2020/01/24 06:31:17 cheloha Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -649,11 +649,7 @@ pool_runqueue(struct pool *pp, int flags)
 	do {
 		pp->pr_requesting = 1;
 
-		/* no TAILQ_JOIN? :( */
-		while ((pr = TAILQ_FIRST(&pp->pr_requests)) != NULL) {
-			TAILQ_REMOVE(&pp->pr_requests, pr, pr_entry);
-			TAILQ_INSERT_TAIL(&prl, pr, pr_entry);
-		}
+		TAILQ_CONCAT(&prl, &pp->pr_requests, pr_entry);
 		if (TAILQ_EMPTY(&prl))
 			continue;
 
@@ -684,11 +680,7 @@ pool_runqueue(struct pool *pp, int flags)
 		pl_enter(pp, &pp->pr_requests_lock);
 	} while (--pp->pr_requesting);
 
-	/* no TAILQ_JOIN :( */
-	while ((pr = TAILQ_FIRST(&prl)) != NULL) {
-		TAILQ_REMOVE(&prl, pr, pr_entry);
-		TAILQ_INSERT_TAIL(&pp->pr_requests, pr, pr_entry);
-	}
+	TAILQ_CONCAT(&pp->pr_requests, &prl, pr_entry);
 }
 
 void *
