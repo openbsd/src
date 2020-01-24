@@ -1,4 +1,4 @@
-/*	$OpenBSD: plx9060var.h,v 1.2 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: plx9060var.h,v 1.3 2020/01/24 03:29:55 tedu Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -47,11 +47,5 @@ struct plx9060_config {
 	pci_chipset_tag_t plx_pc;	/* PCI chipset we're on */
 	pcitag_t plx_tag;		/* PCI tag for our b/d/f */
 };
-
-#ifdef notyet
-void	plx9060_read_eeprom(struct plx9060_config *, int, int, void *);
-void	plx9060_write_eeprom(struct plx9060_config *, int, int,
-	    const void *);
-#endif
 
 #endif /* _DEV_PCI_PLX9060VAR_H_ */

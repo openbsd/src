@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.41 2019/12/14 12:46:47 fcambus Exp $ */
+/* $OpenBSD: auixp.c,v 1.42 2020/01/24 03:29:55 tedu Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -1044,14 +1044,6 @@ auixp_post_config(struct device *self)
 
 	audio_attach_mi(&auixp_hw_if, &sc->sc_codec, &sc->sc_dev);
 
-#if notyet
-	/* copy formats and invalidate entries not suitable for codec0 */
-	sc->has_4ch   = AC97_IS_4CH(sc->sc_codec.codec_if);
-	sc->has_6ch   = AC97_IS_6CH(sc->sc_codec.codec_if);
-	sc->is_fixed  = AC97_IS_FIXED_RATE(sc->sc_codec.codec_if);
-	sc->has_spdif = AC97_HAS_SPDIF(sc->sc_codec.codec_if);
-#endif
-
 	if (sc->has_spdif)
 		sc->has_spdif = 0;
 
@@ -1089,13 +1081,6 @@ auixp_enable_interrupts(struct auixp_softc *sc)
 	value = bus_space_read_4(iot, ioh, ATI_REG_IER);
 
 	value |= ATI_REG_IER_IO_STATUS_EN;
-#ifdef notyet
-	value |= ATI_REG_IER_IN_XRUN_EN;
-	value |= ATI_REG_IER_OUT_XRUN_EN;
-
-	value |= ATI_REG_IER_SPDIF_XRUN_EN;
-	value |= ATI_REG_IER_SPDF_STATUS_EN;
-#endif
 
 	bus_space_write_4(iot, ioh, ATI_REG_IER, value);
 }

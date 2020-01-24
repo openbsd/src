@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alcreg.h,v 1.6 2019/03/22 09:04:46 kevlo Exp $	*/
+/*	$OpenBSD: if_alcreg.h,v 1.7 2020/01/24 03:29:55 tedu Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -805,18 +805,10 @@
 /* Interrupt Mask Register */
 #define	ALC_INTR_MASK			0x1604
 
-#ifdef	notyet
-#define	INTR_RX_PKT					\
-	(INTR_RX_PKT0 | INTR_RX_PKT1 | INTR_RX_PKT2 |	\
-	 INTR_RX_PKT3)
-#define	INTR_RD_UNDERRUN				\
-	(INTR_RD0_UNDERRUN | INTR_RD1_UNDERRUN |	\
-	INTR_RD2_UNDERRUN | INTR_RD3_UNDERRUN)
-#else
 #define	INTR_TX_PKT			INTR_TX_PKT0
 #define	INTR_RX_PKT			INTR_RX_PKT0
 #define	INTR_RD_UNDERRUN		INTR_RD0_UNDERRUN
-#endif
+
 #define	ALC_INTRS					\
 	(INTR_DMA_RD_TO_RST | INTR_DMA_WR_TO_RST |	\
 	INTR_TXQ_TO_RST	| INTR_RX_PKT | INTR_TX_PKT |	\

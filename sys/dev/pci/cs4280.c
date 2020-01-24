@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.52 2018/09/03 05:37:32 miko Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.53 2020/01/24 03:29:55 tedu Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -1063,13 +1063,6 @@ int
 cs4280_get_props(void *hdl)
 {
 	return (AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX); 
-#ifdef notyet
-	/* XXX 
-	 * How can I mmap ?
-	 */
-		AUDIO_PROP_MMAP 
-#endif
-	    
 }
 
 int
