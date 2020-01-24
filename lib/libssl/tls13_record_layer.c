@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.24 2020/01/23 05:08:30 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.25 2020/01/24 04:36:29 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -274,7 +274,7 @@ tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 		ret = TLS13_IO_EOF;
 	} else if (alert_desc == SSL_AD_USER_CANCELLED) {
 		/* Ignored at the record layer. */
-		ret = TLS13_IO_WANT_POLLIN;
+		ret = TLS13_IO_WANT_RETRY;
 	} else if (alert_level == SSL3_AL_FATAL) {
 		rl->read_closed = 1;
 		rl->write_closed = 1;
@@ -330,7 +330,7 @@ tls13_record_layer_send_phh(struct tls13_record_layer *rl)
 	if (!CBS_skip(&rl->phh_cbs, ret))
 		return TLS13_IO_FAILURE;
 	if (CBS_len(&rl->phh_cbs) != 0)
-		return TLS13_IO_WANT_POLLOUT;
+		return TLS13_IO_WANT_RETRY;
 
 	freezero(rl->phh_data, rl->phh_len);
 	rl->phh_data = NULL;
@@ -776,7 +776,7 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 			return tls13_send_alert(rl, SSL_AD_ILLEGAL_PARAMETER);
 		rl->ccs_seen = 1;
 		tls13_record_layer_rrec_free(rl);
-		return TLS13_IO_WANT_POLLIN;
+		return TLS13_IO_WANT_RETRY;
 	}
 
 	/*
@@ -896,7 +896,7 @@ tls13_record_layer_read_internal(struct tls13_record_layer *rl,
 				rl->phh = 0;
 
 				if (ret == TLS13_IO_SUCCESS)
-					return TLS13_IO_WANT_POLLIN;
+					return TLS13_IO_WANT_RETRY;
 
 				return ret;
 			}
@@ -929,14 +929,26 @@ ssize_t
 tls13_record_layer_peek(struct tls13_record_layer *rl, uint8_t content_type,
     uint8_t *buf, size_t n)
 {
-	return tls13_record_layer_read_internal(rl, content_type, buf, n, 1);
+	ssize_t ret;
+
+	do {
+		ret = tls13_record_layer_read_internal(rl, content_type, buf, n, 1);
+	} while (ret == TLS13_IO_WANT_RETRY);
+
+	return ret;
 }
 
 ssize_t
 tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
     uint8_t *buf, size_t n)
 {
-	return tls13_record_layer_read_internal(rl, content_type, buf, n, 0);
+	ssize_t ret;
+
+	do {
+		ret = tls13_record_layer_read_internal(rl, content_type, buf, n, 0);
+	} while (ret == TLS13_IO_WANT_RETRY);
+
+	return ret;
 }
 
 static ssize_t
@@ -1015,10 +1027,17 @@ tls13_record_layer_write(struct tls13_record_layer *rl, uint8_t content_type,
 {
 	ssize_t ret;
 
-	if ((ret = tls13_record_layer_send_pending(rl)) != TLS13_IO_SUCCESS)
+	do {
+		ret = tls13_record_layer_send_pending(rl);
+	} while (ret == TLS13_IO_WANT_RETRY);
+	if (ret != TLS13_IO_SUCCESS)
 		return ret;
 
-	return tls13_record_layer_write_chunk(rl, content_type, buf, n);
+	do {
+		ret = tls13_record_layer_write_chunk(rl, content_type, buf, n);
+	} while (ret == TLS13_IO_WANT_RETRY);
+
+	return ret;
 }
 
 ssize_t
@@ -1075,10 +1094,15 @@ ssize_t
 tls13_send_alert(struct tls13_record_layer *rl, uint8_t alert_desc)
 {
 	uint8_t alert_level = SSL3_AL_FATAL;
+	ssize_t ret;
 
 	if (alert_desc == SSL_AD_CLOSE_NOTIFY ||
 	    alert_desc == SSL_AD_USER_CANCELLED)
 		alert_level = SSL3_AL_WARNING;
 
-	return tls13_record_layer_alert(rl, alert_level, alert_desc);
+	do {
+		ret = tls13_record_layer_alert(rl, alert_level, alert_desc);
+	} while (ret == TLS13_IO_WANT_RETRY);
+
+	return ret;
 }

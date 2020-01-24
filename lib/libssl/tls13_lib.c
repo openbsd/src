@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.26 2020/01/23 11:57:20 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.27 2020/01/24 04:36:29 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -419,6 +419,10 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 	case TLS13_IO_WANT_POLLOUT:
 		BIO_set_retry_write(ssl->wbio);
 		ssl->internal->rwstate = SSL_WRITING;
+		return -1;
+
+	case TLS13_IO_WANT_RETRY:
+		SSLerror(ssl, ERR_R_INTERNAL_ERROR);
 		return -1;
 	}
 
