@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.67 2020/01/23 02:40:21 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.68 2020/01/24 05:14:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -41,7 +41,6 @@
 
 #include "wd.h"
 bdev_decl(wd);
-#include "fdc.h"
 #include "fd.h"
 bdev_decl(fd);
 #include "sd.h"

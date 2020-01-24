@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.125 2020/01/22 05:06:19 tedu Exp $
+#	$OpenBSD: files.isa,v 1.126 2020/01/24 05:14:51 jsg Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -28,7 +28,7 @@ file	dev/isa/isadma.c		isadma needs-flag
 # Floppy disk controller
 device	fdc {[drive = -1]}
 attach	fdc at isa
-file	dev/isa/fdc.c				fdc needs-flag
+file	dev/isa/fdc.c				fdc
 
 device	fd: disk, isa_dma
 attach	fd at fdc

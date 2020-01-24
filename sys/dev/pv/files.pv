@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pv,v 1.15 2018/11/23 12:37:40 reyk Exp $
+#	$OpenBSD: files.pv,v 1.16 2020/01/24 05:14:51 jsg Exp $
 #
 # Config file and device description for paravirtual devices.
 # Included by ports that need it.
@@ -16,7 +16,7 @@ file	dev/pv/pvclock.c		pvclock	needs-flag
 # VMware Tools
 device	vmt
 attach	vmt at pvbus
-file	dev/pv/vmt.c			vmt	needs-flag
+file	dev/pv/vmt.c			vmt
 
 # Xen
 device	xen {}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.75 2019/07/14 06:37:01 florian Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.76 2020/01/24 05:14:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "enc.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

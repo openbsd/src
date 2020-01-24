@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.94 2019/06/26 08:13:13 claudio Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.95 2020/01/24 05:14:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -15,7 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include "mpe.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

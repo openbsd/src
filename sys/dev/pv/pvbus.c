@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.19 2019/05/13 15:40:34 pd Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.20 2020/01/24 05:14:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -42,8 +42,6 @@
 
 #include <dev/pv/pvvar.h>
 #include <dev/pv/pvreg.h>
-
-#include "vmt.h"
 
 int has_hv_cpuid = 0;
 
