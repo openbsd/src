@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.232 2020/01/09 15:50:34 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.233 2020/01/24 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -97,7 +97,8 @@ struct rde_peer {
 	u_int64_t			 prefix_sent_update;
 	u_int64_t			 prefix_sent_withdraw;
 	u_int64_t			 prefix_sent_eor;
-	u_int32_t			 prefix_cnt; /* # of prefixes */
+	u_int32_t			 prefix_cnt;
+	u_int32_t			 prefix_out_cnt;
 	u_int32_t			 remote_bgpid; /* host byte order! */
 	u_int32_t			 up_nlricnt;
 	u_int32_t			 up_wcnt;
@@ -359,6 +360,8 @@ int		mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *,
 void		mrt_dump_upcall(struct rib_entry *, void *);
 
 /* rde.c */
+void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
+		     void *, u_int16_t);
 void		 rde_update_log(const char *, u_int16_t,
 		     const struct rde_peer *, const struct bgpd_addr *,
 		     const struct bgpd_addr *, u_int8_t);

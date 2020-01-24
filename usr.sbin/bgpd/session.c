@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.397 2020/01/21 11:12:06 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.398 2020/01/24 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2511,6 +2511,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 	struct kif		*kif;
 	u_char			*data;
 	int			 n, fd, depend_ok, restricted;
+	u_int16_t		 t;
 	u_int8_t		 aid, errcode, subcode;
 
 	while (ibuf) {
@@ -2795,10 +2796,15 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			case ERR_CEASE:
 				switch (subcode) {
 				case ERR_CEASE_MAX_PREFIX:
+				case ERR_CEASE_MAX_SENT_PREFIX:
+					t = p->conf.max_out_prefix_restart;
+					if (subcode == ERR_CEASE_MAX_PREFIX)
+						t = p->conf.max_prefix_restart;
+
 					bgp_fsm(p, EVNT_STOP);
-					if (p->conf.max_prefix_restart)
-						timer_set(p, Timer_IdleHold, 60 *
-						    p->conf.max_prefix_restart);
+					if (t)
+						timer_set(p, Timer_IdleHold,
+						    60 * t);
 					break;
 				default:
 					bgp_fsm(p, EVNT_CON_FATAL);

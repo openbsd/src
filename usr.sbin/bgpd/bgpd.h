@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.398 2020/01/21 11:10:24 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.399 2020/01/24 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -379,10 +379,12 @@ struct peer_config {
 	u_int32_t		 remote_as;
 	u_int32_t		 local_as;
 	u_int32_t		 max_prefix;
+	u_int32_t		 max_out_prefix;
 	enum export_type	 export_type;
 	enum enforce_as		 enforce_as;
 	enum enforce_as		 enforce_local_as;
 	u_int16_t		 max_prefix_restart;
+	u_int16_t		 max_out_prefix_restart;
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;
 	u_int16_t		 local_short_as;

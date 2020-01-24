@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.499 2020/01/10 13:22:26 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.500 2020/01/24 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -59,8 +59,6 @@ int		 rde_attr_add(struct filterstate *, u_char *, u_int16_t);
 u_int8_t	 rde_attr_missing(struct rde_aspath *, int, u_int16_t);
 int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int8_t,
 		     struct filterstate *);
-void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
-		     void *, u_int16_t);
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
 void		 rde_reflector(struct rde_peer *, struct rde_aspath *);
 
@@ -535,6 +533,7 @@ badnetdel:
 			peer = peer_get(p.conf.id);
 			if (peer != NULL) {
 				p.stats.prefix_cnt = peer->prefix_cnt;
+				p.stats.prefix_out_cnt = peer->prefix_out_cnt;
 				p.stats.prefix_rcvd_update =
 				    peer->prefix_rcvd_update;
 				p.stats.prefix_rcvd_withdraw =

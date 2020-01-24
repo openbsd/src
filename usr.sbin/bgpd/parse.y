@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.402 2019/09/27 10:26:32 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.403 2020/01/24 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1390,6 +1390,14 @@ peeropts	: REMOTEAS as4number	{
 			}
 			curpeer->conf.max_prefix = $2;
 			curpeer->conf.max_prefix_restart = $3;
+		}
+		| MAXPREFIX NUMBER OUT restart {
+			if ($2 < 0 || $2 > UINT_MAX) {
+				yyerror("bad maximum number of prefixes");
+				YYERROR;
+			}
+			curpeer->conf.max_out_prefix = $2;
+			curpeer->conf.max_out_prefix_restart = $4;
 		}
 		| TCP MD5SIG PASSWORD string {
 			if (curpeer->conf.auth.method) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.140 2019/08/07 10:26:41 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.141 2020/01/24 05:44:05 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -614,6 +614,12 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tmax-prefix %u", c, p->max_prefix);
 		if (p->max_prefix_restart)
 			printf(" restart %u", p->max_prefix_restart);
+		printf("\n");
+	}
+	if (p->max_out_prefix) {
+		printf("%s\tmax-prefix %u out", c, p->max_out_prefix);
+		if (p->max_out_prefix_restart)
+			printf(" restart %u", p->max_out_prefix_restart);
 		printf("\n");
 	}
 	if (p->holdtime)

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.197 2019/10/31 09:09:04 benno Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.198 2020/01/24 05:44:05 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 31 2019 $
+.Dd $Mdocdate: January 24 2020 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1050,6 +1050,21 @@ Log received and sent updates for this neighbor.
 Terminate the session when the maximum
 .Ar number
 of prefixes received is exceeded
+(no such limit is imposed by default).
+If
+.Ic restart
+is specified, the session will be restarted after
+.Ar number
+minutes.
+.Pp
+.Pp
+.It Xo
+.Ic max-prefix Ar number Ic out
+.Op Ic restart Ar number
+.Xc
+Terminate the session when the maximum
+.Ar number
+of prefixes sent is exceeded
 (no such limit is imposed by default).
 If
 .Ic restart

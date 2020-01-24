@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.122 2019/08/13 12:16:20 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.123 2020/01/24 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -144,8 +144,10 @@ withdraw:
 		/* withdraw prefix */
 		pt_getaddr(old->pt, &addr);
 		if (prefix_adjout_withdraw(peer, &addr,
-		    old->pt->prefixlen) == 1)
+		    old->pt->prefixlen) == 1) {
+			peer->prefix_out_cnt--;
 			peer->up_wcnt++;
+		}
 	} else {
 		switch (up_test_update(peer, new)) {
 		case 1:
@@ -169,10 +171,22 @@ withdraw:
 
 		/* only send update if path changed */
 		if (prefix_adjout_update(peer, &state, &addr,
-		    new->pt->prefixlen, prefix_vstate(new)) == 1)
+		    new->pt->prefixlen, prefix_vstate(new)) == 1) {
+			peer->prefix_out_cnt++;
 			peer->up_nlricnt++;
+		}
 
 		rde_filterstate_clean(&state);
+
+		/* max prefix checker outbound */
+		if (peer->conf.max_out_prefix &&
+		    peer->prefix_out_cnt > peer->conf.max_out_prefix) {
+			log_peer_warnx(&peer->conf,
+			    "outbound prefix limit reached (>%u/%u)",
+		    	    peer->prefix_out_cnt, peer->conf.max_out_prefix);
+			rde_update_err(peer, ERR_CEASE,
+			    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
+		}
 	}
 }
 
@@ -214,11 +228,23 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 		return;
 	}
 
-	if (prefix_adjout_update(peer, &state, &addr, 0, ROA_NOTFOUND) == 1)
+	if (prefix_adjout_update(peer, &state, &addr, 0, ROA_NOTFOUND) == 1) {
+		peer->prefix_out_cnt++;
 		peer->up_nlricnt++;
+	}
 
 	/* no longer needed */
 	rde_filterstate_clean(&state);
+
+	/* max prefix checker outbound */
+	if (peer->conf.max_out_prefix &&
+	    peer->prefix_out_cnt > peer->conf.max_out_prefix) {
+		log_peer_warnx(&peer->conf,
+		    "outbound prefix limit reached (>%u/%u)",
+	    	    peer->prefix_out_cnt, peer->conf.max_out_prefix);
+		rde_update_err(peer, ERR_CEASE,
+		    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
+	}
 }
 
 /* only for IPv4 */
