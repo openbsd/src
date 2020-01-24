@@ -1,9 +1,0 @@
-#!/bin/ksh
-#
-# $OpenBSD: rebound,v 1.2 2018/01/11 19:52:12 rpe Exp $
-
-daemon="/usr/sbin/rebound"
-
-. /etc/rc.d/rc.subr
-
-rc_cmd $1

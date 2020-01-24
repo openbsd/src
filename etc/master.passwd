@@ -14,7 +14,6 @@ _unwind:*:48:48::0:0:Unwind Daemon:/var/empty:/sbin/nologin
 _switchd:*:49:49::0:0:Switch Daemon:/var/empty:/sbin/nologin
 _traceroute:*:50:50::0:0:traceroute privdrop user:/var/empty:/sbin/nologin
 _ping:*:51:51::0:0:ping privdrop user:/var/empty:/sbin/nologin
-_rebound:*:52:52::0:0:Rebound DNS Daemon:/var/empty:/sbin/nologin
 _unbound:*:53:53:unbound:0:0:Unbound Daemon:/var/unbound:/sbin/nologin
 _dpb:*:54:54::0:0:dpb privsep:/var/empty:/sbin/nologin
 _pbuild:*:55:55:pbuild:0:0:dpb build user:/nonexistent:/sbin/nologin
