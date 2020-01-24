@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.60 2019/07/04 15:25:16 tb Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.61 2020/01/24 21:10:46 schwarze Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: July 4 2019 $
+.Dd $Mdocdate: January 24 2020 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -268,6 +268,15 @@ Same semantics as
 but it is searched before
 .Ev PKG_PATH
 and waives any kind of signature checking.
+.El
+.Sh FILES
+.Bl -tag -width /var/db/pkg/
+.It Pa /usr/local/share/doc/pkg-readmes/
+.Ox Ns -specific
+information about individual packages
+.It Pa /var/db/pkg/
+database of installed
+.Xr packages 7
 .El
 .Sh TECHNICAL DETAILS
 Package info is either extracted from package files named on the

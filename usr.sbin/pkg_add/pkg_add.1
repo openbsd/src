@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.162 2020/01/04 15:13:54 schwarze Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.163 2020/01/24 21:10:46 schwarze Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 4 2020 $
+.Dd $Mdocdate: January 24 2020 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -819,6 +819,22 @@ Same semantics as
 but it is searched before
 .Ev PKG_PATH
 and waives any kind of signature checking.
+.El
+.Sh FILES
+.Bl -tag -width /etc/installurl
+.It Pa /etc/installurl
+default mirror server for package download
+.It Pa /etc/signify/*-pkg.pub
+public keys for package verification with
+.Xr signify 1
+.It Pa /usr/local/
+default file system to install packages in
+.It Pa /usr/local/share/doc/pkg-readmes/
+.Ox Ns -specific
+information about individual packages
+.It Pa /var/db/pkg/
+database of installed
+.Xr packages 7
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
