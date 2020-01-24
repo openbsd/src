@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.369 2020/01/02 08:52:53 claudio Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.370 2020/01/24 14:00:31 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -129,6 +129,7 @@ extern int audio_record_enable;
 #endif
 
 int allowkmem;
+int allowdt;
 
 int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
@@ -358,12 +359,14 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (EPERM);
 		securelevel = level;
 		return (0);
+	case KERN_ALLOWDT:
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp, allowdt));
+		return (sysctl_int(oldp, oldlenp, newp, newlen,  &allowdt));
 	case KERN_ALLOWKMEM:
 		if (securelevel > 0)
-			return (sysctl_rdint(oldp, oldlenp, newp,
-			    allowkmem));
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &allowkmem));
+			return (sysctl_rdint(oldp, oldlenp, newp, allowkmem));
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &allowkmem));
 	case KERN_HOSTNAME:
 		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
 		    hostname, sizeof(hostname));

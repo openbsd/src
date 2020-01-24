@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.199 2019/12/24 13:13:54 bluhm Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.200 2020/01/24 14:00:32 mpi Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ struct ctlname {
 #define	KERN_SHMINFO		62	/* struct: SysV struct shminfo */
 #define KERN_INTRCNT		63	/* node: interrupt counters */
 #define	KERN_WATCHDOG		64	/* node: watchdog */
-/* was KERN_EMUL		65	*/
+#define	KERN_ALLOWDT		65	/* int: allowdt */
 #define	KERN_PROC		66	/* struct: process entries */
 #define	KERN_MAXCLUSTERS	67	/* number of mclusters */
 #define KERN_EVCOUNT		68	/* node: event counters */
@@ -257,7 +257,7 @@ struct ctlname {
 	{ "shminfo", CTLTYPE_STRUCT }, \
 	{ "intrcnt", CTLTYPE_NODE }, \
  	{ "watchdog", CTLTYPE_NODE }, \
- 	{ "gap", 0 }, \
+ 	{ "allowdt", CTLTYPE_INT }, \
  	{ "proc", CTLTYPE_STRUCT }, \
  	{ "maxclusters", CTLTYPE_INT }, \
 	{ "evcount", CTLTYPE_NODE }, \

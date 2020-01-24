@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.1 2020/01/21 16:16:23 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.2 2020/01/24 14:00:31 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -132,6 +132,10 @@ dtopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct dt_softc *sc;
 	int unit = minor(dev);
+	extern int allowdt;
+
+	if (!allowdt)
+		return EPERM;
 
 	KASSERT(dtlookup(unit) == NULL);
 
