@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.86 2020/01/23 02:40:21 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.87 2020/01/24 14:11:01 mpi Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -115,6 +115,7 @@ cdev_decl(cy);
 #include "ugen.h"
 #include "ulpt.h"
 #include "ucom.h"
+#include "dt.h"
 #include "pf.h"
 #ifdef USER_PCICONF
 #include "pci.h"
@@ -161,7 +162,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSKBD,wskbd),	/* 29: /dev/kbd XXX */
 	cdev_mouse_init(NWSMOUSE,wsmouse),	/* 30: /dev/mouse XXX */
 	cdev_lpt_init(NLPT,lpt),	/* 31: parallel printer */
-	cdev_notdef(),			/* 32: */
+	cdev_dt_init(NDT,dt),		/* 32: dynamic tracer */
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
 	cdev_random_init(1,random),	/* 34: random data source */
 	cdev_pf_init(NPF, pf),		/* 35: packet filter */

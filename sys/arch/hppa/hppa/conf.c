@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.68 2020/01/23 02:40:21 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.69 2020/01/24 14:11:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -98,6 +98,7 @@ cdev_decl(lpt);
 #include "com.h"
 cdev_decl(com);
 
+#include "dt.h"
 #include "pf.h"
 
 #include "hotplug.h"
@@ -158,7 +159,7 @@ struct cdevsw   cdevsw[] =
 #else
 	cdev_notdef(),			/* 31: */
 #endif
-	cdev_notdef(),			/* 32 */
+	cdev_dt_init(NDT,dt),		/* 32: dynamic tracer */
 	cdev_video_init(NVIDEO,video),	/* 33: generic video I/O */
 	cdev_notdef(),			/* 34 */
 	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */
