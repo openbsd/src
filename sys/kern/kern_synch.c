@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.160 2020/01/21 16:16:23 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.161 2020/01/24 15:58:33 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -164,8 +164,10 @@ tsleep_nsec(const volatile void *ident, int priority, const char *wmesg,
 		return tsleep(ident, priority, wmesg, 0);
 #ifdef DIAGNOSTIC
 	if (nsecs == 0) {
-		log(LOG_WARNING, "%s: %s: trying to sleep zero nanoseconds\n",
-		    __func__, wmesg);
+		log(LOG_WARNING,
+		    "%s: %s[%d]: %s: trying to sleep zero nanoseconds\n",
+		    __func__, curproc->p_p->ps_comm, curproc->p_p->ps_pid,
+		    wmesg);
 	}
 #endif
 	/*
@@ -288,8 +290,10 @@ msleep_nsec(const volatile void *ident, struct mutex *mtx, int priority,
 		return msleep(ident, mtx, priority, wmesg, 0);
 #ifdef DIAGNOSTIC
 	if (nsecs == 0) {
-		log(LOG_WARNING, "%s: %s: trying to sleep zero nanoseconds\n",
-		    __func__, wmesg);
+		log(LOG_WARNING,
+		    "%s: %s[%d]: %s: trying to sleep zero nanoseconds\n",
+		    __func__, curproc->p_p->ps_comm, curproc->p_p->ps_pid,
+		    wmesg);
 	}
 #endif
 	nsecs = MIN(nsecs, UINT64_MAX - tick_nsec);
@@ -338,8 +342,10 @@ rwsleep_nsec(const volatile void *ident, struct rwlock *rwl, int priority,
 		return rwsleep(ident, rwl, priority, wmesg, 0);
 #ifdef DIAGNOSTIC
 	if (nsecs == 0) {
-		log(LOG_WARNING, "%s: %s: trying to sleep zero nanoseconds\n",
-		    __func__, wmesg);
+		log(LOG_WARNING,
+		    "%s: %s[%d]: %s: trying to sleep zero nanoseconds\n",
+		    __func__, curproc->p_p->ps_comm, curproc->p_p->ps_pid,
+		    wmesg);
 	}
 #endif
 	nsecs = MIN(nsecs, UINT64_MAX - tick_nsec);
