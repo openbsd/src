@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.32 2020/01/23 11:06:59 beck Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.33 2020/01/25 09:20:56 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -209,6 +209,9 @@ tls13_client_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 	if (ctx->hs->min_version < TLS1_2_VERSION)
 		tls13_record_layer_set_legacy_version(ctx->rl, TLS1_VERSION);
 
+	/* We may receive a pre-TLSv1.3 alert in response to the client hello. */
+	tls13_record_layer_allow_legacy_alerts(ctx->rl, 1);
+
 	if (!tls13_client_hello_build(ctx, cbb))
 		return 0;
 
@@ -305,6 +308,9 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 			goto err;
 		return tls13_use_legacy_client(ctx);
 	}
+
+	/* From here on in we know we are doing TLSv1.3. */
+	tls13_record_layer_allow_legacy_alerts(ctx->rl, 0);
 
 	if (!tlsext_client_parse(s, cbs, &alert_desc, SSL_TLSEXT_MSG_SH)) {
 		ctx->alert = alert_desc;

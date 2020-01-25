@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.25 2020/01/24 04:36:29 beck Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.26 2020/01/25 09:20:56 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -29,9 +29,11 @@ static ssize_t tls13_record_layer_write_record(struct tls13_record_layer *rl,
 
 struct tls13_record_layer {
 	uint16_t legacy_version;
+
 	int ccs_allowed;
 	int ccs_seen;
 	int handshake_completed;
+	int legacy_alerts_allowed;
 	int phh;
 
 	/*
@@ -207,6 +209,12 @@ tls13_record_layer_allow_ccs(struct tls13_record_layer *rl, int allow)
 }
 
 void
+tls13_record_layer_allow_legacy_alerts(struct tls13_record_layer *rl, int allow)
+{
+	rl->legacy_alerts_allowed = allow;
+}
+
+void
 tls13_record_layer_set_aead(struct tls13_record_layer *rl,
     const EVP_AEAD *aead)
 {
@@ -279,10 +287,15 @@ tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 		rl->read_closed = 1;
 		rl->write_closed = 1;
 		ret = TLS13_IO_ALERT;
-	} else
+	} else if (rl->legacy_alerts_allowed && alert_level == SSL3_AL_WARNING) {
+		/* Ignored and not passed to the callback. */
+		return TLS13_IO_WANT_RETRY;
+	} else {
 		return tls13_send_alert(rl, SSL_AD_ILLEGAL_PARAMETER);
+	}
 
 	rl->alert_cb(alert_desc, rl->cb_arg);
+
 	return ret;
 }
 
