@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.29 2020/01/24 05:11:34 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.30 2020/01/25 13:11:20 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -103,6 +103,30 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 	ERR_asprintf_error_data("SSL alert number %d", alert_desc);
 
 	SSL_CTX_remove_session(s->ctx, s->session);
+}
+
+static void
+tls13_legacy_handshake_message_recv_cb(void *arg, CBS *cbs)
+{
+	struct tls13_ctx *ctx = arg;
+	SSL *s = ctx->ssl;
+
+	if (s->internal->msg_callback != NULL)
+		s->internal->msg_callback(0, TLS1_3_VERSION, SSL3_RT_HANDSHAKE,
+		    CBS_data(cbs), CBS_len(cbs), s,
+		    s->internal->msg_callback_arg);
+}
+
+static void
+tls13_legacy_handshake_message_sent_cb(void *arg, CBS *cbs)
+{
+	struct tls13_ctx *ctx = arg;
+	SSL *s = ctx->ssl;
+
+	if (s->internal->msg_callback != NULL)
+		s->internal->msg_callback(1, TLS1_3_VERSION, SSL3_RT_HANDSHAKE,
+		    CBS_data(cbs), CBS_len(cbs), s,
+		    s->internal->msg_callback_arg);
 }
 
 static int
@@ -262,6 +286,9 @@ tls13_ctx_new(int mode)
 	    tls13_legacy_wire_write_cb, tls13_alert_received_cb,
 	    tls13_phh_received_cb, tls13_phh_done_cb, ctx)) == NULL)
 		goto err;
+
+	ctx->handshake_message_sent_cb = tls13_legacy_handshake_message_sent_cb;
+	ctx->handshake_message_recv_cb = tls13_legacy_handshake_message_recv_cb;
 
 	return ctx;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.54 2020/01/25 09:20:56 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.55 2020/01/25 13:11:20 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -50,6 +50,7 @@ typedef void (*tls13_phh_sent_cb)(void *_cb_arg);
 typedef ssize_t (*tls13_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
 typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen,
     void *_cb_arg);
+typedef void (*tls13_handshake_message_cb)(void *_cb_arg, CBS *_cbs);
 
 struct tls13_buffer;
 
@@ -205,6 +206,9 @@ struct tls13_ctx {
 	uint8_t alert;
 	int phh_count;
 	time_t phh_last_seen;
+
+	tls13_handshake_message_cb handshake_message_sent_cb;
+	tls13_handshake_message_cb handshake_message_recv_cb;
 };
 #ifndef TLS13_PHH_LIMIT_TIME
 #define TLS13_PHH_LIMIT_TIME 3600
