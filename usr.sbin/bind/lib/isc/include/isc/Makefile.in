@@ -34,7 +34,7 @@ HEADERS =	aes.h app.h assertions.h base32.h base64.h \
 		netaddr.h netscope.h parseint.h \
 		print.h \
 		refcount.h regex.h \
-		region.h result.h resultclass.h rwlock.h \
+		region.h result.h resultclass.h \
 		safe.h serial.h sha1.h sha2.h sockaddr.h socket.h \
 		stdio.h stdlib.h symtab.h task.h \
 		timer.h types.h util.h version.h

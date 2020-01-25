@@ -51,7 +51,6 @@ OBJS =		 \
 		netaddr.@O@ netscope.@O@ \
 		parseint.@O@ \
 		refcount.@O@ region.@O@ regex.@O@ result.@O@ \
-		rwlock.@O@ \
 		safe.@O@ serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ \
 		symtab.@O@ task.@O@ \
 		timer.@O@ \
@@ -67,7 +66,7 @@ SRCS =		 \
 		lex.c log.c \
 		netaddr.c netscope.c \
 		parseint.c \
-		refcount.c region.c regex.c result.c rwlock.c \
+		refcount.c region.c regex.c result.c \
 		safe.c serial.c sha1.c sha2.c sockaddr.c \
 		symtab.c task.c timer.c
 
