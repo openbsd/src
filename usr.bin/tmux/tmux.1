@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.704 2020/01/12 21:07:07 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.705 2020/01/25 16:40:32 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 12 2020 $
+.Dd $Mdocdate: January 25 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2533,10 +2533,11 @@ This is similar to
 except the source and destination windows are swapped.
 It is an error if no window exists at
 .Ar src-window .
+If
+.Fl d
+is given, the new window does not become the current window.
 .Pp
-Like
-.Ic swap-pane ,
-if
+If
 .Fl s
 is omitted and a marked pane is present (see
 .Ic select-pane
