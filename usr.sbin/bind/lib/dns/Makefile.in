@@ -60,7 +60,7 @@ DNSOBJS =	byaddr.@O@ \
 		dnssec.@O@ ds.@O@ \
 		keydata.@O@ \
 		lib.@O@ log.@O@ \
-		master.@O@ masterdump.@O@ message.@O@ \
+		masterdump.@O@ message.@O@ \
 		name.@O@ ncache.@O@ nsec.@O@ nsec3.@O@ \
 		rcode.@O@ rdata.@O@ \
 		rdatalist.@O@ rdataset.@O@ \
@@ -89,7 +89,7 @@ DNSSRCS =	byaddr.c \
 		callbacks.c compress.c \
 		dnssec.c ds.c \
 		keydata.c lib.c log.c \
-		master.c masterdump.c message.c \
+		masterdump.c message.c \
 		name.c ncache.c nsec.c nsec3.c \
 		rcode.c rdata.c rdatalist.c \
 		rdataset.c \

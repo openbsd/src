@@ -38,7 +38,7 @@
 #include <dns/fixedname.h>
 #include <dns/lib.h>
 #include <dns/log.h>
-#include <dns/master.h>
+
 #include <dns/masterdump.h>
 #include <dns/ncache.h>
 #include <dns/rdata.h>

@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.9 2020/01/23 07:46:26 florian Exp $
+# $Id: Makefile.in,v 1.10 2020/01/25 10:44:27 florian Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -25,7 +25,7 @@ HEADERS =	bit.h byaddr.h callbacks.h cert.h \
 		dnssec.h ds.h dsdigest.h \
 		events.h fixedname.h \
 		keydata.h keyflags.h keyvalues.h \
-		lib.h log.h master.h masterdump.h message.h \
+		lib.h log.h masterdump.h message.h \
 		name.h ncache.h nsec.h nsec3.h opcode.h \
 		rcode.h rdata.h rdataclass.h rdatalist.h \
 		rdataset.h rdatatype.h \
