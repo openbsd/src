@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.6 2019/02/21 23:06:33 bluhm Exp $
+# $OpenBSD: Makefile,v 1.7 2020/01/25 16:08:25 jsing Exp $
 
 SUBDIR =	libressl openssl openssl11
+
 # the above binaries must have been built before we can continue
+#SUBDIR +=	cert
+SUBDIR +=	cipher
 SUBDIR +=	netcat
 SUBDIR +=	session
-SUBDIR +=	cipher
-SUBDIR +=	cert
 
 .include <bsd.subdir.mk>
