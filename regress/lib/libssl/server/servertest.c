@@ -1,4 +1,4 @@
-/* $OpenBSD: servertest.c,v 1.1 2017/03/05 14:15:53 jsing Exp $ */
+/* $OpenBSD: servertest.c,v 1.2 2020/01/25 05:02:27 jsing Exp $ */
 /*
  * Copyright (c) 2015, 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -80,7 +80,8 @@ struct server_hello_test {
 	unsigned char *client_hello;
 	const size_t client_hello_len;
 	const SSL_METHOD *(*ssl_method)(void);
-	const long ssl_options;
+	const long ssl_clear_options;
+	const long ssl_set_options;
 };
 
 static struct server_hello_test server_hello_tests[] = {
@@ -89,14 +90,16 @@ static struct server_hello_test server_hello_tests[] = {
 		.client_hello = sslv2_client_hello_tls10,
 		.client_hello_len = sizeof(sslv2_client_hello_tls10),
 		.ssl_method = TLS_server_method,
-		.ssl_options = 0,
+		.ssl_clear_options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1,
+		.ssl_set_options = 0,
 	},
 	{
 		.desc = "TLSv1.2 in SSLv2 record",
 		.client_hello = sslv2_client_hello_tls12,
 		.client_hello_len = sizeof(sslv2_client_hello_tls12),
 		.ssl_method = TLS_server_method,
-		.ssl_options = 0,
+		.ssl_clear_options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1,
+		.ssl_set_options = 0,
 	},
 };
 
@@ -141,7 +144,9 @@ server_hello_test(int testno, struct server_hello_test *sht)
 
 	SSL_CTX_set_dh_auto(ssl_ctx, 1);
 	SSL_CTX_set_ecdh_auto(ssl_ctx, 1);
-	SSL_CTX_set_options(ssl_ctx, sht->ssl_options);
+
+	SSL_CTX_clear_options(ssl_ctx, sht->ssl_clear_options);
+	SSL_CTX_set_options(ssl_ctx, sht->ssl_set_options);
 
 	if ((ssl = SSL_new(ssl_ctx)) == NULL) {
 		fprintf(stderr, "SSL_new() returned NULL\n");
