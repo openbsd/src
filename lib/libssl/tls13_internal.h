@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.55 2020/01/25 13:11:20 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.56 2020/01/25 19:01:43 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -45,7 +45,7 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_ERR_NO_SHARED_CIPHER	19
 
 typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
-typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *cbs);
+typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *_cbs);
 typedef void (*tls13_phh_sent_cb)(void *_cb_arg);
 typedef ssize_t (*tls13_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
 typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen,
