@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: file.h,v 1.4 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: file.h,v 1.5 2020/01/25 10:58:21 deraadt Exp $ */
 
 #ifndef ISC_FILE_H
 #define ISC_FILE_H 1
@@ -361,12 +361,6 @@ isc_file_munmap(void *addr, size_t len);
 /*%<
  * Portable front-end to munmap().  If munmap() is not defined on
  * this platform, then we simply free the memory.
- */
-
-isc_boolean_t
-isc_file_isdirwritable(const char *path);
-/*%<
- *	Return true if the path is a directory and is writable
  */
 
 ISC_LANG_ENDDECLS

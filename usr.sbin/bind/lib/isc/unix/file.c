@@ -43,7 +43,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: file.c,v 1.14 2020/01/22 13:02:10 florian Exp $ */
+/* $Id: file.c,v 1.15 2020/01/25 10:58:21 deraadt Exp $ */
 
 /*! \file */
 
@@ -658,9 +658,4 @@ isc_file_mmap(void *addr, size_t len, int prot,
 int
 isc_file_munmap(void *addr, size_t len) {
 	return (munmap(addr, len));
-}
-
-isc_boolean_t
-isc_file_isdirwritable(const char *path) {
-	return (ISC_TF(access(path, W_OK|X_OK) == 0));
 }
