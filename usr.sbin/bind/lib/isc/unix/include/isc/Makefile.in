@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: Makefile.in,v 1.5 2020/01/09 19:50:35 florian Exp $
+# $Id: Makefile.in,v 1.6 2020/01/25 10:45:23 florian Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -21,7 +21,7 @@ top_srcdir =	@top_srcdir@
 VERSION=@BIND9_VERSION@
 
 HEADERS =	dir.h net.h netdb.h offset.h stat.h \
-		stdtime.h strerror.h syslog.h time.h
+		stdtime.h strerror.h time.h
 
 SUBDIRS =
 TARGETS =

@@ -33,7 +33,7 @@ UNIXOBJS =	 \
 		unix/errno2result.@O@ unix/file.@O@ unix/fsaccess.@O@ \
 		unix/net.@O@ \
 		unix/socket.@O@ unix/stdio.@O@ \
-		unix/stdtime.@O@ unix/strerror.@O@ unix/syslog.@O@ unix/time.@O@
+		unix/stdtime.@O@ unix/strerror.@O@ unix/time.@O@
 
 THREADOPTOBJS = nothreads/condition.@O@
 

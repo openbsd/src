@@ -31,14 +31,14 @@ OBJS =		 \
 		file.@O@ fsaccess.@O@ \
 		net.@O@ \
 		socket.@O@ stdio.@O@ stdtime.@O@ \
-		strerror.@O@ syslog.@O@ time.@O@
+		strerror.@O@ time.@O@
 
 # Alphabetically
 SRCS =		@ISC_IPV6_C@ @ISC_PK11_API_C@ \
 		app.c dir.c errno.c errno2result.c file.c \
 		fsaccess.c net.c \
 		socket.c stdio.c stdtime.c \
-		strerror.c syslog.c time.c
+		strerror.c time.c
 
 SUBDIRS =	include
 TARGETS =	${OBJS}
