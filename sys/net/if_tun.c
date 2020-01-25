@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.211 2020/01/25 05:28:31 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.212 2020/01/25 06:31:32 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -611,10 +611,10 @@ tun_enqueue(struct ifnet *ifp, struct mbuf *m0)
 void
 tun_wakeup(struct tun_softc *sc)
 {
+	if (sc->sc_reading)
+		wakeup(&sc->sc_if.if_snd);
+
 	KERNEL_LOCK();
-	if (sc->sc_reading) {
-		wakeup((caddr_t)sc);
-	}
 	selwakeup(&sc->sc_rsel);
 	if (sc->sc_flags & TUN_ASYNC)
 		pgsigio(&sc->sc_sigio, SIGIO, 0);
@@ -766,29 +766,10 @@ tun_dev_read(dev_t dev, struct uio *uio, int ioflag)
 
 	ifp = &sc->sc_if;
 
-	m0 = ifq_dequeue(&ifp->if_snd);
-	if (m0 == NULL) {
-		if (ISSET(ioflag, IO_NDELAY)) {
-			error = EWOULDBLOCK;
-			goto put;
-		}
-
-		do {
-			sc->sc_reading++;
-			error = tsleep_nsec(sc, (PZERO + 1)|PCATCH,
-			    "tunread", INFSLP);
-			sc->sc_reading--;
-			if (error != 0)
-				goto put;
-
-			if (ISSET(sc->sc_flags, TUN_DEAD)) {
-				error = ENXIO;
-				goto put;
-			}
-
-			m0 = ifq_dequeue(&ifp->if_snd);
-		} while (m0 == NULL);
-	}
+	error = ifq_deq_sleep(&ifp->if_snd, &m0, ioflag, (PZERO + 1)|PCATCH,
+	    "tunread", &sc->sc_reading, &sc->sc_dev);
+	if (error != 0)
+		goto put;
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)

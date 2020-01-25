@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.35 2019/10/08 04:18:00 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.36 2020/01/25 06:31:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -386,6 +386,45 @@ ifq_dequeue(struct ifqueue *ifq)
 	ifq_deq_commit(ifq, m);
 
 	return (m);
+}
+
+int
+ifq_deq_sleep(struct ifqueue *ifq, struct mbuf **mp, int nbio, int priority,
+    const char *wmesg, volatile unsigned int *sleeping,
+    volatile unsigned int *alive)
+{
+	struct mbuf *m;
+	void *cookie;
+	int error;
+
+	ifq_deq_enter(ifq);
+	if (ifq->ifq_len == 0 && nbio)
+		error = EWOULDBLOCK;
+	else {
+		for (;;) {
+			m = ifq->ifq_ops->ifqop_deq_begin(ifq, &cookie);
+			if (m != NULL) {
+				ifq->ifq_ops->ifqop_deq_commit(ifq, m, cookie);
+				ifq->ifq_len--;
+				*mp = m;
+				break;
+			}
+
+			(*sleeping)++;
+			error = msleep_nsec(ifq, &ifq->ifq_mtx,
+			    priority, wmesg, INFSLP);
+			(*sleeping)--;
+			if (error != 0)
+				break;
+			if (!(*alive)) {
+				error = ENXIO;
+				break;
+			}
+		}
+	}
+	ifq_deq_leave(ifq);
+
+	return (error);
 }
 
 int

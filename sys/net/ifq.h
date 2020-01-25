@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.26 2019/04/16 04:04:19 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.27 2020/01/25 06:31:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -412,6 +412,11 @@ void		*ifq_q_enter(struct ifqueue *, const struct ifq_ops *);
 void		 ifq_q_leave(struct ifqueue *, void *);
 void		 ifq_serialize(struct ifqueue *, struct task *);
 void		 ifq_barrier(struct ifqueue *);
+
+
+int		 ifq_deq_sleep(struct ifqueue *, struct mbuf **, int, int,
+		     const char *, volatile unsigned int *,
+		     volatile unsigned int *);
 
 #define	ifq_len(_ifq)			((_ifq)->ifq_len)
 #define	ifq_empty(_ifq)			(ifq_len(_ifq) == 0)
