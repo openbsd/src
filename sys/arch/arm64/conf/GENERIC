@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.138 2020/01/14 20:43:20 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.139 2020/01/25 12:52:10 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -299,6 +299,8 @@ umass*		at uhub?		# USB Mass Storage devices
 uhidev*		at uhub?		# Human Interface Devices
 ums*		at uhidev?		# USB mouse
 wsmouse*	at ums? mux 0
+umt*		at uhidev?		# USB multitouch touchpad
+wsmouse*	at umt? mux 0
 uts*		at uhub?		# USB touchscreen
 wsmouse*	at uts? mux 0
 uwacom*		at uhidev?		# USB Wacom tablet
