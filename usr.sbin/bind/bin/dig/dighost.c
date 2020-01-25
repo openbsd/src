@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.37 2020/01/23 08:14:12 florian Exp $ */
+/* $Id: dighost.c,v 1.38 2020/01/25 10:53:38 florian Exp $ */
 
 /*! \file
  *  \note
@@ -1259,9 +1259,6 @@ read_confkey(void) {
 	const char *secretstr;
 	const char *algorithm;
 	isc_result_t result;
-
-	if (! isc_file_exists(keyfile))
-		return (ISC_R_FILENOTFOUND);
 
 	result = cfg_parser_create(NULL, &pctx);
 	if (result != ISC_R_SUCCESS)
