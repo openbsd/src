@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.33 2020/01/25 09:20:56 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.34 2020/01/25 14:23:27 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -288,20 +288,22 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 
 	if (tls13_server_hello_is_legacy(cbs)) {
-		/*
-		 * RFC 8446 section 4.1.3, We must not downgrade if
-		 * the server random value contains the TLS 1.2 or 1.1
-		 * magical value.
-		 */
-		if (!CBS_skip(&server_random, CBS_len(&server_random) -
-		    sizeof(tls13_downgrade_12)))
-			goto err;
-		if (CBS_mem_equal(&server_random, tls13_downgrade_12,
-		    sizeof(tls13_downgrade_12)) ||
-		    CBS_mem_equal(&server_random, tls13_downgrade_11,
-		    sizeof(tls13_downgrade_11))) {
-			ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
-			goto err;
+		if (ctx->hs->max_version >= TLS1_3_VERSION) {
+			/*
+			 * RFC 8446 section 4.1.3, We must not downgrade if
+			 * the server random value contains the TLS 1.2 or 1.1
+			 * magical value.
+			 */
+			if (!CBS_skip(&server_random, CBS_len(&server_random) -
+			    sizeof(tls13_downgrade_12)))
+				goto err;
+			if (CBS_mem_equal(&server_random, tls13_downgrade_12,
+			    sizeof(tls13_downgrade_12)) ||
+			    CBS_mem_equal(&server_random, tls13_downgrade_11,
+			    sizeof(tls13_downgrade_11))) {
+				ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+				goto err;
+			}
 		}
 
 		if (!CBS_skip(cbs, CBS_len(cbs)))
