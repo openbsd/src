@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.153 2019/12/09 18:19:09 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.154 2020/01/25 01:28:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -103,8 +103,8 @@ int	coredump_elf(struct proc *, void *);
 void	*elf_copyargs(struct exec_package *, struct ps_strings *, void *,
 	    void *);
 int	exec_elf_fixup(struct proc *, struct exec_package *);
-int	elf_os_pt_note(struct proc *, struct exec_package *, Elf_Ehdr *,
-	    char *, size_t, size_t);
+int	elf_os_pt_note_name(Elf_Note *);
+int	elf_os_pt_note(struct proc *, struct exec_package *, Elf_Ehdr *, int *);
 
 extern char sigcode[], esigcode[], sigcoderet[];
 #ifdef SYSCALL_DEBUG
@@ -149,6 +149,20 @@ struct emul emul_elf = {
 	esigcode,
 	sigcoderet
 };
+
+#define ELF_NOTE_NAME_OPENBSD	0x01
+#define ELF_NOTE_NAME_GO	0x02
+
+struct elf_note_name {
+	char *name;
+	int id;
+} elf_note_names[] = {
+	{ "OpenBSD",	ELF_NOTE_NAME_OPENBSD },
+	{ "Go",		ELF_NOTE_NAME_GO }
+};
+
+#define	ELFROUNDSIZE	sizeof(Elf_Word)
+#define	elfround(x)	roundup((x), ELFROUNDSIZE)
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
@@ -515,7 +529,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 	Elf_Ehdr *eh = epp->ep_hdr;
 	Elf_Phdr *ph, *pp, *base_ph = NULL;
 	Elf_Addr phdr = 0, exe_base = 0;
-	int error, i, has_phdr = 0;
+	int error, i, has_phdr = 0, names = 0;
 	char *interp = NULL;
 	u_long phsize;
 	size_t randomizequota = ELF_RANDOMIZE_LIMIT;
@@ -596,10 +610,10 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 	 * Verify this is an OpenBSD executable.  If it's marked that way
 	 * via a PT_NOTE then also check for a PT_OPENBSD_WXNEEDED segment.
 	 */
-	if (eh->e_ident[EI_OSABI] != ELFOSABI_OPENBSD && (error =
-	    elf_os_pt_note(p, epp, epp->ep_hdr, "OpenBSD", 8, 4)) != 0) {
+	if ((error = elf_os_pt_note(p, epp, epp->ep_hdr, &names)) != 0)
 		goto bad;
-	}
+	if (eh->e_ident[EI_OSABI] == ELFOSABI_OPENBSD)
+		names |= ELF_NOTE_NAME_OPENBSD;
 
 	/*
 	 * Load all the necessary sections
@@ -621,17 +635,14 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 				}
 			} else
 				addr = ELF_NO_ADDR;
-			/*
-			 * static binary: main program does system calls
-			 * dynamic binary: regular main program won't do system
-			 * calls, unfortunately go binaries do...
-			 */
-			flags |= VMCMD_SYSCALL;
-			if (interp == NULL) {
-				/*
-				 * static binary: no ld.so, no late request for
-				 * syscalls inside libc.so block msyscall()
-				 */
+
+			/* Permit system calls in specific main-programs */
+			if (names & ELF_NOTE_NAME_GO) {
+				/* go main-binaries; we await a libc future */
+				flags |= VMCMD_SYSCALL;
+			} else if (interp == NULL) {
+				/* statics. Also block the ld.so syscall-grant */
+				flags |= VMCMD_SYSCALL;
 				p->p_vmspace->vm_map.flags |= VM_MAP_SYSCALL_ONCE;
 			}
 
@@ -862,13 +873,35 @@ exec_elf_fixup(struct proc *p, struct exec_package *epp)
 }
 
 int
-elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
-    char *os_name, size_t name_size, size_t desc_size)
+elf_os_pt_note_name(Elf_Note *np)
+{
+	int i, j;
+
+	for (i = 0; i < nitems(elf_note_names); i++) {
+		size_t namlen = strlen(elf_note_names[i].name);
+		if (np->namesz < namlen)
+			continue;
+		/* verify name padding (after the NUL) is NUL */
+		for (j = namlen + 1; j < elfround(np->namesz); j++)
+			if (((char *)(np + 1))[j] != '\0')
+				continue;		
+		/* verify desc padding is NUL */
+		for (j = np->descsz; j < elfround(np->descsz); j++)
+			if (((char *)(np + 1))[j] != '\0')
+				continue;		
+		if (strcmp((char *)(np + 1), elf_note_names[i].name) == 0)
+			return elf_note_names[i].id;
+	}
+	return (0);
+}
+
+int
+elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh, int *namesp)
 {
 	Elf_Phdr *hph, *ph;
 	Elf_Note *np = NULL;
-	size_t phsize;
-	int error;
+	size_t phsize, offset, pfilesz = 0, total;
+	int error, names = 0;
 
 	hph = mallocarray(eh->e_phnum, sizeof(Elf_Phdr), M_TEMP, M_WAITOK);
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
@@ -879,50 +912,42 @@ elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
 		if (ph->p_type == PT_OPENBSD_WXNEEDED) {
 			epp->ep_flags |= EXEC_WXNEEDED;
-			break;
+			continue;
 		}
-	}
 
-	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
-		if (ph->p_type != PT_NOTE ||
-		    ph->p_filesz > 1024 ||
-		    ph->p_filesz < sizeof(Elf_Note) + name_size)
+		if (ph->p_type != PT_NOTE || ph->p_filesz > 1024)
 			continue;
 
-		np = malloc(ph->p_filesz, M_TEMP, M_WAITOK);
+		if (np && ph->p_filesz != pfilesz) {
+			free(np, M_TEMP, pfilesz);
+			np = NULL;
+		}
+		if (!np)
+			np = malloc(ph->p_filesz, M_TEMP, M_WAITOK);
+		pfilesz = ph->p_filesz;
 		if ((error = elf_read_from(p, epp->ep_vp, ph->p_offset,
 		    np, ph->p_filesz)) != 0)
 			goto out2;
 
-#if 0
-		if (np->type != ELF_NOTE_TYPE_OSVERSION) {
-			free(np, M_TEMP, ph->p_filesz);
-			np = NULL;
-			continue;
+		for (offset = 0; offset < ph->p_filesz; offset += total) {
+			Elf_Note *np2 = (Elf_Note *)((char *)np + offset);
+
+			if (offset + sizeof(Elf_Note) > ph->p_filesz)
+				break;
+			total = sizeof(Elf_Note) + elfround(np2->namesz) +
+			    elfround(np2->descsz);
+			if (offset + total > ph->p_filesz)
+				break;
+			names |= elf_os_pt_note_name(np2);
 		}
-#endif
-
-		/* Check the name and description sizes. */
-		if (np->namesz != name_size ||
-		    np->descsz != desc_size)
-			goto out3;
-
-		if (memcmp((np + 1), os_name, name_size))
-			goto out3;
-
-		/* XXX: We could check for the specific emulation here */
-		/* All checks succeeded. */
-		error = 0;
-		goto out2;
 	}
 
-out3:
-	error = ENOEXEC;
 out2:
-	free(np, M_TEMP, ph->p_filesz);
+	free(np, M_TEMP, pfilesz);
 out1:
 	free(hph, M_TEMP, phsize);
-	return error;
+	*namesp = names;
+	return ((names & ELF_NOTE_NAME_OPENBSD) ? 0 : ENOEXEC);
 }
 
 /*
@@ -956,9 +981,6 @@ int	coredump_notes_elf(struct proc *, void *, size_t *);
 int	coredump_note_elf(struct proc *, void *, size_t *);
 int	coredump_writenote_elf(struct proc *, void *, Elf_Note *,
 	    const char *, void *);
-
-#define	ELFROUNDSIZE	sizeof(Elf_Word)
-#define	elfround(x)	roundup((x), ELFROUNDSIZE)
 
 int
 coredump_elf(struct proc *p, void *cookie)
