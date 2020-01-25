@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.81 2020/01/23 10:24:29 dtucker Exp $
+#	$OpenBSD: Makefile.inc,v 1.82 2020/01/25 23:02:13 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -99,6 +99,8 @@ SRCS_KEY+=	verify.c
 SRCS_KEY+=	hash.c
 
 SRCS_KEYP+=	authfile.c
+SRCS_KEYP+=	sshbuf-io.c
+SRCS_KEYP+=	atomicio.c
 
 SRCS_KRL+=	bitmap.c
 SRCS_KRL+=	krl.c
