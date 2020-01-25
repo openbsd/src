@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.214 2020/01/10 14:52:57 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.215 2020/01/25 23:54:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1800,8 +1800,11 @@ nexthop_update(struct kroute_nexthop *msg)
 	nh->nexthop_netlen = msg->netlen;
 
 	nh->next_prefix = LIST_FIRST(&nh->prefix_h);
-	TAILQ_INSERT_HEAD(&nexthop_runners, nh, runner_l);
-	log_debug("nexthop %s update starting", log_addr(&nh->exit_nexthop));
+	if (nh->next_prefix != NULL) {
+		TAILQ_INSERT_HEAD(&nexthop_runners, nh, runner_l);
+		log_debug("nexthop %s update starting",
+		    log_addr(&nh->exit_nexthop));
+	}
 }
 
 void
@@ -1860,8 +1863,11 @@ nexthop_unlink(struct prefix *p)
 	if (p == p->nexthop->next_prefix) {
 		p->nexthop->next_prefix = LIST_NEXT(p, entry.list.nexthop);
 		/* remove nexthop from list if no prefixes left to update */
-		if (p->nexthop->next_prefix == NULL)
+		if (p->nexthop->next_prefix == NULL) {
 			TAILQ_REMOVE(&nexthop_runners, p->nexthop, runner_l);
+			log_debug("nexthop %s update finished",
+			    log_addr(&p->nexthop->exit_nexthop));
+		}
 	}
 
 	p->flags &= ~PREFIX_NEXTHOP_LINKED;
