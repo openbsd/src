@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.108 2020/01/09 14:35:19 mpi Exp $ */
+/*	$OpenBSD: arc.c,v 1.109 2020/01/25 21:48:42 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1408,7 +1408,6 @@ arc_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > MAXPHYS)
 		bp->b_bcount = MAXPHYS;
-	minphys(bp);
 }
 
 void

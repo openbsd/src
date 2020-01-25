@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.78 2020/01/23 01:43:17 cheloha Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.79 2020/01/25 21:48:42 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -430,7 +430,6 @@ cissminphys(struct buf *bp, struct scsi_link *sl)
 	if (bp->b_bcount > CISS_MAXFER)
 		bp->b_bcount = CISS_MAXFER;
 #endif
-	minphys(bp);
 }
 
 /*

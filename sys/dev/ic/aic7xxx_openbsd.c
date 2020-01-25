@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.57 2020/01/23 07:53:00 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.58 2020/01/25 21:48:42 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -267,7 +267,6 @@ ahc_minphys(struct buf *bp, struct scsi_link *sl)
 	if (bp->b_bcount > ((AHC_NSEG - 1) * PAGE_SIZE)) {
 		bp->b_bcount = ((AHC_NSEG - 1) * PAGE_SIZE);
 	}
-	minphys(bp);
 }
 
 void

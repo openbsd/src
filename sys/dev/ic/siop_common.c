@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.36 2014/12/19 22:44:58 guenther Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.37 2020/01/25 21:48:42 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -706,8 +706,6 @@ siop_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > SIOP_MAXFER)
 		bp->b_bcount = SIOP_MAXFER;
-
-	minphys(bp);
 }
 
 void

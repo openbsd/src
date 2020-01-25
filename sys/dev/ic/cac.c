@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.56 2020/01/23 07:53:00 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.57 2020/01/25 21:48:42 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -566,7 +566,6 @@ cacminphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > CAC_MAX_XFER)
 		bp->b_bcount = CAC_MAX_XFER;
-	minphys(bp);
 }
 
 void

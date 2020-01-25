@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.65 2020/01/23 07:53:00 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.66 2020/01/25 21:48:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -1102,8 +1102,6 @@ gdtminphys(struct buf *bp, struct scsi_link *sl)
 	if ((GDT_MAXOFFSETS - 1) * PAGE_SIZE < MAXPHYS &&
 	    bp->b_bcount > ((GDT_MAXOFFSETS - 1) * PAGE_SIZE))
 		bp->b_bcount = ((GDT_MAXOFFSETS - 1) * PAGE_SIZE);
-
-	minphys(bp);
 }
 
 int

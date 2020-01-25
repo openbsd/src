@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.23 2020/01/23 07:53:00 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.24 2020/01/25 21:48:42 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -728,7 +728,6 @@ oosiop_minphys(struct buf *bp, struct scsi_link *sl)
 
 	if (bp->b_bcount > OOSIOP_MAX_XFER)
 		bp->b_bcount = OOSIOP_MAX_XFER;
-	minphys(bp);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.172 2020/01/23 07:53:00 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.173 2020/01/25 21:48:42 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -667,7 +667,6 @@ mfiminphys(struct buf *bp, struct scsi_link *sl)
 	/* XXX currently using MFI_MAXFER = MAXPHYS */
 	if (bp->b_bcount > MFI_MAXFER)
 		bp->b_bcount = MFI_MAXFER;
-	minphys(bp);
 }
 
 int

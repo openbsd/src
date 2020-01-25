@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.107 2020/01/23 07:52:59 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.108 2020/01/25 21:48:42 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -425,7 +425,6 @@ wdc_atapi_minphys (struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > MAX_SIZE)
 		bp->b_bcount = MAX_SIZE;
-	minphys(bp);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.42 2018/03/30 07:18:39 jmatthew Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.43 2020/01/25 21:48:43 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -556,8 +556,6 @@ sdmmc_scsi_minphys(struct buf *bp, struct scsi_link *sl)
 	if (sc->sc_max_xfer != 0 &&
 	    bp->b_bcount > sf->csd.sector_size * sc->sc_max_xfer)
 		bp->b_bcount = sf->csd.sector_size * sc->sc_max_xfer;
-
-	minphys(bp);
 }
 
 #ifdef HIBERNATE

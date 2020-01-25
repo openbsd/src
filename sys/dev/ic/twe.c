@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.48 2020/01/23 07:53:00 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.49 2020/01/25 21:48:42 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -757,7 +757,6 @@ tweminphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > TWE_MAXFER)
 		bp->b_bcount = TWE_MAXFER;
-	minphys(bp);
 }
 
 void

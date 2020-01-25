@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.45 2020/01/23 07:53:00 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.46 2020/01/25 21:48:42 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -874,7 +874,6 @@ wdsminphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > ((WDS_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((WDS_NSEG - 1) << PGSHIFT);
-	minphys(bp);
 }
 
 /*

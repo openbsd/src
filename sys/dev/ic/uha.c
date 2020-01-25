@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.27 2020/01/23 07:53:00 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.28 2020/01/25 21:48:42 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -265,7 +265,6 @@ uhaminphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > ((UHA_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((UHA_NSEG - 1) << PGSHIFT);
-	minphys(bp);
 }
 
 /*

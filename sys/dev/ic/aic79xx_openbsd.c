@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.47 2020/01/23 07:53:00 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.48 2020/01/25 21:48:42 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -262,7 +262,6 @@ ahd_minphys(struct buf *bp, struct scsi_link *sl)
 	if (bp->b_bcount > ((AHD_NSEG - 1) * PAGE_SIZE)) {
 		bp->b_bcount = ((AHD_NSEG - 1) * PAGE_SIZE);
 	}
-	minphys(bp);
 }
 
 void

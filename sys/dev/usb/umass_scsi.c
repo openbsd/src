@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.47 2020/01/23 07:53:00 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.48 2020/01/25 21:48:43 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -268,8 +268,6 @@ umass_scsi_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > UMASS_MAX_TRANSFER_SIZE)
 		bp->b_bcount = UMASS_MAX_TRANSFER_SIZE;
-
-	minphys(bp);
 }
 
 void

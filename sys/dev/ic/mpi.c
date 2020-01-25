@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.209 2020/01/23 07:53:00 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.210 2020/01/25 21:48:42 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1606,7 +1606,6 @@ mpi_minphys(struct buf *bp, struct scsi_link *sl)
 	/* XXX */
 	if (bp->b_bcount > MAXPHYS)
 		bp->b_bcount = MAXPHYS;
-	minphys(bp);
 }
 
 int

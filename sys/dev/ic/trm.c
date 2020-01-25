@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.34 2020/01/23 07:53:00 krw Exp $
+/*	$OpenBSD: trm.c,v 1.35 2020/01/25 21:48:42 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -2363,7 +2363,6 @@ trm_minphys(struct buf *bp, struct scsi_link *sl)
 	if (bp->b_bcount > (TRM_MAX_SG_LISTENTRY-1) * (long) NBPG) {
 		bp->b_bcount = (TRM_MAX_SG_LISTENTRY-1) * (long) NBPG;
 	}
-	minphys(bp);
 }
 
 /*
