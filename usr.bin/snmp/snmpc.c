@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.20 2020/01/17 10:10:32 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.21 2020/01/25 17:17:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -564,7 +564,6 @@ snmpc_get(int argc, char *argv[])
 		if (!snmpc_print(varbind))
 			err(1, "Can't print response");
 	}
-	sleep(10);
 	ober_free_elements(pdu);
 	snmp_free_agent(agent);
 	return 0;
