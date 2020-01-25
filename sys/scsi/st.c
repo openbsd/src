@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.172 2019/12/05 18:42:14 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.173 2020/01/25 21:40:35 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1007,6 +1007,8 @@ stminphys(struct buf *bp)
 		return;
 
 	(*st->sc_link->adapter->scsi_minphys)(bp, st->sc_link);
+	if (st->sc_link->adapter->scsi_minphys != scsi_minphys)
+		scsi_minphys(bp, st->sc_link);
 
 	device_unref(&st->sc_dev);
 }
