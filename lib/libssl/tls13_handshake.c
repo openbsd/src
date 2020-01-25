@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.47 2020/01/25 13:21:52 beck Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.48 2020/01/25 15:06:17 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -413,8 +413,8 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 	 */
 	msg_type = tls13_handshake_msg_type(ctx->hs_msg);
 	if (msg_type != action->handshake_type &&
-	    (msg_type != TLS13_MT_CERTIFICATE_REQUEST ||
-	     action->handshake_type != TLS13_MT_CERTIFICATE))
+	    (msg_type != TLS13_MT_CERTIFICATE ||
+	     action->handshake_type != TLS13_MT_CERTIFICATE_REQUEST))
 		return tls13_send_alert(ctx->rl, SSL_AD_UNEXPECTED_MESSAGE);
 
 	if (!tls13_handshake_msg_content(ctx->hs_msg, &cbs))
