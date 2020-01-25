@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.41 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: dig.c,v 1.42 2020/01/25 10:59:19 florian Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -349,63 +349,6 @@ short_answer(dns_message_t *msg, dns_messagetextflag_t flags,
 
 	return (ISC_R_SUCCESS);
 }
-#ifdef DIG_SIGCHASE
-static isc_result_t
-printrdataset(dns_name_t *owner_name, dns_rdataset_t *rdataset,
-	      isc_buffer_t *target)
-{
-	isc_result_t result;
-	dns_master_style_t *style = NULL;
-	unsigned int styleflags = 0;
-
-	if (rdataset == NULL || owner_name == NULL || target == NULL)
-		return(ISC_FALSE);
-
-	styleflags |= DNS_STYLEFLAG_REL_OWNER;
-	if (nottl)
-		styleflags |= DNS_STYLEFLAG_NO_TTL;
-	if (noclass)
-		styleflags |= DNS_STYLEFLAG_NO_CLASS;
-	if (nocrypto)
-		styleflags |= DNS_STYLEFLAG_NOCRYPTO;
-	/* Turn on rrcomments if explicitly enabled */
-	if (rrcomments > 0)
-		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
-	if (multiline) {
-		styleflags |= DNS_STYLEFLAG_OMIT_OWNER;
-		styleflags |= DNS_STYLEFLAG_OMIT_CLASS;
-		styleflags |= DNS_STYLEFLAG_REL_DATA;
-		styleflags |= DNS_STYLEFLAG_OMIT_TTL;
-		styleflags |= DNS_STYLEFLAG_TTL;
-		styleflags |= DNS_STYLEFLAG_MULTILINE;
-		styleflags |= DNS_STYLEFLAG_COMMENT;
-		/* Turn on rrcomments if not explicitly disabled */
-		if (rrcomments >= 0)
-			styleflags |= DNS_STYLEFLAG_RRCOMMENT;
-	}
-
-	if (multiline || (nottl && noclass))
-		result = dns_master_stylecreate2(&style, styleflags,
-						24, 24, 24, 32, 80, 8,
-						splitwidth);
-	else if (nottl || noclass)
-		result = dns_master_stylecreate2(&style, styleflags,
-						24, 24, 32, 40, 80, 8,
-						splitwidth);
-	else
-		result = dns_master_stylecreate2(&style, styleflags,
-						24, 32, 40, 48, 80, 8,
-						splitwidth);
-	check_result(result, "dns_master_stylecreate");
-
-	result = dns_master_rdatasettotext(owner_name, rdataset, style, target);
-
-	if (style != NULL)
-		dns_master_styledestroy(&style);
-
-	return(result);
-}
-#endif
 
 static isc_boolean_t
 isdotlocal(dns_message_t *msg) {
@@ -1175,14 +1118,6 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 			break;
 		case 'i':
 			switch (cmd[2]) {
-#ifdef DIG_SIGCHASE
-			case 'g': /* sigchase */
-				FULLCHECK("sigchase");
-				lookup->sigchase = state;
-				if (lookup->sigchase)
-					lookup->dnssec = ISC_TRUE;
-				break;
-#endif
 			case 't': /* sit */
 				FULLCHECK("sit");
  sit:
@@ -1283,12 +1218,6 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 			if (timeout == 0)
 				timeout = 1;
 			break;
-#if DIG_SIGCHASE_TD
-		case 'o': /* topdown */
-			FULLCHECK("topdown");
-			lookup->do_topdown = state;
-			break;
-#endif
 		case 'r':
 			switch (cmd[2]) {
 			case 'a': /* trace */
@@ -1321,19 +1250,6 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 				if (lookup->retries == 0)
 					lookup->retries = 1;
 				break;
-#ifdef DIG_SIGCHASE
-			case 'u': /* trusted-key */
-				FULLCHECK("trusted-key");
-				if (value == NULL)
-					goto need_value;
-				if (!state)
-					goto invalid_option;
-				n = strlcpy(trustedkey, ptr,
-					    sizeof(trustedkey));
-				if (n >= sizeof(trustedkey))
-					fatal("trusted key too large");
-				break;
-#endif
 			default:
 				goto invalid_option;
 			}
@@ -2035,9 +1951,6 @@ void dig_setup(int argc, char **argv)
 	debug("dig_setup()");
 
 	/* setup dighost callbacks */
-#ifdef DIG_SIGCHASE
-	dighost_printrdataset = printrdataset;
-#endif
 	dighost_printmessage = printmessage;
 	dighost_received = received;
 	dighost_trying = trying;
@@ -2098,10 +2011,6 @@ dig_shutdown() {
 			fclose(batchfp);
 		batchname = NULL;
 	}
-
-#ifdef DIG_SIGCHASE
-	clean_trustedkey();
-#endif
 
 	cancel_all();
 	destroy_libs();

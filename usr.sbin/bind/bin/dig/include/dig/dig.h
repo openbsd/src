@@ -76,23 +76,12 @@
  * Defaults for the sigchase suboptions.  Consolidated here because
  * these control the layout of dig_lookup_t (among other things).
  */
-#ifdef DIG_SIGCHASE
-#ifndef DIG_SIGCHASE_BU
-#define DIG_SIGCHASE_BU 1
-#endif
-#ifndef DIG_SIGCHASE_TD
-#define DIG_SIGCHASE_TD 1
-#endif
-#endif
 
 ISC_LANG_BEGINDECLS
 
 typedef struct dig_lookup dig_lookup_t;
 typedef struct dig_query dig_query_t;
 typedef struct dig_server dig_server_t;
-#ifdef DIG_SIGCHASE
-typedef struct dig_message dig_message_t;
-#endif
 typedef ISC_LIST(dig_server_t) dig_serverlist_t;
 typedef struct dig_searchlist dig_searchlist_t;
 
@@ -134,27 +123,11 @@ struct dig_lookup {
 		ednsneg,
 		mapped,
 		idnout;
-#ifdef DIG_SIGCHASE
-isc_boolean_t	sigchase;
-#if DIG_SIGCHASE_TD
-	isc_boolean_t do_topdown,
-		trace_root_sigchase,
-		rdtype_sigchaseset,
-		rdclass_sigchaseset;
-	/* Name we are going to validate RRset */
-	char textnamesigchase[MXNAME];
-#endif
-#endif
 
 	char textname[MXNAME]; /*% Name we're going to be looking up */
 	char cmdline[MXNAME];
 	dns_rdatatype_t rdtype;
 	dns_rdatatype_t qrdtype;
-#if DIG_SIGCHASE_TD
-	dns_rdatatype_t rdtype_sigchase;
-	dns_rdatatype_t qrdtype_sigchase;
-	dns_rdataclass_t rdclass_sigchase;
-#endif
 	dns_rdataclass_t rdclass;
 	isc_boolean_t rdtypeset;
 	isc_boolean_t rdclassset;
@@ -245,12 +218,6 @@ struct dig_searchlist {
 	char origin[MXNAME];
 	ISC_LINK(dig_searchlist_t) link;
 };
-#ifdef DIG_SIGCHASE
-struct dig_message {
-		dns_message_t *msg;
-		ISC_LINK(dig_message_t) link;
-};
-#endif
 
 typedef ISC_LIST(dig_searchlist_t) dig_searchlistlist_t;
 typedef ISC_LIST(dig_lookup_t) dig_lookuplist_t;
@@ -278,9 +245,6 @@ extern char keyfile[MXNAME];
 extern char keysecret[MXNAME];
 extern dns_name_t *hmacname;
 extern unsigned int digestbits;
-#ifdef DIG_SIGCHASE
-extern char trustedkey[MXNAME];
-#endif
 extern dns_tsigkey_t *tsigkey;
 extern isc_boolean_t validated;
 extern isc_taskmgr_t *taskmgr;
@@ -385,11 +349,6 @@ destroy_libs(void);
 void
 set_search_domain(char *domain);
 
-#ifdef DIG_SIGCHASE
-void
-clean_trustedkey(void);
-#endif
-
 char *
 next_token(char **stringp, const char *delim);
 
@@ -397,11 +356,6 @@ next_token(char **stringp, const char *delim);
  * Routines to be defined in dig.c, host.c, and nslookup.c. and
  * then assigned to the appropriate function pointer
  */
-#ifdef DIG_SIGCHASE
-extern isc_result_t
-(*dighost_printrdataset)(dns_name_t *owner_name, dns_rdataset_t *rdataset,
-	      isc_buffer_t *target);
-#endif
 
 extern isc_result_t
 (*dighost_printmessage)(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers);
@@ -422,14 +376,6 @@ extern void
 
 extern void
 (*dighost_shutdown)(void);
-
-#ifdef DIG_SIGCHASE
-/* Chasing functions */
-dns_rdataset_t *
-chase_scanname(dns_name_t *name, dns_rdatatype_t type, dns_rdatatype_t covers);
-void
-chase_sig(dns_message_t *msg);
-#endif
 
 void save_opt(dig_lookup_t *lookup, char *code, char *value);
 

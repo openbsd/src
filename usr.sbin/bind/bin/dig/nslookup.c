@@ -195,18 +195,6 @@ printa(dns_rdata_t *rdata) {
 	printf("Address: %.*s\n", (int)isc_buffer_usedlength(&b),
 	       (char *)isc_buffer_base(&b));
 }
-#ifdef DIG_SIGCHASE
-/* Just for compatibility : not use in host program */
-static isc_result_t
-printrdataset(dns_name_t *owner_name, dns_rdataset_t *rdataset,
-	      isc_buffer_t *target)
-{
-	UNUSED(owner_name);
-	UNUSED(rdataset);
-	UNUSED(target);
-	return(ISC_FALSE);
-}
-#endif
 static void
 printrdata(dns_rdata_t *rdata) {
 	isc_result_t result;
@@ -888,9 +876,6 @@ main(int argc, char **argv) {
 	check_ra = ISC_TRUE;
 
 	/* setup dighost callbacks */
-#ifdef DIG_SIGCHASE
-	dighost_printrdataset = printrdataset;
-#endif
 	dighost_printmessage = printmessage;
 	dighost_received = received;
 	dighost_trying = trying;
