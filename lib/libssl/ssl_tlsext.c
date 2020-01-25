@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.54 2020/01/22 10:38:11 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.55 2020/01/25 12:31:42 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -443,7 +443,7 @@ tlsext_ri_server_parse(SSL *s, CBS *cbs, int *alert)
 int
 tlsext_ri_server_needs(SSL *s)
 {
-	return (S3I(s)->send_connection_binding);
+	return (s->version < TLS1_3_VERSION && S3I(s)->send_connection_binding);
 }
 
 int
