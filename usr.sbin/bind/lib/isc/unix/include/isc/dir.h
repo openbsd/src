@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dir.h,v 1.3 2019/12/17 01:46:37 sthen Exp $ */
+/* $Id: dir.h,v 1.4 2020/01/25 10:42:50 deraadt Exp $ */
 
 /* Principal Authors: DCL */
 
@@ -75,9 +75,6 @@ isc_dir_close(isc_dir_t *dir);
 
 isc_result_t
 isc_dir_chdir(const char *dirname);
-
-isc_result_t
-isc_dir_chroot(const char *dirname);
 
 isc_result_t
 isc_dir_createunique(char *templet);
