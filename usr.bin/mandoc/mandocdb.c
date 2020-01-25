@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandocdb.c,v 1.212 2019/05/03 18:16:57 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.213 2020/01/25 22:59:14 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2016 Ed Maste <emaste@freebsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -164,6 +164,7 @@ static	int		 write_utf8; /* write UTF-8 output; else ASCII */
 static	int		 exitcode; /* to be returned by main */
 static	enum op		 op; /* operational mode */
 static	char		 basedir[PATH_MAX]; /* current base directory */
+static	size_t		 basedir_len; /* strlen(basedir) */
 static	struct mpage	*mpage_head; /* list of distinct manual pages */
 static	struct ohash	 mpages; /* table of distinct manual pages */
 static	struct ohash	 mlinks; /* table of directory entries */
@@ -318,7 +319,7 @@ mandocdb(int argc, char *argv[])
 	 * clobber each other.
 	 */
 #define	CHECKOP(_op, _ch) do \
-	if (OP_DEFAULT != (_op)) { \
+	if ((_op) != OP_DEFAULT) { \
 		warnx("-%c: Conflicting option", (_ch)); \
 		goto usage; \
 	} while (/*CONSTCOND*/0)
@@ -327,7 +328,7 @@ mandocdb(int argc, char *argv[])
 	path_arg = NULL;
 	op = OP_DEFAULT;
 
-	while (-1 != (ch = getopt(argc, argv, "aC:Dd:npQT:tu:v")))
+	while ((ch = getopt(argc, argv, "aC:Dd:npQT:tu:v")) != -1)
 		switch (ch) {
 		case 'a':
 			use_all = 1;
@@ -355,7 +356,7 @@ mandocdb(int argc, char *argv[])
 			mparse_options |= MPARSE_QUICK;
 			break;
 		case 'T':
-			if (strcmp(optarg, "utf8")) {
+			if (strcmp(optarg, "utf8") != 0) {
 				warnx("-T%s: Unsupported output format",
 				    optarg);
 				goto usage;
@@ -390,7 +391,7 @@ mandocdb(int argc, char *argv[])
 		}
 	}
 
-	if (OP_CONFFILE == op && argc > 0) {
+	if (op == OP_CONFFILE && argc > 0) {
 		warnx("-C: Too many arguments");
 		goto usage;
 	}
@@ -401,13 +402,13 @@ mandocdb(int argc, char *argv[])
 	mandoc_ohash_init(&mpages, 6, offsetof(struct mpage, inodev));
 	mandoc_ohash_init(&mlinks, 6, offsetof(struct mlink, file));
 
-	if (OP_UPDATE == op || OP_DELETE == op || OP_TEST == op) {
+	if (op == OP_UPDATE || op == OP_DELETE || op == OP_TEST) {
 
 		/*
 		 * Most of these deal with a specific directory.
 		 * Jump into that directory first.
 		 */
-		if (OP_TEST != op && 0 == set_basedir(path_arg, 1))
+		if (op != OP_TEST && set_basedir(path_arg, 1) == 0)
 			goto out;
 
 		dba = nodb ? dba_new(128) : dba_read(MANDOC_DB);
@@ -428,11 +429,11 @@ mandocdb(int argc, char *argv[])
 				    " from scratch", strerror(errno));
 			exitcode = (int)MANDOCLEVEL_OK;
 			op = OP_DEFAULT;
-			if (0 == treescan())
+			if (treescan() == 0)
 				goto out;
 			dba = dba_new(128);
 		}
-		if (OP_DELETE != op)
+		if (op != OP_DELETE)
 			mpages_merge(dba, mp);
 		if (nodb == 0)
 			dbwrite(dba);
@@ -466,7 +467,7 @@ mandocdb(int argc, char *argv[])
 			sz = strlen(conf.manpath.paths[j]);
 			if (sz && conf.manpath.paths[j][sz - 1] == '/')
 				conf.manpath.paths[j][--sz] = '\0';
-			if (0 == sz)
+			if (sz == 0)
 				continue;
 
 			if (j) {
@@ -476,9 +477,9 @@ mandocdb(int argc, char *argv[])
 				    offsetof(struct mlink, file));
 			}
 
-			if ( ! set_basedir(conf.manpath.paths[j], argc > 0))
+			if (set_basedir(conf.manpath.paths[j], argc > 0) == 0)
 				continue;
-			if (0 == treescan())
+			if (treescan() == 0)
 				continue;
 			dba = dba_new(128);
 			mpages_merge(dba, mp);
@@ -578,7 +579,7 @@ treescan(void)
 					say(path, "&realpath");
 				continue;
 			}
-			if (strstr(buf, basedir) != buf) {
+			if (strncmp(buf, basedir, basedir_len) != 0) {
 				if (warnings) say("",
 				    "%s: outside base directory", buf);
 				continue;
@@ -752,7 +753,7 @@ filescan(const char *file)
 
 	assert(use_all);
 
-	if (0 == strncmp(file, "./", 2))
+	if (strncmp(file, "./", 2) == 0)
 		file += 2;
 
 	/*
@@ -762,11 +763,11 @@ filescan(const char *file)
 	 * we want to use the orginal file name, while for
 	 * regular files, we want to use the real path.
 	 */
-	if (-1 == lstat(file, &st)) {
+	if (lstat(file, &st) == -1) {
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say(file, "&lstat");
 		return;
-	} else if (0 == ((S_IFREG | S_IFLNK) & st.st_mode)) {
+	} else if ((st.st_mode & (S_IFREG | S_IFLNK)) == 0) {
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say(file, "Not a regular file");
 		return;
@@ -776,16 +777,16 @@ filescan(const char *file)
 	 * We have to resolve the file name to the real path
 	 * in any case for the base directory check.
 	 */
-	if (NULL == realpath(file, buf)) {
+	if (realpath(file, buf) == NULL) {
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say(file, "&realpath");
 		return;
 	}
 
-	if (OP_TEST == op)
+	if (op == OP_TEST)
 		start = buf;
-	else if (strstr(buf, basedir) == buf)
-		start = buf + strlen(basedir);
+	else if (strncmp(buf, basedir, basedir_len) == 0)
+		start = buf + basedir_len;
 	else {
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say("", "%s: outside base directory", buf);
@@ -801,8 +802,8 @@ filescan(const char *file)
 	 * Note the stat(2) can still fail if the link target
 	 * doesn't exist.
 	 */
-	if (S_IFLNK & st.st_mode) {
-		if (-1 == stat(buf, &st)) {
+	if (st.st_mode & S_IFLNK) {
+		if (stat(buf, &st) == -1) {
 			exitcode = (int)MANDOCLEVEL_BADARG;
 			say(file, "&stat");
 			return;
@@ -812,8 +813,8 @@ filescan(const char *file)
 			return;
 		}
 		start = buf;
-		if (OP_TEST != op && strstr(buf, basedir) == buf)
-			start += strlen(basedir);
+		if (op != OP_TEST && strncmp(buf, basedir, basedir_len) == 0)
+			start += basedir_len;
 	}
 
 	mlink = mandoc_calloc(1, sizeof(struct mlink));
@@ -845,18 +846,18 @@ filescan(const char *file)
 	 * If we find one of these and what's underneath is a directory,
 	 * assume it's an architecture.
 	 */
-	if (NULL != (p = strchr(start, '/'))) {
+	if ((p = strchr(start, '/')) != NULL) {
 		*p++ = '\0';
-		if (0 == strncmp(start, "man", 3)) {
+		if (strncmp(start, "man", 3) == 0) {
 			mlink->dform = FORM_SRC;
 			mlink->dsec = start + 3;
-		} else if (0 == strncmp(start, "cat", 3)) {
+		} else if (strncmp(start, "cat", 3) == 0) {
 			mlink->dform = FORM_CAT;
 			mlink->dsec = start + 3;
 		}
 
 		start = p;
-		if (NULL != mlink->dsec && NULL != (p = strchr(start, '/'))) {
+		if (mlink->dsec != NULL && (p = strchr(start, '/')) != NULL) {
 			*p++ = '\0';
 			mlink->arch = start;
 			start = p;
@@ -868,10 +869,10 @@ filescan(const char *file)
 	 * Suffix of `.0' indicates a catpage, `.1-9' is a manpage.
 	 */
 	p = strrchr(start, '\0');
-	while (p-- > start && '/' != *p && '.' != *p)
-		/* Loop. */ ;
+	while (p-- > start && *p != '/' && *p != '.')
+		continue;
 
-	if ('.' == *p) {
+	if (*p == '.') {
 		*p++ = '\0';
 		mlink->fsec = p;
 	}
@@ -881,7 +882,7 @@ filescan(const char *file)
 	 * Use the filename portion of the path.
 	 */
 	mlink->name = start;
-	if (NULL != (p = strrchr(start, '/'))) {
+	if ((p = strrchr(start, '/')) != NULL) {
 		mlink->name = p + 1;
 		*p = '\0';
 	}
@@ -2212,7 +2213,6 @@ set_basedir(const char *targetdir, int report_baddir)
 	static char	 startdir[PATH_MAX];
 	static int	 getcwd_status;  /* 1 = ok, 2 = failure */
 	static int	 chdir_status;  /* 1 = changed directory */
-	char		*cp;
 
 	/*
 	 * Remember the original working directory, if possible.
@@ -2221,8 +2221,8 @@ set_basedir(const char *targetdir, int report_baddir)
 	 * Do not error out if the current directory is not
 	 * searchable: Maybe it won't be needed after all.
 	 */
-	if (0 == getcwd_status) {
-		if (NULL == getcwd(startdir, sizeof(startdir))) {
+	if (getcwd_status == 0) {
+		if (getcwd(startdir, sizeof(startdir)) == NULL) {
 			getcwd_status = 2;
 			(void)strlcpy(startdir, strerror(errno),
 			    sizeof(startdir));
@@ -2235,19 +2235,20 @@ set_basedir(const char *targetdir, int report_baddir)
 	 * Do not use it any longer, not even for messages.
 	 */
 	*basedir = '\0';
+	basedir_len = 0;
 
 	/*
 	 * If and only if the directory was changed earlier and
 	 * the next directory to process is given as a relative path,
 	 * first go back, or bail out if that is impossible.
 	 */
-	if (chdir_status && '/' != *targetdir) {
-		if (2 == getcwd_status) {
+	if (chdir_status && *targetdir != '/') {
+		if (getcwd_status == 2) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
 			say("", "getcwd: %s", startdir);
 			return 0;
 		}
-		if (-1 == chdir(startdir)) {
+		if (chdir(startdir) == -1) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
 			say("", "&chdir %s", startdir);
 			return 0;
@@ -2259,29 +2260,33 @@ set_basedir(const char *targetdir, int report_baddir)
 	 * pathname and append a trailing slash, such that
 	 * we can reliably check whether files are inside.
 	 */
-	if (NULL == realpath(targetdir, basedir)) {
+	if (realpath(targetdir, basedir) == NULL) {
 		if (report_baddir || errno != ENOENT) {
 			exitcode = (int)MANDOCLEVEL_BADARG;
 			say("", "&%s: realpath", targetdir);
 		}
+		*basedir = '\0';
 		return 0;
-	} else if (-1 == chdir(basedir)) {
+	} else if (chdir(basedir) == -1) {
 		if (report_baddir || errno != ENOENT) {
 			exitcode = (int)MANDOCLEVEL_BADARG;
 			say("", "&chdir");
 		}
+		*basedir = '\0';
 		return 0;
 	}
 	chdir_status = 1;
-	cp = strchr(basedir, '\0');
-	if ('/' != cp[-1]) {
-		if (cp - basedir >= PATH_MAX - 1) {
+	basedir_len = strlen(basedir);
+	if (basedir[basedir_len - 1] != '/') {
+		if (basedir_len >= PATH_MAX - 1) {
 			exitcode = (int)MANDOCLEVEL_SYSERR;
 			say("", "Filename too long");
+			*basedir = '\0';
+			basedir_len = 0;
 			return 0;
 		}
-		*cp++ = '/';
-		*cp = '\0';
+		basedir[basedir_len++] = '/';
+		basedir[basedir_len] = '\0';
 	}
 	return 1;
 }
@@ -2292,15 +2297,15 @@ say(const char *file, const char *format, ...)
 	va_list		 ap;
 	int		 use_errno;
 
-	if ('\0' != *basedir)
+	if (*basedir != '\0')
 		fprintf(stderr, "%s", basedir);
-	if ('\0' != *basedir && '\0' != *file)
+	if (*basedir != '\0' && *file != '\0')
 		fputc('/', stderr);
-	if ('\0' != *file)
+	if (*file != '\0')
 		fprintf(stderr, "%s", file);
 
 	use_errno = 1;
-	if (NULL != format) {
+	if (format != NULL) {
 		switch (*format) {
 		case '&':
 			format++;
@@ -2313,15 +2318,15 @@ say(const char *file, const char *format, ...)
 			break;
 		}
 	}
-	if (NULL != format) {
-		if ('\0' != *basedir || '\0' != *file)
+	if (format != NULL) {
+		if (*basedir != '\0' || *file != '\0')
 			fputs(": ", stderr);
 		va_start(ap, format);
 		vfprintf(stderr, format, ap);
 		va_end(ap);
 	}
 	if (use_errno) {
-		if ('\0' != *basedir || '\0' != *file || NULL != format)
+		if (*basedir != '\0' || *file != '\0' || format != NULL)
 			fputs(": ", stderr);
 		perror(NULL);
 	} else
