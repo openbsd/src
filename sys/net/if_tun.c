@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.212 2020/01/25 06:31:32 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.213 2020/01/25 10:56:43 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -300,6 +300,9 @@ tun_clone_destroy(struct ifnet *ifp)
 		KASSERT(sc->sc_dev == 0);
 	}
 	tun_wakeup(sc);
+
+	SMR_LIST_REMOVE_LOCKED(sc, sc_entry);
+	smr_barrier();
 	refcnt_finalize(&sc->sc_refs, "tundtor");
 
 	s = splhigh();
@@ -315,8 +318,6 @@ tun_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 	sigio_free(&sc->sc_sigio);
 
-	SMR_LIST_REMOVE_LOCKED(sc, sc_entry);
-	smr_barrier();
 	free(sc, M_DEVBUF, sizeof *sc);
 	return (0);
 }
