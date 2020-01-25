@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.12 2020/01/24 09:42:32 tb Exp $ */
+/* $OpenBSD: s_cb.c,v 1.13 2020/01/25 05:29:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -390,6 +390,7 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 
 	str_write_p = write_p ? ">>>" : "<<<";
 
+	/* XXX convert to using ssl_get_version */
 	switch (version) {
 	case SSL2_VERSION:
 		str_version = "SSL 2.0";
@@ -420,6 +421,7 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 		str_details1 = "???";
 
 		if (len > 0) {
+			/* XXX magic numbers */
 			switch (((const unsigned char *) buf)[0]) {
 			case 0:
 				str_details1 = ", ERROR:";
@@ -473,6 +475,7 @@ msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, 
 	if (version == SSL3_VERSION || version == TLS1_VERSION ||
 	    version == TLS1_1_VERSION || version == TLS1_2_VERSION ||
 	    version == TLS1_3_VERSION || version == DTLS1_VERSION) {
+		/* XXX magic numbers are in ssl3.h */
 		switch (content_type) {
 		case 20:
 			str_content_type = "ChangeCipherSpec";
