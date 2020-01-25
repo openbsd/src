@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.210 2020/01/25 05:10:53 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.211 2020/01/25 05:28:31 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #include <sys/signalvar.h>
 #include <sys/poll.h>
 #include <sys/conf.h>
-
+#include <sys/smr.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -82,7 +82,8 @@ struct tun_softc {
 #define sc_if			sc_ac.ac_if
 	struct selinfo		sc_rsel;	/* read select */
 	struct selinfo		sc_wsel;	/* write select (not used) */
-	LIST_ENTRY(tun_softc)	sc_entry;	/* all tunnel interfaces */
+	SMR_LIST_ENTRY(tun_softc)
+				sc_entry;	/* all tunnel interfaces */
 	int			sc_unit;
 	struct sigio_ref	sc_sigio;	/* async I/O registration */
 	unsigned int		sc_flags;	/* misc flags */
@@ -145,7 +146,7 @@ const struct filterops tunwrite_filtops = {
 	.f_event	= filt_tunwrite,
 };
 
-LIST_HEAD(tun_list, tun_softc);
+SMR_LIST_HEAD(tun_list, tun_softc);
 
 struct if_clone tun_cloner =
     IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
@@ -172,7 +173,7 @@ tap_clone_create(struct if_clone *ifc, int unit)
 	return (tun_create(ifc, unit, TUN_LAYER2));
 }
 
-struct tun_list tun_devs_list = LIST_HEAD_INITIALIZER(tun_list);
+struct tun_list tun_devs_list = SMR_LIST_HEAD_INITIALIZER(tun_list);
 
 struct tun_softc *
 tun_name_lookup(const char *name)
@@ -181,7 +182,7 @@ tun_name_lookup(const char *name)
 
 	KERNEL_ASSERT_LOCKED();
 
-	LIST_FOREACH(sc, &tun_devs_list, sc_entry) {
+	SMR_LIST_FOREACH_LOCKED(sc, &tun_devs_list, sc_entry) {
 		if (strcmp(sc->sc_if.if_xname, name) == 0)
 			return (sc);
 	}
@@ -197,8 +198,10 @@ tun_insert(struct tun_softc *sc)
 	/* check for a race */
 	if (tun_name_lookup(sc->sc_if.if_xname) != NULL)
 		error = EEXIST;
-	else
-		LIST_INSERT_HEAD(&tun_devs_list, sc, sc_entry);
+	else {
+		/* tun_name_lookup checks for the right lock already */
+		SMR_LIST_INSERT_HEAD_LOCKED(&tun_devs_list, sc, sc_entry);
+	}
 
 	return (error);
 }
@@ -312,7 +315,8 @@ tun_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 	sigio_free(&sc->sc_sigio);
 
-	LIST_REMOVE(sc, sc_entry);
+	SMR_LIST_REMOVE_LOCKED(sc, sc_entry);
+	smr_barrier();
 	free(sc, M_DEVBUF, sizeof *sc);
 	return (0);
 }
@@ -322,15 +326,14 @@ tun_get(dev_t dev)
 {
 	struct tun_softc *sc;
 
-	KERNEL_ASSERT_LOCKED();
-	/* lock enter */
-	LIST_FOREACH(sc, &tun_devs_list, sc_entry) {
+	smr_read_enter();
+	SMR_LIST_FOREACH(sc, &tun_devs_list, sc_entry) {
 		if (sc->sc_dev == dev) {
 			refcnt_take(&sc->sc_refs);
 			break;
 		}
 	}
-	/* lock leave */
+	smr_read_leave();
 
 	return (sc);
 }
