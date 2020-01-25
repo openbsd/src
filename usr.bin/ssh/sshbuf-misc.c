@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-misc.c,v 1.12 2020/01/25 23:02:14 djm Exp $	*/
+/*	$OpenBSD: sshbuf-misc.c,v 1.13 2020/01/25 23:28:06 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -17,24 +17,19 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
 #include <netinet/in.h>
-
-#include <ctype.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <resolv.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <limits.h>
 #include <string.h>
-#include <unistd.h>
+#include <resolv.h>
+#include <ctype.h>
 
 #include "ssherr.h"
 #define SSHBUF_INTERNAL
 #include "sshbuf.h"
-#include "atomicio.h"
 
 void
 sshbuf_dump_data(const void *s, size_t len, FILE *f)
