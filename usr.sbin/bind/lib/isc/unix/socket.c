@@ -37,18 +37,15 @@
 
 #include <isc/buffer.h>
 #include <isc/bufferlist.h>
-#include <isc/condition.h>
 #include <isc/formatcheck.h>
 #include <isc/list.h>
 #include <isc/log.h>
 #include <isc/msgs.h>
 #include <isc/net.h>
-#include <isc/once.h>
 #include <isc/region.h>
 #include <isc/socket.h>
 #include <isc/strerror.h>
 #include <isc/task.h>
-#include <isc/thread.h>
 #include <isc/util.h>
 
 #include "errno2result.h"

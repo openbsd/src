@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: util.h,v 1.7 2020/01/25 10:43:06 florian Exp $ */
+/* $Id: util.h,v 1.8 2020/01/26 11:25:30 florian Exp $ */
 
 #ifndef ISC_UTIL_H
 #define ISC_UTIL_H 1
@@ -86,27 +86,6 @@
  */
 
 #include <isc/result.h>		/* Contractual promise. */
-
-#define BROADCAST(cvp) do { \
-	RUNTIME_CHECK(isc_condition_broadcast((cvp)) == ISC_R_SUCCESS); \
-	} while (0)
-#define SIGNAL(cvp) do { \
-	RUNTIME_CHECK(isc_condition_signal((cvp)) == ISC_R_SUCCESS); \
-	} while (0)
-#define WAIT(cvp, lp) do { \
-	RUNTIME_CHECK(isc_condition_wait((cvp), (lp)) == ISC_R_SUCCESS); \
-	} while (0)
-
-/*
- * isc_condition_waituntil can return ISC_R_TIMEDOUT, so we
- * don't RUNTIME_CHECK the result.
- *
- *  XXX Also, can't really debug this then...
- */
-
-#define WAITUNTIL(cvp, lp, tp) \
-	isc_condition_waituntil((cvp), (lp), (tp))
-
 /*
  * List Macros.
  */

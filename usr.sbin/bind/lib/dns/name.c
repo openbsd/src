@@ -14,23 +14,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.22 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: name.c,v 1.23 2020/01/26 11:25:30 florian Exp $ */
 
 /*! \file */
-
-
-
 #include <ctype.h>
 #include <stdlib.h>
-
 #include <isc/buffer.h>
 #include <isc/hash.h>
 
-#include <isc/once.h>
-
-
 #include <string.h>
-#include <isc/thread.h>
 #include <isc/util.h>
 
 #include <dns/compress.h>

@@ -23,32 +23,25 @@
  * for changing states.
  */
 
-
 #include <stdlib.h>
 #include <isc/app.h>
-#include <isc/condition.h>
 #include <isc/event.h>
-
 #include <isc/magic.h>
-
 #include <isc/msgs.h>
-#include <isc/once.h>
-
 
 #include <string.h>
 #include <isc/task.h>
-#include <isc/thread.h>
 #include <isc/util.h>
 
 #include "task_p.h"
 
 #ifdef ISC_TASK_TRACE
 #define XTRACE(m)		fprintf(stderr, "task %p thread %lu: %s\n", \
-				       task, isc_thread_self(), (m))
+				       task, 0, (m))
 #define XTTRACE(t, m)		fprintf(stderr, "task %p thread %lu: %s\n", \
-				       (t), isc_thread_self(), (m))
+				       (t), 0, (m))
 #define XTHREADTRACE(m)		fprintf(stderr, "thread %lu: %s\n", \
-				       isc_thread_self(), (m))
+				       0, (m))
 #else
 #define XTRACE(m)
 #define XTTRACE(t, m)

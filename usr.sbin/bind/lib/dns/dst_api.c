@@ -33,35 +33,22 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.21 2020/01/26 11:23:42 florian Exp $
+ * $Id: dst_api.c,v 1.22 2020/01/26 11:25:30 florian Exp $
  */
 
 /*! \file */
-
-
-
 #include <stdlib.h>
 #include <time.h>
 
 #include <isc/buffer.h>
 #include <isc/dir.h>
-
-
 #include <isc/hmacsha.h>
 #include <isc/lex.h>
-
-#include <isc/once.h>
-
-
 #include <isc/refcount.h>
-
 #include <isc/safe.h>
 #include <string.h>
 #include <isc/time.h>
 #include <isc/util.h>
-
-
-
 
 #define DST_KEY_INTERNAL
 

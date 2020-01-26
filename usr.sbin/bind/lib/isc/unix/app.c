@@ -30,7 +30,7 @@
 
 #include <isc/app.h>
 #include <isc/boolean.h>
-#include <isc/condition.h>
+
 
 #include <isc/msgs.h>
 #include <isc/event.h>
@@ -373,61 +373,6 @@ evloop(isc__appctx_t *ctx) {
 			(void)isc__socketmgr_dispatch(ctx->socketmgr, swait);
 		(void)isc__taskmgr_dispatch(ctx->taskmgr);
 	}
-	return (ISC_R_SUCCESS);
-}
-
-/*
- * This is a gross hack to support waiting for condition
- * variables in nonthreaded programs in a limited way;
- * see lib/isc/nothreads/include/isc/condition.h.
- * We implement isc_condition_wait() by entering the
- * event loop recursively until the want_shutdown flag
- * is set by isc_condition_signal().
- */
-
-/*!
- * \brief True if we are currently executing in the recursive
- * event loop.
- */
-static isc_boolean_t in_recursive_evloop = ISC_FALSE;
-
-/*!
- * \brief True if we are exiting the event loop as the result of
- * a call to isc_condition_signal() rather than a shutdown
- * or reload.
- */
-static isc_boolean_t signalled = ISC_FALSE;
-
-isc_result_t
-isc__nothread_wait_hack(isc_condition_t *cp) {
-	isc_result_t result;
-
-	UNUSED(cp);
-
-	INSIST(!in_recursive_evloop);
-	in_recursive_evloop = ISC_TRUE;
-
-	result = evloop(&isc_g_appctx);
-	if (result == ISC_R_RELOAD)
-		isc_g_appctx.want_reload = ISC_TRUE;
-	if (signalled) {
-		isc_g_appctx.want_shutdown = ISC_FALSE;
-		signalled = ISC_FALSE;
-	}
-
-	in_recursive_evloop = ISC_FALSE;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc__nothread_signal_hack(isc_condition_t *cp) {
-
-	UNUSED(cp);
-
-	INSIST(in_recursive_evloop);
-
-	isc_g_appctx.want_shutdown = ISC_TRUE;
-	signalled = ISC_TRUE;
 	return (ISC_R_SUCCESS);
 }
 

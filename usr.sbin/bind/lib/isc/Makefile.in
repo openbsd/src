@@ -21,7 +21,6 @@ top_srcdir =	@top_srcdir@
 @BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	-I${srcdir}/unix/include \
-		-I${srcdir}/nothreads/include \
 		-I./include \
 		-I${srcdir}/include ${DNS_INCLUDES}
 CDEFINES =
@@ -34,10 +33,6 @@ UNIXOBJS =	 \
 		unix/net.@O@ \
 		unix/socket.@O@ unix/stdio.@O@ \
 		unix/stdtime.@O@ unix/strerror.@O@ unix/time.@O@
-
-THREADOPTOBJS = nothreads/condition.@O@
-
-THREADOBJS =	nothreads/thread.@O@
 
 # Alphabetically
 OBJS =		 \
@@ -54,7 +49,7 @@ OBJS =		 \
 		safe.@O@ serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ \
 		symtab.@O@ task.@O@ \
 		timer.@O@ \
-		${UNIXOBJS} ${THREADOBJS}
+		${UNIXOBJS}
 
 # Alphabetically
 SRCS =		 \

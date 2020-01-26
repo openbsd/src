@@ -35,12 +35,9 @@
  * Principal Author: Brian Wellington
  */
 
-
 #include <stdlib.h>
 
-
 #include <string.h>
-#include <isc/thread.h>
 #include <isc/util.h>
 
 #include <dns/log.h>
