@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.22 2013/03/04 00:41:54 dlg Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.23 2020/01/26 00:53:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -236,7 +236,7 @@ struct gdt_softc {
 	int (*sc_test_busy)(struct gdt_softc *);
 };
 
-void	gdtminphys(struct buf *, struct scsi_link *);
+void	gdt_minphys(struct buf *, struct scsi_link *);
 int	gdt_attach(struct gdt_softc *);
 int	gdt_intr(void *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.239 2020/01/25 21:48:42 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.240 2020/01/26 00:53:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -95,16 +95,16 @@ struct cfdriver ami_cd = {
 
 void	ami_scsi_cmd(struct scsi_xfer *);
 int	ami_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
-void	amiminphys(struct buf *bp, struct scsi_link *sl);
+void	ami_minphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter ami_switch = {
-	ami_scsi_cmd, amiminphys, NULL, NULL, ami_scsi_ioctl
+	ami_scsi_cmd, ami_minphys, NULL, NULL, ami_scsi_ioctl
 };
 
 void	ami_scsi_raw_cmd(struct scsi_xfer *);
 
 struct scsi_adapter ami_raw_switch = {
-	ami_scsi_raw_cmd, amiminphys, NULL, NULL, NULL
+	ami_scsi_raw_cmd, ami_minphys, NULL, NULL, NULL
 };
 
 void *		ami_get_ccb(void *);
@@ -1191,7 +1191,7 @@ ami_done_init(struct ami_softc *sc, struct ami_ccb *ccb)
 }
 
 void
-amiminphys(struct buf *bp, struct scsi_link *sl)
+ami_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > AMI_MAXFER)
 		bp->b_bcount = AMI_MAXFER;

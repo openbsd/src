@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.131 2020/01/23 07:52:59 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.132 2020/01/26 00:53:31 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -177,7 +177,7 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	/* copy from template and modify for ourselves */
 	as->as_switch = atascsi_switch;
 	if (aaa->aaa_minphys != NULL)
-		as->as_switch.scsi_minphys = aaa->aaa_minphys;
+		as->as_switch.dev_minphys = aaa->aaa_minphys;
 
 	/* fill in our scsi_link */
 	as->as_link.adapter = &as->as_switch;

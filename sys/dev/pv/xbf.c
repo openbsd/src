@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.33 2020/01/22 02:02:31 cheloha Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.34 2020/01/26 00:53:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -299,7 +299,7 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_switch.scsi_cmd = xbf_scsi_cmd;
-	sc->sc_switch.scsi_minphys = scsi_minphys;
+	sc->sc_switch.dev_minphys = scsi_minphys;
 	sc->sc_switch.dev_probe = xbf_dev_probe;
 
 	sc->sc_link.adapter = &sc->sc_switch;

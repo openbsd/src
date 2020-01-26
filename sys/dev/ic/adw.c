@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.56 2020/01/25 21:48:42 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.57 2020/01/26 00:53:31 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -503,7 +503,7 @@ adw_attach(ADW_SOFTC *sc)
 	 * Fill in the adapter.
 	 */
 	sc->sc_adapter.scsi_cmd = adw_scsi_cmd;
-	sc->sc_adapter.scsi_minphys = adw_minphys;
+	sc->sc_adapter.dev_minphys = adw_minphys;
 
 	/*
          * fill in the prototype scsi_link.

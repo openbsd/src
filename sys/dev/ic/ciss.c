@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.79 2020/01/25 21:48:42 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.80 2020/01/26 00:53:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -68,10 +68,10 @@ struct cfdriver ciss_cd = {
 
 void	ciss_scsi_cmd(struct scsi_xfer *xs);
 int	ciss_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
-void	cissminphys(struct buf *bp, struct scsi_link *sl);
+void	ciss_minphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter ciss_switch = {
-	ciss_scsi_cmd, cissminphys, NULL, NULL, ciss_scsi_ioctl
+	ciss_scsi_cmd, ciss_minphys, NULL, NULL, ciss_scsi_ioctl
 };
 
 #if NBIO > 0
@@ -423,7 +423,7 @@ ciss_shutdown(void *v)
 }
 
 void
-cissminphys(struct buf *bp, struct scsi_link *sl)
+ciss_minphys(struct buf *bp, struct scsi_link *sl)
 {
 #if 0	/* TODO */
 #define	CISS_MAXFER	(PAGE_SIZE * (sc->maxsg + 1))

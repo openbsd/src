@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.48 2020/01/25 21:48:43 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.49 2020/01/26 00:53:31 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,10 +66,10 @@ struct umass_scsi_softc {
 
 int umass_scsi_probe(struct scsi_link *);
 void umass_scsi_cmd(struct scsi_xfer *);
-void umass_scsi_minphys(struct buf *, struct scsi_link *);
+void umass_minphys(struct buf *, struct scsi_link *);
 
 struct scsi_adapter umass_scsi_switch = {
-	umass_scsi_cmd, umass_scsi_minphys, umass_scsi_probe, NULL, NULL
+	umass_scsi_cmd, umass_minphys, umass_scsi_probe, NULL, NULL
 };
 
 void umass_scsi_cb(struct umass_softc *sc, void *priv, int residue,
@@ -264,7 +264,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 }
 
 void
-umass_scsi_minphys(struct buf *bp, struct scsi_link *sl)
+umass_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > UMASS_MAX_TRANSFER_SIZE)
 		bp->b_bcount = UMASS_MAX_TRANSFER_SIZE;

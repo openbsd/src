@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.39 2020/01/25 21:48:42 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.40 2020/01/26 00:53:31 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static void adv_start_ccbs(ASC_SOFTC *);
 static u_int8_t *adv_alloc_overrunbuf(char *dvname, bus_dma_tag_t);
 
 static void adv_scsi_cmd(struct scsi_xfer *);
-static void advminphys(struct buf *, struct scsi_link *);
+static void adv_minphys(struct buf *, struct scsi_link *);
 static void adv_narrow_isr_callback(ASC_SOFTC *, ASC_QDONE_INFO *);
 
 static int adv_poll(ASC_SOFTC *, struct scsi_xfer *, int);
@@ -83,7 +83,7 @@ struct cfdriver adv_cd = {
 
 
 struct scsi_adapter adv_switch = {
-	adv_scsi_cmd, advminphys, NULL, NULL, NULL
+	adv_scsi_cmd, adv_minphys, NULL, NULL, NULL
 };
 
 

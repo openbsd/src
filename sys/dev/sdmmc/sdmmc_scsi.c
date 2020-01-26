@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.43 2020/01/25 21:48:43 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.44 2020/01/26 00:53:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -92,7 +92,7 @@ void	sdmmc_start_xs(struct sdmmc_softc *, struct sdmmc_ccb *);
 void	sdmmc_complete_xs(void *);
 void	sdmmc_done_xs(struct sdmmc_ccb *);
 void	sdmmc_stimeout(void *);
-void	sdmmc_scsi_minphys(struct buf *, struct scsi_link *);
+void	sdmmc_minphys(struct buf *, struct scsi_link *);
 
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s)	printf s
@@ -135,7 +135,7 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	sc->sc_scsibus = scbus;
 
 	scbus->sc_adapter.scsi_cmd = sdmmc_scsi_cmd;
-	scbus->sc_adapter.scsi_minphys = sdmmc_scsi_minphys;
+	scbus->sc_adapter.dev_minphys = sdmmc_minphys;
 
 	scbus->sc_link.adapter_target = SDMMC_SCSIID_HOST;
 	scbus->sc_link.adapter_buswidth = scbus->sc_ntargets;
@@ -545,7 +545,7 @@ sdmmc_stimeout(void *arg)
 }
 
 void
-sdmmc_scsi_minphys(struct buf *bp, struct scsi_link *sl)
+sdmmc_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	struct sdmmc_softc *sc = sl->adapter_softc;
 	struct sdmmc_scsi_softc *scbus = sc->sc_scsibus;

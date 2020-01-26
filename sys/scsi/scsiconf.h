@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.182 2019/12/08 13:05:12 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.183 2020/01/26 00:53:31 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -241,7 +241,7 @@ extern int scsi_autoconf;
  */
 struct scsi_adapter {
 	void		(*scsi_cmd)(struct scsi_xfer *);
-	void		(*scsi_minphys)(struct buf *, struct scsi_link *);
+	void		(*dev_minphys)(struct buf *, struct scsi_link *);
 	int		(*dev_probe)(struct scsi_link *);
 	void		(*dev_free)(struct scsi_link *);
 	int		(*ioctl)(struct scsi_link *, u_long, caddr_t, int);

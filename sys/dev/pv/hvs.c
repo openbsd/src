@@ -306,7 +306,7 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->sc_probetask, hvs_scsi_probe, sc);
 
 	sc->sc_switch.scsi_cmd = hvs_scsi_cmd;
-	sc->sc_switch.scsi_minphys = scsi_minphys;
+	sc->sc_switch.dev_minphys = scsi_minphys;
 
 	sc->sc_link.adapter = &sc->sc_switch;
 	sc->sc_link.adapter_softc = self;
