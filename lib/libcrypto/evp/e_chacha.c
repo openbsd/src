@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha.c,v 1.5 2014/08/04 04:16:11 miod Exp $ */
+/* $OpenBSD: e_chacha.c,v 1.6 2020/01/26 02:39:58 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -34,8 +34,9 @@ static const EVP_CIPHER chacha20_cipher = {
 	.nid = NID_chacha20,
 	.block_size = 1,
 	.key_len = 32,
-	.iv_len = 8,
-	.flags = EVP_CIPH_STREAM_CIPHER,
+	.iv_len = 16, /* OpenSSL has 8 byte counter followed by 8 byte iv */
+	.flags = EVP_CIPH_STREAM_CIPHER | EVP_CIPH_ALWAYS_CALL_INIT |
+	    EVP_CIPH_CUSTOM_IV,
 	.init = chacha_init,
 	.do_cipher = chacha_cipher,
 	.ctx_size = sizeof(ChaCha_ctx)
@@ -51,10 +52,16 @@ static int
 chacha_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
-	ChaCha_set_key((ChaCha_ctx *)ctx->cipher_data, key,
-	    EVP_CIPHER_CTX_key_length(ctx) * 8);
-	if (iv != NULL)
-		ChaCha_set_iv((ChaCha_ctx *)ctx->cipher_data, iv, NULL);
+	if (key != NULL)
+		ChaCha_set_key((ChaCha_ctx *)ctx->cipher_data, key,
+		    EVP_CIPHER_CTX_key_length(ctx) * 8);
+	if (iv != NULL) {
+		const unsigned char *openssl_iv = iv + 8;
+		const unsigned char *counter = iv;
+
+		ChaCha_set_iv((ChaCha_ctx *)ctx->cipher_data, openssl_iv,
+		    counter);
+	}
 	return 1;
 }
 
