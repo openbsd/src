@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.c,v 1.13 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: hash.c,v 1.14 2020/01/26 11:24:19 florian Exp $ */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
@@ -59,10 +59,7 @@ if advised of the possibility of such damage.
 #include <stdlib.h>
 
 #include <isc/hash.h>
-
 #include <isc/magic.h>
-#include <isc/once.h>
-
 #include <isc/refcount.h>
 #include <string.h>
 #include <isc/util.h>
@@ -328,7 +325,7 @@ isc__hash_setvec(const uint16_t *vec) {
 }
 
 static uint32_t fnv_offset_basis;
-static isc_once_t fnv_once = ISC_ONCE_INIT;
+static isc_boolean_t fnv_once = ISC_FALSE;
 
 static void
 fnv_initialize(void) {
@@ -352,7 +349,10 @@ isc_hash_function(const void *data, size_t length,
 	const unsigned char *be;
 
 	REQUIRE(length == 0 || data != NULL);
-	RUNTIME_CHECK(isc_once_do(&fnv_once, fnv_initialize) == ISC_R_SUCCESS);
+	if (!fnv_once) {
+		fnv_once = ISC_TRUE;
+		fnv_initialize();
+	}
 
 	hval = previous_hashp != NULL ?
 		*previous_hashp : fnv_offset_basis;
@@ -419,7 +419,10 @@ isc_hash_function_reverse(const void *data, size_t length,
 	const unsigned char *be;
 
 	REQUIRE(length == 0 || data != NULL);
-	RUNTIME_CHECK(isc_once_do(&fnv_once, fnv_initialize) == ISC_R_SUCCESS);
+	if (!fnv_once) {
+		fnv_once = ISC_TRUE;
+		fnv_initialize();
+	}
 
 	hval = previous_hashp != NULL ?
 		*previous_hashp : fnv_offset_basis;

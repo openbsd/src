@@ -14,27 +14,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lib.c,v 1.10 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: lib.c,v 1.11 2020/01/26 11:24:19 florian Exp $ */
 
 /*! \file */
-
-
 
 #include <stddef.h>
 
 #include <isc/hash.h>
-
-
-#include <isc/once.h>
 #include <isc/util.h>
-
-
 
 #include <dns/lib.h>
 #include <dns/result.h>
-
 #include <dst/dst.h>
-
 
 /***
  *** Globals
@@ -46,7 +37,7 @@ unsigned int			dns_pps = 0U;
  *** Functions
  ***/
 
-static isc_once_t init_once = ISC_ONCE_INIT;
+static isc_boolean_t init_once = ISC_FALSE;
 static isc_boolean_t initialize_done = ISC_FALSE;
 static unsigned int references = 0;
 
@@ -74,17 +65,10 @@ initialize(void) {
 
 isc_result_t
 dns_lib_init(void) {
-	isc_result_t result;
-
-	/*
-	 * Since this routine is expected to be used by a normal application,
-	 * it should be better to return an error, instead of an emergency
-	 * abort, on any failure.
-	 */
-	result = isc_once_do(&init_once, initialize);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
+	if (!init_once) {
+		init_once = ISC_TRUE;
+		initialize();
+	}
 	if (!initialize_done)
 		return (ISC_R_FAILURE);
 

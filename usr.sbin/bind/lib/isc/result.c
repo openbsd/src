@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.c,v 1.6 2020/01/22 13:02:10 florian Exp $ */
+/* $Id: result.c,v 1.7 2020/01/26 11:24:19 florian Exp $ */
 
 /*! \file */
 
@@ -25,7 +25,6 @@
 
 #include <isc/lib.h>
 #include <isc/msgs.h>
-#include <isc/once.h>
 #include <isc/resultclass.h>
 #include <isc/util.h>
 
@@ -107,7 +106,7 @@ static const char *description[ISC_R_NRESULTS] = {
 #define ISC_RESULT_RESULTSET			2
 #define ISC_RESULT_UNAVAILABLESET		3
 
-static isc_once_t 				once = ISC_ONCE_INIT;
+static isc_boolean_t 				once = ISC_FALSE;
 static ISC_LIST(resulttable)			tables;
 
 static isc_result_t
@@ -154,7 +153,10 @@ initialize_action(void) {
 
 static void
 initialize(void) {
-	RUNTIME_CHECK(isc_once_do(&once, initialize_action) == ISC_R_SUCCESS);
+	if (!once) {
+		once = ISC_TRUE;
+		initialize_action();
+	}
 }
 
 const char *

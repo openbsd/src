@@ -14,13 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.c,v 1.8 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: result.c,v 1.9 2020/01/26 11:24:19 florian Exp $ */
 
 /*! \file */
-
-
-
-#include <isc/once.h>
 #include <isc/util.h>
 
 #include <dns/result.h>
@@ -200,7 +196,7 @@ static const char *rcode_text[DNS_R_NRCODERESULTS] = {
 #define DNS_RESULT_RESULTSET			2
 #define DNS_RESULT_RCODERESULTSET		3
 
-static isc_once_t		once = ISC_ONCE_INIT;
+static isc_boolean_t		once = ISC_FALSE;
 
 static void
 initialize_action(void) {
@@ -220,7 +216,10 @@ initialize_action(void) {
 
 static void
 initialize(void) {
-	RUNTIME_CHECK(isc_once_do(&once, initialize_action) == ISC_R_SUCCESS);
+	if (!once) {
+		once = ISC_TRUE;
+		initialize_action();
+	}
 }
 
 const char *
