@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.214 2020/01/26 11:15:49 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.215 2020/01/26 21:24:58 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -744,17 +744,17 @@ treescan(void)
  * See treescan() for the fts(3) version of this.
  */
 static void
-filescan(const char *file)
+filescan(const char *infile)
 {
-	char		 buf[PATH_MAX];
 	struct stat	 st;
 	struct mlink	*mlink;
-	char		*p, *start;
+	char		*linkfile, *p, *realdir, *start, *usefile;
+	size_t		 realdir_len;
 
 	assert(use_all);
 
-	if (strncmp(file, "./", 2) == 0)
-		file += 2;
+	if (strncmp(infile, "./", 2) == 0)
+		infile += 2;
 
 	/*
 	 * We have to do lstat(2) before realpath(3) loses
@@ -763,13 +763,13 @@ filescan(const char *file)
 	 * we want to use the orginal file name, while for
 	 * regular files, we want to use the real path.
 	 */
-	if (lstat(file, &st) == -1) {
+	if (lstat(infile, &st) == -1) {
 		exitcode = (int)MANDOCLEVEL_BADARG;
-		say(file, "&lstat");
+		say(infile, "&lstat");
 		return;
 	} else if (S_ISREG(st.st_mode) == 0 && S_ISLNK(st.st_mode) == 0) {
 		exitcode = (int)MANDOCLEVEL_BADARG;
-		say(file, "Not a regular file");
+		say(infile, "Not a regular file");
 		return;
 	}
 
@@ -777,19 +777,20 @@ filescan(const char *file)
 	 * We have to resolve the file name to the real path
 	 * in any case for the base directory check.
 	 */
-	if (realpath(file, buf) == NULL) {
+	if ((usefile = realpath(infile, NULL)) == NULL) {
 		exitcode = (int)MANDOCLEVEL_BADARG;
-		say(file, "&realpath");
+		say(infile, "&realpath");
 		return;
 	}
 
 	if (op == OP_TEST)
-		start = buf;
-	else if (strncmp(buf, basedir, basedir_len) == 0)
-		start = buf + basedir_len;
+		start = usefile;
+	else if (strncmp(usefile, basedir, basedir_len) == 0)
+		start = usefile + basedir_len;
 	else {
 		exitcode = (int)MANDOCLEVEL_BADARG;
-		say("", "%s: outside base directory", buf);
+		say("", "%s: outside base directory", infile);
+		free(usefile);
 		return;
 	}
 
@@ -797,25 +798,72 @@ filescan(const char *file)
 	 * Now we are sure the file is inside our tree.
 	 * If it is a symbolic link, ignore the real path
 	 * and use the original name.
-	 * This implies passing stuff like "cat1/../man1/foo.1"
-	 * on the command line won't work.  So don't do that.
-	 * Note the stat(2) can still fail if the link target
-	 * doesn't exist.
 	 */
-	if (S_ISLNK(st.st_mode)) {
-		if (stat(buf, &st) == -1) {
+	do {
+		if (S_ISLNK(st.st_mode) == 0)
+			break;
+
+		/*
+		 * Some implementations of realpath(3) may succeed
+		 * even if the target of the link does not exist,
+		 * so check again for extra safety.
+		 */
+		if (stat(usefile, &st) == -1) {
 			exitcode = (int)MANDOCLEVEL_BADARG;
-			say(file, "&stat");
+			say(infile, "&stat");
+			free(usefile);
 			return;
 		}
-		if (strlcpy(buf, file, sizeof(buf)) >= sizeof(buf)) {
-			say(file, "Filename too long");
-			return;
+		linkfile = mandoc_strdup(infile);
+		if (op == OP_TEST) {
+			free(usefile);
+			start = usefile = linkfile;
+			break;
 		}
-		start = buf;
-		if (op != OP_TEST && strncmp(buf, basedir, basedir_len) == 0)
-			start += basedir_len;
-	}
+		if (strncmp(infile, basedir, basedir_len) == 0) {
+			free(usefile);
+			usefile = linkfile;
+			start = usefile + basedir_len;
+			break;
+		}
+
+		/*
+		 * This symbolic link points into the basedir
+		 * from the outside.  Let's see whether any of
+		 * the parent directories resolve to the basedir.
+		 */
+		p = strchr(linkfile, '\0');
+		do {
+			while (*--p != '/')
+				continue;
+			*p = '\0';
+			if ((realdir = realpath(linkfile, NULL)) == NULL) {
+				exitcode = (int)MANDOCLEVEL_BADARG;
+				say(infile, "&realpath");
+				free(linkfile);
+				free(usefile);
+				return;
+			}
+			realdir_len = strlen(realdir) + 1;
+			free(realdir);
+			*p = '/';
+		} while (realdir_len > basedir_len);
+
+		/*
+		 * If one of the directories resolves to the basedir,
+		 * use the rest of the original name.
+		 * Otherwise, the best we can do
+		 * is to use the filename pointed to.
+		 */
+		if (realdir_len == basedir_len) {
+			free(usefile);
+			usefile = linkfile;
+			start = p + 1;
+		} else {
+			free(linkfile);
+			start = usefile + basedir_len;
+		}
+	} while (/* CONSTCOND */ 0);
 
 	mlink = mandoc_calloc(1, sizeof(struct mlink));
 	mlink->dform = FORM_NONE;
@@ -823,6 +871,7 @@ filescan(const char *file)
 	    sizeof(mlink->file)) {
 		say(start, "Filename too long");
 		free(mlink);
+		free(usefile);
 		return;
 	}
 
@@ -831,13 +880,13 @@ filescan(const char *file)
 	 * but outside our tree, guess the base directory.
 	 */
 
-	if (op == OP_TEST || (start == buf && *start == '/')) {
-		if (strncmp(buf, "man/", 4) == 0)
-			start = buf + 4;
-		else if ((start = strstr(buf, "/man/")) != NULL)
+	if (op == OP_TEST || (start == usefile && *start == '/')) {
+		if (strncmp(usefile, "man/", 4) == 0)
+			start = usefile + 4;
+		else if ((start = strstr(usefile, "/man/")) != NULL)
 			start += 5;
 		else
-			start = buf;
+			start = usefile;
 	}
 
 	/*
@@ -887,6 +936,7 @@ filescan(const char *file)
 		*p = '\0';
 	}
 	mlink_add(mlink, &st);
+	free(usefile);
 }
 
 static void
