@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdgpio.c,v 1.1 2019/12/23 08:05:42 kettenis Exp $	*/
+/*	$OpenBSD: amdgpio.c,v 1.2 2020/01/26 00:11:42 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -260,20 +260,28 @@ int
 amdgpio_pin_intr(struct amdgpio_softc *sc, int pin)
 {
 	uint32_t reg;
+	int rc = 0;
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, pin * 4);
-	if (!(reg & AMDGPIO_CONF_INT_STS) ||
-	    !(reg & AMDGPIO_CONF_INT_MASK))
-		return 0;
+	if (reg & AMDGPIO_CONF_INT_STS) {
+		if (sc->sc_pin_ih[pin].ih_func) {
+			sc->sc_pin_ih[pin].ih_func(sc->sc_pin_ih[pin].ih_arg);
 
-	if (sc->sc_pin_ih[pin].ih_func)
-		sc->sc_pin_ih[pin].ih_func(sc->sc_pin_ih[pin].ih_arg);
+			/* Clear interrupt */
+			reg = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+			    pin * 4);
+			bus_space_write_4(sc->sc_memt, sc->sc_memh,
+			    pin * 4, reg);
+			rc = 1;
+		} else {
+			/* Mask unhandled interrupt */
+			reg &= ~(AMDGPIO_CONF_INT_MASK | AMDGPIO_CONF_INT_EN);
+			bus_space_write_4(sc->sc_memt, sc->sc_memh,
+			    pin * 4, reg);
+		}
+	}
 
-	/* Clear interrupt */
-	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, pin * 4);
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, pin * 4, reg);
-
-	return 1;
+	return rc;
 }
 
 int
