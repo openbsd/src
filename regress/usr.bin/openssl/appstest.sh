@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.31 2019/11/25 12:45:45 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.32 2020/01/26 12:37:06 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1374,14 +1374,14 @@ function test_server_client {
 	
 	s_ciph=$server_dir/s_ciph_${sc}
 	if [ $s_id = "0" ] ; then
-		$s_bin ciphers -v ALL:!ECDSA:!kGOST | awk '{print $1}' > $s_ciph
+		$s_bin ciphers -v ALL:!ECDSA:!kGOST:!TLSv1.3 | awk '{print $1}' > $s_ciph
 	else
 		$s_bin ciphers -v | awk '{print $1}' > $s_ciph
 	fi
 
 	c_ciph=$user1_dir/c_ciph_${sc}
 	if [ $c_id = "0" ] ; then
-		$c_bin ciphers -v ALL:!ECDSA:!kGOST | awk '{print $1}' > $c_ciph
+		$c_bin ciphers -v ALL:!ECDSA:!kGOST:!TLSv1.3 | awk '{print $1}' > $c_ciph
 	else
 		$c_bin ciphers -v | awk '{print $1}' > $c_ciph
 	fi
@@ -1398,7 +1398,7 @@ function test_server_client {
 		start_message "s_client ... connect to TLS/SSL test server with [ $cnstr ] $c"
 		sleep $test_pause_sec
 		$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-			-cipher $c \
+			-tls1_2 -cipher $c \
 			-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 		check_exit_status $?
 	
@@ -1416,7 +1416,7 @@ function test_server_client {
 	start_message "s_client ... connect to TLS/SSL test server to get session id"
 	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-alpn "spdy/3,http/1.1" -sess_out $sess_dat \
+		-tls1_2 -alpn "spdy/3,http/1.1" -sess_out $sess_dat \
 		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
@@ -1433,7 +1433,7 @@ function test_server_client {
 	start_message "s_client ... connect to TLS/SSL test server reusing session id"
 	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-sess_in $sess_dat \
+		-tls1_2 -sess_in $sess_dat \
 		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
@@ -1450,7 +1450,7 @@ function test_server_client {
 	start_message "s_client ... connect to TLS/SSL test server but verify error"
 	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-showcerts -crl_check -issuer_checks -policy_check \
+		-tls1_2 -showcerts -crl_check -issuer_checks -policy_check \
 		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
