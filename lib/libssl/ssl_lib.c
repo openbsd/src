@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.210 2020/01/23 10:40:59 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.211 2020/01/26 07:24:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2239,6 +2239,15 @@ SSL_set_ssl_method(SSL *s, const SSL_METHOD *meth)
 			s->method = meth;
 			ret = s->method->internal->ssl_new(s);
 		}
+
+		/*
+		 * XXX - reset the client max version to that of the incoming
+		 * method, otherwise a caller that uses a TLS_method() and then
+		 * sets with TLS_client_method() cannot do TLSv1.3.
+		 */
+		if (meth->internal->max_version == TLS1_3_VERSION &&
+		    meth->internal->ssl_connect != NULL)
+			s->internal->max_version = meth->internal->max_version;
 
 		if (conn == 1)
 			s->internal->handshake_func = meth->internal->ssl_connect;
