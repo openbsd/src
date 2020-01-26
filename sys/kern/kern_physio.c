@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.45 2020/01/25 21:56:49 krw Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.46 2020/01/26 23:06:39 krw Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -64,7 +64,8 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 {
 	struct iovec *iovp;
 	struct proc *p = curproc;
-	int error, done, i, s, todo;
+	long done, todo;
+	int error, i, s;
 	struct buf *bp;
 
 	if ((uio->uio_offset % DEV_BSIZE) != 0)
@@ -188,6 +189,7 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 			 * [deduct the transfer size from the total number
 			 *    of data to transfer]
 			 */
+			KASSERTMSG(bp->b_resid <= LONG_MAX, "strategy broken");
 			done = bp->b_bcount - bp->b_resid;
 			KASSERTMSG(done >= 0, "strategy broken");
 			KASSERTMSG(done <= todo, "strategy broken");
