@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1145 2019/10/19 13:14:23 tb Exp $
+#	$OpenBSD: install.sub,v 1.1146 2020/01/26 10:47:07 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -893,7 +893,6 @@ dhcp_request() {
 
 	if [[ -x /sbin/dhclient ]]; then
 		/sbin/dhclient -c /dev/stdin $_if <<__EOT
-initial-interval 1;
 backoff-cutoff 2;
 reboot 5;
 timeout 10;
