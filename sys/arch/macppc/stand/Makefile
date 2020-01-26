@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.9 2016/03/30 06:38:45 jmc Exp $
+#	$OpenBSD: Makefile,v 1.10 2020/01/26 04:26:46 tedu Exp $
 #	$NetBSD: Makefile,v 1.1 1996/09/30 16:34:59 ws Exp $
 
 MANSUBDIR=macppc
 MAN=boot.8
 
 .if ${MACHINE} == "macppc"
-SUBDIR=	ofwboot boot.mac mbr tbxidata
+SUBDIR=	ofwboot mbr tbxidata
 
 SAREL=
 KERNREL=
