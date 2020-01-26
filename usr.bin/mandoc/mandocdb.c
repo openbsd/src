@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandocdb.c,v 1.213 2020/01/25 22:59:14 schwarze Exp $ */
+/*	$OpenBSD: mandocdb.c,v 1.214 2020/01/26 11:15:49 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -767,7 +767,7 @@ filescan(const char *file)
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say(file, "&lstat");
 		return;
-	} else if ((st.st_mode & (S_IFREG | S_IFLNK)) == 0) {
+	} else if (S_ISREG(st.st_mode) == 0 && S_ISLNK(st.st_mode) == 0) {
 		exitcode = (int)MANDOCLEVEL_BADARG;
 		say(file, "Not a regular file");
 		return;
@@ -802,7 +802,7 @@ filescan(const char *file)
 	 * Note the stat(2) can still fail if the link target
 	 * doesn't exist.
 	 */
-	if (st.st_mode & S_IFLNK) {
+	if (S_ISLNK(st.st_mode)) {
 		if (stat(buf, &st) == -1) {
 			exitcode = (int)MANDOCLEVEL_BADARG;
 			say(file, "&stat");
