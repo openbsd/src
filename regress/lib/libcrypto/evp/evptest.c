@@ -1,4 +1,4 @@
-/*	$OpenBSD: evptest.c,v 1.8 2019/03/17 18:33:01 tb Exp $	*/
+/*	$OpenBSD: evptest.c,v 1.9 2020/01/26 02:46:26 tb Exp $	*/
 /* Written by Ben Laurie, 2001 */
 /*
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
@@ -350,7 +350,7 @@ main(int argc, char **argv)
 #endif
 
 	for (;;) {
-		char line[4096];
+		char line[8 * 1024];
 		char *p;
 		char *cipher;
 		unsigned char *iv, *key, *plaintext, *ciphertext;
