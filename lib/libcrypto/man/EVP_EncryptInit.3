@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.38 2020/01/26 07:36:43 tb Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.39 2020/01/26 08:00:31 jmc Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -1030,8 +1030,8 @@ implemented as a macro.
 .It Fn EVP_chacha20
 The ChaCha20 stream cipher.
 The key length is 256 bits.
-The first 32 bit of the 128 bit IV are used as a counter,
-the remaining 96 bit as a nonce.
+The first 32 bits of the 128-bit IV are used as a counter,
+and the remaining 96 bits as a nonce.
 .El
 .Pp
 See also
