@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.10 2020/01/22 02:01:11 claudio Exp $
+# $OpenBSD: Makefile,v 1.11 2020/01/26 00:54:47 claudio Exp $
 
-REGRESS_TARGETS	= 	network_statement md5 ovs mrt maxprefix as0
+REGRESS_TARGETS	= 	network_statement md5 ovs mrt \
+			maxprefix maxprefixout as0
 
 BGPD ?=			/usr/sbin/bgpd
 
@@ -19,6 +20,9 @@ mrt:
 	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11
 
 maxprefix:
+	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
+
+maxprefixout:
 	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
 
 .if ! exists(/usr/local/bin/exabgp)
