@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.19 2020/01/22 13:02:09 florian Exp $
+ * $Id: dst_api.c,v 1.20 2020/01/26 11:22:33 florian Exp $
  */
 
 /*! \file */
@@ -92,8 +92,6 @@ static dst_key_t *	get_key_struct(dns_name_t *name,
 				       unsigned int bits,
 				       dns_rdataclass_t rdclass,
 				       dns_ttl_t ttl);
-static isc_result_t	write_public_key(const dst_key_t *key, int type,
-					 const char *directory);
 static isc_result_t	buildfilename(dns_name_t *name,
 				      dns_keytag_t id,
 				      unsigned int alg,
@@ -365,32 +363,6 @@ dst_key_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 		return (DST_R_NOTPRIVATEKEY);
 
 	return (pub->func->computesecret(pub, priv, secret));
-}
-
-isc_result_t
-dst_key_tofile(const dst_key_t *key, int type, const char *directory) {
-	isc_result_t ret = ISC_R_SUCCESS;
-
-	REQUIRE(dst_initialized == ISC_TRUE);
-	REQUIRE(VALID_KEY(key));
-	REQUIRE((type & (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC)) != 0);
-
-	CHECKALG(key->key_alg);
-
-	if (key->func->tofile == NULL)
-		return (DST_R_UNSUPPORTEDALG);
-
-	if (type & DST_TYPE_PUBLIC) {
-		ret = write_public_key(key, type, directory);
-		if (ret != ISC_R_SUCCESS)
-			return (ret);
-	}
-
-	if ((type & DST_TYPE_PRIVATE) &&
-	    (key->key_flags & DNS_KEYFLAG_TYPEMASK) != DNS_KEYTYPE_NOKEY)
-		return (key->func->tofile(key, directory));
-	else
-		return (ISC_R_SUCCESS);
 }
 
 void
@@ -1382,182 +1354,6 @@ dst_key_read_public(const char *filename, int type,
  cleanup:
 	if (lex != NULL)
 		isc_lex_destroy(&lex);
-	return (ret);
-}
-
-static isc_boolean_t
-issymmetric(const dst_key_t *key) {
-	REQUIRE(dst_initialized == ISC_TRUE);
-	REQUIRE(VALID_KEY(key));
-
-	/* XXXVIX this switch statement is too sparse to gen a jump table. */
-	switch (key->key_alg) {
-	case DST_ALG_RSASHA1:
-	case DST_ALG_NSEC3RSASHA1:
-	case DST_ALG_RSASHA256:
-	case DST_ALG_RSASHA512:
-	case DST_ALG_ECCGOST:
-	case DST_ALG_ECDSA256:
-	case DST_ALG_ECDSA384:
-	case DST_ALG_ED25519:
-	case DST_ALG_ED448:
-		return (ISC_FALSE);
-	case DST_ALG_HMACSHA1:
-	case DST_ALG_HMACSHA224:
-	case DST_ALG_HMACSHA256:
-	case DST_ALG_HMACSHA384:
-	case DST_ALG_HMACSHA512:
-		return (ISC_TRUE);
-	default:
-		return (ISC_FALSE);
-	}
-}
-
-/*%
- * Write key timing metadata to a file pointer, preceded by 'tag'
- */
-static void
-printtime(const dst_key_t *key, int type, const char *tag, FILE *stream) {
-	isc_result_t result;
-	const char *output;
-	isc_stdtime_t when;
-	time_t t;
-	char utc[sizeof("YYYYMMDDHHSSMM")];
-	isc_buffer_t b;
-	isc_region_t r;
-
-	result = dst_key_gettime(key, type, &when);
-	if (result == ISC_R_NOTFOUND)
-		return;
-
-	/* time_t and isc_stdtime_t might be different sizes */
-	t = when;
-	output = ctime(&t);
-
-	isc_buffer_init(&b, utc, sizeof(utc));
-	result = dns_time32_totext(when, &b);
-	if (result != ISC_R_SUCCESS)
-		goto error;
-
-	isc_buffer_usedregion(&b, &r);
-	fprintf(stream, "%s: %.*s (%.*s)\n", tag, (int)r.length, r.base,
-		 (int)strlen(output) - 1, output);
-	return;
-
- error:
-	fprintf(stream, "%s: (set, unable to display)\n", tag);
-}
-
-/*%
- * Writes a public key to disk in DNS format.
- */
-static isc_result_t
-write_public_key(const dst_key_t *key, int type, const char *directory) {
-	FILE *fp;
-	isc_buffer_t keyb, textb, fileb, classb;
-	isc_region_t r;
-	char filename[ISC_DIR_NAMEMAX];
-	unsigned char key_array[DST_KEY_MAXSIZE];
-	char text_array[DST_KEY_MAXTEXTSIZE];
-	char class_array[10];
-	isc_result_t ret;
-	dns_rdata_t rdata = DNS_RDATA_INIT;
-	isc_fsaccess_t access;
-
-	REQUIRE(VALID_KEY(key));
-
-	isc_buffer_init(&keyb, key_array, sizeof(key_array));
-	isc_buffer_init(&textb, text_array, sizeof(text_array));
-	isc_buffer_init(&classb, class_array, sizeof(class_array));
-
-	ret = dst_key_todns(key, &keyb);
-	if (ret != ISC_R_SUCCESS)
-		return (ret);
-
-	isc_buffer_usedregion(&keyb, &r);
-	dns_rdata_fromregion(&rdata, key->key_class, dns_rdatatype_dnskey, &r);
-
-	ret = dns_rdata_totext(&rdata, (dns_name_t *) NULL, &textb);
-	if (ret != ISC_R_SUCCESS)
-		return (DST_R_INVALIDPUBLICKEY);
-
-	ret = dns_rdataclass_totext(key->key_class, &classb);
-	if (ret != ISC_R_SUCCESS)
-		return (DST_R_INVALIDPUBLICKEY);
-
-	/*
-	 * Make the filename.
-	 */
-	isc_buffer_init(&fileb, filename, sizeof(filename));
-	ret = dst_key_buildfilename(key, DST_TYPE_PUBLIC, directory, &fileb);
-	if (ret != ISC_R_SUCCESS)
-		return (ret);
-
-	/*
-	 * Create public key file.
-	 */
-	if ((fp = fopen(filename, "w")) == NULL)
-		return (DST_R_WRITEERROR);
-
-	if (issymmetric(key)) {
-		access = 0;
-		isc_fsaccess_add(ISC_FSACCESS_OWNER,
-				 ISC_FSACCESS_READ | ISC_FSACCESS_WRITE,
-				 &access);
-		(void)isc_fsaccess_set(filename, access);
-	}
-
-	/* Write key information in comments */
-	if ((type & DST_TYPE_KEY) == 0) {
-		fprintf(fp, "; This is a %s%s-signing key, keyid %d, for ",
-			(key->key_flags & DNS_KEYFLAG_REVOKE) != 0 ?
-				"revoked " :
-				"",
-			(key->key_flags & DNS_KEYFLAG_KSK) != 0 ?
-				"key" :
-				"zone",
-			key->key_id);
-		ret = dns_name_print(key->key_name, fp);
-		if (ret != ISC_R_SUCCESS) {
-			fclose(fp);
-			return (ret);
-		}
-		fputc('\n', fp);
-
-		printtime(key, DST_TIME_CREATED, "; Created", fp);
-		printtime(key, DST_TIME_PUBLISH, "; Publish", fp);
-		printtime(key, DST_TIME_ACTIVATE, "; Activate", fp);
-		printtime(key, DST_TIME_REVOKE, "; Revoke", fp);
-		printtime(key, DST_TIME_INACTIVE, "; Inactive", fp);
-		printtime(key, DST_TIME_DELETE, "; Delete", fp);
-	}
-
-	/* Now print the actual key */
-	ret = dns_name_print(key->key_name, fp);
-	fprintf(fp, " ");
-
-	if (key->key_ttl != 0)
-		fprintf(fp, "%u ", key->key_ttl);
-
-	isc_buffer_usedregion(&classb, &r);
-	if ((unsigned) fwrite(r.base, 1, r.length, fp) != r.length)
-	       ret = DST_R_WRITEERROR;
-
-	if ((type & DST_TYPE_KEY) != 0)
-		fprintf(fp, " KEY ");
-	else
-		fprintf(fp, " DNSKEY ");
-
-	isc_buffer_usedregion(&textb, &r);
-	if ((unsigned) fwrite(r.base, 1, r.length, fp) != r.length)
-	       ret = DST_R_WRITEERROR;
-
-	fputc('\n', fp);
-	fflush(fp);
-	if (ferror(fp))
-		ret = DST_R_WRITEERROR;
-	fclose(fp);
-
 	return (ret);
 }
 

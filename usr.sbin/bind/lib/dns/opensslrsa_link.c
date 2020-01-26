@@ -560,131 +560,6 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 }
 
 static isc_result_t
-opensslrsa_tofile(const dst_key_t *key, const char *directory) {
-	int i;
-	RSA *rsa;
-	dst_private_t priv;
-	unsigned char *bufs[8];
-	isc_result_t result;
-	const BIGNUM *n = NULL, *e = NULL, *d = NULL;
-	const BIGNUM *p = NULL, *q = NULL;
-	const BIGNUM *dmp1 = NULL, *dmq1 = NULL, *iqmp = NULL;
-
-	if (key->keydata.pkey == NULL)
-		return (DST_R_NULLKEY);
-	rsa = EVP_PKEY_get1_RSA(key->keydata.pkey);
-	if (rsa == NULL)
-		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
-	memset(bufs, 0, sizeof(bufs));
-
-	RSA_get0_key(rsa, &n, &e, &d);
-	RSA_get0_factors(rsa, &p, &q);
-	RSA_get0_crt_params(rsa, &dmp1, &dmq1, &iqmp);
-
-	if (key->external) {
-		priv.nelements = 0;
-		result = dst__privstruct_writefile(key, &priv, directory);
-		goto fail;
-	}
-
-	for (i = 0; i < 8; i++) {
-		bufs[i] = malloc(BN_num_bytes(n));
-		if (bufs[i] == NULL) {
-			result = ISC_R_NOMEMORY;
-			goto fail;
-		}
-	}
-
-	i = 0;
-
-	priv.elements[i].tag = TAG_RSA_MODULUS;
-	priv.elements[i].length = BN_num_bytes(n);
-	BN_bn2bin(n, bufs[i]);
-	priv.elements[i].data = bufs[i];
-	i++;
-
-	priv.elements[i].tag = TAG_RSA_PUBLICEXPONENT;
-	priv.elements[i].length = BN_num_bytes(e);
-	BN_bn2bin(e, bufs[i]);
-	priv.elements[i].data = bufs[i];
-	i++;
-
-	if (d != NULL) {
-		priv.elements[i].tag = TAG_RSA_PRIVATEEXPONENT;
-		priv.elements[i].length = BN_num_bytes(d);
-		BN_bn2bin(d, bufs[i]);
-		priv.elements[i].data = bufs[i];
-		i++;
-	}
-
-	if (p != NULL) {
-		priv.elements[i].tag = TAG_RSA_PRIME1;
-		priv.elements[i].length = BN_num_bytes(p);
-		BN_bn2bin(p, bufs[i]);
-		priv.elements[i].data = bufs[i];
-		i++;
-	}
-
-	if (q != NULL) {
-		priv.elements[i].tag = TAG_RSA_PRIME2;
-		priv.elements[i].length = BN_num_bytes(q);
-		BN_bn2bin(q, bufs[i]);
-		priv.elements[i].data = bufs[i];
-		i++;
-	}
-
-	if (dmp1 != NULL) {
-		priv.elements[i].tag = TAG_RSA_EXPONENT1;
-		priv.elements[i].length = BN_num_bytes(dmp1);
-		BN_bn2bin(dmp1, bufs[i]);
-		priv.elements[i].data = bufs[i];
-		i++;
-	}
-
-	if (dmq1 != NULL) {
-		priv.elements[i].tag = TAG_RSA_EXPONENT2;
-		priv.elements[i].length = BN_num_bytes(dmq1);
-		BN_bn2bin(dmq1, bufs[i]);
-		priv.elements[i].data = bufs[i];
-		i++;
-	}
-
-	if (iqmp != NULL) {
-		priv.elements[i].tag = TAG_RSA_COEFFICIENT;
-		priv.elements[i].length = BN_num_bytes(iqmp);
-		BN_bn2bin(iqmp, bufs[i]);
-		priv.elements[i].data = bufs[i];
-		i++;
-	}
-
-	if (key->engine != NULL) {
-		priv.elements[i].tag = TAG_RSA_ENGINE;
-		priv.elements[i].length = strlen(key->engine) + 1;
-		priv.elements[i].data = (unsigned char *)key->engine;
-		i++;
-	}
-
-	if (key->label != NULL) {
-		priv.elements[i].tag = TAG_RSA_LABEL;
-		priv.elements[i].length = strlen(key->label) + 1;
-		priv.elements[i].data = (unsigned char *)key->label;
-		i++;
-	}
-
-
-	priv.nelements = i;
-	result = dst__privstruct_writefile(key, &priv, directory);
- fail:
-	RSA_free(rsa);
-	for (i = 0; i < 8; i++) {
-		if (bufs[i] == NULL)
-			break;
-		free(bufs[i]);
-	}
-	return (result);
-}
-
-static isc_result_t
 rsa_check(RSA *rsa, RSA *pub) {
 	const BIGNUM *n1 = NULL, *n2 = NULL;
 	const BIGNUM *e1 = NULL, *e2 = NULL;
@@ -897,7 +772,7 @@ static dst_func_t opensslrsa_functions = {
 	opensslrsa_destroy,
 	opensslrsa_todns,
 	opensslrsa_fromdns,
-	opensslrsa_tofile,
+	NULL, /* opensslrsa_tofile */
 	opensslrsa_parse,
 	NULL, /*%< cleanup */
 	opensslrsa_fromlabel,

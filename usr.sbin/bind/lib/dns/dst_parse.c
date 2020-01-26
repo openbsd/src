@@ -33,7 +33,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $Id: dst_parse.c,v 1.10 2020/01/22 13:02:09 florian Exp $
+ * $Id: dst_parse.c,v 1.11 2020/01/26 11:22:33 florian Exp $
  */
 
 
@@ -138,18 +138,6 @@ find_value(const char *s, const unsigned int alg) {
 			return (map[i].value);
 	}
 	return (-1);
-}
-
-static const char *
-find_tag(const int value) {
-	int i;
-
-	for (i = 0; ; i++) {
-		if (map[i].tag == NULL)
-			return (NULL);
-		else if (value == map[i].value)
-			return (map[i].tag);
-	}
 }
 
 static int
@@ -561,188 +549,6 @@ fail:
 		free(data);
 
 	return (ret);
-}
-
-isc_result_t
-dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
-			  const char *directory)
-{
-	FILE *fp;
-	isc_result_t result;
-	char filename[ISC_DIR_NAMEMAX];
-	char buffer[MAXFIELDSIZE * 2];
-	isc_fsaccess_t access;
-	isc_stdtime_t when;
-	uint32_t value;
-	isc_buffer_t b;
-	isc_region_t r;
-	int major, minor;
-	mode_t mode;
-	int i, ret;
-
-	REQUIRE(priv != NULL);
-
-	ret = check_data(priv, dst_key_alg(key), ISC_FALSE, key->external);
-	if (ret < 0)
-		return (DST_R_INVALIDPRIVATEKEY);
-	else if (ret != ISC_R_SUCCESS)
-		return (ret);
-
-	isc_buffer_init(&b, filename, sizeof(filename));
-	result = dst_key_buildfilename(key, DST_TYPE_PRIVATE, directory, &b);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	result = isc_file_mode(filename, &mode);
-	if (result == ISC_R_SUCCESS && mode != 0600) {
-		/* File exists; warn that we are changing its permissions */
-		int level;
-
-		level = ISC_LOG_WARNING;
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
-			      DNS_LOGMODULE_DNSSEC, level,
-			      "Permissions on the file %s "
-			      "have changed from 0%o to 0600 as "
-			      "a result of this operation.",
-			      filename, (unsigned int)mode);
-	}
-
-	if ((fp = fopen(filename, "w")) == NULL)
-		return (DST_R_WRITEERROR);
-
-	access = 0;
-	isc_fsaccess_add(ISC_FSACCESS_OWNER,
-			 ISC_FSACCESS_READ | ISC_FSACCESS_WRITE,
-			 &access);
-	(void)isc_fsaccess_set(filename, access);
-
-	dst_key_getprivateformat(key, &major, &minor);
-	if (major == 0 && minor == 0) {
-		major = DST_MAJOR_VERSION;
-		minor = DST_MINOR_VERSION;
-	}
-
-	/* XXXDCL return value should be checked for full filesystem */
-	fprintf(fp, "%s v%d.%d\n", PRIVATE_KEY_STR, major, minor);
-
-	fprintf(fp, "%s %u ", ALGORITHM_STR, dst_key_alg(key));
-
-	/* XXXVIX this switch statement is too sparse to gen a jump table. */
-	switch (dst_key_alg(key)) {
-	case DST_ALG_RSAMD5:
-		fprintf(fp, "(RSA)\n");
-		break;
-	case DST_ALG_DH:
-		fprintf(fp, "(DH)\n");
-		break;
-	case DST_ALG_DSA:
-		fprintf(fp, "(DSA)\n");
-		break;
-	case DST_ALG_RSASHA1:
-		fprintf(fp, "(RSASHA1)\n");
-		break;
-	case DST_ALG_NSEC3RSASHA1:
-		fprintf(fp, "(NSEC3RSASHA1)\n");
-		break;
-	case DST_ALG_NSEC3DSA:
-		fprintf(fp, "(NSEC3DSA)\n");
-		break;
-	case DST_ALG_RSASHA256:
-		fprintf(fp, "(RSASHA256)\n");
-		break;
-	case DST_ALG_RSASHA512:
-		fprintf(fp, "(RSASHA512)\n");
-		break;
-	case DST_ALG_ECCGOST:
-		fprintf(fp, "(ECC-GOST)\n");
-		break;
-	case DST_ALG_ECDSA256:
-		fprintf(fp, "(ECDSAP256SHA256)\n");
-		break;
-	case DST_ALG_ECDSA384:
-		fprintf(fp, "(ECDSAP384SHA384)\n");
-		break;
-	case DST_ALG_ED25519:
-		fprintf(fp, "(ED25519)\n");
-		break;
-	case DST_ALG_ED448:
-		fprintf(fp, "(ED448)\n");
-		break;
-	case DST_ALG_HMACMD5:
-		fprintf(fp, "(HMAC_MD5)\n");
-		break;
-	case DST_ALG_HMACSHA1:
-		fprintf(fp, "(HMAC_SHA1)\n");
-		break;
-	case DST_ALG_HMACSHA224:
-		fprintf(fp, "(HMAC_SHA224)\n");
-		break;
-	case DST_ALG_HMACSHA256:
-		fprintf(fp, "(HMAC_SHA256)\n");
-		break;
-	case DST_ALG_HMACSHA384:
-		fprintf(fp, "(HMAC_SHA384)\n");
-		break;
-	case DST_ALG_HMACSHA512:
-		fprintf(fp, "(HMAC_SHA512)\n");
-		break;
-	default:
-		fprintf(fp, "(?)\n");
-		break;
-	}
-
-	for (i = 0; i < priv->nelements; i++) {
-		const char *s;
-
-		s = find_tag(priv->elements[i].tag);
-
-		r.base = priv->elements[i].data;
-		r.length = priv->elements[i].length;
-		isc_buffer_init(&b, buffer, sizeof(buffer));
-		result = isc_base64_totext(&r, sizeof(buffer), "", &b);
-		if (result != ISC_R_SUCCESS) {
-			fclose(fp);
-			return (DST_R_INVALIDPRIVATEKEY);
-		}
-		isc_buffer_usedregion(&b, &r);
-
-	       fprintf(fp, "%s %.*s\n", s, (int)r.length, r.base);
-	}
-
-	if (key->external)
-	       fprintf(fp, "External:\n");
-
-	/* Add the metadata tags */
-	if (major > 1 || (major == 1 && minor >= 3)) {
-		for (i = 0; i < NUMERIC_NTAGS; i++) {
-			result = dst_key_getnum(key, i, &value);
-			if (result != ISC_R_SUCCESS)
-				continue;
-			fprintf(fp, "%s %u\n", numerictags[i], value);
-		}
-		for (i = 0; i < TIMING_NTAGS; i++) {
-			result = dst_key_gettime(key, i, &when);
-			if (result != ISC_R_SUCCESS)
-				continue;
-
-			isc_buffer_init(&b, buffer, sizeof(buffer));
-			result = dns_time32_totext(when, &b);
-			if (result != ISC_R_SUCCESS) {
-			       fclose(fp);
-			       return (DST_R_INVALIDPRIVATEKEY);
-			}
-
-			isc_buffer_usedregion(&b, &r);
-
-			fprintf(fp, "%s %.*s\n", timetags[i], (int)r.length,
-				r.base);
-		}
-	}
-
-	fflush(fp);
-	result = ferror(fp) ? DST_R_WRITEERROR : ISC_R_SUCCESS;
-	fclose(fp);
-	return (result);
 }
 
 /*! \file */

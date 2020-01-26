@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_parse.h,v 1.4 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: dst_parse.h,v 1.5 2020/01/26 11:22:33 florian Exp $ */
 
 /*! \file */
 #ifndef DST_DST_PARSE_H
@@ -141,10 +141,6 @@ dst__privstruct_free(dst_private_t *priv);
 isc_result_t
 dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		      dst_private_t *priv);
-
-isc_result_t
-dst__privstruct_writefile(const dst_key_t *key, const dst_private_t *priv,
-			  const char *directory);
 
 ISC_LANG_ENDDECLS
 

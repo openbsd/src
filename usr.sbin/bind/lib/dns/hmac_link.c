@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: hmac_link.c,v 1.9 2020/01/22 13:02:09 florian Exp $
+ * $Id: hmac_link.c,v 1.10 2020/01/26 11:22:33 florian Exp $
  */
 
 
@@ -244,36 +244,6 @@ hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data) {
 }
 
 static isc_result_t
-hmacsha1_tofile(const dst_key_t *key, const char *directory) {
-	int cnt = 0;
-	dst_hmacsha1_key_t *hkey;
-	dst_private_t priv;
-	int bytes = (key->key_size + 7) / 8;
-	unsigned char buf[2];
-
-	if (key->keydata.hmacsha1 == NULL)
-		return (DST_R_NULLKEY);
-
-	if (key->external)
-		return (DST_R_EXTERNALKEY);
-
-	hkey = key->keydata.hmacsha1;
-
-	priv.elements[cnt].tag = TAG_HMACSHA1_KEY;
-	priv.elements[cnt].length = bytes;
-	priv.elements[cnt++].data = hkey->key;
-
-	buf[0] = (key->key_bits >> 8) & 0xffU;
-	buf[1] = key->key_bits & 0xffU;
-	priv.elements[cnt].tag = TAG_HMACSHA1_BITS;
-	priv.elements[cnt].data = buf;
-	priv.elements[cnt++].length = 2;
-
-	priv.nelements = cnt;
-	return (dst__privstruct_writefile(key, &priv, directory));
-}
-
-static isc_result_t
 hmacsha1_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
@@ -332,7 +302,7 @@ static dst_func_t hmacsha1_functions = {
 	hmacsha1_destroy,
 	hmacsha1_todns,
 	hmacsha1_fromdns,
-	hmacsha1_tofile,
+	NULL, /* hmacsha1_tofile */
 	hmacsha1_parse,
 	NULL, /* cleanup */
 	NULL, /* fromlabel */
@@ -534,36 +504,6 @@ hmacsha224_fromdns(dst_key_t *key, isc_buffer_t *data) {
 }
 
 static isc_result_t
-hmacsha224_tofile(const dst_key_t *key, const char *directory) {
-	int cnt = 0;
-	dst_hmacsha224_key_t *hkey;
-	dst_private_t priv;
-	int bytes = (key->key_size + 7) / 8;
-	unsigned char buf[2];
-
-	if (key->keydata.hmacsha224 == NULL)
-		return (DST_R_NULLKEY);
-
-	if (key->external)
-		return (DST_R_EXTERNALKEY);
-
-	hkey = key->keydata.hmacsha224;
-
-	priv.elements[cnt].tag = TAG_HMACSHA224_KEY;
-	priv.elements[cnt].length = bytes;
-	priv.elements[cnt++].data = hkey->key;
-
-	buf[0] = (key->key_bits >> 8) & 0xffU;
-	buf[1] = key->key_bits & 0xffU;
-	priv.elements[cnt].tag = TAG_HMACSHA224_BITS;
-	priv.elements[cnt].data = buf;
-	priv.elements[cnt++].length = 2;
-
-	priv.nelements = cnt;
-	return (dst__privstruct_writefile(key, &priv, directory));
-}
-
-static isc_result_t
 hmacsha224_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
@@ -622,7 +562,7 @@ static dst_func_t hmacsha224_functions = {
 	hmacsha224_destroy,
 	hmacsha224_todns,
 	hmacsha224_fromdns,
-	hmacsha224_tofile,
+	NULL, /* hmacsha224_tofile */
 	hmacsha224_parse,
 	NULL, /* cleanup */
 	NULL, /* fromlabel */
@@ -818,36 +758,6 @@ hmacsha256_fromdns(dst_key_t *key, isc_buffer_t *data) {
 }
 
 static isc_result_t
-hmacsha256_tofile(const dst_key_t *key, const char *directory) {
-	int cnt = 0;
-	dst_hmacsha256_key_t *hkey;
-	dst_private_t priv;
-	int bytes = (key->key_size + 7) / 8;
-	unsigned char buf[2];
-
-	if (key->keydata.hmacsha256 == NULL)
-		return (DST_R_NULLKEY);
-
-	if (key->external)
-		return (DST_R_EXTERNALKEY);
-
-	hkey = key->keydata.hmacsha256;
-
-	priv.elements[cnt].tag = TAG_HMACSHA256_KEY;
-	priv.elements[cnt].length = bytes;
-	priv.elements[cnt++].data = hkey->key;
-
-	buf[0] = (key->key_bits >> 8) & 0xffU;
-	buf[1] = key->key_bits & 0xffU;
-	priv.elements[cnt].tag = TAG_HMACSHA256_BITS;
-	priv.elements[cnt].data = buf;
-	priv.elements[cnt++].length = 2;
-
-	priv.nelements = cnt;
-	return (dst__privstruct_writefile(key, &priv, directory));
-}
-
-static isc_result_t
 hmacsha256_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
@@ -906,7 +816,7 @@ static dst_func_t hmacsha256_functions = {
 	hmacsha256_destroy,
 	hmacsha256_todns,
 	hmacsha256_fromdns,
-	hmacsha256_tofile,
+	NULL, /* hmacsha256_tofile */
 	hmacsha256_parse,
 	NULL, /* cleanup */
 	NULL, /* fromlabel */
@@ -1102,36 +1012,6 @@ hmacsha384_fromdns(dst_key_t *key, isc_buffer_t *data) {
 }
 
 static isc_result_t
-hmacsha384_tofile(const dst_key_t *key, const char *directory) {
-	int cnt = 0;
-	dst_hmacsha384_key_t *hkey;
-	dst_private_t priv;
-	int bytes = (key->key_size + 7) / 8;
-	unsigned char buf[2];
-
-	if (key->keydata.hmacsha384 == NULL)
-		return (DST_R_NULLKEY);
-
-	if (key->external)
-		return (DST_R_EXTERNALKEY);
-
-	hkey = key->keydata.hmacsha384;
-
-	priv.elements[cnt].tag = TAG_HMACSHA384_KEY;
-	priv.elements[cnt].length = bytes;
-	priv.elements[cnt++].data = hkey->key;
-
-	buf[0] = (key->key_bits >> 8) & 0xffU;
-	buf[1] = key->key_bits & 0xffU;
-	priv.elements[cnt].tag = TAG_HMACSHA384_BITS;
-	priv.elements[cnt].data = buf;
-	priv.elements[cnt++].length = 2;
-
-	priv.nelements = cnt;
-	return (dst__privstruct_writefile(key, &priv, directory));
-}
-
-static isc_result_t
 hmacsha384_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
@@ -1190,7 +1070,7 @@ static dst_func_t hmacsha384_functions = {
 	hmacsha384_destroy,
 	hmacsha384_todns,
 	hmacsha384_fromdns,
-	hmacsha384_tofile,
+	NULL, /* hmacsha384_tofile */
 	hmacsha384_parse,
 	NULL, /* cleanup */
 	NULL, /* fromlabel */
@@ -1386,36 +1266,6 @@ hmacsha512_fromdns(dst_key_t *key, isc_buffer_t *data) {
 }
 
 static isc_result_t
-hmacsha512_tofile(const dst_key_t *key, const char *directory) {
-	int cnt = 0;
-	dst_hmacsha512_key_t *hkey;
-	dst_private_t priv;
-	int bytes = (key->key_size + 7) / 8;
-	unsigned char buf[2];
-
-	if (key->keydata.hmacsha512 == NULL)
-		return (DST_R_NULLKEY);
-
-	if (key->external)
-		return (DST_R_EXTERNALKEY);
-
-	hkey = key->keydata.hmacsha512;
-
-	priv.elements[cnt].tag = TAG_HMACSHA512_KEY;
-	priv.elements[cnt].length = bytes;
-	priv.elements[cnt++].data = hkey->key;
-
-	buf[0] = (key->key_bits >> 8) & 0xffU;
-	buf[1] = key->key_bits & 0xffU;
-	priv.elements[cnt].tag = TAG_HMACSHA512_BITS;
-	priv.elements[cnt].data = buf;
-	priv.elements[cnt++].length = 2;
-
-	priv.nelements = cnt;
-	return (dst__privstruct_writefile(key, &priv, directory));
-}
-
-static isc_result_t
 hmacsha512_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dst_private_t priv;
 	isc_result_t result, tresult;
@@ -1474,7 +1324,7 @@ static dst_func_t hmacsha512_functions = {
 	hmacsha512_destroy,
 	hmacsha512_todns,
 	hmacsha512_fromdns,
-	hmacsha512_tofile,
+	NULL, /* hmacsha512_tofile */
 	hmacsha512_parse,
 	NULL, /* cleanup */
 	NULL, /* fromlabel */

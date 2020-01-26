@@ -439,50 +439,6 @@ opensslecdsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 }
 
 static isc_result_t
-opensslecdsa_tofile(const dst_key_t *key, const char *directory) {
-	isc_result_t ret;
-	EVP_PKEY *pkey;
-	EC_KEY *eckey = NULL;
-	const BIGNUM *privkey;
-	dst_private_t priv;
-	unsigned char *buf = NULL;
-
-	if (key->keydata.pkey == NULL)
-		return (DST_R_NULLKEY);
-
-	if (key->external) {
-		priv.nelements = 0;
-		return (dst__privstruct_writefile(key, &priv, directory));
-	}
-
-	pkey = key->keydata.pkey;
-	eckey = EVP_PKEY_get1_EC_KEY(pkey);
-	if (eckey == NULL)
-		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
-	privkey = EC_KEY_get0_private_key(eckey);
-	if (privkey == NULL)
-		DST_RET (ISC_R_FAILURE);
-
-	buf = malloc(BN_num_bytes(privkey));
-	if (buf == NULL)
-		DST_RET (ISC_R_NOMEMORY);
-
-	priv.elements[0].tag = TAG_ECDSA_PRIVATEKEY;
-	priv.elements[0].length = BN_num_bytes(privkey);
-	BN_bn2bin(privkey, buf);
-	priv.elements[0].data = buf;
-	priv.nelements = 1;
-	ret = dst__privstruct_writefile(key, &priv, directory);
-
- err:
-	if (eckey != NULL)
-		EC_KEY_free(eckey);
-	if (buf != NULL)
-		free(buf);
-	return (ret);
-}
-
-static isc_result_t
 ecdsa_check(EC_KEY *eckey, dst_key_t *pub)
 {
 	isc_result_t ret = ISC_R_FAILURE;
@@ -599,7 +555,7 @@ static dst_func_t opensslecdsa_functions = {
 	opensslecdsa_destroy,
 	opensslecdsa_todns,
 	opensslecdsa_fromdns,
-	opensslecdsa_tofile,
+	NULL, /* opensslecdsa_tofile */
 	opensslecdsa_parse,
 	NULL, /*%< cleanup */
 	NULL, /*%< fromlabel */
