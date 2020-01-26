@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.36 2019/12/01 10:30:37 ajacoutot Exp $
+# $OpenBSD: sysupgrade.sh,v 1.37 2020/01/26 22:08:36 benno Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -198,6 +198,7 @@ echo Fetching updated firmware.
 fw_update || echo "Warning: firmware not updated."
 
 install -F -m 700 bsd.rd /bsd.upgrade
+logger -t sysupgrade -p kern.info "installed new /bsd.upgrade. Old kernel version: $(sysctl -n kern.version)"
 sync
 
 if ${REBOOT}; then
