@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.30 2019/11/10 17:32:47 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.31 2020/01/26 03:24:36 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1591,6 +1591,7 @@ test_tlsext_sigalgs_client(void)
 	return (failure);
 }
 
+#if 0
 static int
 test_tlsext_sigalgs_server(void)
 {
@@ -1640,6 +1641,7 @@ test_tlsext_sigalgs_server(void)
 
 	return (failure);
 }
+#endif
 
 /*
  * Server Name Indication - RFC 6066 section 3.
@@ -3537,7 +3539,6 @@ main(int argc, char **argv)
 	failed |= test_tlsext_ri_server();
 
 	failed |= test_tlsext_sigalgs_client();
-	failed |= test_tlsext_sigalgs_server();
 
 	failed |= test_tlsext_sni_client();
 	failed |= test_tlsext_sni_server();
