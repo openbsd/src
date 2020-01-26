@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.242 2020/01/17 19:23:59 jasper Exp $
+.\"	$OpenBSD: port-modules.5,v 1.243 2020/01/26 11:11:39 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 17 2020 $
+.Dd $Mdocdate: January 26 2020 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -1404,7 +1404,10 @@ with
 .Ev MODPY_PYTEST_ARGS .
 All ports that generate egg-info files should set
 .Ev MODPY_EGG_VERSION
-to the version string used by the port's setup.py setup() function.
+to the version string used by the
+.Fn setup
+function in the port's
+.Pa setup.py .
 Arguments can be passed to setup.py during
 .Cm configure
 with
@@ -1950,10 +1953,11 @@ Read-only.
 .It Ev MODKDE4_FIX_GETTEXT
 If set to
 .Sq Yes ,
-adds an additional step before building port that
-searches for KDE-specific calls of GETTEXT_PROCESS_PO_FILES()
-CMake command and tweaks them to be compatible with the one from
-FindGettext.cmake module provided by CMake itself.
+adds an additional step before building the port that
+searches for KDE-specific uses of the GETTEXT_PROCESS_PO_FILES
+CMake command and tweaks them to be compatible with the one from the
+.Pa FindGettext.cmake
+module provided by CMake itself.
 Defaults to
 .Sq Yes .
 .It Ev MODKDE4_SYSCONF_FILES
