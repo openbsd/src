@@ -1,4 +1,4 @@
-/* $OpenBSD: cast_lcl.h,v 1.11 2015/11/05 21:46:51 miod Exp $ */
+/* $OpenBSD: cast_lcl.h,v 1.12 2020/01/26 11:49:21 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,7 +145,7 @@
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
 /* only invoked with 0 <= n <= 31 */
-#define ROTL(a,n)     ((((a)<<(n))&0xffffffffL)|((a)>>(32-(n))))
+#define ROTL(a,n)     ((((a)<<(n))&0xffffffffL)|((a)>>((32-(n))&31)))
 
 #define C_M    0x3fc
 #define C_0    22L
