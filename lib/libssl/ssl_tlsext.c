@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.56 2020/01/25 12:37:06 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.57 2020/01/26 03:29:30 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -571,20 +571,49 @@ tlsext_sigalgs_server_parse(SSL *s, CBS *cbs, int *alert)
 int
 tlsext_sigalgs_server_needs(SSL *s)
 {
-	return 0;
+	return (s->version >= TLS1_3_VERSION);
 }
 
 int
 tlsext_sigalgs_server_build(SSL *s, CBB *cbb)
 {
-	return 0;
+	uint16_t *tls_sigalgs = tls12_sigalgs;
+	size_t tls_sigalgs_len = tls12_sigalgs_len;
+	CBB sigalgs;
+
+	if (s->version >= TLS1_3_VERSION) {
+		tls_sigalgs = tls13_sigalgs;
+		tls_sigalgs_len = tls13_sigalgs_len;
+	}
+
+	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
+		return 0;
+
+	if (!ssl_sigalgs_build(&sigalgs, tls_sigalgs, tls_sigalgs_len))
+		return 0;
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
 }
 
 int
 tlsext_sigalgs_client_parse(SSL *s, CBS *cbs, int *alert)
 {
-	/* As per the RFC, servers must not send this extension. */
-	return 0;
+	CBS sigalgs;
+
+	if (s->version < TLS1_3_VERSION)
+		return 0;
+
+	if (!CBS_get_u16_length_prefixed(cbs, &sigalgs))
+		return 0;
+	if (CBS_len(&sigalgs) % 2 != 0 || CBS_len(&sigalgs) > 64)
+		return 0;
+	if (!CBS_stow(&sigalgs, &S3I(s)->hs.sigalgs, &S3I(s)->hs.sigalgs_len))
+		return 0;
+
+	return 1;
 }
 
 /*
