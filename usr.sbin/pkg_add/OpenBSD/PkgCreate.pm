@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.166 2020/01/13 13:11:31 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.167 2020/01/26 12:50:17 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -131,6 +131,7 @@ sub handle_options
 	if (defined $state->opt('u')) {
 		$state->{userlist} = $state->parse_userdb($state->opt('u'));
 	}
+	$state->{wrkobjdir} = $state->defines('WRKOBJDIR');
 }
 
 sub parse_userdb
@@ -290,6 +291,12 @@ sub compute_checksum
 			$state->error("bogus symlink: #1 (too deep)", $fname);
 		} elsif (!-e $chk) {
 			push(@{$state->{bad_symlinks}{$chk}}, $fname);
+		}
+		if (defined $state->{wrkobjdir} && 
+		    $value =~ m/^\Q$state->{wrkobjdir}\E\//) {
+		    	$state->error(
+			    "bad symlink: #1 (points into WRKOBJDIR)",
+			    $fname);
 		}
 		$result->make_symlink($value);
 	} elsif (-f _) {
