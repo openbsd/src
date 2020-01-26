@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.108 2020/01/14 20:43:20 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.109 2020/01/26 06:20:30 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -10,6 +10,10 @@ file	dev/fdt/pinctrl.c		pinctrl
 device	simplefb: wsemuldisplaydev, rasops15, rasops16, rasops24, rasops32
 attach	simplefb at fdt
 file	dev/fdt/simplefb.c		simplefb
+
+device	simplepanel
+attach	simplepanel at fdt
+file	dev/fdt/simplepanel.c		simplepanel
 
 device	sxiccmu
 attach	sxiccmu at fdt

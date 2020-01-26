@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.139 2020/01/25 12:52:10 patrick Exp $
+# $OpenBSD: GENERIC,v 1.140 2020/01/26 06:20:30 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -106,7 +106,8 @@ option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
 
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
-pwmbl*			at fdt?		# PWM backlight
+simplepanel*	at fdt?
+pwmbl*		at fdt?			# PWM backlight
 
 radeondrm*	at pci?
 drm*		at radeondrm?
