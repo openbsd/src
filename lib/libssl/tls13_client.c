@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.34 2020/01/25 14:23:27 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.35 2020/01/26 02:45:27 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -587,22 +587,6 @@ tls13_server_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	return ret;
 }
 
-/*
- * Certificate Verify padding - RFC 8446 section 4.4.3.
- */
-static uint8_t cert_verify_pad[64] = {
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-};
-
-static uint8_t server_cert_verify_context[] = "TLS 1.3, server CertificateVerify";
-
 int
 tls13_server_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
@@ -631,10 +615,11 @@ tls13_server_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 
 	if (!CBB_init(&cbb, 0))
 		goto err;
-	if (!CBB_add_bytes(&cbb, cert_verify_pad, sizeof(cert_verify_pad)))
+	if (!CBB_add_bytes(&cbb, tls13_cert_verify_pad,
+	    sizeof(tls13_cert_verify_pad)))
 		goto err;
-	if (!CBB_add_bytes(&cbb, server_cert_verify_context,
-	    strlen(server_cert_verify_context)))
+	if (!CBB_add_bytes(&cbb, tls13_cert_server_verify_context,
+	    strlen(tls13_cert_server_verify_context)))
 		goto err;
 	if (!CBB_add_u8(&cbb, 0))
 		goto err;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.30 2020/01/25 13:11:20 tb Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.31 2020/01/26 02:45:27 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -606,4 +606,47 @@ tls13_legacy_shutdown(SSL *ssl)
 		return 1;
 
 	return 0;
+}
+
+/*
+ * Certificate Verify padding - RFC 8446 section 4.4.3.
+ */
+uint8_t tls13_cert_verify_pad[64] = {
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+};
+
+uint8_t tls13_cert_client_verify_context[] = "TLS 1.3, client CertificateVerify";
+uint8_t tls13_cert_server_verify_context[] = "TLS 1.3, server CertificateVerify";
+
+int
+tls13_cert_add(CBB *cbb, X509 *cert)
+{
+	CBB cert_data, cert_exts;
+	uint8_t *data;
+	int cert_len;
+
+	if ((cert_len = i2d_X509(cert, NULL)) < 0)
+		return 0;
+
+	if (!CBB_add_u24_length_prefixed(cbb, &cert_data))
+		return 0;
+	if (!CBB_add_space(&cert_data, &data, cert_len))
+		return 0;
+	if (i2d_X509(cert, &data) != cert_len)
+		return 0;
+
+	if (!CBB_add_u16_length_prefixed(cbb, &cert_exts))
+		return 0;
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
 }

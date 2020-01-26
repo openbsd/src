@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.16 2020/01/24 08:21:24 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.17 2020/01/26 02:45:27 beck Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -476,32 +476,6 @@ tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx, CBB *cbb)
 	return 0;
 }
 
-static int
-tls13_cert_add(CBB *cbb, X509 *cert)
-{
-	CBB cert_data, cert_exts;
-	uint8_t *data;
-	int cert_len;
-
-	if ((cert_len = i2d_X509(cert, NULL)) < 0)
-		return 0;
-
-	if (!CBB_add_u24_length_prefixed(cbb, &cert_data))
-		return 0;
-	if (!CBB_add_space(&cert_data, &data, cert_len))
-		return 0;
-	if (i2d_X509(cert, &data) != cert_len)
-		return 0;
-
-	if (!CBB_add_u16_length_prefixed(cbb, &cert_exts))
-		return 0;
-
-	if (!CBB_flush(cbb))
-		return 0;
-
-	return 1;
-}
-
 int
 tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 {
@@ -564,22 +538,6 @@ tls13_server_certificate_request_send(struct tls13_ctx *ctx, CBB *cbb)
 	return 0;
 }
 
-/*
- * Certificate Verify padding - RFC 8446 section 4.4.3.
- */
-static uint8_t cert_verify_pad[64] = {
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-};
-
-static uint8_t server_cert_verify_context[] = "TLS 1.3, server CertificateVerify";
-
 int
 tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 {
@@ -607,10 +565,11 @@ tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 
 	if (!CBB_init(&sig_cbb, 0))
 		goto err;
-	if (!CBB_add_bytes(&sig_cbb, cert_verify_pad, sizeof(cert_verify_pad)))
+	if (!CBB_add_bytes(&sig_cbb, tls13_cert_verify_pad,
+	    sizeof(tls13_cert_verify_pad)))
 		goto err;
-	if (!CBB_add_bytes(&sig_cbb, server_cert_verify_context,
-	    strlen(server_cert_verify_context)))
+	if (!CBB_add_bytes(&sig_cbb, tls13_cert_server_verify_context,
+	    strlen(tls13_cert_server_verify_context)))
 		goto err;
 	if (!CBB_add_u8(&sig_cbb, 0))
 		goto err;
