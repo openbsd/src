@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.130 2019/12/21 15:25:12 espie Exp $
+.\"	$OpenBSD: make.1,v 1.131 2020/01/26 12:40:50 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: December 21 2019 $
+.Dd $Mdocdate: January 26 2020 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1405,8 +1405,6 @@ Mark its prerequisites as
 Command lines attached to this target are executed if
 .Nm
 is interrupted by a SIGINT.
-.It Ic .MADE
-Mark its prerequisites as being up to date.
 .It Ic .MAKE
 Mark its prerequisites as
 .Dq Always build .
