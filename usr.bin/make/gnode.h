@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.38 2020/01/26 12:37:47 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.39 2020/01/26 12:41:21 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -188,10 +188,6 @@ struct command
 #define OP_OPTIONAL	0x00000008  /* Don't care if the target doesn't
 				     * exist and can't be created */
 #define OP_USE		0x00000010  /* Use associated commands for parents */
-#define OP_EXEC 	0x00000020  /* Target is never out of date, but always
-				     * execute commands anyway. Its time
-				     * doesn't matter, so it has none...sort
-				     * of */
 #define OP_IGNORE	0x00000040  /* Ignore errors when creating the node */
 #define OP_PRECIOUS	0x00000080  /* Don't remove the target when
 				     * interrupted */
@@ -200,13 +196,10 @@ struct command
 				     * commands should always be executed when
 				     * it is out of date, regardless of the
 				     * state of the -n or -t flags */
-#define OP_JOIN 	0x00000400  /* Target is out-of-date only if any of its
-				     * children was out-of-date */
-#define OP_MADE 	0x00000800  /* Assume the node is already made; even if
-				     * it really is out of date */
 #define OP_INVISIBLE	0x00001000  /* The node is invisible to its parents.
 				     * I.e. it doesn't show up in the parents's
-				     * local variables. */
+				     * local variables. Used by :: for
+				     * supplementary nodes (cohorts). */
 #define OP_NOTMAIN	0x00002000  /* The node is exempt from normal 'main
 				     * target' processing in parse.c */
 #define OP_PHONY	0x00004000  /* Not a file target; run always */
@@ -234,7 +227,7 @@ struct command
  */
 #define OP_NOP(t)	(((t) & OP_OPMASK) == OP_ZERO)
 
-#define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)
+#define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_TRANSFORM)
 
 
 #endif

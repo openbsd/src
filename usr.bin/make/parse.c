@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.131 2020/01/26 12:37:47 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.132 2020/01/26 12:41:21 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -184,13 +184,13 @@ static struct {
 	unsigned int special;
 	unsigned int special_op;
 } specials[] = {
-    { P(NODE_EXEC),		SPECIAL_DEPRECATED,	OP_EXEC },
+    { P(NODE_EXEC),		SPECIAL_DEPRECATED,	0 },
     { P(NODE_IGNORE),		SPECIAL_IGNORE, 	OP_IGNORE },
     { P(NODE_INCLUDES),		SPECIAL_DEPRECATED,	0 },
-    { P(NODE_INVISIBLE),	SPECIAL_DEPRECATED,	OP_INVISIBLE },
-    { P(NODE_JOIN),		SPECIAL_DEPRECATED,	OP_JOIN },
+    { P(NODE_INVISIBLE),	SPECIAL_DEPRECATED,	0 },
+    { P(NODE_JOIN),		SPECIAL_DEPRECATED,	0 },
     { P(NODE_LIBS),		SPECIAL_DEPRECATED,	0 },
-    { P(NODE_MADE),		SPECIAL_DEPRECATED,	OP_MADE },
+    { P(NODE_MADE),		SPECIAL_DEPRECATED,	0 },
     { P(NODE_MAIN),		SPECIAL_MAIN,		0 },
     { P(NODE_MAKE),		SPECIAL_MAKE,		OP_MAKE },
     { P(NODE_MAKEFLAGS),	SPECIAL_MFLAGS,		0 },

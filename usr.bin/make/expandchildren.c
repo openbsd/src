@@ -1,4 +1,4 @@
-/*	$OpenBSD: expandchildren.c,v 1.1 2020/01/13 14:05:21 espie Exp $ */
+/*	$OpenBSD: expandchildren.c,v 1.2 2020/01/26 12:41:21 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ LinkParent(GNode *cgn, GNode *pgn)
 	Lst_AtEnd(&cgn->parents, pgn);
 	if (!has_been_built(cgn))
 		pgn->children_left++;
-	else if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
+	else if ( ! (cgn->type & OP_USE)) {
 		if (cgn->built_status == REBUILT)
 			pgn->child_rebuilt = true;
 		(void)Make_TimeStamp(pgn, cgn);

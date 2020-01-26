@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.81 2020/01/13 15:41:53 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.82 2020/01/26 12:41:21 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -279,7 +279,7 @@ Make_Update(GNode *cgn)	/* the child node */
 				printf("%s--=%d ",
 				    pgn->name, pgn->children_left);
 
-			if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
+			if ( ! (cgn->type & OP_USE)) {
 				if (cgn->built_status == REBUILT)
 					pgn->child_rebuilt = true;
 				(void)Make_TimeStamp(pgn, cgn);
@@ -388,15 +388,6 @@ try_to_make_node(GNode *gn)
 		if (DEBUG(MAKE))
 			printf("up-to-date\n");
 		gn->built_status = UPTODATE;
-		if (gn->type & OP_JOIN) {
-			/*
-			 * Even for an up-to-date .JOIN node, we need its
-			 * local variables, so that we have the right
-			 * value for .TARGET when computing the
-			 * local variables of its parent(s)...
-			 */
-			Make_DoAllVar(gn);
-		}
 
 		Make_Update(gn);
 	}
