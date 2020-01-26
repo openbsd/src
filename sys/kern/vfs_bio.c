@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.195 2019/12/30 22:17:14 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.196 2020/01/26 04:22:36 tedu Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -450,7 +450,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 		brelse(bp);
 	}
 
-	mp = vp->v_type == VBLK? vp->v_specmountpoint : vp->v_mount;
+	mp = vp->v_type == VBLK ? vp->v_specmountpoint : vp->v_mount;
 
 	/*
 	 * Collect statistics on synchronous and asynchronous reads.
@@ -1202,7 +1202,6 @@ buf_daemon(void *arg)
 		}
 
 		while ((bp = bufcache_getdirtybuf())) {
-
 			if (UNCLEAN_PAGES < lodirtypages &&
 			    bcstats.kvaslots_avail > 2 * RESERVE_SLOTS &&
 			    pushed >= 16)
@@ -1437,7 +1436,8 @@ void
 bufcache_init(void)
 {
 	int i;
-	for (i=0; i < NUM_CACHES; i++) {
+
+	for (i = 0; i < NUM_CACHES; i++) {
 		TAILQ_INIT(&cleancache[i].hotqueue);
 		TAILQ_INIT(&cleancache[i].coldqueue);
 		TAILQ_INIT(&cleancache[i].warmqueue);
@@ -1452,7 +1452,8 @@ void
 bufcache_adjust(void)
 {
 	int i;
-	for (i=0; i < NUM_CACHES; i++) {
+
+	for (i = 0; i < NUM_CACHES; i++) {
 		while (chillbufs(&cleancache[i], &cleancache[i].warmqueue,
 		    &cleancache[i].warmbufpages) ||
 		    chillbufs(&cleancache[i], &cleancache[i].hotqueue,
@@ -1479,59 +1480,58 @@ bufcache_getcleanbuf(int cachenum, int discard)
 	while ((bp = TAILQ_FIRST(&cache->coldqueue)) ||
 	    (bp = TAILQ_FIRST(&cache->warmqueue)) ||
 	    (bp = TAILQ_FIRST(&cache->hotqueue))) {
-		if ((!discard) && cachenum < NUM_CACHES - 1) {
-			int64_t pages = atop(bp->b_bufsize);
-			struct bufcache *newcache;
+		int64_t pages = atop(bp->b_bufsize);
+		struct bufcache *newcache;
 
-			KASSERT(bp->cache == cachenum);
-
-			/*
-			 * If this buffer was warm before, move it to
-			 * the hot queue in the next cache
-			 */
-
-			if (fliphigh) {
-				/*
-				 * If we are in the DMA cache, try to flip the
-				 * buffer up high to move it on to the other
-				 * caches. if we can't move the buffer to high
-				 * memory without sleeping, we give it up and
-				 * return it rather than fight for more memory
-				 * against non buffer cache competitors.
-				 */
-				SET(bp->b_flags, B_BUSY);
-				if (bp->cache == 0 && buf_flip_high(bp) == -1) {
-					CLR(bp->b_flags, B_BUSY);
-					return bp;
-				}
-				CLR(bp->b_flags, B_BUSY);
-			}
-
-			/* Move the buffer to the hot queue in the next cache */
-			if (ISSET(bp->b_flags, B_COLD)) {
-				queue = &cache->coldqueue;
-			} else if (ISSET(bp->b_flags, B_WARM)) {
-				queue = &cache->warmqueue;
-				cache->warmbufpages -= pages;
-			} else {
-				queue = &cache->hotqueue;
-				cache->hotbufpages -= pages;
-			}
-			TAILQ_REMOVE(queue, bp, b_freelist);
-			cache->cachepages -= pages;
-			CLR(bp->b_flags, B_WARM);
-			CLR(bp->b_flags, B_COLD);
-			bp->cache++;
-			newcache= &cleancache[bp->cache];
-			newcache->cachepages += pages;
-			newcache->hotbufpages += pages;
-			chillbufs(newcache, &newcache->hotqueue,
-			    &newcache->hotbufpages);
-			TAILQ_INSERT_TAIL(&newcache->hotqueue, bp, b_freelist);
-		}
-		else
+		if (discard || cachenum >= NUM_CACHES - 1) {
 			/* Victim selected, give it up */
 			return bp;
+		}
+		KASSERT(bp->cache == cachenum);
+
+		/*
+		 * If this buffer was warm before, move it to
+		 * the hot queue in the next cache
+		 */
+
+		if (fliphigh) {
+			/*
+			 * If we are in the DMA cache, try to flip the
+			 * buffer up high to move it on to the other
+			 * caches. if we can't move the buffer to high
+			 * memory without sleeping, we give it up and
+			 * return it rather than fight for more memory
+			 * against non buffer cache competitors.
+			 */
+			SET(bp->b_flags, B_BUSY);
+			if (bp->cache == 0 && buf_flip_high(bp) == -1) {
+				CLR(bp->b_flags, B_BUSY);
+				return bp;
+			}
+			CLR(bp->b_flags, B_BUSY);
+		}
+
+		/* Move the buffer to the hot queue in the next cache */
+		if (ISSET(bp->b_flags, B_COLD)) {
+			queue = &cache->coldqueue;
+		} else if (ISSET(bp->b_flags, B_WARM)) {
+			queue = &cache->warmqueue;
+			cache->warmbufpages -= pages;
+		} else {
+			queue = &cache->hotqueue;
+			cache->hotbufpages -= pages;
+		}
+		TAILQ_REMOVE(queue, bp, b_freelist);
+		cache->cachepages -= pages;
+		CLR(bp->b_flags, B_WARM);
+		CLR(bp->b_flags, B_COLD);
+		bp->cache++;
+		newcache= &cleancache[bp->cache];
+		newcache->cachepages += pages;
+		newcache->hotbufpages += pages;
+		chillbufs(newcache, &newcache->hotqueue,
+		    &newcache->hotbufpages);
+		TAILQ_INSERT_TAIL(&newcache->hotqueue, bp, b_freelist);
 	}
 	return bp;
 }
@@ -1562,69 +1562,70 @@ bufcache_recover_dmapages(int discard, int64_t howmany)
 	    ((bp = TAILQ_FIRST(&cache->coldqueue)) ||
 	    (bp = TAILQ_FIRST(&cache->warmqueue)) ||
 	    (bp = TAILQ_FIRST(&cache->hotqueue)))) {
-		if (!discard && DMA_CACHE < NUM_CACHES - 1) {
-			int64_t pages = atop(bp->b_bufsize);
-			struct bufcache *newcache;
+		int64_t pages = atop(bp->b_bufsize);
+		struct bufcache *newcache;
 
-			KASSERT(bp->cache == DMA_CACHE);
-
-			/*
-			 * If this buffer was warm before, move it to
-			 * the hot queue in the next cache
-			 */
-
-			/*
-			 * One way or another, the pages for this
-			 * buffer are leaving DMA memory
-			 */
-			recovered += pages;
-
-			if (fliphigh) {
-				/*
-				 * If we are in the DMA cache, try to flip the
-				 * buffer up high to move it on to the other
-				 * caches. if we can't move the buffer to high
-				 * memory without sleeping, we give it up
-				 * now rather than fight for more memory
-				 * against non buffer cache competitors.
-				 */
-				SET(bp->b_flags, B_BUSY);
-				if (bp->cache == 0 && buf_flip_high(bp) == -1) {
-					CLR(bp->b_flags, B_BUSY);
-					discard_buffer(bp);
-				} else {
-					CLR(bp->b_flags, B_BUSY);
-
-					/*
-					 * Move the buffer to the hot queue in
-					 * the next cache
-					 */
-					if (ISSET(bp->b_flags, B_COLD)) {
-						queue = &cache->coldqueue;
-					} else if (ISSET(bp->b_flags, B_WARM)) {
-						queue = &cache->warmqueue;
-						cache->warmbufpages -= pages;
-					} else {
-						queue = &cache->hotqueue;
-						cache->hotbufpages -= pages;
-					}
-					TAILQ_REMOVE(queue, bp, b_freelist);
-					cache->cachepages -= pages;
-					CLR(bp->b_flags, B_WARM);
-					CLR(bp->b_flags, B_COLD);
-					bp->cache++;
-					newcache= &cleancache[bp->cache];
-					newcache->cachepages += pages;
-					newcache->hotbufpages += pages;
-					chillbufs(newcache, &newcache->hotqueue,
-					    &newcache->hotbufpages);
-					TAILQ_INSERT_TAIL(&newcache->hotqueue,
-					    bp, b_freelist);
-				}
-			} else
-				discard_buffer(bp);
-		} else
+		if (discard || DMA_CACHE >= NUM_CACHES - 1) {
 			discard_buffer(bp);
+			continue;
+		}
+		KASSERT(bp->cache == DMA_CACHE);
+
+		/*
+		 * If this buffer was warm before, move it to
+		 * the hot queue in the next cache
+		 */
+
+		/*
+		 * One way or another, the pages for this
+		 * buffer are leaving DMA memory
+		 */
+		recovered += pages;
+
+		if (!fliphigh) {
+			discard_buffer(bp);
+			continue;
+		}
+
+		/*
+		 * If we are in the DMA cache, try to flip the
+		 * buffer up high to move it on to the other
+		 * caches. if we can't move the buffer to high
+		 * memory without sleeping, we give it up
+		 * now rather than fight for more memory
+		 * against non buffer cache competitors.
+		 */
+		SET(bp->b_flags, B_BUSY);
+		if (bp->cache == 0 && buf_flip_high(bp) == -1) {
+			CLR(bp->b_flags, B_BUSY);
+			discard_buffer(bp);
+			continue;
+		}
+		CLR(bp->b_flags, B_BUSY);
+
+		/*
+		 * Move the buffer to the hot queue in the next cache
+		 */
+		if (ISSET(bp->b_flags, B_COLD)) {
+			queue = &cache->coldqueue;
+		} else if (ISSET(bp->b_flags, B_WARM)) {
+			queue = &cache->warmqueue;
+			cache->warmbufpages -= pages;
+		} else {
+			queue = &cache->hotqueue;
+			cache->hotbufpages -= pages;
+		}
+		TAILQ_REMOVE(queue, bp, b_freelist);
+		cache->cachepages -= pages;
+		CLR(bp->b_flags, B_WARM);
+		CLR(bp->b_flags, B_COLD);
+		bp->cache++;
+		newcache= &cleancache[bp->cache];
+		newcache->cachepages += pages;
+		newcache->hotbufpages += pages;
+		chillbufs(newcache, &newcache->hotqueue,
+		    &newcache->hotbufpages);
+		TAILQ_INSERT_TAIL(&newcache->hotqueue, bp, b_freelist);
 	}
 	return recovered;
 }
@@ -1643,7 +1644,7 @@ bufcache_getcleanbuf_range(int start, int end, int discard)
 	while (j <= q)	{
 		for (i = q; i >= j; i--)
 			if ((bp = bufcache_getcleanbuf(i, discard)))
-				return(bp);
+				return (bp);
 		j++;
 	}
 	return bp;
