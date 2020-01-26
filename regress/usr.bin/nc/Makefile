@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2020/01/21 22:47:39 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2020/01/26 23:48:50 beck Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -1103,14 +1103,6 @@ run-tcp-client-shutdown-reverse-eof: server-tcp
 	grep '^greeting$$' client.out
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
-REGRESS_EXPECTED_FAILURES = \
-	run-tcp-server-shutdown-eof \
-	run-tcp-server-shutdown-reverse-eof \
-	run-tcp-client-shutdown-eof \
-	run-tcp-client-shutdown-reverse-eof \
-	run-tcp-sleep \
-	run-tls-sleep \
-	run-udp-sleep
 
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
