@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.19 2020/01/26 03:55:22 beck Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.20 2020/01/26 06:55:17 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -96,6 +96,7 @@ tls13_use_legacy_server(struct tls13_ctx *ctx)
 	CBS cbs;
 
 	s->method = tls_legacy_server_method();
+	s->internal->handshake_func = s->method->internal->ssl_accept;
 	s->client_version = s->version = s->method->internal->max_version;
 	s->server = 1;
 
