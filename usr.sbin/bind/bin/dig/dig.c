@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.42 2020/01/25 10:59:19 florian Exp $ */
+/* $Id: dig.c,v 1.43 2020/01/26 14:50:47 jca Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -1943,7 +1943,7 @@ void dig_setup(int argc, char **argv)
 	ISC_LIST_INIT(server_list);
 	ISC_LIST_INIT(search_list);
 
-	if (pledge("stdio rpath dns", NULL) == -1) {
+	if (pledge("stdio rpath inet dns", NULL) == -1) {
 		perror("pledge");
 		exit(1);
 	}
@@ -1977,7 +1977,7 @@ void dig_query_setup(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 	else if (keysecret[0] != 0)
 		setup_text_key();
 
-	if (pledge("stdio dns", NULL) == -1) {
+	if (pledge("stdio inet dns", NULL) == -1) {
 		perror("pledge");
 		exit(1);
 	}

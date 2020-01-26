@@ -892,7 +892,7 @@ main(int argc, char **argv) {
 	setup_libs();
 	progname = argv[0];
 
-	if (pledge("stdio dns", NULL) == -1) {
+	if (pledge("stdio inet dns", NULL) == -1) {
 		perror("pledge");
 		exit(1);
 	}

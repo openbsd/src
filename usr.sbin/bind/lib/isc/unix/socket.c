@@ -1373,10 +1373,10 @@ opensocket(isc__socket_t *sock)
 
 	switch (sock->type) {
 	case isc_sockettype_udp:
-		sock->fd = socket(sock->pf, SOCK_DGRAM | SOCK_DNS, IPPROTO_UDP);
+		sock->fd = socket(sock->pf, SOCK_DGRAM, IPPROTO_UDP);
 		break;
 	case isc_sockettype_tcp:
-		sock->fd = socket(sock->pf, SOCK_STREAM | SOCK_DNS, IPPROTO_TCP);
+		sock->fd = socket(sock->pf, SOCK_STREAM, IPPROTO_TCP);
 		break;
 	}
 
