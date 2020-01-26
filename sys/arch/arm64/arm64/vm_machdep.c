@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.4 2017/08/12 18:07:35 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.5 2020/01/26 01:11:19 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_x19 = (uint64_t)func;
-	sf->sf_x20= (uint64_t)arg;
+	sf->sf_x20 = (uint64_t)arg;
 	sf->sf_lr = (u_int64_t)&proc_trampoline;
 	pcb->pcb_sp = (uint64_t)sf;
 }
