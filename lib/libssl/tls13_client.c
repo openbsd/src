@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.35 2020/01/26 02:45:27 beck Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.36 2020/01/26 03:38:24 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -63,11 +63,13 @@ tls13_legacy_connect(SSL *ssl)
 	struct tls13_ctx *ctx = ssl->internal->tls13;
 	int ret;
 
+#ifdef TLS13_USE_LEGACY_CLIENT_AUTH
 	/* XXX drop back to legacy for client auth for now */
 	if (ssl->cert->key->privatekey != NULL) {
 		ssl->method = tls_legacy_client_method();
 		return ssl->method->internal->ssl_connect(ssl);
 	}
+#endif
 
 	if (ctx == NULL) {
 		if ((ctx = tls13_ctx_new(TLS13_HS_CLIENT)) == NULL) {
@@ -481,6 +483,9 @@ tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx, CBS *cbs)
 int
 tls13_server_certificate_request_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
+	CBS cert_request_context;
+	int alert_desc;
+
 	/*
 	 * Thanks to poor state design in the RFC, this function can be called
 	 * when we actually have a certificate message instead of a certificate
@@ -492,8 +497,21 @@ tls13_server_certificate_request_recv(struct tls13_ctx *ctx, CBS *cbs)
 		return tls13_server_certificate_recv(ctx, cbs);
 	}
 
-	/* XXX - unimplemented. */
+	if (!CBS_get_u8_length_prefixed(cbs, &cert_request_context))
+		goto err;
+	if (CBS_len(&cert_request_context) != 0)
+		goto err;
 
+	if (!tlsext_client_parse(ctx->ssl, cbs, &alert_desc, SSL_TLSEXT_MSG_CR)) {
+		ctx->alert = alert_desc;
+		goto err;
+	}
+
+	return 1;
+
+ err:
+	if (ctx->alert == 0)
+		ctx->alert = TLS1_AD_DECODE_ERROR;
 	return 0;
 }
 
@@ -870,5 +888,133 @@ tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	}
 err:
+	return ret;
+}
+
+int
+tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
+{
+	SSL *s = ctx->ssl;
+	CBB cert_request_context, cert_list;
+	STACK_OF(X509) *chain;
+	CERT_PKEY *cpk;
+	X509 *cert;
+	int i, ret = 0;
+
+	/* XXX - Need to revisit certificate selection. */
+	cpk = &s->cert->pkeys[SSL_PKEY_RSA_ENC];
+
+	if ((chain = cpk->chain) == NULL)
+		chain = s->ctx->extra_certs;
+
+	if (!CBB_add_u8_length_prefixed(cbb, &cert_request_context))
+		goto err;
+	if (!CBB_add_u24_length_prefixed(cbb, &cert_list))
+		goto err;
+
+	if (cpk->x509 == NULL)
+		goto done;
+
+	if (!tls13_cert_add(&cert_list, cpk->x509))
+		goto err;
+
+	for (i = 0; i < sk_X509_num(chain); i++) {
+		cert = sk_X509_value(chain, i);
+		if (!tls13_cert_add(&cert_list, cert))
+			goto err;
+	}
+
+	ctx->handshake_stage.hs_type |= WITH_CCV;
+ done:
+	if (!CBB_flush(cbb))
+		goto err;
+
+	ret = 1;
+
+ err:
+	return ret;
+}
+
+int
+tls13_client_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
+{
+	SSL *s = ctx->ssl;
+	const struct ssl_sigalg *sigalg = NULL;
+	uint8_t *sig = NULL, *sig_content = NULL;
+	size_t sig_len, sig_content_len;
+	EVP_MD_CTX *mdctx = NULL;
+	EVP_PKEY_CTX *pctx;
+	EVP_PKEY *pkey;
+	CERT_PKEY *cpk;
+	CBB sig_cbb;
+	int ret = 0;
+
+	memset(&sig_cbb, 0, sizeof(sig_cbb));
+
+	/* XXX - Need to revisit certificate selection. */
+	cpk = &s->cert->pkeys[SSL_PKEY_RSA_ENC];
+	pkey = cpk->privatekey;
+
+	if ((sigalg = ssl_sigalg_select(s, pkey)) == NULL) {
+		/* XXX - SSL_R_SIGNATURE_ALGORITHMS_ERROR */
+		goto err;
+	}
+
+	if (!CBB_init(&sig_cbb, 0))
+		goto err;
+	if (!CBB_add_bytes(&sig_cbb, tls13_cert_verify_pad,
+	    sizeof(tls13_cert_verify_pad)))
+		goto err;
+	if (!CBB_add_bytes(&sig_cbb, tls13_cert_client_verify_context,
+	    strlen(tls13_cert_client_verify_context)))
+		goto err;
+	if (!CBB_add_u8(&sig_cbb, 0))
+		goto err;
+	if (!CBB_add_bytes(&sig_cbb, ctx->hs->transcript_hash,
+	    ctx->hs->transcript_hash_len))
+		goto err;
+	if (!CBB_finish(&sig_cbb, &sig_content, &sig_content_len))
+		goto err;
+
+	if ((mdctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if (!EVP_DigestSignInit(mdctx, &pctx, sigalg->md(), NULL, pkey))
+		goto err;
+	if (sigalg->flags & SIGALG_FLAG_RSA_PSS) {
+		if (!EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING))
+			goto err;
+		if (!EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))
+			goto err;
+	}
+	if (!EVP_DigestSignUpdate(mdctx, sig_content, sig_content_len))
+		goto err;
+	if (EVP_DigestSignFinal(mdctx, NULL, &sig_len) <= 0)
+		goto err;
+	if ((sig = calloc(1, sig_len)) == NULL)
+		goto err;
+	if (EVP_DigestSignFinal(mdctx, sig, &sig_len) <= 0)
+		goto err;
+
+	if (!CBB_add_u16(cbb, sigalg->value))
+		goto err;
+	if (!CBB_add_u16_length_prefixed(cbb, &sig_cbb))
+		goto err;
+	if (!CBB_add_bytes(&sig_cbb, sig, sig_len))
+		goto err;
+
+	if (!CBB_flush(cbb))
+		goto err;
+
+	ret = 1;
+
+ err:
+	if (!ret && ctx->alert == 0)
+		ctx->alert = TLS1_AD_INTERNAL_ERROR;
+
+	CBB_cleanup(&sig_cbb);
+	EVP_MD_CTX_free(mdctx);
+	free(sig_content);
+	free(sig);
+
 	return ret;
 }

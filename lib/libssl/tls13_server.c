@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.17 2020/01/26 02:45:27 beck Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.18 2020/01/26 03:38:24 beck Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -312,19 +312,7 @@ tls13_client_end_of_early_data_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
-{
-	return 0;
-}
-
-int
 tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
-{
-	return 0;
-}
-
-int
-tls13_client_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }
