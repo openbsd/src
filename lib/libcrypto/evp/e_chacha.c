@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha.c,v 1.7 2020/01/26 07:34:05 tb Exp $ */
+/* $OpenBSD: e_chacha.c,v 1.8 2020/01/26 07:47:26 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -37,7 +37,7 @@ static const EVP_CIPHER chacha20_cipher = {
 	/* 
 	 * The 128 bit EVP IV is split for ChaCha into four 32 bit pieces:
 	 * 			counter[0]	counter[1]	iv[0]	iv[1]
-	 * OpenSSL exposes these as;
+	 * OpenSSL exposes these as:
 	 * 	openssl_iv =	counter[0]	iv[0]		iv[1]	iv[2]
 	 * Due to the cipher internal state's symmetry, these are functionally
 	 * equivalent.
