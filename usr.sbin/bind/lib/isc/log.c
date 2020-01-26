@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.20 2020/01/22 13:02:10 florian Exp $ */
+/* $Id: log.c,v 1.21 2020/01/26 11:21:58 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -226,12 +226,6 @@ assignchannel(isc_logconfig_t *lcfg, unsigned int category_id,
 
 static isc_result_t
 sync_channellist(isc_logconfig_t *lcfg);
-
-static isc_result_t
-greatest_version(isc_logchannel_t *channel, int versions, int *greatest);
-
-static isc_result_t
-roll_log(isc_logchannel_t *channel);
 
 static void
 isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
@@ -480,7 +474,6 @@ isc_logconfig_destroy(isc_logconfig_t **lcfgp) {
 	isc_logconfig_t *lcfg;
 	isc_logchannel_t *channel;
 	isc_logchannellist_t *item;
-	char *filename;
 	unsigned int i;
 
 	REQUIRE(lcfgp != NULL && VALID_CONFIG(*lcfgp));
@@ -495,20 +488,6 @@ isc_logconfig_destroy(isc_logconfig_t **lcfgp) {
 
 	while ((channel = ISC_LIST_HEAD(lcfg->channels)) != NULL) {
 		ISC_LIST_UNLINK(lcfg->channels, channel, link);
-
-		if (channel->type == ISC_LOG_TOFILE) {
-			/*
-			 * The filename for the channel may have ultimately
-			 * started its life in user-land as a const string,
-			 * but in isc_log_createchannel it gets copied
-			 * into writable memory and is not longer truly const.
-			 */
-			DE_CONST(FILE_NAME(channel), filename);
-			free(filename);
-
-			if (FILE_STREAM(channel) != NULL)
-				(void)fclose(FILE_STREAM(channel));
-		}
 
 		free(channel->name);
 		free(channel);
@@ -680,7 +659,7 @@ isc_log_createchannel(isc_logconfig_t *lcfg, const char *name,
 
 	REQUIRE(VALID_CONFIG(lcfg));
 	REQUIRE(name != NULL);
-	REQUIRE(type == ISC_LOG_TOSYSLOG   || type == ISC_LOG_TOFILE ||
+	REQUIRE(type == ISC_LOG_TOSYSLOG   ||
 		type == ISC_LOG_TOFILEDESC || type == ISC_LOG_TONULL);
 	REQUIRE(destination != NULL || type == ISC_LOG_TONULL);
 	REQUIRE(level >= ISC_LOG_CRITICAL);
@@ -707,19 +686,6 @@ isc_log_createchannel(isc_logconfig_t *lcfg, const char *name,
 	switch (type) {
 	case ISC_LOG_TOSYSLOG:
 		FACILITY(channel) = destination->facility;
-		break;
-
-	case ISC_LOG_TOFILE:
-		/*
-		 * The file name is copied because greatest_version wants
-		 * to scribble on it, so it needs to be definitely in
-		 * writable memory.
-		 */
-		FILE_NAME(channel) = strdup(destination->file.name);
-		FILE_STREAM(channel) = NULL;
-		FILE_VERSIONS(channel) = destination->file.versions;
-		FILE_MAXSIZE(channel) = destination->file.maximum_size;
-		FILE_MAXREACHED(channel) = ISC_FALSE;
 		break;
 
 	case ISC_LOG_TOFILEDESC:
@@ -853,24 +819,9 @@ isc_log_setcontext(isc_log_t *lctx) {
 
 void
 isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level) {
-	isc_logchannel_t *channel;
-
 	REQUIRE(VALID_CONTEXT(lctx));
 
 	lctx->debug_level = level;
-	/*
-	 * Close ISC_LOG_DEBUGONLY channels if level is zero.
-	 */
-	if (lctx->debug_level == 0)
-		for (channel = ISC_LIST_HEAD(lctx->logconfig->channels);
-		     channel != NULL;
-		     channel = ISC_LIST_NEXT(channel, link))
-			if (channel->type == ISC_LOG_TOFILE &&
-			    (channel->flags & ISC_LOG_DEBUGONLY) != 0 &&
-			    FILE_STREAM(channel) != NULL) {
-				(void)fclose(FILE_STREAM(channel));
-				FILE_STREAM(channel) = NULL;
-			}
 }
 
 unsigned int
@@ -925,23 +876,6 @@ isc_log_gettag(isc_logconfig_t *lcfg) {
 void
 isc_log_opensyslog(const char *tag, int options, int facility) {
 	(void)openlog(tag, options, facility);
-}
-
-void
-isc_log_closefilelogs(isc_log_t *lctx) {
-	isc_logchannel_t *channel;
-
-	REQUIRE(VALID_CONTEXT(lctx));
-
-	for (channel = ISC_LIST_HEAD(lctx->logconfig->channels);
-	     channel != NULL;
-	     channel = ISC_LIST_NEXT(channel, link))
-
-		if (channel->type == ISC_LOG_TOFILE &&
-		    FILE_STREAM(channel) != NULL) {
-			(void)fclose(FILE_STREAM(channel));
-			FILE_STREAM(channel) = NULL;
-		}
 }
 
 /****
@@ -1036,228 +970,6 @@ sync_channellist(isc_logconfig_t *lcfg) {
 	return (ISC_R_SUCCESS);
 }
 
-static isc_result_t
-greatest_version(isc_logchannel_t *channel, int versions, int *greatestp) {
-	/* XXXDCL HIGHLY NT */
-	char *bname, *digit_end;
-	const char *dirname;
-	int version, greatest = -1;
-	size_t bnamelen;
-	isc_dir_t dir;
-	isc_result_t result;
-	char sep = '/';
-
-	REQUIRE(channel->type == ISC_LOG_TOFILE);
-
-	/*
-	 * It is safe to DE_CONST the file.name because it was copied
-	 * with strdup in isc_log_createchannel.
-	 */
-	bname = strrchr(FILE_NAME(channel), sep);
-	if (bname != NULL) {
-		*bname++ = '\0';
-		dirname = FILE_NAME(channel);
-	} else {
-		DE_CONST(FILE_NAME(channel), bname);
-		dirname = ".";
-	}
-	bnamelen = strlen(bname);
-
-	isc_dir_init(&dir);
-	result = isc_dir_open(&dir, dirname);
-
-	/*
-	 * Replace the file separator if it was taken out.
-	 */
-	if (bname != FILE_NAME(channel))
-		*(bname - 1) = sep;
-
-	/*
-	 * Return if the directory open failed.
-	 */
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	while (isc_dir_read(&dir) == ISC_R_SUCCESS) {
-		if (dir.entry.length > bnamelen &&
-		    strncmp(dir.entry.name, bname, bnamelen) == 0 &&
-		    dir.entry.name[bnamelen] == '.') {
-
-			version = strtol(&dir.entry.name[bnamelen + 1],
-					 &digit_end, 10);
-			/*
-			 * Remove any backup files that exceed versions.
-			 */
-			if (*digit_end == '\0' && version >= versions) {
-				result = isc_file_remove(dir.entry.name);
-				if (result != ISC_R_SUCCESS &&
-				    result != ISC_R_FILENOTFOUND)
-					syslog(LOG_ERR, "unable to remove "
-					       "log file '%s': %s",
-					       dir.entry.name,
-					       isc_result_totext(result));
-			} else if (*digit_end == '\0' && version > greatest)
-				greatest = version;
-		}
-	}
-	isc_dir_close(&dir);
-
-	*greatestp = greatest;
-
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-roll_log(isc_logchannel_t *channel) {
-	int i, n, greatest;
-	char current[PATH_MAX + 1];
-	char newpath[PATH_MAX + 1];
-	const char *path;
-	isc_result_t result;
-
-	/*
-	 * Do nothing (not even excess version trimming) if ISC_LOG_ROLLNEVER
-	 * is specified.  Apparently complete external control over the log
-	 * files is desired.
-	 */
-	if (FILE_VERSIONS(channel) == ISC_LOG_ROLLNEVER)
-		return (ISC_R_SUCCESS);
-
-	path = FILE_NAME(channel);
-
-	if (FILE_VERSIONS(channel) == ISC_LOG_ROLLINFINITE) {
-		/*
-		 * Find the first missing entry in the log file sequence.
-		 */
-		for (greatest = 0; greatest < INT_MAX; greatest++) {
-			n = snprintf(current, sizeof(current),
-				     "%s.%u", path, (unsigned)greatest) ;
-			if (n >= (int)sizeof(current) || n < 0 ||
-			    !isc_file_exists(current))
-				break;
-		}
-	} else {
-		/*
-		 * Get the largest existing version and remove any
-		 * version greater than the permitted version.
-		 */
-		result = greatest_version(channel, FILE_VERSIONS(channel),
-					  &greatest);
-		if (result != ISC_R_SUCCESS)
-			return (result);
-
-		/*
-		 * Increment if greatest is not the actual maximum value.
-		 */
-		if (greatest < FILE_VERSIONS(channel) - 1)
-			greatest++;
-	}
-
-	for (i = greatest; i > 0; i--) {
-		result = ISC_R_SUCCESS;
-		n = snprintf(current, sizeof(current), "%s.%u", path,
-			     (unsigned)(i - 1));
-		if (n >= (int)sizeof(current) || n < 0) {
-			result = ISC_R_NOSPACE;
-		}
-		if (result == ISC_R_SUCCESS) {
-			n = snprintf(newpath, sizeof(newpath), "%s.%u",
-				     path, (unsigned)i);
-			if (n >= (int)sizeof(newpath) || n < 0) {
-				result = ISC_R_NOSPACE;
-			}
-		}
-		if (result == ISC_R_SUCCESS)
-			result = isc_file_rename(current, newpath);
-		if (result != ISC_R_SUCCESS &&
-		    result != ISC_R_FILENOTFOUND)
-			syslog(LOG_ERR,
-			       "unable to rename log file '%s.%u' to "
-			       "'%s.%u': %s", path, i - 1, path, i,
-			       isc_result_totext(result));
-	}
-
-	if (FILE_VERSIONS(channel) != 0) {
-		n = snprintf(newpath, sizeof(newpath), "%s.0", path);
-		if (n >= (int)sizeof(newpath) || n < 0)
-			result = ISC_R_NOSPACE;
-		else
-			result = isc_file_rename(path, newpath);
-		if (result != ISC_R_SUCCESS &&
-		    result != ISC_R_FILENOTFOUND)
-			syslog(LOG_ERR,
-			       "unable to rename log file '%s' to '%s.0': %s",
-			       path, path, isc_result_totext(result));
-	} else {
-		result = isc_file_remove(path);
-		if (result != ISC_R_SUCCESS &&
-		    result != ISC_R_FILENOTFOUND)
-			syslog(LOG_ERR, "unable to remove log file '%s': %s",
-			       path, isc_result_totext(result));
-	}
-
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-isc_log_open(isc_logchannel_t *channel) {
-	struct stat statbuf;
-	isc_boolean_t regular_file;
-	isc_boolean_t roll = ISC_FALSE;
-	isc_result_t result = ISC_R_SUCCESS;
-	const char *path;
-
-	REQUIRE(channel->type == ISC_LOG_TOFILE);
-	REQUIRE(FILE_STREAM(channel) == NULL);
-
-	path = FILE_NAME(channel);
-
-	REQUIRE(path != NULL && *path != '\0');
-
-	/*
-	 * Determine type of file; only regular files will be
-	 * version renamed, and only if the base file exists
-	 * and either has no size limit or has reached its size limit.
-	 */
-	if (stat(path, &statbuf) == 0) {
-		regular_file = S_ISREG(statbuf.st_mode) ? ISC_TRUE : ISC_FALSE;
-		/* XXXDCL if not regular_file complain? */
-		if ((FILE_MAXSIZE(channel) == 0 &&
-		     FILE_VERSIONS(channel) != ISC_LOG_ROLLNEVER) ||
-		    (FILE_MAXSIZE(channel) > 0 &&
-		     statbuf.st_size >= FILE_MAXSIZE(channel)))
-			roll = regular_file;
-	} else if (errno == ENOENT) {
-		regular_file = ISC_TRUE;
-		POST(regular_file);
-	} else
-		result = ISC_R_INVALIDFILE;
-
-	/*
-	 * Version control.
-	 */
-	if (result == ISC_R_SUCCESS && roll) {
-		if (FILE_VERSIONS(channel) == ISC_LOG_ROLLNEVER)
-			return (ISC_R_MAXSIZE);
-		result = roll_log(channel);
-		if (result != ISC_R_SUCCESS) {
-			if ((channel->flags & ISC_LOG_OPENERR) == 0) {
-				syslog(LOG_ERR,
-				       "isc_log_open: roll_log '%s' "
-				       "failed: %s",
-				       FILE_NAME(channel),
-				       isc_result_totext(result));
-				channel->flags |= ISC_LOG_OPENERR;
-			}
-			return (result);
-		}
-	}
-
-	result = isc_stdio_open(path, "a", &FILE_STREAM(channel));
-
-	return (result);
-}
-
 isc_boolean_t
 isc_log_wouldlog(isc_log_t *lctx, int level) {
 	/*
@@ -1290,14 +1002,12 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 	char time_string[64];
 	char level_string[24];
 	const char *iformat;
-	struct stat statbuf;
 	isc_boolean_t matched = ISC_FALSE;
 	isc_boolean_t printtime, printtag, printcolon;
 	isc_boolean_t printcategory, printmodule, printlevel;
 	isc_logconfig_t *lcfg;
 	isc_logchannel_t *channel;
 	isc_logchannellist_t *category_channels;
-	isc_result_t result;
 
 	REQUIRE(lctx == NULL || VALID_CONTEXT(lctx));
 	REQUIRE(category != NULL);
@@ -1523,49 +1233,6 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				       != 0);
 
 		switch (channel->type) {
-		case ISC_LOG_TOFILE:
-			if (FILE_MAXREACHED(channel)) {
-				/*
-				 * If the file can be rolled, OR
-				 * If the file no longer exists, OR
-				 * If the file is less than the maximum size,
-				 *    (such as if it had been renamed and
-				 *     a new one touched, or it was truncated
-				 *     in place)
-				 * ... then close it to trigger reopening.
-				 */
-				if (FILE_VERSIONS(channel) !=
-				    ISC_LOG_ROLLNEVER ||
-				    (stat(FILE_NAME(channel), &statbuf) != 0 &&
-				     errno == ENOENT) ||
-				    statbuf.st_size < FILE_MAXSIZE(channel)) {
-					(void)fclose(FILE_STREAM(channel));
-					FILE_STREAM(channel) = NULL;
-					FILE_MAXREACHED(channel) = ISC_FALSE;
-				} else
-					/*
-					 * Eh, skip it.
-					 */
-					break;
-			}
-
-			if (FILE_STREAM(channel) == NULL) {
-				result = isc_log_open(channel);
-				if (result != ISC_R_SUCCESS &&
-				    result != ISC_R_MAXSIZE &&
-				    (channel->flags & ISC_LOG_OPENERR) == 0) {
-					syslog(LOG_ERR,
-					       "isc_log_open '%s' failed: %s",
-					       FILE_NAME(channel),
-					       isc_result_totext(result));
-					channel->flags |= ISC_LOG_OPENERR;
-				}
-				if (result != ISC_R_SUCCESS)
-					break;
-				channel->flags &= ~ISC_LOG_OPENERR;
-			}
-			/* FALLTHROUGH */
-
 		case ISC_LOG_TOFILEDESC:
 			fprintf(FILE_STREAM(channel),
 				"%s%s%s%s%s%s%s%s%s%s\n",
@@ -1583,23 +1250,6 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				lctx->buffer);
 
 			fflush(FILE_STREAM(channel));
-
-			/*
-			 * If the file now exceeds its maximum size
-			 * threshold, note it so that it will not be logged
-			 * to any more.
-			 */
-			if (FILE_MAXSIZE(channel) > 0) {
-				INSIST(channel->type == ISC_LOG_TOFILE);
-
-				/* XXXDCL NT fstat/fileno */
-				/* XXXDCL complain if fstat fails? */
-				if (fstat(fileno(FILE_STREAM(channel)),
-					  &statbuf) >= 0 &&
-				    statbuf.st_size > FILE_MAXSIZE(channel))
-					FILE_MAXREACHED(channel) = ISC_TRUE;
-			}
-
 			break;
 
 		case ISC_LOG_TOSYSLOG:

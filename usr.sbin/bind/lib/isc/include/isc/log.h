@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.10 2020/01/22 13:02:10 florian Exp $ */
+/* $Id: log.h,v 1.11 2020/01/26 11:21:58 florian Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -54,8 +54,7 @@
  */
 #define ISC_LOG_TONULL		1
 #define ISC_LOG_TOSYSLOG	2
-#define ISC_LOG_TOFILE		3
-#define ISC_LOG_TOFILEDESC	4
+#define ISC_LOG_TOFILEDESC	3
 /*@}*/
 
 /*@{*/
