@@ -26,7 +26,7 @@ VERSION=@BIND9_VERSION@
 HEADERS =	aes.h app.h assertions.h base32.h base64.h \
 		bind9.h boolean.h buffer.h bufferlist.h \
 		commandline.h errno.h error.h \
-		event.h eventclass.h file.h formatcheck.h fsaccess.h \
+		event.h eventclass.h formatcheck.h \
 		hash.h heap.h hex.h hmacmd5.h hmacsha.h \
 		@ISC_IPV6_H@ iterated_hash.h \
 		lang.h lex.h lib.h likely.h list.h log.h \

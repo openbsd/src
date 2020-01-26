@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.20 2020/01/26 11:22:33 florian Exp $
+ * $Id: dst_api.c,v 1.21 2020/01/26 11:23:42 florian Exp $
  */
 
 /*! \file */
@@ -46,7 +46,7 @@
 #include <isc/buffer.h>
 #include <isc/dir.h>
 
-#include <isc/fsaccess.h>
+
 #include <isc/hmacsha.h>
 #include <isc/lex.h>
 
@@ -59,7 +59,7 @@
 #include <string.h>
 #include <isc/time.h>
 #include <isc/util.h>
-#include <isc/file.h>
+
 
 
 

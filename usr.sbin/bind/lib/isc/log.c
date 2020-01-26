@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.21 2020/01/26 11:21:58 florian Exp $ */
+/* $Id: log.c,v 1.22 2020/01/26 11:23:42 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -29,7 +29,7 @@
 #include <sys/types.h>	/* dev_t FreeBSD 2.1 */
 
 #include <isc/dir.h>
-#include <isc/file.h>
+
 #include <isc/log.h>
 #include <isc/magic.h>
 #include <isc/msgs.h>

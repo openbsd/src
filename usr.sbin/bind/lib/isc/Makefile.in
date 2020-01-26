@@ -30,7 +30,7 @@ CWARNINGS =
 # Alphabetically
 UNIXOBJS =	 \
 		unix/app.@O@ unix/dir.@O@ unix/errno.@O@ \
-		unix/errno2result.@O@ unix/file.@O@ unix/fsaccess.@O@ \
+		unix/errno2result.@O@ \
 		unix/net.@O@ \
 		unix/socket.@O@ unix/stdio.@O@ \
 		unix/stdtime.@O@ unix/strerror.@O@ unix/time.@O@

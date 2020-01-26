@@ -21,7 +21,7 @@
 #include <stdlib.h>
 
 #include <isc/event.h>
-#include <isc/file.h>
+
 #include <isc/magic.h>
 
 
