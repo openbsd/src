@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.18 2020/01/26 03:38:24 beck Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.19 2020/01/26 03:55:22 beck Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -314,13 +314,179 @@ tls13_client_end_of_early_data_recv(struct tls13_ctx *ctx, CBS *cbs)
 int
 tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
-	return 0;
+	CBS cert_request_context, cert_list, cert_data, cert_exts;
+	struct stack_st_X509 *certs = NULL;
+	SSL *s = ctx->ssl;
+	X509 *cert = NULL;
+	EVP_PKEY *pkey;
+	const uint8_t *p;
+	int cert_idx;
+	int ret = 0;
+
+	if (!CBS_get_u8_length_prefixed(cbs, &cert_request_context))
+		goto err;
+	if (CBS_len(&cert_request_context) != 0)
+		goto err;
+	if (!CBS_get_u24_length_prefixed(cbs, &cert_list))
+		goto err;
+
+	if (CBS_len(&cert_list) == 0)
+		return 1;
+
+	if ((certs = sk_X509_new_null()) == NULL)
+		goto err;
+	while (CBS_len(&cert_list) > 0) {
+		if (!CBS_get_u24_length_prefixed(&cert_list, &cert_data))
+			goto err;
+		if (!CBS_get_u16_length_prefixed(&cert_list, &cert_exts))
+			goto err;
+
+		p = CBS_data(&cert_data);
+		if ((cert = d2i_X509(NULL, &p, CBS_len(&cert_data))) == NULL)
+			goto err;
+		if (p != CBS_data(&cert_data) + CBS_len(&cert_data))
+			goto err;
+
+		if (!sk_X509_push(certs, cert))
+			goto err;
+
+		cert = NULL;
+	}
+
+	/*
+	 * At this stage we still have no proof of possession. As such, it would
+	 * be preferable to keep the chain and verify once we have successfully
+	 * processed the CertificateVerify message.
+	 */
+	if (ssl_verify_cert_chain(s, certs) <= 0 &&
+	    s->verify_mode != SSL_VERIFY_NONE) {
+		ctx->alert = ssl_verify_alarm_type(s->verify_result);
+		tls13_set_errorx(ctx, TLS13_ERR_VERIFY_FAILED, 0,
+		    "failed to verify peer certificate", NULL);
+		goto err;
+	}
+	ERR_clear_error();
+
+	cert = sk_X509_value(certs, 0);
+	X509_up_ref(cert);
+
+	if ((pkey = X509_get0_pubkey(cert)) == NULL)
+		goto err;
+	if (EVP_PKEY_missing_parameters(pkey))
+		goto err;
+	if ((cert_idx = ssl_cert_type(cert, pkey)) < 0)
+		goto err;
+
+	ssl_sess_cert_free(SSI(s)->sess_cert);
+	if ((SSI(s)->sess_cert = ssl_sess_cert_new()) == NULL)
+		goto err;
+
+	SSI(s)->sess_cert->cert_chain = certs;
+	certs = NULL;
+
+	X509_up_ref(cert);
+	SSI(s)->sess_cert->peer_pkeys[cert_idx].x509 = cert;
+	SSI(s)->sess_cert->peer_key = &(SSI(s)->sess_cert->peer_pkeys[cert_idx]);
+
+	X509_free(s->session->peer);
+
+	X509_up_ref(cert);
+	s->session->peer = cert;
+	s->session->verify_result = s->verify_result;
+
+	ctx->handshake_stage.hs_type |= WITH_CCV;
+	ret = 1;
+
+ err:
+	sk_X509_pop_free(certs, X509_free);
+	X509_free(cert);
+
+	return ret;
 }
 
 int
 tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
-	return 0;
+	const struct ssl_sigalg *sigalg;
+	uint16_t signature_scheme;
+	uint8_t *sig_content = NULL;
+	size_t sig_content_len;
+	EVP_MD_CTX *mdctx = NULL;
+	EVP_PKEY_CTX *pctx;
+	EVP_PKEY *pkey;
+	X509 *cert;
+	CBS signature;
+	CBB cbb;
+	int ret = 0;
+
+	memset(&cbb, 0, sizeof(cbb));
+
+	if (!CBS_get_u16(cbs, &signature_scheme))
+		goto err;
+	if (!CBS_get_u16_length_prefixed(cbs, &signature))
+		goto err;
+
+	if ((sigalg = ssl_sigalg(signature_scheme, tls13_sigalgs,
+	    tls13_sigalgs_len)) == NULL)
+		goto err;
+
+	if (!CBB_init(&cbb, 0))
+		goto err;
+	if (!CBB_add_bytes(&cbb, tls13_cert_verify_pad,
+	    sizeof(tls13_cert_verify_pad)))
+		goto err;
+	if (!CBB_add_bytes(&cbb, tls13_cert_client_verify_context,
+	    strlen(tls13_cert_client_verify_context)))
+		goto err;
+	if (!CBB_add_u8(&cbb, 0))
+		goto err;
+	if (!CBB_add_bytes(&cbb, ctx->hs->transcript_hash,
+	    ctx->hs->transcript_hash_len))
+		goto err;
+	if (!CBB_finish(&cbb, &sig_content, &sig_content_len))
+		goto err;
+
+	if ((cert = ctx->ssl->session->peer) == NULL)
+		goto err;
+	if ((pkey = X509_get0_pubkey(cert)) == NULL)
+		goto err;
+	if (!ssl_sigalg_pkey_ok(sigalg, pkey, 1))
+		goto err;
+
+	if (CBS_len(&signature) > EVP_PKEY_size(pkey))
+		goto err;
+
+	if ((mdctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if (!EVP_DigestVerifyInit(mdctx, &pctx, sigalg->md(), NULL, pkey))
+		goto err;
+	if (sigalg->flags & SIGALG_FLAG_RSA_PSS) {
+		if (!EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING))
+			goto err;
+		if (!EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))
+			goto err;
+	}
+	if (!EVP_DigestVerifyUpdate(mdctx, sig_content, sig_content_len)) {
+		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		goto err;
+	}
+	if (EVP_DigestVerifyFinal(mdctx, CBS_data(&signature),
+	    CBS_len(&signature)) <= 0) {
+		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		goto err;
+	}
+
+	ret = 1;
+
+ err:
+	if (!ret && ctx->alert == 0) {
+		ctx->alert = TLS1_AD_DECODE_ERROR;
+	}
+	CBB_cleanup(&cbb);
+	EVP_MD_CTX_free(mdctx);
+	free(sig_content);
+
+	return ret;
 }
 
 int
@@ -439,7 +605,10 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 	    &secrets->server_handshake_traffic))
 		goto err;
 
- 	ctx->handshake_stage.hs_type |= NEGOTIATED | WITHOUT_CR;
+	ctx->handshake_stage.hs_type |= NEGOTIATED;
+	if (!(SSL_get_verify_mode(s) & SSL_VERIFY_PEER))
+		ctx->handshake_stage.hs_type |= WITHOUT_CR;
+
 	ret = 1;
 
  err:
