@@ -1,6 +1,6 @@
 #ifndef GNODE_H
 #define GNODE_H
-/*	$OpenBSD: gnode.h,v 1.37 2020/01/13 14:07:35 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.38 2020/01/26 12:37:47 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -77,6 +77,8 @@
 #define SPECIAL_NOTHING 	6U	/* this is used for things we
 					 * recognize for compatibility but
 					 * don't do anything with... */
+#define SPECIAL_DEPRECATED	7U	/* this is an old keyword and it will
+					 * trigger a fatal error. */
 #define SPECIAL_INVISIBLE	8U
 #define SPECIAL_JOIN		9U
 #define SPECIAL_MADE		11U
