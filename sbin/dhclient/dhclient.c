@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.658 2020/01/24 00:54:16 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.659 2020/01/26 10:31:03 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -533,9 +533,7 @@ main(int argc, char *argv[])
 			 */
 			if (errno != ENOENT)
 				fatal("lstat(%s)", path_dhclient_conf);
-		} else if (S_ISREG(sb.st_mode) == 0)
-			fatalx("'%s' is not a regular file",
-			    path_dhclient_conf);
+		}
 	}
 
 	if ((cmd_opts & (OPT_FOREGROUND | OPT_NOACTION)) != 0)
