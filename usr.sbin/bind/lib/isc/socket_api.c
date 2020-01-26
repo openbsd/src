@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket_api.c,v 1.8 2020/01/23 08:15:04 florian Exp $ */
+/* $Id: socket_api.c,v 1.9 2020/01/26 11:26:54 florian Exp $ */
 
 
 
@@ -22,35 +22,6 @@
 #include <isc/magic.h>
 #include <isc/socket.h>
 #include <isc/util.h>
-
-static isc_socketmgrcreatefunc_t socketmgr_createfunc = NULL;
-
-isc_result_t
-isc_socket_register(isc_socketmgrcreatefunc_t createfunc) {
-	isc_result_t result = ISC_R_SUCCESS;
-
-	if (socketmgr_createfunc == NULL)
-		socketmgr_createfunc = createfunc;
-	else
-		result = ISC_R_EXISTS;
-
-	return (result);
-}
-
-isc_result_t
-isc_socketmgr_createinctx(isc_appctx_t *actx,
-			  isc_socketmgr_t **managerp)
-{
-	isc_result_t result;
-
-	REQUIRE(socketmgr_createfunc != NULL);
-	result = (*socketmgr_createfunc)( managerp);
-
-	if (result == ISC_R_SUCCESS)
-		isc_appctx_setsocketmgr(actx, *managerp);
-
-	return (result);
-}
 
 isc_result_t
 isc_socketmgr_create(isc_socketmgr_t **managerp) {
@@ -104,17 +75,6 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr,
 }
 
 isc_result_t
-isc_socket_sendto(isc_socket_t *sock, isc_region_t *region, isc_task_t *task,
-		  isc_taskaction_t action, void *arg,
-		  isc_sockaddr_t *address, struct in6_pktinfo *pktinfo)
-{
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	return (isc__socket_sendto(sock, region, task,
-			   action, arg, address, pktinfo));
-}
-
-isc_result_t
 isc_socket_connect(isc_socket_t *sock, isc_sockaddr_t *addr, isc_task_t *task,
 		   isc_taskaction_t action, void *arg)
 {
@@ -123,90 +83,11 @@ isc_socket_connect(isc_socket_t *sock, isc_sockaddr_t *addr, isc_task_t *task,
 	return (isc__socket_connect(sock, addr, task, action, arg));
 }
 
-isc_result_t
-isc_socket_recv(isc_socket_t *sock, isc_region_t *region, unsigned int minimum,
-		isc_task_t *task, isc_taskaction_t action, void *arg)
-{
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	return (isc__socket_recv(sock, region, minimum,
-					 task, action, arg));
-}
-
 void
 isc_socket_cancel(isc_socket_t *sock, isc_task_t *task, unsigned int how) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
 	isc__socket_cancel(sock, task, how);
-}
-
-isc_result_t
-isc_socket_getsockname(isc_socket_t *sock, isc_sockaddr_t *addressp) {
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	return (isc__socket_getsockname(sock, addressp));
-}
-
-void
-isc_socket_ipv6only(isc_socket_t *sock, isc_boolean_t yes) {
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	isc__socket_ipv6only(sock, yes);
-}
-
-void
-isc_socket_dscp(isc_socket_t *sock, isc_dscp_t dscp) {
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	sock->methods->dscp(sock, dscp);
-}
-
-isc_sockettype_t
-isc_socket_gettype(isc_socket_t *sock) {
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	return (isc__socket_gettype(sock));
-}
-
-void
-isc_socket_setname(isc_socket_t *sock, const char *name, void *tag) {
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	UNUSED(sock);		/* in case REQUIRE() is empty */
-	UNUSED(name);
-	UNUSED(tag);
-}
-
-isc_result_t
-isc_socket_dup(isc_socket_t *sock, isc_socket_t **socketp) {
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-	REQUIRE(socketp != NULL && *socketp == NULL);
-
-	return (isc__socket_dup(sock, socketp));
-}
-
-int
-isc_socket_getfd(isc_socket_t *sock) {
-	REQUIRE(ISCAPI_SOCKET_VALID(sock));
-
-	return (isc__socket_getfd(sock));
-}
-
-isc_result_t
-isc_socket_open(isc_socket_t *sock) {
-	return (isc__socket_open(sock));
-}
-
-isc_result_t
-isc_socket_close(isc_socket_t *sock) {
-	return (isc__socket_close(sock));
-}
-
-isc_result_t
-isc_socketmgr_create2(isc_socketmgr_t **managerp,
-		       unsigned int maxsocks)
-{
-	return (isc__socketmgr_create2(managerp, maxsocks));
 }
 
 isc_result_t
@@ -218,34 +99,10 @@ isc_socket_recvv(isc_socket_t *sock, isc_bufferlist_t *buflist,
 }
 
 isc_result_t
-isc_socket_recv2(isc_socket_t *sock, isc_region_t *region,
-		  unsigned int minimum, isc_task_t *task,
-		  isc_socketevent_t *event, unsigned int flags)
-{
-	return (isc__socket_recv2(sock, region, minimum, task, event, flags));
-}
-
-isc_result_t
-isc_socket_send(isc_socket_t *sock, isc_region_t *region,
-		 isc_task_t *task, isc_taskaction_t action, void *arg)
-{
-	return (isc__socket_send(sock, region, task, action, arg));
-}
-
-isc_result_t
 isc_socket_sendv(isc_socket_t *sock, isc_bufferlist_t *buflist,
 		  isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	return (isc__socket_sendv(sock, buflist, task, action, arg));
-}
-
-isc_result_t
-isc_socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
-		    isc_task_t *task, isc_taskaction_t action, void *arg,
-		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo)
-{
-	return (isc__socket_sendtov(sock, buflist, task, action, arg,
-				    address, pktinfo));
 }
 
 isc_result_t
@@ -256,24 +113,4 @@ isc_socket_sendtov2(isc_socket_t *sock, isc_bufferlist_t *buflist,
 {
 	return (isc__socket_sendtov2(sock, buflist, task, action, arg,
 				     address, pktinfo, flags));
-}
-
-isc_result_t
-isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
-		    isc_task_t *task,
-		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
-		    isc_socketevent_t *event, unsigned int flags)
-{
-	return (isc__socket_sendto2(sock, region, task, address, pktinfo,
-				    event, flags));
-}
-
-isc_result_t
-isc_socket_filter(isc_socket_t *sock, const char *filter) {
-	return (isc__socket_filter(sock, filter));
-}
-
-isc_result_t
-isc_socket_getpeername(isc_socket_t *sock, isc_sockaddr_t *addressp) {
-	return (isc__socket_getpeername(sock, addressp));
 }
