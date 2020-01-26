@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.340 2020/01/18 08:40:19 visa Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.341 2020/01/26 04:28:18 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1216,6 +1216,90 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	fdplock(fdp);
 	fdinsert(fdp, indx, cloexec, fp);
 	FRELE(fp, p);
+out:
+	fdpunlock(fdp);
+	return (error);
+}
+
+/*
+ * Open a new created file (in /tmp) suitable for mmaping.
+ */
+int
+sys___tmpfd(struct proc *p, void *v, register_t *retval)
+{
+	struct sys___tmpfd_args /* {
+		syscallarg(int) flags;
+	} */ *uap = v;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct vnode *vp;
+	int oflags = SCARG(uap, flags);
+	int flags, cloexec, cmode;
+	int indx, error;
+	unsigned int i;
+	struct nameidata nd;
+	char path[64];
+	static const char *letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
+
+	/* most flags are hardwired */
+	oflags = O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW | (oflags & O_CLOEXEC);
+
+	cloexec = (oflags & O_CLOEXEC) ? UF_EXCLOSE : 0;
+
+	fdplock(fdp);
+	if ((error = falloc(p, &fp, &indx)) != 0)
+		goto out;
+	fdpunlock(fdp);
+
+	flags = FFLAGS(oflags);
+
+	arc4random_buf(path, sizeof(path));
+	memcpy(path, "/tmp/", 5);
+	for (i = 5; i < sizeof(path) - 1; i++)
+		path[i] = letters[(unsigned char)path[i] & 63];
+	path[sizeof(path)-1] = 0;
+
+	cmode = 0600;
+	NDINITAT(&nd, 0, KERNELPATH, UIO_SYSSPACE, AT_FDCWD, path, p);
+	if ((error = vn_open(&nd, flags, cmode)) != 0) {
+		fdplock(fdp);
+		if (error == ERESTART)
+			error = EINTR;
+		fdremove(fdp, indx);
+		closef(fp, p);
+		goto out;
+	}
+	vp = nd.ni_vp;
+	fp->f_flag = flags & FMASK;
+	fp->f_type = DTYPE_VNODE;
+	fp->f_ops = &vnops;
+	fp->f_data = vp;
+	VOP_UNLOCK(vp);
+	*retval = indx;
+	fdplock(fdp);
+	fdinsert(fdp, indx, cloexec, fp);
+	FRELE(fp, p);
+
+	/* unlink it */
+	/* XXX
+	 * there is a wee race here, although it is mostly inconsequential.
+	 * perhaps someday we can create a file like object without a name...
+	 */
+	NDINITAT(&nd, DELETE, KERNELPATH | LOCKPARENT | LOCKLEAF, UIO_SYSSPACE,
+	    AT_FDCWD, path, p);
+	if ((error = namei(&nd)) != 0) {
+		printf("can't unlink temp file! %d\n", error);
+		error = 0;
+	} else {
+		vp = nd.ni_vp;
+		uvm_vnp_uncache(vp);
+		error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+		if (error) {
+			printf("error removing vop: %d\n", error);
+			error = 0;
+		}
+	}
+
 out:
 	fdpunlock(fdp);
 	return (error);
