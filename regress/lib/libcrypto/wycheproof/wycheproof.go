@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.115 2019/12/14 18:39:02 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.116 2020/01/27 00:37:59 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -1535,6 +1535,14 @@ func runECDHTest(nid int, variant testVariant, wt *wycheproofTestECDH) bool {
 		log.Fatalf("Failed to decode shared secret: %v", err)
 	}
 
+	// XXX The shared fields of the secp224k1 test cases have a 0 byte preprended.
+	if len(shared) == int(secLen) + 1 && shared[0] == 0 {
+		fmt.Printf("INFO: Test case %d (%q) %v - prepending 0 byte\n", wt.TCID, wt.Comment, wt.Flags)
+		// shared = shared[1:];
+		zero := make([]byte, 1, secLen + 1)
+		secret = append(zero, secret...)
+	}
+
 	success := true
 	if !bytes.Equal(shared, secret) {
 		fmt.Printf("FAIL: Test case %d (%q) %v - expected and computed shared secret do not match, want %v\n",
@@ -1548,12 +1556,6 @@ func runECDHTest(nid int, variant testVariant, wt *wycheproofTestECDH) bool {
 }
 
 func runECDHTestGroup(algorithm string, variant testVariant, wtg *wycheproofTestGroupECDH) bool {
-	// XXX
-	if wtg.Curve == "secp224k1" {
-		fmt.Printf("INFO: skipping %v test group %v with curve %v and %v encoding...\n", algorithm, wtg.Type, wtg.Curve, wtg.Encoding)
-		return true
-	}
-
 	fmt.Printf("Running %v test group %v with curve %v and %v encoding...\n",
 		algorithm, wtg.Type, wtg.Curve, wtg.Encoding)
 
