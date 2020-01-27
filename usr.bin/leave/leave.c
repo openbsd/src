@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.19 2018/02/10 00:00:47 tb Exp $	*/
+/*	$OpenBSD: leave.c,v 1.20 2020/01/27 01:05:28 tedu Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 static __dead void	usage(void);
@@ -83,6 +84,9 @@ main(int argc, char *argv[])
 		plusnow = 1;
 		++cp;
 	}
+
+	if (!plusnow && strlen(cp) != 4)
+		usage();
 
 	for (hours = 0; (c = *cp) && c != '\n'; ++cp) {
 		if (!isdigit((unsigned char)c))
