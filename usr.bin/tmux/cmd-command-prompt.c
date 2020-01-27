@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.46 2019/05/23 11:13:30 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.47 2020/01/27 08:53:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,8 +40,8 @@ const struct cmd_entry cmd_command_prompt_entry = {
 	.name = "command-prompt",
 	.alias = NULL,
 
-	.args = { "1iI:Np:t:", 0, 1 },
-	.usage = "[-1Ni] [-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
+	.args = { "1kiI:Np:t:", 0, 1 },
+	.usage = "[-1kiN] [-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
 		 "[template]",
 
 	.flags = 0,
@@ -122,6 +122,8 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->flags |= PROMPT_NUMERIC;
 	else if (args_has(args, 'i'))
 		cdata->flags |= PROMPT_INCREMENTAL;
+	else if (args_has(args, 'k'))
+		cdata->flags |= PROMPT_KEY;
 	status_prompt_set(c, prompt, input, cmd_command_prompt_callback,
 	    cmd_command_prompt_free, cdata, cdata->flags);
 	free(prompt);
