@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.174 2020/01/26 00:53:31 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.175 2020/01/27 07:41:02 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1000,17 +1000,19 @@ st_buf_done(struct scsi_xfer *xs)
 void
 stminphys(struct buf *bp)
 {
-	struct st_softc *st;
+	struct scsi_link	*link;
+	struct st_softc		*sc;
 
-	st = stlookup(STUNIT(bp->b_dev));
-	if (st == NULL)
+	sc = stlookup(STUNIT(bp->b_dev));
+	if (sc == NULL)
 		return;
+	link = sc->sc_link;
 
-	(*st->sc_link->adapter->dev_minphys)(bp, st->sc_link);
-	if (st->sc_link->adapter->dev_minphys != scsi_minphys)
-		scsi_minphys(bp, st->sc_link);
+	(*link->adapter->dev_minphys)(bp, link);
+	if (link->adapter->dev_minphys != scsi_minphys)
+		scsi_minphys(bp, link);
 
-	device_unref(&st->sc_dev);
+	device_unref(&sc->sc_dev);
 }
 
 int
