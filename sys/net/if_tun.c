@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.213 2020/01/25 10:56:43 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.214 2020/01/27 11:00:44 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -287,6 +287,10 @@ tun_clone_destroy(struct ifnet *ifp)
 	dev_t			 dev;
 	int			 s;
 
+	KERNEL_ASSERT_LOCKED();
+
+	if (ISSET(sc->sc_flags, TUN_DEAD))
+		return (ENXIO);
 	SET(sc->sc_flags, TUN_DEAD);
 
 	/* kick userland off the device */
@@ -299,10 +303,16 @@ tun_clone_destroy(struct ifnet *ifp)
 
 		KASSERT(sc->sc_dev == 0);
 	}
-	tun_wakeup(sc);
 
+	/* prevent userland from getting to the device again */
 	SMR_LIST_REMOVE_LOCKED(sc, sc_entry);
 	smr_barrier();
+
+	/* help read() give up */
+	if (sc->sc_reading)
+		wakeup(&ifp->if_snd);
+
+	/* wait for device entrypoints to finish */
 	refcnt_finalize(&sc->sc_refs, "tundtor");
 
 	s = splhigh();
