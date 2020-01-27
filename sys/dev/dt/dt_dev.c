@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.2 2020/01/24 14:00:31 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.3 2020/01/27 17:13:33 visa Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -91,7 +91,7 @@ unsigned int			dt_nprobes;	/* [I] # of probes available */
 SIMPLEQ_HEAD(, dt_probe)	dt_probe_list;	/* [I] list of probes */
 
 struct rwlock			dt_lock = RWLOCK_INITIALIZER("dtlk");
-volatile uint32_t		dt_tracing = 0;	/* [d] # of processes tracing */
+volatile uint32_t		dt_tracing = 0;	/* [k] # of processes tracing */
 
 void	dtattach(struct device *, struct device *, void *);
 int	dtopen(dev_t, int, int, struct proc *);
@@ -107,9 +107,6 @@ int	dt_ioctl_record_start(struct dt_softc *);
 void	dt_ioctl_record_stop(struct dt_softc *);
 int	dt_ioctl_probe_enable(struct dt_softc *, struct dtioc_req *);
 void	dt_ioctl_probe_disable(struct dt_softc *, struct dtioc_req *);
-
-int	dt_enter(void);
-void	dt_leave(uint32_t);
 
 int	dt_pcb_ring_copy(struct dt_pcb *, struct dt_evt *, size_t, uint64_t *);
 
@@ -379,7 +376,6 @@ int
 dt_ioctl_record_start(struct dt_softc *sc)
 {
 	struct dt_pcb *dp;
-	int count;
 
 	if (sc->ds_recording)
 		return EBUSY;
@@ -388,16 +384,15 @@ dt_ioctl_record_start(struct dt_softc *sc)
  	if (TAILQ_EMPTY(&sc->ds_pcbs))
 		return ENOENT;
 
-	count = dt_enter();
+	rw_enter_write(&dt_lock);
 	TAILQ_FOREACH(dp, &sc->ds_pcbs, dp_snext) {
 		struct dt_probe *dtp = dp->dp_dtp;
 
-		rw_assert_wrlock(&dt_lock);
 		SMR_SLIST_INSERT_HEAD_LOCKED(&dtp->dtp_pcbs, dp, dp_pnext);
 		dtp->dtp_recording++;
 		dtp->dtp_prov->dtpv_recording++;
 	}
-	dt_leave(count);
+	rw_exit_write(&dt_lock);
 
 	sc->ds_recording = 1;
 	dt_tracing++;
@@ -409,7 +404,6 @@ void
 dt_ioctl_record_stop(struct dt_softc *sc)
 {
 	struct dt_pcb *dp;
-	int count;
 
 	KASSERT(suser(curproc) == 0);
 
@@ -421,16 +415,18 @@ dt_ioctl_record_stop(struct dt_softc *sc)
 	dt_tracing--;
 	sc->ds_recording = 0;
 
-	count = dt_enter();
+	rw_enter_write(&dt_lock);
 	TAILQ_FOREACH(dp, &sc->ds_pcbs, dp_snext) {
 		struct dt_probe *dtp = dp->dp_dtp;
 
-		rw_assert_wrlock(&dt_lock);
 		dtp->dtp_recording--;
 		dtp->dtp_prov->dtpv_recording--;
 		SMR_SLIST_REMOVE_LOCKED(&dtp->dtp_pcbs, dp, dt_pcb, dp_pnext);
 	}
-	dt_leave(count);
+	rw_exit_write(&dt_lock);
+
+	/* Wait until readers cannot access the PCBs. */
+	smr_barrier();
 }
 
 int
@@ -468,27 +464,6 @@ dt_ioctl_probe_enable(struct dt_softc *sc, struct dtioc_req *dtrq)
 	}
 
 	return 0;
-}
-
-int
-dt_enter(void)
-{
-	uint32_t count;
-
-	rw_enter_write(&dt_lock);
-	count = dt_tracing;
-	dt_tracing = 0;
-
-	smr_barrier();
-
-	return count;
-}
-
-void
-dt_leave(uint32_t count)
-{
-	dt_tracing = count;
-	rw_exit_write(&dt_lock);
 }
 
 struct dt_probe *
