@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.1 2020/01/21 16:24:55 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.2 2020/01/27 14:15:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -100,7 +100,7 @@ static int	 yylex(void);
 %token	ARG0 ARG1 ARG2 ARG3 ARG4 ARG5 ARG6 ARG7 ARG8 ARG9
 %token	COMM HZ KSTACK USTACK NSECS PID RETVAL TID
 /* Functions */
-%token  F_CLEAR F_DELETE F_EXIT F_PRINT F_PRINTF F_ZERO
+%token  F_CLEAR F_DELETE F_EXIT F_PRINT F_PRINTF F_TIME F_ZERO
 /* Map funcitons */
 %token  M_COUNT
 %token	<v.string>	STRING CSTRING
@@ -170,6 +170,7 @@ func0		: F_EXIT			{ $$ = B_AC_EXIT; }
 		;
 
 func1		: F_CLEAR			{ $$ = B_AC_CLEAR; }
+		| F_TIME			{ $$ = B_AC_TIME; }
 		| F_ZERO			{ $$ = B_AC_ZERO; }
 		;
 
@@ -500,6 +501,7 @@ lookup(char *s)
 		{ "printf",	F_PRINTF },
 		{ "retval",	RETVAL },
 		{ "tid",	TID },
+		{ "time",	F_TIME },
 		{ "ustack",	USTACK },
 		{ "zero",	F_ZERO },
 	};

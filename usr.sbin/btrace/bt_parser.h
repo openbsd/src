@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.1 2020/01/21 16:24:55 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.2 2020/01/27 14:15:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -147,6 +147,7 @@ struct bt_stmt {
 		B_AC_EXIT,			/* exit() */
 		B_AC_PRINT,			/* print(@map, 10) */
 		B_AC_PRINTF,			/* printf("hello!\n") */
+		B_AC_TIME,			/* time("%H:%M:%S  ") */
 		B_AC_ZERO,			/* zero(@map) */
 	}			 bs_act;
 };

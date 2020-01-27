@@ -5,7 +5,6 @@ Missing features:
 - scratch variable ($name)
 - `args', tracepoint arguments support (requires kernel work)
 - str()
-- time()
 - @ = sum(x)
 - @ = hist(x)
 - @ = lhist(x, min, max, step)

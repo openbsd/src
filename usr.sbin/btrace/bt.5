@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.1 2020/01/21 16:24:55 mpi Exp $
+.\"	$OpenBSD: bt.5,v 1.2 2020/01/27 14:15:25 mpi Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2020 $
+.Dd $Mdocdate: January 27 2020 $
 .Dt BT 5
 .Os
 .Sh NAME
 .Nm BT
-.Nd B Tracing language
+.Nd Bug Tracing language
 .Sh SYNTAX
 .D1 Ar probe Ic \&/ Ar filter Ic \&/ \&{ Ar action Ic \&}
 .Sh DESCRIPTION
@@ -103,6 +103,22 @@ Userland stack of the current thread
 Argument
 .Va N
 of the corresponding probe
+.El
+.Pp
+Functions:
+.Pp
+.Bl -tag -width "printf fmt ...  " -compact
+.It Fn clear "@map"
+Delete all (key, value) pairs from map
+.Va @map
+.It Fn print "@map"
+Print all (key, value) pairs from map
+.Va @map
+.It Fn printf "fmt" ...
+print formatted string
+.Va fmt
+.It Fn time
+print formatted time
 .El
 .Sh SEE ALSO
 .Xr awk 1 ,

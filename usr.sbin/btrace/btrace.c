@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.1 2020/01/21 16:24:55 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.2 2020/01/27 14:15:25 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <dev/dt/dtvar.h>
@@ -80,6 +81,7 @@ void			 stmt_delete(struct bt_stmt *, struct dt_evt *);
 void			 stmt_insert(struct bt_stmt *, struct dt_evt *);
 void			 stmt_print(struct bt_stmt *, struct dt_evt *);
 void			 stmt_store(struct bt_stmt *, struct dt_evt *);
+void			 stmt_time(struct bt_stmt *, struct dt_evt *);
 void			 stmt_zero(struct bt_stmt *);
 struct bt_arg		*ba_read(struct bt_arg *);
 long			 ba2long(struct bt_arg *, struct dt_evt *);
@@ -566,6 +568,9 @@ rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 		case B_AC_PRINTF:
 			stmt_printf(bs, dtev);
 			break;
+		case B_AC_TIME:
+			stmt_time(bs, dtev);
+			break;
 		case B_AC_ZERO:
 			stmt_zero(bs);
 			break;
@@ -573,6 +578,19 @@ rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 			xabort("no handler for action type %d", bs->bs_act);
 		}
 	}
+}
+
+time_t
+builtin_gettime(struct dt_evt *dtev)
+{
+	struct timespec ts;
+
+	if (dtev == NULL) {
+		clock_gettime(CLOCK_REALTIME, &ts);
+		return ts.tv_sec;
+	}
+
+	return dtev->dtev_tsp.tv_sec;
 }
 
 static inline uint64_t
@@ -748,6 +766,27 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 	}
 
 	debug("bv=%p var '%s' store (%p) \n", bv, bv->bv_name, bv->bv_value);
+}
+
+/*
+ * Print time: 		{ time("%H:%M:%S"); }
+ */
+void
+stmt_time(struct bt_stmt *bs, struct dt_evt *dtev)
+{
+	struct bt_arg *ba = SLIST_FIRST(&bs->bs_args);
+	time_t time;
+	struct tm *tm;
+	char buf[64];
+
+	assert(bs->bs_var == NULL);
+	assert(ba->ba_type = B_AT_STR);
+	assert(strlen(ba2str(ba, dtev)) < (sizeof(buf) - 1));
+
+	time = builtin_gettime(dtev);
+	tm = localtime(&time);
+	strftime(buf, sizeof(buf), ba2str(ba, dtev), tm);
+	printf("%s", buf);
 }
 
 void
