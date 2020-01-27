@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.40 2020/01/26 00:53:31 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.41 2020/01/27 13:11:01 sthen Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -517,7 +517,7 @@ adv_attach(sc)
 
 
 static void
-advminphys(struct buf *bp, struct scsi_link *sl)
+adv_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > ((ASC_MAX_SG_LIST - 1) * PAGE_SIZE))
 		bp->b_bcount = ((ASC_MAX_SG_LIST - 1) * PAGE_SIZE);
