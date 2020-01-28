@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dlv_32769.c,v 1.6 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: dlv_32769.c,v 1.7 2020/01/28 17:17:05 florian Exp $ */
 
 /* RFC3658 */
 
@@ -27,8 +27,6 @@
 #include <isc/sha2.h>
 
 #include <dns/ds.h>
-
-#include "dst_gost.h"
 
 static inline isc_result_t
 fromtext_dlv(ARGS_FROMTEXT) {

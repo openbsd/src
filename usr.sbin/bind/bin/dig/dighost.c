@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.40 2020/01/26 11:23:42 florian Exp $ */
+/* $Id: dighost.c,v 1.41 2020/01/28 17:17:04 florian Exp $ */
 
 /*! \file
  *  \note
@@ -44,7 +44,7 @@
 #include <dns/rdataclass.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 #include <dns/rdatatype.h>
 #include <dns/result.h>
 #include <dns/tsig.h>
@@ -90,8 +90,8 @@
 #define NS_IN6ADDRSZ	16
 #endif
 
-static lwres_conf_t  confdata;
-static lwres_conf_t *lwconf = &confdata;
+static lwres_conf_t  lwconfdata;
+static lwres_conf_t *lwconf = &lwconfdata;
 
 dig_lookuplist_t lookup_list;
 dig_serverlist_t server_list;
@@ -475,7 +475,7 @@ flush_server_list(void) {
 
 /* this used to be bind9_getaddresses from lib/bind9 */
 static isc_result_t
-get_addresses(const char *hostname, in_port_t port,
+get_addresses(const char *hostname, in_port_t dstport,
 		   isc_sockaddr_t *addrs, int addrsize, int *addrcount)
 {
 	struct addrinfo *ai = NULL, *tmpai, hints;
@@ -517,12 +517,12 @@ get_addresses(const char *hostname, in_port_t port,
 		if (tmpai->ai_family == AF_INET) {
 			struct sockaddr_in *sin;
 			sin = (struct sockaddr_in *)tmpai->ai_addr;
-			isc_sockaddr_fromin(&addrs[i], &sin->sin_addr, port);
+			isc_sockaddr_fromin(&addrs[i], &sin->sin_addr, dstport);
 		} else {
 			struct sockaddr_in6 *sin6;
 			sin6 = (struct sockaddr_in6 *)tmpai->ai_addr;
 			isc_sockaddr_fromin6(&addrs[i], &sin6->sin6_addr,
-					     port);
+					     dstport);
 		}
 		i++;
 

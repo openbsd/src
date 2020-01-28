@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: dnssec.c,v 1.15 2020/01/22 13:02:09 florian Exp $
+ * $Id: dnssec.c,v 1.16 2020/01/28 17:17:05 florian Exp $
  */
 
 /*! \file */
@@ -43,7 +43,7 @@
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 #include <dns/result.h>
 
 #include <dns/tsig.h>		/* for DNS_TSIG_FUDGE */

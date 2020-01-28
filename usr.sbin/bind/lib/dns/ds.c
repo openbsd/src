@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds.c,v 1.7 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: ds.c,v 1.8 2020/01/28 17:17:05 florian Exp $ */
 
 /*! \file */
 
@@ -32,7 +32,7 @@
 #include <dns/fixedname.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 #include <dns/result.h>
 
 #include <dst/dst.h>

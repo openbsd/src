@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: keydata.h,v 1.4 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: keydata.h,v 1.5 2020/01/28 17:17:05 florian Exp $ */
 
 #ifndef DNS_KEYDATA_H
 #define DNS_KEYDATA_H 1
@@ -36,7 +36,7 @@
 #include <isc/types.h>
 
 #include <dns/types.h>
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 
 ISC_LANG_BEGINDECLS
 

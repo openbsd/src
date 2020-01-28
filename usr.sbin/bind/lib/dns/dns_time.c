@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.11 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: dns_time.c,v 1.1 2020/01/28 17:17:05 florian Exp $ */
 
 /*! \file */
 

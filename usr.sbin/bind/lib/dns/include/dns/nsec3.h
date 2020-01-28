@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3.h,v 1.4 2020/01/20 18:51:52 florian Exp $ */
+/* $Id: nsec3.h,v 1.5 2020/01/28 17:17:05 florian Exp $ */
 
 #ifndef DNS_NSEC3_H
 #define DNS_NSEC3_H 1
@@ -25,7 +25,7 @@
 
 
 #include <dns/name.h>
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 #include <dns/types.h>
 
 #define DNS_NSEC3_SALTSIZE 255

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.10 2020/01/18 16:55:01 florian Exp $ */
+/* $Id: rdataset.h,v 1.11 2020/01/28 17:17:05 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -55,7 +55,7 @@
 #include <isc/stdtime.h>
 
 #include <dns/types.h>
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 
 ISC_LANG_BEGINDECLS
 

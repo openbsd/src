@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.c,v 1.9 2020/01/26 11:24:19 florian Exp $ */
+/* $Id: dns_result.c,v 1.1 2020/01/28 17:17:05 florian Exp $ */
 
 /*! \file */
 #include <isc/util.h>

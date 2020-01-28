@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: byaddr.c,v 1.13 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: byaddr.c,v 1.14 2020/01/28 17:17:05 florian Exp $ */
 
 /*! \file */
 
@@ -34,7 +34,7 @@
 
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 
 #include <dns/result.h>
 

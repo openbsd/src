@@ -40,7 +40,7 @@
 #include <dns/rdataclass.h>
 #include <dns/rdataset.h>
 #include <dns/rdatatype.h>
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 
 #include <dig/dig.h>
 
@@ -96,7 +96,7 @@ struct rtype {
 	const char *text;
 };
 
-struct rtype rtypes[] = {
+static struct rtype rtypes[] = {
 	{ 1, 	"has address" },
 	{ 2, 	"name server" },
 	{ 5, 	"is an alias for" },
@@ -806,7 +806,7 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 }
 
 int
-main(int argc, char **argv) {
+host_main(int argc, char **argv) {
 	isc_result_t result;
 
 	tries = 2;

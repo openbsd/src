@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: keydata.c,v 1.6 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: keydata.c,v 1.7 2020/01/28 17:17:05 florian Exp $ */
 
 /*! \file */
 
@@ -26,7 +26,7 @@
 #include <isc/util.h>
 
 #include <dns/rdata.h>
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 #include <dns/keydata.h>
 
 isc_result_t

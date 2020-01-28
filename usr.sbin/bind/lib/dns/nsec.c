@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec.c,v 1.7 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: nsec.c,v 1.8 2020/01/28 17:17:05 florian Exp $ */
 
 /*! \file */
 
@@ -30,7 +30,7 @@
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
 
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 #include <dns/result.h>
 
 #include <dst/dst.h>

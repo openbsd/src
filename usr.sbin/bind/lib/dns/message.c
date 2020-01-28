@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.17 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: message.c,v 1.18 2020/01/28 17:17:05 florian Exp $ */
 
 /*! \file */
 
@@ -42,7 +42,7 @@
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
-#include <dns/rdatastruct.h>
+#include "rdatastruct.h"
 #include <dns/result.h>
 #include <dns/tsig.h>
 #include <dns/ttl.h>

@@ -257,6 +257,9 @@ extern char *progname;
 extern int tries;
 extern int fatalexit;
 
+int host_main(int, char **);
+int nslookup_main(int, char **);
+
 /*
  * Routines in dighost.c.
  */

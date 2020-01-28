@@ -26,8 +26,6 @@
 
 #include <dns/ds.h>
 
-#include "dst_gost.h"
-
 static inline isc_result_t
 fromtext_cds(ARGS_FROMTEXT) {
 
