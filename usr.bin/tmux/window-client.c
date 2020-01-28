@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.25 2019/12/03 10:47:23 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.26 2020/01/28 08:06:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -210,7 +210,7 @@ window_client_draw(__unused void *modedata, void *itemdata,
 	struct window_pane		*wp;
 	u_int				 cx = s->cx, cy = s->cy, lines, at;
 
-	if (c->session == NULL || (c->flags & (CLIENT_DEAD|CLIENT_DETACHING)))
+	if (c->session == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
 		return;
 	wp = c->session->curw->window->active;
 

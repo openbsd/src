@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.302 2019/12/16 16:39:03 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.303 2020/01/28 08:06:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1034,7 +1034,7 @@ server_client_key_callback(struct cmdq_item *item, void *data)
 	key_code			 key0;
 
 	/* Check the client is good to accept input. */
-	if (s == NULL || (c->flags & (CLIENT_DEAD|CLIENT_SUSPENDED)) != 0)
+	if (s == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
 		goto out;
 	wl = s->curw;
 
@@ -1221,7 +1221,7 @@ server_client_handle_key(struct client *c, struct key_event *event)
 	struct cmdq_item	*item;
 
 	/* Check the client is good to accept input. */
-	if (s == NULL || (c->flags & (CLIENT_DEAD|CLIENT_SUSPENDED)) != 0)
+	if (s == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
 		return (0);
 
 	/*
