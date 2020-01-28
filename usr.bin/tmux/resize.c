@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.37 2020/01/28 08:06:11 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.38 2020/01/28 13:23:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -66,10 +66,26 @@ resize_window(struct window *w, u_int sx, u_int sy, int xpixel, int ypixel)
 static int
 ignore_client_size(struct client *c)
 {
+	struct client	*loop;
+
 	if (c->session == NULL)
 		return (1);
 	if (c->flags & CLIENT_NOSIZEFLAGS)
 		return (1);
+	if (c->flags & CLIENT_READONLY) {
+		/*
+		 * Ignore readonly clients if there are any attached clients
+		 * that aren't readonly.
+		 */
+		TAILQ_FOREACH (loop, &clients, entry) {
+			if (loop->session == NULL)
+				continue;
+			if (loop->flags & CLIENT_NOSIZEFLAGS)
+				continue;
+			if (~loop->flags & CLIENT_READONLY)
+				return (1);
+		}
+	}
 	if ((c->flags & CLIENT_CONTROL) && (~c->flags & CLIENT_SIZECHANGED))
 		return (1);
 	return (0);

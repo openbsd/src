@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.952 2020/01/28 11:39:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.953 2020/01/28 13:23:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1590,8 +1590,7 @@ struct client {
 #define CLIENT_NOSIZEFLAGS	\
 	(CLIENT_DEAD|		\
 	 CLIENT_SUSPENDED|	\
-	 CLIENT_DETACHING|	\
-	 CLIENT_READONLY)
+	 CLIENT_DETACHING)
 	int		 flags;
 	struct key_table *keytable;
 
