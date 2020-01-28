@@ -38,8 +38,8 @@ _shadow:*:65:
 crontab:*:66:
 www:*:67:
 _isakmpd:*:68:
-_rpki-client:*:70:
 network:*:69:
+_rpki-client:*:70:
 authpf:*:72:
 _syslogd:*:73:
 _pflogd:*:74:
