@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.60 2014/01/11 11:51:01 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.61 2020/01/28 11:25:44 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -60,7 +60,7 @@ sub _init_list
 		next if $e eq '.' or $e eq '..';
 		add_installed($e);
 	}
-	close($dir);
+	closedir($dir);
 }
 
 sub add_installed
