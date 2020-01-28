@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.5 2020/01/28 12:13:49 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.6 2020/01/28 16:00:12 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -212,16 +212,19 @@ arglist		: arg
 		| arglist ',' arg		{ $$ = ba_append($1, $3); }
 		;
 
-stmt		: '\n'				{ $$ = NULL; }
-		| gvar '=' arg ';'		{ $$ = bv_set($1, $3); }
-		| gvar '[' arg ']' '=' marg ';'	{ $$ = bm_set($1, $3, $6); }
-		| fnN '(' arglist ')' ';'	{ $$ = bs_new($1, $3, NULL); }
-		| fn1 '(' arg ')' ';'		{ $$ = bs_new($1, $3, NULL); }
-		| fn0 '(' ')' ';'		{ $$ = bs_new($1, NULL, NULL); }
-		| mfn1 '(' map ')' ';'		{ $$ = bm_fn($1, $3, NULL); }
+NL		: /* empty */ | '\n'
 		;
 
-stmtlist	: stmt 
+stmt		: ';' NL			{ $$ = NULL; }
+		| gvar '=' arg			{ $$ = bv_set($1, $3); }
+		| gvar '[' arg ']' '=' marg	{ $$ = bm_set($1, $3, $6); }
+		| fnN '(' arglist ')'		{ $$ = bs_new($1, $3, NULL); }
+		| fn1 '(' arg ')'		{ $$ = bs_new($1, $3, NULL); }
+		| fn0 '(' ')'			{ $$ = bs_new($1, NULL, NULL); }
+		| mfn1 '(' map ')'		{ $$ = bm_fn($1, $3, NULL); }
+		;
+
+stmtlist	: stmt
 		| stmtlist stmt			{ $$ = bs_append($1, $2); }
 		;
 
@@ -381,10 +384,11 @@ bs_append(struct bt_stmt *ds0, struct bt_stmt *ds1)
 {
 	struct bt_stmt *bs = ds0;
 
-	assert(ds1 != NULL);
-
 	if (ds0 == NULL)
 		return ds1;
+
+	if (ds1 == NULL)
+		return ds0;
 
 	while (SLIST_NEXT(bs, bs_next) != NULL)
 		bs = SLIST_NEXT(bs, bs_next);
