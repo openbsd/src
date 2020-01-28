@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.93 2019/09/27 10:26:32 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.94 2020/01/28 15:45:46 bket Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -195,7 +195,6 @@ void
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 {
 	struct listen_addr	*nla, *ola, *next;
-	struct network		*n;
 	struct peer		*p, *np, *nextp;
 
 	/*
@@ -250,10 +249,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 
 	/* switch the network statements, but first remove the old ones */
 	free_networks(&xconf->networks);
-	while ((n = TAILQ_FIRST(&conf->networks)) != NULL) {
-		TAILQ_REMOVE(&conf->networks, n, entry);
-		TAILQ_INSERT_TAIL(&xconf->networks, n, entry);
-	}
+	TAILQ_CONCAT(&xconf->networks, &conf->networks, entry);
 
 	/* switch the l3vpn configs, first remove the old ones */
 	free_l3vpns(&xconf->l3vpns);
