@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.15 2017/07/14 18:49:07 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.16 2020/01/28 10:44:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -182,8 +182,8 @@ proc_start(const char *name)
 	if (uname(&u) < 0)
 		memset(&u, 0, sizeof u);
 
-	log_debug("%s started (%ld): socket %s, protocol %d", name,
-	    (long)getpid(), socket_path, PROTOCOL_VERSION);
+	log_debug("%s started (%ld): version %s, socket %s, protocol %d", name,
+	    (long)getpid(), getversion(), socket_path, PROTOCOL_VERSION);
 	log_debug("on %s %s %s; libevent %s (%s)", u.sysname, u.release,
 	    u.version, event_get_version(), event_get_method());
 

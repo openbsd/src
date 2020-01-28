@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.950 2020/01/28 08:06:11 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.951 2020/01/28 10:44:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1769,6 +1769,7 @@ int		 areshell(const char *);
 void		 setblocking(int, int);
 const char	*find_cwd(void);
 const char	*find_home(void);
+const char	*getversion(void);
 
 /* proc.c */
 struct imsg;

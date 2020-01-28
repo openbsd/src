@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.223 2020/01/12 21:07:07 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.224 2020/01/28 10:44:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1106,6 +1106,7 @@ format_create(struct client *c, struct cmdq_item *item, int tag, int flags)
 	ft->flags = flags;
 	ft->time = time(NULL);
 
+	format_add(ft, "version", "%s", getversion());
 	format_add_cb(ft, "host", format_cb_host);
 	format_add_cb(ft, "host_short", format_cb_host_short);
 	format_add_cb(ft, "pid", format_cb_pid);
