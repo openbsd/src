@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.44 2018/08/05 09:33:13 mestre Exp $	*/
+/*	$OpenBSD: control.c,v 1.45 2020/01/28 15:42:10 bket Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -487,10 +487,7 @@ control_dispatch_agentx(int fd, short event, void *arg)
 				TAILQ_INSERT_TAIL(&oids, miboid, o_list);
 			} while (++oid.bo_id[rhdr.subrange] <= ubound);
 
-			while ((miboid = TAILQ_FIRST(&oids)) != NULL) {
-				TAILQ_REMOVE(&oids, miboid, o_list);
-				TAILQ_INSERT_TAIL(&c->oids, miboid, o_list);
-			}
+			TAILQ_CONCAT(&c->oids, &oids, o_list);
  dodone:
 			break;
 		}
