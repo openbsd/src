@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.7 2020/01/28 16:02:28 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.8 2020/01/28 16:39:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -102,11 +102,11 @@ static int	 yylex(void);
 /* Functions */
 %token  F_CLEAR F_DELETE F_EXIT F_PRINT F_PRINTF F_TIME F_ZERO
 /* Map functions */
-%token  M_COUNT
+%token  M_COUNT M_MAX M_MIN M_SUM
 %token	<v.string>	STRING CSTRING
 %token	<v.number>	NUMBER
 %type	<v.string>	gvar
-%type	<v.i>		filterval oper builtin fn0 fn1 fnN mfn0 mfn1
+%type	<v.i>		filterval oper builtin fn0 fn1 fnN mfn0 mfn1 mfnN
 %type	<v.probe>	probe
 %type	<v.filter>	predicate
 %type	<v.stmt>	action stmt stmtlist
@@ -180,10 +180,15 @@ fnN		: F_PRINTF			{ $$ = B_AC_PRINTF; }
 		| F_PRINT			{ $$ = B_AC_PRINT; }
 		;
 
-mfn0		: M_COUNT '(' ')'		{ $$ = B_AT_MF_COUNT; }
+mfn0		: M_COUNT 			{ $$ = B_AT_MF_COUNT; }
 		;
 
 mfn1		: F_DELETE			{ $$ = B_AC_DELETE; }
+		;
+
+mfnN		: M_MAX				{ $$ = B_AT_MF_MAX; }
+		| M_MIN				{ $$ = B_AT_MF_MIN; }
+		| M_SUM				{ $$ = B_AT_MF_SUM; }
 		;
 
 term		: '(' term ')'			{ $$ = $2; }
@@ -203,7 +208,8 @@ map		: gvar '[' arg ']'		{ $$ = bm_get($1, $3); }
 		;
 
 marg		: arg				{ $$ = $1; }
-		| mfn0				{ $$ = ba_new(NULL, $1); };
+		| mfn0 '(' ')'			{ $$ = ba_new(NULL, $1); }
+		| mfnN '(' arg ')'		{ $$ = ba_new($3, $1); }
 		;
 
 arg		: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
@@ -523,11 +529,14 @@ lookup(char *s)
 		{ "exit",	F_EXIT },
 		{ "hz",		HZ },
 		{ "kstack",	KSTACK },
+		{ "max",	M_MAX },
+		{ "min",	M_MIN },
 		{ "nsecs",	NSECS },
 		{ "pid",	PID },
 		{ "print",	F_PRINT },
 		{ "printf",	F_PRINTF },
 		{ "retval",	RETVAL },
+		{ "sum",	M_SUM },
 		{ "tid",	TID },
 		{ "time",	F_TIME },
 		{ "ustack",	USTACK },

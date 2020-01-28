@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.3 2020/01/28 12:13:49 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.4 2020/01/28 16:39:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -124,7 +124,10 @@ struct bt_arg {
 		B_AT_BI_ARGS,
 		B_AT_BI_RETVAL,
 
-		B_AT_MF_COUNT,			/* count() */
+		B_AT_MF_COUNT,			/* @map[key] = count() */
+		B_AT_MF_MAX,			/* @map[key] = max(nsecs) */
+		B_AT_MF_MIN,			/* @map[key] = min(pid) */
+		B_AT_MF_SUM,			/* @map[key] = sum(@elapsed) */
 
 		B_AT_OP_ADD,
 		B_AT_OP_MINUS,

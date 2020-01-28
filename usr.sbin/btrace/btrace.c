@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.3 2020/01/28 12:13:49 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.4 2020/01/28 16:39:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -84,7 +84,6 @@ void			 stmt_store(struct bt_stmt *, struct dt_evt *);
 void			 stmt_time(struct bt_stmt *, struct dt_evt *);
 void			 stmt_zero(struct bt_stmt *);
 struct bt_arg		*ba_read(struct bt_arg *);
-long			 ba2long(struct bt_arg *, struct dt_evt *);
 
 /* FIXME: use a real hash. */
 #define ba2hash(_b, _e)	ba2str((_b), (_e))
@@ -460,6 +459,9 @@ rules_setup(int fd)
 					dtrq->dtrq_evtflags |= DTEVT_RETVAL;
 					break;
 				case B_AT_MF_COUNT:
+				case B_AT_MF_MAX:
+				case B_AT_MF_MIN:
+				case B_AT_MF_SUM:
 				case B_AT_OP_ADD ... B_AT_OP_DIVIDE:
 					break;
 				default:
@@ -952,6 +954,9 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		str = buf;
 		break;
 	case B_AT_MF_COUNT:
+	case B_AT_MF_MAX:
+	case B_AT_MF_MIN:
+	case B_AT_MF_SUM:
 		assert(0);
 		break;
 	default:

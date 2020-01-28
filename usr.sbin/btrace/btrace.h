@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.h,v 1.2 2020/01/28 12:13:49 mpi Exp $ */
+/*	$OpenBSD: btrace.h,v 1.3 2020/01/28 16:39:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -29,6 +29,7 @@ struct bt_var;
 struct bt_stmt;
 
 /* btrace.c */
+long			 ba2long(struct bt_arg *, struct dt_evt *);
 const char		*ba2str(struct bt_arg *, struct dt_evt *);
 long			 bacmp(struct bt_arg *, struct bt_arg *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.2 2020/01/28 12:13:49 mpi Exp $ */
+/*	$OpenBSD: map.c,v 1.3 2020/01/28 16:39:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -32,6 +32,14 @@
 
 #include "bt_parser.h"
 #include "btrace.h"
+
+#ifndef MIN
+#define	MIN(_a,_b) ((_a) < (_b) ? (_a) : (_b))
+#endif
+
+#ifndef MAX
+#define	MAX(_a,_b) ((_a) > (_b) ? (_a) : (_b))
+#endif
 
 RB_HEAD(mtree, mentry);
 
@@ -132,6 +140,11 @@ map_insert(struct bt_var *bv, const char *key, struct bt_arg *bval)
 
 	mep = mget(map, key);
 	switch (bval->ba_type) {
+	case B_AT_STR:
+	case B_AT_LONG:
+		free(mep->mval);
+		mep->mval = bval;
+		break;
 	case B_AT_MF_COUNT:
 		if (mep->mval == NULL)
 			mep->mval = ba_new(0, B_AT_LONG);
@@ -139,10 +152,26 @@ map_insert(struct bt_var *bv, const char *key, struct bt_arg *bval)
 		val++;
 		mep->mval->ba_value = (void *)val;
 		break;
-	case B_AT_STR:
-	case B_AT_LONG:
-		free(mep->mval);
-		mep->mval = bval;
+	case B_AT_MF_MAX:
+		if (mep->mval == NULL)
+			mep->mval = ba_new(0, B_AT_LONG);
+		val = (long)mep->mval->ba_value;
+		val = MAX(val, ba2long(bval->ba_value, NULL));
+		mep->mval->ba_value = (void *)val;
+		break;
+	case B_AT_MF_MIN:
+		if (mep->mval == NULL)
+			mep->mval = ba_new(0, B_AT_LONG);
+		val = (long)mep->mval->ba_value;
+		val = MIN(val, ba2long(bval->ba_value, NULL));
+		mep->mval->ba_value = (void *)val;
+		break;
+	case B_AT_MF_SUM:
+		if (mep->mval == NULL)
+			mep->mval = ba_new(0, B_AT_LONG);
+		val = (long)mep->mval->ba_value;
+		val += ba2long(bval->ba_value, NULL);
+		mep->mval->ba_value = (void *)val;
 		break;
 	default:
 		errx(1, "no insert support for type %d", bval->ba_type);
