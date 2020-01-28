@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwmbl.c,v 1.3 2020/01/26 23:05:47 patrick Exp $	*/
+/*	$OpenBSD: pwmbl.c,v 1.4 2020/01/28 14:09:31 patrick Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -110,7 +110,10 @@ pwmbl_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_max_level = sc->sc_levels[sc->sc_nlevels - 1];
 	sc->sc_def_level = OF_getpropint(faa->fa_node,
-	    "default-brightness-level", sc->sc_max_level);
+	    "default-brightness-level", sc->sc_nlevels - 1);
+	if (sc->sc_def_level >= sc->sc_nlevels)
+		sc->sc_def_level = sc->sc_nlevels - 1;
+	sc->sc_def_level = sc->sc_levels[sc->sc_def_level];
 
 	pwmbl_set_brightness(sc, sc->sc_def_level);
 
