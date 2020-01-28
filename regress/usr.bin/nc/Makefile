@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2020/01/26 23:48:50 beck Exp $
+#	$OpenBSD: Makefile,v 1.8 2020/01/28 19:25:45 bluhm Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -839,6 +839,28 @@ run-unix-namelookup:
 	grep 'Connection received on server.sock$$' server.err
 	# XXX message succeeded is missing
 	! grep 'Connection to server.sock .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-unix-probe
+run-unix-probe:
+	@echo '======== $@ ========'
+	rm -f server.sock
+	${SERVER_NC} -U -n -v -l server.sock ${SERVER_BG}
+	${LISTEN_WAIT}
+	# connect and close immediately, check if socket is listening
+	${NC} -N -U -v server.sock </dev/null ${CLIENT_LOG}
+	# XXX message Bound and Listening is redundant
+	grep 'Bound on server.sock$$' server.err
+	grep 'Listening on server.sock$$' server.err
+	grep 'Connection received on server.sock$$' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+	# server accepts one connection, second connection should be refused
+	! ${NC} -N -U -v server.sock </dev/null ${CLIENT_LOG}
+	grep 'server.sock: Connection refused' client.err
+	# connection to non existing socket file should fail
+	rm server.sock
+	! ${NC} -N -U -v server.sock </dev/null ${CLIENT_LOG}
+	grep 'server.sock: No such file or directory' client.err
 
 # UNIX keep
 
