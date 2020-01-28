@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 2020/01/21 16:27:17 mpi Exp $
+# $OpenBSD: Makefile,v 1.2 2020/01/28 12:07:12 mpi Exp $
 
-BTRACE?=		 ${.CURDIR}/../../../usr.sbin/btrace/obj/btrace
+BTRACE?=		 /usr/sbin/btrace
 
 # scripts that don't need /dev/dt
 BT_LANG_SCRIPTS=	arithm beginend comments delete exit map maxoperand \

@@ -5,6 +5,8 @@
 => Print top 2:
 @map[4]: 9999
 @map[897123]: 9997
+=> Using printf:
+9999 + 1
 => Print all map:
 @map[4]: 9999
 @map[897123]: 9997

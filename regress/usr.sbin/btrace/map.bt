@@ -15,6 +15,9 @@ BEGIN
 	@top = 2;
 	printf("=> Print top %d:\n", @top);
 	print(@map, @top);
+
+	printf("=> Using printf:\n");
+	printf("%d + %d\n", @map[4], @map[7]);
 }
 
 END
