@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.25 2019/10/24 12:39:26 tb Exp $ */
+/*	$OpenBSD: search.c,v 1.26 2020/01/28 15:51:26 bket Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -764,11 +764,8 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 		/* Select an index to use. */
 		TAILQ_FOREACH(arg, &plan->args, next) {
 			if (arg->indexed) {
-				while ((indx = TAILQ_FIRST(&arg->indices))) {
-					TAILQ_REMOVE(&arg->indices, indx, next);
-					TAILQ_INSERT_TAIL(&plan->indices, indx,
-					    next);
-				}
+				TAILQ_CONCAT(&plan->indices, &arg->indices,
+				    next);
 				plan->indexed = arg->indexed;
 				break;
 			}
@@ -796,11 +793,9 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 				plan->indexed = 0;
 				break;
 			}
-			while ((indx = TAILQ_FIRST(&arg->indices))) {
-				TAILQ_REMOVE(&arg->indices, indx, next);
-				TAILQ_INSERT_TAIL(&plan->indices, indx,next);
+			TAILQ_FOREACH(indx, &arg->indices, next)
 				plan->indexed++;
-			}
+			TAILQ_CONCAT(&plan->indices, &arg->indices, next);
 		}
 		break;
 	case LDAP_FILT_NOT:
