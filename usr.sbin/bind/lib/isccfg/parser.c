@@ -38,6 +38,13 @@
 #include <isccfg/cfg.h>
 #include <isccfg/grammar.h>
 
+/*!
+ * Pass one of these flags to cfg_parser_error() to include the
+ * token text in log message.
+ */
+#define CFG_LOG_NEAR    0x00000001	/*%< Say "near <token>" */
+#define CFG_LOG_BEFORE  0x00000002	/*%< Say "before <token>" */
+#define CFG_LOG_NOPREP  0x00000004	/*%< Say just "<token>" */
 
 isc_logcategory_t cfg_category = { "config",     0 };
 isc_logmodule_t cfg_module = { "isccfg/parser",      0 };
@@ -50,6 +57,8 @@ isc_logmodule_t cfg_module = { "isccfg/parser",      0 };
 
 #define TOKEN_STRING(pctx) (pctx->token.value.as_textregion.base)
 
+#define CFG_LEXOPT_QSTRING (ISC_LEXOPT_QSTRING | ISC_LEXOPT_QSTRINGMULTILINE)
+
 /* Check a return value. */
 #define CHECK(op) 						\
 	do { result = (op); 					\
@@ -61,18 +70,61 @@ isc_logmodule_t cfg_module = { "isccfg/parser",      0 };
 	do { if ((obj) != NULL) cfg_obj_destroy(pctx, &(obj)); } while (0)
 
 
+/* Forward declarations of variables */
+cfg_rep_t cfg_rep_string;
+cfg_rep_t cfg_rep_list;
+
+cfg_type_t cfg_type_qstring;
+cfg_type_t cfg_type_ustring;
+cfg_type_t cfg_type_sstring;
+cfg_type_t cfg_type_token;
+cfg_type_t cfg_type_unsupported;
+
 /*
  * Forward declarations of static functions.
  */
 
-static void
-free_tuple(cfg_parser_t *pctx, cfg_obj_t *obj);
+static isc_result_t
+cfg_gettoken(cfg_parser_t *pctx, int options);
 
 static isc_result_t
-parse_list(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
+cfg_peektoken(cfg_parser_t *pctx, int options);
 
 static void
-print_list(cfg_printer_t *pctx, const cfg_obj_t *obj);
+cfg_ungettoken(cfg_parser_t *pctx);
+
+static isc_result_t
+cfg_create_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **objp);
+
+static isc_result_t
+cfg_parse_qstring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
+
+static isc_result_t
+cfg_parse_astring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
+
+static isc_result_t
+cfg_parse_sstring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
+
+static isc_result_t
+cfg_parse_special(cfg_parser_t *pctx, int special);
+/*%< Parse a required special character 'special'. */
+
+static isc_result_t
+cfg_create_list(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **objp);
+
+static isc_result_t
+cfg_parse_listelt(cfg_parser_t *pctx, const cfg_type_t *elttype,
+		  cfg_listelt_t **ret);
+
+static isc_result_t
+cfg_parse_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
+
+static isc_result_t
+cfg_parse_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
+
+static void
+cfg_parser_error(cfg_parser_t *pctx, unsigned int flags,
+		 const char *fmt, ...) ISC_FORMAT_PRINTF(3, 4);
 
 static void
 free_list(cfg_parser_t *pctx, cfg_obj_t *obj);
@@ -95,11 +147,7 @@ free_map(cfg_parser_t *pctx, cfg_obj_t *obj);
 
 static isc_result_t
 parse_symtab_elt(cfg_parser_t *pctx, const char *name,
-		 cfg_type_t *elttype, isc_symtab_t *symtab,
-		 isc_boolean_t callback);
-
-static void
-free_noop(cfg_parser_t *pctx, cfg_obj_t *obj);
+		 cfg_type_t *elttype, isc_symtab_t *symtab);
 
 static isc_result_t
 cfg_getstringtoken(cfg_parser_t *pctx);
@@ -114,69 +162,17 @@ parser_complain(cfg_parser_t *pctx, isc_boolean_t is_warning,
  * not need a union member).
  */
 
-cfg_rep_t cfg_rep_uint32 = { "uint32", free_noop };
-cfg_rep_t cfg_rep_uint64 = { "uint64", free_noop };
 cfg_rep_t cfg_rep_string = { "string", free_string };
-cfg_rep_t cfg_rep_boolean = { "boolean", free_noop };
 cfg_rep_t cfg_rep_map = { "map", free_map };
 cfg_rep_t cfg_rep_list = { "list", free_list };
-cfg_rep_t cfg_rep_tuple = { "tuple", free_tuple };
-cfg_rep_t cfg_rep_sockaddr = { "sockaddr", free_noop };
-cfg_rep_t cfg_rep_netprefix = { "netprefix", free_noop };
-cfg_rep_t cfg_rep_void = { "void", free_noop };
-cfg_rep_t cfg_rep_fixedpoint = { "fixedpoint", free_noop };
 
 /*
  * Configuration type definitions.
  */
 
-/*%
- * An implicit list.  These are formed by clauses that occur multiple times.
- */
-static cfg_type_t cfg_type_implicitlist = {
-	"implicitlist", NULL, print_list, NULL, &cfg_rep_list, NULL };
-
 /* Functions. */
 
-void
-cfg_print_obj(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	obj->type->print(pctx, obj);
-}
-
-void
-cfg_print_chars(cfg_printer_t *pctx, const char *text, int len) {
-	REQUIRE(pctx != NULL);
-	REQUIRE(text != NULL);
-
-	pctx->f(pctx->closure, text, len);
-}
-
-static void
-print_open(cfg_printer_t *pctx) {
-	cfg_print_chars(pctx, "{\n", 2);
-	pctx->indent++;
-}
-
-static void
-print_indent(cfg_printer_t *pctx) {
-	int indent = pctx->indent;
-	while (indent > 0) {
-		cfg_print_chars(pctx, "\t", 1);
-		indent--;
-	}
-}
-
-static void
-print_close(cfg_printer_t *pctx) {
-	pctx->indent--;
-	print_indent(pctx);
-	cfg_print_chars(pctx, "}", 1);
-}
-
-isc_result_t
+static isc_result_t
 cfg_parse_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
 
@@ -191,177 +187,7 @@ cfg_parse_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (ISC_R_SUCCESS);
 }
 
-void
-cfg_print(const cfg_obj_t *obj,
-	  void (*f)(void *closure, const char *text, int textlen),
-	  void *closure)
-{
-	REQUIRE(obj != NULL);
-	REQUIRE(f != NULL);
-
-	cfg_printx(obj, 0, f, closure);
-}
-
-void
-cfg_printx(const cfg_obj_t *obj, unsigned int flags,
-	     void (*f)(void *closure, const char *text, int textlen),
-	     void *closure)
-{
-	cfg_printer_t pctx;
-
-	REQUIRE(obj != NULL);
-	REQUIRE(f != NULL);
-
-	pctx.f = f;
-	pctx.closure = closure;
-	pctx.indent = 0;
-	pctx.flags = flags;
-	obj->type->print(&pctx, obj);
-}
-
-/* Tuples. */
-
-isc_result_t
-cfg_create_tuple(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	isc_result_t result;
-	const cfg_tuplefielddef_t *fields = type->of;
-	const cfg_tuplefielddef_t *f;
-	cfg_obj_t *obj = NULL;
-	unsigned int nfields = 0;
-	int i;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	for (f = fields; f->name != NULL; f++)
-		nfields++;
-
-	CHECK(cfg_create_obj(pctx, type, &obj));
-	obj->value.tuple = malloc(nfields * sizeof(cfg_obj_t *));
-	if (obj->value.tuple == NULL) {
-		result = ISC_R_NOMEMORY;
-		goto cleanup;
-	}
-	for (f = fields, i = 0; f->name != NULL; f++, i++)
-		obj->value.tuple[i] = NULL;
-	*ret = obj;
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	if (obj != NULL)
-		free(obj);
-	return (result);
-}
-
-isc_result_t
-cfg_parse_tuple(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
-{
-	isc_result_t result;
-	const cfg_tuplefielddef_t *fields = type->of;
-	const cfg_tuplefielddef_t *f;
-	cfg_obj_t *obj = NULL;
-	unsigned int i;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	CHECK(cfg_create_tuple(pctx, type, &obj));
-	for (f = fields, i = 0; f->name != NULL; f++, i++)
-		CHECK(cfg_parse_obj(pctx, f->type, &obj->value.tuple[i]));
-
-	*ret = obj;
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	CLEANUP_OBJ(obj);
-	return (result);
-}
-
-void
-cfg_print_tuple(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	unsigned int i;
-	const cfg_tuplefielddef_t *fields;
-	const cfg_tuplefielddef_t *f;
-	isc_boolean_t need_space = ISC_FALSE;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	fields = obj->type->of;
-
-	for (f = fields, i = 0; f->name != NULL; f++, i++) {
-		const cfg_obj_t *fieldobj = obj->value.tuple[i];
-		if (need_space && fieldobj->type->rep != &cfg_rep_void)
-			cfg_print_cstr(pctx, " ");
-		cfg_print_obj(pctx, fieldobj);
-		need_space = ISC_TF(need_space ||
-				    fieldobj->type->print != cfg_print_void);
-	}
-}
-
-void
-cfg_doc_tuple(cfg_printer_t *pctx, const cfg_type_t *type) {
-	const cfg_tuplefielddef_t *fields;
-	const cfg_tuplefielddef_t *f;
-	isc_boolean_t need_space = ISC_FALSE;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-
-	fields = type->of;
-
-	for (f = fields; f->name != NULL; f++) {
-		if (need_space)
-			cfg_print_cstr(pctx, " ");
-		cfg_doc_obj(pctx, f->type);
-		need_space = ISC_TF(f->type->print != cfg_print_void);
-	}
-}
-
-static void
-free_tuple(cfg_parser_t *pctx, cfg_obj_t *obj) {
-	unsigned int i;
-	const cfg_tuplefielddef_t *fields = obj->type->of;
-	const cfg_tuplefielddef_t *f;
-	unsigned int nfields = 0;
-
-	if (obj->value.tuple == NULL)
-		return;
-
-	for (f = fields, i = 0; f->name != NULL; f++, i++) {
-		CLEANUP_OBJ(obj->value.tuple[i]);
-		nfields++;
-	}
-	free(obj->value.tuple);
-}
-
-isc_boolean_t
-cfg_obj_istuple(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-	return (ISC_TF(obj->type->rep == &cfg_rep_tuple));
-}
-
-const cfg_obj_t *
-cfg_tuple_get(const cfg_obj_t *tupleobj, const char* name) {
-	unsigned int i;
-	const cfg_tuplefielddef_t *fields;
-	const cfg_tuplefielddef_t *f;
-
-	REQUIRE(tupleobj != NULL && tupleobj->type->rep == &cfg_rep_tuple);
-	REQUIRE(name != NULL);
-
-	fields = tupleobj->type->of;
-	for (f = fields, i = 0; f->name != NULL; f++, i++) {
-		if (strcmp(f->name, name) == 0)
-			return (tupleobj->value.tuple[i]);
-	}
-	INSIST(0);
-	return (NULL);
-}
-
-isc_result_t
+static isc_result_t
 cfg_parse_special(cfg_parser_t *pctx, int special) {
 	isc_result_t result;
 
@@ -421,7 +247,7 @@ parse_eof(cfg_parser_t *pctx) {
 /* A list of files, used internally for pctx->files. */
 
 static cfg_type_t cfg_type_filelist = {
-	"filelist", NULL, print_list, NULL, &cfg_rep_list,
+	"filelist", NULL, &cfg_rep_list,
 	&cfg_type_qstring
 };
 
@@ -448,12 +274,9 @@ cfg_parser_create(isc_log_t *lctx, cfg_parser_t **ret) {
 	pctx->seen_eof = ISC_FALSE;
 	pctx->ungotten = ISC_FALSE;
 	pctx->errors = 0;
-	pctx->warnings = 0;
 	pctx->open_files = NULL;
 	pctx->closed_files = NULL;
 	pctx->line = 0;
-	pctx->callback = NULL;
-	pctx->callbackarg = NULL;
 	pctx->token.type = isc_tokentype_unknown;
 	pctx->flags = 0;
 
@@ -511,17 +334,6 @@ parser_openfile(cfg_parser_t *pctx, const char *filename) {
 	return (result);
 }
 
-void
-cfg_parser_setcallback(cfg_parser_t *pctx,
-		       cfg_parsecallback_t callback,
-		       void *arg)
-{
-	REQUIRE(pctx != NULL);
-
-	pctx->callback = callback;
-	pctx->callbackarg = arg;
-}
-
 /*
  * Parse a configuration using a pctx where a lexer has already
  * been set up with a source.
@@ -574,48 +386,6 @@ cfg_parse_file(cfg_parser_t *pctx, const char *filename,
 	return (result);
 }
 
-
-isc_result_t
-cfg_parse_buffer(cfg_parser_t *pctx, isc_buffer_t *buffer,
-	const cfg_type_t *type, cfg_obj_t **ret)
-{
-	return (cfg_parse_buffer4(pctx, buffer, NULL, 0, type, 0, ret));
-}
-
-isc_result_t
-cfg_parse_buffer4(cfg_parser_t *pctx, isc_buffer_t *buffer,
-		  const char *file, unsigned int line,
-		  const cfg_type_t *type, unsigned int flags,
-		  cfg_obj_t **ret)
-{
-	isc_result_t result;
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-	REQUIRE(buffer != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-	REQUIRE((flags & ~(CFG_PCTX_NODEPRECATED)) == 0);
-
-	UNUSED(file);
-	UNUSED(line);
-
-	CHECK(isc_lex_openbuffer(pctx->lexer, buffer));
-
-	pctx->flags = flags;
-
-	CHECK(parse2(pctx, type, ret));
- cleanup:
-	return (result);
-}
-
-void
-cfg_parser_attach(cfg_parser_t *src, cfg_parser_t **dest) {
-	REQUIRE(src != NULL);
-	REQUIRE(dest != NULL && *dest == NULL);
-
-	isc_refcount_increment(&src->references, NULL);
-	*dest = src;
-}
-
 void
 cfg_parser_destroy(cfg_parser_t **pctxp) {
 	cfg_parser_t *pctx;
@@ -639,221 +409,6 @@ cfg_parser_destroy(cfg_parser_t **pctxp) {
 		free(pctx);
 	}
 }
-
-/*
- * void
- */
-isc_result_t
-cfg_parse_void(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	REQUIRE(pctx != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	UNUSED(type);
-
-	return (cfg_create_obj(pctx, &cfg_type_void, ret));
-}
-
-void
-cfg_print_void(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	UNUSED(pctx);
-	UNUSED(obj);
-}
-
-void
-cfg_doc_void(cfg_printer_t *pctx, const cfg_type_t *type) {
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-
-	UNUSED(pctx);
-	UNUSED(type);
-}
-
-isc_boolean_t
-cfg_obj_isvoid(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-	return (ISC_TF(obj->type->rep == &cfg_rep_void));
-}
-
-cfg_type_t cfg_type_void = {
-	"void", cfg_parse_void, cfg_print_void, cfg_doc_void, &cfg_rep_void,
-	NULL };
-
-/*
- * Fixed point
- */
-isc_result_t
-cfg_parse_fixedpoint(cfg_parser_t *pctx, const cfg_type_t *type,
-		     cfg_obj_t **ret)
-{
-	isc_result_t result;
-	cfg_obj_t *obj = NULL;
-	size_t n1, n2, n3, l;
-	const char *p;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	UNUSED(type);
-
-	CHECK(cfg_gettoken(pctx, 0));
-	if (pctx->token.type != isc_tokentype_string) {
-		cfg_parser_error(pctx, CFG_LOG_NEAR,
-				 "expected fixed point number");
-		return (ISC_R_UNEXPECTEDTOKEN);
-	}
-
-
-	p = TOKEN_STRING(pctx);
-	l = strlen(p);
-	n1 = strspn(p, "0123456789");
-	n2 = strspn(p + n1, ".");
-	n3 = strspn(p + n1 + n2, "0123456789");
-
-	if ((n1 + n2 + n3 != l) || (n1 + n3 == 0) ||
-	    n1 > 5 || n2 > 1 || n3 > 2) {
-		cfg_parser_error(pctx, CFG_LOG_NEAR,
-				 "expected fixed point number");
-		return (ISC_R_UNEXPECTEDTOKEN);
-	}
-
-	CHECK(cfg_create_obj(pctx, &cfg_type_fixedpoint, &obj));
-
-	obj->value.uint32 = strtoul(p, NULL, 10) * 100;
-	switch (n3) {
-	case 2:
-		obj->value.uint32 += strtoul(p + n1 + n2, NULL, 10);
-		break;
-	case 1:
-		obj->value.uint32 += strtoul(p + n1 + n2, NULL, 10) * 10;
-		break;
-	}
-	*ret = obj;
-
- cleanup:
-	return (result);
-}
-
-void
-cfg_print_fixedpoint(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	char buf[64];
-	int n;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	n = snprintf(buf, sizeof(buf), "%u.%02u",
-		     obj->value.uint32/100, obj->value.uint32%100);
-	INSIST(n > 0 && (size_t)n < sizeof(buf));
-	cfg_print_chars(pctx, buf, strlen(buf));
-}
-
-uint32_t
-cfg_obj_asfixedpoint(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL && obj->type->rep == &cfg_rep_fixedpoint);
-	return (obj->value.uint32);
-}
-
-cfg_type_t cfg_type_fixedpoint = {
-	"fixedpoint", cfg_parse_fixedpoint, cfg_print_fixedpoint,
-	cfg_doc_terminal, &cfg_rep_fixedpoint, NULL
-};
-
-/*
- * uint32
- */
-isc_result_t
-cfg_parse_uint32(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	isc_result_t result;
-	cfg_obj_t *obj = NULL;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	UNUSED(type);
-
-	CHECK(cfg_gettoken(pctx, ISC_LEXOPT_NUMBER | ISC_LEXOPT_CNUMBER));
-	if (pctx->token.type != isc_tokentype_number) {
-		cfg_parser_error(pctx, CFG_LOG_NEAR, "expected number");
-		return (ISC_R_UNEXPECTEDTOKEN);
-	}
-
-	CHECK(cfg_create_obj(pctx, &cfg_type_uint32, &obj));
-
-	obj->value.uint32 = pctx->token.value.as_ulong;
-	*ret = obj;
- cleanup:
-	return (result);
-}
-
-void
-cfg_print_cstr(cfg_printer_t *pctx, const char *s) {
-	cfg_print_chars(pctx, s, strlen(s));
-}
-
-void
-cfg_print_rawuint(cfg_printer_t *pctx, unsigned int u) {
-	char buf[32];
-
-	snprintf(buf, sizeof(buf), "%u", u);
-	cfg_print_cstr(pctx, buf);
-}
-
-void
-cfg_print_uint32(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	cfg_print_rawuint(pctx, obj->value.uint32);
-}
-
-isc_boolean_t
-cfg_obj_isuint32(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-	return (ISC_TF(obj->type->rep == &cfg_rep_uint32));
-}
-
-uint32_t
-cfg_obj_asuint32(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL && obj->type->rep == &cfg_rep_uint32);
-	return (obj->value.uint32);
-}
-
-cfg_type_t cfg_type_uint32 = {
-	"integer", cfg_parse_uint32, cfg_print_uint32, cfg_doc_terminal,
-	&cfg_rep_uint32, NULL
-};
-
-
-/*
- * uint64
- */
-isc_boolean_t
-cfg_obj_isuint64(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-	return (ISC_TF(obj->type->rep == &cfg_rep_uint64));
-}
-
-uint64_t
-cfg_obj_asuint64(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL && obj->type->rep == &cfg_rep_uint64);
-	return (obj->value.uint64);
-}
-
-void
-cfg_print_uint64(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	char buf[32];
-
-	snprintf(buf, sizeof(buf), "%llu",
-		 obj->value.uint64);
-	cfg_print_cstr(pctx, buf);
-}
-
-cfg_type_t cfg_type_uint64 = {
-	"64_bit_integer", NULL, cfg_print_uint64, cfg_doc_terminal,
-	&cfg_rep_uint64, NULL
-};
 
 /*
  * qstring (quoted string), ustring (unquoted string), astring
@@ -885,7 +440,7 @@ create_string(cfg_parser_t *pctx, const char *contents, const cfg_type_t *type,
 	return (result);
 }
 
-isc_result_t
+static isc_result_t
 cfg_parse_qstring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
 
@@ -924,7 +479,7 @@ parse_ustring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (result);
 }
 
-isc_result_t
+static isc_result_t
 cfg_parse_astring(cfg_parser_t *pctx, const cfg_type_t *type,
 		  cfg_obj_t **ret)
 {
@@ -944,7 +499,7 @@ cfg_parse_astring(cfg_parser_t *pctx, const cfg_type_t *type,
 	return (result);
 }
 
-isc_result_t
+static isc_result_t
 cfg_parse_sstring(cfg_parser_t *pctx, const cfg_type_t *type,
 		  cfg_obj_t **ret)
 {
@@ -962,90 +517,6 @@ cfg_parse_sstring(cfg_parser_t *pctx, const cfg_type_t *type,
 			      ret));
  cleanup:
 	return (result);
-}
-
-isc_boolean_t
-cfg_is_enum(const char *s, const char *const *enums) {
-	const char * const *p;
-
-	REQUIRE(s != NULL);
-	REQUIRE(enums != NULL);
-
-	for (p = enums; *p != NULL; p++) {
-		if (strcasecmp(*p, s) == 0)
-			return (ISC_TRUE);
-	}
-	return (ISC_FALSE);
-}
-
-static isc_result_t
-check_enum(cfg_parser_t *pctx, cfg_obj_t *obj, const char *const *enums) {
-	const char *s = obj->value.string.base;
-
-	if (cfg_is_enum(s, enums))
-		return (ISC_R_SUCCESS);
-	cfg_parser_error(pctx, 0, "'%s' unexpected", s);
-	return (ISC_R_UNEXPECTEDTOKEN);
-}
-
-isc_result_t
-cfg_parse_enum(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	isc_result_t result;
-	cfg_obj_t *obj = NULL;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	CHECK(parse_ustring(pctx, NULL, &obj));
-	CHECK(check_enum(pctx, obj, type->of));
-	*ret = obj;
-	return (ISC_R_SUCCESS);
- cleanup:
-	CLEANUP_OBJ(obj);
-	return (result);
-}
-
-void
-cfg_doc_enum(cfg_printer_t *pctx, const cfg_type_t *type) {
-	const char * const *p;
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-
-	cfg_print_chars(pctx, "( ", 2);
-	for (p = type->of; *p != NULL; p++) {
-		cfg_print_cstr(pctx, *p);
-		if (p[1] != NULL)
-			cfg_print_chars(pctx, " | ", 3);
-	}
-	cfg_print_chars(pctx, " )", 2);
-}
-
-void
-cfg_print_ustring(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	cfg_print_chars(pctx, obj->value.string.base, obj->value.string.length);
-}
-
-static void
-print_qstring(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	cfg_print_chars(pctx, "\"", 1);
-	cfg_print_ustring(pctx, obj);
-	cfg_print_chars(pctx, "\"", 1);
-}
-
-static void
-print_sstring(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	cfg_print_chars(pctx, "\"", 1);
-	if ((pctx->flags & CFG_PRINTER_XKEY) != 0) {
-		unsigned int len = obj->value.string.length;
-		while (len-- > 0)
-			cfg_print_chars(pctx, "?", 1);
-	} else
-		cfg_print_ustring(pctx, obj);
-	cfg_print_chars(pctx, "\"", 1);
 }
 
 static void
@@ -1068,20 +539,17 @@ cfg_obj_asstring(const cfg_obj_t *obj) {
 
 /* Quoted string only */
 cfg_type_t cfg_type_qstring = {
-	"quoted_string", cfg_parse_qstring, print_qstring, cfg_doc_terminal,
-	&cfg_rep_string, NULL
+	"quoted_string", cfg_parse_qstring, &cfg_rep_string, NULL
 };
 
 /* Unquoted string only */
 cfg_type_t cfg_type_ustring = {
-	"string", parse_ustring, cfg_print_ustring, cfg_doc_terminal,
-	&cfg_rep_string, NULL
+	"string", parse_ustring, &cfg_rep_string, NULL
 };
 
 /* Any string (quoted or unquoted); printed with quotes */
 cfg_type_t cfg_type_astring = {
-	"string", cfg_parse_astring, print_qstring, cfg_doc_terminal,
-	&cfg_rep_string, NULL
+	"string", cfg_parse_astring, &cfg_rep_string, NULL
 };
 
 /*
@@ -1089,91 +557,18 @@ cfg_type_t cfg_type_astring = {
  * If CFG_PRINTER_XKEY is set when printing the string will be '?' out.
  */
 cfg_type_t cfg_type_sstring = {
-	"string", cfg_parse_sstring, print_sstring, cfg_doc_terminal,
-	&cfg_rep_string, NULL
+	"string", cfg_parse_sstring, &cfg_rep_string, NULL
 };
 
 /*
  * Booleans
  */
 
-isc_boolean_t
-cfg_obj_isboolean(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-	return (ISC_TF(obj->type->rep == &cfg_rep_boolean));
-}
-
-isc_boolean_t
-cfg_obj_asboolean(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL && obj->type->rep == &cfg_rep_boolean);
-	return (obj->value.boolean);
-}
-
-isc_result_t
-cfg_parse_boolean(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
-{
-	isc_result_t result;
-	isc_boolean_t value;
-	cfg_obj_t *obj = NULL;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	UNUSED(type);
-
-	result = cfg_gettoken(pctx, 0);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	if (pctx->token.type != isc_tokentype_string)
-		goto bad_boolean;
-
-	if ((strcasecmp(TOKEN_STRING(pctx), "true") == 0) ||
-	    (strcasecmp(TOKEN_STRING(pctx), "yes") == 0) ||
-	    (strcmp(TOKEN_STRING(pctx), "1") == 0)) {
-		value = ISC_TRUE;
-	} else if ((strcasecmp(TOKEN_STRING(pctx), "false") == 0) ||
-		   (strcasecmp(TOKEN_STRING(pctx), "no") == 0) ||
-		   (strcmp(TOKEN_STRING(pctx), "0") == 0)) {
-		value = ISC_FALSE;
-	} else {
-		goto bad_boolean;
-	}
-
-	CHECK(cfg_create_obj(pctx, &cfg_type_boolean, &obj));
-	obj->value.boolean = value;
-	*ret = obj;
-	return (result);
-
- bad_boolean:
-	cfg_parser_error(pctx, CFG_LOG_NEAR, "boolean expected");
-	return (ISC_R_UNEXPECTEDTOKEN);
-
- cleanup:
-	return (result);
-}
-
-void
-cfg_print_boolean(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	if (obj->value.boolean)
-		cfg_print_chars(pctx, "yes", 3);
-	else
-		cfg_print_chars(pctx, "no", 2);
-}
-
-cfg_type_t cfg_type_boolean = {
-	"boolean", cfg_parse_boolean, cfg_print_boolean, cfg_doc_terminal,
-	&cfg_rep_boolean, NULL
-};
-
 /*
  * Lists.
  */
 
-isc_result_t
+static isc_result_t
 cfg_create_list(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **obj) {
 	isc_result_t result;
 
@@ -1219,7 +614,7 @@ free_list(cfg_parser_t *pctx, cfg_obj_t *obj) {
 	}
 }
 
-isc_result_t
+static isc_result_t
 cfg_parse_listelt(cfg_parser_t *pctx, const cfg_type_t *elttype,
 		  cfg_listelt_t **ret)
 {
@@ -1245,145 +640,6 @@ cfg_parse_listelt(cfg_parser_t *pctx, const cfg_type_t *elttype,
  cleanup:
 	free(elt);
 	return (result);
-}
-
-/*
- * Parse a homogeneous list whose elements are of type 'elttype'
- * and where each element is terminated by a semicolon.
- */
-static isc_result_t
-parse_list(cfg_parser_t *pctx, const cfg_type_t *listtype, cfg_obj_t **ret)
-{
-	cfg_obj_t *listobj = NULL;
-	const cfg_type_t *listof = listtype->of;
-	isc_result_t result;
-	cfg_listelt_t *elt = NULL;
-
-	CHECK(cfg_create_list(pctx, listtype, &listobj));
-
-	for (;;) {
-		CHECK(cfg_peektoken(pctx, 0));
-		if (pctx->token.type == isc_tokentype_special &&
-		    pctx->token.value.as_char == /*{*/ '}')
-			break;
-		CHECK(cfg_parse_listelt(pctx, listof, &elt));
-		CHECK(parse_semicolon(pctx));
-		ISC_LIST_APPEND(listobj->value.list, elt, link);
-		elt = NULL;
-	}
-	*ret = listobj;
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	if (elt != NULL)
-		free_list_elt(pctx, elt);
-	CLEANUP_OBJ(listobj);
-	return (result);
-}
-
-static void
-print_list(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	const cfg_list_t *list = &obj->value.list;
-	const cfg_listelt_t *elt;
-
-	for (elt = ISC_LIST_HEAD(*list);
-	     elt != NULL;
-	     elt = ISC_LIST_NEXT(elt, link)) {
-		print_indent(pctx);
-		cfg_print_obj(pctx, elt->obj);
-		cfg_print_chars(pctx, ";\n", 2);
-	}
-}
-
-isc_result_t
-cfg_parse_bracketed_list(cfg_parser_t *pctx, const cfg_type_t *type,
-		     cfg_obj_t **ret)
-{
-	isc_result_t result;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	CHECK(cfg_parse_special(pctx, '{'));
-	CHECK(parse_list(pctx, type, ret));
-	CHECK(cfg_parse_special(pctx, '}'));
- cleanup:
-	return (result);
-}
-
-void
-cfg_print_bracketed_list(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	print_open(pctx);
-	print_list(pctx, obj);
-	print_close(pctx);
-}
-
-void
-cfg_doc_bracketed_list(cfg_printer_t *pctx, const cfg_type_t *type) {
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-
-	cfg_print_chars(pctx, "{ ", 2);
-	cfg_doc_obj(pctx, type->of);
-	cfg_print_chars(pctx, "; ... }", 7);
-}
-
-/*
- * Parse a homogeneous list whose elements are of type 'elttype'
- * and where elements are separated by space.  The list ends
- * before the first semicolon.
- */
-isc_result_t
-cfg_parse_spacelist(cfg_parser_t *pctx, const cfg_type_t *listtype,
-		    cfg_obj_t **ret)
-{
-	cfg_obj_t *listobj = NULL;
-	const cfg_type_t *listof = listtype->of;
-	isc_result_t result;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(listtype != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	CHECK(cfg_create_list(pctx, listtype, &listobj));
-
-	for (;;) {
-		cfg_listelt_t *elt = NULL;
-
-		CHECK(cfg_peektoken(pctx, 0));
-		if (pctx->token.type == isc_tokentype_special &&
-		    pctx->token.value.as_char == ';')
-			break;
-		CHECK(cfg_parse_listelt(pctx, listof, &elt));
-		ISC_LIST_APPEND(listobj->value.list, elt, link);
-	}
-	*ret = listobj;
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	CLEANUP_OBJ(listobj);
-	return (result);
-}
-
-void
-cfg_print_spacelist(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	const cfg_list_t *list = &obj->value.list;
-	const cfg_listelt_t *elt;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	for (elt = ISC_LIST_HEAD(*list);
-	     elt != NULL;
-	     elt = ISC_LIST_NEXT(elt, link)) {
-		cfg_print_obj(pctx, elt->obj);
-		if (ISC_LIST_NEXT(elt, link) != NULL)
-			cfg_print_chars(pctx, " ", 1);
-	}
 }
 
 isc_boolean_t
@@ -1429,12 +685,6 @@ cfg_list_length(const cfg_obj_t *obj, isc_boolean_t recurse) {
 	return (count);
 }
 
-cfg_obj_t *
-cfg_listelt_value(const cfg_listelt_t *elt) {
-	REQUIRE(elt != NULL);
-	return (elt->obj);
-}
-
 /*
  * Maps.
  */
@@ -1461,7 +711,6 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 	cfg_obj_t *eltobj = NULL;
 	cfg_obj_t *includename = NULL;
 	isc_symvalue_t symval;
-	cfg_list_t *list = NULL;
 
 	REQUIRE(pctx != NULL);
 	REQUIRE(type != NULL);
@@ -1472,8 +721,6 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 	obj->value.map.clausesets = clausesets;
 
 	for (;;) {
-		cfg_listelt_t *elt;
-
 	redo:
 		/*
 		 * Parse the option name and see if it is known.
@@ -1530,95 +777,25 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 
 		/* Clause is known. */
 
-		/* Issue warnings if appropriate */
-		if ((pctx->flags & CFG_PCTX_NODEPRECATED) == 0 &&
-		    (clause->flags & CFG_CLAUSEFLAG_DEPRECATED) != 0)
-		{
-			cfg_parser_warning(pctx, 0, "option '%s' is deprecated",
-					   clause->name);
-		}
-		if ((clause->flags & CFG_CLAUSEFLAG_OBSOLETE) != 0) {
-			cfg_parser_warning(pctx, 0, "option '%s' is obsolete",
-					   clause->name);
-		}
-		if ((clause->flags & CFG_CLAUSEFLAG_NOTIMP) != 0) {
-			cfg_parser_warning(pctx, 0, "option '%s' is "
-					   "not implemented", clause->name);
-		}
-		if ((clause->flags & CFG_CLAUSEFLAG_NYI) != 0) {
-			cfg_parser_warning(pctx, 0, "option '%s' is "
-					   "not implemented", clause->name);
-		}
-
-		if ((clause->flags & CFG_CLAUSEFLAG_NOTCONFIGURED) != 0) {
-			cfg_parser_warning(pctx, 0, "option '%s' was not "
-					   "enabled at compile time",
-					   clause->name);
-			result = ISC_R_FAILURE;
-			goto cleanup;
-		}
-
-		/*
-		 * Don't log options with CFG_CLAUSEFLAG_NEWDEFAULT
-		 * set here - we need to log the *lack* of such an option,
-		 * not its presence.
-		 */
-
 		/* See if the clause already has a value; if not create one. */
 		result = isc_symtab_lookup(obj->value.map.symtab,
 					   clause->name, 0, &symval);
 
-		if ((clause->flags & CFG_CLAUSEFLAG_MULTI) != 0) {
-			/* Multivalued clause */
-			cfg_obj_t *listobj = NULL;
-			if (result == ISC_R_NOTFOUND) {
-				CHECK(cfg_create_list(pctx,
-						  &cfg_type_implicitlist,
-						  &listobj));
-				symval.as_pointer = listobj;
-				result = isc_symtab_define(obj->value.
-						   map.symtab,
-						   clause->name,
-						   1, symval,
-						   isc_symexists_reject);
-				if (result != ISC_R_SUCCESS) {
-					cfg_parser_error(pctx, CFG_LOG_NEAR,
-						     "isc_symtab_define(%s) "
-						     "failed", clause->name);
-					free(list);
-					goto cleanup;
-				}
-			} else {
-				INSIST(result == ISC_R_SUCCESS);
-				listobj = symval.as_pointer;
-			}
-
-			elt = NULL;
-			CHECK(cfg_parse_listelt(pctx, clause->type, &elt));
+		/* Single-valued clause */
+		if (result == ISC_R_NOTFOUND) {
+			CHECK(parse_symtab_elt(pctx, clause->name,
+					       clause->type,
+					       obj->value.map.symtab));
 			CHECK(parse_semicolon(pctx));
-
-			ISC_LIST_APPEND(listobj->value.list, elt, link);
+		} else if (result == ISC_R_SUCCESS) {
+			cfg_parser_error(pctx, CFG_LOG_NEAR, "'%s' redefined",
+				     clause->name);
+			result = ISC_R_EXISTS;
+			goto cleanup;
 		} else {
-			/* Single-valued clause */
-			if (result == ISC_R_NOTFOUND) {
-				isc_boolean_t callback =
-					ISC_TF((clause->flags &
-						CFG_CLAUSEFLAG_CALLBACK) != 0);
-				CHECK(parse_symtab_elt(pctx, clause->name,
-						       clause->type,
-						       obj->value.map.symtab,
-						       callback));
-				CHECK(parse_semicolon(pctx));
-			} else if (result == ISC_R_SUCCESS) {
-				cfg_parser_error(pctx, CFG_LOG_NEAR, "'%s' redefined",
-					     clause->name);
-				result = ISC_R_EXISTS;
-				goto cleanup;
-			} else {
-				cfg_parser_error(pctx, CFG_LOG_NEAR,
-					     "isc_symtab_define() failed");
-				goto cleanup;
-			}
+			cfg_parser_error(pctx, CFG_LOG_NEAR,
+				     "isc_symtab_define() failed");
+			goto cleanup;
 		}
 	}
 
@@ -1636,17 +813,13 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 
 static isc_result_t
 parse_symtab_elt(cfg_parser_t *pctx, const char *name,
-		 cfg_type_t *elttype, isc_symtab_t *symtab,
-		 isc_boolean_t callback)
+		 cfg_type_t *elttype, isc_symtab_t *symtab)
 {
 	isc_result_t result;
 	cfg_obj_t *obj = NULL;
 	isc_symvalue_t symval;
 
 	CHECK(cfg_parse_obj(pctx, elttype, &obj));
-
-	if (callback && pctx->callback != NULL)
-		CHECK(pctx->callback(name, obj, pctx->callbackarg));
 
 	symval.as_pointer = obj;
 	CHECK(isc_symtab_define(symtab, name,
@@ -1662,7 +835,7 @@ parse_symtab_elt(cfg_parser_t *pctx, const char *name,
 /*
  * Parse a map; e.g., "{ foo 1; bar { glub; }; zap true; zap false; }"
  */
-isc_result_t
+static isc_result_t
 cfg_parse_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
 
@@ -1713,188 +886,6 @@ cfg_parse_named_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 	return (parse_any_named_map(pctx, &cfg_type_astring, type, ret));
 }
 
-/*
- * Parse a map identified by a network address.
- * Used to be used for the "server" statement.
- */
-isc_result_t
-cfg_parse_addressed_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	return (parse_any_named_map(pctx, &cfg_type_netaddr, type, ret));
-}
-
-/*
- * Parse a map identified by a network prefix.
- * Used for the "server" statement.
- */
-isc_result_t
-cfg_parse_netprefix_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	return (parse_any_named_map(pctx, &cfg_type_netprefix, type, ret));
-}
-
-void
-cfg_print_mapbody(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	isc_result_t result = ISC_R_SUCCESS;
-
-	const cfg_clausedef_t * const *clauseset;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	for (clauseset = obj->value.map.clausesets;
-	     *clauseset != NULL;
-	     clauseset++)
-	{
-		isc_symvalue_t symval;
-		const cfg_clausedef_t *clause;
-
-		for (clause = *clauseset;
-		     clause->name != NULL;
-		     clause++) {
-			result = isc_symtab_lookup(obj->value.map.symtab,
-						   clause->name, 0, &symval);
-			if (result == ISC_R_SUCCESS) {
-				cfg_obj_t *symobj = symval.as_pointer;
-				if (symobj->type == &cfg_type_implicitlist) {
-					/* Multivalued. */
-					cfg_list_t *list = &symobj->value.list;
-					cfg_listelt_t *elt;
-					for (elt = ISC_LIST_HEAD(*list);
-					     elt != NULL;
-					     elt = ISC_LIST_NEXT(elt, link)) {
-						print_indent(pctx);
-						cfg_print_cstr(pctx, clause->name);
-						cfg_print_chars(pctx, " ", 1);
-						cfg_print_obj(pctx, elt->obj);
-						cfg_print_chars(pctx, ";\n", 2);
-					}
-				} else {
-					/* Single-valued. */
-					print_indent(pctx);
-					cfg_print_cstr(pctx, clause->name);
-					cfg_print_chars(pctx, " ", 1);
-					cfg_print_obj(pctx, symobj);
-					cfg_print_chars(pctx, ";\n", 2);
-				}
-			} else if (result == ISC_R_NOTFOUND) {
-				; /* do nothing */
-			} else {
-				INSIST(0);
-			}
-		}
-	}
-}
-
-static struct flagtext {
-	unsigned int flag;
-	const char *text;
-} flagtexts[] = {
-	{ CFG_CLAUSEFLAG_NOTIMP, "not implemented" },
-	{ CFG_CLAUSEFLAG_NYI, "not yet implemented" },
-	{ CFG_CLAUSEFLAG_OBSOLETE, "obsolete" },
-	{ CFG_CLAUSEFLAG_NEWDEFAULT, "default changed" },
-	{ CFG_CLAUSEFLAG_TESTONLY, "test only" },
-	{ CFG_CLAUSEFLAG_NOTCONFIGURED, "not configured" },
-	{ CFG_CLAUSEFLAG_MULTI, "may occur multiple times" },
-	{ CFG_CLAUSEFLAG_EXPERIMENTAL, "experimental" },
-	{ 0, NULL }
-};
-
-static void
-print_clause_flags(cfg_printer_t *pctx, unsigned int flags) {
-	struct flagtext *p;
-	isc_boolean_t first = ISC_TRUE;
-	for (p = flagtexts; p->flag != 0; p++) {
-		if ((flags & p->flag) != 0) {
-			if (first)
-				cfg_print_cstr(pctx, " // ");
-			else
-				cfg_print_cstr(pctx, ", ");
-			cfg_print_cstr(pctx, p->text);
-			first = ISC_FALSE;
-		}
-	}
-}
-
-void
-cfg_doc_mapbody(cfg_printer_t *pctx, const cfg_type_t *type) {
-	const cfg_clausedef_t * const *clauseset;
-	const cfg_clausedef_t *clause;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-
-	for (clauseset = type->of; *clauseset != NULL; clauseset++) {
-		for (clause = *clauseset;
-		     clause->name != NULL;
-		     clause++) {
-			cfg_print_cstr(pctx, clause->name);
-			cfg_print_chars(pctx, " ", 1);
-			cfg_doc_obj(pctx, clause->type);
-			cfg_print_cstr(pctx, ";");
-			print_clause_flags(pctx, clause->flags);
-			cfg_print_cstr(pctx, "\n\n");
-		}
-	}
-}
-
-void
-cfg_print_map(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	if (obj->value.map.id != NULL) {
-		cfg_print_obj(pctx, obj->value.map.id);
-		cfg_print_chars(pctx, " ", 1);
-	}
-	print_open(pctx);
-	cfg_print_mapbody(pctx, obj);
-	print_close(pctx);
-}
-
-void
-cfg_doc_map(cfg_printer_t *pctx, const cfg_type_t *type) {
-	const cfg_clausedef_t * const *clauseset;
-	const cfg_clausedef_t *clause;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-
-	if (type->parse == cfg_parse_named_map) {
-		cfg_doc_obj(pctx, &cfg_type_astring);
-		cfg_print_chars(pctx, " ", 1);
-	} else if (type->parse == cfg_parse_addressed_map) {
-		cfg_doc_obj(pctx, &cfg_type_netaddr);
-		cfg_print_chars(pctx, " ", 1);
-	} else if (type->parse == cfg_parse_netprefix_map) {
-		cfg_doc_obj(pctx, &cfg_type_netprefix);
-		cfg_print_chars(pctx, " ", 1);
-	}
-
-	print_open(pctx);
-
-	for (clauseset = type->of; *clauseset != NULL; clauseset++) {
-		for (clause = *clauseset;
-		     clause->name != NULL;
-		     clause++) {
-			print_indent(pctx);
-			cfg_print_cstr(pctx, clause->name);
-			if (clause->type->print != cfg_print_void)
-				cfg_print_chars(pctx, " ", 1);
-			cfg_doc_obj(pctx, clause->type);
-			cfg_print_chars(pctx, ";", 1);
-			print_clause_flags(pctx, clause->flags);
-			cfg_print_chars(pctx, "\n", 1);
-		}
-	}
-	print_close(pctx);
-}
-
-isc_boolean_t
-cfg_obj_ismap(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-	return (ISC_TF(obj->type->rep == &cfg_rep_map));
-}
-
 isc_result_t
 cfg_map_get(const cfg_obj_t *mapobj, const char* name, const cfg_obj_t **obj) {
 	isc_result_t result;
@@ -1918,16 +909,6 @@ const cfg_obj_t *
 cfg_map_getname(const cfg_obj_t *mapobj) {
 	REQUIRE(mapobj != NULL && mapobj->type->rep == &cfg_rep_map);
 	return (mapobj->value.map.id);
-}
-
-unsigned int
-cfg_map_count(const cfg_obj_t *mapobj) {
-	const cfg_map_t *map;
-
-	REQUIRE(mapobj != NULL && mapobj->type->rep == &cfg_rep_map);
-
-	map = &mapobj->value.map;
-	return (isc_symtab_count(map->symtab));
 }
 
 /* Parse an arbitrary token, storing its raw text representation. */
@@ -1967,8 +948,7 @@ parse_token(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 }
 
 cfg_type_t cfg_type_token = {
-	"token", parse_token, cfg_print_ustring, cfg_doc_terminal,
-	&cfg_rep_string, NULL
+	"token", parse_token, &cfg_rep_string, NULL
 };
 
 /*
@@ -2016,529 +996,10 @@ parse_unsupported(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 }
 
 cfg_type_t cfg_type_unsupported = {
-	"unsupported", parse_unsupported, cfg_print_spacelist, cfg_doc_terminal,
-	&cfg_rep_list, NULL
-};
-
-/*
- * Try interpreting the current token as a network address.
- *
- * If CFG_ADDR_WILDOK is set in flags, "*" can be used as a wildcard
- * and at least one of CFG_ADDR_V4OK and CFG_ADDR_V6OK must also be set.  The
- * "*" is interpreted as the IPv4 wildcard address if CFG_ADDR_V4OK is
- * set (including the case where CFG_ADDR_V4OK and CFG_ADDR_V6OK are both set),
- * and the IPv6 wildcard address otherwise.
- */
-static isc_result_t
-token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
-	char *s;
-	struct in_addr in4a;
-	struct in6_addr in6a;
-
-	if (pctx->token.type != isc_tokentype_string)
-		return (ISC_R_UNEXPECTEDTOKEN);
-
-	s = TOKEN_STRING(pctx);
-	if ((flags & CFG_ADDR_WILDOK) != 0 && strcmp(s, "*") == 0) {
-		if ((flags & CFG_ADDR_V4OK) != 0) {
-			isc_netaddr_any(na);
-			return (ISC_R_SUCCESS);
-		} else if ((flags & CFG_ADDR_V6OK) != 0) {
-			isc_netaddr_any6(na);
-			return (ISC_R_SUCCESS);
-		} else {
-			INSIST(0);
-		}
-	} else {
-		if ((flags & (CFG_ADDR_V4OK | CFG_ADDR_V4PREFIXOK)) != 0) {
-			if (inet_pton(AF_INET, s, &in4a) == 1) {
-				isc_netaddr_fromin(na, &in4a);
-				return (ISC_R_SUCCESS);
-			}
-		}
-		if ((flags & CFG_ADDR_V4PREFIXOK) != 0 && strlen(s) <= 15U) {
-			char buf[64];
-			int i;
-
-			strlcpy(buf, s, sizeof(buf));
-			for (i = 0; i < 3; i++) {
-				strlcat(buf, ".0", sizeof(buf));
-				if (inet_pton(AF_INET, buf, &in4a) == 1) {
-					isc_netaddr_fromin(na, &in4a);
-					return (ISC_R_SUCCESS);
-				}
-			}
-		}
-		if ((flags & CFG_ADDR_V6OK) != 0 && strlen(s) <= 127U) {
-			char buf[128]; /* see lib/bind9/getaddresses.c */
-			char *d; /* zone delimiter */
-			uint32_t zone = 0; /* scope zone ID */
-
-			strlcpy(buf, s, sizeof(buf));
-			d = strchr(buf, '%');
-			if (d != NULL)
-				*d = '\0';
-
-			if (inet_pton(AF_INET6, buf, &in6a) == 1) {
-				if (d != NULL) {
-					isc_result_t result;
-
-					result = isc_netscope_pton(AF_INET6,
-								   d + 1,
-								   &in6a,
-								   &zone);
-					if (result != ISC_R_SUCCESS)
-						return (result);
-				}
-
-				isc_netaddr_fromin6(na, &in6a);
-				isc_netaddr_setzone(na, zone);
-				return (ISC_R_SUCCESS);
-			}
-		}
-	}
-	return (ISC_R_UNEXPECTEDTOKEN);
-}
-
-isc_result_t
-cfg_parse_rawaddr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
-	isc_result_t result;
-	const char *wild = "";
-	const char *prefix = "";
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(na != NULL);
-
-	CHECK(cfg_gettoken(pctx, 0));
-	result = token_addr(pctx, flags, na);
-	if (result == ISC_R_UNEXPECTEDTOKEN) {
-		if ((flags & CFG_ADDR_WILDOK) != 0)
-			wild = " or '*'";
-		if ((flags & CFG_ADDR_V4PREFIXOK) != 0)
-			wild = " or IPv4 prefix";
-		if ((flags & CFG_ADDR_MASK) == CFG_ADDR_V4OK)
-			cfg_parser_error(pctx, CFG_LOG_NEAR,
-					 "expected IPv4 address%s%s",
-					 prefix, wild);
-		else if ((flags & CFG_ADDR_MASK) == CFG_ADDR_V6OK)
-			cfg_parser_error(pctx, CFG_LOG_NEAR,
-					 "expected IPv6 address%s%s",
-					 prefix, wild);
-		else
-			cfg_parser_error(pctx, CFG_LOG_NEAR,
-					 "expected IP address%s%s",
-					 prefix, wild);
-	}
- cleanup:
-	return (result);
-}
-
-isc_boolean_t
-cfg_lookingat_netaddr(cfg_parser_t *pctx, unsigned int flags) {
-	isc_result_t result;
-	isc_netaddr_t na_dummy;
-
-	REQUIRE(pctx != NULL);
-
-	result = token_addr(pctx, flags, &na_dummy);
-	return (ISC_TF(result == ISC_R_SUCCESS));
-}
-
-isc_result_t
-cfg_parse_rawport(cfg_parser_t *pctx, unsigned int flags, in_port_t *port) {
-	isc_result_t result;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(port != NULL);
-
-	CHECK(cfg_gettoken(pctx, ISC_LEXOPT_NUMBER));
-
-	if ((flags & CFG_ADDR_WILDOK) != 0 &&
-	    pctx->token.type == isc_tokentype_string &&
-	    strcmp(TOKEN_STRING(pctx), "*") == 0) {
-		*port = 0;
-		return (ISC_R_SUCCESS);
-	}
-	if (pctx->token.type != isc_tokentype_number) {
-		cfg_parser_error(pctx, CFG_LOG_NEAR,
-			     "expected port number or '*'");
-		return (ISC_R_UNEXPECTEDTOKEN);
-	}
-	if (pctx->token.value.as_ulong >= 65536U) {
-		cfg_parser_error(pctx, CFG_LOG_NEAR,
-			     "port number out of range");
-		return (ISC_R_UNEXPECTEDTOKEN);
-	}
-	*port = (in_port_t)(pctx->token.value.as_ulong);
-	return (ISC_R_SUCCESS);
- cleanup:
-	return (result);
-}
-
-void
-cfg_print_rawaddr(cfg_printer_t *pctx, const isc_netaddr_t *na) {
-	isc_result_t result;
-	char text[128];
-	isc_buffer_t buf;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(na != NULL);
-
-	isc_buffer_init(&buf, text, sizeof(text));
-	result = isc_netaddr_totext(na, &buf);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
-	cfg_print_chars(pctx, isc_buffer_base(&buf), isc_buffer_usedlength(&buf));
-}
-
-isc_result_t
-cfg_parse_dscp(cfg_parser_t *pctx, isc_dscp_t *dscp) {
-	isc_result_t result;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(dscp != NULL);
-
-	CHECK(cfg_gettoken(pctx, ISC_LEXOPT_NUMBER | ISC_LEXOPT_CNUMBER));
-
-	if (pctx->token.type != isc_tokentype_number) {
-		cfg_parser_error(pctx, CFG_LOG_NEAR,
-			     "expected number");
-		return (ISC_R_UNEXPECTEDTOKEN);
-	}
-	if (pctx->token.value.as_ulong > 63U) {
-		cfg_parser_error(pctx, CFG_LOG_NEAR,
-			     "dscp out of range");
-		return (ISC_R_RANGE);
-	}
-	*dscp = (isc_dscp_t)(pctx->token.value.as_ulong);
-	return (ISC_R_SUCCESS);
- cleanup:
-	return (result);
-}
-
-/* netaddr */
-
-static unsigned int netaddr_flags = CFG_ADDR_V4OK | CFG_ADDR_V6OK;
-static unsigned int netaddr4_flags = CFG_ADDR_V4OK;
-static unsigned int netaddr4wild_flags = CFG_ADDR_V4OK | CFG_ADDR_WILDOK;
-static unsigned int netaddr6_flags = CFG_ADDR_V6OK;
-static unsigned int netaddr6wild_flags = CFG_ADDR_V6OK | CFG_ADDR_WILDOK;
-
-static isc_result_t
-parse_netaddr(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	isc_result_t result;
-	cfg_obj_t *obj = NULL;
-	isc_netaddr_t netaddr;
-	unsigned int flags = *(const unsigned int *)type->of;
-
-	CHECK(cfg_create_obj(pctx, type, &obj));
-	CHECK(cfg_parse_rawaddr(pctx, flags, &netaddr));
-	isc_sockaddr_fromnetaddr(&obj->value.sockaddr, &netaddr, 0);
-	*ret = obj;
-	return (ISC_R_SUCCESS);
- cleanup:
-	CLEANUP_OBJ(obj);
-	return (result);
-}
-
-static void
-cfg_doc_netaddr(cfg_printer_t *pctx, const cfg_type_t *type) {
-	const unsigned int *flagp = type->of;
-	int n = 0;
-	if (*flagp != CFG_ADDR_V4OK && *flagp != CFG_ADDR_V6OK)
-		cfg_print_chars(pctx, "( ", 2);
-	if (*flagp & CFG_ADDR_V4OK) {
-		cfg_print_cstr(pctx, "<ipv4_address>");
-		n++;
-	}
-	if (*flagp & CFG_ADDR_V6OK) {
-		if (n != 0)
-			cfg_print_chars(pctx, " | ", 3);
-		cfg_print_cstr(pctx, "<ipv6_address>");
-		n++;
-	}
-	if (*flagp & CFG_ADDR_WILDOK) {
-		if (n != 0)
-			cfg_print_chars(pctx, " | ", 3);
-		cfg_print_chars(pctx, "*", 1);
-		n++;
-		POST(n);
-	}
-	if (*flagp != CFG_ADDR_V4OK && *flagp != CFG_ADDR_V6OK)
-		cfg_print_chars(pctx, " )", 2);
-}
-
-cfg_type_t cfg_type_netaddr = {
-	"netaddr", parse_netaddr, cfg_print_sockaddr, cfg_doc_netaddr,
-	&cfg_rep_sockaddr, &netaddr_flags
-};
-
-cfg_type_t cfg_type_netaddr4 = {
-	"netaddr4", parse_netaddr, cfg_print_sockaddr, cfg_doc_netaddr,
-	&cfg_rep_sockaddr, &netaddr4_flags
-};
-
-cfg_type_t cfg_type_netaddr4wild = {
-	"netaddr4wild", parse_netaddr, cfg_print_sockaddr, cfg_doc_netaddr,
-	&cfg_rep_sockaddr, &netaddr4wild_flags
-};
-
-cfg_type_t cfg_type_netaddr6 = {
-	"netaddr6", parse_netaddr, cfg_print_sockaddr, cfg_doc_netaddr,
-	&cfg_rep_sockaddr, &netaddr6_flags
-};
-
-cfg_type_t cfg_type_netaddr6wild = {
-	"netaddr6wild", parse_netaddr, cfg_print_sockaddr, cfg_doc_netaddr,
-	&cfg_rep_sockaddr, &netaddr6wild_flags
-};
-
-/* netprefix */
-
-isc_result_t
-cfg_parse_netprefix(cfg_parser_t *pctx, const cfg_type_t *type,
-		    cfg_obj_t **ret)
-{
-	cfg_obj_t *obj = NULL;
-	isc_result_t result;
-	isc_netaddr_t netaddr;
-	unsigned int addrlen = 0, prefixlen;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	UNUSED(type);
-
-	CHECK(cfg_parse_rawaddr(pctx, CFG_ADDR_V4OK | CFG_ADDR_V4PREFIXOK |
-				CFG_ADDR_V6OK, &netaddr));
-	switch (netaddr.family) {
-	case AF_INET:
-		addrlen = 32;
-		break;
-	case AF_INET6:
-		addrlen = 128;
-		break;
-	default:
-		INSIST(0);
-		break;
-	}
-	CHECK(cfg_peektoken(pctx, 0));
-	if (pctx->token.type == isc_tokentype_special &&
-	    pctx->token.value.as_char == '/') {
-		CHECK(cfg_gettoken(pctx, 0)); /* read "/" */
-		CHECK(cfg_gettoken(pctx, ISC_LEXOPT_NUMBER));
-		if (pctx->token.type != isc_tokentype_number) {
-			cfg_parser_error(pctx, CFG_LOG_NEAR,
-				     "expected prefix length");
-			return (ISC_R_UNEXPECTEDTOKEN);
-		}
-		prefixlen = pctx->token.value.as_ulong;
-		if (prefixlen > addrlen) {
-			cfg_parser_error(pctx, CFG_LOG_NOPREP,
-				     "invalid prefix length");
-			return (ISC_R_RANGE);
-		}
-	} else {
-		prefixlen = addrlen;
-	}
-	CHECK(cfg_create_obj(pctx, &cfg_type_netprefix, &obj));
-	obj->value.netprefix.address = netaddr;
-	obj->value.netprefix.prefixlen = prefixlen;
-	*ret = obj;
-	return (ISC_R_SUCCESS);
- cleanup:
-	cfg_parser_error(pctx, CFG_LOG_NEAR, "expected network prefix");
-	return (result);
-}
-
-static void
-print_netprefix(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	const cfg_netprefix_t *p = &obj->value.netprefix;
-
-	cfg_print_rawaddr(pctx, &p->address);
-	cfg_print_chars(pctx, "/", 1);
-	cfg_print_rawuint(pctx, p->prefixlen);
-}
-
-isc_boolean_t
-cfg_obj_isnetprefix(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-	return (ISC_TF(obj->type->rep == &cfg_rep_netprefix));
-}
-
-void
-cfg_obj_asnetprefix(const cfg_obj_t *obj, isc_netaddr_t *netaddr,
-		    unsigned int *prefixlen)
-{
-	REQUIRE(obj != NULL && obj->type->rep == &cfg_rep_netprefix);
-	REQUIRE(netaddr != NULL);
-	REQUIRE(prefixlen != NULL);
-
-	*netaddr = obj->value.netprefix.address;
-	*prefixlen = obj->value.netprefix.prefixlen;
-}
-
-cfg_type_t cfg_type_netprefix = {
-	"netprefix", cfg_parse_netprefix, print_netprefix, cfg_doc_terminal,
-	&cfg_rep_netprefix, NULL
+	"unsupported", parse_unsupported, &cfg_rep_list, NULL
 };
 
 static isc_result_t
-parse_sockaddrsub(cfg_parser_t *pctx, const cfg_type_t *type,
-		  int flags, cfg_obj_t **ret)
-{
-	isc_result_t result;
-	isc_netaddr_t netaddr;
-	in_port_t port = 0;
-	isc_dscp_t dscp = -1;
-	cfg_obj_t *obj = NULL;
-	int have_port = 0, have_dscp = 0;
-
-	CHECK(cfg_create_obj(pctx, type, &obj));
-	CHECK(cfg_parse_rawaddr(pctx, flags, &netaddr));
-	for (;;) {
-		CHECK(cfg_peektoken(pctx, 0));
-		if (pctx->token.type == isc_tokentype_string) {
-			if (strcasecmp(TOKEN_STRING(pctx), "port") == 0) {
-				CHECK(cfg_gettoken(pctx, 0)); /* read "port" */
-				CHECK(cfg_parse_rawport(pctx, flags, &port));
-				++have_port;
-			} else if ((flags & CFG_ADDR_DSCPOK) != 0 &&
-				   strcasecmp(TOKEN_STRING(pctx), "dscp") == 0)
-			{
-				CHECK(cfg_gettoken(pctx, 0)); /* read "dscp" */
-				CHECK(cfg_parse_dscp(pctx, &dscp));
-				++have_dscp;
-			} else
-				break;
-		} else
-			break;
-	}
-	if (have_port > 1) {
-		cfg_parser_error(pctx, 0, "expected at most one port");
-		result = ISC_R_UNEXPECTEDTOKEN;
-		goto cleanup;
-	}
-
-	if (have_dscp > 1) {
-		cfg_parser_error(pctx, 0, "expected at most one dscp");
-		result = ISC_R_UNEXPECTEDTOKEN;
-		goto cleanup;
-	}
-	isc_sockaddr_fromnetaddr(&obj->value.sockaddr, &netaddr, port);
-	obj->value.sockaddrdscp.dscp = dscp;
-	*ret = obj;
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	CLEANUP_OBJ(obj);
-	return (result);
-}
-
-static unsigned int sockaddr_flags = CFG_ADDR_V4OK | CFG_ADDR_V6OK;
-cfg_type_t cfg_type_sockaddr = {
-	"sockaddr", cfg_parse_sockaddr, cfg_print_sockaddr, cfg_doc_sockaddr,
-	&cfg_rep_sockaddr, &sockaddr_flags
-};
-
-static unsigned int sockaddrdscp_flags = CFG_ADDR_V4OK | CFG_ADDR_V6OK |
-					 CFG_ADDR_DSCPOK;
-cfg_type_t cfg_type_sockaddrdscp = {
-	"sockaddr", cfg_parse_sockaddr, cfg_print_sockaddr, cfg_doc_sockaddr,
-	&cfg_rep_sockaddr, &sockaddrdscp_flags
-};
-
-isc_result_t
-cfg_parse_sockaddr(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	const unsigned int *flagp;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-	REQUIRE(ret != NULL && *ret == NULL);
-
-	flagp = type->of;
-
-	return (parse_sockaddrsub(pctx, &cfg_type_sockaddr, *flagp, ret));
-}
-
-void
-cfg_print_sockaddr(cfg_printer_t *pctx, const cfg_obj_t *obj) {
-	isc_netaddr_t netaddr;
-	in_port_t port;
-	char buf[ISC_NETADDR_FORMATSIZE];
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(obj != NULL);
-
-	isc_netaddr_fromsockaddr(&netaddr, &obj->value.sockaddr);
-	isc_netaddr_format(&netaddr, buf, sizeof(buf));
-	cfg_print_cstr(pctx, buf);
-	port = isc_sockaddr_getport(&obj->value.sockaddr);
-	if (port != 0) {
-		cfg_print_chars(pctx, " port ", 6);
-		cfg_print_rawuint(pctx, port);
-	}
-	if (obj->value.sockaddrdscp.dscp != -1) {
-		cfg_print_chars(pctx, " dscp ", 6);
-		cfg_print_rawuint(pctx, obj->value.sockaddrdscp.dscp);
-	}
-}
-
-void
-cfg_doc_sockaddr(cfg_printer_t *pctx, const cfg_type_t *type) {
-	const unsigned int *flagp = type->of;
-	int n = 0;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-
-	cfg_print_chars(pctx, "( ", 2);
-	if (*flagp & CFG_ADDR_V4OK) {
-		cfg_print_cstr(pctx, "<ipv4_address>");
-		n++;
-	}
-	if (*flagp & CFG_ADDR_V6OK) {
-		if (n != 0)
-			cfg_print_chars(pctx, " | ", 3);
-		cfg_print_cstr(pctx, "<ipv6_address>");
-		n++;
-	}
-	if (*flagp & CFG_ADDR_WILDOK) {
-		if (n != 0)
-			cfg_print_chars(pctx, " | ", 3);
-		cfg_print_chars(pctx, "*", 1);
-		n++;
-		POST(n);
-	}
-	cfg_print_chars(pctx, " ) ", 3);
-	if (*flagp & CFG_ADDR_WILDOK) {
-		cfg_print_cstr(pctx, "[ port ( <integer> | * ) ]");
-	} else {
-		cfg_print_cstr(pctx, "[ port <integer> ]");
-	}
-	if ((*flagp & CFG_ADDR_DSCPOK) != 0) {
-		cfg_print_cstr(pctx, " [ dscp <integer> ]");
-	}
-}
-
-isc_boolean_t
-cfg_obj_issockaddr(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-	return (ISC_TF(obj->type->rep == &cfg_rep_sockaddr));
-}
-
-const isc_sockaddr_t *
-cfg_obj_assockaddr(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL && obj->type->rep == &cfg_rep_sockaddr);
-	return (&obj->value.sockaddr);
-}
-
-isc_dscp_t
-cfg_obj_getdscp(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL && obj->type->rep == &cfg_rep_sockaddr);
-	return (obj->value.sockaddrdscp.dscp);
-}
-
-isc_result_t
 cfg_gettoken(cfg_parser_t *pctx, int options) {
 	isc_result_t result;
 
@@ -2598,7 +1059,7 @@ cfg_gettoken(cfg_parser_t *pctx, int options) {
 	return (result);
 }
 
-void
+static void
 cfg_ungettoken(cfg_parser_t *pctx) {
 	REQUIRE(pctx != NULL);
 
@@ -2608,7 +1069,7 @@ cfg_ungettoken(cfg_parser_t *pctx) {
 	pctx->ungotten = ISC_TRUE;
 }
 
-isc_result_t
+static isc_result_t
 cfg_peektoken(cfg_parser_t *pctx, int options) {
 	isc_result_t result;
 
@@ -2640,7 +1101,7 @@ cfg_getstringtoken(cfg_parser_t *pctx) {
 	return (ISC_R_SUCCESS);
 }
 
-void
+static void
 cfg_parser_error(cfg_parser_t *pctx, unsigned int flags, const char *fmt, ...) {
 	va_list args;
 
@@ -2651,19 +1112,6 @@ cfg_parser_error(cfg_parser_t *pctx, unsigned int flags, const char *fmt, ...) {
 	parser_complain(pctx, ISC_FALSE, flags, fmt, args);
 	va_end(args);
 	pctx->errors++;
-}
-
-void
-cfg_parser_warning(cfg_parser_t *pctx, unsigned int flags, const char *fmt, ...) {
-	va_list args;
-
-	REQUIRE(pctx != NULL);
-	REQUIRE(fmt != NULL);
-
-	va_start(args, fmt);
-	parser_complain(pctx, ISC_TRUE, flags, fmt, args);
-	va_end(args);
-	pctx->warnings++;
 }
 
 #define MAX_LOG_TOKEN 30 /* How much of a token to quote in log messages. */
@@ -2762,45 +1210,7 @@ parser_complain(cfg_parser_t *pctx, isc_boolean_t is_warning,
 		      "%s%s%s%s", where, message, prep, tokenbuf);
 }
 
-void
-cfg_obj_log(const cfg_obj_t *obj, isc_log_t *lctx, int level,
-	    const char *fmt, ...) {
-	va_list ap;
-	char msgbuf[2048];
-
-	REQUIRE(obj != NULL);
-	REQUIRE(fmt != NULL);
-
-	if (! isc_log_wouldlog(lctx, level))
-		return;
-
-	va_start(ap, fmt);
-
-	vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap);
-	va_end(ap);
-	if (obj->file != NULL) {
-		isc_log_write(lctx, CAT, MOD, level,
-			      "%s:%u: %s", obj->file, obj->line, msgbuf);
-	} else {
-		isc_log_write(lctx, CAT, MOD, level, "%s", msgbuf);
-	}
-}
-
-const char *
-cfg_obj_file(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-
-	return (obj->file);
-}
-
-unsigned int
-cfg_obj_line(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-
-	return (obj->line);
-}
-
-isc_result_t
+static isc_result_t
 cfg_create_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
 	cfg_obj_t *obj;
@@ -2867,15 +1277,6 @@ free_map(cfg_parser_t *pctx, cfg_obj_t *obj) {
 	isc_symtab_destroy(&obj->value.map.symtab);
 }
 
-isc_boolean_t
-cfg_obj_istype(const cfg_obj_t *obj, const cfg_type_t *type) {
-
-	REQUIRE(obj != NULL);
-	REQUIRE(type != NULL);
-
-	return (ISC_TF(obj->type == type));
-}
-
 /*
  * Destroy 'obj', a configuration object created in 'pctx'.
  */
@@ -2896,51 +1297,4 @@ cfg_obj_destroy(cfg_parser_t *pctx, cfg_obj_t **objp) {
 		free(obj);
 	}
 	*objp = NULL;
-}
-
-void
-cfg_obj_attach(cfg_obj_t *src, cfg_obj_t **dest) {
-    REQUIRE(src != NULL);
-    REQUIRE(dest != NULL && *dest == NULL);
-
-    isc_refcount_increment(&src->references, NULL);
-    *dest = src;
-}
-
-static void
-free_noop(cfg_parser_t *pctx, cfg_obj_t *obj) {
-	UNUSED(pctx);
-	UNUSED(obj);
-}
-
-void
-cfg_doc_obj(cfg_printer_t *pctx, const cfg_type_t *type) {
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-
-	type->doc(pctx, type);
-}
-
-void
-cfg_doc_terminal(cfg_printer_t *pctx, const cfg_type_t *type) {
-	REQUIRE(pctx != NULL);
-	REQUIRE(type != NULL);
-
-	cfg_print_chars(pctx, "<", 1);
-	cfg_print_cstr(pctx, type->name);
-	cfg_print_chars(pctx, ">", 1);
-}
-
-void
-cfg_print_grammar(const cfg_type_t *type,
-	void (*f)(void *closure, const char *text, int textlen),
-	void *closure)
-{
-	cfg_printer_t pctx;
-
-	pctx.f = f;
-	pctx.closure = closure;
-	pctx.indent = 0;
-	pctx.flags = 0;
-	cfg_doc_obj(&pctx, type);
 }
