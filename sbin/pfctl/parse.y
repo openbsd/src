@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.700 2020/01/15 22:38:30 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.701 2020/01/28 15:40:35 bket Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -5637,16 +5637,11 @@ mv_rules(struct pf_ruleset *src, struct pf_ruleset *dst)
 {
 	struct pf_rule *r;
 
-	while ((r = TAILQ_FIRST(src->rules.active.ptr)) != NULL) {
-		TAILQ_REMOVE(src->rules.active.ptr, r, entries);
-		TAILQ_INSERT_TAIL(dst->rules.active.ptr, r, entries);
+	TAILQ_FOREACH(r, src->rules.active.ptr, entries)
 		dst->anchor->match++;
-	}
+	TAILQ_CONCAT(dst->rules.active.ptr, src->rules.active.ptr, entries);
 	src->anchor->match = 0;
-	while ((r = TAILQ_FIRST(src->rules.inactive.ptr)) != NULL) {
-		TAILQ_REMOVE(src->rules.inactive.ptr, r, entries);
-		TAILQ_INSERT_TAIL(dst->rules.inactive.ptr, r, entries);
-	}
+	TAILQ_CONCAT(dst->rules.inactive.ptr, src->rules.inactive.ptr, entries);
 }
 
 void
