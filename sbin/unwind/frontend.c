@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.49 2019/12/18 09:18:27 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.50 2020/01/28 15:44:13 bket Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1011,10 +1011,7 @@ merge_tas(struct trust_anchor_head *newh, struct trust_anchor_head *oldh)
 
 	if (chg) {
 		free_tas(oldh);
-		while((i = TAILQ_FIRST(newh)) != NULL) {
-			TAILQ_REMOVE(newh, i, entry);
-			TAILQ_INSERT_TAIL(oldh, i, entry);
-		}
+		TAILQ_CONCAT(oldh, newh, entry);
 	} else {
 		free_tas(newh);
 	}
