@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.73 2020/01/24 06:42:13 jsg Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.74 2020/01/28 16:26:09 visa Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -541,9 +541,6 @@ filt_pppx_rdetach(struct knote *kn)
 	struct pppx_dev *pxd = (struct pppx_dev *)kn->kn_hook;
 	struct klist *klist = &pxd->pxd_rsel.si_note;
 
-	if (ISSET(kn->kn_status, KN_DETACHED))
-		return;
-
 	mtx_enter(&pxd->pxd_rsel_mtx);
 	SLIST_REMOVE(klist, kn, knote, kn_selnext);
 	mtx_leave(&pxd->pxd_rsel_mtx);
@@ -553,11 +550,6 @@ int
 filt_pppx_read(struct knote *kn, long hint)
 {
 	struct pppx_dev *pxd = (struct pppx_dev *)kn->kn_hook;
-
-	if (ISSET(kn->kn_status, KN_DETACHED)) {
-		kn->kn_data = 0;
-		return (1);
-	}
 
 	kn->kn_data = mq_hdatalen(&pxd->pxd_svcq);
 
@@ -569,9 +561,6 @@ filt_pppx_wdetach(struct knote *kn)
 {
 	struct pppx_dev *pxd = (struct pppx_dev *)kn->kn_hook;
 	struct klist *klist = &pxd->pxd_wsel.si_note;
-
-	if (ISSET(kn->kn_status, KN_DETACHED))
-		return;
 
 	mtx_enter(&pxd->pxd_wsel_mtx);
 	SLIST_REMOVE(klist, kn, knote, kn_selnext);
@@ -1462,14 +1451,8 @@ pppackqfilter(dev_t dev, struct knote *kn)
 static void
 filt_pppac_rdetach(struct knote *kn)
 {
-	struct pppac_softc *sc;
-	struct klist *klist;
-
-	if (ISSET(kn->kn_status, KN_DETACHED))
-		return;
-
-	sc = kn->kn_hook;
-	klist = &sc->sc_rsel.si_note;
+	struct pppac_softc *sc = kn->kn_hook;
+	struct klist *klist = &sc->sc_rsel.si_note;
 
 	mtx_enter(&sc->sc_rsel_mtx);
 	SLIST_REMOVE(klist, kn, knote, kn_selnext);
@@ -1479,14 +1462,7 @@ filt_pppac_rdetach(struct knote *kn)
 static int
 filt_pppac_read(struct knote *kn, long hint)
 {
-	struct pppac_softc *sc;
-
-	if (ISSET(kn->kn_status, KN_DETACHED)) {
-		kn->kn_data = 0;
-		return (1);
-	}
-
-	sc = kn->kn_hook;
+	struct pppac_softc *sc = kn->kn_hook;
 
 	kn->kn_data = mq_hdatalen(&sc->sc_mq);
 
@@ -1496,14 +1472,8 @@ filt_pppac_read(struct knote *kn, long hint)
 static void
 filt_pppac_wdetach(struct knote *kn)
 {
-	struct pppac_softc *sc;
-	struct klist *klist;
-
-	if (ISSET(kn->kn_status, KN_DETACHED))
-		return;
-
-	sc = kn->kn_hook;
-	klist = &sc->sc_wsel.si_note;
+	struct pppac_softc *sc = kn->kn_hook;
+	struct klist *klist = &sc->sc_wsel.si_note;
 
 	mtx_enter(&sc->sc_wsel_mtx);
 	SLIST_REMOVE(klist, kn, knote, kn_selnext);
