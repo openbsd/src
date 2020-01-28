@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.1 2020/01/21 16:24:55 mpi Exp $ */
+/*	$OpenBSD: map.c,v 1.2 2020/01/28 12:13:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -43,7 +43,8 @@ struct mentry {
 	struct bt_arg		*mval;
 };
 
-int	mcmp(struct mentry *, struct mentry *);
+int		 mcmp(struct mentry *, struct mentry *);
+struct mentry	*mget(struct mtree *, const char *);
 
 RB_GENERATE(mtree, mentry, mlink, mcmp);
 
@@ -51,6 +52,25 @@ int
 mcmp(struct mentry *me0, struct mentry *me1)
 {
 	return strncmp(me0->mkey, me1->mkey, KLEN - 1);
+}
+
+struct mentry *
+mget(struct mtree *map, const char *key)
+{
+	struct mentry me, *mep;
+
+	strlcpy(me.mkey, key, KLEN);
+	mep = RB_FIND(mtree, map, &me);
+	if (mep == NULL) {
+		mep = calloc(1, sizeof(struct mentry));
+		if (mep == NULL)
+			err(1, "mentry: calloc");
+
+		strlcpy(mep->mkey, key, KLEN);
+		RB_INSERT(mtree, map, mep);
+	}
+
+	return mep;
 }
 
 void
@@ -77,15 +97,30 @@ map_delete(struct bt_var *bv, const char *key)
 	struct mentry me, *mep;
 
 	strlcpy(me.mkey, key, KLEN);
-	mep = RB_REMOVE(mtree, map, &me);
-	free(mep);
+	mep = RB_FIND(mtree, map, &me);
+	if (mep != NULL) {
+		RB_REMOVE(mtree, map, mep);
+		free(mep);
+	}
 }
 
+struct bt_arg *
+map_get(struct bt_var *bv, const char *key)
+{
+	struct mtree *map = (struct mtree *)bv->bv_value;
+	struct mentry *mep;
+
+	mep = mget(map, key);
+	if (mep->mval == NULL)
+		mep->mval = ba_new(0, B_AT_LONG);
+
+	return mep->mval;
+}
 void
 map_insert(struct bt_var *bv, const char *key, struct bt_arg *bval)
 {
 	struct mtree *map = (struct mtree *)bv->bv_value;
-	struct mentry me, *mep;
+	struct mentry *mep;
 	long val;
 
 	if (map == NULL) {
@@ -95,17 +130,7 @@ map_insert(struct bt_var *bv, const char *key, struct bt_arg *bval)
 		bv->bv_value = (struct bt_arg *)map;
 	}
 
-	strlcpy(me.mkey, key, KLEN);
-	mep = RB_FIND(mtree, map, &me);
-	if (mep == NULL) {
-		mep = calloc(1, sizeof(struct mentry));
-		if (mep == NULL)
-			err(1, "mentry: calloc");
-
-		strlcpy(mep->mkey, key, KLEN);
-		RB_INSERT(mtree, map, mep);
-	}
-
+	mep = mget(map, key);
 	switch (bval->ba_type) {
 	case B_AT_MF_COUNT:
 		if (mep->mval == NULL)
@@ -116,6 +141,7 @@ map_insert(struct bt_var *bv, const char *key, struct bt_arg *bval)
 		break;
 	case B_AT_STR:
 	case B_AT_LONG:
+		free(mep->mval);
 		mep->mval = bval;
 		break;
 	default:
@@ -123,12 +149,13 @@ map_insert(struct bt_var *bv, const char *key, struct bt_arg *bval)
 	}
 }
 
+static struct bt_arg nullba = { {NULL }, (void *)0, NULL, B_AT_LONG };
+static struct bt_arg maxba = { { NULL }, (void *)LONG_MAX, NULL, B_AT_LONG };
+
 /* Print at most `top' entries of the map ordered by value. */
 void
 map_print(struct bt_var *bv, size_t top)
 {
-	static struct bt_arg nullba = { { NULL }, (void *)0, B_AT_LONG };
-	static struct bt_arg maxba = { { NULL }, (void *)LONG_MAX, B_AT_LONG };
 	struct mtree *map = (void *)bv->bv_value;
 	struct mentry *mep, *mcur;
 	struct bt_arg *bhigh, *bprev;

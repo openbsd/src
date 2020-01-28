@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.2 2020/01/27 14:15:25 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.3 2020/01/28 12:13:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -675,14 +675,16 @@ stmt_clear(struct bt_stmt *bs)
 void
 stmt_delete(struct bt_stmt *bs, struct dt_evt *dtev)
 {
-	struct bt_arg *bkey = SLIST_FIRST(&bs->bs_args);
-	struct bt_var *bv = bs->bs_var;
+	struct bt_arg *bkey, *bmap = SLIST_FIRST(&bs->bs_args);
+	struct bt_var *bv = bmap->ba_value;
 
-	assert(SLIST_NEXT(bkey, ba_next) == NULL);
+	assert(bmap->ba_type == B_AT_MAP);
+	assert(bs->bs_var == NULL);
+
+	bkey = bmap->ba_key;
+	debug("map=%p '%s' delete key=%p\n", bv->bv_value, bv->bv_name, bkey);
 
 	map_delete(bv, ba2hash(bkey, dtev));
-
-	debug("map=%p '%s' delete key=%p\n", bv->bv_value, bv->bv_name, bkey);
 }
 
 /*
@@ -694,16 +696,18 @@ stmt_delete(struct bt_stmt *bs, struct dt_evt *dtev)
 void
 stmt_insert(struct bt_stmt *bs, struct dt_evt *dtev)
 {
-	struct bt_arg *bkey, *bval = SLIST_FIRST(&bs->bs_args);
-	struct bt_var *bv = bs->bs_var;
+	struct bt_arg *bkey, *bmap = SLIST_FIRST(&bs->bs_args);
+	struct bt_arg *bval = (struct bt_arg *)bs->bs_var;
+	struct bt_var *bv = bmap->ba_value;
 
-	bkey = SLIST_NEXT(bval, ba_next);
-	assert(SLIST_NEXT(bkey, ba_next) == NULL);
+	assert(bmap->ba_type == B_AT_MAP);
+	assert(SLIST_NEXT(bval, ba_next) == NULL);
 
-	map_insert(bv, ba2hash(bkey, dtev), bval);
-
+	bkey = bmap->ba_key;
 	debug("map=%p '%s' insert key=%p bval=%p\n", bv->bv_value, bv->bv_name,
 	    bkey, bval);
+
+	map_insert(bv, ba2hash(bkey, dtev), bval);
 }
 
 /*
@@ -802,6 +806,7 @@ stmt_zero(struct bt_stmt *bs)
 
 	debug("map=%p '%s' zero\n", bv->bv_value, bv->bv_name);
 }
+
 struct bt_arg *
 ba_read(struct bt_arg *ba)
 {
@@ -935,6 +940,9 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_BI_RETVAL:
 		snprintf(buf, sizeof(buf) - 1, "%ld", (long)dtev->dtev_sysretval);
 		str = buf;
+		break;
+	case B_AT_MAP:
+		str = ba2str(map_get(ba->ba_value, ba2str(ba->ba_key, dtev)), dtev);
 		break;
 	case B_AT_VAR:
 		str = ba2str(ba_read(ba), dtev);

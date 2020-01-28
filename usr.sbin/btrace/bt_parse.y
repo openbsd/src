@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.4 2020/01/28 12:09:19 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.5 2020/01/28 12:13:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -62,9 +62,9 @@ struct bt_var	*bv_find(const char *);
 struct bt_arg	*bv_get(const char *);
 struct bt_stmt	*bv_set(const char *, struct bt_arg *);
 
-struct bt_smt	*bn_set(const char *, struct bt_arg *, struct bt_arg *);
-struct bt_stmt	*bm_fn(enum bt_action, const char *, struct bt_arg *,
-		     struct bt_arg *);
+struct bt_arg	*bm_get(const char *, struct bt_arg *);
+struct bt_stmt	*bm_set(const char *, struct bt_arg *, struct bt_arg *);
+struct bt_stmt	*bm_fn(enum bt_action, struct bt_arg *, struct bt_arg *);
 
 /*
  * Lexer
@@ -101,16 +101,16 @@ static int	 yylex(void);
 %token	COMM HZ KSTACK USTACK NSECS PID RETVAL TID
 /* Functions */
 %token  F_CLEAR F_DELETE F_EXIT F_PRINT F_PRINTF F_TIME F_ZERO
-/* Map funcitons */
+/* Map functions */
 %token  M_COUNT
 %token	<v.string>	STRING CSTRING
 %token	<v.number>	NUMBER
 %type	<v.string>	gvar
-%type	<v.i>		filterval oper builtin func0 func1 funcn mfunc1 mapfunc
+%type	<v.i>		filterval oper builtin fn0 fn1 fnN mfn0 mfn1
 %type	<v.probe>	probe
 %type	<v.filter>	predicate
 %type	<v.stmt>	action stmt stmtlist
-%type	<v.arg>		arg arglist marg term
+%type	<v.arg>		arg arglist map marg term
 %type	<v.rtype>	beginend
 
 %%
@@ -166,19 +166,22 @@ builtin		: PID 				{ $$ = B_AT_BI_PID; }
 		| RETVAL			{ $$ = B_AT_BI_RETVAL; }
 		;
 
-func0		: F_EXIT			{ $$ = B_AC_EXIT; }
+fn0		: F_EXIT			{ $$ = B_AC_EXIT; }
 		;
 
-func1		: F_CLEAR			{ $$ = B_AC_CLEAR; }
+fn1		: F_CLEAR			{ $$ = B_AC_CLEAR; }
 		| F_TIME			{ $$ = B_AC_TIME; }
 		| F_ZERO			{ $$ = B_AC_ZERO; }
 		;
 
-funcn		: F_PRINTF			{ $$ = B_AC_PRINTF; }
+fnN		: F_PRINTF			{ $$ = B_AC_PRINTF; }
 		| F_PRINT			{ $$ = B_AC_PRINT; }
 		;
 
-mapfunc		: M_COUNT '(' ')'		{ $$ = B_AT_MF_COUNT; }
+mfn0		: M_COUNT '(' ')'		{ $$ = B_AT_MF_COUNT; }
+		;
+
+mfn1		: F_DELETE			{ $$ = B_AC_DELETE; }
 		;
 
 term		: '(' term ')'			{ $$ = $2; }
@@ -189,17 +192,21 @@ term		: '(' term ')'			{ $$ = $2; }
 		| NUMBER			{ $$ = ba_new($1, B_AT_LONG); }
 		| builtin			{ $$ = ba_new(NULL, $1); }
 		| gvar				{ $$ = bv_get($1); }
+		| map				{ $$ = $1; }
+		;
+
+gvar		: '@' STRING			{ $$ = $2; }
+
+map		: gvar '[' arg ']'		{ $$ = bm_get($1, $3); }
 		;
 
 marg		: arg				{ $$ = $1; }
-		| mapfunc			{ $$ = ba_new(NULL, $1); };
+		| mfn0				{ $$ = ba_new(NULL, $1); };
 		;
 
 arg		: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
 		| term
 		;
-
-gvar		: '@' STRING			{ $$ = $2; }
 
 arglist		: arg
 		| arglist ',' arg		{ $$ = ba_append($1, $3); }
@@ -208,9 +215,10 @@ arglist		: arg
 stmt		: '\n'				{ $$ = NULL; }
 		| gvar '=' arg ';'		{ $$ = bv_set($1, $3); }
 		| gvar '[' arg ']' '=' marg ';'	{ $$ = bm_set($1, $3, $6); }
-		| funcn '(' arglist ')' ';'	{ $$ = bs_new($1, $3, NULL); }
-		| func1 '(' arg ')' ';'		{ $$ = bs_new($1, $3, NULL); }
-		| func0 '(' ')' ';'		{ $$ = bs_new($1, NULL, NULL); }
+		| fnN '(' arglist ')' ';'	{ $$ = bs_new($1, $3, NULL); }
+		| fn1 '(' arg ')' ';'		{ $$ = bs_new($1, $3, NULL); }
+		| fn0 '(' ')' ';'		{ $$ = bs_new($1, NULL, NULL); }
+		| mfn1 '(' map ')' ';'		{ $$ = bm_fn($1, $3, NULL); }
 		;
 
 stmtlist	: stmt 
@@ -441,22 +449,36 @@ bv_get(const char *vname)
 }
 
 struct bt_stmt *
-bm_fn(enum bt_action mact, const char *mname, struct bt_arg *mkey,
-    struct bt_arg *mval)
+bm_fn(enum bt_action mact, struct bt_arg *ba, struct bt_arg *mval)
 {
-	struct bt_var *bv;
-
-	bv = bv_find(mname);
-	if (bv == NULL)
-		bv = bv_new(mname);
-	return bs_new(mact, ba_append(mval, mkey), bv);
+	return bs_new(mact, ba, (struct bt_var *)mval);
 }
 
 /* Create a 'map store' statement to assign a value to a map entry. */
 struct bt_stmt *
 bm_set(const char *mname, struct bt_arg *mkey, struct bt_arg *mval)
 {
-	return bm_fn(B_AC_INSERT, mname, mkey, mval);
+	struct bt_arg *ba;
+	struct bt_var *bv;
+
+	bv = bv_find(mname);
+	if (bv == NULL)
+		bv = bv_new(mname);
+	ba = ba_new(bv, B_AT_MAP);
+	ba->ba_key = mkey;
+	return bs_new(B_AC_INSERT, ba, (struct bt_var *)mval);
+}
+
+/* Create an argument that points to a variable and attach a key to it. */
+struct bt_arg *
+bm_get(const char *mname, struct bt_arg *mkey)
+{
+	struct bt_arg *ba;
+
+	ba = bv_get(mname);
+	ba->ba_type = B_AT_MAP;
+	ba->ba_key = mkey;
+	return ba;
 }
 
 struct keyword {

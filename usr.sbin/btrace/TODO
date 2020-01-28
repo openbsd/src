@@ -10,7 +10,6 @@ Missing features:
 - @ = lhist(x, min, max, step)
 - @ = min(x)
 - @ = max(x)
-- delete(@map[key])
 
 Improvements:
 
