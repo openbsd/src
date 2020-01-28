@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.3 2020/01/28 10:24:00 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.4 2020/01/28 12:09:19 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -54,9 +54,9 @@ struct bt_rule	*br_new(struct bt_probe *, struct bt_filter *, struct bt_stmt *,
 		     enum bt_rtype);
 struct bt_filter *bf_new(enum bt_operand, enum bt_filtervar, int);
 struct bt_probe	*bp_new(const char *, const char *, const char *, int32_t);
-struct bt_arg	*ba_concat(struct bt_arg *, struct bt_arg *);
+struct bt_arg	*ba_append(struct bt_arg *, struct bt_arg *);
 struct bt_stmt	*bs_new(enum bt_action, struct bt_arg *, struct bt_var *);
-struct bt_stmt	*bs_concat(struct bt_stmt *, struct bt_stmt *);
+struct bt_stmt	*bs_append(struct bt_stmt *, struct bt_stmt *);
 
 struct bt_var	*bv_find(const char *);
 struct bt_arg	*bv_get(const char *);
@@ -202,7 +202,7 @@ arg		: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
 gvar		: '@' STRING			{ $$ = $2; }
 
 arglist		: arg
-		| arglist ',' arg		{ $$ = ba_concat($1, $3); }
+		| arglist ',' arg		{ $$ = ba_append($1, $3); }
 		;
 
 stmt		: '\n'				{ $$ = NULL; }
@@ -214,7 +214,7 @@ stmt		: '\n'				{ $$ = NULL; }
 		;
 
 stmtlist	: stmt 
-		| stmtlist stmt			{ $$ = bs_concat($1, $2); }
+		| stmtlist stmt			{ $$ = bs_append($1, $2); }
 		;
 
 action		: '{' stmtlist '}'		{ $$ = $2; }
@@ -307,7 +307,7 @@ ba_new0(void *val, enum bt_argtype type)
  * function calls.
  */
 struct bt_arg *
-ba_concat(struct bt_arg *da0, struct bt_arg *da1)
+ba_append(struct bt_arg *da0, struct bt_arg *da1)
 {
 	struct bt_arg *ba = da0;
 
@@ -347,7 +347,7 @@ ba_op(const char op, struct bt_arg *da0, struct bt_arg *da1)
 		assert(0);
 	}
 
-	return ba_new(ba_concat(da0, da1), type);
+	return ba_new(ba_append(da0, da1), type);
 }
 
 /* Create a new statement: function call or assignment. */
@@ -369,7 +369,7 @@ bs_new(enum bt_action act, struct bt_arg *head, struct bt_var *var)
 
 /* Link two statements together, to build an 'action'. */
 struct bt_stmt *
-bs_concat(struct bt_stmt *ds0, struct bt_stmt *ds1)
+bs_append(struct bt_stmt *ds0, struct bt_stmt *ds1)
 {
 	struct bt_stmt *bs = ds0;
 
@@ -449,7 +449,7 @@ bm_fn(enum bt_action mact, const char *mname, struct bt_arg *mkey,
 	bv = bv_find(mname);
 	if (bv == NULL)
 		bv = bv_new(mname);
-	return bs_new(mact, ba_concat(mval, mkey), bv);
+	return bs_new(mact, ba_append(mval, mkey), bv);
 }
 
 /* Create a 'map store' statement to assign a value to a map entry. */
