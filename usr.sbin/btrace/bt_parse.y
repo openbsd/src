@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.6 2020/01/28 16:00:12 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.7 2020/01/28 16:02:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -113,6 +113,8 @@ static int	 yylex(void);
 %type	<v.arg>		arg arglist map marg term
 %type	<v.rtype>	beginend
 
+%left	'+' '-'
+%left	'/' '*'
 %%
 
 grammar		: /* empty */
