@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.120 2020/01/13 08:12:53 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.121 2020/01/28 10:59:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1099,7 +1099,7 @@ tty_keys_device_status_report(struct tty *tty, const char *buf, size_t len,
 		return (-1);
 	if (len == 2)
 		return (1);
-	if (buf[2] != 'I')
+	if (buf[2] != 'I' && buf[2] != 'T')
 		return (-1);
 	if (len == 3)
 		return (1);
