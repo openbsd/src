@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.2 2020/01/27 14:15:25 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.3 2020/01/28 10:24:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -588,6 +588,9 @@ again:
 	}
 
 	switch (c) {
+	case '=':
+		if (peek() == '=')
+			break;
 	case ',':
 	case '(':
 	case ')':
@@ -596,7 +599,6 @@ again:
 	case ':':
 	case ';':
 	case '/':
-	case '=':
 		return c;
 	case EOF:
 		return 0;
