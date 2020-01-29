@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.20 2020/01/26 06:55:17 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.21 2020/01/29 17:03:58 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -78,6 +78,7 @@ tls13_legacy_accept(SSL *ssl)
 		}
 	}
 
+	ERR_clear_error();
 	S3I(ssl)->hs.state = SSL_ST_ACCEPT;
 
 	ret = tls13_accept(ctx);

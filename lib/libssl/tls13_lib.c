@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.31 2020/01/26 02:45:27 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.32 2020/01/29 17:03:58 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -407,6 +407,10 @@ tls13_legacy_error(SSL *ssl)
 		reason = SSL_R_NO_SHARED_CIPHER;
 		break;
 	}
+
+	/* Something (probably libcrypto) already pushed an error on the stack. */
+	if (reason == SSL_R_UNKNOWN && ERR_peek_error() != 0)
+		return;
 
 	ERR_put_error(ERR_LIB_SSL, (0xfff), reason, ctx->error.file,
 	    ctx->error.line);
