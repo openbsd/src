@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.256 2020/01/23 10:48:37 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.257 2020/01/29 17:08:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1353,15 +1353,6 @@ int tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block,
 long ssl_get_algorithm2(SSL *s);
 
 int tls1_check_ec_server_key(SSL *s);
-
-int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p,
-    int *len, int maxlen);
-int ssl_parse_clienthello_use_srtp_ext(SSL *s, const unsigned char *d,
-    int len, int *al);
-int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p,
-    int *len, int maxlen);
-int ssl_parse_serverhello_use_srtp_ext(SSL *s, const unsigned char *d,
-    int len, int *al);
 
 /* s3_cbc.c */
 void ssl3_cbc_copy_mac(unsigned char *out, const SSL3_RECORD *rec,
