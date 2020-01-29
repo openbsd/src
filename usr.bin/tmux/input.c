@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.168 2020/01/28 10:59:29 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.169 2020/01/29 15:07:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -773,6 +773,7 @@ input_save_state(struct input_ctx *ictx)
 	ictx->old_mode = s->mode;
 }
 
+/* Restore screen state. */
 static void
 input_restore_state(struct input_ctx *ictx)
 {
