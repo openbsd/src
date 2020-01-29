@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.185 2020/01/24 05:38:33 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.186 2020/01/29 06:04:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -97,6 +97,14 @@ struct wskbd_vol
 #endif
 
 /*
+ * event indicating that a control was changed
+ */
+struct mixer_ev {
+	struct mixer_ev *next;
+	int pending;
+};
+
+/*
  * device structure
  */
 struct audio_softc {
@@ -122,6 +130,11 @@ struct audio_softc {
 	void (*conv_dec)(unsigned char *, int);	/* decode to user */
 	struct mixer_ctrl *mix_ents;	/* mixer state for suspend/resume */
 	int mix_nent;			/* size of mixer state */
+	int mix_isopen;			/* mixer open for reading */
+	int mix_blocking;		/* read() blocking */
+	struct selinfo mix_sel;		/* wakeup poll(2) */
+	struct mixer_ev *mix_evbuf;	/* per mixer-control event */
+	struct mixer_ev *mix_pending;	/* list of changed controls */
 #if NWSKBD > 0
 	struct wskbd_vol spkr, mic;
 	struct task wskbd_task;
@@ -1192,6 +1205,8 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	sc->mix_nent = mi->index;
 	sc->mix_ents = mallocarray(sc->mix_nent,
 	    sizeof(struct mixer_ctrl), M_DEVBUF, M_WAITOK);
+	sc->mix_evbuf = mallocarray(sc->mix_nent,
+	    sizeof(struct mixer_ev), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	ent = sc->mix_ents;
 	mi->index = 0;
@@ -1329,6 +1344,7 @@ audio_detach(struct device *self, int flags)
 	}
 
 	/* free resources */
+	free(sc->mix_evbuf, M_DEVBUF, sc->mix_nent * sizeof(struct mixer_ev));
 	free(sc->mix_ents, M_DEVBUF, sc->mix_nent * sizeof(struct mixer_ctrl));
 	audio_buf_done(sc, &sc->play);
 	audio_buf_done(sc, &sc->rec);
@@ -1718,6 +1734,28 @@ audio_ioctl(struct audio_softc *sc, unsigned long cmd, void *addr)
 	return error;
 }
 
+void
+audio_event(struct audio_softc *sc, int addr)
+{
+	struct mixer_ev *e;
+
+	mtx_enter(&audio_lock);
+	if (sc->mix_isopen) {
+		e = sc->mix_evbuf + addr;
+		if (!e->pending) {
+			e->pending = 1;
+			e->next = sc->mix_pending;
+			sc->mix_pending = e;
+		}
+		if (sc->mix_blocking) {
+			wakeup(&sc->mix_blocking);
+			sc->mix_blocking = 0;
+		}
+		selwakeup(&sc->mix_sel);
+	}
+	mtx_leave(&audio_lock);
+}
+
 int
 audio_mixer_devinfo(struct audio_softc *sc, struct mixer_devinfo *devinfo)
 {
@@ -1784,6 +1822,7 @@ audio_mixer_set(struct audio_softc *sc, struct mixer_ctrl *c, struct proc *p)
 			return error;
 		if (sc->ops->commit_settings)
 			return sc->ops->commit_settings(sc->arg);
+		audio_event(sc, c->dev);
 		return 0;
 	}
 
@@ -1834,6 +1873,107 @@ audio_ioctl_mixer(struct audio_softc *sc, unsigned long cmd, void *addr,
 }
 
 int
+audio_mixer_read(struct audio_softc *sc, struct uio *uio, int ioflag)
+{	
+	struct mixer_ev *e;
+	int data;
+	int error;
+
+	DPRINTF("%s: mixer read: resid = %zd\n", DEVNAME(sc), uio->uio_resid);
+
+	/* block if quiesced */
+	while (sc->quiesce)
+		tsleep_nsec(&sc->quiesce, 0, "mix_qrd", INFSLP);
+
+	mtx_enter(&audio_lock);
+
+	/* if there are no events then sleep */
+	while (!sc->mix_pending) {
+		if (ioflag & IO_NDELAY) {
+			mtx_leave(&audio_lock);
+			return EWOULDBLOCK;
+		}
+		DPRINTF("%s: mixer read sleep\n", DEVNAME(sc));
+		sc->mix_blocking = 1;
+		error = msleep_nsec(&sc->mix_blocking,
+		    &audio_lock, PWAIT | PCATCH, "mix_rd", INFSLP);
+		if (!(sc->dev.dv_flags & DVF_ACTIVE))
+			error = EIO;
+		if (error) {
+			DPRINTF("%s: mixer read woke up error = %d\n",
+			    DEVNAME(sc), error);
+			mtx_leave(&audio_lock);
+			return error;
+		}
+	}
+
+	/* at this stage, there is an event to transfer */
+	while (uio->uio_resid >= sizeof(int) && sc->mix_pending) {
+		e = sc->mix_pending;
+		sc->mix_pending = e->next;
+		e->pending = 0;
+		data = e - sc->mix_evbuf;
+		mtx_leave(&audio_lock);
+		DPRINTF("%s: mixer read: %u\n", DEVNAME(sc), data);
+		error = uiomove(&data, sizeof(int), uio);
+		if (error)
+			return error;
+		mtx_enter(&audio_lock);
+	}
+
+	mtx_leave(&audio_lock);
+	return 0;
+}
+
+int
+audio_mixer_poll(struct audio_softc *sc, int events, struct proc *p)
+{
+	int revents = 0;
+
+	mtx_enter(&audio_lock);
+	if (sc->mix_isopen && sc->mix_pending)
+		revents |= events & (POLLIN | POLLRDNORM);
+	if (revents == 0) {
+		if (events & (POLLIN | POLLRDNORM))
+			selrecord(p, &sc->mix_sel);
+	}
+	mtx_leave(&audio_lock);
+	return revents;
+}
+
+int
+audio_mixer_open(struct audio_softc *sc, int flags)
+{
+	DPRINTF("%s: flags = 0x%x\n", __func__, flags);
+
+	if (flags & FREAD) {
+		if (sc->mix_isopen)
+			return EBUSY;
+		sc->mix_isopen = 1;
+	}
+	return 0;
+}
+
+int
+audio_mixer_close(struct audio_softc *sc, int flags)
+{
+	int i;
+
+	DPRINTF("%s: flags = 0x%x\n", __func__, flags);
+
+	if (flags & FREAD) {
+		sc->mix_isopen = 0;
+
+		mtx_enter(&audio_lock);
+		sc->mix_pending = NULL;
+		for (i = 0; i < sc->mix_nent; i++)
+			sc->mix_evbuf[i].pending = 0;
+		mtx_leave(&audio_lock);
+	}
+	return 0;
+}
+
+int
 audio_poll(struct audio_softc *sc, int events, struct proc *p)
 {
 	int revents = 0;
@@ -1870,6 +2010,8 @@ audioopen(dev_t dev, int flags, int mode, struct proc *p)
 			error = audio_open(sc, flags);
 			break;
 		case AUDIO_DEV_AUDIOCTL:
+			error = audio_mixer_open(sc, flags);
+			break;
 		case AUDIO_DEV_MIXER:
 			error = 0;
 			break;
@@ -1894,8 +2036,10 @@ audioclose(dev_t dev, int flags, int ifmt, struct proc *p)
 	case AUDIO_DEV_AUDIO:
 		error = audio_close(sc);
 		break;
-	case AUDIO_DEV_MIXER:
 	case AUDIO_DEV_AUDIOCTL:
+		error = audio_mixer_close(sc, flags);
+		break;
+	case AUDIO_DEV_MIXER:
 		error = 0;
 		break;
 	default:
@@ -1919,6 +2063,8 @@ audioread(dev_t dev, struct uio *uio, int ioflag)
 		error = audio_read(sc, uio, ioflag);
 		break;
 	case AUDIO_DEV_AUDIOCTL:
+		error = audio_mixer_read(sc, uio, ioflag);
+		break;
 	case AUDIO_DEV_MIXER:
 		error = ENODEV;
 		break;
@@ -1975,7 +2121,12 @@ audioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			error = ENXIO;
 			break;
 		}
-		error = audio_ioctl(sc, cmd, addr);
+		if (cmd == AUDIO_MIXER_DEVINFO ||
+		    cmd == AUDIO_MIXER_READ ||
+		    cmd == AUDIO_MIXER_WRITE)
+			error = audio_ioctl_mixer(sc, cmd, addr, p);
+		else
+			error = audio_ioctl(sc, cmd, addr);
 		break;
 	case AUDIO_DEV_MIXER:
 		error = audio_ioctl_mixer(sc, cmd, addr, p);
@@ -2001,6 +2152,8 @@ audiopoll(dev_t dev, int events, struct proc *p)
 		revents = audio_poll(sc, events, p);
 		break;
 	case AUDIO_DEV_AUDIOCTL:
+		revents = audio_mixer_poll(sc, events, p);
+		break;
 	case AUDIO_DEV_MIXER:
 	default:
 		revents = 0;
@@ -2144,6 +2297,7 @@ wskbd_mixer_update(struct audio_softc *sc, struct wskbd_vol *vol)
 			DPRINTF("%s: set mute err = %d\n", DEVNAME(sc), error);
 			return;
 		}
+		audio_event(sc, vol->mute);
 	}
 	if (vol->val >= 0 && val_pending) {
 		ctrl.dev = vol->val;
@@ -2169,6 +2323,7 @@ wskbd_mixer_update(struct audio_softc *sc, struct wskbd_vol *vol)
 			DPRINTF("%s: set vol err = %d\n", DEVNAME(sc), error);
 			return;
 		}
+		audio_event(sc, vol->val);
 	}
 }
 
