@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.708 2020/01/28 10:44:30 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.709 2020/01/29 08:28:17 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2020 $
+.Dd $Mdocdate: January 29 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -214,7 +214,6 @@ was given) and off.
 Report the
 .Nm
 version.
-.Pp
 .It Ar command Op Ar flags
 This specifies one of a set of commands used to control
 .Nm ,
@@ -4953,7 +4952,7 @@ When the
 option is reached, the oldest automatically named buffer is deleted.
 Explicitly named buffers are not subject to
 .Ic buffer-limit
-and may be deleted with
+and may be deleted with the
 .Ic delete-buffer
 command.
 .Pp
