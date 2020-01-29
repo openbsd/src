@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.136 2019/12/16 16:09:28 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.137 2020/01/29 16:22:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -862,6 +862,12 @@ client_dispatch_wait(struct imsg *imsg)
 		break;
 	case MSG_WRITE_CLOSE:
 		client_write_close(data, datalen);
+		break;
+	case MSG_OLDSTDERR:
+	case MSG_OLDSTDIN:
+	case MSG_OLDSTDOUT:
+		fprintf(stderr, "server version is too old for client\n");
+		proc_exit(client_proc);
 		break;
 	}
 }
