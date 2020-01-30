@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.37 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.38 2020/01/30 05:17:07 ratchov Exp $	*/
 /*
  * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
@@ -217,12 +217,12 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (unveil(path, "rw") == -1)
+	if (unveil(path, "w") == -1)
 		err(1, "unveil");
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
 
-	fd = open(path, O_RDWR);
+	fd = open(path, O_WRONLY);
 	if (fd == -1)
 		err(1, "%s", path);
 	if (ioctl(fd, AUDIO_GETSTATUS, &rstatus) == -1)
