@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2020/01/13 17:06:56 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/01/30 08:22:30 mpi Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -30,8 +30,8 @@ PROGS +=	t_access t_bind t_chroot t_clock_gettime t_dup t_fsync
 PROGS +=	t_getgroups t_getitimer t_getlogin t_getpid t_getrusage
 PROGS +=	t_getsid t_getsockname t_gettimeofday t_kill t_link t_listen
 PROGS +=	t_mkdir t_mknod t_msgctl t_msgget t_msgsnd t_msync t_pipe
-PROGS +=	t_poll t_revoke t_select t_sendrecv t_setuid t_socketpair
-PROGS +=	t_sigaction t_truncate t_umask t_write
+PROGS +=	t_poll t_ptrace t_revoke t_select t_sendrecv t_setuid
+PROGS +=	t_socketpair t_sigaction t_truncate t_umask t_write
 
 # failing tests
 .if 0
@@ -40,7 +40,6 @@ PROGS +=	t_mlock
 PROGS +=	t_mmap
 PROGS +=	t_msgrcv
 PROGS +=	t_pipe2
-PROGS +=	t_ptrace
 PROGS +=	t_stat
 PROGS +=	t_syscall
 PROGS +=	t_unlink
@@ -57,8 +56,9 @@ setup-t_truncate:
 	${SUDO} touch truncate_test.root_owned
 	${SUDO} chown root:wheel truncate_test.root_owned
 
-run-t_chroot: cleanup-t_chroot
-cleanup-t_chroot:
+run-t_chroot: cleanup-dir
+run-t_ptrace: cleanup-dir
+cleanup-dir:
 	${SUDO} rm -rf dir
 
 CLEANFILES =	access dummy mmap truncate_test.root_owned
@@ -100,3 +100,5 @@ run-${PROG}-$n:
 .endif
 
 .include <bsd.regress.mk>
+
+clean: cleanup-dir

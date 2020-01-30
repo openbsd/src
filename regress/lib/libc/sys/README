@@ -18,6 +18,7 @@ t_getrusage	- no expected fail, PR kern/30115 is NetBSD, work more
 t_mknod 	- remove tests for unsupported file types
 t_msgget	- remove msgget_limit test
 t_poll 		- remove pollts_* tests
+t_ptrace 	- change EPERM -> EINVAL for PT_ATTACH of a parent
 t_revoke 	- remove basic tests, revoke only on ttys supported
 t_select 	- remove sigset_t struct as it is int on OpenBSD
 
@@ -26,7 +27,6 @@ t_mlock		- wrong errno, succeeds where not expected, POSIX imprecise
 t_mmap		- ENOTBLK on test NetBSD is skipping, remove mmap_va0 test
 t_msgrcv	- msgrcv(id, &r, 3 - 1, 0x41, 004000) != -1
 t_pipe2 	- closefrom(4) == -1, remove F_GETNOSIGPIPE and nosigpipe test
-t_ptrace 	- ptrace(0, 0, ((void *)0), 0) != -1
 t_stat 		- invalid GID with doas
 t_syscall	- SIGSEGV
 t_unlink	- wrong errno according to POSIX

@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_ptrace.c,v 1.1.1.1 2019/11/19 19:57:04 bluhm Exp $	*/
+/*	$OpenBSD: t_ptrace.c,v 1.2 2020/01/30 08:22:30 mpi Exp $	*/
 /*	$NetBSD: t_ptrace.c,v 1.4 2018/05/14 12:44:40 kamil Exp $	*/
 
 /*-
@@ -171,7 +171,7 @@ ATF_TC_BODY(attach_chroot, tc)
 		rv = write(fds_toparent[1], &msg, sizeof(msg));
 		FORKEE_ASSERTX(rv == sizeof(msg));
 
-		ATF_REQUIRE_ERRNO(EPERM,
+		ATF_REQUIRE_ERRNO(EINVAL,
 			ptrace(PT_ATTACH, getppid(), NULL, 0) == -1);
 
 		rv = read(fds_fromparent[0], &msg, sizeof(msg));

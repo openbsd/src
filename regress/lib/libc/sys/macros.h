@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.1.1.1 2019/11/19 19:57:03 bluhm Exp $	*/
+/*	$OpenBSD: macros.h,v 1.2 2020/01/30 08:22:30 mpi Exp $	*/
 /* Public domain - Moritz Buhl */
 
 #include <sys/param.h>
@@ -9,6 +9,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 
 #define __RCSID(str)
 #define __COPYRIGHT(str)
@@ -26,17 +27,26 @@ int sysctlbyname(char *, void *, size_t *, void *, size_t);
 int
 sysctlbyname(char* s, void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
-	int ktc;
-	if (strcmp(s, "kern.timecounter.hardware") == 0)
-		ktc = KERN_TIMECOUNTER_HARDWARE;
-	else if (strcmp(s, "kern.timecounter.choice") == 0)
-		ktc = KERN_TIMECOUNTER_CHOICE;
+        int mib[3], miblen;
 
-        int mib[3];
 	mib[0] = CTL_KERN;
-	mib[1] = KERN_TIMECOUNTER;
-	mib[2] = ktc;
-        return sysctl(mib, 3, oldp, oldlenp, newp, newlen);
+	if (strcmp(s, "kern.timecounter.hardware") == 0) {
+		mib[1] = KERN_TIMECOUNTER;
+		mib[2] = KERN_TIMECOUNTER_HARDWARE;
+		miblen = 3;
+	} else if (strcmp(s, "kern.timecounter.choice") == 0) {
+		mib[1] = KERN_TIMECOUNTER;
+		mib[2] = KERN_TIMECOUNTER_CHOICE;
+		miblen = 3;
+	} else if (strcmp(s, "kern.securelevel") == 0) {
+		mib[1] = KERN_SECURELVL;
+		miblen = 2;
+	} else {
+		fprintf(stderr, "%s(): mib '%s' not supported\n", __func__, s);
+		return -42;
+	}
+
+        return sysctl(mib, miblen, oldp, oldlenp, newp, newlen);
 }
 
 /* t_mlock.c */
