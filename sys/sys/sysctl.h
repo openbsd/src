@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.200 2020/01/24 14:00:32 mpi Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.201 2020/01/30 08:51:27 mpi Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -561,6 +561,10 @@ struct kinfo_vmentry {
 #define PR_UNLOCK(pr)	/* nothing */
 #endif
 
+#define _getcompatprio(_p)						\
+	((_p)->p_stat == SRUN ? (_p)->p_runpri : 			\
+	    ((_p)->p_stat == SSLEEP) ? (_p)->p_slppri : (_p)->p_usrpri)
+
 #define PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
 
 #define FILL_KPROC(kp, copy_str, p, pr, uc, pg, paddr, \
@@ -659,7 +663,7 @@ do {									\
 		(kp)->p_stat = (p)->p_stat;				\
 		(kp)->p_slptime = (p)->p_slptime;			\
 		(kp)->p_holdcnt = 1;					\
-		(kp)->p_priority = (p)->p_priority;			\
+		(kp)->p_priority = _getcompatprio(p);			\
 		(kp)->p_usrpri = (p)->p_usrpri;				\
 		if ((p)->p_wchan && (p)->p_wmesg)			\
 			copy_str((kp)->p_wmesg, (p)->p_wmesg,		\

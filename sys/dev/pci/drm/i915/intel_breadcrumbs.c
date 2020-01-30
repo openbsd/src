@@ -451,7 +451,7 @@ static bool __intel_engine_add_wait(struct intel_engine_cs *engine,
 #ifdef __linux__
 			if (wait->tsk->prio > to_wait(parent)->tsk->prio) {
 #else
-			if (wait->tsk->p_priority > to_wait(parent)->tsk->p_priority) {
+			if (wait->tsk->p_usrpri > to_wait(parent)->tsk->p_usrpri) {
 #endif
 				p = &parent->rb_right;
 				first = false;
@@ -538,7 +538,7 @@ static inline bool chain_wakeup(struct rb_node *rb, int priority)
 #else
 static inline bool chain_wakeup(struct rb_node *rb, int priority)
 {
-	return rb && to_wait(rb)->tsk->p_priority <= priority;
+	return rb && to_wait(rb)->tsk->p_usrpri <= priority;
 }
 #endif
 
@@ -558,7 +558,7 @@ static inline int wakeup_priority(struct intel_breadcrumbs *b,
 	if (p == b->signaler)
 		return INT_MIN;
 	else
-		return p->p_priority;
+		return p->p_usrpri;
 }
 #endif
 

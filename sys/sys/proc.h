@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.286 2020/01/21 15:20:47 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.287 2020/01/30 08:51:27 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -346,7 +346,7 @@ struct proc {
 	int	p_flag;			/* P_* flags. */
 	u_char	p_spare;		/* unused */
 	char	p_stat;			/* [s] S* process status. */
-	char	p_pad1[1];
+	u_char	p_runpri;		/* [s] Runqueue priority */
 	u_char	p_descfd;		/* if not 255, fdesc permits this fd */
 
 	pid_t	p_tid;			/* Thread identifier. */
@@ -385,8 +385,8 @@ struct proc {
 #define	p_startcopy	p_sigmask
 	sigset_t p_sigmask;	/* Current signal mask. */
 
-	u_char	p_priority;	/* [s] Process priority. */
-	u_char	p_usrpri;	/* [s] User-prio based on p_estcpu & ps_nice. */
+	u_char	p_slppri;		/* [s] Sleeping priority */
+	u_char	p_usrpri;	/* [s] Priority based on p_estcpu & ps_nice */
 	u_int	p_estcpu;		/* [s] Time averaged val of p_cpticks */
 	int	p_pledge_syscall;	/* Cache of current syscall */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.242 2020/01/16 16:35:03 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.243 2020/01/30 08:51:27 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1130,8 +1130,8 @@ runfast:
 	/*
 	 * Raise priority to at least PUSER.
 	 */
-	if (p->p_priority > PUSER)
-		p->p_priority = PUSER;
+	if (p->p_usrpri > PUSER)
+		p->p_usrpri = PUSER;
 run:
 	setrunnable(p);
 out:
@@ -1886,7 +1886,7 @@ userret(struct proc *p)
 
 	WITNESS_WARN(WARN_PANIC, NULL, "userret: returning");
 
-	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
 }
 
 int

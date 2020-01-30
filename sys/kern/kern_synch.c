@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.161 2020/01/24 15:58:33 cheloha Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.162 2020/01/30 08:51:27 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -393,7 +393,7 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 	p->p_wchan = ident;
 	p->p_wmesg = wmesg;
 	p->p_slptime = 0;
-	p->p_priority = prio & PRIMASK;
+	p->p_slppri = prio & PRIMASK;
 	TAILQ_INSERT_TAIL(&slpque[LOOKUP(ident)], p, p_runq);
 }
 
@@ -624,7 +624,7 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 	 */
 	newprio = p->p_usrpri;
 	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link)
-		newprio = max(newprio, q->p_priority);
+		newprio = max(newprio, q->p_runpri);
 	setrunqueue(p->p_cpu, p, newprio);
 	p->p_ru.ru_nvcsw++;
 	mi_switch();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.221 2020/01/21 15:20:47 visa Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.222 2020/01/30 08:51:27 mpi Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -148,6 +148,7 @@ thread_new(struct proc *parent, vaddr_t uaddr)
 
 	p = pool_get(&proc_pool, PR_WAITOK);
 	p->p_stat = SIDL;			/* protect against others */
+	p->p_runpri = 0;
 	p->p_flag = 0;
 
 	/*
@@ -314,7 +315,7 @@ fork_thread_start(struct proc *p, struct proc *parent, int flags)
 
 	SCHED_LOCK(s);
 	ci = sched_choosecpu_fork(parent, flags);
-	setrunqueue(ci, p, p->p_priority);
+	setrunqueue(ci, p, p->p_usrpri);
 	SCHED_UNLOCK(s);
 }
 

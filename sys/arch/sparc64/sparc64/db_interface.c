@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.54 2019/11/07 14:44:53 mpi Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.55 2020/01/30 08:51:27 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -958,10 +958,10 @@ db_proc_cmd(addr, have_addr, count, modif)
 		return;
 	}
 	db_printf("process %p:", p);
-	db_printf("pid:%d vmspace:%p pmap:%p ctx:%x wchan:%p pri:%d upri:%d\n",
+	db_printf("pid:%d vmspace:%p pmap:%p ctx:%x wchan:%p rpri:%d upri:%d\n",
 	    p->p_p->ps_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap,
 	    p->p_vmspace->vm_map.pmap->pm_ctx,
-	    p->p_wchan, p->p_priority, p->p_usrpri);
+	    p->p_wchan, p->p_runpri, p->p_usrpri);
 	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
 	    p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize,
 	    (unsigned long long)ptoa(p->p_vmspace->vm_ssize));
