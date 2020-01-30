@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.341 2020/01/26 04:28:18 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.342 2020/01/30 15:36:11 visa Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -3147,11 +3147,12 @@ sys_umask(struct proc *p, void *v, register_t *retval)
 	struct sys_umask_args /* {
 		syscallarg(mode_t) newmask;
 	} */ *uap = v;
-	struct filedesc *fdp;
+	struct filedesc *fdp = p->p_fd;
 
-	fdp = p->p_fd;
+	fdplock(fdp);
 	*retval = fdp->fd_cmask;
 	fdp->fd_cmask = SCARG(uap, newmask) & ACCESSPERMS;
+	fdpunlock(fdp);
 	return (0);
 }
 
