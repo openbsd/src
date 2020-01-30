@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.h,v 1.13 2009/04/22 07:42:17 henning Exp $ */
+/*	$OpenBSD: ntp.h,v 1.14 2020/01/30 15:55:41 otto Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -141,7 +141,19 @@ struct ntp_query {
 #define	MODE_RES2	7	/* reserved for private use */
 
 #define	JAN_1970	2208988800UL	/* 1970 - 1900 in seconds */
-#define	JAN_2030	1893456000UL + JAN_1970	/* 1. 1. 2030 00:00:00 */
+
+/*
+ * The era we're in if we have no reason to assume otherwise.
+ * If lfp_to_d() sees an offset <= INT32_MAX the era is is assumed to be
+ * NTP_ERA + 1.
+ * Once the actual year is well into era 1, (after 2036) define NTP_ERA to 1
+ * and adapt (remove) the test in lfp_to_d().
+ * Once more than half of era 1 has elapsed (after 2104), re-inroduce the test
+ * to move to era 2 if offset <= INT32_MAX, repeat for each half era.
+ */
+#define NTP_ERA		0
+
+#define SECS_IN_ERA	(UINT32_MAX + 1ULL)
 
 #define	NTP_VERSION	4
 #define	NTP_MAXSTRATUM	15

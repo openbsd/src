@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2017/03/01 00:56:30 gsoares Exp $ */
+/*	$OpenBSD: util.c,v 1.25 2020/01/30 15:55:41 otto Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -86,12 +86,17 @@ d_to_tv(double d, struct timeval *tv)
 double
 lfp_to_d(struct l_fixedpt lfp)
 {
-	double	ret;
+	double	base, ret;
 
 	lfp.int_partl = ntohl(lfp.int_partl);
 	lfp.fractionl = ntohl(lfp.fractionl);
 
-	ret = (double)(lfp.int_partl) + ((double)lfp.fractionl / UINT_MAX);
+	/* see comment in ntp.h */
+	base = NTP_ERA;
+	if (lfp.int_partl <= INT32_MAX)
+		base++; 
+	ret = base * SECS_IN_ERA;
+	ret += (double)(lfp.int_partl) + ((double)lfp.fractionl / UINT_MAX);
 
 	return (ret);
 }
@@ -101,6 +106,8 @@ d_to_lfp(double d)
 {
 	struct l_fixedpt	lfp;
 
+	while (d > SECS_IN_ERA)
+		d -= SECS_IN_ERA;
 	lfp.int_partl = htonl((u_int32_t)d);
 	lfp.fractionl = htonl((u_int32_t)((d - (u_int32_t)d) * UINT_MAX));
 
