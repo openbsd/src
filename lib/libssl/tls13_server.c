@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.21 2020/01/29 17:03:58 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.22 2020/01/30 17:09:23 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -49,6 +49,11 @@ tls13_server_init(struct tls13_ctx *ctx)
 		return 0;
 
 	if ((s->session = SSL_SESSION_new()) == NULL)
+		return 0;
+
+	if ((ctx->hs->key_share = tls13_key_share_new(NID_X25519)) == NULL)
+		return 0;
+	if (!tls13_key_share_generate(ctx->hs->key_share))
 		return 0;
 
 	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
@@ -552,19 +557,18 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 	struct tls13_secret context;
 	unsigned char buf[EVP_MAX_MD_SIZE];
 	uint8_t *shared_key = NULL;
+	size_t shared_key_len = 0;
 	size_t hash_len;
 	SSL *s = ctx->ssl;
 	int ret = 0;
 
 	/* XXX - handle other key share types. */
-	if (ctx->hs->x25519_peer_public == NULL) {
+	if (ctx->hs->key_share == NULL) {
 		/* XXX - alert. */
 		goto err;
 	}
-	if ((shared_key = malloc(X25519_KEY_LENGTH)) == NULL)
-		goto err;
-	if (!X25519(shared_key, ctx->hs->x25519_private,
-	    ctx->hs->x25519_peer_public))
+	if (!tls13_key_share_derive(ctx->hs->key_share,
+	    &shared_key, &shared_key_len))
 		goto err;
 
 	s->session->cipher = S3I(s)->hs.new_cipher;
@@ -594,7 +598,7 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 
 	/* Handshake secrets. */
 	if (!tls13_derive_handshake_secrets(ctx->hs->secrets, shared_key,
-	    X25519_KEY_LENGTH, &context))
+	    shared_key_len, &context))
 		goto err;
 
 	tls13_record_layer_set_aead(ctx->rl, ctx->aead);
@@ -614,7 +618,7 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 	ret = 1;
 
  err:
-	freezero(shared_key, X25519_KEY_LENGTH);
+	freezero(shared_key, shared_key_len);
 	return ret;
 }
 

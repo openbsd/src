@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.57 2020/01/26 03:29:30 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.58 2020/01/30 17:09:23 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -16,6 +16,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <openssl/curve25519.h>
 #include <openssl/ocsp.h>
 
@@ -1255,57 +1256,28 @@ tlsext_keyshare_client_needs(SSL *s)
 int
 tlsext_keyshare_client_build(SSL *s, CBB *cbb)
 {
-	uint8_t *public_key = NULL, *private_key = NULL;
-	CBB client_shares, key_exchange;
+	CBB client_shares;
 
-	/* Generate and provide key shares. */
 	if (!CBB_add_u16_length_prefixed(cbb, &client_shares))
 		return 0;
 
-	/* XXX - other groups. */
-
-	/* Generate X25519 key pair. */
-	if ((public_key = malloc(X25519_KEY_LENGTH)) == NULL)
-		goto err;
-	if ((private_key = malloc(X25519_KEY_LENGTH)) == NULL)
-		goto err;
-	X25519_keypair(public_key, private_key);
-
-	/* Add the group and serialize the public key. */
-	if (!CBB_add_u16(&client_shares, tls1_ec_nid2curve_id(NID_X25519)))
-		goto err;
-	if (!CBB_add_u16_length_prefixed(&client_shares, &key_exchange))
-		goto err;
-	if (!CBB_add_bytes(&key_exchange, public_key, X25519_KEY_LENGTH))
-		goto err;
+	if (!tls13_key_share_public(S3I(s)->hs_tls13.key_share,
+	    &client_shares))
+		return 0;
 
 	if (!CBB_flush(cbb))
-		goto err;
-
-	S3I(s)->hs_tls13.x25519_public = public_key;
-	S3I(s)->hs_tls13.x25519_private = private_key;
+		return 0;
 
 	return 1;
-
- err:
-	freezero(public_key, X25519_KEY_LENGTH);
-	freezero(private_key, X25519_KEY_LENGTH);
-
-	return 0;
 }
 
 int
 tlsext_keyshare_server_parse(SSL *s, CBS *cbs, int *alert)
 {
 	CBS client_shares;
-	CBS key_exchange;
 	uint16_t group;
-	size_t out_len;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &client_shares))
-		goto err;
-
-	if (CBS_len(cbs) != 0)
 		goto err;
 
 	while (CBS_len(&client_shares) > 0) {
@@ -1314,23 +1286,16 @@ tlsext_keyshare_server_parse(SSL *s, CBS *cbs, int *alert)
 		if (!CBS_get_u16(&client_shares, &group))
 			goto err;
 
-		if (!CBS_get_u16_length_prefixed(&client_shares, &key_exchange))
-			goto err;
-
 		/*
-		 * Skip this client share if not X25519
 		 * XXX support other groups later.
 		 * XXX enforce group can only appear once.
 		 */
-		if (S3I(s)->hs_tls13.x25519_peer_public != NULL ||
-		    group != tls1_ec_nid2curve_id(NID_X25519))
+		if (S3I(s)->hs_tls13.key_share == NULL ||
+		    tls13_key_share_group(S3I(s)->hs_tls13.key_share) != group)
 			continue;
 
-		if (CBS_len(&key_exchange) != X25519_KEY_LENGTH)
-			goto err;
-
-		if (!CBS_stow(&key_exchange, &S3I(s)->hs_tls13.x25519_peer_public,
-		    &out_len))
+		if (!tls13_key_share_peer_public(S3I(s)->hs_tls13.key_share,
+		    group, &client_shares))
 			goto err;
 	}
 
@@ -1353,68 +1318,28 @@ tlsext_keyshare_server_needs(SSL *s)
 int
 tlsext_keyshare_server_build(SSL *s, CBB *cbb)
 {
-	uint8_t *public_key = NULL, *private_key = NULL;
-	CBB key_exchange;
-
-	/* XXX deduplicate with client code */
-
-	/* X25519 */
-	if (S3I(s)->hs_tls13.x25519_peer_public == NULL)
+	if (S3I(s)->hs_tls13.key_share == NULL)
 		return 0;
 
-	/* Generate X25519 key pair. */
-	if ((public_key = malloc(X25519_KEY_LENGTH)) == NULL)
-		goto err;
-	if ((private_key = malloc(X25519_KEY_LENGTH)) == NULL)
-		goto err;
-	X25519_keypair(public_key, private_key);
-
-	/* Add the group and serialize the public key. */
-	if (!CBB_add_u16(cbb, tls1_ec_nid2curve_id(NID_X25519)))
-		goto err;
-	if (!CBB_add_u16_length_prefixed(cbb, &key_exchange))
-		goto err;
-	if (!CBB_add_bytes(&key_exchange, public_key, X25519_KEY_LENGTH))
-		goto err;
-
-	if (!CBB_flush(cbb))
-		goto err;
-
-	S3I(s)->hs_tls13.x25519_public = public_key;
-	S3I(s)->hs_tls13.x25519_private = private_key;
+	if (!tls13_key_share_public(S3I(s)->hs_tls13.key_share, cbb))
+		return 0;
 
 	return 1;
-
- err:
-	freezero(public_key, X25519_KEY_LENGTH);
-	freezero(private_key, X25519_KEY_LENGTH);
-
-	return 0;
 }
 
 int
 tlsext_keyshare_client_parse(SSL *s, CBS *cbs, int *alert)
 {
-	CBS key_exchange;
 	uint16_t group;
-	size_t out_len;
 
 	/* Unpack server share. */
 	if (!CBS_get_u16(cbs, &group))
 		goto err;
 
-	/* Handle other groups and verify that they're valid. */
-	if (group != tls1_ec_nid2curve_id(NID_X25519))
-		goto err;
+	/* XXX - Handle other groups and verify that they're valid. */
 
-	if (!CBS_get_u16_length_prefixed(cbs, &key_exchange))
-		goto err;
-
-	if (CBS_len(&key_exchange) != X25519_KEY_LENGTH)
-		goto err;
-
-	if (!CBS_stow(&key_exchange, &S3I(s)->hs_tls13.x25519_peer_public,
-	    &out_len))
+	if (!tls13_key_share_peer_public(S3I(s)->hs_tls13.key_share,
+	    group, cbs))
 		goto err;
 
 	return 1;
