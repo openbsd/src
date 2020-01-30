@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.62 2020/01/23 10:48:37 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.63 2020/01/30 16:25:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1263,56 +1263,27 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 static int
 ssl3_get_server_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, int nid, CBS *public)
 {
-	const EC_GROUP *group;
-	EC_GROUP *ngroup = NULL;
-	EC_POINT *point = NULL;
-	BN_CTX *bn_ctx = NULL;
 	EC_KEY *ecdh = NULL;
 	int ret = -1;
 
-	/*
-	 * Extract the server's ephemeral ECDH public key.
-	 */
-
+	/* Extract the server's ephemeral ECDH public key. */
 	if ((ecdh = EC_KEY_new()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-
-	if ((ngroup = EC_GROUP_new_by_curve_name(nid)) == NULL) {
-		SSLerror(s, ERR_R_EC_LIB);
-		goto err;
-	}
-	if (EC_KEY_set_group(ecdh, ngroup) == 0) {
-		SSLerror(s, ERR_R_EC_LIB);
-		goto err;
-	}
-
-	group = EC_KEY_get0_group(ecdh);
-
-	if ((point = EC_POINT_new(group)) == NULL ||
-	    (bn_ctx = BN_CTX_new()) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
-	if (EC_POINT_oct2point(group, point, CBS_data(public),
-	    CBS_len(public), bn_ctx) == 0) {
+	if (!ssl_kex_peer_public_ecdhe_ecp(ecdh, nid, public)) {
 		SSLerror(s, SSL_R_BAD_ECPOINT);
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 		goto err;
 	}
 
-	EC_KEY_set_public_key(ecdh, point);
+	sc->peer_nid = nid;
 	sc->peer_ecdh_tmp = ecdh;
 	ecdh = NULL;
 
 	ret = 1;
 
  err:
-	BN_CTX_free(bn_ctx);
-	EC_GROUP_free(ngroup);
-	EC_POINT_free(point);
 	EC_KEY_free(ecdh);
 
 	return (ret);
@@ -2049,87 +2020,37 @@ err:
 static int
 ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 {
-	const EC_GROUP *group = NULL;
-	const EC_POINT *point = NULL;
 	EC_KEY *ecdh = NULL;
-	BN_CTX *bn_ctx = NULL;
-	unsigned char *key = NULL;
-	unsigned char *data;
-	size_t encoded_len;
-	int key_size = 0, key_len;
+	uint8_t *key = NULL;
+	size_t key_len = 0;
 	int ret = -1;
 	CBB ecpoint;
-
-	if ((group = EC_KEY_get0_group(sc->peer_ecdh_tmp)) == NULL ||
-	    (point = EC_KEY_get0_public_key(sc->peer_ecdh_tmp)) == NULL) {
-		SSLerror(s, ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
 
 	if ((ecdh = EC_KEY_new()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (!EC_KEY_set_group(ecdh, group)) {
-		SSLerror(s, ERR_R_EC_LIB);
+	if (!ssl_kex_generate_ecdhe_ecp(ecdh, sc->peer_nid))
 		goto err;
-	}
 
-	/* Generate a new ECDH key pair. */
-	if (!EC_KEY_generate_key(ecdh)) {
-		SSLerror(s, ERR_R_ECDH_LIB);
-		goto err;
-	}
-	if ((key_size = ECDH_size(ecdh)) <= 0) {
-		SSLerror(s, ERR_R_ECDH_LIB);
-		goto err;
-	}
-	if ((key = malloc(key_size)) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	key_len = ECDH_compute_key(key, key_size, point, ecdh, NULL);
-	if (key_len <= 0) {
-		SSLerror(s, ERR_R_ECDH_LIB);
-		goto err;
-	}
-
-	/* Generate master key from the result. */
-	s->session->master_key_length =
-	    tls1_generate_master_secret(s,
-		s->session->master_key, key, key_len);
-
-	encoded_len = EC_POINT_point2oct(group, EC_KEY_get0_public_key(ecdh),
-	    POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
-	if (encoded_len == 0) {
-		SSLerror(s, ERR_R_ECDH_LIB);
-		goto err;
-	}
-
-	if ((bn_ctx = BN_CTX_new()) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
-	/* Encode the public key. */
+	/* Encode our public key. */
 	if (!CBB_add_u8_length_prefixed(cbb, &ecpoint))
 		goto err;
-	if (!CBB_add_space(&ecpoint, &data, encoded_len))
-		goto err;
-	if (EC_POINT_point2oct(group, EC_KEY_get0_public_key(ecdh),
-	    POINT_CONVERSION_UNCOMPRESSED, data, encoded_len,
-	    bn_ctx) == 0)
+	if (!ssl_kex_public_ecdhe_ecp(ecdh, &ecpoint))
 		goto err;
 	if (!CBB_flush(cbb))
 		goto err;
 
+	if (!ssl_kex_derive_ecdhe_ecp(ecdh, sc->peer_ecdh_tmp, &key, &key_len))
+		goto err;
+	s->session->master_key_length = tls1_generate_master_secret(s,
+		s->session->master_key, key, key_len);
+
 	ret = 1;
 
  err:
-	freezero(key, key_size);
-
-	BN_CTX_free(bn_ctx);
+	freezero(key, key_len);
 	EC_KEY_free(ecdh);
 
 	return (ret);

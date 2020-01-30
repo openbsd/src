@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.257 2020/01/29 17:08:49 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.258 2020/01/30 16:25:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -872,6 +872,7 @@ typedef struct ssl3_state_internal_st {
 		DH *dh;
 
 		EC_KEY *ecdh; /* holds short lived ECDH key */
+		int ecdh_nid;
 
 		uint8_t *x25519;
 
@@ -1017,6 +1018,7 @@ typedef struct sess_cert_st {
 	/* Obviously we don't have the private keys of these,
 	 * so maybe we shouldn't even use the CERT_PKEY type here. */
 
+	int peer_nid;
 	DH *peer_dh_tmp;
 	EC_KEY *peer_ecdh_tmp;
 	uint8_t *peer_x25519_tmp;
@@ -1277,6 +1279,12 @@ int ssl3_send_server_done(SSL *s);
 int ssl3_get_client_certificate(SSL *s);
 int ssl3_get_client_key_exchange(SSL *s);
 int ssl3_get_cert_verify(SSL *s);
+
+int ssl_kex_generate_ecdhe_ecp(EC_KEY *ecdh, int nid);
+int ssl_kex_public_ecdhe_ecp(EC_KEY *ecdh, CBB *cbb);
+int ssl_kex_peer_public_ecdhe_ecp(EC_KEY *ecdh, int nid, CBS *cbs);
+int ssl_kex_derive_ecdhe_ecp(EC_KEY *ecdh, EC_KEY *ecdh_peer,
+    uint8_t **shared_key, size_t *shared_key_len);
 
 int tls1_new(SSL *s);
 void tls1_free(SSL *s);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.70 2020/01/23 10:48:37 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.71 2020/01/30 16:25:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1347,12 +1347,7 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 static int
 ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 {
-	const EC_GROUP *group;
-	const EC_POINT *pubkey;
-	unsigned char *data;
-	int encoded_len = 0;
 	int curve_id = 0;
-	BN_CTX *bn_ctx = NULL;
 	EC_KEY *ecdh;
 	CBB ecpoint;
 	int al;
@@ -1371,39 +1366,20 @@ ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 		goto err;
 	}
 
-	if ((S3I(s)->tmp.ecdh = EC_KEY_new_by_curve_name(nid)) == NULL) {
+	if ((S3I(s)->tmp.ecdh = EC_KEY_new()) == NULL) {
 		al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerror(s, SSL_R_MISSING_TMP_ECDH_KEY);
 		goto f_err;
 	}
+	S3I(s)->tmp.ecdh_nid = nid;
 	ecdh = S3I(s)->tmp.ecdh;
 
-	if (!EC_KEY_generate_key(ecdh)) {
-		SSLerror(s, ERR_R_ECDH_LIB);
+	if (!ssl_kex_generate_ecdhe_ecp(ecdh, nid))
 		goto err;
-	}
-	if ((group = EC_KEY_get0_group(ecdh)) == NULL ||
-	    (pubkey = EC_KEY_get0_public_key(ecdh)) == NULL ||
-	    EC_KEY_get0_private_key(ecdh) == NULL) {
-		SSLerror(s, ERR_R_ECDH_LIB);
-		goto err;
-	}
 
 	/*
 	 * Encode the public key.
-	 */
-	encoded_len = EC_POINT_point2oct(group, pubkey,
-	    POINT_CONVERSION_UNCOMPRESSED, NULL, 0, NULL);
-	if (encoded_len == 0) {
-		SSLerror(s, ERR_R_ECDH_LIB);
-		goto err;
-	}
-	if ((bn_ctx = BN_CTX_new()) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
-	/*
+	 *
 	 * Only named curves are supported in ECDH ephemeral key exchanges.
 	 * In this case the ServerKeyExchange message has:
 	 * [1 byte CurveType], [2 byte CurveName]
@@ -1416,25 +1392,16 @@ ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 		goto err;
 	if (!CBB_add_u8_length_prefixed(cbb, &ecpoint))
 		goto err;
-	if (!CBB_add_space(&ecpoint, &data, encoded_len))
+	if (!ssl_kex_public_ecdhe_ecp(ecdh, &ecpoint))
 		goto err;
-	if (EC_POINT_point2oct(group, pubkey, POINT_CONVERSION_UNCOMPRESSED,
-	    data, encoded_len, bn_ctx) == 0) {
-		SSLerror(s, ERR_R_ECDH_LIB);
-		goto err;
-	}
 	if (!CBB_flush(cbb))
 		goto err;
-
-	BN_CTX_free(bn_ctx);
 
 	return (1);
 
  f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-	BN_CTX_free(bn_ctx);
-
 	return (-1);
 }
 
@@ -1861,19 +1828,12 @@ ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 static int
 ssl3_get_client_kex_ecdhe_ecp(SSL *s, CBS *cbs)
 {
-	unsigned char *key = NULL;
-	int key_size = 0, key_len;
-	EC_POINT *point = NULL;
-	BN_CTX *bn_ctx = NULL;
-	const EC_GROUP *group;
+	uint8_t *key = NULL;
+	size_t key_len = 0;
+	EC_KEY *ecdh_peer = NULL;
 	EC_KEY *ecdh;
 	CBS public;
 	int ret = -1;
-
-	if (!CBS_get_u8_length_prefixed(cbs, &public))
-		goto err;
-	if (CBS_len(cbs) != 0)
-		goto err;
 
 	/*
 	 * Use the ephemeral values we saved when generating the
@@ -1883,54 +1843,38 @@ ssl3_get_client_kex_ecdhe_ecp(SSL *s, CBS *cbs)
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-	group = EC_KEY_get0_group(ecdh);
 
 	/*
 	 * Get client's public key from encoded point in the ClientKeyExchange
 	 * message.
 	 */
-	if ((bn_ctx = BN_CTX_new()) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
+	if (!CBS_get_u8_length_prefixed(cbs, &public))
 		goto err;
-	}
-	if ((point = EC_POINT_new(group)) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
+	if (CBS_len(cbs) != 0)
 		goto err;
-	}
-	if (EC_POINT_oct2point(group, point, CBS_data(&public),
-	    CBS_len(&public), bn_ctx) == 0) {
-		SSLerror(s, ERR_R_EC_LIB);
-		goto err;
-	}
 
-	/* Compute the shared pre-master secret */
-	if ((key_size = ECDH_size(ecdh)) <= 0) {
-		SSLerror(s, ERR_R_ECDH_LIB);
+	if ((ecdh_peer = EC_KEY_new()) == NULL)
 		goto err;
-	}
-	if ((key = malloc(key_size)) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if ((key_len = ECDH_compute_key(key, key_size, point, ecdh,
-	    NULL)) <= 0) {
-		SSLerror(s, ERR_R_ECDH_LIB);
-		goto err;
-	}
 
-	/* Compute the master secret */
+	if (!ssl_kex_peer_public_ecdhe_ecp(ecdh_peer, S3I(s)->tmp.ecdh_nid,
+	    &public))
+		goto err;
+
+	/* Derive the shared secret and compute master secret. */
+	if (!ssl_kex_derive_ecdhe_ecp(ecdh, ecdh_peer, &key, &key_len))
+		goto err;
 	s->session->master_key_length = tls1_generate_master_secret(s,
 	    s->session->master_key, key, key_len);
 
 	EC_KEY_free(S3I(s)->tmp.ecdh);
 	S3I(s)->tmp.ecdh = NULL;
+	S3I(s)->tmp.ecdh_nid = NID_undef;
 
 	ret = 1;
 
  err:
-	freezero(key, key_size);
-	EC_POINT_free(point);
-	BN_CTX_free(bn_ctx);
+	freezero(key, key_len);
+	EC_KEY_free(ecdh_peer);
 
 	return (ret);
 }
