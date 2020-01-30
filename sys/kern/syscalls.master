@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.203 2020/01/26 04:28:18 tedu Exp $
+;	$OpenBSD: syscalls.master,v 1.204 2020/01/30 15:24:06 visa Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -56,7 +56,7 @@
 			    size_t nbyte); }
 5	STD		{ int sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
-6	STD		{ int sys_close(int fd); }
+6	STD NOLOCK	{ int sys_close(int fd); }
 7	STD NOLOCK	{ int sys_getentropy(void *buf, size_t nbyte); }
 8	STD		{ int sys___tfork(const struct __tfork *param, \
 			    size_t psize); }
@@ -109,7 +109,7 @@
 38	STD		{ int sys_stat(const char *path, struct stat *ub); }
 39	STD		{ pid_t sys_getppid(void); }
 40	STD		{ int sys_lstat(const char *path, struct stat *ub); }
-41	STD		{ int sys_dup(int fd); }
+41	STD NOLOCK	{ int sys_dup(int fd); }
 42	STD		{ int sys_fstatat(int fd, const char *path, \
 			    struct stat *buf, int flag); }
 43	STD NOLOCK	{ gid_t sys_getegid(void); }
@@ -200,7 +200,7 @@
 			    const struct timespec *tp); }
 89	STD NOLOCK	{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
-90	STD		{ int sys_dup2(int from, int to); }
+90	STD NOLOCK	{ int sys_dup2(int from, int to); }
 91	STD NOLOCK	{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 92	STD		{ int sys_fcntl(int fd, int cmd, ... void *arg); }
@@ -217,7 +217,7 @@
 99	STD		{ int sys_getdents(int fd, void *buf, size_t buflen); }
 100	STD		{ int sys_getpriority(int which, id_t who); }
 101	STD NOLOCK	{ int sys_pipe2(int *fdp, int flags); }
-102	STD		{ int sys_dup3(int from, int to, int flags); }
+102	STD NOLOCK	{ int sys_dup3(int from, int to, int flags); }
 103	STD		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
 104	STD		{ int sys_bind(int s, const struct sockaddr *name, \
 			    socklen_t namelen); }
@@ -481,7 +481,7 @@
 285	OBSOL		sys_omquery
 286	STD		{ void *sys_mquery(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
-287	STD		{ int sys_closefrom(int fd); }
+287	STD NOLOCK	{ int sys_closefrom(int fd); }
 288	STD		{ int sys_sigaltstack(const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
 #ifdef SYSVSHM
