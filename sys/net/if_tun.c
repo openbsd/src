@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.215 2020/01/28 16:26:09 visa Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.216 2020/01/30 21:17:59 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -941,7 +941,7 @@ tun_dev_poll(dev_t dev, int events, struct proc *p)
 
 	sc = tun_get(dev);
 	if (sc == NULL)
-		return (ENXIO);
+		return (POLLERR);
 
 	ifp = &sc->sc_if;
 	revents = 0;
