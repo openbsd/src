@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.35 2020/01/27 08:53:13 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.36 2020/01/30 08:02:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,8 +33,8 @@ const struct cmd_entry cmd_bind_key_entry = {
 	.name = "bind-key",
 	.alias = "bind",
 
-	.args = { "cnrN:T:", 2, -1 },
-	.usage = "[-cnr] [-T key-table] [-N note] key "
+	.args = { "nrN:T:", 2, -1 },
+	.usage = "[-nr] [-T key-table] [-N note] key "
 	         "command [arguments]",
 
 	.flags = CMD_AFTERHOOK,
