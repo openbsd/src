@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.31 2020/01/26 03:24:36 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.32 2020/01/30 17:10:04 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3126,6 +3126,12 @@ test_tlsext_keyshare_client(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
+	if ((S3I(ssl)->hs_tls13.key_share =
+	    tls13_key_share_new(NID_X25519)) == NULL)
+		errx(1, "failed to create key share");
+	if (!tls13_key_share_generate(S3I(ssl)->hs_tls13.key_share))
+		errx(1, "failed to generate key share");
+
 	S3I(ssl)->hs_tls13.max_version = 0;
 
 	if (tlsext_keyshare_client_needs(ssl)) {
@@ -3205,10 +3211,11 @@ test_tlsext_keyshare_server(void)
 	CBB cbb;
 	CBS cbs;
 	uint8_t bogokey[] = {
+		0x00, 0x20,
 		0xe5, 0xe8, 0x5a, 0xb9,	0x7e, 0x12, 0x62, 0xe3,
 		0xd8, 0x7f, 0x6e, 0x3c,	0xec, 0xa6, 0x8b, 0x99,
 		0x45, 0x77, 0x8e, 0x11,	0xb3, 0xb9, 0x12, 0xb6,
-		0xbe, 0x35, 0xca, 0x51,	0x76, 0x1e, 0xe8, 0x22
+		0xbe, 0x35, 0xca, 0x51,	0x76, 0x1e, 0xe8, 0x22,
 	};
 
 	CBB_init(&cbb, 0);
@@ -3239,8 +3246,11 @@ test_tlsext_keyshare_server(void)
 		goto done;
 	}
 
-	if (tls_extension_find(TLSEXT_TYPE_key_share, &idx) == NULL)
-		FAIL("Can't find keyshare extension");
+	if (tls_extension_find(TLSEXT_TYPE_key_share, &idx) == NULL) {
+		FAIL("failed to find keyshare extension");
+		failure = 1;
+		goto done;
+	}
 	S3I(ssl)->hs.extensions_seen |= (1 << idx);
 
 	if (!tlsext_keyshare_server_needs(ssl)) {
@@ -3255,10 +3265,19 @@ test_tlsext_keyshare_server(void)
 		goto done;
 	}
 
-	if ((S3I(ssl)->hs_tls13.x25519_peer_public =
-	    malloc(sizeof(bogokey))) == NULL)
-		errx(1, "malloc failed");
-	memcpy(S3I(ssl)->hs_tls13.x25519_peer_public, bogokey, sizeof(bogokey));
+	if ((S3I(ssl)->hs_tls13.key_share =
+	    tls13_key_share_new(NID_X25519)) == NULL)
+		errx(1, "failed to create key share");
+	if (!tls13_key_share_generate(S3I(ssl)->hs_tls13.key_share))
+		errx(1, "failed to generate key share");
+
+	CBS_init(&cbs, bogokey, sizeof(bogokey));
+	if (!tls13_key_share_peer_public(S3I(ssl)->hs_tls13.key_share,
+	    0x001d, &cbs)) {
+		FAIL("failed to load peer public key");
+		failure = 1;
+		goto done;
+	}
 
 	if (!tlsext_keyshare_server_build(ssl, &cbb)) {
 		FAIL("server should be able to build a keyshare response");
