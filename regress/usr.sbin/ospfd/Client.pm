@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.6 2016/12/26 21:30:10 jca Exp $
+#	$OpenBSD: Client.pm,v 1.7 2020/01/30 13:03:46 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014-2015 Florian Riehm <mail@friehm.de>
@@ -348,6 +348,13 @@ sub child {
 	or croak ref($self), " ospfd ip missing";
     $ospfd_rtrid = $self->{ospfd_rtrid}
 	or croak ref($self), " ospfd router id missing";
+
+    if ($ENV{KTRACE}) {
+	my @ktrace = $ENV{KTRACE};
+	push @ktrace, "-i", "-f", "client.ktrace", "-p", $$;
+	system(@ktrace)
+	    and die "Command '@ktrace' failed: $?";
+    }
 
     my $tap = opentap($tap_number);
 

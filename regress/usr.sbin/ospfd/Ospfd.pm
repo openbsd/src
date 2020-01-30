@@ -1,4 +1,4 @@
-#	$OpenBSD: Ospfd.pm,v 1.3 2014/08/18 22:58:19 bluhm Exp $
+#	$OpenBSD: Ospfd.pm,v 1.4 2020/01/30 13:03:46 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -67,7 +67,8 @@ sub new {
 sub child {
 	my $self = shift;
 	my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
-	my @ktrace = $ENV{KTRACE} ? ($ENV{KTRACE}, "-i") : ();
+	my @ktrace = $ENV{KTRACE} || ();
+	push @ktrace, "-i", "-f", "ospfd.ktrace" if @ktrace;
 	my $ospfd = $ENV{OSPFD} ? $ENV{OSPFD} : "ospfd";
 	my @cmd = (@sudo, @ktrace, $ospfd, "-dv", "-f", $self->{conffile});
 	print STDERR "execute: @cmd\n";
