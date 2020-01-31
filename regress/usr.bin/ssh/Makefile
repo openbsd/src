@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.105 2019/11/26 23:41:23 djm Exp $
+#	$OpenBSD: Makefile,v 1.106 2020/01/31 23:25:08 djm Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -78,6 +78,7 @@ LTESTS= 	connect \
 		principals-command \
 		cert-file \
 		cfginclude \
+		servcfginclude \
 		allow-deny-users \
 		authinfo \
 		sshsig
@@ -108,7 +109,7 @@ CLEANFILES+=	*.core actual agent-key.* authorized_keys_${USERNAME} \
 		sftp-server.sh sftp.log ssh-log-wrapper.sh ssh.log \
 		ssh-rsa_oldfmt \
 		ssh_config ssh_config.* ssh_proxy ssh_proxy_bak \
-		ssh_proxy_envpass sshd.log sshd_config sshd_config.orig \
+		ssh_proxy_envpass sshd.log sshd_config sshd_config.* \
 		sshd_proxy sshd_proxy.* sshd_proxy_bak sshd_proxy_orig \
 		t10.out t10.out.pub t12.out t12.out.pub t2.out t3.out \
 		t6.out1 t6.out2 t7.out t7.out.pub t8.out t8.out.pub \
