@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.257 2019/12/13 03:38:15 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.258 2020/01/31 01:51:27 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -177,7 +177,6 @@ void vmx_handle_intr(struct vcpu *);
 void vmx_handle_intwin(struct vcpu *);
 void vmx_handle_misc_enable_msr(struct vcpu *);
 int vmm_get_guest_memtype(struct vm *, paddr_t);
-int vmm_get_guest_faulttype(void);
 int vmx_get_guest_faulttype(void);
 int svm_get_guest_faulttype(struct vmcb *);
 int vmx_get_exit_qualification(uint64_t *);
@@ -5073,23 +5072,6 @@ vmm_get_guest_memtype(struct vm *vm, paddr_t gpa)
 
 	DPRINTF("guest memtype @ 0x%llx unknown\n", (uint64_t)gpa);
 	return (VMM_MEM_TYPE_UNKNOWN);
-}
-
-/*
- * vmm_get_guest_faulttype
- *
- * Determines the type (R/W/X) of the last fault on the VCPU last run on
- * this PCPU. Calls the appropriate architecture-specific subroutine.
- */
-int
-vmm_get_guest_faulttype(void)
-{
-	if (vmm_softc->mode == VMM_MODE_EPT)
-		return vmx_get_guest_faulttype();
-	else if (vmm_softc->mode == VMM_MODE_RVI)
-		return vmx_get_guest_faulttype();
-	else
-		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
 }
 
 /*
