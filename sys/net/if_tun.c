@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.216 2020/01/30 21:17:59 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.217 2020/01/31 02:58:28 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ int	filt_tunread(struct knote *, long);
 int	filt_tunwrite(struct knote *, long);
 void	filt_tunrdetach(struct knote *);
 void	filt_tunwdetach(struct knote *);
-void	tun_link_state(struct tun_softc *);
+void	tun_link_state(struct tun_softc *, int);
 
 const struct filterops tunread_filtops = {
 	.f_isfd		= 1,
@@ -415,7 +415,7 @@ tun_dev_open(dev_t dev, const struct if_clone *ifc, int mode, struct proc *p)
 
 	/* automatically mark the interface running on open */
 	SET(ifp->if_flags, IFF_UP | IFF_RUNNING);
-	tun_link_state(sc);
+	tun_link_state(sc, LINK_STATE_FULL_DUPLEX);
 
 	return (0);
 }
@@ -468,7 +468,7 @@ tun_dev_close(dev_t dev, struct proc *p)
 			strlcpy(name, ifp->if_xname, sizeof(name));
 		} else {
 			CLR(ifp->if_flags, IFF_UP | IFF_RUNNING);
-			tun_link_state(sc);
+			tun_link_state(sc, LINK_STATE_DOWN);
 		}
 	}
 
@@ -1067,13 +1067,9 @@ tun_start(struct ifnet *ifp)
 }
 
 void
-tun_link_state(struct tun_softc *sc)
+tun_link_state(struct tun_softc *sc, int link_state)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	int link_state = LINK_STATE_DOWN;
-
-	if (sc->sc_dev != 0)
-		link_state = LINK_STATE_FULL_DUPLEX;
 
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
