@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.273 2020/01/08 01:41:11 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.274 2020/01/31 22:01:20 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -566,7 +566,7 @@ SRS KEY STRING {
 
 dispatcher_local_option:
 USER STRING {
-	if (dispatcher->u.local.requires_root) {
+	if (dispatcher->u.local.is_mbox) {
 		yyerror("user may not be specified for this dispatcher");
 		YYERROR;
 	}
@@ -662,9 +662,9 @@ dispatcher_local_option dispatcher_local_options
 
 dispatcher_local:
 MBOX {
-	dispatcher->u.local.requires_root = 1;
+	dispatcher->u.local.is_mbox = 1;
 	dispatcher->u.local.user = xstrdup("root");
-	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.local -f %%{mbox.from} %%{user.username}");
+	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.local -f %%{mbox.from} -- %%{user.username}");
 } dispatcher_local_options
 | MAILDIR {
 	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.maildir");
