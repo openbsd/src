@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.545 2020/01/24 23:56:01 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.546 2020/01/31 22:42:45 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -231,6 +231,9 @@ struct sshauthopt *auth_opts = NULL;
 
 /* sshd_config buffer */
 struct sshbuf *cfg;
+
+/* Included files from the configuration file */
+struct include_list includes = TAILQ_HEAD_INITIALIZER(includes);
 
 /* message to be displayed after login */
 struct sshbuf *loginmsg;
@@ -829,24 +832,41 @@ usage(void)
 static void
 send_rexec_state(int fd, struct sshbuf *conf)
 {
-	struct sshbuf *m;
+	struct sshbuf *m = NULL, *inc = NULL;
+	struct include_item *item = NULL;
 	int r;
 
 	debug3("%s: entering fd = %d config len %zu", __func__, fd,
 	    sshbuf_len(conf));
 
+	if ((m = sshbuf_new()) == NULL || (inc = sshbuf_new()) == NULL)
+		fatal("%s: sshbuf_new failed", __func__);
+
+	/* pack includes into a string */
+	TAILQ_FOREACH(item, &includes, entry) {
+		if ((r = sshbuf_put_cstring(inc, item->selector)) != 0 ||
+		    (r = sshbuf_put_cstring(inc, item->filename)) != 0 ||
+		    (r = sshbuf_put_stringb(m, item->contents)) != 0)
+			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	}
+
 	/*
 	 * Protocol from reexec master to child:
 	 *	string	configuration
+	 *	string	included_files[] {
+	 *		string	selector
+	 *		string	filename
+	 *		string	contents
+	 *	}
 	 */
-	if ((m = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
-	if ((r = sshbuf_put_stringb(m, conf)) != 0)
+	if ((r = sshbuf_put_stringb(m, conf)) != 0 ||
+	    (r = sshbuf_put_stringb(m, inc)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	if (ssh_msg_send(fd, 0, m) == -1)
 		fatal("%s: ssh_msg_send failed", __func__);
 
 	sshbuf_free(m);
+	sshbuf_free(inc);
 
 	debug3("%s: done", __func__);
 }
@@ -854,14 +874,15 @@ send_rexec_state(int fd, struct sshbuf *conf)
 static void
 recv_rexec_state(int fd, struct sshbuf *conf)
 {
-	struct sshbuf *m;
+	struct sshbuf *m, *inc;
 	u_char *cp, ver;
 	size_t len;
 	int r;
+	struct include_item *item;
 
 	debug3("%s: entering fd = %d", __func__, fd);
 
-	if ((m = sshbuf_new()) == NULL)
+	if ((m = sshbuf_new()) == NULL || (inc = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new failed", __func__);
 	if (ssh_msg_recv(fd, m) == -1)
 		fatal("%s: ssh_msg_recv failed", __func__);
@@ -869,10 +890,23 @@ recv_rexec_state(int fd, struct sshbuf *conf)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	if (ver != 0)
 		fatal("%s: rexec version mismatch", __func__);
-	if ((r = sshbuf_get_string(m, &cp, &len)) != 0)
+	if ((r = sshbuf_get_string(m, &cp, &len)) != 0 ||
+	    (r = sshbuf_get_stringb(m, inc)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+
 	if (conf != NULL && (r = sshbuf_put(conf, cp, len)))
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+
+	while (sshbuf_len(inc) != 0) {
+		item = xcalloc(1, sizeof(*item));
+		if ((item->contents = sshbuf_new()) == NULL)
+			fatal("%s: sshbuf_new failed", __func__);
+		if ((r = sshbuf_get_cstring(inc, &item->selector, NULL)) != 0 ||
+		    (r = sshbuf_get_cstring(inc, &item->filename, NULL)) != 0 ||
+		    (r = sshbuf_get_stringb(inc, item->contents)) != 0)
+			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		TAILQ_INSERT_TAIL(&includes, item, entry);
+	}
 
 	free(cp);
 	sshbuf_free(m);
@@ -1492,7 +1526,7 @@ main(int ac, char **av)
 		case 'o':
 			line = xstrdup(optarg);
 			if (process_server_config_line(&options, line,
-			    "command-line", 0, NULL, NULL) != 0)
+			    "command-line", 0, NULL, NULL, &includes) != 0)
 				exit(1);
 			free(line);
 			break;
@@ -1558,7 +1592,7 @@ main(int ac, char **av)
 		load_server_config(config_file_name, cfg);
 
 	parse_server_config(&options, rexeced_flag ? "rexec" : config_file_name,
-	    cfg, NULL);
+	    cfg, &includes, NULL);
 
 	/* Fill in default values for those options not explicitly set. */
 	fill_default_server_options(&options);
@@ -1768,7 +1802,7 @@ main(int ac, char **av)
 		if (connection_info == NULL)
 			connection_info = get_connection_info(ssh, 0, 0);
 		connection_info->test = 1;
-		parse_server_match_config(&options, connection_info);
+		parse_server_match_config(&options, &includes, connection_info);
 		dump_config(&options);
 	}
 
