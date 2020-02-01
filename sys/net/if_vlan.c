@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.202 2019/11/07 07:36:32 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.203 2020/02/01 10:27:40 jmatthew Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -58,6 +58,7 @@
 #include <sys/rwlock.h>
 #include <sys/percpu.h>
 #include <sys/refcnt.h>
+#include <sys/smr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -94,13 +95,15 @@ struct vlan_softc {
 	uint16_t		 sc_type; /* non-standard ethertype or 0x8100 */
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry)
 				 sc_mc_listhead;
-	SRPL_ENTRY(vlan_softc)	 sc_list;
+	SMR_SLIST_ENTRY(vlan_softc) sc_list;
 	int			 sc_flags;
 	struct refcnt		 sc_refcnt;
 	struct task		 sc_ltask;
 	struct task		 sc_dtask;
 	struct ifih		*sc_ifih;
 };
+
+SMR_SLIST_HEAD(vlan_list, vlan_softc);
 
 #define	IFVF_PROMISC	0x01	/* the parent should be made promisc */
 #define	IFVF_LLADDR	0x02	/* don't inherit the parents mac */
@@ -109,7 +112,7 @@ struct vlan_softc {
 #define TAG_HASH_SIZE		(1 << TAG_HASH_BITS)
 #define TAG_HASH_MASK		(TAG_HASH_SIZE - 1)
 #define TAG_HASH(tag)		(tag & TAG_HASH_MASK)
-SRPL_HEAD(, vlan_softc) *vlan_tagh, *svlan_tagh;
+struct vlan_list *vlan_tagh, *svlan_tagh;
 struct rwlock vlan_tagh_lk = RWLOCK_INITIALIZER("vlantag");
 
 void	vlanattach(int count);
@@ -152,11 +155,6 @@ struct if_clone vlan_cloner =
 struct if_clone svlan_cloner =
     IF_CLONE_INITIALIZER("svlan", vlan_clone_create, vlan_clone_destroy);
 
-void vlan_ref(void *, void *);
-void vlan_unref(void *, void *);
-
-struct srpl_rc vlan_tagh_rc = SRPL_RC_INITIALIZER(vlan_ref, vlan_unref, NULL);
-
 void
 vlanattach(int count)
 {
@@ -175,8 +173,8 @@ vlanattach(int count)
 		panic("vlanattach: hashinit");
 
 	for (i = 0; i < TAG_HASH_SIZE; i++) {
-		SRPL_INIT(&vlan_tagh[i]);
-		SRPL_INIT(&svlan_tagh[i]);
+		SMR_SLIST_INIT(&vlan_tagh[i]);
+		SMR_SLIST_INIT(&svlan_tagh[i]);
 	}
 
 	if_clone_attach(&vlan_cloner);
@@ -227,22 +225,6 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	return (0);
 }
 
-void
-vlan_ref(void *null, void *v)
-{
-	struct vlan_softc *sc = v;
-
-	refcnt_take(&sc->sc_refcnt);
-}
-
-void
-vlan_unref(void *null, void *v)
-{
-	struct vlan_softc *sc = v;
-
-	refcnt_rele_wake(&sc->sc_refcnt);
-}
-
 int
 vlan_clone_destroy(struct ifnet *ifp)
 {
@@ -257,6 +239,7 @@ vlan_clone_destroy(struct ifnet *ifp)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	smr_barrier();
 	refcnt_finalize(&sc->sc_refcnt, "vlanrefs");
 	vlan_multi_free(sc);
 	free(sc, M_DEVBUF, sizeof(*sc));
@@ -384,8 +367,7 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	struct vlan_softc *sc;
 	struct ether_vlan_header *evl;
 	struct ether_header *eh;
-	SRPL_HEAD(, vlan_softc) *tagh, *list;
-	struct srp_ref sr;
+	struct vlan_list *tagh, *list;
 	uint16_t tag;
 	uint16_t etype;
 	int rxprio;
@@ -415,11 +397,15 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	tag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
 
 	list = &tagh[TAG_HASH(tag)];
-	SRPL_FOREACH(sc, &sr, list, sc_list) {
+	smr_read_enter();
+	SMR_SLIST_FOREACH(sc, list, sc_list) {
 		if (ifp0->if_index == sc->sc_ifidx0 && tag == sc->sc_tag &&
-		    etype == sc->sc_type)
+		    etype == sc->sc_type) {
+			refcnt_take(&sc->sc_refcnt);
 			break;
+		}
 	}
+	smr_read_leave();
 
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING)) {
 		m_freem(m);
@@ -456,14 +442,15 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 
 	if_vinput(&sc->sc_if, m);
 leave:
-	SRPL_LEAVE(&sr);
+	if (sc != NULL)
+		refcnt_rele_wake(&sc->sc_refcnt);
 	return (1);
 }
 
 int
 vlan_up(struct vlan_softc *sc)
 {
-	SRPL_HEAD(, vlan_softc) *tagh, *list;
+	struct vlan_list *tagh, *list;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
 	int error = 0;
@@ -531,7 +518,7 @@ vlan_up(struct vlan_softc *sc)
 	if (error != 0)
 		goto leave;
 
-	SRPL_INSERT_HEAD_LOCKED(&vlan_tagh_rc, list, sc, sc_list);
+	SMR_SLIST_INSERT_HEAD_LOCKED(list, sc, sc_list);
 	rw_exit(&vlan_tagh_lk);
 
 	/* Register callback for physical link state changes */
@@ -571,7 +558,7 @@ put:
 int
 vlan_down(struct vlan_softc *sc)
 {
-	SRPL_HEAD(, vlan_softc) *tagh, *list;
+	struct vlan_list *tagh, *list;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
 
@@ -597,7 +584,7 @@ vlan_down(struct vlan_softc *sc)
 	if_put(ifp0);
 
 	rw_enter_write(&vlan_tagh_lk);
-	SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, sc, vlan_softc, sc_list);
+	SMR_SLIST_REMOVE_LOCKED(list, sc, vlan_softc, sc_list);
 	rw_exit_write(&vlan_tagh_lk);
 
 	ifp->if_capabilities = 0;
@@ -855,7 +842,7 @@ int
 vlan_set_vnetid(struct vlan_softc *sc, uint16_t tag)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	SRPL_HEAD(, vlan_softc) *tagh, *list;
+	struct vlan_list *tagh, *list;
 	u_char link = ifp->if_link_state;
 	uint64_t baud = ifp->if_baudrate;
 	int error;
@@ -875,13 +862,12 @@ vlan_set_vnetid(struct vlan_softc *sc, uint16_t tag)
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
 		list = &tagh[TAG_HASH(sc->sc_tag)];
-		SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, sc, vlan_softc,
-		    sc_list);
+		SMR_SLIST_REMOVE_LOCKED(list, sc, vlan_softc, sc_list);
 
 		sc->sc_tag = tag;
 
 		list = &tagh[TAG_HASH(sc->sc_tag)];
-		SRPL_INSERT_HEAD_LOCKED(&vlan_tagh_rc, list, sc, sc_list);
+		SMR_SLIST_INSERT_HEAD_LOCKED(list, sc, sc_list);
 	} else
 		sc->sc_tag = tag;
 
@@ -1028,13 +1014,13 @@ vlan_inuse(uint16_t type, unsigned int ifidx, uint16_t tag)
 int
 vlan_inuse_locked(uint16_t type, unsigned int ifidx, uint16_t tag)
 {
-	SRPL_HEAD(, vlan_softc) *tagh, *list;
+	struct vlan_list *tagh, *list;
 	struct vlan_softc *sc;
 
 	tagh = type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
 	list = &tagh[TAG_HASH(tag)];
 
-	SRPL_FOREACH_LOCKED(sc, list, sc_list) {
+	SMR_SLIST_FOREACH_LOCKED(sc, list, sc_list) {
 		if (sc->sc_tag == tag &&
 		    sc->sc_type == type && /* wat */
 		    sc->sc_ifidx0 == ifidx)
