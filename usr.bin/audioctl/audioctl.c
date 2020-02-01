@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.38 2020/01/30 05:17:07 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.39 2020/02/01 18:06:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
@@ -66,6 +66,8 @@ const char usagestr[] =
 	"usage: audioctl [-f file]\n"
 	"       audioctl [-n] [-f file] name ...\n"
 	"       audioctl [-nq] [-f file] name=value ...\n";
+
+int fd, print_names = 1, quiet = 0;
 
 /*
  * parse encoding string (examples: s8, u8, s16, s16le, s24be ...)
@@ -189,42 +191,13 @@ parse_val(struct field *f, void *addr, char *p)
 	}
 }
 
-int
-main(int argc, char **argv)
+void
+audio_main(int argc, char **argv)
 {
 	struct field *f;
-	char *lhs, *rhs, *path = "/dev/audioctl0";
-	int fd, c, set = 0, print_names = 1, quiet = 0;
+	char *lhs, *rhs;
+	int set = 0;
 
-	while ((c = getopt(argc, argv, "anf:q")) != -1) {
-		switch (c) {
-		case 'a':	/* ignored, compat */
-			break;
-		case 'n':
-			print_names = 0;
-			break;
-		case 'f':
-			path = optarg;
-			break;
-		case 'q':
-			quiet = 1;
-			break;
-		default:
-			fputs(usagestr, stderr);
-			return 1;
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (unveil(path, "w") == -1)
-		err(1, "unveil");
-	if (unveil(NULL, NULL) == -1)
-		err(1, "unveil");
-
-	fd = open(path, O_WRONLY);
-	if (fd == -1)
-		err(1, "%s", path);
 	if (ioctl(fd, AUDIO_GETSTATUS, &rstatus) == -1)
 		err(1, "AUDIO_GETSTATUS");
 	if (ioctl(fd, AUDIO_GETDEV, &rname) == -1)
@@ -265,10 +238,8 @@ main(int argc, char **argv)
 			printf("\n");
 		}
 	}
-	if (!set) {
-		close(fd);
-		return 0;
-	}
+	if (!set)
+		return;
 	if (ioctl(fd, AUDIO_SETPAR, &wpar) == -1)
 		err(1, "AUDIO_SETPAR");
 	if (ioctl(fd, AUDIO_GETPAR, &wpar) == -1)
@@ -284,6 +255,50 @@ main(int argc, char **argv)
 		print_val(f, f->waddr);
 		printf("\n");
 	}
+}
+
+int
+main(int argc, char **argv)
+{
+	extern char *__progname;
+	char *path = "/dev/audioctl0";
+	int c, mixer = 0;
+
+	if (strcmp(__progname, "mixerctl") == 0)
+		mixer = 1;
+
+	while ((c = getopt(argc, argv, "anf:q")) != -1) {
+		switch (c) {
+		case 'a':	/* ignored, compat */
+			break;
+		case 'n':
+			print_names = 0;
+			break;
+		case 'f':
+			path = optarg;
+			break;
+		case 'q':
+			quiet = 1;
+			break;
+		default:
+			fputs(usagestr, stderr);
+			return 1;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (unveil(path, "w") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
+
+	fd = open(path, O_WRONLY);
+	if (fd == -1)
+		err(1, "%s", path);
+
+	audio_main(argc, argv);
+
 	close(fd);
 	return 0;	
 }
