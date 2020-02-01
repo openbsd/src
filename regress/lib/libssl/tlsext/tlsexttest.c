@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.32 2020/01/30 17:10:04 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.33 2020/02/01 12:42:39 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3211,7 +3211,6 @@ test_tlsext_keyshare_server(void)
 	CBB cbb;
 	CBS cbs;
 	uint8_t bogokey[] = {
-		0x00, 0x20,
 		0xe5, 0xe8, 0x5a, 0xb9,	0x7e, 0x12, 0x62, 0xe3,
 		0xd8, 0x7f, 0x6e, 0x3c,	0xec, 0xa6, 0x8b, 0x99,
 		0x45, 0x77, 0x8e, 0x11,	0xb3, 0xb9, 0x12, 0xb6,
