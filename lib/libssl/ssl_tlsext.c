@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.58 2020/01/30 17:09:23 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.59 2020/02/01 12:41:58 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1274,7 +1274,7 @@ tlsext_keyshare_client_build(SSL *s, CBB *cbb)
 int
 tlsext_keyshare_server_parse(SSL *s, CBS *cbs, int *alert)
 {
-	CBS client_shares;
+	CBS client_shares, key_exchange;
 	uint16_t group;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &client_shares))
@@ -1285,6 +1285,8 @@ tlsext_keyshare_server_parse(SSL *s, CBS *cbs, int *alert)
 		/* Unpack client share. */
 		if (!CBS_get_u16(&client_shares, &group))
 			goto err;
+		if (!CBS_get_u16_length_prefixed(&client_shares, &key_exchange))
+			return 0;
 
 		/*
 		 * XXX support other groups later.
@@ -1295,7 +1297,7 @@ tlsext_keyshare_server_parse(SSL *s, CBS *cbs, int *alert)
 			continue;
 
 		if (!tls13_key_share_peer_public(S3I(s)->hs_tls13.key_share,
-		    group, &client_shares))
+		    group, &key_exchange))
 			goto err;
 	}
 
@@ -1330,16 +1332,19 @@ tlsext_keyshare_server_build(SSL *s, CBB *cbb)
 int
 tlsext_keyshare_client_parse(SSL *s, CBS *cbs, int *alert)
 {
+	CBS key_exchange;
 	uint16_t group;
 
 	/* Unpack server share. */
 	if (!CBS_get_u16(cbs, &group))
 		goto err;
+	if (!CBS_get_u16_length_prefixed(cbs, &key_exchange))
+		return 0;
 
 	/* XXX - Handle other groups and verify that they're valid. */
 
 	if (!tls13_key_share_peer_public(S3I(s)->hs_tls13.key_share,
-	    group, cbs))
+	    group, &key_exchange))
 		goto err;
 
 	return 1;
