@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.59 2020/01/05 13:46:02 visa Exp $	*/
+/*	$OpenBSD: file.h,v 1.60 2020/02/01 08:57:27 anton Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -80,19 +80,19 @@ struct	fileops {
 struct file {
 	LIST_ENTRY(file) f_list;/* [F] list of active files */
 	struct mutex f_mtx;
-	short	f_flag;		/* [k] see fcntl.h */
+	u_int	f_flag;		/* [a] see fcntl.h */
 #define	DTYPE_VNODE	1	/* file */
 #define	DTYPE_SOCKET	2	/* communications endpoint */
 #define	DTYPE_PIPE	3	/* pipe */
 #define	DTYPE_KQUEUE	4	/* event queue */
 #define	DTYPE_DMABUF	5	/* DMA buffer (for DRM) */
-	short	f_type;		/* [I] descriptor type */
+	int	f_iflags;	/* [k] internal flags */
+	int	f_type;		/* [I] descriptor type */
 	u_int	f_count;	/* [a] reference count */
 	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */
 	const struct fileops *f_ops; /* [I] file operation pointers */
 	off_t	f_offset;	/* [f,v] offset */
 	void 	*f_data;	/* [I] private data */
-	int	f_iflags;	/* [k] internal flags */
 	uint64_t f_rxfer;	/* [f] total number of read transfers */
 	uint64_t f_wxfer;	/* [f] total number of write transfers */
 	uint64_t f_seek;	/* [f] total independent seek operations */

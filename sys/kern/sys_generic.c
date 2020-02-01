@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.128 2020/01/16 16:35:04 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.129 2020/02/01 08:57:27 anton Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -475,17 +475,17 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 
 	case FIONBIO:
 		if ((tmp = *(int *)data) != 0)
-			fp->f_flag |= FNONBLOCK;
+			atomic_setbits_int(&fp->f_flag, FNONBLOCK);
 		else
-			fp->f_flag &= ~FNONBLOCK;
+			atomic_clearbits_int(&fp->f_flag, FNONBLOCK);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
 		break;
 
 	case FIOASYNC:
 		if ((tmp = *(int *)data) != 0)
-			fp->f_flag |= FASYNC;
+			atomic_setbits_int(&fp->f_flag, FASYNC);
 		else
-			fp->f_flag &= ~FASYNC;
+			atomic_clearbits_int(&fp->f_flag, FASYNC);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, p);
 		break;
 

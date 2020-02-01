@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.196 2020/01/08 16:45:28 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.197 2020/02/01 08:57:27 anton Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -410,7 +410,7 @@ sys_fcntl(struct proc *p, void *v, register_t *retval)
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct vnode *vp;
-	int i, tmp, newmin, flg = F_POSIX;
+	int i, prev, tmp, newmin, flg = F_POSIX;
 	struct flock fl;
 	int error = 0;
 
@@ -480,8 +480,11 @@ restart:
 		break;
 
 	case F_SETFL:
-		fp->f_flag &= ~FCNTLFLAGS;
-		fp->f_flag |= FFLAGS((long)SCARG(uap, arg)) & FCNTLFLAGS;
+		do {
+			tmp = prev = fp->f_flag;
+			tmp &= ~FCNTLFLAGS;
+			tmp |= FFLAGS((long)SCARG(uap, arg)) & FCNTLFLAGS;
+		} while (atomic_cas_uint(&fp->f_flag, prev, tmp) != prev);
 		tmp = fp->f_flag & FNONBLOCK;
 		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
 		if (error)
@@ -490,7 +493,7 @@ restart:
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, p);
 		if (!error)
 			break;
-		fp->f_flag &= ~FNONBLOCK;
+		atomic_clearbits_int(&fp->f_flag, FNONBLOCK);
 		tmp = 0;
 		(void) (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
 		break;

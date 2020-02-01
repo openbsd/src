@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.201 2020/01/30 08:51:27 mpi Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.202 2020/02/01 08:57:27 anton Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -734,7 +734,7 @@ do {									\
 
 struct kinfo_file {
 	uint64_t	f_fileaddr;	/* PTR: address of struct file */
-	uint32_t	f_flag;		/* SHORT: flags (see fcntl.h) */
+	uint32_t	f_flag;		/* UINT: flags (see fcntl.h) */
 	uint32_t	f_iflags;	/* INT: internal flags */
 	uint32_t	f_type;		/* INT: descriptor type */
 	uint32_t	f_count;	/* UINT: reference count */
