@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.12 2018/09/09 10:13:21 henning Exp $
+.\"	$OpenBSD: rdomain.4,v 1.13 2020/02/01 15:00:20 kn Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 9 2018 $
+.Dd $Mdocdate: February 1 2020 $
 .Dt RDOMAIN 4
 .Os
 .Sh NAME
@@ -125,7 +125,7 @@ match out on rdomain 4 to !$internal_net nat-to (em1) rtable 0
 .Pp
 Delete rdomain 4 again:
 .Bd -literal -offset indent
-# ifconfig em0 rdomain 0
+# ifconfig em0 -rdomain
 # ifconfig lo4 destroy
 .Ed
 .Sh SEE ALSO
