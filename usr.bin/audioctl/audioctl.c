@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.39 2020/02/01 18:06:19 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.40 2020/02/01 18:07:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
@@ -67,7 +67,7 @@ const char usagestr[] =
 	"       audioctl [-n] [-f file] name ...\n"
 	"       audioctl [-nq] [-f file] name=value ...\n";
 
-int fd, print_names = 1, quiet = 0;
+int fd, show_names = 1, quiet = 0;
 
 /*
  * parse encoding string (examples: s8, u8, s16, s16le, s24be ...)
@@ -232,7 +232,7 @@ audio_main(int argc, char **argv)
 			f->set = 1;
 			set = 1;
 		} else {
-			if (print_names)
+			if (show_names)
 				printf("%s=", f->name);
 			print_val(f, f->raddr);
 			printf("\n");
@@ -247,7 +247,7 @@ audio_main(int argc, char **argv)
 	for (f = fields; f->name != NULL; f++) {
 		if (!f->set || quiet)
 			continue;
-		if (print_names) {
+		if (show_names) {
 			printf("%s: ", f->name);
 			print_val(f, f->raddr);
 			printf(" -> ");
@@ -272,7 +272,7 @@ main(int argc, char **argv)
 		case 'a':	/* ignored, compat */
 			break;
 		case 'n':
-			print_names = 0;
+			show_names = 0;
 			break;
 		case 'f':
 			path = optarg;
