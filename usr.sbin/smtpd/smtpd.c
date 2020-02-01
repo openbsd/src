@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.329 2020/01/31 22:01:20 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.330 2020/02/01 12:54:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1534,7 +1534,9 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	/* avoid hangs by setting 5m timeout */
 	alarm(300);
 
-	if (dsp->u.local.is_mbox && dsp->u.local.mda_wrapper == NULL)
+	if (dsp->u.local.is_mbox &&
+	    dsp->u.local.mda_wrapper == NULL &&
+	    deliver->mda_exec[0] == '\0')
 		mda_mbox(deliver);
 	else
 		mda_unpriv(dsp, deliver, pw_name, pw_dir);
