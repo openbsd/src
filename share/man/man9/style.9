@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.73 2018/12/05 15:34:52 schwarze Exp $
+.\"	$OpenBSD: style.9,v 1.74 2020/02/02 03:08:37 schwarze Exp $
 .\"
-.Dd $Mdocdate: December 5 2018 $
+.Dd $Mdocdate: February 2 2020 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -519,19 +519,7 @@ if ((six = (int *)overflow()) == NULL)
 return eight;
 .Ed
 .Pp
-Old-style function declarations look like this:
-.Bd -literal -offset indent
-static char *
-function(a1, a2, fl, a4)
-	int a1, a2;	/* Declare ints, too, don't default them. */
-	float fl;	/* Beware double vs. float prototype differences. */
-	int a4;		/* List in order declared. */
-{
-	...
-}
-.Ed
-.Pp
-Use ANSI function declarations unless you explicitly need K&R compatibility.
+Always use ANSI function declarations.
 Long parameter lists are wrapped with a normal four space indent.
 .Pp
 Variable numbers of arguments should look like this:
