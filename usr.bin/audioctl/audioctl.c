@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.40 2020/02/01 18:07:49 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.41 2020/02/02 05:21:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
@@ -138,7 +138,7 @@ strtoenc(struct audio_swpar *ap, char *p)
 }
 
 void
-print_val(struct field *p, void *addr)
+print_field(struct field *p, void *addr)
 {
 	int mode;
 	struct audio_swpar *ap;
@@ -175,7 +175,7 @@ print_val(struct field *p, void *addr)
 }
 
 void
-parse_val(struct field *f, void *addr, char *p)
+parse_field(struct field *f, void *addr, char *p)
 {
 	const char *strerr;
 
@@ -209,7 +209,7 @@ audio_main(int argc, char **argv)
 	if (argc == 0) {
 		for (f = fields; f->name != NULL; f++) {
 			printf("%s=", f->name);
-			print_val(f, f->raddr);
+			print_field(f, f->raddr);
 			printf("\n");
 		}
 	}
@@ -228,13 +228,13 @@ audio_main(int argc, char **argv)
 		if (rhs) {
 			if (f->waddr == NULL)
 				errx(1, "%s: is read only", f->name);
-			parse_val(f, f->waddr, rhs);
+			parse_field(f, f->waddr, rhs);
 			f->set = 1;
 			set = 1;
 		} else {
 			if (show_names)
 				printf("%s=", f->name);
-			print_val(f, f->raddr);
+			print_field(f, f->raddr);
 			printf("\n");
 		}
 	}
@@ -249,10 +249,10 @@ audio_main(int argc, char **argv)
 			continue;
 		if (show_names) {
 			printf("%s: ", f->name);
-			print_val(f, f->raddr);
+			print_field(f, f->raddr);
 			printf(" -> ");
 		}
-		print_val(f, f->waddr);
+		print_field(f, f->waddr);
 		printf("\n");
 	}
 }
