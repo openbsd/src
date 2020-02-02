@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.41 2020/02/02 05:21:15 ratchov Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.42 2020/02/02 05:25:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
@@ -260,12 +260,8 @@ audio_main(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-	extern char *__progname;
 	char *path = "/dev/audioctl0";
-	int c, mixer = 0;
-
-	if (strcmp(__progname, "mixerctl") == 0)
-		mixer = 1;
+	int c;
 
 	while ((c = getopt(argc, argv, "anf:q")) != -1) {
 		switch (c) {
