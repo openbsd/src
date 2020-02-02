@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2020/01/15 20:47:13 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.31 2020/02/02 21:01:53 bluhm Exp $
 
 # Copyright (c) 2012-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -310,28 +310,30 @@ check-setup-src:
 	@echo '\n======== $@ ========'
 .for ip in SRC_OUT RPT_IN RPT_OUT
 	ping -n -c 1 ${${ip}}  # ${ip}
-	route -n get -inet ${${ip}} | grep -q 'flags: .*LOCAL'  # ${ip}
+	/sbin/route -n get -inet ${${ip}} | grep -q 'flags: .*LOCAL'  # ${ip}
 .endfor
 	ping -n -c 1 ${PF_IN}  # PF_IN
-	route -n get -inet ${PF_IN} | fgrep -q 'interface: ${SRC_IF}' \
+	/sbin/route -n get -inet ${PF_IN} | fgrep -q 'interface: ${SRC_IF}' \
 	    # PF_IN SRC_IF
 .for ip in PF_OUT RT_IN RT_OUT ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN\
     RTT_IN RTT_OUT
-	route -n get -inet ${${ip}} | fgrep -q 'gateway: ${PF_IN}' \
+	/sbin/route -n get -inet ${${ip}} | fgrep -q 'gateway: ${PF_IN}' \
 	    # ${ip} PF_IN
 .endfor
 .for ip in SRC_OUT RPT_IN RPT_OUT
 	ping6 -n -c 1 ${${ip}6}  # ${ip}6
-	route -n get -inet6 ${${ip}6} | grep -q 'flags: .*LOCAL'  # ${ip}6
+	/sbin/route -n get -inet6 ${${ip}6} | grep -q 'flags: .*LOCAL'  # ${ip}6
 .endfor
 	ping6 -n -c 1 ${PF_IN6}  # PF_IN6
-	route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: ${SRC_IF}' \
+	/sbin/route -n get -inet6 ${PF_IN6} | fgrep -q 'interface: ${SRC_IF}' \
 	    # PF_IN6 SRC_IF
 .for ip in PF_OUT RT_IN RT_OUT ECO_IN ECO_OUT RDR_IN RDR_OUT AF_IN\
     RTT_IN RTT_OUT
-	route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${PF_IN6}' \
+	/sbin/route -n get -inet6 ${${ip}6} | fgrep -q 'gateway: ${PF_IN6}' \
 	    # ${ip}6 PF_IN6
 .endfor
+	/sbin/sysctl net.inet.ip.forwarding | fgrep =1
+	/sbin/sysctl net.inet6.ip6.forwarding | fgrep =1
 
 check-setup-pf:
 	@echo '\n======== $@ ========'
