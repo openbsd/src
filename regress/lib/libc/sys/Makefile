@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2020/01/30 08:22:30 mpi Exp $
+#	$OpenBSD: Makefile,v 1.4 2020/02/02 20:18:17 bluhm Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -100,5 +100,3 @@ run-${PROG}-$n:
 .endif
 
 .include <bsd.regress.mk>
-
-clean: cleanup-dir
