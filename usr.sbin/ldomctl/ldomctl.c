@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.37 2020/01/17 22:49:54 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.38 2020/02/02 00:49:06 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -205,6 +205,8 @@ dump(int argc, char **argv)
 
 	if (argc != 1)
 		usage();
+
+	hv_config();
 
 	fp = fopen("hv.md", "w");
 	if (fp == NULL)
