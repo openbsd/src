@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.194 2019/12/17 14:21:54 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.195 2020/02/02 20:33:52 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -95,11 +95,17 @@ init_config(void)
 
 	/* Set some defaults. */
 	config->link_timeout = 10;	/* secs before going daemon w/o lease */
-	config->timeout = 30;		/* secs to wait for an OFFER */
 	config->select_interval = 0;	/* secs to wait for other OFFERs */
-	config->reboot_timeout = 1;	/* secs before giving up on reboot */
 	config->retry_interval = 1;	/* secs before asking for OFFER */
+#ifdef SMALL
+	config->backoff_cutoff = 2;	/* max secs between packet retries */
+	config->reboot_timeout = 5;	/* secs before giving up on reboot */
+	config->timeout = 10;		/* secs to wait for an OFFER */
+#else
 	config->backoff_cutoff = 10;	/* max secs between packet retries */
+	config->reboot_timeout = 1;	/* secs before giving up on reboot */
+	config->timeout = 30;		/* secs to wait for an OFFER */
+#endif
 	config->initial_interval = 1;	/* secs before 1st retry */
 
 	/* All leases must supply a subnet mask. Classful defaults are dead, Jim. */

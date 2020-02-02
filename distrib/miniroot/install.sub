@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1146 2020/01/26 10:47:07 krw Exp $
+#	$OpenBSD: install.sub,v 1.1147 2020/02/02 20:33:52 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -892,11 +892,7 @@ dhcp_request() {
 	ifconfig $_if group dhcp >/dev/null 2>&1
 
 	if [[ -x /sbin/dhclient ]]; then
-		/sbin/dhclient -c /dev/stdin $_if <<__EOT
-backoff-cutoff 2;
-reboot 5;
-timeout 10;
-__EOT
+		/sbin/dhclient $_if
 	else
 		echo "DHCP leases not available during install - no /sbin/dhclient."
 	fi
