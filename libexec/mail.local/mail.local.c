@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.36 2019/06/28 13:32:53 deraadt Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.37 2020/02/02 23:17:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <syslog.h>
 #include <fcntl.h>
@@ -46,6 +47,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include "pathnames.h"
 #include "mail.local.h"
 
@@ -92,8 +94,6 @@ main(int argc, char *argv[])
 	} else {
 		if (!*argv)
 			usage();
-		if (geteuid() != 0)
-			merr(FATAL, "may only be run by the superuser");
 	}
 
 	/*
@@ -188,7 +188,7 @@ deliver(int fd, char *name, int lockfile)
 	(void)snprintf(path, sizeof path, "%s/%s", _PATH_MAILDIR, name);
 
 	if (lockfile) {
-		lfd = getlock(name, pw);
+		lfd = lockspool(name, pw);
 		if (lfd == -1)
 			return (1);
 	}
@@ -270,10 +270,8 @@ retry:
 	}
 
 bad:
-	if (lfd != -1) {
-		rellock();
-		close(lfd);
-	}
+	if (lfd != -1)
+		unlockspool();
 
 	if (mbfd != -1) {
 		(void)fsync(mbfd);		/* Don't wait for update. */
@@ -326,6 +324,65 @@ notifybiff(char *msg)
 	len = strlen(msg) + 1;	/* XXX */
 	if (sendto(f, msg, len, 0, res->ai_addr, res->ai_addrlen) != len)
 		merr(NOTFATAL, "sendto biff: %s", strerror(errno));
+}
+
+static int lockfd = -1;
+static pid_t lockpid = -1;
+
+int
+lockspool(const char *name, struct passwd *pw)
+{
+	int pfd[2];
+	char ch;
+
+	if (geteuid() == 0)
+		return getlock(name, pw);
+
+	/* If not privileged, open pipe to lockspool(1) instead */
+	if (pipe2(pfd, O_CLOEXEC) == -1) {
+		merr(FATAL, "pipe: %s", strerror(errno));
+		return -1;
+	}
+
+	signal(SIGPIPE, SIG_IGN);
+	switch ((lockpid = fork())) {
+	case -1:
+		merr(FATAL, "fork: %s", strerror(errno));
+		return -1;
+	case 0:
+		/* child */
+		close(pfd[0]);
+		dup2(pfd[1], STDOUT_FILENO);
+		execl(_PATH_LOCKSPOOL, "lockspool", (char *)NULL);
+		merr(FATAL, "execl: lockspool: %s", strerror(errno));
+		/* NOTREACHED */
+		break;
+	default:
+		/* parent */
+		close(pfd[1]);
+		lockfd = pfd[0];
+		break;
+	}
+
+	if (read(lockfd, &ch, 1) != 1 || ch != '1') {
+		unlockspool();
+		merr(FATAL, "lockspool: unable to get lock");
+	}
+
+	return lockfd;
+}
+
+void
+unlockspool(void)
+{
+	if (lockpid != -1) {
+		waitpid(lockpid, NULL, 0);
+		lockpid = -1;
+	} else {
+		rellock();
+	}
+	close(lockfd);
+	lockfd = -1;
 }
 
 void

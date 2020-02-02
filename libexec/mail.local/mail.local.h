@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.h,v 1.5 2006/04/01 22:48:57 deraadt Exp $	*/
+/*	$OpenBSD: mail.local.h,v 1.6 2020/02/02 23:17:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,8 +35,10 @@
 void	baditem(char *);
 int	deliver(int, char *, int);
 void	merr(int, const char *, ...);
-int	getlock(char *, struct passwd *);
+int	getlock(const char *, struct passwd *);
 void	notifybiff(char *);
 void	rellock(void);
 int	storemail(char *);
+int	lockspool(const char *, struct passwd *);
+void	unlockspool(void);
 void	usage(void);
