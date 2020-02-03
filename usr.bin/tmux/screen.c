@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.56 2019/11/15 11:16:53 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.57 2020/02/03 13:46:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -152,11 +152,16 @@ screen_set_cursor_colour(struct screen *s, const char *colour)
 }
 
 /* Set screen title. */
-void
+int
 screen_set_title(struct screen *s, const char *title)
 {
+	char	*cp;
+
+	if (!utf8_isvalid(title))
+		return (0);
 	free(s->title);
-	utf8_stravis(&s->title, title, VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL);
+	s->title = xstrdup(title);
+	return (1);
 }
 
 /* Set screen path. */
