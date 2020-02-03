@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.423 2020/02/01 15:33:46 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.424 2020/02/03 15:53:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2573,6 +2573,10 @@ smtp_tx_rcpt_to(struct smtp_tx *tx, const char *line)
 			}
 		} else if (ADVERTISE_EXT_DSN(tx->session) && strncasecmp(opt, "ORCPT=", 6) == 0) {
 			opt += 6;
+
+			if (strncasecmp(opt, "rfc822;", 7) == 0)
+				opt += 7;
+
 			if (!text_to_mailaddr(&tx->evp.dsn_orcpt, opt) ||
 			    !valid_localpart(tx->evp.dsn_orcpt.user) ||
 			    !valid_domainpart(tx->evp.dsn_orcpt.domain)) {

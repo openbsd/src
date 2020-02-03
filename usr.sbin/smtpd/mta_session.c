@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.130 2020/01/20 10:18:20 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.131 2020/02/03 15:53:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -824,7 +824,7 @@ again:
 			    e->dest,
 			    e->dsn_notify ? " NOTIFY=" : "",
 			    e->dsn_notify ? dsn_strnotify(e->dsn_notify) : "",
-			    e->dsn_orcpt ? " ORCPT=" : "",
+			    e->dsn_orcpt ? " ORCPT=rfc822;" : "",
 			    e->dsn_orcpt ? e->dsn_orcpt : "");
 		} else
 			mta_send(s, "RCPT TO:<%s>", e->dest);
