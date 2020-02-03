@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.275 2020/02/02 22:13:48 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.276 2020/02/03 15:41:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -663,7 +663,6 @@ dispatcher_local_option dispatcher_local_options
 dispatcher_local:
 MBOX {
 	dispatcher->u.local.is_mbox = 1;
-	dispatcher->u.local.user = xstrdup("root");
 	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.local -f %%{mbox.from} -- %%{user.username}");
 } dispatcher_local_options
 | MAILDIR {
