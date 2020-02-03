@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.74 2020/02/02 03:08:37 schwarze Exp $
+.\"	$OpenBSD: style.9,v 1.75 2020/02/03 22:33:04 schwarze Exp $
 .\"
-.Dd $Mdocdate: February 2 2020 $
+.Dd $Mdocdate: February 3 2020 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -111,7 +111,7 @@ In userland, functions local to one source module should be declared
 This should not be done in kernel land since it makes it impossible
 to use the kernel debugger.
 .Pp
-Functions used from other parts of the kernel are prototyped in the
+Functions used from other files are prototyped in the
 relevant include file.
 .Pp
 Functions that are used locally in more than one module go into a
@@ -380,9 +380,6 @@ function(int a1, int a2, float fl, int a4)
 .Pp
 When declaring variables in functions, declare them sorted by size (largest to
 smallest), then in alphabetical order; multiple ones per line are okay.
-Old style function declarations should be avoided.
-ANSI style function declarations should go in an include file such as
-.Dq Pa extern.h .
 If a line overflows, reuse the type keyword.
 .Pp
 Be careful not to obfuscate the code by initializing variables in
@@ -519,7 +516,7 @@ if ((six = (int *)overflow()) == NULL)
 return eight;
 .Ed
 .Pp
-Always use ANSI function declarations.
+Always use ANSI function definitions.
 Long parameter lists are wrapped with a normal four space indent.
 .Pp
 Variable numbers of arguments should look like this:
