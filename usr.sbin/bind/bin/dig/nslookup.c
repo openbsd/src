@@ -14,17 +14,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-
-
+#include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <isc/app.h>
 #include <isc/buffer.h>
 #include <isc/event.h>
 #include <isc/parseint.h>
-
-#include <string.h>
 #include <isc/util.h>
 #include <isc/task.h>
 #include <isc/netaddr.h>

@@ -16,15 +16,11 @@
 
 /*! \file */
 
-
-
+#include <limits.h>
 #include <stdlib.h>
 
 #include <isc/event.h>
-
 #include <isc/magic.h>
-
-
 #include <isc/stdio.h>
 #include <string.h>
 #include <isc/task.h>
@@ -32,19 +28,15 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-
-
 #include <dns/events.h>
 #include <dns/fixedname.h>
 #include <dns/lib.h>
 #include <dns/log.h>
-
 #include <dns/masterdump.h>
 #include <dns/ncache.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rdataset.h>
-
 #include <dns/rdatatype.h>
 #include <dns/result.h>
 #include <dns/time.h>

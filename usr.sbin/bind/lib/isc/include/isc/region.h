@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: region.h,v 1.3 2019/12/17 01:46:35 sthen Exp $ */
+/* $Id: region.h,v 1.4 2020/02/04 19:13:02 florian Exp $ */
 
 #ifndef ISC_REGION_H
 #define ISC_REGION_H 1
@@ -65,15 +65,6 @@ struct isc_consttextregion {
 #define isc_textregion_consume(r,l) \
 	do { \
 		isc_textregion_t *_r = (r); \
-		unsigned int _l = (l); \
-		INSIST(_r->length >= _l); \
-		_r->base += _l; \
-		_r->length -= _l; \
-	} while (0)
-
-#define isc_constregion_consume(r,l) \
-	do { \
-		isc_constregion_t *_r = (r); \
 		unsigned int _l = (l); \
 		INSIST(_r->length >= _l); \
 		_r->base += _l; \

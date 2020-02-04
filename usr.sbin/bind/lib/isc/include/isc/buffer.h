@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: buffer.h,v 1.6 2020/02/04 19:13:02 florian Exp $ */
 
 #ifndef ISC_BUFFER_H
 #define ISC_BUFFER_H 1
@@ -105,6 +105,8 @@
 /***
  *** Imports
  ***/
+
+#include <inttypes.h>
 
 #include <isc/formatcheck.h>
 #include <isc/lang.h>

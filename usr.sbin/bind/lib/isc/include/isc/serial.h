@@ -14,10 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: serial.h,v 1.4 2020/01/09 18:17:19 florian Exp $ */
+/* $Id: serial.h,v 1.5 2020/02/04 19:13:02 florian Exp $ */
 
 #ifndef ISC_SERIAL_H
 #define ISC_SERIAL_H 1
+
+#include <inttypes.h>
 
 #include <isc/lang.h>
 #include <isc/types.h>

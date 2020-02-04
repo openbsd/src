@@ -16,15 +16,11 @@
 
 /*! \file */
 
-
+#include <limits.h>
+#include <string.h>
 
 #include <isc/safe.h>
-#include <string.h>
 #include <isc/util.h>
-
-#ifdef _MSC_VER
-#pragma optimize("", off)
-#endif
 
 isc_boolean_t
 isc_safe_memequal(const void *s1, const void *s2, size_t n) {

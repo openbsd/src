@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.11 2020/01/26 11:21:58 florian Exp $ */
+/* $Id: log.h,v 1.12 2020/02/04 19:13:02 florian Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -126,7 +126,7 @@ typedef struct isc_logfile {
 	 * anyone would want).  st_size returned by fstat should be typedef'd
 	 * to a size large enough for the largest possible file on a system.
 	 */
-	isc_offset_t maximum_size;
+	off_t maximum_size;
 	isc_boolean_t maximum_reached; /*%< Private. */
 } isc_logfile_t;
 
