@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_share.c,v 1.2 2020/02/01 12:41:58 jsing Exp $ */
+/* $OpenBSD: tls13_key_share.c,v 1.3 2020/02/04 18:06:26 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -26,6 +26,9 @@
 struct tls13_key_share {
 	int nid;
 	uint16_t group_id;
+
+	EC_KEY *ecdhe;
+	EC_KEY *ecdhe_peer;
 
 	uint8_t *x25519_public;
 	uint8_t *x25519_private;
@@ -59,6 +62,9 @@ tls13_key_share_free(struct tls13_key_share *ks)
 	if (ks == NULL)
 		return;
 
+	EC_KEY_free(ks->ecdhe);
+	EC_KEY_free(ks->ecdhe_peer);
+
 	freezero(ks->x25519_public, X25519_KEY_LENGTH);
 	freezero(ks->x25519_private, X25519_KEY_LENGTH);
 	freezero(ks->x25519_peer_public, X25519_KEY_LENGTH);
@@ -70,6 +76,31 @@ uint16_t
 tls13_key_share_group(struct tls13_key_share *ks)
 {
 	return ks->group_id;
+}
+
+static int
+tls13_key_share_generate_ecdhe_ecp(struct tls13_key_share *ks)
+{
+	EC_KEY *ecdhe = NULL;
+	int ret = 0;
+
+	if (ks->ecdhe != NULL)
+		goto err;
+
+	if ((ecdhe = EC_KEY_new()) == NULL)
+		goto err;
+	if (!ssl_kex_generate_ecdhe_ecp(ecdhe, ks->nid))
+		goto err;
+
+	ks->ecdhe = ecdhe;
+	ecdhe = NULL;
+
+	ret = 1;
+
+ err:
+	EC_KEY_free(ecdhe);
+
+	return ret;
 }
 
 static int
@@ -105,10 +136,21 @@ tls13_key_share_generate_x25519(struct tls13_key_share *ks)
 int
 tls13_key_share_generate(struct tls13_key_share *ks)
 {
-	if (ks->nid == NID_X25519)
+	if (ks->nid == NID_X9_62_prime256v1 || ks->nid == NID_secp384r1)
+		return tls13_key_share_generate_ecdhe_ecp(ks);
+	else if (ks->nid == NID_X25519)
 		return tls13_key_share_generate_x25519(ks);
 
 	return 0;
+}
+
+static int
+tls13_key_share_public_ecdhe_ecp(struct tls13_key_share *ks, CBB *cbb)
+{
+	if (ks->ecdhe == NULL)
+		return 0;
+
+	return ssl_kex_public_ecdhe_ecp(ks->ecdhe, cbb);
 }
 
 static int
@@ -130,7 +172,10 @@ tls13_key_share_public(struct tls13_key_share *ks, CBB *cbb)
 	if (!CBB_add_u16_length_prefixed(cbb, &key_exchange))
 		goto err;
 
-	if (ks->nid == NID_X25519) {
+	if (ks->nid == NID_X9_62_prime256v1 || ks->nid == NID_secp384r1) {
+		if (!tls13_key_share_public_ecdhe_ecp(ks, &key_exchange))
+			goto err;
+	} else if (ks->nid == NID_X25519) {
 		if (!tls13_key_share_public_x25519(ks, &key_exchange))
 			goto err;
 	} else {
@@ -147,9 +192,37 @@ tls13_key_share_public(struct tls13_key_share *ks, CBB *cbb)
 }
 
 static int
+tls13_key_share_peer_public_ecdhe_ecp(struct tls13_key_share *ks, CBS *cbs)
+{
+	EC_KEY *ecdhe = NULL;
+	int ret = 0;
+
+	if (ks->ecdhe_peer != NULL)
+		goto err;
+
+	if ((ecdhe = EC_KEY_new()) == NULL)
+		goto err;
+	if (!ssl_kex_peer_public_ecdhe_ecp(ecdhe, ks->nid, cbs))
+		goto err;
+
+	ks->ecdhe_peer = ecdhe;
+	ecdhe = NULL;
+
+	ret = 1;
+
+ err:
+	EC_KEY_free(ecdhe);
+
+	return ret;
+}
+
+static int
 tls13_key_share_peer_public_x25519(struct tls13_key_share *ks, CBS *cbs)
 {
 	size_t out_len;
+
+	if (ks->x25519_peer_public != NULL)
+		return 0;
 
 	if (CBS_len(cbs) != X25519_KEY_LENGTH)
 		return 0;
@@ -164,12 +237,28 @@ tls13_key_share_peer_public(struct tls13_key_share *ks, uint16_t group,
 	if (ks->group_id != group)
 		return 0;
 
-	if (ks->nid == NID_X25519) {
+	if (ks->nid == NID_X9_62_prime256v1 || ks->nid == NID_secp384r1) {
+		if (!tls13_key_share_peer_public_ecdhe_ecp(ks, cbs))
+			return 0;
+	} else if (ks->nid == NID_X25519) {
 		if (!tls13_key_share_peer_public_x25519(ks, cbs))
 			return 0;
+	} else {
+		return 0;
 	}
 
 	return 1;
+}
+
+static int
+tls13_key_share_derive_ecdhe_ecp(struct tls13_key_share *ks,
+    uint8_t **shared_key, size_t *shared_key_len)
+{
+	if (ks->ecdhe == NULL || ks->ecdhe_peer == NULL)
+		return 0;
+
+	return ssl_kex_derive_ecdhe_ecp(ks->ecdhe, ks->ecdhe_peer,
+	    shared_key, shared_key_len);
 }
 
 static int
@@ -208,9 +297,13 @@ tls13_key_share_derive(struct tls13_key_share *ks, uint8_t **shared_key,
 
 	*shared_key_len = 0;
 
-	if (ks->nid == NID_X25519)
+	if (ks->nid == NID_X9_62_prime256v1 || ks->nid == NID_secp384r1) {
+		return tls13_key_share_derive_ecdhe_ecp(ks, shared_key,
+		    shared_key_len);
+	} else if (ks->nid == NID_X25519) {
 		return tls13_key_share_derive_x25519(ks, shared_key,
 		    shared_key_len);
+	}
 
 	return 0;
 }
