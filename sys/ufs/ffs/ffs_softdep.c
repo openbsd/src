@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.147 2020/01/14 08:17:08 mpi Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.148 2020/02/04 04:09:11 bket Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -4486,10 +4486,7 @@ merge_inode_lists(struct inodedep *inodedep)
 		}
 		newadp = TAILQ_FIRST(&inodedep->id_newinoupdt);
 	}
-	while ((newadp = TAILQ_FIRST(&inodedep->id_newinoupdt)) != NULL) {
-		TAILQ_REMOVE(&inodedep->id_newinoupdt, newadp, ad_next);
-		TAILQ_INSERT_TAIL(&inodedep->id_inoupdt, newadp, ad_next);
-	}
+	TAILQ_CONCAT(&inodedep->id_inoupdt, &inodedep->id_newinoupdt, ad_next);
 }
 
 /*
