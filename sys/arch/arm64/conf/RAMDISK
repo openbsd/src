@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.109 2019/12/03 09:12:46 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.110 2020/02/04 01:01:09 kevlo Exp $
 #
 # GENERIC machine description file
 #
@@ -208,6 +208,7 @@ mcx*		at pci?			# Mellanox ConnectX-4/5 Ethernet
 mskc*		at pci?			# Marvell Yukon-2
 msk*		at mskc?		#  each port of above
 re*		at pci?			# Realtek 8169/8169S/8110S
+rge*		at pci?			# Realtek 8125
 
 # PCI SCSI
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers
