@@ -244,7 +244,6 @@ struct dns_message {
 	int				timeadjust;
 
 	dns_name_t		       *sig0name; /* Owner name of SIG0, if any */
-	dst_key_t		       *sig0key;
 	dns_rcode_t			sig0status;
 	isc_region_t			query;
 	isc_region_t			saved;
@@ -1174,35 +1173,6 @@ dns_message_getsig0(dns_message_t *msg, dns_name_t **owner);
  * Ensures:
  *
  * \li	If 'owner' is not NULL, it will point to the owner name.
- */
-
-isc_result_t
-dns_message_setsig0key(dns_message_t *msg, dst_key_t *key);
-/*%<
- * Set the SIG(0) key for 'msg'.
- *
- * Requires:
- *
- *\li	'msg' is a valid message with rendering intent,
- *	dns_message_renderbegin() has been called, and no sections have been
- *	rendered.
- *\li	'key' is a valid sig key or NULL.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS		-- all is well.
- *
- *\li	#ISC_R_NOSPACE		-- there is no space for the SIG(0) record.
- */
-
-dst_key_t *
-dns_message_getsig0key(dns_message_t *msg);
-/*%<
- * Gets the SIG(0) key for 'msg'.
- *
- * Requires:
- *
- *\li	'msg' is a valid message
  */
 
 void

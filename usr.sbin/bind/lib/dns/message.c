@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.18 2020/01/28 17:17:05 florian Exp $ */
+/* $Id: message.c,v 1.19 2020/02/04 18:42:51 florian Exp $ */
 
 /*! \file */
 
@@ -32,7 +32,6 @@
 #include <string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
 
-#include <dns/dnssec.h>
 #include <dns/keyvalues.h>
 #include <dns/log.h>
 #include <dns/masterdump.h>
@@ -390,7 +389,6 @@ msginittsig(dns_message_t *m) {
 	m->tsigkey = NULL;
 	m->tsigctx = NULL;
 	m->sigstart = -1;
-	m->sig0key = NULL;
 	m->sig0status = dns_rcode_noerror;
 	m->timeadjust = 0;
 }
@@ -2159,7 +2157,7 @@ dns_message_renderend(dns_message_t *msg) {
 	 * before adding the OPT, TSIG or SIG(0).  If the question doesn't
 	 * fit, don't include it.
 	 */
-	if ((msg->tsigkey != NULL || msg->sig0key != NULL || msg->opt) &&
+	if ((msg->tsigkey != NULL || msg->opt) &&
 	    (msg->flags & DNS_MESSAGEFLAG_TC) != 0)
 	{
 		isc_buffer_t *buf;
@@ -2211,28 +2209,6 @@ dns_message_renderend(dns_message_t *msg) {
 			return (result);
 		count = 0;
 		result = renderset(msg->tsig, msg->tsigname, msg->cctx,
-				   msg->buffer, msg->reserved, 0, &count);
-		msg->counts[DNS_SECTION_ADDITIONAL] += count;
-		if (result != ISC_R_SUCCESS)
-			return (result);
-	}
-
-	/*
-	 * If we're adding a SIG(0) record, generate and render it.
-	 */
-	if (msg->sig0key != NULL) {
-		dns_message_renderrelease(msg, msg->sig_reserved);
-		msg->sig_reserved = 0;
-		result = dns_dnssec_signmessage(msg, msg->sig0key);
-		if (result != ISC_R_SUCCESS)
-			return (result);
-		count = 0;
-		/*
-		 * Note: dns_rootname is used here, not msg->sig0name, since
-		 * the owner name of a SIG(0) is irrelevant, and will not
-		 * be set in a message being rendered.
-		 */
-		result = renderset(msg->sig0, dns_rootname, msg->cctx,
 				   msg->buffer, msg->reserved, 0, &count);
 		msg->counts[DNS_SECTION_ADDITIONAL] += count;
 		if (result != ISC_R_SUCCESS)
@@ -2713,7 +2689,7 @@ dns_message_settsigkey(dns_message_t *msg, dns_tsigkey_t *key) {
 		dns_tsigkey_detach(&msg->tsigkey);
 	}
 	if (key != NULL) {
-		REQUIRE(msg->tsigkey == NULL && msg->sig0key == NULL);
+		REQUIRE(msg->tsigkey == NULL);
 		dns_tsigkey_attach(key, &msg->tsigkey);
 		if (msg->from_to_wire == DNS_MESSAGE_INTENTRENDER) {
 			msg->sig_reserved = spacefortsig(msg->tsigkey, 0);
@@ -2841,70 +2817,6 @@ dns_message_getsig0(dns_message_t *msg, dns_name_t **owner) {
 			*owner = msg->sig0name;
 	}
 	return (msg->sig0);
-}
-
-isc_result_t
-dns_message_setsig0key(dns_message_t *msg, dst_key_t *key) {
-	isc_region_t r;
-	unsigned int x;
-	isc_result_t result;
-
-	/*
-	 * Set the SIG(0) key for 'msg'
-	 */
-
-	/*
-	 * The space required for an SIG(0) record is:
-	 *
-	 *	1 byte for the name
-	 *	2 bytes for the type
-	 *	2 bytes for the class
-	 *	4 bytes for the ttl
-	 *	2 bytes for the type covered
-	 *	1 byte for the algorithm
-	 *	1 bytes for the labels
-	 *	4 bytes for the original ttl
-	 *	4 bytes for the signature expiration
-	 *	4 bytes for the signature inception
-	 *	2 bytes for the key tag
-	 *	n bytes for the signer's name
-	 *	x bytes for the signature
-	 * ---------------------------------
-	 *     27 + n + x bytes
-	 */
-	REQUIRE(DNS_MESSAGE_VALID(msg));
-	REQUIRE(msg->from_to_wire == DNS_MESSAGE_INTENTRENDER);
-	REQUIRE(msg->state == DNS_SECTION_ANY);
-
-	if (key != NULL) {
-		REQUIRE(msg->sig0key == NULL && msg->tsigkey == NULL);
-		dns_name_toregion(dst_key_name(key), &r);
-		result = dst_key_sigsize(key, &x);
-		if (result != ISC_R_SUCCESS) {
-			msg->sig_reserved = 0;
-			return (result);
-		}
-		msg->sig_reserved = 27 + r.length + x;
-		result = dns_message_renderreserve(msg, msg->sig_reserved);
-		if (result != ISC_R_SUCCESS) {
-			msg->sig_reserved = 0;
-			return (result);
-		}
-		msg->sig0key = key;
-	}
-	return (ISC_R_SUCCESS);
-}
-
-dst_key_t *
-dns_message_getsig0key(dns_message_t *msg) {
-
-	/*
-	 * Get the SIG(0) key for 'msg'
-	 */
-
-	REQUIRE(DNS_MESSAGE_VALID(msg));
-
-	return (msg->sig0key);
 }
 
 void
