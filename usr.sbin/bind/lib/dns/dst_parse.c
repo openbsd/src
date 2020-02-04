@@ -33,7 +33,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $Id: dst_parse.c,v 1.13 2020/02/04 18:45:07 florian Exp $
+ * $Id: dst_parse.c,v 1.14 2020/02/04 19:24:07 florian Exp $
  */
 
 
@@ -80,28 +80,6 @@ struct parse_map {
 };
 
 static struct parse_map map[] = {
-	{TAG_RSA_MODULUS, "Modulus:"},
-	{TAG_RSA_PUBLICEXPONENT, "PublicExponent:"},
-	{TAG_RSA_PRIVATEEXPONENT, "PrivateExponent:"},
-	{TAG_RSA_PRIME1, "Prime1:"},
-	{TAG_RSA_PRIME2, "Prime2:"},
-	{TAG_RSA_EXPONENT1, "Exponent1:"},
-	{TAG_RSA_EXPONENT2, "Exponent2:"},
-	{TAG_RSA_COEFFICIENT, "Coefficient:"},
-	{TAG_RSA_ENGINE, "Engine:" },
-	{TAG_RSA_LABEL, "Label:" },
-
-	{TAG_GOST_PRIVASN1, "GostAsn1:"},
-	{TAG_GOST_PRIVRAW, "PrivateKey:"},
-
-	{TAG_ECDSA_PRIVATEKEY, "PrivateKey:"},
-	{TAG_ECDSA_ENGINE, "Engine:" },
-	{TAG_ECDSA_LABEL, "Label:" },
-
-	{TAG_EDDSA_PRIVATEKEY, "PrivateKey:"},
-	{TAG_EDDSA_ENGINE, "Engine:" },
-	{TAG_EDDSA_LABEL, "Label:" },
-
 	{TAG_HMACSHA1_KEY, "Key:"},
 	{TAG_HMACSHA1_BITS, "Bits:"},
 
@@ -155,120 +133,6 @@ find_numericdata(const char *s) {
 }
 
 static int
-check_rsa(const dst_private_t *priv, isc_boolean_t external) {
-	int i, j;
-	isc_boolean_t have[RSA_NTAGS];
-	isc_boolean_t ok;
-	unsigned int mask;
-
-	if (external)
-		return ((priv->nelements == 0) ? 0 : -1);
-
-	for (i = 0; i < RSA_NTAGS; i++)
-		have[i] = ISC_FALSE;
-
-	for (j = 0; j < priv->nelements; j++) {
-		for (i = 0; i < RSA_NTAGS; i++)
-			if (priv->elements[j].tag == TAG(DST_ALG_RSAMD5, i))
-				break;
-		if (i == RSA_NTAGS)
-			return (-1);
-		have[i] = ISC_TRUE;
-	}
-
-	mask = (1ULL << TAG_SHIFT) - 1;
-
-	if (have[TAG_RSA_ENGINE & mask])
-		ok = have[TAG_RSA_MODULUS & mask] &&
-		     have[TAG_RSA_PUBLICEXPONENT & mask] &&
-		     have[TAG_RSA_LABEL & mask];
-	else
-		ok = have[TAG_RSA_MODULUS & mask] &&
-		     have[TAG_RSA_PUBLICEXPONENT & mask] &&
-		     have[TAG_RSA_PRIVATEEXPONENT & mask] &&
-		     have[TAG_RSA_PRIME1 & mask] &&
-		     have[TAG_RSA_PRIME2 & mask] &&
-		     have[TAG_RSA_EXPONENT1 & mask] &&
-		     have[TAG_RSA_EXPONENT2 & mask] &&
-		     have[TAG_RSA_COEFFICIENT & mask];
-	return (ok ? 0 : -1 );
-}
-
-static int
-check_gost(const dst_private_t *priv, isc_boolean_t external) {
-
-	if (external)
-		return ((priv->nelements == 0)? 0 : -1);
-
-	if (priv->nelements != GOST_NTAGS)
-		return (-1);
-	if ((priv->elements[0].tag != TAG(DST_ALG_ECCGOST, 0)) &&
-	    (priv->elements[0].tag != TAG(DST_ALG_ECCGOST, 1)))
-		return (-1);
-	return (0);
-}
-
-static int
-check_ecdsa(const dst_private_t *priv, isc_boolean_t external) {
-	int i, j;
-	isc_boolean_t have[ECDSA_NTAGS];
-	isc_boolean_t ok;
-	unsigned int mask;
-
-	if (external)
-		return ((priv->nelements == 0) ? 0 : -1);
-
-	for (i = 0; i < ECDSA_NTAGS; i++)
-		have[i] = ISC_FALSE;
-	for (j = 0; j < priv->nelements; j++) {
-		for (i = 0; i < ECDSA_NTAGS; i++)
-			if (priv->elements[j].tag == TAG(DST_ALG_ECDSA256, i))
-				break;
-		if (i == ECDSA_NTAGS)
-			return (-1);
-		have[i] = ISC_TRUE;
-	}
-
-	mask = (1ULL << TAG_SHIFT) - 1;
-
-	if (have[TAG_ECDSA_ENGINE & mask])
-		ok = have[TAG_ECDSA_LABEL & mask];
-	else
-		ok = have[TAG_ECDSA_PRIVATEKEY & mask];
-	return (ok ? 0 : -1 );
-}
-
-static int
-check_eddsa(const dst_private_t *priv, isc_boolean_t external) {
-	int i, j;
-	isc_boolean_t have[EDDSA_NTAGS];
-	isc_boolean_t ok;
-	unsigned int mask;
-
-	if (external)
-		return ((priv->nelements == 0) ? 0 : -1);
-
-	for (i = 0; i < EDDSA_NTAGS; i++)
-		have[i] = ISC_FALSE;
-	for (j = 0; j < priv->nelements; j++) {
-		for (i = 0; i < EDDSA_NTAGS; i++)
-			if (priv->elements[j].tag == TAG(DST_ALG_ED25519, i))
-				break;
-		if (i == EDDSA_NTAGS)
-			return (-1);
-		have[i] = ISC_TRUE;
-	}
-
-	mask = (1ULL << TAG_SHIFT) - 1;
-
-	if (have[TAG_EDDSA_ENGINE & mask])
-		ok = have[TAG_EDDSA_LABEL & mask];
-	else
-		ok = have[TAG_EDDSA_PRIVATEKEY & mask];
-	return (ok ? 0 : -1 );
-}
-
-static int
 check_hmac_sha(const dst_private_t *priv, unsigned int ntags,
 	       unsigned int alg)
 {
@@ -292,19 +156,6 @@ check_data(const dst_private_t *priv, const unsigned int alg,
 	UNUSED(old);
 	/* XXXVIX this switch statement is too sparse to gen a jump table. */
 	switch (alg) {
-	case DST_ALG_RSASHA1:
-	case DST_ALG_NSEC3RSASHA1:
-	case DST_ALG_RSASHA256:
-	case DST_ALG_RSASHA512:
-		return (check_rsa(priv, external));
-	case DST_ALG_ECCGOST:
-		return (check_gost(priv, external));
-	case DST_ALG_ECDSA256:
-	case DST_ALG_ECDSA384:
-		return (check_ecdsa(priv, external));
-	case DST_ALG_ED25519:
-	case DST_ALG_ED448:
-		return (check_eddsa(priv, external));
 	case DST_ALG_HMACSHA1:
 		return (check_hmac_sha(priv, HMACSHA1_NTAGS, alg));
 	case DST_ALG_HMACSHA224:
@@ -521,8 +372,7 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		goto fail;
 	}
 
-	check = check_data(priv, alg == DST_ALG_RSA ? DST_ALG_RSASHA1 : alg,
-			   ISC_TRUE, external);
+	check = check_data(priv, alg, ISC_TRUE, external);
 	if (check < 0) {
 		ret = DST_R_INVALIDPRIVATEKEY;
 		goto fail;

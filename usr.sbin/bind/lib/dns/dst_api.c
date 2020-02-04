@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.23 2020/02/04 18:45:07 florian Exp $
+ * $Id: dst_api.c,v 1.24 2020/02/04 19:24:07 florian Exp $
  */
 
 /*! \file */
@@ -134,16 +134,6 @@ dst_lib_init2(const char *engine) {
 	RETERR(dst__hmacsha384_init(&dst_t_func[DST_ALG_HMACSHA384]));
 	RETERR(dst__hmacsha512_init(&dst_t_func[DST_ALG_HMACSHA512]));
 	RETERR(dst__openssl_init(engine));
-	RETERR(dst__opensslrsa_init(&dst_t_func[DST_ALG_RSASHA1],
-				    DST_ALG_RSASHA1));
-	RETERR(dst__opensslrsa_init(&dst_t_func[DST_ALG_NSEC3RSASHA1],
-				    DST_ALG_NSEC3RSASHA1));
-	RETERR(dst__opensslrsa_init(&dst_t_func[DST_ALG_RSASHA256],
-				    DST_ALG_RSASHA256));
-	RETERR(dst__opensslrsa_init(&dst_t_func[DST_ALG_RSASHA512],
-				    DST_ALG_RSASHA512));
-	RETERR(dst__opensslecdsa_init(&dst_t_func[DST_ALG_ECDSA256]));
-	RETERR(dst__opensslecdsa_init(&dst_t_func[DST_ALG_ECDSA384]));
 	dst_initialized = ISC_TRUE;
 	return (ISC_R_SUCCESS);
 
@@ -982,27 +972,6 @@ dst_key_sigsize(const dst_key_t *key, unsigned int *n) {
 
 	/* XXXVIX this switch statement is too sparse to gen a jump table. */
 	switch (key->key_alg) {
-	case DST_ALG_RSASHA1:
-	case DST_ALG_NSEC3RSASHA1:
-	case DST_ALG_RSASHA256:
-	case DST_ALG_RSASHA512:
-		*n = (key->key_size + 7) / 8;
-		break;
-	case DST_ALG_ECCGOST:
-		*n = DNS_SIG_GOSTSIGSIZE;
-		break;
-	case DST_ALG_ECDSA256:
-		*n = DNS_SIG_ECDSA256SIZE;
-		break;
-	case DST_ALG_ECDSA384:
-		*n = DNS_SIG_ECDSA384SIZE;
-		break;
-	case DST_ALG_ED25519:
-		*n = DNS_SIG_ED25519SIZE;
-		break;
-	case DST_ALG_ED448:
-		*n = DNS_SIG_ED448SIZE;
-		break;
 	case DST_ALG_HMACSHA1:
 		*n = ISC_SHA1_DIGESTLENGTH;
 		break;
