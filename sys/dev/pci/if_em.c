@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.343 2020/01/20 23:45:02 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.344 2020/02/04 10:59:23 mpi Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -260,6 +260,7 @@ void em_disable_aspm(struct em_softc *);
 void em_txeof(struct em_softc *);
 int  em_allocate_receive_structures(struct em_softc *);
 int  em_allocate_transmit_structures(struct em_softc *);
+int  em_allocate_desc_rings(struct em_softc *);
 int  em_rxfill(struct em_softc *);
 void em_rxrefill(void *);
 int  em_rxeof(struct em_softc *);
@@ -343,11 +344,6 @@ em_defer_attach(struct device *self)
 		em_stop(sc, 1);
 
 		em_free_pci_resources(sc);
-
-		sc->sc_rx_desc_ring = NULL;
-		em_dma_free(sc, &sc->sc_rx_dma);
-		sc->sc_tx_desc_ring = NULL;
-		em_dma_free(sc, &sc->sc_tx_dma);
 
 		return;
 	}
@@ -464,6 +460,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_82572:
 		case em_82574:
 		case em_82575:
+		case em_82576:
 		case em_82580:
 		case em_i210:
 		case em_i350:
@@ -494,23 +491,11 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->hw.min_frame_size = 
 	    ETHER_MIN_LEN + ETHER_CRC_LEN;
 
-	/* Allocate Transmit Descriptor ring */
-	if (em_dma_malloc(sc, sc->sc_tx_slots * sizeof(struct em_tx_desc),
-	    &sc->sc_tx_dma) != 0) {
-		printf("%s: Unable to allocate tx_desc memory\n", 
-		       DEVNAME(sc));
-		goto err_tx_desc;
+	if (em_allocate_desc_rings(sc) != 0) {
+		printf("%s: Unable to allocate descriptor ring memory\n",
+		    DEVNAME(sc));
+		goto err_pci;
 	}
-	sc->sc_tx_desc_ring = (struct em_tx_desc *)sc->sc_tx_dma.dma_vaddr;
-
-	/* Allocate Receive Descriptor ring */
-	if (em_dma_malloc(sc, sc->sc_rx_slots * sizeof(struct em_rx_desc),
-	    &sc->sc_rx_dma) != 0) {
-		printf("%s: Unable to allocate rx_desc memory\n",
-		       DEVNAME(sc));
-		goto err_rx_desc;
-	}
-	sc->sc_rx_desc_ring = (struct em_rx_desc *)sc->sc_rx_dma.dma_vaddr;
 
 	/* Initialize the hardware */
 	if ((defer = em_hardware_init(sc))) {
@@ -519,11 +504,12 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		else {
 			printf("%s: Unable to initialize the hardware\n",
 			    DEVNAME(sc));
-			goto err_hw_init;
+			goto err_pci;
 		}
 	}
 
 	if (sc->hw.mac_type == em_80003es2lan || sc->hw.mac_type == em_82575 ||
+	    sc->hw.mac_type == em_82576 ||
 	    sc->hw.mac_type == em_82580 || sc->hw.mac_type == em_i210 ||
 	    sc->hw.mac_type == em_i350) {
 		uint32_t reg = EM_READ_REG(&sc->hw, E1000_STATUS);
@@ -552,7 +538,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (em_read_mac_addr(&sc->hw) < 0) {
 		printf("%s: EEPROM read error while reading mac address\n",
 		       DEVNAME(sc));
-		goto err_mac_addr;
+		goto err_pci;
 	}
 
 	bcopy(sc->hw.mac_addr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
@@ -593,14 +579,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	INIT_DEBUGOUT("em_attach: end");
 	return;
 
-err_mac_addr:
-err_hw_init:
-	sc->sc_rx_desc_ring = NULL;
-	em_dma_free(sc, &sc->sc_rx_dma);
-err_rx_desc:
-	sc->sc_tx_desc_ring = NULL;
-	em_dma_free(sc, &sc->sc_tx_dma);
-err_tx_desc:
 err_pci:
 	em_free_pci_resources(sc);
 }
@@ -678,7 +656,7 @@ em_start(struct ifqueue *ifq)
 			if (sc->link_duplex == HALF_DUPLEX)
 				em_82547_move_tail_locked(sc);
 			else {
-				E1000_WRITE_REG(&sc->hw, TDT,
+				E1000_WRITE_REG(&sc->hw, TDT(0),
 				    sc->sc_tx_desc_head);
 				em_82547_update_fifo_head(sc, len);
 			}
@@ -697,7 +675,7 @@ em_start(struct ifqueue *ifq)
 		 * available to transmit.
 		 */
 		if (post)
-			E1000_WRITE_REG(&sc->hw, TDT, sc->sc_tx_desc_head);
+			E1000_WRITE_REG(&sc->hw, TDT(0), sc->sc_tx_desc_head);
 	}
 }
 
@@ -801,7 +779,7 @@ em_watchdog(struct ifnet *ifp)
 	printf("%s: watchdog: head %u tail %u TDH %u TDT %u\n",
 	    DEVNAME(sc),
 	    sc->sc_tx_desc_head, sc->sc_tx_desc_tail,
-	    E1000_READ_REG(&sc->hw, TDH), E1000_READ_REG(&sc->hw, TDT));
+	    E1000_READ_REG(&sc->hw, TDH(0)), E1000_READ_REG(&sc->hw, TDT(0)));
 
 	em_init(sc);
 
@@ -857,6 +835,7 @@ em_init(void *arg)
 	case em_82571:
 	case em_82572: /* Total Packet Buffer on these is 48k */
 	case em_82575:
+	case em_82576:
 	case em_82580:
 	case em_80003es2lan:
 	case em_i350:
@@ -1185,6 +1164,7 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 	}
 
 	if (sc->hw.mac_type >= em_82543 && sc->hw.mac_type != em_82575 &&
+	    sc->hw.mac_type != em_82576 &&
 	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i210 &&
 	    sc->hw.mac_type != em_i350) {
 		used += em_transmit_checksum_setup(sc, m, head,
@@ -1289,7 +1269,7 @@ em_82547_move_tail_locked(struct em_softc *sc)
 	uint16_t length = 0;
 	boolean_t eop = 0;
 
-	hw_tdt = E1000_READ_REG(&sc->hw, TDT);
+	hw_tdt = E1000_READ_REG(&sc->hw, TDT(0));
 	sw_tdt = sc->sc_tx_desc_head;
 
 	while (hw_tdt != sw_tdt) {
@@ -1305,7 +1285,7 @@ em_82547_move_tail_locked(struct em_softc *sc)
 				timeout_add(&sc->tx_fifo_timer_handle, 1);
 				break;
 			}
-			E1000_WRITE_REG(&sc->hw, TDT, hw_tdt);
+			E1000_WRITE_REG(&sc->hw, TDT(0), hw_tdt);
 			em_82547_update_fifo_head(sc, length);
 			length = 0;
 		}
@@ -1360,8 +1340,8 @@ em_82547_tx_fifo_reset(struct em_softc *sc)
 {
 	uint32_t tctl;
 
-	if ((E1000_READ_REG(&sc->hw, TDT) ==
-	     E1000_READ_REG(&sc->hw, TDH)) &&
+	if ((E1000_READ_REG(&sc->hw, TDT(0)) ==
+	     E1000_READ_REG(&sc->hw, TDH(0))) &&
 	    (E1000_READ_REG(&sc->hw, TDFT) ==
 	     E1000_READ_REG(&sc->hw, TDFH)) &&
 	    (E1000_READ_REG(&sc->hw, TDFTS) ==
@@ -1494,6 +1474,7 @@ em_update_link_status(struct em_softc *sc)
 			    ((sc->hw.mac_type == em_82571) ||
 			    (sc->hw.mac_type == em_82572) ||
 			    (sc->hw.mac_type == em_82575) ||
+			    (sc->hw.mac_type == em_82576) ||
 			    (sc->hw.mac_type == em_82580))) {
 				int tarc0;
 
@@ -1774,6 +1755,15 @@ em_free_pci_resources(struct em_softc *sc)
 		bus_space_unmap(sc->osdep.mem_bus_space_tag, sc->osdep.mem_bus_space_handle,
 				sc->osdep.em_memsize);
 	sc->osdep.em_membase = 0;
+
+	if (sc->sc_rx_desc_ring != NULL) {
+		sc->sc_rx_desc_ring = NULL;
+		em_dma_free(sc, &sc->sc_rx_dma);
+	}
+	if (sc->sc_tx_desc_ring != NULL) {
+		sc->sc_tx_desc_ring = NULL;
+		em_dma_free(sc, &sc->sc_tx_dma);
+	}
 }
 
 /*********************************************************************
@@ -1826,6 +1816,7 @@ em_hardware_init(struct em_softc *sc)
 	     (sc->hw.mac_type == em_82571 ||
 	      sc->hw.mac_type == em_82572 ||
 	      sc->hw.mac_type == em_82575 ||
+	      sc->hw.mac_type == em_82576 ||
 	      sc->hw.mac_type == em_82580 ||
 	      sc->hw.mac_type == em_i210 ||
 	      sc->hw.mac_type == em_i350 )) {
@@ -1911,11 +1902,13 @@ em_setup_interface(struct em_softc *sc)
 
 #if NVLAN > 0
 	if (sc->hw.mac_type != em_82575 && sc->hw.mac_type != em_82580 &&
+	    sc->hw.mac_type != em_82576 &&
 	    sc->hw.mac_type != em_i210 && sc->hw.mac_type != em_i350)
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
 	if (sc->hw.mac_type >= em_82543 && sc->hw.mac_type != em_82575 &&
+	    sc->hw.mac_type != em_82576 &&
 	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i210 &&
 	    sc->hw.mac_type != em_i350)
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
@@ -1970,15 +1963,6 @@ em_detach(struct device *self, int flags)
 	em_stop(sc, 1);
 
 	em_free_pci_resources(sc);
-
-	if (sc->sc_rx_desc_ring != NULL) {
-		sc->sc_rx_desc_ring = NULL;
-		em_dma_free(sc, &sc->sc_rx_dma);
-	}
-	if (sc->sc_tx_desc_ring != NULL) {
-		sc->sc_tx_desc_ring = NULL;
-		em_dma_free(sc, &sc->sc_tx_dma);
-	}
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -2201,19 +2185,19 @@ em_initialize_transmit_unit(struct em_softc *sc)
 
 	/* Setup the Base and Length of the Tx Descriptor Ring */
 	bus_addr = sc->sc_tx_dma.dma_map->dm_segs[0].ds_addr;
-	E1000_WRITE_REG(&sc->hw, TDLEN, 
+	E1000_WRITE_REG(&sc->hw, TDLEN(0),
 			sc->sc_tx_slots *
 			sizeof(struct em_tx_desc));
-	E1000_WRITE_REG(&sc->hw, TDBAH, (u_int32_t)(bus_addr >> 32));
-	E1000_WRITE_REG(&sc->hw, TDBAL, (u_int32_t)bus_addr);
+	E1000_WRITE_REG(&sc->hw, TDBAH(0), (u_int32_t)(bus_addr >> 32));
+	E1000_WRITE_REG(&sc->hw, TDBAL(0), (u_int32_t)bus_addr);
 
 	/* Setup the HW Tx Head and Tail descriptor pointers */
-	E1000_WRITE_REG(&sc->hw, TDT, 0);
-	E1000_WRITE_REG(&sc->hw, TDH, 0);
+	E1000_WRITE_REG(&sc->hw, TDT(0), 0);
+	E1000_WRITE_REG(&sc->hw, TDH(0), 0);
 
 	HW_DEBUGOUT2("Base = %x, Length = %x\n", 
-		     E1000_READ_REG(&sc->hw, TDBAL),
-		     E1000_READ_REG(&sc->hw, TDLEN));
+		     E1000_READ_REG(&sc->hw, TDBAL(0)),
+		     E1000_READ_REG(&sc->hw, TDLEN(0)));
 
 	/* Set the default values for the Tx Inter Packet Gap timer */
 	switch (sc->hw.mac_type) {
@@ -2247,11 +2231,12 @@ em_initialize_transmit_unit(struct em_softc *sc)
 	sc->sc_txd_cmd = E1000_TXD_CMD_IFCS;
 
 	if (sc->hw.mac_type == em_82575 || sc->hw.mac_type == em_82580 ||
+	    sc->hw.mac_type == em_82576 ||
 	    sc->hw.mac_type == em_i210 || sc->hw.mac_type == em_i350) {
 		/* 82575/6 need to enable the TX queue and lack the IDE bit */
-		reg_tctl = E1000_READ_REG(&sc->hw, TXDCTL);
+		reg_tctl = E1000_READ_REG(&sc->hw, TXDCTL(0));
 		reg_tctl |= E1000_TXDCTL_QUEUE_ENABLE;
-		E1000_WRITE_REG(&sc->hw, TXDCTL, reg_tctl);
+		E1000_WRITE_REG(&sc->hw, TXDCTL(0), reg_tctl);
 	} else if (sc->tx_int_delay > 0)
 		sc->sc_txd_cmd |= E1000_TXD_CMD_IDE;
 
@@ -2614,10 +2599,10 @@ em_initialize_receive_unit(struct em_softc *sc)
 
 	/* Setup the Base and Length of the Rx Descriptor Ring */
 	bus_addr = sc->sc_rx_dma.dma_map->dm_segs[0].ds_addr;
-	E1000_WRITE_REG(&sc->hw, RDLEN,
+	E1000_WRITE_REG(&sc->hw, RDLEN(0),
 	    sc->sc_rx_slots * sizeof(*sc->sc_rx_desc_ring));
-	E1000_WRITE_REG(&sc->hw, RDBAH, (u_int32_t)(bus_addr >> 32));
-	E1000_WRITE_REG(&sc->hw, RDBAL, (u_int32_t)bus_addr);
+	E1000_WRITE_REG(&sc->hw, RDBAH(0), (u_int32_t)(bus_addr >> 32));
+	E1000_WRITE_REG(&sc->hw, RDBAL(0), (u_int32_t)bus_addr);
 
 	/* Setup the Receive Control Register */
 	reg_rctl = E1000_RCTL_EN | E1000_RCTL_BAM | E1000_RCTL_LBM_NO |
@@ -2669,20 +2654,21 @@ em_initialize_receive_unit(struct em_softc *sc)
 		E1000_WRITE_REG(&sc->hw, RDTR, 0x20);
 
 	if (sc->hw.mac_type == em_82575 || sc->hw.mac_type == em_82580 ||
+	    sc->hw.mac_type == em_82576 ||
 	    sc->hw.mac_type == em_i210 || sc->hw.mac_type == em_i350) {
 		/* 82575/6 need to enable the RX queue */
 		uint32_t reg;
-		reg = E1000_READ_REG(&sc->hw, RXDCTL);
+		reg = E1000_READ_REG(&sc->hw, RXDCTL(0));
 		reg |= E1000_RXDCTL_QUEUE_ENABLE;
-		E1000_WRITE_REG(&sc->hw, RXDCTL, reg);
+		E1000_WRITE_REG(&sc->hw, RXDCTL(0), reg);
 	}
 
 	/* Enable Receives */
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 
 	/* Setup the HW Rx Head and Tail Descriptor Pointers */
-	E1000_WRITE_REG(&sc->hw, RDH, 0);
-	E1000_WRITE_REG(&sc->hw, RDT, sc->sc_rx_desc_head);
+	E1000_WRITE_REG(&sc->hw, RDH(0), 0);
+	E1000_WRITE_REG(&sc->hw, RDT(0), sc->sc_rx_desc_head);
 }
 
 /*********************************************************************
@@ -2770,7 +2756,7 @@ em_rxrefill(void *arg)
 	struct em_softc *sc = arg;
 
 	if (em_rxfill(sc))
-		E1000_WRITE_REG(&sc->hw, RDT, sc->sc_rx_desc_head);
+		E1000_WRITE_REG(&sc->hw, RDT(0), sc->sc_rx_desc_head);
 	else if (if_rxr_inuse(&sc->sc_rx_ring) == 0)
 		timeout_add(&sc->rx_refill, 1);
 }
@@ -3188,7 +3174,7 @@ em_flush_tx_ring(struct em_softc *sc)
 	tctl = EM_READ_REG(&sc->hw, E1000_TCTL);
 	EM_WRITE_REG(&sc->hw, E1000_TCTL, tctl | E1000_TCTL_EN);
 
-	KASSERT(EM_READ_REG(&sc->hw, E1000_TDT) == sc->sc_tx_desc_head);
+	KASSERT(EM_READ_REG(&sc->hw, E1000_TDT(0)) == sc->sc_tx_desc_head);
 
 	txd = &sc->sc_tx_desc_ring[sc->sc_tx_desc_head];
 	txd->buffer_addr = sc->sc_tx_dma.dma_map->dm_segs[0].ds_addr;
@@ -3202,7 +3188,7 @@ em_flush_tx_ring(struct em_softc *sc)
 	if (++sc->sc_tx_desc_head == sc->sc_tx_slots)
 		sc->sc_tx_desc_head = 0;
 
-	EM_WRITE_REG(&sc->hw, E1000_TDT, sc->sc_tx_desc_head);
+	EM_WRITE_REG(&sc->hw, E1000_TDT(0), sc->sc_tx_desc_head);
 	bus_space_barrier(sc->osdep.mem_bus_space_tag, sc->osdep.mem_bus_space_handle,
 	    0, 0, BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 	usec_delay(250);
@@ -3223,7 +3209,7 @@ em_flush_rx_ring(struct em_softc *sc)
 	E1000_WRITE_FLUSH(&sc->hw);
 	usec_delay(150);
 
-	rxdctl = EM_READ_REG(&sc->hw, E1000_RXDCTL);
+	rxdctl = EM_READ_REG(&sc->hw, E1000_RXDCTL(0));
 	/* zero the lower 14 bits (prefetch and host thresholds) */
 	rxdctl &= 0xffffc000;
 	/*
@@ -3231,7 +3217,7 @@ em_flush_rx_ring(struct em_softc *sc)
 	 * and make sure the granularity is "descriptors" and not "cache lines"
 	 */
 	rxdctl |= (0x1F | (1 << 8) | E1000_RXDCTL_THRESH_UNIT_DESC);
-	EM_WRITE_REG(&sc->hw, E1000_RXDCTL, rxdctl);
+	EM_WRITE_REG(&sc->hw, E1000_RXDCTL(0), rxdctl);
 
 	/* momentarily enable the RX ring for the changes to take effect */
 	EM_WRITE_REG(&sc->hw, E1000_RCTL, rctl | E1000_RCTL_EN);
@@ -3263,7 +3249,7 @@ em_flush_desc_rings(struct em_softc *sc)
 	EM_WRITE_REG(&sc->hw, E1000_FEXTNVM11, fextnvm11);
 
 	/* do nothing if we're not in faulty state, or if the queue is empty */
-	tdlen = EM_READ_REG(&sc->hw, E1000_TDLEN);
+	tdlen = EM_READ_REG(&sc->hw, E1000_TDLEN(0));
 	hang_state = pci_conf_read(pa->pa_pc, pa->pa_tag, PCICFG_DESC_RING_STATUS);
 	if (!(hang_state & FLUSH_DESC_REQUIRED) || !tdlen)
 		return;
@@ -3359,6 +3345,15 @@ em_update_stats_counters(struct em_softc *sc)
 	sc->stats.ptc1522 += E1000_READ_REG(&sc->hw, PTC1522);
 	sc->stats.mptc += E1000_READ_REG(&sc->hw, MPTC);
 	sc->stats.bptc += E1000_READ_REG(&sc->hw, BPTC);
+	sc->stats.sdpc += E1000_READ_REG(&sc->hw, SDPC);
+	sc->stats.mngpdc += E1000_READ_REG(&sc->hw, MGTPDC);
+	sc->stats.mngprc += E1000_READ_REG(&sc->hw, MGTPRC);
+	sc->stats.mngptc += E1000_READ_REG(&sc->hw, MGTPTC);
+	sc->stats.b2ospc += E1000_READ_REG(&sc->hw, B2OSPC);
+	sc->stats.o2bgptc += E1000_READ_REG(&sc->hw, O2BGPTC);
+	sc->stats.b2ogprc += E1000_READ_REG(&sc->hw, B2OGPRC);
+	sc->stats.o2bspc += E1000_READ_REG(&sc->hw, O2BSPC);
+	sc->stats.rpthc += E1000_READ_REG(&sc->hw, RPTHC);
 
 	if (sc->hw.mac_type >= em_82543) {
 		sc->stats.tncrs += 
@@ -3445,6 +3440,50 @@ em_print_hw_stats(struct em_softc *sc)
 		(long long)sc->stats.gprc);
 	printf("%s: Good Packets Xmtd = %lld\n", unit,
 		(long long)sc->stats.gptc);
+	printf("%s: Switch Drop Packet Count = %lld\n", unit,
+	    (long long)sc->stats.sdpc);
+	printf("%s: Management Packets Dropped Count  = %lld\n", unit,
+	    (long long)sc->stats.mngptc);
+	printf("%s: Management Packets Received Count  = %lld\n", unit,
+	    (long long)sc->stats.mngprc);
+	printf("%s: Management Packets Transmitted Count  = %lld\n", unit,
+	    (long long)sc->stats.mngptc);
+	printf("%s: OS2BMC Packets Sent by MC Count  = %lld\n", unit,
+	    (long long)sc->stats.b2ospc);
+	printf("%s: OS2BMC Packets Received by MC Count  = %lld\n", unit,
+	    (long long)sc->stats.o2bgptc);
+	printf("%s: OS2BMC Packets Received by Host Count  = %lld\n", unit,
+	    (long long)sc->stats.b2ogprc);
+	printf("%s: OS2BMC Packets Transmitted by Host Count  = %lld\n", unit,
+	    (long long)sc->stats.o2bspc);
+	printf("%s: Multicast Packets Received Count  = %lld\n", unit,
+	    (long long)sc->stats.mprc);
+	printf("%s: Rx Packets to Host Count = %lld\n", unit,
+	    (long long)sc->stats.rpthc);
 }
 #endif
 #endif /* !SMALL_KERNEL */
+
+int
+em_allocate_desc_rings(struct em_softc *sc)
+{
+	/* Allocate Transmit Descriptor ring */
+	if (em_dma_malloc(sc, sc->sc_tx_slots * sizeof(struct em_tx_desc),
+	    &sc->sc_tx_dma) != 0) {
+		printf("%s: Unable to allocate tx_desc memory\n", 
+		       DEVNAME(sc));
+		return (ENOMEM);
+	}
+	sc->sc_tx_desc_ring = (struct em_tx_desc *)sc->sc_tx_dma.dma_vaddr;
+
+	/* Allocate Receive Descriptor ring */
+	if (em_dma_malloc(sc, sc->sc_rx_slots * sizeof(struct em_rx_desc),
+	    &sc->sc_rx_dma) != 0) {
+		printf("%s: Unable to allocate rx_desc memory\n",
+		       DEVNAME(sc));
+		return (ENOMEM);
+	}
+	sc->sc_rx_desc_ring = (struct em_rx_desc *)sc->sc_rx_dma.dma_vaddr;
+
+	return (0);
+}

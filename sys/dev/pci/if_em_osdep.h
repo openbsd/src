@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em_osdep.h,v 1.13 2016/02/18 14:24:39 bluhm Exp $ */
+/* $OpenBSD: if_em_osdep.h,v 1.14 2020/02/04 10:59:23 mpi Exp $ */
 /* $FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $ */
 
 #ifndef _EM_OPENBSD_OS_H_
@@ -96,20 +96,21 @@ struct em_osdep
 			   offset, value)
 
 /* Convert a register name to its offset in the adapter's memory space */
-#define E1000_REG_OFFSET(hw, reg) \
-	((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg)
+#define E1000_REG_TR(hw, reg)						\
+	((hw)->mac_type >= em_82543 ?					\
+	     reg : em_translate_82542_register(reg))
 
 /* Register READ/WRITE macros */
 
 #define E1000_READ_REG(hw, reg) \
 	bus_space_read_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
 			 ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-			  ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg))
+			  E1000_REG_TR(hw, E1000_##reg))
 
 #define E1000_WRITE_REG(hw, reg, value) \
 	bus_space_write_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
 			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-			   ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg), \
+			   E1000_REG_TR(hw, E1000_##reg), \
 			   value)
 
 #define EM_READ_REG(hw, reg) \
@@ -122,18 +123,26 @@ struct em_osdep
 			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
 			   reg, value)
 
+#define EM_READ_REG_ARRAY(hw, reg, index)				\
+	bus_space_read_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+	    ((struct em_osdep *)(hw)->back)->mem_bus_space_handle,	\
+	    reg + ((index) << 2))
+
+#define EM_WRITE_REG_ARRAY(hw, reg, index, value)			\
+	bus_space_write_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+	    ((struct em_osdep *)(hw)->back)->mem_bus_space_handle,	\
+	    reg + ((index) << 2), value)
 
 #define E1000_READ_REG_ARRAY(hw, reg, index) \
 	bus_space_read_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
 			 ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-			  ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg) \
-			  + ((index) << 2))
+			   E1000_REG_TR(hw, E1000_##reg) + ((index) << 2))
 
 #define E1000_WRITE_REG_ARRAY(hw, reg, index, value) \
 	bus_space_write_4(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
 			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-			   ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg) \
-			   + ((index) << 2), value)
+			   E1000_REG_TR(hw, E1000_##reg) + ((index) << 2), \
+			   value)
 
 #define E1000_READ_REG_ARRAY_DWORD E1000_READ_REG_ARRAY
 #define E1000_WRITE_REG_ARRAY_DWORD E1000_WRITE_REG_ARRAY
@@ -141,14 +150,14 @@ struct em_osdep
 #define E1000_WRITE_REG_ARRAY_BYTE(hw, reg, index, value) \
 	bus_space_write_1(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
 			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-			   ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg \
-			   + index), value)
+			   E1000_REG_TR(hw, E1000_##reg) + index, \
+			   value)
 
 #define E1000_WRITE_REG_ARRAY_WORD(hw, reg, index, value) \
 	bus_space_write_2(((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
 			  ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-			   ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg \
-			   + (index << 1)), value)
+			   E1000_REG_TR(hw, E1000_##reg) + (index << 1), \
+			   value)
 
 #define E1000_READ_ICH_FLASH_REG(hw, reg) \
 	bus_space_read_4(((struct em_osdep *)(hw)->back)->flash_bus_space_tag, \

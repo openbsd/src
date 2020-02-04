@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.79 2020/01/20 23:45:02 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.80 2020/02/04 10:59:23 mpi Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -70,6 +70,7 @@ typedef enum {
     em_82573,
     em_82574,
     em_82575,
+    em_82576,
     em_82580,
     em_i350,
     em_i210,
@@ -447,6 +448,7 @@ int32_t em_read_pcie_cap_reg(struct em_hw *hw, uint32_t reg, uint16_t *value);
 /* Port I/O is only supported on 82544 and newer */
 int32_t em_disable_pciex_master(struct em_hw *hw);
 int32_t em_check_phy_reset_block(struct em_hw *hw);
+uint32_t em_translate_82542_register(uint32_t);
 
 #ifndef E1000_READ_REG_IO
 #define E1000_READ_REG_IO(a, reg) \
@@ -1043,12 +1045,20 @@ struct em_ffvt_entry {
 #define E1000_IMC      0x000D8  /* Interrupt Mask Clear - WO */
 #define E1000_IAM      0x000E0  /* Interrupt Acknowledge Auto Mask */
 #define E1000_RCTL     0x00100  /* RX Control - RW */
+#define E1000_GPIE     0x01514  /* General Purpose Interrupt Enable - RW */
+#define E1000_EICS     0x01520  /* Ext. Interrupt Cause Set - W0 */
+#define E1000_EIMS     0x01524  /* Ext. Interrupt Mask Set/Read - RW */
+#define E1000_EIMC     0x01528  /* Ext. Interrupt Mask Clear - WO */
+#define E1000_EIAC     0x0152C  /* Ext. Interrupt Auto Clear - RW */
+#define E1000_EIAM     0x01530  /* Ext. Interrupt Ack Auto Clear Mask - RW */
+#define E1000_EICR     0x01580  /* Ext. Interrupt Cause Read - R/clr */
+#define E1000_EITR(_n)  (0x01680 + (0x4 * (_n)))
+#define E1000_IVAR0    0x01700  /* Interrupt Vector Allocation (array) - RW */
+#define E1000_IVAR_MISC 0x01740 /* IVAR for "other" causes - RW */
 #define E1000_RDTR1    0x02820  /* RX Delay Timer (1) - RW */
 #define E1000_RDBAL1   0x02900  /* RX Descriptor Base Address Low (1) - RW */
 #define E1000_RDBAH1   0x02904  /* RX Descriptor Base Address High (1) - RW */
 #define E1000_RDLEN1   0x02908  /* RX Descriptor Length (1) - RW */
-#define E1000_RDH1     0x02910  /* RX Descriptor Head (1) - RW */
-#define E1000_RDT1     0x02918  /* RX Descriptor Tail (1) - RW */
 #define E1000_FCTTV    0x00170  /* Flow Control Transmit Timer Value - RW */
 #define E1000_TXCW     0x00178  /* TX Configuration Word - RW */
 #define E1000_RXCW     0x00180  /* RX Configuration Word - RO */
@@ -1079,20 +1089,31 @@ struct em_ffvt_entry {
 #define E1000_FCRTL    0x02160  /* Flow Control Receive Threshold Low - RW */
 #define E1000_FCRTH    0x02168  /* Flow Control Receive Threshold High - RW */
 #define E1000_PSRCTL   0x02170  /* Packet Split Receive Control - RW */
-#define E1000_RDBAL    0x02800  /* RX Descriptor Base Address Low - RW */
-#define E1000_RDBAH    0x02804  /* RX Descriptor Base Address High - RW */
-#define E1000_RDLEN    0x02808  /* RX Descriptor Length - RW */
-#define E1000_RDH      0x02810  /* RX Descriptor Head - RW */
-#define E1000_RDT      0x02818  /* RX Descriptor Tail - RW */
+/* RX Descriptor Base Address Low - RW */
+#define E1000_RDBAL(_n)	((_n) < 4 ? (0x02800 + ((_n) * 0x100)) :	\
+    (0x0C000 + ((_n) * 0x40)))
+/* RX Descriptor Base Address High - RW */
+#define E1000_RDBAH(_n)	((_n) < 4 ? (0x02804 + ((_n) * 0x100)) :	\
+    (0x0C004 + ((_n) * 0x40)))
+/* RX Descriptor Length - RW */
+#define E1000_RDLEN(_n)	((_n) < 4 ? (0x02808 + ((_n) * 0x100)) :	\
+    (0x0C008 + ((_n) * 0x40)))
+/* Split and Replication Receive CTRL - RW */
+#define E1000_SRRCTL(_n)	((_n) < 4 ? (0x0280C + ((_n) * 0x100)) : \
+    (0x0C00C + ((_n) * 0x40)))
+/* RX Descriptor Head - RW */
+#define E1000_RDH(_n)	((_n) < 4 ? (0x02810 + ((_n) * 0x100)) :	\
+    (0x0C010 + ((_n) * 0x40)))
+/* RX Descriptor Tail - RW */
+#define E1000_RDT(_n)	((_n) < 4 ? (0x02818 + ((_n) * 0x100)) :	\
+    (0x0C018 + ((_n) * 0x40)))
 #define E1000_RDTR     0x02820  /* RX Delay Timer - RW */
 #define E1000_RDBAL0   E1000_RDBAL /* RX Desc Base Address Low (0) - RW */
 #define E1000_RDBAH0   E1000_RDBAH /* RX Desc Base Address High (0) - RW */
 #define E1000_RDLEN0   E1000_RDLEN /* RX Desc Length (0) - RW */
-#define E1000_RDH0     E1000_RDH   /* RX Desc Head (0) - RW */
-#define E1000_RDT0     E1000_RDT   /* RX Desc Tail (0) - RW */
 #define E1000_RDTR0    E1000_RDTR  /* RX Delay Timer (0) - RW */
-#define E1000_RXDCTL   0x02828  /* RX Descriptor Control queue 0 - RW */
-#define E1000_RXDCTL1  0x02928  /* RX Descriptor Control queue 1 - RW */
+#define E1000_RXDCTL(_n)	((_n) < 4 ? (0x02828 + ((_n) * 0x100)) : \
+    (0x0C028 + ((_n) * 0x40)))
 #define E1000_RADV     0x0282C  /* RX Interrupt Absolute Delay Timer - RW */
 #define E1000_RSRPD    0x02C00  /* RX Small Packet Detect - RW */
 #define E1000_RAID     0x02C08  /* Receive Ack Interrupt Delay - RW */
@@ -1103,13 +1124,24 @@ struct em_ffvt_entry {
 #define E1000_TDFHS    0x03420  /* TX Data FIFO Head Saved - RW */
 #define E1000_TDFTS    0x03428  /* TX Data FIFO Tail Saved - RW */
 #define E1000_TDFPC    0x03430  /* TX Data FIFO Packet Count - RW */
-#define E1000_TDBAL    0x03800  /* TX Descriptor Base Address Low - RW */
-#define E1000_TDBAH    0x03804  /* TX Descriptor Base Address High - RW */
-#define E1000_TDLEN    0x03808  /* TX Descriptor Length - RW */
-#define E1000_TDH      0x03810  /* TX Descriptor Head - RW */
-#define E1000_TDT      0x03818  /* TX Descriptor Tail - RW */
+/* TX Descriptor Base Address Low - RW */
+#define E1000_TDBAL(_n)	((_n) < 4 ? (0x03800 + ((_n) * 0x100)) :	\
+    (0x0E000 + ((_n) * 0x40)))
+/* TX Descriptor Base Address High - RW */
+#define E1000_TDBAH(_n)	((_n) < 4 ? (0x03804 + ((_n) * 0x100)) :	\
+    (0x0E004 + ((_n) * 0x40)))
+/* TX Descriptor Length - RW */
+#define E1000_TDLEN(_n)	((_n) < 4 ? (0x03808 + ((_n) * 0x100)) :	\
+    (0x0E008 + ((_n) * 0x40)))
+/* TX Descriptor Head - RW */
+#define E1000_TDH(_n)	((_n) < 4 ? (0x03810 + ((_n) * 0x100)) :	\
+    (0x0E010 + ((_n) * 0x40)))
+/* TX Descriptor Tail - RW */
+#define E1000_TDT(_n)	((_n) < 4 ? (0x03818 + ((_n) * 0x100)) :	\
+    (0x0E018 + ((_n) * 0x40)))
 #define E1000_TIDV     0x03820  /* TX Interrupt Delay Value - RW */
-#define E1000_TXDCTL   0x03828  /* TX Descriptor Control - RW */
+#define E1000_TXDCTL(_n) ((_n) < 4 ? (0x03828 + ((_n) * 0x100)) :	\
+    (0x0E028 + ((_n) * 0x40)))
 #define E1000_TADV     0x0382C  /* TX Interrupt Absolute Delay Val - RW */
 #define E1000_TSPMT    0x03830  /* TCP Segmentation PAD & Min Threshold - RW */
 #define E1000_TARC0    0x03840  /* TX Arbitration Count (0) */
@@ -1118,7 +1150,6 @@ struct em_ffvt_entry {
 #define E1000_TDLEN1   0x03908  /* TX Desc Length (1) - RW */
 #define E1000_TDH1     0x03910  /* TX Desc Head (1) - RW */
 #define E1000_TDT1     0x03918  /* TX Desc Tail (1) - RW */
-#define E1000_TXDCTL1  0x03928  /* TX Descriptor Control (1) - RW */
 #define E1000_TARC1    0x03940  /* TX Arbitration Count (1) */
 #define E1000_CRCERRS  0x04000  /* CRC Error Count - R/clr */
 #define E1000_ALGNERRC 0x04004  /* Alignment Error Count - R/clr */
@@ -1179,6 +1210,7 @@ struct em_ffvt_entry {
 #define E1000_TSCTC    0x040F8  /* TCP Segmentation Context TX - R/clr */
 #define E1000_TSCTFC   0x040FC  /* TCP Segmentation Context TX Fail - R/clr */
 #define E1000_IAC      0x04100  /* Interrupt Assertion Count */
+#define E1000_RPTHC    0x04104	/* CONFLICT Rx Packets to Host Count */
 #define E1000_ICRXPTC  0x04104  /* Interrupt Cause Rx Packet Timer Expire Count */
 #define E1000_ICRXATC  0x04108  /* Interrupt Cause Rx Absolute Timer Expire Count */
 #define E1000_ICTXPTC  0x0410C  /* Interrupt Cause Tx Packet Timer Expire Count */
@@ -1187,6 +1219,7 @@ struct em_ffvt_entry {
 #define E1000_ICTXQMTC 0x0411C  /* Interrupt Cause Tx Queue Minimum Threshold Count */
 #define E1000_ICRXDMTC 0x04120  /* Interrupt Cause Rx Descriptor Minimum Threshold Count */
 #define E1000_ICRXOC   0x04124  /* Interrupt Cause Receiver Overrun Count */
+#define E1000_SDPC     0x041A4   /* Switch Drop Packet Count */
 #define E1000_PCS_CFG0 0x04200  /* PCS Configuration 0 - RW */
 #define E1000_PCS_LCTL 0x04208  /* PCS Link Control - RW */
 #define E1000_PCS_LSTAT 0x0420C /* PCS Link Status - RO */
@@ -1231,10 +1264,33 @@ struct em_ffvt_entry {
 /* RSS registers */
 #define E1000_CPUVEC    0x02C10 /* CPU Vector Register - RW */
 #define E1000_MRQC      0x05818 /* Multiple Receive Control - RW */
-#define E1000_RETA      0x05C00 /* Redirection Table - RW Array */
-#define E1000_RSSRK     0x05C80 /* RSS Random Key - RW Array */
+#define E1000_RETA(_i)	(0x05C00 + ((_i) * 4))/* Redirection Table - RW Array */
+#define E1000_RSSRK(_i)	(0x05C80 + ((_i) * 4))/* RSS Random Key - RW Array */
 #define E1000_RSSIM     0x05864 /* RSS Interrupt Mask */
 #define E1000_RSSIR     0x05868 /* RSS Interrupt Request */
+
+/* BMC2OS Registers */
+#define E1000_B2OSPC    0x8FE0
+#define E1000_B2OGPRC   0x4158
+#define E1000_O2BGPTC   0x8FE4
+#define E1000_O2BSPC    0x415C
+
+/* Per Queue Packets Count */
+#define E1000_PQGPRC(_i) (0x010010 + ((_i) * 0x100))
+#define E1000_PQGPTC(_i) (0x010014 + ((_i) * 0x100))
+
+/* Phy Power Management (i210 8.27.2 pag 542) */
+#define	E1000_PHPM	0x0E14
+#define	E1000_PHPM_SPD_EN	(1 << 0)
+#define	E1000_PHPM_D0LPLU	(1 << 1)
+#define	E1000_PHPM_LPLU		(1 << 2)
+#define	E1000_PHPM_DIS_1000_ND0	(1 << 3)
+#define	E1000_PHPM_LINK_ED	(1 << 4)
+#define	E1000_PHPM_GOLINK_DISC	(1 << 5)
+#define	E1000_PHPM_DIS_1000	(1 << 6)
+#define	E1000_PHPM_SPD_B2B_EN	(1 << 7)
+#define	E1000_PHPM_RST_COMPL	(1 << 8)
+#define	E1000_PHPM_DIS_100_ND0	(1 << 9)
 
 /* Energy Efficient Ethernet "EEE" registers */
 #define E1000_IPCNFG    0x0E38 /* Internal PHY Configuration */
@@ -1243,236 +1299,6 @@ struct em_ffvt_entry {
 #define E1000_EEE_SU    0x0E34 /* EEE Setup */
 #define E1000_TLPIC     0x4148 /* EEE Tx LPI Count - TLPIC */
 #define E1000_RLPIC     0x414C /* EEE Rx LPI Count - RLPIC */
-
-/* Register Set (82542)
- *
- * Some of the 82542 registers are located at different offsets than they are
- * in more current versions of the 8254x. Despite the difference in location,
- * the registers function in the same manner.
- */
-#define E1000_82542_CTRL     E1000_CTRL
-#define E1000_82542_CTRL_DUP E1000_CTRL_DUP
-#define E1000_82542_STATUS   E1000_STATUS
-#define E1000_82542_EECD     E1000_EECD
-#define E1000_82542_EERD     E1000_EERD
-#define E1000_82542_CTRL_EXT E1000_CTRL_EXT
-#define E1000_82542_FLA      E1000_FLA
-#define E1000_82542_MDIC     E1000_MDIC
-#define E1000_82542_SCTL     E1000_SCTL
-#define E1000_82542_FEXTNVM  E1000_FEXTNVM
-#define E1000_82542_FEXTNVM3 E1000_FEXTNVM3
-#define E1000_82542_FEXTNVM4 E1000_FEXTNVM4
-#define E1000_82542_FEXTNVM6 E1000_FEXTNVM6
-#define E1000_82542_FEXTNVM7 E1000_FEXTNVM7
-#define E1000_82542_FCAL     E1000_FCAL
-#define E1000_82542_FCAH     E1000_FCAH
-#define E1000_82542_FCT      E1000_FCT
-#define E1000_82542_CONNSW   E1000_CONNSW
-#define E1000_82542_VET      E1000_VET
-#define E1000_82542_RA       0x00040
-#define E1000_82542_ICR      E1000_ICR
-#define E1000_82542_ITR      E1000_ITR
-#define E1000_82542_ICS      E1000_ICS
-#define E1000_82542_IMS      E1000_IMS
-#define E1000_82542_IMC      E1000_IMC
-#define E1000_82542_RCTL     E1000_RCTL
-#define E1000_82542_RDTR     0x00108
-#define E1000_82542_RDBAL    0x00110
-#define E1000_82542_RDBAH    0x00114
-#define E1000_82542_RDLEN    0x00118
-#define E1000_82542_RDH      0x00120
-#define E1000_82542_RDT      0x00128
-#define E1000_82542_RDTR0    E1000_82542_RDTR
-#define E1000_82542_RDBAL0   E1000_82542_RDBAL
-#define E1000_82542_RDBAH0   E1000_82542_RDBAH
-#define E1000_82542_RDLEN0   E1000_82542_RDLEN
-#define E1000_82542_RDH0     E1000_82542_RDH
-#define E1000_82542_RDT0     E1000_82542_RDT
-#define E1000_82542_SRRCTL(_n) (0x280C + ((_n) << 8)) /* Split and Replication
-                                                       * RX Control - RW */
-#define E1000_82542_DCA_RXCTRL(_n) (0x02814 + ((_n) << 8))
-#define E1000_82542_RDBAH3   0x02B04 /* RX Desc Base High Queue 3 - RW */
-#define E1000_82542_RDBAL3   0x02B00 /* RX Desc Low Queue 3 - RW */
-#define E1000_82542_RDLEN3   0x02B08 /* RX Desc Length Queue 3 - RW */
-#define E1000_82542_RDH3     0x02B10 /* RX Desc Head Queue 3 - RW */
-#define E1000_82542_RDT3     0x02B18 /* RX Desc Tail Queue 3 - RW */
-#define E1000_82542_RDBAL2   0x02A00 /* RX Desc Base Low Queue 2 - RW */
-#define E1000_82542_RDBAH2   0x02A04 /* RX Desc Base High Queue 2 - RW */
-#define E1000_82542_RDLEN2   0x02A08 /* RX Desc Length Queue 2 - RW */
-#define E1000_82542_RDH2     0x02A10 /* RX Desc Head Queue 2 - RW */
-#define E1000_82542_RDT2     0x02A18 /* RX Desc Tail Queue 2 - RW */
-#define E1000_82542_RDTR1    0x00130
-#define E1000_82542_RDBAL1   0x00138
-#define E1000_82542_RDBAH1   0x0013C
-#define E1000_82542_RDLEN1   0x00140
-#define E1000_82542_RDH1     0x00148
-#define E1000_82542_RDT1     0x00150
-#define E1000_82542_FCRTH    0x00160
-#define E1000_82542_FCRTL    0x00168
-#define E1000_82542_FCTTV    E1000_FCTTV
-#define E1000_82542_TXCW     E1000_TXCW
-#define E1000_82542_RXCW     E1000_RXCW
-#define E1000_82542_MTA      0x00200
-#define E1000_82542_TCTL     E1000_TCTL
-#define E1000_82542_TCTL_EXT E1000_TCTL_EXT
-#define E1000_82542_TIPG     E1000_TIPG
-#define E1000_82542_TDBAL    0x00420
-#define E1000_82542_TDBAH    0x00424
-#define E1000_82542_TDLEN    0x00428
-#define E1000_82542_TDH      0x00430
-#define E1000_82542_TDT      0x00438
-#define E1000_82542_TIDV     0x00440
-#define E1000_82542_TBT      E1000_TBT
-#define E1000_82542_AIT      E1000_AIT
-#define E1000_82542_VFTA     0x00600
-#define E1000_82542_LEDCTL   E1000_LEDCTL
-#define E1000_82542_PBA      E1000_PBA
-#define E1000_82542_PBS      E1000_PBS
-#define E1000_82542_EEMNGCTL E1000_EEMNGCTL
-#define E1000_82542_EEARBC   E1000_EEARBC
-#define E1000_82542_FLASHT   E1000_FLASHT
-#define E1000_82542_EEWR     E1000_EEWR
-#define E1000_82542_FLSWCTL  E1000_FLSWCTL
-#define E1000_82542_FLSWDATA E1000_FLSWDATA
-#define E1000_82542_FLSWCNT  E1000_FLSWCNT
-#define E1000_82542_FLOP     E1000_FLOP
-#define E1000_82542_EXTCNF_CTRL  E1000_EXTCNF_CTRL
-#define E1000_82542_EXTCNF_SIZE  E1000_EXTCNF_SIZE
-#define E1000_82542_PHY_CTRL E1000_PHY_CTRL
-#define E1000_82542_ERT      E1000_ERT
-#define E1000_82542_RXDCTL   E1000_RXDCTL
-#define E1000_82542_RXDCTL1  E1000_RXDCTL1
-#define E1000_82542_RADV     E1000_RADV
-#define E1000_82542_RSRPD    E1000_RSRPD
-#define E1000_82542_TXDMAC   E1000_TXDMAC
-#define E1000_82542_KABGTXD  E1000_KABGTXD
-#define E1000_82542_TDFHS    E1000_TDFHS
-#define E1000_82542_TDFTS    E1000_TDFTS
-#define E1000_82542_TDFPC    E1000_TDFPC
-#define E1000_82542_TXDCTL   E1000_TXDCTL
-#define E1000_82542_TADV     E1000_TADV
-#define E1000_82542_TSPMT    E1000_TSPMT
-#define E1000_82542_CRCERRS  E1000_CRCERRS
-#define E1000_82542_ALGNERRC E1000_ALGNERRC
-#define E1000_82542_SYMERRS  E1000_SYMERRS
-#define E1000_82542_RXERRC   E1000_RXERRC
-#define E1000_82542_MPC      E1000_MPC
-#define E1000_82542_SCC      E1000_SCC
-#define E1000_82542_ECOL     E1000_ECOL
-#define E1000_82542_MCC      E1000_MCC
-#define E1000_82542_LATECOL  E1000_LATECOL
-#define E1000_82542_COLC     E1000_COLC
-#define E1000_82542_DC       E1000_DC
-#define E1000_82542_TNCRS    E1000_TNCRS
-#define E1000_82542_SEC      E1000_SEC
-#define E1000_82542_CEXTERR  E1000_CEXTERR
-#define E1000_82542_RLEC     E1000_RLEC
-#define E1000_82542_XONRXC   E1000_XONRXC
-#define E1000_82542_XONTXC   E1000_XONTXC
-#define E1000_82542_XOFFRXC  E1000_XOFFRXC
-#define E1000_82542_XOFFTXC  E1000_XOFFTXC
-#define E1000_82542_FCRUC    E1000_FCRUC
-#define E1000_82542_PRC64    E1000_PRC64
-#define E1000_82542_PRC127   E1000_PRC127
-#define E1000_82542_PRC255   E1000_PRC255
-#define E1000_82542_PRC511   E1000_PRC511
-#define E1000_82542_PRC1023  E1000_PRC1023
-#define E1000_82542_PRC1522  E1000_PRC1522
-#define E1000_82542_GPRC     E1000_GPRC
-#define E1000_82542_BPRC     E1000_BPRC
-#define E1000_82542_MPRC     E1000_MPRC
-#define E1000_82542_GPTC     E1000_GPTC
-#define E1000_82542_GORCL    E1000_GORCL
-#define E1000_82542_GORCH    E1000_GORCH
-#define E1000_82542_GOTCL    E1000_GOTCL
-#define E1000_82542_GOTCH    E1000_GOTCH
-#define E1000_82542_RNBC     E1000_RNBC
-#define E1000_82542_RUC      E1000_RUC
-#define E1000_82542_RFC      E1000_RFC
-#define E1000_82542_ROC      E1000_ROC
-#define E1000_82542_RJC      E1000_RJC
-#define E1000_82542_MGTPRC   E1000_MGTPRC
-#define E1000_82542_MGTPDC   E1000_MGTPDC
-#define E1000_82542_MGTPTC   E1000_MGTPTC
-#define E1000_82542_TORL     E1000_TORL
-#define E1000_82542_TORH     E1000_TORH
-#define E1000_82542_TOTL     E1000_TOTL
-#define E1000_82542_TOTH     E1000_TOTH
-#define E1000_82542_TPR      E1000_TPR
-#define E1000_82542_TPT      E1000_TPT
-#define E1000_82542_PTC64    E1000_PTC64
-#define E1000_82542_PTC127   E1000_PTC127
-#define E1000_82542_PTC255   E1000_PTC255
-#define E1000_82542_PTC511   E1000_PTC511
-#define E1000_82542_PTC1023  E1000_PTC1023
-#define E1000_82542_PTC1522  E1000_PTC1522
-#define E1000_82542_MPTC     E1000_MPTC
-#define E1000_82542_BPTC     E1000_BPTC
-#define E1000_82542_TSCTC    E1000_TSCTC
-#define E1000_82542_TSCTFC   E1000_TSCTFC
-#define E1000_82542_RXCSUM   E1000_RXCSUM
-#define E1000_82542_WUC      E1000_WUC
-#define E1000_82542_WUFC     E1000_WUFC
-#define E1000_82542_WUS      E1000_WUS
-#define E1000_82542_MANC     E1000_MANC
-#define E1000_82542_IPAV     E1000_IPAV
-#define E1000_82542_IP4AT    E1000_IP4AT
-#define E1000_82542_IP6AT    E1000_IP6AT
-#define E1000_82542_WUPL     E1000_WUPL
-#define E1000_82542_WUPM     E1000_WUPM
-#define E1000_82542_FFLT     E1000_FFLT
-#define E1000_82542_FCRTV_PCH E1000_FCRTV_PCH
-#define E1000_82542_TDFH     0x08010
-#define E1000_82542_TDFT     0x08018
-#define E1000_82542_FFMT     E1000_FFMT
-#define E1000_82542_FFVT     E1000_FFVT
-#define E1000_82542_CRC_OFFSET E1000_CRC_OFFSET
-#define E1000_82542_HOST_IF  E1000_HOST_IF
-#define E1000_82542_IAM         E1000_IAM
-#define E1000_82542_EEMNGCTL    E1000_EEMNGCTL
-#define E1000_82542_PSRCTL      E1000_PSRCTL
-#define E1000_82542_RAID        E1000_RAID
-#define E1000_82542_TARC0       E1000_TARC0
-#define E1000_82542_TDBAL1      E1000_TDBAL1
-#define E1000_82542_TDBAH1      E1000_TDBAH1
-#define E1000_82542_TDLEN1      E1000_TDLEN1
-#define E1000_82542_TDH1        E1000_TDH1
-#define E1000_82542_TDT1        E1000_TDT1
-#define E1000_82542_TXDCTL1     E1000_TXDCTL1
-#define E1000_82542_TARC1       E1000_TARC1
-#define E1000_82542_RFCTL       E1000_RFCTL
-#define E1000_82542_GCR         E1000_GCR
-#define E1000_82542_GSCL_1      E1000_GSCL_1
-#define E1000_82542_GSCL_2      E1000_GSCL_2
-#define E1000_82542_GSCL_3      E1000_GSCL_3
-#define E1000_82542_GSCL_4      E1000_GSCL_4
-#define E1000_82542_FACTPS      E1000_FACTPS
-#define E1000_82542_SWSM        E1000_SWSM
-#define E1000_82542_H2ME        E1000_H2ME
-#define E1000_82542_FWSM        E1000_FWSM
-#define E1000_82542_FFLT_DBG    E1000_FFLT_DBG
-#define E1000_82542_IAC         E1000_IAC
-#define E1000_82542_ICRXPTC     E1000_ICRXPTC
-#define E1000_82542_ICRXATC     E1000_ICRXATC
-#define E1000_82542_ICTXPTC     E1000_ICTXPTC
-#define E1000_82542_ICTXATC     E1000_ICTXATC
-#define E1000_82542_ICTXQEC     E1000_ICTXQEC
-#define E1000_82542_ICTXQMTC    E1000_ICTXQMTC
-#define E1000_82542_ICRXDMTC    E1000_ICRXDMTC
-#define E1000_82542_ICRXOC      E1000_ICRXOC
-#define E1000_82542_HICR        E1000_HICR
-#define E1000_82542_PCS_CFG0	E1000_PCS_CFG0
-#define E1000_82542_PCS_LCTL	E1000_PCS_LCTL
-#define E1000_82542_PCS_LSTAT	E1000_PCS_LSTAT
-
-#define E1000_82542_CPUVEC      E1000_CPUVEC
-#define E1000_82542_MRQC        E1000_MRQC
-#define E1000_82542_RETA        E1000_RETA
-#define E1000_82542_RSSRK       E1000_RSSRK
-#define E1000_82542_RSSIM       E1000_RSSIM
-#define E1000_82542_RSSIR       E1000_RSSIR
-#define E1000_82542_KUMCTRLSTA E1000_KUMCTRLSTA
-#define E1000_82542_SW_FW_SYNC E1000_SW_FW_SYNC
 
 #define E1000_FEXTNVM3_PHY_CFG_COUNTER_MASK    0x0C000000
 #define E1000_FEXTNVM3_PHY_CFG_COUNTER_50MSEC  0x08000000
@@ -1553,6 +1379,15 @@ struct em_hw_stats {
     uint64_t ictxqmtc;
     uint64_t icrxdmtc;
     uint64_t icrxoc;
+    uint64_t sdpc;
+    uint64_t mngpdc;
+    uint64_t mngptc;
+    uint64_t mngprc;
+    uint64_t b2ospc;
+    uint64_t o2bgptc;
+    uint64_t b2ogprc;
+    uint64_t o2bspc;
+    uint64_t rpthc;
 };
 
 /* Structure containing variables used by the shared code (em_hw.c) */
@@ -2273,6 +2108,10 @@ struct em_hw {
 #define E1000_WUC_PME_STATUS 0x00000004 /* PME Status */
 #define E1000_WUC_APMPME     0x00000008 /* Assert PME on APM Wakeup */
 #define E1000_WUC_SPM        0x80000000 /* Enable SPM */
+/* Flexible Host Filter Table */
+#define E1000_FHFT(_n)       (0x09000 + ((_n) * 0x100))
+/* Ext Flexible Host Filter Table */
+#define E1000_FHFT_EXT(_n)  (0x09A00 + ((_n) * 0x100))
 
 /* Wake Up Filter Control */
 #define E1000_WUFC_LNKC 0x00000001 /* Link Status Change Wakeup Enable */
@@ -2490,6 +2329,42 @@ struct em_host_command_info {
 #define E1000_FACTPS_MNGCG                          0x20000000
 #define E1000_FACTPS_LAN_FUNC_SEL                   0x40000000
 #define E1000_FACTPS_PM_STATE_CHANGED               0x80000000
+
+/* IVAR0 bit definitions */
+#define E1000_IVAR_VALID	0x80
+
+/* GPIE bit definitions */
+#define E1000_GPIE_NSICR	0x00000001
+#define E1000_GPIE_MSIX_MODE	0x00000010
+#define E1000_GPIE_EIAME	0x40000000
+#define E1000_GPIE_PBA		0x80000000
+
+/* MRQC bit definitions */
+#define E1000_MRQC_ENABLE_RSS_4Q		0x00000002
+#define E1000_MRQC_ENABLE_VMDQ			0x00000003
+#define E1000_MRQC_ENABLE_VMDQ_RSS_2Q		0x00000005
+#define E1000_MRQC_RSS_FIELD_IPV4_UDP		0x00400000
+#define E1000_MRQC_RSS_FIELD_IPV6_UDP		0x00800000
+#define E1000_MRQC_RSS_FIELD_IPV6_UDP_EX	0x01000000
+#define E1000_MRQC_ENABLE_RSS_8Q		0x00000002
+
+/* SRRCTL bit definitions */
+#define E1000_SRRCTL_BSIZEPKT_SHIFT		10 /* Shift _right_ */
+#define E1000_SRRCTL_BSIZEHDRSIZE_MASK		0x00000F00
+#define E1000_SRRCTL_BSIZEHDRSIZE_SHIFT		2  /* Shift _left_ */
+#define E1000_SRRCTL_DESCTYPE_LEGACY		0x00000000
+#define E1000_SRRCTL_DESCTYPE_ADV_ONEBUF	0x02000000
+#define E1000_SRRCTL_DESCTYPE_HDR_SPLIT		0x04000000
+#define E1000_SRRCTL_DESCTYPE_HDR_SPLIT_ALWAYS	0x0A000000
+#define E1000_SRRCTL_DESCTYPE_HDR_REPLICATION	0x06000000
+#define E1000_SRRCTL_DESCTYPE_HDR_REPLICATION_LARGE_PKT 0x08000000
+#define E1000_SRRCTL_DESCTYPE_MASK		0x0E000000
+#define E1000_SRRCTL_TIMESTAMP			0x40000000
+#define E1000_SRRCTL_DROP_EN			0x80000000
+
+/* WUFC bit definitions */
+#define E1000_WUFC_FLX(_n)			(1 << (16 + _n))
+#define E1000_WUFC_FLEX_HQ			(1 << 14)
 
 /* PCI-Ex Config Space */
 #define PCI_EX_LINK_STATUS           0x12

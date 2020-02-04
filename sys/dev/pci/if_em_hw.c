@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.105 2020/01/20 23:45:02 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.106 2020/02/04 10:59:23 mpi Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -511,6 +511,9 @@ em_set_mac_type(struct em_hw *hw)
 	case E1000_DEV_ID_82575EB_PF:
 	case E1000_DEV_ID_82575GB_QP:
 	case E1000_DEV_ID_82575GB_QP_PM:
+		hw->mac_type = em_82575;
+		hw->initialize_hw_bits_disable = 1;
+		break;
 	case E1000_DEV_ID_82576:
 	case E1000_DEV_ID_82576_FIBER:
 	case E1000_DEV_ID_82576_SERDES:
@@ -519,7 +522,7 @@ em_set_mac_type(struct em_hw *hw)
 	case E1000_DEV_ID_82576_NS:
 	case E1000_DEV_ID_82576_NS_SERDES:
 	case E1000_DEV_ID_82576_SERDES_QUAD:
-		hw->mac_type = em_82575;
+		hw->mac_type = em_82576;
 		hw->initialize_hw_bits_disable = 1;
 		break;
 	case E1000_DEV_ID_82580_COPPER:
@@ -685,6 +688,7 @@ em_set_mac_type(struct em_hw *hw)
 		break;
 	case em_80003es2lan:
 	case em_82575:
+	case em_82576:
 	case em_82580:
 	case em_i210:
 	case em_i350:
@@ -725,6 +729,7 @@ em_set_media_type(struct em_hw *hw)
 	}
 
 	if (hw->mac_type == em_82575 || hw->mac_type == em_82580 ||
+	    hw->mac_type == em_82576 ||
 	    hw->mac_type == em_i210 || hw->mac_type == em_i350) {
 		hw->media_type = em_media_type_copper;
 	
@@ -835,6 +840,7 @@ em_reset_hw(struct em_hw *hw)
 
         /* Set the completion timeout for 82575 chips */
         if (hw->mac_type == em_82575 || hw->mac_type == em_82580 ||
+	    hw->mac_type == em_82576 ||
 	    hw->mac_type == em_i210 || hw->mac_type == em_i350) {
                 ret_val = em_set_pciex_completion_timeout(hw);
                 if (ret_val) {              
@@ -1123,13 +1129,13 @@ em_initialize_hardware_bits(struct em_hw *hw)
 		reg_tarc0 &= ~0x78000000;	/* Clear bits 30, 29, 28, and
 						 * 27 */
 
-		reg_txdctl = E1000_READ_REG(hw, TXDCTL);
+		reg_txdctl = E1000_READ_REG(hw, TXDCTL(0));
 		reg_txdctl |= E1000_TXDCTL_COUNT_DESC;	/* Set bit 22 */
-		E1000_WRITE_REG(hw, TXDCTL, reg_txdctl);
+		E1000_WRITE_REG(hw, TXDCTL(0), reg_txdctl);
 
-		reg_txdctl1 = E1000_READ_REG(hw, TXDCTL1);
+		reg_txdctl1 = E1000_READ_REG(hw, TXDCTL(1));
 		reg_txdctl1 |= E1000_TXDCTL_COUNT_DESC;	/* Set bit 22 */
-		E1000_WRITE_REG(hw, TXDCTL1, reg_txdctl1);
+		E1000_WRITE_REG(hw, TXDCTL(1), reg_txdctl1);
 
 		switch (hw->mac_type) {
 		case em_82571:
@@ -1620,10 +1626,10 @@ em_init_hw(struct em_hw *hw)
 
 	/* Set the transmit descriptor write-back policy */
 	if (hw->mac_type > em_82544) {
-		ctrl = E1000_READ_REG(hw, TXDCTL);
+		ctrl = E1000_READ_REG(hw, TXDCTL(0));
 		ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) | 
 		    E1000_TXDCTL_FULL_TX_DESC_WB;
-		E1000_WRITE_REG(hw, TXDCTL, ctrl);
+		E1000_WRITE_REG(hw, TXDCTL(0), ctrl);
 	}
 	if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) {
 		em_enable_tx_pkt_filtering(hw);
@@ -1656,6 +1662,7 @@ em_init_hw(struct em_hw *hw)
 	case em_82571:
 	case em_82572:
 	case em_82575:
+	case em_82576:
 	case em_82580:
 	case em_i210:
 	case em_i350:
@@ -1667,10 +1674,10 @@ em_init_hw(struct em_hw *hw)
 	case em_pch_lpt:
 	case em_pch_spt:
 	case em_pch_cnp:
-		ctrl = E1000_READ_REG(hw, TXDCTL1);
+		ctrl = E1000_READ_REG(hw, TXDCTL(1));
 		ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) | 
 		    E1000_TXDCTL_FULL_TX_DESC_WB;
-		E1000_WRITE_REG(hw, TXDCTL1, ctrl);
+		E1000_WRITE_REG(hw, TXDCTL(1), ctrl);
 		break;
 	}
 
@@ -4958,7 +4965,8 @@ em_read_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data)
 		hw->mac_type == em_pch_cnp)
 		return (em_access_phy_reg_hv(hw, reg_addr, phy_data, TRUE));
 
-	if (((hw->mac_type == em_80003es2lan) || (hw->mac_type == em_82575)) &&
+	if (((hw->mac_type == em_80003es2lan) || (hw->mac_type == em_82575) ||
+	    (hw->mac_type == em_82576)) &&
 	    (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
 		swfw = E1000_SWFW_PHY1_SM;
 	} else {
@@ -5658,6 +5666,7 @@ em_match_gig_phy(struct em_hw *hw)
 			match = TRUE;
 		break;
 	case em_82575:
+	case em_82576:
 		if (hw->phy_id == M88E1000_E_PHY_ID)
 			match = TRUE;
 		if (hw->phy_id == IGP01E1000_I_PHY_ID)
@@ -5959,6 +5968,7 @@ em_init_eeprom_params(struct em_hw *hw)
 	case em_82573:
 	case em_82574:
 	case em_82575:
+	case em_82576:
 	case em_82580:
 	case em_i210:
 	case em_i350:
@@ -7307,6 +7317,7 @@ em_read_mac_addr(struct em_hw *hw)
 	case em_82546_rev_3:
 	case em_82571:
 	case em_82575:
+	case em_82576:
 	case em_80003es2lan:
 		if (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)
 			hw->perm_mac_addr[5] ^= 0x01;
@@ -8105,6 +8116,7 @@ em_get_bus_info(struct em_hw *hw)
 	case em_82573:
 	case em_82574:
 	case em_82575:
+	case em_82576:
 	case em_82580:
 	case em_80003es2lan:
 	case em_i210:
@@ -9309,6 +9321,7 @@ em_get_auto_rd_done(struct em_hw *hw)
 	case em_82573:
 	case em_82574:
 	case em_82575:
+	case em_82576:
 	case em_82580:
 	case em_80003es2lan:
 	case em_i210:
@@ -9369,6 +9382,7 @@ em_get_phy_cfg_done(struct em_hw *hw)
 		break;
 	case em_80003es2lan:
 	case em_82575:
+	case em_82576:
 	case em_82580:
 	case em_i350:
 		switch (hw->bus_func) {
@@ -11584,3 +11598,91 @@ out:
 	return ret_val;
 }
 
+uint32_t
+em_translate_82542_register(uint32_t reg)
+{
+	/*
+	 * Some of the 82542 registers are located at different
+	 * offsets than they are in newer adapters.
+	 * Despite the difference in location, the registers
+	 * function in the same manner.
+	 */
+	switch (reg) {
+	case E1000_RA:
+		reg = 0x00040;
+		break;
+	case E1000_RDTR:
+		reg = 0x00108;
+		break;
+	case E1000_RDBAL(0):
+		reg = 0x00110;
+		break;
+	case E1000_RDBAH(0):
+		reg = 0x00114;
+		break;
+	case E1000_RDLEN(0):
+		reg = 0x00118;
+		break;
+	case E1000_RDH(0):
+		reg = 0x00120;
+		break;
+	case E1000_RDT(0):
+		reg = 0x00128;
+		break;
+	case E1000_RDBAL(1):
+		reg = 0x00138;
+		break;
+	case E1000_RDBAH(1):
+		reg = 0x0013C;
+		break;
+	case E1000_RDLEN(1):
+		reg = 0x00140;
+		break;
+	case E1000_RDH(1):
+		reg = 0x00148;
+		break;
+	case E1000_RDT(1):
+		reg = 0x00150;
+		break;
+	case E1000_FCRTH:
+		reg = 0x00160;
+		break;
+	case E1000_FCRTL:
+		reg = 0x00168;
+		break;
+	case E1000_MTA:
+		reg = 0x00200;
+		break;
+	case E1000_TDBAL(0):
+		reg = 0x00420;
+		break;
+	case E1000_TDBAH(0):
+		reg = 0x00424;
+		break;
+	case E1000_TDLEN(0):
+		reg = 0x00428;
+		break;
+	case E1000_TDH(0):
+		reg = 0x00430;
+		break;
+	case E1000_TDT(0):
+		reg = 0x00438;
+		break;
+	case E1000_TIDV:
+		reg = 0x00440;
+		break;
+	case E1000_VFTA:
+		reg = 0x00600;
+		break;
+	case E1000_TDFH:
+		reg = 0x08010;
+		break;
+	case E1000_TDFT:
+		reg = 0x08018;
+		break;
+	default:
+		break;
+	}
+
+	return (reg);
+}
