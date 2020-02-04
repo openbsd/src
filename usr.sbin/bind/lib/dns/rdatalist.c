@@ -14,18 +14,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatalist.c,v 1.7 2020/01/22 13:02:09 florian Exp $ */
+/* $Id: rdatalist.c,v 1.8 2020/02/04 19:27:45 florian Exp $ */
 
 /*! \file */
-
-
 
 #include <stddef.h>
 
 #include <isc/util.h>
 
 #include <dns/name.h>
-#include <dns/nsec3.h>
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
