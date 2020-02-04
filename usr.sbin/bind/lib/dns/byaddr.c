@@ -14,30 +14,22 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: byaddr.c,v 1.14 2020/01/28 17:17:05 florian Exp $ */
+/* $Id: byaddr.c,v 1.15 2020/02/04 19:41:10 florian Exp $ */
 
 /*! \file */
 
-
+#include <string.h>
 
 #include <isc/buffer.h>
-
 #include <isc/netaddr.h>
-
-#include <string.h>		/* Required for HP/UX (and others?) */
 #include <isc/task.h>
 #include <isc/util.h>
 
 #include <dns/byaddr.h>
-
-#include <dns/events.h>
-
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include "rdatastruct.h"
-
 #include <dns/result.h>
-
 
 /*
  * XXXRTH  We could use a static event...

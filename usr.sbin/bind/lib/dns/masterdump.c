@@ -28,7 +28,6 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-#include <dns/events.h>
 #include <dns/fixedname.h>
 #include <dns/lib.h>
 #include <dns/log.h>
