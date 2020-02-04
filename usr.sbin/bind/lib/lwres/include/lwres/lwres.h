@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwres.h,v 1.6 2020/01/20 18:41:48 florian Exp $ */
+/* $Id: lwres.h,v 1.7 2020/02/04 19:40:01 florian Exp $ */
 
 #ifndef LWRES_LWRES_H
 #define LWRES_LWRES_H 1
@@ -28,7 +28,6 @@
 
 #include <stdio.h>
 
-#include <lwres/list.h>
 #include <lwres/result.h>
 
 /*! \file lwres/lwres.h */
@@ -90,16 +89,12 @@
 /*% lwres_addr_t */
 typedef struct lwres_addr lwres_addr_t;
 
-/*% LWRES_LIST */
-typedef LWRES_LIST(lwres_addr_t) lwres_addrlist_t;
-
 /*% lwres_addr */
 struct lwres_addr {
 	uint32_t			family;
 	uint16_t			length;
 	unsigned char			address[LWRES_ADDR_MAXLEN];
 	uint32_t			zone;
-	LWRES_LINK(lwres_addr_t)	link;
 };
 
 /*!
