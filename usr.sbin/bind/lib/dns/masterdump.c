@@ -18,11 +18,11 @@
 
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <isc/event.h>
 #include <isc/magic.h>
 #include <isc/stdio.h>
-#include <string.h>
 #include <isc/task.h>
 #include <isc/time.h>
 #include <isc/types.h>
@@ -33,7 +33,6 @@
 #include <dns/lib.h>
 #include <dns/log.h>
 #include <dns/masterdump.h>
-#include <dns/ncache.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rdataset.h>
@@ -343,52 +342,6 @@ str_totext(const char *source, isc_buffer_t *target) {
 	return (ISC_R_SUCCESS);
 }
 
-static isc_result_t
-ncache_summary(dns_rdataset_t *rdataset, isc_boolean_t omit_final_dot,
-	       isc_buffer_t *target)
-{
-	isc_result_t result = ISC_R_SUCCESS;
-	dns_rdataset_t rds;
-	dns_name_t name;
-
-	dns_rdataset_init(&rds);
-	dns_name_init(&name, NULL);
-
-	do {
-		dns_ncache_current(rdataset, &name, &rds);
-		for (result = dns_rdataset_first(&rds);
-		     result == ISC_R_SUCCESS;
-		     result = dns_rdataset_next(&rds)) {
-			CHECK(str_totext("; ", target));
-			CHECK(dns_name_totext(&name, omit_final_dot, target));
-			CHECK(str_totext(" ", target));
-			CHECK(dns_rdatatype_totext(rds.type, target));
-			if (rds.type == dns_rdatatype_rrsig) {
-				CHECK(str_totext(" ", target));
-				CHECK(dns_rdatatype_totext(rds.covers, target));
-				CHECK(str_totext(" ...\n", target));
-			} else {
-				dns_rdata_t rdata = DNS_RDATA_INIT;
-				dns_rdataset_current(&rds, &rdata);
-				CHECK(str_totext(" ", target));
-				CHECK(dns_rdata_tofmttext(&rdata, dns_rootname,
-							  0, 0, 0, " ", target));
-				CHECK(str_totext("\n", target));
-			}
-		}
-		dns_rdataset_disassociate(&rds);
-		result = dns_rdataset_next(rdataset);
-	} while (result == ISC_R_SUCCESS);
-
-	if (result == ISC_R_NOMORE)
-		result = ISC_R_SUCCESS;
- cleanup:
-	if (dns_rdataset_isassociated(&rds))
-		dns_rdataset_disassociate(&rds);
-
-	return (result);
-}
-
 /*
  * Convert 'rdataset' to master file text format according to 'ctx',
  * storing the result in 'target'.  If 'owner_name' is NULL, it
@@ -496,16 +449,10 @@ rdataset_totext(dns_rdataset_t *rdataset,
 		 * Type.
 		 */
 
-		if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) {
-			type = rdataset->covers;
-		} else {
-			type = rdataset->type;
-		}
+		type = rdataset->type;
 
 		INDENT_TO(type_column);
 		type_start = target->used;
-		if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0)
-			RETERR(str_totext("\\-", target));
 		switch (type) {
 		case dns_rdatatype_keydata:
 #define KEYDATA "KEYDATA"
@@ -528,19 +475,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 		 * Rdata.
 		 */
 		INDENT_TO(rdata_column);
-		if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) {
-			if (NXDOMAIN(rdataset))
-				RETERR(str_totext(";-$NXDOMAIN\n", target));
-			else
-				RETERR(str_totext(";-$NXRRSET\n", target));
-			/*
-			 * Print a summary of the cached records which make
-			 * up the negative response.
-			 */
-			RETERR(ncache_summary(rdataset, omit_final_dot,
-					      target));
-			break;
-		} else {
+		{
 			dns_rdata_t rdata = DNS_RDATA_INIT;
 			isc_region_t r;
 

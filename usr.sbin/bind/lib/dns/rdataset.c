@@ -16,19 +16,14 @@
 
 /*! \file */
 
-
-
 #include <stdint.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
-
-
 #include <isc/serial.h>
 #include <isc/util.h>
 
 #include <dns/name.h>
-#include <dns/ncache.h>
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
 #include <dns/compress.h>
@@ -346,15 +341,6 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		count = 1;
 		result = dns_rdataset_first(rdataset);
 		INSIST(result == ISC_R_NOMORE);
-	} else if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0) {
-		/*
-		 * This is a negative caching rdataset.
-		 */
-		unsigned int ncache_opts = 0;
-		if ((options & DNS_RDATASETTOWIRE_OMITDNSSEC) != 0)
-			ncache_opts |= DNS_NCACHETOWIRE_OMITDNSSEC;
-		return (dns_ncache_towire(rdataset, cctx, target, ncache_opts,
-					  countp));
 	} else {
 		count = (rdataset->methods->count)(rdataset);
 		result = dns_rdataset_first(rdataset);

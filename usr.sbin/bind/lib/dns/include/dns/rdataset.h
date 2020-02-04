@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.11 2020/01/28 17:17:05 florian Exp $ */
+/* $Id: rdataset.h,v 1.12 2020/02/04 19:38:54 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -205,7 +205,6 @@ struct dns_rdataset {
 #define DNS_RDATASETATTR_RESIGN		0x00040000
 #define DNS_RDATASETATTR_CLOSEST	0x00080000
 #define DNS_RDATASETATTR_OPTOUT		0x00100000	/*%< OPTOUT proof */
-#define DNS_RDATASETATTR_NEGATIVE	0x00200000
 #define DNS_RDATASETATTR_PREFETCH	0x00400000
 
 /*%
