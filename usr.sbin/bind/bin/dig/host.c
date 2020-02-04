@@ -24,7 +24,6 @@
 #include <locale.h>
 
 #include <isc/app.h>
-#include <isc/commandline.h>
 #include <isc/netaddr.h>
 
 #include <string.h>
@@ -573,7 +572,7 @@ static void
 pre_parse_args(int argc, char **argv) {
 	int c;
 
-	while ((c = isc_commandline_parse(argc, argv, optstring)) != -1) {
+	while ((c = getopt(argc, argv, optstring)) != -1) {
 		switch (c) {
 		case '4':
 			if (ipv6only)
@@ -614,12 +613,12 @@ pre_parse_args(int argc, char **argv) {
 			show_usage();
 		}
 	}
-	isc_commandline_reset = ISC_TRUE;
-	isc_commandline_index = 1;
+	optind = 1;
+	optreset = 1;
 }
 
 static void
-parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
+parse_args(int argc, char **argv) {
 	char hostname[MXNAME];
 	dig_lookup_t *lookup;
 	int c;
@@ -630,14 +629,12 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 	dns_rdataclass_t rdclass;
 	uint32_t serial = 0;
 
-	UNUSED(is_batchfile);
-
 	lookup = make_empty_lookup();
 
 	lookup->servfail_stops = ISC_FALSE;
 	lookup->comments = ISC_FALSE;
 
-	while ((c = isc_commandline_parse(argc, argv, optstring)) != -1) {
+	while ((c = getopt(argc, argv, optstring)) != -1) {
 		switch (c) {
 		case 'l':
 			lookup->tcp_mode = ISC_TRUE;
@@ -653,24 +650,22 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			lookup->recurse = ISC_FALSE;
 			break;
 		case 't':
-			if (strncasecmp(isc_commandline_argument,
-					"ixfr=", 5) == 0) {
+			if (strncasecmp(optarg,	"ixfr=", 5) == 0) {
 				rdtype = dns_rdatatype_ixfr;
 				/* XXXMPA add error checking */
-				serial = strtoul(isc_commandline_argument + 5,
+				serial = strtoul(optarg + 5,
 						 NULL, 10);
 				result = ISC_R_SUCCESS;
 			} else {
-				tr.base = isc_commandline_argument;
-				tr.length = strlen(isc_commandline_argument);
+				tr.base = optarg;
+				tr.length = strlen(optarg);
 				result = dns_rdatatype_fromtext(&rdtype,
 						   (isc_textregion_t *)&tr);
 			}
 
 			if (result != ISC_R_SUCCESS) {
 				fatalexit = 2;
-				fatal("invalid type: %s\n",
-				      isc_commandline_argument);
+				fatal("invalid type: %s\n", optarg);
 			}
 			if (!lookup->rdtypeset ||
 			    lookup->rdtype != dns_rdatatype_axfr)
@@ -691,15 +686,14 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			default_lookups = ISC_FALSE;
 			break;
 		case 'c':
-			tr.base = isc_commandline_argument;
-			tr.length = strlen(isc_commandline_argument);
+			tr.base = optarg;
+			tr.length = strlen(optarg);
 			result = dns_rdataclass_fromtext(&rdclass,
 						   (isc_textregion_t *)&tr);
 
 			if (result != ISC_R_SUCCESS) {
 				fatalexit = 2;
-				fatal("invalid class: %s\n",
-				      isc_commandline_argument);
+				fatal("invalid class: %s\n", optarg);
 			} else {
 				lookup->rdclass = rdclass;
 				lookup->rdclassset = ISC_TRUE;
@@ -733,12 +727,12 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			timeout = INT_MAX;
 			break;
 		case 'W':
-			timeout = atoi(isc_commandline_argument);
+			timeout = atoi(optarg);
 			if (timeout < 1)
 				timeout = 1;
 			break;
 		case 'R':
-			tries = atoi(isc_commandline_argument) + 1;
+			tries = atoi(optarg) + 1;
 			if (tries < 2)
 				tries = 2;
 			break;
@@ -757,9 +751,8 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			default_lookups = ISC_FALSE;
 			break;
 		case 'N':
-			debug("setting NDOTS to %s",
-			      isc_commandline_argument);
-			ndots = atoi(isc_commandline_argument);
+			debug("setting NDOTS to %s", optarg);
+			ndots = atoi(optarg);
 			break;
 		case 'D':
 			/* Handled by pre_parse_args(). */
@@ -773,19 +766,24 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 		case 's':
 			lookup->servfail_stops = ISC_TRUE;
 			break;
+		default:
+			show_usage();
 		}
 	}
 
 	lookup->retries = tries;
 
-	if (isc_commandline_index >= argc)
+	argc -= optind;
+	argv += optind;
+
+	if (argc == 0)
 		show_usage();
 
-	strlcpy(hostname, argv[isc_commandline_index], sizeof(hostname));
+	strlcpy(hostname, *argv, sizeof(hostname));
 
-	if (argc > isc_commandline_index + 1) {
-		set_nameserver(argv[isc_commandline_index+1]);
-		debug("server is %s", argv[isc_commandline_index+1]);
+	if (argc == 2) {
+		set_nameserver(*argv + 1);
+		debug("server is %s", *argv + 1);
 		listed_server = ISC_TRUE;
 	} else
 		check_ra = ISC_TRUE;
@@ -841,7 +839,7 @@ host_main(int argc, char **argv) {
 		exit(1);
 	}
 
-	parse_args(ISC_FALSE, argc, argv);
+	parse_args(argc, argv);
 	setup_system(ipv4only, ipv6only);
 	result = isc_app_onrun(global_task, onrun_callback, NULL);
 	check_result(result, "isc_app_onrun");

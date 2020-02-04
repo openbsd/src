@@ -21,7 +21,6 @@
 
 #include <isc/app.h>
 #include <isc/buffer.h>
-#include <isc/commandline.h>
 #include <isc/event.h>
 #include <isc/parseint.h>
 
