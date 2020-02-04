@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3param_51.c,v 1.5 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: nsec3param_51.c,v 1.6 2020/02/04 19:42:25 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -37,7 +37,6 @@
 #ifndef RDATA_GENERIC_NSEC3PARAM_51_C
 #define RDATA_GENERIC_NSEC3PARAM_51_C
 
-#include <isc/iterated_hash.h>
 #include <isc/base32.h>
 
 #define RRTYPE_NSEC3PARAM_ATTRIBUTES (DNS_RDATATYPEATTR_DNSSEC)

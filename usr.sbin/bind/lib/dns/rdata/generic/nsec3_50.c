@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.5 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: nsec3_50.c,v 1.6 2020/02/04 19:42:25 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -37,7 +37,6 @@
 #ifndef RDATA_GENERIC_NSEC3_50_C
 #define RDATA_GENERIC_NSEC3_50_C
 
-#include <isc/iterated_hash.h>
 #include <isc/base32.h>
 
 #define RRTYPE_NSEC3_ATTRIBUTES DNS_RDATATYPEATTR_DNSSEC
@@ -360,6 +359,7 @@ digest_nsec3(ARGS_DIGEST) {
 	return ((digest)(arg, &r));
 }
 
+#define NSEC3_MAX_HASH_LENGTH 155
 static inline isc_boolean_t
 checkowner_nsec3(ARGS_CHECKOWNER) {
 	unsigned char owner[NSEC3_MAX_HASH_LENGTH];

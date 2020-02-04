@@ -18,12 +18,10 @@
 #ifndef GENERIC_NSEC3_50_H
 #define GENERIC_NSEC3_50_H 1
 
-/* $Id: nsec3_50.h,v 1.5 2020/01/20 18:51:53 florian Exp $ */
+/* $Id: nsec3_50.h,v 1.6 2020/02/04 19:42:25 florian Exp $ */
 
 /*!
  * \brief Per RFC 5155 */
-
-#include <isc/iterated_hash.h>
 
 typedef struct dns_rdata_nsec3 {
 	dns_rdatacommon_t	common;
