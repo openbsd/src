@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.41 2020/01/28 17:17:04 florian Exp $ */
+/* $Id: dighost.c,v 1.42 2020/02/04 19:17:58 florian Exp $ */
 
 /*! \file
  *  \note
@@ -26,13 +26,14 @@
  * functions in most applications.
  */
 
-
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <limits.h>
-
 #include <locale.h>
+#include <netdb.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>
@@ -54,16 +55,11 @@
 
 #include <isc/app.h>
 #include <isc/base64.h>
-
-
 #include <isc/hex.h>
 #include <isc/lang.h>
 #include <isc/log.h>
 #include <isc/netaddr.h>
-#include <isc/netdb.h>
 #include <isc/parseint.h>
-
-
 #include <isc/result.h>
 #include <isc/safe.h>
 #include <isc/serial.h>
@@ -74,10 +70,7 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-
-
 #include <isccfg/namedconf.h>
-
 #include <lwres/lwres.h>
 
 #include <dig/dig.h>
