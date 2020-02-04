@@ -19,13 +19,13 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <dirent.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#include "gen-unix.h"
+#include <unistd.h>
 
 #define INSIST(cond) \
 	if (!(cond)) { \
@@ -458,16 +458,17 @@ add(int rdclass, const char *classname, int type, const char *typename,
 
 static void
 sd(int rdclass, const char *classname, const char *dirname, char filetype) {
+	DIR *dirp;
+	struct dirent *dp;
 	char buf[TYPECLASSLEN + sizeof("_65535.h")];
 	char typename[TYPECLASSBUF];
 	int type, n;
-	isc_dir_t dir;
 
-	if (!start_directory(dirname, &dir))
+	if ((dirp = opendir(dirname)) == NULL)
 		return;
 
-	while (next_file(&dir)) {
-		if (sscanf(dir.filename, TYPECLASSFMT, typename, &type) != 2)
+	while ((dp = readdir(dirp)) != NULL) {
+		if (sscanf(dp->d_name, TYPECLASSFMT, typename, &type) != 2)
 			continue;
 		if ((type > 65535) || (type < 0))
 			continue;
@@ -475,12 +476,12 @@ sd(int rdclass, const char *classname, const char *dirname, char filetype) {
 		n = snprintf(buf, sizeof(buf), "%s_%d.%c", typename,
 			     type, filetype);
 		INSIST(n > 0 && (unsigned)n < sizeof(buf));
-		if (strcmp(buf, dir.filename) != 0)
+		if (strcmp(buf, dp->d_name) != 0)
 			continue;
 		add(rdclass, classname, type, typename, dirname);
 	}
 
-	end_directory(&dir);
+	closedir(dirp);
 }
 
 static unsigned int
@@ -501,6 +502,8 @@ HASH(char *string) {
 
 int
 main(int argc, char **argv) {
+	DIR *dirp;
+	struct dirent *dp;
 	char buf[DIRNAMESIZE];		/* XXX Should be max path length */
 	char srcdir[DIRNAMESIZE];	/* XXX Should be max path length */
 	int rdclass;
@@ -525,13 +528,12 @@ main(int argc, char **argv) {
 	char *prefix = NULL;
 	char *suffix = NULL;
 	char *file = NULL;
-	isc_dir_t dir;
 
 	for (i = 0; i < TYPENAMES; i++)
 		memset(&typenames[i], 0, sizeof(typenames[i]));
 
 	srcdir[0] = '\0';
-	while ((c = isc_commandline_parse(argc, argv, "cdits:F:P:S:")) != -1)
+	while ((c = getopt(argc, argv, "cdits:F:P:S:")) != -1)
 		switch (c) {
 		case 'c':
 			code = 0;
@@ -566,25 +568,25 @@ main(int argc, char **argv) {
 			filetype = 'h';
 			break;
 		case 's':
-			if (strlen(isc_commandline_argument) >
+			if (strlen(optarg) >
 			    DIRNAMESIZE - 2 * TYPECLASSLEN  -
 			    sizeof("/rdata/_65535_65535")) {
 				fprintf(stderr, "\"%s\" too long\n",
-					isc_commandline_argument);
+					optarg);
 				exit(1);
 			}
 			n = snprintf(srcdir, sizeof(srcdir), "%s/",
-				     isc_commandline_argument);
+				     optarg);
 			INSIST(n > 0 && (unsigned)n < sizeof(srcdir));
 			break;
 		case 'F':
-			file = isc_commandline_argument;
+			file = optarg;
 			break;
 		case 'P':
-			prefix = isc_commandline_argument;
+			prefix = optarg;
 			break;
 		case 'S':
-			suffix = isc_commandline_argument;
+			suffix = optarg;
 			break;
 		case '?':
 			exit(1);
@@ -593,11 +595,11 @@ main(int argc, char **argv) {
 	n = snprintf(buf, sizeof(buf), "%srdata", srcdir);
 	INSIST(n > 0 && (unsigned)n < sizeof(srcdir));
 
-	if (!start_directory(buf, &dir))
+	if ((dirp = opendir(buf)) == NULL)
 		exit(1);
 
-	while (next_file(&dir)) {
-		if (sscanf(dir.filename, TYPECLASSFMT, classname,
+	while ((dp = readdir(dirp)) != NULL) {
+		if (sscanf(dp->d_name, TYPECLASSFMT, classname,
 			   &rdclass) != 2)
 			continue;
 		if ((rdclass > 65535) || (rdclass < 0))
@@ -606,11 +608,12 @@ main(int argc, char **argv) {
 		n = snprintf(buf, sizeof(buf), "%srdata/%s_%d",
 			     srcdir, classname, rdclass);
 		INSIST(n > 0 && (unsigned)n < sizeof(buf));
-		if (strcmp(buf + 6 + strlen(srcdir), dir.filename) != 0)
+		if (strcmp(buf + 6 + strlen(srcdir), dp->d_name) != 0)
 			continue;
 		sd(rdclass, classname, buf, filetype);
 	}
-	end_directory(&dir);
+	closedir(dirp);
+
 	n = snprintf(buf, sizeof(buf), "%srdata/generic", srcdir);
 	INSIST(n > 0 && (unsigned)n < sizeof(srcdir));
 	sd(0, "", buf, filetype);
