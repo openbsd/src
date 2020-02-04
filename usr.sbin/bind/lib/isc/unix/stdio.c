@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: stdio.c,v 1.6 2020/01/26 11:26:30 florian Exp $ */
+/* $Id: stdio.c,v 1.7 2020/02/04 19:18:57 florian Exp $ */
 
 
 
@@ -22,7 +22,6 @@
 #include <unistd.h>
 
 #include <isc/stdio.h>
-#include <isc/stat.h>
 #include <isc/util.h>
 
 #include "errno2result.h"
