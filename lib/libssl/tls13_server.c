@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.22 2020/01/30 17:09:23 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.23 2020/02/04 18:00:30 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -586,6 +586,7 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 	/* XXX - pass in hash. */
 	if (!tls1_transcript_hash_init(s))
 		goto err;
+	tls1_transcript_free(s);
 	if (!tls1_transcript_hash_value(s, buf, sizeof(buf), &hash_len))
 		goto err;
 	context.data = buf;
