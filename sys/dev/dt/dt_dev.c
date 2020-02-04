@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.3 2020/01/27 17:13:33 visa Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.4 2020/02/04 10:56:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -193,6 +193,7 @@ dtclose(dev_t dev, int flags, int mode, struct proc *p)
 int
 dtread(dev_t dev, struct uio *uio, int flags)
 {
+	struct sleep_state sls;
 	struct dt_softc *sc;
 	struct dt_evt *estq;
 	struct dt_pcb *dp;
@@ -207,14 +208,14 @@ dtread(dev_t dev, struct uio *uio, int flags)
 	if (count < 1)
 		return (EMSGSIZE);
 
-	mtx_enter(&sc->ds_mtx);
 	while (!sc->ds_evtcnt) {
-		error = msleep(sc, &sc->ds_mtx, PWAIT|PCATCH, "dtread", 0);
+		sleep_setup(&sls, sc, PWAIT | PCATCH, "dtread");
+		sleep_setup_signal(&sls);
+		sleep_finish(&sls, !sc->ds_evtcnt);
+		error = sleep_finish_signal(&sls);
 		if (error == EINTR || error == ERESTART)
 			break;
 	}
-	mtx_leave(&sc->ds_mtx);
-
 	if (error)
 		return error;
 
