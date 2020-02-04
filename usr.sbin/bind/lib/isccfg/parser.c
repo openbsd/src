@@ -21,7 +21,6 @@
 #include <stdlib.h>
 
 #include <isc/buffer.h>
-#include <isc/dir.h>
 #include <isc/formatcheck.h>
 #include <isc/lex.h>
 #include <isc/log.h>
@@ -1153,7 +1152,7 @@ parser_complain(cfg_parser_t *pctx, isc_boolean_t is_warning,
 		va_list args)
 {
 	char tokenbuf[MAX_LOG_TOKEN + 10];
-	static char where[ISC_DIR_PATHMAX + 100];
+	static char where[PATH_MAX + 100];
 	static char message[2048];
 	int level = ISC_LOG_ERROR;
 	const char *prep = "";

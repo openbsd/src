@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.22 2020/01/26 11:25:30 florian Exp $
+ * $Id: dst_api.c,v 1.23 2020/02/04 18:45:07 florian Exp $
  */
 
 /*! \file */
@@ -41,7 +41,6 @@
 #include <time.h>
 
 #include <isc/buffer.h>
-#include <isc/dir.h>
 #include <isc/hmacsha.h>
 #include <isc/lex.h>
 #include <isc/refcount.h>
@@ -360,49 +359,6 @@ dst_key_setexternal(dst_key_t *key, isc_boolean_t value) {
 isc_boolean_t
 dst_key_isexternal(dst_key_t *key) {
 	return (key->external);
-}
-
-isc_result_t
-dst_key_fromfile(dns_name_t *name, dns_keytag_t id,
-		 unsigned int alg, int type, const char *directory,
-		 dst_key_t **keyp)
-{
-	char filename[ISC_DIR_NAMEMAX];
-	isc_buffer_t b;
-	dst_key_t *key;
-	isc_result_t result;
-
-	REQUIRE(dst_initialized == ISC_TRUE);
-	REQUIRE(dns_name_isabsolute(name));
-	REQUIRE((type & (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC)) != 0);
-	REQUIRE(keyp != NULL && *keyp == NULL);
-
-	CHECKALG(alg);
-
-	isc_buffer_init(&b, filename, sizeof(filename));
-	result = buildfilename(name, id, alg, type, directory, &b);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	key = NULL;
-	result = dst_key_fromnamedfile(filename, NULL, type, &key);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	result = computeid(key);
-	if (result != ISC_R_SUCCESS) {
-		dst_key_free(&key);
-		return (result);
-	}
-
-	if (!dns_name_equal(name, key->key_name) || id != key->key_id ||
-	    alg != key->key_alg) {
-		dst_key_free(&key);
-		return (DST_R_INVALIDPRIVATEKEY);
-	}
-
-	*keyp = key;
-	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
