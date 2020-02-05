@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.121 2020/01/18 08:59:48 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.122 2020/02/05 17:03:13 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1217,8 +1217,6 @@ knote_fdclose(struct proc *p, int fd)
 	struct kqueue *kq;
 	struct klist *list;
 
-	KERNEL_ASSERT_LOCKED();
-
 	/*
 	 * fdplock can be ignored if the file descriptor table is being freed
 	 * because no other thread can access the fdp.
@@ -1226,6 +1224,10 @@ knote_fdclose(struct proc *p, int fd)
 	if (fdp->fd_refcnt != 0)
 		fdpassertlocked(fdp);
 
+	if (LIST_EMPTY(&fdp->fd_kqlist))
+		return;
+
+	KERNEL_LOCK();
 	LIST_FOREACH(kq, &fdp->fd_kqlist, kq_next) {
 		if (fd >= kq->kq_knlistsize)
 			continue;
@@ -1233,6 +1235,7 @@ knote_fdclose(struct proc *p, int fd)
 		list = &kq->kq_knlist[fd];
 		knote_remove(p, list);
 	}
+	KERNEL_UNLOCK();
 }
 
 /*

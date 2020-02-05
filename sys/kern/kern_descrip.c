@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.197 2020/02/01 08:57:27 anton Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.198 2020/02/05 17:03:13 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -667,9 +667,6 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 		fd_used(fdp, new);
  	}
 
-	/* Prevent race with kevent. */
-	KERNEL_LOCK();
-
 	/*
 	 * Use `fd_fplock' to synchronize with fd_getfile() so that
 	 * the function no longer creates a new reference to the old file.
@@ -685,8 +682,6 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 		knote_fdclose(p, new);
 		closef(oldfp, p);
 	}
-
-	KERNEL_UNLOCK();
 
 	return (0);
 }
@@ -740,7 +735,6 @@ fdrelease(struct proc *p, int fd)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int error;
 
 	fdpassertlocked(fdp);
 
@@ -749,14 +743,10 @@ fdrelease(struct proc *p, int fd)
 		fdpunlock(fdp);
 		return (EBADF);
 	}
-	/* Prevent race with kevent. */
-	KERNEL_LOCK();
 	fdremove(fdp, fd);
 	knote_fdclose(p, fd);
 	fdpunlock(fdp);
-	error = closef(fp, p);
-	KERNEL_UNLOCK();
-	return (error);
+	return (closef(fp, p));
 }
 
 /*
