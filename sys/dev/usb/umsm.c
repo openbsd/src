@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.116 2020/01/11 22:43:15 deraadt Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.117 2020/02/05 16:01:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -256,7 +256,6 @@ static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD_340U}, 0},
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD_770S}, 0},
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC7455}, 0},
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC7700}, 0},
 
 	{{ USB_VENDOR_SIMCOM, USB_PRODUCT_SIMCOM_SIM7600E}, 0},
 
