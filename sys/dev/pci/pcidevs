@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1915 2020/01/23 04:33:54 jsg Exp $
+$OpenBSD: pcidevs,v 1.1916 2020/02/05 10:19:19 patrick Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4587,9 +4587,40 @@ product INTEL WL_3165_1		0x3165	Dual Band Wireless AC 3165
 product INTEL WL_3165_2		0x3166	Dual Band Wireless AC 3165
 product INTEL GLK_UHD_605	0x3184	UHD Graphics 605
 product INTEL GLK_UHD_600	0x3185	UHD Graphics 600
+product INTEL GLK_DPTF		0x318c	Gemini Lake DPTF
+product INTEL GLK_GNA		0x3190	Gemini Lake GNA
+product INTEL GLK_PMC		0x3194	Gemini Lake PMC
+product INTEL GLK_HDA		0x3198	Gemini Lake HD Audio
+product INTEL GLK_XHCI		0x31a8	Gemini Lake xHCI
+product INTEL GLK_I2C_1		0x31ac	Gemini Lake I2C
+product INTEL GLK_I2C_2		0x31ae	Gemini Lake I2C
+product INTEL GLK_I2C_3		0x31b0	Gemini Lake I2C
+product INTEL GLK_I2C_4		0x31b2	Gemini Lake I2C
+product INTEL GLK_I2C_5		0x31b4	Gemini Lake I2C
+product INTEL GLK_I2C_6		0x31b6	Gemini Lake I2C
+product INTEL GLK_I2C_7		0x31b8	Gemini Lake I2C
+product INTEL GLK_I2C_8		0x31ba	Gemini Lake I2C
+product INTEL GLK_UART_1	0x31bc	Gemini Lake HSUART
+product INTEL GLK_UART_2	0x31be	Gemini Lake HSUART
+product INTEL GLK_UART_3	0x31c0	Gemini Lake HSUART
+product INTEL GLK_SPI_1		0x31c2	Gemini Lake SPI
+product INTEL GLK_SPI_2		0x31c4	Gemini Lake SPI
+product INTEL GLK_SPI_3		0x31c6	Gemini Lake SPI
 product INTEL GLK_SDMMC		0x31ca	Gemini Lake SD/MMC
 product INTEL GLK_EMMC		0x31cc	Gemini Lake eMMC
 product INTEL GLK_SDIO		0x31d0	Gemini Lake SDIO
+product INTEL GLK_SMB		0x31d4	Gemini Lake SMBus
+product INTEL GLK_PCIE_1	0x31d6	Gemini Lake PCIE
+product INTEL GLK_PCIE_2	0x31d7	Gemini Lake PCIE
+product INTEL GLK_PCIE_3	0x31d8	Gemini Lake PCIE
+product INTEL GLK_PCIE_4	0x31d9	Gemini Lake PCIE
+product INTEL GLK_PCIE_5	0x31da	Gemini Lake PCIE
+product INTEL GLK_PCIE_6	0x31db	Gemini Lake PCIE
+product INTEL GLK_WL		0x31dc	Gemini Lake CNVi
+product INTEL GLK_AHCI		0x31e3	Gemini Lake AHCI
+product INTEL GLK_LPC		0x31e8	Gemini Lake LPC
+product INTEL GLK_UART_4	0x31ee	Gemini Lake HSUART
+product INTEL GLK_HB		0x31f0	Gemini Lake Host
 product INTEL 31244		0x3200	31244 SATA
 product INTEL 82855PM_HB	0x3340	82855PM Host
 product INTEL 82855PM_AGP	0x3341	82855PM AGP
