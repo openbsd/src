@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.146 2019/09/05 05:38:40 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.147 2020/02/05 14:26:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2862,7 +2862,7 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 	 *
 	 *		UAUDIO_NXFERS * (blksz - min_blksz)
 	 */
-	min_blksz = (((uint64_t)blksz << 32) / s->spf_max * s->spf_max) >> 32;
+	min_blksz = (((uint64_t)blksz << 32) / s->spf_max * s->spf_min) >> 32;
 
 	/* round to sample size */
 	min_blksz -= min_blksz % bpa;
