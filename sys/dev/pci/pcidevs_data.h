@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1915 2020/01/23 04:33:54 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1917 2020/02/05 10:33:20 patrick Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -24314,6 +24314,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PERICOM, PCI_PRODUCT_PERICOM_PI7C21P100,
 	    "PI7C21P100 PCIX-PCIX",
+	},
+	{
+	    PCI_VENDOR_PERICOM, PCI_PRODUCT_PERICOM_PI7C9X2G404EL,
+	    "PI7C9X2G404EL PCIE",
 	},
 	{
 	    PCI_VENDOR_PERICOM, PCI_PRODUCT_PERICOM_PI7C9X2G608GP,
