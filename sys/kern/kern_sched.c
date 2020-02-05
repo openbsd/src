@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.64 2020/01/30 08:51:27 mpi Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.65 2020/02/05 10:12:38 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -524,7 +524,6 @@ sched_steal_proc(struct cpu_info *self)
 	if (best == NULL)
 		return (NULL);
 
-	spc = &best->p_cpu->ci_schedstate;
 	remrunqueue(best);
 	best->p_cpu = self;
 
