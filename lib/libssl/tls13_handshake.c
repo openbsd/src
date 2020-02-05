@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.50 2020/02/05 06:12:43 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.51 2020/02/05 16:42:29 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -285,6 +285,15 @@ tls13_handshake_advance_state_machine(struct tls13_ctx *ctx)
 }
 
 int
+tls13_handshake_msg_record(struct tls13_ctx *ctx)
+{
+	CBS cbs;
+
+	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
+	return tls1_transcript_record(ctx->ssl, CBS_data(&cbs), CBS_len(&cbs));
+}
+
+int
 tls13_handshake_perform(struct tls13_ctx *ctx)
 {
 	struct tls13_handshake_action *action;
@@ -322,7 +331,6 @@ tls13_handshake_send_action(struct tls13_ctx *ctx,
 {
 	ssize_t ret;
 	CBB cbb;
-	CBS cbs;
 
 	/* If we have no handshake message, we need to build one. */
 	if (ctx->hs_msg == NULL) {
@@ -343,8 +351,7 @@ tls13_handshake_send_action(struct tls13_ctx *ctx,
 	if ((ret = tls13_handshake_msg_send(ctx->hs_msg, ctx->rl)) <= 0)
 		return ret;
 
-	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
-	if (!tls1_transcript_record(ctx->ssl, CBS_data(&cbs), CBS_len(&cbs)))
+	if (!tls13_handshake_msg_record(ctx))
 		return TLS13_IO_FAILURE;
 
 	if (action->send_preserve_transcript_hash) {
@@ -389,8 +396,7 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 			return TLS13_IO_FAILURE;
 	}
 
-	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
-	if (!tls1_transcript_record(ctx->ssl, CBS_data(&cbs), CBS_len(&cbs)))
+	if (!tls13_handshake_msg_record(ctx))
 		return TLS13_IO_FAILURE;
 
 	if (ctx->handshake_message_recv_cb != NULL)
