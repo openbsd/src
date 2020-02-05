@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_transcript.c,v 1.1 2019/02/09 15:30:52 jsing Exp $ */
+/* $OpenBSD: ssl_transcript.c,v 1.2 2020/02/05 16:47:34 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -142,7 +142,7 @@ tls1_transcript_reset(SSL *s)
 	 */ 
 	(void)BUF_MEM_grow_clean(S3I(s)->handshake_transcript, 0);
 
-	s->s3->flags &= ~TLS1_FLAGS_FREEZE_TRANSCRIPT;
+	tls1_transcript_unfreeze(s);
 }
 
 int
@@ -186,6 +186,12 @@ void
 tls1_transcript_freeze(SSL *s)
 {
 	s->s3->flags |= TLS1_FLAGS_FREEZE_TRANSCRIPT;
+}
+
+void
+tls1_transcript_unfreeze(SSL *s)
+{
+	s->s3->flags &= ~TLS1_FLAGS_FREEZE_TRANSCRIPT;
 }
 
 int
