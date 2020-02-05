@@ -17,19 +17,17 @@
 /*! \file */
 #include <sys/cdefs.h>
 
-#include <stdlib.h>
-#include <unistd.h>
+#include <err.h>
 #include <limits.h>
-
 #include <locale.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <isc/app.h>
 #include <isc/netaddr.h>
-
-#include <string.h>
 #include <isc/util.h>
 #include <isc/task.h>
-
 
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>
@@ -628,6 +626,7 @@ parse_args(int argc, char **argv) {
 	dns_rdatatype_t rdtype;
 	dns_rdataclass_t rdclass;
 	uint32_t serial = 0;
+	const char *errstr;
 
 	lookup = make_empty_lookup();
 
@@ -727,12 +726,17 @@ parse_args(int argc, char **argv) {
 			timeout = INT_MAX;
 			break;
 		case 'W':
-			timeout = atoi(optarg);
+			timeout = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "timeout is %s: %s", errstr, optarg);
 			if (timeout < 1)
 				timeout = 1;
 			break;
 		case 'R':
-			tries = atoi(optarg) + 1;
+			tries = strtonum(optarg, INT_MIN, INT_MAX - 1, &errstr);
+			if (errstr != NULL)
+				errx(1, "retries is %s: %s", errstr, optarg);
+			tries++;
 			if (tries < 2)
 				tries = 2;
 			break;
@@ -752,7 +756,9 @@ parse_args(int argc, char **argv) {
 			break;
 		case 'N':
 			debug("setting NDOTS to %s", optarg);
-			ndots = atoi(optarg);
+			ndots = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "ndots is %s: %s", errstr, optarg);
 			break;
 		case 'D':
 			/* Handled by pre_parse_args(). */
