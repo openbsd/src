@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1918 2020/02/05 11:26:52 patrick Exp $
+$OpenBSD: pcidevs,v 1.1919 2020/02/05 14:50:57 patrick Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5015,6 +5015,7 @@ product INTEL APOLLOLAKE_IGD_2	0x5a85	HD Graphics 500
 product INTEL APOLLOLAKE_HDA	0x5a98	Apollo Lake HD Audio
 product INTEL APOLLOLAKE_TXE	0x5a9a	Apollo Lake TXE
 product INTEL APOLLOLAKE_XHCI	0x5aa8	Apollo Lake xHCI
+product INTEL APOLLOLAKE_XDCI	0x5aaa	Apollo Lake xDCI
 product INTEL APOLLOLAKE_I2C_1	0x5aac	Apollo Lake I2C
 product INTEL APOLLOLAKE_I2C_2	0x5aae	Apollo Lake I2C
 product INTEL APOLLOLAKE_I2C_3	0x5ab0	Apollo Lake I2C
@@ -5029,6 +5030,7 @@ product INTEL APOLLOLAKE_UART_3	0x5ac0	Apollo Lake HSUART
 product INTEL APOLLOLAKE_SPI_1	0x5ac2	Apollo Lake SPI
 product INTEL APOLLOLAKE_SPI_2	0x5ac4	Apollo Lake SPI
 product INTEL APOLLOLAKE_SPI_3	0x5ac6	Apollo Lake SPI
+product INTEL APOLLOLAKE_PWM	0x5ac8	Apollo Lake PWM
 product INTEL APOLLOLAKE_SDMMC	0x5aca	Apollo Lake SD/MMC
 product INTEL APOLLOLAKE_EMMC	0x5acc	Apollo Lake eMMC
 product INTEL APOLLOLAKE_SDIO	0x5ad0	Apollo Lake SDIO
