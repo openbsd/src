@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1917 2020/02/05 10:33:20 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1918 2020/02/05 11:26:52 patrick Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5029,6 +5029,8 @@
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_7	0x5ab8		/* Apollo Lake I2C */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_8	0x5aba		/* Apollo Lake I2C */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_UART_1	0x5abc		/* Apollo Lake HSUART */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_UART_2	0x5abe		/* Apollo Lake HSUART */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_UART_3	0x5ac0		/* Apollo Lake HSUART */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_1	0x5ac2		/* Apollo Lake SPI */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_2	0x5ac4		/* Apollo Lake SPI */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_3	0x5ac6		/* Apollo Lake SPI */
@@ -5041,8 +5043,10 @@
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_1	0x5ad8		/* Apollo Lake PCIE */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_2	0x5ad9		/* Apollo Lake PCIE */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_3	0x5ada		/* Apollo Lake PCIE */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_6	0x5adb		/* Apollo Lake PCIE */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_AHCI	0x5ae3		/* Apollo Lake AHCI */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_LPC	0x5ae8		/* Apollo Lake LPC */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_UART_4	0x5aee		/* Apollo Lake HSUART */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_HB	0x5af0		/* Apollo Lake Host */
 #define	PCI_PRODUCT_INTEL_5100_HB	0x65c0		/* 5100 Host */
 #define	PCI_PRODUCT_INTEL_5100_PCIE_2	0x65e2		/* 5100 PCIE */

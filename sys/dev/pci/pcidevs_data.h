@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1917 2020/02/05 10:33:20 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1918 2020/02/05 11:26:52 patrick Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17556,6 +17556,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Apollo Lake HSUART",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_UART_2,
+	    "Apollo Lake HSUART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_UART_3,
+	    "Apollo Lake HSUART",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_1,
 	    "Apollo Lake SPI",
 	},
@@ -17604,12 +17612,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Apollo Lake PCIE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_6,
+	    "Apollo Lake PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_AHCI,
 	    "Apollo Lake AHCI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_LPC,
 	    "Apollo Lake LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_UART_4,
+	    "Apollo Lake HSUART",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_HB,
