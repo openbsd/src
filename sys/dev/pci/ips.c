@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.114 2020/01/23 07:53:00 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.115 2020/02/05 16:29:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -498,11 +498,11 @@ struct cfdriver ips_cd = {
 };
 
 static struct scsi_adapter ips_scsi_adapter = {
-	ips_scsi_cmd, scsi_minphys, NULL, NULL, ips_scsi_ioctl
+	ips_scsi_cmd, NULL, NULL, NULL, ips_scsi_ioctl
 };
 
 static struct scsi_adapter ips_scsi_pt_adapter = {
-	ips_scsi_pt_cmd, scsi_minphys, NULL, NULL, NULL
+	ips_scsi_pt_cmd, NULL, NULL, NULL, NULL
 };
 
 static const struct pci_matchid ips_ids[] = {

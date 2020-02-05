@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.15 2020/01/23 07:53:00 krw Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.16 2020/02/05 16:29:30 krw Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -356,7 +356,7 @@ struct cfdriver vmwpvs_cd = {
 void		vmwpvs_scsi_cmd(struct scsi_xfer *);
 
 struct scsi_adapter vmwpvs_switch = {
-	vmwpvs_scsi_cmd, scsi_minphys, NULL, NULL, NULL
+	vmwpvs_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 #define dwordsof(s)		(sizeof(s) / sizeof(u_int32_t))

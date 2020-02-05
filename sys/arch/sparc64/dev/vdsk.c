@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.51 2020/01/26 04:23:55 tedu Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.52 2020/02/05 16:29:29 krw Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -344,7 +344,7 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	scsi_iopool_init(&sc->sc_iopool, sc, vdsk_io_get, vdsk_io_put);
 
 	sc->sc_switch.scsi_cmd = vdsk_scsi_cmd;
-	sc->sc_switch.dev_minphys = scsi_minphys;
+	sc->sc_switch.dev_minphys = NULL;
 	sc->sc_switch.dev_probe = vdsk_dev_probe;
 	sc->sc_switch.dev_free = vdsk_dev_free;
 

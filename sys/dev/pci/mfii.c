@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.66 2020/01/25 05:38:02 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.67 2020/02/05 16:29:30 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -385,14 +385,14 @@ int		mfii_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 int		mfii_ioctl_cache(struct scsi_link *, u_long, struct dk_cache *);
 
 struct scsi_adapter mfii_switch = {
-	mfii_scsi_cmd, scsi_minphys, NULL, NULL, mfii_scsi_ioctl
+	mfii_scsi_cmd, NULL, NULL, NULL, mfii_scsi_ioctl
 };
 
 void		mfii_pd_scsi_cmd(struct scsi_xfer *);
 int		mfii_pd_scsi_probe(struct scsi_link *);
 
 struct scsi_adapter mfii_pd_switch = {
-	mfii_pd_scsi_cmd, scsi_minphys, mfii_pd_scsi_probe, NULL, NULL,
+	mfii_pd_scsi_cmd, NULL, mfii_pd_scsi_probe, NULL, NULL,
 };
 
 #define DEVNAME(_sc)		((_sc)->sc_dev.dv_xname)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.132 2020/01/26 00:53:31 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.133 2020/02/05 16:29:29 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -96,7 +96,7 @@ void		atascsi_free(struct scsi_link *);
 
 /* template */
 struct scsi_adapter atascsi_switch = {
-	atascsi_cmd, scsi_minphys, atascsi_probe, atascsi_free, NULL
+	atascsi_cmd, NULL, atascsi_probe, atascsi_free, NULL
 };
 
 void		ata_swapcopy(void *, void *, size_t);

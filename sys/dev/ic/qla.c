@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.59 2020/01/23 07:53:00 krw Exp $ */
+/*	$OpenBSD: qla.c,v 1.60 2020/02/05 16:29:29 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -170,7 +170,7 @@ static const struct qla_regs qla_regs_23XX = {
     ((*(_sc)->sc_regs->read_isr)((_sc), (_isr), (_info)))
 
 struct scsi_adapter qla_switch = {
-	qla_scsi_cmd, scsi_minphys, qla_scsi_probe, NULL, NULL
+	qla_scsi_cmd, NULL, qla_scsi_probe, NULL, NULL
 };
 
 int

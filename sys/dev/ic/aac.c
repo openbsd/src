@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.73 2020/01/23 07:52:59 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.74 2020/02/05 16:29:29 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -130,7 +130,7 @@ struct cfdriver aac_cd = {
 };
 
 struct scsi_adapter aac_switch = {
-	aac_scsi_cmd, scsi_minphys, NULL, NULL, NULL
+	aac_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 /* Falcon/PPC interface */

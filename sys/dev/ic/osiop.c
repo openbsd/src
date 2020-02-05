@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.53 2020/01/25 21:48:42 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.54 2020/02/05 16:29:29 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -344,9 +344,6 @@ osiop_attach(sc)
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
-/*
- * default minphys routine for osiop based controllers
- */
 void
 osiop_minphys(struct buf *bp, struct scsi_link *sl)
 {

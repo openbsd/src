@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6250.c,v 1.6 2020/01/23 07:52:59 krw Exp $	*/
+/*	$OpenBSD: aic6250.c,v 1.7 2020/02/05 16:29:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2010, 2013 Miodrag Vallat.
@@ -167,7 +167,7 @@ struct cfdriver oaic_cd = {
 };
 
 struct scsi_adapter aic6250_switch = {
-	aic6250_scsi_cmd, scsi_minphys, NULL, NULL, NULL
+	aic6250_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 /*

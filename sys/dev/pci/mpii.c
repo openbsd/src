@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.127 2020/01/23 07:53:00 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.128 2020/02/05 16:29:30 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -269,7 +269,7 @@ int		mpii_scsi_probe(struct scsi_link *);
 int		mpii_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 
 struct scsi_adapter mpii_switch = {
-	mpii_scsi_cmd, scsi_minphys, mpii_scsi_probe, NULL, mpii_scsi_ioctl
+	mpii_scsi_cmd, NULL, mpii_scsi_probe, NULL, mpii_scsi_ioctl
 };
 
 struct mpii_dmamem *

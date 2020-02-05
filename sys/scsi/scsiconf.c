@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.222 2019/12/08 13:05:12 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.223 2020/02/05 16:29:30 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -1338,16 +1338,6 @@ scsi_devid_wwn(struct scsi_link *link)
 	link->id = devid_alloc(DEVID_WWN, 0, sizeof(wwnn), (u_int8_t *)&wwnn);
 
 	return 0;
-}
-
-/*
- * The 'scsi_minphys' member of struct scsi_adapter for drivers which don't
- * need any specific routine.
- */
-void
-scsi_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	minphys(bp);
 }
 
 struct devid *

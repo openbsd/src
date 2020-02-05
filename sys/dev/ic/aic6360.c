@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.30 2020/01/23 07:52:59 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.31 2020/02/05 16:29:29 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -185,7 +185,7 @@ struct cfdriver aic_cd = {
 };
 
 struct scsi_adapter aic_switch = {
-	aic_scsi_cmd, scsi_minphys, NULL, NULL, NULL
+	aic_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 /*
