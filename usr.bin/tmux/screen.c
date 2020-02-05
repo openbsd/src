@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.57 2020/02/03 13:46:27 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.58 2020/02/05 13:06:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -155,8 +155,6 @@ screen_set_cursor_colour(struct screen *s, const char *colour)
 int
 screen_set_title(struct screen *s, const char *title)
 {
-	char	*cp;
-
 	if (!utf8_isvalid(title))
 		return (0);
 	free(s->title);
