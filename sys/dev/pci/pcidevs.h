@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1918 2020/02/05 11:26:52 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1919 2020/02/05 14:50:57 patrick Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5020,6 +5020,7 @@
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_HDA	0x5a98		/* Apollo Lake HD Audio */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_TXE	0x5a9a		/* Apollo Lake TXE */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_XHCI	0x5aa8		/* Apollo Lake xHCI */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_XDCI	0x5aaa		/* Apollo Lake xDCI */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_1	0x5aac		/* Apollo Lake I2C */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_2	0x5aae		/* Apollo Lake I2C */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_3	0x5ab0		/* Apollo Lake I2C */
@@ -5034,6 +5035,7 @@
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_1	0x5ac2		/* Apollo Lake SPI */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_2	0x5ac4		/* Apollo Lake SPI */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_3	0x5ac6		/* Apollo Lake SPI */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_PWM	0x5ac8		/* Apollo Lake PWM */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SDMMC	0x5aca		/* Apollo Lake SD/MMC */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_EMMC	0x5acc		/* Apollo Lake eMMC */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SDIO	0x5ad0		/* Apollo Lake SDIO */
