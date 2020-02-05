@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.46 2020/02/05 16:29:30 krw Exp $ */
+/*	$OpenBSD: mpath.c,v 1.47 2020/02/05 21:50:41 krw Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -409,7 +409,8 @@ mpath_minphys(struct buf *bp, struct scsi_link *link)
 	TAILQ_FOREACH(g, &d->d_groups, g_entry) {
 		TAILQ_FOREACH(p, &g->g_paths, p_entry) {
 			/* XXX crossing layers with mutex held */
-			p->p_link->adapter->dev_minphys(bp, p->p_link);
+			if (p->p_link->adapter->dev_minphys != NULL)
+				p->p_link->adapter->dev_minphys(bp, p->p_link);
 		}
 	}
 	mtx_leave(&d->d_mtx);
