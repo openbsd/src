@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.40 2020/02/04 18:00:30 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.41 2020/02/05 17:01:43 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -471,6 +471,18 @@ tls13_server_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
+tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
+{
+	return 0;
+}
+
+int
+tls13_server_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
+{
+	return 0;
+}
+
+int
 tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	int alert_desc;
@@ -485,6 +497,7 @@ tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx, CBS *cbs)
  err:
 	if (ctx->alert == 0)
 		ctx->alert = TLS1_AD_DECODE_ERROR;
+
 	return 0;
 }
 
@@ -841,62 +854,6 @@ tls13_client_finished_sent(struct tls13_ctx *ctx)
 	 */
 	return tls13_record_layer_set_write_traffic_key(ctx->rl,
 	    &secrets->client_application_traffic);
-}
-
-
-static int
-tls13_client_hello_retry_process(struct tls13_ctx *ctx, CBS *cbs)
-{
-	CBS server_random, session_id;
-	uint16_t cipher_suite, legacy_version;
-	uint8_t compression_method;
-	int alert_desc;
-	SSL *s = ctx->ssl;
-
-	if (!CBS_get_u16(cbs, &legacy_version))
-		goto err;
-	if (!CBS_get_bytes(cbs, &server_random, SSL3_RANDOM_SIZE))
-		goto err;
-	if (!CBS_get_u8_length_prefixed(cbs, &session_id))
-		goto err;
-	if (!CBS_get_u16(cbs, &cipher_suite))
-		goto err;
-	if (!CBS_get_u8(cbs, &compression_method))
-		goto err;
-
-	/*
-	 * XXX currently this will change state and be hazardous later
-	 * if we decide to support sending an updated client hello.
-	 * however, since we will not today (and are going to return
-	 * illegal parameter as per section 4.1.4) we just ensure
-	 * that the extensions parse correctly.
-	 */
-	if (!tlsext_client_parse(s, cbs, &alert_desc, SSL_TLSEXT_MSG_SH)) {
-		ctx->alert = alert_desc;
-		goto err;
-	}
-
-	/* XXX for now, just say no, we will not change our hello */
-	ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
- err:
-	if (ctx->alert == 0)
-		ctx->alert = TLS1_AD_DECODE_ERROR;
-	return 0;
-}
-
-int
-tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
-{
-	int ret = 0;
-
-	if (!tls13_client_hello_retry_process(ctx, cbs)) {
-		if (ctx->alert == SSL_AD_ILLEGAL_PARAMETER)
-			tls13_set_errorx(ctx, TLS13_ERR_HRR_FAILED, 0,
-			    "Unsatisfiable hello retry request", NULL);
-		goto err;
-	}
-err:
-	return ret;
 }
 
 int

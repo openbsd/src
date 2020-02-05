@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.23 2020/02/04 18:00:30 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.24 2020/02/05 17:01:43 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -295,13 +295,7 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
-{
-	return 0;
-}
-
-int
-tls13_server_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
+tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	return 0;
 }
