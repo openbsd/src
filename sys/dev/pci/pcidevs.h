@@ -4592,9 +4592,40 @@
 #define	PCI_PRODUCT_INTEL_WL_3165_2	0x3166		/* Dual Band Wireless AC 3165 */
 #define	PCI_PRODUCT_INTEL_GLK_UHD_605	0x3184		/* UHD Graphics 605 */
 #define	PCI_PRODUCT_INTEL_GLK_UHD_600	0x3185		/* UHD Graphics 600 */
+#define	PCI_PRODUCT_INTEL_GLK_DPTF	0x318c		/* Gemini Lake DPTF */
+#define	PCI_PRODUCT_INTEL_GLK_GNA	0x3190		/* Gemini Lake GNA */
+#define	PCI_PRODUCT_INTEL_GLK_PMC	0x3194		/* Gemini Lake PMC */
+#define	PCI_PRODUCT_INTEL_GLK_HDA	0x3198		/* Gemini Lake HD Audio */
+#define	PCI_PRODUCT_INTEL_GLK_XHCI	0x31a8		/* Gemini Lake xHCI */
+#define	PCI_PRODUCT_INTEL_GLK_I2C_1	0x31ac		/* Gemini Lake I2C */
+#define	PCI_PRODUCT_INTEL_GLK_I2C_2	0x31ae		/* Gemini Lake I2C */
+#define	PCI_PRODUCT_INTEL_GLK_I2C_3	0x31b0		/* Gemini Lake I2C */
+#define	PCI_PRODUCT_INTEL_GLK_I2C_4	0x31b2		/* Gemini Lake I2C */
+#define	PCI_PRODUCT_INTEL_GLK_I2C_5	0x31b4		/* Gemini Lake I2C */
+#define	PCI_PRODUCT_INTEL_GLK_I2C_6	0x31b6		/* Gemini Lake I2C */
+#define	PCI_PRODUCT_INTEL_GLK_I2C_7	0x31b8		/* Gemini Lake I2C */
+#define	PCI_PRODUCT_INTEL_GLK_I2C_8	0x31ba		/* Gemini Lake I2C */
+#define	PCI_PRODUCT_INTEL_GLK_UART_1	0x31bc		/* Gemini Lake HSUART */
+#define	PCI_PRODUCT_INTEL_GLK_UART_2	0x31be		/* Gemini Lake HSUART */
+#define	PCI_PRODUCT_INTEL_GLK_UART_3	0x31c0		/* Gemini Lake HSUART */
+#define	PCI_PRODUCT_INTEL_GLK_SPI_1	0x31c2		/* Gemini Lake SPI */
+#define	PCI_PRODUCT_INTEL_GLK_SPI_2	0x31c4		/* Gemini Lake SPI */
+#define	PCI_PRODUCT_INTEL_GLK_SPI_3	0x31c6		/* Gemini Lake SPI */
 #define	PCI_PRODUCT_INTEL_GLK_SDMMC	0x31ca		/* Gemini Lake SD/MMC */
 #define	PCI_PRODUCT_INTEL_GLK_EMMC	0x31cc		/* Gemini Lake eMMC */
 #define	PCI_PRODUCT_INTEL_GLK_SDIO	0x31d0		/* Gemini Lake SDIO */
+#define	PCI_PRODUCT_INTEL_GLK_SMB	0x31d4		/* Gemini Lake SMBus */
+#define	PCI_PRODUCT_INTEL_GLK_PCIE_1	0x31d6		/* Gemini Lake PCIE */
+#define	PCI_PRODUCT_INTEL_GLK_PCIE_2	0x31d7		/* Gemini Lake PCIE */
+#define	PCI_PRODUCT_INTEL_GLK_PCIE_3	0x31d8		/* Gemini Lake PCIE */
+#define	PCI_PRODUCT_INTEL_GLK_PCIE_4	0x31d9		/* Gemini Lake PCIE */
+#define	PCI_PRODUCT_INTEL_GLK_PCIE_5	0x31da		/* Gemini Lake PCIE */
+#define	PCI_PRODUCT_INTEL_GLK_PCIE_6	0x31db		/* Gemini Lake PCIE */
+#define	PCI_PRODUCT_INTEL_GLK_WL	0x31dc		/* Gemini Lake CNVi */
+#define	PCI_PRODUCT_INTEL_GLK_AHCI	0x31e3		/* Gemini Lake AHCI */
+#define	PCI_PRODUCT_INTEL_GLK_LPC	0x31e8		/* Gemini Lake LPC */
+#define	PCI_PRODUCT_INTEL_GLK_UART_4	0x31ee		/* Gemini Lake HSUART */
+#define	PCI_PRODUCT_INTEL_GLK_HB	0x31f0		/* Gemini Lake Host */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 SATA */
 #define	PCI_PRODUCT_INTEL_82855PM_HB	0x3340		/* 82855PM Host */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM AGP */
