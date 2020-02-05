@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.33 2020/02/01 12:42:39 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.34 2020/02/05 18:06:42 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3296,6 +3296,12 @@ test_tlsext_keyshare_server(void)
 		failure = 1;
 		goto done;
 	}
+
+	if ((S3I(ssl)->hs_tls13.key_share =
+	    tls13_key_share_new(NID_X25519)) == NULL)
+		errx(1, "failed to create key share");
+	if (!tls13_key_share_generate(S3I(ssl)->hs_tls13.key_share))
+		errx(1, "failed to generate key share");
 
 	CBS_init(&cbs, data, dlen);
 
