@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.49 2020/01/29 13:44:42 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.50 2020/02/05 06:12:43 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -355,7 +355,7 @@ tls13_handshake_send_action(struct tls13_ctx *ctx,
 	}
 
 	if (ctx->handshake_message_sent_cb != NULL)
-		ctx->handshake_message_sent_cb(ctx, &cbs);
+		ctx->handshake_message_sent_cb(ctx);
 
 	tls13_handshake_msg_free(ctx->hs_msg);
 	ctx->hs_msg = NULL;
@@ -394,7 +394,7 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 		return TLS13_IO_FAILURE;
 
 	if (ctx->handshake_message_recv_cb != NULL)
-		ctx->handshake_message_recv_cb(ctx, &cbs);
+		ctx->handshake_message_recv_cb(ctx);
 
 	/*
 	 * In TLSv1.3 there is no way to know if you're going to receive a

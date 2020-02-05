@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.58 2020/01/30 17:09:23 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.59 2020/02/05 06:12:43 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -50,7 +50,7 @@ typedef void (*tls13_phh_sent_cb)(void *_cb_arg);
 typedef ssize_t (*tls13_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
 typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen,
     void *_cb_arg);
-typedef void (*tls13_handshake_message_cb)(void *_cb_arg, CBS *_cbs);
+typedef void (*tls13_handshake_message_cb)(void *_cb_arg);
 
 /*
  * Buffers.

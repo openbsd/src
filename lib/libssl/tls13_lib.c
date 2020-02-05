@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.32 2020/01/29 17:03:58 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.33 2020/02/05 06:12:43 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -106,27 +106,33 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 }
 
 static void
-tls13_legacy_handshake_message_recv_cb(void *arg, CBS *cbs)
+tls13_legacy_handshake_message_recv_cb(void *arg)
 {
 	struct tls13_ctx *ctx = arg;
 	SSL *s = ctx->ssl;
+	CBS cbs;
 
-	if (s->internal->msg_callback != NULL)
-		s->internal->msg_callback(0, TLS1_3_VERSION, SSL3_RT_HANDSHAKE,
-		    CBS_data(cbs), CBS_len(cbs), s,
-		    s->internal->msg_callback_arg);
+	if (s->internal->msg_callback == NULL)
+		return;
+
+	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
+	s->internal->msg_callback(0, TLS1_3_VERSION, SSL3_RT_HANDSHAKE,
+	    CBS_data(&cbs), CBS_len(&cbs), s, s->internal->msg_callback_arg);
 }
 
 static void
-tls13_legacy_handshake_message_sent_cb(void *arg, CBS *cbs)
+tls13_legacy_handshake_message_sent_cb(void *arg)
 {
 	struct tls13_ctx *ctx = arg;
 	SSL *s = ctx->ssl;
+	CBS cbs;
 
-	if (s->internal->msg_callback != NULL)
-		s->internal->msg_callback(1, TLS1_3_VERSION, SSL3_RT_HANDSHAKE,
-		    CBS_data(cbs), CBS_len(cbs), s,
-		    s->internal->msg_callback_arg);
+	if (s->internal->msg_callback == NULL)
+		return;
+
+	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
+	s->internal->msg_callback(1, TLS1_3_VERSION, SSL3_RT_HANDSHAKE,
+	    CBS_data(&cbs), CBS_len(&cbs), s, s->internal->msg_callback_arg);
 }
 
 static int
