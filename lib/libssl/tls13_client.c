@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.42 2020/02/05 17:30:30 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.43 2020/02/06 13:19:18 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -233,6 +233,8 @@ tls13_client_hello_sent(struct tls13_ctx *ctx)
 	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_2_VERSION);
 	tls13_record_layer_allow_ccs(ctx->rl, 1);
 
+	tls1_transcript_freeze(ctx->ssl);
+
 	return 1;
 }
 
@@ -400,6 +402,49 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 static int
+tls13_client_synthetic_handshake_message(struct tls13_ctx *ctx)
+{
+	struct tls13_handshake_msg *hm = NULL;
+	unsigned char buf[EVP_MAX_MD_SIZE];
+	size_t hash_len;
+	CBB cbb;
+	CBS cbs;
+	SSL *s = ctx->ssl;
+	int ret = 0;
+
+	/*
+	 * Replace ClientHello with synthetic handshake message - see
+	 * RFC 8446 section 4.4.1.
+	 */
+	if (!tls1_transcript_hash_init(s))
+		goto err;
+	if (!tls1_transcript_hash_value(s, buf, sizeof(buf), &hash_len))
+		goto err;
+
+	if ((hm = tls13_handshake_msg_new()) == NULL)
+		goto err;
+	if (!tls13_handshake_msg_start(hm, &cbb, TLS13_MT_MESSAGE_HASH))
+		goto err;
+	if (!CBB_add_bytes(&cbb, buf, hash_len))
+		goto err;
+	if (!tls13_handshake_msg_finish(hm))
+		goto err;
+
+	tls13_handshake_msg_data(hm, &cbs);
+
+	tls1_transcript_reset(ctx->ssl);
+	if (!tls1_transcript_record(ctx->ssl, CBS_data(&cbs), CBS_len(&cbs)))
+		goto err;
+
+	ret = 1;
+
+ err:
+	tls13_handshake_msg_free(hm);
+
+	return ret;
+}
+
+static int
 tls13_client_engage_record_protection(struct tls13_ctx *ctx)
 {
 	struct tls13_secrets *secrets;
@@ -469,6 +514,8 @@ tls13_client_engage_record_protection(struct tls13_ctx *ctx)
 int
 tls13_server_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
+	SSL *s = ctx->ssl;
+
 	/*
 	 * We may have received a legacy (pre-TLSv1.3) server hello,
 	 * a TLSv1.3 server hello or a TLSv1.3 hello retry request.
@@ -476,11 +523,23 @@ tls13_server_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 	if (!tls13_server_hello_process(ctx, cbs))
 		return 0;
 
+	tls1_transcript_unfreeze(s);
+
+	if (ctx->hs->hrr) {
+		if (!tls13_client_synthetic_handshake_message(ctx))
+			return 0;
+	}
+
+	if (!tls13_handshake_msg_record(ctx))
+		return 0;
+
 	if (ctx->hs->use_legacy)
 		return tls13_use_legacy_client(ctx);
 
-	if (!tls13_client_engage_record_protection(ctx))
-		return 0;
+	if (!ctx->hs->hrr) {
+		if (!tls13_client_engage_record_protection(ctx))
+			return 0;
+	}
 
 	ctx->handshake_stage.hs_type |= NEGOTIATED;
 	if (ctx->hs->hrr)
@@ -494,13 +553,49 @@ tls13_server_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 int
 tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	return 0;
+	int nid;
+
+	/*
+	 * Ensure that the server supported group is not the same
+	 * as the one we previously offered and that it was one that
+	 * we listed in our supported groups.
+	 */
+	if (ctx->hs->server_group == tls13_key_share_group(ctx->hs->key_share))
+		return 0; /* XXX alert */
+	if ((nid = tls1_ec_curve_id2nid(ctx->hs->server_group)) == 0)
+		return 0;
+	if (nid != NID_X25519 && nid != NID_X9_62_prime256v1 && nid != NID_secp384r1)
+		return 0; /* XXX alert */
+
+	/* Switch to new key share. */
+	tls13_key_share_free(ctx->hs->key_share);
+	if ((ctx->hs->key_share = tls13_key_share_new(nid)) == NULL)
+		return 0;
+	if (!tls13_key_share_generate(ctx->hs->key_share))
+		return 0;
+
+	if (!tls13_client_hello_build(ctx, cbb))
+		return 0;
+
+	return 1;
 }
 
 int
 tls13_server_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
-	return 0;
+	if (!tls13_server_hello_process(ctx, cbs))
+		return 0;
+
+	if (ctx->hs->use_legacy)
+		return 0; /* XXX alert */
+
+	if (ctx->hs->hrr)
+		return 0; /* XXX alert */
+
+	if (!tls13_client_engage_record_protection(ctx))
+		return 0;
+
+	return 1;
 }
 
 int
