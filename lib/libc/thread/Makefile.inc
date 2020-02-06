@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2018/10/21 17:07:24 visa Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2020/02/06 03:13:45 jsg Exp $
 
 .PATH: ${LIBCSRCDIR}/thread
 
@@ -19,16 +19,13 @@ notyet= rthread_condattr_clock.c \
 	spinlock.c \
 	spinlocktry.c
 
-.if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "mips64" || \
-    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sparc64"
+.if ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "m88k" || \
+    ${MACHINE_ARCH} == "sh"
+SRCS+=	rthread_sync.c
+.else
 CFLAGS+= -DFUTEX
 SRCS+=	rthread_mutex.c \
 	rthread_cond.c
-.else
-SRCS+=	rthread_sync.c
 .endif
 
 .if defined(NOPIC)
