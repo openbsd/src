@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.h,v 1.3 2011/04/26 15:46:58 krw Exp $
+/*	$OpenBSD: trm.h,v 1.4 2020/02/06 15:34:29 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.h
@@ -75,7 +75,7 @@ struct trm_scsi_req_q
 	u_int32_t	PhysSRB;
 	u_int32_t	SRBTotalXferLength;
 	u_int32_t	SRBSGPhyAddr;        /* a segment starting address     */
-       
+
 	u_int16_t	SRBState;            /* State machine                  */
 #define TRM_FREE                    0x0000
 #define TRM_WAIT                    0x0001
@@ -232,7 +232,7 @@ struct trm_softc
 };
 
 /*
- * The SEEPROM structure for TRM_S1040            
+ * The SEEPROM structure for TRM_S1040
  */
 struct trm_target_nvram
 {
@@ -276,7 +276,7 @@ struct trm_adapter_nvram
 
 /*
  * The PCI configuration register offsets for the TRM_S1040, and
- * the associated bit definitions.        
+ * the associated bit definitions.
  */
 
 #define TRM_S1040_ID            0x00    /* Vendor and Device ID               */
@@ -344,27 +344,27 @@ struct trm_adapter_nvram
  * 07-06    0    RSVD                   Reversed. Always read 0
  * 05       0    LVDS                   Reversed. Always read 0
  * 04       0    WIDE/WSCSI             Enable wide (16-bits) SCSI transfer.
- * 03       0    ALTPERD/ALTPD          Alternate (Sync./Period) mode. 
+ * 03       0    ALTPERD/ALTPD          Alternate (Sync./Period) mode.
  *
  *                                      @@ When this bit is set,
- *                                         the synchronous period bits 2:0 
+ *                                         the synchronous period bits 2:0
  *                                         in the Synchronous Mode register
- *                                         are used to transfer data 
+ *                                         are used to transfer data
  *                                         at the Fast-20 rate.
  *                                      @@ When this bit is reset,
- *                                         the synchronous period bits 2:0 
+ *                                         the synchronous period bits 2:0
  *                                         in the Synchronous Mode Register
- *                                         are used to transfer data 
+ *                                         are used to transfer data
  *                                         at the Fast-40 rate.
  *
  * 02-00    0    PERIOD[2:0]/SXPD[02:00]    Synchronous SCSI Transfer Rate.
- *                                      These 3 bits specify 
+ *                                      These 3 bits specify
  *                                      the Synchronous SCSI Transfer Rate
  *                                      for Fast-20 and Fast-10.
  *                                      These bits are also reset
  *                                      by a SCSI Bus reset.
  *
- * For Fast-10 bit ALTPD = 0 and LVDS = 0 
+ * For Fast-10 bit ALTPD = 0 and LVDS = 0
  *     and bit2,bit1,bit0 is defined as follows :
  *
  *           000    100ns, 10.0 Mbytes/s
@@ -376,7 +376,7 @@ struct trm_adapter_nvram
  *           110    400ns,  2.5 Mbytes/s
  *           111    450ns,  2.2 Mbytes/s
  *
- * For Fast-20 bit ALTPD = 1 and LVDS = 0 
+ * For Fast-20 bit ALTPD = 1 and LVDS = 0
  *     and bit2,bit1,bit0 is defined as follows :
  *
  *           000     50ns, 20.0 Mbytes/s
