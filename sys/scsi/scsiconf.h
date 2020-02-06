@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.184 2020/02/05 16:29:30 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.185 2020/02/06 21:06:15 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -199,30 +199,16 @@ struct devid *	devid_copy(struct devid *);
 void		devid_free(struct devid *);
 
 /*
- * The following documentation tries to describe the relationship between the
- * various structures defined in this file:
- *
- * each adapter type has a scsi_adapter struct. This describes the adapter and
- *    identifies routines that can be called to use the adapter.
- * each existing device position (scsibus + target + lun)
- *    can be described by a scsi_link struct.
- *    Only scsi positions that actually have devices, have a scsi_link
- *    structure assigned. so in effect each device has scsi_link struct.
- *    The scsi_link structure contains information identifying both the
- *    device driver and the adapter driver for that position on that scsi bus,
- *    and can be said to 'link' the two.
- * each individual scsi bus has an array that points to all the scsi_link
- *    structs associated with that scsi bus. Slots with no device have
- *    a NULL pointer.
- * each individual device also knows the address of its own scsi_link
- *    structure.
- *
- *				-------------
- *
- * The key to all this is the scsi_link structure which associates all the
- * other structures with each other in the correct configuration.  The
- * scsi_link is the connecting information that allows each part of the
- * scsi system to find the associated other parts.
+ * Each existing device (scsibus + target + lun)
+ *    - is described by a scsi_link struct.
+ * Each scsi_link struct
+ *    - identifies the device's softc and scsi_adapter.
+ * Each scsi_adapter struct
+ *    - contains pointers to the device's scsi functions.
+ * Each scsibus_softc has an SLIST
+ *    - holding pointers to the scsi_link structs of devices on that scsi bus.
+ * Each individual device
+ *    - knows the address of its scsi_link structure.
  */
 
 struct scsi_xfer;
@@ -333,7 +319,7 @@ struct scsi_link {
 #define SDEV_ONLYBIG		0x4000  /* always use READ_BIG and WRITE_BIG */
 	int	(*interpret_sense)(struct scsi_xfer *);
 	void	*device_softc;		/* needed for call to foo_start */
-	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
+	struct	scsi_adapter *adapter;	/* adapter entry points */
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
 	struct	scsibus_softc *bus;	/* link to the scsibus we're on */
 	struct	scsi_inquiry_data inqdata; /* copy of INQUIRY data from probe */
