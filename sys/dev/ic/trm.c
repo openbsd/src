@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.36 2020/01/26 00:53:31 krw Exp $
+/*	$OpenBSD: trm.c,v 1.37 2020/02/06 15:56:36 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -9,8 +9,8 @@
  * (C)Copyright 1995-1999 Tekram Technology Co., Ltd.
  * (C)Copyright 2001-2002 Ashley R. Martens and Kenneth R Westerback
  * ------------------------------------------------------------
- *    HISTORY:                    
- *                        
+ *    HISTORY:
+ *
  *  REV#   DATE      NAME                  DESCRIPTION
  *  1.00   05/01/99  ERICH CHEN            First released for NetBSD 1.4.x
  *  1.01   00/00/00  MARTIN AKESSON        Port to OpenBSD 2.8
@@ -137,7 +137,7 @@ struct scsi_adapter trm_switch = {
 	trm_scsi_cmd, trm_minphys, NULL, NULL, NULL
 };
 
-/* 
+/*
  * ------------------------------------------------------------
  *
  *          stateV = (void *) trm_SCSI_phase0[phase]
@@ -214,7 +214,7 @@ u_int8_t trm_clock_period[8] = {
  * ------------------------------------------------------------
  * Function : trm_srb_alloc
  * Purpose  : Get the first free SRB
- * Inputs   : 
+ * Inputs   :
  * Return   : NULL or a free SCSI Request block
  * ------------------------------------------------------------
  */
@@ -242,8 +242,8 @@ trm_srb_alloc(void *xsc)
  * ------------------------------------------------------------
  * Function : trm_RewaitSRB
  * Purpose  : Q back to pending Q
- * Inputs   : struct trm_dcb * - 
- *            struct trm_scsi_req_q * - 
+ * Inputs   : struct trm_dcb * -
+ *            struct trm_scsi_req_q * -
  * ------------------------------------------------------------
  */
 void
@@ -265,7 +265,7 @@ trm_RewaitSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 
 	pSRB->SRBState     = TRM_READY;
 	pSRB->TargetStatus = SCSI_OK;
-	pSRB->AdaptStatus  = TRM_STATUS_GOOD; 
+	pSRB->AdaptStatus  = TRM_STATUS_GOOD;
 
 	pSRB->SRBFlag |= TRM_ON_WAITING_SRB;
 	TAILQ_INSERT_HEAD(&sc->waitingSRB, pSRB, link);
@@ -279,7 +279,7 @@ trm_RewaitSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
  * Purpose  : If there is no active DCB then run robin through
  *            the DCB's to find the next waiting SRB
  *            and move it to the going list.
- * Inputs   : struct trm_softc * - 
+ * Inputs   : struct trm_softc * -
  * ------------------------------------------------------------
  */
 void
@@ -319,7 +319,7 @@ out:
  * ------------------------------------------------------------
  */
 void
-trm_scsi_cmd(struct scsi_xfer *xs) 
+trm_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct trm_scsi_req_q *pSRB;
 	bus_space_handle_t ioh;
@@ -366,7 +366,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 		scsi_done(xs);
 		return;
  	}
- 
+
 	xferflags = xs->flags;
 	if (xferflags & SCSI_RESET) {
 #ifdef TRM_DEBUG0
@@ -381,14 +381,14 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 
 	pSRB = xs->io;
 	trm_srb_reinit(sc, pSRB);
-	
+
 	xs->error  = XS_NOERROR;
 	xs->status = SCSI_OK;
 	xs->resid  = 0;
 
 	intflag = splbio();
 
-	/* 
+	/*
 	 * BuildSRB(pSRB,pDCB);
 	 */
 	if (xs->datalen != 0) {
@@ -468,7 +468,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
  * ------------------------------------------------------------
  * Function : trm_ResetAllDevParam
  * Purpose  :
- * Inputs   : struct trm_softc * 
+ * Inputs   : struct trm_softc *
  * ------------------------------------------------------------
  */
 void
@@ -496,7 +496,7 @@ trm_ResetAllDevParam(struct trm_softc *sc)
  * ------------------------------------------------------------
  * Function : trm_ResetDevParam
  * Purpose  :
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -514,14 +514,14 @@ trm_ResetDevParam(struct trm_softc *sc, struct trm_dcb *pDCB, u_int8_t quirks)
 	pDCB->MaxNegoPeriod = 0;
 
 	pDCB->DevMode = pEEpromBuf->NvramTarget[target].NvmTarCfg0;
-	
+
 	pDCB->IdentifyMsg = MSG_IDENTIFY(pDCB->lun, ((pDCB->DevMode & TRM_DISCONNECT) != 0));
-	
+
 	if (((quirks & SDEV_NOWIDE) == 0) &&
 	    (pDCB->DevMode & TRM_WIDE) &&
 	    ((sc->sc_config & HCC_WIDE_CARD) != 0))
 		pDCB->DCBFlag |= TRM_WIDE_NEGO_16BIT;
-	
+
 	if (((quirks & SDEV_NOSYNC) == 0) &&
 	    ((pDCB->DevMode & TRM_SYNC) != 0)) {
 		PeriodIndex   = pEEpromBuf->NvramTarget[target].NvmTarPeriod & 0x07;
@@ -541,7 +541,7 @@ trm_ResetDevParam(struct trm_softc *sc, struct trm_dcb *pDCB, u_int8_t quirks)
  * ------------------------------------------------------------
  * Function : trm_RecoverSRB
  * Purpose  : Moves all SRBs from Going to Waiting for all the Link DCBs
- * Inputs   : struct trm_softc * - 
+ * Inputs   : struct trm_softc * -
  * ------------------------------------------------------------
  */
 void
@@ -563,7 +563,7 @@ trm_RecoverSRB(struct trm_softc *sc)
  * ------------------------------------------------------------
  * Function : trm_reset
  * Purpose  : perform a hard reset on the SCSI bus (and TRM_S1040 chip).
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -588,7 +588,7 @@ trm_reset (struct trm_softc *sc)
 	bus_space_write_1(iot, ioh,
 	    TRM_S1040_SCSI_INTEN,
 	    (EN_SELECT | EN_SELTIMEOUT | EN_DISCONNECT | EN_RESELECTED |
-		EN_SCSIRESET | EN_BUSSERVICE | EN_CMDDONE)); 
+		EN_SCSIRESET | EN_BUSSERVICE | EN_CMDDONE));
 	/*
 	 * Enable DMA interrupt
 	 */
@@ -628,7 +628,7 @@ trm_timeout(void *arg1)
 	struct trm_scsi_req_q *pSRB;
  	struct scsi_xfer *xs;
  	struct trm_softc *sc;
- 
+
  	pSRB = (struct trm_scsi_req_q *)arg1;
  	xs   = pSRB->xs;
 
@@ -655,7 +655,7 @@ trm_timeout(void *arg1)
  * Function : trm_StartSRB
  * Purpose  : Send the commands in the SRB to the device
  * Inputs   : struct trm_softc * -
- *            struct trm_scsi_req_q * - 
+ *            struct trm_scsi_req_q * -
  * Return   : 0 - SCSI processor is unoccupied
  *            1 - SCSI processor is occupied with an SRB
  * ------------------------------------------------------------
@@ -673,12 +673,12 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	printf("%s: trm_StartSRB. sc = %p, pDCB = %p, pSRB = %p\n",
 	    sc->sc_device.dv_xname, sc, pDCB, pSRB);
 #endif
-	/* 
+	/*
 	 * If the queue is full or the SCSI processor has a pending interrupt
 	 * then try again later.
 	 */
 	if ((pDCB->DCBFlag & TRM_QUEUE_FULL) || (bus_space_read_2(iot, ioh,
-	    TRM_S1040_SCSI_STATUS) & SCSIINTERRUPT)) 
+	    TRM_S1040_SCSI_STATUS) & SCSIINTERRUPT))
 		return (1);
 
 	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_HOSTID, sc->sc_AdaptSCSIID);
@@ -711,7 +711,7 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 		pSRB->SRBState = TRM_MSGOUT;
 
 	} else if ((pDCB->DCBFlag & TRM_USE_TAG_QUEUING) == 0) {
-		pDCB->DCBFlag |= TRM_QUEUE_FULL;			
+		pDCB->DCBFlag |= TRM_QUEUE_FULL;
 
 	} else if ((sc->MsgBuf[0] & MSG_IDENTIFY_DISCFLAG) != 0) {
 		if (pSRB->TagNumber == TRM_NO_TAG) {
@@ -732,7 +732,7 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 		/* TODO XXXX: Should send ORDERED_Q_TAG if metadata (non-block) i/o!? */
 		sc->MsgBuf[sc->MsgCnt++] = MSG_SIMPLE_Q_TAG;
 		sc->MsgBuf[sc->MsgCnt++] = pSRB->TagNumber;
-		
+
 		scsicommand = SCMD_SEL_ATN3;
 	}
 
@@ -755,7 +755,7 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	 */
 	bus_space_write_2(iot, ioh, TRM_S1040_SCSI_CONTROL, DO_DATALATCH | DO_HWRESELECT);
 	/*
-	 * SCSI command 
+	 * SCSI command
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_COMMAND, scsicommand);
 
@@ -765,8 +765,8 @@ trm_StartSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 /*
  * ------------------------------------------------------------
  * Function : trm_Interrupt
- * Purpose  : Catch an interrupt from the adapter           
- *            Process pending device interrupts.        
+ * Purpose  : Catch an interrupt from the adapter
+ *            Process pending device interrupts.
  * Inputs   : void * - struct trm_softc * structure pointer
  * ------------------------------------------------------------
  */
@@ -811,29 +811,29 @@ trm_Interrupt(void *vsc)
 		 * software sequential machine
 		 */
 		phase = (u_int16_t) pSRB->ScsiPhase;  /* phase: */
-		/* 
+		/*
 		 * 62037 or 62137
 		 * call  trm_SCSI_phase0[]... "phase entry"
 		 * handle every phase before start transfer
 		 */
 		stateV = trm_SCSI_phase0[phase];
 		stateV(sc, pSRB, &scsi_status);
-		/* 
+		/*
 		 * if any exception occurred
 		 * scsi_status will be modified to bus free phase
 		 * new scsi_status transfer out from previous stateV
-		 */ 
+		 */
 		/*
 		 * phase:0,1,2,3,4,5,6,7
 		 */
 		pSRB->ScsiPhase = scsi_status & PHASEMASK;
-		phase = (u_int16_t) scsi_status & PHASEMASK;       
-		/* 
+		phase = (u_int16_t) scsi_status & PHASEMASK;
+		/*
 		 * call  trm_SCSI_phase1[]... "phase entry"
 		 * handle every phase do transfer
 		 */
 		stateV = trm_SCSI_phase1[phase];
-		stateV(sc, pSRB, &scsi_status); 
+		stateV(sc, pSRB, &scsi_status);
 
 	} else {
 		return 0;
@@ -859,7 +859,7 @@ trm_MsgOutPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
 	case TRM_ABORT_SENT:
 		*pscsi_status = PH_BUS_FREE; /* initial phase */
 		break;
-		
+
 	default:
 		break;
 	}
@@ -888,7 +888,7 @@ trm_MsgOutPhase1(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
 		 * WIDE DATA TRANSFER REQUEST code (03h)
 		 */
 		pDCB->DCBFlag &= ~TRM_WIDE_NEGO_ENABLE;
-		pDCB->DCBFlag |=  TRM_DOING_WIDE_NEGO; 
+		pDCB->DCBFlag |=  TRM_DOING_WIDE_NEGO;
 
 		sc->MsgBuf[0] = pDCB->IdentifyMsg & ~MSG_IDENTIFY_DISCFLAG;
 		sc->MsgBuf[1] = MSG_EXTENDED;
@@ -901,7 +901,7 @@ trm_MsgOutPhase1(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
 			sc->MsgBuf[4] = MSG_EXT_WDTR_BUS_16_BIT;
 
 		sc->MsgCnt = 5;
-			
+
 	} else if ((pDCB->DCBFlag & TRM_SYNC_NEGO_ENABLE) != 0) {
 
 		pDCB->DCBFlag &= ~TRM_SYNC_NEGO_ENABLE;
@@ -943,7 +943,7 @@ trm_MsgOutPhase1(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
  * ------------------------------------------------------------
  * Function : trm_CommandPhase1
  * Purpose  : Send commands to bus
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1026,7 +1026,7 @@ trm_DataOutPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *p
 			    DO_CLRFIFO);
 		}
 		if (dLeftCounter == 0 ||
-		    (scsi_status & SCSIXFERCNT_2_ZERO) != 0) {   
+		    (scsi_status & SCSIXFERCNT_2_ZERO) != 0) {
 			TempDMAstatus = bus_space_read_1(iot,
 			    ioh, TRM_S1040_DMA_STATUS);
 			while ((TempDMAstatus & DMAXFERCOMP) == 0) {
@@ -1060,9 +1060,9 @@ trm_DataOutPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *p
 				for (SGIndexTemp = pSRB->SRBSGIndex;
 				    SGIndexTemp < pSRB->SRBSGCount;
 				    SGIndexTemp++) {
-					/* 
+					/*
 					 * find last time which SG transfer be
-					 * disconnect 
+					 * disconnect
 					 */
 					if (TempSRBXferredLength >= pseg->length)
 						TempSRBXferredLength -= pseg->length;
@@ -1096,7 +1096,7 @@ trm_DataOutPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *p
  * ------------------------------------------------------------
  * Function : trm_DataOutPhase1
  * Purpose  : Transfers data out, calls trm_DataIO_transfer
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1109,7 +1109,7 @@ trm_DataOutPhase1(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *p
  * ------------------------------------------------------------
  * Function : trm_DataInPhase0
  * Purpose  : Prepare for reading data in from bus
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1135,12 +1135,12 @@ trm_DataInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
 			while ((bus_space_read_1(iot, ioh, TRM_S1040_DMA_STATUS) & DMAXFERCOMP) == 0)
 				;
 			pSRB->SRBTotalXferLength = 0;
-		} else {  
+		} else {
 			/*
 			 * phase changed
 			 *
 			 * parsing the case:
-			 * when a transfer not yet complete 
+			 * when a transfer not yet complete
 			 * but be disconnected by uper layer
 			 * if transfer not yet complete
 			 * there were some data residue in SCSI FIFO or
@@ -1163,9 +1163,9 @@ trm_DataInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
 				for (SGIndexTemp = pSRB->SRBSGIndex;
 				    SGIndexTemp < pSRB->SRBSGCount;
 				    SGIndexTemp++) {
-					/* 
+					/*
 					 * find last time which SG transfer be
-					 * disconnect 
+					 * disconnect
 					 */
 					if (TempSRBXferredLength >=
 					    pseg->length) {
@@ -1184,7 +1184,7 @@ trm_DataInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
 						pseg->address += TempSRBXferredLength;
 						pSRB->SRBSGIndex = SGIndexTemp;
 						break;
-					} 
+					}
 					pseg++;
 				}
 			}
@@ -1196,7 +1196,7 @@ trm_DataInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
  * ------------------------------------------------------------
  * Function : trm_DataInPhase1
  * Purpose  : Transfer data in from bus, calls trm_DataIO_transfer
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1208,8 +1208,8 @@ trm_DataInPhase1(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
 /*
  * ------------------------------------------------------------
  * Function : trm_DataIO_transfer
- * Purpose  : 
- * Inputs   : 
+ * Purpose  :
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1222,9 +1222,9 @@ trm_DataIO_transfer(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int16_t
 
 	if (pSRB->SRBSGIndex < pSRB->SRBSGCount) {
 		if (pSRB->SRBTotalXferLength != 0) {
-			/* 
+			/*
 			 * load what physical address of Scatter/Gather list
-			 * table want to be transfer 
+			 * table want to be transfer
 			 */
 			pSRB->SRBState = TRM_DATA_XFER;
 			bus_space_write_4(iot, ioh, TRM_S1040_DMA_XHIGHADDR, 0);
@@ -1326,7 +1326,7 @@ trm_StatusPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
  * ------------------------------------------------------------
  * Function : trm_StatusPhase1
  * Purpose  : Clear FIFO of DMA and SCSI
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1340,7 +1340,7 @@ trm_StatusPhase1(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
 		    == 0) {
 			bus_space_write_2(iot, ioh, TRM_S1040_SCSI_CONTROL,
 			    DO_CLRFIFO);
-		}        
+		}
 		if ((bus_space_read_2(iot, ioh,
 		    TRM_S1040_DMA_FIFOCNT) & 0x8000) == 0) {
 			bus_space_write_1(iot, ioh,
@@ -1372,8 +1372,8 @@ trm_StatusPhase1(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
 /*
  * ------------------------------------------------------------
  * Function : trm_MsgInPhase0
- * Purpose  : 
- * Inputs   : 
+ * Purpose  :
+ * Inputs   :
  *
  * extended message codes:
  *   code        description
@@ -1383,8 +1383,8 @@ trm_StatusPhase1(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *ps
  *    01h        SYNCHRONOUS DATA TRANSFER REQUEST
  *    03h        WIDE DATA TRANSFER REQUEST
  * 04h - 7Fh     Reserved
- * 80h - FFh     Vendor specific  
- *                
+ * 80h - FFh     Vendor specific
+ *
  * ------------------------------------------------------------
  */
 void
@@ -1441,7 +1441,7 @@ trm_MsgInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *psc
 					pSRB->SRBState = TRM_MSGOUT;
 					bus_space_write_2(iot, ioh,
 					    TRM_S1040_SCSI_CONTROL, DO_SETATN);
-				} else {   
+				} else {
 					/*
 					 * Clear ATN
 					 */
@@ -1449,7 +1449,7 @@ trm_MsgInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *psc
 					    TRM_S1040_SCSI_CONTROL, DO_CLRATN);
 				}
 
-			} else if ((pDCB->DCBFlag & TRM_DOING_SYNC_NEGO) != 0) { 
+			} else if ((pDCB->DCBFlag & TRM_DOING_SYNC_NEGO) != 0) {
 				/*
 				 * do sync nego reject
 				 */
@@ -1514,20 +1514,20 @@ trm_MsgInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *psc
 				}
 			}
 			break;
-			
+
 		case  MSG_EXTENDED:
 			/* TODO XXXX: Correctly handling target initiated negotiations? */
 			if ((sc->MsgBuf[2] == MSG_EXT_WDTR) && (sc->MsgCnt == 4)) {
-				/*	
+				/*
 				 * ======================================
-				 * WIDE DATA TRANSFER REQUEST	
+				 * WIDE DATA TRANSFER REQUEST
 				 * ======================================
-				 * byte 0 :  Extended message (01h)	
-				 * byte 1 :  Extended message length (02h)	
-				 * byte 2 :  WIDE DATA TRANSFER code (03h)	
-				 * byte 3 :  Transfer width exponent 
+				 * byte 0 :  Extended message (01h)
+				 * byte 1 :  Extended message length (02h)
+				 * byte 2 :  WIDE DATA TRANSFER code (03h)
+				 * byte 3 :  Transfer width exponent
 				 */
-				
+
 				pSRB->SRBState  = TRM_FREE;
 				pDCB->DCBFlag  &= ~(TRM_WIDE_NEGO_ENABLE | TRM_DOING_WIDE_NEGO);
 
@@ -1538,10 +1538,10 @@ trm_MsgInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *psc
 				case MSG_EXT_WDTR_BUS_32_BIT:
 					if ((pDCB->DCBFlag & TRM_WIDE_NEGO_16BIT) == 0)
 						sc->MsgBuf[3] = MSG_EXT_WDTR_BUS_8_BIT;
-					else 
+					else
 						sc->MsgBuf[3] = MSG_EXT_WDTR_BUS_16_BIT;
 					break;
-					
+
 				case MSG_EXT_WDTR_BUS_16_BIT:
 					if ((pDCB->DCBFlag & TRM_WIDE_NEGO_16BIT) == 0) {
 						sc->MsgBuf[3] = MSG_EXT_WDTR_BUS_8_BIT;
@@ -1549,27 +1549,27 @@ trm_MsgInPhase0(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *psc
 					}
 					pDCB->SyncPeriod |= WIDE_SYNC;
 					/* FALL THROUGH == ACCEPT OFFER */
-					
+
 				case MSG_EXT_WDTR_BUS_8_BIT:
 					pSRB->SRBState  =  TRM_MSGOUT;
 					pDCB->DCBFlag  |= (TRM_SYNC_NEGO_ENABLE | TRM_WIDE_NEGO_DONE);
-					
+
 					if (pDCB->MaxNegoPeriod == 0) {
 						pDCB->SyncPeriod = 0;
 						pDCB->SyncOffset = 0;
 						goto re_prog;
 					}
 					break;
-					
+
 				default:
-					pDCB->DCBFlag &= ~TRM_WIDE_NEGO_ENABLE; 
+					pDCB->DCBFlag &= ~TRM_WIDE_NEGO_ENABLE;
 					pDCB->DCBFlag |= TRM_WIDE_NEGO_DONE;
 reject_offer:
 					sc->MsgCnt    = 1;
 					sc->MsgBuf[0] = MSG_MESSAGE_REJECT;
 					break;
 				}
-				
+
 				/* Echo accepted offer, or send revised offer */
 				bus_space_write_2(iot, ioh, TRM_S1040_SCSI_CONTROL, DO_SETATN);
 
@@ -1581,8 +1581,8 @@ reject_offer:
 				 * byte 0 :  Extended message (01h)
 				 * byte 1 :  Extended message length (03)
 				 * byte 2 :  SYNCHRONOUS DATA TRANSFER code (01h)
-				 * byte 3 :  Transfer period factor 
-				 * byte 4 :  REQ/ACK offset  
+				 * byte 3 :  Transfer period factor
+				 * byte 4 :  REQ/ACK offset
 				 */
 
 				pSRB->SRBState  = TRM_FREE;
@@ -1590,16 +1590,16 @@ reject_offer:
 
 				if (sc->MsgBuf[1] != MSG_EXT_SDTR_LEN)
 					goto reject_offer;
-				
+
 				if ((sc->MsgBuf[3] == 0) || (sc->MsgBuf[4] == 0)) {
 					/*
 					 * Asynchronous transfers
 					 */
 					pDCB->SyncPeriod  = 0;
 					pDCB->SyncOffset  = 0;
-					
+
 				} else {
-					/*	
+					/*
 					 * Synchronous transfers
 					 */
 					/*
@@ -1614,7 +1614,7 @@ reject_offer:
 					pDCB->SyncPeriod |= (bIndex | ALT_SYNC);
 				}
 
-re_prog:			/*               
+re_prog:			/*
 				 *   program SCSI control register
 				 */
 				bus_space_write_1(iot, ioh, TRM_S1040_SCSI_SYNC, pDCB->SyncPeriod);
@@ -1623,7 +1623,7 @@ re_prog:			/*
 				trm_SetXferParams(sc, pDCB, (pDCB->DCBFlag & TRM_QUIRKS_VALID));
 			}
 			break;
-			
+
 		default:
 			break;
 		}
@@ -1647,7 +1647,7 @@ re_prog:			/*
  * ------------------------------------------------------------
  * Function : trm_MsgInPhase1
  * Purpose  : Clear the FIFO
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1664,7 +1664,7 @@ trm_MsgInPhase1(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *psc
 	 */
 	bus_space_write_2(iot, ioh, TRM_S1040_SCSI_CONTROL, DO_DATALATCH);
 	/*
-	 * SCSI command 
+	 * SCSI command
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_COMMAND, SCMD_FIFO_IN);
 }
@@ -1673,7 +1673,7 @@ trm_MsgInPhase1(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *psc
  * ------------------------------------------------------------
  * Function : trm_Nop
  * Purpose  : EMPTY
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1686,7 +1686,7 @@ trm_Nop(struct trm_softc *sc, struct trm_scsi_req_q *pSRB, u_int8_t *pscsi_statu
  * Function : trm_SetXferParams
  * Purpose  : Set the Sync period, offset and mode for each device that has
  *            the same target as the given one (struct trm_dcb *)
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1722,15 +1722,15 @@ trm_SetXferParams(struct trm_softc *sc, struct trm_dcb *pDCB, int print_info)
  * ------------------------------------------------------------
  * Function : trm_Disconnect
  * Purpose  :
- * Inputs   : 
+ * Inputs   :
  *
  *    ---SCSI bus phase
- *     PH_DATA_OUT          0x00     Data out phase                  
- *     PH_DATA_IN           0x01     Data in phase                
- *     PH_COMMAND           0x02     Command phase     
+ *     PH_DATA_OUT          0x00     Data out phase
+ *     PH_DATA_IN           0x01     Data in phase
+ *     PH_COMMAND           0x02     Command phase
  *     PH_STATUS            0x03     Status phase
- *     PH_BUS_FREE          0x04     Invalid phase used as bus free    
- *     PH_BUS_FREE          0x05     Invalid phase used as bus free    
+ *     PH_BUS_FREE          0x04     Invalid phase used as bus free
+ *     PH_BUS_FREE          0x05     Invalid phase used as bus free
  *     PH_MSG_OUT           0x06     Message out phase
  *     PH_MSG_IN            0x07     Message in phase
  * ------------------------------------------------------------
@@ -1741,7 +1741,7 @@ trm_Disconnect(struct trm_softc *sc)
 	const bus_space_handle_t ioh = sc->sc_iohandle;
 	struct trm_scsi_req_q *pSRB;
 	const bus_space_tag_t iot = sc->sc_iotag;
-	struct trm_dcb *pDCB; 
+	struct trm_dcb *pDCB;
 	int j;
 
 #ifdef TRM_DEBUG0
@@ -1758,7 +1758,7 @@ trm_Disconnect(struct trm_softc *sc)
 		return;
 	}
 
-	pSRB = pDCB->pActiveSRB;    
+	pSRB = pDCB->pActiveSRB;
 	sc->pActiveDCB = NULL;
 	pSRB->ScsiPhase = PH_BUS_FREE; /* SCSI bus free Phase */
 	bus_space_write_2(iot, ioh,
@@ -1796,7 +1796,7 @@ disc1:
 		pDCB->pActiveSRB = NULL;
 		trm_FinishSRB(sc, pSRB);
 		break;
-		
+
 	default:
 		break;
 	}
@@ -1808,7 +1808,7 @@ disc1:
  * ------------------------------------------------------------
  * Function : trm_Reselect
  * Purpose  :
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1877,7 +1877,7 @@ trm_Reselect(struct trm_softc *sc)
 	}
 	pSRB->ScsiPhase = PH_BUS_FREE; /* SCSI bus free Phase */
 
-	/* 
+	/*
 	 * Program HA ID, target ID, period and offset
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_TARGETID, target);
@@ -1892,7 +1892,7 @@ trm_Reselect(struct trm_softc *sc)
 	DELAY(30);
 
 	/*
-	 * SCSI command 
+	 * SCSI command
 	 * to rls the /ACK signal
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_COMMAND, SCMD_MSGACCEPT);
@@ -1902,7 +1902,7 @@ trm_Reselect(struct trm_softc *sc)
  * ------------------------------------------------------------
  * Function : trm_FinishSRB
  * Purpose  : Complete execution of a SCSI command
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -1962,7 +1962,7 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 #ifdef TRM_DEBUG0
 				sc_print_addr(xs->sc_link);
 				printf(" trm_FinishSRB. TRM_PARITY_ERROR\n");
-#endif		
+#endif
 				xs->error = XS_DRIVER_STUFFUP;
 
 			} else if ((pSRB->SRBFlag & TRM_SCSI_TIMED_OUT) != 0) {
@@ -1977,9 +1977,9 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 			} else if ((pSRB->SRBFlag & TRM_AUTO_REQSENSE) != 0) {
 				s1 = &pSRB->scsisense;
 				s2 = &xs->sense;
-				
+
 				*s2 = *s1;
-				
+
 				xs->status = SCSI_CHECK;
 				xs->error  = XS_SENSE;
 
@@ -2000,12 +2000,12 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 			sc_print_addr(xs->sc_link);
 			printf("trm_FinishSRB. AdaptStatus Error = 0x%02x\n",
 			    pSRB->AdaptStatus);
-#endif	
+#endif
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		}
 		break;
-		
+
 	case SCSI_TERMINATED:
 	case SCSI_ACA_ACTIVE:
 	case SCSI_CHECK:
@@ -2022,7 +2022,7 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 		pDCB->DCBFlag |= TRM_QUEUE_FULL;
 		trm_RewaitSRB(sc, pSRB);
 		return;
-	
+
 	case SCSI_RESV_CONFLICT:
 	case SCSI_BUSY:
 		xs->error = XS_BUSY;
@@ -2049,20 +2049,20 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	}
 
 	target = xs->sc_link->target;
-	lun    = xs->sc_link->lun;   
+	lun    = xs->sc_link->lun;
 
 	if ((xs->flags & SCSI_POLL) != 0) {
 
 		if (xs->cmd->opcode == INQUIRY && pDCB->sc_link == NULL) {
 
-			ptr = (struct scsi_inquiry_data *) xs->data; 
+			ptr = (struct scsi_inquiry_data *) xs->data;
 
 			if ((xs->error != XS_NOERROR) ||
 			    ((ptr->device & SID_QUAL_BAD_LU) == SID_QUAL_BAD_LU)) {
 #ifdef TRM_DEBUG0
 				sc_print_addr(xs->sc_link);
 				printf("trm_FinishSRB NO Device\n");
-#endif		
+#endif
 				free(pDCB, M_DEVBUF, 0);
 				sc->pDCB[target][lun] = NULL;
 				pDCB = NULL;
@@ -2093,8 +2093,8 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 /*
  * ------------------------------------------------------------
  * Function : trm_srb_reinit
- * Purpose  : 
- * Inputs   : 
+ * Purpose  :
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -2121,8 +2121,8 @@ trm_srb_reinit(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 /*
  * ------------------------------------------------------------
  * Function : trm_srb_free
- * Purpose  : 
- * Inputs   : 
+ * Purpose  :
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -2144,7 +2144,7 @@ trm_srb_free(void *xsc, void *xpSRB)
  * ------------------------------------------------------------
  * Function : trm_GoingSRB_Done
  * Purpose  :
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -2176,7 +2176,7 @@ trm_GoingSRB_Done(struct trm_softc *sc, struct trm_dcb *pDCB)
  * ------------------------------------------------------------
  * Function : trm_ResetSCSIBus
  * Purpose  : Reset the SCSI bus
- * Inputs   : struct trm_softc * - 
+ * Inputs   : struct trm_softc * -
  * ------------------------------------------------------------
  */
 void
@@ -2201,7 +2201,7 @@ trm_ResetSCSIBus(struct trm_softc *sc)
  * ------------------------------------------------------------
  * Function : trm_ScsiRstDetect
  * Purpose  :
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -2241,7 +2241,7 @@ trm_ScsiRstDetect(struct trm_softc *sc)
  * ------------------------------------------------------------
  * Function : trm_RequestSense
  * Purpose  :
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -2283,7 +2283,7 @@ trm_RequestSense(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
  * ------------------------------------------------------------
  * Function : trm_EnableMsgOut
  * Purpose  : set up MsgBuf to send out a single byte message
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -2369,7 +2369,7 @@ trm_minphys(struct buf *bp, struct scsi_link *sl)
  * ------------------------------------------------------------
  * Function : trm_initACB
  * Purpose  : initialize the internal structures for a given SCSI host
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
@@ -2403,7 +2403,7 @@ trm_initACB(struct trm_softc *sc, int unit)
 	sc->sc_TagMaxNum   = 2 << pEEpromBuf->NvramMaxTag;
 	sc->sc_Flag        = 0;
 
-	/* 
+	/*
 	 * put all SRB's (except [0]) onto the freeSRB list
 	 */
 	trm_linkSRB(sc);
@@ -2419,7 +2419,7 @@ trm_initACB(struct trm_softc *sc, int unit)
 			pDCB = (struct trm_dcb *)malloc(sizeof(struct trm_dcb),
 			    M_DEVBUF, M_NOWAIT | M_ZERO);
 			sc->pDCB[target][lun] = pDCB;
-			
+
 			if (pDCB == NULL)
 				continue;
 
@@ -2429,7 +2429,7 @@ trm_initACB(struct trm_softc *sc, int unit)
 		}
 	}
 
-	sc->sc_adapter.scsi_cmd     = trm_scsi_cmd; 
+	sc->sc_adapter.scsi_cmd     = trm_scsi_cmd;
 	sc->sc_adapter.dev_minphys  = trm_minphys;
 
 	sc->sc_link.adapter_softc    = sc;
@@ -2444,10 +2444,10 @@ trm_initACB(struct trm_softc *sc, int unit)
 
 /*
  * ------------------------------------------------------------
- * Function     : trm_write_all            
- * Description  : write pEEpromBuf 128 bytes to seeprom    
- * Input        : iot, ioh - chip's base address        
- * Output       : none                        
+ * Function     : trm_write_all
+ * Description  : write pEEpromBuf 128 bytes to seeprom
+ * Input        : iot, ioh - chip's base address
+ * Output       : none
  * ------------------------------------------------------------
  */
 void
@@ -2470,7 +2470,7 @@ trm_write_all(struct trm_adapter_nvram *pEEpromBuf,  bus_space_tag_t iot,
 	trm_wait_30us(iot, ioh);
 	for (bAddr = 0; bAddr < 128; bAddr++, bpEeprom++)
 		trm_set_data(iot, ioh, bAddr, *bpEeprom);
-	/* 
+	/*
 	 * Write disable
 	 */
 	trm_write_cmd(iot, ioh, 0x04, 0x00);
@@ -2485,12 +2485,12 @@ trm_write_all(struct trm_adapter_nvram *pEEpromBuf,  bus_space_tag_t iot,
 
 /*
  * ------------------------------------------------------------
- * Function     : trm_set_data                    
+ * Function     : trm_set_data
  * Description  : write one byte to seeprom
- * Input        : iot, ioh - chip's base address    
- *                  bAddr - address of SEEPROM        
- *                  bData - data of SEEPROM    
- * Output       : none                
+ * Input        : iot, ioh - chip's base address
+ *                  bAddr - address of SEEPROM
+ *                  bData - data of SEEPROM
+ * Output       : none
  * ------------------------------------------------------------
  */
 void
@@ -2500,12 +2500,12 @@ trm_set_data(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t bAddr,
 	u_int8_t bSendData;
 	int i;
 
-	/* 
-	 * Send write command & address    
+	/*
+	 * Send write command & address
 	 */
 	trm_write_cmd(iot, ioh, 0x05, bAddr);
-	/* 
-	 * Write data 
+	/*
+	 * Write data
 	 */
 	for (i = 0; i < 8; i++, bData <<= 1) {
 		bSendData = NVR_SELECT;
@@ -2521,14 +2521,14 @@ trm_set_data(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t bAddr,
 	bus_space_write_1(iot, ioh, TRM_S1040_GEN_NVRAM, NVR_SELECT);
 	trm_wait_30us(iot, ioh);
 	/*
-	 * Disable chip select 
+	 * Disable chip select
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_GEN_NVRAM, 0);
 	trm_wait_30us(iot, ioh);
 	bus_space_write_1(iot, ioh, TRM_S1040_GEN_NVRAM, NVR_SELECT);
 	trm_wait_30us(iot, ioh);
-	/* 
-	 * Wait for write ready    
+	/*
+	 * Wait for write ready
 	 */
 	for (;;) {
 		bus_space_write_1(iot, ioh, TRM_S1040_GEN_NVRAM,
@@ -2539,18 +2539,18 @@ trm_set_data(bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t bAddr,
 		if (bus_space_read_1(iot, ioh, TRM_S1040_GEN_NVRAM) & NVR_BITIN)
 			break;
 	}
-	/* 
-	 * Disable chip select 
+	/*
+	 * Disable chip select
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_GEN_NVRAM, 0);
 }
 
 /*
  * ------------------------------------------------------------
- * Function     : trm_read_all                    
+ * Function     : trm_read_all
  * Description  : read seeprom 128 bytes to pEEpromBuf
- * Input        : pEEpromBuf, iot, ioh - chip's base address        
- * Output       : none                        
+ * Input        : pEEpromBuf, iot, ioh - chip's base address
+ * Output       : none
  * ------------------------------------------------------------
  */
 void
@@ -2559,9 +2559,9 @@ trm_read_all(struct trm_adapter_nvram *pEEpromBuf,  bus_space_tag_t iot,
 {
 	u_int8_t *bpEeprom = (u_int8_t *)pEEpromBuf;
 	u_int8_t  bAddr;
-	
+
 	/*
-	 * Enable SEEPROM 
+	 * Enable SEEPROM
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_GEN_CONTROL,
 	    (bus_space_read_1(iot, ioh, TRM_S1040_GEN_CONTROL) | EN_EEPROM));
@@ -2569,8 +2569,8 @@ trm_read_all(struct trm_adapter_nvram *pEEpromBuf,  bus_space_tag_t iot,
 	for (bAddr = 0; bAddr < 128; bAddr++, bpEeprom++)
 		*bpEeprom = trm_get_data(iot, ioh, bAddr);
 
-	/* 
-	 * Disable SEEPROM 
+	/*
+	 * Disable SEEPROM
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_GEN_CONTROL,
 	    (bus_space_read_1(iot, ioh, TRM_S1040_GEN_CONTROL) & ~EN_EEPROM));
@@ -2578,11 +2578,11 @@ trm_read_all(struct trm_adapter_nvram *pEEpromBuf,  bus_space_tag_t iot,
 
 /*
  * ------------------------------------------------------------
- * Function     : trm_get_data                        
- * Description  : read one byte from seeprom    
+ * Function     : trm_get_data
+ * Description  : read one byte from seeprom
  * Input        : iot, ioh - chip's base address
- *                     bAddr - address of SEEPROM        
- * Output       : bData - data of SEEPROM        
+ *                     bAddr - address of SEEPROM
+ * Output       : bData - data of SEEPROM
  * ------------------------------------------------------------
  */
 u_int8_t
@@ -2593,21 +2593,21 @@ trm_get_data( bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t bAddr)
 
 	bData = 0;
 
-	/* 
+	/*
 	 * Send read command & address
 	 */
 	trm_write_cmd(iot, ioh, 0x06, bAddr);
-				
+
 	for (i = 0; i < 8; i++) {
-		/* 
+		/*
 		 * Read data
 		 */
 		bus_space_write_1(iot, ioh, TRM_S1040_GEN_NVRAM,
 		    (NVR_SELECT | NVR_CLOCK));
 		trm_wait_30us(iot, ioh);
 		bus_space_write_1(iot, ioh, TRM_S1040_GEN_NVRAM, NVR_SELECT);
-		/* 
-		 * Get data bit while falling edge 
+		/*
+		 * Get data bit while falling edge
 		 */
 		bReadData = bus_space_read_1(iot, ioh, TRM_S1040_GEN_NVRAM);
 		bData <<= 1;
@@ -2615,8 +2615,8 @@ trm_get_data( bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t bAddr)
 			bData |= 1;
 		trm_wait_30us(iot, ioh);
 	}
-	/* 
-	 * Disable chip select 
+	/*
+	 * Disable chip select
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_GEN_NVRAM, 0);
 
@@ -2625,10 +2625,10 @@ trm_get_data( bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t bAddr)
 
 /*
  * ------------------------------------------------------------
- * Function     : trm_wait_30us                    
- * Description  : wait 30 us                        
- * Input        : iot, ioh - chip's base address            
- * Output       : none                            
+ * Function     : trm_wait_30us
+ * Description  : wait 30 us
+ * Input        : iot, ioh - chip's base address
+ * Output       : none
  * ------------------------------------------------------------
  */
 void
@@ -2642,12 +2642,12 @@ trm_wait_30us(bus_space_tag_t iot, bus_space_handle_t ioh)
 
 /*
  * ------------------------------------------------------------
- * Function     : trm_write_cmd                        
- * Description  : write SB and Op Code into seeprom    
- * Input        : iot, ioh - chip's base address            
- *                  bCmd     - SB + Op Code                
- *                  bAddr    - address of SEEPROM        
- * Output       : none                    
+ * Function     : trm_write_cmd
+ * Description  : write SB and Op Code into seeprom
+ * Input        : iot, ioh - chip's base address
+ *                  bCmd     - SB + Op Code
+ *                  bAddr    - address of SEEPROM
+ * Output       : none
  * ------------------------------------------------------------
  */
 void
@@ -2658,8 +2658,8 @@ trm_write_cmd( bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t bCmd,
 	int i;
 
 	for (i = 0; i < 3; i++, bCmd <<= 1) {
-		/* 
-		 * Program SB + OP code        
+		/*
+		 * Program SB + OP code
 		 */
 		bSendData = NVR_SELECT;
 		if (bCmd & 0x04)        /* Start from bit 2        */
@@ -2670,10 +2670,10 @@ trm_write_cmd( bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t bCmd,
 		    (bSendData | NVR_CLOCK));
 		trm_wait_30us(iot, ioh);
 	}
-				
+
 	for (i = 0; i < 7; i++, bAddr <<= 1) {
-		/* 
-		 * Program address        
+		/*
+		 * Program address
 		 */
 		bSendData = NVR_SELECT;
 		if (bAddr & 0x40) {        /* Start from bit 6        */
@@ -2691,11 +2691,11 @@ trm_write_cmd( bus_space_tag_t iot, bus_space_handle_t ioh, u_int8_t bCmd,
 
 /*
  * ------------------------------------------------------------
- * Function     : trm_check_eeprom                
+ * Function     : trm_check_eeprom
  * Description  : read eeprom 128 bytes to pEEpromBuf and check
  *                  checksum. If it is wrong, updated with default value.
- * Input        : eeprom, iot, ioh - chip's base address        
- * Output       : none                    
+ * Input        : eeprom, iot, ioh - chip's base address
+ * Output       : none
  * ------------------------------------------------------------
  */
 void
@@ -2715,12 +2715,12 @@ trm_check_eeprom(struct trm_adapter_nvram *pEEpromBuf, bus_space_tag_t iot,
 	for (wAddr = 0; wAddr < 64; wAddr++, wpEeprom++)
 		wCheckSum += *wpEeprom;
 
-	if (wCheckSum != 0x1234) {  
+	if (wCheckSum != 0x1234) {
 #ifdef TRM_DEBUG0
 		printf("TRM_S1040 EEPROM Check Sum ERROR (load default)\n");
 #endif
-		/* 
-		 * Checksum error, load default    
+		/*
+		 * Checksum error, load default
 		 */
 		pEEpromBuf->NvramSubVendorID[0] = (u_int8_t)PCI_VENDOR_TEKRAM2;
 		pEEpromBuf->NvramSubVendorID[1] = (u_int8_t)(PCI_VENDOR_TEKRAM2
@@ -2789,11 +2789,11 @@ trm_initAdapter(struct trm_softc *sc)
 	} else {
 		bval = PHASELATCH | INITIATOR | BLOCKRST;
 	}
-	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_CONFIG0, bval); 
+	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_CONFIG0, bval);
 	/*
 	 * program configuration 1
 	 */
-	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_CONFIG1, 0x13); 
+	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_CONFIG1, 0x13);
 	/*
 	 * 250ms selection timeout
 	 */
@@ -2801,31 +2801,31 @@ trm_initAdapter(struct trm_softc *sc)
 	/*
 	 * Mask all the interrupt
 	 */
-	bus_space_write_1(iot, ioh, TRM_S1040_DMA_INTEN,  0);    
-	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_INTEN, 0);     
+	bus_space_write_1(iot, ioh, TRM_S1040_DMA_INTEN,  0);
+	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_INTEN, 0);
 	/*
 	 * Reset SCSI module
 	 */
-	bus_space_write_2(iot, ioh, TRM_S1040_SCSI_CONTROL, DO_RSTMODULE); 
+	bus_space_write_2(iot, ioh, TRM_S1040_SCSI_CONTROL, DO_RSTMODULE);
 	/*
 	 * program Host ID
 	 */
 	bval = sc->sc_AdaptSCSIID;
-	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_HOSTID, bval); 
+	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_HOSTID, bval);
 	/*
 	 * set ansynchronous transfer
 	 */
-	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_OFFSET, 0); 
+	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_OFFSET, 0);
 	/*
 	 * Turn LED control off
 	 */
 	wval = bus_space_read_2(iot, ioh, TRM_S1040_GEN_CONTROL) & 0x7F;
-	bus_space_write_2(iot, ioh, TRM_S1040_GEN_CONTROL, wval); 
+	bus_space_write_2(iot, ioh, TRM_S1040_GEN_CONTROL, wval);
 	/*
 	 * DMA config
 	 */
 	wval = bus_space_read_2(iot, ioh, TRM_S1040_DMA_CONFIG) | DMA_ENHANCE;
-	bus_space_write_2(iot, ioh, TRM_S1040_DMA_CONFIG, wval); 
+	bus_space_write_2(iot, ioh, TRM_S1040_DMA_CONFIG, wval);
 	/*
 	 * Clear pending interrupt status
 	 */
@@ -2835,8 +2835,8 @@ trm_initAdapter(struct trm_softc *sc)
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_INTEN,
 	    (EN_SELECT | EN_SELTIMEOUT | EN_DISCONNECT | EN_RESELECTED |
-		EN_SCSIRESET | EN_BUSSERVICE | EN_CMDDONE)); 
-	bus_space_write_1(iot, ioh, TRM_S1040_DMA_INTEN, EN_SCSIINTR); 
+		EN_SCSIRESET | EN_BUSSERVICE | EN_CMDDONE));
+	bus_space_write_1(iot, ioh, TRM_S1040_DMA_INTEN, EN_SCSIINTR);
 }
 
 /*
@@ -2844,7 +2844,7 @@ trm_initAdapter(struct trm_softc *sc)
  * Function      : trm_init
  * Purpose       : initialize the internal structures for a given SCSI host
  * Inputs        : host - pointer to this host adapter's structure
- * Preconditions : when this function is called, the chip_type field of 
+ * Preconditions : when this function is called, the chip_type field of
  *                 the ACB structure MUST have been set.
  * ------------------------------------------------------------
  */
@@ -2906,7 +2906,7 @@ trm_init(struct trm_softc *sc, int unit)
 		return -1;
 	}
 #ifdef TRM_DEBUG0
-	printf("\n\n%s: all_srbs_size=%x\n", 
+	printf("\n\n%s: all_srbs_size=%x\n",
 	    sc->sc_device.dv_xname, all_srbs_size);
 #endif
 	trm_initACB(sc, unit);
@@ -2918,7 +2918,7 @@ trm_init(struct trm_softc *sc, int unit)
 /* ------------------------------------------------------------
  * Function : trm_print_info
  * Purpose  : Print the DCB negotiation information
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 void
