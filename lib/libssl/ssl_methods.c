@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.11 2020/01/23 10:48:37 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.12 2020/02/06 16:05:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -366,6 +366,10 @@ static const SSL_METHOD TLSv1_2_client_method_data = {
 const SSL_METHOD *
 tls1_get_client_method(int ver)
 {
+#ifdef LIBRESSL_HAS_TLS1_3_CLIENT
+	if (ver == TLS1_3_VERSION)
+		return (TLS_client_method());
+#endif
 	if (ver == TLS1_2_VERSION)
 		return (TLSv1_2_client_method());
 	if (ver == TLS1_1_VERSION)
@@ -734,6 +738,10 @@ static const SSL_METHOD TLSv1_2_server_method_data = {
 const SSL_METHOD *
 tls1_get_server_method(int ver)
 {
+#ifdef LIBRESSL_HAS_TLS1_3_SERVER
+	if (ver == TLS1_3_VERSION)
+		return (TLS_server_method());
+#endif
 	if (ver == TLS1_2_VERSION)
 		return (TLSv1_2_server_method());
 	if (ver == TLS1_1_VERSION)
