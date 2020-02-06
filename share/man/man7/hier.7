@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.164 2020/01/16 16:46:47 schwarze Exp $
+.\"	$OpenBSD: hier.7,v 1.165 2020/02/06 05:40:02 jsg Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: January 16 2020 $
+.Dd $Mdocdate: February 6 2020 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -218,6 +218,9 @@ Standard C include files.
 C include files for Internet service protocols.
 .It c++/
 Include files for the Clang C++ compiler.
+.It cbor/
+C include files for the Concise Binary Object Representation (CBOR)
+library.
 .It crypto/
 C include files for the cryptographic libraries.
 .It ddb/
@@ -225,10 +228,16 @@ C include files for the kernel debugger (see
 .Xr ddb 4 ) .
 .It dev/
 Device-specific C include files.
+.It fido/
+C include files for the U2F/FIDO2 communication library.
 .It g++/
 Include files for the GNU C++ compiler.
 .It isofs/
 C include files for the ISO standard file systems (currently only cd9660).
+.It llvm/
+C++ include files for LLVM.
+.It llvm-c/
+C include files for LLVM.
 .It machine/
 Machine specific C include files.
 .It miscfs/
