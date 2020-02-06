@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.94 2019/05/14 15:19:06 jan Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.95 2020/02/06 17:24:18 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.94 2019/05/14 15:19:06 jan Exp $
+ * $Id: aic7xxx.c,v 1.95 2020/02/06 17:24:18 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -4333,7 +4333,7 @@ ahc_fini_scbdata(struct ahc_softc *ahc)
 	/*FALLTHROUGH*/
 	case 4:
 		ahc_freedmamem(ahc->parent_dmat,
-		    AHC_SCB_MAX * sizeof(struct scsipi_sense_data),
+		    AHC_SCB_MAX * sizeof(struct scsi_sense_data),
 		    scb_data->sense_dmamap, (caddr_t)scb_data->sense,
 		    &scb_data->sense_seg, scb_data->sense_nseg);
 	/*FALLTHROUGH*/

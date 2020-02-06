@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.31 2017/12/12 12:33:36 krw Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.32 2020/02/06 17:24:18 krw Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.31 2017/12/12 12:33:36 krw Exp $
+ * $Id: aic7xxxvar.h,v 1.32 2020/02/06 17:24:18 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -592,7 +592,7 @@ struct scb {
 	} links;
 	LIST_ENTRY(scb)		  pending_links;
 
-	struct scsipi_xfer	 *xs;
+	struct scsi_xfer	 *xs;
 	struct ahc_softc	 *ahc_softc;
 	scb_flag		  flags;
 	bus_dmamap_t		  dmamap;
@@ -618,7 +618,7 @@ struct scb_data {
 					 */
 	struct	hardware_scb	*hscbs;	/* Array of hardware SCBs */
 	struct	scb *scbarray;		/* Array of kernel SCBs */
-	struct	scsipi_sense_data *sense; /* Per SCB sense data */
+	struct	scsi_sense_data *sense; /* Per SCB sense data */
 
 	/*
 	 * "Bus" addresses of our data structures.
@@ -935,11 +935,11 @@ typedef void ahc_callback_t (void *);
 struct ahc_softc {
 	struct device		  sc_dev;
 
-	struct scsipi_channel	  sc_channel;
-	struct scsipi_channel	  sc_channel_b;
+	struct scsi_link	  sc_channel;
+	struct scsi_link	  sc_channel_b;
 	struct device *		  sc_child;
 	struct device *		  sc_child_b;
-	struct scsipi_adapter	  sc_adapter;
+	struct scsi_adapter	  sc_adapter;
 
 	bus_space_tag_t           tag;
 	bus_space_handle_t        bsh;
@@ -1247,7 +1247,7 @@ typedef enum {
 int			ahc_search_qinfifo(struct ahc_softc *, int, char,
 			    int, u_int, role_t, uint32_t, ahc_search_action);
 int			ahc_search_untagged_queues(struct ahc_softc *,
-			    struct scsipi_xfer *, int, char, int, uint32_t,
+			    struct scsi_xfer *, int, char, int, uint32_t,
 			    ahc_search_action);
 int			ahc_search_disc_list(struct ahc_softc *, int, char,
 			    int, u_int, int, int, int);
@@ -1313,7 +1313,7 @@ void			ahc_set_tags(struct ahc_softc *ahc,
 #ifdef AHC_TARGET_MODE
 void		ahc_send_lstate_events(struct ahc_softc *,
 		    struct ahc_tmode_lstate *);
-void		ahc_handle_en_lun(struct ahc_softc *, struct scsipi_xfer *);
+void		ahc_handle_en_lun(struct ahc_softc *, struct scsi_xfer *);
 cam_status	ahc_find_tmode_devs(struct ahc_softc *,
 		    struct ahc_tmode_tstate **, struct ahc_tmode_lstate **,
 		    int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_cam.h,v 1.8 2019/09/01 15:03:32 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_cam.h,v 1.9 2020/02/06 17:24:18 krw Exp $	*/
 /*	$NetBSD: aic7xxx_cam.h,v 1.3 2003/04/20 11:17:20 fvdl Exp $	*/
 
 /*
@@ -67,13 +67,6 @@
 #define MSG_ORDERED_TASK	MSG_ORDERED_Q_TAG
 #define MSG_SIMPLE_TASK		MSG_SIMPLE_Q_TAG
 #define MSG_ABORT_TASK		MSG_ABORT_TAG
-
-#define scsipi_channel		scsi_link
-#define scsipi_xfer		scsi_xfer
-#define scsipi_adapter		scsi_adapter
-#define scsipi_sense_data	scsi_sense_data
-#define scsipi_sense		scsi_sense
-#define scsipi_periph		scsi_link
 
 #define	callout_reset(timer, timeout, func, arg) do {	\
 	if (!timeout_initialized((timer)))		\
