@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.h,v 1.4 2020/02/06 15:34:29 krw Exp $
+/*	$OpenBSD: trm.h,v 1.5 2020/02/06 19:17:54 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.h
@@ -215,7 +215,6 @@ struct trm_softc
 	 *    Link to the generic SCSI driver
 	 *----------------------------------
 	 */
-	struct	scsi_adapter	sc_adapter;
 	struct	scsi_link	sc_link;
 
 	struct	SRB_HEAD	freeSRB;

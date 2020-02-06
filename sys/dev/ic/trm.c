@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.37 2020/02/06 15:56:36 krw Exp $
+/*	$OpenBSD: trm.c,v 1.38 2020/02/06 19:17:54 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -2429,13 +2429,10 @@ trm_initACB(struct trm_softc *sc, int unit)
 		}
 	}
 
-	sc->sc_adapter.scsi_cmd     = trm_scsi_cmd;
-	sc->sc_adapter.dev_minphys  = trm_minphys;
-
 	sc->sc_link.adapter_softc    = sc;
 	sc->sc_link.adapter_target   = sc->sc_AdaptSCSIID;
 	sc->sc_link.openings         = 30; /* So TagMask (32 bit integer) always has space */
-	sc->sc_link.adapter          = &sc->sc_adapter;
+	sc->sc_link.adapter          = &trm_switch;
 	sc->sc_link.adapter_buswidth = ((sc->sc_config & HCC_WIDE_CARD) == 0) ? 8:16;
 	sc->sc_link.pool	     = &sc->sc_iopool;
 
