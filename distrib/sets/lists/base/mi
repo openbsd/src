@@ -367,6 +367,7 @@
 ./usr/bin/deroff
 ./usr/bin/diff
 ./usr/bin/diff3
+./usr/bin/dig
 ./usr/bin/dirname
 ./usr/bin/doas
 ./usr/bin/du
@@ -405,6 +406,7 @@
 ./usr/bin/head
 ./usr/bin/help
 ./usr/bin/hexdump
+./usr/bin/host
 ./usr/bin/hoststat
 ./usr/bin/htpasswd
 ./usr/bin/id
@@ -473,6 +475,7 @@
 ./usr/bin/nl
 ./usr/bin/nm
 ./usr/bin/nohup
+./usr/bin/nslookup
 ./usr/bin/od
 ./usr/bin/opencvs
 ./usr/bin/openrsync
@@ -2491,7 +2494,6 @@
 ./usr/sbin/dhcpd
 ./usr/sbin/dhcrelay
 ./usr/sbin/dhcrelay6
-./usr/sbin/dig
 ./usr/sbin/dvmrpctl
 ./usr/sbin/dvmrpd
 ./usr/sbin/edquota
@@ -2504,7 +2506,6 @@
 ./usr/sbin/groupdel
 ./usr/sbin/groupinfo
 ./usr/sbin/groupmod
-./usr/sbin/host
 ./usr/sbin/hostapd
 ./usr/sbin/httpd
 ./usr/sbin/identd
@@ -2549,7 +2550,6 @@
 ./usr/sbin/nsd-checkzone
 ./usr/sbin/nsd-control
 ./usr/sbin/nsd-control-setup
-./usr/sbin/nslookup
 ./usr/sbin/ntpctl
 ./usr/sbin/ntpd
 ./usr/sbin/ocspcheck
