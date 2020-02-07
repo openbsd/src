@@ -1,0 +1,891 @@
+.\" $OpenBSD: dig.1,v 1.1 2020/02/07 09:58:52 florian Exp $
+.\"
+.\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+.\"
+.\" Permission to use, copy, modify, and/or distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+.\" REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+.\" LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+.\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 7 2020 $
+.Dt DIG 1
+.Os
+.Sh NAME
+.Nm dig
+.Nd DNS lookup utility
+.Sh SYNOPSIS
+.Nm
+.Op Pf @ Ar server
+.Op Fl 46hiuv
+.Op Fl b Ar address Ns Op Pf # Ar port
+.Op Fl c Ar class
+.Op Fl f Ar file
+.Op Fl k Ar keyfile
+.Op Fl p Ar port
+.Op Fl q Ar name
+.Op Fl t Ar type
+.Op Fl x Ar addr
+.Op Fl y Oo Ar hmac : Oc Ns Ar name : Ns Ar key
+.Op Ar name
+.Op Ar type
+.Op Ar class
+.Op Pf + Ar queryopt ...
+.Sh DESCRIPTION
+The
+.Nm
+command is a flexible tool for interrogating DNS name servers.
+It performs DNS lookups and displays the answers that are returned from the name
+servers that were queried.
+Although
+.Nm
+is normally used with command line arguments, it also has a batch mode of
+operation for reading lookup requests from a file.
+When no command line arguments or options are given,
+.Nm
+will perform an NS query for '.' (the root).
+.Pp
+A typical invocation of
+.Nm
+looks like:
+.Pp
+.Dl dig @server [options] name type [class] [+queryopt]
+.Bl -tag -width +queryopt
+.It Pf @ Ar server
+The name or IP address of the name server to query.
+When the argument is a hostname,
+.Nm
+resolves that name before querying that name server.
+If no
+.Ar server
+argument is provided,
+.Nm
+will try each of the servers listed in
+.Xr resolv.conf 5 .
+If no usable addresses are found,
+.Nm
+will send the query to the local host.
+The reply from the name server that responds is displayed.
+.It Ar name
+The name of the resource record that is to be looked up.
+.It Ar type
+The type of query, as documented for
+.Fl t .
+The default is
+.Cm A .
+.It Ar class
+The query class, as documented for
+.Fl c .
+The default is
+.Cm IN .
+.It Pf + Ar queryopt
+One or more query options,
+as documented in
+.Sx QUERY OPTIONS ,
+below.
+.El
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl 4
+Use IPv4 only.
+.It Fl 6
+Use IPv6 only.
+.It Fl b Ar address Ns Op Pf # Ar port
+Set the source IP address of the query.
+The
+.Ar address
+must be a valid address on one of the host's network interfaces, or
+"0.0.0.0" or "::". An optional port may be specified by appending
+"#<port>".
+.It Fl c Ar class
+Set the query class.
+The default is
+.Cm IN ;
+other classes are
+.Cm HS
+for Hesiod records and
+.Cm CH
+for Chaosnet records.
+.It Fl f Ar file
+Batch mode:
+.Nm
+reads a list of lookup requests to process from the given
+.Ar file .
+Each line in the file should be organized in the same way they would be
+presented as queries to
+.Nm
+using the command-line interface.
+.It Fl h
+Display a brief summary of command line arguments and options.
+.It Fl i
+Do reverse IPv6 lookups using the obsolete RFC 1886 IP6.INT domain, which is no
+longer in use.
+Obsolete bit string label queries (RFC 2874) are not attempted.
+.It Fl k Ar keyfile
+Sign queries using TSIG using a key read from the given file.
+When using TSIG authentication with
+.Nm ,
+the name server that is queried needs to know the key and algorithm that is
+being used.
+In BIND, this is done by providing appropriate
+.Ic key
+and
+.Ic server
+statements in
+.Pa named.conf .
+.It Fl p Ar port
+Send the query to a non-standard port on the server, instead of the defaut port
+53.
+This option would be used to test a name server that has been configured to
+listen for queries on a non-standard port number.
+.It Fl q Ar name
+The domain name to query.
+This is useful to distinguish the
+.Ar name
+from other arguments.
+.It Fl t Ar type
+The resource record type to query.
+It can be any valid query type.
+If it is a resource record type supported in BIND 9, it can be given by the
+type mnemonic (such as
+.Cm NS
+or
+.Cm AAAA ) .
+The default query type is
+.Cm A ,
+unless the
+.Fl x
+option is supplied to indicate a reverse lookup.
+A zone transfer can be requested by specifying a type of
+.Cm AXFR .
+When an incremental zone transfer is required, set the
+.Ar type
+to
+.Cm IXFR Ns = Ns Ar N .
+The incremental zone transfer will contain the changes made to the zone since
+the serial number in the zone's SOA record was
+.Ar N .
+.Pp
+All resource record types can be expressed as
+.Cm TYPE Ns Ar nn ,
+where
+.Ar nn
+is the number of the type.
+If the resource record type is not supported in BIND 9, the result will be
+displayed as described in RFC 3597.
+.It Fl u
+Print query times in microseconds instead of milliseconds.
+.It Fl v
+Print the version number and exit.
+.It Fl x Ar addr
+Simplified reverse lookups, for mapping addresses to names.
+The
+.Ar addr
+is an IPv4 address in dotted-decimal notation, or a colon-delimited IPv6
+address.
+When the
+.Fl x
+is used, there is no need to provide the
+.Ar name ,
+.Ar class
+and
+.Ar type
+arguments.
+.Nm
+automatically performs a lookup for a name like
+.Ql 94.2.0.192.in-addr.arpa
+and sets the query type and class to
+.Cm PTR
+and
+.Cm IN
+respectively.
+IPv6 addresses are looked up using nibble format under the IP6.ARPA domain
+(but see also the
+.Fl i
+option).
+.It Fl y Xo
+.Op Ar hmac : Ns
+.Ar keyname : Ns
+.Ar secret
+.Xc
+Sign queries using TSIG with the given authentication key.
+.Ar keyname
+is the name of the key, and
+.Ar secret
+is the base64 encoded shared secret.
+.Ar hmac
+is the name of the key algorithm;
+valid choices are
+.Ql hmac-md5 ,
+.Ql hmac-sha1 ,
+.Ql hmac-sha224 ,
+.Ql hmac-sha256 ,
+.Ql hmac-sha384 ,
+or
+.Ql hmac-sha512 .
+If
+.Ar hmac
+is not specified, the default is
+.Ql hmac-md5
+or if MD5 was disabled
+.Ql hmac-sha256 .
+.Pp
+NOTE: You should use the
+.Fl k
+option and
+avoid the
+.Fl y
+option, because
+with
+.Fl y
+the shared secret is supplied as a command line argument in clear text.
+This may be visible in the output from
+.Xr ps 1
+or in a history file maintained by the user's shell.
+.El
+.Pp
+The
+.Cm IN
+and
+.Cm CH
+class names overlap with the IN and CH top level domain names.
+Either use the
+.Fl t
+and
+.Fl c
+options to specify the type and class, use the
+.Fl q
+to specify the domain name, or use "IN." and "CH." when looking up these top
+level domains.
+.Sh QUERY OPTIONS
+.Nm
+provides a number of query options which affect the way in which lookups are
+made and the results displayed.
+Some of
+these set or reset flag bits in the query header, some determine which sections
+of the answer get printed, and others determine the timeout and retry
+strategies.
+.Pp
+Each query option is identified by a keyword preceded by a plus sign
+.Pq Cm + .
+Some keywords set or reset an option.
+These may be preceded by the string
+.Cm no
+to negate the meaning of that keyword.
+Other keywords assign values to options like the timeout interval.
+They have the form
+.Cm + Ns Ar keyword Ns = Ns Ar value .
+Keywords may be abbreviated, provided the abbreviation is unambiguous; for
+example,
+.Cm +cd
+is equivalent
+to
+.Cm +cdflag .
+The query options are:
+.Bl -tag -width Ds
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm aaflag
+.Xc
+A synonym for
+.Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm aaonly .
+.Xc
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm aaonly
+.Xc
+Set the "aa" flag in the query (off by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm additional
+.Xc
+Display the additional section of a reply (on by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm adflag
+.Xc
+Set the AD (authentic data) bit in the query (on by default).
+This requests the server to return whether all of the answer and authority
+sections have all been validated as secure according to the security policy of
+the server.
+AD=1 indicates that all records have been validated as secure and the answer is
+not from an OPT-OUT range.
+AD=0 indicates that some part of the answer was insecure or not validated.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm all
+.Xc
+Set or clear all display flags.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm answer
+.Xc
+Display the answer section of a reply (on by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm authority
+.Xc
+Display the authority section of a reply (on by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm besteffort
+.Xc
+Attempt to display the contents of messages which are malformed (on by
+default).
+.It Cm +bufsize Ns = Ns Ar #
+Set the UDP message buffer size advertised using EDNS0 to
+.Ar #
+bytes.
+The maximum and minimum sizes of this buffer are 65535 and 0 respectively.
+Values outside this range are rounded up or down appropriately.
+Values other than zero will cause an EDNS query to be sent.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm cdflag
+.Xc
+Set the CD (checking disabled) bit in the query (off by default).
+This requests the server to not perform DNSSEC validation of responses.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm class
+.Xc
+Display the CLASS when printing the record (on by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm cmd
+.Xc
+Print an initial comment identifying the version of
+.Nm
+and the query options that have been applied (on by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm comments
+.Xc
+Display comment lines in the output (on by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm cookie Ns
+.Op = Ns Ar value
+.Xc
+Send a COOKIE EDNS option, containing an optional
+.Ar value
+(off by default).
+Replaying a COOKIE from a previous response will allow the server to
+identify a previous client.
+.Pp
+.Cm +cookie
+is automatically set when
+.Cm +trace
+is in use, to better emulate the default queries from a name server.
+.Pp
+This option was formerly called
+.Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm sit
+.Xc
+(Server Identity Token).
+In BIND 9.10.0 through BIND 9.10.2,
+it sent the experimental option code 65001.
+This was changed to option code 10 in BIND 9.10.3 when the DNS
+COOKIE option was allocated.
+.Pp
+The
+.Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm sit
+.Xc
+option is now deprecated, but has been retained as a synonym for
+.Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm cookie
+.Xc
+for backward compatibility within the BIND 9.10 branch.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm crypto
+.Xc
+Display cryptographic fields in DNSSEC records (on by default).
+The contents of these field are unnecessary to debug most DNSSEC validation
+failures and removing them makes it easier to see the common failures.
+When omitted they are replaced by the string "[omitted]" or in the DNSKEY case
+the key id is displayed as the replacement, e.g. "[ key id = value ]".
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm defname
+.Xc
+Deprecated, treated as a synonym for
+.Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm search
+.Xc .
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm dnssec
+.Xc
+Request DNSSEC records be sent by setting the DNSSEC OK bit (DO) in the OPT
+record in the additional section of the query (off by default).
+.It Cm +domain Ns = Ns Ar name
+Set the search list to contain the single domain
+.Ar name ,
+as if specified in a
+.Ic domain
+directive in
+.Xr resolv.conf 5 ,
+and enable search list processing as if the
+.Cm +search
+option were given (off by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm edns Ns
+.Op = Ns Ar #
+.Xc
+Use EDNS in the query (on by default).
+A version may also be specified, from 0 (the default) to 255.
+.Cm +noedns
+disables EDNS and clears the remembered version.
+.It Cm +ednsflags Ns Op = Ns Ar #
+Set the must-be-zero EDNS flags bits (Z bits)
+to the specified value (0 by default).
+Decimal, hex and octal encodings are accepted.
+Setting a named flag (e.g. DO) will silently be ignored.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm ednsnegotiation
+.Xc
+Enable EDNS version negotiation (off by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm ednsopt Ns
+.Op = Ns Ar code Ns Op : Ns Ar value
+.Xc
+Specify EDNS option with code point
+.Ar code
+and optionally payload of
+.Ar value
+as a hexadecimal string.
+.Ar code
+can be
+either an EDNS option name (for example,
+.Cm NSID
+or
+.Cm ECS ) ,
+or an arbitrary numeric value.
+.Cm +noednsopt
+clears the EDNS options to be sent.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm expire
+.Xc
+Send an EDNS Expire option (off by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm fail
+.Xc
+Do not try the next server if you receive a SERVFAIL.
+This option is on by default,
+which is the reverse of normal stub resolver behavior.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm identify
+.Xc
+Show the IP address and port number that supplied the answer (off by default).
+This option has no effect unless the
+.Cm +short
+option is enabled.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm idnout
+.Xc
+Convert puny code on output.
+This version of
+.Nm
+does not support IDN.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm ignore
+.Xc
+Ignore truncation in UDP responses.
+This option is off by default, which means truncated responses
+cause retrying with TCP.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm keepopen
+.Xc
+Keep the TCP socket open between queries and reuse it.
+This option is off by default, which means that a new TCP socket
+is created for each lookup.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm multiline
+.Xc
+Print records like the SOA records in a verbose multi-line format with
+human-readable comments.
+This option is off by default, which means that each record is
+printed on a single line to facilitate machine parsing of the
+.Nm
+output.
+.It Cm +ndots Ns = Ns Ar #
+Set the number of dots that have to appear in
+.Ar name
+to
+.Ar #
+for it to be considered absolute.
+The default value is that defined using the ndots statement in
+.Xr resolv.conf 5 ,
+or 1 if no ndots statement is present.
+Names with fewer dots are interpreted as relative names and will be searched
+for in the domains listed in the
+.Cm search
+or
+.Cm domain
+directive in
+.Xr resolv.conf 5
+if
+.Cm +search
+is set.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm nsid
+.Xc
+Include an EDNS name server ID request when sending a query (off by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm nssearch
+.Xc
+Attempt to find the authoritative name servers for the zone
+containing the name being looked up and display the SOA record
+that each name server has for the zone (off by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm onesoa
+.Xc
+Print only one (starting) SOA record when performing an
+.Cm AXFR .
+This option is off by default, which means that both the starting
+and the ending SOA records are printed.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm opcode Ns = Ns
+.Ar #
+.Xc
+Set or restore the DNS message opcode to the specified value,
+which can be
+.Cm QUERY Pq the default ,
+.Cm IQUERY ,
+.Cm STATUS ,
+.Cm NOTIFY ,
+.Cm UPDATE ,
+or an integer number in the range from 0 to 15.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm qr
+.Xc
+Print the query as it is sent (off by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm question
+.Xc
+Print the question section of a query as a comment when an answer
+is returned (on by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm rdflag
+.Xc
+A synonym for
+.Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm recurse
+.Xc .
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm recurse
+.Xc
+Set the RD (recursion desired) bit in the query (on by default).
+Recursion is automatically disabled when the
+.Cm +nssearch
+or
+.Cm +trace
+query options are used.
+.It Cm +retry Ns = Ns Ar #
+Set the number of times to retry UDP queries to server to
+.Ar # .
+The default is 2.
+Unlike
+.Cm +tries ,
+this does not include the initial query.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm rrcomments
+.Xc
+Display per-record comments in the output (for example,
+human-readable key information about DNSKEY records).
+The default is
+.Cm +rrcomments
+if
+.Cm +multiline
+mode is active or
+.Cm +norrcomments
+otherwise.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm search
+.Xc
+Use the search list defined by the searchlist or domain directive in
+.Xr resolv.conf 5 ,
+if any (off by default).
+\&'ndots' from
+.Xr resolv.conf 5
+(default 1), which may be overridden by
+.Cm +ndots ,
+determines if the name will be treated as relative or not and hence whether a
+search is eventually performed or not.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm short
+.Xc
+Provide a terse answer (off by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm showsearch
+.Xc
+Perform a search showing intermediate results (off by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm split Ns = Ns Ar #
+.Xc
+Split long hex- or base64-formatted fields in resource records into chunks of
+.Ar #
+characters (where
+.Ar #
+is rounded up to the nearest multiple of 4).
+.Cm +nosplit
+or
+.Cm +split Ns =0
+causes fields not to be split at all.
+The default is 56 characters, or 44 characters when
+.Cm +multiline
+mode is active.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm stats
+.Xc
+Print statistics:
+when the query was made, the size of the reply and so on (on by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm subnet Ns = Ns
+.Ar addr Ns
+.Op / Ns Ar prefix
+.Xc
+Send an EDNS Client Subnet option with the specified IP address or
+network prefix (off by default).
+.Pp
+.Nm
+.Cm +subnet Ns =0.0.0.0/0,
+or simply
+.Nm
+.Cm +subnet Ns =0
+for short, sends an EDNS CLIENT-SUBNET option with an empty address and a
+source prefix-length of zero, which signals a resolver that the client's address
+information must
+.Em not
+be used when resolving this query.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm tcp
+.Xc
+Use TCP when querying name servers (off by default).
+.Cm IXFR Ns = Ns Ar N
+queries use TCP unless it is explicitly disabled with
+.Cm +notcp .
+.Cm AXFR
+queries always use TCP.
+.It Cm +timeout Ns = Ns Ar #
+Set the timeout for a query to
+.Ar #
+seconds.
+The default is 5 seconds for UDP and 10 seconds for TCP.
+An attempt to set
+.Ar #
+to less than 1 will result in a query timeout of 1 second being applied.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm trace
+.Xc
+Trace the delegation path from the root name servers for the name
+being looked up (off by default).
+.Pp
+When tracing is enabled,
+.Nm
+makes iterative queries to resolve the name being looked up.
+It will follow referrals from the root servers, showing the answer from each
+server that was used to resolve the lookup.
+.Pp
+If @server is also specified, it affects only the initial query for the root
+zone name servers.
+.Pp
+.Cm +dnssec
+is also set when
+.Cm +trace
+is set to better emulate the default queries from a name server.
+.It Cm +tries Ns = Ns Ar #
+Set the number of times to try UDP queries to server to
+.Ar # .
+The default is 3.
+If
+.Ar #
+is less than or equal to zero, the number of tries is silently rounded up to 1.
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm ttlid
+.Xc
+Display the TTL when printing the record (on by default).
+.It Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm vc
+.Xc
+Use TCP when querying name servers.
+This alternate syntax to
+.Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm tcp
+.Xc
+is provided for backwards compatibility.
+The "vc" stands for "virtual circuit".
+.El
+.Sh MULTIPLE QUERIES
+The BIND 9 implementation of
+.Nm
+supports specifying multiple queries on the command line (in addition to
+supporting the
+.Fl f
+batch file option).
+Each of those queries can be supplied with its own set of flags, options and
+query options.
+.Pp
+In this case, each
+.Ar query
+argument represent an individual query in the command-line syntax described
+above.
+Each consists of any of the standard options and flags, the name to be looked
+up, an optional query type and class and any query options that should be
+applied to that query.
+.Pp
+A global set of query options, which should be applied to all queries, can
+also be supplied.
+These global query options must precede the first tuple of name, class, type,
+options, flags, and query options supplied on the command line.
+Any global query options (except the
+.Xo
+.Cm + Ns
+.Op Cm no Ns
+.Cm cmd
+.Xc
+option) can be overridden by a query-specific set of query options.
+For example:
+.Bd -literal -offset indent
+dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
+.Ed
+.Pp
+shows how
+.Nm
+could be used from the command line to make three lookups: an ANY query for
+www.isc.org, a reverse lookup of 127.0.0.1 and a query for the NS records of
+isc.org.
+A global query option of
+.Cm +qr
+is applied, so that
+.Nm
+shows the initial query it made for each lookup.
+The final query has a local query option of
+.Cm +noqr
+which means that
+.Nm
+will not print the initial query when it looks up the NS records for
+isc.org.
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa /etc/resolv.conf
+Resolver configuration file.
+.It Pa ${HOME}/.digrc
+User defaults for
+.Nm .
+This file is read and any options in it are applied before the command line
+arguments.
+.El
+.Sh SEE ALSO
+.Xr host 1 ,
+.Xr resolv.conf 5
+.Sh STANDARDS
+.Rs
+.%A P. Mockapetris
+.%D November 1987
+.%R RFC 1035
+.%T Domain Names - Implementation and Specification
+.Re
+.Sh AUTHORS
+.An -nosplit
+.An Internet Systems Consortium, Inc .
+.Sh BUGS
+There are probably too many query options.
