@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.61 2019/06/28 13:32:44 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.62 2020/02/07 13:01:34 bluhm Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -49,6 +49,7 @@ static int	pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t, u_int8_t,
 		    struct ipsec_auth *, u_int8_t);
 static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
+		    u_int8_t, u_int16_t,
 		    struct ipsec_transforms *, struct ipsec_key *,
 		    struct ipsec_key *, u_int8_t);
 static int	pfkey_sabundle(int, u_int8_t, u_int8_t, u_int8_t,
@@ -388,6 +389,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 static int
 pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
     struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
+    u_int8_t encap, u_int16_t dport,
     struct ipsec_transforms *xfs, struct ipsec_key *authkey,
     struct ipsec_key *enckey, u_int8_t tmode)
 {
@@ -395,6 +397,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	struct sadb_sa		sa;
 	struct sadb_address	sa_src, sa_dst;
 	struct sadb_key		sa_authkey, sa_enckey;
+	struct sadb_x_udpencap	udpencap;
 	struct sockaddr_storage	ssrc, sdst;
 	struct iovec		iov[IOV_CNT];
 	ssize_t			n;
@@ -541,6 +544,12 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
 	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 
+	if (encap) {
+		sa.sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
+		udpencap.sadb_x_udpencap_exttype = SADB_X_EXT_UDPENCAP;
+		udpencap.sadb_x_udpencap_len = sizeof(udpencap) / 8;
+		udpencap.sadb_x_udpencap_port = htons(dport);
+	}
 	if (action == SADB_ADD && !authkey && !enckey && satype !=
 	    SADB_X_SATYPE_IPCOMP && satype != SADB_X_SATYPE_IPIP) { /* XXX ENCNULL */
 		warnx("no key specified");
@@ -592,6 +601,12 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	smsg.sadb_msg_len += sa_dst.sadb_address_len;
 	iov_cnt++;
 
+	if (encap) {
+		iov[iov_cnt].iov_base = &udpencap;
+		iov[iov_cnt].iov_len = sizeof(udpencap);
+		smsg.sadb_msg_len += udpencap.sadb_x_udpencap_len;
+		iov_cnt++;
+	}
 	if (authkey) {
 		/* authentication key */
 		iov[iov_cnt].iov_base = &sa_authkey;
@@ -1170,12 +1185,12 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		switch (action) {
 		case ACTION_ADD:
 			ret = pfkey_sa(fd, satype, SADB_ADD, r->spi,
-			    r->src, r->dst, r->xfs, r->authkey, r->enckey,
-			    r->tmode);
+			    r->src, r->dst, r->udpencap, r->udpdport,
+			    r->xfs, r->authkey, r->enckey, r->tmode);
 			break;
 		case ACTION_DELETE:
 			ret = pfkey_sa(fd, satype, SADB_DELETE, r->spi,
-			    r->src, r->dst, r->xfs, NULL, NULL, r->tmode);
+			    r->src, r->dst, 0, 0, r->xfs, NULL, NULL, r->tmode);
 			break;
 		default:
 			return -1;

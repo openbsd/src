@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.156 2019/11/10 20:51:52 landry Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.157 2020/02/07 13:01:34 bluhm Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2019 $
+.Dd $Mdocdate: February 7 2020 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -890,6 +890,10 @@ and
 The SPI identifies a specific SA.
 .Ar number
 is a 32-bit value and needs to be unique.
+.It Ic udpencap Op Ic port Ar dport
+For NAT-Traversal encapsulate the IPsec traffic in UDP.
+The port number of the peer can be set to
+.Ar dport .
 .It Ic auth Ar algorithm
 For ESP and AH
 an authentication algorithm can be specified.
