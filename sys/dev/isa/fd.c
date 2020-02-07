@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.106 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: fd.c,v 1.107 2020/02/07 13:35:08 cheloha Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -210,11 +210,11 @@ fdprobe(struct device *parent, void *match, void *aux)
 	/* select drive and turn on motor */
 	bus_space_write_1(iot, ioh, fdout, drive | FDO_FRST | FDO_MOEN(drive));
 	/* wait for motor to spin up */
-	tsleep(fdc, 0, "fdprobe", 250 * hz / 1000);
+	tsleep_nsec(fdc, 0, "fdprobe", MSEC_TO_NSEC(250));
 	out_fdc(iot, ioh, NE7CMD_RECAL);
 	out_fdc(iot, ioh, drive);
 	/* wait for recalibrate */
-	tsleep(fdc, 0, "fdprobe", 2000 * hz / 1000);
+	tsleep_nsec(fdc, 0, "fdprobe", MSEC_TO_NSEC(2000));
 	out_fdc(iot, ioh, NE7CMD_SENSEI);
 	n = fdcresult(fdc);
 #ifdef FD_DEBUG
@@ -228,7 +228,7 @@ fdprobe(struct device *parent, void *match, void *aux)
 #endif
 
 	/* turn off motor */
-	tsleep(fdc, 0, "fdprobe", 250 * hz / 1000);
+	tsleep_nsec(fdc, 0, "fdprobe", MSEC_TO_NSEC(250));
 	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
 
 	/* flags & 0x20 forces the drive to be found even if it won't probe */
@@ -900,7 +900,7 @@ loop:
 		timeout_del(&fd->fdtimeout_to);
 		fdc->sc_state = RECALCOMPLETE;
 		/* allow 1/30 second for heads to settle */
-		timeout_add(&fdc->fdcpseudointr_to, hz / 30);
+		timeout_add_msec(&fdc->fdcpseudointr_to, 1000 / 30);
 		return 1;			/* will return later */
 
 	case RECALCOMPLETE:
