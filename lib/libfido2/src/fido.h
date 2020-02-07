@@ -93,8 +93,7 @@ int fido_assert_set_clientdata_hash(fido_assert_t *, const unsigned char *,
 int fido_assert_set_count(fido_assert_t *, size_t);
 int fido_assert_set_extensions(fido_assert_t *, int);
 int fido_assert_set_hmac_salt(fido_assert_t *, const unsigned char *, size_t);
-int fido_assert_set_options(fido_assert_t *, bool, bool)
-    __attribute__((__deprecated__("use fido_assert_set_up/fido_assert_set_uv")));
+int fido_assert_set_options(fido_assert_t *, bool, bool);
 int fido_assert_set_rp(fido_assert_t *, const char *);
 int fido_assert_set_up(fido_assert_t *, fido_opt_t);
 int fido_assert_set_uv(fido_assert_t *, fido_opt_t);
@@ -107,8 +106,7 @@ int fido_cred_set_authdata_raw(fido_cred_t *, const unsigned char *, size_t);
 int fido_cred_set_clientdata_hash(fido_cred_t *, const unsigned char *, size_t);
 int fido_cred_set_extensions(fido_cred_t *, int);
 int fido_cred_set_fmt(fido_cred_t *, const char *);
-int fido_cred_set_options(fido_cred_t *, bool, bool)
-    __attribute__((__deprecated__("use fido_cred_set_rk/fido_cred_set_uv")));
+int fido_cred_set_options(fido_cred_t *, bool, bool);
 int fido_cred_set_prot(fido_cred_t *, int);
 int fido_cred_set_rk(fido_cred_t *, fido_opt_t);
 int fido_cred_set_rp(fido_cred_t *, const char *, const char *);
