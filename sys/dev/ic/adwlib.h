@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.h,v 1.13 2010/10/03 21:23:35 krw Exp $ */
+/*	$OpenBSD: adwlib.h,v 1.14 2020/02/07 13:31:47 krw Exp $ */
 /*      $NetBSD: adwlib.h,v 1.14 2000/07/03 18:14:18 dante Exp $        */
 
 /*
@@ -745,7 +745,6 @@ typedef struct adw_softc {
 	TAILQ_HEAD(, adw_ccb)	sc_free_ccb, sc_waiting_ccb;
 	TAILQ_HEAD(adw_pending_ccb, adw_ccb)	sc_pending_ccb;
 	struct scsi_link	sc_link;     /* prototype for devs */
-	struct scsi_adapter	sc_adapter;
 	struct mutex		sc_ccb_mtx;
 	struct scsi_iopool	sc_iopool;
 

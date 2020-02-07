@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.57 2020/01/26 00:53:31 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.58 2020/02/07 13:31:47 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -81,6 +81,10 @@ void adw_reset_bus(ADW_SOFTC *);
 
 struct cfdriver adw_cd = {
 	NULL, "adw", DV_DULL
+};
+
+struct scsi_adapter adw_switch = {
+	adw_scsi_cmd, adw_minphys, NULL, NULL, NULL
 };
 
 /******************************************************************************/
@@ -500,17 +504,11 @@ adw_attach(ADW_SOFTC *sc)
 	}
 
 	/*
-	 * Fill in the adapter.
-	 */
-	sc->sc_adapter.scsi_cmd = adw_scsi_cmd;
-	sc->sc_adapter.dev_minphys = adw_minphys;
-
-	/*
          * fill in the prototype scsi_link.
          */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->chip_scsi_id;
-	sc->sc_link.adapter = &sc->sc_adapter;
+	sc->sc_link.adapter = &adw_switch;
 	sc->sc_link.openings = 4;
 	sc->sc_link.adapter_buswidth = ADW_MAX_TID+1;
 	sc->sc_link.pool = &sc->sc_iopool;
