@@ -10,8 +10,16 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef _FIDO_INTERNAL
+#include "blob.h"
 #include "fido/err.h"
 #include "fido/param.h"
+#include "fido/types.h"
+#else
+#include <fido.h>
+#include <fido/err.h>
+#include <fido/param.h>
+#endif
 
 #ifdef _FIDO_INTERNAL
 struct fido_credman_metadata {

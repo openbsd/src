@@ -113,6 +113,7 @@ _fido_credman_rp_id_hash_ptr
 _fido_credman_rp_name
 _fido_credman_rp_new
 _fido_cred_new
+_fido_cred_prot
 _fido_cred_pubkey_len
 _fido_cred_pubkey_ptr
 _fido_cred_rp_id
@@ -123,6 +124,7 @@ _fido_cred_set_clientdata_hash
 _fido_cred_set_extensions
 _fido_cred_set_fmt
 _fido_cred_set_options
+_fido_cred_set_prot
 _fido_cred_set_rk
 _fido_cred_set_rp
 _fido_cred_set_sig
@@ -170,6 +172,7 @@ _fido_dev_reset
 _fido_dev_set_io_functions
 _fido_dev_set_pin
 _fido_init
+_fido_set_log_handler
 _fido_strerr
 _rs256_pk_free
 _rs256_pk_from_ptr

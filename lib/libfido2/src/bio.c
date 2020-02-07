@@ -32,18 +32,18 @@ bio_prepare_hmac(uint8_t cmd, cbor_item_t **argv, size_t argc,
 		return (fido_blob_set(hmac_data, prefix, sizeof(prefix)));
 
 	if ((*param = cbor_flatten_vector(argv, argc)) == NULL) {
-		log_debug("%s: cbor_flatten_vector", __func__);
+		fido_log_debug("%s: cbor_flatten_vector", __func__);
 		goto fail;
 	}
 
 	if ((cbor_len = cbor_serialize_alloc(*param, &cbor,
 	    &cbor_alloc_len)) == 0 || cbor_len > SIZE_MAX - sizeof(prefix)) {
-		log_debug("%s: cbor_serialize_alloc", __func__);
+		fido_log_debug("%s: cbor_serialize_alloc", __func__);
 		goto fail;
 	}
 
 	if ((hmac_data->ptr = malloc(cbor_len + sizeof(prefix))) == NULL) {
-		log_debug("%s: malloc", __func__);
+		fido_log_debug("%s: malloc", __func__);
 		goto fail;
 	}
 
@@ -76,7 +76,7 @@ bio_tx(fido_dev_t *dev, uint8_t cmd, cbor_item_t **sub_argv, size_t sub_argc,
 	/* modality, subCommand */
 	if ((argv[0] = cbor_build_uint8(1)) == NULL ||
 	    (argv[1] = cbor_build_uint8(cmd)) == NULL) {
-		log_debug("%s: cbor encode", __func__);
+		fido_log_debug("%s: cbor encode", __func__);
 		goto fail;
 	}
 
@@ -84,7 +84,7 @@ bio_tx(fido_dev_t *dev, uint8_t cmd, cbor_item_t **sub_argv, size_t sub_argc,
 	if (pin || token) {
 		if (bio_prepare_hmac(cmd, sub_argv, sub_argc, &argv[2],
 		    &hmac) < 0) {
-			log_debug("%s: bio_prepare_hmac", __func__);
+			fido_log_debug("%s: bio_prepare_hmac", __func__);
 			goto fail;
 		}
 	}
@@ -92,26 +92,26 @@ bio_tx(fido_dev_t *dev, uint8_t cmd, cbor_item_t **sub_argv, size_t sub_argc,
 	/* pinProtocol, pinAuth */
 	if (pin) {
 		if ((r = fido_do_ecdh(dev, &pk, &ecdh)) != FIDO_OK) {
-			log_debug("%s: fido_do_ecdh", __func__);
+			fido_log_debug("%s: fido_do_ecdh", __func__);
 			goto fail;
 		}
-		if ((r = add_cbor_pin_params(dev, &hmac, pk, ecdh, pin,
+		if ((r = cbor_add_pin_params(dev, &hmac, pk, ecdh, pin,
 		    &argv[4], &argv[3])) != FIDO_OK) {
-			log_debug("%s: add_cbor_pin_params", __func__);
+			fido_log_debug("%s: cbor_add_pin_params", __func__);
 			goto fail;
 		}
 	} else if (token) {
-		if ((argv[3] = encode_pin_opt()) == NULL ||
-		    (argv[4] = encode_pin_auth(token, &hmac)) == NULL) {
-			log_debug("%s: encode pin", __func__);
+		if ((argv[3] = cbor_encode_pin_opt()) == NULL ||
+		    (argv[4] = cbor_encode_pin_auth(token, &hmac)) == NULL) {
+			fido_log_debug("%s: encode pin", __func__);
 			goto fail;
 		}
 	}
 
 	/* framing and transmission */
-	if (cbor_build_frame(CTAP_CBOR_BIO_ENROLL_PRE, argv, 5, &f) < 0 ||
-	    tx(dev, CTAP_FRAME_INIT | CTAP_CMD_CBOR, f.ptr, f.len) < 0) {
-		log_debug("%s: tx", __func__);
+	if (cbor_build_frame(CTAP_CBOR_BIO_ENROLL_PRE, argv, nitems(argv),
+	    &f) < 0 || fido_tx(dev, CTAP_CMD_CBOR, f.ptr, f.len) < 0) {
+		fido_log_debug("%s: fido_tx", __func__);
 		r = FIDO_ERR_TX;
 		goto fail;
 	}
@@ -154,7 +154,7 @@ decode_template(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 
 	if (cbor_isa_uint(key) == false ||
 	    cbor_int_get_width(key) != CBOR_INT_8) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (0); /* ignore */
 	}
 
@@ -175,17 +175,17 @@ decode_template_array(const cbor_item_t *item, void *arg)
 
 	if (cbor_isa_map(item) == false ||
 	    cbor_map_is_definite(item) == false) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
 	if (ta->n_rx >= ta->n_alloc) {
-		log_debug("%s: n_rx >= n_alloc", __func__);
+		fido_log_debug("%s: n_rx >= n_alloc", __func__);
 		return (-1);
 	}
 
 	if (cbor_map_iter(item, &ta->ptr[ta->n_rx], decode_template) < 0) {
-		log_debug("%s: decode_template", __func__);
+		fido_log_debug("%s: decode_template", __func__);
 		return (-1);
 	}
 
@@ -203,18 +203,18 @@ bio_parse_template_array(const cbor_item_t *key, const cbor_item_t *val,
 	if (cbor_isa_uint(key) == false ||
 	    cbor_int_get_width(key) != CBOR_INT_8 ||
 	    cbor_get_uint8(key) != 7) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (0); /* ignore */
 	}
 
 	if (cbor_isa_array(val) == false ||
 	    cbor_array_is_definite(val) == false) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
 	if (ta->ptr != NULL || ta->n_alloc != 0 || ta->n_rx != 0) {
-		log_debug("%s: ptr != NULL || n_alloc != 0 || n_rx != 0",
+		fido_log_debug("%s: ptr != NULL || n_alloc != 0 || n_rx != 0",
 		    __func__);
 		return (-1);
 	}
@@ -225,7 +225,7 @@ bio_parse_template_array(const cbor_item_t *key, const cbor_item_t *val,
 	ta->n_alloc = cbor_array_size(val);
 
 	if (cbor_array_iter(val, ta, decode_template_array) < 0) {
-		log_debug("%s: decode_template_array", __func__);
+		fido_log_debug("%s: decode_template_array", __func__);
 		return (-1);
 	}
 
@@ -235,21 +235,21 @@ bio_parse_template_array(const cbor_item_t *key, const cbor_item_t *val,
 static int
 bio_rx_template_array(fido_dev_t *dev, fido_bio_template_array_t *ta, int ms)
 {
-	const uint8_t	cmd = CTAP_FRAME_INIT | CTAP_CMD_CBOR;
-	unsigned char	reply[2048];
+	unsigned char	reply[FIDO_MAXMSG];
 	int		reply_len;
 	int		r;
 
 	bio_reset_template_array(ta);
 
-	if ((reply_len = rx(dev, cmd, &reply, sizeof(reply), ms)) < 0) {
-		log_debug("%s: rx", __func__);
+	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
+	    ms)) < 0) {
+		fido_log_debug("%s: fido_rx", __func__);
 		return (FIDO_ERR_RX);
 	}
 
-	if ((r = parse_cbor_reply(reply, (size_t)reply_len, ta,
+	if ((r = cbor_parse_reply(reply, (size_t)reply_len, ta,
 	    bio_parse_template_array)) != FIDO_OK) {
-		log_debug("%s: bio_parse_template_array" , __func__);
+		fido_log_debug("%s: bio_parse_template_array" , __func__);
 		return (r);
 	}
 
@@ -290,13 +290,13 @@ bio_set_template_name_wait(fido_dev_t *dev, const fido_bio_template_t *t,
 
 	if ((argv[0] = fido_blob_encode(&t->id)) == NULL ||
 	    (argv[1] = cbor_build_string(t->name)) == NULL) {
-		log_debug("%s: cbor encode", __func__);
+		fido_log_debug("%s: cbor encode", __func__);
 		goto fail;
 	}
 
 	if ((r = bio_tx(dev, CMD_SET_NAME, argv, 2, pin, NULL)) != FIDO_OK ||
-	    (r = rx_cbor_status(dev, ms)) != FIDO_OK) {
-		log_debug("%s: tx/rx", __func__);
+	    (r = fido_rx_cbor_status(dev, ms)) != FIDO_OK) {
+		fido_log_debug("%s: tx/rx", __func__);
 		goto fail;
 	}
 
@@ -336,21 +336,21 @@ bio_parse_enroll_status(const cbor_item_t *key, const cbor_item_t *val,
 
 	if (cbor_isa_uint(key) == false ||
 	    cbor_int_get_width(key) != CBOR_INT_8) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (0); /* ignore */
 	}
 
 	switch (cbor_get_uint8(key)) {
 	case 5:
-		if (decode_uint64(val, &x) < 0 || x > UINT8_MAX) {
-			log_debug("%s: decode_uint64", __func__);
+		if (cbor_decode_uint64(val, &x) < 0 || x > UINT8_MAX) {
+			fido_log_debug("%s: cbor_decode_uint64", __func__);
 			return (-1);
 		}
 		e->last_status = (uint8_t)x;
 		break;
 	case 6:
-		if (decode_uint64(val, &x) < 0 || x > UINT8_MAX) {
-			log_debug("%s: decode_uint64", __func__);
+		if (cbor_decode_uint64(val, &x) < 0 || x > UINT8_MAX) {
+			fido_log_debug("%s: cbor_decode_uint64", __func__);
 			return (-1);
 		}
 		e->remaining_samples = (uint8_t)x;
@@ -371,7 +371,7 @@ bio_parse_template_id(const cbor_item_t *key, const cbor_item_t *val,
 	if (cbor_isa_uint(key) == false ||
 	    cbor_int_get_width(key) != CBOR_INT_8 ||
 	    cbor_get_uint8(key) != 4) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (0); /* ignore */
 	}
 
@@ -382,8 +382,7 @@ static int
 bio_rx_enroll_begin(fido_dev_t *dev, fido_bio_template_t *t,
     fido_bio_enroll_t *e, int ms)
 {
-	const uint8_t	cmd = CTAP_FRAME_INIT | CTAP_CMD_CBOR;
-	unsigned char	reply[2048];
+	unsigned char	reply[FIDO_MAXMSG];
 	int		reply_len;
 	int		r;
 
@@ -392,19 +391,20 @@ bio_rx_enroll_begin(fido_dev_t *dev, fido_bio_template_t *t,
 	e->remaining_samples = 0;
 	e->last_status = 0;
 
-	if ((reply_len = rx(dev, cmd, &reply, sizeof(reply), ms)) < 0) {
-		log_debug("%s: rx", __func__);
+	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
+	    ms)) < 0) {
+		fido_log_debug("%s: fido_rx", __func__);
 		return (FIDO_ERR_RX);
 	}
 
-	if ((r = parse_cbor_reply(reply, (size_t)reply_len, e,
+	if ((r = cbor_parse_reply(reply, (size_t)reply_len, e,
 	    bio_parse_enroll_status)) != FIDO_OK) {
-		log_debug("%s: bio_parse_enroll_status", __func__);
+		fido_log_debug("%s: bio_parse_enroll_status", __func__);
 		return (r);
 	}
-	if ((r = parse_cbor_reply(reply, (size_t)reply_len, &t->id,
+	if ((r = cbor_parse_reply(reply, (size_t)reply_len, &t->id,
 	    bio_parse_template_id)) != FIDO_OK) {
-		log_debug("%s: bio_parse_template_id", __func__);
+		fido_log_debug("%s: bio_parse_template_id", __func__);
 		return (r);
 	}
     
@@ -422,13 +422,13 @@ bio_enroll_begin_wait(fido_dev_t *dev, fido_bio_template_t *t,
 	memset(&argv, 0, sizeof(argv));
 
 	if ((argv[2] = cbor_build_uint32(timo_ms)) == NULL) {
-		log_debug("%s: cbor encode", __func__);
+		fido_log_debug("%s: cbor encode", __func__);
 		goto fail;
 	}
 
 	if ((r = bio_tx(dev, cmd, argv, 3, NULL, e->token)) != FIDO_OK ||
 	    (r = bio_rx_enroll_begin(dev, t, e, ms)) != FIDO_OK) {
-		log_debug("%s: tx/rx", __func__);
+		fido_log_debug("%s: tx/rx", __func__);
 		goto fail;
 	}
 
@@ -457,12 +457,12 @@ fido_bio_dev_enroll_begin(fido_dev_t *dev, fido_bio_template_t *t,
 	}
 
 	if ((r = fido_do_ecdh(dev, &pk, &ecdh)) != FIDO_OK) {
-		log_debug("%s: fido_do_ecdh", __func__);
+		fido_log_debug("%s: fido_do_ecdh", __func__);
 		goto fail;
 	}
 
 	if ((r = fido_dev_get_pin_token(dev, pin, ecdh, pk, token)) != FIDO_OK) {
-		log_debug("%s: fido_dev_get_pin_token", __func__);
+		fido_log_debug("%s: fido_dev_get_pin_token", __func__);
 		goto fail;
 	}
 
@@ -482,22 +482,22 @@ fail:
 static int
 bio_rx_enroll_continue(fido_dev_t *dev, fido_bio_enroll_t *e, int ms)
 {
-	const uint8_t	cmd = CTAP_FRAME_INIT | CTAP_CMD_CBOR;
-	unsigned char	reply[2048];
+	unsigned char	reply[FIDO_MAXMSG];
 	int		reply_len;
 	int		r;
 
 	e->remaining_samples = 0;
 	e->last_status = 0;
 
-	if ((reply_len = rx(dev, cmd, &reply, sizeof(reply), ms)) < 0) {
-		log_debug("%s: rx", __func__);
+	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
+	    ms)) < 0) {
+		fido_log_debug("%s: fido_rx", __func__);
 		return (FIDO_ERR_RX);
 	}
 
-	if ((r = parse_cbor_reply(reply, (size_t)reply_len, e,
+	if ((r = cbor_parse_reply(reply, (size_t)reply_len, e,
 	    bio_parse_enroll_status)) != FIDO_OK) {
-		log_debug("%s: bio_parse_enroll_status", __func__);
+		fido_log_debug("%s: bio_parse_enroll_status", __func__);
 		return (r);
 	}
     
@@ -516,13 +516,13 @@ bio_enroll_continue_wait(fido_dev_t *dev, const fido_bio_template_t *t,
 
 	if ((argv[0] = fido_blob_encode(&t->id)) == NULL ||
 	    (argv[2] = cbor_build_uint32(timo_ms)) == NULL) {
-		log_debug("%s: cbor encode", __func__);
+		fido_log_debug("%s: cbor encode", __func__);
 		goto fail;
 	}
 
 	if ((r = bio_tx(dev, cmd, argv, 3, NULL, e->token)) != FIDO_OK ||
 	    (r = bio_rx_enroll_continue(dev, e, ms)) != FIDO_OK) {
-		log_debug("%s: tx/rx", __func__);
+		fido_log_debug("%s: tx/rx", __func__);
 		goto fail;
 	}
 
@@ -550,8 +550,8 @@ bio_enroll_cancel_wait(fido_dev_t *dev, int ms)
 	int		r;
 
 	if ((r = bio_tx(dev, cmd, NULL, 0, NULL, NULL)) != FIDO_OK ||
-	    (r = rx_cbor_status(dev, ms)) != FIDO_OK) {
-		log_debug("%s: tx/rx", __func__);
+	    (r = fido_rx_cbor_status(dev, ms)) != FIDO_OK) {
+		fido_log_debug("%s: tx/rx", __func__);
 		return (r);
 	}
 
@@ -575,13 +575,13 @@ bio_enroll_remove_wait(fido_dev_t *dev, const fido_bio_template_t *t,
 	memset(&argv, 0, sizeof(argv));
 
 	if ((argv[0] = fido_blob_encode(&t->id)) == NULL) {
-		log_debug("%s: cbor encode", __func__);
+		fido_log_debug("%s: cbor encode", __func__);
 		goto fail;
 	}
 
 	if ((r = bio_tx(dev, cmd, argv, 1, pin, NULL)) != FIDO_OK ||
-	    (r = rx_cbor_status(dev, ms)) != FIDO_OK) {
-		log_debug("%s: tx/rx", __func__);
+	    (r = fido_rx_cbor_status(dev, ms)) != FIDO_OK) {
+		fido_log_debug("%s: tx/rx", __func__);
 		goto fail;
 	}
 
@@ -614,21 +614,21 @@ bio_parse_info(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 
 	if (cbor_isa_uint(key) == false ||
 	    cbor_int_get_width(key) != CBOR_INT_8) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (0); /* ignore */
 	}
 
 	switch (cbor_get_uint8(key)) {
 	case 2:
-		if (decode_uint64(val, &x) < 0 || x > UINT8_MAX) {
-			log_debug("%s: decode_uint64", __func__);
+		if (cbor_decode_uint64(val, &x) < 0 || x > UINT8_MAX) {
+			fido_log_debug("%s: cbor_decode_uint64", __func__);
 			return (-1);
 		}
 		i->type = (uint8_t)x;
 		break;
 	case 3:
-		if (decode_uint64(val, &x) < 0 || x > UINT8_MAX) {
-			log_debug("%s: decode_uint64", __func__);
+		if (cbor_decode_uint64(val, &x) < 0 || x > UINT8_MAX) {
+			fido_log_debug("%s: cbor_decode_uint64", __func__);
 			return (-1);
 		}
 		i->max_samples = (uint8_t)x;
@@ -643,21 +643,21 @@ bio_parse_info(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 static int
 bio_rx_info(fido_dev_t *dev, fido_bio_info_t *i, int ms)
 {
-	const uint8_t	cmd = CTAP_FRAME_INIT | CTAP_CMD_CBOR;
-	unsigned char	reply[2048];
+	unsigned char	reply[FIDO_MAXMSG];
 	int		reply_len;
 	int		r;
 
 	bio_reset_info(i);
 
-	if ((reply_len = rx(dev, cmd, &reply, sizeof(reply), ms)) < 0) {
-		log_debug("%s: rx", __func__);
+	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
+	    ms)) < 0) {
+		fido_log_debug("%s: fido_rx", __func__);
 		return (FIDO_ERR_RX);
 	}
 
-	if ((r = parse_cbor_reply(reply, (size_t)reply_len, i,
+	if ((r = cbor_parse_reply(reply, (size_t)reply_len, i,
 	    bio_parse_info)) != FIDO_OK) {
-		log_debug("%s: bio_parse_info" , __func__);
+		fido_log_debug("%s: bio_parse_info" , __func__);
 		return (r);
 	}
 
@@ -671,7 +671,7 @@ bio_get_info_wait(fido_dev_t *dev, fido_bio_info_t *i, int ms)
 
 	if ((r = bio_tx(dev, CMD_GET_INFO, NULL, 0, NULL, NULL)) != FIDO_OK ||
 	    (r = bio_rx_info(dev, i, ms)) != FIDO_OK) {
-		log_debug("%s: tx/rx", __func__);
+		fido_log_debug("%s: tx/rx", __func__);
 		return (r);
 	}
 

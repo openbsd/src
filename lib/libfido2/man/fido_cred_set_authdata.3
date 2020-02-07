@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: November 19 2019 $
+.Dd $Mdocdate: February 7 2020 $
 .Dt FIDO_CRED_SET_AUTHDATA 3
 .Os
 .Sh NAME
@@ -14,6 +14,7 @@
 .Nm fido_cred_set_rp ,
 .Nm fido_cred_set_user ,
 .Nm fido_cred_set_extensions ,
+.Nm fido_cred_set_prot ,
 .Nm fido_cred_set_rk ,
 .Nm fido_cred_set_uv ,
 .Nm fido_cred_set_fmt ,
@@ -44,6 +45,8 @@ typedef enum {
 .Fn fido_cred_set_user "fido_cred_t *cred" "const unsigned char *user_id" "size_t user_id_len" "const char *name" "const char *display_name" "const char *icon"
 .Ft int
 .Fn fido_cred_set_extensions "fido_cred_t *cred" "int flags"
+.Ft int
+.Fn fido_cred_set_prot "fido_cred_t *cred" "int prot"
 .Ft int
 .Fn fido_cred_set_rk "fido_cred_t *cred" "fido_opt_t rk"
 .Ft int
@@ -149,12 +152,32 @@ to the bitmask
 .Fa flags .
 At the moment, only the
 .Dv FIDO_EXT_HMAC_SECRET
-extension is supported.
+and
+.Dv FIDO_EXT_CRED_PROTECT
+extensions are supported.
 If
 .Fa flags
 is zero, the extensions of
 .Fa cred
 are cleared.
+.Pp
+The
+.Fn fido_cred_set_prot
+function sets the protection of
+.Fa cred
+to the scalar
+.Fa prot .
+At the moment, only the
+.Dv FIDO_CRED_PROT_UV_OPTIONAL ,
+.Dv FIDO_CRED_PROT_UV_OPTIONAL_WITH_ID ,
+and
+.Dv FIDO_CRED_PROT_UV_REQUIRED
+protections are supported.
+If
+.Fa prot
+is zero, the protection of
+.Fa cred
+is cleared.
 .Pp
 The
 .Fn fido_cred_set_rk

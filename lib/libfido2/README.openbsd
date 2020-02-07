@@ -1,3 +1,9 @@
-This is an import of https://github.com/Yubico/libfido2 rev 4f6739e7dc
+This is an import of https://github.com/Yubico/libfido2 780ad3c25 (20120123)
+
+Local changes:
 
 Only a subset of the upstream files have been imported: src/, man/ and LICENSE.
+
+The CMake-based build system has been replaced with a fixed Makefile.
+
+src/hid_openbsd.c has been adapted to use the fido(4) device.

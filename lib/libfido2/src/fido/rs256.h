@@ -12,6 +12,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef _FIDO_INTERNAL
+#include "types.h"
+#else
+#include <fido.h>
+#endif
+
 rs256_pk_t *rs256_pk_new(void);
 void rs256_pk_free(rs256_pk_t **);
 EVP_PKEY *rs256_pk_to_EVP_PKEY(const rs256_pk_t *);

@@ -24,7 +24,7 @@ aes256_cbc_enc(const fido_blob_t *key, const fido_blob_t *in, fido_blob_t *out)
 	/* sanity check */
 	if (in->len > INT_MAX || (in->len % 16) != 0 ||
 	    (out->ptr = calloc(1, in->len)) == NULL) {
-		log_debug("%s: in->len=%zu", __func__, in->len);
+		fido_log_debug("%s: in->len=%zu", __func__, in->len);
 		goto fail;
 	}
 
@@ -33,7 +33,7 @@ aes256_cbc_enc(const fido_blob_t *key, const fido_blob_t *in, fido_blob_t *out)
 	    !EVP_CIPHER_CTX_set_padding(ctx, 0) ||
 	    !EVP_EncryptUpdate(ctx, out->ptr, &len, in->ptr, (int)in->len) ||
 	    len < 0 || (size_t)len != in->len) {
-		log_debug("%s: EVP_Encrypt", __func__);
+		fido_log_debug("%s: EVP_Encrypt", __func__);
 		goto fail;
 	}
 
@@ -68,7 +68,7 @@ aes256_cbc_dec(const fido_blob_t *key, const fido_blob_t *in, fido_blob_t *out)
 	/* sanity check */
 	if (in->len > INT_MAX || (in->len % 16) != 0 ||
 	    (out->ptr = calloc(1, in->len)) == NULL) {
-		log_debug("%s: in->len=%zu", __func__, in->len);
+		fido_log_debug("%s: in->len=%zu", __func__, in->len);
 		goto fail;
 	}
 
@@ -77,7 +77,7 @@ aes256_cbc_dec(const fido_blob_t *key, const fido_blob_t *in, fido_blob_t *out)
 	    !EVP_CIPHER_CTX_set_padding(ctx, 0) ||
 	    !EVP_DecryptUpdate(ctx, out->ptr, &len, in->ptr, (int)in->len) ||
 	    len < 0 || (size_t)len > in->len + 32) {
-		log_debug("%s: EVP_Decrypt", __func__);
+		fido_log_debug("%s: EVP_Decrypt", __func__);
 		goto fail;
 	}
 

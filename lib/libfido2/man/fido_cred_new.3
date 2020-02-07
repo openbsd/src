@@ -2,12 +2,13 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: November 27 2019 $
+.Dd $Mdocdate: February 7 2020 $
 .Dt FIDO_CRED_NEW 3
 .Os
 .Sh NAME
 .Nm fido_cred_new ,
 .Nm fido_cred_free ,
+.Nm fido_cred_prot ,
 .Nm fido_cred_fmt ,
 .Nm fido_cred_authdata_ptr ,
 .Nm fido_cred_clientdata_hash_ptr ,
@@ -28,6 +29,8 @@
 .Fn fido_cred_new "void"
 .Ft void
 .Fn fido_cred_free "fido_cred_t **cred_p"
+.Ft int
+.Fn fido_cred_prot "fido_cred_t *cred"
 .Ft const char *
 .Fn fido_cred_fmt "const fido_cred_t *cred"
 .Ft const unsigned char *
@@ -97,6 +100,15 @@ or
 may be NULL, in which case
 .Fn fido_cred_free
 is a NOP.
+.Pp
+The
+.Fn fido_cred_prot
+function returns the protection of
+.Fa cred .
+See
+.Xr fido_cred_set_prot 3
+for the values understood by
+.Em libfido2 .
 .Pp
 The
 .Fn fido_cred_fmt

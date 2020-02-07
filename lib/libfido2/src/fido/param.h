@@ -58,6 +58,11 @@
 #define FIDO_RANDOM_DEV			"/dev/urandom"
 #endif
 
+/* Maximum message size in bytes. */
+#ifndef FIDO_MAXMSG
+#define FIDO_MAXMSG	1200
+#endif
+
 /* CTAP capability bits. */
 #define FIDO_CAP_WINK	0x01 /* if set, device supports CTAP_CMD_WINK */
 #define FIDO_CAP_CBOR	0x04 /* if set, device supports CTAP_CMD_CBOR */
@@ -80,5 +85,11 @@
 
 /* Supported extensions. */
 #define FIDO_EXT_HMAC_SECRET	0x01
+#define FIDO_EXT_CRED_PROTECT	0x02
+
+/* Supported credential protection policies. */
+#define FIDO_CRED_PROT_UV_OPTIONAL		0x01
+#define FIDO_CRED_PROT_UV_OPTIONAL_WITH_ID	0x02
+#define FIDO_CRED_PROT_UV_REQUIRED		0x03
 
 #endif /* !_FIDO_PARAM_H */

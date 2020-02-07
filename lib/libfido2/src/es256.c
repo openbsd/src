@@ -19,7 +19,7 @@ decode_coord(const cbor_item_t *item, void *xy, size_t xy_len)
 	if (cbor_isa_bytestring(item) == false ||
 	    cbor_bytestring_is_definite(item) == false ||
 	    cbor_bytestring_length(item) != xy_len) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -53,7 +53,7 @@ es256_pk_decode(const cbor_item_t *item, es256_pk_t *k)
 	if (cbor_isa_map(item) == false ||
 	    cbor_map_is_definite(item) == false ||
 	    cbor_map_iter(item, k, decode_pubkey_point) < 0) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -176,10 +176,15 @@ es256_pk_free(es256_pk_t **pkp)
 int
 es256_pk_from_ptr(es256_pk_t *pk, const void *ptr, size_t len)
 {
+	const uint8_t *p = ptr;
+
 	if (len < sizeof(*pk))
 		return (FIDO_ERR_INVALID_ARGUMENT);
 
-	memcpy(pk, ptr, sizeof(*pk));
+	if (len == sizeof(*pk) + 1 && *p == 0x04)
+		memcpy(pk, ++p, sizeof(*pk)); /* uncompressed format */
+	else
+		memcpy(pk, ptr, sizeof(*pk)); /* libfido2 x||y format */
 
 	return (FIDO_OK);
 }
@@ -217,13 +222,13 @@ es256_sk_create(es256_sk_t *key)
 	    EVP_PKEY_paramgen_init(pctx) <= 0 ||
 	    EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, nid) <= 0 ||
 	    EVP_PKEY_paramgen(pctx, &p) <= 0) {
-		log_debug("%s: EVP_PKEY_paramgen", __func__);
+		fido_log_debug("%s: EVP_PKEY_paramgen", __func__);
 		goto fail;
 	}
 
 	if ((kctx = EVP_PKEY_CTX_new(p, NULL)) == NULL ||
 	    EVP_PKEY_keygen_init(kctx) <= 0 || EVP_PKEY_keygen(kctx, &k) <= 0) {
-		log_debug("%s: EVP_PKEY_keygen", __func__);
+		fido_log_debug("%s: EVP_PKEY_keygen", __func__);
 		goto fail;
 	}
 
@@ -231,7 +236,7 @@ es256_sk_create(es256_sk_t *key)
 	    (d = EC_KEY_get0_private_key(ec)) == NULL ||
 	    (n = BN_num_bytes(d)) < 0 || (size_t)n > sizeof(key->d) ||
 	    (n = BN_bn2bin(d, key->d)) < 0 || (size_t)n > sizeof(key->d)) {
-		log_debug("%s: EC_KEY_get0_private_key", __func__);
+		fido_log_debug("%s: EC_KEY_get0_private_key", __func__);
 		goto fail;
 	}
 
@@ -269,26 +274,26 @@ es256_pk_to_EVP_PKEY(const es256_pk_t *k)
 
 	if (BN_bin2bn(k->x, sizeof(k->x), x) == NULL ||
 	    BN_bin2bn(k->y, sizeof(k->y), y) == NULL) {
-		log_debug("%s: BN_bin2bn", __func__);
+		fido_log_debug("%s: BN_bin2bn", __func__);
 		goto fail;
 	}
 
 	if ((ec = EC_KEY_new_by_curve_name(nid)) == NULL ||
 	    (g = EC_KEY_get0_group(ec)) == NULL) {
-		log_debug("%s: EC_KEY init", __func__);
+		fido_log_debug("%s: EC_KEY init", __func__);
 		goto fail;
 	}
 
 	if ((q = EC_POINT_new(g)) == NULL ||
 	    EC_POINT_set_affine_coordinates_GFp(g, q, x, y, bnctx) == 0 ||
 	    EC_KEY_set_public_key(ec, q) == 0) {
-		log_debug("%s: EC_KEY_set_public_key", __func__);
+		fido_log_debug("%s: EC_KEY_set_public_key", __func__);
 		goto fail;
 	}
 
 	if ((pkey = EVP_PKEY_new()) == NULL ||
 	    EVP_PKEY_assign_EC_KEY(pkey, ec) == 0) {
-		log_debug("%s: EVP_PKEY_assign_EC_KEY", __func__);
+		fido_log_debug("%s: EVP_PKEY_assign_EC_KEY", __func__);
 		goto fail;
 	}
 
@@ -333,13 +338,14 @@ es256_pk_from_EC_KEY(es256_pk_t *pk, const EC_KEY *ec)
 	if (EC_POINT_get_affine_coordinates_GFp(g, q, x, y, ctx) == 0 ||
 	    (n = BN_num_bytes(x)) < 0 || (size_t)n > sizeof(pk->x) ||
 	    (n = BN_num_bytes(y)) < 0 || (size_t)n > sizeof(pk->y)) {
-		log_debug("%s: EC_POINT_get_affine_coordinates_GFp", __func__);
+		fido_log_debug("%s: EC_POINT_get_affine_coordinates_GFp",
+		    __func__);
 		goto fail;
 	}
 
 	if ((n = BN_bn2bin(x, pk->x)) < 0 || (size_t)n > sizeof(pk->x) ||
 	    (n = BN_bn2bin(y, pk->y)) < 0 || (size_t)n > sizeof(pk->y)) {
-		log_debug("%s: BN_bn2bin", __func__);
+		fido_log_debug("%s: BN_bn2bin", __func__);
 		goto fail;
 	}
 
@@ -363,19 +369,19 @@ es256_sk_to_EVP_PKEY(const es256_sk_t *k)
 
 	if ((bnctx = BN_CTX_new()) == NULL || (d = BN_CTX_get(bnctx)) == NULL ||
 	    BN_bin2bn(k->d, sizeof(k->d), d) == NULL) {
-		log_debug("%s: BN_bin2bn", __func__);
+		fido_log_debug("%s: BN_bin2bn", __func__);
 		goto fail;
 	}
 
 	if ((ec = EC_KEY_new_by_curve_name(nid)) == NULL ||
 	    EC_KEY_set_private_key(ec, d) == 0) {
-		log_debug("%s: EC_KEY_set_private_key", __func__);
+		fido_log_debug("%s: EC_KEY_set_private_key", __func__);
 		goto fail;
 	}
 
 	if ((pkey = EVP_PKEY_new()) == NULL ||
 	    EVP_PKEY_assign_EC_KEY(pkey, ec) == 0) {
-		log_debug("%s: EVP_PKEY_assign_EC_KEY", __func__);
+		fido_log_debug("%s: EVP_PKEY_assign_EC_KEY", __func__);
 		goto fail;
 	}
 
@@ -409,14 +415,14 @@ es256_derive_pk(const es256_sk_t *sk, es256_pk_t *pk)
 	    (ec = EC_KEY_new_by_curve_name(nid)) == NULL ||
 	    (g = EC_KEY_get0_group(ec)) == NULL ||
 	    (q = EC_POINT_new(g)) == NULL) {
-		log_debug("%s: get", __func__);
+		fido_log_debug("%s: get", __func__);
 		goto fail;
 	}
 
 	if (EC_POINT_mul(g, q, d, NULL, NULL, NULL) == 0 ||
 	    EC_KEY_set_public_key(ec, q) == 0 ||
 	    es256_pk_from_EC_KEY(pk, ec) != FIDO_OK) {
-		log_debug("%s: set", __func__);
+		fido_log_debug("%s: set", __func__);
 		goto fail;
 	}
 

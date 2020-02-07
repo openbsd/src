@@ -71,7 +71,7 @@ decode_coord(const cbor_item_t *item, void *xy, size_t xy_len)
 	if (cbor_isa_bytestring(item) == false ||
 	    cbor_bytestring_is_definite(item) == false ||
 	    cbor_bytestring_length(item) != xy_len) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -103,7 +103,7 @@ eddsa_pk_decode(const cbor_item_t *item, eddsa_pk_t *k)
 	if (cbor_isa_map(item) == false ||
 	    cbor_map_is_definite(item) == false ||
 	    cbor_map_iter(item, k, decode_pubkey_point) < 0) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -148,7 +148,7 @@ eddsa_pk_to_EVP_PKEY(const eddsa_pk_t *k)
 
 	if ((pkey = EVP_PKEY_new_raw_public_key(EVP_PKEY_ED25519, NULL, k->x,
 	    sizeof(k->x))) == NULL)
-		log_debug("%s: EVP_PKEY_new_raw_public_key", __func__);
+		fido_log_debug("%s: EVP_PKEY_new_raw_public_key", __func__);
 
 	return (pkey);
 }

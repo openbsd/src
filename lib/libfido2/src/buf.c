@@ -8,7 +8,7 @@
 #include "fido.h"
 
 int
-buf_read(const unsigned char **buf, size_t *len, void *dst, size_t count)
+fido_buf_read(const unsigned char **buf, size_t *len, void *dst, size_t count)
 {
 	if (count > *len)
 		return (-1);
@@ -21,7 +21,7 @@ buf_read(const unsigned char **buf, size_t *len, void *dst, size_t count)
 }
 
 int
-buf_write(unsigned char **buf, size_t *len, const void *src, size_t count)
+fido_buf_write(unsigned char **buf, size_t *len, const void *src, size_t count)
 {
 	if (count > *len)
 		return (-1);

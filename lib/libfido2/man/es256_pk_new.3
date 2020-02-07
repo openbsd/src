@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: November 27 2019 $
+.Dd $Mdocdate: February 7 2020 $
 .Dt ES256_PK_NEW 3
 .Os
 .Sh NAME
@@ -89,6 +89,10 @@ where
 points to
 .Fa len
 bytes.
+The
+.Fa ptr
+pointer may point to an uncompressed point, or to the
+concatenation of the x and y coordinates.
 No references to
 .Fa ptr
 are kept.

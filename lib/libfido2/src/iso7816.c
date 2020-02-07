@@ -13,7 +13,7 @@ iso7816_new(uint8_t ins, uint8_t p1, uint16_t payload_len)
 	iso7816_apdu_t	*apdu;
 	size_t		 alloc_len;
 
-	alloc_len = sizeof(iso7816_apdu_t) + payload_len;
+	alloc_len = sizeof(iso7816_apdu_t) + payload_len + 2; /* le1 le2 */
 
 	if ((apdu = calloc(1, alloc_len)) == NULL)
 		return (NULL);

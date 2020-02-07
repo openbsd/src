@@ -7,6 +7,9 @@
 #ifndef _ISO7816_H
 #define _ISO7816_H
 
+#include <stdint.h>
+#include <stdlib.h>
+
 #include "packed.h"
 
 PACKED_TYPE(iso7816_header_t,

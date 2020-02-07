@@ -45,7 +45,7 @@ decode_bignum(const cbor_item_t *item, void *ptr, size_t len)
 	if (cbor_isa_bytestring(item) == false ||
 	    cbor_bytestring_is_definite(item) == false ||
 	    cbor_bytestring_length(item) != len) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -79,7 +79,7 @@ rs256_pk_decode(const cbor_item_t *item, rs256_pk_t *k)
 	if (cbor_isa_map(item) == false ||
 	    cbor_map_is_definite(item) == false ||
 	    cbor_map_iter(item, k, decode_rsa_pubkey) < 0) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -131,12 +131,12 @@ rs256_pk_to_EVP_PKEY(const rs256_pk_t *k)
 
 	if (BN_bin2bn(k->n, sizeof(k->n), n) == NULL ||
 	    BN_bin2bn(k->e, sizeof(k->e), e) == NULL) {
-		log_debug("%s: BN_bin2bn", __func__);
+		fido_log_debug("%s: BN_bin2bn", __func__);
 		goto fail;
 	}
 
 	if ((rsa = RSA_new()) == NULL || RSA_set0_key(rsa, n, e, NULL) == 0) {
-		log_debug("%s: RSA_set0_key", __func__);
+		fido_log_debug("%s: RSA_set0_key", __func__);
 		goto fail;
 	}
 
@@ -146,7 +146,7 @@ rs256_pk_to_EVP_PKEY(const rs256_pk_t *k)
 
 	if ((pkey = EVP_PKEY_new()) == NULL ||
 	    EVP_PKEY_assign_RSA(pkey, rsa) == 0) {
-		log_debug("%s: EVP_PKEY_assign_RSA", __func__);
+		fido_log_debug("%s: EVP_PKEY_assign_RSA", __func__);
 		goto fail;
 	}
 
@@ -177,26 +177,26 @@ rs256_pk_from_RSA(rs256_pk_t *pk, const RSA *rsa)
 	int		 k;
 
 	if (RSA_bits(rsa) != 2048) {
-		log_debug("%s: invalid key length", __func__);
+		fido_log_debug("%s: invalid key length", __func__);
 		return (FIDO_ERR_INVALID_ARGUMENT);
 	}
 
 	RSA_get0_key(rsa, &n, &e, &d);
 
 	if (n == NULL || e == NULL) {
-		log_debug("%s: RSA_get0_key", __func__);
+		fido_log_debug("%s: RSA_get0_key", __func__);
 		return (FIDO_ERR_INTERNAL);
 	}
 
 	if ((k = BN_num_bytes(n)) < 0 || (size_t)k > sizeof(pk->n) ||
 	    (k = BN_num_bytes(e)) < 0 || (size_t)k > sizeof(pk->e)) {
-		log_debug("%s: invalid key", __func__);
+		fido_log_debug("%s: invalid key", __func__);
 		return (FIDO_ERR_INTERNAL);
 	}
 
 	if ((k = BN_bn2bin(n, pk->n)) < 0 || (size_t)k > sizeof(pk->n) ||
 	    (k = BN_bn2bin(e, pk->e)) < 0 || (size_t)k > sizeof(pk->e)) {
-		log_debug("%s: BN_bn2bin", __func__);
+		fido_log_debug("%s: BN_bn2bin", __func__);
 		return (FIDO_ERR_INTERNAL);
 	}
 

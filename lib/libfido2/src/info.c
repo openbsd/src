@@ -15,7 +15,7 @@ decode_version(const cbor_item_t *item, void *arg)
 
 	/* keep ptr[x] and len consistent */
 	if (cbor_string_copy(item, &v->ptr[i]) < 0) {
-		log_debug("%s: cbor_string_copy", __func__);
+		fido_log_debug("%s: cbor_string_copy", __func__);
 		return (-1);
 	}
 
@@ -32,7 +32,7 @@ decode_versions(const cbor_item_t *item, fido_str_array_t *v)
 
 	if (cbor_isa_array(item) == false ||
 	    cbor_array_is_definite(item) == false) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -41,7 +41,7 @@ decode_versions(const cbor_item_t *item, fido_str_array_t *v)
 		return (-1);
 
 	if (cbor_array_iter(item, v, decode_version) < 0) {
-		log_debug("%s: decode_version", __func__);
+		fido_log_debug("%s: decode_version", __func__);
 		return (-1);
 	}
 
@@ -56,7 +56,7 @@ decode_extension(const cbor_item_t *item, void *arg)
 
 	/* keep ptr[x] and len consistent */
 	if (cbor_string_copy(item, &e->ptr[i]) < 0) {
-		log_debug("%s: cbor_string_copy", __func__);
+		fido_log_debug("%s: cbor_string_copy", __func__);
 		return (-1);
 	}
 
@@ -73,7 +73,7 @@ decode_extensions(const cbor_item_t *item, fido_str_array_t *e)
 
 	if (cbor_isa_array(item) == false ||
 	    cbor_array_is_definite(item) == false) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -82,7 +82,7 @@ decode_extensions(const cbor_item_t *item, fido_str_array_t *e)
 		return (-1);
 
 	if (cbor_array_iter(item, e, decode_extension) < 0) {
-		log_debug("%s: decode_extension", __func__);
+		fido_log_debug("%s: decode_extension", __func__);
 		return (-1);
 	}
 
@@ -95,7 +95,7 @@ decode_aaguid(const cbor_item_t *item, unsigned char *aaguid, size_t aaguid_len)
 	if (cbor_isa_bytestring(item) == false ||
 	    cbor_bytestring_is_definite(item) == false ||
 	    cbor_bytestring_length(item) != aaguid_len) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -113,12 +113,12 @@ decode_option(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 	if (cbor_isa_float_ctrl(val) == false ||
 	    cbor_float_get_width(val) != CBOR_FLOAT_0 ||
 	    cbor_is_bool(val) == false) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (0); /* ignore */
 	}
 
 	if (cbor_string_copy(key, &o->name[i]) < 0) {
-		log_debug("%s: cbor_string_copy", __func__);
+		fido_log_debug("%s: cbor_string_copy", __func__);
 		return (0); /* ignore */
 	}
 
@@ -138,7 +138,7 @@ decode_options(const cbor_item_t *item, fido_opt_array_t *o)
 
 	if (cbor_isa_map(item) == false ||
 	    cbor_map_is_definite(item) == false) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -158,7 +158,7 @@ decode_protocol(const cbor_item_t *item, void *arg)
 
 	if (cbor_isa_uint(item) == false ||
 	    cbor_int_get_width(item) != CBOR_INT_8) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -177,7 +177,7 @@ decode_protocols(const cbor_item_t *item, fido_byte_array_t *p)
 
 	if (cbor_isa_array(item) == false ||
 	    cbor_array_is_definite(item) == false) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (-1);
 	}
 
@@ -186,7 +186,7 @@ decode_protocols(const cbor_item_t *item, fido_byte_array_t *p)
 		return (-1);
 
 	if (cbor_array_iter(item, p, decode_protocol) < 0) {
-		log_debug("%s: decode_protocol", __func__);
+		fido_log_debug("%s: decode_protocol", __func__);
 		return (-1);
 	}
 
@@ -200,7 +200,7 @@ parse_reply_element(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 
 	if (cbor_isa_uint(key) == false ||
 	    cbor_int_get_width(key) != CBOR_INT_8) {
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (0); /* ignore */
 	}
 
@@ -214,11 +214,11 @@ parse_reply_element(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 	case 4: /* options */
 		return (decode_options(val, &ci->options));
 	case 5: /* maxMsgSize */
-		return (decode_uint64(val, &ci->maxmsgsiz));
+		return (cbor_decode_uint64(val, &ci->maxmsgsiz));
 	case 6: /* pinProtocols */
 		return (decode_protocols(val, &ci->protocols));
 	default: /* ignore */
-		log_debug("%s: cbor type", __func__);
+		fido_log_debug("%s: cbor type", __func__);
 		return (0);
 	}
 }
@@ -226,13 +226,12 @@ parse_reply_element(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 static int
 fido_dev_get_cbor_info_tx(fido_dev_t *dev)
 {
-	const unsigned char	cbor[] = { CTAP_CBOR_GETINFO };
-	const uint8_t		cmd = CTAP_FRAME_INIT | CTAP_CMD_CBOR;
+	const unsigned char cbor[] = { CTAP_CBOR_GETINFO };
 
-	log_debug("%s: dev=%p", __func__, (void *)dev);
+	fido_log_debug("%s: dev=%p", __func__, (void *)dev);
 
-	if (tx(dev, cmd, cbor, sizeof(cbor)) < 0) {
-		log_debug("%s: tx", __func__);
+	if (fido_tx(dev, CTAP_CMD_CBOR, cbor, sizeof(cbor)) < 0) {
+		fido_log_debug("%s: fido_tx", __func__);
 		return (FIDO_ERR_TX);
 	}
 
@@ -242,25 +241,25 @@ fido_dev_get_cbor_info_tx(fido_dev_t *dev)
 static int
 fido_dev_get_cbor_info_rx(fido_dev_t *dev, fido_cbor_info_t *ci, int ms)
 {
-	const uint8_t	cmd = CTAP_FRAME_INIT | CTAP_CMD_CBOR;
-	unsigned char	reply[512];
+	unsigned char	reply[FIDO_MAXMSG];
 	int		reply_len;
 
-	log_debug("%s: dev=%p, ci=%p, ms=%d", __func__, (void *)dev,
+	fido_log_debug("%s: dev=%p, ci=%p, ms=%d", __func__, (void *)dev,
 	    (void *)ci, ms);
 
 	memset(ci, 0, sizeof(*ci));
 
-	if ((reply_len = rx(dev, cmd, &reply, sizeof(reply), ms)) < 0) {
-		log_debug("%s: rx", __func__);
+	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
+	    ms)) < 0) {
+		fido_log_debug("%s: fido_rx", __func__);
 		return (FIDO_ERR_RX);
 	}
 
-	return (parse_cbor_reply(reply, (size_t)reply_len, ci,
+	return (cbor_parse_reply(reply, (size_t)reply_len, ci,
 	    parse_reply_element));
 }
 
-static int
+int
 fido_dev_get_cbor_info_wait(fido_dev_t *dev, fido_cbor_info_t *ci, int ms)
 {
 	int r;
