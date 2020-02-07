@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.16 2019/06/17 12:42:52 florian Exp $ */
+/*	$Id: extern.h,v 1.17 2020/02/07 14:34:15 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -277,12 +277,12 @@ char		*json_fmt_signed(const char *, const char *, const char *);
 /*
  * Should we print debugging messages?
  */
-int		 verbose;
+extern int	 verbose;
 
 /*
  * What component is the process within (COMP__MAX for none)?
  */
-enum comp	 proccomp;
+extern enum comp proccomp;
 
 __END_DECLS
 
