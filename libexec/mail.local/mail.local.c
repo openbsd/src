@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.37 2020/02/02 23:17:09 millert Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.38 2020/02/07 02:27:37 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -55,14 +55,14 @@ int
 main(int argc, char *argv[])
 {
 	struct passwd *pw;
-	int ch, fd, eval, lockfile=1, holdme=0;
+	int ch, fd, eval, lockfile=1;
 	uid_t uid;
 	char *from;
 
 	openlog("mail.local", LOG_PERROR, LOG_MAIL);
 
 	from = NULL;
-	while ((ch = getopt(argc, argv, "lLdf:r:H")) != -1)
+	while ((ch = getopt(argc, argv, "lLdf:r:")) != -1)
 		switch (ch) {
 		case 'd':		/* backward compatible */
 			break;
@@ -78,23 +78,14 @@ main(int argc, char *argv[])
 		case 'L':
 			lockfile=0;
 			break;
-		case 'H':
-			holdme=1;
-			break;
 		default:
 			usage();
 		}
 	argc -= optind;
 	argv += optind;
 
-	/* Support -H flag for backwards compat */
-	if (holdme) {
-		execl(_PATH_LOCKSPOOL, "lockspool", (char *)NULL);
-		merr(FATAL, "execl: lockspool: %s", strerror(errno));
-	} else {
-		if (!*argv)
-			usage();
-	}
+	if (!*argv)
+		usage();
 
 	/*
 	 * If from not specified, use the name from getlogin() if the
