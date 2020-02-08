@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncheck_ffs.8,v 1.26 2020/02/08 01:25:10 jsg Exp $
+.\"	$OpenBSD: ncheck_ffs.8,v 1.27 2020/02/08 17:25:25 schwarze Exp $
 .\"
 .\" Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -104,10 +104,8 @@ Print a
 character.
 .It Cm \e\e
 Print a backslash character.
-.It Cm \e Ns Ar 0
-Print a
-.Tn NUL
-character.
+.It Cm \e0
+Print a NUL character.
 .El
 .Pp
 All other characters, when prefixed by a backslash, simply print
