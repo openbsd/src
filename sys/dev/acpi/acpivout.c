@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.18 2020/01/28 14:06:16 patrick Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.19 2020/02/08 19:08:17 patrick Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -96,9 +96,6 @@ acpivout_match(struct device *parent, void *match, void *aux)
 	    aaa->aaa_table != NULL)
 		return (0);
 
-	if (ws_get_param || ws_set_param)
-		return (0);
-
 	return (1);
 }
 
@@ -115,6 +112,10 @@ acpivout_attach(struct device *parent, struct device *self, void *aux)
 
 	aml_register_notify(sc->sc_devnode, aaa->aaa_dev,
 	    acpivout_notify, sc, ACPIDEV_NOPOLL);
+
+	if (!aml_searchname(sc->sc_devnode, "_BQC") ||
+	    ws_get_param || ws_set_param)
+		return;
 
 	ws_get_param = acpivout_get_param;
 	ws_set_param = acpivout_set_param;
