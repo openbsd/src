@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.258 2020/01/31 01:51:27 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.259 2020/02/08 11:58:39 jasper Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3665,7 +3665,6 @@ vcpu_vmx_compute_ctrl(uint64_t ctrlval, uint16_t ctrl, uint32_t want1,
 /*
  * vm_get_info
  *
- * Returns information about the VM indicated by 'vip'.
  * Returns information about the VM indicated by 'vip'. The 'vip_size' field
  * in the 'vip' parameter is used to indicate the size of the caller's buffer.
  * If insufficient space exists in that buffer, the required size needed is
