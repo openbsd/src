@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.113 2019/06/28 13:32:47 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.114 2020/02/09 09:44:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -688,6 +688,13 @@ fcgiflags	: SOCKET STRING		{
 			    srv_conf->location, srv_conf->name, srv_conf->id,
 			    param->name, param->value);
 			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
+		}
+		| STRIP NUMBER			{
+			if ($2 < 0 || $2 > INT_MAX) {
+				yyerror("invalid fastcgi strip number");
+				YYERROR;
+			}
+			srv_conf->fcgistrip = $2;
 		}
 		;
 

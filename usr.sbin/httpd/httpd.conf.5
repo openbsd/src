@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.107 2019/05/08 21:46:56 tb Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.108 2020/02/09 09:44:04 florian Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 8 2019 $
+.Dd $Mdocdate: February 9 2020 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -300,6 +300,12 @@ Alternatively if
 the FastCGI handler is listening on a TCP socket,
 .Ar socket
 starts with a colon followed by the TCP port number.
+.It Ic strip Ar number
+Strip
+.Ar number
+path components from the beginning of DOCUMENT_ROOT and
+SCRIPT_FILENAME before sending them to the FastCGI server.
+This allows FastCGI server chroot to be a directory under httpd chroot.
 .It Ic param Ar variable value
 Sets a variable that will be sent to the FastCGI server.
 Each statement defines one variable.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.80 2019/05/08 21:41:06 tb Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.81 2020/02/09 09:44:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -241,7 +241,8 @@ server_fcgi(struct httpd *env, struct client *clt)
 		errstr = "failed to encode param";
 		goto fail;
 	}
-	if (fcgi_add_param(&param, "SCRIPT_FILENAME", script, clt) == -1) {
+	if (fcgi_add_param(&param, "SCRIPT_FILENAME", server_root_strip(script,
+	    srv_conf->fcgistrip), clt) == -1) {
 		errstr = "failed to encode param";
 		goto fail;
 	}
@@ -257,8 +258,8 @@ server_fcgi(struct httpd *env, struct client *clt)
 		goto fail;
 	}
 
-	if (fcgi_add_param(&param, "DOCUMENT_ROOT", srv_conf->root,
-	    clt) == -1) {
+	if (fcgi_add_param(&param, "DOCUMENT_ROOT", server_root_strip(
+	    srv_conf->root, srv_conf->fcgistrip), clt) == -1) {
 		errstr = "failed to encode param";
 		goto fail;
 	}

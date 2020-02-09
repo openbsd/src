@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.145 2019/05/08 19:57:45 reyk Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.146 2020/02/09 09:44:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -547,6 +547,7 @@ struct server_config {
 	uint8_t			 hsts_flags;
 
 	struct server_fcgiparams fcgiparams;
+	int			 fcgistrip;
 
 	TAILQ_ENTRY(server_config) entry;
 };
