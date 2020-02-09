@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.199 2020/01/25 12:07:28 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.200 2020/02/09 14:21:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2020 $
+.Dd $Mdocdate: February 9 2020 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1883,10 +1883,12 @@ For prefixes with equally long paths, the prefix with the larger weight
 is selected.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/bgpd.conf" -compact
+.Bl -tag -width "/etc/examples/bgpd.conf" -compact
 .It Pa /etc/bgpd.conf
 .Xr bgpd 8
 configuration file
+.It Pa /etc/examples/bgpd.conf
+example configuration file
 .El
 .Sh SEE ALSO
 .Xr strftime 3 ,
