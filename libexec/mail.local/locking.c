@@ -1,4 +1,4 @@
-/*	$OpenBSD: locking.c,v 1.13 2020/02/02 23:17:09 millert Exp $	*/
+/*	$OpenBSD: locking.c,v 1.14 2020/02/09 14:59:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -96,8 +96,7 @@ getlock(const char *name, struct passwd *pw)
 				break;
 again:
 			if (tries > 10) {
-				merr(NOTFATAL, "%s: %s", lpath,
-				    strerror(errno));
+				mwarn("%s: %s", lpath, strerror(errno));
 				seteuid(0);
 				return(-1);
 			}
@@ -129,7 +128,7 @@ again:
 			    S_IRUSR|S_IWUSR)) != -1)
 				break;
 			if (tries > 9) {
-				merr(NOTFATAL, "%s: %s", lpath, strerror(errno));
+				mwarn("%s: %s", lpath, strerror(errno));
 				return(-1);
 			}
 			sleep(1U << tries);
@@ -154,19 +153,27 @@ baditem(char *path)
 	if (rename(path, npath) == -1)
 		unlink(npath);
 	else
-		merr(NOTFATAL, "nasty spool item %s renamed to %s",
-		    path, npath);
+		mwarn("nasty spool item %s renamed to %s", path, npath);
 	/* XXX if we fail to rename, another attempt will happen later */
 }
 
 void
-merr(int isfatal, const char *fmt, ...)
+mwarn(const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
-	if (isfatal)
-		exit(1);
+}
+
+void
+merr(int eval, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vsyslog(LOG_ERR, fmt, ap);
+	va_end(ap);
+	exit(eval);
 }

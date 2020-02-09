@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockspool.c,v 1.20 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: lockspool.c,v 1.21 2020/02/09 14:59:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt <deraadt@theos.com>
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 	if (argc != 1 && argc != 2)
 		usage();
 	if (argc == 2 && getuid() != 0)
-		merr(FATAL, "you must be root to lock someone else's spool");
+		merr(1, "you must be root to lock someone else's spool");
 
 	signal(SIGTERM, unhold);
 	signal(SIGINT, unhold);
@@ -114,5 +114,5 @@ void
 usage(void)
 {
 
-	merr(FATAL, "usage: %s [username]", __progname);
+	merr(1, "usage: %s [username]", __progname);
 }
