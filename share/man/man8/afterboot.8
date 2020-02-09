@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.164 2018/09/28 18:21:31 ratchov Exp $
+.\"	$OpenBSD: afterboot.8,v 1.165 2020/02/09 16:36:02 espie Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 28 2018 $
+.Dd $Mdocdate: February 9 2020 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -60,6 +60,10 @@ command, type:
 Administrators will rapidly become more familiar with
 .Ox
 if they get used to using the high quality manual pages.
+.Pp
+Some base programs and subsystems also come with sample configuration 
+files in
+.Pa /etc/examples .
 .Ss Errata
 By the time that you have installed your system, it is possible that
 bugs in the release have been found.
