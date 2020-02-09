@@ -1,4 +1,4 @@
-/*	$OpenBSD: afile.h,v 1.1 2015/01/21 08:43:55 ratchov Exp $	*/
+/*	$OpenBSD: afile.h,v 1.2 2020/02/09 19:58:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,8 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef WAV_H
-#define WAV_H
+#ifndef AFILE_H
+#define AFILE_H
 
 #include <sys/types.h>
 #include "dsp.h"
@@ -52,4 +52,4 @@ size_t afile_write(struct afile *, void *, size_t);
 int afile_seek(struct afile *, off_t);
 void afile_close(struct afile *);
 
-#endif /* !defined(WAV_H) */
+#endif /* !defined(AFILE_H) */
