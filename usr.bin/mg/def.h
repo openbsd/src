@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.165 2019/07/18 10:55:11 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.166 2020/02/09 10:13:13 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -337,7 +337,7 @@ void		 ttnowindow(void);
 void		 ttcolor(int);
 void		 ttresize(void);
 
-volatile sig_atomic_t winch_flag;
+extern volatile sig_atomic_t winch_flag;
 
 /* ttyio.c */
 void		 ttopen(void);
@@ -752,11 +752,7 @@ extern char	 	 cinfo[];
 extern char		*keystrings[];
 extern char		 pat[NPAT];
 extern char		 prompt[];
-
-/*
- * Globals.
- */
-int		 tceeol;
-int		 tcinsl;
-int		 tcdell;
-int		 rptcount;	/* successive invocation count */
+extern int		 tceeol;
+extern int		 tcinsl;
+extern int		 tcdell;
+extern int		 rptcount;	/* successive invocation count */

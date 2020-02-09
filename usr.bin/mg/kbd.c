@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.33 2019/07/03 18:11:07 lum Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.34 2020/02/09 10:13:13 florian Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -26,13 +26,13 @@ char	 prompt[PROMPTL] = "", *promptp = prompt;
 
 static int mgwrap(PF, int, int);
 
-static int	 use_metakey = TRUE;
-static int	 pushed = FALSE;
-static int	 pushedc;
+static int		 use_metakey = TRUE;
+static int		 pushed = FALSE;
+static int		 pushedc;
 
 struct map_element	*ele;
-
-struct key key;
+struct key		 key;
+int			 rptcount;
 
 /*
  * Toggle the value of use_metakey
