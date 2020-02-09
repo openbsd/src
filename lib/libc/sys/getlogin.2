@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.21 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: getlogin.2,v 1.22 2020/02/09 02:32:43 jsg Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)getlogin.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: February 9 2020 $
 .Dt GETLOGIN 2
 .Os
 .Sh NAME
@@ -195,10 +195,18 @@ and
 functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
+A
+.Fn getlogin
+function which used
+.Xr utmp 5
+first appeared in
+.At v7 .
 The
 .Fn getlogin
-function first appeared in
-.Bx 4.2 .
+and
+.Fn setlogin
+system calls first appeared in
+.Bx 4.3 Reno .
 .Sh BUGS
 In earlier versions of the system,
 .Fn getlogin
