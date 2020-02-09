@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.122 2020/02/05 17:03:13 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.123 2020/02/09 14:09:08 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -686,7 +686,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	}
 
 	if (kev->flags & EV_ADD)
-		newkn = pool_get(&knote_pool, PR_WAITOK);
+		newkn = pool_get(&knote_pool, PR_WAITOK | PR_ZERO);
 
 again:
 	if (fops->f_isfd) {
