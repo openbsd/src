@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.conf.5,v 1.7 2020/02/10 13:18:21 schwarze Exp $
+.\"	$OpenBSD: man.conf.5,v 1.8 2020/02/10 14:42:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -101,12 +101,6 @@ manual.
 .It Ic toc      Ta none     Ta Cm html Ta print table of contents
 .It Ic width    Ta integer  Ta Cm ascii , utf8 Ta right margin
 .El
-.It Ic _whatdb Ar path Ns Cm /whatis.db
-This directive provides the same functionality as
-.Ic manpath ,
-but using a historic and misleading syntax.
-It is kept for backward compatibility for now,
-but will eventually be removed.
 .El
 .Sh FILES
 .Bl -tag -width /etc/examples/man.conf -compact

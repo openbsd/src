@@ -1,4 +1,4 @@
-/*	$OpenBSD: manpath.c,v 1.27 2019/07/10 19:38:56 schwarze Exp $ */
+/*	$OpenBSD: manpath.c,v 1.28 2020/02/10 14:42:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011,2014,2015,2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -165,7 +165,7 @@ manconf_free(struct manconf *conf)
 static void
 manconf_file(struct manconf *conf, const char *file)
 {
-	const char *const toks[] = { "manpath", "output", "_whatdb" };
+	const char *const toks[] = { "manpath", "output" };
 	char manpath_default[] = MANPATH_DEFAULT;
 
 	FILE		*stream;
@@ -202,13 +202,6 @@ manconf_file(struct manconf *conf, const char *file)
 		}
 
 		switch (tok) {
-		case 2:  /* _whatdb */
-			while (ep > cp && ep[-1] != '/')
-				ep--;
-			if (ep == cp)
-				continue;
-			*ep = '\0';
-			/* FALLTHROUGH */
 		case 0:  /* manpath */
 			manpath_add(&conf->manpath, cp, '\0');
 			*manpath_default = '\0';
