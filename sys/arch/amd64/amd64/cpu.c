@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.143 2019/12/20 07:49:31 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.144 2020/02/10 03:08:58 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1167,8 +1167,10 @@ cpu_tsx_disable(struct cpu_info *ci)
 	uint32_t dummy, sefflags_edx;
 
 	/* this runs before identifycpu() populates ci_feature_sefflags_edx */
-	if (cpuid_level >= 0x07)
-		CPUID_LEAF(0x7, 0, dummy, dummy, dummy, sefflags_edx);
+	if (cpuid_level < 0x07)
+		return;
+	CPUID_LEAF(0x7, 0, dummy, dummy, dummy, sefflags_edx);
+
 	if (strcmp(cpu_vendor, "GenuineIntel") == 0 &&
 	    (sefflags_edx & SEFF0EDX_ARCH_CAP)) {
 		msr = rdmsr(MSR_ARCH_CAPABILITIES);
