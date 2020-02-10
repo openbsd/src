@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.22 2018/06/18 06:04:25 jmc Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.23 2020/02/10 13:18:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -164,10 +164,12 @@ Valid attributes are:
 Use the supplied LDAP filter to retrieve password entries.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/ypldap.conf" -compact
+.Bl -tag -width /etc/examples/ypldap.conf -compact
 .It Pa /etc/ypldap.conf
 .Xr ypldap 8
-configuration file.
+configuration file
+.It Pa /etc/examples/ypldap.conf
+example configuration file
 .El
 .Sh SEE ALSO
 .Xr ypbind 8 ,

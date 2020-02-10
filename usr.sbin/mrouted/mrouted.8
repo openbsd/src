@@ -1,11 +1,11 @@
-.\"	$OpenBSD: mrouted.8,v 1.26 2015/10/28 10:02:59 jmc Exp $
+.\"	$OpenBSD: mrouted.8,v 1.27 2020/02/10 13:18:21 schwarze Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
 .\" the terms and conditions listed in that file.
 .\"
 .\" The mrouted program is COPYRIGHT 1989 by The Board of Trustees of
 .\" Leland Stanford Junior University.
-.Dd $Mdocdate: October 28 2015 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt MROUTED 8
 .Os
 .Sh NAME
@@ -345,8 +345,9 @@ Dumps the internal routing tables to stderr (only if
 was invoked with a non-zero debug level).
 .El
 .Sh FILES
-.Bl -tag -width /var/tmp/mrouted.cache -compact
+.Bl -tag -width /etc/examples/mrouted.conf -compact
 .It Pa /etc/mrouted.conf
+.It Pa /etc/examples/mrouted.conf
 .It Pa /var/tmp/mrouted.cache
 .It Pa /var/tmp/mrouted.dump
 .El

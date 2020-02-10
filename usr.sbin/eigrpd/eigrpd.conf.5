@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eigrpd.conf.5,v 1.7 2018/06/18 06:04:25 jmc Exp $
+.\"	$OpenBSD: eigrpd.conf.5,v 1.8 2020/02/10 13:18:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt EIGRPD.CONF 5
 .Os
 .Sh NAME
@@ -267,10 +267,12 @@ Configure a summary aggregate address for this interface.
 Multiple summary addresses can be configured.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/eigrpd.conf" -compact
+.Bl -tag -width /etc/examples/eigrpd.conf -compact
 .It Pa /etc/eigrpd.conf
 .Xr eigrpd 8
 configuration file
+.It Pa /etc/examples/eigrpd.conf
+example configuration file
 .El
 .Sh SEE ALSO
 .Xr eigrpctl 8 ,

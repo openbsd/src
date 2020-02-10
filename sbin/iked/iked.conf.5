@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.60 2019/12/01 12:11:56 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.61 2020/02/10 13:18:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 1 2019 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -923,6 +923,11 @@ ECP (elliptic curve groups modulo a prime),
 or Curve25519.
 Please note that the EC2N groups are considered as insecure and only
 provided for backwards compatibility.
+.Sh FILES
+.Bl -tag -width /etc/examples/iked.conf -compact
+.It Pa /etc/iked.conf
+.It Pa /etc/examples/iked.conf
+.El
 .Sh EXAMPLES
 The first example is intended for a server with clients connecting to
 .Xr iked 8

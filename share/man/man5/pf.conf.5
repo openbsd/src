@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.583 2020/01/17 09:07:35 sashan Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.584 2020/02/10 13:18:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 17 2020 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1542,7 +1542,7 @@ With 9000 state table entries, the timeout values are scaled to 50%
 .El
 .Pp
 .Dq pfctl -F Reset
-restores default values for following options: debug, all limit options,
+restores default values for the following options: debug, all limit options,
 loginterface, reassemble, skip, syncookies, all timeouts.
 .Sh QUEUEING
 Packets can be assigned to queues for the purpose of bandwidth
@@ -2943,11 +2943,13 @@ pooltype       = ( "bitmask" | "least-states" |
 include        = "include" filename
 .Ed
 .Sh FILES
-.Bl -tag -width "/etc/protocolsXXX" -compact
+.Bl -tag -width /etc/examples/pf.conf -compact
 .It Pa /etc/hosts
 Host name database.
 .It Pa /etc/pf.conf
 Default location of the ruleset file.
+.It Pa /etc/examples/pf.conf
+Example ruleset file.
 .It Pa /etc/pf.os
 Default location of OS fingerprints.
 .It Pa /etc/protocols

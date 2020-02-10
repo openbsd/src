@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.15 2019/08/08 20:37:08 fcambus Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.16 2020/02/10 13:18:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2019 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -149,10 +149,12 @@ prefix.
 The default is 2592000.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/rad.conf" -compact
+.Bl -tag -width /etc/examples/rad.conf -compact
 .It Pa /etc/rad.conf
 .Xr rad 8
 configuration file
+.It Pa /etc/examples/rad.conf
+example configuration file
 .El
 .Sh EXAMPLES
 With the following example configuration,

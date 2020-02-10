@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.18 2011/06/23 20:35:22 sthen Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.19 2020/02/10 13:18:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" Manual page for sasyncd.conf
 .\"
-.Dd $Mdocdate: June 23 2011 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt SASYNCD.CONF 5
 .Os
 .Sh NAME
@@ -175,6 +175,11 @@ This option can be changed to control
 instead,
 to control all supported daemons at the same time,
 or to turn it off to synchronize SAs only.
+.El
+.Sh FILES
+.Bl -tag -width /etc/examples/sasyncd.conf -compact
+.It Pa /etc/sasyncd.conf
+.It Pa /etc/examples/sasyncd.conf
 .El
 .Sh SEE ALSO
 .Xr chmod 1 ,

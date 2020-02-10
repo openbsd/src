@@ -1,4 +1,4 @@
-.\" $OpenBSD: ifstated.conf.5,v 1.14 2018/12/07 19:29:38 jmc Exp $
+.\" $OpenBSD: ifstated.conf.5,v 1.15 2020/02/10 13:18:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Nikolay Sturm <sturm@openbsd.org>
 .\" Copyright (c) 2005 Marco Pfatschbacher <mpf@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 7 2018 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt IFSTATED.CONF 5
 .Os
 .Sh NAME
@@ -184,10 +184,12 @@ stateopt	= init | action
 init		= "init" action_block
 .Ed
 .Sh FILES
-.Bl -tag -width "/etc/ifstated.conf" -compact
+.Bl -tag -width /etc/examples/ifstated.conf -compact
 .It Pa /etc/ifstated.conf
 .Xr ifstated 8
 configuration file
+.It Pa /etc/examples/ifstated.conf
+example configuration file
 .El
 .Sh SEE ALSO
 .Xr carp 4 ,

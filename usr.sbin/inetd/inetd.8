@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inetd.8,v 1.41 2017/10/04 19:52:26 jca Exp $
+.\"	$OpenBSD: inetd.8,v 1.42 2020/02/10 13:18:21 schwarze Exp $
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
 .\"
-.Dd $Mdocdate: October 4 2017 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -317,8 +317,7 @@ These services are
 in the form of the number of seconds since midnight, January
 1, 1900).
 All of these services are TCP based.
-For details of these services, consult the appropriate
-.Tn RFC
+For details of these services, consult the appropriate RFC
 from the Network Information Center.
 .Pp
 .Nm inetd
@@ -358,6 +357,11 @@ and IPv6 traffic will go to server on
 If you have only one server on
 .Dq tcp6 ,
 only IPv6 traffic will be routed to the server.
+.El
+.Sh FILES
+.Bl -tag -width /etc/examples/inetd.conf -compact
+.It Pa /etc/inetd.conf
+.It Pa /etc/examples/inetd.conf
 .El
 .Sh SEE ALSO
 .Xr comsat 8 ,

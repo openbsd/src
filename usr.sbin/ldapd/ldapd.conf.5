@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.25 2018/05/18 12:36:30 reyk Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.26 2020/02/10 13:18:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 18 2018 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -327,11 +327,13 @@ This would define MyOidAttributes as a symbolic name for the OID
 1.2.3.4.5.6, and MyOidObjects for 1.2.3.4.7.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/ldap/ldapd.confXXX" -compact
+.Bl -tag -width /etc/examples/ldapd.conf -compact
 .It Pa /etc/ldapd.conf
 Default
 .Xr ldapd 8
 configuration file.
+.It Pa /etc/examples/ldapd.conf
+Example configuration file.
 .It Pa /etc/ldap/*.schema
 Default schema definition files.
 .It Pa /etc/ldap/certs/

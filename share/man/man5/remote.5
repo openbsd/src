@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.27 2017/11/02 17:53:12 remi Exp $
+.\"	$OpenBSD: remote.5,v 1.28 2020/02/10 13:18:20 schwarze Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)remote.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: November 2 2017 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt REMOTE 5
 .Os
 .Sh NAME
@@ -90,9 +90,11 @@ attempts to perform an exclusive open on the device to ensure only
 one user at a time has access to the port.
 .El
 .Sh FILES
-.Bl -tag -width /etc/remote -compact
+.Bl -tag -width /etc/examples/remote -compact
 .It Pa /etc/remote
 Global database.
+.It Pa /etc/examples/remote
+Example database.
 .El
 .Sh SEE ALSO
 .Xr cu 1

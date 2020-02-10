@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.50 2020/01/15 14:08:26 phessler Exp $
+.\" $OpenBSD: vm.conf.5,v 1.51 2020/02/10 13:18:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 15 2020 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -450,6 +450,11 @@ Start the switch forwarding packets.
 This is the default.
 .It Cm down
 Stop the switch from forwarding packets.
+.El
+.Sh FILES
+.Bl -tag -width /etc/examples/vm.conf -compact
+.It Pa /etc/vm.conf
+.It Pa /etc/examples/vm.conf
 .El
 .Sh EXAMPLES
 Create a new VM with 1GB memory, 1 network interface connected to

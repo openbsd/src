@@ -1,4 +1,4 @@
-.\" $OpenBSD: sysctl.conf.5,v 1.13 2019/01/25 00:19:26 millert Exp $
+.\" $OpenBSD: sysctl.conf.5,v 1.14 2020/02/10 13:18:20 schwarze Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt SYSCTL.CONF 5
 .Os
 .Sh NAME
@@ -35,8 +35,9 @@ variable assignments
 with comments designated by a hash mark
 .Pq Sq # .
 .Sh FILES
-.Bl -tag -width /etc/sysctl.conf -compact
+.Bl -tag -width /etc/examples/sysctl.conf -compact
 .It Pa /etc/sysctl.conf
+.It Pa /etc/examples/sysctl.conf
 .El
 .Sh EXAMPLES
 To turn on IP forwarding, one would use the following line:

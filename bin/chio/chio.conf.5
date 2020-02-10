@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.conf.5,v 1.1 2007/11/02 15:26:07 jmc Exp $
+.\"	$OpenBSD: chio.conf.5,v 1.2 2020/02/10 13:18:20 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 2 2007 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt CHIO.CONF 5
 .Os
 .Sh NAME
@@ -51,13 +51,15 @@ changer ch0 {
 .Ed
 .El
 .Sh FILES
-.Bl -tag -width "/etc/chio.confXXX" -compact
+.Bl -tag -width /etc/examples/chio.conf -compact
 .It /dev/ch0
 Default changer device.
 .It /etc/chio.conf
 Default location for
 .Xr chio 1
 configuration file.
+.It /etc/examples/chio.conf
+Example configuration file.
 .El
 .Sh SEE ALSO
 .Xr chio 1 ,

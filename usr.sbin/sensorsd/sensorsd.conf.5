@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.28 2019/09/02 21:18:41 deraadt Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.29 2020/02/10 13:18:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2019 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt SENSORSD.CONF 5
 .Os
 .Sh NAME
@@ -132,10 +132,12 @@ attribute to ignore
 status changes of sensors of a certain type
 or individual sensors.
 .Sh FILES
-.Bl -tag -width "/etc/sensorsd.conf"
+.Bl -tag -width /etc/examples/sensorsd.conf -compact
 .It Pa /etc/sensorsd.conf
 Configuration file for
 .Xr sensorsd 8 .
+.It Pa /etc/examples/sensorsd.conf
+Example configuration file.
 .El
 .Sh EXAMPLES
 In the following configuration file,

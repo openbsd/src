@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dvmrpd.conf.5,v 1.9 2018/06/18 06:04:25 jmc Exp $
+.\"	$OpenBSD: dvmrpd.conf.5,v 1.10 2020/02/10 13:18:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2018 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt DVMRPD.CONF 5
 .Os
 .Sh NAME
@@ -145,10 +145,12 @@ The default value is query-interval / 4; valid range is the same as the
 query-interval.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/dvmrpd.conf" -compact
+.Bl -tag -width /etc/examples/dvmrpd.conf -compact
 .It Pa /etc/dvmrpd.conf
 .Xr dvmrpd 8
 configuration file
+.It Pa /etc/examples/dvmrpd.conf
+example configuration file
 .El
 .Sh SEE ALSO
 .Xr dvmrpctl 8 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.27 2017/05/14 12:01:52 ajacoutot Exp $
+.\"	$OpenBSD: printcap.5,v 1.28 2020/02/10 13:18:20 schwarze Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)printcap.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 14 2017 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt PRINTCAP 5
 .Os
 .Sh NAME
@@ -255,9 +255,11 @@ themselves.
 Error messages sent to the console have a carriage return and a line
 feed appended to them, rather than just a line feed.
 .Sh FILES
-.Bl -tag -width "/etc/printcap" -compact
+.Bl -tag -width /etc/examples/printcap -compact
 .It Pa /etc/printcap
 Default location of the database file.
+.It Pa /etc/examples/printcap
+Example database file.
 .El
 .Sh SEE ALSO
 .Xr lpq 1 ,

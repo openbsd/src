@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.21 2020/01/08 08:21:01 remi Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.22 2020/02/10 13:18:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 8 2020 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -335,10 +335,12 @@ Set the interface type to point to point.
 This disables the election of a DR and BDR for the given interface.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/ospf6d.conf" -compact
+.Bl -tag -width /etc/examples/ospf6d.conf -compact
 .It Pa /etc/ospf6d.conf
 .Xr ospf6d 8
 configuration file
+.It Pa /etc/examples/ospf6d.conf
+example configuration file
 .El
 .Sh SEE ALSO
 .Xr ospf6ctl 8 ,

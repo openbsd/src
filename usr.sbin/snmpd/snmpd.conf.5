@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.41 2020/01/02 10:55:53 florian Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.42 2020/02/10 13:18:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 2 2020 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -299,9 +299,11 @@ or
 .Ic integer .
 .El
 .Sh FILES
-.Bl -tag -width "/etc/snmpd.conf"
+.Bl -tag -width /etc/examples/snmpd.conf -compact
 .It Pa /etc/snmpd.conf
 Default location of the configuration file.
+.It Pa /etc/examples/snmpd.conf
+Example configuration file.
 .El
 .Sh EXAMPLES
 The following example will tell

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.43 2019/11/12 07:19:18 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.44 2020/02/10 13:18:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2019 $
+.Dd $Mdocdate: February 10 2020 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -245,11 +245,13 @@ constraints from "https://www.google.com/"
 .Ed
 .El
 .Sh FILES
-.Bl -tag -width "/etc/ntpd.confXXX" -compact
+.Bl -tag -width /etc/examples/ntpd.conf -compact
 .It Pa /etc/ntpd.conf
 default
 .Xr ntpd 8
 configuration file
+.It Pa /etc/examples/ntpd.conf
+example configuration file
 .El
 .Sh SEE ALSO
 .Xr ntpctl 8 ,
