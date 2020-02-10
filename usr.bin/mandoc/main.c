@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.245 2020/02/06 19:41:34 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.246 2020/02/10 13:49:04 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -427,8 +427,20 @@ main(int argc, char *argv[])
 	/* man(1): Resolve each name individually. */
 
 	if (search.argmode == ARG_NAME) {
-		if (argc < 1)
-			usage(ARG_NAME);
+		if (argc < 1) {
+			if (outmode != OUTMODE_FLN)
+				usage(ARG_NAME);
+			if (conf.manpath.sz == 0) {
+				warnx("The manpath is empty.");
+				mandoc_msg_setrc(MANDOCLEVEL_BADARG);
+			} else {
+				for (i = 0; i + 1 < conf.manpath.sz; i++)
+					printf("%s:", conf.manpath.paths[i]);
+				printf("%s\n", conf.manpath.paths[i]);
+			}
+			manconf_free(&conf);
+			return (int)mandoc_msg_getrc();
+		}
 		for (res = NULL, ressz = 0; argc > 0; argc--, argv++) {
 			(void)mansearch(&search, &conf.manpath,
 			    1, argv, &resn, &resnsz);
