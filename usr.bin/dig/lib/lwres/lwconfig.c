@@ -63,14 +63,6 @@
 #include <lwres/lwres.h>
 #include <lwres/result.h>
 
-#if ! defined(NS_INADDRSZ)
-#define NS_INADDRSZ	 4
-#endif
-
-#if ! defined(NS_IN6ADDRSZ)
-#define NS_IN6ADDRSZ	16
-#endif
-
 static lwres_result_t
 lwres_conf_parsenameserver(lwres_conf_t *confdata,  FILE *fp);
 
@@ -192,10 +184,7 @@ static void
 lwres_resetaddr(lwres_addr_t *addr) {
 	assert(addr != NULL);
 
-	memset(addr->address, 0, LWRES_ADDR_MAXLEN);
-	addr->family = 0;
-	addr->length = 0;
-	addr->zone = 0;
+	memset(addr, 0, sizeof(*addr));
 }
 
 /*% intializes data structure for subsequent config parsing. */
@@ -411,14 +400,14 @@ lwres_create_addr(const char *buffer, lwres_addr_t *addr, int convert_zero) {
 				memmove(&v4, loopaddress, 4);
 		}
 		addr->family = LWRES_ADDRTYPE_V4;
-		addr->length = NS_INADDRSZ;
+		addr->length = sizeof(v4);
 		addr->zone = 0;
-		memmove((void *)addr->address, &v4, NS_INADDRSZ);
+		memcpy(addr->address, &v4, sizeof(v4));
 
 	} else if (inet_pton(AF_INET6, buf, &v6) == 1) {
 		addr->family = LWRES_ADDRTYPE_V6;
-		addr->length = NS_IN6ADDRSZ;
-		memmove((void *)addr->address, &v6, NS_IN6ADDRSZ);
+		addr->length = sizeof(v6);
+		memcpy(addr->address, &v6, sizeof(v6));
 		if (percent != NULL) {
 			unsigned long zone;
 			char *ep;
