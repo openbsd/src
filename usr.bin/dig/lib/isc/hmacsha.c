@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: hmacsha.c,v 1.2 2020/02/11 17:28:46 florian Exp $ */
 
 /*
  * This code implements the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256, HMAC-SHA384
@@ -287,73 +287,4 @@ isc_hmacsha512_verify(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len) 
 	REQUIRE(len <= ISC_SHA512_DIGESTLENGTH);
 	isc_hmacsha512_sign(ctx, newdigest, ISC_SHA512_DIGESTLENGTH);
 	return (isc_safe_memequal(digest, newdigest, len));
-}
-
-/*
- * Check for SHA-1 support; if it does not work, raise a fatal error.
- *
- * Use the first test vector from RFC 2104, with a second round using
- * a too-short key.
- *
- * Standard use is testing 0 and expecting result true.
- * Testing use is testing 1..4 and expecting result false.
- */
-isc_boolean_t
-isc_hmacsha1_check(int testing) {
-	isc_hmacsha1_t ctx;
-	unsigned char key[] = { /* 20*0x0b */
-		0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
-		0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
-		0x0b, 0x0b, 0x0b, 0x0b
-	};
-	unsigned char input[] = { /* "Hi There" */
-		0x48, 0x69, 0x20, 0x54, 0x68, 0x65, 0x72, 0x65
-	};
-	unsigned char expected[] = {
-		0xb6, 0x17, 0x31, 0x86, 0x55, 0x05, 0x72, 0x64,
-		0xe2, 0x8b, 0xc0, 0xb6, 0xfb, 0x37, 0x8c, 0x8e,
-		0xf1, 0x46, 0xbe, 0x00
-	};
-	unsigned char expected2[] = {
-		0xa0, 0x75, 0xe0, 0x5f, 0x7f, 0x17, 0x9d, 0x34,
-		0xb2, 0xab, 0xc5, 0x19, 0x8f, 0x38, 0x62, 0x36,
-		0x42, 0xbd, 0xec, 0xde
-	};
-	isc_boolean_t result;
-
-	/*
-	 * Introduce a fault for testing.
-	 */
-	switch (testing) {
-	case 0:
-	default:
-		break;
-	case 1:
-		key[0] ^= 0x01;
-		break;
-	case 2:
-		input[0] ^= 0x01;
-		break;
-	case 3:
-		expected[0] ^= 0x01;
-		break;
-	case 4:
-		expected2[0] ^= 0x01;
-		break;
-	}
-
-	/*
-	 * These functions do not return anything; any failure will be fatal.
-	 */
-	isc_hmacsha1_init(&ctx, key, 20U);
-	isc_hmacsha1_update(&ctx, input, 8U);
-	result = isc_hmacsha1_verify(&ctx, expected, sizeof(expected));
-	if (!result) {
-		return (result);
-	}
-
-	/* Second round using a byte key */
-	isc_hmacsha1_init(&ctx, key, 1U);
-	isc_hmacsha1_update(&ctx, input, 8U);
-	return (isc_hmacsha1_verify(&ctx, expected2, sizeof(expected2)));
 }

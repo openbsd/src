@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: hmacsha.h,v 1.2 2020/02/11 17:28:46 florian Exp $ */
 
 /*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,
@@ -67,10 +67,6 @@ isc_hmacsha1_sign(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len);
 
 isc_boolean_t
 isc_hmacsha1_verify(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len);
-
-isc_boolean_t
-isc_hmacsha1_check(int testing);
-
 
 void
 isc_hmacsha224_init(isc_hmacsha224_t *ctx, const unsigned char *key,

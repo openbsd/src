@@ -14,10 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha1.c,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: sha1.c,v 1.2 2020/02/11 17:28:46 florian Exp $ */
 
 /*	$NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
-/*	$OpenBSD: sha1.c,v 1.1 2020/02/07 09:58:54 florian Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.2 2020/02/11 17:28:46 florian Exp $	*/
 
 /*! \file
  * SHA-1 in C
@@ -84,45 +84,4 @@ isc_sha1_final(isc_sha1_t *context, unsigned char *digest) {
 	RUNTIME_CHECK(EVP_DigestFinal(context->ctx, digest, NULL) == 1);
 	EVP_MD_CTX_free(context->ctx);
 	context->ctx = NULL;
-}
-
-/*
- * Check for SHA-1 support; if it does not work, raise a fatal error.
- *
- * Use "a" as the test vector.
- *
- * Standard use is testing false and result true.
- * Testing use is testing true and result false;
- */
-isc_boolean_t
-isc_sha1_check(isc_boolean_t testing) {
-	isc_sha1_t ctx;
-	unsigned char input = 'a';
-	unsigned char digest[ISC_SHA1_DIGESTLENGTH];
-	unsigned char expected[] = {
-		0x86, 0xf7, 0xe4, 0x37, 0xfa, 0xa5, 0xa7, 0xfc,
-		0xe1, 0x5d, 0x1d, 0xdc, 0xb9, 0xea, 0xea, 0xea,
-		0x37, 0x76, 0x67, 0xb8
-	};
-
-	INSIST(sizeof(expected) == ISC_SHA1_DIGESTLENGTH);
-
-	/*
-	 * Introduce a fault for testing.
-	 */
-	if (testing) {
-		input ^= 0x01;
-	}
-
-	/*
-	 * These functions do not return anything; any failure will be fatal.
-	 */
-	isc_sha1_init(&ctx);
-	isc_sha1_update(&ctx, &input, 1U);
-	isc_sha1_final(&ctx, digest);
-
-	/*
-	 * Must return true in standard case, should return false for testing.
-	 */
-	return (ISC_TF(memcmp(digest, expected, ISC_SHA1_DIGESTLENGTH) == 0));
 }

@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: hmac_link.c,v 1.1 2020/02/07 09:58:52 florian Exp $
+ * $Id: hmac_link.c,v 1.2 2020/02/11 17:28:46 florian Exp $
  */
 
 
@@ -312,12 +312,6 @@ static dst_func_t hmacsha1_functions = {
 
 isc_result_t
 dst__hmacsha1_init(dst_func_t **funcp) {
-	/*
-	 * Prevent use of incorrect crypto
-	 */
-	RUNTIME_CHECK(isc_sha1_check(ISC_FALSE));
-	RUNTIME_CHECK(isc_hmacsha1_check(0));
-
 	REQUIRE(funcp != NULL);
 	if (*funcp == NULL)
 		*funcp = &hmacsha1_functions;

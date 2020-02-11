@@ -17,7 +17,7 @@
 #ifndef ISC_SHA1_H
 #define ISC_SHA1_H 1
 
-/* $Id: sha1.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: sha1.h,v 1.2 2020/02/11 17:28:46 florian Exp $ */
 
 /*	$NetBSD: sha1.h,v 1.2 1998/05/29 22:55:44 thorpej Exp $	*/
 
@@ -54,9 +54,6 @@ isc_sha1_update(isc_sha1_t *ctx, const unsigned char *data, unsigned int len);
 
 void
 isc_sha1_final(isc_sha1_t *ctx, unsigned char *digest);
-
-isc_boolean_t
-isc_sha1_check(isc_boolean_t testing);
 
 ISC_LANG_ENDDECLS
 
