@@ -1,4 +1,4 @@
-.\"	$OpenBSD: truncate.2,v 1.19 2016/02/28 14:38:25 natano Exp $
+.\"	$OpenBSD: truncate.2,v 1.20 2020/02/11 13:19:17 schwarze Exp $
 .\"	$NetBSD: truncate.2,v 1.7 1995/02/27 12:39:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)truncate.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 28 2016 $
+.Dd $Mdocdate: February 11 2020 $
 .Dt TRUNCATE 2
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ the file must be open for writing.
 .Fn truncate
 and
 .Fn ftruncate
-will succeed unless:
+will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The

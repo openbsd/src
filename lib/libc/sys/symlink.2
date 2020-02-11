@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.2,v 1.20 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: symlink.2,v 1.21 2020/02/11 13:19:17 schwarze Exp $
 .\"	$NetBSD: symlink.2,v 1.7 1995/02/27 12:38:34 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)symlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: February 11 2020 $
 .Dt SYMLINK 2
 .Os
 .Sh NAME
@@ -87,7 +87,7 @@ and the behavior is identical to a call to
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
-The symbolic link succeeds unless:
+The symbolic link will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the
