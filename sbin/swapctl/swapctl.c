@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.25 2019/12/05 12:46:54 mpi Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.26 2020/02/11 18:16:38 jca Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -332,7 +332,7 @@ do_fstab(void)
 	char	*s;
 	long	priority;
 	struct	stat st;
-	mode_t	rejecttype;
+	mode_t	rejecttype = 0;
 	int	gotone = 0;
 
 	/*
@@ -344,8 +344,7 @@ do_fstab(void)
 			rejecttype = S_IFREG;
 		else if (strcmp(tflag, "noblk") == 0)
 			rejecttype = S_IFBLK;
-	} else
-		rejecttype = 0;
+	}
 
 #define PRIORITYEQ	"priority="
 #define NFSMNTPT	"nfsmntpt="
