@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: dig.c,v 1.2 2020/02/11 16:50:58 florian Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -1605,10 +1605,6 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 	char *bargv[64];
 	int rc;
 	char **rv;
-#ifndef NOPOSIX
-	char *homedir;
-	char rcfile[256];
-#endif
 	char *input;
 	int i;
 	isc_boolean_t need_clone = ISC_TRUE;
@@ -1630,45 +1626,6 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 		default_lookup = make_empty_lookup();
 		default_lookup->adflag = ISC_TRUE;
 		default_lookup->edns = 0;
-
-#ifndef NOPOSIX
-		/*
-		 * Treat ${HOME}/.digrc as a special batchfile
-		 */
-		INSIST(batchfp == NULL);
-		homedir = getenv("HOME");
-		if (homedir != NULL) {
-			unsigned int n;
-			n = snprintf(rcfile, sizeof(rcfile), "%s/.digrc",
-				     homedir);
-			if (n < sizeof(rcfile))
-				batchfp = fopen(rcfile, "r");
-		}
-		if (batchfp != NULL) {
-			while (fgets(batchline, sizeof(batchline),
-				     batchfp) != 0) {
-				debug("config line %s", batchline);
-				bargc = 1;
-				input = batchline;
-				bargv[bargc] = next_token(&input, " \t\r\n");
-				while ((bargc < 62) && (bargv[bargc] != NULL)) {
-					bargc++;
-					bargv[bargc] =
-						next_token(&input, " \t\r\n");
-				}
-
-				bargv[0] = argv[0];
-				argv0 = argv[0];
-
-				for(i = 0; i < bargc; i++)
-					debug(".digrc argv %d: %s",
-					      i, bargv[i]);
-				parse_args(ISC_TRUE, ISC_TRUE, bargc,
-					   (char **)bargv);
-			}
-			fclose(batchfp);
-		}
-#endif
 	}
 
 	if (is_batchfile && !config_only) {

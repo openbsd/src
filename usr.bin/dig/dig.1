@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.1 2020/02/07 09:58:52 florian Exp $
+.\" $OpenBSD: dig.1,v 1.2 2020/02/11 16:50:58 florian Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 7 2020 $
+.Dd $Mdocdate: February 11 2020 $
 .Dt DIG 1
 .Os
 .Sh NAME
@@ -868,11 +868,6 @@ isc.org.
 .Bl -tag -width Ds
 .It Pa /etc/resolv.conf
 Resolver configuration file.
-.It Pa ${HOME}/.digrc
-User defaults for
-.Nm .
-This file is read and any options in it are applied before the command line
-arguments.
 .El
 .Sh SEE ALSO
 .Xr host 1 ,
