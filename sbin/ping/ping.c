@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.239 2020/01/04 01:00:18 cheloha Exp $	*/
+/*	$OpenBSD: ping.c,v 1.240 2020/02/11 18:41:39 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2191,7 +2191,7 @@ usage(void)
 		    "\t[-V rtable] [-w maxwait] host\n");
 	} else {
 		fprintf(stderr,
-		    "usage: ping [-DdEefHLnqRv] [-c count] [-I ifaddr] "
+		    "usage: ping [-DdEefHLnqRv] [-c count] [-I sourceaddr] "
 		    "[-i interval]\n\t[-l preload] [-p pattern] [-s packetsize]"
 #ifndef	SMALL
 		    " [-T toskeyword]"

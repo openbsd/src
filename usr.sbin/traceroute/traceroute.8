@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.68 2019/04/05 14:56:48 sthen Exp $
+.\"	$OpenBSD: traceroute.8,v 1.69 2020/02/11 18:41:39 deraadt Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 5 2019 $
+.Dd $Mdocdate: February 11 2020 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@
 .Op Fl P Ar proto
 .Op Fl p Ar port
 .Op Fl q Ar nqueries
-.Op Fl s Ar src_addr
+.Op Fl s Ar sourceaddr
 .Op Fl t Ar toskeyword
 .Op Fl V Ar rtable
 .Op Fl w Ar waittime
@@ -61,7 +61,7 @@
 .Op Fl m Ar max_hop
 .Op Fl p Ar port
 .Op Fl q Ar nqueries
-.Op Fl s Ar src_addr
+.Op Fl s Ar sourceaddr
 .Op Fl t Ar toskeyword
 .Op Fl V Ar rtable
 .Op Fl w Ar waittime
@@ -162,16 +162,9 @@ Set the number of probes per TTL to
 The default is three probes.
 .It Fl S
 Print how many probes were not answered for each hop.
-.It Fl s Ar src_addr
-Use the following IP address
-(which must be given as an IP number, not
-a hostname) as the source address in outgoing probe packets.
-On hosts with more than one IP address, this option can be used to
-force the source address to be something other than the IP address
-of the interface the probe packet is sent on.
-If the IP address
-is not one of this machine's interface addresses and the user is
-not the superuser, an error is returned and nothing is sent.
+.It Fl s Ar sourceaddr
+Set the source address to transmit from, which is useful on machines
+with multiple interfaces.
 .It Fl t Ar toskeyword
 Set the type-of-service (TOS) in probe packets.
 The value may be one of

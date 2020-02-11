@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.19 2019/12/19 17:31:03 jmc Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.20 2020/02/11 18:41:39 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 19 2019 $
+.Dd $Mdocdate: February 11 2020 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl Bcfjnov
-.Op Fl b Ar bind_addr
+.Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
 .Op Fl T Ar table
@@ -52,10 +52,11 @@ The options are as follows:
 Create output in the file
 .Pa bird
 in the output directory which is suitable for the BIRD internet routing daemon.
-.It Fl b Ar bind_addr
-Tell the rsync client to use the specified
-.Ar bind_addr
-as the source address for connections.
+.It Fl b Ar sourceaddr
+Tell the rsync client to use
+.Ar sourceaddr
+as the source address for connections, which is useful on machines
+with multiple interfaces.
 .It Fl c
 Create output in the file
 .Pa csv

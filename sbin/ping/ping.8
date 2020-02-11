@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.62 2020/01/04 01:00:18 cheloha Exp $
+.\"	$OpenBSD: ping.8,v 1.63 2020/02/11 18:41:39 deraadt Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,7 +57,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: January 4 2020 $
+.Dd $Mdocdate: February 11 2020 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@
 .Nm ping
 .Op Fl DdEefHLnqRv
 .Op Fl c Ar count
-.Op Fl I Ar ifaddr
+.Op Fl I Ar sourceaddr
 .Op Fl i Ar interval
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
@@ -156,9 +156,9 @@ Try reverse lookups for addresses.
 .It Fl h Ar hoplimit
 .Pq IPv6 only
 Set the hoplimit.
-.It Fl I Ar ifaddr
-Specify the interface address to transmit from
-on machines with multiple interfaces.
+.It Fl I Ar sourceaddr
+Set the source address to transmit from, which is useful on machines
+with multiple interfaces.
 For unicast and multicast pings.
 .It Fl i Ar interval
 Send one packet every

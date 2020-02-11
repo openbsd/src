@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.130 2019/10/23 16:48:59 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.131 2020/02/11 18:41:39 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -945,15 +945,15 @@ usage(void)
 #ifndef SMALL
 	    "ftp [-46AadEegiMmnptVv] [-D title] [-k seconds] [-P port] "
 	    "[-r seconds]\n"
-	    "           [-s srcaddr] [host [port]]\n"
-	    "       ftp [-C] [-N name] [-o output] [-s srcaddr]\n"
+	    "           [-s sourceaddr] [host [port]]\n"
+	    "       ftp [-C] [-N name] [-o output] [-s sourceaddr]\n"
 	    "           ftp://[user:password@]host[:port]/file[/] ...\n"
 	    "       ftp [-C] [-c cookie] [-N name] [-o output] [-S ssl_options] "
-	    "[-s srcaddr]\n"
+	    "[-s sourceaddr]\n"
 	    "           [-U useragent] [-w seconds] "
 	    "http[s]://[user:password@]host[:port]/file ...\n"
-	    "       ftp [-C] [-N name] [-o output] [-s srcaddr] file:file ...\n"
-	    "       ftp [-C] [-N name] [-o output] [-s srcaddr] host:/file[/] ...\n"
+	    "       ftp [-C] [-N name] [-o output] [-s sourceaddr] file:file ...\n"
+	    "       ftp [-C] [-N name] [-o output] [-s sourceaddr] host:/file[/] ...\n"
 #else /* !SMALL */
 	    "ftp [-N name] [-o output] "
 	    "ftp://[user:password@]host[:port]/file[/] ...\n"
