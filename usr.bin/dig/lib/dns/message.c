@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: message.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
 
 /*! \file */
 
@@ -32,7 +32,6 @@
 #include <string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
 
-#include <dns/keyvalues.h>
 #include <dns/log.h>
 #include <dns/masterdump.h>
 #include <dns/message.h>

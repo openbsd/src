@@ -19,7 +19,6 @@
 
 
 #include <isc/errno.h>
-#include <isc/util.h>
 
 #include "errno2result.h"
 

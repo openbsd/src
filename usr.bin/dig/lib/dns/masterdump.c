@@ -20,25 +20,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <isc/event.h>
 #include <isc/magic.h>
-#include <isc/stdio.h>
-#include <isc/task.h>
-#include <isc/time.h>
 #include <isc/types.h>
 #include <isc/util.h>
 
 #include <dns/fixedname.h>
-#include <dns/lib.h>
-#include <dns/log.h>
 #include <dns/masterdump.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rdataset.h>
 #include <dns/rdatatype.h>
 #include <dns/result.h>
-#include <dns/time.h>
-#include <dns/ttl.h>
 
 #define DNS_DCTX_MAGIC		ISC_MAGIC('D', 'c', 't', 'x')
 #define DNS_DCTX_VALID(d)	ISC_MAGIC_VALID(d, DNS_DCTX_MAGIC)

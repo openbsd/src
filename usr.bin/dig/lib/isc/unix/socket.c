@@ -16,14 +16,9 @@
 
 /*! \file */
 
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/event.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/uio.h>
-#include <sys/un.h>
 
 #include <netinet/tcp.h>
 
@@ -33,14 +28,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <inttypes.h> /* uintptr_t */
 
 #include <isc/buffer.h>
 #include <isc/bufferlist.h>
 #include <isc/formatcheck.h>
 #include <isc/list.h>
 #include <isc/log.h>
-#include <isc/msgs.h>
 #include <isc/net.h>
 #include <isc/region.h>
 #include <isc/socket.h>

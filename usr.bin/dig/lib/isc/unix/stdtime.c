@@ -14,14 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: stdtime.c,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: stdtime.c,v 1.2 2020/02/11 23:26:12 jsg Exp $ */
 
 /*! \file */
 
 
 
 #include <stddef.h>	/* NULL */
-#include <stdlib.h>	/* NULL */
 #include <syslog.h>
 
 #include <sys/time.h>

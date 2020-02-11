@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: assertions.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: assertions.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
 
 /*! \file */
 
@@ -24,9 +24,6 @@
 #include <stdlib.h>
 
 #include <isc/assertions.h>
-#include <isc/msgs.h>
-
-#include <isc/result.h>
 
 /*%
  * Forward.

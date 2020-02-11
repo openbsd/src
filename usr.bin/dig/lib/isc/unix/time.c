@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: time.c,v 1.2 2020/02/11 23:26:12 jsg Exp $ */
 
 /*! \file */
 
@@ -23,12 +23,11 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <syslog.h>
 #include <time.h>
 
 #include <sys/time.h>	/* Required for struct timeval on some platforms. */
-
-#include <isc/log.h>
 
 
 #include <isc/strerror.h>

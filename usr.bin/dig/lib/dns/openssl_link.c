@@ -35,14 +35,9 @@
  * Principal Author: Brian Wellington
  */
 
-#include <stdlib.h>
-
-#include <string.h>
 #include <isc/util.h>
 
 #include <dns/log.h>
-
-#include <dst/result.h>
 
 #include "dst_internal.h"
 #include "dst_openssl.h"

@@ -15,17 +15,9 @@
  */
 
 /*! \file */
-#include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 
-#include <isc/lex.h>
-#include <isc/result.h>
-#include <string.h>
 #include <isc/util.h>
-
-#include <dns/ttl.h>
-#include <dns/result.h>
 
 #include <isccfg/cfg.h>
 #include <isccfg/grammar.h>

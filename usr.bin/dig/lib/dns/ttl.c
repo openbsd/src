@@ -14,16 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ttl.c,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: ttl.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
 
 /*! \file */
 
 
 
 #include <ctype.h>
-#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include <isc/buffer.h>
 #include <isc/parseint.h>

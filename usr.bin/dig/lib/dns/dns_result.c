@@ -14,13 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dns_result.c,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: dns_result.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
 
 /*! \file */
 #include <isc/util.h>
 
 #include <dns/result.h>
-#include <dns/lib.h>
 
 static const char *text[DNS_R_NRESULTS] = {
 	"label too long",		       /*%< 0 DNS_R_LABELTOOLONG */

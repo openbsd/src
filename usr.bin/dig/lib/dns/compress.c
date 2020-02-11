@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.c,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: compress.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
 
 /*! \file */
 
@@ -23,13 +23,10 @@
 
 #include <stdlib.h>
 
-#include <string.h>
 #include <isc/util.h>
 
 #include <dns/compress.h>
 #include <dns/fixedname.h>
-
-#include <dns/result.h>
 
 #define CCTX_MAGIC	ISC_MAGIC('C', 'C', 'T', 'X')
 #define VALID_CCTX(x)	ISC_MAGIC_VALID(x, CCTX_MAGIC)

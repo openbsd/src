@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.3 2020/02/11 18:47:29 florian Exp $ */
+/* $Id: dighost.c,v 1.4 2020/02/11 23:26:11 jsg Exp $ */
 
 /*! \file
  *  \note
@@ -26,21 +26,18 @@
  * functions in most applications.
  */
 
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <limits.h>
 #include <locale.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/message.h>
 #include <dns/name.h>
-#include <dns/rcode.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rdatalist.h>
@@ -56,7 +53,6 @@
 #include <isc/app.h>
 #include <isc/base64.h>
 #include <isc/hex.h>
-#include <isc/lang.h>
 #include <isc/log.h>
 #include <isc/netaddr.h>
 #include <isc/parseint.h>
@@ -64,7 +60,6 @@
 #include <isc/safe.h>
 #include <isc/serial.h>
 #include <isc/sockaddr.h>
-#include <string.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/types.h>

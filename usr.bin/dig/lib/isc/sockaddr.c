@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.2 2020/02/11 17:22:31 florian Exp $ */
+/* $Id: sockaddr.c,v 1.3 2020/02/11 23:26:12 jsg Exp $ */
 
 /*! \file */
 
@@ -24,7 +24,6 @@
 
 #include <isc/buffer.h>
 #include <isc/hash.h>
-#include <isc/msgs.h>
 #include <isc/netaddr.h>
 
 #include <isc/region.h>

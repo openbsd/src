@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.1 2020/02/07 09:58:52 florian Exp $
+ * $Id: tsig.c,v 1.2 2020/02/11 23:26:11 jsg Exp $
  */
 /*! \file */
 
@@ -25,17 +25,14 @@
 
 
 #include <isc/refcount.h>
-#include <isc/serial.h>
 #include <string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
-#include <isc/time.h>
 
 
 
 #include <dns/keyvalues.h>
 #include <dns/log.h>
 #include <dns/message.h>
-#include <dns/fixedname.h>
 
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>

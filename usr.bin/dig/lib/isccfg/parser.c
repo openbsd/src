@@ -20,14 +20,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <isc/buffer.h>
 #include <isc/formatcheck.h>
 #include <isc/lex.h>
 #include <isc/log.h>
-#include <isc/net.h>
-#include <isc/netaddr.h>
-#include <isc/netscope.h>
-#include <isc/sockaddr.h>
 #include <isc/symtab.h>
 #include <isc/util.h>
 

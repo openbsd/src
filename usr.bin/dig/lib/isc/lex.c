@@ -14,21 +14,19 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: lex.c,v 1.2 2020/02/11 23:26:12 jsg Exp $ */
 
 /*! \file */
 
 
 
 #include <ctype.h>
-#include <errno.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
 
 #include <isc/lex.h>
 
-#include <isc/msgs.h>
 #include <isc/parseint.h>
 
 #include <isc/stdio.h>

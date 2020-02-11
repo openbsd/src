@@ -25,11 +25,8 @@
 #include <unistd.h>
 
 #include <isc/app.h>
-#include <isc/netaddr.h>
 #include <isc/util.h>
-#include <isc/task.h>
 
-#include <dns/byaddr.h>
 #include <dns/fixedname.h>
 #include <dns/message.h>
 #include <dns/name.h>

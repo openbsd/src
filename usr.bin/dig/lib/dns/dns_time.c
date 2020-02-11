@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dns_time.c,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: dns_time.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
 
 /*! \file */
 
@@ -29,7 +29,6 @@
 #include <isc/region.h>
 #include <isc/serial.h>
 #include <isc/stdtime.h>
-#include <isc/util.h>
 
 #include <dns/result.h>
 #include <dns/time.h>

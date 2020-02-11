@@ -27,7 +27,6 @@
 #include <isc/app.h>
 #include <isc/event.h>
 #include <isc/magic.h>
-#include <isc/msgs.h>
 
 #include <string.h>
 #include <isc/task.h>

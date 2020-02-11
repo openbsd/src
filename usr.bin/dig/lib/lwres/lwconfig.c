@@ -58,7 +58,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 
 #include <lwres/lwres.h>
 #include <lwres/result.h>

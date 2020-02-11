@@ -18,13 +18,9 @@
 
 
 
-#include <sys/param.h>	/* Openserver 5.0.6A and FD_SETSIZE */
-#include <sys/types.h>
-
 #include <stddef.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <unistd.h>
 #include <signal.h>
 #include <sys/time.h>
 
@@ -32,7 +28,6 @@
 #include <isc/boolean.h>
 
 
-#include <isc/msgs.h>
 #include <isc/event.h>
 
 #include <isc/strerror.h>

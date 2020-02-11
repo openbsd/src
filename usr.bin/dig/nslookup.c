@@ -22,10 +22,8 @@
 #include <isc/app.h>
 #include <isc/buffer.h>
 #include <isc/event.h>
-#include <isc/parseint.h>
 #include <isc/util.h>
 #include <isc/task.h>
-#include <isc/netaddr.h>
 
 #include <dns/message.h>
 #include <dns/name.h>
@@ -35,7 +33,6 @@
 #include <dns/rdataset.h>
 #include "rdatastruct.h"
 #include <dns/rdatatype.h>
-#include <dns/byaddr.h>
 
 #include "dig.h"
 

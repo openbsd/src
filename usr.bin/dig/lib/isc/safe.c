@@ -20,7 +20,6 @@
 #include <string.h>
 
 #include <isc/safe.h>
-#include <isc/util.h>
 
 isc_boolean_t
 isc_safe_memequal(const void *s1, const void *s2, size_t n) {

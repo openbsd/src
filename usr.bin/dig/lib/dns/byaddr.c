@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: byaddr.c,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: byaddr.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
 
 /*! \file */
 
@@ -22,14 +22,10 @@
 
 #include <isc/buffer.h>
 #include <isc/netaddr.h>
-#include <isc/task.h>
 #include <isc/util.h>
 
 #include <dns/byaddr.h>
-#include <dns/rdata.h>
-#include <dns/rdataset.h>
-#include "rdatastruct.h"
-#include <dns/result.h>
+#include <dns/name.h>
 
 /*
  * XXXRTH  We could use a static event...
