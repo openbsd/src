@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.77 2017/10/23 15:15:22 jca Exp $	*/
+/*	$OpenBSD: cron.c,v 1.78 2020/02/11 12:42:01 schwarze Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,6 @@
 #include <err.h>
 #include <errno.h>
 #include <grp.h>
-#include <locale.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
@@ -83,8 +82,6 @@ main(int argc, char *argv[])
 	struct sigaction sact;
 	sigset_t blocked, omask;
 	struct group *grp;
-
-	setlocale(LC_ALL, "");
 
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(stderr, NULL, _IOLBF, 0);

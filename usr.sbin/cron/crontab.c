@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.93 2019/06/28 13:32:47 deraadt Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.94 2020/02/11 12:42:02 schwarze Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,6 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
-#include <locale.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -92,7 +91,6 @@ main(int argc, char *argv[])
 	user_gid = getgid();
 	crontab_gid = getegid();
 
-	setlocale(LC_ALL, "");
 	openlog(__progname, LOG_PID, LOG_CRON);
 
 	setvbuf(stderr, NULL, _IOLBF, 0);
