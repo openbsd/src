@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.24 2019/12/13 09:15:13 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.25 2020/02/11 07:01:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -210,7 +210,7 @@ window_buffer_draw(__unused void *modedata, void *itemdata,
 	struct paste_buffer		*pb;
 	const char			*pdata, *start, *end;
 	char				*buf = NULL;
-	size_t				 psize, len;
+	size_t				 psize;
 	u_int				 i, cx = ctx->s->cx, cy = ctx->s->cy;
 
 	pb = paste_get_name(item->name);
@@ -223,7 +223,7 @@ window_buffer_draw(__unused void *modedata, void *itemdata,
 		while (end != pdata + psize && *end != '\n')
 			end++;
 		buf = xreallocarray(buf, 4, end - start + 1);
-		len = utf8_strvis(buf, start, end - start, VIS_OCTAL|VIS_TAB);
+		utf8_strvis(buf, start, end - start, VIS_OCTAL|VIS_TAB);
 		if (*buf != '\0') {
 			screen_write_cursormove(ctx, cx, cy + i, 0);
 			screen_write_nputs(ctx, sx, &grid_default_cell, "%s",

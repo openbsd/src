@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.303 2020/01/28 08:06:11 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.304 2020/02/11 07:01:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1706,7 +1706,6 @@ static void
 server_client_dispatch(struct imsg *imsg, void *arg)
 {
 	struct client	*c = arg;
-	const char	*data;
 	ssize_t		 datalen;
 	struct session	*s;
 
@@ -1718,7 +1717,6 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 		return;
 	}
 
-	data = imsg->data;
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 
 	switch (imsg->hdr.type) {
