@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key.c,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: key.c,v 1.2 2020/02/11 17:23:29 florian Exp $ */
 
 
 
@@ -95,67 +95,15 @@ dst_key_size(const dst_key_t *key) {
 }
 
 unsigned int
-dst_key_proto(const dst_key_t *key) {
-	REQUIRE(VALID_KEY(key));
-	return (key->key_proto);
-}
-
-unsigned int
 dst_key_alg(const dst_key_t *key) {
 	REQUIRE(VALID_KEY(key));
 	return (key->key_alg);
-}
-
-uint32_t
-dst_key_flags(const dst_key_t *key) {
-	REQUIRE(VALID_KEY(key));
-	return (key->key_flags);
 }
 
 dns_keytag_t
 dst_key_id(const dst_key_t *key) {
 	REQUIRE(VALID_KEY(key));
 	return (key->key_id);
-}
-
-dns_keytag_t
-dst_key_rid(const dst_key_t *key) {
-	REQUIRE(VALID_KEY(key));
-	return (key->key_rid);
-}
-
-dns_rdataclass_t
-dst_key_class(const dst_key_t *key) {
-	REQUIRE(VALID_KEY(key));
-	return (key->key_class);
-}
-
-isc_boolean_t
-dst_key_iszonekey(const dst_key_t *key) {
-	REQUIRE(VALID_KEY(key));
-
-	if ((key->key_flags & DNS_KEYTYPE_NOAUTH) != 0)
-		return (ISC_FALSE);
-	if ((key->key_flags & DNS_KEYFLAG_OWNERMASK) != DNS_KEYOWNER_ZONE)
-		return (ISC_FALSE);
-	if (key->key_proto != DNS_KEYPROTO_DNSSEC &&
-	    key->key_proto != DNS_KEYPROTO_ANY)
-		return (ISC_FALSE);
-	return (ISC_TRUE);
-}
-
-isc_boolean_t
-dst_key_isnullkey(const dst_key_t *key) {
-	REQUIRE(VALID_KEY(key));
-
-	if ((key->key_flags & DNS_KEYFLAG_TYPEMASK) != DNS_KEYTYPE_NOKEY)
-		return (ISC_FALSE);
-	if ((key->key_flags & DNS_KEYFLAG_OWNERMASK) != DNS_KEYOWNER_ZONE)
-		return (ISC_FALSE);
-	if (key->key_proto != DNS_KEYPROTO_DNSSEC &&
-	    key->key_proto != DNS_KEYPROTO_ANY)
-		return (ISC_FALSE);
-	return (ISC_TRUE);
 }
 
 void
@@ -174,18 +122,6 @@ uint16_t
 dst_key_getbits(const dst_key_t *key) {
 	REQUIRE(VALID_KEY(key));
 	return (key->key_bits);
-}
-
-void
-dst_key_setttl(dst_key_t *key, dns_ttl_t ttl) {
-	REQUIRE(VALID_KEY(key));
-	key->key_ttl = ttl;
-}
-
-dns_ttl_t
-dst_key_getttl(const dst_key_t *key) {
-	REQUIRE(VALID_KEY(key));
-	return (key->key_ttl);
 }
 
 /*! \file */
