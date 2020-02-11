@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: errno2result.c,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: errno2result.c,v 1.2 2020/02/11 17:22:31 florian Exp $ */
 
 /*! \file */
 
@@ -59,54 +59,30 @@ isc___errno2result(int posixerrno, isc_boolean_t dolog,
 	case ENFILE:
 	case EMFILE:
 		return (ISC_R_TOOMANYOPENFILES);
-#ifdef EOVERFLOW
 	case EOVERFLOW:
 		return (ISC_R_RANGE);
-#endif
 	case EPIPE:
-#ifdef ECONNRESET
 	case ECONNRESET:
-#endif
-#ifdef ECONNABORTED
 	case ECONNABORTED:
-#endif
 		return (ISC_R_CONNECTIONRESET);
-#ifdef ENOTCONN
 	case ENOTCONN:
 		return (ISC_R_NOTCONNECTED);
-#endif
-#ifdef ETIMEDOUT
 	case ETIMEDOUT:
 		return (ISC_R_TIMEDOUT);
-#endif
-#ifdef ENOBUFS
 	case ENOBUFS:
 		return (ISC_R_NORESOURCES);
-#endif
-#ifdef EAFNOSUPPORT
 	case EAFNOSUPPORT:
 		return (ISC_R_FAMILYNOSUPPORT);
-#endif
-#ifdef ENETDOWN
 	case ENETDOWN:
 		return (ISC_R_NETDOWN);
-#endif
-#ifdef EHOSTDOWN
 	case EHOSTDOWN:
 		return (ISC_R_HOSTDOWN);
-#endif
-#ifdef ENETUNREACH
 	case ENETUNREACH:
 		return (ISC_R_NETUNREACH);
-#endif
-#ifdef EHOSTUNREACH
 	case EHOSTUNREACH:
 		return (ISC_R_HOSTUNREACH);
-#endif
-#ifdef EADDRINUSE
 	case EADDRINUSE:
 		return (ISC_R_ADDRINUSE);
-#endif
 	case EADDRNOTAVAIL:
 		return (ISC_R_ADDRNOTAVAIL);
 	case ECONNREFUSED:

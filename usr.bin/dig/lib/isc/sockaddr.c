@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: sockaddr.c,v 1.2 2020/02/11 17:22:31 florian Exp $ */
 
 /*! \file */
 
@@ -322,23 +322,7 @@ isc_sockaddr_pf(const isc_sockaddr_t *sockaddr) {
 	 * Get the protocol family of 'sockaddr'.
 	 */
 
-#if (AF_INET == PF_INET && AF_INET6 == PF_INET6)
-	/*
-	 * Assume that PF_xxx == AF_xxx for all AF and PF.
-	 */
 	return (sockaddr->type.sa.sa_family);
-#else
-	switch (sockaddr->type.sa.sa_family) {
-	case AF_INET:
-		return (PF_INET);
-	case AF_INET6:
-		return (PF_INET6);
-	default:
-		FATAL_ERROR(__FILE__, __LINE__,
-			    "unknown address family: %d",
-			    (int)sockaddr->type.sa.sa_family);
-	}
-#endif
 }
 
 void
