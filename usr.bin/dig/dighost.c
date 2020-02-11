@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: dighost.c,v 1.2 2020/02/11 16:47:42 florian Exp $ */
 
 /*! \file
  *  \note
@@ -2923,9 +2923,6 @@ launch_next_query(dig_query_t *query, isc_boolean_t include_question) {
 		debug("sendcount=%d", sendcount);
 	}
 	query->waiting_connect = ISC_FALSE;
-#if 0
-	check_next_lookup(query->lookup);
-#endif
 	return;
 }
 
