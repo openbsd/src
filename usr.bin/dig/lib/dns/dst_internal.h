@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.2 2020/02/11 17:23:29 florian Exp $ */
+/* $Id: dst_internal.h,v 1.3 2020/02/12 22:26:15 jsg Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -42,12 +42,10 @@
 #include <isc/magic.h>
 #include <isc/region.h>
 #include <isc/types.h>
-#include <isc/md5.h>
 #include <isc/refcount.h>
 #include <isc/sha1.h>
 #include <isc/sha2.h>
 #include <isc/stdtime.h>
-#include <isc/hmacmd5.h>
 #include <isc/hmacsha.h>
 
 
