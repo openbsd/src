@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.91 2019/11/02 00:41:36 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.92 2020/02/12 11:23:11 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -380,7 +380,6 @@ main(int argc, char *argv[])
 	int noacsleep = 0;
 	struct timespec ts = {TIMO, 0}, sts = {0, 0};
 	struct apm_power_info pinfo;
-	time_t apmtimeout = 0;
 	const char *sockname = _PATH_APM_SOCKET;
 	const char *errstr;
 	int kq, nchanges;
@@ -502,13 +501,10 @@ main(int argc, char *argv[])
 
 		sts = ts;
 
-		apmtimeout += 1;
 		if ((rv = kevent(kq, NULL, 0, ev, 1, &sts)) == -1)
 			break;
 
-		if (apmtimeout >= ts.tv_sec) {
-			apmtimeout = 0;
-
+		if (!rv) {
 			/* wakeup for timeout: take status */
 			powerbak = power_status(ctl_fd, 0, &pinfo);
 			if (powerstatus != powerbak) {
@@ -530,10 +526,8 @@ main(int argc, char *argv[])
 				else
 					hibernate(ctl_fd);
 			}
-		}
-
-		if (!rv)
 			continue;
+		}
 
 		if (ev->ident == ctl_fd) {
 			suspends = standbys = hibernates = resumes = 0;
