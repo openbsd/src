@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.92 2020/02/12 11:23:11 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.93 2020/02/12 11:29:41 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -515,8 +515,8 @@ main(int argc, char *argv[])
 			if (!powerstatus && autoaction &&
 			    autolimit > (int)pinfo.battery_life) {
 				logmsg(LOG_NOTICE,
-				    "estimated battery life %d%%, "
-				    "autoaction limit set to %d%% .",
+				    "estimated battery life %d%%"
+				    " below configured limit %d%%",
 				    pinfo.battery_life,
 				    autolimit
 				);
@@ -569,6 +569,19 @@ main(int argc, char *argv[])
 				if (powerstatus != powerbak) {
 					powerstatus = powerbak;
 					powerchange = 1;
+				}
+
+				if (!powerstatus && autoaction &&
+				    autolimit > (int)pinfo.battery_life) {
+					logmsg(LOG_NOTICE,
+					    "estimated battery life %d%%"
+					    " below configured limit %d%%",
+					    pinfo.battery_life, autolimit);
+
+					if (autoaction == AUTO_SUSPEND)
+						suspends++;
+					else
+						hibernates++;
 				}
 				break;
 			default:
