@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: weekly,v 1.29 2019/12/30 16:49:51 espie Exp $
+#	$OpenBSD: weekly,v 1.30 2020/02/12 20:51:49 jung Exp $
 #
 # For local additions, create the file /etc/weekly.local.
 # To get section headers, use the function next_part in weekly.local.
@@ -48,7 +48,7 @@ if [ -f /var/db/locate.database ]; then
 	if TMP=`mktemp /var/db/locate.database.XXXXXXXXXX`; then
 		trap 'rm -f $TMP; exit 1' 0 1 15
 		UPDATEDB="/usr/libexec/locate.updatedb"
-		echo "${UPDATEDB} --fcodes=- --tmpdir=${TMPDIR:-/tmp}" | \
+		echo "${UPDATEDB} --fcodes=-" | \
 		    nice -5 su -m nobody 1>$TMP
 		if [ $? -ne 0 ]; then
 			echo "Rebuilding locate database failed"
