@@ -27,13 +27,4 @@ typedef struct dns_rdata_txt dns_rdata_ninfo_t;
  * via rdatastructpre.h and rdatastructsuf.h.
  */
 
-isc_result_t
-dns_rdata_ninfo_first(dns_rdata_ninfo_t *);
-
-isc_result_t
-dns_rdata_ninfo_next(dns_rdata_ninfo_t *);
-
-isc_result_t
-dns_rdata_ninfo_current(dns_rdata_ninfo_t *, dns_rdata_ninfo_string_t *);
-
 #endif /* GENERIC_NINFO_16_H */

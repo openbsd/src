@@ -28,26 +28,6 @@
 #include <dns/rdataset.h>
 #include <dns/compress.h>
 
-static const char *trustnames[] = {
-	"none",
-	"pending-additional",
-	"pending-answer",
-	"additional",
-	"glue",
-	"answer",
-	"authauthority",
-	"authanswer",
-	"secure",
-	"local" /* aka ultimate */
-};
-
-const char *
-dns_trust_totext(dns_trust_t trust) {
-	if (trust >= sizeof(trustnames)/sizeof(*trustnames))
-		return ("bad");
-	return (trustnames[trust]);
-}
-
 void
 dns_rdataset_init(dns_rdataset_t *rdataset) {
 
@@ -75,32 +55,6 @@ dns_rdataset_init(dns_rdataset_t *rdataset) {
 	rdataset->private6 = NULL;
 	rdataset->private7 = NULL;
 	rdataset->resign = 0;
-}
-
-void
-dns_rdataset_invalidate(dns_rdataset_t *rdataset) {
-
-	/*
-	 * Invalidate 'rdataset'.
-	 */
-
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods == NULL);
-
-	rdataset->magic = 0;
-	ISC_LINK_INIT(rdataset, link);
-	rdataset->rdclass = 0;
-	rdataset->type = 0;
-	rdataset->ttl = 0;
-	rdataset->trust = 0;
-	rdataset->covers = 0;
-	rdataset->attributes = 0;
-	rdataset->count = UINT32_MAX;
-	rdataset->private1 = NULL;
-	rdataset->private2 = NULL;
-	rdataset->private3 = NULL;
-	rdataset->privateuint4 = 0;
-	rdataset->private5 = NULL;
 }
 
 void
@@ -220,19 +174,6 @@ dns_rdataset_makequestion(dns_rdataset_t *rdataset, dns_rdataclass_t rdclass,
 	rdataset->rdclass = rdclass;
 	rdataset->type = type;
 	rdataset->attributes |= DNS_RDATASETATTR_QUESTION;
-}
-
-unsigned int
-dns_rdataset_count(dns_rdataset_t *rdataset) {
-
-	/*
-	 * Return the number of records in 'rdataset'.
-	 */
-
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-
-	return ((rdataset->methods->count)(rdataset));
 }
 
 void
@@ -579,154 +520,4 @@ dns_rdataset_towire(dns_rdataset_t *rdataset,
 {
 	return (towiresorted(rdataset, owner_name, cctx, target,
 			     NULL, NULL, ISC_FALSE, options, countp, NULL));
-}
-
-isc_result_t
-dns_rdataset_additionaldata(dns_rdataset_t *rdataset,
-			    dns_additionaldatafunc_t add, void *arg)
-{
-	dns_rdata_t rdata = DNS_RDATA_INIT;
-	isc_result_t result;
-
-	/*
-	 * For each rdata in rdataset, call 'add' for each name and type in the
-	 * rdata which is subject to additional section processing.
-	 */
-
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE((rdataset->attributes & DNS_RDATASETATTR_QUESTION) == 0);
-
-	result = dns_rdataset_first(rdataset);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	do {
-		dns_rdataset_current(rdataset, &rdata);
-		result = dns_rdata_additionaldata(&rdata, add, arg);
-		if (result == ISC_R_SUCCESS)
-			result = dns_rdataset_next(rdataset);
-		dns_rdata_reset(&rdata);
-	} while (result == ISC_R_SUCCESS);
-
-	if (result != ISC_R_NOMORE)
-		return (result);
-
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name) {
-
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-	if (rdataset->methods->addnoqname == NULL)
-		return (ISC_R_NOTIMPLEMENTED);
-	return((rdataset->methods->addnoqname)(rdataset, name));
-}
-
-isc_result_t
-dns_rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-			dns_rdataset_t *neg, dns_rdataset_t *negsig)
-{
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-
-	if (rdataset->methods->getnoqname == NULL)
-		return (ISC_R_NOTIMPLEMENTED);
-	return((rdataset->methods->getnoqname)(rdataset, name, neg, negsig));
-}
-
-isc_result_t
-dns_rdataset_addclosest(dns_rdataset_t *rdataset, dns_name_t *name) {
-
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-	if (rdataset->methods->addclosest == NULL)
-		return (ISC_R_NOTIMPLEMENTED);
-	return((rdataset->methods->addclosest)(rdataset, name));
-}
-
-isc_result_t
-dns_rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
-			dns_rdataset_t *neg, dns_rdataset_t *negsig)
-{
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-
-	if (rdataset->methods->getclosest == NULL)
-		return (ISC_R_NOTIMPLEMENTED);
-	return((rdataset->methods->getclosest)(rdataset, name, neg, negsig));
-}
-
-isc_result_t
-dns_rdataset_putadditional(dns_acache_t *acache,
-			   dns_rdataset_t *rdataset,
-			   dns_rdatasetadditional_t type,
-			   dns_rdatatype_t qtype)
-{
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-
-	if (acache != NULL && rdataset->methods->putadditional != NULL) {
-		return ((rdataset->methods->putadditional)(acache, rdataset,
-							   type, qtype));
-	}
-
-	return (ISC_R_FAILURE);
-}
-
-void
-dns_rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust) {
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-
-	if (rdataset->methods->settrust != NULL)
-		(rdataset->methods->settrust)(rdataset, trust);
-	else
-		rdataset->trust = trust;
-}
-
-void
-dns_rdataset_expire(dns_rdataset_t *rdataset) {
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-
-	if (rdataset->methods->expire != NULL)
-		(rdataset->methods->expire)(rdataset);
-}
-
-void
-dns_rdataset_clearprefetch(dns_rdataset_t *rdataset) {
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-
-	if (rdataset->methods->clearprefetch != NULL)
-		(rdataset->methods->clearprefetch)(rdataset);
-}
-
-void
-dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
-		     dns_rdata_rrsig_t *rrsig, isc_stdtime_t now,
-		     isc_boolean_t acceptexpired)
-{
-	uint32_t ttl = 0;
-
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(DNS_RDATASET_VALID(sigrdataset));
-	REQUIRE(rrsig != NULL);
-
-	/*
-	 * If we accept expired RRsets keep them for no more than 120 seconds.
-	 */
-	if (acceptexpired &&
-	    (isc_serial_le(rrsig->timeexpire, ((now + 120) & 0xffffffff)) ||
-	     isc_serial_le(rrsig->timeexpire, now)))
-		ttl = 120;
-	else if (isc_serial_ge(rrsig->timeexpire, now))
-		ttl = rrsig->timeexpire - now;
-
-	ttl = ISC_MIN(ISC_MIN(rdataset->ttl, sigrdataset->ttl),
-		      ISC_MIN(rrsig->originalttl, ttl));
-	rdataset->ttl = ttl;
-	sigrdataset->ttl = ttl;
 }

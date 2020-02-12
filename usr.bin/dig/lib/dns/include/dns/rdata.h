@@ -236,25 +236,6 @@ dns_rdata_compare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2);
  *\li	> 0		'rdata1' is greater than 'rdata2'
  */
 
-int
-dns_rdata_casecompare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2);
-/*%<
- * dns_rdata_casecompare() is similar to dns_rdata_compare() but also
- * compares domain names case insensitively in known rdata types that
- * are treated as opaque data by dns_rdata_compare().
- *
- * Requires:
- *
- *\li	'rdata1' is a valid, non-empty rdata
- *
- *\li	'rdata2' is a valid, non-empty rdata
- *
- * Returns:
- *\li	< 0		'rdata1' is less than 'rdata2'
- *\li	0		'rdata1' is equal to 'rdata2'
- *\li	> 0		'rdata1' is greater than 'rdata2'
- */
-
 /***
  *** Conversions
  ***/
@@ -549,35 +530,6 @@ dns_rdatatype_issingleton(dns_rdatatype_t type);
  */
 
 isc_boolean_t
-dns_rdataclass_ismeta(dns_rdataclass_t rdclass);
-/*%<
- * Return true iff the rdata class 'rdclass' is a meta-class
- * like ANY or NONE.
- */
-
-isc_boolean_t
-dns_rdatatype_isdnssec(dns_rdatatype_t type);
-/*%<
- * Return true iff 'type' is one of the DNSSEC
- * rdata types that may exist alongside a CNAME record.
- *
- * Requires:
- * \li	'type' is a valid rdata type.
- */
-
-isc_boolean_t
-dns_rdatatype_iszonecutauth(dns_rdatatype_t type);
-/*%<
- * Return true iff rdata of type 'type' is considered authoritative
- * data (not glue) in the NSEC chain when it occurs in the parent zone
- * at a zone cut.
- *
- * Requires:
- * \li	'type' is a valid rdata type.
- *
- */
-
-isc_boolean_t
 dns_rdatatype_isknown(dns_rdatatype_t type);
 /*%<
  * Return true iff the rdata type 'type' is known.
@@ -587,93 +539,11 @@ dns_rdatatype_isknown(dns_rdatatype_t type);
  *
  */
 
-
-isc_result_t
-dns_rdata_additionaldata(dns_rdata_t *rdata, dns_additionaldatafunc_t add,
-			 void *arg);
-/*%<
- * Call 'add' for each name and type from 'rdata' which is subject to
- * additional section processing.
- *
- * Requires:
- *
- *\li	'rdata' is a valid, non-empty rdata.
- *
- *\li	'add' is a valid dns_additionalfunc_t.
- *
- * Ensures:
- *
- *\li	If successful, then add() will have been called for each name
- *	and type subject to additional section processing.
- *
- *\li	If add() returns something other than #ISC_R_SUCCESS, that result
- *	will be returned as the result of dns_rdata_additionaldata().
- *
- * Returns:
- *
- *\li	ISC_R_SUCCESS
- *
- *\li	Many other results are possible if not successful.
- */
-
-isc_result_t
-dns_rdata_digest(dns_rdata_t *rdata, dns_digestfunc_t digest, void *arg);
-/*%<
- * Send 'rdata' in DNSSEC canonical form to 'digest'.
- *
- * Note:
- *\li	'digest' may be called more than once by dns_rdata_digest().  The
- *	concatenation of all the regions, in the order they were given
- *	to 'digest', will be the DNSSEC canonical form of 'rdata'.
- *
- * Requires:
- *
- *\li	'rdata' is a valid, non-empty rdata.
- *
- *\li	'digest' is a valid dns_digestfunc_t.
- *
- * Ensures:
- *
- *\li	If successful, then all of the rdata's data has been sent, in
- *	DNSSEC canonical form, to 'digest'.
- *
- *\li	If digest() returns something other than ISC_R_SUCCESS, that result
- *	will be returned as the result of dns_rdata_digest().
- *
- * Returns:
- *
- *\li	ISC_R_SUCCESS
- *
- *\li	Many other results are possible if not successful.
- */
-
 isc_boolean_t
 dns_rdatatype_questiononly(dns_rdatatype_t type);
 /*%<
  * Return true iff rdata of type 'type' can only appear in the question
  * section of a properly formatted message.
- *
- * Requires:
- * \li	'type' is a valid rdata type.
- *
- */
-
-isc_boolean_t
-dns_rdatatype_notquestion(dns_rdatatype_t type);
-/*%<
- * Return true iff rdata of type 'type' can not appear in the question
- * section of a properly formatted message.
- *
- * Requires:
- * \li	'type' is a valid rdata type.
- *
- */
-
-isc_boolean_t
-dns_rdatatype_atparent(dns_rdatatype_t type);
-/*%<
- * Return true iff rdata of type 'type' should appear at the parent of
- * a zone cut.
  *
  * Requires:
  * \li	'type' is a valid rdata type.
@@ -738,37 +608,6 @@ dns_rdata_checkowner(dns_name_t* name, dns_rdataclass_t rdclass,
  * Requires:
  *	'name' is a valid name.
  */
-
-isc_boolean_t
-dns_rdata_checknames(dns_rdata_t *rdata, dns_name_t *owner, dns_name_t *bad);
-/*
- * Returns whether 'rdata' contains valid domain names.  The checks are
- * sensitive to the owner name.
- *
- * If 'bad' is non-NULL and a domain name fails the check the
- * the offending name will be return in 'bad' by cloning from
- * the 'rdata' contents.
- *
- * Requires:
- *	'rdata' to be valid.
- *	'owner' to be valid.
- *	'bad'	to be NULL or valid.
- */
-
-void
-dns_rdata_exists(dns_rdata_t *rdata, dns_rdatatype_t type);
-
-void
-dns_rdata_notexist(dns_rdata_t *rdata, dns_rdatatype_t type);
-
-void
-dns_rdata_deleterrset(dns_rdata_t *rdata, dns_rdatatype_t type);
-
-void
-dns_rdata_makedelete(dns_rdata_t *rdata);
-
-const char *
-dns_rdata_updateop(dns_rdata_t *rdata, dns_section_t section);
 
 ISC_LANG_ENDDECLS
 

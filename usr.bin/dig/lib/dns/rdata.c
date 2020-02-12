@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
+/* $Id: rdata.c,v 1.3 2020/02/12 13:05:03 jsg Exp $ */
 
 /*! \file */
 
@@ -282,15 +282,6 @@ generic_tostruct_txt(ARGS_TOSTRUCT);
 
 static void
 generic_freestruct_txt(ARGS_FREESTRUCT);
-
-static isc_result_t
-generic_txt_first(dns_rdata_txt_t *txt);
-
-static isc_result_t
-generic_txt_next(dns_rdata_txt_t *txt);
-
-static isc_result_t
-generic_txt_current(dns_rdata_txt_t *txt, dns_rdata_txt_string_t *string);
 
 static isc_result_t
 generic_totext_ds(ARGS_TOTEXT);
@@ -676,37 +667,6 @@ dns_rdata_compare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2) {
 		return (rdata1->type < rdata2->type ? -1 : 1);
 
 	COMPARESWITCH
-
-	if (use_default) {
-		isc_region_t r1;
-		isc_region_t r2;
-
-		dns_rdata_toregion(rdata1, &r1);
-		dns_rdata_toregion(rdata2, &r2);
-		result = isc_region_compare(&r1, &r2);
-	}
-	return (result);
-}
-
-int
-dns_rdata_casecompare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2) {
-	int result = 0;
-	isc_boolean_t use_default = ISC_FALSE;
-
-	REQUIRE(rdata1 != NULL);
-	REQUIRE(rdata2 != NULL);
-	REQUIRE(rdata1->length == 0 || rdata1->data != NULL);
-	REQUIRE(rdata2->length == 0 || rdata2->data != NULL);
-	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata1));
-	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata2));
-
-	if (rdata1->rdclass != rdata2->rdclass)
-		return (rdata1->rdclass < rdata2->rdclass ? -1 : 1);
-
-	if (rdata1->type != rdata2->type)
-		return (rdata1->type < rdata2->type ? -1 : 1);
-
-	CASECOMPARESWITCH
 
 	if (use_default) {
 		isc_region_t r1;
@@ -1238,55 +1198,6 @@ dns_rdata_freestruct(void *source) {
 	FREESTRUCTSWITCH
 }
 
-isc_result_t
-dns_rdata_additionaldata(dns_rdata_t *rdata, dns_additionaldatafunc_t add,
-			 void *arg)
-{
-	isc_result_t result = ISC_R_NOTIMPLEMENTED;
-	isc_boolean_t use_default = ISC_FALSE;
-
-	/*
-	 * Call 'add' for each name and type from 'rdata' which is subject to
-	 * additional section processing.
-	 */
-
-	REQUIRE(rdata != NULL);
-	REQUIRE(add != NULL);
-	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata));
-
-	ADDITIONALDATASWITCH
-
-	/* No additional processing for unknown types */
-	if (use_default)
-		result = ISC_R_SUCCESS;
-
-	return (result);
-}
-
-isc_result_t
-dns_rdata_digest(dns_rdata_t *rdata, dns_digestfunc_t digest, void *arg) {
-	isc_result_t result = ISC_R_NOTIMPLEMENTED;
-	isc_boolean_t use_default = ISC_FALSE;
-	isc_region_t r;
-
-	/*
-	 * Send 'rdata' in DNSSEC canonical form to 'digest'.
-	 */
-
-	REQUIRE(rdata != NULL);
-	REQUIRE(digest != NULL);
-	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata));
-
-	DIGESTSWITCH
-
-	if (use_default) {
-		dns_rdata_toregion(rdata, &r);
-		result = (digest)(arg, &r);
-	}
-
-	return (result);
-}
-
 isc_boolean_t
 dns_rdata_checkowner(dns_name_t *name, dns_rdataclass_t rdclass,
 		     dns_rdatatype_t type, isc_boolean_t wildcard)
@@ -1294,15 +1205,6 @@ dns_rdata_checkowner(dns_name_t *name, dns_rdataclass_t rdclass,
 	isc_boolean_t result;
 
 	CHECKOWNERSWITCH
-	return (result);
-}
-
-isc_boolean_t
-dns_rdata_checknames(dns_rdata_t *rdata, dns_name_t *owner, dns_name_t *bad)
-{
-	isc_boolean_t result;
-
-	CHECKNAMESSWITCH
 	return (result);
 }
 
@@ -2289,50 +2191,8 @@ dns_rdatatype_issingleton(dns_rdatatype_t type) {
 }
 
 isc_boolean_t
-dns_rdatatype_notquestion(dns_rdatatype_t type) {
-	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_NOTQUESTION)
-	    != 0)
-		return (ISC_TRUE);
-	return (ISC_FALSE);
-}
-
-isc_boolean_t
 dns_rdatatype_questiononly(dns_rdatatype_t type) {
 	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_QUESTIONONLY)
-	    != 0)
-		return (ISC_TRUE);
-	return (ISC_FALSE);
-}
-
-isc_boolean_t
-dns_rdatatype_atparent(dns_rdatatype_t type) {
-	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_ATPARENT) != 0)
-		return (ISC_TRUE);
-	return (ISC_FALSE);
-}
-
-isc_boolean_t
-dns_rdataclass_ismeta(dns_rdataclass_t rdclass) {
-
-	if (rdclass == dns_rdataclass_reserved0
-	    || rdclass == dns_rdataclass_none
-	    || rdclass == dns_rdataclass_any)
-		return (ISC_TRUE);
-
-	return (ISC_FALSE);  /* Assume it is not a meta class. */
-}
-
-isc_boolean_t
-dns_rdatatype_isdnssec(dns_rdatatype_t type) {
-	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_DNSSEC) != 0)
-		return (ISC_TRUE);
-	return (ISC_FALSE);
-}
-
-isc_boolean_t
-dns_rdatatype_iszonecutauth(dns_rdatatype_t type) {
-	if ((dns_rdatatype_attributes(type)
-	     & (DNS_RDATATYPEATTR_DNSSEC | DNS_RDATATYPEATTR_ZONECUTAUTH))
 	    != 0)
 		return (ISC_TRUE);
 	return (ISC_FALSE);
@@ -2344,94 +2204,4 @@ dns_rdatatype_isknown(dns_rdatatype_t type) {
 	    == 0)
 		return (ISC_TRUE);
 	return (ISC_FALSE);
-}
-
-void
-dns_rdata_exists(dns_rdata_t *rdata, dns_rdatatype_t type) {
-
-	REQUIRE(rdata != NULL);
-	REQUIRE(DNS_RDATA_INITIALIZED(rdata));
-
-	rdata->data = NULL;
-	rdata->length = 0;
-	rdata->flags = DNS_RDATA_UPDATE;
-	rdata->type = type;
-	rdata->rdclass = dns_rdataclass_any;
-}
-
-void
-dns_rdata_notexist(dns_rdata_t *rdata, dns_rdatatype_t type) {
-
-	REQUIRE(rdata != NULL);
-	REQUIRE(DNS_RDATA_INITIALIZED(rdata));
-
-	rdata->data = NULL;
-	rdata->length = 0;
-	rdata->flags = DNS_RDATA_UPDATE;
-	rdata->type = type;
-	rdata->rdclass = dns_rdataclass_none;
-}
-
-void
-dns_rdata_deleterrset(dns_rdata_t *rdata, dns_rdatatype_t type) {
-
-	REQUIRE(rdata != NULL);
-	REQUIRE(DNS_RDATA_INITIALIZED(rdata));
-
-	rdata->data = NULL;
-	rdata->length = 0;
-	rdata->flags = DNS_RDATA_UPDATE;
-	rdata->type = type;
-	rdata->rdclass = dns_rdataclass_any;
-}
-
-void
-dns_rdata_makedelete(dns_rdata_t *rdata) {
-	REQUIRE(rdata != NULL);
-
-	rdata->rdclass = dns_rdataclass_none;
-}
-
-const char *
-dns_rdata_updateop(dns_rdata_t *rdata, dns_section_t section) {
-
-	REQUIRE(rdata != NULL);
-	REQUIRE(DNS_RDATA_INITIALIZED(rdata));
-
-	switch (section) {
-	case DNS_SECTION_PREREQUISITE:
-		switch (rdata->rdclass) {
-		case dns_rdataclass_none:
-			switch (rdata->type) {
-			case dns_rdatatype_any:
-				return ("domain doesn't exist");
-			default:
-				return ("rrset doesn't exist");
-			}
-		case dns_rdataclass_any:
-			switch (rdata->type) {
-			case dns_rdatatype_any:
-				return ("domain exists");
-			default:
-				return ("rrset exists (value independent)");
-			}
-		default:
-			return ("rrset exists (value dependent)");
-		}
-	case DNS_SECTION_UPDATE:
-		switch (rdata->rdclass) {
-		case dns_rdataclass_none:
-			return ("delete");
-		case dns_rdataclass_any:
-			switch (rdata->type) {
-			case dns_rdatatype_any:
-				return ("delete all rrsets");
-			default:
-				return ("delete rrset");
-			}
-		default:
-			return ("add");
-		}
-	}
-	return ("invalid");
 }

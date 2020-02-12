@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: assertions.h,v 1.1 2020/02/07 09:58:54 florian Exp $
+ * $Id: assertions.h,v 1.2 2020/02/12 13:05:04 jsg Exp $
  */
 /*! \file isc/assertions.h
  */
@@ -45,9 +45,6 @@ typedef void (*isc_assertioncallback_t)(const char *, int, isc_assertiontype_t,
 /* coverity[+kill] */
 __dead void isc_assertion_failed(const char *, int, isc_assertiontype_t,
 			  const char *);
-
-void
-isc_assertion_setcallback(isc_assertioncallback_t);
 
 const char *
 isc_assertion_typetotext(isc_assertiontype_t type);

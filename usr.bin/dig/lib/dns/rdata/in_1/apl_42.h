@@ -18,7 +18,7 @@
 #ifndef IN_1_APL_42_H
 #define IN_1_APL_42_H 1
 
-/* $Id: apl_42.h,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: apl_42.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 typedef struct dns_rdata_apl_ent {
 	isc_boolean_t	negative;
@@ -41,14 +41,5 @@ typedef struct dns_rdata_in_apl {
  * ISC_LANG_BEGINDECLS and ISC_LANG_ENDDECLS are already done
  * via rdatastructpre.h and rdatastructsuf.h.
  */
-
-isc_result_t
-dns_rdata_apl_first(dns_rdata_in_apl_t *);
-
-isc_result_t
-dns_rdata_apl_next(dns_rdata_in_apl_t *);
-
-isc_result_t
-dns_rdata_apl_current(dns_rdata_in_apl_t *, dns_rdata_apl_ent_t *);
 
 #endif /* IN_1_APL_42_H */

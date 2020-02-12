@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: compress.h,v 1.2 2020/02/12 13:05:03 jsg Exp $ */
 
 #ifndef DNS_COMPRESS_H
 #define DNS_COMPRESS_H 1
@@ -120,39 +120,6 @@ dns_compress_getmethods(dns_compress_t *cctx);
  *\li		allowed compression bitmap.
  */
 
-void
-dns_compress_setsensitive(dns_compress_t *cctx, isc_boolean_t sensitive);
-
-/*
- *	Preserve the case of compressed domain names.
- *
- *	Requires:
- *		'cctx' to be initialized.
- */
-
-isc_boolean_t
-dns_compress_getsensitive(dns_compress_t *cctx);
-/*
- *	Return whether case is to be preserved when compressing
- *	domain names.
- *
- *	Requires:
- *		'cctx' to be initialized.
- */
-
-int
-dns_compress_getedns(dns_compress_t *cctx);
-
-/*%<
- *	Gets edns value.
- *
- *	Requires:
- *\li		'cctx' to be initialized.
- *
- *	Returns:
- *\li		-1 .. 255
- */
-
 isc_boolean_t
 dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 			dns_name_t *prefix, uint16_t *offset);
@@ -226,26 +193,6 @@ dns_decompress_setmethods(dns_decompress_t *dctx, unsigned int allowed);
 
 /*%<
  *	Sets 'dctx->allowed' to 'allowed'.
- *
- *	Requires:
- *\li		'dctx' to be initialized
- */
-
-unsigned int
-dns_decompress_getmethods(dns_decompress_t *dctx);
-
-/*%<
- *	Returns 'dctx->allowed'
- *
- *	Requires:
- *\li		'dctx' to be initialized
- */
-
-int
-dns_decompress_edns(dns_decompress_t *dctx);
-
-/*%<
- *	Returns 'dctx->edns'
  *
  *	Requires:
  *\li		'dctx' to be initialized

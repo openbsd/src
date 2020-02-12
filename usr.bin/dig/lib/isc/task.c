@@ -1300,51 +1300,6 @@ isc__task_privilege(isc_task_t *task0) {
 }
 
 isc_result_t
-isc__task_register(void) {
-	return (isc_task_register(isc__taskmgr_create));
-}
-
-isc_boolean_t
-isc_task_exiting(isc_task_t *t) {
-	isc__task_t *task = (isc__task_t *)t;
-
-	REQUIRE(VALID_TASK(task));
-	return (TASK_SHUTTINGDOWN(task));
-}
-
-
-static isc_taskmgrcreatefunc_t taskmgr_createfunc = NULL;
-
-isc_result_t
-isc_task_register(isc_taskmgrcreatefunc_t createfunc) {
-	isc_result_t result = ISC_R_SUCCESS;
-
-	if (taskmgr_createfunc == NULL)
-		taskmgr_createfunc = createfunc;
-	else
-		result = ISC_R_EXISTS;
-
-	return (result);
-}
-
-isc_result_t
-isc_taskmgr_createinctx(isc_appctx_t *actx,
-			unsigned int workers, unsigned int default_quantum,
-			isc_taskmgr_t **managerp)
-{
-	isc_result_t result;
-
-	REQUIRE(taskmgr_createfunc != NULL);
-	result = (*taskmgr_createfunc)(workers, default_quantum,
-				       managerp);
-
-	if (result == ISC_R_SUCCESS)
-		isc_appctx_settaskmgr(actx, *managerp);
-
-	return (result);
-}
-
-isc_result_t
 isc_taskmgr_create(unsigned int workers,
 		   unsigned int default_quantum, isc_taskmgr_t **managerp)
 {
@@ -1358,20 +1313,6 @@ isc_taskmgr_destroy(isc_taskmgr_t **managerp) {
 	isc__taskmgr_destroy(managerp);
 
 	ENSURE(*managerp == NULL);
-}
-
-void
-isc_taskmgr_setmode(isc_taskmgr_t *manager, isc_taskmgrmode_t mode) {
-	REQUIRE(ISCAPI_TASKMGR_VALID(manager));
-
-	isc__taskmgr_setmode(manager, mode);
-}
-
-isc_taskmgrmode_t
-isc_taskmgr_mode(isc_taskmgr_t *manager) {
-	REQUIRE(ISCAPI_TASKMGR_VALID(manager));
-
-	return (isc__taskmgr_mode(manager));
 }
 
 isc_result_t
@@ -1430,14 +1371,6 @@ isc_task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type,
 	return (isc__task_unsend(task, sender, type, tag, events));
 }
 
-isc_result_t
-isc_task_onshutdown(isc_task_t *task, isc_taskaction_t action, void *arg)
-{
-	REQUIRE(ISCAPI_TASK_VALID(task));
-
-	return (isc__task_onshutdown(task, action, arg));
-}
-
 void
 isc_task_shutdown(isc_task_t *task) {
 	REQUIRE(ISCAPI_TASK_VALID(task));
@@ -1446,56 +1379,10 @@ isc_task_shutdown(isc_task_t *task) {
 }
 
 void
-isc_task_destroy(isc_task_t **taskp) {
-	isc__task_destroy(taskp);
-}
-
-void
 isc_task_setname(isc_task_t *task, const char *name, void *tag) {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 
 	isc__task_setname(task, name, tag);
-}
-
-unsigned int
-isc_task_purge(isc_task_t *task, void *sender, isc_eventtype_t type, void *tag)
-{
-	REQUIRE(ISCAPI_TASK_VALID(task));
-
-	return (isc__task_purge(task, sender, type, tag));
-}
-
-isc_result_t
-isc_task_beginexclusive(isc_task_t *task) {
-	REQUIRE(ISCAPI_TASK_VALID(task));
-
-	return (isc__task_beginexclusive(task));
-}
-
-void
-isc_task_endexclusive(isc_task_t *task) {
-	REQUIRE(ISCAPI_TASK_VALID(task));
-
-	isc__task_endexclusive(task);
-}
-
-void
-isc_task_setprivilege(isc_task_t *task, isc_boolean_t priv) {
-	REQUIRE(ISCAPI_TASK_VALID(task));
-
-	isc__task_setprivilege(task, priv);
-}
-
-isc_boolean_t
-isc_task_privilege(isc_task_t *task) {
-	REQUIRE(ISCAPI_TASK_VALID(task));
-
-	return (isc__task_privilege(task));
-}
-
-void
-isc_task_getcurrenttime(isc_task_t *task, isc_stdtime_t *t) {
-	isc__task_getcurrenttime(task, t);
 }
 
 /*%

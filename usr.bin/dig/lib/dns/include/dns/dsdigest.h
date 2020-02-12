@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dsdigest.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: dsdigest.h,v 1.2 2020/02/12 13:05:03 jsg Exp $ */
 
 #ifndef DNS_DSDIGEST_H
 #define DNS_DSDIGEST_H 1
@@ -45,32 +45,7 @@ dns_dsdigest_fromtext(dns_dsdigest_t *dsdigestp, isc_textregion_t *source);
  *\li	DNS_R_UNKNOWN			mnemonic type is unknown
  */
 
-isc_result_t
-dns_dsdigest_totext(dns_dsdigest_t dsdigest, isc_buffer_t *target);
-/*%<
- * Put a textual representation of the DS/DLV digest type 'dsdigest'
- * into 'target'.
- *
- * Requires:
- *\li	'dsdigest' is a valid dsdigest.
- *
- *\li	'target' is a valid text buffer.
- *
- * Ensures,
- *	if the result is success:
- *\li		The used space in 'target' is updated.
- *
- * Returns:
- *\li	ISC_R_SUCCESS			on success
- *\li	ISC_R_NOSPACE			target buffer is too small
- */
-
 #define DNS_DSDIGEST_FORMATSIZE 20
-void
-dns_dsdigest_format(dns_dsdigest_t typ, char *cp, unsigned int size);
-/*%<
- * Wrapper for dns_dsdigest_totext(), writing text into 'cp'
- */
 
 ISC_LANG_ENDDECLS
 

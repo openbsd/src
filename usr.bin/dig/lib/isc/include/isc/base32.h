@@ -39,12 +39,6 @@ ISC_LANG_BEGINDECLS
  ***/
 
 isc_result_t
-isc_base32_totext(isc_region_t *source, int wordlength,
-		  const char *wordbreak, isc_buffer_t *target);
-isc_result_t
-isc_base32hex_totext(isc_region_t *source, int wordlength,
-		     const char *wordbreak, isc_buffer_t *target);
-isc_result_t
 isc_base32hexnp_totext(isc_region_t *source, int wordlength,
 		       const char *wordbreak, isc_buffer_t *target);
 /*!<
@@ -69,10 +63,6 @@ isc_base32hexnp_totext(isc_region_t *source, int wordlength,
  */
 
 isc_result_t
-isc_base32_decodestring(const char *cstr, isc_buffer_t *target);
-isc_result_t
-isc_base32hex_decodestring(const char *cstr, isc_buffer_t *target);
-isc_result_t
 isc_base32hexnp_decodestring(const char *cstr, isc_buffer_t *target);
 /*!<
  * \brief Decode a null-terminated string in base32, base32hex, or
@@ -89,36 +79,8 @@ isc_base32hexnp_decodestring(const char *cstr, isc_buffer_t *target);
  *
  * 	Other error returns are any possible error code from:
  *\li		isc_lex_create(),
- *\li		isc_lex_openbuffer(),
- *\li		isc_base32_tobuffer().
  */
 
-isc_result_t
-isc_base32_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
-isc_result_t
-isc_base32hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
-isc_result_t
-isc_base32hexnp_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
-/*!<
- * \brief Convert text encoded in base32, base32hex, or base32hex
- * non-padded from a lexer context into data.
- *
- * Requires:
- *\li	'lex' is a valid lexer context
- *\li	'target' is a buffer containing binary data
- *\li	'length' is an integer
- *
- * Ensures:
- *\li	target will contain the data represented by the base32 encoded
- *	string parsed by the lexer.  No more than length bytes will be read,
- *	if length is positive.  The 'used' pointer in target will be
- *	advanced as necessary.
- */
-
-isc_result_t
-isc_base32_decoderegion(isc_region_t *source, isc_buffer_t *target);
-isc_result_t
-isc_base32hex_decoderegion(isc_region_t *source, isc_buffer_t *target);
 isc_result_t
 isc_base32hexnp_decoderegion(isc_region_t *source, isc_buffer_t *target);
 /*!<

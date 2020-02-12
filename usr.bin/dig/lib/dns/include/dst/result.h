@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: result.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef DST_RESULT_H
 #define DST_RESULT_H 1
@@ -61,9 +61,6 @@
 #define DST_R_NRESULTS			23	/* Number of results */
 
 ISC_LANG_BEGINDECLS
-
-const char *
-dst_result_totext(isc_result_t);
 
 void
 dst_result_register(void);

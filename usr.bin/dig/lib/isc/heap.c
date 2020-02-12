@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: heap.c,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 /*! \file
  * Heap implementation of priority queues adapted from the following:
@@ -263,15 +263,4 @@ isc_heap_element(isc_heap_t *heap, unsigned int idx) {
 	if (idx <= heap->last)
 		return (heap->array[idx]);
 	return (NULL);
-}
-
-void
-isc_heap_foreach(isc_heap_t *heap, isc_heapaction_t action, void *uap) {
-	unsigned int i;
-
-	REQUIRE(VALID_HEAP(heap));
-	REQUIRE(action != NULL);
-
-	for (i = 1 ; i <= heap->last ; i++)
-		(action)(heap->array[i], uap);
 }

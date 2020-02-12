@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.h,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: hip_55.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef GENERIC_HIP_5_H
 #define GENERIC_HIP_5_H 1
@@ -39,8 +39,5 @@ dns_rdata_hip_first(dns_rdata_hip_t *);
 
 isc_result_t
 dns_rdata_hip_next(dns_rdata_hip_t *);
-
-void
-dns_rdata_hip_current(dns_rdata_hip_t *, dns_name_t *);
 
 #endif /* GENERIC_HIP_5_H */

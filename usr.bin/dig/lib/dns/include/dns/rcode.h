@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: rcode.h,v 1.2 2020/02/12 13:05:03 jsg Exp $ */
 
 #ifndef DNS_RCODE_H
 #define DNS_RCODE_H 1
@@ -26,38 +26,6 @@
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
-
-isc_result_t dns_rcode_fromtext(dns_rcode_t *rcodep, isc_textregion_t *source);
-/*%<
- * Convert the text 'source' refers to into a DNS error value.
- *
- * Requires:
- *\li	'rcodep' is a valid pointer.
- *
- *\li	'source' is a valid text region.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS			on success
- *\li	#DNS_R_UNKNOWN			type is unknown
- */
-
-isc_result_t dns_rcode_totext(dns_rcode_t rcode, isc_buffer_t *target);
-/*%<
- * Put a textual representation of error 'rcode' into 'target'.
- *
- * Requires:
- *\li	'rcode' is a valid rcode.
- *
- *\li	'target' is a valid text buffer.
- *
- * Ensures:
- *\li	If the result is success:
- *		The used space in 'target' is updated.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS			on success
- *\li	#ISC_R_NOSPACE			target buffer is too small
- */
 
 isc_result_t dns_tsigrcode_fromtext(dns_rcode_t *rcodep,
 				    isc_textregion_t *source);

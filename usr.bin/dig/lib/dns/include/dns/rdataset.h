@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: rdataset.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -226,19 +226,6 @@ dns_rdataset_init(dns_rdataset_t *rdataset);
  */
 
 void
-dns_rdataset_invalidate(dns_rdataset_t *rdataset);
-/*%<
- * Invalidate 'rdataset'.
- *
- * Requires:
- *\li	'rdataset' is a valid, disassociated rdataset.
- *
- * Ensures:
- *\li	If assertion checking is enabled, future attempts to use 'rdataset'
- *	without initializing it will cause an assertion failure.
- */
-
-void
 dns_rdataset_disassociate(dns_rdataset_t *rdataset);
 /*%<
  * Disassociate 'rdataset' from its rdata, allowing it to be reused.
@@ -296,18 +283,6 @@ dns_rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target);
  *
  * Ensures:
  *\li	'target' references the same rdataset as 'source'.
- */
-
-unsigned int
-dns_rdataset_count(dns_rdataset_t *rdataset);
-/*%<
- * Return the number of records in 'rdataset'.
- *
- * Requires:
- *\li	'rdataset' is a valid, associated rdataset.
- *
- * Returns:
- *\li	The number of records in 'rdataset'.
  */
 
 isc_result_t
@@ -467,159 +442,6 @@ dns_rdataset_towirepartial(dns_rdataset_t *rdataset,
  *\li	#ISC_R_NOSPACE if unable to fit in all of the records. *countp
  *		      will be updated to reflect the number of records
  *		      written.
- */
-
-isc_result_t
-dns_rdataset_additionaldata(dns_rdataset_t *rdataset,
-			    dns_additionaldatafunc_t add, void *arg);
-/*%<
- * For each rdata in rdataset, call 'add' for each name and type in the
- * rdata which is subject to additional section processing.
- *
- * Requires:
- *
- *\li	'rdataset' is a valid, non-question rdataset.
- *
- *\li	'add' is a valid dns_additionaldatafunc_t
- *
- * Ensures:
- *
- *\li	If successful, dns_rdata_additionaldata() will have been called for
- *	each rdata in 'rdataset'.
- *
- *\li	If a call to dns_rdata_additionaldata() is not successful, the
- *	result returned will be the result of dns_rdataset_additionaldata().
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS
- *
- *\li	Any error that dns_rdata_additionaldata() can return.
- */
-
-isc_result_t
-dns_rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-			dns_rdataset_t *neg, dns_rdataset_t *negsig);
-/*%<
- * Return the noqname proof for this record.
- *
- * Requires:
- *\li	'rdataset' to be valid and #DNS_RDATASETATTR_NOQNAME to be set.
- *\li	'name' to be valid.
- *\li	'neg' and 'negsig' to be valid and not associated.
- */
-
-isc_result_t
-dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name);
-/*%<
- * Associate a noqname proof with this record.
- * Sets #DNS_RDATASETATTR_NOQNAME if successful.
- * Adjusts the 'rdataset->ttl' to minimum of the 'rdataset->ttl' and
- * the 'nsec'/'nsec3' and 'rrsig(nsec)'/'rrsig(nsec3)' ttl.
- *
- * Requires:
- *\li	'rdataset' to be valid and #DNS_RDATASETATTR_NOQNAME to be set.
- *\li	'name' to be valid and have NSEC or NSEC3 and associated RRSIG
- *	 rdatasets.
- */
-
-isc_result_t
-dns_rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
-			dns_rdataset_t *nsec, dns_rdataset_t *nsecsig);
-/*%<
- * Return the closest encloser for this record.
- *
- * Requires:
- *\li	'rdataset' to be valid and #DNS_RDATASETATTR_CLOSEST to be set.
- *\li	'name' to be valid.
- *\li	'nsec' and 'nsecsig' to be valid and not associated.
- */
-
-isc_result_t
-dns_rdataset_addclosest(dns_rdataset_t *rdataset, dns_name_t *name);
-/*%<
- * Associate a closest encloset proof with this record.
- * Sets #DNS_RDATASETATTR_CLOSEST if successful.
- * Adjusts the 'rdataset->ttl' to minimum of the 'rdataset->ttl' and
- * the 'nsec' and 'rrsig(nsec)' ttl.
- *
- * Requires:
- *\li	'rdataset' to be valid and #DNS_RDATASETATTR_CLOSEST to be set.
- *\li	'name' to be valid and have NSEC3 and RRSIG(NSEC3) rdatasets.
- */
-
-isc_result_t
-dns_rdataset_putadditional(dns_acache_t *acache,
-			   dns_rdataset_t *rdataset,
-			   dns_rdatasetadditional_t type,
-			   dns_rdatatype_t qtype);
-/*%<
- * Discard cached additional information stored in the DB node for a particular
- * 'rdataset.'  See dns_rdataset_getadditional for the semantics of 'type'
- * and 'qtype'.
- *
- * Requires:
- * \li	'rdataset' is a valid rdataset.
- * \li	'acache' can be NULL, in which case this function will simply return
- *	ISC_R_FAILURE.
- *
- * Ensures:
- * \li	See dns_acache_cancelentry().
- *
- * Returns:
- * \li	#ISC_R_SUCCESS
- * \li	#ISC_R_FAILURE	- additional information caching is not supported.
- * \li	#ISC_R_NOTFOUND	- the corresponding DB node has not cached additional
- *			  information for 'rdataset.'
- */
-
-void
-dns_rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust);
-/*%<
- * Set the trust of the 'rdataset' to trust in any in the backing database.
- * The local trust level of 'rdataset' is also set.
- */
-
-void
-dns_rdataset_expire(dns_rdataset_t *rdataset);
-/*%<
- * Mark the rdataset to be expired in the backing database.
- */
-
-void
-dns_rdataset_clearprefetch(dns_rdataset_t *rdataset);
-/*%<
- * Clear the PREFETCH attribute for the given rdataset in the
- * underlying database.
- *
- * In the cache database, this signals that the rdataset is not
- * eligible to be prefetched when the TTL is close to expiring.
- * It has no function in other databases.
- */
-
-void
-dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
-		     dns_rdata_rrsig_t *rrsig, isc_stdtime_t now,
-		     isc_boolean_t acceptexpired);
-/*%<
- * Trim the ttl of 'rdataset' and 'sigrdataset' so that they will expire
- * at or before 'rrsig->expiretime'.  If 'acceptexpired' is true and the
- * signature has expired or will expire in the next 120 seconds, limit
- * the ttl to be no more than 120 seconds.
- *
- * The ttl is further limited by the original ttl as stored in 'rrsig'
- * and the original ttl values of 'rdataset' and 'sigrdataset'.
- *
- * Requires:
- * \li	'rdataset' is a valid rdataset.
- * \li	'sigrdataset' is a valid rdataset.
- * \li	'rrsig' is non NULL.
- */
-
-const char *
-dns_trust_totext(dns_trust_t trust);
-/*%<
- * Display trust in textual form.
  */
 
 ISC_LANG_ENDDECLS

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: base32.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: base32.c,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 /*! \file */
 
@@ -47,8 +47,6 @@ mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length);
 
 /*@}*/
 
-static const char base32[] =
-	 "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567=abcdefghijklmnopqrstuvwxyz234567";
 static const char base32hex[] =
 	"0123456789ABCDEFGHIJKLMNOPQRSTUV=0123456789abcdefghijklmnopqrstuv";
 
@@ -115,22 +113,6 @@ base32_totext(isc_region_t *source, int wordlength, const char *wordbreak,
 	if (source->length > 0)
 		isc_region_consume(source, source->length);
 	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc_base32_totext(isc_region_t *source, int wordlength,
-		  const char *wordbreak, isc_buffer_t *target)
-{
-	return (base32_totext(source, wordlength, wordbreak, target,
-			      base32, '='));
-}
-
-isc_result_t
-isc_base32hex_totext(isc_region_t *source, int wordlength,
-		     const char *wordbreak, isc_buffer_t *target)
-{
-	return (base32_totext(source, wordlength, wordbreak, target,
-			      base32hex, '='));
 }
 
 isc_result_t
@@ -283,53 +265,6 @@ base32_decode_finish(base32_decode_ctx_t *ctx) {
 }
 
 static isc_result_t
-base32_tobuffer(isc_lex_t *lexer, const char base[], isc_boolean_t pad,
-		isc_buffer_t *target, int length)
-{
-	base32_decode_ctx_t ctx;
-	isc_textregion_t *tr;
-	isc_token_t token;
-	isc_boolean_t eol;
-
-	base32_decode_init(&ctx, length, base, pad, target);
-
-	while (!ctx.seen_end && (ctx.length != 0)) {
-		unsigned int i;
-
-		if (length > 0)
-			eol = ISC_FALSE;
-		else
-			eol = ISC_TRUE;
-		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string, eol));
-		if (token.type != isc_tokentype_string)
-			break;
-		tr = &token.value.as_textregion;
-		for (i = 0; i < tr->length; i++)
-			RETERR(base32_decode_char(&ctx, tr->base[i]));
-	}
-	if (ctx.length < 0 && !ctx.seen_end)
-		isc_lex_ungettoken(lexer, &token);
-	RETERR(base32_decode_finish(&ctx));
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc_base32_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
-	return (base32_tobuffer(lexer, base32, ISC_TRUE, target, length));
-}
-
-isc_result_t
-isc_base32hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
-	return (base32_tobuffer(lexer, base32hex, ISC_TRUE, target, length));
-}
-
-isc_result_t
-isc_base32hexnp_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
-	return (base32_tobuffer(lexer, base32hex, ISC_FALSE, target, length));
-}
-
-static isc_result_t
 base32_decodestring(const char *cstr, const char base[], isc_boolean_t pad,
 		    isc_buffer_t *target)
 {
@@ -346,16 +281,6 @@ base32_decodestring(const char *cstr, const char base[], isc_boolean_t pad,
 	}
 	RETERR(base32_decode_finish(&ctx));
 	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc_base32_decodestring(const char *cstr, isc_buffer_t *target) {
-	return (base32_decodestring(cstr, base32, ISC_TRUE, target));
-}
-
-isc_result_t
-isc_base32hex_decodestring(const char *cstr, isc_buffer_t *target) {
-	return (base32_decodestring(cstr, base32hex, ISC_TRUE, target));
 }
 
 isc_result_t
@@ -377,16 +302,6 @@ base32_decoderegion(isc_region_t *source, const char base[],
 	}
 	RETERR(base32_decode_finish(&ctx));
 	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc_base32_decoderegion(isc_region_t *source, isc_buffer_t *target) {
-	return (base32_decoderegion(source, base32, ISC_TRUE, target));
-}
-
-isc_result_t
-isc_base32hex_decoderegion(isc_region_t *source, isc_buffer_t *target) {
-	return (base32_decoderegion(source, base32hex, ISC_TRUE, target));
 }
 
 isc_result_t

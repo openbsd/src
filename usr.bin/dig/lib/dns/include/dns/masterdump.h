@@ -110,56 +110,9 @@ ISC_LANG_BEGINDECLS
  ***/
 
 /*%
- * The default master file style.
- *
- * This uses $TTL directives to avoid the need to dedicate a
- * tab stop for the TTL.  The class is only printed for the first
- * rrset in the file and shares a tab stop with the RR type.
- */
-extern const dns_master_style_t dns_master_style_default;
-
-/*%
- * A master file style that dumps zones to a very generic format easily
- * imported/checked with external tools.
- */
-extern const dns_master_style_t dns_master_style_full;
-
-/*%
- * A master file style that prints explicit TTL values on each
- * record line, never using $TTL statements.  The TTL has a tab
- * stop of its own, but the class and type share one.
- */
-extern const dns_master_style_t
-					dns_master_style_explicitttl;
-
-/*%
- * A master style format designed for cache files.  It prints explicit TTL
- * values on each record line and never uses $ORIGIN or relative names.
- */
-extern const dns_master_style_t dns_master_style_cache;
-
-/*%
- * A master style that prints name, ttl, class, type, and value on
- * every line.  Similar to explicitttl above, but more verbose.
- * Intended for generating master files which can be easily parsed
- * by perl scripts and similar applications.
- */
-extern const dns_master_style_t dns_master_style_simple;
-
-/*%
  * The style used for debugging, "dig" output, etc.
  */
 extern const dns_master_style_t dns_master_style_debug;
-
-/*%
- * Similar to dns_master_style_debug but data is prepended with ";"
- */
-extern const dns_master_style_t dns_master_style_comment;
-
-/*%
- * The style used for dumping "key" zones.
- */
-extern const dns_master_style_t dns_master_style_keyzone;
 
 /***
  ***	Functions

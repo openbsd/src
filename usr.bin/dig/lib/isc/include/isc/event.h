@@ -89,9 +89,6 @@ ISC_LANG_BEGINDECLS
 isc_event_t *
 isc_event_allocate(void *sender, isc_eventtype_t type,
 		   isc_taskaction_t action, void *arg, size_t size);
-isc_event_t *
-isc_event_constallocate(void *sender, isc_eventtype_t type,
-			isc_taskaction_t action, const void *arg, size_t size);
 /*%<
  * Allocate an event structure.
  *

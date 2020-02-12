@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: callbacks.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: callbacks.h,v 1.2 2020/02/12 13:05:03 jsg Exp $ */
 
 #ifndef DNS_CALLBACKS_H
 #define DNS_CALLBACKS_H 1
@@ -76,32 +76,6 @@ struct dns_rdatacallbacks {
 	void	*error_private;
 	void	*warn_private;
 };
-
-/***
- ***	Initialization
- ***/
-
-void
-dns_rdatacallbacks_init(dns_rdatacallbacks_t *callbacks);
-/*%<
- * Initialize 'callbacks'.
- *
- * \li	'magic' is set to DNS_CALLBACK_MAGIC
- *
- * \li	'error' and 'warn' are set to default callbacks that print the
- *	error message through the DNS library log context.
- *
- *\li	All other elements are initialized to NULL.
- *
- * Requires:
- *  \li    'callbacks' is a valid dns_rdatacallbacks_t,
- */
-
-void
-dns_rdatacallbacks_init_stdio(dns_rdatacallbacks_t *callbacks);
-/*%<
- * Like dns_rdatacallbacks_init, but logs to stdio.
- */
 
 ISC_LANG_ENDDECLS
 

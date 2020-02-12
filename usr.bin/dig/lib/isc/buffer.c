@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: buffer.c,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 /*! \file */
 
@@ -46,25 +46,6 @@ isc__buffer_initnull(isc_buffer_t *b) {
 	 */
 
 	ISC__BUFFER_INIT(b, NULL, 0);
-}
-
-void
-isc_buffer_reinit(isc_buffer_t *b, void *base, unsigned int length) {
-	/*
-	 * Re-initialize the buffer enough to reconfigure the base of the
-	 * buffer.  We will swap in the new buffer, after copying any
-	 * data we contain into the new buffer and adjusting all of our
-	 * internal pointers.
-	 *
-	 * The buffer must not be smaller than the length of the original
-	 * buffer.
-	 */
-	REQUIRE(b->length <= length);
-	REQUIRE(base != NULL);
-
-	(void)memmove(base, b->base, b->length);
-	b->base = base;
-	b->length = length;
 }
 
 void
@@ -351,31 +332,6 @@ isc__buffer_putuint32(isc_buffer_t *b, uint32_t val) {
 	REQUIRE(b->used + 4 <= b->length);
 
 	ISC__BUFFER_PUTUINT32(b, val);
-}
-
-uint64_t
-isc_buffer_getuint48(isc_buffer_t *b) {
-	unsigned char *cp;
-	uint64_t result;
-
-	/*
-	 * Read an unsigned 48-bit integer in network byte order from 'b',
-	 * convert it to host byte order, and return it.
-	 */
-
-	REQUIRE(ISC_BUFFER_VALID(b));
-	REQUIRE(b->used - b->current >= 6);
-
-	cp = isc_buffer_current(b);
-	b->current += 6;
-	result = ((int64_t)(cp[0])) << 40;
-	result |= ((int64_t)(cp[1])) << 32;
-	result |= ((int64_t)(cp[2])) << 24;
-	result |= ((int64_t)(cp[3])) << 16;
-	result |= ((int64_t)(cp[4])) << 8;
-	result |= ((int64_t)(cp[5]));
-
-	return (result);
 }
 
 void

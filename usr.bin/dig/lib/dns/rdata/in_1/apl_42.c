@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: apl_42.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: apl_42.c,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 /* RFC3123 */
 
@@ -297,101 +297,6 @@ freestruct_in_apl(ARGS_FREESTRUCT) {
 
 	if (apl->apl != NULL)
 		free(apl->apl);
-}
-
-isc_result_t
-dns_rdata_apl_first(dns_rdata_in_apl_t *apl) {
-	uint32_t length;
-
-	REQUIRE(apl != NULL);
-	REQUIRE(apl->common.rdtype == dns_rdatatype_apl);
-	REQUIRE(apl->common.rdclass == dns_rdataclass_in);
-	REQUIRE(apl->apl != NULL || apl->apl_len == 0);
-
-	/*
-	 * If no APL return ISC_R_NOMORE.
-	 */
-	if (apl->apl == NULL)
-		return (ISC_R_NOMORE);
-
-	/*
-	 * Sanity check data.
-	 */
-	INSIST(apl->apl_len > 3U);
-	length = apl->apl[apl->offset + 3] & 0x7f;
-	INSIST(length <= apl->apl_len);
-
-	apl->offset = 0;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_rdata_apl_next(dns_rdata_in_apl_t *apl) {
-	uint32_t length;
-
-	REQUIRE(apl != NULL);
-	REQUIRE(apl->common.rdtype == dns_rdatatype_apl);
-	REQUIRE(apl->common.rdclass == dns_rdataclass_in);
-	REQUIRE(apl->apl != NULL || apl->apl_len == 0);
-
-	/*
-	 * No APL or have already reached the end return ISC_R_NOMORE.
-	 */
-	if (apl->apl == NULL || apl->offset == apl->apl_len)
-		return (ISC_R_NOMORE);
-
-	/*
-	 * Sanity check data.
-	 */
-	INSIST(apl->offset < apl->apl_len);
-	INSIST(apl->apl_len > 3U);
-	INSIST(apl->offset <= apl->apl_len - 4U);
-	length = apl->apl[apl->offset + 3] & 0x7f;
-	/*
-	 * 16 to 32 bits promotion as 'length' is 32 bits so there is
-	 * no overflow problems.
-	 */
-	INSIST(length + apl->offset <= apl->apl_len);
-
-	apl->offset += apl->apl[apl->offset + 3] & 0x7f;
-	return ((apl->offset >= apl->apl_len) ? ISC_R_SUCCESS : ISC_R_NOMORE);
-}
-
-isc_result_t
-dns_rdata_apl_current(dns_rdata_in_apl_t *apl, dns_rdata_apl_ent_t *ent) {
-	uint32_t length;
-
-	REQUIRE(apl != NULL);
-	REQUIRE(apl->common.rdtype == dns_rdatatype_apl);
-	REQUIRE(apl->common.rdclass == dns_rdataclass_in);
-	REQUIRE(ent != NULL);
-	REQUIRE(apl->apl != NULL || apl->apl_len == 0);
-	REQUIRE(apl->offset <= apl->apl_len);
-
-	if (apl->offset == apl->apl_len)
-		return (ISC_R_NOMORE);
-
-	/*
-	 * Sanity check data.
-	 */
-	INSIST(apl->apl_len > 3U);
-	INSIST(apl->offset <= apl->apl_len - 4U);
-	length = apl->apl[apl->offset + 3] & 0x7f;
-	/*
-	 * 16 to 32 bits promotion as 'length' is 32 bits so there is
-	 * no overflow problems.
-	 */
-	INSIST(length + apl->offset <= apl->apl_len);
-
-	ent->family = (apl->apl[apl->offset] << 8) + apl->apl[apl->offset + 1];
-	ent->prefix = apl->apl[apl->offset + 2];
-	ent->length = apl->apl[apl->offset + 3] & 0x7f;
-	ent->negative = ISC_TF((apl->apl[apl->offset + 3] & 0x80) != 0);
-	if (ent->length != 0)
-		ent->data = &apl->apl[apl->offset + 4];
-	else
-		ent->data = NULL;
-	return (ISC_R_SUCCESS);
 }
 
 static inline isc_result_t

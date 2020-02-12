@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: base64.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: base64.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef ISC_BASE64_H
 #define ISC_BASE64_H 1
@@ -70,7 +70,6 @@ isc_base64_decodestring(const char *cstr, isc_buffer_t *target);
  *
  * 	Other error returns are any possible error code from:
  *\li		isc_lex_create(),
- *\li		isc_lex_openbuffer(),
  *\li		isc_base64_tobuffer().
  */
 

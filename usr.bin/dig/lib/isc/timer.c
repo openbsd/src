@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.2 2020/02/11 23:26:12 jsg Exp $ */
+/* $Id: timer.c,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
 
 /*! \file */
 
@@ -756,40 +756,6 @@ isc__timermgr_dispatch(isc_timermgr_t *manager0) {
 }
 
 isc_result_t
-isc__timer_register(void) {
-	return (isc_timer_register(isc__timermgr_create));
-}
-
-static isc_timermgrcreatefunc_t timermgr_createfunc = NULL;
-
-isc_result_t
-isc_timer_register(isc_timermgrcreatefunc_t createfunc) {
-	isc_result_t result = ISC_R_SUCCESS;
-
-	if (timermgr_createfunc == NULL)
-		timermgr_createfunc = createfunc;
-	else
-		result = ISC_R_EXISTS;
-
-	return (result);
-}
-
-isc_result_t
-isc_timermgr_createinctx(isc_appctx_t *actx,
-			 isc_timermgr_t **managerp)
-{
-	isc_result_t result;
-
-	REQUIRE(timermgr_createfunc != NULL);
-	result = (*timermgr_createfunc)(managerp);
-
-	if (result == ISC_R_SUCCESS)
-		isc_appctx_settimermgr(actx, *managerp);
-
-	return (result);
-}
-
-isc_result_t
 isc_timermgr_create(isc_timermgr_t **managerp) {
 	return (isc__timermgr_create(managerp));
 }
@@ -813,16 +779,6 @@ isc_timer_create(isc_timermgr_t *manager, isc_timertype_t type,
 
 	return (isc__timer_create(manager, type, expires, interval,
 				  task, action, arg, timerp));
-}
-
-void
-isc_timer_attach(isc_timer_t *timer, isc_timer_t **timerp) {
-	REQUIRE(ISCAPI_TIMER_VALID(timer));
-	REQUIRE(timerp != NULL && *timerp == NULL);
-
-	isc__timer_attach(timer, timerp);
-
-	ENSURE(*timerp == timer);
 }
 
 void

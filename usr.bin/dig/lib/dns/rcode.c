@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
+/* $Id: rcode.c,v 1.3 2020/02/12 13:05:03 jsg Exp $ */
 
 
 #include <ctype.h>
@@ -160,7 +160,6 @@ struct tbl {
 	int             flags;
 };
 
-static struct tbl rcodes[] = { RCODENAMES ERCODENAMES };
 static struct tbl tsigrcodes[] = { RCODENAMES TSIGRCODENAMES };
 static struct tbl certs[] = { CERTNAMES };
 static struct tbl secalgs[] = { SECALGNAMES };
@@ -298,19 +297,6 @@ dns_mnemonic_totext(unsigned int value, isc_buffer_t *target,
 }
 
 isc_result_t
-dns_rcode_fromtext(dns_rcode_t *rcodep, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, rcodes, 0xffff));
-	*rcodep = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_rcode_totext(dns_rcode_t rcode, isc_buffer_t *target) {
-	return (dns_mnemonic_totext(rcode, target, rcodes));
-}
-
-isc_result_t
 dns_tsigrcode_fromtext(dns_rcode_t *rcodep, isc_textregion_t *source) {
 	unsigned int value;
 	RETERR(dns_mnemonic_fromtext(&value, source, tsigrcodes, 0xffff));
@@ -370,11 +356,6 @@ dns_secproto_fromtext(dns_secproto_t *secprotop, isc_textregion_t *source) {
 	RETERR(dns_mnemonic_fromtext(&value, source, secprotos, 0xff));
 	*secprotop = value;
 	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_secproto_totext(dns_secproto_t secproto, isc_buffer_t *target) {
-	return (dns_mnemonic_totext(secproto, target, secprotos));
 }
 
 isc_result_t
@@ -438,26 +419,6 @@ dns_dsdigest_fromtext(dns_dsdigest_t *dsdigestp, isc_textregion_t *source) {
 	RETERR(dns_mnemonic_fromtext(&value, source, dsdigests, 0xff));
 	*dsdigestp = value;
 	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_dsdigest_totext(dns_dsdigest_t dsdigest, isc_buffer_t *target) {
-	return (dns_mnemonic_totext(dsdigest, target, dsdigests));
-}
-
-void
-dns_dsdigest_format(dns_dsdigest_t typ, char *cp, unsigned int size) {
-	isc_buffer_t b;
-	isc_region_t r;
-	isc_result_t result;
-
-	REQUIRE(cp != NULL && size > 0);
-	isc_buffer_init(&b, cp, size - 1);
-	result = dns_dsdigest_totext(typ, &b);
-	isc_buffer_usedregion(&b, &r);
-	r.base[r.length] = 0;
-	if (result != ISC_R_SUCCESS)
-		r.base[0] = 0;
 }
 
 /*

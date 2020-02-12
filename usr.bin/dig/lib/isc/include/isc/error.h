@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: error.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: error.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef ISC_ERROR_H
 #define ISC_ERROR_H 1
@@ -32,14 +32,6 @@
 ISC_LANG_BEGINDECLS
 
 typedef void (*isc_errorcallback_t)(const char *, int, const char *, va_list);
-
-/*% set unexpected error */
-void
-isc_error_setunexpected(isc_errorcallback_t);
-
-/*% set fatal error */
-void
-isc_error_setfatal(isc_errorcallback_t);
 
 /*% unexpected error */
 void

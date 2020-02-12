@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: time.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -154,33 +154,6 @@ isc_time_now(isc_time_t *t);
  *		in the current definition of isc_time_t.
  */
 
-isc_result_t
-isc_time_nowplusinterval(isc_time_t *t, const interval_t *i);
-/*%<
- * Set *t to the current absolute time + i.
- *
- * Note:
- *\li	This call is equivalent to:
- *
- *\code
- *		isc_time_now(t);
- *		isc_time_add(t, i, t);
- *\endcode
- *
- * Requires:
- *
- *\li	't' and 'i' are valid pointers.
- *
- * Returns:
- *
- *\li	Success
- *\li	Unexpected error
- *		Getting the time from the system failed.
- *\li	Out of range
- *		The interval added to the time from the system is too large to
- *		be represented in the current definition of isc_time_t.
- */
-
 int
 isc_time_compare(const isc_time_t *t1, const isc_time_t *t2);
 /*%<
@@ -253,29 +226,6 @@ isc_time_seconds(const isc_time_t *t);
  *\li	't' is a valid pointer.
  */
 
-isc_result_t
-isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp);
-/*%<
- * Ensure the number of seconds in an isc_time_t is representable by a time_t.
- *
- * Notes:
- *\li	The number of seconds stored in an isc_time_t might be larger
- *	than the number of seconds a time_t is able to handle.  Since
- *	time_t is mostly opaque according to the ANSI/ISO standard
- *	(essentially, all you can be sure of is that it is an arithmetic type,
- *	not even necessarily integral), it can be tricky to ensure that
- *	the isc_time_t is in the range a time_t can handle.  Use this
- *	function in place of isc_time_seconds() any time you need to set a
- *	time_t from an isc_time_t.
- *
- * Requires:
- *\li	't' is a valid pointer.
- *
- * Returns:
- *\li	Success
- *\li	Out of range
- */
-
 uint32_t
 isc_time_nanoseconds(const isc_time_t *t);
 /*%<
@@ -312,20 +262,6 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len);
 /*%<
  * Format the time 't' into the buffer 'buf' of length 'len',
  * using a format like "Mon, 30 Aug 2000 04:06:47 GMT"
- * If the text does not fit in the buffer, the result is indeterminate,
- * but is always guaranteed to be null terminated.
- *
- *  Requires:
- *\li      'len' > 0
- *\li      'buf' points to an array of at least len chars
- *
- */
-
-void
-isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len);
-/*%<
- * Format the time 't' into the buffer 'buf' of length 'len',
- * using the ISO8601 format: "yyyy-mm-ddThh:mm:ssZ"
  * If the text does not fit in the buffer, the result is indeterminate,
  * but is always guaranteed to be null terminated.
  *

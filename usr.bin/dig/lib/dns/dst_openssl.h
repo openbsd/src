@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_openssl.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: dst_openssl.h,v 1.2 2020/02/12 13:05:03 jsg Exp $ */
 
 #ifndef DST_OPENSSL_H
 #define DST_OPENSSL_H 1
@@ -40,16 +40,6 @@
 #define EVP_dss1 EVP_sha1
 
 ISC_LANG_BEGINDECLS
-
-isc_result_t
-dst__openssl_toresult(isc_result_t fallback);
-
-isc_result_t
-dst__openssl_toresult2(const char *funcname, isc_result_t fallback);
-
-isc_result_t
-dst__openssl_toresult3(isc_logcategory_t *category,
-		       const char *funcname, isc_result_t fallback);
 
 #define dst__openssl_getengine(x) NULL
 

@@ -291,26 +291,6 @@ dns_message_create(unsigned int intent, dns_message_t **msgp);
  */
 
 void
-dns_message_reset(dns_message_t *msg, unsigned int intent);
-/*%<
- * Reset a message structure to default state.  All internal lists are freed
- * or reset to a default state as well.  This is simply a more efficient
- * way to call dns_message_destroy() followed by dns_message_allocate(),
- * since it avoid many memory allocations.
- *
- * If any data loanouts (buffers, names, rdatas, etc) were requested,
- * the caller must no longer use them after this call.
- *
- * The intended next use of the message will be 'intent'.
- *
- * Requires:
- *
- *\li	'msg' be valid.
- *
- *\li	'intent' is DNS_MESSAGE_INTENTPARSE or DNS_MESSAGE_INTENTRENDER
- */
-
-void
 dns_message_destroy(dns_message_t **msgp);
 /*%<
  * Destroy all state in the message.
@@ -365,49 +345,6 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
  *
  *\li	Note: On error return, *target may be partially filled with data.
 */
-
-isc_result_t
-dns_message_totext(dns_message_t *msg, const dns_master_style_t *style,
-		   dns_messagetextflag_t flags, isc_buffer_t *target);
-/*%<
- * Convert all sections of message 'msg' to a cleartext representation
- *
- * Notes on flags:
- *\li	If #DNS_MESSAGETEXTFLAG_NOCOMMENTS is cleared, lines beginning with
- * 	";;" will be emitted indicating section name.
- *\li	If #DNS_MESSAGETEXTFLAG_NOHEADERS is cleared, header lines will be
- * 	emitted.
- *\li   If #DNS_MESSAGETEXTFLAG_ONESOA is set then only print the first
- *	SOA record in the answer section.
- *\li	If *#DNS_MESSAGETEXTFLAG_OMITSOA is set don't print any SOA records
- *	in the answer section.
- *
- * The SOA flags are useful for suppressing the display of the second
- * SOA record in an AXFR by setting #DNS_MESSAGETEXTFLAG_ONESOA on the
- * first message in an AXFR stream and #DNS_MESSAGETEXTFLAG_OMITSOA on
- * subsequent messages.
- *
- * Requires:
- *
- *\li	'msg' is a valid message.
- *
- *\li	'style' is a valid master dump style.
- *
- *\li	'target' is a valid buffer.
- *
- * Ensures:
- *
- *\li	If the result is success:
- *		The used space in 'target' is updated.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS
- *\li	#ISC_R_NOSPACE
- *\li	#ISC_R_NOMORE
- *
- *\li	Note: On error return, *target may be partially filled with data.
- */
 
 isc_result_t
 dns_message_parse(dns_message_t *msg, isc_buffer_t *source,
@@ -484,29 +421,6 @@ dns_message_renderbegin(dns_message_t *msg, dns_compress_t *cctx,
  * Returns:
  *\li	#ISC_R_SUCCESS		-- all is well
  *\li	#ISC_R_NOSPACE		-- output buffer is too small
- */
-
-isc_result_t
-dns_message_renderchangebuffer(dns_message_t *msg, isc_buffer_t *buffer);
-/*%<
- * Reset the buffer.  This can be used after growing the old buffer
- * on a ISC_R_NOSPACE return from most of the render functions.
- *
- * On successful completion, the old buffer is no longer used by the
- * library.  The new buffer is owned by the library until
- * dns_message_renderend() is called.
- *
- * Requires:
- *
- *\li	'msg' be valid.
- *
- *\li	dns_message_renderbegin() was called.
- *
- *\li	buffer != NULL.
- *
- * Returns:
- *\li	#ISC_R_NOSPACE		-- new buffer is too small
- *\li	#ISC_R_SUCCESS		-- all is well.
  */
 
 isc_result_t
@@ -756,24 +670,6 @@ dns_message_find(dns_name_t *name, dns_rdataclass_t rdclass,
  */
 
 void
-dns_message_movename(dns_message_t *msg, dns_name_t *name,
-		     dns_section_t fromsection,
-		     dns_section_t tosection);
-/*%<
- * Move a name from one section to another.
- *
- * Requires:
- *
- *\li	'msg' be valid.
- *
- *\li	'name' must be a name already in 'fromsection'.
- *
- *\li	'fromsection' must be a valid section.
- *
- *\li	'tosection' must be a valid section.
- */
-
-void
 dns_message_addname(dns_message_t *msg, dns_name_t *name,
 		    dns_section_t section);
 /*%<
@@ -781,24 +677,6 @@ dns_message_addname(dns_message_t *msg, dns_name_t *name,
  *
  * It is the caller's responsibility to enforce any unique name requirements
  * in a section.
- *
- * Requires:
- *
- *\li	'msg' be valid, and be a renderable message.
- *
- *\li	'name' be a valid absolute name.
- *
- *\li	'section' be a named section.
- */
-
-void
-dns_message_removename(dns_message_t *msg, dns_name_t *name,
-		       dns_section_t section);
-/*%<
- * Remove a existing name from a given section.
- *
- * It is the caller's responsibility to ensure the name is part of the
- * given section.
  *
  * Requires:
  *
@@ -827,23 +705,6 @@ dns_message_gettempname(dns_message_t *msg, dns_name_t **item);
  * one of the message's sections before the message is destroyed.
  *
  * It is the caller's responsibility to initialize this name.
- *
- * Requires:
- *\li	msg be a valid message
- *
- *\li	item != NULL && *item == NULL
- *
- * Returns:
- *\li	#ISC_R_SUCCESS		-- All is well.
- *\li	#ISC_R_NOMEMORY		-- No item can be allocated.
- */
-
-isc_result_t
-dns_message_gettempoffsets(dns_message_t *msg, dns_offsets_t **item);
-/*%<
- * Return an offsets array that can be used for any temporary purpose,
- * such as attaching to a temporary name.  The offsets will be freed
- * when the message is destroyed or reset.
  *
  * Requires:
  *\li	msg be a valid message
@@ -989,37 +850,6 @@ dns_message_peekheader(isc_buffer_t *source, dns_messageid_t *idp,
  *\li	#ISC_R_SUCCESS		-- all is well.
  *
  *\li	#ISC_R_UNEXPECTEDEND	-- buffer doesn't contain enough for a header.
- */
-
-isc_result_t
-dns_message_reply(dns_message_t *msg, isc_boolean_t want_question_section);
-/*%<
- * Start formatting a reply to the query in 'msg'.
- *
- * Requires:
- *
- *\li	'msg' is a valid message with parsing intent, and contains a query.
- *
- * Ensures:
- *
- *\li	The message will have a rendering intent.  If 'want_question_section'
- *	is true, the message opcode is query or notify, and the question
- *	section is present and properly formatted, then the question section
- *	will be included in the reply.  All other sections will be cleared.
- *	The QR flag will be set, the RD flag will be preserved, and all other
- *	flags will be cleared.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS		-- all is well.
- *
- *\li	#DNS_R_FORMERR		-- the header or question section of the
- *				   message is invalid, replying is impossible.
- *				   If DNS_R_FORMERR is returned when
- *				   want_question_section is ISC_FALSE, then
- *				   it's the header section that's bad;
- *				   otherwise either of the header or question
- *				   sections may be bad.
  */
 
 dns_rdataset_t *
@@ -1191,44 +1021,6 @@ dns_message_takebuffer(dns_message_t *msg, isc_buffer_t **buffer);
  */
 
 isc_result_t
-dns_message_signer(dns_message_t *msg, dns_name_t *signer);
-/*%<
- * If this message was signed, return the identity of the signer.
- * Unless ISC_R_NOTFOUND is returned, signer will reflect the name of the
- * key that signed the message.
- *
- * Requires:
- *
- *\li	msg is a valid parsed message.
- *\li	signer is a valid name
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS		- the message was signed, and *signer
- *				  contains the signing identity
- *
- *\li	#ISC_R_NOTFOUND		- no TSIG or SIG(0) record is present in the
- *				  message
- *
- *\li	#DNS_R_TSIGVERIFYFAILURE	- the message was signed by a TSIG, but the
- *				  signature failed to verify
- *
- *\li	#DNS_R_TSIGERRORSET	- the message was signed by a TSIG and
- *				  verified, but the query was rejected by
- *				  the server
- *
- *\li	#DNS_R_NOIDENTITY	- the message was signed by a TSIG and
- *				  verified, but the key has no identity since
- *				  it was generated by an unsigned TKEY process
- *
- *\li	#DNS_R_SIGINVALID	- the message was signed by a SIG(0), but
- *				  the signature failed to verify
- *
- *\li	#DNS_R_NOTVERIFIEDYET	- the message was signed by a TSIG or SIG(0),
- *				  but the signature has not been verified yet
- */
-
-isc_result_t
 dns_message_rechecksig(dns_message_t *msg, dns_view_t *view);
 /*%<
  * Reset the signature state and then if the message was signed,
@@ -1249,77 +1041,6 @@ dns_message_rechecksig(dns_message_t *msg, dns_view_t *view);
  *\li	#DNS_R_TSIGVERIFYFAILURE - The TSIG failed to verify
  */
 
-void
-dns_message_resetsig(dns_message_t *msg);
-/*%<
- * Reset the signature state.
- *
- * Requires:
- *\li	'msg' is a valid parsed message.
- */
-
-isc_region_t *
-dns_message_getrawmessage(dns_message_t *msg);
-/*%<
- * Retrieve the raw message in compressed wire format.  The message must
- * have been successfully parsed for it to have been saved.
- *
- * Requires:
- *\li	msg is a valid parsed message.
- *
- * Returns:
- *\li	NULL	if there is no saved message.
- *	a pointer to a region which refers the dns message.
- */
-
-void
-dns_message_setsortorder(dns_message_t *msg, dns_rdatasetorderfunc_t order,
-			 const void *order_arg);
-/*%<
- * Define the order in which RR sets get rendered by
- * dns_message_rendersection() to be the ascending order
- * defined by the integer value returned by 'order' when
- * given each RR and 'arg' as arguments.  If 'order' and
- * 'order_arg' are NULL, a default order is used.
- *
- * Requires:
- *\li	msg be a valid message.
- *\li	order_arg is NULL if and only if order is NULL.
- */
-
-void
-dns_message_settimeadjust(dns_message_t *msg, int timeadjust);
-/*%<
- * Adjust the time used to sign/verify a message by timeadjust.
- * Currently only TSIG.
- *
- * Requires:
- *\li	msg be a valid message.
- */
-
-int
-dns_message_gettimeadjust(dns_message_t *msg);
-/*%<
- * Return the current time adjustment.
- *
- * Requires:
- *\li	msg be a valid message.
- */
-
-void
-dns_message_logpacket(dns_message_t *message, const char *description,
-		      isc_logcategory_t *category, isc_logmodule_t *module,
-		      int level);
-void
-dns_message_logfmtpacket(dns_message_t *message, const char *description,
-			 isc_logcategory_t *category, isc_logmodule_t *module,
-			 const dns_master_style_t *style, int level);
-/*%<
- * Log 'message' at the specified logging parameters.
- * 'description' will be emitted at the start of the message and will
- * normally end with a newline.
- */
-
 isc_result_t
 dns_message_buildopt(dns_message_t *msg, dns_rdataset_t **opt,
 		     unsigned int version, uint16_t udpsize,
@@ -1336,15 +1057,6 @@ dns_message_buildopt(dns_message_t *msg, dns_rdataset_t **opt,
  * \li	 ISC_R_NOMEMORY
  * \li	 ISC_R_NOSPACE
  * \li	 other.
- */
-
-void
-dns_message_setclass(dns_message_t *msg, dns_rdataclass_t rdclass);
-/*%<
- * Set the expected class of records in the response.
- *
- * Requires:
- * \li   msg be a valid message with parsing intent.
  */
 
 ISC_LANG_ENDDECLS

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.2 2020/02/11 23:26:12 jsg Exp $ */
+/* $Id: time.c,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
 
 /*! \file */
 
@@ -185,57 +185,6 @@ isc_time_now(isc_time_t *t) {
 	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
-isc_time_nowplusinterval(isc_time_t *t, const interval_t *i) {
-	struct timeval tv;
-	char strbuf[ISC_STRERRORSIZE];
-
-	REQUIRE(t != NULL);
-	REQUIRE(i != NULL);
-	INSIST(i->nanoseconds < NS_PER_S);
-
-	if (gettimeofday(&tv, NULL) == -1) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__, "%s", strbuf);
-		return (ISC_R_UNEXPECTED);
-	}
-
-	/*
-	 * Does POSIX guarantee the signedness of tv_sec and tv_usec?  If not,
-	 * then this test will generate warnings for platforms on which it is
-	 * unsigned.  In any event, the chances of any of these problems
-	 * happening are pretty much zero, but since the libisc library ensures
-	 * certain things to be true ...
-	 */
-#if ISC_FIX_TV_USEC
-	fix_tv_usec(&tv);
-	if (tv.tv_sec < 0)
-		return (ISC_R_UNEXPECTED);
-#else
-	if (tv.tv_sec < 0 || tv.tv_usec < 0 || tv.tv_usec >= US_PER_S)
-		return (ISC_R_UNEXPECTED);
-#endif
-
-	/*
-	 * Ensure the resulting seconds value fits in the size of an
-	 * unsigned int.  (It is written this way as a slight optimization;
-	 * note that even if both values == INT_MAX, then when added
-	 * and getting another 1 added below the result is UINT_MAX.)
-	 */
-	if ((tv.tv_sec > INT_MAX || i->seconds > INT_MAX) &&
-	    ((long long)tv.tv_sec + i->seconds > UINT_MAX))
-		return (ISC_R_RANGE);
-
-	t->seconds = tv.tv_sec + i->seconds;
-	t->nanoseconds = tv.tv_usec * NS_PER_US + i->nanoseconds;
-	if (t->nanoseconds >= NS_PER_S) {
-		t->seconds++;
-		t->nanoseconds -= NS_PER_S;
-	}
-
-	return (ISC_R_SUCCESS);
-}
-
 int
 isc_time_compare(const isc_time_t *t1, const isc_time_t *t2) {
 	REQUIRE(t1 != NULL && t2 != NULL);
@@ -333,43 +282,6 @@ isc_time_seconds(const isc_time_t *t) {
 	return ((uint32_t)t->seconds);
 }
 
-isc_result_t
-isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp) {
-	time_t seconds;
-
-	REQUIRE(t != NULL);
-	INSIST(t->nanoseconds < NS_PER_S);
-
-	/*
-	 * Ensure that the number of seconds represented by t->seconds
-	 * can be represented by a time_t.  Since t->seconds is an unsigned
-	 * int and since time_t is mostly opaque, this is trickier than
-	 * it seems.  (This standardized opaqueness of time_t is *very*
-	 * frustrating; time_t is not even limited to being an integral
-	 * type.)
-	 *
-	 * The mission, then, is to avoid generating any kind of warning
-	 * about "signed versus unsigned" while trying to determine if the
-	 * the unsigned int t->seconds is out range for tv_sec, which is
-	 * pretty much only true if time_t is a signed integer of the same
-	 * size as the return value of isc_time_seconds.
-	 *
-	 * If the paradox in the if clause below is true, t->seconds is out
-	 * of range for time_t.
-	 */
-	seconds = (time_t)t->seconds;
-
-	INSIST(sizeof(unsigned int) == sizeof(uint32_t));
-	INSIST(sizeof(time_t) >= sizeof(uint32_t));
-
-	if (t->seconds > (~0U>>1) && seconds <= (time_t)(~0U>>1))
-		return (ISC_R_RANGE);
-
-	*secondsp = seconds;
-
-	return (ISC_R_SUCCESS);
-}
-
 uint32_t
 isc_time_nanoseconds(const isc_time_t *t) {
 	REQUIRE(t != NULL);
@@ -415,20 +327,5 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 	 */
 	now = (time_t)t->seconds;
 	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT", gmtime(&now));
-	INSIST(flen < len);
-}
-
-void
-isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len) {
-	time_t now;
-	unsigned int flen;
-
-	REQUIRE(t != NULL);
-	INSIST(t->nanoseconds < NS_PER_S);
-	REQUIRE(buf != NULL);
-	REQUIRE(len > 0);
-
-	now = (time_t)t->seconds;
-	flen = strftime(buf, len, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
 	INSIST(flen < len);
 }

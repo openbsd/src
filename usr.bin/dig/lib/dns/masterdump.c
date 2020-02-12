@@ -80,71 +80,6 @@ typedef struct dns_totext_ctx {
 	isc_boolean_t 		current_ttl_valid;
 } dns_totext_ctx_t;
 
-const dns_master_style_t
-dns_master_style_keyzone = {
-	DNS_STYLEFLAG_OMIT_OWNER |
-	DNS_STYLEFLAG_OMIT_CLASS |
-	DNS_STYLEFLAG_REL_OWNER |
-	DNS_STYLEFLAG_REL_DATA |
-	DNS_STYLEFLAG_OMIT_TTL |
-	DNS_STYLEFLAG_TTL |
-	DNS_STYLEFLAG_COMMENT |
-	DNS_STYLEFLAG_RRCOMMENT |
-	DNS_STYLEFLAG_MULTILINE |
-	DNS_STYLEFLAG_KEYDATA,
-	24, 24, 24, 32, 80, 8, UINT_MAX
-};
-
-const dns_master_style_t
-dns_master_style_default = {
-	DNS_STYLEFLAG_OMIT_OWNER |
-	DNS_STYLEFLAG_OMIT_CLASS |
-	DNS_STYLEFLAG_REL_OWNER |
-	DNS_STYLEFLAG_REL_DATA |
-	DNS_STYLEFLAG_OMIT_TTL |
-	DNS_STYLEFLAG_TTL |
-	DNS_STYLEFLAG_COMMENT |
-	DNS_STYLEFLAG_RRCOMMENT |
-	DNS_STYLEFLAG_MULTILINE,
-	24, 24, 24, 32, 80, 8, UINT_MAX
-};
-
-const dns_master_style_t
-dns_master_style_full = {
-	DNS_STYLEFLAG_COMMENT |
-	DNS_STYLEFLAG_RESIGN,
-	46, 46, 46, 64, 120, 8, UINT_MAX
-};
-
-const dns_master_style_t
-dns_master_style_explicitttl = {
-	DNS_STYLEFLAG_OMIT_OWNER |
-	DNS_STYLEFLAG_OMIT_CLASS |
-	DNS_STYLEFLAG_REL_OWNER |
-	DNS_STYLEFLAG_REL_DATA |
-	DNS_STYLEFLAG_COMMENT |
-	DNS_STYLEFLAG_RRCOMMENT |
-	DNS_STYLEFLAG_MULTILINE,
-	24, 32, 32, 40, 80, 8, UINT_MAX
-};
-
-const dns_master_style_t
-dns_master_style_cache = {
-	DNS_STYLEFLAG_OMIT_OWNER |
-	DNS_STYLEFLAG_OMIT_CLASS |
-	DNS_STYLEFLAG_MULTILINE |
-	DNS_STYLEFLAG_RRCOMMENT |
-	DNS_STYLEFLAG_TRUST |
-	DNS_STYLEFLAG_NCACHE,
-	24, 32, 32, 40, 80, 8, UINT_MAX
-};
-
-const dns_master_style_t
-dns_master_style_simple = {
-	0,
-	24, 32, 32, 40, 80, 8, UINT_MAX
-};
-
 /*%
  * A style suitable for dns_rdataset_totext().
  */
@@ -153,19 +88,6 @@ dns_master_style_debug = {
 	DNS_STYLEFLAG_REL_OWNER,
 	24, 32, 40, 48, 80, 8, UINT_MAX
 };
-
-/*%
- * Similar, but with each line commented out.
- */
-const dns_master_style_t
-dns_master_style_comment = {
-	DNS_STYLEFLAG_REL_OWNER |
-	DNS_STYLEFLAG_MULTILINE |
-	DNS_STYLEFLAG_RRCOMMENT |
-	DNS_STYLEFLAG_COMMENTDATA,
-	24, 32, 40, 48, 80, 8, UINT_MAX
-};
-
 
 #define N_SPACES 10
 static char spaces[N_SPACES+1] = "          ";

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst.h,v 1.2 2020/02/11 17:23:29 florian Exp $ */
+/* $Id: dst.h,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -393,9 +393,6 @@ dst_key_size(const dst_key_t *key);
 
 unsigned int
 dst_key_alg(const dst_key_t *key);
-
-dns_keytag_t
-dst_key_id(const dst_key_t *key);
 
 isc_result_t
 dst_key_sigsize(const dst_key_t *key, unsigned int *n);

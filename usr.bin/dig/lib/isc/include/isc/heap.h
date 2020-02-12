@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: heap.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef ISC_HEAP_H
 #define ISC_HEAP_H 1
@@ -146,24 +146,6 @@ isc_heap_element(isc_heap_t *heap, unsigned int index);
  *
  * Returns:
  *\li	A pointer to the element for the element index.
- */
-
-void
-isc_heap_foreach(isc_heap_t *heap, isc_heapaction_t action, void *uap);
-/*!<
- * \brief Iterate over the heap, calling an action for each element.  The
- * order of iteration is not sorted.
- *
- * Requires:
- *\li	"heapp" is not NULL and "*heap" points to a valid isc_heap_t.
- *\li	"action" is not NULL, and is a function which takes two arguments.
- *	The first is a void *, representing the element, and the second is
- *	"uap" as provided to isc_heap_foreach.
- *\li	"uap" is a caller-provided argument, and may be NULL.
- *
- * Note:
- *\li	The heap structure CANNOT be modified during this iteration.  The only
- *	safe function to call while iterating the heap is isc_heap_element().
  */
 
 ISC_LANG_ENDDECLS

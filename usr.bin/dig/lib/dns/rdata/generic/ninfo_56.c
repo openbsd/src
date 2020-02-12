@@ -165,32 +165,4 @@ casecompare_ninfo(ARGS_COMPARE) {
 	return (compare_ninfo(rdata1, rdata2));
 }
 
-isc_result_t
-dns_rdata_ninfo_first(dns_rdata_ninfo_t *ninfo) {
-
-	REQUIRE(ninfo != NULL);
-	REQUIRE(ninfo->common.rdtype == dns_rdatatype_ninfo);
-
-	return (generic_txt_first(ninfo));
-}
-
-isc_result_t
-dns_rdata_ninfo_next(dns_rdata_ninfo_t *ninfo) {
-
-	REQUIRE(ninfo != NULL);
-	REQUIRE(ninfo->common.rdtype == dns_rdatatype_ninfo);
-
-	return (generic_txt_next(ninfo));
-}
-
-isc_result_t
-dns_rdata_ninfo_current(dns_rdata_ninfo_t *ninfo,
-			dns_rdata_ninfo_string_t *string)
-{
-
-	REQUIRE(ninfo != NULL);
-	REQUIRE(ninfo->common.rdtype == dns_rdatatype_ninfo);
-
-	return (generic_txt_current(ninfo, string));
-}
 #endif	/* RDATA_GENERIC_NINFO_56_C */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.2 2020/02/11 23:26:12 jsg Exp $ */
+/* $Id: lex.c,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
 
 /*! \file */
 
@@ -140,17 +140,6 @@ isc_lex_destroy(isc_lex_t **lexp) {
 	*lexp = NULL;
 }
 
-unsigned int
-isc_lex_getcomments(isc_lex_t *lex) {
-	/*
-	 * Return the current lexer commenting styles.
-	 */
-
-	REQUIRE(VALID_LEX(lex));
-
-	return (lex->comments);
-}
-
 void
 isc_lex_setcomments(isc_lex_t *lex, unsigned int comments) {
 	/*
@@ -160,17 +149,6 @@ isc_lex_setcomments(isc_lex_t *lex, unsigned int comments) {
 	REQUIRE(VALID_LEX(lex));
 
 	lex->comments = comments;
-}
-
-void
-isc_lex_getspecials(isc_lex_t *lex, isc_lexspecials_t specials) {
-	/*
-	 * Put the current list of specials into 'specials'.
-	 */
-
-	REQUIRE(VALID_LEX(lex));
-
-	memmove(specials, lex->specials, 256);
 }
 
 void
@@ -240,36 +218,6 @@ isc_lex_openfile(isc_lex_t *lex, const char *filename) {
 	if (result != ISC_R_SUCCESS)
 		(void)fclose(stream);
 	return (result);
-}
-
-isc_result_t
-isc_lex_openstream(isc_lex_t *lex, FILE *stream) {
-	char name[128];
-
-	/*
-	 * Make 'stream' the current input source for 'lex'.
-	 */
-
-	REQUIRE(VALID_LEX(lex));
-
-	snprintf(name, sizeof(name), "stream-%p", stream);
-
-	return (new_source(lex, ISC_TRUE, ISC_FALSE, stream, name));
-}
-
-isc_result_t
-isc_lex_openbuffer(isc_lex_t *lex, isc_buffer_t *buffer) {
-	char name[128];
-
-	/*
-	 * Make 'buffer' the current input source for 'lex'.
-	 */
-
-	REQUIRE(VALID_LEX(lex));
-
-	snprintf(name, sizeof(name), "buffer-%p", buffer);
-
-	return (new_source(lex, ISC_FALSE, ISC_FALSE, buffer, name));
 }
 
 isc_result_t
@@ -914,25 +862,6 @@ isc_lex_getsourceline(isc_lex_t *lex) {
 		return (0);
 
 	return (source->line);
-}
-
-
-isc_result_t
-isc_lex_setsourcename(isc_lex_t *lex, const char *name) {
-	inputsource *source;
-	char *newname;
-
-	REQUIRE(VALID_LEX(lex));
-	source = HEAD(lex->sources);
-
-	if (source == NULL)
-		return(ISC_R_NOTFOUND);
-	newname = strdup(name);
-	if (newname == NULL)
-		return (ISC_R_NOMEMORY);
-	free(source->name);
-	source->name = newname;
-	return (ISC_R_SUCCESS);
 }
 
 isc_boolean_t

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: lex.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef ISC_LEX_H
 #define ISC_LEX_H 1
@@ -171,18 +171,6 @@ isc_lex_destroy(isc_lex_t **lexp);
  *\li	*lexp == NULL
  */
 
-unsigned int
-isc_lex_getcomments(isc_lex_t *lex);
-/*%<
- * Return the current lexer commenting styles.
- *
- * Requires:
- *\li	'lex' is a valid lexer.
- *
- * Returns:
- *\li	The commenting sytles which are currently allowed.
- */
-
 void
 isc_lex_setcomments(isc_lex_t *lex, unsigned int comments);
 /*%<
@@ -192,15 +180,6 @@ isc_lex_setcomments(isc_lex_t *lex, unsigned int comments);
  *\li	'lex' is a valid lexer.
  *
  *\li	'comments' has meaningful values.
- */
-
-void
-isc_lex_getspecials(isc_lex_t *lex, isc_lexspecials_t specials);
-/*%<
- * Put the current list of specials into 'specials'.
- *
- * Requires:
- *\li	'lex' is a valid lexer.
  */
 
 void
@@ -234,36 +213,6 @@ isc_lex_openfile(isc_lex_t *lex, const char *filename);
  *\li	#ISC_R_NOPERM			No permission to open file
  *\li	#ISC_R_FAILURE			Couldn't open file, not sure why
  *\li	#ISC_R_UNEXPECTED
- */
-
-isc_result_t
-isc_lex_openstream(isc_lex_t *lex, FILE *stream);
-/*%<
- * Make 'stream' the current input source for 'lex'.
- *
- * Requires:
- *\li	'lex' is a valid lexer.
- *
- *\li	'stream' is a valid C stream.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
- *\li	#ISC_R_NOMEMORY			Out of memory
- */
-
-isc_result_t
-isc_lex_openbuffer(isc_lex_t *lex, isc_buffer_t *buffer);
-/*%<
- * Make 'buffer' the current input source for 'lex'.
- *
- * Requires:
- *\li	'lex' is a valid lexer.
- *
- *\li	'buffer' is a valid buffer.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS
- *\li	#ISC_R_NOMEMORY			Out of memory
  */
 
 isc_result_t
@@ -392,21 +341,6 @@ isc_lex_getsourceline(isc_lex_t *lex);
  *
  * Returns:
  *\li 	Current line number or 0 if no current source.
- */
-
-isc_result_t
-isc_lex_setsourcename(isc_lex_t *lex, const char *name);
-/*%<
- * Assigns a new name to the input source.
- *
- * Requires:
- *
- * \li	'lex' is a valid lexer.
- *
- * Returns:
- * \li	#ISC_R_SUCCESS
- * \li	#ISC_R_NOMEMORY
- * \li	#ISC_R_NOTFOUND - there are no sources.
  */
 
 isc_boolean_t

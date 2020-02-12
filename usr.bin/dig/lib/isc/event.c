@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: event.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: event.c,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 /*!
  * \file
@@ -50,40 +50,6 @@ isc_event_allocate(void *sender, isc_eventtype_t type,
 		return (NULL);
 
 	ISC_EVENT_INIT(event, size, 0, NULL, type, action, arg,
-		       sender, destroy);
-
-	return (event);
-}
-
-isc_event_t *
-isc_event_constallocate(void *sender, isc_eventtype_t type,
-			isc_taskaction_t action, const void *arg, size_t size)
-{
-	isc_event_t *event;
-	void *deconst_arg;
-
-	REQUIRE(size >= sizeof(struct isc_event));
-	REQUIRE(action != NULL);
-
-	event = malloc(size);
-	if (event == NULL)
-		return (NULL);
-
-	/*
-	 * Removing the const attribute from "arg" is the best of two
-	 * evils here.  If the event->ev_arg member is made const, then
-	 * it affects a great many users of the task/event subsystem
-	 * which are not passing in an "arg" which starts its life as
-	 * const.  Changing isc_event_allocate() and isc_task_onshutdown()
-	 * to not have "arg" prototyped as const (which is quite legitimate,
-	 * because neither of those functions modify arg) can cause
-	 * compiler whining anytime someone does want to use a const
-	 * arg that they themselves never modify, such as with
-	 * gcc -Wwrite-strings and using a string "arg".
-	 */
-	DE_CONST(arg, deconst_arg);
-
-	ISC_EVENT_INIT(event, size, 0, NULL, type, action, deconst_arg,
 		       sender, destroy);
 
 	return (event);

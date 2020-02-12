@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lwres.h,v 1.2 2020/02/11 18:47:29 florian Exp $ */
+/* $Id: lwres.h,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef LWRES_LWRES_H
 #define LWRES_LWRES_H 1
@@ -154,15 +154,6 @@ lwres_conf_parse(lwres_conf_t *confdata, const char *filename);
  *	LWRES_R_SUCCESS on a successful parse.
  *	Anything else on error, although the structure may be partially filled
  *	in.
- */
-
-lwres_result_t
-lwres_conf_print(lwres_conf_t *confdata, FILE *fp);
-/**<
- * Prints a resolv.conf-format of confdata output to fp.
- *
- * Requires:
- *	confdata != NULL
  */
 
 void

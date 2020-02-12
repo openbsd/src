@@ -28,18 +28,11 @@
  *    lwres_conf_parse() opens the file filename and parses it to initialise
  *    the resolver context ctx's lwres_conf_t structure.
  *
- *    lwres_conf_print() prints the lwres_conf_t structure for resolver
- *    context ctx to the FILE fp.
- *
  * \section lwconfig_return Return Values
  *
  *    lwres_conf_parse() returns #LWRES_R_SUCCESS if it successfully read and
  *    parsed filename. It returns #LWRES_R_FAILURE if filename could not be
  *    opened or contained incorrect resolver statements.
- *
- *    lwres_conf_print() returns #LWRES_R_SUCCESS unless an error occurred
- *    when converting the network addresses to a numeric host address
- *    string. If this happens, the function returns #LWRES_R_FAILURE.
  *
  * \section lwconfig_see See Also
  *
@@ -85,28 +78,6 @@ lwres_resetaddr(lwres_addr_t *addr);
 
 static lwres_result_t
 lwres_create_addr(const char *buff, lwres_addr_t *addr, int convert_zero);
-
-static int lwresaddr2af(int lwresaddrtype);
-
-
-static int
-lwresaddr2af(int lwresaddrtype)
-{
-	int af = 0;
-
-	switch (lwresaddrtype) {
-	case LWRES_ADDRTYPE_V4:
-		af = AF_INET;
-		break;
-
-	case LWRES_ADDRTYPE_V6:
-		af = AF_INET6;
-		break;
-	}
-
-	return (af);
-}
-
 
 /*!
  * Eat characters from FP until EOL or EOF. Returns EOF or '\n'
@@ -569,109 +540,4 @@ lwres_conf_parse(lwres_conf_t *confdata, const char *filename) {
 	fclose(fp);
 
 	return (ret);
-}
-
-/*% Prints the config data structure to the FILE. */
-lwres_result_t
-lwres_conf_print(lwres_conf_t *confdata, FILE *fp) {
-	int i;
-	int af;
-	char tmp[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
-	char buf[sizeof("%4000000000")];
-	const char *p;
-	lwres_addr_t tmpaddr;
-
-	assert(confdata->nsnext <= LWRES_CONFMAXNAMESERVERS);
-
-	for (i = 0; i < confdata->nsnext; i++) {
-		af = lwresaddr2af(confdata->nameservers[i].family);
-
-		p = inet_ntop(af, confdata->nameservers[i].address,
-				   tmp, sizeof(tmp));
-		if (p != tmp)
-			return (LWRES_R_FAILURE);
-
-		if (af == AF_INET6 && confdata->lwservers[i].zone != 0) {
-			snprintf(buf, sizeof(buf), "%%%u",
-				confdata->nameservers[i].zone);
-		} else
-			buf[0] = 0;
-
-		fprintf(fp, "nameserver %s%s\n", tmp, buf);
-	}
-
-	for (i = 0; i < confdata->lwnext; i++) {
-		af = lwresaddr2af(confdata->lwservers[i].family);
-
-		p = inet_ntop(af, confdata->lwservers[i].address,
-				   tmp, sizeof(tmp));
-		if (p != tmp)
-			return (LWRES_R_FAILURE);
-
-		if (af == AF_INET6 && confdata->lwservers[i].zone != 0) {
-			snprintf(buf, sizeof(buf), "%%%u",
-				confdata->nameservers[i].zone);
-		} else
-			buf[0] = 0;
-
-		fprintf(fp, "lwserver %s%s\n", tmp, buf);
-	}
-
-	if (confdata->domainname != NULL) {
-		fprintf(fp, "domain %s\n", confdata->domainname);
-	} else if (confdata->searchnxt > 0) {
-		assert(confdata->searchnxt <= LWRES_CONFMAXSEARCH);
-
-		fprintf(fp, "search");
-		for (i = 0; i < confdata->searchnxt; i++)
-			fprintf(fp, " %s", confdata->search[i]);
-		fputc('\n', fp);
-	}
-
-	assert(confdata->sortlistnxt <= LWRES_CONFMAXSORTLIST);
-
-	if (confdata->sortlistnxt > 0) {
-		fputs("sortlist", fp);
-		for (i = 0; i < confdata->sortlistnxt; i++) {
-			af = lwresaddr2af(confdata->sortlist[i].addr.family);
-
-			p = inet_ntop(af,
-					   confdata->sortlist[i].addr.address,
-					   tmp, sizeof(tmp));
-			if (p != tmp)
-				return (LWRES_R_FAILURE);
-
-			fprintf(fp, " %s", tmp);
-
-			tmpaddr = confdata->sortlist[i].mask;
-			memset(&tmpaddr.address, 0xff, tmpaddr.length);
-
-			if (memcmp(&tmpaddr.address,
-				   confdata->sortlist[i].mask.address,
-				   confdata->sortlist[i].mask.length) != 0) {
-				af = lwresaddr2af(
-					    confdata->sortlist[i].mask.family);
-				p = inet_ntop
-					(af,
-					 confdata->sortlist[i].mask.address,
-					 tmp, sizeof(tmp));
-				if (p != tmp)
-					return (LWRES_R_FAILURE);
-
-				fprintf(fp, "/%s", tmp);
-			}
-		}
-		fputc('\n', fp);
-	}
-
-	if (confdata->resdebug)
-		fprintf(fp, "options debug\n");
-
-	if (confdata->ndots > 0)
-		fprintf(fp, "options ndots:%d\n", confdata->ndots);
-
-	if (confdata->no_tld_query)
-		fprintf(fp, "options no_tld_query\n");
-
-	return (LWRES_R_SUCCESS);
 }

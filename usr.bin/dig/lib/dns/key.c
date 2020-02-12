@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key.c,v 1.3 2020/02/11 23:26:11 jsg Exp $ */
+/* $Id: key.c,v 1.4 2020/02/12 13:05:03 jsg Exp $ */
 
 
 
@@ -98,12 +98,6 @@ unsigned int
 dst_key_alg(const dst_key_t *key) {
 	REQUIRE(VALID_KEY(key));
 	return (key->key_alg);
-}
-
-dns_keytag_t
-dst_key_id(const dst_key_t *key) {
-	REQUIRE(VALID_KEY(key));
-	return (key->key_id);
 }
 
 void

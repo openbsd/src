@@ -66,7 +66,6 @@ cfg_rep_t cfg_rep_string;
 cfg_rep_t cfg_rep_list;
 
 cfg_type_t cfg_type_qstring;
-cfg_type_t cfg_type_ustring;
 cfg_type_t cfg_type_sstring;
 cfg_type_t cfg_type_token;
 cfg_type_t cfg_type_unsupported;
@@ -452,25 +451,6 @@ cfg_parse_qstring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 }
 
 static isc_result_t
-parse_ustring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	isc_result_t result;
-
-	UNUSED(type);
-
-	CHECK(cfg_gettoken(pctx, 0));
-	if (pctx->token.type != isc_tokentype_string) {
-		cfg_parser_error(pctx, CFG_LOG_NEAR, "expected unquoted string");
-		return (ISC_R_UNEXPECTEDTOKEN);
-	}
-	return (create_string(pctx,
-			      TOKEN_STRING(pctx),
-			      &cfg_type_ustring,
-			      ret));
- cleanup:
-	return (result);
-}
-
-static isc_result_t
 cfg_parse_astring(cfg_parser_t *pctx, const cfg_type_t *type,
 		  cfg_obj_t **ret)
 {
@@ -516,12 +496,6 @@ free_string(cfg_parser_t *pctx, cfg_obj_t *obj) {
 	free(obj->value.string.base);
 }
 
-isc_boolean_t
-cfg_obj_isstring(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-	return (ISC_TF(obj->type->rep == &cfg_rep_string));
-}
-
 const char *
 cfg_obj_asstring(const cfg_obj_t *obj) {
 	REQUIRE(obj != NULL && obj->type->rep == &cfg_rep_string);
@@ -531,11 +505,6 @@ cfg_obj_asstring(const cfg_obj_t *obj) {
 /* Quoted string only */
 cfg_type_t cfg_type_qstring = {
 	"quoted_string", cfg_parse_qstring, &cfg_rep_string, NULL
-};
-
-/* Unquoted string only */
-cfg_type_t cfg_type_ustring = {
-	"string", parse_ustring, &cfg_rep_string, NULL
 };
 
 /* Any string (quoted or unquoted); printed with quotes */

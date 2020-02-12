@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: log.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -236,46 +236,6 @@ isc_logconfig_create(isc_log_t *lctx, isc_logconfig_t **lcfgp);
  *\li	*lcfgp will point to a valid logging context if all of the necessary
  *	memory was allocated, or NULL otherwise.
  *\li	On failure, no additional memory is allocated.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS		Success
- *\li	#ISC_R_NOMEMORY		Resource limit: Out of memory
- */
-
-isc_logconfig_t *
-isc_logconfig_get(isc_log_t *lctx);
-/*%<
- * Returns a pointer to the configuration currently in use by the log context.
- *
- * Requires:
- *\li	lctx is a valid context.
- *
- * Ensures:
- *\li	The configuration pointer is non-null.
- *
- * Returns:
- *\li	The configuration pointer.
- */
-
-isc_result_t
-isc_logconfig_use(isc_log_t *lctx, isc_logconfig_t *lcfg);
-/*%<
- * Associate a new configuration with a logging context.
- *
- * Notes:
- *\li	This is thread safe.  The logging context will lock a mutex
- *	before attempting to swap in the new configuration, and isc_log_doit
- *	(the internal function used by all of isc_log_[v]write[1]) locks
- *	the same lock for the duration of its use of the configuration.
- *
- * Requires:
- *\li	lctx is a valid logging context.
- *\li	lcfg is a valid logging configuration.
- *\li	lctx is the same configuration given to isc_logconfig_create
- *		when the configuration was created.
- *
- * Ensures:
- *\li	Future calls to isc_log_write will use the new configuration.
  *
  * Returns:
  *\li	#ISC_R_SUCCESS		Success
@@ -648,25 +608,6 @@ isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level);
  *\li	The debugging level is set to the requested value.
  */
 
-unsigned int
-isc_log_getdebuglevel(isc_log_t *lctx);
-/*%<
- * Get the current debugging level.
- *
- * Notes:
- *\li	This is provided so that a program can have a notion of
- *	"increment debugging level" or "decrement debugging level"
- *	without needing to keep track of what the current level is.
- *
- *\li	A return value of 0 indicates that debugging messages are disabled.
- *
- * Requires:
- *\li	lctx is a valid logging context.
- *
- * Ensures:
- *\li	The current logging debugging level is returned.
- */
-
 isc_boolean_t
 isc_log_wouldlog(isc_log_t *lctx, int level);
 /*%<
@@ -676,126 +617,6 @@ isc_log_wouldlog(isc_log_t *lctx, int level);
  * If #ISC_FALSE is returned, it is guaranteed that nothing would
  * be logged, allowing the caller to omit unnecessary
  * isc_log_write() calls and possible message preformatting.
- */
-
-void
-isc_log_setduplicateinterval(isc_logconfig_t *lcfg, unsigned int interval);
-/*%<
- * Set the interval over which duplicate log messages will be ignored
- * by isc_log_[v]write1(), in seconds.
- *
- * Notes:
- *\li	Increasing the duplicate interval from X to Y will not necessarily
- *	filter out duplicates of messages logged in Y - X seconds since the
- *	increase.  (Example: Message1 is logged at midnight.  Message2
- *	is logged at 00:01:00, when the interval is only 30 seconds, causing
- *	Message1 to be expired from the log message history.  Then the interval
- *	is increased to 3000 (five minutes) and at 00:04:00 Message1 is logged
- *	again.  It will appear the second time even though less than five
- *	passed since the first occurrence.
- *
- * Requires:
- *\li	lctx is a valid logging context.
- */
-
-unsigned int
-isc_log_getduplicateinterval(isc_logconfig_t *lcfg);
-/*%<
- * Get the current duplicate filtering interval.
- *
- * Requires:
- *\li	lctx is a valid logging context.
- *
- * Returns:
- *\li	The current duplicate filtering interval.
- */
-
-isc_result_t
-isc_log_settag(isc_logconfig_t *lcfg, const char *tag);
-/*%<
- * Set the program name or other identifier for #ISC_LOG_PRINTTAG.
- *
- * Requires:
- *\li	lcfg is a valid logging configuration.
- *
- * Notes:
- *\li	If this function has not set the tag to a non-NULL, non-empty value,
- *	then the #ISC_LOG_PRINTTAG channel flag will not print anything.
- *	Unlike some implementations of syslog on Unix systems, you *must* set
- *	the tag in order to get it logged.  It is not implicitly derived from
- *	the program name (which is pretty impossible to infer portably).
- *
- *\li	Setting the tag to NULL or the empty string will also cause the
- *	#ISC_LOG_PRINTTAG channel flag to not print anything.  If tag equals the
- *	empty string, calls to isc_log_gettag will return NULL.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS	Success
- *\li	#ISC_R_NOMEMORY  Resource Limit: Out of memory
- *
- * XXXDCL when creating a new isc_logconfig_t, it might be nice if the tag
- * of the currently active isc_logconfig_t was inherited.  this does not
- * currently happen.
- */
-
-char *
-isc_log_gettag(isc_logconfig_t *lcfg);
-/*%<
- * Get the current identifier printed with #ISC_LOG_PRINTTAG.
- *
- * Requires:
- *\li	lcfg is a valid logging configuration.
- *
- * Notes:
- *\li	Since isc_log_settag() will not associate a zero-length string
- *	with the logging configuration, attempts to do so will cause
- *	this function to return NULL.  However, a determined programmer
- *	will observe that (currently) a tag of length greater than zero
- *	could be set, and then modified to be zero length.
- *
- * Returns:
- *\li	A pointer to the current identifier, or NULL if none has been set.
- */
-
-void
-isc_log_opensyslog(const char *tag, int options, int facility);
-/*%<
- * Initialize syslog logging.
- *
- * Notes:
- *\li	XXXDCL NT
- *	This is currently equivalent to openlog(), but is not going to remain
- *	that way.  In the meantime, the arguments are all identical to
- *	those used by openlog(3), as follows:
- *
- * \code
- *		tag: The string to use in the position of the program
- *			name in syslog messages.  Most (all?) syslogs
- *			will use basename(argv[0]) if tag is NULL.
- *
- *		options: LOG_CONS, LOG_PID, LOG_NDELAY ... whatever your
- *			syslog supports.
- *
- *		facility: The default syslog facility.  This is irrelevant
- *			since isc_log_write will ALWAYS use the channel's
- *			declared facility.
- * \endcode
- *
- *\li	Zero effort has been made (yet) to accommodate systems with openlog()
- *	that only takes two arguments, or to identify valid syslog
- *	facilities or options for any given architecture.
- *
- *\li	It is necessary to call isc_log_opensyslog() to initialize
- *	syslogging on machines which do not support network connections to
- *	syslogd because they require a Unix domain socket to be used.  Since
- *	this is a chore to determine at run-time, it is suggested that it
- *	always be called by programs using the ISC logging system.
- *
- * Requires:
- *\li	Nothing.
- *
- * Ensures:
- *\li	openlog() is called to initialize the syslog system.
  */
 
 void
@@ -818,42 +639,6 @@ isc_log_closefilelogs(isc_log_t *lctx);
  * Ensures:
  *\li	The open files are closed and will be reopened when they are
  *	next needed.
- */
-
-isc_logcategory_t *
-isc_log_categorybyname(isc_log_t *lctx, const char *name);
-/*%<
- * Find a category by its name.
- *
- * Notes:
- *\li	The string name of a category is not required to be unique.
- *
- * Requires:
- *\li	lctx is a valid context.
- *\li	name is not NULL.
- *
- * Returns:
- *\li	A pointer to the _first_ isc_logcategory_t structure used by "name".
- *
- *\li	NULL if no category exists by that name.
- */
-
-isc_logmodule_t *
-isc_log_modulebyname(isc_log_t *lctx, const char *name);
-/*%<
- * Find a module by its name.
- *
- * Notes:
- *\li	The string name of a module is not required to be unique.
- *
- * Requires:
- *\li	lctx is a valid context.
- *\li	name is not NULL.
- *
- * Returns:
- *\li	A pointer to the _first_ isc_logmodule_t structure used by "name".
- *
- *\li	NULL if no module exists by that name.
  */
 
 void

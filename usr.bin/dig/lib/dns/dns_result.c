@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dns_result.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
+/* $Id: dns_result.c,v 1.3 2020/02/12 13:05:03 jsg Exp $ */
 
 /*! \file */
 #include <isc/util.h>
@@ -231,62 +231,4 @@ dns_result_totext(isc_result_t result) {
 void
 dns_result_register(void) {
 	initialize();
-}
-
-dns_rcode_t
-dns_result_torcode(isc_result_t result) {
-	dns_rcode_t rcode = dns_rcode_servfail;
-
-	if (DNS_RESULT_ISRCODE(result)) {
-		/*
-		 * Rcodes can't be bigger than 12 bits, which is why we
-		 * AND with 0xFFF instead of 0xFFFF.
-		 */
-		return ((dns_rcode_t)((result) & 0xFFF));
-	}
-
-	/*
-	 * Try to supply an appropriate rcode.
-	 */
-	switch (result) {
-	case ISC_R_SUCCESS:
-		rcode = dns_rcode_noerror;
-		break;
-	case ISC_R_BADBASE64:
-	case ISC_R_NOSPACE:
-	case ISC_R_RANGE:
-	case ISC_R_UNEXPECTEDEND:
-	case DNS_R_BADAAAA:
-	/* case DNS_R_BADBITSTRING: deprecated */
-	case DNS_R_BADCKSUM:
-	case DNS_R_BADCLASS:
-	case DNS_R_BADLABELTYPE:
-	case DNS_R_BADPOINTER:
-	case DNS_R_BADTTL:
-	case DNS_R_BADZONE:
-	/* case DNS_R_BITSTRINGTOOLONG: deprecated */
-	case DNS_R_EXTRADATA:
-	case DNS_R_LABELTOOLONG:
-	case DNS_R_NOREDATA:
-	case DNS_R_SYNTAX:
-	case DNS_R_TEXTTOOLONG:
-	case DNS_R_TOOMANYHOPS:
-	case DNS_R_TSIGERRORSET:
-	case DNS_R_UNKNOWN:
-	case DNS_R_NAMETOOLONG:
-	case DNS_R_OPTERR:
-		rcode = dns_rcode_formerr;
-		break;
-	case DNS_R_DISALLOWED:
-		rcode = dns_rcode_refused;
-		break;
-	case DNS_R_TSIGVERIFYFAILURE:
-	case DNS_R_CLOCKSKEW:
-		rcode = dns_rcode_notauth;
-		break;
-	default:
-		rcode = dns_rcode_servfail;
-	}
-
-	return (rcode);
 }

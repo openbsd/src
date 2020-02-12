@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: timer.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -289,22 +289,6 @@ isc_timer_touch(isc_timer_t *timer);
  */
 
 void
-isc_timer_attach(isc_timer_t *timer, isc_timer_t **timerp);
-/*%<
- * Attach *timerp to timer.
- *
- * Requires:
- *
- *\li	'timer' is a valid timer.
- *
- *\li	'timerp' points to a NULL timer.
- *
- * Ensures:
- *
- *\li	*timerp is attached to timer.
- */
-
-void
 isc_timer_detach(isc_timer_t **timerp);
 /*%<
  * Detach *timerp from its timer.
@@ -343,10 +327,6 @@ isc_timer_gettype(isc_timer_t *timer);
  *
  *\li	'timer' to be a valid timer.
  */
-
-isc_result_t
-isc_timermgr_createinctx(isc_appctx_t *actx,
-			 isc_timermgr_t **managerp);
 
 isc_result_t
 isc_timermgr_create(isc_timermgr_t **managerp);
@@ -407,23 +387,6 @@ void isc_timermgr_poke(isc_timermgr_t *m);
  */
 typedef isc_result_t
 (*isc_timermgrcreatefunc_t)(isc_timermgr_t **managerp);
-
-isc_result_t
-isc__timer_register(void);
-/*%<
- * Register a new timer management implementation and add it to the list of
- * supported implementations.  This function must be called when a different
- * event library is used than the one contained in the ISC library.
- */
-
-isc_result_t
-isc_timer_register(isc_timermgrcreatefunc_t createfunc);
-/*%<
- * A short cut function that specifies the timer management module in the ISC
- * library for isc_timer_register().  An application that uses the ISC library
- * usually do not have to care about this function: it would call
- * isc_lib_register(), which internally calls this function.
- */
 
 ISC_LANG_ENDDECLS
 

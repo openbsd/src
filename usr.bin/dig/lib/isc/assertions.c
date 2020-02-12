@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: assertions.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
+/* $Id: assertions.c,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
 
 /*! \file */
 
@@ -46,15 +46,6 @@ isc_assertion_failed(const char *file, int line, isc_assertiontype_t type,
 	isc_assertion_failed_cb(file, line, type, cond);
 	abort();
 	/* NOTREACHED */
-}
-
-/*% Set callback. */
-void
-isc_assertion_setcallback(isc_assertioncallback_t cb) {
-	if (cb == NULL)
-		isc_assertion_failed_cb = default_callback;
-	else
-		isc_assertion_failed_cb = cb;
 }
 
 /*% Type to Text */

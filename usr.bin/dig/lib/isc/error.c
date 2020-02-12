@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: error.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
+/* $Id: error.c,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
 
 /*! \file */
 
@@ -38,22 +38,6 @@ default_fatal_callback(const char *, int, const char *, va_list)
 /*% unexpected_callback */
 static isc_errorcallback_t unexpected_callback = default_unexpected_callback;
 static isc_errorcallback_t fatal_callback = default_fatal_callback;
-
-void
-isc_error_setunexpected(isc_errorcallback_t cb) {
-	if (cb == NULL)
-		unexpected_callback = default_unexpected_callback;
-	else
-		unexpected_callback = cb;
-}
-
-void
-isc_error_setfatal(isc_errorcallback_t cb) {
-	if (cb == NULL)
-		fatal_callback = default_fatal_callback;
-	else
-		fatal_callback = cb;
-}
 
 void
 isc_error_unexpected(const char *file, int line, const char *format, ...) {

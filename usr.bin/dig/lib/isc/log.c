@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.3 2020/02/11 23:26:12 jsg Exp $ */
+/* $Id: log.c,v 1.4 2020/02/12 13:05:04 jsg Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -385,41 +385,6 @@ isc_logconfig_create(isc_log_t *lctx, isc_logconfig_t **lcfgp) {
 	return (result);
 }
 
-isc_logconfig_t *
-isc_logconfig_get(isc_log_t *lctx) {
-	REQUIRE(VALID_CONTEXT(lctx));
-
-	ENSURE(lctx->logconfig != NULL);
-
-	return (lctx->logconfig);
-}
-
-isc_result_t
-isc_logconfig_use(isc_log_t *lctx, isc_logconfig_t *lcfg) {
-	isc_logconfig_t *old_cfg;
-	isc_result_t result;
-
-	REQUIRE(VALID_CONTEXT(lctx));
-	REQUIRE(VALID_CONFIG(lcfg));
-	REQUIRE(lcfg->lctx == lctx);
-
-	/*
-	 * Ensure that lcfg->channellist_count == lctx->category_count.
-	 * They won't be equal if isc_log_usechannel has not been called
-	 * since any call to isc_log_registercategories.
-	 */
-	result = sync_channellist(lcfg);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	old_cfg = lctx->logconfig;
-	lctx->logconfig = lcfg;
-
-	isc_logconfig_destroy(&old_cfg);
-
-	return (ISC_R_SUCCESS);
-}
-
 void
 isc_log_destroy(isc_log_t **lctxp) {
 	isc_log_t *lctx;
@@ -544,29 +509,6 @@ isc_log_registercategories(isc_log_t *lctx, isc_logcategory_t categories[]) {
 		catp->id = lctx->category_count++;
 }
 
-isc_logcategory_t *
-isc_log_categorybyname(isc_log_t *lctx, const char *name) {
-	isc_logcategory_t *catp;
-
-	REQUIRE(VALID_CONTEXT(lctx));
-	REQUIRE(name != NULL);
-
-	for (catp = lctx->categories; catp->name != NULL; )
-		if (catp->id == UINT_MAX)
-			/*
-			 * catp is neither modified nor returned to the
-			 * caller, so removing its const qualifier is ok.
-			 */
-			DE_CONST(catp->name, catp);
-		else {
-			if (strcmp(catp->name, name) == 0)
-				return (catp);
-			catp++;
-		}
-
-	return (NULL);
-}
-
 void
 isc_log_registermodules(isc_log_t *lctx, isc_logmodule_t modules[]) {
 	isc_logmodule_t *modp;
@@ -609,29 +551,6 @@ isc_log_registermodules(isc_log_t *lctx, isc_logmodule_t modules[]) {
 	 */
 	for (modp = modules; modp->name != NULL; modp++)
 		modp->id = lctx->module_count++;
-}
-
-isc_logmodule_t *
-isc_log_modulebyname(isc_log_t *lctx, const char *name) {
-	isc_logmodule_t *modp;
-
-	REQUIRE(VALID_CONTEXT(lctx));
-	REQUIRE(name != NULL);
-
-	for (modp = lctx->modules; modp->name != NULL; )
-		if (modp->id == UINT_MAX)
-			/*
-			 * modp is neither modified nor returned to the
-			 * caller, so removing its const qualifier is ok.
-			 */
-			DE_CONST(modp->name, modp);
-		else {
-			if (strcmp(modp->name, name) == 0)
-				return (modp);
-			modp++;
-		}
-
-	return (NULL);
 }
 
 isc_result_t
@@ -807,60 +726,6 @@ isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level) {
 	REQUIRE(VALID_CONTEXT(lctx));
 
 	lctx->debug_level = level;
-}
-
-unsigned int
-isc_log_getdebuglevel(isc_log_t *lctx) {
-	REQUIRE(VALID_CONTEXT(lctx));
-
-	return (lctx->debug_level);
-}
-
-void
-isc_log_setduplicateinterval(isc_logconfig_t *lcfg, unsigned int interval) {
-	REQUIRE(VALID_CONFIG(lcfg));
-
-	lcfg->duplicate_interval = interval;
-}
-
-unsigned int
-isc_log_getduplicateinterval(isc_logconfig_t *lcfg) {
-	REQUIRE(VALID_CONTEXT(lcfg));
-
-	return (lcfg->duplicate_interval);
-}
-
-isc_result_t
-isc_log_settag(isc_logconfig_t *lcfg, const char *tag) {
-	REQUIRE(VALID_CONFIG(lcfg));
-
-	if (tag != NULL && *tag != '\0') {
-		if (lcfg->tag != NULL)
-			free(lcfg->tag);
-		lcfg->tag = strdup(tag);
-		if (lcfg->tag == NULL)
-			return (ISC_R_NOMEMORY);
-
-	} else {
-		if (lcfg->tag != NULL)
-			free(lcfg->tag);
-		lcfg->tag = NULL;
-	}
-
-	return (ISC_R_SUCCESS);
-}
-
-char *
-isc_log_gettag(isc_logconfig_t *lcfg) {
-	REQUIRE(VALID_CONFIG(lcfg));
-
-	return (lcfg->tag);
-}
-
-/* XXXDCL NT  -- This interface will assuredly be changing. */
-void
-isc_log_opensyslog(const char *tag, int options, int facility) {
-	(void)openlog(tag, options, facility);
 }
 
 /****

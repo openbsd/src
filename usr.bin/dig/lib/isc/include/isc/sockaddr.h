@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: sockaddr.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
@@ -72,25 +72,6 @@ isc_sockaddr_eqaddr(const isc_sockaddr_t *a, const isc_sockaddr_t *b);
  * 'a' and 'b' are equal, ignoring the ports.
  */
 
-isc_boolean_t
-isc_sockaddr_eqaddrprefix(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
-			  unsigned int prefixlen);
-/*%<
- * Return ISC_TRUE iff the most significant 'prefixlen' bits of the
- * socket addresses 'a' and 'b' are equal, ignoring the ports.
- * If 'b''s scope is zero then 'a''s scope will be ignored.
- */
-
-unsigned int
-isc_sockaddr_hash(const isc_sockaddr_t *sockaddr, isc_boolean_t address_only);
-/*%<
- * Return a hash value for the socket address 'sockaddr'.  If 'address_only'
- * is ISC_TRUE, the hash value will not depend on the port.
- *
- * IPv6 addresses containing mapped IPv4 addresses generate the same hash
- * value as the equivalent IPv4 address.
- */
-
 void
 isc_sockaddr_any(isc_sockaddr_t *sockaddr);
 /*%<
@@ -127,20 +108,6 @@ isc_sockaddr_fromin6(isc_sockaddr_t *sockaddr, const struct in6_addr *ina6,
  * Construct an isc_sockaddr_t from an IPv6 address and port.
  */
 
-void
-isc_sockaddr_v6fromin(isc_sockaddr_t *sockaddr, const struct in_addr *ina,
-		      in_port_t port);
-/*%<
- * Construct an IPv6 isc_sockaddr_t representing a mapped IPv4 address.
- */
-
-void
-isc_sockaddr_fromnetaddr(isc_sockaddr_t *sockaddr, const isc_netaddr_t *na,
-			 in_port_t port);
-/*%<
- * Construct an isc_sockaddr_t from an isc_netaddr_t and port.
- */
-
 int
 isc_sockaddr_pf(const isc_sockaddr_t *sockaddr);
 /*%<
@@ -154,12 +121,6 @@ isc_sockaddr_pf(const isc_sockaddr_t *sockaddr);
  * Returns:
  *
  *\li	The protocol family of 'sockaddr', e.g. PF_INET or PF_INET6.
- */
-
-void
-isc_sockaddr_setport(isc_sockaddr_t *sockaddr, in_port_t port);
-/*%<
- * Set the port of 'sockaddr' to 'port'.
  */
 
 in_port_t
@@ -196,12 +157,6 @@ isc_sockaddr_ismulticast(const isc_sockaddr_t *sa);
  */
 
 isc_boolean_t
-isc_sockaddr_isexperimental(const isc_sockaddr_t *sa);
-/*
- * Returns ISC_TRUE if the address is a experimental (CLASS E) address.
- */
-
-isc_boolean_t
 isc_sockaddr_islinklocal(const isc_sockaddr_t *sa);
 /*%<
  * Returns ISC_TRUE if the address is a link local address.
@@ -211,23 +166,6 @@ isc_boolean_t
 isc_sockaddr_issitelocal(const isc_sockaddr_t *sa);
 /*%<
  * Returns ISC_TRUE if the address is a sitelocal address.
- */
-
-isc_boolean_t
-isc_sockaddr_isnetzero(const isc_sockaddr_t *sa);
-/*%<
- * Returns ISC_TRUE if the address is in net zero.
- */
-
-isc_result_t
-isc_sockaddr_frompath(isc_sockaddr_t *sockaddr, const char *path);
-/*
- *  Create a UNIX domain sockaddr that refers to path.
- *
- * Returns:
- * \li	ISC_R_NOSPACE
- * \li	ISC_R_NOTIMPLEMENTED
- * \li	ISC_R_SUCCESS
  */
 
 #define ISC_SOCKADDR_FORMATSIZE \
