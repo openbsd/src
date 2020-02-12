@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-usbpcap.c,v 1.2 2020/02/12 20:07:55 jasper Exp $ */
+
 /*
  * Copyright (c) 2018 Martin Pieuchot <mpi@openbsd.org>
  *
@@ -38,10 +40,9 @@ usbpcap_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	ts_print(&h->ts);
 
 	/* check length */
-	if (caplen < sizeof(uint16_t)) {
-		printf("[|usb]");
-		goto out;
-	}
+	if (caplen < sizeof(uint16_t))
+		goto trunc;
+
 	uph = (struct usbpcap_pkt_hdr *)p;
 	hdrlen = letoh16(uph->uph_hlen);
 	if (hdrlen < sizeof(*uph)) {
@@ -49,10 +50,8 @@ usbpcap_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		goto out;
 	}
 
-	if (caplen < hdrlen) {
-		printf("[|usb]");
-		goto out;
-	}
+	if (caplen < hdrlen)
+		goto trunc;
 
 	printf("bus %u %c addr %u: ep%u",
 	    letoh16(uph->uph_bus),
@@ -64,10 +63,13 @@ usbpcap_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	else
 		printf(" ??");
 
-	printf(" %u", letoh32(uph->uph_dlen));
+	printf(" dlen=%u", letoh32(uph->uph_dlen));
 
 	if (xflag)
 		default_print(p + sizeof(*uph), length - sizeof(*uph));
 out:
 	putchar('\n');
+	return;
+trunc:
+	printf("[|usb]");
 }
