@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.128 2019/11/11 06:32:52 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.129 2020/02/12 19:14:56 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -810,7 +810,8 @@ show_status_msg(struct imsg *imsg)
 			printf(" (%d errors)",
 			    cstatus->constraint_errors);
 		printf(", ");
-	}
+	} else if (cstatus->constraints)
+		printf("constraints configured but none available, ");
 
 	if (cstatus->peercnt + cstatus->sensorcnt == 0)
 		printf("no peers and no sensors configured\n");

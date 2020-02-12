@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.48 2019/07/16 14:15:40 otto Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.49 2020/02/12 19:14:56 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -695,8 +695,9 @@ constraint_msg_result(u_int32_t id, u_int8_t *data, size_t len)
 void
 constraint_msg_close(u_int32_t id, u_int8_t *data, size_t len)
 {
-	struct constraint	*cstr;
-	int			 fail;
+	struct constraint	*cstr, *tmp;
+	int			 fail, cnt;
+	static int		 total_fails;
 
 	if ((cstr = constraint_byid(id)) == NULL) {
 		log_warnx("IMSG_CONSTRAINT_CLOSE with invalid constraint id");
@@ -715,6 +716,15 @@ constraint_msg_close(u_int32_t id, u_int8_t *data, size_t len)
 		    " received in time, next query %ds",
 		    log_sockaddr((struct sockaddr *)
 		    &cstr->addr->ss), CONSTRAINT_SCAN_INTERVAL);
+		
+		cnt = 0;
+		TAILQ_FOREACH(tmp, &conf->constraints, entry)
+			cnt++;
+		if (cnt > 0 && ++total_fails >= cnt &&
+		    conf->constraint_median == 0) {
+			log_warnx("constrainst configured but none available");
+			total_fails = 0;
+		}
 	}
 
 	if (fail || cstr->state < STATE_QUERY_SENT) {

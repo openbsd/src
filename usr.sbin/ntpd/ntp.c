@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.162 2019/11/11 06:32:52 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.163 2020/02/12 19:14:56 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -228,7 +228,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 
 		memset(pfd, 0, sizeof(*pfd) * pfd_elms);
 		memset(idx2peer, 0, sizeof(*idx2peer) * idx2peer_elms);
-		nextaction = getmonotime() + 3600;
+		nextaction = getmonotime() + 900;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		pfd[PFD_PIPE_DNS].fd = ibuf_dns->fd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.148 2019/11/11 06:32:52 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.149 2020/02/12 19:14:56 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -254,16 +254,17 @@ struct ntpd_conf {
 };
 
 struct ctl_show_status {
+	time_t		 constraint_median;
+	time_t		 constraint_last;
+	double		 clock_offset;
 	u_int		 peercnt;
 	u_int		 sensorcnt;
 	u_int		 valid_peers;
 	u_int		 valid_sensors;
+	u_int		 constraint_errors;
 	u_int8_t	 synced;
 	u_int8_t	 stratum;
-	double		 clock_offset;
-	time_t		 constraint_median;
-	time_t		 constraint_last;
-	u_int		 constraint_errors;
+	u_int8_t	 constraints;
 };
 
 struct ctl_show_peer {
