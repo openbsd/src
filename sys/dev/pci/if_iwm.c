@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.293 2019/12/20 10:23:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.294 2020/02/12 15:36:15 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8589,8 +8589,9 @@ iwm_intr(void *arg)
 {
 	struct iwm_softc *sc = arg;
 	int handled = 0;
-	int r1, r2, rv = 0;
+	int rv = 0;
 	int isperiodic = 0;
+	uint32_t r1, r2;
 
 	IWM_WRITE(sc, IWM_CSR_INT_MASK, 0);
 
@@ -8617,19 +8618,24 @@ iwm_intr(void *arg)
 		if (r1 == 0xffffffff)
 			r1 = 0;
 
-		/* i am not expected to understand this */
+		/*
+		 * Workaround for hardware bug where bits are falsely cleared
+		 * when using interrupt coalescing.  Bit 15 should be set if
+		 * bits 18 and 19 are set.
+		 */
 		if (r1 & 0xc0000)
 			r1 |= 0x8000;
+
 		r1 = (0xff & r1) | ((0xff00 & r1) << 16);
 	} else {
 		r1 = IWM_READ(sc, IWM_CSR_INT);
-		if (r1 == 0xffffffff || (r1 & 0xfffffff0) == 0xa5a5a5a0)
-			goto out;
 		r2 = IWM_READ(sc, IWM_CSR_FH_INT_STATUS);
 	}
 	if (r1 == 0 && r2 == 0) {
 		goto out_ena;
 	}
+	if (r1 == 0xffffffff || (r1 & 0xfffffff0) == 0xa5a5a5a0)
+		goto out;
 
 	IWM_WRITE(sc, IWM_CSR_INT, r1 | ~sc->sc_intmask);
 
