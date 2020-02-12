@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.294 2020/02/12 15:36:15 tobhe Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.295 2020/02/12 16:02:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1276,6 +1276,7 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 	ring->qid = qid;
 	ring->queued = 0;
 	ring->cur = 0;
+	ring->tail = 0;
 
 	/* Allocate TX descriptors (256-byte aligned). */
 	size = IWM_TX_RING_COUNT * sizeof (struct iwm_tfd);
@@ -1377,6 +1378,7 @@ iwm_reset_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring)
 	}
 	ring->queued = 0;
 	ring->cur = 0;
+	ring->tail = 0;
 }
 
 void
@@ -4193,6 +4195,25 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 }
 
 void
+iwm_txd_done(struct iwm_softc *sc, struct iwm_tx_data *txd)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	bus_dmamap_sync(sc->sc_dmat, txd->map, 0, txd->map->dm_mapsize,
+	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, txd->map);
+	m_freem(txd->m);
+	txd->m = NULL;
+
+	KASSERT(txd->in);
+	ieee80211_release_node(ic, &txd->in->in_ni);
+	txd->in = NULL;
+
+	KASSERT(txd->done == 0);
+	txd->done = 1;
+}
+
+void
 iwm_rx_tx_cmd(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
     struct iwm_rx_data *data)
 {
@@ -4202,31 +4223,35 @@ iwm_rx_tx_cmd(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	int idx = cmd_hdr->idx;
 	int qid = cmd_hdr->qid;
 	struct iwm_tx_ring *ring = &sc->txq[qid];
-	struct iwm_tx_data *txd = &ring->data[idx];
-	struct iwm_node *in = txd->in;
-
-	if (txd->done)
-		return;
+	struct iwm_tx_data *txd;
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
 	    BUS_DMASYNC_POSTREAD);
 
 	sc->sc_tx_timer = 0;
 
-	iwm_rx_tx_cmd_single(sc, pkt, in);
+	txd = &ring->data[idx];
+	if (txd->done)
+		return;
 
-	bus_dmamap_sync(sc->sc_dmat, txd->map, 0, txd->map->dm_mapsize,
-	    BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(sc->sc_dmat, txd->map);
-	m_freem(txd->m);
+	iwm_rx_tx_cmd_single(sc, pkt, txd->in);
+	iwm_txd_done(sc, txd);
 
-	KASSERT(txd->done == 0);
-	txd->done = 1;
-	KASSERT(txd->in);
-
-	txd->m = NULL;
-	txd->in = NULL;
-	ieee80211_release_node(ic, &in->in_ni);
+	/*
+	 * XXX Sometimes we miss Tx completion interrupts.
+	 * We cannot check Tx success/failure for affected frames; just free
+	 * the associated mbuf and release the associated node reference.
+	 */
+	while (ring->tail != idx) {
+		txd = &ring->data[ring->tail];
+		if (!txd->done) {
+			DPRINTF(("%s: missed Tx completion: tail=%d idx=%d\n",
+			    __func__, ring->tail, idx));
+			iwm_txd_done(sc, txd);
+			ring->queued--;
+		}
+		ring->tail = (ring->tail + 1) % IWM_TX_RING_COUNT;
+	}
 
 	if (--ring->queued < IWM_TX_RING_LOMARK) {
 		sc->qfullmsk &= ~(1 << ring->qid);

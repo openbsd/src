@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.49 2019/12/18 09:52:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.50 2020/02/12 16:02:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -270,6 +270,7 @@ struct iwm_tx_ring {
 	int			qid;
 	int			queued;
 	int			cur;
+	int			tail;
 };
 
 #define IWM_RX_MQ_RING_COUNT	512
