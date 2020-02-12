@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.93 2020/02/12 11:29:41 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.94 2020/02/12 12:01:29 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -504,7 +504,29 @@ main(int argc, char *argv[])
 		if ((rv = kevent(kq, NULL, 0, ev, 1, &sts)) == -1)
 			break;
 
-		if (!rv) {
+		if (rv == 1 && ev->ident == sock_fd) {
+			switch (handle_client(sock_fd, ctl_fd)) {
+			case NORMAL:
+				break;
+			case SUSPENDING:
+				suspend(ctl_fd);
+				break;
+			case STANDING_BY:
+				stand_by(ctl_fd);
+				break;
+			case HIBERNATING:
+				hibernate(ctl_fd);
+				break;
+			}
+			continue;
+		}
+
+		suspends = standbys = hibernates = resumes = 0;
+
+		if (rv == 0 && ctl_fd == -1) {
+			/* timeout and no way to query status */
+			continue;
+		} else if (rv == 0) {
 			/* wakeup for timeout: take status */
 			powerbak = power_status(ctl_fd, 0, &pinfo);
 			if (powerstatus != powerbak) {
@@ -522,15 +544,11 @@ main(int argc, char *argv[])
 				);
 
 				if (autoaction == AUTO_SUSPEND)
-					suspend(ctl_fd);
+					suspends++;
 				else
-					hibernate(ctl_fd);
+					hibernates++;
 			}
-			continue;
-		}
-
-		if (ev->ident == ctl_fd) {
-			suspends = standbys = hibernates = resumes = 0;
+		} else if (ev->ident == ctl_fd) {
 			logmsg(LOG_DEBUG, "apmevent %04x index %d",
 			    (int)APM_EVENT_TYPE(ev->data),
 			    (int)APM_EVENT_INDEX(ev->data));
@@ -587,42 +605,28 @@ main(int argc, char *argv[])
 			default:
 				;
 			}
+		}
 
-			if ((standbys || suspends) && noacsleep &&
-			    power_status(ctl_fd, 0, &pinfo))
-				logmsg(LOG_DEBUG, "no! sleep! till brooklyn!");
-			else if (suspends)
-				suspend(ctl_fd);
-			else if (standbys)
-				stand_by(ctl_fd);
-			else if (hibernates)
-				hibernate(ctl_fd);
-			else if (resumes) {
-				resumed(ctl_fd);
-			}
+		if ((standbys || suspends) && noacsleep &&
+		    power_status(ctl_fd, 0, &pinfo))
+			logmsg(LOG_DEBUG, "no! sleep! till brooklyn!");
+		else if (suspends)
+			suspend(ctl_fd);
+		else if (standbys)
+			stand_by(ctl_fd);
+		else if (hibernates)
+			hibernate(ctl_fd);
+		else if (resumes) {
+			resumed(ctl_fd);
+		}
 
-			if (powerchange) {
-				if (powerstatus)
-					do_etc_file(_PATH_APM_ETC_POWERUP);
-				else
-					do_etc_file(_PATH_APM_ETC_POWERDOWN);
-				powerchange = 0;
-			}
-
-		} else if (ev->ident == sock_fd)
-			switch (handle_client(sock_fd, ctl_fd)) {
-			case NORMAL:
-				break;
-			case SUSPENDING:
-				suspend(ctl_fd);
-				break;
-			case STANDING_BY:
-				stand_by(ctl_fd);
-				break;
-			case HIBERNATING:
-				hibernate(ctl_fd);
-				break;
-			}
+		if (powerchange) {
+			if (powerstatus)
+				do_etc_file(_PATH_APM_ETC_POWERUP);
+			else
+				do_etc_file(_PATH_APM_ETC_POWERDOWN);
+			powerchange = 0;
+		}
 	}
 	error("kevent loop", NULL);
 
