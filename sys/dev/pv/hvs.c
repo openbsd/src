@@ -215,7 +215,6 @@ struct hvs_softc {
 	int			 sc_initiator;
 
 	struct scsi_iopool	 sc_iopool;
-	struct scsi_adapter	 sc_switch;
 	struct scsi_link         sc_link;
 	struct device		*sc_scsibus;
 	struct task		 sc_probetask;
@@ -247,6 +246,10 @@ struct cfdriver hvs_cd = {
 
 const struct cfattach hvs_ca = {
 	sizeof(struct hvs_softc), hvs_match, hvs_attach
+};
+
+struct scsi_adapter hvs_switch = {
+	hvs_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 int
@@ -305,10 +308,7 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 
 	task_set(&sc->sc_probetask, hvs_scsi_probe, sc);
 
-	sc->sc_switch.scsi_cmd = hvs_scsi_cmd;
-	sc->sc_switch.dev_minphys = NULL;
-
-	sc->sc_link.adapter = &sc->sc_switch;
+	sc->sc_link.adapter = &hvs_switch;
 	sc->sc_link.adapter_softc = self;
 	sc->sc_link.luns = sc->sc_flags & HVSF_SCSI ? 64 : 1;
 	sc->sc_link.adapter_buswidth = 2;

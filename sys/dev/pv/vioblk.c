@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.15 2020/02/05 16:29:30 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.16 2020/02/12 14:08:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -109,7 +109,6 @@ struct vioblk_softc {
 	struct virtio_blk_req   *sc_reqs;
 	bus_dma_segment_t        sc_reqs_segs[1];
 
-	struct scsi_adapter	 sc_switch;
 	struct scsi_link	 sc_link;
 	struct scsi_iopool	 sc_iopool;
 	struct mutex		 sc_vr_mtx;
@@ -153,6 +152,9 @@ struct cfdriver vioblk_cd = {
 	NULL, "vioblk", DV_DULL
 };
 
+struct scsi_adapter vioblk_switch = {
+	vioblk_scsi_cmd, NULL, vioblk_dev_probe, vioblk_dev_free, NULL
+};
 
 int vioblk_match(struct device *parent, void *match, void *aux)
 {
@@ -226,11 +228,6 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_queued = 0;
 
-	sc->sc_switch.scsi_cmd = vioblk_scsi_cmd;
-	sc->sc_switch.dev_minphys = NULL;
-	sc->sc_switch.dev_probe = vioblk_dev_probe;
-	sc->sc_switch.dev_free = vioblk_dev_free;
-
 	SLIST_INIT(&sc->sc_freelist);
 	mtx_init(&sc->sc_vr_mtx, IPL_BIO);
 	scsi_iopool_init(&sc->sc_iopool, sc, vioblk_req_get, vioblk_req_put);
@@ -241,7 +238,7 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 		goto err;
 	}
 
-	sc->sc_link.adapter = &sc->sc_switch;
+	sc->sc_link.adapter = &vioblk_switch;
 	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.adapter_softc = self;
 	sc->sc_link.adapter_buswidth = 2;
