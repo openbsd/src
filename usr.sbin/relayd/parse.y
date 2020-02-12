@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.243 2019/09/18 20:27:53 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.244 2020/02/12 21:15:44 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1088,7 +1088,6 @@ proto		: relay_proto PROTO STRING	{
 				yyerror("invalid TLS protocol");
 				YYERROR;
 			}
-
 			TAILQ_INSERT_TAIL(conf->sc_protos, proto, entry);
 		}
 		;
@@ -1102,10 +1101,38 @@ protopts_l	: protopts_l protoptsl nl
 		| protoptsl optnl
 		;
 
-protoptsl	: ssltls tlsflags
-		| ssltls '{' tlsflags_l '}'
-		| TCP tcpflags
-		| TCP '{' tcpflags_l '}'
+protoptsl	: ssltls {
+			if (!(proto->type == RELAY_PROTO_TCP ||
+			    proto->type == RELAY_PROTO_HTTP)) {
+				yyerror("can set tls options only for "
+				    "tcp or http protocols");
+				YYERROR;
+			}
+		} tlsflags
+		| ssltls {
+			if (!(proto->type == RELAY_PROTO_TCP ||
+			    proto->type == RELAY_PROTO_HTTP)) {
+				yyerror("can set tls options only for "
+				    "tcp or http protocols");
+				YYERROR;
+			}
+		} '{' tlsflags_l '}'
+		| TCP {
+			if (!(proto->type == RELAY_PROTO_TCP ||
+			    proto->type == RELAY_PROTO_HTTP)) {
+				yyerror("can set tcp options only for "
+				    "tcp or http protocols");
+				YYERROR;
+			}
+		} tcpflags
+		| TCP {
+			if (!(proto->type == RELAY_PROTO_TCP ||
+			    proto->type == RELAY_PROTO_HTTP)) {
+				yyerror("can set tcp options only for "
+				    "tcp or http protocols");
+				YYERROR;
+			}
+		} '{' tcpflags_l '}'
 		| HTTP {
 			if (proto->type != RELAY_PROTO_HTTP) {
 				yyerror("can set http options only for "
@@ -1905,6 +1932,11 @@ relayoptsl	: LISTEN ON STRING port opttls {
 		| PROTO STRING			{
 			struct protocol *p;
 
+			if (rlay->rl_conf.proto != EMPTY_ID) {
+				yyerror("more than one protocol specified");
+				YYERROR;
+			}
+				
 			TAILQ_FOREACH(p, conf->sc_protos, entry)
 				if (!strcmp(p->name, $2))
 					break;
