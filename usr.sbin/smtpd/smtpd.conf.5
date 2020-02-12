@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.248 2020/01/08 10:02:17 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.249 2020/02/12 14:46:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: January 8 2020 $
+.Dd $Mdocdate: February 12 2020 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -299,10 +299,11 @@ The credential table format is described in
 Use
 .Ar mailaddr
 as the MAIL FROM address within the SMTP transaction.
-.It Cm src Ar address | Pf < Ar address Ns >
+.It Cm src Ar sourceaddr | Pf < Ar sourceaddr Ns >
 Use the string or list table
-.Ar address
-for the source IP address.
+.Ar sourceaddr
+for the source IP address,
+which is useful on machines with multiple interfaces.
 If the list contains more than one address, all of them are used
 in such a way that traffic is routed as efficiently as possible.
 .El

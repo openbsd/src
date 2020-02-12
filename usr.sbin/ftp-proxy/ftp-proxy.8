@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.23 2017/01/15 06:16:05 deraadt Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.24 2020/02/12 14:46:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 15 2017 $
+.Dd $Mdocdate: February 12 2020 $
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nm
 .Bk -words
 .Op Fl 6Adrv
-.Op Fl a Ar address
+.Op Fl a Ar sourceaddr
 .Op Fl b Ar address
 .Op Fl D Ar level
 .Op Fl m Ar maxsessions
@@ -94,9 +94,10 @@ The proxy is in IPv4 mode by default.
 .It Fl A
 Only permit anonymous FTP connections.
 Either user "ftp" or user "anonymous" is allowed.
-.It Fl a Ar address
+.It Fl a Ar sourceaddr
 The proxy will use this as the source address for the control
-connection to a server.
+connection to a server, which is useful on machines with multiple
+interfaces.
 .It Fl b Ar address
 Address where the proxy will listen for redirected control connections.
 The default is 127.0.0.1, or ::1 in IPv6 mode.

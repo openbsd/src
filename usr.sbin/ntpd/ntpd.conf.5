@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.44 2020/02/10 13:18:21 schwarze Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.45 2020/02/12 14:46:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: February 12 2020 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -68,10 +68,11 @@ listen on 127.0.0.1
 listen on ::1
 listen on 127.0.0.1 rtable 4
 .Ed
-.It Ic query from Ar address
+.It Ic query from Ar sourceaddr
 Specify a local IP address the
 .Xr ntpd 8
-daemon should use for outgoing queries to subsequently specified servers.
+daemon should use for outgoing queries to subsequently specified servers,
+which is useful on machines with multiple interfaces.
 For example:
 .Bd -literal -offset indent
 query from 192.0.2.1

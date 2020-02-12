@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.94 2019/10/24 17:27:08 kn Exp $
+.\"     $OpenBSD: nc.1,v 1.95 2020/02/12 14:46:36 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 24 2019 $
+.Dd $Mdocdate: February 12 2020 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@
 .Op Fl P Ar proxy_username
 .Op Fl p Ar source_port
 .Op Fl R Ar CAfile
-.Op Fl s Ar source
+.Op Fl s Ar sourceaddr
 .Op Fl T Ar keyword
 .Op Fl V Ar rtable
 .Op Fl W Ar recvlimit
@@ -228,10 +228,9 @@ instead of sequentially within a range or in the order that the system
 assigns them.
 .It Fl S
 Enable the RFC 2385 TCP MD5 signature option.
-.It Fl s Ar source
-Send packets from the interface with the
-.Ar source
-IP address.
+.It Fl s Ar sourceaddr
+Set the source address to send packets from,
+which is useful on machines with multiple interfaces.
 For
 .Ux Ns -domain
 datagram sockets, specifies the local temporary socket file
