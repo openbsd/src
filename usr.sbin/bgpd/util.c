@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.51 2019/07/03 03:24:02 deraadt Exp $ */
+/*	$OpenBSD: util.c,v 1.52 2020/02/12 10:33:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -75,6 +75,7 @@ log_in6addr(const struct in6_addr *addr)
 	sa_in6.sin6_family = AF_INET6;
 	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
 
+#ifdef __KAME__
 	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
 	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
 	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
@@ -83,6 +84,7 @@ log_in6addr(const struct in6_addr *addr)
 		sa_in6.sin6_addr.s6_addr[2] = 0;
 		sa_in6.sin6_addr.s6_addr[3] = 0;
 	}
+#endif
 
 	return (log_sockaddr((struct sockaddr *)&sa_in6, sizeof(sa_in6)));
 }
@@ -883,6 +885,23 @@ sa2addr(struct sockaddr *sa, struct bgpd_addr *addr, u_int16_t *port)
 	case AF_INET6:
 		addr->aid = AID_INET6;
 		memcpy(&addr->v6, &sa_in6->sin6_addr, sizeof(addr->v6));
+#ifdef __KAME__
+		/*
+		 * XXX thanks, KAME, for this ugliness...
+		 * adopted from route/show.c
+		 */
+		if (IN6_IS_ADDR_LINKLOCAL(&sa_in6->sin6_addr) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6->sin6_addr)) {
+			uint16_t tmp16;
+			memcpy(&tmp16, &sa_in6->sin6_addr.s6_addr[2],
+			    sizeof(tmp16));
+			if (tmp16 != 0) {
+				sa_in6->sin6_scope_id = ntohs(tmp16);
+				sa_in6->sin6_addr.s6_addr[2] = 0;
+				sa_in6->sin6_addr.s6_addr[3] = 0;
+			}
+		}
+#endif
 		addr->scope_id = sa_in6->sin6_scope_id; /* I hate v6 */
 		if (port)
 			*port = ntohs(sa_in6->sin6_port);

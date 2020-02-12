@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.4 2020/01/24 05:44:05 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.5 2020/02/12 10:33:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -17,9 +17,7 @@
  */
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/socket.h>
 
-#include <ifaddrs.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -306,102 +304,6 @@ rde_up_dump_done(void *ptr, u_int8_t aid)
 		fatal("%s: prefix_dump_new", __func__);
 }
 
-static int
-sa_cmp(struct bgpd_addr *a, struct sockaddr *b)
-{
-	struct sockaddr_in	*in_b;
-	struct sockaddr_in6	*in6_b;
-
-	if (aid2af(a->aid) != b->sa_family)
-		return (1);
-
-	switch (b->sa_family) {
-	case AF_INET:
-		in_b = (struct sockaddr_in *)b;
-		if (a->v4.s_addr != in_b->sin_addr.s_addr)
-			return (1);
-		break;
-	case AF_INET6:
-		in6_b = (struct sockaddr_in6 *)b;
-#ifdef __KAME__
-		/* directly stolen from sbin/ifconfig/ifconfig.c */
-		if (IN6_IS_ADDR_LINKLOCAL(&in6_b->sin6_addr)) {
-			in6_b->sin6_scope_id =
-			    ntohs(*(u_int16_t *)&in6_b->sin6_addr.s6_addr[2]);
-			in6_b->sin6_addr.s6_addr[2] =
-			    in6_b->sin6_addr.s6_addr[3] = 0;
-		}
-#endif
-		if (bcmp(&a->v6, &in6_b->sin6_addr,
-		    sizeof(struct in6_addr)))
-			return (1);
-		break;
-	default:
-		fatal("king bula sez: unknown address family");
-		/* NOTREACHED */
-	}
-
-	return (0);
-}
-
-/*
- * Figure out the local IP addresses most suitable for this session.
- * This looks up the local address of other address family based on
- * the address of the TCP session.
- */
-static int
-peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
-{
-	struct ifaddrs	*ifap, *ifa, *match;
-
-	if (getifaddrs(&ifap) == -1)
-		fatal("getifaddrs");
-
-	for (match = ifap; match != NULL; match = match->ifa_next)
-		if (sa_cmp(laddr, match->ifa_addr) == 0)
-			break;
-
-	if (match == NULL) {
-		log_warnx("peer_localaddrs: local address not found");
-		return (-1);
-	}
-
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family == AF_INET &&
-		    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
-			if (ifa->ifa_addr->sa_family ==
-			    match->ifa_addr->sa_family)
-				ifa = match;
-			sa2addr(ifa->ifa_addr, &peer->local_v4_addr, NULL);
-			break;
-		}
-	}
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family == AF_INET6 &&
-		    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
-			/*
-			 * only accept global scope addresses except explicitly
-			 * specified.
-			 */
-			if (ifa->ifa_addr->sa_family ==
-			    match->ifa_addr->sa_family)
-				ifa = match;
-			else if (IN6_IS_ADDR_LINKLOCAL(
-			    &((struct sockaddr_in6 *)ifa->
-			    ifa_addr)->sin6_addr) ||
-			    IN6_IS_ADDR_SITELOCAL(
-			    &((struct sockaddr_in6 *)ifa->
-			    ifa_addr)->sin6_addr))
-				continue;
-			sa2addr(ifa->ifa_addr, &peer->local_v6_addr, NULL);
-			break;
-		}
-	}
-
-	freeifaddrs(ifap);
-	return (0);
-}
-
 /*
  * Session got established, bring peer up, load RIBs do initial table dump.
  */
@@ -425,12 +327,10 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 	}
 	peer->remote_bgpid = ntohl(sup->remote_bgpid);
 	peer->short_as = sup->short_as;
-	memcpy(&peer->remote_addr, &sup->remote_addr,
-	    sizeof(peer->remote_addr));
+	peer->remote_addr = sup->remote_addr;
+	peer->local_v4_addr = sup->local_v4_addr;
+	peer->local_v6_addr = sup->local_v6_addr;
 	memcpy(&peer->capa, &sup->capa, sizeof(peer->capa));
-
-	if (peer_localaddrs(peer, &sup->local_addr))
-		return (-1);
 
 	peer->state = PEER_UP;
 

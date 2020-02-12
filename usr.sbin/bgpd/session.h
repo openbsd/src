@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.144 2020/01/24 05:44:05 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.145 2020/02/12 10:33:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -214,6 +214,7 @@ struct peer {
 		u_int8_t		established;
 	}			 auth;
 	struct bgpd_addr	 local;
+	struct bgpd_addr	 local_alt;
 	struct bgpd_addr	 remote;
 	struct peer_timer_head	 timers;
 	struct msgbuf		 wbuf;

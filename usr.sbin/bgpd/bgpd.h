@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.399 2020/01/24 05:44:05 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.400 2020/02/12 10:33:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -660,7 +660,8 @@ struct kif {
 };
 
 struct session_up {
-	struct bgpd_addr	local_addr;
+	struct bgpd_addr	local_v4_addr;
+	struct bgpd_addr	local_v6_addr;
 	struct bgpd_addr	remote_addr;
 	struct capabilities	capa;
 	u_int32_t		remote_bgpid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.398 2020/01/24 05:44:05 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.399 2020/02/12 10:33:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -33,6 +33,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ifaddrs.h>
 #include <poll.h>
 #include <pwd.h>
 #include <signal.h>
@@ -1191,6 +1192,69 @@ session_setup_socket(struct peer *p)
 	return (0);
 }
 
+/* compare two sockaddrs by converting them into bgpd_addr */
+static int
+sa_cmp(struct sockaddr *a, struct sockaddr *b)
+{
+	struct bgpd_addr ba, bb;
+
+	sa2addr(a, &ba, NULL);
+	sa2addr(b, &bb, NULL);
+
+	return (memcmp(&ba, &bb, sizeof(ba)) == 0);
+}
+
+static void
+get_alternate_addr(struct sockaddr *sa, struct bgpd_addr *alt)
+{
+	struct ifaddrs	*ifap, *ifa, *match;
+
+	if (getifaddrs(&ifap) == -1)
+		fatal("getifaddrs");
+
+	for (match = ifap; match != NULL; match = match->ifa_next)
+		if (sa_cmp(sa, match->ifa_addr) == 0)
+			break;
+
+	if (match == NULL) {
+		log_warnx("%s: local address not found", __func__);
+		return;
+	}
+
+	switch (sa->sa_family) {
+	case AF_INET6:
+		for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+			if (ifa->ifa_addr->sa_family == AF_INET &&
+			    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
+				sa2addr(ifa->ifa_addr, alt, NULL);
+				break;
+			}
+		}
+		break;
+	case AF_INET:
+		for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+			struct sockaddr_in6 *s =
+			    (struct sockaddr_in6 *)ifa->ifa_addr;
+			if (ifa->ifa_addr->sa_family == AF_INET6 &&
+			    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
+				/* only accept global scope addresses */
+				if (IN6_IS_ADDR_LINKLOCAL(&s->sin6_addr) ||
+				    IN6_IS_ADDR_SITELOCAL(&s->sin6_addr))
+					continue;
+				sa2addr(ifa->ifa_addr, alt, NULL);
+				break;
+			}
+		}
+		break;
+	default:
+		log_warnx("%s: unsupported address family %d", __func__,
+		    sa->sa_family);
+		break;
+	}
+
+	freeifaddrs(ifap);
+}
+
 void
 session_tcp_established(struct peer *peer)
 {
@@ -1201,6 +1265,7 @@ session_tcp_established(struct peer *peer)
 	if (getsockname(peer->fd, (struct sockaddr *)&ss, &len) == -1)
 		log_warn("getsockname");
 	sa2addr((struct sockaddr *)&ss, &peer->local, &peer->local_port);
+	get_alternate_addr((struct sockaddr *)&ss, &peer->local_alt);
 	len = sizeof(ss);
 	if (getpeername(peer->fd, (struct sockaddr *)&ss, &len) == -1)
 		log_warn("getpeername");
@@ -3080,7 +3145,13 @@ session_up(struct peer *p)
 	    &p->conf, sizeof(p->conf)) == -1)
 		fatalx("imsg_compose error");
 
-	sup.local_addr = p->local;
+	if (p->local.aid == AID_INET) {
+		sup.local_v4_addr = p->local;
+		sup.local_v6_addr = p->local_alt;
+	} else {
+		sup.local_v6_addr = p->local;
+		sup.local_v4_addr = p->local_alt;
+	}
 	sup.remote_addr = p->remote;
 
 	sup.remote_bgpid = p->remote_bgpid;
