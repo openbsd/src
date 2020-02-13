@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.299 2020/01/20 23:21:55 claudio Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.300 2020/02/13 08:47:10 claudio Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -996,6 +996,17 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	if (vp->v_flag & VXLOCK)
 		panic("vclean: deadlock");
 	vp->v_flag |= VXLOCK;
+
+	if (vp->v_lockcount > 0) {
+		/*
+		 * Ensure that any thread currently waiting on the same lock has
+		 * observed that the vnode is about to be exclusively locked
+		 * before continuing.
+		 */
+		tsleep_nsec(&vp->v_lockcount, PINOD, "vop_lock", INFSLP);
+		KASSERT(vp->v_lockcount == 0);
+	}
+
 	/*
 	 * Even if the count is zero, the VOP_INACTIVE routine may still
 	 * have the object locked while it cleans it out. The VOP_LOCK

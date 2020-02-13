@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.23 2019/12/08 12:29:42 mpi Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.24 2020/02/13 08:47:10 claudio Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -46,7 +46,6 @@
 #include <sys/vnode.h>
 #include <sys/unistd.h>
 #include <sys/systm.h>
-#include <sys/lock.h>	/* LK_DRAIN */
 
 #ifdef VFSLCKDEBUG
 #include <sys/systm.h>		/* for panic() */
@@ -599,17 +598,6 @@ VOP_LOCK(struct vnode *vp, int flags)
 
 	if (vp->v_op->vop_lock == NULL)
 		return (EOPNOTSUPP);
-
-	if ((flags & LK_DRAIN) && vp->v_lockcount > 0) {
-		/*
-		 * Ensure that any thread currently waiting on the same lock has
-		 * observed that the vnode is about to be exclusively locked
-		 * before continuing.
-		 */
-		KASSERT(vp->v_flag & VXLOCK);
-		tsleep_nsec(&vp->v_lockcount, PINOD, "vop_lock", INFSLP);
-		KASSERT(vp->v_lockcount == 0);
-	}
 
 	return ((vp->v_op->vop_lock)(&a));
 }
