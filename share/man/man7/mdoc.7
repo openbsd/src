@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.169 2020/01/19 17:59:00 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.170 2020/02/13 18:31:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 19 2020 $
+.Dd $Mdocdate: February 13 2020 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1203,7 +1203,8 @@ Close a
 block.
 Does not have any tail arguments.
 .It Ic \&Dd Cm $\&Mdocdate$ | Ar month day , year
-Document date for display in the page footer.
+Document date for display in the page footer,
+by convention the date of the last change.
 This is the mandatory first macro of any
 .Nm
 manual.
@@ -3096,26 +3097,12 @@ The following problematic behaviour is found in groff:
 .Pp
 .Bl -dash -compact
 .It
-.Ic \&Dd
-with non-standard arguments behaves very strangely.
-When there are three arguments, they are printed verbatim.
-Any other number of arguments is replaced by the current date,
-but without any arguments the string
-.Dq Epoch
-is printed.
-.It
-.Ic \&Lk
-only accepts a single link-name argument; the remainder is misformatted.
-.It
 .Ic \&Pa
 does not format its arguments when used in the FILES section under
 certain list types.
 .It
 .Ic \&Ta
 can only be called by other macros, but not at the beginning of a line.
-.It
-.Ic \&%C
-is not implemented (up to and including groff-1.22.2).
 .It
 .Sq \ef
 .Pq font face
