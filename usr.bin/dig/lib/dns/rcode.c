@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.c,v 1.3 2020/02/12 13:05:03 jsg Exp $ */
+/* $Id: rcode.c,v 1.4 2020/02/13 08:18:03 florian Exp $ */
 
 
 #include <ctype.h>
@@ -400,10 +400,6 @@ dns_keyflags_fromtext(dns_keyflags_t *flagsp, isc_textregion_t *source)
 		if (p->name == NULL)
 			return (DNS_R_UNKNOWNFLAG);
 		value |= p->value;
-#ifdef notyet
-		if ((mask & p->mask) != 0)
-			warn("overlapping key flags");
-#endif
 		mask |= p->mask;
 		text += len;
 		if (delim != NULL)
