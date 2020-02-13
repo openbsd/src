@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.3 2020/02/12 13:05:03 jsg Exp $ */
+/* $Id: rdata.c,v 1.4 2020/02/13 10:40:24 jsg Exp $ */
 
 /*! \file */
 
@@ -584,9 +584,6 @@ static const char hexdigits[] = "0123456789abcdef";
 static const char decdigits[] = "0123456789";
 
 #include "code.h"
-
-#define META 0x0001
-#define RESERVED 0x0002
 
 /***
  *** Initialization

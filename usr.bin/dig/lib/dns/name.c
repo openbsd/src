@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.4 2020/02/13 10:12:49 florian Exp $ */
+/* $Id: name.c,v 1.5 2020/02/13 10:40:24 jsg Exp $ */
 
 /*! \file */
 #include <ctype.h>
@@ -256,7 +256,6 @@ dns_name_isabsolute(const dns_name_t *name) {
 }
 
 #define hyphenchar(c) ((c) == 0x2d)
-#define asterchar(c) ((c) == 0x2a)
 #define alphachar(c) (((c) >= 0x41 && (c) <= 0x5a) \
 		      || ((c) >= 0x61 && (c) <= 0x7a))
 #define digitchar(c) ((c) >= 0x30 && (c) <= 0x39)

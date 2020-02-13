@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: timer.c,v 1.4 2020/02/13 10:40:24 jsg Exp $ */
 
 /*! \file */
 
@@ -31,19 +31,11 @@
 #include "timer_p.h"
 
 #ifdef ISC_TIMER_TRACE
-#define XTRACE(s)			fprintf(stderr, "%s\n", (s))
 #define XTRACEID(s, t)			fprintf(stderr, "%s %p\n", (s), (t))
-#define XTRACETIME(s, d)		fprintf(stderr, "%s %u.%09u\n", (s), \
-					       (d).seconds, (d).nanoseconds)
-#define XTRACETIME2(s, d, n)		fprintf(stderr, "%s %u.%09u %u.%09u\n", (s), \
-					       (d).seconds, (d).nanoseconds, (n).seconds, (n).nanoseconds)
 #define XTRACETIMER(s, t, d)		fprintf(stderr, "%s %p %u.%09u\n", (s), (t), \
 					       (d).seconds, (d).nanoseconds)
 #else
-#define XTRACE(s)
 #define XTRACEID(s, t)
-#define XTRACETIME(s, d)
-#define XTRACETIME2(s, d, n)
 #define XTRACETIMER(s, t, d)
 #endif /* ISC_TIMER_TRACE */
 

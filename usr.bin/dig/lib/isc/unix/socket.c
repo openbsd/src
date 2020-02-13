@@ -63,7 +63,6 @@ int isc_dscp_check_value = -1;
 /*%
  * Size of per-FD lock buckets.
  */
-#define FDLOCK_COUNT		1
 #define FDLOCK_ID(fd)		0
 
 /*%
@@ -88,19 +87,16 @@ int isc_dscp_check_value = -1;
 
 /*!<
  * DLVL(90)  --  Function entry/exit and other tracing.
- * DLVL(70)  --  Socket "correctness" -- including returning of events, etc.
  * DLVL(60)  --  Socket data send/receive
  * DLVL(50)  --  Event tracing, including receiving/sending completion events.
  * DLVL(20)  --  Socket creation/destruction.
  */
 #define TRACE_LEVEL		90
-#define CORRECTNESS_LEVEL	70
 #define IOEVENT_LEVEL		60
 #define EVENT_LEVEL		50
 #define CREATION_LEVEL		20
 
 #define TRACE		DLVL(TRACE_LEVEL)
-#define CORRECTNESS	DLVL(CORRECTNESS_LEVEL)
 #define IOEVENT		DLVL(IOEVENT_LEVEL)
 #define EVENT		DLVL(EVENT_LEVEL)
 #define CREATION	DLVL(CREATION_LEVEL)
@@ -121,11 +117,6 @@ typedef isc_event_t intev_t;
  * a setsockopt() like interface to request timestamps, and if the OS
  * doesn't do it for us, call gettimeofday() on every UDP receive?
  */
-
-/*%
- * The size to raise the receive buffer to (from BIND 8).
- */
-#define RCVBUFSIZE (32*1024)
 
 /*%
  * Instead of calculating the cmsgbuf lengths every time we take
@@ -151,8 +142,6 @@ typedef isc_event_t intev_t;
 
 typedef struct isc__socket isc__socket_t;
 typedef struct isc__socketmgr isc__socketmgr_t;
-
-#define NEWCONNSOCK(ev) ((isc__socket_t *)(ev)->newsocket)
 
 struct isc__socket {
 	/* Not locked. */
@@ -312,9 +301,7 @@ static isc_socketmgrmethods_t socketmgrmethods = {
 };
 
 #define SELECT_POKE_SHUTDOWN		(-1)
-#define SELECT_POKE_NOTHING		(-2)
 #define SELECT_POKE_READ		(-3)
-#define SELECT_POKE_ACCEPT		(-3) /*%< Same as _READ */
 #define SELECT_POKE_WRITE		(-4)
 #define SELECT_POKE_CONNECT		(-4) /*%< Same as _WRITE */
 #define SELECT_POKE_CLOSE		(-5)

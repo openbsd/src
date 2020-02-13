@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.5 2020/02/13 09:38:34 jsg Exp $ */
+/* $Id: dig.c,v 1.6 2020/02/13 10:40:24 jsg Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -47,8 +47,6 @@
 	else 						\
 		isc_buffer_putstr(b, s); 		\
 }
-
-#define DIG_MAX_ADDRESSES 20
 
 #ifndef DNS_NAME_INITABSOLUTE
 #define DNS_NAME_INITABSOLUTE(A,B) { \

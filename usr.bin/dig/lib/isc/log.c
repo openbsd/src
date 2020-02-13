@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.4 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: log.c,v 1.5 2020/02/13 10:40:24 jsg Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -228,7 +228,6 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 #define FILE_STREAM(channel)	 (channel->destination.file.stream)
 #define FILE_VERSIONS(channel)	 (channel->destination.file.versions)
 #define FILE_MAXSIZE(channel)	 (channel->destination.file.maximum_size)
-#define FILE_MAXREACHED(channel) (channel->destination.file.maximum_reached)
 
 /*@}*/
 /****

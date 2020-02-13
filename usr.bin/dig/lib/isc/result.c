@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.c,v 1.2 2020/02/11 23:26:12 jsg Exp $ */
+/* $Id: result.c,v 1.3 2020/02/13 10:40:24 jsg Exp $ */
 
 /*! \file */
 
@@ -102,7 +102,6 @@ static const char *description[ISC_R_NRESULTS] = {
 };
 
 #define ISC_RESULT_RESULTSET			2
-#define ISC_RESULT_UNAVAILABLESET		3
 
 static isc_boolean_t 				once = ISC_FALSE;
 static ISC_LIST(resulttable)			tables;
