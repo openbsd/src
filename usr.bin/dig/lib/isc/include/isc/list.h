@@ -14,18 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: list.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: list.h,v 1.2 2020/02/13 16:56:09 florian Exp $ */
 
 #ifndef ISC_LIST_H
 #define ISC_LIST_H 1
 #include <isc/boolean.h>
 #include <isc/assertions.h>
-
-#ifdef ISC_LIST_CHECKINIT
-#define ISC_LINK_INSIST(x) ISC_INSIST(x)
-#else
-#define ISC_LINK_INSIST(x)
-#endif
 
 #define ISC_LIST(type) struct { type *head, *tail; }
 #define ISC_LIST_INIT(list) \
@@ -58,7 +52,6 @@
 
 #define ISC_LIST_PREPEND(list, elt, link) \
 	do { \
-		ISC_LINK_INSIST(!ISC_LINK_LINKED(elt, link)); \
 		__ISC_LIST_PREPENDUNSAFE(list, elt, link); \
 	} while (0)
 
@@ -78,7 +71,6 @@
 
 #define ISC_LIST_APPEND(list, elt, link) \
 	do { \
-		ISC_LINK_INSIST(!ISC_LINK_LINKED(elt, link)); \
 		__ISC_LIST_APPENDUNSAFE(list, elt, link); \
 	} while (0)
 
@@ -110,7 +102,6 @@
 
 #define ISC_LIST_UNLINK_TYPE(list, elt, link, type) \
 	do { \
-		ISC_LINK_INSIST(ISC_LINK_LINKED(elt, link)); \
 		__ISC_LIST_UNLINKUNSAFE_TYPE(list, elt, link, type); \
 	} while (0)
 #define ISC_LIST_UNLINK(list, elt, link) \
@@ -133,8 +124,6 @@
 
 #define ISC_LIST_INSERTBEFORE(list, before, elt, link) \
 	do { \
-		ISC_LINK_INSIST(ISC_LINK_LINKED(before, link)); \
-		ISC_LINK_INSIST(!ISC_LINK_LINKED(elt, link)); \
 		__ISC_LIST_INSERTBEFOREUNSAFE(list, before, elt, link); \
 	} while (0)
 
@@ -152,8 +141,6 @@
 
 #define ISC_LIST_INSERTAFTER(list, after, elt, link) \
 	do { \
-		ISC_LINK_INSIST(ISC_LINK_LINKED(after, link)); \
-		ISC_LINK_INSIST(!ISC_LINK_LINKED(elt, link)); \
 		__ISC_LIST_INSERTAFTERUNSAFE(list, after, elt, link); \
 	} while (0)
 
