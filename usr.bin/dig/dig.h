@@ -409,12 +409,6 @@ void
 dig_startup(void);
 
 /*%<
- * Initiates the next lookup cycle
- */
-void
-dig_query_start(void);
-
-/*%<
  * Cleans up the application
  */
 void

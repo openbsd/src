@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.4 2020/02/12 14:46:36 schwarze Exp $ */
+/* $Id: dig.c,v 1.5 2020/02/13 09:38:34 jsg Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -1945,11 +1945,6 @@ void dig_startup() {
 	result = isc_app_onrun(global_task, onrun_callback, NULL);
 	check_result(result, "isc_app_onrun");
 	isc_app_run();
-}
-
-void dig_query_start()
-{
-	start_lookup();
 }
 
 void
