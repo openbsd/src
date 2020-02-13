@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.187 2020/01/21 05:02:53 beck Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.188 2020/02/13 15:47:33 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1045,18 +1045,14 @@ noslash:
 		if (error == -1)
 			goto cleanup_url_get;
 	} else {
-		i = 0;
-		len = 1;
-		while (len > 0) {
-			len = fread(buf, 1, buflen, fin);
+		while ((len = fread(buf, 1, buflen, fin)) > 0) {
 			bytes += len;
-			for (cp = buf, wlen = len; wlen > 0; wlen -= i, cp += i) {
-				if ((i = write(out, cp, wlen)) == -1) {
+			for (cp = buf; len > 0; len -= wlen, cp += wlen) {
+				if ((wlen = write(out, cp, len)) == -1) {
 					warn("Writing %s", savefile);
 					signal(SIGINFO, oldinti);
 					goto cleanup_url_get;
-				} else if (i == 0)
-					break;
+				}
 			}
 			if (hash && !progress) {
 				while (bytes >= hashbytes) {
@@ -1066,6 +1062,7 @@ noslash:
 				(void)fflush(ttyout);
 			}
 		}
+		save_errno = errno;
 		signal(SIGINFO, oldinti);
 		if (hash && !progress && bytes > 0) {
 			if (bytes < mark)
@@ -1073,7 +1070,8 @@ noslash:
 			(void)putc('\n', ttyout);
 			(void)fflush(ttyout);
 		}
-		if (len != 0) {
+		if (len == 0 && ferror(fin)) {
+			errno = save_errno;
 			warnx("Reading from socket: %s", sockerror(tls));
 			goto cleanup_url_get;
 		}
