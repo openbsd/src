@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.18 2019/11/30 18:12:18 cheloha Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.19 2020/02/13 18:19:07 jasper Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -138,7 +138,7 @@ utwitch_attach(struct device *parent, struct device *self, void *aux)
 
 	err = uhidev_open(&sc->sc_hdev);
 	if (err) {
-		printf("utwitch_open: uhidev_open %d\n", err);
+		printf("%s: uhidev_open %d\n", __func__, err);
 		return;
 	}
 	sc->sc_ibuf = malloc(sc->sc_ilen, M_USBDEV, M_WAITOK);
