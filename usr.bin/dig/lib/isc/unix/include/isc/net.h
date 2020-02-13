@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: net.h,v 1.2 2020/02/11 17:22:31 florian Exp $ */
+/* $Id: net.h,v 1.3 2020/02/13 09:29:34 jsg Exp $ */
 
 #ifndef ISC_NET_H
 #define ISC_NET_H 1
@@ -121,11 +121,6 @@ isc_net_probedscp(void);
 /*%<
  * Probe the level of DSCP support.
  */
-
-int
-isc_net_aton(const char *cp, struct in_addr *addr);
-#undef inet_aton
-#define inet_aton isc_net_aton
 
 ISC_LANG_ENDDECLS
 
