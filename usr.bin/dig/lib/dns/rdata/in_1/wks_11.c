@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: wks_11.c,v 1.2 2020/02/13 16:57:04 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -26,16 +26,6 @@
 #include <stdlib.h>
 
 #include <isc/net.h>
-
-/*
- * Redefine CHECK here so cppcheck "sees" the define.
- */
-#ifndef CHECK
-#define CHECK(op)						\
-	do { result = (op);					\
-		if (result != ISC_R_SUCCESS) goto cleanup;	\
-	} while (0)
-#endif
 
 #define RRTYPE_WKS_ATTRIBUTES (0)
 
