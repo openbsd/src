@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.132 2020/01/16 20:05:00 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.133 2020/02/13 16:27:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1030,8 +1030,8 @@ const char *
 const char *
 	 print_map(unsigned int, struct iked_constmap *);
 void	 lc_string(char *);
-void	 print_hex(uint8_t *, off_t, size_t);
-void	 print_hexval(uint8_t *, off_t, size_t);
+void	 print_hex(const uint8_t *, off_t, size_t);
+void	 print_hexval(const uint8_t *, off_t, size_t);
 const char *
 	 print_bits(unsigned short, unsigned char *);
 int	 sockaddr_cmp(struct sockaddr *, struct sockaddr *, int);

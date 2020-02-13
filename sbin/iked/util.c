@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.37 2018/12/07 08:42:13 claudio Exp $	*/
+/*	$OpenBSD: util.c,v 1.38 2020/02/13 16:27:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -466,7 +466,7 @@ lc_string(char *str)
 }
 
 void
-print_hex(uint8_t *buf, off_t offset, size_t length)
+print_hex(const uint8_t *buf, off_t offset, size_t length)
 {
 	unsigned int	 i;
 
@@ -486,7 +486,7 @@ print_hex(uint8_t *buf, off_t offset, size_t length)
 }
 
 void
-print_hexval(uint8_t *buf, off_t offset, size_t length)
+print_hexval(const uint8_t *buf, off_t offset, size_t length)
 {
 	unsigned int	 i;
 
