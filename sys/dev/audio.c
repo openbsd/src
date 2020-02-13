@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.186 2020/01/29 06:04:05 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.187 2020/02/13 21:00:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,6 +47,8 @@
 #define DPRINTFN(n, ...) do {} while(0)
 #endif
 
+#define IPL_SOFTAUDIO		IPL_SOFTNET
+
 #define DEVNAME(sc)		((sc)->dev.dv_xname)
 #define AUDIO_UNIT(n)		(minor(n) & 0x0f)
 #define AUDIO_DEV(n)		(minor(n) & 0xf0)
@@ -76,6 +78,7 @@ struct audio_buf {
 	size_t blksz;			/* DMA block size */
 	unsigned int nblks;		/* number of blocks */
 	struct selinfo sel;		/* to record & wakeup poll(2) */
+	void *softintr;			/* context to call selwakeup() */
 	unsigned int pos;		/* bytes transferred */
 	unsigned int xrun;		/* bytes lost by xruns */
 	int blocking;			/* read/write blocking */
@@ -231,9 +234,27 @@ audio_blksz_bytes(int mode,
 	return nr * np / audio_gcd(nr, np);
 }
 
+void
+audio_buf_wakeup(void *addr)
+{
+	struct audio_buf *buf = addr;
+
+	if (buf->blocking) {
+		wakeup(&buf->blocking);
+		buf->blocking = 0;
+	}
+	selwakeup(&buf->sel);
+}
+
 int
 audio_buf_init(struct audio_softc *sc, struct audio_buf *buf, int dir)
 {
+	buf->softintr = softintr_establish(IPL_SOFTAUDIO,
+	    audio_buf_wakeup, buf);
+	if (buf->softintr == NULL) {
+		printf("%s: can't establish softintr\n", DEVNAME(sc));
+		return ENOMEM;
+	}
 	if (sc->ops->round_buffersize) {
 		buf->datalen = sc->ops->round_buffersize(sc->arg,
 		    dir, AUDIO_BUFSZ);
@@ -244,8 +265,10 @@ audio_buf_init(struct audio_softc *sc, struct audio_buf *buf, int dir)
 		    M_DEVBUF, M_WAITOK);
 	} else
 		buf->data = malloc(buf->datalen, M_DEVBUF, M_WAITOK);
-	if (buf->data == NULL)
+	if (buf->data == NULL) {
+		softintr_disestablish(buf->softintr);
 		return ENOMEM;
+	}
 	return 0;
 }
 
@@ -256,6 +279,7 @@ audio_buf_done(struct audio_softc *sc, struct audio_buf *buf)
 		sc->ops->freem(sc->arg, buf->data, M_DEVBUF);
 	else
 		free(buf->data, M_DEVBUF, buf->datalen);
+	softintr_disestablish(buf->softintr);
 }
 
 /*
@@ -468,11 +492,13 @@ audio_pintr(void *addr)
 	if (sc->play.used < sc->play.len) {
 		DPRINTFN(1, "%s: play wakeup, chan = %d\n",
 		    DEVNAME(sc), sc->play.blocking);
-		if (sc->play.blocking) {
-			wakeup(&sc->play.blocking);
-			sc->play.blocking = 0;
-		}
-		selwakeup(&sc->play.sel);
+		/*
+		 * As long as selwakeup() needs to be protected by the
+		 * KERNEL_LOCK() we have to delay the wakeup to another
+		 * context to keep the interrupt context KERNEL_LOCK()
+		 * free.
+		 */
+		softintr_schedule(sc->play.softintr);
 	}
 }
 
@@ -549,11 +575,13 @@ audio_rintr(void *addr)
 	if (sc->rec.used > 0) {
 		DPRINTFN(1, "%s: rec wakeup, chan = %d\n",
 		    DEVNAME(sc), sc->rec.blocking);
-		if (sc->rec.blocking) {
-			wakeup(&sc->rec.blocking);
-			sc->rec.blocking = 0;
-		}
-		selwakeup(&sc->rec.sel);
+		/*
+		 * As long as selwakeup() needs to be protected by the
+		 * KERNEL_LOCK() we have to delay the wakeup to another
+		 * context to keep the interrupt context KERNEL_LOCK()
+		 * free.
+		 */
+		softintr_schedule(sc->rec.softintr);
 	}
 }
 
