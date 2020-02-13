@@ -30,7 +30,6 @@
 
 #include <isc/event.h>
 
-#include <isc/strerror.h>
 #include <string.h>
 #include <isc/task.h>
 #include <isc/time.h>
@@ -143,16 +142,15 @@ reload_action(int arg) {
 static isc_result_t
 handle_signal(int sig, void (*handler)(int)) {
 	struct sigaction sa;
-	char strbuf[ISC_STRERRORSIZE];
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = handler;
 
 	if (sigfillset(&sa.sa_mask) != 0 ||
 	    sigaction(sig, &sa, NULL) < 0) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "handle_signal() %d setup: %s", sig, strbuf);
+				 "handle_signal() %d setup: %s", sig,
+				 strerror(errno));
 		return (ISC_R_UNEXPECTED);
 	}
 
@@ -165,7 +163,6 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 	isc_result_t result;
 	int presult;
 	sigset_t sset;
-	char strbuf[ISC_STRERRORSIZE];
 
 	REQUIRE(VALID_APPCTX(ctx));
 
@@ -219,17 +216,17 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 	    sigaddset(&sset, SIGHUP) != 0 ||
 	    sigaddset(&sset, SIGINT) != 0 ||
 	    sigaddset(&sset, SIGTERM) != 0) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_app_start() sigsetops: %s", strbuf);
+				 "isc_app_start() sigsetops: %s",
+				 strerror(errno));
 		result = ISC_R_UNEXPECTED;
 		goto cleanup;
 	}
 	presult = sigprocmask(SIG_UNBLOCK, &sset, NULL);
 	if (presult != 0) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_app_start() sigprocmask: %s", strbuf);
+				 "isc_app_start() sigprocmask: %s",
+				 strerror(errno));
 		result = ISC_R_UNEXPECTED;
 		goto cleanup;
 	}

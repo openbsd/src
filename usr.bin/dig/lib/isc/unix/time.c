@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.5 2020/02/13 12:03:51 jsg Exp $ */
+/* $Id: time.c,v 1.6 2020/02/13 21:34:06 jung Exp $ */
 
 /*! \file */
 
@@ -28,7 +28,6 @@
 #include <sys/time.h>	/* Required for struct timeval on some platforms. */
 
 
-#include <isc/strerror.h>
 #include <string.h>
 #include <isc/time.h>
 
@@ -113,13 +112,11 @@ isc_time_isepoch(const isc_time_t *t) {
 isc_result_t
 isc_time_now(isc_time_t *t) {
 	struct timeval tv;
-	char strbuf[ISC_STRERRORSIZE];
 
 	REQUIRE(t != NULL);
 
 	if (gettimeofday(&tv, NULL) == -1) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__, "%s", strbuf);
+		UNEXPECTED_ERROR(__FILE__, __LINE__, "%s", strerror(errno));
 		return (ISC_R_UNEXPECTED);
 	}
 
