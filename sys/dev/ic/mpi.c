@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.211 2020/01/27 03:35:05 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.212 2020/02/13 15:11:32 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -64,13 +64,12 @@ struct cfdriver mpi_cd = {
 
 void			mpi_scsi_cmd(struct scsi_xfer *);
 void			mpi_scsi_cmd_done(struct mpi_ccb *);
-void			mpi_minphys(struct buf *, struct scsi_link *);
 int			mpi_scsi_probe(struct scsi_link *);
 int			mpi_scsi_ioctl(struct scsi_link *, u_long, caddr_t,
 			    int);
 
 struct scsi_adapter mpi_switch = {
-	mpi_scsi_cmd, mpi_minphys, mpi_scsi_probe, NULL, mpi_scsi_ioctl
+	mpi_scsi_cmd, NULL, mpi_scsi_probe, NULL, mpi_scsi_ioctl
 };
 
 struct mpi_dmamem	*mpi_dmamem_alloc(struct mpi_softc *, size_t);
@@ -1598,14 +1597,6 @@ mpi_load_xs(struct mpi_ccb *ccb)
 	    BUS_DMASYNC_PREWRITE);
 
 	return (0);
-}
-
-void
-mpi_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	/* XXX */
-	if (bp->b_bcount > MAXPHYS)
-		bp->b_bcount = MAXPHYS;
 }
 
 int

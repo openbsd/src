@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.169 2019/07/04 18:09:17 bluhm Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.170 2020/02/13 15:11:32 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -328,7 +328,6 @@ extern u_int32_t		sr_debug;
 #define DNPRINTF(n,x...)
 #endif
 
-#define	SR_MAXFER		MAXPHYS
 #define	SR_MAX_LD		256
 #define	SR_MAX_CMDS		16
 #define	SR_MAX_STATES		7

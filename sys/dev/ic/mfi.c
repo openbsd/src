@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.174 2020/01/26 00:53:31 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.175 2020/02/13 15:11:32 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -58,17 +58,16 @@ struct cfdriver mfi_cd = {
 void	mfi_scsi_cmd(struct scsi_xfer *);
 int	mfi_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 int	mfi_ioctl_cache(struct scsi_link *, u_long,  struct dk_cache *);
-void	mfi_minphys(struct buf *bp, struct scsi_link *sl);
 
 void	mfi_pd_scsi_cmd(struct scsi_xfer *);
 int	mfi_pd_scsi_probe(struct scsi_link *);
 
 struct scsi_adapter mfi_switch = {
-	mfi_scsi_cmd, mfi_minphys, NULL, NULL, mfi_scsi_ioctl
+	mfi_scsi_cmd, NULL, NULL, NULL, mfi_scsi_ioctl
 };
 
 struct scsi_adapter mfi_pd_switch = {
-	mfi_pd_scsi_cmd, mfi_minphys, mfi_pd_scsi_probe, NULL, mfi_scsi_ioctl
+	mfi_pd_scsi_cmd, NULL, mfi_pd_scsi_probe, NULL, mfi_scsi_ioctl
 };
 
 void *		mfi_get_ccb(void *);
@@ -657,16 +656,6 @@ mfi_get_info(struct mfi_softc *sc)
 #endif /* MFI_DEBUG */
 
 	return (0);
-}
-
-void
-mfi_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	DNPRINTF(MFI_D_MISC, "mfi_minphys: %d\n", bp->b_bcount);
-
-	/* XXX currently using MFI_MAXFER = MAXPHYS */
-	if (bp->b_bcount > MFI_MAXFER)
-		bp->b_bcount = MFI_MAXFER;
 }
 
 int

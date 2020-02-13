@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.109 2020/01/25 21:48:42 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.110 2020/02/13 15:11:32 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -604,7 +604,6 @@ int	arc_intr_D(void *);
 
 /* interface for scsi midlayer to talk to */
 void	arc_scsi_cmd(struct scsi_xfer *);
-void	arc_minphys(struct buf *, struct scsi_link *);
 
 /* code to deal with getting bits in and out of the bus space */
 u_int32_t	arc_read(struct arc_softc *, bus_size_t);
@@ -689,7 +688,7 @@ struct cfdriver arc_cd = {
 };
 
 struct scsi_adapter arc_switch = {
-	arc_scsi_cmd, arc_minphys, NULL, NULL, NULL
+	arc_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 /* real stuff for dealing with the hardware */
@@ -1401,13 +1400,6 @@ Loop0:
 	arc_enable_all_intr(sc);
 
 	return (ret);
-}
-
-void
-arc_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	if (bp->b_bcount > MAXPHYS)
-		bp->b_bcount = MAXPHYS;
 }
 
 void

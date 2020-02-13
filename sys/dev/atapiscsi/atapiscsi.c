@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.108 2020/01/25 21:48:42 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.109 2020/02/13 15:11:32 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -133,7 +133,6 @@ void  wdc_atapi_reset_2(struct channel_softc *, struct wdc_xfer *,
 
 void  wdc_atapi_tape_done(struct channel_softc *, struct wdc_xfer *,
 	int, struct atapi_return_args *);
-#define MAX_SIZE MAXPHYS
 
 struct atapiscsi_softc;
 struct atapiscsi_xfer;
@@ -155,12 +154,11 @@ struct atapiscsi_softc {
 	int drive;
 };
 
-void  wdc_atapi_minphys(struct buf *bp, struct scsi_link *sl);
 int   wdc_atapi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 void  wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer);
 
 static struct scsi_adapter atapiscsi_switch = {
-	wdc_atapi_send_cmd, wdc_atapi_minphys, NULL, NULL, wdc_atapi_ioctl
+	wdc_atapi_send_cmd, NULL, NULL, NULL, wdc_atapi_ioctl
 };
 
 /* Inital version shares bus_link structure so it can easily
@@ -418,13 +416,6 @@ wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer)
 
 	wdc_exec_xfer(chp, xfer);
 	splx(s);
-}
-
-void
-wdc_atapi_minphys (struct buf *bp, struct scsi_link *sl)
-{
-	if (bp->b_bcount > MAX_SIZE)
-		bp->b_bcount = MAX_SIZE;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.397 2020/01/25 21:48:42 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.398 2020/02/13 15:11:32 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -93,7 +93,6 @@ struct cfdriver softraid_cd = {
 
 /* scsi & discipline */
 void			sr_scsi_cmd(struct scsi_xfer *);
-void			sr_minphys(struct buf *, struct scsi_link *);
 int			sr_scsi_probe(struct scsi_link *);
 void			sr_copy_internal_data(struct scsi_xfer *,
 			    void *, size_t);
@@ -179,7 +178,7 @@ extern void		(*softraid_disk_attach)(struct disk *, int);
 
 /* scsi glue */
 struct scsi_adapter sr_switch = {
-	sr_scsi_cmd, sr_minphys, sr_scsi_probe, NULL, sr_scsi_ioctl
+	sr_scsi_cmd, NULL, sr_scsi_probe, NULL, sr_scsi_ioctl
 };
 
 /* native metadata format */
@@ -1884,16 +1883,6 @@ sr_error(struct sr_softc *sc, const char *fmt, ...)
 	va_start(ap, fmt);
 	bio_status(&sc->sc_status, 1, BIO_MSG_ERROR, fmt, &ap);
 	va_end(ap);
-}
-
-void
-sr_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	DNPRINTF(SR_D_MISC, "sr_minphys: %ld\n", bp->b_bcount);
-
-	/* XXX currently using SR_MAXFER = MAXPHYS */
-	if (bp->b_bcount > SR_MAXFER)
-		bp->b_bcount = SR_MAXFER;
 }
 
 void
