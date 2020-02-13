@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.4 2020/02/13 08:20:08 florian Exp $
+ * $Id: tsig.c,v 1.5 2020/02/13 16:55:20 florian Exp $
  */
 /*! \file */
 
@@ -53,16 +53,6 @@
 	 (algname) != dns_tsig_hmacsha256_name && \
 	 (algname) != dns_tsig_hmacsha384_name && \
 	 (algname) != dns_tsig_hmacsha512_name)
-
-#ifndef DNS_NAME_INITABSOLUTE
-#define DNS_NAME_INITABSOLUTE(A,B) { \
-	DNS_NAME_MAGIC, \
-	A, sizeof(A), sizeof(B), \
-	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE, \
-	B, NULL, { (void *)-1, (void *)-1}, \
-	{NULL, NULL} \
-}
-#endif
 
 #define BADTIMELEN 6
 
