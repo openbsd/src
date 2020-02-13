@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: time.c,v 1.4 2020/02/13 08:19:12 florian Exp $ */
 
 /*! \file */
 
@@ -38,7 +38,6 @@
 
 #define NS_PER_S	1000000000	/*%< Nanoseconds per second. */
 #define NS_PER_US	1000		/*%< Nanoseconds per microsecond. */
-#define US_PER_S	1000000		/*%< Microseconds per second. */
 
 /*
  * All of the INSIST()s checks of nanoseconds < NS_PER_S are for
@@ -47,42 +46,12 @@
  * need an initialized type.
  */
 
-#ifndef ISC_FIX_TV_USEC
-#define ISC_FIX_TV_USEC 1
-#endif
-
 /*%
  *** Intervals
  ***/
 
 static const interval_t zero_interval = { 0, 0 };
 const interval_t * const interval_zero = &zero_interval;
-
-#if ISC_FIX_TV_USEC
-static inline void
-fix_tv_usec(struct timeval *tv) {
-	isc_boolean_t fixed = ISC_FALSE;
-
-	if (tv->tv_usec < 0) {
-		fixed = ISC_TRUE;
-		do {
-			tv->tv_sec -= 1;
-			tv->tv_usec += US_PER_S;
-		} while (tv->tv_usec < 0);
-	} else if (tv->tv_usec >= US_PER_S) {
-		fixed = ISC_TRUE;
-		do {
-			tv->tv_sec += 1;
-			tv->tv_usec -= US_PER_S;
-		} while (tv->tv_usec >=US_PER_S);
-	}
-	/*
-	 * Call syslog directly as was are called from the logging functions.
-	 */
-	if (fixed)
-		(void)syslog(LOG_ERR, "gettimeofday returned bad tv_usec: corrected");
-}
-#endif
 
 void
 interval_set(interval_t *i,
@@ -155,22 +124,6 @@ isc_time_now(isc_time_t *t) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__, "%s", strbuf);
 		return (ISC_R_UNEXPECTED);
 	}
-
-	/*
-	 * Does POSIX guarantee the signedness of tv_sec and tv_usec?  If not,
-	 * then this test will generate warnings for platforms on which it is
-	 * unsigned.  In any event, the chances of any of these problems
-	 * happening are pretty much zero, but since the libisc library ensures
-	 * certain things to be true ...
-	 */
-#if ISC_FIX_TV_USEC
-	fix_tv_usec(&tv);
-	if (tv.tv_sec < 0)
-		return (ISC_R_UNEXPECTED);
-#else
-	if (tv.tv_sec < 0 || tv.tv_usec < 0 || tv.tv_usec >= US_PER_S)
-		return (ISC_R_UNEXPECTED);
-#endif
 
 	/*
 	 * Ensure the tv_sec value fits in t->seconds.
