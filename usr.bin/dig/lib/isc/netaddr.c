@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.c,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: netaddr.c,v 1.4 2020/02/13 16:55:44 florian Exp $ */
 
 /*! \file */
 
@@ -106,14 +106,6 @@ isc_netaddr_totext(const isc_netaddr_t *netaddr, isc_buffer_t *target) {
 	case AF_INET6:
 		type = &netaddr->type.in6;
 		break;
-	case AF_UNIX:
-		alen = strlen(netaddr->type.un);
-		if (alen > isc_buffer_availablelength(target))
-			return (ISC_R_NOSPACE);
-		isc_buffer_putmem(target,
-				  (const unsigned char *)(netaddr->type.un),
-				  alen);
-		return (ISC_R_SUCCESS);
 	default:
 		return (ISC_R_FAILURE);
 	}
@@ -186,10 +178,6 @@ isc_netaddr_fromsockaddr(isc_netaddr_t *t, const isc_sockaddr_t *s) {
 	case AF_INET6:
 		memmove(&t->type.in6, &s->type.sin6.sin6_addr, 16);
 		t->zone = s->type.sin6.sin6_scope_id;
-		break;
-	case AF_UNIX:
-		memmove(t->type.un, s->type.sunix.sun_path, sizeof(t->type.un));
-		t->zone = 0;
 		break;
 	default:
 		INSIST(0);
