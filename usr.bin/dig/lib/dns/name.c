@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.2 2020/02/12 13:05:03 jsg Exp $ */
+/* $Id: name.c,v 1.3 2020/02/13 08:16:01 florian Exp $ */
 
 /*! \file */
 #include <ctype.h>
@@ -1607,10 +1607,6 @@ dns_name_towire(const dns_name_t *name, dns_compress_t *cctx,
 	 * has one.
 	 */
 	if (name->offsets == NULL) {
-#if defined(__clang__)  && \
-       ( __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 2))
-		memset(&clname, 0, sizeof(clname));
-#endif
 		DNS_NAME_INIT(&clname, clo);
 		dns_name_clone(name, &clname);
 		name = &clname;
@@ -1915,10 +1911,6 @@ dns_name_digest(dns_name_t *name, dns_digestfunc_t digest, void *arg) {
 	REQUIRE(VALID_NAME(name));
 	REQUIRE(digest != NULL);
 
-#if defined(__clang__)  && \
-       ( __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 2))
-	memset(&downname, 0, sizeof(downname));
-#endif
 	DNS_NAME_INIT(&downname, NULL);
 
 	isc_buffer_init(&buffer, data, sizeof(data));
