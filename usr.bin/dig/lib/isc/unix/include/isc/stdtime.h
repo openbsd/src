@@ -14,15 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: stdtime.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: stdtime.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_STDTIME_H
 #define ISC_STDTIME_H 1
 
 /*! \file */
-
-#include <isc/lang.h>
-
 
 /*%
  * It's public information that 'isc_stdtime_t' is an unsigned integral type.
@@ -41,7 +38,6 @@ typedef uint32_t isc_stdtime_t;
  */
 typedef uint32_t isc_stdtime32_t;
 
-ISC_LANG_BEGINDECLS
 /* */
 void
 isc_stdtime_get(isc_stdtime_t *t);
@@ -57,7 +53,5 @@ isc_stdtime_get(isc_stdtime_t *t);
 /*
  * Convert the standard time to its 32-bit version.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_STDTIME_H */

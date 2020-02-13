@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: bufferlist.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: bufferlist.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_BUFFERLIST_H
 #define ISC_BUFFERLIST_H 1
@@ -43,10 +43,7 @@
  *** Imports
  ***/
 
-#include <isc/lang.h>
 #include <isc/types.h>
-
-ISC_LANG_BEGINDECLS
 
 /***
  *** Functions
@@ -79,7 +76,5 @@ isc_bufferlist_availablecount(isc_bufferlist_t *bl);
  * Returns:
  *\li	sum of all available regions' lengths.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_BUFFERLIST_H */

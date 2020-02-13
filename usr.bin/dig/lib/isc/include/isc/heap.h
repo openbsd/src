@@ -14,17 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: heap.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_HEAP_H
 #define ISC_HEAP_H 1
 
 /*! \file isc/heap.h */
 
-#include <isc/lang.h>
 #include <isc/types.h>
-
-ISC_LANG_BEGINDECLS
 
 /*%
  * The comparison function returns ISC_TRUE if the first argument has
@@ -147,7 +144,5 @@ isc_heap_element(isc_heap_t *heap, unsigned int index);
  * Returns:
  *\li	A pointer to the element for the element index.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_HEAP_H */

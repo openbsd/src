@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: hash.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
@@ -82,7 +82,6 @@
 /***
  *** Functions
  ***/
-ISC_LANG_BEGINDECLS
 
 isc_result_t
 isc_hash_ctxcreate(size_t limit, isc_hash_t **hctx);
@@ -232,7 +231,5 @@ isc_hash_function_reverse(const void *data, size_t length,
  * this function. It can be used to perform incremental hashing. NULL
  * must be passed during first calls.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_HASH_H */

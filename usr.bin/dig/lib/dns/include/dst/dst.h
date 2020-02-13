@@ -14,14 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst.h,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: dst.h,v 1.4 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
 
 /*! \file dst/dst.h */
 
-#include <isc/lang.h>
 #include <isc/stdtime.h>
 
 #include <dns/types.h>
@@ -30,8 +29,6 @@
 #include <dns/secalg.h>
 #include <dns/ds.h>
 #include <dns/dsdigest.h>
-
-ISC_LANG_BEGINDECLS
 
 /***
  *** Types
@@ -443,7 +440,5 @@ dst_key_setbits(dst_key_t *key, uint16_t bits);
  * Requires:
  *	"key" is a valid key.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DST_DST_H */

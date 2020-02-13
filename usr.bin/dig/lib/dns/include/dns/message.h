@@ -21,7 +21,6 @@
  ***	Imports
  ***/
 
-#include <isc/lang.h>
 #include <isc/magic.h>
 
 #include <dns/compress.h>
@@ -261,8 +260,6 @@ struct dns_ednsopt {
 /***
  *** Functions
  ***/
-
-ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_message_create(unsigned int intent, dns_message_t **msgp);
@@ -1058,7 +1055,5 @@ dns_message_buildopt(dns_message_t *msg, dns_rdataset_t **opt,
  * \li	 ISC_R_NOSPACE
  * \li	 other.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_MESSAGE_H */

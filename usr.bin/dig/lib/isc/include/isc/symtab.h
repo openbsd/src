@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: symtab.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: symtab.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_SYMTAB_H
 #define ISC_SYMTAB_H 1
@@ -84,7 +84,6 @@
  *** Imports.
  ***/
 
-#include <isc/lang.h>
 #include <isc/types.h>
 
 /*
@@ -106,8 +105,6 @@ typedef enum {
 	isc_symexists_replace = 1,	/*%< Replace the old value with the new */
 	isc_symexists_add = 2		/*%< Add the new tuple */
 } isc_symexists_t;
-
-ISC_LANG_BEGINDECLS
 
 /*% Create a symbol table. */
 isc_result_t
@@ -136,6 +133,5 @@ isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type);
 /*% Return the number of items in a symbol table. */
 unsigned int
 isc_symtab_count(isc_symtab_t *symtab);
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_SYMTAB_H */

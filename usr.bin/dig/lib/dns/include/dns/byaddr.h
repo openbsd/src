@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: byaddr.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: byaddr.h,v 1.2 2020/02/13 13:53:00 jsg Exp $ */
 
 #ifndef DNS_BYADDR_H
 #define DNS_BYADDR_H 1
@@ -46,12 +46,9 @@
  *\li	Drafts:	TBS
  */
 
-#include <isc/lang.h>
 #include <isc/event.h>
 
 #include <dns/types.h>
-
-ISC_LANG_BEGINDECLS
 
 /*
  * This option is deprecated since we now only consider nibbles.
@@ -111,7 +108,5 @@ dns_byaddr_createptrname2(isc_netaddr_t *address, unsigned int options,
  * \li	'address' is a valid address.
  * \li	'name' is a valid name with a dedicated buffer.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_BYADDR_H */

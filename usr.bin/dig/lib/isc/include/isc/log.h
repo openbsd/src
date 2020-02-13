@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.3 2020/02/13 12:03:51 jsg Exp $ */
+/* $Id: log.h,v 1.4 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -25,7 +25,6 @@
 #include <stdarg.h>
 
 #include <isc/formatcheck.h>
-#include <isc/lang.h>
 
 #include <isc/types.h>
 
@@ -166,8 +165,6 @@ extern isc_logmodule_t isc_modules[];
 #define ISC_LOGMODULE_TIMER (&isc_modules[3])
 #define ISC_LOGMODULE_FILE (&isc_modules[4])
 #define ISC_LOGMODULE_OTHER (&isc_modules[5])
-
-ISC_LANG_BEGINDECLS
 
 isc_result_t
 isc_log_create(isc_log_t **lctxp, isc_logconfig_t **lcfgp);
@@ -648,7 +645,5 @@ isc_log_setcontext(isc_log_t *lctx);
  * Requires:
  *\li	lctx be a valid context.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_LOG_H */

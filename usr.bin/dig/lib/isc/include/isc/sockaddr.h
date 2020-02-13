@@ -14,14 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: sockaddr.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
 
 /*! \file isc/sockaddr.h */
 
-#include <isc/lang.h>
 #include <isc/net.h>
 #include <isc/types.h>
 #include <sys/un.h>
@@ -46,8 +45,6 @@ struct isc_sockaddr {
 						 *   sin6_scope */
 #define ISC_SOCKADDR_CMPSCOPEZERO 0x0008	/*%< when comparing scopes
 						 *   zero scopes always match */
-
-ISC_LANG_BEGINDECLS
 
 isc_boolean_t
 isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
@@ -173,7 +170,5 @@ isc_sockaddr_issitelocal(const isc_sockaddr_t *sa);
 /*%<
  * Minimum size of array to pass to isc_sockaddr_format().
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_SOCKADDR_H */

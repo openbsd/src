@@ -14,18 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cert.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: cert.h,v 1.2 2020/02/13 13:53:00 jsg Exp $ */
 
 #ifndef DNS_CERT_H
 #define DNS_CERT_H 1
 
 /*! \file dns/cert.h */
 
-#include <isc/lang.h>
-
 #include <dns/types.h>
-
-ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_cert_fromtext(dns_cert_t *certp, isc_textregion_t *source);
@@ -62,7 +58,5 @@ dns_cert_totext(dns_cert_t cert, isc_buffer_t *target);
  *\li	#ISC_R_SUCCESS			on success
  *\li	#ISC_R_NOSPACE			target buffer is too small
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_CERT_H */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: rdataset.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -50,14 +50,11 @@
  *\li	None.
  */
 
-#include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/stdtime.h>
 
 #include <dns/types.h>
 #include "rdatastruct.h"
-
-ISC_LANG_BEGINDECLS
 
 typedef enum {
 	dns_rdatasetadditional_fromauth,
@@ -443,7 +440,5 @@ dns_rdataset_towirepartial(dns_rdataset_t *rdataset,
  *		      will be updated to reflect the number of records
  *		      written.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_RDATASET_H */

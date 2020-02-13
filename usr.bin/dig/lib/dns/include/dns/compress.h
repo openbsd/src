@@ -14,17 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.h,v 1.2 2020/02/12 13:05:03 jsg Exp $ */
+/* $Id: compress.h,v 1.3 2020/02/13 13:53:00 jsg Exp $ */
 
 #ifndef DNS_COMPRESS_H
 #define DNS_COMPRESS_H 1
 
-#include <isc/lang.h>
 #include <isc/region.h>
 
 #include <dns/types.h>
-
-ISC_LANG_BEGINDECLS
 
 #define DNS_COMPRESS_NONE		0x00	/*%< no compression */
 #define DNS_COMPRESS_GLOBAL14		0x01	/*%< "normal" compression. */
@@ -207,7 +204,5 @@ dns_decompress_type(dns_decompress_t *dctx);
  *	Requires:
  *\li		'dctx' to be initialized
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_COMPRESS_H */

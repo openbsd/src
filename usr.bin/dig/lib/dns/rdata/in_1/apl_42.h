@@ -18,7 +18,7 @@
 #ifndef IN_1_APL_42_H
 #define IN_1_APL_42_H 1
 
-/* $Id: apl_42.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: apl_42.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 typedef struct dns_rdata_apl_ent {
 	isc_boolean_t	negative;
@@ -36,10 +36,5 @@ typedef struct dns_rdata_in_apl {
 	/* private */
 	uint16_t            offset;
 } dns_rdata_in_apl_t;
-
-/*
- * ISC_LANG_BEGINDECLS and ISC_LANG_ENDDECLS are already done
- * via rdatastructpre.h and rdatastructsuf.h.
- */
 
 #endif /* IN_1_APL_42_H */

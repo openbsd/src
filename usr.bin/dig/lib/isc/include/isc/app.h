@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: app.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_APP_H
 #define ISC_APP_H 1
@@ -84,7 +84,6 @@
  */
 
 #include <isc/eventclass.h>
-#include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/result.h>
 
@@ -139,8 +138,6 @@ struct isc_appctx {
 #define ISCAPI_APPCTX_MAGIC		ISC_MAGIC('A','a','p','c')
 #define ISCAPI_APPCTX_VALID(c)		((c) != NULL && \
 					 (c)->magic == ISCAPI_APPCTX_MAGIC)
-
-ISC_LANG_BEGINDECLS
 
 isc_result_t
 isc_app_ctxstart(isc_appctx_t *ctx);
@@ -383,7 +380,5 @@ isc__app_register(void);
  * usually do not have to care about this function: it would call
  * isc_lib_register(), which internally calls this function.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_APP_H */

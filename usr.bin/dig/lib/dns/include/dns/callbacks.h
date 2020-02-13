@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: callbacks.h,v 1.2 2020/02/12 13:05:03 jsg Exp $ */
+/* $Id: callbacks.h,v 1.3 2020/02/13 13:53:00 jsg Exp $ */
 
 #ifndef DNS_CALLBACKS_H
 #define DNS_CALLBACKS_H 1
@@ -25,12 +25,9 @@
  ***	Imports
  ***/
 
-#include <isc/lang.h>
 #include <isc/magic.h>
 
 #include <dns/types.h>
-
-ISC_LANG_BEGINDECLS
 
 /***
  ***	Types
@@ -76,7 +73,5 @@ struct dns_rdatacallbacks {
 	void	*error_private;
 	void	*warn_private;
 };
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_CALLBACKS_H */

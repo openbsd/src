@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: socket.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -58,15 +58,11 @@
 
 #include <isc/event.h>
 #include <isc/eventclass.h>
-#include <isc/lang.h>
 
 #include <isc/region.h>
 #include <isc/sockaddr.h>
 #include <isc/time.h>
 #include <isc/types.h>
-
-
-ISC_LANG_BEGINDECLS
 
 /***
  *** Constants
@@ -635,7 +631,5 @@ isc_socketmgr_destroy(isc_socketmgr_t **managerp);
  *
  *\li	All resources used by the manager have been freed.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_SOCKET_H */

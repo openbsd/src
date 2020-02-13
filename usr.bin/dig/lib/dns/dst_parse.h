@@ -31,13 +31,11 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_parse.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: dst_parse.h,v 1.2 2020/02/13 13:53:00 jsg Exp $ */
 
 /*! \file */
 #ifndef DST_DST_PARSE_H
 #define DST_DST_PARSE_H 1
-
-#include <isc/lang.h>
 
 #include <dst/dst.h>
 
@@ -133,15 +131,11 @@ struct dst_private {
 
 typedef struct dst_private dst_private_t;
 
-ISC_LANG_BEGINDECLS
-
 void
 dst__privstruct_free(dst_private_t *priv);
 
 isc_result_t
 dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		      dst_private_t *priv);
-
-ISC_LANG_ENDDECLS
 
 #endif /* DST_DST_PARSE_H */

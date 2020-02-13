@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: safe.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: safe.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_SAFE_H
 #define ISC_SAFE_H 1
@@ -23,8 +23,6 @@
 
 #include <isc/types.h>
 #include <stdlib.h>
-
-ISC_LANG_BEGINDECLS
 
 isc_boolean_t
 isc_safe_memequal(const void *s1, const void *s2, size_t n);
@@ -45,7 +43,5 @@ isc_safe_memwipe(void *ptr, size_t len);
  * function to perform the memset operation so that the compiler cannot
  * infer about what the function does and optimize the call away.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_SAFE_H */

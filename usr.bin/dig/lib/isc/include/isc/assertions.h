@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: assertions.h,v 1.3 2020/02/13 08:15:31 florian Exp $
+ * $Id: assertions.h,v 1.4 2020/02/13 13:53:01 jsg Exp $
  */
 /*! \file isc/assertions.h
  */
@@ -24,12 +24,6 @@
 #define ISC_ASSERTIONS_H 1
 
 #include <sys/cdefs.h>
-
-#include <isc/lang.h>
-
-
-
-ISC_LANG_BEGINDECLS
 
 /*% isc assertion type */
 typedef enum {
@@ -69,6 +63,5 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 		 ((isc_assertion_failed)(__FILE__, __LINE__, \
 					 isc_assertiontype_invariant, \
 					 #cond), 0)))
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_ASSERTIONS_H */

@@ -14,8 +14,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatastructsuf.h,v 1.1 2020/02/07 09:58:53 florian Exp $ */
-
-ISC_LANG_ENDDECLS
+/* $Id: rdatastructsuf.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #endif /* DNS_RDATASTRUCT_H */

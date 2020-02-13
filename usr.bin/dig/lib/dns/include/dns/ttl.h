@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ttl.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: ttl.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef DNS_TTL_H
 #define DNS_TTL_H 1
@@ -25,10 +25,7 @@
  ***	Imports
  ***/
 
-#include <isc/lang.h>
 #include <isc/types.h>
-
-ISC_LANG_BEGINDECLS
 
 /***
  ***	Functions
@@ -71,7 +68,5 @@ dns_ttl_fromtext(isc_textregion_t *source, uint32_t *ttl);
  *\li	ISC_R_SUCCESS
  *\li	DNS_R_BADTTL
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_TTL_H */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: error.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: error.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_ERROR_H
 #define ISC_ERROR_H 1
@@ -25,11 +25,6 @@
 #include <stdarg.h>
 
 #include <isc/formatcheck.h>
-#include <isc/lang.h>
-
-
-
-ISC_LANG_BEGINDECLS
 
 typedef void (*isc_errorcallback_t)(const char *, int, const char *, va_list);
 
@@ -50,7 +45,5 @@ isc_error_runtimecheck(const char *, int, const char *);
 #define ISC_ERROR_RUNTIMECHECK(cond) \
 	((void) ((cond) || \
 		 ((isc_error_runtimecheck)(__FILE__, __LINE__, #cond), 0)))
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_ERROR_H */

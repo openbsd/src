@@ -20,7 +20,6 @@
 #ifndef DNS_LOG_H
 #define DNS_LOG_H 1
 
-#include <isc/lang.h>
 #include <isc/log.h>
 
 extern isc_log_t *dns_lctx;
@@ -79,8 +78,6 @@ extern isc_logmodule_t dns_modules[];
 #define DNS_LOGMODULE_PACKETS		(&dns_modules[29])
 #define DNS_LOGMODULE_SSU		(&dns_modules[30])
 
-ISC_LANG_BEGINDECLS
-
 void
 dns_log_init(isc_log_t *lctx);
 /*%
@@ -106,7 +103,5 @@ dns_log_setcontext(isc_log_t *lctx);
  * Requires:
  *\li	lctx is a valid logging context.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_LOG_H */

@@ -14,12 +14,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: parseint.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: parseint.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_PARSEINT_H
 #define ISC_PARSEINT_H 1
 
-#include <isc/lang.h>
 #include <isc/types.h>
 
 /*! \file isc/parseint.h
@@ -29,8 +28,6 @@
 /***
  ***	Functions
  ***/
-
-ISC_LANG_BEGINDECLS
 
 isc_result_t
 isc_parse_uint32(uint32_t *uip, const char *string, int base);
@@ -57,7 +54,5 @@ isc_parse_uint8(uint8_t *uip, const char *string, int base);
  *\li	#ISC_R_BADNUMBER   The string is not numeric (in the given base)
  *\li	#ISC_R_RANGE	  The number is not representable as the requested type.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_PARSEINT_H */

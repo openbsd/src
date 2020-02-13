@@ -14,18 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.h,v 1.2 2020/02/12 13:05:03 jsg Exp $ */
+/* $Id: rcode.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef DNS_RCODE_H
 #define DNS_RCODE_H 1
 
 /*! \file dns/rcode.h */
 
-#include <isc/lang.h>
-
 #include <dns/types.h>
-
-ISC_LANG_BEGINDECLS
 
 isc_result_t dns_tsigrcode_fromtext(dns_rcode_t *rcodep,
 				    isc_textregion_t *source);
@@ -74,7 +70,5 @@ dns_hashalg_fromtext(unsigned char *hashalg, isc_textregion_t *source);
  *\li	#ISC_R_SUCCESS			on success
  *\li	#DNS_R_UNKNOWN			type is unknown
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_RCODE_H */

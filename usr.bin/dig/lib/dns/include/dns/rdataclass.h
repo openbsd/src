@@ -14,18 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataclass.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: rdataclass.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef DNS_RDATACLASS_H
 #define DNS_RDATACLASS_H 1
 
 /*! \file dns/rdataclass.h */
 
-#include <isc/lang.h>
-
 #include <dns/types.h>
-
-ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_rdataclass_fromtext(dns_rdataclass_t *classp, isc_textregion_t *source);
@@ -74,7 +70,5 @@ dns_rdataclass_format(dns_rdataclass_t rdclass,
 /*%<
  * Minimum size of array to pass to dns_rdataclass_format().
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_RDATACLASS_H */

@@ -25,8 +25,6 @@
 
 #include <stdio.h>
 
-#include <isc/lang.h>
-
 #include <dns/types.h>
 
 /***
@@ -103,8 +101,6 @@ typedef struct dns_master_style dns_master_style_t;
 /*% Comment out data by prepending with ";" */
 #define	DNS_STYLEFLAG_COMMENTDATA	0x010000000ULL
 
-ISC_LANG_BEGINDECLS
-
 /***
  ***	Constants
  ***/
@@ -155,7 +151,5 @@ dns_master_stylecreate2(dns_master_style_t **style, unsigned int flags,
 		       unsigned int split_width);
 void
 dns_master_styledestroy(dns_master_style_t **style);
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_MASTERDUMP_H */

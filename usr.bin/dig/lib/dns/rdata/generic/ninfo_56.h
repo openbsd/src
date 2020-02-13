@@ -22,9 +22,4 @@ typedef struct dns_rdata_txt_string dns_rdata_ninfo_string_t;
 
 typedef struct dns_rdata_txt dns_rdata_ninfo_t;
 
-/*
- * ISC_LANG_BEGINDECLS and ISC_LANG_ENDDECLS are already done
- * via rdatastructpre.h and rdatastructsuf.h.
- */
-
 #endif /* GENERIC_NINFO_16_H */

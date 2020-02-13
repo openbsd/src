@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatalist.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: rdatalist.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef DNS_RDATALIST_H
 #define DNS_RDATALIST_H 1
@@ -43,8 +43,6 @@
  *\li	None.
  */
 
-#include <isc/lang.h>
-
 #include <dns/types.h>
 
 /*%
@@ -58,8 +56,6 @@ struct dns_rdatalist {
 	ISC_LIST(dns_rdata_t)		rdata;
 	ISC_LINK(dns_rdatalist_t)	link;
 };
-
-ISC_LANG_BEGINDECLS
 
 void
 dns_rdatalist_init(dns_rdatalist_t *rdatalist);
@@ -117,7 +113,5 @@ dns_rdatalist_fromrdataset(dns_rdataset_t *rdataset,
  * Returns:
  *\li	#ISC_R_SUCCESS
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_RDATALIST_H */

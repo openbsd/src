@@ -14,14 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: time.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
 
 /*! \file */
 
-#include <isc/lang.h>
 #include <isc/types.h>
 
 /***
@@ -48,8 +47,6 @@ extern const interval_t * const interval_zero;
  * expanding strftime's %a and %b.
  */
 #define ISC_FORMATHTTPTIMESTAMP_SIZE 50
-
-ISC_LANG_BEGINDECLS
 
 void
 interval_set(interval_t *i,
@@ -270,7 +267,5 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len);
  *\li      'buf' points to an array of at least len chars
  *
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_TIME_H */

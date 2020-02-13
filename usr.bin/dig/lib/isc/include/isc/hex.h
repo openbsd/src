@@ -14,17 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hex.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: hex.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_HEX_H
 #define ISC_HEX_H 1
 
 /*! \file isc/hex.h */
 
-#include <isc/lang.h>
 #include <isc/types.h>
-
-ISC_LANG_BEGINDECLS
 
 /***
  *** Functions
@@ -89,8 +86,5 @@ isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
  *	if length is positive.  The 'used' pointer in target will be
  *	advanced as necessary.
  */
-
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_HEX_H */

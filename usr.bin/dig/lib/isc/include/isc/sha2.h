@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha2.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: sha2.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.h,v 1.1.2.1 2001/07/03 11:01:36 ume Exp $	*/
 /*	$KAME: sha2.h,v 1.3 2001/03/12 08:27:48 itojun Exp $	*/
@@ -57,8 +57,6 @@
 #ifndef ISC_SHA2_H
 #define ISC_SHA2_H
 
-#include <isc/lang.h>
-
 #include <isc/types.h>
 
 /*** SHA-224/256/384/512 Various Length Definitions ***********************/
@@ -92,8 +90,6 @@ typedef isc_sha2_t isc_sha512_t;
 typedef isc_sha256_t isc_sha224_t;
 typedef isc_sha512_t isc_sha384_t;
 
-ISC_LANG_BEGINDECLS
-
 /*** SHA-224/256/384/512 Function Prototypes ******************************/
 
 void isc_sha224_init (isc_sha224_t *);
@@ -123,7 +119,5 @@ void isc_sha512_update (isc_sha512_t *, const uint8_t *, size_t);
 void isc_sha512_final (uint8_t[ISC_SHA512_DIGESTLENGTH], isc_sha512_t *);
 char *isc_sha512_end (isc_sha512_t *, char[ISC_SHA512_DIGESTSTRINGLENGTH]);
 char *isc_sha512_data (const uint8_t *, size_t, char[ISC_SHA512_DIGESTSTRINGLENGTH]);
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_SHA2_H */

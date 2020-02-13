@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: task.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_TASK_H
 #define ISC_TASK_H 1
@@ -81,7 +81,6 @@
 
 #include <isc/eventclass.h>
 
-#include <isc/lang.h>
 #include <isc/stdtime.h>
 #include <isc/types.h>
 
@@ -94,8 +93,6 @@
 /*****
  ***** Tasks.
  *****/
-
-ISC_LANG_BEGINDECLS
 
 /***
  *** Types
@@ -592,7 +589,5 @@ typedef isc_result_t
 (*isc_taskmgrcreatefunc_t)(unsigned int workers,
 			   unsigned int default_quantum,
 			   isc_taskmgr_t **managerp);
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_TASK_H */

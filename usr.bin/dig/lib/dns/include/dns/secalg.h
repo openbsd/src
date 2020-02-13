@@ -14,18 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: secalg.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: secalg.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef DNS_SECALG_H
 #define DNS_SECALG_H 1
 
 /*! \file dns/secalg.h */
 
-#include <isc/lang.h>
-
 #include <dns/types.h>
-
-ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_secalg_fromtext(dns_secalg_t *secalgp, isc_textregion_t *source);
@@ -71,7 +67,5 @@ dns_secalg_format(dns_secalg_t alg, char *cp, unsigned int size);
 /*%<
  * Wrapper for dns_secalg_totext(), writing text into 'cp'
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_SECALG_H */

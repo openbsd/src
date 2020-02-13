@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.3 2020/02/13 10:12:49 florian Exp $ */
+/* $Id: name.h,v 1.4 2020/02/13 13:53:00 jsg Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -73,13 +73,10 @@
 #include <stdio.h>
 
 #include <isc/boolean.h>
-#include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/region.h>		/* Required for storage size of dns_label_t. */
 
 #include <dns/types.h>
-
-ISC_LANG_BEGINDECLS
 
 /*****
  ***** Labels
@@ -1104,7 +1101,5 @@ dns_name_isdnssd(const dns_name_t *owner);
 /*%<
  * Determine if the 'owner' is a DNS-SD prefix.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_NAME_H */

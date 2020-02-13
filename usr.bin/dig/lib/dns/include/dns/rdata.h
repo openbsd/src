@@ -88,14 +88,9 @@
  *** Imports
  ***/
 
-#include <isc/lang.h>
-
 #include <dns/types.h>
 #include <dns/name.h>
 #include <dns/message.h>
-
-ISC_LANG_BEGINDECLS
-
 
 /***
  *** Types
@@ -598,7 +593,5 @@ dns_rdata_checkowner(dns_name_t* name, dns_rdataclass_t rdclass,
  * Requires:
  *	'name' is a valid name.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_RDATA_H */

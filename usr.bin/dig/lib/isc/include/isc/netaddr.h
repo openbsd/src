@@ -14,21 +14,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: netaddr.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1
 
 /*! \file isc/netaddr.h */
 
-#include <isc/lang.h>
 #include <isc/net.h>
 #include <isc/types.h>
 
 #include <sys/types.h>
 #include <sys/un.h>
-
-ISC_LANG_BEGINDECLS
 
 struct isc_netaddr {
 	unsigned int family;
@@ -115,7 +112,5 @@ isc_netaddr_isnetzero(isc_netaddr_t *na);
 /*%<
  * Returns #ISC_TRUE if the address is in net zero.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_NETADDR_H */

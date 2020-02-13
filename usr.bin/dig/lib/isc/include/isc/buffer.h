@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: buffer.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_BUFFER_H
 #define ISC_BUFFER_H 1
@@ -109,7 +109,6 @@
 #include <inttypes.h>
 
 #include <isc/formatcheck.h>
-#include <isc/lang.h>
 #include <isc/magic.h>
 #include <isc/types.h>
 
@@ -118,8 +117,6 @@
  * If it is undefined, a function will be used.
  */
 /* #define ISC_BUFFER_USEINLINE */
-
-ISC_LANG_BEGINDECLS
 
 /*@{*/
 /*!
@@ -618,8 +615,6 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r);
  *\li	ISC_R_NOSPACE			The available region of 'b' is not
  *					big enough.
  */
-
-ISC_LANG_ENDDECLS
 
 /*
  * Inline macro versions of the functions.  These should never be called

@@ -17,7 +17,7 @@
 #ifndef GENERIC_SPF_99_H
 #define GENERIC_SPF_99_H 1
 
-/* $Id: spf_99.h,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: spf_99.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 typedef struct dns_rdata_spf_string {
 		uint8_t    length;
@@ -32,8 +32,4 @@ typedef struct dns_rdata_spf {
 	uint16_t            offset;
 } dns_rdata_spf_t;
 
-/*
- * ISC_LANG_BEGINDECLS and ISC_LANG_ENDDECLS are already done
- * via rdatastructpre.h and rdatastructsuf.h.
- */
 #endif /* GENERIC_SPF_99_H */

@@ -29,10 +29,7 @@
  * Base 32 hex "np" is base 32 hex but no padding is produced or accepted.
  */
 
-#include <isc/lang.h>
 #include <isc/types.h>
-
-ISC_LANG_BEGINDECLS
 
 /***
  *** Functions
@@ -96,7 +93,5 @@ isc_base32hexnp_decoderegion(isc_region_t *source, isc_buffer_t *target);
  *                         fit in 'target'.
  *\li   #ISC_R_BADBASE32 -- 'source' is not a valid base32 encoding.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_BASE32_H */

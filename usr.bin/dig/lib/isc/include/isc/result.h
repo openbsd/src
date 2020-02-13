@@ -14,14 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: result.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_RESULT_H
 #define ISC_RESULT_H 1
 
 /*! \file isc/result.h */
 
-#include <isc/lang.h>
 #include <isc/types.h>
 
 #define ISC_R_SUCCESS			0	/*%< success */
@@ -93,8 +92,6 @@
 /*% Not a result code: the number of results. */
 #define ISC_R_NRESULTS 			64
 
-ISC_LANG_BEGINDECLS
-
 const char *
 isc_result_totext(isc_result_t);
 /*%<
@@ -104,7 +101,5 @@ isc_result_totext(isc_result_t);
 isc_result_t
 isc_result_register(unsigned int base, unsigned int nresults,
 		    const char **text, int set);
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_RESULT_H */

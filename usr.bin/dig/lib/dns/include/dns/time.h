@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: time.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef DNS_TIME_H
 #define DNS_TIME_H 1
@@ -26,9 +26,6 @@
  ***/
 
 #include <isc/buffer.h>
-#include <isc/lang.h>
-
-ISC_LANG_BEGINDECLS
 
 /***
  ***	Functions
@@ -71,7 +68,5 @@ dns_time64_from32(uint32_t value);
 /*%<
  * Covert a 32-bit cyclic time value into a 64 bit time stamp.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_TIME_H */

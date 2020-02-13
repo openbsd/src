@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: stdio.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: stdio.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_STDIO_H
 #define ISC_STDIO_H 1
@@ -32,15 +32,10 @@
 
 #include <stdio.h>
 
-#include <isc/lang.h>
 #include <isc/result.h>
-
-ISC_LANG_BEGINDECLS
 
 /*% Open */
 isc_result_t
 isc_stdio_open(const char *filename, const char *mode, FILE **fp);
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_STDIO_H */

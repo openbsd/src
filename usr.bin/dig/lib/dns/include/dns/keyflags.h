@@ -14,18 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: keyflags.h,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: keyflags.h,v 1.2 2020/02/13 13:53:00 jsg Exp $ */
 
 #ifndef DNS_KEYFLAGS_H
 #define DNS_KEYFLAGS_H 1
 
 /*! \file dns/keyflags.h */
 
-#include <isc/lang.h>
-
 #include <dns/types.h>
-
-ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_keyflags_fromtext(dns_keyflags_t *flagsp, isc_textregion_t *source);
@@ -47,7 +43,5 @@ dns_keyflags_fromtext(dns_keyflags_t *flagsp, isc_textregion_t *source);
  *\li	ISC_R_RANGE			numeric flag value is out of range
  *\li	DNS_R_UNKNOWN			mnemonic flag is unknown
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_KEYFLAGS_H */

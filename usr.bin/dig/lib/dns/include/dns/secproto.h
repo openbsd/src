@@ -14,18 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: secproto.h,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: secproto.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef DNS_SECPROTO_H
 #define DNS_SECPROTO_H 1
 
 /*! \file dns/secproto.h */
 
-#include <isc/lang.h>
-
 #include <dns/types.h>
-
-ISC_LANG_BEGINDECLS
 
 isc_result_t
 dns_secproto_fromtext(dns_secproto_t *secprotop, isc_textregion_t *source);
@@ -44,7 +40,5 @@ dns_secproto_fromtext(dns_secproto_t *secprotop, isc_textregion_t *source);
  *\li	ISC_R_RANGE			numeric type is out of range
  *\li	DNS_R_UNKNOWN			mnemonic type is unknown
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* DNS_SECPROTO_H */

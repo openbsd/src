@@ -14,14 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: serial.h,v 1.2 2020/02/13 12:03:51 jsg Exp $ */
+/* $Id: serial.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_SERIAL_H
 #define ISC_SERIAL_H 1
 
 #include <inttypes.h>
 
-#include <isc/lang.h>
 #include <isc/boolean.h>
 
 /*! \file isc/serial.h
@@ -32,8 +31,6 @@
 /***
  ***	Functions
  ***/
-
-ISC_LANG_BEGINDECLS
 
 isc_boolean_t
 isc_serial_lt(uint32_t a, uint32_t b);
@@ -70,7 +67,5 @@ isc_serial_ne(uint32_t a, uint32_t b);
 /*%<
  *	Return true if 'a' != 'b' otherwise false.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_SERIAL_H */

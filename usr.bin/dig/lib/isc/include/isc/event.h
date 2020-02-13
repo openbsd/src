@@ -19,7 +19,6 @@
 
 /*! \file isc/event.h */
 
-#include <isc/lang.h>
 #include <isc/types.h>
 
 /*****
@@ -84,8 +83,6 @@ struct isc_event {
 
 #define ISC_EVENT_PTR(p) ((isc_event_t **)(void *)(p))
 
-ISC_LANG_BEGINDECLS
-
 isc_event_t *
 isc_event_allocate(void *sender, isc_eventtype_t type,
 		   isc_taskaction_t action, void *arg, size_t size);
@@ -113,7 +110,5 @@ isc_event_allocate(void *sender, isc_eventtype_t type,
 
 void
 isc_event_free(isc_event_t **);
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_EVENT_H */

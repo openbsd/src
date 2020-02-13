@@ -19,10 +19,6 @@
 
 /*! \file isc/regex.h */
 
-#include <isc/lang.h>
-
-ISC_LANG_BEGINDECLS
-
 int
 isc_regex_validate(const char *expression);
 /*%<
@@ -32,7 +28,5 @@ isc_regex_validate(const char *expression);
  *\li	 -1 on error.
  *\li	 the number of groups in the expression.
  */
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_REGEX_H */

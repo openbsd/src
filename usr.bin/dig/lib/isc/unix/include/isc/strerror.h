@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: strerror.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: strerror.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
 
 #ifndef ISC_STRERROR_H
 #define ISC_STRERROR_H
@@ -22,10 +22,6 @@
 /*! \file */
 
 #include <sys/types.h>
-
-#include <isc/lang.h>
-
-ISC_LANG_BEGINDECLS
 
 /*% String Error Size */
 #define ISC_STRERRORSIZE 128
@@ -38,7 +34,5 @@ ISC_LANG_BEGINDECLS
  */
 void
 isc__strerror(int num, char *buf, size_t bufsize);
-
-ISC_LANG_ENDDECLS
 
 #endif /* ISC_STRERROR_H */

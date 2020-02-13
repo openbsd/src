@@ -24,7 +24,6 @@
 #include <isc/boolean.h>
 #include <isc/buffer.h>
 #include <isc/formatcheck.h>
-#include <isc/lang.h>
 #include <isc/list.h>
 #include <isc/time.h>
 #include <isc/sockaddr.h>
@@ -72,8 +71,6 @@
  * Defaults for the sigchase suboptions.  Consolidated here because
  * these control the layout of dig_lookup_t (among other things).
  */
-
-ISC_LANG_BEGINDECLS
 
 typedef struct dig_lookup dig_lookup_t;
 typedef struct dig_query dig_query_t;
@@ -409,7 +406,5 @@ dig_startup(void);
  */
 void
 dig_shutdown(void);
-
-ISC_LANG_ENDDECLS
 
 #endif
