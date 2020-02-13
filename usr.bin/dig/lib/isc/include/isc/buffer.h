@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: buffer.h,v 1.4 2020/02/13 16:57:55 florian Exp $ */
 
 #ifndef ISC_BUFFER_H
 #define ISC_BUFFER_H 1
@@ -108,7 +108,7 @@
 
 #include <inttypes.h>
 
-#include <isc/formatcheck.h>
+
 #include <isc/magic.h>
 #include <isc/types.h>
 

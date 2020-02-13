@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: error.c,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: error.c,v 1.4 2020/02/13 16:57:55 florian Exp $ */
 
 /*! \file */
 
@@ -28,12 +28,12 @@
 /*% Default unexpected callback. */
 static void
 default_unexpected_callback(const char *, int, const char *, va_list)
-     ISC_FORMAT_PRINTF(3, 0);
+     __attribute__((__format__(__printf__, 3, 0)));
 
 /*% Default fatal callback. */
 static void
 default_fatal_callback(const char *, int, const char *, va_list)
-     ISC_FORMAT_PRINTF(3, 0);
+     __attribute__((__format__(__printf__, 3, 0)));
 
 /*% unexpected_callback */
 static isc_errorcallback_t unexpected_callback = default_unexpected_callback;

@@ -31,7 +31,7 @@
 
 #include <isc/buffer.h>
 #include <isc/bufferlist.h>
-#include <isc/formatcheck.h>
+
 #include <isc/list.h>
 #include <isc/log.h>
 #include <isc/net.h>
@@ -329,7 +329,7 @@ enum {
 static void
 socket_log(isc__socket_t *sock, isc_sockaddr_t *address,
 	   isc_logcategory_t *category, isc_logmodule_t *module, int level,
-	   const char *fmt, ...) ISC_FORMAT_PRINTF(6, 7);
+	   const char *fmt, ...) __attribute__((__format__(__printf__, 6, 7)));
 static void
 socket_log(isc__socket_t *sock, isc_sockaddr_t *address,
 	   isc_logcategory_t *category, isc_logmodule_t *module, int level,

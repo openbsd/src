@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <isc/formatcheck.h>
+
 #include <isc/lex.h>
 #include <isc/log.h>
 #include <isc/symtab.h>
@@ -114,7 +114,7 @@ cfg_parse_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 static void
 cfg_parser_error(cfg_parser_t *pctx, unsigned int flags,
-		 const char *fmt, ...) ISC_FORMAT_PRINTF(3, 4);
+		 const char *fmt, ...) __attribute__((__format__(__printf__, 3, 4)));
 
 static void
 free_list(cfg_parser_t *pctx, cfg_obj_t *obj);

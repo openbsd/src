@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.6 2020/02/13 16:55:20 florian Exp $ */
+/* $Id: rdata.c,v 1.7 2020/02/13 16:57:55 florian Exp $ */
 
 /*! \file */
 
@@ -198,7 +198,7 @@ atob_tobuffer(isc_lex_t *lexer, isc_buffer_t *target);
 
 static void
 default_fromtext_callback(dns_rdatacallbacks_t *callbacks, const char *, ...)
-     ISC_FORMAT_PRINTF(2, 3);
+     __attribute__((__format__(__printf__, 2, 3)));
 
 static void
 fromtext_error(void (*callback)(dns_rdatacallbacks_t *, const char *, ...),

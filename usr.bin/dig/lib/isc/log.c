@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.6 2020/02/13 12:03:51 jsg Exp $ */
+/* $Id: log.c,v 1.7 2020/02/13 16:57:55 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -217,7 +217,7 @@ static void
 isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 	     isc_logmodule_t *module, int level, isc_boolean_t write_once,
 	     const char *format, va_list args)
-     ISC_FORMAT_PRINTF(6, 0);
+     __attribute__((__format__(__printf__, 6, 0)));
 
 /*@{*/
 /*!

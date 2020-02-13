@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.4 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: log.h,v 1.5 2020/02/13 16:57:55 florian Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include <isc/formatcheck.h>
+
 
 #include <isc/types.h>
 
@@ -525,7 +525,7 @@ isc_log_write(isc_log_t *lctx, isc_logcategory_t *category,
 	       isc_logmodule_t *module, int level,
 	      const char *format, ...)
 
-ISC_FORMAT_PRINTF(5, 6);
+__attribute__((__format__(__printf__, 5, 6)));
 
 /*%
  * Write a message to the log channels.
@@ -564,7 +564,7 @@ isc_log_vwrite(isc_log_t *lctx, isc_logcategory_t *category,
 	       isc_logmodule_t *module, int level,
 	       const char *format, va_list args)
 
-ISC_FORMAT_PRINTF(5, 0);
+__attribute__((__format__(__printf__, 5, 0)));
 
 /*%
  * Write a message to the log channels, pruning duplicates that occur within
@@ -575,7 +575,7 @@ void
 isc_log_write1(isc_log_t *lctx, isc_logcategory_t *category,
 	       isc_logmodule_t *module, int level, const char *format, ...)
 
-ISC_FORMAT_PRINTF(5, 6);
+__attribute__((__format__(__printf__, 5, 6)));
 
 /*%
  * Write a message to the log channels, pruning duplicates that occur within
@@ -587,7 +587,7 @@ isc_log_vwrite1(isc_log_t *lctx, isc_logcategory_t *category,
 		isc_logmodule_t *module, int level, const char *format,
 		va_list args)
 
-ISC_FORMAT_PRINTF(5, 0);
+__attribute__((__format__(__printf__, 5, 0)));
 
 void
 isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level);
