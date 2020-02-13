@@ -14,12 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.c,v 1.3 2020/02/12 13:05:03 jsg Exp $ */
+/* $Id: compress.c,v 1.4 2020/02/13 10:12:49 florian Exp $ */
 
 /*! \file */
-
-#define DNS_NAME_USEINLINE 1
-
 
 #include <stdlib.h>
 
@@ -156,13 +153,6 @@ dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 	return (ISC_TRUE);
 }
 
-static inline unsigned int
-name_length(const dns_name_t *name) {
-	isc_region_t r;
-	dns_name_toregion(name, &r);
-	return (r.length);
-}
-
 void
 dns_compress_add(dns_compress_t *cctx, const dns_name_t *name,
 		 const dns_name_t *prefix, uint16_t offset)
@@ -187,14 +177,14 @@ dns_compress_add(dns_compress_t *cctx, const dns_name_t *name,
 	if (dns_name_isabsolute(prefix))
 		count--;
 	start = 0;
-	length = name_length(name);
+	length = name->length;
 	while (count > 0) {
 		if (offset >= 0x4000)
 			break;
 		dns_name_getlabelsequence(name, start, n, &tname);
 		hash = dns_name_hash(&tname, ISC_FALSE) %
 		       DNS_COMPRESS_TABLESIZE;
-		tlength = name_length(&tname);
+		tlength = tname.length;
 		toffset = (uint16_t)(offset + (length - tlength));
 		/*
 		 * Create a new node and add it.

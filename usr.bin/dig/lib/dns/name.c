@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.3 2020/02/13 08:16:01 florian Exp $ */
+/* $Id: name.c,v 1.4 2020/02/13 10:12:49 florian Exp $ */
 
 /*! \file */
 #include <ctype.h>
@@ -185,7 +185,16 @@ dns_name_init(dns_name_t *name, unsigned char *offsets) {
 	/*
 	 * Initialize 'name'.
 	 */
-	DNS_NAME_INIT(name, offsets);
+	name->magic = DNS_NAME_MAGIC;
+	name->ndata = NULL;
+	name->length = 0;
+	name->labels = 0;
+	name->attributes = 0;
+	name->offsets = offsets;
+	name->buffer = NULL;
+	ISC_LINK_INIT(name, link);
+	ISC_LIST_INIT(name->list);
+
 }
 
 void
@@ -193,7 +202,12 @@ dns_name_reset(dns_name_t *name) {
 	REQUIRE(VALID_NAME(name));
 	REQUIRE(BINDABLE(name));
 
-	DNS_NAME_RESET(name);
+	name->ndata = NULL;
+	name->length = 0;
+	name->labels = 0;
+	name->attributes &= ~DNS_NAMEATTR_ABSOLUTE;
+	if (name->buffer != NULL)
+		isc_buffer_clear(name->buffer);
 }
 
 void
@@ -873,7 +887,8 @@ dns_name_toregion(dns_name_t *name, isc_region_t *r) {
 	REQUIRE(VALID_NAME(name));
 	REQUIRE(r != NULL);
 
-	DNS_NAME_TOREGION(name, r);
+	r->base = name->ndata;
+	r->length = name->length;
 }
 
 isc_result_t
@@ -1607,11 +1622,11 @@ dns_name_towire(const dns_name_t *name, dns_compress_t *cctx,
 	 * has one.
 	 */
 	if (name->offsets == NULL) {
-		DNS_NAME_INIT(&clname, clo);
+		dns_name_init(&clname, clo);
 		dns_name_clone(name, &clname);
 		name = &clname;
 	}
-	DNS_NAME_INIT(&gp, NULL);
+	dns_name_init(&gp, NULL);
 
 	offset = target->used;	/*XXX*/
 
@@ -1696,7 +1711,7 @@ dns_name_concatenate(dns_name_t *prefix, dns_name_t *suffix, dns_name_t *name,
 		REQUIRE(!copy_suffix);
 	}
 	if (name == NULL) {
-		DNS_NAME_INIT(&tmp_name, odata);
+		dns_name_init(&tmp_name, odata);
 		name = &tmp_name;
 	}
 	if (target == NULL) {
@@ -1911,7 +1926,7 @@ dns_name_digest(dns_name_t *name, dns_digestfunc_t digest, void *arg) {
 	REQUIRE(VALID_NAME(name));
 	REQUIRE(digest != NULL);
 
-	DNS_NAME_INIT(&downname, NULL);
+	dns_name_init(&downname, NULL);
 
 	isc_buffer_init(&buffer, data, sizeof(data));
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.2 2020/02/12 13:05:03 jsg Exp $ */
+/* $Id: name.h,v 1.3 2020/02/13 10:12:49 florian Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -1106,81 +1106,5 @@ dns_name_isdnssd(const dns_name_t *owner);
  */
 
 ISC_LANG_ENDDECLS
-
-/*
- *** High Performance Macros
- ***/
-
-/*
- * WARNING:  Use of these macros by applications may require recompilation
- *           of the application in some situations where calling the function
- *           would not.
- *
- * WARNING:  No assertion checking is done for these macros.
- */
-
-#define DNS_NAME_INIT(n, o) \
-do { \
-	dns_name_t *_n = (n); \
-	/* memset(_n, 0, sizeof(*_n)); */ \
-	_n->magic = DNS_NAME_MAGIC; \
-	_n->ndata = NULL; \
-	_n->length = 0; \
-	_n->labels = 0; \
-	_n->attributes = 0; \
-	_n->offsets = (o); \
-	_n->buffer = NULL; \
-	ISC_LINK_INIT(_n, link); \
-	ISC_LIST_INIT(_n->list); \
-} while (0)
-
-#define DNS_NAME_RESET(n) \
-do { \
-	(n)->ndata = NULL; \
-	(n)->length = 0; \
-	(n)->labels = 0; \
-	(n)->attributes &= ~DNS_NAMEATTR_ABSOLUTE; \
-	if ((n)->buffer != NULL) \
-		isc_buffer_clear((n)->buffer); \
-} while (0)
-
-#define DNS_NAME_SETBUFFER(n, b) \
-	(n)->buffer = (b)
-
-#define DNS_NAME_ISABSOLUTE(n) \
-	(((n)->attributes & DNS_NAMEATTR_ABSOLUTE) != 0 ? ISC_TRUE : ISC_FALSE)
-
-#define DNS_NAME_COUNTLABELS(n) \
-	((n)->labels)
-
-#define DNS_NAME_TOREGION(n, r) \
-do { \
-	(r)->base = (n)->ndata; \
-	(r)->length = (n)->length; \
-} while (0)
-
-#define DNS_NAME_SPLIT(n, l, p, s) \
-do { \
-	dns_name_t *_n = (n); \
-	dns_name_t *_p = (p); \
-	dns_name_t *_s = (s); \
-	unsigned int _l = (l); \
-	if (_p != NULL) \
-		dns_name_getlabelsequence(_n, 0, _n->labels - _l, _p); \
-	if (_s != NULL) \
-		dns_name_getlabelsequence(_n, _n->labels - _l, _l, _s); \
-} while (0)
-
-#ifdef DNS_NAME_USEINLINE
-
-#define dns_name_init(n, o)		DNS_NAME_INIT(n, o)
-#define dns_name_reset(n)		DNS_NAME_RESET(n)
-#define dns_name_setbuffer(n, b)	DNS_NAME_SETBUFFER(n, b)
-#define dns_name_countlabels(n)		DNS_NAME_COUNTLABELS(n)
-#define dns_name_isabsolute(n)		DNS_NAME_ISABSOLUTE(n)
-#define dns_name_toregion(n, r)		DNS_NAME_TOREGION(n, r)
-#define dns_name_split(n, l, p, s)	DNS_NAME_SPLIT(n, l, p, s)
-
-#endif /* DNS_NAME_USEINLINE */
 
 #endif /* DNS_NAME_H */
