@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <isc/magic.h>
 #include <isc/types.h>
 #include <isc/util.h>
 

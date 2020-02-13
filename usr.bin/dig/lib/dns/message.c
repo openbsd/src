@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.5 2020/02/13 10:40:24 jsg Exp $ */
+/* $Id: message.c,v 1.6 2020/02/13 12:03:51 jsg Exp $ */
 
 /*! \file */
 
@@ -35,12 +35,9 @@
 #include <dns/log.h>
 #include <dns/masterdump.h>
 #include <dns/message.h>
-#include <dns/opcode.h>
-#include <dns/rcode.h>
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
-#include "rdatastruct.h"
 #include <dns/result.h>
 #include <dns/tsig.h>
 #include <dns/ttl.h>

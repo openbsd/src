@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.5 2020/02/13 10:40:24 jsg Exp $ */
+/* $Id: log.c,v 1.6 2020/02/13 12:03:51 jsg Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <limits.h>
+#include <syslog.h>
 
 #include <isc/log.h>
 #include <isc/magic.h>

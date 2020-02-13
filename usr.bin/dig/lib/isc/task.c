@@ -24,7 +24,6 @@
  */
 
 #include <stdlib.h>
-#include <isc/app.h>
 #include <isc/event.h>
 #include <isc/magic.h>
 

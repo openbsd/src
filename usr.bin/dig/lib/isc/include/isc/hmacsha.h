@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.h,v 1.2 2020/02/11 17:28:46 florian Exp $ */
+/* $Id: hmacsha.h,v 1.3 2020/02/13 12:03:51 jsg Exp $ */
 
 /*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,
@@ -28,7 +28,6 @@
 
 #include <isc/sha1.h>
 #include <isc/sha2.h>
-#include <isc/types.h>
 
 #define ISC_HMACSHA1_KEYLENGTH ISC_SHA1_BLOCK_LENGTH
 #define ISC_HMACSHA224_KEYLENGTH ISC_SHA224_BLOCK_LENGTH
@@ -36,7 +35,6 @@
 #define ISC_HMACSHA384_KEYLENGTH ISC_SHA384_BLOCK_LENGTH
 #define ISC_HMACSHA512_KEYLENGTH ISC_SHA512_BLOCK_LENGTH
 
-#include <openssl/opensslv.h>
 #include <openssl/hmac.h>
 
 typedef struct {

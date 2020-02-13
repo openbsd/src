@@ -17,7 +17,7 @@
 #ifndef ISC_SHA1_H
 #define ISC_SHA1_H 1
 
-/* $Id: sha1.h,v 1.2 2020/02/11 17:28:46 florian Exp $ */
+/* $Id: sha1.h,v 1.3 2020/02/13 12:03:51 jsg Exp $ */
 
 /*	$NetBSD: sha1.h,v 1.2 1998/05/29 22:55:44 thorpej Exp $	*/
 
@@ -29,12 +29,9 @@
 
 #include <isc/lang.h>
 
-#include <isc/types.h>
-
 #define ISC_SHA1_DIGESTLENGTH 20U
 #define ISC_SHA1_BLOCK_LENGTH 64U
 
-#include <openssl/opensslv.h>
 #include <openssl/evp.h>
 
 typedef struct {

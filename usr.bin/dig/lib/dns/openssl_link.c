@@ -35,12 +35,15 @@
  * Principal Author: Brian Wellington
  */
 
-#include <isc/util.h>
+#include <isc/result.h>
 
-#include <dns/log.h>
+#include <openssl/conf.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
 #include "dst_internal.h"
-#include "dst_openssl.h"
 
 isc_result_t
 dst__openssl_init(void) {

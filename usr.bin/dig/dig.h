@@ -19,18 +19,14 @@
 
 /*! \file */
 
-#include <dns/rdatalist.h>
-
 #include <dst/dst.h>
 
 #include <isc/boolean.h>
 #include <isc/buffer.h>
-#include <isc/bufferlist.h>
 #include <isc/formatcheck.h>
 #include <isc/lang.h>
 #include <isc/list.h>
-
-
+#include <isc/time.h>
 #include <isc/sockaddr.h>
 #include <isc/socket.h>
 

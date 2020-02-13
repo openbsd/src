@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: serial.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: serial.h,v 1.2 2020/02/13 12:03:51 jsg Exp $ */
 
 #ifndef ISC_SERIAL_H
 #define ISC_SERIAL_H 1
@@ -22,7 +22,7 @@
 #include <inttypes.h>
 
 #include <isc/lang.h>
-#include <isc/types.h>
+#include <isc/boolean.h>
 
 /*! \file isc/serial.h
  *	\brief Implement 32 bit serial space arithmetic comparison functions.

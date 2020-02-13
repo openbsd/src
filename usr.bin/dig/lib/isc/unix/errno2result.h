@@ -21,8 +21,6 @@
 
 /* XXXDCL this should be moved to lib/isc/include/isc/errno2result.h. */
 
-#include <errno.h>		/* Provides errno. */
-
 #include <isc/lang.h>
 #include <isc/types.h>
 

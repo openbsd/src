@@ -16,7 +16,6 @@
 
 /*! \file */
 
-#include <limits.h>
 #include <string.h>
 
 #include <isc/safe.h>

@@ -19,6 +19,7 @@
 
 
 #include <isc/regex.h>
+#include <isc/types.h>
 #include <string.h>
 
 #if VALREGEX_REPORT_REASON

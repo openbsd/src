@@ -19,7 +19,6 @@
 
 /*! \file isc/regex.h */
 
-#include <isc/types.h>
 #include <isc/lang.h>
 
 ISC_LANG_BEGINDECLS

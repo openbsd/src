@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: base32.c,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: base32.c,v 1.3 2020/02/13 12:03:51 jsg Exp $ */
 
 /*! \file */
 
@@ -22,7 +22,6 @@
 
 #include <isc/base32.h>
 #include <isc/buffer.h>
-#include <isc/lex.h>
 #include <isc/region.h>
 #include <string.h>
 #include <isc/util.h>

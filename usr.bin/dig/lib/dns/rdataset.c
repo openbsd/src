@@ -20,7 +20,6 @@
 #include <stdlib.h>
 
 #include <isc/buffer.h>
-#include <isc/serial.h>
 #include <isc/util.h>
 
 #include <dns/name.h>
