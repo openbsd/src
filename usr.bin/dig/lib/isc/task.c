@@ -33,19 +33,6 @@
 
 #include "task_p.h"
 
-#ifdef ISC_TASK_TRACE
-#define XTRACE(m)		fprintf(stderr, "task %p thread %lu: %s\n", \
-				       task, 0, (m))
-#define XTTRACE(t, m)		fprintf(stderr, "task %p thread %lu: %s\n", \
-				       (t), 0, (m))
-#define XTHREADTRACE(m)		fprintf(stderr, "thread %lu: %s\n", \
-				       0, (m))
-#else
-#define XTRACE(m)
-#define XTTRACE(t, m)
-#define XTHREADTRACE(m)
-#endif
-
 /***
  *** Types.
  ***/
@@ -256,8 +243,6 @@ task_finished(isc__task_t *task) {
 	REQUIRE(task->references == 0);
 	REQUIRE(task->state == task_state_done);
 
-	XTRACE("task_finished");
-
 	UNLINK(manager->tasks, task, link);
 
 	task->common.impmagic = 0;
@@ -279,7 +264,6 @@ isc__task_create(isc_taskmgr_t *manager0, unsigned int quantum,
 	task = malloc(sizeof(*task));
 	if (task == NULL)
 		return (ISC_R_NOMEMORY);
-	XTRACE("isc_task_create");
 	task->manager = manager;
 	task->state = task_state_idle;
 	task->references = 1;
@@ -327,8 +311,6 @@ isc__task_attach(isc_task_t *source0, isc_task_t **targetp) {
 	REQUIRE(VALID_TASK(source));
 	REQUIRE(targetp != NULL && *targetp == NULL);
 
-	XTTRACE(source, "isc_task_attach");
-
 	source->references++;
 
 	*targetp = (isc_task_t *)source;
@@ -343,10 +325,7 @@ task_shutdown(isc__task_t *task) {
 	 * Caller must be holding the task's lock.
 	 */
 
-	XTRACE("task_shutdown");
-
 	if (! TASK_SHUTTINGDOWN(task)) {
-		XTRACE("shutting down");
 		task->flags |= TASK_F_SHUTTINGDOWN;
 		if (task->state == task_state_idle) {
 			INSIST(EMPTY(task->events));
@@ -384,8 +363,6 @@ task_ready(isc__task_t *task) {
 	REQUIRE(VALID_MANAGER(manager));
 	REQUIRE(task->state == task_state_ready);
 
-	XTRACE("task_ready");
-
 	push_readyq(manager, task);
 }
 
@@ -397,8 +374,6 @@ task_detach(isc__task_t *task) {
 	 */
 
 	REQUIRE(task->references > 0);
-
-	XTRACE("detach");
 
 	task->references--;
 	if (task->references == 0 && task->state == task_state_idle) {
@@ -431,8 +406,6 @@ isc__task_detach(isc_task_t **taskp) {
 	task = (isc__task_t *)*taskp;
 	REQUIRE(VALID_TASK(task));
 
-	XTRACE("isc_task_detach");
-
 	was_idle = task_detach(task);
 
 	if (was_idle)
@@ -456,8 +429,6 @@ task_send(isc__task_t *task, isc_event_t **eventp) {
 	REQUIRE(event->ev_type > 0);
 	REQUIRE(task->state != task_state_done);
 	REQUIRE(!ISC_LINK_LINKED(event, ev_ratelink));
-
-	XTRACE("task_send");
 
 	if (task->state == task_state_idle) {
 		was_idle = ISC_TRUE;
@@ -483,8 +454,6 @@ isc__task_send(isc_task_t *task0, isc_event_t **eventp) {
 	 */
 
 	REQUIRE(VALID_TASK(task));
-
-	XTRACE("isc_task_send");
 
 	/*
 	 * We're trying hard to hold locks for as short a time as possible.
@@ -527,8 +496,6 @@ isc__task_sendanddetach(isc_task_t **taskp, isc_event_t **eventp) {
 	task = (isc__task_t *)*taskp;
 	REQUIRE(VALID_TASK(task));
 
-	XTRACE("isc_task_sendanddetach");
-
 	idle1 = task_send(task, eventp);
 	idle2 = task_detach(task);
 
@@ -557,8 +524,6 @@ dequeue_events(isc__task_t *task, void *sender, isc_eventtype_t first,
 
 	REQUIRE(VALID_TASK(task));
 	REQUIRE(last >= first);
-
-	XTRACE("dequeue_events");
 
 	/*
 	 * Events matching 'sender', whose type is >= first and <= last, and
@@ -597,8 +562,6 @@ isc__task_purgerange(isc_task_t *task0, void *sender, isc_eventtype_t first,
 	 * Purge events from a task's event queue.
 	 */
 
-	XTRACE("isc_task_purgerange");
-
 	ISC_LIST_INIT(events);
 
 	count = dequeue_events(task, sender, first, last, tag, &events,
@@ -624,8 +587,6 @@ isc__task_purge(isc_task_t *task, void *sender, isc_eventtype_t type,
 	/*
 	 * Purge events from a task's event queue.
 	 */
-
-	XTRACE("isc_task_purge");
 
 	return (isc__task_purgerange(task, sender, type, type, tag));
 }
@@ -681,8 +642,6 @@ isc__task_unsendrange(isc_task_t *task, void *sender, isc_eventtype_t first,
 	 * Remove events from a task's event queue.
 	 */
 
-	XTRACE("isc_task_unsendrange");
-
 	return (dequeue_events((isc__task_t *)task, sender, first,
 			       last, tag, events, ISC_FALSE));
 }
@@ -694,8 +653,6 @@ isc__task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type,
 	/*
 	 * Remove events from a task's event queue.
 	 */
-
-	XTRACE("isc_task_unsend");
 
 	return (dequeue_events((isc__task_t *)task, sender, type,
 			       type, tag, events, ISC_FALSE));
@@ -892,7 +849,6 @@ dispatch(isc__taskmgr_t *manager) {
 		if (total_dispatch_count >= DEFAULT_TASKMGR_QUANTUM ||
 		    empty_readyq(manager))
 			break;
-		XTHREADTRACE("working");
 
 		task = pop_readyq(manager);
 		if (task != NULL) {
@@ -914,7 +870,6 @@ dispatch(isc__taskmgr_t *manager) {
 
 			INSIST(task->state == task_state_ready);
 			task->state = task_state_running;
-			XTRACE("running");
 			isc_stdtime_get(&task->now);
 			do {
 				if (!EMPTY(task->events)) {
@@ -925,7 +880,6 @@ dispatch(isc__taskmgr_t *manager) {
 					/*
 					 * Execute the event action.
 					 */
-					XTRACE("execute action");
 					if (event->ev_action != NULL) {
 						(event->ev_action)(
 							(isc_task_t *)task,
@@ -971,13 +925,11 @@ dispatch(isc__taskmgr_t *manager) {
 					 * Nothing else to do for this task
 					 * right now.
 					 */
-					XTRACE("empty");
 					if (task->references == 0 &&
 					    TASK_SHUTTINGDOWN(task)) {
 						/*
 						 * The task is done.
 						 */
-						XTRACE("done");
 						finished = ISC_TRUE;
 						task->state = task_state_done;
 					} else
@@ -994,7 +946,6 @@ dispatch(isc__taskmgr_t *manager) {
 					 * dispatching at least one event,
 					 * so the minimum quantum is one.
 					 */
-					XTRACE("quantum");
 					task->state = task_state_ready;
 					requeue = ISC_TRUE;
 					done = ISC_TRUE;
@@ -1134,7 +1085,6 @@ isc__taskmgr_destroy(isc_taskmgr_t **managerp) {
 		return;
 	}
 
-	XTHREADTRACE("isc_taskmgr_destroy");
 	/*
 	 * Only one non-worker thread may ever call this routine.
 	 * If a worker thread wants to initiate shutdown of the

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.5 2020/02/13 12:03:51 jsg Exp $ */
+/* $Id: timer.c,v 1.6 2020/02/13 16:56:32 florian Exp $ */
 
 /*! \file */
 
@@ -28,15 +28,6 @@
 #include <isc/util.h>
 
 #include "timer_p.h"
-
-#ifdef ISC_TIMER_TRACE
-#define XTRACEID(s, t)			fprintf(stderr, "%s %p\n", (s), (t))
-#define XTRACETIMER(s, t, d)		fprintf(stderr, "%s %p %u.%09u\n", (s), (t), \
-					       (d).seconds, (d).nanoseconds)
-#else
-#define XTRACEID(s, t)
-#define XTRACETIMER(s, t, d)
-#endif /* ISC_TIMER_TRACE */
 
 #define TIMER_MAGIC			ISC_MAGIC('T', 'I', 'M', 'R')
 #define VALID_TIMER(t)			ISC_MAGIC_VALID(t, TIMER_MAGIC)
@@ -209,8 +200,6 @@ schedule(isc__timer_t *timer, isc_time_t *now, isc_boolean_t signal_ok) {
 		}
 		manager->nscheduled++;
 	}
-
-	XTRACETIMER("schedule", timer, due);
 
 	/*
 	 * If this timer is at the head of the queue, we need to ensure
@@ -566,14 +555,12 @@ dispatch(isc__timermgr_t *manager, isc_time_t *now) {
 					 * Idle timer has been touched;
 					 * reschedule.
 					 */
-					XTRACEID("idle reschedule", timer);
 					post_event = ISC_FALSE;
 					need_schedule = ISC_TRUE;
 				}
 			}
 
 			if (post_event) {
-				XTRACEID("posting", timer);
 				/*
 				 * XXX We could preallocate this event.
 				 */
