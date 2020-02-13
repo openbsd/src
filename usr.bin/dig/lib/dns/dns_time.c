@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dns_time.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
+/* $Id: dns_time.c,v 1.3 2020/02/13 08:15:31 florian Exp $ */
 
 /*! \file */
 
@@ -159,14 +159,6 @@ dns_time64_fromtext(const char *source, int64_t *target) {
 	RANGE(1, 12, month);
 	RANGE(1, days[month - 1] +
 		 ((month == 2 && is_leap(year)) ? 1 : 0), day);
-#ifdef __COVERITY__
-	/*
-	 * Use a simplified range to silence Coverity warning (in
-	 * arithmetic with day below).
-	 */
-	RANGE(1, 31, day);
-#endif /* __COVERITY__ */
-
 	RANGE(0, 23, hour);
 	RANGE(0, 59, minute);
 	RANGE(0, 60, second);		/* 60 == leap second. */
