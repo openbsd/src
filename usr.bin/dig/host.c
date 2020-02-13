@@ -807,6 +807,7 @@ host_main(int argc, char **argv) {
 
 	ISC_LIST_INIT(lookup_list);
 	ISC_LIST_INIT(server_list);
+	ISC_LIST_INIT(root_hints_server_list);
 	ISC_LIST_INIT(search_list);
 
 	fatalexit = 1;

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.7 2020/02/13 16:55:20 florian Exp $ */
+/* $Id: dig.c,v 1.8 2020/02/13 19:29:47 florian Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -1878,6 +1878,7 @@ void dig_setup(int argc, char **argv)
 
 	ISC_LIST_INIT(lookup_list);
 	ISC_LIST_INIT(server_list);
+	ISC_LIST_INIT(root_hints_server_list);
 	ISC_LIST_INIT(search_list);
 
 	if (pledge("stdio rpath inet dns", NULL) == -1) {

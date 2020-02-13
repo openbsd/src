@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.4 2020/02/11 23:26:11 jsg Exp $ */
+/* $Id: dighost.c,v 1.5 2020/02/13 19:29:47 florian Exp $ */
 
 /*! \file
  *  \note
@@ -75,6 +75,7 @@ static lwres_conf_t *lwconf = &lwconfdata;
 
 dig_lookuplist_t lookup_list;
 dig_serverlist_t server_list;
+dig_serverlist_t root_hints_server_list;
 dig_searchlistlist_t search_list;
 
 isc_boolean_t
@@ -110,6 +111,38 @@ static char sitvalue[256];
 
 isc_socket_t *keep = NULL;
 isc_sockaddr_t keepaddr;
+
+static const struct {
+	const char *ns;
+	const int af;
+} root_hints[] = {
+	{ "198.41.0.4", AF_INET },		/*  a.root-servers.net  */
+	{ "2001:503:ba3e::2:30", AF_INET6 },	/*  a.root-servers.net  */
+	{ "199.9.14.201", AF_INET },		/*  b.root-servers.net  */
+	{ "2001:500:200::b", AF_INET6 },	/*  b.root-servers.net  */
+	{ "192.33.4.12", AF_INET },		/*  c.root-servers.net  */
+	{ "2001:500:2::c", AF_INET6 },		/*  c.root-servers.net  */
+	{ "199.7.91.13", AF_INET },		/*  d.root-servers.net  */
+	{ "2001:500:2d::d", AF_INET6 },		/*  d.root-servers.net  */
+	{ "192.203.230.10", AF_INET },		/*  e.root-servers.net  */
+	{ "2001:500:a8::e", AF_INET6 },		/*  e.root-servers.net  */
+	{ "192.5.5.241", AF_INET },		/*  f.root-servers.net  */
+	{ "2001:500:2f::f", AF_INET6 },		/*  f.root-servers.net  */
+	{ "192.112.36.4", AF_INET },		/*  g.root-servers.net  */
+	{ "2001:500:12::d0d", AF_INET6 },	/*  g.root-servers.net  */
+	{ "198.97.190.53", AF_INET },		/*  h.root-servers.net  */
+	{ "2001:500:1::53", AF_INET6 },		/*  h.root-servers.net */
+	{ "192.36.148.17", AF_INET },		/*  i.root-servers.net  */
+	{ "2001:7fe::53", AF_INET6 },		/*  i.root-servers.net  */
+	{ "192.58.128.30", AF_INET },		/*  j.root-servers.net  */
+	{ "2001:503:c27::2:30", AF_INET6 },	/*  j.root-servers.net  */
+	{ "193.0.14.129", AF_INET },		/*  k.root-servers.net  */
+	{ "2001:7fd::1", AF_INET6 },		/*  k.root-servers.net  */
+	{ "199.7.83.42", AF_INET },		/*  l.root-servers.net  */
+	{ "2001:500:9f::42", AF_INET6 },	/*  l.root-servers.net  */
+	{ "202.12.27.33", AF_INET },		/*  m.root-servers.net  */
+	{ "2001:dc3::35", AF_INET6 }		/*  m.root-servers.net  */
+};
 
 /*%
  * Exit Codes:
@@ -1939,6 +1972,28 @@ compute_cookie(unsigned char *clientcookie, size_t len) {
 	memmove(clientcookie, cookie_secret, 8);
 }
 
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+static void
+populate_root_hints()
+{
+	dig_server_t *newsrv;
+	size_t i;
+
+	if (!ISC_LIST_EMPTY(root_hints_server_list))
+		return;
+
+	for (i = 0; i < nitems(root_hints); i++) {
+		if (!have_ipv4 && root_hints[i].af == AF_INET)
+			continue;
+		if (!have_ipv6 && root_hints[i].af == AF_INET6)
+			continue;
+		newsrv = make_server(root_hints[i].ns, root_hints[i].ns);
+		ISC_LINK_INIT(newsrv, link);
+		ISC_LIST_ENQUEUE(root_hints_server_list, newsrv, link);
+	}
+}
+#undef nitems
+
 /*%
  * Setup the supplied lookup structure, making it ready to start sending
  * queries to servers.  Create and initialize the message to be sent as
@@ -1973,8 +2028,15 @@ setup_lookup(dig_lookup_t *lookup) {
 	}
 
 	if (ISC_LIST_EMPTY(lookup->my_server_list)) {
-		debug("cloning server list");
-		clone_server_list(server_list, &lookup->my_server_list);
+		if (lookup->trace && lookup->trace_root) {
+			populate_root_hints();
+			clone_server_list(root_hints_server_list,
+			    &lookup->my_server_list);
+		} else {
+			debug("cloning server list");
+			clone_server_list(server_list,
+			    &lookup->my_server_list);
+		}
 	}
 	result = dns_message_gettempname(lookup->sendmsg, &lookup->name);
 	check_result(result, "dns_message_gettempname");

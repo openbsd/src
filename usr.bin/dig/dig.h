@@ -221,6 +221,7 @@ typedef ISC_LIST(dig_lookup_t) dig_lookuplist_t;
 
 extern dig_lookuplist_t lookup_list;
 extern dig_serverlist_t server_list;
+extern dig_serverlist_t root_hints_server_list;
 extern dig_searchlistlist_t search_list;
 extern unsigned int extrabytes;
 
