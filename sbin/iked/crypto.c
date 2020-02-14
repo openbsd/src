@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.22 2017/08/28 16:28:13 otto Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.23 2020/02/14 13:02:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -83,7 +83,7 @@ static const struct {
 int	_dsa_verify_init(struct iked_dsa *, const uint8_t *, size_t);
 int	_dsa_verify_prepare(struct iked_dsa *, uint8_t **, size_t *,
 	    uint8_t **);
-int	_dsa_sign_encode(struct iked_dsa *, uint8_t *, size_t *);
+int	_dsa_sign_encode(struct iked_dsa *, uint8_t *, size_t, size_t *);
 int	_dsa_sign_ecdsa(struct iked_dsa *, uint8_t *, size_t);
 
 struct iked_hash *
@@ -745,37 +745,39 @@ dsa_init(struct iked_dsa *dsa, const void *buf, size_t len)
 	}
 
 	if (dsa->dsa_sign)
-		ret = EVP_SignInit_ex(dsa->dsa_ctx, dsa->dsa_priv, NULL);
+		ret = EVP_DigestSignInit(dsa->dsa_ctx, NULL, dsa->dsa_priv,
+		    NULL, dsa->dsa_key);
 	else {
 		if ((ret = _dsa_verify_init(dsa, buf, len)) != 0)
 			return (ret);
-		ret = EVP_VerifyInit_ex(dsa->dsa_ctx, dsa->dsa_priv, NULL);
+		ret = EVP_DigestVerifyInit(dsa->dsa_ctx, NULL, dsa->dsa_priv,
+		    NULL, dsa->dsa_key);
 	}
 
-	return (ret ? 0 : -1);
+	return (ret == 1 ? 0 : -1);
 }
 
 int
 dsa_update(struct iked_dsa *dsa, const void *buf, size_t len)
 {
-	int	ret = 1;
+	int	ret;
 
 	if (dsa->dsa_hmac)
 		ret = HMAC_Update(dsa->dsa_ctx, buf, len);
 	else if (dsa->dsa_sign)
-		ret = EVP_SignUpdate(dsa->dsa_ctx, buf, len);
+		ret = EVP_DigestSignUpdate(dsa->dsa_ctx, buf, len);
 	else
-		ret = EVP_VerifyUpdate(dsa->dsa_ctx, buf, len);
+		ret = EVP_DigestVerifyUpdate(dsa->dsa_ctx, buf, len);
 
-	return (ret ? 0 : -1);
+	return (ret == 1 ? 0 : -1);
 }
 
 /* Prefix signature hash with encoded type */
 int
-_dsa_sign_encode(struct iked_dsa *dsa, uint8_t *ptr, size_t *offp)
+_dsa_sign_encode(struct iked_dsa *dsa, uint8_t *ptr, size_t len, size_t *offp)
 {
 	int		 keytype;
-	size_t		 i;
+	size_t		 i, need;
 
 	if (offp)
 		*offp = 0;
@@ -792,13 +794,17 @@ _dsa_sign_encode(struct iked_dsa *dsa, uint8_t *ptr, size_t *offp)
 	}
 	if (i >= nitems(schemes))
 		return (-1);
+	log_debug("%s: signature scheme %zd selected", __func__, i);
+	need = sizeof(ptr[0]) + schemes[i].sc_len;
 	if (ptr) {
+		if (len < need)
+			return (-1);
 		ptr[0] = schemes[i].sc_len;
 		memcpy(ptr + sizeof(ptr[0]), schemes[i].sc_oid,
 		    schemes[i].sc_len);
 	}
 	if (offp)
-		*offp = sizeof(ptr[0]) + schemes[i].sc_len;
+		*offp = need;
 	return (0);
 }
 
@@ -808,7 +814,7 @@ dsa_prefix(struct iked_dsa *dsa)
 {
 	size_t		off = 0;
 
-	if (_dsa_sign_encode(dsa, NULL, &off) < 0)
+	if (_dsa_sign_encode(dsa, NULL, 0, &off) < 0)
 		fatal("dsa_prefix: internal error");
 	return off;
 }
@@ -832,9 +838,9 @@ int
 _dsa_sign_ecdsa(struct iked_dsa *dsa, uint8_t *ptr, size_t len)
 {
 	ECDSA_SIG	*obj = NULL;
-	uint8_t		*otmp = NULL, *tmp;
+	uint8_t		*tmp = NULL;
 	const uint8_t	*p;
-	unsigned int	 tmplen;
+	size_t		 tmplen;
 	int		 ret = -1;
 	int		 bnlen, off;
 
@@ -846,11 +852,11 @@ _dsa_sign_ecdsa(struct iked_dsa *dsa, uint8_t *ptr, size_t len)
 	 * (b) convert buffer to ECDSA_SIG object
 	 * (c) concatenate the padded r|s BIGNUMS into 'ptr'
 	 */
-	if ((tmplen = EVP_PKEY_size(dsa->dsa_key)) == 0)
+	if (EVP_DigestSignFinal(dsa->dsa_ctx, NULL, &tmplen) != 1)
 		goto done;
-	if ((otmp = tmp = calloc(1, tmplen)) == NULL)
+	if ((tmp = calloc(1, tmplen)) == NULL)
 		goto done;
-	if (!EVP_SignFinal(dsa->dsa_ctx, tmp, &tmplen, dsa->dsa_key))
+	if (EVP_DigestSignFinal(dsa->dsa_ctx, tmp, &tmplen) != 1)
 		goto done;
 	p = tmp;
 	if (d2i_ECDSA_SIG(&obj, &p, tmplen) == NULL)
@@ -864,7 +870,7 @@ _dsa_sign_ecdsa(struct iked_dsa *dsa, uint8_t *ptr, size_t len)
 	BN_bn2bin(obj->s, ptr + off);
 	ret = 0;
  done:
-	free(otmp);
+	free(tmp);
 	if (obj)
 		ECDSA_SIG_free(obj);
 	return (ret);
@@ -873,7 +879,7 @@ _dsa_sign_ecdsa(struct iked_dsa *dsa, uint8_t *ptr, size_t len)
 ssize_t
 dsa_sign_final(struct iked_dsa *dsa, void *buf, size_t len)
 {
-	unsigned int	 siglen;
+	unsigned int	 hmaclen;
 	size_t		 off = 0;
 	uint8_t		*ptr = buf;
 
@@ -881,8 +887,11 @@ dsa_sign_final(struct iked_dsa *dsa, void *buf, size_t len)
 		return (-1);
 
 	if (dsa->dsa_hmac) {
-		if (!HMAC_Final(dsa->dsa_ctx, buf, &siglen))
+		if (!HMAC_Final(dsa->dsa_ctx, buf, &hmaclen))
 			return (-1);
+		if (hmaclen > INT_MAX)
+			return (-1);
+		return (ssize_t)hmaclen;
 	} else {
 		switch (dsa->dsa_method) {
 		case IKEV2_AUTH_ECDSA_256:
@@ -890,20 +899,20 @@ dsa_sign_final(struct iked_dsa *dsa, void *buf, size_t len)
 		case IKEV2_AUTH_ECDSA_521:
 			if (_dsa_sign_ecdsa(dsa, buf, len) < 0)
 				return (-1);
-			siglen = len;
-			break;
+			return (len);
 		default:
-			if (_dsa_sign_encode(dsa, ptr, &off) < 0)
+			if (_dsa_sign_encode(dsa, ptr, len, &off) < 0)
 				return (-1);
-			if (!EVP_SignFinal(dsa->dsa_ctx, ptr + off, &siglen,
-			    dsa->dsa_key))
+			if (off > len)
 				return (-1);
-			siglen += off;
-			break;
+			len -= off;
+			ptr += off;
+			if (EVP_DigestSignFinal(dsa->dsa_ctx, ptr, &len) != 1)
+				return (-1);
+			return (len + off);
 		}
 	}
-
-	return (siglen);
+	return (-1);
 }
 
 int
@@ -979,8 +988,7 @@ dsa_verify_final(struct iked_dsa *dsa, void *buf, size_t len)
 	} else {
 		if (_dsa_verify_prepare(dsa, &ptr, &len, &freeme) < 0)
 			return (-1);
-		if (EVP_VerifyFinal(dsa->dsa_ctx, ptr, len,
-		    dsa->dsa_key) != 1) {
+		if (EVP_DigestVerifyFinal(dsa->dsa_ctx, ptr, len) != 1) {
 			free(freeme);
 			ca_sslerror(__func__);
 			return (-1);
