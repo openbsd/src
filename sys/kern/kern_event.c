@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.123 2020/02/09 14:09:08 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.124 2020/02/14 16:50:25 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -72,6 +72,7 @@ void	kqueue_wakeup(struct kqueue *kq);
 
 static void	kqueue_expand_hash(struct kqueue *kq);
 static void	kqueue_expand_list(struct kqueue *kq, int fd);
+static void	kqueue_task(void *);
 
 const struct fileops kqueueops = {
 	.fo_read	= kqueue_read,
@@ -498,6 +499,7 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	kq->kq_refs = 1;
 	kq->kq_fdp = fdp;
 	TAILQ_INIT(&kq->kq_head);
+	task_set(&kq->kq_task, kqueue_task, kq);
 
 	fdplock(fdp);
 	error = falloc(p, &fp, &fd);
@@ -1061,11 +1063,24 @@ kqueue_close(struct file *fp, struct proc *p)
 
 	kq->kq_state |= KQ_DYING;
 	kqueue_wakeup(kq);
+
+	KASSERT(SLIST_EMPTY(&kq->kq_sel.si_note));
+	task_del(systq, &kq->kq_task);
+
 	KQRELE(kq);
 
 	KERNEL_UNLOCK();
 
 	return (0);
+}
+
+static void
+kqueue_task(void *arg)
+{
+	struct kqueue *kq = arg;
+
+	KNOTE(&kq->kq_sel.si_note, 0);
+	KQRELE(kq);
 }
 
 void
@@ -1079,8 +1094,12 @@ kqueue_wakeup(struct kqueue *kq)
 	if (kq->kq_state & KQ_SEL) {
 		kq->kq_state &= ~KQ_SEL;
 		selwakeup(&kq->kq_sel);
-	} else
-		KNOTE(&kq->kq_sel.si_note, 0);
+	} else if (!SLIST_EMPTY(&kq->kq_sel.si_note)) {
+		/* Defer activation to avoid recursion. */
+		KQREF(kq);
+		if (!task_add(systq, &kq->kq_task))
+			KQRELE(kq);
+	}
 }
 
 static void

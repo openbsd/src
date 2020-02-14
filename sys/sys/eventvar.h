@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.7 2020/01/10 15:49:37 visa Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.8 2020/02/14 16:50:25 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -31,6 +31,8 @@
 #ifndef _SYS_EVENTVAR_H_
 #define _SYS_EVENTVAR_H_
 
+#include <sys/task.h>
+
 #define KQ_NEVENTS	8		/* minimize copy{in,out} calls */
 #define KQEXTENT	256		/* linear growth by this amount */
 
@@ -51,6 +53,7 @@ struct kqueue {
 	struct		klist *kq_knlist;	/* list of attached knotes */
 	u_long		kq_knhashmask;		/* size of knhash */
 	struct		klist *kq_knhash;	/* hash table for attached knotes */
+	struct		task kq_task;		/* deferring of activation */
 
 	int		kq_state;
 #define KQ_SEL		0x01
