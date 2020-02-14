@@ -775,10 +775,10 @@ parse_args(int argc, char **argv) {
 	if (argc == 0)
 		show_usage();
 
-	strlcpy(hostname, *argv, sizeof(hostname));
+	strlcpy(hostname, argv[0], sizeof(hostname));
 
-	if (argc == 2) {
-		set_nameserver(*argv + 1);
+	if (argc >= 2) {
+		set_nameserver(argv[1]);
 		debug("server is %s", *argv + 1);
 		listed_server = ISC_TRUE;
 	} else
