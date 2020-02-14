@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.35 2019/02/16 17:01:24 jmc Exp $
+.\"	$OpenBSD: dd.1,v 1.36 2020/02/14 15:55:57 schwarze Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd $Mdocdate: February 16 2019 $
+.Dd $Mdocdate: February 14 2020 $
 .Dt DD 1
 .Os
 .Sh NAME
@@ -57,11 +57,11 @@ and truncated input records to the standard error output.
 .Pp
 The following operands are available:
 .Bl -tag -width of=file
-.It Cm if= Ns Ar file
+.It Cm if Ns = Ns Ar file
 Read input from
 .Ar file
 instead of the standard input.
-.It Cm of= Ns Ar file
+.It Cm of Ns = Ns Ar file
 Write output to
 .Ar file
 instead of the standard output.
@@ -72,15 +72,15 @@ If an initial portion of the output file is skipped (see the
 .Cm seek
 operand),
 the output file is truncated at that point.
-.It Cm ibs= Ns Ar n
+.It Cm ibs Ns = Ns Ar n
 Set the input block size to
 .Ar n
 bytes instead of the default 512.
-.It Cm obs= Ns Ar n
+.It Cm obs Ns = Ns Ar n
 Set the output block size to
 .Ar n
 bytes instead of the default 512.
-.It Cm bs= Ns Ar n
+.It Cm bs Ns = Ns Ar n
 Set both the input and output block size to
 .Ar n
 bytes, superseding the
@@ -95,22 +95,22 @@ or
 .Cm sync
 are specified, then each input block is copied to the output as a
 single block without any aggregation of short blocks.
-.It Cm cbs= Ns Ar n
+.It Cm cbs Ns = Ns Ar n
 Set the conversion record size to
 .Ar n
 bytes.
 The conversion record size is required by the record oriented conversion
 values.
-.It Cm count= Ns Ar n
+.It Cm count Ns = Ns Ar n
 Copy only
 .Ar n
 input blocks.
-.It Cm files= Ns Ar n
+.It Cm files Ns = Ns Ar n
 Copy
 .Ar n
 input files before terminating.
 This operand is only applicable when the input device is a tape.
-.It Cm seek= Ns Ar n
+.It Cm seek Ns = Ns Ar n
 Seek
 .Ar n
 blocks from the beginning of the output before copying.
@@ -124,7 +124,7 @@ using the tape
 function calls.
 If the seek operation is past the end of file, space from the current
 end of file to the specified offset is filled with blocks of NUL bytes.
-.It Cm skip= Ns Ar n
+.It Cm skip Ns = Ns Ar n
 Skip
 .Ar n
 blocks from the beginning of the input before copying.
@@ -135,11 +135,7 @@ Otherwise, input data is read and discarded.
 For pipes, the correct number of bytes is read.
 For all other devices, the correct number of blocks is read without
 distinguishing between a partial or complete block being read.
-.It Xo
-.Sm off
-.Cm status= Ar value
-.Sm on
-.Xc
+.It Cm status Ns = Ns Ar value
 Where
 .Ar value
 is one of the symbols from the following list.
@@ -150,12 +146,7 @@ Do not print the transfer statistics as the last line of status output.
 Do not print the status output.
 Error messages are shown; informational messages are not.
 .El
-.It Xo
-.Sm off
-.Cm conv= Ar value Oo ,
-.Sm on
-.Ar value ... Oc
-.Xc
+.It Cm conv Ns = Ns Ar value Ns Op , Ns Ar value ...
 Where
 .Ar value
 is one of the symbols from the following list.
@@ -235,12 +226,11 @@ The
 value is not supported for tapes.
 .It Cm osync
 Pad the final output block to the full output block size.
-If the input file is not a multiple of the output block size
-after conversion, this conversion forces the final output block
-to be the same size as preceding blocks for use on devices that require
+This forces the final output block to be the same size
+as preceding blocks for use on devices that require
 regularly sized blocks to be written.
-This option is incompatible with use of the
-.Cm bs= Ns Ar n
+This option is incompatible with the
+.Cm bs
 block size specification.
 .It Cm swab
 Swap every pair of input bytes.
