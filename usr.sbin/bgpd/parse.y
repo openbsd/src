@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.403 2020/01/24 05:44:05 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.404 2020/02/14 13:54:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4076,8 +4076,7 @@ expand_rule(struct filter_rule *rule, struct filter_rib_l *rib,
 					memcpy(r, rule, sizeof(struct filter_rule));
 					memcpy(&r->match, match,
 					    sizeof(struct filter_match));
-					TAILQ_INIT(&r->set);
-					copy_filterset(set, &r->set);
+					filterset_copy(set, &r->set);
 
 					if (rb != NULL)
 						strlcpy(r->rib, rb->name,

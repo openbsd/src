@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.94 2020/01/28 15:45:46 bket Exp $ */
+/*	$OpenBSD: config.c,v 1.95 2020/02/14 13:54:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -496,22 +496,6 @@ prepare_listeners(struct bgpd_config *conf)
 }
 
 void
-copy_filterset(struct filter_set_head *source, struct filter_set_head *dest)
-{
-	struct filter_set	*s, *t;
-
-	if (source == NULL)
-		return;
-
-	TAILQ_FOREACH(s, source, entry) {
-		if ((t = malloc(sizeof(struct filter_set))) == NULL)
-			fatal(NULL);
-		memcpy(t, s, sizeof(struct filter_set));
-		TAILQ_INSERT_TAIL(dest, t, entry);
-	}
-}
-
-void
 expand_networks(struct bgpd_config *c)
 {
 	struct network		*n, *m, *tmp;
@@ -533,8 +517,7 @@ expand_networks(struct bgpd_config *c)
 				memcpy(&m->net.prefix, &psi->p.addr,
 				    sizeof(m->net.prefix));
 				m->net.prefixlen = psi->p.len;
-				TAILQ_INIT(&m->net.attrset);
-				copy_filterset(&n->net.attrset,
+				filterset_copy(&n->net.attrset,
 				    &m->net.attrset);
 				TAILQ_INSERT_TAIL(nw, m, entry);
 			}

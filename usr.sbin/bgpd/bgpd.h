@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.400 2020/02/12 10:33:56 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.401 2020/02/14 13:54:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1182,8 +1182,6 @@ void		free_prefixtree(struct prefixset_tree *);
 void		filterlist_free(struct filter_head *);
 int		host(const char *, struct bgpd_addr *, u_int8_t *);
 u_int32_t	get_bgpid(void);
-void		copy_filterset(struct filter_set_head *,
-		    struct filter_set_head *);
 void		expand_networks(struct bgpd_config *);
 int		prefixset_cmp(struct prefixset_item *, struct prefixset_item *);
 RB_PROTOTYPE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
@@ -1261,10 +1259,10 @@ int	pftable_addr_remove(struct pftable_msg *);
 int	pftable_commit(void);
 
 /* rde_filter.c */
-void		 filterset_free(struct filter_set_head *);
-int		 filterset_cmp(struct filter_set *, struct filter_set *);
-void		 filterset_move(struct filter_set_head *,
-		    struct filter_set_head *);
+void	filterset_free(struct filter_set_head *);
+int	filterset_cmp(struct filter_set *, struct filter_set *);
+void	filterset_move(struct filter_set_head *, struct filter_set_head *);
+void	filterset_copy(struct filter_set_head *, struct filter_set_head *);
 const char	*filterset_name(enum action_types);
 
 /* rde_sets.c */

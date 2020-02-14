@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.122 2019/08/13 12:16:20 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.123 2020/02/14 13:54:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -502,6 +502,10 @@ filterset_cmp(struct filter_set *a, struct filter_set *b)
 	return (0);
 }
 
+/*
+ * move filterset from source to dest. dest will be initialized first.
+ * After the move source is an empty list.
+ */
 void
 filterset_move(struct filter_set_head *source, struct filter_set_head *dest)
 {
@@ -509,6 +513,26 @@ filterset_move(struct filter_set_head *source, struct filter_set_head *dest)
 	if (source == NULL)
 		return;
 	TAILQ_CONCAT(dest, source, entry);
+}
+
+/*
+ * copy filterset from source to dest. dest will be initialized first.
+ */
+void
+filterset_copy(struct filter_set_head *source, struct filter_set_head *dest)
+{
+	struct filter_set	*s, *t;
+
+	TAILQ_INIT(dest);
+	if (source == NULL)
+		return;
+
+	TAILQ_FOREACH(s, source, entry) {
+		if ((t = malloc(sizeof(struct filter_set))) == NULL)
+			fatal(NULL);
+		memcpy(t, s, sizeof(struct filter_set));
+		TAILQ_INSERT_TAIL(dest, t, entry);
+	}
 }
 
 int
