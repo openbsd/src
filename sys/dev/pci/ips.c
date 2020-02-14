@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.115 2020/02/05 16:29:30 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.116 2020/02/14 15:56:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -62,7 +62,6 @@ int ips_debug = IPS_D_ERR;
 #define IPS_MAXCHUNKS		16
 #define IPS_MAXCMDS		128
 
-#define IPS_MAXFER		(64 * 1024)
 #define IPS_MAXSGS		16
 #define IPS_MAXCDB		12
 
@@ -1984,8 +1983,8 @@ ips_ccb_alloc(struct ips_softc *sc, int n)
 		    i * sizeof(struct ips_cmdb);
 		ccb[i].c_cmdbpa = sc->sc_cmdbm.dm_paddr +
 		    i * sizeof(struct ips_cmdb);
-		if (bus_dmamap_create(sc->sc_dmat, IPS_MAXFER, IPS_MAXSGS,
-		    IPS_MAXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, IPS_MAXSGS,
+		    MAXPHYS, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb[i].c_dmam))
 			goto fail;
 	}

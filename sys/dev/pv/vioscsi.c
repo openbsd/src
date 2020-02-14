@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.15 2020/02/05 16:29:30 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.16 2020/02/14 15:56:47 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -32,9 +32,8 @@
 enum { vioscsi_debug = 0 };
 #define DPRINTF(f...) do { if (vioscsi_debug) printf(f); } while (0)
 
-#define MAX_XFER	MAX(MAXPHYS,MAXBSIZE)
 /* Number of DMA segments for buffers that the device must support */
-#define SEG_MAX		(MAX_XFER/PAGE_SIZE + 1)
+#define SEG_MAX		(MAXPHYS/PAGE_SIZE + 1)
 /* In the virtqueue, we need space for header and footer, too */
 #define ALLOC_SEGS	(SEG_MAX + 2)
 
@@ -139,7 +138,7 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < nitems(sc->sc_vqs); i++) {
-		rv = virtio_alloc_vq(vsc, &sc->sc_vqs[i], i, MAX_XFER,
+		rv = virtio_alloc_vq(vsc, &sc->sc_vqs[i], i, MAXPHYS,
 		    ALLOC_SEGS, vioscsi_vq_names[i]);
 		if (rv) {
 			printf(": failed to allocate virtqueue %d\n", i);
@@ -492,8 +491,8 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 			printf("bus_dmamap_create vr_control failed, error  %d\n", r);
 			return i;
 		}
-		r = bus_dmamap_create(vsc->sc_dmat, MAX_XFER, SEG_MAX,
-		    MAX_XFER, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_data);
+		r = bus_dmamap_create(vsc->sc_dmat, MAXPHYS, SEG_MAX,
+		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_data);
 		if (r != 0) {
 			printf("bus_dmamap_create vr_data failed, error %d\n", r );
 			return i;

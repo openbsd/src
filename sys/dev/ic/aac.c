@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.74 2020/02/05 16:29:29 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.75 2020/02/14 15:56:47 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -968,8 +968,8 @@ aac_alloc_commands(struct aac_softc *sc)
 			(i * sizeof(struct aac_fib));
 		cm->cm_index = sc->total_fibs;
 
-		if (bus_dmamap_create(sc->aac_dmat, MAXBSIZE, AAC_MAXSGENTRIES,
-		    MAXBSIZE, 0, BUS_DMA_NOWAIT, &cm->cm_datamap)) {
+		if (bus_dmamap_create(sc->aac_dmat, MAXPHYS, AAC_MAXSGENTRIES,
+		    MAXPHYS, 0, BUS_DMA_NOWAIT, &cm->cm_datamap)) {
 			break;
 		}
 		aac_release_command(sc, cm);

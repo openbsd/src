@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.16 2020/02/12 14:08:56 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.17 2020/02/14 15:56:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -65,9 +65,8 @@
 
 #define VIOBLK_DONE	-1
 
-#define MAX_XFER	MAX(MAXPHYS,MAXBSIZE)
 /* Number of DMA segments for buffers that the device must support */
-#define SEG_MAX		(MAX_XFER/PAGE_SIZE + 1)
+#define SEG_MAX		(MAXPHYS/PAGE_SIZE + 1)
 /* In the virtqueue, we need space for header and footer, too */
 #define ALLOC_SEGS	(SEG_MAX + 2)
 
@@ -210,7 +209,7 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_capacity = virtio_read_device_config_8(vsc,
 	    VIRTIO_BLK_CONFIG_CAPACITY);
 
-	if (virtio_alloc_vq(vsc, &sc->sc_vq[0], 0, MAX_XFER, ALLOC_SEGS,
+	if (virtio_alloc_vq(vsc, &sc->sc_vq[0], 0, MAXPHYS, ALLOC_SEGS,
 	    "I/O request") != 0) {
 		printf("\nCan't alloc virtqueue\n");
 		goto err;
@@ -720,8 +719,8 @@ vioblk_alloc_reqs(struct vioblk_softc *sc, int qsize)
 			nreqs = i;
 			goto err_reqs;
 		}
-		r = bus_dmamap_create(sc->sc_virtio->sc_dmat, MAX_XFER,
-		    SEG_MAX, MAX_XFER, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		r = bus_dmamap_create(sc->sc_virtio->sc_dmat, MAXPHYS,
+		    SEG_MAX, MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 		    &vr->vr_payload);
 		if (r != 0) {
 			printf("payload dmamap creation failed, err %d\n", r);
