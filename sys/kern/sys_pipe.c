@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.115 2020/02/01 15:52:34 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.116 2020/02/14 14:32:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -372,20 +372,17 @@ pipeselwakeup(struct pipe *cpipe)
 {
 	rw_assert_wrlock(cpipe->pipe_lock);
 
-	KERNEL_LOCK();
-
-	/* Kernel lock needed in order to prevent race with kevent. */
 	if (cpipe->pipe_state & PIPE_SEL) {
 		cpipe->pipe_state &= ~PIPE_SEL;
 		selwakeup(&cpipe->pipe_sel);
-	} else
+	} else {
+		KERNEL_LOCK();
 		KNOTE(&cpipe->pipe_sel.si_note, NOTE_SUBMIT);
+		KERNEL_UNLOCK();
+	}
 
-	/* Kernel lock needed since pgsigio() calls ptsignal(). */
 	if (cpipe->pipe_state & PIPE_ASYNC)
 		pgsigio(&cpipe->pipe_sigio, SIGIO, 0);
-
-	KERNEL_UNLOCK();
 }
 
 int

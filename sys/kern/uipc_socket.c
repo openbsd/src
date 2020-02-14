@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.239 2020/01/15 13:17:35 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.240 2020/02/14 14:32:44 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1988,10 +1988,8 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 void
 sohasoutofband(struct socket *so)
 {
-	KERNEL_LOCK();
 	pgsigio(&so->so_sigio, SIGURG, 0);
 	selwakeup(&so->so_rcv.sb_sel);
-	KERNEL_UNLOCK();
 }
 
 int

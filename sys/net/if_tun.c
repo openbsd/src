@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.217 2020/01/31 02:58:28 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.218 2020/02/14 14:32:44 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -625,11 +625,9 @@ tun_wakeup(struct tun_softc *sc)
 	if (sc->sc_reading)
 		wakeup(&sc->sc_if.if_snd);
 
-	KERNEL_LOCK();
 	selwakeup(&sc->sc_rsel);
 	if (sc->sc_flags & TUN_ASYNC)
 		pgsigio(&sc->sc_sigio, SIGIO, 0);
-	KERNEL_UNLOCK();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.186 2020/01/27 19:16:43 jcs Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.187 2020/02/14 14:32:44 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -571,8 +571,6 @@ void
 bpf_wakeup_cb(void *xd)
 {
 	struct bpf_d *d = xd;
-
-	KERNEL_ASSERT_LOCKED();
 
 	wakeup(d);
 	if (d->bd_async && d->bd_sig)

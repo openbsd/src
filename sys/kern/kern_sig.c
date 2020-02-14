@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.245 2020/02/01 15:52:34 anton Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.246 2020/02/14 14:32:44 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -740,6 +740,7 @@ pgsigio(struct sigio_ref *sir, int sig, int checkctty)
 	if (sir->sir_sigio == NULL)
 		return;
 
+	KERNEL_LOCK();
 	mtx_enter(&sigio_lock);
 	sigio = sir->sir_sigio;
 	if (sigio == NULL)
@@ -756,6 +757,7 @@ pgsigio(struct sigio_ref *sir, int sig, int checkctty)
 	}
 out:
 	mtx_leave(&sigio_lock);
+	KERNEL_UNLOCK();
 }
 
 /*
