@@ -1,4 +1,4 @@
-/*	$OpenBSD: gaitest.c,v 1.6 2009/06/09 18:15:08 phessler Exp $	*/
+/*	$OpenBSD: gaitest.c,v 1.7 2020/02/14 19:17:33 schwarze Exp $	*/
 /*	$NetBSD: gaitest.c,v 1.3 2002/07/05 15:47:43 itojun Exp $	*/
 
 /*
@@ -119,8 +119,6 @@ main(argc, argv)
 	struct addrinfo *res;
 	int error, i;
 	char *p, *q;
-	extern int optind;
-	extern char *optarg;
 	int c;
 	char nbuf[10];
 

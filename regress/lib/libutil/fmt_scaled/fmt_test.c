@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.15 2017/03/16 02:42:31 dtucker Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.16 2020/02/14 19:17:34 schwarze Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -36,8 +36,6 @@ __dead static void usage(int stat)
 int
 main(int argc, char **argv)
 {
-	extern char *optarg;
-	extern int optind;
 	int i, ch;
  
 	while ((ch = getopt(argc, argv, "hv")) != -1) {

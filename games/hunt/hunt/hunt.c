@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.22 2017/04/08 22:50:41 gsoares Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.23 2020/02/14 19:17:33 schwarze Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -85,8 +85,6 @@ int
 main(int ac, char **av)
 {
 	int		c;
-	extern int	optind;
-	extern char	*optarg;
 	long		enter_status;
 	int		option;
 	struct servent	*se;

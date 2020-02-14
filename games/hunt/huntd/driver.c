@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.29 2017/01/21 08:22:57 krw Exp $	*/
+/*	$OpenBSD: driver.c,v 1.30 2020/02/14 19:17:33 schwarze Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -80,8 +80,6 @@ main(int ac, char **av)
 	static fd_set	read_fds;
 	static FLAG	first = TRUE;
 	static FLAG	server = FALSE;
-	extern int	optind;
-	extern char	*optarg;
 	extern char	*__progname;
 	int		c;
 	static struct timeval	linger = { 0, 0 };

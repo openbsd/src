@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.29 2017/06/04 13:39:25 fcambus Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.30 2020/02/14 19:17:33 schwarze Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -252,8 +252,6 @@ main(int ac, char *av[])
 void
 getargs(int argc, char *argv[])
 {
-	extern char	*optarg;
-	extern int	optind;
 	int	ch;
 
 	while ((ch = getopt(argc, argv, "c:hiorsx")) != -1) {
