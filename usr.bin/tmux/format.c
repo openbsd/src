@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.224 2020/01/28 10:44:30 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.225 2020/02/14 13:57:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -878,6 +878,44 @@ format_cb_pane_in_mode(struct format_tree *ft, struct format_entry *fe)
 	TAILQ_FOREACH(wme, &wp->modes, entry)
 	    n++;
 	xasprintf(&fe->value, "%u", n);
+}
+
+/* Callback for pane_at_top. */
+static void
+format_cb_pane_at_top(struct format_tree *ft, struct format_entry *fe)
+{
+	struct window_pane	*wp = ft->wp;
+	struct window		*w = wp->window;
+	int			 status, flag;
+
+	if (wp == NULL)
+		return;
+
+	status = options_get_number(w->options, "pane-border-status");
+	if (status == PANE_STATUS_TOP)
+		flag = (wp->yoff == 1);
+	else
+		flag = (wp->yoff == 0);
+	xasprintf(&fe->value, "%d", flag);
+}
+
+/* Callback for pane_at_bottom. */
+static void
+format_cb_pane_at_bottom(struct format_tree *ft, struct format_entry *fe)
+{
+	struct window_pane	*wp = ft->wp;
+	struct window		*w = wp->window;
+	int			 status, flag;
+
+	if (wp == NULL)
+		return;
+
+	status = options_get_number(w->options, "pane-border-status");
+	if (status == PANE_STATUS_BOTTOM)
+		flag = (wp->yoff + wp->sy == w->sy - 1);
+	else
+		flag = (wp->yoff + wp->sy == w->sy);
+	xasprintf(&fe->value, "%d", flag);
 }
 
 /* Callback for cursor_character. */
@@ -2531,9 +2569,9 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "pane_right", "%u", wp->xoff + wp->sx - 1);
 	format_add(ft, "pane_bottom", "%u", wp->yoff + wp->sy - 1);
 	format_add(ft, "pane_at_left", "%d", wp->xoff == 0);
-	format_add(ft, "pane_at_top", "%d", wp->yoff == 0);
+	format_add_cb(ft, "pane_at_top", format_cb_pane_at_top);
 	format_add(ft, "pane_at_right", "%d", wp->xoff + wp->sx == w->sx);
-	format_add(ft, "pane_at_bottom", "%d", wp->yoff + wp->sy == w->sy);
+	format_add_cb(ft, "pane_at_bottom", format_cb_pane_at_bottom);
 
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme != NULL) {
