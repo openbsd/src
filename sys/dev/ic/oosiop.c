@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.24 2020/01/25 21:48:42 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.25 2020/02/14 18:37:03 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ struct cfdriver oosiop_cd = {
 	NULL, "oosiop", DV_DULL
 };
 
-struct scsi_adapter oosiop_adapter = {
+struct scsi_adapter oosiop_switch = {
 	oosiop_scsicmd, oosiop_minphys, NULL, NULL, NULL
 };
 
@@ -260,7 +260,7 @@ oosiop_attach(struct oosiop_softc *sc)
 	/*
 	 * Fill in the sc_link.
 	 */
-	sc->sc_link.adapter = &oosiop_adapter;
+	sc->sc_link.adapter = &oosiop_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.openings = 1;	/* XXX */
 	sc->sc_link.adapter_buswidth = OOSIOP_NTGT;

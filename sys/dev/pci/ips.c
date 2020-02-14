@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.116 2020/02/14 15:56:47 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.117 2020/02/14 18:37:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -496,11 +496,11 @@ struct cfdriver ips_cd = {
 	NULL, "ips", DV_DULL
 };
 
-static struct scsi_adapter ips_scsi_adapter = {
+static struct scsi_adapter ips_switch = {
 	ips_scsi_cmd, NULL, NULL, NULL, ips_scsi_ioctl
 };
 
-static struct scsi_adapter ips_scsi_pt_adapter = {
+static struct scsi_adapter ips_pt_switch = {
 	ips_scsi_pt_cmd, NULL, NULL, NULL, NULL
 };
 
@@ -723,7 +723,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_scsi_link.openings = sc->sc_nccbs / sc->sc_nunits;
 	sc->sc_scsi_link.adapter_target = sc->sc_nunits;
 	sc->sc_scsi_link.adapter_buswidth = sc->sc_nunits;
-	sc->sc_scsi_link.adapter = &ips_scsi_adapter;
+	sc->sc_scsi_link.adapter = &ips_switch;
 	sc->sc_scsi_link.adapter_softc = sc;
 	sc->sc_scsi_link.pool = &sc->sc_iopool;
 
@@ -767,7 +767,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		link->openings = 1;
 		link->adapter_target = IPS_MAXTARGETS;
 		link->adapter_buswidth = lastarget + 1;
-		link->adapter = &ips_scsi_pt_adapter;
+		link->adapter = &ips_pt_switch;
 		link->adapter_softc = pt;
 		link->pool = &sc->sc_iopool;
 

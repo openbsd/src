@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.72 2020/01/23 07:53:00 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.73 2020/02/14 18:37:03 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ struct cfdriver siop_cd = {
 	NULL, "siop", DV_DULL
 };
 
-struct scsi_adapter siop_adapter = {
+struct scsi_adapter siop_switch = {
 	siop_scsicmd, siop_minphys, siop_scsiprobe, siop_scsifree, NULL
 };
 
@@ -190,7 +190,7 @@ siop_attach(sc)
 	TAILQ_INIT(&sc->lunsw_list);
 	scsi_iopool_init(&sc->iopool, sc, siop_cmd_get, siop_cmd_put);
 	sc->sc_currschedslot = 0;
-	sc->sc_c.sc_link.adapter = &siop_adapter;
+	sc->sc_c.sc_link.adapter = &siop_switch;
 	sc->sc_c.sc_link.openings = SIOP_NTAG;
 	sc->sc_c.sc_link.pool = &sc->iopool;
 
