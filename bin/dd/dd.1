@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.36 2020/02/14 15:55:57 schwarze Exp $
+.\"	$OpenBSD: dd.1,v 1.37 2020/02/14 20:13:10 schwarze Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -136,9 +136,9 @@ For pipes, the correct number of bytes is read.
 For all other devices, the correct number of blocks is read without
 distinguishing between a partial or complete block being read.
 .It Cm status Ns = Ns Ar value
-Where
+The
 .Ar value
-is one of the symbols from the following list.
+is one of the symbols from the following list:
 .Bl -tag -width unblock
 .It Cm noxfer
 Do not print the transfer statistics as the last line of status output.
@@ -147,9 +147,9 @@ Do not print the status output.
 Error messages are shown; informational messages are not.
 .El
 .It Cm conv Ns = Ns Ar value Ns Op , Ns Ar value ...
-Where
+Each
 .Ar value
-is one of the symbols from the following list.
+is one of the symbols from the following list:
 .Bl -tag -width unblock
 .It Cm ascii
 The same as the
