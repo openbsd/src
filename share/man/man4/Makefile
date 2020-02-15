@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.753 2020/01/22 05:06:18 tedu Exp $
+#	$OpenBSD: Makefile,v 1.754 2020/02/15 08:48:30 stsp Exp $
 
 MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -40,7 +40,7 @@ MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	imxtmu.4 imxuart.4 inet.4 inet6.4 inphy.4 iophy.4 \
 	ip.4 ip6.4 ipcomp.4 ipgphy.4 ipmi.4 ips.4 ipsec.4 ipw.4 \
 	isa.4 isagpio.4 isapnp.4 islrtc.4 it.4 itherm.4 iwi.4 iwn.4 iwm.4 \
-	ix.4 ixgb.4 ixl.4 jmb.4 jme.4 jmphy.4 \
+	iwx.4 ix.4 ixgb.4 ixl.4 jmb.4 jme.4 jmphy.4 \
 	kate.4 kcov.4 km.4 ksmn.4 ksyms.4 kubsan.4 kue.4 lc.4 lge.4 lii.4 \
 	lisa.4 lm.4 lmenv.4 lmn.4 lmtemp.4 lo.4 lpt.4 lxtphy.4 luphy.4 \
 	maestro.4 mainbus.4 malo.4 maxds.4 maxrtc.4 maxtmp.4 mbg.4 \
