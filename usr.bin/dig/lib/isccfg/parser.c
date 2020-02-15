@@ -418,7 +418,7 @@ create_string(cfg_parser_t *pctx, const char *contents, const cfg_type_t *type,
 	len = strlen(contents);
 	obj->value.string.length = len;
 	obj->value.string.base = malloc(len + 1);
-	if (obj->value.string.base == 0) {
+	if (obj->value.string.base == NULL) {
 		free(obj);
 		return (ISC_R_NOMEMORY);
 	}

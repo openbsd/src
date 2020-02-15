@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.8 2020/02/13 19:29:47 florian Exp $ */
+/* $Id: dig.c,v 1.9 2020/02/15 11:57:11 jsg Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -1774,7 +1774,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 		}
 		/* XXX Remove code dup from shutdown code */
 	next_line:
-		if (fgets(batchline, sizeof(batchline), batchfp) != 0) {
+		if (fgets(batchline, sizeof(batchline), batchfp) != NULL) {
 			bargc = 1;
 			debug("batch line %s", batchline);
 			if (batchline[0] == '\r' || batchline[0] == '\n'
@@ -1847,7 +1847,7 @@ query_finished(void) {
 		return;
 	}
 
-	if (fgets(batchline, sizeof(batchline), batchfp) != 0) {
+	if (fgets(batchline, sizeof(batchline), batchfp) != NULL) {
 		debug("batch line %s", batchline);
 		bargc = 1;
 		input = batchline;
