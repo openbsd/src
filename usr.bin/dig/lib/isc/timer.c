@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.7 2020/02/15 17:59:26 florian Exp $ */
+/* $Id: timer.c,v 1.8 2020/02/15 17:59:55 florian Exp $ */
 
 /*! \file */
 
@@ -94,8 +94,6 @@ void
 isc__timer_detach(isc_timer_t **timerp);
 isc_result_t
 isc__timermgr_create(isc_timermgr_t **managerp);
-void
-isc_timermgr_poke(isc_timermgr_t *manager0);
 void
 isc__timermgr_destroy(isc_timermgr_t **managerp);
 
@@ -634,11 +632,6 @@ isc__timermgr_create(isc_timermgr_t **managerp) {
 	*managerp = (isc_timermgr_t *)manager;
 
 	return (ISC_R_SUCCESS);
-}
-
-void
-isc_timermgr_poke(isc_timermgr_t *manager0) {
-	UNUSED(manager0);
 }
 
 void

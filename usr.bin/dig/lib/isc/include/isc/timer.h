@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.4 2020/02/15 17:59:26 florian Exp $ */
+/* $Id: timer.h,v 1.5 2020/02/15 17:59:55 florian Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -351,13 +351,5 @@ isc_timermgr_destroy(isc_timermgr_t **managerp);
  *
  *\li	All resources used by the manager have been freed.
  */
-
-void isc_timermgr_poke(isc_timermgr_t *m);
-
-/*%<
- * See isc_timermgr_create() above.
- */
-typedef isc_result_t
-(*isc_timermgrcreatefunc_t)(isc_timermgr_t **managerp);
 
 #endif /* ISC_TIMER_H */
