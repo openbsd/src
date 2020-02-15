@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.h,v 1.4 2020/02/13 16:57:55 florian Exp $ */
+/* $Id: buffer.h,v 1.5 2020/02/15 10:56:25 florian Exp $ */
 
 #ifndef ISC_BUFFER_H
 #define ISC_BUFFER_H 1
@@ -850,13 +850,6 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r);
 #define isc_buffer_putuint24		isc__buffer_putuint24
 #define isc_buffer_putuint32		isc__buffer_putuint32
 #endif
-
-#define isc_buffer_constinit(_b, _d, _l) \
-	do { \
-		union { void *_var; const void *_const; } _deconst; \
-		_deconst._const = (_d); \
-		isc_buffer_init((_b), _deconst._var, (_l)); \
-	} while (0)
 
 /*
  * No inline method for this one (yet).
