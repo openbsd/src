@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.486 2020/01/21 01:40:46 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.487 2020/02/15 08:49:11 stsp Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -553,6 +553,7 @@ iwi*	at pci?				# Intel PRO/Wireless 2200BG/2915ABG
 wpi*	at pci?				# Intel PRO/Wireless 3945ABG
 iwn*	at pci?				# Intel WiFi Link 4965/5000/1000/6000
 iwm*	at pci?				# Intel WiFi Link 7xxx
+iwx*	at pci?				# Intel WiFi Link 22xxx
 ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 ral*	at cardbus?			# Ralink RT2500/RT2501/RT2600
 rtw*	at pci?				# Realtek 8180

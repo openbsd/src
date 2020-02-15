@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.187 2019/12/23 08:05:42 kettenis Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.188 2020/02/15 08:49:11 stsp Exp $
 
 machine		amd64
 maxusers	4
@@ -267,6 +267,7 @@ iwi*		at pci?			# Intel PRO/Wireless 2200BG/2915ABG
 wpi*		at pci?			# Intel PRO/Wireless 3945ABG
 iwn*		at pci?			# Intel Wireless WiFi Link 4965AGN
 iwm*		at pci?			# Intel WiFi Link 7xxx
+iwx*		at pci?			# Intel WiFi Link 22xxx
 ral*		at pci?			# Ralink RT2500/RT2501/RT2600
 ral*		at cardbus?		# Ralink RT2500/RT2501/RT2600
 rtw*		at pci?			# Realtek 8180
