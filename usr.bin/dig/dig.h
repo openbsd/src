@@ -35,10 +35,6 @@
 /*% Buffer Size */
 #define BUFSIZE 512
 #define COMMSIZE 0xffff
-#ifndef RESOLV_CONF
-/*% location of resolve.conf */
-#define RESOLV_CONF "/etc/resolv.conf"
-#endif
 /*% output buffer */
 #define OUTPUTBUF 32767
 /*% Max RR Limit */

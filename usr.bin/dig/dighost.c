@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.5 2020/02/13 19:29:47 florian Exp $ */
+/* $Id: dighost.c,v 1.6 2020/02/15 10:58:14 florian Exp $ */
 
 /*! \file
  *  \note
@@ -30,6 +30,7 @@
 #include <limits.h>
 #include <locale.h>
 #include <netdb.h>
+#include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -1259,9 +1260,9 @@ setup_system(isc_boolean_t ipv4only, isc_boolean_t ipv6only) {
 		lwresflags |= LWRES_USEIPV6;
 	lwres_conf_init(lwconf, lwresflags);
 
-	lwresult = lwres_conf_parse(lwconf, RESOLV_CONF);
+	lwresult = lwres_conf_parse(lwconf, _PATH_RESCONF);
 	if (lwresult != LWRES_R_SUCCESS && lwresult != LWRES_R_NOTFOUND)
-		fatal("parse of %s failed", RESOLV_CONF);
+		fatal("parse of %s failed", _PATH_RESCONF);
 
 	/* Make the search list */
 	if (lwconf->searchnxt > 0)
