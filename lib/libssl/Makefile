@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.62 2020/01/30 17:09:23 jsing Exp $
+# $OpenBSD: Makefile,v 1.63 2020/02/15 14:40:38 jsing Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -74,6 +74,7 @@ SRCS= \
 	tls13_handshake_msg.c \
 	tls13_key_schedule.c \
 	tls13_key_share.c \
+	tls13_legacy.c \
 	tls13_lib.c \
 	tls13_record.c \
 	tls13_record_layer.c \
