@@ -60,11 +60,6 @@ struct isc_socketwait {
 int isc_dscp_check_value = -1;
 
 /*%
- * Size of per-FD lock buckets.
- */
-#define FDLOCK_ID(fd)		0
-
-/*%
  * Some systems define the socket length argument as an int, some as size_t,
  * some as socklen_t.  This is here so it can be easily changed if needed.
  */
@@ -1427,7 +1422,6 @@ socket_create(isc_socketmgr_t *manager0, int pf, isc_sockettype_t type,
 	isc__socket_t *sock = NULL;
 	isc__socketmgr_t *manager = (isc__socketmgr_t *)manager0;
 	isc_result_t result;
-	int lockid;
 
 	REQUIRE(VALID_MANAGER(manager));
 	REQUIRE(socketp != NULL && *socketp == NULL);
@@ -1464,7 +1458,6 @@ socket_create(isc_socketmgr_t *manager0, int pf, isc_sockettype_t type,
 	 * there are no external references to it yet.
 	 */
 
-	lockid = FDLOCK_ID(sock->fd);
 	manager->fds[sock->fd] = sock;
 	manager->fdstate[sock->fd] = MANAGED;
 
