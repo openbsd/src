@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.260 2020/02/11 16:02:39 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.261 2020/02/15 09:35:48 anton Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -488,7 +488,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 
 	if (SCARG(uap, promises)) {
 		pr->ps_pledge = promises;
-		pr->ps_flags |= PS_PLEDGE;
+		atomic_setbits_int(&pr->ps_flags, PS_PLEDGE);
 		/*
 		 * Kill off unveil and drop unveil vnode refs if we no
 		 * longer are holding any path-accessing pledge
@@ -500,7 +500,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 	}
 	if (SCARG(uap, execpromises)) {
 		pr->ps_execpledge = execpromises;
-		pr->ps_flags |= PS_EXECPLEDGE;
+		atomic_setbits_int(&pr->ps_flags, PS_EXECPLEDGE);
 	}
 	return (0);
 }

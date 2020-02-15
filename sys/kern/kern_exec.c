@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.212 2019/12/11 07:30:09 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.213 2020/02/15 09:35:48 anton Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -701,9 +701,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		p->p_descfd = pack.ep_fd;
 
 	if (pack.ep_flags & EXEC_WXNEEDED)
-		p->p_p->ps_flags |= PS_WXNEEDED;
+		atomic_setbits_int(&p->p_p->ps_flags, PS_WXNEEDED);
 	else
-		p->p_p->ps_flags &= ~PS_WXNEEDED;
+		atomic_clearbits_int(&p->p_p->ps_flags, PS_WXNEEDED);
 
 	/* update ps_emul, the old value is no longer needed */
 	pr->ps_emul = pack.ep_emul;

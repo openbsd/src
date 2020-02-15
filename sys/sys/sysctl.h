@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.202 2020/02/01 08:57:27 anton Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.203 2020/02/15 09:35:48 anton Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -460,7 +460,7 @@ struct kinfo_proc {
 
 	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
-	int32_t p_psflags;		/* INT: PS_* flags on the process. */
+	int32_t p_psflags;		/* UINT: PS_* flags on the process. */
 	int32_t p_spare;		/* INT: unused. */
 	u_int32_t p_svuid;		/* UID_T: saved user id */
 	u_int32_t p_svgid;		/* GID_T: saved group id */

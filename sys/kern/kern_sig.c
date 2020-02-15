@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.246 2020/02/14 14:32:44 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.247 2020/02/15 09:35:48 anton Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -434,7 +434,7 @@ execsigs(struct proc *p)
 	 * Clear set of signals caught on the signal stack.
 	 */
 	sigstkinit(&p->p_sigstk);
-	ps->ps_flags &= ~SAS_NOCLDWAIT;
+	atomic_clearbits_int(&ps->ps_flags, SAS_NOCLDWAIT);
 	if (ps->ps_sigact[SIGCHLD] == SIG_IGN)
 		ps->ps_sigact[SIGCHLD] = SIG_DFL;
 }
@@ -1512,7 +1512,7 @@ coredump(struct proc *p)
 	if (pr->ps_emul->e_coredump == NULL)
 		return (EINVAL);
 
-	pr->ps_flags |= PS_COREDUMP;
+	atomic_setbits_int(&pr->ps_flags, PS_COREDUMP);
 
 	/* Don't dump if will exceed file size limit. */
 	if (USPACE + ptoa(vm->vm_dsize + vm->vm_ssize) >= lim_cur(RLIMIT_CORE))

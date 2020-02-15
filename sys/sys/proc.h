@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.287 2020/01/30 08:51:27 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.288 2020/02/15 09:35:48 anton Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -159,6 +159,7 @@ struct unveil;
 
 /*
  * Locks used to protect struct members in this file:
+ *	a	atomic operations
  *	m	this process' `ps_mtx'
  *	p	this process' `ps_lock'
  *	r	rlimit_lock
@@ -196,7 +197,7 @@ struct process {
 /* The following fields are all zeroed upon creation in process_new. */
 #define	ps_startzero	ps_klist
 	struct	klist ps_klist;		/* knotes attached to this process */
-	int	ps_flags;		/* PS_* flags. */
+	u_int	ps_flags;		/* [a] PS_* flags. */
 	int	ps_siglist;		/* Signals pending for the process. */
 
 	struct	proc *ps_single;	/* Single threading to this thread. */
