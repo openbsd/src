@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.65 2020/02/05 16:29:29 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.66 2020/02/15 11:35:31 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -953,8 +953,8 @@ nvme_poll_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
 {
 	struct nvme_poll_state *state = ccb->ccb_cookie;
 
-	SET(cqe->flags, htole16(NVME_CQE_PHASE));
 	state->c = *cqe;
+	SET(state->c.flags, htole16(NVME_CQE_PHASE));
 }
 
 void
