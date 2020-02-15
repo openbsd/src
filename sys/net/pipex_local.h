@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.30 2019/01/31 18:01:14 millert Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.31 2020/02/15 07:16:03 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifdef __OpenBSD__
-#define Static
-#else
-#define Static static
-#endif
 
 #define	PIPEX_PPTP	1
 #define	PIPEX_L2TP	1
@@ -372,59 +366,56 @@ extern struct pipex_hash_head	pipex_id_hashtable[];
 #define PIPEX_TCP_OPTLEN 40
 #define	PIPEX_L2TP_MINLEN	8
 
-/*
- * static function prototypes
- */
-Static void                  pipex_iface_start (struct pipex_iface_context *);
-Static void                  pipex_iface_stop (struct pipex_iface_context *);
-Static int                   pipex_add_session (struct pipex_session_req *, struct pipex_iface_context *);
-Static int                   pipex_close_session (struct pipex_session_close_req *);
-Static int                   pipex_config_session (struct pipex_session_config_req *);
-Static int                   pipex_get_stat (struct pipex_session_stat_req *);
-Static int                   pipex_get_closed (struct pipex_session_list_req *);
-Static int                   pipex_destroy_session (struct pipex_session *);
-Static struct pipex_session  *pipex_lookup_by_ip_address (struct in_addr);
-Static struct pipex_session  *pipex_lookup_by_session_id (int, int);
-Static void                  pipex_ip_output (struct mbuf *, struct pipex_session *);
-Static void                  pipex_ppp_output (struct mbuf *, struct pipex_session *, int);
-Static int                   pipex_ppp_proto (struct mbuf *, struct pipex_session *, int, int *);
-Static void                  pipex_ppp_input (struct mbuf *, struct pipex_session *, int);
-Static void                  pipex_ip_input (struct mbuf *, struct pipex_session *);
+void                  pipex_iface_start (struct pipex_iface_context *);
+void                  pipex_iface_stop (struct pipex_iface_context *);
+int                   pipex_add_session (struct pipex_session_req *, struct pipex_iface_context *);
+int                   pipex_close_session (struct pipex_session_close_req *);
+int                   pipex_config_session (struct pipex_session_config_req *);
+int                   pipex_get_stat (struct pipex_session_stat_req *);
+int                   pipex_get_closed (struct pipex_session_list_req *);
+int                   pipex_destroy_session (struct pipex_session *);
+struct pipex_session  *pipex_lookup_by_ip_address (struct in_addr);
+struct pipex_session  *pipex_lookup_by_session_id (int, int);
+void                  pipex_ip_output (struct mbuf *, struct pipex_session *);
+void                  pipex_ppp_output (struct mbuf *, struct pipex_session *, int);
+int                   pipex_ppp_proto (struct mbuf *, struct pipex_session *, int, int *);
+void                  pipex_ppp_input (struct mbuf *, struct pipex_session *, int);
+void                  pipex_ip_input (struct mbuf *, struct pipex_session *);
 #ifdef INET6
-Static void                  pipex_ip6_input (struct mbuf *, struct pipex_session *);
+void                  pipex_ip6_input (struct mbuf *, struct pipex_session *);
 #endif
-Static struct mbuf           *pipex_common_input(struct pipex_session *, struct mbuf *, int, int, int);
+struct mbuf           *pipex_common_input(struct pipex_session *, struct mbuf *, int, int, int);
 
 #ifdef PIPEX_PPPOE
-Static void                  pipex_pppoe_output (struct mbuf *, struct pipex_session *);
+void                  pipex_pppoe_output (struct mbuf *, struct pipex_session *);
 #endif
 
 #ifdef PIPEX_PPTP
-Static void                  pipex_pptp_output (struct mbuf *, struct pipex_session *, int, int);
-Static struct pipex_session  *pipex_pptp_userland_lookup_session(struct mbuf *, struct sockaddr *);
+void                  pipex_pptp_output (struct mbuf *, struct pipex_session *, int, int);
+struct pipex_session  *pipex_pptp_userland_lookup_session(struct mbuf *, struct sockaddr *);
 #endif
 
 #ifdef PIPEX_L2TP
-Static void                  pipex_l2tp_output (struct mbuf *, struct pipex_session *);
+void                  pipex_l2tp_output (struct mbuf *, struct pipex_session *);
 #endif
 
 #ifdef PIPEX_MPPE
-Static void                  pipex_mppe_init (struct pipex_mppe *, int, int, u_char *, int);
-Static void                  GetNewKeyFromSHA (u_char *, u_char *, int, u_char *);
-Static void                  pipex_mppe_reduce_key (struct pipex_mppe *);
-Static void                  mppe_key_change (struct pipex_mppe *);
-Static void                  pipex_mppe_input (struct mbuf *, struct pipex_session *);
-Static void                  pipex_mppe_output (struct mbuf *, struct pipex_session *, uint16_t);
-Static void                  pipex_ccp_input (struct mbuf *, struct pipex_session *);
-Static int                   pipex_ccp_output (struct pipex_session *, int, int);
+void                  pipex_mppe_init (struct pipex_mppe *, int, int, u_char *, int);
+void                  GetNewKeyFromSHA (u_char *, u_char *, int, u_char *);
+void                  pipex_mppe_reduce_key (struct pipex_mppe *);
+void                  mppe_key_change (struct pipex_mppe *);
+void                  pipex_mppe_input (struct mbuf *, struct pipex_session *);
+void                  pipex_mppe_output (struct mbuf *, struct pipex_session *, uint16_t);
+void                  pipex_ccp_input (struct mbuf *, struct pipex_session *);
+int                   pipex_ccp_output (struct pipex_session *, int, int);
 #endif
 
-Static struct mbuf           *adjust_tcp_mss (struct mbuf *, int);
-Static struct mbuf           *ip_is_idle_packet (struct mbuf *, int *);
-Static void                  pipex_session_log (struct pipex_session *, int, const char *, ...)  __attribute__((__format__(__printf__,3,4)));
-Static uint32_t              pipex_sockaddr_hash_key(struct sockaddr *);
-Static int                   pipex_sockaddr_compar_addr(struct sockaddr *, struct sockaddr *);
-Static int                   pipex_ppp_enqueue (struct mbuf *, struct pipex_session *, struct mbuf_queue *);
-Static void                  pipex_timer_start (void);
-Static void                  pipex_timer_stop (void);
-Static void                  pipex_timer (void *);
+struct mbuf           *adjust_tcp_mss (struct mbuf *, int);
+struct mbuf           *ip_is_idle_packet (struct mbuf *, int *);
+void                  pipex_session_log (struct pipex_session *, int, const char *, ...)  __attribute__((__format__(__printf__,3,4)));
+uint32_t              pipex_sockaddr_hash_key(struct sockaddr *);
+int                   pipex_sockaddr_compar_addr(struct sockaddr *, struct sockaddr *);
+int                   pipex_ppp_enqueue (struct mbuf *, struct pipex_session *, struct mbuf_queue *);
+void                  pipex_timer_start (void);
+void                  pipex_timer_stop (void);
+void                  pipex_timer (void *);
