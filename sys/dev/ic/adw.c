@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.58 2020/02/07 13:31:47 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.59 2020/02/15 18:02:00 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -65,7 +65,6 @@ int adw_queue_ccb(ADW_SOFTC *, ADW_CCB *, int);
 void adw_scsi_cmd(struct scsi_xfer *);
 int adw_build_req(struct scsi_xfer *, ADW_CCB *, int);
 void adw_build_sglist(ADW_CCB *, ADW_SCSI_REQ_Q *, ADW_SG_BLOCK *);
-void adw_minphys(struct buf *, struct scsi_link *);
 void adw_isr_callback(ADW_SOFTC *, ADW_SCSI_REQ_Q *);
 void adw_async_callback(ADW_SOFTC *, u_int8_t);
 
@@ -84,7 +83,7 @@ struct cfdriver adw_cd = {
 };
 
 struct scsi_adapter adw_switch = {
-	adw_scsi_cmd, adw_minphys, NULL, NULL, NULL
+	adw_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 /******************************************************************************/
@@ -517,15 +516,6 @@ adw_attach(ADW_SOFTC *sc)
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
-}
-
-
-void
-adw_minphys(struct buf *bp, struct scsi_link *sl)
-{
-
-	if (bp->b_bcount > ((ADW_MAX_SG_LIST - 1) * PAGE_SIZE))
-		bp->b_bcount = ((ADW_MAX_SG_LIST - 1) * PAGE_SIZE);
 }
 
 

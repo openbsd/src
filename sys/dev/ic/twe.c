@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.50 2020/01/26 00:53:31 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.51 2020/02/15 18:02:00 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -65,7 +65,7 @@ struct cfdriver twe_cd = {
 void	twe_scsi_cmd(struct scsi_xfer *);
 
 struct scsi_adapter twe_switch = {
-	twe_scsi_cmd, twe_minphys, NULL, NULL, NULL
+	twe_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 void *twe_get_ccb(void *);
@@ -750,13 +750,6 @@ twe_done(sc, ccb)
 	TWE_UNLOCK(sc, lock);
 
 	return 0;
-}
-
-void
-twe_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	if (bp->b_bcount > TWE_MAXFER)
-		bp->b_bcount = TWE_MAXFER;
 }
 
 void

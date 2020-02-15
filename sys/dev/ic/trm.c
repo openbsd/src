@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.38 2020/02/06 19:17:54 krw Exp $
+/*	$OpenBSD: trm.c,v 1.39 2020/02/15 18:02:00 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -60,8 +60,6 @@
 #include <dev/ic/trm.h>
 
 /* #define TRM_DEBUG0 */
-
-void	trm_minphys(struct buf *, struct scsi_link *);
 
 void	trm_initSRB(struct trm_scsi_req_q *);
 
@@ -134,7 +132,7 @@ struct  cfdriver trm_cd = {
 };
 
 struct scsi_adapter trm_switch = {
-	trm_scsi_cmd, trm_minphys, NULL, NULL, NULL
+	trm_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 /*
@@ -2348,21 +2346,6 @@ trm_linkSRB(struct trm_softc *sc)
 	printf("\n ");
 #endif
 	splx(intflag);
-}
-
-/*
- * ------------------------------------------------------------
- * Function : trm_minphys
- * Purpose  : limited by the number of segments in the dma segment list
- * Inputs   : *buf
- * ------------------------------------------------------------
- */
-void
-trm_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	if (bp->b_bcount > (TRM_MAX_SG_LISTENTRY-1) * (long) NBPG) {
-		bp->b_bcount = (TRM_MAX_SG_LISTENTRY-1) * (long) NBPG;
-	}
 }
 
 /*
