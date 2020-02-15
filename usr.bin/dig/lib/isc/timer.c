@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.6 2020/02/13 16:56:32 florian Exp $ */
+/* $Id: timer.c,v 1.7 2020/02/15 17:59:26 florian Exp $ */
 
 /*! \file */
 
@@ -98,34 +98,6 @@ void
 isc_timermgr_poke(isc_timermgr_t *manager0);
 void
 isc__timermgr_destroy(isc_timermgr_t **managerp);
-
-static struct isc__timermethods {
-	isc_timermethods_t methods;
-
-	/*%
-	 * The following are defined just for avoiding unused static functions.
-	 */
-	void *gettype;
-} timermethods = {
-	{
-		isc__timer_attach,
-		isc__timer_detach,
-		isc__timer_reset,
-		isc__timer_touch
-	},
-	(void *)isc_timer_gettype
-};
-
-static struct isc__timermgrmethods {
-	isc_timermgrmethods_t methods;
-	void *poke;		/* see above */
-} timermgrmethods = {
-	{
-		isc__timermgr_destroy,
-		isc__timer_create
-	},
-	(void *)isc_timermgr_poke
-};
 
 /*!
  * If the manager is supposed to be shared, there can be only one.
@@ -337,7 +309,6 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 	ISC_LINK_INIT(timer, link);
 	timer->common.impmagic = TIMER_MAGIC;
 	timer->common.magic = ISCAPI_TIMER_MAGIC;
-	timer->common.methods = (isc_timermethods_t *)&timermethods;
 
 	if (type != isc_timertype_inactive)
 		result = schedule(timer, &now, ISC_TRUE);
@@ -646,7 +617,6 @@ isc__timermgr_create(isc_timermgr_t **managerp) {
 
 	manager->common.impmagic = TIMER_MANAGER_MAGIC;
 	manager->common.magic = ISCAPI_TIMERMGR_MAGIC;
-	manager->common.methods = (isc_timermgrmethods_t *)&timermgrmethods;
 	manager->done = ISC_FALSE;
 	INIT_LIST(manager->timers);
 	manager->nscheduled = 0;
