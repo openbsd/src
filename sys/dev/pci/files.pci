@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.343 2020/01/11 00:56:37 jsg Exp $
+#	$OpenBSD: files.pci,v 1.344 2020/02/15 08:47:14 stsp Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -555,6 +555,11 @@ file	dev/pci/if_iwn.c		iwn
 device	iwm: ifnet, wlan, firmload
 attach	iwm at pci
 file	dev/pci/if_iwm.c		iwm
+
+# Intel Wireless WiFi 22xxx
+device	iwx: ifnet, wlan, firmload
+attach	iwx at pci
+file	dev/pci/if_iwx.c		iwx
 
 # C-Media CMI8x38 Audio Chip
 device	cmpci {}: audio
