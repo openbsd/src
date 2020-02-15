@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mandoc.1,v 1.165 2020/01/19 16:16:32 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.166 2020/02/15 15:28:01 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 19 2020 $
+.Dd $Mdocdate: February 15 2020 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -443,6 +443,11 @@ This is useful for distributing manual sources to legacy systems
 lacking
 .Xr mdoc 7
 formatters.
+Embedded
+.Xr eqn 7
+and
+.Xr tbl 7
+code is not supported.
 .Pp
 If the input format of a file is
 .Xr man 7 ,
