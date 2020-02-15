@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.259 2020/02/08 11:58:39 jasper Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.260 2020/02/15 22:59:55 mortimer Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -201,6 +201,7 @@ void vmx_setmsrbrw(struct vcpu *, uint32_t);
 void svm_set_clean(struct vcpu *, uint32_t);
 void svm_set_dirty(struct vcpu *, uint32_t);
 
+int vmm_gpa_is_valid(struct vcpu *vcpu, paddr_t gpa, size_t obj_size);
 void vmm_init_pvclock(struct vcpu *, paddr_t);
 int vmm_update_pvclock(struct vcpu *);
 
@@ -6844,9 +6845,45 @@ vmm_free_vpid(uint16_t vpid)
 	rw_exit_write(&vmm_softc->vpid_lock);
 }
 
+
+/* vmm_gpa_is_valid
+ *
+ * Check if the given gpa is within guest memory space.
+ *
+ * Parameters:
+ * 	vcpu: The virtual cpu we are running on.
+ * 	gpa: The address to check.
+ * 	obj_size: The size of the object assigned to gpa
+ *
+ * Return values:
+ * 	1: gpa is within the memory ranges allocated for the vcpu
+ * 	0: otherwise
+ */
+int
+vmm_gpa_is_valid(struct vcpu *vcpu, paddr_t gpa, size_t obj_size)
+{
+	struct vm *vm = vcpu->vc_parent;
+	struct vm_mem_range *vmr;
+	for (size_t i = 0; i < vm->vm_nmemranges; ++i) {
+		vmr = &vm->vm_memranges[i];
+		if (vmr->vmr_gpa <= gpa &&
+		    gpa < (vmr->vmr_gpa + vmr->vmr_size - obj_size)) {
+		    return 1;
+		}
+	}
+	return 0;
+}
+
 void
 vmm_init_pvclock(struct vcpu *vcpu, paddr_t gpa)
 {
+	if (!vmm_gpa_is_valid(vcpu, gpa & 0xFFFFFFFFFFFFFFF0,
+	        sizeof(struct pvclock_time_info))) {
+		/* XXX: Kill guest? */
+		vmm_inject_gp(vcpu);
+		return;
+	}
+
 	vcpu->vc_pvclock_system_gpa = gpa;
 	if (tsc_frequency > 0)
 		vcpu->vc_pvclock_system_tsc_mul =
