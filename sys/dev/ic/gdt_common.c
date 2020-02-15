@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.67 2020/01/26 00:53:31 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.68 2020/02/15 01:58:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -93,7 +93,7 @@ struct cfdriver gdt_cd = {
 };
 
 struct scsi_adapter gdt_switch = {
-	gdt_scsi_cmd, gdt_minphys, NULL, NULL, NULL
+	gdt_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 int gdt_cnt = 0;
@@ -1091,17 +1091,6 @@ gdt_intr(void *arg)
 		gdt_chain(sc);
 
 	return (1);
-}
-
-void
-gdt_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	GDT_DPRINTF(GDT_D_MISC, ("gdt_minphys(0x%x) ", bp));
-
-	/* As this is way more than MAXPHYS it's really not necessary. */
-	if ((GDT_MAXOFFSETS - 1) * PAGE_SIZE < MAXPHYS &&
-	    bp->b_bcount > ((GDT_MAXOFFSETS - 1) * PAGE_SIZE))
-		bp->b_bcount = ((GDT_MAXOFFSETS - 1) * PAGE_SIZE);
 }
 
 int
