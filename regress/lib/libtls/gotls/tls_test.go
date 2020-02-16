@@ -185,6 +185,7 @@ func TestTLSVersions(t *testing.T) {
 		wantVersion      ProtocolVersion
 		wantHandshakeErr bool
 	}{
+		{tls.VersionTLS10, tls.VersionTLS13, ProtocolTLSv13, false},
 		{tls.VersionSSL30, tls.VersionTLS12, ProtocolTLSv12, false},
 		{tls.VersionTLS10, tls.VersionTLS12, ProtocolTLSv12, false},
 		{tls.VersionTLS11, tls.VersionTLS12, ProtocolTLSv12, false},
