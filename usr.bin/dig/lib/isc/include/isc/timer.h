@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.7 2020/02/16 08:06:37 florian Exp $ */
+/* $Id: timer.h,v 1.8 2020/02/16 18:05:09 florian Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -84,7 +84,7 @@
 
 typedef struct isc_timerevent {
 	struct isc_event	common;
-	isc_time_t		due;
+	struct timespec		due;
 } isc_timerevent_t;
 
 #define ISC_TIMEREVENT_FIRSTEVENT	(ISC_EVENTCLASS_TIMER + 0)
@@ -133,7 +133,7 @@ struct isc_timer {
 
 isc_result_t
 isc_timer_create(isc_timermgr_t *manager,
-		 const interval_t *interval,
+		 const struct timespec *interval,
 		 isc_task_t *task,
 		 isc_taskaction_t action,
 		 void *arg,
@@ -195,7 +195,7 @@ isc_timer_create(isc_timermgr_t *manager,
 
 isc_result_t
 isc_timer_reset(isc_timer_t *timer,
-		const interval_t *interval,
+		const struct timespec *interval,
 		isc_boolean_t purge);
 /*%<
  * Change the timer's type, expires, and interval values to the given

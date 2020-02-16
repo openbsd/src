@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: socket.h,v 1.3 2020/02/16 18:05:09 florian Exp $ */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -93,7 +93,7 @@ struct isc_socketevent {
 	isc_region_t		region;		/*%< for single-buffer i/o */
 	isc_bufferlist_t	bufferlist;	/*%< list of buffers */
 	isc_sockaddr_t		address;	/*%< source address */
-	isc_time_t		timestamp;	/*%< timestamp of packet recv */
+	struct timespec		timestamp;	/*%< timestamp of packet recv */
 	struct in6_pktinfo	pktinfo;	/*%< ipv6 pktinfo */
 	uint32_t		attributes;	/*%< see below */
 	isc_eventdestructor_t   destroy;	/*%< original destructor */

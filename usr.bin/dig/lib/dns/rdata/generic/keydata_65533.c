@@ -180,7 +180,7 @@ totext_keydata(ARGS_TOTEXT) {
 		char rbuf[ISC_FORMATHTTPTIMESTAMP_SIZE];
 		char abuf[ISC_FORMATHTTPTIMESTAMP_SIZE];
 		char dbuf[ISC_FORMATHTTPTIMESTAMP_SIZE];
-		isc_time_t t;
+		struct timespec t;
 
 		RETERR(str_totext(" ; ", target));
 		RETERR(str_totext(keyinfo, target));

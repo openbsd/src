@@ -299,7 +299,7 @@ evloop(isc__appctx_t *ctx) {
 
 	while (!ctx->want_shutdown) {
 		int n;
-		isc_time_t when, now;
+		struct timespec when, now;
 		struct timeval tv, *tvp;
 		isc_socketwait_t *swait;
 		isc_boolean_t readytasks;

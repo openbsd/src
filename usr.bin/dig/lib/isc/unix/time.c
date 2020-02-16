@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.7 2020/02/16 08:06:37 florian Exp $ */
+/* $Id: time.c,v 1.8 2020/02/16 18:05:09 florian Exp $ */
 
 /*! \file */
 
@@ -47,26 +47,25 @@
  *** Intervals
  ***/
 
-static const interval_t zero_interval = { 0, 0 };
-const interval_t * const interval_zero = &zero_interval;
+static const struct timespec zero_interval = { 0, 0 };
+const struct timespec * const interval_zero = &zero_interval;
 
 void
-interval_set(interval_t *i,
-		 unsigned int seconds, unsigned int nanoseconds)
+interval_set(struct timespec *i, time_t seconds, long nanoseconds)
 {
 	REQUIRE(i != NULL);
 	REQUIRE(nanoseconds < NS_PER_S);
 
-	i->seconds = seconds;
-	i->nanoseconds = nanoseconds;
+	i->tv_sec = seconds;
+	i->tv_nsec = nanoseconds;
 }
 
 isc_boolean_t
-interval_iszero(const interval_t *i) {
+interval_iszero(const struct timespec *i) {
 	REQUIRE(i != NULL);
-	INSIST(i->nanoseconds < NS_PER_S);
+	INSIST(i->tv_nsec < NS_PER_S);
 
-	if (i->seconds == 0 && i->nanoseconds == 0)
+	if (!timespecisset(i))
 		return (ISC_TRUE);
 
 	return (ISC_FALSE);
@@ -78,28 +77,27 @@ interval_iszero(const interval_t *i) {
  ***/
 
 void
-isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds) {
+isc_time_set(struct timespec *t, time_t seconds, long nanoseconds) {
 	REQUIRE(t != NULL);
 	REQUIRE(nanoseconds < NS_PER_S);
 
-	t->seconds = seconds;
-	t->nanoseconds = nanoseconds;
+	t->tv_sec = seconds;
+	t->tv_nsec = nanoseconds;
 }
 
 void
-isc_time_settoepoch(isc_time_t *t) {
+isc_time_settoepoch(struct timespec *t) {
 	REQUIRE(t != NULL);
 
-	t->seconds = 0;
-	t->nanoseconds = 0;
+	timespecclear(t);
 }
 
 isc_boolean_t
-isc_time_isepoch(const isc_time_t *t) {
+isc_time_isepoch(const struct timespec *t) {
 	REQUIRE(t != NULL);
-	INSIST(t->nanoseconds < NS_PER_S);
+	INSIST(t->tv_nsec < NS_PER_S);
 
-	if (t->seconds == 0 && t->nanoseconds == 0)
+	if (!timespecisset(t))
 		return (ISC_TRUE);
 
 	return (ISC_FALSE);
@@ -107,170 +105,99 @@ isc_time_isepoch(const isc_time_t *t) {
 
 
 isc_result_t
-isc_time_now(isc_time_t *t) {
-	struct timeval tv;
-
+isc_time_now(struct timespec *t) {
 	REQUIRE(t != NULL);
 
-	if (gettimeofday(&tv, NULL) == -1) {
+	if (clock_gettime(CLOCK_REALTIME, t) == -1) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__, "%s", strerror(errno));
 		return (ISC_R_UNEXPECTED);
 	}
-
-	/*
-	 * Ensure the tv_sec value fits in t->seconds.
-	 */
-	if (sizeof(tv.tv_sec) > sizeof(t->seconds) &&
-	    ((tv.tv_sec | (unsigned int)-1) ^ (unsigned int)-1) != 0U)
-		return (ISC_R_RANGE);
-
-	t->seconds = tv.tv_sec;
-	t->nanoseconds = tv.tv_usec * NS_PER_US;
-
 	return (ISC_R_SUCCESS);
 }
 
 int
-isc_time_compare(const isc_time_t *t1, const isc_time_t *t2) {
+isc_time_compare(const struct timespec *t1, const struct timespec *t2) {
 	REQUIRE(t1 != NULL && t2 != NULL);
-	INSIST(t1->nanoseconds < NS_PER_S && t2->nanoseconds < NS_PER_S);
+	INSIST(t1->tv_nsec < NS_PER_S && t2->tv_nsec < NS_PER_S);
 
-	if (t1->seconds < t2->seconds)
+	if (t1->tv_sec < t2->tv_sec)
 		return (-1);
-	if (t1->seconds > t2->seconds)
+	if (t1->tv_sec > t2->tv_sec)
 		return (1);
-	if (t1->nanoseconds < t2->nanoseconds)
+	if (t1->tv_nsec < t2->tv_nsec)
 		return (-1);
-	if (t1->nanoseconds > t2->nanoseconds)
+	if (t1->tv_nsec > t2->tv_nsec)
 		return (1);
 	return (0);
 }
 
 isc_result_t
-isc_time_add(const isc_time_t *t, const interval_t *i, isc_time_t *result)
+isc_time_add(const struct timespec *t, const struct timespec *i, struct timespec *result)
 {
 	REQUIRE(t != NULL && i != NULL && result != NULL);
-	INSIST(t->nanoseconds < NS_PER_S && i->nanoseconds < NS_PER_S);
+	INSIST(t->tv_nsec < NS_PER_S && i->tv_nsec < NS_PER_S);
 
-	/*
-	 * Ensure the resulting seconds value fits in the size of an
-	 * unsigned int.  (It is written this way as a slight optimization;
-	 * note that even if both values == INT_MAX, then when added
-	 * and getting another 1 added below the result is UINT_MAX.)
-	 */
-	if ((t->seconds > INT_MAX || i->seconds > INT_MAX) &&
-	    ((long long)t->seconds + i->seconds > UINT_MAX))
-		return (ISC_R_RANGE);
-
-	result->seconds = t->seconds + i->seconds;
-	result->nanoseconds = t->nanoseconds + i->nanoseconds;
-	if (result->nanoseconds >= NS_PER_S) {
-		result->seconds++;
-		result->nanoseconds -= NS_PER_S;
-	}
-
+	timespecadd(t, i, result);
 	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
-isc_time_subtract(const isc_time_t *t, const interval_t *i,
-		  isc_time_t *result)
+isc_time_subtract(const struct timespec *t, const struct timespec *i,
+		  struct timespec *result)
 {
 	REQUIRE(t != NULL && i != NULL && result != NULL);
-	INSIST(t->nanoseconds < NS_PER_S && i->nanoseconds < NS_PER_S);
+	INSIST(t->tv_nsec < NS_PER_S && i->tv_nsec < NS_PER_S);
 
-	if ((unsigned int)t->seconds < i->seconds ||
-	    ((unsigned int)t->seconds == i->seconds &&
-	     t->nanoseconds < i->nanoseconds))
-	    return (ISC_R_RANGE);
-
-	result->seconds = t->seconds - i->seconds;
-	if (t->nanoseconds >= i->nanoseconds)
-		result->nanoseconds = t->nanoseconds - i->nanoseconds;
-	else {
-		result->nanoseconds = NS_PER_S - i->nanoseconds +
-			t->nanoseconds;
-		result->seconds--;
-	}
-
+	timespecsub(t, i, result);
 	return (ISC_R_SUCCESS);
 }
 
 uint64_t
-isc_time_microdiff(const isc_time_t *t1, const isc_time_t *t2) {
-	uint64_t i1, i2, i3;
+isc_time_microdiff(const struct timespec *t1, const struct timespec *t2) {
+	struct timespec res;
 
 	REQUIRE(t1 != NULL && t2 != NULL);
-	INSIST(t1->nanoseconds < NS_PER_S && t2->nanoseconds < NS_PER_S);
 
-	i1 = (uint64_t)t1->seconds * NS_PER_S + t1->nanoseconds;
-	i2 = (uint64_t)t2->seconds * NS_PER_S + t2->nanoseconds;
+	timespecsub(t1, t2, &res);
+	if (res.tv_sec < 0)
+		return 0;
 
-	if (i1 <= i2)
-		return (0);
-
-	i3 = i1 - i2;
-
-	/*
-	 * Convert to microseconds.
-	 */
-	i3 /= NS_PER_US;
-
-	return (i3);
-}
-
-uint32_t
-isc_time_seconds(const isc_time_t *t) {
-	REQUIRE(t != NULL);
-	INSIST(t->nanoseconds < NS_PER_S);
-
-	return ((uint32_t)t->seconds);
-}
-
-uint32_t
-isc_time_nanoseconds(const isc_time_t *t) {
-	REQUIRE(t != NULL);
-
-	ENSURE(t->nanoseconds < NS_PER_S);
-
-	return ((uint32_t)t->nanoseconds);
+	return ((res.tv_sec * NS_PER_S + res.tv_nsec) / NS_PER_US);
 }
 
 void
-isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len) {
-	time_t now;
+isc_time_formattimestamp(const struct timespec *t, char *buf, unsigned int len) {
 	unsigned int flen;
 
 	REQUIRE(t != NULL);
-	INSIST(t->nanoseconds < NS_PER_S);
+	INSIST(t->tv_nsec < NS_PER_S);
 	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
-	now = (time_t) t->seconds;
-	flen = strftime(buf, len, "%d-%b-%Y %X", localtime(&now));
+	flen = strftime(buf, len, "%d-%b-%Y %X", localtime(&t->tv_sec));
 	INSIST(flen < len);
 	if (flen != 0) {
 		snprintf(buf + flen, len - flen,
-			 ".%03u", t->nanoseconds / 1000000);
+			 ".%03ld", t->tv_nsec / 1000000);
 	} else {
 		strlcpy(buf, "99-Bad-9999 99:99:99.999", len);
 	}
 }
 
 void
-isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
-	time_t now;
+isc_time_formathttptimestamp(const struct timespec *t, char *buf, unsigned int len) {
 	unsigned int flen;
 
 	REQUIRE(t != NULL);
-	INSIST(t->nanoseconds < NS_PER_S);
+	INSIST(t->tv_nsec < NS_PER_S);
 	REQUIRE(buf != NULL);
 	REQUIRE(len > 0);
 
 	/*
 	 * 5 spaces, 1 comma, 3 GMT, 2 %d, 4 %Y, 8 %H:%M:%S, 3+ %a, 3+ %b (29+)
 	 */
-	now = (time_t)t->seconds;
-	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT", gmtime(&now));
+
+	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT",
+	    gmtime(&t->tv_sec));
 	INSIST(flen < len);
 }

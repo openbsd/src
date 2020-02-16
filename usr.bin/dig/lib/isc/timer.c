@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.10 2020/02/16 08:06:37 florian Exp $ */
+/* $Id: timer.c,v 1.11 2020/02/16 18:05:09 florian Exp $ */
 
 /*! \file */
 
@@ -41,14 +41,14 @@ struct isc__timer {
 	isc__timermgr_t *		manager;
 	/*! Locked by timer lock. */
 	unsigned int			references;
-	isc_time_t			idle;
+	struct timespec			idle;
 	/*! Locked by manager lock. */
-	interval_t			interval;
+	struct timespec			interval;
 	isc_task_t *			task;
 	isc_taskaction_t		action;
 	void *				arg;
 	unsigned int			index;
-	isc_time_t			due;
+	struct timespec			due;
 	LINK(isc__timer_t)		link;
 };
 
@@ -62,7 +62,7 @@ struct isc__timermgr {
 	isc_boolean_t			done;
 	LIST(isc__timer_t)		timers;
 	unsigned int			nscheduled;
-	isc_time_t			due;
+	struct timespec			due;
 	unsigned int			refs;
 	isc_heap_t *			heap;
 };
@@ -74,11 +74,11 @@ struct isc__timermgr {
  */
 
 isc_result_t
-isc__timer_create(isc_timermgr_t *manager, const interval_t *interval,
+isc__timer_create(isc_timermgr_t *manager, const struct timespec *interval,
 		  isc_task_t *task, isc_taskaction_t action, void *arg,
 		  isc_timer_t **timerp);
 isc_result_t
-isc__timer_reset(isc_timer_t *timer, const interval_t *interval,
+isc__timer_reset(isc_timer_t *timer, const struct timespec *interval,
 		 isc_boolean_t purge);
 isc_result_t
 isc__timer_touch(isc_timer_t *timer);
@@ -97,10 +97,10 @@ isc__timermgr_destroy(isc_timermgr_t **managerp);
 static isc__timermgr_t *timermgr = NULL;
 
 static inline isc_result_t
-schedule(isc__timer_t *timer, isc_time_t *now, isc_boolean_t signal_ok) {
+schedule(isc__timer_t *timer, struct timespec *now, isc_boolean_t signal_ok) {
 	isc_result_t result;
 	isc__timermgr_t *manager;
-	isc_time_t due;
+	struct timespec due;
 	int cmp;
 
 	/*!
@@ -200,14 +200,14 @@ destroy(isc__timer_t *timer) {
 }
 
 isc_result_t
-isc__timer_create(isc_timermgr_t *manager0, const interval_t *interval,
+isc__timer_create(isc_timermgr_t *manager0, const struct timespec *interval,
 		  isc_task_t *task, isc_taskaction_t action, void *arg,
 		  isc_timer_t **timerp)
 {
 	isc__timermgr_t *manager = (isc__timermgr_t *)manager0;
 	isc__timer_t *timer;
 	isc_result_t result;
-	isc_time_t now;
+	struct timespec now;
 
 	/*
 	 * Create a new 'type' timer managed by 'manager'.  The timers
@@ -283,11 +283,11 @@ isc__timer_create(isc_timermgr_t *manager0, const interval_t *interval,
 }
 
 isc_result_t
-isc__timer_reset(isc_timer_t *timer0, const interval_t *interval,
+isc__timer_reset(isc_timer_t *timer0, const struct timespec *interval,
 		 isc_boolean_t purge)
 {
 	isc__timer_t *timer = (isc__timer_t *)timer0;
-	isc_time_t now;
+	struct timespec now;
 	isc__timermgr_t *manager;
 	isc_result_t result;
 
@@ -336,7 +336,7 @@ isc_result_t
 isc__timer_touch(isc_timer_t *timer0) {
 	isc__timer_t *timer = (isc__timer_t *)timer0;
 	isc_result_t result;
-	isc_time_t now;
+	struct timespec now;
 
 	/*
 	 * Set the last-touched time of 'timer' to the current time.
@@ -391,7 +391,7 @@ isc__timer_detach(isc_timer_t **timerp) {
 }
 
 static void
-dispatch(isc__timermgr_t *manager, isc_time_t *now) {
+dispatch(isc__timermgr_t *manager, struct timespec *now) {
 	isc_boolean_t done = ISC_FALSE, post_event, need_schedule;
 	isc_timerevent_t *event;
 	isc_eventtype_t type = 0;
@@ -570,7 +570,7 @@ isc__timermgr_destroy(isc_timermgr_t **managerp) {
 }
 
 isc_result_t
-isc__timermgr_nextevent(isc_timermgr_t *manager0, isc_time_t *when) {
+isc__timermgr_nextevent(isc_timermgr_t *manager0, struct timespec *when) {
 	isc__timermgr_t *manager = (isc__timermgr_t *)manager0;
 
 	if (manager == NULL)
@@ -584,7 +584,7 @@ isc__timermgr_nextevent(isc_timermgr_t *manager0, isc_time_t *when) {
 void
 isc__timermgr_dispatch(isc_timermgr_t *manager0) {
 	isc__timermgr_t *manager = (isc__timermgr_t *)manager0;
-	isc_time_t now;
+	struct timespec now;
 
 	if (manager == NULL)
 		manager = timermgr;
@@ -609,7 +609,7 @@ isc_timermgr_destroy(isc_timermgr_t **managerp) {
 }
 
 isc_result_t
-isc_timer_create(isc_timermgr_t *manager, const interval_t *interval,
+isc_timer_create(isc_timermgr_t *manager, const struct timespec *interval,
 		 isc_task_t *task, isc_taskaction_t action, void *arg,
 		 isc_timer_t **timerp)
 {
@@ -629,7 +629,7 @@ isc_timer_detach(isc_timer_t **timerp) {
 }
 
 isc_result_t
-isc_timer_reset(isc_timer_t *timer, const interval_t *interval,
+isc_timer_reset(isc_timer_t *timer, const struct timespec *interval,
 		isc_boolean_t purge)
 {
 	REQUIRE(ISCAPI_TIMER_VALID(timer));

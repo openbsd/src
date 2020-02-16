@@ -143,7 +143,7 @@ host_shutdown(void) {
 
 static void
 received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
-	isc_time_t now;
+	struct timespec now;
 	int diff;
 
 	if (!short_form) {

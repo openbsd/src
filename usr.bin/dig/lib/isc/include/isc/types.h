@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: types.h,v 1.2 2020/02/16 18:05:09 florian Exp $ */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
@@ -44,7 +44,6 @@ typedef struct isc_event		isc_event_t;		/*%< Event */
 typedef ISC_LIST(isc_event_t)		isc_eventlist_t;	/*%< Event List */
 typedef unsigned int			isc_eventtype_t;	/*%< Event Type */
 typedef struct isc_hash			isc_hash_t;		/*%< Hash */
-typedef struct interval			interval_t;		/*%< Interval */
 typedef struct isc_lex			isc_lex_t;		/*%< Lex */
 typedef struct isc_log 			isc_log_t;		/*%< Log */
 typedef struct isc_logcategory		isc_logcategory_t;	/*%< Log Category */
@@ -61,7 +60,6 @@ typedef struct isc_symtab		isc_symtab_t;		/*%< Symbol Table */
 typedef struct isc_task			isc_task_t;		/*%< Task */
 typedef struct isc_taskmgr		isc_taskmgr_t;		/*%< Task Manager */
 typedef struct isc_textregion		isc_textregion_t;	/*%< Text Region */
-typedef struct isc_time			isc_time_t;		/*%< Time */
 typedef struct isc_timer		isc_timer_t;		/*%< Timer */
 typedef struct isc_timermgr		isc_timermgr_t;		/*%< Timer Manager */
 

@@ -535,8 +535,7 @@ process_cmsg(isc__socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 			struct timeval tv;
 			timevalp = CMSG_DATA(cmsgp);
 			memmove(&tv, timevalp, sizeof(tv));
-			dev->timestamp.seconds = tv.tv_sec;
-			dev->timestamp.nanoseconds = tv.tv_usec * 1000;
+			TIMEVAL_TO_TIMESPEC(&tv, &dev->timestamp);
 			dev->attributes |= ISC_SOCKEVENTATTR_TIMESTAMP;
 			goto next;
 		}

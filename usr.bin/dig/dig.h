@@ -127,7 +127,7 @@ struct dig_lookup {
 	isc_buffer_t renderbuf;
 	char *sendspace;
 	dns_name_t *name;
-	interval_t interval;
+	struct timespec interval;
 	dns_message_t *sendmsg;
 	dns_name_t *oname;
 	ISC_LINK(dig_lookup_t) link;
@@ -190,8 +190,8 @@ struct dig_query {
 	ISC_LINK(dig_query_t) link;
 	ISC_LINK(dig_query_t) clink;
 	isc_sockaddr_t sockaddr;
-	isc_time_t time_sent;
-	isc_time_t time_recv;
+	struct timespec time_sent;
+	struct timespec time_recv;
 	uint64_t byte_count;
 	isc_buffer_t sendbuf;
 	isc_timer_t *timer;

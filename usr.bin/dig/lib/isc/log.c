@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.7 2020/02/13 16:57:55 florian Exp $ */
+/* $Id: log.c,v 1.8 2020/02/16 18:05:09 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -85,7 +85,7 @@ typedef struct isc_logmessage isc_logmessage_t;
 
 struct isc_logmessage {
 	char *				text;
-	isc_time_t			time;
+	struct timespec			time;
 	ISC_LINK(isc_logmessage_t)	link;
 };
 
@@ -943,7 +943,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 
 		if ((channel->flags & ISC_LOG_PRINTTIME) != 0 &&
 		    time_string[0] == '\0') {
-			isc_time_t isctime;
+			struct timespec isctime;
 
 			TIME_NOW(&isctime);
 			isc_time_formattimestamp(&isctime, time_string,
@@ -976,8 +976,8 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 			 */
 			if (write_once) {
 				isc_logmessage_t *message, *next;
-				isc_time_t oldest;
-				interval_t interval;
+				struct timespec oldest;
+				struct timespec interval;
 				size_t size;
 
 				interval_set(&interval,

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.7 2020/02/16 08:06:37 florian Exp $ */
+/* $Id: dighost.c,v 1.8 2020/02/16 18:05:08 florian Exp $ */
 
 /*! \file
  *  \note
@@ -375,14 +375,14 @@ fatal(const char *format, ...) {
 void
 debug(const char *format, ...) {
 	va_list args;
-	isc_time_t t;
+	struct timespec t;
 
 	if (debugging) {
 		fflush(stdout);
 		if (debugtiming) {
 			TIME_NOW(&t);
-			fprintf(stderr, "%u.%06u: ", isc_time_seconds(&t),
-				isc_time_nanoseconds(&t) / 1000);
+			fprintf(stderr, "%lld.%06ld: ", t.tv_sec, t.tv_nsec /
+			    1000);
 		}
 		va_start(args, format);
 		vfprintf(stderr, format, args);
