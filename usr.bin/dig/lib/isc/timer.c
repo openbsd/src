@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.16 2020/02/16 21:08:15 florian Exp $ */
+/* $Id: timer.c,v 1.17 2020/02/16 21:08:59 florian Exp $ */
 
 /*! \file */
 
@@ -80,7 +80,7 @@ isc__timer_create(isc_timermgr_t *manager, const struct timespec *interval,
 isc_result_t
 isc__timer_reset(isc_timer_t *timer, const struct timespec *interval,
 		 isc_boolean_t purge);
-isc_result_t
+void
 isc__timer_touch(isc_timer_t *timer);
 void
 isc__timer_attach(isc_timer_t *timer0, isc_timer_t **timerp);
@@ -227,13 +227,8 @@ isc__timer_create(isc_timermgr_t *manager0, const struct timespec *interval,
 	timer->manager = manager;
 	timer->references = 1;
 
-	if (timespecisset(interval)) {
-		result = isc_time_add(&now, interval, &timer->idle);
-		if (result != ISC_R_SUCCESS) {
-			free(timer);
-			return (result);
-		}
-	}
+	if (timespecisset(interval))
+		timespecadd(&now, interval, &timer->idle);
 
 	timer->interval = *interval;
 	timer->task = NULL;
@@ -306,23 +301,19 @@ isc__timer_reset(isc_timer_t *timer0, const struct timespec *interval,
 					  NULL);
 	timer->interval = *interval;
 	if (timespecisset(interval)) {
-		result = isc_time_add(&now, interval, &timer->idle);
+		timespecadd(&now, interval, &timer->idle);
 	} else {
 		timespecclear(&timer->idle);
-		result = ISC_R_SUCCESS;
 	}
 
-	if (result == ISC_R_SUCCESS) {
-		result = schedule(timer, &now, ISC_TRUE);
-	}
+	result = schedule(timer, &now, ISC_TRUE);
 
 	return (result);
 }
 
-isc_result_t
+void
 isc__timer_touch(isc_timer_t *timer0) {
 	isc__timer_t *timer = (isc__timer_t *)timer0;
-	isc_result_t result;
 	struct timespec now;
 
 	/*
@@ -332,9 +323,7 @@ isc__timer_touch(isc_timer_t *timer0) {
 	REQUIRE(VALID_TIMER(timer));
 
 	TIME_NOW(&now);
-	result = isc_time_add(&now, &timer->interval, &timer->idle);
-
-	return (result);
+	timespecadd(&now, &timer->interval, &timer->idle);
 }
 
 void
@@ -623,9 +612,9 @@ isc_timer_reset(isc_timer_t *timer, const struct timespec *interval,
 	return (isc__timer_reset(timer, interval, purge));
 }
 
-isc_result_t
+void
 isc_timer_touch(isc_timer_t *timer) {
 	REQUIRE(ISCAPI_TIMER_VALID(timer));
 
-	return (isc__timer_touch(timer));
+	isc__timer_touch(timer);
 }

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.10 2020/02/16 21:08:15 florian Exp $ */
+/* $Id: time.h,v 1.11 2020/02/16 21:08:59 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -50,33 +50,6 @@ isc_time_now(struct timespec *t);
  *\li	Success
  *\li	Unexpected error
  *		Getting the time from the system failed.
- */
-
-isc_result_t
-isc_time_add(const struct timespec *t, const struct timespec *i, struct timespec *result);
-/*%<
- * Add 'i' to 't', storing the result in 'result'.
- *
- * Requires:
- *
- *\li	't', 'i', and 'result' are valid pointers.
- *
- * Returns:
- *\li	Success
- */
-
-isc_result_t
-isc_time_subtract(const struct timespec *t, const struct timespec *i,
-		  struct timespec *result);
-/*%<
- * Subtract 'i' from 't', storing the result in 'result'.
- *
- * Requires:
- *
- *\li	't', 'i', and 'result' are valid pointers.
- *
- * Returns:
- *\li	Success
  */
 
 uint64_t

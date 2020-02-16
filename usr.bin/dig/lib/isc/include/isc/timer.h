@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.8 2020/02/16 18:05:09 florian Exp $ */
+/* $Id: timer.h,v 1.9 2020/02/16 21:08:59 florian Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -228,7 +228,7 @@ isc_timer_reset(isc_timer_t *timer,
  *\li	Unexpected error
  */
 
-isc_result_t
+void
 isc_timer_touch(isc_timer_t *timer);
 /*%<
  * Set the last-touched time of 'timer' to the current time.
@@ -243,10 +243,6 @@ isc_timer_touch(isc_timer_t *timer);
  *	timer's interval if 'timer' is a once timer with a non-zero
  *	interval.
  *
- * Returns:
- *
- *\li	Success
- *\li	Unexpected error
  */
 
 void
