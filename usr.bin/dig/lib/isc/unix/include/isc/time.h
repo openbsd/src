@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.14 2020/02/16 21:11:02 florian Exp $ */
+/* $Id: time.h,v 1.15 2020/02/16 21:11:31 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -22,13 +22,9 @@
 /*! \file */
 
 #include <sys/time.h>
+
+#include <inttypes.h>
 #include <time.h>
-#include <isc/types.h>
-
-
-/***
- *** Absolute Times
- ***/
 
 uint64_t
 isc_time_microdiff(const struct timespec *t1, const struct timespec *t2);

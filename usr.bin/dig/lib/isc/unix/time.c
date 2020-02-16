@@ -14,34 +14,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.17 2020/02/16 21:11:02 florian Exp $ */
+/* $Id: time.c,v 1.18 2020/02/16 21:11:31 florian Exp $ */
 
 /*! \file */
 
 #include <sys/time.h>
-
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
 #include <time.h>
-#include <string.h>
 
 #include <isc/time.h>
 #include <isc/util.h>
 
 #define NS_PER_S	1000000000	/*%< Nanoseconds per second. */
 #define NS_PER_US	1000		/*%< Nanoseconds per microsecond. */
-
-/*
- * All of the INSIST()s checks of nanoseconds < NS_PER_S are for
- * consistency checking of the type. In lieu of magic numbers, it
- * is the best we've got.  The check is only performed on functions which
- * need an initialized type.
- */
-
-/***
- *** Absolute Times
- ***/
 
 uint64_t
 isc_time_microdiff(const struct timespec *t1, const struct timespec *t2) {
