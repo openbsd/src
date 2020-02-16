@@ -92,6 +92,25 @@ fromtext_keydata(ARGS_FROMTEXT) {
 	return (ISC_R_SUCCESS);
 }
 
+/*
+ * ISC_FORMATHTTPTIMESTAMP_SIZE needs to be 30 in C locale and potentially
+ * more for other locales to handle longer national abbreviations when
+ * expanding strftime's %a and %b.
+ */
+#define ISC_FORMATHTTPTIMESTAMP_SIZE 50
+
+static void
+isc_time_formathttptimestamp(const struct timespec *t, char *buf, size_t len) {
+	size_t flen;
+	/*
+	 * 5 spaces, 1 comma, 3 GMT, 2 %d, 4 %Y, 8 %H:%M:%S, 3+ %a, 3+ %b (29+)
+	 */
+
+	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT",
+	    gmtime(&t->tv_sec));
+	INSIST(flen < len);
+}
+
 static inline isc_result_t
 totext_keydata(ARGS_TOTEXT) {
 	isc_region_t sr;
