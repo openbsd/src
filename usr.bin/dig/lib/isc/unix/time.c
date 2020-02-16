@@ -14,23 +14,19 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.14 2020/02/16 21:08:59 florian Exp $ */
+/* $Id: time.c,v 1.15 2020/02/16 21:09:32 florian Exp $ */
 
 /*! \file */
 
-
+#include <sys/time.h>
 
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <time.h>
-
-#include <sys/time.h>	/* Required for struct timeval on some platforms. */
-
-
 #include <string.h>
-#include <isc/time.h>
 
+#include <isc/time.h>
 #include <isc/util.h>
 
 #define NS_PER_S	1000000000	/*%< Nanoseconds per second. */
@@ -69,25 +65,6 @@ isc_time_microdiff(const struct timespec *t1, const struct timespec *t2) {
 		return 0;
 
 	return ((res.tv_sec * NS_PER_S + res.tv_nsec) / NS_PER_US);
-}
-
-void
-isc_time_formattimestamp(const struct timespec *t, char *buf, unsigned int len) {
-	unsigned int flen;
-
-	REQUIRE(t != NULL);
-	INSIST(t->tv_nsec < NS_PER_S);
-	REQUIRE(buf != NULL);
-	REQUIRE(len > 0);
-
-	flen = strftime(buf, len, "%d-%b-%Y %X", localtime(&t->tv_sec));
-	INSIST(flen < len);
-	if (flen != 0) {
-		snprintf(buf + flen, len - flen,
-			 ".%03ld", t->tv_nsec / 1000000);
-	} else {
-		strlcpy(buf, "99-Bad-9999 99:99:99.999", len);
-	}
 }
 
 void

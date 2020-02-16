@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.11 2020/02/16 21:08:59 florian Exp $ */
+/* $Id: time.h,v 1.12 2020/02/16 21:09:32 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -64,20 +64,6 @@ isc_time_microdiff(const struct timespec *t1, const struct timespec *t2);
  *
  * Returns:
  *\li	The difference of t1 - t2, or 0 if t1 <= t2.
- */
-
-void
-isc_time_formattimestamp(const struct timespec *t, char *buf, unsigned int len);
-/*%<
- * Format the time 't' into the buffer 'buf' of length 'len',
- * using a format like "30-Aug-2000 04:06:47.997" and the local time zone.
- * If the text does not fit in the buffer, the result is indeterminate,
- * but is always guaranteed to be null terminated.
- *
- *  Requires:
- *\li      'len' > 0
- *\li      'buf' points to an array of at least len chars
- *
  */
 
 void
