@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.6 2020/02/16 08:05:41 florian Exp $ */
+/* $Id: timer.h,v 1.7 2020/02/16 08:06:37 florian Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -81,9 +81,6 @@
  ***/
 
 /*% Timer Type */
-typedef enum {
-	isc_timertype_once = 1	 	/*%< Once */
-} isc_timertype_t;
 
 typedef struct isc_timerevent {
 	struct isc_event	common;
@@ -136,8 +133,6 @@ struct isc_timer {
 
 isc_result_t
 isc_timer_create(isc_timermgr_t *manager,
-		 isc_timertype_t type,
-		 const isc_time_t *expires,
 		 const interval_t *interval,
 		 isc_task_t *task,
 		 isc_taskaction_t action,
@@ -200,8 +195,6 @@ isc_timer_create(isc_timermgr_t *manager,
 
 isc_result_t
 isc_timer_reset(isc_timer_t *timer,
-		isc_timertype_t type,
-		const isc_time_t *expires,
 		const interval_t *interval,
 		isc_boolean_t purge);
 /*%<
@@ -284,16 +277,6 @@ isc_timer_detach(isc_timer_t **timerp);
  *		of the timer's task, it is guaranteed that no more
  *		timer event callbacks will run after the call.
  *\endcode
- */
-
-isc_timertype_t
-isc_timer_gettype(isc_timer_t *timer);
-/*%<
- * Return the timer type.
- *
- * Requires:
- *
- *\li	'timer' to be a valid timer.
  */
 
 isc_result_t

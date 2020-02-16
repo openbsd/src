@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: time.h,v 1.4 2020/02/16 08:06:37 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -87,8 +87,6 @@ struct isc_time {
 	unsigned int	seconds;
 	unsigned int	nanoseconds;
 };
-
-extern const isc_time_t * const isc_time_epoch;
 
 void
 isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds);

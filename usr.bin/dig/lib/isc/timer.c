@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.9 2020/02/16 08:05:41 florian Exp $ */
+/* $Id: timer.c,v 1.10 2020/02/16 08:06:37 florian Exp $ */
 
 /*! \file */
 
@@ -43,8 +43,6 @@ struct isc__timer {
 	unsigned int			references;
 	isc_time_t			idle;
 	/*! Locked by manager lock. */
-	isc_timertype_t			type;
-	isc_time_t			expires;
 	interval_t			interval;
 	isc_task_t *			task;
 	isc_taskaction_t		action;
@@ -76,16 +74,12 @@ struct isc__timermgr {
  */
 
 isc_result_t
-isc__timer_create(isc_timermgr_t *manager, isc_timertype_t type,
-		  const isc_time_t *expires, const interval_t *interval,
+isc__timer_create(isc_timermgr_t *manager, const interval_t *interval,
 		  isc_task_t *task, isc_taskaction_t action, void *arg,
 		  isc_timer_t **timerp);
 isc_result_t
-isc__timer_reset(isc_timer_t *timer, isc_timertype_t type,
-		 const isc_time_t *expires, const interval_t *interval,
+isc__timer_reset(isc_timer_t *timer, const interval_t *interval,
 		 isc_boolean_t purge);
-isc_timertype_t
-isc_timer_gettype(isc_timer_t *timer);
 isc_result_t
 isc__timer_touch(isc_timer_t *timer);
 void
@@ -120,14 +114,7 @@ schedule(isc__timer_t *timer, isc_time_t *now, isc_boolean_t signal_ok) {
 	/*
 	 * Compute the new due time.
 	 */
-	if (isc_time_isepoch(&timer->idle))
-		due = timer->expires;
-	else if (isc_time_isepoch(&timer->expires))
-		due = timer->idle;
-	else if (isc_time_compare(&timer->idle, &timer->expires) < 0)
-		due = timer->idle;
-	else
-		due = timer->expires;
+	due = timer->idle;
 
 	/*
 	 * Schedule the timer.
@@ -213,8 +200,7 @@ destroy(isc__timer_t *timer) {
 }
 
 isc_result_t
-isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
-		  const isc_time_t *expires, const interval_t *interval,
+isc__timer_create(isc_timermgr_t *manager0, const interval_t *interval,
 		  isc_task_t *task, isc_taskaction_t action, void *arg,
 		  isc_timer_t **timerp)
 {
@@ -225,7 +211,7 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 
 	/*
 	 * Create a new 'type' timer managed by 'manager'.  The timers
-	 * parameters are specified by 'expires' and 'interval'.  Events
+	 * parameters are specified by 'interval'.  Events
 	 * will be posted to 'task' and when dispatched 'action' will be
 	 * called with 'arg' as the arg value.  The new timer is returned
 	 * in 'timerp'.
@@ -234,13 +220,10 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 	REQUIRE(VALID_MANAGER(manager));
 	REQUIRE(task != NULL);
 	REQUIRE(action != NULL);
-	if (expires == NULL)
-		expires = isc_time_epoch;
 	if (interval == NULL)
 		interval = interval_zero;
-	REQUIRE(!(isc_time_isepoch(expires) && interval_iszero(interval)));
+	REQUIRE(!(interval_iszero(interval)));
 	REQUIRE(timerp != NULL && *timerp == NULL);
-	REQUIRE(!(isc_time_isepoch(expires) || interval_iszero(interval)));
 
 	/*
 	 * Get current time.
@@ -254,7 +237,7 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 	timer->manager = manager;
 	timer->references = 1;
 
-	if (type == isc_timertype_once && !interval_iszero(interval)) {
+	if (!interval_iszero(interval)) {
 		result = isc_time_add(&now, interval, &timer->idle);
 		if (result != ISC_R_SUCCESS) {
 			free(timer);
@@ -262,8 +245,6 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 		}
 	}
 
-	timer->type = type;
-	timer->expires = *expires;
 	timer->interval = *interval;
 	timer->task = NULL;
 	isc_task_attach(task, &timer->task);
@@ -302,8 +283,7 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 }
 
 isc_result_t
-isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
-		 const isc_time_t *expires, const interval_t *interval,
+isc__timer_reset(isc_timer_t *timer0, const interval_t *interval,
 		 isc_boolean_t purge)
 {
 	isc__timer_t *timer = (isc__timer_t *)timer0;
@@ -321,12 +301,10 @@ isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
 	manager = timer->manager;
 	REQUIRE(VALID_MANAGER(manager));
 
-	if (expires == NULL)
-		expires = isc_time_epoch;
 	if (interval == NULL)
 		interval = interval_zero;
-	REQUIRE(!(isc_time_isepoch(expires) && interval_iszero(interval)));
-	REQUIRE(!(isc_time_isepoch(expires) || interval_iszero(interval)));
+
+	REQUIRE(!(interval_iszero(interval)));
 
 	/*
 	 * Get current time.
@@ -339,10 +317,8 @@ isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
 					  ISC_TIMEREVENT_FIRSTEVENT,
 					  ISC_TIMEREVENT_LASTEVENT,
 					  NULL);
-	timer->type = type;
-	timer->expires = *expires;
 	timer->interval = *interval;
-	if (type == isc_timertype_once && !interval_iszero(interval)) {
+	if (!interval_iszero(interval)) {
 		result = isc_time_add(&now, interval, &timer->idle);
 	} else {
 		isc_time_settoepoch(&timer->idle);
@@ -354,18 +330,6 @@ isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
 	}
 
 	return (result);
-}
-
-isc_timertype_t
-isc_timer_gettype(isc_timer_t *timer0) {
-	isc__timer_t *timer = (isc__timer_t *)timer0;
-	isc_timertype_t t;
-
-	REQUIRE(VALID_TIMER(timer));
-
-	t = timer->type;
-
-	return (t);
 }
 
 isc_result_t
@@ -443,32 +407,24 @@ dispatch(isc__timermgr_t *manager, isc_time_t *now) {
 		timer = isc_heap_element(manager->heap, 1);
 		INSIST(timer != NULL);
 		if (isc_time_compare(now, &timer->due) >= 0) {
-			if (!isc_time_isepoch(&timer->expires) &&
-				   isc_time_compare(now,
-						    &timer->expires) >= 0) {
-				type = ISC_TIMEREVENT_LIFE;
+			idle = ISC_FALSE;
+
+			if (!isc_time_isepoch(&timer->idle) &&
+			    isc_time_compare(now,
+			    &timer->idle) >= 0) {
+				idle = ISC_TRUE;
+			}
+			if (idle) {
+				type = ISC_TIMEREVENT_IDLE;
 				post_event = ISC_TRUE;
 				need_schedule = ISC_FALSE;
 			} else {
-				idle = ISC_FALSE;
-
-				if (!isc_time_isepoch(&timer->idle) &&
-				    isc_time_compare(now,
-						     &timer->idle) >= 0) {
-					idle = ISC_TRUE;
-				}
-				if (idle) {
-					type = ISC_TIMEREVENT_IDLE;
-					post_event = ISC_TRUE;
-					need_schedule = ISC_FALSE;
-				} else {
-					/*
-					 * Idle timer has been touched;
-					 * reschedule.
-					 */
-					post_event = ISC_FALSE;
-					need_schedule = ISC_TRUE;
-				}
+				/*
+				 * Idle timer has been touched;
+				 * reschedule.
+				 */
+				post_event = ISC_FALSE;
+				need_schedule = ISC_TRUE;
 			}
 
 			if (post_event) {
@@ -653,14 +609,13 @@ isc_timermgr_destroy(isc_timermgr_t **managerp) {
 }
 
 isc_result_t
-isc_timer_create(isc_timermgr_t *manager, isc_timertype_t type,
-		 const isc_time_t *expires, const interval_t *interval,
+isc_timer_create(isc_timermgr_t *manager, const interval_t *interval,
 		 isc_task_t *task, isc_taskaction_t action, void *arg,
 		 isc_timer_t **timerp)
 {
 	REQUIRE(ISCAPI_TIMERMGR_VALID(manager));
 
-	return (isc__timer_create(manager, type, expires, interval,
+	return (isc__timer_create(manager, interval,
 				  task, action, arg, timerp));
 }
 
@@ -674,14 +629,12 @@ isc_timer_detach(isc_timer_t **timerp) {
 }
 
 isc_result_t
-isc_timer_reset(isc_timer_t *timer, isc_timertype_t type,
-		const isc_time_t *expires, const interval_t *interval,
+isc_timer_reset(isc_timer_t *timer, const interval_t *interval,
 		isc_boolean_t purge)
 {
 	REQUIRE(ISCAPI_TIMER_VALID(timer));
 
-	return (isc__timer_reset(timer, type, expires,
-				 interval, purge));
+	return (isc__timer_reset(timer, interval, purge));
 }
 
 isc_result_t
