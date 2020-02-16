@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.14 2020/02/16 21:06:54 florian Exp $ */
+/* $Id: timer.c,v 1.15 2020/02/16 21:07:33 florian Exp $ */
 
 /*! \file */
 
@@ -405,7 +405,7 @@ dispatch(isc__timermgr_t *manager, struct timespec *now) {
 		if (isc_time_compare(now, &timer->due) >= 0) {
 			idle = ISC_FALSE;
 
-			if (!isc_time_isepoch(&timer->idle) &&
+			if (timespecisset(&timer->idle) &&
 			    isc_time_compare(now,
 			    &timer->idle) >= 0) {
 				idle = ISC_TRUE;

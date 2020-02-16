@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.8 2020/02/16 21:06:54 florian Exp $ */
+/* $Id: time.h,v 1.9 2020/02/16 21:07:33 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -35,16 +35,6 @@
 /***
  *** Absolute Times
  ***/
-
-isc_boolean_t
-isc_time_isepoch(const struct timespec *t);
-/*%<
- * Returns ISC_TRUE iff. 't' is the epoch ("time zero").
- *
- * Requires:
- *
- *\li	't' is a valid pointer.
- */
 
 isc_result_t
 isc_time_now(struct timespec *t);
