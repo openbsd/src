@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.116 2020/02/14 14:32:44 mpi Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.117 2020/02/16 07:59:08 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -683,23 +683,25 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	struct pipe *mpipe = fp->f_data;
 	int error = 0;
 
-	rw_enter_write(mpipe->pipe_lock);
-
 	switch (cmd) {
 
 	case FIONBIO:
 		break;
 
 	case FIOASYNC:
+		rw_enter_write(mpipe->pipe_lock);
 		if (*(int *)data) {
 			mpipe->pipe_state |= PIPE_ASYNC;
 		} else {
 			mpipe->pipe_state &= ~PIPE_ASYNC;
 		}
+		rw_exit_write(mpipe->pipe_lock);
 		break;
 
 	case FIONREAD:
+		rw_enter_read(mpipe->pipe_lock);
 		*(int *)data = mpipe->pipe_buffer.cnt;
+		rw_exit_read(mpipe->pipe_lock);
 		break;
 
 	case FIOSETOWN:
@@ -717,8 +719,6 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	default:
 		error = ENOTTY;
 	}
-
-	rw_exit_write(mpipe->pipe_lock);
 
 	return (error);
 }
