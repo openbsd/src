@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.158 2020/02/10 13:18:20 schwarze Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.159 2020/02/16 11:28:28 kn Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: February 16 2020 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -466,7 +466,8 @@ expands to
 .Dq ipsec-bar.org .
 The variable expansion for the
 .Ar tag
-directive occurs only at runtime, not during configuration file parse time.
+directive occurs only at runtime (not when the file is parsed)
+and must be quoted, or it will be interpreted as a macro.
 .El
 .Sh PACKET FILTERING
 IPsec traffic appears unencrypted on the
@@ -575,7 +576,7 @@ The tags will be assigned by the following
 example:
 .Bd -literal -offset indent
 ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2 \e
-	tag ipsec-$domain
+	tag "ipsec-$domain"
 .Ed
 .Sh OUTGOING NETWORK ADDRESS TRANSLATION
 In some network topologies it is desirable to perform NAT on traffic leaving

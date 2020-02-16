@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.61 2020/02/10 13:18:20 schwarze Exp $
+.\" $OpenBSD: iked.conf.5,v 1.62 2020/02/16 11:28:28 kn Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: February 16 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ for more information about manual keying and ISAKMP support.
 is divided into three main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
-User-defined variables may be defined and used later, simplifying the
+User-defined macros may be defined and used later, simplifying the
 configuration file.
 .It Sy Global Configuration
 Global settings for
@@ -643,7 +643,8 @@ expands to
 .Dq ipsec-example.com .
 The variable expansion for the
 .Ar tag
-directive occurs only at runtime, not during configuration file parse time.
+directive occurs only at runtime (not when the file is parsed)
+and must be quoted, or it will be interpreted as a macro.
 .It Ic tap Ar interface
 Send the decapsulated IPsec traffic to the specified
 .Xr enc 4
@@ -766,7 +767,7 @@ configuration and also sets an alternative
 device:
 .Bd -literal -offset indent
 ikev2 esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2 \e
-	tag ipsec-$domain tap "enc1"
+	tag "ipsec-$domain" tap "enc1"
 .Ed
 .Sh OUTGOING NETWORK ADDRESS TRANSLATION
 In some network topologies it is desirable to perform NAT on traffic leaving
