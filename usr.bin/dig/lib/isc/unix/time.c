@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.8 2020/02/16 18:05:09 florian Exp $ */
+/* $Id: time.c,v 1.9 2020/02/16 21:04:44 florian Exp $ */
 
 /*! \file */
 
@@ -46,9 +46,6 @@
 /*%
  *** Intervals
  ***/
-
-static const struct timespec zero_interval = { 0, 0 };
-const struct timespec * const interval_zero = &zero_interval;
 
 void
 interval_set(struct timespec *i, time_t seconds, long nanoseconds)

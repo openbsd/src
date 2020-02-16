@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.5 2020/02/16 18:05:09 florian Exp $ */
+/* $Id: time.h,v 1.6 2020/02/16 21:04:44 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -23,12 +23,6 @@
 
 #include <time.h>
 #include <isc/types.h>
-
-/***
- *** Intervals
- ***/
-
-extern const struct timespec * const interval_zero;
 
 /*
  * ISC_FORMATHTTPTIMESTAMP_SIZE needs to be 30 in C locale and potentially
