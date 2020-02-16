@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.5 2020/02/15 17:59:55 florian Exp $ */
+/* $Id: timer.h,v 1.6 2020/02/16 08:05:41 florian Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -82,11 +82,7 @@
 
 /*% Timer Type */
 typedef enum {
-	isc_timertype_undefined = -1,	/*%< Undefined */
-	isc_timertype_ticker = 0, 	/*%< Ticker */
-	isc_timertype_once = 1, 	/*%< Once */
-	isc_timertype_limited = 2, 	/*%< Limited */
-	isc_timertype_inactive = 3 	/*%< Inactive */
+	isc_timertype_once = 1	 	/*%< Once */
 } isc_timertype_t;
 
 typedef struct isc_timerevent {
