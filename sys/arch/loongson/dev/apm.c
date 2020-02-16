@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.33 2019/12/31 13:48:31 visa Exp $	*/
+/*	$OpenBSD: apm.c,v 1.34 2020/02/16 23:37:23 jca Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -433,6 +433,8 @@ apm_suspend(int state)
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif
+
+	apm_record_event(APM_NORMAL_RESUME, "System", "resumed from sleep");
 
 	return rv;
 }
