@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.71 2020/01/30 16:25:09 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.72 2020/02/16 14:33:04 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1408,7 +1408,7 @@ ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 static int
 ssl3_send_server_kex_ecdhe_ecx(SSL *s, int nid, CBB *cbb)
 {
-	uint8_t *public_key = NULL;
+	uint8_t *public_key = NULL, *private_key = NULL;
 	int curve_id;
 	CBB ecpoint;
 	int ret = -1;
@@ -1418,11 +1418,11 @@ ssl3_send_server_kex_ecdhe_ecx(SSL *s, int nid, CBB *cbb)
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-	if ((S3I(s)->tmp.x25519 = malloc(X25519_KEY_LENGTH)) == NULL)
+	if ((private_key = malloc(X25519_KEY_LENGTH)) == NULL)
 		goto err;
 	if ((public_key = malloc(X25519_KEY_LENGTH)) == NULL)
 		goto err;
-	X25519_keypair(public_key, S3I(s)->tmp.x25519);
+	X25519_keypair(public_key, private_key);
 
 	/* Serialize public key. */
 	if ((curve_id = tls1_ec_nid2curve_id(nid)) == 0) {
@@ -1441,10 +1441,13 @@ ssl3_send_server_kex_ecdhe_ecx(SSL *s, int nid, CBB *cbb)
 	if (!CBB_flush(cbb))
 		goto err;
 
+	S3I(s)->tmp.x25519 = private_key;
+	private_key = NULL;
 	ret = 1;
 
  err:
 	free(public_key);
+	freezero(private_key, X25519_KEY_LENGTH);
 
 	return (ret);
 }
