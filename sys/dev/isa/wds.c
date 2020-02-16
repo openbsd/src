@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.47 2020/01/26 00:53:31 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.48 2020/02/16 17:39:47 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -160,7 +160,6 @@ void    wds_done(struct wds_softc *, struct wds_scb *, u_char);
 int	wds_find(struct isa_attach_args *, struct wds_softc *);
 void	wds_init(struct wds_softc *);
 void	wds_inquire_setup_information(struct wds_softc *);
-void    wds_minphys(struct buf *, struct scsi_link *);
 void    wds_scsi_cmd(struct scsi_xfer *);
 void	wds_sense(struct wds_softc *, struct wds_scb *);
 int	wds_poll(struct wds_softc *, struct scsi_xfer *, int);
@@ -169,7 +168,7 @@ void	wds_timeout(void *);
 int	wdsprint(void *, const char *);
 
 struct scsi_adapter wds_switch = {
-	wds_scsi_cmd, wds_minphys, NULL, NULL, NULL
+	wds_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 int	wdsprobe(struct device *, void *, void *);
@@ -867,13 +866,6 @@ wds_inquire_setup_information(struct wds_softc *sc)
 out:
 	printf("\n");
 	scsi_io_put(&sc->sc_iopool, scb);
-}
-
-void
-wds_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	if (bp->b_bcount > ((WDS_NSEG - 1) << PGSHIFT))
-		bp->b_bcount = ((WDS_NSEG - 1) << PGSHIFT);
 }
 
 /*
