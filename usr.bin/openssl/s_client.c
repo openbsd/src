@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.41 2020/01/23 03:35:54 beck Exp $ */
+/* $OpenBSD: s_client.c,v 1.42 2020/02/16 16:39:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -222,12 +222,13 @@ sc_usage(void)
 	BIO_printf(bio_err, " -quiet        - no s_client output\n");
 	BIO_printf(bio_err, " -ign_eof      - ignore input eof (default when -quiet)\n");
 	BIO_printf(bio_err, " -no_ign_eof   - don't ignore input eof\n");
+	BIO_printf(bio_err, " -tls1_3       - just use TLSv1.3\n");
 	BIO_printf(bio_err, " -tls1_2       - just use TLSv1.2\n");
 	BIO_printf(bio_err, " -tls1_1       - just use TLSv1.1\n");
 	BIO_printf(bio_err, " -tls1         - just use TLSv1\n");
 	BIO_printf(bio_err, " -dtls1        - just use DTLSv1\n");
 	BIO_printf(bio_err, " -mtu          - set the link layer MTU\n");
-	BIO_printf(bio_err, " -no_tls1_2/-no_tls1_1/-no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
+	BIO_printf(bio_err, " -no_tls1_3/-no_tls1_2/-no_tls1_1/-no_tls1 - turn off that protocol\n");
 	BIO_printf(bio_err, " -bugs         - Switch on all SSL implementation bug workarounds\n");
 	BIO_printf(bio_err, " -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
 	BIO_printf(bio_err, "                 command to see what is available\n");
@@ -334,6 +335,7 @@ s_client_main(int argc, char **argv)
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0;
 	long socket_mtu = 0;
+	uint16_t min_version = 0, max_version = 0;
 
 	if (single_execution) {
 		if (pledge("stdio cpath wpath rpath inet dns tty", NULL) == -1) {
@@ -342,7 +344,7 @@ s_client_main(int argc, char **argv)
 		}
 	}
 
-	meth = SSLv23_client_method();
+	meth = TLS_client_method();
 
 	c_Pause = 0;
 	c_quiet = 0;
@@ -445,15 +447,21 @@ s_client_main(int argc, char **argv)
 			nbio_test = 1;
 		else if (strcmp(*argv, "-state") == 0)
 			state = 1;
-		else if (strcmp(*argv, "-tls1_2") == 0)
-			meth = TLSv1_2_client_method();
-		else if (strcmp(*argv, "-tls1_1") == 0)
-			meth = TLSv1_1_client_method();
-		else if (strcmp(*argv, "-tls1") == 0)
-			meth = TLSv1_client_method();
+		else if (strcmp(*argv, "-tls1_3") == 0) {
+			min_version = TLS1_3_VERSION;
+			max_version = TLS1_3_VERSION;
+		} else if (strcmp(*argv, "-tls1_2") == 0) {
+			min_version = TLS1_2_VERSION;
+			max_version = TLS1_2_VERSION;
+		} else if (strcmp(*argv, "-tls1_1") == 0) {
+			min_version = TLS1_1_VERSION;
+			max_version = TLS1_1_VERSION;
+		} else if (strcmp(*argv, "-tls1") == 0) {
+			min_version = TLS1_VERSION;
+			max_version = TLS1_VERSION;
 #ifndef OPENSSL_NO_DTLS1
-		else if (strcmp(*argv, "-dtls1") == 0) {
-			meth = DTLSv1_client_method();
+		} else if (strcmp(*argv, "-dtls1") == 0) {
+			meth = DTLS_client_method();
 			socket_type = SOCK_DGRAM;
 		} else if (strcmp(*argv, "-timeout") == 0)
 			enable_timeouts = 1;
@@ -489,7 +497,9 @@ s_client_main(int argc, char **argv)
 			if (--argc < 1)
 				goto bad;
 			CAfile = *(++argv);
-		} else if (strcmp(*argv, "-no_tls1_2") == 0)
+		} else if (strcmp(*argv, "-no_tls1_3") == 0)
+			off |= SSL_OP_NO_TLSv1_3;
+		else if (strcmp(*argv, "-no_tls1_2") == 0)
 			off |= SSL_OP_NO_TLSv1_2;
 		else if (strcmp(*argv, "-no_tls1_1") == 0)
 			off |= SSL_OP_NO_TLSv1_1;
@@ -550,17 +560,14 @@ s_client_main(int argc, char **argv)
 				starttls_proto = PROTO_XMPP;
 			else
 				goto bad;
-		}
-		else if (strcmp(*argv, "-4") == 0) {
+		} else if (strcmp(*argv, "-4") == 0) {
 			af = AF_INET;
 		} else if (strcmp(*argv, "-6") == 0) {
 			af = AF_INET6;
-		}
-		else if (strcmp(*argv, "-servername") == 0) {
+		} else if (strcmp(*argv, "-servername") == 0) {
 			if (--argc < 1)
 				goto bad;
 			servername = *(++argv);
-			/* meth=TLSv1_client_method(); */
 		}
 #ifndef OPENSSL_NO_SRTP
 		else if (strcmp(*argv, "-use_srtp") == 0) {
@@ -648,6 +655,11 @@ s_client_main(int argc, char **argv)
 	}
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
+
+	if (!SSL_CTX_set_min_proto_version(ctx, min_version))
+		goto end;
+	if (!SSL_CTX_set_max_proto_version(ctx, max_version))
+		goto end;
 
 #ifndef OPENSSL_NO_SRTP
 	if (srtp_profiles != NULL)

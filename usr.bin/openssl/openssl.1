@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.118 2019/12/18 12:38:15 sthen Exp $
+.\" $OpenBSD: openssl.1,v 1.119 2020/02/16 16:39:01 jsing Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: December 18 2019 $
+.Dd $Mdocdate: February 16 2020 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -4213,6 +4213,7 @@ Verify the input data and output the recovered data.
 .Op Fl no_tls1
 .Op Fl no_tls1_1
 .Op Fl no_tls1_2
+.Op Fl no_tls1_3
 .Op Fl pass Ar arg
 .Op Fl pause
 .Op Fl policy_check
@@ -4233,6 +4234,7 @@ Verify the input data and output the recovered data.
 .Op Fl tls1
 .Op Fl tls1_1
 .Op Fl tls1_2
+.Op Fl tls1_3
 .Op Fl tlsextdebug
 .Op Fl use_srtp Ar profiles
 .Op Fl verify Ar depth
@@ -4370,8 +4372,8 @@ Can be used to override the implicit
 .Fl ign_eof
 after
 .Fl quiet .
-.It Fl no_tls1 | no_tls1_1 | no_tls1_2
-Disable the use of TLS1.0, 1.1, and 1.2, respectively.
+.It Fl no_tls1 | no_tls1_1 | no_tls1_2 | no_tls1_3
+Disable the use of TLS1.0, 1.1, 1.2 and 1.3 respectively.
 .It Fl no_ticket
 Disable RFC 4507 session ticket support.
 .It Fl pass Ar arg
@@ -4444,8 +4446,8 @@ Send a certificate status request to the server (OCSP stapling).
 The server response (if any) is printed out.
 .It Fl timeout
 Enable send/receive timeout on DTLS connections.
-.It Fl tls1 | tls1_1 | tls1_2
-Permit only TLS1.0, 1.1, or 1.2, respectively.
+.It Fl tls1 | tls1_1 | tls1_2 | tls1_3
+Permit only TLS1.0, 1.1, 1.2 or 1.3 respectively.
 .It Fl tlsextdebug
 Print a hex dump of any TLS extensions received from the server.
 .It Fl use_srtp Ar profiles
