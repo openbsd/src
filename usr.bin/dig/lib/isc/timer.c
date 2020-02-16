@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.13 2020/02/16 21:06:15 florian Exp $ */
+/* $Id: timer.c,v 1.14 2020/02/16 21:06:54 florian Exp $ */
 
 /*! \file */
 
@@ -317,7 +317,7 @@ isc__timer_reset(isc_timer_t *timer0, const struct timespec *interval,
 	if (timespecisset(interval)) {
 		result = isc_time_add(&now, interval, &timer->idle);
 	} else {
-		isc_time_settoepoch(&timer->idle);
+		timespecclear(&timer->idle);
 		result = ISC_R_SUCCESS;
 	}
 
@@ -512,7 +512,7 @@ isc__timermgr_create(isc_timermgr_t **managerp) {
 	manager->done = ISC_FALSE;
 	INIT_LIST(manager->timers);
 	manager->nscheduled = 0;
-	isc_time_settoepoch(&manager->due);
+	timespecclear(&manager->due);
 	manager->heap = NULL;
 	result = isc_heap_create(sooner, set_index, 0, &manager->heap);
 	if (result != ISC_R_SUCCESS) {

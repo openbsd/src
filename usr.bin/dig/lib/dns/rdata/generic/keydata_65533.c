@@ -203,7 +203,8 @@ totext_keydata(ARGS_TOTEXT) {
 
 			RETERR(str_totext(tctx->linebreak, target));
 			RETERR(str_totext("; next refresh: ", target));
-			isc_time_set(&t, refresh, 0);
+			t.tv_sec = refresh;
+			t.tv_nsec = 0;
 			isc_time_formathttptimestamp(&t, rbuf, sizeof(rbuf));
 			RETERR(str_totext(rbuf, target));
 
@@ -219,7 +220,8 @@ totext_keydata(ARGS_TOTEXT) {
 					RETERR(str_totext("; trust pending: ",
 							  target));
 				}
-				isc_time_set(&t, add, 0);
+				t.tv_sec = add;
+				t.tv_nsec = 0;
 				isc_time_formathttptimestamp(&t, abuf,
 							     sizeof(abuf));
 				RETERR(str_totext(abuf, target));
@@ -229,7 +231,8 @@ totext_keydata(ARGS_TOTEXT) {
 				RETERR(str_totext(tctx->linebreak, target));
 				RETERR(str_totext("; removal pending: ",
 						  target));
-				isc_time_set(&t, deltime, 0);
+				t.tv_sec = deltime;
+				t.tv_nsec = 0;
 				isc_time_formathttptimestamp(&t, dbuf,
 							     sizeof(dbuf));
 				RETERR(str_totext(dbuf, target));
