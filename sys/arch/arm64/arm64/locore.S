@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.28 2020/02/02 18:55:46 deraadt Exp $ */
+/* $OpenBSD: locore.S,v 1.29 2020/02/16 09:33:47 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -347,16 +347,16 @@ _C_LABEL(sigcode):
 1:
 	mov	x8, #SYS_sigreturn
 	svc	0
+	dsb	nsh
+	isb
 	.globl  _C_LABEL(sigcoderet)
 _C_LABEL(sigcoderet):
-	nop
-	nop
 
 	/* sigreturn failed, exit */
 	mov	x8, #SYS_exit
 	svc	0
-	nop
-	nop
+	dsb	nsh
+	isb
 
 	b	1b
 END(sigcode)
