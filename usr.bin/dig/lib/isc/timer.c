@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.12 2020/02/16 21:04:44 florian Exp $ */
+/* $Id: timer.c,v 1.13 2020/02/16 21:06:15 florian Exp $ */
 
 /*! \file */
 
@@ -221,7 +221,7 @@ isc__timer_create(isc_timermgr_t *manager0, const struct timespec *interval,
 	REQUIRE(task != NULL);
 	REQUIRE(action != NULL);
 	REQUIRE(interval != NULL);
-	REQUIRE(!(interval_iszero(interval)));
+	REQUIRE(timespecisset(interval));
 	REQUIRE(timerp != NULL && *timerp == NULL);
 
 	/*
@@ -236,7 +236,7 @@ isc__timer_create(isc_timermgr_t *manager0, const struct timespec *interval,
 	timer->manager = manager;
 	timer->references = 1;
 
-	if (!interval_iszero(interval)) {
+	if (timespecisset(interval)) {
 		result = isc_time_add(&now, interval, &timer->idle);
 		if (result != ISC_R_SUCCESS) {
 			free(timer);
@@ -300,7 +300,7 @@ isc__timer_reset(isc_timer_t *timer0, const struct timespec *interval,
 	manager = timer->manager;
 	REQUIRE(VALID_MANAGER(manager));
 	REQUIRE(interval != NULL);
-	REQUIRE(!(interval_iszero(interval)));
+	REQUIRE(timespecisset(interval));
 
 	/*
 	 * Get current time.
@@ -314,7 +314,7 @@ isc__timer_reset(isc_timer_t *timer0, const struct timespec *interval,
 					  ISC_TIMEREVENT_LASTEVENT,
 					  NULL);
 	timer->interval = *interval;
-	if (!interval_iszero(interval)) {
+	if (timespecisset(interval)) {
 		result = isc_time_add(&now, interval, &timer->idle);
 	} else {
 		isc_time_settoepoch(&timer->idle);

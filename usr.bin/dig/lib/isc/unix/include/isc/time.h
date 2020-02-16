@@ -14,13 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.6 2020/02/16 21:04:44 florian Exp $ */
+/* $Id: time.h,v 1.7 2020/02/16 21:06:15 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
 
 /*! \file */
 
+#include <sys/time.h>
 #include <time.h>
 #include <isc/types.h>
 
@@ -30,29 +31,6 @@
  * expanding strftime's %a and %b.
  */
 #define ISC_FORMATHTTPTIMESTAMP_SIZE 50
-
-void
-interval_set(struct timespec *i, time_t seconds, long nanoseconds);
-/*%<
- * Set 'i' to a value representing an interval of 'seconds' seconds and
- * 'nanoseconds' nanoseconds, suitable for use in isc_time_add() and
- * isc_time_subtract().
- *
- * Requires:
- *
- *\li	't' is a valid pointer.
- *\li	nanoseconds < 1000000000.
- */
-
-isc_boolean_t
-interval_iszero(const struct timespec *i);
-/*%<
- * Returns ISC_TRUE iff. 'i' is the zero interval.
- *
- * Requires:
- *
- *\li	'i' is a valid pointer.
- */
 
 /***
  *** Absolute Times

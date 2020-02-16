@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.9 2020/02/16 21:04:44 florian Exp $ */
+/* $Id: time.c,v 1.10 2020/02/16 21:06:15 florian Exp $ */
 
 /*! \file */
 
@@ -42,32 +42,6 @@
  * is the best we've got.  The check is only performed on functions which
  * need an initialized type.
  */
-
-/*%
- *** Intervals
- ***/
-
-void
-interval_set(struct timespec *i, time_t seconds, long nanoseconds)
-{
-	REQUIRE(i != NULL);
-	REQUIRE(nanoseconds < NS_PER_S);
-
-	i->tv_sec = seconds;
-	i->tv_nsec = nanoseconds;
-}
-
-isc_boolean_t
-interval_iszero(const struct timespec *i) {
-	REQUIRE(i != NULL);
-	INSIST(i->tv_nsec < NS_PER_S);
-
-	if (!timespecisset(i))
-		return (ISC_TRUE);
-
-	return (ISC_FALSE);
-}
-
 
 /***
  *** Absolute Times
