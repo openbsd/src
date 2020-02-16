@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.71 2020/02/15 21:03:18 kn Exp $
+.\"	$OpenBSD: vmctl.8,v 1.72 2020/02/16 11:03:25 kn Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2020 $
+.Dd $Mdocdate: February 16 2020 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -204,7 +204,7 @@ Number of network interfaces to add to the VM.
 .It Fl L
 Add a local network interface.
 .Xr vmd 8
-will auto-generate an IPv4 subnet for the first interface,
+will auto-generate an IPv4 subnet for the interface,
 configure a gateway address on the VM host side,
 and run a simple DHCP/BOOTP server for the VM.
 See
