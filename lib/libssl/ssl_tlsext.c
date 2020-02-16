@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.60 2020/02/06 13:14:17 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.61 2020/02/16 16:36:40 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1347,6 +1347,9 @@ tlsext_keyshare_client_parse(SSL *s, CBS *cbs, int *alert)
 	}
 
 	if (!CBS_get_u16_length_prefixed(cbs, &key_exchange))
+		return 0;
+
+	if (S3I(s)->hs_tls13.key_share == NULL)
 		return 0;
 
 	if (!tls13_key_share_peer_public(S3I(s)->hs_tls13.key_share,
