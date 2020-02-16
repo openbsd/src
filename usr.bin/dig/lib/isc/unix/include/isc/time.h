@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.9 2020/02/16 21:07:33 florian Exp $ */
+/* $Id: time.h,v 1.10 2020/02/16 21:08:15 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -50,22 +50,6 @@ isc_time_now(struct timespec *t);
  *\li	Success
  *\li	Unexpected error
  *		Getting the time from the system failed.
- */
-
-int
-isc_time_compare(const struct timespec *t1, const struct timespec *t2);
-/*%<
- * Compare the times referenced by 't1' and 't2'
- *
- * Requires:
- *
- *\li	't1' and 't2' are valid pointers.
- *
- * Returns:
- *
- *\li	-1		t1 < t2		(comparing times, not pointers)
- *\li	0		t1 = t2
- *\li	1		t1 > t2
  */
 
 isc_result_t

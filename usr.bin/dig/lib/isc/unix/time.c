@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.12 2020/02/16 21:07:33 florian Exp $ */
+/* $Id: time.c,v 1.13 2020/02/16 21:08:15 florian Exp $ */
 
 /*! \file */
 
@@ -56,22 +56,6 @@ isc_time_now(struct timespec *t) {
 		return (ISC_R_UNEXPECTED);
 	}
 	return (ISC_R_SUCCESS);
-}
-
-int
-isc_time_compare(const struct timespec *t1, const struct timespec *t2) {
-	REQUIRE(t1 != NULL && t2 != NULL);
-	INSIST(t1->tv_nsec < NS_PER_S && t2->tv_nsec < NS_PER_S);
-
-	if (t1->tv_sec < t2->tv_sec)
-		return (-1);
-	if (t1->tv_sec > t2->tv_sec)
-		return (1);
-	if (t1->tv_nsec < t2->tv_nsec)
-		return (-1);
-	if (t1->tv_nsec > t2->tv_nsec)
-		return (1);
-	return (0);
 }
 
 isc_result_t

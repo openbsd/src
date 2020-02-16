@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.15 2020/02/16 21:07:33 florian Exp $ */
+/* $Id: timer.c,v 1.16 2020/02/16 21:08:15 florian Exp $ */
 
 /*! \file */
 
@@ -101,7 +101,6 @@ schedule(isc__timer_t *timer, struct timespec *now, isc_boolean_t signal_ok) {
 	isc_result_t result;
 	isc__timermgr_t *manager;
 	struct timespec due;
-	int cmp;
 
 	/*!
 	 * Note: the caller must ensure locking.
@@ -124,19 +123,12 @@ schedule(isc__timer_t *timer, struct timespec *now, isc_boolean_t signal_ok) {
 		/*
 		 * Already scheduled.
 		 */
-		cmp = isc_time_compare(&due, &timer->due);
+		if (timespeccmp(&due, &timer->due, <))
+		    isc_heap_increased(manager->heap, timer->index);
+		else if (timespeccmp(&due, &timer->due, >))
+		    isc_heap_decreased(manager->heap, timer->index);
+
 		timer->due = due;
-		switch (cmp) {
-		case -1:
-			isc_heap_increased(manager->heap, timer->index);
-			break;
-		case 1:
-			isc_heap_decreased(manager->heap, timer->index);
-			break;
-		case 0:
-			/* Nothing to do. */
-			break;
-		}
 	} else {
 		timer->due = due;
 		result = isc_heap_insert(manager->heap, timer);
@@ -153,8 +145,7 @@ schedule(isc__timer_t *timer, struct timespec *now, isc_boolean_t signal_ok) {
 	 * the current "next" timer.  We do this either by waking up the
 	 * run thread, or explicitly setting the value in the manager.
 	 */
-	if (timer->index == 1 &&
-	    isc_time_compare(&timer->due, &manager->due) < 0)
+	if (timer->index == 1 && timespeccmp(&timer->due, &manager->due, <))
 		manager->due = timer->due;
 
 	return (ISC_R_SUCCESS);
@@ -402,12 +393,11 @@ dispatch(isc__timermgr_t *manager, struct timespec *now) {
 	while (manager->nscheduled > 0 && !done) {
 		timer = isc_heap_element(manager->heap, 1);
 		INSIST(timer != NULL);
-		if (isc_time_compare(now, &timer->due) >= 0) {
+		if (timespeccmp(now, &timer->due, >=)) {
 			idle = ISC_FALSE;
 
-			if (timespecisset(&timer->idle) &&
-			    isc_time_compare(now,
-			    &timer->idle) >= 0) {
+			if (timespecisset(&timer->idle) && timespeccmp(now,
+			    &timer->idle, >=)) {
 				idle = ISC_TRUE;
 			}
 			if (idle) {
@@ -471,7 +461,7 @@ sooner(void *v1, void *v2) {
 	REQUIRE(VALID_TIMER(t1));
 	REQUIRE(VALID_TIMER(t2));
 
-	if (isc_time_compare(&t1->due, &t2->due) < 0)
+	if (timespeccmp(&t1->due, &t2->due, <))
 		return (ISC_TRUE);
 	return (ISC_FALSE);
 }

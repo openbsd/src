@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.9 2020/02/16 21:06:15 florian Exp $ */
+/* $Id: log.c,v 1.10 2020/02/16 21:08:15 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -1000,8 +1000,8 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 					message = ISC_LIST_HEAD(lctx->messages);
 
 				while (message != NULL) {
-					if (isc_time_compare(&message->time,
-							     &oldest) < 0) {
+					if (timespeccmp(&message->time,
+					    &oldest, <)) {
 						/*
 						 * This message is older
 						 * than the duplicate_interval,
