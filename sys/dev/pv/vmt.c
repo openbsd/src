@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.16 2019/12/31 01:26:56 jsg Exp $ */
+/*	$OpenBSD: vmt.c,v 1.17 2020/02/16 03:23:05 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -220,6 +220,7 @@ void	 vmt_do_reboot(struct vmt_softc *);
 void	 vmt_do_shutdown(struct vmt_softc *);
 void	 vmt_shutdown(void *);
 
+void	 vmt_clear_guest_info(struct vmt_softc *);
 void	 vmt_update_guest_info(struct vmt_softc *);
 void	 vmt_update_guest_uptime(struct vmt_softc *);
 
@@ -516,6 +517,13 @@ vmt_update_guest_uptime(struct vmt_softc *sc)
 }
 
 void
+vmt_clear_guest_info(struct vmt_softc *sc)
+{
+	sc->sc_hostname[0] = '\0';
+	sc->sc_set_guest_os = 0;
+}
+
+void
 vmt_update_guest_info(struct vmt_softc *sc)
 {
 	if (strncmp(sc->sc_hostname, hostname, sizeof(sc->sc_hostname)) != 0) {
@@ -721,8 +729,7 @@ vmt_tclo_resume(struct vmt_softc *sc)
 	    "VMware guest resuming from suspended state\n");
 
 	/* force guest info update */
-	sc->sc_hostname[0] = '\0';
-	sc->sc_set_guest_os = 0;
+	vmt_clear_guest_info(sc);
 	vmt_update_guest_info(sc);
 	vmt_resume();
 
@@ -768,6 +775,7 @@ vmt_tclo_capreg(struct vmt_softc *sc)
 		sc->sc_rpc_error = 1;
 	}
 
+	vmt_clear_guest_info(sc);
 	vmt_update_guest_uptime(sc);
 
 	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
