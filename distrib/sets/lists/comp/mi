@@ -569,6 +569,8 @@
 ./usr/include/dev/pci/if_iwmvar.h
 ./usr/include/dev/pci/if_iwnreg.h
 ./usr/include/dev/pci/if_iwnvar.h
+./usr/include/dev/pci/if_iwxreg.h
+./usr/include/dev/pci/if_iwxvar.h
 ./usr/include/dev/pci/if_ix.h
 ./usr/include/dev/pci/if_ixgb.h
 ./usr/include/dev/pci/if_ixgb_osdep.h
