@@ -24,10 +24,11 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
 #include <isc/event.h>
 #include <isc/magic.h>
-
-#include <string.h>
 #include <isc/task.h>
 #include <isc/util.h>
 
@@ -60,7 +61,7 @@ struct isc__task {
 	unsigned int			nevents;
 	unsigned int			quantum;
 	unsigned int			flags;
-	isc_stdtime_t			now;
+	time_t			now;
 	char				name[16];
 	void *				tag;
 	/* Locked by task manager lock. */
@@ -156,7 +157,7 @@ isc__task_getname(isc_task_t *task0);
 void *
 isc__task_gettag(isc_task_t *task0);
 void
-isc__task_getcurrenttime(isc_task_t *task0, isc_stdtime_t *t);
+isc__task_getcurrenttime(isc_task_t *task0, time_t *t);
 isc_result_t
 isc__taskmgr_create(unsigned int workers,
 		    unsigned int default_quantum, isc_taskmgr_t **managerp);
@@ -758,7 +759,7 @@ isc__task_gettag(isc_task_t *task0) {
 }
 
 void
-isc__task_getcurrenttime(isc_task_t *task0, isc_stdtime_t *t) {
+isc__task_getcurrenttime(isc_task_t *task0, time_t *t) {
 	isc__task_t *task = (isc__task_t *)task0;
 
 	REQUIRE(VALID_TASK(task));
@@ -870,7 +871,7 @@ dispatch(isc__taskmgr_t *manager) {
 
 			INSIST(task->state == task_state_ready);
 			task->state = task_state_running;
-			isc_stdtime_get(&task->now);
+			time(&task->now);
 			do {
 				if (!EMPTY(task->events)) {
 					event = HEAD(task->events);

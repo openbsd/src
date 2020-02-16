@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: rdataset.h,v 1.4 2020/02/16 21:12:41 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -51,7 +51,6 @@
  */
 
 #include <isc/magic.h>
-#include <isc/stdtime.h>
 
 #include <dns/types.h>
 #include "rdatastruct.h"
@@ -93,7 +92,7 @@ typedef struct dns_rdatasetmethods {
 						 dns_dbnode_t **nodep,
 						 dns_name_t *fname,
 						 dns_message_t *msg,
-						 isc_stdtime_t now);
+						 time_t now);
 	isc_result_t		(*setadditional)(dns_rdataset_t *rdataset,
 						 dns_rdatasetadditional_t type,
 						 dns_rdatatype_t qtype,
@@ -151,7 +150,7 @@ struct dns_rdataset {
 	 * This RRSIG RRset should be re-generated around this time.
 	 * Only valid if DNS_RDATASETATTR_RESIGN is set in attributes.
 	 */
-	isc_stdtime_t			resign;
+	time_t			resign;
 	/*@{*/
 	/*%
 	 * These are for use by the rdataset implementation, and MUST NOT

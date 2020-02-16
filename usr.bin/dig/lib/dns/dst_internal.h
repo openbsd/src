@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.4 2020/02/13 13:53:00 jsg Exp $ */
+/* $Id: dst_internal.h,v 1.5 2020/02/16 21:12:41 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -44,10 +44,7 @@
 #include <isc/refcount.h>
 #include <isc/sha1.h>
 #include <isc/sha2.h>
-#include <isc/stdtime.h>
 #include <isc/hmacsha.h>
-
-
 
 #include <dns/time.h>
 
@@ -110,9 +107,9 @@ struct dst_key {
 
 	} keydata;			/*%< pointer to key in crypto pkg fmt */
 
-	isc_stdtime_t	times[DST_MAX_TIMES + 1];    /*%< timing metadata */
+	time_t	times[DST_MAX_TIMES + 1];    /*%< timing metadata */
 	isc_boolean_t	timeset[DST_MAX_TIMES + 1];  /*%< data set? */
-	isc_stdtime_t	nums[DST_MAX_NUMERIC + 1];   /*%< numeric metadata */
+	time_t	nums[DST_MAX_NUMERIC + 1];   /*%< numeric metadata */
 	isc_boolean_t	numset[DST_MAX_NUMERIC + 1]; /*%< data set? */
 	isc_boolean_t 	inactive;      /*%< private key not present as it is
 					    inactive */

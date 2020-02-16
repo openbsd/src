@@ -18,7 +18,6 @@
 #define GENERIC_KEYDATA_65533_C 1
 
 #include <isc/time.h>
-#include <isc/stdtime.h>
 
 #include <dst/dst.h>
 
@@ -216,9 +215,9 @@ totext_keydata(ARGS_TOTEXT) {
 		RETERR(str_totext(buf, target));
 
 		if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
-			isc_stdtime_t now;
+			time_t now;
 
-			isc_stdtime_get(&now);
+			time(&now);
 
 			RETERR(str_totext(tctx->linebreak, target));
 			RETERR(str_totext("; next refresh: ", target));
@@ -232,7 +231,7 @@ totext_keydata(ARGS_TOTEXT) {
 				RETERR(str_totext("; no trust", target));
 			} else {
 				RETERR(str_totext(tctx->linebreak, target));
-				if (add < now) {
+				if ((time_t)add < now) {
 					RETERR(str_totext("; trusted since: ",
 							  target));
 				} else {

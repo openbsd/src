@@ -14,21 +14,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dns_time.c,v 1.3 2020/02/13 08:15:31 florian Exp $ */
+/* $Id: dns_time.c,v 1.4 2020/02/16 21:12:41 florian Exp $ */
 
 /*! \file */
-
-
 
 #include <stdio.h>
 #include <string.h>		/* Required for HP/UX (and others?) */
 #include <time.h>
 #include <ctype.h>
 
-
 #include <isc/region.h>
 #include <isc/serial.h>
-#include <isc/stdtime.h>
 
 #include <dns/result.h>
 #include <dns/time.h>
@@ -103,17 +99,17 @@ dns_time64_totext(int64_t t, isc_buffer_t *target) {
 
 int64_t
 dns_time64_from32(uint32_t value) {
-	isc_stdtime_t now;
+	time_t now;
 	int64_t start;
 	int64_t t;
 
 	/*
 	 * Adjust the time to the closest epoch.  This should be changed
-	 * to use a 64-bit counterpart to isc_stdtime_get() if one ever
+	 * to use a 64-bit counterpart to time() if one ever
 	 * is defined, but even the current code is good until the year
 	 * 2106.
 	 */
-	isc_stdtime_get(&now);
+	time(&now);
 	start = (int64_t) now;
 	if (isc_serial_gt(value, now))
 		t = start + (value - now);

@@ -15,25 +15,21 @@
  */
 
 /*
- * $Id: tsig.c,v 1.6 2020/02/13 16:57:55 florian Exp $
+ * $Id: tsig.c,v 1.7 2020/02/16 21:12:41 florian Exp $
  */
 /*! \file */
 
 #include <stdlib.h>
-
-#include <isc/buffer.h>
-
-
-#include <isc/refcount.h>
 #include <string.h>		/* Required for HP/UX (and others?) */
+#include <time.h>
+
 #include <isc/util.h>
-
-
+#include <isc/buffer.h>
+#include <isc/refcount.h>
 
 #include <dns/keyvalues.h>
 #include <dns/log.h>
 #include <dns/message.h>
-
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
@@ -135,8 +131,8 @@ tsig_log(dns_tsigkey_t *key, int level, const char *fmt, ...) {
 isc_result_t
 dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 			  dst_key_t *dstkey, isc_boolean_t generated,
-			  dns_name_t *creator, isc_stdtime_t inception,
-			  isc_stdtime_t expire,
+			  dns_name_t *creator, time_t inception,
+			  time_t expire,
 			  dns_tsigkey_t **key)
 {
 	dns_tsigkey_t *tkey;
@@ -284,8 +280,8 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 isc_result_t
 dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 		   unsigned char *secret, int length, isc_boolean_t generated,
-		   dns_name_t *creator, isc_stdtime_t inception,
-		   isc_stdtime_t expire,
+		   dns_name_t *creator, time_t inception,
+		   time_t expire,
 		   dns_tsigkey_t **key)
 {
 	dst_key_t *dstkey = NULL;
@@ -434,7 +430,7 @@ dns_tsig_sign(dns_message_t *msg) {
 	dns_rdatalist_t *datalist;
 	dns_rdataset_t *dataset;
 	isc_region_t r;
-	isc_stdtime_t now;
+	time_t now;
 	dst_context_t *ctx = NULL;
 	isc_result_t ret;
 	unsigned char badtimedata[BADTIMELEN];
@@ -460,7 +456,7 @@ dns_tsig_sign(dns_message_t *msg) {
 	dns_name_init(&tsig.algorithm, NULL);
 	dns_name_clone(key->algorithm, &tsig.algorithm);
 
-	isc_stdtime_get(&now);
+	time(&now);
 	tsig.timesigned = now + msg->timeadjust;
 	tsig.fudge = DNS_TSIG_FUDGE;
 
@@ -728,7 +724,7 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg)
 	unsigned char data[32];
 	dns_name_t *keyname;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
-	isc_stdtime_t now;
+	time_t now;
 	isc_result_t ret;
 	dns_tsigkey_t *tsigkey;
 	dst_key_t *key = NULL;
@@ -807,7 +803,7 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg)
 	/*
 	 * Get the current time.
 	 */
-	isc_stdtime_get(&now);
+	time(&now);
 
 	/*
 	 * Find dns_tsigkey_t based on keyname.
@@ -991,12 +987,13 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg)
 	/*
 	 * Is the time ok?
 	 */
-	if (now + msg->timeadjust > tsig.timesigned + tsig.fudge) {
+	if (now + msg->timeadjust > (time_t)(tsig.timesigned + tsig.fudge)) {
 		msg->tsigstatus = dns_tsigerror_badtime;
 		tsig_log(msg->tsigkey, 2, "signature has expired");
 		ret = DNS_R_CLOCKSKEW;
 		goto cleanup_context;
-	} else if (now + msg->timeadjust < tsig.timesigned - tsig.fudge) {
+	} else if (now + msg->timeadjust < (time_t)(tsig.timesigned -
+	    tsig.fudge)) {
 		msg->tsigstatus = dns_tsigerror_badtime;
 		tsig_log(msg->tsigkey, 2, "signature is in the future");
 		ret = DNS_R_CLOCKSKEW;
@@ -1066,7 +1063,7 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	unsigned char data[32];
 	dns_name_t *keyname;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
-	isc_stdtime_t now;
+	time_t now;
 	isc_result_t ret;
 	dns_tsigkey_t *tsigkey;
 	dst_key_t *key = NULL;
@@ -1293,16 +1290,16 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 		/*
 		 * Is the time ok?
 		 */
-		isc_stdtime_get(&now);
+		time(&now);
 
-		if (now + msg->timeadjust > tsig.timesigned + tsig.fudge) {
+		if (now + msg->timeadjust > (time_t)(tsig.timesigned +
+		    tsig.fudge)) {
 			msg->tsigstatus = dns_tsigerror_badtime;
 			tsig_log(msg->tsigkey, 2, "signature has expired");
 			ret = DNS_R_CLOCKSKEW;
 			goto cleanup_context;
-		} else if (now + msg->timeadjust <
-			   tsig.timesigned - tsig.fudge)
-		{
+		} else if (now + msg->timeadjust < (time_t)(tsig.timesigned -
+		    tsig.fudge)) {
 			msg->tsigstatus = dns_tsigerror_badtime;
 			tsig_log(msg->tsigkey, 2,
 				 "signature is in the future");
