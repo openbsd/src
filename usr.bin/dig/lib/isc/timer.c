@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.17 2020/02/16 21:08:59 florian Exp $ */
+/* $Id: timer.c,v 1.18 2020/02/16 21:11:02 florian Exp $ */
 
 /*! \file */
 
@@ -218,7 +218,7 @@ isc__timer_create(isc_timermgr_t *manager0, const struct timespec *interval,
 	/*
 	 * Get current time.
 	 */
-	TIME_NOW(&now);
+	clock_gettime(CLOCK_REALTIME, &now);
 
 	timer = malloc(sizeof(*timer));
 	if (timer == NULL)
@@ -291,7 +291,7 @@ isc__timer_reset(isc_timer_t *timer0, const struct timespec *interval,
 	/*
 	 * Get current time.
 	 */
-	TIME_NOW(&now);
+	clock_gettime(CLOCK_REALTIME, &now);
 
 	if (purge)
 		(void)isc_task_purgerange(timer->task,
@@ -322,7 +322,7 @@ isc__timer_touch(isc_timer_t *timer0) {
 
 	REQUIRE(VALID_TIMER(timer));
 
-	TIME_NOW(&now);
+	clock_gettime(CLOCK_REALTIME, &now);
 	timespecadd(&now, &timer->interval, &timer->idle);
 }
 
@@ -565,7 +565,7 @@ isc__timermgr_dispatch(isc_timermgr_t *manager0) {
 		manager = timermgr;
 	if (manager == NULL)
 		return;
-	TIME_NOW(&now);
+	clock_gettime(CLOCK_REALTIME, &now);
 	dispatch(manager, &now);
 }
 

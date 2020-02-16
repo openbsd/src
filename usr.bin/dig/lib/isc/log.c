@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.12 2020/02/16 21:09:32 florian Exp $ */
+/* $Id: log.c,v 1.13 2020/02/16 21:11:02 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -945,7 +945,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 		    time_string[0] == '\0') {
 			struct timespec now;
 
-			TIME_NOW(&now);
+			clock_gettime(CLOCK_REALTIME, &now);
 			strftime(time_string, sizeof(time_string),
 			    "%d-%b-%Y %X", localtime(&now.tv_sec));
 		}
@@ -987,7 +987,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				 * which fall within the duplicate_interval
 				 * range.
 				 */
-				TIME_NOW(&oldest);
+				clock_gettime(CLOCK_REALTIME, &oldest);
 				timespecsub(&oldest, &interval, &oldest);
 				message = ISC_LIST_HEAD(lctx->messages);
 
@@ -1050,7 +1050,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 					strlcpy(message->text, lctx->buffer,
 						size);
 
-					TIME_NOW(&message->time);
+					clock_gettime(CLOCK_REALTIME, &message->time);
 
 					ISC_LINK_INIT(message, link);
 					ISC_LIST_APPEND(lctx->messages,

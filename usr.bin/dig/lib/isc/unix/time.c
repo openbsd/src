@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.c,v 1.16 2020/02/16 21:10:07 florian Exp $ */
+/* $Id: time.c,v 1.17 2020/02/16 21:11:02 florian Exp $ */
 
 /*! \file */
 
@@ -42,17 +42,6 @@
 /***
  *** Absolute Times
  ***/
-
-isc_result_t
-isc_time_now(struct timespec *t) {
-	REQUIRE(t != NULL);
-
-	if (clock_gettime(CLOCK_REALTIME, t) == -1) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__, "%s", strerror(errno));
-		return (ISC_R_UNEXPECTED);
-	}
-	return (ISC_R_SUCCESS);
-}
 
 uint64_t
 isc_time_microdiff(const struct timespec *t1, const struct timespec *t2) {

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: time.h,v 1.13 2020/02/16 21:10:07 florian Exp $ */
+/* $Id: time.h,v 1.14 2020/02/16 21:11:02 florian Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1
@@ -29,22 +29,6 @@
 /***
  *** Absolute Times
  ***/
-
-isc_result_t
-isc_time_now(struct timespec *t);
-/*%<
- * Set 't' to the current absolute time.
- *
- * Requires:
- *
- *\li	't' is a valid pointer.
- *
- * Returns:
- *
- *\li	Success
- *\li	Unexpected error
- *		Getting the time from the system failed.
- */
 
 uint64_t
 isc_time_microdiff(const struct timespec *t1, const struct timespec *t2);
