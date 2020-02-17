@@ -1,3 +1,5 @@
+/*	$OpenBSD: ukspan.c,v 1.3 2020/02/17 19:29:55 jasper Exp $ */
+
 /*
  * Copyright (c) 2019 Cody Cutler <ccutler@csail.mit.edu>
  *
