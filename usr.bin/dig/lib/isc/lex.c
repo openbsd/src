@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.3 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: lex.c,v 1.4 2020/02/17 19:45:00 jung Exp $ */
 
 /*! \file */
 
@@ -29,9 +29,11 @@
 
 #include <isc/parseint.h>
 
-#include <isc/stdio.h>
+#include <errno.h>
 #include <string.h>
 #include <isc/util.h>
+
+#include "unix/errno2result.h"
 
 typedef struct inputsource {
 	isc_result_t			result;
@@ -201,7 +203,7 @@ new_source(isc_lex_t *lex, isc_boolean_t is_file, isc_boolean_t need_close,
 
 isc_result_t
 isc_lex_openfile(isc_lex_t *lex, const char *filename) {
-	isc_result_t result;
+	isc_result_t result = ISC_R_SUCCESS;
 	FILE *stream = NULL;
 
 	/*
@@ -210,9 +212,8 @@ isc_lex_openfile(isc_lex_t *lex, const char *filename) {
 
 	REQUIRE(VALID_LEX(lex));
 
-	result = isc_stdio_open(filename, "r", &stream);
-	if (result != ISC_R_SUCCESS)
-		return (result);
+	if ((stream = fopen(filename, "r")) == NULL)
+		return (isc__errno2result(errno));
 
 	result = new_source(lex, ISC_TRUE, ISC_TRUE, stream, filename);
 	if (result != ISC_R_SUCCESS)

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig.h,v 1.3 2020/02/16 21:12:41 florian Exp $ */
+/* $Id: tsig.h,v 1.4 2020/02/17 19:45:00 jung Exp $ */
 
 #ifndef DNS_TSIG_H
 #define DNS_TSIG_H 1
@@ -22,7 +22,6 @@
 /*! \file dns/tsig.h */
 
 #include <isc/refcount.h>
-#include <isc/stdio.h>
 
 #include <dns/types.h>
 #include <dns/name.h>
