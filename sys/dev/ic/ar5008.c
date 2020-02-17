@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.53 2019/12/20 10:16:23 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.54 2020/02/17 14:34:19 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -726,7 +726,6 @@ ar5008_rx_radiotap(struct athn_softc *sc, struct mbuf *m,
 
 	struct athn_rx_radiotap_header *tap = &sc->sc_rxtap;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct mbuf mb;
 	uint64_t tsf;
 	uint32_t tstamp;
 	uint8_t rate;
@@ -778,13 +777,7 @@ ar5008_rx_radiotap(struct athn_softc *sc, struct mbuf *m,
 		case 0xc: tap->wr_rate = 108; break;
 		}
 	}
-	mb.m_data = (caddr_t)tap;
-	mb.m_len = sc->sc_rxtap_len;
-	mb.m_next = m;
-	mb.m_nextpkt = NULL;
-	mb.m_type = 0;
-	mb.m_flags = 0;
-	bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+	bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m, BPF_DIRECTION_IN);
 }
 #endif
 
@@ -1397,7 +1390,6 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 #if NBPFILTER > 0
 	if (__predict_false(sc->sc_drvbpf != NULL)) {
 		struct athn_tx_radiotap_header *tap = &sc->sc_txtap;
-		struct mbuf mb;
 
 		tap->wt_flags = 0;
 		/* Use initial transmit rate. */
@@ -1412,13 +1404,8 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		    ridx[0] != ATHN_RIDX_CCK1 &&
 		    (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len, m,
+		    BPF_DIRECTION_OUT);
 	}
 #endif
 
