@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2020/01/17 10:01:18 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.8 2020/02/17 15:34:56 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -140,7 +140,9 @@ setup_certs: ca-both.crt left-from-ca-both.crt left.key right-from-ca-both.crt \
 	    put right-from-ca-left.crt certs\n \
 	    put right.key private/local.key\n \
 	    put ca-right.crt ca\n \
-	    put ca-both.crt ca\n" | sftp ${RIGHT_SSH} -q
+	    put ca-both.crt ca\n" | sftp ${RIGHT_SSH} -q; \
+	ssh ${LEFT_SSH} "openssl rsa -in /etc/iked/private/local.key -pubout > /etc/iked/local.pub"; \
+	ssh ${RIGHT_SSH} "openssl rsa -in /etc/iked/private/local.key -pubout > /etc/iked/local.pub"
 
 .PHONY: setup_certs
 
