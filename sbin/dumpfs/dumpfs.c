@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.34 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.35 2020/02/17 16:11:25 otto Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -139,6 +139,8 @@ open_disk(const char *name)
 		if (n == SBLOCKSIZE && (afs.fs_magic == FS_UFS1_MAGIC ||
 		    (afs.fs_magic == FS_UFS2_MAGIC &&
 		    afs.fs_sblockloc == sbtry[i])) &&
+		    !(afs.fs_magic == FS_UFS1_MAGIC &&
+		    sbtry[i] == SBLOCK_UFS2) &&
 		    afs.fs_bsize <= MAXBSIZE &&
 		    afs.fs_bsize >= sizeof(struct fs))
 			break;
