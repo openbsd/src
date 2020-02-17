@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.32 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: conf_def.c,v 1.33 2020/02/17 12:51:48 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,6 +69,8 @@
 #include <openssl/stack.h>
 
 #include "conf_def.h"
+
+#define MAX_CONF_VALUE_LENGTH 65536
 
 static char *eat_ws(CONF *conf, char *p);
 static char *eat_alpha_numeric(CONF *conf, char *p);
@@ -455,6 +457,7 @@ str_copy(CONF *conf, char *section, char **pto, char *from)
 {
 	int q, r,rr = 0, to = 0, len = 0;
 	char *s, *e, *rp, *p, *rrp, *np, *cp, v;
+	size_t newsize;
 	BUF_MEM *buf;
 
 	if ((buf = BUF_MEM_new()) == NULL)
@@ -563,8 +566,12 @@ str_copy(CONF *conf, char *section, char **pto, char *from)
 				CONFerror(CONF_R_VARIABLE_HAS_NO_VALUE);
 				goto err;
 			}
-			if (!BUF_MEM_grow_clean(buf,
-				(strlen(p) + buf->length - (e - from)))) {
+			newsize = strlen(p) + buf->length - (e - from);
+			if (newsize > MAX_CONF_VALUE_LENGTH) {
+				CONFerror(CONF_R_VARIABLE_EXPANSION_TOO_LONG);
+				goto err;
+			}
+			if (!BUF_MEM_grow_clean(buf, newsize)) {
 				CONFerror(CONF_R_MODULE_INITIALIZATION_ERROR);
 				goto err;
 			}
