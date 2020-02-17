@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.29 2011/04/05 22:37:39 dlg Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.30 2020/02/17 02:50:23 krw Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.33 2005/11/18 23:10:32 bouyer Exp $ */
 
 /*
@@ -200,7 +200,6 @@ int	siop_iwr(struct siop_common_cmd *);
 #define SIOP_NEG_MSGOUT	0x1
 #define SIOP_NEG_ACK	0x2
 
-void	siop_minphys(struct buf *, struct scsi_link *);
 void 	siop_ma(struct siop_common_cmd *);
 void 	siop_sdp(struct siop_common_cmd *, int);
 void 	siop_update_resid(struct siop_common_cmd *, int);

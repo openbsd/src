@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.73 2020/02/14 18:37:03 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.74 2020/02/17 02:50:23 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct cfdriver siop_cd = {
 };
 
 struct scsi_adapter siop_switch = {
-	siop_scsicmd, siop_minphys, siop_scsiprobe, siop_scsifree, NULL
+	siop_scsicmd, NULL, siop_scsiprobe, siop_scsifree, NULL
 };
 
 #ifdef SIOP_STATS

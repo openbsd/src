@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.37 2020/01/25 21:48:42 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.38 2020/02/17 02:50:23 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -699,13 +699,6 @@ siop_ppr_msg(siop_cmd, offset, ssync, soff)
 	siop_cmd->siop_tables->msg_out[offset + 7] = MSG_EXT_PPR_PROT_DT;
 	siop_cmd->siop_tables->t_msgout.count =
 	    siop_htoc32(siop_cmd->siop_sc, offset + MSG_EXT_PPR_LEN + 2);
-}
-
-void
-siop_minphys(struct buf *bp, struct scsi_link *sl)
-{
-	if (bp->b_bcount > SIOP_MAXFER)
-		bp->b_bcount = SIOP_MAXFER;
 }
 
 void
