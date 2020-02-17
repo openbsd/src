@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.260 2020/02/15 22:59:55 mortimer Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.261 2020/02/17 16:38:19 claudio Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3941,7 +3941,7 @@ vcpu_must_stop(struct vcpu *vcpu)
 
 	if (vcpu->vc_state == VCPU_STATE_REQTERM)
 		return (1);
-	if (CURSIG(p) != 0)
+	if (SIGPENDING(p) != 0)
 		return (1);
 	return (0);
 }
