@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.13 2020/02/16 21:11:02 florian Exp $ */
+/* $Id: log.c,v 1.14 2020/02/17 18:58:39 jung Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -677,43 +677,6 @@ isc_log_write(isc_log_t *lctx, isc_logcategory_t *category,
 	va_start(args, format);
 	isc_log_doit(lctx, category, module, level, ISC_FALSE, format, args);
 	va_end(args);
-}
-
-void
-isc_log_vwrite(isc_log_t *lctx, isc_logcategory_t *category,
-	       isc_logmodule_t *module, int level,
-	       const char *format, va_list args)
-{
-	/*
-	 * Contract checking is done in isc_log_doit().
-	 */
-	isc_log_doit(lctx, category, module, level, ISC_FALSE, format, args);
-}
-
-void
-isc_log_write1(isc_log_t *lctx, isc_logcategory_t *category,
-	       isc_logmodule_t *module, int level, const char *format, ...)
-{
-	va_list args;
-
-	/*
-	 * Contract checking is done in isc_log_doit().
-	 */
-
-	va_start(args, format);
-	isc_log_doit(lctx, category, module, level, ISC_TRUE, format, args);
-	va_end(args);
-}
-
-void
-isc_log_vwrite1(isc_log_t *lctx, isc_logcategory_t *category,
-		isc_logmodule_t *module, int level,
-		const char *format, va_list args)
-{
-	/*
-	 * Contract checking is done in isc_log_doit().
-	 */
-	isc_log_doit(lctx, category, module, level, ISC_TRUE, format, args);
 }
 
 void

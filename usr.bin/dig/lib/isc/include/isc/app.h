@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: app.h,v 1.3 2020/02/17 18:58:39 jung Exp $ */
 
 #ifndef ISC_APP_H
 #define ISC_APP_H 1
@@ -45,11 +45,6 @@
  *
  *\li		isc_app_finish();	Call very late in main().
  *
- * Applications that want to use SIGHUP/isc_app_reload() to trigger reloading
- * should check the result of isc_app_run() and call the reload routine if
- * the result is ISC_R_RELOAD.  They should then call isc_app_run() again
- * to resume waiting for reload or termination.
- *
  * Use of this module is not required.  In particular, isc_app_start() is
  * NOT an ISC library initialization routine.
  *
@@ -66,9 +61,7 @@
  *	called previously).
  *
  *	The same note applies to isc_app_ctxXXX() functions, but in this case
- *	it's a per-thread restriction.  For example, a thread with an
- *	application context must ensure that isc_app_ctxstart() with the
- *	context is called at most once.
+ *	it's a per-thread restriction.
  *
  * \li Reliability:
  *	No anticipated impact.
@@ -140,9 +133,6 @@ struct isc_appctx {
 					 (c)->magic == ISCAPI_APPCTX_MAGIC)
 
 isc_result_t
-isc_app_ctxstart(isc_appctx_t *ctx);
-
-isc_result_t
 isc_app_start(void);
 /*!<
  * \brief Start an ISC library application.
@@ -155,9 +145,6 @@ isc_app_start(void);
  *\li	'ctx' is a valid application context (for app_ctxstart()).
  */
 
-isc_result_t
-isc_app_ctxonrun(isc_appctx_t *ctx, isc_task_t *task,
-		 isc_taskaction_t action, void *arg);
 isc_result_t
 isc_app_onrun(isc_task_t *task, isc_taskaction_t action,
 	      void *arg);
@@ -172,9 +159,6 @@ isc_app_onrun(isc_task_t *task, isc_taskaction_t action,
  *	ISC_R_SUCCESS
  *	ISC_R_NOMEMORY
  */
-
-isc_result_t
-isc_app_ctxrun(isc_appctx_t *ctx);
 
 isc_result_t
 isc_app_run(void);
@@ -210,9 +194,6 @@ isc_app_isrunning(void);
  */
 
 isc_result_t
-isc_app_ctxshutdown(isc_appctx_t *ctx);
-
-isc_result_t
 isc_app_shutdown(void);
 /*!<
  * \brief Request application shutdown.
@@ -229,28 +210,6 @@ isc_app_shutdown(void);
  *\li	ISC_R_SUCCESS
  *\li	ISC_R_UNEXPECTED
  */
-
-isc_result_t
-isc_app_ctxsuspend(isc_appctx_t *ctx);
-/*!<
- * \brief This has the same behavior as isc_app_ctxsuspend().
- */
-
-isc_result_t
-isc_app_reload(void);
-/*!<
- * \brief Request application reload.
- *
- * Requires:
- *\li	isc_app_run() has been called.
- *
- * Returns:
- *\li	ISC_R_SUCCESS
- *\li	ISC_R_UNEXPECTED
- */
-
-void
-isc_app_ctxfinish(isc_appctx_t *ctx);
 
 void
 isc_app_finish(void);
@@ -298,87 +257,10 @@ isc_app_unblock(void);
  * \li	isc_app_block() has been called by the same thread.
  */
 
-isc_result_t
-isc_appctx_create(isc_appctx_t **ctxp);
-/*!<
- * \brief Create an application context.
- *
- * Requires:
- *\li	'mctx' is a valid memory context.
- *\li	'ctxp' != NULL && *ctxp == NULL.
- */
-
-void
-isc_appctx_destroy(isc_appctx_t **ctxp);
-/*!<
- * \brief Destroy an application context.
- *
- * Requires:
- *\li	'*ctxp' is a valid application context.
- *
- * Ensures:
- *\li	*ctxp == NULL.
- */
-
-void
-isc_appctx_settaskmgr(isc_appctx_t *ctx, isc_taskmgr_t *taskmgr);
-/*!<
- * \brief Associate a task manager with an application context.
- *
- * This must be done before running tasks within the application context.
- *
- * Requires:
- *\li	'ctx' is a valid application context.
- *\li	'taskmgr' is a valid task manager.
- */
-
-void
-isc_appctx_setsocketmgr(isc_appctx_t *ctx, isc_socketmgr_t *socketmgr);
-/*!<
- * \brief Associate a socket manager with an application context.
- *
- * This must be done before handling socket events within the application
- * context.
- *
- * Requires:
- *\li	'ctx' is a valid application context.
- *\li	'socketmgr' is a valid socket manager.
- */
-
-void
-isc_appctx_settimermgr(isc_appctx_t *ctx, isc_timermgr_t *timermgr);
-/*!<
- * \brief Associate a socket timer with an application context.
- *
- * This must be done before handling timer events within the application
- * context.
- *
- * Requires:
- *\li	'ctx' is a valid application context.
- *\li	'timermgr' is a valid timer manager.
- */
-
 /*%<
  * See isc_appctx_create() above.
  */
 typedef isc_result_t
 (*isc_appctxcreatefunc_t)(isc_appctx_t **ctxp);
-
-isc_result_t
-isc_app_register(isc_appctxcreatefunc_t createfunc);
-/*%<
- * Register a new application implementation and add it to the list of
- * supported implementations.  This function must be called when a different
- * event library is used than the one contained in the ISC library.
- */
-
-isc_result_t
-isc__app_register(void);
-/*%<
- * A short cut function that specifies the application module in the ISC
- * library for isc_app_register().  An application that uses the ISC library
- * usually do not have to care about this function: it would call
- * isc_lib_register(), which internally calls this function.
- */
 
 #endif /* ISC_APP_H */

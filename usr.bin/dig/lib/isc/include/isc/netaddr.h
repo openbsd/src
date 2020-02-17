@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: netaddr.h,v 1.4 2020/02/17 18:58:39 jung Exp $ */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1
@@ -37,14 +37,6 @@ struct isc_netaddr {
 	uint32_t zone;
 };
 
-/*%<
- * Compare network addresses 'a' and 'b'.  Return #ISC_TRUE if
- * they are equal, #ISC_FALSE if not.
- */
-
-isc_boolean_t
-isc_netaddr_eqprefix(const isc_netaddr_t *a, const isc_netaddr_t *b,
-		     unsigned int prefixlen);
 /*%<
  * Compare the 'prefixlen' most significant bits of the network
  * addresses 'a' and 'b'.  If 'b''s scope is zero then 'a''s scope is
@@ -80,19 +72,10 @@ isc_netaddr_format(const isc_netaddr_t *na, char *array, unsigned int size);
 void
 isc_netaddr_fromsockaddr(isc_netaddr_t *netaddr, const isc_sockaddr_t *source);
 
-uint32_t
-isc_netaddr_getzone(const isc_netaddr_t *netaddr);
-
 isc_boolean_t
 isc_netaddr_ismulticast(isc_netaddr_t *na);
 /*%<
  * Returns ISC_TRUE if the address is a multicast address.
- */
-
-isc_boolean_t
-isc_netaddr_isexperimental(isc_netaddr_t *na);
-/*%<
- * Returns ISC_TRUE if the address is a experimental (CLASS E) address.
  */
 
 isc_boolean_t
@@ -105,12 +88,6 @@ isc_boolean_t
 isc_netaddr_issitelocal(isc_netaddr_t *na);
 /*%<
  * Returns #ISC_TRUE if the address is a site local address.
- */
-
-isc_boolean_t
-isc_netaddr_isnetzero(isc_netaddr_t *na);
-/*%<
- * Returns #ISC_TRUE if the address is in net zero.
  */
 
 #endif /* ISC_NETADDR_H */

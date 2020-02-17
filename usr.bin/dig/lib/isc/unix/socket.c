@@ -265,8 +265,6 @@ isc__socketmgr_create(isc_socketmgr_t **managerp);
 isc_result_t
 isc__socketmgr_create2(isc_socketmgr_t **managerp,
 		       unsigned int maxsocks);
-isc_result_t
-isc_socketmgr_getmaxsockets(isc_socketmgr_t *manager0, unsigned int *nsockp);
 void
 isc__socketmgr_destroy(isc_socketmgr_t **managerp);
 

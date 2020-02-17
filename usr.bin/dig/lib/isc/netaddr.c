@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.c,v 1.4 2020/02/13 16:55:44 florian Exp $ */
+/* $Id: netaddr.c,v 1.5 2020/02/17 18:58:39 jung Exp $ */
 
 /*! \file */
 
@@ -29,64 +29,6 @@
 #include <isc/sockaddr.h>
 #include <string.h>
 #include <isc/util.h>
-
-isc_boolean_t
-isc_netaddr_eqprefix(const isc_netaddr_t *a, const isc_netaddr_t *b,
-		     unsigned int prefixlen)
-{
-	const unsigned char *pa = NULL, *pb = NULL;
-	unsigned int ipabytes = 0; /* Length of whole IP address in bytes */
-	unsigned int nbytes;       /* Number of significant whole bytes */
-	unsigned int nbits;        /* Number of significant leftover bits */
-
-	REQUIRE(a != NULL && b != NULL);
-
-	if (a->family != b->family)
-		return (ISC_FALSE);
-
-	if (a->zone != b->zone && b->zone != 0)
-		return (ISC_FALSE);
-
-	switch (a->family) {
-	case AF_INET:
-		pa = (const unsigned char *) &a->type.in;
-		pb = (const unsigned char *) &b->type.in;
-		ipabytes = 4;
-		break;
-	case AF_INET6:
-		pa = (const unsigned char *) &a->type.in6;
-		pb = (const unsigned char *) &b->type.in6;
-		ipabytes = 16;
-		break;
-	default:
-		return (ISC_FALSE);
-	}
-
-	/*
-	 * Don't crash if we get a pattern like 10.0.0.1/9999999.
-	 */
-	if (prefixlen > ipabytes * 8)
-		prefixlen = ipabytes * 8;
-
-	nbytes = prefixlen / 8;
-	nbits = prefixlen % 8;
-
-	if (nbytes > 0) {
-		if (memcmp(pa, pb, nbytes) != 0)
-			return (ISC_FALSE);
-	}
-	if (nbits > 0) {
-		unsigned int bytea, byteb, mask;
-		INSIST(nbytes < ipabytes);
-		INSIST(nbits < 8);
-		bytea = pa[nbytes];
-		byteb = pb[nbytes];
-		mask = (0xFF << (8-nbits)) & 0xFF;
-		if ((bytea & mask) != (byteb & mask))
-			return (ISC_FALSE);
-	}
-	return (ISC_TRUE);
-}
 
 isc_result_t
 isc_netaddr_totext(const isc_netaddr_t *netaddr, isc_buffer_t *target) {
@@ -161,11 +103,6 @@ isc_netaddr_format(const isc_netaddr_t *na, char *array, unsigned int size) {
 	}
 }
 
-uint32_t
-isc_netaddr_getzone(const isc_netaddr_t *netaddr) {
-	return (netaddr->zone);
-}
-
 void
 isc_netaddr_fromsockaddr(isc_netaddr_t *t, const isc_sockaddr_t *s) {
 	int family = s->type.sa.sa_family;
@@ -191,16 +128,6 @@ isc_netaddr_ismulticast(isc_netaddr_t *na) {
 		return (ISC_TF(ISC_IPADDR_ISMULTICAST(na->type.in.s_addr)));
 	case AF_INET6:
 		return (ISC_TF(IN6_IS_ADDR_MULTICAST(&na->type.in6)));
-	default:
-		return (ISC_FALSE);  /* XXXMLG ? */
-	}
-}
-
-isc_boolean_t
-isc_netaddr_isexperimental(isc_netaddr_t *na) {
-	switch (na->family) {
-	case AF_INET:
-		return (ISC_TF(ISC_IPADDR_ISEXPERIMENTAL(na->type.in.s_addr)));
 	default:
 		return (ISC_FALSE);  /* XXXMLG ? */
 	}
@@ -233,15 +160,3 @@ isc_netaddr_issitelocal(isc_netaddr_t *na) {
 #define ISC_IPADDR_ISNETZERO(i) \
 	       (((uint32_t)(i) & ISC__IPADDR(0xff000000)) \
 		== ISC__IPADDR(0x00000000))
-
-isc_boolean_t
-isc_netaddr_isnetzero(isc_netaddr_t *na) {
-	switch (na->family) {
-	case AF_INET:
-		return (ISC_TF(ISC_IPADDR_ISNETZERO(na->type.in.s_addr)));
-	case AF_INET6:
-		return (ISC_FALSE);
-	default:
-		return (ISC_FALSE);
-	}
-}

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: parseint.c,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: parseint.c,v 1.2 2020/02/17 18:58:39 jung Exp $ */
 
 /*! \file */
 
@@ -49,19 +49,6 @@ isc_parse_uint32(uint32_t *uip, const char *string, int base) {
 	if ((n == ULONG_MAX && errno == ERANGE) || (n != (unsigned long)r))
 		return (ISC_R_RANGE);
 	*uip = r;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc_parse_uint16(uint16_t *uip, const char *string, int base) {
-	uint32_t val;
-	isc_result_t result;
-	result = isc_parse_uint32(&val, string, base);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	if (val > 0xFFFF)
-		return (ISC_R_RANGE);
-	*uip = (uint16_t) val;
 	return (ISC_R_SUCCESS);
 }
 

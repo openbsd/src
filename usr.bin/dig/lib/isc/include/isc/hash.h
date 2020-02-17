@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: hash.h,v 1.3 2020/02/17 18:58:39 jung Exp $ */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
@@ -83,103 +83,6 @@
  *** Functions
  ***/
 
-isc_result_t
-isc_hash_ctxcreate(size_t limit, isc_hash_t **hctx);
-isc_result_t
-isc_hash_create(size_t limit);
-/*!<
- * \brief Create a new hash object.
- *
- * isc_hash_ctxcreate() creates a different object.
- *
- * isc_hash_create() creates a module-internal object to support the
- * single-context mode.  It should be called only once.
- *
- * 'limit' specifies the maximum number of hash keys.  If it is too large,
- * these functions may fail.
- */
-
-void
-isc_hash_ctxattach(isc_hash_t *hctx, isc_hash_t **hctxp);
-/*!<
- * \brief Attach to a hash object.
- *
- * This function is only necessary for the multiple-context mode.
- */
-
-void
-isc_hash_ctxdetach(isc_hash_t **hctxp);
-/*!<
- * \brief Detach from a hash object.
- *
- * This function  is for the multiple-context mode, and takes a valid
- * hash object as an argument.
- */
-
-void
-isc_hash_destroy(void);
-/*!<
- * \brief This function is for the single-context mode, and is expected to be used
- * as a counterpart of isc_hash_create().
- *
- * A valid module-internal hash object must have been created, and this
- * function should be called only once.
- */
-
-/*@{*/
-void
-isc_hash_ctxinit(isc_hash_t *hctx);
-void
-isc_hash_init(void);
-/*!<
- * \brief Initialize a hash object.
- *
- * It fills in the random vector with a proper
- * source of entropy, which is typically from the entropy object specified
- * at the creation.  Thus, it is desirable to call these functions after
- * initializing the entropy object with some good entropy sources.
- *
- * These functions should be called before the first hash calculation.
- *
- * isc_hash_ctxinit() is for the multiple-context mode, and takes a valid hash
- * object as an argument.
- *
- * isc_hash_init() is for the single-context mode.  A valid module-internal
- * hash object must have been created, and this function should be called only
- * once.
- */
-/*@}*/
-
-/*@{*/
-unsigned int
-isc_hash_ctxcalc(isc_hash_t *hctx, const unsigned char *key,
-		 unsigned int keylen, isc_boolean_t case_sensitive);
-unsigned int
-isc_hash_calc(const unsigned char *key, unsigned int keylen,
-	      isc_boolean_t case_sensitive);
-/*!<
- * \brief Calculate a hash value.
- *
- * isc_hash_ctxinit() is for the multiple-context mode, and takes a valid hash
- * object as an argument.
- *
- * isc_hash_init() is for the single-context mode.  A valid module-internal
- * hash object must have been created.
- *
- * 'key' is the hash key, which is a variable length buffer.
- *
- * 'keylen' specifies the key length, which must not be larger than the limit
- * specified for the corresponding hash object.
- *
- * 'case_sensitive' specifies whether the hash key should be treated as
- * case_sensitive values.  It should typically be ISC_FALSE if the hash key
- * is a DNS name.
- */
-/*@}*/
-
-void
-isc__hash_setvec(const uint16_t *vec);
-
 /*!<
  * \brief Set the contents of the random vector used in hashing.
  *
@@ -194,10 +97,6 @@ isc__hash_setvec(const uint16_t *vec);
  */
 
 uint32_t
-isc_hash_function(const void *data, size_t length,
-		  isc_boolean_t case_sensitive,
-		  const uint32_t *previous_hashp);
-uint32_t
 isc_hash_function_reverse(const void *data, size_t length,
 			  isc_boolean_t case_sensitive,
 			  const uint32_t *previous_hashp);
@@ -210,14 +109,10 @@ isc_hash_function_reverse(const void *data, size_t length,
  * process using this library is run, but will have uniform
  * distribution.
  *
- * isc_hash_function() calculates the hash from start to end over the
- * input data. isc_hash_function_reverse() calculates the hash from the
+ * isc_hash_function_reverse() calculates the hash from the
  * end to the start over the input data. The difference in order is
  * useful in incremental hashing; for example, a previously hashed
  * value for 'com' can be used as input when hashing 'example.com'.
- *
- * This is a new variant of isc_hash_calc() and will supercede
- * isc_hash_calc() eventually.
  *
  * 'data' is the data to be hashed.
  *

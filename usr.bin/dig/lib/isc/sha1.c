@@ -14,10 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha1.c,v 1.3 2020/02/11 23:26:12 jsg Exp $ */
+/* $Id: sha1.c,v 1.4 2020/02/17 18:58:39 jung Exp $ */
 
 /*	$NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
-/*	$OpenBSD: sha1.c,v 1.3 2020/02/11 23:26:12 jsg Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.4 2020/02/17 18:58:39 jung Exp $	*/
 
 /*! \file
  * SHA-1 in C
@@ -50,12 +50,6 @@ isc_sha1_init(isc_sha1_t *context)
 	if (EVP_DigestInit(context->ctx, EVP_sha1()) != 1) {
 		FATAL_ERROR(__FILE__, __LINE__, "Cannot initialize SHA1.");
 	}
-}
-
-void
-isc_sha1_invalidate(isc_sha1_t *context) {
-	EVP_MD_CTX_free(context->ctx);
-	context->ctx = NULL;
 }
 
 void

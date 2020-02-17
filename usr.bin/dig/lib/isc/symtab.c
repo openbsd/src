@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: symtab.c,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: symtab.c,v 1.2 2020/02/17 18:58:39 jung Exp $ */
 
 /*! \file */
 
@@ -268,33 +268,4 @@ isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 		grow_table(symtab);
 
 	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type) {
-	unsigned int bucket;
-	elt_t *elt;
-
-	REQUIRE(VALID_SYMTAB(symtab));
-	REQUIRE(key != NULL);
-
-	FIND(symtab, key, type, bucket, elt);
-
-	if (elt == NULL)
-		return (ISC_R_NOTFOUND);
-
-	if (symtab->undefine_action != NULL)
-		(symtab->undefine_action)(elt->key, elt->type,
-					  elt->value, symtab->undefine_arg);
-	UNLINK(symtab->table[bucket], elt, link);
-	free(elt);
-	symtab->count--;
-
-	return (ISC_R_SUCCESS);
-}
-
-unsigned int
-isc_symtab_count(isc_symtab_t *symtab) {
-	REQUIRE(VALID_SYMTAB(symtab));
-	return (symtab->count);
 }

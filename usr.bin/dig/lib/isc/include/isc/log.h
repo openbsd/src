@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.5 2020/02/13 16:57:55 florian Exp $ */
+/* $Id: log.h,v 1.6 2020/02/17 18:58:39 jung Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -526,68 +526,6 @@ isc_log_write(isc_log_t *lctx, isc_logcategory_t *category,
 	      const char *format, ...)
 
 __attribute__((__format__(__printf__, 5, 6)));
-
-/*%
- * Write a message to the log channels.
- *
- * Notes:
- *\li	lctx can be NULL; this is allowed so that programs which use
- *	libraries that use the ISC logging system are not required to
- *	also use it.
- *
- *\li	The format argument is a printf(3) string, with additional arguments
- *	as necessary.
- *
- * Requires:
- *\li	lctx is a valid logging context.
- *
- *\li	The category and module arguments must have ids that are in the
- *	range of known ids, as established by isc_log_registercategories()
- *	and isc_log_registermodules().
- *
- *\li	level != #ISC_LOG_DYNAMIC.  ISC_LOG_DYNAMIC is used only to define
- *	channels, and explicit debugging level must be identified for
- *	isc_log_write() via ISC_LOG_DEBUG(level).
- *
- *\li	format != NULL.
- *
- * Ensures:
- *\li	The log message is written to every channel associated with the
- *	indicated category/module pair.
- *
- * Returns:
- *\li	Nothing.  Failure to log a message is not construed as a
- *	meaningful error.
- */
-void
-isc_log_vwrite(isc_log_t *lctx, isc_logcategory_t *category,
-	       isc_logmodule_t *module, int level,
-	       const char *format, va_list args)
-
-__attribute__((__format__(__printf__, 5, 0)));
-
-/*%
- * Write a message to the log channels, pruning duplicates that occur within
- * a configurable amount of seconds (see isc_log_[sg]etduplicateinterval).
- * This function is otherwise identical to isc_log_write().
- */
-void
-isc_log_write1(isc_log_t *lctx, isc_logcategory_t *category,
-	       isc_logmodule_t *module, int level, const char *format, ...)
-
-__attribute__((__format__(__printf__, 5, 6)));
-
-/*%
- * Write a message to the log channels, pruning duplicates that occur within
- * a configurable amount of seconds (see isc_log_[sg]etduplicateinterval).
- * This function is otherwise identical to isc_log_vwrite().
- */
-void
-isc_log_vwrite1(isc_log_t *lctx, isc_logcategory_t *category,
-		isc_logmodule_t *module, int level, const char *format,
-		va_list args)
-
-__attribute__((__format__(__printf__, 5, 0)));
 
 void
 isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level);
