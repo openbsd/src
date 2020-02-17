@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.24 2020/01/21 15:17:12 denis Exp $ */
+/*	$OpenBSD: rde.h,v 1.25 2020/02/17 08:12:22 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -145,9 +145,7 @@ void		 vertex_nexthop_add(struct vertex *, struct vertex *,
 		    const struct in6_addr *, u_int32_t);
 int		 lsa_newer(struct lsa_hdr *, struct lsa_hdr *);
 int		 lsa_check(struct rde_nbr *, struct lsa *, u_int16_t);
-int		 lsa_self(struct lsa *);
-void		 lsa_flush(struct rde_nbr *, struct lsa *);
-void		 lsa_reflood(struct vertex *, struct lsa*);
+int		 lsa_self(struct rde_nbr *, struct lsa *, struct vertex *);
 int		 lsa_add(struct rde_nbr *, struct lsa *);
 void		 lsa_del(struct rde_nbr *, struct lsa_hdr *);
 void		 lsa_age(struct vertex *);
@@ -156,7 +154,7 @@ struct vertex	*lsa_find_rtr(struct area *, u_int32_t);
 struct vertex	*lsa_find_rtr_frag(struct area *, u_int32_t, unsigned int);
 struct vertex	*lsa_find_tree(struct lsa_tree *, u_int16_t, u_int32_t,
 		    u_int32_t);
-u_int32_t	 lsa_find_lsid(struct lsa_tree *, u_int16_t, u_int32_t,
+u_int32_t	 lsa_find_lsid(struct lsa_tree *,
 		    int (*)(struct lsa *, struct lsa *), struct lsa *);
 u_int16_t	 lsa_num_links(struct vertex *);
 void		 lsa_snap(struct rde_nbr *);

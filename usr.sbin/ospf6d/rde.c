@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.83 2020/01/21 15:17:12 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.84 2020/02/17 08:12:22 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -455,17 +455,10 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 				rde_req_list_del(nbr, &lsa->hdr);
 
-				self = lsa_self(lsa);
-				if (self) {
-					if (v == NULL)
-						/* LSA is no longer announced,
-						 * remove by premature aging. */
-						lsa_flush(nbr, lsa);
-					else
-						lsa_reflood(v, lsa);
-				} else if (lsa_add(nbr, lsa))
-					/* delayed lsa, don't flood yet */
-					break;
+				if (!(self = lsa_self(nbr, lsa, v)))
+					if (lsa_add(nbr, lsa))
+						/* delayed lsa */
+						break;
 
 				/* flood and perhaps ack LSA */
 				imsg_compose_event(iev_ospfe, IMSG_LS_FLOOD,
@@ -1683,8 +1676,7 @@ orig_asext_lsa(struct kroute *kr, u_int16_t age)
 	memcpy((char *)lsa + sizeof(struct lsa_hdr) + sizeof(struct lsa_asext),
 	    &kr->prefix, LSA_PREFIXSIZE(kr->prefixlen));
 
-	lsa->hdr.ls_id = lsa_find_lsid(&asext_tree, lsa->hdr.type,
-	    lsa->hdr.adv_rtr, comp_asext, lsa);
+	lsa->hdr.ls_id = lsa_find_lsid(&asext_tree, comp_asext, lsa);
 
 	if (age == MAX_AGE) {
 		/* inherit metric and ext_tag from the current LSA,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.42 2020/01/21 15:17:13 denis Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.43 2020/02/17 08:12:22 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -192,7 +192,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 		return (0);
 	}
 	if (ntohs(lsa->hdr.len) != len) {
-		log_warnx("lsa_check: bad packet size");
+		log_warnx("lsa_check: bad packet length");
 		return (0);
 	}
 
@@ -244,7 +244,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 		}
 		metric = ntohl(lsa->data.pref_sum.metric);
 		if (metric & ~LSA_METRIC_MASK) {
-			log_warnx("lsa_check: bad LSA summary metric");
+			log_warnx("lsa_check: bad LSA prefix summary metric");
 			return (0);
 		}
 		if (lsa_get_prefix(((char *)lsa) + sizeof(lsa->hdr) +
@@ -263,7 +263,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 		}
 		metric = ntohl(lsa->data.rtr_sum.metric);
 		if (metric & ~LSA_METRIC_MASK) {
-			log_warnx("lsa_check: bad LSA summary metric");
+			log_warnx("lsa_check: bad LSA router summary metric");
 			return (0);
 		}
 		break;
@@ -379,7 +379,7 @@ lsa_asext_check(struct lsa *lsa, u_int16_t len)
 
 	if ((len % sizeof(u_int32_t)) ||
 	    len < sizeof(lsa->hdr) + sizeof(*asext)) {
-		log_warnx("lsa_asext_check: bad LSA as-external packet");
+		log_warnx("lsa_asext_check: bad LSA as-external packet size");
 		return (0);
 	}
 
@@ -421,38 +421,44 @@ lsa_asext_check(struct lsa *lsa, u_int16_t len)
 }
 
 int
-lsa_self(struct lsa *lsa)
+lsa_self(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 {
-	return rde_router_id() == lsa->hdr.adv_rtr;
-}
+	struct lsa	*dummy;
 
-void
-lsa_flush(struct rde_nbr *nbr, struct lsa *lsa)
-{
-	struct lsa	*copy;
+	if (nbr->self)
+		return (0);
+
+	if (rde_router_id() != lsa->hdr.adv_rtr)
+		return (0);
+
+	if (v == NULL) {
+		/* LSA is no longer announced, remove by premature aging.
+	 	 * The LSA may not be altered because the caller may still
+		 * use it, so a copy needs to be added to the LSDB.
+		 * The copy will be reflooded via the default timeout handler.
+		 */
+		if ((dummy = malloc(ntohs(lsa->hdr.len))) == NULL)
+			fatal("lsa_self");
+		memcpy(dummy, lsa, ntohs(lsa->hdr.len));
+		dummy->hdr.age = htons(MAX_AGE);
+		/*
+		 * The clue is that by using the remote nbr as originator
+		 * the dummy LSA will be reflooded via the default timeout
+		 * handler.
+		 */
+		(void)lsa_add(rde_nbr_self(nbr->area), dummy);
+		return (1);
+	}
 
 	/*
-	 * The LSA may not be altered because the caller may still
-	 * use it, so a copy needs to be added to the LSDB.
-	 * The copy will be reflooded via the default timeout handler.
+	 * LSA is still originated, just reflood it. But we need to create
+	 * a new instance by setting the LSA sequence number equal to the
+	 * one of new and calling lsa_refresh(). Flooding will be done by the
+	 * caller.
 	 */
-	if ((copy = malloc(ntohs(lsa->hdr.len))) == NULL)
-		fatal("lsa_flush");
-	memcpy(copy, lsa, ntohs(lsa->hdr.len));
-	copy->hdr.age = htons(MAX_AGE);
-	(void)lsa_add(rde_nbr_self(nbr->area), copy);
-}
-
-void
-lsa_reflood(struct vertex *v, struct lsa *new)
-{
-	/*
-	 * We only need to create a new instance by setting the LSA
-	 * sequence number equal to the one of 'new' and calling
-	 * lsa_refresh(). Actual flooding will be done by the caller.
-	 */
-	v->lsa->hdr.seq_num = new->hdr.seq_num;
+	v->lsa->hdr.seq_num = lsa->hdr.seq_num;
 	lsa_refresh(v);
+	return (1);
 }
 
 int
@@ -461,7 +467,6 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	struct lsa_tree	*tree;
 	struct vertex	*new, *old;
 	struct timeval	 tv, now, res;
-	int		 update = 1;
 
 	if (LSA_IS_SCOPE_AS(ntohs(lsa->hdr.type)))
 		tree = &asext_tree;
@@ -470,7 +475,7 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	else if (LSA_IS_SCOPE_LLOCAL(ntohs(lsa->hdr.type)))
 		tree = &nbr->iface->lsa_tree;
 	else
-		fatalx("unknown scope type");
+		fatalx("%s: unknown scope type", __func__);
 
 	new = vertex_get(lsa, nbr, tree);
 	old = RB_INSERT(lsa_tree, tree, new);
@@ -490,13 +495,16 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 				fatal("lsa_add");
 			return (1);
 		}
-		if (lsa_equal(new->lsa, old->lsa))
-			update = 0;
+		if (!lsa_equal(new->lsa, old->lsa)) {
+			if (ntohs(lsa->hdr.type) == LSA_TYPE_LINK)
+				orig_intra_area_prefix_lsas(nbr->area);
+			if (ntohs(lsa->hdr.type) != LSA_TYPE_EXTERNAL)
+				nbr->area->dirty = 1;
+			start_spf_timer();
+		}
 		vertex_free(old);
 		RB_INSERT(lsa_tree, tree, new);
-	}
-
-	if (update) {
+	} else {
 		if (ntohs(lsa->hdr.type) == LSA_TYPE_LINK)
 			orig_intra_area_prefix_lsas(nbr->area);
 		if (ntohs(lsa->hdr.type) != LSA_TYPE_EXTERNAL)
@@ -513,7 +521,7 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 		tv.tv_sec = MAX_AGE - ntohs(new->lsa->hdr.age);
 
 	if (evtimer_add(&new->ev, &tv) != 0)
-		fatal("lsa_add");
+		fatal("lsa_add: evtimer_add()");
 	return (0);
 }
 
@@ -651,8 +659,8 @@ lsa_find_rtr_frag(struct area *area, u_int32_t rtr_id, unsigned int n)
 }
 
 u_int32_t
-lsa_find_lsid(struct lsa_tree *tree, u_int16_t type, u_int32_t adv_rtr,
-    int (*cmp)(struct lsa *, struct lsa *), struct lsa *lsa)
+lsa_find_lsid(struct lsa_tree *tree, int (*cmp)(struct lsa *, struct lsa *),
+    struct lsa *lsa)
 {
 #define MIN(x, y)	((x) < (y) ? (x) : (y))
 	struct vertex	*v;
@@ -660,8 +668,8 @@ lsa_find_lsid(struct lsa_tree *tree, u_int16_t type, u_int32_t adv_rtr,
 	u_int32_t	 min, cur;
 
 	key.ls_id = 0;
-	key.adv_rtr = ntohl(adv_rtr);
-	key.type = ntohs(type);
+	key.adv_rtr = ntohl(lsa->hdr.adv_rtr);
+	key.type = ntohs(lsa->hdr.type);
 
 	cur = 0;
 	min = 0xffffffffU;
