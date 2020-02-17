@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.261 2020/02/17 16:38:19 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.262 2020/02/17 18:16:10 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6042,19 +6042,30 @@ svm_handle_xsetbv(struct vcpu *vcpu)
 int
 vmm_handle_xsetbv(struct vcpu *vcpu, uint64_t *rax)
 {
-	uint64_t *rdx, *rcx;
+	uint64_t *rdx, *rcx, val;
 
 	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 
+	if (vmm_get_guest_cpu_cpl(vcpu) != 0) {
+		DPRINTF("%s: guest cpl not zero\n", __func__);
+		return (vmm_inject_gp(vcpu));
+	}
+
 	if (*rcx != 0) {
 		DPRINTF("%s: guest specified invalid xcr register number "
 		    "%lld\n", __func__, *rcx);
-		/* XXX this should #GP(0) instead of killing the guest */
-		return (EINVAL);
+		return (vmm_inject_gp(vcpu));
 	}
 
-	vcpu->vc_gueststate.vg_xcr0 = *rax + (*rdx << 32);
+	val = *rax + (*rdx << 32);
+	if (val & ~xsave_mask) {
+		DPRINTF("%s: guest specified xcr0 outside xsave_mask %lld\n",
+		    __func__, val);
+		return (vmm_inject_gp(vcpu));
+	}
+
+	vcpu->vc_gueststate.vg_xcr0 = val;
 
 	return (0);
 }
