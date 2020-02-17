@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.41 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.42 2020/02/17 19:00:58 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <millert@openbsd.org>
@@ -147,6 +147,15 @@ fsirand(char *device)
 		if (sblock->fs_magic != FS_UFS1_MAGIC &&
 		    sblock->fs_magic != FS_UFS2_MAGIC)
 			continue; /* Not a superblock */
+
+		/*
+		 * Do not look for an FFS1 file system at SBLOCK_UFS2.
+		 * Doing so will find the wrong super-block for file
+		 * systems with 64k block size.
+		 */
+		if (sblock->fs_magic == FS_UFS1_MAGIC &&
+		    sbtry[i] == SBLOCK_UFS2)
+			continue;
 
 		if (sblock->fs_magic == FS_UFS2_MAGIC &&
 		    sblock->fs_sblockloc != sbtry[i])
