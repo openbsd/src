@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.74 2020/01/28 16:26:09 visa Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.75 2020/02/18 15:06:27 cheloha Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -295,8 +295,8 @@ pppxread(dev_t dev, struct uio *uio, int ioflag)
 
 		NET_LOCK();
 		pxd->pxd_waiting = 1;
-		error = rwsleep(pxd, &netlock,
-		    (PZERO + 1)|PCATCH, "pppxread", 0);
+		error = rwsleep_nsec(pxd, &netlock,
+		    (PZERO + 1)|PCATCH, "pppxread", INFSLP);
 		NET_UNLOCK();
 		if (error != 0) {
 			return (error);
