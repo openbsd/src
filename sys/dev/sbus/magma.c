@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.30 2019/12/31 10:05:33 mpi Exp $	*/
+/*	$OpenBSD: magma.c,v 1.31 2020/02/18 00:12:08 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -1410,8 +1410,8 @@ mbppopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	/* set defaults */
 	mp->mp_burst = BPP_BURST;
-	mp->mp_timeout = mbpp_mstohz(BPP_TIMEOUT);
-	mp->mp_delay = mbpp_mstohz(BPP_DELAY);
+	mp->mp_timeout = BPP_TIMEOUT;
+	mp->mp_delay = BPP_DELAY;
 
 	/* init chips */
 	if (mp->mp_cd1400) {	/* CD1400 */
@@ -1482,15 +1482,15 @@ mbppioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			error = EINVAL;
 		} else {
 			mp->mp_burst = bp->bp_burst;
-			mp->mp_timeout = mbpp_mstohz(bp->bp_timeout);
-			mp->mp_delay = mbpp_mstohz(bp->bp_delay);
+			mp->mp_timeout = bp->bp_timeout;
+			mp->mp_delay = bp->bp_delay;
 		}
 		break;
 	case BPPIOCGPARAM:
 		bp = (struct bpp_param *)data;
 		bp->bp_burst = mp->mp_burst;
-		bp->bp_timeout = mbpp_hztoms(mp->mp_timeout);
-		bp->bp_delay = mbpp_hztoms(mp->mp_delay);
+		bp->bp_timeout = mp->mp_timeout;
+		bp->bp_delay = mp->mp_delay;
 		break;
 	case BPPIOCGSTAT:
 		/* XXX make this more generic */
@@ -1540,7 +1540,7 @@ mbpp_rw(dev_t dev, struct uio *uio)
 	 */
 	if (mp->mp_timeout > 0) {
 		SET(mp->mp_flags, MBPPF_TIMEOUT);
-		timeout_add(&mp->mp_timeout_tmo, mp->mp_timeout);
+		timeout_add_msec(&mp->mp_timeout_tmo, mp->mp_timeout);
 	}
 
 	len = cnt = 0;
@@ -1588,7 +1588,7 @@ mbpp_rw(dev_t dev, struct uio *uio)
 		if (mp->mp_delay > 0) {
 			s = spltty();	/* XXX */
 			SET(mp->mp_flags, MBPPF_DELAY);
-			timeout_add(&mp->mp_start_tmo, mp->mp_delay);
+			timeout_add_msec(&mp->mp_start_tmo, mp->mp_delay);
 			error = tsleep_nsec(mp, PCATCH | PZERO, "mbppdelay",
 			    INFSLP);
 			splx(s);
@@ -1739,27 +1739,4 @@ mbpp_recv(struct mbpp_port *mp, caddr_t ptr, int len)
 
 	/* return number of chars received */
 	return (len - mp->mp_cnt);
-}
-
-int
-mbpp_hztoms(int h)
-{
-	int m = h;
-
-	if (m > 0)
-		m = m * 1000 / hz;
-	return (m);
-}
-
-int
-mbpp_mstohz(int m)
-{
-	int h = m;
-
-	if (h > 0) {
-		h = h * hz / 1000;
-		if (h == 0)
-			h = 1000 / hz;
-	}
-	return (h);
 }

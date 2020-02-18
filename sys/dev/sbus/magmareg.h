@@ -1,4 +1,4 @@
-/*	$OpenBSD: magmareg.h,v 1.9 2008/11/29 01:55:06 ray Exp $	*/
+/*	$OpenBSD: magmareg.h,v 1.10 2020/02/18 00:12:08 cheloha Exp $	*/
 
 /*-
  *  Copyright (c) 1998 Iain Hibbert
@@ -220,8 +220,6 @@ void mbpp_timeout(void *);
 void mbpp_start(void *);
 int mbpp_send(struct mbpp_port *, caddr_t, int);
 int mbpp_recv(struct mbpp_port *, caddr_t, int);
-int mbpp_hztoms(int);
-int mbpp_mstohz(int);
 
 #define	CD1400_REGMAPSIZE	0x80
 #define	CD1190_REGMAPSIZE	0x20
