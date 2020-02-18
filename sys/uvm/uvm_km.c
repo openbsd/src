@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.135 2019/12/30 23:58:38 jsg Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.136 2020/02/18 12:13:40 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -131,6 +131,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/kthread.h>
 #include <uvm/uvm.h>
 

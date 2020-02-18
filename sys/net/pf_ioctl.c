@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.348 2020/01/08 21:48:59 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.349 2020/02/18 12:13:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -51,7 +51,7 @@
 #include <sys/timeout.h>
 #include <sys/pool.h>
 #include <sys/malloc.h>
-#include <sys/kthread.h>
+#include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/syslog.h>
 #include <uvm/uvm_extern.h>

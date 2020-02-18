@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.10 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.11 2020/02/18 12:13:39 mpi Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@
 #include <sys/extent.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 #include <sys/device.h>
 
 #include <dev/pcmcia/pcmciareg.h>

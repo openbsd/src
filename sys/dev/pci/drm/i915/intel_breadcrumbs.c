@@ -28,7 +28,6 @@
 #else
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/kthread.h>
 #endif
 
 #include "i915_drv.h"

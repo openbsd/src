@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiicvar.h,v 1.3 2019/03/16 02:40:43 jcs Exp $ */
+/* $OpenBSD: dwiicvar.h,v 1.4 2020/02/18 12:13:39 mpi Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -20,7 +20,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>

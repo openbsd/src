@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.12 2020/01/13 13:30:00 mpi Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.13 2020/02/18 12:13:39 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <machine/bus.h>

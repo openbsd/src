@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.58 2020/01/01 01:50:00 beck Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.59 2020/02/18 12:13:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -21,7 +21,7 @@
 #include <uvm/uvm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/kthread.h>
+#include <sys/proc.h>
 #include <sys/mount.h>
 
 /*

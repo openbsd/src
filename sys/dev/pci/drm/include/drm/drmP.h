@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.5 2019/08/18 13:11:47 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.6 2020/02/18 12:13:39 mpi Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -45,7 +45,6 @@
 #include <sys/pool.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/mutex.h>
 #include <sys/tree.h>

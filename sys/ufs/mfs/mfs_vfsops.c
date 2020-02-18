@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.58 2020/02/14 17:03:42 claudio Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.59 2020/02/18 12:13:40 mpi Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
-#include <sys/kthread.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
