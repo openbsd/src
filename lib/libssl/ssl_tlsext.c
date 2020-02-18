@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.61 2020/02/16 16:36:40 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.62 2020/02/18 16:12:14 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -17,7 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <openssl/curve25519.h>
 #include <openssl/ocsp.h>
 
 #include "ssl_locl.h"

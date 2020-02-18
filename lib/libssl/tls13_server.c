@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.24 2020/02/05 17:01:43 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.25 2020/02/18 16:12:14 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <openssl/curve25519.h>
 
 #include "ssl_locl.h"
 #include "ssl_tlsext.h"
