@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.126 2019/07/29 10:50:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.127 2020/02/18 08:29:35 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -73,8 +73,7 @@ struct	mbuf *ieee80211_getmgmt(int, int, u_int);
 struct	mbuf *ieee80211_get_probe_req(struct ieee80211com *,
 	    struct ieee80211_node *);
 #ifndef IEEE80211_STA_ONLY
-struct	mbuf *ieee80211_get_probe_resp(struct ieee80211com *,
-	    struct ieee80211_node *);
+struct	mbuf *ieee80211_get_probe_resp(struct ieee80211com *);
 #endif
 struct	mbuf *ieee80211_get_auth(struct ieee80211com *,
 	    struct ieee80211_node *, u_int16_t, u_int16_t);
@@ -1239,7 +1238,7 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
  * [tlv] HT Operation (802.11n)
  */
 struct mbuf *
-ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
+ieee80211_get_probe_resp(struct ieee80211com *ic)
 {
 	const struct ieee80211_rateset *rs = &ic->ic_bss->ni_rates;
 	struct mbuf *m;
@@ -1247,7 +1246,7 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
 	    8 + 2 + 2 +
-	    2 + ni->ni_esslen +
+	    2 + ic->ic_bss->ni_esslen +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
 	    2 + 1 +
 	    ((ic->ic_opmode == IEEE80211_M_IBSS) ? 2 + 2 : 0) +
@@ -1268,13 +1267,13 @@ ieee80211_get_probe_resp(struct ieee80211com *ic, struct ieee80211_node *ni)
 	frm = mtod(m, u_int8_t *);
 	memset(frm, 0, 8); frm += 8;	/* timestamp is set by hardware */
 	LE_WRITE_2(frm, ic->ic_bss->ni_intval); frm += 2;
-	frm = ieee80211_add_capinfo(frm, ic, ni);
+	frm = ieee80211_add_capinfo(frm, ic, ic->ic_bss);
 	frm = ieee80211_add_ssid(frm, ic->ic_bss->ni_essid,
 	    ic->ic_bss->ni_esslen);
 	frm = ieee80211_add_rates(frm, rs);
-	frm = ieee80211_add_ds_params(frm, ic, ni);
+	frm = ieee80211_add_ds_params(frm, ic, ic->ic_bss);
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
-		frm = ieee80211_add_ibss_params(frm, ni);
+		frm = ieee80211_add_ibss_params(frm, ic->ic_bss);
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		frm = ieee80211_add_erp(frm, ic);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
@@ -1777,7 +1776,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		break;
 #ifndef IEEE80211_STA_ONLY
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
-		if ((m = ieee80211_get_probe_resp(ic, ni)) == NULL)
+		if ((m = ieee80211_get_probe_resp(ic)) == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
 		break;
 #endif
