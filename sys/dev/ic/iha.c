@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.47 2020/02/15 18:02:00 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.48 2020/02/18 17:08:35 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -233,8 +233,8 @@ iha_setup_sg_list(struct iha_softc *sc, struct iha_scb *pScb)
 			pScb->SCB_SGList[i].SG_Addr = segs[i].ds_addr;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma, 
-			0, sizeof(pScb->SCB_SGList), BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma,
+		    0, sizeof(pScb->SCB_SGList), BUS_DMASYNC_PREWRITE);
 	}
 
 	return (0);
@@ -297,10 +297,10 @@ iha_scsi_cmd(struct scsi_xfer *xs)
 			scsi_done(xs);
 			return;
 		}
-		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma, 
-			0, pScb->SCB_BufChars,
-			(pScb->SCB_Flags & SCSI_DATA_IN) ?
-				BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma,
+		    0, pScb->SCB_BufChars,
+		    (pScb->SCB_Flags & SCSI_DATA_IN) ?
+		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 		error = iha_setup_sg_list(sc, pScb);
 		if (error) {
@@ -313,7 +313,7 @@ iha_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	/*
-	 * Always initialize the stimeout structure as it may 
+	 * Always initialize the stimeout structure as it may
 	 * contain garbage that confuses timeout_del() later on.
 	 * But, timeout_add() ONLY if we are not polling.
 	 */
@@ -410,7 +410,7 @@ iha_init_tulip(struct iha_softc *sc)
 	bus_space_write_1(iot, ioh, TUL_SID, sc->sc_link.adapter_target << 4);
 
 	/*
-	 * Configure the channel as requested by the NVRAM settings read 
+	 * Configure the channel as requested by the NVRAM settings read
 	 * into iha_nvram by iha_read_eeprom() above.
 	 */
 
@@ -428,8 +428,8 @@ iha_init_tulip(struct iha_softc *sc)
 	    (pScsi->NVM_SCSI_Cfg & (CFG_ACT_TERM1 | CFG_ACT_TERM2)));
 
 	bus_space_write_1(iot, ioh, TUL_GCTRL1,
-	    ((pScsi->NVM_SCSI_Cfg & CFG_AUTO_TERM) >> 4) 
-	        | (bus_space_read_1(iot, ioh, TUL_GCTRL1) & (~ATDEN)));
+	    ((pScsi->NVM_SCSI_Cfg & CFG_AUTO_TERM) >> 4)
+	    | (bus_space_read_1(iot, ioh, TUL_GCTRL1) & (~ATDEN)));
 
 	for (i = 0; i < IHA_MAX_TARGETS; i++) {
 		sc->HCS_Tcs[i].TCS_Flags = pScsi->NVM_SCSI_TargetFlags[i];
@@ -725,7 +725,7 @@ iha_abort_xs(struct iha_softc *sc, struct scsi_xfer *xs, u_int8_t hastat)
 		default:
 			break;
 		}
-	
+
 	splx(s);
 }
 
@@ -760,8 +760,8 @@ iha_push_sense_request(struct iha_softc *sc, struct iha_scb *pScb)
 	if ((pScb->SCB_Flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) != 0) {
 		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma,
 			0, pScb->SCB_BufChars,
-			((pScb->SCB_Flags & SCSI_DATA_IN) ? 
-				BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+			((pScb->SCB_Flags & SCSI_DATA_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 		bus_dmamap_unload(sc->sc_dmat, pScb->SCB_DataDma);
 		/* Don't unload this map again until it is reloaded */
 		pScb->SCB_Flags &= ~(SCSI_DATA_IN | SCSI_DATA_OUT);
@@ -777,7 +777,7 @@ iha_push_sense_request(struct iha_softc *sc, struct iha_scb *pScb)
 
 	pScb->SCB_BufChars     = sizeof(pScb->SCB_ScsiSenseData);
 	pScb->SCB_BufCharsLeft = sizeof(pScb->SCB_ScsiSenseData);
-	bzero(&pScb->SCB_ScsiSenseData, sizeof(pScb->SCB_ScsiSenseData)); 
+	bzero(&pScb->SCB_ScsiSenseData, sizeof(pScb->SCB_ScsiSenseData));
 
 	error = bus_dmamap_load(sc->sc_dmat, pScb->SCB_DataDma,
 			&pScb->SCB_ScsiSenseData,
@@ -790,10 +790,10 @@ iha_push_sense_request(struct iha_softc *sc, struct iha_scb *pScb)
 			error);
 		return (error);
 	}
-	bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma, 
-		0, pScb->SCB_BufChars, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma,
+	    0, pScb->SCB_BufChars, BUS_DMASYNC_PREREAD);
 
-	/* Save _POLL and _NOSLEEP flags. */ 
+	/* Save _POLL and _NOSLEEP flags. */
 	pScb->SCB_Flags &= SCSI_POLL | SCSI_NOSLEEP;
 	pScb->SCB_Flags |= FLAG_RSENS | SCSI_DATA_IN;
 
@@ -844,7 +844,7 @@ iha_scsi_label:
 			case SCSI_TERMINATED:
 			case SCSI_ACA_ACTIVE:
 			case SCSI_CHECK:
-				pScb->SCB_Tcs->TCS_Flags &= 
+				pScb->SCB_Tcs->TCS_Flags &=
 				    ~(FLAG_SYNC_DONE | FLAG_WIDE_DONE);
 
 				if ((pScb->SCB_Flags & FLAG_RSENS) != 0)
@@ -863,7 +863,7 @@ iha_scsi_label:
 					/*
 					 * Return the original SCSI_CHECK, not
 					 * the status of the request sense
-					 * command!		
+					 * command!
 					 */
 					pScb->SCB_TaStat = SCSI_CHECK;
 				break;
@@ -878,7 +878,7 @@ iha_scsi_label:
 		 * continue the good work with another call to
 		 * iha_scsi().
 		 */
-		if (((bus_space_read_1(iot, ioh, TUL_STAT0) & INTPD) == 0) 
+		if (((bus_space_read_1(iot, ioh, TUL_STAT0) & INTPD) == 0)
 		    && (iha_find_pend_scb(sc) == NULL))
 			break;
 	}
@@ -905,12 +905,12 @@ iha_scsi(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 		sc->HCS_JSInt     = bus_space_read_1(iot, ioh, TUL_SISTAT);
 
 		sc->HCS_Phase = sc->HCS_JSStatus0 & PH_MASK;
-		
+
 		if ((sc->HCS_JSInt & SRSTD) != 0) {
 			iha_reset_scsi_bus(sc);
 			return;
 		}
-		
+
 		if ((sc->HCS_JSInt & RSELED) != 0) {
 			iha_resel(sc, iot, ioh);
 			return;
@@ -994,7 +994,7 @@ iha_scsi(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
  *                     is an 'Allocation Length'. All other SCSI opcodes
  *		       get HOST_DO_DU as they SHOULD have xferred all the
  *		       data requested.
- * 
+ *
  *		       The list of opcodes using 'Allocation Length' was
  * 		       found by scanning all the SCSI-3 T10 drafts. See
  *		       www.t10.org for the curious with a .pdf reader.
@@ -1042,7 +1042,7 @@ iha_data_over_run(struct iha_scb *pScb)
 
 		return (HOST_OK);
 		break;
-		
+
 	default:
 		return (HOST_DO_DU);
 		break;
@@ -1050,7 +1050,7 @@ iha_data_over_run(struct iha_scb *pScb)
 }
 
 /*
- * iha_next_state - process the current SCB as requested in its 
+ * iha_next_state - process the current SCB as requested in its
  *                  SCB_NxtStat member.
  */
 int
@@ -1180,7 +1180,7 @@ iha_state_1(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 /*
  * iha_state_2 - selection is complete after a SEL_ATN or SEL_ATN3. If the SCSI
  *		 CDB has already been send, go to state 4 to start the data
- *               xfer. Otherwise reset the FIFO and go to state 3, sending 
+ *               xfer. Otherwise reset the FIFO and go to state 3, sending
  *		 the SCSI CDB.
  */
 int
@@ -1256,10 +1256,10 @@ iha_state_3(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 		}
 }
 
-/* 
+/*
  * iha_state_4 - start a data xfer. Handle any bus state
  *               transitions until PHASE_DATA_IN/_OUT
- *               or the attempt is abandoned. If there is 
+ *               or the attempt is abandoned. If there is
  *               no data to xfer, go to state 6 and finish
  *               processing the current SCB.
  */
@@ -1319,7 +1319,7 @@ iha_state_4(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 
 /*
  * iha_state_5 - handle the partial or final completion of the current
- *               data xfer. If DMA is still active stop it. If there is 
+ *               data xfer. If DMA is still active stop it. If there is
  *		 more data to xfer, go to state 4 and start the xfer.
  *               If not go to state 6 and finish the SCB.
  */
@@ -1334,7 +1334,7 @@ iha_state_5(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 	long xcnt;  /* cannot use unsigned!! see code: if (xcnt < 0) */
 
 	cnt = bus_space_read_4(iot, ioh, TUL_STCNT0) & TCNT;
-	
+
 	/*
 	 * Stop any pending DMA activity and check for parity error.
 	 */
@@ -1354,7 +1354,7 @@ iha_state_5(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 	} else {
 		/* Output Operation */
 		if ((sc->HCS_JSStatus1 & SXCMP) == 0) {
-			period = pScb->SCB_Tcs->TCS_JS_Period; 
+			period = pScb->SCB_Tcs->TCS_JS_Period;
 			if ((period & PERIOD_WIDE_SCSI) != 0)
 				cnt += (bus_space_read_1(iot, ioh,
 					    TUL_SFIFOCNT) & FIFOC) << 1;
@@ -1389,8 +1389,8 @@ iha_state_5(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 	xcnt = pScb->SCB_BufCharsLeft - cnt;	/* xcnt == bytes xferred */
 	pScb->SCB_BufCharsLeft = cnt;		/* cnt  == bytes left    */
 
-	bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma, 
-		0, sizeof(pScb->SCB_SGList), BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma,
+	    0, sizeof(pScb->SCB_SGList), BUS_DMASYNC_POSTWRITE);
 
 	if ((pScb->SCB_Flags & FLAG_SG) != 0) {
 		pSg = &pScb->SCB_SGList[pScb->SCB_SGIdx];
@@ -1402,8 +1402,8 @@ iha_state_5(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 				pSg->SG_Addr += xcnt;
 				pSg->SG_Len -= xcnt;
 
-				bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma, 
-					0, sizeof(pScb->SCB_SGList),
+				bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma,
+				    0, sizeof(pScb->SCB_SGList),
 					BUS_DMASYNC_PREWRITE);
 
 				return (4);
@@ -1418,7 +1418,7 @@ iha_state_5(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 
 /*
  * iha_state_6 - finish off the active scb (may require several
- *               iterations if PHASE_MSG_IN) and return -1 to indicate 
+ *               iterations if PHASE_MSG_IN) and return -1 to indicate
  *		 the bus is free.
  */
 int
@@ -1472,7 +1472,7 @@ iha_state_8(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 		bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_BUS_DEV_RESET);
 
 		pScb = sc->HCS_ActScb;
-		
+
 		/* This SCB finished correctly -- resetting the device */
 		iha_append_done_scb(sc, pScb, HOST_OK);
 
@@ -1490,7 +1490,7 @@ iha_state_8(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 				case STATUS_SELECT:
 					iha_push_pend_scb(sc, pScb);
 					break;
-					
+
 				default:
 					break;
 				}
@@ -1619,7 +1619,7 @@ iha_status_msg(struct iha_softc *sc, bus_space_tag_t iot,
 		return (-1);
 
 	pScb = sc->HCS_ActScb;
-	
+
 	pScb->SCB_TaStat = bus_space_read_1(iot, ioh, TUL_SFIFO);
 
 	if (phase == PHASE_MSG_OUT) {
@@ -1649,8 +1649,8 @@ iha_status_msg(struct iha_softc *sc, bus_space_tag_t iot,
 			}
 
 		if (msg == MSG_CMDCOMPLETE) {
-			if ((pScb->SCB_TaStat 
-				& (SCSI_INTERM | SCSI_BUSY)) == SCSI_INTERM) {
+			if ((pScb->SCB_TaStat
+			    & (SCSI_INTERM | SCSI_BUSY)) == SCSI_INTERM) {
 				iha_bad_seq(sc);
 				return (-1);
 			}
@@ -1661,8 +1661,8 @@ iha_status_msg(struct iha_softc *sc, bus_space_tag_t iot,
 
 		if ((msg == MSG_LINK_CMD_COMPLETE)
 		    || (msg == MSG_LINK_CMD_COMPLETEF)) {
-			if ((pScb->SCB_TaStat 
-				 & (SCSI_INTERM | SCSI_BUSY)) == SCSI_INTERM)
+			if ((pScb->SCB_TaStat
+			    & (SCSI_INTERM | SCSI_BUSY)) == SCSI_INTERM)
 				return (iha_wait(sc, iot, ioh, MSG_ACCEPT));
 		}
 	}
@@ -1762,7 +1762,7 @@ iha_resel(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 		pScb = pTcs->TCS_NonTagScb;
 
 	else {
-		/* 
+		/*
 		 * Since there is no active non-tagged operation
 		 * read the tag type, the tag itself, and find
 		 * the appropriate pScb by indexing HCS_Scb with
@@ -1804,7 +1804,7 @@ iha_resel(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 		abortmsg = MSG_ABORT_TAG; /* Now that we have valdid tag! */
 	}
 
-	if ((pScb->SCB_Target != target)  
+	if ((pScb->SCB_Target != target)
 	    || (pScb->SCB_Lun != lun)
 	    || (pScb->SCB_Status != STATUS_BUSY)) {
 abort:
@@ -2086,7 +2086,7 @@ iha_msgout_extended(struct iha_softc *sc, bus_space_tag_t iot,
 
 	bus_space_write_1(iot, ioh, TUL_SFIFO, MSG_EXTENDED);
 
-	bus_space_write_multi_1(iot, ioh, TUL_SFIFO, 
+	bus_space_write_multi_1(iot, ioh, TUL_SFIFO,
 	    sc->HCS_Msg, sc->HCS_Msg[0]+1);
 
 	phase = iha_wait(sc, iot, ioh, XF_FIFO_OUT);
@@ -2250,7 +2250,7 @@ iha_select(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh,
 
 /*
  * iha_wait - wait for an interrupt to service or a SCSI bus phase change
- *            after writing the supplied command to the tulip chip. If 
+ *            after writing the supplied command to the tulip chip. If
  *            the command is NO_OP, skip the command writing.
  */
 int
@@ -2260,7 +2260,7 @@ iha_wait(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh,
 	if (cmd != NO_OP)
 		bus_space_write_1(iot, ioh, TUL_SCMD, cmd);
 
-	/* 
+	/*
 	 * Have to do this here, in addition to in iha_isr, because
 	 * interrupts might be turned off when we get here.
 	 */
@@ -2334,8 +2334,8 @@ iha_done_scb(struct iha_softc *sc, struct iha_scb *pScb)
 		if ((pScb->SCB_Flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) != 0) {
 			bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma,
 				0, pScb->SCB_BufChars,
-				((pScb->SCB_Flags & SCSI_DATA_IN) ? 
-					BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+				((pScb->SCB_Flags & SCSI_DATA_IN) ?
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 			bus_dmamap_unload(sc->sc_dmat, pScb->SCB_DataDma);
 		}
 		if ((pScb->SCB_Flags & FLAG_SG) != 0) {
@@ -2485,7 +2485,7 @@ iha_print_info(struct iha_softc *sc, int target)
 
 	printf("%s: target %d using %d bit ", sc->sc_dev.dv_xname, target,
 		(period & PERIOD_WIDE_SCSI) ? 16 : 8);
- 
+
 	if ((period & PERIOD_SYOFS) == 0)
 		printf("async ");
 	else {
