@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.417 2019/12/27 14:34:46 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.418 2020/02/18 08:09:37 gerhard Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -5666,6 +5666,7 @@ umb_status(void)
 	char	 apn[UMB_APN_MAXLEN+1];
 	char	 pn[UMB_PHONENR_MAXLEN+1];
 	int	 i, n;
+	char	 astr[INET6_ADDRSTRLEN];
 
 	memset((char *)&mi, 0, sizeof(mi));
 	ifr.ifr_data = (caddr_t)&mi;
@@ -5830,7 +5831,15 @@ umb_status(void)
 	for (i = 0, n = 0; i < UMB_MAX_DNSSRV; i++) {
 		if (mi.ipv4dns[i].s_addr == INADDR_ANY)
 			break;
-		printf("%s %s", n++ ? "" : "\tdns", inet_ntoa(mi.ipv4dns[i]));
+		printf("%s %s", n++ ? "" : "\tdns",
+		    inet_ntop(AF_INET, &mi.ipv4dns[i], astr, sizeof(astr)));
+	}
+	for (i = 0; i < UMB_MAX_DNSSRV; i++) {
+		if (memcmp(&mi.ipv6dns[i], &in6addr_any,
+		    sizeof (mi.ipv6dns[i])) == 0)
+			break;
+		printf("%s %s", n++ ? "" : "\tdns",
+		    inet_ntop(AF_INET6, &mi.ipv6dns[i], astr, sizeof(astr)));
 	}
 	if (n)
 		printf("\n");

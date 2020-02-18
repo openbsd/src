@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umb.4,v 1.9 2017/11/23 20:47:26 job Exp $
+.\"	$OpenBSD: umb.4,v 1.10 2020/02/18 08:09:37 gerhard Exp $
 .\"
 .\" Copyright (c) 2016 genua mbH
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2017 $
+.Dd $Mdocdate: February 18 2020 $
 .Dt UMB 4
 .Os
 .Sh NAME
@@ -64,10 +64,6 @@ The following devices should work:
 .%U http://www.usb.org/developers/docs/devclass_docs/MBIM10Errata1_073013.zip
 .Re
 .Sh CAVEATS
-The
-.Nm
-driver does not support IPv6.
-.Pp
 Devices which fail to provide a conforming MBIM implementation will
 probably be attached as some other driver, such as
 .Xr umsm 4 .

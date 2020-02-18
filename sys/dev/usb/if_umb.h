@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.h,v 1.5 2019/08/26 15:23:01 claudio Exp $ */
+/*	$OpenBSD: if_umb.h,v 1.6 2020/02/18 08:09:37 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -321,6 +321,7 @@ struct umb_info {
 
 #define UMB_MAX_DNSSRV			2
 	struct in_addr		ipv4dns[UMB_MAX_DNSSRV];
+	struct in6_addr		ipv6dns[UMB_MAX_DNSSRV];
 };
 
 #ifdef _KERNEL
@@ -345,6 +346,7 @@ struct umb_softc {
 	int			 sc_ndp_remainder;
 
 #define UMBFLG_FCC_AUTH_REQUIRED	0x0001
+#define UMBFLG_NO_INET6			0x0002
 	uint32_t		 sc_flags;
 	int			 sc_cid;
 
@@ -380,6 +382,6 @@ struct umb_softc {
 
 #define sc_state		sc_info.state
 #define sc_roaming		sc_info.enable_roaming
-	struct umb_info		sc_info;
+	struct umb_info		 sc_info;
 };
 #endif /* _KERNEL */

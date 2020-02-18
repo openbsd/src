@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.31 2019/11/26 23:04:28 claudio Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.32 2020/02/18 08:09:37 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -42,6 +42,14 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/in6_var.h>
+#include <netinet6/ip6_var.h>
+#include <netinet6/in6_ifattach.h>
+#include <netinet6/nd6.h>
+#endif
 
 #include <machine/bus.h>
 
@@ -158,7 +166,9 @@ int		 umb_decode_connect_info(struct umb_softc *, void *, int);
 void		 umb_clear_addr(struct umb_softc *);
 int		 umb_add_inet_config(struct umb_softc *, struct in_addr, u_int,
 		    struct in_addr);
-void		 umb_send_inet_proposal(struct umb_softc *);
+int		 umb_add_inet6_config(struct umb_softc *, struct in6_addr *,
+		    u_int, struct in6_addr *);
+void		 umb_send_inet_proposal(struct umb_softc *, int);
 int		 umb_decode_ip_configuration(struct umb_softc *, void *, int);
 void		 umb_rx(struct umb_softc *);
 void		 umb_rxeof(struct usbd_xfer *, void *, usbd_status);
@@ -800,8 +810,8 @@ umb_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 #endif /* INET6 */
 	default:
 		ifp->if_ierrors++;
-		DPRINTFN(4, "%s: dropping packet with bad IP version (%d)\n",
-		    __func__, ipv);
+		DPRINTFN(4, "%s: dropping packet with bad IP version (af %d)\n",
+		    __func__, af);
 		m_freem(m);
 		return 1;
 	}
@@ -902,7 +912,10 @@ umb_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	struct umb_softc *sc = ifp->if_softc;
 
 	if (req == RTM_PROPOSAL) {
-		umb_send_inet_proposal(sc);
+		umb_send_inet_proposal(sc, AF_INET);
+#ifdef INET6
+		umb_send_inet_proposal(sc, AF_INET6);
+#endif
 		return;
 	}
 
@@ -1596,11 +1609,6 @@ umb_decode_connect_info(struct umb_softc *sc, void *data, int len)
 		if (ifp->if_flags & IFF_DEBUG)
 			log(LOG_INFO, "%s: connection %s\n", DEVNAM(sc),
 			    umb_activation(act));
-		if ((ifp->if_flags & IFF_DEBUG) &&
-		    letoh32(ci->iptype) != MBIM_CONTEXT_IPTYPE_DEFAULT &&
-		    letoh32(ci->iptype) != MBIM_CONTEXT_IPTYPE_IPV4)
-			log(LOG_DEBUG, "%s: got iptype %d connection\n",
-			    DEVNAM(sc), letoh32(ci->iptype));
 
 		sc->sc_info.activation = act;
 		sc->sc_info.nwerror = letoh32(ci->nwerror);
@@ -1621,9 +1629,16 @@ umb_clear_addr(struct umb_softc *sc)
 	struct ifnet *ifp = GET_IFP(sc);
 
 	memset(sc->sc_info.ipv4dns, 0, sizeof (sc->sc_info.ipv4dns));
-	umb_send_inet_proposal(sc);
+	memset(sc->sc_info.ipv6dns, 0, sizeof (sc->sc_info.ipv6dns));
+	umb_send_inet_proposal(sc, AF_INET);
+#ifdef INET6
+	umb_send_inet_proposal(sc, AF_INET6);
+#endif
 	NET_LOCK();
 	in_ifdetach(ifp);
+#ifdef INET6
+	in6_ifdetach(ifp);
+#endif
 	NET_UNLOCK();
 }
 
@@ -1698,29 +1713,125 @@ umb_add_inet_config(struct umb_softc *sc, struct in_addr ip, u_int prefixlen,
 		    sockaddr_ntop(sintosa(&ifra.ifra_dstaddr), str[2],
 		    sizeof(str[2])));
 	}
-	return rv;
+	return 0;
 }
 
+#ifdef INET6
+int
+umb_add_inet6_config(struct umb_softc *sc, struct in6_addr *ip, u_int prefixlen,
+    struct in6_addr *gw)
+{
+	struct ifnet *ifp = GET_IFP(sc);
+	struct in6_aliasreq ifra;
+	struct sockaddr_in6 *sin6, default_sin6;
+	struct rt_addrinfo info;
+	struct rtentry *rt;
+	int	 rv;
+
+	memset(&ifra, 0, sizeof (ifra));
+	sin6 = &ifra.ifra_addr;
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_len = sizeof (*sin6);
+	memcpy(&sin6->sin6_addr, ip, sizeof (sin6->sin6_addr));
+
+	sin6 = &ifra.ifra_dstaddr;
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_len = sizeof (*sin6);
+	memcpy(&sin6->sin6_addr, gw, sizeof (sin6->sin6_addr));
+
+	/* XXX: in6_update_ifa() accepts only 128 bits for P2P interfaces. */
+	prefixlen = 128;
+
+	sin6 = &ifra.ifra_prefixmask;
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_len = sizeof (*sin6);
+	in6_prefixlen2mask(&sin6->sin6_addr, prefixlen);
+
+	ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
+	ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
+
+	rv = in6_ioctl(SIOCAIFADDR_IN6, (caddr_t)&ifra, ifp, 1);
+	if (rv != 0) {
+		printf("%s: unable to set IPv6 address, error %d\n",
+		    DEVNAM(ifp->if_softc), rv);
+		return rv;
+	}
+
+	memset(&default_sin6, 0, sizeof(default_sin6));
+	default_sin6.sin6_family = AF_INET6;
+	default_sin6.sin6_len = sizeof (default_sin6);
+
+	memset(&info, 0, sizeof(info));
+	info.rti_flags = RTF_GATEWAY /* maybe | RTF_STATIC */;
+	info.rti_ifa = ifa_ifwithaddr(sin6tosa(&ifra.ifra_addr),
+	    ifp->if_rdomain);
+	info.rti_info[RTAX_DST] = sin6tosa(&default_sin6);
+	info.rti_info[RTAX_NETMASK] = sin6tosa(&default_sin6);
+	info.rti_info[RTAX_GATEWAY] = sin6tosa(&ifra.ifra_dstaddr);
+
+	NET_LOCK();
+	rv = rtrequest(RTM_ADD, &info, 0, &rt, ifp->if_rdomain);
+	NET_UNLOCK();
+	if (rv) {
+		printf("%s: unable to set IPv6 default route, "
+		    "error %d\n", DEVNAM(ifp->if_softc), rv);
+		rtm_miss(RTM_MISS, &info, 0, RTP_NONE, 0, rv,
+		    ifp->if_rdomain);
+	} else {
+		/* Inform listeners of the new route */
+		rtm_send(rt, RTM_ADD, rv, ifp->if_rdomain);
+		rtfree(rt);
+	}
+
+	if (ifp->if_flags & IFF_DEBUG) {
+		char str[3][INET6_ADDRSTRLEN];
+		log(LOG_INFO, "%s: IPv6 addr %s, mask %s, gateway %s\n",
+		    DEVNAM(ifp->if_softc),
+		    sockaddr_ntop(sin6tosa(&ifra.ifra_addr), str[0],
+		    sizeof(str[0])),
+		    sockaddr_ntop(sin6tosa(&ifra.ifra_prefixmask), str[1],
+		    sizeof(str[1])),
+		    sockaddr_ntop(sin6tosa(&ifra.ifra_dstaddr), str[2],
+		    sizeof(str[2])));
+	}
+	return 0;
+}
+#endif
+
 void
-umb_send_inet_proposal(struct umb_softc *sc)
+umb_send_inet_proposal(struct umb_softc *sc, int af)
 {
 	struct ifnet *ifp = GET_IFP(sc);
 	struct sockaddr_rtdns rtdns;
 	struct rt_addrinfo info;
 	int i, flag = 0;
+	size_t sz = 0;
 
 	memset(&rtdns, 0, sizeof(rtdns));
 	memset(&info, 0, sizeof(info));
 
 	for (i = 0; i < UMB_MAX_DNSSRV; i++) {
-		if (sc->sc_info.ipv4dns[i].s_addr == INADDR_ANY)
-			break;
-		memcpy(rtdns.sr_dns + i * sizeof(struct in_addr),
-		    &sc->sc_info.ipv4dns[i], sizeof(struct in_addr));
-		flag = RTF_UP;
+		if (af == AF_INET) {
+			sz = sizeof (sc->sc_info.ipv4dns[i]);
+			if (sc->sc_info.ipv4dns[i].s_addr == INADDR_ANY)
+				break;
+			memcpy(rtdns.sr_dns + i * sz, &sc->sc_info.ipv4dns[i],
+			    sz);
+			flag = RTF_UP;
+#ifdef INET6
+		} else if (af == AF_INET6) {
+			sz = sizeof (sc->sc_info.ipv6dns[i]);
+			if (IN6_ARE_ADDR_EQUAL(&sc->sc_info.ipv6dns[i],
+			    &in6addr_any))
+				break;
+			memcpy(rtdns.sr_dns + i * sz, &sc->sc_info.ipv6dns[i],
+			    sz);
+			flag = RTF_UP;
+#endif
+		}
 	}
-	rtdns.sr_family = AF_INET;
-	rtdns.sr_len = 2 + i * sizeof(struct in_addr);
+	rtdns.sr_family = af;
+	rtdns.sr_len = 2 + i * sz;
 	info.rti_info[RTAX_DNS] = srtdnstosa(&rtdns);
 
 	rtm_proposal(ifp, &info, flag, RTP_PROPOSAL_UMB);
@@ -1732,7 +1843,7 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 	struct mbim_cid_ip_configuration_info *ic = data;
 	struct ifnet *ifp = GET_IFP(sc);
 	int	 s;
-	uint32_t avail;
+	uint32_t avail_v4;
 	uint32_t val;
 	int	 n, i;
 	int	 off;
@@ -1740,6 +1851,12 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 	struct in_addr addr, gw;
 	int	 state = -1;
 	int	 rv;
+	int	 hasmtu = 0;
+#ifdef INET6
+	uint32_t avail_v6;
+	struct mbim_cid_ipv6_element ipv6elem;
+	struct in6_addr addr6, gw6;
+#endif
 
 	if (len < sizeof (*ic))
 		return 0;
@@ -1750,17 +1867,20 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 	}
 	s = splnet();
 
+	memset(sc->sc_info.ipv4dns, 0, sizeof (sc->sc_info.ipv4dns));
+	memset(sc->sc_info.ipv6dns, 0, sizeof (sc->sc_info.ipv6dns));
+
 	/*
 	 * IPv4 configuation
 	 */
-	avail = letoh32(ic->ipv4_available);
-	if ((avail & (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) ==
+	avail_v4 = letoh32(ic->ipv4_available);
+	if ((avail_v4 & (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) ==
 	    (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) {
 		n = letoh32(ic->ipv4_naddr);
 		off = letoh32(ic->ipv4_addroffs);
 
 		if (n == 0 || off + sizeof (ipv4elem) > len)
-			goto done;
+			goto tryv6;
 		if (n != 1 && ifp->if_flags & IFF_DEBUG)
 			log(LOG_INFO, "%s: more than one IPv4 addr: %d\n",
 			    DEVNAM(ifp->if_softc), n);
@@ -1771,6 +1891,8 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 		addr.s_addr = ipv4elem.addr;
 
 		off = letoh32(ic->ipv4_gwoffs);
+		if (off + sizeof (gw) > len)
+			goto done;
 		memcpy(&gw, data + off, sizeof(gw));
 
 		rv = umb_add_inet_config(sc, addr, ipv4elem.prefixlen, gw);
@@ -1780,12 +1902,12 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 	}
 
 	memset(sc->sc_info.ipv4dns, 0, sizeof (sc->sc_info.ipv4dns));
-	if (avail & MBIM_IPCONF_HAS_DNSINFO) {
+	if (avail_v4 & MBIM_IPCONF_HAS_DNSINFO) {
 		n = letoh32(ic->ipv4_ndnssrv);
 		off = letoh32(ic->ipv4_dnssrvoffs);
 		i = 0;
 		while (n-- > 0) {
-			if (off + sizeof (uint32_t) > len)
+			if (off + sizeof (addr) > len)
 				break;
 			memcpy(&addr, data + off, sizeof(addr));
 			if (i < UMB_MAX_DNSSRV)
@@ -1798,29 +1920,95 @@ umb_decode_ip_configuration(struct umb_softc *sc, void *data, int len)
 				    &addr, str, sizeof(str)));
 			}
 		}
-		umb_send_inet_proposal(sc);
+		umb_send_inet_proposal(sc, AF_INET);
 	}
-
-	if ((avail & MBIM_IPCONF_HAS_MTUINFO)) {
+	if ((avail_v4 & MBIM_IPCONF_HAS_MTUINFO)) {
 		val = letoh32(ic->ipv4_mtu);
 		if (ifp->if_hardmtu != val && val <= sc->sc_maxpktlen) {
+			hasmtu = 1;
 			ifp->if_hardmtu = val;
 			if (ifp->if_mtu > val)
 				ifp->if_mtu = val;
-			if (ifp->if_flags & IFF_DEBUG)
-				log(LOG_INFO, "%s: MTU %d\n", DEVNAM(sc), val);
 		}
 	}
 
-	avail = letoh32(ic->ipv6_available);
-	if ((ifp->if_flags & IFF_DEBUG) && avail & MBIM_IPCONF_HAS_ADDRINFO) {
-		/* XXX FIXME: IPv6 configuation missing */
-		log(LOG_INFO, "%s: ignoring IPv6 configuration\n", DEVNAM(sc));
+tryv6:;
+#ifdef INET6
+	/*
+	 * IPv6 configuation
+	 */
+	avail_v6 = letoh32(ic->ipv6_available);
+	if (avail_v6 == 0) {
+		if (ifp->if_flags & IFF_DEBUG)
+			log(LOG_INFO, "%s: ISP or WWAN module offers no IPv6 "
+			    "support\n", DEVNAM(ifp->if_softc));
+		goto done;
 	}
+
+	if ((avail_v4 & (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) ==
+	    (MBIM_IPCONF_HAS_ADDRINFO | MBIM_IPCONF_HAS_GWINFO)) {
+		n = letoh32(ic->ipv6_naddr);
+		off = letoh32(ic->ipv6_addroffs);
+
+		if (n == 0 || off + sizeof (ipv6elem) > len)
+			goto done;
+		if (n != 1 && ifp->if_flags & IFF_DEBUG)
+			log(LOG_INFO, "%s: more than one IPv6 addr: %d\n",
+			    DEVNAM(ifp->if_softc), n);
+
+		/* Only pick the first one */
+		memcpy(&ipv6elem, data + off, sizeof (ipv6elem));
+		memcpy(&addr6, ipv6elem.addr, sizeof (addr6));
+
+		off = letoh32(ic->ipv6_gwoffs);
+		if (off + sizeof (gw6) > len)
+			goto done;
+		memcpy(&gw6, data + off, sizeof (gw6));
+
+		rv = umb_add_inet6_config(sc, &addr6, ipv6elem.prefixlen, &gw6);
+		if (rv == 0)
+			state = UMB_S_UP;
+	}
+
+	if (avail_v6 & MBIM_IPCONF_HAS_DNSINFO) {
+		n = letoh32(ic->ipv6_ndnssrv);
+		off = letoh32(ic->ipv6_dnssrvoffs);
+		i = 0;
+		while (n-- > 0) {
+			if (off + sizeof (addr6) > len)
+				break;
+			memcpy(&addr6, data + off, sizeof(addr6));
+			if (i < UMB_MAX_DNSSRV)
+				sc->sc_info.ipv6dns[i++] = addr6;
+			off += sizeof(addr6);
+			if (ifp->if_flags & IFF_DEBUG) {
+				char str[INET6_ADDRSTRLEN];
+				log(LOG_INFO, "%s: IPv6 nameserver %s\n",
+				    DEVNAM(ifp->if_softc), inet_ntop(AF_INET6,
+				    &addr6, str, sizeof(str)));
+			}
+		}
+		umb_send_inet_proposal(sc, AF_INET6);
+	}
+
+	if ((avail_v6 & MBIM_IPCONF_HAS_MTUINFO)) {
+		val = letoh32(ic->ipv6_mtu);
+		if (ifp->if_hardmtu != val && val <= sc->sc_maxpktlen) {
+			hasmtu = 1;
+			ifp->if_hardmtu = val;
+			if (ifp->if_mtu > val)
+				ifp->if_mtu = val;
+		}
+	}
+#endif
+
+done:
+	if (hasmtu && (ifp->if_flags & IFF_DEBUG))
+		log(LOG_INFO, "%s: MTU %d\n", DEVNAM(sc), ifp->if_hardmtu);
+
 	if (state != -1)
 		umb_newstate(sc, state, 0);
 
-done:
 	splx(s);
 	return 1;
 }
@@ -2393,6 +2581,11 @@ umb_send_connect(struct umb_softc *sc, int command)
 	c->authprot = htole32(MBIM_AUTHPROT_NONE);
 	c->compression = htole32(MBIM_COMPRESSION_NONE);
 	c->iptype = htole32(MBIM_CONTEXT_IPTYPE_IPV4);
+#ifdef INET6
+	/* XXX FIXME: support IPv6-only mode, too */
+	if ((sc->sc_flags & UMBFLG_NO_INET6) == 0)
+		c->iptype = htole32(MBIM_CONTEXT_IPTYPE_IPV4V6);
+#endif
 	memcpy(c->context, umb_uuid_context_internet, sizeof (c->context));
 	umb_cmd(sc, MBIM_CID_CONNECT, MBIM_CMDOP_SET, c, off);
 done:
@@ -2476,6 +2669,20 @@ umb_command_done(struct umb_softc *sc, void *data, int len)
 	switch (status) {
 	case MBIM_STATUS_SUCCESS:
 		break;
+#ifdef INET6
+	case MBIM_STATUS_NO_DEVICE_SUPPORT:
+		if ((cid == MBIM_CID_CONNECT) &&
+		    (sc->sc_flags & UMBFLG_NO_INET6) == 0) {
+			sc->sc_flags |= UMBFLG_NO_INET6;
+			if (ifp->if_flags & IFF_DEBUG)
+				log(LOG_ERR,
+				    "%s: device does not support IPv6\n",
+				    DEVNAM(sc));
+		}
+		/* Re-trigger the connect, this time IPv4 only */
+		usb_add_task(sc->sc_udev, &sc->sc_umb_task);
+		return;
+#endif
 	case MBIM_STATUS_NOT_INITIALIZED:
 		if (ifp->if_flags & IFF_DEBUG)
 			log(LOG_ERR, "%s: SIM not initialized (PIN missing)\n",
