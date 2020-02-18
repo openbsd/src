@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.c,v 1.25 2017/09/08 05:36:52 deraadt Exp $ */
+/*	$OpenBSD: adwlib.c,v 1.26 2020/02/18 20:24:52 krw Exp $ */
 /* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
@@ -35,7 +35,7 @@
  */
 /*
  * advansys.c - Linux Host Driver for AdvanSys SCSI Adapters
- * 
+ *
  * Copyright (c) 1995-2000 Advanced System Products, Inc.
  * All Rights Reserved.
  *
@@ -1697,7 +1697,7 @@ AdwExeScsiQueue(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 	/*
 	 * Beginning of CRITICAL SECTION: ASSUME splbio() in effect
 	 */
-	
+
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
 
 	/*
@@ -1785,7 +1785,7 @@ AdwExeScsiQueue(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 	/*
 	 * End of CRITICAL SECTION: Must be protected within splbio/splx pair
 	 */
-	
+
 	return ADW_SUCCESS;
 }
 

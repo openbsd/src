@@ -1,11 +1,11 @@
-/*	$OpenBSD: adv_pci.c,v 1.12 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: adv_pci.c,v 1.13 2020/02/18 20:24:52 krw Exp $	*/
 /*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
- * 
+ *
  * Author: Baldassare Dante Profeta <dante@mclink.it>
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -101,7 +101,7 @@ const struct pci_matchid adv_pci_devices[] = {
  * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
-int 
+int
 adv_pci_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
@@ -111,7 +111,7 @@ adv_pci_match(parent, match, aux)
 }
 
 
-void 
+void
 adv_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;

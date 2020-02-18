@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.59 2020/02/15 18:02:00 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.60 2020/02/18 20:24:52 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -145,9 +145,9 @@ adw_alloc_carriers(ADW_SOFTC *sc)
 	/*
          * Allocate the control structure.
          */
-	sc->sc_control->carriers = 
-		malloc(ADW_MAX_CARRIER * sizeof(ADW_CARRIER), M_DEVBUF,
-		       M_NOWAIT);
+	sc->sc_control->carriers =
+	    malloc(ADW_MAX_CARRIER * sizeof(ADW_CARRIER), M_DEVBUF,
+		M_NOWAIT);
 	if (sc->sc_control->carriers == NULL)
 		return (ENOMEM);
 
@@ -866,7 +866,7 @@ adw_timeout(void *arg)
 
 
 void
-adw_reset_bus(ADW_SOFTC *sc) 
+adw_reset_bus(ADW_SOFTC *sc)
 {
 	ADW_CCB	*ccb;
 	int	 s;
@@ -920,7 +920,7 @@ adw_print_info(ADW_SOFTC *sc, int tid)
 	else {
 		period = (hshk_cfg & 0x1f00) >> 8;
 		switch (period) {
-		case 0x11: 
+		case 0x11:
 			printf("80.0 ");
 			break;
 		case 0x10:
@@ -935,7 +935,7 @@ adw_print_info(ADW_SOFTC *sc, int tid)
 	}
 
 	printf("xfers\n");
-}	
+}
 
 
 /******************************************************************************/
@@ -1010,10 +1010,10 @@ NO_ERROR:
 			case SCSI_INTERM:
 			case SCSI_INTERM_COND_MET:
 				/*
-				 * These non-zero status values are 
+				 * These non-zero status values are
 				 * not really error conditions.
 				 *
-				 * XXX - would it be too paranoid to 
+				 * XXX - would it be too paranoid to
 				 *       add SCSI_OK here in
 				 *       case the docs are wrong re
 				 *       QD_NO_ERROR?
@@ -1035,7 +1035,7 @@ NO_ERROR:
 				sc->sc_freeze_dev[scsiq->target_id] = 1;
 				xs->error = XS_BUSY;
 				break;
-		
+
 			default: /* scsiq->scsi_status value */
 				printf("%s: bad scsi_status: 0x%02x.\n"
 				    ,sc->sc_dev.dv_xname
@@ -1044,7 +1044,7 @@ NO_ERROR:
 				break;
 			}
 			break;
-		
+
 		case QHSTA_M_SEL_TIMEOUT:
 			xs->error = XS_SELTIMEOUT;
 			break;
@@ -1092,17 +1092,17 @@ NO_ERROR:
 			adw_reset_bus(sc);
 			xs->error = XS_RESET;
 			break;
-			
+
 		default: /* scsiq->host_status value */
 			/*
 			 * XXX - is a panic really appropriate here? If
-			 *       not, would it be better to make the 
-			 *       XS_DRIVER_STUFFUP case above the 
+			 *       not, would it be better to make the
+			 *       XS_DRIVER_STUFFUP case above the
 			 *       default behaviour? Or XS_RESET?
 			 */
 			panic("%s: bad host_status: 0x%02x"
 			    ,sc->sc_dev.dv_xname, scsiq->host_status);
-			break;      
+			break;
 		}
 		break;
 
@@ -1160,10 +1160,10 @@ adw_async_callback(ADW_SOFTC *sc, u_int8_t code)
 
 
 	case ADW_ASYNC_CARRIER_READY_FAILURE:
-		/* 
+		/*
 		 * Carrier Ready failure.
 	         *
-		 * A warning only - RISC too busy to realize it's been 
+		 * A warning only - RISC too busy to realize it's been
 		 * tickled. Occurs in normal operation under heavy
 		 * load, so a message is printed only when ADW_DEBUG'ing
 		 */
