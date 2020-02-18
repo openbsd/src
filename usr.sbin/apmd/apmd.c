@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.94 2020/02/12 12:01:29 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.95 2020/02/18 01:18:53 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -37,6 +37,7 @@
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <syslog.h>
@@ -497,7 +498,7 @@ main(int argc, char *argv[])
 		error("kevent", NULL);
 
 	for (;;) {
-		int rv;
+		int rv, event, index;
 
 		sts = ts;
 
@@ -528,6 +529,46 @@ main(int argc, char *argv[])
 			continue;
 		} else if (rv == 0) {
 			/* wakeup for timeout: take status */
+			event = APM_POWER_CHANGE;
+			index = -1;
+		} else {
+			assert(rv == 1 && ev->ident == ctl_fd);
+			event = APM_EVENT_TYPE(ev->data);
+			index = APM_EVENT_INDEX(ev->data);
+		}
+
+		logmsg(LOG_DEBUG, "apmevent %04x index %d", event, index);
+
+		switch (event) {
+		case APM_SUSPEND_REQ:
+		case APM_USER_SUSPEND_REQ:
+		case APM_CRIT_SUSPEND_REQ:
+		case APM_BATTERY_LOW:
+			suspends++;
+			break;
+		case APM_USER_STANDBY_REQ:
+		case APM_STANDBY_REQ:
+			standbys++;
+			break;
+		case APM_USER_HIBERNATE_REQ:
+			hibernates++;
+			break;
+#if 0
+		case APM_CANCEL:
+			suspends = standbys = 0;
+			break;
+#endif
+		case APM_NORMAL_RESUME:
+		case APM_CRIT_RESUME:
+		case APM_SYS_STANDBY_RESUME:
+			powerbak = power_status(ctl_fd, 0, &pinfo);
+			if (powerstatus != powerbak) {
+				powerstatus = powerbak;
+				powerchange = 1;
+			}
+			resumes++;
+			break;
+		case APM_POWER_CHANGE:
 			powerbak = power_status(ctl_fd, 0, &pinfo);
 			if (powerstatus != powerbak) {
 				powerstatus = powerbak;
@@ -548,63 +589,9 @@ main(int argc, char *argv[])
 				else
 					hibernates++;
 			}
-		} else if (ev->ident == ctl_fd) {
-			logmsg(LOG_DEBUG, "apmevent %04x index %d",
-			    (int)APM_EVENT_TYPE(ev->data),
-			    (int)APM_EVENT_INDEX(ev->data));
-
-			switch (APM_EVENT_TYPE(ev->data)) {
-			case APM_SUSPEND_REQ:
-			case APM_USER_SUSPEND_REQ:
-			case APM_CRIT_SUSPEND_REQ:
-			case APM_BATTERY_LOW:
-				suspends++;
-				break;
-			case APM_USER_STANDBY_REQ:
-			case APM_STANDBY_REQ:
-				standbys++;
-				break;
-			case APM_USER_HIBERNATE_REQ:
-				hibernates++;
-				break;
-#if 0
-			case APM_CANCEL:
-				suspends = standbys = 0;
-				break;
-#endif
-			case APM_NORMAL_RESUME:
-			case APM_CRIT_RESUME:
-			case APM_SYS_STANDBY_RESUME:
-				powerbak = power_status(ctl_fd, 0, &pinfo);
-				if (powerstatus != powerbak) {
-					powerstatus = powerbak;
-					powerchange = 1;
-				}
-				resumes++;
-				break;
-			case APM_POWER_CHANGE:
-				powerbak = power_status(ctl_fd, 0, &pinfo);
-				if (powerstatus != powerbak) {
-					powerstatus = powerbak;
-					powerchange = 1;
-				}
-
-				if (!powerstatus && autoaction &&
-				    autolimit > (int)pinfo.battery_life) {
-					logmsg(LOG_NOTICE,
-					    "estimated battery life %d%%"
-					    " below configured limit %d%%",
-					    pinfo.battery_life, autolimit);
-
-					if (autoaction == AUTO_SUSPEND)
-						suspends++;
-					else
-						hibernates++;
-				}
-				break;
-			default:
-				;
-			}
+			break;
+		default:
+			;
 		}
 
 		if ((standbys || suspends) && noacsleep &&
