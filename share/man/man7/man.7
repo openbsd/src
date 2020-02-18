@@ -1,7 +1,7 @@
-.\"	$OpenBSD: man.7,v 1.56 2019/07/09 03:46:41 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.57 2020/02/18 17:31:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2011-2015,2017,2018,2019 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2017 Anthony Bentley <bentley@openbsd.org>
 .\" Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
 .\"
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2019 $
+.Dd $Mdocdate: February 18 2020 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -127,6 +127,8 @@ Sets the volume for the footer for compatibility with man pages from
 .At
 releases.
 The optional arguments specify which release it is from.
+This macro is an extension that first appeared in
+.Bx 4.3 .
 .It Ic B
 Text is rendered in bold face.
 .It Ic BI
@@ -255,8 +257,12 @@ is usually a command-line flag and
 .Ar value
 its argument.
 .It Ic P
-A synonym for
-.Ic PP .
+This synonym for
+.Ic PP
+is an
+.At III
+extension later adopted by
+.Bx 4.3 .
 .It Ic PD
 Specify the vertical space to be inserted before each new paragraph.
 .br
@@ -343,6 +349,9 @@ See also
 .It Ic SB
 Text is rendered in small size (one point smaller than the default font)
 bold face.
+This macro is an extension that probably first appeared in SunOS 4.0
+and was later adopted by GNU and by
+.Bx 4.4 .
 .It Ic SH
 Begin a section.
 The scope of a section is only closed by another section or the end of
@@ -435,6 +444,8 @@ Sets the volume for the footer for compatibility with man pages from
 .Bx
 releases.
 The optional first argument specifies which release it is from.
+This macro is an extension that first appeared in
+.Bx 3 .
 .It Ic UE
 End a uniform resource identifier block started with
 .Ic UR .
