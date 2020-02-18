@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.198 2020/02/05 17:03:13 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.199 2020/02/18 03:47:18 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -81,6 +81,9 @@ static __inline int fd_inuse(struct filedesc *, int);
 int finishdup(struct proc *, struct file *, int, int, register_t *, int);
 int find_last_set(struct filedesc *, int);
 int dodup3(struct proc *, int, int, int, register_t *);
+
+#define DUPF_CLOEXEC	0x01
+#define DUPF_DUP2	0x02
 
 struct pool file_pool;
 struct pool fdesc_pool;
@@ -350,7 +353,7 @@ dodup3(struct proc *p, int old, int new, int flags, register_t *retval)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int i, error;
+	int dupflags, error, i;
 
 restart:
 	if ((fp = fd_getfile(fdp, old)) == NULL)
@@ -385,10 +388,13 @@ restart:
 			panic("dup2: fdalloc");
 		fd_unused(fdp, new);
 	}
+
+	dupflags = DUPF_DUP2;
+	if (flags & O_CLOEXEC)
+		dupflags |= DUPF_CLOEXEC;
+
 	/* No need for FRELE(), finishdup() uses current ref. */
-	error = finishdup(p, fp, old, new, retval, 1);
-	if (!error && flags & O_CLOEXEC)
-		fdp->fd_ofileflags[new] |= UF_EXCLOSE;
+	error = finishdup(p, fp, old, new, retval, dupflags);
 
 out:
 	fdpunlock(fdp);
@@ -440,11 +446,13 @@ restart:
 				goto restart;
 			}
 		} else {
-			/* No need for FRELE(), finishdup() uses current ref. */
-			error = finishdup(p, fp, fd, i, retval, 0);
+			int dupflags = 0;
 
-			if (!error && SCARG(uap, cmd) == F_DUPFD_CLOEXEC)
-				fdp->fd_ofileflags[i] |= UF_EXCLOSE;
+			if (SCARG(uap, cmd) == F_DUPFD_CLOEXEC)
+				dupflags |= DUPF_CLOEXEC;
+
+			/* No need for FRELE(), finishdup() uses current ref. */
+			error = finishdup(p, fp, fd, i, retval, dupflags);
 		}
 
 		fdpunlock(fdp);
@@ -645,7 +653,7 @@ out:
  */
 int
 finishdup(struct proc *p, struct file *fp, int old, int new,
-    register_t *retval, int dup2)
+    register_t *retval, int dupflags)
 {
 	struct file *oldfp;
 	struct filedesc *fdp = p->p_fd;
@@ -659,7 +667,7 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 	}
 
 	oldfp = fd_getfile(fdp, new);
-	if (dup2 && oldfp == NULL) {
+	if ((dupflags & DUPF_DUP2) && oldfp == NULL) {
 		if (fd_inuse(fdp, new)) {
  			FRELE(fp, p);
  			return (EBUSY);
@@ -676,6 +684,8 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 	mtx_leave(&fdp->fd_fplock);
 
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
+	if (dupflags & DUPF_CLOEXEC)
+		fdp->fd_ofileflags[new] |= UF_EXCLOSE;
 	*retval = new;
 
 	if (oldfp != NULL) {
