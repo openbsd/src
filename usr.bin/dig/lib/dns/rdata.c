@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.7 2020/02/13 16:57:55 florian Exp $ */
+/* $Id: rdata.c,v 1.8 2020/02/18 18:11:27 florian Exp $ */
 
 /*! \file */
 
@@ -815,8 +815,6 @@ rdata_validate(isc_buffer_t *src, isc_buffer_t *dest, dns_rdataclass_t rdclass,
 	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_NONE);
 	isc_buffer_setactive(src, isc_buffer_usedlength(src));
 	result = dns_rdata_fromwire(NULL, rdclass, type, src, &dctx, 0, dest);
-	dns_decompress_invalidate(&dctx);
-
 	return (result);
 }
 

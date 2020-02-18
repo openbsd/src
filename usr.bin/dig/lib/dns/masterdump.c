@@ -266,8 +266,6 @@ rdataset_totext(dns_rdataset_t *rdataset,
 	dns_rdatatype_t type;
 	unsigned int type_start;
 
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-
 	rdataset->attributes |= DNS_RDATASETATTR_LOADORDER;
 	result = dns_rdataset_first(rdataset);
 
@@ -437,7 +435,6 @@ question_totext(dns_rdataset_t *rdataset,
 	isc_result_t result;
 	isc_region_t r;
 
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	result = dns_rdataset_first(rdataset);
 	REQUIRE(result == ISC_R_NOMORE);
 

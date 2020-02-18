@@ -843,6 +843,5 @@ host_main(int argc, char **argv) {
 	isc_app_run();
 	cancel_all();
 	destroy_libs();
-	isc_app_finish();
 	return ((seen_error == 0) ? 0 : 1);
 }

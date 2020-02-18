@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.9 2020/02/16 21:08:59 florian Exp $ */
+/* $Id: timer.h,v 1.10 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -92,37 +92,6 @@ typedef struct isc_timerevent {
 #define ISC_TIMEREVENT_IDLE		(ISC_EVENTCLASS_TIMER + 2)
 #define ISC_TIMEREVENT_LIFE		(ISC_EVENTCLASS_TIMER + 3)
 #define ISC_TIMEREVENT_LASTEVENT	(ISC_EVENTCLASS_TIMER + 65535)
-
-/*%
- * This structure is actually just the common prefix of a timer manager
- * object implementation's version of an isc_timermgr_t.
- * \brief
- * Direct use of this structure by clients is forbidden.  timer implementations
- * may change the structure.  'magic' must be ISCAPI_TIMERMGR_MAGIC for any
- * of the isc_timer_ routines to work.  timer implementations must maintain
- * all timer invariants.
- */
-struct isc_timermgr {
-	unsigned int		impmagic;
-	unsigned int		magic;
-};
-
-#define ISCAPI_TIMERMGR_MAGIC		ISC_MAGIC('A','t','m','g')
-#define ISCAPI_TIMERMGR_VALID(m)	((m) != NULL && \
-					 (m)->magic == ISCAPI_TIMERMGR_MAGIC)
-
-/*%
- * This is the common prefix of a timer object.  The same note as
- * that for the timermgr structure applies.
- */
-struct isc_timer {
-	unsigned int		impmagic;
-	unsigned int		magic;
-};
-
-#define ISCAPI_TIMER_MAGIC	ISC_MAGIC('A','t','m','r')
-#define ISCAPI_TIMER_VALID(s)	((s) != NULL && \
-				 (s)->magic == ISCAPI_TIMER_MAGIC)
 
 /***
  *** Timer and Timer Manager Functions

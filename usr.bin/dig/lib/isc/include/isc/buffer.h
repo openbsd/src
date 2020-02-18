@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.h,v 1.5 2020/02/15 10:56:25 florian Exp $ */
+/* $Id: buffer.h,v 1.6 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef ISC_BUFFER_H
 #define ISC_BUFFER_H 1
@@ -108,8 +108,6 @@
 
 #include <inttypes.h>
 
-
-#include <isc/magic.h>
 #include <isc/types.h>
 
 /*!
@@ -117,14 +115,6 @@
  * If it is undefined, a function will be used.
  */
 /* #define ISC_BUFFER_USEINLINE */
-
-/*@{*/
-/*!
- *** Magic numbers
- ***/
-#define ISC_BUFFER_MAGIC		0x42756621U	/* Buf!. */
-#define ISC_BUFFER_VALID(b)		ISC_MAGIC_VALID(b, ISC_BUFFER_MAGIC)
-/*@}*/
 
 /*
  * The following macros MUST be used only on valid buffers.  It is the
@@ -165,7 +155,6 @@
  */
 
 struct isc_buffer {
-	unsigned int		magic;
 	void		       *base;
 	/*@{*/
 	/*! The following integers are byte offsets from 'base'. */
@@ -648,14 +637,12 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r);
 		(_b)->current = 0; \
 		(_b)->active = 0; \
 		ISC_LINK_INIT(_b, link); \
-		(_b)->magic = ISC_BUFFER_MAGIC; \
 	} while (0)
 
 #define ISC__BUFFER_INITNULL(_b) ISC__BUFFER_INIT(_b, NULL, 0)
 
 #define ISC__BUFFER_INVALIDATE(_b) \
 	do { \
-		(_b)->magic = 0; \
 		(_b)->base = NULL; \
 		(_b)->length = 0; \
 		(_b)->used = 0; \

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.4 2020/02/17 19:45:00 jung Exp $ */
+/* $Id: lex.c,v 1.5 2020/02/18 18:11:27 florian Exp $ */
 
 /*! \file */
 
@@ -50,12 +50,8 @@ typedef struct inputsource {
 	ISC_LINK(struct inputsource)	link;
 } inputsource;
 
-#define LEX_MAGIC			ISC_MAGIC('L', 'e', 'x', '!')
-#define VALID_LEX(l)			ISC_MAGIC_VALID(l, LEX_MAGIC)
-
 struct isc_lex {
 	/* Unlocked. */
-	unsigned int			magic;
 	size_t				max_token;
 	char *				data;
 	unsigned int			comments;
@@ -113,7 +109,6 @@ isc_lex_create(size_t max_token, isc_lex_t **lexp) {
 	lex->saved_paren_count = 0;
 	memset(lex->specials, 0, 256);
 	INIT_LIST(lex->sources);
-	lex->magic = LEX_MAGIC;
 
 	*lexp = lex;
 
@@ -130,13 +125,11 @@ isc_lex_destroy(isc_lex_t **lexp) {
 
 	REQUIRE(lexp != NULL);
 	lex = *lexp;
-	REQUIRE(VALID_LEX(lex));
 
 	while (!EMPTY(lex->sources))
 		RUNTIME_CHECK(isc_lex_close(lex) == ISC_R_SUCCESS);
 	if (lex->data != NULL)
 		free(lex->data);
-	lex->magic = 0;
 	free(lex);
 
 	*lexp = NULL;
@@ -148,7 +141,6 @@ isc_lex_setcomments(isc_lex_t *lex, unsigned int comments) {
 	 * Set allowed lexer commenting styles.
 	 */
 
-	REQUIRE(VALID_LEX(lex));
 
 	lex->comments = comments;
 }
@@ -160,7 +152,6 @@ isc_lex_setspecials(isc_lex_t *lex, isc_lexspecials_t specials) {
 	 * whitespace, they delimit strings and numbers.
 	 */
 
-	REQUIRE(VALID_LEX(lex));
 
 	memmove(lex->specials, specials, 256);
 }
@@ -210,7 +201,6 @@ isc_lex_openfile(isc_lex_t *lex, const char *filename) {
 	 * Open 'filename' and make it the current input source for 'lex'.
 	 */
 
-	REQUIRE(VALID_LEX(lex));
 
 	if ((stream = fopen(filename, "r")) == NULL)
 		return (isc__errno2result(errno));
@@ -229,7 +219,6 @@ isc_lex_close(isc_lex_t *lex) {
 	 * Close the most recently opened object (i.e. file or buffer).
 	 */
 
-	REQUIRE(VALID_LEX(lex));
 
 	source = HEAD(lex->sources);
 	if (source == NULL)
@@ -318,7 +307,6 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 	 * Get the next token.
 	 */
 
-	REQUIRE(VALID_LEX(lex));
 	source = HEAD(lex->sources);
 	REQUIRE(tokenp != NULL);
 
@@ -802,7 +790,6 @@ isc_lex_ungettoken(isc_lex_t *lex, isc_token_t *tokenp) {
 	 * Unget the current token.
 	 */
 
-	REQUIRE(VALID_LEX(lex));
 	source = HEAD(lex->sources);
 	REQUIRE(source != NULL);
 	REQUIRE(tokenp != NULL);
@@ -822,7 +809,6 @@ isc_lex_getlasttokentext(isc_lex_t *lex, isc_token_t *tokenp, isc_region_t *r)
 {
 	inputsource *source;
 
-	REQUIRE(VALID_LEX(lex));
 	source = HEAD(lex->sources);
 	REQUIRE(source != NULL);
 	REQUIRE(tokenp != NULL);
@@ -843,7 +829,6 @@ char *
 isc_lex_getsourcename(isc_lex_t *lex) {
 	inputsource *source;
 
-	REQUIRE(VALID_LEX(lex));
 	source = HEAD(lex->sources);
 
 	if (source == NULL)
@@ -856,7 +841,6 @@ unsigned long
 isc_lex_getsourceline(isc_lex_t *lex) {
 	inputsource *source;
 
-	REQUIRE(VALID_LEX(lex));
 	source = HEAD(lex->sources);
 
 	if (source == NULL)
@@ -868,8 +852,6 @@ isc_lex_getsourceline(isc_lex_t *lex) {
 isc_boolean_t
 isc_lex_isfile(isc_lex_t *lex) {
 	inputsource *source;
-
-	REQUIRE(VALID_LEX(lex));
 
 	source = HEAD(lex->sources);
 

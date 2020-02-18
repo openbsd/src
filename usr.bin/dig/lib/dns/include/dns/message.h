@@ -21,8 +21,6 @@
  ***	Imports
  ***/
 
-#include <isc/magic.h>
-
 #include <dns/compress.h>
 #include <dns/masterdump.h>
 #include <dns/types.h>
@@ -115,9 +113,6 @@
 
 #define DNS_MESSAGE_HEADERLEN		12 /*%< 6 uint16_t's */
 
-#define DNS_MESSAGE_MAGIC		ISC_MAGIC('M','S','G','@')
-#define DNS_MESSAGE_VALID(msg)		ISC_MAGIC_VALID(msg, DNS_MESSAGE_MAGIC)
-
 /*
  * Ordering here matters.  DNS_SECTION_ANY must be the lowest and negative,
  * and DNS_SECTION_MAX must be one greater than the last used section.
@@ -184,8 +179,6 @@ typedef struct dns_msgblock dns_msgblock_t;
 
 struct dns_message {
 	/* public from here down */
-	unsigned int			magic;
-
 	dns_messageid_t			id;
 	unsigned int			flags;
 	dns_rcode_t			rcode;

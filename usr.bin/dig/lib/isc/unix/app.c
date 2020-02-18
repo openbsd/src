@@ -16,8 +16,6 @@
 
 /*! \file */
 
-
-
 #include <stddef.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -26,8 +24,6 @@
 
 #include <isc/app.h>
 #include <isc/boolean.h>
-
-
 #include <isc/event.h>
 
 #include <string.h>
@@ -45,43 +41,12 @@
 #include "../task_p.h"
 #include "socket_p.h"
 
-/*%
- * The following are intended for internal use (indicated by "isc__"
- * prefix) but are not declared as static, allowing direct access from
- * unit tests etc.
- */
-isc_result_t isc__app_start(void);
-isc_result_t isc__app_ctxstart(isc_appctx_t *ctx);
-isc_result_t isc__app_onrun(isc_task_t *task,
-			    isc_taskaction_t action, void *arg);
-isc_result_t isc__app_ctxrun(isc_appctx_t *ctx);
-isc_result_t isc__app_run(void);
-isc_result_t isc__app_ctxshutdown(isc_appctx_t *ctx);
-isc_result_t isc__app_shutdown(void);
-isc_result_t isc__app_reload(void);
-isc_result_t isc__app_ctxsuspend(isc_appctx_t *ctx);
-void isc__app_ctxfinish(isc_appctx_t *ctx);
-void isc__app_finish(void);
-void isc__app_block(void);
-void isc__app_unblock(void);
-isc_result_t isc__appctx_create(isc_appctx_t **ctxp);
-void isc__appctx_destroy(isc_appctx_t **ctxp);
-void isc__appctx_settaskmgr(isc_appctx_t *ctx, isc_taskmgr_t *taskmgr);
-void isc__appctx_setsocketmgr(isc_appctx_t *ctx, isc_socketmgr_t *socketmgr);
-void isc__appctx_settimermgr(isc_appctx_t *ctx, isc_timermgr_t *timermgr);
-isc_result_t isc__app_ctxonrun(isc_appctx_t *ctx,
-			       isc_task_t *task, isc_taskaction_t action,
-			       void *arg);
-
 /*
  * The application context of this module.  This implementation actually
  * doesn't use it. (This may change in the future).
  */
-#define APPCTX_MAGIC		ISC_MAGIC('A', 'p', 'c', 'x')
-#define VALID_APPCTX(c)		ISC_MAGIC_VALID(c, APPCTX_MAGIC)
 
-typedef struct isc__appctx {
-	isc_appctx_t		common;
+typedef struct isc_appctx {
 	isc_eventlist_t		on_run;
 	isc_boolean_t		shutdown_requested;
 	isc_boolean_t		running;
@@ -100,9 +65,13 @@ typedef struct isc__appctx {
 	isc_taskmgr_t		*taskmgr;
 	isc_socketmgr_t		*socketmgr;
 	isc_timermgr_t		*timermgr;
-} isc__appctx_t;
+} isc_appctx_t;
 
-static isc__appctx_t isc_g_appctx;
+static isc_appctx_t isc_g_appctx;
+static isc_boolean_t is_running = ISC_FALSE;
+
+static isc_result_t isc_app_ctxonrun(isc_appctx_t *ctx, isc_task_t *task,
+    isc_taskaction_t action, void *arg);
 
 static void
 reload_action(int arg) {
@@ -128,14 +97,11 @@ handle_signal(int sig, void (*handler)(int)) {
 	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
-isc__app_ctxstart(isc_appctx_t *ctx0) {
-	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
+static isc_result_t
+isc_app_ctxstart(isc_appctx_t *ctx) {
 	isc_result_t result;
 	int presult;
 	sigset_t sset;
-
-	REQUIRE(VALID_APPCTX(ctx));
 
 	/*
 	 * Start an ISC library application.
@@ -209,27 +175,24 @@ isc__app_ctxstart(isc_appctx_t *ctx0) {
 }
 
 isc_result_t
-isc__app_start(void) {
-	isc_g_appctx.common.impmagic = APPCTX_MAGIC;
-	isc_g_appctx.common.magic = ISCAPI_APPCTX_MAGIC;
+isc_app_start(void) {
 	/* The remaining members will be initialized in ctxstart() */
 
-	return (isc__app_ctxstart((isc_appctx_t *)&isc_g_appctx));
+	return (isc_app_ctxstart((isc_appctx_t *)&isc_g_appctx));
 }
 
 isc_result_t
-isc__app_onrun(isc_task_t *task, isc_taskaction_t action,
+isc_app_onrun(isc_task_t *task, isc_taskaction_t action,
 	      void *arg)
 {
-	return (isc__app_ctxonrun((isc_appctx_t *)&isc_g_appctx,
+	return (isc_app_ctxonrun((isc_appctx_t *)&isc_g_appctx,
 				  task, action, arg));
 }
 
 isc_result_t
-isc__app_ctxonrun(isc_appctx_t *ctx0, isc_task_t *task,
+isc_app_ctxonrun(isc_appctx_t *ctx, isc_task_t *task,
 		  isc_taskaction_t action, void *arg)
 {
-	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
 	isc_event_t *event;
 	isc_task_t *cloned_task = NULL;
 	isc_result_t result;
@@ -264,7 +227,7 @@ isc__app_ctxonrun(isc_appctx_t *ctx0, isc_task_t *task,
  * Event loop for nonthreaded programs.
  */
 static isc_result_t
-evloop(isc__appctx_t *ctx) {
+evloop(isc_appctx_t *ctx) {
 	isc_result_t result;
 
 	while (!ctx->want_shutdown) {
@@ -278,8 +241,8 @@ evloop(isc__appctx_t *ctx) {
 		/*
 		 * Check the reload (or suspend) case first for exiting the
 		 * loop as fast as possible in case:
-		 *   - the direct call to isc__taskmgr_dispatch() in
-		 *     isc__app_ctxrun() completes all the tasks so far,
+		 *   - the direct call to isc_taskmgr_dispatch() in
+		 *     isc_app_ctxrun() completes all the tasks so far,
 		 *   - there is thus currently no active task, and
 		 *   - there is a timer event
 		 */
@@ -288,14 +251,14 @@ evloop(isc__appctx_t *ctx) {
 			return (ISC_R_RELOAD);
 		}
 
-		readytasks = isc__taskmgr_ready(ctx->taskmgr);
+		readytasks = isc_taskmgr_ready(ctx->taskmgr);
 		if (readytasks) {
 			tv.tv_sec = 0;
 			tv.tv_usec = 0;
 			tvp = &tv;
 			call_timer_dispatch = ISC_TRUE;
 		} else {
-			result = isc__timermgr_nextevent(ctx->timermgr, &when);
+			result = isc_timermgr_nextevent(ctx->timermgr, &when);
 			if (result != ISC_R_SUCCESS)
 				tvp = NULL;
 			else {
@@ -312,11 +275,11 @@ evloop(isc__appctx_t *ctx) {
 		}
 
 		swait = NULL;
-		n = isc__socketmgr_waitevents(ctx->socketmgr, tvp, &swait);
+		n = isc_socketmgr_waitevents(ctx->socketmgr, tvp, &swait);
 
 		if (n == 0 || call_timer_dispatch) {
 			/*
-			 * We call isc__timermgr_dispatch() only when
+			 * We call isc_timermgr_dispatch() only when
 			 * necessary, in order to reduce overhead.  If the
 			 * select() call indicates a timeout, we need the
 			 * dispatch.  Even if not, if we set the 0-timeout
@@ -329,23 +292,20 @@ evloop(isc__appctx_t *ctx) {
 			 * call, since this loop only runs in the non-thread
 			 * mode.
 			 */
-			isc__timermgr_dispatch(ctx->timermgr);
+			isc_timermgr_dispatch(ctx->timermgr);
 		}
 		if (n > 0)
-			(void)isc__socketmgr_dispatch(ctx->socketmgr, swait);
-		(void)isc__taskmgr_dispatch(ctx->taskmgr);
+			(void)isc_socketmgr_dispatch(ctx->socketmgr, swait);
+		(void)isc_taskmgr_dispatch(ctx->taskmgr);
 	}
 	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
-isc__app_ctxrun(isc_appctx_t *ctx0) {
-	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
+static isc_result_t
+isc_app_ctxrun(isc_appctx_t *ctx) {
 	int result;
 	isc_event_t *event, *next_event;
 	isc_task_t *task;
-
-	REQUIRE(VALID_APPCTX(ctx));
 
 	if (!ctx->running) {
 		ctx->running = ISC_TRUE;
@@ -371,22 +331,19 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 			return (ISC_R_SUCCESS);
 	}
 
-	(void) isc__taskmgr_dispatch(ctx->taskmgr);
+	(void) isc_taskmgr_dispatch(ctx->taskmgr);
 	result = evloop(ctx);
 	return (result);
 }
 
 isc_result_t
-isc__app_run(void) {
-	return (isc__app_ctxrun((isc_appctx_t *)&isc_g_appctx));
+isc_app_run(void) {
+	return (isc_app_ctxrun((isc_appctx_t *)&isc_g_appctx));
 }
 
-isc_result_t
-isc__app_ctxshutdown(isc_appctx_t *ctx0) {
-	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
+static isc_result_t
+isc_app_ctxshutdown(isc_appctx_t *ctx) {
 	isc_boolean_t want_kill = ISC_TRUE;
-
-	REQUIRE(VALID_APPCTX(ctx));
 
 	REQUIRE(ctx->running);
 
@@ -407,57 +364,18 @@ isc__app_ctxshutdown(isc_appctx_t *ctx0) {
 	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
-isc__app_shutdown(void) {
-	return (isc__app_ctxshutdown((isc_appctx_t *)&isc_g_appctx));
+isc_boolean_t
+isc_app_isrunning() {
+	return (is_running);
 }
 
 isc_result_t
-isc__app_ctxsuspend(isc_appctx_t *ctx0) {
-	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
-	isc_boolean_t want_kill = ISC_TRUE;
-
-	REQUIRE(VALID_APPCTX(ctx));
-
-	REQUIRE(ctx->running);
-
-	/*
-	 * Don't send the reload signal if we're shutting down.
-	 */
-	if (ctx->shutdown_requested)
-		want_kill = ISC_FALSE;
-
-	if (want_kill) {
-		if (ctx != &isc_g_appctx)
-			/* BIND9 internal, but using multiple contexts */
-			ctx->want_reload = ISC_TRUE;
-		else {
-			ctx->want_reload = ISC_TRUE;
-		}
-	}
-
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-isc__app_reload(void) {
-	return (isc__app_ctxsuspend((isc_appctx_t *)&isc_g_appctx));
+isc_app_shutdown(void) {
+	return (isc_app_ctxshutdown((isc_appctx_t *)&isc_g_appctx));
 }
 
 void
-isc__app_ctxfinish(isc_appctx_t *ctx0) {
-	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
-
-	REQUIRE(VALID_APPCTX(ctx));
-}
-
-void
-isc__app_finish(void) {
-	isc__app_ctxfinish((isc_appctx_t *)&isc_g_appctx);
-}
-
-void
-isc__app_block(void) {
+isc_app_block(void) {
 	REQUIRE(isc_g_appctx.running);
 	REQUIRE(!isc_g_appctx.blocked);
 
@@ -465,7 +383,7 @@ isc__app_block(void) {
 }
 
 void
-isc__app_unblock(void) {
+isc_app_unblock(void) {
 
 	REQUIRE(isc_g_appctx.running);
 	REQUIRE(isc_g_appctx.blocked);
@@ -473,67 +391,3 @@ isc__app_unblock(void) {
 	isc_g_appctx.blocked = ISC_FALSE;
 
 }
-
-isc_result_t
-isc__appctx_create(isc_appctx_t **ctxp) {
-	isc__appctx_t *ctx;
-
-	REQUIRE(ctxp != NULL && *ctxp == NULL);
-
-	ctx = malloc(sizeof(*ctx));
-	if (ctx == NULL)
-		return (ISC_R_NOMEMORY);
-
-	ctx->common.impmagic = APPCTX_MAGIC;
-	ctx->common.magic = ISCAPI_APPCTX_MAGIC;
-
-	ctx->taskmgr = NULL;
-	ctx->socketmgr = NULL;
-	ctx->timermgr = NULL;
-
-	*ctxp = (isc_appctx_t *)ctx;
-
-	return (ISC_R_SUCCESS);
-}
-
-void
-isc__appctx_destroy(isc_appctx_t **ctxp) {
-	isc__appctx_t *ctx;
-
-	REQUIRE(ctxp != NULL);
-	ctx = (isc__appctx_t *)*ctxp;
-	REQUIRE(VALID_APPCTX(ctx));
-
-	free(ctx);
-
-	*ctxp = NULL;
-}
-
-void
-isc__appctx_settaskmgr(isc_appctx_t *ctx0, isc_taskmgr_t *taskmgr) {
-	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
-
-	REQUIRE(VALID_APPCTX(ctx));
-
-	ctx->taskmgr = taskmgr;
-}
-
-void
-isc__appctx_setsocketmgr(isc_appctx_t *ctx0, isc_socketmgr_t *socketmgr) {
-	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
-
-	REQUIRE(VALID_APPCTX(ctx));
-
-	ctx->socketmgr = socketmgr;
-}
-
-void
-isc__appctx_settimermgr(isc_appctx_t *ctx0, isc_timermgr_t *timermgr) {
-	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
-
-	REQUIRE(VALID_APPCTX(ctx));
-
-	ctx->timermgr = timermgr;
-}
-
-#include "../app_api.c"

@@ -36,7 +36,6 @@ dns_rdataset_init(dns_rdataset_t *rdataset) {
 
 	REQUIRE(rdataset != NULL);
 
-	rdataset->magic = DNS_RDATASET_MAGIC;
 	rdataset->methods = NULL;
 	ISC_LINK_INIT(rdataset, link);
 	rdataset->rdclass = 0;
@@ -63,7 +62,6 @@ dns_rdataset_disassociate(dns_rdataset_t *rdataset) {
 	 * Disassociate 'rdataset' from its rdata, allowing it to be reused.
 	 */
 
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods != NULL);
 
 	(rdataset->methods->disassociate)(rdataset);
@@ -90,7 +88,6 @@ dns_rdataset_isassociated(dns_rdataset_t *rdataset) {
 	 * Is 'rdataset' associated?
 	 */
 
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
 
 	if (rdataset->methods != NULL)
 		return (ISC_TRUE);
@@ -166,7 +163,6 @@ dns_rdataset_makequestion(dns_rdataset_t *rdataset, dns_rdataclass_t rdclass,
 	 * question class of 'rdclass' and type 'type'.
 	 */
 
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods == NULL);
 
 	rdataset->methods = &question_methods;
@@ -182,9 +178,7 @@ dns_rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target) {
 	 * Make 'target' refer to the same rdataset as 'source'.
 	 */
 
-	REQUIRE(DNS_RDATASET_VALID(source));
 	REQUIRE(source->methods != NULL);
-	REQUIRE(DNS_RDATASET_VALID(target));
 	REQUIRE(target->methods == NULL);
 
 	(source->methods->clone)(source, target);
@@ -197,7 +191,6 @@ dns_rdataset_first(dns_rdataset_t *rdataset) {
 	 * Move the rdata cursor to the first rdata in the rdataset (if any).
 	 */
 
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods != NULL);
 
 	return ((rdataset->methods->first)(rdataset));
@@ -210,7 +203,6 @@ dns_rdataset_next(dns_rdataset_t *rdataset) {
 	 * Move the rdata cursor to the next rdata in the rdataset (if any).
 	 */
 
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods != NULL);
 
 	return ((rdataset->methods->next)(rdataset));
@@ -223,7 +215,6 @@ dns_rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata) {
 	 * Make 'rdata' refer to the current rdata.
 	 */
 
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods != NULL);
 
 	(rdataset->methods->current)(rdataset, rdata);
@@ -270,7 +261,6 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	 * in cctx, and storing the result in 'target'.
 	 */
 
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods != NULL);
 	REQUIRE(countp != NULL);
 	REQUIRE((order == NULL) == (order_arg == NULL));

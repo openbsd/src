@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: symtab.c,v 1.2 2020/02/17 18:58:39 jung Exp $ */
+/* $Id: symtab.c,v 1.3 2020/02/18 18:11:27 florian Exp $ */
 
 /*! \file */
 
@@ -22,7 +22,6 @@
 
 #include <ctype.h>
 #include <stdlib.h>
-#include <isc/magic.h>
 #include <string.h>
 #include <isc/symtab.h>
 #include <isc/util.h>
@@ -36,12 +35,8 @@ typedef struct elt {
 
 typedef LIST(elt_t)			eltlist_t;
 
-#define SYMTAB_MAGIC			ISC_MAGIC('S', 'y', 'm', 'T')
-#define VALID_SYMTAB(st)		ISC_MAGIC_VALID(st, SYMTAB_MAGIC)
-
 struct isc_symtab {
 	/* Unlocked. */
-	unsigned int			magic;
 	unsigned int			size;
 	unsigned int			count;
 	unsigned int			maxload;
@@ -81,10 +76,7 @@ isc_symtab_create(unsigned int size,
 	symtab->undefine_action = undefine_action;
 	symtab->undefine_arg = undefine_arg;
 	symtab->case_sensitive = case_sensitive;
-	symtab->magic = SYMTAB_MAGIC;
-
 	*symtabp = symtab;
-
 	return (ISC_R_SUCCESS);
 }
 
@@ -96,7 +88,6 @@ isc_symtab_destroy(isc_symtab_t **symtabp) {
 
 	REQUIRE(symtabp != NULL);
 	symtab = *symtabp;
-	REQUIRE(VALID_SYMTAB(symtab));
 
 	for (i = 0; i < symtab->size; i++) {
 		for (elt = HEAD(symtab->table[i]); elt != NULL; elt = nelt) {
@@ -110,9 +101,7 @@ isc_symtab_destroy(isc_symtab_t **symtabp) {
 		}
 	}
 	free(symtab->table);
-	symtab->magic = 0;
 	free(symtab);
-
 	*symtabp = NULL;
 }
 
@@ -165,7 +154,6 @@ isc_symtab_lookup(isc_symtab_t *symtab, const char *key, unsigned int type,
 	unsigned int bucket;
 	elt_t *elt;
 
-	REQUIRE(VALID_SYMTAB(symtab));
 	REQUIRE(key != NULL);
 
 	FIND(symtab, key, type, bucket, elt);
@@ -225,7 +213,6 @@ isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 	unsigned int bucket;
 	elt_t *elt;
 
-	REQUIRE(VALID_SYMTAB(symtab));
 	REQUIRE(key != NULL);
 	REQUIRE(type != 0);
 

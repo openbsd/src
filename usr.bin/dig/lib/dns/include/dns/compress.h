@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.h,v 1.3 2020/02/13 13:53:00 jsg Exp $ */
+/* $Id: compress.h,v 1.4 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef DNS_COMPRESS_H
 #define DNS_COMPRESS_H 1
@@ -46,7 +46,6 @@ struct dns_compressnode {
 };
 
 struct dns_compress {
-	unsigned int		magic;		/*%< Magic number. */
 	unsigned int		allowed;	/*%< Allowed methods. */
 	int			edns;		/*%< Edns version or -1. */
 	/*% Global compression table. */
@@ -63,7 +62,6 @@ typedef enum {
 } dns_decompresstype_t;
 
 struct dns_decompress {
-	unsigned int		magic;		/*%< Magic number. */
 	unsigned int		allowed;	/*%< Allowed methods. */
 	int			edns;		/*%< Edns version or -1. */
 	dns_decompresstype_t	type;		/*%< Strict checking */

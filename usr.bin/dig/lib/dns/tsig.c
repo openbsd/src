@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.7 2020/02/16 21:12:41 florian Exp $
+ * $Id: tsig.c,v 1.8 2020/02/18 18:11:27 florian Exp $
  */
 /*! \file */
 
@@ -38,9 +38,6 @@
 #include <dns/tsig.h>
 
 #include <dst/result.h>
-
-#define TSIG_MAGIC		ISC_MAGIC('T', 'S', 'I', 'G')
-#define VALID_TSIG_KEY(x)	ISC_MAGIC_VALID(x, TSIG_MAGIC)
 
 #define is_response(msg) (msg->flags & DNS_MESSAGEFLAG_QR)
 #define algname_is_allocated(algname) \
@@ -237,8 +234,6 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 	tkey->expire = expire;
 	ISC_LINK_INIT(tkey, link);
 
-	tkey->magic = TSIG_MAGIC;
-
 	/*
 	 * Ignore this if it's a GSS key, since the key size is meaningless.
 	 */
@@ -374,7 +369,6 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 
 void
 dns_tsigkey_attach(dns_tsigkey_t *source, dns_tsigkey_t **targetp) {
-	REQUIRE(VALID_TSIG_KEY(source));
 	REQUIRE(targetp != NULL && *targetp == NULL);
 
 	isc_refcount_increment(&source->refs, NULL);
@@ -383,9 +377,6 @@ dns_tsigkey_attach(dns_tsigkey_t *source, dns_tsigkey_t **targetp) {
 
 static void
 tsigkey_free(dns_tsigkey_t *key) {
-	REQUIRE(VALID_TSIG_KEY(key));
-
-	key->magic = 0;
 	dns_name_free(&key->name);
 	if (algname_is_allocated(key->algorithm)) {
 		dns_name_free(key->algorithm);
@@ -407,7 +398,6 @@ dns_tsigkey_detach(dns_tsigkey_t **keyp) {
 	unsigned int refs;
 
 	REQUIRE(keyp != NULL);
-	REQUIRE(VALID_TSIG_KEY(*keyp));
 
 	key = *keyp;
 	isc_refcount_decrement(&key->refs, &refs);
@@ -439,7 +429,6 @@ dns_tsig_sign(dns_message_t *msg) {
 
 	REQUIRE(msg != NULL);
 	key = dns_message_gettsigkey(msg);
-	REQUIRE(VALID_TSIG_KEY(key));
 
 	/*
 	 * If this is a response, there should be a query tsig.
@@ -736,11 +725,8 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg)
 	isc_boolean_t response;
 
 	REQUIRE(source != NULL);
-	REQUIRE(DNS_MESSAGE_VALID(msg));
 	tsigkey = dns_message_gettsigkey(msg);
 	response = is_response(msg);
-
-	REQUIRE(tsigkey == NULL || VALID_TSIG_KEY(tsigkey));
 
 	msg->verify_attempted = 1;
 	msg->verified_sig = 0;

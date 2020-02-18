@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task_p.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: task_p.h,v 1.2 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef ISC_TASK_P_H
 #define ISC_TASK_P_H
@@ -22,9 +22,9 @@
 /*! \file */
 
 isc_boolean_t
-isc__taskmgr_ready(isc_taskmgr_t *taskmgr);
+isc_taskmgr_ready(isc_taskmgr_t *taskmgr);
 
 isc_result_t
-isc__taskmgr_dispatch(isc_taskmgr_t *taskmgr);
+isc_taskmgr_dispatch(isc_taskmgr_t *taskmgr);
 
 #endif /* ISC_TASK_P_H */

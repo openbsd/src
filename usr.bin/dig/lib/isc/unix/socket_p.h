@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket_p.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: socket_p.h,v 1.2 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef ISC_SOCKET_P_H
 #define ISC_SOCKET_P_H
@@ -24,7 +24,7 @@
 #include <sys/select.h>
 
 typedef struct isc_socketwait isc_socketwait_t;
-int isc__socketmgr_waitevents(isc_socketmgr_t *, struct timeval *,
+int isc_socketmgr_waitevents(isc_socketmgr_t *, struct timeval *,
 			      isc_socketwait_t **);
-isc_result_t isc__socketmgr_dispatch(isc_socketmgr_t *, isc_socketwait_t *);
+isc_result_t isc_socketmgr_dispatch(isc_socketmgr_t *, isc_socketwait_t *);
 #endif /* ISC_SOCKET_P_H */

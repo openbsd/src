@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: callbacks.h,v 1.3 2020/02/13 13:53:00 jsg Exp $ */
+/* $Id: callbacks.h,v 1.4 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef DNS_CALLBACKS_H
 #define DNS_CALLBACKS_H 1
@@ -25,20 +25,13 @@
  ***	Imports
  ***/
 
-#include <isc/magic.h>
-
 #include <dns/types.h>
 
 /***
  ***	Types
  ***/
 
-#define DNS_CALLBACK_MAGIC	ISC_MAGIC('C','L','L','B')
-#define DNS_CALLBACK_VALID(cb)	ISC_MAGIC_VALID(cb, DNS_CALLBACK_MAGIC)
-
 struct dns_rdatacallbacks {
-	unsigned int magic;
-
 	/*%
 	 * dns_load_master calls this when it has rdatasets to commit.
 	 */

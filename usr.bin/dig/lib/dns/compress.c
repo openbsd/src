@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.c,v 1.4 2020/02/13 10:12:49 florian Exp $ */
+/* $Id: compress.c,v 1.5 2020/02/18 18:11:27 florian Exp $ */
 
 /*! \file */
 
@@ -24,12 +24,6 @@
 
 #include <dns/compress.h>
 #include <dns/fixedname.h>
-
-#define CCTX_MAGIC	ISC_MAGIC('C', 'C', 'T', 'X')
-#define VALID_CCTX(x)	ISC_MAGIC_VALID(x, CCTX_MAGIC)
-
-#define DCTX_MAGIC	ISC_MAGIC('D', 'C', 'T', 'X')
-#define VALID_DCTX(x)	ISC_MAGIC_VALID(x, DCTX_MAGIC)
 
 /***
  ***	Compression
@@ -46,7 +40,6 @@ dns_compress_init(dns_compress_t *cctx, int edns) {
 	for (i = 0; i < DNS_COMPRESS_TABLESIZE; i++)
 		cctx->table[i] = NULL;
 	cctx->count = 0;
-	cctx->magic = CCTX_MAGIC;
 	return (ISC_R_SUCCESS);
 }
 
@@ -55,9 +48,6 @@ dns_compress_invalidate(dns_compress_t *cctx) {
 	dns_compressnode_t *node;
 	unsigned int i;
 
-	REQUIRE(VALID_CCTX(cctx));
-
-	cctx->magic = 0;
 	for (i = 0; i < DNS_COMPRESS_TABLESIZE; i++) {
 		while (cctx->table[i] != NULL) {
 			node = cctx->table[i];
@@ -73,15 +63,12 @@ dns_compress_invalidate(dns_compress_t *cctx) {
 
 void
 dns_compress_setmethods(dns_compress_t *cctx, unsigned int allowed) {
-	REQUIRE(VALID_CCTX(cctx));
-
 	cctx->allowed &= ~DNS_COMPRESS_ALL;
 	cctx->allowed |= (allowed & DNS_COMPRESS_ALL);
 }
 
 unsigned int
 dns_compress_getmethods(dns_compress_t *cctx) {
-	REQUIRE(VALID_CCTX(cctx));
 	return (cctx->allowed & DNS_COMPRESS_ALL);
 }
 
@@ -106,7 +93,6 @@ dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 	dns_compressnode_t *node = NULL;
 	unsigned int labels, hash, n;
 
-	REQUIRE(VALID_CCTX(cctx));
 	REQUIRE(dns_name_isabsolute(name) == ISC_TRUE);
 	REQUIRE(offset != NULL);
 
@@ -167,7 +153,6 @@ dns_compress_add(dns_compress_t *cctx, const dns_name_t *name,
 	unsigned int tlength;
 	uint16_t toffset;
 
-	REQUIRE(VALID_CCTX(cctx));
 	REQUIRE(dns_name_isabsolute(name));
 
 	dns_name_init(&tname, NULL);
@@ -213,8 +198,6 @@ dns_compress_rollback(dns_compress_t *cctx, uint16_t offset) {
 	unsigned int i;
 	dns_compressnode_t *node;
 
-	REQUIRE(VALID_CCTX(cctx));
-
 	for (i = 0; i < DNS_COMPRESS_TABLESIZE; i++) {
 		node = cctx->table[i];
 		/*
@@ -247,22 +230,10 @@ dns_decompress_init(dns_decompress_t *dctx, int edns,
 	dctx->allowed = DNS_COMPRESS_NONE;
 	dctx->edns = edns;
 	dctx->type = type;
-	dctx->magic = DCTX_MAGIC;
-}
-
-void
-dns_decompress_invalidate(dns_decompress_t *dctx) {
-
-	REQUIRE(VALID_DCTX(dctx));
-
-	dctx->magic = 0;
 }
 
 void
 dns_decompress_setmethods(dns_decompress_t *dctx, unsigned int allowed) {
-
-	REQUIRE(VALID_DCTX(dctx));
-
 	switch (dctx->type) {
 	case DNS_DECOMPRESS_ANY:
 		dctx->allowed = DNS_COMPRESS_ALL;

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.c,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: buffer.c,v 1.3 2020/02/18 18:11:27 florian Exp $ */
 
 /*! \file */
 
@@ -54,7 +54,6 @@ isc__buffer_invalidate(isc_buffer_t *b) {
 	 * Make 'b' an invalid buffer.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(!ISC_LINK_LINKED(b, link));
 
 	ISC__BUFFER_INVALIDATE(b);
@@ -66,7 +65,6 @@ isc__buffer_region(isc_buffer_t *b, isc_region_t *r) {
 	 * Make 'r' refer to the region of 'b'.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(r != NULL);
 
 	ISC__BUFFER_REGION(b, r);
@@ -78,7 +76,6 @@ isc__buffer_usedregion(isc_buffer_t *b, isc_region_t *r) {
 	 * Make 'r' refer to the used region of 'b'.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(r != NULL);
 
 	ISC__BUFFER_USEDREGION(b, r);
@@ -90,7 +87,6 @@ isc__buffer_availableregion(isc_buffer_t *b, isc_region_t *r) {
 	 * Make 'r' refer to the available region of 'b'.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(r != NULL);
 
 	ISC__BUFFER_AVAILABLEREGION(b, r);
@@ -102,7 +98,6 @@ isc__buffer_add(isc_buffer_t *b, unsigned int n) {
 	 * Increase the 'used' region of 'b' by 'n' bytes.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used + n <= b->length);
 
 	ISC__BUFFER_ADD(b, n);
@@ -114,7 +109,6 @@ isc__buffer_subtract(isc_buffer_t *b, unsigned int n) {
 	 * Decrease the 'used' region of 'b' by 'n' bytes.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used >= n);
 
 	ISC__BUFFER_SUBTRACT(b, n);
@@ -126,8 +120,6 @@ isc__buffer_clear(isc_buffer_t *b) {
 	 * Make the used region empty.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
-
 	ISC__BUFFER_CLEAR(b);
 }
 
@@ -137,7 +129,6 @@ isc__buffer_consumedregion(isc_buffer_t *b, isc_region_t *r) {
 	 * Make 'r' refer to the consumed region of 'b'.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(r != NULL);
 
 	ISC__BUFFER_CONSUMEDREGION(b, r);
@@ -149,7 +140,6 @@ isc__buffer_remainingregion(isc_buffer_t *b, isc_region_t *r) {
 	 * Make 'r' refer to the remaining region of 'b'.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(r != NULL);
 
 	ISC__BUFFER_REMAININGREGION(b, r);
@@ -161,7 +151,6 @@ isc__buffer_activeregion(isc_buffer_t *b, isc_region_t *r) {
 	 * Make 'r' refer to the active region of 'b'.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(r != NULL);
 
 	ISC__BUFFER_ACTIVEREGION(b, r);
@@ -173,7 +162,6 @@ isc__buffer_setactive(isc_buffer_t *b, unsigned int n) {
 	 * Sets the end of the active region 'n' bytes after current.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->current + n <= b->used);
 
 	ISC__BUFFER_SETACTIVE(b, n);
@@ -185,8 +173,6 @@ isc__buffer_first(isc_buffer_t *b) {
 	 * Make the consumed region empty.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
-
 	ISC__BUFFER_FIRST(b);
 }
 
@@ -196,7 +182,6 @@ isc__buffer_forward(isc_buffer_t *b, unsigned int n) {
 	 * Increase the 'consumed' region of 'b' by 'n' bytes.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->current + n <= b->used);
 
 	ISC__BUFFER_FORWARD(b, n);
@@ -208,7 +193,6 @@ isc__buffer_back(isc_buffer_t *b, unsigned int n) {
 	 * Decrease the 'consumed' region of 'b' by 'n' bytes.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(n <= b->current);
 
 	ISC__BUFFER_BACK(b, n);
@@ -224,8 +208,6 @@ isc_buffer_compact(isc_buffer_t *b) {
 	 * at the start of the buffer.  The used region is shrunk by the size
 	 * of the consumed region, and the consumed region is then made empty.
 	 */
-
-	REQUIRE(ISC_BUFFER_VALID(b));
 
 	src = isc_buffer_current(b);
 	length = isc_buffer_remaininglength(b);
@@ -248,7 +230,6 @@ isc_buffer_getuint8(isc_buffer_t *b) {
 	 * Read an unsigned 8-bit integer from 'b' and return it.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used - b->current >= 1);
 
 	cp = isc_buffer_current(b);
@@ -260,7 +241,6 @@ isc_buffer_getuint8(isc_buffer_t *b) {
 
 void
 isc__buffer_putuint8(isc_buffer_t *b, uint8_t val) {
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used + 1 <= b->length);
 
 	ISC__BUFFER_PUTUINT8(b, val);
@@ -276,7 +256,6 @@ isc_buffer_getuint16(isc_buffer_t *b) {
 	 * convert it to host byte order, and return it.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used - b->current >= 2);
 
 	cp = isc_buffer_current(b);
@@ -289,7 +268,6 @@ isc_buffer_getuint16(isc_buffer_t *b) {
 
 void
 isc__buffer_putuint16(isc_buffer_t *b, uint16_t val) {
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used + 2 <= b->length);
 
 	ISC__BUFFER_PUTUINT16(b, val);
@@ -297,7 +275,6 @@ isc__buffer_putuint16(isc_buffer_t *b, uint16_t val) {
 
 void
 isc__buffer_putuint24(isc_buffer_t *b, uint32_t val) {
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used + 3 <= b->length);
 
 	ISC__BUFFER_PUTUINT24(b, val);
@@ -313,7 +290,6 @@ isc_buffer_getuint32(isc_buffer_t *b) {
 	 * convert it to host byte order, and return it.
 	 */
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used - b->current >= 4);
 
 	cp = isc_buffer_current(b);
@@ -328,7 +304,6 @@ isc_buffer_getuint32(isc_buffer_t *b) {
 
 void
 isc__buffer_putuint32(isc_buffer_t *b, uint32_t val) {
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used + 4 <= b->length);
 
 	ISC__BUFFER_PUTUINT32(b, val);
@@ -339,7 +314,6 @@ isc__buffer_putuint48(isc_buffer_t *b, uint64_t val) {
 	uint16_t valhi;
 	uint32_t vallo;
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used + 6 <= b->length);
 
 	valhi = (uint16_t)(val >> 32);
@@ -352,7 +326,6 @@ void
 isc__buffer_putmem(isc_buffer_t *b, const unsigned char *base,
 		   unsigned int length)
 {
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(b->used + length <= b->length);
 
 	ISC__BUFFER_PUTMEM(b, base, length);
@@ -363,7 +336,6 @@ isc__buffer_putstr(isc_buffer_t *b, const char *source) {
 	unsigned int l;
 	unsigned char *cp;
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(source != NULL);
 
 	/*
@@ -383,7 +355,6 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r) {
 	unsigned char *base;
 	unsigned int available;
 
-	REQUIRE(ISC_BUFFER_VALID(b));
 	REQUIRE(r != NULL);
 
 	/*
@@ -415,8 +386,6 @@ isc_buffer_allocate(isc_buffer_t **dynbuffer,
 	isc_buffer_init(dbuf, ((unsigned char *)dbuf) + sizeof(isc_buffer_t),
 			length);
 
-	ENSURE(ISC_BUFFER_VALID(dbuf));
-
 	*dynbuffer = dbuf;
 
 	return (ISC_R_SUCCESS);
@@ -428,8 +397,6 @@ isc_buffer_free(isc_buffer_t **dynbuffer) {
 	isc_buffer_t *dbuf;
 
 	REQUIRE(dynbuffer != NULL);
-	REQUIRE(ISC_BUFFER_VALID(*dynbuffer));
-
 	dbuf = *dynbuffer;
 	*dynbuffer = NULL;	/* destroy external reference */
 

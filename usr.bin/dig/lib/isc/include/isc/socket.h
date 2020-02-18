@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.h,v 1.4 2020/02/18 18:10:17 florian Exp $ */
+/* $Id: socket.h,v 1.5 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -189,41 +189,6 @@ typedef enum {
 #define ISC_SOCKFDWATCH_READ	0x00000001	/*%< watch for readable */
 #define ISC_SOCKFDWATCH_WRITE	0x00000002	/*%< watch for writable */
 /*@}*/
-
-/*%
- * This structure is actually just the common prefix of a socket manager
- * object implementation's version of an isc_socketmgr_t.
- * \brief
- * Direct use of this structure by clients is forbidden.  socket implementations
- * may change the structure.  'magic' must be ISCAPI_SOCKETMGR_MAGIC for any
- * of the isc_socket_ routines to work.  socket implementations must maintain
- * all socket invariants.
- * In effect, this definition is used only for non-BIND9 version ("export")
- * of the library, and the export version does not work for win32.  So, to avoid
- * the definition conflict with win32/socket.c, we enable this definition only
- * for non-Win32 (i.e. Unix) platforms.
- */
-struct isc_socketmgr {
-	unsigned int		impmagic;
-	unsigned int		magic;
-};
-
-#define ISCAPI_SOCKETMGR_MAGIC		ISC_MAGIC('A','s','m','g')
-#define ISCAPI_SOCKETMGR_VALID(m)	((m) != NULL && \
-					 (m)->magic == ISCAPI_SOCKETMGR_MAGIC)
-
-/*%
- * This is the common prefix of a socket object.  The same note as
- * that for the socketmgr structure applies.
- */
-struct isc_socket {
-	unsigned int		impmagic;
-	unsigned int		magic;
-};
-
-#define ISCAPI_SOCKET_MAGIC	ISC_MAGIC('A','s','c','t')
-#define ISCAPI_SOCKET_VALID(s)	((s) != NULL && \
-				 (s)->magic == ISCAPI_SOCKET_MAGIC)
 
 /***
  *** Socket and Socket Manager Functions

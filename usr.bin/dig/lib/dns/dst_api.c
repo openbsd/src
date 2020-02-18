@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.4 2020/02/12 09:39:53 florian Exp $
+ * $Id: dst_api.c,v 1.5 2020/02/18 18:11:27 florian Exp $
  */
 
 /*! \file */
@@ -180,7 +180,6 @@ dst_context_create4(dst_key_t *key,
 	isc_result_t result;
 
 	REQUIRE(dst_initialized == ISC_TRUE);
-	REQUIRE(VALID_KEY(key));
 	REQUIRE(dctxp != NULL && *dctxp == NULL);
 
 	if (key->func->createctx == NULL &&
@@ -209,7 +208,6 @@ dst_context_create4(dst_key_t *key,
 		free(dctx);
 		return (result);
 	}
-	dctx->magic = CTX_MAGIC;
 	*dctxp = dctx;
 	return (ISC_R_SUCCESS);
 }
@@ -218,21 +216,19 @@ void
 dst_context_destroy(dst_context_t **dctxp) {
 	dst_context_t *dctx;
 
-	REQUIRE(dctxp != NULL && VALID_CTX(*dctxp));
+	REQUIRE(dctxp != NULL);
 
 	dctx = *dctxp;
 	INSIST(dctx->key->func->destroyctx != NULL);
 	dctx->key->func->destroyctx(dctx);
 	if (dctx->key != NULL)
 		dst_key_free(&dctx->key);
-	dctx->magic = 0;
 	free(dctx);
 	*dctxp = NULL;
 }
 
 isc_result_t
 dst_context_adddata(dst_context_t *dctx, const isc_region_t *data) {
-	REQUIRE(VALID_CTX(dctx));
 	REQUIRE(data != NULL);
 	INSIST(dctx->key->func->adddata != NULL);
 
@@ -243,7 +239,6 @@ isc_result_t
 dst_context_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	dst_key_t *key;
 
-	REQUIRE(VALID_CTX(dctx));
 	REQUIRE(sig != NULL);
 
 	key = dctx->key;
@@ -262,7 +257,6 @@ dst_context_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 isc_result_t
 dst_context_verify(dst_context_t *dctx, isc_region_t *sig) {
-	REQUIRE(VALID_CTX(dctx));
 	REQUIRE(sig != NULL);
 
 	CHECKALG(dctx->key->key_alg);
@@ -278,7 +272,6 @@ isc_result_t
 dst_context_verify2(dst_context_t *dctx, unsigned int maxbits,
 		    isc_region_t *sig)
 {
-	REQUIRE(VALID_CTX(dctx));
 	REQUIRE(sig != NULL);
 
 	CHECKALG(dctx->key->key_alg);
@@ -398,7 +391,6 @@ dst_key_fromnamedfile(const char *filename, const char *dirname,
 isc_result_t
 dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
 	REQUIRE(dst_initialized == ISC_TRUE);
-	REQUIRE(VALID_KEY(key));
 	REQUIRE(target != NULL);
 
 	CHECKALG(key->key_alg);
@@ -499,7 +491,6 @@ dst_key_attach(dst_key_t *source, dst_key_t **target) {
 
 	REQUIRE(dst_initialized == ISC_TRUE);
 	REQUIRE(target != NULL && *target == NULL);
-	REQUIRE(VALID_KEY(source));
 
 	isc_refcount_increment(&source->refs, NULL);
 	*target = source;
@@ -511,7 +502,7 @@ dst_key_free(dst_key_t **keyp) {
 	unsigned int refs;
 
 	REQUIRE(dst_initialized == ISC_TRUE);
-	REQUIRE(keyp != NULL && VALID_KEY(*keyp));
+	REQUIRE(keyp != NULL);
 
 	key = *keyp;
 
@@ -541,7 +532,6 @@ dst_key_free(dst_key_t **keyp) {
 isc_result_t
 dst_key_sigsize(const dst_key_t *key, unsigned int *n) {
 	REQUIRE(dst_initialized == ISC_TRUE);
-	REQUIRE(VALID_KEY(key));
 	REQUIRE(n != NULL);
 
 	/* XXXVIX this switch statement is too sparse to gen a jump table. */
@@ -626,7 +616,6 @@ get_key_struct(dns_name_t *name, unsigned int alg,
 		key->timeset[i] = ISC_FALSE;
 	}
 	key->inactive = ISC_FALSE;
-	key->magic = KEY_MAGIC;
 	return (key);
 }
 

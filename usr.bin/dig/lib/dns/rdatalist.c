@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatalist.c,v 1.1 2020/02/07 09:58:52 florian Exp $ */
+/* $Id: rdatalist.c,v 1.2 2020/02/18 18:11:27 florian Exp $ */
 
 /*! \file */
 
@@ -74,7 +74,6 @@ dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist,
 	 */
 
 	REQUIRE(rdatalist != NULL);
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(! dns_rdataset_isassociated(rdataset));
 
 	rdataset->methods = &methods;

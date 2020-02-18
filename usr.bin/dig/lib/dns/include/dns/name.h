@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.5 2020/02/13 16:55:20 florian Exp $ */
+/* $Id: name.h,v 1.6 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -73,7 +73,6 @@
 #include <stdio.h>
 
 #include <isc/boolean.h>
-#include <isc/magic.h>
 #include <isc/region.h>		/* Required for storage size of dns_label_t. */
 
 #include <dns/types.h>
@@ -104,7 +103,6 @@
  * for whatever purpose the client desires.
  */
 struct dns_name {
-	unsigned int			magic;
 	unsigned char *			ndata;
 	unsigned int			length;
 	unsigned int			labels;
@@ -114,8 +112,6 @@ struct dns_name {
 	ISC_LINK(dns_name_t)		link;
 	ISC_LIST(dns_rdataset_t)	list;
 };
-
-#define DNS_NAME_MAGIC			ISC_MAGIC('D','N','S','n')
 
 #define DNS_NAMEATTR_ABSOLUTE		0x00000001
 #define DNS_NAMEATTR_READONLY		0x00000002
@@ -1103,7 +1099,6 @@ dns_name_isdnssd(const dns_name_t *owner);
  */
 
 #define DNS_NAME_INITABSOLUTE(A,B) { \
-	DNS_NAME_MAGIC, \
 	A, sizeof(A), sizeof(B), \
 	DNS_NAMEATTR_READONLY | DNS_NAMEATTR_ABSOLUTE, \
 	B, NULL, { (void *)-1, (void *)-1}, \
@@ -1111,7 +1106,6 @@ dns_name_isdnssd(const dns_name_t *owner);
 }
 
 #define DNS_NAME_INITNONABSOLUTE(A,B) { \
-	DNS_NAME_MAGIC, \
 	A, (sizeof(A) - 1), sizeof(B), \
 	DNS_NAMEATTR_READONLY, \
 	B, NULL, { (void *)-1, (void *)-1}, \

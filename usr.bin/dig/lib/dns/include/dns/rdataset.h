@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.4 2020/02/16 21:12:41 florian Exp $ */
+/* $Id: rdataset.h,v 1.5 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -49,8 +49,6 @@
  * Standards:
  *\li	None.
  */
-
-#include <isc/magic.h>
 
 #include <dns/types.h>
 #include "rdatastruct.h"
@@ -112,9 +110,6 @@ typedef struct dns_rdatasetmethods {
 	void			(*clearprefetch)(dns_rdataset_t *rdataset);
 } dns_rdatasetmethods_t;
 
-#define DNS_RDATASET_MAGIC	       ISC_MAGIC('D','N','S','R')
-#define DNS_RDATASET_VALID(set)	       ISC_MAGIC_VALID(set, DNS_RDATASET_MAGIC)
-
 /*%
  * Direct use of this structure by clients is strongly discouraged, except
  * for the 'link' field which may be used however the client wishes.  The
@@ -122,7 +117,6 @@ typedef struct dns_rdatasetmethods {
  * rdataset implementations may change any of the fields.
  */
 struct dns_rdataset {
-	unsigned int			magic;		/* XXX ? */
 	dns_rdatasetmethods_t *		methods;
 	ISC_LINK(dns_rdataset_t)	link;
 	/*

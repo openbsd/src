@@ -31,14 +31,12 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.5 2020/02/16 21:12:41 florian Exp $ */
+/* $Id: dst_internal.h,v 1.6 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
 
 #include <isc/buffer.h>
-
-#include <isc/magic.h>
 #include <isc/region.h>
 #include <isc/types.h>
 #include <isc/refcount.h>
@@ -47,19 +45,12 @@
 #include <isc/hmacsha.h>
 
 #include <dns/time.h>
-
 #include <dst/dst.h>
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
-
-#define KEY_MAGIC	ISC_MAGIC('D','S','T','K')
-#define CTX_MAGIC	ISC_MAGIC('D','S','T','C')
-
-#define VALID_KEY(x) ISC_MAGIC_VALID(x, KEY_MAGIC)
-#define VALID_CTX(x) ISC_MAGIC_VALID(x, CTX_MAGIC)
 
 /***
  *** Types
@@ -81,7 +72,6 @@ typedef enum { DO_SIGN, DO_VERIFY } dst_use_t;
 
 /*% DST Key Structure */
 struct dst_key {
-	unsigned int	magic;
 	isc_refcount_t	refs;
 	dns_name_t *	key_name;	/*%< name of the key */
 	unsigned int	key_size;	/*%< size of the key in bits */
@@ -123,7 +113,6 @@ struct dst_key {
 };
 
 struct dst_context {
-	unsigned int magic;
 	dst_use_t use;
 	dst_key_t *key;
 	isc_logcategory_t *category;

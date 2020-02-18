@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig.h,v 1.4 2020/02/17 19:45:00 jung Exp $ */
+/* $Id: tsig.h,v 1.5 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef DNS_TSIG_H
 #define DNS_TSIG_H 1
@@ -49,7 +49,6 @@ extern dns_name_t *dns_tsig_hmacsha512_name;
 
 struct dns_tsigkey {
 	/* Unlocked */
-	unsigned int		magic;		/*%< Magic number. */
 	dst_key_t		*key;		/*%< Key */
 	dns_name_t		name;		/*%< Key name */
 	dns_name_t		*algorithm;	/*%< Algorithm name */

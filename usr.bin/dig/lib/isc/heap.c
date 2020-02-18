@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.c,v 1.3 2020/02/13 08:18:44 florian Exp $ */
+/* $Id: heap.c,v 1.4 2020/02/18 18:11:27 florian Exp $ */
 
 /*! \file
  * Heap implementation of priority queues adapted from the following:
@@ -29,7 +29,6 @@
 
 #include <stdlib.h>
 #include <isc/heap.h>
-#include <isc/magic.h>
 #include <string.h>
 #include <isc/util.h>
 
@@ -46,9 +45,6 @@
 
 #define SIZE_INCREMENT			1024
 
-#define HEAP_MAGIC			ISC_MAGIC('H', 'E', 'A', 'P')
-#define VALID_HEAP(h)			ISC_MAGIC_VALID(h, HEAP_MAGIC)
-
 /*%
  * When the heap is in a consistent state, the following invariant
  * holds true: for every element i > 1, heap_parent(i) has a priority
@@ -60,7 +56,6 @@
 
 /*% ISC heap structure. */
 struct isc_heap {
-	unsigned int			magic;
 	unsigned int			size;
 	unsigned int			size_increment;
 	unsigned int			last;
@@ -82,7 +77,6 @@ isc_heap_create(isc_heapcompare_t compare,
 	heap = malloc(sizeof(*heap));
 	if (heap == NULL)
 		return (ISC_R_NOMEMORY);
-	heap->magic = HEAP_MAGIC;
 	heap->size = 0;
 	if (size_increment == 0)
 		heap->size_increment = SIZE_INCREMENT;
@@ -104,10 +98,8 @@ isc_heap_destroy(isc_heap_t **heapp) {
 
 	REQUIRE(heapp != NULL);
 	heap = *heapp;
-	REQUIRE(VALID_HEAP(heap));
 
 	free(heap->array);
-	heap->magic = 0;
 	free(heap);
 
 	*heapp = NULL;
@@ -118,7 +110,6 @@ resize(isc_heap_t *heap) {
 	void **new_array;
 	unsigned int new_size;
 
-	REQUIRE(VALID_HEAP(heap));
 
 	new_size = heap->size + heap->size_increment;
 	new_array = malloc(new_size * sizeof(void *));
@@ -181,7 +172,6 @@ isc_result_t
 isc_heap_insert(isc_heap_t *heap, void *elt) {
 	unsigned int new_last;
 
-	REQUIRE(VALID_HEAP(heap));
 
 	new_last = heap->last + 1;
 	RUNTIME_CHECK(new_last > 0); /* overflow check */
@@ -199,7 +189,6 @@ isc_heap_delete(isc_heap_t *heap, unsigned int idx) {
 	void *elt;
 	isc_boolean_t less;
 
-	REQUIRE(VALID_HEAP(heap));
 	REQUIRE(idx >= 1 && idx <= heap->last);
 
 	if (heap->index != NULL)
@@ -223,7 +212,6 @@ isc_heap_delete(isc_heap_t *heap, unsigned int idx) {
 
 void
 isc_heap_increased(isc_heap_t *heap, unsigned int idx) {
-	REQUIRE(VALID_HEAP(heap));
 	REQUIRE(idx >= 1 && idx <= heap->last);
 
 	float_up(heap, idx, heap->array[idx]);
@@ -231,7 +219,6 @@ isc_heap_increased(isc_heap_t *heap, unsigned int idx) {
 
 void
 isc_heap_decreased(isc_heap_t *heap, unsigned int idx) {
-	REQUIRE(VALID_HEAP(heap));
 	REQUIRE(idx >= 1 && idx <= heap->last);
 
 	sink_down(heap, idx, heap->array[idx]);
@@ -239,7 +226,6 @@ isc_heap_decreased(isc_heap_t *heap, unsigned int idx) {
 
 void *
 isc_heap_element(isc_heap_t *heap, unsigned int idx) {
-	REQUIRE(VALID_HEAP(heap));
 	REQUIRE(idx >= 1);
 
 	if (idx <= heap->last)

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task.h,v 1.5 2020/02/18 18:10:17 florian Exp $ */
+/* $Id: task.h,v 1.6 2020/02/18 18:11:27 florian Exp $ */
 
 #ifndef ISC_TASK_H
 #define ISC_TASK_H 1
@@ -99,37 +99,6 @@ typedef enum {
 		isc_taskmgrmode_normal = 0,
 		isc_taskmgrmode_privileged
 } isc_taskmgrmode_t;
-
-/*%
- * This structure is actually just the common prefix of a task manager
- * object implementation's version of an isc_taskmgr_t.
- * \brief
- * Direct use of this structure by clients is forbidden.  task implementations
- * may change the structure.  'magic' must be ISCAPI_TASKMGR_MAGIC for any
- * of the isc_task_ routines to work.  task implementations must maintain
- * all task invariants.
- */
-struct isc_taskmgr {
-	unsigned int		impmagic;
-	unsigned int		magic;
-};
-
-#define ISCAPI_TASKMGR_MAGIC	ISC_MAGIC('A','t','m','g')
-#define ISCAPI_TASKMGR_VALID(m)	((m) != NULL && \
-				 (m)->magic == ISCAPI_TASKMGR_MAGIC)
-
-/*%
- * This is the common prefix of a task object.  The same note as
- * that for the taskmgr structure applies.
- */
-struct isc_task {
-	unsigned int		impmagic;
-	unsigned int		magic;
-};
-
-#define ISCAPI_TASK_MAGIC	ISC_MAGIC('A','t','s','t')
-#define ISCAPI_TASK_VALID(s)	((s) != NULL && \
-				 (s)->magic == ISCAPI_TASK_MAGIC)
 
 isc_result_t
 isc_task_create(isc_taskmgr_t *manager, unsigned int quantum,
