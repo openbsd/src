@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx.c,v 1.21 2017/10/09 20:06:36 stsp Exp $	*/
+/*	$OpenBSD: rtsx.c,v 1.22 2020/02/18 00:06:56 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -1008,7 +1008,7 @@ rtsx_xfer_exec(struct rtsx_softc *sc, bus_dmamap_t dmap, int dmaflags)
 	splx(s);
 
 	/* Wait for completion. */
-	return rtsx_wait_intr(sc, RTSX_TRANS_OK_INT, 10*hz);
+	return rtsx_wait_intr(sc, RTSX_TRANS_OK_INT, 10);
 }
 
 int
@@ -1315,7 +1315,7 @@ rtsx_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	/* Run the command queue and wait for completion. */
 	error = rtsx_hostcmd_send(sc, ncmd);
 	if (error == 0)
-		error = rtsx_wait_intr(sc, RTSX_TRANS_OK_INT, hz);
+		error = rtsx_wait_intr(sc, RTSX_TRANS_OK_INT, 1);
 	if (error)
 		goto unload_cmdbuf;
 
@@ -1381,7 +1381,7 @@ rtsx_soft_reset(struct rtsx_softc *sc)
 }
 
 int
-rtsx_wait_intr(struct rtsx_softc *sc, int mask, int timo)
+rtsx_wait_intr(struct rtsx_softc *sc, int mask, int secs)
 {
 	int status;
 	int error = 0;
@@ -1392,8 +1392,8 @@ rtsx_wait_intr(struct rtsx_softc *sc, int mask, int timo)
 	s = splsdmmc();
 	status = sc->intr_status & mask;
 	while (status == 0) {
-		if (tsleep(&sc->intr_status, PRIBIO, "rtsxintr", timo)
-		    == EWOULDBLOCK) {
+		if (tsleep_nsec(&sc->intr_status, PRIBIO, "rtsxintr",
+		    SEC_TO_NSEC(secs)) == EWOULDBLOCK) {
 			rtsx_soft_reset(sc);
 			error = ETIMEDOUT;
 			break;
