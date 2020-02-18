@@ -189,47 +189,6 @@ pop_readyq(isc__taskmgr_t *manager);
 static inline void
 push_readyq(isc__taskmgr_t *manager, isc__task_t *task);
 
-static struct isc__taskmethods {
-	isc_taskmethods_t methods;
-
-	/*%
-	 * The following are defined just for avoiding unused static functions.
-	 */
-	void *purgeevent, *unsendrange, *getname, *gettag, *getcurrenttime;
-} taskmethods = {
-	{
-		isc__task_attach,
-		isc__task_detach,
-		isc__task_destroy,
-		isc__task_send,
-		isc__task_sendanddetach,
-		isc__task_unsend,
-		isc__task_onshutdown,
-		isc__task_shutdown,
-		isc__task_setname,
-		isc__task_purge,
-		isc__task_purgerange,
-		isc__task_beginexclusive,
-		isc__task_endexclusive,
-		isc__task_setprivilege,
-		isc__task_privilege
-	},
-	(void *)isc_task_purgeevent,
-	(void *)isc__task_unsendrange,
-	(void *)isc__task_getname,
-	(void *)isc__task_gettag,
-	(void *)isc__task_getcurrenttime
-};
-
-static isc_taskmgrmethods_t taskmgrmethods = {
-	isc__taskmgr_destroy,
-	isc__taskmgr_setmode,
-	isc__taskmgr_mode,
-	isc__task_create,
-	isc_taskmgr_setexcltask,
-	isc_taskmgr_excltask
-};
-
 /***
  *** Tasks.
  ***/
@@ -293,7 +252,6 @@ isc__task_create(isc_taskmgr_t *manager0, unsigned int quantum,
 		return (ISC_R_SHUTTINGDOWN);
 	}
 
-	task->common.methods = (isc_taskmethods_t *)&taskmethods;
 	task->common.magic = ISCAPI_TASK_MAGIC;
 	task->common.impmagic = TASK_MAGIC;
 	*taskp = (isc_task_t *)task;
@@ -1035,7 +993,6 @@ isc__taskmgr_create(unsigned int workers,
 	manager = malloc(sizeof(*manager));
 	if (manager == NULL)
 		return (ISC_R_NOMEMORY);
-	manager->common.methods = &taskmgrmethods;
 	manager->common.impmagic = TASK_MANAGER_MAGIC;
 	manager->common.magic = ISCAPI_TASKMGR_MAGIC;
 	manager->mode = isc_taskmgrmode_normal;

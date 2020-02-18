@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task.h,v 1.4 2020/02/16 21:12:41 florian Exp $ */
+/* $Id: task.h,v 1.5 2020/02/18 18:10:17 florian Exp $ */
 
 #ifndef ISC_TASK_H
 #define ISC_TASK_H 1
@@ -100,42 +100,6 @@ typedef enum {
 		isc_taskmgrmode_privileged
 } isc_taskmgrmode_t;
 
-/*% Task and task manager methods */
-typedef struct isc_taskmgrmethods {
-	void		(*destroy)(isc_taskmgr_t **managerp);
-	void		(*setmode)(isc_taskmgr_t *manager,
-				   isc_taskmgrmode_t mode);
-	isc_taskmgrmode_t (*mode)(isc_taskmgr_t *manager);
-	isc_result_t	(*taskcreate)(isc_taskmgr_t *manager,
-				      unsigned int quantum,
-				      isc_task_t **taskp);
-	void (*setexcltask)(isc_taskmgr_t *mgr, isc_task_t *task);
-	isc_result_t (*excltask)(isc_taskmgr_t *mgr, isc_task_t **taskp);
-} isc_taskmgrmethods_t;
-
-typedef struct isc_taskmethods {
-	void (*attach)(isc_task_t *source, isc_task_t **targetp);
-	void (*detach)(isc_task_t **taskp);
-	void (*destroy)(isc_task_t **taskp);
-	void (*send)(isc_task_t *task, isc_event_t **eventp);
-	void (*sendanddetach)(isc_task_t **taskp, isc_event_t **eventp);
-	unsigned int (*unsend)(isc_task_t *task, void *sender, isc_eventtype_t type,
-			       void *tag, isc_eventlist_t *events);
-	isc_result_t (*onshutdown)(isc_task_t *task, isc_taskaction_t action,
-				   void *arg);
-	void (*shutdown)(isc_task_t *task);
-	void (*setname)(isc_task_t *task, const char *name, void *tag);
-	unsigned int (*purgeevents)(isc_task_t *task, void *sender,
-				    isc_eventtype_t type, void *tag);
-	unsigned int (*purgerange)(isc_task_t *task, void *sender,
-				   isc_eventtype_t first, isc_eventtype_t last,
-				   void *tag);
-	isc_result_t (*beginexclusive)(isc_task_t *task);
-	void (*endexclusive)(isc_task_t *task);
-    void (*setprivilege)(isc_task_t *task, isc_boolean_t priv);
-    isc_boolean_t (*privilege)(isc_task_t *task);
-} isc_taskmethods_t;
-
 /*%
  * This structure is actually just the common prefix of a task manager
  * object implementation's version of an isc_taskmgr_t.
@@ -148,7 +112,6 @@ typedef struct isc_taskmethods {
 struct isc_taskmgr {
 	unsigned int		impmagic;
 	unsigned int		magic;
-	isc_taskmgrmethods_t	*methods;
 };
 
 #define ISCAPI_TASKMGR_MAGIC	ISC_MAGIC('A','t','m','g')
@@ -162,7 +125,6 @@ struct isc_taskmgr {
 struct isc_task {
 	unsigned int		impmagic;
 	unsigned int		magic;
-	isc_taskmethods_t	*methods;
 };
 
 #define ISCAPI_TASK_MAGIC	ISC_MAGIC('A','t','s','t')

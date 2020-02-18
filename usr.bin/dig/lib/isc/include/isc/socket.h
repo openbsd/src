@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.h,v 1.3 2020/02/16 18:05:09 florian Exp $ */
+/* $Id: socket.h,v 1.4 2020/02/18 18:10:17 florian Exp $ */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -190,27 +190,6 @@ typedef enum {
 #define ISC_SOCKFDWATCH_WRITE	0x00000002	/*%< watch for writable */
 /*@}*/
 
-/*% Socket and socket manager methods */
-typedef struct isc_socketmgrmethods {
-	void		(*destroy)(isc_socketmgr_t **managerp);
-	isc_result_t	(*socketcreate)(isc_socketmgr_t *manager, int pf,
-					isc_sockettype_t type,
-					isc_socket_t **socketp);
-} isc_socketmgrmethods_t;
-
-typedef struct isc_socketmethods {
-	void		(*attach)(isc_socket_t *socket,
-				  isc_socket_t **socketp);
-	void		(*detach)(isc_socket_t **socketp);
-	isc_result_t	(*bind)(isc_socket_t *sock, isc_sockaddr_t *sockaddr,
-				unsigned int options);
-	isc_result_t	(*connect)(isc_socket_t *sock, isc_sockaddr_t *addr,
-				   isc_task_t *task, isc_taskaction_t action,
-				   void *arg);
-	void		(*cancel)(isc_socket_t *sock, isc_task_t *task,
-				  unsigned int how);
-} isc_socketmethods_t;
-
 /*%
  * This structure is actually just the common prefix of a socket manager
  * object implementation's version of an isc_socketmgr_t.
@@ -227,7 +206,6 @@ typedef struct isc_socketmethods {
 struct isc_socketmgr {
 	unsigned int		impmagic;
 	unsigned int		magic;
-	isc_socketmgrmethods_t	*methods;
 };
 
 #define ISCAPI_SOCKETMGR_MAGIC		ISC_MAGIC('A','s','m','g')
@@ -241,7 +219,6 @@ struct isc_socketmgr {
 struct isc_socket {
 	unsigned int		impmagic;
 	unsigned int		magic;
-	isc_socketmethods_t	*methods;
 };
 
 #define ISCAPI_SOCKET_MAGIC	ISC_MAGIC('A','s','c','t')

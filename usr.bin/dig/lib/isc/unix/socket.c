@@ -268,30 +268,6 @@ isc__socketmgr_create2(isc_socketmgr_t **managerp,
 void
 isc__socketmgr_destroy(isc_socketmgr_t **managerp);
 
-static struct {
-	isc_socketmethods_t methods;
-
-	/*%
-	 * The following are defined just for avoiding unused static functions.
-	 */
-	void *recvv, *sendv;
-} socketmethods = {
-	{
-		isc__socket_attach,
-		isc__socket_detach,
-		isc__socket_bind,
-		isc__socket_connect,
-		isc__socket_cancel,
-	},
-	(void *)isc__socket_recvv,
-	(void *)isc__socket_sendv,
-};
-
-static isc_socketmgrmethods_t socketmgrmethods = {
-	isc__socketmgr_destroy,
-	isc__socket_create
-};
-
 #define SELECT_POKE_SHUTDOWN		(-1)
 #define SELECT_POKE_READ		(-3)
 #define SELECT_POKE_WRITE		(-4)
@@ -1446,7 +1422,6 @@ socket_create(isc_socketmgr_t *manager0, int pf, isc_sockettype_t type,
 		return (result);
 	}
 
-	sock->common.methods = (isc_socketmethods_t *)&socketmethods;
 	sock->references = 1;
 	*socketp = (isc_socket_t *)sock;
 
@@ -1933,7 +1908,6 @@ isc__socketmgr_create2(isc_socketmgr_t **managerp,
 		goto free_manager;
 	}
 
-	manager->common.methods = &socketmgrmethods;
 	manager->common.magic = ISCAPI_SOCKETMGR_MAGIC;
 	manager->common.impmagic = SOCKET_MANAGER_MAGIC;
 	memset(manager->fds, 0, manager->maxsocks * sizeof(isc_socket_t *));
