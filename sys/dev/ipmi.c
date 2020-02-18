@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.108 2020/01/11 18:51:54 kettenis Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.109 2020/02/18 00:06:12 cheloha Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -55,7 +55,7 @@ struct ipmi_sensor {
 
 int	ipmi_enabled = 0;
 
-#define SENSOR_REFRESH_RATE (5 * hz)
+#define SENSOR_REFRESH_RATE 5	/* seconds */
 
 #define DEVNAME(s)  ((s)->sc_dev.dv_xname)
 
@@ -1498,7 +1498,8 @@ ipmi_poll_thread(void *arg)
 
 	while (thread->running) {
 		ipmi_refresh_sensors(sc);
-		tsleep(thread, PWAIT, "ipmi_poll", SENSOR_REFRESH_RATE);
+		tsleep_nsec(thread, PWAIT, "ipmi_poll",
+		    SEC_TO_NSEC(SENSOR_REFRESH_RATE));
 	}
 
 done:
