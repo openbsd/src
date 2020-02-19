@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.119 2020/02/16 16:39:01 jsing Exp $
+.\" $OpenBSD: openssl.1,v 1.120 2020/02/19 20:42:12 kn Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: February 16 2020 $
+.Dd $Mdocdate: February 19 2020 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -200,6 +200,7 @@ is not able to detect pseudo-commands such as
 or
 .Cm no- Ns Ar command
 itself.
+.Tg asn1parse
 .Sh ASN1PARSE
 .Bl -hang -width "openssl asn1parse"
 .It Nm openssl asn1parse
@@ -296,6 +297,7 @@ This option can be used multiple times to
 .Qq drill down
 into a nested structure.
 .El
+.Tg ca
 .Sh CA
 .Bl -hang -width "openssl ca"
 .It Nm openssl ca
@@ -845,6 +847,7 @@ The default value is
 The same as
 .Fl extensions .
 .El
+.Tg ciphers
 .Sh CIPHERS
 .Nm openssl ciphers
 .Op Fl hVv
@@ -877,6 +880,7 @@ Like
 .Fl V ,
 but without cipher suite codes.
 .El
+.Tg cms
 .Sh CMS
 .Bl -hang -width "openssl cms"
 .It Nm openssl cms
@@ -1393,6 +1397,7 @@ A verify error occurred while
 .Fl verify_retcode
 is specified.
 .El
+.Tg crl
 .Sh CRL
 .Bl -hang -width "openssl crl"
 .It Nm openssl crl
@@ -1469,6 +1474,7 @@ Print the CRL in plain text.
 .It Fl verify
 Verify the signature on the CRL.
 .El
+.Tg crl2pkcs7
 .Sh CRL2PKCS7
 .Bl -hang -width "openssl crl2pkcs7"
 .It Nm openssl crl2pkcs7
@@ -1514,6 +1520,7 @@ or standard output if not specified.
 .It Fl outform Cm der | pem
 The output format.
 .El
+.Tg dgst
 .Sh DGST
 .Bl -hang -width "openssl dgst"
 .It Nm openssl dgst
@@ -1628,6 +1635,7 @@ or
 File or files to digest.
 If no files are specified then standard input is used.
 .El
+.Tg dhparam
 .Sh DHPARAM
 .Bl -hang -width "openssl dhparam"
 .It Nm openssl dhparam
@@ -1704,6 +1712,7 @@ If not present, a value of 2048 is used.
 If this value is present, the input file is ignored and
 parameters are generated instead.
 .El
+.Tg dsa
 .Sh DSA
 .Bl -hang -width "openssl dsa"
 .It Nm openssl dsa
@@ -1792,6 +1801,7 @@ The default is
 .It Fl text
 Print the public/private key in plain text.
 .El
+.Tg dsaparam
 .Sh DSAPARAM
 .Bl -hang -width "openssl dsaparam"
 .It Nm openssl dsaparam
@@ -1844,6 +1854,7 @@ Generate a parameter set of size
 .Ar numbits .
 If this option is included, the input file is ignored.
 .El
+.Tg ec
 .Sh EC
 .Bl -hang -width "openssl ec"
 .It Nm openssl ec
@@ -1956,6 +1967,7 @@ Automatically set if the input is a public key.
 .It Fl text
 Print the public/private key in plain text.
 .El
+.Tg ecparam
 .Sh ECPARAM
 .Bl -hang -width "openssl ecparam"
 .It Nm openssl ecparam
@@ -2051,6 +2063,7 @@ is currently not implemented.
 .It Fl text
 Print the EC parameters in plain text.
 .El
+.Tg enc
 .Sh ENC
 .Bl -hang -width "openssl enc"
 .It Nm openssl enc
@@ -2214,6 +2227,7 @@ encrypted file when it is decrypted.
 .It Fl v
 Print extra details about the processing.
 .El
+.Tg errstr
 .Sh ERRSTR
 .Nm openssl errstr
 .Op Fl stats
@@ -2244,6 +2258,7 @@ The options are as follows:
 .It Fl stats
 Print debugging statistics about various aspects of the hash table.
 .El
+.Tg gendsa
 .Sh GENDSA
 .Bl -hang -width "openssl gendsa"
 .It Nm openssl gendsa
@@ -2290,6 +2305,7 @@ The output file password source.
 Specify the DSA parameter file to use.
 The parameters in this file determine the size of the private key.
 .El
+.Tg genpkey
 .Sh GENPKEY
 .Bl -hang -width "openssl genpkey"
 .It Nm openssl genpkey
@@ -2394,6 +2410,7 @@ The EC curve to use.
 .It Fl text
 Print the private/public key in plain text.
 .El
+.Tg genrsa
 .Sh GENRSA
 .Bl -hang -width "openssl genrsa"
 .It Nm openssl genrsa
@@ -2451,6 +2468,7 @@ The size of the private key to generate in bits.
 This must be the last option specified.
 The default is 2048.
 .El
+.Tg nseq
 .Sh NSEQ
 .Nm openssl nseq
 .Op Fl in Ar file
@@ -2481,6 +2499,7 @@ With the
 option the situation is reversed:
 a Netscape certificate sequence is created from a file of certificates.
 .El
+.Tg ocsp
 .Sh OCSP
 .Bl -hang -width "openssl ocsp"
 .It Nm openssl ocsp
@@ -2833,6 +2852,7 @@ Alternatively, the responder certificate itself can be explicitly trusted
 with the
 .Fl VAfile
 option.
+.Tg passwd
 .Sh PASSWD
 .Bl -hang -width "openssl passwd"
 .It Nm openssl passwd
@@ -2896,6 +2916,7 @@ Read passwords from standard input.
 In the output list, prepend the cleartext password and a TAB character
 to each password hash.
 .El
+.Tg pkcs7
 .Sh PKCS7
 .Bl -hang -width "openssl pkcs7"
 .It Nm openssl pkcs7
@@ -2941,6 +2962,7 @@ preceded by their subject and issuer names in a one-line format.
 .It Fl text
 Print certificate details in full rather than just subject and issuer names.
 .El
+.Tg pkcs8
 .Sh PKCS8
 .Bl -hang -width "openssl pkcs8"
 .It Nm openssl pkcs8
@@ -3024,6 +3046,7 @@ is the encryption algorithm to use;
 valid values include des, des3, and rc2.
 It is recommended that des3 is used.
 .El
+.Tg pkcs12
 .Sh PKCS12
 .Bl -hang -width "openssl pkcs12"
 .It Nm openssl pkcs12
@@ -3241,6 +3264,7 @@ Otherwise,
 is equivalent to
 .Fl passin .
 .El
+.Tg pkey
 .Sh PKEY
 .Bl -hang -width "openssl pkey"
 .It Nm openssl pkey
@@ -3304,6 +3328,7 @@ Print the public/private key in plain text.
 Print out only public key components
 even if a private key is being processed.
 .El
+.Tg pkeyparam
 .Sh PKEYPARAM
 .Cm openssl pkeyparam
 .Op Fl in Ar file
@@ -3329,6 +3354,7 @@ or standard output if not specified.
 .It Fl text
 Print the parameters in plain text.
 .El
+.Tg pkeyutl
 .Sh PKEYUTL
 .Bl -hang -width "openssl pkeyutl"
 .It Nm openssl pkeyutl
@@ -3481,6 +3507,7 @@ verification succeeded or failed.
 .It Fl verifyrecover
 Verify the input data and output the recovered data.
 .El
+.Tg prime
 .Sh PRIME
 .Cm openssl prime
 .Op Fl bits Ar n
@@ -3525,6 +3552,7 @@ Test if number
 .Ar p
 is prime.
 .El
+.Tg rand
 .Sh RAND
 .Bl -hang -width "openssl rand"
 .It Nm openssl rand
@@ -3552,6 +3580,7 @@ Specify hexadecimal output.
 The output file to write to,
 or standard output if not specified.
 .El
+.Tg req
 .Sh REQ
 .Bl -hang -width "openssl req"
 .It Nm openssl req
@@ -4001,6 +4030,7 @@ or
 options in the configuration file.
 Any additional fields will be treated as though they were a
 .Cm DirectoryString .
+.Tg rsa
 .Sh RSA
 .Bl -hang -width "openssl rsa"
 .It Nm openssl rsa
@@ -4098,6 +4128,7 @@ and SGC keys.
 .It Fl text
 Print the public/private key components in plain text.
 .El
+.Tg rsautl
 .Sh RSAUTL
 .Bl -hang -width "openssl rsautl"
 .It Nm openssl rsautl
@@ -4172,6 +4203,7 @@ This requires an RSA private key.
 .It Fl verify
 Verify the input data and output the recovered data.
 .El
+.Tg s_client
 .Sh S_CLIENT
 .Bl -hang -width "openssl s_client"
 .It Nm openssl s_client
@@ -4470,6 +4502,7 @@ If this option is not specified then the host specified with
 .Fl connect
 will be used.
 .El
+.Tg s_server
 .Sh S_SERVER
 .Bl -hang -width "openssl s_server"
 .It Nm openssl s_server
@@ -4775,6 +4808,7 @@ with
 .Fl verify ,
 a certificate is requested but the client does not have to send one.
 .El
+.Tg s_time
 .Sh S_TIME
 .Bl -hang -width "openssl s_time"
 .It Nm openssl s_time
@@ -4885,6 +4919,7 @@ If this parameter is not specified,
 will only perform the handshake to establish SSL connections
 but not transfer any payload data.
 .El
+.Tg sess_id
 .Sh SESS_ID
 .Bl -hang -width "openssl sess_id"
 .It Nm openssl sess_id
@@ -4977,6 +5012,7 @@ should be taken if the information is being output by a
 application.
 This is, however, strongly discouraged and should only be used for
 debugging purposes.
+.Tg smime
 .Sh SMIME
 .Bl -hang -width "openssl smime"
 .It Nm openssl smime
@@ -5273,6 +5309,7 @@ An error occurred decrypting or verifying the message.
 .It 5
 An error occurred writing certificates.
 .El
+.Tg speed
 .Sh SPEED
 .Bl -hang -width "openssl speed"
 .It Nm openssl speed
@@ -5310,6 +5347,7 @@ Run
 .Ar number
 benchmarks in parallel.
 .El
+.Tg spkac
 .Sh SPKAC
 .Bl -hang -width "openssl spkac"
 .It Nm openssl spkac
@@ -5371,6 +5409,7 @@ containing the SPKAC.
 .It Fl verify
 Verify the digital signature on the supplied SPKAC.
 .El
+.Tg ts
 .Sh TS
 .Bk -words
 .Bl -hang -width "openssl ts"
@@ -5733,6 +5772,7 @@ If this variable is set to no,
 only the signing certificate identifier is included.
 The default is no.
 .El
+.Tg verify
 .Sh VERIFY
 .Bl -hang -width "openssl verify"
 .It Nm openssl verify
@@ -6060,6 +6100,7 @@ extension does not permit certificate signing.
 An application specific error.
 Unused.
 .El
+.Tg version
 .Sh VERSION
 .Nm openssl version
 .Op Fl abdfopv
@@ -6091,6 +6132,7 @@ The current
 .Nm openssl
 version.
 .El
+.Tg x509
 .Sh X509
 .Bl -hang -width "openssl x509"
 .It Nm openssl x509
