@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.85 2019/09/12 12:55:07 stsp Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.86 2020/02/19 11:05:04 claudio Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1171,7 +1171,6 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 
 #if NBPFILTER > 0
 		if (sc->sc_drvbpf != NULL) {
-			struct mbuf mb;
 			struct rt2560_rx_radiotap_header *tap = &sc->sc_rxtap;
 			uint32_t tsf_lo, tsf_hi;
 
@@ -1189,13 +1188,8 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 			tap->wr_antenna = sc->rx_ant;
 			tap->wr_antsignal = desc->rssi;
 
-			mb.m_data = (caddr_t)tap;
-			mb.m_len = sc->sc_txtap_len;
-			mb.m_next = m;
-			mb.m_nextpkt = NULL;
-			mb.m_type = 0;
-			mb.m_flags = 0;
-			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+			bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len, m,
+			    BPF_DIRECTION_IN);
 		}
 #endif
 		wh = mtod(m, struct ieee80211_frame *);
@@ -1632,7 +1626,6 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
-		struct mbuf mb;
 		struct rt2560_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
@@ -1641,13 +1634,8 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m0;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0,
+		    BPF_DIRECTION_OUT);
 	}
 #endif
 
@@ -1864,7 +1852,6 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
-		struct mbuf mb;
 		struct rt2560_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
@@ -1873,13 +1860,8 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m0;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0,
+		    BPF_DIRECTION_OUT);
 	}
 #endif
 

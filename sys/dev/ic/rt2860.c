@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.97 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.98 2020/02/19 11:05:04 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1272,7 +1272,6 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 	int error;
 #if NBPFILTER > 0
 	struct rt2860_rx_radiotap_header *tap;
-	struct mbuf mb;
 	uint16_t phy;
 #endif
 
@@ -1405,13 +1404,8 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 			}
 			break;
 		}
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_rxtap_len;
-		mb.m_next = m;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m,
+		    BPF_DIRECTION_IN);
 skipbpf:
 #endif
 		/* grab a reference to the source node */
@@ -1645,7 +1639,6 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 #if NBPFILTER > 0
 	if (__predict_false(sc->sc_drvbpf != NULL)) {
 		struct rt2860_tx_radiotap_header *tap = &sc->sc_txtap;
-		struct mbuf mb;
 
 		tap->wt_flags = 0;
 		tap->wt_rate = rt2860_rates[ridx].rate;
@@ -1655,13 +1648,8 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		if (mcs & RT2860_PHY_SHPRE)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len, m,
+		    BPF_DIRECTION_OUT);
 	}
 #endif
 

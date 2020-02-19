@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.117 2019/09/12 12:55:06 stsp Exp $  */
+/*      $OpenBSD: ath.c,v 1.118 2020/02/19 11:05:04 claudio Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1922,8 +1922,6 @@ ath_rx_proc(void *arg, int npending)
 
 #if NBPFILTER > 0
 		if (sc->sc_drvbpf) {
-			struct mbuf mb;
-
 			sc->sc_rxtap.wr_flags = IEEE80211_RADIOTAP_F_FCS;
 			sc->sc_rxtap.wr_rate =
 			    sc->sc_hwmap[ds->ds_rxstat.rs_rate] &
@@ -1932,13 +1930,8 @@ ath_rx_proc(void *arg, int npending)
 			sc->sc_rxtap.wr_rssi = ds->ds_rxstat.rs_rssi;
 			sc->sc_rxtap.wr_max_rssi = ic->ic_max_rssi;
 
-			mb.m_data = (caddr_t)&sc->sc_rxtap;
-			mb.m_len = sc->sc_rxtap_len;
-			mb.m_next = m;
-			mb.m_nextpkt = NULL;
-			mb.m_type = 0;
-			mb.m_flags = 0;
-			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
+			bpf_mtap_hdr(sc->sc_drvbpf, &sc->sc_rxtap,
+			    sc->sc_rxtap_len, m, BPF_DIRECTION_IN);
 		}
 #endif
 		m_adj(m, -IEEE80211_CRC_LEN);
@@ -2307,8 +2300,6 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 
 	if (sc->sc_drvbpf) {
-		struct mbuf mb;
-
 		sc->sc_txtap.wt_flags = 0;
 		if (shortPreamble)
 			sc->sc_txtap.wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
@@ -2320,13 +2311,8 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		sc->sc_txtap.wt_antenna = antenna;
 		sc->sc_txtap.wt_hwqueue = hwqueue;
 
-		mb.m_data = (caddr_t)&sc->sc_txtap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m0;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+		bpf_mtap_hdr(sc->sc_drvbpf, &sc->sc_txtap, sc->sc_txtap_len,
+		    m0, BPF_DIRECTION_OUT);
 	}
 #endif
 
