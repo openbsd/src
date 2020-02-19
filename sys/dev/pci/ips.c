@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.117 2020/02/14 18:37:03 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.118 2020/02/19 01:31:38 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1409,8 +1409,7 @@ ips_cmd(struct ips_softc *sc, struct ips_ccb *ccb)
 int
 ips_poll(struct ips_softc *sc, struct ips_ccb *ccb)
 {
-	struct timeval tv;
-	int error, timo;
+	int error, msecs, usecs;
 
 	splassert(IPL_BIO);
 
@@ -1419,7 +1418,7 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *ccb)
 		DPRINTF(IPS_D_XFER, ("%s: ips_poll: busy-wait\n",
 		    sc->sc_dev.dv_xname));
 
-		for (timo = 10000; timo > 0; timo--) {
+		for (usecs = 1000000; usecs > 0; usecs -= 100) {
 			delay(100);
 			ips_intr(sc);
 			if (ccb->c_state == IPS_CCB_DONE)
@@ -1427,14 +1426,11 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *ccb)
 		}
 	} else {
 		/* sleep */
-		timo = ccb->c_xfer ? ccb->c_xfer->timeout : IPS_TIMEOUT;
-		tv.tv_sec = timo / 1000;
-		tv.tv_usec = (timo % 1000) * 1000;
-		timo = tvtohz(&tv);
+		msecs = ccb->c_xfer ? ccb->c_xfer->timeout : IPS_TIMEOUT;
 
-		DPRINTF(IPS_D_XFER, ("%s: ips_poll: sleep %d hz\n",
-		    sc->sc_dev.dv_xname, timo));
-		tsleep(ccb, PRIBIO + 1, "ipscmd", timo);
+		DPRINTF(IPS_D_XFER, ("%s: ips_poll: sleep %d ms\n",
+		    sc->sc_dev.dv_xname, msecs));
+		tsleep_nsec(ccb, PRIBIO + 1, "ipscmd", MSEC_TO_NSEC(msecs));
 	}
 	DPRINTF(IPS_D_XFER, ("%s: ips_poll: state %d\n", sc->sc_dev.dv_xname,
 	    ccb->c_state));
