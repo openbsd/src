@@ -784,7 +784,6 @@ isc_result_t
 isc_taskmgr_create(unsigned int workers,
 		    unsigned int default_quantum, isc_taskmgr_t **managerp)
 {
-	isc_result_t result;
 	unsigned int i, started = 0;
 	isc_taskmgr_t *manager;
 
@@ -830,9 +829,6 @@ isc_taskmgr_create(unsigned int workers,
 	*managerp = (isc_taskmgr_t *)manager;
 
 	return (ISC_R_SUCCESS);
-
-	free(manager);
-	return (result);
 }
 
 void
