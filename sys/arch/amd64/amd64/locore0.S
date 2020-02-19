@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.18 2020/01/24 05:27:31 kettenis Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.19 2020/02/19 16:55:04 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -511,9 +511,9 @@ map_tables:
 	movl	$(NDML2_ENTRIES * NPDPG), %ecx
 1:	orl	$(PG_V|PG_KW|PG_PS), %eax
 	orl	RELOC(pg_g_kern), %eax
-	cmpl	$__kernel_base_phys, %eax
+	cmpl	$__kernel_phys_base, %eax
 	jl	store_pte
-	cmpl	$__kernel_end_phys, %eax
+	cmpl	$__kernel_phys_end, %eax
 	jg	store_pte
 	andl	$(~PG_KW), %eax
 store_pte:

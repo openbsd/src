@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.15 2019/11/09 20:07:00 guenther Exp $	*/
+/*	$OpenBSD: ld.script,v 1.16 2020/02/19 16:55:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -40,13 +40,13 @@ __ALIGN_SIZE = 0x1000;
 __kernel_base = 0xffffffff80000000;
 __kernel_virt_base = __kernel_base + 0x1000000;
 __kernel_phys_base = 0x1000000;
-__kernel_base_phys =  __kernel_phys_base + SIZEOF_HEADERS;
 __kernel_virt_to_phys = __kernel_phys_base - __kernel_virt_base;
 
 ENTRY(start)
 SECTIONS
 {
-	.text (__kernel_virt_base + SIZEOF_HEADERS) : AT (__kernel_base_phys)
+	.text (__kernel_virt_base + SIZEOF_HEADERS) :
+	      AT (__kernel_phys_base + SIZEOF_HEADERS)
 	{
 		start = .;
 		locore0.o(.text)
@@ -148,7 +148,7 @@ SECTIONS
 	. = ALIGN(0x200000);
 	_end = .;
 	PROVIDE (end = .);
-	__kernel_end_phys = . + __kernel_virt_to_phys;
+	__kernel_phys_end = . + __kernel_virt_to_phys;
 
 	/* XXX - hack alert, since we are not C++, nuke these */
 	/DISCARD/ :
