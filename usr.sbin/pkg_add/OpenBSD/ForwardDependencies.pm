@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ForwardDependencies.pm,v 1.15 2018/12/17 13:51:21 espie Exp $
+# $OpenBSD: ForwardDependencies.pm,v 1.16 2020/02/19 10:53:53 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -77,9 +77,14 @@ sub dump
 	my ($self, $result, $state) = @_;
 	$state->say("#1 forward dependencies:", $self->{set}->print);
 	while (my ($pkg, $l) = each %$result) {
-		my $deps = join(',', map {$_->{pattern}} @$l);
-		$state->say("| Dependencies of #1 on #2 don't match", 
-		    $pkg, $deps);
+		if (@$l == 1) {
+			$state->say("| Dependency of #1 on #2 doesn't match", 
+			    $pkg, $l->[0]{pattern});
+		} else {
+			my $deps = join(',', map {$_->{pattern}} @$l);
+			$state->say("| Dependencies of #1 on #2 don't match", 
+			    $pkg, $deps);
+		}
 	}
 }
 
