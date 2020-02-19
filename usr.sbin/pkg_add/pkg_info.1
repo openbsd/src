@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.62 2020/02/18 11:29:16 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.63 2020/02/19 14:24:19 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: February 18 2020 $
+.Dd $Mdocdate: February 19 2020 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -187,6 +187,9 @@ Show packages in the package search path which match the given
 .Ar query .
 Specifically, show all packages in the first repository that matches
 the query.
+If
+.Fl a
+is also specified, show all packages in all repositories instead.
 .It Fl q
 Be
 .Dq quiet
