@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.189 2020/02/13 15:54:10 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.190 2020/02/19 07:29:53 yasuoka Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -316,7 +316,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	struct addrinfo hints, *res0, *res;
 	const char *savefile;
 	char *proxyurl = NULL;
-	char *credentials = NULL;
+	char *credentials = NULL, *proxy_credentials = NULL;
 	int fd = -1, out = -1;
 	volatile sig_t oldintr, oldinti;
 	FILE *fin = NULL;
@@ -399,7 +399,7 @@ noslash:
 	 * contain the path. Basic auth from RFC 2617, valid
 	 * characters for path are in RFC 3986 section 3.3.
 	 */
-	if (proxyenv == NULL && (ishttpurl || ishttpsurl)) {
+	if (ishttpurl || ishttpsurl) {
 		if ((p = strchr(host, '@')) != NULL) {
 			*p = '\0';
 			credentials = recode_credentials(host);
@@ -471,7 +471,7 @@ noslash:
 				warnx("Malformed proxy URL: %s", proxyenv);
 				goto cleanup_url_get;
 			}
-			credentials = recode_credentials(host);
+			proxy_credentials = recode_credentials(host);
 			*path = '@'; /* restore @ in proxyurl */
 
 			/*
@@ -615,7 +615,7 @@ noslash:
 
 #ifndef NOSSL
 		if (proxyenv && sslhost)
-			proxy_connect(fd, sslhost, credentials);
+			proxy_connect(fd, sslhost, proxy_credentials);
 #endif /* !NOSSL */
 		break;
 	}
@@ -707,18 +707,17 @@ noslash:
 		 * Host: directive must use the destination host address for
 		 * the original URI (path).
 		 */
+		ftp_printf(fin, "GET %s HTTP/1.1\r\n"
+		    "Connection: close\r\n"
+		    "Host: %s\r\n%s%s\r\n",
+		    epath, proxyhost, buf ? buf : "", httpuseragent);
 		if (credentials)
-			ftp_printf(fin, "GET %s HTTP/1.1\r\n"
-			    "Connection: close\r\n"
-			    "Proxy-Authorization: Basic %s\r\n"
-			    "Host: %s\r\n%s%s\r\n\r\n",
-			    epath, credentials,
-			    proxyhost, buf ? buf : "", httpuseragent);
-		else
-			ftp_printf(fin, "GET %s HTTP/1.1\r\n"
-			    "Connection: close\r\n"
-			    "Host: %s\r\n%s%s\r\n\r\n",
-			    epath, proxyhost, buf ? buf : "", httpuseragent);
+			ftp_printf(fin, "Authorization: Basic %s\r\n",
+			    credentials);
+		if (proxy_credentials)
+			ftp_printf(fin, "Proxy-Authorization: Basic %s\r\n",
+			    proxy_credentials);
+		ftp_printf(fin, "\r\n");
 	} else {
 		if (verbose)
 			fprintf(ttyout, "Requesting %s\n", origline);
@@ -1117,6 +1116,7 @@ cleanup_url_get:
 	free(proxyurl);
 	free(newline);
 	free(credentials);
+	free(proxy_credentials);
 	return (rval);
 }
 
@@ -1698,7 +1698,8 @@ proxy_connect(int socket, char *host, char *cookie)
 {
 	int l;
 	char buf[1024];
-	char *connstr, *hosttail, *port;
+	char *connstr, *hosttail, *port, *crlf;
+	ssize_t sz;
 
 	if (*host == '[' && (hosttail = strrchr(host, ']')) != NULL &&
 		(hosttail[1] == '\0' || hosttail[1] == ':')) {
@@ -1730,7 +1731,22 @@ proxy_connect(int socket, char *host, char *cookie)
 #endif /* !SMALL */
 	if (write(socket, connstr, l) != l)
 		err(1, "Could not send connect string");
-	read(socket, &buf, sizeof(buf)); /* only proxy header XXX: error handling? */
+	sz = read(socket, &buf, sizeof(buf) - 1);
+	if (sz < 0)
+		err(1, "Failed to receive response from proxy");
+	/* XXX should not assume we could read entire response at once.  */
+	buf[sz] = '\0';
+	if ((strncmp(buf, "HTTP/1.0 ", 9) != 0 &&
+	    strncmp(buf, "HTTP/1.1 ", 9) != 0) ||
+	    (crlf = strstr(buf, "\r\n")) == NULL)
+		errx(1, "Could not parse received response from proxy");
+	*crlf = '\0';
+	if (strncmp(buf + 9, "200 ", 4) != 0)
+		errx(1, "CONNECT command on proxy failed: %s", buf + 9);
+	*crlf = '\r';	/* revert CR */
+	if ((crlf = strstr(buf, "\r\n\r\n")) == NULL)
+		errx(1, "Could not read the end of response from proxy");
+
 	free(connstr);
 	return(200);
 }
