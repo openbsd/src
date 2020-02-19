@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app.h,v 1.5 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: app.h,v 1.6 2020/02/19 20:57:10 jung Exp $ */
 
 #ifndef ISC_APP_H
 #define ISC_APP_H 1
@@ -137,17 +137,6 @@ isc_app_run(void);
  *
  * Returns:
  *\li	ISC_R_SUCCESS			Shutdown has been requested.
- *\li	ISC_R_RELOAD			Reload has been requested.
- */
-
-isc_boolean_t
-isc_app_isrunning(void);
-/*!<
- * \brief Return if the ISC library application is running.
- *
- * Returns:
- *\li	ISC_TRUE    App is running.
- *\li	ISC_FALSE   App is not running.
  */
 
 isc_result_t
@@ -166,36 +155,6 @@ isc_app_shutdown(void);
  * Returns:
  *\li	ISC_R_SUCCESS
  *\li	ISC_R_UNEXPECTED
- */
-
-void
-isc_app_block(void);
-/*!<
- * \brief Indicate that a blocking operation will be performed.
- *
- * Notes:
- *\li	If a blocking operation is in process, a call to isc_app_shutdown()
- *	or an external signal will abort the program, rather than allowing
- *	clean shutdown.  This is primarily useful for reading user input.
- *
- * Requires:
- * \li	isc_app_start() has been called.
- * \li	No other blocking operations are in progress.
- */
-
-void
-isc_app_unblock(void);
-/*!<
- * \brief Indicate that a blocking operation is complete.
- *
- * Notes:
- * \li	When a blocking operation has completed, return the program to a
- * 	state where a call to isc_app_shutdown() or an external signal will
- * 	shutdown normally.
- *
- * Requires:
- * \li	isc_app_start() has been called.
- * \li	isc_app_block() has been called by the same thread.
  */
 
 /*%<

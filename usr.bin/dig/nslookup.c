@@ -725,10 +725,8 @@ do_next_command(char *input) {
 		setoption(arg);
 	else if ((strcasecmp(ptr, "server") == 0) ||
 		 (strcasecmp(ptr, "lserver") == 0)) {
-		isc_app_block();
 		set_nameserver(arg);
 		check_ra = ISC_FALSE;
-		isc_app_unblock();
 		show_settings(ISC_TRUE, ISC_TRUE);
 	} else if (strcasecmp(ptr, "exit") == 0) {
 		in_use = ISC_FALSE;
@@ -753,14 +751,12 @@ get_next_command(void) {
 	buf = malloc(COMMSIZE);
 	if (buf == NULL)
 		fatal("memory allocation failure");
-	isc_app_block();
 	if (interactive) {
 		fputs("> ", stderr);
 		fflush(stderr);
 		ptr = fgets(buf, COMMSIZE, stdin);
 	} else
 		ptr = fgets(buf, COMMSIZE, stdin);
-	isc_app_unblock();
 	if (ptr == NULL) {
 		in_use = ISC_FALSE;
 	} else

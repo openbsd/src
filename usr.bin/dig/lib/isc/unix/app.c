@@ -55,12 +55,6 @@ typedef struct isc_appctx {
 	 * We assume that 'want_shutdown' can be read and written atomically.
 	 */
 	isc_boolean_t		want_shutdown;
-	/*
-	 * We assume that 'want_reload' can be read and written atomically.
-	 */
-	isc_boolean_t		want_reload;
-
-	isc_boolean_t		blocked;
 
 	isc_taskmgr_t		*taskmgr;
 	isc_socketmgr_t		*socketmgr;
@@ -68,41 +62,12 @@ typedef struct isc_appctx {
 } isc_appctx_t;
 
 static isc_appctx_t isc_g_appctx;
-static isc_boolean_t is_running = ISC_FALSE;
 
 static isc_result_t isc_app_ctxonrun(isc_appctx_t *ctx, isc_task_t *task,
     isc_taskaction_t action, void *arg);
 
-static void
-reload_action(int arg) {
-	UNUSED(arg);
-	isc_g_appctx.want_reload = ISC_TRUE;
-}
-
-static isc_result_t
-handle_signal(int sig, void (*handler)(int)) {
-	struct sigaction sa;
-
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = handler;
-
-	if (sigfillset(&sa.sa_mask) != 0 ||
-	    sigaction(sig, &sa, NULL) < 0) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "handle_signal() %d setup: %s", sig,
-				 strerror(errno));
-		return (ISC_R_UNEXPECTED);
-	}
-
-	return (ISC_R_SUCCESS);
-}
-
 static isc_result_t
 isc_app_ctxstart(isc_appctx_t *ctx) {
-	isc_result_t result;
-	int presult;
-	sigset_t sset;
-
 	/*
 	 * Start an ISC library application.
 	 */
@@ -112,66 +77,14 @@ isc_app_ctxstart(isc_appctx_t *ctx) {
 	ctx->shutdown_requested = ISC_FALSE;
 	ctx->running = ISC_FALSE;
 	ctx->want_shutdown = ISC_FALSE;
-	ctx->want_reload = ISC_FALSE;
-	ctx->blocked = ISC_FALSE;
 
-	/*
-	 * Always ignore SIGPIPE.
-	 */
-	result = handle_signal(SIGPIPE, SIG_IGN);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	/*
-	 * On Solaris 2, delivery of a signal whose action is SIG_IGN
-	 * will not cause sigwait() to return. We may have inherited
-	 * unexpected actions for SIGHUP, SIGINT, and SIGTERM from our parent
-	 * process (e.g, Solaris cron).  Set an action of SIG_DFL to make
-	 * sure sigwait() works as expected.  Only do this for SIGTERM and
-	 * SIGINT if we don't have sigwait(), since a different handler is
-	 * installed above.
-	 */
-	result = handle_signal(SIGHUP, SIG_DFL);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	result = handle_signal(SIGTERM, SIG_DFL);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-	result = handle_signal(SIGINT, SIG_DFL);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	/*
-	 * Unblock SIGHUP, SIGINT, SIGTERM.
-	 *
-	 * If we're not using threads, we need to make sure that SIGHUP,
-	 * SIGINT and SIGTERM are not inherited as blocked from the parent
-	 * process.
-	 */
-	if (sigemptyset(&sset) != 0 ||
-	    sigaddset(&sset, SIGHUP) != 0 ||
-	    sigaddset(&sset, SIGINT) != 0 ||
-	    sigaddset(&sset, SIGTERM) != 0) {
+	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_app_start() sigsetops: %s",
+				 "isc_app_ctxstart() signal: %s",
 				 strerror(errno));
-		result = ISC_R_UNEXPECTED;
-		goto cleanup;
+		return ISC_R_UNEXPECTED;
 	}
-	presult = sigprocmask(SIG_UNBLOCK, &sset, NULL);
-	if (presult != 0) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_app_start() sigprocmask: %s",
-				 strerror(errno));
-		result = ISC_R_UNEXPECTED;
-		goto cleanup;
-	}
-
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	return (result);
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t
@@ -237,19 +150,6 @@ evloop(isc_appctx_t *ctx) {
 		isc_socketwait_t *swait;
 		isc_boolean_t readytasks;
 		isc_boolean_t call_timer_dispatch = ISC_FALSE;
-
-		/*
-		 * Check the reload (or suspend) case first for exiting the
-		 * loop as fast as possible in case:
-		 *   - the direct call to isc_taskmgr_dispatch() in
-		 *     isc_app_ctxrun() completes all the tasks so far,
-		 *   - there is thus currently no active task, and
-		 *   - there is a timer event
-		 */
-		if (ctx->want_reload) {
-			ctx->want_reload = ISC_FALSE;
-			return (ISC_R_RELOAD);
-		}
 
 		readytasks = isc_taskmgr_ready(ctx->taskmgr);
 		if (readytasks) {
@@ -325,12 +225,6 @@ isc_app_ctxrun(isc_appctx_t *ctx) {
 
 	}
 
-	if (ctx == &isc_g_appctx) {
-		result = handle_signal(SIGHUP, reload_action);
-		if (result != ISC_R_SUCCESS)
-			return (ISC_R_SUCCESS);
-	}
-
 	(void) isc_taskmgr_dispatch(ctx->taskmgr);
 	result = evloop(ctx);
 	return (result);
@@ -364,30 +258,7 @@ isc_app_ctxshutdown(isc_appctx_t *ctx) {
 	return (ISC_R_SUCCESS);
 }
 
-isc_boolean_t
-isc_app_isrunning() {
-	return (is_running);
-}
-
 isc_result_t
 isc_app_shutdown(void) {
 	return (isc_app_ctxshutdown((isc_appctx_t *)&isc_g_appctx));
-}
-
-void
-isc_app_block(void) {
-	REQUIRE(isc_g_appctx.running);
-	REQUIRE(!isc_g_appctx.blocked);
-
-	isc_g_appctx.blocked = ISC_TRUE;
-}
-
-void
-isc_app_unblock(void) {
-
-	REQUIRE(isc_g_appctx.running);
-	REQUIRE(isc_g_appctx.blocked);
-
-	isc_g_appctx.blocked = ISC_FALSE;
-
 }

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.10 2020/02/16 21:11:02 florian Exp $ */
+/* $Id: dighost.c,v 1.11 2020/02/19 20:57:10 jung Exp $ */
 
 /*! \file
  *  \note
@@ -3792,14 +3792,8 @@ isc_result_t
 get_address(char *host, in_port_t myport, isc_sockaddr_t *sockaddr) {
 	int count;
 	isc_result_t result;
-	isc_boolean_t is_running;
 
-	is_running = isc_app_isrunning();
-	if (is_running)
-		isc_app_block();
 	result = get_addresses(host, myport, sockaddr, 1, &count);
-	if (is_running)
-		isc_app_unblock();
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
