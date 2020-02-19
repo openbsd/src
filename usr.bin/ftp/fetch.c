@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.190 2020/02/19 07:29:53 yasuoka Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.191 2020/02/19 12:39:38 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -373,6 +373,26 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 		errx(1, "%s: URL not permitted", newline);
 
 	path = strchr(host, '/');		/* Find path */
+
+#ifndef NOSSL
+	/*
+	 * Look for auth header in host.
+	 * Basic auth from RFC 2617, valid characters for path are in
+	 * RFC 3986 section 3.3.
+	 */
+	if (ishttpurl || ishttpsurl) {
+		p = strchr(host, '@');
+		if (p != NULL && (path == NULL || p < path)) {
+			*p++ = '\0';
+			credentials = recode_credentials(host);
+
+			/* Overwrite userinfo */
+			memmove(host, p, strlen(p) + 1);
+			path = strchr(host, '/');
+		}
+	}
+#endif /* !NOSSL */
+
 	if (EMPTYSTRING(path)) {
 		if (outfile) {				/* No slash, but */
 			path = strchr(host,'\0');	/* we have outfile. */
@@ -392,22 +412,6 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	}
 
 noslash:
-
-#ifndef NOSSL
-	/*
-	 * Look for auth header in host, since now host does not
-	 * contain the path. Basic auth from RFC 2617, valid
-	 * characters for path are in RFC 3986 section 3.3.
-	 */
-	if (ishttpurl || ishttpsurl) {
-		if ((p = strchr(host, '@')) != NULL) {
-			*p = '\0';
-			credentials = recode_credentials(host);
-			host = p + 1;
-		}
-	}
-#endif	/* NOSSL */
-
 	if (outfile)
 		savefile = outfile;
 	else {
