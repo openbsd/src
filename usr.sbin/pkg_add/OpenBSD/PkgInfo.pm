@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.49 2017/10/07 13:23:05 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.50 2020/02/19 14:23:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -513,6 +513,31 @@ sub print_info
 	}
 }
 
+sub handle_query
+{
+	my ($self, $state) = @_;
+
+	require OpenBSD::Search;
+
+	$state->say("PKG_PATH=#1", $ENV{PKG_PATH} // "<undefined>")
+		if $state->verbose;
+	my $partial = OpenBSD::Search::PartialStem->new($state->opt('Q'));
+	if ($state->opt('a')) {
+		$partial->keep_all;
+	}
+	my $r = $state->repo->match_locations($partial);
+
+	for my $pkg (sort {$a->name cmp $b->name} @$r) {
+		my $p = $pkg->name;
+		if ($state->hasanyopt('cdfMqs')) {
+			$self->print_info($state, $p, $pkg);
+		} else {
+			$state->say(
+			    is_installed($p) ? "#1 (installed)" : "#1", $p);
+		}
+	}
+}
+
 sub parse_and_run
 {
 	my ($self, $cmd) = @_;
@@ -585,30 +610,18 @@ sub parse_and_run
 
 	unless ($state->hasanyopt('cMUdfILRsSP') || $state->{terse}) {
 		if ($nonames) {
-			$state->setopts('Ia');
+			if ($state->opt('Q')) {
+				$state->setopts('I');
+			} else {
+				$state->setopts('Ia');
+			}
 		} else {
 			$state->setopts('cdMR');
 		}
 	}
 
 	if ($state->opt('Q')) {
-		require OpenBSD::Search;
-
-		$state->say("PKG_PATH=#1", $ENV{PKG_PATH} // "<undefined>")
-			if $state->verbose;
-		my $partial = OpenBSD::Search::PartialStem->new($state->opt('Q'));
-		my $r = $state->repo->match_locations($partial);
-
-		for my $pkg (sort {$a->name cmp $b->name} @$r) {
-			my $p = $pkg->name;
-			if ($state->hasanyopt('cdfMqs')) {
-				$self->print_info($state, $p, $pkg);
-			} else {
-				$state->say(
-			    	    is_installed($p) ? "#1 (installed)" : "#1", $p);
-			}
-		}
-
+		$self->handle_query($state);
 		return 0;
 	}
 
