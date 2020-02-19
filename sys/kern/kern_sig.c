@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.247 2020/02/15 09:35:48 anton Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.248 2020/02/19 11:33:48 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ const struct filterops sig_filtops = {
 
 void proc_stop(struct proc *p, int);
 void proc_stop_sweep(void *);
-struct timeout proc_stop_to;
+void *proc_stop_si;
 
 void postsig(struct proc *, int);
 int cansignal(struct proc *, struct process *, int);
@@ -158,7 +158,10 @@ cansignal(struct proc *p, struct process *qr, int signum)
 void
 signal_init(void)
 {
-	timeout_set(&proc_stop_to, proc_stop_sweep, NULL);
+	proc_stop_si = softintr_establish(IPL_SOFTCLOCK, proc_stop_sweep,
+	    NULL);
+	if (proc_stop_si == NULL)
+		panic("signal_init failed to register softintr");
 
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, IPL_NONE,
 	    PR_WAITOK, "sigapl", NULL);
@@ -1318,7 +1321,6 @@ void
 proc_stop(struct proc *p, int sw)
 {
 	struct process *pr = p->p_p;
-	extern void *softclock_si;
 
 #ifdef MULTIPROCESSOR
 	SCHED_ASSERT_LOCKED();
@@ -1328,20 +1330,18 @@ proc_stop(struct proc *p, int sw)
 	atomic_clearbits_int(&pr->ps_flags, PS_WAITED);
 	atomic_setbits_int(&pr->ps_flags, PS_STOPPED);
 	atomic_setbits_int(&p->p_flag, P_SUSPSIG);
-	if (!timeout_pending(&proc_stop_to)) {
-		timeout_add(&proc_stop_to, 0);
-		/*
-		 * We need this soft interrupt to be handled fast.
-		 * Extra calls to softclock don't hurt.
-		 */
-                softintr_schedule(softclock_si);
-	}
+	/*
+	 * We need this soft interrupt to be handled fast.
+	 * Extra calls to softclock don't hurt.
+	 */
+	softintr_schedule(proc_stop_si);
 	if (sw)
 		mi_switch();
 }
 
 /*
- * Called from a timeout to send signals to the parents of stopped processes.
+ * Called from a soft interrupt to send signals to the parents of stopped
+ * processes.
  * We can't do this in proc_stop because it's called with nasty locks held
  * and we would need recursive scheduler lock to deal with that.
  */
