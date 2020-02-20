@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.9 2019/12/14 17:42:48 kurt Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.10 2020/02/20 23:50:01 kurt Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -306,6 +306,13 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 	}
+
+	/*
+	 * XXX On at least the RockPro64, many cards will panic when first
+	 * accessing PCIe config space during bus scanning. A delay after
+	 * link training allows some of these cards to function.
+	 */
+	delay(2000000);
 
 	/* Initialize Root Complex registers. */
 	HWRITE4(sc, PCIE_LM_VENDOR_ID, PCI_VENDOR_ROCKCHIP);
