@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.10 2020/01/13 09:29:41 kn Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.11 2020/02/20 20:18:00 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 13 2020 $
+.Dd $Mdocdate: February 20 2020 $
 .Dt LDOM.CONF 5 sparc64
 .Os
 .Sh NAME
@@ -64,12 +64,12 @@ can be a block device node or a disk image file created with the
 .Cm create-vdisk
 command.
 This keyword can be used multiple times.
-.It Ic vnet Op Brq Ar keyword Ns = Ns Ar value ...
+.It Ic vnet Op Ar keyword Ns = Ns Ar value ...
 Assign a
 .Xr vnet 4
 network interface to the guest domain.
 This keyword can be used multiple times.
-The curly braces are optional and can contain the following keywords:
+Valid options are:
 .Bl -tag -width Ds
 .It Ic mac-addr Ns = Ns Ar address
 Configure the MAC address of the interface.
