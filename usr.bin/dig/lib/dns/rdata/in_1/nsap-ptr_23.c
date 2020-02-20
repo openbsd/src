@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap-ptr_23.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: nsap-ptr_23.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 10:16:02 PST 2000 by gson */
 
@@ -24,30 +24,6 @@
 #define RDATA_IN_1_NSAP_PTR_23_C
 
 #define RRTYPE_NSAP_PTR_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_in_nsap_ptr(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-
-	REQUIRE(type == dns_rdatatype_nsap_ptr);
-	REQUIRE(rdclass == dns_rdataclass_in);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-
-	dns_name_init(&name, NULL);
-	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
-		origin = dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_in_nsap_ptr(ARGS_TOTEXT) {

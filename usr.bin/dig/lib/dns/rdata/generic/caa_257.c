@@ -39,53 +39,6 @@ static unsigned char const alphanumeric[256] = {
 };
 
 static inline isc_result_t
-fromtext_caa(ARGS_FROMTEXT) {
-	isc_token_t token;
-	isc_textregion_t tr;
-	uint8_t flags;
-	unsigned int i;
-
-	REQUIRE(type == dns_rdatatype_caa);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	/* Flags. */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 255U)
-		RETTOK(ISC_R_RANGE);
-	flags = (uint8_t)(token.value.as_ulong & 255U);
-	RETERR(uint8_tobuffer(flags, target));
-
-	/*
-	 * Tag
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	tr = token.value.as_textregion;
-	for (i = 0; i < tr.length; i++)
-		if (!alphanumeric[(unsigned char) tr.base[i]])
-			RETTOK(DNS_R_SYNTAX);
-	RETERR(uint8_tobuffer(tr.length, target));
-	RETERR(mem_tobuffer(target, tr.base, tr.length));
-
-	/*
-	 * Value
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token,
-				      isc_tokentype_qstring, ISC_FALSE));
-	if (token.type != isc_tokentype_qstring &&
-	    token.type != isc_tokentype_string)
-		RETERR(DNS_R_SYNTAX);
-	RETERR(multitxt_fromtext(&token.value.as_textregion, target));
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
 totext_caa(ARGS_TOTEXT) {
 	isc_region_t region;
 	uint8_t flags;

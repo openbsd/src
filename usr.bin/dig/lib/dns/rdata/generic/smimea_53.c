@@ -20,15 +20,6 @@
 #define RRTYPE_SMIMEA_ATTRIBUTES 0
 
 static inline isc_result_t
-fromtext_smimea(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_smimea);
-
-	return (generic_fromtext_tlsa(rdclass, type, lexer, origin, options,
-				      target, callbacks));
-}
-
-static inline isc_result_t
 totext_smimea(ARGS_TOTEXT) {
 
 	REQUIRE(rdata->type == dns_rdatatype_smimea);

@@ -24,39 +24,6 @@
 #define RRTYPE_L32_ATTRIBUTES (0)
 
 static inline isc_result_t
-fromtext_l32(ARGS_FROMTEXT) {
-	isc_token_t token;
-	struct in_addr addr;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_l32);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-
-	if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1)
-		RETTOK(DNS_R_BADDOTTEDQUAD);
-	isc_buffer_availableregion(target, &region);
-	if (region.length < 4)
-		return (ISC_R_NOSPACE);
-	memmove(region.base, &addr, 4);
-	isc_buffer_add(target, 4);
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
 totext_l32(ARGS_TOTEXT) {
 	isc_region_t region;
 	char buf[sizeof("65000")];

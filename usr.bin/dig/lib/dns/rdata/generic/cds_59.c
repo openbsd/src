@@ -27,15 +27,6 @@
 #include <dns/ds.h>
 
 static inline isc_result_t
-fromtext_cds(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_cds);
-
-	return (generic_fromtext_ds(rdclass, type, lexer, origin, options,
-				    target, callbacks));
-}
-
-static inline isc_result_t
 totext_cds(ARGS_TOTEXT) {
 
 	REQUIRE(rdata->type == dns_rdatatype_cds);

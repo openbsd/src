@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mx_15.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: mx_15.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 
@@ -26,68 +26,6 @@
 #include <isc/net.h>
 
 #define RRTYPE_MX_ATTRIBUTES (0)
-
-static isc_boolean_t
-check_mx(isc_token_t *token) {
-	char tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:123.123.123.123.")];
-	struct in_addr addr;
-	struct in6_addr addr6;
-
-	if (strlcpy(tmp, DNS_AS_STR(*token), sizeof(tmp)) >= sizeof(tmp))
-		return (ISC_TRUE);
-
-	if (tmp[strlen(tmp) - 1] == '.')
-		tmp[strlen(tmp) - 1] = '\0';
-	if (inet_aton(tmp, &addr) == 1 ||
-	    inet_pton(AF_INET6, tmp, &addr6) == 1)
-		return (ISC_FALSE);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_result_t
-fromtext_mx(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-	isc_boolean_t ok;
-
-	REQUIRE(type == dns_rdatatype_mx);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-
-	ok = ISC_TRUE;
-	if ((options & DNS_RDATA_CHECKMX) != 0)
-		ok = check_mx(&token);
-	if (!ok && (options & DNS_RDATA_CHECKMXFAIL) != 0)
-		RETTOK(DNS_R_MXISADDRESS);
-	if (!ok && callbacks != NULL)
-		warn_badmx(&token, lexer, callbacks);
-
-	dns_name_init(&name, NULL);
-	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
-		origin = dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-	ok = ISC_TRUE;
-	if ((options & DNS_RDATA_CHECKNAMES) != 0)
-		ok = dns_name_ishostname(&name, ISC_FALSE);
-	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
-		RETTOK(DNS_R_BADNAME);
-	if (!ok && callbacks != NULL)
-		warn_badname(&name, lexer, callbacks);
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_mx(ARGS_TOTEXT) {

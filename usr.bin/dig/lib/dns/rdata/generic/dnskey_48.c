@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnskey_48.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: dnskey_48.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -28,15 +28,6 @@
 #include <dst/dst.h>
 
 #define RRTYPE_DNSKEY_ATTRIBUTES (DNS_RDATATYPEATTR_DNSSEC)
-
-static inline isc_result_t
-fromtext_dnskey(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_dnskey);
-
-	return (generic_fromtext_key(rdclass, type, lexer, origin,
-				     options, target, callbacks));
-}
 
 static inline isc_result_t
 totext_dnskey(ARGS_TOTEXT) {

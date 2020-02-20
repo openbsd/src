@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipseckey_45.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: ipseckey_45.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -24,98 +24,6 @@
 #include <isc/net.h>
 
 #define RRTYPE_IPSECKEY_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_ipseckey(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-	unsigned int gateway;
-	struct in_addr addr;
-	unsigned char addr6[16];
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_ipseckey);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	/*
-	 * Precedence.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Gateway type.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0x3U)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-	gateway = token.value.as_ulong;
-
-	/*
-	 * Algorithm.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Gateway.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-
-	switch (gateway) {
-	case 0:
-		if (strcmp(DNS_AS_STR(token), ".") != 0)
-			RETTOK(DNS_R_SYNTAX);
-		break;
-
-	case 1:
-		if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1)
-			RETTOK(DNS_R_BADDOTTEDQUAD);
-		isc_buffer_availableregion(target, &region);
-		if (region.length < 4)
-			return (ISC_R_NOSPACE);
-		memmove(region.base, &addr, 4);
-		isc_buffer_add(target, 4);
-		break;
-
-	case 2:
-		if (inet_pton(AF_INET6, DNS_AS_STR(token), addr6) != 1)
-			RETTOK(DNS_R_BADAAAA);
-		isc_buffer_availableregion(target, &region);
-		if (region.length < 16)
-			return (ISC_R_NOSPACE);
-		memmove(region.base, addr6, 16);
-		isc_buffer_add(target, 16);
-		break;
-
-	case 3:
-		dns_name_init(&name, NULL);
-		buffer_fromregion(&buffer, &token.value.as_region);
-		if (origin == NULL)
-			origin = dns_rootname;
-		RETTOK(dns_name_fromtext(&name, &buffer, origin,
-					 options, target));
-		break;
-	}
-
-	/*
-	 * Public key.
-	 */
-	return (isc_base64_tobuffer(lexer, target, -1));
-}
 
 static inline isc_result_t
 totext_ipseckey(ARGS_TOTEXT) {

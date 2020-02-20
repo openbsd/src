@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap_22.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: nsap_22.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 10:41:07 PST 2000 by gson */
 
@@ -24,55 +24,6 @@
 #define RDATA_IN_1_NSAP_22_C
 
 #define RRTYPE_NSAP_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_in_nsap(ARGS_FROMTEXT) {
-	isc_token_t token;
-	isc_textregion_t *sr;
-	int n;
-	isc_boolean_t valid = ISC_FALSE;
-	int digits = 0;
-	unsigned char c = 0;
-
-	REQUIRE(type == dns_rdatatype_nsap);
-	REQUIRE(rdclass == dns_rdataclass_in);
-
-	UNUSED(type);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	/* 0x<hex.string.with.periods> */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	sr = &token.value.as_textregion;
-	if (sr->length < 2)
-		RETTOK(ISC_R_UNEXPECTEDEND);
-	if (sr->base[0] != '0' || (sr->base[1] != 'x' && sr->base[1] != 'X'))
-		RETTOK(DNS_R_SYNTAX);
-	isc_textregion_consume(sr, 2);
-	while (sr->length > 0) {
-		if (sr->base[0] == '.') {
-			isc_textregion_consume(sr, 1);
-			continue;
-		}
-		if ((n = hexvalue(sr->base[0])) == -1)
-			RETTOK(DNS_R_SYNTAX);
-		c <<= 4;
-		c += n;
-		if (++digits == 2) {
-			RETERR(mem_tobuffer(target, &c, 1));
-			valid = ISC_TRUE;
-			digits = 0;
-			c = 0;
-		}
-		isc_textregion_consume(sr, 1);
-	}
-	if (digits != 0 || !valid)
-		RETTOK(ISC_R_UNEXPECTEDEND);
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_in_nsap(ARGS_TOTEXT) {

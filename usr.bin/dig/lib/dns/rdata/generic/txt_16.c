@@ -22,40 +22,6 @@
 #define RRTYPE_TXT_ATTRIBUTES (0)
 
 static inline isc_result_t
-generic_fromtext_txt(ARGS_FROMTEXT) {
-	isc_token_t token;
-	int strings;
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	strings = 0;
-	if ((options & DNS_RDATA_UNKNOWNESCAPE) != 0) {
-		isc_textregion_t r;
-		DE_CONST("#", r.base);
-		r.length = 1;
-		RETERR(txt_fromtext(&r, target));
-		strings++;
-	}
-	for (;;) {
-		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_qstring,
-					      ISC_TRUE));
-		if (token.type != isc_tokentype_qstring &&
-		    token.type != isc_tokentype_string)
-			break;
-		RETTOK(txt_fromtext(&token.value.as_textregion, target));
-		strings++;
-	}
-	/* Let upper layer handle eol/eof. */
-	isc_lex_ungettoken(lexer, &token);
-	return (strings == 0 ? ISC_R_UNEXPECTEDEND : ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
 generic_totext_txt(ARGS_TOTEXT) {
 	isc_region_t region;
 
@@ -87,15 +53,6 @@ generic_fromwire_txt(ARGS_FROMWIRE) {
 			return (result);
 	} while (!buffer_empty(source));
 	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-fromtext_txt(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_txt);
-
-	return (generic_fromtext_txt(rdclass, type, lexer, origin, options,
-				     target, callbacks));
 }
 
 static inline isc_result_t

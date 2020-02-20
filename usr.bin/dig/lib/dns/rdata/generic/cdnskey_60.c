@@ -24,15 +24,6 @@
 #define RRTYPE_CDNSKEY_ATTRIBUTES 0
 
 static inline isc_result_t
-fromtext_cdnskey(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_cdnskey);
-
-	return (generic_fromtext_key(rdclass, type, lexer, origin,
-				     options, target, callbacks));
-}
-
-static inline isc_result_t
 totext_cdnskey(ARGS_TOTEXT) {
 
 	REQUIRE(rdata != NULL);

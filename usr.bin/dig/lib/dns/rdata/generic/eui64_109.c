@@ -22,40 +22,6 @@
 #define RRTYPE_EUI64_ATTRIBUTES (0)
 
 static inline isc_result_t
-fromtext_eui64(ARGS_FROMTEXT) {
-	isc_token_t token;
-	unsigned char eui64[8];
-	unsigned int l0, l1, l2, l3, l4, l5, l6, l7;
-	int n;
-
-	REQUIRE(type == dns_rdatatype_eui64);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	n = sscanf(DNS_AS_STR(token), "%2x-%2x-%2x-%2x-%2x-%2x-%2x-%2x",
-		   &l0, &l1, &l2, &l3, &l4, &l5, &l6, &l7);
-	if (n != 8 || l0 > 255U || l1 > 255U || l2 > 255U || l3 > 255U ||
-	    l4 > 255U || l5 > 255U || l6 > 255U || l7 > 255U)
-		return (DNS_R_BADEUI);
-
-	eui64[0] = l0;
-	eui64[1] = l1;
-	eui64[2] = l2;
-	eui64[3] = l3;
-	eui64[4] = l4;
-	eui64[5] = l5;
-	eui64[6] = l6;
-	eui64[7] = l7;
-	return (mem_tobuffer(target, eui64, sizeof(eui64)));
-}
-
-static inline isc_result_t
 totext_eui64(ARGS_TOTEXT) {
 	char buf[sizeof("xx-xx-xx-xx-xx-xx-xx-xx")];
 

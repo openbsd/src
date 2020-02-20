@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: naptr_35.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: naptr_35.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -116,73 +116,6 @@ txt_valid_regex(const unsigned char *txt) {
 	n = isc_regex_validate(regex);
 	if (n < 0 || nsub > (unsigned int)n)
 		return (DNS_R_SYNTAX);
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-fromtext_naptr(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-	unsigned char *regex;
-
-	REQUIRE(type == dns_rdatatype_naptr);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	/*
-	 * Order.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Preference.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Flags.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_qstring,
-				      ISC_FALSE));
-	RETTOK(txt_fromtext(&token.value.as_textregion, target));
-
-	/*
-	 * Service.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_qstring,
-				      ISC_FALSE));
-	RETTOK(txt_fromtext(&token.value.as_textregion, target));
-
-	/*
-	 * Regexp.
-	 */
-	regex = isc_buffer_used(target);
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_qstring,
-				      ISC_FALSE));
-	RETTOK(txt_fromtext(&token.value.as_textregion, target));
-	RETTOK(txt_valid_regex(regex));
-
-	/*
-	 * Replacement.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	dns_name_init(&name, NULL);
-	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
-		origin = dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	return (ISC_R_SUCCESS);
 }
 

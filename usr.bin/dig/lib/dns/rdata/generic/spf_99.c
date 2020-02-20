@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: spf_99.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: spf_99.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -22,21 +22,6 @@
 #define RDATA_GENERIC_SPF_99_C
 
 #define RRTYPE_SPF_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_spf(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_spf);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	return (generic_fromtext_txt(rdclass, type, lexer, origin, options,
-				     target, callbacks));
-}
 
 static inline isc_result_t
 totext_spf(ARGS_TOTEXT) {

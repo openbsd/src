@@ -26,25 +26,6 @@
 			       DNS_RDATATYPEATTR_NOTQUESTION)
 
 static inline isc_result_t
-fromtext_opt(ARGS_FROMTEXT) {
-	/*
-	 * OPT records do not have a text format.
-	 */
-
-	REQUIRE(type == dns_rdatatype_opt);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(lexer);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(target);
-	UNUSED(callbacks);
-
-	return (ISC_R_NOTIMPLEMENTED);
-}
-
-static inline isc_result_t
 totext_opt(ARGS_TOTEXT) {
 	isc_region_t r;
 	isc_region_t or;

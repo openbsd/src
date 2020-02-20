@@ -14,53 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: uri_256.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: uri_256.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 #ifndef GENERIC_URI_256_C
 #define GENERIC_URI_256_C 1
 
 #define RRTYPE_URI_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_uri(ARGS_FROMTEXT) {
-	isc_token_t token;
-
-	REQUIRE(type == dns_rdatatype_uri);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	/*
-	 * Priority
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Weight
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Target URI
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token,
-				      isc_tokentype_qstring, ISC_FALSE));
-	if (token.type != isc_tokentype_qstring)
-		RETTOK(DNS_R_SYNTAX);
-	RETTOK(multitxt_fromtext(&token.value.as_textregion, target));
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_uri(ARGS_TOTEXT) {

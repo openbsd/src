@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dlv_32769.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: dlv_32769.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* RFC3658 */
 
@@ -27,15 +27,6 @@
 #include <isc/sha2.h>
 
 #include <dns/ds.h>
-
-static inline isc_result_t
-fromtext_dlv(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_dlv);
-
-	return (generic_fromtext_ds(rdclass, type, lexer, origin, options,
-				    target, callbacks));
-}
 
 static inline isc_result_t
 totext_dlv(ARGS_TOTEXT) {

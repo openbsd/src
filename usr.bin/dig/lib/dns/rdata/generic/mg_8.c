@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mg_8.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: mg_8.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:49:21 PST 2000 by brister */
 
@@ -22,29 +22,6 @@
 #define RDATA_GENERIC_MG_8_C
 
 #define RRTYPE_MG_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_mg(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-
-	REQUIRE(type == dns_rdatatype_mg);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-
-	dns_name_init(&name, NULL);
-	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
-		origin = dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_mg(ARGS_TOTEXT) {

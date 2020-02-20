@@ -14,26 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: unspec_103.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: unspec_103.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 #ifndef RDATA_GENERIC_UNSPEC_103_C
 #define RDATA_GENERIC_UNSPEC_103_C
 
 #define RRTYPE_UNSPEC_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_unspec(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_unspec);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	return (atob_tobuffer(lexer, target));
-}
 
 static inline isc_result_t
 totext_unspec(ARGS_TOTEXT) {

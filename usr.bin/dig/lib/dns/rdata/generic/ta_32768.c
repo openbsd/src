@@ -22,15 +22,6 @@
 #define RRTYPE_TA_ATTRIBUTES 0
 
 static inline isc_result_t
-fromtext_ta(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_ta);
-
-	return (generic_fromtext_ds(rdclass, type, lexer, origin, options,
-				    target, callbacks));
-}
-
-static inline isc_result_t
 totext_ta(ARGS_TOTEXT) {
 
 	REQUIRE(rdata->type == dns_rdatatype_ta);

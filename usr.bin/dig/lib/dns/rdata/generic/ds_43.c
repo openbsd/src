@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.c,v 1.2 2020/02/13 08:19:39 florian Exp $ */
+/* $Id: ds_43.c,v 1.3 2020/02/20 18:08:51 florian Exp $ */
 
 /* RFC3658 */
 
@@ -28,72 +28,6 @@
 #include <isc/sha2.h>
 
 #include <dns/ds.h>
-
-static inline isc_result_t
-generic_fromtext_ds(ARGS_FROMTEXT) {
-	isc_token_t token;
-	unsigned char c;
-	int length;
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	/*
-	 * Key tag.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Algorithm.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(dns_secalg_fromtext(&c, &token.value.as_textregion));
-	RETERR(mem_tobuffer(target, &c, 1));
-
-	/*
-	 * Digest type.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(dns_dsdigest_fromtext(&c, &token.value.as_textregion));
-	RETERR(mem_tobuffer(target, &c, 1));
-
-	/*
-	 * Digest.
-	 */
-	switch (c) {
-	case DNS_DSDIGEST_SHA1:
-		length = ISC_SHA1_DIGESTLENGTH;
-		break;
-	case DNS_DSDIGEST_SHA256:
-		length = ISC_SHA256_DIGESTLENGTH;
-		break;
-	case DNS_DSDIGEST_SHA384:
-		length = ISC_SHA384_DIGESTLENGTH;
-		break;
-	default:
-		length = -1;
-		break;
-	}
-	return (isc_hex_tobuffer(lexer, target, length));
-}
-
-static inline isc_result_t
-fromtext_ds(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_ds);
-
-	return (generic_fromtext_ds(rdclass, type, lexer, origin, options,
-				    target, callbacks));
-}
 
 static inline isc_result_t
 generic_totext_ds(ARGS_TOTEXT) {

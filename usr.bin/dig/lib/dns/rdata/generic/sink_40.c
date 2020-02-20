@@ -22,42 +22,6 @@
 #define RRTYPE_SINK_ATTRIBUTES (0)
 
 static inline isc_result_t
-fromtext_sink(ARGS_FROMTEXT) {
-	isc_token_t token;
-
-	REQUIRE(type == dns_rdatatype_sink);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	/* meaning */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-
-	/* coding */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-
-	/* subcoding */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-
-	return(isc_base64_tobuffer(lexer, target, -1));
-}
-
-static inline isc_result_t
 totext_sink(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("255 255 255")];

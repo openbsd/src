@@ -20,36 +20,6 @@
 #define RRTYPE_TALINK_ATTRIBUTES 0
 
 static inline isc_result_t
-fromtext_talink(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-	int i;
-
-	REQUIRE(type == dns_rdatatype_talink);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	if (origin == NULL)
-		origin = dns_rootname;
-
-	for (i = 0; i < 2; i++) {
-		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string,
-					      ISC_FALSE));
-
-		dns_name_init(&name, NULL);
-		buffer_fromregion(&buffer, &token.value.as_region);
-		RETTOK(dns_name_fromtext(&name, &buffer, origin,
-					 options, target));
-	}
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
 totext_talink(ARGS_TOTEXT) {
 	isc_region_t dregion;
 	dns_name_t prev;

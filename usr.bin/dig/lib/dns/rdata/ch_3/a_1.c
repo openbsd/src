@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: a_1.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -25,44 +25,6 @@
 #include <isc/net.h>
 
 #define RRTYPE_A_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_ch_a(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-
-	REQUIRE(type == dns_rdatatype_a);
-	REQUIRE(rdclass == dns_rdataclass_ch); /* 3 */
-
-	UNUSED(type);
-	UNUSED(callbacks);
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-
-	/* get domain name */
-	dns_name_init(&name, NULL);
-	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
-		origin = dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-	if ((options & DNS_RDATA_CHECKNAMES) != 0 &&
-	    (options & DNS_RDATA_CHECKREVERSE) != 0) {
-		isc_boolean_t ok;
-		ok = dns_name_ishostname(&name, ISC_FALSE);
-		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
-			RETTOK(DNS_R_BADNAME);
-		if (!ok && callbacks != NULL)
-			warn_badname(&name, lexer, callbacks);
-	}
-
-	/* 16-bit octal address */
-	RETERR(isc_lex_getoctaltoken(lexer, &token, ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	return (uint16_tobuffer(token.value.as_ulong, target));
-}
 
 static inline isc_result_t
 totext_ch_a(ARGS_TOTEXT) {

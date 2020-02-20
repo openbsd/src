@@ -314,61 +314,6 @@ dns_rdata_towire(dns_rdata_t *rdata, dns_compress_t *cctx,
  */
 
 isc_result_t
-dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
-		   dns_rdatatype_t type, isc_lex_t *lexer, dns_name_t *origin,
-		   unsigned int options,
-		   isc_buffer_t *target, dns_rdatacallbacks_t *callbacks);
-/*%<
- * Convert the textual representation of a DNS rdata into uncompressed wire
- * form stored in the target region.  Tokens constituting the text of the rdata
- * are taken from 'lexer'.
- *
- * Notes:
- *\li	Relative domain names in the rdata will have 'origin' appended to them.
- *	A NULL origin implies "origin == dns_rootname".
- *
- *
- *	'options'
- *\li	DNS_RDATA_DOWNCASE	downcase domain names when they are copied
- *				into target.
- *\li	DNS_RDATA_CHECKNAMES 	perform checknames checks.
- *\li	DNS_RDATA_CHECKNAMESFAIL fail if the checknames check fail.  If
- *				not set a warning will be issued.
- *\li	DNS_RDATA_CHECKREVERSE  this should set if the owner name ends
- *				in IP6.ARPA, IP6.INT or IN-ADDR.ARPA.
- *
- * Requires:
- *
- *\li	'rdclass' and 'type' are valid.
- *
- *\li	'lexer' is a valid isc_lex_t.
- *
- *\li	'target' is a valid region.
- *
- *\li	'origin' if non NULL it must be absolute.
- *
- *\li	'callbacks' to be NULL or callbacks->warn and callbacks->error be
- *	initialized.
- *
- * Ensures,
- *	if result is success:
- *\li	 	If 'rdata' is not NULL, it is attached to the target.
-
- *\li		The conditions dns_name_fromtext() ensures for names hold
- *		for all names in the rdata.
-
- *\li		The used space in target is updated.
- *
- * Result:
- *\li	Success
- *\li	Translated result codes from isc_lex_gettoken
- *\li	Various 'Bad Form' class failures depending on class and type
- *\li	Bad Form: Input too short
- *\li	Resource Limit: Not enough space
- *\li	Resource Limit: Not enough memory
- */
-
-isc_result_t
 dns_rdata_totext(dns_rdata_t *rdata, dns_name_t *origin, isc_buffer_t *target);
 /*%<
  * Convert 'rdata' into text format, storing the result in 'target'.

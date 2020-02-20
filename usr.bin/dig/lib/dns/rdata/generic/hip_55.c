@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.2 2020/02/12 13:05:04 jsg Exp $ */
+/* $Id: hip_55.c,v 1.3 2020/02/20 18:08:51 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -24,101 +24,6 @@
 #define RDATA_GENERIC_HIP_5_C
 
 #define RRTYPE_HIP_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_hip(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-	isc_buffer_t hit_len;
-	isc_buffer_t key_len;
-	unsigned char *start;
-	size_t len;
-
-	REQUIRE(type == dns_rdatatype_hip);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	/*
-	 * Dummy HIT len.
-	 */
-	hit_len = *target;
-	RETERR(uint8_tobuffer(0, target));
-
-	/*
-	 * Algorithm.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Dummy KEY len.
-	 */
-	key_len = *target;
-	RETERR(uint16_tobuffer(0, target));
-
-	/*
-	 * HIT (base16).
-	 */
-	start = isc_buffer_used(target);
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(isc_hex_decodestring(DNS_AS_STR(token), target));
-
-	/*
-	 * Fill in HIT len.
-	 */
-	len = (unsigned char *)isc_buffer_used(target) - start;
-	if (len > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer((uint32_t)len, &hit_len));
-
-	/*
-	 * Public key (base64).
-	 */
-	start = isc_buffer_used(target);
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(isc_base64_decodestring(DNS_AS_STR(token), target));
-
-	/*
-	 * Fill in KEY len.
-	 */
-	len = (unsigned char *)isc_buffer_used(target) - start;
-	if (len > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer((uint32_t)len, &key_len));
-
-	if (origin == NULL)
-		origin = dns_rootname;
-
-	/*
-	 * Rendezvous Servers.
-	 */
-	dns_name_init(&name, NULL);
-	do {
-		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string,
-					      ISC_TRUE));
-		if (token.type != isc_tokentype_string)
-			break;
-		buffer_fromregion(&buffer, &token.value.as_region);
-		RETTOK(dns_name_fromtext(&name, &buffer, origin, options,
-					 target));
-	} while (1);
-
-	/*
-	 * Let upper layer handle eol/eof.
-	 */
-	isc_lex_ungettoken(lexer, &token);
-
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_hip(ARGS_TOTEXT) {

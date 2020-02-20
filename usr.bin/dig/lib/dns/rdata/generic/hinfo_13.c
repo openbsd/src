@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hinfo_13.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: hinfo_13.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -24,28 +24,6 @@
 #define RDATA_GENERIC_HINFO_13_C
 
 #define RRTYPE_HINFO_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_hinfo(ARGS_FROMTEXT) {
-	isc_token_t token;
-	int i;
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	REQUIRE(type == dns_rdatatype_hinfo);
-
-	for (i = 0; i < 2; i++) {
-		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_qstring,
-					      ISC_FALSE));
-		RETTOK(txt_fromtext(&token.value.as_textregion, target));
-	}
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_hinfo(ARGS_TOTEXT) {

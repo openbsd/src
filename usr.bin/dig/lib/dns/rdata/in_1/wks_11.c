@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.2 2020/02/13 16:57:04 florian Exp $ */
+/* $Id: wks_11.c,v 1.3 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -28,129 +28,6 @@
 #include <isc/net.h>
 
 #define RRTYPE_WKS_ATTRIBUTES (0)
-
-static isc_boolean_t
-mygetprotobyname(const char *name, long *proto) {
-	struct protoent *pe;
-
-	pe = getprotobyname(name);
-	if (pe != NULL)
-		*proto = pe->p_proto;
-	return (ISC_TF(pe != NULL));
-}
-
-static isc_boolean_t
-mygetservbyname(const char *name, const char *proto, long *port) {
-	struct servent *se;
-
-	se = getservbyname(name, proto);
-	if (se != NULL)
-		*port = ntohs(se->s_port);
-	return (ISC_TF(se != NULL));
-}
-
-static inline isc_result_t
-fromtext_in_wks(ARGS_FROMTEXT) {
-	isc_token_t token;
-	isc_region_t region;
-	struct in_addr addr;
-	char *e;
-	long proto;
-	unsigned char bm[8*1024]; /* 64k bits */
-	long port;
-	long maxport = -1;
-	const char *ps = NULL;
-	unsigned int n;
-	char service[32];
-	int i;
-	isc_result_t result;
-
-	REQUIRE(type == dns_rdatatype_wks);
-	REQUIRE(rdclass == dns_rdataclass_in);
-
-	UNUSED(type);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(rdclass);
-
-	/*
-	 * IPv4 dotted quad.
-	 */
-	CHECK(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-
-	isc_buffer_availableregion(target, &region);
-	if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1)
-		CHECKTOK(DNS_R_BADDOTTEDQUAD);
-	if (region.length < 4)
-		return (ISC_R_NOSPACE);
-	memmove(region.base, &addr, 4);
-	isc_buffer_add(target, 4);
-
-	/*
-	 * Protocol.
-	 */
-	CHECK(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-
-	proto = strtol(DNS_AS_STR(token), &e, 10);
-	if (*e == 0)
-		;
-	else if (!mygetprotobyname(DNS_AS_STR(token), &proto))
-		CHECKTOK(DNS_R_UNKNOWNPROTO);
-
-	if (proto < 0 || proto > 0xff)
-		CHECKTOK(ISC_R_RANGE);
-
-	if (proto == IPPROTO_TCP)
-		ps = "tcp";
-	else if (proto == IPPROTO_UDP)
-		ps = "udp";
-
-	CHECK(uint8_tobuffer(proto, target));
-
-	memset(bm, 0, sizeof(bm));
-	do {
-		CHECK(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string, ISC_TRUE));
-		if (token.type != isc_tokentype_string)
-			break;
-
-		/*
-		 * Lowercase the service string as some getservbyname() are
-		 * case sensitive and the database is usually in lowercase.
-		 */
-		strncpy(service, DNS_AS_STR(token), sizeof(service));
-		service[sizeof(service)-1] = '\0';
-		for (i = strlen(service) - 1; i >= 0; i--)
-			if (isupper(service[i]&0xff))
-				service[i] = tolower(service[i]&0xff);
-
-		port = strtol(DNS_AS_STR(token), &e, 10);
-		if (*e == 0)
-			;
-		else if (!mygetservbyname(service, ps, &port) &&
-			 !mygetservbyname(DNS_AS_STR(token), ps, &port))
-			CHECKTOK(DNS_R_UNKNOWNSERVICE);
-		if (port < 0 || port > 0xffff)
-			CHECKTOK(ISC_R_RANGE);
-		if (port > maxport)
-			maxport = port;
-		bm[port / 8] |= (0x80 >> (port % 8));
-	} while (1);
-
-	/*
-	 * Let upper layer handle eol/eof.
-	 */
-	isc_lex_ungettoken(lexer, &token);
-
-	n = (maxport + 8) / 8;
-	result = mem_tobuffer(target, bm, n);
-
- cleanup:
-
-	return (result);
-}
 
 static inline isc_result_t
 totext_in_wks(ARGS_TOTEXT) {

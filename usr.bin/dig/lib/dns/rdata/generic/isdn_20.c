@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: isdn_20.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: isdn_20.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:53:11 PST 2000 by bwelling */
 
@@ -24,35 +24,6 @@
 #define RDATA_GENERIC_ISDN_20_C
 
 #define RRTYPE_ISDN_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_isdn(ARGS_FROMTEXT) {
-	isc_token_t token;
-
-	REQUIRE(type == dns_rdatatype_isdn);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	/* ISDN-address */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_qstring,
-				      ISC_FALSE));
-	RETTOK(txt_fromtext(&token.value.as_textregion, target));
-
-	/* sa: optional */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_qstring,
-				      ISC_TRUE));
-	if (token.type != isc_tokentype_string &&
-	    token.type != isc_tokentype_qstring) {
-		isc_lex_ungettoken(lexer, &token);
-		return (ISC_R_SUCCESS);
-	}
-	RETTOK(txt_fromtext(&token.value.as_textregion, target));
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_isdn(ARGS_TOTEXT) {

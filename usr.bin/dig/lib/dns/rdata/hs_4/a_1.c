@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: a_1.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:58:36 PST 2000 by brister */
 
@@ -24,33 +24,6 @@
 #include <isc/net.h>
 
 #define RRTYPE_A_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_hs_a(ARGS_FROMTEXT) {
-	isc_token_t token;
-	struct in_addr addr;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_a);
-	REQUIRE(rdclass == dns_rdataclass_hs);
-
-	UNUSED(type);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(rdclass);
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-
-	if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1)
-		RETTOK(DNS_R_BADDOTTEDQUAD);
-	isc_buffer_availableregion(target, &region);
-	if (region.length < 4)
-		return (ISC_R_NOSPACE);
-	memmove(region.base, &addr, 4);
-	isc_buffer_add(target, 4);
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_hs_a(ARGS_TOTEXT) {

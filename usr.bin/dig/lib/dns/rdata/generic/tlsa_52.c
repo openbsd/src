@@ -22,49 +22,6 @@
 #define RRTYPE_TLSA_ATTRIBUTES 0
 
 static inline isc_result_t
-generic_fromtext_tlsa(ARGS_FROMTEXT) {
-	isc_token_t token;
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	/*
-	 * Certificate Usage.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Selector.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Matching type.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Certificate Association Data.
-	 */
-	return (isc_hex_tobuffer(lexer, target, -1));
-}
-
-static inline isc_result_t
 generic_totext_tlsa(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("64000 ")];
@@ -132,15 +89,6 @@ generic_fromwire_tlsa(ARGS_FROMWIRE) {
 
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
-}
-
-static inline isc_result_t
-fromtext_tlsa(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_tlsa);
-
-	return (generic_fromtext_tlsa(rdclass, type, lexer, origin, options,
-				      target, callbacks));
 }
 
 static inline isc_result_t

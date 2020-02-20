@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sig_24.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: sig_24.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -24,105 +24,6 @@
 #define RDATA_GENERIC_SIG_24_C
 
 #define RRTYPE_SIG_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_sig(ARGS_FROMTEXT) {
-	isc_token_t token;
-	unsigned char c;
-	long i;
-	dns_rdatatype_t covered;
-	char *e;
-	isc_result_t result;
-	dns_name_t name;
-	isc_buffer_t buffer;
-	uint32_t time_signed, time_expire;
-
-	REQUIRE(type == dns_rdatatype_sig);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	/*
-	 * Type covered.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	result = dns_rdatatype_fromtext(&covered, &token.value.as_textregion);
-	if (result != ISC_R_SUCCESS && result != ISC_R_NOTIMPLEMENTED) {
-		i = strtol(DNS_AS_STR(token), &e, 10);
-		if (i < 0 || i > 65535)
-			RETTOK(ISC_R_RANGE);
-		if (*e != 0)
-			RETTOK(result);
-		covered = (dns_rdatatype_t)i;
-	}
-	RETERR(uint16_tobuffer(covered, target));
-
-	/*
-	 * Algorithm.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(dns_secalg_fromtext(&c, &token.value.as_textregion));
-	RETERR(mem_tobuffer(target, &c, 1));
-
-	/*
-	 * Labels.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	c = (unsigned char)token.value.as_ulong;
-	RETERR(mem_tobuffer(target, &c, 1));
-
-	/*
-	 * Original ttl.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	RETERR(uint32_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Signature expiration.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_expire));
-	RETERR(uint32_tobuffer(time_expire, target));
-
-	/*
-	 * Time signed.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_signed));
-	RETERR(uint32_tobuffer(time_signed, target));
-
-	/*
-	 * Key footprint.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Signer.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	dns_name_init(&name, NULL);
-	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
-		origin = dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-
-	/*
-	 * Sig.
-	 */
-	return (isc_base64_tobuffer(lexer, target, -1));
-}
 
 static inline isc_result_t
 totext_sig(ARGS_TOTEXT) {

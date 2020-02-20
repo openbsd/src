@@ -20,23 +20,6 @@
 #define RRTYPE_OPENPGPKEY_ATTRIBUTES 0
 
 static inline isc_result_t
-fromtext_openpgpkey(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_openpgpkey);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-	UNUSED(options);
-	UNUSED(origin);
-
-	/*
-	 * Keyring.
-	 */
-	return (isc_base64_tobuffer(lexer, target, -1));
-}
-
-static inline isc_result_t
 totext_openpgpkey(ARGS_TOTEXT) {
 	isc_region_t sr;
 

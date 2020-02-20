@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cert_37.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: cert_37.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 21:14:32 EST 2000 by tale */
 
@@ -24,48 +24,6 @@
 #define RDATA_GENERIC_CERT_37_C
 
 #define RRTYPE_CERT_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_cert(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_secalg_t secalg;
-	dns_cert_t cert;
-
-	REQUIRE(type == dns_rdatatype_cert);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	/*
-	 * Cert type.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(dns_cert_fromtext(&cert, &token.value.as_textregion));
-	RETERR(uint16_tobuffer(cert, target));
-
-	/*
-	 * Key tag.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Algorithm.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(dns_secalg_fromtext(&secalg, &token.value.as_textregion));
-	RETERR(mem_tobuffer(target, &secalg, 1));
-
-	return (isc_base64_tobuffer(lexer, target, -1));
-}
 
 static inline isc_result_t
 totext_cert(ARGS_TOTEXT) {

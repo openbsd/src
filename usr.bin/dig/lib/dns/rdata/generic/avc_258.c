@@ -20,21 +20,6 @@
 #define RRTYPE_AVC_ATTRIBUTES (0)
 
 static inline isc_result_t
-fromtext_avc(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_avc);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	return (generic_fromtext_txt(rdclass, type, lexer, origin, options,
-				     target, callbacks));
-}
-
-static inline isc_result_t
 totext_avc(ARGS_TOTEXT) {
 
 	UNUSED(tctx);

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dhcid_49.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: dhcid_49.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* RFC 4701 */
 
@@ -22,21 +22,6 @@
 #define RDATA_IN_1_DHCID_49_C 1
 
 #define RRTYPE_DHCID_ATTRIBUTES 0
-
-static inline isc_result_t
-fromtext_in_dhcid(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_dhcid);
-	REQUIRE(rdclass == dns_rdataclass_in);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	return (isc_base64_tobuffer(lexer, target, -1));
-}
 
 static inline isc_result_t
 totext_in_dhcid(ARGS_TOTEXT) {

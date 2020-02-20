@@ -22,34 +22,6 @@
 #define RRTYPE_CSYNC_ATTRIBUTES 0
 
 static inline isc_result_t
-fromtext_csync(ARGS_FROMTEXT) {
-	isc_token_t token;
-
-	REQUIRE(type == dns_rdatatype_csync);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	/* Serial. */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	RETERR(uint32_tobuffer(token.value.as_ulong, target));
-
-	/* Flags. */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/* Type Map */
-	return (typemap_fromtext(lexer, target, ISC_TRUE));
-}
-
-static inline isc_result_t
 totext_csync(ARGS_TOTEXT) {
 	unsigned long num;
 	char buf[sizeof("0123456789")];	/* Also TYPE65535 */

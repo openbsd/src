@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: soa_6.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: soa_6.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
@@ -22,65 +22,6 @@
 #define RDATA_GENERIC_SOA_6_C
 
 #define RRTYPE_SOA_ATTRIBUTES (DNS_RDATATYPEATTR_SINGLETON)
-
-static inline isc_result_t
-fromtext_soa(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-	int i;
-	uint32_t n;
-	isc_boolean_t ok;
-
-	REQUIRE(type == dns_rdatatype_soa);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	if (origin == NULL)
-		origin = dns_rootname;
-
-	for (i = 0; i < 2; i++) {
-		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string,
-					      ISC_FALSE));
-
-		dns_name_init(&name, NULL);
-		buffer_fromregion(&buffer, &token.value.as_region);
-		RETTOK(dns_name_fromtext(&name, &buffer, origin,
-					 options, target));
-		ok = ISC_TRUE;
-		if ((options & DNS_RDATA_CHECKNAMES) != 0)
-			switch (i) {
-			case 0:
-				ok = dns_name_ishostname(&name, ISC_FALSE);
-				break;
-			case 1:
-				ok = dns_name_ismailbox(&name);
-				break;
-
-			}
-		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
-			RETTOK(DNS_R_BADNAME);
-		if (!ok && callbacks != NULL)
-			warn_badname(&name, lexer, callbacks);
-	}
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	RETERR(uint32_tobuffer(token.value.as_ulong, target));
-
-	for (i = 0; i < 4; i++) {
-		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_string,
-					      ISC_FALSE));
-		RETTOK(dns_counter_fromtext(&token.value.as_textregion, &n));
-		RETERR(uint32_tobuffer(n, target));
-	}
-
-	return (ISC_R_SUCCESS);
-}
 
 static const char *soa_fieldnames[5] = {
 	"serial", "refresh", "retry", "expire", "minimum"

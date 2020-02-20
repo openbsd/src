@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key_25.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: key_25.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -28,53 +28,6 @@
 #include <dst/dst.h>
 
 #define RRTYPE_KEY_ATTRIBUTES (0)
-
-static inline isc_result_t
-generic_fromtext_key(ARGS_FROMTEXT) {
-	isc_result_t result;
-	isc_token_t token;
-	dns_secalg_t alg;
-	dns_secproto_t proto;
-	dns_keyflags_t flags;
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	/* flags */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(dns_keyflags_fromtext(&flags, &token.value.as_textregion));
-	RETERR(uint16_tobuffer(flags, target));
-
-	/* protocol */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(dns_secproto_fromtext(&proto, &token.value.as_textregion));
-	RETERR(mem_tobuffer(target, &proto, 1));
-
-	/* algorithm */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	RETTOK(dns_secalg_fromtext(&alg, &token.value.as_textregion));
-	RETERR(mem_tobuffer(target, &alg, 1));
-
-	/* No Key? */
-	if ((flags & 0xc000) == 0xc000)
-		return (ISC_R_SUCCESS);
-
-	result = isc_base64_tobuffer(lexer, target, -1);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	/* Ensure there's at least enough data to compute a key ID for MD5 */
-	if (alg == DST_ALG_RSAMD5 && isc_buffer_usedlength(target) < 7)
-		return (ISC_R_UNEXPECTEDEND);
-
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 generic_totext_key(ARGS_TOTEXT) {
@@ -213,15 +166,6 @@ generic_fromwire_key(ARGS_FROMWIRE) {
 	isc_buffer_activeregion(source, &sr);
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
-}
-
-static inline isc_result_t
-fromtext_key(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_key);
-
-	return (generic_fromtext_key(rdclass, type, lexer, origin,
-				     options, target, callbacks));
 }
 
 static inline isc_result_t

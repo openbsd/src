@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: gpos_27.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: gpos_27.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 
@@ -24,28 +24,6 @@
 #define RDATA_GENERIC_GPOS_27_C
 
 #define RRTYPE_GPOS_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_gpos(ARGS_FROMTEXT) {
-	isc_token_t token;
-	int i;
-
-	REQUIRE(type == dns_rdatatype_gpos);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	for (i = 0; i < 3; i++) {
-		RETERR(isc_lex_getmastertoken(lexer, &token,
-					      isc_tokentype_qstring,
-					      ISC_FALSE));
-		RETTOK(txt_fromtext(&token.value.as_textregion, target));
-	}
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_gpos(ARGS_TOTEXT) {

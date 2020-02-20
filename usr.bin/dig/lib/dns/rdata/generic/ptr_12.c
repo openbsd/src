@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ptr_12.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: ptr_12.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 14:05:12 PST 2000 by explorer */
 
@@ -22,39 +22,6 @@
 #define RDATA_GENERIC_PTR_12_C
 
 #define RRTYPE_PTR_ATTRIBUTES (0)
-
-static inline isc_result_t
-fromtext_ptr(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-
-	REQUIRE(type == dns_rdatatype_ptr);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-
-	dns_name_init(&name, NULL);
-	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
-		origin = dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-	if (rdclass == dns_rdataclass_in &&
-	    (options & DNS_RDATA_CHECKNAMES) != 0 &&
-	    (options & DNS_RDATA_CHECKREVERSE) != 0) {
-		isc_boolean_t ok;
-		ok = dns_name_ishostname(&name, ISC_FALSE);
-		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
-			RETTOK(DNS_R_BADNAME);
-		if (!ok && callbacks != NULL)
-			warn_badname(&name, lexer, callbacks);
-	}
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_ptr(ARGS_TOTEXT) {

@@ -22,38 +22,6 @@
 #define RRTYPE_EUI48_ATTRIBUTES (0)
 
 static inline isc_result_t
-fromtext_eui48(ARGS_FROMTEXT) {
-	isc_token_t token;
-	unsigned char eui48[6];
-	unsigned int l0, l1, l2, l3, l4, l5;
-	int n;
-
-	REQUIRE(type == dns_rdatatype_eui48);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	n = sscanf(DNS_AS_STR(token), "%2x-%2x-%2x-%2x-%2x-%2x",
-		   &l0, &l1, &l2, &l3, &l4, &l5);
-	if (n != 6 || l0 > 255U || l1 > 255U || l2 > 255U || l3 > 255U ||
-	    l4 > 255U || l5 > 255U)
-		return (DNS_R_BADEUI);
-
-	eui48[0] = l0;
-	eui48[1] = l1;
-	eui48[2] = l2;
-	eui48[3] = l3;
-	eui48[4] = l4;
-	eui48[5] = l5;
-	return (mem_tobuffer(target, eui48, sizeof(eui48)));
-}
-
-static inline isc_result_t
 totext_eui48(ARGS_TOTEXT) {
 	char buf[sizeof("xx-xx-xx-xx-xx-xx")];
 

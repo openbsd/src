@@ -645,8 +645,6 @@ main(int argc, char **argv) {
 
 		fputs("\n\n", stdout);
 
-		doswitch("FROMTEXTSWITCH", "fromtext", FROMTEXTARGS,
-			 FROMTEXTTYPE, FROMTEXTCLASS, FROMTEXTDEF);
 		doswitch("TOTEXTSWITCH", "totext", TOTEXTARGS,
 			 TOTEXTTYPE, TOTEXTCLASS, TOTEXTDEF);
 		doswitch("FROMWIRESWITCH", "fromwire", FROMWIREARGS,

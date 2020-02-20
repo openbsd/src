@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkey_249.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: tkey_249.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -26,102 +26,6 @@
 #define RDATA_GENERIC_TKEY_249_C
 
 #define RRTYPE_TKEY_ATTRIBUTES (DNS_RDATATYPEATTR_META)
-
-static inline isc_result_t
-fromtext_tkey(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_rcode_t rcode;
-	dns_name_t name;
-	isc_buffer_t buffer;
-	long i;
-	char *e;
-
-	REQUIRE(type == dns_rdatatype_tkey);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	/*
-	 * Algorithm.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	dns_name_init(&name, NULL);
-	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
-		origin = dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-
-
-	/*
-	 * Inception.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	RETERR(uint32_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Expiration.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	RETERR(uint32_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Mode.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Error.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
-				      ISC_FALSE));
-	if (dns_tsigrcode_fromtext(&rcode, &token.value.as_textregion)
-				!= ISC_R_SUCCESS)
-	{
-		i = strtol(DNS_AS_STR(token), &e, 10);
-		if (*e != 0)
-			RETTOK(DNS_R_UNKNOWN);
-		if (i < 0 || i > 0xffff)
-			RETTOK(ISC_R_RANGE);
-		rcode = (dns_rcode_t)i;
-	}
-	RETERR(uint16_tobuffer(rcode, target));
-
-	/*
-	 * Key Size.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Key Data.
-	 */
-	RETERR(isc_base64_tobuffer(lexer, target, (int)token.value.as_ulong));
-
-	/*
-	 * Other Size.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(token.value.as_ulong, target));
-
-	/*
-	 * Other Data.
-	 */
-	return (isc_base64_tobuffer(lexer, target, (int)token.value.as_ulong));
-}
 
 static inline isc_result_t
 totext_tkey(ARGS_TOTEXT) {

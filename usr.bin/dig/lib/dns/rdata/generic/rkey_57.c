@@ -20,15 +20,6 @@
 #define RRTYPE_RKEY_ATTRIBUTES 0
 
 static inline isc_result_t
-fromtext_rkey(ARGS_FROMTEXT) {
-
-	REQUIRE(type == dns_rdatatype_rkey);
-
-	return (generic_fromtext_key(rdclass, type, lexer, origin,
-				     options, target, callbacks));
-}
-
-static inline isc_result_t
 totext_rkey(ARGS_TOTEXT) {
 
 	REQUIRE(rdata != NULL);

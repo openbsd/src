@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ns_2.c,v 1.1 2020/02/07 09:58:53 florian Exp $ */
+/* $Id: ns_2.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:15:00 PST 2000 by bwelling */
 
@@ -22,37 +22,6 @@
 #define RDATA_GENERIC_NS_2_C
 
 #define RRTYPE_NS_ATTRIBUTES (DNS_RDATATYPEATTR_ZONECUTAUTH)
-
-static inline isc_result_t
-fromtext_ns(ARGS_FROMTEXT) {
-	isc_token_t token;
-	dns_name_t name;
-	isc_buffer_t buffer;
-	isc_boolean_t ok;
-
-	REQUIRE(type == dns_rdatatype_ns);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(callbacks);
-
-	RETERR(isc_lex_getmastertoken(lexer, &token,isc_tokentype_string,
-				      ISC_FALSE));
-
-	dns_name_init(&name, NULL);
-	buffer_fromregion(&buffer, &token.value.as_region);
-	if (origin == NULL)
-		origin = dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
-	ok = ISC_TRUE;
-	if ((options & DNS_RDATA_CHECKNAMES) != 0)
-		ok = dns_name_ishostname(&name, ISC_FALSE);
-	if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
-		RETTOK(DNS_R_BADNAME);
-	if (!ok && callbacks != NULL)
-		warn_badname(&name, lexer, callbacks);
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 totext_ns(ARGS_TOTEXT) {
