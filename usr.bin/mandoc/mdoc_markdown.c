@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.32 2020/01/19 17:59:01 schwarze Exp $ */
+/*	$OpenBSD: mdoc_markdown.c,v 1.33 2020/02/20 00:29:10 schwarze Exp $ */
 /*
  * Copyright (c) 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -226,7 +226,7 @@ static	const struct md_act md_acts[MDOC_MAX - MDOC_Dd] = {
 	{ NULL, NULL, md_post_pc, NULL, NULL }, /* %Q */
 	{ NULL, md_pre_Lk, md_post_pc, NULL, NULL }, /* %U */
 	{ NULL, NULL, NULL, NULL, NULL }, /* Ta */
-	{ NULL, NULL, NULL, NULL, NULL }, /* Tg */
+	{ NULL, md_pre_skip, NULL, NULL, NULL }, /* Tg */
 };
 static const struct md_act *md_act(enum roff_tok);
 
