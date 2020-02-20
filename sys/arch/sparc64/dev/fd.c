@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.50 2018/12/27 11:06:38 claudio Exp $	*/
+/*	$OpenBSD: fd.c,v 1.51 2020/02/20 02:05:18 cheloha Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -1632,7 +1632,7 @@ loop:
 		fdc->sc_state = RECALCOMPLETE;
 		if (fdc->sc_flags & FDC_NEEDHEADSETTLE) {
 			/* allow 1/30 second for heads to settle */
-			timeout_add(&fdc->fdcpseudointr_to, hz / 30);
+			timeout_add_msec(&fdc->fdcpseudointr_to, 1000 / 30);
 			return (1);		/* will return later */
 		}
 
