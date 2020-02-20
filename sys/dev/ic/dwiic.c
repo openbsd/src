@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.10 2020/02/18 12:13:39 mpi Exp $ */
+/* $OpenBSD: dwiic.c,v 1.11 2020/02/20 15:33:41 cheloha Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -271,7 +271,8 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 		dwiic_read(sc, DW_IC_CLR_INTR);
 		dwiic_write(sc, DW_IC_INTR_MASK, DW_IC_INTR_TX_EMPTY);
 
-		if (tsleep(&sc->sc_writewait, PRIBIO, "dwiic", hz / 2) != 0)
+		if (tsleep_nsec(&sc->sc_writewait, PRIBIO, "dwiic",
+		    MSEC_TO_NSEC(500)) != 0)
 			printf("%s: timed out waiting for tx_empty intr\n",
 			    sc->sc_dev.dv_xname);
 		splx(s);
@@ -368,8 +369,8 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 				dwiic_write(sc, DW_IC_INTR_MASK,
 				    DW_IC_INTR_RX_FULL);
 
-				if (tsleep(&sc->sc_readwait, PRIBIO, "dwiic",
-				    hz / 2) != 0)
+				if (tsleep_nsec(&sc->sc_readwait, PRIBIO,
+				    "dwiic", MSEC_TO_NSEC(500)) != 0)
 					printf("%s: timed out waiting for "
 					    "rx_full intr\n",
 					    sc->sc_dev.dv_xname);
@@ -433,8 +434,8 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			while (sc->sc_busy) {
 				dwiic_write(sc, DW_IC_INTR_MASK,
 				    DW_IC_INTR_STOP_DET);
-				if (tsleep(&sc->sc_busy, PRIBIO, "dwiic",
-				    hz / 2) != 0)
+				if (tsleep_nsec(&sc->sc_busy, PRIBIO, "dwiic",
+				    MSEC_TO_NSEC(500)) != 0)
 					printf("%s: timed out waiting for "
 					    "stop intr\n",
 					    sc->sc_dev.dv_xname);
