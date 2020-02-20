@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-#	$OpenBSD: gen_ctype_utf8.pl,v 1.4 2016/03/03 16:18:48 afresh1 Exp $	#
+#	$OpenBSD: gen_ctype_utf8.pl,v 1.5 2020/02/20 02:51:56 afresh1 Exp $	#
 use 5.022;
 use warnings;
 
@@ -53,9 +53,9 @@ print <<'EOL';
 /*
  * COPYRIGHT AND PERMISSION NOTICE
  *
- * Copyright © 1991-2015 Unicode, Inc. All rights reserved.
+ * Copyright (c) 1991-2019 Unicode, Inc. All rights reserved.
  * Distributed under the Terms of Use in
- * http://www.unicode.org/copyright.html.
+ * https://www.unicode.org/copyright.html.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of the Unicode data files and any associated documentation
@@ -64,14 +64,11 @@ print <<'EOL';
  * without restriction, including without limitation the rights to use,
  * copy, modify, merge, publish, distribute, and/or sell copies of
  * the Data Files or Software, and to permit persons to whom the Data Files
- * or Software are furnished to do so, provided that
+ * or Software are furnished to do so, provided that either
  * (a) this copyright and permission notice appear with all copies
- * of the Data Files or Software,
+ * of the Data Files or Software, or
  * (b) this copyright and permission notice appear in associated
- * documentation, and
- * (c) there is clear notice in each modified Data File or in the Software
- * as well as in the documentation associated with the Data File(s) or
- * Software that the data or software has been modified.
+ * Documentation.
  *
  * THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF
  * ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
@@ -94,6 +91,8 @@ ENCODING        "UTF8"
 VARIABLE        CODESET=UTF-8
 
 EOL
+
+print "/* Unicode Version " . Unicode::UCD::UnicodeVersion() . " */\n";
 
 for my $i ( 0 .. $#{ $blocks_ranges_ref } ) {
 	my $start = $blocks_ranges_ref->[ $i ];
