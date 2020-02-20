@@ -35,6 +35,13 @@ request_firmware(const struct firmware **fw, const char *name,
 	}
 }
 
+static inline int
+request_firmware_direct(const struct firmware **fw, const char *name,
+    struct device *device)
+{
+	return request_firmware(fw, name, device);
+}
+
 #define request_firmware_nowait(a, b, c, d, e, f, g) -EINVAL
 
 static inline void
