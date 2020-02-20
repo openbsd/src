@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2020/01/09 22:06:23 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.16 2020/02/20 20:38:44 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -70,12 +70,17 @@ struct vcpu_opts {
 	uint64_t	stride;
 } vcpu_opts;
 
+struct vdisk_opts {
+	const char	*devalias;
+} vdisk_opts;
+
 struct vnet_opts {
 	uint64_t	mac_addr;
 	uint64_t	mtu;
 } vnet_opts;
 
 void		vcput_opts_default(void);
+void		vdisk_opts_default(void);
 void		vnet_opts_default(void);
 
 typedef struct {
@@ -83,6 +88,7 @@ typedef struct {
 		int64_t			 number;
 		char			*string;
 		struct vcpu_opts	 vcpu_opts;
+		struct vdisk_opts	 vdisk_opts;
 		struct vnet_opts	 vnet_opts;
 	} v;
 	int lineno;
@@ -91,13 +97,15 @@ typedef struct {
 %}
 
 %token	DOMAIN
-%token	VCPU MEMORY VDISK VNET VARIABLE IODEVICE
+%token	VCPU MEMORY VDISK DEVALIAS VNET VARIABLE IODEVICE
 %token	MAC_ADDR MTU
 %token	ERROR
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.number>		memory
 %type	<v.vcpu_opts>		vcpu
+%type	<v.vdisk_opts>		vdisk_opts vdisk_opts_l vdisk_opt
+%type	<v.vdisk_opts>		devalias
 %type	<v.vnet_opts>		vnet_opts vnet_opts_l vnet_opt
 %type	<v.vnet_opts>		mac_addr
 %type	<v.vnet_opts>		mtu
@@ -162,7 +170,7 @@ domainopts	: VCPU vcpu {
 		| MEMORY memory {
 			domain->memory = $2;
 		}
-		| VDISK STRING {
+		| VDISK STRING vdisk_opts {
 			struct vdisk *vdisk = xmalloc(sizeof(struct vdisk));
 			vdisk->path = $2;
 			SIMPLEQ_INSERT_TAIL(&domain->vdisk_list, vdisk, entry);
@@ -184,6 +192,22 @@ domainopts	: VCPU vcpu {
 			iodev->path = $2;
 			SIMPLEQ_INSERT_TAIL(&domain->iodev_list, iodev, entry);
 		    }
+		;
+
+vdisk_opts	:	{ vdisk_opts_default(); }
+		  vdisk_opts_l
+			{ $$ = vdisk_opts; }
+		|	{ vdisk_opts_default(); $$ = vdisk_opts; }
+		;
+vdisk_opts_l	: vdisk_opts_l vdisk_opt
+		| vdisk_opt
+		;
+vdisk_opt	: devalias
+		;
+
+devalias	: DEVALIAS '=' STRING {
+			vdisk_opts.devalias = $3;
+		}
 		;
 
 vnet_opts	:	{ vnet_opts_default(); }
@@ -279,6 +303,12 @@ vcpu_opts_default(void)
 }
 
 void
+vdisk_opts_default(void)
+{
+	vdisk_opts.devalias = NULL;
+}
+
+void
 vnet_opts_default(void)
 {
 	vnet_opts.mac_addr = -1;
@@ -315,6 +345,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "devalias",		DEVALIAS},
 		{ "domain",		DOMAIN},
 		{ "iodevice",		IODEVICE},
 		{ "mac-addr",		MAC_ADDR},
