@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.117 2020/02/16 07:59:08 anton Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.118 2020/02/20 16:56:52 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -75,14 +75,14 @@ int	filt_piperead(struct knote *kn, long hint);
 int	filt_pipewrite(struct knote *kn, long hint);
 
 const struct filterops pipe_rfiltops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_pipedetach,
 	.f_event	= filt_piperead,
 };
 
 const struct filterops pipe_wfiltops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_pipedetach,
 	.f_event	= filt_pipewrite,

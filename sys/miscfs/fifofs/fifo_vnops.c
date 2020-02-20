@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.72 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.73 2020/02/20 16:56:52 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -108,14 +108,14 @@ void	filt_fifowdetach(struct knote *kn);
 int	filt_fifowrite(struct knote *kn, long hint);
 
 const struct filterops fiforead_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_fifordetach,
 	.f_event	= filt_fiforead,
 };
 
 const struct filterops fifowrite_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_fifowdetach,
 	.f_event	= filt_fifowrite,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.38 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.39 2020/02/20 16:56:52 visa Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -2588,21 +2588,21 @@ int filt_tmpfswrite(struct knote *kn, long hint);
 int filt_tmpfsvnode(struct knote *kn, long hint);
 
 const struct filterops tmpfsread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_tmpfsdetach,
 	.f_event	= filt_tmpfsread,
 };
 
 const struct filterops tmpfswrite_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_tmpfsdetach,
 	.f_event	= filt_tmpfswrite,
 };
 
 const struct filterops tmpfsvnode_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_tmpfsdetach,
 	.f_event	= filt_tmpfsvnode,

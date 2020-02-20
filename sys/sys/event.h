@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.32 2019/12/31 13:48:32 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.33 2020/02/20 16:56:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -146,8 +146,10 @@ SLIST_HEAD(klist, knote);
  */
 #define NOTE_SIGNAL	0x08000000
 
+#define FILTEROP_ISFD		0x00000001	/* ident == filedescriptor */
+
 struct filterops {
-	int	f_isfd;		/* true if ident == filedescriptor */
+	int	f_flags;
 	int	(*f_attach)(struct knote *kn);
 	void	(*f_detach)(struct knote *kn);
 	int	(*f_event)(struct knote *kn, long hint);

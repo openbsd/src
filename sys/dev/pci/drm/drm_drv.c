@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.170 2020/01/05 08:39:46 jsg Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.171 2020/02/20 16:56:52 visa Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -496,7 +496,7 @@ filt_drmkms(struct knote *kn, long hint)
 }
 
 const struct filterops drm_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_drmdetach,
 	.f_event	= filt_drmkms,

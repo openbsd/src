@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.128 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.129 2020/02/20 16:56:52 visa Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1960,21 +1960,21 @@ const struct vops msdosfs_vops = {
 };
 
 const struct filterops msdosfsread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_msdosfsdetach,
 	.f_event	= filt_msdosfsread,
 };
 
 const struct filterops msdosfswrite_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_msdosfsdetach,
 	.f_event	= filt_msdosfswrite,
 };
 
 const struct filterops msdosfsvnode_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_msdosfsdetach,
 	.f_event	= filt_msdosfsvnode,

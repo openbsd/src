@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.30 2019/12/31 13:48:32 visa Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.31 2020/02/20 16:56:52 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -70,14 +70,14 @@ int	filt_fuse_read(struct knote *, long);
 void	filt_fuse_rdetach(struct knote *);
 
 const static struct filterops fuse_rd_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_fuse_rdetach,
 	.f_event	= filt_fuse_read,
 };
 
 const static struct filterops fuse_seltrue_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_fuse_rdetach,
 	.f_event	= filt_seltrue,

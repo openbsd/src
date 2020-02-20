@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.187 2020/02/14 14:32:44 mpi Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.188 2020/02/20 16:56:52 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1163,7 +1163,7 @@ bpfpoll(dev_t dev, int events, struct proc *p)
 }
 
 const struct filterops bpfread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_bpfrdetach,
 	.f_event	= filt_bpfread,

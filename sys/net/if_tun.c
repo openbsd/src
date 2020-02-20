@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.218 2020/02/14 14:32:44 mpi Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.219 2020/02/20 16:56:52 visa Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -133,14 +133,14 @@ void	filt_tunwdetach(struct knote *);
 void	tun_link_state(struct tun_softc *, int);
 
 const struct filterops tunread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_tunrdetach,
 	.f_event	= filt_tunread,
 };
 
 const struct filterops tunwrite_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_tunwdetach,
 	.f_event	= filt_tunwrite,

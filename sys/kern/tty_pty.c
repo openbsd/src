@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.96 2020/01/11 14:30:24 mpi Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.97 2020/02/20 16:56:52 visa Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -717,14 +717,14 @@ filt_ptcwrite(struct knote *kn, long hint)
 }
 
 const struct filterops ptcread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_ptcrdetach,
 	.f_event	= filt_ptcread,
 };
 
 const struct filterops ptcwrite_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_ptcwdetach,
 	.f_event	= filt_ptcwrite,

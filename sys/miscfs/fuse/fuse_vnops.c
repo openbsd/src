@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.57 2020/01/20 23:21:56 claudio Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.58 2020/02/20 16:56:52 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -111,21 +111,21 @@ const struct vops fusefs_vops = {
 };
 
 const struct filterops fusefsread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_fusefsdetach,
 	.f_event	= filt_fusefsread,
 };
 
 const struct filterops fusefswrite_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_fusefsdetach,
 	.f_event	= filt_fusefswrite,
 };
 
 const struct filterops fusefsvnode_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_fusefsdetach,
 	.f_event	= filt_fusefsvnode,

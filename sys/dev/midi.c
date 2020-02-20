@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.45 2019/12/31 13:48:31 visa Exp $	*/
+/*	$OpenBSD: midi.c,v 1.46 2020/02/20 16:56:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -67,7 +67,7 @@ void filt_midiwdetach(struct knote *);
 int filt_midiwrite(struct knote *, long);
 
 const struct filterops midiwrite_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_midiwdetach,
 	.f_event	= filt_midiwrite,
@@ -77,7 +77,7 @@ void filt_midirdetach(struct knote *);
 int filt_midiread(struct knote *, long);
 
 const struct filterops midiread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_midirdetach,
 	.f_event	= filt_midiread,

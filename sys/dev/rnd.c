@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.200 2019/12/31 13:48:31 visa Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.201 2020/02/20 16:56:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -242,14 +242,14 @@ static void _rs_seed(u_char *, size_t);
 static void _rs_clearseed(const void *p, size_t s);
 
 const struct filterops randomread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_randomdetach,
 	.f_event	= filt_randomread,
 };
 
 const struct filterops randomwrite_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_randomdetach,
 	.f_event	= filt_randomwrite,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.20 2019/12/31 13:48:31 visa Exp $	*/
+/*	$OpenBSD: apm.c,v 1.21 2020/02/20 16:56:51 visa Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -86,7 +86,7 @@ int filt_apmread(struct knote *kn, long hint);
 int apmkqfilter(dev_t dev, struct knote *kn);
 
 const struct filterops apmread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_apmrdetach,
 	.f_event	= filt_apmread,

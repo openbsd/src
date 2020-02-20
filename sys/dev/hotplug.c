@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.18 2019/12/31 13:48:31 visa Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.19 2020/02/20 16:56:52 visa Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -39,7 +39,7 @@ void filt_hotplugrdetach(struct knote *);
 int  filt_hotplugread(struct knote *, long);
 
 const struct filterops hotplugread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_hotplugrdetach,
 	.f_event	= filt_hotplugread,

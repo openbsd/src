@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.47 2020/02/05 16:29:29 krw Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.48 2020/02/20 16:56:52 visa Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -114,7 +114,7 @@ void		filt_vscsidetach(struct knote *);
 int		filt_vscsiread(struct knote *, long);
   
 const struct filterops vscsi_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_vscsidetach,
 	.f_event	= filt_vscsiread,

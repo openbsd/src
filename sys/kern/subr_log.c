@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.64 2020/01/11 14:30:24 mpi Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.65 2020/02/20 16:56:52 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ void filt_logrdetach(struct knote *kn);
 int filt_logread(struct knote *kn, long hint);
 
 const struct filterops logread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_logrdetach,
 	.f_event	= filt_logread,

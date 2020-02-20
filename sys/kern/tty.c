@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.152 2020/02/08 14:52:07 visa Exp $	*/
+/*	$OpenBSD: tty.c,v 1.153 2020/02/20 16:56:52 visa Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1090,14 +1090,14 @@ ttpoll(dev_t device, int events, struct proc *p)
 }
 
 const struct filterops ttyread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_ttyrdetach,
 	.f_event	= filt_ttyread,
 };
 
 const struct filterops ttywrite_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_ttywdetach,
 	.f_event	= filt_ttywrite,

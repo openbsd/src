@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.125 2020/02/17 04:07:01 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.126 2020/02/20 16:56:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -104,28 +104,28 @@ int	filt_timer(struct knote *kn, long hint);
 void	filt_seltruedetach(struct knote *kn);
 
 const struct filterops kqread_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_kqdetach,
 	.f_event	= filt_kqueue,
 };
 
 const struct filterops proc_filtops = {
-	.f_isfd		= 0,
+	.f_flags	= 0,
 	.f_attach	= filt_procattach,
 	.f_detach	= filt_procdetach,
 	.f_event	= filt_proc,
 };
 
 const struct filterops file_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= filt_fileattach,
 	.f_detach	= NULL,
 	.f_event	= NULL,
 };
 
 const struct filterops timer_filtops = {
-	.f_isfd		= 0,
+	.f_flags	= 0,
 	.f_attach	= filt_timerattach,
 	.f_detach	= filt_timerdetach,
 	.f_event	= filt_timer,
@@ -447,7 +447,7 @@ filt_seltruedetach(struct knote *kn)
 }
 
 const struct filterops seltrue_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_seltruedetach,
 	.f_event	= filt_seltrue,
@@ -484,7 +484,7 @@ filt_deaddetach(struct knote *kn)
 }
 
 static const struct filterops dead_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_deaddetach,
 	.f_event	= filt_dead,
@@ -684,7 +684,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		return (EINVAL);
 	}
 
-	if (fops->f_isfd) {
+	if (fops->f_flags & FILTEROP_ISFD) {
 		/* validate descriptor */
 		if (kev->ident > INT_MAX)
 			return (EBADF);
@@ -694,7 +694,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		newkn = pool_get(&knote_pool, PR_WAITOK | PR_ZERO);
 
 again:
-	if (fops->f_isfd) {
+	if (fops->f_flags & FILTEROP_ISFD) {
 		if ((fp = fd_getfile(fdp, kev->ident)) == NULL) {
 			error = EBADF;
 			goto done;
@@ -774,7 +774,7 @@ again:
 			 * knote_fdclose() has missed kn if the function
 			 * ran before kn appeared in kq_knlist.
 			 */
-			if (fops->f_isfd &&
+			if ((fops->f_flags & FILTEROP_ISFD) &&
 			    fd_checkclosed(fdp, kev->ident, kn->kn_fp)) {
 				/*
 				 * Drop the knote silently without error
@@ -1297,7 +1297,7 @@ knote_attach(struct knote *kn)
 	struct kqueue *kq = kn->kn_kq;
 	struct klist *list;
 
-	if (kn->kn_fop->f_isfd) {
+	if (kn->kn_fop->f_flags & FILTEROP_ISFD) {
 		KASSERT(kq->kq_knlistsize > kn->kn_id);
 		list = &kq->kq_knlist[kn->kn_id];
 	} else {
@@ -1320,7 +1320,7 @@ knote_drop(struct knote *kn, struct proc *p)
 
 	KASSERT(kn->kn_filter != EVFILT_MARKER);
 
-	if (kn->kn_fop->f_isfd)
+	if (kn->kn_fop->f_flags & FILTEROP_ISFD)
 		list = &kq->kq_knlist[kn->kn_id];
 	else
 		list = &kq->kq_knhash[KN_HASH(kn->kn_id, kq->kq_knhashmask)];
@@ -1334,7 +1334,7 @@ knote_drop(struct knote *kn, struct proc *p)
 		wakeup(kn);
 	}
 	splx(s);
-	if (kn->kn_fop->f_isfd)
+	if (kn->kn_fop->f_flags & FILTEROP_ISFD)
 		FRELE(kn->kn_fp, p);
 	pool_put(&knote_pool, kn);
 }

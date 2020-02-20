@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.248 2020/02/19 11:33:48 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.249 2020/02/20 16:56:52 visa Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ void	filt_sigdetach(struct knote *kn);
 int	filt_signal(struct knote *kn, long hint);
 
 const struct filterops sig_filtops = {
-	.f_isfd		= 0,
+	.f_flags	= 0,
 	.f_attach	= filt_sigattach,
 	.f_detach	= filt_sigdetach,
 	.f_event	= filt_signal,

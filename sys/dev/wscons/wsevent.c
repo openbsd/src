@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.22 2019/12/31 13:48:31 visa Exp $ */
+/* $OpenBSD: wsevent.c,v 1.23 2020/02/20 16:56:52 visa Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -89,7 +89,7 @@ void	filt_wseventdetach(struct knote *);
 int	filt_wseventread(struct knote *, long);
 
 const struct filterops wsevent_filtops = {
-	.f_isfd		= 1,
+	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_wseventdetach,
 	.f_event	= filt_wseventread,
