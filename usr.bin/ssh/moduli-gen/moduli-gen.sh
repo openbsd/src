@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: moduli-gen.sh,v 1.3 2017/06/23 03:25:53 dtucker Exp $
+#	$OpenBSD: moduli-gen.sh,v 1.4 2020/02/20 05:58:08 dtucker Exp $
 #
 
 srcdir="$1"
@@ -19,15 +19,17 @@ if [ -f ${moduli_part} ]; then
 fi
 
 if [ ! -f ${moduli_sieved} ]; then
-	for i in 0 1; do ssh-keygen -b ${bits} -G /dev/stdout; done | \
-	    gzip -9c >${moduli_sieved}.tmp && \
+	for i in 0 1;
+		do ssh-keygen -M generate -O bits=${bits} /dev/stdout;
+	done | gzip -9c >${moduli_sieved}.tmp && \
 	mv ${moduli_sieved}.tmp ${moduli_sieved}
 fi
 
 lines=`gzip -dc ${moduli_sieved} | wc -l`
 
 gzip -dc ${moduli_sieved} | \
-    ssh-keygen -K ${moduli_tested}.ckpt -T ${moduli_tested} -J $lines && \
-mv ${objdir}/moduli.${bits}.tested ${srcdir}/moduli.${bits}
+    ssh-keygen -M screen -O checkpoint=${moduli_tested}.ckpt \
+        -O lines=${lines} ${moduli_tested} && \
+    mv ${objdir}/moduli.${bits}.tested ${srcdir}/moduli.${bits}
 
 exit 0
