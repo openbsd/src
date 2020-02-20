@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.344 2020/02/04 10:59:23 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.345 2020/02/20 09:32:49 mpi Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -257,25 +257,25 @@ void em_free_transmit_structures(struct em_softc *);
 void em_free_receive_structures(struct em_softc *);
 void em_update_stats_counters(struct em_softc *);
 void em_disable_aspm(struct em_softc *);
-void em_txeof(struct em_softc *);
+void em_txeof(struct em_queue *);
 int  em_allocate_receive_structures(struct em_softc *);
 int  em_allocate_transmit_structures(struct em_softc *);
 int  em_allocate_desc_rings(struct em_softc *);
-int  em_rxfill(struct em_softc *);
+int  em_rxfill(struct em_queue *);
 void em_rxrefill(void *);
-int  em_rxeof(struct em_softc *);
+int  em_rxeof(struct em_queue *);
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
-u_int	em_transmit_checksum_setup(struct em_softc *, struct mbuf *, u_int,
+u_int	em_transmit_checksum_setup(struct em_queue *, struct mbuf *, u_int,
 	    u_int32_t *, u_int32_t *);
 void em_iff(struct em_softc *);
 #ifdef EM_DEBUG
 void em_print_hw_stats(struct em_softc *);
 #endif
 void em_update_link_status(struct em_softc *);
-int  em_get_buf(struct em_softc *, int);
+int  em_get_buf(struct em_queue *, int);
 void em_enable_hw_vlans(struct em_softc *);
-u_int em_encap(struct em_softc *, struct mbuf *);
+u_int em_encap(struct em_queue *, struct mbuf *);
 void em_smartspeed(struct em_softc *);
 int  em_82547_fifo_workaround(struct em_softc *, int);
 void em_82547_update_fifo_head(struct em_softc *, int);
@@ -286,8 +286,8 @@ int  em_dma_malloc(struct em_softc *, bus_size_t, struct em_dma_alloc *);
 void em_dma_free(struct em_softc *, struct em_dma_alloc *);
 u_int32_t em_fill_descriptors(u_int64_t address, u_int32_t length,
 			      PDESC_ARRAY desc_array);
-void em_flush_tx_ring(struct em_softc *);
-void em_flush_rx_ring(struct em_softc *);
+void em_flush_tx_ring(struct em_queue *);
+void em_flush_rx_ring(struct em_queue *);
 void em_flush_desc_rings(struct em_softc *);
 
 /*********************************************************************
@@ -383,7 +383,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->timer_handle, em_local_timer, sc);
 	timeout_set(&sc->tx_fifo_timer_handle, em_82547_move_tail, sc);
-	timeout_set(&sc->rx_refill, em_rxrefill, sc);
 
 	/* Determine hardware revision */
 	em_identify_hardware(sc);
@@ -601,6 +600,7 @@ em_start(struct ifqueue *ifq)
 	u_int head, free, used;
 	struct mbuf *m;
 	int post = 0;
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 
 	if (!sc->link_active) {
 		ifq_purge(ifq);
@@ -608,15 +608,15 @@ em_start(struct ifqueue *ifq)
 	}
 
 	/* calculate free space */
-	head = sc->sc_tx_desc_head;
-	free = sc->sc_tx_desc_tail;
+	head = que->tx.sc_tx_desc_head;
+	free = que->tx.sc_tx_desc_tail;
 	if (free <= head)
 		free += sc->sc_tx_slots;
 	free -= head;
 
 	if (sc->hw.mac_type != em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
-		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, que->tx.sc_tx_dma.dma_map,
+		    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
 
@@ -631,7 +631,7 @@ em_start(struct ifqueue *ifq)
 		if (m == NULL)
 			break;
 
-		used = em_encap(sc, m);
+		used = em_encap(que, m);
 		if (used == 0) {
 			m_freem(m);
 			continue;
@@ -656,8 +656,8 @@ em_start(struct ifqueue *ifq)
 			if (sc->link_duplex == HALF_DUPLEX)
 				em_82547_move_tail_locked(sc);
 			else {
-				E1000_WRITE_REG(&sc->hw, TDT(0),
-				    sc->sc_tx_desc_head);
+				E1000_WRITE_REG(&sc->hw, TDT(que->me),
+				    que->tx.sc_tx_desc_head);
 				em_82547_update_fifo_head(sc, len);
 			}
 		}
@@ -666,8 +666,8 @@ em_start(struct ifqueue *ifq)
 	}
 
 	if (sc->hw.mac_type != em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
-		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, que->tx.sc_tx_dma.dma_map,
+		    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 		/* 
 		 * Advance the Transmit Descriptor Tail (Tdt),
@@ -675,7 +675,8 @@ em_start(struct ifqueue *ifq)
 		 * available to transmit.
 		 */
 		if (post)
-			E1000_WRITE_REG(&sc->hw, TDT(0), sc->sc_tx_desc_head);
+			E1000_WRITE_REG(&sc->hw, TDT(que->me),
+			    que->tx.sc_tx_desc_head);
 	}
 }
 
@@ -735,7 +736,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	case SIOCGIFRXR:
 		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
-		    NULL, EM_MCLBYTES, &sc->sc_rx_ring);
+		    NULL, EM_MCLBYTES, &sc->queues->rx.sc_rx_ring);
 		break;
 
 	default:
@@ -768,6 +769,8 @@ void
 em_watchdog(struct ifnet *ifp)
 {
 	struct em_softc *sc = ifp->if_softc;
+	struct em_queue *que = sc->queues; /* Use only first queue. */
+
 
 	/* If we are in this routine because of pause frames, then
 	 * don't reset the hardware.
@@ -778,8 +781,9 @@ em_watchdog(struct ifnet *ifp)
 	}
 	printf("%s: watchdog: head %u tail %u TDH %u TDT %u\n",
 	    DEVNAME(sc),
-	    sc->sc_tx_desc_head, sc->sc_tx_desc_tail,
-	    E1000_READ_REG(&sc->hw, TDH(0)), E1000_READ_REG(&sc->hw, TDT(0)));
+	    que->tx.sc_tx_desc_head, que->tx.sc_tx_desc_tail,
+	    E1000_READ_REG(&sc->hw, TDH(que->me)),
+	    E1000_READ_REG(&sc->hw, TDT(que->me)));
 
 	em_init(sc);
 
@@ -940,6 +944,7 @@ int
 em_intr(void *arg)
 {
 	struct em_softc	*sc = arg;
+	struct em_queue *que = sc->queues; /* single queue */
 	struct ifnet	*ifp = &sc->sc_ac.ac_if;
 	u_int32_t	reg_icr, test_icr;
 
@@ -950,9 +955,9 @@ em_intr(void *arg)
 		return (0);
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		em_txeof(sc);
-		if (em_rxeof(sc))
-			em_rxrefill(sc);
+		em_txeof(que);
+		if (em_rxeof(que))
+			em_rxrefill(que);
 	}
 
 	/* Link status change */
@@ -1120,8 +1125,9 @@ em_flowstatus(struct em_softc *sc)
  *  return 0 on success, positive on failure
  **********************************************************************/
 u_int
-em_encap(struct em_softc *sc, struct mbuf *m)
+em_encap(struct em_queue *que, struct mbuf *m)
 {
+	struct em_softc *sc = que->sc;
 	struct em_packet *pkt;
 	struct em_tx_desc *desc;
 	bus_dmamap_t map;
@@ -1134,8 +1140,8 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 	u_int32_t		array_elements;
 
 	/* get a dmamap for this packet from the next free slot */
-	head = sc->sc_tx_desc_head;
-	pkt = &sc->sc_tx_pkts_ring[head];
+	head = que->tx.sc_tx_desc_head;
+	pkt = &que->tx.sc_tx_pkts_ring[head];
 	map = pkt->pkt_map;
 
 	switch (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT)) {
@@ -1158,8 +1164,8 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 	    BUS_DMASYNC_PREWRITE);
 
 	if (sc->hw.mac_type == em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
-		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, que->tx.sc_tx_dma.dma_map,
+		    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
 
@@ -1167,7 +1173,7 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 	    sc->hw.mac_type != em_82576 &&
 	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i210 &&
 	    sc->hw.mac_type != em_i350) {
-		used += em_transmit_checksum_setup(sc, m, head,
+		used += em_transmit_checksum_setup(que, m, head,
 		    &txd_upper, &txd_lower);
 	} else {
 		txd_upper = txd_lower = 0;
@@ -1188,12 +1194,12 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 			    map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len,
 			    &desc_array);
 			for (j = 0; j < array_elements; j++) {
-				desc = &sc->sc_tx_desc_ring[head];
+				desc = &que->tx.sc_tx_desc_ring[head];
 
 				desc->buffer_addr = htole64(
 					desc_array.descriptor[j].address);
 				desc->lower.data = htole32(
-					(sc->sc_txd_cmd | txd_lower |
+					(que->tx.sc_txd_cmd | txd_lower |
 					 (u_int16_t)desc_array.descriptor[j].length));
 				desc->upper.data = htole32(txd_upper);
 
@@ -1204,10 +1210,10 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 				used++;
 			}
 		} else {
-			desc = &sc->sc_tx_desc_ring[head];
+			desc = &que->tx.sc_tx_desc_ring[head];
 
 			desc->buffer_addr = htole64(map->dm_segs[i].ds_addr);
-			desc->lower.data = htole32(sc->sc_txd_cmd |
+			desc->lower.data = htole32(que->tx.sc_txd_cmd |
 			    txd_lower | map->dm_segs[i].ds_len);
 			desc->upper.data = htole32(txd_upper);
 
@@ -1234,7 +1240,7 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 	pkt->pkt_m = m;
 	pkt->pkt_eop = last;
 
-	sc->sc_tx_desc_head = head;
+	que->tx.sc_tx_desc_head = head;
 
 	/* 
 	 * Last Descriptor of Packet
@@ -1244,8 +1250,8 @@ em_encap(struct em_softc *sc, struct mbuf *m)
 	desc->lower.data |= htole32(E1000_TXD_CMD_EOP | E1000_TXD_CMD_RS);
 
 	if (sc->hw.mac_type == em_82547) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
-		    0, sc->sc_tx_dma.dma_map->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, que->tx.sc_tx_dma.dma_map,
+		    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
@@ -1268,12 +1274,13 @@ em_82547_move_tail_locked(struct em_softc *sc)
 	struct em_tx_desc *tx_desc;
 	uint16_t length = 0;
 	boolean_t eop = 0;
+	struct em_queue *que = sc->queues; /* single queue chip */
 
-	hw_tdt = E1000_READ_REG(&sc->hw, TDT(0));
-	sw_tdt = sc->sc_tx_desc_head;
+	hw_tdt = E1000_READ_REG(&sc->hw, TDT(que->me));
+	sw_tdt = que->tx.sc_tx_desc_head;
 
 	while (hw_tdt != sw_tdt) {
-		tx_desc = &sc->sc_tx_desc_ring[hw_tdt];
+		tx_desc = &que->tx.sc_tx_desc_ring[hw_tdt];
 		length += tx_desc->lower.flags.length;
 		eop = tx_desc->lower.data & E1000_TXD_CMD_EOP;
 		if (++hw_tdt == sc->sc_tx_slots)
@@ -1285,7 +1292,7 @@ em_82547_move_tail_locked(struct em_softc *sc)
 				timeout_add(&sc->tx_fifo_timer_handle, 1);
 				break;
 			}
-			E1000_WRITE_REG(&sc->hw, TDT(0), hw_tdt);
+			E1000_WRITE_REG(&sc->hw, TDT(que->me), hw_tdt);
 			em_82547_update_fifo_head(sc, length);
 			length = 0;
 		}
@@ -1339,9 +1346,10 @@ int
 em_82547_tx_fifo_reset(struct em_softc *sc)
 {
 	uint32_t tctl;
+	struct em_queue *que = sc->queues; /* single queue chip */
 
-	if ((E1000_READ_REG(&sc->hw, TDT(0)) ==
-	     E1000_READ_REG(&sc->hw, TDH(0))) &&
+	if ((E1000_READ_REG(&sc->hw, TDT(que->me)) ==
+	     E1000_READ_REG(&sc->hw, TDH(que->me))) &&
 	    (E1000_READ_REG(&sc->hw, TDFT) ==
 	     E1000_READ_REG(&sc->hw, TDFH)) &&
 	    (E1000_READ_REG(&sc->hw, TDFTS) ==
@@ -1516,6 +1524,7 @@ void
 em_stop(void *arg, int softonly)
 {
 	struct em_softc *sc = arg;
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 	struct ifnet   *ifp = &sc->sc_ac.ac_if;
 
 	/* Tell the stack that the interface is no longer active */
@@ -1523,7 +1532,7 @@ em_stop(void *arg, int softonly)
 
 	INIT_DEBUGOUT("em_stop: begin");
 
-	timeout_del(&sc->rx_refill);
+	timeout_del(&que->rx_refill);
 	timeout_del(&sc->timer_handle);
 	timeout_del(&sc->tx_fifo_timer_handle);
 
@@ -1615,6 +1624,7 @@ em_allocate_pci_resources(struct em_softc *sc)
 	const char		*intrstr = NULL;
 	struct pci_attach_args *pa = &sc->osdep.em_pa;
 	pci_chipset_tag_t	pc = pa->pa_pc;
+	struct em_queue	       *que = NULL;
 
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_MMBA);
 	if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
@@ -1684,6 +1694,18 @@ em_allocate_pci_resources(struct em_softc *sc)
 		}
         }
 
+	/* Only one queue for the moment. */
+	que = malloc(sizeof(struct em_queue), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (que == NULL) {
+		printf(": unable to allocate queue memory\n");
+		return (ENOMEM);
+	}
+	que->me = 0;
+	que->sc = sc;
+	timeout_set(&que->rx_refill, em_rxrefill, que);
+
+	sc->queues = que;
+	sc->num_queues = 1;
 	sc->legacy_irq = 0;
 	if (pci_intr_map_msi(pa, &ih)) {
 		if (pci_intr_map(pa, &ih)) {
@@ -1736,7 +1758,7 @@ em_free_pci_resources(struct em_softc *sc)
 {
 	struct pci_attach_args *pa = &sc->osdep.em_pa;
 	pci_chipset_tag_t	pc = pa->pa_pc;
-
+	struct em_queue	       *que = NULL;
 	if (sc->sc_intrhand)
 		pci_intr_disestablish(pc, sc->sc_intrhand);
 	sc->sc_intrhand = 0;
@@ -1756,14 +1778,20 @@ em_free_pci_resources(struct em_softc *sc)
 				sc->osdep.em_memsize);
 	sc->osdep.em_membase = 0;
 
-	if (sc->sc_rx_desc_ring != NULL) {
-		sc->sc_rx_desc_ring = NULL;
-		em_dma_free(sc, &sc->sc_rx_dma);
+	que = sc->queues; /* Use only first queue. */
+	if (que->rx.sc_rx_desc_ring != NULL) {
+		que->rx.sc_rx_desc_ring = NULL;
+		em_dma_free(sc, &que->rx.sc_rx_dma);
 	}
-	if (sc->sc_tx_desc_ring != NULL) {
-		sc->sc_tx_desc_ring = NULL;
-		em_dma_free(sc, &sc->sc_tx_dma);
+	if (que->tx.sc_tx_desc_ring != NULL) {
+		que->tx.sc_tx_desc_ring = NULL;
+		em_dma_free(sc, &que->tx.sc_tx_dma);
 	}
+	if (sc->queues)
+		free(sc->queues, M_DEVBUF,
+		    sc->num_queues * sizeof(struct em_queue));
+	sc->num_queues = 0;
+	sc->queues = NULL;
 }
 
 /*********************************************************************
@@ -2113,13 +2141,15 @@ em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
 int
 em_allocate_transmit_structures(struct em_softc *sc)
 {
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
-	    0, sc->sc_tx_dma.dma_map->dm_mapsize,
+	struct em_queue *que = sc->queues; /* Use only first queue. */
+
+	bus_dmamap_sync(sc->sc_dmat, que->tx.sc_tx_dma.dma_map,
+	    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	sc->sc_tx_pkts_ring = mallocarray(sc->sc_tx_slots,
-	    sizeof(*sc->sc_tx_pkts_ring), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_tx_pkts_ring == NULL) {
+	que->tx.sc_tx_pkts_ring = mallocarray(sc->sc_tx_slots,
+	    sizeof(*que->tx.sc_tx_pkts_ring), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (que->tx.sc_tx_pkts_ring == NULL) {
 		printf("%s: Unable to allocate tx_buffer memory\n", 
 		       DEVNAME(sc));
 		return (ENOMEM);
@@ -2136,17 +2166,18 @@ em_allocate_transmit_structures(struct em_softc *sc)
 int
 em_setup_transmit_structures(struct em_softc *sc)
 {
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 	struct em_packet *pkt;
 	int error, i;
 
 	if ((error = em_allocate_transmit_structures(sc)) != 0)
 		goto fail;
 
-	bzero((void *) sc->sc_tx_desc_ring,
+	bzero((void *) que->tx.sc_tx_desc_ring,
 	      (sizeof(struct em_tx_desc)) * sc->sc_tx_slots);
 
 	for (i = 0; i < sc->sc_tx_slots; i++) {
-		pkt = &sc->sc_tx_pkts_ring[i];
+		pkt = &que->tx.sc_tx_pkts_ring[i];
 		error = bus_dmamap_create(sc->sc_dmat, MAX_JUMBO_FRAME_SIZE,
 		    EM_MAX_SCATTER / (sc->pcix_82544 ? 2 : 1),
 		    MAX_JUMBO_FRAME_SIZE, 0, BUS_DMA_NOWAIT, &pkt->pkt_map);
@@ -2157,11 +2188,11 @@ em_setup_transmit_structures(struct em_softc *sc)
 		}
 	}
 
-	sc->sc_tx_desc_head = 0;
-	sc->sc_tx_desc_tail = 0;
+	que->tx.sc_tx_desc_head = 0;
+	que->tx.sc_tx_desc_tail = 0;
 
 	/* Set checksum context */
-	sc->active_checksum_context = OFFLOAD_NONE;
+	que->tx.active_checksum_context = OFFLOAD_NONE;
 
 	return (0);
 
@@ -2178,26 +2209,27 @@ fail:
 void
 em_initialize_transmit_unit(struct em_softc *sc)
 {
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 	u_int32_t	reg_tctl, reg_tipg = 0;
 	u_int64_t	bus_addr;
 
 	INIT_DEBUGOUT("em_initialize_transmit_unit: begin");
 
 	/* Setup the Base and Length of the Tx Descriptor Ring */
-	bus_addr = sc->sc_tx_dma.dma_map->dm_segs[0].ds_addr;
-	E1000_WRITE_REG(&sc->hw, TDLEN(0),
+	bus_addr = que->tx.sc_tx_dma.dma_map->dm_segs[0].ds_addr;
+	E1000_WRITE_REG(&sc->hw, TDLEN(que->me),
 			sc->sc_tx_slots *
 			sizeof(struct em_tx_desc));
-	E1000_WRITE_REG(&sc->hw, TDBAH(0), (u_int32_t)(bus_addr >> 32));
-	E1000_WRITE_REG(&sc->hw, TDBAL(0), (u_int32_t)bus_addr);
+	E1000_WRITE_REG(&sc->hw, TDBAH(que->me), (u_int32_t)(bus_addr >> 32));
+	E1000_WRITE_REG(&sc->hw, TDBAL(que->me), (u_int32_t)bus_addr);
 
 	/* Setup the HW Tx Head and Tail descriptor pointers */
-	E1000_WRITE_REG(&sc->hw, TDT(0), 0);
-	E1000_WRITE_REG(&sc->hw, TDH(0), 0);
+	E1000_WRITE_REG(&sc->hw, TDT(que->me), 0);
+	E1000_WRITE_REG(&sc->hw, TDH(que->me), 0);
 
 	HW_DEBUGOUT2("Base = %x, Length = %x\n", 
-		     E1000_READ_REG(&sc->hw, TDBAL(0)),
-		     E1000_READ_REG(&sc->hw, TDLEN(0)));
+		     E1000_READ_REG(&sc->hw, TDBAL(que->me)),
+		     E1000_READ_REG(&sc->hw, TDLEN(que->me)));
 
 	/* Set the default values for the Tx Inter Packet Gap timer */
 	switch (sc->hw.mac_type) {
@@ -2228,17 +2260,17 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		E1000_WRITE_REG(&sc->hw, TADV, sc->tx_abs_int_delay);
 
 	/* Setup Transmit Descriptor Base Settings */   
-	sc->sc_txd_cmd = E1000_TXD_CMD_IFCS;
+	que->tx.sc_txd_cmd = E1000_TXD_CMD_IFCS;
 
 	if (sc->hw.mac_type == em_82575 || sc->hw.mac_type == em_82580 ||
 	    sc->hw.mac_type == em_82576 ||
 	    sc->hw.mac_type == em_i210 || sc->hw.mac_type == em_i350) {
 		/* 82575/6 need to enable the TX queue and lack the IDE bit */
-		reg_tctl = E1000_READ_REG(&sc->hw, TXDCTL(0));
+		reg_tctl = E1000_READ_REG(&sc->hw, TXDCTL(que->me));
 		reg_tctl |= E1000_TXDCTL_QUEUE_ENABLE;
-		E1000_WRITE_REG(&sc->hw, TXDCTL(0), reg_tctl);
+		E1000_WRITE_REG(&sc->hw, TXDCTL(que->me), reg_tctl);
 	} else if (sc->tx_int_delay > 0)
-		sc->sc_txd_cmd |= E1000_TXD_CMD_IDE;
+		que->tx.sc_txd_cmd |= E1000_TXD_CMD_IDE;
 
 	/* Program the Transmit Control Register */
 	reg_tctl = E1000_TCTL_PSP | E1000_TCTL_EN |
@@ -2277,14 +2309,15 @@ em_initialize_transmit_unit(struct em_softc *sc)
 void
 em_free_transmit_structures(struct em_softc *sc)
 {
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 	struct em_packet *pkt;
 	int i;
 
 	INIT_DEBUGOUT("free_transmit_structures: begin");
 
-	if (sc->sc_tx_pkts_ring != NULL) {
+	if (que->tx.sc_tx_pkts_ring != NULL) {
 		for (i = 0; i < sc->sc_tx_slots; i++) {
-			pkt = &sc->sc_tx_pkts_ring[i];
+			pkt = &que->tx.sc_tx_pkts_ring[i];
 
 			if (pkt->pkt_m != NULL) {
 				bus_dmamap_sync(sc->sc_dmat, pkt->pkt_map,
@@ -2302,13 +2335,13 @@ em_free_transmit_structures(struct em_softc *sc)
 			}
 		}
 
-		free(sc->sc_tx_pkts_ring, M_DEVBUF,
-		    sc->sc_tx_slots * sizeof(*sc->sc_tx_pkts_ring));
-		sc->sc_tx_pkts_ring = NULL;
+		free(que->tx.sc_tx_pkts_ring, M_DEVBUF,
+		    sc->sc_tx_slots * sizeof(*que->tx.sc_tx_pkts_ring));
+		que->tx.sc_tx_pkts_ring = NULL;
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
-	    0, sc->sc_tx_dma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, que->tx.sc_tx_dma.dma_map,
+	    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 }
 
@@ -2320,7 +2353,7 @@ em_free_transmit_structures(struct em_softc *sc)
  *
  **********************************************************************/
 u_int
-em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp, u_int head,
+em_transmit_checksum_setup(struct em_queue *que, struct mbuf *mp, u_int head,
     u_int32_t *txd_upper, u_int32_t *txd_lower)
 {
 	struct em_context_desc *TXD;
@@ -2328,17 +2361,17 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp, u_int head,
 	if (mp->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 		*txd_upper = E1000_TXD_POPTS_TXSM << 8;
 		*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
-		if (sc->active_checksum_context == OFFLOAD_TCP_IP)
+		if (que->tx.active_checksum_context == OFFLOAD_TCP_IP)
 			return (0);
 		else
-			sc->active_checksum_context = OFFLOAD_TCP_IP;
+			que->tx.active_checksum_context = OFFLOAD_TCP_IP;
 	} else if (mp->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 		*txd_upper = E1000_TXD_POPTS_TXSM << 8;
 		*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
-		if (sc->active_checksum_context == OFFLOAD_UDP_IP)
+		if (que->tx.active_checksum_context == OFFLOAD_UDP_IP)
 			return (0);
 		else
-			sc->active_checksum_context = OFFLOAD_UDP_IP;
+			que->tx.active_checksum_context = OFFLOAD_UDP_IP;
 	} else {
 		*txd_upper = 0;
 		*txd_lower = 0;
@@ -2348,7 +2381,7 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp, u_int head,
 	/* If we reach this point, the checksum offload context
 	 * needs to be reset.
 	 */
-	TXD = (struct em_context_desc *)&sc->sc_tx_desc_ring[head];
+	TXD = (struct em_context_desc *)&que->tx.sc_tx_desc_ring[head];
 
 	TXD->lower_setup.ip_fields.ipcss = ETHER_HDR_LEN;
 	TXD->lower_setup.ip_fields.ipcso = 
@@ -2360,18 +2393,18 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp, u_int head,
 	    ETHER_HDR_LEN + sizeof(struct ip);
 	TXD->upper_setup.tcp_fields.tucse = htole16(0);
 
-	if (sc->active_checksum_context == OFFLOAD_TCP_IP) {
+	if (que->tx.active_checksum_context == OFFLOAD_TCP_IP) {
 		TXD->upper_setup.tcp_fields.tucso = 
 		    ETHER_HDR_LEN + sizeof(struct ip) + 
 		    offsetof(struct tcphdr, th_sum);
-	} else if (sc->active_checksum_context == OFFLOAD_UDP_IP) {
+	} else if (que->tx.active_checksum_context == OFFLOAD_UDP_IP) {
 		TXD->upper_setup.tcp_fields.tucso = 
 		    ETHER_HDR_LEN + sizeof(struct ip) + 
 		    offsetof(struct udphdr, uh_sum);
 	}
 
 	TXD->tcp_seg_setup.data = htole32(0);
-	TXD->cmd_and_length = htole32(sc->sc_txd_cmd | E1000_TXD_CMD_DEXT);
+	TXD->cmd_and_length = htole32(que->tx.sc_txd_cmd | E1000_TXD_CMD_DEXT);
 
 	return (1);
 }
@@ -2384,27 +2417,28 @@ em_transmit_checksum_setup(struct em_softc *sc, struct mbuf *mp, u_int head,
  *
  **********************************************************************/
 void
-em_txeof(struct em_softc *sc)
+em_txeof(struct em_queue *que)
 {
+	struct em_softc *sc = que->sc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct em_packet *pkt;
 	struct em_tx_desc *desc;
 	u_int head, tail;
 	u_int free = 0;
 
-	head = sc->sc_tx_desc_head;
-	tail = sc->sc_tx_desc_tail;
+	head = que->tx.sc_tx_desc_head;
+	tail = que->tx.sc_tx_desc_tail;
 
 	if (head == tail)
 		return;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
-	    0, sc->sc_tx_dma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, que->tx.sc_tx_dma.dma_map,
+	    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 
 	do {
-		pkt = &sc->sc_tx_pkts_ring[tail];
-		desc = &sc->sc_tx_desc_ring[pkt->pkt_eop];
+		pkt = &que->tx.sc_tx_pkts_ring[tail];
+		desc = &que->tx.sc_tx_desc_ring[pkt->pkt_eop];
 
 		if (!ISSET(desc->upper.fields.status, E1000_TXD_STAT_DD))
 			break;
@@ -2427,14 +2461,14 @@ em_txeof(struct em_softc *sc)
 		free++;
 	} while (tail != head);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dma.dma_map,
-	    0, sc->sc_tx_dma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, que->tx.sc_tx_dma.dma_map,
+	    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
 	if (free == 0)
 		return;
 
-	sc->sc_tx_desc_tail = tail;
+	que->tx.sc_tx_desc_tail = tail;
 
 	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
@@ -2448,15 +2482,16 @@ em_txeof(struct em_softc *sc)
  *
  **********************************************************************/
 int
-em_get_buf(struct em_softc *sc, int i)
+em_get_buf(struct em_queue *que, int i)
 {
+	struct em_softc *sc = que->sc;
 	struct mbuf    *m;
 	struct em_packet *pkt;
 	struct em_rx_desc *desc;
 	int error;
 
-	pkt = &sc->sc_rx_pkts_ring[i];
-	desc = &sc->sc_rx_desc_ring[i];
+	pkt = &que->rx.sc_rx_pkts_ring[i];
+	desc = &que->rx.sc_rx_desc_ring[i];
 
 	KASSERT(pkt->pkt_m == NULL);
 
@@ -2497,24 +2532,25 @@ em_get_buf(struct em_softc *sc, int i)
 int
 em_allocate_receive_structures(struct em_softc *sc)
 {
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 	struct em_packet *pkt;
 	int i;
 	int error;
 
-	sc->sc_rx_pkts_ring = mallocarray(sc->sc_rx_slots,
-	    sizeof(*sc->sc_rx_pkts_ring), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_rx_pkts_ring == NULL) {
+	que->rx.sc_rx_pkts_ring = mallocarray(sc->sc_rx_slots,
+	    sizeof(*que->rx.sc_rx_pkts_ring), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (que->rx.sc_rx_pkts_ring == NULL) {
 		printf("%s: Unable to allocate rx_buffer memory\n", 
 		    DEVNAME(sc));
 		return (ENOMEM);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
-	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, que->rx.sc_rx_dma.dma_map,
+	    0, que->rx.sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < sc->sc_rx_slots; i++) {
-		pkt = &sc->sc_rx_pkts_ring[i];
+		pkt = &que->rx.sc_rx_pkts_ring[i];
 
 		error = bus_dmamap_create(sc->sc_dmat, EM_MCLBYTES, 1,
 		    EM_MCLBYTES, 0, BUS_DMA_NOWAIT, &pkt->pkt_map);
@@ -2543,23 +2579,24 @@ fail:
 int
 em_setup_receive_structures(struct em_softc *sc)
 {
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	u_int lwm;
-
-	memset(sc->sc_rx_desc_ring, 0,
-	    sc->sc_rx_slots * sizeof(*sc->sc_rx_desc_ring));
 
 	if (em_allocate_receive_structures(sc))
 		return (ENOMEM);
 
+	memset(que->rx.sc_rx_desc_ring, 0,
+	    sc->sc_rx_slots * sizeof(*que->rx.sc_rx_desc_ring));
+
 	/* Setup our descriptor pointers */
-	sc->sc_rx_desc_tail = 0;
-	sc->sc_rx_desc_head = sc->sc_rx_slots - 1;
+	que->rx.sc_rx_desc_tail = 0;
+	que->rx.sc_rx_desc_head = sc->sc_rx_slots - 1;
 
 	lwm = max(4, 2 * ((ifp->if_hardmtu / MCLBYTES) + 1));
-	if_rxr_init(&sc->sc_rx_ring, lwm, sc->sc_rx_slots);
+	if_rxr_init(&que->rx.sc_rx_ring, lwm, sc->sc_rx_slots);
 
-	if (em_rxfill(sc) == 0) {
+	if (em_rxfill(que) == 0) {
 		printf("%s: unable to fill any rx descriptors\n",
 		    DEVNAME(sc));
 	}
@@ -2575,6 +2612,7 @@ em_setup_receive_structures(struct em_softc *sc)
 void
 em_initialize_receive_unit(struct em_softc *sc)
 {
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 	u_int32_t	reg_rctl;
 	u_int32_t	reg_rxcsum;
 	u_int64_t	bus_addr;
@@ -2596,13 +2634,6 @@ em_initialize_receive_unit(struct em_softc *sc)
 		 * as DEFAULT_ITR = 1/(MAX_INTS_PER_SEC * 256ns) */
 		E1000_WRITE_REG(&sc->hw, ITR, DEFAULT_ITR);
 	}
-
-	/* Setup the Base and Length of the Rx Descriptor Ring */
-	bus_addr = sc->sc_rx_dma.dma_map->dm_segs[0].ds_addr;
-	E1000_WRITE_REG(&sc->hw, RDLEN(0),
-	    sc->sc_rx_slots * sizeof(*sc->sc_rx_desc_ring));
-	E1000_WRITE_REG(&sc->hw, RDBAH(0), (u_int32_t)(bus_addr >> 32));
-	E1000_WRITE_REG(&sc->hw, RDBAL(0), (u_int32_t)bus_addr);
 
 	/* Setup the Receive Control Register */
 	reg_rctl = E1000_RCTL_EN | E1000_RCTL_BAM | E1000_RCTL_LBM_NO |
@@ -2653,22 +2684,29 @@ em_initialize_receive_unit(struct em_softc *sc)
 	if (sc->hw.mac_type == em_82573)
 		E1000_WRITE_REG(&sc->hw, RDTR, 0x20);
 
+	/* Setup the Base and Length of the Rx Descriptor Ring */
+	bus_addr = que->rx.sc_rx_dma.dma_map->dm_segs[0].ds_addr;
+	E1000_WRITE_REG(&sc->hw, RDLEN(que->me),
+	    sc->sc_rx_slots * sizeof(*que->rx.sc_rx_desc_ring));
+	E1000_WRITE_REG(&sc->hw, RDBAH(que->me), (u_int32_t)(bus_addr >> 32));
+	E1000_WRITE_REG(&sc->hw, RDBAL(que->me), (u_int32_t)bus_addr);
+
 	if (sc->hw.mac_type == em_82575 || sc->hw.mac_type == em_82580 ||
 	    sc->hw.mac_type == em_82576 ||
 	    sc->hw.mac_type == em_i210 || sc->hw.mac_type == em_i350) {
 		/* 82575/6 need to enable the RX queue */
 		uint32_t reg;
-		reg = E1000_READ_REG(&sc->hw, RXDCTL(0));
+		reg = E1000_READ_REG(&sc->hw, RXDCTL(que->me));
 		reg |= E1000_RXDCTL_QUEUE_ENABLE;
-		E1000_WRITE_REG(&sc->hw, RXDCTL(0), reg);
+		E1000_WRITE_REG(&sc->hw, RXDCTL(que->me), reg);
 	}
 
 	/* Enable Receives */
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 
 	/* Setup the HW Rx Head and Tail Descriptor Pointers */
-	E1000_WRITE_REG(&sc->hw, RDH(0), 0);
-	E1000_WRITE_REG(&sc->hw, RDT(0), sc->sc_rx_desc_head);
+	E1000_WRITE_REG(&sc->hw, RDH(que->me), 0);
+	E1000_WRITE_REG(&sc->hw, RDT(que->me), que->rx.sc_rx_desc_head);
 }
 
 /*********************************************************************
@@ -2679,20 +2717,21 @@ em_initialize_receive_unit(struct em_softc *sc)
 void
 em_free_receive_structures(struct em_softc *sc)
 {
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 	struct em_packet *pkt;
 	int i;
 
 	INIT_DEBUGOUT("free_receive_structures: begin");
 
-	if_rxr_init(&sc->sc_rx_ring, 0, 0);
+	if_rxr_init(&que->rx.sc_rx_ring, 0, 0);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
-	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, que->rx.sc_rx_dma.dma_map,
+	    0, que->rx.sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	if (sc->sc_rx_pkts_ring != NULL) {
+	if (que->rx.sc_rx_pkts_ring != NULL) {
 		for (i = 0; i < sc->sc_rx_slots; i++) {
-			pkt = &sc->sc_rx_pkts_ring[i];
+			pkt = &que->rx.sc_rx_pkts_ring[i];
 			if (pkt->pkt_m != NULL) {
 				bus_dmamap_sync(sc->sc_dmat, pkt->pkt_map,
 				    0, pkt->pkt_map->dm_mapsize,
@@ -2704,47 +2743,48 @@ em_free_receive_structures(struct em_softc *sc)
 			bus_dmamap_destroy(sc->sc_dmat, pkt->pkt_map);
 		}
 
-		free(sc->sc_rx_pkts_ring, M_DEVBUF,
-		    sc->sc_rx_slots * sizeof(*sc->sc_rx_pkts_ring));
-		sc->sc_rx_pkts_ring = NULL;
+		free(que->rx.sc_rx_pkts_ring, M_DEVBUF,
+		    sc->sc_rx_slots * sizeof(*que->rx.sc_rx_pkts_ring));
+		que->rx.sc_rx_pkts_ring = NULL;
 	}
 
-	if (sc->fmp != NULL) {
-		m_freem(sc->fmp);
-		sc->fmp = NULL;
-		sc->lmp = NULL;
+	if (que->rx.fmp != NULL) {
+		m_freem(que->rx.fmp);
+		que->rx.fmp = NULL;
+		que->rx.lmp = NULL;
 	}
 }
 
 int
-em_rxfill(struct em_softc *sc)
+em_rxfill(struct em_queue *que)
 {
+	struct em_softc *sc = que->sc;
 	u_int slots;
 	int post = 0;
 	int i;
 
-	i = sc->sc_rx_desc_head;
+	i = que->rx.sc_rx_desc_head;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
-	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, que->rx.sc_rx_dma.dma_map,
+	    0, que->rx.sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTWRITE);
 
-	for (slots = if_rxr_get(&sc->sc_rx_ring, sc->sc_rx_slots);
+	for (slots = if_rxr_get(&que->rx.sc_rx_ring, sc->sc_rx_slots);
 	    slots > 0; slots--) {
 		if (++i == sc->sc_rx_slots)
 			i = 0;
 
-		if (em_get_buf(sc, i) != 0)
+		if (em_get_buf(que, i) != 0)
 			break;
 
-		sc->sc_rx_desc_head = i;
+		que->rx.sc_rx_desc_head = i;
 		post = 1;
 	}
 
-	if_rxr_put(&sc->sc_rx_ring, slots);
+	if_rxr_put(&que->rx.sc_rx_ring, slots);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
-	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, que->rx.sc_rx_dma.dma_map,
+	    0, que->rx.sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
 	return (post);
@@ -2753,12 +2793,13 @@ em_rxfill(struct em_softc *sc)
 void
 em_rxrefill(void *arg)
 {
-	struct em_softc *sc = arg;
+	struct em_queue *que = arg;
+	struct em_softc *sc = que->sc;
 
-	if (em_rxfill(sc))
-		E1000_WRITE_REG(&sc->hw, RDT(0), sc->sc_rx_desc_head);
-	else if (if_rxr_inuse(&sc->sc_rx_ring) == 0)
-		timeout_add(&sc->rx_refill, 1);
+	if (em_rxfill(que))
+		E1000_WRITE_REG(&sc->hw, RDT(que->me), que->rx.sc_rx_desc_head);
+	else if (if_rxr_inuse(&que->rx.sc_rx_ring) == 0)
+		timeout_add(&que->rx_refill, 1);
 }
 
 /*********************************************************************
@@ -2769,8 +2810,9 @@ em_rxrefill(void *arg)
  *
  *********************************************************************/
 int
-em_rxeof(struct em_softc *sc)
+em_rxeof(struct em_queue *que)
 {
+	struct em_softc	    *sc = que->sc;
 	struct ifnet	    *ifp = &sc->sc_ac.ac_if;
 	struct mbuf_list    ml = MBUF_LIST_INITIALIZER();
 	struct mbuf	    *m;
@@ -2784,20 +2826,20 @@ em_rxeof(struct em_softc *sc)
 	struct em_packet    *pkt;
 	u_int8_t	    status;
 
-	if (if_rxr_inuse(&sc->sc_rx_ring) == 0)
+	if (if_rxr_inuse(&que->rx.sc_rx_ring) == 0)
 		return (0);
 
-	i = sc->sc_rx_desc_tail;
+	i = que->rx.sc_rx_desc_tail;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
-	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, que->rx.sc_rx_dma.dma_map,
+	    0, que->rx.sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 
 	do {
 		m = NULL;
 
-		pkt = &sc->sc_rx_pkts_ring[i];
-		desc = &sc->sc_rx_desc_ring[i];
+		pkt = &que->rx.sc_rx_pkts_ring[i];
+		desc = &que->rx.sc_rx_desc_ring[i];
 
 		status = desc->status;
 		if (!ISSET(status, E1000_RXD_STAT_DD))
@@ -2813,7 +2855,7 @@ em_rxeof(struct em_softc *sc)
 
 		KASSERT(m != NULL);
 
-		if_rxr_put(&sc->sc_rx_ring, 1);
+		if_rxr_put(&que->rx.sc_rx_ring, 1);
 		rv = 1;
 
 		accept_frame = 1;
@@ -2839,8 +2881,8 @@ em_rxeof(struct em_softc *sc)
 			u_int8_t last_byte;
 			u_int32_t pkt_len = desc_len;
 
-			if (sc->fmp != NULL)
-				pkt_len += sc->fmp->m_pkthdr.len; 
+			if (que->rx.fmp != NULL)
+				pkt_len += que->rx.fmp->m_pkthdr.len;
 
 			last_byte = *(mtod(m, caddr_t) + desc_len - 1);
 			if (TBI_ACCEPT(&sc->hw, status, desc->errors,
@@ -2859,10 +2901,10 @@ em_rxeof(struct em_softc *sc)
 			/* Assign correct length to the current fragment */
 			m->m_len = len;
 
-			if (sc->fmp == NULL) {
+			if (que->rx.fmp == NULL) {
 				m->m_pkthdr.len = m->m_len;
-				sc->fmp = m;	 /* Store the first mbuf */
-				sc->lmp = m;
+				que->rx.fmp = m;	 /* Store the first mbuf */
+				que->rx.lmp = m;
 			} else {
 				/* Chain mbuf's together */
 				m->m_flags &= ~M_PKTHDR;
@@ -2872,16 +2914,16 @@ em_rxeof(struct em_softc *sc)
 				 * descriptor.
 				 */
 				if (prev_len_adj > 0) {
-					sc->lmp->m_len -= prev_len_adj;
-					sc->fmp->m_pkthdr.len -= prev_len_adj;
+					que->rx.lmp->m_len -= prev_len_adj;
+					que->rx.fmp->m_pkthdr.len -= prev_len_adj;
 				}
-				sc->lmp->m_next = m;
-				sc->lmp = m;
-				sc->fmp->m_pkthdr.len += m->m_len;
+				que->rx.lmp->m_next = m;
+				que->rx.lmp = m;
+				que->rx.fmp->m_pkthdr.len += m->m_len;
 			}
 
 			if (eop) {
-				m = sc->fmp;
+				m = que->rx.fmp;
 
 				em_receive_checksum(sc, desc, m);
 #if NVLAN > 0
@@ -2893,16 +2935,16 @@ em_rxeof(struct em_softc *sc)
 #endif
 				ml_enqueue(&ml, m);
 
-				sc->fmp = NULL;
-				sc->lmp = NULL;
+				que->rx.fmp = NULL;
+				que->rx.lmp = NULL;
 			}
 		} else {
-			sc->dropped_pkts++;
+			que->rx.dropped_pkts++;
 
-			if (sc->fmp != NULL) {
-				m_freem(sc->fmp);
-				sc->fmp = NULL;
-				sc->lmp = NULL;
+			if (que->rx.fmp != NULL) {
+				m_freem(que->rx.fmp);
+				que->rx.fmp = NULL;
+				que->rx.lmp = NULL;
 			}
 
 			m_freem(m);
@@ -2911,13 +2953,13 @@ em_rxeof(struct em_softc *sc)
 		/* Advance our pointers to the next descriptor. */
 		if (++i == sc->sc_rx_slots)
 			i = 0;
-	} while (if_rxr_inuse(&sc->sc_rx_ring) > 0);
+	} while (if_rxr_inuse(&que->rx.sc_rx_ring) > 0);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dma.dma_map,
-	    0, sc->sc_rx_dma.dma_map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmat, que->rx.sc_rx_dma.dma_map,
+	    0, que->rx.sc_rx_dma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	sc->sc_rx_desc_tail = i;
+	que->rx.sc_rx_desc_tail = i;
 
 	if_input(ifp, &ml);
 
@@ -3163,21 +3205,22 @@ em_disable_aspm(struct em_softc *sc)
  * to reset the HW.
  */
 void
-em_flush_tx_ring(struct em_softc *sc)
+em_flush_tx_ring(struct em_queue *que)
 {
+	struct em_softc		*sc = que->sc;
 	uint32_t		 tctl, txd_lower = E1000_TXD_CMD_IFCS;
 	uint16_t		 size = 512;
 	struct em_tx_desc	*txd;
 
-	KASSERT(sc->sc_tx_desc_ring != NULL);
+	KASSERT(que->tx.sc_tx_desc_ring != NULL);
 
 	tctl = EM_READ_REG(&sc->hw, E1000_TCTL);
 	EM_WRITE_REG(&sc->hw, E1000_TCTL, tctl | E1000_TCTL_EN);
 
-	KASSERT(EM_READ_REG(&sc->hw, E1000_TDT(0)) == sc->sc_tx_desc_head);
+	KASSERT(EM_READ_REG(&sc->hw, E1000_TDT(que->me)) == que->tx.sc_tx_desc_head);
 
-	txd = &sc->sc_tx_desc_ring[sc->sc_tx_desc_head];
-	txd->buffer_addr = sc->sc_tx_dma.dma_map->dm_segs[0].ds_addr;
+	txd = &que->tx.sc_tx_desc_ring[que->tx.sc_tx_desc_head];
+	txd->buffer_addr = que->tx.sc_tx_dma.dma_map->dm_segs[0].ds_addr;
 	txd->lower.data = htole32(txd_lower | size);
 	txd->upper.data = 0;
 
@@ -3185,10 +3228,10 @@ em_flush_tx_ring(struct em_softc *sc)
 	bus_space_barrier(sc->osdep.mem_bus_space_tag,
 	    sc->osdep.mem_bus_space_handle, 0, 0, BUS_SPACE_BARRIER_WRITE);
 
-	if (++sc->sc_tx_desc_head == sc->sc_tx_slots)
-		sc->sc_tx_desc_head = 0;
+	if (++que->tx.sc_tx_desc_head == sc->sc_tx_slots)
+		que->tx.sc_tx_desc_head = 0;
 
-	EM_WRITE_REG(&sc->hw, E1000_TDT(0), sc->sc_tx_desc_head);
+	EM_WRITE_REG(&sc->hw, E1000_TDT(que->me), que->tx.sc_tx_desc_head);
 	bus_space_barrier(sc->osdep.mem_bus_space_tag, sc->osdep.mem_bus_space_handle,
 	    0, 0, BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 	usec_delay(250);
@@ -3200,16 +3243,17 @@ em_flush_tx_ring(struct em_softc *sc)
  * Mark all descriptors in the RX ring as consumed and disable the rx ring
  */
 void
-em_flush_rx_ring(struct em_softc *sc)
+em_flush_rx_ring(struct em_queue *que)
 {
 	uint32_t	rctl, rxdctl;
+	struct em_softc	*sc = que->sc;
 
 	rctl = EM_READ_REG(&sc->hw, E1000_RCTL);
 	EM_WRITE_REG(&sc->hw, E1000_RCTL, rctl & ~E1000_RCTL_EN);
 	E1000_WRITE_FLUSH(&sc->hw);
 	usec_delay(150);
 
-	rxdctl = EM_READ_REG(&sc->hw, E1000_RXDCTL(0));
+	rxdctl = EM_READ_REG(&sc->hw, E1000_RXDCTL(que->me));
 	/* zero the lower 14 bits (prefetch and host thresholds) */
 	rxdctl &= 0xffffc000;
 	/*
@@ -3217,7 +3261,7 @@ em_flush_rx_ring(struct em_softc *sc)
 	 * and make sure the granularity is "descriptors" and not "cache lines"
 	 */
 	rxdctl |= (0x1F | (1 << 8) | E1000_RXDCTL_THRESH_UNIT_DESC);
-	EM_WRITE_REG(&sc->hw, E1000_RXDCTL(0), rxdctl);
+	EM_WRITE_REG(&sc->hw, E1000_RXDCTL(que->me), rxdctl);
 
 	/* momentarily enable the RX ring for the changes to take effect */
 	EM_WRITE_REG(&sc->hw, E1000_RCTL, rctl | E1000_RCTL_EN);
@@ -3239,6 +3283,7 @@ em_flush_rx_ring(struct em_softc *sc)
 void
 em_flush_desc_rings(struct em_softc *sc)
 {
+	struct em_queue		*que = sc->queues; /* Use only first queue. */
 	struct pci_attach_args	*pa = &sc->osdep.em_pa;
 	uint32_t		 fextnvm11, tdlen;
 	uint16_t		 hang_state;
@@ -3249,16 +3294,16 @@ em_flush_desc_rings(struct em_softc *sc)
 	EM_WRITE_REG(&sc->hw, E1000_FEXTNVM11, fextnvm11);
 
 	/* do nothing if we're not in faulty state, or if the queue is empty */
-	tdlen = EM_READ_REG(&sc->hw, E1000_TDLEN(0));
+	tdlen = EM_READ_REG(&sc->hw, E1000_TDLEN(que->me));
 	hang_state = pci_conf_read(pa->pa_pc, pa->pa_tag, PCICFG_DESC_RING_STATUS);
 	if (!(hang_state & FLUSH_DESC_REQUIRED) || !tdlen)
 		return;
-	em_flush_tx_ring(sc);
+	em_flush_tx_ring(que);
 
 	/* recheck, maybe the fault is caused by the rx ring */
 	hang_state = pci_conf_read(pa->pa_pc, pa->pa_tag, PCICFG_DESC_RING_STATUS);
 	if (hang_state & FLUSH_DESC_REQUIRED)
-		em_flush_rx_ring(sc);
+		em_flush_rx_ring(que);
 }
 
 #ifndef SMALL_KERNEL
@@ -3270,6 +3315,7 @@ em_flush_desc_rings(struct em_softc *sc)
 void
 em_update_stats_counters(struct em_softc *sc)
 {
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 	struct ifnet   *ifp = &sc->sc_ac.ac_if;
 
 	sc->stats.crcerrs += E1000_READ_REG(&sc->hw, CRCERRS);
@@ -3370,7 +3416,7 @@ em_update_stats_counters(struct em_softc *sc)
 
 	/* Rx Errors */
 	ifp->if_ierrors =
-	    sc->dropped_pkts +
+	    que->rx.dropped_pkts +
 	    sc->stats.rxerrc +
 	    sc->stats.crcerrs +
 	    sc->stats.algnerrc +
@@ -3467,23 +3513,27 @@ em_print_hw_stats(struct em_softc *sc)
 int
 em_allocate_desc_rings(struct em_softc *sc)
 {
+	struct em_queue *que = sc->queues; /* Use only first queue. */
+
 	/* Allocate Transmit Descriptor ring */
 	if (em_dma_malloc(sc, sc->sc_tx_slots * sizeof(struct em_tx_desc),
-	    &sc->sc_tx_dma) != 0) {
+	    &que->tx.sc_tx_dma) != 0) {
 		printf("%s: Unable to allocate tx_desc memory\n", 
 		       DEVNAME(sc));
 		return (ENOMEM);
 	}
-	sc->sc_tx_desc_ring = (struct em_tx_desc *)sc->sc_tx_dma.dma_vaddr;
+	que->tx.sc_tx_desc_ring =
+	    (struct em_tx_desc *)que->tx.sc_tx_dma.dma_vaddr;
 
 	/* Allocate Receive Descriptor ring */
 	if (em_dma_malloc(sc, sc->sc_rx_slots * sizeof(struct em_rx_desc),
-	    &sc->sc_rx_dma) != 0) {
+	    &que->rx.sc_rx_dma) != 0) {
 		printf("%s: Unable to allocate rx_desc memory\n",
 		       DEVNAME(sc));
 		return (ENOMEM);
 	}
-	sc->sc_rx_desc_ring = (struct em_rx_desc *)sc->sc_rx_dma.dma_vaddr;
+	que->rx.sc_rx_desc_ring =
+	    (struct em_rx_desc *)que->rx.sc_rx_dma.dma_vaddr;
 
 	return (0);
 }

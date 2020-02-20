@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.74 2019/03/01 10:02:44 dlg Exp $ */
+/* $OpenBSD: if_em.h,v 1.75 2020/02/20 09:32:49 mpi Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -305,6 +305,66 @@ typedef struct _DESCRIPTOR_PAIR
 	u_int32_t	elements;
 } DESC_ARRAY, *PDESC_ARRAY;
 
+/*
+ * Receive definitions
+ *
+ * we have an array of num_rx_desc rx_desc (handled by the
+ * controller), and paired with an array of rx_buffers
+ * (at rx_buffer_area).
+ * The next pair to check on receive is at offset next_rx_desc_to_check
+ */
+struct em_rx {
+	struct em_dma_alloc	 sc_rx_dma;	/* bus_dma glue for rx desc */
+	struct em_rx_desc	*sc_rx_desc_ring;
+	u_int			 sc_rx_desc_head;
+	u_int			 sc_rx_desc_tail;
+	struct em_packet	*sc_rx_pkts_ring;
+
+	struct if_rxring	 sc_rx_ring;
+
+	/*
+	 * First/last mbuf pointers, for
+	 * collecting multisegment RX packets.
+	 */
+	struct mbuf		*fmp;
+	struct mbuf		*lmp;
+
+	/* Statistics */
+	unsigned long		dropped_pkts;
+};
+
+/*
+ * Transmit definitions
+ *
+ * We have an array of num_tx_desc descriptors (handled
+ * by the controller) paired with an array of tx_buffers
+ * (at tx_buffer_area).
+ * The index of the next available descriptor is next_avail_tx_desc.
+ * The number of remaining tx_desc is num_tx_desc_avail.
+ */
+struct em_tx {
+	struct em_dma_alloc	 sc_tx_dma;	/* bus_dma glue for tx desc */
+	struct em_tx_desc	*sc_tx_desc_ring;
+	u_int			 sc_tx_desc_head;
+	u_int			 sc_tx_desc_tail;
+	struct em_packet	*sc_tx_pkts_ring;
+
+	u_int32_t		 sc_txd_cmd;
+
+	XSUM_CONTEXT_T		 active_checksum_context;
+};
+
+struct em_softc;
+struct em_queue {
+	struct em_softc		*sc;
+	uint32_t		 me;	/* queue index, also msix vector */
+
+	struct em_tx		 tx;
+	struct em_rx		 rx;
+
+	struct timeout		 rx_refill;
+};
+
 /* Our adapter structure */
 struct em_softc {
 	struct device	sc_dev;
@@ -324,7 +384,6 @@ struct em_softc {
 	struct timeout	em_intr_enable;
 	struct timeout	timer_handle;
 	struct timeout	tx_fifo_timer_handle;
-	struct timeout	rx_refill;
 
 	/* Info about the board itself */
 	u_int32_t	part_num;
@@ -337,53 +396,11 @@ struct em_softc {
 	u_int32_t	rx_int_delay;
 	u_int32_t	rx_abs_int_delay;
 
-	XSUM_CONTEXT_T	active_checksum_context;
-
-	/*
-	 * Transmit definitions
-	 *
-	 * We have an array of num_tx_desc descriptors (handled
-	 * by the controller) paired with an array of tx_buffers
-	 * (at tx_buffer_area).
-	 * The index of the next available descriptor is next_avail_tx_desc.
-	 * The number of remaining tx_desc is num_tx_desc_avail.
-	 */
 	u_int			 sc_tx_slots;
-	struct em_dma_alloc	 sc_tx_dma;	/* bus_dma glue for tx desc */
-	struct em_tx_desc	*sc_tx_desc_ring;
-	u_int			 sc_tx_desc_head;
-	u_int			 sc_tx_desc_tail;
-	struct em_packet	*sc_tx_pkts_ring;
-
-	u_int32_t		 sc_txd_cmd;
-
-	/*
-	 * Receive definitions
-	 *
-	 * we have an array of num_rx_desc rx_desc (handled by the
-	 * controller), and paired with an array of rx_buffers
-	 * (at rx_buffer_area).
-	 * The next pair to check on receive is at offset next_rx_desc_to_check
-	 */
 	u_int			 sc_rx_slots;
-	struct if_rxring	 sc_rx_ring;
-	struct em_dma_alloc	 sc_rx_dma;	/* bus_dma glue for rx desc */
-	struct em_rx_desc	*sc_rx_desc_ring;
-	u_int			 sc_rx_desc_head;
-	u_int			 sc_rx_desc_tail;
-	struct em_packet	*sc_rx_pkts_ring;
-
 	u_int32_t		 sc_rx_buffer_len;
 
-	/*
-	 * First/last mbuf pointers, for
-	 * collecting multisegment RX packets.
-	 */
-	struct mbuf		*fmp;
-	struct mbuf		*lmp;
-
 	/* Misc stats maintained by the driver */
-	unsigned long		dropped_pkts;
 	unsigned long		mbuf_alloc_failed;
 	unsigned long		mbuf_cluster_failed;
 	unsigned long		no_tx_desc_avail1;
@@ -401,6 +418,10 @@ struct em_softc {
 
 	#define EM_82547_PKT_THRESH	0x3e0
 
+	/*
+	 * These are all 82547 members for the workaround. The chip is pretty
+	 * old, single queue, so keep it here to avoid further changes.
+	 */
 	u_int32_t	tx_fifo_size;
 	u_int32_t	tx_fifo_head;
 	u_int32_t	tx_fifo_head_addr;
@@ -411,6 +432,9 @@ struct em_softc {
 	/* For 82544 PCI-X Workaround */
 	boolean_t	pcix_82544;
 	struct em_hw_stats stats;
+
+	int			 num_queues;
+	struct em_queue		*queues;
 };
 
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
