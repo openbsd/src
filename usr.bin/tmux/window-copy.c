@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.245 2020/02/13 09:02:07 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.246 2020/02/20 07:34:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -590,7 +590,10 @@ window_copy_formats(struct window_mode_entry *wme, struct format_tree *ft)
 		format_add(ft, "selection_start_y", "%d", data->sely);
 		format_add(ft, "selection_end_x", "%d", data->endselx);
 		format_add(ft, "selection_end_y", "%d", data->endsely);
-	}
+		format_add(ft, "selection_active", "%d",
+		    data->cursordrag != CURSORDRAG_NONE);
+	} else
+		format_add(ft, "selection_active", "%d", 0);
 
 	s = format_grid_word(data->screen.grid, data->cx, data->cy);
 	if (s != NULL) {

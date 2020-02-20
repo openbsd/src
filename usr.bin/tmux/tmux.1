@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.712 2020/02/15 15:08:08 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.713 2020/02/20 07:34:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2020 $
+.Dd $Mdocdate: February 20 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4350,6 +4350,7 @@ The following variables are available, where appropriate:
 .It Li "scroll_position" Ta "" Ta "Scroll position in copy mode"
 .It Li "scroll_region_lower" Ta "" Ta "Bottom of scroll region in pane"
 .It Li "scroll_region_upper" Ta "" Ta "Top of scroll region in pane"
+.It Li "selection_active" Ta "" Ta "1 if selection started and changes with the cursor in copy mode"
 .It Li "selection_end_x" Ta "" Ta "X position of the end of the selection"
 .It Li "selection_end_y" Ta "" Ta "Y position of the end of the selection"
 .It Li "selection_present" Ta "" Ta "1 if selection started in copy mode"
