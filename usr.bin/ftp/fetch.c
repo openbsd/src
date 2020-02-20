@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.191 2020/02/19 12:39:38 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.192 2020/02/20 00:45:09 yasuoka Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1702,8 +1702,7 @@ proxy_connect(int socket, char *host, char *cookie)
 {
 	int l;
 	char buf[1024];
-	char *connstr, *hosttail, *port, *crlf;
-	ssize_t sz;
+	char *connstr, *hosttail, *port;
 
 	if (*host == '[' && (hosttail = strrchr(host, ']')) != NULL &&
 		(hosttail[1] == '\0' || hosttail[1] == ':')) {
@@ -1735,22 +1734,7 @@ proxy_connect(int socket, char *host, char *cookie)
 #endif /* !SMALL */
 	if (write(socket, connstr, l) != l)
 		err(1, "Could not send connect string");
-	sz = read(socket, &buf, sizeof(buf) - 1);
-	if (sz < 0)
-		err(1, "Failed to receive response from proxy");
-	/* XXX should not assume we could read entire response at once.  */
-	buf[sz] = '\0';
-	if ((strncmp(buf, "HTTP/1.0 ", 9) != 0 &&
-	    strncmp(buf, "HTTP/1.1 ", 9) != 0) ||
-	    (crlf = strstr(buf, "\r\n")) == NULL)
-		errx(1, "Could not parse received response from proxy");
-	*crlf = '\0';
-	if (strncmp(buf + 9, "200 ", 4) != 0)
-		errx(1, "CONNECT command on proxy failed: %s", buf + 9);
-	*crlf = '\r';	/* revert CR */
-	if ((crlf = strstr(buf, "\r\n\r\n")) == NULL)
-		errx(1, "Could not read the end of response from proxy");
-
+	read(socket, &buf, sizeof(buf)); /* only proxy header XXX: error handling? */
 	free(connstr);
 	return(200);
 }
