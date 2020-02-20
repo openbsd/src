@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.3 2019/08/04 16:15:58 kmos Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.4 2020/02/20 06:12:14 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -147,8 +147,8 @@ struct smbios_struct_bios {
 	uint32_t	charext;
 	uint8_t		major_rel;
 	uint8_t		minor_rel;
-	uint8_t		ecf_mjr_rel;	/* embedded controler firmware */
-	uint8_t		ecf_min_rel;	/* embedded controler firmware */
+	uint8_t		ecf_mjr_rel;	/* embedded controller firmware */
+	uint8_t		ecf_min_rel;	/* embedded controller firmware */
 } __packed;
 
 /*
