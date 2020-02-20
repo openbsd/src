@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.49 2020/02/12 19:14:56 otto Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.50 2020/02/20 14:41:01 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -722,7 +722,7 @@ constraint_msg_close(u_int32_t id, u_int8_t *data, size_t len)
 			cnt++;
 		if (cnt > 0 && ++total_fails >= cnt &&
 		    conf->constraint_median == 0) {
-			log_warnx("constrainst configured but none available");
+			log_warnx("constraints configured but none available");
 			total_fails = 0;
 		}
 	}
