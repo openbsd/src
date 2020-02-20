@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst.h,v 1.5 2020/02/16 21:12:41 florian Exp $ */
+/* $Id: dst.h,v 1.6 2020/02/20 18:07:59 florian Exp $ */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -240,73 +240,6 @@ dst_context_verify2(dst_context_t *dctx, unsigned int maxbits,
  *
  * Ensures:
  * \li	"sig" will contain the signature
- */
-
-isc_result_t
-dst_key_fromnamedfile(const char *filename, const char *dirname,
-		      int type, dst_key_t **keyp);
-/*%<
- * Reads a key from permanent storage.  The key can either be a public or
- * key, and is specified by filename.  If a private key is specified, the
- * public key must also be present.
- *
- * If 'dirname' is not NULL, and 'filename' is a relative path,
- * then the file is looked up relative to the given directory.
- * If 'filename' is an absolute path, 'dirname' is ignored.
- *
- * Requires:
- * \li	"filename" is not NULL
- * \li	"type" is DST_TYPE_PUBLIC, DST_TYPE_PRIVATE, or the bitwise union
- *		  DST_TYPE_KEY look for a KEY record otherwise DNSKEY
- * \li	"keyp" is not NULL and "*keyp" is NULL.
- *
- * Returns:
- * \li	ISC_R_SUCCESS
- * \li	any other result indicates failure
- *
- * Ensures:
- * \li	If successful, *keyp will contain a valid key.
- */
-
-
-isc_result_t
-dst_key_read_public(const char *filename, int type, dst_key_t **keyp);
-/*%<
- * Reads a public key from permanent storage.  The key must be a public key.
- *
- * Requires:
- * \li	"filename" is not NULL
- * \li	"type" is DST_TYPE_KEY look for a KEY record otherwise DNSKEY
- * \li	"keyp" is not NULL and "*keyp" is NULL.
- *
- * Returns:
- * \li	ISC_R_SUCCESS
- * \li	DST_R_BADKEYTYPE if the key type is not the expected one
- * \li	ISC_R_UNEXPECTEDTOKEN if the file can not be parsed as a public key
- * \li	any other result indicates failure
- *
- * Ensures:
- * \li	If successful, *keyp will contain a valid key.
- */
-
-isc_result_t
-dst_key_fromdns(dns_name_t *name, dns_rdataclass_t rdclass,
-		isc_buffer_t *source, dst_key_t **keyp);
-/*%<
- * Converts a DNS KEY record into a DST key.
- *
- * Requires:
- * \li	"name" is a valid absolute dns name.
- * \li	"source" is a valid buffer.  There must be at least 4 bytes available.
- * \li	"keyp" is not NULL and "*keyp" is NULL.
- *
- * Returns:
- * \li	ISC_R_SUCCESS
- * \li	any other result indicates failure
- *
- * Ensures:
- * \li	If successful, *keyp will contain a valid key, and the consumed
- *	pointer in data will be advanced.
  */
 
 isc_result_t

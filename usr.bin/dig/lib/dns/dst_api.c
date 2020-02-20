@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.5 2020/02/18 18:11:27 florian Exp $
+ * $Id: dst_api.c,v 1.6 2020/02/20 18:07:59 florian Exp $
  */
 
 /*! \file */
@@ -83,10 +83,6 @@ static isc_result_t	frombuffer(dns_name_t *name,
 				   dst_key_t **keyp);
 
 static isc_result_t	algorithm_status(unsigned int alg);
-
-static isc_result_t	addsuffix(char *filename, int len,
-				  const char *dirname, const char *ofilename,
-				  const char *suffix);
 
 #define RETERR(x)				\
 	do {					\
@@ -287,108 +283,6 @@ dst_context_verify2(dst_context_t *dctx, unsigned int maxbits,
 }
 
 isc_result_t
-dst_key_fromnamedfile(const char *filename, const char *dirname,
-		      int type, dst_key_t **keyp)
-{
-	isc_result_t result;
-	dst_key_t *pubkey = NULL, *key = NULL;
-	char *newfilename = NULL;
-	int newfilenamelen = 0;
-	isc_lex_t *lex = NULL;
-
-	REQUIRE(dst_initialized == ISC_TRUE);
-	REQUIRE(filename != NULL);
-	REQUIRE((type & (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC)) != 0);
-	REQUIRE(keyp != NULL && *keyp == NULL);
-
-	/* If an absolute path is specified, don't use the key directory */
-	if (filename[0] == '/')
-		dirname = NULL;
-
-	newfilenamelen = strlen(filename) + 5;
-	if (dirname != NULL)
-		newfilenamelen += strlen(dirname) + 1;
-	newfilename = malloc(newfilenamelen);
-	if (newfilename == NULL)
-		return (ISC_R_NOMEMORY);
-	result = addsuffix(newfilename, newfilenamelen,
-			   dirname, filename, ".key");
-	INSIST(result == ISC_R_SUCCESS);
-
-	result = dst_key_read_public(newfilename, type, &pubkey);
-	free(newfilename);
-	newfilename = NULL;
-	RETERR(result);
-
-	if ((type & (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC)) == DST_TYPE_PUBLIC ||
-	    (pubkey->key_flags & DNS_KEYFLAG_TYPEMASK) == DNS_KEYTYPE_NOKEY) {
-		result = computeid(pubkey);
-		if (result != ISC_R_SUCCESS) {
-			dst_key_free(&pubkey);
-			return (result);
-		}
-
-		*keyp = pubkey;
-		return (ISC_R_SUCCESS);
-	}
-
-	result = algorithm_status(pubkey->key_alg);
-	if (result != ISC_R_SUCCESS) {
-		dst_key_free(&pubkey);
-		return (result);
-	}
-
-	key = get_key_struct(pubkey->key_name, pubkey->key_alg,
-			     pubkey->key_flags, pubkey->key_proto, 0,
-			     pubkey->key_class, pubkey->key_ttl);
-	if (key == NULL) {
-		dst_key_free(&pubkey);
-		return (ISC_R_NOMEMORY);
-	}
-
-	if (key->func->parse == NULL)
-		RETERR(DST_R_UNSUPPORTEDALG);
-
-	newfilenamelen = strlen(filename) + 9;
-	if (dirname != NULL)
-		newfilenamelen += strlen(dirname) + 1;
-	newfilename = malloc(newfilenamelen);
-	if (newfilename == NULL)
-		RETERR(ISC_R_NOMEMORY);
-	result = addsuffix(newfilename, newfilenamelen,
-			   dirname, filename, ".private");
-	INSIST(result == ISC_R_SUCCESS);
-
-	RETERR(isc_lex_create(1500, &lex));
-	RETERR(isc_lex_openfile(lex, newfilename));
-	free(newfilename);
-	newfilename = NULL;
-
-	RETERR(key->func->parse(key, lex, pubkey));
-	isc_lex_destroy(&lex);
-
-	RETERR(computeid(key));
-
-	if (pubkey->key_id != key->key_id)
-		RETERR(DST_R_INVALIDPRIVATEKEY);
-	dst_key_free(&pubkey);
-
-	*keyp = key;
-	return (ISC_R_SUCCESS);
-
- out:
-	if (pubkey != NULL)
-		dst_key_free(&pubkey);
-	if (newfilename != NULL)
-		free(newfilename);
-	if (lex != NULL)
-		isc_lex_destroy(&lex);
-	if (key != NULL)
-		dst_key_free(&key);
-	return (result);
-}
-
-isc_result_t
 dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
 	REQUIRE(dst_initialized == ISC_TRUE);
 	REQUIRE(target != NULL);
@@ -416,48 +310,6 @@ dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
 		return (ISC_R_SUCCESS);
 
 	return (key->func->todns(key, target));
-}
-
-isc_result_t
-dst_key_fromdns(dns_name_t *name, dns_rdataclass_t rdclass,
-		isc_buffer_t *source, dst_key_t **keyp)
-{
-	uint8_t alg, proto;
-	uint32_t flags, extflags;
-	dst_key_t *key = NULL;
-	dns_keytag_t id, rid;
-	isc_region_t r;
-	isc_result_t result;
-
-	REQUIRE(dst_initialized);
-
-	isc_buffer_remainingregion(source, &r);
-
-	if (isc_buffer_remaininglength(source) < 4)
-		return (DST_R_INVALIDPUBLICKEY);
-	flags = isc_buffer_getuint16(source);
-	proto = isc_buffer_getuint8(source);
-	alg = isc_buffer_getuint8(source);
-
-	id = dst_region_computeid(&r, alg);
-	rid = dst_region_computerid(&r, alg);
-
-	if (flags & DNS_KEYFLAG_EXTENDED) {
-		if (isc_buffer_remaininglength(source) < 2)
-			return (DST_R_INVALIDPUBLICKEY);
-		extflags = isc_buffer_getuint16(source);
-		flags |= (extflags << 16);
-	}
-
-	result = frombuffer(name, alg, flags, proto, rdclass, source,
-			    &key);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	key->key_id = id;
-	key->key_rid = rid;
-
-	*keyp = key;
-	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
@@ -619,128 +471,6 @@ get_key_struct(dns_name_t *name, unsigned int alg,
 	return (key);
 }
 
-/*%
- * Reads a public key from disk
- */
-isc_result_t
-dst_key_read_public(const char *filename, int type,
-		    dst_key_t **keyp)
-{
-	u_char rdatabuf[DST_KEY_MAXSIZE];
-	isc_buffer_t b;
-	dns_fixedname_t name;
-	isc_lex_t *lex = NULL;
-	isc_token_t token;
-	isc_result_t ret;
-	dns_rdata_t rdata = DNS_RDATA_INIT;
-	unsigned int opt = ISC_LEXOPT_DNSMULTILINE;
-	dns_rdataclass_t rdclass = dns_rdataclass_in;
-	isc_lexspecials_t specials;
-	uint32_t ttl = 0;
-	isc_result_t result;
-	dns_rdatatype_t keytype;
-
-	/*
-	 * Open the file and read its formatted contents
-	 * File format:
-	 *    domain.name [ttl] [class] [KEY|DNSKEY] <flags> <protocol> <algorithm> <key>
-	 */
-
-	/* 1500 should be large enough for any key */
-	ret = isc_lex_create(1500, &lex);
-	if (ret != ISC_R_SUCCESS)
-		goto cleanup;
-
-	memset(specials, 0, sizeof(specials));
-	specials['('] = 1;
-	specials[')'] = 1;
-	specials['"'] = 1;
-	isc_lex_setspecials(lex, specials);
-	isc_lex_setcomments(lex, ISC_LEXCOMMENT_DNSMASTERFILE);
-
-	ret = isc_lex_openfile(lex, filename);
-	if (ret != ISC_R_SUCCESS)
-		goto cleanup;
-
-#define NEXTTOKEN(lex, opt, token) { \
-	ret = isc_lex_gettoken(lex, opt, token); \
-	if (ret != ISC_R_SUCCESS) \
-		goto cleanup; \
-	}
-
-#define BADTOKEN() { \
-	ret = ISC_R_UNEXPECTEDTOKEN; \
-	goto cleanup; \
-	}
-
-	/* Read the domain name */
-	NEXTTOKEN(lex, opt, &token);
-	if (token.type != isc_tokentype_string)
-		BADTOKEN();
-
-	/*
-	 * We don't support "@" in .key files.
-	 */
-	if (!strcmp(DST_AS_STR(token), "@"))
-		BADTOKEN();
-
-	dns_fixedname_init(&name);
-	isc_buffer_init(&b, DST_AS_STR(token), strlen(DST_AS_STR(token)));
-	isc_buffer_add(&b, strlen(DST_AS_STR(token)));
-	ret = dns_name_fromtext(dns_fixedname_name(&name), &b, dns_rootname,
-				0, NULL);
-	if (ret != ISC_R_SUCCESS)
-		goto cleanup;
-
-	/* Read the next word: either TTL, class, or 'KEY' */
-	NEXTTOKEN(lex, opt, &token);
-
-	if (token.type != isc_tokentype_string)
-		BADTOKEN();
-
-	/* If it's a TTL, read the next one */
-	result = dns_ttl_fromtext(&token.value.as_textregion, &ttl);
-	if (result == ISC_R_SUCCESS)
-		NEXTTOKEN(lex, opt, &token);
-
-	if (token.type != isc_tokentype_string)
-		BADTOKEN();
-
-	ret = dns_rdataclass_fromtext(&rdclass, &token.value.as_textregion);
-	if (ret == ISC_R_SUCCESS)
-		NEXTTOKEN(lex, opt, &token);
-
-	if (token.type != isc_tokentype_string)
-		BADTOKEN();
-
-	if (strcasecmp(DST_AS_STR(token), "DNSKEY") == 0)
-		keytype = dns_rdatatype_dnskey;
-	else if (strcasecmp(DST_AS_STR(token), "KEY") == 0)
-		keytype = dns_rdatatype_key; /*%< SIG(0), TKEY */
-	else
-		BADTOKEN();
-
-	if (((type & DST_TYPE_KEY) != 0 && keytype != dns_rdatatype_key) ||
-	    ((type & DST_TYPE_KEY) == 0 && keytype != dns_rdatatype_dnskey)) {
-		ret = DST_R_BADKEYTYPE;
-		goto cleanup;
-	}
-
-	isc_buffer_init(&b, rdatabuf, sizeof(rdatabuf));
-	ret = dns_rdata_fromtext(&rdata, rdclass, keytype, lex, NULL,
-				 ISC_FALSE, &b, NULL);
-	if (ret != ISC_R_SUCCESS)
-		goto cleanup;
-
-	ret = dst_key_fromdns(dns_fixedname_name(&name), rdclass, &b, keyp);
-	if (ret != ISC_R_SUCCESS)
-		goto cleanup;
- cleanup:
-	if (lex != NULL)
-		isc_lex_destroy(&lex);
-	return (ret);
-}
-
 static isc_result_t
 computeid(dst_key_t *key) {
 	isc_buffer_t dnsbuf;
@@ -804,30 +534,4 @@ algorithm_status(unsigned int alg) {
 	if (dst_algorithm_supported(alg))
 		return (ISC_R_SUCCESS);
 	return (DST_R_UNSUPPORTEDALG);
-}
-
-static isc_result_t
-addsuffix(char *filename, int len, const char *odirname,
-	  const char *ofilename, const char *suffix)
-{
-	int olen = strlen(ofilename);
-	int n;
-
-	if (olen > 1 && ofilename[olen - 1] == '.')
-		olen -= 1;
-	else if (olen > 8 && strcmp(ofilename + olen - 8, ".private") == 0)
-		olen -= 8;
-	else if (olen > 4 && strcmp(ofilename + olen - 4, ".key") == 0)
-		olen -= 4;
-
-	if (odirname == NULL)
-		n = snprintf(filename, len, "%.*s%s", olen, ofilename, suffix);
-	else
-		n = snprintf(filename, len, "%s/%.*s%s",
-			     odirname, olen, ofilename, suffix);
-	if (n < 0)
-		return (ISC_R_FAILURE);
-	if (n >= len)
-		return (ISC_R_NOSPACE);
-	return (ISC_R_SUCCESS);
 }
