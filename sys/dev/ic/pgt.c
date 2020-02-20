@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.97 2020/01/09 14:35:19 mpi Exp $  */
+/*	$OpenBSD: pgt.c,v 1.98 2020/02/20 15:32:17 cheloha Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1648,7 +1648,7 @@ pgt_mgmt_request(struct pgt_softc *sc, struct pgt_mgmt_desc *pmd)
 {
 	struct pgt_desc *pd;
 	struct pgt_mgmt_frame *pmf;
-	int error, i;
+	int error, i, ret;
 
 	if (sc->sc_flags & (SC_DYING | SC_NEEDS_RESET))
 		return (EIO);
@@ -1695,7 +1695,8 @@ pgt_mgmt_request(struct pgt_softc *sc, struct pgt_mgmt_desc *pmd)
 	 */
 	i = 0;
 	do {
-		if (tsleep(pmd, 0, "pgtmgm", hz / 10) != EWOULDBLOCK)
+		ret = tsleep_nsec(pmd, 0, "pgtmgm", MSEC_TO_NSEC(100));
+		if (ret != EWOULDBLOCK)
 			break;
 		if (pmd->pmd_error != EINPROGRESS)
 			break;
