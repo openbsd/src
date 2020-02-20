@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.116 2019/11/12 16:37:48 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.117 2020/02/20 16:44:01 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: November 12 2019 $
+.Dd $Mdocdate: February 20 2020 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -352,6 +352,15 @@ can be used to tag the next file as special: even though its characteristics
 will be recorded in the package, it can be altered after installation, and
 .Xr pkg_delete 1
 will still delete it.
+.Pp
+The special comment
+.Cm @comment no debug
+can be used to tag the next file as special: even though it might be a
+binary, it has no debug info
+.Po
+see
+.Xr build-debug-info 1
+.Pc .
 .Pp
 .It Cm @conflict Ar pkgspec
 Declare a conflict with packages matching
