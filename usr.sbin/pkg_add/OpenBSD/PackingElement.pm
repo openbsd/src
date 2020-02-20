@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.274 2019/11/10 16:43:11 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.275 2020/02/20 16:31:11 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -361,6 +361,7 @@ sub write
 {
 	my ($self, $fh) = @_;
 	print $fh "\@comment no checksum\n" if defined $self->{nochecksum};
+	print $fh "\@comment no debug\n" if defined $self->{nodebug};
 	$self->SUPER::write($fh);
 	if (defined $self->{d}) {
 		$self->{d}->write($fh);
@@ -392,6 +393,10 @@ sub destate
 	if (defined $state->{nochecksum}) {
 		$self->{nochecksum} = 1;
 		undef $state->{nochecksum};
+	}
+	if (defined $state->{nodebug}) {
+		$self->{nodebug} = 1;
+		undef $state->{nodebug};
 	}
 }
 
@@ -454,6 +459,9 @@ sub check_digest
 }
 
 sub IsFile() { 1 }
+
+package OpenBSD::PackingElement::FileWithDebugInfo;
+our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
 package OpenBSD::PackingElement::File;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
@@ -573,7 +581,7 @@ __PACKAGE__->register_with_factory;
 sub dirclass() { "OpenBSD::PackingElement::Infodir" }
 
 package OpenBSD::PackingElement::Shell;
-our @ISA=qw(OpenBSD::PackingElement::FileBase);
+our @ISA=qw(OpenBSD::PackingElement::FileWithDebugInfo);
 
 sub keyword() { "shell" }
 __PACKAGE__->register_with_factory;
@@ -659,9 +667,6 @@ sub format
 	}
 	return 1;
 }
-
-package OpenBSD::PackingElement::FileWithDebugInfo;
-our @ISA=qw(OpenBSD::PackingElement::FileBase);
 
 package OpenBSD::PackingElement::Lib;
 our @ISA=qw(OpenBSD::PackingElement::FileWithDebugInfo);
