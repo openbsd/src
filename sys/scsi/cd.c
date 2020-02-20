@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.244 2020/02/05 16:29:30 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.245 2020/02/20 16:26:01 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -697,8 +697,8 @@ cdminphys(struct buf *bp)
 
 	if (link->adapter->dev_minphys != NULL)
 		(*link->adapter->dev_minphys)(bp, link);
-
-	minphys(bp);
+	else
+		minphys(bp);
 
 	device_unref(&sc->sc_dev);
 }

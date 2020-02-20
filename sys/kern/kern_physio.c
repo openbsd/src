@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.46 2020/01/26 23:06:39 krw Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.47 2020/02/20 16:26:01 krw Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -129,7 +129,6 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 			(*minphys)(bp);
 			todo = bp->b_bcount;
 			KASSERTMSG(todo >= 0, "minphys broken");
-			KASSERTMSG(todo <= MAXPHYS, "minphys broken");
 
 			/*
 			 * [lock the part of the user address space involved
