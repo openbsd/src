@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.275 2020/02/20 16:31:11 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.276 2020/02/20 16:40:49 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -748,7 +748,10 @@ sub add
 	} elsif ($args =~ m/^(?:subdir|pkgpath)\=(.*?)\s+ftp\=(.*?)\s*$/o) {
 		return OpenBSD::PackingElement::ExtraInfo->add($plist, $1, undef, $2);
 	} elsif ($args eq 'no checksum') {
-		$plist->{state}->{nochecksum} = 1;
+		$plist->{state}{nochecksum} = 1;
+		return;
+	} elsif ($args eq 'no debug') {
+		$plist->{state}{nodebug} = 1;
 		return;
 	} else {
 		return $class->SUPER::add($plist, $args);
