@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.13 2020/02/21 07:44:50 florian Exp $ */
+/* $Id: dighost.c,v 1.14 2020/02/21 19:53:39 jung Exp $ */
 
 /*! \file
  *  \note
@@ -1930,7 +1930,7 @@ compute_cookie(unsigned char *clientcookie, size_t len) {
 
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 static void
-populate_root_hints()
+populate_root_hints(void)
 {
 	dig_server_t *newsrv;
 	size_t i;
