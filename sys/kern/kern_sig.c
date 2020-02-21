@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.249 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.250 2020/02/21 06:08:42 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ signal_init(void)
 
 /*
  * Create an initial sigacts structure, using the same signal state
- * as p.
+ * as pr.
  */
 struct sigacts *
 sigactsinit(struct process *pr)
