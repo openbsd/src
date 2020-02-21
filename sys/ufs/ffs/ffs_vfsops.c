@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.182 2019/12/26 13:28:49 bluhm Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.183 2020/02/21 11:11:15 otto Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -533,8 +533,14 @@ ffs_reload_vnode(struct vnode *vp, void *args)
 		return (error);
 	}
 
-	*ip->i_din1 = *((struct ufs1_dinode *)bp->b_data +
-	    ino_to_fsbo(fra->fs, ip->i_number));
+	if (fra->fs->fs_magic == FS_UFS1_MAGIC)
+		*ip->i_din1 = *((struct ufs1_dinode *)bp->b_data +
+		    ino_to_fsbo(fra->fs, ip->i_number));
+#ifdef FFS2
+	else
+		*ip->i_din2 = *((struct ufs2_dinode *)bp->b_data +
+		    ino_to_fsbo(fra->fs, ip->i_number));
+#endif /* FFS2 */
 	ip->i_effnlink = DIP(ip, nlink);
 	brelse(bp);
 	vput(vp);
