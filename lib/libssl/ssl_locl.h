@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.265 2020/02/21 16:07:00 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.266 2020/02/21 16:18:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,9 +168,6 @@ __BEGIN_HIDDEN_DECLS
 
 #define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ]   \
 			    __attribute__((__unused__))
-
-#define s2n(s,c)	((c[0]=(unsigned char)(((s)>> 8)&0xff), \
-			  c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
 
 #ifndef LIBRESSL_HAS_TLS1_3_CLIENT
 #define LIBRESSL_HAS_TLS1_3_CLIENT
