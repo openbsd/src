@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.36 2018/10/29 07:55:41 ajacoutot Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.37 2020/02/21 00:47:21 kn Exp $
 .\"
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 29 2018 $
+.Dd $Mdocdate: February 21 2020 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -321,7 +321,7 @@ is set, the following
 command is prepended to
 .Va rcexec :
 .Pp
-.Dl "route -T ${daemon_rtable}"
+.Dl "route -T ${daemon_rtable} exec"
 .Pp
 All
 .Va daemon_*
