@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.70 2018/06/18 21:46:05 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.71 2020/02/21 18:21:23 tb Exp $	*/
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -1052,6 +1052,10 @@ setspec(struct tbl *vp)
 		vp->flag |= SPECIAL;
 		break;
 	case V_TMOUT:
+		/* Enforce integer to avoid command execution from initcoms[] */
+		vp->flag &= ~SPECIAL;
+		intval(vp);
+		vp->flag |= SPECIAL;
 		/* at&t ksh seems to do this (only listen if integer) */
 		if (vp->flag & INTEGER)
 			ksh_tmout = vp->val.i >= 0 ? vp->val.i : 0;
