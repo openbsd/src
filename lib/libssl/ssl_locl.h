@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.264 2020/02/06 17:35:22 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.265 2020/02/21 16:07:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,20 +168,6 @@ __BEGIN_HIDDEN_DECLS
 
 #define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ]   \
 			    __attribute__((__unused__))
-
-#define l2n(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)    )&0xff))
-
-#define l2n8(l,c)	(*((c)++)=(unsigned char)(((l)>>56)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>48)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>40)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>32)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>24)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)    )&0xff))
 
 #define s2n(s,c)	((c[0]=(unsigned char)(((s)>> 8)&0xff), \
 			  c[1]=(unsigned char)(((s)    )&0xff)),c+=2)

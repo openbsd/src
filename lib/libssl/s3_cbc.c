@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.17 2018/09/08 14:39:41 jsing Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.18 2020/02/21 16:07:00 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -265,6 +265,20 @@ ssl3_cbc_copy_mac(unsigned char* out, const SSL3_RECORD *rec,
 	}
 #endif
 }
+
+#define l2n(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+			 *((c)++)=(unsigned char)(((l)    )&0xff))
+
+#define l2n8(l,c)	(*((c)++)=(unsigned char)(((l)>>56)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>48)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>40)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>32)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>24)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+			 *((c)++)=(unsigned char)(((l)    )&0xff))
 
 /* u32toLE serialises an unsigned, 32-bit number (n) as four bytes at (p) in
  * little-endian order. The value of p is advanced by four. */
