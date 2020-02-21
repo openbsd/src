@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.66 2018/12/03 17:16:12 tb Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.67 2020/02/21 16:06:26 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1180,7 +1180,6 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 {
 	unsigned char *p, *pseq;
 	int i, mac_size, clear = 0;
-	int prefix_len = 0;
 	SSL3_RECORD *wr;
 	SSL3_BUFFER *wb;
 	SSL_SESSION *sess;
@@ -1222,7 +1221,7 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 
 	/* DTLS implements explicit IV, so no need for empty fragments. */
 
-	p = wb->buf + prefix_len;
+	p = wb->buf;
 
 	/* write the header */
 
@@ -1311,7 +1310,7 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	tls1_record_sequence_increment(S3I(s)->write_sequence);
 
 	/* now let's set up wb */
-	wb->left = prefix_len + wr->length;
+	wb->left = wr->length;
 	wb->offset = 0;
 
 	/* memorize arguments so that ssl3_write_pending can detect bad write retries later */
