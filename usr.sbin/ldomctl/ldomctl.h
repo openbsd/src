@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.h,v 1.13 2020/02/20 20:38:44 kn Exp $	*/
+/*	$OpenBSD: ldomctl.h,v 1.14 2020/02/21 19:39:28 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -165,6 +165,7 @@ struct vnet {
 	SIMPLEQ_ENTRY(vnet)	entry;
 	uint64_t		mac_addr;
 	uint64_t		mtu;
+	const char		*devalias;
 };
 
 struct var {

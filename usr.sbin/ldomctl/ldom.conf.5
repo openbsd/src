@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.12 2020/02/20 20:38:44 kn Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.13 2020/02/21 19:39:28 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 20 2020 $
+.Dd $Mdocdate: February 21 2020 $
 .Dt LDOM.CONF 5 sparc64
 .Os
 .Sh NAME
@@ -81,6 +81,9 @@ Valid options are:
 Configure the MAC address of the interface.
 .It Ic mtu Ns = Ns Ar number
 Configure the MTU of the interface.
+.It Ic devalias Ns = Ns Ar name
+Alias the interface as
+.Ar name .
 .El
 .El
 .Sh EXAMPLES

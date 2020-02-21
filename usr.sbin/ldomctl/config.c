@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.33 2020/02/20 20:38:44 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.34 2020/02/21 19:39:28 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -2586,7 +2586,7 @@ guest_add_vdisk(struct guest *guest, uint64_t id, const char *path,
 
 void
 guest_add_vnetwork(struct guest *guest, uint64_t id, uint64_t mac_addr,
-    uint64_t mtu)
+    uint64_t mtu, const char *user_devalias)
 {
 	struct guest *primary;
 	struct ldc_channel *lc;
@@ -2610,6 +2610,8 @@ guest_add_vnetwork(struct guest *guest, uint64_t id, uint64_t mac_addr,
 	if (id == 0)
 		guest_add_devalias(guest, "net", devpath);
 	guest_add_devalias(guest, devalias, devpath);
+	if (user_devalias != NULL)
+		guest_add_devalias(guest, user_devalias, devpath);
 	free(devalias);
 	free(devpath);
 }
@@ -2857,7 +2859,7 @@ build_config(const char *filename, int noaction)
 		i = 0;
 		SIMPLEQ_FOREACH(vnet, &domain->vnet_list, entry)
 			guest_add_vnetwork(guest, i++, vnet->mac_addr,
-			    vnet->mtu);
+			    vnet->mtu, vnet->devalias);
 		SIMPLEQ_FOREACH(var, &domain->var_list, entry)
 			guest_add_variable(guest, var->name, var->str);
 		SIMPLEQ_FOREACH(iodev, &domain->iodev_list, entry)
