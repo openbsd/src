@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.109 2019/07/19 00:24:31 cheloha Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.110 2020/02/21 11:13:55 otto Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -871,6 +871,7 @@ ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
 	struct fs *fs;
 	struct cg *cgp;
 	struct buf *bp;
+	struct timespec now;
 	daddr_t bno;
 	int i, frags, bbase;
 
@@ -888,7 +889,9 @@ ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
 		return (0);
 
 	cgp = (struct cg *)bp->b_data;
-	cgp->cg_ffs2_time = cgp->cg_time = time_second;
+	nanotime(&now);
+	cgp->cg_ffs2_time = now.tv_sec;
+	cgp->cg_time = now.tv_sec;
 
 	bno = dtogd(fs, bprev);
 	for (i = numfrags(fs, osize); i < frags; i++)
@@ -934,6 +937,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 	struct fs *fs;
 	struct cg *cgp;
 	struct buf *bp;
+	struct timespec now;
 	daddr_t bno, blkno;
 	int i, frags, allocsiz;
 
@@ -950,7 +954,9 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 		return (0);
 	}
 
-	cgp->cg_ffs2_time = cgp->cg_time = time_second;
+	nanotime(&now);
+	cgp->cg_ffs2_time = now.tv_sec;
+	cgp->cg_time = now.tv_sec;
 
 	if (size == fs->fs_bsize) {
 		/* allocate and return a complete data block */
@@ -1086,6 +1092,7 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	struct fs *fs;
 	struct cg *cgp;
 	struct buf *bp;
+	struct timespec now;
 	int start, len, loc, map, i;
 #ifdef FFS2
 	struct buf *ibp = NULL;
@@ -1114,7 +1121,9 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	 * We are committed to the allocation from now on, so update the time
 	 * on the cylinder group.
 	 */
-	cgp->cg_ffs2_time = cgp->cg_time = time_second;
+	nanotime(&now);
+	cgp->cg_ffs2_time = now.tv_sec;
+	cgp->cg_time = now.tv_sec;
 
 	/*
 	 * If there was a preferred location for the new inode, try to find it.
@@ -1249,6 +1258,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 	struct fs *fs;
 	struct cg *cgp;
 	struct buf *bp;
+	struct timespec now;
 	daddr_t blkno;
 	int i, cg, blk, frags, bbase;
 
@@ -1270,7 +1280,9 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 		return;
 
 	cgp = (struct cg *)bp->b_data;
-	cgp->cg_ffs2_time = cgp->cg_time = time_second;
+	nanotime(&now);
+	cgp->cg_ffs2_time = now.tv_sec;
+	cgp->cg_time = now.tv_sec;
 
 	bno = dtogd(fs, bno);
 	if (size == fs->fs_bsize) {
@@ -1367,6 +1379,7 @@ ffs_freefile(struct inode *pip, ufsino_t ino, mode_t mode)
 	struct fs *fs;
 	struct cg *cgp;
 	struct buf *bp;
+	struct timespec now;
 	int cg;
 
 	fs = pip->i_fs;
@@ -1379,7 +1392,9 @@ ffs_freefile(struct inode *pip, ufsino_t ino, mode_t mode)
 		return (0);
 
 	cgp = (struct cg *)bp->b_data;
-	cgp->cg_ffs2_time = cgp->cg_time = time_second;
+	nanotime(&now);
+	cgp->cg_ffs2_time = now.tv_sec;
+	cgp->cg_time = now.tv_sec;
 
 	ino %= fs->fs_ipg;
 	if (isclr(cg_inosused(cgp), ino)) {
