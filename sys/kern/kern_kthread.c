@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.43 2019/12/11 07:30:09 guenther Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.44 2020/02/21 11:10:23 claudio Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ kthread_create(void (*func)(void *), void *arg,
 	 * parent to wait for.
 	 */
 	error = fork1(&proc0, FORK_SHAREVM|FORK_SHAREFILES|FORK_NOZOMBIE|
-	    FORK_SYSTEM|FORK_SIGHAND, func, arg, NULL, &p);
+	    FORK_SYSTEM, func, arg, NULL, &p);
 	if (error) {
 		KERNEL_UNLOCK();
 		return (error);

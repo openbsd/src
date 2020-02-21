@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.288 2020/02/15 09:35:48 anton Exp $	*/
+/*	$OpenBSD: proc.h,v 1.289 2020/02/21 11:10:23 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -506,7 +506,6 @@ void uid_release(struct uidinfo *);
 #define FORK_SYSTEM	0x00000020
 #define FORK_NOZOMBIE	0x00000040
 #define FORK_SHAREVM	0x00000080
-#define FORK_SIGHAND	0x00000200
 #define FORK_PTRACE	0x00000400
 
 #define EXIT_NORMAL		0x00000001

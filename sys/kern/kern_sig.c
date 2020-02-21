@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.250 2020/02/21 06:08:42 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.251 2020/02/21 11:10:23 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -178,20 +178,7 @@ sigactsinit(struct process *pr)
 
 	ps = pool_get(&sigacts_pool, PR_WAITOK);
 	memcpy(ps, pr->ps_sigacts, sizeof(struct sigacts));
-	ps->ps_refcnt = 1;
 	return (ps);
-}
-
-/*
- * Share a sigacts structure.
- */
-struct sigacts *
-sigactsshare(struct process *pr)
-{
-	struct sigacts *ps = pr->ps_sigacts;
-
-	ps->ps_refcnt++;
-	return ps;
 }
 
 /*
@@ -206,32 +193,12 @@ sigstkinit(struct sigaltstack *ss)
 }
 
 /*
- * Make this process not share its sigacts, maintaining all
- * signal state.
- */
-void
-sigactsunshare(struct process *pr)
-{
-	struct sigacts *newps;
-
-	if (pr->ps_sigacts->ps_refcnt == 1)
-		return;
-
-	newps = sigactsinit(pr);
-	sigactsfree(pr);
-	pr->ps_sigacts = newps;
-}
-
-/*
  * Release a sigacts structure.
  */
 void
 sigactsfree(struct process *pr)
 {
 	struct sigacts *ps = pr->ps_sigacts;
-
-	if (--ps->ps_refcnt > 0)
-		return;
 
 	pr->ps_sigacts = NULL;
 
@@ -412,7 +379,6 @@ execsigs(struct proc *p)
 	struct sigacts *ps;
 	int nc, mask;
 
-	sigactsunshare(p->p_p);
 	ps = p->p_p->ps_sigacts;
 
 	/*
