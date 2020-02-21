@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quota.1,v 1.16 2011/01/20 13:58:16 jmc Exp $
+.\"	$OpenBSD: quota.1,v 1.17 2020/02/21 21:45:20 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)quota.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 20 2011 $
+.Dd $Mdocdate: February 21 2020 $
 .Dt QUOTA 1
 .Os
 .Sh NAME
@@ -64,6 +64,9 @@ of which the user is a member.
 Print a more terse message,
 containing only information
 on filesystems where usage is over quota.
+This flag takes precedence over the
+.Fl v
+flag.
 .It Fl u
 Print user quotas for the user.
 This flag is equivalent to the default.
@@ -73,29 +76,18 @@ will display quotas on filesystems
 where no storage is allocated.
 .El
 .Pp
-Specifying both
+Only the superuser may use the
 .Fl g
 and
 .Fl u
-displays both the user quotas and the group quotas (for
-the user).
-.Pp
-Only the superuser may use the
-.Fl u
-flag and the optional
-.Ar user
-argument to view the limits of other users.
+flags
+to view the limits of other groups and users.
 Non-superusers can use the
 .Fl g
-flag and optional
-.Ar group
-argument to view only the limits of groups of which they are members.
-.Pp
-The
-.Fl q
-flag takes precedence over the
-.Fl v
-flag.
+and
+.Fl u
+flags to view the limits of groups of which they are members as well as
+their own user limits.
 .Pp
 .Nm quota
 tries to report the quotas of all mounted filesystems.
