@@ -164,7 +164,7 @@ evloop(isc_appctx_t *ctx) {
 			else {
 				uint64_t us;
 
-				clock_gettime(CLOCK_REALTIME, &now);
+				clock_gettime(CLOCK_MONOTONIC, &now);
 				us = isc_time_microdiff(&when, &now);
 				if (us == 0)
 					call_timer_dispatch = ISC_TRUE;

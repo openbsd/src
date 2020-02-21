@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.15 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: log.c,v 1.16 2020/02/21 07:44:50 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -862,11 +862,10 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 
 		if ((channel->flags & ISC_LOG_PRINTTIME) != 0 &&
 		    time_string[0] == '\0') {
-			struct timespec now;
-
-			clock_gettime(CLOCK_REALTIME, &now);
+			time_t now;
+			now = time(NULL);
 			strftime(time_string, sizeof(time_string),
-			    "%d-%b-%Y %X", localtime(&now.tv_sec));
+			    "%d-%b-%Y %X", localtime(&now));
 		}
 
 		if ((channel->flags & ISC_LOG_PRINTLEVEL) != 0 &&
@@ -906,7 +905,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 				 * which fall within the duplicate_interval
 				 * range.
 				 */
-				clock_gettime(CLOCK_REALTIME, &oldest);
+				clock_gettime(CLOCK_MONOTONIC, &oldest);
 				timespecsub(&oldest, &interval, &oldest);
 				message = ISC_LIST_HEAD(lctx->messages);
 
@@ -969,7 +968,8 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 					strlcpy(message->text, lctx->buffer,
 						size);
 
-					clock_gettime(CLOCK_REALTIME, &message->time);
+					clock_gettime(CLOCK_MONOTONIC,
+					    &message->time);
 
 					ISC_LINK_INIT(message, link);
 					ISC_LIST_APPEND(lctx->messages,
