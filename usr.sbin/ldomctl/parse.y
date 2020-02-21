@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2020/02/20 20:38:44 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2020/02/21 19:29:41 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -173,6 +173,7 @@ domainopts	: VCPU vcpu {
 		| VDISK STRING vdisk_opts {
 			struct vdisk *vdisk = xmalloc(sizeof(struct vdisk));
 			vdisk->path = $2;
+			vdisk->devalias = $3.devalias;
 			SIMPLEQ_INSERT_TAIL(&domain->vdisk_list, vdisk, entry);
 		}
 		| VNET vnet_opts {
