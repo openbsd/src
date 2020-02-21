@@ -1,4 +1,4 @@
-.\" $OpenBSD: dig.1,v 1.3 2020/02/12 14:46:36 schwarze Exp $
+.\" $OpenBSD: dig.1,v 1.4 2020/02/21 10:51:28 florian Exp $
 .\"
 .\" Copyright (C) 2000-2011, 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 12 2020 $
+.Dd $Mdocdate: February 21 2020 $
 .Dt DIG 1
 .Os
 .Sh NAME
@@ -130,17 +130,30 @@ Do reverse IPv6 lookups using the obsolete RFC 1886 IP6.INT domain, which is no
 longer in use.
 Obsolete bit string label queries (RFC 2874) are not attempted.
 .It Fl k Ar keyfile
-Sign queries using TSIG using a key read from the given file.
-When using TSIG authentication with
-.Nm ,
-the name server that is queried needs to know the key and algorithm that is
-being used.
-In BIND, this is done by providing appropriate
-.Ic key
+Sign queries using TSIG.
+The format of the
+.Ar keyfile
+is as follows:
+.Bd -literal -offset indent
+key "keyname" {
+	algorithm hmac;
+	secret "base64-secret";
+};
+.Ed
+.Pp
+.Ar keyname
+is the name of the key, and
+.Ar base64-secret
+is the base64-encoded shared secret.
+.Ar hmac
+is the name of the key algorithm;
+valid choices are
+.Cm hmac-sha1 ,
+.Cm hmac-sha224 ,
+.Cm hmac-sha256 ,
+.Cm hmac-sha384 ,
 and
-.Ic server
-statements in
-.Pa named.conf .
+.Cm hmac-sha512 .
 .It Fl p Ar port
 Send the query to a non-standard port on the server, instead of the defaut port
 53.
@@ -224,19 +237,16 @@ is the base64 encoded shared secret.
 .Ar hmac
 is the name of the key algorithm;
 valid choices are
-.Ql hmac-md5 ,
-.Ql hmac-sha1 ,
-.Ql hmac-sha224 ,
-.Ql hmac-sha256 ,
-.Ql hmac-sha384 ,
-or
-.Ql hmac-sha512 .
+.Cm hmac-sha1 ,
+.Cm hmac-sha224 ,
+.Cm hmac-sha256 ,
+.Cm hmac-sha384 ,
+and
+.Cm hmac-sha512 .
 If
 .Ar hmac
 is not specified, the default is
-.Ql hmac-md5
-or if MD5 was disabled
-.Ql hmac-sha256 .
+.Cm hmac-sha256 .
 .Pp
 NOTE: You should use the
 .Fl k
