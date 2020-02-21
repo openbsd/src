@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.12 2020/01/23 02:57:10 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.13 2020/02/21 15:46:16 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -438,4 +438,59 @@ nvmem_read_cell(int node, const char *name, void *data, bus_size_t size)
 
 	nd = nc->nc_nd;
 	return nd->nd_read(nd->nd_cookie, nc->nc_addr, data, size);
+}
+
+/* Video interface support */
+
+LIST_HEAD(, video_device) video_devices =
+	LIST_HEAD_INITIALIZER(video_devices);
+
+void
+video_register(struct video_device *vd)
+{
+	vd->vd_phandle = OF_getpropint(vd->vd_node, "phandle", 0);
+	if (vd->vd_phandle == 0)
+		return;
+	LIST_INSERT_HEAD(&video_devices, vd, vd_list);
+}
+
+int
+video_port_activate(uint32_t phandle, struct drm_device *ddev)
+{
+	uint32_t ep, rep;
+	int node, error;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return ENXIO;
+
+	for (node = OF_child(node); node; node = OF_peer(node)) {
+		ep = OF_getpropint(node, "phandle", 0);
+		rep = OF_getpropint(node, "remote-endpoint", 0);
+		if (ep == 0 || rep == 0)
+			continue;
+		error = video_endpoint_activate(ep, ddev);
+		if (error)
+			return error;
+		error = video_endpoint_activate(rep, ddev);
+		if (error)
+			return error;
+	}
+
+	return 0;
+}
+
+int
+video_endpoint_activate(uint32_t phandle, struct drm_device *ddev)
+{
+	struct video_device *vd;
+
+	LIST_FOREACH(vd, &video_devices, vd_list) {
+		if (vd->vd_phandle == phandle)
+			break;
+	}
+	if (vd == NULL)
+		return ENXIO;
+
+	return vd->vd_ep_activate(vd->vd_cookie, ddev);
 }
