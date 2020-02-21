@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.18 2020/02/21 16:06:00 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.19 2020/02/21 16:16:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -625,8 +625,11 @@ ssl3_create_record(SSL *s, unsigned char *p, int type, const unsigned char *buf,
 {
 	SSL3_RECORD *wr = &(S3I(s)->wrec);
 	SSL_SESSION *sess = s->session;
-	unsigned char *plen;
 	int eivlen, mac_size;
+	uint16_t version;
+	CBB cbb;
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	if ((sess == NULL) || (s->internal->enc_write_ctx == NULL) ||
 	    (EVP_MD_CTX_md(s->internal->write_hash) == NULL)) {
@@ -637,24 +640,25 @@ ssl3_create_record(SSL *s, unsigned char *p, int type, const unsigned char *buf,
 			goto err;
 	}
 
-	/* write the header */
-
-	*(p++) = type&0xff;
-	wr->type = type;
-
-	*(p++) = (s->version >> 8);
-	/* Some servers hang if iniatial client hello is larger than 256
-	 * bytes and record version number > TLS 1.0
+	/*
+	 * Some servers hang if initial client hello is larger than 256
+	 * bytes and record version number > TLS 1.0.
 	 */
+	version = s->version;
 	if (S3I(s)->hs.state == SSL3_ST_CW_CLNT_HELLO_B && !s->internal->renegotiate &&
 	    TLS1_get_version(s) > TLS1_VERSION)
-		*(p++) = 0x1;
-	else
-		*(p++) = s->version&0xff;
+		version = TLS1_VERSION;
 
-	/* field where we are to write out packet length */
-	plen = p;
-	p += 2;
+	if (!CBB_init_fixed(&cbb, p, SSL3_RT_HEADER_LENGTH))
+		goto err;
+
+	/* Write the header. */
+	if (!CBB_add_u8(&cbb, type))
+		goto err;
+	if (!CBB_add_u16(&cbb, version))
+		goto err;
+
+	p += SSL3_RT_HEADER_LENGTH;
 
 	/* Explicit IV length. */
 	eivlen = 0;
@@ -671,6 +675,7 @@ ssl3_create_record(SSL *s, unsigned char *p, int type, const unsigned char *buf,
 	}
 
 	/* lets setup the record stuff. */
+	wr->type = type;
 	wr->data = p + eivlen;
 	wr->length = (int)len;
 	wr->input = (unsigned char *)buf;
@@ -704,17 +709,22 @@ ssl3_create_record(SSL *s, unsigned char *p, int type, const unsigned char *buf,
 	s->method->internal->ssl3_enc->enc(s, 1);
 
 	/* record length after mac and block padding */
-	s2n(wr->length, plen);
+	if (!CBB_add_u16(&cbb, wr->length))
+		goto err;
+	if (!CBB_finish(&cbb, NULL, NULL))
+		goto err;
 
 	/* we should now have
 	 * wr->data pointing to the encrypted data, which is
 	 * wr->length long */
-	wr->type=type; /* not needed but helps for debugging */
+	wr->type = type; /* not needed but helps for debugging */
 	wr->length += SSL3_RT_HEADER_LENGTH;
 
 	return 1;
 
  err:
+	CBB_cleanup(&cbb);
+
 	return 0;
 }
 
