@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.17 2020/02/19 18:22:54 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.18 2020/02/21 16:06:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -627,11 +627,9 @@ ssl3_create_record(SSL *s, unsigned char *p, int type, const unsigned char *buf,
 	SSL_SESSION *sess = s->session;
 	unsigned char *plen;
 	int eivlen, mac_size;
-	int clear = 0;
 
 	if ((sess == NULL) || (s->internal->enc_write_ctx == NULL) ||
 	    (EVP_MD_CTX_md(s->internal->write_hash) == NULL)) {
-		clear = s->internal->enc_write_ctx ? 0 : 1; /* must be AEAD cipher */
 		mac_size = 0;
 	} else {
 		mac_size = EVP_MD_CTX_size(s->internal->write_hash);
