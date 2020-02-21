@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.188 2020/01/16 20:05:00 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.189 2020/02/21 15:17:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -142,15 +142,17 @@ int	 ikev2_cp_setaddr(struct iked *, struct iked_sa *, sa_family_t);
 int	 ikev2_cp_fixaddr(struct iked_sa *, struct iked_addr *,
 	    struct iked_addr *);
 
-ssize_t	ikev2_add_sighashnotify(struct ibuf *, struct ikev2_payload **,
+ssize_t	 ikev2_add_sighashnotify(struct ibuf *, struct ikev2_payload **,
 	    ssize_t);
-ssize_t ikev2_add_nat_detection(struct iked *, struct ibuf *,
+ssize_t	 ikev2_add_nat_detection(struct iked *, struct ibuf *,
 	    struct ikev2_payload **, struct iked_message *, ssize_t);
 ssize_t	 ikev2_add_notify(struct ibuf *, struct ikev2_payload **, ssize_t,
-    uint16_t);
+	    uint16_t);
 ssize_t	 ikev2_add_mobike(struct ibuf *, struct ikev2_payload **, ssize_t);
-ssize_t ikev2_add_fragmentation(struct ibuf *, struct ikev2_payload **,
-    struct iked_message *, ssize_t);
+ssize_t	 ikev2_add_fragmentation(struct ibuf *, struct ikev2_payload **,
+	    struct iked_message *, ssize_t);
+ssize_t	 ikev2_add_transport_mode(struct iked *, struct ibuf *,
+	    struct ikev2_payload **, ssize_t, struct iked_sa *);
 int	 ikev2_update_sa_addresses(struct iked *, struct iked_sa *);
 int	 ikev2_resp_informational(struct iked *, struct iked_sa *,
 	    struct iked_message *);
@@ -1246,9 +1248,11 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 			goto done;
 	}
 
-	/* compression */
 	if ((pol->pol_flags & IKED_POLICY_IPCOMP) &&
 	    (len = ikev2_add_ipcompnotify(env, e, &pld, len, sa, 1)) == -1)
+		goto done;
+	if ((pol->pol_flags & IKED_POLICY_TRANSPORT) &&
+	    (len = ikev2_add_transport_mode(env, e, &pld, len, sa)) == -1)
 		goto done;
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_SA) == -1)
@@ -1784,6 +1788,13 @@ ikev2_add_sighashnotify(struct ibuf *e, struct ikev2_payload **pld,
 	}
 
 	return (len);
+}
+
+ssize_t
+ikev2_add_transport_mode(struct iked *env, struct ibuf *e,
+    struct ikev2_payload **pld, ssize_t len, struct iked_sa *sa)
+{
+	return ikev2_add_notify(e, pld, len, IKEV2_N_USE_TRANSPORT_MODE);
 }
 
 int
@@ -2990,9 +3001,11 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 			goto done;
 	}
 
-	/* compression */
 	if (sa->sa_ipcompr.ic_transform &&
 	    (len = ikev2_add_ipcompnotify(env, e, &pld, len, sa, 0)) == -1)
+		goto done;
+	if (sa->sa_used_transport_mode &&
+	    (len = ikev2_add_transport_mode(env, e, &pld, len, sa)) == -1)
 		goto done;
 
 	/* MOBIKE */
@@ -3233,9 +3246,11 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 	if ((e = ibuf_static()) == NULL)
 		goto done;
 
-	/* compression */
 	if ((pol->pol_flags & IKED_POLICY_IPCOMP) &&
 	    (len = ikev2_add_ipcompnotify(env, e, &pld, 0, sa, 1)) == -1)
+		goto done;
+	if ((pol->pol_flags & IKED_POLICY_TRANSPORT) &&
+	    (len = ikev2_add_transport_mode(env, e, &pld, len, sa)) == -1)
 		goto done;
 
 	if (pld) {
@@ -4055,9 +4070,11 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 	if ((e = ibuf_static()) == NULL)
 		goto done;
 
-	/* compression (unless IKE rekeying) */
 	if (!nsa && sa->sa_ipcompr.ic_transform &&
 	    (len = ikev2_add_ipcompnotify(env, e, &pld, 0, sa, 0)) == -1)
+		goto done;
+	if (!nsa && sa->sa_used_transport_mode &&
+	    (len = ikev2_add_transport_mode(env, e, &pld, len, sa)) == -1)
 		goto done;
 
 	if (pld) {
@@ -5320,6 +5337,9 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 	    (initiator && ic->ic_cpi_in == 0))
 		ic = NULL;
 
+	/* reset state */
+	sa->sa_used_transport_mode = 0;
+
 	/* We need to determine the key material length first */
 	TAILQ_FOREACH(prop, proposals, prop_entry) {
 		if (prop->prop_protoid == IKEV2_SAPROTO_IKE)
@@ -5460,6 +5480,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 		csa->csa_spi.spi_protoid = prop->prop_protoid;
 		csa->csa_esn = esn;
 		csa->csa_acquired = acquired;
+		csa->csa_transport = sa->sa_use_transport_mode;
+		sa->sa_used_transport_mode = sa->sa_use_transport_mode;
 
 		/* Set up responder's SPIs */
 		if (initiator) {
@@ -5597,6 +5619,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 
 	ret = 0;
  done:
+	sa->sa_use_transport_mode = 0;		/* reset state after use */
 	ibuf_release(dhsecret);
 	ibuf_release(keymat);
 	ibuf_release(seed);

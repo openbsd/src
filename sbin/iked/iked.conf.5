@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.62 2020/02/16 11:28:28 kn Exp $
+.\" $OpenBSD: iked.conf.5,v 1.63 2020/02/21 15:17:34 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2020 $
+.Dd $Mdocdate: February 21 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -271,6 +271,15 @@ The optional compression is applied before packets are encapsulated.
 IPcomp must be enabled in the kernel:
 .Pp
 .Dl # sysctl net.inet.ipcomp.enable=1
+.It Op Ar tmode
+.Ar tmode
+describes the encapsulation mode to be used.
+Possible modes are
+.Ar tunnel
+and
+.Ar transport ;
+the default is
+.Ar tunnel .
 .It Op Ar encap
 .Ar encap
 specifies the encapsulation protocol to be used.
@@ -280,15 +289,6 @@ and
 .Ar ah ;
 the default is
 .Ar esp .
-.\" .It Op Ar tmode
-.\" .Ar tmode
-.\" describes the encapsulation mode to be used.
-.\" Possible modes are
-.\" .Ar tunnel
-.\" and
-.\" .Ar transport ;
-.\" the default is
-.\" .Ar tunnel .
 .It Op Ar af
 This policy only applies to endpoints of the specified address family
 which can be either

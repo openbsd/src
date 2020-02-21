@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.133 2020/02/13 16:27:02 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.134 2020/02/21 15:17:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -254,6 +254,7 @@ struct iked_policy {
 #define IKED_POLICY_QUICK		 0x08
 #define IKED_POLICY_SKIP		 0x10
 #define IKED_POLICY_IPCOMP		 0x20
+#define IKED_POLICY_TRANSPORT		 0x40
 
 	int				 pol_refcnt;
 
@@ -480,6 +481,9 @@ struct iked_sa {
 
 	int				 sa_mobike;	/* MOBIKE */
 	int				 sa_frag;	/* fragmentation */
+
+	int			 	 sa_use_transport_mode;	/* peer requested */
+	int			 	 sa_used_transport_mode; /* we enabled */
 
 	struct iked_timer		 sa_timer;	/* SA timeouts */
 #define IKED_IKE_SA_EXCHANGE_TIMEOUT	 300		/* 5 minutes */

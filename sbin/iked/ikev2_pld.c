@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.76 2019/11/28 12:16:28 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.77 2020/02/21 15:17:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1171,6 +1171,24 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			return (0);
 		}
 		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_MOBIKE;
+		break;
+	case IKEV2_N_USE_TRANSPORT_MODE:
+		if (!msg->msg_e) {
+			log_debug("%s: N_USE_TRANSPORT_MODE not encrypted",
+			    __func__);
+			return (-1);
+		}
+		if (len != 0) {
+			log_debug("%s: ignoring malformed transport mode"
+			    " notification: %zu", __func__, len);
+			return (0);
+		}
+		if (!(msg->msg_policy->pol_flags & IKED_POLICY_TRANSPORT)) {
+			log_debug("%s: ignoring transport mode"
+			    " notification (policy)", __func__);
+			return (0);
+		}
+		msg->msg_sa->sa_use_transport_mode = 1;
 		break;
 	case IKEV2_N_UPDATE_SA_ADDRESSES:
 		if (!msg->msg_e) {

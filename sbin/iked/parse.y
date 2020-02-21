@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.88 2019/12/03 12:38:34 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.89 2020/02/21 15:17:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -426,7 +426,7 @@ typedef struct {
 %type	<v.id>			id
 %type	<v.transforms>		transforms
 %type	<v.filters>		filters
-%type	<v.ikemode>		ikeflags ikematch ikemode ipcomp
+%type	<v.ikemode>		ikeflags ikematch ikemode ipcomp tmode
 %type	<v.ikeauth>		ikeauth
 %type	<v.ikekey>		keyspec
 %type	<v.mode>		ike_sas child_sas
@@ -890,7 +890,7 @@ child_sa	: CHILDSA	{
 		}
 		;
 
-ikeflags	: ikematch ikemode ipcomp	{ $$ = $1 | $2 | $3; }
+ikeflags	: ikematch ikemode ipcomp tmode { $$ = $1 | $2 | $3 | $4; }
 		;
 
 ikematch	: /* empty */			{ $$ = 0; }
@@ -906,6 +906,11 @@ ikemode		: /* empty */			{ $$ = IKED_POLICY_PASSIVE; }
 
 ipcomp		: /* empty */			{ $$ = 0; }
 		| IPCOMP			{ $$ = IKED_POLICY_IPCOMP; }
+		;
+
+tmode		: /* empty */			{ $$ = 0; }
+		| TUNNEL			{ $$ = 0; }
+		| TRANSPORT			{ $$ = IKED_POLICY_TRANSPORT; }
 		;
 
 ikeauth		: /* empty */			{
@@ -2464,6 +2469,11 @@ print_policy(struct iked_policy *pol)
 		print_verbose(" active");
 	else
 		print_verbose(" passive");
+
+	if (pol->pol_flags & IKED_POLICY_TRANSPORT)
+		print_verbose(" transport");
+	else
+		print_verbose(" tunnel");
 
 	print_verbose(" %s", print_xf(pol->pol_saproto, 0, saxfs));
 
