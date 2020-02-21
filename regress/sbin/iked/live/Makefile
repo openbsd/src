@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2020/02/17 15:37:09 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.10 2020/02/21 15:21:47 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -31,23 +31,34 @@ regress:
 .endif
 
 TEST_FLOWS = \
+	[ -z $$tmode ] && tmode=tunnel; \
 	success=false; \
 	count=0; \
 	while [[ $$count -le 3 ]]; do \
-		sasleft=`ssh ${LEFT_SSH} ipsecctl -sa`; \
-		flowleft=`echo "$$sasleft" \
+		ipsecctlleft=`ssh ${LEFT_SSH} ipsecctl -sa`; \
+		ipsecctlright=`ssh ${RIGHT_SSH} ipsecctl -sa`; \
+		flowleft=`echo "$$ipsecctlleft" \
 		    | sed -n "/^flow $$flowtype in from ${RIGHT_ADDR} to ${LEFT_ADDR}/p"`; \
-		sasright=`ssh ${RIGHT_SSH} ipsecctl -sa`; \
-		flowright=`echo "$$sasright" \
+		flowright=`echo "$$ipsecctlright" \
 		    | sed -n "/^flow $$flowtype in from ${LEFT_ADDR} to ${RIGHT_ADDR}/p"`; \
-		if [[ -n "$$flowleft" && -n "$$flowright" ]]; then \
+		saleft_rtol=`echo "$$ipsecctlleft" \
+		    | sed -n "/^$$flowtype $$tmode from ${RIGHT_ADDR} to ${LEFT_ADDR}/p"`; \
+		saleft_ltor=`echo "$$ipsecctlleft" \
+		    | sed -n "/^$$flowtype $$tmode from ${LEFT_ADDR} to ${RIGHT_ADDR}/p"`; \
+		saright_rtol=`echo "$$ipsecctlright" \
+		    | sed -n "/^$$flowtype $$tmode from ${RIGHT_ADDR} to ${LEFT_ADDR}/p"`; \
+		saright_ltor=`echo "$$ipsecctlright" \
+		    | sed -n "/^$$flowtype $$tmode from ${LEFT_ADDR} to ${RIGHT_ADDR}/p"`; \
+		if [[ -n "$$saleft_ltor" && -n "$$saleft_rtol" && \
+		     -n "$$saright_ltor" && -n "$$saright_rtol" && \
+		     -n "$$flowleft" && -n "$$flowright" ]]; then \
 			 success=true; \
 			 break; \
 		fi; \
 		let count=$$count+1; \
 	done; \
 	if [[ "$$success" = false ]]; then \
-		echo "error: SAs not found : $$sasleft $$sasright"; \
+		echo "error: SAs not found:\n$$ipsecctlleft\n$$ipsecctlright"; \
 		exit 1; \
 	fi
 
@@ -79,6 +90,7 @@ SETUP_CONFIGS = \
 		fragstr="set fragmentation"; \
 	fi; \
 	echo "FRAGMENTATION=\"$$fragstr\"" > $@_left.conf; \
+	echo "TMODE=\"$$tmode\"" >> $@_left.conf; \
 	echo "LOCAL_ADDR=\"${LEFT_ADDR}\"" >> $@_left.conf; \
 	echo "PEER_ADDR=\"${RIGHT_ADDR}\"" >> $@_left.conf; \
 	echo "IPCOMP=\"$$ipcomp\"" >> $@_left.conf; \
@@ -88,6 +100,7 @@ SETUP_CONFIGS = \
 	chmod 0600 $@_left.conf; \
 	echo "cd /tmp\nput $@_left.conf test.conf" | sftp -q ${LEFT_SSH}; \
 	echo "FRAGMENTATION=\"$$fragstr\"" > $@_right.conf; \
+	echo "TMODE=\"$$tmode\"" >> $@_right.conf; \
 	echo "LOCAL_ADDR=\"${RIGHT_ADDR}\"" >> $@_right.conf; \
 	echo "PEER_ADDR=\"${LEFT_ADDR}\"" >> $@_right.conf; \
 	echo "IPCOMP=\"$$ipcomp\"" >> $@_right.conf; \
@@ -228,6 +241,19 @@ run-fragmentation:
 	    ${SETUP_CONFIGS}
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}
+	${TEST_PING}
+
+REGRESS_TARGETS += run-transport
+run-transport:
+	@echo '======= $@ ========'
+	flowtype=esp; \
+	tmode=transport; \
+	leftid=left-from-ca-both; \
+	rightid=right-from-ca-both; \
+	    ${SETUP_CONFIGS}
+	${SETUP_START}
+	tmode=transport; flowtype=esp; \
+	  ${TEST_FLOWS}
 	${TEST_PING}
 
 REGRESS_TARGETS += run-ipcomp
