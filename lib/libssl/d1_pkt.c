@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.67 2020/02/21 16:06:26 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.68 2020/02/21 16:13:16 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1272,33 +1272,22 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	wr->input = p;
 	wr->data = p;
 
-
-	/* ssl3_enc can only have an error on read */
-	if (bs)	/* bs != 0 in case of CBC */
-	{
+	/* bs != 0 in case of CBC */
+	if (bs) {
 		arc4random_buf(p, bs);
 		/* master IV and last CBC residue stand for
 		 * the rest of randomness */
 		wr->length += bs;
 	}
 
+	/* ssl3_enc can only have an error on read */
 	s->method->internal->ssl3_enc->enc(s, 1);
 
-	/* record length after mac and block padding */
-/*	if (type == SSL3_RT_APPLICATION_DATA ||
-	(type == SSL3_RT_ALERT && ! SSL_in_init(s))) */
-
-	/* there's only one epoch between handshake and app data */
-
 	s2n(D1I(s)->w_epoch, pseq);
-
-	/* XDTLS: ?? */
-/*	else
-	s2n(D1I(s)->handshake_epoch, pseq);
-*/
-
 	memcpy(pseq, &(S3I(s)->write_sequence[2]), 6);
 	pseq += 6;
+
+	/* record length after mac and block padding */
 	s2n(wr->length, pseq);
 
 	/* we should now have
