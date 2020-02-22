@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.132 2019/09/07 10:02:19 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.133 2020/02/22 18:58:13 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -201,7 +201,7 @@ rc_cmd() {
 
 	[ -n "${_RC_DEBUG}" ] || _n="-n"
 
-	_rc_do _rc_parse_conf ${_RC_RUNFILE}
+	[[ ${1} == start ]] || _rc_do _rc_parse_conf ${_RC_RUNFILE}
 
 	case "$1" in
 	check)
