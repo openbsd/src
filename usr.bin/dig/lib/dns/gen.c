@@ -34,11 +34,6 @@
 		abort(); \
 	}
 
-#define FROMTEXTARGS "rdclass, type, lexer, origin, options, target, callbacks"
-#define FROMTEXTCLASS "rdclass"
-#define FROMTEXTTYPE "type"
-#define FROMTEXTDEF "result = DNS_R_UNKNOWN"
-
 #define TOTEXTARGS "rdata, tctx, target"
 #define TOTEXTCLASS "rdata->rdclass"
 #define TOTEXTTYPE "rdata->type"
