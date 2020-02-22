@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.c,v 1.4 2020/02/22 19:47:06 jung Exp $ */
+/* $Id: buffer.c,v 1.5 2020/02/22 19:48:48 jung Exp $ */
 
 /*! \file */
 
@@ -343,14 +343,12 @@ isc_buffer_allocate(isc_buffer_t **dynbuffer,
 
 void
 isc_buffer_free(isc_buffer_t **dynbuffer) {
-	unsigned int real_length;
 	isc_buffer_t *dbuf;
 
 	REQUIRE(dynbuffer != NULL);
 	dbuf = *dynbuffer;
 	*dynbuffer = NULL;	/* destroy external reference */
 
-	real_length = dbuf->length + sizeof(isc_buffer_t);
 	isc_buffer_invalidate(dbuf);
 
 	free(dbuf);

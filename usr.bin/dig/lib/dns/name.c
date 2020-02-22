@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.8 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: name.c,v 1.9 2020/02/22 19:48:48 jung Exp $ */
 
 /*! \file */
 #include <ctype.h>
@@ -1819,17 +1819,12 @@ dns_name_dupwithoffsets(dns_name_t *source,
 
 void
 dns_name_free(dns_name_t *name) {
-	size_t size;
-
 	/*
 	 * Free 'name'.
 	 */
 
 	REQUIRE((name->attributes & DNS_NAMEATTR_DYNAMIC) != 0);
 
-	size = name->length;
-	if ((name->attributes & DNS_NAMEATTR_DYNOFFSETS) != 0)
-		size += name->labels;
 	free(name->ndata);
 	dns_name_invalidate(name);
 }

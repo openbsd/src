@@ -1993,7 +1993,6 @@ isc_socket_recvv(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 {
 	isc_socket_t *sock = (isc_socket_t *)sock0;
 	isc_socketevent_t *dev;
-	isc_socketmgr_t *manager;
 	unsigned int iocount;
 	isc_buffer_t *buffer;
 
@@ -2001,8 +2000,6 @@ isc_socket_recvv(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 	REQUIRE(!ISC_LIST_EMPTY(*buflist));
 	REQUIRE(task != NULL);
 	REQUIRE(action != NULL);
-
-	manager = sock->manager;
 
 	iocount = isc_bufferlist_availablecount(buflist);
 	REQUIRE(iocount > 0);
@@ -2136,7 +2133,6 @@ isc_socket_sendtov2(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 {
 	isc_socket_t *sock = (isc_socket_t *)sock0;
 	isc_socketevent_t *dev;
-	isc_socketmgr_t *manager;
 	unsigned int iocount;
 	isc_buffer_t *buffer;
 
@@ -2144,8 +2140,6 @@ isc_socket_sendtov2(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 	REQUIRE(!ISC_LIST_EMPTY(*buflist));
 	REQUIRE(task != NULL);
 	REQUIRE(action != NULL);
-
-	manager = sock->manager;
 
 	iocount = isc_bufferlist_usedcount(buflist);
 	REQUIRE(iocount > 0);

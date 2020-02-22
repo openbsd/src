@@ -506,10 +506,8 @@ lwres_conf_parse(lwres_conf_t *confdata, const char *filename) {
 	ret = LWRES_R_SUCCESS;
 	do {
 		stopchar = getword(fp, word, sizeof(word));
-		if (stopchar == EOF) {
-			rval = LWRES_R_SUCCESS;
+		if (stopchar == EOF)
 			break;
-		}
 
 		if (strlen(word) == 0U)
 			rval = LWRES_R_SUCCESS;
