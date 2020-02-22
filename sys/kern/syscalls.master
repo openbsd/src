@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.204 2020/01/30 15:24:06 visa Exp $
+;	$OpenBSD: syscalls.master,v 1.205 2020/02/22 12:00:24 anton Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -135,7 +135,7 @@
 #endif
 52	STD		{ int sys_sigpending(void); }
 53	STD		{ int sys_fstat(int fd, struct stat *sb); }
-54	STD		{ int sys_ioctl(int fd, \
+54	STD NOLOCK	{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	STD		{ int sys_reboot(int opt); }
 56	STD		{ int sys_revoke(const char *path); }
