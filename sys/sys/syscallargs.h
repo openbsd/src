@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.215 2020/01/30 15:24:55 visa Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.216 2020/02/22 12:03:19 anton Exp $	*/
 
 /*
  * System call argument lists.
