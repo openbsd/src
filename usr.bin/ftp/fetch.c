@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.192 2020/02/20 00:45:09 yasuoka Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.193 2020/02/22 00:58:28 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -326,7 +326,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	char *proxyhost = NULL;
 #ifndef NOSSL
 	char *sslpath = NULL, *sslhost = NULL;
-	int ishttpurl = 0, ishttpsurl = 0;
+	int ishttpsurl = 0;
 #endif /* !NOSSL */
 #ifndef SMALL
 	char *full_host = NULL;
@@ -347,9 +347,6 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 		errx(1, "Can't allocate memory to parse URL");
 	if (strncasecmp(newline, HTTP_URL, sizeof(HTTP_URL) - 1) == 0) {
 		host = newline + sizeof(HTTP_URL) - 1;
-#ifndef NOSSL
-		ishttpurl = 1;
-#endif /* !NOSSL */
 #ifndef SMALL
 		scheme = HTTP_URL;
 #endif /* !SMALL */
@@ -374,13 +371,12 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 
 	path = strchr(host, '/');		/* Find path */
 
-#ifndef NOSSL
 	/*
 	 * Look for auth header in host.
 	 * Basic auth from RFC 2617, valid characters for path are in
 	 * RFC 3986 section 3.3.
 	 */
-	if (ishttpurl || ishttpsurl) {
+	if (!isftpurl) {
 		p = strchr(host, '@');
 		if (p != NULL && (path == NULL || p < path)) {
 			*p++ = '\0';
@@ -391,7 +387,6 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 			path = strchr(host, '/');
 		}
 	}
-#endif /* !NOSSL */
 
 	if (EMPTYSTRING(path)) {
 		if (outfile) {				/* No slash, but */
@@ -735,7 +730,6 @@ noslash:
 				restart_point = 0;
 		}
 #endif	/* SMALL */
-#ifndef NOSSL
 		if (credentials) {
 			ftp_printf(fin,
 			    "GET /%s HTTP/1.1\r\n"
@@ -745,7 +739,6 @@ noslash:
 			free(credentials);
 			credentials = NULL;
 		} else
-#endif	/* NOSSL */
 			ftp_printf(fin,
 			    "GET /%s HTTP/1.1\r\n"
 			    "Connection: close\r\n"
