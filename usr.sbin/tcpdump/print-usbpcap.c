@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-usbpcap.c,v 1.2 2020/02/12 20:07:55 jasper Exp $ */
+/*	$OpenBSD: print-usbpcap.c,v 1.3 2020/02/22 14:05:08 jasper Exp $ */
 
 /*
  * Copyright (c) 2018 Martin Pieuchot <mpi@openbsd.org>
@@ -40,7 +40,7 @@ usbpcap_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	ts_print(&h->ts);
 
 	/* check length */
-	if (caplen < sizeof(uint16_t))
+	if (caplen < sizeof(uint16_t) || length < sizeof(*uph))
 		goto trunc;
 
 	uph = (struct usbpcap_pkt_hdr *)p;
