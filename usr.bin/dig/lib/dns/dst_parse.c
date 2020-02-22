@@ -33,7 +33,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $Id: dst_parse.c,v 1.4 2020/02/13 12:03:51 jsg Exp $
+ * $Id: dst_parse.c,v 1.5 2020/02/22 19:50:05 jung Exp $
  */
 
 
@@ -147,10 +147,8 @@ check_hmac_sha(const dst_private_t *priv, unsigned int ntags,
 }
 
 static int
-check_data(const dst_private_t *priv, const unsigned int alg,
-	   isc_boolean_t old, isc_boolean_t external)
+check_data(const dst_private_t *priv, const unsigned int alg)
 {
-	UNUSED(old);
 	/* XXXVIX this switch statement is too sparse to gen a jump table. */
 	switch (alg) {
 	case DST_ALG_HMACSHA1:
@@ -355,7 +353,7 @@ dst__privstruct_parse(dst_key_t *key, unsigned int alg, isc_lex_t *lex,
 		goto fail;
 	}
 
-	check = check_data(priv, alg, ISC_TRUE, external);
+	check = check_data(priv, alg);
 	if (check < 0) {
 		ret = DST_R_INVALIDPRIVATEKEY;
 		goto fail;

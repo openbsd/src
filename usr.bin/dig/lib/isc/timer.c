@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.20 2020/02/21 07:44:50 florian Exp $ */
+/* $Id: timer.c,v 1.21 2020/02/22 19:50:05 jung Exp $ */
 
 /*! \file */
 
@@ -70,7 +70,7 @@ struct isc_timermgr {
 static isc_timermgr_t *timermgr = NULL;
 
 static inline isc_result_t
-schedule(isc_timer_t *timer, struct timespec *now, isc_boolean_t signal_ok) {
+schedule(isc_timer_t *timer) {
 	isc_result_t result;
 	isc_timermgr_t *manager;
 	struct timespec due;
@@ -78,8 +78,6 @@ schedule(isc_timer_t *timer, struct timespec *now, isc_boolean_t signal_ok) {
 	/*!
 	 * Note: the caller must ensure locking.
 	 */
-
-	UNUSED(signal_ok);
 
 	manager = timer->manager;
 
@@ -218,7 +216,7 @@ isc_timer_create(isc_timermgr_t *manager0, const struct timespec *interval,
 	timer->index = 0;
 	ISC_LINK_INIT(timer, link);
 
-	result = schedule(timer, &now, ISC_TRUE);
+	result = schedule(timer);
 	if (result == ISC_R_SUCCESS)
 		APPEND(manager->timers, timer, link);
 
@@ -238,7 +236,6 @@ isc_timer_reset(isc_timer_t *timer, const struct timespec *interval,
 		 isc_boolean_t purge)
 {
 	struct timespec now;
-	isc_timermgr_t *manager;
 	isc_result_t result;
 
 	/*
@@ -247,7 +244,6 @@ isc_timer_reset(isc_timer_t *timer, const struct timespec *interval,
 	 * are purged from its task's event queue.
 	 */
 
-	manager = timer->manager;
 	REQUIRE(interval != NULL);
 	REQUIRE(timespecisset(interval));
 
@@ -269,7 +265,7 @@ isc_timer_reset(isc_timer_t *timer, const struct timespec *interval,
 		timespecclear(&timer->idle);
 	}
 
-	result = schedule(timer, &now, ISC_TRUE);
+	result = schedule(timer);
 
 	return (result);
 }
@@ -371,7 +367,7 @@ dispatch(isc_timermgr_t *manager, struct timespec *now) {
 			manager->nscheduled--;
 
 			if (need_schedule) {
-				result = schedule(timer, now, ISC_FALSE);
+				result = schedule(timer);
 				if (result != ISC_R_SUCCESS)
 					UNEXPECTED_ERROR(__FILE__, __LINE__,
 						"%s: %u",

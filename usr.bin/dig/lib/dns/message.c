@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.7 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: message.c,v 1.8 2020/02/22 19:50:05 jung Exp $ */
 
 /*! \file */
 
@@ -112,9 +112,6 @@ msgblock_internalget(dns_msgblock_t *, unsigned int);
 static inline void
 msgblock_reset(dns_msgblock_t *);
 
-static inline void
-msgblock_free(dns_msgblock_t *, unsigned int);
-
 /*
  * Allocate a new dns_msgblock_t, and return a pointer to it.  If no memory
  * is free, return NULL.
@@ -163,19 +160,6 @@ msgblock_internalget(dns_msgblock_t *block, unsigned int sizeof_type) {
 static inline void
 msgblock_reset(dns_msgblock_t *block) {
 	block->remaining = block->count;
-}
-
-/*
- * Release memory associated with a message block.
- */
-static inline void
-msgblock_free(dns_msgblock_t *block, unsigned int sizeof_type)
-{
-	unsigned int length;
-
-	length = sizeof(dns_msgblock_t) + (sizeof_type * block->count);
-
-	free(block);
 }
 
 /*
@@ -513,7 +497,7 @@ msgreset(dns_message_t *msg, isc_boolean_t everything) {
 	while (msgblock != NULL) {
 		next_msgblock = ISC_LIST_NEXT(msgblock, link);
 		ISC_LIST_UNLINK(msg->rdatas, msgblock, link);
-		msgblock_free(msgblock, sizeof(dns_rdata_t));
+		free(msgblock);
 		msgblock = next_msgblock;
 	}
 
@@ -529,7 +513,7 @@ msgreset(dns_message_t *msg, isc_boolean_t everything) {
 	while (msgblock != NULL) {
 		next_msgblock = ISC_LIST_NEXT(msgblock, link);
 		ISC_LIST_UNLINK(msg->rdatalists, msgblock, link);
-		msgblock_free(msgblock, sizeof(dns_rdatalist_t));
+		free(msgblock);
 		msgblock = next_msgblock;
 	}
 
@@ -541,7 +525,7 @@ msgreset(dns_message_t *msg, isc_boolean_t everything) {
 	while (msgblock != NULL) {
 		next_msgblock = ISC_LIST_NEXT(msgblock, link);
 		ISC_LIST_UNLINK(msg->offsets, msgblock, link);
-		msgblock_free(msgblock, sizeof(dns_offsets_t));
+		free(msgblock);
 		msgblock = next_msgblock;
 	}
 
@@ -1754,7 +1738,7 @@ wrong_priority(dns_rdataset_t *rds, int pass, dns_rdatatype_t preferred_glue) {
 static isc_result_t
 renderset(dns_rdataset_t *rdataset, dns_name_t *owner_name,
 	  dns_compress_t *cctx, isc_buffer_t *target,
-	  unsigned int reserved, unsigned int options, unsigned int *countp)
+	  unsigned int reserved, unsigned int *countp)
 {
 	isc_result_t result;
 
@@ -1766,7 +1750,7 @@ renderset(dns_rdataset_t *rdataset, dns_name_t *owner_name,
 
 	target->length -= reserved;
 	result = dns_rdataset_towire(rdataset, owner_name,
-				     cctx, target, options, countp);
+				     cctx, target, countp);
 	target->length += reserved;
 
 	return (result);
@@ -1793,7 +1777,6 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 	isc_buffer_t st; /* for rollbacks */
 	int pass;
 	isc_boolean_t partial = ISC_FALSE;
-	unsigned int rd_options;
 	dns_rdatatype_t preferred_glue = 0;
 
 	REQUIRE(msg->buffer != NULL);
@@ -1813,11 +1796,6 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 			pass = 3;
 	} else
 		pass = 1;
-
-	if ((options & DNS_MESSAGERENDER_OMITDNSSEC) == 0)
-		rd_options = 0;
-	else
-		rd_options = DNS_RDATASETTOWIRE_OMITDNSSEC;
 
 	/*
 	 * Shrink the space in the buffer by the reserved amount.
@@ -1849,7 +1827,6 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 								    msg->buffer,
 								    msg->order,
 								    order_arg,
-								    rd_options,
 								    &count,
 								    NULL);
 			else
@@ -1859,7 +1836,6 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 								   msg->buffer,
 								   msg->order,
 								   order_arg,
-								   rd_options,
 								   &count);
 			total += count;
 			if (partial && result == ISC_R_NOSPACE) {
@@ -1920,7 +1896,6 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 							  msg->buffer,
 							  msg->order,
 							  msg->order_arg,
-							  rd_options,
 							  &count,
 							  NULL);
 				else
@@ -1931,7 +1906,6 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 							  msg->buffer,
 							  msg->order,
 							  msg->order_arg,
-							  rd_options,
 							  &count);
 
 				total += count;
@@ -2083,7 +2057,7 @@ dns_message_renderend(dns_message_t *msg) {
 		 */
 		count = 0;
 		result = renderset(msg->opt, dns_rootname, msg->cctx,
-				   msg->buffer, msg->reserved, 0, &count);
+				   msg->buffer, msg->reserved, &count);
 		msg->counts[DNS_SECTION_ADDITIONAL] += count;
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -2100,7 +2074,7 @@ dns_message_renderend(dns_message_t *msg) {
 			return (result);
 		count = 0;
 		result = renderset(msg->tsig, msg->tsigname, msg->cctx,
-				   msg->buffer, msg->reserved, 0, &count);
+				   msg->buffer, msg->reserved, &count);
 		msg->counts[DNS_SECTION_ADDITIONAL] += count;
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -2257,6 +2231,8 @@ isc_result_t
 dns_message_gettempname(dns_message_t *msg, dns_name_t **item) {
 	REQUIRE(item != NULL && *item == NULL);
 
+	UNUSED(msg);
+
 	*item = malloc(sizeof(dns_name_t));
 	if (*item == NULL)
 		return (ISC_R_NOMEMORY);
@@ -2279,6 +2255,8 @@ dns_message_gettemprdata(dns_message_t *msg, dns_rdata_t **item) {
 isc_result_t
 dns_message_gettemprdataset(dns_message_t *msg, dns_rdataset_t **item) {
 	REQUIRE(item != NULL && *item == NULL);
+
+	UNUSED(msg);
 
 	*item = malloc(sizeof(dns_rdataset_t));
 	if (*item == NULL)
@@ -2304,6 +2282,8 @@ void
 dns_message_puttempname(dns_message_t *msg, dns_name_t **item) {
 	REQUIRE(item != NULL && *item != NULL);
 
+	UNUSED(msg);
+
 	if (dns_name_dynamic(*item))
 		dns_name_free(*item);
 	free(*item);
@@ -2321,8 +2301,10 @@ dns_message_puttemprdata(dns_message_t *msg, dns_rdata_t **item) {
 void
 dns_message_puttemprdataset(dns_message_t *msg, dns_rdataset_t **item) {
 	REQUIRE(item != NULL && *item != NULL);
-
 	REQUIRE(!dns_rdataset_isassociated(*item));
+
+	UNUSED(msg);
+
 	free(*item);
 	*item = NULL;
 }
