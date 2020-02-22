@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.75 2020/01/22 03:43:13 krw Exp $ */
+/*	$OpenBSD: umass.c,v 1.76 2020/02/22 14:01:34 jasper Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -441,14 +441,14 @@ umass_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN
-		    && (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+		    && UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			sc->sc_epaddr[UMASS_BULKIN] = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT
-		    && (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+		    && UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			sc->sc_epaddr[UMASS_BULKOUT] = ed->bEndpointAddress;
 		} else if (sc->sc_wire == UMASS_WPROTO_CBI_I
 		    && UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN
-		    && (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
+		    && UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
 			sc->sc_epaddr[UMASS_INTRIN] = ed->bEndpointAddress;
 #ifdef UMASS_DEBUG
 			if (UGETW(ed->wMaxPacketSize) > 2) {

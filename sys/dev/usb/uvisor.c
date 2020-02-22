@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.51 2016/09/02 09:14:59 mpi Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.52 2020/02/22 14:01:35 jasper Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ uvisor_attach(struct device *parent, struct device *self, void *aux)
 				if (ed == NULL)
 					break;
 				if (UE_GET_ADDR(ed->bEndpointAddress) == port &&
-				    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+				    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 					if (UE_GET_DIR(ed->bEndpointAddress)
 					    == UE_DIR_IN)
 						hasin++;

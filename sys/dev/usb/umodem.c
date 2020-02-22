@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.64 2018/08/29 20:18:14 kettenis Exp $ */
+/*	$OpenBSD: umodem.c,v 1.65 2020/02/22 14:01:35 jasper Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -306,10 +306,10 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 			goto bad;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
                         uca.bulkin = ed->bEndpointAddress;
                 } else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
-			   (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+			   UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
                         uca.bulkout = ed->bEndpointAddress;
                 }
         }
@@ -361,7 +361,7 @@ umodem_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
 			printf("%s: status change notification available\n",
 			       sc->sc_dev.dv_xname);
 			sc->sc_ctl_notify = ed->bEndpointAddress;

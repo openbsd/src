@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.102 2020/02/20 16:56:52 visa Exp $ */
+/*	$OpenBSD: ugen.c,v 1.103 2020/02/22 14:01:34 jasper Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -302,7 +302,7 @@ ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 		DPRINTFN(5, ("ugenopen: sc=%p, endpt=%d, dir=%d, sce=%p\n",
 			     sc, endpt, dir, sce));
 		edesc = sce->edesc;
-		switch (edesc->bmAttributes & UE_XFERTYPE) {
+		switch (UE_GET_XFERTYPE(edesc->bmAttributes)) {
 		case UE_INTERRUPT:
 			if (dir == OUT) {
 				err = usbd_open_pipe(sce->iface,
@@ -444,7 +444,7 @@ ugen_do_close(struct ugen_softc *sc, int endpt, int flag)
 		usbd_close_pipe(sce->pipeh);
 		sce->pipeh = NULL;
 
-		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
+		switch (UE_GET_XFERTYPE(sce->edesc->bmAttributes)) {
 		case UE_INTERRUPT:
 			ndflush(&sce->q, sce->q.c_cc);
 			clfree(&sce->q);
@@ -499,7 +499,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	}
 #endif
 
-	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
+	switch (UE_GET_XFERTYPE(sce->edesc->bmAttributes)) {
 	case UE_INTERRUPT:
 		/* Block until activity occurred. */
 		s = splusb();
@@ -670,7 +670,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	if (sce->timeout == 0)
 		flags |= USBD_CATCH;
 
-	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
+	switch (UE_GET_XFERTYPE(sce->edesc->bmAttributes)) {
 	case UE_BULK:
 		xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (xfer == 0)
@@ -1253,7 +1253,7 @@ ugenpoll(dev_t dev, int events, struct proc *p)
 	}
 #endif
 	s = splusb();
-	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
+	switch (UE_GET_XFERTYPE(sce->edesc->bmAttributes)) {
 	case UE_INTERRUPT:
 		if (events & (POLLIN | POLLRDNORM)) {
 			if (sce->q.c_cc > 0)
@@ -1370,7 +1370,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		klist = &sce->rsel.si_note;
-		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
+		switch (UE_GET_XFERTYPE(sce->edesc->bmAttributes)) {
 		case UE_INTERRUPT:
 			kn->kn_fop = &ugenread_intr_filtops;
 			break;
@@ -1392,7 +1392,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 
 	case EVFILT_WRITE:
 		klist = &sce->rsel.si_note;
-		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
+		switch (UE_GET_XFERTYPE(sce->edesc->bmAttributes)) {
 		case UE_INTERRUPT:
 		case UE_ISOCHRONOUS:
 			/* XXX poll doesn't support this */

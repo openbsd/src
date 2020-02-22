@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.81 2018/10/02 19:49:10 stsp Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.82 2020/02/22 14:01:34 jasper Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -213,13 +213,13 @@ udav_attach(struct device *parent, struct device *self, void *aux)
 			printf("couldn't get endpoint %d\n", i);
 			goto bad;
 		}
-		if ((ed->bmAttributes & UE_XFERTYPE) == UE_BULK &&
+		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
 		    UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN)
 			sc->sc_bulkin_no = ed->bEndpointAddress; /* RX */
-		else if ((ed->bmAttributes & UE_XFERTYPE) == UE_BULK &&
+		else if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
 			 UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT)
 			sc->sc_bulkout_no = ed->bEndpointAddress; /* TX */
-		else if ((ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT &&
+		else if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT &&
 			 UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN)
 			sc->sc_intrin_no = ed->bEndpointAddress; /* Status */
 	}

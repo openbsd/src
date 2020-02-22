@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.26 2016/11/06 12:58:01 mpi Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.27 2020/02/22 14:01:34 jasper Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -206,10 +206,10 @@ uipaq_attach(struct device *parent, struct device *self, void *aux)
 			goto bad;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			uca.bulkin = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
-		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			uca.bulkout = ed->bEndpointAddress;
 		}
 	}

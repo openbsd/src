@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.111 2020/01/22 02:25:11 krw Exp $ */
+/* $OpenBSD: xhci.c,v 1.112 2020/02/22 14:01:35 jasper Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1225,7 +1225,7 @@ xhci_get_txinfo(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	uint32_t mep, atl, mps = UGETW(ed->wMaxPacketSize);
 
-	switch (ed->bmAttributes & UE_XFERTYPE) {
+	switch (UE_GET_XFERTYPE(ed->bmAttributes)) {
 	case UE_CONTROL:
 		mep = 0;
 		atl = 8;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.92 2019/01/07 14:24:22 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.93 2020/02/22 14:01:34 jasper Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -238,7 +238,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: no endpoint descriptor\n", sc->sc_dev.dv_xname);
 		goto bad;
 	}
-	if ((ed->bmAttributes & UE_XFERTYPE) != UE_INTERRUPT) {
+	if (UE_GET_XFERTYPE(ed->bmAttributes) != UE_INTERRUPT) {
 		printf("%s: bad interrupt endpoint\n", sc->sc_dev.dv_xname);
 		goto bad;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.205 2019/10/08 11:07:16 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.206 2020/02/22 14:01:34 jasper Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1354,7 +1354,7 @@ ehci_open(struct usbd_pipe *pipe)
 	struct ehci_softc *sc = (struct ehci_softc *)dev->bus;
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	u_int8_t addr = dev->address;
-	u_int8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
+	u_int8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
 	struct ehci_soft_qh *sqh;
 	usbd_status err;
@@ -2356,7 +2356,7 @@ ehci_alloc_sqtd_chain(struct ehci_softc *sc, u_int alen, struct usbd_xfer *xfer,
 	DPRINTFN(alen<4*4096,("ehci_alloc_sqtd_chain: start len=%d\n", alen));
 
 	len = alen;
-	iscontrol = (xfer->pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) ==
+	iscontrol = UE_GET_XFERTYPE(xfer->pipe->endpoint->edesc->bmAttributes) ==
 	    UE_CONTROL;
 
 	dataphys = DMAADDR(dma, 0);
