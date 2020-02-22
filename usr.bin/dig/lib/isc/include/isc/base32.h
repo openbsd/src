@@ -60,25 +60,6 @@ isc_base32hexnp_totext(isc_region_t *source, int wordlength,
  */
 
 isc_result_t
-isc_base32hexnp_decodestring(const char *cstr, isc_buffer_t *target);
-/*!<
- * \brief Decode a null-terminated string in base32, base32hex, or
- * base32hex non-padded.
- *
- * Requires:
- *\li	'cstr' is non-null.
- *\li	'target' is a valid buffer.
- *
- * Returns:
- *\li	#ISC_R_SUCCESS	-- the entire decoded representation of 'cstring'
- *			   fit in 'target'.
- *\li	#ISC_R_BADBASE32 -- 'cstr' is not a valid base32 encoding.
- *
- * 	Other error returns are any possible error code from:
- *\li		isc_lex_create(),
- */
-
-isc_result_t
 isc_base32hexnp_decoderegion(isc_region_t *source, isc_buffer_t *target);
 /*!<
  * \brief Decode a packed (no white space permitted) region in

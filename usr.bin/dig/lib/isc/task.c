@@ -448,86 +448,6 @@ isc_task_purgerange(isc_task_t *task, void *sender, isc_eventtype_t first,
 	return (count);
 }
 
-isc_boolean_t
-isc_task_purgeevent(isc_task_t *task, isc_event_t *event) {
-	isc_event_t *curr_event, *next_event;
-
-	/*
-	 * Purge 'event' from a task's event queue.
-	 *
-	 * XXXRTH:  WARNING:  This method may be removed before beta.
-	 */
-
-
-	/*
-	 * If 'event' is on the task's event queue, it will be purged,
-	 * unless it is marked as unpurgeable.  'event' does not have to be
-	 * on the task's event queue; in fact, it can even be an invalid
-	 * pointer.  Purging only occurs if the event is actually on the task's
-	 * event queue.
-	 *
-	 * Purging never changes the state of the task.
-	 */
-
-	for (curr_event = HEAD(task->events);
-	     curr_event != NULL;
-	     curr_event = next_event) {
-		next_event = NEXT(curr_event, ev_link);
-		if (curr_event == event && PURGE_OK(event)) {
-			DEQUEUE(task->events, curr_event, ev_link);
-			task->nevents--;
-			break;
-		}
-	}
-
-	if (curr_event == NULL)
-		return (ISC_FALSE);
-
-	isc_event_free(&curr_event);
-
-	return (ISC_TRUE);
-}
-
-unsigned int
-isc_task_unsendrange(isc_task_t *task, void *sender, isc_eventtype_t first,
-		      isc_eventtype_t last, void *tag,
-		      isc_eventlist_t *events)
-{
-	/*
-	 * Remove events from a task's event queue.
-	 */
-
-	return (dequeue_events((isc_task_t *)task, sender, first,
-			       last, tag, events, ISC_FALSE));
-}
-
-unsigned int
-isc_task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type,
-		 void *tag, isc_eventlist_t *events)
-{
-	/*
-	 * Remove events from a task's event queue.
-	 */
-
-	return (dequeue_events((isc_task_t *)task, sender, type,
-			       type, tag, events, ISC_FALSE));
-}
-
-void
-isc_task_shutdown(isc_task_t *task) {
-	isc_boolean_t was_idle;
-
-	/*
-	 * Shutdown 'task'.
-	 */
-
-
-	was_idle = task_shutdown(task);
-
-	if (was_idle)
-		task_ready(task);
-}
-
 void
 isc_task_setname(isc_task_t *task, const char *name, void *tag) {
 	/*
@@ -537,16 +457,6 @@ isc_task_setname(isc_task_t *task, const char *name, void *tag) {
 
 	strlcpy(task->name, name, sizeof(task->name));
 	task->tag = tag;
-}
-
-const char *
-isc_task_getname(isc_task_t *task) {
-	return (task->name);
-}
-
-void *
-isc_task_gettag(isc_task_t *task) {
-	return (task->tag);
 }
 
 /***
@@ -924,28 +834,4 @@ isc_taskmgr_dispatch(isc_taskmgr_t *manager) {
 	dispatch(manager);
 
 	return (ISC_R_SUCCESS);
-}
-
-void
-isc_taskmgr_setexcltask(isc_taskmgr_t *mgr0, isc_task_t *task) {
-	isc_taskmgr_t *mgr = (isc_taskmgr_t *) mgr0;
-
-	if (mgr->excl != NULL)
-		isc_task_detach((isc_task_t **) &mgr->excl);
-	isc_task_attach(task, (isc_task_t **) &mgr->excl);
-}
-
-isc_result_t
-isc_taskmgr_excltask(isc_taskmgr_t *mgr0, isc_task_t **taskp) {
-	isc_taskmgr_t *mgr = (isc_taskmgr_t *) mgr0;
-	isc_result_t result = ISC_R_SUCCESS;
-
-	REQUIRE(taskp != NULL && *taskp == NULL);
-
-	if (mgr->excl != NULL)
-		isc_task_attach((isc_task_t *) mgr->excl, taskp);
-	else
-		result = ISC_R_NOTFOUND;
-
-	return (result);
 }

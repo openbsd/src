@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.c,v 1.3 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: buffer.c,v 1.4 2020/02/22 19:47:06 jung Exp $ */
 
 /*! \file */
 
@@ -39,16 +39,6 @@ isc__buffer_init(isc_buffer_t *b, void *base, unsigned int length) {
 }
 
 void
-isc__buffer_initnull(isc_buffer_t *b) {
-	/*
-	 * Initialize a new buffer which has no backing store.  This can
-	 * later be grown as needed and swapped in place.
-	 */
-
-	ISC__BUFFER_INIT(b, NULL, 0);
-}
-
-void
 isc__buffer_invalidate(isc_buffer_t *b) {
 	/*
 	 * Make 'b' an invalid buffer.
@@ -57,17 +47,6 @@ isc__buffer_invalidate(isc_buffer_t *b) {
 	REQUIRE(!ISC_LINK_LINKED(b, link));
 
 	ISC__BUFFER_INVALIDATE(b);
-}
-
-void
-isc__buffer_region(isc_buffer_t *b, isc_region_t *r) {
-	/*
-	 * Make 'r' refer to the region of 'b'.
-	 */
-
-	REQUIRE(r != NULL);
-
-	ISC__BUFFER_REGION(b, r);
 }
 
 void
@@ -124,17 +103,6 @@ isc__buffer_clear(isc_buffer_t *b) {
 }
 
 void
-isc__buffer_consumedregion(isc_buffer_t *b, isc_region_t *r) {
-	/*
-	 * Make 'r' refer to the consumed region of 'b'.
-	 */
-
-	REQUIRE(r != NULL);
-
-	ISC__BUFFER_CONSUMEDREGION(b, r);
-}
-
-void
 isc__buffer_remainingregion(isc_buffer_t *b, isc_region_t *r) {
 	/*
 	 * Make 'r' refer to the remaining region of 'b'.
@@ -185,17 +153,6 @@ isc__buffer_forward(isc_buffer_t *b, unsigned int n) {
 	REQUIRE(b->current + n <= b->used);
 
 	ISC__BUFFER_FORWARD(b, n);
-}
-
-void
-isc__buffer_back(isc_buffer_t *b, unsigned int n) {
-	/*
-	 * Decrease the 'consumed' region of 'b' by 'n' bytes.
-	 */
-
-	REQUIRE(n <= b->current);
-
-	ISC__BUFFER_BACK(b, n);
 }
 
 void
@@ -271,13 +228,6 @@ isc__buffer_putuint16(isc_buffer_t *b, uint16_t val) {
 	REQUIRE(b->used + 2 <= b->length);
 
 	ISC__BUFFER_PUTUINT16(b, val);
-}
-
-void
-isc__buffer_putuint24(isc_buffer_t *b, uint32_t val) {
-	REQUIRE(b->used + 3 <= b->length);
-
-	ISC__BUFFER_PUTUINT24(b, val);
 }
 
 uint32_t

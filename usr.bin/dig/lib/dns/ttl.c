@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ttl.c,v 1.2 2020/02/11 23:26:11 jsg Exp $ */
+/* $Id: ttl.c,v 1.3 2020/02/22 19:47:06 jung Exp $ */
 
 /*! \file */
 
@@ -39,8 +39,6 @@
 		return (_r); \
 	} while (0)
 
-
-static isc_result_t bind_ttl(isc_textregion_t *source, uint32_t *ttl);
 
 /*
  * Helper for dns_ttl_totext().
@@ -126,93 +124,5 @@ dns_ttl_totext(uint32_t src, isc_boolean_t verbose, isc_buffer_t *target) {
 		region.base[region.length - 1] =
 			toupper(region.base[region.length - 1]);
 	}
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_counter_fromtext(isc_textregion_t *source, uint32_t *ttl) {
-	return (bind_ttl(source, ttl));
-}
-
-isc_result_t
-dns_ttl_fromtext(isc_textregion_t *source, uint32_t *ttl) {
-	isc_result_t result;
-
-	result = bind_ttl(source, ttl);
-	if (result != ISC_R_SUCCESS && result != ISC_R_RANGE)
-		result = DNS_R_BADTTL;
-	return (result);
-}
-
-static isc_result_t
-bind_ttl(isc_textregion_t *source, uint32_t *ttl) {
-	uint64_t tmp = 0ULL;
-	uint32_t n;
-	char *s;
-	char buf[64];
-	char nbuf[64]; /* Number buffer */
-
-	/*
-	 * Copy the buffer as it may not be NULL terminated.
-	 * No legal counter / ttl is longer that 63 characters.
-	 */
-	if (source->length > sizeof(buf) - 1)
-		return (DNS_R_SYNTAX);
-	/* Copy source->length bytes and NUL terminate. */
-	snprintf(buf, sizeof(buf), "%.*s", (int)source->length, source->base);
-	s = buf;
-
-	do {
-		isc_result_t result;
-
-		char *np = nbuf;
-		while (*s != '\0' && isdigit((unsigned char)*s))
-			*np++ = *s++;
-		*np++ = '\0';
-		INSIST(np - nbuf <= (int)sizeof(nbuf));
-		result = isc_parse_uint32(&n, nbuf, 10);
-		if (result != ISC_R_SUCCESS)
-			return (DNS_R_SYNTAX);
-		switch (*s) {
-		case 'w':
-		case 'W':
-			tmp += (uint64_t) n * 7 * 24 * 3600;
-			s++;
-			break;
-		case 'd':
-		case 'D':
-			tmp += (uint64_t) n * 24 * 3600;
-			s++;
-			break;
-		case 'h':
-		case 'H':
-			tmp += (uint64_t) n * 3600;
-			s++;
-			break;
-		case 'm':
-		case 'M':
-			tmp += (uint64_t) n * 60;
-			s++;
-			break;
-		case 's':
-		case 'S':
-			tmp += (uint64_t) n;
-			s++;
-			break;
-		case '\0':
-			/* Plain number? */
-			if (tmp != 0ULL)
-				return (DNS_R_SYNTAX);
-			tmp = n;
-			break;
-		default:
-			return (DNS_R_SYNTAX);
-		}
-	} while (*s != '\0');
-
-	if (tmp > 0xffffffffULL)
-		return (ISC_R_RANGE);
-
-	*ttl = (uint32_t)(tmp & 0xffffffffUL);
 	return (ISC_R_SUCCESS);
 }

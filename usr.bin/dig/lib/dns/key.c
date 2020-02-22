@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key.c,v 1.5 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: key.c,v 1.6 2020/02/22 19:47:06 jung Exp $ */
 
 
 
@@ -80,11 +80,6 @@ dst_region_computerid(const isc_region_t *source, unsigned int alg) {
 	ac += (ac >> 16) & 0xffff;
 
 	return ((uint16_t)(ac & 0xffff));
-}
-
-dns_name_t *
-dst_key_name(const dst_key_t *key) {
-	return (key->key_name);
 }
 
 unsigned int

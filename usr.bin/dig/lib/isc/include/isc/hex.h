@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hex.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: hex.h,v 1.4 2020/02/22 19:47:07 jung Exp $ */
 
 #ifndef ISC_HEX_H
 #define ISC_HEX_H 1
@@ -67,24 +67,6 @@ isc_hex_decodestring(const char *cstr, isc_buffer_t *target);
  *
  * 	Other error returns are any possible error code from:
  *		isc_lex_create(),
- *		isc_hex_tobuffer().
- */
-
-isc_result_t
-isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
-/*!<
- * \brief Convert hex encoded text from a lexer context into data.
- *
- * Requires:
- *\li	'lex' is a valid lexer context
- *\li	'target' is a buffer containing binary data
- *\li	'length' is an integer
- *
- * Ensures:
- *\li	target will contain the data represented by the hex encoded
- *	string parsed by the lexer.  No more than length bytes will be read,
- *	if length is positive.  The 'used' pointer in target will be
- *	advanced as necessary.
  */
 
 #endif /* ISC_HEX_H */

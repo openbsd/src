@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task.h,v 1.6 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: task.h,v 1.7 2020/02/22 19:47:07 jung Exp $ */
 
 #ifndef ISC_TASK_H
 #define ISC_TASK_H 1
@@ -241,122 +241,6 @@ isc_task_purgerange(isc_task_t *task, void *sender, isc_eventtype_t first,
  *\li	The number of events purged.
  */
 
-isc_boolean_t
-isc_task_purgeevent(isc_task_t *task, isc_event_t *event);
-/*%<
- * Purge 'event' from a task's event queue.
- *
- * XXXRTH:  WARNING:  This method may be removed before beta.
- *
- * Notes:
- *
- *\li	If 'event' is on the task's event queue, it will be purged,
- * 	unless it is marked as unpurgeable.  'event' does not have to be
- *	on the task's event queue; in fact, it can even be an invalid
- *	pointer.  Purging only occurs if the event is actually on the task's
- *	event queue.
- *
- * \li	Purging never changes the state of the task.
- *
- * Requires:
- *
- *\li	'task' is a valid task.
- *
- * Ensures:
- *
- *\li	'event' is not in the event queue for 'task'.
- *
- * Returns:
- *
- *\li	#ISC_TRUE			The event was purged.
- *\li	#ISC_FALSE			The event was not in the event queue,
- *					or was marked unpurgeable.
- */
-
-unsigned int
-isc_task_unsendrange(isc_task_t *task, void *sender, isc_eventtype_t first,
-		     isc_eventtype_t last, void *tag, isc_eventlist_t *events);
-/*%<
- * Remove events from a task's event queue.
- *
- * Requires:
- *
- *\li	'task' is a valid task.
- *
- *\li	last >= first.
- *
- *\li	*events is a valid list.
- *
- * Ensures:
- *
- *\li	Events in the event queue of 'task' whose sender is 'sender', whose
- *	type is >= first and <= last, and whose tag is 'tag' will be dequeued
- *	and appended to *events.
- *
- *\li	A sender of NULL will match any sender.  A NULL tag matches any
- *	tag.
- *
- * Returns:
- *
- *\li	The number of events unsent.
- */
-
-unsigned int
-isc_task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type,
-		void *tag, isc_eventlist_t *events);
-/*%<
- * Remove events from a task's event queue.
- *
- * Notes:
- *
- *\li	This function is equivalent to
- *
- *\code
- *		isc_task_unsendrange(task, sender, type, type, tag, events);
- *\endcode
- *
- * Requires:
- *
- *\li	'task' is a valid task.
- *
- *\li	*events is a valid list.
- *
- * Ensures:
- *
- *\li	Events in the event queue of 'task' whose sender is 'sender', whose
- *	type is 'type', and whose tag is 'tag' will be dequeued and appended
- *	to *events.
- *
- * Returns:
- *
- *\li	The number of events unsent.
- */
-
-void
-isc_task_shutdown(isc_task_t *task);
-/*%<
- * Shutdown 'task'.
- *
- * Notes:
- *
- *\li	Shutting down a task causes any shutdown events requested with
- *	isc_task_onshutdown() to be posted (in LIFO order).  The task
- *	moves into a "shutting down" mode which prevents further calls
- *	to isc_task_onshutdown().
- *
- *\li	Trying to shutdown a task that has already been shutdown has no
- *	effect.
- *
- * Requires:
- *
- *\li	'task' is a valid task.
- *
- * Ensures:
- *
- *\li	Any shutdown events requested with isc_task_onshutdown() have been
- *	posted (in LIFO order).
- */
-
 void
 isc_task_setname(isc_task_t *task, const char *name, void *tag);
 /*%<
@@ -370,36 +254,6 @@ isc_task_setname(isc_task_t *task, const char *name, void *tag);
  *
  * Requires:
  *
- *\li	'task' is a valid task.
- */
-
-const char *
-isc_task_getname(isc_task_t *task);
-/*%<
- * Get the name of 'task', as previously set using isc_task_setname().
- *
- * Notes:
- *\li	This function is for debugging purposes only.
- *
- * Requires:
- *\li	'task' is a valid task.
- *
- * Returns:
- *\li	A non-NULL pointer to a null-terminated string.
- * 	If the task has not been named, the string is
- * 	empty.
- *
- */
-
-void *
-isc_task_gettag(isc_task_t *task);
-/*%<
- * Get the tag value for  'task', as previously set using isc_task_settag().
- *
- * Notes:
- *\li	This function is for debugging purposes only.
- *
- * Requires:
  *\li	'task' is a valid task.
  */
 
@@ -484,31 +338,6 @@ isc_taskmgr_destroy(isc_taskmgr_t **managerp);
  *\li	All resources used by the task manager, and any tasks it managed,
  *	have been freed.
  */
-
-void
-isc_taskmgr_setexcltask(isc_taskmgr_t *mgr, isc_task_t *task);
-/*%<
- * Set a task which will be used for all task-exclusive operations.
- *
- * Requires:
- *\li	'manager' is a valid task manager.
- *
- *\li	'task' is a valid task.
- */
-
-isc_result_t
-isc_taskmgr_excltask(isc_taskmgr_t *mgr, isc_task_t **taskp);
-/*%<
- * Attach '*taskp' to the task set by isc_taskmgr_getexcltask().
- * This task should be used whenever running in task-exclusive mode,
- * so as to prevent deadlock between two exclusive tasks.
- *
- * Requires:
- *\li	'manager' is a valid task manager.
-
- *\li	taskp != NULL && *taskp == NULL
- */
-
 
 /*%<
  * See isc_taskmgr_create() above.

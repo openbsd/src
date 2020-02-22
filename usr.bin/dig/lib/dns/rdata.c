@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.9 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: rdata.c,v 1.10 2020/02/22 19:47:06 jung Exp $ */
 
 /*! \file */
 
@@ -1348,13 +1348,6 @@ dns_rdata_covers(dns_rdata_t *rdata) {
 	if (rdata->type == dns_rdatatype_rrsig)
 		return (covers_rrsig(rdata));
 	return (covers_sig(rdata));
-}
-
-isc_boolean_t
-dns_rdatatype_ismeta(dns_rdatatype_t type) {
-	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_META) != 0)
-		return (ISC_TRUE);
-	return (ISC_FALSE);
 }
 
 isc_boolean_t

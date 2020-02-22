@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.5 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: lex.c,v 1.6 2020/02/22 19:47:06 jung Exp $ */
 
 /*! \file */
 
@@ -756,33 +756,6 @@ isc_lex_getmastertoken(isc_lex_t *lex, isc_token_t *token,
 	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
-isc_lex_getoctaltoken(isc_lex_t *lex, isc_token_t *token, isc_boolean_t eol)
-{
-	unsigned int options = ISC_LEXOPT_EOL | ISC_LEXOPT_EOF |
-			       ISC_LEXOPT_DNSMULTILINE | ISC_LEXOPT_ESCAPE|
-			       ISC_LEXOPT_NUMBER | ISC_LEXOPT_OCTAL;
-	isc_result_t result;
-
-	result = isc_lex_gettoken(lex, options, token);
-	if (result == ISC_R_RANGE)
-		isc_lex_ungettoken(lex, token);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	if (eol && ((token->type == isc_tokentype_eol) ||
-		    (token->type == isc_tokentype_eof)))
-		return (ISC_R_SUCCESS);
-	if (token->type != isc_tokentype_number) {
-		isc_lex_ungettoken(lex, token);
-		if (token->type == isc_tokentype_eol ||
-		    token->type == isc_tokentype_eof)
-			return (ISC_R_UNEXPECTEDEND);
-		return (ISC_R_BADNUMBER);
-	}
-	return (ISC_R_SUCCESS);
-}
-
 void
 isc_lex_ungettoken(isc_lex_t *lex, isc_token_t *tokenp) {
 	inputsource *source;
@@ -847,16 +820,4 @@ isc_lex_getsourceline(isc_lex_t *lex) {
 		return (0);
 
 	return (source->line);
-}
-
-isc_boolean_t
-isc_lex_isfile(isc_lex_t *lex) {
-	inputsource *source;
-
-	source = HEAD(lex->sources);
-
-	if (source == NULL)
-		return (ISC_FALSE);
-
-	return (source->is_file);
 }

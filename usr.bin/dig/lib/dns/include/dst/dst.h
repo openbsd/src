@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst.h,v 1.6 2020/02/20 18:07:59 florian Exp $ */
+/* $Id: dst.h,v 1.7 2020/02/22 19:47:06 jung Exp $ */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -26,7 +26,6 @@
 #include <dns/name.h>
 #include <dns/secalg.h>
 #include <dns/ds.h>
-#include <dns/dsdigest.h>
 
 /***
  *** Types
@@ -313,9 +312,6 @@ dst_key_free(dst_key_t **keyp);
  * Require:
  *\li	"key" is a valid key.
  */
-dns_name_t *
-dst_key_name(const dst_key_t *key);
-
 unsigned int
 dst_key_size(const dst_key_t *key);
 

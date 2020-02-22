@@ -442,13 +442,6 @@ dns_rdata_freestruct(void *source);
  */
 
 isc_boolean_t
-dns_rdatatype_ismeta(dns_rdatatype_t type);
-/*%<
- * Return true iff the rdata type 'type' is a meta-type
- * like ANY or AXFR.
- */
-
-isc_boolean_t
 dns_rdatatype_issingleton(dns_rdatatype_t type);
 /*%<
  * Return true iff the rdata type 'type' is a singleton type,
