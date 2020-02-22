@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.44 2020/01/08 16:27:41 visa Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.45 2020/02/22 11:58:29 anton Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -134,13 +134,17 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		 * different entry since a socket's unnecessary
 		 */
 		if (IOCGROUP(cmd) == 'i') {
+			KERNEL_LOCK();
 			error = ifioctl(so, cmd, data, p);
+			KERNEL_UNLOCK();
 			return (error);
 		}
 		if (IOCGROUP(cmd) == 'r')
 			return (EOPNOTSUPP);
+		KERNEL_LOCK();
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data, NULL, p));
+		KERNEL_UNLOCK();
 		break;
 	}
 
