@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.193 2020/02/22 00:58:28 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.194 2020/02/22 01:00:07 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -730,19 +730,10 @@ noslash:
 				restart_point = 0;
 		}
 #endif	/* SMALL */
-		if (credentials) {
-			ftp_printf(fin,
-			    "GET /%s HTTP/1.1\r\n"
-			    "Connection: close\r\n"
-			    "Authorization: Basic %s\r\n"
-			    "Host: ", epath, credentials);
-			free(credentials);
-			credentials = NULL;
-		} else
-			ftp_printf(fin,
-			    "GET /%s HTTP/1.1\r\n"
-			    "Connection: close\r\n"
-			    "Host: ", epath);
+		ftp_printf(fin,
+		    "GET /%s HTTP/1.1\r\n"
+		    "Connection: close\r\n"
+		    "Host: ", epath);
 		if (proxyhost) {
 			ftp_printf(fin, "%s", proxyhost);
 			port = NULL;
@@ -776,8 +767,12 @@ noslash:
 		if (port && strcmp(port, "80") != 0)
 			ftp_printf(fin, ":%s", port);
 #endif /* !NOSSL */
-		ftp_printf(fin, "\r\n%s%s\r\n\r\n",
+		ftp_printf(fin, "\r\n%s%s\r\n",
 		    buf ? buf : "", httpuseragent);
+		if (credentials)
+			ftp_printf(fin, "Authorization: Basic %s\r\n",
+			    credentials);
+		ftp_printf(fin, "\r\n");
 	}
 	free(epath);
 
