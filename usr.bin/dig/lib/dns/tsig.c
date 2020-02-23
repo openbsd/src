@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.8 2020/02/18 18:11:27 florian Exp $
+ * $Id: tsig.c,v 1.9 2020/02/23 08:54:01 florian Exp $
  */
 /*! \file */
 
@@ -292,10 +292,9 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 
 			isc_buffer_init(&b, secret, length);
 			isc_buffer_add(&b, length);
-			result = dst_key_frombuffer(name, DST_ALG_HMACSHA1,
+			result = dst_key_frombuffer(DST_ALG_HMACSHA1,
 						    DNS_KEYOWNER_ENTITY,
 						    DNS_KEYPROTO_DNSSEC,
-						    dns_rdataclass_in,
 						    &b, &dstkey);
 				if (result != ISC_R_SUCCESS)
 					return (result);
@@ -306,10 +305,9 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 
 			isc_buffer_init(&b, secret, length);
 			isc_buffer_add(&b, length);
-			result = dst_key_frombuffer(name, DST_ALG_HMACSHA224,
+			result = dst_key_frombuffer(DST_ALG_HMACSHA224,
 						    DNS_KEYOWNER_ENTITY,
 						    DNS_KEYPROTO_DNSSEC,
-						    dns_rdataclass_in,
 						    &b, &dstkey);
 				if (result != ISC_R_SUCCESS)
 					return (result);
@@ -320,10 +318,9 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 
 			isc_buffer_init(&b, secret, length);
 			isc_buffer_add(&b, length);
-			result = dst_key_frombuffer(name, DST_ALG_HMACSHA256,
+			result = dst_key_frombuffer(DST_ALG_HMACSHA256,
 						    DNS_KEYOWNER_ENTITY,
 						    DNS_KEYPROTO_DNSSEC,
-						    dns_rdataclass_in,
 						    &b, &dstkey);
 				if (result != ISC_R_SUCCESS)
 					return (result);
@@ -334,10 +331,9 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 
 			isc_buffer_init(&b, secret, length);
 			isc_buffer_add(&b, length);
-			result = dst_key_frombuffer(name, DST_ALG_HMACSHA384,
+			result = dst_key_frombuffer(DST_ALG_HMACSHA384,
 						    DNS_KEYOWNER_ENTITY,
 						    DNS_KEYPROTO_DNSSEC,
-						    dns_rdataclass_in,
 						    &b, &dstkey);
 				if (result != ISC_R_SUCCESS)
 					return (result);
@@ -348,10 +344,9 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 
 			isc_buffer_init(&b, secret, length);
 			isc_buffer_add(&b, length);
-			result = dst_key_frombuffer(name, DST_ALG_HMACSHA512,
+			result = dst_key_frombuffer(DST_ALG_HMACSHA512,
 						    DNS_KEYOWNER_ENTITY,
 						    DNS_KEYPROTO_DNSSEC,
-						    dns_rdataclass_in,
 						    &b, &dstkey);
 				if (result != ISC_R_SUCCESS)
 					return (result);

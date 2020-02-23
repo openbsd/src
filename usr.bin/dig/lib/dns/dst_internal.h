@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.10 2020/02/23 08:53:19 florian Exp $ */
+/* $Id: dst_internal.h,v 1.11 2020/02/23 08:54:01 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -71,19 +71,11 @@ typedef enum { DO_SIGN, DO_VERIFY } dst_use_t;
 /*% DST Key Structure */
 struct dst_key {
 	isc_refcount_t	refs;
-	dns_name_t *	key_name;	/*%< name of the key */
 	unsigned int	key_size;	/*%< size of the key in bits */
 	unsigned int	key_proto;	/*%< protocols this key is used for */
 	unsigned int	key_alg;	/*%< algorithm of the key */
 	uint32_t	key_flags;	/*%< flags of the public key */
-	uint16_t	key_id;		/*%< identifier of the key */
-	uint16_t	key_rid;	/*%< identifier of the key when
-					     revoked */
 	uint16_t	key_bits;	/*%< hmac digest bits */
-	dns_rdataclass_t key_class;	/*%< class of the key record */
-	dns_ttl_t	key_ttl;	/*%< default/initial dnskey ttl */
-	char		*engine;	/*%< engine name (HSM) */
-	char		*label;		/*%< engine label (HSM) */
 	union {
 		dst_hmacsha1_key_t *hmacsha1;
 		dst_hmacsha224_key_t *hmacsha224;
@@ -93,19 +85,7 @@ struct dst_key {
 
 	} keydata;			/*%< pointer to key in crypto pkg fmt */
 
-	time_t	times[DST_MAX_TIMES + 1];    /*%< timing metadata */
-	isc_boolean_t	timeset[DST_MAX_TIMES + 1];  /*%< data set? */
-	time_t	nums[DST_MAX_NUMERIC + 1];   /*%< numeric metadata */
-	isc_boolean_t	numset[DST_MAX_NUMERIC + 1]; /*%< data set? */
-	isc_boolean_t 	inactive;      /*%< private key not present as it is
-					    inactive */
-	isc_boolean_t 	external;      /*%< external key */
-
-	int		fmt_major;     /*%< private key format, major version */
-	int		fmt_minor;     /*%< private key format, minor version */
-
 	dst_func_t *    func;	       /*%< crypto package specific functions */
-	isc_buffer_t   *key_tkeytoken; /*%< TKEY token data */
 };
 
 struct dst_context {
