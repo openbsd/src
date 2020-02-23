@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.6 2020/02/22 19:47:06 jung Exp $ */
+/* $Id: lex.c,v 1.7 2020/02/23 23:40:22 jsg Exp $ */
 
 /*! \file */
 
@@ -718,42 +718,6 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 	if (source->is_file)
 		funlockfile(source->input);
 	return (result);
-}
-
-isc_result_t
-isc_lex_getmastertoken(isc_lex_t *lex, isc_token_t *token,
-		       isc_tokentype_t expect, isc_boolean_t eol)
-{
-	unsigned int options = ISC_LEXOPT_EOL | ISC_LEXOPT_EOF |
-			       ISC_LEXOPT_DNSMULTILINE | ISC_LEXOPT_ESCAPE;
-	isc_result_t result;
-
-	if (expect == isc_tokentype_qstring)
-		options |= ISC_LEXOPT_QSTRING;
-	else if (expect == isc_tokentype_number)
-		options |= ISC_LEXOPT_NUMBER;
-	result = isc_lex_gettoken(lex, options, token);
-	if (result == ISC_R_RANGE)
-		isc_lex_ungettoken(lex, token);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	if (eol && ((token->type == isc_tokentype_eol) ||
-		    (token->type == isc_tokentype_eof)))
-		return (ISC_R_SUCCESS);
-	if (token->type == isc_tokentype_string &&
-	    expect == isc_tokentype_qstring)
-		return (ISC_R_SUCCESS);
-	if (token->type != expect) {
-		isc_lex_ungettoken(lex, token);
-		if (token->type == isc_tokentype_eol ||
-		    token->type == isc_tokentype_eof)
-			return (ISC_R_UNEXPECTEDEND);
-		if (expect == isc_tokentype_number)
-			return (ISC_R_BADNUMBER);
-		return (ISC_R_UNEXPECTEDTOKEN);
-	}
-	return (ISC_R_SUCCESS);
 }
 
 void

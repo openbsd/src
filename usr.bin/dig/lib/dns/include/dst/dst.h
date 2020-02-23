@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst.h,v 1.9 2020/02/23 08:54:01 florian Exp $ */
+/* $Id: dst.h,v 1.10 2020/02/23 23:40:21 jsg Exp $ */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -303,8 +303,6 @@ dst_key_sigsize(const dst_key_t *key, unsigned int *n);
 
 uint16_t
 dst_region_computeid(const isc_region_t *source, unsigned int alg);
-uint16_t
-dst_region_computerid(const isc_region_t *source, unsigned int alg);
 /*%<
  * Computes the (revoked) key id of the key stored in the provided
  * region with the given algorithm.
