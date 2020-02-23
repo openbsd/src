@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: region.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: region.h,v 1.3 2020/02/23 06:22:46 jsg Exp $ */
 
 #ifndef ISC_REGION_H
 #define ISC_REGION_H 1
@@ -30,19 +30,6 @@ struct isc_region {
 
 struct isc_textregion {
 	char *		base;
-	unsigned int	length;
-};
-
-/* XXXDCL questionable ... bears discussion.  we have been putting off
- * discussing the region api.
- */
-struct isc_constregion {
-	const void *	base;
-	unsigned int	length;
-};
-
-struct isc_consttextregion {
-	const char *	base;
 	unsigned int	length;
 };
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.c,v 1.4 2020/02/22 19:51:03 jung Exp $ */
+/* $Id: hash.c,v 1.5 2020/02/23 06:22:46 jsg Exp $ */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
@@ -55,31 +55,10 @@ or otherwise) arising in any way out of the use of this software, even
 if advised of the possibility of such damage.
 */
 
-
 #include <stdlib.h>
 
 #include <isc/hash.h>
-#include <isc/refcount.h>
-#include <string.h>
 #include <isc/util.h>
-
-/*@{*/
-/*%
- * Types of random seed and hash accumulator.  Perhaps they can be system
- * dependent.
- */
-typedef uint32_t hash_accum_t;
-typedef uint16_t hash_random_t;
-/*@}*/
-
-/*% isc hash structure */
-struct isc_hash {
-	isc_boolean_t	initialized;
-	isc_refcount_t	refcnt;
-	size_t		limit;	/*%< upper limit of key length */
-	size_t		vectorlen; /*%< size of the vector below */
-	hash_random_t	*rndvector; /*%< random vector for universal hashing */
-};
 
 static unsigned char maptolower[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
