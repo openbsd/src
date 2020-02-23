@@ -159,8 +159,6 @@ typedef int dns_messagetextflag_t;
 #define DNS_MESSAGEPARSE_BESTEFFORT	0x0002	/*%< return a message if a
 						   recoverable parse error
 						   occurs */
-#define DNS_MESSAGEPARSE_CLONEBUFFER	0x0004	/*%< save a copy of the
-						   source buffer */
 #define DNS_MESSAGEPARSE_IGNORETRUNCATION 0x0008 /*%< truncation errors are
 						  * not fatal. */
 
