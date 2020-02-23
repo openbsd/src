@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: hmac_link.c,v 1.4 2020/02/23 08:51:12 florian Exp $
+ * $Id: hmac_link.c,v 1.5 2020/02/23 08:51:53 florian Exp $
  */
 
 #include <string.h>
@@ -182,17 +182,14 @@ hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 static dst_func_t hmacsha1_functions = {
 	hmacsha1_createctx,
-	NULL, /*%< createctx2 */
 	hmacsha1_destroyctx,
 	hmacsha1_adddata,
 	hmacsha1_sign,
 	hmacsha1_verify,
-	NULL, /* verify2 */
 	hmacsha1_isprivate,
 	hmacsha1_destroy,
 	hmacsha1_todns,
 	hmacsha1_fromdns,
-	NULL, /* cleanup */
 };
 
 isc_result_t
@@ -337,17 +334,14 @@ hmacsha224_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 static dst_func_t hmacsha224_functions = {
 	hmacsha224_createctx,
-	NULL, /*%< createctx2 */
 	hmacsha224_destroyctx,
 	hmacsha224_adddata,
 	hmacsha224_sign,
 	hmacsha224_verify,
-	NULL, /* verify2 */
 	hmacsha224_isprivate,
 	hmacsha224_destroy,
 	hmacsha224_todns,
 	hmacsha224_fromdns,
-	NULL, /* cleanup */
 };
 
 isc_result_t
@@ -492,17 +486,14 @@ hmacsha256_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 static dst_func_t hmacsha256_functions = {
 	hmacsha256_createctx,
-	NULL, /*%< createctx2 */
 	hmacsha256_destroyctx,
 	hmacsha256_adddata,
 	hmacsha256_sign,
 	hmacsha256_verify,
-	NULL, /* verify2 */
 	hmacsha256_isprivate,
 	hmacsha256_destroy,
 	hmacsha256_todns,
 	hmacsha256_fromdns,
-	NULL, /* cleanup */
 };
 
 isc_result_t
@@ -647,17 +638,14 @@ hmacsha384_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 static dst_func_t hmacsha384_functions = {
 	hmacsha384_createctx,
-	NULL, /*%< createctx2 */
 	hmacsha384_destroyctx,
 	hmacsha384_adddata,
 	hmacsha384_sign,
 	hmacsha384_verify,
-	NULL, /* verify2 */
 	hmacsha384_isprivate,
 	hmacsha384_destroy,
 	hmacsha384_todns,
 	hmacsha384_fromdns,
-	NULL, /* cleanup */
 };
 
 isc_result_t
@@ -802,17 +790,14 @@ hmacsha512_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 static dst_func_t hmacsha512_functions = {
 	hmacsha512_createctx,
-	NULL, /*%< createctx2 */
 	hmacsha512_destroyctx,
 	hmacsha512_adddata,
 	hmacsha512_sign,
 	hmacsha512_verify,
-	NULL, /* verify2 */
 	hmacsha512_isprivate,
 	hmacsha512_destroy,
 	hmacsha512_todns,
 	hmacsha512_fromdns,
-	NULL, /* cleanup */
 };
 
 isc_result_t

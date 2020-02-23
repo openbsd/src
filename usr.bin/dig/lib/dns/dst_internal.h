@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.7 2020/02/23 08:51:12 florian Exp $ */
+/* $Id: dst_internal.h,v 1.8 2020/02/23 08:51:53 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -135,8 +135,6 @@ struct dst_func {
 	 * Context functions
 	 */
 	isc_result_t (*createctx)(dst_key_t *key, dst_context_t *dctx);
-	isc_result_t (*createctx2)(dst_key_t *key, int maxbits,
-				   dst_context_t *dctx);
 	void (*destroyctx)(dst_context_t *dctx);
 	isc_result_t (*adddata)(dst_context_t *dctx, const isc_region_t *data);
 
@@ -145,17 +143,12 @@ struct dst_func {
 	 */
 	isc_result_t (*sign)(dst_context_t *dctx, isc_buffer_t *sig);
 	isc_result_t (*verify)(dst_context_t *dctx, const isc_region_t *sig);
-	isc_result_t (*verify2)(dst_context_t *dctx, int maxbits,
-				const isc_region_t *sig);
 	isc_boolean_t (*isprivate)(const dst_key_t *key);
 	void (*destroy)(dst_key_t *key);
 
 	/* conversion functions */
 	isc_result_t (*todns)(const dst_key_t *key, isc_buffer_t *data);
 	isc_result_t (*fromdns)(dst_key_t *key, isc_buffer_t *data);
-
-	/* cleanup */
-	void (*cleanup)(void);
 };
 
 /*%

@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.7 2020/02/22 19:51:03 jung Exp $
+ * $Id: dst_api.c,v 1.8 2020/02/23 08:51:53 florian Exp $
  */
 
 /*! \file */
@@ -124,13 +124,9 @@ dst_lib_init(void) {
 
 void
 dst_lib_destroy(void) {
-	int i;
 	RUNTIME_CHECK(dst_initialized == ISC_TRUE);
 	dst_initialized = ISC_FALSE;
 
-	for (i = 0; i < DST_MAX_ALGS; i++)
-		if (dst_t_func[i] != NULL && dst_t_func[i]->cleanup != NULL)
-			dst_t_func[i]->cleanup();
 	dst__openssl_destroy();
 }
 
@@ -144,31 +140,9 @@ dst_algorithm_supported(unsigned int alg) {
 }
 
 isc_result_t
-dst_context_create(dst_key_t *key, dst_context_t **dctxp) {
-	return (dst_context_create4(key, DNS_LOGCATEGORY_GENERAL,
-				    ISC_TRUE, 0, dctxp));
-}
-
-isc_result_t
-dst_context_create2(dst_key_t *key,
-		    isc_logcategory_t *category, dst_context_t **dctxp)
-{
-	return (dst_context_create4(key, category, ISC_TRUE, 0, dctxp));
-}
-
-isc_result_t
 dst_context_create3(dst_key_t *key,
 		    isc_logcategory_t *category, isc_boolean_t useforsigning,
 		    dst_context_t **dctxp)
-{
-	return (dst_context_create4(key, category,
-				    useforsigning, 0, dctxp));
-}
-
-isc_result_t
-dst_context_create4(dst_key_t *key,
-		    isc_logcategory_t *category, isc_boolean_t useforsigning,
-		    int maxbits, dst_context_t **dctxp)
 {
 	dst_context_t *dctx;
 	isc_result_t result;
@@ -176,8 +150,7 @@ dst_context_create4(dst_key_t *key,
 	REQUIRE(dst_initialized == ISC_TRUE);
 	REQUIRE(dctxp != NULL && *dctxp == NULL);
 
-	if (key->func->createctx == NULL &&
-	    key->func->createctx2 == NULL)
+	if (key->func->createctx == NULL)
 		return (DST_R_UNSUPPORTEDALG);
 	if (key->keydata.generic == NULL)
 		return (DST_R_NULLKEY);
@@ -192,10 +165,7 @@ dst_context_create4(dst_key_t *key,
 		dctx->use = DO_SIGN;
 	else
 		dctx->use = DO_VERIFY;
-	if (key->func->createctx2 != NULL)
-		result = key->func->createctx2(key, maxbits, dctx);
-	else
-		result = key->func->createctx(key, dctx);
+	result = key->func->createctx(key, dctx);
 	if (result != ISC_R_SUCCESS) {
 		if (dctx->key != NULL)
 			dst_key_free(&dctx->key);
@@ -260,24 +230,6 @@ dst_context_verify(dst_context_t *dctx, isc_region_t *sig) {
 		return (DST_R_NOTPUBLICKEY);
 
 	return (dctx->key->func->verify(dctx, sig));
-}
-
-isc_result_t
-dst_context_verify2(dst_context_t *dctx, unsigned int maxbits,
-		    isc_region_t *sig)
-{
-	REQUIRE(sig != NULL);
-
-	CHECKALG(dctx->key->key_alg);
-	if (dctx->key->keydata.generic == NULL)
-		return (DST_R_NULLKEY);
-	if (dctx->key->func->verify == NULL &&
-	    dctx->key->func->verify2 == NULL)
-		return (DST_R_NOTPUBLICKEY);
-
-	return (dctx->key->func->verify2 != NULL ?
-		dctx->key->func->verify2(dctx, maxbits, sig) :
-		dctx->key->func->verify(dctx, sig));
 }
 
 isc_result_t
