@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.6 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: dst_internal.h,v 1.7 2020/02/23 08:51:12 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -147,33 +147,15 @@ struct dst_func {
 	isc_result_t (*verify)(dst_context_t *dctx, const isc_region_t *sig);
 	isc_result_t (*verify2)(dst_context_t *dctx, int maxbits,
 				const isc_region_t *sig);
-	isc_result_t (*computesecret)(const dst_key_t *pub,
-				      const dst_key_t *priv,
-				      isc_buffer_t *secret);
-	isc_boolean_t (*compare)(const dst_key_t *key1, const dst_key_t *key2);
-	isc_boolean_t (*paramcompare)(const dst_key_t *key1,
-				      const dst_key_t *key2);
-	isc_result_t (*generate)(dst_key_t *key, int parms,
-				 void (*callback)(int));
 	isc_boolean_t (*isprivate)(const dst_key_t *key);
 	void (*destroy)(dst_key_t *key);
 
 	/* conversion functions */
 	isc_result_t (*todns)(const dst_key_t *key, isc_buffer_t *data);
 	isc_result_t (*fromdns)(dst_key_t *key, isc_buffer_t *data);
-	isc_result_t (*tofile)(const dst_key_t *key, const char *directory);
-	isc_result_t (*parse)(dst_key_t *key,
-			      isc_lex_t *lexer,
-			      dst_key_t *pub);
 
 	/* cleanup */
 	void (*cleanup)(void);
-
-	isc_result_t (*fromlabel)(dst_key_t *key, const char *engine,
-				  const char *label, const char *pin);
-	isc_result_t (*dump)(dst_key_t *key, char **buffer,
-			     int *length);
-	isc_result_t (*restore)(dst_key_t *key, const char *keystr);
 };
 
 /*%
