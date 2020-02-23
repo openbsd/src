@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.25 2020/02/18 16:12:14 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.26 2020/02/23 17:51:36 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -893,7 +893,7 @@ tls13_client_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 
 	if (!CBS_mem_equal(cbs, verify_data, verify_data_len)) {
-		ctx->alert = TLS1_AD_DECRYPTION_FAILED;
+		ctx->alert = TLS1_AD_DECRYPT_ERROR;
 		goto err;
 	}
 
