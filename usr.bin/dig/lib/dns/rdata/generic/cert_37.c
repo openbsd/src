@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cert_37.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: cert_37.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* Reviewed: Wed Mar 15 21:14:32 EST 2000 by tale */
 
@@ -183,28 +183,6 @@ freestruct_cert(ARGS_FREESTRUCT) {
 	free(cert->certificate);
 }
 
-static inline isc_result_t
-additionaldata_cert(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_cert);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_cert(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_cert);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_cert(ARGS_CHECKOWNER) {
 
@@ -217,19 +195,6 @@ checkowner_cert(ARGS_CHECKOWNER) {
 
 	return (ISC_TRUE);
 }
-
-static inline isc_boolean_t
-checknames_cert(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_cert);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
-}
-
 
 static inline int
 casecompare_cert(ARGS_COMPARE) {

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: minfo_14.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: minfo_14.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 
@@ -209,38 +209,6 @@ freestruct_minfo(ARGS_FREESTRUCT) {
 	dns_name_free(&minfo->emailbox);
 }
 
-static inline isc_result_t
-additionaldata_minfo(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_minfo);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_minfo(ARGS_DIGEST) {
-	isc_region_t r;
-	dns_name_t name;
-	isc_result_t result;
-
-	REQUIRE(rdata->type == dns_rdatatype_minfo);
-
-	dns_rdata_toregion(rdata, &r);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &r);
-	result = dns_name_digest(&name, digest, arg);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	isc_region_consume(&r, name_length(&name));
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &r);
-
-	return (dns_name_digest(&name, digest, arg));
-}
-
 static inline isc_boolean_t
 checkowner_minfo(ARGS_CHECKOWNER) {
 
@@ -251,33 +219,6 @@ checkowner_minfo(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_minfo(ARGS_CHECKNAMES) {
-	isc_region_t region;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_minfo);
-
-	UNUSED(owner);
-
-	dns_rdata_toregion(rdata, &region);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &region);
-	if (!dns_name_ismailbox(&name)) {
-		if (bad != NULL)
-			dns_name_clone(&name, bad);
-		return (ISC_FALSE);
-	}
-	isc_region_consume(&region, name_length(&name));
-	dns_name_fromregion(&name, &region);
-	if (!dns_name_ismailbox(&name)) {
-		if (bad != NULL)
-			dns_name_clone(&name, bad);
-		return (ISC_FALSE);
-	}
 	return (ISC_TRUE);
 }
 

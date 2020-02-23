@@ -180,27 +180,6 @@ freestruct_talink(ARGS_FREESTRUCT) {
 	dns_name_free(&talink->next);
 }
 
-static inline isc_result_t
-additionaldata_talink(ARGS_ADDLDATA) {
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_talink);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_talink(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_talink);
-
-	dns_rdata_toregion(rdata, &r);
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_talink(ARGS_CHECKOWNER) {
 
@@ -210,17 +189,6 @@ checkowner_talink(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_talink(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_talink);
-
-	UNUSED(bad);
-	UNUSED(owner);
 
 	return (ISC_TRUE);
 }

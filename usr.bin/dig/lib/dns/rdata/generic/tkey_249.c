@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkey_249.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: tkey_249.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -411,28 +411,6 @@ freestruct_tkey(ARGS_FREESTRUCT) {
 		free(tkey->other);
 }
 
-static inline isc_result_t
-additionaldata_tkey(ARGS_ADDLDATA) {
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_tkey);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_tkey(ARGS_DIGEST) {
-	UNUSED(rdata);
-	UNUSED(digest);
-	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_tkey);
-
-	return (ISC_R_NOTIMPLEMENTED);
-}
-
 static inline isc_boolean_t
 checkowner_tkey(ARGS_CHECKOWNER) {
 
@@ -442,18 +420,6 @@ checkowner_tkey(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_tkey(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_tkey);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

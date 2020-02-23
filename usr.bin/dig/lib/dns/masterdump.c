@@ -552,18 +552,6 @@ dns_master_questiontotext(dns_name_t *owner_name,
 }
 
 isc_result_t
-dns_master_stylecreate(dns_master_style_t **stylep, unsigned int flags,
-		       unsigned int ttl_column, unsigned int class_column,
-		       unsigned int type_column, unsigned int rdata_column,
-		       unsigned int line_length, unsigned int tab_width)
-{
-	return (dns_master_stylecreate2(stylep, flags, ttl_column,
-					class_column, type_column,
-					rdata_column, line_length,
-					tab_width, 0xffffffff));
-}
-
-isc_result_t
 dns_master_stylecreate2(dns_master_style_t **stylep, unsigned int flags,
 			unsigned int ttl_column, unsigned int class_column,
 			unsigned int type_column, unsigned int rdata_column,

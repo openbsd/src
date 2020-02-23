@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3param_51.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: nsec3param_51.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -209,27 +209,6 @@ freestruct_nsec3param(ARGS_FREESTRUCT) {
 		free(nsec3param->salt);
 }
 
-static inline isc_result_t
-additionaldata_nsec3param(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_nsec3param);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_nsec3param(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_nsec3param);
-
-	dns_rdata_toregion(rdata, &r);
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_nsec3param(ARGS_CHECKOWNER) {
 
@@ -241,18 +220,6 @@ checkowner_nsec3param(ARGS_CHECKOWNER) {
        UNUSED(wildcard);
 
        return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_nsec3param(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_nsec3param);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
 }
 
 static inline int

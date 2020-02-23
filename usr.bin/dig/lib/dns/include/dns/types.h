@@ -201,12 +201,6 @@ enum {
 /*
  * Functions.
  */
-typedef isc_result_t
-(*dns_additionaldatafunc_t)(void *, dns_name_t *, dns_rdatatype_t);
-
-typedef isc_result_t
-(*dns_digestfunc_t)(void *, isc_region_t *);
-
 typedef int
 (*dns_rdatasetorderfunc_t)(const dns_rdata_t *, const void *);
 

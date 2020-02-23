@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nxt_30.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: nxt_30.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -209,36 +209,6 @@ freestruct_nxt(ARGS_FREESTRUCT) {
 		free(nxt->typebits);
 }
 
-static inline isc_result_t
-additionaldata_nxt(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_nxt);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_nxt(ARGS_DIGEST) {
-	isc_region_t r;
-	dns_name_t name;
-	isc_result_t result;
-
-	REQUIRE(rdata->type == dns_rdatatype_nxt);
-
-	dns_rdata_toregion(rdata, &r);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &r);
-	result = dns_name_digest(&name, digest, arg);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	isc_region_consume(&r, name_length(&name));
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_nxt(ARGS_CHECKOWNER) {
 
@@ -248,18 +218,6 @@ checkowner_nxt(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_nxt(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_nxt);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

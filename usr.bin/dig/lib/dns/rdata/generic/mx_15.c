@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mx_15.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: mx_15.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 
@@ -183,39 +183,6 @@ freestruct_mx(ARGS_FREESTRUCT) {
 	dns_name_free(&mx->mx);
 }
 
-static inline isc_result_t
-additionaldata_mx(ARGS_ADDLDATA) {
-	dns_name_t name;
-	dns_offsets_t offsets;
-	isc_region_t region;
-
-	REQUIRE(rdata->type == dns_rdatatype_mx);
-
-	dns_name_init(&name, offsets);
-	dns_rdata_toregion(rdata, &region);
-	isc_region_consume(&region, 2);
-	dns_name_fromregion(&name, &region);
-
-	return ((add)(arg, &name, dns_rdatatype_a));
-}
-
-static inline isc_result_t
-digest_mx(ARGS_DIGEST) {
-	isc_region_t r1, r2;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_mx);
-
-	dns_rdata_toregion(rdata, &r1);
-	r2 = r1;
-	isc_region_consume(&r2, 2);
-	r1.length = 2;
-	RETERR((digest)(arg, &r1));
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &r2);
-	return (dns_name_digest(&name, digest, arg));
-}
-
 static inline isc_boolean_t
 checkowner_mx(ARGS_CHECKOWNER) {
 
@@ -225,27 +192,6 @@ checkowner_mx(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 
 	return (dns_name_ishostname(name, wildcard));
-}
-
-static inline isc_boolean_t
-checknames_mx(ARGS_CHECKNAMES) {
-	isc_region_t region;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_mx);
-
-	UNUSED(owner);
-
-	dns_rdata_toregion(rdata, &region);
-	isc_region_consume(&region, 2);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &region);
-	if (!dns_name_ishostname(&name, ISC_FALSE)) {
-		if (bad != NULL)
-			dns_name_clone(&name, bad);
-		return (ISC_FALSE);
-	}
-	return (ISC_TRUE);
 }
 
 static inline int

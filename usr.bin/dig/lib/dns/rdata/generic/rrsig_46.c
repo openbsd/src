@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rrsig_46.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: rrsig_46.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -383,29 +383,6 @@ freestruct_rrsig(ARGS_FREESTRUCT) {
 		free(sig->signature);
 }
 
-static inline isc_result_t
-additionaldata_rrsig(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_rrsig);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_rrsig(ARGS_DIGEST) {
-
-	REQUIRE(rdata->type == dns_rdatatype_rrsig);
-
-	UNUSED(rdata);
-	UNUSED(digest);
-	UNUSED(arg);
-
-	return (ISC_R_NOTIMPLEMENTED);
-}
-
 static inline dns_rdatatype_t
 covers_rrsig(dns_rdata_t *rdata) {
 	dns_rdatatype_t type;
@@ -428,18 +405,6 @@ checkowner_rrsig(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_rrsig(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_rrsig);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

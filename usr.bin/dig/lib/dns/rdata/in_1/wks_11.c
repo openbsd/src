@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.3 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: wks_11.c,v 1.4 2020/02/23 19:54:26 jung Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -189,30 +189,6 @@ freestruct_in_wks(ARGS_FREESTRUCT) {
 		free(wks->map);
 }
 
-static inline isc_result_t
-additionaldata_in_wks(ARGS_ADDLDATA) {
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_wks);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_in_wks(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_wks);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_in_wks(ARGS_CHECKOWNER) {
 
@@ -223,19 +199,6 @@ checkowner_in_wks(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 
 	return (dns_name_ishostname(name, wildcard));
-}
-
-static inline isc_boolean_t
-checknames_in_wks(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_wks);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
 }
 
 static inline int

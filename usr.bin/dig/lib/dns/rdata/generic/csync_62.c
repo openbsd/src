@@ -176,27 +176,6 @@ freestruct_csync(ARGS_FREESTRUCT) {
 	free(csync->typebits);
 }
 
-static inline isc_result_t
-additionaldata_csync(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_csync);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_csync(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_csync);
-
-	dns_rdata_toregion(rdata, &r);
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_csync(ARGS_CHECKOWNER) {
 
@@ -208,18 +187,6 @@ checkowner_csync(ARGS_CHECKOWNER) {
        UNUSED(wildcard);
 
        return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_csync(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_csync);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
 }
 
 static inline int

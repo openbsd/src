@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: isdn_20.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: isdn_20.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* Reviewed: Wed Mar 15 16:53:11 PST 2000 by bwelling */
 
@@ -154,28 +154,6 @@ freestruct_isdn(ARGS_FREESTRUCT) {
 	free(isdn->subaddress);
 }
 
-static inline isc_result_t
-additionaldata_isdn(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_isdn);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_isdn(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_isdn);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_isdn(ARGS_CHECKOWNER) {
 
@@ -185,18 +163,6 @@ checkowner_isdn(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_isdn(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_isdn);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

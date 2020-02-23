@@ -255,32 +255,6 @@ freestruct_caa(ARGS_FREESTRUCT) {
 	free(caa->value);
 }
 
-static inline isc_result_t
-additionaldata_caa(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_caa);
-	REQUIRE(rdata->data != NULL);
-	REQUIRE(rdata->length >= 3U);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_caa(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_caa);
-	REQUIRE(rdata->data != NULL);
-	REQUIRE(rdata->length >= 3U);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_caa(ARGS_CHECKOWNER) {
 
@@ -290,20 +264,6 @@ checkowner_caa(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_caa(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_caa);
-	REQUIRE(rdata->data != NULL);
-	REQUIRE(rdata->length >= 3U);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

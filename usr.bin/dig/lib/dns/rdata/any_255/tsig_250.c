@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig_250.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: tsig_250.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 
@@ -429,31 +429,6 @@ freestruct_any_tsig(ARGS_FREESTRUCT) {
 	free(tsig->other);
 }
 
-static inline isc_result_t
-additionaldata_any_tsig(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_tsig);
-	REQUIRE(rdata->rdclass == dns_rdataclass_any);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_any_tsig(ARGS_DIGEST) {
-
-	REQUIRE(rdata->type == dns_rdatatype_tsig);
-	REQUIRE(rdata->rdclass == dns_rdataclass_any);
-
-	UNUSED(rdata);
-	UNUSED(digest);
-	UNUSED(arg);
-
-	return (ISC_R_NOTIMPLEMENTED);
-}
-
 static inline isc_boolean_t
 checkowner_any_tsig(ARGS_CHECKOWNER) {
 
@@ -464,19 +439,6 @@ checkowner_any_tsig(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_any_tsig(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_tsig);
-	REQUIRE(rdata->rdclass == dns_rdataclass_any);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

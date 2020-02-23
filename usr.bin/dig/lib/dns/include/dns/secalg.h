@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: secalg.h,v 1.2 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: secalg.h,v 1.3 2020/02/23 19:54:25 jung Exp $ */
 
 #ifndef DNS_SECALG_H
 #define DNS_SECALG_H 1
@@ -22,24 +22,6 @@
 /*! \file dns/secalg.h */
 
 #include <dns/types.h>
-
-isc_result_t
-dns_secalg_fromtext(dns_secalg_t *secalgp, isc_textregion_t *source);
-/*%<
- * Convert the text 'source' refers to into a DNSSEC security algorithm value.
- * The text may contain either a mnemonic algorithm name or a decimal algorithm
- * number.
- *
- * Requires:
- *\li	'secalgp' is a valid pointer.
- *
- *\li	'source' is a valid text region.
- *
- * Returns:
- *\li	ISC_R_SUCCESS			on success
- *\li	ISC_R_RANGE			numeric type is out of range
- *\li	DNS_R_UNKNOWN			mnemonic type is unknown
- */
 
 isc_result_t
 dns_secalg_totext(dns_secalg_t secalg, isc_buffer_t *target);

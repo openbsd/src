@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sshfp_44.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: sshfp_44.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* RFC 4255 */
 
@@ -173,28 +173,6 @@ freestruct_sshfp(ARGS_FREESTRUCT) {
 		free(sshfp->digest);
 }
 
-static inline isc_result_t
-additionaldata_sshfp(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_sshfp);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_sshfp(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_sshfp);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_sshfp(ARGS_CHECKOWNER) {
 
@@ -204,18 +182,6 @@ checkowner_sshfp(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_sshfp(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_sshfp);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

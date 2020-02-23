@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: a_1.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* reviewed: Thu Mar 16 15:58:36 PST 2000 by brister */
 
@@ -148,30 +148,6 @@ freestruct_hs_a(ARGS_FREESTRUCT) {
 	REQUIRE(source != NULL);
 }
 
-static inline isc_result_t
-additionaldata_hs_a(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_a);
-	REQUIRE(rdata->rdclass == dns_rdataclass_hs);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_hs_a(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_a);
-	REQUIRE(rdata->rdclass == dns_rdataclass_hs);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_hs_a(ARGS_CHECKOWNER) {
 
@@ -182,19 +158,6 @@ checkowner_hs_a(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_hs_a(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_a);
-	REQUIRE(rdata->rdclass == dns_rdataclass_hs);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

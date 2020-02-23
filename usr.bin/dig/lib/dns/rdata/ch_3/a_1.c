@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: a_1.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -208,35 +208,6 @@ freestruct_ch_a(ARGS_FREESTRUCT) {
 	dns_name_free(&a->ch_addr_dom);
 }
 
-static inline isc_result_t
-additionaldata_ch_a(ARGS_ADDLDATA) {
-
-	REQUIRE(rdata->type == dns_rdatatype_a);
-	REQUIRE(rdata->rdclass == dns_rdataclass_ch);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_ch_a(ARGS_DIGEST) {
-	isc_region_t r;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_a);
-	REQUIRE(rdata->rdclass == dns_rdataclass_ch);
-
-	dns_rdata_toregion(rdata, &r);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &r);
-	isc_region_consume(&r, name_length(&name));
-	RETERR(dns_name_digest(&name, digest, arg));
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_ch_a(ARGS_CHECKOWNER) {
 
@@ -246,28 +217,6 @@ checkowner_ch_a(ARGS_CHECKOWNER) {
 	UNUSED(type);
 
 	return (dns_name_ishostname(name, wildcard));
-}
-
-static inline isc_boolean_t
-checknames_ch_a(ARGS_CHECKNAMES) {
-	isc_region_t region;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_a);
-	REQUIRE(rdata->rdclass == dns_rdataclass_ch);
-
-	UNUSED(owner);
-
-	dns_rdata_toregion(rdata, &region);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &region);
-	if (!dns_name_ishostname(&name, ISC_FALSE)) {
-		if (bad != NULL)
-			dns_name_clone(&name, bad);
-		return (ISC_FALSE);
-	}
-
-	return (ISC_TRUE);
 }
 
 static inline int

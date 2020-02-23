@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dns_result.c,v 1.3 2020/02/12 13:05:03 jsg Exp $ */
+/* $Id: dns_result.c,v 1.4 2020/02/23 19:54:25 jung Exp $ */
 
 /*! \file */
 #include <isc/util.h>
@@ -219,13 +219,6 @@ initialize(void) {
 		once = ISC_TRUE;
 		initialize_action();
 	}
-}
-
-const char *
-dns_result_totext(isc_result_t result) {
-	initialize();
-
-	return (isc_result_totext(result));
 }
 
 void

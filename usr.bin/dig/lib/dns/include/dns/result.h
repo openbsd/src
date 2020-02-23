@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: result.h,v 1.4 2020/02/23 19:54:25 jung Exp $ */
 
 #ifndef DNS_RESULT_H
 #define DNS_RESULT_H 1
@@ -185,9 +185,6 @@
 
 #define DNS_RESULT_ISRCODE(result) \
 	(ISC_RESULTCLASS_INCLASS(ISC_RESULTCLASS_DNSRCODE, (result)))
-
-const char *
-dns_result_totext(isc_result_t);
 
 void
 dns_result_register(void);

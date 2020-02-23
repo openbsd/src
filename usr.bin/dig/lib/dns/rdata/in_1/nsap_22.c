@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap_22.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: nsap_22.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* Reviewed: Fri Mar 17 10:41:07 PST 2000 by gson */
 
@@ -147,30 +147,6 @@ freestruct_in_nsap(ARGS_FREESTRUCT) {
 		free(nsap->nsap);
 }
 
-static inline isc_result_t
-additionaldata_in_nsap(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_nsap);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_in_nsap(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_nsap);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_in_nsap(ARGS_CHECKOWNER) {
 
@@ -181,19 +157,6 @@ checkowner_in_nsap(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_in_nsap(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_nsap);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

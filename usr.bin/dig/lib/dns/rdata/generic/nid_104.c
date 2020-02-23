@@ -140,31 +140,6 @@ freestruct_nid(ARGS_FREESTRUCT) {
 	return;
 }
 
-static inline isc_result_t
-additionaldata_nid(ARGS_ADDLDATA) {
-
-	REQUIRE(rdata->type == dns_rdatatype_nid);
-	REQUIRE(rdata->length == 10);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_nid(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_nid);
-	REQUIRE(rdata->length == 10);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_nid(ARGS_CHECKOWNER) {
 
@@ -174,19 +149,6 @@ checkowner_nid(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_nid(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_nid);
-	REQUIRE(rdata->length == 10);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

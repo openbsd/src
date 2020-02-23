@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: nsec3_50.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -274,27 +274,6 @@ freestruct_nsec3(ARGS_FREESTRUCT) {
 		free(nsec3->typebits);
 }
 
-static inline isc_result_t
-additionaldata_nsec3(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_nsec3);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_nsec3(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_nsec3);
-
-	dns_rdata_toregion(rdata, &r);
-	return ((digest)(arg, &r));
-}
-
 #define NSEC3_MAX_HASH_LENGTH 155
 static inline isc_boolean_t
 checkowner_nsec3(ARGS_CHECKOWNER) {
@@ -318,18 +297,6 @@ checkowner_nsec3(ARGS_CHECKOWNER) {
 		return (ISC_TRUE);
 
 	return (ISC_FALSE);
-}
-
-static inline isc_boolean_t
-checknames_nsec3(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_nsec3);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
 }
 
 static inline int

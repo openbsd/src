@@ -125,31 +125,6 @@ freestruct_eui64(ARGS_FREESTRUCT) {
 	return;
 }
 
-static inline isc_result_t
-additionaldata_eui64(ARGS_ADDLDATA) {
-
-	REQUIRE(rdata->type == dns_rdatatype_eui64);
-	REQUIRE(rdata->length == 8);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_eui64(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_eui64);
-	REQUIRE(rdata->length == 8);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_eui64(ARGS_CHECKOWNER) {
 
@@ -159,19 +134,6 @@ checkowner_eui64(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_eui64(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_eui64);
-	REQUIRE(rdata->length == 8);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

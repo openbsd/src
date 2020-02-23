@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a6_38.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: a6_38.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* RFC2874 */
 
@@ -305,46 +305,6 @@ freestruct_in_a6(ARGS_FREESTRUCT) {
 		dns_name_free(&a6->prefix);
 }
 
-static inline isc_result_t
-additionaldata_in_a6(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_a6);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_in_a6(ARGS_DIGEST) {
-	isc_region_t r1, r2;
-	unsigned char prefixlen, octets;
-	isc_result_t result;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_a6);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-
-	dns_rdata_toregion(rdata, &r1);
-	r2 = r1;
-	prefixlen = r1.base[0];
-	octets = 1 + 16 - prefixlen / 8;
-
-	r1.length = octets;
-	result = (digest)(arg, &r1);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	if (prefixlen == 0)
-		return (ISC_R_SUCCESS);
-
-	isc_region_consume(&r2, octets);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &r2);
-	return (dns_name_digest(&name, digest, arg));
-}
-
 static inline isc_boolean_t
 checkowner_in_a6(ARGS_CHECKOWNER) {
 
@@ -355,32 +315,6 @@ checkowner_in_a6(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 
 	return (dns_name_ishostname(name, wildcard));
-}
-
-static inline isc_boolean_t
-checknames_in_a6(ARGS_CHECKNAMES) {
-	isc_region_t region;
-	dns_name_t name;
-	unsigned int prefixlen;
-
-	REQUIRE(rdata->type == dns_rdatatype_a6);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-
-	UNUSED(owner);
-
-	dns_rdata_toregion(rdata, &region);
-	prefixlen = uint8_fromregion(&region);
-	if (prefixlen == 0)
-		return (ISC_TRUE);
-	isc_region_consume(&region, 1 + 16 - prefixlen / 8);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &region);
-	if (!dns_name_ishostname(&name, ISC_FALSE)) {
-		if (bad != NULL)
-			dns_name_clone(&name, bad);
-		return (ISC_FALSE);
-	}
-	return (ISC_TRUE);
 }
 
 static inline int

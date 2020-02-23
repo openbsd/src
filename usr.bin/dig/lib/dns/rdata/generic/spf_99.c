@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: spf_99.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: spf_99.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -103,28 +103,6 @@ freestruct_spf(ARGS_FREESTRUCT) {
 	generic_freestruct_txt(source);
 }
 
-static inline isc_result_t
-additionaldata_spf(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_spf);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_spf(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_spf);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_spf(ARGS_CHECKOWNER) {
 
@@ -134,18 +112,6 @@ checkowner_spf(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_spf(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_spf);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

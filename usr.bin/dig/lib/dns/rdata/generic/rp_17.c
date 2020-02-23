@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rp_17.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: rp_17.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* RFC1183 */
 
@@ -205,37 +205,6 @@ freestruct_rp(ARGS_FREESTRUCT) {
 	dns_name_free(&rp->text);
 }
 
-static inline isc_result_t
-additionaldata_rp(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_rp);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_rp(ARGS_DIGEST) {
-	isc_region_t r;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_rp);
-
-	dns_rdata_toregion(rdata, &r);
-	dns_name_init(&name, NULL);
-
-	dns_name_fromregion(&name, &r);
-	RETERR(dns_name_digest(&name, digest, arg));
-	isc_region_consume(&r, name_length(&name));
-
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &r);
-
-	return (dns_name_digest(&name, digest, arg));
-}
-
 static inline isc_boolean_t
 checkowner_rp(ARGS_CHECKOWNER) {
 
@@ -246,26 +215,6 @@ checkowner_rp(ARGS_CHECKOWNER) {
 	UNUSED(rdclass);
 	UNUSED(wildcard);
 
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_rp(ARGS_CHECKNAMES) {
-	isc_region_t region;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_rp);
-
-	UNUSED(owner);
-
-	dns_rdata_toregion(rdata, &region);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &region);
-	if (!dns_name_ismailbox(&name)) {
-		if (bad != NULL)
-				dns_name_clone(&name, bad);
-		return (ISC_FALSE);
-	}
 	return (ISC_TRUE);
 }
 

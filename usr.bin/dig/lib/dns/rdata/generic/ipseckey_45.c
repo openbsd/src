@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipseckey_45.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: ipseckey_45.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -315,28 +315,6 @@ freestruct_ipseckey(ARGS_FREESTRUCT) {
 
 }
 
-static inline isc_result_t
-additionaldata_ipseckey(ARGS_ADDLDATA) {
-
-	REQUIRE(rdata->type == dns_rdatatype_ipseckey);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_ipseckey(ARGS_DIGEST) {
-	isc_region_t region;
-
-	REQUIRE(rdata->type == dns_rdatatype_ipseckey);
-
-	dns_rdata_toregion(rdata, &region);
-	return ((digest)(arg, &region));
-}
-
 static inline isc_boolean_t
 checkowner_ipseckey(ARGS_CHECKOWNER) {
 
@@ -346,18 +324,6 @@ checkowner_ipseckey(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_ipseckey(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_ipseckey);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

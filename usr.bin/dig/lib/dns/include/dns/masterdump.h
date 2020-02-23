@@ -138,12 +138,6 @@ dns_master_questiontotext(dns_name_t *owner_name,
 			  isc_buffer_t *target);
 
 isc_result_t
-dns_master_stylecreate(dns_master_style_t **style, unsigned int flags,
-		       unsigned int ttl_column, unsigned int class_column,
-		       unsigned int type_column, unsigned int rdata_column,
-		       unsigned int line_length, unsigned int tab_width);
-
-isc_result_t
 dns_master_stylecreate2(dns_master_style_t **style, unsigned int flags,
 		       unsigned int ttl_column, unsigned int class_column,
 		       unsigned int type_column, unsigned int rdata_column,

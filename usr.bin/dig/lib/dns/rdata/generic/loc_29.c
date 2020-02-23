@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: loc_29.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: loc_29.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -336,28 +336,6 @@ freestruct_loc(ARGS_FREESTRUCT) {
 	UNUSED(loc);
 }
 
-static inline isc_result_t
-additionaldata_loc(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_loc);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_loc(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_loc);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_loc(ARGS_CHECKOWNER) {
 
@@ -367,18 +345,6 @@ checkowner_loc(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_loc(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_loc);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

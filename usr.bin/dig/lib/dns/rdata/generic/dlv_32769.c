@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dlv_32769.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: dlv_32769.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* RFC3658 */
 
@@ -105,28 +105,6 @@ freestruct_dlv(ARGS_FREESTRUCT) {
 	free(dlv->digest);
 }
 
-static inline isc_result_t
-additionaldata_dlv(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_dlv);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_dlv(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_dlv);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_dlv(ARGS_CHECKOWNER) {
 
@@ -136,18 +114,6 @@ checkowner_dlv(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_dlv(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_dlv);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }

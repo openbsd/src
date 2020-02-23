@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec_47.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: nsec_47.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -178,27 +178,6 @@ freestruct_nsec(ARGS_FREESTRUCT) {
 		free(nsec->typebits);
 }
 
-static inline isc_result_t
-additionaldata_nsec(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_nsec);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_nsec(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_nsec);
-
-	dns_rdata_toregion(rdata, &r);
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_nsec(ARGS_CHECKOWNER) {
 
@@ -210,18 +189,6 @@ checkowner_nsec(ARGS_CHECKOWNER) {
        UNUSED(wildcard);
 
        return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_nsec(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_nsec);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
 }
 
 static inline int

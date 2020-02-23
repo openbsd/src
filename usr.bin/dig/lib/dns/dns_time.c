@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dns_time.c,v 1.4 2020/02/16 21:12:41 florian Exp $ */
+/* $Id: dns_time.c,v 1.5 2020/02/23 19:54:25 jung Exp $ */
 
 /*! \file */
 
@@ -122,76 +122,4 @@ dns_time64_from32(uint32_t value) {
 isc_result_t
 dns_time32_totext(uint32_t value, isc_buffer_t *target) {
 	return (dns_time64_totext(dns_time64_from32(value), target));
-}
-
-isc_result_t
-dns_time64_fromtext(const char *source, int64_t *target) {
-	int year, month, day, hour, minute, second;
-	int64_t value;
-	int secs;
-	int i;
-
-#define RANGE(min, max, value) \
-	do { \
-		if (value < (min) || value > (max)) \
-			return (ISC_R_RANGE); \
-	} while (0)
-
-	if (strlen(source) != 14U)
-		return (DNS_R_SYNTAX);
-	/*
-	 * Confirm the source only consists digits.  sscanf() allows some
-	 * minor exceptions.
-	 */
-	for (i = 0; i < 14; i++) {
-		if (!isdigit((unsigned char)source[i]))
-			return (DNS_R_SYNTAX);
-	}
-	if (sscanf(source, "%4d%2d%2d%2d%2d%2d",
-		   &year, &month, &day, &hour, &minute, &second) != 6)
-		return (DNS_R_SYNTAX);
-
-	RANGE(0, 9999, year);
-	RANGE(1, 12, month);
-	RANGE(1, days[month - 1] +
-		 ((month == 2 && is_leap(year)) ? 1 : 0), day);
-	RANGE(0, 23, hour);
-	RANGE(0, 59, minute);
-	RANGE(0, 60, second);		/* 60 == leap second. */
-
-	/*
-	 * Calculate seconds from epoch.
-	 * Note: this uses a idealized calendar.
-	 */
-	value = second + (60 * minute) + (3600 * hour) + ((day - 1) * 86400);
-	for (i = 0; i < (month - 1); i++)
-		value += days[i] * 86400;
-	if (is_leap(year) && month > 2)
-		value += 86400;
-	if (year < 1970) {
-		for (i = 1969; i >= year; i--) {
-			secs = (is_leap(i) ? 366 : 365) * 86400;
-			value -= secs;
-		}
-	} else {
-		for (i = 1970; i < year; i++) {
-			secs = (is_leap(i) ? 366 : 365) * 86400;
-			value += secs;
-		}
-	}
-
-	*target = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_time32_fromtext(const char *source, uint32_t *target) {
-	int64_t value64;
-	isc_result_t result;
-	result = dns_time64_fromtext(source, &value64);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	*target = (uint32_t)value64;
-
-	return (ISC_R_SUCCESS);
 }

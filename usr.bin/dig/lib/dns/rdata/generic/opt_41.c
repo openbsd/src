@@ -278,33 +278,6 @@ freestruct_opt(ARGS_FREESTRUCT) {
 		free(opt->options);
 }
 
-static inline isc_result_t
-additionaldata_opt(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_opt);
-
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_opt(ARGS_DIGEST) {
-
-	/*
-	 * OPT records are not digested.
-	 */
-
-	REQUIRE(rdata->type == dns_rdatatype_opt);
-
-	UNUSED(rdata);
-	UNUSED(digest);
-	UNUSED(arg);
-
-	return (ISC_R_NOTIMPLEMENTED);
-}
-
 static inline isc_boolean_t
 checkowner_opt(ARGS_CHECKOWNER) {
 
@@ -315,18 +288,6 @@ checkowner_opt(ARGS_CHECKOWNER) {
 	UNUSED(wildcard);
 
 	return (dns_name_equal(name, dns_rootname));
-}
-
-static inline isc_boolean_t
-checknames_opt(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_opt);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
 }
 
 static inline int

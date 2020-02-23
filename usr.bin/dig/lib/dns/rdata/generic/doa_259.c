@@ -242,28 +242,6 @@ freestruct_doa(ARGS_FREESTRUCT) {
 	free(doa->data);
 }
 
-static inline isc_result_t
-additionaldata_doa(ARGS_ADDLDATA) {
-	UNUSED(rdata);
-	UNUSED(add);
-	UNUSED(arg);
-
-	REQUIRE(rdata->type == dns_rdatatype_doa);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_doa(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_doa);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_doa(ARGS_CHECKOWNER) {
 	UNUSED(name);
@@ -272,17 +250,6 @@ checkowner_doa(ARGS_CHECKOWNER) {
 	UNUSED(wildcard);
 
 	REQUIRE(type == dns_rdatatype_doa);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_doa(ARGS_CHECKNAMES) {
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	REQUIRE(rdata->type == dns_rdatatype_doa);
 
 	return (ISC_TRUE);
 }

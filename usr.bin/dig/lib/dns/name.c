@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.9 2020/02/22 19:48:48 jung Exp $ */
+/* $Id: name.c,v 1.10 2020/02/23 19:54:25 jung Exp $ */
 
 /*! \file */
 #include <ctype.h>
@@ -1829,33 +1829,6 @@ dns_name_free(dns_name_t *name) {
 	dns_name_invalidate(name);
 }
 
-isc_result_t
-dns_name_digest(dns_name_t *name, dns_digestfunc_t digest, void *arg) {
-	dns_name_t downname;
-	unsigned char data[256];
-	isc_buffer_t buffer;
-	isc_result_t result;
-	isc_region_t r;
-
-	/*
-	 * Send 'name' in DNSSEC canonical form to 'digest'.
-	 */
-
-	REQUIRE(digest != NULL);
-
-	dns_name_init(&downname, NULL);
-
-	isc_buffer_init(&buffer, data, sizeof(data));
-
-	result = dns_name_downcase(name, &downname, &buffer);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	isc_buffer_usedregion(&buffer, &r);
-
-	return ((digest)(arg, &r));
-}
-
 isc_boolean_t
 dns_name_dynamic(dns_name_t *name) {
 
@@ -1865,12 +1838,6 @@ dns_name_dynamic(dns_name_t *name) {
 
 	return ((name->attributes & DNS_NAMEATTR_DYNAMIC) != 0 ?
 		ISC_TRUE : ISC_FALSE);
-}
-
-isc_result_t
-dns_name_settotextfilter(dns_name_totextfilter_t proc) {
-	totext_filter_proc = proc;
-	return (ISC_R_SUCCESS);
 }
 
 void
@@ -1901,12 +1868,6 @@ dns_name_format(dns_name_t *name, char *cp, unsigned int size) {
  * dns_name_fromstring() -- convert directly from a string to a name,
  * allocating memory as needed
  */
-isc_result_t
-dns_name_fromstring(dns_name_t *target, const char *src, unsigned int options)
-{
-	return (dns_name_fromstring2(target, src, dns_rootname, options));
-}
-
 isc_result_t
 dns_name_fromstring2(dns_name_t *target, const char *src,
 		     const dns_name_t *origin, unsigned int options)
@@ -1983,46 +1944,4 @@ dns_name_copy(dns_name_t *source, dns_name_t *dest, isc_buffer_t *target) {
 	isc_buffer_add(target, dest->length);
 
 	return (ISC_R_SUCCESS);
-}
-
-void
-dns_name_destroy(void) {
-}
-
-/*
- * Service Discovery Prefixes RFC 6763.
- */
-static unsigned char b_dns_sd_udp_data[]  = "\001b\007_dns-sd\004_udp";
-static unsigned char b_dns_sd_udp_offsets[] = { 0, 2, 10 };
-static unsigned char db_dns_sd_udp_data[]  = "\002db\007_dns-sd\004_udp";
-static unsigned char db_dns_sd_udp_offsets[] = { 0, 3, 11 };
-static unsigned char r_dns_sd_udp_data[]  = "\001r\007_dns-sd\004_udp";
-static unsigned char r_dns_sd_udp_offsets[] = { 0, 2, 10 };
-static unsigned char dr_dns_sd_udp_data[]  = "\002dr\007_dns-sd\004_udp";
-static unsigned char dr_dns_sd_udp_offsets[] = { 0, 3, 11 };
-static unsigned char lb_dns_sd_udp_data[]  = "\002lb\007_dns-sd\004_udp";
-static unsigned char lb_dns_sd_udp_offsets[] = { 0, 3, 11 };
-
-static dns_name_t const dns_sd[] = {
-	DNS_NAME_INITNONABSOLUTE(b_dns_sd_udp_data, b_dns_sd_udp_offsets),
-	DNS_NAME_INITNONABSOLUTE(db_dns_sd_udp_data, db_dns_sd_udp_offsets),
-	DNS_NAME_INITNONABSOLUTE(r_dns_sd_udp_data, r_dns_sd_udp_offsets),
-	DNS_NAME_INITNONABSOLUTE(dr_dns_sd_udp_data, dr_dns_sd_udp_offsets),
-	DNS_NAME_INITNONABSOLUTE(lb_dns_sd_udp_data, lb_dns_sd_udp_offsets)
-};
-
-isc_boolean_t
-dns_name_isdnssd(const dns_name_t *name) {
-	size_t i;
-	dns_name_t prefix;
-
-	if (dns_name_countlabels(name) > 3U) {
-		dns_name_init(&prefix, NULL);
-		dns_name_getlabelsequence(name, 0, 3, &prefix);
-		for (i = 0; i < (sizeof(dns_sd)/sizeof(dns_sd[0])); i++)
-			if (dns_name_equal(&prefix, &dns_sd[i]))
-				return (ISC_TRUE);
-	}
-
-	return (ISC_FALSE);
 }

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.c,v 1.6 2020/02/22 19:47:06 jung Exp $ */
+/* $Id: rcode.c,v 1.7 2020/02/23 19:54:25 jung Exp $ */
 
 
 #include <ctype.h>
@@ -30,26 +30,13 @@
 #include <isc/types.h>
 #include <isc/util.h>
 
-
-
 #include <dns/cert.h>
 #include <dns/ds.h>
-#include <dns/keyflags.h>
 #include <dns/keyvalues.h>
 #include <dns/rcode.h>
 #include <dns/rdataclass.h>
 #include <dns/result.h>
 #include <dns/secalg.h>
-#include <dns/secproto.h>
-
-#define RETERR(x) \
-	do { \
-		isc_result_t _r = (x); \
-		if (_r != ISC_R_SUCCESS) \
-			return (_r); \
-	} while (0)
-
-#define NUMBERSIZE sizeof("037777777777") /* 2^32-1 octal + NUL */
 
 #define TOTEXTONLY 0x01
 
@@ -125,28 +112,6 @@
 
 /* RFC2535 section 7.1 */
 
-#define SECPROTONAMES \
-	{   0,    "NONE", 0 }, \
-	{   1,    "TLS", 0 }, \
-	{   2,    "EMAIL", 0 }, \
-	{   3,    "DNSSEC", 0 }, \
-	{   4,    "IPSEC", 0 }, \
-	{ 255,    "ALL", 0 }, \
-	{ 0, NULL, 0}
-
-#define HASHALGNAMES \
-	{ 1, "SHA-1", 0 }, \
-	{ 0, NULL, 0 }
-
-/* RFC3658, RFC4509, RFC5933, RFC6605 */
-
-#define DSDIGESTNAMES \
-	{ DNS_DSDIGEST_SHA1, "SHA-1", 0 }, \
-	{ DNS_DSDIGEST_SHA256, "SHA-256", 0 }, \
-	{ DNS_DSDIGEST_GOST, "GOST", 0 }, \
-	{ DNS_DSDIGEST_SHA384, "SHA-384", 0 }, \
-	{ 0, NULL, 0}
-
 struct tbl {
 	unsigned int    value;
 	const char      *name;
@@ -156,48 +121,6 @@ struct tbl {
 static struct tbl tsigrcodes[] = { RCODENAMES TSIGRCODENAMES };
 static struct tbl certs[] = { CERTNAMES };
 static struct tbl secalgs[] = { SECALGNAMES };
-static struct tbl secprotos[] = { SECPROTONAMES };
-static struct tbl hashalgs[] = { HASHALGNAMES };
-
-static struct keyflag {
-	const char *name;
-	unsigned int value;
-	unsigned int mask;
-} keyflags[] = {
-	{ "NOCONF", 0x4000, 0xC000 },
-	{ "NOAUTH", 0x8000, 0xC000 },
-	{ "NOKEY",  0xC000, 0xC000 },
-	{ "FLAG2",  0x2000, 0x2000 },
-	{ "EXTEND", 0x1000, 0x1000 },
-	{ "FLAG4",  0x0800, 0x0800 },
-	{ "FLAG5",  0x0400, 0x0400 },
-	{ "USER",   0x0000, 0x0300 },
-	{ "ZONE",   0x0100, 0x0300 },
-	{ "HOST",   0x0200, 0x0300 },
-	{ "NTYP3",  0x0300, 0x0300 },
-	{ "FLAG8",  0x0080, 0x0080 },
-	{ "FLAG9",  0x0040, 0x0040 },
-	{ "FLAG10", 0x0020, 0x0020 },
-	{ "FLAG11", 0x0010, 0x0010 },
-	{ "SIG0",   0x0000, 0x000F },
-	{ "SIG1",   0x0001, 0x000F },
-	{ "SIG2",   0x0002, 0x000F },
-	{ "SIG3",   0x0003, 0x000F },
-	{ "SIG4",   0x0004, 0x000F },
-	{ "SIG5",   0x0005, 0x000F },
-	{ "SIG6",   0x0006, 0x000F },
-	{ "SIG7",   0x0007, 0x000F },
-	{ "SIG8",   0x0008, 0x000F },
-	{ "SIG9",   0x0009, 0x000F },
-	{ "SIG10",  0x000A, 0x000F },
-	{ "SIG11",  0x000B, 0x000F },
-	{ "SIG12",  0x000C, 0x000F },
-	{ "SIG13",  0x000D, 0x000F },
-	{ "SIG14",  0x000E, 0x000F },
-	{ "SIG15",  0x000F, 0x000F },
-	{ "KSK",  DNS_KEYFLAG_KSK, DNS_KEYFLAG_KSK },
-	{ NULL,     0, 0 }
-};
 
 static isc_result_t
 str_totext(const char *source, isc_buffer_t *target) {
@@ -213,63 +136,6 @@ str_totext(const char *source, isc_buffer_t *target) {
 	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-maybe_numeric(unsigned int *valuep, isc_textregion_t *source,
-	      unsigned int max, isc_boolean_t hex_allowed)
-{
-	isc_result_t result;
-	uint32_t n;
-	char buffer[NUMBERSIZE];
-
-	if (! isdigit(source->base[0] & 0xff) ||
-	    source->length > NUMBERSIZE - 1)
-		return (ISC_R_BADNUMBER);
-
-	/*
-	 * We have a potential number.	Try to parse it with
-	 * isc_parse_uint32().	isc_parse_uint32() requires
-	 * null termination, so we must make a copy.
-	 */
-	snprintf(buffer, sizeof(buffer), "%.*s",
-		 (int)source->length, source->base);
-
-	INSIST(buffer[source->length] == '\0');
-
-	result = isc_parse_uint32(&n, buffer, 10);
-	if (result == ISC_R_BADNUMBER && hex_allowed)
-		result = isc_parse_uint32(&n, buffer, 16);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-	if (n > max)
-		return (ISC_R_RANGE);
-	*valuep = n;
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-dns_mnemonic_fromtext(unsigned int *valuep, isc_textregion_t *source,
-		      struct tbl *table, unsigned int max)
-{
-	isc_result_t result;
-	int i;
-
-	result = maybe_numeric(valuep, source, max, ISC_FALSE);
-	if (result != ISC_R_BADNUMBER)
-		return (result);
-
-	for (i = 0; table[i].name != NULL; i++) {
-		unsigned int n;
-		n = strlen(table[i].name);
-		if (n == source->length &&
-		    (table[i].flags & TOTEXTONLY) == 0 &&
-		    strncasecmp(source->base, table[i].name, n) == 0) {
-			*valuep = table[i].value;
-			return (ISC_R_SUCCESS);
-		}
-	}
-	return (DNS_R_UNKNOWN);
 }
 
 static isc_result_t
@@ -289,37 +155,13 @@ dns_mnemonic_totext(unsigned int value, isc_buffer_t *target,
 }
 
 isc_result_t
-dns_tsigrcode_fromtext(dns_rcode_t *rcodep, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, tsigrcodes, 0xffff));
-	*rcodep = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
 dns_tsigrcode_totext(dns_rcode_t rcode, isc_buffer_t *target) {
 	return (dns_mnemonic_totext(rcode, target, tsigrcodes));
 }
 
 isc_result_t
-dns_cert_fromtext(dns_cert_t *certp, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, certs, 0xffff));
-	*certp = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
 dns_cert_totext(dns_cert_t cert, isc_buffer_t *target) {
 	return (dns_mnemonic_totext(cert, target, certs));
-}
-
-isc_result_t
-dns_secalg_fromtext(dns_secalg_t *secalgp, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, secalgs, 0xff));
-	*secalgp = value;
-	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
@@ -340,65 +182,6 @@ dns_secalg_format(dns_secalg_t alg, char *cp, unsigned int size) {
 	r.base[r.length] = 0;
 	if (result != ISC_R_SUCCESS)
 		r.base[0] = 0;
-}
-
-isc_result_t
-dns_secproto_fromtext(dns_secproto_t *secprotop, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, secprotos, 0xff));
-	*secprotop = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_hashalg_fromtext(unsigned char *hashalg, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, hashalgs, 0xff));
-	*hashalg = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_keyflags_fromtext(dns_keyflags_t *flagsp, isc_textregion_t *source)
-{
-	isc_result_t result;
-	char *text, *end;
-	unsigned int value, mask;
-
-	result = maybe_numeric(&value, source, 0xffff, ISC_TRUE);
-	if (result == ISC_R_SUCCESS) {
-		*flagsp = value;
-		return (ISC_R_SUCCESS);
-	}
-	if (result != ISC_R_BADNUMBER)
-		return (result);
-
-	text = source->base;
-	end = source->base + source->length;
-	value = mask = 0;
-
-	while (text < end) {
-		struct keyflag *p;
-		unsigned int len;
-		char *delim = memchr(text, '|', end - text);
-		if (delim != NULL)
-			len = (unsigned int)(delim - text);
-		else
-			len = (unsigned int)(end - text);
-		for (p = keyflags; p->name != NULL; p++) {
-			if (strncasecmp(p->name, text, len) == 0)
-				break;
-		}
-		if (p->name == NULL)
-			return (DNS_R_UNKNOWNFLAG);
-		value |= p->value;
-		mask |= p->mask;
-		text += len;
-		if (delim != NULL)
-			text++; /* Skip "|" */
-	}
-	*flagsp = value;
-	return (ISC_R_SUCCESS);
 }
 
 /*

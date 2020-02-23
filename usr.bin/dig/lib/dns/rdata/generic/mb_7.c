@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mb_7.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: mb_7.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 /* Reviewed: Wed Mar 15 17:31:26 PST 2000 by bwelling */
 
@@ -150,35 +150,6 @@ freestruct_mb(ARGS_FREESTRUCT) {
 	dns_name_free(&mb->mb);
 }
 
-static inline isc_result_t
-additionaldata_mb(ARGS_ADDLDATA) {
-	dns_name_t name;
-	dns_offsets_t offsets;
-	isc_region_t region;
-
-	REQUIRE(rdata->type == dns_rdatatype_mb);
-
-	dns_name_init(&name, offsets);
-	dns_rdata_toregion(rdata, &region);
-	dns_name_fromregion(&name, &region);
-
-	return ((add)(arg, &name, dns_rdatatype_a));
-}
-
-static inline isc_result_t
-digest_mb(ARGS_DIGEST) {
-	isc_region_t r;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_mb);
-
-	dns_rdata_toregion(rdata, &r);
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &r);
-
-	return (dns_name_digest(&name, digest, arg));
-}
-
 static inline isc_boolean_t
 checkowner_mb(ARGS_CHECKOWNER) {
 
@@ -189,18 +160,6 @@ checkowner_mb(ARGS_CHECKOWNER) {
 	UNUSED(wildcard);
 
 	return (dns_name_ismailbox(name));
-}
-
-static inline isc_boolean_t
-checknames_mb(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_mb);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
-
-	return (ISC_TRUE);
 }
 
 static inline int

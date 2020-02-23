@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: proforma.c,v 1.2 2020/02/20 18:08:51 florian Exp $ */
+/* $Id: proforma.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
 
 #ifndef RDATA_GENERIC_#_#_C
 #define RDATA_GENERIC_#_#_C
@@ -106,29 +106,6 @@ freestruct_#(ARGS_FREESTRUCT) {
 
 }
 
-static inline isc_result_t
-additionaldata_#(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == dns_rdatatype_proforma.c#);
-	REQUIRE(rdata->rdclass == #);
-
-	(void)add;
-	(void)arg;
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline isc_result_t
-digest_#(ARGS_DIGEST) {
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_proforma.c#);
-	REQUIRE(rdata->rdclass == #);
-
-	dns_rdata_toregion(rdata, &r);
-
-	return ((digest)(arg, &r));
-}
-
 static inline isc_boolean_t
 checkowner_#(ARGS_CHECKOWNER) {
 
@@ -139,19 +116,6 @@ checkowner_#(ARGS_CHECKOWNER) {
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
-
-static inline isc_boolean_t
-checknames_#(ARGS_CHECKNAMES) {
-
-	REQUIRE(rdata->type == dns_rdatatype_proforma.c#);
-	REQUIRE(rdata->rdclass == #);
-
-	UNUSED(rdata);
-	UNUSED(owner);
-	UNUSED(bad);
 
 	return (ISC_TRUE);
 }
