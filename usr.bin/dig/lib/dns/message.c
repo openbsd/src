@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.8 2020/02/22 19:50:05 jung Exp $ */
+/* $Id: message.c,v 1.9 2020/02/23 08:54:33 florian Exp $ */
 
 /*! \file */
 
@@ -1776,7 +1776,6 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 	isc_result_t result;
 	isc_buffer_t st; /* for rollbacks */
 	int pass;
-	isc_boolean_t partial = ISC_FALSE;
 	dns_rdatatype_t preferred_glue = 0;
 
 	REQUIRE(msg->buffer != NULL);
@@ -1805,8 +1804,6 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 	msg->buffer->length -= msg->reserved;
 
 	total = 0;
-	if (msg->reserved == 0 && (options & DNS_MESSAGERENDER_PARTIAL) != 0)
-		partial = ISC_TRUE;
 
 	/*
 	 * Render required glue first.  Set TC if it won't fit.
@@ -1820,30 +1817,14 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 			const void *order_arg = msg->order_arg;
 			st = *(msg->buffer);
 			count = 0;
-			if (partial)
-				result = dns_rdataset_towirepartial(rdataset,
-								    name,
-								    msg->cctx,
-								    msg->buffer,
-								    msg->order,
-								    order_arg,
-								    &count,
-								    NULL);
-			else
-				result = dns_rdataset_towiresorted(rdataset,
-								   name,
-								   msg->cctx,
-								   msg->buffer,
-								   msg->order,
-								   order_arg,
-								   &count);
+			result = dns_rdataset_towiresorted(rdataset,
+							   name,
+							   msg->cctx,
+							   msg->buffer,
+							   msg->order,
+							   order_arg,
+							   &count);
 			total += count;
-			if (partial && result == ISC_R_NOSPACE) {
-				msg->flags |= DNS_MESSAGEFLAG_TC;
-				msg->buffer->length += msg->reserved;
-				msg->counts[sectionid] += total;
-				return (result);
-			}
 			if (result == ISC_R_NOSPACE)
 				msg->flags |= DNS_MESSAGEFLAG_TC;
 			if (result != ISC_R_SUCCESS) {
@@ -1888,25 +1869,14 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 				st = *(msg->buffer);
 
 				count = 0;
-				if (partial)
-					result = dns_rdataset_towirepartial(
-							  rdataset,
-							  name,
-							  msg->cctx,
-							  msg->buffer,
-							  msg->order,
-							  msg->order_arg,
-							  &count,
-							  NULL);
-				else
-					result = dns_rdataset_towiresorted(
-							  rdataset,
-							  name,
-							  msg->cctx,
-							  msg->buffer,
-							  msg->order,
-							  msg->order_arg,
-							  &count);
+				result = dns_rdataset_towiresorted(
+						  rdataset,
+						  name,
+						  msg->cctx,
+						  msg->buffer,
+						  msg->order,
+						  msg->order_arg,
+						  &count);
 
 				total += count;
 
@@ -1914,20 +1884,7 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 				 * If out of space, record stats on what we
 				 * rendered so far, and return that status.
 				 *
-				 * XXXMLG Need to change this when
-				 * dns_rdataset_towire() can render partial
-				 * sets starting at some arbitrary point in the
-				 * set.  This will include setting a bit in the
-				 * rdataset to indicate that a partial
-				 * rendering was done, and some state saved
-				 * somewhere (probably in the message struct)
-				 * to indicate where to continue from.
 				 */
-				if (partial && result == ISC_R_NOSPACE) {
-					msg->buffer->length += msg->reserved;
-					msg->counts[sectionid] += total;
-					return (result);
-				}
 				if (result != ISC_R_SUCCESS) {
 					INSIST(st.used < 65536);
 					dns_compress_rollback(msg->cctx,

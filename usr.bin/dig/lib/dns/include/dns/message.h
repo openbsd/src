@@ -168,7 +168,6 @@ typedef int dns_messagetextflag_t;
  * Control behavior of rendering
  */
 #define DNS_MESSAGERENDER_ORDERED	0x0001	/*%< don't change order */
-#define DNS_MESSAGERENDER_PARTIAL	0x0002	/*%< allow a partial rdataset */
 #define DNS_MESSAGERENDER_PREFER_A	0x0008	/*%< prefer A records in
 						      additional section. */
 #define DNS_MESSAGERENDER_PREFER_AAAA	0x0010	/*%< prefer AAAA records in
