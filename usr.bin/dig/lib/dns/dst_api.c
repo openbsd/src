@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.9 2020/02/23 08:52:50 florian Exp $
+ * $Id: dst_api.c,v 1.10 2020/02/23 08:53:19 florian Exp $
  */
 
 /*! \file */
@@ -150,9 +150,6 @@ dst_context_create3(dst_key_t *key,
 	REQUIRE(dst_initialized == ISC_TRUE);
 	REQUIRE(dctxp != NULL && *dctxp == NULL);
 
-	if (key->keydata.generic == NULL)
-		return (DST_R_NULLKEY);
-
 	dctx = malloc(sizeof(dst_context_t));
 	if (dctx == NULL)
 		return (ISC_R_NOMEMORY);
@@ -202,8 +199,6 @@ dst_context_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 	key = dctx->key;
 	CHECKALG(key->key_alg);
-	if (key->keydata.generic == NULL)
-		return (DST_R_NULLKEY);
 
 	return (key->func->sign(dctx, sig));
 }
@@ -213,8 +208,6 @@ dst_context_verify(dst_context_t *dctx, isc_region_t *sig) {
 	REQUIRE(sig != NULL);
 
 	CHECKALG(dctx->key->key_alg);
-	if (dctx->key->keydata.generic == NULL)
-		return (DST_R_NULLKEY);
 
 	return (dctx->key->func->verify(dctx, sig));
 }
@@ -239,9 +232,6 @@ dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
 				     (uint16_t)((key->key_flags >> 16)
 						    & 0xffff));
 	}
-
-	if (key->keydata.generic == NULL) /*%< NULL KEY */
-		return (ISC_R_SUCCESS);
 
 	return (key->func->todns(key, target));
 }
@@ -297,8 +287,7 @@ dst_key_free(dst_key_t **keyp) {
 		return;
 
 	isc_refcount_destroy(&key->refs);
-	if (key->keydata.generic != NULL)
-		key->func->destroy(key);
+	key->func->destroy(key);
 	if (key->engine != NULL)
 		free(key->engine);
 	if (key->label != NULL)
@@ -388,7 +377,6 @@ get_key_struct(dns_name_t *name, unsigned int alg,
 	key->key_alg = alg;
 	key->key_flags = flags;
 	key->key_proto = protocol;
-	key->keydata.generic = NULL;
 	key->key_size = bits;
 	key->key_class = rdclass;
 	key->key_ttl = ttl;

@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.9 2020/02/23 08:52:50 florian Exp $ */
+/* $Id: dst_internal.h,v 1.10 2020/02/23 08:53:19 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -48,9 +48,7 @@
 #include <dst/dst.h>
 
 #include <openssl/err.h>
-#include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/rsa.h>
 
 /***
  *** Types
@@ -87,8 +85,6 @@ struct dst_key {
 	char		*engine;	/*%< engine name (HSM) */
 	char		*label;		/*%< engine label (HSM) */
 	union {
-		void *generic;
-		EVP_PKEY *pkey;
 		dst_hmacsha1_key_t *hmacsha1;
 		dst_hmacsha224_key_t *hmacsha224;
 		dst_hmacsha256_key_t *hmacsha256;
@@ -117,16 +113,11 @@ struct dst_context {
 	dst_key_t *key;
 	isc_logcategory_t *category;
 	union {
-		void *generic;
-		isc_sha1_t *sha1ctx;
-		isc_sha256_t *sha256ctx;
-		isc_sha512_t *sha512ctx;
 		isc_hmacsha1_t *hmacsha1ctx;
 		isc_hmacsha224_t *hmacsha224ctx;
 		isc_hmacsha256_t *hmacsha256ctx;
 		isc_hmacsha384_t *hmacsha384ctx;
 		isc_hmacsha512_t *hmacsha512ctx;
-		EVP_MD_CTX *evp_md_ctx;
 	} ctxdata;
 };
 
