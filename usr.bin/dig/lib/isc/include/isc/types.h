@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.2 2020/02/16 18:05:09 florian Exp $ */
+/* $Id: types.h,v 1.3 2020/02/23 11:06:22 jsg Exp $ */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
@@ -43,7 +43,6 @@ typedef ISC_LIST(isc_buffer_t)		isc_bufferlist_t;	/*%< Buffer List */
 typedef struct isc_event		isc_event_t;		/*%< Event */
 typedef ISC_LIST(isc_event_t)		isc_eventlist_t;	/*%< Event List */
 typedef unsigned int			isc_eventtype_t;	/*%< Event Type */
-typedef struct isc_hash			isc_hash_t;		/*%< Hash */
 typedef struct isc_lex			isc_lex_t;		/*%< Lex */
 typedef struct isc_log 			isc_log_t;		/*%< Log */
 typedef struct isc_logcategory		isc_logcategory_t;	/*%< Log Category */
