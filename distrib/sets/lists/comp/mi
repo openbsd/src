@@ -143,6 +143,7 @@
 ./usr/include/dev/fdt/mvpinctrl_pins.h
 ./usr/include/dev/fdt/pscivar.h
 ./usr/include/dev/fdt/rkclock_clocks.h
+./usr/include/dev/fdt/rkdrm.h
 ./usr/include/dev/fdt/rsbvar.h
 ./usr/include/dev/fdt/sunxireg.h
 ./usr/include/dev/fdt/sxiccmu_clocks.h
@@ -204,6 +205,7 @@
 ./usr/include/dev/ic/amivar.h
 ./usr/include/dev/ic/anreg.h
 ./usr/include/dev/ic/anvar.h
+./usr/include/dev/ic/anxdp.h
 ./usr/include/dev/ic/apcdmareg.h
 ./usr/include/dev/ic/ar5008reg.h
 ./usr/include/dev/ic/ar5210reg.h
