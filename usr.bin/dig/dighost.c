@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.14 2020/02/21 19:53:39 jung Exp $ */
+/* $Id: dighost.c,v 1.15 2020/02/23 08:55:43 florian Exp $ */
 
 /*! \file
  *  \note
@@ -2330,10 +2330,10 @@ setup_lookup(dig_lookup_t *lookup) {
 	}
 
 	result = dns_message_rendersection(lookup->sendmsg,
-					   DNS_SECTION_QUESTION, 0);
+					   DNS_SECTION_QUESTION);
 	check_result(result, "dns_message_rendersection");
 	result = dns_message_rendersection(lookup->sendmsg,
-					   DNS_SECTION_AUTHORITY, 0);
+					   DNS_SECTION_AUTHORITY);
 	check_result(result, "dns_message_rendersection");
 	result = dns_message_renderend(lookup->sendmsg);
 	check_result(result, "dns_message_renderend");
