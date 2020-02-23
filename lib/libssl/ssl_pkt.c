@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.19 2020/02/21 16:16:59 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.20 2020/02/23 17:59:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -437,7 +437,7 @@ ssl3_get_record(SSL *s)
 	 *    1: if the padding is valid
 	 *    -1: if the padding is invalid */
 	if (enc_err == 0) {
-		al = SSL_AD_DECRYPTION_FAILED;
+		al = SSL_AD_BAD_RECORD_MAC;
 		SSLerror(s, SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
 		goto f_err;
 	}
