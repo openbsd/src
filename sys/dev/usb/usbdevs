@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.710 2020/01/27 15:41:42 stsp Exp $
+$OpenBSD: usbdevs,v 1.711 2020/02/23 11:52:10 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -262,6 +262,7 @@ vendor AGFA		0x06bd	AGFA-Gevaert
 vendor ASIAMD		0x06be	Asia Microelectronic Development
 vendor PHIDGETS		0x06c2	Phidgets
 vendor BIZLINK		0x06c4	Bizlink International
+vendor SYNAPTICS	0x06cb	Synaptics
 vendor KEYSPAN		0x06cd	Keyspan
 vendor AASHIMA		0x06d6	Aashima Technology
 vendor LIEBERT		0x06da	Liebert
@@ -887,6 +888,9 @@ product ALTI2 NEPTUNE3		0x6001	Neptune 3
 /* Ambit Microsystems products */
 product AMBIT WLAN		0x0302	WLAN
 product AMBIT NTL_250		0x6098	NTL 250 cable modem
+
+/* Advanced Micro Devices products */
+product AMD HUB			0x7900	Hub
 
 /* Amigo Technology products */
 product AMIGO RT2870_1		0x9031	RT2870
@@ -4167,6 +4171,10 @@ product SWEEX2 LW153		0x0153	LW153
 product SWEEX2 LW154		0x0154	LW154
 product SWEEX2 LW303		0x0302	LW303
 product SWEEX2 LW313		0x0313	LW313
+
+/* Synaptics products */
+product SYNAPTICS FPRINT	0x00bd	Fingerprint Reader
+product SYNAPTICS FPRINT_2	0x00c2	Fingerprint Reader
 
 /* Syntech Information products */
 product SYNTECH SERIAL		0x0001	Serial
