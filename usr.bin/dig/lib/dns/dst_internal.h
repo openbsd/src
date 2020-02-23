@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.8 2020/02/23 08:51:53 florian Exp $ */
+/* $Id: dst_internal.h,v 1.9 2020/02/23 08:52:50 florian Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -143,7 +143,6 @@ struct dst_func {
 	 */
 	isc_result_t (*sign)(dst_context_t *dctx, isc_buffer_t *sig);
 	isc_result_t (*verify)(dst_context_t *dctx, const isc_region_t *sig);
-	isc_boolean_t (*isprivate)(const dst_key_t *key);
 	void (*destroy)(dst_key_t *key);
 
 	/* conversion functions */

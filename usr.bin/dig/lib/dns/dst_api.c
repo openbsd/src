@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.8 2020/02/23 08:51:53 florian Exp $
+ * $Id: dst_api.c,v 1.9 2020/02/23 08:52:50 florian Exp $
  */
 
 /*! \file */
@@ -150,8 +150,6 @@ dst_context_create3(dst_key_t *key,
 	REQUIRE(dst_initialized == ISC_TRUE);
 	REQUIRE(dctxp != NULL && *dctxp == NULL);
 
-	if (key->func->createctx == NULL)
-		return (DST_R_UNSUPPORTEDALG);
 	if (key->keydata.generic == NULL)
 		return (DST_R_NULLKEY);
 
@@ -183,7 +181,6 @@ dst_context_destroy(dst_context_t **dctxp) {
 	REQUIRE(dctxp != NULL);
 
 	dctx = *dctxp;
-	INSIST(dctx->key->func->destroyctx != NULL);
 	dctx->key->func->destroyctx(dctx);
 	if (dctx->key != NULL)
 		dst_key_free(&dctx->key);
@@ -194,8 +191,6 @@ dst_context_destroy(dst_context_t **dctxp) {
 isc_result_t
 dst_context_adddata(dst_context_t *dctx, const isc_region_t *data) {
 	REQUIRE(data != NULL);
-	INSIST(dctx->key->func->adddata != NULL);
-
 	return (dctx->key->func->adddata(dctx, data));
 }
 
@@ -210,12 +205,6 @@ dst_context_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	if (key->keydata.generic == NULL)
 		return (DST_R_NULLKEY);
 
-	if (key->func->sign == NULL)
-		return (DST_R_NOTPRIVATEKEY);
-	if (key->func->isprivate == NULL ||
-	    key->func->isprivate(key) == ISC_FALSE)
-		return (DST_R_NOTPRIVATEKEY);
-
 	return (key->func->sign(dctx, sig));
 }
 
@@ -226,8 +215,6 @@ dst_context_verify(dst_context_t *dctx, isc_region_t *sig) {
 	CHECKALG(dctx->key->key_alg);
 	if (dctx->key->keydata.generic == NULL)
 		return (DST_R_NULLKEY);
-	if (dctx->key->func->verify == NULL)
-		return (DST_R_NOTPUBLICKEY);
 
 	return (dctx->key->func->verify(dctx, sig));
 }
@@ -238,9 +225,6 @@ dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
 	REQUIRE(target != NULL);
 
 	CHECKALG(key->key_alg);
-
-	if (key->func->todns == NULL)
-		return (DST_R_UNSUPPORTEDALG);
 
 	if (isc_buffer_availablelength(target) < 4)
 		return (ISC_R_NOSPACE);
@@ -313,10 +297,8 @@ dst_key_free(dst_key_t **keyp) {
 		return;
 
 	isc_refcount_destroy(&key->refs);
-	if (key->keydata.generic != NULL) {
-		INSIST(key->func->destroy != NULL);
+	if (key->keydata.generic != NULL)
 		key->func->destroy(key);
-	}
 	if (key->engine != NULL)
 		free(key->engine);
 	if (key->label != NULL)
@@ -460,10 +442,6 @@ frombuffer(dns_name_t *name, unsigned int alg, unsigned int flags,
 		if (ret != ISC_R_SUCCESS) {
 			dst_key_free(&key);
 			return (ret);
-		}
-		if (key->func->fromdns == NULL) {
-			dst_key_free(&key);
-			return (DST_R_UNSUPPORTEDALG);
 		}
 
 		ret = key->func->fromdns(key, source);

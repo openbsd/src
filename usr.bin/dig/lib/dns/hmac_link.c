@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: hmac_link.c,v 1.5 2020/02/23 08:51:53 florian Exp $
+ * $Id: hmac_link.c,v 1.6 2020/02/23 08:52:50 florian Exp $
  */
 
 #include <string.h>
@@ -113,12 +113,6 @@ hmacsha1_verify(dst_context_t *dctx, const isc_region_t *sig) {
 		return (DST_R_VERIFYFAILURE);
 }
 
-static isc_boolean_t
-hmacsha1_isprivate(const dst_key_t *key) {
-	UNUSED(key);
-	return (ISC_TRUE);
-}
-
 static void
 hmacsha1_destroy(dst_key_t *key) {
 	dst_hmacsha1_key_t *hkey = key->keydata.hmacsha1;
@@ -186,7 +180,6 @@ static dst_func_t hmacsha1_functions = {
 	hmacsha1_adddata,
 	hmacsha1_sign,
 	hmacsha1_verify,
-	hmacsha1_isprivate,
 	hmacsha1_destroy,
 	hmacsha1_todns,
 	hmacsha1_fromdns,
@@ -265,12 +258,6 @@ hmacsha224_verify(dst_context_t *dctx, const isc_region_t *sig) {
 		return (DST_R_VERIFYFAILURE);
 }
 
-static isc_boolean_t
-hmacsha224_isprivate(const dst_key_t *key) {
-	UNUSED(key);
-	return (ISC_TRUE);
-}
-
 static void
 hmacsha224_destroy(dst_key_t *key) {
 	dst_hmacsha224_key_t *hkey = key->keydata.hmacsha224;
@@ -338,7 +325,6 @@ static dst_func_t hmacsha224_functions = {
 	hmacsha224_adddata,
 	hmacsha224_sign,
 	hmacsha224_verify,
-	hmacsha224_isprivate,
 	hmacsha224_destroy,
 	hmacsha224_todns,
 	hmacsha224_fromdns,
@@ -417,12 +403,6 @@ hmacsha256_verify(dst_context_t *dctx, const isc_region_t *sig) {
 		return (DST_R_VERIFYFAILURE);
 }
 
-static isc_boolean_t
-hmacsha256_isprivate(const dst_key_t *key) {
-	UNUSED(key);
-	return (ISC_TRUE);
-}
-
 static void
 hmacsha256_destroy(dst_key_t *key) {
 	dst_hmacsha256_key_t *hkey = key->keydata.hmacsha256;
@@ -490,7 +470,6 @@ static dst_func_t hmacsha256_functions = {
 	hmacsha256_adddata,
 	hmacsha256_sign,
 	hmacsha256_verify,
-	hmacsha256_isprivate,
 	hmacsha256_destroy,
 	hmacsha256_todns,
 	hmacsha256_fromdns,
@@ -569,12 +548,6 @@ hmacsha384_verify(dst_context_t *dctx, const isc_region_t *sig) {
 		return (DST_R_VERIFYFAILURE);
 }
 
-static isc_boolean_t
-hmacsha384_isprivate(const dst_key_t *key) {
-	UNUSED(key);
-	return (ISC_TRUE);
-}
-
 static void
 hmacsha384_destroy(dst_key_t *key) {
 	dst_hmacsha384_key_t *hkey = key->keydata.hmacsha384;
@@ -642,7 +615,6 @@ static dst_func_t hmacsha384_functions = {
 	hmacsha384_adddata,
 	hmacsha384_sign,
 	hmacsha384_verify,
-	hmacsha384_isprivate,
 	hmacsha384_destroy,
 	hmacsha384_todns,
 	hmacsha384_fromdns,
@@ -721,12 +693,6 @@ hmacsha512_verify(dst_context_t *dctx, const isc_region_t *sig) {
 		return (DST_R_VERIFYFAILURE);
 }
 
-static isc_boolean_t
-hmacsha512_isprivate(const dst_key_t *key) {
-	UNUSED(key);
-	return (ISC_TRUE);
-}
-
 static void
 hmacsha512_destroy(dst_key_t *key) {
 	dst_hmacsha512_key_t *hkey = key->keydata.hmacsha512;
@@ -794,7 +760,6 @@ static dst_func_t hmacsha512_functions = {
 	hmacsha512_adddata,
 	hmacsha512_sign,
 	hmacsha512_verify,
-	hmacsha512_isprivate,
 	hmacsha512_destroy,
 	hmacsha512_todns,
 	hmacsha512_fromdns,
