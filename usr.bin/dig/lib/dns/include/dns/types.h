@@ -106,7 +106,6 @@ typedef struct dns_portlist			dns_portlist_t;
 typedef struct dns_rbt				dns_rbt_t;
 typedef uint16_t				dns_rcode_t;
 typedef struct dns_rdata			dns_rdata_t;
-typedef struct dns_rdatacallbacks		dns_rdatacallbacks_t;
 typedef uint16_t				dns_rdataclass_t;
 typedef struct dns_rdatalist			dns_rdatalist_t;
 typedef struct dns_rdataset			dns_rdataset_t;
