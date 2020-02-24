@@ -131,9 +131,6 @@ typedef isc_event_t intev_t;
  */
 #define NRETRIES 10
 
-typedef struct isc_socket isc_socket_t;
-typedef struct isc_socketmgr isc_socketmgr_t;
-
 struct isc_socket {
 	/* Not locked. */
 	isc_socketmgr_t	*manager;

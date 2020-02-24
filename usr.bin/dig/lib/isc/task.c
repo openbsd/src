@@ -42,9 +42,6 @@ typedef enum {
 	task_state_done
 } task_state_t;
 
-typedef struct isc_task isc_task_t;
-typedef struct isc_taskmgr isc_taskmgr_t;
-
 struct isc_task {
 	/* Not locked. */
 	isc_taskmgr_t *		manager;
