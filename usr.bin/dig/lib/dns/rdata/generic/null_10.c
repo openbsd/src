@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: null_10.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: null_10.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:57:50 PST 2000 by explorer */
 
@@ -55,19 +55,6 @@ towire_null(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
-compare_null(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_null);
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
-}
 
 static inline isc_result_t
 fromstruct_null(ARGS_FROMSTRUCT) {
@@ -130,9 +117,5 @@ checkowner_null(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_null(ARGS_COMPARE) {
-	return (compare_null(rdata1, rdata2));
-}
 
 #endif	/* RDATA_GENERIC_NULL_10_C */

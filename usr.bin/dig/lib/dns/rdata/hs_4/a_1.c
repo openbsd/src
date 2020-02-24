@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: a_1.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:58:36 PST 2000 by brister */
 
@@ -83,23 +83,6 @@ towire_hs_a(ARGS_TOWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline int
-compare_hs_a(ARGS_COMPARE) {
-	int order;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_a);
-	REQUIRE(rdata1->rdclass == dns_rdataclass_hs);
-	REQUIRE(rdata1->length == 4);
-	REQUIRE(rdata2->length == 4);
-
-	order = memcmp(rdata1->data, rdata2->data, 4);
-	if (order != 0)
-		order = (order < 0) ? -1 : 1;
-
-	return (order);
-}
 
 static inline isc_result_t
 fromstruct_hs_a(ARGS_FROMSTRUCT) {
@@ -162,9 +145,5 @@ checkowner_hs_a(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_hs_a(ARGS_COMPARE) {
-	return (compare_hs_a(rdata1, rdata2));
-}
 
 #endif	/* RDATA_HS_4_A_1_C */

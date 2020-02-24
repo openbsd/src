@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.c,v 1.4 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: ds_43.c,v 1.5 2020/02/24 12:06:13 florian Exp $ */
 
 /* RFC3658 */
 
@@ -153,21 +153,6 @@ towire_ds(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
-compare_ds(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_ds);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
-}
 
 static inline isc_result_t
 generic_fromstruct_ds(ARGS_FROMSTRUCT) {
@@ -272,9 +257,5 @@ checkowner_ds(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_ds(ARGS_COMPARE) {
-	return (compare_ds(rdata1, rdata2));
-}
 
 #endif	/* RDATA_GENERIC_DS_43_C */

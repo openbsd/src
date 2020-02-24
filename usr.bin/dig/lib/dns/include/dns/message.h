@@ -155,7 +155,6 @@ typedef int dns_messagetextflag_t;
 /*
  * Control behavior of parsing
  */
-#define DNS_MESSAGEPARSE_PRESERVEORDER	0x0001	/*%< preserve rdata order */
 #define DNS_MESSAGEPARSE_BESTEFFORT	0x0002	/*%< return a message if a
 						   recoverable parse error
 						   occurs */
@@ -332,14 +331,9 @@ dns_message_parse(dns_message_t *msg, isc_buffer_t *source,
  * OPT records are detected and stored in the pseudo-section "opt".
  * TSIGs are detected and stored in the pseudo-section "tsig".
  *
- * If #DNS_MESSAGEPARSE_PRESERVEORDER is set, or if the opcode of the message
- * is UPDATE, a separate dns_name_t object will be created for each RR in the
+ * A separate dns_name_t object will be created for each RR in the
  * message.  Each such dns_name_t will have a single rdataset containing the
  * single RR, and the order of the RRs in the message is preserved.
- * Otherwise, only one dns_name_t object will be created for each unique
- * owner name in the section, and each such dns_name_t will have a list
- * of rdatasets.  To access the names and their data, use
- * dns_message_firstname() and dns_message_nextname().
  *
  * If #DNS_MESSAGEPARSE_BESTEFFORT is set, errors in message content will
  * not be considered FORMERRs.  If the entire message can be parsed, it
@@ -348,8 +342,6 @@ dns_message_parse(dns_message_t *msg, isc_buffer_t *source,
  * If #DNS_MESSAGEPARSE_IGNORETRUNCATION is set then return as many complete
  * RR's as possible, DNS_R_RECOVERABLE will be returned.
  *
- * OPT and TSIG records are always handled specially, regardless of the
- * 'preserve_order' setting.
  *
  * Requires:
  *\li	"msg" be valid.

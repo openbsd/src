@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: minfo_14.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: minfo_14.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 
@@ -104,45 +104,6 @@ towire_minfo(ARGS_TOWIRE) {
 	return (dns_name_towire(&rmail, cctx, target));
 }
 
-static inline int
-compare_minfo(ARGS_COMPARE) {
-	isc_region_t region1;
-	isc_region_t region2;
-	dns_name_t name1;
-	dns_name_t name2;
-	int order;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_minfo);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_name_init(&name1, NULL);
-	dns_name_init(&name2, NULL);
-
-	dns_rdata_toregion(rdata1, &region1);
-	dns_rdata_toregion(rdata2, &region2);
-
-	dns_name_fromregion(&name1, &region1);
-	dns_name_fromregion(&name2, &region2);
-
-	order = dns_name_rdatacompare(&name1, &name2);
-	if (order != 0)
-		return (order);
-
-	isc_region_consume(&region1, name_length(&name1));
-	isc_region_consume(&region2, name_length(&name2));
-
-	dns_name_init(&name1, NULL);
-	dns_name_init(&name2, NULL);
-
-	dns_name_fromregion(&name1, &region1);
-	dns_name_fromregion(&name2, &region2);
-
-	order = dns_name_rdatacompare(&name1, &name2);
-	return (order);
-}
 
 static inline isc_result_t
 fromstruct_minfo(ARGS_FROMSTRUCT) {
@@ -222,9 +183,5 @@ checkowner_minfo(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_minfo(ARGS_COMPARE) {
-	return (compare_minfo(rdata1, rdata2));
-}
 
 #endif	/* RDATA_GENERIC_MINFO_14_C */

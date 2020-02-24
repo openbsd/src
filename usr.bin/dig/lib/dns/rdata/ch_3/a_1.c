@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: a_1.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -117,41 +117,6 @@ towire_ch_a(ARGS_TOWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline int
-compare_ch_a(ARGS_COMPARE) {
-	dns_name_t name1;
-	dns_name_t name2;
-	isc_region_t region1;
-	isc_region_t region2;
-	int order;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_a);
-	REQUIRE(rdata1->rdclass == dns_rdataclass_ch);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_name_init(&name1, NULL);
-	dns_name_init(&name2, NULL);
-
-	dns_rdata_toregion(rdata1, &region1);
-	dns_rdata_toregion(rdata2, &region2);
-
-	dns_name_fromregion(&name1, &region1);
-	dns_name_fromregion(&name2, &region2);
-	isc_region_consume(&region1, name_length(&name1));
-	isc_region_consume(&region2, name_length(&name2));
-
-	order = dns_name_rdatacompare(&name1, &name2);
-	if (order != 0)
-		return (order);
-
-	order = memcmp(rdata1->data, rdata2->data, 2);
-	if (order != 0)
-		order = (order < 0) ? -1 : 1;
-	return (order);
-}
 
 static inline isc_result_t
 fromstruct_ch_a(ARGS_FROMSTRUCT) {
@@ -219,8 +184,4 @@ checkowner_ch_a(ARGS_CHECKOWNER) {
 	return (dns_name_ishostname(name, wildcard));
 }
 
-static inline int
-casecompare_ch_a(ARGS_COMPARE) {
-	return (compare_ch_a(rdata1, rdata2));
-}
 #endif	/* RDATA_CH_3_A_1_C */

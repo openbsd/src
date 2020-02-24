@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: proforma.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: proforma.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
 
 #ifndef RDATA_GENERIC_#_#_C
 #define RDATA_GENERIC_#_#_C
@@ -56,22 +56,6 @@ towire_#(ARGS_TOWIRE) {
 	return (ISC_R_NOTIMPLEMENTED);
 }
 
-static inline int
-compare_#(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-
-	REQUIRE(rdata1->type == dns_rdatatype_proforma.crdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_proforma.c#);
-	REQUIRE(rdata1->rdclass == #);
-	REQUIRE(rdata1->length != 0);	/* XXX */
-	REQUIRE(rdata2->length != 0);	/* XXX */
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
-}
 
 static inline isc_result_t
 fromstruct_#(ARGS_FROMSTRUCT) {
@@ -120,21 +104,5 @@ checkowner_#(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_#(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-
-	REQUIRE(rdata1->type == dns_rdatatype_proforma.crdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_proforma.c#);
-	REQUIRE(rdata1->rdclass == #);
-	REQUIRE(rdata1->length != 0);	/* XXX */
-	REQUIRE(rdata2->length != 0);	/* XXX */
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
-}
 
 #endif	/* RDATA_GENERIC_#_#_C */

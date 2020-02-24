@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnskey_48.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: dnskey_48.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -61,23 +61,6 @@ towire_dnskey(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
-compare_dnskey(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-
-	REQUIRE(rdata1 != NULL);
-	REQUIRE(rdata2 != NULL);
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_dnskey);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
-}
 
 static inline isc_result_t
 fromstruct_dnskey(ARGS_FROMSTRUCT) {
@@ -125,13 +108,5 @@ checkowner_dnskey(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_dnskey(ARGS_COMPARE) {
-
-	/*
-	 * Treat ALG 253 (private DNS) subtype name case sensistively.
-	 */
-	return (compare_dnskey(rdata1, rdata2));
-}
 
 #endif	/* RDATA_GENERIC_DNSKEY_48_C */

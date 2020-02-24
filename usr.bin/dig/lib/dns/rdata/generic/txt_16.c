@@ -82,19 +82,6 @@ towire_txt(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
-compare_txt(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_txt);
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
-}
 
 static inline isc_result_t
 generic_fromstruct_txt(ARGS_FROMSTRUCT) {
@@ -198,9 +185,5 @@ checkowner_txt(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_txt(ARGS_COMPARE) {
-	return (compare_txt(rdata1, rdata2));
-}
 
 #endif	/* RDATA_GENERIC_TXT_16_C */

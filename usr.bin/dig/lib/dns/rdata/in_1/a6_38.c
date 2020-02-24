@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a6_38.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: a6_38.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
 
 /* RFC2874 */
 
@@ -150,59 +150,6 @@ towire_in_a6(ARGS_TOWIRE) {
 	return (dns_name_towire(&name, cctx, target));
 }
 
-static inline int
-compare_in_a6(ARGS_COMPARE) {
-	int order;
-	unsigned char prefixlen1, prefixlen2;
-	unsigned char octets;
-	dns_name_t name1;
-	dns_name_t name2;
-	isc_region_t region1;
-	isc_region_t region2;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_a6);
-	REQUIRE(rdata1->rdclass == dns_rdataclass_in);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_rdata_toregion(rdata1, &region1);
-	dns_rdata_toregion(rdata2, &region2);
-	prefixlen1 = region1.base[0];
-	prefixlen2 = region2.base[0];
-	isc_region_consume(&region1, 1);
-	isc_region_consume(&region2, 1);
-	if (prefixlen1 < prefixlen2)
-		return (-1);
-	else if (prefixlen1 > prefixlen2)
-		return (1);
-	/*
-	 * Prefix lengths are equal.
-	 */
-	octets = 16 - prefixlen1 / 8;
-
-	if (octets > 0) {
-		order = memcmp(region1.base, region2.base, octets);
-		if (order < 0)
-			return (-1);
-		else if (order > 0)
-			return (1);
-		/*
-		 * Address suffixes are equal.
-		 */
-		if (prefixlen1 == 0)
-			return (order);
-		isc_region_consume(&region1, octets);
-		isc_region_consume(&region2, octets);
-	}
-
-	dns_name_init(&name1, NULL);
-	dns_name_init(&name2, NULL);
-	dns_name_fromregion(&name1, &region1);
-	dns_name_fromregion(&name2, &region2);
-	return (dns_name_rdatacompare(&name1, &name2));
-}
 
 static inline isc_result_t
 fromstruct_in_a6(ARGS_FROMSTRUCT) {
@@ -317,9 +264,5 @@ checkowner_in_a6(ARGS_CHECKOWNER) {
 	return (dns_name_ishostname(name, wildcard));
 }
 
-static inline int
-casecompare_in_a6(ARGS_COMPARE) {
-	return (compare_in_a6(rdata1, rdata2));
-}
 
 #endif	/* RDATA_IN_1_A6_38_C */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: nsec3_50.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -168,21 +168,6 @@ towire_nsec3(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
-compare_nsec3(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_nsec3);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
-}
 
 static inline isc_result_t
 fromstruct_nsec3(ARGS_FROMSTRUCT) {
@@ -299,9 +284,5 @@ checkowner_nsec3(ARGS_CHECKOWNER) {
 	return (ISC_FALSE);
 }
 
-static inline int
-casecompare_nsec3(ARGS_COMPARE) {
-	return (compare_nsec3(rdata1, rdata2));
-}
 
 #endif	/* RDATA_GENERIC_NSEC3_50_C */

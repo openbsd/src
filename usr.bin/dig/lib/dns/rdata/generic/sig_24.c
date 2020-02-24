@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sig_24.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: sig_24.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -217,48 +217,6 @@ towire_sig(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-static inline int
-compare_sig(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-	dns_name_t name1;
-	dns_name_t name2;
-	int order;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_sig);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-
-	INSIST(r1.length > 18);
-	INSIST(r2.length > 18);
-	r1.length = 18;
-	r2.length = 18;
-	order = isc_region_compare(&r1, &r2);
-	if (order != 0)
-		return (order);
-
-	dns_name_init(&name1, NULL);
-	dns_name_init(&name2, NULL);
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	isc_region_consume(&r1, 18);
-	isc_region_consume(&r2, 18);
-	dns_name_fromregion(&name1, &r1);
-	dns_name_fromregion(&name2, &r2);
-	order = dns_name_rdatacompare(&name1, &name2);
-	if (order != 0)
-		return (order);
-
-	isc_region_consume(&r1, name_length(&name1));
-	isc_region_consume(&r2, name_length(&name2));
-
-	return (isc_region_compare(&r1, &r2));
-}
 
 static inline isc_result_t
 fromstruct_sig(ARGS_FROMSTRUCT) {
@@ -437,8 +395,4 @@ checkowner_sig(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_sig(ARGS_COMPARE) {
-	return (compare_sig(rdata1, rdata2));
-}
 #endif	/* RDATA_GENERIC_SIG_24_C */

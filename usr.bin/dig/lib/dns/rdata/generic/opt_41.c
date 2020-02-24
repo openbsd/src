@@ -200,19 +200,6 @@ towire_opt(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
-compare_opt(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_opt);
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
-}
 
 static inline isc_result_t
 fromstruct_opt(ARGS_FROMSTRUCT) {
@@ -290,9 +277,5 @@ checkowner_opt(ARGS_CHECKOWNER) {
 	return (dns_name_equal(name, dns_rootname));
 }
 
-static inline int
-casecompare_opt(ARGS_COMPARE) {
-	return (compare_opt(rdata1, rdata2));
-}
 
 #endif	/* RDATA_GENERIC_OPT_41_C */

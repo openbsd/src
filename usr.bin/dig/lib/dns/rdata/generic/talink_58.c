@@ -97,21 +97,6 @@ towire_talink(ARGS_TOWIRE) {
 	return(dns_name_towire(&next, cctx, target));
 }
 
-static inline int
-compare_talink(ARGS_COMPARE) {
-	isc_region_t region1;
-	isc_region_t region2;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_talink);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_rdata_toregion(rdata1, &region1);
-	dns_rdata_toregion(rdata2, &region2);
-	return (isc_region_compare(&region1, &region2));
-}
 
 static inline isc_result_t
 fromstruct_talink(ARGS_FROMSTRUCT) {
@@ -193,9 +178,5 @@ checkowner_talink(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_talink(ARGS_COMPARE) {
-	return (compare_talink(rdata1, rdata2));
-}
 
 #endif	/* RDATA_GENERIC_TALINK_58_C */

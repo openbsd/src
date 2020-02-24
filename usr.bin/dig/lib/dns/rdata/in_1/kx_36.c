@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: kx_36.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: kx_36.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 17:24:54 PST 2000 by explorer */
 
@@ -98,39 +98,6 @@ towire_in_kx(ARGS_TOWIRE) {
 	return (dns_name_towire(&name, cctx, target));
 }
 
-static inline int
-compare_in_kx(ARGS_COMPARE) {
-	dns_name_t name1;
-	dns_name_t name2;
-	isc_region_t region1;
-	isc_region_t region2;
-	int order;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_kx);
-	REQUIRE(rdata1->rdclass == dns_rdataclass_in);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	order = memcmp(rdata1->data, rdata2->data, 2);
-	if (order != 0)
-		return (order < 0 ? -1 : 1);
-
-	dns_name_init(&name1, NULL);
-	dns_name_init(&name2, NULL);
-
-	dns_rdata_toregion(rdata1, &region1);
-	dns_rdata_toregion(rdata2, &region2);
-
-	isc_region_consume(&region1, 2);
-	isc_region_consume(&region2, 2);
-
-	dns_name_fromregion(&name1, &region1);
-	dns_name_fromregion(&name2, &region2);
-
-	return (dns_name_rdatacompare(&name1, &name2));
-}
 
 static inline isc_result_t
 fromstruct_in_kx(ARGS_FROMSTRUCT) {
@@ -203,9 +170,5 @@ checkowner_in_kx(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_in_kx(ARGS_COMPARE) {
-	return (compare_in_kx(rdata1, rdata2));
-}
 
 #endif	/* RDATA_IN_1_KX_36_C */

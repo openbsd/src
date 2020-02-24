@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.16 2020/02/23 19:54:25 jung Exp $ */
+/* $Id: dighost.c,v 1.17 2020/02/24 12:06:13 florian Exp $ */
 
 /*! \file
  *  \note
@@ -3436,7 +3436,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	}
 
 	debug("before parse starts");
-	parseflags = DNS_MESSAGEPARSE_PRESERVEORDER;
+	parseflags = 0;
 	if (l->besteffort) {
 		parseflags |= DNS_MESSAGEPARSE_BESTEFFORT;
 		parseflags |= DNS_MESSAGEPARSE_IGNORETRUNCATION;

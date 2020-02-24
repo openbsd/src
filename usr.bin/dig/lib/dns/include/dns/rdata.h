@@ -200,28 +200,6 @@ dns_rdata_clone(const dns_rdata_t *src, dns_rdata_t *target);
  */
 
 /***
- *** Comparisons
- ***/
-
-int
-dns_rdata_compare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2);
-/*%<
- * Determine the relative ordering under the DNSSEC order relation of
- * 'rdata1' and 'rdata2'.
- *
- * Requires:
- *
- *\li	'rdata1' is a valid, non-empty rdata
- *
- *\li	'rdata2' is a valid, non-empty rdata
- *
- * Returns:
- *\li	< 0		'rdata1' is less than 'rdata2'
- *\li	0		'rdata1' is equal to 'rdata2'
- *\li	> 0		'rdata1' is greater than 'rdata2'
- */
-
-/***
  *** Conversions
  ***/
 

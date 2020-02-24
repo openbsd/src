@@ -65,21 +65,6 @@ towire_eui48(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
-compare_eui48(ARGS_COMPARE) {
-	isc_region_t region1;
-	isc_region_t region2;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_eui48);
-	REQUIRE(rdata1->length == 6);
-	REQUIRE(rdata2->length == 6);
-
-	dns_rdata_toregion(rdata1, &region1);
-	dns_rdata_toregion(rdata2, &region2);
-	return (isc_region_compare(&region1, &region2));
-}
 
 static inline isc_result_t
 fromstruct_eui48(ARGS_FROMSTRUCT) {
@@ -135,9 +120,5 @@ checkowner_eui48(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_eui48(ARGS_COMPARE) {
-	return (compare_eui48(rdata1, rdata2));
-}
 
 #endif	/* RDATA_GENERIC_EUI48_108_C */

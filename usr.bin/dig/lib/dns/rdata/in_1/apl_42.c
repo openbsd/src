@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: apl_42.c,v 1.4 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: apl_42.c,v 1.5 2020/02/24 12:06:14 florian Exp $ */
 
 /* RFC3123 */
 
@@ -149,20 +149,6 @@ towire_in_apl(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-static inline int
-compare_in_apl(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_apl);
-	REQUIRE(rdata1->rdclass == dns_rdataclass_in);
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-	return (isc_region_compare(&r1, &r2));
-}
 
 static inline isc_result_t
 fromstruct_in_apl(ARGS_FROMSTRUCT) {
@@ -230,9 +216,5 @@ checkowner_in_apl(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_in_apl(ARGS_COMPARE) {
-	return (compare_in_apl(rdata1, rdata2));
-}
 
 #endif	/* RDATA_IN_1_APL_42_C */

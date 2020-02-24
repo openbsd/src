@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.4 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: hip_55.c,v 1.5 2020/02/24 12:06:13 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -145,21 +145,6 @@ towire_hip(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, region.base, region.length));
 }
 
-static inline int
-compare_hip(ARGS_COMPARE) {
-	isc_region_t region1;
-	isc_region_t region2;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_hip);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_rdata_toregion(rdata1, &region1);
-	dns_rdata_toregion(rdata2, &region2);
-	return (isc_region_compare(&region1, &region2));
-}
 
 static inline isc_result_t
 fromstruct_hip(ARGS_FROMSTRUCT) {
@@ -303,58 +288,5 @@ dns_rdata_hip_next(dns_rdata_hip_t *hip) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline int
-casecompare_hip(ARGS_COMPARE) {
-	isc_region_t r1;
-	isc_region_t r2;
-	dns_name_t name1;
-	dns_name_t name2;
-	int order;
-	uint8_t hit_len;
-	uint16_t key_len;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_hip);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_rdata_toregion(rdata1, &r1);
-	dns_rdata_toregion(rdata2, &r2);
-
-	INSIST(r1.length > 4);
-	INSIST(r2.length > 4);
-	order = memcmp(r1.base, r2.base, 4);
-	if (order != 0)
-		return (order);
-
-	hit_len = uint8_fromregion(&r1);
-	isc_region_consume(&r1, 2);         /* hit length + algorithm */
-	key_len = uint16_fromregion(&r1);
-	isc_region_consume(&r1, 2);         /* key length */
-	isc_region_consume(&r2, 4);
-
-	INSIST(r1.length >= (unsigned) (hit_len + key_len));
-	INSIST(r2.length >= (unsigned) (hit_len + key_len));
-	order = memcmp(r1.base, r2.base, hit_len + key_len);
-	if (order != 0)
-		return (order);
-	isc_region_consume(&r1, hit_len + key_len);
-	isc_region_consume(&r2, hit_len + key_len);
-
-	dns_name_init(&name1, NULL);
-	dns_name_init(&name2, NULL);
-	while (r1.length != 0 && r2.length != 0) {
-		dns_name_fromregion(&name1, &r1);
-		dns_name_fromregion(&name2, &r2);
-		order = dns_name_rdatacompare(&name1, &name2);
-		if (order != 0)
-			return (order);
-
-		isc_region_consume(&r1, name_length(&name1));
-		isc_region_consume(&r2, name_length(&name2));
-	}
-	return (isc_region_compare(&r1, &r2));
-}
 
 #endif	/* RDATA_GENERIC_HIP_5_C */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: naptr_35.c,v 1.3 2020/02/23 19:54:26 jung Exp $ */
+/* $Id: naptr_35.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -270,73 +270,6 @@ towire_naptr(ARGS_TOWIRE) {
 	return (dns_name_towire(&name, cctx, target));
 }
 
-static inline int
-compare_naptr(ARGS_COMPARE) {
-	dns_name_t name1;
-	dns_name_t name2;
-	isc_region_t region1;
-	isc_region_t region2;
-	int order, len;
-
-	REQUIRE(rdata1->type == rdata2->type);
-	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == dns_rdatatype_naptr);
-	REQUIRE(rdata1->length != 0);
-	REQUIRE(rdata2->length != 0);
-
-	dns_rdata_toregion(rdata1, &region1);
-	dns_rdata_toregion(rdata2, &region2);
-
-	/*
-	 * Order, preference.
-	 */
-	order = memcmp(region1.base, region2.base, 4);
-	if (order != 0)
-		return (order < 0 ? -1 : 1);
-	isc_region_consume(&region1, 4);
-	isc_region_consume(&region2, 4);
-
-	/*
-	 * Flags.
-	 */
-	len = ISC_MIN(region1.base[0], region2.base[0]);
-	order = memcmp(region1.base, region2.base, len + 1);
-	if (order != 0)
-		return (order < 0 ? -1 : 1);
-	isc_region_consume(&region1, region1.base[0] + 1);
-	isc_region_consume(&region2, region2.base[0] + 1);
-
-	/*
-	 * Service.
-	 */
-	len = ISC_MIN(region1.base[0], region2.base[0]);
-	order = memcmp(region1.base, region2.base, len + 1);
-	if (order != 0)
-		return (order < 0 ? -1 : 1);
-	isc_region_consume(&region1, region1.base[0] + 1);
-	isc_region_consume(&region2, region2.base[0] + 1);
-
-	/*
-	 * Regexp.
-	 */
-	len = ISC_MIN(region1.base[0], region2.base[0]);
-	order = memcmp(region1.base, region2.base, len + 1);
-	if (order != 0)
-		return (order < 0 ? -1 : 1);
-	isc_region_consume(&region1, region1.base[0] + 1);
-	isc_region_consume(&region2, region2.base[0] + 1);
-
-	/*
-	 * Replacement.
-	 */
-	dns_name_init(&name1, NULL);
-	dns_name_init(&name2, NULL);
-
-	dns_name_fromregion(&name1, &region1);
-	dns_name_fromregion(&name2, &region2);
-
-	return (dns_name_rdatacompare(&name1, &name2));
-}
 
 static inline isc_result_t
 fromstruct_naptr(ARGS_FROMSTRUCT) {
@@ -458,9 +391,5 @@ checkowner_naptr(ARGS_CHECKOWNER) {
 	return (ISC_TRUE);
 }
 
-static inline int
-casecompare_naptr(ARGS_COMPARE) {
-	return (compare_naptr(rdata1, rdata2));
-}
 
 #endif	/* RDATA_GENERIC_NAPTR_35_C */
