@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dhcid_49.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: dhcid_49.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
 
 /* RFC 4701 */
 
@@ -131,17 +131,6 @@ tostruct_in_dhcid(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_in_dhcid(ARGS_FREESTRUCT) {
-	dns_rdata_in_dhcid_t *dhcid = source;
-
-	REQUIRE(dhcid != NULL);
-	REQUIRE(dhcid->common.rdtype == dns_rdatatype_dhcid);
-	REQUIRE(dhcid->common.rdclass == dns_rdataclass_in);
-
-	if (dhcid->dhcid != NULL)
-		free(dhcid->dhcid);
-}
 
 
 

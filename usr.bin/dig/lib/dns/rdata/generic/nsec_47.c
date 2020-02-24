@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec_47.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: nsec_47.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -151,17 +151,6 @@ tostruct_nsec(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_nsec(ARGS_FREESTRUCT) {
-	dns_rdata_nsec_t *nsec = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(nsec->common.rdtype == dns_rdatatype_nsec);
-
-	dns_name_free(&nsec->next);
-	if (nsec->typebits != NULL)
-		free(nsec->typebits);
-}
 
 
 #endif	/* RDATA_GENERIC_NSEC_47_C */

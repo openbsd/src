@@ -72,15 +72,6 @@ tostruct_smimea(ARGS_TOSTRUCT) {
 	return (generic_tostruct_tlsa(rdata, target));
 }
 
-static inline void
-freestruct_smimea(ARGS_FREESTRUCT) {
-	dns_rdata_txt_t *txt = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(txt->common.rdtype == dns_rdatatype_smimea);
-
-	generic_freestruct_tlsa(source);
-}
 
 
 

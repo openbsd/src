@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: x25_19.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: x25_19.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:15:57 PST 2000 by bwelling */
 
@@ -114,15 +114,6 @@ tostruct_x25(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_x25(ARGS_FREESTRUCT) {
-	dns_rdata_x25_t *x25 = source;
-	REQUIRE(source != NULL);
-	REQUIRE(x25->common.rdtype == dns_rdatatype_x25);
-
-	if (x25->x25 != NULL)
-		free(x25->x25);
-}
 
 
 

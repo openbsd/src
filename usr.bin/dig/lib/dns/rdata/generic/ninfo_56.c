@@ -75,15 +75,6 @@ tostruct_ninfo(ARGS_TOSTRUCT) {
 	return (generic_tostruct_txt(rdata, target));
 }
 
-static inline void
-freestruct_ninfo(ARGS_FREESTRUCT) {
-	dns_rdata_ninfo_t *ninfo = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(ninfo->common.rdtype == dns_rdatatype_ninfo);
-
-	generic_freestruct_txt(source);
-}
 
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: unspec_103.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: unspec_103.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 #ifndef RDATA_GENERIC_UNSPEC_103_C
 #define RDATA_GENERIC_UNSPEC_103_C
@@ -95,16 +95,6 @@ tostruct_unspec(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_unspec(ARGS_FREESTRUCT) {
-	dns_rdata_unspec_t *unspec = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(unspec->common.rdtype == dns_rdatatype_unspec);
-
-	if (unspec->data != NULL)
-		free(unspec->data);
-}
 
 
 

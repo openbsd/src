@@ -127,15 +127,6 @@ tostruct_lp(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_lp(ARGS_FREESTRUCT) {
-	dns_rdata_lp_t *lp = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(lp->common.rdtype == dns_rdatatype_lp);
-
-	dns_name_free(&lp->lp);
-}
 
 
 

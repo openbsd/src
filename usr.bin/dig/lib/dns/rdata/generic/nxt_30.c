@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nxt_30.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: nxt_30.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -170,18 +170,6 @@ tostruct_nxt(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_nxt(ARGS_FREESTRUCT) {
-	dns_rdata_nxt_t *nxt = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(nxt->common.rdtype == dns_rdatatype_nxt);
-
-
-	dns_name_free(&nxt->next);
-	if (nxt->typebits != NULL)
-		free(nxt->typebits);
-}
 
 
 #endif	/* RDATA_GENERIC_NXT_30_C */

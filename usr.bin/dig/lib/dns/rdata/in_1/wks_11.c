@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.6 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: wks_11.c,v 1.7 2020/02/24 17:43:53 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -161,17 +161,6 @@ tostruct_in_wks(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_in_wks(ARGS_FREESTRUCT) {
-	dns_rdata_in_wks_t *wks = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(wks->common.rdtype == dns_rdatatype_wks);
-	REQUIRE(wks->common.rdclass == dns_rdataclass_in);
-
-	if (wks->map != NULL)
-		free(wks->map);
-}
 
 
 

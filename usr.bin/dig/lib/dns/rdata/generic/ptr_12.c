@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ptr_12.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: ptr_12.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 14:05:12 PST 2000 by explorer */
 
@@ -117,15 +117,6 @@ tostruct_ptr(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_ptr(ARGS_FREESTRUCT) {
-	dns_rdata_ptr_t *ptr = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(ptr->common.rdtype == dns_rdatatype_ptr);
-
-	dns_name_free(&ptr->ptr);
-}
 
 
 static unsigned char ip6_arpa_data[]  = "\003IP6\004ARPA";

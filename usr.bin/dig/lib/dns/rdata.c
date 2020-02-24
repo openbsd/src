@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.18 2020/02/24 15:09:14 jsg Exp $ */
+/* $Id: rdata.c,v 1.19 2020/02/24 17:43:52 florian Exp $ */
 
 /*! \file */
 
@@ -689,11 +689,31 @@ dns_rdata_tostruct(const dns_rdata_t *rdata, void *target) {
 }
 
 void
-dns_rdata_freestruct(void *source) {
-	dns_rdatacommon_t *common = source;
-	REQUIRE(source != NULL);
+dns_rdata_freestruct_cname(dns_rdata_cname_t *cname) {
+	REQUIRE(cname != NULL);
 
-	FREESTRUCTSWITCH
+	freestruct_cname(cname);
+}
+
+void
+dns_rdata_freestruct_ns(dns_rdata_ns_t *ns) {
+	REQUIRE(ns != NULL);
+
+	freestruct_ns(ns);
+}
+
+void
+dns_rdata_freestruct_soa(dns_rdata_soa_t *soa) {
+	REQUIRE(soa != NULL);
+
+	freestruct_soa(soa);
+}
+
+void
+dns_rdata_freestruct_tsig(dns_rdata_any_tsig_t *tsig) {
+	REQUIRE(tsig != NULL);
+
+	freestruct_any_tsig(tsig);
 }
 
 isc_boolean_t

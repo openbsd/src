@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rp_17.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: rp_17.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* RFC1183 */
 
@@ -156,16 +156,6 @@ tostruct_rp(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_rp(ARGS_FREESTRUCT) {
-	dns_rdata_rp_t *rp = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(rp->common.rdtype == dns_rdatatype_rp);
-
-	dns_name_free(&rp->mail);
-	dns_name_free(&rp->text);
-}
 
 
 #endif	/* RDATA_GENERIC_RP_17_C */

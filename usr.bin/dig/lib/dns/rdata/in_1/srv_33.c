@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: srv_33.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: srv_33.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 13:01:00 PST 2000 by bwelling */
 
@@ -183,16 +183,6 @@ tostruct_in_srv(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_in_srv(ARGS_FREESTRUCT) {
-	dns_rdata_in_srv_t *srv = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(srv->common.rdclass == dns_rdataclass_in);
-	REQUIRE(srv->common.rdtype == dns_rdatatype_srv);
-
-	dns_name_free(&srv->target);
-}
 
 
 

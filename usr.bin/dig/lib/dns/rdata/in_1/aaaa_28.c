@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aaaa_28.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: aaaa_28.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -123,16 +123,6 @@ tostruct_in_aaaa(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_in_aaaa(ARGS_FREESTRUCT) {
-	dns_rdata_in_aaaa_t *aaaa = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(aaaa->common.rdclass == dns_rdataclass_in);
-	REQUIRE(aaaa->common.rdtype == dns_rdatatype_aaaa);
-
-	UNUSED(aaaa);
-}
 
 
 #endif	/* RDATA_IN_1_AAAA_28_C */

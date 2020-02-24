@@ -83,15 +83,6 @@ tostruct_cds(ARGS_TOSTRUCT) {
 	return (generic_tostruct_ds(rdata, target));
 }
 
-static inline void
-freestruct_cds(ARGS_FREESTRUCT) {
-	dns_rdata_cds_t *ds = source;
-
-	REQUIRE(ds != NULL);
-	REQUIRE(ds->common.rdtype == dns_rdatatype_cds);
-
-	free(ds->digest);
-}
 
 
 

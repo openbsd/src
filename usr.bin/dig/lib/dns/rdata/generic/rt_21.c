@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rt_21.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: rt_21.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:02:31 PST 2000 by brister */
 
@@ -147,15 +147,6 @@ tostruct_rt(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_rt(ARGS_FREESTRUCT) {
-	dns_rdata_rt_t *rt = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(rt->common.rdtype == dns_rdatatype_rt);
-
-	dns_name_free(&rt->host);
-}
 
 
 

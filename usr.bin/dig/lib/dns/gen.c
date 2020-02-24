@@ -625,8 +625,6 @@ main(int argc, char **argv) {
 			  FROMSTRUCTTYPE, FROMSTRUCTCLASS, FROMSTRUCTDEF);
 		doswitch("TOSTRUCTSWITCH", "tostruct", TOSTRUCTARGS,
 			  TOSTRUCTTYPE, TOSTRUCTCLASS, TOSTRUCTDEF);
-		doswitch("FREESTRUCTSWITCH", "freestruct", FREESTRUCTARGS,
-			  FREESTRUCTTYPE, FREESTRUCTCLASS, FREESTRUCTDEF);
 
 		/*
 		 * From here down, we are processing the rdata names and

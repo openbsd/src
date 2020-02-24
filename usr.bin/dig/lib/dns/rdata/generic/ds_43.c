@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.c,v 1.6 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: ds_43.c,v 1.7 2020/02/24 17:43:52 florian Exp $ */
 
 /* RFC3658 */
 
@@ -234,15 +234,6 @@ tostruct_ds(ARGS_TOSTRUCT) {
 	return (generic_tostruct_ds(rdata, target));
 }
 
-static inline void
-freestruct_ds(ARGS_FREESTRUCT) {
-	dns_rdata_ds_t *ds = source;
-
-	REQUIRE(ds != NULL);
-	REQUIRE(ds->common.rdtype == dns_rdatatype_ds);
-
-	free(ds->digest);
-}
 
 
 

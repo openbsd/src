@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: px_26.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: px_26.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
 
 /* Reviewed: Mon Mar 20 10:44:27 PST 2000 */
 
@@ -199,17 +199,6 @@ tostruct_in_px(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_in_px(ARGS_FREESTRUCT) {
-	dns_rdata_in_px_t *px = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(px->common.rdclass == dns_rdataclass_in);
-	REQUIRE(px->common.rdtype == dns_rdatatype_px);
-
-	dns_name_free(&px->map822);
-	dns_name_free(&px->mapx400);
-}
 
 
 

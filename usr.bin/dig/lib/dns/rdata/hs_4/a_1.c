@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: a_1.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:58:36 PST 2000 by brister */
 
@@ -124,12 +124,6 @@ tostruct_hs_a(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_hs_a(ARGS_FREESTRUCT) {
-	UNUSED(source);
-
-	REQUIRE(source != NULL);
-}
 
 
 

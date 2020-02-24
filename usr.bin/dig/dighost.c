@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.18 2020/02/24 13:49:38 jsg Exp $ */
+/* $Id: dighost.c,v 1.19 2020/02/24 17:43:52 florian Exp $ */
 
 /*! \file
  *  \note
@@ -1722,7 +1722,7 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 			result = dns_rdata_tostruct(&rdata, &ns);
 			check_result(result, "dns_rdata_tostruct");
 			dns_name_format(&ns.name, namestr, sizeof(namestr));
-			dns_rdata_freestruct(&ns);
+			dns_rdata_freestruct_ns(&ns);
 
 			/* Initialize lookup if we've not yet */
 			debug("found NS %s", namestr);
@@ -3105,7 +3105,7 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 				result = dns_rdata_tostruct(&rdata, &soa);
 				check_result(result, "dns_rdata_tostruct");
 				serial = soa.serial;
-				dns_rdata_freestruct(&soa);
+				dns_rdata_freestruct_soa(&soa);
 				if (!query->first_soa_rcvd) {
 					query->first_soa_rcvd = ISC_TRUE;
 					query->first_rr_serial = serial;

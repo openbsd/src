@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap_22.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: nsap_22.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 10:41:07 PST 2000 by gson */
 
@@ -119,17 +119,6 @@ tostruct_in_nsap(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_in_nsap(ARGS_FREESTRUCT) {
-	dns_rdata_in_nsap_t *nsap = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(nsap->common.rdclass == dns_rdataclass_in);
-	REQUIRE(nsap->common.rdtype == dns_rdatatype_nsap);
-
-	if (nsap->nsap != NULL)
-		free(nsap->nsap);
-}
 
 
 

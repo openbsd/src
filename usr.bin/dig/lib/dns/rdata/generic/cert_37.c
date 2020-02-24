@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cert_37.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: cert_37.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 21:14:32 EST 2000 by tale */
 
@@ -158,15 +158,6 @@ tostruct_cert(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_cert(ARGS_FREESTRUCT) {
-	dns_rdata_cert_t *cert = source;
-
-	REQUIRE(cert != NULL);
-	REQUIRE(cert->common.rdtype == dns_rdatatype_cert);
-
-	free(cert->certificate);
-}
 
 
 #endif	/* RDATA_GENERIC_CERT_37_C */

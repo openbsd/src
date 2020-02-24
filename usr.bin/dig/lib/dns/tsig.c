@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.9 2020/02/23 08:54:01 florian Exp $
+ * $Id: tsig.c,v 1.10 2020/02/24 17:43:52 florian Exp $
  */
 /*! \file */
 
@@ -1357,7 +1357,7 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	}
 
  cleanup_querystruct:
-	dns_rdata_freestruct(&querytsig);
+	dns_rdata_freestruct_tsig(&querytsig);
 
 	return (ret);
 }

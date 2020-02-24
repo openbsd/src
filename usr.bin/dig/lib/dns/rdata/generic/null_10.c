@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: null_10.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: null_10.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:57:50 PST 2000 by explorer */
 
@@ -93,16 +93,6 @@ tostruct_null(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_null(ARGS_FREESTRUCT) {
-	dns_rdata_null_t *null = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(null->common.rdtype == dns_rdatatype_null);
-
-	if (null->data != NULL)
-		free(null->data);
-}
 
 
 

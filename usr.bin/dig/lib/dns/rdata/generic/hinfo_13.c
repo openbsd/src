@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hinfo_13.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: hinfo_13.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -118,15 +118,6 @@ tostruct_hinfo(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_hinfo(ARGS_FREESTRUCT) {
-	dns_rdata_hinfo_t *hinfo = source;
-
-	REQUIRE(source != NULL);
-
-	free(hinfo->cpu);
-	free(hinfo->os);
-}
 
 
 #endif	/* RDATA_GENERIC_HINFO_13_C */

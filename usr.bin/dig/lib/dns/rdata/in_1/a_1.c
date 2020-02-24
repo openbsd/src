@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: a_1.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -127,16 +127,6 @@ tostruct_in_a(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_in_a(ARGS_FREESTRUCT) {
-	dns_rdata_in_a_t *a = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(a->common.rdtype == dns_rdatatype_a);
-	REQUIRE(a->common.rdclass == dns_rdataclass_in);
-
-	UNUSED(a);
-}
 
 
 

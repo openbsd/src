@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: nsec3_50.c,v 1.5 2020/02/24 17:43:52 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -243,21 +243,6 @@ tostruct_nsec3(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_nsec3(ARGS_FREESTRUCT) {
-	dns_rdata_nsec3_t *nsec3 = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(nsec3->common.rdtype == dns_rdatatype_nsec3);
-
-
-	if (nsec3->salt != NULL)
-		free(nsec3->salt);
-	if (nsec3->next != NULL)
-		free(nsec3->next);
-	if (nsec3->typebits != NULL)
-		free(nsec3->typebits);
-}
 
 #define NSEC3_MAX_HASH_LENGTH 155
 static inline isc_boolean_t

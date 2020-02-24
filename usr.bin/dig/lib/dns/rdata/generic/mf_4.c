@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mf_4.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: mf_4.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:47:33 PST 2000 by brister */
 
@@ -117,15 +117,6 @@ tostruct_mf(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_mf(ARGS_FREESTRUCT) {
-	dns_rdata_mf_t *mf = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(mf->common.rdtype == dns_rdatatype_mf);
-
-	dns_name_free(&mf->mf);
-}
 
 
 

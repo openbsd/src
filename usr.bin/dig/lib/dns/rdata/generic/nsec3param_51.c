@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3param_51.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: nsec3param_51.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -183,16 +183,6 @@ tostruct_nsec3param(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_nsec3param(ARGS_FREESTRUCT) {
-	dns_rdata_nsec3param_t *nsec3param = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(nsec3param->common.rdtype == dns_rdatatype_nsec3param);
-
-	if (nsec3param->salt != NULL)
-		free(nsec3param->salt);
-}
 
 
 

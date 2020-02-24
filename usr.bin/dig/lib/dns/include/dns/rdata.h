@@ -92,6 +92,8 @@
 #include <dns/name.h>
 #include <dns/message.h>
 
+#include "rdatastruct.h"
+
 /***
  *** Types
  ***/
@@ -409,14 +411,47 @@ dns_rdata_tostruct(const dns_rdata_t *rdata, void *target);
  */
 
 void
-dns_rdata_freestruct(void *source);
+dns_rdata_freestruct_cname(dns_rdata_cname_t *cname);
 /*%<
- * Free dynamic memory attached to 'source' (if any).
+ * Free dynamic memory attached to 'cname' (if any).
  *
  * Requires:
  *
- *\li	'source' to point to the structure previously filled in by
- *	dns_rdata_tostruct().
+ *\li	'cname' to point to the structure previously filled in by
+ *	dns_rdata_tostruct_cname().
+ */
+
+void
+dns_rdata_freestruct_ns(dns_rdata_ns_t *ns);
+/*%<
+ * Free dynamic memory attached to 'ns' (if any).
+ *
+ * Requires:
+ *
+ *\li	'ns' to point to the structure previously filled in by
+ *	dns_rdata_tostruct_ns().
+ */
+
+void
+dns_rdata_freestruct_soa(dns_rdata_soa_t *soa);
+/*%<
+ * Free dynamic memory attached to 'soa' (if any).
+ *
+ * Requires:
+ *
+ *\li	'soa' to point to the structure previously filled in by
+ *	dns_rdata_tostruct_soa().
+ */
+
+void
+dns_rdata_freestruct_tsig(dns_rdata_any_tsig_t *tsig);
+/*%<
+ * Free dynamic memory attached to 'tsig' (if any).
+ *
+ * Requires:
+ *
+ *\li	'tsig' to point to the structure previously filled in by
+ *	dns_rdata_tostruct_tsig().
  */
 
 isc_boolean_t

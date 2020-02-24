@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mx_15.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: mx_15.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 
@@ -141,15 +141,6 @@ tostruct_mx(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_mx(ARGS_FREESTRUCT) {
-	dns_rdata_mx_t *mx = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(mx->common.rdtype == dns_rdatatype_mx);
-
-	dns_name_free(&mx->mx);
-}
 
 
 

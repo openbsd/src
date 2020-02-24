@@ -132,17 +132,6 @@ tostruct_openpgpkey(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_openpgpkey(ARGS_FREESTRUCT) {
-	dns_rdata_openpgpkey_t *sig = (dns_rdata_openpgpkey_t *) source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(sig->common.rdtype == dns_rdatatype_openpgpkey);
-
-
-	if (sig->keyring != NULL)
-		free(sig->keyring);
-}
 
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnskey_48.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: dnskey_48.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -85,15 +85,6 @@ tostruct_dnskey(ARGS_TOSTRUCT) {
 	return (generic_tostruct_key(rdata, target));
 }
 
-static inline void
-freestruct_dnskey(ARGS_FREESTRUCT) {
-	dns_rdata_dnskey_t *dnskey = (dns_rdata_dnskey_t *) source;
-
-	REQUIRE(dnskey != NULL);
-	REQUIRE(dnskey->common.rdtype == dns_rdatatype_dnskey);
-
-	generic_freestruct_key(source);
-}
 
 
 

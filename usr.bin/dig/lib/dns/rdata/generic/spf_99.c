@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: spf_99.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: spf_99.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -80,15 +80,6 @@ tostruct_spf(ARGS_TOSTRUCT) {
 	return (generic_tostruct_txt(rdata, target));
 }
 
-static inline void
-freestruct_spf(ARGS_FREESTRUCT) {
-	dns_rdata_spf_t *txt = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(txt->common.rdtype == dns_rdatatype_spf);
-
-	generic_freestruct_txt(source);
-}
 
 
 #endif	/* RDATA_GENERIC_SPF_99_C */

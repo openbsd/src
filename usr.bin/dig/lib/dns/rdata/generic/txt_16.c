@@ -162,15 +162,6 @@ tostruct_txt(ARGS_TOSTRUCT) {
 	return (generic_tostruct_txt(rdata, target));
 }
 
-static inline void
-freestruct_txt(ARGS_FREESTRUCT) {
-	dns_rdata_txt_t *txt = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(txt->common.rdtype == dns_rdatatype_txt);
-
-	generic_freestruct_txt(source);
-}
 
 
 

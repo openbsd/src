@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dname_39.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: dname_39.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:52:38 PST 2000 by explorer */
 
@@ -118,15 +118,6 @@ tostruct_dname(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_dname(ARGS_FREESTRUCT) {
-	dns_rdata_dname_t *dname = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(dname->common.rdtype == dns_rdatatype_dname);
-
-	dns_name_free(&dname->dname);
-}
 
 
 #endif	/* RDATA_GENERIC_DNAME_39_C */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: loc_29.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: loc_29.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -310,16 +310,6 @@ tostruct_loc(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_loc(ARGS_FREESTRUCT) {
-	dns_rdata_loc_t *loc = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(loc->common.rdtype == dns_rdatatype_loc);
-
-	UNUSED(source);
-	UNUSED(loc);
-}
 
 
 

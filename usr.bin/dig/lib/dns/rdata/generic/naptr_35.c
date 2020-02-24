@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: naptr_35.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: naptr_35.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -365,18 +365,6 @@ tostruct_naptr(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_naptr(ARGS_FREESTRUCT) {
-	dns_rdata_naptr_t *naptr = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(naptr->common.rdtype == dns_rdatatype_naptr);
-
-	free(naptr->flags);
-	free(naptr->service);
-	free(naptr->regexp);
-	dns_name_free(&naptr->replacement);
-}
 
 
 

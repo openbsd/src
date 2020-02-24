@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: uri_256.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: uri_256.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 #ifndef GENERIC_URI_256_C
 #define GENERIC_URI_256_C 1
@@ -167,16 +167,6 @@ tostruct_uri(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_uri(ARGS_FREESTRUCT) {
-	dns_rdata_uri_t *uri = (dns_rdata_uri_t *) source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(uri->common.rdtype == dns_rdatatype_uri);
-
-	if (uri->target != NULL)
-		free(uri->target);
-}
 
 
 

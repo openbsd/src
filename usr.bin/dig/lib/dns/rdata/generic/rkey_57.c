@@ -75,15 +75,6 @@ tostruct_rkey(ARGS_TOSTRUCT) {
 	return (generic_tostruct_key(rdata, target));
 }
 
-static inline void
-freestruct_rkey(ARGS_FREESTRUCT) {
-	dns_rdata_rkey_t *rkey = (dns_rdata_rkey_t *) source;
-
-	REQUIRE(rkey != NULL);
-	REQUIRE(rkey->common.rdtype == dns_rdatatype_rkey);
-
-	generic_freestruct_key(source);
-}
 
 
 

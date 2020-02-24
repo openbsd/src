@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: apl_42.c,v 1.6 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: apl_42.c,v 1.7 2020/02/24 17:43:53 florian Exp $ */
 
 /* RFC3123 */
 
@@ -190,17 +190,6 @@ tostruct_in_apl(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_in_apl(ARGS_FREESTRUCT) {
-	dns_rdata_in_apl_t *apl = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(apl->common.rdtype == dns_rdatatype_apl);
-	REQUIRE(apl->common.rdclass == dns_rdataclass_in);
-
-	if (apl->apl != NULL)
-		free(apl->apl);
-}
 
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: afsdb_18.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: afsdb_18.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 14:59:00 PST 2000 by explorer */
 
@@ -149,15 +149,6 @@ tostruct_afsdb(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_afsdb(ARGS_FREESTRUCT) {
-	dns_rdata_afsdb_t *afsdb = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(afsdb->common.rdtype == dns_rdatatype_afsdb);
-
-	dns_name_free(&afsdb->server);
-}
 
 
 #endif	/* RDATA_GENERIC_AFSDB_18_C */

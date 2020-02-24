@@ -97,15 +97,6 @@ tostruct_eui48(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_eui48(ARGS_FREESTRUCT) {
-	dns_rdata_eui48_t *eui48 = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(eui48->common.rdtype == dns_rdatatype_eui48);
-
-	return;
-}
 
 
 

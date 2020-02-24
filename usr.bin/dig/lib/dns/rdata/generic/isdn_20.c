@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: isdn_20.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: isdn_20.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:53:11 PST 2000 by bwelling */
 
@@ -129,15 +129,6 @@ tostruct_isdn(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_isdn(ARGS_FREESTRUCT) {
-	dns_rdata_isdn_t *isdn = source;
-
-	REQUIRE(source != NULL);
-
-	free(isdn->isdn);
-	free(isdn->subaddress);
-}
 
 
 

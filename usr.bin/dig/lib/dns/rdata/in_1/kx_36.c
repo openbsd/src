@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: kx_36.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: kx_36.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 17:24:54 PST 2000 by explorer */
 
@@ -145,16 +145,6 @@ tostruct_in_kx(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_in_kx(ARGS_FREESTRUCT) {
-	dns_rdata_in_kx_t *kx = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(kx->common.rdclass == dns_rdataclass_in);
-	REQUIRE(kx->common.rdtype == dns_rdatatype_kx);
-
-	dns_name_free(&kx->exchange);
-}
 
 
 

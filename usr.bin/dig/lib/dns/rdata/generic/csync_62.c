@@ -151,15 +151,6 @@ tostruct_csync(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_csync(ARGS_FREESTRUCT) {
-	dns_rdata_csync_t *csync = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(csync->common.rdtype == dns_rdatatype_csync);
-
-	free(csync->typebits);
-}
 
 
 #endif	/* RDATA_GENERIC_CSYNC_62_C */

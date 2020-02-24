@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkey_249.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: tkey_249.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -369,18 +369,6 @@ tostruct_tkey(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_tkey(ARGS_FREESTRUCT) {
-	dns_rdata_tkey_t *tkey = (dns_rdata_tkey_t *) source;
-
-	REQUIRE(source != NULL);
-
-	dns_name_free(&tkey->algorithm);
-	if (tkey->key != NULL)
-		free(tkey->key);
-	if (tkey->other != NULL)
-		free(tkey->other);
-}
 
 
 #endif	/* RDATA_GENERIC_TKEY_249_C */

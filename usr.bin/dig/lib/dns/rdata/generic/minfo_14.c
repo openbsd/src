@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: minfo_14.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: minfo_14.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 
@@ -158,17 +158,6 @@ tostruct_minfo(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_minfo(ARGS_FREESTRUCT) {
-	dns_rdata_minfo_t *minfo = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(minfo->common.rdtype == dns_rdatatype_minfo);
-
-
-	dns_name_free(&minfo->rmailbox);
-	dns_name_free(&minfo->emailbox);
-}
 
 
 

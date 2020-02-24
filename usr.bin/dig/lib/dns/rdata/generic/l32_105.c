@@ -114,15 +114,6 @@ tostruct_l32(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_l32(ARGS_FREESTRUCT) {
-	dns_rdata_l32_t *l32 = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(l32->common.rdtype == dns_rdatatype_l32);
-
-	return;
-}
 
 
 

@@ -174,7 +174,7 @@ printsoa(dns_rdata_t *rdata) {
 	printf("\tretry = %u\n", soa.retry);
 	printf("\texpire = %u\n", soa.expire);
 	printf("\tminimum = %u\n", soa.minimum);
-	dns_rdata_freestruct(&soa);
+	dns_rdata_freestruct_soa(&soa);
 }
 
 static void

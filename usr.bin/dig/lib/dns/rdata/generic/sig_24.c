@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sig_24.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: sig_24.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -357,17 +357,6 @@ tostruct_sig(ARGS_TOSTRUCT) {
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_sig(ARGS_FREESTRUCT) {
-	dns_rdata_sig_t *sig = (dns_rdata_sig_t *) source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(sig->common.rdtype == dns_rdatatype_sig);
-
-	dns_name_free(&sig->signer);
-	if (sig->signature != NULL)
-		free(sig->signature);
-}
 
 static inline dns_rdatatype_t
 covers_sig(dns_rdata_t *rdata) {

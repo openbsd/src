@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mr_9.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: mr_9.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 21:30:35 EST 2000 by tale */
 
@@ -117,15 +117,6 @@ tostruct_mr(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_mr(ARGS_FREESTRUCT) {
-	dns_rdata_mr_t *mr = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(mr->common.rdtype == dns_rdatatype_mr);
-
-	dns_name_free(&mr->mr);
-}
 
 
 

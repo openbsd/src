@@ -214,16 +214,6 @@ cleanup:
 	return (ISC_R_NOMEMORY);
 }
 
-static inline void
-freestruct_doa(ARGS_FREESTRUCT) {
-	dns_rdata_doa_t *doa = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(doa->common.rdtype == dns_rdatatype_doa);
-
-	free(doa->mediatype);
-	free(doa->data);
-}
 
 
 

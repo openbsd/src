@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.6 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: hip_55.c,v 1.7 2020/02/24 17:43:52 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -238,17 +238,6 @@ tostruct_hip(ARGS_TOSTRUCT) {
 
 }
 
-static inline void
-freestruct_hip(ARGS_FREESTRUCT) {
-	dns_rdata_hip_t *hip = source;
-
-	REQUIRE(source != NULL);
-
-
-	free(hip->hit);
-	free(hip->key);
-	free(hip->servers);
-}
 
 
 isc_result_t

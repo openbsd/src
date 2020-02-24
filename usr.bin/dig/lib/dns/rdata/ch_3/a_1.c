@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.5 2020/02/24 12:06:50 florian Exp $ */
+/* $Id: a_1.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -163,15 +163,6 @@ tostruct_ch_a(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_ch_a(ARGS_FREESTRUCT) {
-	dns_rdata_ch_a_t *a = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(a->common.rdtype == dns_rdatatype_a);
-
-	dns_name_free(&a->ch_addr_dom);
-}
 
 
 #endif	/* RDATA_CH_3_A_1_C */

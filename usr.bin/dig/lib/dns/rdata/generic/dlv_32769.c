@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dlv_32769.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: dlv_32769.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /* RFC3658 */
 
@@ -80,15 +80,6 @@ tostruct_dlv(ARGS_TOSTRUCT) {
 	return (generic_tostruct_ds(rdata, target));
 }
 
-static inline void
-freestruct_dlv(ARGS_FREESTRUCT) {
-	dns_rdata_dlv_t *dlv = source;
-
-	REQUIRE(dlv != NULL);
-	REQUIRE(dlv->common.rdtype == dns_rdatatype_dlv);
-
-	free(dlv->digest);
-}
 
 
 

@@ -162,16 +162,6 @@ tostruct_sink(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_sink(ARGS_FREESTRUCT) {
-	dns_rdata_sink_t *sink = (dns_rdata_sink_t *) source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(sink->common.rdtype == dns_rdatatype_sink);
-
-	if (sink->data != NULL)
-		free(sink->data);
-}
 
 
 #endif	/* RDATA_GENERIC_SINK_40_C */

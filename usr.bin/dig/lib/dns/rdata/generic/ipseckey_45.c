@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipseckey_45.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: ipseckey_45.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -284,20 +284,6 @@ tostruct_ipseckey(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
-static inline void
-freestruct_ipseckey(ARGS_FREESTRUCT) {
-	dns_rdata_ipseckey_t *ipseckey = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(ipseckey->common.rdtype == dns_rdatatype_ipseckey);
-
-	if (ipseckey->gateway_type == 3)
-		dns_name_free(&ipseckey->gateway);
-
-	if (ipseckey->key != NULL)
-		free(ipseckey->key);
-
-}
 
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key_25.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: key_25.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -299,15 +299,6 @@ tostruct_key(ARGS_TOSTRUCT) {
 	return (generic_tostruct_key(rdata, target));
 }
 
-static inline void
-freestruct_key(ARGS_FREESTRUCT) {
-	dns_rdata_key_t *key = (dns_rdata_key_t *) source;
-
-	REQUIRE(key != NULL);
-	REQUIRE(key->common.rdtype == dns_rdatatype_key);
-
-	generic_freestruct_key(source);
-}
 
 
 
