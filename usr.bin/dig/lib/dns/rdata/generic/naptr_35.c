@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: naptr_35.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: naptr_35.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -272,71 +272,6 @@ towire_naptr(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_naptr(ARGS_TOSTRUCT) {
-	dns_rdata_naptr_t *naptr = target;
-	isc_region_t r;
-	isc_result_t result;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_naptr);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	naptr->common.rdclass = rdata->rdclass;
-	naptr->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&naptr->common, link);
-
-	naptr->flags = NULL;
-	naptr->service = NULL;
-	naptr->regexp = NULL;
-
-	dns_rdata_toregion(rdata, &r);
-
-	naptr->order = uint16_fromregion(&r);
-	isc_region_consume(&r, 2);
-
-	naptr->preference = uint16_fromregion(&r);
-	isc_region_consume(&r, 2);
-
-	naptr->flags_len = uint8_fromregion(&r);
-	isc_region_consume(&r, 1);
-	INSIST(naptr->flags_len <= r.length);
-	naptr->flags = mem_maybedup(r.base, naptr->flags_len);
-	if (naptr->flags == NULL)
-		goto cleanup;
-	isc_region_consume(&r, naptr->flags_len);
-
-	naptr->service_len = uint8_fromregion(&r);
-	isc_region_consume(&r, 1);
-	INSIST(naptr->service_len <= r.length);
-	naptr->service = mem_maybedup(r.base, naptr->service_len);
-	if (naptr->service == NULL)
-		goto cleanup;
-	isc_region_consume(&r, naptr->service_len);
-
-	naptr->regexp_len = uint8_fromregion(&r);
-	isc_region_consume(&r, 1);
-	INSIST(naptr->regexp_len <= r.length);
-	naptr->regexp = mem_maybedup(r.base, naptr->regexp_len);
-	if (naptr->regexp == NULL)
-		goto cleanup;
-	isc_region_consume(&r, naptr->regexp_len);
-
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &r);
-	dns_name_init(&naptr->replacement, NULL);
-	result = name_duporclone(&name, &naptr->replacement);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	free(naptr->flags);
-	free(naptr->service);
-	free(naptr->regexp);
-	return (ISC_R_NOMEMORY);
-}
 
 
 

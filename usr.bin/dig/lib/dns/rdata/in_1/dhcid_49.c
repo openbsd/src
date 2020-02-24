@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dhcid_49.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: dhcid_49.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* RFC 4701 */
 
@@ -92,28 +92,6 @@ towire_in_dhcid(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_in_dhcid(ARGS_TOSTRUCT) {
-	dns_rdata_in_dhcid_t *dhcid = target;
-	isc_region_t region;
-
-	REQUIRE(rdata->type == dns_rdatatype_dhcid);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	dhcid->common.rdclass = rdata->rdclass;
-	dhcid->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&dhcid->common, link);
-
-	dns_rdata_toregion(rdata, &region);
-
-	dhcid->dhcid = mem_maybedup(region.base, region.length);
-	if (dhcid->dhcid == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec_47.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: nsec_47.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -96,38 +96,6 @@ towire_nsec(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_nsec(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_nsec_t *nsec = target;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_nsec);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	nsec->common.rdclass = rdata->rdclass;
-	nsec->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nsec->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &region);
-	dns_name_fromregion(&name, &region);
-	isc_region_consume(&region, name_length(&name));
-	dns_name_init(&nsec->next, NULL);
-	RETERR(name_duporclone(&name, &nsec->next));
-
-	nsec->len = region.length;
-	nsec->typebits = mem_maybedup(region.base, region.length);
-	if (nsec->typebits == NULL)
-		goto cleanup;
-
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	dns_name_free(&nsec->next);
-	return (ISC_R_NOMEMORY);
-}
 
 
 

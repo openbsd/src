@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: loc_29.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
+/* $Id: loc_29.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -231,41 +231,6 @@ towire_loc(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_loc(ARGS_TOSTRUCT) {
-	dns_rdata_loc_t *loc = target;
-	isc_region_t r;
-	uint8_t version;
-
-	REQUIRE(rdata->type == dns_rdatatype_loc);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	dns_rdata_toregion(rdata, &r);
-	version = uint8_fromregion(&r);
-	if (version != 0)
-		return (ISC_R_NOTIMPLEMENTED);
-
-	loc->common.rdclass = rdata->rdclass;
-	loc->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&loc->common, link);
-
-	loc->v.v0.version = version;
-	isc_region_consume(&r, 1);
-	loc->v.v0.size = uint8_fromregion(&r);
-	isc_region_consume(&r, 1);
-	loc->v.v0.horizontal = uint8_fromregion(&r);
-	isc_region_consume(&r, 1);
-	loc->v.v0.vertical = uint8_fromregion(&r);
-	isc_region_consume(&r, 1);
-	loc->v.v0.latitude = uint32_fromregion(&r);
-	isc_region_consume(&r, 4);
-	loc->v.v0.longitude = uint32_fromregion(&r);
-	isc_region_consume(&r, 4);
-	loc->v.v0.altitude = uint32_fromregion(&r);
-	isc_region_consume(&r, 4);
-	return (ISC_R_SUCCESS);
-}
 
 
 

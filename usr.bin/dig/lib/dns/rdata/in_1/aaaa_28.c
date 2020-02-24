@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aaaa_28.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: aaaa_28.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -87,26 +87,6 @@ towire_in_aaaa(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_in_aaaa(ARGS_TOSTRUCT) {
-	dns_rdata_in_aaaa_t *aaaa = target;
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_aaaa);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length == 16);
-
-	aaaa->common.rdclass = rdata->rdclass;
-	aaaa->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&aaaa->common, link);
-
-	dns_rdata_toregion(rdata, &r);
-	INSIST(r.length == 16);
-	memmove(aaaa->in6_addr.s6_addr, r.base, 16);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ptr_12.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: ptr_12.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 14:05:12 PST 2000 by explorer */
 
@@ -79,27 +79,6 @@ towire_ptr(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_ptr(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_ptr_t *ptr = target;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_ptr);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	ptr->common.rdclass = rdata->rdclass;
-	ptr->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&ptr->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &region);
-	dns_name_fromregion(&name, &region);
-	dns_name_init(&ptr->ptr, NULL);
-	RETERR(name_duporclone(&name, &ptr->ptr));
-	return (ISC_R_SUCCESS);
-}
 
 
 

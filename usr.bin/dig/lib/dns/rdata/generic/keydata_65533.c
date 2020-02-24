@@ -223,64 +223,6 @@ towire_keydata(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_keydata(ARGS_TOSTRUCT) {
-	dns_rdata_keydata_t *keydata = target;
-	isc_region_t sr;
-
-	REQUIRE(rdata->type == dns_rdatatype_keydata);
-	REQUIRE(target != NULL);
-
-	keydata->common.rdclass = rdata->rdclass;
-	keydata->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&keydata->common, link);
-
-	dns_rdata_toregion(rdata, &sr);
-
-	/* Refresh timer */
-	if (sr.length < 4)
-		return (ISC_R_UNEXPECTEDEND);
-	keydata->refresh = uint32_fromregion(&sr);
-	isc_region_consume(&sr, 4);
-
-	/* Add hold-down */
-	if (sr.length < 4)
-		return (ISC_R_UNEXPECTEDEND);
-	keydata->addhd = uint32_fromregion(&sr);
-	isc_region_consume(&sr, 4);
-
-	/* Remove hold-down */
-	if (sr.length < 4)
-		return (ISC_R_UNEXPECTEDEND);
-	keydata->removehd = uint32_fromregion(&sr);
-	isc_region_consume(&sr, 4);
-
-	/* Flags */
-	if (sr.length < 2)
-		return (ISC_R_UNEXPECTEDEND);
-	keydata->flags = uint16_fromregion(&sr);
-	isc_region_consume(&sr, 2);
-
-	/* Protocol */
-	if (sr.length < 1)
-		return (ISC_R_UNEXPECTEDEND);
-	keydata->protocol = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/* Algorithm */
-	if (sr.length < 1)
-		return (ISC_R_UNEXPECTEDEND);
-	keydata->algorithm = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/* Data */
-	keydata->datalen = sr.length;
-	keydata->data = mem_maybedup(sr.base, keydata->datalen);
-	if (keydata->data == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkey_249.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: tkey_249.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -225,92 +225,6 @@ towire_tkey(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_tkey(ARGS_TOSTRUCT) {
-	dns_rdata_tkey_t *tkey = target;
-	dns_name_t alg;
-	isc_region_t sr;
-
-	REQUIRE(rdata->type == dns_rdatatype_tkey);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	tkey->common.rdclass = rdata->rdclass;
-	tkey->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&tkey->common, link);
-
-	dns_rdata_toregion(rdata, &sr);
-
-	/*
-	 * Algorithm Name.
-	 */
-	dns_name_init(&alg, NULL);
-	dns_name_fromregion(&alg, &sr);
-	dns_name_init(&tkey->algorithm, NULL);
-	RETERR(name_duporclone(&alg, &tkey->algorithm));
-	isc_region_consume(&sr, name_length(&tkey->algorithm));
-
-	/*
-	 * Inception.
-	 */
-	tkey->inception = uint32_fromregion(&sr);
-	isc_region_consume(&sr, 4);
-
-	/*
-	 * Expire.
-	 */
-	tkey->expire = uint32_fromregion(&sr);
-	isc_region_consume(&sr, 4);
-
-	/*
-	 * Mode.
-	 */
-	tkey->mode = uint16_fromregion(&sr);
-	isc_region_consume(&sr, 2);
-
-	/*
-	 * Error.
-	 */
-	tkey->error = uint16_fromregion(&sr);
-	isc_region_consume(&sr, 2);
-
-	/*
-	 * Key size.
-	 */
-	tkey->keylen = uint16_fromregion(&sr);
-	isc_region_consume(&sr, 2);
-
-	/*
-	 * Key.
-	 */
-	INSIST(tkey->keylen + 2U <= sr.length);
-	tkey->key = mem_maybedup(sr.base, tkey->keylen);
-	if (tkey->key == NULL)
-		goto cleanup;
-	isc_region_consume(&sr, tkey->keylen);
-
-	/*
-	 * Other size.
-	 */
-	tkey->otherlen = uint16_fromregion(&sr);
-	isc_region_consume(&sr, 2);
-
-	/*
-	 * Other.
-	 */
-	INSIST(tkey->otherlen <= sr.length);
-	tkey->other = mem_maybedup(sr.base, tkey->otherlen);
-	if (tkey->other == NULL)
-		goto cleanup;
-
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	dns_name_free(&tkey->algorithm);
-	if (tkey->key != NULL)
-		free(tkey->key);
-	return (ISC_R_NOMEMORY);
-}
 
 
 

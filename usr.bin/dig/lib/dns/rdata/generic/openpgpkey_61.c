@@ -85,34 +85,6 @@ towire_openpgpkey(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_openpgpkey(ARGS_TOSTRUCT) {
-	isc_region_t sr;
-	dns_rdata_openpgpkey_t *sig = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	sig->common.rdclass = rdata->rdclass;
-	sig->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&sig->common, link);
-
-	dns_rdata_toregion(rdata, &sr);
-
-	/*
-	 * Keyring.
-	 */
-	sig->length = sr.length;
-	sig->keyring = mem_maybedup(sr.base, sig->length);
-	if (sig->keyring == NULL)
-		goto cleanup;
-
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	return (ISC_R_NOMEMORY);
-}
 
 
 

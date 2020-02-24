@@ -425,19 +425,67 @@ dns_rdata_fromstruct_tsig(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
  */
 
 isc_result_t
-dns_rdata_tostruct(const dns_rdata_t *rdata, void *target);
+dns_rdata_tostruct_cname(const dns_rdata_t *rdata, dns_rdata_cname_t *cname);
 /*%<
  * Convert an rdata into its C structure representation.
  *
- * If 'mctx' is NULL then 'rdata' must persist while 'target' is being used.
- *
- * If 'mctx' is non NULL then memory will be allocated if required.
  *
  * Requires:
  *
  *\li	'rdata' is a valid, non-empty rdata.
  *
- *\li	'target' to point to a valid pointer for the type and class.
+ *\li	'cname' to point to a valid pointer for the type and class.
+ *
+ * Result:
+ *\li	Success
+ *\li	Resource Limit: Not enough memory
+ */
+
+isc_result_t
+dns_rdata_tostruct_ns(const dns_rdata_t *rdata, dns_rdata_ns_t *ns);
+/*%<
+ * Convert an rdata into its C structure representation.
+ *
+ *
+ * Requires:
+ *
+ *\li	'rdata' is a valid, non-empty rdata.
+ *
+ *\li	'ns' to point to a valid pointer for the type and class.
+ *
+ * Result:
+ *\li	Success
+ *\li	Resource Limit: Not enough memory
+ */
+
+isc_result_t
+dns_rdata_tostruct_soa(const dns_rdata_t *rdata, dns_rdata_soa_t *soa);
+/*%<
+ * Convert an rdata into its C structure representation.
+ *
+ *
+ * Requires:
+ *
+ *\li	'rdata' is a valid, non-empty rdata.
+ *
+ *\li	'soa' to point to a valid pointer for the type and class.
+ *
+ * Result:
+ *\li	Success
+ *\li	Resource Limit: Not enough memory
+ */
+
+isc_result_t
+dns_rdata_tostruct_tsig(const dns_rdata_t *rdata, dns_rdata_any_tsig_t *tsig);
+/*%<
+ * Convert an rdata into its C structure representation.
+ *
+ *
+ * Requires:
+ *
+ *\li	'rdata' is a valid, non-empty rdata.
+ *
+ *\li	'tsig' to point to a valid pointer for the type and class.
  *
  * Result:
  *\li	Success

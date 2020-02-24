@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: uri_256.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: uri_256.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 #ifndef GENERIC_URI_256_C
 #define GENERIC_URI_256_C 1
@@ -97,47 +97,6 @@ towire_uri(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_uri(ARGS_TOSTRUCT) {
-	dns_rdata_uri_t *uri = target;
-	isc_region_t sr;
-
-	REQUIRE(rdata->type == dns_rdatatype_uri);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	uri->common.rdclass = rdata->rdclass;
-	uri->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&uri->common, link);
-
-	dns_rdata_toregion(rdata, &sr);
-
-	/*
-	 * Priority
-	 */
-	if (sr.length < 2)
-		return (ISC_R_UNEXPECTEDEND);
-	uri->priority = uint16_fromregion(&sr);
-	isc_region_consume(&sr, 2);
-
-	/*
-	 * Weight
-	 */
-	if (sr.length < 2)
-		return (ISC_R_UNEXPECTEDEND);
-	uri->weight = uint16_fromregion(&sr);
-	isc_region_consume(&sr, 2);
-
-	/*
-	 * Target URI
-	 */
-	uri->tgt_len = sr.length;
-	uri->target = mem_maybedup(sr.base, sr.length);
-	if (uri->target == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

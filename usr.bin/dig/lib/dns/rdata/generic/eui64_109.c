@@ -70,21 +70,6 @@ towire_eui64(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_eui64(ARGS_TOSTRUCT) {
-	dns_rdata_eui64_t *eui64 = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_eui64);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length == 8);
-
-	eui64->common.rdclass = rdata->rdclass;
-	eui64->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&eui64->common, link);
-
-	memmove(eui64->eui64, rdata->data, rdata->length);
-	return (ISC_R_SUCCESS);
-}
 
 
 

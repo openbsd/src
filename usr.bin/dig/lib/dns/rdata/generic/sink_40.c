@@ -96,47 +96,6 @@ towire_sink(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_sink(ARGS_TOSTRUCT) {
-	dns_rdata_sink_t *sink = target;
-	isc_region_t sr;
-
-	REQUIRE(rdata->type == dns_rdatatype_sink);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length >= 3);
-
-	sink->common.rdclass = rdata->rdclass;
-	sink->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&sink->common, link);
-
-	dns_rdata_toregion(rdata, &sr);
-
-	/* Meaning */
-	if (sr.length < 1)
-		return (ISC_R_UNEXPECTEDEND);
-	sink->meaning = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/* Coding */
-	if (sr.length < 1)
-		return (ISC_R_UNEXPECTEDEND);
-	sink->coding = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/* Subcoding */
-	if (sr.length < 1)
-		return (ISC_R_UNEXPECTEDEND);
-	sink->subcoding = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/* Data */
-	sink->datalen = sr.length;
-	sink->data = mem_maybedup(sr.base, sink->datalen);
-	if (sink->data == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

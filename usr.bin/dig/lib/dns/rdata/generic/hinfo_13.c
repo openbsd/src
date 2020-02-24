@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hinfo_13.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
+/* $Id: hinfo_13.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -67,39 +67,6 @@ towire_hinfo(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_hinfo(ARGS_TOSTRUCT) {
-	dns_rdata_hinfo_t *hinfo = target;
-	isc_region_t region;
-
-	REQUIRE(rdata->type == dns_rdatatype_hinfo);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	hinfo->common.rdclass = rdata->rdclass;
-	hinfo->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&hinfo->common, link);
-
-	dns_rdata_toregion(rdata, &region);
-	hinfo->cpu_len = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-	hinfo->cpu = mem_maybedup(region.base, hinfo->cpu_len);
-	if (hinfo->cpu == NULL)
-		return (ISC_R_NOMEMORY);
-	isc_region_consume(&region, hinfo->cpu_len);
-
-	hinfo->os_len = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-	hinfo->os = mem_maybedup(region.base, hinfo->os_len);
-	if (hinfo->os == NULL)
-		goto cleanup;
-
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	free(hinfo->cpu);
-	return (ISC_R_NOMEMORY);
-}
 
 
 

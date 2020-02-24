@@ -81,24 +81,6 @@ towire_l64(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_l64(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_l64_t *l64 = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_l64);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length == 10);
-
-	l64->common.rdclass = rdata->rdclass;
-	l64->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&l64->common, link);
-
-	dns_rdata_toregion(rdata, &region);
-	l64->pref = uint16_fromregion(&region);
-	memmove(l64->l64, region.base, region.length);
-	return (ISC_R_SUCCESS);
-}
 
 
 

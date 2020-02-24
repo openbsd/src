@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: gpos_27.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
+/* $Id: gpos_27.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 
@@ -75,53 +75,6 @@ towire_gpos(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_gpos(ARGS_TOSTRUCT) {
-	dns_rdata_gpos_t *gpos = target;
-	isc_region_t region;
-
-	REQUIRE(rdata->type == dns_rdatatype_gpos);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	gpos->common.rdclass = rdata->rdclass;
-	gpos->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&gpos->common, link);
-
-	dns_rdata_toregion(rdata, &region);
-	gpos->long_len = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-	gpos->longitude = mem_maybedup(region.base, gpos->long_len);
-	if (gpos->longitude == NULL)
-		return (ISC_R_NOMEMORY);
-	isc_region_consume(&region, gpos->long_len);
-
-	gpos->lat_len = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-	gpos->latitude = mem_maybedup(region.base, gpos->lat_len);
-	if (gpos->latitude == NULL)
-		goto cleanup_longitude;
-	isc_region_consume(&region, gpos->lat_len);
-
-	gpos->alt_len = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-	if (gpos->lat_len > 0) {
-		gpos->altitude =
-			mem_maybedup(region.base, gpos->alt_len);
-		if (gpos->altitude == NULL)
-			goto cleanup_latitude;
-	} else
-		gpos->altitude = NULL;
-
-	return (ISC_R_SUCCESS);
-
- cleanup_latitude:
-	free(gpos->longitude);
-
- cleanup_longitude:
-	free(gpos->latitude);
-	return (ISC_R_NOMEMORY);
-}
 
 
 

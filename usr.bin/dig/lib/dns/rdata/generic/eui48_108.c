@@ -67,21 +67,6 @@ towire_eui48(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_eui48(ARGS_TOSTRUCT) {
-	dns_rdata_eui48_t *eui48 = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_eui48);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length == 6);
-
-	eui48->common.rdclass = rdata->rdclass;
-	eui48->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&eui48->common, link);
-
-	memmove(eui48->eui48, rdata->data, rdata->length);
-	return (ISC_R_SUCCESS);
-}
 
 
 

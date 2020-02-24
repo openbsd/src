@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dname_39.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
+/* $Id: dname_39.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:52:38 PST 2000 by explorer */
 
@@ -80,27 +80,6 @@ towire_dname(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_dname(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_dname_t *dname = target;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_dname);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	dname->common.rdclass = rdata->rdclass;
-	dname->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&dname->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &region);
-	dns_name_fromregion(&name, &region);
-	dns_name_init(&dname->dname, NULL);
-	RETERR(name_duporclone(&name, &dname->dname));
-	return (ISC_R_SUCCESS);
-}
 
 
 

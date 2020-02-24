@@ -202,27 +202,6 @@ towire_opt(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_opt(ARGS_TOSTRUCT) {
-	dns_rdata_opt_t *opt = target;
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_opt);
-	REQUIRE(target != NULL);
-
-	opt->common.rdclass = rdata->rdclass;
-	opt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&opt->common, link);
-
-	dns_rdata_toregion(rdata, &r);
-	opt->length = r.length;
-	opt->options = mem_maybedup(r.base, r.length);
-	if (opt->options == NULL)
-		return (ISC_R_NOMEMORY);
-
-	opt->offset = 0;
-	return (ISC_R_SUCCESS);
-}
 
 
 

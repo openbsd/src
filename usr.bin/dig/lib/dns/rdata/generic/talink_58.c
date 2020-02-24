@@ -99,42 +99,6 @@ towire_talink(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_talink(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_talink_t *talink = target;
-	dns_name_t name;
-	isc_result_t result;
-
-	REQUIRE(rdata->type == dns_rdatatype_talink);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	talink->common.rdclass = rdata->rdclass;
-	talink->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&talink->common, link);
-
-	dns_rdata_toregion(rdata, &region);
-
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &region);
-	isc_region_consume(&region, name_length(&name));
-	dns_name_init(&talink->prev, NULL);
-	RETERR(name_duporclone(&name, &talink->prev));
-
-	dns_name_fromregion(&name, &region);
-	isc_region_consume(&region, name_length(&name));
-	dns_name_init(&talink->next, NULL);
-	result = name_duporclone(&name, &talink->next);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	dns_name_free(&talink->prev);
-	return (ISC_R_NOMEMORY);
-}
 
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap-ptr_23.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: nsap-ptr_23.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 10:16:02 PST 2000 by gson */
 
@@ -83,28 +83,6 @@ towire_in_nsap_ptr(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_in_nsap_ptr(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_in_nsap_ptr_t *nsap_ptr = target;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_nsap_ptr);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	nsap_ptr->common.rdclass = rdata->rdclass;
-	nsap_ptr->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nsap_ptr->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &region);
-	dns_name_fromregion(&name, &region);
-	dns_name_init(&nsap_ptr->owner, NULL);
-	RETERR(name_duporclone(&name, &nsap_ptr->owner));
-	return (ISC_R_SUCCESS);
-}
 
 
 

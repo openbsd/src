@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.11 2020/02/24 17:44:44 florian Exp $
+ * $Id: tsig.c,v 1.12 2020/02/24 17:45:25 florian Exp $
  */
 /*! \file */
 
@@ -496,7 +496,8 @@ dns_tsig_sign(dns_message_t *msg) {
 			if (ret != ISC_R_SUCCESS)
 				goto cleanup_context;
 			dns_rdataset_current(msg->querytsig, &querytsigrdata);
-			ret = dns_rdata_tostruct(&querytsigrdata, &querytsig);
+			ret = dns_rdata_tostruct_tsig(&querytsigrdata,
+						      &querytsig);
 			if (ret != ISC_R_SUCCESS)
 				goto cleanup_context;
 			isc_buffer_putuint16(&databuf, querytsig.siglen);
@@ -756,7 +757,7 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg)
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 	dns_rdataset_current(msg->tsig, &rdata);
-	ret = dns_rdata_tostruct(&rdata, &tsig);
+	ret = dns_rdata_tostruct_tsig(&rdata, &tsig);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 	dns_rdata_reset(&rdata);
@@ -765,7 +766,7 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg)
 		if (ret != ISC_R_SUCCESS)
 			return (ret);
 		dns_rdataset_current(msg->querytsig, &rdata);
-		ret = dns_rdata_tostruct(&rdata, &querytsig);
+		ret = dns_rdata_tostruct_tsig(&rdata, &querytsig);
 		if (ret != ISC_R_SUCCESS)
 			return (ret);
 	}
@@ -1076,7 +1077,7 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 	dns_rdataset_current(msg->querytsig, &rdata);
-	ret = dns_rdata_tostruct(&rdata, &querytsig);
+	ret = dns_rdata_tostruct_tsig(&rdata, &querytsig);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
 	dns_rdata_reset(&rdata);
@@ -1092,7 +1093,7 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 		if (ret != ISC_R_SUCCESS)
 			goto cleanup_querystruct;
 		dns_rdataset_current(msg->tsig, &rdata);
-		ret = dns_rdata_tostruct(&rdata, &tsig);
+		ret = dns_rdata_tostruct_tsig(&rdata, &tsig);
 		if (ret != ISC_R_SUCCESS)
 			goto cleanup_querystruct;
 

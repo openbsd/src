@@ -58,23 +58,6 @@ towire_cds(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_cds(ARGS_TOSTRUCT) {
-	dns_rdata_cds_t *cds = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_cds);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	/*
-	 * Checked by generic_tostruct_ds().
-	 */
-	cds->common.rdclass = rdata->rdclass;
-	cds->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&cds->common, link);
-
-	return (generic_tostruct_ds(rdata, target));
-}
 
 
 

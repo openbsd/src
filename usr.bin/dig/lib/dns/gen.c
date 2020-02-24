@@ -621,9 +621,6 @@ main(int argc, char **argv) {
 			 FROMWIRETYPE, FROMWIRECLASS, FROMWIREDEF);
 		doswitch("TOWIRESWITCH", "towire", TOWIREARGS,
 			 TOWIRETYPE, TOWIRECLASS, TOWIREDEF);
-		doswitch("TOSTRUCTSWITCH", "tostruct", TOSTRUCTARGS,
-			  TOSTRUCTTYPE, TOSTRUCTCLASS, TOSTRUCTDEF);
-
 		/*
 		 * From here down, we are processing the rdata names and
 		 * attributes.

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.8 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: wks_11.c,v 1.9 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -113,32 +113,6 @@ towire_in_wks(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_in_wks(ARGS_TOSTRUCT) {
-	dns_rdata_in_wks_t *wks = target;
-	uint32_t n;
-	isc_region_t region;
-
-	REQUIRE(rdata->type == dns_rdatatype_wks);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(rdata->length != 0);
-
-	wks->common.rdclass = rdata->rdclass;
-	wks->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&wks->common, link);
-
-	dns_rdata_toregion(rdata, &region);
-	n = uint32_fromregion(&region);
-	wks->in_addr.s_addr = htonl(n);
-	isc_region_consume(&region, 4);
-	wks->protocol = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-	wks->map_len = region.length;
-	wks->map = mem_maybedup(region.base, region.length);
-	if (wks->map == NULL)
-		return (ISC_R_NOMEMORY);
-	return (ISC_R_SUCCESS);
-}
 
 
 

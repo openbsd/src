@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nxt_30.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: nxt_30.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -114,38 +114,6 @@ towire_nxt(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_nxt(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_nxt_t *nxt = target;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_nxt);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	nxt->common.rdclass = rdata->rdclass;
-	nxt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nxt->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &region);
-	dns_name_fromregion(&name, &region);
-	isc_region_consume(&region, name_length(&name));
-	dns_name_init(&nxt->next, NULL);
-	RETERR(name_duporclone(&name, &nxt->next));
-
-	nxt->len = region.length;
-	nxt->typebits = mem_maybedup(region.base, region.length);
-	if (nxt->typebits == NULL)
-		goto cleanup;
-
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	dns_name_free(&nxt->next);
-	return (ISC_R_NOMEMORY);
-}
 
 
 

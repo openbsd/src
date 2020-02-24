@@ -358,8 +358,8 @@ chase_cnamechain(dns_message_t *msg, dns_name_t *qname) {
 		check_result(result, "dns_rdataset_first");
 		dns_rdata_reset(&rdata);
 		dns_rdataset_current(rdataset, &rdata);
-		result = dns_rdata_tostruct(&rdata, &cname);
-		check_result(result, "dns_rdata_tostruct");
+		result = dns_rdata_tostruct_cname(&rdata, &cname);
+		check_result(result, "dns_rdata_tostruct_cname");
 		dns_name_copy(&cname.cname, qname, NULL);
 		dns_rdata_freestruct_cname(&cname);
 	}

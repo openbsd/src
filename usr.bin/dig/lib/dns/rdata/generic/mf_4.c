@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mf_4.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: mf_4.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:47:33 PST 2000 by brister */
 
@@ -79,27 +79,6 @@ towire_mf(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_mf(ARGS_TOSTRUCT) {
-	dns_rdata_mf_t *mf = target;
-	isc_region_t r;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_mf);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	mf->common.rdclass = rdata->rdclass;
-	mf->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&mf->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &r);
-	dns_name_fromregion(&name, &r);
-	dns_name_init(&mf->mf, NULL);
-	RETERR(name_duporclone(&name, &mf->mf));
-	return (ISC_R_SUCCESS);
-}
 
 
 

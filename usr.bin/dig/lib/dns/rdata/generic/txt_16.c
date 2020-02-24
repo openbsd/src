@@ -141,19 +141,6 @@ generic_freestruct_txt(ARGS_FREESTRUCT) {
 }
 
 
-static inline isc_result_t
-tostruct_txt(ARGS_TOSTRUCT) {
-	dns_rdata_txt_t *txt = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_txt);
-	REQUIRE(target != NULL);
-
-	txt->common.rdclass = rdata->rdclass;
-	txt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&txt->common, link);
-
-	return (generic_tostruct_txt(rdata, target));
-}
 
 
 

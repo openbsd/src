@@ -76,26 +76,6 @@ towire_l32(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_l32(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_l32_t *l32 = target;
-	uint32_t n;
-
-	REQUIRE(rdata->type == dns_rdatatype_l32);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length == 6);
-
-	l32->common.rdclass = rdata->rdclass;
-	l32->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&l32->common, link);
-
-	dns_rdata_toregion(rdata, &region);
-	l32->pref = uint16_fromregion(&region);
-	n = uint32_fromregion(&region);
-	l32->l32.s_addr = htonl(n);
-	return (ISC_R_SUCCESS);
-}
 
 
 

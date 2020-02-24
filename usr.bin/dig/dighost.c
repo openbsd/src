@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.20 2020/02/24 17:44:44 florian Exp $ */
+/* $Id: dighost.c,v 1.21 2020/02/24 17:45:25 florian Exp $ */
 
 /*! \file
  *  \note
@@ -1719,8 +1719,8 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 			dns_rdataset_current(rdataset, &rdata);
 
 			query->lookup->nsfound++;
-			result = dns_rdata_tostruct(&rdata, &ns);
-			check_result(result, "dns_rdata_tostruct");
+			result = dns_rdata_tostruct_ns(&rdata, &ns);
+			check_result(result, "dns_rdata_tostruct_ns");
 			dns_name_format(&ns.name, namestr, sizeof(namestr));
 			dns_rdata_freestruct_ns(&ns);
 
@@ -3102,8 +3102,8 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 
 				/* Now we have an SOA.  Work with it. */
 				debug("got an SOA");
-				result = dns_rdata_tostruct(&rdata, &soa);
-				check_result(result, "dns_rdata_tostruct");
+				result = dns_rdata_tostruct_soa(&rdata, &soa);
+				check_result(result, "dns_rdata_tostruct_soa");
 				serial = soa.serial;
 				dns_rdata_freestruct_soa(&soa);
 				if (!query->first_soa_rcvd) {

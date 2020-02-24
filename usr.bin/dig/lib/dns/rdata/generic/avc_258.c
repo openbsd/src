@@ -55,19 +55,6 @@ towire_avc(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_avc(ARGS_TOSTRUCT) {
-	dns_rdata_avc_t *avc = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_avc);
-	REQUIRE(target != NULL);
-
-	avc->common.rdclass = rdata->rdclass;
-	avc->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&avc->common, link);
-
-	return (generic_tostruct_txt(rdata, target));
-}
 
 
 

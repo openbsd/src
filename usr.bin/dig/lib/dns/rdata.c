@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.20 2020/02/24 17:44:44 florian Exp $ */
+/* $Id: rdata.c,v 1.21 2020/02/24 17:45:25 florian Exp $ */
 
 /*! \file */
 
@@ -135,9 +135,6 @@ btoa_totext(unsigned char *inbuf, int inbuflen, isc_buffer_t *target);
 static isc_result_t
 rdata_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 	     isc_buffer_t *target);
-
-static uint16_t
-uint16_consume_fromregion(isc_region_t *region);
 
 static isc_result_t
 unknown_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
@@ -701,19 +698,35 @@ dns_rdata_fromstruct_tsig(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 }
 
 isc_result_t
-dns_rdata_tostruct(const dns_rdata_t *rdata, void *target) {
-	isc_result_t result = ISC_R_NOTIMPLEMENTED;
-	isc_boolean_t use_default = ISC_FALSE;
-
+dns_rdata_tostruct_cname(const dns_rdata_t *rdata, dns_rdata_cname_t *cname) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata));
 
-	TOSTRUCTSWITCH
+	return (tostruct_cname(rdata, cname));
+}
 
-	if (use_default)
-		(void)NULL;
+isc_result_t
+dns_rdata_tostruct_ns(const dns_rdata_t *rdata, dns_rdata_ns_t *ns) {
+	REQUIRE(rdata != NULL);
+	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata));
 
-	return (result);
+	return (tostruct_ns(rdata, ns));
+}
+
+isc_result_t
+dns_rdata_tostruct_soa(const dns_rdata_t *rdata, dns_rdata_soa_t *soa) {
+	REQUIRE(rdata != NULL);
+	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata));
+
+	return (tostruct_soa(rdata, soa));
+}
+
+isc_result_t
+dns_rdata_tostruct_tsig(const dns_rdata_t *rdata, dns_rdata_any_tsig_t *tsig) {
+	REQUIRE(rdata != NULL);
+	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata));
+
+	return (tostruct_any_tsig(rdata, tsig));
 }
 
 void
@@ -1120,14 +1133,6 @@ uint32_fromregion(isc_region_t *region) {
 	value |= region->base[2] << 8;
 	value |= region->base[3];
 	return(value);
-}
-
-static uint16_t
-uint16_consume_fromregion(isc_region_t *region) {
-	uint16_t r = uint16_fromregion(region);
-
-	isc_region_consume(region, 2);
-	return r;
 }
 
 static uint16_t

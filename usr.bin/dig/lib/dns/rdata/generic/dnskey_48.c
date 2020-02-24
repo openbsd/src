@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnskey_48.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
+/* $Id: dnskey_48.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -63,20 +63,6 @@ towire_dnskey(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_dnskey(ARGS_TOSTRUCT) {
-	dns_rdata_dnskey_t *dnskey = target;
-
-	REQUIRE(dnskey != NULL);
-	REQUIRE(rdata != NULL);
-	REQUIRE(rdata->type == dns_rdatatype_dnskey);
-
-	dnskey->common.rdclass = rdata->rdclass;
-	dnskey->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&dnskey->common, link);
-
-	return (generic_tostruct_key(rdata, target));
-}
 
 
 

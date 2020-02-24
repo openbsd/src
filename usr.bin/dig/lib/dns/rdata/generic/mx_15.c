@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mx_15.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: mx_15.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 
@@ -100,29 +100,6 @@ towire_mx(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_mx(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_mx_t *mx = target;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_mx);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	mx->common.rdclass = rdata->rdclass;
-	mx->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&mx->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &region);
-	mx->pref = uint16_fromregion(&region);
-	isc_region_consume(&region, 2);
-	dns_name_fromregion(&name, &region);
-	dns_name_init(&mx->mx, NULL);
-	RETERR(name_duporclone(&name, &mx->mx));
-	return (ISC_R_SUCCESS);
-}
 
 
 

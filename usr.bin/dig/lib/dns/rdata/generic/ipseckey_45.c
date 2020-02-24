@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipseckey_45.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
+/* $Id: ipseckey_45.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -174,73 +174,6 @@ towire_ipseckey(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_ipseckey(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_ipseckey_t *ipseckey = target;
-	dns_name_t name;
-	uint32_t n;
-
-	REQUIRE(rdata->type == dns_rdatatype_ipseckey);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length >= 3);
-
-	if (rdata->data[1] > 3U)
-		return (ISC_R_NOTIMPLEMENTED);
-
-	ipseckey->common.rdclass = rdata->rdclass;
-	ipseckey->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&ipseckey->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &region);
-
-	ipseckey->precedence = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-
-	ipseckey->gateway_type = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-
-	ipseckey->algorithm = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-
-	switch (ipseckey->gateway_type) {
-	case 0:
-		break;
-
-	case 1:
-		n = uint32_fromregion(&region);
-		ipseckey->in_addr.s_addr = htonl(n);
-		isc_region_consume(&region, 4);
-		break;
-
-	case 2:
-		memmove(ipseckey->in6_addr.s6_addr, region.base, 16);
-		isc_region_consume(&region, 16);
-		break;
-
-	case 3:
-		dns_name_init(&ipseckey->gateway, NULL);
-		dns_name_fromregion(&name, &region);
-		RETERR(name_duporclone(&name, &ipseckey->gateway));
-		isc_region_consume(&region, name_length(&name));
-		break;
-	}
-
-	ipseckey->keylength = region.length;
-	if (ipseckey->keylength != 0U) {
-		ipseckey->key = mem_maybedup(region.base,
-					     ipseckey->keylength);
-		if (ipseckey->key == NULL) {
-			if (ipseckey->gateway_type == 3)
-				dns_name_free(&ipseckey->gateway);
-			return (ISC_R_NOMEMORY);
-		}
-	} else
-		ipseckey->key = NULL;
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap_22.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: nsap_22.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 10:41:07 PST 2000 by gson */
 
@@ -80,28 +80,6 @@ towire_in_nsap(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_in_nsap(ARGS_TOSTRUCT) {
-	dns_rdata_in_nsap_t *nsap = target;
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_nsap);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	nsap->common.rdclass = rdata->rdclass;
-	nsap->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nsap->common, link);
-
-	dns_rdata_toregion(rdata, &r);
-	nsap->nsap_len = r.length;
-	nsap->nsap = mem_maybedup(r.base, r.length);
-	if (nsap->nsap == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

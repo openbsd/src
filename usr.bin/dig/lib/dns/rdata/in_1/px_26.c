@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: px_26.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: px_26.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Mon Mar 20 10:44:27 PST 2000 */
 
@@ -139,45 +139,6 @@ towire_in_px(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_in_px(ARGS_TOSTRUCT) {
-	dns_rdata_in_px_t *px = target;
-	dns_name_t name;
-	isc_region_t region;
-	isc_result_t result;
-
-	REQUIRE(rdata->type == dns_rdatatype_px);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	px->common.rdclass = rdata->rdclass;
-	px->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&px->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &region);
-
-	px->preference = uint16_fromregion(&region);
-	isc_region_consume(&region, 2);
-
-	dns_name_fromregion(&name, &region);
-
-	dns_name_init(&px->map822, NULL);
-	RETERR(name_duporclone(&name, &px->map822));
-	isc_region_consume(&region, name_length(&px->map822));
-
-	dns_name_init(&px->mapx400, NULL);
-	result = name_duporclone(&name, &px->mapx400);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	return (result);
-
- cleanup:
-	dns_name_free(&px->map822);
-	return (ISC_R_NOMEMORY);
-}
 
 
 

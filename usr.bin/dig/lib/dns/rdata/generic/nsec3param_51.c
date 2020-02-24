@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3param_51.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: nsec3param_51.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -134,34 +134,6 @@ towire_nsec3param(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_nsec3param(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_nsec3param_t *nsec3param = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_nsec3param);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	nsec3param->common.rdclass = rdata->rdclass;
-	nsec3param->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nsec3param->common, link);
-
-	region.base = rdata->data;
-	region.length = rdata->length;
-	nsec3param->hash = uint8_consume_fromregion(&region);
-	nsec3param->flags = uint8_consume_fromregion(&region);
-	nsec3param->iterations = uint16_consume_fromregion(&region);
-
-	nsec3param->salt_length = uint8_consume_fromregion(&region);
-	nsec3param->salt = mem_maybedup(region.base,
-					nsec3param->salt_length);
-	if (nsec3param->salt == NULL)
-		return (ISC_R_NOMEMORY);
-	isc_region_consume(&region, nsec3param->salt_length);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

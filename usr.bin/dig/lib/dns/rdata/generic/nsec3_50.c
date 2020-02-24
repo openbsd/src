@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.6 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: nsec3_50.c,v 1.7 2020/02/24 17:45:26 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -170,50 +170,6 @@ towire_nsec3(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_nsec3(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_nsec3_t *nsec3 = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_nsec3);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	nsec3->common.rdclass = rdata->rdclass;
-	nsec3->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nsec3->common, link);
-
-	region.base = rdata->data;
-	region.length = rdata->length;
-	nsec3->hash = uint8_consume_fromregion(&region);
-	nsec3->flags = uint8_consume_fromregion(&region);
-	nsec3->iterations = uint16_consume_fromregion(&region);
-
-	nsec3->salt_length = uint8_consume_fromregion(&region);
-	nsec3->salt = mem_maybedup(region.base, nsec3->salt_length);
-	if (nsec3->salt == NULL)
-		return (ISC_R_NOMEMORY);
-	isc_region_consume(&region, nsec3->salt_length);
-
-	nsec3->next_length = uint8_consume_fromregion(&region);
-	nsec3->next = mem_maybedup(region.base, nsec3->next_length);
-	if (nsec3->next == NULL)
-		goto cleanup;
-	isc_region_consume(&region, nsec3->next_length);
-
-	nsec3->len = region.length;
-	nsec3->typebits = mem_maybedup(region.base, region.length);
-	if (nsec3->typebits == NULL)
-		goto cleanup;
-
-	return (ISC_R_SUCCESS);
-
-  cleanup:
-	if (nsec3->next != NULL)
-		free(nsec3->next);
-	free(nsec3->salt);
-	return (ISC_R_NOMEMORY);
-}
 
 
 #define NSEC3_MAX_HASH_LENGTH 155

@@ -162,8 +162,8 @@ printsoa(dns_rdata_t *rdata) {
 	isc_result_t result;
 	char namebuf[DNS_NAME_FORMATSIZE];
 
-	result = dns_rdata_tostruct(rdata, &soa);
-	check_result(result, "dns_rdata_tostruct");
+	result = dns_rdata_tostruct_soa(rdata, &soa);
+	check_result(result, "dns_rdata_tostruct_soa");
 
 	dns_name_format(&soa.origin, namebuf, sizeof(namebuf));
 	printf("\torigin = %s\n", namebuf);

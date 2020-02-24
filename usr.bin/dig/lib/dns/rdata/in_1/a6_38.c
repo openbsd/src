@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a6_38.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: a6_38.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* RFC2874 */
 
@@ -152,49 +152,6 @@ towire_in_a6(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_in_a6(ARGS_TOSTRUCT) {
-	dns_rdata_in_a6_t *a6 = target;
-	unsigned char octets;
-	dns_name_t name;
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_a6);
-	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	a6->common.rdclass = rdata->rdclass;
-	a6->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&a6->common, link);
-
-	dns_rdata_toregion(rdata, &r);
-
-	a6->prefixlen = uint8_fromregion(&r);
-	isc_region_consume(&r, 1);
-	memset(a6->in6_addr.s6_addr, 0, sizeof(a6->in6_addr.s6_addr));
-
-	/*
-	 * Suffix.
-	 */
-	if (a6->prefixlen != 128) {
-		octets = 16 - a6->prefixlen / 8;
-		INSIST(r.length >= octets);
-		memmove(a6->in6_addr.s6_addr + 16 - octets, r.base, octets);
-		isc_region_consume(&r, octets);
-	}
-
-	/*
-	 * Prefix.
-	 */
-	dns_name_init(&a6->prefix, NULL);
-	if (a6->prefixlen != 0) {
-		dns_name_init(&name, NULL);
-		dns_name_fromregion(&name, &r);
-		RETERR(name_duporclone(&name, &a6->prefix));
-	}
-	return (ISC_R_SUCCESS);
-}
 
 
 

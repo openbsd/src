@@ -180,19 +180,6 @@ generic_freestruct_tlsa(ARGS_FREESTRUCT) {
 }
 
 
-static inline isc_result_t
-tostruct_tlsa(ARGS_TOSTRUCT) {
-	dns_rdata_txt_t *txt = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_tlsa);
-	REQUIRE(target != NULL);
-
-	txt->common.rdclass = rdata->rdclass;
-	txt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&txt->common, link);
-
-	return (generic_tostruct_tlsa(rdata, target));
-}
 
 
 

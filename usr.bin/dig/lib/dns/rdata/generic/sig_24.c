@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sig_24.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: sig_24.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -219,85 +219,6 @@ towire_sig(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_sig(ARGS_TOSTRUCT) {
-	isc_region_t sr;
-	dns_rdata_sig_t *sig = target;
-	dns_name_t signer;
-
-	REQUIRE(rdata->type == dns_rdatatype_sig);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	sig->common.rdclass = rdata->rdclass;
-	sig->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&sig->common, link);
-
-	dns_rdata_toregion(rdata, &sr);
-
-	/*
-	 * Type covered.
-	 */
-	sig->covered = uint16_fromregion(&sr);
-	isc_region_consume(&sr, 2);
-
-	/*
-	 * Algorithm.
-	 */
-	sig->algorithm = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/*
-	 * Labels.
-	 */
-	sig->labels = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/*
-	 * Original TTL.
-	 */
-	sig->originalttl = uint32_fromregion(&sr);
-	isc_region_consume(&sr, 4);
-
-	/*
-	 * Expire time.
-	 */
-	sig->timeexpire = uint32_fromregion(&sr);
-	isc_region_consume(&sr, 4);
-
-	/*
-	 * Time signed.
-	 */
-	sig->timesigned = uint32_fromregion(&sr);
-	isc_region_consume(&sr, 4);
-
-	/*
-	 * Key ID.
-	 */
-	sig->keyid = uint16_fromregion(&sr);
-	isc_region_consume(&sr, 2);
-
-	dns_name_init(&signer, NULL);
-	dns_name_fromregion(&signer, &sr);
-	dns_name_init(&sig->signer, NULL);
-	RETERR(name_duporclone(&signer, &sig->signer));
-	isc_region_consume(&sr, name_length(&sig->signer));
-
-	/*
-	 * Signature.
-	 */
-	sig->siglen = sr.length;
-	sig->signature = mem_maybedup(sr.base, sig->siglen);
-	if (sig->signature == NULL)
-		goto cleanup;
-
-
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	dns_name_free(&sig->signer);
-	return (ISC_R_NOMEMORY);
-}
 
 
 static inline dns_rdatatype_t

@@ -55,18 +55,6 @@ towire_ninfo(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_ninfo(ARGS_TOSTRUCT) {
-	dns_rdata_ninfo_t *txt = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_ninfo);
-
-	txt->common.rdclass = rdata->rdclass;
-	txt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&txt->common, link);
-
-	return (generic_tostruct_txt(rdata, target));
-}
 
 
 

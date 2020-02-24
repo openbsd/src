@@ -53,20 +53,6 @@ towire_rkey(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_rkey(ARGS_TOSTRUCT) {
-	dns_rdata_rkey_t *rkey = target;
-
-	REQUIRE(rkey != NULL);
-	REQUIRE(rdata != NULL);
-	REQUIRE(rdata->type == dns_rdatatype_rkey);
-
-	rkey->common.rdclass = rdata->rdclass;
-	rkey->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&rkey->common, link);
-
-	return (generic_tostruct_key(rdata, target));
-}
 
 
 

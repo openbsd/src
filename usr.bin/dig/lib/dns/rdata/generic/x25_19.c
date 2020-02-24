@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: x25_19.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: x25_19.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:15:57 PST 2000 by bwelling */
 
@@ -67,28 +67,6 @@ towire_x25(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_x25(ARGS_TOSTRUCT) {
-	dns_rdata_x25_t *x25 = target;
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_x25);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	x25->common.rdclass = rdata->rdclass;
-	x25->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&x25->common, link);
-
-	dns_rdata_toregion(rdata, &r);
-	x25->x25_len = uint8_fromregion(&r);
-	isc_region_consume(&r, 1);
-	x25->x25 = mem_maybedup(r.base, x25->x25_len);
-	if (x25->x25 == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.8 2020/02/24 17:44:44 florian Exp $ */
+/* $Id: hip_55.c,v 1.9 2020/02/24 17:45:26 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -147,64 +147,6 @@ towire_hip(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_hip(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_hip_t *hip = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_hip);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	hip->common.rdclass = rdata->rdclass;
-	hip->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&hip->common, link);
-
-	dns_rdata_toregion(rdata, &region);
-
-	hip->hit_len = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-
-	hip->algorithm = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-
-	hip->key_len = uint16_fromregion(&region);
-	isc_region_consume(&region, 2);
-
-	hip->hit = hip->key = hip->servers = NULL;
-
-	hip->hit = mem_maybedup(region.base, hip->hit_len);
-	if (hip->hit == NULL)
-		goto cleanup;
-	isc_region_consume(&region, hip->hit_len);
-
-	INSIST(hip->key_len <= region.length);
-
-	hip->key = mem_maybedup(region.base, hip->key_len);
-	if (hip->key == NULL)
-		goto cleanup;
-	isc_region_consume(&region, hip->key_len);
-
-	hip->servers_len = region.length;
-	if (hip->servers_len != 0) {
-		hip->servers = mem_maybedup(region.base, region.length);
-		if (hip->servers == NULL)
-			goto cleanup;
-	}
-
-	hip->offset = hip->servers_len;
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	if (hip->hit != NULL)
-		free(hip->hit);
-	if (hip->key != NULL)
-		free(hip->key);
-	if (hip->servers != NULL)
-		free(hip->servers);
-	return (ISC_R_NOMEMORY);
-
-}
 
 
 

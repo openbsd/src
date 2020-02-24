@@ -132,58 +132,6 @@ towire_caa(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_caa(ARGS_TOSTRUCT) {
-	dns_rdata_caa_t *caa = target;
-	isc_region_t sr;
-
-	REQUIRE(rdata->type == dns_rdatatype_caa);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length >= 3U);
-	REQUIRE(rdata->data != NULL);
-
-	caa->common.rdclass = rdata->rdclass;
-	caa->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&caa->common, link);
-
-	dns_rdata_toregion(rdata, &sr);
-
-	/*
-	 * Flags
-	 */
-	if (sr.length < 1)
-		return (ISC_R_UNEXPECTEDEND);
-	caa->flags = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/*
-	 * Tag length
-	 */
-	if (sr.length < 1)
-		return (ISC_R_UNEXPECTEDEND);
-	caa->tag_len = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/*
-	 * Tag
-	 */
-	if (sr.length < caa->tag_len)
-		return (ISC_R_UNEXPECTEDEND);
-	caa->tag = mem_maybedup(sr.base, caa->tag_len);
-	if (caa->tag == NULL)
-		return (ISC_R_NOMEMORY);
-	isc_region_consume(&sr, caa->tag_len);
-
-	/*
-	 * Value
-	 */
-	caa->value_len = sr.length;
-	caa->value = mem_maybedup(sr.base, sr.length);
-	if (caa->value == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

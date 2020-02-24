@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mb_7.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: mb_7.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 17:31:26 PST 2000 by bwelling */
 
@@ -79,27 +79,6 @@ towire_mb(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_mb(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_mb_t *mb = target;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_mb);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	mb->common.rdclass = rdata->rdclass;
-	mb->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&mb->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &region);
-	dns_name_fromregion(&name, &region);
-	dns_name_init(&mb->mb, NULL);
-	RETERR(name_duporclone(&name, &mb->mb));
-	return (ISC_R_SUCCESS);
-}
 
 
 

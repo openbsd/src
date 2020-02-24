@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rp_17.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: rp_17.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* RFC1183 */
 
@@ -104,39 +104,6 @@ towire_rp(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_rp(ARGS_TOSTRUCT) {
-	isc_result_t result;
-	isc_region_t region;
-	dns_rdata_rp_t *rp = target;
-	dns_name_t name;
-
-	REQUIRE(rdata->type == dns_rdatatype_rp);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	rp->common.rdclass = rdata->rdclass;
-	rp->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&rp->common, link);
-
-	dns_name_init(&name, NULL);
-	dns_rdata_toregion(rdata, &region);
-	dns_name_fromregion(&name, &region);
-	dns_name_init(&rp->mail, NULL);
-	RETERR(name_duporclone(&name, &rp->mail));
-	isc_region_consume(&region, name_length(&name));
-	dns_name_fromregion(&name, &region);
-	dns_name_init(&rp->text, NULL);
-	result = name_duporclone(&name, &rp->text);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-
-	return (ISC_R_SUCCESS);
-
- cleanup:
-	dns_name_free(&rp->mail);
-	return (ISC_R_NOMEMORY);
-}
 
 
 

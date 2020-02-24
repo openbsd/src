@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: null_10.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: null_10.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:57:50 PST 2000 by explorer */
 
@@ -57,26 +57,6 @@ towire_null(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_null(ARGS_TOSTRUCT) {
-	dns_rdata_null_t *null = target;
-	isc_region_t r;
-
-	REQUIRE(rdata->type == dns_rdatatype_null);
-	REQUIRE(target != NULL);
-
-	null->common.rdclass = rdata->rdclass;
-	null->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&null->common, link);
-
-	dns_rdata_toregion(rdata, &r);
-	null->length = r.length;
-	null->data = mem_maybedup(r.base, r.length);
-	if (null->data == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

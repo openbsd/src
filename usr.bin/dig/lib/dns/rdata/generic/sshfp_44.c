@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sshfp_44.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: sshfp_44.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
 
 /* RFC 4255 */
 
@@ -102,33 +102,6 @@ towire_sshfp(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_sshfp(ARGS_TOSTRUCT) {
-	dns_rdata_sshfp_t *sshfp = target;
-	isc_region_t region;
-
-	REQUIRE(rdata->type == dns_rdatatype_sshfp);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-
-	sshfp->common.rdclass = rdata->rdclass;
-	sshfp->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&sshfp->common, link);
-
-	dns_rdata_toregion(rdata, &region);
-
-	sshfp->algorithm = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-	sshfp->digest_type = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-	sshfp->length = region.length;
-
-	sshfp->digest = mem_maybedup(region.base, region.length);
-	if (sshfp->digest == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
 
 
 

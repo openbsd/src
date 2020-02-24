@@ -81,24 +81,6 @@ towire_nid(ARGS_TOWIRE) {
 
 
 
-static inline isc_result_t
-tostruct_nid(ARGS_TOSTRUCT) {
-	isc_region_t region;
-	dns_rdata_nid_t *nid = target;
-
-	REQUIRE(rdata->type == dns_rdatatype_nid);
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length == 10);
-
-	nid->common.rdclass = rdata->rdclass;
-	nid->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nid->common, link);
-
-	dns_rdata_toregion(rdata, &region);
-	nid->pref = uint16_fromregion(&region);
-	memmove(nid->nid, region.base, region.length);
-	return (ISC_R_SUCCESS);
-}
 
 
 
