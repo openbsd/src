@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: parser.c,v 1.2 2020/02/24 07:07:11 dlg Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -18,6 +18,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/time.h>
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +37,9 @@ enum token_type {
 	PORT,
 	METHOD,
 	NAS_PORT,
+	TRIES,
+	INTERVAL,
+	MAXWAIT,
 	ENDTOKEN
 };
 
@@ -45,7 +50,11 @@ struct token {
 	const struct token	*next;
 };
 
-static struct parse_result res;
+static struct parse_result res = {
+	.tries		= TEST_TRIES_DEFAULT,
+	.interval	= { TEST_INTERVAL_DEFAULT, 0 },
+	.maxwait	= { TEST_MAXWAIT_DEFAULT, 0 },
+};
 
 static const struct token t_test[];
 static const struct token t_secret[];
@@ -55,6 +64,9 @@ static const struct token t_password[];
 static const struct token t_port[];
 static const struct token t_method[];
 static const struct token t_nas_port[];
+static const struct token t_tries[];
+static const struct token t_interval[];
+static const struct token t_maxwait[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"test",		TEST,		t_test },
@@ -82,6 +94,9 @@ static const struct token t_test_opts[] = {
 	{ KEYWORD,	"port",		NONE,		t_port },
 	{ KEYWORD,	"method",	NONE,		t_method },
 	{ KEYWORD,	"nas-port",	NONE,		t_nas_port },
+	{ KEYWORD,	"interval",	NONE,		t_interval },
+	{ KEYWORD,	"tries",	NONE,		t_tries },
+	{ KEYWORD,	"maxwait",	NONE,		t_maxwait },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
@@ -105,6 +120,21 @@ static const struct token t_nas_port[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
+static const struct token t_tries[] = {
+	{ TRIES,	"",		NONE,		t_test_opts },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
+static const struct token t_interval[] = {
+	{ INTERVAL,	"",		NONE,		t_test_opts },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
+static const struct token t_maxwait[] = {
+	{ MAXWAIT,	"",		NONE,		t_test_opts },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
 
 static const struct token	*match_token(char *, const struct token []);
 static void			 show_valid_args(const struct token []);
@@ -114,8 +144,6 @@ parse(int argc, char *argv[])
 {
 	const struct token	*table = t_main;
 	const struct token	*match;
-
-	bzero(&res, sizeof(res));
 
 	while (argc >= 0) {
 		if ((match = match_token(argv[0], table)) == NULL) {
@@ -135,6 +163,12 @@ parse(int argc, char *argv[])
 
 	if (argc > 0) {
 		fprintf(stderr, "superfluous argument: %s\n", argv[0]);
+		return (NULL);
+	}
+
+	if (res.tries * res.interval.tv_sec > res.maxwait.tv_sec) {
+		fprintf(stderr, "tries %u by interval %lld > maxwait %lld",
+		    res.tries, res.interval.tv_sec, res.maxwait.tv_sec);
 		return (NULL);
 	}
 
@@ -240,6 +274,50 @@ match_token(char *word, const struct token table[])
 			res.nas_port = num;
 			t = &table[i];
 			break;
+
+		case TRIES:
+			if (word == NULL)
+				break;
+			num = strtonum(word,
+			    TEST_TRIES_MIN, TEST_TRIES_MAX, &errstr);
+			if (errstr != NULL) {
+				printf("invalid argument: %s is %s"
+				    " for \"tries\"\n", word, errstr);
+				return (NULL);
+			}
+			match++;
+			res.tries = num;
+			t = &table[i];
+			break;
+		case INTERVAL:
+			if (word == NULL)
+				break;
+			num = strtonum(word,
+			    TEST_INTERVAL_MIN, TEST_INTERVAL_MAX, &errstr);
+			if (errstr != NULL) {
+				printf("invalid argument: %s is %s"
+				    " for \"interval\"\n", word, errstr);
+				return (NULL);
+			}
+			match++;
+			res.interval.tv_sec = num;
+			t = &table[i];
+			break;
+		case MAXWAIT:
+			if (word == NULL)
+				break;
+			num = strtonum(word,
+			    TEST_MAXWAIT_MIN, TEST_MAXWAIT_MAX, &errstr);
+			if (errstr != NULL) {
+				printf("invalid argument: %s is %s"
+				    " for \"maxwait\"\n", word, errstr);
+				return (NULL);
+			}
+			match++;
+			res.maxwait.tv_sec = num;
+			t = &table[i];
+			break;
+
 		case ENDTOKEN:
 			break;
 		}
@@ -292,6 +370,18 @@ show_valid_args(const struct token table[])
 			break;
 		case NAS_PORT:
 			fprintf(stderr, "  <nas-port (0-65535)>\n");
+			break;
+		case TRIES:
+			fprintf(stderr, "  <tries (%u-%u)>\n",
+			    TEST_TRIES_MIN, TEST_TRIES_MAX);
+			break;
+		case INTERVAL:
+			fprintf(stderr, "  <interval (%u-%u)>\n",
+			    TEST_INTERVAL_MIN, TEST_INTERVAL_MAX);
+			break;
+		case MAXWAIT:
+			fprintf(stderr, "  <maxwait (%u-%u)>\n",
+			    TEST_MAXWAIT_MIN, TEST_MAXWAIT_MAX);
 			break;
 		case ENDTOKEN:
 			break;

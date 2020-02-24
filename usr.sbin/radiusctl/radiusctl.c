@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.7 2019/04/01 09:51:56 yasuoka Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.8 2020/02/24 07:07:11 dlg Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -19,6 +19,7 @@
 #include <netinet/in.h>
 
 #include <arpa/inet.h>
+#include <errno.h>
 #include <err.h>
 #include <md5.h>
 #include <netdb.h>
@@ -30,11 +31,13 @@
 
 #include <radius.h>
 
+#include <event.h>
+
 #include "parser.h"
 #include "chap_ms.h"
 
 
-static void		 radius_test (struct parse_result *);
+static int		 radius_test (struct parse_result *);
 static void		 radius_dump (FILE *, RADIUS_PACKET *, bool,
 			    const char *);
 static const char	*radius_code_str (int code);
@@ -53,6 +56,7 @@ main(int argc, char *argv[])
 {
 	int			 ch;
 	struct parse_result	*result;
+	int			 ecode = EXIT_SUCCESS;
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
@@ -72,21 +76,38 @@ main(int argc, char *argv[])
 	case TEST:
 		if (pledge("stdio dns inet", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
-		radius_test(result);
+		ecode = radius_test(result);
 		break;
 	}
 
-	return (EXIT_SUCCESS);
+	return (ecode);
 }
 
-static void
+struct radius_test {
+	const struct parse_result	*res;
+	int				 ecode;
+
+	RADIUS_PACKET			*reqpkt;
+	int				 sock;
+	unsigned int			 tries;
+	struct event			 ev_send;
+	struct event			 ev_recv;
+	struct event			 ev_timedout;
+};
+
+static void	radius_test_send(int, short, void *);
+static void	radius_test_recv(int, short, void *);
+static void	radius_test_timedout(int, short, void *);
+
+static int
 radius_test(struct parse_result *res)
 {
+	struct radius_test	 test = { .res = res };
+	RADIUS_PACKET		*reqpkt;
 	struct addrinfo		 hints, *ai;
 	int			 sock, retval;
 	struct sockaddr_storage	 sockaddr;
 	socklen_t		 sockaddrlen;
-	RADIUS_PACKET		*reqpkt, *respkt;
 	struct sockaddr_in	*sin4;
 	struct sockaddr_in6	*sin6;
 	uint32_t		 u32val;
@@ -110,7 +131,8 @@ radius_test(struct parse_result *res)
 		((struct sockaddr_in *)ai->ai_addr)->sin_port =
 		    htons(res->port);
 
-	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+	sock = socket(ai->ai_family, ai->ai_socktype | SOCK_NONBLOCK,
+	    ai->ai_protocol);
 	if (sock == -1)
 		err(1, "socket");
 
@@ -211,24 +233,31 @@ radius_test(struct parse_result *res)
 
 	radius_put_message_authenticator(reqpkt, res->secret);
 
+	event_init();
+
+	test.ecode = EXIT_FAILURE;
+	test.res = res;
+	test.sock = sock;
+	test.reqpkt = reqpkt;
+	
+	event_set(&test.ev_recv, sock, EV_READ|EV_PERSIST,
+	    radius_test_recv, &test);
+
+	evtimer_set(&test.ev_send, radius_test_send, &test);
+	evtimer_set(&test.ev_timedout, radius_test_timedout, &test);
+
+	event_add(&test.ev_recv, NULL);
+	evtimer_add(&test.ev_timedout, &res->maxwait);
+
 	/* Send! */
 	fprintf(stderr, "Sending:\n");
 	radius_dump(stdout, reqpkt, false, res->secret);
-	if (send(sock, radius_get_data(reqpkt), radius_get_length(reqpkt), 0)
-	    == -1)
-		warn("send");
-	if ((respkt = radius_recv(sock, 0)) == NULL)
-		warn("recv");
-	else {
-		radius_set_request_packet(respkt, reqpkt);
-		fprintf(stderr, "\nReceived:\n");
-		radius_dump(stdout, respkt, true, res->secret);
-	}
+	radius_test_send(0, EV_TIMEOUT, &test);
+
+	event_dispatch();
 
 	/* Release the resources */
 	radius_delete_packet(reqpkt);
-	if (respkt)
-		radius_delete_packet(respkt);
 	close(sock);
 	freeaddrinfo(ai);
 
@@ -236,7 +265,79 @@ radius_test(struct parse_result *res)
 	if (res->password)
 		explicit_bzero((char *)res->password, strlen(res->password));
 
-	return;
+	return (test.ecode);
+}
+
+static void
+radius_test_send(int thing, short revents, void *arg)
+{
+	struct radius_test	*test = arg;
+	RADIUS_PACKET		*reqpkt = test->reqpkt;
+	ssize_t			 rv;
+
+retry:
+	rv = send(test->sock,
+	    radius_get_data(reqpkt), radius_get_length(reqpkt), 0);
+	if (rv == -1) {
+		switch (errno) {
+		case EINTR:
+		case EAGAIN:
+			goto retry;
+		default:
+			break;
+		}
+
+		warn("send");
+	}
+
+	if (++test->tries >= test->res->tries)
+		return;
+
+	evtimer_add(&test->ev_send, &test->res->interval);
+}
+
+static void
+radius_test_recv(int sock, short revents, void *arg)
+{
+	struct radius_test	*test = arg;
+	RADIUS_PACKET		*respkt;
+	RADIUS_PACKET		*reqpkt = test->reqpkt;
+
+retry:
+	respkt = radius_recv(sock, 0);
+	if (respkt == NULL) {
+		switch (errno) {
+		case EINTR:
+		case EAGAIN:
+			goto retry;
+		default:
+			break;
+		}
+
+		warn("recv");
+		return;
+	}
+
+	radius_set_request_packet(respkt, reqpkt);
+	if (radius_get_id(respkt) == radius_get_id(reqpkt)) {
+		fprintf(stderr, "\nReceived:\n");
+		radius_dump(stdout, respkt, true, test->res->secret);
+
+		event_del(&test->ev_recv);
+		evtimer_del(&test->ev_send);
+		evtimer_del(&test->ev_timedout);
+		test->ecode = EXIT_SUCCESS;
+	}
+
+	radius_delete_packet(respkt);
+}
+
+static void
+radius_test_timedout(int thing, short revents, void *arg)
+{
+	struct radius_test	*test = arg;
+
+	event_del(&test->ev_recv);
 }
 
 static void

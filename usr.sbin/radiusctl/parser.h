@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: parser.h,v 1.2 2020/02/24 07:07:11 dlg Exp $	*/
 
 /* This file is derived from OpenBSD:src/usr.sbin/ikectl/parser.h 1.9 */
 /*
@@ -31,6 +31,18 @@ enum auth_method {
 	MSCHAPV2
 };
 
+#define TEST_TRIES_MIN		1
+#define TEST_TRIES_MAX		32
+#define TEST_TRIES_DEFAULT	3
+
+#define TEST_INTERVAL_MIN	1
+#define TEST_INTERVAL_MAX	10
+#define TEST_INTERVAL_DEFAULT	2
+
+#define TEST_MAXWAIT_MIN	3
+#define TEST_MAXWAIT_MAX	60
+#define TEST_MAXWAIT_DEFAULT	8
+
 struct parse_result {
 	enum actions		 action;
 	const char		*hostname;
@@ -40,6 +52,13 @@ struct parse_result {
 	u_short			 port;
 	int			 nas_port;
 	enum auth_method	 auth_method;
+
+	/* number of packets to try sending */
+	unsigned int		 tries;
+	/* how long between packet sends */
+	struct timeval		 interval;
+	/* overall process wait time for a reply */
+	struct timeval		 maxwait;
 };
 
 struct parse_result	*parse(int, char *[]);
