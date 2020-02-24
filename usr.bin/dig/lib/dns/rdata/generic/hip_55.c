@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.9 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: hip_55.c,v 1.10 2020/02/24 17:47:50 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -144,36 +144,4 @@ towire_hip(ARGS_TOWIRE) {
 	dns_rdata_toregion(rdata, &region);
 	return (mem_tobuffer(target, region.base, region.length));
 }
-
-
-
-
-
-
-isc_result_t
-dns_rdata_hip_first(dns_rdata_hip_t *hip) {
-	if (hip->servers_len == 0)
-		return (ISC_R_NOMORE);
-	hip->offset = 0;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_rdata_hip_next(dns_rdata_hip_t *hip) {
-	isc_region_t region;
-	dns_name_t name;
-
-	if (hip->offset >= hip->servers_len)
-		return (ISC_R_NOMORE);
-
-	region.base = hip->servers + hip->offset;
-	region.length = hip->servers_len - hip->offset;
-	dns_name_init(&name, NULL);
-	dns_name_fromregion(&name, &region);
-	hip->offset += name.length;
-	INSIST(hip->offset <= hip->servers_len);
-	return (ISC_R_SUCCESS);
-}
-
-
 #endif	/* RDATA_GENERIC_HIP_5_C */

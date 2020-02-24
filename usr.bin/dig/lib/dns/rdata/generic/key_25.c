@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key_25.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: key_25.c,v 1.9 2020/02/24 17:47:50 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -199,86 +199,5 @@ towire_key(ARGS_TOWIRE) {
 	dns_rdata_toregion(rdata, &sr);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
-
-
-static inline isc_result_t
-generic_fromstruct_key(ARGS_FROMSTRUCT) {
-	dns_rdata_key_t *key = source;
-
-	REQUIRE(key != NULL);
-	REQUIRE(key->common.rdtype == type);
-	REQUIRE(key->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	/* Flags */
-	RETERR(uint16_tobuffer(key->flags, target));
-
-	/* Protocol */
-	RETERR(uint8_tobuffer(key->protocol, target));
-
-	/* Algorithm */
-	RETERR(uint8_tobuffer(key->algorithm, target));
-
-	/* Data */
-	return (mem_tobuffer(target, key->data, key->datalen));
-}
-
-static inline isc_result_t
-generic_tostruct_key(ARGS_TOSTRUCT) {
-	dns_rdata_key_t *key = target;
-	isc_region_t sr;
-
-	REQUIRE(rdata != NULL);
-	REQUIRE(rdata->length != 0);
-
-	REQUIRE(key != NULL);
-	REQUIRE(key->common.rdclass == rdata->rdclass);
-	REQUIRE(key->common.rdtype == rdata->type);
-	REQUIRE(!ISC_LINK_LINKED(&key->common, link));
-
-	dns_rdata_toregion(rdata, &sr);
-
-	/* Flags */
-	if (sr.length < 2)
-		return (ISC_R_UNEXPECTEDEND);
-	key->flags = uint16_fromregion(&sr);
-	isc_region_consume(&sr, 2);
-
-	/* Protocol */
-	if (sr.length < 1)
-		return (ISC_R_UNEXPECTEDEND);
-	key->protocol = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/* Algorithm */
-	if (sr.length < 1)
-		return (ISC_R_UNEXPECTEDEND);
-	key->algorithm = uint8_fromregion(&sr);
-	isc_region_consume(&sr, 1);
-
-	/* Data */
-	key->datalen = sr.length;
-	key->data = mem_maybedup(sr.base, key->datalen);
-	if (key->data == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
-
-static inline void
-generic_freestruct_key(ARGS_FREESTRUCT) {
-	dns_rdata_key_t *key = (dns_rdata_key_t *) source;
-
-	REQUIRE(key != NULL);
-
-	free(key->data);
-}
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_KEY_25_C */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.21 2020/02/24 17:45:25 florian Exp $ */
+/* $Id: rdata.c,v 1.22 2020/02/24 17:47:50 florian Exp $ */
 
 /*! \file */
 
@@ -109,9 +109,6 @@ static isc_result_t
 uint16_tobuffer(uint32_t, isc_buffer_t *target);
 
 static isc_result_t
-uint8_tobuffer(uint32_t, isc_buffer_t *target);
-
-static isc_result_t
 name_tobuffer(dns_name_t *name, isc_buffer_t *target);
 
 static uint32_t
@@ -146,15 +143,6 @@ generic_totext_key(ARGS_TOTEXT);
 static inline isc_result_t
 generic_fromwire_key(ARGS_FROMWIRE);
 
-static inline isc_result_t
-generic_fromstruct_key(ARGS_FROMSTRUCT);
-
-static inline isc_result_t
-generic_tostruct_key(ARGS_TOSTRUCT);
-
-static inline void
-generic_freestruct_key(ARGS_FREESTRUCT);
-
 static isc_result_t
 generic_totext_txt(ARGS_TOTEXT);
 
@@ -162,40 +150,16 @@ static isc_result_t
 generic_fromwire_txt(ARGS_FROMWIRE);
 
 static isc_result_t
-generic_fromstruct_txt(ARGS_FROMSTRUCT);
-
-static isc_result_t
-generic_tostruct_txt(ARGS_TOSTRUCT);
-
-static void
-generic_freestruct_txt(ARGS_FREESTRUCT);
-
-static isc_result_t
 generic_totext_ds(ARGS_TOTEXT);
 
 static isc_result_t
-generic_tostruct_ds(ARGS_TOSTRUCT);
-
-static isc_result_t
 generic_fromwire_ds(ARGS_FROMWIRE);
-
-static isc_result_t
-generic_fromstruct_ds(ARGS_FROMSTRUCT);
 
 static isc_result_t
 generic_totext_tlsa(ARGS_TOTEXT);
 
 static isc_result_t
 generic_fromwire_tlsa(ARGS_FROMWIRE);
-
-static isc_result_t
-generic_fromstruct_tlsa(ARGS_FROMSTRUCT);
-
-static isc_result_t
-generic_tostruct_tlsa(ARGS_TOSTRUCT);
-
-static void
-generic_freestruct_tlsa(ARGS_FREESTRUCT);
 
 static inline isc_result_t
 name_duporclone(dns_name_t *source, dns_name_t *target) {
@@ -1100,19 +1064,6 @@ uint16_tobuffer(uint32_t value, isc_buffer_t *target) {
 	if (region.length < 2)
 		return (ISC_R_NOSPACE);
 	isc_buffer_putuint16(target, (uint16_t)value);
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-uint8_tobuffer(uint32_t value, isc_buffer_t *target) {
-	isc_region_t region;
-
-	if (value > 0xff)
-		return (ISC_R_RANGE);
-	isc_buffer_availableregion(target, &region);
-	if (region.length < 1)
-		return (ISC_R_NOSPACE);
-	isc_buffer_putuint8(target, (uint8_t)value);
 	return (ISC_R_SUCCESS);
 }
 

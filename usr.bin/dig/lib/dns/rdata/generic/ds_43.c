@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.c,v 1.9 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: ds_43.c,v 1.10 2020/02/24 17:47:50 florian Exp $ */
 
 /* RFC3658 */
 
@@ -152,69 +152,5 @@ towire_ds(ARGS_TOWIRE) {
 	dns_rdata_toregion(rdata, &sr);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
-
-
-static inline isc_result_t
-generic_fromstruct_ds(ARGS_FROMSTRUCT) {
-	dns_rdata_ds_t *ds = source;
-
-	REQUIRE(source != NULL);
-	REQUIRE(ds->common.rdtype == type);
-	REQUIRE(ds->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	switch (ds->digest_type) {
-	case DNS_DSDIGEST_SHA1:
-		REQUIRE(ds->length == ISC_SHA1_DIGESTLENGTH);
-		break;
-	case DNS_DSDIGEST_SHA256:
-		REQUIRE(ds->length == ISC_SHA256_DIGESTLENGTH);
-		break;
-	case DNS_DSDIGEST_SHA384:
-		REQUIRE(ds->length == ISC_SHA384_DIGESTLENGTH);
-		break;
-	}
-
-	RETERR(uint16_tobuffer(ds->key_tag, target));
-	RETERR(uint8_tobuffer(ds->algorithm, target));
-	RETERR(uint8_tobuffer(ds->digest_type, target));
-
-	return (mem_tobuffer(target, ds->digest, ds->length));
-}
-
-
-static inline isc_result_t
-generic_tostruct_ds(ARGS_TOSTRUCT) {
-	dns_rdata_ds_t *ds = target;
-	isc_region_t region;
-
-	REQUIRE(target != NULL);
-	REQUIRE(rdata->length != 0);
-	REQUIRE(ds->common.rdtype == rdata->type);
-	REQUIRE(ds->common.rdclass == rdata->rdclass);
-	REQUIRE(!ISC_LINK_LINKED(&ds->common, link));
-
-	dns_rdata_toregion(rdata, &region);
-
-	ds->key_tag = uint16_fromregion(&region);
-	isc_region_consume(&region, 2);
-	ds->algorithm = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-	ds->digest_type = uint8_fromregion(&region);
-	isc_region_consume(&region, 1);
-	ds->length = region.length;
-
-	ds->digest = mem_maybedup(region.base, region.length);
-	if (ds->digest == NULL)
-		return (ISC_R_NOMEMORY);
-
-	return (ISC_R_SUCCESS);
-}
-
-
-
-
 
 #endif	/* RDATA_GENERIC_DS_43_C */
