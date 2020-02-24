@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.343 2019/11/10 09:10:44 stsp Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.344 2020/02/24 10:05:34 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 10 2019 $
+.Dd $Mdocdate: February 24 2020 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -972,8 +972,9 @@ list if they are found during a scan.
 .Pp
 The
 .Ar id
-can either be any text string up to 32 characters in length,
-or a series of hexadecimal digits up to 64 digits.
+can either be a printable ASCII string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits preceded by
+.Dq 0x .
 If
 .Ar id
 is the empty string
@@ -1077,6 +1078,12 @@ Remove specified flag.
 .It Cm nwid Ar id
 Connect to the network with NWID/ESSID
 .Ar id .
+The
+.Ar id
+can either be a printable ASCII string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits preceded by
+.Dq 0x .
+.Pp
 Unlike
 .Cm join ,
 the
