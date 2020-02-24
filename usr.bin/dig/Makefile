@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.1 2020/02/07 09:58:52 florian Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/02/24 12:05:37 florian Exp $
 
 PROG=		dig
 SRCS=		dig.c dighost.c host.c nslookup.c
 MAN=		dig.1 host.1 nslookup.1
 LINKS=		${BINDIR}/dig ${BINDIR}/host \
 		${BINDIR}/dig ${BINDIR}/nslookup
-CLEANFILES+=	code.h enumclass.h enumtype.h gen gen.d rdatastruct.h
+CLEANFILES+=	code.h gen gen.d rdatastruct.h
 
 .include "${.CURDIR}/lib/dns/Makefile.inc"
 .include "${.CURDIR}/lib/isc/Makefile.inc"
@@ -29,16 +29,10 @@ YFLAGS=
 LDADD+=	-lcrypto
 DPADD+= ${LIBCRYPTO}
 
-BUILDFIRST = enumtype.h enumclass.h rdatastruct.h code.h
+BUILDFIRST = rdatastruct.h code.h
 
 gen: lib/dns/gen.c
 	${HOSTCC} ${CFLAGS} ${.CURDIR}/lib/dns/gen.c -o $@
-
-enumtype.h: gen
-	./gen -s ${.CURDIR}/lib/dns -t > $@
-
-enumclass.h: gen
-	./gen -s ${.CURDIR}/lib/dns -c > $@
 
 rdatastruct.h: gen lib/dns/rdata/rdatastructpre.h \
 	lib/dns/rdata/rdatastructsuf.h
