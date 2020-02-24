@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.246 2020/02/10 13:49:04 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.247 2020/02/24 21:15:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -98,6 +98,7 @@ static	int		  fs_lookup(const struct manpaths *,
 static	int		  fs_search(const struct mansearch *,
 				const struct manpaths *, const char *,
 				struct manpage **, size_t *);
+static	void		  glob_esc(char **, const char *, const char *);
 static	void		  outdata_alloc(struct outstate *, struct manoutput *);
 static	void		  parse(struct mparse *, int, const char *,
 				struct outstate *, struct manoutput *);
@@ -653,6 +654,18 @@ usage(enum argmode argmode)
 	exit((int)MANDOCLEVEL_BADARG);
 }
 
+static void
+glob_esc(char **dst, const char *src, const char *suffix)
+{
+	while (*src != '\0') {
+		if (strchr("*?[", *src) != NULL)
+			*(*dst)++ = '\\';
+		*(*dst)++ = *src++;
+	}
+	while (*suffix != '\0')
+		*(*dst)++ = *suffix++;
+}
+
 static int
 fs_lookup(const struct manpaths *paths, size_t ipath,
 	const char *sec, const char *arch, const char *name,
@@ -661,9 +674,13 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	struct stat	 sb;
 	glob_t		 globinfo;
 	struct manpage	*page;
-	char		*file;
+	char		*file, *cp;
 	int		 globres;
 	enum form	 form;
+
+	const char *const slman = "/man";
+	const char *const slash = "/";
+	const char *const sglob = ".[01-9]*";
 
 	form = FORM_SRC;
 	mandoc_asprintf(&file, "%s/man%s/%s.%s",
@@ -688,8 +705,13 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 		free(file);
 	}
 
-	mandoc_asprintf(&file, "%s/man%s/%s.[01-9]*",
-	    paths->paths[ipath], sec, name);
+	cp = file = mandoc_malloc(strlen(paths->paths[ipath]) * 2 +
+	    strlen(slman) + strlen(sec) * 2 + strlen(slash) +
+	    strlen(name) * 2 + strlen(sglob) + 1);
+	glob_esc(&cp, paths->paths[ipath], slman);
+	glob_esc(&cp, sec, slash);
+	glob_esc(&cp, name, sglob);
+	*cp = '\0';
 	globres = glob(file, 0, NULL, &globinfo);
 	if (globres != 0 && globres != GLOB_NOMATCH)
 		mandoc_msg(MANDOCERR_GLOB, 0, 0,
