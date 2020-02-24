@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.131 2020/02/03 15:53:52 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.132 2020/02/24 16:16:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1294,7 +1294,7 @@ mta_io(struct io *io, int evt, void *arg)
 		if (cont) {
 			if (s->replybuf[0] == '\0')
 				(void)strlcat(s->replybuf, line, sizeof s->replybuf);
-			else {
+			else if (len > 4) {
 				line = line + 4;
 				if (isdigit((int)*line) && *(line + 1) == '.' &&
 				    isdigit((int)*line+2) && *(line + 3) == '.' &&
@@ -1309,7 +1309,9 @@ mta_io(struct io *io, int evt, void *arg)
 		/* last line of a reply, check if we're on a continuation to parse out status and ESC.
 		 * if we overflow reply buffer or are not on continuation, log entire last line.
 		 */
-		if (s->replybuf[0] != '\0') {
+		if (s->replybuf[0] == '\0')
+			(void)strlcat(s->replybuf, line, sizeof s->replybuf);
+		else if (len > 4) {
 			p = line + 4;
 			if (isdigit((int)*p) && *(p + 1) == '.' &&
 			    isdigit((int)*p+2) && *(p + 3) == '.' &&
@@ -1318,8 +1320,6 @@ mta_io(struct io *io, int evt, void *arg)
 			if (strlcat(s->replybuf, p, sizeof s->replybuf) >= sizeof s->replybuf)
 				(void)strlcpy(s->replybuf, line, sizeof s->replybuf);
 		}
-		else
-			(void)strlcpy(s->replybuf, line, sizeof s->replybuf);
 
 		if (s->state == MTA_QUIT) {
 			log_info("%016"PRIx64" mta disconnected reason=quit messages=%zu",

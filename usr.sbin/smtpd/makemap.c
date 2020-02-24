@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.72 2018/12/28 11:40:29 eric Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.73 2020/02/24 16:16:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -83,7 +83,12 @@ makemap(int prog_mode, int argc, char *argv[])
 	int		 ch, dbputs = 0, Uflag = 0;
 	DBTYPE		 dbtype = DB_HASH;
 	char		*p;
+	gid_t		 gid;
 	int		 fd = -1;
+
+	gid = getgid();
+	if (setresgid(gid, gid, gid) == -1)
+		err(1, "setresgid");
 
 	if ((env = config_default()) == NULL)
 		err(1, NULL);
@@ -161,9 +166,9 @@ makemap(int prog_mode, int argc, char *argv[])
 				errx(1, "database name too long");
 		}
 
-		execlp("makemap", "makemap", "-d", argv[0], "-o", dbname, "-",
-		    (char *)NULL);
-		err(1, "execlp");
+		execl(PATH_MAKEMAP, "makemap", "-d", argv[0], "-o", dbname,
+		    "-", (char *)NULL);
+		err(1, "execl");
 	}
 
 	if (mode == P_NEWALIASES) {
