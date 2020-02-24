@@ -92,11 +92,49 @@
 #include <dns/name.h>
 #include <dns/message.h>
 
-#include "rdatastruct.h"
-
 /***
  *** Types
  ***/
+
+typedef struct dns_rdatacommon {
+	dns_rdataclass_t			rdclass;
+	dns_rdatatype_t				rdtype;
+	ISC_LINK(struct dns_rdatacommon)	link;
+} dns_rdatacommon_t;
+
+typedef struct dns_rdata_cname {
+	dns_rdatacommon_t	common;
+	dns_name_t		cname;
+} dns_rdata_cname_t;
+
+typedef struct dns_rdata_ns {
+	dns_rdatacommon_t	common;
+	dns_name_t		name;
+} dns_rdata_ns_t;
+
+typedef struct dns_rdata_soa {
+	dns_rdatacommon_t	common;
+	dns_name_t		origin;
+	dns_name_t		contact;
+	uint32_t		serial;		/*%< host order */
+	uint32_t		refresh;	/*%< host order */
+	uint32_t		retry;		/*%< host order */
+	uint32_t		expire;		/*%< host order */
+	uint32_t		minimum;	/*%< host order */
+} dns_rdata_soa_t;
+
+typedef struct dns_rdata_any_tsig {
+	dns_rdatacommon_t	common;
+	dns_name_t		algorithm;
+	uint64_t		timesigned;
+	uint16_t		fudge;
+	uint16_t		siglen;
+	unsigned char *		signature;
+	uint16_t		originalid;
+	uint16_t		error;
+	uint16_t		otherlen;
+	unsigned char *		other;
+} dns_rdata_any_tsig_t;
 
 /*%
  ***** An 'rdata' is a handle to a binary region.  The handle has an RR

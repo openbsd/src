@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.12 2020/02/24 17:45:25 florian Exp $
+ * $Id: tsig.c,v 1.13 2020/02/24 17:57:54 florian Exp $
  */
 /*! \file */
 
@@ -33,7 +33,6 @@
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
-#include "rdatastruct.h"
 #include <dns/result.h>
 #include <dns/tsig.h>
 

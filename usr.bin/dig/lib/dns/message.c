@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.15 2020/02/24 16:25:22 florian Exp $ */
+/* $Id: message.c,v 1.16 2020/02/24 17:57:54 florian Exp $ */
 
 /*! \file */
 
@@ -22,14 +22,14 @@
  *** Imports
  ***/
 
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <isc/buffer.h>
-
-
-#include <string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
 
 #include <dns/log.h>

@@ -37,7 +37,6 @@
 #include <dns/rdataclass.h>
 #include <dns/rdataset.h>
 #include <dns/rdatatype.h>
-#include "rdatastruct.h"
 
 #include "dig.h"
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.22 2020/02/24 17:47:50 florian Exp $ */
+/* $Id: rdata.c,v 1.23 2020/02/24 17:57:54 florian Exp $ */
 
 /*! \file */
 
@@ -33,7 +33,6 @@
 #include <dns/keyvalues.h>
 #include <dns/rcode.h>
 #include <dns/rdata.h>
-#include "rdatastruct.h"
 #include <dns/rdatatype.h>
 #include <dns/result.h>
 #include <dns/time.h>

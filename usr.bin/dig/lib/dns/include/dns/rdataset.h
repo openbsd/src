@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.8 2020/02/24 16:25:22 florian Exp $ */
+/* $Id: rdataset.h,v 1.9 2020/02/24 17:57:54 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -51,7 +51,6 @@
  */
 
 #include <dns/types.h>
-#include "rdatastruct.h"
 
 typedef enum {
 	dns_rdatasetadditional_fromauth,
