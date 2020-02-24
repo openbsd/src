@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.14 2020/02/24 16:12:29 florian Exp $ */
+/* $Id: message.c,v 1.15 2020/02/24 16:25:22 florian Exp $ */
 
 /*! \file */
 
@@ -1625,41 +1625,6 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid)
 	msg->buffer->length -= msg->reserved;
 
 	total = 0;
-
-	/*
-	 * Render required glue first.  Set TC if it won't fit.
-	 */
-	name = ISC_LIST_HEAD(*section);
-	if (name != NULL) {
-		rdataset = ISC_LIST_HEAD(name->list);
-		if (rdataset != NULL &&
-		    (rdataset->attributes & DNS_RDATASETATTR_REQUIREDGLUE) != 0 &&
-		    (rdataset->attributes & DNS_RDATASETATTR_RENDERED) == 0) {
-			const void *order_arg = msg->order_arg;
-			st = *(msg->buffer);
-			count = 0;
-			result = dns_rdataset_towiresorted(rdataset,
-							   name,
-							   msg->cctx,
-							   msg->buffer,
-							   msg->order,
-							   order_arg,
-							   &count);
-			total += count;
-			if (result == ISC_R_NOSPACE)
-				msg->flags |= DNS_MESSAGEFLAG_TC;
-			if (result != ISC_R_SUCCESS) {
-				INSIST(st.used < 65536);
-				dns_compress_rollback(msg->cctx,
-						      (uint16_t)st.used);
-				*(msg->buffer) = st;  /* rollback */
-				msg->buffer->length += msg->reserved;
-				msg->counts[sectionid] += total;
-				return (result);
-			}
-			rdataset->attributes |= DNS_RDATASETATTR_RENDERED;
-		}
-	}
 
 	do {
 		name = ISC_LIST_HEAD(*section);
