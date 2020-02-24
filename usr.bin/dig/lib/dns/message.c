@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.13 2020/02/24 12:06:50 florian Exp $ */
+/* $Id: message.c,v 1.14 2020/02/24 16:12:29 florian Exp $ */
 
 /*! \file */
 
@@ -1055,10 +1055,6 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 
 	for (count = 0; count < msg->counts[sectionid]; count++) {
 		int recstart = source->current;
-		isc_boolean_t skip_name_search, skip_type_search;
-
-		skip_name_search = ISC_FALSE;
-		skip_type_search = ISC_FALSE;
 		free_rdataset = ISC_FALSE;
 
 		name = malloc(sizeof(dns_name_t));
@@ -1144,8 +1140,6 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			    count != msg->counts[sectionid]  - 1)
 				DO_FORMERR;
 			msg->sigstart = recstart;
-			skip_name_search = ISC_TRUE;
-			skip_type_search = ISC_TRUE;
 		} else if (rdtype == dns_rdatatype_opt) {
 			/*
 			 * The name of an OPT record must be ".", it
@@ -1156,8 +1150,6 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			    sectionid != DNS_SECTION_ADDITIONAL ||
 			    msg->opt != NULL)
 				DO_FORMERR;
-			skip_name_search = ISC_TRUE;
-			skip_type_search = ISC_TRUE;
 		} else if (rdtype == dns_rdatatype_tkey) {
 			/*
 			 * A TKEY must be in the additional section if this
@@ -1243,8 +1235,6 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 				    count != msg->counts[sectionid]  - 1)
 					DO_FORMERR;
 				msg->sigstart = recstart;
-				skip_name_search = ISC_TRUE;
-				skip_type_search = ISC_TRUE;
 				issigzero = ISC_TRUE;
 			} else {
 				if (msg->rdclass != dns_rdataclass_any &&
