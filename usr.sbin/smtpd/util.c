@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.150 2019/10/03 04:49:12 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.151 2020/02/24 23:54:28 millert Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -462,7 +462,7 @@ valid_domainpart(const char *s)
 		if (strlcpy(domain, p, sizeof domain) >= sizeof domain)
 			return 0;
 
-		c = strchr(domain, (int)']');
+		c = strchr(domain, ']');
 		if (!c || c[1] != '\0')
 			return 0;
 
@@ -489,7 +489,7 @@ valid_domainpart(const char *s)
 	return res_hnok(s);
 }
 
-#define LABELCHR(c) ((c) == '-' || (c) == '_' || isalpha((int)(c)) || isdigit((int)(c)))
+#define LABELCHR(c) ((c) == '-' || (c) == '_' || isalpha((unsigned char)(c)) || isdigit((unsigned char)(c)))
 #define LABELMAX 63
 #define DNAMEMAX 253
 

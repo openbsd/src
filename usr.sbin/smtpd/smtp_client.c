@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_client.c,v 1.12 2019/09/10 12:08:26 eric Exp $	*/
+/*	$OpenBSD: smtp_client.c,v 1.13 2020/02/24 23:54:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -779,9 +779,10 @@ smtp_client_replycat(struct smtp_client *proto, const char *line)
 		line += 3;
 		if (line[0]) {
 			line += 1;
-			if (isdigit((int)line[0]) && line[1] == '.' &&
-			    isdigit((int)line[2]) && line[3] == '.' &&
-			    isdigit((int)line[4]) && isspace((int)line[5]))
+			if (isdigit((unsigned char)line[0]) && line[1] == '.' &&
+			    isdigit((unsigned char)line[2]) && line[3] == '.' &&
+			    isdigit((unsigned char)line[4]) &&
+			    isspace((unsigned char)line[5]))
 				line += 5;
 		}
 	} else

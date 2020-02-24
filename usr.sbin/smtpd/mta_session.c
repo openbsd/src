@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.132 2020/02/24 16:16:07 millert Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.133 2020/02/24 23:54:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1295,13 +1295,12 @@ mta_io(struct io *io, int evt, void *arg)
 			if (s->replybuf[0] == '\0')
 				(void)strlcat(s->replybuf, line, sizeof s->replybuf);
 			else if (len > 4) {
-				line = line + 4;
-				if (isdigit((int)*line) && *(line + 1) == '.' &&
-				    isdigit((int)*line+2) && *(line + 3) == '.' &&
-				    isdigit((int)*line+4) && isspace((int)*(line + 5)))
-					(void)strlcat(s->replybuf, line+5, sizeof s->replybuf);
-				else
-					(void)strlcat(s->replybuf, line, sizeof s->replybuf);
+				p = line + 4;
+				if (isdigit((unsigned char)p[0]) && p[1] == '.' &&
+				    isdigit((unsigned char)p[2]) && p[3] == '.' &&
+				    isdigit((unsigned char)p[4]) && isspace((unsigned char)p[5]))
+					p += 5;
+				(void)strlcat(s->replybuf, p, sizeof s->replybuf);
 			}
 			goto nextline;
 		}
@@ -1313,9 +1312,9 @@ mta_io(struct io *io, int evt, void *arg)
 			(void)strlcat(s->replybuf, line, sizeof s->replybuf);
 		else if (len > 4) {
 			p = line + 4;
-			if (isdigit((int)*p) && *(p + 1) == '.' &&
-			    isdigit((int)*p+2) && *(p + 3) == '.' &&
-			    isdigit((int)*p+4) && isspace((int)*(p + 5)))
+			if (isdigit((unsigned char)p[0]) && p[1] == '.' &&
+			    isdigit((unsigned char)p[2]) && p[3] == '.' &&
+			    isdigit((unsigned char)p[4]) && isspace((unsigned char)p[5]))
 				p += 5;
 			if (strlcat(s->replybuf, p, sizeof s->replybuf) >= sizeof s->replybuf)
 				(void)strlcpy(s->replybuf, line, sizeof s->replybuf);
