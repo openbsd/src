@@ -420,31 +420,9 @@ dns_rdata_freestruct(void *source);
  */
 
 isc_boolean_t
-dns_rdatatype_issingleton(dns_rdatatype_t type);
-/*%<
- * Return true iff the rdata type 'type' is a singleton type,
- * like CNAME or SOA.
- *
- * Requires:
- * \li	'type' is a valid rdata type.
- *
- */
-
-isc_boolean_t
 dns_rdatatype_isknown(dns_rdatatype_t type);
 /*%<
  * Return true iff the rdata type 'type' is known.
- *
- * Requires:
- * \li	'type' is a valid rdata type.
- *
- */
-
-isc_boolean_t
-dns_rdatatype_questiononly(dns_rdatatype_t type);
-/*%<
- * Return true iff rdata of type 'type' can only appear in the question
- * section of a properly formatted message.
  *
  * Requires:
  * \li	'type' is a valid rdata type.

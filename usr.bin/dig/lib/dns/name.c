@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.c,v 1.10 2020/02/23 19:54:25 jung Exp $ */
+/* $Id: name.c,v 1.11 2020/02/24 15:09:14 jsg Exp $ */
 
 /*! \file */
 #include <ctype.h>
@@ -226,107 +226,6 @@ dns_name_isabsolute(const dns_name_t *name) {
 	if ((name->attributes & DNS_NAMEATTR_ABSOLUTE) != 0)
 		return (ISC_TRUE);
 	return (ISC_FALSE);
-}
-
-#define hyphenchar(c) ((c) == 0x2d)
-#define alphachar(c) (((c) >= 0x41 && (c) <= 0x5a) \
-		      || ((c) >= 0x61 && (c) <= 0x7a))
-#define digitchar(c) ((c) >= 0x30 && (c) <= 0x39)
-#define borderchar(c) (alphachar(c) || digitchar(c))
-#define middlechar(c) (borderchar(c) || hyphenchar(c))
-#define domainchar(c) ((c) > 0x20 && (c) < 0x7f)
-
-isc_boolean_t
-dns_name_ismailbox(const dns_name_t *name) {
-	unsigned char *ndata, ch;
-	unsigned int n;
-	isc_boolean_t first;
-
-	REQUIRE(name->labels > 0);
-	REQUIRE(name->attributes & DNS_NAMEATTR_ABSOLUTE);
-
-	/*
-	 * Root label.
-	 */
-	if (name->length == 1)
-		return (ISC_TRUE);
-
-	ndata = name->ndata;
-	n = *ndata++;
-	INSIST(n <= 63);
-	while (n--) {
-		ch = *ndata++;
-		if (!domainchar(ch))
-			return (ISC_FALSE);
-	}
-
-	if (ndata == name->ndata + name->length)
-		return (ISC_FALSE);
-
-	/*
-	 * RFC292/RFC1123 hostname.
-	 */
-	while (ndata < (name->ndata + name->length)) {
-		n = *ndata++;
-		INSIST(n <= 63);
-		first = ISC_TRUE;
-		while (n--) {
-			ch = *ndata++;
-			if (first || n == 0) {
-				if (!borderchar(ch))
-					return (ISC_FALSE);
-			} else {
-				if (!middlechar(ch))
-					return (ISC_FALSE);
-			}
-			first = ISC_FALSE;
-		}
-	}
-	return (ISC_TRUE);
-}
-
-isc_boolean_t
-dns_name_ishostname(const dns_name_t *name, isc_boolean_t wildcard) {
-	unsigned char *ndata, ch;
-	unsigned int n;
-	isc_boolean_t first;
-
-	REQUIRE(name->labels > 0);
-	REQUIRE(name->attributes & DNS_NAMEATTR_ABSOLUTE);
-
-	/*
-	 * Root label.
-	 */
-	if (name->length == 1)
-		return (ISC_TRUE);
-
-	/*
-	 * Skip wildcard if this is a ownername.
-	 */
-	ndata = name->ndata;
-	if (wildcard && ndata[0] == 1 && ndata[1] == '*')
-		ndata += 2;
-
-	/*
-	 * RFC292/RFC1123 hostname.
-	 */
-	while (ndata < (name->ndata + name->length)) {
-		n = *ndata++;
-		INSIST(n <= 63);
-		first = ISC_TRUE;
-		while (n--) {
-			ch = *ndata++;
-			if (first || n == 0) {
-				if (!borderchar(ch))
-					return (ISC_FALSE);
-			} else {
-				if (!middlechar(ch))
-					return (ISC_FALSE);
-			}
-			first = ISC_FALSE;
-		}
-	}
-	return (ISC_TRUE);
 }
 
 unsigned int
@@ -599,62 +498,6 @@ dns_name_caseequal(const dns_name_t *name1, const dns_name_t *name2) {
 		return (ISC_FALSE);
 
 	return (ISC_TRUE);
-}
-
-int
-dns_name_rdatacompare(const dns_name_t *name1, const dns_name_t *name2) {
-	unsigned int l1, l2, l, count1, count2, count;
-	unsigned char c1, c2;
-	unsigned char *label1, *label2;
-
-	/*
-	 * Compare two absolute names as rdata.
-	 */
-
-	REQUIRE(name1->labels > 0);
-	REQUIRE((name1->attributes & DNS_NAMEATTR_ABSOLUTE) != 0);
-	REQUIRE(name2->labels > 0);
-	REQUIRE((name2->attributes & DNS_NAMEATTR_ABSOLUTE) != 0);
-
-	l1 = name1->labels;
-	l2 = name2->labels;
-
-	l = (l1 < l2) ? l1 : l2;
-
-	label1 = name1->ndata;
-	label2 = name2->ndata;
-	while (l > 0) {
-		l--;
-		count1 = *label1++;
-		count2 = *label2++;
-
-		/* no bitstring support */
-		INSIST(count1 <= 63 && count2 <= 63);
-
-		if (count1 != count2)
-			return ((count1 < count2) ? -1 : 1);
-		count = count1;
-		while (count > 0) {
-			count--;
-			c1 = maptolower[*label1++];
-			c2 = maptolower[*label2++];
-			if (c1 < c2)
-				return (-1);
-			else if (c1 > c2)
-				return (1);
-		}
-	}
-
-	/*
-	 * If one name had more labels than the other, their common
-	 * prefix must have been different because the shorter name
-	 * ended with the root label and the longer one can't have
-	 * a root label in the middle of it.  Therefore, if we get
-	 * to this point, the lengths must be equal.
-	 */
-	INSIST(l1 == l2);
-
-	return (0);
 }
 
 isc_boolean_t
@@ -1711,33 +1554,6 @@ dns_name_concatenate(dns_name_t *prefix, dns_name_t *suffix, dns_name_t *name,
 	isc_buffer_add(target, name->length);
 
 	return (ISC_R_SUCCESS);
-}
-
-void
-dns_name_split(dns_name_t *name, unsigned int suffixlabels,
-	       dns_name_t *prefix, dns_name_t *suffix)
-
-{
-	unsigned int splitlabel;
-
-	REQUIRE(suffixlabels > 0);
-	REQUIRE(suffixlabels < name->labels);
-	REQUIRE(prefix != NULL || suffix != NULL);
-	REQUIRE(prefix == NULL ||
-		 BINDABLE(prefix));
-	REQUIRE(suffix == NULL ||
-		 BINDABLE(suffix));
-
-	splitlabel = name->labels - suffixlabels;
-
-	if (prefix != NULL)
-		dns_name_getlabelsequence(name, 0, splitlabel, prefix);
-
-	if (suffix != NULL)
-		dns_name_getlabelsequence(name, splitlabel,
-					  suffixlabels, suffix);
-
-	return;
 }
 
 isc_result_t

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.8 2020/02/24 12:06:50 florian Exp $ */
+/* $Id: name.h,v 1.9 2020/02/24 15:09:14 jsg Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -388,27 +388,6 @@ isc_boolean_t
 dns_name_caseequal(const dns_name_t *name1, const dns_name_t *name2);
 /*%<
  * Case sensitive version of dns_name_equal().
- */
-
-int
-dns_name_rdatacompare(const dns_name_t *name1, const dns_name_t *name2);
-/*%<
- * Compare two names as if they are part of rdata in DNSSEC canonical
- * form.
- *
- * Requires:
- * \li	'name1' is a valid absolute name
- *
- * \li	dns_name_countlabels(name1) > 0
- *
- * \li	'name2' is a valid absolute name
- *
- * \li	dns_name_countlabels(name2) > 0
- *
- * Returns:
- * \li	< 0		'name1' is less than 'name2'
- * \li	0		'name1' is equal to 'name2'
- * \li	> 0		'name1' is greater than 'name2'
  */
 
 isc_boolean_t
@@ -822,53 +801,6 @@ dns_name_concatenate(dns_name_t *prefix, dns_name_t *suffix,
  *\li	#DNS_R_NAMETOOLONG
  */
 
-void
-dns_name_split(dns_name_t *name, unsigned int suffixlabels,
-	       dns_name_t *prefix, dns_name_t *suffix);
-/*%<
- *
- * Split 'name' into two pieces on a label boundary.
- *
- * Notes:
- * \li     'name' is split such that 'suffix' holds the most significant
- *      'suffixlabels' labels.  All other labels are stored in 'prefix'.
- *
- *\li	Copying name data is avoided as much as possible, so 'prefix'
- *	and 'suffix' will end up pointing at the data for 'name'.
- *
- *\li	It is legitimate to pass a 'prefix' or 'suffix' that has
- *	its name data stored someplace other than the dedicated buffer.
- *	This is useful to avoid name copying in the calling function.
- *
- *\li	It is also legitimate to pass a 'prefix' or 'suffix' that is
- *	the same dns_name_t as 'name'.
- *
- * Requires:
- *\li	'name' is a valid name.
- *
- *\li	'suffixlabels' cannot exceed the number of labels in 'name'.
- *
- * \li	'prefix' is a valid name or NULL, and cannot be read-only.
- *
- *\li	'suffix' is a valid name or NULL, and cannot be read-only.
- *
- * Ensures:
- *
- *\li	On success:
- *		If 'prefix' is not NULL it will contain the least significant
- *		labels.
- *		If 'suffix' is not NULL it will contain the most significant
- *		labels.  dns_name_countlabels(suffix) will be equal to
- *		suffixlabels.
- *
- *\li	On failure:
- *		Either 'prefix' or 'suffix' is invalidated (depending
- *		on which one the problem was encountered with).
- *
- * Returns:
- *\li	#ISC_R_SUCCESS	No worries.  (This function should always success).
- */
-
 isc_result_t
 dns_name_dup(const dns_name_t *source,
 	     dns_name_t *target);
@@ -1011,28 +943,6 @@ dns_name_copy(dns_name_t *source, dns_name_t *dest, isc_buffer_t *target);
  * Returns:
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOSPACE
- */
-
-isc_boolean_t
-dns_name_ishostname(const dns_name_t *name, isc_boolean_t wildcard);
-/*%<
- * Return if 'name' is a valid hostname.  RFC 952 / RFC 1123.
- * If 'wildcard' is ISC_TRUE then allow the first label of name to
- * be a wildcard.
- * The root is also accepted.
- *
- * Requires:
- *	'name' to be valid.
- */
-
-
-isc_boolean_t
-dns_name_ismailbox(const dns_name_t *name);
-/*%<
- * Return if 'name' is a valid mailbox.  RFC 821.
- *
- * Requires:
- * \li	'name' to be valid.
  */
 
 #define DNS_NAME_INITABSOLUTE(A,B) { \

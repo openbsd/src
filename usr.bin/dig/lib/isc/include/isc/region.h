@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: region.h,v 1.3 2020/02/23 06:22:46 jsg Exp $ */
+/* $Id: region.h,v 1.4 2020/02/24 15:09:14 jsg Exp $ */
 
 #ifndef ISC_REGION_H
 #define ISC_REGION_H 1
@@ -47,30 +47,6 @@ struct isc_textregion {
 		_r->base += _l; \
 		_r->length -= _l; \
 	} while (0)
-
-#define isc_textregion_consume(r,l) \
-	do { \
-		isc_textregion_t *_r = (r); \
-		unsigned int _l = (l); \
-		INSIST(_r->length >= _l); \
-		_r->base += _l; \
-		_r->length -= _l; \
-	} while (0)
 /*@}*/
-
-int
-isc_region_compare(isc_region_t *r1, isc_region_t *r2);
-/*%<
- * Compares the contents of two regions
- *
- * Requires:
- *\li	'r1' is a valid region
- *\li	'r2' is a valid region
- *
- * Returns:
- *\li	 < 0 if r1 is lexicographically less than r2
- *\li	 = 0 if r1 is lexicographically identical to r2
- *\li	 > 0 if r1 is lexicographically greater than r2
- */
 
 #endif /* ISC_REGION_H */

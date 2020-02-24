@@ -64,17 +64,6 @@
 #define FREESTRUCTTYPE "common->rdtype"
 #define FREESTRUCTDEF NULL
 
-#define COMPAREARGS "rdata1, rdata2"
-#define COMPARECLASS "rdata1->rdclass"
-#define COMPARETYPE "rdata1->type"
-#define COMPAREDEF "use_default = ISC_TRUE"
-
-
-#define CHECKOWNERARGS "name, rdclass, type, wildcard"
-#define CHECKOWNERCLASS "rdclass"
-#define CHECKOWNERTYPE "type"
-#define CHECKOWNERDEF "result = ISC_TRUE"
-
 static const char copyright[] =
 "/*\n"
 " * Copyright (C) 2004%s Internet Systems Consortium, Inc. (\"ISC\")\n"
