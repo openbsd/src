@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.419 2020/02/24 10:06:05 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.420 2020/02/24 10:39:00 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2581,7 +2581,7 @@ join_status(void)
 		if (jn[i].i_len > IEEE80211_NWID_LEN)
 			jn[i].i_len = IEEE80211_NWID_LEN;
 		len = print_string(jn[i].i_nwid, jn[i].i_len);
-		printf("%-*s", maxlen - len, " ");
+		printf("%-*s", maxlen - len, "");
 		if (jn[i].i_flags) {
 			const char *sep;
 			printf(" ");
