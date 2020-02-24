@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.15 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: rdata.c,v 1.16 2020/02/24 12:06:50 florian Exp $ */
 
 /*! \file */
 
@@ -202,15 +202,6 @@ generic_tostruct_tlsa(ARGS_TOSTRUCT);
 
 static void
 generic_freestruct_tlsa(ARGS_FREESTRUCT);
-
-/*
- * Active Diretory gc._msdcs.<forest> prefix.
- */
-static unsigned char gc_msdcs_data[]  = "\002gc\006_msdcs";
-static unsigned char gc_msdcs_offset [] = { 0, 3 };
-
-static dns_name_t const gc_msdcs =
-	DNS_NAME_INITNONABSOLUTE(gc_msdcs_data, gc_msdcs_offset);
 
 static inline isc_result_t
 name_duporclone(dns_name_t *source, dns_name_t *target) {
@@ -709,13 +700,10 @@ dns_rdata_freestruct(void *source) {
 }
 
 isc_boolean_t
-dns_rdata_checkowner(dns_name_t *name, dns_rdataclass_t rdclass,
+dns_rdata_checkowner_nsec3(dns_name_t *name, dns_rdataclass_t rdclass,
 		     dns_rdatatype_t type, isc_boolean_t wildcard)
 {
-	isc_boolean_t result;
-
-	CHECKOWNERSWITCH
-	return (result);
+	return checkowner_nsec3(name, rdclass, type, wildcard);
 }
 
 unsigned int

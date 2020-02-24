@@ -211,18 +211,6 @@ freestruct_tlsa(ARGS_FREESTRUCT) {
 	generic_freestruct_tlsa(source);
 }
 
-static inline isc_boolean_t
-checkowner_tlsa(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_tlsa);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_TLSA_52_C */

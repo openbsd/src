@@ -125,18 +125,6 @@ freestruct_nid(ARGS_FREESTRUCT) {
 	return;
 }
 
-static inline isc_boolean_t
-checkowner_nid(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_nid);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_NID_104_C */

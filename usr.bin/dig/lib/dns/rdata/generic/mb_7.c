@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mb_7.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: mb_7.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 17:31:26 PST 2000 by bwelling */
 
@@ -126,17 +126,6 @@ freestruct_mb(ARGS_FREESTRUCT) {
 	dns_name_free(&mb->mb);
 }
 
-static inline isc_boolean_t
-checkowner_mb(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_mb);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (dns_name_ismailbox(name));
-}
 
 
 #endif	/* RDATA_GENERIC_MB_7_C */

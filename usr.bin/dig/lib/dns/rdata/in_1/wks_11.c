@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.5 2020/02/24 12:06:14 florian Exp $ */
+/* $Id: wks_11.c,v 1.6 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -173,17 +173,6 @@ freestruct_in_wks(ARGS_FREESTRUCT) {
 		free(wks->map);
 }
 
-static inline isc_boolean_t
-checkowner_in_wks(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_wks);
-	REQUIRE(rdclass == dns_rdataclass_in);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	return (dns_name_ishostname(name, wildcard));
-}
 
 
 #endif	/* RDATA_IN_1_WKS_11_C */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: a_1.c,v 1.5 2020/02/24 12:06:50 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -173,15 +173,5 @@ freestruct_ch_a(ARGS_FREESTRUCT) {
 	dns_name_free(&a->ch_addr_dom);
 }
 
-static inline isc_boolean_t
-checkowner_ch_a(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_a);
-	REQUIRE(rdclass == dns_rdataclass_ch);
-
-	UNUSED(type);
-
-	return (dns_name_ishostname(name, wildcard));
-}
 
 #endif	/* RDATA_CH_3_A_1_C */

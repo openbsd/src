@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
+/* $Id: a_1.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -138,31 +138,6 @@ freestruct_in_a(ARGS_FREESTRUCT) {
 	UNUSED(a);
 }
 
-static inline isc_boolean_t
-checkowner_in_a(ARGS_CHECKOWNER) {
-	dns_name_t prefix, suffix;
-
-	REQUIRE(type == dns_rdatatype_a);
-	REQUIRE(rdclass == dns_rdataclass_in);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	/*
-	 * Handle Active Diretory gc._msdcs.<forest> name.
-	 */
-	if (dns_name_countlabels(name) > 2U) {
-		dns_name_init(&prefix, NULL);
-		dns_name_init(&suffix, NULL);
-		dns_name_split(name, dns_name_countlabels(name) - 2,
-			       &prefix, &suffix);
-		if (dns_name_equal(&gc_msdcs, &prefix) &&
-		    dns_name_ishostname(&suffix, ISC_FALSE))
-			return (ISC_TRUE);
-	}
-
-	return (dns_name_ishostname(name, wildcard));
-}
 
 
 #endif	/* RDATA_IN_1_A_1_C */

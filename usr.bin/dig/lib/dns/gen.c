@@ -638,9 +638,6 @@ main(int argc, char **argv) {
 			  TOSTRUCTTYPE, TOSTRUCTCLASS, TOSTRUCTDEF);
 		doswitch("FREESTRUCTSWITCH", "freestruct", FREESTRUCTARGS,
 			  FREESTRUCTTYPE, FREESTRUCTCLASS, FREESTRUCTDEF);
-		doswitch("CHECKOWNERSWITCH", "checkowner",
-			CHECKOWNERARGS, CHECKOWNERTYPE,
-			CHECKOWNERCLASS, CHECKOWNERDEF);
 
 		/*
 		 * From here down, we are processing the rdata names and

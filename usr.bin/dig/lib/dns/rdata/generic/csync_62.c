@@ -161,17 +161,5 @@ freestruct_csync(ARGS_FREESTRUCT) {
 	free(csync->typebits);
 }
 
-static inline isc_boolean_t
-checkowner_csync(ARGS_CHECKOWNER) {
-
-       REQUIRE(type == dns_rdatatype_csync);
-
-       UNUSED(name);
-       UNUSED(type);
-       UNUSED(rdclass);
-       UNUSED(wildcard);
-
-       return (ISC_TRUE);
-}
 
 #endif	/* RDATA_GENERIC_CSYNC_62_C */

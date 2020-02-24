@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: isdn_20.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: isdn_20.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:53:11 PST 2000 by bwelling */
 
@@ -139,18 +139,6 @@ freestruct_isdn(ARGS_FREESTRUCT) {
 	free(isdn->subaddress);
 }
 
-static inline isc_boolean_t
-checkowner_isdn(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_isdn);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_ISDN_20_C */

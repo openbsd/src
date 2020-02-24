@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: md_3.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: md_3.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 17:48:20 PST 2000 by bwelling */
 
@@ -127,18 +127,6 @@ freestruct_md(ARGS_FREESTRUCT) {
 	dns_name_free(&md->md);
 }
 
-static inline isc_boolean_t
-checkowner_md(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_md);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_MD_3_C */

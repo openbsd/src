@@ -110,18 +110,6 @@ freestruct_eui64(ARGS_FREESTRUCT) {
 	return;
 }
 
-static inline isc_boolean_t
-checkowner_eui64(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_eui64);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_EUI64_109_C */

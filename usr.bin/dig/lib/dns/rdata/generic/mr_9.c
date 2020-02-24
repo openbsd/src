@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mr_9.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: mr_9.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 21:30:35 EST 2000 by tale */
 
@@ -127,18 +127,6 @@ freestruct_mr(ARGS_FREESTRUCT) {
 	dns_name_free(&mr->mr);
 }
 
-static inline isc_boolean_t
-checkowner_mr(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_mr);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_MR_9_C */

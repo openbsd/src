@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: x25_19.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
+/* $Id: x25_19.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:15:57 PST 2000 by bwelling */
 
@@ -124,18 +124,6 @@ freestruct_x25(ARGS_FREESTRUCT) {
 		free(x25->x25);
 }
 
-static inline isc_boolean_t
-checkowner_x25(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_x25);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_X25_19_C */

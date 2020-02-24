@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a6_38.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
+/* $Id: a6_38.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* RFC2874 */
 
@@ -252,17 +252,6 @@ freestruct_in_a6(ARGS_FREESTRUCT) {
 		dns_name_free(&a6->prefix);
 }
 
-static inline isc_boolean_t
-checkowner_in_a6(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_a6);
-	REQUIRE(rdclass == dns_rdataclass_in);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	return (dns_name_ishostname(name, wildcard));
-}
 
 
 #endif	/* RDATA_IN_1_A6_38_C */

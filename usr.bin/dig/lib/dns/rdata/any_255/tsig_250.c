@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig_250.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: tsig_250.c,v 1.5 2020/02/24 12:06:50 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 
@@ -401,19 +401,6 @@ freestruct_any_tsig(ARGS_FREESTRUCT) {
 	free(tsig->other);
 }
 
-static inline isc_boolean_t
-checkowner_any_tsig(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_tsig);
-	REQUIRE(rdclass == dns_rdataclass_any);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_ANY_255_TSIG_250_C */

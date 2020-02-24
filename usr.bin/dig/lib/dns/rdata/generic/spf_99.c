@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: spf_99.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
+/* $Id: spf_99.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -90,17 +90,5 @@ freestruct_spf(ARGS_FREESTRUCT) {
 	generic_freestruct_txt(source);
 }
 
-static inline isc_boolean_t
-checkowner_spf(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_spf);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 #endif	/* RDATA_GENERIC_SPF_99_C */

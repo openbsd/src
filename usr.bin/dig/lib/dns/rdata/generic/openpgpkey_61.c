@@ -144,18 +144,6 @@ freestruct_openpgpkey(ARGS_FREESTRUCT) {
 		free(sig->keyring);
 }
 
-static inline isc_boolean_t
-checkowner_openpgpkey(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_openpgpkey);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_OPENPGPKEY_61_C */

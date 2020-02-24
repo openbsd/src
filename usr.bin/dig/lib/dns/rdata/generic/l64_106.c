@@ -125,18 +125,6 @@ freestruct_l64(ARGS_FREESTRUCT) {
 	return;
 }
 
-static inline isc_boolean_t
-checkowner_l64(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_l64);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_L64_106_C */

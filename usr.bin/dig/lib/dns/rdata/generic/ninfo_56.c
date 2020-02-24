@@ -85,18 +85,6 @@ freestruct_ninfo(ARGS_FREESTRUCT) {
 	generic_freestruct_txt(source);
 }
 
-static inline isc_boolean_t
-checkowner_ninfo(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_ninfo);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_NINFO_56_C */

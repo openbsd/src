@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sshfp_44.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
+/* $Id: sshfp_44.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* RFC 4255 */
 
@@ -158,18 +158,6 @@ freestruct_sshfp(ARGS_FREESTRUCT) {
 		free(sshfp->digest);
 }
 
-static inline isc_boolean_t
-checkowner_sshfp(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_sshfp);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_SSHFP_44_C */

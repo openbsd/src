@@ -87,18 +87,6 @@ freestruct_ta(ARGS_FREESTRUCT) {
 		free(ds->digest);
 }
 
-static inline isc_boolean_t
-checkowner_ta(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_ta);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_TA_32768_C */

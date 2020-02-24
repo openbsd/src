@@ -86,17 +86,5 @@ freestruct_avc(ARGS_FREESTRUCT) {
 	generic_freestruct_txt(source);
 }
 
-static inline isc_boolean_t
-checkowner_avc(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_avc);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 #endif	/* RDATA_GENERIC_AVC_258_C */

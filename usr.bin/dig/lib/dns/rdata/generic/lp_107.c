@@ -137,18 +137,6 @@ freestruct_lp(ARGS_FREESTRUCT) {
 	dns_name_free(&lp->lp);
 }
 
-static inline isc_boolean_t
-checkowner_lp(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_lp);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(name);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_LP_107_C */

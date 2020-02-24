@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dlv_32769.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: dlv_32769.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* RFC3658 */
 
@@ -90,18 +90,6 @@ freestruct_dlv(ARGS_FREESTRUCT) {
 	free(dlv->digest);
 }
 
-static inline isc_boolean_t
-checkowner_dlv(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_dlv);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_DLV_32769_C */

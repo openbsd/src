@@ -107,18 +107,6 @@ freestruct_eui48(ARGS_FREESTRUCT) {
 	return;
 }
 
-static inline isc_boolean_t
-checkowner_eui48(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_eui48);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_EUI48_108_C */

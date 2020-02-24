@@ -82,18 +82,6 @@ freestruct_smimea(ARGS_FREESTRUCT) {
 	generic_freestruct_tlsa(source);
 }
 
-static inline isc_boolean_t
-checkowner_smimea(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_smimea);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_SMIMEA_53_C */

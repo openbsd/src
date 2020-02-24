@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rrsig_46.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
+/* $Id: rrsig_46.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -381,18 +381,6 @@ covers_rrsig(dns_rdata_t *rdata) {
 	return (type);
 }
 
-static inline isc_boolean_t
-checkowner_rrsig(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_rrsig);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_RRSIG_46_C */

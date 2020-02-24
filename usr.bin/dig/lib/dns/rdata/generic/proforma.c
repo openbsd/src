@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: proforma.c,v 1.4 2020/02/24 12:06:14 florian Exp $ */
+/* $Id: proforma.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 #ifndef RDATA_GENERIC_#_#_C
 #define RDATA_GENERIC_#_#_C
@@ -90,19 +90,6 @@ freestruct_#(ARGS_FREESTRUCT) {
 
 }
 
-static inline isc_boolean_t
-checkowner_#(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_proforma.c#);
-	REQUIRE(rdclass == #);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_#_#_C */

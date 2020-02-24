@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: minfo_14.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: minfo_14.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 
@@ -170,18 +170,6 @@ freestruct_minfo(ARGS_FREESTRUCT) {
 	dns_name_free(&minfo->emailbox);
 }
 
-static inline isc_boolean_t
-checkowner_minfo(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_minfo);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_MINFO_14_C */

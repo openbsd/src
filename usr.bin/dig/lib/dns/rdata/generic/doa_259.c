@@ -225,17 +225,6 @@ freestruct_doa(ARGS_FREESTRUCT) {
 	free(doa->data);
 }
 
-static inline isc_boolean_t
-checkowner_doa(ARGS_CHECKOWNER) {
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	REQUIRE(type == dns_rdatatype_doa);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_DOA_259_C */

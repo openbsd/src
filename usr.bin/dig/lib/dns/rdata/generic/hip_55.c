@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.5 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: hip_55.c,v 1.6 2020/02/24 12:06:51 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -250,18 +250,6 @@ freestruct_hip(ARGS_FREESTRUCT) {
 	free(hip->servers);
 }
 
-static inline isc_boolean_t
-checkowner_hip(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_hip);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 isc_result_t
 dns_rdata_hip_first(dns_rdata_hip_t *hip) {

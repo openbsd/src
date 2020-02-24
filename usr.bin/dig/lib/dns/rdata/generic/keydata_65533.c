@@ -325,18 +325,6 @@ freestruct_keydata(ARGS_FREESTRUCT) {
 	free(keydata->data);
 }
 
-static inline isc_boolean_t
-checkowner_keydata(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_keydata);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif /* GENERIC_KEYDATA_65533_C */

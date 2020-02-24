@@ -265,17 +265,6 @@ freestruct_opt(ARGS_FREESTRUCT) {
 		free(opt->options);
 }
 
-static inline isc_boolean_t
-checkowner_opt(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_opt);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (dns_name_equal(name, dns_rootname));
-}
 
 
 #endif	/* RDATA_GENERIC_OPT_41_C */

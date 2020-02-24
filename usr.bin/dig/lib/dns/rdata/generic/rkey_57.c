@@ -85,18 +85,6 @@ freestruct_rkey(ARGS_FREESTRUCT) {
 	generic_freestruct_key(source);
 }
 
-static inline isc_boolean_t
-checkowner_rkey(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_rkey);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_RKEY_57_C */

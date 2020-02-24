@@ -239,18 +239,6 @@ freestruct_caa(ARGS_FREESTRUCT) {
 	free(caa->value);
 }
 
-static inline isc_boolean_t
-checkowner_caa(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_caa);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif /* GENERIC_CAA_257_C */

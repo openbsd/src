@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mx_15.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: mx_15.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 
@@ -151,16 +151,6 @@ freestruct_mx(ARGS_FREESTRUCT) {
 	dns_name_free(&mx->mx);
 }
 
-static inline isc_boolean_t
-checkowner_mx(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_mx);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	return (dns_name_ishostname(name, wildcard));
-}
 
 
 #endif	/* RDATA_GENERIC_MX_15_C */

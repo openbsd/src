@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.12 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: message.c,v 1.13 2020/02/24 12:06:50 florian Exp $ */
 
 /*! \file */
 
@@ -1258,7 +1258,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		 * Check the ownername of NSEC3 records
 		 */
 		if (rdtype == dns_rdatatype_nsec3 &&
-		    !dns_rdata_checkowner(name, msg->rdclass, rdtype,
+		    !dns_rdata_checkowner_nsec3(name, msg->rdclass, rdtype,
 					  ISC_FALSE)) {
 			result = DNS_R_BADOWNERNAME;
 			goto cleanup;

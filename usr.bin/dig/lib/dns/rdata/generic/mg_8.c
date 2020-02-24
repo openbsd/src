@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mg_8.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: mg_8.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:49:21 PST 2000 by brister */
 
@@ -127,17 +127,6 @@ freestruct_mg(ARGS_FREESTRUCT) {
 	dns_name_free(&mg->mg);
 }
 
-static inline isc_boolean_t
-checkowner_mg(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_mg);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (dns_name_ismailbox(name));
-}
 
 
 #endif	/* RDATA_GENERIC_MG_8_C */

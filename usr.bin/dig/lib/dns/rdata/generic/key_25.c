@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key_25.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: key_25.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -309,18 +309,6 @@ freestruct_key(ARGS_FREESTRUCT) {
 	generic_freestruct_key(source);
 }
 
-static inline isc_boolean_t
-checkowner_key(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_key);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_KEY_25_C */

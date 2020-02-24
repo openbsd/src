@@ -165,18 +165,6 @@ freestruct_talink(ARGS_FREESTRUCT) {
 	dns_name_free(&talink->next);
 }
 
-static inline isc_boolean_t
-checkowner_talink(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_talink);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_TALINK_58_C */

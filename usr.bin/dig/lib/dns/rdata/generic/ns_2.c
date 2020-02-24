@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ns_2.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: ns_2.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:15:00 PST 2000 by bwelling */
 
@@ -126,18 +126,6 @@ freestruct_ns(ARGS_FREESTRUCT) {
 	dns_name_free(&ns->name);
 }
 
-static inline isc_boolean_t
-checkowner_ns(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_ns);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_NS_2_C */

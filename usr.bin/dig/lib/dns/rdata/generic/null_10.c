@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: null_10.c,v 1.4 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: null_10.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:57:50 PST 2000 by explorer */
 
@@ -104,18 +104,6 @@ freestruct_null(ARGS_FREESTRUCT) {
 		free(null->data);
 }
 
-static inline isc_boolean_t
-checkowner_null(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_null);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_NULL_10_C */

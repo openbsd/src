@@ -88,18 +88,6 @@ freestruct_cdnskey(ARGS_FREESTRUCT) {
 	generic_freestruct_key(source);
 }
 
-static inline isc_boolean_t
-checkowner_cdnskey(ARGS_CHECKOWNER) {
-
-	REQUIRE(type == dns_rdatatype_cdnskey);
-
-	UNUSED(name);
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(wildcard);
-
-	return (ISC_TRUE);
-}
 
 
 #endif	/* RDATA_GENERIC_CDNSKEY_60_C */
