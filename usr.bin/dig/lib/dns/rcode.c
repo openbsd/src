@@ -14,24 +14,19 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.c,v 1.7 2020/02/23 19:54:25 jung Exp $ */
-
+/* $Id: rcode.c,v 1.8 2020/02/24 13:49:38 jsg Exp $ */
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <isc/buffer.h>
-#include <isc/parseint.h>
-
 #include <isc/region.h>
 #include <isc/result.h>
-
-#include <string.h>
 #include <isc/types.h>
 #include <isc/util.h>
 
 #include <dns/cert.h>
-#include <dns/ds.h>
 #include <dns/keyvalues.h>
 #include <dns/rcode.h>
 #include <dns/rdataclass.h>

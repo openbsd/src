@@ -17,7 +17,7 @@
 #ifndef GENERIC_KEYDATA_65533_C
 #define GENERIC_KEYDATA_65533_C 1
 
-#include <isc/time.h>
+#include <time.h>
 
 #include <dst/dst.h>
 

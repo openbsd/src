@@ -14,18 +14,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hex.c,v 1.2 2020/02/22 19:47:06 jung Exp $ */
+/* $Id: hex.c,v 1.3 2020/02/24 13:49:38 jsg Exp $ */
 
 /*! \file */
 
-
-
 #include <ctype.h>
+#include <string.h>
 
 #include <isc/buffer.h>
 #include <isc/hex.h>
-#include <isc/lex.h>
-#include <string.h>
+#include <isc/region.h>
+#include <isc/types.h>
 #include <isc/util.h>
 
 #define RETERR(x) do { \
@@ -33,7 +32,6 @@
 	if (_r != ISC_R_SUCCESS) \
 		return (_r); \
 	} while (0)
-
 
 /*
  * BEW: These static functions are copied from lib/dns/rdata.c.

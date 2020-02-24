@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.h,v 1.5 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: socket.h,v 1.6 2020/02/24 13:49:39 jsg Exp $ */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -56,12 +56,13 @@
  *** Imports
  ***/
 
+#include <time.h>
+
 #include <isc/event.h>
 #include <isc/eventclass.h>
 
 #include <isc/region.h>
 #include <isc/sockaddr.h>
-#include <isc/time.h>
 #include <isc/types.h>
 
 /***

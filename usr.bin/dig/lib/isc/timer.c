@@ -14,15 +14,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.22 2020/02/24 00:17:44 aoyama Exp $ */
+/* $Id: timer.c,v 1.23 2020/02/24 13:49:38 jsg Exp $ */
 
 /*! \file */
 
-
+#include <sys/time.h>
 #include <stdlib.h>
+#include <time.h>
 #include <isc/heap.h>
 #include <isc/task.h>
-#include <isc/time.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 

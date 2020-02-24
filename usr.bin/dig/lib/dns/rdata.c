@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.16 2020/02/24 12:06:50 florian Exp $ */
+/* $Id: rdata.c,v 1.17 2020/02/24 13:49:38 jsg Exp $ */
 
 /*! \file */
 
@@ -25,9 +25,8 @@
 
 #include <isc/base64.h>
 #include <isc/hex.h>
-#include <isc/lex.h>
-#include <isc/parseint.h>
 #include <isc/util.h>
+#include <isc/buffer.h>
 
 #include <dns/cert.h>
 #include <dns/compress.h>

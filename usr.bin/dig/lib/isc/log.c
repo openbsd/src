@@ -14,18 +14,19 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.16 2020/02/21 07:44:50 florian Exp $ */
+/* $Id: log.c,v 1.17 2020/02/24 13:49:38 jsg Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
 
+#include <sys/time.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 
 #include <isc/log.h>
-#include <isc/time.h>
 #include <isc/util.h>
 
 /*

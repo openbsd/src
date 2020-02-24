@@ -23,9 +23,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
+#include <stdint.h>
 
 #include <isc/app.h>
 #include <isc/util.h>
+#include <isc/time.h>
 
 #include <dns/fixedname.h>
 #include <dns/message.h>

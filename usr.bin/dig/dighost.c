@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.17 2020/02/24 12:06:13 florian Exp $ */
+/* $Id: dighost.c,v 1.18 2020/02/24 13:49:38 jsg Exp $ */
 
 /*! \file
  *  \note
@@ -33,6 +33,8 @@
 #include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <stdint.h>
 
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>
@@ -51,7 +53,6 @@
 #include <dst/dst.h>
 #include <dst/result.h>
 
-#include <isc/app.h>
 #include <isc/base64.h>
 #include <isc/hex.h>
 #include <isc/log.h>

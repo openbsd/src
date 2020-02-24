@@ -17,10 +17,10 @@
 /*! \file */
 
 #include <stddef.h>
-#include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <time.h>
 
 #include <isc/app.h>
 #include <isc/boolean.h>
