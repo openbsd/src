@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.9 2020/02/24 15:09:14 jsg Exp $ */
+/* $Id: name.h,v 1.10 2020/02/24 16:11:21 florian Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -142,21 +142,11 @@ struct dns_name {
 #define DNS_NAME_CHECKMXFAIL		0x0020		/*%< Used by rdata. */
 
 extern dns_name_t *dns_rootname;
-extern dns_name_t *dns_wildcardname;
 
 /*%
  * Standard size of a wire format name
  */
 #define DNS_NAME_MAXWIRE 255
-
-/*
- * Text output filter procedure.
- * 'target' is the buffer to be converted.  The region to be converted
- * is from 'buffer'->base + 'used_org' to the end of the used region.
- */
-typedef isc_result_t (*dns_name_totextfilter_t)(isc_buffer_t *target,
-						unsigned int used_org,
-						isc_boolean_t absolute);
 
 /***
  *** Initialization
