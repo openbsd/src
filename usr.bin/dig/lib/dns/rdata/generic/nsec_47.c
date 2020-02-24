@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec_47.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: nsec_47.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -95,28 +95,6 @@ towire_nsec(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_nsec(ARGS_FROMSTRUCT) {
-	dns_rdata_nsec_t *nsec = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_nsec);
-	REQUIRE(source != NULL);
-	REQUIRE(nsec->common.rdtype == type);
-	REQUIRE(nsec->common.rdclass == rdclass);
-	REQUIRE(nsec->typebits != NULL || nsec->len == 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	dns_name_toregion(&nsec->next, &region);
-	RETERR(isc_buffer_copyregion(target, &region));
-
-	region.base = nsec->typebits;
-	region.length = nsec->len;
-	RETERR(typemap_test(&region, ISC_FALSE));
-	return (mem_tobuffer(target, nsec->typebits, nsec->len));
-}
 
 static inline isc_result_t
 tostruct_nsec(ARGS_TOSTRUCT) {

@@ -140,13 +140,6 @@ generic_freestruct_txt(ARGS_FREESTRUCT) {
 		free(txt->txt);
 }
 
-static inline isc_result_t
-fromstruct_txt(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_txt);
-
-	return (generic_fromstruct_txt(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_txt(ARGS_TOSTRUCT) {

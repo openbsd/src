@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: a_1.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -118,24 +118,6 @@ towire_ch_a(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_ch_a(ARGS_FROMSTRUCT) {
-	dns_rdata_ch_a_t *a = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_a);
-	REQUIRE(source != NULL);
-	REQUIRE(a->common.rdtype == type);
-	REQUIRE(a->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	dns_name_toregion(&a->ch_addr_dom, &region);
-	RETERR(isc_buffer_copyregion(target, &region));
-
-	return (uint16_tobuffer(ntohs(a->ch_addr), target));
-}
 
 static inline isc_result_t
 tostruct_ch_a(ARGS_TOSTRUCT) {

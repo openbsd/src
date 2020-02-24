@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rp_17.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: rp_17.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* RFC1183 */
 
@@ -103,24 +103,6 @@ towire_rp(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_rp(ARGS_FROMSTRUCT) {
-	dns_rdata_rp_t *rp = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_rp);
-	REQUIRE(source != NULL);
-	REQUIRE(rp->common.rdtype == type);
-	REQUIRE(rp->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	dns_name_toregion(&rp->mail, &region);
-	RETERR(isc_buffer_copyregion(target, &region));
-	dns_name_toregion(&rp->text, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_rp(ARGS_TOSTRUCT) {

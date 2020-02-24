@@ -119,22 +119,6 @@ towire_doa(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_doa(ARGS_FROMSTRUCT) {
-	dns_rdata_doa_t *doa = source;
-
-	REQUIRE(type == dns_rdatatype_doa);
-	REQUIRE(source != NULL);
-	REQUIRE(doa->common.rdtype == dns_rdatatype_doa);
-	REQUIRE(doa->common.rdclass == rdclass);
-
-	RETERR(uint32_tobuffer(doa->enterprise, target));
-	RETERR(uint32_tobuffer(doa->type, target));
-	RETERR(uint8_tobuffer(doa->location, target));
-	RETERR(uint8_tobuffer(doa->mediatype_len, target));
-	RETERR(mem_tobuffer(target, doa->mediatype, doa->mediatype_len));
-	return (mem_tobuffer(target, doa->data, doa->data_len));
-}
 
 static inline isc_result_t
 tostruct_doa(ARGS_TOSTRUCT) {

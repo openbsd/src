@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: srv_33.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
+/* $Id: srv_33.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 13:01:00 PST 2000 by bwelling */
 
@@ -133,26 +133,6 @@ towire_in_srv(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_in_srv(ARGS_FROMSTRUCT) {
-	dns_rdata_in_srv_t *srv = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_srv);
-	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
-	REQUIRE(srv->common.rdtype == type);
-	REQUIRE(srv->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(srv->priority, target));
-	RETERR(uint16_tobuffer(srv->weight, target));
-	RETERR(uint16_tobuffer(srv->port, target));
-	dns_name_toregion(&srv->target, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_in_srv(ARGS_TOSTRUCT) {

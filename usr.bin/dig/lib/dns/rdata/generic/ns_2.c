@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ns_2.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: ns_2.c,v 1.6 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:15:00 PST 2000 by bwelling */
 
@@ -78,22 +78,6 @@ towire_ns(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_ns(ARGS_FROMSTRUCT) {
-	dns_rdata_ns_t *ns = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_ns);
-	REQUIRE(source != NULL);
-	REQUIRE(ns->common.rdtype == type);
-	REQUIRE(ns->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	dns_name_toregion(&ns->name, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_ns(ARGS_TOSTRUCT) {

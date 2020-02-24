@@ -96,28 +96,6 @@ towire_csync(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_csync(ARGS_FROMSTRUCT) {
-	dns_rdata_csync_t *csync = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_csync);
-	REQUIRE(source != NULL);
-	REQUIRE(csync->common.rdtype == type);
-	REQUIRE(csync->common.rdclass == rdclass);
-	REQUIRE(csync->typebits != NULL || csync->len == 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint32_tobuffer(csync->serial, target));
-	RETERR(uint16_tobuffer(csync->flags, target));
-
-	region.base = csync->typebits;
-	region.length = csync->len;
-	RETERR(typemap_test(&region, ISC_TRUE));
-	return (mem_tobuffer(target, csync->typebits, csync->len));
-}
 
 static inline isc_result_t
 tostruct_csync(ARGS_TOSTRUCT) {

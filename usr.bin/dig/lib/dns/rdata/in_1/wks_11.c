@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: wks_11.c,v 1.7 2020/02/24 17:43:53 florian Exp $ */
+/* $Id: wks_11.c,v 1.8 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -112,27 +112,6 @@ towire_in_wks(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_in_wks(ARGS_FROMSTRUCT) {
-	dns_rdata_in_wks_t *wks = source;
-	uint32_t a;
-
-	REQUIRE(type == dns_rdatatype_wks);
-	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
-	REQUIRE(wks->common.rdtype == type);
-	REQUIRE(wks->common.rdclass == rdclass);
-	REQUIRE((wks->map != NULL && wks->map_len <= 8*1024) ||
-		 wks->map_len == 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	a = ntohl(wks->in_addr.s_addr);
-	RETERR(uint32_tobuffer(a, target));
-	RETERR(uint8_tobuffer(wks->protocol, target));
-	return (mem_tobuffer(target, wks->map, wks->map_len));
-}
 
 static inline isc_result_t
 tostruct_in_wks(ARGS_TOSTRUCT) {

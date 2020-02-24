@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: gpos_27.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: gpos_27.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 
@@ -74,25 +74,6 @@ towire_gpos(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_gpos(ARGS_FROMSTRUCT) {
-	dns_rdata_gpos_t *gpos = source;
-
-	REQUIRE(type == dns_rdatatype_gpos);
-	REQUIRE(source != NULL);
-	REQUIRE(gpos->common.rdtype == type);
-	REQUIRE(gpos->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint8_tobuffer(gpos->long_len, target));
-	RETERR(mem_tobuffer(target, gpos->longitude, gpos->long_len));
-	RETERR(uint8_tobuffer(gpos->lat_len, target));
-	RETERR(mem_tobuffer(target, gpos->latitude, gpos->lat_len));
-	RETERR(uint8_tobuffer(gpos->alt_len, target));
-	return (mem_tobuffer(target, gpos->altitude, gpos->alt_len));
-}
 
 static inline isc_result_t
 tostruct_gpos(ARGS_TOSTRUCT) {

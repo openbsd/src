@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.19 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: rdata.c,v 1.20 2020/02/24 17:44:44 florian Exp $ */
 
 /*! \file */
 
@@ -635,28 +635,56 @@ dns_rdata_tofmttext(dns_rdata_t *rdata, dns_name_t *origin,
 }
 
 isc_result_t
-dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
-		     dns_rdatatype_t type, void *source,
+dns_rdata_fromstruct_soa(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
+		     dns_rdatatype_t type, dns_rdata_soa_t *soa,
 		     isc_buffer_t *target)
 {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
 	isc_buffer_t st;
 	isc_region_t region;
-	isc_boolean_t use_default = ISC_FALSE;
 	unsigned int length;
 
-	REQUIRE(source != NULL);
+	REQUIRE(soa != NULL);
 	if (rdata != NULL) {
 		REQUIRE(DNS_RDATA_INITIALIZED(rdata));
 		REQUIRE(DNS_RDATA_VALIDFLAGS(rdata));
 	}
 
 	st = *target;
+	result = fromstruct_soa(rdclass, type, soa, target);
 
-	FROMSTRUCTSWITCH
+	length = isc_buffer_usedlength(target) - isc_buffer_usedlength(&st);
+	if (result == ISC_R_SUCCESS && length > DNS_RDATA_MAXLENGTH)
+		result = ISC_R_NOSPACE;
 
-	if (use_default)
-		(void)NULL;
+	if (rdata != NULL && result == ISC_R_SUCCESS) {
+		region.base = isc_buffer_used(&st);
+		region.length = length;
+		dns_rdata_fromregion(rdata, rdclass, type, &region);
+	}
+	if (result != ISC_R_SUCCESS)
+		*target = st;
+	return (result);
+}
+
+isc_result_t
+dns_rdata_fromstruct_tsig(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
+		     dns_rdatatype_t type, dns_rdata_any_tsig_t *tsig,
+		     isc_buffer_t *target)
+{
+	isc_result_t result = ISC_R_NOTIMPLEMENTED;
+	isc_buffer_t st;
+	isc_region_t region;
+	unsigned int length;
+
+	REQUIRE(tsig != NULL);
+	if (rdata != NULL) {
+		REQUIRE(DNS_RDATA_INITIALIZED(rdata));
+		REQUIRE(DNS_RDATA_VALIDFLAGS(rdata));
+	}
+
+	st = *target;
+	result = fromstruct_any_tsig(rdclass, type, tsig, target);
 
 	length = isc_buffer_usedlength(target) - isc_buffer_usedlength(&st);
 	if (result == ISC_R_SUCCESS && length > DNS_RDATA_MAXLENGTH)

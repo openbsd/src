@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.c,v 1.7 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: ds_43.c,v 1.8 2020/02/24 17:44:44 florian Exp $ */
 
 /* RFC3658 */
 
@@ -184,13 +184,6 @@ generic_fromstruct_ds(ARGS_FROMSTRUCT) {
 	return (mem_tobuffer(target, ds->digest, ds->length));
 }
 
-static inline isc_result_t
-fromstruct_ds(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_ds);
-
-	return (generic_fromstruct_ds(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 generic_tostruct_ds(ARGS_TOSTRUCT) {

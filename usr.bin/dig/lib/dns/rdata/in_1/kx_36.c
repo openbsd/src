@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: kx_36.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
+/* $Id: kx_36.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 17:24:54 PST 2000 by explorer */
 
@@ -99,24 +99,6 @@ towire_in_kx(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_in_kx(ARGS_FROMSTRUCT) {
-	dns_rdata_in_kx_t *kx = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_kx);
-	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
-	REQUIRE(kx->common.rdtype == type);
-	REQUIRE(kx->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(kx->preference, target));
-	dns_name_toregion(&kx->exchange, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_in_kx(ARGS_TOSTRUCT) {

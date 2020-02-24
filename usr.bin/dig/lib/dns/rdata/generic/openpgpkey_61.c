@@ -84,24 +84,6 @@ towire_openpgpkey(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_openpgpkey(ARGS_FROMSTRUCT) {
-	dns_rdata_openpgpkey_t *sig = source;
-
-	REQUIRE(type == dns_rdatatype_openpgpkey);
-	REQUIRE(source != NULL);
-	REQUIRE(sig->common.rdtype == type);
-	REQUIRE(sig->common.rdclass == rdclass);
-	REQUIRE(sig->keyring != NULL && sig->length != 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	/*
-	 * Keyring.
-	 */
-	return (mem_tobuffer(target, sig->keyring, sig->length));
-}
 
 static inline isc_result_t
 tostruct_openpgpkey(ARGS_TOSTRUCT) {

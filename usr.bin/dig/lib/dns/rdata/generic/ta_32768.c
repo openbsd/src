@@ -52,13 +52,6 @@ towire_ta(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_ta(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_ta);
-
-	return (generic_fromstruct_ds(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_ta(ARGS_TOSTRUCT) {

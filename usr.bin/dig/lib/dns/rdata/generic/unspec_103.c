@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: unspec_103.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: unspec_103.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 #ifndef RDATA_GENERIC_UNSPEC_103_C
 #define RDATA_GENERIC_UNSPEC_103_C
@@ -58,21 +58,6 @@ towire_unspec(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_unspec(ARGS_FROMSTRUCT) {
-	dns_rdata_unspec_t *unspec = source;
-
-	REQUIRE(type == dns_rdatatype_unspec);
-	REQUIRE(source != NULL);
-	REQUIRE(unspec->common.rdtype == type);
-	REQUIRE(unspec->common.rdclass == rdclass);
-	REQUIRE(unspec->data != NULL || unspec->datalen == 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	return (mem_tobuffer(target, unspec->data, unspec->datalen));
-}
 
 static inline isc_result_t
 tostruct_unspec(ARGS_TOSTRUCT) {

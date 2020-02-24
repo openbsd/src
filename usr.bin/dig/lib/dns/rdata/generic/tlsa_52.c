@@ -179,13 +179,6 @@ generic_freestruct_tlsa(ARGS_FREESTRUCT) {
 		free(tlsa->data);
 }
 
-static inline isc_result_t
-fromstruct_tlsa(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_tlsa);
-
-	return (generic_fromstruct_tlsa(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_tlsa(ARGS_TOSTRUCT) {

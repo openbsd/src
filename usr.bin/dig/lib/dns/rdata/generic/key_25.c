@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key_25.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: key_25.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -276,13 +276,6 @@ generic_freestruct_key(ARGS_FREESTRUCT) {
 	free(key->data);
 }
 
-static inline isc_result_t
-fromstruct_key(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_key);
-
-	return (generic_fromstruct_key(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_key(ARGS_TOSTRUCT) {

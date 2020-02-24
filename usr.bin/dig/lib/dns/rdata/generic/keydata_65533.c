@@ -222,39 +222,6 @@ towire_keydata(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_keydata(ARGS_FROMSTRUCT) {
-	dns_rdata_keydata_t *keydata = source;
-
-	REQUIRE(type == dns_rdatatype_keydata);
-	REQUIRE(source != NULL);
-	REQUIRE(keydata->common.rdtype == type);
-	REQUIRE(keydata->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	/* Refresh timer */
-	RETERR(uint32_tobuffer(keydata->refresh, target));
-
-	/* Add hold-down */
-	RETERR(uint32_tobuffer(keydata->addhd, target));
-
-	/* Remove hold-down */
-	RETERR(uint32_tobuffer(keydata->removehd, target));
-
-	/* Flags */
-	RETERR(uint16_tobuffer(keydata->flags, target));
-
-	/* Protocol */
-	RETERR(uint8_tobuffer(keydata->protocol, target));
-
-	/* Algorithm */
-	RETERR(uint8_tobuffer(keydata->algorithm, target));
-
-	/* Data */
-	return (mem_tobuffer(target, keydata->data, keydata->datalen));
-}
 
 static inline isc_result_t
 tostruct_keydata(ARGS_TOSTRUCT) {

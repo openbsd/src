@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rt_21.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: rt_21.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:02:31 PST 2000 by brister */
 
@@ -104,23 +104,6 @@ towire_rt(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_rt(ARGS_FROMSTRUCT) {
-	dns_rdata_rt_t *rt = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_rt);
-	REQUIRE(source != NULL);
-	REQUIRE(rt->common.rdtype == type);
-	REQUIRE(rt->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(rt->preference, target));
-	dns_name_toregion(&rt->host, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_rt(ARGS_TOSTRUCT) {

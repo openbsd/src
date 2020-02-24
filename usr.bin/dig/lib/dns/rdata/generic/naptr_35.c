@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: naptr_35.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: naptr_35.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -271,33 +271,6 @@ towire_naptr(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_naptr(ARGS_FROMSTRUCT) {
-	dns_rdata_naptr_t *naptr = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_naptr);
-	REQUIRE(source != NULL);
-	REQUIRE(naptr->common.rdtype == type);
-	REQUIRE(naptr->common.rdclass == rdclass);
-	REQUIRE(naptr->flags != NULL || naptr->flags_len == 0);
-	REQUIRE(naptr->service != NULL || naptr->service_len == 0);
-	REQUIRE(naptr->regexp != NULL || naptr->regexp_len == 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(naptr->order, target));
-	RETERR(uint16_tobuffer(naptr->preference, target));
-	RETERR(uint8_tobuffer(naptr->flags_len, target));
-	RETERR(mem_tobuffer(target, naptr->flags, naptr->flags_len));
-	RETERR(uint8_tobuffer(naptr->service_len, target));
-	RETERR(mem_tobuffer(target, naptr->service, naptr->service_len));
-	RETERR(uint8_tobuffer(naptr->regexp_len, target));
-	RETERR(mem_tobuffer(target, naptr->regexp, naptr->regexp_len));
-	dns_name_toregion(&naptr->replacement, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_naptr(ARGS_TOSTRUCT) {

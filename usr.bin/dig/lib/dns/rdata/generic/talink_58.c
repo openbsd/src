@@ -98,24 +98,6 @@ towire_talink(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_talink(ARGS_FROMSTRUCT) {
-	dns_rdata_talink_t *talink = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_talink);
-	REQUIRE(source != NULL);
-	REQUIRE(talink->common.rdtype == type);
-	REQUIRE(talink->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	dns_name_toregion(&talink->prev, &region);
-	RETERR(isc_buffer_copyregion(target, &region));
-	dns_name_toregion(&talink->next, &region);
-	return(isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_talink(ARGS_TOSTRUCT) {

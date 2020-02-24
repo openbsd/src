@@ -54,13 +54,6 @@ towire_ninfo(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_ninfo(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_ninfo);
-
-	return (generic_fromstruct_txt(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_ninfo(ARGS_TOSTRUCT) {

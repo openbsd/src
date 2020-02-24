@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: a_1.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:58:36 PST 2000 by brister */
 
@@ -84,24 +84,6 @@ towire_hs_a(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_hs_a(ARGS_FROMSTRUCT) {
-	dns_rdata_hs_a_t *a = source;
-	uint32_t n;
-
-	REQUIRE(type == dns_rdatatype_a);
-	REQUIRE(rdclass == dns_rdataclass_hs);
-	REQUIRE(source != NULL);
-	REQUIRE(a->common.rdtype == type);
-	REQUIRE(a->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	n = ntohl(a->in_addr.s_addr);
-
-	return (uint32_tobuffer(n, target));
-}
 
 static inline isc_result_t
 tostruct_hs_a(ARGS_TOSTRUCT) {

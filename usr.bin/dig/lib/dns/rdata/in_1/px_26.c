@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: px_26.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
+/* $Id: px_26.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Mon Mar 20 10:44:27 PST 2000 */
 
@@ -138,26 +138,6 @@ towire_in_px(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_in_px(ARGS_FROMSTRUCT) {
-	dns_rdata_in_px_t *px = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_px);
-	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
-	REQUIRE(px->common.rdtype == type);
-	REQUIRE(px->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(px->preference, target));
-	dns_name_toregion(&px->map822, &region);
-	RETERR(isc_buffer_copyregion(target, &region));
-	dns_name_toregion(&px->mapx400, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_in_px(ARGS_TOSTRUCT) {

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: uri_256.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: uri_256.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 #ifndef GENERIC_URI_256_C
 #define GENERIC_URI_256_C 1
@@ -96,34 +96,6 @@ towire_uri(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_uri(ARGS_FROMSTRUCT) {
-	dns_rdata_uri_t *uri = source;
-
-	REQUIRE(type == dns_rdatatype_uri);
-	REQUIRE(source != NULL);
-	REQUIRE(uri->common.rdtype == type);
-	REQUIRE(uri->common.rdclass == rdclass);
-	REQUIRE(uri->target != NULL && uri->tgt_len != 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	/*
-	 * Priority
-	 */
-	RETERR(uint16_tobuffer(uri->priority, target));
-
-	/*
-	 * Weight
-	 */
-	RETERR(uint16_tobuffer(uri->weight, target));
-
-	/*
-	 * Target URI
-	 */
-	return (mem_tobuffer(target, uri->target, uri->tgt_len));
-}
 
 static inline isc_result_t
 tostruct_uri(ARGS_TOSTRUCT) {

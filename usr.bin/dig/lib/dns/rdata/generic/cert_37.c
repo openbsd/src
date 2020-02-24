@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cert_37.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: cert_37.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 21:14:32 EST 2000 by tale */
 
@@ -109,24 +109,6 @@ towire_cert(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_cert(ARGS_FROMSTRUCT) {
-	dns_rdata_cert_t *cert = source;
-
-	REQUIRE(type == dns_rdatatype_cert);
-	REQUIRE(source != NULL);
-	REQUIRE(cert->common.rdtype == type);
-	REQUIRE(cert->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(cert->type, target));
-	RETERR(uint16_tobuffer(cert->key_tag, target));
-	RETERR(uint8_tobuffer(cert->algorithm, target));
-
-	return (mem_tobuffer(target, cert->certificate, cert->length));
-}
 
 static inline isc_result_t
 tostruct_cert(ARGS_TOSTRUCT) {

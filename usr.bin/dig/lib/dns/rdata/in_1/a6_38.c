@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a6_38.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
+/* $Id: a6_38.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* RFC2874 */
 
@@ -151,50 +151,6 @@ towire_in_a6(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_in_a6(ARGS_FROMSTRUCT) {
-	dns_rdata_in_a6_t *a6 = source;
-	isc_region_t region;
-	int octets;
-	uint8_t bits;
-	uint8_t first;
-	uint8_t mask;
-
-	REQUIRE(type == dns_rdatatype_a6);
-	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
-	REQUIRE(a6->common.rdtype == type);
-	REQUIRE(a6->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	if (a6->prefixlen > 128)
-		return (ISC_R_RANGE);
-
-	RETERR(uint8_tobuffer(a6->prefixlen, target));
-
-	/* Suffix */
-	if (a6->prefixlen != 128) {
-		octets = 16 - a6->prefixlen / 8;
-		bits = a6->prefixlen % 8;
-		if (bits != 0) {
-			mask = 0xffU >> bits;
-			first = a6->in6_addr.s6_addr[16 - octets] & mask;
-			RETERR(uint8_tobuffer(first, target));
-			octets--;
-		}
-		if (octets > 0)
-			RETERR(mem_tobuffer(target,
-					    a6->in6_addr.s6_addr + 16 - octets,
-					    octets));
-	}
-
-	if (a6->prefixlen == 0)
-		return (ISC_R_SUCCESS);
-	dns_name_toregion(&a6->prefix, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_in_a6(ARGS_TOSTRUCT) {

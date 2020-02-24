@@ -201,36 +201,6 @@ towire_opt(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_opt(ARGS_FROMSTRUCT) {
-	dns_rdata_opt_t *opt = source;
-	isc_region_t region;
-	uint16_t length;
-
-	REQUIRE(type == dns_rdatatype_opt);
-	REQUIRE(source != NULL);
-	REQUIRE(opt->common.rdtype == type);
-	REQUIRE(opt->common.rdclass == rdclass);
-	REQUIRE(opt->options != NULL || opt->length == 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	region.base = opt->options;
-	region.length = opt->length;
-	while (region.length >= 4) {
-		isc_region_consume(&region, 2);	/* opt */
-		length = uint16_fromregion(&region);
-		isc_region_consume(&region, 2);
-		if (region.length < length)
-			return (ISC_R_UNEXPECTEDEND);
-		isc_region_consume(&region, length);
-	}
-	if (region.length != 0)
-		return (ISC_R_UNEXPECTEDEND);
-
-	return (mem_tobuffer(target, opt->options, opt->length));
-}
 
 static inline isc_result_t
 tostruct_opt(ARGS_TOSTRUCT) {

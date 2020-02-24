@@ -69,20 +69,6 @@ towire_eui64(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_eui64(ARGS_FROMSTRUCT) {
-	dns_rdata_eui64_t *eui64 = source;
-
-	REQUIRE(type == dns_rdatatype_eui64);
-	REQUIRE(source != NULL);
-	REQUIRE(eui64->common.rdtype == type);
-	REQUIRE(eui64->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	return (mem_tobuffer(target, eui64->eui64, sizeof(eui64->eui64)));
-}
 
 static inline isc_result_t
 tostruct_eui64(ARGS_TOSTRUCT) {

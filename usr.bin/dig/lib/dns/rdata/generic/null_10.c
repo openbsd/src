@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: null_10.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: null_10.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:57:50 PST 2000 by explorer */
 
@@ -56,21 +56,6 @@ towire_null(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_null(ARGS_FROMSTRUCT) {
-	dns_rdata_null_t *null = source;
-
-	REQUIRE(type == dns_rdatatype_null);
-	REQUIRE(source != NULL);
-	REQUIRE(null->common.rdtype == type);
-	REQUIRE(null->common.rdclass == rdclass);
-	REQUIRE(null->data != NULL || null->length == 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	return (mem_tobuffer(target, null->data, null->length));
-}
 
 static inline isc_result_t
 tostruct_null(ARGS_TOSTRUCT) {

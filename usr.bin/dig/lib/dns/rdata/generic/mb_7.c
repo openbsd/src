@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mb_7.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: mb_7.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 17:31:26 PST 2000 by bwelling */
 
@@ -78,22 +78,6 @@ towire_mb(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_mb(ARGS_FROMSTRUCT) {
-	dns_rdata_mb_t *mb = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_mb);
-	REQUIRE(source != NULL);
-	REQUIRE(mb->common.rdtype == type);
-	REQUIRE(mb->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	dns_name_toregion(&mb->mb, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_mb(ARGS_TOSTRUCT) {

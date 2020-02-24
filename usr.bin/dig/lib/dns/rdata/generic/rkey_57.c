@@ -52,13 +52,6 @@ towire_rkey(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_rkey(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_rkey);
-
-	return (generic_fromstruct_key(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_rkey(ARGS_TOSTRUCT) {

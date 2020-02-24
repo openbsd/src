@@ -66,20 +66,6 @@ towire_eui48(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_eui48(ARGS_FROMSTRUCT) {
-	dns_rdata_eui48_t *eui48 = source;
-
-	REQUIRE(type == dns_rdatatype_eui48);
-	REQUIRE(source != NULL);
-	REQUIRE(eui48->common.rdtype == type);
-	REQUIRE(eui48->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	return (mem_tobuffer(target, eui48->eui48, sizeof(eui48->eui48)));
-}
 
 static inline isc_result_t
 tostruct_eui48(ARGS_TOSTRUCT) {

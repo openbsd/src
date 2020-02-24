@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: loc_29.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: loc_29.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -230,49 +230,6 @@ towire_loc(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_loc(ARGS_FROMSTRUCT) {
-	dns_rdata_loc_t *loc = source;
-	uint8_t c;
-
-	REQUIRE(type == dns_rdatatype_loc);
-	REQUIRE(source != NULL);
-	REQUIRE(loc->common.rdtype == type);
-	REQUIRE(loc->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	if (loc->v.v0.version != 0)
-		return (ISC_R_NOTIMPLEMENTED);
-	RETERR(uint8_tobuffer(loc->v.v0.version, target));
-
-	c = loc->v.v0.size;
-	if ((c&0xf) > 9 || ((c>>4)&0xf) > 9 || ((c>>4)&0xf) == 0)
-		return (ISC_R_RANGE);
-	RETERR(uint8_tobuffer(loc->v.v0.size, target));
-
-	c = loc->v.v0.horizontal;
-	if ((c&0xf) > 9 || ((c>>4)&0xf) > 9 || ((c>>4)&0xf) == 0)
-		return (ISC_R_RANGE);
-	RETERR(uint8_tobuffer(loc->v.v0.horizontal, target));
-
-	c = loc->v.v0.vertical;
-	if ((c&0xf) > 9 || ((c>>4)&0xf) > 9 || ((c>>4)&0xf) == 0)
-		return (ISC_R_RANGE);
-	RETERR(uint8_tobuffer(loc->v.v0.vertical, target));
-
-	if (loc->v.v0.latitude < (0x80000000UL - 90 * 3600000) ||
-	    loc->v.v0.latitude > (0x80000000UL + 90 * 3600000))
-		return (ISC_R_RANGE);
-	RETERR(uint32_tobuffer(loc->v.v0.latitude, target));
-
-	if (loc->v.v0.longitude < (0x80000000UL - 180 * 3600000) ||
-	    loc->v.v0.longitude > (0x80000000UL + 180 * 3600000))
-		return (ISC_R_RANGE);
-	RETERR(uint32_tobuffer(loc->v.v0.longitude, target));
-	return (uint32_tobuffer(loc->v.v0.altitude, target));
-}
 
 static inline isc_result_t
 tostruct_loc(ARGS_TOSTRUCT) {

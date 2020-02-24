@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.5 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: nsec3_50.c,v 1.6 2020/02/24 17:44:45 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -169,34 +169,6 @@ towire_nsec3(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_nsec3(ARGS_FROMSTRUCT) {
-	dns_rdata_nsec3_t *nsec3 = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_nsec3);
-	REQUIRE(source != NULL);
-	REQUIRE(nsec3->common.rdtype == type);
-	REQUIRE(nsec3->common.rdclass == rdclass);
-	REQUIRE(nsec3->typebits != NULL || nsec3->len == 0);
-	REQUIRE(nsec3->hash == dns_hash_sha1);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint8_tobuffer(nsec3->hash, target));
-	RETERR(uint8_tobuffer(nsec3->flags, target));
-	RETERR(uint16_tobuffer(nsec3->iterations, target));
-	RETERR(uint8_tobuffer(nsec3->salt_length, target));
-	RETERR(mem_tobuffer(target, nsec3->salt, nsec3->salt_length));
-	RETERR(uint8_tobuffer(nsec3->next_length, target));
-	RETERR(mem_tobuffer(target, nsec3->next, nsec3->next_length));
-
-	region.base = nsec3->typebits;
-	region.length = nsec3->len;
-	RETERR(typemap_test(&region, ISC_TRUE));
-	return (mem_tobuffer(target, nsec3->typebits, nsec3->len));
-}
 
 static inline isc_result_t
 tostruct_nsec3(ARGS_TOSTRUCT) {

@@ -80,21 +80,6 @@ towire_nid(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_nid(ARGS_FROMSTRUCT) {
-	dns_rdata_nid_t *nid = source;
-
-	REQUIRE(type == dns_rdatatype_nid);
-	REQUIRE(source != NULL);
-	REQUIRE(nid->common.rdtype == type);
-	REQUIRE(nid->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(nid->pref, target));
-	return (mem_tobuffer(target, nid->nid, sizeof(nid->nid)));
-}
 
 static inline isc_result_t
 tostruct_nid(ARGS_TOSTRUCT) {

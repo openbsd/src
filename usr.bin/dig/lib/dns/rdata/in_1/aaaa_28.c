@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: aaaa_28.c,v 1.6 2020/02/24 17:43:53 florian Exp $ */
+/* $Id: aaaa_28.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -86,21 +86,6 @@ towire_in_aaaa(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_in_aaaa(ARGS_FROMSTRUCT) {
-	dns_rdata_in_aaaa_t *aaaa = source;
-
-	REQUIRE(type == dns_rdatatype_aaaa);
-	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
-	REQUIRE(aaaa->common.rdtype == type);
-	REQUIRE(aaaa->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	return (mem_tobuffer(target, aaaa->in6_addr.s6_addr, 16));
-}
 
 static inline isc_result_t
 tostruct_in_aaaa(ARGS_TOSTRUCT) {

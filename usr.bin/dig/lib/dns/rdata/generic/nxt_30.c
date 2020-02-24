@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nxt_30.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: nxt_30.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -113,29 +113,6 @@ towire_nxt(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_nxt(ARGS_FROMSTRUCT) {
-	dns_rdata_nxt_t *nxt = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_nxt);
-	REQUIRE(source != NULL);
-	REQUIRE(nxt->common.rdtype == type);
-	REQUIRE(nxt->common.rdclass == rdclass);
-	REQUIRE(nxt->typebits != NULL || nxt->len == 0);
-	if (nxt->typebits != NULL && (nxt->typebits[0] & 0x80) == 0) {
-		REQUIRE(nxt->len <= 16);
-		REQUIRE(nxt->typebits[nxt->len - 1] != 0);
-	}
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	dns_name_toregion(&nxt->next, &region);
-	RETERR(isc_buffer_copyregion(target, &region));
-
-	return (mem_tobuffer(target, nxt->typebits, nxt->len));
-}
 
 static inline isc_result_t
 tostruct_nxt(ARGS_TOSTRUCT) {

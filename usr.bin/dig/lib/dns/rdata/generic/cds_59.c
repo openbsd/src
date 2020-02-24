@@ -57,13 +57,6 @@ towire_cds(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_cds(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_cds);
-
-	return (generic_fromstruct_ds(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_cds(ARGS_TOSTRUCT) {

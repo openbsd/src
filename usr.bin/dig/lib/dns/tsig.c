@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.10 2020/02/24 17:43:52 florian Exp $
+ * $Id: tsig.c,v 1.11 2020/02/24 17:44:44 florian Exp $
  */
 /*! \file */
 
@@ -639,8 +639,8 @@ dns_tsig_sign(dns_message_t *msg) {
 	ret = isc_buffer_allocate(&dynbuf, 512);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_rdata;
-	ret = dns_rdata_fromstruct(rdata, dns_rdataclass_any,
-				   dns_rdatatype_tsig, &tsig, dynbuf);
+	ret = dns_rdata_fromstruct_tsig(rdata, dns_rdataclass_any,
+				        dns_rdatatype_tsig, &tsig, dynbuf);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_dynbuf;
 

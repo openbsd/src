@@ -55,13 +55,6 @@ towire_cdnskey(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_cdnskey(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_cdnskey);
-
-	return (generic_fromstruct_key(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_cdnskey(ARGS_TOSTRUCT) {

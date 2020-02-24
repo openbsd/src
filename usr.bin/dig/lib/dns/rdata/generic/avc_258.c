@@ -54,13 +54,6 @@ towire_avc(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_avc(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_avc);
-
-	return (generic_fromstruct_txt(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_avc(ARGS_TOSTRUCT) {

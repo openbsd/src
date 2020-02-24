@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3param_51.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: nsec3param_51.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -133,26 +133,6 @@ towire_nsec3param(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_nsec3param(ARGS_FROMSTRUCT) {
-	dns_rdata_nsec3param_t *nsec3param = source;
-
-	REQUIRE(type == dns_rdatatype_nsec3param);
-	REQUIRE(source != NULL);
-	REQUIRE(nsec3param->common.rdtype == type);
-	REQUIRE(nsec3param->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint8_tobuffer(nsec3param->hash, target));
-	RETERR(uint8_tobuffer(nsec3param->flags, target));
-	RETERR(uint16_tobuffer(nsec3param->iterations, target));
-	RETERR(uint8_tobuffer(nsec3param->salt_length, target));
-	RETERR(mem_tobuffer(target, nsec3param->salt,
-			    nsec3param->salt_length));
-	return (ISC_R_SUCCESS);
-}
 
 static inline isc_result_t
 tostruct_nsec3param(ARGS_TOSTRUCT) {

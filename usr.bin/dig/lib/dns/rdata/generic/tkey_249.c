@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkey_249.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: tkey_249.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -224,63 +224,6 @@ towire_tkey(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_tkey(ARGS_FROMSTRUCT) {
-	dns_rdata_tkey_t *tkey = source;
-
-	REQUIRE(type == dns_rdatatype_tkey);
-	REQUIRE(source != NULL);
-	REQUIRE(tkey->common.rdtype == type);
-	REQUIRE(tkey->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	/*
-	 * Algorithm Name.
-	 */
-	RETERR(name_tobuffer(&tkey->algorithm, target));
-
-	/*
-	 * Inception: 32 bits.
-	 */
-	RETERR(uint32_tobuffer(tkey->inception, target));
-
-	/*
-	 * Expire: 32 bits.
-	 */
-	RETERR(uint32_tobuffer(tkey->expire, target));
-
-	/*
-	 * Mode: 16 bits.
-	 */
-	RETERR(uint16_tobuffer(tkey->mode, target));
-
-	/*
-	 * Error: 16 bits.
-	 */
-	RETERR(uint16_tobuffer(tkey->error, target));
-
-	/*
-	 * Key size: 16 bits.
-	 */
-	RETERR(uint16_tobuffer(tkey->keylen, target));
-
-	/*
-	 * Key.
-	 */
-	RETERR(mem_tobuffer(target, tkey->key, tkey->keylen));
-
-	/*
-	 * Other size: 16 bits.
-	 */
-	RETERR(uint16_tobuffer(tkey->otherlen, target));
-
-	/*
-	 * Other data.
-	 */
-	return (mem_tobuffer(target, tkey->other, tkey->otherlen));
-}
 
 static inline isc_result_t
 tostruct_tkey(ARGS_TOSTRUCT) {

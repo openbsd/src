@@ -75,23 +75,6 @@ towire_l32(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_l32(ARGS_FROMSTRUCT) {
-	dns_rdata_l32_t *l32 = source;
-	uint32_t n;
-
-	REQUIRE(type == dns_rdatatype_l32);
-	REQUIRE(source != NULL);
-	REQUIRE(l32->common.rdtype == type);
-	REQUIRE(l32->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(l32->pref, target));
-	n = ntohl(l32->l32.s_addr);
-	return (uint32_tobuffer(n, target));
-}
 
 static inline isc_result_t
 tostruct_l32(ARGS_TOSTRUCT) {

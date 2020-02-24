@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sshfp_44.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: sshfp_44.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* RFC 4255 */
 
@@ -101,23 +101,6 @@ towire_sshfp(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_sshfp(ARGS_FROMSTRUCT) {
-	dns_rdata_sshfp_t *sshfp = source;
-
-	REQUIRE(type == dns_rdatatype_sshfp);
-	REQUIRE(source != NULL);
-	REQUIRE(sshfp->common.rdtype == type);
-	REQUIRE(sshfp->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint8_tobuffer(sshfp->algorithm, target));
-	RETERR(uint8_tobuffer(sshfp->digest_type, target));
-
-	return (mem_tobuffer(target, sshfp->digest, sshfp->length));
-}
 
 static inline isc_result_t
 tostruct_sshfp(ARGS_TOSTRUCT) {

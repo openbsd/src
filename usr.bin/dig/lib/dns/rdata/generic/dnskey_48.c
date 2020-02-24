@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dnskey_48.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: dnskey_48.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -62,13 +62,6 @@ towire_dnskey(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_dnskey(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_dnskey);
-
-	return (generic_fromstruct_key(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_dnskey(ARGS_TOSTRUCT) {

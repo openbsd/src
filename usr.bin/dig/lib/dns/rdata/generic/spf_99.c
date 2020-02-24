@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: spf_99.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: spf_99.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -58,13 +58,6 @@ towire_spf(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_spf(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_spf);
-
-	return (generic_fromstruct_txt(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_spf(ARGS_TOSTRUCT) {

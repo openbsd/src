@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: afsdb_18.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: afsdb_18.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 14:59:00 PST 2000 by explorer */
 
@@ -103,23 +103,6 @@ towire_afsdb(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_afsdb(ARGS_FROMSTRUCT) {
-	dns_rdata_afsdb_t *afsdb = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_afsdb);
-	REQUIRE(source != NULL);
-	REQUIRE(afsdb->common.rdclass == rdclass);
-	REQUIRE(afsdb->common.rdtype == type);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(afsdb->subtype, target));
-	dns_name_toregion(&afsdb->server, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_afsdb(ARGS_TOSTRUCT) {

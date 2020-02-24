@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mx_15.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: mx_15.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 
@@ -99,23 +99,6 @@ towire_mx(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_mx(ARGS_FROMSTRUCT) {
-	dns_rdata_mx_t *mx = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_mx);
-	REQUIRE(source != NULL);
-	REQUIRE(mx->common.rdtype == type);
-	REQUIRE(mx->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(mx->pref, target));
-	dns_name_toregion(&mx->mx, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_mx(ARGS_TOSTRUCT) {

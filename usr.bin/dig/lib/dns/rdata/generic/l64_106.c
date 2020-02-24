@@ -80,21 +80,6 @@ towire_l64(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_l64(ARGS_FROMSTRUCT) {
-	dns_rdata_l64_t *l64 = source;
-
-	REQUIRE(type == dns_rdatatype_l64);
-	REQUIRE(source != NULL);
-	REQUIRE(l64->common.rdtype == type);
-	REQUIRE(l64->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint16_tobuffer(l64->pref, target));
-	return (mem_tobuffer(target, l64->l64, sizeof(l64->l64)));
-}
 
 static inline isc_result_t
 tostruct_l64(ARGS_TOSTRUCT) {

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rrsig_46.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: rrsig_46.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -218,64 +218,6 @@ towire_rrsig(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_rrsig(ARGS_FROMSTRUCT) {
-	dns_rdata_rrsig_t *sig = source;
-
-	REQUIRE(type == dns_rdatatype_rrsig);
-	REQUIRE(source != NULL);
-	REQUIRE(sig->common.rdtype == type);
-	REQUIRE(sig->common.rdclass == rdclass);
-	REQUIRE(sig->signature != NULL || sig->siglen == 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	/*
-	 * Type covered.
-	 */
-	RETERR(uint16_tobuffer(sig->covered, target));
-
-	/*
-	 * Algorithm.
-	 */
-	RETERR(uint8_tobuffer(sig->algorithm, target));
-
-	/*
-	 * Labels.
-	 */
-	RETERR(uint8_tobuffer(sig->labels, target));
-
-	/*
-	 * Original TTL.
-	 */
-	RETERR(uint32_tobuffer(sig->originalttl, target));
-
-	/*
-	 * Expire time.
-	 */
-	RETERR(uint32_tobuffer(sig->timeexpire, target));
-
-	/*
-	 * Time signed.
-	 */
-	RETERR(uint32_tobuffer(sig->timesigned, target));
-
-	/*
-	 * Key ID.
-	 */
-	RETERR(uint16_tobuffer(sig->keyid, target));
-
-	/*
-	 * Signer name.
-	 */
-	RETERR(name_tobuffer(&sig->signer, target));
-
-	/*
-	 * Signature.
-	 */
-	return (mem_tobuffer(target, sig->signature, sig->siglen));
-}
 
 static inline isc_result_t
 tostruct_rrsig(ARGS_TOSTRUCT) {

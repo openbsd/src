@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dname_39.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: dname_39.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:52:38 PST 2000 by explorer */
 
@@ -79,22 +79,6 @@ towire_dname(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_dname(ARGS_FROMSTRUCT) {
-	dns_rdata_dname_t *dname = source;
-	isc_region_t region;
-
-	REQUIRE(type == dns_rdatatype_dname);
-	REQUIRE(source != NULL);
-	REQUIRE(dname->common.rdtype == type);
-	REQUIRE(dname->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	dns_name_toregion(&dname->dname, &region);
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_dname(ARGS_TOSTRUCT) {

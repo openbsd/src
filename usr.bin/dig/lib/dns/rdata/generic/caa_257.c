@@ -131,49 +131,6 @@ towire_caa(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_caa(ARGS_FROMSTRUCT) {
-	dns_rdata_caa_t *caa = source;
-	isc_region_t region;
-	unsigned int i;
-
-	REQUIRE(type == dns_rdatatype_caa);
-	REQUIRE(source != NULL);
-	REQUIRE(caa->common.rdtype == type);
-	REQUIRE(caa->common.rdclass == rdclass);
-	REQUIRE(caa->tag != NULL && caa->tag_len != 0);
-	REQUIRE(caa->value != NULL);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	/*
-	 * Flags
-	 */
-	RETERR(uint8_tobuffer(caa->flags, target));
-
-	/*
-	 * Tag length
-	 */
-	RETERR(uint8_tobuffer(caa->tag_len, target));
-
-	/*
-	 * Tag
-	 */
-	region.base = caa->tag;
-	region.length = caa->tag_len;
-	for (i = 0; i < region.length; i++)
-		if (!alphanumeric[region.base[i]])
-			RETERR(DNS_R_SYNTAX);
-	RETERR(isc_buffer_copyregion(target, &region));
-
-	/*
-	 * Value
-	 */
-	region.base = caa->value;
-	region.length = caa->value_len;
-	return (isc_buffer_copyregion(target, &region));
-}
 
 static inline isc_result_t
 tostruct_caa(ARGS_TOSTRUCT) {

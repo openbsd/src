@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.19 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: dighost.c,v 1.20 2020/02/24 17:44:44 florian Exp $ */
 
 /*! \file
  *  \note
@@ -1894,10 +1894,10 @@ insert_soa(dig_lookup_t *lookup) {
 	result = dns_message_gettemprdata(lookup->sendmsg, &rdata);
 	check_result(result, "dns_message_gettemprdata");
 
-	result = dns_rdata_fromstruct(rdata, lookup->rdclass,
+	result = dns_rdata_fromstruct_soa(rdata, lookup->rdclass,
 				      dns_rdatatype_soa, &soa,
 				      &lookup->rdatabuf);
-	check_result(result, "isc_rdata_fromstruct");
+	check_result(result, "isc_rdata_fromstruct_soa");
 
 	result = dns_message_gettemprdatalist(lookup->sendmsg, &rdatalist);
 	check_result(result, "dns_message_gettemprdatalist");

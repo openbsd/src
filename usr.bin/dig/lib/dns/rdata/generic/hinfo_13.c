@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hinfo_13.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: hinfo_13.c,v 1.7 2020/02/24 17:44:44 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -66,23 +66,6 @@ towire_hinfo(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_hinfo(ARGS_FROMSTRUCT) {
-	dns_rdata_hinfo_t *hinfo = source;
-
-	REQUIRE(type == dns_rdatatype_hinfo);
-	REQUIRE(source != NULL);
-	REQUIRE(hinfo->common.rdtype == type);
-	REQUIRE(hinfo->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint8_tobuffer(hinfo->cpu_len, target));
-	RETERR(mem_tobuffer(target, hinfo->cpu, hinfo->cpu_len));
-	RETERR(uint8_tobuffer(hinfo->os_len, target));
-	return (mem_tobuffer(target, hinfo->os, hinfo->os_len));
-}
 
 static inline isc_result_t
 tostruct_hinfo(ARGS_TOSTRUCT) {

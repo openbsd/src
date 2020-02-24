@@ -359,8 +359,42 @@ dns_rdata_tofmttext(dns_rdata_t *rdata, dns_name_t *origin, unsigned int flags,
  */
 
 isc_result_t
-dns_rdata_fromstruct(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
-		     dns_rdatatype_t type, void *source, isc_buffer_t *target);
+dns_rdata_fromstruct_soa(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
+		          dns_rdatatype_t type, dns_rdata_soa_t *soa,
+		          isc_buffer_t *target);
+/*%<
+ * Convert the C structure representation of an rdata into uncompressed wire
+ * format in 'target'.
+ *
+ * XXX  Should we have a 'size' parameter as a sanity check on target?
+ *
+ * Requires:
+ *
+ *\li	'rdclass' and 'type' are valid.
+ *
+ *\li	'source' points to a valid C struct for the class and type.
+ *
+ *\li	'target' is a valid buffer.
+ *
+ *\li	All structure pointers to memory blocks should be NULL if their
+ *	corresponding length values are zero.
+ *
+ * Ensures,
+ *	if result is success:
+ *	\li 	If 'rdata' is not NULL, it is attached to the target.
+ *
+ *	\li	The used space in 'target' is updated.
+ *
+ * Result:
+ *\li	Success
+ *\li	Various 'Bad Form' class failures depending on class and type
+ *\li	Resource Limit: Not enough space
+ */
+
+isc_result_t
+dns_rdata_fromstruct_tsig(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
+		          dns_rdatatype_t type, dns_rdata_any_tsig_t *tsig,
+		          isc_buffer_t *target);
 /*%<
  * Convert the C structure representation of an rdata into uncompressed wire
  * format in 'target'.

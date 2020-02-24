@@ -50,13 +50,6 @@ towire_smimea(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_smimea(ARGS_FROMSTRUCT) {
-
-	REQUIRE(type == dns_rdatatype_smimea);
-
-	return (generic_fromstruct_tlsa(rdclass, type, source, target));
-}
 
 static inline isc_result_t
 tostruct_smimea(ARGS_TOSTRUCT) {

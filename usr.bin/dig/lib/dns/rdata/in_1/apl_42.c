@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: apl_42.c,v 1.7 2020/02/24 17:43:53 florian Exp $ */
+/* $Id: apl_42.c,v 1.8 2020/02/24 17:44:45 florian Exp $ */
 
 /* RFC3123 */
 
@@ -150,23 +150,6 @@ towire_in_apl(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_in_apl(ARGS_FROMSTRUCT) {
-	dns_rdata_in_apl_t *apl = source;
-	isc_buffer_t b;
-
-	REQUIRE(type == dns_rdatatype_apl);
-	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
-	REQUIRE(apl->common.rdtype == type);
-	REQUIRE(apl->common.rdclass == rdclass);
-	REQUIRE(apl->apl != NULL || apl->apl_len == 0);
-
-	isc_buffer_init(&b, apl->apl, apl->apl_len);
-	isc_buffer_add(&b, apl->apl_len);
-	isc_buffer_setactive(&b, apl->apl_len);
-	return(fromwire_in_apl(rdclass, type, &b, NULL, ISC_FALSE, target));
-}
 
 static inline isc_result_t
 tostruct_in_apl(ARGS_TOSTRUCT) {

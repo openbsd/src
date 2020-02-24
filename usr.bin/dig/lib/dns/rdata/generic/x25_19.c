@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: x25_19.c,v 1.6 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: x25_19.c,v 1.7 2020/02/24 17:44:45 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:15:57 PST 2000 by bwelling */
 
@@ -66,30 +66,6 @@ towire_x25(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_x25(ARGS_FROMSTRUCT) {
-	dns_rdata_x25_t *x25 = source;
-	uint8_t i;
-
-	REQUIRE(type == dns_rdatatype_x25);
-	REQUIRE(source != NULL);
-	REQUIRE(x25->common.rdtype == type);
-	REQUIRE(x25->common.rdclass == rdclass);
-	REQUIRE(x25->x25 != NULL && x25->x25_len != 0);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	if (x25->x25_len < 4)
-		return (ISC_R_RANGE);
-
-	for (i = 0; i < x25->x25_len; i++)
-		if (!isdigit(x25->x25[i] & 0xff))
-			return (ISC_R_RANGE);
-
-	RETERR(uint8_tobuffer(x25->x25_len, target));
-	return (mem_tobuffer(target, x25->x25, x25->x25_len));
-}
 
 static inline isc_result_t
 tostruct_x25(ARGS_TOSTRUCT) {

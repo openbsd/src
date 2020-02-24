@@ -95,30 +95,6 @@ towire_sink(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_sink(ARGS_FROMSTRUCT) {
-	dns_rdata_sink_t *sink = source;
-
-	REQUIRE(type == dns_rdatatype_sink);
-	REQUIRE(source != NULL);
-	REQUIRE(sink->common.rdtype == type);
-	REQUIRE(sink->common.rdclass == rdclass);
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	/* Meaning */
-	RETERR(uint8_tobuffer(sink->meaning, target));
-
-	/* Coding */
-	RETERR(uint8_tobuffer(sink->coding, target));
-
-	/* Subcoding */
-	RETERR(uint8_tobuffer(sink->subcoding, target));
-
-	/* Data */
-	return (mem_tobuffer(target, sink->data, sink->datalen));
-}
 
 static inline isc_result_t
 tostruct_sink(ARGS_TOSTRUCT) {

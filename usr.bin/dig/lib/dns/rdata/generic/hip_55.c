@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.7 2020/02/24 17:43:52 florian Exp $ */
+/* $Id: hip_55.c,v 1.8 2020/02/24 17:44:44 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -146,38 +146,6 @@ towire_hip(ARGS_TOWIRE) {
 }
 
 
-static inline isc_result_t
-fromstruct_hip(ARGS_FROMSTRUCT) {
-	dns_rdata_hip_t *hip = source;
-	dns_rdata_hip_t myhip;
-	isc_result_t result;
-
-	REQUIRE(type == dns_rdatatype_hip);
-	REQUIRE(source != NULL);
-	REQUIRE(hip->common.rdtype == type);
-	REQUIRE(hip->common.rdclass == rdclass);
-	REQUIRE(hip->hit_len > 0 && hip->hit != NULL);
-	REQUIRE(hip->key_len > 0 && hip->key != NULL);
-	REQUIRE((hip->servers == NULL && hip->servers_len == 0) ||
-		 (hip->servers != NULL && hip->servers_len != 0));
-
-	UNUSED(type);
-	UNUSED(rdclass);
-
-	RETERR(uint8_tobuffer(hip->hit_len, target));
-	RETERR(uint8_tobuffer(hip->algorithm, target));
-	RETERR(uint16_tobuffer(hip->key_len, target));
-	RETERR(mem_tobuffer(target, hip->hit, hip->hit_len));
-	RETERR(mem_tobuffer(target, hip->key, hip->key_len));
-
-	myhip = *hip;
-	for (result = dns_rdata_hip_first(&myhip);
-	     result == ISC_R_SUCCESS;
-	     result = dns_rdata_hip_next(&myhip))
-		/* empty */;
-
-	return(mem_tobuffer(target, hip->servers, hip->servers_len));
-}
 
 static inline isc_result_t
 tostruct_hip(ARGS_TOSTRUCT) {
