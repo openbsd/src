@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.418 2020/02/18 08:09:37 gerhard Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.419 2020/02/24 10:06:05 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2575,8 +2575,6 @@ join_status(void)
 		if (len > maxlen)
 			maxlen = len;
 	}
-	if (maxlen > IEEE80211_NWID_LEN)
-		maxlen = IEEE80211_NWID_LEN - 1;
 
 	for (i = 0; i < ja.ja_nodes; i++) {
 		printf("\t      ");
