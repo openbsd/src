@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.37 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.38 2020/02/25 10:03:39 mpi Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -374,6 +374,7 @@ ucycom_param(void *addr, int portno, struct termios *t)
 {
 	struct ucycom_softc *sc = addr;
 	uint8_t report[5];
+	size_t rlen;
 	uint32_t baud = 0;
 	uint8_t cfg;
 
@@ -443,8 +444,9 @@ ucycom_param(void *addr, int portno, struct termios *t)
 	report[2] = (baud >> 16) & 0xff;
 	report[3] = (baud >> 24) & 0xff;
 	report[4] = cfg;
+	rlen = MIN(sc->sc_flen, sizeof(report));
 	if (uhidev_set_report(sc->sc_hdev.sc_parent, UHID_FEATURE_REPORT,
-	    sc->sc_hdev.sc_report_id, report, sc->sc_flen) != sc->sc_flen)
+	    sc->sc_hdev.sc_report_id, report, rlen) != rlen)
 		return EIO;
 	sc->sc_baud = baud;
 	return (0);

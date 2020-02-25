@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.19 2020/02/13 18:19:07 jasper Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.20 2020/02/25 10:03:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -56,7 +56,6 @@ struct utwitch_softc {
 	struct usbd_device	*sc_udev;
 
 	/* uhidev parameters */
-	size_t			 sc_flen;	/* feature report length */
 	size_t			 sc_ilen;	/* input report length */
 	size_t			 sc_olen;	/* output report length */
 
@@ -134,7 +133,6 @@ utwitch_attach(struct device *parent, struct device *self, void *aux)
 	repid = uha->reportid;
 	sc->sc_ilen = hid_report_size(desc, size, hid_input, repid);
 	sc->sc_olen = hid_report_size(desc, size, hid_output, repid);
-	sc->sc_flen = hid_report_size(desc, size, hid_feature, repid);
 
 	err = uhidev_open(&sc->sc_hdev);
 	if (err) {
@@ -266,13 +264,15 @@ void
 utwitch_set_mode(struct utwitch_softc *sc, uint8_t val)
 {
 	uint8_t req[8];
+	int olen;
 
+	olen = MIN(sc->sc_olen, sizeof(req));
 	memset(req, CMD_PADDING, sizeof(req));
 	req[0] = CMD_MODE;
 	req[1] = val;
 	req[2] = CMD_EOF;
 	if (uhidev_set_report(sc->sc_hdev.sc_parent, UHID_OUTPUT_REPORT,
-	    sc->sc_hdev.sc_report_id, req, sc->sc_olen) != sc->sc_olen) {
+	    sc->sc_hdev.sc_report_id, req, olen) != olen) {
 		printf("uhidev_set_report error:EIO\n");
 		return;
 	}
@@ -285,14 +285,16 @@ void
 utwitch_read_value_request(struct utwitch_softc *sc)
 {
 	uint8_t req[8];
+	int olen;
 
+	olen = MIN(sc->sc_olen, sizeof(req));
 	memset(req, CMD_PADDING, sizeof(req));
 	req[0] = CMD_READ;
 	req[1] = CMD_EOF;
 	sc->issueing_cmd = CMD_READ;
 	sc->accepted_cmd = CMD_NONE;
 	if (uhidev_set_report(sc->sc_hdev.sc_parent, UHID_OUTPUT_REPORT,
-	    sc->sc_hdev.sc_report_id, req, sc->sc_olen) != sc->sc_olen)
+	    sc->sc_hdev.sc_report_id, req, olen) != olen)
 		return;
 
 	/* wait till sensor data are updated, 500ms will be enough */
@@ -304,7 +306,9 @@ utwitch_write_value_request(struct utwitch_softc *sc, uint32_t val)
 {
 	uint32_t v;
 	uint8_t req[8];
+	int olen;
 
+	olen = MIN(sc->sc_olen, sizeof(req));
 	req[0] = CMD_WRITE;
 	req[1] = 0;
 	req[6] = CMD_EOF;
@@ -315,7 +319,7 @@ utwitch_write_value_request(struct utwitch_softc *sc, uint32_t val)
 	sc->issueing_cmd = CMD_WRITE;
 	sc->accepted_cmd = CMD_NONE;
 	if (uhidev_set_report(sc->sc_hdev.sc_parent, UHID_OUTPUT_REPORT,
-	    sc->sc_hdev.sc_report_id, req, sc->sc_olen) != sc->sc_olen)
+	    sc->sc_hdev.sc_report_id, req, olen) != olen)
 		return;
 
 	/* wait till sensor data are updated, 250ms will be enough */
