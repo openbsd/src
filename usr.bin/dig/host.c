@@ -780,7 +780,11 @@ parse_args(int argc, char **argv) {
 	strlcpy(hostname, argv[0], sizeof(hostname));
 
 	if (argc >= 2) {
-		set_nameserver(argv[1]);
+		isc_result_t res;
+
+		if ((res = set_nameserver(argv[1])))
+			fatal("couldn't get address for '%s': %s",
+			    argv[1], isc_result_totext(res));
 		debug("server is %s", *argv + 1);
 		listed_server = ISC_TRUE;
 	} else

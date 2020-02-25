@@ -326,7 +326,7 @@ make_server(const char *servname, const char *userarg);
 void
 flush_server_list(void);
 
-void
+isc_result_t
 set_nameserver(char *opt);
 
 void

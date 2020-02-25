@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.23 2020/02/25 05:00:42 jsg Exp $ */
+/* $Id: dighost.c,v 1.24 2020/02/25 17:01:56 deraadt Exp $ */
 
 /*! \file
  *  \note
@@ -548,7 +548,7 @@ get_addresses(const char *hostname, in_port_t dstport,
 		return (ISC_R_SUCCESS);
 }
 
-void
+isc_result_t
 set_nameserver(char *opt) {
 	isc_result_t result;
 	isc_sockaddr_t sockaddrs[DIG_MAX_ADDRESSES];
@@ -558,13 +558,12 @@ set_nameserver(char *opt) {
 	char tmp[ISC_NETADDR_FORMATSIZE];
 
 	if (opt == NULL)
-		return;
+		return ISC_R_NOTFOUND;
 
 	result = get_addresses(opt, 0, sockaddrs,
 				    DIG_MAX_ADDRESSES, &count);
 	if (result != ISC_R_SUCCESS)
-		fatal("couldn't get address for '%s': %s",
-		      opt, isc_result_totext(result));
+		return (result);
 
 	flush_server_list();
 
@@ -576,6 +575,7 @@ set_nameserver(char *opt) {
 			fatal("memory allocation failure");
 		ISC_LIST_APPEND(server_list, srv, link);
 	}
+	return (ISC_R_SUCCESS);
 }
 
 static isc_result_t

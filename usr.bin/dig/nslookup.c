@@ -724,9 +724,17 @@ do_next_command(char *input) {
 		setoption(arg);
 	else if ((strcasecmp(ptr, "server") == 0) ||
 		 (strcasecmp(ptr, "lserver") == 0)) {
-		set_nameserver(arg);
-		check_ra = ISC_FALSE;
-		show_settings(ISC_TRUE, ISC_TRUE);
+		isc_result_t res;
+
+		if (arg == NULL)
+			printf("usage: server hostname\n");
+		else if ((res = set_nameserver(arg))) {
+			printf("couldn't get address for '%s': %s\n",
+			    arg, isc_result_totext(res));
+		} else {
+			check_ra = ISC_FALSE;
+			show_settings(ISC_TRUE, ISC_TRUE);
+		}
 	} else if (strcasecmp(ptr, "exit") == 0) {
 		in_use = ISC_FALSE;
 	} else if (strcasecmp(ptr, "help") == 0 ||
@@ -784,7 +792,11 @@ parse_args(int argc, char **argv) {
 				in_use = ISC_TRUE;
 				addlookup(argv[0]);
 			} else {
-				set_nameserver(argv[0]);
+				isc_result_t res;
+
+				if ((res = set_nameserver(argv[0])))
+					fatal("couldn't get address for '%s': %s",
+					    argv[0], isc_result_totext(res));
 				check_ra = ISC_FALSE;
 			}
 		}
