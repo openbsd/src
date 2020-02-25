@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_fs.c,v 1.19 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: queue_fs.c,v 1.20 2020/02/25 17:03:13 millert Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -228,8 +228,7 @@ queue_fs_envelope_create(uint32_t msgid, const char *buf, size_t len,
 			fsqueue_envelope_incoming_path(*evpid, path,
 			    sizeof(path));
 
-		r = fsqueue_envelope_dump(path, buf, len, 0, 0);
-		if (r >= 0)
+		if ((r = fsqueue_envelope_dump(path, buf, len, 0, 0)) != 0)
 			goto done;
 	}
 	r = 0;
