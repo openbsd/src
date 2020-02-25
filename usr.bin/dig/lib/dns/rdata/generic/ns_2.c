@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ns_2.c,v 1.6 2020/02/24 17:44:45 florian Exp $ */
+/* $Id: ns_2.c,v 1.7 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Wed Mar 15 18:15:00 PST 2000 by bwelling */
 
@@ -77,8 +77,6 @@ towire_ns(ARGS_TOWIRE) {
 	return (dns_name_towire(&name, cctx, target));
 }
 
-
-
 static inline isc_result_t
 tostruct_ns(ARGS_TOSTRUCT) {
 	isc_region_t region;
@@ -109,7 +107,5 @@ freestruct_ns(ARGS_FREESTRUCT) {
 
 	dns_name_free(&ns->name);
 }
-
-
 
 #endif	/* RDATA_GENERIC_NS_2_C */

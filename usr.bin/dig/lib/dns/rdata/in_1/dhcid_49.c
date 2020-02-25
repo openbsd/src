@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dhcid_49.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: dhcid_49.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* RFC 4701 */
 
@@ -89,11 +89,5 @@ towire_in_dhcid(ARGS_TOWIRE) {
 	dns_rdata_toregion(rdata, &sr);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_IN_1_DHCID_49_C */

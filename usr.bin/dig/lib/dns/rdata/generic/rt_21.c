@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rt_21.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: rt_21.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* reviewed: Thu Mar 16 15:02:31 PST 2000 by brister */
 
@@ -102,11 +102,5 @@ towire_rt(ARGS_TOWIRE) {
 
 	return (dns_name_towire(&name, cctx, target));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_RT_21_C */

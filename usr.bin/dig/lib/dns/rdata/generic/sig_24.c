@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sig_24.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: sig_24.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -217,10 +217,6 @@ towire_sig(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-
-
-
-
 static inline dns_rdatatype_t
 covers_sig(dns_rdata_t *rdata) {
 	dns_rdatatype_t type;
@@ -233,6 +229,5 @@ covers_sig(dns_rdata_t *rdata) {
 
 	return (type);
 }
-
 
 #endif	/* RDATA_GENERIC_SIG_24_C */

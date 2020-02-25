@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cfg.h,v 1.4 2020/02/13 16:57:55 florian Exp $ */
+/* $Id: cfg.h,v 1.5 2020/02/25 05:00:43 jsg Exp $ */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
@@ -31,7 +31,6 @@
 /***
  *** Imports
  ***/
-
 
 #include <isc/refcount.h>
 #include <isc/types.h>

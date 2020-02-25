@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: srv_33.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: srv_33.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Fri Mar 17 13:01:00 PST 2000 by bwelling */
 
@@ -131,11 +131,5 @@ towire_in_srv(ARGS_TOWIRE) {
 	dns_name_fromregion(&name, &sr);
 	return (dns_name_towire(&name, cctx, target));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_IN_1_SRV_33_C */

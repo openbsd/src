@@ -130,10 +130,4 @@ towire_caa(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, region.base, region.length));
 }
 
-
-
-
-
-
-
 #endif /* GENERIC_CAA_257_C */

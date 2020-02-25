@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: isdn_20.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: isdn_20.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Wed Mar 15 16:53:11 PST 2000 by bwelling */
 
@@ -66,11 +66,5 @@ towire_isdn(ARGS_TOWIRE) {
 
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_ISDN_20_C */

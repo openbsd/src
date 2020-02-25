@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include <isc/lex.h>
 #include <isc/log.h>
 #include <isc/symtab.h>
@@ -59,7 +58,6 @@ isc_logmodule_t cfg_module = { "isccfg/parser",      0 };
 /* Clean up a configuration object if non-NULL. */
 #define CLEANUP_OBJ(obj) \
 	do { if ((obj) != NULL) cfg_obj_destroy(pctx, &(obj)); } while (0)
-
 
 /* Forward declarations of variables */
 cfg_rep_t cfg_rep_string;
@@ -759,7 +757,6 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 		}
 	}
 
-
 	*ret = obj;
 	return (ISC_R_SUCCESS);
 
@@ -1194,7 +1191,6 @@ cfg_create_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (ISC_R_SUCCESS);
 }
 
-
 static void
 map_symtabitem_destroy(char *key, unsigned int type,
 		       isc_symvalue_t symval, void *userarg)
@@ -1207,7 +1203,6 @@ map_symtabitem_destroy(char *key, unsigned int type,
 
 	cfg_obj_destroy(pctx, &obj);
 }
-
 
 static isc_result_t
 create_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {

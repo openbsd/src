@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: null_10.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: null_10.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Thu Mar 16 13:57:50 PST 2000 by explorer */
 
@@ -54,11 +54,5 @@ towire_null(ARGS_TOWIRE) {
 
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_NULL_10_C */

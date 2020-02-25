@@ -14,10 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.23 2020/02/24 17:57:54 florian Exp $ */
+/* $Id: rdata.c,v 1.24 2020/02/25 05:00:42 jsg Exp $ */
 
 /*! \file */
-
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -1142,7 +1141,6 @@ static const char atob_digits[86] =
  * Modified to be re-entrant 3/2/99.
  */
 
-
 struct state {
 	int32_t Ceor;
 	int32_t Csum;
@@ -1223,7 +1221,6 @@ byte_btoa(int c, isc_buffer_t *target, struct state *state) {
 	}
 	return (ISC_R_SUCCESS);
 }
-
 
 /*
  * Encode the binary data from inbuf, of length inbuflen, into a

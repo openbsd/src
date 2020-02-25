@@ -14,11 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.7 2020/02/23 23:40:22 jsg Exp $ */
+/* $Id: lex.c,v 1.8 2020/02/25 05:00:43 jsg Exp $ */
 
 /*! \file */
-
-
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -141,7 +139,6 @@ isc_lex_setcomments(isc_lex_t *lex, unsigned int comments) {
 	 * Set allowed lexer commenting styles.
 	 */
 
-
 	lex->comments = comments;
 }
 
@@ -151,7 +148,6 @@ isc_lex_setspecials(isc_lex_t *lex, isc_lexspecials_t specials) {
 	 * The characters in 'specials' are returned as tokens.  Along with
 	 * whitespace, they delimit strings and numbers.
 	 */
-
 
 	memmove(lex->specials, specials, 256);
 }
@@ -201,7 +197,6 @@ isc_lex_openfile(isc_lex_t *lex, const char *filename) {
 	 * Open 'filename' and make it the current input source for 'lex'.
 	 */
 
-
 	if ((stream = fopen(filename, "r")) == NULL)
 		return (isc__errno2result(errno));
 
@@ -218,7 +213,6 @@ isc_lex_close(isc_lex_t *lex) {
 	/*
 	 * Close the most recently opened object (i.e. file or buffer).
 	 */
-
 
 	source = HEAD(lex->sources);
 	if (source == NULL)
@@ -760,7 +754,6 @@ isc_lex_getlasttokentext(isc_lex_t *lex, isc_token_t *tokenp, isc_region_t *r)
 	r->length = isc_buffer_consumedlength(source->pushback) -
 		    source->ignored;
 }
-
 
 char *
 isc_lex_getsourcename(isc_lex_t *lex) {

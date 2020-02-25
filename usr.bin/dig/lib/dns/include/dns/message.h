@@ -655,7 +655,6 @@ dns_message_addname(dns_message_t *msg, dns_name_t *name,
  *\li	'section' be a named section.
  */
 
-
 /*
  * LOANOUT FUNCTIONS
  *

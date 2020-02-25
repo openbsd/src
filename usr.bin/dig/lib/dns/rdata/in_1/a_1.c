@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: a_1.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -84,12 +84,5 @@ towire_in_a(ARGS_TOWIRE) {
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
 }
-
-
-
-
-
-
-
 
 #endif	/* RDATA_IN_1_A_1_C */

@@ -49,10 +49,4 @@ towire_smimea(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-
-
-
-
-
-
 #endif	/* RDATA_GENERIC_SMIMEA_53_C */

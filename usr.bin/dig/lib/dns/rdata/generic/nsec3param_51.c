@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3param_51.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: nsec3param_51.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -131,11 +131,5 @@ towire_nsec3param(ARGS_TOWIRE) {
 	dns_rdata_toregion(rdata, &sr);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_NSEC3PARAM_51_C */

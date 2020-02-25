@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap-ptr_23.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: nsap-ptr_23.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Fri Mar 17 10:16:02 PST 2000 by gson */
 
@@ -80,11 +80,5 @@ towire_in_nsap_ptr(ARGS_TOWIRE) {
 
 	return (dns_name_towire(&name, cctx, target));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_IN_1_NSAP_PTR_23_C */

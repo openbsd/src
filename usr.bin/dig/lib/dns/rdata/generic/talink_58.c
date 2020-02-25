@@ -97,10 +97,4 @@ towire_talink(ARGS_TOWIRE) {
 	return(dns_name_towire(&next, cctx, target));
 }
 
-
-
-
-
-
-
 #endif	/* RDATA_GENERIC_TALINK_58_C */

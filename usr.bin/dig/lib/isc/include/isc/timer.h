@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.11 2020/02/24 13:49:39 jsg Exp $ */
+/* $Id: timer.h,v 1.12 2020/02/25 05:00:43 jsg Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -65,7 +65,6 @@
  * \li Standards:
  *	None.
  */
-
 
 /***
  *** Imports

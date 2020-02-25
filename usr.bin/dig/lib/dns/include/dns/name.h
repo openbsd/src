@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.10 2020/02/24 16:11:21 florian Exp $ */
+/* $Id: name.h,v 1.11 2020/02/25 05:00:42 jsg Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -469,7 +469,6 @@ dns_name_getlabelsequence(const dns_name_t *source, unsigned int first,
  *
  * \li	first + n <= dns_name_countlabels(name)
  */
-
 
 void
 dns_name_clone(const dns_name_t *source, dns_name_t *target);

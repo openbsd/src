@@ -43,8 +43,6 @@
  *    /etc/resolv.conf
  */
 
-
-
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -93,7 +91,6 @@ eatline(FILE *fp) {
 	return (ch);
 }
 
-
 /*!
  * Eats white space up to next newline or non-whitespace character (of
  * EOF). Returns the last character read. Comments are considered white
@@ -112,7 +109,6 @@ eatwhite(FILE *fp) {
 
 	return (ch);
 }
-
 
 /*!
  * Skip over any leading whitespace and then read in the next sequence of

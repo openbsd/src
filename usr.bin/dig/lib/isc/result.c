@@ -14,11 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.c,v 1.3 2020/02/13 10:40:24 jsg Exp $ */
+/* $Id: result.c,v 1.4 2020/02/25 05:00:43 jsg Exp $ */
 
 /*! \file */
-
-
 
 #include <stddef.h>
 #include <stdlib.h>

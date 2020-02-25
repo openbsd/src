@@ -88,7 +88,6 @@ dns_rdataset_isassociated(dns_rdataset_t *rdataset) {
 	 * Is 'rdataset' associated?
 	 */
 
-
 	if (rdataset->methods != NULL)
 		return (ISC_TRUE);
 

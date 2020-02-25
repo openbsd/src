@@ -14,10 +14,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-
-
-
-
 #include <isc/regex.h>
 #include <isc/types.h>
 #include <string.h>

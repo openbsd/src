@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: soa_6.c,v 1.5 2020/02/24 12:06:51 florian Exp $ */
+/* $Id: soa_6.c,v 1.6 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
@@ -46,7 +46,6 @@ totext_soa(ARGS_TOTEXT) {
 		comm = ISC_TF((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0);
 	else
 		comm = ISC_FALSE;
-
 
 	dns_name_init(&mname, NULL);
 	dns_name_init(&rname, NULL);
@@ -170,7 +169,6 @@ towire_soa(ARGS_TOWIRE) {
 	return (ISC_R_SUCCESS);
 }
 
-
 static inline isc_result_t
 fromstruct_soa(ARGS_FROMSTRUCT) {
 	dns_rdata_soa_t *soa = source;
@@ -209,7 +207,6 @@ tostruct_soa(ARGS_TOSTRUCT) {
 	soa->common.rdclass = rdata->rdclass;
 	soa->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&soa->common, link);
-
 
 	dns_rdata_toregion(rdata, &region);
 
@@ -257,7 +254,5 @@ freestruct_soa(ARGS_FREESTRUCT) {
 	dns_name_free(&soa->origin);
 	dns_name_free(&soa->contact);
 }
-
-
 
 #endif	/* RDATA_GENERIC_SOA_6_C */

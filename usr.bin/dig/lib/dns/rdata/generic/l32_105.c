@@ -74,10 +74,4 @@ towire_l32(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
 
-
-
-
-
-
-
 #endif	/* RDATA_GENERIC_L32_105_C */

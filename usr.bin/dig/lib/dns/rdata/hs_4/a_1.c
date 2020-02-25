@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: a_1.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* reviewed: Thu Mar 16 15:58:36 PST 2000 by brister */
 
@@ -82,11 +82,5 @@ towire_hs_a(ARGS_TOWIRE) {
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_HS_4_A_1_C */

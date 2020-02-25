@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: md_3.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: md_3.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Wed Mar 15 17:48:20 PST 2000 by bwelling */
 
@@ -76,11 +76,5 @@ towire_md(ARGS_TOWIRE) {
 
 	return (dns_name_towire(&name, cctx, target));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_MD_3_C */

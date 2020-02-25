@@ -118,10 +118,4 @@ towire_doa(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, region.base, region.length));
 }
 
-
-
-
-
-
-
 #endif	/* RDATA_GENERIC_DOA_259_C */

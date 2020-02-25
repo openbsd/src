@@ -14,11 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: base32.c,v 1.4 2020/02/22 19:47:06 jung Exp $ */
+/* $Id: base32.c,v 1.5 2020/02/25 05:00:43 jsg Exp $ */
 
 /*! \file */
-
-
 
 #include <isc/base32.h>
 #include <isc/buffer.h>
@@ -31,7 +29,6 @@
 	if (_r != ISC_R_SUCCESS) \
 		return (_r); \
 	} while (0)
-
 
 /*@{*/
 /*!

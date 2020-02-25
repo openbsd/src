@@ -17,7 +17,7 @@
 #ifndef ISC_SHA1_H
 #define ISC_SHA1_H 1
 
-/* $Id: sha1.h,v 1.5 2020/02/17 18:58:39 jung Exp $ */
+/* $Id: sha1.h,v 1.6 2020/02/25 05:00:43 jsg Exp $ */
 
 /*	$NetBSD: sha1.h,v 1.2 1998/05/29 22:55:44 thorpej Exp $	*/
 
@@ -35,7 +35,6 @@
 typedef struct {
 	EVP_MD_CTX *ctx;
 } isc_sha1_t;
-
 
 void
 isc_sha1_init(isc_sha1_t *ctx);

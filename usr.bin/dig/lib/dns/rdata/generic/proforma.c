@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: proforma.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: proforma.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 #ifndef RDATA_GENERIC_#_#_C
 #define RDATA_GENERIC_#_#_C
@@ -55,11 +55,5 @@ towire_#(ARGS_TOWIRE) {
 
 	return (ISC_R_NOTIMPLEMENTED);
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_#_#_C */

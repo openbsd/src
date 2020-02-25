@@ -14,11 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: parseint.c,v 1.3 2020/02/22 19:47:06 jung Exp $ */
+/* $Id: parseint.c,v 1.4 2020/02/25 05:00:43 jsg Exp $ */
 
 /*! \file */
-
-
 
 #include <ctype.h>
 #include <errno.h>
@@ -27,7 +25,6 @@
 
 #include <isc/parseint.h>
 #include <isc/result.h>
-
 
 isc_result_t
 isc_parse_uint32(uint32_t *uip, const char *string, int base) {

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cname_5.c,v 1.6 2020/02/24 17:44:44 florian Exp $ */
+/* $Id: cname_5.c,v 1.7 2020/02/25 05:00:43 jsg Exp $ */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 
@@ -78,8 +78,6 @@ towire_cname(ARGS_TOWIRE) {
 	return (dns_name_towire(&name, cctx, target));
 }
 
-
-
 static inline isc_result_t
 tostruct_cname(ARGS_TOSTRUCT) {
 	isc_region_t region;
@@ -110,7 +108,5 @@ freestruct_cname(ARGS_FREESTRUCT) {
 
 	dns_name_free(&cname->cname);
 }
-
-
 
 #endif	/* RDATA_GENERIC_CNAME_5_C */

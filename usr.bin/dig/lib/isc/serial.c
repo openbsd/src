@@ -14,11 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: serial.c,v 1.2 2020/02/17 18:58:39 jung Exp $ */
+/* $Id: serial.c,v 1.3 2020/02/25 05:00:43 jsg Exp $ */
 
 /*! \file */
-
-
 
 #include <isc/serial.h>
 

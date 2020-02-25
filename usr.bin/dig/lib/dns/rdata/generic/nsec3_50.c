@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.7 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: nsec3_50.c,v 1.8 2020/02/25 05:00:43 jsg Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -168,10 +168,6 @@ towire_nsec3(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-
-
-
-
 #define NSEC3_MAX_HASH_LENGTH 155
 static inline isc_boolean_t
 checkowner_nsec3(ARGS_CHECKOWNER) {
@@ -196,6 +192,5 @@ checkowner_nsec3(ARGS_CHECKOWNER) {
 
 	return (ISC_FALSE);
 }
-
 
 #endif	/* RDATA_GENERIC_NSEC3_50_C */

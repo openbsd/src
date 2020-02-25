@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: minfo_14.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: minfo_14.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 
@@ -103,11 +103,5 @@ towire_minfo(ARGS_TOWIRE) {
 
 	return (dns_name_towire(&rmail, cctx, target));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_MINFO_14_C */

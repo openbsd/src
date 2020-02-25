@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: spf_99.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: spf_99.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 
@@ -56,10 +56,5 @@ towire_spf(ARGS_TOWIRE) {
 
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_SPF_99_C */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: util.h,v 1.2 2020/02/16 21:11:02 florian Exp $ */
+/* $Id: util.h,v 1.3 2020/02/25 05:00:43 jsg Exp $ */
 
 #ifndef ISC_UTIL_H
 #define ISC_UTIL_H 1
@@ -112,7 +112,6 @@
 /*%
  * Performance
  */
-
 
 /*
  * Assertions

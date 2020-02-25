@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.h,v 1.5 2020/02/23 23:40:22 jsg Exp $ */
+/* $Id: lex.h,v 1.6 2020/02/25 05:00:43 jsg Exp $ */
 
 #ifndef ISC_LEX_H
 #define ISC_LEX_H 1
@@ -290,7 +290,6 @@ isc_lex_getsourcename(isc_lex_t *lex);
  * \li	source name or NULL if no current source.
  *\li	result valid while current input source exists.
  */
-
 
 unsigned long
 isc_lex_getsourceline(isc_lex_t *lex);

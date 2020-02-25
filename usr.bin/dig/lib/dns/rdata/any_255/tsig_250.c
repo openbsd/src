@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig_250.c,v 1.5 2020/02/24 12:06:50 florian Exp $ */
+/* $Id: tsig_250.c,v 1.6 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 
@@ -222,7 +222,6 @@ towire_any_tsig(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-
 static inline isc_result_t
 fromstruct_any_tsig(ARGS_FROMSTRUCT) {
 	dns_rdata_any_tsig_t *tsig = source;
@@ -400,7 +399,5 @@ freestruct_any_tsig(ARGS_FREESTRUCT) {
 	free(tsig->signature);
 	free(tsig->other);
 }
-
-
 
 #endif	/* RDATA_ANY_255_TSIG_250_C */

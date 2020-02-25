@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: loc_29.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: loc_29.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -228,11 +228,5 @@ towire_loc(ARGS_TOWIRE) {
 
 	return (mem_tobuffer(target, rdata->data, rdata->length));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_LOC_29_C */

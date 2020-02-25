@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mx_15.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: mx_15.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 
@@ -97,11 +97,5 @@ towire_mx(ARGS_TOWIRE) {
 
 	return (dns_name_towire(&name, cctx, target));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_MX_15_C */

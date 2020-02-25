@@ -239,7 +239,6 @@ enum {
 	STATID_ACTIVE = 10
 };
 
-
 static void
 socket_log(isc_socket_t *sock, isc_sockaddr_t *address,
 	   isc_logcategory_t *category, isc_logmodule_t *module, int level,
@@ -2387,7 +2386,6 @@ internal_connect(isc_task_t *me, isc_event_t *ev) {
 				    SELECT_POKE_CONNECT);
 			return;
 		}
-
 
 		/*
 		 * Translate other errors into ISC_R_* flavors.

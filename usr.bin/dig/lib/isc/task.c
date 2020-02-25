@@ -108,8 +108,6 @@ pop_readyq(isc_taskmgr_t *manager);
 static inline void
 push_readyq(isc_taskmgr_t *manager, isc_task_t *task);
 
-
-
 /***
  *** Tasks.
  ***/
@@ -322,7 +320,6 @@ isc_task_send(isc_task_t *task, isc_event_t **eventp) {
 	 * Send '*event' to 'task'.
 	 */
 
-
 	/*
 	 * We're trying hard to hold locks for as short a time as possible.
 	 * We're also trying to hold as few locks as possible.  This is why
@@ -451,7 +448,6 @@ isc_task_setname(isc_task_t *task, const char *name, void *tag) {
 	 * Name 'task'.
 	 */
 
-
 	strlcpy(task->name, name, sizeof(task->name));
 	task->tag = tag;
 }
@@ -528,7 +524,6 @@ dispatch(isc_taskmgr_t *manager) {
 	isc_tasklist_t new_ready_tasks;
 	isc_tasklist_t new_priority_tasks;
 	unsigned int tasks_ready = 0;
-
 
 	ISC_LIST_INIT(new_ready_tasks);
 	ISC_LIST_INIT(new_priority_tasks);

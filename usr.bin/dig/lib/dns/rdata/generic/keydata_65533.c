@@ -221,10 +221,4 @@ towire_keydata(ARGS_TOWIRE) {
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
 
-
-
-
-
-
-
 #endif /* GENERIC_KEYDATA_65533_C */

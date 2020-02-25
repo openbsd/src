@@ -18,8 +18,6 @@
 
 /* Principal Authors: DCL */
 
-
-
 #include <isc/util.h>
 
 #include <dns/log.h>

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.c,v 1.5 2020/02/23 06:22:46 jsg Exp $ */
+/* $Id: hash.c,v 1.6 2020/02/25 05:00:43 jsg Exp $ */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
@@ -39,7 +39,6 @@ met:
     * Neither the name of Rice University (RICE) nor the names of its
     contributors may be used to endorse or promote products derived
     from this software without specific prior written permission.
-
 
 This software is provided by RICE and the contributors on an "as is"
 basis, without any representations or warranties of any kind, express

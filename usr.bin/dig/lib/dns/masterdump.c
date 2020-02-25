@@ -227,7 +227,6 @@ totext_ctx_init(const dns_master_style_t *style, dns_totext_ctx_t *ctx) {
 			    return (result); \
 	} while (0)
 
-
 static isc_result_t
 str_totext(const char *source, isc_buffer_t *target) {
 	unsigned int l;

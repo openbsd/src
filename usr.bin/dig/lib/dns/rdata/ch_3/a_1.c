@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: a_1.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -116,10 +116,5 @@ towire_ch_a(ARGS_TOWIRE) {
 	isc_buffer_add(target, 2);
 	return (ISC_R_SUCCESS);
 }
-
-
-
-
-
 
 #endif	/* RDATA_CH_3_A_1_C */

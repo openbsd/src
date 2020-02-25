@@ -14,10 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha1.c,v 1.4 2020/02/17 18:58:39 jung Exp $ */
+/* $Id: sha1.c,v 1.5 2020/02/25 05:00:43 jsg Exp $ */
 
 /*	$NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp $	*/
-/*	$OpenBSD: sha1.c,v 1.4 2020/02/17 18:58:39 jung Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.5 2020/02/25 05:00:43 jsg Exp $	*/
 
 /*! \file
  * SHA-1 in C
@@ -33,8 +33,6 @@
  *   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
  * \endverbatim
  */
-
-
 
 #include <isc/sha1.h>
 #include <string.h>

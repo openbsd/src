@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mb_7.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: mb_7.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* Reviewed: Wed Mar 15 17:31:26 PST 2000 by bwelling */
 
@@ -76,11 +76,5 @@ towire_mb(ARGS_TOWIRE) {
 
 	return (dns_name_towire(&name, cctx, target));
 }
-
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_MB_7_C */

@@ -14,11 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ttl.c,v 1.4 2020/02/24 13:49:38 jsg Exp $ */
+/* $Id: ttl.c,v 1.5 2020/02/25 05:00:42 jsg Exp $ */
 
 /*! \file */
-
-
 
 #include <ctype.h>
 #include <stdio.h>

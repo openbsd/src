@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nxt_30.c,v 1.8 2020/02/24 17:45:26 florian Exp $ */
+/* $Id: nxt_30.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -111,10 +111,5 @@ towire_nxt(ARGS_TOWIRE) {
 
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
-
-
-
-
-
 
 #endif	/* RDATA_GENERIC_NXT_30_C */

@@ -14,11 +14,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: bufferlist.c,v 1.2 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: bufferlist.c,v 1.3 2020/02/25 05:00:43 jsg Exp $ */
 
 /*! \file */
-
-
 
 #include <stddef.h>
 
