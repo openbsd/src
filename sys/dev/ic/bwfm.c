@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.68 2020/01/09 14:35:19 mpi Exp $ */
+/* $OpenBSD: bwfm.c,v 1.69 2020/02/25 14:24:58 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -91,7 +91,8 @@ int	 bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *, int,
 	     int, char *, size_t *);
 int	 bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *, int,
 	     int, char *, size_t);
-void	 bwfm_proto_bcdc_rx(struct bwfm_softc *, struct mbuf *);
+void	 bwfm_proto_bcdc_rx(struct bwfm_softc *, struct mbuf *,
+	     struct mbuf_list *);
 int	 bwfm_proto_bcdc_txctl(struct bwfm_softc *, int, char *, size_t *);
 void	 bwfm_proto_bcdc_rxctl(struct bwfm_softc *, char *, size_t);
 
@@ -135,7 +136,6 @@ void	 bwfm_delete_key_cb(struct bwfm_softc *, void *);
 void	 bwfm_rx_event_cb(struct bwfm_softc *, struct mbuf *);
 
 struct mbuf *bwfm_newbuf(void);
-void	 bwfm_rx(struct bwfm_softc *, struct mbuf *);
 #ifndef IEEE80211_STA_ONLY
 void	 bwfm_rx_auth_ind(struct bwfm_softc *, struct bwfm_event *, size_t);
 void	 bwfm_rx_assoc_ind(struct bwfm_softc *, struct bwfm_event *, size_t, int);
@@ -1585,7 +1585,7 @@ bwfm_proto_bcdc_rxctl(struct bwfm_softc *sc, char *buf, size_t len)
 }
 
 void
-bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m)
+bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml)
 {
 	struct bwfm_proto_bcdc_hdr *hdr;
 
@@ -1600,7 +1600,7 @@ bwfm_proto_bcdc_rx(struct bwfm_softc *sc, struct mbuf *m)
 	}
 	m_adj(m, sizeof(*hdr) + (hdr->data_offset << 2));
 
-	bwfm_rx(sc, m);
+	bwfm_rx(sc, m, ml);
 }
 
 /* FW Variable code */
@@ -2058,11 +2058,10 @@ bwfm_newbuf(void)
 }
 
 void
-bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
+bwfm_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ieee80211_node *ni;
 	struct bwfm_event *e;
 
@@ -2115,10 +2114,8 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 #endif
 			ni = ic->ic_bss;
 		ieee80211_eapol_key_input(ic, m, ni);
-	} else {
-		ml_enqueue(&ml, m);
-		if_input(ifp, &ml);
-	}
+	} else
+		ml_enqueue(ml, m);
 }
 
 #ifndef IEEE80211_STA_ONLY

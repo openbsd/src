@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.17 2020/01/10 09:25:51 gerhard Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.18 2020/02/25 14:24:58 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -453,6 +453,8 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct bwfm_usb_rx_data *data = priv;
 	struct bwfm_usb_softc *sc = data->sc;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct ifnet *ifp = &sc->sc_sc.sc_ic.ic_if;
 	usbd_status error;
 	struct mbuf *m;
 	uint32_t len;
@@ -477,7 +479,8 @@ bwfm_usb_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	memcpy(mtod(m, char *), data->buf, len);
 	m->m_len = m->m_pkthdr.len = len;
-	sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m);
+	sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m, &ml);
+	if_input(ifp, &ml);
 
 resubmit:
 	usbd_setup_xfer(data->xfer, sc->sc_rx_pipeh, data, data->buf,

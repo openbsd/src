@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.30 2020/01/22 12:08:55 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.31 2020/02/25 14:24:58 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -160,7 +160,7 @@ void		 bwfm_sdio_tx_ctrlframe(struct bwfm_sdio_softc *, struct mbuf *);
 void		 bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *, struct mbuf *);
 void		 bwfm_sdio_rx_frames(struct bwfm_sdio_softc *);
 void		 bwfm_sdio_rx_glom(struct bwfm_sdio_softc *, uint16_t *, int,
-		    uint16_t *);
+		    uint16_t *, struct mbuf_list *);
 
 int		 bwfm_sdio_txcheck(struct bwfm_softc *);
 int		 bwfm_sdio_txdata(struct bwfm_softc *, struct mbuf *);
@@ -1205,6 +1205,8 @@ bwfm_sdio_tx_dataframe(struct bwfm_sdio_softc *sc, struct mbuf *m)
 void
 bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_sc.sc_ic.ic_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct bwfm_sdio_hwhdr *hwhdr;
 	struct bwfm_sdio_swhdr *swhdr;
 	uint16_t *sublen, nextlen = 0;
@@ -1294,7 +1296,7 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 			}
 			m->m_len = m->m_pkthdr.len = flen - off;
 			memcpy(mtod(m, char *), data + off, flen - off);
-			sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m);
+			sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m, &ml);
 			nextlen = swhdr->nextlen << 4;
 			break;
 		case BWFM_SDIO_SWHDR_CHANNEL_GLOM:
@@ -1304,7 +1306,7 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 			sublen = mallocarray(nsub, sizeof(uint16_t),
 			    M_DEVBUF, M_WAITOK | M_ZERO);
 			memcpy(sublen, data, nsub * sizeof(uint16_t));
-			bwfm_sdio_rx_glom(sc, sublen, nsub, &nextlen);
+			bwfm_sdio_rx_glom(sc, sublen, nsub, &nextlen, &ml);
 			free(sublen, M_DEVBUF, nsub * sizeof(uint16_t));
 			break;
 		default:
@@ -1312,21 +1314,23 @@ bwfm_sdio_rx_frames(struct bwfm_sdio_softc *sc)
 			break;
 		}
 	}
+
+	if_input(ifp, &ml);
 }
 
 void
 bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
-    uint16_t *nextlen)
+    uint16_t *nextlen, struct mbuf_list *ml)
 {
 	struct bwfm_sdio_hwhdr hwhdr;
 	struct bwfm_sdio_swhdr swhdr;
-	struct mbuf_list ml, drop;
+	struct mbuf_list glom, drop;
 	struct mbuf *m;
 	size_t flen;
 	off_t off;
 	int i;
 
-	ml_init(&ml);
+	ml_init(&glom);
 	ml_init(&drop);
 
 	if (nsub == 0)
@@ -1335,24 +1339,24 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
 	for (i = 0; i < nsub; i++) {
 		m = bwfm_sdio_newbuf();
 		if (m == NULL) {
-			ml_purge(&ml);
+			ml_purge(&glom);
 			return;
 		}
-		ml_enqueue(&ml, m);
+		ml_enqueue(&glom, m);
 		if (letoh16(sublen[i]) > m->m_len) {
-			ml_purge(&ml);
+			ml_purge(&glom);
 			return;
 		}
 		if (bwfm_sdio_frame_read_write(sc, mtod(m, char *),
 		    letoh16(sublen[i]), 0)) {
-			ml_purge(&ml);
+			ml_purge(&glom);
 			return;
 		}
 		m->m_len = m->m_pkthdr.len = letoh16(sublen[i]);
 	}
 
 	/* TODO: Verify actual superframe header */
-	m = MBUF_LIST_FIRST(&ml);
+	m = MBUF_LIST_FIRST(&glom);
 	if (m->m_len >= sizeof(hwhdr) + sizeof(swhdr)) {
 		m_copydata(m, 0, sizeof(hwhdr), (caddr_t)&hwhdr);
 		m_copydata(m, sizeof(hwhdr), sizeof(swhdr), (caddr_t)&swhdr);
@@ -1361,7 +1365,7 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
 		    sizeof(struct bwfm_sdio_swhdr));
 	}
 
-	while ((m = ml_dequeue(&ml)) != NULL) {
+	while ((m = ml_dequeue(&glom)) != NULL) {
 		if (m->m_len < sizeof(hwhdr) + sizeof(swhdr))
 			goto drop;
 
@@ -1405,7 +1409,7 @@ bwfm_sdio_rx_glom(struct bwfm_sdio_softc *sc, uint16_t *sublen, int nsub,
 		case BWFM_SDIO_SWHDR_CHANNEL_EVENT:
 		case BWFM_SDIO_SWHDR_CHANNEL_DATA:
 			m_adj(m, swhdr.dataoff);
-			sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m);
+			sc->sc_sc.sc_proto_ops->proto_rx(&sc->sc_sc, m, ml);
 			break;
 		case BWFM_SDIO_SWHDR_CHANNEL_GLOM:
 			printf("%s: glom not allowed in glom\n",

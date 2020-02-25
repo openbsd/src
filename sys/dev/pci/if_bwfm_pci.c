@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.33 2020/01/15 22:23:55 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.34 2020/02/25 14:24:58 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -248,8 +248,9 @@ void		 bwfm_pci_ring_write_cancel(struct bwfm_pci_softc *,
 		    struct bwfm_pci_msgring *, int);
 
 void		 bwfm_pci_ring_rx(struct bwfm_pci_softc *,
-		    struct bwfm_pci_msgring *);
-void		 bwfm_pci_msg_rx(struct bwfm_pci_softc *, void *);
+		    struct bwfm_pci_msgring *, struct mbuf_list *);
+void		 bwfm_pci_msg_rx(struct bwfm_pci_softc *, void *,
+		    struct mbuf_list *);
 
 uint32_t	 bwfm_pci_buscore_read(struct bwfm_softc *, uint32_t);
 void		 bwfm_pci_buscore_write(struct bwfm_softc *, uint32_t,
@@ -1257,7 +1258,8 @@ bwfm_pci_ring_write_cancel(struct bwfm_pci_softc *sc,
  * a message handler and let the firmware know we handled it.
  */
 void
-bwfm_pci_ring_rx(struct bwfm_pci_softc *sc, struct bwfm_pci_msgring *ring)
+bwfm_pci_ring_rx(struct bwfm_pci_softc *sc, struct bwfm_pci_msgring *ring,
+    struct mbuf_list *ml)
 {
 	void *buf;
 	int avail, processed;
@@ -1269,7 +1271,7 @@ again:
 
 	processed = 0;
 	while (avail) {
-		bwfm_pci_msg_rx(sc, buf + sc->sc_rx_dataoffset);
+		bwfm_pci_msg_rx(sc, buf + sc->sc_rx_dataoffset, ml);
 		buf += ring->itemsz;
 		processed++;
 		if (processed == 48) {
@@ -1285,7 +1287,7 @@ again:
 }
 
 void
-bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
+bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf, struct mbuf_list *ml)
 {
 	struct ifnet *ifp = &sc->sc_sc.sc_ic.ic_if;
 	struct msgbuf_ioctl_resp_hdr *resp;
@@ -1373,7 +1375,7 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 			break;
 		m_adj(m, sc->sc_rx_dataoffset);
 		m->m_len = m->m_pkthdr.len = letoh16(event->event_data_len);
-		bwfm_rx(&sc->sc_sc, m);
+		bwfm_rx(&sc->sc_sc, m, ml);
 		if_rxr_put(&sc->sc_event_ring, 1);
 		bwfm_pci_fill_rx_rings(sc);
 		break;
@@ -1400,7 +1402,7 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 		else if (sc->sc_rx_dataoffset)
 			m_adj(m, sc->sc_rx_dataoffset);
 		m->m_len = m->m_pkthdr.len = letoh16(rx->data_len);
-		bwfm_rx(&sc->sc_sc, m);
+		bwfm_rx(&sc->sc_sc, m, ml);
 		if_rxr_put(&sc->sc_rxbuf_ring, 1);
 		bwfm_pci_fill_rx_rings(sc);
 		break;
@@ -1880,6 +1882,8 @@ int
 bwfm_pci_intr(void *v)
 {
 	struct bwfm_pci_softc *sc = (void *)v;
+	struct ifnet *ifp = &sc->sc_sc.sc_ic.ic_if;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	uint32_t status;
 
 	if ((status = bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
@@ -1895,9 +1899,10 @@ bwfm_pci_intr(void *v)
 		printf("%s: handle MB data\n", __func__);
 
 	if (status & BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_D2H_DB) {
-		bwfm_pci_ring_rx(sc, &sc->sc_rx_complete);
-		bwfm_pci_ring_rx(sc, &sc->sc_tx_complete);
-		bwfm_pci_ring_rx(sc, &sc->sc_ctrl_complete);
+		bwfm_pci_ring_rx(sc, &sc->sc_rx_complete, &ml);
+		bwfm_pci_ring_rx(sc, &sc->sc_tx_complete, &ml);
+		bwfm_pci_ring_rx(sc, &sc->sc_ctrl_complete, &ml);
+		if_input(ifp, &ml);
 	}
 
 #ifdef BWFM_DEBUG

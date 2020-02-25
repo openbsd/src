@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.16 2019/07/05 12:35:16 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.17 2020/02/25 14:24:58 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -106,7 +106,8 @@ struct bwfm_proto_ops {
 	    char *, size_t *);
 	int (*proto_set_dcmd)(struct bwfm_softc *, int, int,
 	    char *, size_t);
-	void (*proto_rx)(struct bwfm_softc *, struct mbuf *);
+	void (*proto_rx)(struct bwfm_softc *, struct mbuf *,
+	    struct mbuf_list *);
 	void (*proto_rxctl)(struct bwfm_softc *, char *, size_t);
 };
 extern struct bwfm_proto_ops bwfm_proto_bcdc_ops;
@@ -179,6 +180,6 @@ void bwfm_chip_set_passive(struct bwfm_softc *);
 int bwfm_chip_sr_capable(struct bwfm_softc *);
 struct bwfm_core *bwfm_chip_get_core(struct bwfm_softc *, int);
 struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
-void bwfm_rx(struct bwfm_softc *, struct mbuf *);
+void bwfm_rx(struct bwfm_softc *, struct mbuf *, struct mbuf_list *);
 void bwfm_do_async(struct bwfm_softc *, void (*)(struct bwfm_softc *, void *),
     void *, int);
