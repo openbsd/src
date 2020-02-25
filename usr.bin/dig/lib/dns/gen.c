@@ -49,21 +49,6 @@
 #define TOWIRETYPE "rdata->type"
 #define TOWIREDEF "use_default = ISC_TRUE"
 
-#define FROMSTRUCTARGS "rdclass, type, source, target"
-#define FROMSTRUCTCLASS "rdclass"
-#define FROMSTRUCTTYPE "type"
-#define FROMSTRUCTDEF "use_default = ISC_TRUE"
-
-#define TOSTRUCTARGS "rdata, target"
-#define TOSTRUCTCLASS "rdata->rdclass"
-#define TOSTRUCTTYPE "rdata->type"
-#define TOSTRUCTDEF "use_default = ISC_TRUE"
-
-#define FREESTRUCTARGS "source"
-#define FREESTRUCTCLASS "common->rdclass"
-#define FREESTRUCTTYPE "common->rdtype"
-#define FREESTRUCTDEF NULL
-
 static const char copyright[] =
 "/*\n"
 " * Copyright (C) 2004%s Internet Systems Consortium, Inc. (\"ISC\")\n"
