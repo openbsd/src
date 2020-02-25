@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.126 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.127 2020/02/25 13:21:17 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -55,6 +55,10 @@
 #include <sys/syscallargs.h>
 #include <sys/timeout.h>
 #include <sys/wait.h>
+
+void	kqueue_init(void);
+void	KQREF(struct kqueue *);
+void	KQRELE(struct kqueue *);
 
 int	kqueue_scan(struct kqueue *kq, int maxevents,
 		    struct kevent *ulistp, struct timespec *timeout,
@@ -152,9 +156,6 @@ const struct filterops *const sysfilt_ops[] = {
 	&file_filtops,			/* EVFILT_DEVICE */
 };
 
-void KQREF(struct kqueue *);
-void KQRELE(struct kqueue *);
-
 void
 KQREF(struct kqueue *kq)
 {
@@ -182,8 +183,6 @@ KQRELE(struct kqueue *kq)
 	hashfree(kq->kq_knhash, KN_HASHSIZE, M_KEVENT);
 	pool_put(&kqueue_pool, kq);
 }
-
-void kqueue_init(void);
 
 void
 kqueue_init(void)
