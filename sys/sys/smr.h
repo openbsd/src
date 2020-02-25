@@ -1,4 +1,4 @@
-/*	$OpenBSD: smr.h,v 1.2 2019/03/09 06:15:48 visa Exp $	*/
+/*	$OpenBSD: smr.h,v 1.3 2020/02/25 16:55:33 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -34,6 +34,7 @@ SIMPLEQ_HEAD(smr_entry_list, smr_entry);
 #include <sys/atomic.h>
 
 void	smr_startup(void);
+void	smr_startup_thread(void);
 void	smr_idle(void);
 void	smr_read_enter(void);
 void	smr_read_leave(void);
