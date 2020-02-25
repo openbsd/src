@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: symtab.c,v 1.4 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: symtab.c,v 1.5 2020/02/25 16:54:24 deraadt Exp $ */
 
 /*! \file */
 
@@ -61,7 +61,7 @@ isc_symtab_create(unsigned int size,
 	if (symtab == NULL)
 		return (ISC_R_NOMEMORY);
 
-	symtab->table = (eltlist_t *)malloc(size * sizeof(eltlist_t));
+	symtab->table = (eltlist_t *)reallocarray(NULL, size, sizeof(eltlist_t));
 	if (symtab->table == NULL) {
 		free(symtab);
 		return (ISC_R_NOMEMORY);
@@ -176,7 +176,7 @@ grow_table(isc_symtab_t *symtab) {
 	newmax = newsize * 3 / 4;
 	INSIST(newsize > 0U && newmax > 0U);
 
-	newtable = malloc(newsize * sizeof(eltlist_t));
+	newtable = reallocarray(NULL, newsize, sizeof(eltlist_t));
 	if (newtable == NULL)
 		return;
 

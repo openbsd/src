@@ -1821,12 +1821,12 @@ isc_socketmgr_create2(isc_socketmgr_t **managerp,
 	/* zero-clear so that necessary cleanup on failure will be easy */
 	memset(manager, 0, sizeof(*manager));
 	manager->maxsocks = maxsocks;
-	manager->fds = malloc(manager->maxsocks * sizeof(isc_socket_t *));
+	manager->fds = reallocarray(NULL, manager->maxsocks, sizeof(isc_socket_t *));
 	if (manager->fds == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto free_manager;
 	}
-	manager->fdstate = malloc(manager->maxsocks * sizeof(int));
+	manager->fdstate = reallocarray(NULL, manager->maxsocks, sizeof(int));
 	if (manager->fdstate == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto free_manager;

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: safe.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: safe.h,v 1.4 2020/02/25 16:54:24 deraadt Exp $ */
 
 #ifndef ISC_SAFE_H
 #define ISC_SAFE_H 1
@@ -30,18 +30,6 @@ isc_safe_memequal(const void *s1, const void *s2, size_t n);
  * Returns ISC_TRUE iff. two blocks of memory are equal, otherwise
  * ISC_FALSE.
  *
- */
-
-void
-isc_safe_memwipe(void *ptr, size_t len);
-/*%<
- * Clear the memory of length `len` pointed to by `ptr`.
- *
- * Some crypto code calls memset() on stack allocated buffers just
- * before return so that they are wiped. Such memset() calls can be
- * optimized away by the compiler. We provide this external non-inline C
- * function to perform the memset operation so that the compiler cannot
- * infer about what the function does and optimize the call away.
  */
 
 #endif /* ISC_SAFE_H */

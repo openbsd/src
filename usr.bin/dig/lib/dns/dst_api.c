@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.12 2020/02/24 13:49:38 jsg Exp $
+ * $Id: dst_api.c,v 1.13 2020/02/25 16:54:24 deraadt Exp $
  */
 
 /*! \file */
@@ -273,7 +273,7 @@ dst_key_free(dst_key_t **keyp) {
 
 	isc_refcount_destroy(&key->refs);
 	key->func->destroy(key);
-	isc_safe_memwipe(key, sizeof(*key));
+	explicit_bzero(key, sizeof(*key));
 	free(key);
 	*keyp = NULL;
 }

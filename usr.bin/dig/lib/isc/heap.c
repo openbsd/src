@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.c,v 1.5 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: heap.c,v 1.6 2020/02/25 16:54:24 deraadt Exp $ */
 
 /*! \file
  * Heap implementation of priority queues adapted from the following:
@@ -110,7 +110,7 @@ resize(isc_heap_t *heap) {
 	unsigned int new_size;
 
 	new_size = heap->size + heap->size_increment;
-	new_array = malloc(new_size * sizeof(void *));
+	new_array = reallocarray(NULL, new_size, sizeof(void *));
 	if (new_array == NULL)
 		return (ISC_FALSE);
 	if (heap->array != NULL) {

@@ -33,11 +33,3 @@ isc_safe_memequal(const void *s1, const void *s2, size_t n) {
 	}
 	return (ISC_TF(acc == 0));
 }
-
-void
-isc_safe_memwipe(void *ptr, size_t len) {
-	if (ptr == NULL || len == 0)
-		return;
-
-	explicit_bzero(ptr, len);
-}

@@ -285,8 +285,8 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		shuffle = ISC_TRUE;
 
 	if (shuffle && count > MAX_SHUFFLE) {
-		in = malloc(count * sizeof(*in));
-		out = malloc(count * sizeof(*out));
+		in = reallocarray(NULL, count, sizeof(*in));
+		out = reallocarray(NULL, count, sizeof(*out));
 		if (in == NULL || out == NULL)
 			shuffle = ISC_FALSE;
 	} else {
