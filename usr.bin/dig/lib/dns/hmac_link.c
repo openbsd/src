@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: hmac_link.c,v 1.7 2020/02/25 16:54:24 deraadt Exp $
+ * $Id: hmac_link.c,v 1.8 2020/02/25 17:06:08 deraadt Exp $
  */
 
 #include <string.h>
@@ -117,8 +117,7 @@ static void
 hmacsha1_destroy(dst_key_t *key) {
 	dst_hmacsha1_key_t *hkey = key->keydata.hmacsha1;
 
-	explicit_bzero(hkey, sizeof(*hkey));
-	free(hkey);
+	freezero(hkey, sizeof(*hkey));
 	key->keydata.hmacsha1 = NULL;
 }
 
@@ -262,8 +261,7 @@ static void
 hmacsha224_destroy(dst_key_t *key) {
 	dst_hmacsha224_key_t *hkey = key->keydata.hmacsha224;
 
-	explicit_bzero(hkey, sizeof(*hkey));
-	free(hkey);
+	freezero(hkey, sizeof(*hkey));
 	key->keydata.hmacsha224 = NULL;
 }
 
@@ -407,8 +405,7 @@ static void
 hmacsha256_destroy(dst_key_t *key) {
 	dst_hmacsha256_key_t *hkey = key->keydata.hmacsha256;
 
-	explicit_bzero(hkey, sizeof(*hkey));
-	free(hkey);
+	freezero(hkey, sizeof(*hkey));
 	key->keydata.hmacsha256 = NULL;
 }
 
@@ -552,8 +549,7 @@ static void
 hmacsha384_destroy(dst_key_t *key) {
 	dst_hmacsha384_key_t *hkey = key->keydata.hmacsha384;
 
-	explicit_bzero(hkey, sizeof(*hkey));
-	free(hkey);
+	freezero(hkey, sizeof(*hkey));
 	key->keydata.hmacsha384 = NULL;
 }
 
@@ -697,8 +693,7 @@ static void
 hmacsha512_destroy(dst_key_t *key) {
 	dst_hmacsha512_key_t *hkey = key->keydata.hmacsha512;
 
-	explicit_bzero(hkey, sizeof(*hkey));
-	free(hkey);
+	freezero(hkey, sizeof(*hkey));
 	key->keydata.hmacsha512 = NULL;
 }
 
