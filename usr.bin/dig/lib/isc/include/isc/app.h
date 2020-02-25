@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app.h,v 1.6 2020/02/19 20:57:10 jung Exp $ */
+/* $Id: app.h,v 1.7 2020/02/25 02:35:46 jsg Exp $ */
 
 #ifndef ISC_APP_H
 #define ISC_APP_H 1
@@ -78,12 +78,6 @@
 
 #include <isc/eventclass.h>
 #include <isc/result.h>
-
-/***
- *** Types
- ***/
-
-typedef isc_event_t isc_appevent_t;
 
 #define ISC_APPEVENT_FIRSTEVENT		(ISC_EVENTCLASS_APP + 0)
 #define ISC_APPEVENT_SHUTDOWN		(ISC_EVENTCLASS_APP + 1)

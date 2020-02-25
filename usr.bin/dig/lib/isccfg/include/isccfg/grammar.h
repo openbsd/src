@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: grammar.h,v 1.1 2020/02/07 09:58:54 florian Exp $ */
+/* $Id: grammar.h,v 1.2 2020/02/25 02:35:46 jsg Exp $ */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -65,12 +65,6 @@ struct cfg_type {
 	cfg_rep_t *	rep;	/*%< Data representation */
 	const void *	of;	/*%< Additional data for meta-types */
 };
-
-/*% A keyword-type definition, for things like "port <integer>". */
-typedef struct {
-	const char *name;
-	const cfg_type_t *type;
-} keyword_type_t;
 
 struct cfg_map {
 	cfg_obj_t	 *id; /*%< Used for 'named maps' like keys, zones, &c */

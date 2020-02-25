@@ -39,8 +39,6 @@ typedef void					dns_dbversion_t;
 typedef struct dns_decompress			dns_decompress_t;
 typedef struct dns_ednsopt			dns_ednsopt_t;
 typedef struct dns_fixedname			dns_fixedname_t;
-typedef uint32_t				dns_iterations_t;
-typedef uint16_t				dns_keyflags_t;
 typedef uint64_t				dns_masterstyle_flags_t;
 typedef struct dns_message			dns_message_t;
 typedef uint16_t				dns_messageid_t;
@@ -56,16 +54,11 @@ typedef struct dns_rdatalist			dns_rdatalist_t;
 typedef struct dns_rdataset			dns_rdataset_t;
 typedef uint16_t				dns_rdatatype_t;
 typedef uint8_t				dns_secalg_t;
-typedef uint8_t				dns_secproto_t;
 typedef uint16_t				dns_trust_t;
 typedef struct dns_tsigkey			dns_tsigkey_t;
 typedef uint32_t				dns_ttl_t;
 typedef struct dns_view				dns_view_t;
 typedef struct dns_zone				dns_zone_t;
-
-typedef enum {
-	dns_hash_sha1 = 1
-} dns_hash_t;
 
 typedef enum {
 	dns_namereln_none = 0,
