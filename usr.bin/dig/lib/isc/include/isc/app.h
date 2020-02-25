@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: app.h,v 1.7 2020/02/25 02:35:46 jsg Exp $ */
+/* $Id: app.h,v 1.8 2020/02/25 13:18:31 jsg Exp $ */
 
 #ifndef ISC_APP_H
 #define ISC_APP_H 1
@@ -150,11 +150,5 @@ isc_app_shutdown(void);
  *\li	ISC_R_SUCCESS
  *\li	ISC_R_UNEXPECTED
  */
-
-/*%<
- * See isc_appctx_create() above.
- */
-typedef isc_result_t
-(*isc_appctxcreatefunc_t)(isc_appctx_t **ctxp);
 
 #endif /* ISC_APP_H */
