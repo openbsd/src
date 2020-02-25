@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: hmac_link.c,v 1.8 2020/02/25 17:06:08 deraadt Exp $
+ * $Id: hmac_link.c,v 1.9 2020/02/25 18:10:17 florian Exp $
  */
 
 #include <string.h>
@@ -41,7 +41,6 @@
 #include <isc/buffer.h>
 #include <isc/hmacsha.h>
 #include <isc/sha1.h>
-#include <isc/safe.h>
 #include <isc/util.h>
 
 #include <dst/result.h>
