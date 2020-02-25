@@ -692,37 +692,6 @@ main(int argc, char **argv) {
 		}
 		fprintf(stdout, "\t}\n");
 
-		fprintf(stdout, "#define RDATATYPE_ATTRIBUTE_SW \\\n");
-		fprintf(stdout, "\tswitch (type) { \\\n");
-		for (i = 0; i <= maxtype; i++) {
-			ttn = find_typename(i);
-			if (ttn == NULL)
-				continue;
-			fprintf(stdout, "\tcase %d: return (%s); \\\n",
-				i, upper(ttn->attr));
-		}
-		fprintf(stdout, "\t}\n");
-
-		fprintf(stdout, "#define RDATATYPE_TOTEXT_SW \\\n");
-		fprintf(stdout, "\tswitch (type) { \\\n");
-		for (i = 0; i <= maxtype; i++) {
-			ttn = find_typename(i);
-			if (ttn == NULL)
-				continue;
-			/*
-			 * Remove KEYDATA (65533) from the type to memonic
-			 * translation as it is internal use only.  This
-			 * stops the tools from displaying KEYDATA instead
-			 * of TYPE65533.
-			 */
-			if (i == 65533U)
-				continue;
-			fprintf(stdout, "\tcase %d: return "
-				"(str_totext(\"%s\", target)); \\\n",
-				i, upper(ttn->typename));
-		}
-		fprintf(stdout, "\t}\n");
-
 		fputs("#endif /* DNS_CODE_H */\n", stdout);
 	} else if (type_enum) {
 		char *s;

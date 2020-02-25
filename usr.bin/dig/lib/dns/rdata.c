@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.24 2020/02/25 05:00:42 jsg Exp $ */
+/* $Id: rdata.c,v 1.25 2020/02/25 12:37:15 florian Exp $ */
 
 /*! \file */
 
@@ -729,7 +729,188 @@ dns_rdata_checkowner_nsec3(dns_name_t *name, dns_rdataclass_t rdclass,
 unsigned int
 dns_rdatatype_attributes(dns_rdatatype_t type)
 {
-	RDATATYPE_ATTRIBUTE_SW
+	switch (type) {
+	case 0:
+		return (DNS_RDATATYPEATTR_RESERVED);
+	case 1:
+		return (RRTYPE_A_ATTRIBUTES);
+	case 2:
+		return (RRTYPE_NS_ATTRIBUTES);
+	case 3:
+		return (RRTYPE_MD_ATTRIBUTES);
+	case 4:
+		return (RRTYPE_MF_ATTRIBUTES);
+	case 5:
+		return (RRTYPE_CNAME_ATTRIBUTES);
+	case 6:
+		return (RRTYPE_SOA_ATTRIBUTES);
+	case 7:
+		return (RRTYPE_MB_ATTRIBUTES);
+	case 8:
+		return (RRTYPE_MG_ATTRIBUTES);
+	case 9:
+		return (RRTYPE_MR_ATTRIBUTES);
+	case 10:
+		return (RRTYPE_NULL_ATTRIBUTES);
+	case 11:
+		return (RRTYPE_WKS_ATTRIBUTES);
+	case 12:
+		return (RRTYPE_PTR_ATTRIBUTES);
+	case 13:
+		return (RRTYPE_HINFO_ATTRIBUTES);
+	case 14:
+		return (RRTYPE_MINFO_ATTRIBUTES);
+	case 15:
+		return (RRTYPE_MX_ATTRIBUTES);
+	case 16:
+		return (RRTYPE_TXT_ATTRIBUTES);
+	case 17:
+		return (RRTYPE_RP_ATTRIBUTES);
+	case 18:
+		return (RRTYPE_AFSDB_ATTRIBUTES);
+	case 19:
+		return (RRTYPE_X25_ATTRIBUTES);
+	case 20:
+		return (RRTYPE_ISDN_ATTRIBUTES);
+	case 21:
+		return (RRTYPE_RT_ATTRIBUTES);
+	case 22:
+		return (RRTYPE_NSAP_ATTRIBUTES);
+	case 23:
+		return (RRTYPE_NSAP_PTR_ATTRIBUTES);
+	case 24:
+		return (RRTYPE_SIG_ATTRIBUTES);
+	case 25:
+		return (RRTYPE_KEY_ATTRIBUTES);
+	case 26:
+		return (RRTYPE_PX_ATTRIBUTES);
+	case 27:
+		return (RRTYPE_GPOS_ATTRIBUTES);
+	case 28:
+		return (RRTYPE_AAAA_ATTRIBUTES);
+	case 29:
+		return (RRTYPE_LOC_ATTRIBUTES);
+	case 30:
+		return (RRTYPE_NXT_ATTRIBUTES);
+	case 31:
+		return (DNS_RDATATYPEATTR_RESERVED);
+	case 32:
+		return (DNS_RDATATYPEATTR_RESERVED);
+	case 33:
+		return (RRTYPE_SRV_ATTRIBUTES);
+	case 34:
+		return (DNS_RDATATYPEATTR_RESERVED);
+	case 35:
+		return (RRTYPE_NAPTR_ATTRIBUTES);
+	case 36:
+		return (RRTYPE_KX_ATTRIBUTES);
+	case 37:
+		return (RRTYPE_CERT_ATTRIBUTES);
+	case 38:
+		return (RRTYPE_A6_ATTRIBUTES);
+	case 39:
+		return (RRTYPE_DNAME_ATTRIBUTES);
+	case 40:
+		return (RRTYPE_SINK_ATTRIBUTES);
+	case 41:
+		return (RRTYPE_OPT_ATTRIBUTES);
+	case 42:
+		return (RRTYPE_APL_ATTRIBUTES);
+	case 43:
+		return (RRTYPE_DS_ATTRIBUTES);
+	case 44:
+		return (RRTYPE_SSHFP_ATTRIBUTES);
+	case 45:
+		return (RRTYPE_IPSECKEY_ATTRIBUTES);
+	case 46:
+		return (RRTYPE_RRSIG_ATTRIBUTES);
+	case 47:
+		return (RRTYPE_NSEC_ATTRIBUTES);
+	case 48:
+		return (RRTYPE_DNSKEY_ATTRIBUTES);
+	case 49:
+		return (RRTYPE_DHCID_ATTRIBUTES);
+	case 50:
+		return (RRTYPE_NSEC3_ATTRIBUTES);
+	case 51:
+		return (RRTYPE_NSEC3PARAM_ATTRIBUTES);
+	case 52:
+		return (RRTYPE_TLSA_ATTRIBUTES);
+	case 53:
+		return (RRTYPE_SMIMEA_ATTRIBUTES);
+	case 55:
+		return (RRTYPE_HIP_ATTRIBUTES);
+	case 56:
+		return (RRTYPE_NINFO_ATTRIBUTES);
+	case 57:
+		return (RRTYPE_RKEY_ATTRIBUTES);
+	case 58:
+		return (RRTYPE_TALINK_ATTRIBUTES);
+	case 59:
+		return (RRTYPE_CDS_ATTRIBUTES);
+	case 60:
+		return (RRTYPE_CDNSKEY_ATTRIBUTES);
+	case 61:
+		return (RRTYPE_OPENPGPKEY_ATTRIBUTES);
+	case 62:
+		return (RRTYPE_CSYNC_ATTRIBUTES);
+	case 99:
+		return (RRTYPE_SPF_ATTRIBUTES);
+	case 100:
+		return (DNS_RDATATYPEATTR_RESERVED);
+	case 101:
+		return (DNS_RDATATYPEATTR_RESERVED);
+	case 102:
+		return (DNS_RDATATYPEATTR_RESERVED);
+	case 103:
+		return (RRTYPE_UNSPEC_ATTRIBUTES);
+	case 104:
+		return (RRTYPE_NID_ATTRIBUTES);
+	case 105:
+		return (RRTYPE_L32_ATTRIBUTES);
+	case 106:
+		return (RRTYPE_L64_ATTRIBUTES);
+	case 107:
+		return (RRTYPE_LP_ATTRIBUTES);
+	case 108:
+		return (RRTYPE_EUI48_ATTRIBUTES);
+	case 109:
+		return (RRTYPE_EUI64_ATTRIBUTES);
+	case 249:
+		return (RRTYPE_TKEY_ATTRIBUTES);
+	case 250:
+		return (RRTYPE_TSIG_ATTRIBUTES);
+	case 251:
+		return (DNS_RDATATYPEATTR_META |
+		    DNS_RDATATYPEATTR_QUESTIONONLY);
+	case 252:
+		return (DNS_RDATATYPEATTR_META |
+		    DNS_RDATATYPEATTR_QUESTIONONLY);
+	case 253:
+		return (DNS_RDATATYPEATTR_META |
+		    DNS_RDATATYPEATTR_QUESTIONONLY);
+	case 254:
+		return (DNS_RDATATYPEATTR_META |
+		    DNS_RDATATYPEATTR_QUESTIONONLY);
+	case 255:
+		return (DNS_RDATATYPEATTR_META |
+		    DNS_RDATATYPEATTR_QUESTIONONLY);
+	case 256:
+		return (RRTYPE_URI_ATTRIBUTES);
+	case 257:
+		return (RRTYPE_CAA_ATTRIBUTES);
+	case 258:
+		return (RRTYPE_AVC_ATTRIBUTES);
+	case 259:
+		return (RRTYPE_DOA_ATTRIBUTES);
+	case 32768:
+		return (RRTYPE_TA_ATTRIBUTES);
+	case 32769:
+		return (RRTYPE_DLV_ATTRIBUTES);
+	case 65533:
+		return (RRTYPE_KEYDATA_ATTRIBUTES);
+	}
+
 	if (type >= (dns_rdatatype_t)128 && type < (dns_rdatatype_t)255)
 		return (DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META);
 	return (DNS_RDATATYPEATTR_UNKNOWN);
@@ -784,9 +965,183 @@ isc_result_t
 dns_rdatatype_totext(dns_rdatatype_t type, isc_buffer_t *target) {
 	char buf[sizeof("TYPE65535")];
 
-	RDATATYPE_TOTEXT_SW
-	snprintf(buf, sizeof(buf), "TYPE%u", type);
-	return (str_totext(buf, target));
+	switch (type) {
+	case 0:
+		return (str_totext("RESERVED0", target));
+	case 1:
+		return (str_totext("A", target));
+	case 2:
+		return (str_totext("NS", target));
+	case 3:
+		return (str_totext("MD", target));
+	case 4:
+		return (str_totext("MF", target));
+	case 5:
+		return (str_totext("CNAME", target));
+	case 6:
+		return (str_totext("SOA", target));
+	case 7:
+		return (str_totext("MB", target));
+	case 8:
+		return (str_totext("MG", target));
+	case 9:
+		return (str_totext("MR", target));
+	case 10:
+		return (str_totext("NULL", target));
+	case 11:
+		return (str_totext("WKS", target));
+	case 12:
+		return (str_totext("PTR", target));
+	case 13:
+		return (str_totext("HINFO", target));
+	case 14:
+		return (str_totext("MINFO", target));
+	case 15:
+		return (str_totext("MX", target));
+	case 16:
+		return (str_totext("TXT", target));
+	case 17:
+		return (str_totext("RP", target));
+	case 18:
+		return (str_totext("AFSDB", target));
+	case 19:
+		return (str_totext("X25", target));
+	case 20:
+		return (str_totext("ISDN", target));
+	case 21:
+		return (str_totext("RT", target));
+	case 22:
+		return (str_totext("NSAP", target));
+	case 23:
+		return (str_totext("NSAP-PTR", target));
+	case 24:
+		return (str_totext("SIG", target));
+	case 25:
+		return (str_totext("KEY", target));
+	case 26:
+		return (str_totext("PX", target));
+	case 27:
+		return (str_totext("GPOS", target));
+	case 28:
+		return (str_totext("AAAA", target));
+	case 29:
+		return (str_totext("LOC", target));
+	case 30:
+		return (str_totext("NXT", target));
+	case 31:
+		return (str_totext("EID", target));
+	case 32:
+		return (str_totext("NIMLOC", target));
+	case 33:
+		return (str_totext("SRV", target));
+	case 34:
+		return (str_totext("ATMA", target));
+	case 35:
+		return (str_totext("NAPTR", target));
+	case 36:
+		return (str_totext("KX", target));
+	case 37:
+		return (str_totext("CERT", target));
+	case 38:
+		return (str_totext("A6", target));
+	case 39:
+		return (str_totext("DNAME", target));
+	case 40:
+		return (str_totext("SINK", target));
+	case 41:
+		return (str_totext("OPT", target));
+	case 42:
+		return (str_totext("APL", target));
+	case 43:
+		return (str_totext("DS", target));
+	case 44:
+		return (str_totext("SSHFP", target));
+	case 45:
+		return (str_totext("IPSECKEY", target));
+	case 46:
+		return (str_totext("RRSIG", target));
+	case 47:
+		return (str_totext("NSEC", target));
+	case 48:
+		return (str_totext("DNSKEY", target));
+	case 49:
+		return (str_totext("DHCID", target));
+	case 50:
+		return (str_totext("NSEC3", target));
+	case 51:
+		return (str_totext("NSEC3PARAM", target));
+	case 52:
+		return (str_totext("TLSA", target));
+	case 53:
+		return (str_totext("SMIMEA", target));
+	case 55:
+		return (str_totext("HIP", target));
+	case 56:
+		return (str_totext("NINFO", target));
+	case 57:
+		return (str_totext("RKEY", target));
+	case 58:
+		return (str_totext("TALINK", target));
+	case 59:
+		return (str_totext("CDS", target));
+	case 60:
+		return (str_totext("CDNSKEY", target));
+	case 61:
+		return (str_totext("OPENPGPKEY", target));
+	case 62:
+		return (str_totext("CSYNC", target));
+	case 99:
+		return (str_totext("SPF", target));
+	case 100:
+		return (str_totext("UINFO", target));
+	case 101:
+		return (str_totext("UID", target));
+	case 102:
+		return (str_totext("GID", target));
+	case 103:
+		return (str_totext("UNSPEC", target));
+	case 104:
+		return (str_totext("NID", target));
+	case 105:
+		return (str_totext("L32", target));
+	case 106:
+		return (str_totext("L64", target));
+	case 107:
+		return (str_totext("LP", target));
+	case 108:
+		return (str_totext("EUI48", target));
+	case 109:
+		return (str_totext("EUI64", target));
+	case 249:
+		return (str_totext("TKEY", target));
+	case 250:
+		return (str_totext("TSIG", target));
+	case 251:
+		return (str_totext("IXFR", target));
+	case 252:
+		return (str_totext("AXFR", target));
+	case 253:
+		return (str_totext("MAILB", target));
+	case 254:
+		return (str_totext("MAILA", target));
+	case 255:
+		return (str_totext("ANY", target));
+	case 256:
+		return (str_totext("URI", target));
+	case 257:
+		return (str_totext("CAA", target));
+	case 258:
+		return (str_totext("AVC", target));
+	case 259:
+		return (str_totext("DOA", target));
+	case 32768:
+		return (str_totext("TA", target));
+	case 32769:
+		return (str_totext("DLV", target));
+	default:
+		snprintf(buf, sizeof(buf), "TYPE%u", type);
+		return (str_totext(buf, target));
+	}
 }
 
 void
