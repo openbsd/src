@@ -499,7 +499,6 @@
 ./usr/libdata/perl5/powerpc-openbsd/threads.pm
 ./usr/libdata/perl5/powerpc-openbsd/threads/shared.pm
 ./usr/local/libdata/perl5/site_perl/powerpc-openbsd
-./usr/mdec/boot.mac
 ./usr/mdec/bsd.tbxi
 ./usr/mdec/mbr
 ./usr/mdec/ofwboot
