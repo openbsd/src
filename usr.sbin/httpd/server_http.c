@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.136 2020/01/14 20:48:57 benno Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.137 2020/02/25 15:18:41 sthen Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -1145,6 +1145,15 @@ server_expand_http(struct client *clt, const char *val, char *buf,
 
 		ret = expand_string(buf, len, "$REQUEST_URI", str);
 		free(str);
+		if (ret != 0)
+			return (NULL);
+	}
+	if (strstr(val, "$REQUEST_SCHEME") != NULL) {
+		if (srv_conf->flags & SRVFLAG_TLS) {
+			ret = expand_string(buf, len, "$REQUEST_SCHEME", "https");
+		} else {
+			ret = expand_string(buf, len, "$REQUEST_SCHEME", "http");
+		}
 		if (ret != 0)
 			return (NULL);
 	}

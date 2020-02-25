@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.108 2020/02/09 09:44:04 florian Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.109 2020/02/25 15:18:41 sthen Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 9 2020 $
+.Dd $Mdocdate: February 25 2020 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -217,6 +217,8 @@ The IP address of the connected client.
 The TCP source port of the connected client.
 .It Ic $REMOTE_USER
 The remote user for HTTP authentication.
+.It Ic $REQUEST_SCHEME
+The request scheme (http or https).
 .It Ic $REQUEST_URI
 The request path and optional query string.
 .It Ic $SERVER_ADDR
@@ -774,11 +776,13 @@ directive:
 .Bd -literal -offset indent
 server "example.com" {
 	listen on 10.0.0.1 port 80
-	block return 301 "http://www.example.com$REQUEST_URI"
+	listen on 10.0.0.1 tls port 443
+	block return 301 "$REQUEST_SCHEME://www.example.com$REQUEST_URI"
 }
 
 server "www.example.com" {
 	listen on 10.0.0.1 port 80
+	listen on 10.0.0.1 tls port 443
 }
 .Ed
 The request can also be rewritten with the
