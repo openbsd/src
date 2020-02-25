@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusctl.8,v 1.4 2020/02/24 07:07:11 dlg Exp $
+.\"	$OpenBSD: radiusctl.8,v 1.5 2020/02/25 06:57:36 jmc Exp $
 .\"
 .\" Copyright (c) YASUOKA Masahiko <yasuoka@yasuoka.net>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 24 2020 $
+.Dd $Mdocdate: February 25 2020 $
 .Dt RADIUSCTL 8
 .Os
 .Sh NAME
@@ -50,6 +50,12 @@ and sent to the RADIUS server specified by
 is the shared secret with the server.
 The options are as follows:
 .Bl -tag -width Ds
+.It Cm interval Ar seconds
+Specifies how many seconds to wait before resending a packet.
+The default is 2.
+.It Cm maxwait Ar seconds
+Specifies the maximum amount of time to wait for a valid reply packet.
+The default is 8.
 .It Cm method Ar method
 Use
 .Ar method
@@ -79,17 +85,7 @@ If the port is omitted,
 the default port number 1812 is used.
 .It Cm tries Ar number
 Specifies the number of packets to try sending.
-By default
-.Nm
-will send 3 packets before giving up.
-.It Cm interval Ar seconds
-Specifies how many seconds to wait before resending a packet.
-The default interval between packet retries is 2 seconds.
-.It Cm maxwait Ar seconds
-Specifies the maximum amount of time to wait for a valid reply packet.
-By default
-.Nm
-will wait 8 seconds for a valid reply.
+The default is 3.
 .El
 .El
 .Sh SEE ALSO
