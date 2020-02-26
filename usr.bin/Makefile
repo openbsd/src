@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.162 2020/02/07 10:19:50 florian Exp $
+#	$OpenBSD: Makefile,v 1.163 2020/02/26 13:58:48 ratchov Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ SUBDIR= apply arch at aucat audioctl awk banner \
 	pr printenv printf quota radioctl rcs rdist rdistd \
 	readlink renice rev rpcgen rpcinfo rs rsync rup rusers rwall \
 	sdiff script sed sendbug shar showmount signify skey \
-	skeyaudit skeyinfo skeyinit sndiod snmp \
+	skeyaudit skeyinfo skeyinit sndioctl sndiod snmp \
 	sort spell split ssh stat su systat \
 	tail talk tcpbench tee telnet tftp tic time \
 	tmux top touch tput tr true tset tsort tty usbhidaction usbhidctl \

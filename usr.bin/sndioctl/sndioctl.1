@@ -1,0 +1,146 @@
+.\" $OpenBSD: sndioctl.1,v 1.1 2020/02/26 13:58:48 ratchov Exp $
+.\"
+.\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 26 2020 $
+.Dt SNDIOCTL 1
+.Os
+.Sh NAME
+.Nm sndioctl
+.Nd control audio parameters
+.Sh SYNOPSIS
+.Nm
+.Bk -words
+.Op Fl iv
+.Op Fl f Ar device
+.Op Ar command ...
+.Ek
+.Nm
+.Fl d
+.Sh DESCRIPTION
+The
+.Nm
+utility can display or change parameters of
+.Xr sndio 7
+audio devices.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Dump the raw list of available parameters and exit.
+Useful as a debugging tool.
+.It Fl f Ar device
+Use this
+.Xr sndio 7
+audio device.
+.It Fl i
+Display characteristics of requested parameters
+instead of their values.
+.It Fl m
+Monitor and display audio parameter changes.
+.It Fl v
+Enable verbose mode, a.k.a. multi-channel mode.
+By default parameters affecting different channels
+of the same stream are disguised as a single mono
+parameter to hide details that are not essential.
+.El
+.Pp
+If no commands are specified all valid parameters are displayed on
+.Em stdout .
+Unless
+.Fl d ,
+.Fl m ,
+or
+.Fl i
+are used, displayed parameters are valid commands.
+The set of available controls depends on the control device.
+.Pp
+Commands use the following two formats to display and set
+parameters respectively:
+.Pp
+.Dl group/stream[channel].function
+.Dl group/stream[channel].function=value
+.Pp
+On the left-hand side are specified the optional parameter group,
+the affected stream name, and the optional channel number.
+Examples of left-hand side terms:
+.Pp
+.Dl output.level
+.Dl hw/spkr[6].mute
+.Pp
+There are 4 parameter types: switches, numbers, selectors, and vectors.
+.Pp
+Numbers are specified in decimal and follow the same semantics
+as MIDI controllers.
+Values are in the 0..127 range and 64 is the neutral state (if applicable).
+Two-state controls (switches) take either 0 or 1 as value,
+typically corresponding to the
+.Em off
+and
+.Em on
+states respectively.
+.Pp
+If a decimal is prefixed by the plus (minus) sign then
+the given value is added to (subtracted from) the
+current value of the control.
+If
+.Qq \&!
+is used instead of a number, then the switch is toggled.
+Examples:
+.Pp
+.Dl hw/spkr.level=85
+.Dl hw/spkr.level=+10
+.Dl hw/spkr.mute=0
+.Dl hw/spkr.mute=!
+.Pp
+Selector values are substreams; they are specified
+as the stream name followed by an optional channel
+number.
+If no channel number is specified, the same
+number as the stream specified on the left-hand side is used.
+For instance the following are equivalent:
+.Pp
+.Dl hw/record[1].source=mic
+.Dl hw/record[1].source=mic1
+.Pp
+Vectors are arrays of numbers.
+Values are specified as comma-separated components.
+Each component is a substream, followed by
+a colon, followed by a number.
+If the colon and the number are omitted, then 127 is
+assumed.
+If a component is missing, then 0 is assumed.
+Example:
+.Pp
+.Dl hw/monitor.mix=play:120,linein:85
+.Dl hw/record.source=mic,linein
+.Pp
+Numbers are specified as discussed above.
+Note that a vector of switches is equivalent to
+a list.
+.Sh EXAMPLES
+The following will set all
+.Ar level
+parameters that control the
+.Ar spkr
+stream to zero.
+.Pp
+.Dl $ sndioctl hw/spkr.level=0
+.Pp
+The following commands are equivalent:
+.Pp
+.Dl $ sndioctl hw/record[0].source=mic0 hw/record[1].source=mic1
+.Dl $ sndioctl hw/record.source=mic
+.Sh SEE ALSO
+.Xr sioctl_open 3
