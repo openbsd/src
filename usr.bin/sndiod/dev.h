@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.22 2019/09/21 04:42:46 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.23 2020/02/26 13:53:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,6 +20,11 @@
 #include "abuf.h"
 #include "dsp.h"
 #include "siofile.h"
+#include "dev_sioctl.h"
+
+#define CTLADDR_SLOT_LEVEL(n)	(n)
+#define CTLADDR_MASTER		(DEV_NSLOT)
+#define CTLADDR_END		(DEV_NSLOT + 1)
 
 /*
  * audio stream state structure
@@ -28,10 +33,15 @@
 struct slotops
 {
 	void (*onmove)(void *);			/* clock tick */
-	void (*onvol)(void *);	        /* tell client vol changed */
+	void (*onvol)(void *);			/* tell client vol changed */
 	void (*fill)(void *);			/* request to fill a play block */
 	void (*flush)(void *);			/* request to flush a rec block */
 	void (*eof)(void *);			/* notify that play drained */
+	void (*exit)(void *);			/* delete client */
+};
+
+struct ctlops
+{
 	void (*exit)(void *);			/* delete client */
 };
 
@@ -105,6 +115,44 @@ struct opt {
 };
 
 /*
+ * subset of channels of a stream
+ */
+
+struct ctl {
+	struct ctl *next;
+#define CTL_NONE	0		/* deleted */
+#define CTL_NUM		2		/* number (aka integer value) */
+#define CTL_SW		3		/* on/off switch, only bit 7 counts */
+#define CTL_VEC		4		/* number, element of vector */
+#define CTL_LIST	5		/* switch, element of a list */
+	unsigned int type;		/* one of above */
+	unsigned int addr;		/* control address */
+#define CTL_NAMEMAX	16		/* max name lenght */
+	char func[CTL_NAMEMAX];		/* parameter function name */
+	char group[CTL_NAMEMAX];	/* group aka namespace */
+	struct ctl_node {
+		char name[CTL_NAMEMAX];	/* stream name */
+		int unit;
+	} node0, node1;			/* affected channels */
+#define CTL_DEVMASK		(1 << 31)
+#define CTL_SLOTMASK(i)		(1 << (i))
+	unsigned int val_mask;
+	unsigned int desc_mask;
+	unsigned int refs_mask;
+	unsigned int maxval;
+	unsigned int curval;
+	int dirty;
+};
+
+struct ctlslot {
+	struct ctlops *ops;
+	void *arg;
+	struct dev *dev;
+	unsigned int mask;
+	unsigned int mode;
+};
+
+/*
  * audio device with plenty of slots
  */
 struct dev {
@@ -117,6 +165,7 @@ struct dev {
 	 * audio device (while opened)
 	 */
 	struct dev_sio sio;
+	struct dev_sioctl sioctl;
 	struct aparams par;			/* encoding */
 	int pchan, rchan;			/* play & rec channels */
 	adata_t *rbuf;				/* rec buffer */
@@ -195,6 +244,14 @@ struct dev {
 #define MMC_RUN		3			/* started */
 	unsigned int tstate;			/* one of above */
 	unsigned int master;			/* master volume controller */
+
+	/*
+	 * control
+	 */
+
+	struct ctl *ctl_list;
+#define DEV_NCTLSLOT 8
+	struct ctlslot ctlslot[DEV_NCTLSLOT];
 };
 
 extern struct dev *dev_list;
@@ -241,5 +298,20 @@ void slot_start(struct slot *);
 void slot_stop(struct slot *);
 void slot_read(struct slot *);
 void slot_write(struct slot *);
+
+/*
+ * control related functions
+ */
+void ctl_log(struct ctl *);
+struct ctlslot *ctlslot_new(struct dev *, struct ctlops *, void *);
+void ctlslot_del(struct ctlslot *);
+int dev_setctl(struct dev *, int, int);
+int dev_onval(struct dev *, int, int);
+int dev_nctl(struct dev *);
+void dev_label(struct dev *, int);
+struct ctl *dev_addctl(struct dev *, char *, int, int,
+    char *, int, char *, char *, int, int, int);
+void dev_rmctl(struct dev *, int);
+int dev_makeunit(struct dev *, char *);
 
 #endif /* !defined(DEV_H) */

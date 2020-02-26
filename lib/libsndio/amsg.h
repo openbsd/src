@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.12 2019/07/12 06:30:55 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.13 2020/02/26 13:53:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,6 +43,11 @@
 #define AUCAT_PORT		11025
 
 /*
+ * limits
+ */
+#define AMSG_CTL_NAMEMAX	16	/* max name length */
+
+/*
  * WARNING: since the protocol may be simultaneously used by static
  * binaries or by different versions of a shared library, we are not
  * allowed to change the packet binary representation in a backward
@@ -64,6 +69,9 @@ struct amsg {
 #define AMSG_HELLO	10	/* say hello, check versions and so ... */
 #define AMSG_BYE	11	/* ask server to drop connection */
 #define AMSG_AUTH	12	/* send authentication cookie */
+#define AMSG_CTLSUB	13	/* ondesc/onctl subscription */
+#define AMSG_CTLSET	14	/* set control value */
+#define AMSG_CTLSYNC	15	/* end of controls descriptions */
 	uint32_t cmd;
 	uint32_t __pad;
 	union {
@@ -108,7 +116,38 @@ struct amsg {
 #define AMSG_COOKIELEN	16
 			uint8_t cookie[AMSG_COOKIELEN];
 		} auth;
+		struct amsg_ctlsub {
+			uint8_t desc, val;
+		} ctlsub;
+		struct amsg_ctlset {
+			uint16_t addr, val;
+		} ctlset;
 	} u;
+};
+
+/*
+ * network representation of sioctl_node structure
+ */
+struct amsg_ctl_node {
+	char name[AMSG_CTL_NAMEMAX];
+	int16_t unit;
+	uint8_t __pad[2];
+};
+
+/*
+ * network representation of sioctl_desc structure
+ */
+struct amsg_ctl_desc {
+	struct amsg_ctl_node node0;	/* affected channels */
+	struct amsg_ctl_node node1;	/* dito for AMSG_CTL_{SEL,VEC,LIST} */
+	char func[AMSG_CTL_NAMEMAX];	/* parameter function name */
+	char group[AMSG_CTL_NAMEMAX];	/* group of the control */
+	uint8_t type;			/* see sioctl_desc structure */
+	uint8_t __pad1[1];
+	uint16_t addr;			/* control address */
+	uint16_t maxval;
+	uint16_t curval;
+	uint32_t __pad2[3];
 };
 
 /*

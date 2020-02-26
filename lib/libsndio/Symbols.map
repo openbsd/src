@@ -27,10 +27,22 @@
 		mio_revents;
 		mio_eof;
 
+		sioctl_open;
+		sioctl_close;
+		sioctl_ondesc;
+		sioctl_onval;
+		sioctl_setval;
+		sioctl_nfds;
+		sioctl_pollfd;
+		sioctl_revents;
+		sioctl_eof;
+
 		mio_rmidi_getfd;
 		mio_rmidi_fdopen;
 		sio_sun_getfd;
 		sio_sun_fdopen;
+		sioctl_sun_getfd;
+		sioctl_sun_fdopen;
 	local:
 		*;
 };

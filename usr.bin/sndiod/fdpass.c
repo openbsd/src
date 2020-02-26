@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.c,v 1.8 2020/01/23 05:40:09 ratchov Exp $	*/
+/*	$OpenBSD: fdpass.c,v 1.9 2020/02/26 13:53:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,6 +32,7 @@
 struct fdpass_msg {
 #define FDPASS_OPEN_SND		0	/* open an audio device */
 #define FDPASS_OPEN_MIDI	1	/* open a midi port */
+#define FDPASS_OPEN_CTL		2	/* open an audio control device */
 #define FDPASS_RETURN		3	/* return after above commands */
 	unsigned int cmd;		/* one of above */
 	unsigned int num;		/* audio device or midi port number */
@@ -287,6 +288,22 @@ fdpass_mio_open(int num, int idx, unsigned int mode)
 	return mio_rmidi_fdopen(fd, mode, 1);
 }
 
+struct sioctl_hdl *
+fdpass_sioctl_open(int num, int idx, unsigned int mode)
+{
+	int fd;
+
+	if (fdpass_peer == NULL)
+		return NULL;
+	if (!fdpass_send(fdpass_peer, FDPASS_OPEN_CTL, num, idx, mode, -1))
+		return NULL;
+	if (!fdpass_waitret(fdpass_peer, &fd))
+		return NULL;
+	if (fd < 0)
+		return NULL;
+	return sioctl_sun_fdopen(fd, mode, 1);
+}
+
 void
 fdpass_in_worker(void *arg)
 {
@@ -345,6 +362,23 @@ fdpass_in_helper(void *arg)
 			return;
 		}
 		fd = mio_rmidi_getfd(path, mode, 1);
+		break;
+	case FDPASS_OPEN_CTL:
+		d = dev_bynum(num);
+		if (d == NULL || !(mode & (SIOCTL_READ | SIOCTL_WRITE))) {
+			if (log_level >= 1) {
+				fdpass_log(f);
+				log_puts(": bad audio control device\n");
+			}
+			fdpass_close(f);
+			return;
+		}
+		path = namelist_byindex(&d->path_list, idx);
+		if (path == NULL) {
+			fdpass_close(f);
+			return;
+		}
+		fd = sioctl_sun_getfd(path, mode, 1);
 		break;
 	default:
 		fdpass_close(f);

@@ -1,6 +1,6 @@
-/*	$OpenBSD: fdpass.h,v 1.3 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: dev_sioctl.h,v 1.1 2020/02/26 13:53:58 ratchov Exp $	*/
 /*
- * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
+ * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,19 +14,19 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef FDPASS_H
-#define FDPASS_H
+#ifndef DEV_SIOCTL_H
+#define DEV_SIOCTL_H
 
-struct fileops;
+#include "file.h"
 
-struct fdpass *fdpass_new(int sock, struct fileops *ops);
-void fdpass_close(struct fdpass *f);
+struct dev;
 
-extern struct fileops worker_fileops, helper_fileops;
-extern struct fdpass *fdpass_peer;
+struct dev_sioctl {
+	struct sioctl_hdl *hdl;
+	struct file *file;
+};
 
-struct sio_hdl *fdpass_sio_open(int, int, unsigned int);
-struct mio_hdl *fdpass_mio_open(int, int, unsigned int);
-struct sioctl_hdl *fdpass_sioctl_open(int, int, unsigned int);
+void dev_sioctl_open(struct dev *);
+void dev_sioctl_close(struct dev *);
 
-#endif /* !defined(FDPASS_H) */
+#endif /* !defined(DEV_SIOCTL_H) */

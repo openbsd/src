@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.31 2019/07/12 06:30:55 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.32 2020/02/26 13:53:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,6 +31,8 @@
 #include "opt.h"
 #include "sock.h"
 #include "utils.h"
+
+#define SOCK_CTLDESC_SIZE	16	/* number of entries in s->ctldesc */
 
 void sock_log(struct sock *);
 void sock_close(struct sock *);
@@ -88,6 +90,10 @@ struct midiops sock_midiops = {
 	sock_exit
 };
 
+struct ctlops sock_ctlops = {
+	sock_exit
+};
+
 struct sock *sock_list = NULL;
 unsigned int sock_sesrefs = 0;		/* connections to the session */
 uint8_t sock_sescookie[AMSG_COOKIELEN];	/* owner of the session */
@@ -103,7 +109,10 @@ sock_log(struct sock *f)
 		slot_log(f->slot);
 	else if (f->midi)
 		midi_log(f->midi);
-	else
+	else if (f->ctlslot) {
+		log_puts("ctlslot");
+		log_putu(f->ctlslot - f->ctlslot->dev->ctlslot);
+	} else
 		log_puts("sock");
 #ifdef DEBUG
 	if (log_level >= 3) {
@@ -149,6 +158,11 @@ sock_close(struct sock *f)
 	if (f->port) {
 		port_unref(f->port);
 		f->port = NULL;
+	}
+	if (f->ctlslot) {
+		ctlslot_del(f->ctlslot);
+		f->ctlslot = NULL;
+		xfree(f->ctldesc);
 	}
 	file_del(f->file);
 	close(f->fd);
@@ -277,6 +291,7 @@ sock_new(int fd)
 	f->slot = NULL;
 	f->port = NULL;
 	f->midi = NULL;
+	f->ctlslot = NULL;
 	f->tickpending = 0;
 	f->fillpending = 0;
 	f->stoppending = 0;
@@ -286,6 +301,8 @@ sock_new(int fd)
 	f->rtodo = sizeof(struct amsg);
 	f->wmax = f->rmax = 0;
 	f->lastvol = -1;
+	f->ctlops = 0;
+	f->ctlsyncpending = 0;
 	f->file = file_new(&sock_fileops, f, "sock", 1);
 	f->fd = fd;
 	if (f->file == NULL) {
@@ -547,6 +564,11 @@ sock_wdata(struct sock *f)
 			data = abuf_rgetblk(&f->slot->sub.buf, &count);
 		else if (f->midi)
 			data = abuf_rgetblk(&f->midi->obuf, &count);
+		else {
+			data = (unsigned char *)f->ctldesc +
+			    (f->wsize - f->wtodo);
+			count = f->wtodo;
+		}
 		if (count > f->wtodo)
 			count = f->wtodo;
 		n = sock_fdwrite(f, data, count);
@@ -800,6 +822,9 @@ sock_hello(struct sock *f)
 	case MODE_REC:
 	case MODE_PLAY:
 	case MODE_PLAY | MODE_REC:
+	case MODE_CTLREAD:
+	case MODE_CTLWRITE:
+	case MODE_CTLREAD | MODE_CTLWRITE:
 		break;
 	default:
 #ifdef DEBUG
@@ -837,6 +862,31 @@ sock_hello(struct sock *f)
 			return 0;
 		return 1;
 	}
+	if (mode & MODE_CTLMASK) {
+		d = dev_bynum(p->devnum);
+		if (d == NULL) {
+			if (log_level >= 2) {
+				sock_log(f);
+				log_puts(": ");
+				log_putu(p->devnum);
+				log_puts(": no such device\n");
+			}
+			return 0;
+		}
+		f->ctlslot = ctlslot_new(d, &sock_ctlops, f);
+		if (f->ctlslot == NULL) {
+			if (log_level >= 2) {
+				sock_log(f);
+				log_puts(": couldn't get slot\n");
+			}
+			return 0;
+		}
+		f->ctldesc = xmalloc(SOCK_CTLDESC_SIZE *
+		    sizeof(struct amsg_ctl_desc));
+		f->ctlops = 0;
+		f->ctlsyncpending = 0;
+		return 1;
+	}
 	d = dev_bynum(p->devnum);
 	if (d == NULL)
 		return 0;
@@ -856,6 +906,7 @@ sock_hello(struct sock *f)
 int
 sock_execmsg(struct sock *f)
 {
+	struct ctl *c;
 	struct slot *s = f->slot;
 	struct amsg *m = &f->rmsg;
 	unsigned char *data;
@@ -1153,6 +1204,81 @@ sock_execmsg(struct sock *f)
 		f->lastvol = ctl; /* dont trigger feedback message */
 		slot_setvol(s, ctl);
 		dev_midi_vol(s->dev, s);
+		dev_onval(s->dev,
+		    CTLADDR_SLOT_LEVEL(f->slot - s->dev->slot), ctl);
+		break;
+	case AMSG_CTLSUB:
+#ifdef DEBUG
+		if (log_level >= 3) {
+			sock_log(f);
+			log_puts(": CTLSUB message, desc = ");
+			log_putx(m->u.ctlsub.desc);
+			log_puts(", val = ");
+			log_putx(m->u.ctlsub.val);
+			log_puts("\n");
+		}
+#endif
+		if (f->pstate != SOCK_INIT || f->ctlslot == NULL) {
+#ifdef DEBUG
+			if (log_level >= 1) {
+				sock_log(f);
+				log_puts(": CTLSUB, wrong state\n");
+			}
+#endif
+			sock_close(f);
+			return 0;
+		}
+		if (m->u.ctlsub.desc) {
+			if (!(f->ctlops & SOCK_CTLDESC)) {
+				ctl = f->ctlslot->mask;
+				c = f->ctlslot->dev->ctl_list;
+				while (c != NULL) {
+					c->desc_mask |= ctl;
+					c = c->next;
+				}
+			}
+			f->ctlops |= SOCK_CTLDESC;
+			f->ctlsyncpending = 1;
+		} else
+			f->ctlops &= ~SOCK_CTLDESC;
+		if (m->u.ctlsub.val) {
+			f->ctlops |= SOCK_CTLVAL;
+		} else
+			f->ctlops &= ~SOCK_CTLVAL;
+		f->rstate = SOCK_RMSG;
+		f->rtodo = sizeof(struct amsg);
+		break;
+	case AMSG_CTLSET:
+#ifdef DEBUG
+		if (log_level >= 3) {
+			sock_log(f);
+			log_puts(": CTLSET message\n");
+		}
+#endif
+		if (f->pstate < SOCK_INIT || f->ctlslot == NULL) {
+#ifdef DEBUG
+			if (log_level >= 1) {
+				sock_log(f);
+				log_puts(": CTLSET, wrong state\n");
+			}
+#endif
+			sock_close(f);
+			return 0;
+		}
+		if (!dev_setctl(f->ctlslot->dev,
+			ntohs(m->u.ctlset.addr),
+			ntohs(m->u.ctlset.val))) {
+#ifdef DEBUG
+			if (log_level >= 1) {
+				sock_log(f);
+				log_puts(": CTLSET, wrong addr/val\n");
+			}
+#endif
+			sock_close(f);
+			return 0;
+		}
+		f->rtodo = sizeof(struct amsg);
+		f->rstate = SOCK_RMSG;
 		break;
 	case AMSG_AUTH:
 #ifdef DEBUG
@@ -1241,7 +1367,9 @@ sock_execmsg(struct sock *f)
 int
 sock_buildmsg(struct sock *f)
 {
-	unsigned int size;
+	unsigned int size, mask;
+	struct amsg_ctl_desc *desc;
+	struct ctl *c, **pc;
 
 	/*
 	 * If pos changed (or initial tick), build a MOVE message.
@@ -1378,6 +1506,106 @@ sock_buildmsg(struct sock *f)
 		f->wmsg.cmd = htonl(AMSG_STOP);
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
+		return 1;
+	}
+
+	/*
+	 * XXX: add a flag indicating if there are changes
+	 * in controls not seen by this client, rather
+	 * than walking through the full list of control
+	 * searching for the {desc,val}_mask bits
+	 */
+	if (f->ctlslot && (f->ctlops & SOCK_CTLDESC)) {
+		desc = f->ctldesc;
+		mask = f->ctlslot->mask;
+		size = 0;
+		pc = &f->ctlslot->dev->ctl_list;
+		while ((c = *pc) != NULL) {
+			if ((c->desc_mask & mask) == 0 ||
+			    (c->refs_mask & mask) == 0) {
+				pc = &c->next;
+				continue;
+			}
+			if (size == SOCK_CTLDESC_SIZE *
+				sizeof(struct amsg_ctl_desc))
+				break;
+			c->desc_mask &= ~mask;
+			c->val_mask &= ~mask;
+			strlcpy(desc->group, c->group,
+			    AMSG_CTL_NAMEMAX);
+			strlcpy(desc->node0.name, c->node0.name,
+			    AMSG_CTL_NAMEMAX);
+			desc->node0.unit = ntohs(c->node0.unit);
+			strlcpy(desc->node1.name, c->node1.name,
+			    AMSG_CTL_NAMEMAX);
+			desc->node1.unit = ntohs(c->node1.unit);
+			desc->type = c->type;
+			strlcpy(desc->func, c->func, AMSG_CTL_NAMEMAX);
+			desc->addr = htons(c->addr);
+			desc->maxval = htons(c->maxval);
+			desc->curval = htons(c->curval);
+			size += sizeof(struct amsg_ctl_desc);
+			desc++;
+
+			/* if this is a deleted entry unref it */
+			if (c->type == CTL_NONE) {
+				c->refs_mask &= ~mask;
+				if (c->refs_mask == 0) {
+					*pc = c->next;
+					xfree(c);
+					continue;
+				}
+			}
+
+			pc = &c->next;
+		}
+		if (size > 0) {
+			AMSG_INIT(&f->wmsg);
+			f->wmsg.cmd = htonl(AMSG_DATA);
+			f->wmsg.u.data.size = htonl(size);
+			f->wtodo = sizeof(struct amsg);
+			f->wstate = SOCK_WMSG;
+#ifdef DEBUG
+			if (log_level >= 3) {
+				sock_log(f);
+				log_puts(": building control DATA message\n");
+			}
+#endif
+			return 1;
+		}
+	}
+	if (f->ctlslot && (f->ctlops & SOCK_CTLVAL)) {
+		mask = f->ctlslot->mask;
+		for (c = f->ctlslot->dev->ctl_list; c != NULL; c = c->next) {
+			if ((c->val_mask & mask) == 0)
+				continue;
+			c->val_mask &= ~mask;
+			AMSG_INIT(&f->wmsg);
+			f->wmsg.cmd = htonl(AMSG_CTLSET);
+			f->wmsg.u.ctlset.addr = htons(c->addr);
+			f->wmsg.u.ctlset.val = htons(c->curval);
+			f->wtodo = sizeof(struct amsg);
+			f->wstate = SOCK_WMSG;
+#ifdef DEBUG
+			if (log_level >= 3) {
+				sock_log(f);
+				log_puts(": building CTLSET message\n");
+			}
+#endif
+			return 1;
+		}
+	}
+	if (f->ctlslot && f->ctlsyncpending) {
+		f->ctlsyncpending = 0;
+		f->wmsg.cmd = htonl(AMSG_CTLSYNC);
+		f->wtodo = sizeof(struct amsg);
+		f->wstate = SOCK_WMSG;
+#ifdef DEBUG
+		if (log_level >= 3) {
+			sock_log(f);
+			log_puts(": building CTLSYNC message\n");
+		}
+#endif
 		return 1;
 	}
 #ifdef DEBUG

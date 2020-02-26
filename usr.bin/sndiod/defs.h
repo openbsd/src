@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.4 2019/07/28 09:44:10 ratchov Exp $	*/
+/*	$OpenBSD: defs.h,v 1.5 2020/02/26 13:53:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -37,9 +37,12 @@
 #define MODE_MIDIOUT	0x04	/* allowed to read midi */
 #define MODE_MIDIIN	0x08	/* allowed to write midi */
 #define MODE_MON	0x10	/* allowed to monitor */
+#define MODE_CTLREAD	0x100	/* allowed to read controls */
+#define MODE_CTLWRITE	0x200	/* allowed to change controls */
 #define MODE_RECMASK	(MODE_REC | MODE_MON)
 #define MODE_AUDIOMASK	(MODE_PLAY | MODE_REC | MODE_MON)
 #define MODE_MIDIMASK	(MODE_MIDIIN | MODE_MIDIOUT)
+#define MODE_CTLMASK	(MODE_CTLREAD | MODE_CTLWRITE)
 
 /*
  * underrun/overrun policies, must be the same as SIO_ constants

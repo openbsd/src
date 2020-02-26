@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.37 2019/09/21 04:52:07 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.38 2020/02/26 13:53:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -413,8 +413,10 @@ start_helper(int background)
 				err(1, "cannot drop privileges");
 		}
 		for (d = dev_list; d != NULL; d = d->next) {
-			for (n = d->path_list; n != NULL; n = n->next)
+			for (n = d->path_list; n != NULL; n = n->next) {
 				dounveil(n->str, "rsnd/", "/dev/audio");
+				dounveil(n->str, "rsnd/", "/dev/audioctl");
+			}
 		}
 		for (p = port_list; p != NULL; p = p->next) {
 			for (n = p->path_list; n != NULL; n = n->next)

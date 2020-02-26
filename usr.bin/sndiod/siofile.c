@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.17 2020/01/23 05:40:09 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.18 2020/02/26 13:53:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -26,6 +26,7 @@
 #include "abuf.h"
 #include "defs.h"
 #include "dev.h"
+#include "dev_sioctl.h"
 #include "dsp.h"
 #include "fdpass.h"
 #include "file.h"
@@ -88,10 +89,11 @@ dev_sio_timeout(void *arg)
  * open the device using one of the provided paths
  */
 static struct sio_hdl *
-dev_sio_openlist(struct dev *d, unsigned int mode)
+dev_sio_openlist(struct dev *d, unsigned int mode, struct sioctl_hdl **rctlhdl)
 {
 	struct name *n;
 	struct sio_hdl *hdl;
+	struct sioctl_hdl *ctlhdl;
 	int idx;
 
 	idx = 0;
@@ -107,6 +109,15 @@ dev_sio_openlist(struct dev *d, unsigned int mode)
 				log_puts(n->str);
 				log_puts("\n");
 			}
+			ctlhdl = fdpass_sioctl_open(d->num, idx,
+			    SIOCTL_READ | SIOCTL_WRITE);
+			if (ctlhdl == NULL) {
+				if (log_level >= 1) {
+					dev_log(d);
+					log_puts(": no control device\n");
+				}
+			}
+			*rctlhdl = ctlhdl;
 			return hdl;
 		}
 		n = n->next;
@@ -124,15 +135,16 @@ dev_sio_open(struct dev *d)
 	struct sio_par par;
 	unsigned int mode = d->mode & (MODE_PLAY | MODE_REC);
 
-	d->sio.hdl = dev_sio_openlist(d, mode);
+	d->sio.hdl = dev_sio_openlist(d, mode, &d->sioctl.hdl);
 	if (d->sio.hdl == NULL) {
 		if (mode != (SIO_PLAY | SIO_REC))
 			return 0;
-		d->sio.hdl = dev_sio_openlist(d, SIO_PLAY);
+		d->sio.hdl = dev_sio_openlist(d, SIO_PLAY, &d->sioctl.hdl);
 		if (d->sio.hdl != NULL)
 			mode = SIO_PLAY;
 		else {
-			d->sio.hdl = dev_sio_openlist(d, SIO_REC);
+			d->sio.hdl = dev_sio_openlist(d,
+			    SIO_REC, &d->sioctl.hdl);
 			if (d->sio.hdl != NULL)
 				mode = SIO_REC;
 			else
@@ -245,9 +257,14 @@ dev_sio_open(struct dev *d)
 	sio_onmove(d->sio.hdl, dev_sio_onmove, d);
 	d->sio.file = file_new(&dev_sio_ops, d, "dev", sio_nfds(d->sio.hdl));
 	timo_set(&d->sio.watchdog, dev_sio_timeout, d);
+	dev_sioctl_open(d);
 	return 1;
  bad_close:
 	sio_close(d->sio.hdl);
+	if (d->sioctl.hdl) {
+		sioctl_close(d->sioctl.hdl);
+		d->sioctl.hdl = NULL;
+	}
 	return 0;
 }
 
@@ -259,10 +276,11 @@ dev_sio_open(struct dev *d)
 int
 dev_sio_reopen(struct dev *d)
 {
+	struct sioctl_hdl *ctlhdl;
 	struct sio_par par;
 	struct sio_hdl *hdl;
 
-	hdl = dev_sio_openlist(d, d->mode & (MODE_PLAY | MODE_REC));
+	hdl = dev_sio_openlist(d, d->mode & (MODE_PLAY | MODE_REC), &ctlhdl);
 	if (hdl == NULL) {
 		if (log_level >= 1) {
 			dev_log(d);
@@ -303,6 +321,11 @@ dev_sio_reopen(struct dev *d)
 	timo_del(&d->sio.watchdog);
 	file_del(d->sio.file);
 	sio_close(d->sio.hdl);
+	dev_sioctl_close(d);
+	if (d->sioctl.hdl) {
+		sioctl_close(d->sioctl.hdl);
+		d->sioctl.hdl = NULL;
+	}
 
 	/* update parameters */
 	d->par.bits = par.bits;
@@ -316,17 +339,21 @@ dev_sio_reopen(struct dev *d)
 		d->rchan = par.rchan;
 
 	d->sio.hdl = hdl;
+	d->sioctl.hdl = ctlhdl;
 	d->sio.file = file_new(&dev_sio_ops, d, "dev", sio_nfds(hdl));
 	sio_onmove(hdl, dev_sio_onmove, d);
 	return 1;
 bad_close:
 	sio_close(hdl);
+	if (ctlhdl)
+		sioctl_close(ctlhdl);
 	return 0;
 }
 
 void
 dev_sio_close(struct dev *d)
 {
+	dev_sioctl_close(d);
 #ifdef DEBUG
 	if (log_level >= 3) {
 		dev_log(d);
@@ -336,6 +363,10 @@ dev_sio_close(struct dev *d)
 	timo_del(&d->sio.watchdog);
 	file_del(d->sio.file);
 	sio_close(d->sio.hdl);
+	if (d->sioctl.hdl) {
+		sioctl_close(d->sioctl.hdl);
+		d->sioctl.hdl = NULL;
+	}
 }
 
 void
