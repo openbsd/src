@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: apl_42.c,v 1.11 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: apl_42.c,v 1.12 2020/02/26 18:47:25 florian Exp $ */
 
 /* RFC3123 */
 
@@ -134,7 +134,7 @@ fromwire_in_apl(ARGS_FROMWIRE) {
 		isc_region_consume(&sr, len);
 	}
 	isc_buffer_forward(source, sr2.length);
-	return (mem_tobuffer(target, sr2.base, sr2.length));
+	return (isc_mem_tobuffer(target, sr2.base, sr2.length));
 }
 
 static inline isc_result_t
@@ -144,7 +144,7 @@ towire_in_apl(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_apl);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
-	return (mem_tobuffer(target, rdata->data, rdata->length));
+	return (isc_mem_tobuffer(target, rdata->data, rdata->length));
 }
 
 #endif	/* RDATA_IN_1_APL_42_C */

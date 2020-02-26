@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rrsig_46.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: rrsig_46.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -154,7 +154,7 @@ fromwire_rrsig(ARGS_FROMWIRE) {
 		return (ISC_R_UNEXPECTEDEND);
 
 	isc_buffer_forward(source, 18);
-	RETERR(mem_tobuffer(target, sr.base, 18));
+	RETERR(isc_mem_tobuffer(target, sr.base, 18));
 
 	/*
 	 * Signer.
@@ -167,7 +167,7 @@ fromwire_rrsig(ARGS_FROMWIRE) {
 	 */
 	isc_buffer_activeregion(source, &sr);
 	isc_buffer_forward(source, sr.length);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return (isc_mem_tobuffer(target, sr.base, sr.length));
 }
 
 static inline isc_result_t
@@ -190,7 +190,7 @@ towire_rrsig(ARGS_TOWIRE) {
 	 * time signed: 4
 	 * key footprint: 2
 	 */
-	RETERR(mem_tobuffer(target, sr.base, 18));
+	RETERR(isc_mem_tobuffer(target, sr.base, 18));
 	isc_region_consume(&sr, 18);
 
 	/*
@@ -204,7 +204,7 @@ towire_rrsig(ARGS_TOWIRE) {
 	/*
 	 * Signature.
 	 */
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return (isc_mem_tobuffer(target, sr.base, sr.length));
 }
 
 static inline dns_rdatatype_t

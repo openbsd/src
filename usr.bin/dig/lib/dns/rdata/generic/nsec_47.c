@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec_47.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: nsec_47.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -69,7 +69,7 @@ fromwire_nsec(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sr);
 	RETERR(typemap_test(&sr, ISC_FALSE));
-	RETERR(mem_tobuffer(target, sr.base, sr.length));
+	RETERR(isc_mem_tobuffer(target, sr.base, sr.length));
 	isc_buffer_forward(source, sr.length);
 	return (ISC_R_SUCCESS);
 }
@@ -90,7 +90,7 @@ towire_nsec(ARGS_TOWIRE) {
 	isc_region_consume(&sr, name_length(&name));
 	RETERR(dns_name_towire(&name, cctx, target));
 
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return (isc_mem_tobuffer(target, sr.base, sr.length));
 }
 
 #endif	/* RDATA_GENERIC_NSEC_47_C */

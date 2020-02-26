@@ -58,7 +58,7 @@ fromwire_l32(ARGS_FROMWIRE) {
 	if (sregion.length != 6)
 		return (DNS_R_FORMERR);
 	isc_buffer_forward(source, sregion.length);
-	return (mem_tobuffer(target, sregion.base, sregion.length));
+	return (isc_mem_tobuffer(target, sregion.base, sregion.length));
 }
 
 static inline isc_result_t
@@ -69,7 +69,7 @@ towire_l32(ARGS_TOWIRE) {
 
 	UNUSED(cctx);
 
-	return (mem_tobuffer(target, rdata->data, rdata->length));
+	return (isc_mem_tobuffer(target, rdata->data, rdata->length));
 }
 
 #endif	/* RDATA_GENERIC_L32_105_C */

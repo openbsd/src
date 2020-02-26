@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.11 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: hip_55.c,v 1.12 2020/02/26 18:47:25 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -119,7 +119,7 @@ fromwire_hip(ARGS_FROMWIRE) {
 	if (region.length < (unsigned) (hit_len + key_len))
 		RETERR(DNS_R_FORMERR);
 
-	RETERR(mem_tobuffer(target, rr.base, 4 + hit_len + key_len));
+	RETERR(isc_mem_tobuffer(target, rr.base, 4 + hit_len + key_len));
 	isc_buffer_forward(source, 4 + hit_len + key_len);
 
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
@@ -140,6 +140,6 @@ towire_hip(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &region);
-	return (mem_tobuffer(target, region.base, region.length));
+	return (isc_mem_tobuffer(target, region.base, region.length));
 }
 #endif	/* RDATA_GENERIC_HIP_5_C */

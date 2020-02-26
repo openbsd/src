@@ -99,7 +99,7 @@ fromwire_doa(ARGS_FROMWIRE) {
 	}
 
 	isc_buffer_forward(source, region.length);
-	return (mem_tobuffer(target, region.base, region.length));
+	return (isc_mem_tobuffer(target, region.base, region.length));
 }
 
 static inline isc_result_t
@@ -113,7 +113,7 @@ towire_doa(ARGS_TOWIRE) {
 	REQUIRE(rdata->length != 0);
 
 	dns_rdata_toregion(rdata, &region);
-	return (mem_tobuffer(target, region.base, region.length));
+	return (isc_mem_tobuffer(target, region.base, region.length));
 }
 
 #endif	/* RDATA_GENERIC_DOA_259_C */

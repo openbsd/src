@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: loc_29.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: loc_29.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -160,7 +160,7 @@ fromwire_loc(ARGS_FROMWIRE) {
 	if (sr.base[0] != 0) {
 		/* Treat as unknown. */
 		isc_buffer_forward(source, sr.length);
-		return (mem_tobuffer(target, sr.base, sr.length));
+		return (isc_mem_tobuffer(target, sr.base, sr.length));
 	}
 	if (sr.length < 16)
 		return (ISC_R_UNEXPECTEDEND);
@@ -214,7 +214,7 @@ fromwire_loc(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &sr);
 	isc_buffer_forward(source, 16);
-	return (mem_tobuffer(target, sr.base, 16));
+	return (isc_mem_tobuffer(target, sr.base, 16));
 }
 
 static inline isc_result_t
@@ -224,7 +224,7 @@ towire_loc(ARGS_TOWIRE) {
 	REQUIRE(rdata->type == dns_rdatatype_loc);
 	REQUIRE(rdata->length != 0);
 
-	return (mem_tobuffer(target, rdata->data, rdata->length));
+	return (isc_mem_tobuffer(target, rdata->data, rdata->length));
 }
 
 #endif	/* RDATA_GENERIC_LOC_29_C */

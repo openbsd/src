@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3param_51.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: nsec3param_51.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -112,7 +112,7 @@ fromwire_nsec3param(ARGS_FROMWIRE) {
 	if (sr.length < saltlen)
 		RETERR(DNS_R_FORMERR);
 	isc_region_consume(&sr, saltlen);
-	RETERR(mem_tobuffer(target, rr.base, rr.length));
+	RETERR(isc_mem_tobuffer(target, rr.base, rr.length));
 	isc_buffer_forward(source, rr.length);
 	return (ISC_R_SUCCESS);
 }
@@ -127,7 +127,7 @@ towire_nsec3param(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &sr);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return (isc_mem_tobuffer(target, sr.base, sr.length));
 }
 
 #endif	/* RDATA_GENERIC_NSEC3PARAM_51_C */

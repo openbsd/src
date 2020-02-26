@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.h,v 1.7 2020/02/22 19:47:07 jung Exp $ */
+/* $Id: buffer.h,v 1.8 2020/02/26 18:47:26 florian Exp $ */
 
 #ifndef ISC_BUFFER_H
 #define ISC_BUFFER_H 1
@@ -715,4 +715,6 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r);
 #define isc_buffer_putuint32		isc__buffer_putuint32
 #define isc_buffer_putuint48		isc__buffer_putuint48
 
+isc_result_t
+isc_mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length);
 #endif /* ISC_BUFFER_H */

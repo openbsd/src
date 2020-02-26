@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.c,v 1.6 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: buffer.c,v 1.7 2020/02/26 18:47:25 florian Exp $ */
 
 /*! \file */
 
@@ -351,4 +351,16 @@ isc_buffer_free(isc_buffer_t **dynbuffer) {
 	isc_buffer_invalidate(dbuf);
 
 	free(dbuf);
+}
+
+isc_result_t
+isc_mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
+	isc_region_t tr;
+
+	isc_buffer_availableregion(target, &tr);
+	if (length > tr.length)
+		return (ISC_R_NOSPACE);
+	memmove(tr.base, base, length);
+	isc_buffer_add(target, length);
+	return (ISC_R_SUCCESS);
 }

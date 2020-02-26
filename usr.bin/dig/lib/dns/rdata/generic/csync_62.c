@@ -71,13 +71,13 @@ fromwire_csync(ARGS_FROMWIRE) {
 	if (sr.length < 6)
 		return (ISC_R_UNEXPECTEDEND);
 
-	RETERR(mem_tobuffer(target, sr.base, 6));
+	RETERR(isc_mem_tobuffer(target, sr.base, 6));
 	isc_buffer_forward(source, 6);
 	isc_region_consume(&sr, 6);
 
 	RETERR(typemap_test(&sr, ISC_TRUE));
 
-	RETERR(mem_tobuffer(target, sr.base, sr.length));
+	RETERR(isc_mem_tobuffer(target, sr.base, sr.length));
 	isc_buffer_forward(source, sr.length);
 	return (ISC_R_SUCCESS);
 }
@@ -90,7 +90,7 @@ towire_csync(ARGS_TOWIRE) {
 
 	UNUSED(cctx);
 
-	return (mem_tobuffer(target, rdata->data, rdata->length));
+	return (isc_mem_tobuffer(target, rdata->data, rdata->length));
 }
 
 #endif	/* RDATA_GENERIC_CSYNC_62_C */

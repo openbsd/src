@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nxt_30.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: nxt_30.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -78,7 +78,7 @@ fromwire_nxt(ARGS_FROMWIRE) {
 	if (sr.length > 0 && (sr.base[0] & 0x80) == 0 &&
 	    ((sr.length > 16) || sr.base[sr.length - 1] == 0))
 		return (DNS_R_BADBITMAP);
-	RETERR(mem_tobuffer(target, sr.base, sr.length));
+	RETERR(isc_mem_tobuffer(target, sr.base, sr.length));
 	isc_buffer_forward(source, sr.length);
 	return (ISC_R_SUCCESS);
 }
@@ -99,7 +99,7 @@ towire_nxt(ARGS_TOWIRE) {
 	isc_region_consume(&sr, name_length(&name));
 	RETERR(dns_name_towire(&name, cctx, target));
 
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return (isc_mem_tobuffer(target, sr.base, sr.length));
 }
 
 #endif	/* RDATA_GENERIC_NXT_30_C */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: uri_256.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: uri_256.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
 
 #ifndef GENERIC_URI_256_C
 #define GENERIC_URI_256_C 1
@@ -77,7 +77,7 @@ fromwire_uri(ARGS_FROMWIRE) {
 	 * Priority, weight and target URI
 	 */
 	isc_buffer_forward(source, region.length);
-	return (mem_tobuffer(target, region.base, region.length));
+	return (isc_mem_tobuffer(target, region.base, region.length));
 }
 
 static inline isc_result_t
@@ -90,7 +90,7 @@ towire_uri(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &region);
-	return (mem_tobuffer(target, region.base, region.length));
+	return (isc_mem_tobuffer(target, region.base, region.length));
 }
 
 #endif /* GENERIC_URI_256_C */

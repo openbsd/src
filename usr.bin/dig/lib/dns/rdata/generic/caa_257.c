@@ -92,7 +92,7 @@ fromwire_caa(ARGS_FROMWIRE) {
 	/*
 	 * Flags, tag length
 	 */
-	RETERR(mem_tobuffer(target, sr.base, 2));
+	RETERR(isc_mem_tobuffer(target, sr.base, 2));
 	len = sr.base[1];
 	isc_region_consume(&sr, 2);
 	isc_buffer_forward(source, 2);
@@ -111,7 +111,7 @@ fromwire_caa(ARGS_FROMWIRE) {
 	 * Tag + Value
 	 */
 	isc_buffer_forward(source, sr.length);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return (isc_mem_tobuffer(target, sr.base, sr.length));
 }
 
 static inline isc_result_t
@@ -125,7 +125,7 @@ towire_caa(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &region);
-	return (mem_tobuffer(target, region.base, region.length));
+	return (isc_mem_tobuffer(target, region.base, region.length));
 }
 
 #endif /* GENERIC_CAA_257_C */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.c,v 1.11 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: ds_43.c,v 1.12 2020/02/26 18:47:25 florian Exp $ */
 
 /* RFC3658 */
 
@@ -125,7 +125,7 @@ generic_fromwire_ds(ARGS_FROMWIRE) {
 		sr.length = 4 + ISC_SHA384_DIGESTLENGTH;
 
 	isc_buffer_forward(source, sr.length);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return (isc_mem_tobuffer(target, sr.base, sr.length));
 }
 
 static inline isc_result_t
@@ -147,7 +147,7 @@ towire_ds(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &sr);
-	return (mem_tobuffer(target, sr.base, sr.length));
+	return (isc_mem_tobuffer(target, sr.base, sr.length));
 }
 
 #endif	/* RDATA_GENERIC_DS_43_C */

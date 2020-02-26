@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hex.c,v 1.3 2020/02/24 13:49:38 jsg Exp $ */
+/* $Id: hex.c,v 1.4 2020/02/26 18:47:25 florian Exp $ */
 
 /*! \file */
 
@@ -38,9 +38,6 @@
  */
 static isc_result_t
 str_totext(const char *source, isc_buffer_t *target);
-
-static isc_result_t
-mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length);
 
 static const char hex[] = "0123456789ABCDEF";
 
@@ -101,7 +98,7 @@ hex_decode_char(hex_decode_ctx_t *ctx, int c) {
 		unsigned char num;
 
 		num = (ctx->val[0] << 4) + (ctx->val[1]);
-		RETERR(mem_tobuffer(ctx->target, &num, 1));
+		RETERR(isc_mem_tobuffer(ctx->target, &num, 1));
 		if (ctx->length >= 0) {
 			if (ctx->length == 0)
 				return (ISC_R_BADHEX);
@@ -152,17 +149,5 @@ str_totext(const char *source, isc_buffer_t *target) {
 
 	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
-	isc_region_t tr;
-
-	isc_buffer_availableregion(target, &tr);
-	if (length > tr.length)
-		return (ISC_R_NOSPACE);
-	memmove(tr.base, base, length);
-	isc_buffer_add(target, length);
 	return (ISC_R_SUCCESS);
 }

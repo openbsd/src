@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a6_38.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: a6_38.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
 
 /* RFC2874 */
 
@@ -96,7 +96,7 @@ fromwire_in_a6(ARGS_FROMWIRE) {
 	if (prefixlen > 128)
 		return (ISC_R_RANGE);
 	isc_region_consume(&sr, 1);
-	RETERR(mem_tobuffer(target, &prefixlen, 1));
+	RETERR(isc_mem_tobuffer(target, &prefixlen, 1));
 	isc_buffer_forward(source, 1);
 
 	/*
@@ -108,7 +108,7 @@ fromwire_in_a6(ARGS_FROMWIRE) {
 			return (ISC_R_UNEXPECTEDEND);
 		mask = 0xff >> (prefixlen % 8);
 		sr.base[0] &= mask;	/* Ensure pad bits are zero. */
-		RETERR(mem_tobuffer(target, sr.base, octets));
+		RETERR(isc_mem_tobuffer(target, sr.base, octets));
 		isc_buffer_forward(source, octets);
 	}
 
@@ -137,7 +137,7 @@ towire_in_a6(ARGS_TOWIRE) {
 	INSIST(prefixlen <= 128);
 
 	octets = 1 + 16 - prefixlen / 8;
-	RETERR(mem_tobuffer(target, sr.base, octets));
+	RETERR(isc_mem_tobuffer(target, sr.base, octets));
 	isc_region_consume(&sr, octets);
 
 	if (prefixlen == 0)

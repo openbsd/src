@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: base32.c,v 1.5 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: base32.c,v 1.6 2020/02/26 18:47:25 florian Exp $ */
 
 /*! \file */
 
@@ -37,9 +37,6 @@
  */
 static isc_result_t
 str_totext(const char *source, isc_buffer_t *target);
-
-static isc_result_t
-mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length);
 
 /*@}*/
 
@@ -229,7 +226,7 @@ base32_decode_char(base32_decode_ctx_t *ctx, int c) {
 		buf[2] = (ctx->val[3]<<4)|(ctx->val[4]>>1);
 		buf[3] = (ctx->val[4]<<7)|(ctx->val[5]<<2)|(ctx->val[6]>>3);
 		buf[4] = (ctx->val[6]<<5)|(ctx->val[7]);
-		RETERR(mem_tobuffer(ctx->target, buf, n));
+		RETERR(isc_mem_tobuffer(ctx->target, buf, n));
 		if (ctx->length >= 0) {
 			if (n > ctx->length)
 				return (ISC_R_BADBASE32);
@@ -294,17 +291,5 @@ str_totext(const char *source, isc_buffer_t *target) {
 
 	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
-	isc_region_t tr;
-
-	isc_buffer_availableregion(target, &tr);
-	if (length > tr.length)
-		return (ISC_R_NOSPACE);
-	memmove(tr.base, base, length);
-	isc_buffer_add(target, length);
 	return (ISC_R_SUCCESS);
 }

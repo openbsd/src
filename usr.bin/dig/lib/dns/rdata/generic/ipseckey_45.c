@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipseckey_45.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: ipseckey_45.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -130,27 +130,27 @@ fromwire_ipseckey(ARGS_FROMWIRE) {
 	switch (region.base[1]) {
 	case 0:
 		isc_buffer_forward(source, region.length);
-		return (mem_tobuffer(target, region.base, region.length));
+		return (isc_mem_tobuffer(target, region.base, region.length));
 
 	case 1:
 		if (region.length < 7)
 			return (ISC_R_UNEXPECTEDEND);
 		isc_buffer_forward(source, region.length);
-		return (mem_tobuffer(target, region.base, region.length));
+		return (isc_mem_tobuffer(target, region.base, region.length));
 
 	case 2:
 		if (region.length < 19)
 			return (ISC_R_UNEXPECTEDEND);
 		isc_buffer_forward(source, region.length);
-		return (mem_tobuffer(target, region.base, region.length));
+		return (isc_mem_tobuffer(target, region.base, region.length));
 
 	case 3:
-		RETERR(mem_tobuffer(target, region.base, 3));
+		RETERR(isc_mem_tobuffer(target, region.base, 3));
 		isc_buffer_forward(source, 3);
 		RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 		isc_buffer_activeregion(source, &region);
 		isc_buffer_forward(source, region.length);
-		return(mem_tobuffer(target, region.base, region.length));
+		return(isc_mem_tobuffer(target, region.base, region.length));
 
 	default:
 		return (ISC_R_NOTIMPLEMENTED);
@@ -167,7 +167,7 @@ towire_ipseckey(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
 	dns_rdata_toregion(rdata, &region);
-	return (mem_tobuffer(target, region.base, region.length));
+	return (isc_mem_tobuffer(target, region.base, region.length));
 }
 
 #endif	/* RDATA_GENERIC_IPSECKEY_45_C */
