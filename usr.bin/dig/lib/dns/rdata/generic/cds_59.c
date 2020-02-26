@@ -19,8 +19,6 @@
 #ifndef RDATA_GENERIC_CDS_59_C
 #define RDATA_GENERIC_CDS_59_C
 
-#define RRTYPE_CDS_ATTRIBUTES 0
-
 #include <isc/sha1.h>
 #include <isc/sha2.h>
 

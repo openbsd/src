@@ -14,14 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mr_9.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: mr_9.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 21:30:35 EST 2000 by tale */
 
 #ifndef RDATA_GENERIC_MR_9_C
 #define RDATA_GENERIC_MR_9_C
-
-#define RRTYPE_MR_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_mr(ARGS_TOTEXT) {

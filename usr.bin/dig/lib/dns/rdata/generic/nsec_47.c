@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec_47.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: nsec_47.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -27,7 +27,6 @@
  * The attributes do not include DNS_RDATATYPEATTR_SINGLETON
  * because we must be able to handle a parent/child NSEC pair.
  */
-#define RRTYPE_NSEC_ATTRIBUTES (DNS_RDATATYPEATTR_DNSSEC)
 
 static inline isc_result_t
 totext_nsec(ARGS_TOTEXT) {

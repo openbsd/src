@@ -17,8 +17,6 @@
 #ifndef RDATA_GENERIC_RKEY_57_C
 #define RDATA_GENERIC_RKEY_57_C
 
-#define RRTYPE_RKEY_ATTRIBUTES 0
-
 static inline isc_result_t
 totext_rkey(ARGS_TOTEXT) {
 

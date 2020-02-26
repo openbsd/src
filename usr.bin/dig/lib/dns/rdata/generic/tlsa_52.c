@@ -19,8 +19,6 @@
 #ifndef RDATA_GENERIC_TLSA_52_C
 #define RDATA_GENERIC_TLSA_52_C
 
-#define RRTYPE_TLSA_ATTRIBUTES 0
-
 static inline isc_result_t
 generic_totext_tlsa(ARGS_TOTEXT) {
 	isc_region_t sr;

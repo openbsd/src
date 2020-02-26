@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: naptr_35.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: naptr_35.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -22,8 +22,6 @@
 
 #ifndef RDATA_GENERIC_NAPTR_35_C
 #define RDATA_GENERIC_NAPTR_35_C
-
-#define RRTYPE_NAPTR_ATTRIBUTES (0)
 
 #include <isc/regex.h>
 

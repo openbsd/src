@@ -14,14 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mf_4.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: mf_4.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:47:33 PST 2000 by brister */
 
 #ifndef RDATA_GENERIC_MF_4_C
 #define RDATA_GENERIC_MF_4_C
-
-#define RRTYPE_MF_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_mf(ARGS_TOTEXT) {

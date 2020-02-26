@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap-ptr_23.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: nsap-ptr_23.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 10:16:02 PST 2000 by gson */
 
@@ -22,8 +22,6 @@
 
 #ifndef RDATA_IN_1_NSAP_PTR_23_C
 #define RDATA_IN_1_NSAP_PTR_23_C
-
-#define RRTYPE_NSAP_PTR_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_in_nsap_ptr(ARGS_TOTEXT) {

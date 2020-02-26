@@ -17,8 +17,6 @@
 #ifndef RDATA_GENERIC_TALINK_58_C
 #define RDATA_GENERIC_TALINK_58_C
 
-#define RRTYPE_TALINK_ATTRIBUTES 0
-
 static inline isc_result_t
 totext_talink(ARGS_TOTEXT) {
 	isc_region_t dregion;

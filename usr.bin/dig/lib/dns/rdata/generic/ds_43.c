@@ -14,15 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.c,v 1.10 2020/02/24 17:47:50 florian Exp $ */
+/* $Id: ds_43.c,v 1.11 2020/02/26 18:38:15 florian Exp $ */
 
 /* RFC3658 */
 
 #ifndef RDATA_GENERIC_DS_43_C
 #define RDATA_GENERIC_DS_43_C
-
-#define RRTYPE_DS_ATTRIBUTES \
-	(DNS_RDATATYPEATTR_DNSSEC|DNS_RDATATYPEATTR_ATPARENT)
 
 #include <isc/sha1.h>
 #include <isc/sha2.h>

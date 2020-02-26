@@ -19,8 +19,6 @@
 
 #include <string.h>
 
-#define RRTYPE_EUI48_ATTRIBUTES (0)
-
 static inline isc_result_t
 totext_eui48(ARGS_TOTEXT) {
 	char buf[sizeof("xx-xx-xx-xx-xx-xx")];

@@ -14,12 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: uri_256.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: uri_256.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 #ifndef GENERIC_URI_256_C
 #define GENERIC_URI_256_C 1
-
-#define RRTYPE_URI_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_uri(ARGS_TOTEXT) {

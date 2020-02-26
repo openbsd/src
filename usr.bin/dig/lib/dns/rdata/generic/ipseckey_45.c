@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipseckey_45.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: ipseckey_45.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -22,8 +22,6 @@
 #include <string.h>
 
 #include <isc/net.h>
-
-#define RRTYPE_IPSECKEY_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_ipseckey(ARGS_TOTEXT) {

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dname_39.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: dname_39.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:52:38 PST 2000 by explorer */
 
@@ -22,8 +22,6 @@
 
 #ifndef RDATA_GENERIC_DNAME_39_C
 #define RDATA_GENERIC_DNAME_39_C
-
-#define RRTYPE_DNAME_ATTRIBUTES (DNS_RDATATYPEATTR_SINGLETON)
 
 static inline isc_result_t
 totext_dname(ARGS_TOTEXT) {

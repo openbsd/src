@@ -17,8 +17,6 @@
 #ifndef RDATA_GENERIC_DOA_259_C
 #define RDATA_GENERIC_DOA_259_C
 
-#define RRTYPE_DOA_ATTRIBUTES (0)
-
 static inline isc_result_t
 totext_doa(ARGS_TOTEXT) {
 	char buf[sizeof("4294967295 ")];

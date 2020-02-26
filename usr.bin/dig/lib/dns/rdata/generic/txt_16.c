@@ -19,8 +19,6 @@
 #ifndef RDATA_GENERIC_TXT_16_C
 #define RDATA_GENERIC_TXT_16_C
 
-#define RRTYPE_TXT_ATTRIBUTES (0)
-
 static inline isc_result_t
 generic_totext_txt(ARGS_TOTEXT) {
 	isc_region_t region;

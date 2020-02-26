@@ -17,8 +17,6 @@
 #ifndef RDATA_GENERIC_NINFO_56_C
 #define RDATA_GENERIC_NINFO_56_C
 
-#define RRTYPE_NINFO_ATTRIBUTES (0)
-
 static inline isc_result_t
 totext_ninfo(ARGS_TOTEXT) {
 

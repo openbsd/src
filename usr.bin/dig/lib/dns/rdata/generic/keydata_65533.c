@@ -21,8 +21,6 @@
 
 #include <dst/dst.h>
 
-#define RRTYPE_KEYDATA_ATTRIBUTES (0)
-
 /*
  * ISC_FORMATHTTPTIMESTAMP_SIZE needs to be 30 in C locale and potentially
  * more for other locales to handle longer national abbreviations when

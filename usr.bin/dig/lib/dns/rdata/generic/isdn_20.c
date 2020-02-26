@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: isdn_20.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: isdn_20.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:53:11 PST 2000 by bwelling */
 
@@ -22,8 +22,6 @@
 
 #ifndef RDATA_GENERIC_ISDN_20_C
 #define RDATA_GENERIC_ISDN_20_C
-
-#define RRTYPE_ISDN_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_isdn(ARGS_TOTEXT) {

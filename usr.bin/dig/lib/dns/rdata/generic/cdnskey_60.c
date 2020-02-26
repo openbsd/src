@@ -21,8 +21,6 @@
 
 #include <dst/dst.h>
 
-#define RRTYPE_CDNSKEY_ATTRIBUTES 0
-
 static inline isc_result_t
 totext_cdnskey(ARGS_TOTEXT) {
 

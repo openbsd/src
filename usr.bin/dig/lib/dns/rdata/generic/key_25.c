@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key_25.c,v 1.10 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: key_25.c,v 1.11 2020/02/26 18:38:15 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -26,8 +26,6 @@
 #define RDATA_GENERIC_KEY_25_C
 
 #include <dst/dst.h>
-
-#define RRTYPE_KEY_ATTRIBUTES (0)
 
 static inline isc_result_t
 generic_totext_key(ARGS_TOTEXT) {

@@ -14,14 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: md_3.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: md_3.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 17:48:20 PST 2000 by bwelling */
 
 #ifndef RDATA_GENERIC_MD_3_C
 #define RDATA_GENERIC_MD_3_C
-
-#define RRTYPE_MD_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_md(ARGS_TOTEXT) {

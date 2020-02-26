@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: a_1.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:58:36 PST 2000 by brister */
 
@@ -22,8 +22,6 @@
 #define RDATA_HS_4_A_1_C
 
 #include <isc/net.h>
-
-#define RRTYPE_A_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_hs_a(ARGS_TOTEXT) {

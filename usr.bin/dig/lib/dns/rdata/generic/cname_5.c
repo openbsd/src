@@ -14,15 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cname_5.c,v 1.7 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: cname_5.c,v 1.8 2020/02/26 18:38:15 florian Exp $ */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 
 #ifndef RDATA_GENERIC_CNAME_5_C
 #define RDATA_GENERIC_CNAME_5_C
-
-#define RRTYPE_CNAME_ATTRIBUTES \
-	(DNS_RDATATYPEATTR_EXCLUSIVE | DNS_RDATATYPEATTR_SINGLETON)
 
 static inline isc_result_t
 totext_cname(ARGS_TOTEXT) {

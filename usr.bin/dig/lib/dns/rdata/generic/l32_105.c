@@ -21,8 +21,6 @@
 
 #include <isc/net.h>
 
-#define RRTYPE_L32_ATTRIBUTES (0)
-
 static inline isc_result_t
 totext_l32(ARGS_TOTEXT) {
 	isc_region_t region;

@@ -14,14 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: null_10.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: null_10.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:57:50 PST 2000 by explorer */
 
 #ifndef RDATA_GENERIC_NULL_10_C
 #define RDATA_GENERIC_NULL_10_C
-
-#define RRTYPE_NULL_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_null(ARGS_TOTEXT) {

@@ -14,14 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dlv_32769.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: dlv_32769.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* RFC3658 */
 
 #ifndef RDATA_GENERIC_DLV_32769_C
 #define RDATA_GENERIC_DLV_32769_C
-
-#define RRTYPE_DLV_ATTRIBUTES 0
 
 #include <isc/sha1.h>
 #include <isc/sha2.h>

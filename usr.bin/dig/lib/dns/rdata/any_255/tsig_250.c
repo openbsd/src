@@ -14,15 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig_250.c,v 1.6 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: tsig_250.c,v 1.7 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 
 #ifndef RDATA_ANY_255_TSIG_250_C
 #define RDATA_ANY_255_TSIG_250_C
-
-#define RRTYPE_TSIG_ATTRIBUTES \
-	(DNS_RDATATYPEATTR_META | DNS_RDATATYPEATTR_NOTQUESTION)
 
 static inline isc_result_t
 totext_any_tsig(ARGS_TOTEXT) {

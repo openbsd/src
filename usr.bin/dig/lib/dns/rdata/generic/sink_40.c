@@ -19,8 +19,6 @@
 
 #include <dst/dst.h>
 
-#define RRTYPE_SINK_ATTRIBUTES (0)
-
 static inline isc_result_t
 totext_sink(ARGS_TOTEXT) {
 	isc_region_t sr;

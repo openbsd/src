@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: gpos_27.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: gpos_27.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 
@@ -22,8 +22,6 @@
 
 #ifndef RDATA_GENERIC_GPOS_27_C
 #define RDATA_GENERIC_GPOS_27_C
-
-#define RRTYPE_GPOS_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_gpos(ARGS_TOTEXT) {

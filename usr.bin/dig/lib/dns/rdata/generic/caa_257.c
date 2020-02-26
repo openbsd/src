@@ -17,8 +17,6 @@
 #ifndef GENERIC_CAA_257_C
 #define GENERIC_CAA_257_C 1
 
-#define RRTYPE_CAA_ATTRIBUTES (0)
-
 static unsigned char const alphanumeric[256] = {
 	/* 0x00-0x0f */ 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,
 	/* 0x10-0x1f */ 0, 0, 0, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0, 0,

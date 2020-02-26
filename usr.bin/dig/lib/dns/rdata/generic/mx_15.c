@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mx_15.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: mx_15.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 
@@ -24,8 +24,6 @@
 #include <string.h>
 
 #include <isc/net.h>
-
-#define RRTYPE_MX_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_mx(ARGS_TOTEXT) {

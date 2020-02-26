@@ -14,12 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: unspec_103.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: unspec_103.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 #ifndef RDATA_GENERIC_UNSPEC_103_C
 #define RDATA_GENERIC_UNSPEC_103_C
-
-#define RRTYPE_UNSPEC_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_unspec(ARGS_TOTEXT) {

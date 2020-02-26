@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nxt_30.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: nxt_30.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -27,7 +27,6 @@
  * The attributes do not include DNS_RDATATYPEATTR_SINGLETON
  * because we must be able to handle a parent/child NXT pair.
  */
-#define RRTYPE_NXT_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_nxt(ARGS_TOTEXT) {
@@ -54,16 +53,7 @@ totext_nxt(ARGS_TOTEXT) {
 				if ((sr.base[i] & (0x80 >> j)) != 0) {
 					dns_rdatatype_t t = i * 8 + j;
 					RETERR(str_totext(" ", target));
-					if (dns_rdatatype_isknown(t)) {
-						RETERR(dns_rdatatype_totext(t,
-								      target));
-					} else {
-						char buf[sizeof("65535")];
-						snprintf(buf, sizeof(buf),
-							 "%u", t);
-						RETERR(str_totext(buf,
-								  target));
-					}
+					RETERR(dns_rdatatype_totext(t, target));
 				}
 	}
 	return (ISC_R_SUCCESS);

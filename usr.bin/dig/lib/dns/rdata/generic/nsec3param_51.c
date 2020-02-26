@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3param_51.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: nsec3param_51.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -38,8 +38,6 @@
 #define RDATA_GENERIC_NSEC3PARAM_51_C
 
 #include <isc/base32.h>
-
-#define RRTYPE_NSEC3PARAM_ATTRIBUTES (DNS_RDATATYPEATTR_DNSSEC)
 
 static inline isc_result_t
 totext_nsec3param(ARGS_TOTEXT) {

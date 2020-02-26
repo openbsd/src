@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: kx_36.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: kx_36.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 17:24:54 PST 2000 by explorer */
 
@@ -22,8 +22,6 @@
 
 #ifndef RDATA_IN_1_KX_36_C
 #define RDATA_IN_1_KX_36_C
-
-#define RRTYPE_KX_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_in_kx(ARGS_TOTEXT) {

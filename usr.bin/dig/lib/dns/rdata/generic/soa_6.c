@@ -14,14 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: soa_6.c,v 1.6 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: soa_6.c,v 1.7 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
 #ifndef RDATA_GENERIC_SOA_6_C
 #define RDATA_GENERIC_SOA_6_C
-
-#define RRTYPE_SOA_ATTRIBUTES (DNS_RDATATYPEATTR_SINGLETON)
 
 static const char *soa_fieldnames[5] = {
 	"serial", "refresh", "retry", "expire", "minimum"

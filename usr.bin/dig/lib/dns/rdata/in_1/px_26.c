@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: px_26.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: px_26.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* Reviewed: Mon Mar 20 10:44:27 PST 2000 */
 
@@ -22,8 +22,6 @@
 
 #ifndef RDATA_IN_1_PX_26_C
 #define RDATA_IN_1_PX_26_C
-
-#define RRTYPE_PX_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_in_px(ARGS_TOTEXT) {

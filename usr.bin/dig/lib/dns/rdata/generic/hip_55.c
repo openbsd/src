@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.10 2020/02/24 17:47:50 florian Exp $ */
+/* $Id: hip_55.c,v 1.11 2020/02/26 18:38:15 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -22,8 +22,6 @@
 
 #ifndef RDATA_GENERIC_HIP_5_C
 #define RDATA_GENERIC_HIP_5_C
-
-#define RRTYPE_HIP_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_hip(ARGS_TOTEXT) {

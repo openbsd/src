@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.9 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: a_1.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -23,8 +23,6 @@
 #define RDATA_CH_3_A_1_C
 
 #include <isc/net.h>
-
-#define RRTYPE_A_ATTRIBUTES (0)
 
 static inline isc_result_t
 totext_ch_a(ARGS_TOTEXT) {

@@ -19,8 +19,6 @@
 #ifndef RDATA_GENERIC_CSYNC_62_C
 #define RDATA_GENERIC_CSYNC_62_C
 
-#define RRTYPE_CSYNC_ATTRIBUTES 0
-
 static inline isc_result_t
 totext_csync(ARGS_TOTEXT) {
 	unsigned long num;

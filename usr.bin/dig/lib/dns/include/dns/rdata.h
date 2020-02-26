@@ -574,16 +574,6 @@ dns_rdata_freestruct_tsig(dns_rdata_any_tsig_t *tsig);
  *	dns_rdata_tostruct_tsig().
  */
 
-isc_boolean_t
-dns_rdatatype_isknown(dns_rdatatype_t type);
-/*%<
- * Return true iff the rdata type 'type' is known.
- *
- * Requires:
- * \li	'type' is a valid rdata type.
- *
- */
-
 unsigned int
 dns_rdatatype_attributes(dns_rdatatype_t rdtype);
 /*%<
@@ -596,26 +586,10 @@ dns_rdatatype_attributes(dns_rdatatype_t rdtype);
  *\li	a bitmask consisting of the following flags.
  */
 
-/*% only one may exist for a name */
-#define DNS_RDATATYPEATTR_SINGLETON		0x00000001U
-/*% requires no other data be present */
-#define DNS_RDATATYPEATTR_EXCLUSIVE		0x00000002U
-/*% Is a meta type */
-#define DNS_RDATATYPEATTR_META			0x00000004U
-/*% Is a DNSSEC type, like RRSIG or NSEC */
-#define DNS_RDATATYPEATTR_DNSSEC		0x00000008U
-/*% Is a zone cut authority type */
-#define DNS_RDATATYPEATTR_ZONECUTAUTH		0x00000010U
 /*% Is reserved (unusable) */
 #define DNS_RDATATYPEATTR_RESERVED		0x00000020U
 /*% Is an unknown type */
 #define DNS_RDATATYPEATTR_UNKNOWN		0x00000040U
-/*% Is META, and can only be in a question section */
-#define DNS_RDATATYPEATTR_QUESTIONONLY		0x00000080U
-/*% is META, and can NOT be in a question section */
-#define DNS_RDATATYPEATTR_NOTQUESTION		0x00000100U
-/*% Is present at zone cuts in the parent, not the child */
-#define DNS_RDATATYPEATTR_ATPARENT		0x00000200U
 
 dns_rdatatype_t
 dns_rdata_covers(dns_rdata_t *rdata);

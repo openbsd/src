@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.26 2020/02/26 18:36:04 florian Exp $ */
+/* $Id: rdata.c,v 1.27 2020/02/26 18:38:15 florian Exp $ */
 
 /*! \file */
 
@@ -212,13 +212,7 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 				if (!first)
 					RETERR(str_totext(" ", target));
 				first = ISC_FALSE;
-				if (dns_rdatatype_isknown(t)) {
-					RETERR(dns_rdatatype_totext(t, target));
-				} else {
-					char buf[sizeof("TYPE65535")];
-					snprintf(buf, sizeof(buf), "TYPE%u", t);
-					RETERR(str_totext(buf, target));
-				}
+				RETERR(dns_rdatatype_totext(t, target));
 			}
 		}
 	}
@@ -736,189 +730,16 @@ dns_rdatatype_attributes(dns_rdatatype_t type)
 {
 	switch (type) {
 	case 0:
-		return (DNS_RDATATYPEATTR_RESERVED);
-	case 1:
-		return (RRTYPE_A_ATTRIBUTES);
-	case 2:
-		return (RRTYPE_NS_ATTRIBUTES);
-	case 3:
-		return (RRTYPE_MD_ATTRIBUTES);
-	case 4:
-		return (RRTYPE_MF_ATTRIBUTES);
-	case 5:
-		return (RRTYPE_CNAME_ATTRIBUTES);
-	case 6:
-		return (RRTYPE_SOA_ATTRIBUTES);
-	case 7:
-		return (RRTYPE_MB_ATTRIBUTES);
-	case 8:
-		return (RRTYPE_MG_ATTRIBUTES);
-	case 9:
-		return (RRTYPE_MR_ATTRIBUTES);
-	case 10:
-		return (RRTYPE_NULL_ATTRIBUTES);
-	case 11:
-		return (RRTYPE_WKS_ATTRIBUTES);
-	case 12:
-		return (RRTYPE_PTR_ATTRIBUTES);
-	case 13:
-		return (RRTYPE_HINFO_ATTRIBUTES);
-	case 14:
-		return (RRTYPE_MINFO_ATTRIBUTES);
-	case 15:
-		return (RRTYPE_MX_ATTRIBUTES);
-	case 16:
-		return (RRTYPE_TXT_ATTRIBUTES);
-	case 17:
-		return (RRTYPE_RP_ATTRIBUTES);
-	case 18:
-		return (RRTYPE_AFSDB_ATTRIBUTES);
-	case 19:
-		return (RRTYPE_X25_ATTRIBUTES);
-	case 20:
-		return (RRTYPE_ISDN_ATTRIBUTES);
-	case 21:
-		return (RRTYPE_RT_ATTRIBUTES);
-	case 22:
-		return (RRTYPE_NSAP_ATTRIBUTES);
-	case 23:
-		return (RRTYPE_NSAP_PTR_ATTRIBUTES);
-	case 24:
-		return (RRTYPE_SIG_ATTRIBUTES);
-	case 25:
-		return (RRTYPE_KEY_ATTRIBUTES);
-	case 26:
-		return (RRTYPE_PX_ATTRIBUTES);
-	case 27:
-		return (RRTYPE_GPOS_ATTRIBUTES);
-	case 28:
-		return (RRTYPE_AAAA_ATTRIBUTES);
-	case 29:
-		return (RRTYPE_LOC_ATTRIBUTES);
-	case 30:
-		return (RRTYPE_NXT_ATTRIBUTES);
 	case 31:
-		return (DNS_RDATATYPEATTR_RESERVED);
 	case 32:
-		return (DNS_RDATATYPEATTR_RESERVED);
-	case 33:
-		return (RRTYPE_SRV_ATTRIBUTES);
 	case 34:
-		return (DNS_RDATATYPEATTR_RESERVED);
-	case 35:
-		return (RRTYPE_NAPTR_ATTRIBUTES);
-	case 36:
-		return (RRTYPE_KX_ATTRIBUTES);
-	case 37:
-		return (RRTYPE_CERT_ATTRIBUTES);
-	case 38:
-		return (RRTYPE_A6_ATTRIBUTES);
-	case 39:
-		return (RRTYPE_DNAME_ATTRIBUTES);
-	case 40:
-		return (RRTYPE_SINK_ATTRIBUTES);
-	case 41:
-		return (RRTYPE_OPT_ATTRIBUTES);
-	case 42:
-		return (RRTYPE_APL_ATTRIBUTES);
-	case 43:
-		return (RRTYPE_DS_ATTRIBUTES);
-	case 44:
-		return (RRTYPE_SSHFP_ATTRIBUTES);
-	case 45:
-		return (RRTYPE_IPSECKEY_ATTRIBUTES);
-	case 46:
-		return (RRTYPE_RRSIG_ATTRIBUTES);
-	case 47:
-		return (RRTYPE_NSEC_ATTRIBUTES);
-	case 48:
-		return (RRTYPE_DNSKEY_ATTRIBUTES);
-	case 49:
-		return (RRTYPE_DHCID_ATTRIBUTES);
-	case 50:
-		return (RRTYPE_NSEC3_ATTRIBUTES);
-	case 51:
-		return (RRTYPE_NSEC3PARAM_ATTRIBUTES);
-	case 52:
-		return (RRTYPE_TLSA_ATTRIBUTES);
-	case 53:
-		return (RRTYPE_SMIMEA_ATTRIBUTES);
-	case 55:
-		return (RRTYPE_HIP_ATTRIBUTES);
-	case 56:
-		return (RRTYPE_NINFO_ATTRIBUTES);
-	case 57:
-		return (RRTYPE_RKEY_ATTRIBUTES);
-	case 58:
-		return (RRTYPE_TALINK_ATTRIBUTES);
-	case 59:
-		return (RRTYPE_CDS_ATTRIBUTES);
-	case 60:
-		return (RRTYPE_CDNSKEY_ATTRIBUTES);
-	case 61:
-		return (RRTYPE_OPENPGPKEY_ATTRIBUTES);
-	case 62:
-		return (RRTYPE_CSYNC_ATTRIBUTES);
-	case 99:
-		return (RRTYPE_SPF_ATTRIBUTES);
 	case 100:
-		return (DNS_RDATATYPEATTR_RESERVED);
 	case 101:
-		return (DNS_RDATATYPEATTR_RESERVED);
 	case 102:
 		return (DNS_RDATATYPEATTR_RESERVED);
-	case 103:
-		return (RRTYPE_UNSPEC_ATTRIBUTES);
-	case 104:
-		return (RRTYPE_NID_ATTRIBUTES);
-	case 105:
-		return (RRTYPE_L32_ATTRIBUTES);
-	case 106:
-		return (RRTYPE_L64_ATTRIBUTES);
-	case 107:
-		return (RRTYPE_LP_ATTRIBUTES);
-	case 108:
-		return (RRTYPE_EUI48_ATTRIBUTES);
-	case 109:
-		return (RRTYPE_EUI64_ATTRIBUTES);
-	case 249:
-		return (RRTYPE_TKEY_ATTRIBUTES);
-	case 250:
-		return (RRTYPE_TSIG_ATTRIBUTES);
-	case 251:
-		return (DNS_RDATATYPEATTR_META |
-		    DNS_RDATATYPEATTR_QUESTIONONLY);
-	case 252:
-		return (DNS_RDATATYPEATTR_META |
-		    DNS_RDATATYPEATTR_QUESTIONONLY);
-	case 253:
-		return (DNS_RDATATYPEATTR_META |
-		    DNS_RDATATYPEATTR_QUESTIONONLY);
-	case 254:
-		return (DNS_RDATATYPEATTR_META |
-		    DNS_RDATATYPEATTR_QUESTIONONLY);
-	case 255:
-		return (DNS_RDATATYPEATTR_META |
-		    DNS_RDATATYPEATTR_QUESTIONONLY);
-	case 256:
-		return (RRTYPE_URI_ATTRIBUTES);
-	case 257:
-		return (RRTYPE_CAA_ATTRIBUTES);
-	case 258:
-		return (RRTYPE_AVC_ATTRIBUTES);
-	case 259:
-		return (RRTYPE_DOA_ATTRIBUTES);
-	case 32768:
-		return (RRTYPE_TA_ATTRIBUTES);
-	case 32769:
-		return (RRTYPE_DLV_ATTRIBUTES);
-	case 65533:
-		return (RRTYPE_KEYDATA_ATTRIBUTES);
+	default:
+		return (0);
 	}
-
-	if (type >= (dns_rdatatype_t)128 && type < (dns_rdatatype_t)255)
-		return (DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META);
-	return (DNS_RDATATYPEATTR_UNKNOWN);
 }
 
 static int
@@ -1704,12 +1525,4 @@ dns_rdata_covers(dns_rdata_t *rdata) {
 	if (rdata->type == dns_rdatatype_rrsig)
 		return (covers_rrsig(rdata));
 	return (covers_sig(rdata));
-}
-
-isc_boolean_t
-dns_rdatatype_isknown(dns_rdatatype_t type) {
-	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_UNKNOWN)
-	    == 0)
-		return (ISC_TRUE);
-	return (ISC_FALSE);
 }

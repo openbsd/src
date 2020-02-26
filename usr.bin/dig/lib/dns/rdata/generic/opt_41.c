@@ -21,10 +21,6 @@
 #ifndef RDATA_GENERIC_OPT_41_C
 #define RDATA_GENERIC_OPT_41_C
 
-#define RRTYPE_OPT_ATTRIBUTES (DNS_RDATATYPEATTR_SINGLETON | \
-			       DNS_RDATATYPEATTR_META | \
-			       DNS_RDATATYPEATTR_NOTQUESTION)
-
 static inline isc_result_t
 totext_opt(ARGS_TOTEXT) {
 	isc_region_t r;
