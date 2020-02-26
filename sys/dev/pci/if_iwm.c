@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.295 2020/02/12 16:02:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.296 2020/02/26 14:29:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8615,7 +8615,6 @@ iwm_intr(void *arg)
 	struct iwm_softc *sc = arg;
 	int handled = 0;
 	int rv = 0;
-	int isperiodic = 0;
 	uint32_t r1, r2;
 
 	IWM_WRITE(sc, IWM_CSR_INT_MASK, 0);
@@ -8722,27 +8721,32 @@ iwm_intr(void *arg)
 		wakeup(&sc->sc_fw);
 	}
 
-	if (r1 & IWM_CSR_INT_BIT_RX_PERIODIC) {
-		handled |= IWM_CSR_INT_BIT_RX_PERIODIC;
-		IWM_WRITE(sc, IWM_CSR_INT, IWM_CSR_INT_BIT_RX_PERIODIC);
-		if ((r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX)) == 0)
-			IWM_WRITE_1(sc,
-			    IWM_CSR_INT_PERIODIC_REG, IWM_CSR_INT_PERIODIC_DIS);
-		isperiodic = 1;
-	}
+	if (r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX |
+	    IWM_CSR_INT_BIT_RX_PERIODIC)) {
+		if (r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX)) {
+			handled |= (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX);
+			IWM_WRITE(sc, IWM_CSR_FH_INT_STATUS, IWM_CSR_FH_INT_RX_MASK);
+		}
+		if (r1 & IWM_CSR_INT_BIT_RX_PERIODIC) {
+			handled |= IWM_CSR_INT_BIT_RX_PERIODIC;
+			IWM_WRITE(sc, IWM_CSR_INT, IWM_CSR_INT_BIT_RX_PERIODIC);
+		}
 
-	if ((r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX)) ||
-	    isperiodic) {
-		handled |= (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX);
-		IWM_WRITE(sc, IWM_CSR_FH_INT_STATUS, IWM_CSR_FH_INT_RX_MASK);
+		/* Disable periodic interrupt; we use it as just a one-shot. */
+		IWM_WRITE_1(sc, IWM_CSR_INT_PERIODIC_REG, IWM_CSR_INT_PERIODIC_DIS);
 
-		iwm_notif_intr(sc);
-
-		/* enable periodic interrupt, see above */
-		if (r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX) &&
-		    !isperiodic)
+		/*
+		 * Enable periodic interrupt in 8 msec only if we received
+		 * real RX interrupt (instead of just periodic int), to catch
+		 * any dangling Rx interrupt.  If it was just the periodic
+		 * interrupt, there was no dangling Rx activity, and no need
+		 * to extend the periodic interrupt; one-shot is enough.
+		 */
+		if (r1 & (IWM_CSR_INT_BIT_FH_RX | IWM_CSR_INT_BIT_SW_RX))
 			IWM_WRITE_1(sc, IWM_CSR_INT_PERIODIC_REG,
 			    IWM_CSR_INT_PERIODIC_ENA);
+
+		iwm_notif_intr(sc);
 	}
 
 	rv = 1;
