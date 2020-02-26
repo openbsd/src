@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.262 2020/02/17 18:16:10 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.263 2020/02/26 06:07:09 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2061,6 +2061,9 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 
 	/* EFER is R/O so we can ensure the guest always has SVME */
 	svm_setmsrbr(vcpu, MSR_EFER);
+
+	/* allow reading TSC */
+	svm_setmsrbr(vcpu, MSR_TSC);
 
 	/* Guest VCPU ASID */
 	if (vmm_alloc_vpid(&asid)) {
@@ -6181,10 +6184,10 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 int
 svm_handle_msr(struct vcpu *vcpu)
 {
-	uint64_t insn_length, msr;
+	uint64_t insn_length;
 	uint64_t *rax, *rcx, *rdx;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
-	int i, ret;
+	int ret;
 
 	/* XXX: Validate RDMSR / WRMSR insn_length */
 	insn_length = 2;
@@ -6209,22 +6212,20 @@ svm_handle_msr(struct vcpu *vcpu)
 		}
 	} else {
 		switch (*rcx) {
-			case MSR_LS_CFG:
-				DPRINTF("%s: guest read LS_CFG msr, injecting "
-				    "#GP\n", __func__);
+			case MSR_DE_CFG:
+				/* LFENCE seralizing bit is set by host */
+				*rax = DE_CFG_SERIALIZE_LFENCE;
+				*rdx = 0;
+				break;
+			case MSR_INT_PEN_MSG:
+				*rax = 0;
+				*rdx = 0;
+				break;
+			default:
+				DPRINTF("%s: guest read msr 0x%llx, injecting "
+				    "#GP\n", __func__, *rcx);
 				ret = vmm_inject_gp(vcpu);
 				return (ret);
-		}
-
-		i = rdmsr_safe(*rcx, &msr);
-		if (i == 0) {
-			*rax = msr & 0xFFFFFFFFULL;
-			*rdx = msr >> 32;
-		} else {
-			DPRINTF("%s: rdmsr for unsupported MSR 0x%llx\n",
-			    __func__, *rcx);
-			*rax = 0;
-			*rdx = 0;
 		}
 	}
 
