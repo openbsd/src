@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.263 2020/02/26 06:07:09 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.264 2020/02/26 06:32:22 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6889,9 +6889,17 @@ vmm_gpa_is_valid(struct vcpu *vcpu, paddr_t gpa, size_t obj_size)
 void
 vmm_init_pvclock(struct vcpu *vcpu, paddr_t gpa)
 {
-	if (!vmm_gpa_is_valid(vcpu, gpa & 0xFFFFFFFFFFFFFFF0,
+	paddr_t pvclock_gpa = gpa & 0xFFFFFFFFFFFFFFF0;
+	if (!vmm_gpa_is_valid(vcpu, pvclock_gpa,
 	        sizeof(struct pvclock_time_info))) {
 		/* XXX: Kill guest? */
+		vmm_inject_gp(vcpu);
+		return;
+	}
+
+	/* XXX: handle case when this struct goes over page boundaries */
+	if ((pvclock_gpa & PAGE_MASK) + sizeof(struct pvclock_time_info) >
+	    PAGE_SIZE) {
 		vmm_inject_gp(vcpu);
 		return;
 	}
