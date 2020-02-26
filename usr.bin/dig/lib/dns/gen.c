@@ -80,7 +80,6 @@ static const char copyright[] =
 #define STR_EXPAND(tok) #tok
 #define STR(tok) STR_EXPAND(tok)
 
-#define TYPENAMES 256
 #define TYPECLASSLEN 20		/* DNS mnemonic size. Must be less than 100. */
 #define TYPECLASSBUF (TYPECLASSLEN + 1)
 #define TYPECLASSFMT "%" STR(TYPECLASSLEN) "[-0-9a-z]_%d"
@@ -102,18 +101,6 @@ static struct tt {
 	char dirname[DIRNAMESIZE];	/* XXX Should be max path length */
 } *types;
 
-static struct ttnam {
-	char typename[TYPECLASSBUF];
-	char macroname[TYPECLASSBUF];
-	char attr[ATTRIBUTESIZE];
-	unsigned int sorted;
-	int type;
-} typenames[TYPENAMES];
-
-static int maxtype = -1;
-
-static char *
-upper(char *);
 static char *
 funname(const char *, char *);
 static void
@@ -123,31 +110,7 @@ static void
 add(int, const char *, int, const char *, const char *);
 static void
 sd(int, const char *, const char *, char);
-static void
-insert_into_typenames(int, const char *, const char *);
 
-/*%
- * If you use more than 10 of these in, say, a printf(), you'll have problems.
- */
-static char *
-upper(char *s) {
-	static int buf_to_use = 0;
-	static char buf[10][256];
-	char *b;
-	int c;
-
-	buf_to_use++;
-	if (buf_to_use > 9)
-		buf_to_use = 0;
-
-	b = buf[buf_to_use];
-	memset(b, 0, 256);
-
-	while ((c = (*s++) & 0xff))
-		*b++ = islower(c) ? toupper(c) : c;
-	*b = '\0';
-	return (buf[buf_to_use]);
-}
 
 static char *
 funname(const char *s, char *buf) {
@@ -233,91 +196,6 @@ doswitch(const char *name, const char *function, const char *args,
 	}
 }
 
-static struct ttnam *
-find_typename(int type) {
-	int i;
-
-	for (i = 0; i < TYPENAMES; i++) {
-		if (typenames[i].typename[0] != 0 &&
-		    typenames[i].type == type)
-			return (&typenames[i]);
-	}
-	return (NULL);
-}
-
-static void
-insert_into_typenames(int type, const char *typename, const char *attr) {
-	struct ttnam *ttn = NULL;
-	size_t c;
-	int i, n;
-	char tmp[256];
-
-	INSIST(strlen(typename) < TYPECLASSBUF);
-	for (i = 0; i < TYPENAMES; i++) {
-		if (typenames[i].typename[0] != 0 &&
-		    typenames[i].type == type &&
-		    strcmp(typename, typenames[i].typename) != 0) {
-			fprintf(stderr,
-				"Error:  type %d has two names: %s, %s\n",
-				type, typenames[i].typename, typename);
-			exit(1);
-		}
-		if (typenames[i].typename[0] == 0 && ttn == NULL)
-			ttn = &typenames[i];
-	}
-	if (ttn == NULL) {
-		fprintf(stderr, "Error: typenames array too small\n");
-		exit(1);
-	}
-
-	/* XXXMUKS: This is redundant due to the INSIST above. */
-	if (strlen(typename) > sizeof(ttn->typename) - 1) {
-		fprintf(stderr, "Error:  type name %s is too long\n",
-			typename);
-		exit(1);
-	}
-
-	strncpy(ttn->typename, typename, sizeof(ttn->typename));
-	ttn->typename[sizeof(ttn->typename) - 1] = '\0';
-
-	strncpy(ttn->macroname, ttn->typename, sizeof(ttn->macroname));
-	ttn->macroname[sizeof(ttn->macroname) - 1] = '\0';
-
-	ttn->type = type;
-	c = strlen(ttn->macroname);
-	while (c > 0) {
-		if (ttn->macroname[c - 1] == '-')
-			ttn->macroname[c - 1] = '_';
-		c--;
-	}
-
-	if (attr == NULL) {
-		n = snprintf(tmp, sizeof(tmp),
-			     "RRTYPE_%s_ATTRIBUTES", upper(ttn->macroname));
-		INSIST(n > 0 && (unsigned)n < sizeof(tmp));
-		attr = tmp;
-	}
-
-	if (ttn->attr[0] != 0 && strcmp(attr, ttn->attr) != 0) {
-		fprintf(stderr, "Error:  type %d has different attributes: "
-			"%s, %s\n", type, ttn->attr, attr);
-		exit(1);
-	}
-
-	if (strlen(attr) > sizeof(ttn->attr) - 1) {
-		fprintf(stderr, "Error:  attr (%s) [name %s] is too long\n",
-			attr, typename);
-		exit(1);
-	}
-
-	strncpy(ttn->attr, attr, sizeof(ttn->attr));
-	ttn->attr[sizeof(ttn->attr) - 1] = '\0';
-
-	ttn->sorted = 0;
-	if (maxtype < type)
-		maxtype = type;
-}
-
 static void
 add(int rdclass, const char *classname, int type, const char *typename,
     const char *dirname)
@@ -330,8 +208,6 @@ add(int rdclass, const char *classname, int type, const char *typename,
 	INSIST(strlen(typename) < TYPECLASSBUF);
 	INSIST(strlen(classname) < TYPECLASSBUF);
 	INSIST(strlen(dirname) < DIRNAMESIZE);
-
-	insert_into_typenames(type, typename, NULL);
 
 	if (newtt == NULL) {
 		fprintf(stderr, "malloc() failed\n");
@@ -439,22 +315,6 @@ sd(int rdclass, const char *classname, const char *dirname, char filetype) {
 	closedir(dirp);
 }
 
-static unsigned int
-HASH(char *string) {
-	size_t n;
-	unsigned char a, b;
-
-	n = strlen(string);
-	if (n == 0) {
-		fprintf(stderr, "n == 0?\n");
-		exit(1);
-	}
-	a = tolower((unsigned char)string[0]);
-	b = tolower((unsigned char)string[n - 1]);
-
-	return ((a + n) * b) % 256;
-}
-
 int
 main(int argc, char **argv) {
 	DIR *dirp;
@@ -465,8 +325,6 @@ main(int argc, char **argv) {
 	char classname[TYPECLASSBUF];
 	struct tt *tt;
 	struct cc *cc;
-	struct ttnam *ttn, *ttn2;
-	unsigned int hash;
 	struct tm *tm;
 	time_t now;
 	char year[11];
@@ -476,16 +334,13 @@ main(int argc, char **argv) {
 	int type_enum = 0;
 	int structs = 0;
 	int depend = 0;
-	int c, i, j, n;
+	int c, n;
 	char buf1[TYPECLASSBUF];
 	char filetype = 'c';
 	FILE *fd;
 	char *prefix = NULL;
 	char *suffix = NULL;
 	char *file = NULL;
-
-	for (i = 0; i < TYPENAMES; i++)
-		memset(&typenames[i], 0, sizeof(typenames[i]));
 
 	srcdir[0] = '\0';
 	while ((c = getopt(argc, argv, "cdits:F:P:S:")) != -1)
@@ -606,91 +461,6 @@ main(int argc, char **argv) {
 			 FROMWIRETYPE, FROMWIRECLASS, FROMWIREDEF);
 		doswitch("TOWIRESWITCH", "towire", TOWIREARGS,
 			 TOWIRETYPE, TOWIRECLASS, TOWIREDEF);
-		/*
-		 * From here down, we are processing the rdata names and
-		 * attributes.
-		 */
-
-#define METAQUESTIONONLY "DNS_RDATATYPEATTR_META | " \
-			 "DNS_RDATATYPEATTR_QUESTIONONLY"
-#define RESERVED "DNS_RDATATYPEATTR_RESERVED"
-
-		/*
-		 * Add in reserved/special types.  This will let us
-		 * sort them without special cases.
-		 */
-		insert_into_typenames(0, "reserved0", RESERVED);
-		insert_into_typenames(31, "eid", RESERVED);
-		insert_into_typenames(32, "nimloc", RESERVED);
-		insert_into_typenames(34, "atma", RESERVED);
-		insert_into_typenames(100, "uinfo", RESERVED);
-		insert_into_typenames(101, "uid", RESERVED);
-		insert_into_typenames(102, "gid", RESERVED);
-		insert_into_typenames(251, "ixfr", METAQUESTIONONLY);
-		insert_into_typenames(252, "axfr", METAQUESTIONONLY);
-		insert_into_typenames(253, "mailb", METAQUESTIONONLY);
-		insert_into_typenames(254, "maila", METAQUESTIONONLY);
-		insert_into_typenames(255, "any", METAQUESTIONONLY);
-
-		/*
-		 * Spit out a quick and dirty hash function.  Here,
-		 * we walk through the list of type names, and calculate
-		 * a hash.  This isn't perfect, but it will generate "pretty
-		 * good" estimates.  Lowercase the characters before
-		 * computing in all cases.
-		 *
-		 * Here, walk the list from top to bottom, calculating
-		 * the hash (mod 256) for each name.
-		 */
-		fprintf(stdout, "#define RDATATYPE_COMPARE(_s, _d, _tn, _n, _tp) \\\n");
-		fprintf(stdout, "\tdo { \\\n");
-		fprintf(stdout, "\t\tif (sizeof(_s) - 1 == _n && \\\n"
-				"\t\t    strncasecmp(_s,(_tn),"
-				"(sizeof(_s) - 1)) == 0) { \\\n");
-		fprintf(stdout, "\t\t\tif ((dns_rdatatype_attributes(_d) & "
-				  "DNS_RDATATYPEATTR_RESERVED) != 0) \\\n");
-		fprintf(stdout, "\t\t\t\treturn (ISC_R_NOTIMPLEMENTED); \\\n");
-		fprintf(stdout, "\t\t\t*(_tp) = _d; \\\n");
-		fprintf(stdout, "\t\t\treturn (ISC_R_SUCCESS); \\\n");
-		fprintf(stdout, "\t\t} \\\n");
-		fprintf(stdout, "\t} while (0)\n\n");
-
-		fprintf(stdout, "#define RDATATYPE_FROMTEXT_SW(_hash,"
-				"_typename,_length,_typep) \\\n");
-		fprintf(stdout, "\tswitch (_hash) { \\\n");
-		for (i = 0; i <= maxtype; i++) {
-			ttn = find_typename(i);
-			if (ttn == NULL)
-				continue;
-
-			/*
-			 * Skip entries we already processed.
-			 */
-			if (ttn->sorted != 0)
-				continue;
-
-			hash = HASH(ttn->typename);
-			fprintf(stdout, "\t\tcase %u: \\\n", hash);
-
-			/*
-			 * Find all other entries that happen to match
-			 * this hash.
-			 */
-			for (j = 0; j <= maxtype; j++) {
-				ttn2 = find_typename(j);
-				if (ttn2 == NULL)
-					continue;
-				if (hash == HASH(ttn2->typename)) {
-					fprintf(stdout, "\t\t\tRDATATYPE_COMPARE"
-					       "(\"%s\", %d, "
-					       "_typename, _length, _typep); \\\n",
-					       ttn2->typename, ttn2->type);
-					ttn2->sorted = 1;
-				}
-			}
-			fprintf(stdout, "\t\t\tbreak; \\\n");
-		}
-		fprintf(stdout, "\t}\n");
 
 		fputs("#endif /* DNS_CODE_H */\n", stdout);
 	} else if (type_enum) {

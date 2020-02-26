@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.25 2020/02/25 12:37:15 florian Exp $ */
+/* $Id: rdata.c,v 1.26 2020/02/26 18:36:04 florian Exp $ */
 
 /*! \file */
 
@@ -75,6 +75,11 @@ typedef struct dns_rdata_textctx {
 	unsigned int width;	/*%< Width of rdata column. */
 	const char *linebreak;	/*%< Line break string. */
 } dns_rdata_textctx_t;
+
+typedef struct dns_rdata_type_lookup {
+	const char	*type;
+	int		 val;
+} dns_rdata_type_lookup_t;
 
 static isc_result_t
 txt_totext(isc_region_t *source, isc_boolean_t quote, isc_buffer_t *target);
@@ -916,44 +921,136 @@ dns_rdatatype_attributes(dns_rdatatype_t type)
 	return (DNS_RDATATYPEATTR_UNKNOWN);
 }
 
+static int
+type_cmp(const void *k, const void *e)
+{
+	return (strcasecmp(k, ((const dns_rdata_type_lookup_t *)e)->type));
+}
+
 isc_result_t
 dns_rdatatype_fromtext(dns_rdatatype_t *typep, isc_textregion_t *source) {
-	unsigned int hash;
+	/* This has to be sorted always. */
+	static const dns_rdata_type_lookup_t type_lookup[] = {
+		{"a",		1},
+		{"a6",		38},
+		{"aaaa",	28},
+		{"afsdb",	18},
+		{"any",		255},
+		{"apl",		42},
+		{"atma",	34},
+		{"avc",		258},
+		{"axfr",	252},
+		{"caa",		257},
+		{"cdnskey",	60},
+		{"cds",		59},
+		{"cert",	37},
+		{"cname",	5},
+		{"csync",	62},
+		{"dhcid",	49},
+		{"dlv",		32769},
+		{"dname",	39},
+		{"dnskey",	48},
+		{"doa",		259},
+		{"ds",		43},
+		{"eid",		31},
+		{"eui48",	108},
+		{"eui64",	109},
+		{"gid",		102},
+		{"gpos",	27},
+		{"hinfo",	13},
+		{"hip",		55},
+		{"ipseckey",	45},
+		{"isdn",	20},
+		{"ixfr",	251},
+		{"key",		25},
+		{"keydata",	65533},
+		{"kx",		36},
+		{"l32",		105},
+		{"l64",		106},
+		{"loc",		29},
+		{"lp",		107},
+		{"maila",	254},
+		{"mailb",	253},
+		{"mb",		7},
+		{"md",		3},
+		{"mf",		4},
+		{"mg",		8},
+		{"minfo",	14},
+		{"mr",		9},
+		{"mx",		15},
+		{"naptr",	35},
+		{"nid",		104},
+		{"nimloc",	32},
+		{"ninfo",	56},
+		{"ns",		2},
+		{"nsap",	22},
+		{"nsap-ptr",	23},
+		{"nsec",	47},
+		{"nsec3",	50},
+		{"nsec3param",	51},
+		{"null",	10},
+		{"nxt",		30},
+		{"openpgpkey",	61},
+		{"opt",		41},
+		{"ptr",		12},
+		{"px",		26},
+		{"reserved0",	0},
+		{"rkey",	57},
+		{"rp",		17},
+		{"rrsig",	46},
+		{"rt",		21},
+		{"sig",		24},
+		{"sink",	40},
+		{"smimea",	53},
+		{"soa",		6},
+		{"spf",		99},
+		{"srv",		33},
+		{"sshfp",	44},
+		{"ta",		32768},
+		{"talink",	58},
+		{"tkey",	249},
+		{"tlsa",	52},
+		{"tsig",	250},
+		{"txt",		16},
+		{"uid",		101},
+		{"uinfo",	100},
+		{"unspec",	103},
+		{"uri",		256},
+		{"wks",		11},
+		{"x25",		19}
+	};
+	const dns_rdata_type_lookup_t *p;
 	unsigned int n;
-	unsigned char a, b;
+	char lookup[sizeof("nsec3param")];
 
 	n = source->length;
 
 	if (n == 0)
 		return (DNS_R_UNKNOWN);
 
-	a = tolower((unsigned char)source->base[0]);
-	b = tolower((unsigned char)source->base[n - 1]);
+	/* source->base is not required to be NUL terminated. */
+	if ((size_t)snprintf(lookup, sizeof(lookup), "%.*s", n, source->base)
+	    >= sizeof(lookup))
+		return (DNS_R_UNKNOWN);
 
-	hash = ((a + n) * b) % 256;
+	p = bsearch(lookup, type_lookup,
+	    sizeof(type_lookup)/sizeof(type_lookup[0]), sizeof(type_lookup[0]),
+	    type_cmp);
 
-	/*
-	 * This switch block is inlined via \#define, and will use "return"
-	 * to return a result to the caller if it is a valid (known)
-	 * rdatatype name.
-	 */
-	RDATATYPE_FROMTEXT_SW(hash, source->base, n, typep);
+	if (p) {
+		if ((dns_rdatatype_attributes(p->val) &
+		    DNS_RDATATYPEATTR_RESERVED) != 0)
+			return (ISC_R_NOTIMPLEMENTED);
+		*typep = p->val;
+		return (ISC_R_SUCCESS);
+	}
 
-	if (source->length > 4 && source->length < (4 + sizeof("65000")) &&
-	    strncasecmp("type", source->base, 4) == 0) {
-		char buf[sizeof("65000")];
-		char *endp;
-		unsigned int val;
-
-		/*
-		 * source->base is not required to be NUL terminated.
-		 * Copy up to remaining bytes and NUL terminate.
-		 */
-		snprintf(buf, sizeof(buf), "%.*s",
-			 (int)(source->length - 4), source->base + 4);
-		val = strtoul(buf, &endp, 10);
-		if (*endp == '\0' && val <= 0xffff) {
-			*typep = (dns_rdatatype_t)val;
+	if (n > 4 && strncasecmp("type", lookup, 4) == 0) {
+		int val;
+		const char *errstr;
+		val = strtonum(lookup + 4, 0, UINT16_MAX, &errstr);
+		if (errstr == NULL) {
+			*typep = val;
 			return (ISC_R_SUCCESS);
 		}
 	}
