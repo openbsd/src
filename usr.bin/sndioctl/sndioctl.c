@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.1 2020/02/26 13:58:48 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.2 2020/02/26 14:47:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -872,7 +872,7 @@ main(int argc, char **argv)
 			break;
 		default:
 			fprintf(stderr, "usage: sndioctl "
-			    "[-dimnv] [-f device] [command ...]\n");
+			    "[-dimv] [-f device] [command ...]\n");
 			exit(1);
 		}
 	}
