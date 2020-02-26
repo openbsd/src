@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.29 2020/02/26 18:47:58 florian Exp $ */
+/* $Id: rdata.c,v 1.30 2020/02/26 18:49:02 florian Exp $ */
 
 /*! \file */
 
@@ -225,7 +225,7 @@ typemap_test(isc_region_t *sr, isc_boolean_t allow_empty) {
 		 * Check for overflow.
 		 */
 		if (i + 2 > sr->length)
-			RETERR(DNS_R_FORMERR);
+			return (DNS_R_FORMERR);
 		window = sr->base[i];
 		len = sr->base[i + 1];
 		i += 2;
@@ -233,29 +233,29 @@ typemap_test(isc_region_t *sr, isc_boolean_t allow_empty) {
 		 * Check that bitmap windows are in the correct order.
 		 */
 		if (!first && window <= lastwindow)
-			RETERR(DNS_R_FORMERR);
+			return (DNS_R_FORMERR);
 		/*
 		 * Check for legal lengths.
 		 */
 		if (len < 1 || len > 32)
-			RETERR(DNS_R_FORMERR);
+			return (DNS_R_FORMERR);
 		/*
 		 * Check for overflow.
 		 */
 		if (i + len > sr->length)
-			RETERR(DNS_R_FORMERR);
+			return (DNS_R_FORMERR);
 		/*
 		 * The last octet of the bitmap must be non zero.
 		 */
 		if (sr->base[i + len - 1] == 0)
-			RETERR(DNS_R_FORMERR);
+			return (DNS_R_FORMERR);
 		lastwindow = window;
 		first = ISC_FALSE;
 	}
 	if (i != sr->length)
 		return (DNS_R_EXTRADATA);
 	if (!allow_empty && first)
-		RETERR(DNS_R_FORMERR);
+		return (DNS_R_FORMERR);
 	return (ISC_R_SUCCESS);
 }
 

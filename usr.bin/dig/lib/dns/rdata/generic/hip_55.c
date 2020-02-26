@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.13 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: hip_55.c,v 1.14 2020/02/26 18:49:02 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -105,19 +105,19 @@ fromwire_hip(ARGS_FROMWIRE) {
 
 	isc_buffer_activeregion(source, &region);
 	if (region.length < 4U)
-		RETERR(DNS_R_FORMERR);
+		return (DNS_R_FORMERR);
 
 	rr = region;
 	hit_len = uint8_fromregion(&region);
 	if (hit_len == 0)
-		RETERR(DNS_R_FORMERR);
+		return (DNS_R_FORMERR);
 	isc_region_consume(&region, 2);  	/* hit length + algorithm */
 	key_len = uint16_fromregion(&region);
 	if (key_len == 0)
-		RETERR(DNS_R_FORMERR);
+		return (DNS_R_FORMERR);
 	isc_region_consume(&region, 2);
 	if (region.length < (unsigned) (hit_len + key_len))
-		RETERR(DNS_R_FORMERR);
+		return (DNS_R_FORMERR);
 
 	RETERR(isc_mem_tobuffer(target, rr.base, 4 + hit_len + key_len));
 	isc_buffer_forward(source, 4 + hit_len + key_len);

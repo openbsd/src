@@ -101,12 +101,12 @@ fromwire_caa(ARGS_FROMWIRE) {
 	 * Zero length tag fields are illegal.
 	 */
 	if (sr.length < len || len == 0)
-		RETERR(DNS_R_FORMERR);
+		return (DNS_R_FORMERR);
 
 	/* Check the Tag's value */
 	for (i = 0; i < len; i++)
 		if (!alphanumeric[sr.base[i]])
-			RETERR(DNS_R_FORMERR);
+			return (DNS_R_FORMERR);
 	/*
 	 * Tag + Value
 	 */
