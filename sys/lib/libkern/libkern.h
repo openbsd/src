@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.35 2018/04/25 11:15:58 dlg Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.36 2020/02/26 14:23:15 visa Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -105,13 +105,8 @@ abs(int j)
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
 #else
-#ifdef __STDC__
 #define	assert(e)	((e) ? (void)0 :				    \
 			    __assert("", __FILE__, __LINE__, #e))
-#else
-#define	assert(e)	((e) ? (void)0 :				    \
-			    __assert("", __FILE__, __LINE__, "e"))
-#endif
 #endif
 
 #define	__KASSERTSTR	"kernel %sassertion \"%s\" failed: file \"%s\", line %d"
@@ -120,38 +115,22 @@ abs(int j)
 #define	KASSERTMSG(e, msg, ...)	((void)0)
 #define	KASSERT(e)	((void)0)
 #else
-#ifdef __STDC__
 #define	KASSERTMSG(e, msg, ...)	((e) ? (void)0 :			    \
 			    panic(__KASSERTSTR " " msg, "diagnostic ", #e,  \
 			    __FILE__, __LINE__, ## __VA_ARGS__))
 #define	KASSERT(e)	((e) ? (void)0 :				    \
 			    __assert("diagnostic ", __FILE__, __LINE__, #e))
-#else
-#define	KASSERTMSG(e, msg, ...)	((e) ? (void)0 :			    \
-			    panic(__KASSERTSTR " " msg, "diagnostic ", "e", \
-			    __FILE__, __LINE__, ## __VA_ARGS__))
-#define	KASSERT(e)	((e) ? (void)0 :				    \
-			    __assert("diagnostic ", __FILE__, __LINE__, "e"))
-#endif
 #endif
 
 #ifndef DEBUG
 #define	KDASSERTMSG(e, msg, ...)	((void)0)
 #define	KDASSERT(e)	((void)0)
 #else
-#ifdef __STDC__
 #define	KDASSERTMSG(e, msg, ...)	((e) ? (void)0 :		    \
 			    panic(__KASSERTSTR " " msg, "debugging ", #e,   \
 			    __FILE__, __LINE__, ## __VA_ARGS__))
 #define	KDASSERT(e)	((e) ? (void)0 :				    \
 			    __assert("debugging ", __FILE__, __LINE__, #e))
-#else
-#define	KDASSERTMSG(e, msg, ...)	((e) ? (void)0 :		    \
-			    panic(__KASSERTSTR " " msg, "debugging ", "e",  \
-			    __FILE__, __LINE__, ## __VA_ARGS__))
-#define	KDASSERT(e)	((e) ? (void)0 :				    \
-			    __assert("debugging ", __FILE__, __LINE__, "e"))
-#endif
 #endif
 
 #define	CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ]	\
