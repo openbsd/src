@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.13 2019/11/29 05:11:18 benno Exp $ */
+/*	$OpenBSD: cert.c,v 1.14 2020/02/26 02:35:08 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1316,7 +1316,7 @@ auth_find(struct auth_tree *auths, const char *aki)
 static inline int
 authcmp(struct auth *a, struct auth *b)
 {
-        return strcmp(a->cert->ski, b->cert->ski);
+	return strcmp(a->cert->ski, b->cert->ski);
 }
 
 RB_GENERATE(auth_tree, auth, entry, authcmp);
