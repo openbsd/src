@@ -30,7 +30,7 @@ totext_openpgpkey(ARGS_TOTEXT) {
 	 * Keyring
 	 */
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext("( ", target));
+		RETERR(isc_str_tobuffer("( ", target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
 		if (tctx->width == 0)   /* No splitting */
@@ -39,10 +39,10 @@ totext_openpgpkey(ARGS_TOTEXT) {
 			RETERR(isc_base64_totext(&sr, tctx->width - 2,
 						 tctx->linebreak, target));
 	} else
-		RETERR(str_totext("[omitted]", target));
+		RETERR(isc_str_tobuffer("[omitted]", target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" )", target));
+		RETERR(isc_str_tobuffer(" )", target));
 
 	return (ISC_R_SUCCESS);
 }

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sig_24.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: sig_24.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -48,23 +48,23 @@ totext_sig(ARGS_TOTEXT) {
 	isc_region_consume(&sr, 2);
 
 	RETERR(dns_rdatatype_totext(covered, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * Algorithm.
 	 */
 	snprintf(buf, sizeof(buf), "%u", sr.base[0]);
 	isc_region_consume(&sr, 1);
-	RETERR(str_totext(buf, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(buf, target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * Labels.
 	 */
 	snprintf(buf, sizeof(buf), "%u", sr.base[0]);
 	isc_region_consume(&sr, 1);
-	RETERR(str_totext(buf, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(buf, target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * Ttl.
@@ -72,8 +72,8 @@ totext_sig(ARGS_TOTEXT) {
 	ttl = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
 	snprintf(buf, sizeof(buf), "%lu", ttl);
-	RETERR(str_totext(buf, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(buf, target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * Sig exp.
@@ -83,8 +83,8 @@ totext_sig(ARGS_TOTEXT) {
 	RETERR(dns_time32_totext(exp, target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" (", target));
-	RETERR(str_totext(tctx->linebreak, target));
+		RETERR(isc_str_tobuffer(" (", target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 
 	/*
 	 * Time signed.
@@ -92,7 +92,7 @@ totext_sig(ARGS_TOTEXT) {
 	when = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
 	RETERR(dns_time32_totext(when, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * Footprint.
@@ -100,8 +100,8 @@ totext_sig(ARGS_TOTEXT) {
 	foot = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	snprintf(buf, sizeof(buf), "%lu", foot);
-	RETERR(str_totext(buf, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(buf, target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * Signer.
@@ -116,14 +116,14 @@ totext_sig(ARGS_TOTEXT) {
 	/*
 	 * Sig.
 	 */
-	RETERR(str_totext(tctx->linebreak, target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 	if (tctx->width == 0)   /* No splitting */
 		RETERR(isc_base64_totext(&sr, 60, "", target));
 	else
 		RETERR(isc_base64_totext(&sr, tctx->width - 2,
 					 tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" )", target));
+		RETERR(isc_str_tobuffer(" )", target));
 
 	return (ISC_R_SUCCESS);
 }

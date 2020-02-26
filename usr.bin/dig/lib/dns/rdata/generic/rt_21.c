@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rt_21.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: rt_21.c,v 1.11 2020/02/26 18:47:59 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:02:31 PST 2000 by brister */
 
@@ -42,8 +42,8 @@ totext_rt(ARGS_TOTEXT) {
 	num = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
 	snprintf(buf, sizeof(buf), "%u", num);
-	RETERR(str_totext(buf, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(buf, target));
+	RETERR(isc_str_tobuffer(" ", target));
 	dns_name_fromregion(&name, &region);
 	sub = name_prefix(&name, tctx->origin, &prefix);
 	return (dns_name_totext(&prefix, sub, target));

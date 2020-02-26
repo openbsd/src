@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: afsdb_18.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: afsdb_18.c,v 1.11 2020/02/26 18:47:58 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 14:59:00 PST 2000 by explorer */
 
@@ -42,7 +42,7 @@ totext_afsdb(ARGS_TOTEXT) {
 	num = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
 	snprintf(buf, sizeof(buf), "%u ", num);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 	dns_name_fromregion(&name, &region);
 	sub = name_prefix(&name, tctx->origin, &prefix);
 	return (dns_name_totext(&prefix, sub, target));

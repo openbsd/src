@@ -31,7 +31,7 @@ totext_eui48(ARGS_TOTEXT) {
 	(void)snprintf(buf, sizeof(buf), "%02x-%02x-%02x-%02x-%02x-%02x",
 		       rdata->data[0], rdata->data[1], rdata->data[2],
 		       rdata->data[3], rdata->data[4], rdata->data[5]);
-	return (str_totext(buf, target));
+	return (isc_str_tobuffer(buf, target));
 }
 
 static inline isc_result_t

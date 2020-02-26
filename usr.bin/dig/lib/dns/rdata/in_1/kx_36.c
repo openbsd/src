@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: kx_36.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: kx_36.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 17:24:54 PST 2000 by explorer */
 
@@ -43,9 +43,9 @@ totext_in_kx(ARGS_TOTEXT) {
 	num = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
 	snprintf(buf, sizeof(buf), "%u", num);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	dns_name_fromregion(&name, &region);
 	sub = name_prefix(&name, tctx->origin, &prefix);

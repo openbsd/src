@@ -37,7 +37,7 @@ totext_doa(ARGS_TOTEXT) {
 	n = uint32_fromregion(&region);
 	isc_region_consume(&region, 4);
 	snprintf(buf, sizeof(buf), "%u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * DOA-TYPE
@@ -45,7 +45,7 @@ totext_doa(ARGS_TOTEXT) {
 	n = uint32_fromregion(&region);
 	isc_region_consume(&region, 4);
 	snprintf(buf, sizeof(buf), "%u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * DOA-LOCATION
@@ -53,19 +53,19 @@ totext_doa(ARGS_TOTEXT) {
 	n = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	snprintf(buf, sizeof(buf), "%u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * DOA-MEDIA-TYPE
 	 */
 	RETERR(txt_totext(&region, ISC_TRUE, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * DOA-DATA
 	 */
 	if (region.length == 0) {
-		return (str_totext("-", target));
+		return (isc_str_tobuffer("-", target));
 	} else {
 		return (isc_base64_totext(&region, 60, "", target));
 	}

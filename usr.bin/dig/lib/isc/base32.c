@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: base32.c,v 1.6 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: base32.c,v 1.7 2020/02/26 18:47:59 florian Exp $ */
 
 /*! \file */
 
@@ -29,14 +29,6 @@
 	if (_r != ISC_R_SUCCESS) \
 		return (_r); \
 	} while (0)
-
-/*@{*/
-/*!
- * These static functions are also present in lib/dns/rdata.c.  I'm not
- * sure where they should go. -- bwelling
- */
-static isc_result_t
-str_totext(const char *source, isc_buffer_t *target);
 
 /*@}*/
 
@@ -60,7 +52,7 @@ base32_totext(isc_region_t *source, int wordlength, const char *wordbreak,
 			buf[1] = base[(source->base[0]<<2)&0x1c];
 			buf[2] = buf[3] = buf[4] = pad;
 			buf[5] = buf[6] = buf[7] = pad;
-			RETERR(str_totext(buf, target));
+			RETERR(isc_str_tobuffer(buf, target));
 			break;
 		}
 		buf[1] = base[((source->base[0]<<2)&0x1c)|	/* 3 = 8 */
@@ -69,7 +61,7 @@ base32_totext(isc_region_t *source, int wordlength, const char *wordbreak,
 		if (source->length == 2) {
 			buf[3] = base[(source->base[1]<<4)&0x10];
 			buf[4] = buf[5] = buf[6] = buf[7] = pad;
-			RETERR(str_totext(buf, target));
+			RETERR(isc_str_tobuffer(buf, target));
 			break;
 		}
 		buf[3] = base[((source->base[1]<<4)&0x10)|	/* 1 = 8 */
@@ -77,7 +69,7 @@ base32_totext(isc_region_t *source, int wordlength, const char *wordbreak,
 		if (source->length == 3) {
 			buf[4] = base[(source->base[2]<<1)&0x1e];
 			buf[5] = buf[6] = buf[7] = pad;
-			RETERR(str_totext(buf, target));
+			RETERR(isc_str_tobuffer(buf, target));
 			break;
 		}
 		buf[4] = base[((source->base[2]<<1)&0x1e)|	/* 4 = 8 */
@@ -86,13 +78,13 @@ base32_totext(isc_region_t *source, int wordlength, const char *wordbreak,
 		if (source->length == 4) {
 			buf[6] = base[(source->base[3]<<3)&0x18];
 			buf[7] = pad;
-			RETERR(str_totext(buf, target));
+			RETERR(isc_str_tobuffer(buf, target));
 			break;
 		}
 		buf[6] = base[((source->base[3]<<3)&0x18)|	/* 2 = 8 */
 			      ((source->base[4]>>5)&0x07)];	/* 3 + */
 		buf[7] = base[source->base[4]&0x1f];		/* 5 = 8 */
-		RETERR(str_totext(buf, target));
+		RETERR(isc_str_tobuffer(buf, target));
 		isc_region_consume(source, 5);
 
 		loops++;
@@ -100,7 +92,7 @@ base32_totext(isc_region_t *source, int wordlength, const char *wordbreak,
 		    (int)((loops + 1) * 8) >= wordlength)
 		{
 			loops = 0;
-			RETERR(str_totext(wordbreak, target));
+			RETERR(isc_str_tobuffer(wordbreak, target));
 		}
 	}
 	if (source->length > 0)
@@ -276,20 +268,4 @@ base32_decoderegion(isc_region_t *source, const char base[],
 isc_result_t
 isc_base32hexnp_decoderegion(isc_region_t *source, isc_buffer_t *target) {
 	return (base32_decoderegion(source, base32hex, ISC_FALSE, target));
-}
-
-static isc_result_t
-str_totext(const char *source, isc_buffer_t *target) {
-	unsigned int l;
-	isc_region_t region;
-
-	isc_buffer_availableregion(target, &region);
-	l = strlen(source);
-
-	if (l > region.length)
-		return (ISC_R_NOSPACE);
-
-	memmove(region.base, source, l);
-	isc_buffer_add(target, l);
-	return (ISC_R_SUCCESS);
 }

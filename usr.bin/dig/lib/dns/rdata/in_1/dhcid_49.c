@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dhcid_49.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: dhcid_49.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
 
 /* RFC 4701 */
 
@@ -35,20 +35,20 @@ totext_in_dhcid(ARGS_TOTEXT) {
 	sr2 = sr;
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext("( " /*)*/, target));
+		RETERR(isc_str_tobuffer("( " /*)*/, target));
 	if (tctx->width == 0)   /* No splitting */
 		RETERR(isc_base64_totext(&sr, 60, "", target));
 	else
 		RETERR(isc_base64_totext(&sr, tctx->width - 2,
 					 tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
-		RETERR(str_totext(/* ( */ " )", target));
+		RETERR(isc_str_tobuffer(/* ( */ " )", target));
 		if (rdata->length > 2) {
 			n = snprintf(buf, sizeof(buf), " ; %u %u %u",
 				     sr2.base[0] * 256U + sr2.base[1],
 				     sr2.base[2], rdata->length - 3U);
 			INSIST(n < sizeof(buf));
-			RETERR(str_totext(buf, target));
+			RETERR(isc_str_tobuffer(buf, target));
 		}
 	}
 	return (ISC_R_SUCCESS);

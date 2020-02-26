@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: apl_42.c,v 1.12 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: apl_42.c,v 1.13 2020/02/26 18:47:59 florian Exp $ */
 
 /* RFC3123 */
 
@@ -56,7 +56,7 @@ totext_in_apl(ARGS_TOTEXT) {
 		n = snprintf(txt, sizeof(txt), "%s%s%u:", sep,
 			     neg ? "!" : "", afi);
 		INSIST(n < (int)sizeof(txt));
-		RETERR(str_totext(txt, target));
+		RETERR(isc_str_tobuffer(txt, target));
 		switch (afi) {
 		case 1:
 			INSIST(len <= 4);
@@ -79,7 +79,7 @@ totext_in_apl(ARGS_TOTEXT) {
 		}
 		n = snprintf(txt, sizeof(txt), "/%u", prefix);
 		INSIST(n < (int)sizeof(txt));
-		RETERR(str_totext(txt, target));
+		RETERR(isc_str_tobuffer(txt, target));
 		isc_region_consume(&sr, len);
 		sep = " ";
 	}

@@ -34,7 +34,7 @@ totext_eui64(ARGS_TOTEXT) {
 		       rdata->data[2], rdata->data[3],
 		       rdata->data[4], rdata->data[5],
 		       rdata->data[6], rdata->data[7]);
-	return (str_totext(buf, target));
+	return (isc_str_tobuffer(buf, target));
 }
 
 static inline isc_result_t

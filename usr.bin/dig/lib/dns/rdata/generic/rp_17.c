@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rp_17.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: rp_17.c,v 1.11 2020/02/26 18:47:59 florian Exp $ */
 
 /* RFC1183 */
 
@@ -47,7 +47,7 @@ totext_rp(ARGS_TOTEXT) {
 	sub = name_prefix(&rmail, tctx->origin, &prefix);
 	RETERR(dns_name_totext(&prefix, sub, target));
 
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	sub = name_prefix(&email, tctx->origin, &prefix);
 	return (dns_name_totext(&prefix, sub, target));

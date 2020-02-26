@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: a_1.c,v 1.11 2020/02/26 18:47:58 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -49,8 +49,8 @@ totext_ch_a(ARGS_TOTEXT) {
 	RETERR(dns_name_totext(&prefix, sub, target));
 
 	snprintf(buf, sizeof(buf), "%o", addr); /* note octal */
-	RETERR(str_totext(" ", target));
-	return (str_totext(buf, target));
+	RETERR(isc_str_tobuffer(" ", target));
+	return (isc_str_tobuffer(buf, target));
 }
 
 static inline isc_result_t

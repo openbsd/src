@@ -55,13 +55,13 @@ totext_caa(ARGS_TOTEXT) {
 	 */
 	flags = uint8_consume_fromregion(&region);
 	snprintf(buf, sizeof(buf), "%u ", flags);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Tag
 	 */
 	RETERR(txt_totext(&region, ISC_FALSE, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * Value

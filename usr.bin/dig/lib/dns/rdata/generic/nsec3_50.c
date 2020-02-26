@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.10 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: nsec3_50.c,v 1.11 2020/02/26 18:47:59 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -57,19 +57,19 @@ totext_nsec3(ARGS_TOTEXT) {
 	hash = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 	snprintf(buf, sizeof(buf), "%u ", hash);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/* Flags */
 	flags = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 	snprintf(buf, sizeof(buf), "%u ", flags);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/* Iterations */
 	iterations = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	snprintf(buf, sizeof(buf), "%u ", iterations);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/* Salt */
 	j = uint8_fromregion(&sr);
@@ -82,11 +82,11 @@ totext_nsec3(ARGS_TOTEXT) {
 		RETERR(isc_hex_totext(&sr, 1, "", target));
 		sr.length = i - j;
 	} else
-		RETERR(str_totext("-", target));
+		RETERR(isc_str_tobuffer("-", target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" (", target));
-	RETERR(str_totext(tctx->linebreak, target));
+		RETERR(isc_str_tobuffer(" (", target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 
 	/* Next hash */
 	j = uint8_fromregion(&sr);
@@ -102,12 +102,12 @@ totext_nsec3(ARGS_TOTEXT) {
 	 * Don't leave a trailing space when there's no typemap present.
 	 */
 	if (((tctx->flags & DNS_STYLEFLAG_MULTILINE) == 0) && (sr.length > 0)) {
-		RETERR(str_totext(" ", target));
+		RETERR(isc_str_tobuffer(" ", target));
 	}
 	RETERR(typemap_totext(&sr, tctx, target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" )", target));
+		RETERR(isc_str_tobuffer(" )", target));
 
 	return (ISC_R_SUCCESS);
 }

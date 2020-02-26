@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig_250.c,v 1.8 2020/02/26 18:47:24 florian Exp $ */
+/* $Id: tsig_250.c,v 1.9 2020/02/26 18:47:58 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 
@@ -46,7 +46,7 @@ totext_any_tsig(ARGS_TOTEXT) {
 	dns_name_fromregion(&name, &sr);
 	sub = name_prefix(&name, tctx->origin, &prefix);
 	RETERR(dns_name_totext(&prefix, sub, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 	isc_region_consume(&sr, name_length(&name));
 
 	/*
@@ -67,7 +67,7 @@ totext_any_tsig(ARGS_TOTEXT) {
 		sigtime /= 10;
 	} while (sigtime != 0);
 	bufp++;
-	RETERR(str_totext(bufp, target));
+	RETERR(isc_str_tobuffer(bufp, target));
 
 	/*
 	 * Fudge.
@@ -75,7 +75,7 @@ totext_any_tsig(ARGS_TOTEXT) {
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	snprintf(buf, sizeof(buf), "%u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Signature Size.
@@ -83,7 +83,7 @@ totext_any_tsig(ARGS_TOTEXT) {
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	snprintf(buf, sizeof(buf), "%u", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Signature.
@@ -92,17 +92,17 @@ totext_any_tsig(ARGS_TOTEXT) {
 	sigr = sr;
 	sigr.length = n;
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" (", target));
-	RETERR(str_totext(tctx->linebreak, target));
+		RETERR(isc_str_tobuffer(" (", target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 	if (tctx->width == 0)   /* No splitting */
 		RETERR(isc_base64_totext(&sigr, 60, "", target));
 	else
 		RETERR(isc_base64_totext(&sigr, tctx->width - 2,
 					 tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" ) ", target));
+		RETERR(isc_str_tobuffer(" ) ", target));
 	else
-		RETERR(str_totext(" ", target));
+		RETERR(isc_str_tobuffer(" ", target));
 	isc_region_consume(&sr, n);
 
 	/*
@@ -111,7 +111,7 @@ totext_any_tsig(ARGS_TOTEXT) {
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	snprintf(buf, sizeof(buf), "%u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Error.
@@ -126,7 +126,7 @@ totext_any_tsig(ARGS_TOTEXT) {
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	snprintf(buf, sizeof(buf), " %u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Other.

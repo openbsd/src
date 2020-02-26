@@ -37,7 +37,7 @@ generic_totext_tlsa(ARGS_TOTEXT) {
 	n = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 	snprintf(buf, sizeof(buf), "%u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Selector.
@@ -45,7 +45,7 @@ generic_totext_tlsa(ARGS_TOTEXT) {
 	n = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 	snprintf(buf, sizeof(buf), "%u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Matching type.
@@ -53,21 +53,21 @@ generic_totext_tlsa(ARGS_TOTEXT) {
 	n = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 	snprintf(buf, sizeof(buf), "%u", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Certificate Association Data.
 	 */
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" (", target));
-	RETERR(str_totext(tctx->linebreak, target));
+		RETERR(isc_str_tobuffer(" (", target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 	if (tctx->width == 0) /* No splitting */
 		RETERR(isc_hex_totext(&sr, 0, "", target));
 	else
 		RETERR(isc_hex_totext(&sr, tctx->width - 2,
 				      tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" )", target));
+		RETERR(isc_str_tobuffer(" )", target));
 	return (ISC_R_SUCCESS);
 }
 

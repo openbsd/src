@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a6_38.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: a6_38.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
 
 /* RFC2874 */
 
@@ -44,8 +44,8 @@ totext_in_a6(ARGS_TOTEXT) {
 	INSIST(prefixlen <= 128);
 	isc_region_consume(&sr, 1);
 	snprintf(buf, sizeof(buf), "%u", prefixlen);
-	RETERR(str_totext(buf, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(buf, target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	if (prefixlen != 128) {
 		octets = prefixlen/8;
@@ -62,7 +62,7 @@ totext_in_a6(ARGS_TOTEXT) {
 	if (prefixlen == 0)
 		return (ISC_R_SUCCESS);
 
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 	dns_name_init(&name, NULL);
 	dns_name_init(&prefix, NULL);
 	dns_name_fromregion(&name, &sr);

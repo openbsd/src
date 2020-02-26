@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.12 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: hip_55.c,v 1.13 2020/02/26 18:47:59 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -46,13 +46,13 @@ totext_hip(ARGS_TOTEXT) {
 	isc_region_consume(&region, 2);
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext("( ", target));
+		RETERR(isc_str_tobuffer("( ", target));
 
 	/*
 	 * Algorithm
 	 */
 	snprintf(buf, sizeof(buf), "%u ", algorithm);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * HIT.
@@ -62,7 +62,7 @@ totext_hip(ARGS_TOTEXT) {
 	region.length = hit_len;
 	RETERR(isc_hex_totext(&region, 1, "", target));
 	region.length = length - hit_len;
-	RETERR(str_totext(tctx->linebreak, target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 
 	/*
 	 * Public KEY.
@@ -72,7 +72,7 @@ totext_hip(ARGS_TOTEXT) {
 	region.length = key_len;
 	RETERR(isc_base64_totext(&region, 1, "", target));
 	region.length = length - key_len;
-	RETERR(str_totext(tctx->linebreak, target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 
 	/*
 	 * Rendezvous Servers.
@@ -84,10 +84,10 @@ totext_hip(ARGS_TOTEXT) {
 		RETERR(dns_name_totext(&name, ISC_FALSE, target));
 		isc_region_consume(&region, name.length);
 		if (region.length > 0)
-			RETERR(str_totext(tctx->linebreak, target));
+			RETERR(isc_str_tobuffer(tctx->linebreak, target));
 	}
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" )", target));
+		RETERR(isc_str_tobuffer(" )", target));
 	return (ISC_R_SUCCESS);
 }
 

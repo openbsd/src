@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hex.c,v 1.4 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: hex.c,v 1.5 2020/02/26 18:47:59 florian Exp $ */
 
 /*! \file */
 
@@ -33,12 +33,6 @@
 		return (_r); \
 	} while (0)
 
-/*
- * BEW: These static functions are copied from lib/dns/rdata.c.
- */
-static isc_result_t
-str_totext(const char *source, isc_buffer_t *target);
-
 static const char hex[] = "0123456789ABCDEF";
 
 isc_result_t
@@ -55,7 +49,7 @@ isc_hex_totext(isc_region_t *source, int wordlength,
 	while (source->length > 0) {
 		buf[0] = hex[(source->base[0] >> 4) & 0xf];
 		buf[1] = hex[(source->base[0]) & 0xf];
-		RETERR(str_totext(buf, target));
+		RETERR(isc_str_tobuffer(buf, target));
 		isc_region_consume(source, 1);
 
 		loops++;
@@ -63,7 +57,7 @@ isc_hex_totext(isc_region_t *source, int wordlength,
 		    (int)((loops + 1) * 2) >= wordlength)
 		{
 			loops = 0;
-			RETERR(str_totext(wordbreak, target));
+			RETERR(isc_str_tobuffer(wordbreak, target));
 		}
 	}
 	return (ISC_R_SUCCESS);
@@ -133,21 +127,5 @@ isc_hex_decodestring(const char *cstr, isc_buffer_t *target) {
 		RETERR(hex_decode_char(&ctx, c));
 	}
 	RETERR(hex_decode_finish(&ctx));
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-str_totext(const char *source, isc_buffer_t *target) {
-	unsigned int l;
-	isc_region_t region;
-
-	isc_buffer_availableregion(target, &region);
-	l = strlen(source);
-
-	if (l > region.length)
-		return (ISC_R_NOSPACE);
-
-	memmove(region.base, source, l);
-	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
 }

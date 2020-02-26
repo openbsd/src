@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cert_37.c,v 1.11 2020/02/26 18:47:24 florian Exp $ */
+/* $Id: cert_37.c,v 1.12 2020/02/26 18:47:58 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 21:14:32 EST 2000 by tale */
 
@@ -42,7 +42,7 @@ totext_cert(ARGS_TOTEXT) {
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	RETERR(dns_cert_totext((dns_cert_t)n, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * Key tag.
@@ -50,7 +50,7 @@ totext_cert(ARGS_TOTEXT) {
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	snprintf(buf, sizeof(buf), "%u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Algorithm.
@@ -62,15 +62,15 @@ totext_cert(ARGS_TOTEXT) {
 	 * Cert.
 	 */
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" (", target));
-	RETERR(str_totext(tctx->linebreak, target));
+		RETERR(isc_str_tobuffer(" (", target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 	if (tctx->width == 0)   /* No splitting */
 		RETERR(isc_base64_totext(&sr, 60, "", target));
 	else
 		RETERR(isc_base64_totext(&sr, tctx->width - 2,
 					 tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" )", target));
+		RETERR(isc_str_tobuffer(" )", target));
 	return (ISC_R_SUCCESS);
 }
 

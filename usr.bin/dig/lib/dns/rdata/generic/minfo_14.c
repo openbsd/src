@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: minfo_14.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: minfo_14.c,v 1.11 2020/02/26 18:47:59 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:45:32 PST 2000 by brister */
 
@@ -48,7 +48,7 @@ totext_minfo(ARGS_TOTEXT) {
 
 	RETERR(dns_name_totext(&prefix, sub, target));
 
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	sub = name_prefix(&email, tctx->origin, &prefix);
 	return (dns_name_totext(&prefix, sub, target));

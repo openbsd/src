@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: base64.c,v 1.5 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: base64.c,v 1.6 2020/02/26 18:47:59 florian Exp $ */
 
 /*! \file */
 
@@ -32,12 +32,6 @@
 	} while (0)
 
 /*@{*/
-/*!
- * These static functions are also present in lib/dns/rdata.c.  I'm not
- * sure where they should go. -- bwelling
- */
-static isc_result_t
-str_totext(const char *source, isc_buffer_t *target);
 
 static const char base64[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
@@ -61,7 +55,7 @@ isc_base64_totext(isc_region_t *source, int wordlength,
 		buf[2] = base64[((source->base[1]<<2)&0x3c)|
 				((source->base[2]>>6)&0x03)];
 		buf[3] = base64[source->base[2]&0x3f];
-		RETERR(str_totext(buf, target));
+		RETERR(isc_str_tobuffer(buf, target));
 		isc_region_consume(source, 3);
 
 		loops++;
@@ -69,7 +63,7 @@ isc_base64_totext(isc_region_t *source, int wordlength,
 		    (int)((loops + 1) * 4) >= wordlength)
 		{
 			loops = 0;
-			RETERR(str_totext(wordbreak, target));
+			RETERR(isc_str_tobuffer(wordbreak, target));
 		}
 	}
 	if (source->length == 2) {
@@ -78,13 +72,13 @@ isc_base64_totext(isc_region_t *source, int wordlength,
 				((source->base[1]>>4)&0x0f)];
 		buf[2] = base64[((source->base[1]<<2)&0x3c)];
 		buf[3] = '=';
-		RETERR(str_totext(buf, target));
+		RETERR(isc_str_tobuffer(buf, target));
 		isc_region_consume(source, 2);
 	} else if (source->length == 1) {
 		buf[0] = base64[(source->base[0]>>2)&0x3f];
 		buf[1] = base64[((source->base[0]<<4)&0x30)];
 		buf[2] = buf[3] = '=';
-		RETERR(str_totext(buf, target));
+		RETERR(isc_str_tobuffer(buf, target));
 		isc_region_consume(source, 1);
 	}
 	return (ISC_R_SUCCESS);
@@ -184,21 +178,5 @@ isc_base64_decodestring(const char *cstr, isc_buffer_t *target) {
 		RETERR(base64_decode_char(&ctx, c));
 	}
 	RETERR(base64_decode_finish(&ctx));
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
-str_totext(const char *source, isc_buffer_t *target) {
-	unsigned int l;
-	isc_region_t region;
-
-	isc_buffer_availableregion(target, &region);
-	l = strlen(source);
-
-	if (l > region.length)
-		return (ISC_R_NOSPACE);
-
-	memmove(region.base, source, l);
-	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
 }

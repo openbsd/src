@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.28 2020/02/26 18:47:24 florian Exp $ */
+/* $Id: rdata.c,v 1.29 2020/02/26 18:47:58 florian Exp $ */
 
 /*! \file */
 
@@ -95,9 +95,6 @@ name_prefix(dns_name_t *name, dns_name_t *origin, dns_name_t *target);
 
 static unsigned int
 name_length(dns_name_t *name);
-
-static isc_result_t
-str_totext(const char *source, isc_buffer_t *target);
 
 static isc_result_t
 inet_totext(int af, isc_region_t *src, isc_buffer_t *target);
@@ -189,7 +186,7 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 	for (i = 0; i < sr->length; i += len) {
 		if (tctx != NULL &&
 		    (tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
-			RETERR(str_totext(tctx->linebreak, target));
+			RETERR(isc_str_tobuffer(tctx->linebreak, target));
 			first = ISC_TRUE;
 		}
 		INSIST(i + 2 <= sr->length);
@@ -207,7 +204,7 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 					continue;
 				t = window * 256 + j * 8 + k;
 				if (!first)
-					RETERR(str_totext(" ", target));
+					RETERR(isc_str_tobuffer(" ", target));
 				first = ISC_FALSE;
 				RETERR(dns_rdatatype_totext(t, target));
 			}
@@ -474,22 +471,22 @@ unknown_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 	isc_region_t sr;
 
 	strlcpy(buf, "\\# ", sizeof(buf));
-	result = str_totext(buf, target);
+	result = isc_str_tobuffer(buf, target);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
 	dns_rdata_toregion(rdata, &sr);
 	INSIST(sr.length < 65536);
 	snprintf(buf, sizeof(buf), "%u", sr.length);
-	result = str_totext(buf, target);
+	result = isc_str_tobuffer(buf, target);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
 	if (sr.length != 0U) {
 		if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-			result = str_totext(" ( ", target);
+			result = isc_str_tobuffer(" ( ", target);
 		else
-			result = str_totext(" ", target);
+			result = isc_str_tobuffer(" ", target);
 
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -502,7 +499,7 @@ unknown_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 						target);
 		if (result == ISC_R_SUCCESS &&
 		    (tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-			result = str_totext(" )", target);
+			result = isc_str_tobuffer(" )", target);
 	}
 	return (result);
 }
@@ -882,180 +879,180 @@ dns_rdatatype_totext(dns_rdatatype_t type, isc_buffer_t *target) {
 
 	switch (type) {
 	case 0:
-		return (str_totext("RESERVED0", target));
+		return (isc_str_tobuffer("RESERVED0", target));
 	case 1:
-		return (str_totext("A", target));
+		return (isc_str_tobuffer("A", target));
 	case 2:
-		return (str_totext("NS", target));
+		return (isc_str_tobuffer("NS", target));
 	case 3:
-		return (str_totext("MD", target));
+		return (isc_str_tobuffer("MD", target));
 	case 4:
-		return (str_totext("MF", target));
+		return (isc_str_tobuffer("MF", target));
 	case 5:
-		return (str_totext("CNAME", target));
+		return (isc_str_tobuffer("CNAME", target));
 	case 6:
-		return (str_totext("SOA", target));
+		return (isc_str_tobuffer("SOA", target));
 	case 7:
-		return (str_totext("MB", target));
+		return (isc_str_tobuffer("MB", target));
 	case 8:
-		return (str_totext("MG", target));
+		return (isc_str_tobuffer("MG", target));
 	case 9:
-		return (str_totext("MR", target));
+		return (isc_str_tobuffer("MR", target));
 	case 10:
-		return (str_totext("NULL", target));
+		return (isc_str_tobuffer("NULL", target));
 	case 11:
-		return (str_totext("WKS", target));
+		return (isc_str_tobuffer("WKS", target));
 	case 12:
-		return (str_totext("PTR", target));
+		return (isc_str_tobuffer("PTR", target));
 	case 13:
-		return (str_totext("HINFO", target));
+		return (isc_str_tobuffer("HINFO", target));
 	case 14:
-		return (str_totext("MINFO", target));
+		return (isc_str_tobuffer("MINFO", target));
 	case 15:
-		return (str_totext("MX", target));
+		return (isc_str_tobuffer("MX", target));
 	case 16:
-		return (str_totext("TXT", target));
+		return (isc_str_tobuffer("TXT", target));
 	case 17:
-		return (str_totext("RP", target));
+		return (isc_str_tobuffer("RP", target));
 	case 18:
-		return (str_totext("AFSDB", target));
+		return (isc_str_tobuffer("AFSDB", target));
 	case 19:
-		return (str_totext("X25", target));
+		return (isc_str_tobuffer("X25", target));
 	case 20:
-		return (str_totext("ISDN", target));
+		return (isc_str_tobuffer("ISDN", target));
 	case 21:
-		return (str_totext("RT", target));
+		return (isc_str_tobuffer("RT", target));
 	case 22:
-		return (str_totext("NSAP", target));
+		return (isc_str_tobuffer("NSAP", target));
 	case 23:
-		return (str_totext("NSAP-PTR", target));
+		return (isc_str_tobuffer("NSAP-PTR", target));
 	case 24:
-		return (str_totext("SIG", target));
+		return (isc_str_tobuffer("SIG", target));
 	case 25:
-		return (str_totext("KEY", target));
+		return (isc_str_tobuffer("KEY", target));
 	case 26:
-		return (str_totext("PX", target));
+		return (isc_str_tobuffer("PX", target));
 	case 27:
-		return (str_totext("GPOS", target));
+		return (isc_str_tobuffer("GPOS", target));
 	case 28:
-		return (str_totext("AAAA", target));
+		return (isc_str_tobuffer("AAAA", target));
 	case 29:
-		return (str_totext("LOC", target));
+		return (isc_str_tobuffer("LOC", target));
 	case 30:
-		return (str_totext("NXT", target));
+		return (isc_str_tobuffer("NXT", target));
 	case 31:
-		return (str_totext("EID", target));
+		return (isc_str_tobuffer("EID", target));
 	case 32:
-		return (str_totext("NIMLOC", target));
+		return (isc_str_tobuffer("NIMLOC", target));
 	case 33:
-		return (str_totext("SRV", target));
+		return (isc_str_tobuffer("SRV", target));
 	case 34:
-		return (str_totext("ATMA", target));
+		return (isc_str_tobuffer("ATMA", target));
 	case 35:
-		return (str_totext("NAPTR", target));
+		return (isc_str_tobuffer("NAPTR", target));
 	case 36:
-		return (str_totext("KX", target));
+		return (isc_str_tobuffer("KX", target));
 	case 37:
-		return (str_totext("CERT", target));
+		return (isc_str_tobuffer("CERT", target));
 	case 38:
-		return (str_totext("A6", target));
+		return (isc_str_tobuffer("A6", target));
 	case 39:
-		return (str_totext("DNAME", target));
+		return (isc_str_tobuffer("DNAME", target));
 	case 40:
-		return (str_totext("SINK", target));
+		return (isc_str_tobuffer("SINK", target));
 	case 41:
-		return (str_totext("OPT", target));
+		return (isc_str_tobuffer("OPT", target));
 	case 42:
-		return (str_totext("APL", target));
+		return (isc_str_tobuffer("APL", target));
 	case 43:
-		return (str_totext("DS", target));
+		return (isc_str_tobuffer("DS", target));
 	case 44:
-		return (str_totext("SSHFP", target));
+		return (isc_str_tobuffer("SSHFP", target));
 	case 45:
-		return (str_totext("IPSECKEY", target));
+		return (isc_str_tobuffer("IPSECKEY", target));
 	case 46:
-		return (str_totext("RRSIG", target));
+		return (isc_str_tobuffer("RRSIG", target));
 	case 47:
-		return (str_totext("NSEC", target));
+		return (isc_str_tobuffer("NSEC", target));
 	case 48:
-		return (str_totext("DNSKEY", target));
+		return (isc_str_tobuffer("DNSKEY", target));
 	case 49:
-		return (str_totext("DHCID", target));
+		return (isc_str_tobuffer("DHCID", target));
 	case 50:
-		return (str_totext("NSEC3", target));
+		return (isc_str_tobuffer("NSEC3", target));
 	case 51:
-		return (str_totext("NSEC3PARAM", target));
+		return (isc_str_tobuffer("NSEC3PARAM", target));
 	case 52:
-		return (str_totext("TLSA", target));
+		return (isc_str_tobuffer("TLSA", target));
 	case 53:
-		return (str_totext("SMIMEA", target));
+		return (isc_str_tobuffer("SMIMEA", target));
 	case 55:
-		return (str_totext("HIP", target));
+		return (isc_str_tobuffer("HIP", target));
 	case 56:
-		return (str_totext("NINFO", target));
+		return (isc_str_tobuffer("NINFO", target));
 	case 57:
-		return (str_totext("RKEY", target));
+		return (isc_str_tobuffer("RKEY", target));
 	case 58:
-		return (str_totext("TALINK", target));
+		return (isc_str_tobuffer("TALINK", target));
 	case 59:
-		return (str_totext("CDS", target));
+		return (isc_str_tobuffer("CDS", target));
 	case 60:
-		return (str_totext("CDNSKEY", target));
+		return (isc_str_tobuffer("CDNSKEY", target));
 	case 61:
-		return (str_totext("OPENPGPKEY", target));
+		return (isc_str_tobuffer("OPENPGPKEY", target));
 	case 62:
-		return (str_totext("CSYNC", target));
+		return (isc_str_tobuffer("CSYNC", target));
 	case 99:
-		return (str_totext("SPF", target));
+		return (isc_str_tobuffer("SPF", target));
 	case 100:
-		return (str_totext("UINFO", target));
+		return (isc_str_tobuffer("UINFO", target));
 	case 101:
-		return (str_totext("UID", target));
+		return (isc_str_tobuffer("UID", target));
 	case 102:
-		return (str_totext("GID", target));
+		return (isc_str_tobuffer("GID", target));
 	case 103:
-		return (str_totext("UNSPEC", target));
+		return (isc_str_tobuffer("UNSPEC", target));
 	case 104:
-		return (str_totext("NID", target));
+		return (isc_str_tobuffer("NID", target));
 	case 105:
-		return (str_totext("L32", target));
+		return (isc_str_tobuffer("L32", target));
 	case 106:
-		return (str_totext("L64", target));
+		return (isc_str_tobuffer("L64", target));
 	case 107:
-		return (str_totext("LP", target));
+		return (isc_str_tobuffer("LP", target));
 	case 108:
-		return (str_totext("EUI48", target));
+		return (isc_str_tobuffer("EUI48", target));
 	case 109:
-		return (str_totext("EUI64", target));
+		return (isc_str_tobuffer("EUI64", target));
 	case 249:
-		return (str_totext("TKEY", target));
+		return (isc_str_tobuffer("TKEY", target));
 	case 250:
-		return (str_totext("TSIG", target));
+		return (isc_str_tobuffer("TSIG", target));
 	case 251:
-		return (str_totext("IXFR", target));
+		return (isc_str_tobuffer("IXFR", target));
 	case 252:
-		return (str_totext("AXFR", target));
+		return (isc_str_tobuffer("AXFR", target));
 	case 253:
-		return (str_totext("MAILB", target));
+		return (isc_str_tobuffer("MAILB", target));
 	case 254:
-		return (str_totext("MAILA", target));
+		return (isc_str_tobuffer("MAILA", target));
 	case 255:
-		return (str_totext("ANY", target));
+		return (isc_str_tobuffer("ANY", target));
 	case 256:
-		return (str_totext("URI", target));
+		return (isc_str_tobuffer("URI", target));
 	case 257:
-		return (str_totext("CAA", target));
+		return (isc_str_tobuffer("CAA", target));
 	case 258:
-		return (str_totext("AVC", target));
+		return (isc_str_tobuffer("AVC", target));
 	case 259:
-		return (str_totext("DOA", target));
+		return (isc_str_tobuffer("DOA", target));
 	case 32768:
-		return (str_totext("TA", target));
+		return (isc_str_tobuffer("TA", target));
 	case 32769:
-		return (str_totext("DLV", target));
+		return (isc_str_tobuffer("DLV", target));
 	default:
 		snprintf(buf, sizeof(buf), "TYPE%u", type);
-		return (str_totext(buf, target));
+		return (isc_str_tobuffer(buf, target));
 	}
 }
 
@@ -1278,22 +1275,6 @@ return_false:
 }
 
 static isc_result_t
-str_totext(const char *source, isc_buffer_t *target) {
-	unsigned int l;
-	isc_region_t region;
-
-	isc_buffer_availableregion(target, &region);
-	l = strlen(source);
-
-	if (l > region.length)
-		return (ISC_R_NOSPACE);
-
-	memmove(region.base, source, l);
-	isc_buffer_add(target, l);
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
 inet_totext(int af, isc_region_t *src, isc_buffer_t *target) {
 	char tmpbuf[64];
 
@@ -1498,7 +1479,7 @@ btoa_totext(unsigned char *inbuf, int inbuflen, isc_buffer_t *target) {
 	 * delimited by 'x'
 	 */
 	snprintf(buf, sizeof(buf), "x %d %x %x %x", inbuflen, Ceor, Csum, Crot);
-	return (str_totext(buf, target));
+	return (isc_str_tobuffer(buf, target));
 }
 
 dns_rdatatype_t

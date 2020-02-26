@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ds_43.c,v 1.12 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: ds_43.c,v 1.13 2020/02/26 18:47:59 florian Exp $ */
 
 /* RFC3658 */
 
@@ -44,7 +44,7 @@ generic_totext_ds(ARGS_TOTEXT) {
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	snprintf(buf, sizeof(buf), "%u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Algorithm.
@@ -52,7 +52,7 @@ generic_totext_ds(ARGS_TOTEXT) {
 	n = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 	snprintf(buf, sizeof(buf), "%u ", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Digest type.
@@ -60,14 +60,14 @@ generic_totext_ds(ARGS_TOTEXT) {
 	n = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 	snprintf(buf, sizeof(buf), "%u", n);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Digest.
 	 */
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" (", target));
-	RETERR(str_totext(tctx->linebreak, target));
+		RETERR(isc_str_tobuffer(" (", target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
 		if (tctx->width == 0) /* No splitting */
 			RETERR(isc_hex_totext(&sr, 0, "", target));
@@ -75,9 +75,9 @@ generic_totext_ds(ARGS_TOTEXT) {
 			RETERR(isc_hex_totext(&sr, tctx->width - 2,
 					      tctx->linebreak, target));
 	} else
-		RETERR(str_totext("[omitted]", target));
+		RETERR(isc_str_tobuffer("[omitted]", target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" )", target));
+		RETERR(isc_str_tobuffer(" )", target));
 	return (ISC_R_SUCCESS);
 }
 

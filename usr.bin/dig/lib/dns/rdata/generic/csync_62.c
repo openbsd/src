@@ -35,20 +35,20 @@ totext_csync(ARGS_TOTEXT) {
 	num = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
 	snprintf(buf, sizeof(buf), "%lu", num);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	num = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	snprintf(buf, sizeof(buf), "%lu", num);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Don't leave a trailing space when there's no typemap present.
 	 */
 	if (sr.length > 0) {
-		RETERR(str_totext(" ", target));
+		RETERR(isc_str_tobuffer(" ", target));
 	}
 	return (typemap_totext(&sr, NULL, target));
 }

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: key_25.c,v 1.12 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: key_25.c,v 1.13 2020/02/26 18:47:59 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -45,8 +45,8 @@ generic_totext_key(ARGS_TOTEXT) {
 	flags = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
 	snprintf(buf, sizeof(buf), "%u", flags);
-	RETERR(str_totext(buf, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(buf, target));
+	RETERR(isc_str_tobuffer(" ", target));
 	if ((flags & DNS_KEYFLAG_KSK) != 0) {
 		if (flags & DNS_KEYFLAG_REVOKE)
 			keyinfo = "revoked KSK";
@@ -58,14 +58,14 @@ generic_totext_key(ARGS_TOTEXT) {
 	/* protocol */
 	snprintf(buf, sizeof(buf), "%u", sr.base[0]);
 	isc_region_consume(&sr, 1);
-	RETERR(str_totext(buf, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(buf, target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	/* algorithm */
 	algorithm = sr.base[0];
 	snprintf(buf, sizeof(buf), "%u", algorithm);
 	isc_region_consume(&sr, 1);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/* No Key? */
 	if ((flags & 0xc000) == 0xc000)
@@ -84,8 +84,8 @@ generic_totext_key(ARGS_TOTEXT) {
 
 	/* key */
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" (", target));
-	RETERR(str_totext(tctx->linebreak, target));
+		RETERR(isc_str_tobuffer(" (", target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
 		if (tctx->width == 0)   /* No splitting */
@@ -97,31 +97,31 @@ generic_totext_key(ARGS_TOTEXT) {
 		dns_rdata_toregion(rdata, &tmpr);
 		snprintf(buf, sizeof(buf), "[key id = %u]",
 			 dst_region_computeid(&tmpr, algorithm));
-		RETERR(str_totext(buf, target));
+		RETERR(isc_str_tobuffer(buf, target));
 	}
 
 	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0)
-		RETERR(str_totext(tctx->linebreak, target));
+		RETERR(isc_str_tobuffer(tctx->linebreak, target));
 	else if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" ", target));
+		RETERR(isc_str_tobuffer(" ", target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(")", target));
+		RETERR(isc_str_tobuffer(")", target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0) {
 
 		if (rdata->type == dns_rdatatype_dnskey ||
 		    rdata->type == dns_rdatatype_cdnskey) {
-			RETERR(str_totext(" ; ", target));
-			RETERR(str_totext(keyinfo, target));
+			RETERR(isc_str_tobuffer(" ; ", target));
+			RETERR(isc_str_tobuffer(keyinfo, target));
 		}
-		RETERR(str_totext("; alg = ", target));
-		RETERR(str_totext(algbuf, target));
-		RETERR(str_totext(" ; key id = ", target));
+		RETERR(isc_str_tobuffer("; alg = ", target));
+		RETERR(isc_str_tobuffer(algbuf, target));
+		RETERR(isc_str_tobuffer(" ; key id = ", target));
 		dns_rdata_toregion(rdata, &tmpr);
 		snprintf(buf, sizeof(buf), "%u",
 			 dst_region_computeid(&tmpr, algorithm));
-		RETERR(str_totext(buf, target));
+		RETERR(isc_str_tobuffer(buf, target));
 	}
 	return (ISC_R_SUCCESS);
 }

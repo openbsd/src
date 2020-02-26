@@ -30,7 +30,7 @@ generic_totext_txt(ARGS_TOTEXT) {
 	while (region.length > 0) {
 		RETERR(txt_totext(&region, ISC_TRUE, target));
 		if (region.length > 0)
-			RETERR(str_totext(" ", target));
+			RETERR(isc_str_tobuffer(" ", target));
 	}
 
 	return (ISC_R_SUCCESS);

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nxt_30.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: nxt_30.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -52,7 +52,7 @@ totext_nxt(ARGS_TOTEXT) {
 			for (j = 0; j < 8; j++)
 				if ((sr.base[i] & (0x80 >> j)) != 0) {
 					dns_rdatatype_t t = i * 8 + j;
-					RETERR(str_totext(" ", target));
+					RETERR(isc_str_tobuffer(" ", target));
 					RETERR(dns_rdatatype_totext(t, target));
 				}
 	}

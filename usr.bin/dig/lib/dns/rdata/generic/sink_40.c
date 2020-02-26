@@ -38,16 +38,16 @@ totext_sink(ARGS_TOTEXT) {
 	subcoding = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
 	snprintf(buf, sizeof(buf), "%u %u %u", meaning, coding, subcoding);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	if (sr.length == 0U)
 		return (ISC_R_SUCCESS);
 
 	/* data */
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" (", target));
+		RETERR(isc_str_tobuffer(" (", target));
 
-	RETERR(str_totext(tctx->linebreak, target));
+	RETERR(isc_str_tobuffer(tctx->linebreak, target));
 
 	if (tctx->width == 0)   /* No splitting */
 		RETERR(isc_base64_totext(&sr, 60, "", target));
@@ -56,7 +56,7 @@ totext_sink(ARGS_TOTEXT) {
 					 tctx->linebreak, target));
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" )", target));
+		RETERR(isc_str_tobuffer(" )", target));
 
 	return (ISC_R_SUCCESS);
 }

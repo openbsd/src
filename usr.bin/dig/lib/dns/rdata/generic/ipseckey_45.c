@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipseckey_45.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: ipseckey_45.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
 
 #ifndef RDATA_GENERIC_IPSECKEY_45_C
 #define RDATA_GENERIC_IPSECKEY_45_C
@@ -40,7 +40,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 		return (ISC_R_NOTIMPLEMENTED);
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext("( ", target));
+		RETERR(isc_str_tobuffer("( ", target));
 
 	/*
 	 * Precedence.
@@ -49,7 +49,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	num = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	snprintf(buf, sizeof(buf), "%u ", num);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Gateway type.
@@ -57,7 +57,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	gateway = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	snprintf(buf, sizeof(buf), "%u ", gateway);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Algorithm.
@@ -65,14 +65,14 @@ totext_ipseckey(ARGS_TOTEXT) {
 	num = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	snprintf(buf, sizeof(buf), "%u ", num);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
 	/*
 	 * Gateway.
 	 */
 	switch (gateway) {
 	case 0:
-		RETERR(str_totext(".", target));
+		RETERR(isc_str_tobuffer(".", target));
 		break;
 
 	case 1:
@@ -96,7 +96,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	 * Key.
 	 */
 	if (region.length > 0U) {
-		RETERR(str_totext(tctx->linebreak, target));
+		RETERR(isc_str_tobuffer(tctx->linebreak, target));
 		if (tctx->width == 0)   /* No splitting */
 			RETERR(isc_base64_totext(&region, 60, "", target));
 		else
@@ -105,7 +105,7 @@ totext_ipseckey(ARGS_TOTEXT) {
 	}
 
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		RETERR(str_totext(" )", target));
+		RETERR(isc_str_tobuffer(" )", target));
 	return (ISC_R_SUCCESS);
 }
 

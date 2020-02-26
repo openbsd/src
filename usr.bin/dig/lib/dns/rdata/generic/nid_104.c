@@ -36,16 +36,16 @@ totext_nid(ARGS_TOTEXT) {
 	num = uint16_fromregion(&region);
 	isc_region_consume(&region, 2);
 	snprintf(buf, sizeof(buf), "%u", num);
-	RETERR(str_totext(buf, target));
+	RETERR(isc_str_tobuffer(buf, target));
 
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 
 	snprintf(buf, sizeof(buf), "%x:%x:%x:%x",
 		 region.base[0]<<8 | region.base[1],
 		 region.base[2]<<8 | region.base[3],
 		 region.base[4]<<8 | region.base[5],
 		 region.base[6]<<8 | region.base[7]);
-	return (str_totext(buf, target));
+	return (isc_str_tobuffer(buf, target));
 }
 
 static inline isc_result_t

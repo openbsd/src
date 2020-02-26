@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rcode.c,v 1.8 2020/02/24 13:49:38 jsg Exp $ */
+/* $Id: rcode.c,v 1.9 2020/02/26 18:47:58 florian Exp $ */
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -118,22 +118,6 @@ static struct tbl certs[] = { CERTNAMES };
 static struct tbl secalgs[] = { SECALGNAMES };
 
 static isc_result_t
-str_totext(const char *source, isc_buffer_t *target) {
-	unsigned int l;
-	isc_region_t region;
-
-	isc_buffer_availableregion(target, &region);
-	l = strlen(source);
-
-	if (l > region.length)
-		return (ISC_R_NOSPACE);
-
-	memmove(region.base, source, l);
-	isc_buffer_add(target, l);
-	return (ISC_R_SUCCESS);
-}
-
-static isc_result_t
 dns_mnemonic_totext(unsigned int value, isc_buffer_t *target,
 		    struct tbl *table)
 {
@@ -141,12 +125,12 @@ dns_mnemonic_totext(unsigned int value, isc_buffer_t *target,
 	char buf[sizeof("4294967296")];
 	while (table[i].name != NULL) {
 		if (table[i].value == value) {
-			return (str_totext(table[i].name, target));
+			return (isc_str_tobuffer(table[i].name, target));
 		}
 		i++;
 	}
 	snprintf(buf, sizeof(buf), "%u", value);
-	return (str_totext(buf, target));
+	return (isc_str_tobuffer(buf, target));
 }
 
 isc_result_t
@@ -251,20 +235,20 @@ dns_rdataclass_totext(dns_rdataclass_t rdclass, isc_buffer_t *target) {
 
 	switch (rdclass) {
 	case dns_rdataclass_any:
-		return (str_totext("ANY", target));
+		return (isc_str_tobuffer("ANY", target));
 	case dns_rdataclass_chaos:
-		return (str_totext("CH", target));
+		return (isc_str_tobuffer("CH", target));
 	case dns_rdataclass_hs:
-		return (str_totext("HS", target));
+		return (isc_str_tobuffer("HS", target));
 	case dns_rdataclass_in:
-		return (str_totext("IN", target));
+		return (isc_str_tobuffer("IN", target));
 	case dns_rdataclass_none:
-		return (str_totext("NONE", target));
+		return (isc_str_tobuffer("NONE", target));
 	case dns_rdataclass_reserved0:
-		return (str_totext("RESERVED0", target));
+		return (isc_str_tobuffer("RESERVED0", target));
 	default:
 		snprintf(buf, sizeof(buf), "CLASS%u", rdclass);
-		return (str_totext(buf, target));
+		return (isc_str_tobuffer(buf, target));
 	}
 }
 

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: buffer.h,v 1.8 2020/02/26 18:47:26 florian Exp $ */
+/* $Id: buffer.h,v 1.9 2020/02/26 18:48:00 florian Exp $ */
 
 #ifndef ISC_BUFFER_H
 #define ISC_BUFFER_H 1
@@ -717,4 +717,8 @@ isc_buffer_copyregion(isc_buffer_t *b, const isc_region_t *r);
 
 isc_result_t
 isc_mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length);
+
+/* this used to be str_totext() in rdata.c etc. */
+isc_result_t
+isc_str_tobuffer(const char *source, isc_buffer_t *target);
 #endif /* ISC_BUFFER_H */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: loc_29.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: loc_29.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -137,7 +137,7 @@ totext_loc(ARGS_TOTEXT) {
 		 below ? "-" : "", altitude/100, altitude % 100,
 		 sbuf, hbuf, vbuf);
 
-	return (str_totext(buf, target));
+	return (isc_str_tobuffer(buf, target));
 }
 
 static inline isc_result_t

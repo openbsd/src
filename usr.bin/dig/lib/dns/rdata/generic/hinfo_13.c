@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hinfo_13.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: hinfo_13.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
 
 /*
  * Reviewed: Wed Mar 15 16:47:10 PST 2000 by halley.
@@ -34,7 +34,7 @@ totext_hinfo(ARGS_TOTEXT) {
 
 	dns_rdata_toregion(rdata, &region);
 	RETERR(txt_totext(&region, ISC_TRUE, target));
-	RETERR(str_totext(" ", target));
+	RETERR(isc_str_tobuffer(" ", target));
 	return (txt_totext(&region, ISC_TRUE, target));
 }
 
