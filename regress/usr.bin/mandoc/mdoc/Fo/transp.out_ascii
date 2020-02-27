@@ -1,0 +1,13 @@
+FO-TRANSP(1)                General Commands Manual               FO-TRANSP(1)
+
+NNAAMMEE
+     FFoo--ttrraannsspp - transparent nodes among function argument macros
+
+SSYYNNOOPPSSIISS
+     _t_y_p_e
+     ffuunncc(_o_n_e, _t_w_o);
+
+DDEESSCCRRIIPPTTIIOONN
+     _t_y_p_e ffuunncc(_o_n_e, _t_w_o)
+
+OpenBSD                        February 27, 2020                       OpenBSD

@@ -1,0 +1,10 @@
+.\" $OpenBSD: vert.in,v 1.1 2020/02/27 01:25:58 schwarze Exp $
+.TH SH-VERT 1 "February 20, 2020"
+.SH NAME
+SH-vert \- vertical spacing of sections
+.SH DESCRIPTION
+.PD 2v
+.SH EXAMPLES
+.PD 1v
+.PP
+text

@@ -1,0 +1,11 @@
+.\" $OpenBSD: transp.in,v 1.1 2020/02/27 01:25:58 schwarze Exp $
+.Dd $Mdocdate: February 27 2020 $
+.Dt SH-TRANSP 1
+.Os
+.Sh NAME
+.Nm Sh-transp
+.Nd interaction of sections with transparent nodes
+.Sh DESCRIPTION
+.Tg transparent
+.Ss Subsection
+text

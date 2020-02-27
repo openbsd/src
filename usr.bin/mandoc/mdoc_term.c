@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.275 2020/01/20 10:29:31 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.276 2020/02/27 01:25:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -52,14 +52,12 @@ struct	mdoc_term_act {
 static	int	  a2width(const struct termp *, const char *);
 
 static	void	  print_bvspace(struct termp *,
-			const struct roff_node *,
-			const struct roff_node *);
+			struct roff_node *, struct roff_node *);
 static	void	  print_mdoc_node(DECL_ARGS);
 static	void	  print_mdoc_nodelist(DECL_ARGS);
 static	void	  print_mdoc_head(struct termp *, const struct roff_meta *);
 static	void	  print_mdoc_foot(struct termp *, const struct roff_meta *);
-static	void	  synopsis_pre(struct termp *,
-			const struct roff_node *);
+static	void	  synopsis_pre(struct termp *, struct roff_node *);
 
 static	void	  termp____post(DECL_ARGS);
 static	void	  termp__t_post(DECL_ARGS);
@@ -580,29 +578,20 @@ a2width(const struct termp *p, const char *v)
  * too.
  */
 static void
-print_bvspace(struct termp *p,
-	const struct roff_node *bl,
-	const struct roff_node *n)
+print_bvspace(struct termp *p, struct roff_node *bl, struct roff_node *n)
 {
-	const struct roff_node	*nn;
-
-	assert(n);
+	struct roff_node *nn;
 
 	term_newln(p);
 
-	if (MDOC_Bd == bl->tok && bl->norm->Bd.comp)
-		return;
-	if (MDOC_Bl == bl->tok && bl->norm->Bl.comp)
+	if ((bl->tok == MDOC_Bd && bl->norm->Bd.comp) ||
+	    (bl->tok == MDOC_Bl && bl->norm->Bl.comp))
 		return;
 
 	/* Do not vspace directly after Ss/Sh. */
 
 	nn = n;
-	while (nn->prev != NULL &&
-	    (nn->prev->type == ROFFT_COMMENT ||
-	     nn->prev->flags & NODE_NOPRT))
-		nn = nn->prev;
-	while (nn->prev == NULL) {
+	while (roff_node_prev(nn) == NULL) {
 		do {
 			nn = nn->parent;
 			if (nn->type == ROFFT_ROOT)
@@ -615,22 +604,18 @@ print_bvspace(struct termp *p,
 			break;
 	}
 
-	/* A `-column' does not assert vspace within the list. */
+	/*
+	 * No vertical space after:
+	 * items in .Bl -column
+	 * items without a body in .Bl -diag
+	 */
 
-	if (MDOC_Bl == bl->tok && LIST_column == bl->norm->Bl.type)
-		if (n->prev && MDOC_It == n->prev->tok)
-			return;
-
-	/* A `-diag' without body does not vspace. */
-
-	if (MDOC_Bl == bl->tok && LIST_diag == bl->norm->Bl.type)
-		if (n->prev && MDOC_It == n->prev->tok) {
-			assert(n->prev->body);
-			if (NULL == n->prev->body->child)
-				return;
-		}
-
-	term_vspace(p);
+	if (bl->tok != MDOC_Bl ||
+	    n->prev == NULL || n->prev->tok != MDOC_It ||
+	    (bl->norm->Bl.type != LIST_column &&
+	     (bl->norm->Bl.type != LIST_diag ||
+	      n->prev->body->child != NULL)))
+		term_vspace(p);
 }
 
 
@@ -1041,15 +1026,16 @@ termp_nm_post(DECL_ARGS)
 static int
 termp_fl_pre(DECL_ARGS)
 {
+	struct roff_node *nn;
 
 	termp_tag_pre(p, pair, meta, n);
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, "\\-");
 
-	if (!(n->child == NULL &&
-	    (n->next == NULL ||
-	     n->next->type == ROFFT_TEXT ||
-	     n->next->flags & NODE_LINE)))
+	if (n->child != NULL ||
+	    ((nn = roff_node_next(n)) != NULL &&
+	     nn->type != ROFFT_TEXT &&
+	     (nn->flags & NODE_LINE) == 0))
 		p->flags |= TERMP_NOSPACE;
 
 	return 1;
@@ -1058,10 +1044,11 @@ termp_fl_pre(DECL_ARGS)
 static int
 termp__a_pre(DECL_ARGS)
 {
+	struct roff_node *nn;
 
-	if (n->prev && MDOC__A == n->prev->tok)
-		if (NULL == n->next || MDOC__A != n->next->tok)
-			term_word(p, "and");
+	if ((nn = roff_node_prev(n)) != NULL && nn->tok == MDOC__A &&
+	    ((nn = roff_node_next(n)) == NULL || nn->tok != MDOC__A))
+		term_word(p, "and");
 
 	return 1;
 }
@@ -1102,10 +1089,9 @@ termp_ns_pre(DECL_ARGS)
 static int
 termp_rs_pre(DECL_ARGS)
 {
-
 	if (SEC_SEE_ALSO != n->sec)
 		return 1;
-	if (n->type == ROFFT_BLOCK && n->prev != NULL)
+	if (n->type == ROFFT_BLOCK && roff_node_prev(n) != NULL)
 		term_vspace(p);
 	return 1;
 }
@@ -1179,13 +1165,12 @@ termp_xr_pre(DECL_ARGS)
  * macro combos).
  */
 static void
-synopsis_pre(struct termp *p, const struct roff_node *n)
+synopsis_pre(struct termp *p, struct roff_node *n)
 {
-	/*
-	 * Obviously, if we're not in a SYNOPSIS or no prior macros
-	 * exist, do nothing.
-	 */
-	if (NULL == n->prev || ! (NODE_SYNPRETTY & n->flags))
+	struct roff_node	*np;
+
+	if ((n->flags & NODE_SYNPRETTY) == 0 ||
+	    (np = roff_node_prev(n)) == NULL)
 		return;
 
 	/*
@@ -1193,7 +1178,7 @@ synopsis_pre(struct termp *p, const struct roff_node *n)
 	 * newline and return.  UNLESS we're `Fo', `Fn', `Fn', in which
 	 * case we soldier on.
 	 */
-	if (n->prev->tok == n->tok &&
+	if (np->tok == n->tok &&
 	    MDOC_Ft != n->tok &&
 	    MDOC_Fo != n->tok &&
 	    MDOC_Fn != n->tok) {
@@ -1206,7 +1191,7 @@ synopsis_pre(struct termp *p, const struct roff_node *n)
 	 * another (or Fn/Fo, which we've let slip through) then assert
 	 * vertical space, else only newline and move on.
 	 */
-	switch (n->prev->tok) {
+	switch (np->tok) {
 	case MDOC_Fd:
 	case MDOC_Fn:
 	case MDOC_Fo:
@@ -1215,7 +1200,7 @@ synopsis_pre(struct termp *p, const struct roff_node *n)
 		term_vspace(p);
 		break;
 	case MDOC_Ft:
-		if (MDOC_Fn != n->tok && MDOC_Fo != n->tok) {
+		if (n->tok != MDOC_Fn && n->tok != MDOC_Fo) {
 			term_vspace(p);
 			break;
 		}
@@ -1269,6 +1254,7 @@ termp_fd_post(DECL_ARGS)
 static int
 termp_sh_pre(DECL_ARGS)
 {
+	struct roff_node	*np;
 
 	switch (n->type) {
 	case ROFFT_BLOCK:
@@ -1276,10 +1262,9 @@ termp_sh_pre(DECL_ARGS)
 		 * Vertical space before sections, except
 		 * when the previous section was empty.
 		 */
-		if (n->prev == NULL ||
-		    n->prev->tok != MDOC_Sh ||
-		    (n->prev->body != NULL &&
-		     n->prev->body->child != NULL))
+		if ((np = roff_node_prev(n)) == NULL ||
+		    np->tok != MDOC_Sh ||
+		    (np->body != NULL && np->body->child != NULL))
 			term_vspace(p);
 		break;
 	case ROFFT_HEAD:
@@ -1430,19 +1415,22 @@ termp_fa_pre(DECL_ARGS)
 		term_fontpush(p, TERMFONT_UNDER);
 		return 1;
 	}
-
-	for (nn = n->child; nn; nn = nn->next) {
+	for (nn = n->child; nn != NULL; nn = nn->next) {
 		term_fontpush(p, TERMFONT_UNDER);
 		p->flags |= TERMP_NBRWORD;
 		term_word(p, nn->string);
 		term_fontpop(p);
-
-		if (nn->next || (n->next && n->next->tok == MDOC_Fa)) {
+		if (nn->next != NULL) {
 			p->flags |= TERMP_NOSPACE;
 			term_word(p, ",");
 		}
 	}
-
+	if (n->child != NULL &&
+	    (nn = roff_node_next(n)) != NULL &&
+	    nn->tok == MDOC_Fa) {
+		p->flags |= TERMP_NOSPACE;
+		term_word(p, ",");
+	}
 	return 0;
 }
 
@@ -1522,24 +1510,18 @@ termp_xx_post(DECL_ARGS)
 static void
 termp_pf_post(DECL_ARGS)
 {
-
-	if ( ! (n->next == NULL || n->next->flags & NODE_LINE))
+	if (n->next != NULL && (n->next->flags & NODE_LINE) == 0)
 		p->flags |= TERMP_NOSPACE;
 }
 
 static int
 termp_ss_pre(DECL_ARGS)
 {
-	struct roff_node *nn;
-
 	switch (n->type) {
 	case ROFFT_BLOCK:
-		term_newln(p);
-		for (nn = n->prev; nn != NULL; nn = nn->prev)
-			if (nn->type != ROFFT_COMMENT &&
-			    (nn->flags & NODE_NOPRT) == 0)
-				break;
-		if (nn != NULL)
+		if (roff_node_prev(n) == NULL)
+			term_newln(p);
+		else
 			term_vspace(p);
 		break;
 	case ROFFT_HEAD:
@@ -1555,14 +1537,12 @@ termp_ss_pre(DECL_ARGS)
 	default:
 		break;
 	}
-
 	return 1;
 }
 
 static void
 termp_ss_post(DECL_ARGS)
 {
-
 	if (n->type == ROFFT_HEAD || n->type == ROFFT_BODY)
 		term_newln(p);
 }
@@ -1890,24 +1870,26 @@ termp_ap_pre(DECL_ARGS)
 static void
 termp____post(DECL_ARGS)
 {
+	struct roff_node *nn;
 
 	/*
 	 * Handle lists of authors.  In general, print each followed by
 	 * a comma.  Don't print the comma if there are only two
 	 * authors.
 	 */
-	if (MDOC__A == n->tok && n->next && MDOC__A == n->next->tok)
-		if (NULL == n->next->next || MDOC__A != n->next->next->tok)
-			if (NULL == n->prev || MDOC__A != n->prev->tok)
-				return;
+	if (n->tok == MDOC__A &&
+	    (nn = roff_node_next(n)) != NULL && nn->tok == MDOC__A &&
+	    ((nn = roff_node_next(nn)) == NULL || nn->tok != MDOC__A) &&
+	    ((nn = roff_node_prev(n)) == NULL || nn->tok != MDOC__A))
+		return;
 
 	/* TODO: %U. */
 
-	if (NULL == n->parent || MDOC_Rs != n->parent->tok)
+	if (n->parent == NULL || n->parent->tok != MDOC_Rs)
 		return;
 
 	p->flags |= TERMP_NOSPACE;
-	if (NULL == n->next) {
+	if (roff_node_next(n) == NULL) {
 		term_word(p, ".");
 		p->flags |= TERMP_SENTENCE;
 	} else

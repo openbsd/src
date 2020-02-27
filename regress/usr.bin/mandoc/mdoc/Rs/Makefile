@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.11 2019/01/07 06:51:37 schwarze Exp $
+# $OpenBSD: Makefile,v 1.12 2020/02/27 01:25:58 schwarze Exp $
 
-REGRESS_TARGETS	 = allch args break empty paragraph three_authors
+REGRESS_TARGETS	 = allch args break empty paragraph three_authors transp
 UTF8_TARGETS	 = allch break empty three_authors
 LINT_TARGETS	 = allch args empty
 HTML_TARGETS	 = paragraph

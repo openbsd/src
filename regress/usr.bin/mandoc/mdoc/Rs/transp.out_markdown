@@ -1,0 +1,27 @@
+RS-TRANSPARENT(1) - General Commands Manual
+
+# NAME
+
+**Rs-transparent** - transparent nodes in reference blocks
+
+# SEE ALSO
+
+first after title,
+last,
+*title*.
+
+first,
+middle, and
+last before title,
+*title*.
+
+first after title and transparent,
+middle before transparent, and
+last before transparent,
+*title*.
+
+first after transparent,
+last before transparent and title,
+*title*.
+
+OpenBSD - February 27, 2020

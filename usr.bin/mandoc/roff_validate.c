@@ -1,6 +1,6 @@
-/*	$OpenBSD: roff_validate.c,v 1.18 2018/12/31 09:02:30 schwarze Exp $ */
+/*	$OpenBSD: roff_validate.c,v 1.19 2020/02/27 01:25:58 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2017, 2018, 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -75,7 +75,7 @@ roff_valid_br(ROFF_VALID_ARGS)
 		return;
 	}
 
-	if ((np = n->prev) == NULL)
+	if ((np = roff_node_prev(n)) == NULL)
 		return;
 
 	switch (np->tok) {
@@ -129,7 +129,7 @@ roff_valid_sp(ROFF_VALID_ARGS)
 {
 	struct roff_node	*np;
 
-	if ((np = n->prev) == NULL)
+	if ((np = roff_node_prev(n)) == NULL)
 		return;
 
 	switch (np->tok) {

@@ -8,12 +8,10 @@ SM-TWOARG(1) - General Commands Manual
 
 **default**:
 **-f** *on*  
-**off two**:
-two**-f**&zwnj;*off*  
+**off two**: two**-f**&zwnj;*off*  
 **badtwo**: bad two
 **-f** *off*  
-**on two**:
-two
+**on two**: two
 **-f** *on*
 
 OpenBSD - July 4, 2017

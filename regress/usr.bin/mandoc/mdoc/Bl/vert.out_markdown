@@ -1,0 +1,15 @@
+BL-VERT(1) - General Commands Manual
+
+# NAME
+
+**Bl-vert** - vertical spacing before lists
+
+# DESCRIPTION
+
+**-o**&zwnj;*file*
+
+> text
+
+end of file
+
+OpenBSD - February 27, 2020

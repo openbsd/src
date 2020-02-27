@@ -1,0 +1,22 @@
+.\" $OpenBSD: bullet.in,v 1.1 2020/02/27 01:25:58 schwarze Exp $
+.TH IP-BULLET 1 "February 20, 2020"
+.SH NAME
+IP-bullet \- bullet lists
+.SH DESCRIPTION
+BEGINTEST
+.IP * 3n
+one
+.IP *
+two
+.IP \(bu
+three
+.IP \(bu
+four
+.IP \-
+five
+.IP \-
+six
+.PP
+ENDTEST
+.br
+end of file

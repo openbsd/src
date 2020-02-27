@@ -1,0 +1,19 @@
+mandoc: transp.in:52:1: WARNING: blank line in fill mode, using .sp
+mandoc: transp.in:54:1: WARNING: blank line in fill mode, using .sp
+mandoc: transp.in:60:1: WARNING: blank line in fill mode, using .sp
+mandoc: transp.in:62:1: WARNING: blank line in fill mode, using .sp
+mandoc: transp.in:68:1: WARNING: blank line in fill mode, using .sp
+mandoc: transp.in:70:1: WARNING: blank line in fill mode, using .sp
+mandoc: transp.in:74:1: WARNING: blank line in fill mode, using .sp
+mandoc: transp.in:76:1: WARNING: blank line in fill mode, using .sp
+mandoc: transp.in:12:2: WARNING: skipping paragraph macro: br after br
+mandoc: transp.in:14:2: WARNING: skipping paragraph macro: br before Pp
+mandoc: transp.in:20:2: WARNING: skipping paragraph macro: br after Pp
+mandoc: transp.in:22:2: WARNING: skipping paragraph macro: Pp before Pp
+mandoc: transp.in:26:2: WARNING: skipping paragraph macro: br before sp
+mandoc: transp.in:32:2: WARNING: skipping paragraph macro: br after sp
+mandoc: transp.in:36:2: WARNING: skipping paragraph macro: sp after Pp
+mandoc: transp.in:40:2: WARNING: skipping paragraph macro: sp after Pp
+mandoc: transp.in:50:2: WARNING: skipping paragraph macro: br before sp
+mandoc: transp.in:56:2: WARNING: skipping paragraph macro: br after sp
+mandoc: transp.in:60:1: WARNING: skipping paragraph macro: sp after Pp

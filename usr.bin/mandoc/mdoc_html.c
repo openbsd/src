@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.208 2020/01/19 17:59:01 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.209 2020/02/27 01:25:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -50,8 +50,7 @@ static	void		  print_mdoc_head(const struct roff_meta *,
 				struct html *);
 static	void		  print_mdoc_node(MDOC_ARGS);
 static	void		  print_mdoc_nodelist(MDOC_ARGS);
-static	void		  synopsis_pre(struct html *,
-				const struct roff_node *);
+static	void		  synopsis_pre(struct html *, struct roff_node *);
 
 static	void		  mdoc_root_post(const struct roff_meta *,
 				struct html *);
@@ -248,13 +247,15 @@ static const struct mdoc_html_act mdoc_html_acts[MDOC_MAX - MDOC_Dd] = {
  * See the same function in mdoc_term.c for documentation.
  */
 static void
-synopsis_pre(struct html *h, const struct roff_node *n)
+synopsis_pre(struct html *h, struct roff_node *n)
 {
+	struct roff_node *np;
 
-	if (NULL == n->prev || ! (NODE_SYNPRETTY & n->flags))
+	if ((n->flags & NODE_SYNPRETTY) == 0 ||
+	    (np = roff_node_prev(n)) == NULL)
 		return;
 
-	if (n->prev->tok == n->tok &&
+	if (np->tok == n->tok &&
 	    MDOC_Fo != n->tok &&
 	    MDOC_Ft != n->tok &&
 	    MDOC_Fn != n->tok) {
@@ -262,7 +263,7 @@ synopsis_pre(struct html *h, const struct roff_node *n)
 		return;
 	}
 
-	switch (n->prev->tok) {
+	switch (np->tok) {
 	case MDOC_Fd:
 	case MDOC_Fn:
 	case MDOC_Fo:
@@ -623,17 +624,18 @@ mdoc_ss_pre(MDOC_ARGS)
 static int
 mdoc_fl_pre(MDOC_ARGS)
 {
-	char	*id;
+	struct roff_node	*nn;
+	char			*id;
 
 	if ((id = cond_id(n)) != NULL)
 		print_otag(h, TAG_A, "chR", "permalink", id);
 	print_otag(h, TAG_CODE, "ci", "Fl", id);
 
 	print_text(h, "\\-");
-	if (!(n->child == NULL &&
-	    (n->next == NULL ||
-	     n->next->type == ROFFT_TEXT ||
-	     n->next->flags & NODE_LINE)))
+	if (n->child != NULL ||
+	    ((nn = roff_node_next(n)) != NULL &&
+	     nn->type != ROFFT_TEXT &&
+	     (nn->flags & NODE_LINE) == 0))
 		h->flags |= HTML_NOSPACE;
 
 	return 1;
@@ -907,7 +909,7 @@ mdoc_bl_pre(MDOC_ARGS)
 static int
 mdoc_ex_pre(MDOC_ARGS)
 {
-	if (n->prev)
+	if (roff_node_prev(n) != NULL)
 		print_otag(h, TAG_BR, "");
 	return 1;
 }
@@ -984,7 +986,7 @@ mdoc_bd_pre(MDOC_ARGS)
 			continue;
 		if (nn->tok == MDOC_Sh || nn->tok == MDOC_Ss)
 			comp = 1;
-		if (nn->prev != NULL)
+		if (roff_node_prev(nn) != NULL)
 			break;
 	}
 	(void)strlcpy(buf, "Bd", sizeof(buf));
@@ -1096,22 +1098,21 @@ mdoc_fa_pre(MDOC_ARGS)
 		print_otag(h, TAG_VAR, "c", "Fa");
 		return 1;
 	}
-
-	for (nn = n->child; nn; nn = nn->next) {
+	for (nn = n->child; nn != NULL; nn = nn->next) {
 		t = print_otag(h, TAG_VAR, "c", "Fa");
 		print_text(h, nn->string);
 		print_tagq(h, t);
-		if (nn->next) {
+		if (nn->next != NULL) {
 			h->flags |= HTML_NOSPACE;
 			print_text(h, ",");
 		}
 	}
-
-	if (n->child && n->next && n->next->tok == MDOC_Fa) {
+	if (n->child != NULL &&
+	    (nn = roff_node_next(n)) != NULL &&
+	    nn->tok == MDOC_Fa) {
 		h->flags |= HTML_NOSPACE;
 		print_text(h, ",");
 	}
-
 	return 0;
 }
 
@@ -1570,7 +1571,9 @@ mdoc_sy_pre(MDOC_ARGS)
 static int
 mdoc_lb_pre(MDOC_ARGS)
 {
-	if (SEC_LIBRARY == n->sec && NODE_LINE & n->flags && n->prev)
+	if (n->sec == SEC_LIBRARY &&
+	    n->flags & NODE_LINE &&
+	    roff_node_prev(n) != NULL)
 		print_otag(h, TAG_BR, "");
 
 	print_otag(h, TAG_SPAN, "c", "Lb");
@@ -1580,17 +1583,18 @@ mdoc_lb_pre(MDOC_ARGS)
 static int
 mdoc__x_pre(MDOC_ARGS)
 {
-	const char	*cattr;
-	enum htmltag	 t;
+	struct roff_node	*nn;
+	const char		*cattr;
+	enum htmltag		 t;
 
 	t = TAG_SPAN;
 
 	switch (n->tok) {
 	case MDOC__A:
 		cattr = "RsA";
-		if (n->prev && MDOC__A == n->prev->tok)
-			if (NULL == n->next || MDOC__A != n->next->tok)
-				print_text(h, "and");
+		if ((nn = roff_node_prev(n)) != NULL && nn->tok == MDOC__A &&
+		    ((nn = roff_node_next(n)) == NULL || nn->tok != MDOC__A))
+			print_text(h, "and");
 		break;
 	case MDOC__B:
 		t = TAG_I;
@@ -1645,19 +1649,21 @@ mdoc__x_pre(MDOC_ARGS)
 static void
 mdoc__x_post(MDOC_ARGS)
 {
+	struct roff_node *nn;
 
-	if (MDOC__A == n->tok && n->next && MDOC__A == n->next->tok)
-		if (NULL == n->next->next || MDOC__A != n->next->next->tok)
-			if (NULL == n->prev || MDOC__A != n->prev->tok)
-				return;
+	if (n->tok == MDOC__A &&
+	    (nn = roff_node_next(n)) != NULL && nn->tok == MDOC__A &&
+	    ((nn = roff_node_next(nn)) == NULL || nn->tok != MDOC__A) &&
+	    ((nn = roff_node_prev(n)) == NULL || nn->tok != MDOC__A))
+		return;
 
 	/* TODO: %U */
 
-	if (NULL == n->parent || MDOC_Rs != n->parent->tok)
+	if (n->parent == NULL || n->parent->tok != MDOC_Rs)
 		return;
 
 	h->flags |= HTML_NOSPACE;
-	print_text(h, n->next ? "," : ".");
+	print_text(h, roff_node_next(n) ? "," : ".");
 }
 
 static int

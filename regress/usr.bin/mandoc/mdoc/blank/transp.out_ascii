@@ -1,0 +1,48 @@
+BLANK-TRANSP(1)             General Commands Manual            BLANK-TRANSP(1)
+
+NNAAMMEE
+     bbllaannkk--ttrraannsspp - transparent nodes between line breaks
+
+DDEESSCCRRIIPPTTIIOONN
+     Double br:
+     br Pp:
+
+     Pp br:
+
+     Double Pp:
+
+     br sp:
+
+     sp br:
+
+     Pp sp:
+
+     Pp sp 2v:
+
+     sp Pp:
+
+
+     Double sp:
+
+
+     br blank:
+
+     blank br:
+
+     Pp blank:
+
+     blank Pp:
+
+
+     sp blank:
+
+
+     blank sp:
+
+
+     Double blank:
+
+
+     end of file
+
+OpenBSD                        February 27, 2020                       OpenBSD

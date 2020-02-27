@@ -1,0 +1,14 @@
+.\" $OpenBSD: vert.in,v 1.1 2020/02/27 01:25:58 schwarze Exp $
+.TH HP-VERT 1 "February 19, 2020"
+.SH NAME
+HP-vert \- vertical spacing before hanged lists
+.SH DESCRIPTION
+.PD 2v
+.HP
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+.HP
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+.LP
+Normal text.

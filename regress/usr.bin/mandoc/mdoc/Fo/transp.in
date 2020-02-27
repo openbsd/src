@@ -1,0 +1,23 @@
+.\" $OpenBSD: transp.in,v 1.1 2020/02/27 01:25:58 schwarze Exp $
+.Dd $Mdocdate: February 27 2020 $
+.Dt FO-TRANSP 1
+.Os
+.Sh NAME
+.Nm Fo-transp
+.Nd transparent nodes among function argument macros
+.Sh SYNOPSIS
+.Ft type
+.Fo func
+.Fa one
+.Tg one
+.Fa two
+.Tg two
+.Fc
+.Sh DESCRIPTION
+.Ft type
+.Fo func
+.Fa one
+.Tg one
+.Fa two
+.Tg two
+.Fc

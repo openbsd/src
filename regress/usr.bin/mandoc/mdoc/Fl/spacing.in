@@ -1,0 +1,42 @@
+.\" $OpenBSD: spacing.in,v 1.1 2020/02/27 01:25:58 schwarze Exp $
+.Dd $Mdocdate: February 27 2020 $
+.Dt FL-SPACING 1
+.Os
+.Sh NAME
+.Nm Fl-spacing
+.Nd horizontal spacing after flag macros
+.Sh DESCRIPTION
+with argument:
+.Fl a
+.Pp
+no next node:
+.Xo Fl Xc suffix
+.Pp
+transparent next node only:
+.Xo Fl
+.Tg transparent1
+.Xc suffix
+.Pp
+following text:
+.Fl
+text
+.Pp
+text after transparent node on the same line:
+.Fl Es < >
+text
+.Pp
+following macro on the same line:
+.Fl Em word
+.Pp
+following macro on the next line:
+.Fl
+.Em word
+.Pp
+following macro on the next line after transparent node on the same line:
+.Fl Es < >
+.Em word
+.Pp
+following macro after transparent node on the next line:
+.Fl
+.Tg transparent3
+.Em word

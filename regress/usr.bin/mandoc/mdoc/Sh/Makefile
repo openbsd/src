@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.11 2019/01/07 06:51:37 schwarze Exp $
+# $OpenBSD: Makefile,v 1.12 2020/02/27 01:25:58 schwarze Exp $
 
 REGRESS_TARGETS	 = badNAME before empty emptyNAME first nohead order
-REGRESS_TARGETS	+= orderNAME paragraph parbefore parborder punctNAME subbefore
+REGRESS_TARGETS	+= orderNAME paragraph parbefore parborder punctNAME
+REGRESS_TARGETS	+= subbefore transp
 LINT_TARGETS	 = badNAME before empty emptyNAME first nohead order
 LINT_TARGETS	+= orderNAME parbefore parborder punctNAME subbefore
 HTML_TARGETS	 = paragraph

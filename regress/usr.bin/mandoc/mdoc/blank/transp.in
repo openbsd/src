@@ -1,0 +1,77 @@
+.\" $OpenBSD: transp.in,v 1.1 2020/02/27 01:25:59 schwarze Exp $
+.Dd $Mdocdate: February 27 2020 $
+.Dt BLANK-TRANSP 1
+.Os
+.Sh NAME
+.Nm blank-transp
+.Nd transparent nodes between line breaks
+.Sh DESCRIPTION
+Double br:
+.br
+.Tg brbr
+.br
+br Pp:
+.br
+.Tg brPp
+.Pp
+Pp br:
+.Pp
+.Tg Ppbr
+.br
+Double Pp:
+.Pp
+.Tg PpPp
+.Pp
+br sp:
+.br
+.Tg brsp
+.sp
+sp br:
+.sp
+.Tg spbr
+.br
+Pp sp:
+.Pp
+.Tg Ppsp
+.sp
+Pp sp 2v:
+.Pp
+.Tg Ppsp2v
+.sp 2v
+sp Pp:
+.sp
+.Tg spPp
+.Pp
+Double sp:
+.sp
+.Tg spsp
+.sp
+br blank:
+.br
+.Tg brbl
+
+blank br:
+
+.Tg blbr
+.br
+Pp blank:
+.Pp
+.Tg Ppbl
+
+blank Pp:
+
+.Tg blPp
+.Pp
+sp blank:
+.sp
+.Tg spbl
+
+blank sp:
+
+.Tg blsp
+.sp
+Double blank:
+
+.Tg blbl
+
+end of file

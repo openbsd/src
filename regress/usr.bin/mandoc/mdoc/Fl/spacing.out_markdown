@@ -1,0 +1,42 @@
+FL-SPACING(1) - General Commands Manual
+
+# NAME
+
+**Fl-spacing** - horizontal spacing after flag macros
+
+# DESCRIPTION
+
+with argument:
+**-a**
+
+no next node:
+**-** suffix
+
+transparent next node only:
+**-**
+suffix
+
+following text:
+**-**
+text
+
+text after transparent node on the same line:
+**-**
+text
+
+following macro on the same line:
+**-**&zwnj;*word*
+
+following macro on the next line:
+**-**
+*word*
+
+following macro on the next line after transparent node on the same line:
+**-**
+*word*
+
+following macro after transparent node on the next line:
+**-**
+*word*
+
+OpenBSD - February 27, 2020

@@ -1,0 +1,19 @@
+FO-TRANSP(1) - General Commands Manual
+
+# NAME
+
+**Fo-transp** - transparent nodes among function argument macros
+
+# SYNOPSIS
+
+*type*  
+**func**(*one*,
+*two*);
+
+# DESCRIPTION
+
+*type*
+**func**(*one*,
+*two*)
+
+OpenBSD - February 27, 2020

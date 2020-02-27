@@ -1,0 +1,36 @@
+.\" $OpenBSD: transp.in,v 1.1 2020/02/27 01:25:58 schwarze Exp $
+.Dd $Mdocdate: February 27 2020 $
+.Dt RS-TRANSPARENT 1
+.Os
+.Sh NAME
+.Nm Rs-transparent
+.Nd transparent nodes in reference blocks
+.Sh SEE ALSO
+.Tg transparent
+.Rs
+.%T title
+.%A first after title
+.%A last
+.Re
+.Rs
+.%A first
+.%A middle
+.%A last before title
+.%T title
+.Re
+.Rs
+.%T title
+.Tg transparent
+.%A first after title and transparent
+.%A middle before transparent
+.Tg transparent
+.%A last before transparent
+.Tg transparent
+.Re
+.Rs
+.Tg transparent
+.%A first after transparent
+.%A last before transparent and title
+.Tg transparent
+.%T title
+.Re

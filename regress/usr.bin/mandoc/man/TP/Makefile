@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.15 2019/01/06 04:41:15 schwarze Exp $
+# $OpenBSD: Makefile,v 1.16 2020/02/27 01:25:58 schwarze Exp $
 
 REGRESS_TARGETS	 = badarg broken double eof fill indent literal longhead
-REGRESS_TARGETS	+= macrotag manyargs sameline spacing width
+REGRESS_TARGETS	+= macrotag manyargs sameline spacing vert width
 LINT_TARGETS	 = broken double eof
-HTML_TARGETS	 = literal
+HTML_TARGETS	 = literal vert
 
 # groff-1.22.3 defects:
 # - If .TP precedes .RE, the latter does not properly reset indentation.

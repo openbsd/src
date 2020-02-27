@@ -8,7 +8,6 @@ SM-BADARG(1) - General Commands Manual
 
 **-f** *on*
 **-f**&zwnj;*off* bad
-**-f** *bad* (on)
-bad**-f**&zwnj;*bad*(off)
+**-f** *bad* (on) bad**-f**&zwnj;*bad*(off)
 
 OpenBSD-July 4, 2017

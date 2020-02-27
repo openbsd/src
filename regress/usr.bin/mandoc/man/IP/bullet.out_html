@@ -1,0 +1,12 @@
+<ul class="Bl-bullet">
+  <li>one</li>
+  <li>two</li>
+</ul>
+<ul class="Bl-bullet">
+  <li>three</li>
+  <li>four</li>
+</ul>
+<ul class="Bl-dash">
+  <li>five</li>
+  <li>six</li>
+</ul>

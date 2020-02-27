@@ -1,0 +1,10 @@
+.\" $OpenBSD: vert.in,v 1.1 2020/02/27 01:25:58 schwarze Exp $
+.TH PP-VERT 1 "February 19, 2020"
+.SH NAME
+PP-vert \- vertical spacing before an ordinary paragraph
+.SH DESCRIPTION
+.PD 2v
+.PP
+first paragraph
+.PP
+second paragraph

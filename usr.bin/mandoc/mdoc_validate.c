@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.292 2020/01/19 17:59:01 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.293 2020/02/27 01:25:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -1745,8 +1745,7 @@ post_bl_head(POST_ARGS)
 static void
 post_bl(POST_ARGS)
 {
-	struct roff_node	*nparent, *nprev; /* of the Bl block */
-	struct roff_node	*nblock, *nbody;  /* of the Bl */
+	struct roff_node	*nbody;           /* of the Bl */
 	struct roff_node	*nchild, *nnext;  /* of the Bl body */
 	const char		*prev_Er;
 	int			 order;
@@ -1767,88 +1766,73 @@ post_bl(POST_ARGS)
 	if (nbody->end != ENDBODY_NOT)
 		return;
 
-	nchild = nbody->child;
-	if (nchild == NULL) {
-		mandoc_msg(MANDOCERR_BLK_EMPTY,
-		    nbody->line, nbody->pos, "Bl");
-		return;
-	}
-	while (nchild != NULL) {
-		nnext = nchild->next;
-		if (nchild->tok == MDOC_It ||
-		    ((nchild->tok == MDOC_Sm || nchild->tok == MDOC_Tg) &&
-		     nnext != NULL && nnext->tok == MDOC_It)) {
-			nchild = nnext;
-			continue;
-		}
+	/*
+	 * Up to the first item, move nodes before the list,
+	 * but leave transparent nodes where they are
+	 * if they precede an item.
+	 * The next non-transparent node is kept in nchild.
+	 * It only needs to be updated after a non-transparent
+	 * node was moved out, and at the very beginning
+	 * when no node at all was moved yet.
+	 */
 
-		/*
-		 * In .Bl -column, the first rows may be implicit,
-		 * that is, they may not start with .It macros.
-		 * Such rows may be followed by nodes generated on the
-		 * roff level, for example .TS, which cannot be moved
-		 * out of the list.  In that case, wrap such roff nodes
-		 * into an implicit row.
-		 */
-
-		if (nchild->prev != NULL) {
-			mdoc->last = nchild;
-			mdoc->next = ROFF_NEXT_SIBLING;
-			roff_block_alloc(mdoc, nchild->line,
-			    nchild->pos, MDOC_It);
-			roff_head_alloc(mdoc, nchild->line,
-			    nchild->pos, MDOC_It);
-			mdoc->next = ROFF_NEXT_SIBLING;
-			roff_body_alloc(mdoc, nchild->line,
-			    nchild->pos, MDOC_It);
-			while (nchild->tok != MDOC_It) {
-				roff_node_relink(mdoc, nchild);
-				if ((nchild = nnext) == NULL)
-					break;
-				nnext = nchild->next;
-				mdoc->next = ROFF_NEXT_SIBLING;
-			}
+	nchild = mdoc->last;
+	for (;;) {
+		if (nchild == mdoc->last)
+			nchild = roff_node_child(nbody);
+		if (nchild == NULL) {
 			mdoc->last = nbody;
+			mandoc_msg(MANDOCERR_BLK_EMPTY,
+			    nbody->line, nbody->pos, "Bl");
+			return;
+		}
+		if (nchild->tok == MDOC_It) {
+			mdoc->last = nbody;
+			break;
+		}
+		mandoc_msg(MANDOCERR_BL_MOVE, nbody->child->line,
+		    nbody->child->pos, "%s", roff_name[nbody->child->tok]);
+		if (nbody->parent->prev == NULL) {
+			mdoc->last = nbody->parent->parent;
+			mdoc->next = ROFF_NEXT_CHILD;
+		} else {
+			mdoc->last = nbody->parent->prev;
+			mdoc->next = ROFF_NEXT_SIBLING;
+		}
+		roff_node_relink(mdoc, nbody->child);
+	}
+
+	/*
+	 * We have reached the first item,
+	 * so moving nodes out is no longer possible.
+	 * But in .Bl -column, the first rows may be implicit,
+	 * that is, they may not start with .It macros.
+	 * Such rows may be followed by nodes generated on the
+	 * roff level, for example .TS.
+	 * Wrap such roff nodes into an implicit row.
+	 */
+
+	while (nchild != NULL) {
+		if (nchild->tok == MDOC_It) {
+			nchild = roff_node_next(nchild);
 			continue;
 		}
-
-		mandoc_msg(MANDOCERR_BL_MOVE, nchild->line, nchild->pos,
-		    "%s", roff_name[nchild->tok]);
-
-		/*
-		 * Move the node out of the Bl block.
-		 * First, collect all required node pointers.
-		 */
-
-		nblock  = nbody->parent;
-		nprev   = nblock->prev;
-		nparent = nblock->parent;
-
-		/*
-		 * Unlink this child.
-		 */
-
-		nbody->child = nnext;
-		if (nnext == NULL)
-			nbody->last  = NULL;
-		else
-			nnext->prev = NULL;
-
-		/*
-		 * Relink this child.
-		 */
-
-		nchild->parent = nparent;
-		nchild->prev   = nprev;
-		nchild->next   = nblock;
-
-		nblock->prev = nchild;
-		if (nprev == NULL)
-			nparent->child = nchild;
-		else
-			nprev->next = nchild;
-
-		nchild = nnext;
+		nnext = nchild->next;
+		mdoc->last = nchild->prev;
+		mdoc->next = ROFF_NEXT_SIBLING;
+		roff_block_alloc(mdoc, nchild->line, nchild->pos, MDOC_It);
+		roff_head_alloc(mdoc, nchild->line, nchild->pos, MDOC_It);
+		mdoc->next = ROFF_NEXT_SIBLING;
+		roff_body_alloc(mdoc, nchild->line, nchild->pos, MDOC_It);
+		while (nchild->tok != MDOC_It) {
+			roff_node_relink(mdoc, nchild);
+			if (nnext == NULL)
+				break;
+			nchild = nnext;
+			nnext = nchild->next;
+			mdoc->next = ROFF_NEXT_SIBLING;
+		}
+		mdoc->last = nbody;
 	}
 
 	if (mdoc->meta.os_e != MANDOC_OS_NETBSD)
@@ -2485,12 +2469,12 @@ post_ignpar(POST_ARGS)
 static void
 post_prevpar(POST_ARGS)
 {
-	struct roff_node *n;
+	struct roff_node *n, *np;
 
 	n = mdoc->last;
-	if (NULL == n->prev)
-		return;
 	if (n->type != ROFFT_ELEM && n->type != ROFFT_BLOCK)
+		return;
+	if ((np = roff_node_prev(n)) == NULL)
 		return;
 
 	/*
@@ -2498,7 +2482,7 @@ post_prevpar(POST_ARGS)
 	 * block: `Pp' or non-compact `Bd' or `Bl'.
 	 */
 
-	if (n->prev->tok != MDOC_Pp && n->prev->tok != ROFF_br)
+	if (np->tok != MDOC_Pp && np->tok != ROFF_br)
 		return;
 	if (n->tok == MDOC_Bl && n->norm->Bl.comp)
 		return;
@@ -2507,9 +2491,9 @@ post_prevpar(POST_ARGS)
 	if (n->tok == MDOC_It && n->parent->norm->Bl.comp)
 		return;
 
-	mandoc_msg(MANDOCERR_PAR_SKIP, n->prev->line, n->prev->pos,
-	    "%s before %s", roff_name[n->prev->tok], roff_name[n->tok]);
-	roff_node_delete(mdoc, n->prev);
+	mandoc_msg(MANDOCERR_PAR_SKIP, np->line, np->pos,
+	    "%s before %s", roff_name[np->tok], roff_name[n->tok]);
+	roff_node_delete(mdoc, np);
 }
 
 static void
