@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: moduli-gen.sh,v 1.4 2020/02/20 05:58:08 dtucker Exp $
+#	$OpenBSD: moduli-gen.sh,v 1.5 2020/02/27 02:32:37 dtucker Exp $
 #
 
 srcdir="$1"
@@ -26,6 +26,7 @@ if [ ! -f ${moduli_sieved} ]; then
 fi
 
 lines=`gzip -dc ${moduli_sieved} | wc -l`
+lines=`echo $lines`  # remove leading space
 
 gzip -dc ${moduli_sieved} | \
     ssh-keygen -M screen -O checkpoint=${moduli_tested}.ckpt \
