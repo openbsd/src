@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.50 2017/04/11 14:43:49 dhill Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.51 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -218,7 +218,7 @@ ntfs_ntvattrget(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t type,
 		   vget() */
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
 				NTFS_A_DATA, NULL, LK_EXCLUSIVE,
-				VG_EXT, curproc, &newvp);
+				VG_EXT, &newvp);
 		if (error) {
 			printf("ntfs_ntvattrget: CAN'T VGET INO: %d\n",
 			       aalp->al_inumber);
@@ -362,7 +362,7 @@ out:
  * ntfs_ntput().
  */
 int
-ntfs_ntget(struct ntnode *ip, struct proc *p)
+ntfs_ntget(struct ntnode *ip)
 {
 	DPRINTF("ntfs_ntget: get ntnode %u: %p, usecount: %d\n",
 	    ip->i_number, ip, ip->i_usecount);
@@ -382,8 +382,7 @@ ntfs_ntget(struct ntnode *ip, struct proc *p)
  * ntnode returned locked
  */
 int
-ntfs_ntlookup(struct ntfsmount *ntmp, ntfsino_t ino, struct ntnode **ipp,
-    struct proc *p)
+ntfs_ntlookup(struct ntfsmount *ntmp, ntfsino_t ino, struct ntnode **ipp)
 {
 	struct ntnode  *ip;
 
@@ -391,7 +390,7 @@ ntfs_ntlookup(struct ntfsmount *ntmp, ntfsino_t ino, struct ntnode **ipp,
 
 	do {
 		if ((ip = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
-			ntfs_ntget(ip, p);
+			ntfs_ntget(ip);
 			DPRINTF("ntfs_ntlookup: ntnode %u: %p, usecount: %d\n",
 			    ino, ip, ip->i_usecount);
 			*ipp = ip;
@@ -413,7 +412,7 @@ ntfs_ntlookup(struct ntfsmount *ntmp, ntfsino_t ino, struct ntnode **ipp,
 
 	/* init lock and lock the newborn ntnode */
 	rw_init(&ip->i_lock, "ntnode");
-	ntfs_ntget(ip, p);
+	ntfs_ntget(ip);
 
 	ntfs_nthashins(ip);
 
@@ -434,7 +433,7 @@ ntfs_ntlookup(struct ntfsmount *ntmp, ntfsino_t ino, struct ntnode **ipp,
  * ntnode should be locked on entry, and unlocked on return.
  */
 void
-ntfs_ntput(struct ntnode *ip, struct proc *p)
+ntfs_ntput(struct ntnode *ip)
 {
 	struct ntfsmount *ntmp = ip->i_mp;
 	struct ntvattr *vap;
@@ -823,7 +822,7 @@ ntfs_ntlookupattr(struct ntfsmount *ntmp, const char *name, int namelen,
  */
 int
 ntfs_ntlookupfile(struct ntfsmount *ntmp, struct vnode *vp,
-    struct componentname *cnp, struct vnode **vpp, struct proc *p)
+    struct componentname *cnp, struct vnode **vpp)
 {
 	struct fnode   *fp = VTOF(vp);
 	struct ntnode  *ip = FTONT(fp);
@@ -844,7 +843,7 @@ ntfs_ntlookupfile(struct ntfsmount *ntmp, struct vnode *vp,
 	int fullscan = 0;
 	struct ntfs_lookup_ctx *lookup_ctx = NULL, *tctx;
 
-	error = ntfs_ntget(ip, p);
+	error = ntfs_ntget(ip);
 	if (error)
 		return (error);
 
@@ -961,7 +960,7 @@ ntfs_ntlookupfile(struct ntfsmount *ntmp, struct vnode *vp,
 			error = ntfs_vgetex(ntmp->ntm_mountp,
 				   iep->ie_number, attrtype, attrname,
 				   LK_EXCLUSIVE, VG_DONTLOADIN | VG_DONTVALIDFN,
-				   curproc, &nvp);
+				   &nvp);
 			if (error)
 				goto fail;
 
@@ -1086,7 +1085,7 @@ fail:
 			free(tctx, M_TEMP, 0);
 		}
 	}
-	ntfs_ntput(ip, p);
+	ntfs_ntput(ip);
 	return (error);
 }
 
@@ -1142,7 +1141,7 @@ ntfs_ntreaddir(struct ntfsmount *ntmp, struct fnode *fp, u_int32_t num,
 	u_int32_t       aoff, cnum;
 
 	DPRINTF("ntfs_ntreaddir: read ino: %u, num: %u\n", ip->i_number, num);
-	error = ntfs_ntget(ip, p);
+	error = ntfs_ntget(ip);
 	if (error)
 		return (error);
 
@@ -1277,7 +1276,7 @@ fail:
 		ntfs_ntvattrrele(iavap);
 	if (bmp)
 		free(bmp, M_TEMP, 0);
-	ntfs_ntput(ip, p);
+	ntfs_ntput(ip);
 
 	return (error);
 }

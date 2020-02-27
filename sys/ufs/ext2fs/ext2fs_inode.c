@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.62 2019/07/25 01:43:21 cheloha Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.63 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -104,7 +104,6 @@ ext2fs_inactive(void *v)
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct proc *p = ap->a_p;
 	struct timespec ts;
 	int error = 0;
 #ifdef DIAGNOSTIC
@@ -138,7 +137,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	if (ip->i_e2din == NULL || ip->i_e2fs_dtime != 0)
-		vrecycle(vp, p);
+		vrecycle(vp, ap->a_p);
 	return (error);
 }
 

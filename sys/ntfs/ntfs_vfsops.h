@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.h,v 1.3 2013/05/30 20:11:06 guenther Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.h,v 1.4 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: ntfs_vfsops.h,v 1.1 2002/12/23 17:38:34 jdolecek Exp $	*/
 
 /*-
@@ -36,5 +36,5 @@
 #define	VG_EXT		0x0004	/* This is not main record */
 
 int ntfs_vgetex(struct mount *, ntfsino_t, u_int32_t, char *, u_long, u_long,
-		struct proc *, struct vnode **);
+		struct vnode **);
 int ntfs_calccfree(struct ntfsmount *, cn_t *);

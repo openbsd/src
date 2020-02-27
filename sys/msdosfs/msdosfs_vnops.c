@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.129 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.130 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -185,15 +185,6 @@ msdosfs_mknod(void *v)
 int
 msdosfs_open(void *v)
 {
-#if 0
-	struct vop_open_args /* {
-		struct vnode *a_vp;
-		int a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap;
-#endif
-
 	return (0);
 }
 
@@ -778,17 +769,6 @@ out:
 int
 msdosfs_ioctl(void *v)
 {
-#if 0
-	struct vop_ioctl_args /* {
-		struct vnode *a_vp;
-		uint32_t a_command;
-		caddr_t a_data;
-		int a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap;
-#endif
-
 	return (ENOTTY);
 }
 

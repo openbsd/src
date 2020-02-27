@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.97 2020/01/24 13:01:29 kurt Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.98 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -533,7 +533,7 @@ ffs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	int error;
 
-	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
+	if ((error = ufs_reclaim(vp)) != 0)
 		return (error);
 
 	if (ip->i_din1 != NULL) {

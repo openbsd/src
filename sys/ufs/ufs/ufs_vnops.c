@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.148 2020/02/20 16:56:53 visa Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.149 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -72,8 +72,8 @@
 
 #include <uvm/uvm_extern.h>
 
-int ufs_chmod(struct vnode *, int, struct ucred *, struct proc *);
-int ufs_chown(struct vnode *, uid_t, gid_t, struct ucred *, struct proc *);
+int ufs_chmod(struct vnode *, int, struct ucred *);
+int ufs_chown(struct vnode *, uid_t, gid_t, struct ucred *);
 int filt_ufsread(struct knote *, long);
 int filt_ufswrite(struct knote *, long);
 int filt_ufsvnode(struct knote *, long);
@@ -339,7 +339,6 @@ ufs_setattr(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct ucred *cred = ap->a_cred;
-	struct proc *p = ap->a_p;
 	int error;
 	long hint = NOTE_ATTRIB;
 	u_quad_t oldsize;
@@ -384,7 +383,7 @@ ufs_setattr(void *v)
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ufs_chown(vp, vap->va_uid, vap->va_gid, cred, p);
+		error = ufs_chown(vp, vap->va_uid, vap->va_gid, cred);
 		if (error)
 			return (error);
 	}
@@ -420,7 +419,7 @@ ufs_setattr(void *v)
 		    !vnoperm(vp) &&
 		    (error = suser_ucred(cred)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
-		    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
+		    (error = VOP_ACCESS(vp, VWRITE, cred, ap->a_p))))
 			return (error);
 		if (vap->va_mtime.tv_nsec != VNOVAL)
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -448,7 +447,7 @@ ufs_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ufs_chmod(vp, (int)vap->va_mode, cred, p);
+		error = ufs_chmod(vp, (int)vap->va_mode, cred);
 	}
 	VN_KNOTE(vp, hint);
 	return (error);
@@ -459,7 +458,7 @@ ufs_setattr(void *v)
  * Inode must be locked before calling.
  */
 int
-ufs_chmod(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
+ufs_chmod(struct vnode *vp, int mode, struct ucred *cred)
 {
 	struct inode *ip = VTOI(vp);
 	int error;
@@ -487,8 +486,7 @@ ufs_chmod(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
  * inode must be locked prior to call.
  */
 int
-ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
-    struct proc *p)
+ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred)
 {
 	struct inode *ip = VTOI(vp);
 	uid_t ouid;

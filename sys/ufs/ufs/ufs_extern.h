@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.36 2016/08/10 08:04:57 natano Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.37 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ void ufs_ihashrem(struct inode *);
 
 /* ufs_inode.c */
 int ufs_init(struct vfsconf *);
-int ufs_reclaim(struct vnode *, struct proc *);
+int ufs_reclaim(struct vnode *);
 
 /* ufs_lookup.c */
 void ufs_dirbad(struct inode *, doff_t, char *);

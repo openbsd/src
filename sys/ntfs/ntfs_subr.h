@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.h,v 1.10 2016/09/01 08:40:39 natano Exp $	*/
+/*	$OpenBSD: ntfs_subr.h,v 1.11 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: ntfs_subr.h,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
 
 /*-
@@ -94,10 +94,10 @@ int ntfs_loadntnode( struct ntfsmount *, struct ntnode * );
 int ntfs_fget(struct ntfsmount *, struct ntnode *, int, char *, struct fnode **);
 void ntfs_frele(struct fnode *);
 int ntfs_ntreaddir(struct ntfsmount *, struct fnode *, u_int32_t, struct attr_indexentry **, struct proc *);
-int ntfs_ntlookupfile(struct ntfsmount *, struct vnode *, struct componentname *, struct vnode **, struct proc *);
-int ntfs_ntlookup(struct ntfsmount *, ntfsino_t, struct ntnode **, struct proc *);
-int ntfs_ntget(struct ntnode *, struct proc *);
-void ntfs_ntput(struct ntnode *, struct proc *);
+int ntfs_ntlookupfile(struct ntfsmount *, struct vnode *, struct componentname *, struct vnode **);
+int ntfs_ntlookup(struct ntfsmount *, ntfsino_t, struct ntnode **);
+int ntfs_ntget(struct ntnode *);
+void ntfs_ntput(struct ntnode *);
 int ntfs_toupper_use(struct mount *, struct ntfsmount *, struct proc *);
 void ntfs_toupper_unuse(struct proc *);
 

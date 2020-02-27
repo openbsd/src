@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.43 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.44 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -62,7 +62,6 @@ ufs_inactive(void *v)
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct proc *p = ap->a_p;
 	mode_t mode;
 	int error = 0;
 #ifdef DIAGNOSTIC
@@ -118,7 +117,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	if (ip->i_din1 == NULL || DIP(ip, mode) == 0)
-		vrecycle(vp, p);
+		vrecycle(vp, ap->a_p);
 
 	return (error);
 }
@@ -127,7 +126,7 @@ out:
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ufs_reclaim(struct vnode *vp, struct proc *p)
+ufs_reclaim(struct vnode *vp)
 {
 	struct inode *ip;
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.86 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.87 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -70,8 +70,8 @@
 
 #include <uvm/uvm_extern.h>
 
-static int ext2fs_chmod(struct vnode *, mode_t, struct ucred *, struct proc *);
-static int ext2fs_chown(struct vnode *, uid_t, gid_t, struct ucred *, struct proc *);
+static int ext2fs_chmod(struct vnode *, mode_t, struct ucred *);
+static int ext2fs_chown(struct vnode *, uid_t, gid_t, struct ucred *);
 
 /*
  * Create a regular file
@@ -218,7 +218,6 @@ ext2fs_setattr(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct ucred *cred = ap->a_cred;
-	struct proc *p = ap->a_p;
 	int error;
 
 	/*
@@ -266,7 +265,7 @@ ext2fs_setattr(void *v)
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ext2fs_chown(vp, vap->va_uid, vap->va_gid, cred, p);
+		error = ext2fs_chown(vp, vap->va_uid, vap->va_gid, cred);
 		if (error)
 			return (error);
 	}
@@ -298,7 +297,7 @@ ext2fs_setattr(void *v)
 		if (cred->cr_uid != ip->i_e2fs_uid &&
 			(error = suser_ucred(cred)) &&
 			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
-			(error = VOP_ACCESS(vp, VWRITE, cred, p))))
+			(error = VOP_ACCESS(vp, VWRITE, cred, ap->a_p))))
 			return (error);
 		if (vap->va_mtime.tv_nsec != VNOVAL)
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -322,7 +321,7 @@ ext2fs_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ext2fs_chmod(vp, vap->va_mode, cred, p);
+		error = ext2fs_chmod(vp, vap->va_mode, cred);
 	}
 	return (error);
 }
@@ -332,7 +331,7 @@ ext2fs_setattr(void *v)
  * Inode must be locked before calling.
  */
 static int
-ext2fs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
+ext2fs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred)
 {
 	struct inode *ip = VTOI(vp);
 	int error;
@@ -358,7 +357,7 @@ ext2fs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
  * inode must be locked prior to call.
  */
 static int
-ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred, struct proc *p)
+ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred)
 {
 	struct inode *ip = VTOI(vp);
 	uid_t ouid;

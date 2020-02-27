@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.45 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.46 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -208,7 +208,6 @@ ntfs_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct fnode *fp = VTOF(vp);
 	struct ntnode *ip = FTONT(fp);
-	struct proc *p = ap->a_p;
 	int error;
 
 	DPRINTF("ntfs_reclaim: vnode: %p, ntnode: %u\n", vp, ip->i_number);
@@ -218,14 +217,14 @@ ntfs_reclaim(void *v)
 		vprint("ntfs_reclaim: pushing active", vp);
 #endif
 
-	if ((error = ntfs_ntget(ip, p)) != 0)
+	if ((error = ntfs_ntget(ip)) != 0)
 		return (error);
 	
 	/* Purge old data structures associated with the inode. */
 	cache_purge(vp);
 
 	ntfs_frele(fp);
-	ntfs_ntput(ip, p);
+	ntfs_ntput(ip);
 
 	vp->v_data = NULL;
 
@@ -531,7 +530,6 @@ ntfs_lookup(void *v)
 	struct ucred *cred = cnp->cn_cred;
 	int error;
 	int lockparent = cnp->cn_flags & LOCKPARENT;
-	struct proc *p = cnp->cn_proc;
 #if NTFS_DEBUG
 	int wantparent = cnp->cn_flags & (LOCKPARENT|WANTPARENT);
 #endif
@@ -598,7 +596,7 @@ ntfs_lookup(void *v)
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 	} else {
-		error = ntfs_ntlookupfile(ntmp, dvp, cnp, ap->a_vpp, p);
+		error = ntfs_ntlookupfile(ntmp, dvp, cnp, ap->a_vpp);
 		if (error) {
 			DPRINTF("ntfs_ntlookupfile: returned %d\n", error);
 			return (error);

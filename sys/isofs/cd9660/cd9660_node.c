@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.34 2018/05/27 06:02:14 visa Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.35 2020/02/27 09:10:31 mpi Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -182,7 +182,6 @@ cd9660_inactive(v)
 {
 	struct vop_inactive_args *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct proc *p = ap->a_p;
 	register struct iso_node *ip = VTOI(vp);
 	int error = 0;
 
@@ -198,7 +197,7 @@ cd9660_inactive(v)
 	 * so that it can be reused immediately.
 	 */
 	if (ip->inode.iso_mode == 0)
-		vrecycle(vp, p);
+		vrecycle(vp, ap->a_p);
 
 	return (error);
 }
