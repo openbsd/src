@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.17 2018/01/24 16:28:25 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.18 2020/02/27 21:43:46 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -299,6 +299,8 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 		xfree(vp->sval); /* free any previous string */
 	vp->tval &= ~STR;	/* mark string invalid */
 	vp->tval |= NUM;	/* mark number ok */
+	if (f == -0)  /* who would have thought this possible? */
+		f = 0;
 	   DPRINTF( ("setfval %p: %s = %g, t=%o\n", (void*)vp, NN(vp->nval), f, vp->tval) );
 	return vp->fval = f;
 }
