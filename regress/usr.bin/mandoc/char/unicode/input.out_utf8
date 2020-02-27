@@ -23,7 +23,7 @@ DDEESSCCRRIIPPTTIIOONN
                 0xc278     ?x   ASCII continuation
        U+0080   0xc280     ��   lowest two-byte
                 0xc2c380   ?À   high continuation
-       U+07FF   0xdfbf     ߿߿     highest two-byte
+       U+07FF   0xdfbf     ߿߿   highest two-byte
 
    TThhrreeee--bbyyttee rraannggee
 
