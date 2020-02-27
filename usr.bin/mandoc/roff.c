@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.242 2020/02/27 01:25:58 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.243 2020/02/27 21:38:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -1171,7 +1171,7 @@ deroff(char **dest, const struct roff_node *n)
 	char	*cp;
 	size_t	 sz;
 
-	if (n->type != ROFFT_TEXT) {
+	if (n->string == NULL) {
 		for (n = n->child; n != NULL; n = n->next)
 			deroff(dest, n);
 		return;

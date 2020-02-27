@@ -1,0 +1,22 @@
+SH-TAG(1)                   General Commands Manual                  SH-TAG(1)
+
+NNAAMMEE
+     SShh--ttaagg - tagging section headers
+
+DDEESSCCRRIIPPTTIIOONN
+     Text in the description.
+
+   SSuubbsseeccttiioonn
+     BEGINTEST
+
+     Text in the subsection.
+
+EEXXAAMMPPLLEESS
+     Text introducing examples.
+
+   SSuubbsseeccttiioonn
+     Example text.
+
+     ENDTEST
+
+OpenBSD                        February 27, 2020                       OpenBSD

@@ -1,0 +1,9 @@
+<p class="Pp">Text in the subsection.</p>
+</section>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="examples"><a class="permalink" href="#examples">EXAMPLES</a></h1>
+<p class="Pp">Text introducing examples.</p>
+<section class="Ss">
+<h2 class="Ss" id="example"><a class="permalink" href="#example">Subsection</a></h2>
+<p class="Pp">Example text.</p>

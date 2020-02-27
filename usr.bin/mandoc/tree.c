@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.52 2020/01/11 16:02:48 schwarze Exp $ */
+/*	$OpenBSD: tree.c,v 1.53 2020/02/27 21:38:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -197,6 +197,13 @@ print_mdoc(const struct roff_node *n, int indent)
 			putchar(')');
 		if (n->flags & NODE_EOS)
 			putchar('.');
+		if (n->flags & NODE_ID) {
+			printf(" ID");
+			if (n->string != NULL)
+				printf("=%s", n->string);
+		}
+		if (n->flags & NODE_HREF)
+			printf(" HREF");
 		if (n->flags & NODE_BROKEN)
 			printf(" BROKEN");
 		if (n->flags & NODE_NOFILL)

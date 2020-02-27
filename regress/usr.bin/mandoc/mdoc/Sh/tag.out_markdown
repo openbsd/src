@@ -1,0 +1,27 @@
+SH-TAG(1) - General Commands Manual
+
+# NAME
+
+**Sh-tag** - tagging section headers
+
+# DESCRIPTION
+
+Text in the description.
+
+## Subsection
+
+BEGINTEST
+
+Text in the subsection.
+
+# EXAMPLES
+
+Text introducing examples.
+
+## Subsection
+
+Example text.
+
+ENDTEST
+
+OpenBSD - February 27, 2020

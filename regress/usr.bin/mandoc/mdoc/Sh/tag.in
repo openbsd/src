@@ -1,0 +1,21 @@
+.\" $OpenBSD: tag.in,v 1.1 2020/02/27 21:38:27 schwarze Exp $
+.Dd $Mdocdate: February 27 2020 $
+.Dt SH-TAG 1
+.Os
+.Sh NAME
+.Nm Sh-tag
+.Nd tagging section headers
+.Sh DESCRIPTION
+Text in the description.
+.Ss Subsection
+BEGINTEST
+.Pp
+Text in the subsection.
+.Tg examples
+.Sh EXAMPLES
+Text introducing examples.
+.Tg example
+.Ss Subsection
+Example text.
+.Pp
+ENDTEST

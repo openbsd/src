@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.293 2020/02/27 01:25:58 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.294 2020/02/27 21:38:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -1079,21 +1079,32 @@ post_st(POST_ARGS)
 static void
 post_tg(POST_ARGS)
 {
-	struct roff_node	*n, *nch;
+	struct roff_node	*n, *nch, *nn;
 	size_t			len;
 
+	/* Find the next node. */
 	n = mdoc->last;
+	for (nn = n; nn != NULL; nn = nn->parent) {
+		if (nn->next != NULL) {
+			nn = nn->next;
+			break;
+		}
+	}
+
+	/* Add the default argument, if needed. */
 	nch = n->child;
-	if (nch == NULL && n->next != NULL &&
-	    n->next->child->type == ROFFT_TEXT) {
+	if (nch == NULL && nn != NULL && nn->child->type == ROFFT_TEXT) {
 		mdoc->next = ROFF_NEXT_CHILD;
 		roff_word_alloc(mdoc, n->line, n->pos, n->next->child->string);
 		nch = mdoc->last;
 		nch->flags |= NODE_NOSRC;
 		mdoc->last = n;
 	}
-	if (nch == NULL || *nch->string == '\0') {
+
+	/* Validate the first argument. */
+	if (nch == NULL || *nch->string == '\0')
 		mandoc_msg(MANDOCERR_MACRO_EMPTY, n->line, n->pos, "Tg");
+	if (nch == NULL) {
 		roff_node_delete(mdoc, n);
 		return;
 	}
@@ -1101,14 +1112,42 @@ post_tg(POST_ARGS)
 	if (nch->string[len] != '\0')
 		mandoc_msg(MANDOCERR_TG_SPC, nch->line, nch->pos + len + 1,
 		    "Tg %s", nch->string);
+
+	/* Keep only the first argument. */
 	if (nch->next != NULL) {
 		mandoc_msg(MANDOCERR_ARG_EXCESS, nch->next->line,
 		    nch->next->pos, "Tg ... %s", nch->next->string);
 		while (nch->next != NULL)
 			roff_node_delete(mdoc, nch->next);
 	}
-	if (nch->string[len] != '\0')
+
+	/* Drop the macro if the first argument is invalid. */
+	if (len == 0 || nch->string[len] != '\0') {
 		roff_node_delete(mdoc, n);
+		return;
+	}
+
+	/* By default, write a <mark> element. */
+	n->flags |= NODE_ID;
+	if (nn == NULL)
+		return;
+
+	/* Explicit tagging of specific macros. */
+	switch (nn->tok) {
+	case MDOC_Sh:
+	case MDOC_Ss:
+		if (nn->head->flags & NODE_ID || nn->head->child == NULL)
+			break;
+		n->flags |= NODE_NOPRT;
+		nn->head->flags |= NODE_ID | NODE_HREF;
+		assert(nn->head->string == NULL);
+		nn->head->string = mandoc_strdup(nch->string);
+		break;
+	default:
+		break;
+	}
+	if (n->flags & NODE_NOPRT)
+		n->flags &= ~NODE_ID;
 }
 
 static void
