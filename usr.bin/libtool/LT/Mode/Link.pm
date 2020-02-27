@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.36 2017/07/23 09:48:53 zhuk Exp $
+# $OpenBSD: Link.pm,v 1.37 2020/02/27 11:27:47 jca Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -834,8 +834,8 @@ sub common1
 		tsay {"stripping stdc++ from orderedlibs due to having estdc++ already; ie=$ie, is=$is"};
 		# check what library comes later
 		if ($ie < $is) {
-			splice(@$orderedlibs, $ie, 1);
 			splice(@$orderedlibs, $is, 1, "estdc++");
+			splice(@$orderedlibs, $ie, 1);
 			$ie = $is;
 		} else {
 			splice(@$orderedlibs, $is, 1);
