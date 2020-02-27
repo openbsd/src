@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.99 2020/02/10 03:08:58 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.100 2020/02/27 16:52:44 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -526,13 +526,16 @@ rdrand(void *v)
 	struct timeout *tmo = v;
 	extern int      has_rdrand;
 	extern int      has_rdseed;
-	uint32_t r;
-	uint8_t valid;
+	uint32_t r, tsc = 0;
+	uint8_t valid = 0;
 	int i;
 
 	if (has_rdrand == 0 && has_rdseed == 0)
 		return;
+
 	for (i = 0; i < 4; i++) {
+		if (cpu_feature & CPUID_TSC)
+			tsc = rdtsc();
 		if (has_rdseed)
 			__asm volatile(
 			    "rdseed	%0\n\t"
@@ -543,8 +546,12 @@ rdrand(void *v)
 			    "rdrand	%0\n\t"
 			    "setc	%1\n"
 			    : "=r" (r), "=qm" (valid) );
-		if (valid)
-			enqueue_randomness(r);
+		r ^= tsc;
+		r ^= valid;		/* potential rdrand empty */
+		if (has_rdrand)
+			if (cpu_feature & CPUID_TSC)
+				r += rdtsc();	/* potential vmexit latency */
+		enqueue_randomness(r);
 	}
 
 	if (tmo)

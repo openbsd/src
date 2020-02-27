@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.144 2020/02/10 03:08:58 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.145 2020/02/27 16:52:42 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1219,8 +1219,10 @@ rdrand(void *v)
 		uint64_t u64;
 		uint32_t u32[2];
 	} r, t;
+	uint32_t tsc;
 	uint8_t valid = 0;
 
+	tsc = rdtsc();
 	if (has_rdseed)
 		__asm volatile(
 		    "rdseed	%0\n\t"
@@ -1232,10 +1234,12 @@ rdrand(void *v)
 		    "setc	%1\n"
 		    : "=r" (r.u64), "=qm" (valid) );
 
-	t.u64 = rdtsc();
+	t.u64 = tsc;
+	t.u64 ^= r.u64;
+	t.u64 ^= valid;			/* potential rdrand empty */
+	if (has_rdrand)
+		t.u64 += rdtsc();	/* potential vmexit latency */
 
-	if (valid)
-		t.u64 ^= r.u64;
 	enqueue_randomness(t.u32[0]);
 	enqueue_randomness(t.u32[1]);
 
