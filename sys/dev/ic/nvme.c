@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.66 2020/02/15 11:35:31 yasuoka Exp $ */
+/*	$OpenBSD: nvme.c,v 1.67 2020/02/27 18:37:19 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1186,7 +1186,7 @@ nvme_ccbs_alloc(struct nvme_softc *sc, u_int nccbs)
 	if (sc->sc_ccbs == NULL)
 		return (1);
 
-	sc->sc_ccb_prpls = nvme_dmamem_alloc(sc, 
+	sc->sc_ccb_prpls = nvme_dmamem_alloc(sc,
 	    sizeof(*prpl) * sc->sc_max_sgl * nccbs);
 
 	prpl = NVME_DMA_KVA(sc->sc_ccb_prpls);
@@ -1454,7 +1454,7 @@ nvme_hibernate_admin_cmd(struct nvme_softc *sc, struct nvme_sqe *sqe,
 		flags = lemtoh16(&acqe->flags);
 		if ((flags & NVME_CQE_PHASE) == q->q_cq_phase)
 			break;
-	
+
 		delay(10);
 	}
 
@@ -1517,7 +1517,7 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		}
 		if (my->nsid == 0)
 			return (EIO);
-		
+
 		my->poffset = blkno;
 		my->psize = size;
 
@@ -1525,7 +1525,7 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		    my->sc->sc_hib_q->q_entries * sizeof(struct nvme_cqe));
 		memset(NVME_DMA_KVA(my->sc->sc_hib_q->q_sq_dmamem), 0,
 		    my->sc->sc_hib_q->q_entries * sizeof(struct nvme_sqe));
-		
+
 		my->sq_tail = 0;
 		my->cq_head = 0;
 		my->cqe_phase = NVME_CQE_PHASE;
@@ -1578,7 +1578,7 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 	} else if (size > my->sc->sc_mps * 2) {
 		pmap_extract(pmap_kernel(), (vaddr_t)page, &page_phys);
 		page_bus_phys = page_phys;
-		htolem64(&isqe->entry.prp[1], page_bus_phys + 
+		htolem64(&isqe->entry.prp[1], page_bus_phys +
 		    offsetof(struct nvme_hibernate_page, prpl));
 		for (i = 1; i < (size / my->sc->sc_mps); i++) {
 			htolem64(&my->prpl[i - 1], data_bus_phys +
@@ -1599,7 +1599,7 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		flags = lemtoh16(&icqe->flags);
 		if ((flags & NVME_CQE_PHASE) == my->cqe_phase)
 			break;
-	
+
 		delay(10);
 	}
 
