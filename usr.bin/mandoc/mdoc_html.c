@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.209 2020/02/27 01:25:57 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.210 2020/02/27 22:26:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -729,7 +729,7 @@ mdoc_tg_pre(MDOC_ARGS)
 	char	*id;
 
 	if ((id = html_make_id(n, 1)) != NULL)
-		print_otag(h, TAG_MARK, "i", id);
+		print_tagq(h, print_otag(h, TAG_MARK, "i", id));
 	return 0;
 }
 
