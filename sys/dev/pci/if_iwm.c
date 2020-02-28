@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.298 2020/02/28 13:27:25 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.299 2020/02/28 14:16:34 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3989,7 +3989,15 @@ iwm_rx_mpdu(struct iwm_softc *sc, struct mbuf *m, void *pktdata,
 	phy_info = &sc->sc_last_phy_info;
 	rx_res = (struct iwm_rx_mpdu_res_start *)pktdata;
 	len = le16toh(rx_res->byte_count);
-	if (len < IEEE80211_MIN_LEN) {
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		/* Allow control frames in monitor mode. */
+		if (len < sizeof(struct ieee80211_frame_cts)) {
+			ic->ic_stats.is_rx_tooshort++;
+			IC2IFP(ic)->if_ierrors++;
+			m_freem(m);
+			return;
+		}
+	} else if (len < sizeof(struct ieee80211_frame)) {
 		ic->ic_stats.is_rx_tooshort++;
 		IC2IFP(ic)->if_ierrors++;
 		m_freem(m);
@@ -4055,7 +4063,15 @@ iwm_rx_mpdu_mq(struct iwm_softc *sc, struct mbuf *m, void *pktdata,
 	}
 
 	len = le16toh(desc->mpdu_len);
-	if (len < IEEE80211_MIN_LEN) {
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		/* Allow control frames in monitor mode. */
+		if (len < sizeof(struct ieee80211_frame_cts)) {
+			ic->ic_stats.is_rx_tooshort++;
+			IC2IFP(ic)->if_ierrors++;
+			m_freem(m);
+			return;
+		}
+	} else if (len < sizeof(struct ieee80211_frame)) {
 		ic->ic_stats.is_rx_tooshort++;
 		IC2IFP(ic)->if_ierrors++;
 		m_freem(m);
