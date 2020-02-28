@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.146 2020/02/28 04:59:06 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.147 2020/02/28 05:22:52 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1219,7 +1219,7 @@ rdrand(void *v)
 		uint64_t u64;
 		uint32_t u32[2];
 	} r, t;
-	uint64_t tsc;
+	uint32_t tsc;
 	uint8_t valid = 0;
 
 	tsc = rdtsc();
