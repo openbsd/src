@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.3 2020/02/28 14:17:48 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.4 2020/02/28 14:18:07 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3461,17 +3461,21 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 	desc = (struct iwx_rx_mpdu_desc *)pktdata;
 
 	if (!(desc->status & htole16(IWX_RX_MPDU_RES_STATUS_CRC_OK)) ||
-	    !(desc->status & htole16(IWX_RX_MPDU_RES_STATUS_OVERRUN_OK)))
+	    !(desc->status & htole16(IWX_RX_MPDU_RES_STATUS_OVERRUN_OK))) {
+		m_freem(m);
 		return; /* drop */
+	}
 
 	len = le16toh(desc->mpdu_len);
 	if (len < IEEE80211_MIN_LEN) {
 		ic->ic_stats.is_rx_tooshort++;
 		IC2IFP(ic)->if_ierrors++;
+		m_freem(m);
 		return;
 	}
 	if (len > maxlen - sizeof(*desc)) {
 		IC2IFP(ic)->if_ierrors++;
+		m_freem(m);
 		return;
 	}
 
@@ -6983,6 +6987,8 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 				m = m_copym(m0, 0, M_COPYALL, M_DONTWAIT);
 				if (m == NULL) {
 					ifp->if_ierrors++;
+					m_freem(m0);
+					m0 = NULL;
 					break;
 				}
 				m_adj(m, offset);
