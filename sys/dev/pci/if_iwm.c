@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.296 2020/02/26 14:29:52 tobhe Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.297 2020/02/28 13:26:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5217,12 +5217,27 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 
 	memset(&add_sta_cmd, 0, sizeof(add_sta_cmd));
 
-	add_sta_cmd.sta_id = IWM_STATION_ID;
-	if (isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_STA_TYPE))
-		add_sta_cmd.station_type = IWM_STA_LINK;
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		add_sta_cmd.sta_id = IWM_MONITOR_STA_ID;
+	else
+		add_sta_cmd.sta_id = IWM_STATION_ID;
+	if (isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_STA_TYPE)) {
+		if (ic->ic_opmode == IEEE80211_M_MONITOR)
+			add_sta_cmd.station_type = IWM_STA_GENERAL_PURPOSE;
+		else
+			add_sta_cmd.station_type = IWM_STA_LINK;
+	}
 	add_sta_cmd.mac_id_n_color
 	    = htole32(IWM_FW_CMD_ID_AND_COLOR(in->in_id, in->in_color));
-	if (!update) {
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		int qid;
+		IEEE80211_ADDR_COPY(&add_sta_cmd.addr, etheranyaddr);
+		if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT))
+			qid = IWM_DQA_INJECT_MONITOR_QUEUE;
+		else
+			qid = IWM_AUX_QUEUE;
+		add_sta_cmd.tfd_queue_msk |= htole32(1 << qid);
+	} else if (!update) {
 		int ac;
 		for (ac = 0; ac < EDCA_NUM_AC; ac++) {
 			int qid = ac;
@@ -5231,12 +5246,7 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 				qid += IWM_DQA_MIN_MGMT_QUEUE;
 			add_sta_cmd.tfd_queue_msk |= htole32(1 << qid);
 		}
-		if (ic->ic_opmode == IEEE80211_M_MONITOR)
-			IEEE80211_ADDR_COPY(&add_sta_cmd.addr,
-			    etherbroadcastaddr);
-		else
-			IEEE80211_ADDR_COPY(&add_sta_cmd.addr,
-			    in->in_ni.ni_bssid);
+		IEEE80211_ADDR_COPY(&add_sta_cmd.addr, in->in_ni.ni_bssid);
 	}
 	add_sta_cmd.add_modify = update ? 1 : 0;
 	add_sta_cmd.station_flags_msk
@@ -5331,6 +5341,7 @@ iwm_add_aux_sta(struct iwm_softc *sc)
 int
 iwm_rm_sta_cmd(struct iwm_softc *sc, struct iwm_node *in)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_rm_sta_cmd rm_sta_cmd;
 	int err;
 
@@ -5338,7 +5349,10 @@ iwm_rm_sta_cmd(struct iwm_softc *sc, struct iwm_node *in)
 		panic("sta already removed");
 
 	memset(&rm_sta_cmd, 0, sizeof(rm_sta_cmd));
-	rm_sta_cmd.sta_id = IWM_STATION_ID;
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		rm_sta_cmd.sta_id = IWM_MONITOR_STA_ID;
+	else
+		rm_sta_cmd.sta_id = IWM_STATION_ID;
 
 	err = iwm_send_cmd_pdu(sc, IWM_REMOVE_STA, 0, sizeof(rm_sta_cmd),
 	    &rm_sta_cmd);
@@ -6202,6 +6216,7 @@ iwm_mac_ctxt_cmd(struct iwm_softc *sc, struct iwm_node *in, uint32_t action,
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		cmd.filter_flags |= htole32(IWM_MAC_FILTER_IN_PROMISC |
 		    IWM_MAC_FILTER_IN_CONTROL_AND_MGMT |
+		    IWM_MAC_FILTER_ACCEPT_GRP |
 		    IWM_MAC_FILTER_IN_BEACON |
 		    IWM_MAC_FILTER_IN_PROBE_REQUEST |
 		    IWM_MAC_FILTER_IN_CRC32);
@@ -7518,7 +7533,7 @@ int
 iwm_init_hw(struct iwm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	int err, i, ac;
+	int err, i, ac, qid;
 
 	err = iwm_preinit(sc);
 	if (err)
@@ -7646,18 +7661,32 @@ iwm_init_hw(struct iwm_softc *sc)
 		}
 	}
 
-	for (ac = 0; ac < EDCA_NUM_AC; ac++) {
-		int qid;
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_DQA_SUPPORT))
-			qid = ac + IWM_DQA_MIN_MGMT_QUEUE;
+			qid = IWM_DQA_INJECT_MONITOR_QUEUE;
 		else
-			qid = ac;
-		err = iwm_enable_txq(sc, IWM_STATION_ID, qid,
-		    iwm_ac_to_tx_fifo[ac]);
+			qid = IWM_AUX_QUEUE;
+		err = iwm_enable_txq(sc, IWM_MONITOR_STA_ID, qid,
+		    iwm_ac_to_tx_fifo[EDCA_AC_BE]);
 		if (err) {
-			printf("%s: could not enable Tx queue %d (error %d)\n",
-			    DEVNAME(sc), ac, err);
+			printf("%s: could not enable monitor inject Tx queue "
+			    "(error %d)\n", DEVNAME(sc), err);
 			goto err;
+		}
+	} else {
+		for (ac = 0; ac < EDCA_NUM_AC; ac++) {
+			if (isset(sc->sc_enabled_capa,
+			    IWM_UCODE_TLV_CAPA_DQA_SUPPORT))
+				qid = ac + IWM_DQA_MIN_MGMT_QUEUE;
+			else
+				qid = ac;
+			err = iwm_enable_txq(sc, IWM_STATION_ID, qid,
+			    iwm_ac_to_tx_fifo[ac]);
+			if (err) {
+				printf("%s: could not enable Tx queue %d "
+				    "(error %d)\n", DEVNAME(sc), ac, err);
+				goto err;
+			}
 		}
 	}
 
