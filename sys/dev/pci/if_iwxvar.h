@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.1 2020/02/15 08:47:14 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.2 2020/02/28 14:17:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -531,6 +531,7 @@ struct iwx_node {
 };
 #define IWX_STATION_ID 0
 #define IWX_AUX_STA_ID 1
+#define IWX_MONITOR_STA_ID 2
 
 #define IWX_ICT_SIZE		4096
 #define IWX_ICT_COUNT		(IWX_ICT_SIZE / sizeof (uint32_t))

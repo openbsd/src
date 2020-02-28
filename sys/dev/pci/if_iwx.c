@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.2 2020/02/28 14:17:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.3 2020/02/28 14:17:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4500,14 +4500,19 @@ iwx_add_sta_cmd(struct iwx_softc *sc, struct iwx_node *in, int update)
 
 	memset(&add_sta_cmd, 0, sizeof(add_sta_cmd));
 
-	add_sta_cmd.sta_id = IWX_STATION_ID;
-	add_sta_cmd.station_type = IWX_STA_LINK;
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		add_sta_cmd.sta_id = IWX_MONITOR_STA_ID;
+		add_sta_cmd.station_type = IWX_STA_GENERAL_PURPOSE;
+	} else {
+		add_sta_cmd.sta_id = IWX_STATION_ID;
+		add_sta_cmd.station_type = IWX_STA_LINK;
+	}
 	add_sta_cmd.mac_id_n_color
 	    = htole32(IWX_FW_CMD_ID_AND_COLOR(in->in_id, in->in_color));
 	if (!update) {
 		if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			IEEE80211_ADDR_COPY(&add_sta_cmd.addr,
-			    etherbroadcastaddr);
+			    etheranyaddr);
 		else
 			IEEE80211_ADDR_COPY(&add_sta_cmd.addr,
 			    in->in_ni.ni_bssid);
@@ -4584,6 +4589,7 @@ iwx_add_aux_sta(struct iwx_softc *sc)
 int
 iwx_rm_sta_cmd(struct iwx_softc *sc, struct iwx_node *in)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwx_rm_sta_cmd rm_sta_cmd;
 	int err;
 
@@ -4591,7 +4597,10 @@ iwx_rm_sta_cmd(struct iwx_softc *sc, struct iwx_node *in)
 		panic("sta already removed");
 
 	memset(&rm_sta_cmd, 0, sizeof(rm_sta_cmd));
-	rm_sta_cmd.sta_id = IWX_STATION_ID;
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		rm_sta_cmd.sta_id = IWX_MONITOR_STA_ID;
+	else
+		rm_sta_cmd.sta_id = IWX_STATION_ID;
 
 	err = iwx_send_cmd_pdu(sc, IWX_REMOVE_STA, 0, sizeof(rm_sta_cmd),
 	    &rm_sta_cmd);
@@ -5286,6 +5295,7 @@ iwx_mac_ctxt_cmd(struct iwx_softc *sc, struct iwx_node *in, uint32_t action,
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		cmd.filter_flags |= htole32(IWX_MAC_FILTER_IN_PROMISC |
 		    IWX_MAC_FILTER_IN_CONTROL_AND_MGMT |
+		    IWX_MAC_FILTER_ACCEPT_GRP |
 		    IWX_MAC_FILTER_IN_BEACON |
 		    IWX_MAC_FILTER_IN_PROBE_REQUEST |
 		    IWX_MAC_FILTER_IN_CRC32);
@@ -5563,8 +5573,14 @@ iwx_auth(struct iwx_softc *sc)
 	}
 	sc->sc_flags |= IWX_FLAG_STA_ACTIVE;
 
-	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		err = iwx_enable_txq(sc, IWX_MONITOR_STA_ID,
+		    IWX_DQA_INJECT_MONITOR_QUEUE, IWX_MGMT_TID,
+		    IWX_TX_RING_COUNT);
+		if (err)
+			goto rm_sta;
 		return 0;
+	}
 
 	err = iwx_enable_data_tx_queues(sc);
 	if (err)
