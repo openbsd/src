@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.26 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: upd.c,v 1.27 2020/02/28 12:13:55 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 David Higgs <higgsd@gmail.com>
@@ -425,7 +425,10 @@ upd_sensor_update(struct upd_softc *sc, struct upd_sensor *sensor,
 	}
 
 	hdata = hid_get_data(buf, len, &sensor->hitem.loc);
-	sensor->ksensor.value = hdata * adjust;
+	if (sensor->ksensor.type == SENSOR_INDICATOR)
+		sensor->ksensor.value = hdata ? 1 : 0;
+	else
+		sensor->ksensor.value = hdata * adjust;
 	sensor->ksensor.status = SENSOR_S_OK;
 	sensor->ksensor.flags &= ~SENSOR_FINVALID;
 
