@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.1 2020/02/15 08:47:14 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.2 2020/02/28 14:51:53 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1595,6 +1595,7 @@ struct iwx_tx_queue_cfg_rsp {
 
 /* DATA_PATH group subcommand IDs */
 #define IWX_DQA_ENABLE_CMD	0x00
+#define IWX_RX_NO_DATA_NOTIF	0xf5
 
 /* REGULATORY_AND_NVM group subcommand IDs */
 #define IWX_NVM_ACCESS_COMPLETE	0x00

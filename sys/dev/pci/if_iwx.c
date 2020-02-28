@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.5 2020/02/28 14:18:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.6 2020/02/28 14:51:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7174,6 +7174,9 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		case IWX_WIDE_ID(IWX_REGULATORY_AND_NVM_GROUP,
 		    IWX_NVM_ACCESS_COMPLETE):
 			break;
+
+		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP, IWX_RX_NO_DATA_NOTIF):
+			break; /* happens in monitor mode; ignore for now */
 
 		default:
 			handled = 0;
