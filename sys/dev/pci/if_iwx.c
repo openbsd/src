@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.1 2020/02/15 08:47:14 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.2 2020/02/28 14:17:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7204,7 +7204,6 @@ iwx_intr(void *arg)
 	struct iwx_softc *sc = arg;
 	int handled = 0;
 	int r1, r2, rv = 0;
-	int isperiodic = 0;
 
 	IWX_WRITE(sc, IWX_CSR_INT_MASK, 0);
 
@@ -7313,27 +7312,32 @@ iwx_intr(void *arg)
 		wakeup(&sc->sc_fw);
 	}
 
-	if (r1 & IWX_CSR_INT_BIT_RX_PERIODIC) {
-		handled |= IWX_CSR_INT_BIT_RX_PERIODIC;
-		IWX_WRITE(sc, IWX_CSR_INT, IWX_CSR_INT_BIT_RX_PERIODIC);
-		if ((r1 & (IWX_CSR_INT_BIT_FH_RX | IWX_CSR_INT_BIT_SW_RX)) == 0)
-			IWX_WRITE_1(sc,
-			    IWX_CSR_INT_PERIODIC_REG, IWX_CSR_INT_PERIODIC_DIS);
-		isperiodic = 1;
-	}
+	if (r1 & (IWX_CSR_INT_BIT_FH_RX | IWX_CSR_INT_BIT_SW_RX |
+	    IWX_CSR_INT_BIT_RX_PERIODIC)) {
+		if (r1 & (IWX_CSR_INT_BIT_FH_RX | IWX_CSR_INT_BIT_SW_RX)) {
+			handled |= (IWX_CSR_INT_BIT_FH_RX | IWX_CSR_INT_BIT_SW_RX);
+			IWX_WRITE(sc, IWX_CSR_FH_INT_STATUS, IWX_CSR_FH_INT_RX_MASK);
+		}
+		if (r1 & IWX_CSR_INT_BIT_RX_PERIODIC) {
+			handled |= IWX_CSR_INT_BIT_RX_PERIODIC;
+			IWX_WRITE(sc, IWX_CSR_INT, IWX_CSR_INT_BIT_RX_PERIODIC);
+		}
 
-	if ((r1 & (IWX_CSR_INT_BIT_FH_RX | IWX_CSR_INT_BIT_SW_RX)) ||
-	    isperiodic) {
-		handled |= (IWX_CSR_INT_BIT_FH_RX | IWX_CSR_INT_BIT_SW_RX);
-		IWX_WRITE(sc, IWX_CSR_FH_INT_STATUS, IWX_CSR_FH_INT_RX_MASK);
+		/* Disable periodic interrupt; we use it as just a one-shot. */
+		IWX_WRITE_1(sc, IWX_CSR_INT_PERIODIC_REG, IWX_CSR_INT_PERIODIC_DIS);
 
-		iwx_notif_intr(sc);
-
-		/* enable periodic interrupt, see above */
-		if (r1 & (IWX_CSR_INT_BIT_FH_RX | IWX_CSR_INT_BIT_SW_RX) &&
-		    !isperiodic)
+		/*
+		 * Enable periodic interrupt in 8 msec only if we received
+		 * real RX interrupt (instead of just periodic int), to catch
+		 * any dangling Rx interrupt.  If it was just the periodic
+		 * interrupt, there was no dangling Rx activity, and no need
+		 * to extend the periodic interrupt; one-shot is enough.
+		 */
+		if (r1 & (IWX_CSR_INT_BIT_FH_RX | IWX_CSR_INT_BIT_SW_RX))
 			IWX_WRITE_1(sc, IWX_CSR_INT_PERIODIC_REG,
 			    IWX_CSR_INT_PERIODIC_ENA);
+
+		iwx_notif_intr(sc);
 	}
 
 	rv = 1;
