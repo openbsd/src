@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.102 2020/02/28 05:22:52 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.103 2020/02/28 05:31:42 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -526,7 +526,8 @@ rdrand(void *v)
 	struct timeout *tmo = v;
 	extern int      has_rdrand;
 	extern int      has_rdseed;
-	uint32_t r, tsc = 0;
+	uint32_t r;
+	uint64_t tsc = 0;
 	uint8_t valid = 0;
 	int i;
 
