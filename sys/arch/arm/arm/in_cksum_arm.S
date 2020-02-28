@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum_arm.S,v 1.7 2018/08/06 18:39:13 kettenis Exp $	*/
+/*	$OpenBSD: in_cksum_arm.S,v 1.8 2020/02/28 11:38:56 jsg Exp $	*/
 /*	$NetBSD: in_cksum_arm.S,v 1.3 2003/11/26 10:31:53 rearnsha Exp $ */
 
 /*
@@ -140,7 +140,7 @@ ENTRY(in4_cksum)
 
 	/* 0x02: Data 16-bit aligned */
 	ldr	r4, [r6, #(IP_SRC - 2)]	/* r4 = 10xx */
-	ldr	r7, [r6, #(IP_DST - 2)]	/* r7 = xx76 */
+	ldrh	r7, [r6, #(IP_DST + 2)]	/* r7 = ..76 */
 	ldr	r5, [r6, #(IP_SRC + 2)]	/* r5 = 5432 */
 	mov	r4, r4, lsr #16		/* r4 = ..10 */
 	orr	r4, r4, r7, lsl #16	/* r4 = 7610 */
