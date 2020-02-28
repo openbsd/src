@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.4 2020/02/28 14:18:07 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.5 2020/02/28 14:18:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3467,7 +3467,15 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 	}
 
 	len = le16toh(desc->mpdu_len);
-	if (len < IEEE80211_MIN_LEN) {
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		/* Allow control frames in monitor mode. */
+		if (len < sizeof(struct ieee80211_frame_cts)) {
+			ic->ic_stats.is_rx_tooshort++;
+			IC2IFP(ic)->if_ierrors++;
+			m_freem(m);
+			return;
+		}
+	} else if (len < sizeof(struct ieee80211_frame)) {
 		ic->ic_stats.is_rx_tooshort++;
 		IC2IFP(ic)->if_ierrors++;
 		m_freem(m);
