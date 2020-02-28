@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.67 2020/02/27 18:37:19 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.68 2020/02/28 21:12:26 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -44,7 +44,7 @@ struct cfdriver nvme_cd = {
 };
 
 int	nvme_ready(struct nvme_softc *, u_int32_t);
-int	nvme_enable(struct nvme_softc *, u_int);
+int	nvme_enable(struct nvme_softc *);
 int	nvme_disable(struct nvme_softc *);
 int	nvme_shutdown(struct nvme_softc *);
 int	nvme_resume(struct nvme_softc *);
@@ -212,7 +212,7 @@ nvme_ready(struct nvme_softc *sc, u_int32_t rdy)
 }
 
 int
-nvme_enable(struct nvme_softc *sc, u_int mps)
+nvme_enable(struct nvme_softc *sc)
 {
 	u_int32_t cc;
 
@@ -235,7 +235,7 @@ nvme_enable(struct nvme_softc *sc, u_int mps)
 	SET(cc, NVME_CC_SHN(NVME_CC_SHN_NONE));
 	SET(cc, NVME_CC_CSS(NVME_CC_CSS_NVM));
 	SET(cc, NVME_CC_AMS(NVME_CC_AMS_RR));
-	SET(cc, NVME_CC_MPS(mps));
+	SET(cc, NVME_CC_MPS(sc->sc_mps_bits));
 	SET(cc, NVME_CC_EN);
 
 	nvme_write4(sc, NVME_CC, cc);
@@ -322,7 +322,7 @@ nvme_attach(struct nvme_softc *sc)
 	}
 	nccbs = 16;
 
-	if (nvme_enable(sc, mps) != 0) {
+	if (nvme_enable(sc) != 0) {
 		printf("%s: unable to enable controller\n", DEVNAME(sc));
 		goto free_ccbs;
 	}
@@ -405,7 +405,7 @@ nvme_resume(struct nvme_softc *sc)
 		return (1);
 	}
 
-	if (nvme_enable(sc, sc->sc_mps_bits) != 0) {
+	if (nvme_enable(sc) != 0) {
 		printf("%s: unable to enable controller\n", DEVNAME(sc));
 		return (1);
 	}
