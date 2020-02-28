@@ -1,7 +1,8 @@
-/*	$OpenBSD: i386_installboot.c,v 1.33 2019/09/02 16:36:12 otto Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.34 2020/02/28 12:26:30 otto Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
+ * Copyright (c) 2013 Pedro Martelletto
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2003 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
  * Copyright (c) 1997 Michael Shalayeff
@@ -82,6 +83,7 @@ struct sym_data pbr_symbols[] = {
 	{"_inodeblk",	4},
 	{"_inodedbl",	4},
 	{"_nblocks",	2},
+	{"_blkincr",	1},
 	{NULL}
 };
 
@@ -90,6 +92,10 @@ static u_int	findopenbsd(int, struct disklabel *);
 static int	getbootparams(char *, int, struct disklabel *);
 static char	*loadproto(char *, long *);
 static int	gpt_chk_mbr(struct dos_partition *, u_int64_t);
+static int	sbchk(struct fs *, daddr_t);
+static void	sbread(int, daddr_t, struct fs **, char *);
+
+static const daddr_t sbtry[] = SBLOCKSEARCH;
 
 /*
  * Read information about /boot's inode and filesystem parameters, then
@@ -662,11 +668,11 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	struct fs	*fs;
 	char		*sblock, *buf;
 	u_int		blk, *ap;
-	struct ufs1_dinode *ip;
 	int		ndb;
 	int		mib[3];
 	size_t		size;
 	dev_t		dev;
+	int		incr;
 
 	/*
 	 * Open 2nd-level boot program and record enough details about
@@ -723,19 +729,10 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	pp = &dl->d_partitions[DISKPART(fsb.st_dev)];
 	close(fd);
 
-	/* Read superblock. */
 	if ((sblock = malloc(SBSIZE)) == NULL)
 		err(1, NULL);
 
-	devread(devfd, sblock, DL_SECTOBLK(dl, pp->p_offset) + SBLOCK,
-	    SBSIZE, "superblock");
-	fs = (struct fs *)sblock;
-
-	/* Sanity-check super-block. */
-	if (fs->fs_magic != FS_MAGIC)
-		errx(1, "Bad magic number in superblock");
-	if (fs->fs_inopb <= 0)
-		err(1, "Bad inopb=%d in superblock", fs->fs_inopb);
+	sbread(devfd, DL_SECTOBLK(dl, pp->p_offset), &fs, sblock);
 
 	/* Read inode. */
 	if ((buf = malloc(fs->fs_bsize)) == NULL)
@@ -743,15 +740,26 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 
 	blk = fsbtodb(fs, ino_to_fsba(fs, fsb.st_ino));
 
-	devread(devfd, buf, DL_SECTOBLK(dl, pp->p_offset) + blk,
-	    fs->fs_bsize, "inode");
-	ip = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs, fsb.st_ino);
-
 	/*
 	 * Have the inode.  Figure out how many filesystem blocks (not disk
 	 * sectors) there are for biosboot to load.
 	 */
-	ndb = howmany(ip->di_size, fs->fs_bsize);
+	devread(devfd, buf, DL_SECTOBLK(dl, pp->p_offset) + blk,
+	    fs->fs_bsize, "inode");
+	if (fs->fs_magic == FS_UFS2_MAGIC) {
+		struct ufs2_dinode *ip2 = (struct ufs2_dinode *)(buf) +
+		    ino_to_fsbo(fs, fsb.st_ino);
+		ndb = howmany(ip2->di_size, fs->fs_bsize);
+		ap = (u_int *)ip2->di_db;
+		incr = sizeof(u_int32_t);
+	} else {
+		struct ufs1_dinode *ip1 = (struct ufs1_dinode *)(buf) +
+		    ino_to_fsbo(fs, fsb.st_ino);
+		ndb = howmany(ip1->di_size, fs->fs_bsize);
+		ap = (u_int *)ip1->di_db;
+		incr = 0;
+	}
+
 	if (ndb <= 0)
 		errx(1, "No blocks to load");
 
@@ -778,10 +786,10 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	sym_set_value(pbr_symbols, "_p_offset", pp->p_offset);
 	sym_set_value(pbr_symbols, "_inodeblk",
 	    ino_to_fsba(fs, fsb.st_ino));
-	ap = ip->di_db;
 	sym_set_value(pbr_symbols, "_inodedbl",
 	    ((((char *)ap) - buf) + INODEOFF));
 	sym_set_value(pbr_symbols, "_nblocks", ndb);
+	sym_set_value(pbr_symbols, "_blkincr", incr);
 
 	if (verbose) {
 		fprintf(stderr, "%s is %d blocks x %d bytes\n",
@@ -792,6 +800,8 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 		    pp->p_offset,
 		    ino_to_fsba(fs, fsb.st_ino),
 		    (unsigned int)((((char *)ap) - buf) + INODEOFF));
+		fprintf(stderr, "expecting %d-bit fs blocks (incr %d)\n",
+		    incr ? 64 : 32, incr);
 	}
 
 	free (sblock);
@@ -880,4 +890,75 @@ pbr_set_symbols(char *fname, char *proto, struct sym_data *sym_list)
 
 		free(nl);
 	}
+}
+
+static int
+sbchk(struct fs *fs, daddr_t sbloc)
+{
+	if (verbose)
+		fprintf(stderr, "looking for superblock at %lld\n", sbloc);
+
+	if (fs->fs_magic != FS_UFS2_MAGIC && fs->fs_magic != FS_UFS1_MAGIC) {
+		if (verbose)
+			fprintf(stderr, "bad superblock magic 0x%x\n",
+			    fs->fs_magic);
+		return (0);
+	}
+
+	/*
+	 * Looking for an FFS1 file system at SBLOCK_UFS2 will find the
+	 * wrong superblock for file systems with 64k block size.
+	 */
+	if (fs->fs_magic == FS_UFS1_MAGIC && sbloc == SBLOCK_UFS2) {
+		if (verbose)
+			fprintf(stderr, "skipping ffs1 superblock at %lld\n",
+			    sbloc);
+		return (0);
+	}
+
+	if (fs->fs_bsize <= 0 || fs->fs_bsize < sizeof(struct fs) ||
+	    fs->fs_bsize > MAXBSIZE) {
+		if (verbose)
+			fprintf(stderr, "invalid superblock block size %d\n",
+			    fs->fs_bsize);
+		return (0);
+	}
+
+	if (fs->fs_sbsize <= 0 || fs->fs_sbsize > SBSIZE) {
+		if (verbose)
+			fprintf(stderr, "invalid superblock size %d\n",
+			    fs->fs_sbsize);
+		return (0);
+	}
+
+	if (fs->fs_inopb <= 0) {
+		if (verbose)
+			fprintf(stderr, "invalid superblock inodes/block %d\n",
+			    fs->fs_inopb);
+		return (0);
+	}
+
+	if (verbose)
+		fprintf(stderr, "found valid %s superblock\n",
+		    fs->fs_magic == FS_UFS2_MAGIC ? "ffs2" : "ffs1");
+
+	return (1);
+}
+
+static void
+sbread(int fd, daddr_t poffset, struct fs **fs, char *sblock)
+{
+	int i;
+	daddr_t sboff;
+
+	for (i = 0; sbtry[i] != -1; i++) {
+		sboff = sbtry[i] / DEV_BSIZE;
+		devread(fd, sblock, poffset + sboff, SBSIZE, "superblock");
+		*fs = (struct fs *)sblock;
+		if (sbchk(*fs, sbtry[i]))
+			break;
+	}
+
+	if (sbtry[i] == -1)
+		errx(1, "couldn't find ffs superblock");
 }
