@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.6 2020/02/28 14:51:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.7 2020/02/29 09:42:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3404,7 +3404,7 @@ iwx_rx_frame(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 		tap->wr_dbm_antsignal = (int8_t)rxi->rxi_rssi;
 		tap->wr_dbm_antnoise = (int8_t)sc->sc_noise;
 		tap->wr_tsft = device_timestamp;
-		if (rate_n_flags & IWX_RATE_HT_MCS_RATE_CODE_MSK) {
+		if (rate_n_flags & IWX_RATE_MCS_HT_MSK) {
 			uint8_t mcs = (rate_n_flags &
 			    (IWX_RATE_HT_MCS_RATE_CODE_MSK |
 			    IWX_RATE_HT_MCS_NSS_MSK));
