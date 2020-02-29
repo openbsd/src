@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2019/10/29 02:55:51 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.25 2020/02/29 11:58:57 otto Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -32,6 +32,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/tftp.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/ufs2.h>
 #include <dev/cons.h>
 
 #include <dev/biovar.h>
@@ -55,6 +56,8 @@ struct fs_ops file_system[] = {
 	  tftp_stat,   tftp_readdir   },
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir,  ufs_fchmod },
+	{ ufs2_open,   ufs2_close,   ufs2_read,   ufs2_write,   ufs2_seek,
+	  ufs2_stat,   ufs2_readdir, ufs2_fchmod },
 };
 int nfsys = nitems(file_system);
 
