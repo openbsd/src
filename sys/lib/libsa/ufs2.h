@@ -36,3 +36,4 @@ int	ufs2_write(struct open_file *, void *, size_t, size_t *);
 int	ufs2_stat(struct open_file *, struct stat *);
 int	ufs2_readdir(struct open_file *, char *);
 off_t	ufs2_seek(struct open_file *, off_t, int);
+int	ufs2_fchmod(struct open_file *, mode_t);
