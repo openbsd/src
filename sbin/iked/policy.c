@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.54 2020/01/07 15:08:28 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.55 2020/03/01 19:17:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -46,6 +46,8 @@ static __inline int
 static __inline int
 	 ts_insert_unique(struct iked_addr *, struct iked_tss *, int);
 
+static int	proposals_match(struct iked_proposal *, struct iked_proposal *,
+		    struct iked_transform **, int);
 
 void
 policy_init(struct iked *env)
@@ -58,6 +60,14 @@ policy_init(struct iked *env)
 	RB_INIT(&env->sc_activeflows);
 }
 
+/*
+ * Lookup an iked policy matching the IKE_AUTH message msg
+ * and store a pointer to the found policy in msg.  If no policy
+ * matches a pointer to the default policy is stored in msg.
+ *
+ * Returns 0 on success and -1 if no matching policy was
+ * found and no default exists.
+ */
 int
 policy_lookup(struct iked *env, struct iked_message *msg)
 {
@@ -78,6 +88,7 @@ policy_lookup(struct iked *env, struct iked_message *msg)
 	if (msg->msg_id.id_type &&
 	    ikev2_print_id(&msg->msg_id, idstr, IKED_ID_SIZE) == 0 &&
 	    (s = strchr(idstr, '/')) != NULL) {
+		pol.pol_proposals = msg->msg_sa->sa_proposals;
 		pol.pol_peerid.id_type = msg->msg_id.id_type;
 		pol.pol_peerid.id_length = strlen(s+1);
 		strlcpy(pol.pol_peerid.id_data, s+1,
@@ -100,6 +111,13 @@ policy_lookup(struct iked *env, struct iked_message *msg)
 	return (0);
 }
 
+/*
+ * Find a policy matching the query policy key in the global env.
+ * If multiple matching policies are found the policy with the highest
+ * priority is selected.
+ *
+ * Returns a pointer to a matching policy, or NULL if no policy matches.
+ */
 struct iked_policy *
 policy_test(struct iked *env, struct iked_policy *key)
 {
@@ -146,6 +164,14 @@ policy_test(struct iked *env, struct iked_policy *key)
 			    memcmp(key->pol_peerid.id_data,
 			    p->pol_peerid.id_data,
 			    sizeof(key->pol_peerid.id_data)) != 0)) {
+				p = TAILQ_NEXT(p, pol_entry);
+				continue;
+			}
+
+			/* Make sure the proposals are compatible */
+			if (TAILQ_FIRST(&key->pol_proposals) &&
+			    proposals_negotiate(NULL, &key->pol_proposals,
+			    &p->pol_proposals, 0) == -1) {
 				p = TAILQ_NEXT(p, pol_entry);
 				continue;
 			}
@@ -639,6 +665,183 @@ static __inline int
 user_cmp(struct iked_user *a, struct iked_user *b)
 {
 	return (strcmp(a->usr_name, b->usr_name));
+}
+
+/*
+ * Find a matching subset of the proposal lists 'local' and 'peer'.
+ * The resulting proposal is stored in 'result' if 'result' is not NULL.
+ * The 'rekey' parameter indicates a CREATE_CHILD_SA exchange where
+ * an extra group is necessary for PFS. For the initial IKE_AUTH exchange
+ * the ESP SA proposal never includes an explicit DH group.
+ *
+ * Return 0 if a matching subset was found and -1 if no subset was found
+ * or an error occured.
+ */
+int
+proposals_negotiate(struct iked_proposals *result, struct iked_proposals *local,
+    struct iked_proposals *peer, int rekey)
+{
+	struct iked_proposal	*ppeer = NULL, *plocal, *prop, vpeer, vlocal;
+	struct iked_transform	 chosen[IKEV2_XFORMTYPE_MAX];
+	struct iked_transform	*valid[IKEV2_XFORMTYPE_MAX];
+	struct iked_transform	*match[IKEV2_XFORMTYPE_MAX];
+	unsigned int		 i, score, chosen_score = 0;
+	uint8_t			 protoid = 0;
+
+	bzero(valid, sizeof(valid));
+	bzero(&vlocal, sizeof(vlocal));
+	bzero(&vpeer, sizeof(vpeer));
+
+	if (TAILQ_EMPTY(peer)) {
+		log_debug("%s: peer did not send %s proposals", __func__,
+		    print_map(protoid, ikev2_saproto_map));
+		return (-1);
+	}
+
+	TAILQ_FOREACH(plocal, local, prop_entry) {
+		TAILQ_FOREACH(ppeer, peer, prop_entry) {
+			if (ppeer->prop_protoid != plocal->prop_protoid)
+				continue;
+			bzero(match, sizeof(match));
+			score = proposals_match(plocal, ppeer, match,
+			    rekey);
+			log_debug("%s: score %d", __func__, score);
+			if (score && (!chosen_score || score < chosen_score)) {
+				chosen_score = score;
+				for (i = 0; i < IKEV2_XFORMTYPE_MAX; i++) {
+					if ((valid[i] = match[i]))
+						memcpy(&chosen[i], match[i],
+						    sizeof(chosen[0]));
+				}
+				memcpy(&vpeer, ppeer, sizeof(vpeer));
+				memcpy(&vlocal, plocal, sizeof(vlocal));
+			}
+		}
+		if (chosen_score != 0)
+			break;
+	}
+
+	if (chosen_score == 0)
+		return (-1);
+	else if (result == NULL)
+		return (0);
+
+	(void)config_free_proposals(result, vpeer.prop_protoid);
+	prop = config_add_proposal(result, vpeer.prop_id, vpeer.prop_protoid);
+
+	if (vpeer.prop_localspi.spi_size) {
+		prop->prop_localspi.spi_size = vpeer.prop_localspi.spi_size;
+		prop->prop_peerspi = vpeer.prop_peerspi;
+	}
+	if (vlocal.prop_localspi.spi_size) {
+		prop->prop_localspi.spi_size = vlocal.prop_localspi.spi_size;
+		prop->prop_localspi.spi = vlocal.prop_localspi.spi;
+	}
+
+	for (i = 0; i < IKEV2_XFORMTYPE_MAX; i++) {
+		if (valid[i] == NULL)
+			continue;
+		print_debug("%s: score %d: %s %s", __func__,
+		    chosen[i].xform_score, print_map(i, ikev2_xformtype_map),
+		    print_map(chosen[i].xform_id, chosen[i].xform_map));
+		if (chosen[i].xform_length)
+			print_debug(" %d", chosen[i].xform_length);
+		print_debug("\n");
+
+		if (config_add_transform(prop, chosen[i].xform_type,
+		    chosen[i].xform_id, chosen[i].xform_length,
+		    chosen[i].xform_keylength) == NULL)
+			break;
+	}
+
+	return (0);
+}
+
+static int
+proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
+    struct iked_transform **xforms, int rekey)
+{
+	struct iked_transform	*tpeer, *tlocal;
+	unsigned int		 i, j, type, score, requiredh = 0;
+	uint8_t			 protoid = peer->prop_protoid;
+	uint8_t			 peerxfs[IKEV2_XFORMTYPE_MAX];
+
+	bzero(peerxfs, sizeof(peerxfs));
+
+	for (i = 0; i < peer->prop_nxforms; i++) {
+		tpeer = peer->prop_xforms + i;
+		if (tpeer->xform_type > IKEV2_XFORMTYPE_MAX)
+			continue;
+
+		/*
+		 * Record all transform types from the peer's proposal,
+		 * because if we want this proposal we have to select
+		 * a transform for each proposed transform type.
+		 */
+		peerxfs[tpeer->xform_type] = 1;
+
+		for (j = 0; j < local->prop_nxforms; j++) {
+			tlocal = local->prop_xforms + j;
+
+			/*
+			 * We require a DH group for ESP if there is any
+			 * local proposal with DH enabled.
+			 */
+			if (rekey && requiredh == 0 &&
+			    protoid == IKEV2_SAPROTO_ESP &&
+			    tlocal->xform_type == IKEV2_XFORMTYPE_DH)
+				requiredh = 1;
+
+			/* Compare peer and local proposals */
+			if (tpeer->xform_type != tlocal->xform_type ||
+			    tpeer->xform_id != tlocal->xform_id ||
+			    tpeer->xform_length != tlocal->xform_length)
+				continue;
+			type = tpeer->xform_type;
+
+			if (xforms[type] == NULL || tlocal->xform_score <
+			    xforms[type]->xform_score) {
+				xforms[type] = tlocal;
+			} else
+				continue;
+
+			print_debug("%s: xform %d <-> %d (%d): %s %s "
+			    "(keylength %d <-> %d)", __func__,
+			    peer->prop_id, local->prop_id, tlocal->xform_score,
+			    print_map(type, ikev2_xformtype_map),
+			    print_map(tpeer->xform_id, tpeer->xform_map),
+			    tpeer->xform_keylength, tlocal->xform_keylength);
+			if (tpeer->xform_length)
+				print_debug(" %d", tpeer->xform_length);
+			print_debug("\n");
+		}
+	}
+
+	for (i = score = 0; i < IKEV2_XFORMTYPE_MAX; i++) {
+		if (protoid == IKEV2_SAPROTO_IKE && xforms[i] == NULL &&
+		    (i == IKEV2_XFORMTYPE_ENCR || i == IKEV2_XFORMTYPE_PRF ||
+		     i == IKEV2_XFORMTYPE_INTEGR || i == IKEV2_XFORMTYPE_DH)) {
+			score = 0;
+			break;
+		} else if (protoid == IKEV2_SAPROTO_AH && xforms[i] == NULL &&
+		    (i == IKEV2_XFORMTYPE_INTEGR || i == IKEV2_XFORMTYPE_ESN)) {
+			score = 0;
+			break;
+		} else if (protoid == IKEV2_SAPROTO_ESP && xforms[i] == NULL &&
+		    (i == IKEV2_XFORMTYPE_ENCR || i == IKEV2_XFORMTYPE_ESN ||
+		    (requiredh && i == IKEV2_XFORMTYPE_DH))) {
+			score = 0;
+			break;
+		} else if (peerxfs[i] && xforms[i] == NULL) {
+			score = 0;
+			break;
+		} else if (xforms[i] == NULL)
+			continue;
+
+		score += xforms[i]->xform_score;
+	}
+
+	return (score);
 }
 
 static __inline int

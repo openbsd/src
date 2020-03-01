@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.134 2020/02/21 15:17:34 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.135 2020/03/01 19:17:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -803,6 +803,8 @@ struct iked_sa *
 	 sa_lookup(struct iked *, uint64_t, uint64_t, unsigned int);
 struct iked_user *
 	 user_lookup(struct iked *, const char *);
+int	 proposals_negotiate(struct iked_proposals *, struct iked_proposals *,
+	    struct iked_proposals *, int);
 RB_PROTOTYPE(iked_sas, iked_sa, sa_entry, sa_cmp);
 RB_PROTOTYPE(iked_addrpool, iked_sa, sa_addrpool_entry, sa_addrpool_cmp);
 RB_PROTOTYPE(iked_addrpool6, iked_sa, sa_addrpool6_entry, sa_addrpool6_cmp);
@@ -859,8 +861,6 @@ ssize_t	 dsa_verify_final(struct iked_dsa *, void *, size_t);
 pid_t	 ikev2(struct privsep *, struct privsep_proc *);
 void	 ikev2_recv(struct iked *, struct iked_message *);
 void	 ikev2_init_ike_sa(struct iked *, void *);
-int	 ikev2_sa_negotiate(struct iked_proposals *, struct iked_proposals *,
-	    struct iked_proposals *, int);
 int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
 int	 ikev2_childsa_enable(struct iked *, struct iked_sa *);
 int	 ikev2_childsa_delete(struct iked *, struct iked_sa *,

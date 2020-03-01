@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.189 2020/02/21 15:17:34 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.190 2020/03/01 19:17:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -115,8 +115,6 @@ int	 ikev2_childsa_negotiate(struct iked *, struct iked_sa *,
 	    struct iked_kex *, struct iked_proposals *, int, int, int);
 int	 ikev2_childsa_delete_proposed(struct iked *, struct iked_sa *,
 	    struct iked_proposals *);
-int	 ikev2_match_proposals(struct iked_proposal *, struct iked_proposal *,
-	    struct iked_transform **, int);
 int	 ikev2_valid_proposal(struct iked_proposal *,
 	    struct iked_transform **, struct iked_transform **, int *);
 
@@ -749,7 +747,7 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 	}
 
 	if (!TAILQ_EMPTY(&msg->msg_proposals)) {
-		if (ikev2_sa_negotiate(&sa->sa_proposals,
+		if (proposals_negotiate(&sa->sa_proposals,
 		    &sa->sa_policy->pol_proposals, &msg->msg_proposals,
 		    0) != 0) {
 			log_info("%s: no proposal chosen", __func__);
@@ -3509,7 +3507,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 		return (-1);
 	}
 
-	if (ikev2_sa_negotiate(&sa->sa_proposals, &sa->sa_proposals,
+	if (proposals_negotiate(&sa->sa_proposals, &sa->sa_proposals,
 	    &msg->msg_proposals, 1) != 0) {
 		log_debug("%s: no proposal chosen", __func__);
 		return (-1);
@@ -3622,7 +3620,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 		}
 		pfs = 1;
 		/* XXX check group against policy ? */
-		/* XXX should ikev2_sa_negotiate do this? */
+		/* XXX should proposals_negotiate do this? */
 	}
 
 	/* Update responder's nonce */
@@ -3977,7 +3975,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			goto fail;
 		}
 
-		if (ikev2_sa_negotiate(&proposals,
+		if (proposals_negotiate(&proposals,
 		    &sa->sa_policy->pol_proposals, &msg->msg_proposals,
 		    1) != 0) {
 			log_info("%s: no proposal chosen", __func__);
@@ -4400,178 +4398,6 @@ ikev2_psk(struct iked_sa *sa, uint8_t *data, size_t length,
 }
 
 int
-ikev2_match_proposals(struct iked_proposal *local, struct iked_proposal *peer,
-    struct iked_transform **xforms, int rekey)
-{
-	struct iked_transform	*tpeer, *tlocal;
-	unsigned int		 i, j, type, score, requiredh = 0;
-	uint8_t			 protoid = peer->prop_protoid;
-	uint8_t			 peerxfs[IKEV2_XFORMTYPE_MAX];
-
-	bzero(peerxfs, sizeof(peerxfs));
-
-	for (i = 0; i < peer->prop_nxforms; i++) {
-		tpeer = peer->prop_xforms + i;
-		if (tpeer->xform_type > IKEV2_XFORMTYPE_MAX)
-			continue;
-
-		/*
-		 * Record all transform types from the peer's proposal,
-		 * because if we want this proposal we have to select
-		 * a transform for each proposed transform type.
-		 */
-		peerxfs[tpeer->xform_type] = 1;
-
-		for (j = 0; j < local->prop_nxforms; j++) {
-			tlocal = local->prop_xforms + j;
-
-			/*
-			 * We require a DH group for ESP if there is any
-			 * local proposal with DH enabled.
-			 */
-			if (rekey && requiredh == 0 &&
-			    protoid == IKEV2_SAPROTO_ESP &&
-			    tlocal->xform_type == IKEV2_XFORMTYPE_DH)
-				requiredh = 1;
-
-			/* Compare peer and local proposals */
-			if (tpeer->xform_type != tlocal->xform_type ||
-			    tpeer->xform_id != tlocal->xform_id ||
-			    tpeer->xform_length != tlocal->xform_length)
-				continue;
-			type = tpeer->xform_type;
-
-			if (xforms[type] == NULL || tlocal->xform_score <
-			    xforms[type]->xform_score) {
-				xforms[type] = tlocal;
-			} else
-				continue;
-
-			print_debug("%s: xform %d <-> %d (%d): %s %s "
-			    "(keylength %d <-> %d)", __func__,
-			    peer->prop_id, local->prop_id, tlocal->xform_score,
-			    print_map(type, ikev2_xformtype_map),
-			    print_map(tpeer->xform_id, tpeer->xform_map),
-			    tpeer->xform_keylength, tlocal->xform_keylength);
-			if (tpeer->xform_length)
-				print_debug(" %d", tpeer->xform_length);
-			print_debug("\n");
-		}
-	}
-
-	for (i = score = 0; i < IKEV2_XFORMTYPE_MAX; i++) {
-		if (protoid == IKEV2_SAPROTO_IKE && xforms[i] == NULL &&
-		    (i == IKEV2_XFORMTYPE_ENCR || i == IKEV2_XFORMTYPE_PRF ||
-		     i == IKEV2_XFORMTYPE_INTEGR || i == IKEV2_XFORMTYPE_DH)) {
-			score = 0;
-			break;
-		} else if (protoid == IKEV2_SAPROTO_AH && xforms[i] == NULL &&
-		    (i == IKEV2_XFORMTYPE_INTEGR || i == IKEV2_XFORMTYPE_ESN)) {
-			score = 0;
-			break;
-		} else if (protoid == IKEV2_SAPROTO_ESP && xforms[i] == NULL &&
-		    (i == IKEV2_XFORMTYPE_ENCR || i == IKEV2_XFORMTYPE_ESN ||
-		    (requiredh && i == IKEV2_XFORMTYPE_DH))) {
-			score = 0;
-			break;
-		} else if (peerxfs[i] && xforms[i] == NULL) {
-			score = 0;
-			break;
-		} else if (xforms[i] == NULL)
-			continue;
-
-		score += xforms[i]->xform_score;
-	}
-
-	return (score);
-}
-
-/*
- * The 'rekey' parameter indicates a CREATE_CHILD_SA exchange where
- * an extra group is necessary for PFS. For the initial IKE_AUTH exchange
- * the ESP SA proposal never includes an explicit DH group.
- */
-int
-ikev2_sa_negotiate(struct iked_proposals *result, struct iked_proposals *local,
-    struct iked_proposals *peer, int rekey)
-{
-	struct iked_proposal	*ppeer = NULL, *plocal, *prop, vpeer, vlocal;
-	struct iked_transform	 chosen[IKEV2_XFORMTYPE_MAX];
-	struct iked_transform	*valid[IKEV2_XFORMTYPE_MAX];
-	struct iked_transform	*match[IKEV2_XFORMTYPE_MAX];
-	unsigned int		 i, score, chosen_score = 0;
-	uint8_t			 protoid = 0;
-
-	bzero(valid, sizeof(valid));
-	bzero(&vlocal, sizeof(vlocal));
-	bzero(&vpeer, sizeof(vpeer));
-
-	if (TAILQ_EMPTY(peer)) {
-		log_debug("%s: peer did not send %s proposals", __func__,
-		    print_map(protoid, ikev2_saproto_map));
-		return (-1);
-	}
-
-	TAILQ_FOREACH(plocal, local, prop_entry) {
-		TAILQ_FOREACH(ppeer, peer, prop_entry) {
-			if (ppeer->prop_protoid != plocal->prop_protoid)
-				continue;
-			bzero(match, sizeof(match));
-			score = ikev2_match_proposals(plocal, ppeer, match,
-			    rekey);
-			log_debug("%s: score %d", __func__, score);
-			if (score && (!chosen_score || score < chosen_score)) {
-				chosen_score = score;
-				for (i = 0; i < IKEV2_XFORMTYPE_MAX; i++) {
-					if ((valid[i] = match[i]))
-						memcpy(&chosen[i], match[i],
-						    sizeof(chosen[0]));
-				}
-				memcpy(&vpeer, ppeer, sizeof(vpeer));
-				memcpy(&vlocal, plocal, sizeof(vlocal));
-			}
-		}
-		if (chosen_score != 0)
-			break;
-	}
-
-	if (chosen_score == 0)
-		return (-1);
-	else if (result == NULL)
-		return (0);
-
-	(void)config_free_proposals(result, vpeer.prop_protoid);
-	prop = config_add_proposal(result, vpeer.prop_id, vpeer.prop_protoid);
-
-	if (vpeer.prop_localspi.spi_size) {
-		prop->prop_localspi.spi_size = vpeer.prop_localspi.spi_size;
-		prop->prop_peerspi = vpeer.prop_peerspi;
-	}
-	if (vlocal.prop_localspi.spi_size) {
-		prop->prop_localspi.spi_size = vlocal.prop_localspi.spi_size;
-		prop->prop_localspi.spi = vlocal.prop_localspi.spi;
-	}
-
-	for (i = 0; i < IKEV2_XFORMTYPE_MAX; i++) {
-		if (valid[i] == NULL)
-			continue;
-		print_debug("%s: score %d: %s %s", __func__,
-		    chosen[i].xform_score, print_map(i, ikev2_xformtype_map),
-		    print_map(chosen[i].xform_id, chosen[i].xform_map));
-		if (chosen[i].xform_length)
-			print_debug(" %d", chosen[i].xform_length);
-		print_debug("\n");
-
-		if (config_add_transform(prop, chosen[i].xform_type,
-		    chosen[i].xform_id, chosen[i].xform_length,
-		    chosen[i].xform_keylength) == NULL)
-			break;
-	}
-
-	return (0);
-}
-
-int
 ikev2_sa_initiator_dh(struct iked_sa *sa, struct iked_message *msg,
     unsigned int proto)
 {
@@ -4663,7 +4489,7 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 	}
 
 	/* XXX we need a better way to get this */
-	if (ikev2_sa_negotiate(&sa->sa_proposals,
+	if (proposals_negotiate(&sa->sa_proposals,
 	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0) != 0) {
 		log_info("%s: no proposal chosen", __func__);
 		msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
@@ -4816,7 +4642,7 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 	}
 
 	/* XXX we need a better way to get this */
-	if (ikev2_sa_negotiate(&sa->sa_proposals,
+	if (proposals_negotiate(&sa->sa_proposals,
 	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0) != 0) {
 		log_info("%s: no proposal chosen", __func__);
 		msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
