@@ -1,4 +1,4 @@
-/* $OpenBSD: rkanxdp.c,v 1.1 2020/02/21 15:51:45 patrick Exp $ */
+/* $OpenBSD: rkanxdp.c,v 1.2 2020/03/01 10:19:35 kettenis Exp $ */
 /* $NetBSD: rk_anxdp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -37,6 +37,7 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 #include <drm/drmP.h>
@@ -123,6 +124,10 @@ rkanxdp_attach(struct device *parent, struct device *self, void *aux)
 		printf(": no registers\n");
 		return;
 	}
+
+	pinctrl_byname(faa->fa_node, "default");
+
+	reset_deassert(faa->fa_node, "dp");
 
 	clock_enable(faa->fa_node, "pclk");
 	clock_enable(faa->fa_node, "dp");
