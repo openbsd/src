@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.13 2020/02/21 15:46:16 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.14 2020/03/01 18:00:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -471,10 +471,10 @@ video_port_activate(uint32_t phandle, struct drm_device *ddev)
 			continue;
 		error = video_endpoint_activate(ep, ddev);
 		if (error)
-			return error;
+			continue;
 		error = video_endpoint_activate(rep, ddev);
 		if (error)
-			return error;
+			continue;
 	}
 
 	return 0;
