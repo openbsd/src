@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.201 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.202 2020/03/01 23:49:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -429,12 +429,12 @@ extract_entropy(u_int8_t *buf)
 
 /* random keystream by ChaCha */
 
-void arc4_reinit(void *v);		/* timeout to start reinit */
-void arc4_init(void *);			/* actually do the reinit */
+void rnd_reinit(void *v);		/* timeout to start reinit */
+void rnd_init(void *);			/* actually do the reinit */
 
 struct mutex rndlock = MUTEX_INITIALIZER(IPL_HIGH);
-struct timeout arc4_timeout;
-struct task arc4_task = TASK_INITIALIZER(arc4_init, NULL);
+struct timeout rnd_timeout;
+struct task rnd_task = TASK_INITIALIZER(rnd_init, NULL);
 
 static chacha_ctx rs;		/* chacha context for random keystream */
 /* keystream blocks (also chacha seed from boot) */
@@ -726,7 +726,7 @@ arc4random_uniform(u_int32_t upper_bound)
 
 /* ARGSUSED */
 void
-arc4_init(void *null)
+rnd_init(void *null)
 {
 	_rs_stir(1);
 }
@@ -735,11 +735,11 @@ arc4_init(void *null)
  * Called by timeout to mark arc4 for stirring,
  */
 void
-arc4_reinit(void *v)
+rnd_reinit(void *v)
 {
-	task_add(systq, &arc4_task);
+	task_add(systq, &rnd_task);
 	/* 10 minutes, per dm@'s suggestion */
-	timeout_add_sec(&arc4_timeout, 10 * 60);
+	timeout_add_sec(&rnd_timeout, 10 * 60);
 }
 
 /*
@@ -769,9 +769,9 @@ random_start(void)
 	    8192/sizeof(u_int32_t));
 
 	dequeue_randomness(NULL);
-	arc4_init(NULL);
-	timeout_set(&arc4_timeout, arc4_reinit, NULL);
-	arc4_reinit(NULL);
+	rnd_init(NULL);
+	timeout_set(&rnd_timeout, rnd_reinit, NULL);
+	rnd_reinit(NULL);
 	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
 }
 
@@ -792,7 +792,7 @@ randomclose(dev_t dev, int flag, int mode, struct proc *p)
  * pool. Larger requests are served from a discrete ChaCha instance keyed
  * from the main pool.
  */
-#define ARC4_MAIN_MAX_BYTES	2048
+#define RND_MAIN_MAX_BYTES	2048
 
 int
 randomread(dev_t dev, struct uio *uio, int ioflag)
@@ -807,7 +807,7 @@ randomread(dev_t dev, struct uio *uio, int ioflag)
 		return 0;
 
 	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
-	if (total > ARC4_MAIN_MAX_BYTES) {
+	if (total > RND_MAIN_MAX_BYTES) {
 		arc4random_buf(lbuf, sizeof(lbuf));
 		chacha_keysetup(&lctx, lbuf, KEYSZ * 8);
 		chacha_ivsetup(&lctx, lbuf + KEYSZ, NULL);
@@ -862,7 +862,7 @@ randomwrite(dev_t dev, struct uio *uio, int flags)
 	}
 
 	if (newdata)
-		arc4_init(NULL);
+		rnd_init(NULL);
 
 	explicit_bzero(buf, POOLBYTES);
 	free(buf, M_TEMP, POOLBYTES);
@@ -894,7 +894,7 @@ filt_randomdetach(struct knote *kn)
 int
 filt_randomread(struct knote *kn, long hint)
 {
-	kn->kn_data = ARC4_MAIN_MAX_BYTES;
+	kn->kn_data = RND_MAIN_MAX_BYTES;
 	return (1);
 }
 
