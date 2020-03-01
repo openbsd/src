@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.50 2020/02/10 12:41:34 patrick Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.51 2020/03/01 17:57:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1818,11 +1818,21 @@ rk3399_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 	case 408000000U:
 		postdiv1 = postdiv2 = 2; refdiv = 1;
 		break;
+	case 297000000U:
 	case 216000000U:
 		postdiv1 = 4; postdiv2 = 2; refdiv = 1;
 		break;
+	case 148500000U:
 	case 96000000U:
 		postdiv1 = postdiv2 = 4; refdiv = 1;
+		break;
+	case 74250000U:
+		postdiv1 = postdiv2 = 4; refdiv = 2;
+		break;
+	case 65000000U:
+	case 54000000U:
+	case 27000000U:
+		postdiv1 = 6; postdiv2 = 4; refdiv = 1;
 		break;
 	default:
 		printf("%s: %d Hz\n", __func__, freq);
@@ -2004,6 +2014,8 @@ rk3399_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		return rk3399_set_pll(sc, RK3399_CRU_GPLL_CON(0), freq);
 	case RK3399_PLL_NPLL:
 		return rk3399_set_pll(sc, RK3399_CRU_NPLL_CON(0), freq);
+	case RK3399_PLL_VPLL:
+		return rk3399_set_pll(sc, RK3399_CRU_VPLL_CON(0), freq);
 	case RK3399_ARMCLKL:
 		return rk3399_set_armclk(sc, RK3399_CRU_CLKSEL_CON(0), freq);
 	case RK3399_ARMCLKB:
