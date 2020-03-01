@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkiic.c,v 1.4 2018/12/31 21:59:44 kettenis Exp $	*/
+/*	$OpenBSD: rkiic.c,v 1.5 2020/03/01 10:18:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
@@ -81,6 +82,7 @@ struct rkiic_softc {
 
 	int			sc_node;
 	struct i2c_controller	sc_ic;
+	struct i2c_bus		sc_ib;
 };
 
 int rkiic_match(struct device *, void *, void *);
@@ -170,6 +172,10 @@ rkiic_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_bus_scan_arg = &sc->sc_node;
 
 	config_found(&sc->sc_dev, &iba, iicbus_print);
+
+	sc->sc_ib.ib_node = sc->sc_node;
+	sc->sc_ib.ib_ic = &sc->sc_ic;
+	i2c_register(&sc->sc_ib);
 }
 
 int
@@ -270,6 +276,8 @@ rkiic_read(struct rkiic_softc *sc, i2c_addr_t addr, const void *cmd,
     size_t cmdlen, void *buf, size_t buflen)
 {
 	uint32_t mrxraddr, rxdata;
+	size_t pos = 0;
+	uint32_t con;
 	int timo, i;
 
 	HWRITE4(sc, RKI2C_MRXADDR, (addr << 1) | RKI2C_MRXADDR_ADDLVLD);
@@ -282,29 +290,45 @@ rkiic_read(struct rkiic_softc *sc, i2c_addr_t addr, const void *cmd,
 	}
 	HWRITE4(sc, RKI2C_MRXRADDR, mrxraddr);
 
-	/* Indicate that we're done after this operation. */
-	HSET4(sc, RKI2C_CON, RKI2C_CON_NAK);
+	while (1) {
+		/* Indicate that we're done after this operation. */
+		if (buflen <= 32)
+			HSET4(sc, RKI2C_CON, RKI2C_CON_NAK);
 
-	/* Start operation. */
-	HWRITE4(sc, RKI2C_MRXCNT, buflen);
+		/* Start operation. */
+		HWRITE4(sc, RKI2C_MRXCNT, MIN(buflen, 32));
 
-	/* Wait for completion. */
-	for (timo = 1000; timo > 0; timo--) {
-		if (HREAD4(sc, RKI2C_IPD) & RKI2C_IPD_MBRF)
-			break;
-		delay(10);
+		/* Wait for completion. */
+		for (timo = 1000; timo > 0; timo--) {
+			if (HREAD4(sc, RKI2C_IPD) & RKI2C_IPD_MBRF)
+				break;
+			delay(10);
+		}
+		if (timo == 0)
+			return ETIMEDOUT;
+
+		/* Ack interrupt. */
+		HWRITE4(sc, RKI2C_IPD, RKI2C_IPD_MBRF);
+
+		for (i = 0; i < MIN(buflen, 32); i++) {
+			if (i % 4 == 0)
+				rxdata = HREAD4(sc, RKI2C_RXDATA0 + i);
+			((uint8_t *)buf)[pos++] = rxdata;
+			rxdata >>= 8;
+		}
+
+		if (buflen <= 32)
+			return 0;
+
+		/* Switch transfer mode after the first block. */
+		if (pos <= 32) {
+			con = HREAD4(sc, RKI2C_CON);
+			con &= ~RKI2C_CON_I2C_MODE_MASK;
+			con |= RKI2C_CON_I2C_MODE_RX;
+			HWRITE4(sc, RKI2C_CON, con);
+		}
+		buflen -= 32;
 	}
-	if (timo == 0)
-		return ETIMEDOUT;
-
-	for (i = 0; i < buflen; i++) {
-		if (i % 4 == 0)
-			rxdata = HREAD4(sc, RKI2C_RXDATA0 + i);
-		((uint8_t *)buf)[i] = rxdata;
-		rxdata >>= 8;
-	}
-
-	return 0;
 }
 
 int
@@ -315,13 +339,13 @@ rkiic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 	uint32_t con;
 	int error;
 
-	if (cmdlen > 3 || buflen > 28)
+	if (cmdlen > 3 || (I2C_OP_WRITE_P(op) && buflen > 28))
 		return EINVAL;
 
 	/* Clear interrupts.  */
 	HWRITE4(sc, RKI2C_IPD, RKI2C_IPD_ALL);
 
-	/* Configure transfer more. */
+	/* Configure transfer mode. */
 	con = HREAD4(sc, RKI2C_CON);
 	con &= ~RKI2C_CON_I2C_MODE_MASK;
 	if (I2C_OP_WRITE_P(op))
