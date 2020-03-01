@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.68 2020/02/28 21:12:26 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.69 2020/03/01 14:10:56 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -231,11 +231,12 @@ nvme_enable(struct nvme_softc *sc)
 
 	CLR(cc, NVME_CC_IOCQES_MASK | NVME_CC_IOSQES_MASK | NVME_CC_SHN_MASK |
 	    NVME_CC_AMS_MASK | NVME_CC_MPS_MASK | NVME_CC_CSS_MASK);
-	SET(cc, NVME_CC_IOSQES(ffs(64) - 1) | NVME_CC_IOCQES(ffs(16) - 1));
+	SET(cc, NVME_CC_IOSQES(6));	/* Submission queue size == 2**6 (64) */
+	SET(cc, NVME_CC_IOCQES(4));	/* Completion queue size == 2**4 (16) */
 	SET(cc, NVME_CC_SHN(NVME_CC_SHN_NONE));
 	SET(cc, NVME_CC_CSS(NVME_CC_CSS_NVM));
 	SET(cc, NVME_CC_AMS(NVME_CC_AMS_RR));
-	SET(cc, NVME_CC_MPS(sc->sc_mps_bits));
+	SET(cc, NVME_CC_MPS(ffs(sc->sc_mps) - 1));
 	SET(cc, NVME_CC_EN);
 
 	nvme_write4(sc, NVME_CC, cc);
@@ -301,7 +302,6 @@ nvme_attach(struct nvme_softc *sc)
 
 	sc->sc_rdy_to = NVME_CAP_TO(cap);
 	sc->sc_mps = 1 << mps;
-	sc->sc_mps_bits = mps;
 	sc->sc_mdts = MAXPHYS;
 	sc->sc_max_sgl = 2;
 
