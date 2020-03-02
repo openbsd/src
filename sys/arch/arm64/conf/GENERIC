@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.143 2020/02/28 04:59:07 deraadt Exp $
+# $OpenBSD: GENERIC,v 1.144 2020/03/02 11:11:09 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -194,6 +194,7 @@ rkpinctrl*	at fdt? early 1
 #rkdrm*		at fdt?
 #drm*		at rkdrm?
 #wsdisplay*	at rkdrm?
+#rkdwhdmi*	at fdt?
 rkemmcphy*	at fdt?
 rkgpio*		at fdt?
 rkiic*		at fdt?
