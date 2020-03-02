@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.112 2020/02/21 15:51:45 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.113 2020/03/02 10:37:22 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -237,6 +237,10 @@ device	rkdrm: drmbase, wsemuldisplaydev, rasops15, rasops16, rasops24, rasops32
 attach	rkdrm at fdt
 file	dev/fdt/rkdrm.c				rkdrm
 file	dev/pci/drm/drm_gem_cma_helper.c	rkdrm
+
+device	rkdwhdmi: dwhdmi, i2cbus
+attach	rkdwhdmi at fdt
+file	dev/fdt/rkdwhdmi.c		rkdwhdmi
 
 device	rkdwusb: fdt
 attach	rkdwusb at fdt
