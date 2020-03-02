@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.69 2020/03/01 14:10:56 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.70 2020/03/02 16:31:22 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -274,7 +274,6 @@ nvme_attach(struct nvme_softc *sc)
 	struct scsibus_attach_args saa;
 	u_int64_t cap;
 	u_int32_t reg;
-	u_int mps = PAGE_SHIFT;
 	u_int nccbs = 0;
 
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
@@ -297,13 +296,14 @@ nvme_attach(struct nvme_softc *sc)
 		    1 << NVME_CAP_MPSMIN(cap), 1 << PAGE_SHIFT);
 		return (1);
 	}
-	if (NVME_CAP_MPSMAX(cap) < mps)
-		mps = NVME_CAP_MPSMAX(cap);
+	if (NVME_CAP_MPSMAX(cap) < PAGE_SHIFT)
+		sc->sc_mps = 1 << NVME_CAP_MPSMAX(cap);
+	else
+		sc->sc_mps = 1 << PAGE_SHIFT;
 
 	sc->sc_rdy_to = NVME_CAP_TO(cap);
-	sc->sc_mps = 1 << mps;
 	sc->sc_mdts = MAXPHYS;
-	sc->sc_max_sgl = 2;
+	sc->sc_max_sgl = sc->sc_mdts / sc->sc_mps;
 
 	if (nvme_disable(sc) != 0) {
 		printf("%s: unable to disable controller\n", DEVNAME(sc));
@@ -332,9 +332,7 @@ nvme_attach(struct nvme_softc *sc)
 		goto disable;
 	}
 
-	/* we know how big things are now */
-	sc->sc_max_sgl = sc->sc_mdts / sc->sc_mps;
-
+	/* We now know the real values of sc_mdts and sc_max_sgl. */
 	nvme_ccbs_free(sc, nccbs);
 	if (nvme_ccbs_alloc(sc, 64) != 0) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
@@ -1013,13 +1011,12 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 }
 
 int
-nvme_identify(struct nvme_softc *sc, u_int mps)
+nvme_identify(struct nvme_softc *sc, u_int mpsmin)
 {
 	char sn[41], mn[81], fr[17];
 	struct nvm_identify_controller *identify;
 	struct nvme_dmamem *mem;
 	struct nvme_ccb *ccb;
-	u_int mdts;
 	int rv = 1;
 
 	ccb = nvme_ccb_get(sc);
@@ -1051,9 +1048,10 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 	printf("%s: %s, firmware %s, serial %s\n", DEVNAME(sc), mn, fr, sn);
 
 	if (identify->mdts > 0) {
-		mdts = (1 << identify->mdts) * (1 << mps);
-		if (mdts < sc->sc_mdts)
-			sc->sc_mdts = mdts;
+		sc->sc_mdts = (1 << identify->mdts) * (1 << mpsmin);
+		if (sc->sc_mdts > MAXPHYS)
+			sc->sc_mdts = MAXPHYS;
+		sc->sc_max_sgl = sc->sc_mdts / sc->sc_mps;
 	}
 
 	sc->sc_nn = lemtoh32(&identify->nn);
