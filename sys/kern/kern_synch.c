@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.162 2020/01/30 08:51:27 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.163 2020/03/02 13:55:15 bluhm Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -259,7 +259,6 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 
 	sleep_setup(&sls, ident, priority, wmesg);
 	sleep_setup_timeout(&sls, timo);
-	sleep_setup_signal(&sls);
 
 	/* XXX - We need to make sure that the mutex doesn't
 	 * unblock splsched. This can be made a bit more
@@ -268,6 +267,8 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	spl = MUTEX_OLDIPL(mtx);
 	MUTEX_OLDIPL(mtx) = splsched();
 	mtx_leave(mtx);
+	/* signal may stop the process, release mutex before that */
+	sleep_setup_signal(&sls);
 
 	error = sleep_finish_all(&sls, 1);
 
@@ -320,9 +321,10 @@ rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
 
 	sleep_setup(&sls, ident, priority, wmesg);
 	sleep_setup_timeout(&sls, timo);
-	sleep_setup_signal(&sls);
 
 	rw_exit(rwl);
+	/* signal may stop the process, release rwlock before that */
+	sleep_setup_signal(&sls);
 
 	error = sleep_finish_all(&sls, 1);
 
