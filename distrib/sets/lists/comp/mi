@@ -261,6 +261,7 @@
 ./usr/include/dev/ic/dp8573areg.h
 ./usr/include/dev/ic/ds1286reg.h
 ./usr/include/dev/ic/ds1687reg.h
+./usr/include/dev/ic/dwhdmi.h
 ./usr/include/dev/ic/dwiicreg.h
 ./usr/include/dev/ic/dwiicvar.h
 ./usr/include/dev/ic/elink3reg.h

@@ -1745,6 +1745,7 @@
 ./usr/share/man/man4/rgephy.4
 ./usr/share/man/man4/ricohrtc.4
 ./usr/share/man/man4/rkclock.4
+./usr/share/man/man4/rkdwhdmi.4
 ./usr/share/man/man4/rkdwusb.4
 ./usr/share/man/man4/rkemmcphy.4
 ./usr/share/man/man4/rkgpio.4
