@@ -1,8 +1,9 @@
-/*	$OpenBSD: ixgbe_82599.c,v 1.18 2020/02/28 05:22:53 deraadt Exp $	*/
+/*	$OpenBSD: ixgbe_82599.c,v 1.19 2020/03/02 01:59:01 jmatthew Exp $	*/
 
 /******************************************************************************
+  SPDX-License-Identifier: BSD-3-Clause
 
-  Copyright (c) 2001-2015, Intel Corporation
+  Copyright (c) 2001-2017, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,7 +33,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 326022 2017-11-20 19:36:21Z pfg $*/
+
 
 #include <dev/pci/ixgbe.h>
 #include <dev/pci/ixgbe_type.h>
@@ -71,7 +73,7 @@ int32_t ixgbe_write_analog_reg8_82599(struct ixgbe_hw *hw, uint32_t reg,
 int32_t ixgbe_start_hw_82599(struct ixgbe_hw *hw);
 int32_t ixgbe_identify_phy_82599(struct ixgbe_hw *hw);
 int32_t ixgbe_init_phy_ops_82599(struct ixgbe_hw *hw);
-uint32_t ixgbe_get_supported_physical_layer_82599(struct ixgbe_hw *hw);
+uint64_t ixgbe_get_supported_physical_layer_82599(struct ixgbe_hw *hw);
 int32_t ixgbe_enable_rx_dma_82599(struct ixgbe_hw *hw, uint32_t regval);
 int32_t prot_autoc_read_82599(struct ixgbe_hw *, bool *locked, uint32_t *reg_val);
 int32_t prot_autoc_write_82599(struct ixgbe_hw *, uint32_t reg_val, bool locked);
@@ -304,7 +306,7 @@ int32_t prot_autoc_read_82599(struct ixgbe_hw *hw, bool *locked,
 /**
  * prot_autoc_write_82599 - Hides MAC differences needed for AUTOC write
  * @hw: pointer to hardware structure
- * @reg_val: value to write to AUTOC
+ * @autoc: value to write to AUTOC
  * @locked: bool to indicate whether the SW/FW lock was already taken by
  *           previous proc_autoc_read_82599.
  *
@@ -362,7 +364,7 @@ int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 
 	DEBUGFUNC("ixgbe_init_ops_82599");
 
-	ret_val = ixgbe_init_phy_ops_generic(hw);
+	ixgbe_init_phy_ops_generic(hw);
 	ret_val = ixgbe_init_ops_generic(hw);
 
 	/* PHY */
@@ -380,7 +382,7 @@ int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 	mac->ops.read_analog_reg8 = ixgbe_read_analog_reg8_82599;
 	mac->ops.write_analog_reg8 = ixgbe_write_analog_reg8_82599;
 	mac->ops.start_hw = ixgbe_start_hw_82599;
-
+	mac->ops.get_device_caps = ixgbe_get_device_caps_generic;
 	mac->ops.prot_autoc_read = prot_autoc_read_82599;
 	mac->ops.prot_autoc_write = prot_autoc_write_82599;
 
@@ -408,6 +410,9 @@ int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 	mac->max_rx_queues	= IXGBE_82599_MAX_RX_QUEUES;
 	mac->max_tx_queues	= IXGBE_82599_MAX_TX_QUEUES;
 	mac->max_msix_vectors	= 0 /*ixgbe_get_pcie_msix_count_generic(hw)*/;
+
+	mac->arc_subsystem_valid = !!(IXGBE_READ_REG(hw, IXGBE_FWSM_BY_MAC(hw))
+				      & IXGBE_FWSM_MODE_MASK);
 
 	hw->mbx.ops.init_params = ixgbe_init_mbx_params_pf;
 
@@ -602,10 +607,11 @@ void ixgbe_stop_mac_link_on_d3_82599(struct ixgbe_hw *hw)
 	uint16_t ee_ctrl_2 = 0;
 
 	DEBUGFUNC("ixgbe_stop_mac_link_on_d3_82599");
-	ixgbe_read_eeprom_82599(hw, IXGBE_EEPROM_CTRL_2, &ee_ctrl_2);
+	if (hw->eeprom.ops.read)
+		hw->eeprom.ops.read(hw, IXGBE_EEPROM_CTRL_2, &ee_ctrl_2);
 
-	if (!ixgbe_mng_present(hw) &&
-	    (ee_ctrl_2 & IXGBE_EEPROM_CCD_BIT)) {
+	if (!ixgbe_mng_present(hw) && !hw->wol_enabled &&
+	    ee_ctrl_2 & IXGBE_EEPROM_CCD_BIT) {
 		autoc2_reg = IXGBE_READ_REG(hw, IXGBE_AUTOC2);
 		autoc2_reg |= IXGBE_AUTOC2_LINK_DISABLE_ON_D3_MASK;
 		IXGBE_WRITE_REG(hw, IXGBE_AUTOC2, autoc2_reg);
@@ -920,7 +926,7 @@ int32_t ixgbe_setup_mac_link_82599(struct ixgbe_hw *hw,
 	DEBUGFUNC("ixgbe_setup_mac_link_82599");
 
 	/* Check to see if speed passed in is supported. */
-	status = ixgbe_get_link_capabilities_82599(hw, &link_capabilities,
+	status = hw->mac.ops.get_link_capabilities(hw, &link_capabilities,
 	    &autoneg);
 	if (status)
 		goto out;
@@ -1158,7 +1164,8 @@ mac_reset_top:
 		 * Likewise if we support WoL we don't want change the
 		 * LMS state.
 		 */
-		if (hw->phy.multispeed_fiber && ixgbe_mng_enabled(hw))
+		if ((hw->phy.multispeed_fiber && ixgbe_mng_enabled(hw)) ||
+		    hw->wol_enabled)
 			hw->mac.orig_autoc =
 				(hw->mac.orig_autoc & ~IXGBE_AUTOC_LMS_MASK) |
 				curr_lms;
@@ -1317,9 +1324,9 @@ int32_t ixgbe_identify_phy_82599(struct ixgbe_hw *hw)
  *
  *  Determines physical layer capabilities of the current configuration.
  **/
-uint32_t ixgbe_get_supported_physical_layer_82599(struct ixgbe_hw *hw)
+uint64_t ixgbe_get_supported_physical_layer_82599(struct ixgbe_hw *hw)
 {
-	uint32_t physical_layer = IXGBE_PHYSICAL_LAYER_UNKNOWN;
+	uint64_t physical_layer = IXGBE_PHYSICAL_LAYER_UNKNOWN;
 	uint32_t autoc = IXGBE_READ_REG(hw, IXGBE_AUTOC);
 	uint32_t autoc2 = IXGBE_READ_REG(hw, IXGBE_AUTOC2);
 	uint32_t pma_pmd_10g_serial = autoc2 & IXGBE_AUTOC2_10G_SERIAL_PMA_PMD_MASK;
@@ -1623,6 +1630,7 @@ reset_pipeline_out:
  *  ixgbe_read_i2c_byte_82599 - Reads 8 bit word over I2C
  *  @hw: pointer to hardware structure
  *  @byte_offset: byte offset to read
+ *  @dev_addr: address to read from
  *  @data: value read
  *
  *  Performs byte read operation to SFP module's EEPROM over I2C interface at
@@ -1680,6 +1688,7 @@ release_i2c_access:
  *  ixgbe_write_i2c_byte_82599 - Writes 8 bit word over I2C
  *  @hw: pointer to hardware structure
  *  @byte_offset: byte offset to write
+ *  @dev_addr: address to read from
  *  @data: value to write
  *
  *  Performs byte write operation to SFP module's EEPROM over I2C interface at

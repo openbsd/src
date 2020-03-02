@@ -1,8 +1,9 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.17 2020/02/28 05:22:53 deraadt Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.18 2020/03/02 01:59:01 jmatthew Exp $	*/
 
 /******************************************************************************
+  SPDX-License-Identifier: BSD-3-Clause
 
-  Copyright (c) 2001-2015, Intel Corporation
+  Copyright (c) 2001-2017, Intel Corporation
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -32,7 +33,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82598.c 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82598.c 331224 2018-03-19 20:55:05Z erj $*/
+
 
 #include <dev/pci/ixgbe.h>
 #include <dev/pci/ixgbe_type.h>
@@ -63,20 +65,20 @@ int32_t ixgbe_setup_copper_link_82598(struct ixgbe_hw *hw,
 				      ixgbe_link_speed speed,
 				      bool autoneg_wait_to_complete);
 int32_t ixgbe_reset_hw_82598(struct ixgbe_hw *hw);
+
 int32_t ixgbe_start_hw_82598(struct ixgbe_hw *hw);
-void ixgbe_enable_relaxed_ordering_82598(struct ixgbe_hw *hw);
 int32_t ixgbe_set_vmdq_82598(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq);
 int32_t ixgbe_clear_vmdq_82598(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq);
 int32_t ixgbe_set_vfta_82598(struct ixgbe_hw *hw, uint32_t vlan,
-			     uint32_t vind, bool vlan_on);
+			     uint32_t vind, bool vlan_on, bool vlvf_bypass);
 int32_t ixgbe_clear_vfta_82598(struct ixgbe_hw *hw);
 int32_t ixgbe_read_analog_reg8_82598(struct ixgbe_hw *hw, uint32_t reg, uint8_t *val);
 int32_t ixgbe_write_analog_reg8_82598(struct ixgbe_hw *hw, uint32_t reg, uint8_t val);
 int32_t ixgbe_read_i2c_phy_82598(struct ixgbe_hw *hw, uint8_t dev_addr,
 				 uint8_t byte_offset, uint8_t *eeprom_data);
 int32_t ixgbe_read_i2c_eeprom_82598(struct ixgbe_hw *hw, uint8_t byte_offset,
-				    uint8_t *eeprom_data);
-uint32_t ixgbe_get_supported_physical_layer_82598(struct ixgbe_hw *hw);
+				uint8_t *eeprom_data);
+uint64_t ixgbe_get_supported_physical_layer_82598(struct ixgbe_hw *hw);
 int32_t ixgbe_init_phy_ops_82598(struct ixgbe_hw *hw);
 void ixgbe_set_lan_id_multi_port_pcie_82598(struct ixgbe_hw *hw);
 void ixgbe_set_pcie_completion_timeout(struct ixgbe_hw *hw);
@@ -160,6 +162,7 @@ int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw)
 	mac->ops.set_vmdq = ixgbe_set_vmdq_82598;
 	mac->ops.clear_vmdq = ixgbe_clear_vmdq_82598;
 	mac->ops.set_vfta = ixgbe_set_vfta_82598;
+	mac->ops.set_vlvf = NULL;
 	mac->ops.clear_vfta = ixgbe_clear_vfta_82598;
 
 	/* Flow Control */
@@ -171,7 +174,7 @@ int32_t ixgbe_init_ops_82598(struct ixgbe_hw *hw)
 	mac->rx_pb_size		= IXGBE_82598_RX_PB_SIZE;
 	mac->max_rx_queues	= IXGBE_82598_MAX_RX_QUEUES;
 	mac->max_tx_queues	= IXGBE_82598_MAX_TX_QUEUES;
-	mac->max_msix_vectors	= ixgbe_get_pcie_msix_count_generic(hw);
+	mac->max_msix_vectors	= 0 /*ixgbe_get_pcie_msix_count_generic(hw)*/;
 
 	/* SFP+ Module */
 	phy->ops.read_i2c_eeprom = ixgbe_read_i2c_eeprom_82598;
@@ -254,7 +257,7 @@ out:
  *  @hw: pointer to hardware structure
  *
  *  Starts the hardware using the generic start_hw function.
- *  Disables relaxed ordering, then set pcie completion timeout
+ *  Disables relaxed ordering Then set pcie completion timeout
  *
  **/
 int32_t ixgbe_start_hw_82598(struct ixgbe_hw *hw)
@@ -555,6 +558,7 @@ out:
 /**
  *  ixgbe_start_mac_link_82598 - Configures MAC link settings
  *  @hw: pointer to hardware structure
+ *  @autoneg_wait_to_complete: TRUE when waiting for completion is needed
  *
  *  Configures link settings based on values in the ixgbe_hw struct.
  *  Restarts the link.  Performs autonegotiation if needed.
@@ -747,7 +751,7 @@ int32_t ixgbe_setup_mac_link_82598(struct ixgbe_hw *hw,
 	DEBUGFUNC("ixgbe_setup_mac_link_82598");
 
 	/* Check to see if speed passed in is supported. */
-	ixgbe_get_link_capabilities_82598(hw, &link_capabilities, &autoneg);
+	hw->mac.ops.get_link_capabilities(hw, &link_capabilities, &autoneg);
 	speed &= link_capabilities;
 
 	if (speed == IXGBE_LINK_SPEED_UNKNOWN)
@@ -1000,11 +1004,12 @@ int32_t ixgbe_clear_vmdq_82598(struct ixgbe_hw *hw, uint32_t rar, uint32_t vmdq)
  *  @vlan: VLAN id to write to VLAN filter
  *  @vind: VMDq output index that maps queue to VLAN id in VFTA
  *  @vlan_on: boolean flag to turn on/off VLAN in VFTA
+ *  @vlvf_bypass: boolean flag - unused
  *
  *  Turn on/off specified VLAN in the VLAN filter table.
  **/
 int32_t ixgbe_set_vfta_82598(struct ixgbe_hw *hw, uint32_t vlan, uint32_t vind,
-			     bool vlan_on)
+			     bool vlan_on, bool vlvf_bypass)
 {
 	uint32_t regindex;
 	uint32_t bitindex;
@@ -1209,9 +1214,9 @@ int32_t ixgbe_read_i2c_eeprom_82598(struct ixgbe_hw *hw, uint8_t byte_offset,
  *
  *  Determines physical layer capabilities of the current configuration.
  **/
-uint32_t ixgbe_get_supported_physical_layer_82598(struct ixgbe_hw *hw)
+uint64_t ixgbe_get_supported_physical_layer_82598(struct ixgbe_hw *hw)
 {
-	uint32_t physical_layer = IXGBE_PHYSICAL_LAYER_UNKNOWN;
+	uint64_t physical_layer = IXGBE_PHYSICAL_LAYER_UNKNOWN;
 	uint32_t autoc = IXGBE_READ_REG(hw, IXGBE_AUTOC);
 	uint32_t pma_pmd_10g = autoc & IXGBE_AUTOC_10G_PMA_PMD_MASK;
 	uint32_t pma_pmd_1g = autoc & IXGBE_AUTOC_1G_PMA_PMD_MASK;
@@ -1252,14 +1257,8 @@ uint32_t ixgbe_get_supported_physical_layer_82598(struct ixgbe_hw *hw)
 			physical_layer = IXGBE_PHYSICAL_LAYER_10GBASE_CX4;
 		else if (pma_pmd_10g == IXGBE_AUTOC_10G_KX4)
 			physical_layer = IXGBE_PHYSICAL_LAYER_10GBASE_KX4;
-		else { /* XAUI */
-			if (autoc & IXGBE_AUTOC_KX_SUPP)
-				physical_layer |=
-				    IXGBE_PHYSICAL_LAYER_1000BASE_KX;
-			if (autoc & IXGBE_AUTOC_KX4_SUPP)
-				physical_layer |=
-				    IXGBE_PHYSICAL_LAYER_10GBASE_KX4;
-		}
+		else /* XAUI */
+			physical_layer = IXGBE_PHYSICAL_LAYER_UNKNOWN;
 		break;
 	case IXGBE_AUTOC_LMS_KX4_AN:
 	case IXGBE_AUTOC_LMS_KX4_AN_1G_AN:
