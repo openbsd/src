@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2019/08/05 15:16:39 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2020/03/02 12:03:09 bluhm Exp $
 
 # Call realpath(3) in combination with chroot(2), chdir(2).
 # Use umount(8) to check that the mountpoint leaks no vnode.
@@ -45,15 +45,15 @@ run-chroot-dir:
 	${SUDO} ./realpath-chroot /mnt/regress-realpath/foo /
 	${SUDO} umount /mnt/regress-realpath
 
-REGRESS_TARGETS +=	run-chroot-dir
-run-chroot-dir:
+REGRESS_TARGETS +=	run-chroot-subdir
+run-chroot-subdir:
 	@echo '\n======== $@ ========'
 	${SUDO} mkdir -p /mnt/regress-realpath/foo
 	${SUDO} ./realpath-chroot /mnt/regress-realpath /foo
 	${SUDO} umount /mnt/regress-realpath
 
-REGRESS_TARGETS +=	run-chroot-dir-dir
-run-chroot-dir-dir:
+REGRESS_TARGETS +=	run-chroot-dir-subdir
+run-chroot-dir-subdir:
 	@echo '\n======== $@ ========'
 	${SUDO} mkdir -p /mnt/regress-realpath/foo/bar
 	${SUDO} ./realpath-chroot /mnt/regress-realpath/foo /bar
@@ -73,15 +73,15 @@ run-chdir-dir:
 	${SUDO} ./realpath-chdir /mnt/regress-realpath/foo .
 	${SUDO} umount /mnt/regress-realpath
 
-REGRESS_TARGETS +=	run-chdir-dir
-run-chdir-dir:
+REGRESS_TARGETS +=	run-chdir-subdir
+run-chdir-subdir:
 	@echo '\n======== $@ ========'
 	${SUDO} mkdir -p /mnt/regress-realpath/foo
 	${SUDO} ./realpath-chdir /mnt/regress-realpath foo
 	${SUDO} umount /mnt/regress-realpath
 
-REGRESS_TARGETS +=	run-chdir-dir-dir
-run-chdir-dir-dir:
+REGRESS_TARGETS +=	run-chdir-dir-subdir
+run-chdir-dir-subdir:
 	@echo '\n======== $@ ========'
 	${SUDO} mkdir -p /mnt/regress-realpath/foo/bar
 	${SUDO} ./realpath-chdir /mnt/regress-realpath/foo bar
