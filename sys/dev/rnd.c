@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.202 2020/03/01 23:49:26 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.203 2020/03/02 22:27:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -433,7 +433,7 @@ void rnd_reinit(void *v);		/* timeout to start reinit */
 void rnd_init(void *);			/* actually do the reinit */
 
 struct mutex rndlock = MUTEX_INITIALIZER(IPL_HIGH);
-struct timeout rnd_timeout;
+struct timeout rndreinit_timeout;
 struct task rnd_task = TASK_INITIALIZER(rnd_init, NULL);
 
 static chacha_ctx rs;		/* chacha context for random keystream */
@@ -739,7 +739,7 @@ rnd_reinit(void *v)
 {
 	task_add(systq, &rnd_task);
 	/* 10 minutes, per dm@'s suggestion */
-	timeout_add_sec(&rnd_timeout, 10 * 60);
+	timeout_add_sec(&rndreinit_timeout, 10 * 60);
 }
 
 /*
@@ -770,7 +770,7 @@ random_start(void)
 
 	dequeue_randomness(NULL);
 	rnd_init(NULL);
-	timeout_set(&rnd_timeout, rnd_reinit, NULL);
+	timeout_set(&rndreinit_timeout, rnd_reinit, NULL);
 	rnd_reinit(NULL);
 	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
 }
