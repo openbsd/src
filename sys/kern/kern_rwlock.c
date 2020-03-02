@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.44 2019/11/30 11:19:17 visa Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.45 2020/03/02 17:07:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -24,6 +24,8 @@
 #include <sys/limits.h>
 #include <sys/atomic.h>
 #include <sys/witness.h>
+
+void	rw_do_exit(struct rwlock *, unsigned long);
 
 /* XXX - temporary measure until proc0 is properly aligned */
 #define RW_PROC(p) (((long)p) & ~RWLOCK_MASK)
@@ -129,31 +131,31 @@ rw_enter_write(struct rwlock *rwl)
 void
 rw_exit_read(struct rwlock *rwl)
 {
-	unsigned long owner = rwl->rwl_owner;
+	unsigned long owner;
 
 	rw_assert_rdlock(rwl);
+	WITNESS_UNLOCK(&rwl->rwl_lock_obj, 0);
 
 	membar_exit_before_atomic();
+	owner = rwl->rwl_owner;
 	if (__predict_false((owner & RWLOCK_WAIT) ||
 	    rw_cas(&rwl->rwl_owner, owner, owner - RWLOCK_READ_INCR)))
-		rw_exit(rwl);
-	else
-		WITNESS_UNLOCK(&rwl->rwl_lock_obj, 0);
+		rw_do_exit(rwl, 0);
 }
 
 void
 rw_exit_write(struct rwlock *rwl)
 {
-	unsigned long owner = rwl->rwl_owner;
+	unsigned long owner;
 
 	rw_assert_wrlock(rwl);
+	WITNESS_UNLOCK(&rwl->rwl_lock_obj, LOP_EXCLUSIVE);
 
 	membar_exit_before_atomic();
+	owner = rwl->rwl_owner;
 	if (__predict_false((owner & RWLOCK_WAIT) ||
 	    rw_cas(&rwl->rwl_owner, owner, 0)))
-		rw_exit(rwl);
-	else
-		WITNESS_UNLOCK(&rwl->rwl_lock_obj, LOP_EXCLUSIVE);
+		rw_do_exit(rwl, RWLOCK_WRLOCK);
 }
 
 #ifdef DIAGNOSTIC
@@ -314,22 +316,29 @@ retry:
 void
 rw_exit(struct rwlock *rwl)
 {
-	unsigned long owner = rwl->rwl_owner;
-	int wrlock = owner & RWLOCK_WRLOCK;
-	unsigned long set;
+	unsigned long wrlock;
 
 	/* Avoid deadlocks after panic or in DDB */
 	if (panicstr || db_active)
 		return;
 
+	wrlock = rwl->rwl_owner & RWLOCK_WRLOCK;
 	if (wrlock)
 		rw_assert_wrlock(rwl);
 	else
 		rw_assert_rdlock(rwl);
-
 	WITNESS_UNLOCK(&rwl->rwl_lock_obj, wrlock ? LOP_EXCLUSIVE : 0);
 
 	membar_exit_before_atomic();
+	rw_do_exit(rwl, wrlock);
+}
+
+/* membar_exit_before_atomic() has to precede call of this function. */
+void
+rw_do_exit(struct rwlock *rwl, unsigned long wrlock)
+{
+	unsigned long owner, set;
+
 	do {
 		owner = rwl->rwl_owner;
 		if (wrlock)
@@ -337,7 +346,7 @@ rw_exit(struct rwlock *rwl)
 		else
 			set = (owner - RWLOCK_READ_INCR) &
 				~(RWLOCK_WAIT|RWLOCK_WRWANT);
-	} while (rw_cas(&rwl->rwl_owner, owner, set));
+	} while (__predict_false(rw_cas(&rwl->rwl_owner, owner, set)));
 
 	if (owner & RWLOCK_WAIT)
 		wakeup(rwl);
