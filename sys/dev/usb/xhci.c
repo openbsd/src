@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.112 2020/02/22 14:01:35 jasper Exp $ */
+/* $OpenBSD: xhci.c,v 1.113 2020/03/02 16:30:39 visa Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -821,9 +821,10 @@ xhci_xfer_length_generic(struct xhci_xfer *xx, struct xhci_pipe *xp,
 	    ((xx->index + xp->ring.ntrb) - xx->ntrb) % (xp->ring.ntrb - 1);
 
 	while (1) {
-		type = xp->ring.trbs[trb0_idx].trb_flags & XHCI_TRB_TYPE_MASK;
+		type = letoh32(xp->ring.trbs[trb0_idx].trb_flags) &
+		    XHCI_TRB_TYPE_MASK;
 		if (type == XHCI_TRB_TYPE_NORMAL || type == XHCI_TRB_TYPE_DATA)
-			len += le32toh(XHCI_TRB_LEN(
+			len += XHCI_TRB_LEN(letoh32(
 			    xp->ring.trbs[trb0_idx].trb_status));
 		if (trb0_idx == trb_idx)
 			break;
@@ -930,8 +931,8 @@ xhci_event_xfer_isoc(struct usbd_xfer *xfer, struct xhci_pipe *xp,
 
 	/* Find the according frame index for this TRB. */
 	while (trb0_idx != trb_idx) {
-		if ((xp->ring.trbs[trb0_idx].trb_flags & XHCI_TRB_TYPE_MASK) ==
-		    XHCI_TRB_TYPE_ISOCH)
+		if ((letoh32(xp->ring.trbs[trb0_idx].trb_flags) &
+		    XHCI_TRB_TYPE_MASK) == XHCI_TRB_TYPE_ISOCH)
 			frame_idx++;
 		if (trb0_idx++ == (xp->ring.ntrb - 1))
 			trb0_idx = 0;
@@ -942,7 +943,7 @@ xhci_event_xfer_isoc(struct usbd_xfer *xfer, struct xhci_pipe *xp,
 	 * check if the first TRB needs accounting since it might not have
 	 * raised an interrupt in case of full data received.
 	 */
-	if ((xp->ring.trbs[trb_idx].trb_flags & XHCI_TRB_TYPE_MASK) ==
+	if ((letoh32(xp->ring.trbs[trb_idx].trb_flags) & XHCI_TRB_TYPE_MASK) ==
 	    XHCI_TRB_TYPE_NORMAL) {
 		frame_idx--;
 		if (trb_idx == 0)
@@ -950,13 +951,13 @@ xhci_event_xfer_isoc(struct usbd_xfer *xfer, struct xhci_pipe *xp,
 		else
 			trb0_idx = trb_idx - 1;
 		if (xfer->frlengths[frame_idx] == 0) {
-			xfer->frlengths[frame_idx] =
-			    XHCI_TRB_LEN(xp->ring.trbs[trb0_idx].trb_status);
+			xfer->frlengths[frame_idx] = XHCI_TRB_LEN(letoh32(
+			    xp->ring.trbs[trb0_idx].trb_status));
 		}
 	}
 
 	xfer->frlengths[frame_idx] +=
-	    XHCI_TRB_LEN(xp->ring.trbs[trb_idx].trb_status) - remain;
+	    XHCI_TRB_LEN(letoh32(xp->ring.trbs[trb_idx].trb_status)) - remain;
 	xfer->actlen += xfer->frlengths[frame_idx];
 
 	if (xx->index != trb_idx)
