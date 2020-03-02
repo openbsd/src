@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.75 2020/01/20 23:27:01 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.76 2020/03/02 16:52:53 otto Exp $
 
 machine		amd64
 maxusers	4
@@ -79,7 +79,7 @@ mfi*		at pci?			# LSI MegaRAID SAS controllers
 
 scsibus*	at scsi?
 sd*		at scsibus?		# SCSI disk drives
-cd*		at scsibus?		# SCSI CD-ROM drives
+#cd*		at scsibus?		# SCSI CD-ROM drives
 
 pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
