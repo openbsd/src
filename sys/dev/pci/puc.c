@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.28 2018/12/02 21:30:21 kettenis Exp $	*/
+/*	$OpenBSD: puc.c,v 1.29 2020/03/02 19:45:42 patrick Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -163,8 +163,11 @@ puc_pci_attach(struct device *parent, struct device *self, void *aux)
 		    0, &sc->sc_bar_mappings[i].t, &sc->sc_bar_mappings[i].h,
 		    &sc->sc_bar_mappings[i].a, &sc->sc_bar_mappings[i].s, 0)
 		      == 0);
-		if (sc->sc_bar_mappings[i].mapped)
+		if (sc->sc_bar_mappings[i].mapped) {
+			if (type == PCI_MAPREG_MEM_TYPE_64BIT)
+				i++;
 			continue;
+		}
 
 #if NCOM > 0
 		/*
@@ -184,6 +187,8 @@ puc_pci_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_bar_mappings[i].h = comconsioh;
 			sc->sc_bar_mappings[i].s = COM_NPORTS;
 			sc->sc_bar_mappings[i].mapped = 1;
+			if (type == PCI_MAPREG_MEM_TYPE_64BIT)
+				i++;
 			continue;
 		}
 #endif
