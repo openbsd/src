@@ -54,11 +54,6 @@ struct drm_device {
 
 	struct pci_dev	_pdev;
 	struct pci_dev	*pdev;
-	u_int16_t	 pci_device;
-	u_int16_t	 pci_vendor;
-
-	pci_chipset_tag_t		 pc;
-	pcitag_t	 		*bridgetag;
 
 	bus_dma_tag_t			dmat;
 	bus_space_tag_t			bst;

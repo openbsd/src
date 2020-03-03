@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.171 2020/02/20 16:56:52 visa Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.172 2020/03/03 09:23:54 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -110,7 +110,6 @@ drm_attach_pci(struct drm_driver *driver, struct pci_attach_args *pa,
 {
 	struct drm_attach_args arg;
 	struct drm_softc *sc;
-	pcireg_t subsys;
 
 	arg.drm = drm;
 	arg.driver = driver;
@@ -118,20 +117,7 @@ drm_attach_pci(struct drm_driver *driver, struct pci_attach_args *pa,
 	arg.bst = pa->pa_memt;
 	arg.is_agp = is_agp;
 	arg.primary = primary;
-
-	arg.pci_vendor = PCI_VENDOR(pa->pa_id);
-	arg.pci_device = PCI_PRODUCT(pa->pa_id);
-
-	subsys = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-	arg.pci_subvendor = PCI_VENDOR(subsys);
-	arg.pci_subdevice = PCI_PRODUCT(subsys);
-
-	arg.pci_revision = PCI_REVISION(pa->pa_class);
-
 	arg.pa = pa;
-	arg.pc = pa->pa_pc;
-	arg.tag = pa->pa_tag;
-	arg.bridgetag = pa->pa_bridgetag;
 
 	arg.busid_len = 20;
 	arg.busid = malloc(arg.busid_len + 1, M_DRM, M_NOWAIT);
@@ -209,7 +195,6 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	struct drm_softc *sc = (struct drm_softc *)self;
 	struct drm_attach_args *da = aux;
 	struct drm_device *dev = da->drm;
-	int bus, slot, func;
 	int ret;
 
 	drm_linux_init();
@@ -230,39 +215,44 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->bst = da->bst;
 	dev->unique = da->busid;
 	dev->unique_len = da->busid_len;
-	dev->pdev = &dev->_pdev;
-	dev->pci_vendor = dev->pdev->vendor = da->pci_vendor;
-	dev->pci_device = dev->pdev->device = da->pci_device;
-	dev->pdev->subsystem_vendor = da->pci_subvendor;
-	dev->pdev->subsystem_device = da->pci_subdevice;
-	dev->pdev->revision = da->pci_revision;
 
-	pci_decompose_tag(da->pc, da->tag, &bus, &slot, &func);
-	dev->pdev->bus = &dev->pdev->_bus;
-	dev->pdev->bus->pc = da->pc;
-	dev->pdev->bus->number = bus;
-	dev->pdev->bus->bridgetag = da->bridgetag;
-	dev->pdev->devfn = PCI_DEVFN(slot, func);
+	if (da->pa) {
+		struct pci_attach_args *pa = da->pa;
+		pcireg_t subsys;
 
-	dev->pdev->bus->self = malloc(sizeof(struct pci_dev), M_DRM,
-	    M_NOWAIT | M_ZERO);
-	if (dev->pdev->bus->self == NULL)
-		goto error;
-	dev->pdev->bus->self->pc = da->pc;
-	if (da->bridgetag != NULL)
-		dev->pdev->bus->self->tag = *da->bridgetag;
+		subsys = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_SUBSYS_ID_REG);
 
-	dev->pc = da->pc;
-	dev->pdev->pc = da->pc;
-	dev->bridgetag = da->bridgetag;
-	dev->pdev->tag = da->tag;
-	dev->pdev->pci = (struct pci_softc *)parent->dv_parent;
+		dev->pdev = &dev->_pdev;
+		dev->pdev->vendor = PCI_VENDOR(pa->pa_id);
+		dev->pdev->device = PCI_PRODUCT(pa->pa_id);
+		dev->pdev->subsystem_vendor = PCI_VENDOR(subsys);
+		dev->pdev->subsystem_device = PCI_PRODUCT(subsys);
+		dev->pdev->revision = PCI_REVISION(pa->pa_class);
+
+		dev->pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
+		dev->pdev->bus = &dev->pdev->_bus;
+		dev->pdev->bus->pc = pa->pa_pc;
+		dev->pdev->bus->number = pa->pa_bus;
+		dev->pdev->bus->bridgetag = pa->pa_bridgetag;
+
+		if (pa->pa_bridgetag != NULL) {
+			dev->pdev->bus->self = malloc(sizeof(struct pci_dev),
+			    M_DRM, M_WAITOK | M_ZERO);
+			dev->pdev->bus->self->pc = pa->pa_pc;
+			dev->pdev->bus->self->tag = *pa->pa_bridgetag;
+		}
+
+		dev->pdev->pc = pa->pa_pc;
+		dev->pdev->tag = pa->pa_tag;
+		dev->pdev->pci = (struct pci_softc *)parent->dv_parent;
 
 #ifdef CONFIG_ACPI
-	dev->pdev->dev.node = acpi_find_pci(da->pc, da->tag);
-	aml_register_notify(dev->pdev->dev.node, NULL,
-	    drm_linux_acpi_notify, NULL, ACPIDEV_NOPOLL);
+		dev->pdev->dev.node = acpi_find_pci(pa->pa_pc, pa->pa_tag);
+		aml_register_notify(dev->pdev->dev.node, NULL,
+		    drm_linux_acpi_notify, NULL, ACPIDEV_NOPOLL);
 #endif
+	}
 
 	rw_init(&dev->struct_mutex, "drmdevlk");
 	mtx_init(&dev->event_lock, IPL_TTY);
@@ -331,7 +321,8 @@ drm_detach(struct device *self, int flags)
 	}
 
 	free(dev->agp, M_DRM, 0);
-	free(dev->pdev->bus->self, M_DRM, sizeof(struct pci_dev));
+	if (dev->pdev && dev->pdev->bus)
+		free(dev->pdev->bus->self, M_DRM, sizeof(struct pci_dev));
 
 	if (sc->sc_allocated)
 		free(dev, M_DRM, sizeof(struct drm_device));
@@ -987,6 +978,9 @@ int
 drm_getpciinfo(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	struct drm_pciinfo *info = data;
+
+	if (dev->pdev == NULL)
+		return -ENOTTY;
 
 	info->domain = 0;
 	info->bus = dev->pdev->bus->number;
