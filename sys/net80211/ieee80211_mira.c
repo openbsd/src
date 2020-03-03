@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.17 2019/12/18 09:52:15 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.18 2020/03/03 21:00:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -409,7 +409,7 @@ ieee80211_mira_update_stats(struct ieee80211_mira_node *mn,
 	ampdu_size = ampdu_size / 1000; /* mbit */
 
 	/* Compute Sub-Frame Error Rate (see section 2.2 in MiRA paper). */
-	sfer = (mn->frames * mn->retries + mn->txfail);
+	sfer = mn->frames * mn->txfail + mn->retries;
 	if ((sfer >> MIRA_FP_SHIFT) != 0) { /* bug in wifi driver */
 		if (ic->ic_if.if_flags & IFF_DEBUG) {
 #ifdef DIAGNOSTIC
@@ -424,7 +424,7 @@ ieee80211_mira_update_stats(struct ieee80211_mira_node *mn,
 		return;
 	}
 	sfer <<= MIRA_FP_SHIFT; /* convert to fixed-point */
-	sfer /= ((mn->retries + 1) * mn->frames);
+	sfer /= (mn->txfail + 1) * mn->frames;
 	if (sfer > MIRA_FP_1) { /* bug in wifi driver */
 		if (ic->ic_if.if_flags & IFF_DEBUG) {
 #ifdef DIAGNOSTIC
