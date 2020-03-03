@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.10 2018/01/11 15:49:34 visa Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.11 2020/03/03 10:30:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -545,7 +545,6 @@ _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
     int prot, int flags)
 {
 	int i;
-	paddr_t pa;
 
 	for (i = 0; i < nsegs; i++) {
 #ifdef DIAGNOSTIC
@@ -562,8 +561,7 @@ _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		(void)pmap_extract (pmap_kernel(), segs[i].ds_addr, &pa);
-		return pa + off;
+		return (segs[i].ds_addr + off);
 	}
 
 	/* Page not found. */
