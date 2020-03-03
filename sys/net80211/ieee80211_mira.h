@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.h,v 1.7 2020/03/03 21:00:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.h,v 1.8 2020/03/03 21:09:35 tb Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -23,7 +23,8 @@
 /* 
  * MiRA - "MIMO Rate Adaptation in 802.11n Wireless Networks"
  * Ioannis Pefkianakis, Yun Hu, Starsky H.Y. Wong, Hao Yang, Songwu Lu
- * http://www.cs.ucla.edu/wing/publication/papers/Pefkianakis.MOBICOM10.pdf
+ * http://metro.cs.ucla.edu/papers/Pefkianakis.MOBICOM10.pdf
+ * https://doi.org/10.1145/1859995.1860025
  */
 
 /* 
