@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.75 2019/11/05 08:18:47 mpi Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.76 2020/03/04 08:04:48 anton Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -261,13 +261,25 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 			return (EINVAL);
 	} else
 		attach_va = 0;
+	/*
+	 * Since uvm_map() could end up sleeping, grab a reference to prevent
+	 * the segment from being deallocated while sleeping.
+	 */
+	shmseg->shm_nattch++;
 	shm_handle = shmseg->shm_internal;
 	uao_reference(shm_handle->shm_object);
 	error = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
 	    shm_handle->shm_object, 0, 0, UVM_MAPFLAG(prot, prot,
 	    MAP_INHERIT_SHARE, MADV_RANDOM, flags));
 	if (error) {
-		uao_detach(shm_handle->shm_object);
+		if ((--shmseg->shm_nattch <= 0) &&
+		    (shmseg->shm_perm.mode & SHMSEG_REMOVED)) {
+			shm_deallocate_segment(shmseg);
+			shm_last_free = IPCID_TO_IX(SCARG(uap, shmid));
+			shmsegs[shm_last_free] = NULL;
+		} else {
+			uao_detach(shm_handle->shm_object);
+		}
 		return (error);
 	}
 
@@ -275,7 +287,6 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 	shmmap_s->shmid = SCARG(uap, shmid);
 	shmseg->shm_lpid = p->p_p->ps_pid;
 	shmseg->shm_atime = time_second;
-	shmseg->shm_nattch++;
 	*retval = attach_va;
 	return (0);
 }
