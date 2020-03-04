@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.262 2019/12/30 23:58:38 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.263 2020/03/04 21:15:38 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1105,7 +1105,10 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 
 	/* Update map and process statistics. */
 	map->size += sz;
-	((struct vmspace *)map)->vm_dused += uvmspace_dused(map, *addr, *addr + sz);
+	if (prot != PROT_NONE) {
+		((struct vmspace *)map)->vm_dused +=
+		    uvmspace_dused(map, *addr, *addr + sz);
+	}
 
 unlock:
 	vm_map_unlock(map);
@@ -1381,7 +1384,8 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	/* Update map and process statistics. */
 	if (!(flags & UVM_FLAG_HOLE)) {
 		map->size += sz;
-		if ((map->flags & VM_MAP_ISVMSPACE) && uobj == NULL) {
+		if ((map->flags & VM_MAP_ISVMSPACE) && uobj == NULL &&
+		    prot != PROT_NONE) {
 			((struct vmspace *)map)->vm_dused +=
 			    uvmspace_dused(map, *addr, *addr + sz);
 		}
@@ -2229,6 +2233,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		/* Update space usage. */
 		if ((map->flags & VM_MAP_ISVMSPACE) &&
 		    entry->object.uvm_obj == NULL &&
+		    entry->protection != PROT_NONE &&
 		    !UVM_ET_ISHOLE(entry)) {
 			((struct vmspace *)map)->vm_dused -=
 			    uvmspace_dused(map, entry->start, entry->end);
@@ -2986,7 +2991,8 @@ vmspace_validate(struct vm_map *map)
 	RBT_FOREACH(iter, uvm_map_addr, &map->addr) {
 		imin = imax = iter->start;
 
-		if (UVM_ET_ISHOLE(iter) || iter->object.uvm_obj != NULL)
+		if (UVM_ET_ISHOLE(iter) || iter->object.uvm_obj != NULL ||
+		    iter->prot != PROT_NONE)
 			continue;
 
 		/*
@@ -3288,6 +3294,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 	struct vm_map_entry *first, *iter;
 	vm_prot_t old_prot;
 	vm_prot_t mask;
+	vsize_t dused;
 	int error;
 
 	if (start > end)
@@ -3297,6 +3304,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 	if (start >= end)
 		return 0;
 
+	dused = 0;
 	error = 0;
 	vm_map_lock(map);
 
@@ -3316,6 +3324,12 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		if (iter->start == iter->end || UVM_ET_ISHOLE(iter))
 			continue;
 
+		old_prot = iter->protection;
+		if (old_prot == PROT_NONE && new_prot != old_prot) {
+			dused += uvmspace_dused(
+			    map, MAX(start, iter->start), MIN(end, iter->end));
+		}
+
 		if (UVM_ET_ISSUBMAP(iter)) {
 			error = EINVAL;
 			goto out;
@@ -3327,6 +3341,17 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		if (map == kernel_map &&
 		    (new_prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC))
 			panic("uvm_map_protect: kernel map W^X violation requested");
+	}
+
+	/* Check limits. */
+	if (dused > 0 && (map->flags & VM_MAP_ISVMSPACE)) {
+		vsize_t limit = lim_cur(RLIMIT_DATA);
+		dused = ptoa(dused);
+		if (limit < dused ||
+		    limit - dused < ptoa(((struct vmspace *)map)->vm_dused)) {
+			error = ENOMEM;
+			goto out;
+		}
 	}
 
 	/* Fix protections.  */
@@ -3371,6 +3396,19 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 			/* XXX should only wserial++ if no split occurs */
 			if (iter->protection & PROT_WRITE)
 				map->wserial++;
+
+			if (map->flags & VM_MAP_ISVMSPACE) {
+				if (old_prot == PROT_NONE) {
+					((struct vmspace *)map)->vm_dused +=
+					    uvmspace_dused(map, iter->start,
+					        iter->end);
+				}
+				if (iter->protection == PROT_NONE) {
+					((struct vmspace *)map)->vm_dused -=
+					    uvmspace_dused(map, iter->start,
+					        iter->end);
+				}
+			}
 
 			/* update pmap */
 			if ((iter->protection & mask) == PROT_NONE &&
@@ -4069,7 +4107,8 @@ uvmspace_fork(struct process *pr)
 	 	/* Update process statistics. */
 		if (!UVM_ET_ISHOLE(new_entry))
 			new_map->size += new_entry->end - new_entry->start;
-		if (!UVM_ET_ISOBJ(new_entry) && !UVM_ET_ISHOLE(new_entry)) {
+		if (!UVM_ET_ISOBJ(new_entry) && !UVM_ET_ISHOLE(new_entry) &&
+		    new_entry->protection != PROT_NONE) {
 			vm2->vm_dused += uvmspace_dused(
 			    new_map, new_entry->start, new_entry->end);
 		}

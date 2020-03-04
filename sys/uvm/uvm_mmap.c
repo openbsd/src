@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.160 2019/11/29 06:34:46 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.161 2020/03/04 21:15:39 kettenis Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -404,10 +404,12 @@ is_anon:	/* label for SunOS style /dev/zero */
 		if ((flags & __MAP_NOFAULT) != 0)
 			return EINVAL;
 
-		limit = lim_cur(RLIMIT_DATA);
-		if (limit < size ||
-		    limit - size < ptoa(p->p_vmspace->vm_dused)) {
-			return ENOMEM;
+		if (prot != PROT_NONE) {
+			limit = lim_cur(RLIMIT_DATA);
+			if (limit < size ||
+			    limit - size < ptoa(p->p_vmspace->vm_dused)) {
+				return ENOMEM;
+			}
 		}
 
 		/*
