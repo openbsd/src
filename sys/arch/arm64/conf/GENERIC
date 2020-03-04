@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.144 2020/03/02 11:11:09 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.145 2020/03/04 22:23:03 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -190,11 +190,11 @@ sfp*		at fdt?
 rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
-#rkanxdp*	at fdt?
-#rkdrm*		at fdt?
-#drm*		at rkdrm?
-#wsdisplay*	at rkdrm?
-#rkdwhdmi*	at fdt?
+rkanxdp*	at fdt?
+rkdrm*		at fdt?
+drm*		at rkdrm?
+wsdisplay*	at rkdrm?
+rkdwhdmi*	at fdt?
 rkemmcphy*	at fdt?
 rkgpio*		at fdt?
 rkiic*		at fdt?
@@ -203,7 +203,7 @@ rkpcie*		at fdt?
 pci*		at rkpcie?
 rkpwm*		at fdt?
 rktemp*		at fdt?
-#rkvop*		at fdt?
+rkvop*		at fdt?
 rkdwusb*	at fdt?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
