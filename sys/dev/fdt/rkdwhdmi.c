@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdwhdmi.c,v 1.1 2020/03/02 10:37:22 kettenis Exp $ */
+/* $OpenBSD: rkdwhdmi.c,v 1.2 2020/03/04 13:38:22 kettenis Exp $ */
 /* $NetBSD: rk_dwhdmi.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $ */
 
 /*-
@@ -122,7 +122,9 @@ void *rkdwhdmi_ep_get_data(void *);
 
 void rkdwhdmi_enable(struct dwhdmi_softc *);
 void rkdwhdmi_mode_set(struct dwhdmi_softc *, struct drm_display_mode *,
-        struct drm_display_mode *);
+    struct drm_display_mode *);
+enum drm_mode_status rkdwhdmi_mode_valid(struct dwhdmi_softc *,
+    struct drm_display_mode *);
 
 struct cfattach	rkdwhdmi_ca = {
 	sizeof (struct rkdwhdmi_softc), rkdwhdmi_match, rkdwhdmi_attach
@@ -198,6 +200,7 @@ rkdwhdmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_base.sc_enable = rkdwhdmi_enable;
 	sc->sc_base.sc_disable = dwhdmi_phy_disable;
 	sc->sc_base.sc_mode_set = rkdwhdmi_mode_set;
+	sc->sc_base.sc_mode_valid = rkdwhdmi_mode_valid;
 	sc->sc_base.sc_mpll_config = rkdwhdmi_mpll_config;
 	sc->sc_base.sc_phy_config = rkdwhdmi_phy_config;
 
@@ -363,6 +366,19 @@ rkdwhdmi_mode_set(struct dwhdmi_softc *dsc,
 	}
 
 	dwhdmi_phy_mode_set(dsc, mode, adjusted_mode);
+}
+
+enum drm_mode_status
+rkdwhdmi_mode_valid(struct dwhdmi_softc *dsc, struct drm_display_mode *mode)
+{
+	struct rkdwhdmi_softc *sc = to_rkdwhdmi_softc(dsc);
+	int i;
+
+	for (i = 0; sc->sc_base.sc_mpll_config[i].pixel_clock != 0; i++)
+		if (mode->clock == sc->sc_base.sc_mpll_config[i].pixel_clock)
+			return MODE_OK;
+
+	return MODE_BAD;
 }
 
 #ifdef notyet

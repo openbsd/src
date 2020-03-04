@@ -1,4 +1,4 @@
-/* $OpenBSD: dwhdmi.c,v 1.1 2020/03/02 10:37:23 kettenis Exp $ */
+/* $OpenBSD: dwhdmi.c,v 1.2 2020/03/04 13:38:22 kettenis Exp $ */
 /* $NetBSD: dw_hdmi.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*-
@@ -684,7 +684,7 @@ void
 dwhdmi_bridge_mode_set(struct drm_bridge *bridge,
     struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
 {
-	struct dwhdmi_softc * const sc = bridge->driver_private;
+	struct dwhdmi_softc *sc = bridge->driver_private;
 
 	if (sc->sc_mode_set)
 		sc->sc_mode_set(sc, mode, adjusted_mode);
@@ -692,11 +692,19 @@ dwhdmi_bridge_mode_set(struct drm_bridge *bridge,
 	sc->sc_curmode = *adjusted_mode;
 }
 
-bool
-dwhdmi_bridge_mode_fixup(struct drm_bridge *bridge,
-    const struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
+enum drm_mode_status
+dwhdmi_bridge_mode_valid(struct drm_bridge *bridge,
+    const struct drm_display_mode *mode)
 {
-	return true;
+	struct dwhdmi_softc *sc = bridge->driver_private;
+
+	if (mode->flags & DRM_MODE_FLAG_DBLCLK)
+		return MODE_BAD;
+
+	if (sc->sc_mode_valid)
+		return sc->sc_mode_valid(sc, mode);
+
+	return MODE_OK;
 }
 
 const struct drm_bridge_funcs dwhdmi_bridge_funcs = {
@@ -706,7 +714,7 @@ const struct drm_bridge_funcs dwhdmi_bridge_funcs = {
 	.disable = dwhdmi_bridge_disable,
 	.post_disable = dwhdmi_bridge_post_disable,
 	.mode_set = dwhdmi_bridge_mode_set,
-	.mode_fixup = dwhdmi_bridge_mode_fixup,
+	.mode_valid = dwhdmi_bridge_mode_valid,
 };
 
 #ifdef notyet
