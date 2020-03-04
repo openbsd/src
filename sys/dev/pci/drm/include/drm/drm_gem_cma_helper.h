@@ -11,7 +11,8 @@ int drm_gem_cma_dumb_map_offset(struct drm_file *, struct drm_device *,
 struct drm_gem_cma_object *drm_gem_cma_create(struct drm_device *,
     size_t);
 
-extern const struct uvm_pagerops drm_gem_cma_uvm_ops;
+int drm_gem_cma_fault(struct drm_gem_object *, struct uvm_faultinfo *,
+    off_t, vaddr_t, vm_page_t *, int, int, vm_prot_t, int);
 
 struct drm_gem_cma_object {
 	struct drm_gem_object	base;

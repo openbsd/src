@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.172 2020/03/03 09:23:54 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.173 2020/03/04 21:19:15 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -87,8 +87,6 @@ int	 drm_detach(struct device *, int);
 void	 drm_quiesce(struct drm_device *);
 void	 drm_wakeup(struct drm_device *);
 int	 drm_activate(struct device *, int);
-int	 drmprint(void *, const char *);
-int	 drmsubmatch(struct device *, void *, void *);
 int	 drm_dequeue_event(struct drm_device *, struct drm_file *, size_t,
 	     struct drm_pending_event **);
 

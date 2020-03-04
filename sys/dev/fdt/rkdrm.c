@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.1 2020/02/21 15:44:54 patrick Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.2 2020/03/04 21:19:15 kettenis Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -72,8 +72,11 @@ void	rkdrm_disable_vblank(struct drm_device *, unsigned int);
 int	rkdrm_load(struct drm_device *, unsigned long);
 int	rkdrm_unload(struct drm_device *);
 
+int	rkdrm_gem_fault(struct drm_gem_object *, struct uvm_faultinfo *,
+	    off_t, vaddr_t, vm_page_t *, int, int, vm_prot_t, int);
+
 struct drm_driver rkdrm_driver = {
-	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_PRIME,
+	.driver_features = DRIVER_MODESET | DRIVER_GEM,
 
 	.get_vblank_counter = rkdrm_get_vblank_counter,
 	.enable_vblank = rkdrm_enable_vblank,
@@ -82,7 +85,8 @@ struct drm_driver rkdrm_driver = {
 	.dumb_create = drm_gem_cma_dumb_create,
 	.dumb_map_offset = drm_gem_cma_dumb_map_offset,
 
-	/* XXX GEM stuff */
+	.gem_free_object_unlocked = drm_gem_cma_free_object,
+	.gem_fault = drm_gem_cma_fault,
 
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
@@ -113,12 +117,22 @@ rkdrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rkdrm_softc *sc = (struct rkdrm_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	struct drm_attach_args arg;
 
 	sc->sc_dmat = faa->fa_dmat;
 	sc->sc_iot = faa->fa_iot;
 	sc->sc_node = faa->fa_node;
 
 	printf("\n");
+
+	memset(&arg, 0, sizeof(arg));
+	arg.driver = &rkdrm_driver;
+	arg.drm = &sc->sc_ddev;
+	arg.dmat = faa->fa_dmat;
+	arg.bst = faa->fa_iot;
+	arg.busid = sc->sc_dev.dv_xname;
+	arg.busid_len = strlen(sc->sc_dev.dv_xname) + 1;
+	config_found_sm(self, &arg, drmprint, drmsubmatch);
 
 	config_mountroot(self, rkdrm_attachhook);
 }
@@ -299,7 +313,7 @@ rkdrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_EFIFB;
+		*(u_int *)data = WSDISPLAY_TYPE_RKDRM;
 		return 0;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
@@ -416,11 +430,6 @@ rkdrm_attachhook(struct device *dev)
 		return;
 	}
 
-	sc->sc_ddev.driver = &rkdrm_driver;
-	sc->sc_ddev.dev_private = sc;
-	sc->sc_ddev.bst = sc->sc_iot;
-	sc->sc_ddev.dmat = sc->sc_dmat;
-
 	drm_mode_config_init(&sc->sc_ddev);
 	sc->sc_ddev.mode_config.min_width = 0;
 	sc->sc_ddev.mode_config.min_height = 0;
@@ -495,9 +504,7 @@ rkdrm_attachhook(struct device *dev)
 	config_found_sm(&sc->sc_dev, &aa, wsemuldisplaydevprint,
 	    wsemuldisplaydevsubmatch);
 
-#ifdef notyet
 	drm_dev_register(&sc->sc_ddev, 0);
-#endif
 }
 
 int

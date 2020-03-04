@@ -1,4 +1,4 @@
-/* $OpenBSD: drmP.h,v 1.7 2020/03/03 09:23:54 kettenis Exp $ */
+/* $OpenBSD: drmP.h,v 1.8 2020/03/04 21:19:15 kettenis Exp $ */
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
  */
@@ -239,6 +239,8 @@ int	drm_linux_acpi_notify(struct aml_node *, int, void *);
 int	drm_pciprobe(struct pci_attach_args *, const struct drm_pcidev * );
 struct drm_device *drm_attach_pci(struct drm_driver *, 
 		     struct pci_attach_args *, int, int, struct device *, struct drm_device *);
+int	 drmprint(void *, const char *);
+int	 drmsubmatch(struct device *, void *, void *);
 dev_type_ioctl(drmioctl);
 dev_type_read(drmread);
 dev_type_poll(drmpoll);

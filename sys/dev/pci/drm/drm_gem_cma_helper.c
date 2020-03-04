@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_gem_cma_helper.c,v 1.1 2020/02/21 15:42:36 patrick Exp $ */
+/* $OpenBSD: drm_gem_cma_helper.c,v 1.2 2020/03/04 21:19:15 kettenis Exp $ */
 /* $NetBSD: drm_gem_cma_helper.c,v 1.9 2019/11/05 23:29:28 jmcneill Exp $ */
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -76,10 +76,14 @@ drm_gem_cma_create_internal(struct drm_device *ddev, size_t size,
 #endif
 		memset(obj->vaddr, 0, obj->dmasize);
 
-	drm_gem_private_object_init(ddev, &obj->base, size);
+	error = drm_gem_object_init(ddev, &obj->base, size);
+	if (error)
+		goto unload;
 
 	return obj;
 
+unload:
+	bus_dmamap_unload(obj->dmat, obj->dmamap);
 destroy:
 	bus_dmamap_destroy(obj->dmat, obj->dmamap);
 unmap:
@@ -189,51 +193,44 @@ done:
 	return error;
 }
 
-static int
-drm_gem_cma_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
-    struct vm_page **pps, int npages, int centeridx, vm_prot_t access_type,
-    int flags)
+int
+drm_gem_cma_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
+    off_t offset, vaddr_t vaddr, vm_page_t *pps, int npages, int centeridx,
+    vm_prot_t access_type, int flags)
 {
 	struct vm_map_entry *entry = ufi->entry;
-	struct uvm_object *uobj = entry->object.uvm_obj;
-	struct drm_gem_object *gem_obj =
-	    container_of(uobj, struct drm_gem_object, uobj);
 	struct drm_gem_cma_object *obj = to_drm_gem_cma_obj(gem_obj);
-	off_t curr_offset;
-	vaddr_t curr_va;
+	struct uvm_object *uobj = &obj->base.uobj;
 	paddr_t paddr;
 	int lcv, retval;
 	vm_prot_t mapprot;
 
-	if (UVM_ET_ISCOPYONWRITE(entry))
-		return EIO;
-
-	curr_offset = entry->offset + (vaddr - entry->start);
-	curr_va = vaddr;
+	offset -= drm_vma_node_offset_addr(&obj->base.vma_node);
+	mapprot = ufi->entry->protection;
 
 	retval = 0;
-	for (lcv = 0; lcv < npages; lcv++, curr_offset += PAGE_SIZE,
-	    curr_va += PAGE_SIZE) {
+	for (lcv = 0; lcv < npages; lcv++, offset += PAGE_SIZE,
+	    vaddr += PAGE_SIZE) {
 		if ((flags & PGO_ALLPAGES) == 0 && lcv != centeridx)
 			continue;
+
 		if (pps[lcv] == PGO_DONTCARE)
 			continue;
 
 		paddr = bus_dmamem_mmap(obj->dmat, obj->dmasegs, 1,
-		    curr_offset, access_type, 0);
+		    offset, access_type, BUS_DMA_NOCACHE);
 		if (paddr == -1) {
-			retval = EIO;
+			retval = VM_PAGER_BAD;
 			break;
 		}
-		mapprot = ufi->entry->protection;
 
-		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr, mapprot,
-		    PMAP_CANFAIL | mapprot) != 0) {
+		if (pmap_enter(ufi->orig_map->pmap, vaddr, paddr,
+		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
 			pmap_update(ufi->orig_map->pmap);
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj, NULL);
 			uvm_wait("drm_gem_cma_fault");
-			return ERESTART;
+			return VM_PAGER_REFAULT;
 		}
 	}
 
@@ -242,14 +239,6 @@ drm_gem_cma_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 
 	return retval;
 }
-
-#ifdef notyet
-const struct uvm_pagerops drm_gem_cma_uvm_ops = {
-	.pgo_reference = drm_gem_pager_reference,
-	.pgo_detach = drm_gem_pager_detach,
-	.pgo_fault = drm_gem_cma_fault,
-};
-#endif
 
 struct sg_table *
 drm_gem_cma_prime_get_sg_table(struct drm_gem_object *gem_obj)
