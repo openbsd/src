@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.196 2020/01/26 04:22:36 tedu Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.197 2020/03/04 13:27:10 anton Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -564,7 +564,7 @@ bread_cluster_callback(struct buf *bp)
 			struct vm_page *pg = uvm_pagelookup(oldobj,
 			    xbpp[i]->b_poffs + ptoa(page));
 			KASSERT(pg != NULL);
-			KASSERT(pg->wire_count = 1);
+			KASSERT(pg->wire_count == 1);
 			uvm_pagerealloc(pg, newobj, xbpp[i]->b_poffs + ptoa(page));
 		}
 		xbpp[i]->b_pobj = newobj;
