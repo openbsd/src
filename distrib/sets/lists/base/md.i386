@@ -78,9 +78,9 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/libLLVM.so.1.0
-./usr/lib/libc++.so.3.0
-./usr/lib/libc++abi.so.1.0
+./usr/lib/libLLVM.so.2.0
+./usr/lib/libc++.so.4.0
+./usr/lib/libc++abi.so.2.0
 ./usr/lib/libcompiler_rt.a
 ./usr/libdata/perl5/i386-openbsd
 ./usr/libdata/perl5/i386-openbsd/.packlist
