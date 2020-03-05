@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.4 2019/11/28 00:17:10 bluhm Exp $
+#	$OpenBSD: Makefile.common,v 1.5 2020/03/05 16:36:30 otto Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -38,7 +38,7 @@ SRCS+=	alloc.c ctime.c exit.c getchar.c hexdump.c \
 	strtol.c strtoll.c
 SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fchmod.c \
 	fstat.c lseek.c open.c read.c readdir.c stat.c
-SRCS+=	ufs.c cd9660.c
+SRCS+=	ufs.c ufs2.c cd9660.c
 .if ${SOFTRAID:L} == "yes"
 SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
 	pkcs5_pbkdf2.c rijndael.c sha1.c sha2.c softraid.c

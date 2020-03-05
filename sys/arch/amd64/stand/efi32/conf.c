@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2019/10/29 02:55:50 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2020/03/05 16:36:30 otto Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -30,6 +30,7 @@
 #include <sys/disklabel.h>
 #include <libsa.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/ufs2.h>
 #include <lib/libsa/tftp.h>
 #include <lib/libsa/cd9660.h>
 #include <dev/cons.h>
@@ -39,7 +40,7 @@
 #include "efidev.h"
 #include "efipxe.h"
 
-const char version[] = "3.47";
+const char version[] = "3.48";
 
 #ifdef EFI_DEBUG
 int	debug = 0;
@@ -67,6 +68,8 @@ struct fs_ops file_system[] = {
 	  tftp_stat,   tftp_readdir   },
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir,  ufs_fchmod },
+	{ ufs2_open,   ufs2_close,   ufs2_read,   ufs2_write,   ufs2_seek,
+	  ufs2_stat,   ufs2_readdir, ufs2_fchmod },
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	  cd9660_stat, cd9660_readdir },
 #ifdef notdef

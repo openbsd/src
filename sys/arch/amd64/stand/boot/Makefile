@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2019/11/28 00:17:10 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.45 2020/03/05 16:36:30 otto Exp $
 
 COPTS?=
 MAN?=	boot.8
@@ -40,6 +40,9 @@ SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fchmod.c \
 	fstat.c lseek.c open.c read.c readdir.c stat.c
 SRCS+=	elf32.c elf64.c loadfile.c arc4.c
 SRCS+=	ufs.c
+.if empty(COPTS:M-DFDBOOT)
+SRCS+=	ufs2.c
+.endif
 .if ${SOFTRAID:L} == "yes"
 SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
 	pkcs5_pbkdf2.c rijndael.c sha1.c sha2.c softraid.c
