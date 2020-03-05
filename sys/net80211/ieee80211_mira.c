@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.21 2020/03/05 11:49:26 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.22 2020/03/05 11:50:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -791,7 +791,7 @@ ieee80211_mira_intra_mode_ra_finished(struct ieee80211_mira_node *mn,
 
 	/* Check if we had a better measurement at a previously probed MCS. */
 	best_mcs = ieee80211_mira_best_mcs_in_rateset(mn, rs);
-	if ((mn->probed_rates & (1 << best_mcs))) {
+	if (best_mcs != ni->ni_txmcs && (probed_rates & (1 << best_mcs))) {
 		if ((mn->probing & IEEE80211_MIRA_PROBING_UP) &&
 		    best_mcs < ni->ni_txmcs) {
 			ieee80211_mira_trigger_next_rateset(mn, ni);
