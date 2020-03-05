@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.18 2020/03/03 21:00:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.19 2020/03/05 10:13:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -305,7 +305,6 @@ ieee80211_mira_best_basic_rate(struct ieee80211_node *ni)
 
 /* 
  * See 802.11-2012, 9.7.6.5 "Rate selection for control response frames".
- * XXX Does not support BlockAck.
  */
 int
 ieee80211_mira_ack_rate(struct ieee80211_node *ni)
@@ -360,9 +359,12 @@ ieee80211_mira_toverhead(struct ieee80211_mira_node *mn,
 		overhead += ieee80211_mira_legacy_txtime(MIRA_CTSLEN, rate, ic);
 	}
 
-	/* XXX This does not yet support BlockAck. */
-	rate = ieee80211_mira_ack_rate(ni);
-	overhead += ieee80211_mira_legacy_txtime(IEEE80211_ACK_LEN, rate, ic);
+	if (mn->agglen == 1) {
+		/* Single-frame transmissions must wait for an ACK frame. */
+		rate = ieee80211_mira_ack_rate(ni);
+		overhead += ieee80211_mira_legacy_txtime(IEEE80211_ACK_LEN,
+		    rate, ic);
+	}
 
 	toverhead = overhead;
 	toverhead <<= MIRA_FP_SHIFT; /* convert to fixed-point */
