@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.70 2019/06/04 15:41:02 visa Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.71 2020/03/05 09:28:31 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -118,7 +118,7 @@ __mp_lock_spin(struct __mp_lock *mpl, u_int me)
 
 #ifdef MP_LOCKDEBUG
 		if (--nticks <= 0) {
-			db_printf("%s: %p lock spun out", __func__, mpl);
+			db_printf("%s: %p lock spun out\n", __func__, mpl);
 			db_enter();
 			nticks = __mp_lock_spinout;
 		}
@@ -268,7 +268,7 @@ mtx_enter(struct mutex *mtx)
 
 #ifdef MP_LOCKDEBUG
 		if (--nticks == 0) {
-			db_printf("%s: %p lock spun out", __func__, mtx);
+			db_printf("%s: %p lock spun out\n", __func__, mtx);
 			db_enter();
 			nticks = __mp_lock_spinout;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.7 2017/12/04 09:51:03 mpi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.8 2020/03/05 09:28:31 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -78,7 +78,7 @@ __mp_lock_spin(struct __mp_lock *mpl)
 		CPU_BUSY_CYCLE();
 
 	if (nticks == 0) {
-		db_printf("__mp_lock(%p): lock spun out", mpl);
+		db_printf("__mp_lock(%p): lock spun out\n", mpl);
 		db_enter();
 	}
 #endif
