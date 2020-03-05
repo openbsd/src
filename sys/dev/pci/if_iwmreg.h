@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.45 2019/11/26 07:37:50 patrick Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.46 2020/03/05 14:56:50 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -4761,8 +4761,6 @@ struct iwm_tx_cmd {
  *	occur if tx failed for this frame when it was a member of a previous
  *	aggregation block). If rate scaling is used, retry count indicates the
  *	rate table entry used for all frames in the new agg.
- * @IWM_AGG_TX_STATE_SEQ_NUM_MSK: Command ID and sequence number of Tx command for
- *	this frame
  */
 #define IWM_AGG_TX_STATE_STATUS_MSK		0x0fff
 #define IWM_AGG_TX_STATE_TRANSMITTED		0x0000
@@ -4819,12 +4817,14 @@ struct iwm_tx_cmd {
 
 /**
  * struct iwm_agg_tx_status - per packet TX aggregation status
- * @status: enum iwm_tx_agg_status
- * @sequence: Sequence # for this frame's Tx cmd (not SSN!)
+ * @status: IWM_AGG_TX_STATE_*
+ * @idx: Tx queue index of this frame
+ * @qid: Tx queue ID of this frame
  */
 struct iwm_agg_tx_status {
 	uint16_t status;
-	uint16_t sequence;
+	uint8_t idx;
+	uint8_t qid;
 } __packed;
 
 /*
@@ -4858,7 +4858,7 @@ struct iwm_agg_tx_status {
  * @pa_integ_res_c: tx power info
  * @measurement_req_id: tx power info
  * @tfd_info: TFD information set by the FH
- * @seq_ctl: sequence control from the Tx cmd
+ * @seq_ctl: sequence control field from IEEE80211 frame header
  * @byte_cnt: byte count from the Tx cmd
  * @tlc_info: TLC rate info
  * @ra_tid: bits [3:0] = ra, bits [7:4] = tid
@@ -4902,7 +4902,8 @@ struct iwm_tx_resp {
  * @sta_addr_hi16: upper 16 bits of the MAC address
  * @sta_id: Index of recipient (BA-sending) station in fw's station table
  * @tid: tid of the session
- * @seq_ctl:
+ * @seq_ctl: sequence control field from IEEE80211 frame header (it is unclear
+ *  which frame this relates to; info or reverse engineering welcome)
  * @bitmap: the bitmap of the BA notification as seen in the air
  * @scd_flow: the tx queue this BA relates to
  * @scd_ssn: the index of the last contiguously sent packet
