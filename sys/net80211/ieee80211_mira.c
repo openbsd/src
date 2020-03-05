@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.22 2020/03/05 11:50:25 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.23 2020/03/05 11:52:18 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -775,7 +775,7 @@ ieee80211_mira_intra_mode_ra_finished(struct ieee80211_mira_node *mn,
 	}
 
 	/*
-	 * Check if the measured goodput is better than the
+	 * Check if the measured goodput is loss-free and better than the
 	 * loss-free goodput of the candidate rate.
 	 */
 	next_mcs = ieee80211_mira_next_mcs(mn, ni);
@@ -784,7 +784,8 @@ ieee80211_mira_intra_mode_ra_finished(struct ieee80211_mira_node *mn,
 		return 1;
 	}
 	next_rate = ieee80211_mira_get_txrate(next_mcs, sgi);
-	if (g->measured >= next_rate + IEEE80211_MIRA_RATE_THRESHOLD) {
+	if (g->loss == 0 &&
+	    g->measured >= next_rate + IEEE80211_MIRA_RATE_THRESHOLD) {
 		ieee80211_mira_trigger_next_rateset(mn, ni);
 		return 1;
 	}
