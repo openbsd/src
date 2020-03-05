@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.20 2020/03/05 10:13:52 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.21 2020/03/05 11:49:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -1212,6 +1212,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 		mn->candidate_rates =
 		    (1 << ieee80211_mira_next_lower_intra_rate(mn, ni));
 #endif
+		ieee80211_mira_cancel_timeouts(mn);
 	} else if (g->measured >= g->average + 2 * g->stddeviation) {
 		/* Channel becomes good. */
 		DPRINTFN(2, ("channel becomes good; probe upwards\n"));
@@ -1226,6 +1227,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 		/* Probe the upper candidate rate to see if it's any better. */
 		mn->candidate_rates =
 		    (1 << ieee80211_mira_next_intra_rate(mn, ni));
+		ieee80211_mira_cancel_timeouts(mn);
 	} else {
 		/* Remain at current rate. */
 		mn->probing = IEEE80211_MIRA_NOT_PROBING;
