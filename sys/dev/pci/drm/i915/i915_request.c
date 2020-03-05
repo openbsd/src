@@ -1205,8 +1205,11 @@ static unsigned long local_clock_us(unsigned int *cpu)
 #else
 static unsigned long local_clock_us(unsigned *cpu)
 {
+	struct timeval tv;
+
 	*cpu = cpu_number();
-	return ticks * tick;
+	microuptime(&tv);
+	return tv.tv_sec * 1000000 + tv.tv_usec;
 }
 #endif
 
