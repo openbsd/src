@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.19 2020/03/05 10:13:12 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.20 2020/03/05 10:13:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -1138,7 +1138,10 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
     struct ieee80211_node *ni)
 {
 	struct ieee80211_mira_goodput_stats *g = &mn->g[ni->ni_txmcs];
-	int s, sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
+	int s;
+#ifdef MIRA_AGGRESSIVE_DOWNWARDS_PROBING
+	int sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
+#endif
 
 	s = splnet();
 
