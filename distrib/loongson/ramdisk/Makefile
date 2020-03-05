@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2019/05/05 17:54:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 2020/03/05 16:33:32 otto Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		18432
@@ -16,14 +16,15 @@ MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 all: ${FS} ${CDROM}
 
-${FS}: bsd.gz
+# PMON cannot load a gzipped kernel
+${FS}: bsd.strip
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
 	echo 'u\ne 0\n83\n\n63\n*\nw\nq\n' | fdisk -e `cat vnd` > /dev/null
 	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
 	newfs_ext2fs /dev/r`cat vnd`i
 	mount /dev/`cat vnd`i ${MOUNT_POINT}
-	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
+	install -c -m 555 -o root -g wheel bsd.strip ${MOUNT_POINT}/bsd
 	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd
 	df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
@@ -43,11 +44,10 @@ ${CDROM}: bsd.rd
 	    -V "OpenBSD/loongson ${OSREV} boot CD" \
 	    ${.OBJDIR}/cd-dir
 
-bsd.gz: bsd.rd
+bsd.strip: bsd.rd
 	cp bsd.rd bsd.strip
 	strip bsd.strip
 	strip -R .comment -R .SUNW_ctf bsd.strip
-	gzip -9cn bsd.strip > bsd.gz
 
 bsd.rd: mr.fs bsd
 	cp bsd bsd.rd
