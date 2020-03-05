@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.19 2019/06/27 18:03:37 deraadt Exp $ */
+/*	$OpenBSD: namespace.c,v 1.20 2020/03/05 07:39:25 martijn Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -29,7 +29,7 @@
 #include "ldapd.h"
 #include "log.h"
 
-extern const char	*datadir;
+extern char		*datadir;
 
 /* Maximum number of requests to queue per namespace during compaction.
  * After this many requests, we return LDAP_BUSY.

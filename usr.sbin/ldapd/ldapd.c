@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.25 2019/03/31 03:36:18 yasuoka Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.26 2020/03/05 07:39:25 martijn Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -55,7 +55,7 @@ static pid_t	 start_child(enum ldapd_process, char *, int, int, int,
 
 struct ldapd_stats	 stats;
 pid_t			 ldape_pid;
-const char		*datadir = DATADIR;
+char			*datadir = DATADIR;
 
 void
 usage(void)
@@ -415,7 +415,7 @@ static pid_t
 start_child(enum ldapd_process p, char *argv0, int fd, int debug,
     int verbose, char *csockpath, char *conffile)
 {
-	char		*argv[9];
+	char		*argv[11];
 	int		 argc = 0;
 	pid_t		 pid;
 
@@ -459,7 +459,11 @@ start_child(enum ldapd_process p, char *argv0, int fd, int debug,
 		argv[argc++] = "-f";
 		argv[argc++] = conffile;
 	}
-	
+	if (datadir) {
+		argv[argc++] = "-r";
+		argv[argc++] = datadir;
+	}
+
 	argv[argc++] = NULL;
 
 	execvp(argv0, argv);
