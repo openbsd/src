@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.128 2020/03/03 18:54:50 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.129 2020/03/06 11:54:49 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -190,7 +190,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	*(u_int16_t *)&wh->i_dur[0] = 0;
 	*(u_int16_t *)&wh->i_seq[0] =
 	    htole16(ni->ni_txseq << IEEE80211_SEQ_SEQ_SHIFT);
-	ni->ni_txseq++;
+	ni->ni_txseq = (ni->ni_txseq + 1) & 0xfff;
 	IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
@@ -623,11 +623,11 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		*(u_int16_t *)qwh->i_qos = htole16(qos);
 		*(u_int16_t *)qwh->i_seq =
 		    htole16(ni->ni_qos_txseqs[tid] << IEEE80211_SEQ_SEQ_SHIFT);
-		ni->ni_qos_txseqs[tid]++;
+		ni->ni_qos_txseqs[tid] = (ni->ni_qos_txseqs[tid] + 1) & 0xfff;
 	} else {
 		*(u_int16_t *)&wh->i_seq[0] =
 		    htole16(ni->ni_txseq << IEEE80211_SEQ_SEQ_SHIFT);
-		ni->ni_txseq++;
+		ni->ni_txseq = (ni->ni_txseq + 1) & 0xfff;
 	}
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
