@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.355 2019/06/10 16:32:51 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.356 2020/03/06 10:40:13 tobhe Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct ifnet *ifp = NULL;
 	struct mbuf *m = m0;
 	int hlen = sizeof (struct ip);
-	int len, error = 0;
+	int error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
 	struct tdb *tdb = NULL;
@@ -121,10 +121,8 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("ip_output no HDR");
 #endif
-	if (opt) {
-		m = ip_insertoptions(m, opt, &len);
-		hlen = len;
-	}
+	if (opt)
+		m = ip_insertoptions(m, opt, &hlen);
 
 	ip = mtod(m, struct ip *);
 
