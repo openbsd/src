@@ -1,3 +1,4 @@
 .gitignore
 .travis.yml
 .git
+.gz

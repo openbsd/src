@@ -59,7 +59,8 @@ else
 *IN = *IN;    # Make single-use warning go away
 $|  = 1;
 
-my $size1 = join( ",", GetTerminalSize( \IN ) );
+# Bad filehandle: IN at ../lib/Term/ReadKey.pm line 377 with \IN and harness
+my $size1 = join( ",", GetTerminalSize( -t \IN ? \IN : "IN" ) );
 my $size2 = join( ",", GetTerminalSize("IN") );
 my $size3 = join( ",", GetTerminalSize(*IN) );
 my $size4 = join( ",", GetTerminalSize( \*IN ) );

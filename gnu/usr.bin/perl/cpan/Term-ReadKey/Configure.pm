@@ -8,7 +8,7 @@
 #  merging into the original, please contact me at kjahds@kjahds.com or
 #  CIS:70705,126
 #
-#  $Id: Configure.pm,v 1.3 2016/07/03 01:07:58 afresh1 Exp $
+#  $Id: Configure.pm,v 2.21 2004/03/02 20:28:11 jonathan Exp $
 # 
 
 # Todo: clean up redudant code in CPP, Compile, Link, and Execute
@@ -16,10 +16,9 @@
 
 # for when no_index is not enough
 package 
-Configure;
+  Configure;
 
 use strict;
-
 use vars qw(@EXPORT @ISA);
 
 use Carp;
@@ -71,7 +70,7 @@ levels of specificity, so here is a summary of what the functions can do:
 
 CheckHeader:		Look for headers.
 
-CheckStructure:	Look for a structure.
+CheckStructure:		Look for a structure.
 
 CheckField:		Look for a field in a structure.
 
@@ -85,11 +84,11 @@ GetTextSymbol:		Get the contents of a symbol as text.
 
 GetNumericSymbol:	Get the contents of a symbol as a number.	
 
-Apply:		Try compiling code with a set of headers and libs.
+Apply:			Try compiling code with a set of headers and libs.
 
 ApplyHeaders:		Try compiling code with a set of headers.
 
-ApplyLibraries:	Try linking code with a set of libraries.
+ApplyLibraries:		Try linking code with a set of libraries.
 
 ApplyHeadersAndLibaries:	You get the idea.
 
@@ -99,7 +98,7 @@ CPP:		Feed some code through the C preproccessor.
 
 Compile:	Try to compile some C code.
 
-Link:	Try to compile & link some C code.
+Link:		Try to compile & link some C code.
 
 Execute:	Try to compile, link, & execute some C code.
 
@@ -175,7 +174,7 @@ sub Compile { # Feed code to compiler. On error, return status and text
 	my($result) = scalar(`$C_cc $C_ccflags -c $in $C_ldflags $C_libs $options 2>&1`);
 	print "Executing '$C_cc $C_ccflags -c $in $C_ldflags $C_libs $options 2>&1'\n"  if $Verbose;
 	my($error) = $?;
-   my($error2) = ! -e $out;
+        my($error2) = ! -e $out;
 	unlink($in,$out);
 	return (($error || $error2) ? 0 : 1) unless wantarray;
 	($error,$result,$error2);
@@ -427,11 +426,12 @@ sub Apply { #
 			@l = split(/\s+/,$lookup[$i+1]);
 		}
 
-		if($ret=&{$cmd == \&Link && !@l?\&Compile:$cmd}(join("",map($_?"#include <$_>\n":"",grep(!/^-I/,@h))).
+		if ($ret=&{$cmd == \&Link && !@l?\&Compile:$cmd}(
+                        join("",map($_?"#include <$_>\n":"",grep(!/^-I/,@h))).
 				$code,grep(/^-I/,@h),@l)) {
 			print "Ret=|$ret|\n" if $Verbose;
 			return $ret unless wantarray;
-		return (join(" ",@h),join(" ",@l));
+                        return (join(" ",@h),join(" ",@l));
 		}
 	}
 	return 0 unless wantarray;
@@ -531,7 +531,7 @@ be returned if nothing succeeds.
 sub CheckField { # Check for the existance of specified field in structure
 	my($structname,$fieldname,@headers) = @_;
 	ApplyHeaders("main(){ struct $structname s1; struct $structname s2;
-								 s1.$fieldname = s2.$fieldname; }",@headers);
+		     s1.$fieldname = s2.$fieldname; }",@headers);
 }
 
 =head2 CheckLSymbol
@@ -592,7 +592,7 @@ sub CheckHPrototype { # Check for header prototype.
 	my($function,$proto,@headers) = @_;
 	my(@proto) = @{$proto};
 	ApplyHeaders("main() { extern ".$proto[0]." $function(".
-								 join(",",@proto[1..$#proto])."); }",@headers);
+                     join(",",@proto[1..$#proto])."); }",@headers);
 }
 
 =head2 GetSymbol
@@ -705,48 +705,61 @@ sub DeducePrototype {
         
 	if($firstdeduce) {
 		$firstdeduce=0;
-		my $checknumber=!Compile("extern int func(int a,int b); 
-									 extern int func(int a,int b,int c); 
-									 main(){}");
-		$checkreturn=!Compile("extern int func(int a,int b); 
-									 extern long func(int a,int b); 
-									 main(){}");
-		my $checketc=   !Compile("extern int func(int a,int b); 
-									 extern long func(int a,...); 
-									 main(){}");
-		my $checknumberetc=!Compile("extern int func(int a,int b); 
-									 extern int func(int a,int b,...); 
-									 main(){}");
-		my $checketcnumber=!Compile("extern int func(int a,int b,int c,...); 
-									 extern int func(int a,int b,...); 
-									 main(){}");
-		my $checkargtypes=!Compile("extern int func(int a); 
-									 extern int func(long a); 
-									 main(){}");
-		my $checkargsnil=!Compile("extern int func(); 
-									 extern int func(int a,int b,int c); 
-									 main(){}");
-		$checknilargs=!Compile("extern int func(int a,int b,int c); 
-									 extern int func(); 
-									 main(){}");
-		my $checkargsniletc=!Compile("extern int func(...); 
-									 extern int func(int a,int b,int c); 
-									 main(){}");
-		$checkniletcargs=!Compile("extern int func(int a,int b,int c); 
-									 extern int func(...); 
-									 main(){}");
+		my $checknumber=!Compile("
+extern int func(int a,int b); 
+extern int func(int a,int b,int c); 
+main(){}");
+		$checkreturn=!Compile("
+extern int func(int a,int b); 
+extern long func(int a,int b); 
+main(){}");
+		my $checketc=   !Compile("
+extern int func(int a,int b); 
+extern long func(int a,...); 
+main(){}");
+		my $checknumberetc=!Compile("
+extern int func(int a,int b); 
+extern int func(int a,int b,...); 
+main(){}");
+		my $checketcnumber=!Compile("
+extern int func(int a,int b,int c,...); 
+extern int func(int a,int b,...); 
+main(){}");
+		my $checkargtypes=!Compile("
+extern int func(int a); 
+extern int func(long a); 
+main(){}");
+		my $checkargsnil=!Compile("
+extern int func(); 
+extern int func(int a,int b,int c); 
+main(){}");
+		$checknilargs=!Compile("
+extern int func(int a,int b,int c);
+extern int func(); 
+main(){}");
+		my $checkargsniletc=!Compile("
+extern int func(...); 
+extern int func(int a,int b,int c); 
+main(){}");
+		$checkniletcargs=!Compile("
+extern int func(int a,int b,int c); 
+extern int func(...); 
+main(){}");
 
-		my $checkconst=!Compile("extern int func(const int * a);
-										extern int func(int * a);
-										main(){ }");
+		my $checkconst=!Compile("
+extern int func(const int * a);
+extern int func(int * a);
+main(){ }");
 
-		my $checksign=!Compile("extern int func(int a);
-										extern int func(unsigned int a);
-										main(){ }");
+		my $checksign=!Compile("
+extern int func(int a);
+extern int func(unsigned int a);
+main(){ }");
 
-		$checkreturnnil=!Compile("extern func(int a);
-										extern void func(int a);
-										main(){ }");
+		$checkreturnnil=!Compile("
+extern func(int a);
+extern void func(int a);
+main(){ }");
 
 		@types = sort grep(Compile("main(){$_ a;}"),
 			"void","int","long int","unsigned int","unsigned long int","long long int",
@@ -765,11 +778,13 @@ sub DeducePrototype {
 			for ($i=0;$i<=$#types;$i++) {
 				for ($j=$i+1;$j<=$#types;$j++) {
 					next if $j==$i;
-					if(Compile("extern void func($types[$i]);
-										  extern void func($types[$j]); main(){}")) {
-						print "Removing type $types[$j] because it equals $types[$i]\n";
-						splice(@types,$j,1);
-						$j--;
+					if(Compile("
+extern void func($types[$i]);
+extern void func($types[$j]);
+main(){}")) {
+                                            print "Removing type $types[$j] because it equals $types[$i]\n";
+                                            splice(@types,$j,1);
+                                            $j--;
 					}
 				}
 			}
@@ -777,8 +792,10 @@ sub DeducePrototype {
 			for ($i=0;$i<=$#types;$i++) {
 				for ($j=$i+1;$j<=$#types;$j++) {
 					next if $j==$i;
-					if(Compile("$types[$i] func(void);
-										  extern $types[$j] func(void); main(){}")) {
+					if(Compile("
+$types[$i] func(void);
+extern $types[$j] func(void);
+main(){}")) {
 						print "Removing type $types[$j] because it equals $types[$i]\n";
 						splice(@types,$j,1);
 						$j--;

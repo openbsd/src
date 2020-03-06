@@ -2024,8 +2024,8 @@ cpan/Term-ReadKey/example/test.pl		Term::ReadKey
 cpan/Term-ReadKey/genchars.pl			Term::ReadKey
 cpan/Term-ReadKey/Makefile.PL			Term::ReadKey
 cpan/Term-ReadKey/ppport.h			Term::ReadKey
-cpan/Term-ReadKey/ReadKey.pm			Term::ReadKey
 cpan/Term-ReadKey/ReadKey.xs			Term::ReadKey
+cpan/Term-ReadKey/ReadKey.pm.PL			Term::ReadKey
 cpan/Term-ReadKey/README			Term::ReadKey
 cpan/Term-ReadKey/t/01_basic.t			Term::ReadKey
 cpan/Term-ReadKey/t/02_terminal_functions.t	Term::ReadKey
