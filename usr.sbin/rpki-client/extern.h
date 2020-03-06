@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.23 2019/12/06 09:27:12 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.24 2020/03/06 17:36:42 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -374,7 +374,9 @@ FILE		*output_createtmp(char *);
 void		 output_cleantmp(void);
 void		 output_finish(FILE *);
 int		 output_bgpd(FILE *, struct vrp_tree *);
-int		 output_bird(FILE *, struct vrp_tree *);
+int		 output_bird1v4(FILE *, struct vrp_tree *);
+int		 output_bird1v6(FILE *, struct vrp_tree *);
+int		 output_bird2(FILE *, struct vrp_tree *);
 int		 output_csv(FILE *, struct vrp_tree *);
 int		 output_json(FILE *, struct vrp_tree *);
 

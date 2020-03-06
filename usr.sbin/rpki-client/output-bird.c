@@ -1,6 +1,7 @@
-/*	$OpenBSD: output-bird.c,v 1.6 2019/12/04 23:03:05 benno Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.7 2020/03/06 17:36:42 benno Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
+ * Copyright (c) 2020 Robert Scheck <robert@fedoraproject.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +22,7 @@
 #include "extern.h"
 
 int
-output_bird(FILE *out, struct vrp_tree *vrps)
+output_bird1v4(FILE *out, struct vrp_tree *vrps)
 {
 	extern		const char *bird_tablename;
 	char		 buf[64];
@@ -31,10 +32,78 @@ output_bird(FILE *out, struct vrp_tree *vrps)
 		return -1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
-		ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
-		if (fprintf(out, "\troa %s max %u as %u;\n", buf, v->maxlength,
-		    v->asid) < 0)
+		if (v->afi == AFI_IPV4) {
+			ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
+			if (fprintf(out, "\troa %s max %u as %u;\n", buf,
+			    v->maxlength, v->asid) < 0)
+				return -1;
+		}
+	}
+
+	if (fprintf(out, "}\n") < 0)
 		return -1;
+	return 0;
+}
+
+int
+output_bird1v6(FILE *out, struct vrp_tree *vrps)
+{
+	extern		const char *bird_tablename;
+	char		 buf[64];
+	struct vrp	*v;
+
+	if (fprintf(out, "roa table %s {\n", bird_tablename) < 0)
+		return -1;
+
+	RB_FOREACH(v, vrp_tree, vrps) {
+		if (v->afi == AFI_IPV6) {
+			ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
+			if (fprintf(out, "\troa %s max %u as %u;\n", buf,
+			    v->maxlength, v->asid) < 0)
+				return -1;
+		}
+	}
+
+	if (fprintf(out, "}\n") < 0)
+		return -1;
+	return 0;
+}
+
+int
+output_bird2(FILE *out, struct vrp_tree *vrps)
+{
+	extern		const char *bird_tablename;
+	char		 buf[64];
+	struct vrp	*v;
+	time_t		 now = time(NULL);
+
+	if (fprintf(out, "define force_roa_table_update = %lld;\n\n"
+	    "roa4 table %s4;\nroa6 table %s6;\n\n"
+	    "protocol static {\n\troa4 { table %s4; };\n\n",
+	    (long long) now, bird_tablename, bird_tablename,
+	    bird_tablename) < 0)
+		return -1;
+
+	RB_FOREACH(v, vrp_tree, vrps) {
+		if (v->afi == AFI_IPV4) {
+			ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
+			if (fprintf(out, "\troute %s max %u as %u;\n", buf,
+			    v->maxlength, v->asid) < 0)
+				return -1;
+		}
+	}
+
+	if (fprintf(out, "}\n\nprotocol static {\n\troa6 { table %s6; };\n\n",
+	    bird_tablename) < 0)
+		return -1;
+
+	RB_FOREACH(v, vrp_tree, vrps) {
+		if (v->afi == AFI_IPV6) {
+			ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
+			if (fprintf(out, "\troute %s max %u as %u;\n", buf,
+			    v->maxlength, v->asid) < 0)
+				return -1;
+		}
 	}
 
 	if (fprintf(out, "}\n") < 0)

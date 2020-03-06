@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.5 2019/12/19 16:32:44 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.6 2020/03/06 17:36:42 benno Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -40,7 +40,9 @@ struct outputs {
 	int	(*fn)(FILE *, struct vrp_tree *);
 } outputs[] = {
 	{ FORMAT_OPENBGPD, "openbgpd", output_bgpd },
-	{ FORMAT_BIRD, "bird", output_bird },
+	{ FORMAT_BIRD, "bird1v4", output_bird1v4 },
+	{ FORMAT_BIRD, "bird1v6", output_bird1v6 },
+	{ FORMAT_BIRD, "bird", output_bird2 },
 	{ FORMAT_CSV, "csv", output_csv },
 	{ FORMAT_JSON, "json", output_json },
 	{ 0, NULL }
