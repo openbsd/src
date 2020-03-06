@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.72 2020/02/16 14:33:04 inoguchi Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.73 2020/03/06 16:31:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -801,7 +801,7 @@ ssl3_get_client_hello(SSL *s)
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
 	unsigned long alg_k;
 	const SSL_METHOD *method;
-	uint16_t shared_version;
+	uint16_t max_version, shared_version;
 
 	/*
 	 * We do this so that we will respond with our native type.
@@ -1042,11 +1042,15 @@ ssl3_get_client_hello(SSL *s)
 	 */
 	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
 
-	if (s->internal->tls13 != NULL) {
+	if (!SSL_IS_DTLS(s) && !ssl_enabled_version_range(s, NULL, &max_version))
+		goto err;
+	if (!SSL_IS_DTLS(s) && max_version >= TLS1_2_VERSION &&
+	    s->version < max_version) {
 		/*
 		 * RFC 8446 section 4.1.3. If we are downgrading from TLS 1.3
 		 * we must set the last 8 bytes of the server random to magical
-		 * values to indicate we meant to downgrade.
+		 * values to indicate we meant to downgrade.  For TLS 1.2 it is
+		 * recommended that we do the same.
 		 */
 		size_t index = SSL3_RANDOM_SIZE - sizeof(tls13_downgrade_12);
 		uint8_t *magic = &s->s3->server_random[index];
