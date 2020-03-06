@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_sdio.h,v 1.2 2018/05/19 10:43:10 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_sdio.h,v 1.3 2020/03/06 09:28:40 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -69,7 +69,7 @@
 #define  BWFM_SDIO_FUNC1_WAKEUPCTRL_HTWAIT		(1 << 1)
 #define BWFM_SDIO_FUNC1_SLEEPCSR		0x1001F
 #define  BWFM_SDIO_FUNC1_SLEEPCSR_KSO		(1 << 0)
-#define  BWFM_SDIO_FUNC1_SLEEPCSR_DEVON		(1 << 2)
+#define  BWFM_SDIO_FUNC1_SLEEPCSR_DEVON		(1 << 1)
 
 #define BWFM_SDIO_SB_OFT_ADDR_PAGE		0x08000
 #define BWFM_SDIO_SB_OFT_ADDR_MASK		0x07FFF
