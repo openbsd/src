@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.58 2019/08/14 09:58:31 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.59 2020/03/06 15:35:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -142,10 +142,11 @@ cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 	session_update_activity(s, NULL);
 	gettimeofday(&s->last_attached_time, NULL);
 
-	recalculate_sizes();
 	server_check_unattached();
 	server_redraw_client(c);
 	s->curw->flags &= ~WINLINK_ALERTFLAGS;
+	s->curw->window->latest = c;
+	recalculate_sizes();
 	alerts_check_session(s);
 
 	return (CMD_RETURN_NORMAL);
