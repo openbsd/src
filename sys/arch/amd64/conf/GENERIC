@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.487 2020/02/15 08:49:11 stsp Exp $
+#	$OpenBSD: GENERIC,v 1.488 2020/03/06 08:39:34 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -338,6 +338,7 @@ bwfm*	at uhub?		# Broadcom FullMAC
 
 puc*	at pci?			# PCI "universal" communication device
 com*	at cardbus?
+com*	at pci?
 
 sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
