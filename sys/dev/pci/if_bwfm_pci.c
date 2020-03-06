@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.34 2020/02/25 14:24:58 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.35 2020/03/06 09:02:19 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -389,9 +389,9 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 {
 	struct bwfm_pci_softc *sc = (void *)bwfm;
 	struct bwfm_pci_ringinfo ringinfo;
-	const char *name, *nvname;
+	const char *name, *nvname, *txtname;
 	u_char *ucode, *nvram = NULL;
-	size_t size, nvlen = 0;
+	size_t size, nvsize, nvlen = 0;
 	uint32_t d2h_w_idx_ptr, d2h_r_idx_ptr;
 	uint32_t h2d_w_idx_ptr, h2d_r_idx_ptr;
 	uint32_t idx_offset, reg;
@@ -420,22 +420,27 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 		if (bwfm->sc_chip.ch_chiprev > 7) {
 			name = "brcmfmac4350-pcie.bin";
 			nvname = "brcmfmac4350-pcie.nvram";
+			txtname = "brcmfmac4350-pcie.txt";
 		} else {
 			name = "brcmfmac4350c2-pcie.bin";
 			nvname = "brcmfmac4350c2-pcie.nvram";
+			txtname = "brcmfmac4350c2-pcie.txt";
 		}
 		break;
 	case BRCM_CC_4356_CHIP_ID:
 		name = "brcmfmac4356-pcie.bin";
 		nvname = "brcmfmac4356-pcie.nvram";
+		txtname = "brcmfmac4356-pcie.txt";
 		break;
 	case BRCM_CC_43602_CHIP_ID:
 		name = "brcmfmac43602-pcie.bin";
 		nvname = "brcmfmac43602-pcie.nvram";
+		txtname = "brcmfmac43602-pcie.txt";
 		break;
 	case BRCM_CC_4371_CHIP_ID:
 		name = "brcmfmac4371-pcie.bin";
 		nvname = "brcmfmac4371-pcie.nvram";
+		txtname = "brcmfmac4371-pcie.txt";
 		break;
 	default:
 		printf("%s: unknown firmware for chip %s\n",
@@ -450,7 +455,19 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	}
 
 	/* NVRAM is optional. */
-	loadfirmware(nvname, &nvram, &nvlen);
+	if (loadfirmware(txtname, &nvram, &nvsize) == 0) {
+		/* .txt needs to be processed first */
+		if (bwfm_nvram_convert(nvram, nvsize, &nvlen) != 0) {
+			printf("%s: failed to process file %s\n",
+			    DEVNAME(sc), txtname);
+			free(ucode, M_DEVBUF, size);
+			free(nvram, M_DEVBUF, nvsize);
+			return 1;
+		}
+	} else if (loadfirmware(nvname, &nvram, &nvsize) == 0) {
+		/* .nvram is the pre-processed version */
+		nvlen = nvsize;
+	}
 
 	/* Retrieve RAM size from firmware. */
 	if (size >= BWFM_RAMSIZE + 8) {
@@ -463,11 +480,11 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 		printf("%s: could not load microcode\n",
 		    DEVNAME(sc));
 		free(ucode, M_DEVBUF, size);
-		free(nvram, M_DEVBUF, nvlen);
+		free(nvram, M_DEVBUF, nvsize);
 		return 1;
 	}
 	free(ucode, M_DEVBUF, size);
-	free(nvram, M_DEVBUF, nvlen);
+	free(nvram, M_DEVBUF, nvsize);
 
 	sc->sc_shared_flags = bus_space_read_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
 	    sc->sc_shared_address + BWFM_SHARED_INFO);
