@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcd.c,v 1.4 2015/12/11 16:07:01 mpi Exp $	*/
+/*	$OpenBSD: lcd.c,v 1.5 2020/03/06 01:45:32 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -138,7 +138,7 @@ lcd_blink(void *v, int on)
 
 	sc->sc_on = on;
 	bus_space_write_1(sc->sc_iot, sc->sc_cmdh, 0, sc->sc_heartbeat[0]);
-	timeout_add(&sc->sc_to, max(1, (sc->sc_delay * hz) / 1000000));
+	timeout_add_usec(&sc->sc_to, sc->sc_delay);
 }
 
 void
