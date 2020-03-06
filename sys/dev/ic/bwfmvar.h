@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.17 2020/02/25 14:24:58 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.18 2020/03/06 08:41:57 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -183,3 +183,4 @@ struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
 void bwfm_rx(struct bwfm_softc *, struct mbuf *, struct mbuf_list *);
 void bwfm_do_async(struct bwfm_softc *, void (*)(struct bwfm_softc *, void *),
     void *, int);
+int bwfm_nvram_convert(u_char *, size_t, size_t *);

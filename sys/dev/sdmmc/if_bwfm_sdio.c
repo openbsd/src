@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.31 2020/02/25 14:24:58 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.32 2020/03/06 08:41:57 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -348,9 +348,10 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 	struct bwfm_sdio_softc *sc = (void *)bwfm;
 	const char *name = NULL;
 	const char *nvname = NULL;
+	const char *txtname = NULL;
 	uint32_t clk, reg;
 	u_char *ucode, *nvram;
-	size_t size, nvlen;
+	size_t size, nvsize, nvlen;
 
 	if (sc->sc_initialized)
 		return 0;
@@ -362,49 +363,60 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 	case BRCM_CC_4330_CHIP_ID:
 		name = "brcmfmac4330-sdio.bin";
 		nvname = "brcmfmac4330-sdio.nvram";
+		txtname = "brcmfmac4330-sdio.txt";
 		break;
 	case BRCM_CC_4334_CHIP_ID:
 		name = "brcmfmac4334-sdio.bin";
 		nvname = "brcmfmac4334-sdio.nvram";
+		txtname = "brcmfmac4334-sdio.txt";
 		break;
 	case BRCM_CC_4345_CHIP_ID:
 		if (bwfm->sc_chip.ch_chiprev == 9) {
 			name = "brcmfmac43456-sdio.bin";
 			nvname = "brcmfmac43456-sdio.nvram";
+			txtname = "brcmfmac43456-sdio.txt";
 		} else {
 			name = "brcmfmac43455-sdio.bin";
 			nvname = "brcmfmac43455-sdio.nvram";
+			txtname = "brcmfmac43455-sdio.txt";
 		}
 		break;
 	case BRCM_CC_43340_CHIP_ID:
 		name = "brcmfmac43340-sdio.bin";
 		nvname = "brcmfmac43340-sdio.nvram";
+		txtname = "brcmfmac43340-sdio.txt";
 		break;
 	case BRCM_CC_4335_CHIP_ID:
 		if (bwfm->sc_chip.ch_chiprev < 2) {
 			name = "brcmfmac4335-sdio.bin";
 			nvname = "brcmfmac4335-sdio.nvram";
+			txtname = "brcmfmac4335-sdio.txt";
 		} else {
 			name = "brcmfmac4339-sdio.bin";
 			nvname = "brcmfmac4339-sdio.nvram";
+			txtname = "brcmfmac4339-sdio.txt";
 		}
 		break;
 	case BRCM_CC_4339_CHIP_ID:
 		name = "brcmfmac4339-sdio.bin";
 		nvname = "brcmfmac4339-sdio.nvram";
+		txtname = "brcmfmac4339-sdio.txt";
 		break;
 	case BRCM_CC_43430_CHIP_ID:
 		if (bwfm->sc_chip.ch_chiprev == 0) {
 			name = "brcmfmac43430a0-sdio.bin";
 			nvname = "brcmfmac43430a0-sdio.nvram";
+			txtname = "brcmfmac43430a0-sdio.txt";
 		} else {
 			name = "brcmfmac43430-sdio.bin";
 			nvname = "brcmfmac43430-sdio.nvram";
+			txtname = "brcmfmac43430-sdio.txt";
 		}
 		break;
 	case BRCM_CC_4356_CHIP_ID:
 		name = "brcmfmac4356-sdio.bin";
 		nvname = "brcmfmac4356-sdio.nvram";
+		txtname = "brcmfmac4356-sdio.txt";
 		break;
 	default:
 		printf("%s: unknown firmware for chip %s\n",
@@ -418,9 +430,21 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 		goto err;
 	}
 
-	if (loadfirmware(nvname, &nvram, &nvlen) != 0) {
+	if (loadfirmware(txtname, &nvram, &nvsize) == 0) {
+		/* .txt needs to be processed first */
+		if (bwfm_nvram_convert(nvram, nvsize, &nvlen) != 0) {
+			printf("%s: failed to process file %s\n",
+			    DEVNAME(sc), txtname);
+			free(ucode, M_DEVBUF, size);
+			free(nvram, M_DEVBUF, nvsize);
+			goto err;
+		}
+	} else if (loadfirmware(nvname, &nvram, &nvsize) == 0) {
+		/* .nvram is the pre-processed version */
+		nvlen = nvsize;
+	} else {
 		printf("%s: failed loadfirmware of file %s\n",
-		    DEVNAME(sc), nvname);
+		    DEVNAME(sc), txtname);
 		free(ucode, M_DEVBUF, size);
 		goto err;
 	}
@@ -431,12 +455,12 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 		printf("%s: could not load microcode\n",
 		    DEVNAME(sc));
 		free(ucode, M_DEVBUF, size);
-		free(nvram, M_DEVBUF, nvlen);
+		free(nvram, M_DEVBUF, nvsize);
 		goto err;
 	}
 	sc->sc_alp_only = 0;
 	free(ucode, M_DEVBUF, size);
-	free(nvram, M_DEVBUF, nvlen);
+	free(nvram, M_DEVBUF, nvsize);
 
 	bwfm_sdio_clkctl(sc, CLK_AVAIL, 0);
 	if (sc->sc_clkstate != CLK_AVAIL)

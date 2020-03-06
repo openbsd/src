@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.69 2020/02/25 14:24:58 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.70 2020/03/06 08:41:57 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2698,5 +2698,54 @@ bwfm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	}
 	sc->sc_newstate(ic, nstate, arg);
 	splx(s);
+	return 0;
+}
+
+int
+bwfm_nvram_convert(u_char *buf, size_t len, size_t *newlenp)
+{
+	u_char *src, *dst, *end = buf + len;
+	size_t count = 0, pad;
+	uint32_t token;
+	int skip = 0;
+
+	for (src = buf, dst = buf; src != end; ++src) {
+		if (*src == '\n') {
+			if (count > 0)
+				*dst++ = '\0';
+			count = 0;
+			skip = 0;
+			continue;
+		}
+		if (skip)
+			continue;
+		if (*src == '#' && count == 0) {
+			skip = 1;
+			continue;
+		}
+		if (*src == '\r')
+			continue;
+		*dst++ = *src;
+		++count;
+	}
+
+	count = dst - buf;
+	pad = roundup(count + 1, 4) - count;
+
+	if (count + pad + sizeof(token) > len)
+		return 1;
+
+	memset(dst, 0, pad);
+	count += pad;
+	dst += pad;
+
+	token = (count / 4) & 0xffff;
+	token |= ~token << 16;
+	token = htole32(token);
+
+	memcpy(dst, &token, sizeof(token));
+	count += sizeof(token);
+
+	*newlenp = count;
 	return 0;
 }
