@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.63 2020/01/30 16:25:09 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.64 2020/03/06 16:36:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -872,6 +872,32 @@ ssl3_get_server_hello(SSL *s)
 	if (!CBS_write_bytes(&server_random, s->s3->server_random,
 	    sizeof(s->s3->server_random), NULL))
 		goto err;
+
+	if (!SSL_IS_DTLS(s) && !ssl_enabled_version_range(s, NULL, &max_version))
+		goto err;
+	if (!SSL_IS_DTLS(s) && max_version >= TLS1_2_VERSION &&
+	    s->version < max_version) {
+		/*
+		 * RFC 8446 section 4.1.3. We must not downgrade if the server
+		 * random value contains the TLS 1.2 or TLS 1.1 magical value.
+		 */
+		if (!CBS_skip(&server_random,
+		    CBS_len(&server_random) - sizeof(tls13_downgrade_12)))
+			goto err;
+		if (s->version == TLS1_2_VERSION &&
+		    CBS_mem_equal(&server_random, tls13_downgrade_12,
+		    sizeof(tls13_downgrade_12))) {
+			al = SSL_AD_ILLEGAL_PARAMETER;
+			SSLerror(s, SSL_R_INAPPROPRIATE_FALLBACK);
+			goto f_err;
+		}
+		if (CBS_mem_equal(&server_random, tls13_downgrade_11,
+		    sizeof(tls13_downgrade_11))) {
+			al = SSL_AD_ILLEGAL_PARAMETER;
+			SSLerror(s, SSL_R_INAPPROPRIATE_FALLBACK);
+			goto f_err;
+		}
+	}
 
 	/* Session ID. */
 	if (!CBS_get_u8_length_prefixed(&cbs, &session_id))
