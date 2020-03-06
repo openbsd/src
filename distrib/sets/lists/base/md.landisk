@@ -422,7 +422,6 @@
 ./usr/libdata/perl5/sh-openbsd/auto/Term
 ./usr/libdata/perl5/sh-openbsd/auto/Term/ReadKey
 ./usr/libdata/perl5/sh-openbsd/auto/Term/ReadKey/ReadKey.so
-./usr/libdata/perl5/sh-openbsd/auto/Term/ReadKey/autosplit.ix
 ./usr/libdata/perl5/sh-openbsd/auto/Tie
 ./usr/libdata/perl5/sh-openbsd/auto/Tie/Hash
 ./usr/libdata/perl5/sh-openbsd/auto/Tie/Hash/NamedCapture
