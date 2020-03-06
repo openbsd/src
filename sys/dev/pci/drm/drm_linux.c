@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.56 2020/01/16 16:35:03 mpi Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.57 2020/03/06 07:50:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -91,13 +91,14 @@ schedule_timeout(long timeout)
 	sleep_setup(&sls, sch_ident, sch_priority, "schto");
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		sleep_setup_timeout(&sls, timeout);
-	sleep_setup_signal(&sls);
 
 	wait = (sch_proc == curproc && timeout > 0);
 
 	spl = MUTEX_OLDIPL(&sch_mtx);
 	MUTEX_OLDIPL(&sch_mtx) = splsched();
 	mtx_leave(&sch_mtx);
+
+	sleep_setup_signal(&sls);
 
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		deadline = ticks + timeout;
