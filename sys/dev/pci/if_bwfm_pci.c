@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.35 2020/03/06 09:02:19 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.36 2020/03/07 09:56:46 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -389,7 +389,8 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 {
 	struct bwfm_pci_softc *sc = (void *)bwfm;
 	struct bwfm_pci_ringinfo ringinfo;
-	const char *name, *nvname, *txtname;
+	const char *chip = NULL;
+	char name[128];
 	u_char *ucode, *nvram = NULL;
 	size_t size, nvsize, nvlen = 0;
 	uint32_t d2h_w_idx_ptr, d2h_r_idx_ptr;
@@ -417,30 +418,19 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	switch (bwfm->sc_chip.ch_chip)
 	{
 	case BRCM_CC_4350_CHIP_ID:
-		if (bwfm->sc_chip.ch_chiprev > 7) {
-			name = "brcmfmac4350-pcie.bin";
-			nvname = "brcmfmac4350-pcie.nvram";
-			txtname = "brcmfmac4350-pcie.txt";
-		} else {
-			name = "brcmfmac4350c2-pcie.bin";
-			nvname = "brcmfmac4350c2-pcie.nvram";
-			txtname = "brcmfmac4350c2-pcie.txt";
-		}
+		if (bwfm->sc_chip.ch_chiprev > 7)
+			chip = "4350";
+		else
+			chip = "4350c2";
 		break;
 	case BRCM_CC_4356_CHIP_ID:
-		name = "brcmfmac4356-pcie.bin";
-		nvname = "brcmfmac4356-pcie.nvram";
-		txtname = "brcmfmac4356-pcie.txt";
+		chip = "4356";
 		break;
 	case BRCM_CC_43602_CHIP_ID:
-		name = "brcmfmac43602-pcie.bin";
-		nvname = "brcmfmac43602-pcie.nvram";
-		txtname = "brcmfmac43602-pcie.txt";
+		chip = "43602";
 		break;
 	case BRCM_CC_4371_CHIP_ID:
-		name = "brcmfmac4371-pcie.bin";
-		nvname = "brcmfmac4371-pcie.nvram";
-		txtname = "brcmfmac4371-pcie.txt";
+		chip = "4371";
 		break;
 	default:
 		printf("%s: unknown firmware for chip %s\n",
@@ -448,25 +438,30 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 		return 1;
 	}
 
+	snprintf(name, sizeof(name), "brcmfmac%s-pcie.bin", chip);
 	if (loadfirmware(name, &ucode, &size) != 0) {
 		printf("%s: failed loadfirmware of file %s\n",
 		    DEVNAME(sc), name);
 		return 1;
 	}
 
-	/* NVRAM is optional. */
-	if (loadfirmware(txtname, &nvram, &nvsize) == 0) {
-		/* .txt needs to be processed first */
+	/* .txt needs to be processed first */
+	snprintf(name, sizeof(name), "brcmfmac%s-pcie.txt", chip);
+	if (loadfirmware(name, &nvram, &nvsize) == 0) {
 		if (bwfm_nvram_convert(nvram, nvsize, &nvlen) != 0) {
 			printf("%s: failed to process file %s\n",
-			    DEVNAME(sc), txtname);
+			    DEVNAME(sc), name);
 			free(ucode, M_DEVBUF, size);
 			free(nvram, M_DEVBUF, nvsize);
 			return 1;
 		}
-	} else if (loadfirmware(nvname, &nvram, &nvsize) == 0) {
-		/* .nvram is the pre-processed version */
-		nvlen = nvsize;
+	}
+
+	/* .nvram is the pre-processed version */
+	if (nvlen == 0) {
+		snprintf(name, sizeof(name), "brcmfmac%s-pcie.nvram", chip);
+		if (loadfirmware(name, &nvram, &nvsize) == 0)
+			nvlen = nvsize;
 	}
 
 	/* Retrieve RAM size from firmware. */
