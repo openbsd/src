@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.14 2020/01/08 14:40:52 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.15 2020/03/07 10:58:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -142,7 +142,8 @@ format_draw_put_list(struct screen_write_ctx *octx,
 		width -= list_left->cx;
 	}
 	if (start + width < list->cx && width > list_right->cx) {
-		screen_write_cursormove(octx, ocx + offset + width - 1, ocy, 0);
+		screen_write_cursormove(octx, ocx + offset + width -
+		    list_right->cx, ocy, 0);
 		screen_write_fast_copy(octx, list_right, 0, 0, list_right->cx,
 		    1);
 		width -= list_right->cx;
