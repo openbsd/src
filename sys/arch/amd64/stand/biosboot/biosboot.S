@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.8 2020/02/28 12:26:30 otto Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.9 2020/03/07 15:11:50 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Tobias Weingartner
@@ -108,9 +108,6 @@
  *			While this can be calculated as
  *			howmany(di_size, fs_bsize) it takes us too
  *			many code bytes to do it.
- * blkincr	uint8	the increment used to parse di_db[]. set to four by
- *			installboot for ffs2 (due to 64-bit blocks) and should
- *			be zero for ffs1.
  *
  * All of these are patched directly into the code where they are used
  * (once only, each), to save space.
@@ -124,7 +121,7 @@
  */
 
 	.globl	inodeblk, inodedbl, fs_bsize_p, fsbtodb, p_offset, nblocks
-	.globl	fs_bsize_s, force_chs, blkincr
+	.globl	fs_bsize_s, force_chs
 	.type	inodeblk, @function
 	.type	inodedbl, @function
 	.type	fs_bsize_p, @function
@@ -133,7 +130,6 @@
 	.type	p_offset, @function
 	.type	nblocks, @function
 	.type	force_chs, @function
-	.type	blkincr, @function
 
 
 /* Clobbers %ax, maybe more */
@@ -464,8 +460,6 @@ load_blocks:
 
 	/* Get the next filesystem block number into %eax */
 	lodsl			/* %eax = *(%si++), make sure 0x66 0xad */
-blkincr = .+2
-	addw	$0x00, %si	/* adjust %si if needed (for ffs2) */
 
 	pushal				/* Save all 32-bit registers */
 
