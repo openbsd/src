@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.148 2020/02/28 08:52:54 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.149 2020/03/07 15:18:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2045,7 +2045,7 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
 	 * descriptor. This avoids relying on the wTotalLength field.
 	 */
 	savepos = p->rptr;
-	units.rptr = p->rptr;
+	units.rptr = units.wptr = p->rptr;
 	while (p->rptr != p->wptr) {
 		if (!uaudio_getdesc(p, &pu))
 			return 0;
