@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.48 2020/03/05 16:36:30 otto Exp $	*/
+/*	$OpenBSD: conf.c,v 1.49 2020/03/08 18:22:36 landry Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -44,7 +44,7 @@
 #include "pxeboot.h"
 #include "pxe_net.h"
 
-const char version[] = "3.46";
+const char version[] = "3.47";
 int	debug = 0;
 
 void (*sa_cleanup)(void) = pxe_shutdown;
@@ -70,7 +70,7 @@ int nibprobes = nitems(probe_list);
 
 /* This next list must match file_system[]. */
 char *fs_name[] = {
-	NULL, "tftp", "nfs"
+	NULL, NULL, "tftp", "nfs"
 };
 int nfsname = nitems(fs_name);
 
