@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.23 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.24 2020/03/08 14:52:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,6 +43,7 @@ struct slotops
 struct ctlops
 {
 	void (*exit)(void *);			/* delete client */
+	void (*sync)(void *);			/* description ready */
 };
 
 struct slot {
@@ -313,5 +314,6 @@ struct ctl *dev_addctl(struct dev *, char *, int, int,
     char *, int, char *, char *, int, int, int);
 void dev_rmctl(struct dev *, int);
 int dev_makeunit(struct dev *, char *);
+void dev_ctlsync(struct dev *);
 
 #endif /* !defined(DEV_H) */

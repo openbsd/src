@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.32 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.33 2020/03/08 14:52:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -44,6 +44,7 @@ void sock_slot_onvol(void *);
 void sock_midi_imsg(void *, unsigned char *, int);
 void sock_midi_omsg(void *, unsigned char *, int);
 void sock_midi_fill(void *, int);
+void sock_ctl_sync(void *);
 struct sock *sock_new(int);
 void sock_exit(void *);
 int sock_fdwrite(struct sock *, void *, int);
@@ -91,7 +92,8 @@ struct midiops sock_midiops = {
 };
 
 struct ctlops sock_ctlops = {
-	sock_exit
+	sock_exit,
+	sock_ctl_sync
 };
 
 struct sock *sock_list = NULL;
@@ -279,6 +281,15 @@ sock_midi_fill(void *arg, int count)
 	struct sock *f = arg;
 
 	f->fillpending += count;
+}
+
+void
+sock_ctl_sync(void *arg)
+{
+	struct sock *f = arg;
+
+	if (f->ctlops & SOCK_CTLDESC)
+		f->ctlsyncpending = 1;
 }
 
 struct sock *
@@ -1236,9 +1247,9 @@ sock_execmsg(struct sock *f)
 					c->desc_mask |= ctl;
 					c = c->next;
 				}
+				f->ctlops |= SOCK_CTLDESC;
+				f->ctlsyncpending = 1;
 			}
-			f->ctlops |= SOCK_CTLDESC;
-			f->ctlsyncpending = 1;
 		} else
 			f->ctlops &= ~SOCK_CTLDESC;
 		if (m->u.ctlsub.val) {

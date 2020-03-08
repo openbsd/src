@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sioctl.c,v 1.1 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: dev_sioctl.c,v 1.2 2020/03/08 14:52:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -55,8 +55,11 @@ dev_sioctl_ondesc(void *arg, struct sioctl_desc *desc, int val)
 	struct dev *d = arg;
 	int addr;
 
-	if (desc == NULL)
+	if (desc == NULL) {
+		dev_ctlsync(d);
 		return;
+	}
+
 	addr = CTLADDR_END + desc->addr;
 	dev_rmctl(d, addr);
 

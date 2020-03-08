@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.64 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.65 2020/03/08 14:52:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2331,6 +2331,18 @@ dev_rmctl(struct dev *d, int addr)
 		return;
 	*pc = c->next;
 	xfree(c);
+}
+
+void
+dev_ctlsync(struct dev *d)
+{
+	struct ctlslot *s;
+	int i;
+
+	for (s = d->ctlslot, i = DEV_NCTLSLOT; i > 0; i--, s++) {
+		if (s->ops)
+			s->ops->sync(s->arg);
+	}
 }
 
 int
