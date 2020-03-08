@@ -1,16 +1,20 @@
-/*	$OpenBSD: kqueue-regress.c,v 1.3 2018/08/24 12:46:39 visa Exp $	*/
+/*	$OpenBSD: kqueue-regress.c,v 1.4 2020/03/08 09:40:52 visa Exp $	*/
 /*
  *	Written by Anton Lindqvist <anton@openbsd.org> 2018 Public Domain
  */
 
 #include <sys/types.h>
 #include <sys/event.h>
+#include <sys/resource.h>
+#include <sys/select.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 
 #include <assert.h>
 #include <err.h>
+#include <poll.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -19,6 +23,8 @@
 static int do_regress1(void);
 static int do_regress2(void);
 static int do_regress3(void);
+static int do_regress4(void);
+static int do_regress5(void);
 
 static void make_chain(int);
 
@@ -32,6 +38,10 @@ do_regress(int n)
 		return do_regress2();
 	case 3:
 		return do_regress3();
+	case 4:
+		return do_regress4();
+	case 5:
+		return do_regress5();
 	default:
 		errx(1, "unknown regress test number %d", n);
 	}
@@ -168,4 +178,127 @@ make_chain(int dir)
 				err(1, "kevent");
 		}
 	}
+}
+
+/*
+ * Regression test for kernel stack exhaustion.
+ */
+static int
+do_regress4(void)
+{
+	static const int nkqueues = 500;
+	struct kevent kev[1];
+	struct rlimit rlim;
+	struct timespec ts;
+	int fds[2], i, kq = -1, prev;
+
+	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
+		err(1, "getrlimit");
+	if (rlim.rlim_cur < nkqueues + 8) {
+		rlim.rlim_cur = nkqueues + 8;
+		if (setrlimit(RLIMIT_NOFILE, &rlim) == -1) {
+			printf("RLIMIT_NOFILE is too low and can't raise it\n");
+			printf("SKIPPED\n");
+			exit(0);
+		}
+	}
+
+	if (pipe(fds) == -1)
+		err(1, "pipe");
+
+	/* Build a chain of kqueus. The first kqueue refers to the pipe. */
+	for (i = 0, prev = fds[0]; i < nkqueues; i++, prev = kq) {
+		kq = kqueue();
+		if (kq == -1)
+			err(1, "kqueue");
+
+		EV_SET(&kev[0], prev, EVFILT_READ, EV_ADD, 0, 0, NULL);
+		if (kevent(kq, kev, 1, NULL, 0, NULL) == -1)
+			err(1, "kevent");
+	}
+
+	/*
+	 * Trigger a cascading event through the chain.
+	 * If the chain is long enough, a broken kernel can run out
+	 * of kernel stack space.
+	 */
+	write(fds[1], "x", 1);
+
+	/*
+	 * Check that the event gets propagated.
+	 * The propagation is not instantaneous, so allow a brief pause.
+	 */
+	ts.tv_sec = 5;
+	ts.tv_nsec = 0;
+	assert(kevent(kq, NULL, 0, kev, 1, NULL) == 1);
+
+	return 0;
+}
+
+/*
+ * Regression test for select and poll with kqueue.
+ */
+static int
+do_regress5(void)
+{
+	fd_set fdset;
+	struct kevent kev[1];
+	struct pollfd pfd[1];
+	struct timeval tv;
+	int fds[2], kq, ret;
+
+	if (pipe(fds) == -1)
+		err(1, "pipe");
+
+	kq = kqueue();
+	if (kq == -1)
+		err(1, "kqueue");
+	EV_SET(&kev[0], fds[0], EVFILT_READ, EV_ADD, 0, 0, NULL);
+	if (kevent(kq, kev, 1, NULL, 0, NULL) == -1)
+		err(1, "kevent");
+
+	/* Check that no event is reported. */
+
+	FD_ZERO(&fdset);
+	FD_SET(kq, &fdset);
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	ret = select(kq + 1, &fdset, NULL, NULL, &tv);
+	if (ret == -1)
+		err(1, "select");
+	assert(ret == 0);
+
+	pfd[0].fd = kq;
+	pfd[0].events = POLLIN;
+	pfd[0].revents = 0;
+	ret = poll(pfd, 1, 0);
+	if (ret == -1)
+		err(1, "poll");
+	assert(ret == 0);
+
+	/* Trigger an event. */
+	write(fds[1], "x", 1);
+
+	/* Check that the event gets reported. */
+
+	FD_ZERO(&fdset);
+	FD_SET(kq, &fdset);
+	tv.tv_sec = 5;
+	tv.tv_usec = 0;
+	ret = select(kq + 1, &fdset, NULL, NULL, &tv);
+	if (ret == -1)
+		err(1, "select");
+	assert(ret == 1);
+	assert(FD_ISSET(kq, &fdset));
+
+	pfd[0].fd = kq;
+	pfd[0].events = POLLIN;
+	pfd[0].revents = 0;
+	ret = poll(pfd, 1, 5000);
+	if (ret == -1)
+		err(1, "poll");
+	assert(ret == 1);
+	assert(pfd[0].revents & POLLIN);
+
+	return 0;
 }
