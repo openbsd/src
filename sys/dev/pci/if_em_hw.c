@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.106 2020/02/04 10:59:23 mpi Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.107 2020/03/08 11:43:43 mpi Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -56,6 +56,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
+#include <dev/pci/if_em.h>
 #include <dev/pci/if_em_hw.h>
 #include <dev/pci/if_em_soc.h>
 
@@ -92,7 +93,7 @@ static int32_t	em_init_lcd_from_nvm_config_region(struct em_hw *,  uint32_t,
 static int32_t	em_init_lcd_from_nvm(struct em_hw *);
 static int32_t	em_phy_no_cable_workaround(struct em_hw *);
 static void	em_init_rx_addrs(struct em_hw *);
-static void	em_initialize_hardware_bits(struct em_hw *);
+static void	em_initialize_hardware_bits(struct em_softc *);
 static void	em_toggle_lanphypc_pch_lpt(struct em_hw *);
 static int	em_disable_ulp_lpt_lp(struct em_hw *hw, bool force);
 static boolean_t em_is_onboard_nvm_eeprom(struct em_hw *);
@@ -712,6 +713,7 @@ em_set_mac_type(struct em_hw *hw)
 
 	return E1000_SUCCESS;
 }
+
 /*****************************************************************************
  * Set media type and TBI compatibility.
  *
@@ -1115,8 +1117,11 @@ em_reset_hw(struct em_hw *hw)
  *
  *****************************************************************************/
 STATIC void
-em_initialize_hardware_bits(struct em_hw *hw)
+em_initialize_hardware_bits(struct em_softc *sc)
 {
+	struct em_hw *hw = &sc->hw;
+	struct em_queue *que = sc->queues; /* Use only first queue. */
+
 	DEBUGFUNC("em_initialize_hardware_bits");
 
 	if ((hw->mac_type >= em_82571) && (!hw->initialize_hw_bits_disable)) {
@@ -1124,18 +1129,24 @@ em_initialize_hardware_bits(struct em_hw *hw)
 		uint32_t reg_ctrl, reg_ctrl_ext;
 		uint32_t reg_tarc0, reg_tarc1;
 		uint32_t reg_tctl;
-		uint32_t reg_txdctl, reg_txdctl1;
+		uint32_t reg_txdctl;
 		reg_tarc0 = E1000_READ_REG(hw, TARC0);
 		reg_tarc0 &= ~0x78000000;	/* Clear bits 30, 29, 28, and
 						 * 27 */
 
-		reg_txdctl = E1000_READ_REG(hw, TXDCTL(0));
+		reg_txdctl = E1000_READ_REG(hw, TXDCTL(que->me));
 		reg_txdctl |= E1000_TXDCTL_COUNT_DESC;	/* Set bit 22 */
-		E1000_WRITE_REG(hw, TXDCTL(0), reg_txdctl);
+		E1000_WRITE_REG(hw, TXDCTL(que->me), reg_txdctl);
 
-		reg_txdctl1 = E1000_READ_REG(hw, TXDCTL(1));
-		reg_txdctl1 |= E1000_TXDCTL_COUNT_DESC;	/* Set bit 22 */
-		E1000_WRITE_REG(hw, TXDCTL(1), reg_txdctl1);
+		/*
+		 * Old code always initialized queue 1,
+		 * even when unused, keep behaviour
+		 */
+		if (sc->num_queues == 1) {
+			reg_txdctl = E1000_READ_REG(hw, TXDCTL(1));
+			reg_txdctl |= E1000_TXDCTL_COUNT_DESC;
+			E1000_WRITE_REG(hw, TXDCTL(1), reg_txdctl);
+		}
 
 		switch (hw->mac_type) {
 		case em_82571:
@@ -1430,8 +1441,10 @@ out:
  * the transmit and receive units disabled and uninitialized.
  *****************************************************************************/
 int32_t
-em_init_hw(struct em_hw *hw)
+em_init_hw(struct em_softc *sc)
 {
+	struct em_hw *hw = &sc->hw;
+	struct em_queue *que = sc->queues; /* Use only first queue. */
 	uint32_t ctrl;
 	uint32_t i;
 	int32_t  ret_val;
@@ -1513,7 +1526,7 @@ em_init_hw(struct em_hw *hw)
 	/* Magic delay that improves problems with i219LM on HP Elitebook */
 	msec_delay(1);
 	/* Must be called after em_set_media_type because media_type is used */
-	em_initialize_hardware_bits(hw);
+	em_initialize_hardware_bits(sc);
 
 	/* Disabling VLAN filtering. */
 	DEBUGOUT("Initializing the IEEE VLAN\n");
@@ -1626,10 +1639,10 @@ em_init_hw(struct em_hw *hw)
 
 	/* Set the transmit descriptor write-back policy */
 	if (hw->mac_type > em_82544) {
-		ctrl = E1000_READ_REG(hw, TXDCTL(0));
+		ctrl = E1000_READ_REG(hw, TXDCTL(que->me));
 		ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) | 
 		    E1000_TXDCTL_FULL_TX_DESC_WB;
-		E1000_WRITE_REG(hw, TXDCTL(0), ctrl);
+		E1000_WRITE_REG(hw, TXDCTL(que->me), ctrl);
 	}
 	if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) {
 		em_enable_tx_pkt_filtering(hw);
@@ -1674,10 +1687,16 @@ em_init_hw(struct em_hw *hw)
 	case em_pch_lpt:
 	case em_pch_spt:
 	case em_pch_cnp:
-		ctrl = E1000_READ_REG(hw, TXDCTL(1));
-		ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) | 
-		    E1000_TXDCTL_FULL_TX_DESC_WB;
-		E1000_WRITE_REG(hw, TXDCTL(1), ctrl);
+		/*
+		 * Old code always initialized queue 1,
+		 * even when unused, keep behaviour
+		 */
+		if (sc->num_queues == 1) {
+			ctrl = E1000_READ_REG(hw, TXDCTL(1));
+			ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) | 
+			    E1000_TXDCTL_FULL_TX_DESC_WB;
+			E1000_WRITE_REG(hw, TXDCTL(1), ctrl);
+		}
 		break;
 	}
 

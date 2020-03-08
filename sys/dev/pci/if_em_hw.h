@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.80 2020/02/04 10:59:23 mpi Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.81 2020/03/08 11:43:43 mpi Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -336,9 +336,11 @@ typedef enum {
 
 /* Function prototypes */
 /* Initialization */
+struct em_softc;
 int32_t em_reset_hw(struct em_hw *hw);
-int32_t em_init_hw(struct em_hw *hw);
+int32_t em_init_hw(struct em_softc *sc);
 int32_t em_set_mac_type(struct em_hw *hw);
+int em_max_queues(struct em_hw *hw);
 void em_set_media_type(struct em_hw *hw);
 
 /* Link Configuration */
