@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.116 2019/07/02 09:36:20 martijn Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.117 2020/03/08 21:47:05 martijn Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -134,32 +134,51 @@ struct {
 	char		buf[SMTP_LINELEN];
 } pstate;
 
-static void
-qp_encoded_write(FILE *fp, char *buf, size_t len)
-{
-	while (len) {
-		if (*buf == '=')
-			fprintf(fp, "=3D");
-		else if (*buf == ' ' || *buf == '\t') {
-			char *p = buf;
+#define QP_TEST_WRAP(fp, buf, linelen, size)	do {			\
+	if (((linelen) += (size)) + 1 > 76) {				\
+		fprintf((fp), "=\n");					\
+		if (buf[0] == '.')					\
+			fprintf((fp), ".");				\
+		(linelen) = (size);					\
+	}								\
+} while (0)
 
-			while (*p != '\n') {
-				if (*p != ' ' && *p != '\t')
-					break;
-				p++;
-			}
-			if (*p == '\n')
+/* RFC 2045 section 6.7 */
+static void
+qp_encoded_write(FILE *fp, char *buf)
+{
+	size_t linelen = 0;
+
+	for (;buf[0] != '\0' && buf[0] != '\n'; buf++) {
+		/*
+		 * Point 3: Any TAB (HT) or SPACE characters on an encoded line
+		 * MUST thus be followed on that line by a printable character.
+		 *
+		 * Ergo, only encode if the next character is EOL.
+		 */
+		if (buf[0] == ' ' || buf[0] == '\t') {
+			if (buf[1] == '\n') {
+				QP_TEST_WRAP(fp, buf, linelen, 3);
 				fprintf(fp, "=%2X", *buf & 0xff);
-			else
+			} else {
+				QP_TEST_WRAP(fp, buf, linelen, 1);
 				fprintf(fp, "%c", *buf & 0xff);
-		}
-		else if (!isprint((unsigned char)*buf) && *buf != '\n')
+			}
+		/*
+		 * Point 1, with exclusion of point 2, skip EBCDIC NOTE.
+		 * Do this after whitespace check, else they would match here.
+		 */
+		} else if (!((buf[0] >= 33 && buf[0] <= 60) ||
+		    (buf[0] >= 62 && buf[0] <= 126))) {
+			QP_TEST_WRAP(fp, buf, linelen, 3);
 			fprintf(fp, "=%2X", *buf & 0xff);
-		else
+		/* Point 2: 33 through 60 inclusive, and 62 through 126 */
+		} else {
+			QP_TEST_WRAP(fp, buf, linelen, 1);
 			fprintf(fp, "%c", *buf);
-		buf++;
-		len--;
+		}
 	}
+	fprintf(fp, "\n");
 }
 
 int
@@ -172,7 +191,6 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	size_t			 sz = 0, envid_sz = 0;
 	ssize_t			 len;
 	char			*line;
-	int			 dotted;
 	int			 inheaders = 1;
 	int			 save_argc;
 	char			**save_argv;
@@ -386,11 +404,9 @@ enqueue(int argc, char *argv[], FILE *ofp)
 		if (buf[len-1] != '\n')
 			errx(EX_SOFTWARE, "expect EOL");
 
-		dotted = 0;
 		if (buf[0] == '.') {
 			if (fputc('.', fout) == EOF)
 				goto fail;
-			dotted = 1;
 		}
 
 		line = buf;
@@ -412,20 +428,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 		}
 
 		/* we don't have a content transfer encoding, use our default */
-		do {
-			if (len < LINESPLIT) {
-				qp_encoded_write(fout, line, len);
-				break;
-			}
-			else {
-				qp_encoded_write(fout, line,
-				    LINESPLIT - 2 - dotted);
-				if (!send_line(fout, 0, "=\n"))
-					goto fail;
-				line += LINESPLIT - 2 - dotted;
-				len -= LINESPLIT - 2 - dotted;
-			}
-		} while (len);
+		qp_encoded_write(fout, line);
 	}
 	free(buf);
 	if (!send_line(fout, verbose, ".\n"))
