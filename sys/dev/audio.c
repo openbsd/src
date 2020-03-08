@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.187 2020/02/13 21:00:48 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.188 2020/03/08 15:15:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1369,6 +1369,10 @@ audio_detach(struct device *self, int flags)
 		}
 		sc->ops->close(sc->arg);
 		sc->mode = 0;
+	}
+	if (sc->mix_isopen) {
+		wakeup(&sc->mix_blocking);
+		selwakeup(&sc->mix_sel);
 	}
 
 	/* free resources */
