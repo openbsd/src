@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.14 2020/03/07 15:11:50 otto Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.15 2020/03/09 06:16:56 otto Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
@@ -190,6 +190,7 @@ sr_install_bootldr(int devfd, char *dev)
 	sym_set_value(pbr_symbols, "_inodeblk", inodeblk);
 	sym_set_value(pbr_symbols, "_inodedbl", inodedbl);
 	sym_set_value(pbr_symbols, "_nblocks", nblocks);
+	sym_set_value(pbr_symbols, "_blkincr", 0);
 
 	if (verbose)
 		fprintf(stderr, "%s is %d blocks x %d bytes\n",
