@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.190 2020/03/01 19:17:58 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.191 2020/03/09 11:50:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3701,9 +3701,9 @@ done:
 int
 ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 {
-	struct iked_childsa		*csa, *nextcsa, *ipcomp;
-	struct iked_flow		*flow, *nextflow;
-	struct iked_proposal		*prop, *nextprop;
+	struct iked_childsa		*csa, *csatmp, *ipcomp;
+	struct iked_flow		*flow, *flowtmp;
+	struct iked_proposal		*prop, *proptmp;
 
 	log_debug("%s: IKE SA %p ispi %s rspi %s replaced"
 	    " by SA %p ispi %s rspi %s ",
@@ -3729,9 +3729,7 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	    sizeof(nsa->sa_peer_loaded));
 
 	/* Transfer all Child SAs and flows from the old IKE SA */
-	for (flow = TAILQ_FIRST(&sa->sa_flows); flow != NULL;
-	     flow = nextflow) {
-		nextflow = TAILQ_NEXT(flow, flow_entry);
+	TAILQ_FOREACH_SAFE(flow, &sa->sa_flows, flow_entry, flowtmp) {
 		TAILQ_REMOVE(&sa->sa_flows, flow, flow_entry);
 		TAILQ_INSERT_TAIL(&nsa->sa_flows, flow,
 		    flow_entry);
@@ -3739,9 +3737,7 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 		flow->flow_local = &nsa->sa_local;
 		flow->flow_peer = &nsa->sa_peer;
 	}
-	for (csa = TAILQ_FIRST(&sa->sa_childsas); csa != NULL;
-	     csa = nextcsa) {
-		nextcsa = TAILQ_NEXT(csa, csa_entry);
+	TAILQ_FOREACH_SAFE(csa, &sa->sa_childsas, csa_entry, csatmp) {
 		TAILQ_REMOVE(&sa->sa_childsas, csa, csa_entry);
 		TAILQ_INSERT_TAIL(&nsa->sa_childsas, csa,
 		    csa_entry);
@@ -3760,9 +3756,7 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 		}
 	}
 	/* Transfer all non-IKE proposals */
-	for (prop = TAILQ_FIRST(&sa->sa_proposals); prop != NULL;
-	     prop = nextprop) {
-		nextprop = TAILQ_NEXT(prop, prop_entry);
+	TAILQ_FOREACH_SAFE(prop, &sa->sa_proposals, prop_entry, proptmp) {
 		if (prop->prop_protoid == IKEV2_SAPROTO_IKE)
 			continue;
 		TAILQ_REMOVE(&sa->sa_proposals, prop, prop_entry);
@@ -5599,13 +5593,11 @@ int
 ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, uint8_t saproto,
     uint64_t spi, uint64_t *spiptr, int cleanup)
 {
-	struct iked_childsa	*csa, *nextcsa = NULL, *ipcomp;
+	struct iked_childsa	*csa, *csatmp = NULL, *ipcomp;
 	uint64_t		 peerspi = 0;
 	int			 found = 0;
 
-	for (csa = TAILQ_FIRST(&sa->sa_childsas); csa != NULL; csa = nextcsa) {
-		nextcsa = TAILQ_NEXT(csa, csa_entry);
-
+	TAILQ_FOREACH_SAFE(csa, &sa->sa_childsas, csa_entry, csatmp) {
 		if ((saproto && csa->csa_saproto != saproto) ||
 		    (spi && (csa->csa_spi.spi != spi &&
 			     csa->csa_peerspi != spi)) ||

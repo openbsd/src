@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.55 2020/03/01 19:17:58 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.56 2020/03/09 11:50:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -512,11 +512,9 @@ sa_free(struct iked *env, struct iked_sa *sa)
 void
 sa_free_flows(struct iked *env, struct iked_saflows *head)
 {
-	struct iked_flow	*flow, *next;
+	struct iked_flow	*flow, *flowtmp;
 
-	for (flow = TAILQ_FIRST(head); flow != NULL; flow = next) {
-		next = TAILQ_NEXT(flow, flow_entry);
-
+	TAILQ_FOREACH_SAFE(flow, head, flow_entry, flowtmp) {
 		log_debug("%s: free %p", __func__, flow);
 
 		if (flow->flow_loaded)
