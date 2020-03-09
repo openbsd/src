@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_mbrtowc.c,v 1.2 2017/07/27 15:08:37 bluhm Exp $	*/
+/*	$OpenBSD: test_mbrtowc.c,v 1.3 2020/03/09 09:29:10 dlg Exp $	*/
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -57,7 +57,7 @@ main(void)
 	onetest("CSI", "\233", 2, 0, 1, L'\233');
 
 	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL)
-		errx(1, "setlocale(UTF-8) failed"),
+		errx(1, "setlocale(UTF-8) failed");
 
 	onetest("NUL", "", 0, 0, -2, WEOF);
 	onetest("NUL", "", 8, 0, 0, L'\0');
@@ -72,12 +72,12 @@ main(void)
 	onetest("U+CFFF", "\277", 8, 0, 1, 0xcfff);
 
 	if (setlocale(LC_CTYPE, "POSIX") == NULL)
-		errx(1, "setlocale(POSIX) failed"),
+		errx(1, "setlocale(POSIX) failed");
 
 	onetest("0xff", "\277", 2, 0, 1, L'\277');
 
 	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL)
-		errx(1, "second setlocale(UTF-8) failed"),
+		errx(1, "second setlocale(UTF-8) failed");
 
 	onetest("U+13000", "\360\223\200\200", 8, 0, 4, 0x13000);
 
