@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.148 2020/02/04 04:09:11 bket Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.149 2020/03/09 16:49:12 millert Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -163,7 +163,7 @@ STATIC	int inodedep_lookup(struct fs *, ufsino_t, int, struct inodedep **);
 STATIC	int pagedep_lookup(struct inode *, daddr_t, int, struct pagedep **);
 STATIC	void pause_timer(void *);
 STATIC	int request_cleanup(int, int);
-STATIC	int process_worklist_item(struct mount *, int);
+STATIC	int process_worklist_item(struct mount *, int *, int);
 STATIC	void add_to_worklist(struct worklist *);
 
 /*
@@ -639,7 +639,8 @@ softdep_process_worklist(struct mount *matchmnt)
 	loopcount = 1;
 	getmicrouptime(&starttime);
 	while (num_on_worklist > 0) {
-		matchcnt += process_worklist_item(matchmnt, LK_NOWAIT);
+		if (process_worklist_item(matchmnt, &matchcnt, LK_NOWAIT) == 0)
+			break;
 
 		/*
 		 * If a umount operation wants to run the worklist
@@ -707,13 +708,12 @@ softdep_process_worklist(struct mount *matchmnt)
  * Process one item on the worklist.
  */
 STATIC int
-process_worklist_item(struct mount *matchmnt, int flags)
+process_worklist_item(struct mount *matchmnt, int *matchcnt, int flags)
 {
 	struct worklist *wk, *wkend;
 	struct dirrem *dirrem;
 	struct mount *mp;
 	struct vnode *vp;
-	int matchcnt = 0;
 
 	ACQUIRE_LOCK(&lk);
 	/*
@@ -761,8 +761,8 @@ process_worklist_item(struct mount *matchmnt, int flags)
 			panic("%s: dirrem on suspended filesystem",
 				"process_worklist_item");
 #endif
-		if (mp == matchmnt)
-			matchcnt += 1;
+		if (matchmnt != NULL && mp == matchmnt)
+			*matchcnt += 1;
 		handle_workitem_remove(WK_DIRREM(wk));
 		break;
 
@@ -774,8 +774,8 @@ process_worklist_item(struct mount *matchmnt, int flags)
 			panic("%s: freeblks on suspended filesystem",
 				"process_worklist_item");
 #endif
-		if (mp == matchmnt)
-			matchcnt += 1;
+		if (matchmnt != NULL && mp == matchmnt)
+			*matchcnt += 1;
 		handle_workitem_freeblocks(WK_FREEBLKS(wk));
 		break;
 
@@ -787,8 +787,8 @@ process_worklist_item(struct mount *matchmnt, int flags)
 			panic("%s: freefrag on suspended filesystem",
 				"process_worklist_item");
 #endif
-		if (mp == matchmnt)
-			matchcnt += 1;
+		if (matchmnt != NULL && mp == matchmnt)
+			*matchcnt += 1;
 		handle_workitem_freefrag(WK_FREEFRAG(wk));
 		break;
 
@@ -800,8 +800,8 @@ process_worklist_item(struct mount *matchmnt, int flags)
 			panic("%s: freefile on suspended filesystem",
 				"process_worklist_item");
 #endif
-		if (mp == matchmnt)
-			matchcnt += 1;
+		if (matchmnt != NULL && mp == matchmnt)
+			*matchcnt += 1;
 		handle_workitem_freefile(WK_FREEFILE(wk));
 		break;
 
@@ -810,7 +810,7 @@ process_worklist_item(struct mount *matchmnt, int flags)
 		    "softdep", TYPENAME(wk->wk_type));
 		/* NOTREACHED */
 	}
-	return (matchcnt);
+	return (1);
 }
 
 /*
@@ -5253,8 +5253,8 @@ request_cleanup(int resource, int islocked)
 		atomic_setbits_int(&p->p_flag, P_SOFTDEP);
 		if (islocked)
 			FREE_LOCK(&lk);
-		process_worklist_item(NULL, LK_NOWAIT);
-		process_worklist_item(NULL, LK_NOWAIT);
+		process_worklist_item(NULL, NULL, LK_NOWAIT);
+		process_worklist_item(NULL, NULL, LK_NOWAIT);
 		atomic_clearbits_int(&p->p_flag, P_SOFTDEP);
 		stat_worklist_push += 2;
 		if (islocked)
