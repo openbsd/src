@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.310 2020/02/20 16:26:02 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.311 2020/03/10 02:01:21 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1425,7 +1425,7 @@ sd_read_cap_10(struct sd_softc *sc, int flags)
 
 	rv = scsi_read_cap_10(sc->sc_link, rdcap, flags);
 	if (rv == 0) {
-		if (_8btol(rdcap->addr) == 0) {
+		if (_4btol(rdcap->addr) == 0) {
 			rv = -1;
 			goto done;
 		}
