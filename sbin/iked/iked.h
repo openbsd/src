@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.135 2020/03/01 19:17:58 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.136 2020/03/10 18:54:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -777,7 +777,8 @@ int	 config_getnattport(struct iked *, struct imsg *);
 
 /* policy.c */
 void	 policy_init(struct iked *);
-int	 policy_lookup(struct iked *, struct iked_message *);
+int	 policy_lookup(struct iked *, struct iked_message *,
+	    struct iked_proposals *proposals);
 struct iked_policy *
 	 policy_test(struct iked *, struct iked_policy *);
 int	 policy_generate_ts(struct iked_policy *);

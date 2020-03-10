@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.56 2020/03/09 11:50:43 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.57 2020/03/10 18:54:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -64,12 +64,15 @@ policy_init(struct iked *env)
  * Lookup an iked policy matching the IKE_AUTH message msg
  * and store a pointer to the found policy in msg.  If no policy
  * matches a pointer to the default policy is stored in msg.
+ * If 'proposals' is not NULL policy_lookup only returns policies
+ * compatible with 'proposals'.
  *
  * Returns 0 on success and -1 if no matching policy was
  * found and no default exists.
  */
 int
-policy_lookup(struct iked *env, struct iked_message *msg)
+policy_lookup(struct iked *env, struct iked_message *msg,
+    struct iked_proposals *proposals)
 {
 	struct iked_policy	 pol;
 	char			*s, idstr[IKED_ID_SIZE];
@@ -82,13 +85,14 @@ policy_lookup(struct iked *env, struct iked_message *msg)
 	}
 
 	bzero(&pol, sizeof(pol));
+	if (proposals != NULL)
+		pol.pol_proposals = *proposals;
 	pol.pol_af = msg->msg_peer.ss_family;
 	memcpy(&pol.pol_peer.addr, &msg->msg_peer, sizeof(msg->msg_peer));
 	memcpy(&pol.pol_local.addr, &msg->msg_local, sizeof(msg->msg_local));
 	if (msg->msg_id.id_type &&
 	    ikev2_print_id(&msg->msg_id, idstr, IKED_ID_SIZE) == 0 &&
 	    (s = strchr(idstr, '/')) != NULL) {
-		pol.pol_proposals = msg->msg_sa->sa_proposals;
 		pol.pol_peerid.id_type = msg->msg_id.id_type;
 		pol.pol_peerid.id_length = strlen(s+1);
 		strlcpy(pol.pol_peerid.id_data, s+1,

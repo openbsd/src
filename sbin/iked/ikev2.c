@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.194 2020/03/10 10:19:22 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.195 2020/03/10 18:54:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -444,7 +444,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	    betoh64(hdr->ike_ispi), betoh64(hdr->ike_rspi),
 	    initiator);
 	msg->msg_msgid = betoh32(hdr->ike_msgid);
-	if (policy_lookup(env, msg) != 0)
+	if (policy_lookup(env, msg, NULL) != 0)
 		return;
 
 	log_info("%srecv %s %s %u peer %s local %s, %ld bytes, policy '%s'",
@@ -633,7 +633,7 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		struct iked_policy	*old = sa->sa_policy;
 
 		sa->sa_policy = NULL;
-		if (policy_lookup(env, msg) == 0 && msg->msg_policy &&
+		if (policy_lookup(env, msg, &sa->sa_proposals) == 0 && msg->msg_policy &&
 		    msg->msg_policy != old) {
 			/* move sa to new policy */
 			policy = sa->sa_policy = msg->msg_policy;
@@ -4618,6 +4618,7 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
     struct iked_message *msg)
 {
 	struct iked_transform	*xform;
+	struct iked_policy	*old;
 
 	sa_state(env, sa, IKEV2_STATE_SA_INIT);
 
@@ -4641,12 +4642,31 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 	}
 
 	/* XXX we need a better way to get this */
-	if (proposals_negotiate(&sa->sa_proposals,
-	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0) != 0) {
+	old = sa->sa_policy;
+	sa->sa_policy = NULL;
+	if (policy_lookup(env, msg, &msg->msg_proposals) != 0 || msg->msg_policy == NULL) {
+		sa->sa_policy = old;
 		log_info("%s: no proposal chosen", __func__);
 		msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
 		return (-1);
-	} else if (sa_stateok(sa, IKEV2_STATE_SA_INIT))
+	}
+	sa->sa_policy = msg->msg_policy;
+	/* move sa to new policy */
+	sa->sa_policy = msg->msg_policy;
+	TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
+	TAILQ_INSERT_TAIL(&sa->sa_policy->pol_sapeers,
+	    sa, sa_peer_entry);
+	if (old->pol_flags & IKED_POLICY_REFCNT)
+		policy_unref(env, old);
+	if (sa->sa_policy->pol_flags & IKED_POLICY_REFCNT)
+		policy_ref(env, sa->sa_policy);
+
+	if (proposals_negotiate(&sa->sa_proposals,
+	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0) != 0) {
+		log_info("%s: proposals_negotiate", __func__);
+		return (-1);
+	}
+	if (sa_stateok(sa, IKEV2_STATE_SA_INIT))
 		sa_stateflags(sa, IKED_REQ_SA);
 
 	if (sa->sa_encr == NULL) {
