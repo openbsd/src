@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.398 2020/02/13 15:11:32 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.399 2020/03/10 08:41:19 tobhe Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3769,7 +3769,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 
 		if (sr_rw(sc, chunk->src_dev_mm, bootblk, bbs,
 		    SR_BOOT_BLOCKS_OFFSET, B_WRITE)) {
-			sr_error(sc, "failed to write boot block", DEVNAME(sc));
+			sr_error(sc, "failed to write boot block");
 			goto done;
 		}
 
