@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.70 2020/03/02 16:31:22 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.71 2020/03/10 13:50:13 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -303,7 +303,7 @@ nvme_attach(struct nvme_softc *sc)
 
 	sc->sc_rdy_to = NVME_CAP_TO(cap);
 	sc->sc_mdts = MAXPHYS;
-	sc->sc_max_sgl = sc->sc_mdts / sc->sc_mps;
+	sc->sc_max_prpl = sc->sc_mdts / sc->sc_mps;
 
 	if (nvme_disable(sc) != 0) {
 		printf("%s: unable to disable controller\n", DEVNAME(sc));
@@ -332,7 +332,7 @@ nvme_attach(struct nvme_softc *sc)
 		goto disable;
 	}
 
-	/* We now know the real values of sc_mdts and sc_max_sgl. */
+	/* We now know the real values of sc_mdts and sc_max_prpl. */
 	nvme_ccbs_free(sc, nccbs);
 	if (nvme_ccbs_alloc(sc, 64) != 0) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
@@ -1051,7 +1051,7 @@ nvme_identify(struct nvme_softc *sc, u_int mpsmin)
 		sc->sc_mdts = (1 << identify->mdts) * (1 << mpsmin);
 		if (sc->sc_mdts > MAXPHYS)
 			sc->sc_mdts = MAXPHYS;
-		sc->sc_max_sgl = sc->sc_mdts / sc->sc_mps;
+		sc->sc_max_prpl = sc->sc_mdts / sc->sc_mps;
 	}
 
 	sc->sc_nn = lemtoh32(&identify->nn);
@@ -1185,7 +1185,7 @@ nvme_ccbs_alloc(struct nvme_softc *sc, u_int nccbs)
 		return (1);
 
 	sc->sc_ccb_prpls = nvme_dmamem_alloc(sc,
-	    sizeof(*prpl) * sc->sc_max_sgl * nccbs);
+	    sizeof(*prpl) * sc->sc_max_prpl * nccbs);
 
 	prpl = NVME_DMA_KVA(sc->sc_ccb_prpls);
 	off = 0;
@@ -1194,7 +1194,7 @@ nvme_ccbs_alloc(struct nvme_softc *sc, u_int nccbs)
 		ccb = &sc->sc_ccbs[i];
 
 		if (bus_dmamap_create(sc->sc_dmat, sc->sc_mdts,
-		    sc->sc_max_sgl + 1 /* we get a free prp in the sqe */,
+		    sc->sc_max_prpl + 1, /* we get a free prp in the sqe */
 		    sc->sc_mps, sc->sc_mps, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap) != 0)
 			goto free_maps;
@@ -1206,8 +1206,8 @@ nvme_ccbs_alloc(struct nvme_softc *sc, u_int nccbs)
 
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_list, ccb, ccb_entry);
 
-		prpl += sc->sc_max_sgl;
-		off += sizeof(*prpl) * sc->sc_max_sgl;
+		prpl += sc->sc_max_prpl;
+		off += sizeof(*prpl) * sc->sc_max_prpl;
 	}
 
 	return (0);
