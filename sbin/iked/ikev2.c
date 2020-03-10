@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.193 2020/03/10 09:57:49 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.194 2020/03/10 10:19:22 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1486,6 +1486,8 @@ ikev2_add_ts_payload(struct ibuf *buf, unsigned int type, struct iked_sa *sa)
 	struct sockaddr_in6	*in6;
 	struct iked_tss		*tss;
 	struct iked_ts		*tsi;
+
+	bzero(&pooladdr, sizeof(pooladdr));
 
 	if ((tsp = ibuf_advance(buf, sizeof(*tsp))) == NULL)
 		return (-1);
