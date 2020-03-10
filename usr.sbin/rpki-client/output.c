@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.8 2020/03/09 23:50:01 jca Exp $ */
+/*	$OpenBSD: output.c,v 1.9 2020/03/10 14:22:26 jca Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -29,12 +29,12 @@
 #include "extern.h"
 
 char		*outputdir;
-char		 output_tmpname[PATH_MAX];
-char		 output_name[PATH_MAX];
-
 int		 outformats;
 
-struct outputs {
+static char	 output_tmpname[PATH_MAX];
+static char	 output_name[PATH_MAX];
+
+static const struct outputs {
 	int	 format;
 	char	*name;
 	int	(*fn)(FILE *, struct vrp_tree *);
@@ -48,8 +48,11 @@ struct outputs {
 	{ 0, NULL }
 };
 
-void		 sig_handler(int);
-void		 set_signal_handler(void);
+static FILE	*output_createtmp(char *);
+static void	 output_cleantmp(void);
+static int	 output_finish(FILE *);
+static void	 sig_handler(int);
+static void	 set_signal_handler(void);
 
 int
 outputfiles(struct vrp_tree *v)
@@ -89,7 +92,7 @@ outputfiles(struct vrp_tree *v)
 	return rc;
 }
 
-FILE *
+static FILE *
 output_createtmp(char *name)
 {
 	FILE *f;
@@ -113,7 +116,7 @@ output_createtmp(char *name)
 	return f;
 }
 
-int
+static int
 output_finish(FILE *out)
 {
 	if (fclose(out) != 0)
@@ -124,7 +127,7 @@ output_finish(FILE *out)
 	return 0;
 }
 
-void
+static void
 output_cleantmp(void)
 {
 	if (*output_tmpname)
@@ -135,7 +138,7 @@ output_cleantmp(void)
 /*
  * Signal handler that clears the temporary files.
  */
-void
+static void
 sig_handler(int sig __unused)
 {
 	output_cleantmp();
@@ -145,7 +148,7 @@ sig_handler(int sig __unused)
 /*
  * Set signal handler on panic signals.
  */
-void
+static void
 set_signal_handler(void)
 {
 	struct sigaction sa;
