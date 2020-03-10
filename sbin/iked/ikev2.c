@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.192 2020/03/10 09:46:35 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.193 2020/03/10 09:57:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2300,8 +2300,11 @@ ikev2_resp_informational(struct iked *env, struct iked_sa *sa,
 	}
 	/* Reflect COOKIE2 */
 	if (msg->msg_cookie2) {
-		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
-			goto done;
+		/* *pld is NULL if there is no previous payload */
+		if (pld != NULL) {
+			if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
+				goto done;
+		}
 		if ((pld = ikev2_add_payload(buf)) == NULL)
 			goto done;
 		if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
