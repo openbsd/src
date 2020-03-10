@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.69 2020/02/21 16:15:56 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.70 2020/03/10 17:02:21 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -361,18 +361,16 @@ dtls1_process_record(SSL *s)
 	/* decrypt in place in 'rr->input' */
 	rr->data = rr->input;
 
-	enc_err = s->method->internal->ssl3_enc->enc(s, 0);
 	/* enc_err is:
 	 *    0: (in non-constant time) if the record is publically invalid.
 	 *    1: if the padding is valid
 	 *    -1: if the padding is invalid */
-	if (enc_err == 0) {
+	if ((enc_err = dtls1_enc(s, 0)) == 0) {
 		/* For DTLS we simply ignore bad packets. */
 		rr->length = 0;
 		s->internal->packet_length = 0;
 		goto err;
 	}
-
 
 	/* r->length is now the compressed data plus mac */
 	if ((sess != NULL) && (s->enc_read_ctx != NULL) &&
@@ -1286,8 +1284,8 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		wr->length += bs;
 	}
 
-	/* ssl3_enc can only have an error on read */
-	s->method->internal->ssl3_enc->enc(s, 1);
+	/* dtls1_enc can only have an error on read */
+	dtls1_enc(s, 1);
 
 	if (!CBB_add_u16(&cbb, wr->length))
 		goto err;

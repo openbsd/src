@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.20 2020/02/23 17:59:03 tb Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.21 2020/03/10 17:02:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -431,17 +431,15 @@ ssl3_get_record(SSL *s)
 	/* decrypt in place in 'rr->input' */
 	rr->data = rr->input;
 
-	enc_err = s->method->internal->ssl3_enc->enc(s, 0);
 	/* enc_err is:
 	 *    0: (in non-constant time) if the record is publically invalid.
 	 *    1: if the padding is valid
 	 *    -1: if the padding is invalid */
-	if (enc_err == 0) {
+	if ((enc_err = tls1_enc(s, 0)) == 0) {
 		al = SSL_AD_BAD_RECORD_MAC;
 		SSLerror(s, SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
 		goto f_err;
 	}
-
 
 	/* r->length is now the compressed data plus mac */
 	if ((sess != NULL) && (s->enc_read_ctx != NULL) &&
@@ -705,8 +703,8 @@ ssl3_create_record(SSL *s, unsigned char *p, int type, const unsigned char *buf,
 		wr->length += eivlen;
 	}
 
-	/* ssl3_enc can only have an error on read */
-	s->method->internal->ssl3_enc->enc(s, 1);
+	/* tls1_enc can only have an error on read */
+	tls1_enc(s, 1);
 
 	/* record length after mac and block padding */
 	if (!CBB_add_u16(&cbb, wr->length))

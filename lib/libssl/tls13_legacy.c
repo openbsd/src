@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.1 2020/02/15 14:40:38 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.2 2020/03/10 17:02:21 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -21,7 +21,6 @@
 #include "tls13_internal.h"
 
 SSL3_ENC_METHOD TLSv1_3_enc_data = {
-	.enc = NULL,
 	.enc_flags = SSL_ENC_FLAG_SIGALGS|SSL_ENC_FLAG_TLS1_3_CIPHERS,
 };
 

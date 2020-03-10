@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.164 2019/04/25 04:57:36 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.165 2020/03/10 17:02:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,17 +126,14 @@ static int tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket,
     SSL_SESSION **psess);
 
 SSL3_ENC_METHOD TLSv1_enc_data = {
-	.enc = tls1_enc,
 	.enc_flags = 0,
 };
 
 SSL3_ENC_METHOD TLSv1_1_enc_data = {
-	.enc = tls1_enc,
 	.enc_flags = SSL_ENC_FLAG_EXPLICIT_IV,
 };
 
 SSL3_ENC_METHOD TLSv1_2_enc_data = {
-	.enc = tls1_enc,
 	.enc_flags = SSL_ENC_FLAG_EXPLICIT_IV|SSL_ENC_FLAG_SIGALGS|
 	    SSL_ENC_FLAG_SHA256_PRF|SSL_ENC_FLAG_TLS1_2_CIPHERS,
 };
