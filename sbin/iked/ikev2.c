@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.191 2020/03/09 11:50:43 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.192 2020/03/10 09:46:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -828,8 +828,8 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 			if (sa) {
 				ikev2_ike_sa_setreason(sa, "invalid new SA");
 				sa_free(env, sa);
-				sa = NULL;
 			}
+			return;
 		}
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
