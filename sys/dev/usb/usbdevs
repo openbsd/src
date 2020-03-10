@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.711 2020/02/23 11:52:10 jasper Exp $
+$OpenBSD: usbdevs,v 1.712 2020/03/10 01:11:30 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2531,6 +2531,7 @@ product LEADTEK 9531		0x2101	9531 GPS
 
 /* Lenovo products */
 product LENOVO AX88179		0x304b	AX88179
+product LENOVO ONELINKPLUS	0x3054	OneLink+ Dock
 product LENOVO DOCK_ETHERNET	0x3062	USB-C Dock Ethernet
 product LENOVO ETHERNET		0x7203	USB 2.0 Ethernet
 

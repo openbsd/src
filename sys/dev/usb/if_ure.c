@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.13 2019/12/07 08:45:28 kevlo Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.14 2020/03/10 01:11:30 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -71,6 +71,7 @@ int	uredebug = 0;
 #endif
 
 const struct usb_devno ure_devs[] = {
+	{ USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_ONELINKPLUS },
 	{ USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_DOCK_ETHERNET },
 	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8152 },
 	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8153 },
