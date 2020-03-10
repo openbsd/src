@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_handshake.h,v 1.3 2019/04/05 20:23:38 tb Exp $ */
+/* $OpenBSD: tls13_handshake.h,v 1.4 2020/03/10 17:15:02 jsing Exp $ */
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -45,8 +45,6 @@ enum tls13_message_type {
 	CLIENT_CERTIFICATE,
 	CLIENT_CERTIFICATE_VERIFY,
 	CLIENT_FINISHED,
-	CLIENT_KEY_UPDATE,
-	SERVER_NEW_SESSION_TICKET,
 	APPLICATION_DATA,
 	TLS13_NUM_MESSAGE_TYPES,
 };

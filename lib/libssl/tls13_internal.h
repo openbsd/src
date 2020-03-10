@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.60 2020/02/05 16:42:29 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.61 2020/03/10 17:15:02 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -304,8 +304,6 @@ int tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_client_finished_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_client_finished_send(struct tls13_ctx *ctx, CBB *cbb);
 int tls13_client_finished_sent(struct tls13_ctx *ctx);
-int tls13_client_key_update_send(struct tls13_ctx *ctx, CBB *cbb);
-int tls13_client_key_update_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_server_hello_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb);
 int tls13_server_hello_sent(struct tls13_ctx *ctx);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.51 2020/02/05 16:42:29 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.52 2020/03/10 17:15:02 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -88,12 +88,6 @@ struct tls13_handshake_action state_machine[] = {
 		.send = tls13_client_finished_send,
 		.sent = tls13_client_finished_sent,
 		.recv = tls13_client_finished_recv,
-	},
-	[CLIENT_KEY_UPDATE] = {
-		.handshake_type = TLS13_MT_KEY_UPDATE,
-		.sender = TLS13_HS_CLIENT,
-		.send = tls13_client_key_update_send,
-		.recv = tls13_client_key_update_recv,
 	},
 	[SERVER_HELLO] = {
 		.handshake_type = TLS13_MT_SERVER_HELLO,
