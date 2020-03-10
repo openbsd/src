@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.12 2020/03/01 14:10:56 krw Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.13 2020/03/10 14:08:40 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -81,7 +81,7 @@ struct nvme_softc {
 	u_int			sc_rdy_to;
 	size_t			sc_mps;
 	size_t			sc_mdts;
-	u_int			sc_max_sgl;
+	u_int			sc_max_prpl;
 	u_int			sc_dstrd;
 
 	struct nvm_identify_controller
