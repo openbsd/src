@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.27 2020/03/10 17:15:02 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.28 2020/03/10 17:23:25 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -561,7 +561,7 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 
 	if ((secrets = tls13_secrets_create(ctx->hash, 0)) == NULL)
 		goto err;
-	S3I(ctx->ssl)->hs_tls13.secrets = secrets;
+	ctx->hs->secrets = secrets;
 
 	/* XXX - pass in hash. */
 	if (!tls1_transcript_hash_init(s))
