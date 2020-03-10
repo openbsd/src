@@ -1,4 +1,4 @@
-/*	$OpenBSD: base64test.c,v 1.6 2019/06/27 04:29:35 deraadt Exp $	*/
+/*	$OpenBSD: base64test.c,v 1.7 2020/03/10 11:10:53 inoguchi Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -221,7 +221,9 @@ base64_encoding_test(int test_no, struct base64_test *bt, int test_nl)
 
 	b64len = 0;
 	for (i = 0; i < bt->out_len; i++) {
-		if (bt->out[i] == '\r' || bt->out[i] == '\n')
+		if ((!test_nl ||
+		    (test_nl && (i % 64 != 0 || i == bt->out_len - 1))) &&
+		    (bt->out[i] == '\r' || bt->out[i] == '\n'))
 			continue;
 		buf[b64len++] = bt->out[i];
 	}
@@ -273,14 +275,15 @@ base64_decoding_test(int test_no, struct base64_test *bt, int test_nl)
 	if (buf == NULL)
 		errx(1, "malloc");
 
-	input = (char *)bt->out;
+	if ((input = malloc(BUF_SIZE)) == NULL)
+		errx(1, "malloc");
+
+	memcpy(input, bt->out, bt->out_len);
 	inlen = bt->out_len;
-
-	if (test_nl)
-		inlen = asprintf(&input, "%s\r\n", bt->out);
-
-	if (inlen == -1)
-		errx(1, "asprintf");
+	if (test_nl) {
+		memcpy(&input[bt->out_len], "\r\n", 2);
+		inlen += 2;
+	}
 
 	bio_mem = BIO_new_mem_buf(input, inlen);
 	if (bio_mem == NULL)
@@ -326,8 +329,8 @@ base64_decoding_test(int test_no, struct base64_test *bt, int test_nl)
 			fprintf(stderr, "0x%x ", buf[i]);
 		fprintf(stderr, "\n");
 		fprintf(stderr, " test data: ");
-		for (i = 0; i < inlen; i++)
-			fprintf(stderr, "0x%x ", input[i]);
+		for (i = 0; i < bt->in_len; i++)
+			fprintf(stderr, "0x%x ", bt->in[i]);
 		fprintf(stderr, "\n");
 		failure = 1;
 	}
