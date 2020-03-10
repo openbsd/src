@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.60 2020/02/18 20:24:52 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.61 2020/03/10 22:31:36 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -529,8 +529,7 @@ adw_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_link *sc_link = xs->sc_link;
 	ADW_SOFTC      *sc = sc_link->adapter_softc;
 	ADW_CCB        *ccb;
-	int             s, nowait = 0, retry = 0;
-	int		flags;
+	int             s, retry = 0;
 
 	/*
          * get a ccb to use. If the transfer
@@ -538,15 +537,12 @@ adw_scsi_cmd(struct scsi_xfer *xs)
          * then we can't allow it to sleep
          */
 
-	flags = xs->flags;
-	if (nowait)
-		flags |= SCSI_NOSLEEP;
 	ccb = xs->io;
 
 	ccb->xs = xs;
 	ccb->timeout = xs->timeout;
 
-	if (adw_build_req(xs, ccb, flags)) {
+	if (adw_build_req(xs, ccb, xs->flags)) {
 retryagain:
 		s = splbio();
 		retry = adw_queue_ccb(sc, ccb, retry);
@@ -562,9 +558,6 @@ retryagain:
 			return;
 		}
 
-		/*
-	         * Usually return SUCCESSFULLY QUEUED
-	         */
 		if ((xs->flags & SCSI_POLL) == 0)
 			return;
 
