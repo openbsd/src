@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.36 2020/01/25 06:31:32 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.37 2020/03/10 08:45:28 tobhe Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -395,7 +395,7 @@ ifq_deq_sleep(struct ifqueue *ifq, struct mbuf **mp, int nbio, int priority,
 {
 	struct mbuf *m;
 	void *cookie;
-	int error;
+	int error = 0;
 
 	ifq_deq_enter(ifq);
 	if (ifq->ifq_len == 0 && nbio)
