@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.63 2020/03/10 09:35:21 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.64 2020/03/10 09:42:40 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -219,16 +219,6 @@ int
 ikev2_msg_valid_ike_sa(struct iked *env, struct ike_header *oldhdr,
     struct iked_message *msg)
 {
-#if 0
-	/* XXX Disabled, see comment below */
-	struct iked_message		 resp;
-	struct ike_header		*hdr;
-	struct ikev2_payload		*pld;
-	struct ikev2_notify		*n;
-	struct ibuf			*buf;
-	struct iked_sa			 sa;
-#endif
-
 	if (msg->msg_sa != NULL && msg->msg_policy != NULL) {
 		if (msg->msg_sa->sa_state == IKEV2_STATE_CLOSED)
 			return (-1);
@@ -247,62 +237,6 @@ ikev2_msg_valid_ike_sa(struct iked *env, struct ike_header *oldhdr,
 		}
 		return (0);
 	}
-
-#if 0
-	/*
-	 * XXX Sending INVALID_IKE_SPIs notifications is disabled
-	 * XXX because it is not mandatory and ignored by most
-	 * XXX implementations.  We might want to enable it in
-	 * XXX combination with a rate-limitation to avoid DoS situations.
-	 */
-
-	/* Fail without error message */
-	if (msg->msg_response || msg->msg_policy == NULL)
-		return (-1);
-
-	/* Invalid IKE SA, return notification */
-	if ((buf = ikev2_msg_init(env, &resp,
-	    &msg->msg_peer, msg->msg_peerlen,
-	    &msg->msg_local, msg->msg_locallen, 1)) == NULL)
-		goto done;
-
-	resp.msg_fd = msg->msg_fd;
-
-	bzero(&sa, sizeof(sa));
-	if ((oldhdr->ike_flags & IKEV2_FLAG_INITIATOR) == 0)
-		sa.sa_hdr.sh_initiator = 1;
-	sa.sa_hdr.sh_ispi = betoh64(oldhdr->ike_ispi);
-	sa.sa_hdr.sh_rspi = betoh64(oldhdr->ike_rspi);
-
-	resp.msg_msgid = betoh32(oldhdr->ike_msgid);
-
-	/* IKE header */
-	if ((hdr = ikev2_add_header(buf, &sa, resp.msg_msgid,
-	    IKEV2_PAYLOAD_NOTIFY, IKEV2_EXCHANGE_INFORMATIONAL,
-	    IKEV2_FLAG_RESPONSE)) == NULL)
-		goto done;
-
-	/* SA payload */
-	if ((pld = ikev2_add_payload(buf)) == NULL)
-		goto done;
-	if ((n = ibuf_advance(buf, sizeof(*n))) == NULL)
-		goto done;
-	n->n_protoid = IKEV2_SAPROTO_IKE;
-	n->n_spisize = 0;
-	n->n_type = htobe16(IKEV2_N_INVALID_IKE_SPI);
-
-	if (ikev2_next_payload(pld, sizeof(*n), IKEV2_PAYLOAD_NONE) == -1)
-		goto done;
-
-	if (ikev2_set_header(hdr, ibuf_size(buf) - sizeof(*hdr)) == -1)
-		goto done;
-
-	(void)ikev2_pld_parse(env, hdr, &resp, 0);
-	(void)ikev2_msg_send(env, &resp);
-
- done:
-	ikev2_msg_cleanup(env, &resp);
-#endif
 
 	/* Always fail */
 	return (-1);
