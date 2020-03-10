@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.62 2020/01/22 07:52:37 deraadt Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.63 2020/03/10 09:35:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -734,7 +734,7 @@ int
 ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
     struct ibuf *in, uint8_t exchange, uint8_t firstpayload, int response) {
 	struct iked_message		 resp;
-	struct ibuf			*buf, *e;
+	struct ibuf			*buf, *e = NULL;
 	struct ike_header		*hdr;
 	struct ikev2_payload		*pld;
 	struct ikev2_frag_payload	*frag;
@@ -792,7 +792,7 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 
 		/* Encrypt message and add as an E payload */
 		data = ibuf_seek(in, offset, 0);
-		if((e=ibuf_new(data, MIN(left, max_len))) == NULL) {
+		if ((e = ibuf_new(data, MIN(left, max_len))) == NULL) {
 			goto done;
 		}
 		if ((e = ikev2_msg_encrypt(env, sa, e)) == NULL) {
