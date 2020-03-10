@@ -1,4 +1,4 @@
-/*	$OpenBSD: base64test.c,v 1.7 2020/03/10 11:10:53 inoguchi Exp $	*/
+/*	$OpenBSD: base64test.c,v 1.8 2020/03/10 11:13:28 inoguchi Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -119,6 +119,102 @@ struct base64_test base64_nl_tests[] = {
 		74,
 		0,
 	},
+
+	/* OpenSSL-1.1.1d test */
+	/* canonical */
+	{ "", 0, "", 0, 0, },
+	/* canonical */
+	{ "h", 1, "aA==\n", 5, 1, },
+	/* canonical */
+	{ "hello", 5, "aGVsbG8=\n", 9, 5, },
+	/* canonical */
+	{ "hello world!", 12, "aGVsbG8gd29ybGQh\n", 17, 12, },
+	/* canonical */
+	{ "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\xa0\xb0\xc0\xd0\xe0\xf0\x00", 17, "AAECAwQFBgcICaCwwNDg8AA=\n", 25, 17, },
+	/* invalid # Missing padding */
+	{ "", -1, "aGVsbG8", 7, 0, },
+	/* invalid */
+	{ "", -1, "aGVsbG8\n", 8, 0, },
+	/* valid # Tolerate missing newline */
+	{ "hello", -1, "aGVsbG8=", 8, 5, },
+	/* invalid # Don't tolerate extra trailing '=' */
+	{ "", -1, "aGVsbG8==\n", 10, 0, },
+	/* invalid */
+	{ "", -1, "aGVsbG8===\n", 11, 0, },
+	/* invalid # Don't tolerate data after '=' */
+	{ "", -1, "aGV=sbG8=\n", 10, 0, },
+	/* valid # Newlines are ignored */
+	{ "hello", -1, "aGV\nsbG8=\n", 10, 5, },
+	/* canonical */
+	{ "hello", 5, "\x61\x47\x56\x73\x62\x47\x38\x3d\x0a", 9, 5, },
+	/* invalid # Invalid characters */
+	{ "", -1, "\x61\x47\x56\x73\x62\x47\x38\x3d\x0a\x00", 10, 0, },
+	/* invalid */
+	{ "", -1, "\x61\x47\x56\x00\x73\x62\x47\x38\x3d\x0a", 10, 0, },
+	/* invalid */
+	{ "", -1, "\x61\x47\x56\x01\x73\x62\x47\x38\x3d\x0a", 10, 0, },
+	/* invalid */
+	{ "", -1, "\x61\x47\x56\x80\x73\x62\x47\x38\x3d\x0a", 10, 0, },
+	/* invalid */
+	{ "", -1, "\xe1\x47\x56\x73\x62\x47\x38\x3d\x0a", 9, 0, },
+	/* canonical */
+	{ "OpenSSLOpenSSL\n", 15, "T3BlblNTTE9wZW5TU0wK\n", 21, 15, },
+	/* valid */
+	{ "OpenSSLOpenSSL\n", -1, "T3BlblNTTE9wZW5TU0wK", 20, 15, },
+	/* invalid # Truncate 1-3 chars */
+	{ "", -1, "T3BlblNTTE9wZW5TU0w", 19, 0, },
+	/* invalid */
+	{ "", -1, "T3BlblNTTE9wZW5TU0", 18, 0, },
+	/* invalid */
+	{ "", -1, "T3BlblNTTE9wZW5TU", 17, 0, },
+	/* invalid */
+	{ "", -1, "T3BlblNTTE9wZW5TU0wK====", 24, 0, },
+	/* invalid */
+	{ "", -1, "T3BlblNTTE9wZW5TU0wK============================================\n", 65, 0, },
+	/* invalid */
+	{ "", -1, "YQ==YQ==YQ==\n", 13, 0, },
+	/* invalid */
+	{ "", -1, "A", 1, 0, },
+	/* invalid */
+	{ "", -1, "A\n", 2, 0, },
+	/* invalid */
+	{ "", -1, "A=", 2, 0, },
+	/* invalid */
+	{ "", -1, "A==\n", 4, 0, },
+	/* invalid */
+	{ "", -1, "A===\n", 5, 0, },
+	/* invalid */
+	{ "", -1, "A====\n", 6, 0, },
+	/* valid */
+	{ "OpenSSLOpenSSL\n", -1, "T3BlblNTTE9wZW5TU0wK\n\n", 22, 15, },
+	/* valid */
+	{ "OpenSSLOpenSSL\n", -1, "T3BlblNTTE\n9wZW5TU0wK", 21, 15, },
+	/* invalid # CVE 2015-0292 */
+	{ "", -1, "ZW5jb2RlIG1lCg==================================================================\n", 81, 0, },
+	/* canonical */
+	{ "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", 46, "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA==\n", 65, 46, },
+	/* valid */
+	{ "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", -1, "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA\n==\n", 66, 46, },
+	/* valid */
+	{ "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", -1, "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA=\n=\n", 66, 46, },
+	/* invalid */
+	{ "", -1, "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA====\n", 67, 0, },
+	/* canonical # Multiline output without padding */
+	{ "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", 60, "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4\neHh4eHh4eHh4eHh4\n", 82, 60, },
+	/* canonical # Multiline output with padding */
+	{ "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", 64, "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4\neHh4eHh4eHh4eHh4eHh4eA==\n", 90, 64, },
+	/* valid # Multiline output with line break in the middle of a b64 block is accepted */
+	{ "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", -1, "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh\n4eHh4eHh4eHh4eHh4eHh4eA==\n", 90, 64, },
+	/* valid # Long lines are accepted */
+	{ "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", -1, "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA==\n", 89, 64, },
+	/* invalid # Multiline input with data after '='. */
+	{ "", -1, "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA==\neHh4eHh4eHh4eHh4eHh4eHh4\n", 90, 0, },
+	/* invalid */
+	{ "", -1, "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4\neA==eHh4eHh4eHh4eHh4eHh4\n", 90, 0, },
+	/* valid # B64_EOF ('-') terminates input and trailing bytes are ignored */
+	{ "OpenSSLOpenSSL\n", -1, "T3BlblNTTE9wZW5TU0wK\n-abcd", 26, 15, },
+	/* valid */
+	{ "OpenSSLOpenSSL\n", -1, "T3BlblNTTE9wZW5TU0wK-abcd", 25, 15, },
 };
 
 #define N_NL_TESTS (sizeof(base64_nl_tests) / sizeof(*base64_nl_tests))
