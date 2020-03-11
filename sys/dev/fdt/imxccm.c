@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.15 2019/04/01 08:49:35 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.16 2020/03/11 12:17:42 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -927,6 +927,7 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 {
 	struct imxccm_softc *sc = cookie;
 	uint32_t idx = cells[0], parent;
+	uint32_t pcells[2];
 	uint16_t reg;
 	uint8_t pos;
 
@@ -934,7 +935,22 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 	if (idx == 0)
 		return;
 
-	if (sc->sc_gates == imx7d_gates) {
+	if (sc->sc_gates == imx8mq_gates) {
+		switch (idx) {
+		case IMX8MQ_CLK_PCIE1_CTRL:
+		case IMX8MQ_CLK_PCIE2_CTRL:
+			pcells[0] = sc->sc_phandle;
+			pcells[1] = IMX8MQ_SYS2_PLL_250M;
+			imxccm_set_parent(cookie, &idx, pcells);
+			break;
+		case IMX8MQ_CLK_PCIE1_PHY:
+		case IMX8MQ_CLK_PCIE2_PHY:
+			pcells[0] = sc->sc_phandle;
+			pcells[1] = IMX8MQ_SYS2_PLL_100M;
+			imxccm_set_parent(cookie, &idx, pcells);
+			break;
+		}
+	} else if (sc->sc_gates == imx7d_gates) {
 		if (sc->sc_anatop == NULL) {
 			sc->sc_anatop = regmap_bycompatible("fsl,imx7d-anatop");
 			KASSERT(sc->sc_anatop);
