@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch7.S,v 1.15 2020/01/06 15:53:00 kettenis Exp $	*/
+/*	$OpenBSD: cpuswitch7.S,v 1.16 2020/03/11 21:04:58 deraadt Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -238,3 +238,5 @@ ENTRY(proc_trampoline)
 	PULLFRAME
 
 	movs	pc, lr			/* Exit */
+	dsb	nsh
+	isb

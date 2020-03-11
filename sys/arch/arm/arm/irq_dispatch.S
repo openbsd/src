@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.15 2018/08/06 18:39:13 kettenis Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.16 2020/03/11 21:04:58 deraadt Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -128,6 +128,8 @@ ASENTRY_NP(irq_entry)
 	DO_AST
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
+	dsb	nsh
+	isb
 
 	.bss
 	.align	2
