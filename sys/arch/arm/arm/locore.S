@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 2019/10/27 10:26:12 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.20 2020/03/11 13:24:16 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -121,6 +121,8 @@ drop_to_pl1:
 	msr	spsr_fsxc, r0
 	msr	ELR_hyp, lr
 	eret				/* Use the HYP LR to get into SVC */
+	dsb nsh
+	isb
 
 	.globl start_mmu
 start_mmu:
