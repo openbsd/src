@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxgpc.c,v 1.5 2019/04/01 08:40:37 patrick Exp $	*/
+/*	$OpenBSD: imxgpc.c,v 1.6 2020/03/11 12:13:47 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -102,6 +102,8 @@ imxgpc_enable(void *cookie, uint32_t *cells, int on)
 #if defined(__arm64__)
 	struct power_domain_device *pd = cookie;
 	int domain;
+
+	power_domain_enable(pd->pd_node);
 
 	domain = OF_getpropint(pd->pd_node, "reg", 0);
 
