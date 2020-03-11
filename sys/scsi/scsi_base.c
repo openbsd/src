@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.261 2020/01/22 00:17:46 cheloha Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.262 2020/03/11 19:23:08 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -90,9 +90,9 @@ void			scsi_iopool_put(struct scsi_iopool *, void *);
 
 /* Various helper functions for scsi_do_mode_sense() */
 int			scsi_mode_sense(struct scsi_link *, int,
-			    struct scsi_mode_header *, size_t, int, int);
+			    struct scsi_mode_header *, size_t, int);
 int			scsi_mode_sense_big(struct scsi_link *, int,
-			    struct scsi_mode_header_big *, size_t, int, int);
+			    struct scsi_mode_header_big *, size_t, int);
 void *			scsi_mode_sense_page(struct scsi_mode_header *, int,
 			    int);
 void *			scsi_mode_sense_big_page(struct scsi_mode_header_big *,
@@ -1062,7 +1062,7 @@ scsi_start(struct scsi_link *link, int type, int flags)
 
 int
 scsi_mode_sense(struct scsi_link *link, int pg_code,
-    struct scsi_mode_header *data, size_t len, int flags, int timeout)
+    struct scsi_mode_header *data, size_t len, int flags)
 {
 	struct scsi_mode_sense	*cmd;
 	struct scsi_xfer	*xs;
@@ -1077,7 +1077,7 @@ scsi_mode_sense(struct scsi_link *link, int pg_code,
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)data;
 	xs->datalen = len;
-	xs->timeout = timeout;
+	xs->timeout = 20000;
 
 	/*
 	 * Make sure the sense buffer is clean before we do the mode sense, so
@@ -1115,7 +1115,7 @@ scsi_mode_sense(struct scsi_link *link, int pg_code,
 
 int
 scsi_mode_sense_big(struct scsi_link *link, int pg_code,
-    struct scsi_mode_header_big *data, size_t len, int flags, int timeout)
+    struct scsi_mode_header_big *data, size_t len, int flags)
 {
 	struct scsi_mode_sense_big	*cmd;
 	struct scsi_xfer		*xs;
@@ -1130,7 +1130,7 @@ scsi_mode_sense_big(struct scsi_link *link, int pg_code,
 	xs->cmdlen = sizeof(*cmd);
 	xs->data = (void *)data;
 	xs->datalen = len;
-	xs->timeout = timeout;
+	xs->timeout = 20000;
 
 	/*
 	 * Make sure the sense buffer is clean before we do the mode sense, so
@@ -1274,7 +1274,7 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
 		 * bytes) is returned.
 		 */
 		error = scsi_mode_sense(link, pg_code, &buf->hdr,
-		    sizeof(*buf), flags, 20000);
+		    sizeof(*buf), flags);
 		if (error == 0) {
 			/*
 			 * Page data may be invalid (e.g. all zeros) but we
@@ -1300,7 +1300,7 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
 	 * Try 10 byte mode sense request.
 	 */
 	error = scsi_mode_sense_big(link, pg_code, &buf->hdr_big,
-	    sizeof(*buf), flags, 20000);
+	    sizeof(*buf), flags);
 	if (error != 0)
 		return error;
 	if (_2btol(buf->hdr_big.data_length) < 6)
