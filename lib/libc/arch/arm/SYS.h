@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.16 2016/08/06 19:16:09 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.17 2020/03/11 12:53:19 deraadt Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -53,8 +53,10 @@
 	__END_HIDDEN(x); END(x)
 
 #define SYSTRAP(x) \
-	ldr	r12, =SYS_ ## x;		\
-	swi	0
+	ldr	r12, =SYS_ ## x;			\
+	swi	0;					\
+	nop;						\
+	nop
 
 #define	CERROR		_C_LABEL(__cerror)
 

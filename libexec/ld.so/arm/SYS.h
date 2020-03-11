@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: SYS.h,v 1.2 2020/03/11 12:53:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -31,7 +31,9 @@
 
 #define SYSTRAP(x) \
 	ldr	r12, =SYS_ ## x;			\
-	swi	0
+	swi	0;					\
+	nop;						\
+	nop
 
 #define DL_SYSCALL(n)					\
 	.global		__CONCAT(_dl_,n)		;\
