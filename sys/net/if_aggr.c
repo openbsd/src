@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.27 2019/12/23 09:03:24 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.28 2020/03/11 07:01:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -1022,8 +1022,7 @@ aggr_set_options(struct aggr_softc *sc, const struct trunk_opts *tro)
 		break;
 
 	case TRUNK_OPT_LACP_TIMEOUT:
-		if (opt->lacp_timeout > nitems(aggr_periodic_times) ||
-		    aggr_periodic_times[opt->lacp_timeout] == 0)
+		if (opt->lacp_timeout >= nitems(aggr_periodic_times))
 			return (EINVAL);
 
 		aggr_set_lacp_timeout(sc, opt->lacp_timeout);
