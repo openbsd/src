@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.22 2020/01/09 14:35:19 mpi Exp $ */
+/*	$OpenBSD: cz.c,v 1.23 2020/03/11 15:51:15 cheloha Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -181,7 +181,6 @@ struct	cztty_softc * cztty_getttysoftc(dev_t dev);
 int	cztty_findmajor(void);
 int	cztty_major;
 int	cztty_attached_ttys;
-int	cz_timeout_ticks;
 
 cdev_decl(cztty);
 
@@ -362,11 +361,8 @@ cz_attach(parent, self, aux)
  polling_mode:
 	if (cz->cz_ih == NULL) {
 		timeout_set(&cz->cz_timeout, cz_poll, cz);
-		if (cz_timeout_ticks == 0)
-			cz_timeout_ticks = max(1, hz * CZ_POLL_MS / 1000);
-		printf("%s: polling mode, %d ms interval (%d tick%s)\n",
-		    cz->cz_dev.dv_xname, CZ_POLL_MS, cz_timeout_ticks,
-		    cz_timeout_ticks == 1 ? "" : "s");
+		printf("%s: polling mode, %d ms interval\n",
+		    cz->cz_dev.dv_xname, CZ_POLL_MS);
 	}
 
 	if (cztty_major == 0)
@@ -667,7 +663,7 @@ cz_poll(void *arg)
 	struct cz_softc *cz = arg;
 
 	cz_intr(cz);
-	timeout_add(&cz->cz_timeout, cz_timeout_ticks);
+	timeout_add_msec(&cz->cz_timeout, CZ_POLL_MS);
 
 	splx(s);
 }
@@ -825,7 +821,8 @@ cz_wait_pci_doorbell(struct cz_softc *cz, char *wstring)
 	int	error;
 
 	while (CZ_PLX_READ(cz, PLX_PCI_LOCAL_DOORBELL)) {
-		error = tsleep(cz, TTIPRI | PCATCH, wstring, max(1, hz/100));
+		error = tsleep_nsec(cz, TTIPRI | PCATCH, wstring,
+		    MSEC_TO_NSEC(10));
 		if ((error != 0) && (error != EWOULDBLOCK))
 			return (error);
 	}
@@ -983,7 +980,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 			printf("%s: Enabling polling.\n",
 			    cz->cz_dev.dv_xname);
 #endif
-			timeout_add(&cz->cz_timeout, cz_timeout_ticks);
+			timeout_add_msec(&cz->cz_timeout, CZ_POLL_MS);
 		}
 
 		/*
