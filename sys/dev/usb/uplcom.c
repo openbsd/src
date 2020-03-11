@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.73 2018/11/18 16:23:14 mpi Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.74 2020/03/11 13:04:02 jasper Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -626,11 +626,6 @@ uplcom_param(void *addr, int portno, struct termios *t)
 
 	if (sc->sc_rts == -1 || sc->sc_dtr == -1)
 		uplcom_set_line_state(sc);
-
-	if (err) {
-		DPRINTF(("uplcom_param: err=%s\n", usbd_errstr(err)));
-		return (EIO);
-	}
 
 	return (0);
 }
