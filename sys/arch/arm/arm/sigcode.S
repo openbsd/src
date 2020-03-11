@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.S,v 1.7 2018/08/06 18:39:13 kettenis Exp $	*/
+/*	$OpenBSD: sigcode.S,v 1.8 2020/03/11 13:42:15 deraadt Exp $	*/
 /*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
@@ -59,12 +59,8 @@ sigcode:
 	swi	SYS_sigreturn
 	.globl  _C_LABEL(sigcoderet)
 _C_LABEL(sigcoderet):
-
-/* Well if that failed we better exit quick ! */
-
+	/* Well if that failed we better exit quick ! */
 	swi	SYS_exit
-	b	. - 8
-
 	.align	2
         .global _C_LABEL(esigcode)
 _C_LABEL(esigcode):
