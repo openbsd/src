@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.19 2014/07/12 19:01:49 tedu Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.20 2020/03/11 09:59:31 otto Exp $	*/
 /*	$NetBSD: installboot.c,v 1.2 1997/04/06 08:41:12 cgd Exp $	*/
 
 /*
@@ -68,12 +68,16 @@ int	max_block_count;
 
 char		*loadprotoblocks(char *, long *);
 int		loadblocknums(char *, int, unsigned long);
-static void	devread(int, void *, daddr32_t, size_t, char *);
+static void	devread(int, void *, daddr_t, size_t, char *);
 static void	usage(void);
+static int	sbchk(struct fs *, daddr_t);
+static void	sbread(int, daddr_t, struct fs **, char *);
 int		main(int, char *[]);
 
 int	isofsblk = 0;
 int	isofseblk = 0;
+
+static const daddr_t sbtry[] = SBLOCKSEARCH;
 
 static void
 usage(void)
@@ -183,7 +187,7 @@ main(int argc, char *argv[])
 	sync();
 	sleep(2);
 
-	if (loadblocknums(boot, devfd, partoffset) != 0)
+	if (loadblocknums(boot, devfd, DL_SECTOBLK(&dl, partoffset)) != 0)
 		exit(1);
 
 	(void)close(devfd);
@@ -302,13 +306,10 @@ loadprotoblocks(char *fname, long *size)
 }
 
 static void
-devread(int fd, void *buf, daddr32_t blk, size_t size, char *msg)
+devread(int fd, void *buf, daddr_t blk, size_t size, char *msg)
 {
-	if (lseek(fd, dbtob(blk), SEEK_SET) != dbtob(blk))
-		err(1, "%s: devread: lseek", msg);
-
-	if (read(fd, buf, size) != size)
-		err(1, "%s: devread: read", msg);
+	if (pread(fd, buf, size, dbtob((off_t)blk)) != (ssize_t)size)
+		err(1, "%s: devread: pread", msg);
 }
 
 static char sblock[SBSIZE];
@@ -321,8 +322,10 @@ loadblocknums(char *boot, int devfd, unsigned long partoffset)
 	struct	statfs	statfsbuf;
 	struct fs	*fs;
 	char		*buf;
-	daddr32_t	blk, *ap;
-	struct ufs1_dinode	*ip;
+	daddr32_t	*ap1;
+	daddr_t		blk, *ap2;
+	struct ufs1_dinode	*ip1;
+	struct ufs2_dinode	*ip2;
 	int32_t		cksum;
 
 	/*
@@ -373,9 +376,7 @@ loadblocknums(char *boot, int devfd, unsigned long partoffset)
 	close(fd);
 
 	/* Read superblock */
-	devread(devfd, sblock, btodb(SBOFF) + partoffset, SBSIZE,
-	    "superblock");
-	fs = (struct fs *)sblock;
+	sbread(devfd, partoffset, &fs, sblock);
 
 	/* Read inode */
 	if ((buf = malloc(fs->fs_bsize)) == NULL)
@@ -383,19 +384,25 @@ loadblocknums(char *boot, int devfd, unsigned long partoffset)
 
 	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
 	devread(devfd, buf, blk + partoffset, fs->fs_bsize, "inode");
-	ip = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+		ip1 = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs,
+		    statbuf.st_ino);
+		ndb = howmany(ip1->di_size, fs->fs_bsize);
+	} else {
+		ip2 = (struct ufs2_dinode *)(buf) + ino_to_fsbo(fs,
+		    statbuf.st_ino);
+		ndb = howmany(ip2->di_size, fs->fs_bsize);
+	}
+	/*
+	 * Check the block numbers; we don't handle fragments
+	 */
+	if (ndb > max_block_count)
+		errx(1, "%s: Too many blocks", boot);
 
 	/*
 	 * Register filesystem block size.
 	 */
 	bbinfop->bsize = fs->fs_bsize;
-
-	/*
-	 * Get the block numbers; we don't handle fragments
-	 */
-	ndb = howmany(ip->di_size, fs->fs_bsize);
-	if (ndb > max_block_count)
-		errx(1, "%s: Too many blocks", boot);
 
 	/*
 	 * Register block count.
@@ -404,12 +411,22 @@ loadblocknums(char *boot, int devfd, unsigned long partoffset)
 
 	if (verbose)
 		(void)printf("%s: block numbers: ", boot);
-	ap = ip->di_db;
-	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
-		blk = fsbtodb(fs, *ap);
-		bbinfop->blocks[i] = blk + partoffset;
-		if (verbose)
-			(void)printf("%d ", bbinfop->blocks[i]);
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+		ap1 = ip1->di_db;
+		for (i = 0; i < NDADDR && *ap1 && ndb; i++, ap1++, ndb--) {
+			blk = fsbtodb(fs, *ap1);
+			bbinfop->blocks[i] = blk + partoffset;
+			if (verbose)
+				(void)printf("%d ", bbinfop->blocks[i]);
+		}
+	} else {
+		ap2 = ip2->di_db;
+		for (i = 0; i < NDADDR && *ap2 && ndb; i++, ap2++, ndb--) {
+			blk = fsbtodb(fs, *ap2);
+			bbinfop->blocks[i] = blk + partoffset;
+			if (verbose)
+				(void)printf("%d ", bbinfop->blocks[i]);
+		}
 	}
 	if (verbose)
 		(void)printf("\n");
@@ -423,15 +440,28 @@ loadblocknums(char *boot, int devfd, unsigned long partoffset)
 	 */
 	if (verbose)
 		(void)printf("%s: block numbers (indirect): ", boot);
-	blk = ip->di_ib[0];
-	devread(devfd, buf, blk + partoffset, fs->fs_bsize,
-	    "indirect block");
-	ap = (daddr32_t *)buf;
-	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
-		blk = fsbtodb(fs, *ap);
-		bbinfop->blocks[i] = blk + partoffset;
-		if (verbose)
-			(void)printf("%d ", bbinfop->blocks[i]);
+	if (fs->fs_magic == FS_UFS1_MAGIC) {
+		blk = ip1->di_ib[0];
+		devread(devfd, buf, blk + partoffset, fs->fs_bsize,
+		    "indirect block");
+		ap1 = (daddr32_t *)buf;
+		for (; i < NINDIR(fs) && *ap1 && ndb; i++, ap1++, ndb--) {
+			blk = fsbtodb(fs, *ap1);
+			bbinfop->blocks[i] = blk + partoffset;
+			if (verbose)
+				(void)printf("%d ", bbinfop->blocks[i]);
+		}
+	} else {
+		blk = ip2->di_ib[0];
+		devread(devfd, buf, blk + partoffset, fs->fs_bsize,
+		    "indirect block");
+		ap2 = (daddr_t *)buf;
+		for (; i < NINDIR(fs) && *ap2 && ndb; i++, ap2++, ndb--) {
+			blk = fsbtodb(fs, *ap2);
+			bbinfop->blocks[i] = blk + partoffset;
+			if (verbose)
+				(void)printf("%d ", bbinfop->blocks[i]);
+		}
 	}
 	if (verbose)
 		(void)printf("\n");
@@ -447,4 +477,75 @@ checksum:
 	bbinfop->cksum = -cksum;
 
 	return 0;
+}
+
+static int
+sbchk(struct fs *fs, daddr_t sbloc)
+{
+	if (verbose)
+		fprintf(stderr, "looking for superblock at %lld\n", sbloc);
+
+	if (fs->fs_magic != FS_UFS2_MAGIC && fs->fs_magic != FS_UFS1_MAGIC) {
+		if (verbose)
+			fprintf(stderr, "bad superblock magic 0x%x\n",
+			    fs->fs_magic);
+		return (0);
+	}
+
+	/*
+	 * Looking for an FFS1 file system at SBLOCK_UFS2 will find the
+	 * wrong superblock for file systems with 64k block size.
+	 */
+	if (fs->fs_magic == FS_UFS1_MAGIC && sbloc == SBLOCK_UFS2) {
+		if (verbose)
+			fprintf(stderr, "skipping ffs1 superblock at %lld\n",
+			    sbloc);
+		return (0);
+	}
+
+	if (fs->fs_bsize <= 0 || fs->fs_bsize < sizeof(struct fs) ||
+	    fs->fs_bsize > MAXBSIZE) {
+		if (verbose)
+			fprintf(stderr, "invalid superblock block size %d\n",
+			    fs->fs_bsize);
+		return (0);
+	}
+
+	if (fs->fs_sbsize <= 0 || fs->fs_sbsize > SBSIZE) {
+		if (verbose)
+			fprintf(stderr, "invalid superblock size %d\n",
+			    fs->fs_sbsize);
+		return (0);
+	}
+
+	if (fs->fs_inopb <= 0) {
+		if (verbose)
+			fprintf(stderr, "invalid superblock inodes/block %d\n",
+			    fs->fs_inopb);
+		return (0);
+	}
+
+	if (verbose)
+		fprintf(stderr, "found valid %s superblock\n",
+		    fs->fs_magic == FS_UFS2_MAGIC ? "ffs2" : "ffs1");
+
+	return (1);
+}
+
+static void
+sbread(int fd, daddr_t poffset, struct fs **fs, char *sblock)
+{
+	int i;
+	daddr_t sboff;
+
+	for (i = 0; sbtry[i] != -1; i++) {
+		sboff = sbtry[i] / DEV_BSIZE;
+		devread(fd, sblock, poffset + sboff, SBSIZE, "superblock");
+		*fs = (struct fs *)sblock;
+		if (sbchk(*fs, sbtry[i]))
+			break;
+	}
+
+	if (sbtry[i] == -1)
+		errx(1, "couldn't find ffs superblock");
 }

@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.10 2014/02/19 20:52:57 miod Exp $
+$OpenBSD: version,v 1.11 2020/03/11 09:59:31 otto Exp $
 $NetBSD: version,v 1.9 1997/01/23 23:10:38 cgd Exp $
 
 1.1:	Initial version
@@ -26,3 +26,4 @@ $NetBSD: version,v 1.9 1997/01/23 23:10:38 cgd Exp $
 1.8:	Use MI loadfile, warn if kernel image would overlap SRM
 1.9:	Better PALcode switching sequence
 1.10:	/etc/random.seed support
+1.11:	ffs2 support

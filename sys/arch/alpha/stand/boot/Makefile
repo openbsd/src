@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2019/10/29 02:55:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.25 2020/03/11 09:59:31 otto Exp $
 #	$NetBSD: Makefile,v 1.17 1997/04/17 07:27:46 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -19,10 +19,10 @@ CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym
 
 .PATH:	${S}/lib/libkern/arch/alpha ${S}/lib/libkern
 SRCS+=	__divlu.S __remqu.S __reml.S strlen.c bzero.c __divl.S __divqu.S \
-	__remlu.S
+	__remlu.S __divq.S __remq.S
 
 .PATH:	${S}/lib/libkern/arch/alpha ${S}/lib/libsa
-SRCS+=	loadfile.c arc4.c
+SRCS+=	loadfile.c arc4.c ufs2.c
 
 DEFNS= -DCOMPAT_UFS
 
