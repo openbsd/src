@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.73 2019/12/15 14:36:59 kn Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.74 2020/03/11 12:47:49 jasper Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -459,7 +459,7 @@ terminate_vm(uint32_t terminate_id, const char *name, unsigned int flags)
  * terminate_vm_complete
  *
  * Callback function invoked when we are expecting an
- * IMSG_VMDOP_TERMINATE_VMM_RESPONSE message indicating the completion of
+ * IMSG_VMDOP_TERMINATE_VM_RESPONSE message indicating the completion of
  * a terminate vm operation.
  *
  * Parameters:
