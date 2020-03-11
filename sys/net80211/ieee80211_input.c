@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.214 2019/12/20 09:28:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.215 2020/03/11 12:39:27 tobhe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -208,7 +208,8 @@ ieee80211_inputm(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			ic->ic_stats.is_rx_tooshort++;
 			goto err;
 		}
-	}
+	} else
+		hdrlen = 0;
 	if ((hasqos = ieee80211_has_qos(wh))) {
 		qos = ieee80211_get_qos(wh);
 		tid = qos & IEEE80211_QOS_TID;
