@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.251 2020/02/21 11:10:23 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.252 2020/03/11 15:45:03 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
  *	@(#)kern_sig.c	8.7 (Berkeley) 4/18/94
  */
 
-#define	SIGPROP		/* include signal properties table */
 #include <sys/param.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
@@ -82,6 +81,46 @@ const struct filterops sig_filtops = {
 	.f_detach	= filt_sigdetach,
 	.f_event	= filt_signal,
 };
+
+const int sigprop[NSIG + 1] = {
+	0,			/* unused */
+	SA_KILL,		/* SIGHUP */
+	SA_KILL,		/* SIGINT */
+	SA_KILL|SA_CORE,	/* SIGQUIT */
+	SA_KILL|SA_CORE,	/* SIGILL */
+	SA_KILL|SA_CORE,	/* SIGTRAP */
+	SA_KILL|SA_CORE,	/* SIGABRT */
+	SA_KILL|SA_CORE,	/* SIGEMT */
+	SA_KILL|SA_CORE,	/* SIGFPE */
+	SA_KILL,		/* SIGKILL */
+	SA_KILL|SA_CORE,	/* SIGBUS */
+	SA_KILL|SA_CORE,	/* SIGSEGV */
+	SA_KILL|SA_CORE,	/* SIGSYS */
+	SA_KILL,		/* SIGPIPE */
+	SA_KILL,		/* SIGALRM */
+	SA_KILL,		/* SIGTERM */
+	SA_IGNORE,		/* SIGURG */
+	SA_STOP,		/* SIGSTOP */
+	SA_STOP|SA_TTYSTOP,	/* SIGTSTP */
+	SA_IGNORE|SA_CONT,	/* SIGCONT */
+	SA_IGNORE,		/* SIGCHLD */
+	SA_STOP|SA_TTYSTOP,	/* SIGTTIN */
+	SA_STOP|SA_TTYSTOP,	/* SIGTTOU */
+	SA_IGNORE,		/* SIGIO */
+	SA_KILL,		/* SIGXCPU */
+	SA_KILL,		/* SIGXFSZ */
+	SA_KILL,		/* SIGVTALRM */
+	SA_KILL,		/* SIGPROF */
+	SA_IGNORE,		/* SIGWINCH  */
+	SA_IGNORE,		/* SIGINFO */
+	SA_KILL,		/* SIGUSR1 */
+	SA_KILL,		/* SIGUSR2 */
+	SA_IGNORE,		/* SIGTHR */
+};
+
+#define	contsigmask	(sigmask(SIGCONT))
+#define	stopsigmask	(sigmask(SIGSTOP) | sigmask(SIGTSTP) | \
+			    sigmask(SIGTTIN) | sigmask(SIGTTOU))
 
 void proc_stop(struct proc *p, int);
 void proc_stop_sweep(void *);

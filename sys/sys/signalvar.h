@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.38 2020/02/21 11:10:23 claudio Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.39 2020/03/11 15:45:04 claudio Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -103,49 +103,6 @@ struct	sigacts {
 #define	SA_IGNORE	0x10		/* ignore by default */
 #define	SA_CONT		0x20		/* continue if suspended */
 #define	SA_CANTMASK	0x40		/* non-maskable, catchable */
-
-#ifdef	SIGPROP
-int sigprop[NSIG + 1] = {
-	0,			/* unused */
-	SA_KILL,		/* SIGHUP */
-	SA_KILL,		/* SIGINT */
-	SA_KILL|SA_CORE,	/* SIGQUIT */
-	SA_KILL|SA_CORE,	/* SIGILL */
-	SA_KILL|SA_CORE,	/* SIGTRAP */
-	SA_KILL|SA_CORE,	/* SIGABRT */
-	SA_KILL|SA_CORE,	/* SIGEMT */
-	SA_KILL|SA_CORE,	/* SIGFPE */
-	SA_KILL,		/* SIGKILL */
-	SA_KILL|SA_CORE,	/* SIGBUS */
-	SA_KILL|SA_CORE,	/* SIGSEGV */
-	SA_KILL|SA_CORE,	/* SIGSYS */
-	SA_KILL,		/* SIGPIPE */
-	SA_KILL,		/* SIGALRM */
-	SA_KILL,		/* SIGTERM */
-	SA_IGNORE,		/* SIGURG */
-	SA_STOP,		/* SIGSTOP */
-	SA_STOP|SA_TTYSTOP,	/* SIGTSTP */
-	SA_IGNORE|SA_CONT,	/* SIGCONT */
-	SA_IGNORE,		/* SIGCHLD */
-	SA_STOP|SA_TTYSTOP,	/* SIGTTIN */
-	SA_STOP|SA_TTYSTOP,	/* SIGTTOU */
-	SA_IGNORE,		/* SIGIO */
-	SA_KILL,		/* SIGXCPU */
-	SA_KILL,		/* SIGXFSZ */
-	SA_KILL,		/* SIGVTALRM */
-	SA_KILL,		/* SIGPROF */
-	SA_IGNORE,		/* SIGWINCH  */
-	SA_IGNORE,		/* SIGINFO */
-	SA_KILL,		/* SIGUSR1 */
-	SA_KILL,		/* SIGUSR2 */
-	SA_IGNORE,		/* SIGTHR */
-};
-
-#define	contsigmask	(sigmask(SIGCONT))
-#define	stopsigmask	(sigmask(SIGSTOP) | sigmask(SIGTSTP) | \
-			    sigmask(SIGTTIN) | sigmask(SIGTTOU))
-
-#endif /* SIGPROP */
 
 #define	sigcantmask	(sigmask(SIGKILL) | sigmask(SIGSTOP))
 
