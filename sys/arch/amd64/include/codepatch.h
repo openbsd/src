@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.13 2020/02/28 05:22:53 deraadt Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.14 2020/03/11 07:27:08 guenther Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -67,15 +67,10 @@ void codepatch_disable(void);
 #define CPTAG_FENCE_NO_SAFE_SMAP	12
 
 /*
- * As stac/clac SMAP instructions are 3 bytes, we want the fastest
- * 3 byte nop sequence possible here.  This will be replaced by
- * stac/clac instructions if SMAP is detected after booting.
- *
- * This would be 'nop (%rax)' if binutils could cope.
- * Intel documents multi-byte NOP sequences as being available
- * on all family 0x6 and 0xf processors (ie 686+)
+ * stac/clac SMAP instructions have lfence like semantics.  Let's
+ * guarantee those semantics on older cpus.
  */
-#define SMAP_NOP	.byte 0x0f, 0x1f, 0x00
+#define SMAP_NOP	lfence
 #define SMAP_STAC	CODEPATCH_START			;\
 			SMAP_NOP			;\
 			CODEPATCH_END(CPTAG_STAC)
