@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.201 2020/01/27 08:53:13 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.202 2020/03/12 09:49:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -733,6 +733,7 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 	if (c->prompt_mode == PROMPT_ENTRY) {
 		switch (key) {
 		case '\003': /* C-c */
+		case '\007': /* C-g */
 		case '\010': /* C-h */
 		case '\011': /* Tab */
 		case '\025': /* C-u */
@@ -812,6 +813,9 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 		return (1);
 	case 'p':
 		*new_key = '\031'; /* C-y */
+		return (1);
+	case 'q':
+		*new_key = '\003'; /* C-c */
 		return (1);
 	case 's':
 	case KEYC_DC:
