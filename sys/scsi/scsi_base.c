@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.263 2020/03/12 13:49:25 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.264 2020/03/12 16:15:03 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1156,6 +1156,9 @@ scsi_mode_sense_big(struct scsi_link *link, int pg_code,
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
+	if (_2btol(data->data_length) < 6)
+		error = EIO;
+
 #ifdef SCSIDEBUG
 	sc_print_addr(link);
 	if (error == 0) {
@@ -1307,8 +1310,6 @@ scsi_do_mode_sense(struct scsi_link *link, int pg_code,
 	error = scsi_mode_sense_big(link, pg_code, &buf->hdr_big, flags);
 	if (error != 0)
 		return error;
-	if (_2btol(buf->hdr_big.data_length) < 6)
-		return EIO;
 
 	*big = 1;
 	*page_data = scsi_mode_sense_big_page(&buf->hdr_big, pg_code,
