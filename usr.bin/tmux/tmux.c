@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.192 2020/01/28 11:31:31 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.193 2020/03/12 09:26:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -379,12 +379,15 @@ main(int argc, char **argv)
 			path[strcspn(path, ",")] = '\0';
 		}
 	}
-	if (path == NULL && (path = make_label(label, &cause)) == NULL) {
-		if (cause != NULL) {
-			fprintf(stderr, "%s\n", cause);
-			free(cause);
+	if (path == NULL) {
+		if ((path = make_label(label, &cause)) == NULL) {
+			if (cause != NULL) {
+				fprintf(stderr, "%s\n", cause);
+				free(cause);
+			}
+			exit(1);
 		}
-		exit(1);
+		flags |= CLIENT_DEFAULTSOCKET;
 	}
 	socket_path = path;
 	free(label);
