@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.198 2020/03/12 15:29:47 visa Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.199 2020/03/12 17:38:02 visa Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -700,14 +700,12 @@ bwrite(struct buf *bp)
 	/*
 	 * Remember buffer type, to switch on it later.  If the write was
 	 * synchronous, but the file system was mounted with MNT_ASYNC,
-	 * convert it to a delayed write.  Caching has to be enabled,
-	 * otherwise the write will be discarded.
+	 * convert it to a delayed write.
 	 * XXX note that this relies on delayed tape writes being converted
 	 * to async, not sync writes (which is safe, but ugly).
 	 */
 	async = ISSET(bp->b_flags, B_ASYNC);
 	if (!async && mp && ISSET(mp->mnt_flag, MNT_ASYNC)) {
-		CLR(bp->b_flags, B_NOCACHE);
 		bdwrite(bp);
 		return (0);
 	}
