@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.16 2020/01/23 10:48:37 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.17 2020/03/12 17:15:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -702,7 +702,7 @@ ssl3_setup_read_buffer(SSL *s)
 	if (S3I(s)->rbuf.buf == NULL) {
 		len = SSL3_RT_MAX_PLAIN_LENGTH +
 		    SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
-		if ((p = malloc(len)) == NULL)
+		if ((p = calloc(1, len)) == NULL)
 			goto err;
 		S3I(s)->rbuf.buf = p;
 		S3I(s)->rbuf.len = len;
@@ -736,7 +736,7 @@ ssl3_setup_write_buffer(SSL *s)
 			len += headerlen + align +
 			    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 
-		if ((p = malloc(len)) == NULL)
+		if ((p = calloc(1, len)) == NULL)
 			goto err;
 		S3I(s)->wbuf.buf = p;
 		S3I(s)->wbuf.len = len;
