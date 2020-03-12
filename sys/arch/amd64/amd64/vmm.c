@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.266 2020/03/11 16:38:42 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.267 2020/03/12 22:14:20 tobhe Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1167,7 +1167,7 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	memcpy(vm->vm_memranges, vcp->vcp_memranges,
 	    vm->vm_nmemranges * sizeof(vm->vm_memranges[0]));
 	vm->vm_memory_size = memsize;
-	strncpy(vm->vm_name, vcp->vcp_name, VMM_MAX_NAME_LEN);
+	strlcpy(vm->vm_name, vcp->vcp_name, VMM_MAX_NAME_LEN);
 
 	rw_enter_write(&vmm_softc->vm_lock);
 
@@ -3718,7 +3718,7 @@ vm_get_info(struct vm_info_params *vip)
 		out[i].vir_ncpus = vm->vm_vcpu_ct;
 		out[i].vir_id = vm->vm_id;
 		out[i].vir_creator_pid = vm->vm_creator_pid;
-		strncpy(out[i].vir_name, vm->vm_name, VMM_MAX_NAME_LEN);
+		strlcpy(out[i].vir_name, vm->vm_name, VMM_MAX_NAME_LEN);
 		rw_enter_read(&vm->vm_vcpu_lock);
 		for (j = 0; j < vm->vm_vcpu_ct; j++) {
 			out[i].vir_vcpu_state[j] = VCPU_STATE_UNKNOWN;
