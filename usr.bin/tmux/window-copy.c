@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.248 2020/03/11 18:46:42 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.249 2020/03/12 13:19:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -230,6 +230,7 @@ struct window_copy_mode_data {
 	} lineflag;			/* line selection mode */
 	int		 rectflag;	/* in rectangle copy mode? */
 	int		 scroll_exit;	/* exit on scroll to end? */
+	int		 hide_position;	/* hide position marker */
 
 	enum {
 		SEL_CHAR,		/* select one char at a time */
@@ -345,6 +346,7 @@ window_copy_init(struct window_mode_entry *wme,
 	data->cy = data->backing->cy;
 
 	data->scroll_exit = args_has(args, 'e');
+	data->hide_position = args_has(args, 'H');
 
 	data->screen.cx = data->cx;
 	data->screen.cy = data->cy;
@@ -2774,7 +2776,7 @@ window_copy_write_line(struct window_mode_entry *wme,
 	style_apply(&gc, oo, "mode-style");
 	gc.flags |= GRID_FLAG_NOPALETTE;
 
-	if (py == 0 && s->rupper < s->rlower) {
+	if (py == 0 && s->rupper < s->rlower && !data->hide_position) {
 		if (data->searchmark == NULL) {
 			size = xsnprintf(hdr, sizeof hdr,
 			    "[%u/%u]", data->oy, screen_hsize(data->backing));
