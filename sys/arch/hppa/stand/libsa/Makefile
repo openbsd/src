@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2019/10/29 02:55:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2020/03/12 19:19:37 otto Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -28,7 +28,7 @@ SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fchmod.c fstat.c \
 	ioctl.c lseek.c open.c read.c stat.c write.c cread.c readdir.c cons.c
 
 # boot filesystems
-SRCS+=	ufs.c cd9660.c
+SRCS+=	ufs.c ufs2.c cd9660.c
 
 .PATH:  ${DIR_SA}
 
