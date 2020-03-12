@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.21 2020/03/10 17:02:21 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.22 2020/03/12 17:01:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,7 +152,7 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 	int i, len, left;
 	size_t align;
 	unsigned char *pkt;
-	SSL3_BUFFER *rb;
+	SSL3_BUFFER_INTERNAL *rb;
 
 	if (n <= 0)
 		return n;
@@ -329,7 +329,7 @@ ssl3_get_record(SSL *s)
 {
 	int al;
 	int enc_err, n, i, ret = -1;
-	SSL3_RECORD *rr;
+	SSL3_RECORD_INTERNAL *rr;
 	SSL_SESSION *sess;
 	unsigned char md[EVP_MAX_MD_SIZE];
 	unsigned mac_size, orig_len;
@@ -360,7 +360,7 @@ ssl3_get_record(SSL *s)
 
 		CBS_init(&header, s->internal->packet, SSL3_RT_HEADER_LENGTH);
 
-		/* Pull apart the header into the SSL3_RECORD */
+		/* Pull apart the header into the SSL3_RECORD_INTERNAL */
 		if (!CBS_get_u8(&header, &type) ||
 		    !CBS_get_u16(&header, &ssl_version) ||
 		    !CBS_get_u16(&header, &len)) {
@@ -621,7 +621,7 @@ static int
 ssl3_create_record(SSL *s, unsigned char *p, int type, const unsigned char *buf,
     unsigned int len)
 {
-	SSL3_RECORD *wr = &(S3I(s)->wrec);
+	SSL3_RECORD_INTERNAL *wr = &(S3I(s)->wrec);
 	SSL_SESSION *sess = s->session;
 	int eivlen, mac_size;
 	uint16_t version;
@@ -729,8 +729,8 @@ ssl3_create_record(SSL *s, unsigned char *p, int type, const unsigned char *buf,
 static int
 do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 {
-	SSL3_RECORD *wr = &(S3I(s)->wrec);
-	SSL3_BUFFER *wb = &(S3I(s)->wbuf);
+	SSL3_RECORD_INTERNAL *wr = &(S3I(s)->wrec);
+	SSL3_BUFFER_INTERNAL *wb = &(S3I(s)->wbuf);
 	SSL_SESSION *sess = s->session;
 	unsigned char *p;
 	int i, clear = 0;
@@ -741,7 +741,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		if (!ssl3_setup_write_buffer(s))
 			return -1;
 
-	/* first check if there is a SSL3_BUFFER still being written
+	/* first check if there is a SSL3_BUFFER_INTERNAL still being written
 	 * out.  This will happen with non blocking IO */
 	if (wb->left != 0)
 		return (ssl3_write_pending(s, type, buf, len));
@@ -830,7 +830,7 @@ int
 ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 {
 	int i;
-	SSL3_BUFFER *wb = &(S3I(s)->wbuf);
+	SSL3_BUFFER_INTERNAL *wb = &(S3I(s)->wbuf);
 
 	/* XXXX */
 	if ((S3I(s)->wpend_tot > (int)len) || ((S3I(s)->wpend_buf != buf) &&
@@ -906,7 +906,7 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	void (*cb)(const SSL *ssl, int type2, int val) = NULL;
 	int al, i, j, ret, rrcount = 0;
 	unsigned int n;
-	SSL3_RECORD *rr;
+	SSL3_RECORD_INTERNAL *rr;
 
 	if (S3I(s)->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_read_buffer(s))

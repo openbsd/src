@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls1.h,v 1.22 2018/08/24 19:35:05 jsing Exp $ */
+/* $OpenBSD: dtls1.h,v 1.23 2020/03/12 17:01:53 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -161,12 +161,16 @@ typedef struct dtls1_state_st {
 	struct dtls1_state_internal_st *internal;
 } DTLS1_STATE;
 
+#ifndef LIBRESSL_INTERNAL
+
 typedef struct dtls1_record_data_st {
 	unsigned char *packet;
 	unsigned int   packet_length;
 	SSL3_BUFFER    rbuf;
 	SSL3_RECORD    rrec;
 } DTLS1_RECORD_DATA;
+
+#endif
 
 #endif
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.70 2020/03/10 17:02:21 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.71 2020/03/12 17:01:53 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -186,7 +186,7 @@ static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
     int len, int peek);
 static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap);
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
-static DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
+static DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr,
     unsigned int *is_next_epoch);
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
     unsigned char *priority);
@@ -196,16 +196,16 @@ static int dtls1_process_record(SSL *s);
 static int
 dtls1_copy_record(SSL *s, pitem *item)
 {
-	DTLS1_RECORD_DATA *rdata;
+	DTLS1_RECORD_DATA_INTERNAL *rdata;
 
-	rdata = (DTLS1_RECORD_DATA *)item->data;
+	rdata = (DTLS1_RECORD_DATA_INTERNAL *)item->data;
 
 	free(S3I(s)->rbuf.buf);
 
 	s->internal->packet = rdata->packet;
 	s->internal->packet_length = rdata->packet_length;
-	memcpy(&(S3I(s)->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER));
-	memcpy(&(S3I(s)->rrec), &(rdata->rrec), sizeof(SSL3_RECORD));
+	memcpy(&(S3I(s)->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER_INTERNAL));
+	memcpy(&(S3I(s)->rrec), &(rdata->rrec), sizeof(SSL3_RECORD_INTERNAL));
 
 	/* Set proper sequence number for mac calculation */
 	memcpy(&(S3I(s)->read_sequence[2]), &(rdata->packet[5]), 6);
@@ -217,30 +217,29 @@ dtls1_copy_record(SSL *s, pitem *item)
 static int
 dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 {
-	DTLS1_RECORD_DATA *rdata;
+	DTLS1_RECORD_DATA_INTERNAL *rdata;
 	pitem *item;
 
 	/* Limit the size of the queue to prevent DOS attacks */
 	if (pqueue_size(queue->q) >= 100)
 		return 0;
 
-	rdata = malloc(sizeof(DTLS1_RECORD_DATA));
+	rdata = malloc(sizeof(DTLS1_RECORD_DATA_INTERNAL));
 	item = pitem_new(priority, rdata);
 	if (rdata == NULL || item == NULL)
 		goto init_err;
 
 	rdata->packet = s->internal->packet;
 	rdata->packet_length = s->internal->packet_length;
-	memcpy(&(rdata->rbuf), &(S3I(s)->rbuf), sizeof(SSL3_BUFFER));
-	memcpy(&(rdata->rrec), &(S3I(s)->rrec), sizeof(SSL3_RECORD));
+	memcpy(&(rdata->rbuf), &(S3I(s)->rbuf), sizeof(SSL3_BUFFER_INTERNAL));
+	memcpy(&(rdata->rrec), &(S3I(s)->rrec), sizeof(SSL3_RECORD_INTERNAL));
 
 	item->data = rdata;
 
-
 	s->internal->packet = NULL;
 	s->internal->packet_length = 0;
-	memset(&(S3I(s)->rbuf), 0, sizeof(SSL3_BUFFER));
-	memset(&(S3I(s)->rrec), 0, sizeof(SSL3_RECORD));
+	memset(&(S3I(s)->rbuf), 0, sizeof(SSL3_BUFFER_INTERNAL));
+	memset(&(S3I(s)->rrec), 0, sizeof(SSL3_RECORD_INTERNAL));
 
 	if (!ssl3_setup_buffers(s))
 		goto err;
@@ -329,7 +328,7 @@ dtls1_process_record(SSL *s)
 	int i, al;
 	int enc_err;
 	SSL_SESSION *sess;
-	SSL3_RECORD *rr;
+	SSL3_RECORD_INTERNAL *rr;
 	unsigned int mac_size, orig_len;
 	unsigned char md[EVP_MAX_MD_SIZE];
 
@@ -467,7 +466,7 @@ err:
 int
 dtls1_get_record(SSL *s)
 {
-	SSL3_RECORD *rr;
+	SSL3_RECORD_INTERNAL *rr;
 	unsigned char *p = NULL;
 	DTLS1_BITMAP *bitmap;
 	unsigned int is_next_epoch;
@@ -638,7 +637,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 {
 	int al, i, j, ret;
 	unsigned int n;
-	SSL3_RECORD *rr;
+	SSL3_RECORD_INTERNAL *rr;
 	void (*cb)(const SSL *ssl, int type2, int val) = NULL;
 
 	if (S3I(s)->rbuf.buf == NULL) /* Not initialized yet */
@@ -1178,15 +1177,15 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 {
 	unsigned char *p;
 	int i, mac_size, clear = 0;
-	SSL3_RECORD *wr;
-	SSL3_BUFFER *wb;
+	SSL3_RECORD_INTERNAL *wr;
+	SSL3_BUFFER_INTERNAL *wb;
 	SSL_SESSION *sess;
 	int bs;
 	CBB cbb;
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	/* first check if there is a SSL3_BUFFER still being written
+	/* first check if there is a SSL3_BUFFER_INTERNAL still being written
 	 * out.  This will happen with non blocking IO */
 	if (S3I(s)->wbuf.left != 0) {
 		OPENSSL_assert(0); /* XDTLS:  want to see if we ever get here */
@@ -1408,7 +1407,7 @@ dtls1_dispatch_alert(SSL *s)
 
 
 static DTLS1_BITMAP *
-dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr, unsigned int *is_next_epoch)
+dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr, unsigned int *is_next_epoch)
 {
 
 	*is_next_epoch = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_enc.c,v 1.14 2017/01/23 08:08:06 beck Exp $ */
+/* $OpenBSD: d1_enc.c,v 1.15 2020/03/12 17:01:53 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -132,7 +132,7 @@
 int
 dtls1_enc(SSL *s, int send)
 {
-	SSL3_RECORD *rec;
+	SSL3_RECORD_INTERNAL *rec;
 	EVP_CIPHER_CTX *ds;
 	unsigned long l;
 	int bs, i, j, k, mac_size = 0;

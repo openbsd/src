@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.49 2018/11/08 22:28:52 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.50 2020/03/12 17:01:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -314,6 +314,7 @@ extern "C" {
 #define TLS1_HB_RESPONSE	2
 
 #ifndef OPENSSL_NO_SSL_INTERN
+#ifndef LIBRESSL_INTERNAL
 
 typedef struct ssl3_record_st {
 /*r */	int type;               /* type of record */
@@ -333,6 +334,7 @@ typedef struct ssl3_buffer_st {
 	int left;		/* how many bytes left */
 } SSL3_BUFFER;
 
+#endif
 #endif
 
 #define SSL3_CT_RSA_SIGN			1

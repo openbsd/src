@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.118 2019/05/13 22:48:30 bcook Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.119 2020/03/12 17:01:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -668,7 +668,7 @@ tls1_enc(SSL *s, int send)
 	const SSL_AEAD_CTX *aead;
 	const EVP_CIPHER *enc;
 	EVP_CIPHER_CTX *ds;
-	SSL3_RECORD *rec;
+	SSL3_RECORD_INTERNAL *rec;
 	unsigned char *seq;
 	unsigned long l;
 	int bs, i, j, k, ret, mac_size = 0;
@@ -931,7 +931,7 @@ tls1_final_finish_mac(SSL *s, const char *str, int str_len, unsigned char *out)
 int
 tls1_mac(SSL *ssl, unsigned char *md, int send)
 {
-	SSL3_RECORD *rec;
+	SSL3_RECORD_INTERNAL *rec;
 	unsigned char *seq;
 	EVP_MD_CTX *hash;
 	size_t md_size, orig_len;
