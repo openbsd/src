@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.71 2020/03/12 17:01:53 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.72 2020/03/12 17:09:02 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -380,8 +380,7 @@ dtls1_process_record(SSL *s)
 		mac_size = EVP_MD_CTX_size(s->read_hash);
 		OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
 
-		/* kludge: *_cbc_remove_padding passes padding length in rr->type */
-		orig_len = rr->length + ((unsigned int)rr->type >> 8);
+		orig_len = rr->length + rr->padding_length;
 
 		/* orig_len is the length of the record before any padding was
 		 * removed. This is public information, as is the MAC in use,

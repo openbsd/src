@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.19 2020/03/12 17:01:53 jsing Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.20 2020/03/12 17:09:02 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -169,7 +169,7 @@ tls1_cbc_remove_padding(const SSL* s, SSL3_RECORD_INTERNAL *rec,
 
 	padding_length = good & (padding_length + 1);
 	rec->length -= padding_length;
-	rec->type |= padding_length<<8;	/* kludge: pass padding length */
+	rec->padding_length = padding_length;
 
 	return (int)((good & 1) | (~good & -1));
 }

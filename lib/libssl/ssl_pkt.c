@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.22 2020/03/12 17:01:53 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.23 2020/03/12 17:09:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -451,8 +451,7 @@ ssl3_get_record(SSL *s)
 		mac_size = EVP_MD_CTX_size(s->read_hash);
 		OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
 
-		/* kludge: *_cbc_remove_padding passes padding length in rr->type */
-		orig_len = rr->length + ((unsigned int)rr->type >> 8);
+		orig_len = rr->length + rr->padding_length;
 
 		/* orig_len is the length of the record before any padding was
 		 * removed. This is public information, as is the MAC in use,

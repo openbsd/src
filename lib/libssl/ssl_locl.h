@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.268 2020/03/12 17:01:53 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.269 2020/03/12 17:09:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -779,6 +779,7 @@ typedef struct ssl_internal_st {
 typedef struct ssl3_record_internal_st {
 	int type;               /* type of record */
 	unsigned int length;    /* How many bytes available */
+	unsigned int padding_length; /* Number of padding bytes. */
 	unsigned int off;       /* read/write offset into 'buf' */
 	unsigned char *data;    /* pointer to the record data */
 	unsigned char *input;   /* where the decode bytes are */

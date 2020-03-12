@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.119 2020/03/12 17:01:53 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.120 2020/03/12 17:09:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -971,9 +971,7 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 	else
 		memcpy(header, seq, SSL3_SEQUENCE_SIZE);
 
-	/* kludge: tls1_cbc_remove_padding passes padding length in rec->type */
-	orig_len = rec->length + md_size + ((unsigned int)rec->type >> 8);
-	rec->type &= 0xff;
+	orig_len = rec->length + md_size + rec->padding_length;
 
 	header[8] = rec->type;
 	header[9] = (unsigned char)(ssl->version >> 8);
