@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.60 2020/03/12 13:25:45 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.61 2020/03/13 06:19:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -114,7 +114,8 @@ cmd_run_shell_exec(struct cmd *self, struct cmdq_item *item)
 
 	cdata->cwd = xstrdup(server_client_get_cwd(item->client, s));
 	cdata->s = s;
-	session_add_ref(s, __func__);
+	if (s != NULL)
+		session_add_ref(s, __func__);
 
 	evtimer_set(&cdata->timer, cmd_run_shell_timer, cdata);
 
@@ -203,7 +204,8 @@ cmd_run_shell_free(void *data)
 	struct cmd_run_shell_data	*cdata = data;
 
 	evtimer_del(&cdata->timer);
-	session_remove_ref(cdata->s, __func__);
+	if (cdata->s != NULL)
+		session_remove_ref(cdata->s, __func__);
 	free(cdata->cwd);
 	free(cdata->cmd);
 	free(cdata);
