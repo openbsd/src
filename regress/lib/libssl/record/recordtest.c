@@ -1,3 +1,4 @@
+/* $OpenBSD: recordtest.c,v 1.3 2020/03/13 16:01:12 jsing Exp $ */
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
