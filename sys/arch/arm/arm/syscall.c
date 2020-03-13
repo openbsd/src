@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.20 2019/10/28 14:43:03 kettenis Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.21 2020/03/13 08:46:50 deraadt Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -113,6 +113,9 @@ swi_handler(trapframe_t *frame)
 
 	p->p_addr->u_pcb.pcb_tf = frame;
 
+	/* Skip over speculation-blocking barrier. */
+	frame->tf_pc += 8;
+
 	code = frame->tf_r12;
 
 	ap = &frame->tf_r0;
@@ -164,7 +167,7 @@ swi_handler(trapframe_t *frame)
 		/*
 		 * Reconstruct the pc to point at the swi.
 		 */
-		frame->tf_pc -= INSN_SIZE;
+		frame->tf_pc -= 12;
 		break;
 
 	case EJUSTRETURN:
