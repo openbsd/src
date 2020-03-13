@@ -1,4 +1,4 @@
-/* $OpenBSD: tag.c,v 1.28 2020/03/13 00:31:05 schwarze Exp $ */
+/* $OpenBSD: tag.c,v 1.29 2020/03/13 16:14:14 schwarze Exp $ */
 /*
  * Copyright (c) 2015,2016,2018,2019,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -57,6 +57,8 @@ tag_free(void)
 	struct tag_entry	*entry;
 	unsigned int		 slot;
 
+	if (tag_data.info.free == NULL)
+		return;
 	entry = ohash_first(&tag_data, &slot);
 	while (entry != NULL) {
 		free(entry->nodes);
@@ -64,6 +66,7 @@ tag_free(void)
 		entry = ohash_next(&tag_data, &slot);
 	}
 	ohash_delete(&tag_data);
+	tag_data.info.free = NULL;
 }
 
 /*
