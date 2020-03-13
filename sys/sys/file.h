@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.60 2020/02/01 08:57:27 anton Exp $	*/
+/*	$OpenBSD: file.h,v 1.61 2020/03/13 10:07:01 anton Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -75,7 +75,6 @@ struct	fileops {
  *	a	atomic operations
  *	f	per file `f_mtx'
  *	v	vnode lock
- *	k	kernel lock
  */
 struct file {
 	LIST_ENTRY(file) f_list;/* [F] list of active files */
@@ -86,7 +85,7 @@ struct file {
 #define	DTYPE_PIPE	3	/* pipe */
 #define	DTYPE_KQUEUE	4	/* event queue */
 #define	DTYPE_DMABUF	5	/* DMA buffer (for DRM) */
-	int	f_iflags;	/* [k] internal flags */
+	u_int	f_iflags;	/* [a] internal flags */
 	int	f_type;		/* [I] descriptor type */
 	u_int	f_count;	/* [a] reference count */
 	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */

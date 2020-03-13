@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.200 2020/02/26 13:54:52 visa Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.201 2020/03/13 10:07:01 anton Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -707,7 +707,7 @@ fdinsert(struct filedesc *fdp, int fd, int flags, struct file *fp)
 
 	mtx_enter(&fhdlk);
 	if ((fp->f_iflags & FIF_INSERTED) == 0) {
-		fp->f_iflags |= FIF_INSERTED;
+		atomic_setbits_int(&fp->f_iflags, FIF_INSERTED);
 		if ((fq = fdp->fd_ofiles[0]) != NULL) {
 			LIST_INSERT_AFTER(fq, fp, f_list);
 		} else {
@@ -1317,7 +1317,7 @@ sys_flock(struct proc *p, void *v, register_t *retval)
 	lf.l_len = 0;
 	if (how & LOCK_UN) {
 		lf.l_type = F_UNLCK;
-		fp->f_iflags &= ~FIF_HASLOCK;
+		atomic_clearbits_int(&fp->f_iflags, FIF_HASLOCK);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_UNLCK, &lf, F_FLOCK);
 		goto out;
 	}
@@ -1329,7 +1329,7 @@ sys_flock(struct proc *p, void *v, register_t *retval)
 		error = EINVAL;
 		goto out;
 	}
-	fp->f_iflags |= FIF_HASLOCK;
+	atomic_setbits_int(&fp->f_iflags, FIF_HASLOCK);
 	if (how & LOCK_NB)
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK);
 	else
