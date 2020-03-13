@@ -1,0 +1,21 @@
+.\" $OpenBSD: tag.in,v 1.1 2020/03/13 00:31:05 schwarze Exp $
+.Dd $Mdocdate: March 13 2020 $
+.Dt ER-TAG 1
+.Os
+.Sh NAME
+.Nm Er-tag
+.Nd tagging of error number macros
+.Sh DESCRIPTION
+BEGINTEST
+.Bl -tag -width Ds
+.It Er one
+text
+.El
+.Tg
+.Er two
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er ENOENT
+text
+.El
+ENDTEST

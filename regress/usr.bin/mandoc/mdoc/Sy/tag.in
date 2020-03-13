@@ -1,0 +1,23 @@
+.\" $OpenBSD: tag.in,v 1.1 2020/03/13 00:31:06 schwarze Exp $
+.Dd $Mdocdate: March 13 2020 $
+.Dt SY-TAG 1
+.Os
+.Sh NAME
+.Nm Sy-tag
+.Nd tagging of symbolic font macros
+.Sh DESCRIPTION
+BEGINTEST
+.Bl -tag -width Ds
+.It Sy one | two
+text
+.It Xo
+.Sy three
+.Xc
+text
+.El
+.Sy four
+.Sy one
+.Tg explicit
+.Sy five
+.Pp
+ENDTEST

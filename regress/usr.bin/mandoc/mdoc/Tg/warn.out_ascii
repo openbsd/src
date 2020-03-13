@@ -1,0 +1,19 @@
+TG-WARN(1)                  General Commands Manual                 TG-WARN(1)
+
+NNAAMMEE
+     TTgg--wwaarrnn - warnings about tagging macros
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     initial text mmaaccrroo too many badstart badend whitespace
+
+   SSuubbsseeccttiioonn
+     subtext
+
+EEXXAAMMPPLLEESS
+     example text
+
+     ENDTEST
+
+OpenBSD                         March 13, 2020                         OpenBSD

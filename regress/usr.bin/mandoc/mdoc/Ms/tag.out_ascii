@@ -1,0 +1,17 @@
+MS-TAG(1)                   General Commands Manual                  MS-TAG(1)
+
+NNAAMMEE
+     MMss--ttaagg - tagging of mathematical symbol macros
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     oonnee | ttwwoo
+             text
+
+     tthhrreeee   text
+     ffoouurr
+
+     ENDTEST
+
+OpenBSD                         March 13, 2020                         OpenBSD

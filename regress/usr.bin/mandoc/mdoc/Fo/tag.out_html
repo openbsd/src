@@ -1,0 +1,9 @@
+<p class="Pp">automatic:
+    <a class="permalink" href="#first"><code class="Fn" id="first">first</code></a>()
+    and <code class="Fn">second</code>()</p>
+<p class="Pp"><a class="permalink" href="#second"><code class="Fn" id="second">second</code></a>()
+    and <code class="Fn">first</code>()</p>
+<p class="Pp">explicit:
+    <a class="permalink" href="#e3"><code class="Fn" id="e3">third</code></a>()
+    and
+    <a class="permalink" href="#e4"><code class="Fn" id="e4">fourth</code></a>(<var class="Fa">void</var>);</p>

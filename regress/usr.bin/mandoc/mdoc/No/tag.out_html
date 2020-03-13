@@ -1,0 +1,9 @@
+<dl class="Bl-tag">
+  <dt><a class="permalink" href="#one"><span class="No" id="one">one</span></a>
+    |
+    <a class="permalink" href="#two"><span class="No" id="two">two</span></a></dt>
+  <dd>text</dd>
+  <dt><a class="permalink" href="#three"><span class="No" id="three">three</span></a></dt>
+  <dd>text</dd>
+</dl>
+<a class="permalink" href="#four"><span class="No" id="four">four</span></a>

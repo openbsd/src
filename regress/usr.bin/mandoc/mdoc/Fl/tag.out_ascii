@@ -1,0 +1,17 @@
+FL-TAG(1)                   General Commands Manual                  FL-TAG(1)
+
+NNAAMMEE
+     FFll--ttaagg - tagging of command line option macros
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     --aa | --bb
+             text
+
+     --cc      text
+     --dd
+
+     ENDTEST
+
+OpenBSD                         March 13, 2020                         OpenBSD

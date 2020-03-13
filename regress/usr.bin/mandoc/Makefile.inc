@@ -1,12 +1,13 @@
-# $OpenBSD: Makefile.inc,v 1.26 2020/01/08 10:17:14 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.27 2020/03/13 00:31:05 schwarze Exp $
 
 .include "Makefile.sub"
 
 # --- programs ---
 
-DIFF = diff -au
-MANDOC ?= mandoc
-MOPTS ?= -mandoc
+DIFF	 = diff -au
+MAN	?= man
+MANDOC	?= mandoc
+MOPTS	?= -mandoc
 
 # --- lists of targets ---
 
@@ -33,18 +34,17 @@ _MARKDOWNDIFFS += ${t}.diff_markdown
 .  endif
 .endfor
 
+_TAGFILES = ${TAG_TARGETS:C/$/.mandoc_tag/}
+_TAGDIFFS = ${TAG_TARGETS:C/$/.diff_tag/}
+
 _UTF8FILES = ${UTF8_TARGETS:C/$/.mandoc_utf8/}
 _UTF8DIFFS = ${UTF8_TARGETS:C/$/.diff_utf8/}
 
 _HTMLFILES = ${HTML_TARGETS:C/$/.mandoc_html/}
 _HTMLDIFFS = ${HTML_TARGETS:C/$/.diff_html/}
 
-_LINTFILES =
-_LINTDIFFS =
-.for t in ${LINT_TARGETS}
-_LINTFILES += ${t}.mandoc_lint
-_LINTDIFFS += ${t}.diff_lint
-.endfor
+_LINTFILES = ${LINT_TARGETS:C/$/.mandoc_lint/}
+_LINTDIFFS = ${LINT_TARGETS:C/$/.diff_lint/}
 
 _HTMLVALS = ${REGRESS_TARGETS:C/$/.validate_html/}
 
@@ -53,7 +53,7 @@ _HTMLVALS = ${REGRESS_TARGETS:C/$/.validate_html/}
 # Note that bsd.regress.mk automatically adds REGRESS_TARGETS to all.
 all: clean
 
-ascii: ascii-clean ${_ASCIIDIFFS}
+ascii: ascii-clean ${_ASCIIDIFFS} ${_TAGDIFFS}
 
 utf8: utf8-clean ${_UTF8DIFFS}
 
@@ -70,10 +70,10 @@ htmlval: ${_HTMLVALS}
 # --- suffix rules ---
 
 .SUFFIXES:	.diff_ascii .diff_html .diff_lint \
-		.diff_man .diff_markdown .diff_utf8 \
+		.diff_man .diff_markdown .diff_tag .diff_utf8 \
 		.in .in_man \
 		.mandoc_ascii .mandoc_html .mandoc_lint \
-		.mandoc_man .mandoc_markdown .mandoc_utf8 \
+		.mandoc_man .mandoc_markdown .mandoc_tag .mandoc_utf8 \
 		.out_ascii .out_lint .out_utf8
 
 .in.mandoc_ascii:
@@ -81,6 +81,16 @@ htmlval: ${_HTMLVALS}
 
 .mandoc_ascii.diff_ascii:
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_ascii$/out_ascii/} ${.IMPSRC}
+
+.in.mandoc_tag:
+	@MANPAGER="${BSDSRCDIR}/regress/usr.bin/mandoc/copyless \
+	    ${.TARGET:S/.mandoc_tag$//}" \
+	    ${MAN} -l ${MOPTS} -Tascii -Ios=OpenBSD ${.IMPSRC}
+
+.mandoc_tag.diff_tag:
+	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_tag$/out_tag/} ${.IMPSRC}
+	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_tag$/out_ascii/} \
+	    ${.IMPSRC:S/mandoc_tag$/mandoc_ascii/}
 
 .in.mandoc_utf8:
 	@${MANDOC} ${MOPTS} -Ios=OpenBSD -Tutf8 ${.IMPSRC} > ${.TARGET}
@@ -125,12 +135,20 @@ ${t}.diff_man: ${t}.mandoc_man
 .    else
 ${t}.diff_man:
 .    endif
+.    if empty(TAG_TARGETS:M${t})
 ${t}: ${t}.diff_ascii ${t}.diff_man
+.    else
+${t}: ${t}.diff_tag ${t}.diff_man
+.    endif
 .  else
 ${t}:
 .  endif
 ${t}.validate_html: ${t}.in
 	@-${MANDOC} ${MOPTS} -Thtml ${.ALLSRC} | validate
+.endfor
+
+.for t in ${TAG_TARGETS}
+${t}: ${t}.diff_tag
 .endfor
 
 .for t in ${UTF8_TARGETS}
@@ -157,7 +175,7 @@ clean: ${_CLEAN_TARGETS}
 
 ascii-clean:
 .if !empty(_ASCIIFILES)
-	@rm -f ${_ASCIIFILES}
+	@rm -f ${_ASCIIFILES} ${_TAGFILES}
 .endif
 
 utf8-clean:
@@ -185,8 +203,8 @@ lint-clean:
 	@rm -f ${_LINTFILES}
 .endif
 
-.PHONY: ${_ASCIIDIFFS} ${_UTF8DIFFS} ${_HTMLDIFFS} ${_MARKDOWNDIFFS} \
-	${_MANDIFFS} ${_LINTDIFFS} ${_HTMLVALS}
+.PHONY: ${_ASCIIDIFFS} ${_TAGDIFFS} ${_UTF8DIFFS} ${_HTMLDIFFS} \
+	${_MARKDOWNDIFFS} ${_MANDIFFS} ${_LINTDIFFS} ${_HTMLVALS}
 
 
 # ----------------------------------------------------------------------

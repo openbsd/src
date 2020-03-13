@@ -1,0 +1,21 @@
+.\" $OpenBSD: tag.in,v 1.1 2020/03/13 00:31:06 schwarze Exp $
+.Dd $Mdocdate: March 13 2020 $
+.Dt MS-TAG 1
+.Os
+.Sh NAME
+.Nm Ms-tag
+.Nd tagging of mathematical symbol macros
+.Sh DESCRIPTION
+BEGINTEST
+.Bl -tag -width Ds
+.It Ms one | two
+text
+.It Xo
+.Ms three
+.Xc
+text
+.El
+.Tg
+.Ms four
+.Pp
+ENDTEST

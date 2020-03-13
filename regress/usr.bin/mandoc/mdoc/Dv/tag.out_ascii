@@ -1,0 +1,17 @@
+DV-TAG(1)                   General Commands Manual                  DV-TAG(1)
+
+NNAAMMEE
+     DDvv--ttaagg - tagging of defined variable macros
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     one | two
+             text
+
+     three   text
+     four
+
+     ENDTEST
+
+OpenBSD                         March 13, 2020                         OpenBSD

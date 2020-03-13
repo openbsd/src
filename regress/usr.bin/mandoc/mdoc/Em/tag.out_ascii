@@ -1,0 +1,17 @@
+EM-TAG(1)                   General Commands Manual                  EM-TAG(1)
+
+NNAAMMEE
+     EEmm--ttaagg - tagging of emphasis macros
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     _o_n_e | _t_w_o
+             text
+
+     _t_h_r_e_e   text
+     _f_o_u_r _o_n_e _f_i_v_e
+
+     ENDTEST
+
+OpenBSD                         March 13, 2020                         OpenBSD

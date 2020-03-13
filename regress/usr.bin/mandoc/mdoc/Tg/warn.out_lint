@@ -1,0 +1,6 @@
+mandoc: warn.in:16:2: WARNING: skipping empty macro: Tg
+mandoc: warn.in:16:8: ERROR: skipping excess arguments: Tg ... ignored
+mandoc: warn.in:18:5: ERROR: skipping tag containing whitespace: Tg \&badstart
+mandoc: warn.in:20:11: ERROR: skipping tag containing whitespace: Tg badend\&
+mandoc: warn.in:22:10: ERROR: skipping tag containing whitespace: Tg white space
+mandoc: warn.in:34:2: WARNING: skipping empty macro: Tg

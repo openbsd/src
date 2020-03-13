@@ -1,0 +1,21 @@
+.\" $OpenBSD: tag.in,v 1.1 2020/03/13 00:31:06 schwarze Exp $
+.Dd $Mdocdate: March 13 2020 $
+.Dt IC-TAG 1
+.Os
+.Sh NAME
+.Nm Ic-tag
+.Nd tagging of internal command macros
+.Sh DESCRIPTION
+BEGINTEST
+.Bl -tag -width Ds
+.It Ic one | two
+text
+.It Xo
+.Ic three
+.Xc
+text
+.El
+.Tg
+.Ic four
+.Pp
+ENDTEST

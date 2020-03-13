@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_term.c,v 1.187 2020/02/27 01:25:57 schwarze Exp $ */
+/* $OpenBSD: man_term.c,v 1.188 2020/03/13 00:31:05 schwarze Exp $ */
 /*
- * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,9 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Plain text formatter for man(7), used by mandoc(1)
+ * for ASCII, UTF-8, PostScript, and PDF output.
  */
 #include <sys/types.h>
 
@@ -30,7 +33,7 @@
 #include "man.h"
 #include "out.h"
 #include "term.h"
-#include "tag.h"
+#include "term_tag.h"
 #include "main.h"
 
 #define	MAXMARGINS	  64 /* maximum number of indented scopes */
@@ -91,8 +94,6 @@ static	void		  post_SH(DECL_ARGS);
 static	void		  post_SY(DECL_ARGS);
 static	void		  post_TP(DECL_ARGS);
 static	void		  post_UR(DECL_ARGS);
-
-static	void		  tag_man(struct termp *, struct roff_node *);
 
 static const struct man_term_act man_term_acts[MAN_MAX - MAN_TH] = {
 	{ NULL, NULL, 0 }, /* TH */
@@ -537,10 +538,8 @@ pre_IP(DECL_ARGS)
 	case ROFFT_HEAD:
 		p->tcol->offset = mt->offset;
 		p->tcol->rmargin = mt->offset + len;
-		if (n->child != NULL) {
+		if (n->child != NULL)
 			print_man_node(p, mt, n->child, meta);
-			tag_man(p, n->child);
-		}
 		return 0;
 	case ROFFT_BODY:
 		p->tcol->offset = mt->offset + len;
@@ -619,18 +618,6 @@ pre_TP(DECL_ARGS)
 		nn = n->child;
 		while (nn != NULL && (nn->flags & NODE_LINE) == 0)
 			nn = nn->next;
-
-		if (nn == NULL)
-			return 0;
-
-		if (nn->type == ROFFT_TEXT)
-			tag_man(p, nn);
-		else if (nn->child != NULL &&
-		    nn->child->type == ROFFT_TEXT &&
-		    (nn->tok == MAN_B || nn->tok == MAN_BI ||
-		     nn->tok == MAN_BR || nn->tok == MAN_I ||
-		     nn->tok == MAN_IB || nn->tok == MAN_IR))
-			tag_man(p, nn->child);
 
 		while (nn != NULL) {
 			print_man_node(p, mt, nn, meta);
@@ -911,6 +898,9 @@ print_man_node(DECL_ARGS)
 	const struct man_term_act *act;
 	int c;
 
+	if (n->flags & NODE_ID)
+		term_tag_write(n, p->line);
+
 	switch (n->type) {
 	case ROFFT_TEXT:
 		/*
@@ -1156,61 +1146,4 @@ print_man_head(struct termp *p, const struct roff_meta *meta)
 		term_vspace(p);
 	}
 	free(title);
-}
-
-/*
- * Skip leading whitespace, dashes, backslashes, and font escapes,
- * then create a tag if the first following byte is a letter.
- * Priority is high unless whitespace is present.
- */
-static void
-tag_man(struct termp *p, struct roff_node *n)
-{
-	const char	*cp, *arg;
-	int		 prio, sz;
-
-	assert(n->type == ROFFT_TEXT);
-	cp = n->string;
-	prio = TAG_STRONG;
-	for (;;) {
-		switch (*cp) {
-		case ' ':
-		case '\t':
-			prio = TAG_WEAK;
-			/* FALLTHROUGH */
-		case '-':
-			cp++;
-			break;
-		case '\\':
-			cp++;
-			switch (mandoc_escape(&cp, &arg, &sz)) {
-			case ESCAPE_FONT:
-			case ESCAPE_FONTROMAN:
-			case ESCAPE_FONTITALIC:
-			case ESCAPE_FONTBOLD:
-			case ESCAPE_FONTPREV:
-			case ESCAPE_FONTBI:
-				break;
-			case ESCAPE_SPECIAL:
-				if (sz != 1)
-					return;
-				switch (*arg) {
-				case '&':
-				case '-':
-				case 'e':
-					break;
-				default:
-					return;
-				}
-				break;
-			default:
-				return;
-			}
-			break;
-		default:
-			if (isalpha((unsigned char)*cp))
-				tag_put(cp, prio, p->line);
-			return;
-		}
-	}
 }

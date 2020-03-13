@@ -1,0 +1,18 @@
+.\" $OpenBSD: tag.in,v 1.1 2020/03/13 00:31:05 schwarze Exp $
+.TH IP-TAG 1 "March 10, 2020"
+.SH NAME
+IP-tag \- automatic tagging of indented blocks
+.SH DESCRIPTION
+BEGINTEST
+initial
+text
+.IP " strong" 10n
+text
+.IP "-strong"
+text
+.IP "\&\fI \-weak\fP"
+text
+.IP " strong"
+text
+.PP
+ENDTEST

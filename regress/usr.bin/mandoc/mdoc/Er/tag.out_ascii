@@ -1,0 +1,16 @@
+ER-TAG(1)                   General Commands Manual                  ER-TAG(1)
+
+NNAAMMEE
+     EErr--ttaagg - tagging of error number macros
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     one     text
+     two
+
+EERRRROORRSS
+     [ENOENT]           text
+     ENDTEST
+
+OpenBSD                         March 13, 2020                         OpenBSD

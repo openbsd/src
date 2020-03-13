@@ -1,7 +1,7 @@
-/*	$OpenBSD: tree.c,v 1.53 2020/02/27 21:38:27 schwarze Exp $ */
+/* $OpenBSD: tree.c,v 1.54 2020/03/13 00:31:05 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,9 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Formatting module to let mandoc(1) show
+ * a human readable representation of the syntax tree.
  */
 #include <sys/types.h>
 
@@ -303,6 +306,11 @@ print_man(const struct roff_node *n, int indent)
 			putchar(')');
 		if (n->flags & NODE_EOS)
 			putchar('.');
+		if (n->flags & NODE_ID) {
+			printf(" ID");
+			if (n->string != NULL)
+				printf("=%s", n->string);
+		}
 		if (n->flags & NODE_NOFILL)
 			printf(" NOFILL");
 		putchar('\n');

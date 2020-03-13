@@ -1,0 +1,17 @@
+LI-TAG(1)                   General Commands Manual                  LI-TAG(1)
+
+NNAAMMEE
+     LLii--ttaagg - tagging of literal font macros
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     one | two
+             text
+
+     three   text
+     four
+
+     ENDTEST
+
+OpenBSD                         March 13, 2020                         OpenBSD

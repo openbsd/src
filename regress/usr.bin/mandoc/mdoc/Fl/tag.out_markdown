@@ -1,0 +1,23 @@
+FL-TAG(1) - General Commands Manual
+
+# NAME
+
+**Fl-tag** - tagging of command line option macros
+
+# DESCRIPTION
+
+BEGINTEST
+
+**-a** | **-b**
+
+> text
+
+**-c**
+
+> text
+
+**-d**
+
+ENDTEST
+
+OpenBSD - March 13, 2020

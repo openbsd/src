@@ -1,0 +1,17 @@
+NO-TAG(1)                   General Commands Manual                  NO-TAG(1)
+
+NNAAMMEE
+     NNoo--ttaagg - tagging of normal font macros
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     one | two
+             text
+
+     three   text
+     four
+
+     ENDTEST
+
+OpenBSD                         March 13, 2020                         OpenBSD

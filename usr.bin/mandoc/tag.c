@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.27 2020/01/20 10:29:31 schwarze Exp $ */
+/* $OpenBSD: tag.c,v 1.28 2020/03/13 00:31:05 schwarze Exp $ */
 /*
  * Copyright (c) 2015,2016,2018,2019,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -13,132 +13,65 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Functions to tag syntax tree nodes.
+ * For internal use by mandoc(1) validation modules only.
  */
 #include <sys/types.h>
 
 #include <assert.h>
-#include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "mandoc_aux.h"
 #include "mandoc_ohash.h"
-#include "mandoc.h"
+#include "roff.h"
 #include "tag.h"
 
 struct tag_entry {
-	size_t	*lines;
-	size_t	 maxlines;
-	size_t	 nlines;
+	struct roff_node **nodes;
+	size_t	 maxnodes;
+	size_t	 nnodes;
 	int	 prio;
 	char	 s[];
 };
 
-static	void	 tag_signal(int) __attribute__((__noreturn__));
-
 static struct ohash	 tag_data;
-static struct tag_files	 tag_files;
 
 
 /*
- * Prepare for using a pager.
- * Not all pagers are capable of using a tag file,
- * but for simplicity, create it anyway.
+ * Set up the ohash table to collect nodes
+ * where various marked-up terms are documented.
  */
-struct tag_files *
-tag_init(char *tagname)
+void
+tag_alloc(void)
 {
-	struct sigaction	 sa;
-	int			 ofd;
-
-	ofd = -1;
-	tag_files.tfd = -1;
-	tag_files.tcpgid = -1;
-	tag_files.tagname = tagname;
-
-	/* Clean up when dying from a signal. */
-
-	memset(&sa, 0, sizeof(sa));
-	sigfillset(&sa.sa_mask);
-	sa.sa_handler = tag_signal;
-	sigaction(SIGHUP, &sa, NULL);
-	sigaction(SIGINT, &sa, NULL);
-	sigaction(SIGTERM, &sa, NULL);
-
-	/*
-	 * POSIX requires that a process calling tcsetpgrp(3)
-	 * from the background gets a SIGTTOU signal.
-	 * In that case, do not stop.
-	 */
-
-	sa.sa_handler = SIG_IGN;
-	sigaction(SIGTTOU, &sa, NULL);
-
-	/* Save the original standard output for use by the pager. */
-
-	if ((tag_files.ofd = dup(STDOUT_FILENO)) == -1) {
-		mandoc_msg(MANDOCERR_DUP, 0, 0, "%s", strerror(errno));
-		goto fail;
-	}
-
-	/* Create both temporary output files. */
-
-	(void)strlcpy(tag_files.ofn, "/tmp/man.XXXXXXXXXX",
-	    sizeof(tag_files.ofn));
-	(void)strlcpy(tag_files.tfn, "/tmp/man.XXXXXXXXXX",
-	    sizeof(tag_files.tfn));
-	if ((ofd = mkstemp(tag_files.ofn)) == -1) {
-		mandoc_msg(MANDOCERR_MKSTEMP, 0, 0,
-		    "%s: %s", tag_files.ofn, strerror(errno));
-		goto fail;
-	}
-	if ((tag_files.tfd = mkstemp(tag_files.tfn)) == -1) {
-		mandoc_msg(MANDOCERR_MKSTEMP, 0, 0,
-		    "%s: %s", tag_files.tfn, strerror(errno));
-		goto fail;
-	}
-	if (dup2(ofd, STDOUT_FILENO) == -1) {
-		mandoc_msg(MANDOCERR_DUP, 0, 0, "%s", strerror(errno));
-		goto fail;
-	}
-	close(ofd);
-
-	/*
-	 * Set up the ohash table to collect output line numbers
-	 * where various marked-up terms are documented.
-	 */
-
 	mandoc_ohash_init(&tag_data, 4, offsetof(struct tag_entry, s));
-	return &tag_files;
+}
 
-fail:
-	tag_unlink();
-	if (ofd != -1)
-		close(ofd);
-	if (tag_files.ofd != -1)
-		close(tag_files.ofd);
-	if (tag_files.tfd != -1)
-		close(tag_files.tfd);
-	*tag_files.ofn = '\0';
-	*tag_files.tfn = '\0';
-	tag_files.ofd = -1;
-	tag_files.tfd = -1;
-	tag_files.tagname = NULL;
-	return NULL;
+void
+tag_free(void)
+{
+	struct tag_entry	*entry;
+	unsigned int		 slot;
+
+	entry = ohash_first(&tag_data, &slot);
+	while (entry != NULL) {
+		free(entry->nodes);
+		free(entry);
+		entry = ohash_next(&tag_data, &slot);
+	}
+	ohash_delete(&tag_data);
 }
 
 /*
- * Set the line number where a term is defined,
+ * Set a node where a term is defined,
  * unless it is already defined at a lower priority.
  */
 void
-tag_put(const char *s, int prio, size_t line)
+tag_put(const char *s, int prio, struct roff_node *n)
 {
 	struct tag_entry	*entry;
 	const char		*se;
@@ -146,11 +79,14 @@ tag_put(const char *s, int prio, size_t line)
 	unsigned int		 slot;
 
 	assert(prio <= TAG_FALLBACK);
-	if (tag_files.tfd <= 0)
-		return;
 
-	if (s[0] == '\\' && (s[1] == '&' || s[1] == 'e'))
-		s += 2;
+	if (s == NULL) {
+		if (n->child == NULL || n->child->type != ROFFT_TEXT)
+			return;
+		s = n->child->string;
+		if (s[0] == '\\' && (s[1] == '&' || s[1] == 'e'))
+			s += 2;
+	}
 
 	/*
 	 * Skip whitespace and escapes and whatever follows,
@@ -168,131 +104,67 @@ tag_put(const char *s, int prio, size_t line)
 	slot = ohash_qlookupi(&tag_data, s, &se);
 	entry = ohash_find(&tag_data, slot);
 
+	/* Build a new entry. */
+
 	if (entry == NULL) {
-
-		/* Build a new entry. */
-
 		entry = mandoc_malloc(sizeof(*entry) + len + 1);
 		memcpy(entry->s, s, len);
 		entry->s[len] = '\0';
-		entry->lines = NULL;
-		entry->maxlines = entry->nlines = 0;
+		entry->nodes = NULL;
+		entry->maxnodes = entry->nnodes = 0;
 		ohash_insert(&tag_data, slot, entry);
+	}
 
-	} else {
+	/*
+	 * Lower priority numbers take precedence.
+	 * If a better entry is already present, ignore the new one.
+	 */
 
-		/*
-		 * Lower priority numbers take precedence,
-		 * but TAG_FALLBACK is special.
-		 * A tag with priority TAG_FALLBACK is only used
-		 * if the tag occurs exactly once.
-		 */
+	else if (entry->prio < prio)
+			return;
+
+	/*
+	 * If the existing entry is worse, clear it.
+	 * In addition, a tag with priority TAG_FALLBACK
+	 * is only used if the tag occurs exactly once.
+	 */
+
+	else if (entry->prio > prio || prio == TAG_FALLBACK) {
+		while (entry->nnodes > 0)
+			entry->nodes[--entry->nnodes]->flags &= ~NODE_ID;
 
 		if (prio == TAG_FALLBACK) {
-			if (entry->prio == TAG_FALLBACK)
-				entry->prio = TAG_DELETE;
+			entry->prio = TAG_DELETE;
 			return;
 		}
-
-		/* A better entry is already present, ignore the new one. */
-
-		if (entry->prio < prio)
-			return;
-
-		/* The existing entry is worse, clear it. */
-
-		if (entry->prio > prio)
-			entry->nlines = 0;
 	}
 
-	/* Remember the new line. */
+	/* Remember the new node. */
 
-	if (entry->maxlines == entry->nlines) {
-		entry->maxlines += 4;
-		entry->lines = mandoc_reallocarray(entry->lines,
-		    entry->maxlines, sizeof(*entry->lines));
+	if (entry->maxnodes == entry->nnodes) {
+		entry->maxnodes += 4;
+		entry->nodes = mandoc_reallocarray(entry->nodes,
+		    entry->maxnodes, sizeof(*entry->nodes));
 	}
-	entry->lines[entry->nlines++] = line;
+	entry->nodes[entry->nnodes++] = n;
 	entry->prio = prio;
+	n->flags |= NODE_ID;
+	if (n->child == NULL || n->child->string != s || *se != '\0') {
+		assert(n->string == NULL);
+		n->string = mandoc_strndup(s, len);
+	}
 }
 
-/*
- * Write out the tags file using the previously collected
- * information and clear the ohash table while going along.
- */
-void
-tag_write(void)
+enum tag_result
+tag_check(const char *test_tag)
 {
-	FILE			*stream;
-	struct tag_entry	*entry;
-	size_t			 i;
-	unsigned int		 slot;
-	int			 empty;
+	unsigned int slot;
 
-	if (tag_files.tfd <= 0)
-		return;
-	if (tag_files.tagname != NULL && ohash_find(&tag_data,
-            ohash_qlookup(&tag_data, tag_files.tagname)) == NULL) {
-		mandoc_msg(MANDOCERR_TAG, 0, 0, "%s", tag_files.tagname);
-		tag_files.tagname = NULL;
-	}
-	if ((stream = fdopen(tag_files.tfd, "w")) == NULL)
-		mandoc_msg(MANDOCERR_FDOPEN, 0, 0, "%s", strerror(errno));
-	empty = 1;
-	entry = ohash_first(&tag_data, &slot);
-	while (entry != NULL) {
-		if (stream != NULL && entry->prio < TAG_DELETE) {
-			for (i = 0; i < entry->nlines; i++) {
-				fprintf(stream, "%s %s %zu\n",
-				    entry->s, tag_files.ofn, entry->lines[i]);
-				empty = 0;
-			}
-		}
-		free(entry->lines);
-		free(entry);
-		entry = ohash_next(&tag_data, &slot);
-	}
-	ohash_delete(&tag_data);
-	if (stream != NULL)
-		fclose(stream);
+	if (ohash_first(&tag_data, &slot) == NULL)
+		return TAG_EMPTY;
+	else if (test_tag != NULL && ohash_find(&tag_data,
+	    ohash_qlookup(&tag_data, test_tag)) == NULL)
+		return TAG_MISS;
 	else
-		close(tag_files.tfd);
-	tag_files.tfd = -1;
-	if (empty) {
-		unlink(tag_files.tfn);
-		*tag_files.tfn = '\0';
-	}
-}
-
-void
-tag_unlink(void)
-{
-	pid_t	 tc_pgid;
-
-	if (tag_files.tcpgid != -1) {
-		tc_pgid = tcgetpgrp(tag_files.ofd);
-		if (tc_pgid == tag_files.pager_pid ||
-		    tc_pgid == getpgid(0) ||
-		    getpgid(tc_pgid) == -1)
-			(void)tcsetpgrp(tag_files.ofd, tag_files.tcpgid);
-	}
-	if (*tag_files.ofn != '\0')
-		unlink(tag_files.ofn);
-	if (*tag_files.tfn != '\0')
-		unlink(tag_files.tfn);
-}
-
-static void
-tag_signal(int signum)
-{
-	struct sigaction	 sa;
-
-	tag_unlink();
-	memset(&sa, 0, sizeof(sa));
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler = SIG_DFL;
-	sigaction(signum, &sa, NULL);
-	kill(getpid(), signum);
-	/* NOTREACHED */
-	_exit(1);
+		return TAG_OK;
 }

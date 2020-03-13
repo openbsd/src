@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.294 2020/02/27 21:38:27 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.295 2020/03/13 00:31:05 schwarze Exp $ */
 /*
- * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,6 +15,8 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Validation module for mdoc(7) syntax trees used by mandoc(1).
  */
 #include <sys/types.h>
 #ifndef OSNAME
@@ -33,6 +35,7 @@
 #include "mandoc.h"
 #include "mandoc_xr.h"
 #include "roff.h"
+#include "tag.h"
 #include "mdoc.h"
 #include "libmandoc.h"
 #include "roff_int.h"
@@ -80,7 +83,9 @@ static	void	 post_dd(POST_ARGS);
 static	void	 post_delim(POST_ARGS);
 static	void	 post_delim_nb(POST_ARGS);
 static	void	 post_dt(POST_ARGS);
+static	void	 post_em(POST_ARGS);
 static	void	 post_en(POST_ARGS);
+static	void	 post_er(POST_ARGS);
 static	void	 post_es(POST_ARGS);
 static	void	 post_eoln(POST_ARGS);
 static	void	 post_ex(POST_ARGS);
@@ -111,6 +116,7 @@ static	void	 post_sm(POST_ARGS);
 static	void	 post_st(POST_ARGS);
 static	void	 post_std(POST_ARGS);
 static	void	 post_sx(POST_ARGS);
+static	void	 post_tag(POST_ARGS);
 static	void	 post_tg(POST_ARGS);
 static	void	 post_useless(POST_ARGS);
 static	void	 post_xr(POST_ARGS);
@@ -135,19 +141,19 @@ static	const v_post mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	NULL,		/* Ap */
 	post_defaults,	/* Ar */
 	NULL,		/* Cd */
-	post_delim_nb,	/* Cm */
-	post_delim_nb,	/* Dv */
-	post_delim_nb,	/* Er */
-	post_delim_nb,	/* Ev */
+	post_tag,	/* Cm */
+	post_tag,	/* Dv */
+	post_er,	/* Er */
+	post_tag,	/* Ev */
 	post_ex,	/* Ex */
 	post_fa,	/* Fa */
 	NULL,		/* Fd */
-	post_delim_nb,	/* Fl */
+	post_tag,	/* Fl */
 	post_fn,	/* Fn */
 	post_delim_nb,	/* Ft */
-	post_delim_nb,	/* Ic */
+	post_tag,	/* Ic */
 	post_delim_nb,	/* In */
-	post_defaults,	/* Li */
+	post_tag,	/* Li */
 	post_nd,	/* Nd */
 	post_nm,	/* Nm */
 	post_delim_nb,	/* Op */
@@ -185,11 +191,11 @@ static	const v_post mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	NULL,		/* Dq */
 	NULL,		/* Ec */
 	NULL,		/* Ef */
-	post_delim_nb,	/* Em */
+	post_em,	/* Em */
 	NULL,		/* Eo */
 	post_xx,	/* Fx */
-	post_delim_nb,	/* Ms */
-	NULL,		/* No */
+	post_tag,	/* Ms */
+	post_tag,	/* No */
 	post_ns,	/* Ns */
 	post_xx,	/* Nx */
 	post_xx,	/* Ox */
@@ -208,7 +214,7 @@ static	const v_post mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	post_delim_nb,	/* Sq */
 	post_sm,	/* Sm */
 	post_sx,	/* Sx */
-	post_delim_nb,	/* Sy */
+	post_em,	/* Sy */
 	post_useless,	/* Tn */
 	post_xx,	/* Ux */
 	NULL,		/* Xc */
@@ -284,6 +290,8 @@ static	const char * const secnames[SEC__MAX] = {
 	"SECURITY CONSIDERATIONS",
 	NULL
 };
+
+static	int	  fn_prio = TAG_STRONG;
 
 
 /* Validate the subtree rooted at mdoc->last. */
@@ -1079,8 +1087,11 @@ post_st(POST_ARGS)
 static void
 post_tg(POST_ARGS)
 {
-	struct roff_node	*n, *nch, *nn;
-	size_t			len;
+	struct roff_node *n;	/* The .Tg node. */
+	struct roff_node *nch;	/* The first child of the .Tg node. */
+	struct roff_node *nn;   /* The next node after the .Tg node. */
+	struct roff_node *nt;	/* The TEXT node containing the tag. */
+	size_t		  len;	/* The number of bytes in the tag. */
 
 	/* Find the next node. */
 	n = mdoc->last;
@@ -1091,30 +1102,26 @@ post_tg(POST_ARGS)
 		}
 	}
 
-	/* Add the default argument, if needed. */
-	nch = n->child;
-	if (nch == NULL && nn != NULL && nn->child->type == ROFFT_TEXT) {
-		mdoc->next = ROFF_NEXT_CHILD;
-		roff_word_alloc(mdoc, n->line, n->pos, n->next->child->string);
-		nch = mdoc->last;
-		nch->flags |= NODE_NOSRC;
-		mdoc->last = n;
-	}
+	/* Find the tag. */
+	nt = nch = n->child;
+	if (nch == NULL && nn != NULL && nn->child != NULL &&
+	    nn->child->type == ROFFT_TEXT)
+		nt = nn->child;
 
-	/* Validate the first argument. */
-	if (nch == NULL || *nch->string == '\0')
+	/* Validate the tag. */
+	if (nt == NULL || *nt->string == '\0')
 		mandoc_msg(MANDOCERR_MACRO_EMPTY, n->line, n->pos, "Tg");
-	if (nch == NULL) {
+	if (nt == NULL) {
 		roff_node_delete(mdoc, n);
 		return;
 	}
-	len = strcspn(nch->string, " \t");
-	if (nch->string[len] != '\0')
-		mandoc_msg(MANDOCERR_TG_SPC, nch->line, nch->pos + len + 1,
-		    "Tg %s", nch->string);
+	len = strcspn(nt->string, " \t\\");
+	if (nt->string[len] != '\0')
+		mandoc_msg(MANDOCERR_TG_SPC, nt->line,
+		    nt->pos + len, "Tg %s", nt->string);
 
 	/* Keep only the first argument. */
-	if (nch->next != NULL) {
+	if (nch != NULL && nch->next != NULL) {
 		mandoc_msg(MANDOCERR_ARG_EXCESS, nch->next->line,
 		    nch->next->pos, "Tg ... %s", nch->next->string);
 		while (nch->next != NULL)
@@ -1122,32 +1129,44 @@ post_tg(POST_ARGS)
 	}
 
 	/* Drop the macro if the first argument is invalid. */
-	if (len == 0 || nch->string[len] != '\0') {
+	if (len == 0 || nt->string[len] != '\0') {
 		roff_node_delete(mdoc, n);
 		return;
 	}
 
-	/* By default, write a <mark> element. */
-	n->flags |= NODE_ID;
+	/* By default, tag the .Tg node itself. */
 	if (nn == NULL)
-		return;
+		nn = n;
 
 	/* Explicit tagging of specific macros. */
 	switch (nn->tok) {
 	case MDOC_Sh:
 	case MDOC_Ss:
-		if (nn->head->flags & NODE_ID || nn->head->child == NULL)
+	case MDOC_Fo:
+		nn = nn->head;
+		/* FALLTHROUGH */
+	case MDOC_Cm:
+	case MDOC_Dv:
+	case MDOC_Em:
+	case MDOC_Er:
+	case MDOC_Ev:
+	case MDOC_Fl:
+	case MDOC_Fn:
+	case MDOC_Ic:
+	case MDOC_Li:
+	case MDOC_Ms:
+	case MDOC_No:
+	case MDOC_Sy:
+		if (nn->child != NULL && (nn->flags & NODE_ID) == 0)
 			break;
-		n->flags |= NODE_NOPRT;
-		nn->head->flags |= NODE_ID | NODE_HREF;
-		assert(nn->head->string == NULL);
-		nn->head->string = mandoc_strdup(nch->string);
-		break;
+		/* FALLTHROUGH */
 	default:
+		nn = n;
 		break;
 	}
-	if (n->flags & NODE_NOPRT)
-		n->flags &= ~NODE_ID;
+	tag_put(nt->string, TAG_MANUAL, nn);
+	if (nn != n)
+		n->flags |= NODE_NOPRT;
 }
 
 static void
@@ -1242,28 +1261,32 @@ post_bf(POST_ARGS)
 static void
 post_fname(POST_ARGS)
 {
-	const struct roff_node	*n;
+	struct roff_node	*n, *nch;
 	const char		*cp;
 	size_t			 pos;
 
-	n = mdoc->last->child;
-	cp = n->string;
+	n = mdoc->last;
+	nch = n->child;
+	cp = nch->string;
 	if (*cp == '(') {
 		if (cp[strlen(cp + 1)] == ')')
 			return;
 		pos = 0;
 	} else {
 		pos = strcspn(cp, "()");
-		if (cp[pos] == '\0')
+		if (cp[pos] == '\0') {
+			if (n->sec == SEC_DESCRIPTION ||
+			    n->sec == SEC_CUSTOM)
+				tag_put(NULL, fn_prio++, n);
 			return;
+		}
 	}
-	mandoc_msg(MANDOCERR_FN_PAREN, n->line, n->pos + pos, "%s", cp);
+	mandoc_msg(MANDOCERR_FN_PAREN, nch->line, nch->pos + pos, "%s", cp);
 }
 
 static void
 post_fn(POST_ARGS)
 {
-
 	post_fname(mdoc);
 	post_fa(mdoc);
 }
@@ -1427,38 +1450,29 @@ post_display(POST_ARGS)
 static void
 post_defaults(POST_ARGS)
 {
-	struct roff_node *nn;
+	struct roff_node *n;
 
-	if (mdoc->last->child != NULL) {
+	n = mdoc->last;
+	if (n->child != NULL) {
 		post_delim_nb(mdoc);
 		return;
 	}
-
-	/*
-	 * The `Ar' defaults to "file ..." if no value is provided as an
-	 * argument; the `Mt' and `Pa' macros use "~"; the `Li' just
-	 * gets an empty string.
-	 */
-
-	nn = mdoc->last;
-	switch (nn->tok) {
+	mdoc->next = ROFF_NEXT_CHILD;
+	switch (n->tok) {
 	case MDOC_Ar:
-		mdoc->next = ROFF_NEXT_CHILD;
-		roff_word_alloc(mdoc, nn->line, nn->pos, "file");
+		roff_word_alloc(mdoc, n->line, n->pos, "file");
 		mdoc->last->flags |= NODE_NOSRC;
-		roff_word_alloc(mdoc, nn->line, nn->pos, "...");
-		mdoc->last->flags |= NODE_NOSRC;
+		roff_word_alloc(mdoc, n->line, n->pos, "...");
 		break;
 	case MDOC_Pa:
 	case MDOC_Mt:
-		mdoc->next = ROFF_NEXT_CHILD;
-		roff_word_alloc(mdoc, nn->line, nn->pos, "~");
-		mdoc->last->flags |= NODE_NOSRC;
+		roff_word_alloc(mdoc, n->line, n->pos, "~");
 		break;
 	default:
 		abort();
 	}
-	mdoc->last = nn;
+	mdoc->last->flags |= NODE_NOSRC;
+	mdoc->last = n;
 }
 
 static void
@@ -1512,18 +1526,54 @@ post_an(POST_ARGS)
 }
 
 static void
+post_em(POST_ARGS)
+{
+	post_tag(mdoc);
+	tag_put(NULL, TAG_FALLBACK, mdoc->last);
+}
+
+static void
 post_en(POST_ARGS)
 {
-
 	post_obsolete(mdoc);
 	if (mdoc->last->type == ROFFT_BLOCK)
 		mdoc->last->norm->Es = mdoc->last_es;
 }
 
 static void
+post_er(POST_ARGS)
+{
+	struct roff_node *n;
+
+	n = mdoc->last;
+	if (n->sec == SEC_ERRORS &&
+	    (n->parent->tok == MDOC_It ||
+	     (n->parent->tok == MDOC_Bq &&
+	      n->parent->parent->parent->tok == MDOC_It)))
+		tag_put(NULL, TAG_STRONG, n);
+	post_delim_nb(mdoc);
+}
+
+static void
+post_tag(POST_ARGS)
+{
+	struct roff_node *n;
+
+	n = mdoc->last;
+	if ((n->prev == NULL ||
+	     (n->prev->type == ROFFT_TEXT &&
+	      strcmp(n->prev->string, "|") == 0)) &&
+	    (n->parent->tok == MDOC_It ||
+	     (n->parent->tok == MDOC_Xo &&
+	      n->parent->parent->prev == NULL &&
+	      n->parent->parent->parent->tok == MDOC_It)))
+		tag_put(NULL, TAG_STRONG, n);
+	post_delim_nb(mdoc);
+}
+
+static void
 post_es(POST_ARGS)
 {
-
 	post_obsolete(mdoc);
 	mdoc->last_es = mdoc->last;
 }
@@ -1620,8 +1670,8 @@ post_it(POST_ARGS)
 		if ((nch = nit->head->child) != NULL)
 			mandoc_msg(MANDOCERR_ARG_SKIP,
 			    nit->line, nit->pos, "It %s",
-			    nch->string == NULL ? roff_name[nch->tok] :
-			    nch->string);
+			    nch->type == ROFFT_TEXT ? nch->string :
+			    roff_name[nch->tok]);
 		break;
 	case LIST_column:
 		cols = (int)nbl->norm->Bl.ncols;
@@ -2137,7 +2187,6 @@ post_sx(POST_ARGS)
 static void
 post_sh(POST_ARGS)
 {
-
 	post_ignpar(mdoc);
 
 	switch (mdoc->last->type) {
@@ -2369,6 +2418,8 @@ post_sh_head(POST_ARGS)
 		roff_setreg(mdoc->roff, "nS", 0, '=');
 		mdoc->flags &= ~MDOC_SYNOPSIS;
 	}
+	if (sec == SEC_DESCRIPTION)
+		fn_prio = TAG_STRONG;
 
 	/* Mark our last section. */
 
@@ -2540,6 +2591,7 @@ post_par(POST_ARGS)
 {
 	struct roff_node *np;
 
+	fn_prio = TAG_STRONG;
 	post_prevpar(mdoc);
 
 	np = mdoc->last;

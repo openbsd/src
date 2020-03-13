@@ -1,0 +1,27 @@
+FO-TAG(1) - General Commands Manual
+
+# NAME
+
+**Fo-tag** - tagging of function name macros
+
+# DESCRIPTION
+
+BEGINTEST
+
+automatic:
+**first**()
+and
+**second**()
+
+**second**()
+and
+**first**()
+
+explicit:
+**third**()
+and
+**fourth**(*void*)
+
+ENDTEST
+
+OpenBSD - March 13, 2020

@@ -1,7 +1,7 @@
-/*	$OpenBSD: html.h,v 1.68 2020/01/19 17:59:01 schwarze Exp $ */
+/* $OpenBSD: html.h,v 1.69 2020/03/13 00:31:04 schwarze Exp $ */
 /*
+ * Copyright (c) 2017, 2018, 2019, 2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2017, 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,9 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Internal interfaces for mandoc(1) HTML formatters.
+ * For use by the individual HTML formatters only.
  */
 
 enum	htmltag {
@@ -120,6 +123,8 @@ void		  print_gen_comment(struct html *, struct roff_node *);
 void		  print_gen_decls(struct html *);
 void		  print_gen_head(struct html *);
 struct tag	 *print_otag(struct html *, enum htmltag, const char *, ...);
+struct tag	 *print_otag_id(struct html *, enum htmltag, const char *,
+			struct roff_node *);
 void		  print_tagq(struct html *, const struct tag *);
 void		  print_stagq(struct html *, const struct tag *);
 void		  print_text(struct html *, const char *);

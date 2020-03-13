@@ -1,0 +1,10 @@
+<dl class="Bl-tag">
+  <dt><a class="permalink" href="#one"><b class="Sy" id="one">one</b></a> |
+    <a class="permalink" href="#two"><b class="Sy" id="two">two</b></a></dt>
+  <dd>text</dd>
+  <dt><a class="permalink" href="#three"><b class="Sy" id="three">three</b></a></dt>
+  <dd>text</dd>
+</dl>
+<a class="permalink" href="#four"><b class="Sy" id="four">four</b></a>
+  <b class="Sy">one</b>
+  <a class="permalink" href="#explicit"><b class="Sy" id="explicit">five</b></a>

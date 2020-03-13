@@ -1,0 +1,10 @@
+<dl class="Bl-tag">
+  <dt> strong</dt>
+  <dd>text</dd>
+  <dt id="strong"><a class="permalink" href="#strong">-strong</a></dt>
+  <dd>text</dd>
+  <dt id="weak"><a class="permalink" href="#weak"><i> -weak</i></a></dt>
+  <dd>text</dd>
+  <dt> strong</dt>
+  <dd>text</dd>
+</dl>

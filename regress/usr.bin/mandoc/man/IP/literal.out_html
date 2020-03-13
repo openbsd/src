@@ -1,5 +1,5 @@
 <dl class="Bl-tag">
-  <dt>tag</dt>
+  <dt id="tag"><a class="permalink" href="#tag">tag</a></dt>
   <dd>indented regular text</dd>
 </dl>
 <p class="Pp">new regular paragraph</p>
@@ -8,7 +8,7 @@ literal
 text
 </pre>
 <dl class="Bl-tag">
-  <dt>tag</dt>
+  <dt id="tag_2"><a class="permalink" href="#tag_2">tag</a></dt>
   <dd>
     <pre>
 indented
@@ -32,7 +32,7 @@ literal
 text
 </pre>
 <dl class="Bl-tag">
-  <dt>tag</dt>
+  <dt id="tag_3"><a class="permalink" href="#tag_3">tag</a></dt>
   <dd>
     <pre>
 indented
@@ -48,7 +48,7 @@ text
   out of indented paragraph</a></h2>
 <p class="Pp">regular text</p>
 <dl class="Bl-tag">
-  <dt>tag</dt>
+  <dt id="tag_4"><a class="permalink" href="#tag_4">tag</a></dt>
   <dd>indented regular text
     <pre>
 indented

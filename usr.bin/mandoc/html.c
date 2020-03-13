@@ -1,7 +1,7 @@
-/*	$OpenBSD: html.c,v 1.134 2020/02/27 22:26:26 schwarze Exp $ */
+/* $OpenBSD: html.c,v 1.135 2020/03/13 00:31:04 schwarze Exp $ */
 /*
- * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,9 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Common functions for mandoc(1) HTML formatters.
+ * For use by individual formatters and by the main program.
  */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -319,6 +322,18 @@ html_fillmode(struct html *h, enum roff_tok want)
 	return had;
 }
 
+/*
+ * Allocate a string to be used for the "id=" attribute of an HTML
+ * element and/or as a segment identifier for a URI in an <a> element.
+ * The function may fail and return NULL if the node lacks text data
+ * to create the attribute from.
+ * If the "unique" argument is 0, the caller is responsible for
+ * free(3)ing the returned string after using it.
+ * If the "unique" argument is non-zero, the "id_unique" ohash table
+ * is used for de-duplication and owns the returned string, so the
+ * caller must not free(3) it.  In this case, it will be freed
+ * automatically by html_reset() or html_free().
+ */
 char *
 html_make_id(const struct roff_node *n, int unique)
 {
@@ -327,14 +342,30 @@ html_make_id(const struct roff_node *n, int unique)
 	unsigned int		 slot;
 	int			 suffix;
 
-	for (nch = n->child; nch != NULL; nch = nch->next)
-		if (nch->type != ROFFT_TEXT)
-			return NULL;
-
-	buf = NULL;
-	deroff(&buf, n);
-	if (buf == NULL)
-		return NULL;
+	if (n->string != NULL)
+		buf = mandoc_strdup(n->string);
+	else {
+		switch (n->tok) {
+		case MDOC_Sh:
+		case MDOC_Ss:
+		case MDOC_Sx:
+		case MAN_SH:
+		case MAN_SS:
+			for (nch = n->child; nch != NULL; nch = nch->next)
+				if (nch->type != ROFFT_TEXT)
+					return NULL;
+			buf = NULL;
+			deroff(&buf, n);
+			if (buf == NULL)
+				return NULL;
+			break;
+		default:
+			if (n->child->type != ROFFT_TEXT)
+				return NULL;
+			buf = mandoc_strdup(n->child->string);
+			break;
+		}
+	}
 
 	/*
 	 * In ID attributes, only use ASCII characters that are
@@ -732,6 +763,33 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 		h->noindent++;
 
 	return t;
+}
+
+/*
+ * Print an element with an optional "id=" attribute.
+ * If there is an "id=" attribute, also add a permalink:
+ * outside if it's a phrasing element, or inside otherwise.
+ */
+struct tag *
+print_otag_id(struct html *h, enum htmltag elemtype, const char *cattr,
+    struct roff_node *n)
+{
+	struct tag	*ret, *t;
+	const char	*id;
+
+	ret = NULL;
+	id = NULL;
+	if (n->flags & NODE_ID)
+		id = html_make_id(n, 1);
+	if (id != NULL && htmltags[elemtype].flags & HTML_INPHRASE)
+		ret = print_otag(h, TAG_A, "chR", "permalink", id);
+	t = print_otag(h, elemtype, "ci", cattr, id);
+	if (ret == NULL) {
+		ret = t;
+		if (id != NULL)
+			print_otag(h, TAG_A, "chR", "permalink", id);
+	}
+	return ret;
 }
 
 static void

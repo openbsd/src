@@ -1,0 +1,17 @@
+SY-TAG(1)                   General Commands Manual                  SY-TAG(1)
+
+NNAAMMEE
+     SSyy--ttaagg - tagging of symbolic font macros
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     oonnee | ttwwoo
+             text
+
+     tthhrreeee   text
+     ffoouurr oonnee ffiivvee
+
+     ENDTEST
+
+OpenBSD                         March 13, 2020                         OpenBSD

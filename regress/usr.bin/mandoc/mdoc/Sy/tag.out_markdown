@@ -1,0 +1,25 @@
+SY-TAG(1) - General Commands Manual
+
+# NAME
+
+**Sy-tag** - tagging of symbolic font macros
+
+# DESCRIPTION
+
+BEGINTEST
+
+**one** | **two**
+
+> text
+
+**three**
+
+> text
+
+**four**
+**one**
+**five**
+
+ENDTEST
+
+OpenBSD - March 13, 2020

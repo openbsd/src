@@ -1,0 +1,25 @@
+ER-TAG(1) - General Commands Manual
+
+# NAME
+
+**Er-tag** - tagging of error number macros
+
+# DESCRIPTION
+
+BEGINTEST
+
+`one`
+
+> text
+
+`two`
+
+# ERRORS
+
+\[`ENOENT`]
+
+> text
+
+ENDTEST
+
+OpenBSD - March 13, 2020

@@ -1,0 +1,18 @@
+<dl class="Bl-tag">
+  <dt></dt>
+  <dd>indented text</dd>
+</dl>
+<p class="Pp">Empty IP is deleted:</p>
+<dl class="Bl-tag">
+  <dt id="tag1"><a class="permalink" href="#tag1">tag1</a></dt>
+  <dd></dd>
+  <dt id="tag2"><a class="permalink" href="#tag2">tag2</a></dt>
+  <dd>indented text</dd>
+</dl>
+<p class="Pp">Empty IP is deleted, RS does not cause additional spacing:</p>
+<div class="Bd-indent">
+<dl class="Bl-tag">
+  <dt id="tag"><a class="permalink" href="#tag">tag</a></dt>
+  <dd>indented text</dd>
+</dl>
+</div>

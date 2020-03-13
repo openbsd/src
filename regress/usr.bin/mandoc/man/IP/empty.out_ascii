@@ -6,7 +6,7 @@ NNAAMMEE
        IP-empty - empty indented paragraphs
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
+       BEGINTEST regular text
 
               indented text
 
@@ -19,7 +19,7 @@ DDEESSCCRRIIPPTTIIOONN
        Empty IP is deleted, RS does not cause additional spacing:
 
               tag    indented text
-       regular text
+       regular text ENDTEST
 
 
 

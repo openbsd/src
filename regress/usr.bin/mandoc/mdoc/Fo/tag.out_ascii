@@ -1,0 +1,17 @@
+FO-TAG(1)                   General Commands Manual                  FO-TAG(1)
+
+NNAAMMEE
+     FFoo--ttaagg - tagging of function name macros
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     automatic: ffiirrsstt() and sseeccoonndd()
+
+     sseeccoonndd() and ffiirrsstt()
+
+     explicit: tthhiirrdd() and ffoouurrtthh(_v_o_i_d)
+
+     ENDTEST
+
+OpenBSD                         March 13, 2020                         OpenBSD

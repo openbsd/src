@@ -1,0 +1,34 @@
+.\" $OpenBSD: warn.in,v 1.1 2020/03/13 00:31:06 schwarze Exp $
+.Dd $Mdocdate: March 13 2020 $
+.Dt TG-WARN 1
+.Os
+.Sh NAME
+.Nm Tg-warn
+.Nd warnings about tagging macros
+.Sh DESCRIPTION
+BEGINTEST
+.Pp
+.Tg start
+initial
+text
+.Tg
+.Ic macro
+.Tg "" ignored arguments
+too many
+.Tg \&badstart
+badstart
+.Tg badend\&
+badend
+.Tg "white space"
+whitespace
+.Tg sub
+.Tg double
+.Ss Subsection
+subtext
+.Tg examples
+.Sh EXAMPLES
+example
+text
+.Pp
+ENDTEST
+.Tg

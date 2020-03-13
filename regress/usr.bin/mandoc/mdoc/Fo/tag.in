@@ -1,0 +1,29 @@
+.\" $OpenBSD: tag.in,v 1.1 2020/03/13 00:31:06 schwarze Exp $
+.Dd $Mdocdate: March 13 2020 $
+.Dt FO-TAG 1
+.Os
+.Sh NAME
+.Nm Fo-tag
+.Nd tagging of function name macros
+.Sh DESCRIPTION
+BEGINTEST
+.Pp
+automatic:
+.Fn first
+and
+.Fn second
+.Pp
+.Fn second
+and
+.Fn first
+.Pp
+explicit:
+.Tg e3
+.Fn third
+and
+.Tg e4
+.Fo fourth
+.Fa void
+.Fc
+.Pp
+ENDTEST

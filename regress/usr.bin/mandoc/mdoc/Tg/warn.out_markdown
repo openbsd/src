@@ -1,0 +1,30 @@
+TG-WARN(1) - General Commands Manual
+
+# NAME
+
+**Tg-warn** - warnings about tagging macros
+
+# DESCRIPTION
+
+BEGINTEST
+
+initial
+text
+**macro**
+too many
+badstart
+badend
+whitespace
+
+## Subsection
+
+subtext
+
+# EXAMPLES
+
+example
+text
+
+ENDTEST
+
+OpenBSD - March 13, 2020

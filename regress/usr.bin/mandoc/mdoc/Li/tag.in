@@ -1,0 +1,21 @@
+.\" $OpenBSD: tag.in,v 1.1 2020/03/13 00:31:06 schwarze Exp $
+.Dd $Mdocdate: March 13 2020 $
+.Dt LI-TAG 1
+.Os
+.Sh NAME
+.Nm Li-tag
+.Nd tagging of literal font macros
+.Sh DESCRIPTION
+BEGINTEST
+.Bl -tag -width Ds
+.It Li one | two
+text
+.It Xo
+.Li three
+.Xc
+text
+.El
+.Tg
+.Li four
+.Pp
+ENDTEST

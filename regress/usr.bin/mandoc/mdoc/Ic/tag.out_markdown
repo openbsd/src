@@ -1,0 +1,23 @@
+IC-TAG(1) - General Commands Manual
+
+# NAME
+
+**Ic-tag** - tagging of internal command macros
+
+# DESCRIPTION
+
+BEGINTEST
+
+**one** | **two**
+
+> text
+
+**three**
+
+> text
+
+**four**
+
+ENDTEST
+
+OpenBSD - March 13, 2020

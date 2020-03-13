@@ -1,19 +1,19 @@
-#	$OpenBSD: Makefile,v 1.117 2019/03/06 12:26:30 schwarze Exp $
+# $OpenBSD: Makefile,v 1.118 2020/03/13 00:31:04 schwarze Exp $
 
 .include <bsd.own.mk>
 
 CFLAGS  += -W -Wall -Wstrict-prototypes -Wno-unused-parameter
-DPADD += ${LIBUTIL}
+DPADD	+= ${LIBUTIL}
 LDADD	+= -lutil -lz
 
 SRCS=	mandoc_aux.c mandoc_ohash.c mandoc.c mandoc_msg.c mandoc_xr.c \
-	arch.c chars.c preconv.c read.c \
-	roff.c roff_validate.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c eqn.c
-SRCS+=	mdoc_macro.c mdoc.c \
-	mdoc_argv.c mdoc_state.c mdoc_validate.c att.c msec.c st.c
+	arch.c chars.c msec.c preconv.c read.c tag.c
+SRCS+=	roff.c roff_validate.c tbl.c tbl_opts.c tbl_layout.c tbl_data.c eqn.c
+SRCS+=	mdoc.c mdoc_argv.c mdoc_macro.c mdoc_state.c mdoc_validate.c \
+	att.c st.c
 SRCS+=	man_macro.c man.c man_validate.c
-SRCS+=	main.c out.c tag.c tree.c
-SRCS+=	term.c term_tab.c term_ascii.c term_ps.c
+SRCS+=	main.c out.c tree.c
+SRCS+=	term.c term_ascii.c term_ps.c term_tab.c term_tag.c
 SRCS+=	roff_term.c mdoc_term.c man_term.c eqn_term.c tbl_term.c
 SRCS+=	mdoc_man.c
 SRCS+=	html.c roff_html.c mdoc_html.c man_html.c eqn_html.c tbl_html.c
@@ -55,7 +55,7 @@ LIBROFF_OBJS =	roff.o roff_validate.o eqn.o \
 		tbl.o tbl_data.o tbl_layout.o tbl_opts.o
 LIBMANDOC_OBJS = ${LIBMDOC_OBJS} ${LIBMAN_OBJS} ${LIBROFF_OBJS} \
 		arch.o mandoc.o mandoc_aux.o mandoc_msg.o mandoc_ohash.o \
-		mandoc_xr.o chars.o msec.o preconv.o read.o
+		mandoc_xr.o chars.o msec.o preconv.o read.o tag.o
 HTML_OBJS =	html.o roff_html.o mdoc_html.o man_html.o \
 		tbl_html.o eqn_html.o out.o
 CGI_OBJS =	${LIBMANDOC_OBJS} ${HTML_OBJS} \
