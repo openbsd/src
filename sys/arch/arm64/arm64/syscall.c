@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.5 2020/02/16 09:33:47 kettenis Exp $ */
+/* $OpenBSD: syscall.c,v 1.6 2020/03/13 05:20:07 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -50,7 +50,7 @@ svc_handler(trapframe_t *frame)
 	if (__predict_true((frame->tf_spsr & I_bit) == 0))
 		enable_interrupts();
 
-	/* Skip over barrier. */
+	/* Skip over speculation-blocking barrier. */
 	frame->tf_elr += 8;
 
 	code = frame->tf_x[8];
