@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.39 2020/03/11 15:45:04 claudio Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.40 2020/03/13 09:25:21 mpi Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ struct	sigacts {
 	sigset_t ps_siginfo;		/* signals that provide siginfo */
 	sigset_t ps_sigignore;		/* signals being ignored */
 	sigset_t ps_sigcatch;		/* signals being caught by user */
-	int	ps_flags;		/* signal flags, below */
+	int	ps_sigflags;		/* signal flags, below */
 };
 
 /* signal flags */

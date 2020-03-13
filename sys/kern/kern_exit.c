@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.185 2020/03/01 18:50:52 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.186 2020/03/13 09:25:21 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		 * If parent has the SAS_NOCLDWAIT flag set, we're not
 		 * going to become a zombie.
 		 */
-		if (pr->ps_pptr->ps_sigacts->ps_flags & SAS_NOCLDWAIT)
+		if (pr->ps_pptr->ps_sigacts->ps_sigflags & SAS_NOCLDWAIT)
 			atomic_setbits_int(&pr->ps_flags, PS_NOZOMBIE);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.296 2020/02/25 16:55:33 visa Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.297 2020/03/13 09:25:21 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -639,7 +639,7 @@ start_init(void *arg)
 	check_console(p);
 
 	/* process 0 ignores SIGCHLD, but we can't */
-	p->p_p->ps_sigacts->ps_flags = 0;
+	p->p_p->ps_sigacts->ps_sigflags = 0;
 
 	/*
 	 * Need just enough stack to hold the faked-up "execve()" arguments.
