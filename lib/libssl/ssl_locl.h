@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.269 2020/03/12 17:09:02 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.270 2020/03/13 16:40:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1306,7 +1306,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 int dtls1_get_record(SSL *s);
 int dtls1_dispatch_alert(SSL *s);
-int dtls1_enc(SSL *s, int snd);
 
 int ssl_init_wbio_buffer(SSL *s, int push);
 void ssl_free_wbio_buffer(SSL *s);
