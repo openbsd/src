@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.33 2020/03/07 09:56:46 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.34 2020/03/13 15:30:58 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -372,6 +372,7 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 			chip = "43455";
 		break;
 	case BRCM_CC_43340_CHIP_ID:
+	case BRCM_CC_43341_CHIP_ID:
 		chip = "43340";
 		break;
 	case BRCM_CC_4335_CHIP_ID:
