@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.12 2018/08/16 18:40:19 jsing Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.13 2020/03/13 15:55:00 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -287,6 +287,45 @@ test_cbb_basic(void)
 	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
 
 	ret = (buf_len == sizeof(kExpected)
+	    && memcmp(buf, kExpected, buf_len) == 0);
+
+	if (0) {
+err:
+		CBB_cleanup(&cbb);
+	}
+	free(buf);
+	return ret;
+}
+
+static int
+test_cbb_add_space(void)
+{
+	static const uint8_t kExpected[] = {1, 2, 0, 0, 0, 0, 7, 8};
+	uint8_t *buf = NULL;
+	size_t buf_len;
+	uint8_t *data;
+	int ret = 0;
+	CBB cbb;
+
+	CHECK(CBB_init(&cbb, 100));
+
+	CHECK_GOTO(CBB_add_u16(&cbb, 0x102));
+	CHECK_GOTO(CBB_add_space(&cbb, &data, 4));
+	CHECK_GOTO(CBB_add_u16(&cbb, 0x708));
+	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
+
+	ret |= (buf_len == sizeof(kExpected)
+	    && memcmp(buf, kExpected, buf_len) == 0);
+
+	memset(buf, 0xa5, buf_len);
+	CHECK(CBB_init_fixed(&cbb, buf, buf_len));
+
+	CHECK_GOTO(CBB_add_u16(&cbb, 0x102));
+	CHECK_GOTO(CBB_add_space(&cbb, &data, 4));
+	CHECK_GOTO(CBB_add_u16(&cbb, 0x708));
+	CHECK_GOTO(CBB_finish(&cbb, NULL, NULL));
+
+	ret |= (buf_len == sizeof(kExpected)
 	    && memcmp(buf, kExpected, buf_len) == 0);
 
 	if (0) {
@@ -857,6 +896,7 @@ main(void)
 	failed |= !test_get_prefixed_bad();
 	failed |= !test_get_asn1();
 	failed |= !test_cbb_basic();
+	failed |= !test_cbb_add_space();
 	failed |= !test_cbb_fixed();
 	failed |= !test_cbb_finish_child();
 	failed |= !test_cbb_discard_child();
