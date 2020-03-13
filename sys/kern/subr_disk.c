@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.235 2019/12/26 22:38:00 kn Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.236 2020/03/13 09:30:22 mpi Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1610,9 +1610,7 @@ gotswap:
 			panic("root device (%s) not found", buf);
 	}
 
-	if (rootdv && rootdv == bootdv && rootdv->dv_class == DV_IFNET)
-		ifp = ifunit(rootdv->dv_xname);
-	else if (bootdv && bootdv->dv_class == DV_IFNET)
+	if (bootdv != NULL && bootdv->dv_class == DV_IFNET)
 		ifp = ifunit(bootdv->dv_xname);
 
 	if (ifp)
