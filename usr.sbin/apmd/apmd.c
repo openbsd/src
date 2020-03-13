@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.95 2020/02/18 01:18:53 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.96 2020/03/13 09:08:58 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -368,18 +368,20 @@ resumed(int ctl_fd)
 }
 
 #define TIMO (10*60)			/* 10 minutes */
+#define AUTOACTION_GRACE_PERIOD (60)	/* 1mn after resume */
 
 int
 main(int argc, char *argv[])
 {
 	const char *fname = _PATH_APM_CTLDEV;
 	int ctl_fd, sock_fd, ch, suspends, standbys, hibernates, resumes;
-	int autoaction = 0;
+	int autoaction = 0, autoaction_inflight = 0;
 	int autolimit = 0;
 	int statonly = 0;
 	int powerstatus = 0, powerbak = 0, powerchange = 0;
 	int noacsleep = 0;
 	struct timespec ts = {TIMO, 0}, sts = {0, 0};
+	struct timespec last_resume = { 0, 0 };
 	struct apm_power_info pinfo;
 	const char *sockname = _PATH_APM_SOCKET;
 	const char *errstr;
@@ -566,6 +568,8 @@ main(int argc, char *argv[])
 				powerstatus = powerbak;
 				powerchange = 1;
 			}
+			clock_gettime(CLOCK_MONOTONIC, &last_resume);
+			autoaction_inflight = 0;
 			resumes++;
 			break;
 		case APM_POWER_CHANGE:
@@ -577,17 +581,30 @@ main(int argc, char *argv[])
 
 			if (!powerstatus && autoaction &&
 			    autolimit > (int)pinfo.battery_life) {
+				struct timespec graceperiod, now;
+
+				graceperiod = last_resume;
+				graceperiod.tv_sec += AUTOACTION_GRACE_PERIOD;
+				clock_gettime(CLOCK_MONOTONIC, &now);
+
 				logmsg(LOG_NOTICE,
 				    "estimated battery life %d%%"
-				    " below configured limit %d%%",
-				    pinfo.battery_life,
-				    autolimit
+				    " below configured limit %d%%%s%s",
+				    pinfo.battery_life, autolimit,
+				    !autoaction_inflight ? "" : ", in flight",
+				    timespeccmp(&now, &graceperiod, >) ?
+				        "" : ", grace period"
 				);
 
-				if (autoaction == AUTO_SUSPEND)
-					suspends++;
-				else
-					hibernates++;
+				if (!autoaction_inflight &&
+				    timespeccmp(&now, &graceperiod, >)) {
+					if (autoaction == AUTO_SUSPEND)
+						suspends++;
+					else
+						hibernates++;
+					/* Block autoaction until next resume */
+					autoaction_inflight = 1;
+				}
 			}
 			break;
 		default:

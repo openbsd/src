@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.51 2020/01/25 18:02:22 jca Exp $
+.\"	$OpenBSD: apmd.8,v 1.52 2020/03/13 09:08:58 jca Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 25 2020 $
+.Dd $Mdocdate: March 13 2020 $
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -128,6 +128,7 @@ If both
 and
 .Fl z
 are specified, the last one will supersede the other.
+After a resume, the effect of those options is inhibited for 60 seconds.
 .El
 .Pp
 When a client requests a suspend or stand-by state,
