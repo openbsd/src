@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.28 2020/02/18 16:12:14 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.29 2020/03/13 16:03:27 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -166,7 +166,7 @@ tls13_record_layer_rbuf(struct tls13_record_layer *rl, CBS *cbs)
 	CBS_dup(&rl->rbuf_cbs, cbs);
 }
 
-static int
+int
 tls13_record_layer_inc_seq_num(uint8_t *seq_num)
 {
 	size_t i;
@@ -177,7 +177,7 @@ tls13_record_layer_inc_seq_num(uint8_t *seq_num)
 	}
 
 	/* RFC 8446 section 5.3 - sequence numbers must not wrap. */
-	return (i != 0 || seq_num[0] != 0);
+	return (i != 0 || ++seq_num[0] != 0);
 }
 
 static int
