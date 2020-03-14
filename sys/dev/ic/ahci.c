@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.35 2020/03/14 16:46:51 krw Exp $ */
+/*	$OpenBSD: ahci.c,v 1.36 2020/03/14 18:53:13 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1131,7 +1131,7 @@ ahci_pmp_port_softreset(struct ahci_port *ap, int pmp_port)
 		ahci_pmp_write(ap, pmp_port, SATA_PMREG_SERR, -1);
 
 		/* send first softreset FIS */
-		ccb = ahci_get_pmp_ccb(ap);
+		ccb = ahci_get_pmp_ccb(ap);	/* Always returns non-NULL. */
 		cmd_slot = ccb->ccb_cmd_hdr;
 		memset(ccb->ccb_cmd_table, 0, sizeof(struct ahci_cmd_table));
 
@@ -1151,7 +1151,7 @@ ahci_pmp_port_softreset(struct ahci_port *ap, int pmp_port)
 		    PORTNAME(ap), pmp_port);
 		if (ahci_poll(ccb, 1000, ahci_pmp_probe_timeout) != 0) {
 			printf("%s.%d: PMP port softreset cmd failed\n",
-			       PORTNAME(ap), pmp_port);
+			    PORTNAME(ap), pmp_port);
 			rc = EBUSY;
 			if (count > 0) {
 				/* probably delay a while to allow
@@ -1618,7 +1618,7 @@ ahci_port_detect_pmp(struct ahci_port *ap)
 		/* Prep first command with SRST feature &
 		 * clear busy/reset flags
 		 */
-		ccb = ahci_get_pmp_ccb(ap);
+		ccb = ahci_get_pmp_ccb(ap);	/* Always returns non-NULL. */
 		cmd_slot = ccb->ccb_cmd_hdr;
 		memset(ccb->ccb_cmd_table, 0,
 		    sizeof(struct ahci_cmd_table));
@@ -3005,11 +3005,7 @@ ahci_pmp_read(struct ahci_port *ap, int target, int which, u_int32_t *datap)
 	struct ata_fis_h2d *fis;
 	int error;
 
-	ccb = ahci_get_pmp_ccb(ap);
-	if (ccb == NULL) {
-		printf("%s: NULL ccb!\n", PORTNAME(ap));
-		return (1);
-	}
+	ccb = ahci_get_pmp_ccb(ap);	/* Always returns non-NULL. */
 	ccb->ccb_xa.flags = ATA_F_POLL | ATA_F_GET_RFIS;
 	ccb->ccb_xa.pmp_port = SATA_PMP_CONTROL_PORT;
 	ccb->ccb_xa.state = ATA_S_PENDING;
@@ -3043,11 +3039,7 @@ ahci_pmp_write(struct ahci_port *ap, int target, int which, u_int32_t data)
 	struct ata_fis_h2d *fis;
 	int error;
 
-	ccb = ahci_get_pmp_ccb(ap);
-	if (ccb == NULL) {
-		printf("%s: NULL ccb!\n", PORTNAME(ap));
-		return (1);
-	}
+	ccb = ahci_get_pmp_ccb(ap);	/* Always returns non-NULL. */
 	ccb->ccb_xa.flags = ATA_F_POLL;
 	ccb->ccb_xa.pmp_port = SATA_PMP_CONTROL_PORT;
 	ccb->ccb_xa.state = ATA_S_PENDING;
