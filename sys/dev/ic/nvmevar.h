@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.15 2020/03/15 18:55:20 kmos Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.16 2020/03/15 20:50:46 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -18,6 +18,7 @@
 
 #define NVME_IO_Q	1
 #define NVME_HIB_Q	2
+#define NVME_MAXPHYS	(128 * 1024)
 
 struct nvme_dmamem {
 	bus_dmamap_t		ndm_map;
