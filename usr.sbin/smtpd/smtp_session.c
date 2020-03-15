@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.424 2020/02/03 15:53:52 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.425 2020/03/15 16:34:57 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -452,7 +452,7 @@ header_address_rewrite_buffer(char *buffer, const char *address, size_t len)
 			pos_component_beg = 0;
 		else {
 			for (pos_component_beg = pos_component_end; pos_component_beg >= 0; --pos_component_beg)
-				if (buffer[pos_component_beg] == ')' || isspace(buffer[pos_component_beg]))
+				if (buffer[pos_component_beg] == ')' || isspace((unsigned char)buffer[pos_component_beg]))
 					break;
 			pos_component_beg += 1;
 			pos_component_end += 1;

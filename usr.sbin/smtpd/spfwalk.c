@@ -95,7 +95,7 @@ spfwalk(int argc, struct parameter *argv)
 	tgt.dispatch = dispatch_txt;
 
 	while ((linelen = getline(&line, &linesize, stdin)) != -1) {
-		while (linelen-- > 0 && isspace(line[linelen]))
+		while (linelen-- > 0 && isspace((unsigned char)line[linelen]))
 			line[linelen] = '\0';
 
 		if (linelen > 0)
