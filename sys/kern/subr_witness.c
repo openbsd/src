@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.36 2020/01/20 15:58:23 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.37 2020/03/15 05:58:48 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -1769,7 +1769,6 @@ witness_lock_list_get(void)
 static void
 witness_lock_list_free(struct lock_list_entry *lle)
 {
-	union lock_stack *stack;
 	struct witness_cpu *wcpu = &witness_cpu[cpu_number()];
 
 	splassert(IPL_HIGH);
@@ -1782,17 +1781,8 @@ witness_lock_list_free(struct lock_list_entry *lle)
 	}
 
 	mtx_enter(&w_mtx);
-	/* Put the entry on the shared free list. */
 	lle->ll_next = w_lock_list_free;
 	w_lock_list_free = lle;
-	/* Put any excess stacks on the shared free list. */
-	while (wcpu->wc_stk_count > WITNESS_STK_CACHE_MAX) {
-		stack = wcpu->wc_stk_cache;
-		wcpu->wc_stk_cache = stack->ls_next;
-		wcpu->wc_stk_count--;
-		stack->ls_next = w_lock_stack_free;
-		w_lock_stack_free = stack;
-	}
 	mtx_leave(&w_mtx);
 }
 
@@ -1812,27 +1802,14 @@ witness_lock_stack_get(void)
 	}
 
 	mtx_enter(&w_mtx);
-	/* Reserve stacks for one lock list entry. */
-	while (w_lock_stack_free != NULL) {
+	if (w_lock_stack_free != NULL) {
 		stack = w_lock_stack_free;
 		w_lock_stack_free = stack->ls_next;
-		if (wcpu->wc_stk_count + 1 == LOCK_NCHILDREN)
-			break;
-		stack->ls_next = wcpu->wc_stk_cache;
-		wcpu->wc_stk_cache = stack;
-		wcpu->wc_stk_count++;
 	}
 	mtx_leave(&w_mtx);
 	return (stack);
 }
 
-/*
- * Put the stack buffer on the CPU-local free list.
- * A call to this function has to be followed by a call
- * to witness_lock_list_free() which will move excess stack buffers
- * to the shared free list.
- * This split of work reduces contention of w_mtx.
- */
 static void
 witness_lock_stack_free(union lock_stack *stack)
 {
@@ -1840,9 +1817,17 @@ witness_lock_stack_free(union lock_stack *stack)
 
 	splassert(IPL_HIGH);
 
-	stack->ls_next = wcpu->wc_stk_cache;
-	wcpu->wc_stk_cache = stack;
-	wcpu->wc_stk_count++;
+	if (wcpu->wc_stk_count < WITNESS_STK_CACHE_MAX) {
+		stack->ls_next = wcpu->wc_stk_cache;
+		wcpu->wc_stk_cache = stack;
+		wcpu->wc_stk_count++;
+		return;
+	}
+
+	mtx_enter(&w_mtx);
+	stack->ls_next = w_lock_stack_free;
+	w_lock_stack_free = stack;
+	mtx_leave(&w_mtx);
 }
 
 static struct lock_instance *
