@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.168 2019/12/01 21:12:42 jca Exp $	*/
+/*	$OpenBSD: in.c,v 1.169 2020/03/15 05:34:13 visa Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -929,7 +929,9 @@ in_delmulti(struct in_multi *inm)
 			    sizeof(struct sockaddr_in);
 			satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 			satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
+			KERNEL_LOCK();
 			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+			KERNEL_UNLOCK();
 
 			TAILQ_REMOVE(&ifp->if_maddrlist, &inm->inm_ifma,
 			    ifma_list);

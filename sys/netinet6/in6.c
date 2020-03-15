@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.234 2019/11/18 22:08:59 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.235 2020/03/15 05:34:14 visa Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1100,7 +1100,9 @@ in6_delmulti(struct in6_multi *in6m)
 			ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
 			ifr.ifr_addr.sin6_family = AF_INET6;
 			ifr.ifr_addr.sin6_addr = in6m->in6m_addr;
+			KERNEL_LOCK();
 			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+			KERNEL_UNLOCK();
 
 			TAILQ_REMOVE(&ifp->if_maddrlist, &in6m->in6m_ifma,
 			    ifma_list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.122 2019/09/04 16:13:49 bluhm Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.123 2020/03/15 05:34:14 visa Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -565,7 +565,9 @@ ip6_mrouter_detach(struct ifnet *ifp)
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_addr.sin6_family = AF_INET6;
 	ifr.ifr_addr.sin6_addr = in6addr_any;
+	KERNEL_LOCK();
 	(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+	KERNEL_UNLOCK();
 
 	free(m6, M_MRTABLE, sizeof(*m6));
 }

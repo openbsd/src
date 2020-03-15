@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.128 2019/09/02 13:12:09 bluhm Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.129 2020/03/15 05:34:13 visa Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -772,7 +772,9 @@ vif_delete(struct ifnet *ifp)
 	satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 	satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 	satosin(&ifr.ifr_addr)->sin_addr = zeroin_addr;
+	KERNEL_LOCK();
 	(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+	KERNEL_UNLOCK();
 
 	free(v, M_MRTABLE, sizeof(*v));
 }
