@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.12 2019/10/13 10:56:31 kettenis Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.13 2020/03/16 08:51:48 jasper Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -189,9 +189,8 @@ set_param_brightness(struct wsdisplay_param *dp)
 		ret = toshiba_find_brightness(sc, &dp->curval);
 		rw_exit_write(&sc->sc_acpi->sc_lck);
 
-		if ((dp->curval != -1) && ( ret != HCI_FAILURE))
+		if ((dp->curval != -1) && (ret != HCI_FAILURE))
 			return (0);
-		
 	}
 
 	return (1);
@@ -217,11 +216,11 @@ toshiba_find_brightness(struct acpitoshiba_softc *sc, int *new_blevel)
 	int ret, current_blevel;
 
 	ret = toshiba_get_brightness(sc, &current_blevel);
-	if ( ret != HCI_SUCCESS)
+	if (ret != HCI_SUCCESS)
 		return (1);
 
-	if ( current_blevel != *new_blevel) {
-		if ( *new_blevel >= HCI_LCD_BRIGHTNESS_MAX)
+	if (current_blevel != *new_blevel) {
+		if (*new_blevel >= HCI_LCD_BRIGHTNESS_MAX)
 			*new_blevel = current_blevel = HCI_LCD_BRIGHTNESS_MAX;
 		else if (*new_blevel <= HCI_LCD_BRIGHTNESS_MIN)
 			*new_blevel = current_blevel = HCI_LCD_BRIGHTNESS_MIN;
@@ -229,7 +228,7 @@ toshiba_find_brightness(struct acpitoshiba_softc *sc, int *new_blevel)
 			current_blevel = *new_blevel;
 
 		ret = toshiba_set_brightness(sc, &current_blevel);
-		if ( ret != HCI_SUCCESS)
+		if (ret != HCI_SUCCESS)
 			return (1);
 	}
 
@@ -245,7 +244,7 @@ toshiba_match(struct device *parent, void *match, void *aux)
         if (acpi_matchhids(aa, acpitoshiba_hids, cf->cf_driver->cd_name))
                 return (1);
 
-	if ( aa->aaa_name == NULL ||
+	if (aa->aaa_name == NULL ||
 	   strcmp(aa->aaa_name, cf->cf_driver->cd_name) != 0 ||
 	   aa->aaa_table != NULL)
 	      return (0);
@@ -312,7 +311,7 @@ toshiba_attach(struct device *parent, struct device *self, void *aux)
 
 	/* enable events and hotkeys */
 	ret = toshiba_enable_events(sc);
-	if ( ret != HCI_FAILURE) {
+	if (ret != HCI_FAILURE) {
 		/* Run toshiba_hotkey on button presses */
 		aml_register_notify(sc->sc_devnode, aa->aaa_dev,
 				toshiba_hotkey, sc, ACPIDEV_NOPOLL);
@@ -331,7 +330,7 @@ toshiba_fn_key_brightness_up(struct acpitoshiba_softc *sc)
 	int ret;
 
 	ret = toshiba_get_brightness(sc, &brightness_level);
-	if ( ret != HCI_FAILURE) {
+	if (ret != HCI_FAILURE) {
 
 		if (brightness_level++ == HCI_LCD_BRIGHTNESS_MAX)
 			brightness_level = HCI_LCD_BRIGHTNESS_MAX;
@@ -349,7 +348,7 @@ toshiba_fn_key_brightness_down(struct acpitoshiba_softc *sc)
 	int ret;
 
 	ret = toshiba_get_brightness(sc, &brightness_level);
-	if ( ret != HCI_FAILURE) {
+	if (ret != HCI_FAILURE) {
 		if (brightness_level-- == HCI_LCD_BRIGHTNESS_MIN)
 			brightness_level = HCI_LCD_BRIGHTNESS_MIN;
 		else
@@ -366,14 +365,13 @@ toshiba_fn_key_video_output(struct acpitoshiba_softc *sc)
 	int ret;
 
 	ret = toshiba_get_video_output(sc, &video_output);
-	if ( ret != HCI_FAILURE) {
+	if (ret != HCI_FAILURE) {
 		video_output = (video_output + 1) % HCI_VIDEO_OUTPUT_CYCLE_MAX;
 
 		ret = toshiba_set_video_output(sc, &video_output);
 	}
 
 	return (ret);
-	
 }
 
 int
@@ -421,7 +419,7 @@ toshiba_hotkey(struct aml_node *node, int notify, void *arg)
 		break;
 	}
 
-	if ( ret != HCI_SUCCESS)
+	if (ret != HCI_SUCCESS)
 		return (1);
 
 	return (0);
@@ -440,7 +438,7 @@ toshiba_set_brightness(struct acpitoshiba_softc *sc, uint32_t *brightness)
 
 	if ((*brightness < HCI_LCD_BRIGHTNESS_MIN) ||
 	    (*brightness > HCI_LCD_BRIGHTNESS_MAX))
-		       return (HCI_FAILURE);
+		return (HCI_FAILURE);
 
 	*brightness <<= HCI_LCD_BRIGHTNESS_SHIFT;
 
