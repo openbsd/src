@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.4 2020/01/28 16:39:51 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.5 2020/03/16 08:54:08 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -662,7 +662,7 @@ stmt_clear(struct bt_stmt *bs)
 	struct bt_var *bv = ba->ba_value;
 
 	assert(bs->bs_var == NULL);
-	assert(ba->ba_type = B_AT_VAR);
+	assert(ba->ba_type == B_AT_VAR);
 
 	map_clear(bv);
 
@@ -726,7 +726,7 @@ stmt_print(struct bt_stmt *bs, struct dt_evt *dtev)
 	size_t top = SIZE_T_MAX;
 
 	assert(bs->bs_var == NULL);
-	assert(ba->ba_type = B_AT_VAR);
+	assert(ba->ba_type == B_AT_VAR);
 
 	/* Parse optional `top' argument. */
 	btop = SLIST_NEXT(ba, ba_next);
@@ -786,7 +786,7 @@ stmt_time(struct bt_stmt *bs, struct dt_evt *dtev)
 	char buf[64];
 
 	assert(bs->bs_var == NULL);
-	assert(ba->ba_type = B_AT_STR);
+	assert(ba->ba_type == B_AT_STR);
 	assert(strlen(ba2str(ba, dtev)) < (sizeof(buf) - 1));
 
 	time = builtin_gettime(dtev);
@@ -802,7 +802,7 @@ stmt_zero(struct bt_stmt *bs)
 	struct bt_var *bv = ba->ba_value;
 
 	assert(bs->bs_var == NULL);
-	assert(ba->ba_type = B_AT_VAR);
+	assert(ba->ba_type == B_AT_VAR);
 
 	map_zero(bv);
 
