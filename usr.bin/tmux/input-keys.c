@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.67 2020/01/13 07:51:54 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.68 2020/03/16 06:12:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -254,12 +254,12 @@ static void
 input_key_mouse(struct window_pane *wp, struct mouse_event *m)
 {
 	struct screen	*s = wp->screen;
-	int		 mode = s->mode;
 	char		 buf[40];
 	size_t		 len;
 	u_int		 x, y;
 
-	if ((mode & ALL_MOUSE_MODES) == 0)
+	/* Ignore events if no mouse mode or the pane is not visible. */
+	if (m->ignore || (s->mode & ALL_MOUSE_MODES) == 0)
 		return;
 	if (cmd_mouse_at(wp, m, &x, &y, 0) != 0)
 		return;
@@ -267,8 +267,7 @@ input_key_mouse(struct window_pane *wp, struct mouse_event *m)
 		return;
 
 	/* If this pane is not in button or all mode, discard motion events. */
-	if (MOUSE_DRAG(m->b) &&
-	    (mode & (MODE_MOUSE_BUTTON|MODE_MOUSE_ALL)) == 0)
+	if (MOUSE_DRAG(m->b) && (s->mode & MOTION_MOUSE_MODES) == 0)
 	    return;
 
 	/*
@@ -280,13 +279,13 @@ input_key_mouse(struct window_pane *wp, struct mouse_event *m)
 	if (m->sgr_type != ' ') {
 		if (MOUSE_DRAG(m->sgr_b) &&
 		    MOUSE_BUTTONS(m->sgr_b) == 3 &&
-		    (~mode & MODE_MOUSE_ALL))
+		    (~s->mode & MODE_MOUSE_ALL))
 			return;
 	} else {
 		if (MOUSE_DRAG(m->b) &&
 		    MOUSE_BUTTONS(m->b) == 3 &&
 		    MOUSE_BUTTONS(m->lb) == 3 &&
-		    (~mode & MODE_MOUSE_ALL))
+		    (~s->mode & MODE_MOUSE_ALL))
 			return;
 	}
 
