@@ -1,4 +1,4 @@
-/* $OpenBSD: anxdp.c,v 1.2 2020/03/16 21:51:25 kettenis Exp $ */
+/* $OpenBSD: anxdp.c,v 1.3 2020/03/16 22:44:12 kettenis Exp $ */
 /* $NetBSD: anx_dp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -373,6 +373,12 @@ anxdp_bridge_attach(struct drm_bridge *bridge)
 	error = drm_connector_attach_encoder(connector, bridge->encoder);
 	if (error != 0)
 		return error;
+
+	if (sc->sc_panel != NULL) {
+		error = drm_panel_attach(sc->sc_panel, connector);
+		if (error != 0)
+			return error;
+	}
 
 	return drm_connector_register(connector);
 }
