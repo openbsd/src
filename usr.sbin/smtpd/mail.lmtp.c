@@ -64,6 +64,7 @@ main(int argc, char *argv[])
 
 	session.lhlo = "localhost";
 	session.mailfrom = getenv("SENDER");
+	session.rcptto = NULL;
 
 	while ((ch = getopt(argc, argv, "d:l:f:ru")) != -1) {
 		switch (ch) {
