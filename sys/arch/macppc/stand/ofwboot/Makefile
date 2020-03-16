@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2019/11/28 00:17:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.20 2020/03/16 07:02:10 otto Exp $
 #	$NetBSD: Makefile,v 1.2 1997/04/17 07:46:24 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -22,7 +22,7 @@ BINDIR=         /usr/mdec
 
 .PATH:          ${S}/stand/boot
 .PATH:          ${S}/lib/libsa
-SRCS+=		hexdump.c strtoll.c
+SRCS+=		hexdump.c strtoll.c ufs2.c
 
 .PATH:		${S}/lib/libkern/arch/powerpc ${S}/lib/libkern
 SRCS+=		getchar.c strlcpy.c memcpy.c memmove.c strlen.c strrchr.c \

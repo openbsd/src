@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.23 2019/09/02 23:40:29 kettenis Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.24 2020/03/16 07:02:10 otto Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/ufs2.h>
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/nfs.h>
 #include <hfs.h>
@@ -142,6 +143,10 @@ static struct fs_ops file_system_ufs = {
 	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat,
 	ufs_readdir
 };
+static struct fs_ops file_system_ufs2 = {
+	ufs2_open, ufs2_close, ufs2_read, ufs2_write, ufs2_seek, ufs2_stat,
+	ufs2_readdir
+};
 static struct fs_ops file_system_cd9660 = {
 	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	cd9660_stat, cd9660_readdir
@@ -155,7 +160,7 @@ static struct fs_ops file_system_nfs = {
 	nfs_readdir
 };
 
-struct fs_ops file_system[3];
+struct fs_ops file_system[4];
 int nfsys;
 
 static u_long
@@ -359,11 +364,12 @@ devopen(struct open_file *of, const char *name, char **file)
 		of->f_dev = devsw;
 		of->f_devdata = ofdev;
 		bcopy(&file_system_ufs, file_system, sizeof file_system[0]);
-		bcopy(&file_system_cd9660, file_system + 1,
+		bcopy(&file_system_ufs2, file_system + 1, sizeof file_system[0]);
+		bcopy(&file_system_cd9660, file_system + 2,
 		    sizeof file_system[0]);
-		bcopy(&file_system_hfs, file_system + 2,
+		bcopy(&file_system_hfs, file_system + 3,
 		    sizeof file_system[0]);
-		nfsys = 3;
+		nfsys = 4;
 		return 0;
 	}
 	if (!strcmp(buf, "network")) {
