@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.10 2020/02/21 15:46:16 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.11 2020/03/16 21:51:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -129,24 +129,52 @@ void	nvmem_register(struct nvmem_device *);
 int	nvmem_read(uint32_t, bus_addr_t, void *, bus_size_t);
 int	nvmem_read_cell(int, const char *name, void *, bus_size_t);
 
-/* Video interface support */
+/* Port/endpoint interface support */
 
-struct drm_device;
-struct video_device {
-	int	vd_node;
-	void	*vd_cookie;
-	int	(*vd_read)(void *, bus_addr_t, void *, bus_size_t);
+struct endpoint;
 
-	int	(*vd_ep_activate)(void *, struct drm_device *);
-	void *	(*vd_ep_get_data)(void *);
+struct device_ports {
+	int	dp_node;
+	void	*dp_cookie;
 
-	LIST_ENTRY(video_device) vd_list;
-	uint32_t vd_phandle;
+	int	(*dp_ep_activate)(void *, struct endpoint *, void *);
+	void	*(*dp_ep_get_cookie)(void *, struct endpoint *);
+
+	LIST_HEAD(, device_port) dp_ports;
 };
 
-void	video_register(struct video_device *);
-int	video_port_activate(uint32_t, struct drm_device *);
-int	video_endpoint_activate(uint32_t, struct drm_device *);
-void *	video_endpoint_get_data(uint32_t);
+struct device_port {
+	int	dp_node;
+	uint32_t dp_phandle;
+	uint32_t dp_reg;
+	struct device_ports *dp_ports;
+	LIST_ENTRY(device_port) dp_list;
+	LIST_HEAD(, endpoint) dp_endpoints;
+};
+
+enum endpoint_type {
+	EP_DRM_BRIDGE = 1,	/* struct drm_bridge */
+	EP_DRM_CONNECTOR,	/* struct drm_connector */
+	EP_DRM_CRTC,		/* struct drm_crtc */
+	EP_DRM_ENCODER,		/* struct drm_encoder */
+	EP_DRM_PANEL,		/* struct drm_panel */
+};
+
+struct endpoint {
+	int ep_node;
+	uint32_t ep_phandle;
+	uint32_t ep_reg;
+	enum endpoint_type ep_type;
+	struct device_port *ep_port;
+	LIST_ENTRY(endpoint) ep_list;
+	LIST_ENTRY(endpoint) ep_plist;
+};
+
+void	device_ports_register(struct device_ports *, enum endpoint_type);
+void	device_port_activate(uint32_t, void *);
+struct endpoint *endpoint_byreg(struct device_ports *, uint32_t, uint32_t);
+struct endpoint *endpoint_remote(struct endpoint *);
+int	endpoint_activate(struct endpoint *, void *);
+void	*endpoint_get_cookie(struct endpoint *);
 
 #endif /* _DEV_OFW_MISC_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: rkvop.c,v 1.1 2020/02/21 15:47:30 patrick Exp $ */
+/* $OpenBSD: rkvop.c,v 1.2 2020/03/16 21:51:25 kettenis Exp $ */
 /* $NetBSD: rk_vop.c,v 1.6 2020/01/05 12:14:35 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -129,11 +129,6 @@ struct rkvop_crtc {
 	struct rkvop_softc	*sc;
 };
 
-struct rkvop_ep {
-	struct rkvop_softc	*sc;
-	struct video_device	vd;
-};
-
 struct rkvop_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -142,8 +137,7 @@ struct rkvop_softc {
 	struct rkvop_config	*sc_conf;
 
 	struct rkvop_crtc	sc_crtc;
-	struct rkvop_ep		*sc_ep;
-	int			sc_nep;
+	struct device_ports	sc_ports;
 };
 
 #define	to_rkvop_crtc(x)	container_of(x, struct rkvop_crtc, base)
@@ -182,8 +176,8 @@ void rkvop_commit(struct drm_crtc *);
 void rk3399_vop_init(struct rkvop_softc *);
 void rk3399_vop_set_polarity(struct rkvop_softc *, enum vop_ep_type, uint32_t);
 
-int rkvop_ep_activate(void *, struct drm_device *);
-void *rkvop_ep_get_data(void *);
+int rkvop_ep_activate(void *, struct endpoint *, void *);
+void *rkvop_ep_get_cookie(void *, struct endpoint *);
 
 struct rkvop_config rk3399_vop_big_config = {
 	.descr = "RK3399 VOPB",
@@ -254,25 +248,11 @@ rkvop_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_conf->init != NULL)
 		sc->sc_conf->init(sc);
 
-	port = OF_getnodebyname(faa->fa_node, "port");
-	if (!port)
-		return;
-
-	for (ep = OF_child(port); ep; ep = OF_peer(ep))
-		sc->sc_nep++;
-	if (!sc->sc_nep)
-		return;
-
-	sc->sc_ep = mallocarray(sc->sc_nep, sizeof(*sc->sc_ep),
-	    M_DEVBUF, M_WAITOK | M_ZERO);
-	for (i = 0, ep = OF_child(port); ep; ep = OF_peer(ep), i++) {
-		sc->sc_ep[i].sc = sc;
-		sc->sc_ep[i].vd.vd_node = ep;
-		sc->sc_ep[i].vd.vd_cookie = &sc->sc_ep[i];
-		sc->sc_ep[i].vd.vd_ep_activate = rkvop_ep_activate;
-		sc->sc_ep[i].vd.vd_ep_get_data = rkvop_ep_get_data;
-		video_register(&sc->sc_ep[i].vd);
-	}
+	sc->sc_ports.dp_node = faa->fa_node;
+	sc->sc_ports.dp_cookie = sc;
+	sc->sc_ports.dp_ep_activate = rkvop_ep_activate;
+	sc->sc_ports.dp_ep_get_cookie = rkvop_ep_get_cookie;
+	device_ports_register(&sc->sc_ports, EP_DRM_CRTC);
 }
 
 int
@@ -534,10 +514,10 @@ struct drm_crtc_helper_funcs rkvop_crtc_helper_funcs = {
 };
 
 int
-rkvop_ep_activate(void *cookie, struct drm_device *ddev)
+rkvop_ep_activate(void *cookie, struct endpoint *ep, void *arg)
 {
-	struct rkvop_ep *ep = cookie;
-	struct rkvop_softc *sc = ep->sc;
+	struct rkvop_softc *sc = cookie;
+	struct drm_device *ddev = arg;
 
 	if (sc->sc_crtc.sc == NULL) {
 		sc->sc_crtc.sc = sc;
@@ -553,11 +533,9 @@ rkvop_ep_activate(void *cookie, struct drm_device *ddev)
 }
 
 void *
-rkvop_ep_get_data(void *cookie)
+rkvop_ep_get_cookie(void *cookie, struct endpoint *ep)
 {
-	struct rkvop_ep *ep = cookie;
-	struct rkvop_softc *sc = ep->sc;
-
+	struct rkvop_softc *sc = cookie;
 	return &sc->sc_crtc.base;
 }
 

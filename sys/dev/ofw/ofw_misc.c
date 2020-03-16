@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.14 2020/03/01 18:00:12 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.15 2020/03/16 21:51:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -440,57 +440,159 @@ nvmem_read_cell(int node, const char *name, void *data, bus_size_t size)
 	return nd->nd_read(nd->nd_cookie, nc->nc_addr, data, size);
 }
 
-/* Video interface support */
+/* Port/endpoint interface support */
 
-LIST_HEAD(, video_device) video_devices =
-	LIST_HEAD_INITIALIZER(video_devices);
+LIST_HEAD(, endpoint) endpoints =
+	LIST_HEAD_INITIALIZER(endpoints);
 
 void
-video_register(struct video_device *vd)
+endpoint_register(int node, struct device_port *dp, enum endpoint_type type)
 {
-	vd->vd_phandle = OF_getpropint(vd->vd_node, "phandle", 0);
-	if (vd->vd_phandle == 0)
+	struct endpoint *ep;
+
+	ep = malloc(sizeof(*ep), M_DEVBUF, M_WAITOK);
+	ep->ep_node = node;
+	ep->ep_phandle = OF_getpropint(node, "phandle", 0);
+	ep->ep_reg = OF_getpropint(node, "reg", -1);
+	ep->ep_port = dp;
+	ep->ep_type = type;
+
+	LIST_INSERT_HEAD(&endpoints, ep, ep_list);
+	LIST_INSERT_HEAD(&dp->dp_endpoints, ep, ep_plist);
+}
+
+void
+device_port_register(int node, struct device_ports *ports,
+    enum endpoint_type type)
+{
+	struct device_port *dp;
+
+	dp = malloc(sizeof(*dp), M_DEVBUF, M_WAITOK);
+	dp->dp_node = node;
+	dp->dp_phandle = OF_getpropint(node, "phandle", 0);
+	dp->dp_reg = OF_getpropint(node, "reg", -1);
+	dp->dp_ports = ports;
+	LIST_INIT(&dp->dp_endpoints);
+	for (node = OF_child(node); node; node = OF_peer(node))
+		endpoint_register(node, dp, type);
+
+	LIST_INSERT_HEAD(&ports->dp_ports, dp, dp_list);
+}
+
+void
+device_ports_register(struct device_ports *ports,
+    enum endpoint_type type)
+{
+	int node;
+
+	LIST_INIT(&ports->dp_ports);
+
+	node = OF_getnodebyname(ports->dp_node, "ports");
+	if (node == 0) {
+		node = OF_getnodebyname(ports->dp_node, "port");
+		if (node == 0)
+			return;
+		
+		device_port_register(node, ports, type);
 		return;
-	LIST_INSERT_HEAD(&video_devices, vd, vd_list);
-}
-
-int
-video_port_activate(uint32_t phandle, struct drm_device *ddev)
-{
-	uint32_t ep, rep;
-	int node, error;
-
-	node = OF_getnodebyphandle(phandle);
-	if (node == 0)
-		return ENXIO;
-
-	for (node = OF_child(node); node; node = OF_peer(node)) {
-		ep = OF_getpropint(node, "phandle", 0);
-		rep = OF_getpropint(node, "remote-endpoint", 0);
-		if (ep == 0 || rep == 0)
-			continue;
-		error = video_endpoint_activate(ep, ddev);
-		if (error)
-			continue;
-		error = video_endpoint_activate(rep, ddev);
-		if (error)
-			continue;
 	}
 
-	return 0;
+	for (node = OF_child(node); node; node = OF_peer(node))
+		device_port_register(node, ports, type);
+}
+
+struct endpoint *
+endpoint_byphandle(uint32_t phandle)
+{
+	struct endpoint *ep;
+
+	LIST_FOREACH(ep, &endpoints, ep_list) {
+		if (ep->ep_phandle == phandle)
+			return ep;
+	}
+
+	return NULL;
+}
+
+struct endpoint *
+endpoint_byreg(struct device_ports *ports, uint32_t dp_reg, uint32_t ep_reg)
+{
+	struct device_port *dp;
+	struct endpoint *ep;
+
+	LIST_FOREACH(dp, &ports->dp_ports, dp_list) {
+		if (dp->dp_reg != dp_reg)
+			continue;
+		LIST_FOREACH(ep, &dp->dp_endpoints, ep_list) {
+			if (ep->ep_reg != ep_reg)
+				continue;
+			return ep;
+		}
+	}
+
+	return NULL;
+}
+
+struct endpoint *
+endpoint_remote(struct endpoint *ep)
+{
+	struct endpoint *rep;
+	int phandle;
+
+	phandle = OF_getpropint(ep->ep_node, "remote-endpoint", 0);
+	if (phandle == 0)
+		return NULL;
+
+	LIST_FOREACH(rep, &endpoints, ep_list) {
+		if (rep->ep_phandle == phandle)
+			return rep;
+	}
+
+	return NULL;
 }
 
 int
-video_endpoint_activate(uint32_t phandle, struct drm_device *ddev)
+endpoint_activate(struct endpoint *ep, void *arg)
 {
-	struct video_device *vd;
+	struct device_ports *ports = ep->ep_port->dp_ports;
+	return ports->dp_ep_activate(ports->dp_cookie, ep, arg);
+}
 
-	LIST_FOREACH(vd, &video_devices, vd_list) {
-		if (vd->vd_phandle == phandle)
+void *
+endpoint_get_cookie(struct endpoint *ep)
+{
+	struct device_ports *ports = ep->ep_port->dp_ports;
+	return ports->dp_ep_get_cookie(ports->dp_cookie, ep);
+}
+
+void
+device_port_activate(uint32_t phandle, void *arg)
+{
+	struct device_ports *ports;
+	struct device_port *dp;
+	struct endpoint *ep, *rep;
+	int error;
+
+	LIST_FOREACH(ep, &endpoints, ep_list) {
+		if (ep->ep_port->dp_phandle == phandle) {
+			dp = ep->ep_port;
 			break;
+		}
 	}
-	if (vd == NULL)
-		return ENXIO;
+	if (dp == NULL)
+		return;
 
-	return vd->vd_ep_activate(vd->vd_cookie, ddev);
+	ports = dp->dp_ports;
+	LIST_FOREACH(ep, &dp->dp_endpoints, ep_plist) {
+		rep = endpoint_remote(ep);
+		if (rep == NULL)
+			continue;
+
+		error = endpoint_activate(ep, arg);
+		if (error)
+			continue;
+		error = endpoint_activate(rep, arg);
+		if (error)
+			continue;
+	}
 }

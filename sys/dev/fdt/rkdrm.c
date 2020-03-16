@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.2 2020/03/04 21:19:15 kettenis Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.3 2020/03/16 21:51:25 kettenis Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -441,7 +441,7 @@ rkdrm_attachhook(struct device *dev)
 	ports = malloc(portslen, M_TEMP, M_WAITOK);
 	OF_getpropintarray(sc->sc_node, "ports", ports, portslen);
 	for (i = 0; i < portslen / sizeof(uint32_t); i++) {
-		video_port_activate(ports[i], &sc->sc_ddev);
+		device_port_activate(ports[i], &sc->sc_ddev);
 		nports++;
 	}
 	free(ports, M_TEMP, portslen);

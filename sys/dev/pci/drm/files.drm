@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.47 2019/08/28 10:17:59 kettenis Exp $
+# $OpenBSD: files.drm,v 1.48 2020/03/16 21:51:25 kettenis Exp $
 
 # direct rendering modules
 define drmbase {[primary = -1]}
@@ -41,7 +41,7 @@ file	dev/pci/drm/drm_mode_object.c		drm
 file	dev/pci/drm/drm_modes.c			drm
 file	dev/pci/drm/drm_modeset_helper.c	drm
 file	dev/pci/drm/drm_modeset_lock.c		drm
-file	dev/pci/drm/drm_panel.c			drm & inteldrm
+file	dev/pci/drm/drm_panel.c			drm
 file	dev/pci/drm/drm_panel_orientation_quirks.c	drm
 file	dev/pci/drm/drm_plane.c			drm
 file	dev/pci/drm/drm_plane_helper.c		drm

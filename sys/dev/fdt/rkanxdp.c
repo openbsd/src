@@ -1,4 +1,4 @@
-/* $OpenBSD: rkanxdp.c,v 1.2 2020/03/01 10:19:35 kettenis Exp $ */
+/* $OpenBSD: rkanxdp.c,v 1.3 2020/03/16 21:51:25 kettenis Exp $ */
 /* $NetBSD: rk_anxdp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -53,17 +53,6 @@ enum {
 	ANXDP_PORT_OUTPUT = 1,
 };
 
-struct rkanxdp_port {
-	struct rkanxdp_softc	*sc;
-	struct rkanxdp_ep	*ep;
-	int			nep;
-};
-
-struct rkanxdp_ep {
-	struct rkanxdp_port	*port;
-	struct video_device	vd;
-};
-
 struct rkanxdp_softc {
 	struct anxdp_softc	sc_base;
 
@@ -73,8 +62,7 @@ struct rkanxdp_softc {
 
 	int			sc_activated;
 
-	struct rkanxdp_port	*sc_port;
-	int			sc_nport;
+	struct device_ports	sc_ports;
 };
 
 #define	to_rkanxdp_softc(x)	container_of(x, struct rkanxdp_softc, sc_base)
@@ -94,8 +82,8 @@ void rkanxdp_encoder_prepare(struct drm_encoder *);
 void rkanxdp_encoder_commit(struct drm_encoder *);
 void rkanxdp_encoder_dpms(struct drm_encoder *, int);
 
-int rkanxdp_ep_activate(void *, struct drm_device *);
-void *rkanxdp_ep_get_data(void *);
+int rkanxdp_ep_activate(void *, struct endpoint *, void *);
+void *rkanxdp_ep_get_cookie(void *, struct endpoint *);
 
 struct cfattach	rkanxdp_ca = {
 	sizeof (struct rkanxdp_softc), rkanxdp_match, rkanxdp_attach
@@ -118,7 +106,7 @@ rkanxdp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rkanxdp_softc *sc = (struct rkanxdp_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	int i, j, ep, port, ports, grf;
+	uint32_t grf;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -157,37 +145,11 @@ rkanxdp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	ports = OF_getnodebyname(faa->fa_node, "ports");
-	if (!ports)
-		return;
-
-	for (port = OF_child(ports); port; port = OF_peer(port))
-		sc->sc_nport++;
-	if (!sc->sc_nport)
-		return;
-
-	sc->sc_port = mallocarray(sc->sc_nport, sizeof(*sc->sc_port), M_DEVBUF,
-	    M_WAITOK | M_ZERO);
-	for (i = 0, port = OF_child(ports); port; port = OF_peer(port), i++) {
-		for (ep = OF_child(port); ep; ep = OF_peer(ep))
-			sc->sc_port[i].nep++;
-		if (!sc->sc_port[i].nep)
-			continue;
-		sc->sc_port[i].sc = sc;
-		sc->sc_port[i].ep = mallocarray(sc->sc_port[i].nep,
-		    sizeof(*sc->sc_port[i].ep), M_DEVBUF, M_WAITOK | M_ZERO);
-		for (j = 0, ep = OF_child(port); ep; ep = OF_peer(ep), j++) {
-			sc->sc_port[i].ep[j].port = &sc->sc_port[i];
-			sc->sc_port[i].ep[j].vd.vd_node = ep;
-			sc->sc_port[i].ep[j].vd.vd_cookie =
-			    &sc->sc_port[i].ep[j];
-			sc->sc_port[i].ep[j].vd.vd_ep_activate =
-			    rkanxdp_ep_activate;
-			sc->sc_port[i].ep[j].vd.vd_ep_get_data =
-			    rkanxdp_ep_get_data;
-			video_register(&sc->sc_port[i].ep[j].vd);
-		}
-	}
+	sc->sc_ports.dp_node = faa->fa_node;
+	sc->sc_ports.dp_cookie = sc;
+	sc->sc_ports.dp_ep_activate = rkanxdp_ep_activate;
+	sc->sc_ports.dp_ep_get_cookie = rkanxdp_ep_get_cookie;
+	device_ports_register(&sc->sc_ports, EP_DRM_ENCODER);
 }
 
 void
@@ -259,23 +221,36 @@ struct drm_encoder_helper_funcs rkanxdp_encoder_helper_funcs = {
 };
 
 int
-rkanxdp_ep_activate(void *cookie, struct drm_device *ddev)
+rkanxdp_ep_activate(void *cookie, struct endpoint *ep, void *arg)
 {
-	struct rkanxdp_ep *ep = cookie;
-	struct rkanxdp_port *port = ep->port;
-	struct rkanxdp_softc *sc = port->sc;
+	struct rkanxdp_softc *sc = cookie;
+	struct drm_crtc *crtc = NULL;
+	struct endpoint *rep;
 	int error;
 
 	if (sc->sc_activated)
 		return 0;
 
-	if (OF_getpropint(OF_parent(ep->vd.vd_node), "reg", 0) != ANXDP_PORT_INPUT)
+	if (ep->ep_port->dp_reg != ANXDP_PORT_INPUT)
+		return EINVAL;
+
+	rep = endpoint_remote(ep);
+	if (rep && rep->ep_type == EP_DRM_CRTC)
+		crtc = endpoint_get_cookie(rep);
+	if (crtc == NULL)
 		return EINVAL;
 
 	sc->sc_encoder.possible_crtcs = 0x3; /* XXX */
-	drm_encoder_init(ddev, &sc->sc_encoder, &rkanxdp_encoder_funcs,
+	drm_encoder_init(crtc->dev, &sc->sc_encoder, &rkanxdp_encoder_funcs,
 	    DRM_MODE_ENCODER_TMDS, NULL);
 	drm_encoder_helper_add(&sc->sc_encoder, &rkanxdp_encoder_helper_funcs);
+
+	ep = endpoint_byreg(&sc->sc_ports, ANXDP_PORT_OUTPUT, 0);
+	if (ep) {
+		rep = endpoint_remote(ep);
+		if (rep && rep->ep_type == EP_DRM_PANEL)
+			sc->sc_base.sc_panel = endpoint_get_cookie(rep);
+	}
 
 	sc->sc_base.sc_connector.base.connector_type = DRM_MODE_CONNECTOR_eDP;
 	error = anxdp_bind(&sc->sc_base, &sc->sc_encoder);
@@ -287,11 +262,8 @@ rkanxdp_ep_activate(void *cookie, struct drm_device *ddev)
 }
 
 void *
-rkanxdp_ep_get_data(void *cookie)
+rkanxdp_ep_get_cookie(void *cookie, struct endpoint *ep)
 {
-	struct rkanxdp_ep *ep = cookie;
-	struct rkanxdp_port *port = ep->port;
-	struct rkanxdp_softc *sc = port->sc;
-
+	struct rkanxdp_softc *sc = cookie;
 	return &sc->sc_encoder;
 }

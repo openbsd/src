@@ -1,4 +1,4 @@
-/* $OpenBSD: anxdp.c,v 1.1 2020/02/21 15:49:09 patrick Exp $ */
+/* $OpenBSD: anxdp.c,v 1.2 2020/03/16 21:51:25 kettenis Exp $ */
 /* $NetBSD: anx_dp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -310,6 +310,9 @@ anxdp_connector_get_modes(struct drm_connector *connector)
 	struct anxdp_softc *sc = anxdp_connector->sc;
 	struct edid *pedid = NULL;
 	int error;
+
+	if (sc->sc_panel)
+		return drm_panel_get_modes(sc->sc_panel);
 
 	pedid = drm_get_edid(connector, &sc->sc_dpaux.ddc);
 

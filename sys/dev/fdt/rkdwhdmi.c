@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdwhdmi.c,v 1.2 2020/03/04 13:38:22 kettenis Exp $ */
+/* $OpenBSD: rkdwhdmi.c,v 1.3 2020/03/16 21:51:25 kettenis Exp $ */
 /* $NetBSD: rk_dwhdmi.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $ */
 
 /*-
@@ -69,22 +69,6 @@ const struct dwhdmi_phy_config rkdwhdmi_phy_config[] = {
 	{ 0,		0x0000, 0x0000, 0x0000 }
 };
 
-enum {
-	DWHDMI_PORT_INPUT = 0,
-	DWHDMI_PORT_OUTPUT = 1,
-};
-
-struct rkdwhdmi_port {
-	struct rkdwhdmi_softc	*sc;
-	struct rkdwhdmi_ep	*ep;
-	int			nep;
-};
-
-struct rkdwhdmi_ep {
-	struct rkdwhdmi_port	*port;
-	struct video_device	vd;
-};
-
 struct rkdwhdmi_softc {
 	struct dwhdmi_softc	sc_base;
 	int			sc_node;
@@ -96,8 +80,7 @@ struct rkdwhdmi_softc {
 
 	int			sc_activated;
 
-	struct rkdwhdmi_port	*sc_port;
-	int			sc_nport;
+	struct device_ports	sc_ports;
 };
 
 #define	to_rkdwhdmi_softc(x)	container_of(x, struct rkdwhdmi_softc, sc_base)
@@ -117,8 +100,8 @@ void rkdwhdmi_encoder_prepare(struct drm_encoder *);
 void rkdwhdmi_encoder_commit(struct drm_encoder *);
 void rkdwhdmi_encoder_dpms(struct drm_encoder *, int);
 
-int rkdwhdmi_ep_activate(void *, struct drm_device *);
-void *rkdwhdmi_ep_get_data(void *);
+int rkdwhdmi_ep_activate(void *, struct endpoint *, void *);
+void *rkdwhdmi_ep_get_cookie(void *, struct endpoint *);
 
 void rkdwhdmi_enable(struct dwhdmi_softc *);
 void rkdwhdmi_mode_set(struct dwhdmi_softc *, struct drm_display_mode *,
@@ -147,7 +130,7 @@ rkdwhdmi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rkdwhdmi_softc *sc = (struct rkdwhdmi_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	int i, j, ep, port, ports, grf;
+	uint32_t grf;
 	bus_addr_t addr;
 	bus_size_t size;
 	uint32_t phandle;
@@ -209,37 +192,11 @@ rkdwhdmi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	ports = OF_getnodebyname(faa->fa_node, "ports");
-	if (!ports)
-		return;
-
-	for (port = OF_child(ports); port; port = OF_peer(port))
-		sc->sc_nport++;
-	if (!sc->sc_nport)
-		return;
-
-	sc->sc_port = mallocarray(sc->sc_nport, sizeof(*sc->sc_port), M_DEVBUF,
-	    M_WAITOK | M_ZERO);
-	for (i = 0, port = OF_child(ports); port; port = OF_peer(port), i++) {
-		for (ep = OF_child(port); ep; ep = OF_peer(ep))
-			sc->sc_port[i].nep++;
-		if (!sc->sc_port[i].nep)
-			continue;
-		sc->sc_port[i].sc = sc;
-		sc->sc_port[i].ep = mallocarray(sc->sc_port[i].nep,
-		    sizeof(*sc->sc_port[i].ep), M_DEVBUF, M_WAITOK | M_ZERO);
-		for (j = 0, ep = OF_child(port); ep; ep = OF_peer(ep), j++) {
-			sc->sc_port[i].ep[j].port = &sc->sc_port[i];
-			sc->sc_port[i].ep[j].vd.vd_node = ep;
-			sc->sc_port[i].ep[j].vd.vd_cookie =
-			    &sc->sc_port[i].ep[j];
-			sc->sc_port[i].ep[j].vd.vd_ep_activate =
-			    rkdwhdmi_ep_activate;
-			sc->sc_port[i].ep[j].vd.vd_ep_get_data =
-			    rkdwhdmi_ep_get_data;
-			video_register(&sc->sc_port[i].ep[j].vd);
-		}
-	}
+	sc->sc_ports.dp_node = faa->fa_node;
+	sc->sc_ports.dp_cookie = sc;
+	sc->sc_ports.dp_ep_activate = rkdwhdmi_ep_activate;
+	sc->sc_ports.dp_ep_get_cookie = rkdwhdmi_ep_get_cookie;
+	device_ports_register(&sc->sc_ports, EP_DRM_ENCODER);
 
 #ifdef notyet
 	fdtbus_register_dai_controller(self, phandle, &rkdwhdmi_dai_funcs);
@@ -306,21 +263,24 @@ struct drm_encoder_helper_funcs rkdwhdmi_encoder_helper_funcs = {
 };
 
 int
-rkdwhdmi_ep_activate(void *cookie, struct drm_device *ddev)
+rkdwhdmi_ep_activate(void *cookie, struct endpoint *ep, void *arg)
 {
-	struct rkdwhdmi_ep *ep = cookie;
-	struct rkdwhdmi_port *port = ep->port;
-	struct rkdwhdmi_softc *sc = port->sc;
+	struct rkdwhdmi_softc *sc = cookie;
+	struct drm_crtc *crtc = NULL;
+	struct endpoint *rep;
 	int error;
 
 	if (sc->sc_activated)
 		return 0;
 
-	if (OF_getpropint(OF_parent(ep->vd.vd_node), "reg", 0) != DWHDMI_PORT_INPUT)
+	rep = endpoint_remote(ep);
+	if (rep && rep->ep_type == EP_DRM_CRTC)
+		crtc = endpoint_get_cookie(rep);
+	if (crtc == NULL)
 		return EINVAL;
 
 	sc->sc_encoder.possible_crtcs = 0x3; /* XXX */
-	drm_encoder_init(ddev, &sc->sc_encoder, &rkdwhdmi_encoder_funcs,
+	drm_encoder_init(crtc->dev, &sc->sc_encoder, &rkdwhdmi_encoder_funcs,
 	    DRM_MODE_ENCODER_TMDS, NULL);
 	drm_encoder_helper_add(&sc->sc_encoder, &rkdwhdmi_encoder_helper_funcs);
 
@@ -334,12 +294,9 @@ rkdwhdmi_ep_activate(void *cookie, struct drm_device *ddev)
 }
 
 void *
-rkdwhdmi_ep_get_data(void *cookie)
+rkdwhdmi_ep_get_cookie(void *cookie, struct endpoint *ep)
 {
-	struct rkdwhdmi_ep *ep = cookie;
-	struct rkdwhdmi_port *port = ep->port;
-	struct rkdwhdmi_softc *sc = port->sc;
-
+	struct rkdwhdmi_softc *sc = cookie;
 	return &sc->sc_encoder;
 }
 
