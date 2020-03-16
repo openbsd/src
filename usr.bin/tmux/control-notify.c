@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.25 2019/12/12 11:39:56 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.26 2020/03/16 09:12:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,6 +54,7 @@ control_notify_input(struct client *c, struct window_pane *wp,
 			else
 			    evbuffer_add_printf(message, "%c", buf[i]);
 		}
+		evbuffer_add(message, "", 1);
 		control_write(c, "%s", EVBUFFER_DATA(message));
 		evbuffer_free(message);
 	}
