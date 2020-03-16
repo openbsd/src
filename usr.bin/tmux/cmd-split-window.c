@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.96 2019/10/15 08:25:37 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.97 2020/03/16 18:08:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -154,7 +154,6 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		sc.flags |= SPAWN_DETACHED;
 
 	if ((new_wp = spawn_pane(&sc, &cause)) == NULL) {
-		layout_close_pane(new_wp);
 		cmdq_error(item, "create pane failed: %s", cause);
 		free(cause);
 		return (CMD_RETURN_ERROR);
