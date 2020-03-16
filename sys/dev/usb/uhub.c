@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.93 2020/02/22 14:01:34 jasper Exp $ */
+/*	$OpenBSD: uhub.c,v 1.94 2020/03/16 13:17:17 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -72,7 +72,7 @@ struct uhub_softc {
 
 int uhub_explore(struct usbd_device *hub);
 void uhub_intr(struct usbd_xfer *, void *, usbd_status);
-int uhub_port_connect(struct uhub_softc *, int, int, int);
+int uhub_port_connect(struct uhub_softc *, int, int);
 
 /*
  * We need two attachment points:
@@ -421,7 +421,7 @@ uhub_explore(struct usbd_device *dev)
 		}
 
 		if (change & UPS_C_CONNECT_STATUS) {
-			if (uhub_port_connect(sc, port, status, change))
+			if (uhub_port_connect(sc, port, status))
 				continue;
 
 			/* The port set up succeeded, reset error count. */
@@ -506,10 +506,10 @@ uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 }
 
 int
-uhub_port_connect(struct uhub_softc *sc, int port, int status, int change)
+uhub_port_connect(struct uhub_softc *sc, int port, int status)
 {
 	struct usbd_port *up = &sc->sc_hub->hub->ports[port-1];
-	int speed;
+	int speed, change;
 
 	/* We have a connect status change, handle it. */
 	usbd_clear_port_feature(sc->sc_hub, port, UHF_C_PORT_CONNECTION);
