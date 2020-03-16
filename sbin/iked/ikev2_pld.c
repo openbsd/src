@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.78 2020/03/10 10:07:46 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.79 2020/03/16 09:13:01 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1645,6 +1645,10 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 	if (sa_frag->frag_arr == NULL) {
 		sa_frag->frag_arr = recallocarray(NULL, 0, frag_total,
 		    sizeof(struct iked_frag_entry*));
+		if (sa_frag->frag_arr == NULL) {
+			log_info("%s: recallocarray sa_frag->frag_arr.", __func__);
+			goto done;
+		}
 		sa_frag->frag_total = frag_total;
 		sa_frag->frag_nextpayload = pld->pld_nextpayload;
 	}
@@ -1672,7 +1676,7 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 	/* Insert new list element */
 	el = calloc(1, sizeof(struct iked_frag_entry));
 	if (el == NULL) {
-		log_debug("%s: Failed allocating new fragment: %zu of %zu",
+		log_info("%s: Failed allocating new fragment: %zu of %zu",
 		    __func__, frag_num, frag_total);
 		goto done;
 	}
