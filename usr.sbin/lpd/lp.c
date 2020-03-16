@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.c,v 1.2 2019/11/08 07:26:38 mestre Exp $	*/
+/*	$OpenBSD: lp.c,v 1.3 2020/03/16 20:46:44 benno Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -321,9 +321,9 @@ lp_readqueue(struct lp_printer *lp, struct lp_queue *q)
 		if (strlen(d->d_name) < 7)
 			continue;
 
-		if (!isdigit((unsigned int)d->d_name[3]) ||
-		    !isdigit((unsigned int)d->d_name[4]) ||
-		    !isdigit((unsigned int)d->d_name[5]))
+		if (!isdigit((unsigned char)d->d_name[3]) ||
+		    !isdigit((unsigned char)d->d_name[4]) ||
+		    !isdigit((unsigned char)d->d_name[5]))
 			continue;
 
 		if (strlcpy(end, d->d_name, sz) >= sz) {
