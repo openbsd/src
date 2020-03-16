@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.195 2020/03/10 18:54:52 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.196 2020/03/16 09:07:40 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6092,7 +6092,9 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 			break;
 		case AF_INET6:
 			memcpy(in6, cfg6, sizeof(*in6));
-			nhost = htonl(host);
+			memcpy(&nhost, &cfg6->sin6_addr.s6_addr[12],
+			    sizeof(uint32_t));
+			nhost = (nhost & mask) | htonl(host);
 			memcpy(&in6->sin6_addr.s6_addr[12], &nhost,
 			    sizeof(uint32_t));
 			break;
