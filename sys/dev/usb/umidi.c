@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.52 2019/01/23 15:27:44 mpi Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.53 2020/03/16 16:12:43 jasper Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -450,6 +450,10 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 	    sc->sc_in_num_endpoints ?
 		sc->sc_endpoints+sc->sc_out_num_endpoints : NULL;
 
+	if (sc->sc_in_ep == NULL || sc->sc_out_ep == NULL) {
+		printf("%s: cannot get valid endpoints", sc->sc_dev.dv_xname);
+		goto error;
+	}
 	ep = &sc->sc_out_ep[0];
 	for (i=0; i<sc->sc_out_num_endpoints; i++) {
 		epd = usbd_interface2endpoint_descriptor(
@@ -524,6 +528,9 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 	desc = TO_D(usbd_get_interface_descriptor(sc->sc_iface));
 	for (i=(int)TO_IFD(desc)->bNumEndpoints-1; i>=0; i--) {
 		epd = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
+		if (epd == NULL)
+			continue;
+
 		if (UE_GET_XFERTYPE(epd->bmAttributes) == UE_BULK) {
 			dir = UE_GET_DIR(epd->bEndpointAddress);
 			if (dir==UE_DIR_OUT && !out_addr)
