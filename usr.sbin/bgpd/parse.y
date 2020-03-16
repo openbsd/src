@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.404 2020/02/14 13:54:31 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.405 2020/03/16 14:47:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4480,7 +4480,7 @@ static void
 add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
 {
 	struct prefixset_item	*psi;
-	struct roa_set rs;
+	struct roa_set rs, *rsp;
 
 	/* no prefixlen option in this tree */
 	npsi->p.op = OP_NONE;
@@ -4492,8 +4492,17 @@ add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
 	if (psi->set == NULL)
 		if ((psi->set = set_new(1, sizeof(rs))) == NULL)
 			fatal("set_new");
-	rs.as = as;
-	rs.maxlen = max;
-	if (set_add(psi->set, &rs, 1) != 0)
-		fatal("as_set_new");
+
+	/* merge sets with same key, longer maxlen wins */
+	if ((rsp = set_match(psi->set, as)) != NULL) {
+		if (rsp->maxlen < max)
+			rsp->maxlen = max;
+	} else  {
+		rs.as = as;
+		rs.maxlen = max;
+		if (set_add(psi->set, &rs, 1) != 0)
+			fatal("as_set_new");
+		/* prep data so that set_match works */
+		set_prep(psi->set);
+	}
 }
