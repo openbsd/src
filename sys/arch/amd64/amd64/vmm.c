@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.267 2020/03/12 22:14:20 tobhe Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.268 2020/03/16 08:21:16 jasper Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4057,6 +4057,9 @@ vmm_translate_gva(struct vcpu *vcpu, uint64_t va, uint64_t *pa, int mode)
 	    vmm_softc->mode == VMM_MODE_SVM) {
 		if (vcpu_readregs_svm(vcpu, VM_RWREGS_ALL, &vrs))
 			return (EINVAL);
+	} else {
+		printf("%s: unknown vmm mode", __func__);
+		return (EINVAL);
 	}
 
 	DPRINTF("%s: guest %%cr0=0x%llx, %%cr3=0x%llx\n", __func__,
