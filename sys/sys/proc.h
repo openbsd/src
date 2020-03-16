@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.289 2020/02/21 11:10:23 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.290 2020/03/16 11:58:46 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -182,6 +182,15 @@ struct process {
 	LIST_HEAD(, process) ps_children;/* Pointer to list of children. */
 	LIST_ENTRY(process) ps_hash;    /* Hash chain. */
 
+	/*
+	 * An orphan is the child that has been re-parented to the
+	 * debugger as a result of attaching to it.  Need to keep
+	 * track of them for parent to be able to collect the exit
+	 * status of what used to be children.
+	 */
+	LIST_ENTRY(process) ps_orphan;	/* List of orphan processes. */
+	LIST_HEAD(, process) ps_orphans;/* Pointer to list of orphans. */
+
 	struct	sigiolst ps_sigiolst;	/* List of sigio structures. */
 	struct	sigacts *ps_sigacts;	/* Signal actions, state */
 	struct	vnode *ps_textvp;	/* Vnode of executable. */
@@ -303,13 +312,15 @@ struct process {
 #define	PS_PLEDGE	0x00100000	/* Has called pledge(2) */
 #define	PS_WXNEEDED	0x00200000	/* Process may violate W^X */
 #define	PS_EXECPLEDGE	0x00400000	/* Has exec pledges */
+#define	PS_ORPHAN	0x00800000	/* Process is on an orphan list */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \
      "\06SUGIDEXEC" "\07PPWAIT" "\010ISPWAIT" "\011PROFIL" "\012TRACED" \
      "\013WAITED" "\014COREDUMP" "\015SINGLEEXIT" "\016SINGLEUNWIND" \
      "\017NOZOMBIE" "\020STOPPED" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
-     "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" )
+     "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" \
+     "\028ORPHAN")
 
 
 struct kcov_dev;

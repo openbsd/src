@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.15 2016/10/19 08:31:33 guenther Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.16 2020/03/16 11:58:46 mpi Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
 
 /*-
@@ -104,7 +104,8 @@ struct reg;
 struct fpreg;
 #endif
 
-void	proc_reparent(struct process *_child, struct process *_newparent);
+void	process_reparent(struct process *_child, struct process *_newparent);
+void	process_untrace(struct process *_tr);
 #ifdef PT_GETFPREGS
 int	process_read_fpregs(struct proc *_t, struct fpreg *);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.186 2020/03/13 09:25:21 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.187 2020/03/16 11:58:46 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 #endif
 
 void	proc_finish_wait(struct proc *, struct proc *);
+void	process_clear_orphan(struct process *);
 void	process_zap(struct process *);
 void	proc_free(struct proc *);
 void	unveil_destroy(struct process *ps);
@@ -253,21 +254,22 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		}
 
 		/*
-		 * Give orphaned children to init(8).
+		 * Reparent children to their original parent, in case
+		 * they were being traced, or to init(8).
 		 */
 		qr = LIST_FIRST(&pr->ps_children);
 		if (qr)		/* only need this if any child is S_ZOMB */
 			wakeup(initprocess);
 		for (; qr != 0; qr = nqr) {
 			nqr = LIST_NEXT(qr, ps_sibling);
-			proc_reparent(qr, initprocess);
 			/*
 			 * Traced processes are killed since their
 			 * existence means someone is screwing up.
 			 */
 			if (qr->ps_flags & PS_TRACED &&
 			    !(qr->ps_flags & PS_EXITING)) {
-				atomic_clearbits_int(&qr->ps_flags, PS_TRACED);
+				process_untrace(qr);
+
 				/*
 				 * If single threading is active,
 				 * direct the signal to the active
@@ -278,7 +280,18 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 					    STHREAD);
 				else
 					prsignal(qr, SIGKILL);
+			} else {
+				process_reparent(qr, initprocess);
 			}
+		}
+
+		/*
+		 * Make sure orphans won't remember the exiting process.
+		 */
+		while ((qr = LIST_FIRST(&pr->ps_orphans)) != NULL) {
+			KASSERT(qr->ps_oppid == pr->ps_pid);
+			qr->ps_oppid = 0;
+			process_clear_orphan(qr);
 		}
 	}
 
@@ -310,7 +323,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		 */
 		if (pr->ps_flags & PS_NOZOMBIE) {
 			struct process *ppr = pr->ps_pptr;
-			proc_reparent(pr, initprocess);
+			process_reparent(pr, initprocess);
 			wakeup(ppr);
 		}
 
@@ -562,6 +575,29 @@ loop:
 			return (0);
 		}
 	}
+	/*
+	 * Look in the orphans list too, to allow the parent to
+	 * collect it's child exit status even if child is being
+	 * debugged.
+	 *
+	 * Debugger detaches from the parent upon successful
+	 * switch-over from parent to child.  At this point due to
+	 * re-parenting the parent loses the child to debugger and a
+	 * wait4(2) call would report that it has no children to wait
+	 * for.  By maintaining a list of orphans we allow the parent
+	 * to successfully wait until the child becomes a zombie.
+	 */
+	if (nfound == 0) {
+		LIST_FOREACH(pr, &q->p_p->ps_orphans, ps_orphan) {
+			if ((pr->ps_flags & PS_NOZOMBIE) ||
+			    (pid != WAIT_ANY &&
+			    pr->ps_pid != pid &&
+			    pr->ps_pgid != -pid))
+				continue;
+			nfound++;
+			break;
+		}
+	}
 	if (nfound == 0)
 		return (ECHILD);
 	if (options & WNOHANG) {
@@ -586,9 +622,9 @@ proc_finish_wait(struct proc *waiter, struct proc *p)
 	pr = p->p_p;
 	if (pr->ps_oppid != 0 && (pr->ps_oppid != pr->ps_pptr->ps_pid) &&
 	   (tr = prfind(pr->ps_oppid))) {
-		atomic_clearbits_int(&pr->ps_flags, PS_TRACED);
 		pr->ps_oppid = 0;
-		proc_reparent(pr, tr);
+		atomic_clearbits_int(&pr->ps_flags, PS_TRACED);
+		process_reparent(pr, tr);
 		prsignal(tr, SIGCHLD);
 		wakeup(tr);
 	} else {
@@ -602,17 +638,56 @@ proc_finish_wait(struct proc *waiter, struct proc *p)
 }
 
 /*
+ * give process back to original parent or init(8)
+ */
+void
+process_untrace(struct process *pr)
+{
+	struct process *ppr = NULL;
+
+	KASSERT(pr->ps_flags & PS_TRACED);
+
+	if (pr->ps_oppid != 0 &&
+	    (pr->ps_oppid != pr->ps_pptr->ps_pid))
+		ppr = prfind(pr->ps_oppid);
+
+	/* not being traced any more */
+	pr->ps_oppid = 0;
+	atomic_clearbits_int(&pr->ps_flags, PS_TRACED);
+	process_reparent(pr, ppr ? ppr : initprocess);
+}
+
+void
+process_clear_orphan(struct process *pr)
+{
+	if (pr->ps_flags & PS_ORPHAN) {
+		LIST_REMOVE(pr, ps_orphan);
+		atomic_clearbits_int(&pr->ps_flags, PS_ORPHAN);
+	}
+}
+
+/*
  * make process 'parent' the new parent of process 'child'.
  */
 void
-proc_reparent(struct process *child, struct process *parent)
+process_reparent(struct process *child, struct process *parent)
 {
 
 	if (child->ps_pptr == parent)
 		return;
 
+	KASSERT(child->ps_oppid == 0 ||
+		child->ps_oppid == child->ps_pptr->ps_pid);
+
 	LIST_REMOVE(child, ps_sibling);
 	LIST_INSERT_HEAD(&parent->ps_children, child, ps_sibling);
+
+	process_clear_orphan(child);
+	if (child->ps_flags & PS_TRACED) {
+		atomic_setbits_int(&child->ps_flags, PS_ORPHAN);
+		LIST_INSERT_HEAD(&child->ps_pptr->ps_orphans, child, ps_orphan);
+	}
+
 	child->ps_pptr = parent;
 }
 
@@ -628,6 +703,7 @@ process_zap(struct process *pr)
 	 */
 	leavepgrp(pr);
 	LIST_REMOVE(pr, ps_sibling);
+	process_clear_orphan(pr);
 
 	/*
 	 * Decrement the count of procs running with this uid.

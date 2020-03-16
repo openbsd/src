@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.82 2019/12/11 07:30:09 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.83 2020/03/16 11:58:46 mpi Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -476,17 +476,8 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 			goto fail;
 #endif
 
-		/* give process back to original parent or init */
-		if (tr->ps_oppid != tr->ps_pptr->ps_pid) {
-			struct process *ppr;
-
-			ppr = prfind(tr->ps_oppid);
-			proc_reparent(tr, ppr ? ppr : initprocess);
-		}
-
-		/* not being traced any more */
-		tr->ps_oppid = 0;
-		atomic_clearbits_int(&tr->ps_flags, PS_TRACED|PS_WAITED);
+		process_untrace(tr);
+		atomic_clearbits_int(&tr->ps_flags, PS_WAITED);
 
 	sendsig:
 		memset(tr->ps_ptstat, 0, sizeof(*tr->ps_ptstat));
@@ -523,8 +514,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		 */
 		atomic_setbits_int(&tr->ps_flags, PS_TRACED);
 		tr->ps_oppid = tr->ps_pptr->ps_pid;
-		if (tr->ps_pptr != p->p_p)
-			proc_reparent(tr, p->p_p);
+		process_reparent(tr, p->p_p);
 		if (tr->ps_ptstat == NULL)
 			tr->ps_ptstat = malloc(sizeof(*tr->ps_ptstat),
 			    M_SUBPROC, M_WAITOK);

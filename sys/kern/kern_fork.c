@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.223 2020/02/21 11:10:23 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.224 2020/03/16 11:58:46 mpi Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -190,6 +190,7 @@ process_initialize(struct process *pr, struct proc *p)
 	KASSERT(p->p_ucred->cr_ref >= 2);	/* new thread and new process */
 
 	LIST_INIT(&pr->ps_children);
+	LIST_INIT(&pr->ps_orphans);
 	LIST_INIT(&pr->ps_ftlist);
 	LIST_INIT(&pr->ps_sigiolst);
 	TAILQ_INIT(&pr->ps_tslpqueue);
@@ -430,8 +431,7 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 
 	if (pr->ps_flags & PS_TRACED) {
 		pr->ps_oppid = curpr->ps_pid;
-		if (pr->ps_pptr != curpr->ps_pptr)
-			proc_reparent(pr, curpr->ps_pptr);
+		process_reparent(pr, curpr->ps_pptr);
 
 		/*
 		 * Set ptrace status.
