@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.121 2020/03/13 16:40:42 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.122 2020/03/16 15:25:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -336,7 +336,7 @@ tls1_aead_ctx_init(SSL_AEAD_CTX **aead_ctx)
 
 static int
 tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
-    unsigned key_len, const unsigned char *iv, unsigned iv_len)
+    unsigned int key_len, const unsigned char *iv, unsigned int iv_len)
 {
 	const EVP_AEAD *aead = S3I(s)->tmp.new_aead;
 	SSL_AEAD_CTX *aead_ctx;

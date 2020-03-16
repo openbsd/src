@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.211 2020/01/26 07:24:47 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.212 2020/03/16 15:25:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1530,7 +1530,7 @@ found:
 /* SSL_get0_next_proto_negotiated is deprecated. */
 void
 SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
-    unsigned *len)
+    unsigned int *len)
 {
 	*data = NULL;
 	*len = 0;
@@ -1637,7 +1637,7 @@ SSL_CTX_set_alpn_select_cb(SSL_CTX* ctx,
  */
 void
 SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
-    unsigned *len)
+    unsigned int *len)
 {
 	*data = NULL;
 	*len = 0;

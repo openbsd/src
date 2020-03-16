@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.270 2020/03/13 16:40:42 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.271 2020/03/16 15:25:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1372,15 +1372,15 @@ int tls1_check_ec_server_key(SSL *s);
 
 /* s3_cbc.c */
 void ssl3_cbc_copy_mac(unsigned char *out, const SSL3_RECORD_INTERNAL *rec,
-    unsigned md_size, unsigned orig_len);
+    unsigned int md_size, unsigned int orig_len);
 int tls1_cbc_remove_padding(const SSL *s, SSL3_RECORD_INTERNAL *rec,
-    unsigned block_size, unsigned mac_size);
+    unsigned int block_size, unsigned int mac_size);
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
 int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char *md_out,
     size_t *md_out_size, const unsigned char header[13],
     const unsigned char *data, size_t data_plus_mac_size,
     size_t data_plus_mac_plus_padding_size, const unsigned char *mac_secret,
-    unsigned mac_secret_length);
+    unsigned int mac_secret_length);
 int SSL_state_func_code(int _state);
 
 #define SSLerror(s, r) SSL_error_internal(s, r, __FILE__, __LINE__)
@@ -1390,8 +1390,8 @@ void SSL_error_internal(const SSL *s, int r, char *f, int l);
 #ifndef OPENSSL_NO_SRTP
 
 int srtp_find_profile_by_name(char *profile_name,
-    SRTP_PROTECTION_PROFILE **pptr, unsigned len);
-int srtp_find_profile_by_num(unsigned profile_num,
+    SRTP_PROTECTION_PROFILE **pptr, unsigned int len);
+int srtp_find_profile_by_num(unsigned int profile_num,
     SRTP_PROTECTION_PROFILE **pptr);
 
 #endif /* OPENSSL_NO_SRTP */

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.20 2020/03/12 17:09:02 jsing Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.21 2020/03/16 15:25:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -73,20 +73,20 @@
  * bits. They use the fact that arithmetic shift shifts-in the sign bit.
  * However, this is not ensured by the C standard so you may need to replace
  * them with something else on odd CPUs. */
-#define DUPLICATE_MSB_TO_ALL(x) ((unsigned)((int)(x) >> (sizeof(int) * 8 - 1)))
+#define DUPLICATE_MSB_TO_ALL(x) ((unsigned int)((int)(x) >> (sizeof(int) * 8 - 1)))
 #define DUPLICATE_MSB_TO_ALL_8(x) ((unsigned char)(DUPLICATE_MSB_TO_ALL(x)))
 
 /* constant_time_lt returns 0xff if a<b and 0x00 otherwise. */
-static unsigned
-constant_time_lt(unsigned a, unsigned b)
+static unsigned int
+constant_time_lt(unsigned int a, unsigned int b)
 {
 	a -= b;
 	return DUPLICATE_MSB_TO_ALL(a);
 }
 
 /* constant_time_ge returns 0xff if a>=b and 0x00 otherwise. */
-static unsigned
-constant_time_ge(unsigned a, unsigned b)
+static unsigned int
+constant_time_ge(unsigned int a, unsigned int b)
 {
 	a -= b;
 	return DUPLICATE_MSB_TO_ALL(~a);
@@ -94,9 +94,9 @@ constant_time_ge(unsigned a, unsigned b)
 
 /* constant_time_eq_8 returns 0xff if a==b and 0x00 otherwise. */
 static unsigned char
-constant_time_eq_8(unsigned a, unsigned b)
+constant_time_eq_8(unsigned int a, unsigned int b)
 {
-	unsigned c = a ^ b;
+	unsigned int c = a ^ b;
 	c--;
 	return DUPLICATE_MSB_TO_ALL_8(c);
 }
@@ -114,10 +114,10 @@ constant_time_eq_8(unsigned a, unsigned b)
  *  -1: otherwise. */
 int
 tls1_cbc_remove_padding(const SSL* s, SSL3_RECORD_INTERNAL *rec,
-    unsigned block_size, unsigned mac_size)
+    unsigned int block_size, unsigned int mac_size)
 {
-	unsigned padding_length, good, to_check, i;
-	const unsigned overhead = 1 /* padding length byte */ + mac_size;
+	unsigned int padding_length, good, to_check, i;
+	const unsigned int overhead = 1 /* padding length byte */ + mac_size;
 
 	/* Check if version requires explicit IV */
 	if (SSL_USE_EXPLICIT_IV(s)) {
@@ -195,7 +195,7 @@ tls1_cbc_remove_padding(const SSL* s, SSL3_RECORD_INTERNAL *rec,
 
 void
 ssl3_cbc_copy_mac(unsigned char* out, const SSL3_RECORD_INTERNAL *rec,
-    unsigned md_size, unsigned orig_len)
+    unsigned int md_size, unsigned int orig_len)
 {
 #if defined(CBC_MAC_ROTATE_IN_PLACE)
 	unsigned char rotated_mac_buf[64 + EVP_MAX_MD_SIZE];
@@ -205,14 +205,14 @@ ssl3_cbc_copy_mac(unsigned char* out, const SSL3_RECORD_INTERNAL *rec,
 #endif
 
 	/* mac_end is the index of |rec->data| just after the end of the MAC. */
-	unsigned mac_end = rec->length;
-	unsigned mac_start = mac_end - md_size;
+	unsigned int mac_end = rec->length;
+	unsigned int mac_start = mac_end - md_size;
 	/* scan_start contains the number of bytes that we can ignore because
 	 * the MAC's position can only vary by 255 bytes. */
-	unsigned scan_start = 0;
-	unsigned i, j;
-	unsigned div_spoiler;
-	unsigned rotate_offset;
+	unsigned int scan_start = 0;
+	unsigned int i, j;
+	unsigned int div_spoiler;
+	unsigned int rotate_offset;
 
 	OPENSSL_assert(orig_len >= md_size);
 	OPENSSL_assert(md_size <= EVP_MAX_MD_SIZE);
@@ -316,7 +316,7 @@ static void
 tls1_sha256_final_raw(void* ctx, unsigned char *md_out)
 {
 	SHA256_CTX *sha256 = ctx;
-	unsigned i;
+	unsigned int i;
 
 	for (i = 0; i < 8; i++) {
 		l2n(sha256->h[i], md_out);
@@ -327,7 +327,7 @@ static void
 tls1_sha512_final_raw(void* ctx, unsigned char *md_out)
 {
 	SHA512_CTX *sha512 = ctx;
-	unsigned i;
+	unsigned int i;
 
 	for (i = 0; i < 8; i++) {
 		l2n8(sha512->h[i], md_out);
@@ -382,7 +382,7 @@ ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
     size_t* md_out_size, const unsigned char header[13],
     const unsigned char *data, size_t data_plus_mac_size,
     size_t data_plus_mac_plus_padding_size, const unsigned char *mac_secret,
-    unsigned mac_secret_length)
+    unsigned int mac_secret_length)
 {
 	union {
 		/*
@@ -395,8 +395,8 @@ ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
 	} md_state;
 	void (*md_final_raw)(void *ctx, unsigned char *md_out);
 	void (*md_transform)(void *ctx, const unsigned char *block);
-	unsigned md_size, md_block_size = 64;
-	unsigned header_length, variance_blocks,
+	unsigned int md_size, md_block_size = 64;
+	unsigned int header_length, variance_blocks,
 	len, max_mac_bytes, num_blocks,
 	num_starting_blocks, k, mac_end_offset, c, index_a, index_b;
 	unsigned int bits;	/* at most 18 bits */
@@ -405,11 +405,11 @@ ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
 	unsigned char hmac_pad[MAX_HASH_BLOCK_SIZE];
 	unsigned char first_block[MAX_HASH_BLOCK_SIZE];
 	unsigned char mac_out[EVP_MAX_MD_SIZE];
-	unsigned i, j, md_out_size_u;
+	unsigned int i, j, md_out_size_u;
 	EVP_MD_CTX md_ctx;
 	/* mdLengthSize is the number of bytes in the length field that terminates
 	* the hash. */
-	unsigned md_length_size = 8;
+	unsigned int md_length_size = 8;
 	char length_is_big_endian = 1;
 
 	/* This is a, hopefully redundant, check that allows us to forget about

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.23 2020/03/12 17:09:02 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.24 2020/03/16 15:25:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -332,7 +332,7 @@ ssl3_get_record(SSL *s)
 	SSL3_RECORD_INTERNAL *rr;
 	SSL_SESSION *sess;
 	unsigned char md[EVP_MAX_MD_SIZE];
-	unsigned mac_size, orig_len;
+	unsigned int mac_size, orig_len;
 
 	rr = &(S3I(s)->rrec);
 	sess = s->session;
