@@ -1,4 +1,4 @@
-/* $OpenBSD: record_layer_test.c,v 1.2 2020/03/13 17:47:38 tb Exp $ */
+/* $OpenBSD: record_layer_test.c,v 1.3 2020/03/16 15:13:15 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -103,7 +103,7 @@ struct seq_num_test seq_num_tests[] = {
 	},
 	{
 		.seq_num = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-		.want_num = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		.want_num = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
 		.want = 0,
 	},
 };
