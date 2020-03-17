@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.344 2020/03/16 10:49:06 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.345 2020/03/17 12:20:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -668,8 +668,6 @@ tty_update_mode(struct tty *tty, int mode, struct screen *s)
 		mode &= ~MODE_CURSOR;
 
 	changed = mode ^ tty->mode;
-	if (changed == 0)
-		return;
 	log_debug("%s: update mode %x to %x", c->name, tty->mode, mode);
 
 	if (changed & MODE_BLINKING) {
