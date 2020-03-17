@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.10 2019/12/17 22:25:56 deraadt Exp $ */
+/* $OpenBSD: exception.S,v 1.11 2020/03/17 17:27:12 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -155,6 +155,8 @@
 1:
 .endm
 
+	.globl handle_el1h_sync
+	.type handle_el1h_sync,@function
 handle_el1h_sync:
 	save_registers 1
 	mov	x0, sp
@@ -164,6 +166,8 @@ handle_el1h_sync:
 	dsb nsh
 	isb
 
+	.globl handle_el1h_irq
+	.type handle_el1h_irq,@function
 handle_el1h_irq:
 	save_registers 1
 	mov	x0, sp
@@ -173,6 +177,8 @@ handle_el1h_irq:
 	dsb nsh
 	isb
 
+	.globl handle_el1h_error
+	.type handle_el1h_error,@function
 handle_el1h_error:
 	brk	0xf13
 
