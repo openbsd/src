@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.27 2019/07/09 14:03:12 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.28 2020/03/17 16:02:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -75,6 +75,7 @@ args_parse(const char *template, int argc, char **argv)
 
 	optreset = 1;
 	optind = 1;
+	optarg = NULL;
 
 	while ((opt = getopt(argc, argv, template)) != -1) {
 		if (opt < 0)
@@ -84,6 +85,7 @@ args_parse(const char *template, int argc, char **argv)
 			return (NULL);
 		}
 		args_set(args, opt, optarg);
+		optarg = NULL;
 	}
 	argc -= optind;
 	argv += optind;
