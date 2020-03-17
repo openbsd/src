@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.35 2020/03/07 18:51:06 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.36 2020/03/17 21:24:22 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -48,6 +48,7 @@ TAILQ_HEAD(, core) cores;
 
 struct component {
 	const char *path;
+	const char *nac;
 	int assigned;
 
 	struct md_node *hv_node;
@@ -216,6 +217,7 @@ pri_init_components(struct md *md)
 	struct component *component;
 	struct md_node *node;
 	const char *path;
+	const char *nac;
 	const char *type;
 
 	TAILQ_INIT(&components);
@@ -228,6 +230,10 @@ pri_init_components(struct md *md)
 		if (md_get_prop_str(md, node, "assignable-path", &path)) {
 			component = xzalloc(sizeof(*component));
 			component->path = path;
+			if (md_get_prop_str(md, node, "nac", &nac))
+				component->nac = nac;
+			else
+				component->nac = "-";
 			TAILQ_INSERT_TAIL(&components, component, link);
 		}
 
@@ -2889,7 +2895,8 @@ list_components(void)
 
 	pri_init_components(pri);
 
+	printf("%-16s %s\n", "PATH", "NAME");
 	TAILQ_FOREACH(component, &components, link) {
-		printf("%s\n", component->path);
+		printf("%-16s %s\n", component->path, component->nac);
 	}
 }
