@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.c,v 1.6 2017/10/09 08:26:16 mpi Exp $ */
+/* $OpenBSD: umcs.c,v 1.7 2020/03/17 09:34:52 mpi Exp $ */
 /* $NetBSD: umcs.c,v 1.8 2014/08/23 21:37:56 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
@@ -451,16 +451,16 @@ umcs_calc_baudrate(uint32_t rate, uint16_t *divisor, uint8_t *clk)
 		return (-1);
 
 	for (i = 0; i < divisors_len - 1; i++) {
-	     if (rate > umcs_baudrate_divisors[i] &&
-		 rate <= umcs_baudrate_divisors[i + 1])
-		     break;
+		if (rate > umcs_baudrate_divisors[i] &&
+		    rate <= umcs_baudrate_divisors[i + 1]) {
+			*divisor = umcs_baudrate_divisors[i + 1] / rate;
+			/* 0x00 .. 0x70 */
+			*clk = i << UMCS_SPx_CLK_SHIFT;
+			return (0);
+		}
 	}
 
-	*divisor = umcs_baudrate_divisors[i + 1] / rate;
-	/* 0x00 .. 0x70 */
-	*clk = i << UMCS_SPx_CLK_SHIFT;
-
-	return (0);
+	return (-1);
 }
 
 int
