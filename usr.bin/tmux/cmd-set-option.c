@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.127 2019/06/20 11:59:59 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.128 2020/03/17 11:10:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -309,6 +309,13 @@ cmd_set_option_set(struct cmd *self, struct cmdq_item *item, struct options *oo,
 		old = xstrdup(options_get_string(oo, oe->name));
 		options_set_string(oo, oe->name, append, "%s", value);
 		new = options_get_string(oo, oe->name);
+		if (strcmp(oe->name, "default-shell") == 0 &&
+		    !checkshell(new)) {
+			options_set_string(oo, oe->name, 0, "%s", old);
+			free(old);
+			cmdq_error(item, "not a suitable shell: %s", value);
+			return (-1);
+		}
 		if (oe->pattern != NULL && fnmatch(oe->pattern, new, 0) != 0) {
 			options_set_string(oo, oe->name, 0, "%s", old);
 			free(old);

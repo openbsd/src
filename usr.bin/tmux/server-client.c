@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.307 2020/03/16 06:12:42 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.308 2020/03/17 11:10:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -400,6 +400,8 @@ server_client_exec(struct client *c, const char *cmd)
 		shell = options_get_string(s->options, "default-shell");
 	else
 		shell = options_get_string(global_s_options, "default-shell");
+	if (!checkshell(shell))
+		shell = _PATH_BSHELL;
 	shellsize = strlen(shell) + 1;
 
 	msg = xmalloc(cmdsize + shellsize);
@@ -2009,7 +2011,7 @@ server_client_dispatch_shell(struct client *c)
 	const char	*shell;
 
 	shell = options_get_string(global_s_options, "default-shell");
-	if (*shell == '\0' || areshell(shell))
+	if (!checkshell(shell))
 		shell = _PATH_BSHELL;
 	proc_send(c->peer, MSG_SHELL, -1, shell, strlen(shell) + 1);
 
