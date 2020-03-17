@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplepanel.c,v 1.1 2020/01/26 06:20:30 patrick Exp $	*/
+/*	$OpenBSD: simplepanel.c,v 1.2 2020/03/17 15:49:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -28,15 +28,46 @@
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/ofw_regulator.h>
 
+#include <drm/drm_modes.h>
+#include <drm/drm_panel.h>
+
+const struct drm_display_mode boe_nv140fhmn49_mode = {
+	.clock = 148500,
+	.hdisplay = 1920,
+	.hsync_start = 1920 + 48,
+	.hsync_end = 1920 + 48 + 32,
+	.htotal = 2200,
+	.vdisplay = 1080,
+	.vsync_start = 1080 + 3,
+	.vsync_end = 1080 + 3 + 5,
+	.vtotal = 1125,
+	.vrefresh = 60,
+};
+
 int simplepanel_match(struct device *, void *, void *);
 void simplepanel_attach(struct device *, struct device *, void *);
 
+struct simplepanel_softc {
+	struct device		sc_dev;
+	struct device_ports	sc_ports;
+	struct drm_panel	sc_panel;
+	const struct drm_display_mode *sc_mode;
+};
+
 struct cfattach	simplepanel_ca = {
-	sizeof (struct device), simplepanel_match, simplepanel_attach
+	sizeof (struct simplepanel_softc),
+	simplepanel_match, simplepanel_attach
 };
 
 struct cfdriver simplepanel_cd = {
 	NULL, "simplepanel", DV_DULL
+};
+
+void	*simplepanel_ep_get_cookie(void *, struct endpoint *);
+int	simplepanel_get_modes(struct drm_panel *);
+
+struct drm_panel_funcs simplepanel_funcs = {
+	.get_modes = simplepanel_get_modes
 };
 
 int
@@ -44,18 +75,18 @@ simplepanel_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "simple-panel");
+	return (OF_is_compatible(faa->fa_node, "simple-panel") ||
+	    OF_is_compatible(faa->fa_node, "boe,nv140fhmn49"));
 }
 
 void
 simplepanel_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct simplepanel_softc *sc = (struct simplepanel_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	uint32_t power_supply;
 	uint32_t *gpios;
-	int len;
-
-	printf("\n");
+	int len, err;
 
 	pinctrl_byname(faa->fa_node, "default");
 
@@ -71,4 +102,56 @@ simplepanel_attach(struct device *parent, struct device *self, void *aux)
 		gpio_controller_set_pin(&gpios[0], 1);
 		free(gpios, M_TEMP, len);
 	}
+
+	if (OF_is_compatible(faa->fa_node, "boe,nv140fhmn49"))
+	    sc->sc_mode = &boe_nv140fhmn49_mode;
+
+	drm_panel_init(&sc->sc_panel);
+	sc->sc_panel.dev = self;
+	sc->sc_panel.funcs = &simplepanel_funcs;
+	err = drm_panel_add(&sc->sc_panel);
+	if (err < 0) {
+		printf(": can't register panel\n");
+		return;
+	}
+
+	printf("\n");
+
+	sc->sc_ports.dp_node = faa->fa_node;
+	sc->sc_ports.dp_cookie = sc;
+	sc->sc_ports.dp_ep_get_cookie = simplepanel_ep_get_cookie;
+	device_ports_register(&sc->sc_ports, EP_DRM_PANEL);
+}
+
+void *
+simplepanel_ep_get_cookie(void *cookie, struct endpoint *ep)
+{
+	struct simplepanel_softc *sc = cookie;
+	return &sc->sc_panel;
+}
+
+static inline struct simplepanel_softc *
+to_simplepanel(struct drm_panel *panel)
+{
+	return container_of(panel, struct simplepanel_softc, sc_panel);
+}
+
+int
+simplepanel_get_modes(struct drm_panel *panel)
+{
+	struct drm_connector *connector = panel->connector;
+	struct simplepanel_softc *sc = to_simplepanel(panel);
+	struct drm_display_mode *mode;
+
+	if (sc->sc_mode == NULL)
+		return 0;
+
+	mode = drm_mode_duplicate(panel->drm, sc->sc_mode);
+	if (mode == NULL)
+		return 0;
+	mode->type |= DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
+
+	drm_mode_set_name(mode);
+	drm_mode_probed_add(connector, mode);
+	return 1;
 }
