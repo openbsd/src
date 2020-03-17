@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.113 2019/06/14 18:13:55 kettenis Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.114 2020/03/17 03:09:04 dlg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -824,37 +824,31 @@ cpu_topology(struct cpu_info *ci)
 	apicid = (ebx >> 24) & 0xff;
 
 	if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
+		uint32_t nthreads = 1; /* per core */
+		uint32_t thread_id; /* within a package */
+
 		/* We need at least apicid at CPUID 0x80000008 */
 		if (ci->ci_pnfeatset < 0x80000008)
 			goto no_topology;
 
-		if (ci->ci_pnfeatset >= 0x8000001e) {
-			struct cpu_info *ci_other;
-			CPU_INFO_ITERATOR cii;
+		CPUID(0x80000008, eax, ebx, ecx, edx);
+		core_bits = (ecx >> 12) & 0xf;
 
+		if (ci->ci_pnfeatset >= 0x8000001e) {
 			CPUID(0x8000001e, eax, ebx, ecx, edx);
-			ci->ci_core_id = ebx & 0xff;
-			ci->ci_pkg_id = ecx & 0xff;
-			ci->ci_smt_id = 0;
-			CPU_INFO_FOREACH(cii, ci_other) {
-				if (ci != ci_other &&
-				    ci_other->ci_core_id == ci->ci_core_id &&
-				    ci_other->ci_pkg_id == ci->ci_pkg_id)
-					ci->ci_smt_id++;
-			}
-		} else {
-			CPUID(0x80000008, eax, ebx, ecx, edx);
-			core_bits = (ecx >> 12) & 0xf;
-			if (core_bits == 0)
-				goto no_topology;
-			/* So coreidsize 2 gives 3, 3 gives 7... */
-			core_mask = (1 << core_bits) - 1;
-			/* Core id is the least significant considering mask */
-			ci->ci_core_id = apicid & core_mask;
-			/* Pkg id is the upper remaining bits */
-			ci->ci_pkg_id = apicid & ~core_mask;
-			ci->ci_pkg_id >>= core_bits;
+			nthreads = ((ebx >> 8) & 0xf) + 1;
 		}
+
+		/* Shift the core_bits off to get at the pkg bits */
+		ci->ci_pkg_id = apicid >> core_bits;
+
+		/* Get rid of the package bits */
+		core_mask = (1 << core_bits) - 1;
+		thread_id = apicid & core_mask;
+
+		/* Cut logical thread_id into core id, and smt id in a core */
+		ci->ci_core_id = thread_id / nthreads;
+		ci->ci_smt_id = thread_id % nthreads;
 	} else if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
 		/* We only support leaf 1/4 detection */
 		if (cpuid_level < 4)
