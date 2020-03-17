@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.35 2019/10/03 05:50:28 gilles Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.36 2020/03/17 09:01:53 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -637,6 +637,8 @@ m_get_envelope(struct msg *m, struct envelope *evp)
 
 	m_get_evpid(m, &evpid);
 	m_get_string(m, &buf);
+	if (buf == NULL)
+		fatalx("empty envelope buffer");
 
 	if (!envelope_load_buffer(evp, buf, strlen(buf)))
 		fatalx("failed to retrieve envelope");
