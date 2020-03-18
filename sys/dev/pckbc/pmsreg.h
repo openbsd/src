@@ -1,4 +1,4 @@
-/* $OpenBSD: pmsreg.h,v 1.17 2019/09/20 21:21:47 bru Exp $ */
+/* $OpenBSD: pmsreg.h,v 1.18 2020/03/18 22:38:10 bru Exp $ */
 /* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
 
 #ifndef SYS_DEV_PCKBC_PMSREG_H
@@ -140,7 +140,11 @@
 #define SYNAPTICS_EXT_CAP_ADV_GESTURE		(1 << 19)
 #define SYNAPTICS_EXT_CAP_MAX_COORDS		(1 << 17)
 #define SYNAPTICS_EXT_CAP_MIN_COORDS		(1 << 13)
+#define SYNAPTICS_EXT_CAP_REPORTS_V		(1 << 11)
 #define SYNAPTICS_EXT_CAP_CLICKPAD_2BTN		(1 << 8)
+
+#define SYNAPTICS_SUPPORTS_AGM(extcaps) ((extcaps) & \
+    (SYNAPTICS_EXT_CAP_ADV_GESTURE | SYNAPTICS_EXT_CAP_REPORTS_V))
 
 /* Coordinate Limits */
 #define SYNAPTICS_X_LIMIT(d)			((((d) & 0xff0000) >> 11) | \
