@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.2 2020/01/27 14:15:25 mpi Exp $
+.\"	$OpenBSD: bt.5,v 1.3 2020/03/18 20:19:42 kn Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2020 $
+.Dd $Mdocdate: March 18 2020 $
 .Dt BT 5
 .Os
 .Sh NAME
@@ -117,8 +117,9 @@ Print all (key, value) pairs from map
 .It Fn printf "fmt" ...
 print formatted string
 .Va fmt
-.It Fn time
-print formatted time
+.It Fn time timefmt
+print timestamps using
+.Xr strftime 3
 .El
 .Sh SEE ALSO
 .Xr awk 1 ,
