@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.5 2020/03/16 08:54:08 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.6 2020/03/18 20:10:34 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -437,6 +437,7 @@ rules_setup(int fd)
 				case B_AT_STR:
 				case B_AT_LONG:
 				case B_AT_VAR:
+				case B_AT_MAP:
 					break;
 				case B_AT_BI_KSTACK:
 					dtrq->dtrq_evtflags |= DTEVT_KSTACK;
