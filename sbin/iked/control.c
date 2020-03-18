@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.26 2018/08/06 06:30:06 mestre Exp $	*/
+/*	$OpenBSD: control.c,v 1.27 2020/03/18 22:12:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -50,7 +50,8 @@ void	 control_imsg_forward(struct imsg *);
 void	 control_run(struct privsep *, struct privsep_proc *, void *);
 
 static struct privsep_proc procs[] = {
-	{ "parent",	PROC_PARENT, NULL }
+	{ "parent",	PROC_PARENT, NULL },
+	{ "ikev2",	PROC_IKEV2, NULL }
 };
 
 pid_t
@@ -304,6 +305,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_CTL_ACTIVE:
 		case IMSG_CTL_PASSIVE:
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_PARENT, -1);
+			break;
+		case IMSG_CTL_RESET_ID:
+			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",

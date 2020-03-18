@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.196 2020/03/16 09:07:40 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.197 2020/03/18 22:12:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -49,6 +49,7 @@
 void	 ikev2_run(struct privsep *, struct privsep_proc *, void *);
 int	 ikev2_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 ikev2_dispatch_cert(int, struct privsep_proc *, struct imsg *);
+int	 ikev2_dispatch_control(int, struct privsep_proc *, struct imsg *);
 
 struct iked_sa *
 	 ikev2_getimsgdata(struct iked *, struct imsg *, struct iked_sahdr *,
@@ -155,10 +156,12 @@ int	 ikev2_update_sa_addresses(struct iked *, struct iked_sa *);
 int	 ikev2_resp_informational(struct iked *, struct iked_sa *,
 	    struct iked_message *);
 
+void	ikev2_ctl_reset_id(struct iked *, struct imsg *, unsigned int);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
-	{ "certstore",	PROC_CERT,	ikev2_dispatch_cert }
+	{ "certstore",	PROC_CERT,	ikev2_dispatch_cert },
+	{ "control",	PROC_CONTROL,	ikev2_dispatch_control }
 };
 
 pid_t
@@ -376,6 +379,22 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 	return (0);
 }
 
+int
+ikev2_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	struct iked		*env = p->p_env;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_RESET_ID:
+		ikev2_ctl_reset_id(env, imsg, imsg->hdr.type);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
 const char *
 ikev2_ikesa_info(uint64_t spi, const char *msg)
 {
@@ -389,6 +408,39 @@ ikev2_ikesa_info(uint64_t spi, const char *msg)
 		snprintf(buf, sizeof(buf), "spi=%s: ", spistr);
 	return buf;
 }
+
+void
+ikev2_ctl_reset_id(struct iked *env, struct imsg *imsg, unsigned int type)
+{
+	struct iked_sa			*sa;
+	char				*reset_id = NULL;
+	char				 sa_id[IKED_ID_SIZE];
+
+	if ((reset_id = get_string(imsg->data, IMSG_DATA_SIZE(imsg))) == NULL)
+		return;
+
+	log_debug("%s: %s %d", __func__, reset_id, type);
+	RB_FOREACH(sa, iked_sas, &env->sc_sas) {
+		if (ikev2_print_id(IKESA_DSTID(sa), sa_id, sizeof(sa_id)) == -1)
+			continue;
+		if (strcmp(reset_id, sa_id) != 0)
+			continue;
+		if (sa->sa_state == IKEV2_STATE_CLOSED)
+			continue;
+		if (sa->sa_state == IKEV2_STATE_ESTABLISHED)
+			ikev2_disable_timer(env, sa);
+		log_info("%s: IKE SA %p id %s ispi %s rspi %s", __func__,
+		    sa, sa_id,
+		    print_spi(sa->sa_hdr.sh_ispi, 8),
+		    print_spi(sa->sa_hdr.sh_rspi, 8));
+		ikev2_ike_sa_setreason(sa, "reset control message");
+		ikev2_ikesa_delete(env, sa, 1);
+		/* default IKED_IKE_SA_DELETE_TIMEOUT is 120s, so switch to 6s */
+		timer_add(env, &sa->sa_timer, 3 * IKED_RETRANSMIT_TIMEOUT);
+	}
+	free(reset_id);
+}
+
 
 struct iked_sa *
 ikev2_getimsgdata(struct iked *env, struct imsg *imsg, struct iked_sahdr *sh,

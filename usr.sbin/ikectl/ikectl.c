@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.23 2015/12/05 13:11:18 claudio Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.24 2020/03/18 22:12:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -290,6 +290,10 @@ main(int argc, char *argv[])
 	case LOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1,
 		    res->path, strlen(res->path));
+		break;
+	case RESET_ID:
+		imsg_compose(ibuf, IMSG_CTL_RESET_ID, 0, 0, -1,
+		    res->id, strlen(res->id));
 		break;
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);

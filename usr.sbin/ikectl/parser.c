@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.17 2018/06/18 10:20:19 benno Exp $	*/
+/*	$OpenBSD: parser.c,v 1.18 2020/03/18 22:12:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -44,7 +44,8 @@ enum token_type {
 	PEER,
 	ADDRESS,
 	FQDN,
-	PASSWORD
+	PASSWORD,
+	IKEID
 };
 
 struct token {
@@ -56,6 +57,7 @@ struct token {
 
 static const struct token t_main[];
 static const struct token t_reset[];
+static const struct token t_reset_id[];
 static const struct token t_log[];
 static const struct token t_load[];
 static const struct token t_ca[];
@@ -104,6 +106,12 @@ static const struct token t_reset[] = {
 	{ KEYWORD,	"policy",	RESETPOLICY,	NULL },
 	{ KEYWORD,	"sa",		RESETSA,	NULL },
 	{ KEYWORD,	"user",		RESETUSER,	NULL },
+	{ KEYWORD,	"id",		RESET_ID,	t_reset_id },
+	{ ENDTOKEN,	"",		NONE,		NULL }
+};
+
+static const struct token t_reset_id[] = {
+	{ IKEID,	"",		NONE,		NULL },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
@@ -344,6 +352,13 @@ match_token(char *word, const struct token table[])
 				t = &table[i];
 			}
 			break;
+		case IKEID:
+			if (!match && word != NULL && strlen(word) > 0) {
+				res.id = strdup(word);
+				match++;
+				t = &table[i];
+			}
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -392,6 +407,9 @@ show_valid_args(const struct token table[])
 			break;
 		case FQDN:
 			fprintf(stderr, "  <fqdn>\n");
+			break;
+		case IKEID:
+			fprintf(stderr, "  <ikeid>\n");
 			break;
 		case ENDTOKEN:
 			break;
