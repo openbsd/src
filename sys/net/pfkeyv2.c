@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.198 2019/07/17 18:52:46 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.199 2020/03/18 11:56:40 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1098,7 +1098,8 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	struct radix_node_head *rnh;
 	struct radix_node *rn = NULL;
 	struct pkpcb *kp, *bkp;
-	void *freeme = NULL, *bckptr = NULL;
+	void *freeme = NULL, *freeme2 = NULL, *freeme3 = NULL;
+	void *bckptr = NULL;
 	void *headers[SADB_EXT_MAX + 1];
 	union sockaddr_union *sunionp;
 	struct tdb *sa1 = NULL, *sa2 = NULL;
@@ -1605,7 +1606,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 
 		i = sizeof(struct sadb_supported) + sizeof(aalgs);
 
-		if (!(freeme = malloc(i, M_PFKEY, M_NOWAIT | M_ZERO))) {
+		if (!(freeme2 = malloc(i, M_PFKEY, M_NOWAIT | M_ZERO))) {
 			rval = ENOMEM;
 			goto ret;
 		}
@@ -1616,34 +1617,34 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		    (1 << ((struct sadb_msg *)message)->sadb_msg_satype);
 		keyunlock(kp, s);
 
-		ssup = (struct sadb_supported *) freeme;
+		ssup = (struct sadb_supported *) freeme2;
 		ssup->sadb_supported_len = i / sizeof(uint64_t);
 
 		{
-			void *p = freeme + sizeof(struct sadb_supported);
+			void *p = freeme2 + sizeof(struct sadb_supported);
 
 			bcopy(&aalgs[0], p, sizeof(aalgs));
 		}
 
-		headers[SADB_EXT_SUPPORTED_AUTH] = freeme;
+		headers[SADB_EXT_SUPPORTED_AUTH] = freeme2;
 
 		i = sizeof(struct sadb_supported) + sizeof(calgs);
 
-		if (!(freeme = malloc(i, M_PFKEY, M_NOWAIT | M_ZERO))) {
+		if (!(freeme3 = malloc(i, M_PFKEY, M_NOWAIT | M_ZERO))) {
 			rval = ENOMEM;
 			goto ret;
 		}
 
-		ssup = (struct sadb_supported *) freeme;
+		ssup = (struct sadb_supported *) freeme3;
 		ssup->sadb_supported_len = i / sizeof(uint64_t);
 
 		{
-			void *p = freeme + sizeof(struct sadb_supported);
+			void *p = freeme3 + sizeof(struct sadb_supported);
 
 			bcopy(&calgs[0], p, sizeof(calgs));
 		}
 
-		headers[SADB_X_EXT_SUPPORTED_COMP] = freeme;
+		headers[SADB_X_EXT_SUPPORTED_COMP] = freeme3;
 
 		break;
 
@@ -2064,14 +2065,14 @@ ret:
 
 realret:
 
-	if (freeme)
-		free(freeme, M_PFKEY, 0);
+	free(freeme, M_PFKEY, 0);
+	free(freeme2, M_PFKEY, 0);
+	free(freeme3, M_PFKEY, 0);
 
 	explicit_bzero(message, len);
 	free(message, M_PFKEY, 0);
 
-	if (sa1)
-		free(sa1, M_PFKEY, 0);
+	free(sa1, M_PFKEY, 0);
 
 	return (rval);
 }
