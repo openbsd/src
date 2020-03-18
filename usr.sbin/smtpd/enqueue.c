@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.117 2020/03/08 21:47:05 martijn Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.118 2020/03/18 20:17:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -136,7 +136,7 @@ struct {
 
 #define QP_TEST_WRAP(fp, buf, linelen, size)	do {			\
 	if (((linelen) += (size)) + 1 > 76) {				\
-		fprintf((fp), "=\n");					\
+		fprintf((fp), "=\r\n");					\
 		if (buf[0] == '.')					\
 			fprintf((fp), ".");				\
 		(linelen) = (size);					\
@@ -178,7 +178,7 @@ qp_encoded_write(FILE *fp, char *buf)
 			fprintf(fp, "%c", *buf);
 		}
 	}
-	fprintf(fp, "\n");
+	fprintf(fp, "\r\n");
 }
 
 int
@@ -325,7 +325,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	if (!get_responses(fout, 1))
 		goto fail;
 
-	if (!send_line(fout, verbose, "EHLO localhost\n"))
+	if (!send_line(fout, verbose, "EHLO localhost\r\n"))
 		goto fail;
 	if (!get_responses(fout, 1))
 		goto fail;
@@ -333,7 +333,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 	if (msg.dsn_envid != NULL)
 		envid_sz = strlen(msg.dsn_envid);
 
-	if (!send_line(fout, verbose, "MAIL FROM:<%s> %s%s %s%s\n",
+	if (!send_line(fout, verbose, "MAIL FROM:<%s> %s%s %s%s\r\n",
 	    msg.from,
 	    msg.dsn_ret ? "RET=" : "",
 	    msg.dsn_ret ? msg.dsn_ret : "",
@@ -344,7 +344,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 		goto fail;
 
 	for (i = 0; i < msg.rcpt_cnt; i++) {
-		if (!send_line(fout, verbose, "RCPT TO:<%s> %s%s\n",
+		if (!send_line(fout, verbose, "RCPT TO:<%s> %s%s\r\n",
 		    msg.rcpts[i],
 		    msg.dsn_notify ? "NOTIFY=" : "",
 		    msg.dsn_notify ? msg.dsn_notify : ""))
@@ -353,41 +353,41 @@ enqueue(int argc, char *argv[], FILE *ofp)
 			goto fail;
 	}
 
-	if (!send_line(fout, verbose, "DATA\n"))
+	if (!send_line(fout, verbose, "DATA\r\n"))
 		goto fail;
 	if (!get_responses(fout, 1))
 		goto fail;
 
 	/* add From */
-	if (!msg.saw_from && !send_line(fout, 0, "From: %s%s<%s>\n",
+	if (!msg.saw_from && !send_line(fout, 0, "From: %s%s<%s>\r\n",
 	    msg.fromname ? msg.fromname : "", msg.fromname ? " " : "",
 	    msg.from))
 		goto fail;
 
 	/* add Date */
-	if (!msg.saw_date && !send_line(fout, 0, "Date: %s\n",
+	if (!msg.saw_date && !send_line(fout, 0, "Date: %s\r\n",
 	    time_to_text(timestamp)))
 		goto fail;
 
 	if (msg.need_linesplit) {
 		/* we will always need to mime encode for long lines */
 		if (!msg.saw_mime_version && !send_line(fout, 0,
-		    "MIME-Version: 1.0\n"))
+		    "MIME-Version: 1.0\r\n"))
 			goto fail;
 		if (!msg.saw_content_type && !send_line(fout, 0,
-		    "Content-Type: text/plain; charset=unknown-8bit\n"))
+		    "Content-Type: text/plain; charset=unknown-8bit\r\n"))
 			goto fail;
 		if (!msg.saw_content_disposition && !send_line(fout, 0,
-		    "Content-Disposition: inline\n"))
+		    "Content-Disposition: inline\r\n"))
 			goto fail;
 		if (!msg.saw_content_transfer_encoding && !send_line(fout, 0,
-		    "Content-Transfer-Encoding: quoted-printable\n"))
+		    "Content-Transfer-Encoding: quoted-printable\r\n"))
 			goto fail;
 	}
 
 	/* add separating newline */
 	if (msg.noheader) {
-		if (!send_line(fout, 0, "\n"))
+		if (!send_line(fout, 0, "\r\n"))
 			goto fail;
 		inheaders = 0;
 	}
@@ -403,6 +403,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 		/* newlines have been normalized on first parsing */
 		if (buf[len-1] != '\n')
 			errx(EX_SOFTWARE, "expect EOL");
+		len--;
 
 		if (buf[0] == '.') {
 			if (fputc('.', fout) == EOF)
@@ -420,7 +421,7 @@ enqueue(int argc, char *argv[], FILE *ofp)
 
 		if (msg.saw_content_transfer_encoding || msg.noheader ||
 		    inheaders || !msg.need_linesplit) {
-			if (!send_line(fout, 0, "%.*s", (int)len, line))
+			if (!send_line(fout, 0, "%.*s\r\n", (int)len, line))
 				goto fail;
 			if (inheaders && buf[0] == '\n')
 				inheaders = 0;
@@ -431,12 +432,12 @@ enqueue(int argc, char *argv[], FILE *ofp)
 		qp_encoded_write(fout, line);
 	}
 	free(buf);
-	if (!send_line(fout, verbose, ".\n"))
+	if (!send_line(fout, verbose, ".\r\n"))
 		goto fail;
 	if (!get_responses(fout, 1))
 		goto fail;
 
-	if (!send_line(fout, verbose, "QUIT\n"))
+	if (!send_line(fout, verbose, "QUIT\r\n"))
 		goto fail;
 	if (!get_responses(fout, 1))
 		goto fail;
