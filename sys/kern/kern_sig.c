@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.253 2020/03/13 09:25:21 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.254 2020/03/18 15:48:21 visa Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -2024,17 +2024,25 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 	}
 
 	if (mode != SINGLE_PTRACE)
-		single_thread_wait(pr);
+		single_thread_wait(pr, 1);
 
 	return 0;
 }
 
-void
-single_thread_wait(struct process *pr)
+int
+single_thread_wait(struct process *pr, int recheck)
 {
+	int waited = 0;
+
 	/* wait until they're all suspended */
-	while (pr->ps_singlecount > 0)
+	while (pr->ps_singlecount > 0) {
 		tsleep_nsec(&pr->ps_singlecount, PWAIT, "suspend", INFSLP);
+		waited = 1;
+		if (!recheck)
+			break;
+	}
+
+	return waited;
 }
 
 void

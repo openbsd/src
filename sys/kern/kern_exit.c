@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.187 2020/03/16 11:58:46 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.188 2020/03/18 15:48:21 visa Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -539,7 +539,8 @@ loop:
 		    (pr->ps_flags & PS_WAITED) == 0 && pr->ps_single &&
 		    pr->ps_single->p_stat == SSTOP &&
 		    (pr->ps_single->p_flag & P_SUSPSINGLE) == 0) {
-			single_thread_wait(pr);
+			if (single_thread_wait(pr, 0))
+				goto loop;
 
 			atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 			retval[0] = pr->ps_pid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.290 2020/03/16 11:58:46 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.291 2020/03/18 15:48:22 visa Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -614,7 +614,7 @@ enum single_thread_mode {
 	SINGLE_EXIT		/* other threads to unwind and then exit */
 };
 int	single_thread_set(struct proc *, enum single_thread_mode, int);
-void	single_thread_wait(struct process *);
+int	single_thread_wait(struct process *, int);
 void	single_thread_clear(struct proc *, int);
 int	single_thread_check(struct proc *, int);
 
