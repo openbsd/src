@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.49 2019/11/27 11:16:59 mpi Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.50 2020/03/19 14:18:38 patrick Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -473,6 +473,7 @@ dwc2_open(struct usbd_pipe *pipe)
 	switch (xfertype) {
 	case UE_CONTROL:
 		pipe->methods = &dwc2_device_ctrl_methods;
+		dpipe->req_dma.flags |= USB_DMA_COHERENT;
 		err = usb_allocmem(&sc->sc_bus, sizeof(usb_device_request_t),
 		    0, &dpipe->req_dma);
 		if (err)

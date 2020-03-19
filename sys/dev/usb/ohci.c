@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.158 2020/02/22 14:01:34 jasper Exp $ */
+/*	$OpenBSD: ohci.c,v 1.159 2020/03/19 14:18:38 patrick Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -394,6 +394,7 @@ ohci_alloc_sed(struct ohci_softc *sc)
 	s = splusb();
 	if (sc->sc_freeeds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_sed: allocating chunk\n"));
+		dma.flags |= USB_DMA_COHERENT;
 		err = usb_allocmem(&sc->sc_bus, OHCI_SED_SIZE * OHCI_SED_CHUNK,
 			  OHCI_ED_ALIGN, &dma);
 		if (err)
@@ -439,6 +440,7 @@ ohci_alloc_std(struct ohci_softc *sc)
 	s = splusb();
 	if (sc->sc_freetds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_std: allocating chunk\n"));
+		dma.flags |= USB_DMA_COHERENT;
 		err = usb_allocmem(&sc->sc_bus, OHCI_STD_SIZE * OHCI_STD_CHUNK,
 			  OHCI_TD_ALIGN, &dma);
 		if (err)
@@ -597,6 +599,7 @@ ohci_alloc_sitd(struct ohci_softc *sc)
 
 	if (sc->sc_freeitds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_sitd: allocating chunk\n"));
+		dma.flags |= USB_DMA_COHERENT;
 		err = usb_allocmem(&sc->sc_bus, OHCI_SITD_SIZE * OHCI_SITD_CHUNK,
 			  OHCI_ITD_ALIGN, &dma);
 		if (err)
@@ -728,6 +731,7 @@ ohci_init(struct ohci_softc *sc)
 
 	/* XXX determine alignment by R/W */
 	/* Allocate the HCCA area. */
+	sc->sc_hccadma.flags |= USB_DMA_COHERENT;
 	err = usb_allocmem(&sc->sc_bus, OHCI_HCCA_SIZE,
 			 OHCI_HCCA_ALIGN, &sc->sc_hccadma);
 	if (err)
@@ -1931,6 +1935,7 @@ ohci_open(struct usbd_pipe *pipe)
 		switch (xfertype) {
 		case UE_CONTROL:
 			pipe->methods = &ohci_device_ctrl_methods;
+			opipe->u.ctl.reqdma.flags |= USB_DMA_COHERENT;
 			err = usb_allocmem(&sc->sc_bus,
 				  sizeof(usb_device_request_t),
 				  0, &opipe->u.ctl.reqdma);

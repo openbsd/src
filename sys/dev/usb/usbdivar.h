@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.79 2018/11/27 14:56:09 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.80 2020/03/19 14:18:38 patrick Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -47,6 +47,8 @@ struct usb_dma_block;
 struct usb_dma {
 	struct usb_dma_block	*block;
 	u_int			 offs;
+	int			 flags;
+#define USB_DMA_COHERENT		(1 << 0)
 };
 
 struct usbd_xfer;

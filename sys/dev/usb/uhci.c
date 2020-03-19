@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.149 2020/02/22 14:01:34 jasper Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.150 2020/03/19 14:18:38 patrick Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -377,6 +377,7 @@ uhci_init(struct uhci_softc *sc)
 	UWRITE1(sc, UHCI_SOF, sc->sc_saved_sof);
 
 	/* Allocate and initialize real frame array. */
+	sc->sc_dma.flags |= USB_DMA_COHERENT;
 	err = usb_allocmem(&sc->sc_bus,
 		  UHCI_FRAMELIST_COUNT * sizeof(uhci_physaddr_t),
 		  UHCI_FRAMELIST_ALIGN, &sc->sc_dma);
@@ -1414,6 +1415,7 @@ uhci_alloc_std(struct uhci_softc *sc)
 	s = splusb();
 	if (sc->sc_freetds == NULL) {
 		DPRINTFN(2,("uhci_alloc_std: allocating chunk\n"));
+		dma.flags |= USB_DMA_COHERENT;
 		err = usb_allocmem(&sc->sc_bus, UHCI_STD_SIZE * UHCI_STD_CHUNK,
 			  UHCI_TD_ALIGN, &dma);
 		if (err)
@@ -1468,6 +1470,7 @@ uhci_alloc_sqh(struct uhci_softc *sc)
 	s = splusb();
 	if (sc->sc_freeqhs == NULL) {
 		DPRINTFN(2, ("uhci_alloc_sqh: allocating chunk\n"));
+		dma.flags |= USB_DMA_COHERENT;
 		err = usb_allocmem(&sc->sc_bus, UHCI_SQH_SIZE * UHCI_SQH_CHUNK,
 			  UHCI_QH_ALIGN, &dma);
 		if (err)
@@ -2650,6 +2653,7 @@ uhci_open(struct usbd_pipe *pipe)
 				uhci_free_std(sc, upipe->u.ctl.setup);
 				goto bad;
 			}
+			upipe->u.ctl.reqdma.flags |= USB_DMA_COHERENT;
 			err = usb_allocmem(&sc->sc_bus,
 				  sizeof(usb_device_request_t),
 				  0, &upipe->u.ctl.reqdma);
