@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.36 2020/01/22 07:52:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.37 2020/03/19 13:55:20 anton Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -37,6 +37,23 @@
 #include <sys/systm.h>
 
 #include <sys/pledge.h>
+
+struct unvname {
+	char 			*un_name;
+	size_t 			un_namesize;
+	u_char			un_flags;
+	RBT_ENTRY(unvnmae)	un_rbt;
+};
+
+RBT_HEAD(unvname_rbt, unvname);
+
+struct unveil {
+	struct vnode		*uv_vp;
+	ssize_t			uv_cover;
+	struct unvname_rbt	uv_names;
+	struct rwlock		uv_lock;
+	u_char			uv_flags;
+};
 
 /* #define DEBUG_UNVEIL */
 
@@ -639,6 +656,15 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
  done:
 	if (ret == 0)
 		unveil_add_traversed_vnodes(p, ndp);
+
+	pr->ps_uvpcwd = unveil_lookup(p->p_fd->fd_cdir, pr, NULL);
+	if (pr->ps_uvpcwd == NULL) {
+		ssize_t i = unveil_find_cover(p->p_fd->fd_cdir, p);
+
+		if (i >= 0)
+			pr->ps_uvpcwd = &pr->ps_uvpaths[i];
+	}
+
 	return ret;
 }
 

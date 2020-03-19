@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.343 2020/03/13 10:07:01 anton Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.344 2020/03/19 13:55:20 anton Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1034,15 +1034,8 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	if (nd.ni_dvp && nd.ni_dvp != nd.ni_vp)
 		VOP_UNLOCK(nd.ni_dvp);
 
-	if (allow) {
+	if (allow)
 		error = unveil_add(p, &nd, permissions);
-		pr->ps_uvpcwd = unveil_lookup(p->p_fd->fd_cdir, pr, NULL);
-		if (pr->ps_uvpcwd == NULL) {
-			ssize_t i = unveil_find_cover(p->p_fd->fd_cdir, p);
-			if (i >= 0)
-				pr->ps_uvpcwd = &pr->ps_uvpaths[i];
-		}
-	}
 	else
 		error = EPERM;
 

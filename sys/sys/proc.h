@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.291 2020/03/18 15:48:22 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.292 2020/03/19 13:55:20 anton Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@
 #include <sys/resource.h>		/* For struct rusage */
 #include <sys/rwlock.h>			/* For struct rwlock */
 #include <sys/sigio.h>			/* For struct sigio */
-#include <sys/tree.h>
 
 #ifdef _KERNEL
 #include <sys/atomic.h>
@@ -128,15 +127,6 @@ struct tusage {
 	uint64_t	tu_sticks;	/* Statclock hits in system mode. */
 	uint64_t	tu_iticks;	/* Statclock hits processing intr. */
 };
-
-struct unvname {
-	char 			*un_name;
-	size_t 			un_namesize;
-	u_char			un_flags;
-	RBT_ENTRY(unvnmae)	un_rbt;
-};
-
-RBT_HEAD(unvname_rbt, unvname);
 
 /*
  * Description of a process.
@@ -463,14 +453,6 @@ struct proc {
 #define	THREAD_PID_OFFSET	100000
 
 #ifdef _KERNEL
-
-struct unveil {
-	struct vnode		*uv_vp;
-	ssize_t			uv_cover;
-	struct unvname_rbt	uv_names;
-	struct rwlock		uv_lock;
-	u_char			uv_flags;
-};
 
 struct uidinfo {
 	LIST_ENTRY(uidinfo) ui_hash;
