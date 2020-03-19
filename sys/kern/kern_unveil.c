@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.37 2020/03/19 13:55:20 anton Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.38 2020/03/19 14:01:57 anton Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -659,8 +659,9 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
 
 	pr->ps_uvpcwd = unveil_lookup(p->p_fd->fd_cdir, pr, NULL);
 	if (pr->ps_uvpcwd == NULL) {
-		ssize_t i = unveil_find_cover(p->p_fd->fd_cdir, p);
+		ssize_t i;
 
+		i = unveil_find_cover(p->p_fd->fd_cdir, p);
 		if (i >= 0)
 			pr->ps_uvpcwd = &pr->ps_uvpaths[i];
 	}
