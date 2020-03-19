@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.12 2019/09/16 13:27:14 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.13 2020/03/19 14:23:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -138,15 +138,12 @@ menu_draw_cb(struct client *c, __unused struct screen_redraw_ctx *ctx0)
 	struct screen		*s = &md->s;
 	struct menu		*menu = md->menu;
 	struct screen_write_ctx	 ctx;
-	u_int			 i, px, py;
+	u_int			 i, px = md->px, py = md->py;
 
 	screen_write_start(&ctx, NULL, s);
 	screen_write_clearscreen(&ctx, 8);
 	screen_write_menu(&ctx, menu, md->choice);
 	screen_write_stop(&ctx);
-
-	px = md->px;
-	py = md->py;
 
 	for (i = 0; i < screen_size_y(&md->s); i++)
 		tty_draw_line(tty, NULL, s, 0, i, menu->width + 4, px, py + i);
@@ -270,7 +267,6 @@ chosen:
 	pr = cmd_parse_from_string(item->command, NULL);
 	switch (pr->status) {
 	case CMD_PARSE_EMPTY:
-		new_item = NULL;
 		break;
 	case CMD_PARSE_ERROR:
 		new_item = cmdq_get_error(pr->error);
