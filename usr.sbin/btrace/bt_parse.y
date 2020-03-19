@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.8 2020/01/28 16:39:51 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.9 2020/03/19 15:52:30 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -41,13 +41,16 @@
 
 #include "bt_parser.h"
 
+/* Name for the default map @[], hopefully nobody will use this one ;) */
+#define UNNAMED_MAP	"___unnamed_map_doesnt_have_any_name"
+
 /* Number of rules to evaluate. */
 struct bt_ruleq		g_rules = TAILQ_HEAD_INITIALIZER(g_rules);
 
 /* Number of probes except BEGIN/END. */
 int		 	g_nprobes;
 
-/* List of global variables. */
+/* List of global variables, including maps. */
 SLIST_HEAD(, bt_var)	 g_variables;
 
 struct bt_rule	*br_new(struct bt_probe *, struct bt_filter *, struct bt_stmt *,
@@ -203,6 +206,7 @@ term		: '(' term ')'			{ $$ = $2; }
 		;
 
 gvar		: '@' STRING			{ $$ = $2; }
+		| '@'				{ $$ = UNNAMED_MAP; }
 
 map		: gvar '[' arg ']'		{ $$ = bm_get($1, $3); }
 		;
@@ -404,6 +408,14 @@ bs_append(struct bt_stmt *ds0, struct bt_stmt *ds1)
 	SLIST_INSERT_AFTER(bs, ds1, bs_next);
 
 	return ds0;
+}
+
+const char *
+bv_name(struct bt_var *bv)
+{
+	if (strncmp(bv->bv_name, UNNAMED_MAP, strlen(UNNAMED_MAP)) == 0)
+		return "";
+	return bv->bv_name;
 }
 
 /* Return the global variable corresponding to `vname'. */

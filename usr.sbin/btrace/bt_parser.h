@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.4 2020/01/28 16:39:51 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.5 2020/03/19 15:52:30 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -164,6 +164,8 @@ int			 btparse(const char *, size_t, const char *, int);
 
 #define ba_new(v, t)	 ba_new0((void *)(v), (t))
 struct bt_arg		*ba_new0(void *, enum bt_argtype);
+
+const char		*bv_name(struct bt_var *);
 
 void			 bm_insert(struct bt_var *, struct bt_arg *,
 			     struct bt_arg *);

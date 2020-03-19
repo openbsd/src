@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.3 2020/01/28 16:39:51 mpi Exp $ */
+/*	$OpenBSD: map.c,v 1.4 2020/03/19 15:52:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -207,7 +207,8 @@ map_print(struct bt_var *bv, size_t top)
 		}
 		if (mcur == NULL)
 			break;
-		printf("@map[%s]: %s\n", mcur->mkey, ba2str(mcur->mval, NULL));
+		printf("@%s[%s]: %s\n", bv_name(bv), mcur->mkey,
+		    ba2str(mcur->mval, NULL));
 		bprev = mcur->mval;
 	}
 }
