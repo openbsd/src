@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.248 2020/03/13 00:31:04 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.249 2020/03/19 12:20:45 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -587,6 +587,8 @@ main(int argc, char *argv[])
 		(void)fchdir(startdir);
 		close(startdir);
 	}
+	if (outst.outtype <= OUTT_UTF8)
+		term_tag_finish();
 	if (outst.outdata != NULL) {
 		switch (outst.outtype) {
 		case OUTT_HTML:
@@ -595,7 +597,6 @@ main(int argc, char *argv[])
 		case OUTT_UTF8:
 		case OUTT_LOCALE:
 		case OUTT_ASCII:
-			term_tag_finish();
 			ascii_free(outst.outdata);
 			break;
 		case OUTT_PDF:
