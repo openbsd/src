@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.65 2019/07/17 17:49:23 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.66 2020/03/19 13:43:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -144,7 +144,8 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 	cmd_find_copy_state(&cdata->input.fs, fs);
 
 	if (job_run(shellcmd, s, server_client_get_cwd(item->client, s), NULL,
-	    cmd_if_shell_callback, cmd_if_shell_free, cdata, 0) == NULL) {
+	    cmd_if_shell_callback, cmd_if_shell_free, cdata, 0, -1,
+	    -1) == NULL) {
 		cmdq_error(item, "failed to run command: %s", shellcmd);
 		free(shellcmd);
 		free(cdata);
