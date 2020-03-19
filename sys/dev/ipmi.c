@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.110 2020/03/09 04:51:24 yasuoka Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.111 2020/03/19 16:17:51 tracey Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1411,7 +1411,8 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 			dbg_printf(5, "	 reading: %lld [%s]\n",
 			    psensor->i_sensor.value,
 			    psensor->i_sensor.desc);
-		}
+		} else
+			free(psensor, M_DEVBUF, sizeof(*psensor));
 	}
 
 	return (1);
