@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.49 2019/12/12 11:39:56 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.50 2020/03/19 14:03:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -80,7 +80,7 @@ cmd_capture_pane_pending(struct args *args, struct window_pane *wp,
 	size_t		 linelen;
 	u_int		 i;
 
-	pending = input_pending(wp);
+	pending = input_pending(wp->ictx);
 	if (pending == NULL)
 		return (xstrdup(""));
 
