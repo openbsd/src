@@ -1,0 +1,13 @@
+BEGIN
+{
+	@[8 - 1] = count();
+	printf("=> Print with one element\n");
+	print(@);
+}
+
+END
+{
+	@[7] = count();
+	printf("=> Print all map:\n");
+	print(@);
+}
