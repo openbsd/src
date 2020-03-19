@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.122 2020/01/28 21:11:06 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.123 2020/03/19 19:27:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1089,7 +1089,9 @@ new_resolver(enum uw_resolver_type type, enum uw_resolver_state state)
 		fatalx("cannot create UW_RES_NONE resolver");
 	}
 
-	resolvers[type] = create_resolver(type);
+	if ((resolvers[type] = create_resolver(type)) == NULL)
+		return;
+
 	switch (state) {
 	case UNKNOWN:
 		check_resolver(resolvers[type]);
