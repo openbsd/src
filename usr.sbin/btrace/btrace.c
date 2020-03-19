@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.6 2020/03/18 20:10:34 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.7 2020/03/19 15:48:13 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -84,6 +84,7 @@ void			 stmt_store(struct bt_stmt *, struct dt_evt *);
 void			 stmt_time(struct bt_stmt *, struct dt_evt *);
 void			 stmt_zero(struct bt_stmt *);
 struct bt_arg		*ba_read(struct bt_arg *);
+int			 ba2dtflag(struct bt_arg *);
 
 /* FIXME: use a real hash. */
 #define ba2hash(_b, _e)	ba2str((_b), (_e))
@@ -432,46 +433,12 @@ rules_setup(int fd)
 		SLIST_FOREACH(bs, &r->br_action, bs_next) {
 			struct bt_arg *ba;
 
-			SLIST_FOREACH(ba, &bs->bs_args, ba_next) {
-				switch (ba->ba_type) {
-				case B_AT_STR:
-				case B_AT_LONG:
-				case B_AT_VAR:
-				case B_AT_MAP:
-					break;
-				case B_AT_BI_KSTACK:
-					dtrq->dtrq_evtflags |= DTEVT_KSTACK;
-					dokstack = 1;
-					break;
-				case B_AT_BI_USTACK:
-					dtrq->dtrq_evtflags |= DTEVT_USTACK;
-					break;
-				case B_AT_BI_COMM:
-					dtrq->dtrq_evtflags |= DTEVT_EXECNAME;
-					break;
-				case B_AT_BI_PID:
-				case B_AT_BI_TID:
-				case B_AT_BI_NSECS:
-					break;
-				case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
-					dtrq->dtrq_evtflags |= DTEVT_FUNCARGS;
-					break;
-				case B_AT_BI_RETVAL:
-					dtrq->dtrq_evtflags |= DTEVT_RETVAL;
-					break;
-				case B_AT_MF_COUNT:
-				case B_AT_MF_MAX:
-				case B_AT_MF_MIN:
-				case B_AT_MF_SUM:
-				case B_AT_OP_ADD ... B_AT_OP_DIVIDE:
-					break;
-				default:
-					xabort("invalid argument type %d",
-					    ba->ba_type);
-				}
-			}
+			SLIST_FOREACH(ba, &bs->bs_args, ba_next)
+				dtrq->dtrq_evtflags |= ba2dtflag(ba);
 		}
 
+		if (dtrq->dtrq_evtflags & DTEVT_KSTACK)
+			dokstack = 1;
 		r->br_cookie = dtrq;
 	}
 
@@ -967,6 +934,55 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 	debug("ba=%p str='%s'\n", ba, str);
 
 	return str;
+}
+
+/*
+ * Return dt(4) flag indicating which data should be recorded by the
+ * kernel, if any, for a given `ba'.
+ */
+int
+ba2dtflag(struct bt_arg *ba)
+{
+	int flag = 0;
+
+	if (ba->ba_type == B_AT_MAP)
+		ba = ba->ba_key;
+
+	switch (ba->ba_type) {
+	case B_AT_STR:
+	case B_AT_LONG:
+	case B_AT_VAR:
+		break;
+	case B_AT_BI_KSTACK:
+		flag = DTEVT_KSTACK;
+		break;
+	case B_AT_BI_USTACK:
+		flag = DTEVT_USTACK;
+		break;
+	case B_AT_BI_COMM:
+		flag = DTEVT_EXECNAME;
+		break;
+	case B_AT_BI_PID:
+	case B_AT_BI_TID:
+	case B_AT_BI_NSECS:
+		break;
+	case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
+		flag = DTEVT_FUNCARGS;
+		break;
+	case B_AT_BI_RETVAL:
+		flag = DTEVT_RETVAL;
+		break;
+	case B_AT_MF_COUNT:
+	case B_AT_MF_MAX:
+	case B_AT_MF_MIN:
+	case B_AT_MF_SUM:
+	case B_AT_OP_ADD ... B_AT_OP_DIVIDE:
+		break;
+	default:
+		xabort("invalid argument type %d", ba->ba_type);
+	}
+
+	return flag;
 }
 
 long
