@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.7 2020/03/19 15:48:13 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.8 2020/03/19 15:55:55 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -634,7 +634,7 @@ stmt_clear(struct bt_stmt *bs)
 
 	map_clear(bv);
 
-	debug("map=%p '%s' clear\n", bv->bv_value, bv->bv_name);
+	debug("map=%p '%s' clear\n", bv->bv_value, bv_name(bv));
 }
 
 /*
@@ -652,7 +652,8 @@ stmt_delete(struct bt_stmt *bs, struct dt_evt *dtev)
 	assert(bs->bs_var == NULL);
 
 	bkey = bmap->ba_key;
-	debug("map=%p '%s' delete key=%p\n", bv->bv_value, bv->bv_name, bkey);
+	debug("map=%p '%s' delete key=%p '%s'\n", bv->bv_value, bv_name(bv),
+	    bkey, ba2hash(bkey, dtev));
 
 	map_delete(bv, ba2hash(bkey, dtev));
 }
@@ -674,8 +675,8 @@ stmt_insert(struct bt_stmt *bs, struct dt_evt *dtev)
 	assert(SLIST_NEXT(bval, ba_next) == NULL);
 
 	bkey = bmap->ba_key;
-	debug("map=%p '%s' insert key=%p bval=%p\n", bv->bv_value, bv->bv_name,
-	    bkey, bval);
+	debug("map=%p '%s' insert key=%p '%s' bval=%p\n", bv->bv_value,
+	    bv_name(bv), bkey, ba2hash(bkey, dtev), bval);
 
 	map_insert(bv, ba2hash(bkey, dtev), bval);
 }
@@ -705,7 +706,7 @@ stmt_print(struct bt_stmt *bs, struct dt_evt *dtev)
 
 	map_print(bv, top);
 
-	debug("map=%p '%s' print (top=%d)\n", bv->bv_value, bv->bv_name, top);
+	debug("map=%p '%s' print (top=%d)\n", bv->bv_value, bv_name(bv), top);
 }
 
 /*
@@ -739,7 +740,7 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 		xabort("store not implemented for type %d", ba->ba_type);
 	}
 
-	debug("bv=%p var '%s' store (%p) \n", bv, bv->bv_name, bv->bv_value);
+	debug("bv=%p var '%s' store (%p) \n", bv, bv_name(bv), bv->bv_value);
 }
 
 /*
@@ -774,7 +775,7 @@ stmt_zero(struct bt_stmt *bs)
 
 	map_zero(bv);
 
-	debug("map=%p '%s' zero\n", bv->bv_value, bv->bv_name);
+	debug("map=%p '%s' zero\n", bv->bv_value, bv_name(bv));
 }
 
 struct bt_arg *
@@ -784,7 +785,7 @@ ba_read(struct bt_arg *ba)
 
 	assert(ba->ba_type == B_AT_VAR);
 
-	debug("bv=%p read '%s' (%p)\n", bv, bv->bv_name, bv->bv_value);
+	debug("bv=%p read '%s' (%p)\n", bv, bv_name(bv), bv->bv_value);
 
 	return bv->bv_value;
 }
