@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.39 2020/03/12 13:19:20 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.40 2020/03/20 17:59:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -30,8 +30,8 @@ const struct cmd_entry cmd_copy_mode_entry = {
 	.name = "copy-mode",
 	.alias = NULL,
 
-	.args = { "eHMt:u", 0, 0 },
-	.usage = "[-eHMu] " CMD_TARGET_PANE_USAGE,
+	.args = { "eHMt:uq", 0, 0 },
+	.usage = "[-eHMuq] " CMD_TARGET_PANE_USAGE,
 
 	.target = { 't', CMD_FIND_PANE, 0 },
 
@@ -60,6 +60,11 @@ cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 	struct client		*c = item->client;
 	struct session		*s;
 	struct window_pane	*wp = item->target.wp;
+
+	if (args_has(args, 'q')) {
+		window_pane_reset_mode_all(wp);
+		return (CMD_RETURN_NORMAL);
+	}
 
 	if (args_has(args, 'M')) {
 		if ((wp = cmd_mouse_pane(&shared->mouse, &s, NULL)) == NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.227 2020/03/19 13:43:18 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.228 2020/03/20 17:59:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -948,7 +948,6 @@ format_grid_word(struct grid *gd, u_int x, u_int y)
 
 	ws = options_get_string(global_s_options, "word-separators");
 
-	y = gd->hsize + y;
 	for (;;) {
 		grid_get_cell(gd, x, y, &gc);
 		if (gc.flags & GRID_FLAG_PADDING)
@@ -1009,6 +1008,7 @@ static void
 format_cb_mouse_word(struct format_tree *ft, struct format_entry *fe)
 {
 	struct window_pane	*wp;
+	struct grid		*gd;
 	u_int			 x, y;
 	char			*s;
 
@@ -1017,12 +1017,18 @@ format_cb_mouse_word(struct format_tree *ft, struct format_entry *fe)
 	wp = cmd_mouse_pane(&ft->m, NULL, NULL);
 	if (wp == NULL)
 		return;
-	if (!TAILQ_EMPTY (&wp->modes))
-		return;
 	if (cmd_mouse_at(wp, &ft->m, &x, &y, 0) != 0)
 		return;
 
-	s = format_grid_word(wp->base.grid, x, y);
+	if (!TAILQ_EMPTY(&wp->modes)) {
+		if (TAILQ_FIRST(&wp->modes)->mode == &window_copy_mode)
+			s = window_copy_get_word(wp, x, y);
+		else
+			s = NULL;
+	} else {
+		gd = wp->base.grid;
+		s = format_grid_word(gd, x, gd->hsize + y);
+	}
 	if (s != NULL)
 		fe->value = s;
 }
@@ -1037,7 +1043,6 @@ format_grid_line(struct grid *gd, u_int y)
 	size_t			 size = 0;
 	char			*s = NULL;
 
-	y = gd->hsize + y;
 	for (x = 0; x < grid_line_length(gd, y); x++) {
 		grid_get_cell(gd, x, y, &gc);
 		if (gc.flags & GRID_FLAG_PADDING)
@@ -1059,6 +1064,7 @@ static void
 format_cb_mouse_line(struct format_tree *ft, struct format_entry *fe)
 {
 	struct window_pane	*wp;
+	struct grid		*gd;
 	u_int			 x, y;
 	char			*s;
 
@@ -1067,12 +1073,18 @@ format_cb_mouse_line(struct format_tree *ft, struct format_entry *fe)
 	wp = cmd_mouse_pane(&ft->m, NULL, NULL);
 	if (wp == NULL)
 		return;
-	if (!TAILQ_EMPTY (&wp->modes))
-		return;
 	if (cmd_mouse_at(wp, &ft->m, &x, &y, 0) != 0)
 		return;
 
-	s = format_grid_line(wp->base.grid, y);
+	if (!TAILQ_EMPTY(&wp->modes)) {
+		if (TAILQ_FIRST(&wp->modes)->mode == &window_copy_mode)
+			s = window_copy_get_line(wp, y);
+		else
+			s = NULL;
+	} else {
+		gd = wp->base.grid;
+		s = format_grid_line(gd, gd->hsize + y);
+	}
 	if (s != NULL)
 		fe->value = s;
 }
