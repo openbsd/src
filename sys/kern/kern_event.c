@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.127 2020/02/25 13:21:17 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.128 2020/03/20 04:14:50 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -53,6 +53,7 @@
 #include <sys/mount.h>
 #include <sys/poll.h>
 #include <sys/syscallargs.h>
+#include <sys/time.h>
 #include <sys/timeout.h>
 #include <sys/wait.h>
 
@@ -843,7 +844,8 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 	struct kevent *kevp;
 	struct timespec elapsed, start, stop;
 	struct knote mend, mstart, *kn;
-	int s, count, timeout, nkev = 0, error = 0;
+	uint64_t nsecs;
+	int s, count, nkev = 0, error = 0;
 	struct kevent kev[KQ_NEVENTS];
 
 	count = maxevents;
@@ -873,10 +875,12 @@ retry:
 			goto done;
 		}
 		kq->kq_state |= KQ_SLEEP;
-		timeout = (tsp == NULL) ? 0 : tstohz(tsp);
-		if (tsp != NULL)
+		if (tsp != NULL) {
 			getnanouptime(&start);
-		error = tsleep(kq, PSOCK | PCATCH, "kqread", timeout);
+			nsecs = MIN(TIMESPEC_TO_NSEC(tsp), MAXTSLP);
+		} else
+			nsecs = INFSLP;
+		error = tsleep_nsec(kq, PSOCK | PCATCH, "kqread", nsecs);
 		if (tsp != NULL) {
 			getnanouptime(&stop);
 			timespecsub(&stop, &start, &elapsed);
