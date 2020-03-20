@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.110 2020/02/04 01:01:09 kevlo Exp $
+# $OpenBSD: RAMDISK,v 1.111 2020/03/20 09:25:42 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -120,6 +120,7 @@ fec*		at fdt?
 imxuart*	at fdt?
 imxiic*		at fdt?
 iic*		at imxiic?
+bdpmic*		at iic?
 imxesdhc*	at fdt?
 sdmmc*		at imxesdhc?
 

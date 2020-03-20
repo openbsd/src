@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.145 2020/03/04 22:23:03 patrick Exp $
+# $OpenBSD: GENERIC,v 1.146 2020/03/20 09:25:42 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -127,6 +127,7 @@ fec*		at fdt?
 imxuart*	at fdt?
 imxiic*		at fdt?
 iic*		at imxiic?
+bdpmic*		at iic?
 imxesdhc*	at fdt?
 sdmmc*		at imxesdhc?
 imxspi*		at fdt?
