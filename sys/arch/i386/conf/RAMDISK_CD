@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.241 2019/11/19 02:01:58 kevlo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.242 2020/03/20 16:12:07 otto Exp $
 
 machine		i386
 maxusers	4
@@ -47,7 +47,7 @@ mpbios0		at bios0
 cpu0		at mainbus?
 bios0		at mainbus0
 ioapic*		at mainbus?
-apm0		at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
+#apm0		at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 pcibios0	at bios0 flags 0x0000
 
 isa0		at mainbus0

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.195 2019/09/04 14:29:41 cheloha Exp $
+#	$OpenBSD: RAMDISK,v 1.196 2020/03/20 16:12:07 otto Exp $
 
 machine		i386
 maxusers	4
@@ -14,6 +14,7 @@ option		PCIVERBOSE
 option		SCSITERSE
 
 option		FFS
+option		FFS2
 option		MSDOSFS
 
 config		bsd root on rd0a swap on rd0b and wd0b and sd0b
@@ -36,7 +37,7 @@ acpimadt0	at acpi?
 cpu0		at mainbus?
 bios0		at mainbus0
 ioapic*		at mainbus?
-apm0		at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
+#apm0		at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 mpbios0		at bios0
 pcibios0	at bios0 flags 0x0000
 
