@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.144 2019/11/30 11:19:17 visa Exp $	*/
+/*	$OpenBSD: systm.h,v 1.145 2020/03/20 03:37:08 cheloha Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -259,6 +259,7 @@ void	cond_wait(struct cond *, const char *);
 void	cond_signal(struct cond *);
 
 #define	INFSLP	UINT64_MAX
+#define	MAXTSLP	(UINT64_MAX - 1)
 
 struct mutex;
 struct rwlock;
