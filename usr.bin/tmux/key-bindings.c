@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.109 2020/03/20 17:59:39 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.110 2020/03/20 18:05:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -47,7 +47,7 @@
 	" 'New At End' 'W' {new-window}"
 #define DEFAULT_PANE_MENU \
 	" '#{?#{==:#{pane_mode},copy-mode},Go To Top,}' '<' {send -X history-top}" \
-	" '#{?#{==:#{pane_mode},copy-mode},Go To Bottom,}' '<' {send -X history-bottom}" \
+	" '#{?#{==:#{pane_mode},copy-mode},Go To Bottom,}' '>' {send -X history-bottom}" \
 	" ''" \
 	" '#{?mouse_word,Search For #[underscore]#{=/9/...:mouse_word},}' 'C-r' {copy-mode -t=; send -Xt= search-backward \"#{q:mouse_word}\"}" \
 	" '#{?mouse_word,Type #[underscore]#{=/9/...:mouse_word},}' 'C-y' {copy-mode -q; send-keys -l -- \"#{q:mouse_word}\"}" \
