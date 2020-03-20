@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.254 2020/03/18 15:48:21 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.255 2020/03/20 08:14:07 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1885,11 +1885,8 @@ userret(struct proc *p)
 		KERNEL_UNLOCK();
 	}
 
-	if (p->p_flag & P_SUSPSINGLE) {
-		KERNEL_LOCK();
+	if (p->p_flag & P_SUSPSINGLE)
 		single_thread_check(p, 0);
-		KERNEL_UNLOCK();
-	}
 
 	WITNESS_WARN(WARN_PANIC, NULL, "userret: returning");
 
@@ -1913,10 +1910,13 @@ single_thread_check(struct proc *p, int deep)
 					return (EINTR);
 			}
 
-			if (--pr->ps_singlecount == 0)
+			if (atomic_dec_int_nv(&pr->ps_singlecount) == 0)
 				wakeup(&pr->ps_singlecount);
-			if (pr->ps_flags & PS_SINGLEEXIT)
+			if (pr->ps_flags & PS_SINGLEEXIT) {
+				KERNEL_LOCK();
 				exit1(p, 0, 0, EXIT_THREAD_NOCHECK);
+				KERNEL_UNLOCK();
+			}
 
 			/* not exiting and don't need to unwind, so suspend */
 			SCHED_LOCK(s);
@@ -1948,6 +1948,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 	int error;
 
 	KERNEL_ASSERT_LOCKED();
+	KASSERT(curproc == p);
 
 	if ((error = single_thread_check(p, deep)))
 		return error;
@@ -1968,8 +1969,9 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 		panic("single_thread_mode = %d", mode);
 #endif
 	}
-	pr->ps_single = p;
 	pr->ps_singlecount = 0;
+	membar_producer();
+	pr->ps_single = p;
 	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 		int s;
 
@@ -1980,7 +1982,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 				SCHED_LOCK(s);
 				if (q->p_stat == SSTOP) {
 					setrunnable(q);
-					pr->ps_singlecount++;
+					atomic_inc_int(&pr->ps_singlecount);
 				}
 				SCHED_UNLOCK(s);
 			}
@@ -1991,7 +1993,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 		switch (q->p_stat) {
 		case SIDL:
 		case SRUN:
-			pr->ps_singlecount++;
+			atomic_inc_int(&pr->ps_singlecount);
 			break;
 		case SSLEEP:
 			/* if it's not interruptible, then just have to wait */
@@ -2005,18 +2007,18 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 				/* need to unwind or exit, so wake it */
 				setrunnable(q);
 			}
-			pr->ps_singlecount++;
+			atomic_inc_int(&pr->ps_singlecount);
 			break;
 		case SSTOP:
 			if (mode == SINGLE_EXIT) {
 				setrunnable(q);
-				pr->ps_singlecount++;
+				atomic_inc_int(&pr->ps_singlecount);
 			}
 			break;
 		case SDEAD:
 			break;
 		case SONPROC:
-			pr->ps_singlecount++;
+			atomic_inc_int(&pr->ps_singlecount);
 			signotify(q);
 			break;
 		}
@@ -2029,20 +2031,28 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 	return 0;
 }
 
+/*
+ * Wait for other threads to stop. If recheck is false then the function
+ * returns non-zero if the caller needs to restart the check else 0 is
+ * returned. If recheck is true the return value is always 0.
+ */
 int
 single_thread_wait(struct process *pr, int recheck)
 {
-	int waited = 0;
+	struct sleep_state sls;
+	int wait;
 
 	/* wait until they're all suspended */
-	while (pr->ps_singlecount > 0) {
-		tsleep_nsec(&pr->ps_singlecount, PWAIT, "suspend", INFSLP);
-		waited = 1;
+	wait = pr->ps_singlecount > 0;
+	while (wait) {
+		sleep_setup(&sls, &pr->ps_singlecount, PWAIT, "suspend");
+		wait = pr->ps_singlecount > 0;
+		sleep_finish(&sls, wait);
 		if (!recheck)
 			break;
 	}
 
-	return waited;
+	return wait;
 }
 
 void
@@ -2052,6 +2062,7 @@ single_thread_clear(struct proc *p, int flag)
 	struct proc *q;
 
 	KASSERT(pr->ps_single == p);
+	KASSERT(curproc == p);
 	KERNEL_ASSERT_LOCKED();
 
 	pr->ps_single = NULL;

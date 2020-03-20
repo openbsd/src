@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.224 2020/03/16 11:58:46 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.225 2020/03/20 08:14:07 claudio Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -563,7 +563,7 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 	 * count ourselves in.
 	 */
 	if (pr->ps_single) {
-		pr->ps_singlecount++;
+		atomic_inc_int(&pr->ps_singlecount);
 		atomic_setbits_int(&p->p_flag, P_SUSPSINGLE);
 	}
 

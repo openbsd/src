@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.292 2020/03/19 13:55:20 anton Exp $	*/
+/*	$OpenBSD: proc.h,v 1.293 2020/03/20 08:14:07 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -200,7 +200,7 @@ struct process {
 	int	ps_siglist;		/* Signals pending for the process. */
 
 	struct	proc *ps_single;	/* Single threading to this thread. */
-	int	ps_singlecount;		/* Not yet suspended threads. */
+	u_int	ps_singlecount;		/* [a] Not yet suspended threads. */
 
 	int	ps_traceflag;		/* Kernel trace points. */
 	struct	vnode *ps_tracevp;	/* Trace to vnode. */
