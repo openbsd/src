@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.13 2020/03/19 14:23:58 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.14 2020/03/20 17:26:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -295,6 +295,10 @@ menu_display(struct menu *menu, int flags, struct cmdq_item *item, u_int px,
 
 	if (c->tty.sx < menu->width + 4 || c->tty.sy < menu->count + 2)
 		return (-1);
+	if (px + menu->width + 4 > c->tty.sx)
+		px = c->tty.sx - menu->width - 4;
+	if (py + menu->count + 2 > c->tty.sy)
+		py = c->tty.sy - menu->count - 2;
 
 	md = xcalloc(1, sizeof *md);
 	md->item = item;
