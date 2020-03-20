@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.228 2020/03/20 17:59:39 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.229 2020/03/20 18:35:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1021,7 +1021,8 @@ format_cb_mouse_word(struct format_tree *ft, struct format_entry *fe)
 		return;
 
 	if (!TAILQ_EMPTY(&wp->modes)) {
-		if (TAILQ_FIRST(&wp->modes)->mode == &window_copy_mode)
+		if (TAILQ_FIRST(&wp->modes)->mode == &window_copy_mode ||
+		    TAILQ_FIRST(&wp->modes)->mode == &window_view_mode)
 			s = window_copy_get_word(wp, x, y);
 		else
 			s = NULL;
@@ -1077,7 +1078,8 @@ format_cb_mouse_line(struct format_tree *ft, struct format_entry *fe)
 		return;
 
 	if (!TAILQ_EMPTY(&wp->modes)) {
-		if (TAILQ_FIRST(&wp->modes)->mode == &window_copy_mode)
+		if (TAILQ_FIRST(&wp->modes)->mode == &window_copy_mode ||
+		    TAILQ_FIRST(&wp->modes)->mode == &window_view_mode)
 			s = window_copy_get_line(wp, y);
 		else
 			s = NULL;
