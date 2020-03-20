@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.253 2020/03/19 13:43:18 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.254 2020/03/20 06:09:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1361,7 +1361,9 @@ window_copy_cmd_other_end(struct window_copy_cmd_state *cs)
 {
 	struct window_mode_entry	*wme = cs->wme;
 	u_int				 np = wme->prefix;
+	struct window_copy_mode_data	*data = wme->data;
 
+	data->selflag = SEL_CHAR;
 	if ((np % 2) != 0)
 		window_copy_other_end(wme);
 	return (WINDOW_COPY_CMD_NOTHING);
