@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.130 2020/02/14 14:32:44 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.131 2020/03/20 04:11:05 cheloha Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -587,7 +587,8 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 	fd_mask bits[6];
 	fd_set *pibits[3], *pobits[3];
 	struct timespec elapsed, start, stop;
-	int s, ncoll, error = 0, timo;
+	uint64_t nsecs;
+	int s, ncoll, error = 0;
 	u_int ni;
 
 	if (nd < 0)
@@ -642,16 +643,18 @@ retry:
 	if (error || *retval)
 		goto done;
 	if (timeout == NULL || timespecisset(timeout)) {
-		timo = (timeout == NULL) ? 0 : tstohz(timeout);
-		if (timeout != NULL)
+		if (timeout != NULL) {
 			getnanouptime(&start);
+			nsecs = MIN(TIMESPEC_TO_NSEC(timeout), MAXTSLP);
+		} else
+			nsecs = INFSLP;
 		s = splhigh();
 		if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
 			splx(s);
 			goto retry;
 		}
 		atomic_clearbits_int(&p->p_flag, P_SELECT);
-		error = tsleep(&selwait, PSOCK | PCATCH, "select", timo);
+		error = tsleep_nsec(&selwait, PSOCK | PCATCH, "select", nsecs);
 		splx(s);
 		if (timeout != NULL) {
 			getnanouptime(&stop);
@@ -916,7 +919,8 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 	size_t sz;
 	struct pollfd pfds[4], *pl = pfds;
 	struct timespec elapsed, start, stop;
-	int timo, ncoll, i, s, error;
+	uint64_t nsecs;
+	int ncoll, i, s, error;
 
 	/* Standards say no more than MAX_OPEN; this is possibly better. */
 	if (nfds > min((int)lim_cur(RLIMIT_NOFILE), maxfiles))
@@ -950,16 +954,18 @@ retry:
 	if (*retval)
 		goto done;
 	if (timeout == NULL || timespecisset(timeout)) {
-		timo = (timeout == NULL) ? 0 : tstohz(timeout);
-		if (timeout != NULL)
+		if (timeout != NULL) {
 			getnanouptime(&start);
+			nsecs = MIN(TIMESPEC_TO_NSEC(timeout), MAXTSLP);
+		} else
+			nsecs = INFSLP;
 		s = splhigh();
 		if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
 			splx(s);
 			goto retry;
 		}
 		atomic_clearbits_int(&p->p_flag, P_SELECT);
-		error = tsleep(&selwait, PSOCK | PCATCH, "poll", timo);
+		error = tsleep_nsec(&selwait, PSOCK | PCATCH, "poll", nsecs);
 		splx(s);
 		if (timeout != NULL) {
 			getnanouptime(&stop);
