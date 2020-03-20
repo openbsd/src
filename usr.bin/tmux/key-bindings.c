@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.112 2020/03/20 18:19:22 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.113 2020/03/20 18:20:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -58,7 +58,7 @@
 	" 'Vertical Split' 'v' {split-window -v}" \
 	" ''" \
 	" '#{?#{>:#{window_panes},1},,-}Swap Up' 'u' {swap-pane -U}" \
-	" '#{?#|>:#{window_panes},1},,-}Swap Down' 'd' {swap-pane -D}" \
+	" '#{?#{>:#{window_panes},1},,-}Swap Down' 'd' {swap-pane -D}" \
 	" '#{?pane_marked_set,,-}Swap Marked' 's' {swap-pane}" \
 	" ''" \
 	" 'Kill' 'X' {kill-pane}" \
