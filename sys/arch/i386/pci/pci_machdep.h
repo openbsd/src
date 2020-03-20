@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.30 2018/08/19 08:23:47 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.31 2020/03/20 13:15:49 mpi Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -96,7 +96,6 @@ void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 struct pci_attach_args;
 int		pci_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
 int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-#define		pci_intr_map_msix(p, vec, ihp)	(-1)
 #define		pci_intr_line(c, ih)	((ih).line)
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
@@ -113,6 +112,12 @@ void		pci_set_powerstate_md(pci_chipset_tag_t, pcitag_t, int, int);
 
 void		pci_mcfg_init(bus_space_tag_t, bus_addr_t, int, int, int);
 pci_chipset_tag_t pci_lookup_segment(int);
+
+static inline int
+pci_intr_map_msix(struct pci_attach_args *pa, int vec, pci_intr_handle_t *ihp)
+{
+	return -1;
+}
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PIC Specification,
