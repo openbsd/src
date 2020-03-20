@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.126 2019/11/07 14:49:07 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.127 2020/03/20 04:08:25 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -270,12 +270,13 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 int
 sys_nanosleep(struct proc *p, void *v, register_t *retval)
 {
-	static int nanowait;
+	static int chan;
 	struct sys_nanosleep_args/* {
 		syscallarg(const struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
 	} */ *uap = v;
 	struct timespec elapsed, remainder, request, start, stop;
+	uint64_t nsecs;
 	struct timespec *rmtp;
 	int copyout_error, error;
 
@@ -293,8 +294,8 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 
 	do {
 		getnanouptime(&start);
-		error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep",
-		    MAX(1, tstohz(&request)));
+		nsecs = MAX(1, MIN(TIMESPEC_TO_NSEC(&request), MAXTSLP));
+		error = tsleep_nsec(&chan, PWAIT | PCATCH, "nanosleep", nsecs);
 		getnanouptime(&stop);
 		timespecsub(&stop, &start, &elapsed);
 		timespecsub(&request, &elapsed, &request);
