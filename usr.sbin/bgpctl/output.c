@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.5 2020/01/24 05:46:00 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.6 2020/03/20 07:56:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -86,9 +86,9 @@ show_head(struct parse_result *res)
 static void
 show_summary(struct peer *p)
 {
-	char			*s;
-	const char		*a;
-	size_t			alen;
+	char		*s;
+	const char	*a;
+	size_t		alen;
 
 	s = fmt_peer(p->conf.descr, &p->conf.remote_addr,
 	    p->conf.remote_masklen);
@@ -122,6 +122,79 @@ show_summary(struct peer *p)
 		printf("%s", statenames[p->state]);
 	printf("\n");
 	free(s);
+}
+
+static void
+show_neighbor_capa_mp(struct peer *p)
+{
+	int		comma;
+	u_int8_t	i;
+
+	printf("    Multiprotocol extensions: ");
+	for (i = 0, comma = 0; i < AID_MAX; i++)
+		if (p->capa.peer.mp[i]) {
+			printf("%s%s", comma ? ", " : "", aid2str(i));
+			comma = 1;
+		}
+	printf("\n");
+}
+
+static void
+show_neighbor_capa_restart(struct peer *p)
+{
+	int		comma;
+	u_int8_t	i;
+
+	printf("    Graceful Restart");
+	if (p->capa.peer.grestart.timeout)
+		printf(": Timeout: %d, ", p->capa.peer.grestart.timeout);
+	for (i = 0, comma = 0; i < AID_MAX; i++)
+		if (p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT) {
+			if (!comma &&
+			    p->capa.peer.grestart.flags[i] & CAPA_GR_RESTART)
+				printf("restarted, ");
+			if (comma)
+				printf(", ");
+			printf("%s", aid2str(i));
+			if (p->capa.peer.grestart.flags[i] & CAPA_GR_FORWARD)
+				printf(" (preserved)");
+			comma = 1;
+		}
+	printf("\n");
+}
+
+static void
+show_neighbor_msgstats(struct peer *p)
+{
+	printf("  Message statistics:\n");
+	printf("  %-15s %-10s %-10s\n", "", "Sent", "Received");
+	printf("  %-15s %10llu %10llu\n", "Opens",
+	    p->stats.msg_sent_open, p->stats.msg_rcvd_open);
+	printf("  %-15s %10llu %10llu\n", "Notifications",
+	    p->stats.msg_sent_notification, p->stats.msg_rcvd_notification);
+	printf("  %-15s %10llu %10llu\n", "Updates",
+	    p->stats.msg_sent_update, p->stats.msg_rcvd_update);
+	printf("  %-15s %10llu %10llu\n", "Keepalives",
+	    p->stats.msg_sent_keepalive, p->stats.msg_rcvd_keepalive);
+	printf("  %-15s %10llu %10llu\n", "Route Refresh",
+	    p->stats.msg_sent_rrefresh, p->stats.msg_rcvd_rrefresh);
+	printf("  %-15s %10llu %10llu\n\n", "Total",
+	    p->stats.msg_sent_open + p->stats.msg_sent_notification +
+	    p->stats.msg_sent_update + p->stats.msg_sent_keepalive +
+	    p->stats.msg_sent_rrefresh,
+	    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
+	    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive +
+	    p->stats.msg_rcvd_rrefresh);
+	printf("  Update statistics:\n");
+	printf("  %-15s %-10s %-10s\n", "", "Sent", "Received");
+	printf("  %-15s %10u %10u\n", "Prefixes",
+	    p->stats.prefix_out_cnt, p->stats.prefix_cnt);
+	printf("  %-15s %10llu %10llu\n", "Updates",
+	    p->stats.prefix_sent_update, p->stats.prefix_rcvd_update);
+	printf("  %-15s %10llu %10llu\n", "Withdraws",
+	    p->stats.prefix_sent_withdraw, p->stats.prefix_rcvd_withdraw);
+	printf("  %-15s %10llu %10llu\n", "End-of-Rib",
+	    p->stats.prefix_sent_eor, p->stats.prefix_rcvd_eor);
 }
 
 static void
@@ -178,7 +251,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 
 	printf("  BGP version 4, remote router-id %s",
 	    inet_ntoa(ina));
-	printf("%s\n", print_auth_method(p->auth.method));
+	printf("%s\n", fmt_auth_method(p->auth.method));
 	printf("  BGP state = %s", statenames[p->state]);
 	if (p->conf.down) {
 		printf(", marked down");
@@ -202,18 +275,12 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	if (hascapamp || p->capa.peer.refresh ||
 	    p->capa.peer.grestart.restart || p->capa.peer.as4byte) {
 		printf("  Neighbor capabilities:\n");
-		if (hascapamp) {
-			printf("    Multiprotocol extensions: ");
-			print_neighbor_capa_mp(p);
-			printf("\n");
-		}
+		if (hascapamp)
+			show_neighbor_capa_mp(p);
 		if (p->capa.peer.refresh)
 			printf("    Route Refresh\n");
-		if (p->capa.peer.grestart.restart) {
-			printf("    Graceful Restart");
-			print_neighbor_capa_restart(p);
-			printf("\n");
-		}
+		if (p->capa.peer.grestart.restart)
+			show_neighbor_capa_restart(p);
 		if (p->capa.peer.as4byte)
 			printf("    4-byte AS numbers\n");
 	}
@@ -222,7 +289,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	if (res->action == SHOW_NEIGHBOR_TIMERS)
 		return;
 
-	print_neighbor_msgstats(p);
+	show_neighbor_msgstats(p);
 	printf("\n");
 	if (*(p->stats.last_shutcomm)) {
 		printf("  Last received shutdown reason: \"%s\"\n",
@@ -231,11 +298,11 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	if (p->state == STATE_IDLE) {
 		const char *errstr;
 
-		errstr = get_errstr(p->stats.last_sent_errcode,
+		errstr = fmt_errstr(p->stats.last_sent_errcode,
 		    p->stats.last_sent_suberr);
 		if (errstr)
 			printf("  Last error sent: %s\n\n", errstr);
-		errstr = get_errstr(p->stats.last_rcvd_errcode,
+		errstr = fmt_errstr(p->stats.last_rcvd_errcode,
 		    p->stats.last_rcvd_suberr);
 		if (errstr)
 			printf("  Last error received: %s\n\n", errstr);
@@ -309,11 +376,9 @@ show_fib(struct kroute_full *kf)
 {
 	char			*p;
 
-	show_fib_flags(kf->flags);
-
 	if (asprintf(&p, "%s/%u", log_addr(&kf->prefix), kf->prefixlen) == -1)
 		err(1, NULL);
-	printf("%4i %-20s ", kf->priority, p);
+	printf("%s%4i %-20s ", fmt_fib_flags(kf->flags), kf->priority, p);
 	free(p);
 
 	if (kf->flags & F_CONNECTED)
@@ -397,14 +462,346 @@ show_interface(struct ctl_show_interface *iface)
 	printf("\n");
 }
 
+void
+show_communities(u_char *data, size_t len, struct parse_result *res)
+{
+	struct community c;
+	size_t	i;
+	u_int64_t ext;
+	u_int8_t type = 0, nt;
+
+	if (len % sizeof(c))
+		return;
+
+	for (i = 0; i < len; i += sizeof(c)) {
+		memcpy(&c, data + i, sizeof(c));
+
+		nt = c.flags;
+		if (type != nt) {
+			if (type != 0)
+				printf("%c", EOL0(res->flags));
+			printf("    %s:", fmt_attr(nt,
+			    ATTR_OPTIONAL | ATTR_TRANSITIVE));
+			type = nt;
+		}
+
+		switch (nt) {
+		case COMMUNITY_TYPE_BASIC:
+			printf(" %s", fmt_community(c.data1, c.data2));
+			break;
+		case COMMUNITY_TYPE_LARGE:
+			printf(" %s",
+			    fmt_large_community(c.data1, c.data2, c.data3));
+			break;
+		case COMMUNITY_TYPE_EXT:
+			ext = (u_int64_t)c.data3 << 48;
+			switch (c.data3 >> 8) {
+			case EXT_COMMUNITY_TRANS_TWO_AS:
+			case EXT_COMMUNITY_TRANS_OPAQUE:
+			case EXT_COMMUNITY_TRANS_EVPN:
+			case EXT_COMMUNITY_NON_TRANS_OPAQUE:
+				ext |= ((u_int64_t)c.data1 & 0xffff) << 32;
+				ext |= (u_int64_t)c.data2;
+				break;
+			case EXT_COMMUNITY_TRANS_FOUR_AS:
+			case EXT_COMMUNITY_TRANS_IPV4:
+				ext |= (u_int64_t)c.data1 << 16;
+				ext |= (u_int64_t)c.data2 & 0xffff;
+				break;
+			}
+			ext = htobe64(ext);
+
+			printf(" %s", fmt_ext_community((void *)&ext));
+			break;
+		}
+	}
+
+	printf("%c", EOL0(res->flags));
+}
+
+static void
+show_community(u_char *data, u_int16_t len)
+{
+	u_int16_t	a, v;
+	u_int16_t	i;
+
+	if (len & 0x3)
+		return;
+
+	for (i = 0; i < len; i += 4) {
+		memcpy(&a, data + i, sizeof(a));
+		memcpy(&v, data + i + 2, sizeof(v));
+		a = ntohs(a);
+		v = ntohs(v);
+		printf("%s", fmt_community(a, v));
+
+		if (i + 4 < len)
+			printf(" ");
+	}
+}
+
+static void
+show_large_community(u_char *data, u_int16_t len)
+{
+	u_int32_t	a, l1, l2;
+	u_int16_t	i;
+
+	if (len % 12)
+		return;
+
+	for (i = 0; i < len; i += 12) {
+		memcpy(&a, data + i, sizeof(a));
+		memcpy(&l1, data + i + 4, sizeof(l1));
+		memcpy(&l2, data + i + 8, sizeof(l2));
+		a = ntohl(a);
+		l1 = ntohl(l1);
+		l2 = ntohl(l2);
+			printf("%s", fmt_large_community(a, l1, l2));
+
+		if (i + 12 < len)
+			printf(" ");
+	}
+}
+
+static void
+show_ext_community(u_char *data, u_int16_t len)
+{
+	u_int16_t	i;
+
+	if (len & 0x7)
+		return;
+
+	for (i = 0; i < len; i += 8) {
+		printf("%s", fmt_ext_community(data + i));
+
+		if (i + 8 < len)
+			printf(" ");
+	}
+}
+
+void
+show_attr(u_char *data, size_t len, struct parse_result *res)
+{
+	u_char		*path;
+	struct in_addr	 id;
+	struct bgpd_addr prefix;
+	char		*aspath;
+	u_int32_t	 as;
+	u_int16_t	 alen, ioff, short_as, afi;
+	u_int8_t	 flags, type, safi, aid, prefixlen;
+	int		 i, pos, e2, e4;
+
+	if (len < 3)
+		errx(1, "show_attr: too short bgp attr");
+
+	flags = data[0];
+	type = data[1];
+
+	/* get the attribute length */
+	if (flags & ATTR_EXTLEN) {
+		if (len < 4)
+			errx(1, "show_attr: too short bgp attr");
+		memcpy(&alen, data+2, sizeof(u_int16_t));
+		alen = ntohs(alen);
+		data += 4;
+		len -= 4;
+	} else {
+		alen = data[2];
+		data += 3;
+		len -= 3;
+	}
+
+	/* bad imsg len how can that happen!? */
+	if (alen > len)
+		errx(1, "show_attr: bad length");
+
+	printf("    %s: ", fmt_attr(type, flags));
+
+	switch (type) {
+	case ATTR_ORIGIN:
+		if (alen == 1)
+			printf("%u", *data);
+		else
+			printf("bad length");
+		break;
+	case ATTR_ASPATH:
+	case ATTR_AS4_PATH:
+		/* prefer 4-byte AS here */
+		e4 = aspath_verify(data, alen, 1);
+		e2 = aspath_verify(data, alen, 0);
+		if (e4 == 0 || e4 == AS_ERR_SOFT) {
+			path = data;
+		} else if (e2 == 0 || e2 == AS_ERR_SOFT) {
+			path = aspath_inflate(data, alen, &alen);
+			if (path == NULL)
+				errx(1, "aspath_inflate failed");
+		} else {
+			printf("bad AS-Path");
+			break;
+		}
+		if (aspath_asprint(&aspath, path, alen) == -1)
+			err(1, NULL);
+		printf("%s", aspath);
+		free(aspath);
+		if (path != data)
+			free(path);
+		break;
+	case ATTR_NEXTHOP:
+		if (alen == 4) {
+			memcpy(&id, data, sizeof(id));
+			printf("%s", inet_ntoa(id));
+		} else
+			printf("bad length");
+		break;
+	case ATTR_MED:
+	case ATTR_LOCALPREF:
+		if (alen == 4) {
+			u_int32_t val;
+			memcpy(&val, data, sizeof(val));
+			val = ntohl(val);
+			printf("%u", val);
+		} else
+			printf("bad length");
+		break;
+	case ATTR_AGGREGATOR:
+	case ATTR_AS4_AGGREGATOR:
+		if (alen == 8) {
+			memcpy(&as, data, sizeof(as));
+			memcpy(&id, data + sizeof(as), sizeof(id));
+			as = ntohl(as);
+		} else if (alen == 6) {
+			memcpy(&short_as, data, sizeof(short_as));
+			memcpy(&id, data + sizeof(short_as), sizeof(id));
+			as = ntohs(short_as);
+		} else {
+			printf("bad length");
+			break;
+		}
+		printf("%s [%s]", log_as(as), inet_ntoa(id));
+		break;
+	case ATTR_COMMUNITIES:
+		show_community(data, alen);
+		break;
+	case ATTR_ORIGINATOR_ID:
+		memcpy(&id, data, sizeof(id));
+		printf("%s", inet_ntoa(id));
+		break;
+	case ATTR_CLUSTER_LIST:
+		for (ioff = 0; ioff + sizeof(id) <= alen;
+		    ioff += sizeof(id)) {
+			memcpy(&id, data + ioff, sizeof(id));
+			printf(" %s", inet_ntoa(id));
+		}
+		break;
+	case ATTR_MP_REACH_NLRI:
+	case ATTR_MP_UNREACH_NLRI:
+		if (alen < 3) {
+ bad_len:
+			printf("bad length");
+			break;
+		}
+		memcpy(&afi, data, 2);
+		data += 2;
+		alen -= 2;
+		afi = ntohs(afi);
+		safi = *data++;
+		alen--;
+
+		if (afi2aid(afi, safi, &aid) == -1) {
+			printf("bad AFI/SAFI pair");
+			break;
+		}
+		printf(" %s", aid2str(aid));
+
+		if (type == ATTR_MP_REACH_NLRI) {
+			struct bgpd_addr nexthop;
+			u_int8_t nhlen;
+			if (len == 0)
+				goto bad_len;
+			nhlen = *data++;
+			alen--;
+			if (nhlen > len)
+				goto bad_len;
+			bzero(&nexthop, sizeof(nexthop));
+			switch (aid) {
+			case AID_INET6:
+				nexthop.aid = aid;
+				if (nhlen != 16 && nhlen != 32)
+					goto bad_len;
+				memcpy(&nexthop.v6.s6_addr, data, 16);
+				break;
+			case AID_VPN_IPv4:
+				if (nhlen != 12)
+					goto bad_len;
+				nexthop.aid = AID_INET;
+				memcpy(&nexthop.v4, data + sizeof(u_int64_t),
+				    sizeof(nexthop.v4));
+				break;
+			default:
+				printf("unhandled AID #%u", aid);
+				goto done;
+			}
+			/* ignore reserved (old SNPA) field as per RFC4760 */
+			data += nhlen + 1;
+			alen -= nhlen + 1;
+
+			printf(" nexthop: %s", log_addr(&nexthop));
+		}
+
+		while (alen > 0) {
+			switch (aid) {
+			case AID_INET6:
+				pos = nlri_get_prefix6(data, alen, &prefix,
+				    &prefixlen);
+				break;
+			case AID_VPN_IPv4:
+				pos = nlri_get_vpn4(data, alen, &prefix,
+				    &prefixlen, 1);
+				break;
+			default:
+				printf("unhandled AID #%u", aid);
+				goto done;
+			}
+			if (pos == -1) {
+				printf("bad %s prefix", aid2str(aid));
+				break;
+			}
+			printf(" %s/%u", log_addr(&prefix), prefixlen);
+			data += pos;
+			alen -= pos;
+		}
+		break;
+	case ATTR_EXT_COMMUNITIES:
+		show_ext_community(data, alen);
+		break;
+	case ATTR_LARGE_COMMUNITIES:
+		show_large_community(data, alen);
+		break;
+	case ATTR_ATOMIC_AGGREGATE:
+	default:
+		printf(" len %u", alen);
+		if (alen) {
+			printf(":");
+			for (i=0; i < alen; i++)
+				printf(" %02x", *(data+i));
+		}
+		break;
+	}
+ done:
+	printf("%c", EOL0(res->flags));
+}
+
 static void
 show_rib_brief(struct ctl_show_rib *r, u_char *asdata, size_t aslen)
 {
-	char			*aspath;
+	char *p, *aspath;
 
-	print_prefix(&r->prefix, r->prefixlen, r->flags, r->validation_state);
-	printf(" %-15s ", log_addr(&r->exit_nexthop));
-	printf(" %5u %5u ", r->local_pref, r->med);
+	if (asprintf(&p, "%s/%u", log_addr(&r->prefix), r->prefixlen) == -1)
+		err(1, NULL);
+	printf("%s %3s %-20s %-15s %5u %5u ",
+	    fmt_flags(r->flags, 1), fmt_ovs(r->validation_state, 1), p,
+	    log_addr(&r->exit_nexthop), r->local_pref, r->med);
+	free(p);
 
 	if (aspath_asprint(&aspath, asdata, aslen) == -1)
 		err(1, NULL);
@@ -412,7 +809,7 @@ show_rib_brief(struct ctl_show_rib *r, u_char *asdata, size_t aslen)
 		printf("%s ", aspath);
 	free(aspath);
 
-	printf("%s\n", print_origin(r->origin, 1));
+	printf("%s\n", fmt_origin(r->origin, 1));
 }
 
 static void
@@ -440,9 +837,9 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	printf("%s)%c", inet_ntoa(id), EOL0(flag0));
 
 	printf("    Origin %s, metric %u, localpref %u, weight %u, ovs %s, ",
-	    print_origin(r->origin, 0), r->med, r->local_pref, r->weight,
-	    print_ovs(r->validation_state, 0));
-	print_flags(r->flags, 0);
+	    fmt_origin(r->origin, 0), r->med, r->local_pref, r->weight,
+	    fmt_ovs(r->validation_state, 0));
+	printf("%s", fmt_flags(r->flags, 0));
 
 	printf("%c    Last update: %s ago%c", EOL0(flag0),
 	    fmt_timeframe(r->age), EOL0(flag0));

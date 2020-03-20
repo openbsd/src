@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.258 2020/01/24 05:46:00 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.259 2020/03/20 07:56:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -46,11 +46,6 @@
 
 int		 main(int, char *[]);
 int		 show(struct imsg *, struct parse_result *);
-void		 show_attr(void *, u_int16_t, int);
-void		 show_communities(u_char *, size_t, int);
-void		 show_community(u_char *, u_int16_t);
-void		 show_large_community(u_char *, u_int16_t);
-void		 show_ext_community(u_char *, u_int16_t);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 void		 show_mrt_dump_neighbors(struct mrt_rib *, struct mrt_peer *,
 		    void *);
@@ -425,7 +420,6 @@ show(struct imsg *imsg, struct parse_result *res)
 		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(*kt))
 			errx(1, "wrong imsg len");
 		kt = imsg->data;
-
 		show_fib_table(kt);
 		break;
 	case IMSG_CTL_SHOW_RIB:
@@ -443,7 +437,7 @@ show(struct imsg *imsg, struct parse_result *res)
 			warnx("bad IMSG_CTL_SHOW_RIB_COMMUNITIES received");
 			break;
 		}
-		show_communities(imsg->data, ilen, res->flags);
+		show_communities(imsg->data, ilen, res);
 		break;
 	case IMSG_CTL_SHOW_RIB_ATTR:
 		ilen = imsg->hdr.len - IMSG_HEADER_SIZE;
@@ -451,7 +445,7 @@ show(struct imsg *imsg, struct parse_result *res)
 			warnx("bad IMSG_CTL_SHOW_RIB_ATTR received");
 			break;
 		}
-		show_attr(imsg->data, ilen, res->flags);
+		show_attr(imsg->data, ilen, res);
 		break;
 	case IMSG_CTL_SHOW_RIB_MEM:
 		memcpy(&stats, imsg->data, sizeof(stats));
@@ -506,7 +500,7 @@ fmt_peer(const char *descr, const struct bgpd_addr *remote_addr,
 }
 
 const char *
-print_auth_method(enum auth_method method)
+fmt_auth_method(enum auth_method method)
 {
 	switch (method) {
 	case AUTH_MD5SIG:
@@ -523,75 +517,6 @@ print_auth_method(enum auth_method method)
 	default:
 		return "";
 	}
-}
-
-void
-print_neighbor_capa_mp(struct peer *p)
-{
-	int		comma;
-	u_int8_t	i;
-
-	for (i = 0, comma = 0; i < AID_MAX; i++)
-		if (p->capa.peer.mp[i]) {
-			printf("%s%s", comma ? ", " : "", aid2str(i));
-			comma = 1;
-		}
-}
-
-void
-print_neighbor_capa_restart(struct peer *p)
-{
-	int		comma;
-	u_int8_t	i;
-
-	if (p->capa.peer.grestart.timeout)
-		printf(": Timeout: %d, ", p->capa.peer.grestart.timeout);
-	for (i = 0, comma = 0; i < AID_MAX; i++)
-		if (p->capa.peer.grestart.flags[i] & CAPA_GR_PRESENT) {
-			if (!comma &&
-			    p->capa.peer.grestart.flags[i] & CAPA_GR_RESTART)
-				printf("restarted, ");
-			if (comma)
-				printf(", ");
-			printf("%s", aid2str(i));
-			if (p->capa.peer.grestart.flags[i] & CAPA_GR_FORWARD)
-				printf(" (preserved)");
-			comma = 1;
-		}
-}
-
-void
-print_neighbor_msgstats(struct peer *p)
-{
-	printf("  Message statistics:\n");
-	printf("  %-15s %-10s %-10s\n", "", "Sent", "Received");
-	printf("  %-15s %10llu %10llu\n", "Opens",
-	    p->stats.msg_sent_open, p->stats.msg_rcvd_open);
-	printf("  %-15s %10llu %10llu\n", "Notifications",
-	    p->stats.msg_sent_notification, p->stats.msg_rcvd_notification);
-	printf("  %-15s %10llu %10llu\n", "Updates",
-	    p->stats.msg_sent_update, p->stats.msg_rcvd_update);
-	printf("  %-15s %10llu %10llu\n", "Keepalives",
-	    p->stats.msg_sent_keepalive, p->stats.msg_rcvd_keepalive);
-	printf("  %-15s %10llu %10llu\n", "Route Refresh",
-	    p->stats.msg_sent_rrefresh, p->stats.msg_rcvd_rrefresh);
-	printf("  %-15s %10llu %10llu\n\n", "Total",
-	    p->stats.msg_sent_open + p->stats.msg_sent_notification +
-	    p->stats.msg_sent_update + p->stats.msg_sent_keepalive +
-	    p->stats.msg_sent_rrefresh,
-	    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
-	    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive +
-	    p->stats.msg_rcvd_rrefresh);
-	printf("  Update statistics:\n");
-	printf("  %-15s %-10s %-10s\n", "", "Sent", "Received");
-	printf("  %-15s %10u %10u\n", "Prefixes",
-	    p->stats.prefix_out_cnt, p->stats.prefix_cnt);
-	printf("  %-15s %10llu %10llu\n", "Updates",
-	    p->stats.prefix_sent_update, p->stats.prefix_rcvd_update);
-	printf("  %-15s %10llu %10llu\n", "Withdraws",
-	    p->stats.prefix_sent_withdraw, p->stats.prefix_rcvd_withdraw);
-	printf("  %-15s %10llu %10llu\n", "End-of-Rib",
-	    p->stats.prefix_sent_eor, p->stats.prefix_rcvd_eor);
 }
 
 #define TF_BUFS	8
@@ -646,58 +571,49 @@ fmt_monotime(time_t t)
 	return (fmt_timeframe(ts.tv_sec - t));
 }
 
-void
-show_fib_flags(u_int16_t flags)
+const char *
+fmt_fib_flags(u_int16_t flags)
 {
+	static char buf[8];
+
 	if (flags & F_DOWN)
-		printf(" ");
+		strlcpy(buf, " ", sizeof(buf));
 	else
-		printf("*");
+		strlcpy(buf, "*", sizeof(buf));
 
 	if (flags & F_BGPD_INSERTED)
-		printf("B");
+		strlcat(buf, "B", sizeof(buf));
 	else if (flags & F_CONNECTED)
-		printf("C");
+		strlcat(buf, "C", sizeof(buf));
 	else if (flags & F_STATIC)
-		printf("S");
+		strlcat(buf, "S", sizeof(buf));
 	else if (flags & F_DYNAMIC)
-		printf("D");
+		strlcat(buf, "D", sizeof(buf));
 	else
-		printf(" ");
+		strlcat(buf, " ", sizeof(buf));
 
 	if (flags & F_NEXTHOP)
-		printf("N");
+		strlcat(buf, "N", sizeof(buf));
 	else
-		printf(" ");
+		strlcat(buf, " ", sizeof(buf));
 
 	if (flags & F_REJECT && flags & F_BLACKHOLE)
-		printf("f");
+		strlcat(buf, "f", sizeof(buf));
 	else if (flags & F_REJECT)
-		printf("r");
+		strlcat(buf, "r", sizeof(buf));
 	else if (flags & F_BLACKHOLE)
-		printf("b");
+		strlcat(buf, "b", sizeof(buf));
 	else
-		printf(" ");
+		strlcat(buf, " ", sizeof(buf));
 
-	printf(" ");
-}
+	if (strlcat(buf, " ", sizeof(buf)) >= sizeof(buf))
+		errx(1, "%s buffer too small", __func__);
 
-void
-print_prefix(struct bgpd_addr *prefix, u_int8_t prefixlen, u_int8_t flags,
-    u_int8_t ovs)
-{
-	char			*p;
-
-	print_flags(flags, 1);
-	printf("%3s ", print_ovs(ovs, 1));
-	if (asprintf(&p, "%s/%u", log_addr(prefix), prefixlen) == -1)
-		err(1, NULL);
-	printf("%-20s", p);
-	free(p);
+	return buf;
 }
 
 const char *
-print_origin(u_int8_t origin, int sum)
+fmt_origin(u_int8_t origin, int sum)
 {
 	switch (origin) {
 	case ORIGIN_IGP:
@@ -711,9 +627,10 @@ print_origin(u_int8_t origin, int sum)
 	}
 }
 
-void
-print_flags(u_int8_t flags, int sum)
+const char *
+fmt_flags(u_int8_t flags, int sum)
 {
+	static char buf[80];
 	char	 flagstr[5];
 	char	*p = flagstr;
 
@@ -731,25 +648,30 @@ print_flags(u_int8_t flags, int sum)
 		if (flags & F_PREF_ACTIVE)
 			*p++ = '>';
 		*p = '\0';
-		printf("%-5s ", flagstr);
+		snprintf(buf, sizeof(buf), "%-5s", flagstr);
 	} else {
 		if (flags & F_PREF_INTERNAL)
-			printf("internal");
+			strlcpy(buf, "internal", sizeof(buf));
 		else
-			printf("external");
+			strlcpy(buf, "external", sizeof(buf));
+
 		if (flags & F_PREF_STALE)
-			printf(", stale");
+			strlcat(buf, ", stale", sizeof(buf));
 		if (flags & F_PREF_ELIGIBLE)
-			printf(", valid");
+			strlcat(buf, ", valid", sizeof(buf));
 		if (flags & F_PREF_ACTIVE)
-			printf(", best");
+			strlcat(buf, ", best", sizeof(buf));
 		if (flags & F_PREF_ANNOUNCE)
-			printf(", announced");
+			strlcat(buf, ", announced", sizeof(buf));
+		if (strlen(buf) >= sizeof(buf) - 1)
+			errx(1, "%s buffer too small", __func__);
 	}
+
+	return buf;
 }
 
 const char *
-print_ovs(u_int8_t validation_state, int sum)
+fmt_ovs(u_int8_t validation_state, int sum)
 {
 	switch (validation_state) {
 	case ROA_INVALID:
@@ -761,8 +683,86 @@ print_ovs(u_int8_t validation_state, int sum)
 	}
 }
 
-static const char *
-print_attr(u_int8_t type, u_int8_t flags)
+const char *
+fmt_mem(long long num)
+{
+	static char	buf[16];
+
+	if (fmt_scaled(num, buf) == -1)
+		snprintf(buf, sizeof(buf), "%lldB", num);
+
+	return (buf);
+}
+
+const char *
+fmt_errstr(u_int8_t errcode, u_int8_t subcode)
+{
+	static char	 errbuf[256];
+	const char	*errstr = NULL;
+	const char	*suberr = NULL;
+	int		 uk = 0;
+
+	if (errcode == 0)	/* no error */
+		return NULL;
+
+	if (errcode < sizeof(errnames)/sizeof(char *))
+		errstr = errnames[errcode];
+
+	switch (errcode) {
+	case ERR_HEADER:
+		if (subcode < sizeof(suberr_header_names)/sizeof(char *))
+			suberr = suberr_header_names[subcode];
+		else
+			uk = 1;
+		break;
+	case ERR_OPEN:
+		if (subcode < sizeof(suberr_open_names)/sizeof(char *))
+			suberr = suberr_open_names[subcode];
+		else
+			uk = 1;
+		break;
+	case ERR_UPDATE:
+		if (subcode < sizeof(suberr_update_names)/sizeof(char *))
+			suberr = suberr_update_names[subcode];
+		else
+			uk = 1;
+		break;
+	case ERR_HOLDTIMEREXPIRED:
+		if (subcode != 0)
+			uk = 1;
+		break;
+	case ERR_FSM:
+		if (subcode < sizeof(suberr_fsm_names)/sizeof(char *))
+			suberr = suberr_fsm_names[subcode];
+		else
+			uk = 1;
+		break;
+	case ERR_CEASE:
+		if (subcode < sizeof(suberr_cease_names)/sizeof(char *))
+			suberr = suberr_cease_names[subcode];
+		else
+			uk = 1;
+		break;
+	default:
+		snprintf(errbuf, sizeof(errbuf),
+		    "unknown error code %u subcode %u", errcode, subcode);
+		return (errbuf);
+	}
+
+	if (uk)
+		snprintf(errbuf, sizeof(errbuf),
+		    "%s, unknown subcode %u", errstr, subcode);
+	else if (suberr == NULL)
+		return (errstr);
+	else
+		snprintf(errbuf, sizeof(errbuf),
+		    "%s, %s", errstr, suberr);
+
+	return (errbuf);
+}
+
+const char *
+fmt_attr(u_int8_t type, u_int8_t flags)
 {
 #define CHECK_FLAGS(s, t, m)	\
 	if (((s) & ~(ATTR_DEFMASK | (m))) != (t)) pflags = 1
@@ -856,252 +856,46 @@ print_attr(u_int8_t type, u_int8_t flags)
 #undef CHECK_FLAGS
 }
 
-void
-show_attr(void *b, u_int16_t len, int flag0)
+const char *
+fmt_community(u_int16_t a, u_int16_t v)
 {
-	u_char		*data = b, *path;
-	struct in_addr	 id;
-	struct bgpd_addr prefix;
-	char		*aspath;
-	u_int32_t	 as;
-	u_int16_t	 alen, ioff, short_as, afi;
-	u_int8_t	 flags, type, safi, aid, prefixlen;
-	int		 i, pos, e2, e4;
+	static char buf[12];
 
-	if (len < 3)
-		errx(1, "show_attr: too short bgp attr");
-
-	flags = data[0];
-	type = data[1];
-
-	/* get the attribute length */
-	if (flags & ATTR_EXTLEN) {
-		if (len < 4)
-			errx(1, "show_attr: too short bgp attr");
-		memcpy(&alen, data+2, sizeof(u_int16_t));
-		alen = ntohs(alen);
-		data += 4;
-		len -= 4;
-	} else {
-		alen = data[2];
-		data += 3;
-		len -= 3;
-	}
-
-	/* bad imsg len how can that happen!? */
-	if (alen > len)
-		errx(1, "show_attr: bad length");
-
-	printf("    %s: ", print_attr(type, flags));
-
-	switch (type) {
-	case ATTR_ORIGIN:
-		if (alen == 1)
-			printf("%u", *data);
-		else
-			printf("bad length");
-		break;
-	case ATTR_ASPATH:
-	case ATTR_AS4_PATH:
-		/* prefer 4-byte AS here */
-		e4 = aspath_verify(data, alen, 1);
-		e2 = aspath_verify(data, alen, 0);
-		if (e4 == 0 || e4 == AS_ERR_SOFT) {
-			path = data;
-		} else if (e2 == 0 || e2 == AS_ERR_SOFT) {
-			path = aspath_inflate(data, alen, &alen);
-			if (path == NULL)
-				errx(1, "aspath_inflate failed");
-		} else {
-			printf("bad AS-Path");
-			break;
-		}
-		if (aspath_asprint(&aspath, path, alen) == -1)
-			err(1, NULL);
-		printf("%s", aspath);
-		free(aspath);
-		if (path != data)
-			free(path);
-		break;
-	case ATTR_NEXTHOP:
-		if (alen == 4) {
-			memcpy(&id, data, sizeof(id));
-			printf("%s", inet_ntoa(id));
-		} else
-			printf("bad length");
-		break;
-	case ATTR_MED:
-	case ATTR_LOCALPREF:
-		if (alen == 4) {
-			u_int32_t val;
-			memcpy(&val, data, sizeof(val));
-			val = ntohl(val);
-			printf("%u", val);
-		} else
-			printf("bad length");
-		break;
-	case ATTR_AGGREGATOR:
-	case ATTR_AS4_AGGREGATOR:
-		if (alen == 8) {
-			memcpy(&as, data, sizeof(as));
-			memcpy(&id, data + sizeof(as), sizeof(id));
-			as = ntohl(as);
-		} else if (alen == 6) {
-			memcpy(&short_as, data, sizeof(short_as));
-			memcpy(&id, data + sizeof(short_as), sizeof(id));
-			as = ntohs(short_as);
-		} else {
-			printf("bad length");
-			break;
-		}
-		printf("%s [%s]", log_as(as), inet_ntoa(id));
-		break;
-	case ATTR_COMMUNITIES:
-		show_community(data, alen);
-		break;
-	case ATTR_ORIGINATOR_ID:
-		memcpy(&id, data, sizeof(id));
-		printf("%s", inet_ntoa(id));
-		break;
-	case ATTR_CLUSTER_LIST:
-		for (ioff = 0; ioff + sizeof(id) <= alen;
-		    ioff += sizeof(id)) {
-			memcpy(&id, data + ioff, sizeof(id));
-			printf(" %s", inet_ntoa(id));
-		}
-		break;
-	case ATTR_MP_REACH_NLRI:
-	case ATTR_MP_UNREACH_NLRI:
-		if (alen < 3) {
- bad_len:
-			printf("bad length");
-			break;
-		}
-		memcpy(&afi, data, 2);
-		data += 2;
-		alen -= 2;
-		afi = ntohs(afi);
-		safi = *data++;
-		alen--;
-
-		if (afi2aid(afi, safi, &aid) == -1) {
-			printf("bad AFI/SAFI pair");
-			break;
-		}
-		printf(" %s", aid2str(aid));
-
-		if (type == ATTR_MP_REACH_NLRI) {
-			struct bgpd_addr nexthop;
-			u_int8_t nhlen;
-			if (len == 0)
-				goto bad_len;
-			nhlen = *data++;
-			alen--;
-			if (nhlen > len)
-				goto bad_len;
-			bzero(&nexthop, sizeof(nexthop));
-			switch (aid) {
-			case AID_INET6:
-				nexthop.aid = aid;
-				if (nhlen != 16 && nhlen != 32)
-					goto bad_len;
-				memcpy(&nexthop.v6.s6_addr, data, 16);
-				break;
-			case AID_VPN_IPv4:
-				if (nhlen != 12)
-					goto bad_len;
-				nexthop.aid = AID_INET;
-				memcpy(&nexthop.v4, data + sizeof(u_int64_t),
-				    sizeof(nexthop.v4));
-				break;
-			default:
-				printf("unhandled AID #%u", aid);
-				goto done;
-			}
-			/* ignore reserved (old SNPA) field as per RFC4760 */
-			data += nhlen + 1;
-			alen -= nhlen + 1;
-
-			printf(" nexthop: %s", log_addr(&nexthop));
-		}
-
-		while (alen > 0) {
-			switch (aid) {
-			case AID_INET6:
-				pos = nlri_get_prefix6(data, alen, &prefix,
-				    &prefixlen);
-				break;
-			case AID_VPN_IPv4:
-				pos = nlri_get_vpn4(data, alen, &prefix,
-				    &prefixlen, 1);
-				break;
-			default:
-				printf("unhandled AID #%u", aid);
-				goto done;
-			}
-			if (pos == -1) {
-				printf("bad %s prefix", aid2str(aid));
-				break;
-			}
-			printf(" %s/%u", log_addr(&prefix), prefixlen);
-			data += pos;
-			alen -= pos;
-		}
-		break;
-	case ATTR_EXT_COMMUNITIES:
-		show_ext_community(data, alen);
-		break;
-	case ATTR_LARGE_COMMUNITIES:
-		show_large_community(data, alen);
-		break;
-	case ATTR_ATOMIC_AGGREGATE:
-	default:
-		printf(" len %u", alen);
-		if (alen) {
-			printf(":");
-			for (i=0; i < alen; i++)
-				printf(" %02x", *(data+i));
-		}
-		break;
-	}
- done:
-	printf("%c", EOL0(flag0));
-}
-
-static void
-print_community(u_int16_t a, u_int16_t v)
-{
 	if (a == COMMUNITY_WELLKNOWN)
 		switch (v) {
 		case COMMUNITY_GRACEFUL_SHUTDOWN:
-			printf("GRACEFUL_SHUTDOWN");
-			break;
+			return "GRACEFUL_SHUTDOWN";
 		case COMMUNITY_NO_EXPORT:
-			printf("NO_EXPORT");
-			break;
+			return "NO_EXPORT";
 		case COMMUNITY_NO_ADVERTISE:
-			printf("NO_ADVERTISE");
-			break;
+			return "NO_ADVERTISE";
 		case COMMUNITY_NO_EXPSUBCONFED:
-			printf("NO_EXPORT_SUBCONFED");
-			break;
+			return "NO_EXPORT_SUBCONFED";
 		case COMMUNITY_NO_PEER:
-			printf("NO_PEER");
-			break;
+			return "NO_PEER";
 		case COMMUNITY_BLACKHOLE:
-			printf("BLACKHOLE");
-			break;
+			return "BLACKHOLE";
 		default:
-			printf("%hu:%hu", a, v);
 			break;
 		}
-	else
-		printf("%hu:%hu", a, v);
+
+	snprintf(buf, sizeof(buf), "%hu:%hu", a, v);
+	return buf;
 }
 
-static void
-print_ext_community(u_int8_t *data)
+const char *
+fmt_large_community(u_int32_t d1, u_int32_t d2, u_int32_t d3)
 {
+	static char buf[33];
+
+	snprintf(buf, sizeof(buf), "%u:%u:%u", d1, d2, d3);
+	return buf;
+}
+
+const char *
+fmt_ext_community(u_int8_t *data)
+{
+	static char	buf[32];
 	u_int64_t	ext;
 	struct in_addr	ip;
 	u_int32_t	as4, u32;
@@ -1111,179 +905,65 @@ print_ext_community(u_int8_t *data)
 	type = data[0];
 	subtype = data[1];
 
-	printf("%s ", log_ext_subtype(type, subtype));
-
 	switch (type) {
 	case EXT_COMMUNITY_TRANS_TWO_AS:
 		memcpy(&as2, data + 2, sizeof(as2));
 		memcpy(&u32, data + 4, sizeof(u32));
-		printf("%s:%u", log_as(ntohs(as2)), ntohl(u32));
-		break;
+		snprintf(buf, sizeof(buf), "%s %s:%u",
+		    log_ext_subtype(type, subtype),
+		    log_as(ntohs(as2)), ntohl(u32));
+		return buf;
 	case EXT_COMMUNITY_TRANS_IPV4:
 		memcpy(&ip, data + 2, sizeof(ip));
 		memcpy(&u16, data + 6, sizeof(u16));
-		printf("%s:%hu", inet_ntoa(ip), ntohs(u16));
-		break;
+		snprintf(buf, sizeof(buf), "%s %s:%hu",
+		    log_ext_subtype(type, subtype),
+		    inet_ntoa(ip), ntohs(u16));
+		return buf;
 	case EXT_COMMUNITY_TRANS_FOUR_AS:
 		memcpy(&as4, data + 2, sizeof(as4));
 		memcpy(&u16, data + 6, sizeof(u16));
-		printf("%s:%hu", log_as(ntohl(as4)), ntohs(u16));
-		break;
+		snprintf(buf, sizeof(buf), "%s %s:%hu",
+		    log_ext_subtype(type, subtype),
+		    log_as(ntohl(as4)), ntohs(u16));
+		return buf;
 	case EXT_COMMUNITY_TRANS_OPAQUE:
 	case EXT_COMMUNITY_TRANS_EVPN:
 		memcpy(&ext, data, sizeof(ext));
 		ext = be64toh(ext) & 0xffffffffffffLL;
-		printf("0x%llx", (unsigned long long)ext);
-		break;
+		snprintf(buf, sizeof(buf), "%s 0x%llx",
+		    log_ext_subtype(type, subtype), (unsigned long long)ext);
+		return buf;
 	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
 		memcpy(&ext, data, sizeof(ext));
 		ext = be64toh(ext) & 0xffffffffffffLL;
 		switch (ext) {
 		case EXT_COMMUNITY_OVS_VALID:
-			printf("valid ");
-			break;
+			snprintf(buf, sizeof(buf), "%s valid ",
+			    log_ext_subtype(type, subtype));
+			return buf;
 		case EXT_COMMUNITY_OVS_NOTFOUND:
-			printf("not-found ");
-			break;
+			snprintf(buf, sizeof(buf), "%s not-found ",
+			    log_ext_subtype(type, subtype));
+			return buf;
 		case EXT_COMMUNITY_OVS_INVALID:
-			printf("invalid ");
-			break;
+			snprintf(buf, sizeof(buf), "%s invalid ",
+			    log_ext_subtype(type, subtype));
+			return buf;
 		default:
-			printf("0x%llx ", (unsigned long long)ext);
-			break;
+			snprintf(buf, sizeof(buf), "%s 0x%llx ",
+			    log_ext_subtype(type, subtype),
+			    (unsigned long long)ext);
+			return buf;
 		}
 		break;
 	default:
 		memcpy(&ext, data, sizeof(ext));
-		printf("0x%llx", (unsigned long long)be64toh(ext));
+		snprintf(buf, sizeof(buf), "%s 0x%llx",
+		    log_ext_subtype(type, subtype),
+		    (unsigned long long)be64toh(ext));
+		return buf;
 	}
-}
-
-void
-show_communities(u_char *data, size_t len, int flag0)
-{
-	struct community c;
-	size_t	i;
-	u_int64_t ext;
-	u_int8_t type = 0, nt;
-
-	if (len % sizeof(c))
-		return;
-
-	for (i = 0; i < len; i += sizeof(c)) {
-		memcpy(&c, data + i, sizeof(c));
-
-		nt = c.flags;
-		if (type != nt) {
-			if (type != 0)
-				printf("%c", EOL0(flag0));
-			printf("    %s:", print_attr(nt,
-			    ATTR_OPTIONAL | ATTR_TRANSITIVE));
-			type = nt;
-		}
-		printf(" ");
-
-		switch (nt) {
-		case COMMUNITY_TYPE_BASIC:
-			print_community(c.data1, c.data2);
-			break;
-		case COMMUNITY_TYPE_LARGE:
-			printf("%u:%u:%u", c.data1, c.data2, c.data3);
-			break;
-		case COMMUNITY_TYPE_EXT:
-			ext = (u_int64_t)c.data3 << 48;
-			switch (c.data3 >> 8) {
-			case EXT_COMMUNITY_TRANS_TWO_AS:
-			case EXT_COMMUNITY_TRANS_OPAQUE:
-			case EXT_COMMUNITY_TRANS_EVPN:
-			case EXT_COMMUNITY_NON_TRANS_OPAQUE:
-				ext |= ((u_int64_t)c.data1 & 0xffff) << 32;
-				ext |= (u_int64_t)c.data2;
-				break;
-			case EXT_COMMUNITY_TRANS_FOUR_AS:
-			case EXT_COMMUNITY_TRANS_IPV4:
-				ext |= (u_int64_t)c.data1 << 16;
-				ext |= (u_int64_t)c.data2 & 0xffff;
-				break;
-			}
-			ext = htobe64(ext);
-
-			print_ext_community((void *)&ext);
-			break;
-		}
-	}
-
-	printf("%c", EOL0(flag0));
-}
-
-void
-show_community(u_char *data, u_int16_t len)
-{
-	u_int16_t	a, v;
-	u_int16_t	i;
-
-	if (len & 0x3)
-		return;
-
-	for (i = 0; i < len; i += 4) {
-		memcpy(&a, data + i, sizeof(a));
-		memcpy(&v, data + i + 2, sizeof(v));
-		a = ntohs(a);
-		v = ntohs(v);
-		print_community(a, v);
-		if (i + 4 < len)
-			printf(" ");
-	}
-}
-
-void
-show_large_community(u_char *data, u_int16_t len)
-{
-	u_int32_t	a, l1, l2;
-	u_int16_t	i;
-
-	if (len % 12)
-		return;
-
-	for (i = 0; i < len; i += 12) {
-		memcpy(&a, data + i, sizeof(a));
-		memcpy(&l1, data + i + 4, sizeof(l1));
-		memcpy(&l2, data + i + 8, sizeof(l2));
-		a = ntohl(a);
-		l1 = ntohl(l1);
-		l2 = ntohl(l2);
-		printf("%u:%u:%u", a, l1, l2);
-
-		if (i + 12 < len)
-			printf(" ");
-	}
-}
-
-void
-show_ext_community(u_char *data, u_int16_t len)
-{
-	u_int16_t	i;
-
-	if (len & 0x7)
-		return;
-
-	for (i = 0; i < len; i += 8) {
-		print_ext_community(data + i);
-
-		if (i + 8 < len)
-			printf(" ");
-	}
-}
-
-const char *
-fmt_mem(long long num)
-{
-	static char	buf[16];
-
-	if (fmt_scaled(num, buf) == -1)
-		snprintf(buf, sizeof(buf), "%lldB", num);
-
-	return (buf);
 }
 
 void
@@ -1297,73 +977,6 @@ send_filterset(struct imsgbuf *i, struct filter_set_head *set)
 		TAILQ_REMOVE(set, s, entry);
 		free(s);
 	}
-}
-
-const char *
-get_errstr(u_int8_t errcode, u_int8_t subcode)
-{
-	static char	 errbuf[256];
-	const char	*errstr = NULL;
-	const char	*suberr = NULL;
-	int		 uk = 0;
-
-	if (errcode == 0)	/* no error */
-		return NULL;
-
-	if (errcode < sizeof(errnames)/sizeof(char *))
-		errstr = errnames[errcode];
-
-	switch (errcode) {
-	case ERR_HEADER:
-		if (subcode < sizeof(suberr_header_names)/sizeof(char *))
-			suberr = suberr_header_names[subcode];
-		else
-			uk = 1;
-		break;
-	case ERR_OPEN:
-		if (subcode < sizeof(suberr_open_names)/sizeof(char *))
-			suberr = suberr_open_names[subcode];
-		else
-			uk = 1;
-		break;
-	case ERR_UPDATE:
-		if (subcode < sizeof(suberr_update_names)/sizeof(char *))
-			suberr = suberr_update_names[subcode];
-		else
-			uk = 1;
-		break;
-	case ERR_HOLDTIMEREXPIRED:
-		if (subcode != 0)
-			uk = 1;
-		break;
-	case ERR_FSM:
-		if (subcode < sizeof(suberr_fsm_names)/sizeof(char *))
-			suberr = suberr_fsm_names[subcode];
-		else
-			uk = 1;
-		break;
-	case ERR_CEASE:
-		if (subcode < sizeof(suberr_cease_names)/sizeof(char *))
-			suberr = suberr_cease_names[subcode];
-		else
-			uk = 1;
-		break;
-	default:
-		snprintf(errbuf, sizeof(errbuf),
-		    "unknown error code %u subcode %u", errcode, subcode);
-		return (errbuf);
-	}
-
-	if (uk)
-		snprintf(errbuf, sizeof(errbuf),
-		    "%s, unknown subcode %u", errstr, subcode);
-	else if (suberr == NULL)
-		return (errstr);
-	else
-		snprintf(errbuf, sizeof(errbuf),
-		    "%s, %s", errstr, suberr);
-
-	return (errbuf);
 }
 
 void
@@ -1514,8 +1127,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		if (req->flags & F_CTL_DETAIL) {
 			for (j = 0; j < mre->nattrs; j++)
 				show_attr(mre->attrs[j].attr,
-				    mre->attrs[j].attr_len,
-				    req->flags);
+				    mre->attrs[j].attr_len, &res);
 		}
 	}
 }
@@ -1603,7 +1215,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 }
 
 static const char *
-print_time(struct timespec *t)
+fmt_time(struct timespec *t)
 {
 	static char timebuf[32];
 	static struct timespec prevtime;
@@ -1619,7 +1231,7 @@ print_time(struct timespec *t)
 void
 show_mrt_state(struct mrt_bgp_state *ms, void *arg)
 {
-	printf("%s %s[%u] -> ", print_time(&ms->time),
+	printf("%s %s[%u] -> ", fmt_time(&ms->time),
 	    log_addr(&ms->src), ms->src_as);
 	printf("%s[%u]: %s -> %s\n", log_addr(&ms->dst), ms->dst_as,
 	    statenames[ms->old_state], statenames[ms->new_state]);
@@ -1998,7 +1610,7 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 	u_int16_t len;
 	u_int8_t type;
 
-	printf("%s %s[%u] -> ", print_time(&mm->time),
+	printf("%s %s[%u] -> ", fmt_time(&mm->time),
 	    log_addr(&mm->src), mm->src_as);
 	printf("%s[%u]: size %u ", log_addr(&mm->dst), mm->dst_as, mm->msg_len);
 	p = mm->msg;

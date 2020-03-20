@@ -22,6 +22,8 @@ void	show_fib(struct kroute_full *);
 void	show_fib_table(struct ktable *);
 void	show_nexthop(struct ctl_show_nexthop *);
 void	show_interface(struct ctl_show_interface *);
+void	show_attr(u_char *, size_t, struct parse_result *);
+void	show_communities(u_char *, size_t, struct parse_result *);
 void	show_rib(struct ctl_show_rib *, u_char *, size_t,
 	    struct parse_result *);
 void	show_rib_hash(struct rde_hashstats *);
@@ -31,20 +33,18 @@ void	show_result(u_int);
 
 #define EOL0(flag)	((flag & F_CTL_SSV) ? ';' : '\n')
 
-void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t, u_int8_t);
-void		 print_neighbor_capa_mp(struct peer *);
-void		 print_neighbor_capa_restart(struct peer *);
-void		 print_neighbor_msgstats(struct peer *);
-void		 print_flags(u_int8_t, int);
-void		 show_fib_flags(u_int16_t);
-
-const char	*print_ovs(u_int8_t, int);
-const char	*print_origin(u_int8_t, int);
-const char	*print_auth_method(enum auth_method);
-const char	*fmt_mem(long long);
-
+char		*fmt_peer(const char *, const struct bgpd_addr *, int);
 const char	*fmt_timeframe(time_t);
 const char	*fmt_monotime(time_t);
-char		*fmt_peer(const char *, const struct bgpd_addr *, int);
-const char	*get_errstr(u_int8_t, u_int8_t);
+const char	*fmt_fib_flags(u_int16_t);
+const char	*fmt_origin(u_int8_t, int);
+const char	*fmt_flags(u_int8_t, int);
+const char	*fmt_ovs(u_int8_t, int);
+const char	*fmt_auth_method(enum auth_method);
+const char	*fmt_mem(long long);
+const char	*fmt_errstr(u_int8_t, u_int8_t);
+const char	*fmt_attr(u_int8_t, u_int8_t);
+const char	*fmt_community(u_int16_t, u_int16_t);
+const char	*fmt_large_community(u_int32_t, u_int32_t, u_int32_t);
+const char	*fmt_ext_community(u_int8_t *);
 
