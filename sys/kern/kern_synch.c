@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.165 2020/03/20 04:49:17 cheloha Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.166 2020/03/20 17:13:51 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -696,7 +696,7 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 		}
 
 		timespecsub(tsp, &now, tsp);
-		nsecs = TIMESPEC_TO_NSEC(tsp);
+		nsecs = MIN(TIMESPEC_TO_NSEC(tsp), MAXTSLP);
 	}
 
 	if (ident == -1) {
