@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.110 2020/03/20 18:05:22 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.111 2020/03/20 18:11:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -357,7 +357,7 @@ key_bindings_init(void)
 		"bind -n MouseDown3Status display-menu -t= -xW -yS -T '#[align=centre]#{window_index}:#{window_name}' " DEFAULT_WINDOW_MENU,
 
 		/* Mouse button 3 down on pane. */
-		"bind -n MouseDown3Pane if -Ft= '#{mouse_any_flag}' { select-pane -t=; send -M } { display-menu -t= -xM -yM -T '#[align=centre]#{pane_index} (#{pane_id})' " DEFAULT_PANE_MENU " }",
+		"bind -n MouseDown3Pane if -Ft= '#{||:#{mouse_any_flag},#{&&:#{pane_in_mode},#{!=:#{pane_mode},copy-mode}}}' { select-pane -t=; send -M } { display-menu -t= -xM -yM -T '#[align=centre]#{pane_index} (#{pane_id})' " DEFAULT_PANE_MENU " }",
 		"bind -n M-MouseDown3Pane display-menu -t= -xM -yM -T '#[align=centre]#{pane_index} (#{pane_id})' " DEFAULT_PANE_MENU,
 
 		/* Copy mode (emacs) keys. */
