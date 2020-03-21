@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.257 2020/03/20 20:12:39 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.258 2020/03/21 13:19:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1566,12 +1566,12 @@ window_copy_cmd_select_line(struct window_copy_cmd_state *cs)
 	window_copy_cursor_start_of_line(wme);
 	data->selrx = data->cx;
 	data->selry = screen_hsize(data->backing) + data->cy - data->oy;
+	data->endselrx = window_copy_find_length(wme, data->selry);
+	data->endselry = data->selry;
 	window_copy_start_selection(wme);
 	for (; np > 1; np--)
 		window_copy_cursor_down(wme, 0);
 	window_copy_cursor_end_of_line(wme);
-	data->endselrx = data->cx;
-	data->endselry = screen_hsize(data->backing) + data->cy - data->oy;
 
 	return (WINDOW_COPY_CMD_REDRAW);
 }
