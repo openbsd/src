@@ -16,8 +16,20 @@ BEGINTEST
 
 > text
 
+**-hyphen**
+
+> text
+
+**&#45;minus&#45;sign**
+
+> text
+
+**&#92;backslash**
+
+> text
+
 **four**
 
 ENDTEST
 
-OpenBSD - March 13, 2020
+OpenBSD - March 21, 2020

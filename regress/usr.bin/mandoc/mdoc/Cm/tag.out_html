@@ -5,5 +5,11 @@
   <dd>text</dd>
   <dt><a class="permalink" href="#three"><code class="Cm" id="three">three</code></a></dt>
   <dd>text</dd>
+  <dt><a class="permalink" href="#hyphen"><code class="Cm" id="hyphen">-hyphen</code></a></dt>
+  <dd>text</dd>
+  <dt><a class="permalink" href="#minus"><code class="Cm" id="minus">-minus-sign</code></a></dt>
+  <dd>text</dd>
+  <dt><a class="permalink" href="#backslash"><code class="Cm" id="backslash">\backslash</code></a></dt>
+  <dd>text</dd>
 </dl>
 <a class="permalink" href="#four"><code class="Cm" id="four">four</code></a>
