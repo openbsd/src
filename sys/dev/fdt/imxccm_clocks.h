@@ -288,6 +288,125 @@ struct imxccm_mux imx7d_muxs[] = {
 };
 
 /*
+ * i.MX8MM clocks.
+ */
+
+#define IMX8MM_ARM_PLL			0x18
+#define IMX8MM_SYS_PLL1_800M		0x38
+#define IMX8MM_CLK_A53_SRC		0x42
+#define IMX8MM_ARM_PLL_OUT		0x2c
+#define IMX8MM_CLK_A53_CG		0x47
+#define IMX8MM_CLK_A53_DIV		0x4c
+#define IMX8MM_CLK_ENET_AXI		0x52
+#define IMX8MM_CLK_ENET_REF		0x74
+#define IMX8MM_CLK_ENET_TIMER		0x75
+#define IMX8MM_CLK_ENET_PHY_REF		0x76
+#define IMX8MM_CLK_USDHC1		0x79
+#define IMX8MM_CLK_USDHC2		0x7a
+#define IMX8MM_CLK_I2C1			0x7b
+#define IMX8MM_CLK_I2C2			0x7c
+#define IMX8MM_CLK_I2C3			0x7d
+#define IMX8MM_CLK_I2C4			0x7e
+#define IMX8MM_CLK_UART1		0x7f
+#define IMX8MM_CLK_UART2		0x80
+#define IMX8MM_CLK_UART3		0x81
+#define IMX8MM_CLK_UART4		0x82
+#define IMX8MM_CLK_USDHC3		0x91
+#define IMX8MM_CLK_ENET1_ROOT		0xa2
+#define IMX8MM_CLK_I2C1_ROOT		0xa4
+#define IMX8MM_CLK_I2C2_ROOT		0xa5
+#define IMX8MM_CLK_I2C3_ROOT		0xa6
+#define IMX8MM_CLK_I2C4_ROOT		0xa7
+#define IMX8MM_CLK_UART1_ROOT		0xbc
+#define IMX8MM_CLK_UART2_ROOT		0xbd
+#define IMX8MM_CLK_UART3_ROOT		0xbe
+#define IMX8MM_CLK_UART4_ROOT		0xbf
+#define IMX8MM_CLK_USDHC1_ROOT		0xc2
+#define IMX8MM_CLK_USDHC2_ROOT		0xc3
+#define IMX8MM_CLK_USDHC3_ROOT		0xd0
+#define IMX8MM_CLK_TMU_ROOT		0xd1
+#define IMX8MM_CLK_ARM			0xd7
+
+struct imxccm_gate imx8mm_gates[] = {
+	[IMX8MM_CLK_A53_CG] = { 0x8000, 14 },
+	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 14 },
+	[IMX8MM_CLK_ENET_REF] = { 0xa980, 14 },
+	[IMX8MM_CLK_ENET_TIMER] = { 0xaa00, 14 },
+	[IMX8MM_CLK_ENET_PHY_REF] = { 0xaa80, 14 },
+	[IMX8MM_CLK_USDHC1] = { 0xac00, 14 },
+	[IMX8MM_CLK_USDHC2] = { 0xac80, 14 },
+	[IMX8MM_CLK_I2C1] = { 0xad00, 14 },
+	[IMX8MM_CLK_I2C2] = { 0xad80, 14 },
+	[IMX8MM_CLK_I2C3] = { 0xae00, 14 },
+	[IMX8MM_CLK_I2C4] = { 0xae80, 14 },
+	[IMX8MM_CLK_UART1] = { 0xaf00, 14 },
+	[IMX8MM_CLK_UART2] = { 0xaf80, 14 },
+	[IMX8MM_CLK_UART3] = { 0xb000, 14 },
+	[IMX8MM_CLK_UART4] = { 0xb080, 14 },
+	[IMX8MM_CLK_USDHC3] = { 0xbc80, 14 },
+	[IMX8MM_CLK_ENET1_ROOT] = { 0x40a0, 0, IMX8MM_CLK_ENET_AXI },
+	[IMX8MM_CLK_I2C1_ROOT] = { 0x4170, 0, IMX8MM_CLK_I2C1 },
+	[IMX8MM_CLK_I2C2_ROOT] = { 0x4180, 0, IMX8MM_CLK_I2C2 },
+	[IMX8MM_CLK_I2C3_ROOT] = { 0x4190, 0, IMX8MM_CLK_I2C3 },
+	[IMX8MM_CLK_I2C4_ROOT] = { 0x41a0, 0, IMX8MM_CLK_I2C4 },
+	[IMX8MM_CLK_UART1_ROOT] = { 0x4490, 0, IMX8MM_CLK_UART1 },
+	[IMX8MM_CLK_UART2_ROOT] = { 0x44a0, 0, IMX8MM_CLK_UART2 },
+	[IMX8MM_CLK_UART3_ROOT] = { 0x44b0, 0, IMX8MM_CLK_UART3 },
+	[IMX8MM_CLK_UART4_ROOT] = { 0x44c0, 0, IMX8MM_CLK_UART4 },
+	[IMX8MM_CLK_USDHC1_ROOT] = { 0x4510, 0, IMX8MM_CLK_USDHC1 },
+	[IMX8MM_CLK_USDHC2_ROOT] = { 0x4520, 0, IMX8MM_CLK_USDHC2 },
+	[IMX8MM_CLK_USDHC3_ROOT] = { 0x45e0, 0, IMX8MM_CLK_USDHC3 },
+	[IMX8MM_CLK_TMU_ROOT] = { 0x4620, 0 },
+};
+
+struct imxccm_divider imx8mm_divs[] = {
+	[IMX8MM_CLK_A53_DIV] = { 0x8000, 0, 0x7, IMX8MM_CLK_A53_CG },
+	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 0, 0x3f },
+	[IMX8MM_CLK_USDHC1] = { 0xac00, 0, 0x3f },
+	[IMX8MM_CLK_USDHC2] = { 0xac80, 0, 0x3f },
+	[IMX8MM_CLK_I2C1] = { 0xad00, 0, 0x3f },
+	[IMX8MM_CLK_I2C2] = { 0xad80, 0, 0x3f },
+	[IMX8MM_CLK_I2C3] = { 0xae00, 0, 0x3f },
+	[IMX8MM_CLK_I2C4] = { 0xae80, 0, 0x3f },
+	[IMX8MM_CLK_UART1] = { 0xaf00, 0, 0x3f },
+	[IMX8MM_CLK_UART2] = { 0xaf80, 0, 0x3f },
+	[IMX8MM_CLK_UART3] = { 0xb000, 0, 0x3f },
+	[IMX8MM_CLK_UART4] = { 0xb080, 0, 0x3f },
+	[IMX8MM_CLK_USDHC3] = { 0xbc80, 0, 0x3f },
+};
+
+struct imxccm_divider imx8mm_predivs[] = {
+	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 16, 0x7 },
+	[IMX8MM_CLK_USDHC1] = { 0xac00, 16, 0x7 },
+	[IMX8MM_CLK_USDHC2] = { 0xac80, 16, 0x7 },
+	[IMX8MM_CLK_I2C1] = { 0xad00, 16, 0x7 },
+	[IMX8MM_CLK_I2C2] = { 0xad80, 16, 0x7 },
+	[IMX8MM_CLK_I2C3] = { 0xae00, 16, 0x7 },
+	[IMX8MM_CLK_I2C4] = { 0xae80, 16, 0x7 },
+	[IMX8MM_CLK_UART1] = { 0xaf00, 16, 0x7 },
+	[IMX8MM_CLK_UART2] = { 0xaf80, 16, 0x7 },
+	[IMX8MM_CLK_UART3] = { 0xb000, 16, 0x7 },
+	[IMX8MM_CLK_UART4] = { 0xb080, 16, 0x7 },
+	[IMX8MM_CLK_USDHC3] = { 0xbc80, 16, 0x7 },
+};
+
+struct imxccm_mux imx8mm_muxs[] = {
+	[IMX8MM_CLK_A53_SRC] = { 0x8000, 24, 0x7 },
+	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 24, 0x7 },
+	[IMX8MM_CLK_USDHC1] = { 0xac00, 24, 0x7 },
+	[IMX8MM_CLK_USDHC2] = { 0xac80, 24, 0x7 },
+	[IMX8MM_CLK_I2C1] = { 0xad00, 24, 0x7 },
+	[IMX8MM_CLK_I2C2] = { 0xad80, 24, 0x7 },
+	[IMX8MM_CLK_I2C3] = { 0xae00, 24, 0x7 },
+	[IMX8MM_CLK_I2C4] = { 0xae80, 24, 0x7 },
+	[IMX8MM_CLK_UART1] = { 0xaf00, 24, 0x7 },
+	[IMX8MM_CLK_UART2] = { 0xaf80, 24, 0x7 },
+	[IMX8MM_CLK_UART3] = { 0xb000, 24, 0x7 },
+	[IMX8MM_CLK_UART4] = { 0xb080, 24, 0x7 },
+	[IMX8MM_CLK_USDHC3] = { 0xbc80, 24, 0x7 },
+};
+
+/*
  * i.MX8MQ clocks.
  */
 
