@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.102 2020/03/19 13:46:10 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.103 2020/03/21 13:51:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -758,15 +758,15 @@ grid_string_cells_bg(const struct grid_cell *gc, int *values)
 		case 8:
 			values[n++] = 49;
 			break;
-		case 100:
-		case 101:
-		case 102:
-		case 103:
-		case 104:
-		case 105:
-		case 106:
-		case 107:
-			values[n++] = gc->bg - 10;
+		case 90:
+		case 91:
+		case 92:
+		case 93:
+		case 94:
+		case 95:
+		case 96:
+		case 97:
+			values[n++] = gc->bg + 10;
 			break;
 		}
 	}
