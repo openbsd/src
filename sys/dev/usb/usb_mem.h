@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.h,v 1.16 2020/03/19 14:18:38 patrick Exp $ */
+/*	$OpenBSD: usb_mem.h,v 1.17 2020/03/21 12:08:31 patrick Exp $ */
 /*	$NetBSD: usb_mem.h,v 1.20 2003/05/03 18:11:42 wiz Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -51,6 +51,7 @@ struct usb_dma_block {
 #define KERNADDR(dma, o) \
 	((void *)((char *)((dma)->block->kaddr + (dma)->offs) + (o)))
 
-usbd_status	usb_allocmem(struct usbd_bus *,size_t,size_t, struct usb_dma *);
+usbd_status	usb_allocmem(struct usbd_bus *, size_t, size_t, int,
+		    struct usb_dma *);
 void		usb_freemem(struct usbd_bus *, struct usb_dma *);
 void		usb_syncmem(struct usb_dma *, bus_addr_t, bus_size_t, int);

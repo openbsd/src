@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.159 2020/03/19 14:18:38 patrick Exp $ */
+/*	$OpenBSD: ohci.c,v 1.160 2020/03/21 12:08:31 patrick Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -394,9 +394,8 @@ ohci_alloc_sed(struct ohci_softc *sc)
 	s = splusb();
 	if (sc->sc_freeeds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_sed: allocating chunk\n"));
-		dma.flags |= USB_DMA_COHERENT;
 		err = usb_allocmem(&sc->sc_bus, OHCI_SED_SIZE * OHCI_SED_CHUNK,
-			  OHCI_ED_ALIGN, &dma);
+			  OHCI_ED_ALIGN, USB_DMA_COHERENT, &dma);
 		if (err)
 			goto out;
 		for (i = 0; i < OHCI_SED_CHUNK; i++) {
@@ -440,9 +439,8 @@ ohci_alloc_std(struct ohci_softc *sc)
 	s = splusb();
 	if (sc->sc_freetds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_std: allocating chunk\n"));
-		dma.flags |= USB_DMA_COHERENT;
 		err = usb_allocmem(&sc->sc_bus, OHCI_STD_SIZE * OHCI_STD_CHUNK,
-			  OHCI_TD_ALIGN, &dma);
+			  OHCI_TD_ALIGN, USB_DMA_COHERENT, &dma);
 		if (err)
 			goto out;
 		for (i = 0; i < OHCI_STD_CHUNK; i++) {
@@ -599,9 +597,8 @@ ohci_alloc_sitd(struct ohci_softc *sc)
 
 	if (sc->sc_freeitds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_sitd: allocating chunk\n"));
-		dma.flags |= USB_DMA_COHERENT;
 		err = usb_allocmem(&sc->sc_bus, OHCI_SITD_SIZE * OHCI_SITD_CHUNK,
-			  OHCI_ITD_ALIGN, &dma);
+			  OHCI_ITD_ALIGN, USB_DMA_COHERENT, &dma);
 		if (err)
 			return (NULL);
 		s = splusb();
@@ -731,9 +728,8 @@ ohci_init(struct ohci_softc *sc)
 
 	/* XXX determine alignment by R/W */
 	/* Allocate the HCCA area. */
-	sc->sc_hccadma.flags |= USB_DMA_COHERENT;
-	err = usb_allocmem(&sc->sc_bus, OHCI_HCCA_SIZE,
-			 OHCI_HCCA_ALIGN, &sc->sc_hccadma);
+	err = usb_allocmem(&sc->sc_bus, OHCI_HCCA_SIZE, OHCI_HCCA_ALIGN,
+	    USB_DMA_COHERENT, &sc->sc_hccadma);
 	if (err)
 		return (err);
 	sc->sc_hcca = KERNADDR(&sc->sc_hccadma, 0);
@@ -1935,10 +1931,10 @@ ohci_open(struct usbd_pipe *pipe)
 		switch (xfertype) {
 		case UE_CONTROL:
 			pipe->methods = &ohci_device_ctrl_methods;
-			opipe->u.ctl.reqdma.flags |= USB_DMA_COHERENT;
 			err = usb_allocmem(&sc->sc_bus,
 				  sizeof(usb_device_request_t),
-				  0, &opipe->u.ctl.reqdma);
+				  0, USB_DMA_COHERENT,
+				  &opipe->u.ctl.reqdma);
 			if (err)
 				goto bad;
 			s = splusb();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.33 2020/03/19 14:18:38 patrick Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.34 2020/03/21 12:08:31 patrick Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -184,7 +184,8 @@ usb_block_freemem(struct usb_dma_block *p)
 }
 
 usbd_status
-usb_allocmem(struct usbd_bus *bus, size_t size, size_t align, struct usb_dma *p)
+usb_allocmem(struct usbd_bus *bus, size_t size, size_t align, int flags,
+    struct usb_dma *p)
 {
 	bus_dma_tag_t tag = bus->dmatag;
 	usbd_status err;
@@ -194,7 +195,7 @@ usb_allocmem(struct usbd_bus *bus, size_t size, size_t align, struct usb_dma *p)
 	int i;
 	int s;
 
-	coherent = !!(p->flags & USB_DMA_COHERENT);
+	coherent = !!(flags & USB_DMA_COHERENT);
 
 	/* If the request is large then just use a full block. */
 	if (size > USB_MEM_SMALL || align > USB_MEM_SMALL) {
