@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.62 2020/03/19 13:43:18 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.63 2020/03/21 13:15:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -160,6 +160,7 @@ cmd_run_shell_callback(struct job *job)
 {
 	struct cmd_run_shell_data	*cdata = job_get_data(job);
 	struct bufferevent		*event = job_get_event(job);
+	struct cmdq_item		*item = cdata->item;
 	char				*cmd = cdata->cmd, *msg = NULL, *line;
 	size_t				 size;
 	int				 retcode, status;
@@ -189,13 +190,17 @@ cmd_run_shell_callback(struct job *job)
 	} else if (WIFSIGNALED(status)) {
 		retcode = WTERMSIG(status);
 		xasprintf(&msg, "'%s' terminated by signal %d", cmd, retcode);
+		retcode += 128;
 	}
 	if (msg != NULL)
 		cmd_run_shell_print(job, msg);
 	free(msg);
 
-	if (cdata->item != NULL)
-		cmdq_continue(cdata->item);
+	if (item != NULL) {
+		if (item->client != NULL && item->client->session == NULL)
+			item->client->retval = retcode;
+		cmdq_continue(item);
+	}
 }
 
 static void
