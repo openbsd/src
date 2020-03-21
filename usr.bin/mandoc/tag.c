@@ -1,4 +1,4 @@
-/* $OpenBSD: tag.c,v 1.29 2020/03/13 16:14:14 schwarze Exp $ */
+/* $OpenBSD: tag.c,v 1.30 2020/03/21 00:17:01 schwarze Exp $ */
 /*
  * Copyright (c) 2015,2016,2018,2019,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -87,8 +87,24 @@ tag_put(const char *s, int prio, struct roff_node *n)
 		if (n->child == NULL || n->child->type != ROFFT_TEXT)
 			return;
 		s = n->child->string;
-		if (s[0] == '\\' && (s[1] == '&' || s[1] == 'e'))
-			s += 2;
+		switch (s[0]) {
+		case '-':
+			s++;
+			break;
+		case '\\':
+			switch (s[1]) {
+			case '&':
+			case '-':
+			case 'e':
+				s += 2;
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
 	}
 
 	/*
