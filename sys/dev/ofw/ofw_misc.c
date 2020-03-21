@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.15 2020/03/16 21:51:26 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.16 2020/03/21 17:37:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -568,8 +568,7 @@ endpoint_get_cookie(struct endpoint *ep)
 void
 device_port_activate(uint32_t phandle, void *arg)
 {
-	struct device_ports *ports;
-	struct device_port *dp;
+	struct device_port *dp = NULL;
 	struct endpoint *ep, *rep;
 	int error;
 
@@ -582,7 +581,6 @@ device_port_activate(uint32_t phandle, void *arg)
 	if (dp == NULL)
 		return;
 
-	ports = dp->dp_ports;
 	LIST_FOREACH(ep, &dp->dp_endpoints, ep_plist) {
 		rep = endpoint_remote(ep);
 		if (rep == NULL)
