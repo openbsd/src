@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2019/10/29 02:55:51 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.45 2020/03/21 14:54:06 otto Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -31,6 +31,7 @@
 #include <netinet/in.h>
 #include <libsa.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/ufs2.h>
 #ifdef notdef
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/fat.h>
@@ -44,7 +45,7 @@
 #include "pxeboot.h"
 #include "pxe_net.h"
 
-const char version[] = "3.35";
+const char version[] = "3.36";
 int	debug = 1;
 
 void (*sa_cleanup)(void) = pxe_shutdown;
@@ -71,13 +72,15 @@ int nibprobes = nitems(probe_list);
 
 /* This next list must match file_system[]. */
 char *fs_name[] = {
-	NULL, "tftp", "nfs"
+	NULL, NULL, "tftp", "nfs"
 };
 int nfsname = nitems(fs_name);
 
 struct fs_ops file_system[] = {
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir,  ufs_fchmod },
+	{ ufs2_open,   ufs2_close,   ufs2_read,   ufs2_write,   ufs2_seek,
+	  ufs2_stat,   ufs2_readdir, ufs2_fchmod },
 	{ tftp_open,   tftp_close,   tftp_read,   tftp_write,   tftp_seek,
 	  tftp_stat,   tftp_readdir   },
 	{ nfs_open,    nfs_close,    nfs_read,    nfs_write,    nfs_seek,
