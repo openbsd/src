@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.175 2020/02/13 15:11:32 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.176 2020/03/21 20:42:23 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1499,9 +1499,9 @@ mfi_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
 			ldp.mlp_diskcache_policy = MR_LD_DISK_CACHE_DISABLE;
 	}
 
-	if ((rv = mfi_mgmt(sc, MR_DCMD_LD_SET_PROPERTIES, MFI_DATA_OUT,
-	    sizeof(ldp), &ldp, &mbox)) != 0)
-		goto done;
+	rv = mfi_mgmt(sc, MR_DCMD_LD_SET_PROPERTIES, MFI_DATA_OUT, sizeof(ldp),
+	    &ldp, &mbox);
+
 done:
 	return (rv);
 }
@@ -1990,10 +1990,8 @@ mfi_ioctl_blink(struct mfi_softc *sc, struct bioc_blink *bb)
 	}
 
 
-	if (mfi_mgmt(sc, cmd, MFI_DATA_NONE, 0, NULL, &mbox))
-		goto done;
+	rv = mfi_mgmt(sc, cmd, MFI_DATA_NONE, 0, NULL, &mbox);
 
-	rv = 0;
 done:
 	free(pd, M_DEVBUF, sizeof *pd);
 	return (rv);
@@ -2060,12 +2058,8 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 		goto done;
 	}
 
+	rv = mfi_mgmt(sc, MR_DCMD_PD_SET_STATE, MFI_DATA_NONE, 0, NULL, &mbox);
 
-	if ((rv = mfi_mgmt(sc, MR_DCMD_PD_SET_STATE, MFI_DATA_NONE, 0, NULL,
-	    &mbox)))
-		goto done;
-
-	rv = 0;
 done:
 	free(pd, M_DEVBUF, sizeof *pd);
 	free(info, M_DEVBUF, sizeof *info);

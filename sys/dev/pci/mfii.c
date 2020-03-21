@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.67 2020/02/05 16:29:30 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.68 2020/03/21 20:42:23 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -3289,10 +3289,9 @@ mfii_ioctl_blink(struct mfii_softc *sc, struct bioc_blink *bb)
 	}
 
 
-	if (mfii_mgmt(sc, cmd, &mbox, NULL, 0, 0))
-		goto done;
+	if (mfii_mgmt(sc, cmd, &mbox, NULL, 0, 0) == 0)
+		rv = 0;
 
-	rv = 0;
 done:
 	free(pd, M_DEVBUF, sizeof *pd);
 	return (rv);
