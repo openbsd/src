@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.389 2020/03/10 21:35:40 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.390 2020/03/21 20:12:37 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -313,7 +313,7 @@ rt_hash(struct rtentry *rt, struct sockaddr *dst, uint32_t *src)
 
 		sin = satosin(dst);
 		a += sin->sin_addr.s_addr;
-		b += (src != NULL) ? src[0] : 0;
+		b += src[0];
 		mix(a, b, c);
 		break;
 	    }
@@ -328,19 +328,19 @@ rt_hash(struct rtentry *rt, struct sockaddr *dst, uint32_t *src)
 		sin6 = satosin6(dst);
 		a += sin6->sin6_addr.s6_addr32[0];
 		b += sin6->sin6_addr.s6_addr32[2];
-		c += (src != NULL) ? src[0] : 0;
+		c += src[0];
 		mix(a, b, c);
 		a += sin6->sin6_addr.s6_addr32[1];
 		b += sin6->sin6_addr.s6_addr32[3];
-		c += (src != NULL) ? src[1] : 0;
+		c += src[1];
 		mix(a, b, c);
 		a += sin6->sin6_addr.s6_addr32[2];
 		b += sin6->sin6_addr.s6_addr32[1];
-		c += (src != NULL) ? src[2] : 0;
+		c += src[2];
 		mix(a, b, c);
 		a += sin6->sin6_addr.s6_addr32[3];
 		b += sin6->sin6_addr.s6_addr32[0];
-		c += (src != NULL) ? src[3] : 0;
+		c += src[3];
 		mix(a, b, c);
 		break;
 	    }
