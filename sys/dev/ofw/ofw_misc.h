@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.11 2020/03/16 21:51:26 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.12 2020/03/22 14:56:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -171,7 +171,7 @@ struct endpoint {
 };
 
 void	device_ports_register(struct device_ports *, enum endpoint_type);
-void	device_port_activate(uint32_t, void *);
+int	device_port_activate(uint32_t, void *);
 struct endpoint *endpoint_byreg(struct device_ports *, uint32_t, uint32_t);
 struct endpoint *endpoint_remote(struct endpoint *);
 int	endpoint_activate(struct endpoint *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.17 2020/03/21 22:45:18 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.18 2020/03/22 14:56:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -565,11 +565,12 @@ endpoint_get_cookie(struct endpoint *ep)
 	return ports->dp_ep_get_cookie(ports->dp_cookie, ep);
 }
 
-void
+int
 device_port_activate(uint32_t phandle, void *arg)
 {
 	struct device_port *dp = NULL;
 	struct endpoint *ep, *rep;
+	int count;
 	int error;
 
 	LIST_FOREACH(ep, &endpoints, ep_list) {
@@ -579,8 +580,9 @@ device_port_activate(uint32_t phandle, void *arg)
 		}
 	}
 	if (dp == NULL)
-		return;
+		return ENXIO;
 
+	count = 0;
 	LIST_FOREACH(ep, &dp->dp_endpoints, ep_plist) {
 		rep = endpoint_remote(ep);
 		if (rep == NULL)
@@ -592,5 +594,8 @@ device_port_activate(uint32_t phandle, void *arg)
 		error = endpoint_activate(rep, arg);
 		if (error)
 			continue;
+		count++;
 	}
+
+	return count ? 0 : ENXIO;
 }
