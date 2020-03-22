@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.34 2019/11/29 16:16:19 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.35 2020/03/22 14:59:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -253,7 +253,7 @@ efi_device_path_depth(EFI_DEVICE_PATH *dp, int dptype)
 			return (i);
 	}
 
-	return (-1);
+	return (i);
 }
 
 int
