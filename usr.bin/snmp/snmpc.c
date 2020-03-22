@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.21 2020/01/25 17:17:31 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.22 2020/03/22 08:59:22 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 	int ch;
 	size_t i;
 
-	if (pledge("stdio inet dns", NULL) == -1)
+	if (pledge("stdio inet dns unix", NULL) == -1)
 		err(1, "pledge");
 
 	if (argc <= 1)
@@ -1192,7 +1192,6 @@ snmpc_parseagent(char *agent, char *defaultport)
 			hints.ai_socktype = SOCK_STREAM;
 		} else if (strcasecmp(specifier, "unix") == 0) {
 			hints.ai_family = AF_UNIX;
-			hints.ai_socktype = SOCK_STREAM;
 			hints.ai_addr = (struct sockaddr *)&saddr;
 			hints.ai_addrlen = sizeof(saddr);
 			saddr.sun_len = sizeof(saddr);
@@ -1202,60 +1201,67 @@ snmpc_parseagent(char *agent, char *defaultport)
 				errx(1, "Hostname path too long");
 			ai = &hints;
 		} else {
-			port = hostname;
+			*--hostname = ':';
 			hostname = specifier;
-			specifier = NULL;
-			hints.ai_family = AF_INET;
-			hints.ai_socktype = SOCK_DGRAM;
-		}
-		if (port == NULL) {
-			if (hints.ai_family == AF_INET) {
-				if ((port = strchr(hostname, ':')) != NULL)
-					*port++ = '\0';
-			} else if (hints.ai_family == AF_INET6) {
-				if (hostname[0] == '[') {
-					hostname++;
-					if ((port = strchr(hostname, ']')) == NULL)
-						errx(1, "invalid agent");
-					*port++ = '\0';
-					if (port[0] == ':')
-						*port++ = '\0';
-					else
-						port = NULL;
-				} else {
-					if ((port = strrchr(hostname, ':')) == NULL)
-						errx(1, "invalid agent");
-					*port++ = '\0';
-				}
-			}
 		}
 	} else {
 		hostname = specifier;
-		hints.ai_family = AF_INET;
-		hints.ai_socktype = SOCK_DGRAM;
+	}
+
+	if (hints.ai_family == AF_INET) {
+		if ((port = strchr(hostname, ':')) != NULL)
+			*port++ = '\0';
+	} else if (hints.ai_family == AF_INET6 || hints.ai_family == 0) {
+		if (hostname[0] == '[') {
+			hints.ai_family = AF_INET6;
+			hostname++;
+			if ((port = strchr(hostname, ']')) == NULL)
+				errx(1, "invalid agent");
+			*port++ = '\0';
+			if (port[0] == ':')
+				*port++ = '\0';
+			else if (port[0] == '\0')
+				port = NULL;
+			else
+				errx(1, "invalid agent");
+		} else {
+			if ((port = strrchr(hostname, ':')) != NULL)
+				*port++ = '\0';
+		}
 	}
 
 	if (hints.ai_family != AF_UNIX) {
+		if (hints.ai_socktype == 0)
+			hints.ai_socktype = SOCK_DGRAM;
 		if (port == NULL)
 			port = defaultport;
 		error = getaddrinfo(hostname, port, &hints, &ai0);
-		if (error)
-			errx(1, "%s", gai_strerror(error));
+		if (error) {
+			if (error != EAI_NODATA && port != defaultport)
+				errx(1, "%s", gai_strerror(error));
+			*--port = ':';
+			error = getaddrinfo(hostname, defaultport, &hints,
+			    &ai0);
+			if (error)
+				errx(1, "%s", gai_strerror(error));
+		}
 		s = -1;
 		for (ai = ai0; ai != NULL; ai = ai->ai_next) {
 			if ((s = socket(ai->ai_family, ai->ai_socktype,
-			    ai->ai_protocol)) == -1)
-				continue;
-			break;
+			    ai->ai_protocol)) != -1 &&
+			    connect(s, (struct sockaddr *)ai->ai_addr,
+			    ai->ai_addrlen) != -1)
+				break;
 		}
-	} else
-		s = socket(hints.ai_family, hints.ai_socktype,
-		    hints.ai_protocol);
+	} else {
+		s = socket(AF_UNIX, SOCK_STREAM, 0);
+		if (connect(s, (struct sockaddr *)ai->ai_addr,
+		    ai->ai_addrlen) == -1)
+			err(1, "Can't connect to %s", agent);
+	}
 	if (s == -1)
-		err(1, "socket");
+		err(1, "Can't connect to agent %s", agent);
 
-	if (connect(s, (struct sockaddr *)ai->ai_addr, ai->ai_addrlen) == -1)
-		err(1, "Can't connect to %s", agent);
 
 	if (ai0 != NULL)
 		freeaddrinfo(ai0);
