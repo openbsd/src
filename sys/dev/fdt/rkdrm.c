@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.4 2020/03/22 14:56:24 kettenis Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.5 2020/03/22 15:53:30 bmercer Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -312,6 +312,14 @@ rkdrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct wsdisplay_fbinfo *wdf;
 
 	switch (cmd) {
+	case WSDISPLAYIO_GETPARAM:
+		if (ws_get_param)
+			return ws_get_param(dp);
+		return -1;
+	case WSDISPLAYIO_SETPARAM:
+		if (ws_set_param)
+			return ws_set_param(dp);
+		return -1;
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_RKDRM;
 		return 0;
