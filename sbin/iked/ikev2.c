@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.198 2020/03/20 18:11:39 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.199 2020/03/22 15:59:05 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -45,6 +45,11 @@
 #include "ikev2.h"
 #include "eap.h"
 #include "dh.h"
+
+void	 ikev2_info(struct iked *, int);
+void	 ikev2_info_sa(struct iked *, int, const char *, struct iked_sa *);
+void	 ikev2_info_csa(struct iked *, int, const char *, struct iked_childsa *);
+void	 ikev2_info_flow(struct iked *, int, const char *, struct iked_flow *);
 
 void	 ikev2_run(struct privsep *, struct privsep_proc *, void *);
 int	 ikev2_dispatch_parent(int, struct privsep_proc *, struct imsg *);
@@ -157,6 +162,7 @@ int	 ikev2_resp_informational(struct iked *, struct iked_sa *,
 	    struct iked_message *);
 
 void	ikev2_ctl_reset_id(struct iked *, struct imsg *, unsigned int);
+void	ikev2_ctl_show_sa(struct iked *, struct imsg *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
@@ -388,25 +394,14 @@ ikev2_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_RESET_ID:
 		ikev2_ctl_reset_id(env, imsg, imsg->hdr.type);
 		break;
+	case IMSG_CTL_SHOW_SA:
+		ikev2_ctl_show_sa(env, imsg);
+		break;
 	default:
 		return (-1);
 	}
 
 	return (0);
-}
-
-const char *
-ikev2_ikesa_info(uint64_t spi, const char *msg)
-{
-	static char buf[1024];
-	const char *spistr;
-
-	spistr = print_spi(spi, 8);
-	if (msg)
-		snprintf(buf, sizeof(buf), "spi=%s: %s", spistr, msg);
-	else
-		snprintf(buf, sizeof(buf), "spi=%s: ", spistr);
-	return buf;
 }
 
 void
@@ -441,6 +436,11 @@ ikev2_ctl_reset_id(struct iked *env, struct imsg *imsg, unsigned int type)
 	free(reset_id);
 }
 
+void
+ikev2_ctl_show_sa(struct iked *env, struct imsg *imsg)
+{
+	ikev2_info(env, 0);
+}
 
 struct iked_sa *
 ikev2_getimsgdata(struct iked *env, struct imsg *imsg, struct iked_sahdr *sh,
@@ -6290,4 +6290,157 @@ ikev2_update_sa_addresses(struct iked *env, struct iked_sa *sa)
 	memcpy(&sa->sa_peer_loaded, &sa->sa_peer, sizeof(sa->sa_peer_loaded));
 
 	return 0;
+}
+
+void
+ikev2_info_sa(struct iked *env, int dolog, const char *msg, struct iked_sa *sa)
+{
+	char		 idstr[IKED_ID_SIZE];
+	char		*buf;
+	int		 buflen;
+
+	if (ikev2_print_id(IKESA_DSTID(sa), idstr, sizeof(idstr)) == -1)
+		bzero(idstr, sizeof(idstr));
+
+	buflen = asprintf(&buf,
+	    "%s: %p rspi %s ispi %s %s->%s<%s>[%s] %s %c%s%s nexti %p pol %p\n",
+	    msg, sa,
+	    print_spi(sa->sa_hdr.sh_rspi, 8),
+	    print_spi(sa->sa_hdr.sh_ispi, 8),
+	    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0),
+	    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0),
+	    idstr,
+	    sa->sa_addrpool ?
+	    print_host((struct sockaddr *)&sa->sa_addrpool->addr, NULL, 0) : "",
+	    print_map(sa->sa_state, ikev2_state_map),
+	    sa->sa_hdr.sh_initiator ? 'i' : 'r',
+	    sa->sa_natt ? " natt" : "",
+	    sa->sa_udpencap ? " udpecap" : "",
+	    sa->sa_nexti, sa->sa_policy);
+
+	if (buflen == -1 || buf == NULL)
+		return;
+
+	if (dolog) {
+		if (buflen > 1)
+			buf[buflen - 1] = '\0';
+		log_debug("%s", buf);
+	} else
+		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_SA,
+		    buf, buflen + 1);
+	free(buf);
+}
+
+void
+ikev2_info_csa(struct iked *env, int dolog, const char *msg, struct iked_childsa *csa)
+{
+	char		*buf;
+	int		 buflen;
+
+	buflen = asprintf(&buf,
+	    "%s: %p %s %s %s %s -> %s (%s%s%s%s) B=%p P=%p @%p\n", msg, csa,
+	    print_map(csa->csa_saproto, ikev2_saproto_map),
+	    print_spi(csa->csa_spi.spi, csa->csa_spi.spi_size),
+	    csa->csa_dir == IPSP_DIRECTION_IN ? "in" : "out",
+	    print_host((struct sockaddr *)&csa->csa_local->addr, NULL, 0),
+	    print_host((struct sockaddr *)&csa->csa_peer->addr, NULL, 0),
+	    csa->csa_loaded ? "L" : "",
+	    csa->csa_rekey ? "R" : "",
+	    csa->csa_allocated ? "A" : "",
+	    csa->csa_persistent ? "P" : "",
+	    csa->csa_bundled,
+	    csa->csa_peersa,
+	    csa->csa_ikesa);
+
+	if (buflen == -1 || buf == NULL)
+		return;
+
+	if (dolog) {
+		if (buflen > 1)
+			buf[buflen - 1] = '\0';
+		log_debug("%s", buf);
+	} else
+		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_SA,
+		    buf, buflen + 1);
+	free(buf);
+}
+
+void
+ikev2_info_flow(struct iked *env, int dolog, const char *msg, struct iked_flow *flow)
+{
+	char		*buf;
+	int		buflen;
+
+	buflen = asprintf(&buf,
+	    "%s: %p %s %s %s/%d -> %s/%d [%u] (%s) @%p\n", msg, flow,
+	    print_map(flow->flow_saproto, ikev2_saproto_map),
+	    flow->flow_dir == IPSP_DIRECTION_IN ? "in" : "out",
+	    print_host((struct sockaddr *)&flow->flow_src.addr, NULL, 0),
+	    flow->flow_src.addr_mask,
+	    print_host((struct sockaddr *)&flow->flow_dst.addr, NULL, 0),
+	    flow->flow_dst.addr_mask,
+	    flow->flow_ipproto,
+	    flow->flow_loaded ? "L" : "",
+	    flow->flow_ikesa);
+
+	if (buflen == -1 || buf == NULL)
+		return;
+
+	if (dolog) {
+		if (buflen > 1)
+			buf[buflen - 1] = '\0';
+		log_debug("%s", buf);
+	} else
+		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_SA,
+		    buf, buflen + 1);
+	free(buf);
+}
+
+void
+ikev2_info(struct iked *env, int dolog)
+{
+	struct iked_sa			*sa;
+	struct iked_childsa		*csa, *ipcomp;
+	struct iked_flow		*flow;
+
+	log_debug("%s: called", __func__);
+
+	RB_FOREACH(sa, iked_sas, &env->sc_sas) {
+		ikev2_info_sa(env, dolog, "iked_sas", sa);
+		TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
+			ikev2_info_csa(env, dolog, "  sa_childsas", csa);
+			if ((ipcomp = csa->csa_bundled) != NULL)
+				ikev2_info_csa(env, dolog, "             ",
+				    ipcomp);
+		}
+		TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
+			ikev2_info_flow(env, dolog, "  sa_flows", flow);
+		}
+	}
+	RB_FOREACH(csa, iked_activesas, &env->sc_activesas) {
+		ikev2_info_csa(env, dolog, "iked_activesas", csa);
+		if ((ipcomp = csa->csa_bundled) != NULL)
+			ikev2_info_csa(env, dolog, "              ", ipcomp);
+	}
+	RB_FOREACH(flow, iked_flows, &env->sc_activeflows) {
+		ikev2_info_flow(env, dolog, "iked_flows", flow);
+	}
+	if (dolog)
+		return;
+	/* Send empty reply to indicate end of information. */
+	proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_SA, NULL, 0);
+}
+
+const char *
+ikev2_ikesa_info(uint64_t spi, const char *msg)
+{
+	static char buf[1024];
+	const char *spistr;
+
+	spistr = print_spi(spi, 8);
+	if (msg)
+		snprintf(buf, sizeof(buf), "spi=%s: %s", spistr, msg);
+	else
+		snprintf(buf, sizeof(buf), "spi=%s: ", spistr);
+	return buf;
 }

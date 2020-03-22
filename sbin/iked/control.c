@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.27 2020/03/18 22:12:43 tobhe Exp $	*/
+/*	$OpenBSD: control.c,v 1.28 2020/03/22 15:59:05 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -48,10 +48,11 @@ void	 control_dispatch_imsg(int, short, void *);
 void	 control_dispatch_parent(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
 void	 control_run(struct privsep *, struct privsep_proc *, void *);
+int	 control_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT, NULL },
-	{ "ikev2",	PROC_IKEV2, NULL }
+	{ "ikev2",	PROC_IKEV2, control_dispatch_ikev2 },
 };
 
 pid_t
@@ -308,6 +309,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			break;
 		case IMSG_CTL_RESET_ID:
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
+		case IMSG_CTL_SHOW_SA:
+			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
+			c->flags |= CTL_CONN_NOTIFY;
+			break;
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",
@@ -330,4 +335,18 @@ control_imsg_forward(struct imsg *imsg)
 			imsg_compose_event(&c->iev, imsg->hdr.type,
 			    0, imsg->hdr.pid, -1, imsg->data,
 			    imsg->hdr.len - IMSG_HEADER_SIZE);
+}
+
+int
+control_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_SA:
+		control_imsg_forward(imsg);
+		return (0);
+	default:
+		break;
+	}
+
+	return (-1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.18 2020/03/18 22:12:43 tobhe Exp $	*/
+/*	$OpenBSD: parser.c,v 1.19 2020/03/22 15:59:05 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -213,6 +213,7 @@ static const struct token t_ca_key_path[] = {
 
 static const struct token t_show[] = {
 	{ KEYWORD,	"ca",		SHOW_CA,	t_show_ca },
+	{ KEYWORD,	"sa",		SHOW_SA,	NULL },
 	{ ENDTOKEN,	"",		NONE,		NULL }
 };
 
