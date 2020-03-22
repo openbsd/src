@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.100 2020/01/08 16:27:40 visa Exp $ */
+/* $OpenBSD: wskbd.c,v 1.101 2020/03/22 07:59:59 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -435,7 +435,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_keyrepeat_data = wskbd_default_keyrepeat_data;
 
 	if (ap->console) {
-		KASSERT(wskbd_console_initted); 
+		KASSERT(wskbd_console_initted);
 		KASSERT(wskbd_console_device == NULL);
 
 		wskbd_console_device = sc;
@@ -489,7 +489,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-void    
+void
 wskbd_cnattach(const struct wskbd_consops *consops, void *conscookie,
     const struct wskbd_mapdata *mapdata)
 {
@@ -638,7 +638,7 @@ wskbd_detach(struct device  *self, int flags)
 void
 wskbd_input(struct device *dev, u_int type, int value)
 {
-	struct wskbd_softc *sc = (struct wskbd_softc *)dev; 
+	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
 #if NWSDISPLAY > 0
 	int num;
 #endif
@@ -948,7 +948,7 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 	struct wseventvar *evar;
 	int error;
 
-	/*      
+	/*
 	 * Try the generic ioctls that the wskbd interface supports.
 	 */
 	switch (cmd) {
@@ -1272,7 +1272,7 @@ wskbd_set_display(struct device *dv, struct device *displaydv)
 	int error;
 
 	DPRINTF(("%s: %s odisp=%p disp=%p cons=%d\n", __func__,
-		 dv->dv_xname, sc->sc_displaydv, displaydv, 
+		 dv->dv_xname, sc->sc_displaydv, displaydv,
 		 sc->sc_isconsole));
 
 	if (sc->sc_isconsole)
@@ -1347,7 +1347,7 @@ wskbd_cngetc(dev_t dev)
 		if (num-- > 0) {
 			ks = wskbd_console_data.t_symbols[pos++];
 			if (KS_GROUP(ks) == KS_GROUP_Ascii)
-				return (KS_VALUE(ks));	
+				return (KS_VALUE(ks));
 		} else {
 			(*wskbd_console_data.t_consops->getc)
 				(wskbd_console_data.t_consaccesscookie,

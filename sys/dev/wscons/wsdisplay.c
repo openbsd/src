@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.135 2019/10/13 19:49:21 fcambus Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.136 2020/03/22 07:59:59 anton Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2204,7 +2204,7 @@ wsdisplay_suspend_device(struct device *dev)
 	struct wsdisplay_softc	*sc = (struct wsdisplay_softc *)dev;
 	struct wsscreen		*scr;
 	int			 active, idx, ret = 0, s;
-	
+
 	if ((active = wsdisplay_getactivescreen(sc)) == WSDISPLAY_NULLSCREEN)
 		return;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.36 2017/08/10 09:12:32 fcambus Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.37 2020/03/22 07:59:59 anton Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -1190,7 +1190,7 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 			processed++;
  			continue;
  		}
- 
+
 		if (edp->state == VT100_EMUL_STATE_NORMAL || kernel) {
 			rc = wsemul_vt100_output_normal(edp, instate, kernel);
 			if (rc != 0)

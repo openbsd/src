@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.21 2015/09/05 08:26:43 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.22 2020/03/22 07:59:59 anton Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -221,7 +221,7 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 	long attr, bkgdattr;
 	u_char c;
 	int rc = 0;
- 
+
 	if (instate->inchar >= 0x100)
 		c = 0x00;	/* cause the switch below to end in default: */
 	else
