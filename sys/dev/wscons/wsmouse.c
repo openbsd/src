@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.59 2020/03/22 07:59:59 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.60 2020/03/22 16:39:51 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -770,7 +770,7 @@ wsmouse_set(struct device *sc, enum wsmouseval type, int value, int aux)
 		wsmouse_position(sc, value, input->motion.pos.y);
 		return;
 	case WSMOUSE_REL_Y:
-		value += input->motion.pos.y;
+		value += input->motion.pos.y; /* fall through */
 	case WSMOUSE_ABS_Y:
 		wsmouse_position(sc, input->motion.pos.x, value);
 		return;
@@ -796,7 +796,7 @@ wsmouse_set(struct device *sc, enum wsmouseval type, int value, int aux)
 		wsmouse_mtstate(sc, aux, value, mts->pos.y, mts->pressure);
 		return;
 	case WSMOUSE_MT_REL_Y:
-		value += mts->pos.y;
+		value += mts->pos.y; /* fall through */
 	case WSMOUSE_MT_ABS_Y:
 		wsmouse_mtstate(sc, aux, mts->pos.x, value, mts->pressure);
 		return;
