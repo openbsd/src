@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.38 2020/03/19 14:01:57 anton Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.39 2020/03/22 20:23:36 anton Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -515,8 +515,6 @@ unveil_add_vnode(struct proc *p, struct vnode *vp)
 void
 unveil_add_traversed_vnodes(struct proc *p, struct nameidata *ndp)
 {
-	struct unveil *uv;
-
 	if (ndp->ni_tvpsize) {
 		size_t i;
 
@@ -525,7 +523,7 @@ unveil_add_traversed_vnodes(struct proc *p, struct nameidata *ndp)
 			if (unveil_lookup(vp, p->p_p, NULL) == NULL) {
 				vref(vp);
 				vp->v_uvcount++;
-				uv = unveil_add_vnode(p, vp);
+				unveil_add_vnode(p, vp);
 			}
 		}
 	}
