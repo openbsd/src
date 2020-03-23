@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.10 2020/03/23 15:34:45 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.11 2020/03/23 15:36:30 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -609,6 +609,7 @@ builtin_nsecs(struct dt_evt *dtev)
 }
 
 #include <machine/vmparam.h>
+#include <machine/param.h>
 #define	INKERNEL(va)	((va) >= VM_MIN_KERNEL_ADDRESS)
 
 const char *
