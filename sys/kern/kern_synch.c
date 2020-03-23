@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.166 2020/03/20 17:13:51 cheloha Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.167 2020/03/23 15:42:10 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -480,7 +480,7 @@ sleep_setup_signal(struct sleep_state *sls)
 	 * stopped, p->p_wchan will be 0 upon return from CURSIG.
 	 */
 	atomic_setbits_int(&p->p_flag, P_SINTR);
-	if (p->p_p->ps_single != NULL || (sls->sls_sig = CURSIG(p)) != 0) {
+	if ((p->p_flag & P_SUSPSINGLE) || (sls->sls_sig = CURSIG(p)) != 0) {
 		unsleep(p);
 		p->p_stat = SONPROC;
 		sls->sls_do_sleep = 0;
