@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-usbpcap.c,v 1.4 2020/02/24 13:12:14 jasper Exp $ */
+/*	$OpenBSD: print-usbpcap.c,v 1.5 2020/03/23 09:38:26 patrick Exp $ */
 
 /*
  * Copyright (c) 2018 Martin Pieuchot <mpi@openbsd.org>
@@ -28,7 +28,7 @@
 #endif
 
 const char *usbpcap_xfer_type[] = {"isoc", "intr", "ctrl", "bulk"};
-const char *usbpcap_control_stages[] = {"setup", "data", "setatus"};
+const char *usbpcap_control_stages[] = {"setup", "data", "status"};
 const char *usbpcap_request_codes[] = {
 	"GET_STATUS", "CLEAR_FEATURE", "?", "SET_FEATURE", "?", "SET_ADDRESS",
 	"GET_DESCRIPTOR", "SET_DESCRIPTOR", "GET_CONFIG", "SET_CONFIG",
