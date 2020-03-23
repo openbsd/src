@@ -1,6 +1,9 @@
-Missing features:
+Missing feature:
 
-- automatically print variables on exit
+- Option "-c command" to run `command' and use its PID as filter.
+
+Missing language features:
+
 - if/else
 - scratch variable ($name)
 - `args', tracepoint arguments support (requires kernel work)
