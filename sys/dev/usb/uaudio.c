@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.149 2020/03/07 15:18:48 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.150 2020/03/23 14:53:51 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1057,7 +1057,13 @@ uaudio_clock_id(struct uaudio_softc *sc)
 int
 uaudio_getrates(struct uaudio_softc *sc, struct uaudio_params *p)
 {
-	return uaudio_alt_getrates(sc, p->palt ? p->palt : p->ralt);
+	switch (sc->version) {
+	case UAUDIO_V1:
+		return p->v1_rates;
+	case UAUDIO_V2:
+		return uaudio_alt_getrates(sc, p->palt ? p->palt : p->ralt);
+	}
+	return 0;
 }
 
 /*
