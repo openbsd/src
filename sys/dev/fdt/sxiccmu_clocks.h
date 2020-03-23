@@ -746,6 +746,10 @@ struct sxiccmu_ccu_bit sun9i_a80_mmc_resets[] = {
 #define H3_RST_BUS_I2C0		46
 #define H3_RST_BUS_I2C1		47
 #define H3_RST_BUS_I2C2		48
+#define H3_RST_BUS_UART0	49
+#define H3_RST_BUS_UART1	50
+#define H3_RST_BUS_UART2	51
+#define H3_RST_BUS_UART3	52
 
 struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 	[H3_RST_USB_PHY0] =  { 0x00cc, 0 },
@@ -769,6 +773,10 @@ struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 	[H3_RST_BUS_I2C0]  = { 0x02d8, 0 },
 	[H3_RST_BUS_I2C1]  = { 0x02d8, 1 },
 	[H3_RST_BUS_I2C2]  = { 0x02d8, 2 },
+	[H3_RST_BUS_UART0] = { 0x02d8, 16 },
+	[H3_RST_BUS_UART1] = { 0x02d8, 17 },
+	[H3_RST_BUS_UART2] = { 0x02d8, 18 },
+	[H3_RST_BUS_UART3] = { 0x02d8, 19 },
 };
 
 #define H3_R_RST_APB0_RSB	2
