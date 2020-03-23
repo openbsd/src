@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.347 2020/03/08 11:43:43 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.348 2020/03/23 15:02:51 mpi Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -233,6 +233,7 @@ void em_defer_attach(struct device*);
 int  em_detach(struct device *, int);
 int  em_activate(struct device *, int);
 int  em_intr(void *);
+int  em_allocate_legacy(struct em_softc *);
 void em_start(struct ifqueue *);
 int  em_ioctl(struct ifnet *, u_long, caddr_t);
 void em_watchdog(struct ifnet *);
@@ -290,6 +291,13 @@ void em_flush_tx_ring(struct em_queue *);
 void em_flush_rx_ring(struct em_queue *);
 void em_flush_desc_rings(struct em_softc *);
 
+/* MSIX/Multiqueue functions */
+int  em_allocate_msix(struct em_softc *);
+int  em_setup_queues_msix(struct em_softc *);
+int  em_queue_intr_msix(void *);
+int  em_link_intr_msix(void *);
+void em_enable_queue_intr_msix(struct em_queue *);
+
 /*********************************************************************
  *  OpenBSD Device Interface Entry Points
  *********************************************************************/
@@ -304,6 +312,7 @@ struct cfdriver em_cd = {
 };
 
 static int em_smart_pwr_down = FALSE;
+int em_enable_msix = 0;
 
 /*********************************************************************
  *  Device identification routine
@@ -918,6 +927,14 @@ em_init(void *arg)
 		return;
 	}
 	em_initialize_receive_unit(sc);
+
+	if (sc->msix) {
+		if (em_setup_queues_msix(sc)) {
+			printf("%s: Can't setup msix queues\n", DEVNAME(sc));
+			splx(s);
+			return;
+		}
+	}
 
 	/* Program promiscuous mode and multicast filters. */
 	em_iff(sc);
@@ -1617,10 +1634,7 @@ int
 em_allocate_pci_resources(struct em_softc *sc)
 {
 	int		val, rid;
-	pci_intr_handle_t	ih;
-	const char		*intrstr = NULL;
 	struct pci_attach_args *pa = &sc->osdep.em_pa;
-	pci_chipset_tag_t	pc = pa->pa_pc;
 	struct em_queue	       *que = NULL;
 
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_MMBA);
@@ -1691,6 +1705,9 @@ em_allocate_pci_resources(struct em_softc *sc)
 		}
         }
 
+	sc->osdep.dev = (struct device *)sc;
+	sc->hw.back = &sc->osdep;
+
 	/* Only one queue for the moment. */
 	que = malloc(sizeof(struct em_queue), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (que == NULL) {
@@ -1703,29 +1720,10 @@ em_allocate_pci_resources(struct em_softc *sc)
 
 	sc->queues = que;
 	sc->num_queues = 1;
+	sc->msix = 0;
 	sc->legacy_irq = 0;
-	if (pci_intr_map_msi(pa, &ih)) {
-		if (pci_intr_map(pa, &ih)) {
-			printf(": couldn't map interrupt\n");
-			return (ENXIO);
-		}
-		sc->legacy_irq = 1;
-	}
-
-	sc->osdep.dev = (struct device *)sc;
-	sc->hw.back = &sc->osdep;
-
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
-	    em_intr, sc, DEVNAME(sc));
-	if (sc->sc_intrhand == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+	if (em_allocate_msix(sc) && em_allocate_legacy(sc))
 		return (ENXIO);
-	}
-	printf(": %s", intrstr);
 
 	/*
 	 * the ICP_xxxx device has multiple, duplicate register sets for
@@ -1784,6 +1782,15 @@ em_free_pci_resources(struct em_softc *sc)
 		que->tx.sc_tx_desc_ring = NULL;
 		em_dma_free(sc, &que->tx.sc_tx_dma);
 	}
+	if (que->tag)
+		pci_intr_disestablish(pc, que->tag);
+	que->tag = NULL;
+	que->eims = 0;
+	que->me = 0;
+	que->sc = NULL;
+	sc->legacy_irq = 0;
+	sc->msix_linkvec = 0;
+	sc->msix_queuesmask = 0;
 	if (sc->queues)
 		free(sc->queues, M_DEVBUF,
 		    sc->num_queues * sizeof(struct em_queue));
@@ -1971,6 +1978,7 @@ em_setup_interface(struct em_softc *sc)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+	em_enable_intr(sc);
 }
 
 int
@@ -3017,7 +3025,16 @@ em_enable_hw_vlans(struct em_softc *sc)
 void
 em_enable_intr(struct em_softc *sc)
 {
-	E1000_WRITE_REG(&sc->hw, IMS, (IMS_ENABLE_MASK));
+	uint32_t mask;
+
+	if (sc->msix) {
+		mask = sc->msix_queuesmask | sc->msix_linkmask;
+		E1000_WRITE_REG(&sc->hw, EIAC, mask);
+		E1000_WRITE_REG(&sc->hw, EIAM, mask);
+		E1000_WRITE_REG(&sc->hw, EIMS, mask);
+		E1000_WRITE_REG(&sc->hw, IMS, E1000_IMS_LSC);
+	} else
+		E1000_WRITE_REG(&sc->hw, IMS, (IMS_ENABLE_MASK));
 }
 
 void
@@ -3031,8 +3048,10 @@ em_disable_intr(struct em_softc *sc)
 	 * For this to work correctly the Sequence error interrupt had
 	 * to be enabled all the time.
 	 */
-
-	if (sc->hw.mac_type == em_82542_rev2_0)
+	if (sc->msix) {
+		E1000_WRITE_REG(&sc->hw, EIMC, ~0);
+		E1000_WRITE_REG(&sc->hw, EIAC, 0);
+	} else if (sc->hw.mac_type == em_82542_rev2_0)
 		E1000_WRITE_REG(&sc->hw, IMC, (0xffffffff & ~E1000_IMC_RXSEQ));
 	else
 		E1000_WRITE_REG(&sc->hw, IMC, 0xffffffff);
@@ -3506,6 +3525,264 @@ em_print_hw_stats(struct em_softc *sc)
 }
 #endif
 #endif /* !SMALL_KERNEL */
+
+int
+em_allocate_legacy(struct em_softc *sc)
+{
+	pci_intr_handle_t	 ih;
+	const char		*intrstr = NULL;
+	struct pci_attach_args	*pa = &sc->osdep.em_pa;
+	pci_chipset_tag_t	 pc = pa->pa_pc;
+
+	if (pci_intr_map_msi(pa, &ih)) {
+		if (pci_intr_map(pa, &ih)) {
+			printf(": couldn't map interrupt\n");
+			return (ENXIO);
+		}
+		sc->legacy_irq = 1;
+	}
+
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
+	    em_intr, sc, DEVNAME(sc));
+	if (sc->sc_intrhand == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return (ENXIO);
+	}
+	printf(": %s", intrstr);
+
+	return (0);
+}
+
+int
+em_allocate_msix(struct em_softc *sc)
+{
+	pci_intr_handle_t	 ih;
+	const char		*intrstr = NULL;
+	struct pci_attach_args	*pa = &sc->osdep.em_pa;
+	pci_chipset_tag_t	 pc = pa->pa_pc;
+	struct em_queue		*que = sc->queues; /* Use only first queue. */
+	int			 vec;
+
+	if (!em_enable_msix)
+		return (ENODEV);
+
+	switch (sc->hw.mac_type) {
+	case em_82576:
+	case em_82580:
+	case em_i350:
+	case em_i210:
+		break;
+	default:
+		return (ENODEV);
+	}
+
+	vec = 0;
+	if (pci_intr_map_msix(pa, vec, &ih))
+		return (ENODEV);
+	sc->msix = 1;
+
+	que->me = vec;
+	que->eims = 1 << vec;
+	snprintf(que->name, sizeof(que->name), "%s:%d", DEVNAME(sc), vec);
+
+	intrstr = pci_intr_string(pc, ih);
+	que->tag = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
+	    em_queue_intr_msix, que, que->name);
+	if (que->tag == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return (ENXIO);
+	}
+
+	/* Setup linkvector, use last queue vector + 1 */
+	vec++;
+	sc->msix_linkvec = vec;
+	if (pci_intr_map_msix(pa, sc->msix_linkvec, &ih)) {
+		printf(": couldn't map link vector\n");
+		return (ENXIO);
+	}
+
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
+	    em_link_intr_msix, sc, DEVNAME(sc));
+	if (sc->sc_intrhand == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return (ENXIO);
+	}
+	printf(", %s, %d queue%s", intrstr, vec, (vec > 1) ? "s" : "");
+
+	return (0);
+}
+
+/*
+ * Interrupt for a specific queue, (not link interrupts). The EICR bit which
+ * maps to the EIMS bit expresses both RX and TX, therefore we can't
+ * distringuish if this is a RX completion of TX completion and must do both.
+ * The bits in EICR are autocleared and we _cannot_ read EICR.
+ */
+int
+em_queue_intr_msix(void *vque)
+{
+	struct em_queue *que = vque;
+	struct em_softc *sc = que->sc;
+	struct ifnet   *ifp = &sc->sc_ac.ac_if;
+
+	if (ifp->if_flags & IFF_RUNNING) {
+		em_txeof(que);
+		if (em_rxeof(que))
+			em_rxrefill(que);
+	}
+
+	em_enable_queue_intr_msix(que);
+
+	return (1);
+}
+
+int
+em_link_intr_msix(void *arg)
+{
+	struct em_softc *sc = arg;
+	uint32_t icr;
+
+	icr = E1000_READ_REG(&sc->hw, ICR);
+
+	/* Link status change */
+	if (icr & E1000_ICR_LSC) {
+		KERNEL_LOCK();
+		sc->hw.get_link_status = 1;
+		em_check_for_link(&sc->hw);
+		em_update_link_status(sc);
+		KERNEL_UNLOCK();
+	}
+
+	/* Re-arm unconditionally */
+	E1000_WRITE_REG(&sc->hw, IMS, E1000_ICR_LSC);
+	E1000_WRITE_REG(&sc->hw, EIMS, sc->msix_linkmask);
+
+	return (1);
+}
+
+/*
+ * Maps queues into msix interrupt vectors.
+ */
+int
+em_setup_queues_msix(struct em_softc *sc)
+{
+	struct em_queue *que = sc->queues; /* Use only first queue. */
+	uint32_t ivar, newitr, index;
+
+	KASSERT(sc->msix);
+
+	/* First turn on RSS capability */
+	if (sc->hw.mac_type != em_82575)
+		E1000_WRITE_REG(&sc->hw, GPIE,
+		    E1000_GPIE_MSIX_MODE | E1000_GPIE_EIAME |
+		    E1000_GPIE_PBA | E1000_GPIE_NSICR);
+
+	/* Turn on MSIX */
+	switch (sc->hw.mac_type) {
+	case em_82580:
+	case em_i350:
+	case em_i210:
+		/* RX entries */
+		/*
+		 * Note, this maps Queues into MSIX vectors, it works fine.
+		 * The funky calculation of offsets and checking if que->me is
+		 * odd is due to the weird register distribution, the datasheet
+		 * explains it well.
+		 */
+		index = que->me >> 1;
+		ivar = E1000_READ_REG_ARRAY(&sc->hw, IVAR0, index);
+		if (que->me & 1) {
+			ivar &= 0xFF00FFFF;
+			ivar |= (que->me | E1000_IVAR_VALID) << 16;
+		} else {
+			ivar &= 0xFFFFFF00;
+			ivar |= que->me | E1000_IVAR_VALID;
+		}
+		E1000_WRITE_REG_ARRAY(&sc->hw, IVAR0, index, ivar);
+
+		/* TX entries */
+		index = que->me >> 1;
+		ivar = E1000_READ_REG_ARRAY(&sc->hw, IVAR0, index);
+		if (que->me & 1) {
+			ivar &= 0x00FFFFFF;
+			ivar |= (que->me | E1000_IVAR_VALID) << 24;
+		} else {
+			ivar &= 0xFFFF00FF;
+			ivar |= (que->me | E1000_IVAR_VALID) << 8;
+		}
+		E1000_WRITE_REG_ARRAY(&sc->hw, IVAR0, index, ivar);
+		sc->msix_queuesmask |= que->eims;
+
+		/* And for the link interrupt */
+		ivar = (sc->msix_linkvec | E1000_IVAR_VALID) << 8;
+		sc->msix_linkmask = 1 << sc->msix_linkvec;
+		E1000_WRITE_REG(&sc->hw, IVAR_MISC, ivar);
+		break;
+	case em_82576:
+		/* RX entries */
+		index = que->me & 0x7; /* Each IVAR has two entries */
+		ivar = E1000_READ_REG_ARRAY(&sc->hw, IVAR0, index);
+		if (que->me < 8) {
+			ivar &= 0xFFFFFF00;
+			ivar |= que->me | E1000_IVAR_VALID;
+		} else {
+			ivar &= 0xFF00FFFF;
+			ivar |= (que->me | E1000_IVAR_VALID) << 16;
+		}
+		E1000_WRITE_REG_ARRAY(&sc->hw, IVAR0, index, ivar);
+		sc->msix_queuesmask |= que->eims;
+		/* TX entries */
+		index = que->me & 0x7; /* Each IVAR has two entries */
+		ivar = E1000_READ_REG_ARRAY(&sc->hw, IVAR0, index);
+		if (que->me < 8) {
+			ivar &= 0xFFFF00FF;
+			ivar |= (que->me | E1000_IVAR_VALID) << 8;
+		} else {
+			ivar &= 0x00FFFFFF;
+			ivar |= (que->me | E1000_IVAR_VALID) << 24;
+		}
+		E1000_WRITE_REG_ARRAY(&sc->hw, IVAR0, index, ivar);
+		sc->msix_queuesmask |= que->eims;
+
+		/* And for the link interrupt */
+		ivar = (sc->msix_linkvec | E1000_IVAR_VALID) << 8;
+		sc->msix_linkmask = 1 << sc->msix_linkvec;
+		E1000_WRITE_REG(&sc->hw, IVAR_MISC, ivar);
+		break;
+	default:
+		panic("unsupported mac");
+		break;
+	}
+
+	/* Set the starting interrupt rate */
+	newitr = (4000000 / MAX_INTS_PER_SEC) & 0x7FFC;
+
+	if (sc->hw.mac_type == em_82575)
+		newitr |= newitr << 16;
+	else
+		newitr |= E1000_EITR_CNT_IGNR;
+
+	E1000_WRITE_REG(&sc->hw, EITR(que->me), newitr);
+
+	return (0);
+}
+
+void
+em_enable_queue_intr_msix(struct em_queue *que)
+{
+	E1000_WRITE_REG(&que->sc->hw, EIMS, que->eims);
+}
 
 int
 em_allocate_desc_rings(struct em_softc *sc)

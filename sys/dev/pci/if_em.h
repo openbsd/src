@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.75 2020/02/20 09:32:49 mpi Exp $ */
+/* $OpenBSD: if_em.h,v 1.76 2020/03/23 15:02:51 mpi Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -358,7 +358,9 @@ struct em_softc;
 struct em_queue {
 	struct em_softc		*sc;
 	uint32_t		 me;	/* queue index, also msix vector */
-
+	uint32_t		 eims;	/* msix only */
+	void			*tag;	/* NULL in legacy, check sc_intrhand */
+	char			 name[8];
 	struct em_tx		 tx;
 	struct em_rx		 rx;
 
@@ -433,6 +435,10 @@ struct em_softc {
 	boolean_t	pcix_82544;
 	struct em_hw_stats stats;
 
+	int			 msix;
+	uint32_t		 msix_linkvec;
+	uint32_t		 msix_linkmask;
+	uint32_t		 msix_queuesmask;
 	int			 num_queues;
 	struct em_queue		*queues;
 };

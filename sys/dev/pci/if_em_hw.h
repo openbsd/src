@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.81 2020/03/08 11:43:43 mpi Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.82 2020/03/23 15:02:51 mpi Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -2032,6 +2032,11 @@ struct em_hw {
 #define E1000_RXDCTL_WTHRESH 0x003F0000 /* RXDCTL Writeback Threshold */
 #define E1000_RXDCTL_THRESH_UNIT_DESC 0x1000000
 #define E1000_RXDCTL_QUEUE_ENABLE 0x2000000
+
+#define E1000_EITR_ITR_INT_MASK	0x0000FFFF
+/* E1000_EITR_CNT_IGNR is only for 82576 and newer */
+#define E1000_EITR_CNT_IGNR	0x80000000 /* Don't reset counters on write */
+#define E1000_EITR_INTERVAL	0x00007FFC
 
 /* Transmit Descriptor Control */
 #define E1000_TXDCTL_PTHRESH 0x000000FF /* TXDCTL Prefetch Threshold */
