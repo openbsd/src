@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.150 2020/03/23 14:53:51 bluhm Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.151 2020/03/23 17:10:02 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2859,6 +2859,10 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 
 	/* max spf can't exceed the device usb packet size */
 	spf_max = (a->maxpkt / bpa) * UAUDIO_SPF_DIV;
+	if (s->spf > spf_max) {
+		printf("%s: samples per frame too large\n", DEVNAME(sc));
+		return EIO;
+	}
 	if (s->spf_max > spf_max)
 		s->spf_max = spf_max;
 
