@@ -64,6 +64,15 @@
 /* Whether the C compiler accepts the "weak" attribute */
 #define HAVE_ATTR_WEAK 1
 
+/* If we have be64toh */
+#define HAVE_BE64TOH 1
+
+/* Define to 1 if you have the <bsd/stdlib.h> header file. */
+/* #undef HAVE_BSD_STDLIB_H */
+
+/* Define to 1 if you have the <bsd/string.h> header file. */
+/* #undef HAVE_BSD_STRING_H */
+
 /* Define to 1 if you have the `chown' function. */
 #define HAVE_CHOWN 1
 
@@ -285,6 +294,9 @@
 /* If you have HMAC_Update */
 #define HAVE_HMAC_UPDATE 1
 
+/* If we have htobe64 */
+#define HAVE_HTOBE64 1
+
 /* Define to 1 if you have the `inet_aton' function. */
 #define HAVE_INET_ATON 1
 
@@ -311,6 +323,9 @@
 
 /* Define to 1 if you have the `kill' function. */
 #define HAVE_KILL 1
+
+/* Use portable libbsd functions */
+/* #undef HAVE_LIBBSD */
 
 /* Define to 1 if you have the <libkern/OSByteOrder.h> header file. */
 /* #undef HAVE_LIBKERN_OSBYTEORDER_H */
@@ -677,7 +692,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.9.6"
+#define PACKAGE_STRING "unbound 1.10.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -686,7 +701,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.9.6"
+#define PACKAGE_VERSION "1.10.0"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -708,7 +723,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,9,6,0
+#define RSRC_PACKAGE_VERSION 1,10,0,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -768,7 +783,7 @@
 /* #undef USE_DNSTAP */
 
 /* Define this to enable DSA support. */
-#define USE_DSA 1
+/* #undef USE_DSA */
 
 /* Define this to enable ECDSA support. */
 #define USE_ECDSA 1
@@ -1230,6 +1245,11 @@ char *strptime(const char *s, const char *format, struct tm *tm);
 
 #if !HAVE_DECL_REALLOCARRAY
 void *reallocarray(void *ptr, size_t nmemb, size_t size);
+#endif
+
+#ifdef HAVE_LIBBSD
+#include <bsd/string.h>
+#include <bsd/stdlib.h>
 #endif
 
 #ifdef HAVE_LIBRESSL
