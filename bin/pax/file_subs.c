@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.54 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.55 2020/03/23 20:04:19 espie Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ file_creat(ARCHD *arcn)
 		    file_mode)) >= 0)
 			break;
 		oerrno = errno;
-		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
+		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid, 0) < 0) {
 			syswarn(1, oerrno, "Unable to create %s", arcn->name);
 			return(-1);
 		}
@@ -316,7 +316,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		if (linkat(AT_FDCWD, to, AT_FDCWD, from, 0) == 0)
 			break;
 		oerrno = errno;
-		if (!nodirs && chk_path(from, to_sb->st_uid, to_sb->st_gid) == 0)
+		if (!nodirs && chk_path(from, to_sb->st_uid, to_sb->st_gid, ign) == 0)
 			continue;
 		if (!ign) {
 			syswarn(1, oerrno, "Could not link to %s from %s", to,
@@ -458,7 +458,7 @@ badlink:
 		if (++pass <= 1)
 			continue;
 
-		if (nodirs || chk_path(nm,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
+		if (nodirs || chk_path(nm,arcn->sb.st_uid,arcn->sb.st_gid, 0) < 0) {
 			syswarn(1, oerrno, "Could not create: %s", nm);
 			return(-1);
 		}
@@ -590,7 +590,7 @@ unlnk_exist(char *name, int type)
  */
 
 int
-chk_path(char *name, uid_t st_uid, gid_t st_gid)
+chk_path(char *name, uid_t st_uid, gid_t st_gid, int ign)
 {
 	char *spt = name;
 	char *next;
@@ -643,6 +643,8 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 		 * needed directory and continue on
 		 */
 		if (mkdir(name, S_IRWXU | S_IRWXG | S_IRWXO) == -1) {
+			if (!ign)
+				syswarn(1, errno, "Unable to mkdir %s", name); 
 			*spt = '/';
 			retval = -1;
 			break;

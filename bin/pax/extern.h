@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.59 2018/09/13 12:33:43 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.60 2020/03/23 20:04:19 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ int cross_lnk(ARCHD *);
 int chk_same(ARCHD *);
 int node_creat(ARCHD *);
 int unlnk_exist(char *, int);
-int chk_path(char *, uid_t, gid_t);
+int chk_path(char *, uid_t, gid_t, int);
 void set_ftime(const char *, const struct timespec *,
     const struct timespec *, int);
 void fset_ftime(const char *, int, const struct timespec *,
