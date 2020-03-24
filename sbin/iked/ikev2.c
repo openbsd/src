@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.200 2020/03/24 18:50:18 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.201 2020/03/24 18:57:25 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2525,11 +2525,8 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 	if ((sa = msg->msg_sa) == NULL)
 		return (-1);
 
-	if (msg->msg_flags & IKED_MSG_FLAGS_CHILD_SA_NOT_FOUND) {
+	if (msg->msg_flags & IKED_MSG_FLAGS_CHILD_SA_NOT_FOUND)
 		sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
-		ibuf_release(sa->sa_simult);
-		sa->sa_simult = NULL;
-	}
 
 	if ((msg->msg_flags & IKED_MSG_FLAGS_FRAGMENTATION) && env->sc_frag) {
 		log_debug("%s: fragmentation enabled", __func__);
@@ -3283,6 +3280,8 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 		return (-1);
 	}
 
+	ibuf_release(sa->sa_simult);
+	sa->sa_simult = NULL;
 	sa->sa_rekeyspi = 0;	/* clear rekey spi */
 	initiator = sa->sa_hdr.sh_initiator ? 1 : 0;
 
@@ -3746,8 +3745,6 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 
 done:
 	sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
-	ibuf_release(sa->sa_simult);
-	sa->sa_simult = NULL;
 
 	if (ret)
 		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
