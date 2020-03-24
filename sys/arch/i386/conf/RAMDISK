@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.196 2020/03/20 16:12:07 otto Exp $
+#	$OpenBSD: RAMDISK,v 1.197 2020/03/24 02:48:45 deraadt Exp $
 
 machine		i386
 maxusers	4
@@ -115,7 +115,7 @@ fxp*		at pci?			# EtherExpress 10/100B ethernet cards
 ne*		at pci?			# NE2000-compat ethernet cards
 ne*		at pcmcia?		# PCMCIA based NE2000 cards
 rl*		at pci?			# Realtek 81[23]9 ethernet
-dc*		at pci?			# 21143, "tulip" clone ethernet
+#dc*		at pci?			# 21143, "tulip" clone ethernet
 em*		at pci?			# Intel Pro/1000 ethernet
 re*		at pci?			# Realtek 8169/8169S/8110S
 #bge*		at pci?			# Broadcom BCM570x (aka Tigon3)
