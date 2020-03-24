@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.34 2015/02/07 16:15:01 bentley Exp $
+	$OpenBSD: na.phone,v 1.35 2020/03/24 17:34:06 deraadt Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -237,6 +237,8 @@
 402:Blair:Nebraska:NE
 402:Lincoln:Nebraska:NE
 402:Omaha:Nebraska:NE
+587::Alberta:AB
+825::Alberta:AB
 403:Banff:Alberta:AB
 403:Calgary:Alberta:AB
 403:Canmore:Alberta:AB
