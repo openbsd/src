@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.62 2020/03/24 08:05:52 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.63 2020/03/24 08:11:59 anton Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -332,11 +332,8 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 
 	error = wsmouse_do_open(sc, evar);
-	if (error) {
-		DPRINTF(("%s: %s open failed\n", __func__,
-			 sc->sc_base.me_dv.dv_xname));
+	if (error)
 		wsevent_fini(evar);
-	}
 	return (error);
 }
 

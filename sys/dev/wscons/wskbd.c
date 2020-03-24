@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.102 2020/03/24 07:53:24 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.103 2020/03/24 08:11:59 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -825,11 +825,8 @@ wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 
 	error = wskbd_do_open(sc, evar);
-	if (error) {
-		DPRINTF(("%s: %s open failed\n", __func__,
-			 sc->sc_base.me_dv.dv_xname));
+	if (error)
 		wsevent_fini(evar);
-	}
 	return (error);
 }
 
