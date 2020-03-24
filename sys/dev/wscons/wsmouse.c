@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.61 2020/03/24 07:53:24 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.62 2020/03/24 08:05:52 anton Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -151,9 +151,9 @@ int	wsmouse_mux_open(struct wsevsrc *, struct wseventvar *);
 int	wsmouse_mux_close(struct wsevsrc *);
 #endif
 
-int	wsmousedoioctl(struct device *, u_long, caddr_t, int,
+int	wmouse_do_ioctl(struct device *, u_long, caddr_t, int,
 			    struct proc *);
-int	wsmousedoopen(struct wsmouse_softc *, struct wseventvar *);
+int	wsmouse_do_open(struct wsmouse_softc *, struct wseventvar *);
 
 struct cfdriver wsmouse_cd = {
 	NULL, "wsmouse", DV_TTY
@@ -169,7 +169,7 @@ struct wssrcops wsmouse_srcops = {
 	.type		= WSMUX_MOUSE,
 	.dopen		= wsmouse_mux_open,
 	.dclose		= wsmouse_mux_close,
-	.dioctl		= wsmousedoioctl,
+	.dioctl		= wmouse_do_ioctl,
 	.ddispioctl	= NULL,
 	.dsetdisplay	= NULL,
 };
@@ -331,7 +331,7 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (wsevent_init(evar))
 		return (EBUSY);
 
-	error = wsmousedoopen(sc, evar);
+	error = wsmouse_do_open(sc, evar);
 	if (error) {
 		DPRINTF(("%s: %s open failed\n", __func__,
 			 sc->sc_base.me_dv.dv_xname));
@@ -374,7 +374,7 @@ wsmouseclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-wsmousedoopen(struct wsmouse_softc *sc, struct wseventvar *evp)
+wsmouse_do_open(struct wsmouse_softc *sc, struct wseventvar *evp)
 {
 	int error;
 
@@ -420,13 +420,13 @@ wsmouseread(dev_t dev, struct uio *uio, int flags)
 int
 wsmouseioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	return (wsmousedoioctl(wsmouse_cd.cd_devs[minor(dev)],
+	return (wmouse_do_ioctl(wsmouse_cd.cd_devs[minor(dev)],
 	    cmd, data, flag, p));
 }
 
 /* A wrapper around the ioctl() workhorse to make reference counting easy. */
 int
-wsmousedoioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
+wmouse_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)dv;
@@ -563,7 +563,7 @@ wsmouse_mux_open(struct wsevsrc *me, struct wseventvar *evp)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)me;
 
-	return wsmousedoopen(sc, evp);
+	return (wsmouse_do_open(sc, evp));
 }
 
 int
