@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.199 2020/03/22 15:59:05 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.200 2020/03/24 18:50:18 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -700,6 +700,8 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 			/* restore */
 			msg->msg_policy = sa->sa_policy = old;
 		}
+		if (ikev2_handle_certreq(env, msg) != 0)
+			return (-1);
 	}
 
 	if (msg->msg_id.id_type) {
@@ -2488,9 +2490,6 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 		    sa->sa_policy->pol_auth.auth_eap)
 			sa_state(env, sa, IKEV2_STATE_EAP);
 
-		if (ikev2_handle_certreq(env, msg) != 0)
-			return;
-
 		if (ikev2_ike_auth_recv(env, sa, msg) != 0) {
 			log_debug("%s: failed to send auth response", __func__);
 			ikev2_send_error(env, sa, msg, hdr->ike_exchange);
@@ -2940,8 +2939,11 @@ ikev2_handle_certreq(struct iked* env, struct iked_message *msg)
 	if ((sa = msg->msg_sa) == NULL)
 		return (-1);
 
+	/* Ignore CERTREQ when policy uses PSK authentication */
+	if (sa->sa_policy->pol_auth.auth_method == IKEV2_AUTH_SHARED_KEY_MIC)
+		return (0);
+
 	while ((cr = SLIST_FIRST(&msg->msg_certreqs))) {
-		/* Optional certreq for PSK */
 		if (sa->sa_hdr.sh_initiator)
 			sa->sa_stateinit |= IKED_REQ_CERT;
 		else
