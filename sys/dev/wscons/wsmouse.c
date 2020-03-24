@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.60 2020/03/22 16:39:51 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.61 2020/03/24 07:53:24 anton Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -335,7 +335,6 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (error) {
 		DPRINTF(("%s: %s open failed\n", __func__,
 			 sc->sc_base.me_dv.dv_xname));
-		sc->sc_base.me_evp = NULL;
 		wsevent_fini(evar);
 	}
 	return (error);
@@ -377,12 +376,20 @@ wsmouseclose(dev_t dev, int flags, int mode, struct proc *p)
 int
 wsmousedoopen(struct wsmouse_softc *sc, struct wseventvar *evp)
 {
+	int error;
+
+	/* The device could already be attached to a mux. */
+	if (sc->sc_base.me_evp != NULL)
+		return (EBUSY);
 	sc->sc_base.me_evp = evp;
 
 	wsmouse_input_reset(&sc->sc_input);
 
 	/* enable the device, and punt if that's not possible */
-	return (*sc->sc_accessops->enable)(sc->sc_accesscookie);
+	error = (*sc->sc_accessops->enable)(sc->sc_accesscookie);
+	if (error)
+		sc->sc_base.me_evp = NULL;
+	return (error);
 }
 
 int
@@ -555,9 +562,6 @@ int
 wsmouse_mux_open(struct wsevsrc *me, struct wseventvar *evp)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)me;
-
-	if (sc->sc_base.me_evp != NULL)
-		return (EBUSY);
 
 	return wsmousedoopen(sc, evp);
 }

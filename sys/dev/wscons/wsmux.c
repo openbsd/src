@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.49 2020/01/08 16:27:41 visa Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.50 2020/03/24 07:53:24 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -90,7 +90,7 @@ int	wsmuxdebug = 0;
 int	wsmux_mux_open(struct wsevsrc *, struct wseventvar *);
 int	wsmux_mux_close(struct wsevsrc *);
 
-void	wsmux_do_open(struct wsmux_softc *, struct wseventvar *);
+int	wsmux_do_open(struct wsmux_softc *, struct wseventvar *);
 
 void	wsmux_do_close(struct wsmux_softc *);
 #if NWSDISPLAY > 0
@@ -184,7 +184,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct wsmux_softc *sc;
 	struct wseventvar *evar;
-	int unit;
+	int error, unit;
 
 	unit = minor(dev);
 	sc = wsmux_getmux(unit);
@@ -215,9 +215,10 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 	sc->sc_rawkbd = 0;
 #endif
 
-	wsmux_do_open(sc, evar);
-
-	return (0);
+	error = wsmux_do_open(sc, evar);
+	if (error)
+                wsevent_fini(evar);
+	return (error);
 }
 
 /*
@@ -229,23 +230,17 @@ wsmux_mux_open(struct wsevsrc *me, struct wseventvar *evar)
 	struct wsmux_softc *sc = (struct wsmux_softc *)me;
 
 #ifdef DIAGNOSTIC
-	if (sc->sc_base.me_evp != NULL) {
-		printf("wsmux_mux_open: busy\n");
-		return (EBUSY);
-	}
 	if (sc->sc_base.me_parent == NULL) {
 		printf("wsmux_mux_open: no parent\n");
 		return (EINVAL);
 	}
 #endif
 
-	wsmux_do_open(sc, evar);
-
-	return (0);
+	return (wsmux_do_open(sc, evar));
 }
 
 /* Common part of opening a mux. */
-void
+int
 wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 {
 	struct wsevsrc *me;
@@ -253,6 +248,9 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 	int error;
 #endif
 
+	/* The device could already be attached to a mux. */
+	if (sc->sc_base.me_evp != NULL)
+		return (EBUSY);
 	sc->sc_base.me_evp = evar; /* remember event variable, mark as open */
 
 	/* Open all children. */
@@ -280,6 +278,8 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 #endif
 	}
 	rw_exit_read(&sc->sc_lock);
+
+	return (0);
 }
 
 /*
