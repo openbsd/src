@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.156 2020/01/04 18:01:56 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.157 2020/03/24 08:09:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,6 +44,7 @@ extern const struct cmd_entry cmd_delete_buffer_entry;
 extern const struct cmd_entry cmd_detach_client_entry;
 extern const struct cmd_entry cmd_display_menu_entry;
 extern const struct cmd_entry cmd_display_message_entry;
+extern const struct cmd_entry cmd_display_popup_entry;
 extern const struct cmd_entry cmd_display_panes_entry;
 extern const struct cmd_entry cmd_down_pane_entry;
 extern const struct cmd_entry cmd_find_window_entry;
@@ -133,6 +134,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_detach_client_entry,
 	&cmd_display_menu_entry,
 	&cmd_display_message_entry,
+	&cmd_display_popup_entry,
 	&cmd_display_panes_entry,
 	&cmd_find_window_entry,
 	&cmd_has_session_entry,

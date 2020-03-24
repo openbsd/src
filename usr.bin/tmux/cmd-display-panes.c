@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.29 2019/06/26 18:28:31 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.30 2020/03/24 08:09:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -273,7 +273,7 @@ cmd_display_panes_exec(struct cmd *self, struct cmdq_item *item)
 	else
 		cdata->item = item;
 
-	server_client_set_overlay(c, delay, cmd_display_panes_draw,
+	server_client_set_overlay(c, delay, NULL, NULL, cmd_display_panes_draw,
 	    cmd_display_panes_key, cmd_display_panes_free, cdata);
 
 	if (args_has(args, 'b'))
