@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.51 2020/03/24 19:11:46 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.52 2020/03/24 19:14:53 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -444,6 +444,7 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 	X509			*ca = NULL, *cert = NULL;
 	struct ibuf		*buf;
 	struct iked_static_id	 id;
+	char			 idstr[IKED_ID_SIZE];
 
 	ptr = (uint8_t *)imsg->data;
 	len = IMSG_DATA_SIZE(imsg);
@@ -503,8 +504,10 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 
 		/* If there is no matching certificate use local raw pubkey */
 		if (cert == NULL) {
-			log_debug("%s: no valid local certificate found",
-			    SPI_SH(&sh, __func__));
+			if (ikev2_print_static_id(&id, idstr, sizeof(idstr)) == -1)
+				return (-1);
+			log_debug("%s: no valid local certificate found for %s",
+			    SPI_SH(&sh, __func__), idstr);
 			if (store->ca_pubkey.id_buf == NULL)
 				return (-1);
 			buf = ibuf_dup(store->ca_pubkey.id_buf);
