@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.527 2020/03/06 15:22:44 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.528 2020/03/24 14:59:52 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 6 2020 $
+.Dd $Mdocdate: March 24 2020 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1597,6 +1597,24 @@ See target
 Set by the Distributed Ports Builder to only get the information it needs
 from
 .Cm dump-vars .
+.It Ev DPB_LOCKNAME
+If set,
+.Xr dpb 1
+will use this instead of the default
+.Ev PKGPATH Ns - Ns
+derived name.
+This feature comes with large restrictions and shouldn't be used unless
+absolutely necessary.
+Specifically, it can allow
+.Nm dpb
+to build several flavors of the same port at the same time,
+but beware: under
+.Ev MULTI_PACKAGES
+and
+.Ev PSEUDO_FLAVORS
+conditions, if some of these packages are identical across flavors,
+this will not work.
+This also makes it harder to interact with locks if the names are not obvious.
 .It Ev DPB_PROPERTIES
 Annotations for the Distributed Ports Builder.
 See
