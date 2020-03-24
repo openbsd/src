@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.39 2019/12/05 15:19:33 mpi Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.40 2020/03/24 15:03:59 mpi Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -272,6 +272,7 @@ uvm_total(struct vmtotal *totalp)
 		case SONPROC:
 			if (p == p->p_cpu->ci_schedstate.spc_idleproc)
 				continue;
+		/* FALLTHROUGH */
 		case SIDL:
 			totalp->t_rq++;
 			if (p->p_stat == SIDL)
