@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.54 2020/03/09 11:50:43 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.55 2020/03/24 13:32:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -434,7 +434,7 @@ config_new_user(struct iked *env, struct iked_user *new)
 
 	if ((old = RB_INSERT(iked_users, &env->sc_users, usr)) != NULL) {
 		/* Update the password of an existing user*/
-		memcpy(old, new, sizeof(*old));
+		memcpy(old->usr_pass, new->usr_pass, IKED_PASSWORD_SIZE);
 
 		log_debug("%s: updating user %s", __func__, usr->usr_name);
 		free(usr);
