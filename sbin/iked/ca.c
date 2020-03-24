@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.50 2020/01/15 21:47:57 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.51 2020/03/24 19:11:46 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -460,14 +460,23 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 	switch (type) {
 	case IKEV2_CERT_RSA_KEY:
 	case IKEV2_CERT_ECDSA:
+		/*
+		 * Find a local raw public key that matches the type
+		 * received in the CERTREQ payoad
+		 */
 		if (store->ca_pubkey.id_type != type ||
-		    (buf = store->ca_pubkey.id_buf) == NULL)
-			return (-1);
+		    store->ca_pubkey.id_buf == NULL)
+			goto fallback;
 
+		buf = ibuf_dup(store->ca_pubkey.id_buf);
 		log_debug("%s: using local public key of type %s", __func__,
 		    print_map(type, ikev2_cert_map));
 		break;
 	case IKEV2_CERT_X509_CERT:
+		/*
+		 * Find a local certificate signed by any of the CAs
+		 * received in the CERTREQ payload
+		 */
 		for (n = 1; i < len; n++, i += SHA_DIGEST_LENGTH) {
 			if ((ca = ca_by_subjectpubkey(store->ca_cas, ptr + i,
 			    SHA_DIGEST_LENGTH)) == NULL)
@@ -483,15 +492,27 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 				break;
 			}
 		}
+
+ fallback:
+		/*
+		 * If no certificate matching one of the CAs was found, try to
+		 * find one with subjectAltName matching the ID
+		 */
 		if (cert == NULL)
 			cert = ca_by_subjectaltname(store->ca_certs, &id);
+
+		/* If there is no matching certificate use local raw pubkey */
 		if (cert == NULL) {
-			log_warnx("%s: no valid local certificate found",
-			    __func__);
-			type = IKEV2_CERT_NONE;
-			ca_setcert(env, &sh, NULL, type, NULL, 0, PROC_IKEV2);
-			return (0);
+			log_debug("%s: no valid local certificate found",
+			    SPI_SH(&sh, __func__));
+			if (store->ca_pubkey.id_buf == NULL)
+				return (-1);
+			buf = ibuf_dup(store->ca_pubkey.id_buf);
+			log_debug("%s: using local public key of type %s",
+			    __func__, print_map(type, ikev2_cert_map));
+			break;
 		}
+
 		log_debug("%s: found local certificate %s", __func__,
 		    cert->name);
 
@@ -499,12 +520,14 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 			return (-1);
 		break;
 	default:
-		log_warnx("%s: unknown cert type requested", __func__);
+		log_warnx("%s: unknown cert type requested",
+		    SPI_SH(&sh, __func__));
 		return (-1);
 	}
 
 	ca_setcert(env, &sh, NULL, type,
 	    ibuf_data(buf), ibuf_size(buf), PROC_IKEV2);
+	ibuf_release(buf);
 
 	return (0);
 }
