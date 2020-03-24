@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.348 2020/03/23 15:02:51 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.349 2020/03/24 09:30:06 mpi Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -291,12 +291,16 @@ void em_flush_tx_ring(struct em_queue *);
 void em_flush_rx_ring(struct em_queue *);
 void em_flush_desc_rings(struct em_softc *);
 
+#ifndef SMALL_KERNEL
 /* MSIX/Multiqueue functions */
 int  em_allocate_msix(struct em_softc *);
 int  em_setup_queues_msix(struct em_softc *);
 int  em_queue_intr_msix(void *);
 int  em_link_intr_msix(void *);
 void em_enable_queue_intr_msix(struct em_queue *);
+#else
+#define em_allocate_msix(_sc) 	(-1)
+#endif
 
 /*********************************************************************
  *  OpenBSD Device Interface Entry Points
@@ -928,6 +932,7 @@ em_init(void *arg)
 	}
 	em_initialize_receive_unit(sc);
 
+#ifndef SMALL_KERNEL
 	if (sc->msix) {
 		if (em_setup_queues_msix(sc)) {
 			printf("%s: Can't setup msix queues\n", DEVNAME(sc));
@@ -935,6 +940,7 @@ em_init(void *arg)
 			return;
 		}
 	}
+#endif
 
 	/* Program promiscuous mode and multicast filters. */
 	em_iff(sc);
@@ -3322,6 +3328,38 @@ em_flush_desc_rings(struct em_softc *sc)
 		em_flush_rx_ring(que);
 }
 
+int
+em_allocate_legacy(struct em_softc *sc)
+{
+	pci_intr_handle_t	 ih;
+	const char		*intrstr = NULL;
+	struct pci_attach_args	*pa = &sc->osdep.em_pa;
+	pci_chipset_tag_t	 pc = pa->pa_pc;
+
+	if (pci_intr_map_msi(pa, &ih)) {
+		if (pci_intr_map(pa, &ih)) {
+			printf(": couldn't map interrupt\n");
+			return (ENXIO);
+		}
+		sc->legacy_irq = 1;
+	}
+
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
+	    em_intr, sc, DEVNAME(sc));
+	if (sc->sc_intrhand == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return (ENXIO);
+	}
+	printf(": %s", intrstr);
+
+	return (0);
+}
+
+
 #ifndef SMALL_KERNEL
 /**********************************************************************
  *
@@ -3524,38 +3562,6 @@ em_print_hw_stats(struct em_softc *sc)
 	    (long long)sc->stats.rpthc);
 }
 #endif
-#endif /* !SMALL_KERNEL */
-
-int
-em_allocate_legacy(struct em_softc *sc)
-{
-	pci_intr_handle_t	 ih;
-	const char		*intrstr = NULL;
-	struct pci_attach_args	*pa = &sc->osdep.em_pa;
-	pci_chipset_tag_t	 pc = pa->pa_pc;
-
-	if (pci_intr_map_msi(pa, &ih)) {
-		if (pci_intr_map(pa, &ih)) {
-			printf(": couldn't map interrupt\n");
-			return (ENXIO);
-		}
-		sc->legacy_irq = 1;
-	}
-
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
-	    em_intr, sc, DEVNAME(sc));
-	if (sc->sc_intrhand == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return (ENXIO);
-	}
-	printf(": %s", intrstr);
-
-	return (0);
-}
 
 int
 em_allocate_msix(struct em_softc *sc)
@@ -3783,6 +3789,7 @@ em_enable_queue_intr_msix(struct em_queue *que)
 {
 	E1000_WRITE_REG(&que->sc->hw, EIMS, que->eims);
 }
+#endif /* !SMALL_KERNEL */
 
 int
 em_allocate_desc_rings(struct em_softc *sc)
