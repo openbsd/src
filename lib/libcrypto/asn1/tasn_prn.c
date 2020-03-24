@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_prn.c,v 1.20 2019/04/07 16:35:50 jsing Exp $ */
+/* $OpenBSD: tasn_prn.c,v 1.21 2020/03/24 10:46:38 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -216,7 +216,8 @@ asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent, const ASN1_ITEM *it,
 	} else
 		asn1_cb = NULL;
 
-	if (*fld == NULL) {
+	if ((it->itype != ASN1_ITYPE_PRIMITIVE ||
+	    it->utype != V_ASN1_BOOLEAN) && *fld == NULL) {
 		if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_ABSENT) {
 			if (!nohdr &&
 			    !asn1_print_fsname(out, indent, fname, sname, pctx))
@@ -454,7 +455,8 @@ asn1_print_integer_ctx(BIO *out, ASN1_INTEGER *str, const ASN1_PCTX *pctx)
 {
 	char *s;
 	int ret = 1;
-	s = i2s_ASN1_INTEGER(NULL, str);
+	if ((s = i2s_ASN1_INTEGER(NULL, str)) == NULL)
+		return 0;
 	if (BIO_puts(out, s) <= 0)
 		ret = 0;
 	free(s);
@@ -512,11 +514,16 @@ asn1_primitive_print(BIO *out, ASN1_VALUE **fld, const ASN1_ITEM *it,
 
 		return pf->prim_print(out, fld, it, indent, pctx);
 	}
-	str = (ASN1_STRING *)*fld;
-	if (it->itype == ASN1_ITYPE_MSTRING)
+	if (it->itype == ASN1_ITYPE_MSTRING) {
+		str = (ASN1_STRING *)*fld;
 		utype = str->type & ~V_ASN1_NEG;
-	else
+	} else {
 		utype = it->utype;
+		if (utype == V_ASN1_BOOLEAN)
+			str = NULL;
+		else
+			str = (ASN1_STRING *)*fld;
+	}
 	if (utype == V_ASN1_ANY) {
 		ASN1_TYPE *atype = (ASN1_TYPE *)*fld;
 		utype = atype->type;
