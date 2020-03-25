@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.51 2020/02/05 16:29:30 krw Exp $ */
+/*	$OpenBSD: qle.c,v 1.52 2020/03/25 05:30:18 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -1097,6 +1097,7 @@ qle_handle_resp(struct qle_softc *sc, u_int32_t id)
 		switch (completion) {
 		case QLE_IOCB_STATUS_DATA_UNDERRUN:
 			xs->resid = lemtoh32(&status->resid);
+			/* FALLTHROUGH */
 		case QLE_IOCB_STATUS_DATA_OVERRUN:
 		case QLE_IOCB_STATUS_COMPLETE:
 			if (lemtoh16(&status->scsi_status) &
