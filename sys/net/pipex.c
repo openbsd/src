@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.107 2019/01/31 18:01:14 millert Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.108 2020/03/25 11:39:58 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -197,7 +197,9 @@ void
 pipex_iface_fini(struct pipex_iface_context *pipex_iface)
 {
 	pool_put(&pipex_session_pool, pipex_iface->multicast_session);
+	NET_LOCK();
 	pipex_iface_stop(pipex_iface);
+	NET_UNLOCK();
 }
 
 int
