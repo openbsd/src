@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.1 2020/01/21 16:16:23 mpi Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.2 2020/03/25 14:59:23 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -120,7 +120,7 @@ dt_prov_static_hook(struct dt_provider *dtpv, ...)
 	SMR_SLIST_FOREACH(dp, &dtp->dtp_pcbs, dp_pnext) {
 		struct dt_evt *dtev;
 
-		dtev = dt_pcb_ring_get(dp);
+		dtev = dt_pcb_ring_get(dp, 0);
 		if (dtev == NULL)
 			continue;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_profile.c,v 1.1 2020/01/21 16:16:23 mpi Exp $ */
+/*	$OpenBSD: dt_prov_profile.c,v 1.2 2020/03/25 14:59:23 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -107,7 +107,7 @@ dt_prov_profile_fire(struct dt_pcb *dp)
 	if (++dp->dp_nticks < dp->dp_maxtick)
 		return;
 
-	dtev = dt_pcb_ring_get(dp);
+	dtev = dt_pcb_ring_get(dp, 1);
 	if (dtev == NULL)
 		return;
 	dt_pcb_ring_consume(dp, dtev);

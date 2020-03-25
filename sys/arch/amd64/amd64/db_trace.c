@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.49 2020/01/20 15:58:23 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.50 2020/03/25 14:59:23 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -256,14 +256,17 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 }
 
 void
-stacktrace_save(struct stacktrace *st)
+stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 {
 	struct callframe *frame, *lastframe;
 
 	frame = __builtin_frame_address(0);
 	st->st_count = 0;
 	while (st->st_count < STACKTRACE_MAX) {
-		st->st_pc[st->st_count++] = frame->f_retaddr;
+		if (skip == 0)
+			st->st_pc[st->st_count++] = frame->f_retaddr;
+		else
+			skip--;
 
 		lastframe = frame;
 		frame = frame->f_frame;
@@ -275,6 +278,12 @@ stacktrace_save(struct stacktrace *st)
 		if (!INKERNEL(frame->f_retaddr))
 			break;
 	}
+}
+
+void
+stacktrace_save(struct stacktrace *st)
+{
+	return stacktrace_save_at(st, 0);
 }
 
 vaddr_t

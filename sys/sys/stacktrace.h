@@ -1,4 +1,4 @@
-/*	$OpenBSD: stacktrace.h,v 1.1 2020/01/20 15:58:23 visa Exp $	*/
+/*	$OpenBSD: stacktrace.h,v 1.2 2020/03/25 14:59:23 mpi Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -28,6 +28,7 @@ struct stacktrace {
 
 #ifdef _KERNEL
 void	stacktrace_print(struct stacktrace *, int (*)(const char *, ...));
+void	stacktrace_save_at(struct stacktrace *, unsigned int);
 void	stacktrace_save(struct stacktrace *);
 #endif
 

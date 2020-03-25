@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.4 2020/02/04 10:56:15 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.5 2020/03/25 14:59:23 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -26,29 +26,42 @@
 #include <dev/dt/dtvar.h>
 
 /*
- * How many frames are used by the profiling code?  For example
- * on amd64:
+ * Number of frames to skip in stack traces.
  *
- * From syscall provider:
+ * The number of frames required to execute dt(4) profiling code
+ * depends on the probe, context, architecture and possibly the
+ * compiler.
+ *
+ * Static probes (tracepoints) are executed in the context of the
+ * current thread and only need to skip frames up to the recording
+ * function.  For example the syscall provider:
  *
  *	dt_prov_syscall_entry+0x141
  *	syscall+0x205		<--- start here
  *	Xsyscall+0x128
  *
- * From profile provider:
+ * Probes executed in their own context, like the profile provider,
+ * need to skip the frames of that context which are different for
+ * every architecture.  For example the profile provider executed
+ * from hardclock(9) on amd64:
  *
  *	dt_prov_profile_enter+0x6e
- *	hardclock+0x12c
- *	clockintr+0x59
- *	intr_handler+0x6e
- *	Xresume_legacy0+0x1d3
- *	cpu_idle_cycle+0x1b	<---- start here.
+ *	hardclock+0x1a9
+ *	lapic_clockintr+0x3f
+ *	Xresume_lapic_ltimer+0x26
+ *	acpicpu_idle+0x1d2	<---- start here.
+ *	sched_idle+0x225
  *	proc_trampoline+0x1c
  */
-#if notyet
-#define DT_HOOK_FRAME_ADDRESS	__builtin_frame_address(4)
+#if defined(__amd64__)
+#define DT_FA_PROFILE	5
+#define DT_FA_STATIC	2
+#elif defined(__sparc64__)
+#define DT_FA_PROFILE	5
+#define DT_FA_STATIC	1
 #else
-#define DT_HOOK_FRAME_ADDRESS	__builtin_frame_address(0)
+#define DT_FA_STATIC	0
+#define DT_FA_PROFILE	0
 #endif
 
 #define DT_EVTRING_SIZE	16	/* # of slots in per PCB event ring */
@@ -583,7 +596,7 @@ dt_pcb_filter(struct dt_pcb *dp)
  * Get a reference to the next free event state from the ring.
  */
 struct dt_evt *
-dt_pcb_ring_get(struct dt_pcb *dp)
+dt_pcb_ring_get(struct dt_pcb *dp, int profiling)
 {
 	struct proc *p = curproc;
 	struct dt_evt *dtev;
@@ -617,11 +630,10 @@ dt_pcb_ring_get(struct dt_pcb *dp)
 		memcpy(dtev->dtev_comm, p->p_p->ps_comm, DTMAXCOMLEN - 1);
 
 	if (ISSET(dp->dp_evtflags, DTEVT_KSTACK|DTEVT_USTACK)) {
-#if notyet
-		stacktrace_save_at(&dtev->dtev_kstack, DT_HOOK_FRAME_ADDRESS);
-#else
-		stacktrace_save(&dtev->dtev_kstack);
-#endif
+		if (profiling)
+			stacktrace_save_at(&dtev->dtev_kstack, DT_FA_PROFILE);
+		else
+			stacktrace_save_at(&dtev->dtev_kstack, DT_FA_STATIC);
 	}
 
 	return dtev;

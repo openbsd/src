@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.1 2020/01/21 16:16:23 mpi Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.2 2020/03/25 14:59:23 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -194,7 +194,7 @@ void		 dt_pcb_free(struct dt_pcb *);
 void		 dt_pcb_purge(struct dt_pcb_list *);
 int		 dt_pcb_filter(struct dt_pcb *);
 
-struct dt_evt	*dt_pcb_ring_get(struct dt_pcb *);
+struct dt_evt	*dt_pcb_ring_get(struct dt_pcb *, int);
 void		 dt_pcb_ring_consume(struct dt_pcb *, struct dt_evt *);
 
 /*
