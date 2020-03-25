@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.263 2020/03/04 21:15:38 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.264 2020/03/25 14:55:14 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1753,10 +1753,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 		me->flags = 0;
 	}
 
-	if (me != NULL) {
-		RBT_POISON(uvm_map_addr, me, UVMMAP_DEADBEEF);
-	}
-
+	RBT_POISON(uvm_map_addr, me, UVMMAP_DEADBEEF);
 out:
 	return(me);
 }
