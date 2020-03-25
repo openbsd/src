@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.52 2016/04/12 16:26:54 krw Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.53 2020/03/25 21:29:04 tobhe Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -101,7 +101,7 @@ sr_raid0_init(struct sr_discipline *sd)
 	sd->mds.mdd_raid0.sr0_strip_bits =
 	    sr_validate_stripsize(sd->sd_meta->ssdi.ssd_strip_size);
 	if (sd->mds.mdd_raid0.sr0_strip_bits == -1) {
-		sr_error(sd->sd_sc, "invalid strip size", sd->sd_name);
+		sr_error(sd->sd_sc, "%s: invalid strip size", sd->sd_name);
 		return EINVAL;
 	}
 	sd->sd_max_ccb_per_wu =
