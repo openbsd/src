@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.69 2019/06/28 13:32:44 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.70 2020/03/25 19:26:52 cheloha Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -195,16 +195,12 @@ main(int argc, char *argv[])
 	sigset_t mask;
 
 	/* Dispose of random users. */
-	if (getuid() != 0) {
-		(void)fprintf(stderr, "init: %s\n", strerror(EPERM));
-		exit (1);
-	}
+	if (getuid() != 0)
+		errc(1, EPERM, NULL);
 
 	/* System V users like to reexec init. */
-	if (getpid() != 1) {
-		(void)fprintf(stderr, "init: already running\n");
-		exit (1);
-	}
+	if (getpid() != 1)
+		errx(1, "already running");
 
 	/*
 	 * Paranoia.
