@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.167 2020/03/23 15:42:10 visa Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.168 2020/03/26 08:03:50 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -375,7 +375,7 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 	sls->sls_catch = prio & PCATCH;
 	sls->sls_do_sleep = 1;
 	sls->sls_locked = 0;
-	sls->sls_sig = 0;
+	sls->sls_sig = 1;
 	sls->sls_timeout = 0;
 
 	/*
