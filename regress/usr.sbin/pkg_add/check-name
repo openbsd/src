@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# $OpenBSD: check-name,v 1.11 2010/01/27 15:41:58 espie Exp $
+# $OpenBSD: check-name,v 1.12 2020/03/26 19:31:39 jca Exp $
 # Written by Marc Espie
 # Public domain
 
@@ -119,5 +119,5 @@ ok(check_list(["correct order is pNvM"], check_name("pkgname-1.0v0p0")),
 	"mixed up vp");
 ok(check_list([], check_name("pkgname-1.0p0v0")), "correct name");
 
-ok(check_order(qw(speex-1.2beta3 speex-1.2rc1 speex-1.2 speex-1.2pl1 
-    speex-1.3beta1)), 'check order');
+ok(check_order(qw(speex-1.2alpha3 speex-1.2beta3 speex-1.2rc1 speex-1.2
+    speex-1.2pl1 speex-1.3beta1)), 'check order');

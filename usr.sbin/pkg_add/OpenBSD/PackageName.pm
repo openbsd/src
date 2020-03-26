@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.53 2019/11/07 15:35:23 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.54 2020/03/26 19:31:39 jca Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -153,7 +153,7 @@ sub from_string
 	my ($class, $string) = @_;
 	my $o = bless { deweys => [ split(/\./o, $string) ],
 		suffix => '', suffix_value => 0}, $class;
-	if ($o->{deweys}->[-1] =~ m/^(\d+)(rc|beta|pre|pl)(\d*)$/) {
+	if ($o->{deweys}->[-1] =~ m/^(\d+)(rc|alpha|beta|pre|pl)(\d*)$/) {
 		$o->{deweys}->[-1] = $1;
 		$o->{suffix} = $2;
 		$o->{suffix_value} = $3;
@@ -193,10 +193,13 @@ sub suffix_compare
 	if ($a->{suffix} gt $b->{suffix}) {
 		return -suffix_compare($b, $a);
 	}
-	# order is '', beta, pre, rc
+	# order is '', alpha, beta, pre, rc
 	# we know that a < b,
 	if ($a->{suffix} eq '') {
 		return 1;
+	}
+	if ($a->{suffix} eq 'alpha') {
+		return -1;
 	}
 	if ($a->{suffix} eq 'beta') {
 		return -1;

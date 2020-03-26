@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.26 2020/03/26 14:58:35 paco Exp $
+.\" $OpenBSD: packages-specs.7,v 1.27 2020/03/26 19:31:39 jca Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -109,6 +109,7 @@ Other parts are compared alphabetically.
 .It
 The last part may contain an extra suffix matching
 .Ar rc[N] ,
+.Ar alpha[N] ,
 .Ar beta[N] ,
 .Ar pre[N] ,
 or
@@ -118,12 +119,14 @@ with
 an optional number.
 These correspond to traditional notations for
 .Sq release candidate ,
+.Sq alpha version ,
 .Sq beta version ,
 .Sq pre-release ,
 .Sq patch-level ,
 and are ordered accordingly, e.g.,
-.Ar beta
-is oldest,
+.Ar alpha
+is oldest, then
+.Ar beta ,
 .Ar rc
 and
 .Ar pre
@@ -137,6 +140,8 @@ then normal version, and finally
 "foo-1.001" is older than "foo-1.002", which in turns is older than "foo-1.0010"
 .It
 "foo-1.0rc2" is not comparable to "foo-1.0pre3"
+.It
+"bar-1.0alpha5" is older than "bar-1.0beta3"
 .It
 "bar-1.0beta3" is older than "bar-1.0rc1"
 .It
