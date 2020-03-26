@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.76 2020/02/20 16:56:52 visa Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.77 2020/03/26 16:50:46 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -675,12 +675,9 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 			return (EINVAL);
 		break;
 #endif
-#ifdef PIPEX_PPTP
+#if defined(PIPEX_PPTP) || defined(PIPEX_L2TP)
 	case PIPEX_PROTO_PPTP:
-#endif
-#ifdef PIPEX_L2TP
 	case PIPEX_PROTO_L2TP:
-#endif
 		switch (req->pr_peer_address.ss_family) {
 		case AF_INET:
 			if (req->pr_peer_address.ss_len != sizeof(struct sockaddr_in))
@@ -701,6 +698,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 		    req->pr_local_address.ss_len)
 			return (EINVAL);
 		break;
+#endif /* defined(PIPEX_PPTP) || defined(PIPEX_L2TP) */
 	default:
 		return (EPROTONOSUPPORT);
 	}
@@ -854,6 +852,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	chain = PIPEX_ID_HASHTABLE(session->session_id);
 	LIST_INSERT_HEAD(chain, session, id_chain);
 	LIST_INSERT_HEAD(&pipex_session_list, session, session_list);
+#if defined(PIPEX_PPTP) || defined(PIPEX_L2TP)
 	switch (req->pr_protocol) {
 	case PIPEX_PROTO_PPTP:
 	case PIPEX_PROTO_L2TP:
@@ -862,6 +861,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 		LIST_INSERT_HEAD(chain, session, peer_addr_chain);
 		break;
 	}
+#endif
 
 	/* if first session is added, start timer */
 	if (LIST_NEXT(session, session_list) == NULL)
@@ -967,13 +967,14 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 
 	LIST_REMOVE(session, id_chain);
 	LIST_REMOVE(session, session_list);
+#if defined(PIPEX_PPTP) || defined(PIPEX_L2TP)
 	switch (session->protocol) {
 	case PIPEX_PROTO_PPTP:
 	case PIPEX_PROTO_L2TP:
-		LIST_REMOVE((struct pipex_session *)session,
-		    peer_addr_chain);
+		LIST_REMOVE(session, peer_addr_chain);
 		break;
 	}
+#endif
 
 	/* if final session is destroyed, stop timer */
 	if (LIST_EMPTY(&pipex_session_list))

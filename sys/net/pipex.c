@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.108 2020/03/25 11:39:58 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.109 2020/03/26 16:50:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -283,12 +283,8 @@ pipex_add_session(struct pipex_session_req *req,
 		break;
 #endif
 #if defined(PIPEX_L2TP) || defined(PIPEX_PPTP)
-#ifdef PIPEX_PPTP
 	case PIPEX_PROTO_PPTP:
-#endif
-#ifdef PIPEX_L2TP
 	case PIPEX_PROTO_L2TP:
-#endif
 		switch (req->pr_peer_address.ss_family) {
 		case AF_INET:
 			if (req->pr_peer_address.ss_len !=
@@ -311,7 +307,7 @@ pipex_add_session(struct pipex_session_req *req,
 		    req->pr_local_address.ss_len)
 			return (EINVAL);
 		break;
-#endif
+#endif /* defined(PIPEX_PPTP) || defined(PIPEX_L2TP) */
 	default:
 		return (EPROTONOSUPPORT);
 	}
@@ -450,6 +446,7 @@ pipex_add_session(struct pipex_session_req *req,
 	chain = PIPEX_ID_HASHTABLE(session->session_id);
 	LIST_INSERT_HEAD(chain, session, id_chain);
 	LIST_INSERT_HEAD(&pipex_session_list, session, session_list);
+#if defined(PIPEX_PPTP) || defined(PIPEX_L2TP)
 	switch (req->pr_protocol) {
 	case PIPEX_PROTO_PPTP:
 	case PIPEX_PROTO_L2TP:
@@ -457,6 +454,7 @@ pipex_add_session(struct pipex_session_req *req,
 		    pipex_sockaddr_hash_key(&session->peer.sa));
 		LIST_INSERT_HEAD(chain, session, peer_addr_chain);
 	}
+#endif
 
 	/* if first session is added, start timer */
 	if (LIST_NEXT(session, session_list) == NULL)
@@ -581,16 +579,15 @@ pipex_destroy_session(struct pipex_session *session)
 
 	LIST_REMOVE(session, id_chain);
 	LIST_REMOVE(session, session_list);
-#ifdef PIPEX_PPTP
-	if (session->protocol == PIPEX_PROTO_PPTP) {
+#if defined(PIPEX_PPTP) || defined(PIPEX_L2TP)
+	switch (session->protocol) {
+	case PIPEX_PROTO_PPTP:
+	case PIPEX_PROTO_L2TP:
 		LIST_REMOVE(session, peer_addr_chain);
+		break;
 	}
 #endif
-#ifdef PIPEX_L2TP
-	if (session->protocol == PIPEX_PROTO_L2TP) {
-		LIST_REMOVE(session, peer_addr_chain);
-	}
-#endif
+
 	/* if final session is destroyed, stop timer */
 	if (LIST_EMPTY(&pipex_session_list))
 		pipex_timer_stop();
