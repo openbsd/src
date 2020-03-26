@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpciephy.c,v 1.1 2019/08/29 17:20:03 kettenis Exp $	*/
+/*	$OpenBSD: amlpciephy.c,v 1.2 2020/03/26 12:58:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,7 +28,7 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
-#define PHY_R0		0x04
+#define PHY_R0		0x00
 #define  PHY_R0_MODE_MASK	(0x3 << 5)
 #define  PHY_R0_MODE_USB3	(0x3 << 5)
 #define PHY_R4		0x10
