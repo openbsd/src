@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.9 2020/03/19 15:52:30 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.10 2020/03/27 09:37:06 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -614,8 +614,10 @@ again:
 		}
 	}
 
-	/* skip single line comments */
-	if (c == '/' && peek() == '/') {
+	/* skip single line comments and shell magic */
+	if ((c == '/' && peek() == '/') ||
+	    (yylval.lineno == 1 && yylval.colno == 1 && c == '#' &&
+	     peek() == '!')) {
 		for (c = lgetc(); c != EOF; c = lgetc()) {
 			if (c == '\n') {
 				yylval.lineno++;
