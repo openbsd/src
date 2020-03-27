@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.26 2019/09/04 14:29:41 cheloha Exp $
+#	$OpenBSD: RAMDISK,v 1.27 2020/03/27 14:34:51 otto Exp $
 
 machine		landisk	sh
 maxusers	4
@@ -14,6 +14,7 @@ option		PCIVERBOSE
 option		USBVERBOSE
 
 option		FFS
+option		FFS2
 option		CD9660
 option		MSDOSFS
 option		EXT2FS
