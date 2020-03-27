@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ptr_12.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: ptr_12.c,v 1.11 2020/03/27 10:19:36 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 14:05:12 PST 2000 by explorer */
 
@@ -74,20 +74,5 @@ towire_ptr(ARGS_TOWIRE) {
 
 	return (dns_name_towire(&name, cctx, target));
 }
-
-static unsigned char ip6_arpa_data[]  = "\003IP6\004ARPA";
-static unsigned char ip6_arpa_offsets[] = { 0, 4, 9 };
-static const dns_name_t ip6_arpa =
-	DNS_NAME_INITABSOLUTE(ip6_arpa_data, ip6_arpa_offsets);
-
-static unsigned char ip6_int_data[]  = "\003IP6\003INT";
-static unsigned char ip6_int_offsets[] = { 0, 4, 8 };
-static const dns_name_t ip6_int =
-	DNS_NAME_INITABSOLUTE(ip6_int_data, ip6_int_offsets);
-
-static unsigned char in_addr_arpa_data[]  = "\007IN-ADDR\004ARPA";
-static unsigned char in_addr_arpa_offsets[] = { 0, 8, 13 };
-static const dns_name_t in_addr_arpa =
-	DNS_NAME_INITABSOLUTE(in_addr_arpa_data, in_addr_arpa_offsets);
 
 #endif	/* RDATA_GENERIC_PTR_12_C */
