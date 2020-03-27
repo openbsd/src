@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.11 2020/03/23 15:36:30 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.12 2020/03/27 16:22:26 cheloha Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -595,17 +595,14 @@ TIMESPEC_TO_NSEC(struct timespec *ts)
 uint64_t
 builtin_nsecs(struct dt_evt *dtev)
 {
-	uint64_t nsecs;
+	struct timespec ts;
 
 	if (dtev == NULL) {
-		struct timeval tv;
+		clock_gettime(CLOCK_REALTIME, &ts);
+		return TIMESPEC_TO_NSEC(&ts);
+	}
 
-		gettimeofday(&tv, NULL);
-		nsecs = (tv.tv_sec * 1000000000L + tv.tv_usec * 1000);
-	} else
-		nsecs = TIMESPEC_TO_NSEC(&dtev->dtev_tsp);
-
-	return nsecs;
+	return TIMESPEC_TO_NSEC(&dtev->dtev_tsp);
 }
 
 #include <machine/vmparam.h>
