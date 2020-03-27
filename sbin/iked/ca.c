@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.52 2020/03/24 19:14:53 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.53 2020/03/27 12:53:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -511,6 +511,7 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 			if (store->ca_pubkey.id_buf == NULL)
 				return (-1);
 			buf = ibuf_dup(store->ca_pubkey.id_buf);
+			type = store->ca_pubkey.id_type;
 			log_debug("%s: using local public key of type %s",
 			    __func__, print_map(type, ikev2_cert_map));
 			break;
