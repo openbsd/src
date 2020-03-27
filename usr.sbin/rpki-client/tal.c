@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.16 2019/11/29 17:29:28 benno Exp $ */
+/*	$OpenBSD: tal.c,v 1.17 2020/03/27 12:46:00 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -107,7 +107,7 @@ tal_parse_buffer(const char *fn, char *buf)
 	}
 
 	/* Now the BASE64-encoded public key. */
-	sz = ((sz + 2) / 3) * 4 + 1;
+	sz = ((sz + 3) / 4) * 3 + 1;
 	if ((b64 = malloc(sz)) == NULL)
 		err(1, NULL);
 	if ((b64sz = b64_pton(buf, b64, sz)) < 0)
