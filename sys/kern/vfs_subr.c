@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.300 2020/02/13 08:47:10 claudio Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.301 2020/03/27 07:58:17 anton Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -704,7 +704,11 @@ vputonfreelist(struct vnode *vp)
 	if (vp->v_usecount != 0)
 		panic("Use count is not zero!");
 
-	if (vp->v_lockcount != 0)
+	/*
+	 * If the hold count is still positive, one or many threads could still
+	 * be waiting on the vnode lock inside uvn_io().
+	 */
+	if (vp->v_holdcnt == 0 && vp->v_lockcount != 0)
 		panic("%s: lock count is not zero", __func__);
 
 	if (vp->v_bioflag & VBIOONFREELIST) {
