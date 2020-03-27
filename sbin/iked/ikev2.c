@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.203 2020/03/27 12:20:48 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.204 2020/03/27 15:50:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3860,7 +3860,10 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 		nsa->sa_tag = sa->sa_tag;
 		sa->sa_tag = NULL;
 	}
-
+	if (sa->sa_eapid) {
+		nsa->sa_eapid = sa->sa_eapid;
+		sa->sa_eapid = NULL;
+	}
 	log_debug("%s: activating new IKE SA", __func__);
 	sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
 	ikev2_enable_timer(env, nsa);
