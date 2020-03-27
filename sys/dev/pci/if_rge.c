@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.2 2020/01/02 09:00:45 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.3 2020/03/27 15:15:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2019 Kevin Lo <kevlo@openbsd.org>
@@ -1383,7 +1383,7 @@ rge_set_phy_power(struct rge_softc *sc, int on)
 		rge_write_phy(sc, 0, MII_BMCR, BMCR_AUTOEN);
 
 		for (i = 0; i < RGE_TIMEOUT; i++) {
-			if ((rge_read_phy_ocp(sc, 0xa420) & 0x0080) == 3)
+			if ((rge_read_phy_ocp(sc, 0xa420) & 0x0007) == 3)
 				break;
 			DELAY(1000);
 		}
@@ -1824,7 +1824,7 @@ rge_exit_oob(struct rge_softc *sc)
 
 	if (rge_read_mac_ocp(sc, 0xd42c) & 0x0100) {
 		for (i = 0; i < RGE_TIMEOUT; i++) {
-			if ((rge_read_phy_ocp(sc, 0xa420) & 0x0080) == 2)
+			if ((rge_read_phy_ocp(sc, 0xa420) & 0x0007) == 2)
 				break;
 			DELAY(1000);
 		}
