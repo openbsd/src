@@ -1,4 +1,4 @@
-/*	$OpenBSD: bd718x7.c,v 1.1 2020/03/20 09:25:42 patrick Exp $	*/
+/*	$OpenBSD: bd718x7.c,v 1.2 2020/03/27 12:23:52 patrick Exp $	*/
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -38,6 +38,7 @@ struct bdpmic_regdata {
 };
 
 struct bdpmic_regdata bd71837_regdata[] = {
+	{ "BUCK2", 0x10, 0x3f, 700000, 10000 },
 	{ }
 };
 
