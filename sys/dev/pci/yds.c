@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.54 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: yds.c,v 1.55 2020/03/27 15:24:59 krw Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -439,7 +439,6 @@ yds_allocate_slots(struct yds_softc *sc, int resuming)
 		if (i) {
 			printf("%s: couldn't alloc/map DSP DMA buffer, reason %d\n",
 			       sc->sc_dev.dv_xname, i);
-			free(p, M_DEVBUF, 0);
 			return 1;
 		}
 	}
