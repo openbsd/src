@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.7 2020/03/24 08:09:43 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.8 2020/03/28 09:39:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -237,7 +237,7 @@ cmd_display_popup_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	if (nlines != 0)
-		h = nlines + 2;
+		h = popup_height(nlines, lines) + 2;
 	else
 		h = c->tty.sy / 2;
 	if (args_has(args, 'h')) {
@@ -262,6 +262,10 @@ cmd_display_popup_exec(struct cmd *self, struct cmdq_item *item)
 		}
 	}
 
+	if (w > c->tty.sx - 1)
+		w = c->tty.sx - 1;
+	if (h > c->tty.sy - 1)
+		h = c->tty.sy - 1;
 	cmd_display_menu_get_position(c, item, args, &px, &py, w, h);
 
 	value = args_get(args, 'd');
