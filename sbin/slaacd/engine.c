@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.47 2019/11/22 15:30:00 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.48 2020/03/28 16:15:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -85,6 +85,11 @@
 #define	MAX_RTR_SOLICITATION_DELAY_USEC	MAX_RTR_SOLICITATION_DELAY * 1000000
 #define	RTR_SOLICITATION_INTERVAL	4
 #define	MAX_RTR_SOLICITATIONS		3
+
+/* constants for RFC 4941 autoconf privacy extension */
+#define ND6_PRIV_MAX_DESYNC_FACTOR	512	/* largest pow2 < 10 minutes */
+#define ND6_PRIV_VALID_LIFETIME		172800	/* 2 days */
+#define ND6_PRIV_PREFERRED_LIFETIME	86400	/* 1 day */
 
 enum if_state {
 	IF_DOWN,

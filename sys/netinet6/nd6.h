@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.75 2019/06/21 17:11:43 mpi Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.76 2020/03/28 16:15:45 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -88,11 +88,6 @@ struct	in6_ndifreq {
 #define MAX_RTR_SOLICITATIONS		3
 
 #define ND6_INFINITE_LIFETIME		0xffffffff
-
-/* constants for RFC 4941 autoconf privacy extension */
-#define ND6_PRIV_MAX_DESYNC_FACTOR	512	/* largest pow2 < 10 minutes */
-#define ND6_PRIV_VALID_LIFETIME		604800	/* 1 week */
-#define ND6_PRIV_PREFERRED_LIFETIME	86400	/* 1 day */
 
 #ifdef _KERNEL
 
