@@ -1477,6 +1477,7 @@
 ./usr/share/man/man4/imxgpc.4
 ./usr/share/man/man4/imxgpio.4
 ./usr/share/man/man4/imxiic.4
+./usr/share/man/man4/imxpwm.4
 ./usr/share/man/man4/imxrtc.4
 ./usr/share/man/man4/imxspi.4
 ./usr/share/man/man4/imxsrc.4
