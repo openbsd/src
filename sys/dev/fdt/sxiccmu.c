@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.26 2019/09/21 15:01:26 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.27 2020/03/28 12:32:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -1116,13 +1116,37 @@ sxiccmu_a64_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 	return 0;
 }
 
+#define A80_AHB1_CLK_CFG_REG		0x0064
+#define A80_AHB1_SRC_CLK_SELECT		(3 << 24)
+#define A80_AHB1_SRC_CLK_SELECT_GTBUS	(0 << 24)
+#define A80_AHB1_SRC_CLK_SELECT_PERIPH0	(1 << 24)
+#define A80_AHB1_CLK_DIV_RATIO(x)	(1 << ((x) & 0x3))
+
 uint32_t
 sxiccmu_a80_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
+	uint32_t parent;
+	uint32_t reg, div;
+
 	switch (idx) {
 	case A80_CLK_PLL_PERIPH0:
 		/* Not hardcoded, but recommended. */
 		return 960000000;
+	case A80_CLK_AHB1:
+		reg = SXIREAD4(sc, A80_AHB1_CLK_CFG_REG);
+		div = A80_AHB1_CLK_DIV_RATIO(reg);
+		switch (reg & A80_AHB1_SRC_CLK_SELECT) {
+		case A80_AHB1_SRC_CLK_SELECT_GTBUS:
+			parent = A80_CLK_GTBUS;
+			break;
+		case A80_AHB1_SRC_CLK_SELECT_PERIPH0:
+			parent = A80_CLK_PLL_PERIPH0;
+			break;
+		default:
+			parent = A80_CLK_PLL_PERIPH1;
+			break;
+		}
+		return sxiccmu_ccu_get_frequency(sc, &parent) / div;
 	case A80_CLK_APB1:
 		/* XXX Controlled by a MUX. */
 		return 24000000;

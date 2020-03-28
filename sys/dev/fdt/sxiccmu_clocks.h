@@ -219,7 +219,10 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 /* A80 */
 
 #define A80_CLK_PLL_PERIPH0	3
+#define A80_CLK_PLL_PERIPH1	11
 
+#define A80_CLK_GTBUS		18
+#define A80_CLK_AHB1		20
 #define A80_CLK_APB1		23
 
 #define A80_CLK_MMC0		33
@@ -229,7 +232,13 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 
 #define A80_CLK_BUS_MMC		84
 #define A80_CLK_BUS_USB		96
+#define A80_CLK_BUS_GMAC	97
 #define A80_CLK_BUS_PIO		111
+#define A80_CLK_BUS_I2C0	119
+#define A80_CLK_BUS_I2C1	120
+#define A80_CLK_BUS_I2C2	121
+#define A80_CLK_BUS_I2C3	122
+#define A80_CLK_BUS_I2C4	123
 #define A80_CLK_BUS_UART0	124
 #define A80_CLK_BUS_UART1	125
 #define A80_CLK_BUS_UART2	126
@@ -243,8 +252,14 @@ struct sxiccmu_ccu_bit sun9i_a80_gates[] = {
 	[A80_CLK_MMC2] =      { 0x0418, 31 },
 	[A80_CLK_MMC3] =      { 0x041c, 31 }, /* Undocumented */
 	[A80_CLK_BUS_MMC] =   { 0x0580, 8 },
+	[A80_CLK_BUS_GMAC] =  { 0x0584, 17, A80_CLK_AHB1 },
 	[A80_CLK_BUS_USB] =   { 0x0584, 1 },
 	[A80_CLK_BUS_PIO] =   { 0x0590, 5 },
+	[A80_CLK_BUS_I2C0] =  { 0x0594, 0, A80_CLK_APB1 },
+	[A80_CLK_BUS_I2C1] =  { 0x0594, 1, A80_CLK_APB1 },
+	[A80_CLK_BUS_I2C2] =  { 0x0594, 2, A80_CLK_APB1 },
+	[A80_CLK_BUS_I2C3] =  { 0x0594, 3, A80_CLK_APB1 },
+	[A80_CLK_BUS_I2C4] =  { 0x0594, 4, A80_CLK_APB1 },
 	[A80_CLK_BUS_UART0] = { 0x0594, 16, A80_CLK_APB1 },
 	[A80_CLK_BUS_UART1] = { 0x0594, 17, A80_CLK_APB1 },
 	[A80_CLK_BUS_UART2] = { 0x0594, 18, A80_CLK_APB1 },
@@ -675,6 +690,12 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 /* A80 */
 
 #define A80_RST_BUS_MMC		4
+#define A80_RST_BUS_GMAC	17
+#define A80_RST_BUS_I2C0	40
+#define A80_RST_BUS_I2C1	41
+#define A80_RST_BUS_I2C2	42
+#define A80_RST_BUS_I2C3	43
+#define A80_RST_BUS_I2C4	44
 #define A80_RST_BUS_UART0	45
 #define A80_RST_BUS_UART1	46
 #define A80_RST_BUS_UART2	47
@@ -684,6 +705,12 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 
 struct sxiccmu_ccu_bit sun9i_a80_resets[] = {
 	[A80_RST_BUS_MMC] =   { 0x05a0, 8 },
+	[A80_RST_BUS_GMAC] =  { 0x05a4, 17 },
+	[A80_RST_BUS_I2C0] =  { 0x05b4, 0 },
+	[A80_RST_BUS_I2C1] =  { 0x05b4, 1 },
+	[A80_RST_BUS_I2C2] =  { 0x05b4, 2 },
+	[A80_RST_BUS_I2C3] =  { 0x05b4, 3 },
+	[A80_RST_BUS_I2C4] =  { 0x05b4, 4 },
 	[A80_RST_BUS_UART0] = { 0x05b4, 16 },
 	[A80_RST_BUS_UART1] = { 0x05b4, 17 },
 	[A80_RST_BUS_UART2] = { 0x05b4, 18 },
