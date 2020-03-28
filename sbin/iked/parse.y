@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.89 2020/02/21 15:17:34 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.90 2020/03/28 21:05:19 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -486,6 +486,8 @@ set		: SET ACTIVE	{ passive = 0; }
 user		: USER STRING STRING		{
 			if (create_user($2, $3) == -1)
 				YYERROR;
+			free($2);
+			free($3);
 		}
 		;
 
@@ -528,6 +530,7 @@ cfg		: CONFIG STRING host_spec	{
 				free($3);
 				YYERROR;
 			}
+			free($2);
 			$$ = $3;
 			$$->type = xf->id;
 			$$->action = IKEV2_CP_REPLY;	/* XXX */
@@ -643,6 +646,7 @@ portval		: STRING				{
 				yyerror("unknown port: %s", $1);
 				YYERROR;
 			}
+			free($1);
 		}
 		| NUMBER				{
 			if ($1 > USHRT_MAX || $1 < 0) {
@@ -767,6 +771,7 @@ transform	: AUTHXF STRING			{
 				yyerror("%s not a valid transform", $2);
 				YYERROR;
 			}
+			free($2);
 			ipsec_transforms->authxf = xfs;
 			ipsec_transforms->nauthxf++;
 		}
@@ -781,6 +786,7 @@ transform	: AUTHXF STRING			{
 				yyerror("%s not a valid transform", $2);
 				YYERROR;
 			}
+			free($2);
 			ipsec_transforms->encxf = xfs;
 			ipsec_transforms->nencxf++;
 		}
@@ -795,6 +801,7 @@ transform	: AUTHXF STRING			{
 				yyerror("%s not a valid transform", $2);
 				YYERROR;
 			}
+			free($2);
 			ipsec_transforms->prfxf = xfs;
 			ipsec_transforms->nprfxf++;
 		}
@@ -809,6 +816,7 @@ transform	: AUTHXF STRING			{
 				yyerror("%s not a valid transform", $2);
 				YYERROR;
 			}
+			free($2);
 			ipsec_transforms->groupxf = xfs;
 			ipsec_transforms->ngroupxf++;
 		}
@@ -969,6 +977,7 @@ byte_spec	: NUMBER			{
 				yyerror("invalid byte specification: %s", $1);
 				YYERROR;
 			}
+			free($1);
 			switch (toupper((unsigned char)unit)) {
 			case 'K':
 				bytes *= 1024;
@@ -998,6 +1007,7 @@ time_spec	: NUMBER			{
 				yyerror("invalid time specification: %s", $1);
 				YYERROR;
 			}
+			free($1);
 			switch (tolower((unsigned char)unit)) {
 			case 'm':
 				seconds *= 60;
@@ -3056,6 +3066,9 @@ done:
 		RB_REMOVE(iked_flows, &pol.pol_flows, flow);
 		free(flow);
 	}
+	free(name);
+	free(srcid);
+	free(dstid);
 	return (ret);
 }
 
