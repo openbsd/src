@@ -1,4 +1,4 @@
-/*	$OpenBSD: acrtc.c,v 1.3 2019/04/20 22:40:13 deraadt Exp $	*/
+/*	$OpenBSD: acrtc.c,v 1.4 2020/03/28 11:40:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -43,13 +43,20 @@ extern todr_chip_handle_t todr_handle;
 #define RTC_CTRL			0xc7
 #define  RTC_CTRL_12H_24H_MODE		(1 << 0)
 #define RTC_SEC				0xc8
+#define  RTC_SEC_MASK			(0x7f << 0)
 #define RTC_MIN				0xc9
+#define  RTC_MIN_MASK			(0x7f << 0)
 #define RTC_HOU				0xca
+#define  RTC_HOU_MASK			(0x3f << 0)
 #define RTC_WEE				0xcb
+#define  RTC_WEE_MASK			(0x07 << 0)
 #define RTC_DAY				0xcc
+#define  RTC_DAY_MASK			(0x3f << 0)
 #define RTC_MON				0xcd
+#define  RTC_MON_MASK			(0x1f << 0)
 #define RTC_YEA				0xce
 #define  RTC_YEA_LEAP_YEAR		(1 << 15)
+#define  RTC_YEA_MASK			(0xff << 0)
 #define RTC_UPD_TRIG			0xcf
 #define  RTC_UPD_TRIG_UPDATE		(1 << 15)
 
@@ -167,12 +174,13 @@ acrtc_clock_read(struct acrtc_softc *sc, struct clock_ymdhms *dt)
 {
 	uint16_t ctrl;
 
-	dt->dt_sec = FROMBCD(acrtc_read_reg(sc, RTC_SEC));
-	dt->dt_min = FROMBCD(acrtc_read_reg(sc, RTC_MIN));
-	dt->dt_hour = FROMBCD(acrtc_read_reg(sc, RTC_HOU));
-	dt->dt_day = FROMBCD(acrtc_read_reg(sc, RTC_DAY));
-	dt->dt_mon = FROMBCD(acrtc_read_reg(sc, RTC_MON));
-	dt->dt_year = FROMBCD(acrtc_read_reg(sc, RTC_YEA)) + 2000;
+	dt->dt_sec = FROMBCD(acrtc_read_reg(sc, RTC_SEC) & RTC_SEC_MASK);
+	dt->dt_min = FROMBCD(acrtc_read_reg(sc, RTC_MIN) & RTC_MIN_MASK);
+	dt->dt_hour = FROMBCD(acrtc_read_reg(sc, RTC_HOU) & RTC_HOU_MASK);
+	dt->dt_day = FROMBCD(acrtc_read_reg(sc, RTC_DAY) & RTC_DAY_MASK);
+	dt->dt_mon = FROMBCD(acrtc_read_reg(sc, RTC_MON) & RTC_MON_MASK);
+	dt->dt_year = FROMBCD(acrtc_read_reg(sc, RTC_YEA) & RTC_YEA_MASK);
+	dt->dt_year += 2000;
 
 #ifdef DEBUG
 	printf("%02d/%02d/%04d %02d:%02d:%0d\n", dt->dt_day, dt->dt_mon,
