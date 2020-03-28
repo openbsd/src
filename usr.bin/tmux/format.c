@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.229 2020/03/20 18:35:53 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.230 2020/03/28 09:39:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2421,6 +2421,8 @@ void
 format_defaults(struct format_tree *ft, struct client *c, struct session *s,
     struct winlink *wl, struct window_pane *wp)
 {
+	struct paste_buffer	*pb;
+
 	if (c != NULL && c->name != NULL)
 		log_debug("%s: c=%s", __func__, c->name);
 	else
@@ -2460,6 +2462,10 @@ format_defaults(struct format_tree *ft, struct client *c, struct session *s,
 		format_defaults_winlink(ft, wl);
 	if (wp != NULL)
 		format_defaults_pane(ft, wp);
+
+	pb = paste_get_top (NULL);
+	if (pb != NULL)
+		format_defaults_paste_buffer(ft, pb);
 }
 
 /* Set default format keys for a session. */
