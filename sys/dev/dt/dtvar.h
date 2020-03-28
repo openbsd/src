@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.2 2020/03/25 14:59:23 mpi Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.3 2020/03/28 15:42:25 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -104,7 +104,8 @@ struct dt_filter {
 
 
 struct dtioc_probe_info {
-	uint32_t	dtpi_pbn;		/* Probe number */
+	uint32_t	dtpi_pbn;		/* probe number */
+	uint8_t		dtpi_nargs;		/* # of arguments */
 	char		dtpi_prov[DTNAMESIZE];
 	char		dtpi_func[DTNAMESIZE];
 	char		dtpi_name[DTNAMESIZE];
@@ -214,11 +215,11 @@ struct dt_probe {
 	const char		*dtp_name;	/* [I] probe name */
 	uint32_t		 dtp_pbn;	/* [I] unique ID */
 	volatile uint32_t	 dtp_recording;	/* [d] is it recording? */
+	uint8_t			 dtp_nargs;	/* [I] # of arguments */
 
 	/* Provider specific fields. */
 	int			 dtp_sysnum;	/* [I] related # of syscall */
 	const char		*dtp_argtype[5];/* [I] type of arguments */
-	int			 dtp_nargs;	/* [I] # of arguments */
 };
 
 

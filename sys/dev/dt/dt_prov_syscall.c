@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_syscall.c,v 1.2 2020/03/25 14:59:23 mpi Exp $ */
+/*	$OpenBSD: dt_prov_syscall.c,v 1.3 2020/03/28 15:42:25 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -79,6 +79,7 @@ dt_prov_syscall_init(void)
 			free(sysnb, M_DT, len);
 			break;
 		}
+		dtp->dtp_nargs = sysent[i].sy_narg;
 		dtp->dtp_sysnum = i;
 		dtps_entry[i] = dtp;
 		dt_dev_register_probe(dtp);

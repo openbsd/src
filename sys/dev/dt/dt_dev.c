@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.5 2020/03/25 14:59:23 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.6 2020/03/28 15:42:25 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -361,6 +361,7 @@ dt_ioctl_list_probes(struct dt_softc *sc, struct dtioc_probe *dtpr)
 			break;
 		}
 		info.dtpi_pbn = dtp->dtp_pbn;
+		info.dtpi_nargs = dtp->dtp_nargs;
 		strlcpy(info.dtpi_prov, dtp->dtp_prov->dtpv_name,
 		    sizeof(info.dtpi_prov));
 		strlcpy(info.dtpi_func, dtp->dtp_func, sizeof(info.dtpi_func));
