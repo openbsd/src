@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.722 2020/03/28 09:39:27 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.723 2020/03/28 09:51:12 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -5032,6 +5032,11 @@ shell command.
 closes the popup automatically when
 .Ar shell-command
 exits.
+Two
+.Fl E
+closes the popup only if
+.Ar shell-command
+exited with success.
 With
 .Fl K ,
 .Ql Escape

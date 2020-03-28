@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.965 2020/03/28 09:39:44 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.966 2020/03/28 09:51:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2761,6 +2761,7 @@ int		 menu_display(struct menu *, int, struct cmdq_item *, u_int,
 /* popup.c */
 #define POPUP_WRITEKEYS 0x1
 #define POPUP_CLOSEEXIT 0x2
+#define POPUP_CLOSEEXITZERO 0x4
 u_int		 popup_width(struct cmdq_item *, u_int, const char **,
 		    struct client *, struct cmd_find_state *);
 u_int		 popup_height(u_int, const char **);
