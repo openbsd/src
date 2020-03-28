@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.249 2020/03/19 12:20:45 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.250 2020/03/28 16:16:42 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -587,8 +587,7 @@ main(int argc, char *argv[])
 		(void)fchdir(startdir);
 		close(startdir);
 	}
-	if (outst.outtype <= OUTT_UTF8)
-		term_tag_finish();
+	term_tag_finish();
 	if (outst.outdata != NULL) {
 		switch (outst.outtype) {
 		case OUTT_HTML:
@@ -810,16 +809,14 @@ process_onefile(struct mparse *mp, struct manpage *resp, int startdir,
 	} else
 		fd = STDIN_FILENO;
 
-	if (outst->outtype <= OUTT_UTF8) {
-		if (outst->use_pager) {
-			outst->use_pager = 0;
-			outst->tag_files = term_tag_init(conf->output.tag);
-		}
-		if (outst->had_output) {
-			if (outst->outdata == NULL)
-				outdata_alloc(outst, &conf->output);
-			terminal_sepline(outst->outdata);
-		}
+	if (outst->use_pager) {
+		outst->use_pager = 0;
+		outst->tag_files = term_tag_init(conf->output.tag);
+	}
+	if (outst->had_output && outst->outtype <= OUTT_UTF8) {
+		if (outst->outdata == NULL)
+			outdata_alloc(outst, &conf->output);
+		terminal_sepline(outst->outdata);
 	}
 
 	if (resp->form == FORM_SRC)
