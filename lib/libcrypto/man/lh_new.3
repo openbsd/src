@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lh_new.3,v 1.6 2019/06/10 09:49:48 schwarze Exp $
+.\"	$OpenBSD: lh_new.3,v 1.7 2020/03/28 22:40:58 schwarze Exp $
 .\"	OpenSSL 1bc74519 May 20 08:11:46 2016 -0400
 .\"
 .\" --------------------------------------------------------------------------
@@ -115,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: March 28 2020 $
 .Dt LH_NEW 3
 .Os
 .Sh NAME
@@ -402,12 +402,6 @@ otherwise.
 .Pp
 .Fn lh_<type>_error
 returns 1 if an error occurred in the last operation, or 0 otherwise.
-.Pp
-.Fn lh_<type>_free ,
-.Fn lh_<type>_doall ,
-and
-.Fn lh_<type>_doall_arg
-return no values.
 .Sh NOTES
 The various LHASH macros and callback types exist to make it possible to
 write type-checked code without resorting to function-prototype casting

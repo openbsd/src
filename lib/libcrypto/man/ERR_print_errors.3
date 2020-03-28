@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ERR_print_errors.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: ERR_print_errors.3,v 1.8 2020/03/28 22:40:58 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>,
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: March 28 2020 $
 .Dt ERR_PRINT_ERRORS 3
 .Os
 .Sh NAME
@@ -103,11 +103,6 @@ respective error code.
 .Pp
 If there is no text string registered for the given error code, the
 error string will contain the numeric code.
-.Sh RETURN VALUES
-.Fn ERR_print_errors
-and
-.Fn ERR_print_errors_fp
-return no values.
 .Sh SEE ALSO
 .Xr ERR 3 ,
 .Xr ERR_error_string 3 ,
