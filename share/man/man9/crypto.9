@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.42 2015/12/10 21:00:51 naddy Exp $
+.\"	$OpenBSD: crypto.9,v 1.43 2020/03/28 13:16:09 krw Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: December 10 2015 $
+.Dd $Mdocdate: March 28 2020 $
 .Dt CRYPTO_GET_DRIVERID 9
 .Os
 .Sh NAME
@@ -412,7 +412,7 @@ Typically, drivers for
 crypto cards that are being ejected will invoke this routine for all
 algorithms supported by the card.
 If called with
-.Dv CRYPTO_ALGORITHM_ALL ,
+.Dv CRYPTO_ALGORITHM_MAX + 1 ,
 all algorithms registered for a driver will be unregistered in one go
 and the driver will be disabled (no new sessions will be allocated on
 that driver, and any existing sessions will be migrated to other
