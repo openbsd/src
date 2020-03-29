@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.23 2020/03/05 11:52:18 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.24 2020/03/29 08:14:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -454,6 +454,15 @@ ieee80211_mira_update_stats(struct ieee80211_mira_node *mn,
 	 * is tuned towards our fixed-point number format.
 	 */
 
+	g->average_agg = MIRA_FP_MUL(MIRA_FP_1 - alpha, g->average_agg);
+	g->average_agg += MIRA_FP_MUL(alpha, agglen);
+
+	toverhead = ieee80211_mira_toverhead(mn, ic, ni);
+	toverhead = MIRA_FP_MUL(toverhead, rate);
+	g->measured = MIRA_FP_DIV(MIRA_FP_1 - sfer, MIRA_FP_1 +
+	    MIRA_FP_DIV(toverhead, MIRA_FP_MUL(ampdu_size, g->average_agg)));
+	g->measured = MIRA_FP_MUL(g->measured, rate);
+
 	g->average = MIRA_FP_MUL(MIRA_FP_1 - alpha, g->average);
 	g->average += MIRA_FP_MUL(alpha, g->measured);
 
@@ -463,15 +472,6 @@ ieee80211_mira_update_stats(struct ieee80211_mira_node *mn,
 	else
 		delta = g->measured - g->average;
 	g->stddeviation += MIRA_FP_MUL(beta, delta);
-
-	g->average_agg = MIRA_FP_MUL(MIRA_FP_1 - alpha, g->average_agg);
-	g->average_agg += MIRA_FP_MUL(alpha, agglen);
-
-	toverhead = ieee80211_mira_toverhead(mn, ic, ni);
-	toverhead = MIRA_FP_MUL(toverhead, rate);
-	g->measured = MIRA_FP_DIV(MIRA_FP_1 - sfer, MIRA_FP_1 +
-	    MIRA_FP_DIV(toverhead, MIRA_FP_MUL(ampdu_size, g->average_agg)));
-	g->measured = MIRA_FP_MUL(g->measured, rate);
 }
 
 void
