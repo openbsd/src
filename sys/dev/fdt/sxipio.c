@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.11 2019/09/05 12:00:09 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.12 2020/03/29 09:35:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -32,6 +32,7 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/fdt/sunxireg.h>
@@ -62,6 +63,7 @@ struct sxipio_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	int			sc_node;
 	void			*sc_ih_h;
 	void			*sc_ih_l;
 	int 			sc_max_il;
@@ -76,6 +78,9 @@ struct sxipio_softc {
 	gpio_pin_t		sc_gpio_pins[SXIPIO_NPORT][32];
 
 	struct intrhand		*sc_handlers[32];
+
+	void			(*sc_bias_cfg)(struct sxipio_softc *,
+				    int, uint32_t);
 };
 
 #define	SXIPIO_CFG(port, pin)	0x00 + ((port) * 0x24) + (((pin) >> 3) * 0x04)
@@ -86,6 +91,13 @@ struct sxipio_softc {
 #define	SXIPIO_INT_CTL		0x0210
 #define	SXIPIO_INT_STA		0x0214
 #define	SXIPIO_INT_DEB		0x0218 /* debounce register */
+#define	SXIPIO_GRP_CFG(port)	0x0300 + ((port) * 0x04)
+#define	 SXIPIO_IO_BIAS_MASK		(0xf << 0)
+#define	 SXIPIO_IO_BIAS_1_8V		0x0
+#define	 SXIPIO_IO_BIAS_2_5V		0x6
+#define	 SXIPIO_IO_BIAS_2_8V		0x9
+#define	 SXIPIO_IO_BIAS_3_0V		0xa
+#define	 SXIPIO_IO_BIAS_3_3V		0xd
 
 #define SXIPIO_GPIO_IN		0
 #define SXIPIO_GPIO_OUT		1
@@ -107,6 +119,7 @@ int	sxipio_pinctrl(uint32_t, void *);
 void	sxipio_config_pin(void *, uint32_t *, int);
 int	sxipio_get_pin(void *, uint32_t *);
 void	sxipio_set_pin(void *, uint32_t *, int);
+void	sxipio_a80_bias_cfg(struct sxipio_softc *, int, uint32_t);
 
 #include "sxipio_pins.h"
 
@@ -212,6 +225,7 @@ sxipio_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
+	sc->sc_node = faa->fa_node;
 
 	clock_enable_all(faa->fa_node);
 	reset_deassert_all(faa->fa_node);
@@ -223,6 +237,11 @@ sxipio_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 	}
+
+	/* Allwinner A80 needs IO pad bias configuration. */
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun9i-a80-pinctrl") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun9i-a80-r-pinctrl"))
+		sc->sc_bias_cfg = sxipio_a80_bias_cfg;
 
 	KASSERT(sc->sc_pins);
 	pinctrl_register(faa->fa_node, sxipio_pinctrl, sc);
@@ -275,8 +294,10 @@ sxipio_pinctrl(uint32_t phandle, void *cookie)
 {
 	struct sxipio_softc *sc = cookie;
 	char func[32];
+	char vcc[16];
 	char *names, *name;
-	int port, pin, off, mask;
+	uint32_t supply;
+	int group, port, pin, off, mask;
 	int mux, drive, pull;
 	int node;
 	int len;
@@ -328,9 +349,18 @@ sxipio_pinctrl(uint32_t phandle, void *cookie)
 		if (j > nitems(sc->sc_pins[i].funcs))
 			goto err;
 
+		group = sc->sc_pins[i].name[1] - 'A';
 		port = sc->sc_pins[i].port;
 		pin = sc->sc_pins[i].pin;
 		mux = sc->sc_pins[i].funcs[j].mux;
+
+		snprintf(vcc, sizeof(vcc), "vcc-p%c-supply", 'a' + group);
+		supply = OF_getpropint(sc->sc_node, vcc, 0);
+		if (supply) {
+			regulator_enable(supply);
+			if (sc->sc_bias_cfg)
+				sc->sc_bias_cfg(sc, port, supply);
+		}
 
 		s = splhigh();
 		off = (pin & 0x7) << 2, mask = (0x7 << off);
@@ -411,6 +441,27 @@ sxipio_set_pin(void *cookie, uint32_t *cells, int val)
 	else
 		reg &= ~(1 << pin);
 	SXIWRITE4(sc, SXIPIO_DAT(port), reg);
+}
+
+void
+sxipio_a80_bias_cfg(struct sxipio_softc *sc, int port, uint32_t supply)
+{
+	uint32_t voltage;
+	uint32_t bias;
+
+	voltage = regulator_get_voltage(supply);
+	if (voltage <= 1800000)
+		bias = SXIPIO_IO_BIAS_1_8V;
+	else if (voltage <= 2500000)
+		bias = SXIPIO_IO_BIAS_2_5V;
+	else if (voltage <= 2800000)
+		bias = SXIPIO_IO_BIAS_2_8V;
+	else if (voltage <= 3000000)
+		bias = SXIPIO_IO_BIAS_3_0V;
+	else
+		bias = SXIPIO_IO_BIAS_3_3V;
+
+	SXICMS4(sc, SXIPIO_GRP_CFG(port), SXIPIO_IO_BIAS_MASK, bias);
 }
 
 /*
