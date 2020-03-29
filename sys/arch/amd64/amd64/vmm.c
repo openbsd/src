@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.268 2020/03/16 08:21:16 jasper Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.269 2020/03/29 11:34:30 tobhe Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1167,7 +1167,7 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	memcpy(vm->vm_memranges, vcp->vcp_memranges,
 	    vm->vm_nmemranges * sizeof(vm->vm_memranges[0]));
 	vm->vm_memory_size = memsize;
-	strlcpy(vm->vm_name, vcp->vcp_name, VMM_MAX_NAME_LEN);
+	strncpy(vm->vm_name, vcp->vcp_name, VMM_MAX_NAME_LEN - 1);
 
 	rw_enter_write(&vmm_softc->vm_lock);
 
