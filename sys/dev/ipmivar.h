@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.32 2019/12/19 09:01:50 kettenis Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.33 2020/03/29 09:31:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -66,6 +66,7 @@ struct ipmi_attach_args {
 	int		iaa_if_rev;
 	int		iaa_if_iotype;
 	bus_addr_t	iaa_if_iobase;
+	int		iaa_if_iosize;
 	int		iaa_if_iospacing;
 	int		iaa_if_irq;
 	int		iaa_if_irqlvl;
@@ -103,6 +104,7 @@ struct ipmi_softc {
 	struct device		sc_dev;
 
 	struct ipmi_if		*sc_if;			/* Interface layer */
+	int			sc_if_iosize;		/* Size of I/O porrs */
 	int			sc_if_iospacing;	/* Spacing of I/O ports */
 	int			sc_if_rev;		/* IPMI Revision */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmi_acpi.c,v 1.3 2020/01/06 12:35:57 kettenis Exp $ */
+/* $OpenBSD: ipmi_acpi.c,v 1.4 2020/03/29 09:31:10 kettenis Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -119,6 +119,7 @@ ipmi_acpi_attach(struct device *parent, struct device *self, void *aux)
 	ia.iaa_if_rev = (sc->sc_srv >> 4);
 	ia.iaa_if_irq = -1;
 	ia.iaa_if_irqlvl = 0;
+	ia.iaa_if_iosize = 1;
 	ia.iaa_if_iospacing = sc->sc_iospacing;
 	ia.iaa_if_iobase = sc->sc_iobase;
 	ia.iaa_if_iotype = sc->sc_iotype;

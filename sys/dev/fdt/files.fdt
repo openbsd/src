@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.115 2020/03/27 16:53:06 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.116 2020/03/29 09:31:11 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -428,6 +428,9 @@ file	dev/fdt/ccp_fdt.c		ccp_fdt
 
 attach	com at fdt with com_fdt
 file	dev/fdt/com_fdt.c		com_fdt
+
+attach	ipmi at fdt with ipmi_fdt
+file	dev/fdt/ipmi_fdt.c		ipmi_fdt
 
 device	ssdfb: wsemuldisplaydev, rasops1
 attach	ssdfb at spi with ssdfb_spi

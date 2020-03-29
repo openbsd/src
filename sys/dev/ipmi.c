@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.111 2020/03/19 16:17:51 tracey Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.112 2020/03/29 09:31:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -240,15 +240,23 @@ ipmi_get_if(int iftype)
 u_int8_t
 bmc_read(struct ipmi_softc *sc, int offset)
 {
-	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-	    offset * sc->sc_if_iospacing));
+	if (sc->sc_if_iosize == 4)
+		return (bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    offset * sc->sc_if_iospacing));
+	else	
+		return (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    offset * sc->sc_if_iospacing));
 }
 
 void
 bmc_write(struct ipmi_softc *sc, int offset, u_int8_t val)
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-	    offset * sc->sc_if_iospacing, val);
+	if (sc->sc_if_iosize == 4)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    offset * sc->sc_if_iospacing, val);
+	else
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    offset * sc->sc_if_iospacing, val);
 }
 
 int
@@ -1452,6 +1460,7 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 		sc->sc_iot = ia->iaa_memt;
 
 	sc->sc_if_rev = ia->iaa_if_rev;
+	sc->sc_if_iosize = ia->iaa_if_iosize;
 	sc->sc_if_iospacing = ia->iaa_if_iospacing;
 	if (bus_space_map(sc->sc_iot, ia->iaa_if_iobase,
 	    sc->sc_if->nregs * sc->sc_if_iospacing,
@@ -1938,6 +1947,7 @@ ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
 	    pipmi->smipmi_irq : -1;
 	ia->iaa_if_irqlvl = (pipmi->smipmi_base_flags & SMIPMI_FLAG_IRQLVL) ?
 	    IST_LEVEL : IST_EDGE;
+	ia->iaa_if_iosize = 1;
 
 	switch (SMIPMI_FLAG_IFSPACING(pipmi->smipmi_base_flags)) {
 	case IPMI_IOSPACING_BYTE:
