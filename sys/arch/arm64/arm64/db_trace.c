@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.9 2020/01/20 15:58:23 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.10 2020/03/29 15:14:28 visa Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -152,16 +152,29 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 void
 stacktrace_save(struct stacktrace *st)
 {
-	struct callframe *frame;
+	struct callframe *frame, *lastframe, *limit;
+	struct proc *p = curproc;
+
+	st->st_count = 0;
+
+	if (p == NULL)
+		return;
 
 	frame = __builtin_frame_address(0);
-	st->st_count = 0;
+	KASSERT(INKERNEL(frame));
+	limit = (struct callframe *)STACKALIGN(p->p_addr + USPACE -
+	    sizeof(struct trapframe) - 0x10);
+
 	while (st->st_count < STACKTRACE_MAX) {
 		st->st_pc[st->st_count++] = frame->f_lr;
 
-		if (!INKERNEL(frame->f_frame) || frame->f_frame <= frame)
-			break;
+		lastframe = frame;
 		frame = frame->f_frame;
+
+		if (frame <= lastframe)
+			break;
+		if (frame >= limit)
+			break;
 		if (!INKERNEL(frame->f_lr))
 			break;
 	}
