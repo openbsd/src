@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RC4.3,v 1.7 2019/06/06 01:06:59 schwarze Exp $
+.\"	$OpenBSD: RC4.3,v 1.8 2020/03/29 17:05:02 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: March 29 2020 $
 .Dt RC4 3
 .Os
 .Sh NAME
@@ -112,11 +112,6 @@ yield a continuous key stream.
 Since RC4 is a stream cipher (the input is XOR'ed with a pseudo-random
 key stream to produce the output), decryption uses the same function
 calls as encryption.
-.Sh RETURN VALUES
-.Fn RC4_set_key
-and
-.Fn RC4
-do not return values.
 .Sh SEE ALSO
 .Xr blowfish 3 ,
 .Xr EVP_EncryptInit 3 ,

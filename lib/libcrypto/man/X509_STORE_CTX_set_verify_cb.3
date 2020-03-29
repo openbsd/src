@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.4 2018/03/22 17:38:08 schwarze Exp $
+.\"	$OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.5 2020/03/29 17:05:02 schwarze Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: March 29 2020 $
 .Dt X509_STORE_CTX_SET_VERIFY_CB 3
 .Os
 .Sh NAME
@@ -108,9 +108,6 @@ In some cases (such as S/MIME verification) the
 structure is created and destroyed internally and the only way to set a
 custom verification callback is by inheriting it from the associated
 .Vt X509_STORE .
-.Sh RETURN VALUES
-.Fn X509_STORE_CTX_set_verify_cb
-does not return a value.
 .Sh EXAMPLES
 Default callback operation:
 .Bd -literal

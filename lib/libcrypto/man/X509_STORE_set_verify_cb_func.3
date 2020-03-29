@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_STORE_set_verify_cb_func.3,v 1.8 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: X509_STORE_set_verify_cb_func.3,v 1.9 2020/03/29 17:05:02 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: March 29 2020 $
 .Dt X509_STORE_SET_VERIFY_CB_FUNC 3
 .Os
 .Sh NAME
@@ -86,11 +86,6 @@ structure when it is initialized.
 This can be used to set the verification callback when the
 .Vt X509_STORE_CTX
 is otherwise inaccessible (for example during S/MIME verification).
-.Sh RETURN VALUES
-.Fn X509_STORE_set_verify_cb
-and
-.Fn X509_STORE_set_verify_cb_func
-do not return a value.
 .Sh SEE ALSO
 .Xr X509_STORE_CTX_set_verify_cb 3 ,
 .Xr X509_STORE_new 3
