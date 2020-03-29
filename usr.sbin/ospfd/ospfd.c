@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.111 2020/01/21 20:38:52 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.112 2020/03/29 12:36:01 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -185,8 +185,8 @@ main(int argc, char *argv[])
 		kif_clear();
 		exit(1);
 	}
-        if (ospfd_conf->rtr_id.s_addr == 0)
-                ospfd_conf->rtr_id.s_addr = get_rtr_id();
+	if (ospfd_conf->rtr_id.s_addr == 0)
+		ospfd_conf->rtr_id.s_addr = get_rtr_id();
 
 	if (sockname == NULL) {
 		if (asprintf(&sockname, "%s.%d", OSPFD_SOCKET,
