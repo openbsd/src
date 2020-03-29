@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.26 2019/12/22 11:19:07 denis Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.27 2020/03/29 11:59:11 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -44,10 +44,11 @@ void		 calc_nexthop(struct vertex *, struct vertex *,
 		     struct area *, struct lsa_rtr_link *);
 void		 rt_nexthop_clear(struct rt_node *);
 void		 rt_nexthop_add(struct rt_node *, struct v_nexthead *,
-		     struct in_addr);
+		     u_int16_t, struct in_addr);
 void		 rt_update(struct in6_addr *, u_int8_t, struct v_nexthead *,
-		     u_int32_t, u_int32_t, struct in_addr, struct in_addr,
-		     enum path_type, enum dst_type, u_int8_t, u_int32_t);
+		     u_int16_t, u_int32_t, u_int32_t, struct in_addr,
+		     struct in_addr, enum path_type, enum dst_type, u_int8_t,
+		     u_int32_t);
 struct rt_node	*rt_lookup(enum dst_type, struct in6_addr *);
 void		 rt_invalidate(struct area *);
 int		 linked(struct vertex *, struct vertex *);
@@ -225,7 +226,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 		adv_rtr.s_addr = htonl(v->adv_rtr);
 		bcopy(&adv_rtr, &ia6.s6_addr[12], sizeof(adv_rtr));
 
-		rt_update(&ia6, 128, &v->nexthop, v->cost, 0, area->id,
+		rt_update(&ia6, 128, &v->nexthop, v->type, v->cost, 0, area->id,
 		    adv_rtr, PT_INTER_AREA, DT_RTR, flags, 0);
 		break;
 	case LSA_TYPE_INTRA_A_PREFIX:
@@ -279,7 +280,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 				adv_rtr.s_addr = htonl(w->adv_rtr);
 
 				rt_update(&ia6, prefix->prefixlen, &w->nexthop,
-				    w->cost + ntohs(prefix->metric), 0,
+				    v->type, w->cost + ntohs(prefix->metric), 0,
 				    area->id, adv_rtr, PT_INTRA_AREA, DT_NET,
 				    flags, 0);
 			}
@@ -315,9 +316,10 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 		bzero(&ia6, sizeof(ia6));
 		bcopy(prefix + 1, &ia6, LSA_PREFIXSIZE(prefix->prefixlen));
 
-		rt_update(&ia6, prefix->prefixlen, &w->nexthop, w->cost +
-		    (ntohs(v->lsa->data.rtr_sum.metric) & LSA_METRIC_MASK), 0,
-		    area->id, adv_rtr, PT_INTER_AREA, DT_NET, 0, 0);
+		rt_update(&ia6, prefix->prefixlen, &w->nexthop, v->type,
+		    w->cost + (ntohs(v->lsa->data.rtr_sum.metric) &
+		    LSA_METRIC_MASK), 0, area->id, adv_rtr, PT_INTER_AREA,
+		    DT_NET, 0, 0);
 		break;
 	case LSA_TYPE_INTER_A_ROUTER:
 		/* XXX if ABR only look at area 0.0.0.0 LSA */
@@ -343,7 +345,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 		bcopy(&v->lsa->data.rtr_sum.dest_rtr_id, &ia6.s6_addr[12],
 		    4);
 
-		rt_update(&ia6, 128, &w->nexthop, w->cost +
+		rt_update(&ia6, 128, &w->nexthop, v->type, w->cost +
 		    (ntohs(v->lsa->data.rtr_sum.metric) & LSA_METRIC_MASK), 0,
 		    area->id, adv_rtr, PT_INTER_AREA, DT_RTR, 0, 0);
 		break;
@@ -434,8 +436,8 @@ asext_calc(struct vertex *v)
 				    rn->ifindex);
 		}
 
-		rt_update(&addr, prefix->prefixlen, &v->nexthop, v->cost, cost2,
-		    area, adv_rtr, type, DT_NET, 0, ext_tag);
+		rt_update(&addr, prefix->prefixlen, &v->nexthop, v->type,
+		    v->cost, cost2, area, adv_rtr, type, DT_NET, 0, ext_tag);
 		break;
 	default:
 		fatalx("asext_calc: invalid LSA type");
@@ -863,7 +865,7 @@ rt_nexthop_clear(struct rt_node *r)
 }
 
 void
-rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh,
+rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh, u_int16_t type,
     struct in_addr adv_rtr)
 {
 	struct v_nexthop	*vn;
@@ -876,7 +878,9 @@ rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh,
 				continue;
 
 			rn->adv_rtr.s_addr = adv_rtr.s_addr;
-			rn->connected = vn->prev == spf_root;
+			rn->connected = (type == LSA_TYPE_NETWORK &&
+			    vn->prev == spf_root) ||
+			    (IN6_IS_ADDR_UNSPECIFIED(&vn->nexthop));
 			rn->invalid = 0;
 
 			r->invalid = 0;
@@ -973,7 +977,7 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 
 void
 rt_update(struct in6_addr *prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
-     u_int32_t cost, u_int32_t cost2, struct in_addr area,
+     u_int16_t v_type, u_int32_t cost, u_int32_t cost2, struct in_addr area,
      struct in_addr adv_rtr, enum path_type p_type, enum dst_type d_type,
      u_int8_t flags, u_int32_t tag)
 {
@@ -999,7 +1003,7 @@ rt_update(struct in6_addr *prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
 		rte->flags = flags;
 		rte->ext_tag = tag;
 
-		rt_nexthop_add(rte, vnh, adv_rtr);
+		rt_nexthop_add(rte, vnh, v_type, adv_rtr);
 
 		rt_insert(rte);
 	} else {
@@ -1054,7 +1058,7 @@ rt_update(struct in6_addr *prefix, u_int8_t prefixlen, struct v_nexthead *vnh,
 		}
 
 		if (equal || better)
-			rt_nexthop_add(rte, vnh, adv_rtr);
+			rt_nexthop_add(rte, vnh, v_type, adv_rtr);
 	}
 }
 
@@ -1115,7 +1119,7 @@ get_rtr_link(struct vertex *v, unsigned int idx)
 		v = lsa_find_rtr_frag(v->area, htonl(v->adv_rtr), frag++);
 	} while (v);
 
-	return (NULL);
+	fatalx("get_rtr_link: index not found");
 }
 
 /* network LSA links */
@@ -1124,21 +1128,23 @@ get_net_link(struct vertex *v, unsigned int idx)
 {
 	struct lsa_net_link	*net_link = NULL;
 	char			*buf = (char *)v->lsa;
-	unsigned int		 i;
+	unsigned int		 i, nlinks;
 
 	if (v->type != LSA_TYPE_NETWORK)
 		fatalx("get_net_link: invalid LSA type");
 
-	/* number of links validated earlier by lsa_check() */
 	net_link = (struct lsa_net_link *)(buf + sizeof(v->lsa->hdr) +
 	    sizeof(struct lsa_net));
-	for (i = 0; i < lsa_num_links(v); i++) {
+
+	/* number of links validated earlier by lsa_check() */
+	nlinks = lsa_num_links(v);
+	for (i = 0; i < nlinks; i++) {
 		if (i == idx)
 			return (net_link);
 		net_link++;
 	}
 
-	return (NULL);
+	fatalx("get_net_link: index not found");
 }
 
 /* misc */

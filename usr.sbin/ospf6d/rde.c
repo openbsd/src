@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.84 2020/02/17 08:12:22 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.85 2020/03/29 11:59:11 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -59,8 +59,9 @@ int		 rde_req_list_exists(struct rde_nbr *, struct lsa_hdr *);
 void		 rde_req_list_del(struct rde_nbr *, struct lsa_hdr *);
 void		 rde_req_list_free(struct rde_nbr *);
 
-struct lsa	*rde_asext_get(struct kroute *);
-struct lsa	*rde_asext_put(struct kroute *);
+struct iface	*rde_asext_lookup(struct in6_addr, int);
+void		 rde_asext_get(struct kroute *);
+void		 rde_asext_put(struct kroute *);
 
 int		 comp_asext(struct lsa *, struct lsa *);
 struct lsa	*orig_asext_lsa(struct kroute *, u_int16_t);
@@ -217,6 +218,7 @@ __dead void
 rde_shutdown(void)
 {
 	struct area	*a;
+	struct vertex	*v, *nv;
 
 	/* close pipes */
 	msgbuf_clear(&iev_ospfe->ibuf.w);
@@ -231,6 +233,10 @@ rde_shutdown(void)
 	while ((a = LIST_FIRST(&rdeconf->area_list)) != NULL) {
 		LIST_REMOVE(a, entry);
 		area_del(a);
+	}
+	for (v = RB_MIN(lsa_tree, &asext_tree); v != NULL; v = nv) {
+		nv = RB_NEXT(lsa_tree, &asext_tree, v);
+		vertex_free(v);
 	}
 	rde_nbr_free();
 
@@ -643,8 +649,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct kroute		 kr;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
-	struct lsa		*lsa;
-	struct vertex		*v;
 	ssize_t			 n;
 	int			 shut = 0, link_ok, prev_link_ok, orig_lsa;
 	unsigned int		 ifindex;
@@ -676,13 +680,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				break;
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));
-
-			if ((lsa = rde_asext_get(&kr)) != NULL) {
-				v = lsa_find(NULL, lsa->hdr.type,
-				    lsa->hdr.ls_id, lsa->hdr.adv_rtr);
-
-				lsa_merge(nbrself, lsa, v);
-			}
+			rde_asext_get(&kr);
 			break;
 		case IMSG_NETWORK_DEL:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kr)) {
@@ -691,20 +689,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				break;
 			}
 			memcpy(&kr, imsg.data, sizeof(kr));
-
-			if ((lsa = rde_asext_put(&kr)) != NULL) {
-				v = lsa_find(NULL, lsa->hdr.type,
-				    lsa->hdr.ls_id, lsa->hdr.adv_rtr);
-
-				/*
-				 * if v == NULL no LSA is in the table and
-				 * nothing has to be done.
-				 */
-				if (v)
-					lsa_merge(nbrself, lsa, v);
-				else
-					free(lsa);
-			}
+			rde_asext_put(&kr);
 			break;
 		case IMSG_IFINFO:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
@@ -1202,48 +1187,77 @@ rde_req_list_free(struct rde_nbr *nbr)
 /*
  * as-external LSA handling
  */
-struct lsa *
-rde_asext_get(struct kroute *kr)
+struct iface *
+rde_asext_lookup(struct in6_addr prefix, int plen)
 {
+
 	struct area		*area;
 	struct iface		*iface;
 	struct iface_addr	*ia;
-	struct in6_addr		 addr;
-
-	LIST_FOREACH(area, &rdeconf->area_list, entry)
-		LIST_FOREACH(iface, &area->iface_list, entry)
+	struct in6_addr		 ina, inb;
+	
+	LIST_FOREACH(area, &rdeconf->area_list, entry) {
+		LIST_FOREACH(iface, &area->iface_list, entry) {
 			TAILQ_FOREACH(ia, &iface->ifa_list, entry) {
 				if (IN6_IS_ADDR_LINKLOCAL(&ia->addr))
 					continue;
 
-				inet6applymask(&addr, &ia->addr,
-				    kr->prefixlen);
-				if (!memcmp(&addr, &kr->prefix,
-				    sizeof(addr)) && kr->prefixlen ==
-				    ia->prefixlen) {
-					/* already announced as Prefix LSA */
-					log_debug("rde_asext_get: %s/%d is "
-					    "part of prefix LSA",
-					    log_in6addr(&kr->prefix),
-					    kr->prefixlen);
-					return (NULL);
-				}
+				inet6applymask(&ina, &ia->addr, ia->prefixlen);
+				inet6applymask(&inb, &prefix, ia->prefixlen);
+				if (IN6_ARE_ADDR_EQUAL(&ina, &inb) &&
+				    (plen == -1 || plen == ia->prefixlen))
+					return (iface);
 			}
-
-	/* update of seqnum is done by lsa_merge */
-	return (orig_asext_lsa(kr, DEFAULT_AGE));
+		}
+	}
+	return (NULL);
 }
 
-struct lsa *
+void
+rde_asext_get(struct kroute *kr)
+{
+	struct vertex	*v;
+	struct lsa	*lsa;
+
+	if (rde_asext_lookup(kr->prefix, kr->prefixlen)) {
+		/* already announced as (stub) net LSA */
+		log_debug("rde_asext_get: %s/%d is net LSA",
+		    log_in6addr(&kr->prefix), kr->prefixlen);
+		return;
+	}
+
+	/* update of seqnum is done by lsa_merge */
+	if ((lsa = orig_asext_lsa(kr, DEFAULT_AGE))) {
+		v = lsa_find(NULL, lsa->hdr.type, lsa->hdr.ls_id,
+		    lsa->hdr.adv_rtr);
+		lsa_merge(nbrself, lsa, v);
+	}
+}
+
+void
 rde_asext_put(struct kroute *kr)
 {
+	struct vertex	*v;
+	struct lsa	*lsa;
 	/*
 	 * just try to remove the LSA. If the prefix is announced as
 	 * stub net LSA lsa_find() will fail later and nothing will happen.
 	 */
 
 	/* remove by reflooding with MAX_AGE */
-	return (orig_asext_lsa(kr, MAX_AGE));
+	if ((lsa = orig_asext_lsa(kr, MAX_AGE))) {
+		v = lsa_find(NULL, lsa->hdr.type, lsa->hdr.ls_id,
+		    lsa->hdr.adv_rtr);
+
+		/*
+		 * if v == NULL no LSA is in the table and
+		 * nothing has to be done.
+		 */
+		if (v)
+			lsa_merge(nbrself, lsa, v);
+		else
+			free(lsa);
+	}
 }
 
 /*
@@ -1706,8 +1720,7 @@ orig_asext_lsa(struct kroute *kr, u_int16_t age)
 	}
 
 	lsa->hdr.ls_chksum = 0;
-	lsa->hdr.ls_chksum =
-	    htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
+	lsa->hdr.ls_chksum = htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
 
 	return (lsa);
 }
