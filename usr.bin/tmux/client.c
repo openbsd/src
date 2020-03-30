@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.138 2020/03/12 09:26:34 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.139 2020/03/30 15:49:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -251,7 +251,7 @@ client_main(struct event_base *base, int argc, char **argv, int flags)
 	/* Set up the initial command. */
 	if (shell_command != NULL) {
 		msg = MSG_SHELL;
-		flags = CLIENT_STARTSERVER;
+		flags |= CLIENT_STARTSERVER;
 	} else if (argc == 0) {
 		msg = MSG_COMMAND;
 		flags |= CLIENT_STARTSERVER;
