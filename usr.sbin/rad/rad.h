@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.17 2019/03/02 03:40:45 pamela Exp $	*/
+/*	$OpenBSD: rad.h,v 1.18 2020/03/30 17:47:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -18,21 +18,23 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define CONF_FILE		"/etc/rad.conf"
+#define	CONF_FILE		"/etc/rad.conf"
 #define	RAD_SOCKET		"/var/run/rad.sock"
-#define RAD_USER		"_rad"
+#define	RAD_USER		"_rad"
 
-#define OPT_VERBOSE	0x00000001
-#define OPT_VERBOSE2	0x00000002
-#define OPT_NOACTION	0x00000004
+#define	OPT_VERBOSE	0x00000001
+#define	OPT_VERBOSE2	0x00000002
+#define	OPT_NOACTION	0x00000004
 
+#define	MAX_RTR_ADV_INTERVAL	600
+#define	MIN_RTR_ADV_INTERVAL	200
+#define	ADV_DEFAULT_LIFETIME	3 * MAX_RTR_ADV_INTERVAL
+#define	ADV_PREFERRED_LIFETIME	604800	/* 7 days */
+#define ADV_VALID_LIFETIME	2592000	/* 30 days */
+#define	MAX_SEARCH		1025	/* MAXDNAME in arpa/nameser.h */
+#define	DEFAULT_RDNS_LIFETIME	600 * 1.5
 
-#define	MAX_RTR_ADV_INTERVAL		600
-#define	MIN_RTR_ADV_INTERVAL		200
-#define	MAX_SEARCH 1025 /* same as MAXDNAME in arpa/nameser.h */
-#define	DEFAULT_RDNS_LIFETIME		600 * 1.5
-
-#define IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
+#define	IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
 
 enum {
 	PROC_MAIN,
