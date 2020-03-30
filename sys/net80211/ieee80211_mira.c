@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.24 2020/03/29 08:14:05 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.25 2020/03/30 19:10:42 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -1193,7 +1193,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 	}
 
 	/* Check if event-based probing should be triggered. */
-	if (g->measured <= g->average - 2 * g->stddeviation) {
+	if (g->measured < g->average - 2 * g->stddeviation) {
 		/* Channel becomes bad. Probe downwards. */
 		DPRINTFN(2, ("channel becomes bad; probe downwards\n"));
 		DPRINTFN(3, ("measured: %s Mbit/s\n",
@@ -1214,7 +1214,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 		    (1 << ieee80211_mira_next_lower_intra_rate(mn, ni));
 #endif
 		ieee80211_mira_cancel_timeouts(mn);
-	} else if (g->measured >= g->average + 2 * g->stddeviation) {
+	} else if (g->measured > g->average + 2 * g->stddeviation) {
 		/* Channel becomes good. */
 		DPRINTFN(2, ("channel becomes good; probe upwards\n"));
 		DPRINTFN(3, ("measured: %s Mbit/s\n",
