@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.205 2020/03/30 20:08:31 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.206 2020/03/30 20:57:59 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -51,6 +51,7 @@ void	 ikev2_info_sa(struct iked *, int, const char *, struct iked_sa *);
 void	 ikev2_info_csa(struct iked *, int, const char *, struct iked_childsa *);
 void	 ikev2_info_flow(struct iked *, int, const char *, struct iked_flow *);
 void	 ikev2_log_established(struct iked_sa *);
+void	 ikev2_log_proposal(struct iked_sa *, struct iked_proposals *);
 
 void	 ikev2_run(struct privsep *, struct privsep_proc *, void *);
 int	 ikev2_dispatch_parent(int, struct privsep_proc *, struct imsg *);
@@ -2796,6 +2797,7 @@ ikev2_add_error(struct iked *env, struct ibuf *buf, struct iked_message *msg)
 	case IKEV2_N_CHILD_SA_NOT_FOUND:
 		break;
 	case IKEV2_N_NO_PROPOSAL_CHOSEN:
+		ikev2_log_proposal(msg->msg_sa, &msg->msg_proposals);
 		break;
 	case IKEV2_N_INVALID_KE_PAYLOAD:
 		break;
@@ -4357,7 +4359,9 @@ ikev2_send_informational(struct iked *env, struct iked_message *msg)
 
 	switch (msg->msg_error) {
 	case IKEV2_N_INVALID_IKE_SPI:
+		break;
 	case IKEV2_N_NO_PROPOSAL_CHOSEN:
+		ikev2_log_proposal(msg->msg_sa, &msg->msg_proposals);
 		break;
 	default:
 		log_debug("%s: unsupported notification %s", __func__,
@@ -6495,4 +6499,33 @@ ikev2_log_established(struct iked_sa *sa)
 	    print_host((struct sockaddr *)&sa->sa_addrpool6->addr, NULL, 0) : "",
 	    sa->sa_policy ? sa->sa_policy->pol_name : "",
 	    sa->sa_hdr.sh_initiator ? " as initiator" : " as responder");
+}
+
+void
+ikev2_log_proposal(struct iked_sa *sa, struct iked_proposals *proposals)
+{
+	struct iked_proposal	*prop;
+	struct iked_transform	*xform;
+	unsigned int		 i;
+	char			 lenstr[20];
+
+	TAILQ_FOREACH(prop, proposals, prop_entry) {
+		for (i = 0; i < prop->prop_nxforms; i++) {
+			xform = &prop->prop_xforms[i];
+			if (xform->xform_keylength)
+				snprintf(lenstr, sizeof(lenstr), "-%u",
+				    xform->xform_keylength);
+			else
+				lenstr[0] = '\0';
+			log_info("%s: %s #%u %s=%s%s",
+			    sa ? SPI_SA(sa, __func__) : __func__,
+			    print_map(prop->prop_protoid, ikev2_saproto_map),
+			    prop->prop_id,
+			    print_map(xform->xform_type, ikev2_xformtype_map),
+			    xform->xform_map ?
+			    print_map(xform->xform_id, xform->xform_map)
+			    : "UNKNOWN",
+			    lenstr);
+		}
+	}
 }
