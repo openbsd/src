@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_client_CA_list.3,v 1.5 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_client_CA_list.3,v 1.6 2020/03/30 10:28:59 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: March 30 2020 $
 .Dt SSL_CTX_SET_CLIENT_CA_LIST 3
 .Os
 .Sh NAME
@@ -143,11 +143,6 @@ or
 .Pp
 These functions are only useful for TLS/SSL servers.
 .Sh RETURN VALUES
-.Fn SSL_CTX_set_client_CA_list
-and
-.Fn SSL_set_client_CA_list
-do not return diagnostic information.
-.Pp
 .Fn SSL_CTX_add_client_CA
 and
 .Fn SSL_add_client_CA

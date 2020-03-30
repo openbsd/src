@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_free.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: SSL_free.3,v 1.5 2020/03/30 10:28:59 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: March 30 2020 $
 .Dt SSL_FREE 3
 .Os
 .Sh NAME
@@ -103,9 +103,6 @@ was not used to set the
 .Vt SSL_SENT_SHUTDOWN
 state, the session will also be removed from the session cache as required by
 RFC2246.
-.Sh RETURN VALUES
-.Fn SSL_free
-does not provide diagnostic information.
 .Sh SEE ALSO
 .Xr ssl 3 ,
 .Xr SSL_clear 3 ,

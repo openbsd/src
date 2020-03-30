@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_quiet_shutdown.3,v 1.5 2019/06/08 15:25:43 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_quiet_shutdown.3,v 1.6 2020/03/30 10:28:59 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2019 $
+.Dd $Mdocdate: March 30 2020 $
 .Dt SSL_CTX_SET_QUIET_SHUTDOWN 3
 .Os
 .Sh NAME
@@ -144,11 +144,6 @@ This behaviour violates the TLS standard.
 .Pp
 The default is normal shutdown behaviour as described by the TLS standard.
 .Sh RETURN VALUES
-.Fn SSL_CTX_set_quiet_shutdown
-and
-.Fn SSL_set_quiet_shutdown
-do not return diagnostic information.
-.Pp
 .Fn SSL_CTX_get_quiet_shutdown
 and
 .Fn SSL_get_quiet_shutdown
