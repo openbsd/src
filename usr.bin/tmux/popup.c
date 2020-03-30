@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.3 2020/03/28 09:51:12 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.4 2020/03/30 07:42:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -346,9 +346,8 @@ popup_job_complete_cb(struct job *job)
 		pd->status = 0;
 	pd->job = NULL;
 
-	if (pd->flags & POPUP_CLOSEEXIT)
-		server_client_clear_overlay(pd->c);
-	if ((pd->flags & POPUP_CLOSEEXITZERO) && pd->status == 0)
+	if ((pd->flags & POPUP_CLOSEEXIT) ||
+	    ((pd->flags & POPUP_CLOSEEXITZERO) && pd->status == 0))
 		server_client_clear_overlay(pd->c);
 }
 
