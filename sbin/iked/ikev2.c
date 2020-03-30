@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.204 2020/03/27 15:50:31 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.205 2020/03/30 20:08:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -50,6 +50,7 @@ void	 ikev2_info(struct iked *, int);
 void	 ikev2_info_sa(struct iked *, int, const char *, struct iked_sa *);
 void	 ikev2_info_csa(struct iked *, int, const char *, struct iked_childsa *);
 void	 ikev2_info_flow(struct iked *, int, const char *, struct iked_flow *);
+void	 ikev2_log_established(struct iked_sa *);
 
 void	 ikev2_run(struct privsep *, struct privsep_proc *, void *);
 int	 ikev2_dispatch_parent(int, struct privsep_proc *, struct imsg *);
@@ -1371,6 +1372,7 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 		/* Delete exchange timeout. */
 		timer_del(env, &sa->sa_timer);
 		ikev2_enable_timer(env, sa);
+		ikev2_log_established(sa);
 	}
 
 	if (ret)
@@ -3095,6 +3097,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		/* Delete exchange timeout. */
 		timer_del(env, &sa->sa_timer);
 		ikev2_enable_timer(env, sa);
+		ikev2_log_established(sa);
 	}
 
  done:
@@ -6468,4 +6471,28 @@ ikev2_ikesa_info(uint64_t spi, const char *msg)
 	else
 		snprintf(buf, sizeof(buf), "spi=%s: ", spistr);
 	return buf;
+}
+
+void
+ikev2_log_established(struct iked_sa *sa)
+{
+	char dstid[IKED_ID_SIZE], srcid[IKED_ID_SIZE];
+
+	if (ikev2_print_id(IKESA_DSTID(sa), dstid, sizeof(dstid)) == -1)
+		bzero(dstid, sizeof(dstid));
+	if (ikev2_print_id(IKESA_SRCID(sa), srcid, sizeof(srcid)) == -1)
+		bzero(srcid, sizeof(srcid));
+	log_info(
+	    "%sestablished peer %s[%s] local %s[%s]%s%s%s%s policy '%s'%s",
+	    SPI_SA(sa, NULL),
+	    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0), dstid,
+	    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0), srcid,
+	    sa->sa_addrpool ? " assigned " : "",
+	    sa->sa_addrpool ?
+	    print_host((struct sockaddr *)&sa->sa_addrpool->addr, NULL, 0) : "",
+	    sa->sa_addrpool6 ? " assigned " : "",
+	    sa->sa_addrpool6 ?
+	    print_host((struct sockaddr *)&sa->sa_addrpool6->addr, NULL, 0) : "",
+	    sa->sa_policy ? sa->sa_policy->pol_name : "",
+	    sa->sa_hdr.sh_initiator ? " as initiator" : " as responder");
 }
