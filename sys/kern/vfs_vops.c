@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.25 2020/02/14 11:57:56 claudio Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.26 2020/03/30 09:08:10 mpi Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -145,6 +145,8 @@ VOP_OPEN(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
 	a.a_cred = cred;
 	a.a_p = p;
 
+	KASSERT(p == curproc);
+
 	if (vp->v_op->vop_open == NULL)
 		return (EOPNOTSUPP);
 
@@ -164,6 +166,7 @@ VOP_CLOSE(struct vnode *vp, int fflag, struct ucred *cred, struct proc *p)
 	a.a_cred = cred;
 	a.a_p = p;
 
+	KASSERT(p == curproc);
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_close == NULL)
@@ -184,6 +187,7 @@ VOP_ACCESS(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
 	a.a_cred = cred;
 	a.a_p = p;
 
+	KASSERT(p == curproc);
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_access == NULL)
@@ -202,6 +206,7 @@ VOP_GETATTR(struct vnode *vp, struct vattr *vap, struct ucred *cred,
 	a.a_cred = cred;
 	a.a_p = p;
 
+	KASSERT(p == curproc);
 	if (vp->v_op->vop_getattr == NULL)
 		return (EOPNOTSUPP);
 
@@ -219,6 +224,7 @@ VOP_SETATTR(struct vnode *vp, struct vattr *vap, struct ucred *cred,
 	a.a_cred = cred;
 	a.a_p = p;
 
+	KASSERT(p == curproc);
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_setattr == NULL)
@@ -282,6 +288,7 @@ VOP_IOCTL(struct vnode *vp, u_long command, void *data, int fflag,
 	a.a_cred = cred;
 	a.a_p = p;
 
+	KASSERT(p == curproc);
 	if (vp->v_op->vop_ioctl == NULL)
 		return (EOPNOTSUPP);
 
@@ -300,6 +307,7 @@ VOP_POLL(struct vnode *vp, int fflag, int events, struct proc *p)
 	a.a_events = events;
 	a.a_p = p;
 
+	KASSERT(p == curproc);
 	if (vp->v_op->vop_poll == NULL)
 		return (EOPNOTSUPP);
 
@@ -343,6 +351,7 @@ VOP_FSYNC(struct vnode *vp, struct ucred *cred, int waitfor,
 	a.a_waitfor = waitfor;
 	a.a_p = p;
 
+	KASSERT(p == curproc);
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_fsync == NULL)
@@ -564,6 +573,7 @@ VOP_INACTIVE(struct vnode *vp, struct proc *p)
 	a.a_vp = vp;
 	a.a_p = p;
 
+	KASSERT(p == curproc);
 	ASSERT_VP_ISLOCKED(vp);
 
 	if (vp->v_op->vop_inactive == NULL)
@@ -580,6 +590,7 @@ VOP_RECLAIM(struct vnode *vp, struct proc *p)
 	a.a_vp = vp;
 	a.a_p = p;
 
+	KASSERT(p == curproc);
 	if (vp->v_op->vop_reclaim == NULL)
 		return (EOPNOTSUPP);
 
