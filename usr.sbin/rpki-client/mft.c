@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.11 2020/03/30 11:09:03 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.12 2020/03/30 12:12:51 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -115,7 +115,7 @@ hex_pton(u_char const *src, size_t srclen, char *target, size_t targlen)
  * Return zero on failure, non-zero on success.
  */
 static int
-mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
+mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os, int just_check)
 {
 	char	 		 file_hash[SHA256_DIGEST_STRING_LENGTH];
 	char 			 cert_hash[SHA256_DIGEST_STRING_LENGTH];
@@ -124,19 +124,18 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	char			*fn = NULL;
 	const unsigned char	*d = os->data;
 	size_t			 dsz = os->length, sz;
-	int			 rc = 0;
 	struct mftfile		*fent;
 	char			*cp, *path = NULL;
 
 	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
 		cryptowarnx("%s: RFC 6486 section 4.2.1: FileAndHash: "
 		    "failed ASN.1 sequence parse", p->fn);
-		goto out;
+		goto fail;
 	} else if (sk_ASN1_TYPE_num(seq) != 2) {
 		warnx("%s: RFC 6486 section 4.2.1: FileAndHash: "
 		    "want 2 elements, have %d", p->fn,
 		    sk_ASN1_TYPE_num(seq));
-		goto out;
+		goto fail;
 	}
 
 	/* First is the filename itself. */
@@ -146,7 +145,7 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 		warnx("%s: RFC 6486 section 4.2.1: FileAndHash: "
 		    "want ASN.1 IA5 string, have %s (NID %d)",
 		    p->fn, ASN1_tag2str(file->type), file->type);
-		goto out;
+		goto fail;
 	}
 	fn = strndup((const char *)file->value.ia5string->data,
 	    file->value.ia5string->length);
@@ -163,20 +162,20 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	if (strchr(fn, '/') != NULL) {
 		warnx("%s: path components disallowed in filename: %s",
 		    p->fn, fn);
-		goto out;
+		goto fail;
 	} else if ((sz = strlen(fn)) <= 4) {
 		warnx("%s: filename must be large enough for suffix part: %s",
 		    p->fn, fn);
-		goto out;
+		goto fail;
 	}
 
 	if (strcasecmp(fn + sz - 4, ".roa") &&
 	    strcasecmp(fn + sz - 4, ".crl") &&
 	    strcasecmp(fn + sz - 4, ".cer")) {
+		/* ignore unknown files */
 		free(fn);
-		fn = NULL;
-		rc = 1;
-		goto out;
+		sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
+		return 1;
 	}
 
 	/* Now hash value. */
@@ -185,14 +184,14 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 		warnx("%s: RFC 6486 section 4.2.1: FileAndHash: "
 		    "want ASN.1 bit string, have %s (NID %d)",
 		    p->fn, ASN1_tag2str(hash->type), hash->type);
-		goto out;
+		goto fail;
 	}
 
 	if (hash->value.bit_string->length != SHA256_DIGEST_LENGTH) {
 		warnx("%s: RFC 6486 section 4.2.1: hash: "
 		    "invalid SHA256 length, have %d",
 		    p->fn, hash->value.bit_string->length);
-		goto out;
+		goto fail;
 	}
 
 	if (hex_pton(hash->value.bit_string->data, SHA256_DIGEST_LENGTH,
@@ -207,13 +206,18 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 
 	if (SHA256File(path, file_hash) == NULL) {
 		warn("%s: referenced file %s", p->fn, fn);
-		goto out;
+		goto fail;
 	}
+	free(path);
+	path = NULL;
 
 	if (strcmp(file_hash, cert_hash) != 0) {
 		warnx("%s: bad message digest for %s", p->fn, fn);
-                goto out;
+                goto fail;
 	}
+
+	if (just_check)
+		goto fail;
 
 	/* Insert the filename and hash value. */
 
@@ -226,15 +230,16 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	memset(fent, 0, sizeof(struct mftfile));
 
 	fent->file = fn;
-	fn = NULL;
 	memcpy(fent->hash, hash->value.bit_string->data, SHA256_DIGEST_LENGTH);
 
-	rc = 1;
-out:
+	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
+	return 1;
+
+fail:
 	free(path);
 	free(fn);
 	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
-	return rc;
+	return 0;
 }
 
 /*
@@ -248,7 +253,7 @@ mft_parse_flist(struct parse *p, const ASN1_OCTET_STRING *os)
 	const ASN1_TYPE		*t;
 	const unsigned char	*d = os->data;
 	size_t			 dsz = os->length;
-	int			 i, rc = 0;
+	int			 i, rc = 0, failed = 0;
 
 	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
 		cryptowarnx("%s: RFC 6486 section 4.2: fileList: "
@@ -263,9 +268,12 @@ mft_parse_flist(struct parse *p, const ASN1_OCTET_STRING *os)
 			    "want ASN.1 sequence, have %s (NID %d)",
 			    p->fn, ASN1_tag2str(t->type), t->type);
 			goto out;
-		} else if (!mft_parse_filehash(p, t->value.octet_string))
-			goto out;
+		} else if (!mft_parse_filehash(p, t->value.octet_string,
+		    failed))
+			failed = 1;
 	}
+	if (failed)
+		goto out;
 
 	rc = 1;
 out:
