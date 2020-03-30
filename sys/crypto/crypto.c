@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.81 2020/03/29 13:43:13 krw Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.82 2020/03/30 17:48:39 krw Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -331,14 +331,16 @@ crypto_unregister(u_int32_t driverid, int alg)
 
 	/* Sanity checks. */
 	if (driverid >= crypto_drivers_num || crypto_drivers == NULL ||
-	    alg <= 0 || alg > (CRYPTO_ALGORITHM_MAX + 1) ||
-	    (alg != (CRYPTO_ALGORITHM_MAX + 1) &&
-	    crypto_drivers[driverid].cc_alg[alg] == 0)) {
+	    alg <= 0 || alg > (CRYPTO_ALGORITHM_MAX + 1)) {
 		splx(s);
 		return EINVAL;
 	}
 
 	if (alg != CRYPTO_ALGORITHM_MAX + 1) {
+		if (crypto_drivers[driverid].cc_alg[alg] == 0) {
+			splx(s);
+			return EINVAL;
+		}
 		crypto_drivers[driverid].cc_alg[alg] = 0;
 
 		/* Was this the last algorithm ? */
