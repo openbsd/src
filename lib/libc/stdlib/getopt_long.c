@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.30 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.31 2020/03/30 12:52:58 martijn Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -478,8 +478,6 @@ start:
 /*
  * getopt --
  *	Parse argc/argv argument vector.
- *
- * [eventually this will replace the BSD getopt]
  */
 int
 getopt(int nargc, char * const *nargv, const char *options)
