@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.54 2020/03/15 20:35:52 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.55 2020/03/31 11:38:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -100,6 +100,9 @@ static const struct {
 	KEYC_MOUSE_STRING(MOUSEDRAGEND3, MouseDragEnd3),
 	KEYC_MOUSE_STRING(WHEELUP, WheelUp),
 	KEYC_MOUSE_STRING(WHEELDOWN, WheelDown),
+	KEYC_MOUSE_STRING(SECONDCLICK1, SecondClick1),
+	KEYC_MOUSE_STRING(SECONDCLICK2, SecondClick2),
+	KEYC_MOUSE_STRING(SECONDCLICK3, SecondClick3),
 	KEYC_MOUSE_STRING(DOUBLECLICK1, DoubleClick1),
 	KEYC_MOUSE_STRING(DOUBLECLICK2, DoubleClick2),
 	KEYC_MOUSE_STRING(DOUBLECLICK3, DoubleClick3),
