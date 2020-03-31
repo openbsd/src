@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-environment.c,v 1.22 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-set-environment.c,v 1.23 2020/03/31 17:14:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -34,8 +34,8 @@ const struct cmd_entry cmd_set_environment_entry = {
 	.name = "set-environment",
 	.alias = "setenv",
 
-	.args = { "grt:u", 1, 2 },
-	.usage = "[-gru] " CMD_TARGET_SESSION_USAGE " name [value]",
+	.args = { "hgrt:u", 1, 2 },
+	.usage = "[-hgru] " CMD_TARGET_SESSION_USAGE " name [value]",
 
 	.target = { 't', CMD_FIND_SESSION, CMD_FIND_CANFAIL },
 
@@ -96,7 +96,10 @@ cmd_set_environment_exec(struct cmd *self, struct cmdq_item *item)
 			cmdq_error(item, "no value specified");
 			return (CMD_RETURN_ERROR);
 		}
-		environ_set(env, name, "%s", value);
+		if (args_has(args, 'h'))
+			environ_set(env, name, ENVIRON_HIDDEN, "%s", value);
+		else
+			environ_set(env, name, 0, "%s", value);
 	}
 
 	return (CMD_RETURN_NORMAL);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.23 2020/01/28 13:10:14 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.24 2020/03/31 17:14:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -99,6 +99,7 @@ static void	 cmd_parse_print_commands(struct cmd_parse_input *, u_int,
 }
 
 %token ERROR
+%token HIDDEN
 %token IF
 %token ELSE
 %token ELIF
@@ -134,6 +135,11 @@ statements	: statement '\n'
 		}
 
 statement	: /* empty */
+		{
+			$$ = xmalloc (sizeof *$$);
+			TAILQ_INIT($$);
+		}
+		| hidden_assignment
 		{
 			$$ = xmalloc (sizeof *$$);
 			TAILQ_INIT($$);
@@ -204,8 +210,19 @@ assignment	: EQUALS
 
 			if ((~flags & CMD_PARSE_PARSEONLY) &&
 			    (ps->scope == NULL || ps->scope->flag))
-				environ_put(global_environ, $1);
+				environ_put(global_environ, $1, 0);
 			free($1);
+		}
+
+hidden_assignment : HIDDEN EQUALS
+		{
+			struct cmd_parse_state	*ps = &parse_state;
+			int			 flags = ps->input->flags;
+
+			if ((~flags & CMD_PARSE_PARSEONLY) &&
+			    (ps->scope == NULL || ps->scope->flag))
+				environ_put(global_environ, $2, ENVIRON_HIDDEN);
+			free($2);
 		}
 
 if_open		: IF expanded
@@ -1079,6 +1096,10 @@ yylex(void)
 			if (*cp == '\0')
 				return (TOKEN);
 			ps->condition = 1;
+			if (strcmp(yylval.token, "%hidden") == 0) {
+				free(yylval.token);
+				return (HIDDEN);
+			}
 			if (strcmp(yylval.token, "%if") == 0) {
 				free(yylval.token);
 				return (IF);

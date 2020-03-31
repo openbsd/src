@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.23 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.24 2020/03/31 17:14:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -38,8 +38,8 @@ const struct cmd_entry cmd_show_environment_entry = {
 	.name = "show-environment",
 	.alias = "showenv",
 
-	.args = { "gst:", 0, 1 },
-	.usage = "[-gs] " CMD_TARGET_SESSION_USAGE " [name]",
+	.args = { "hgst:", 0, 1 },
+	.usage = "[-hgs] " CMD_TARGET_SESSION_USAGE " [name]",
 
 	.target = { 't', CMD_FIND_SESSION, CMD_FIND_CANFAIL },
 
@@ -69,7 +69,13 @@ static void
 cmd_show_environment_print(struct cmd *self, struct cmdq_item *item,
     struct environ_entry *envent)
 {
-	char	*escaped;
+	struct args	*args = self->args;
+	char		*escaped;
+
+	if (!args_has(args, 'h') && (envent->flags & ENVIRON_HIDDEN))
+		return;
+	if (args_has(args, 'h') && (~envent->flags & ENVIRON_HIDDEN))
+		return;
 
 	if (!args_has(self->args, 's')) {
 		if (envent->value != NULL)

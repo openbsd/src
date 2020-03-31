@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.97 2020/03/16 18:08:39 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.98 2020/03/31 17:14:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -142,7 +142,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 
 	add = args_first_value(args, 'e', &value);
 	while (add != NULL) {
-		environ_put(sc.environ, add);
+		environ_put(sc.environ, add, 0);
 		add = args_next_value(&value);
 	}
 
