@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.45 2020/03/31 11:54:07 kettenis Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.46 2020/03/31 13:00:27 kettenis Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -402,8 +402,6 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	descs = bus_space_vaddr(sc->sc_bst, sc->sc_bsh_txdescs);
 	pmap_extract(pmap_kernel(), (vaddr_t)descs, &sc->sc_txdescs_pa);
 
-	sc->sc_rxdescs_pa = faa->fa_reg[0].addr +
-	    CPSW_CPPI_RAM_RXDESCS_BASE;
 	error = bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    CPSW_CPPI_RAM_RXDESCS_BASE, CPSW_CPPI_RAM_RXDESCS_SIZE,
 	    &sc->sc_bsh_rxdescs);
