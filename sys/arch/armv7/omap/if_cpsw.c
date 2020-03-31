@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.44 2018/12/24 08:45:57 jsg Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.45 2020/03/31 11:54:07 kettenis Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -88,6 +88,8 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
+
+#include <uvm/uvm_extern.h>
 
 #define CPSW_TXFRAGS	16
 
@@ -334,6 +336,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct arpcom * const ac = &sc->sc_ac;
 	struct ifnet * const ifp = &ac->ac_if;
+	void *descs;
 	u_int32_t idver;
 	int error;
 	int node;
@@ -383,14 +386,12 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bdt = faa->fa_dmat;
 
 	error = bus_space_map(sc->sc_bst, faa->fa_reg[0].addr,
-	    memsize, 0, &sc->sc_bsh);
+	    memsize, BUS_SPACE_MAP_LINEAR, &sc->sc_bsh);
 	if (error) {
 		printf("can't map registers: %d\n", error);
 		return;
 	}
 
-	sc->sc_txdescs_pa = faa->fa_reg[0].addr +
-	    CPSW_CPPI_RAM_TXDESCS_BASE;
 	error = bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    CPSW_CPPI_RAM_TXDESCS_BASE, CPSW_CPPI_RAM_TXDESCS_SIZE,
 	    &sc->sc_bsh_txdescs);
@@ -398,6 +399,8 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		printf("can't subregion tx ring SRAM: %d\n", error);
 		return;
 	}
+	descs = bus_space_vaddr(sc->sc_bst, sc->sc_bsh_txdescs);
+	pmap_extract(pmap_kernel(), (vaddr_t)descs, &sc->sc_txdescs_pa);
 
 	sc->sc_rxdescs_pa = faa->fa_reg[0].addr +
 	    CPSW_CPPI_RAM_RXDESCS_BASE;
@@ -408,6 +411,8 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 		printf("can't subregion rx ring SRAM: %d\n", error);
 		return;
 	}
+	descs = bus_space_vaddr(sc->sc_bst, sc->sc_bsh_rxdescs);
+	pmap_extract(pmap_kernel(), (vaddr_t)descs, &sc->sc_rxdescs_pa);
 
 	sc->sc_rdp = malloc(sizeof(*sc->sc_rdp), M_TEMP, M_WAITOK);
 	KASSERT(sc->sc_rdp != NULL);
