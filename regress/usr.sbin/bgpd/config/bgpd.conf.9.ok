@@ -6,8 +6,6 @@ roa-set {
 	1.2.3.0/24 source-as 0
 	10.0.0.0/8 source-as 1
 	10.0.0.0/8 source-as 2
-	10.0.0.0/8 source-as 3
-	10.0.0.0/8 source-as 4
 	10.0.0.0/8 maxlen 24 source-as 3
 	10.0.0.0/8 maxlen 24 source-as 4
 	10.0.0.0/8 maxlen 24 source-as 5
@@ -32,8 +30,6 @@ origin-set "test2" {
 origin-set "test3" {
 	10.0.0.0/8 source-as 1
 	10.0.0.0/8 source-as 2
-	10.0.0.0/8 source-as 3
-	10.0.0.0/8 source-as 4
 	10.0.0.0/8 maxlen 24 source-as 3
 	10.0.0.0/8 maxlen 24 source-as 4
 	10.0.0.0/8 maxlen 24 source-as 5
