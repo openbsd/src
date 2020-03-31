@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.206 2020/03/30 20:57:59 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.207 2020/03/31 20:19:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -52,6 +52,7 @@ void	 ikev2_info_csa(struct iked *, int, const char *, struct iked_childsa *);
 void	 ikev2_info_flow(struct iked *, int, const char *, struct iked_flow *);
 void	 ikev2_log_established(struct iked_sa *);
 void	 ikev2_log_proposal(struct iked_sa *, struct iked_proposals *);
+void	 ikev2_log_cert_info(const char *, struct iked_id *);
 
 void	 ikev2_run(struct privsep *, struct privsep_proc *, void *);
 int	 ikev2_dispatch_parent(int, struct privsep_proc *, struct imsg *);
@@ -2745,9 +2746,19 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 int
 ikev2_send_auth_failed(struct iked *env, struct iked_sa *sa)
 {
+	char				 dstid[IKED_ID_SIZE];
 	struct ikev2_notify		*n;
 	struct ibuf			*buf = NULL;
 	int				 ret = -1, exchange, response;
+
+	if (ikev2_print_id(IKESA_DSTID(sa), dstid, sizeof(dstid)) == -1)
+		bzero(dstid, sizeof(dstid));
+	log_info("%s: authentication failed for %s",
+	    SPI_SA(sa, __func__), dstid);
+
+	/* Log certificate information */
+	ikev2_log_cert_info(SPI_SA(sa, __func__),
+	    sa->sa_hdr.sh_initiator ? &sa->sa_rcert : &sa->sa_icert);
 
 	/* Notify payload */
 	if ((buf = ibuf_static()) == NULL)
@@ -6499,6 +6510,27 @@ ikev2_log_established(struct iked_sa *sa)
 	    print_host((struct sockaddr *)&sa->sa_addrpool6->addr, NULL, 0) : "",
 	    sa->sa_policy ? sa->sa_policy->pol_name : "",
 	    sa->sa_hdr.sh_initiator ? " as initiator" : " as responder");
+}
+
+void
+ikev2_log_cert_info(const char *msg, struct iked_id *certid)
+{
+	X509		*cert = NULL;
+	BIO		*rawcert = NULL;
+
+	if (certid->id_type != IKEV2_CERT_X509_CERT ||
+	    certid->id_buf == NULL)
+		return;
+	if ((rawcert = BIO_new_mem_buf(ibuf_data(certid->id_buf),
+	    ibuf_length(certid->id_buf))) == NULL ||
+	    (cert = d2i_X509_bio(rawcert, NULL)) == NULL)
+		goto out;
+	ca_cert_info(msg, cert);
+out:
+	if (cert)
+		X509_free(cert);
+	if (rawcert)
+		BIO_free(rawcert);
 }
 
 void

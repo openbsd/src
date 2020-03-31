@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.53 2020/03/27 12:53:31 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.54 2020/03/31 20:19:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -56,6 +56,7 @@ int	 ca_getauth(struct iked *, struct imsg *);
 X509	*ca_by_subjectpubkey(X509_STORE *, uint8_t *, size_t);
 X509	*ca_by_issuer(X509_STORE *, X509_NAME *, struct iked_static_id *);
 X509	*ca_by_subjectaltname(X509_STORE *, struct iked_static_id *);
+void	 ca_store_certs_info(const char *, X509_STORE *);
 int	 ca_subjectpubkey_digest(X509 *, uint8_t *, unsigned int *);
 int	 ca_x509_subject_cmp(X509 *, struct iked_static_id *);
 int	 ca_validate_pubkey(struct iked *, struct iked_static_id *,
@@ -506,14 +507,17 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 		if (cert == NULL) {
 			if (ikev2_print_static_id(&id, idstr, sizeof(idstr)) == -1)
 				return (-1);
-			log_debug("%s: no valid local certificate found for %s",
+			log_info("%s: no valid local certificate found for %s",
 			    SPI_SH(&sh, __func__), idstr);
+			ca_store_certs_info(SPI_SH(&sh, __func__),
+			    store->ca_certs);
 			if (store->ca_pubkey.id_buf == NULL)
 				return (-1);
 			buf = ibuf_dup(store->ca_pubkey.id_buf);
 			type = store->ca_pubkey.id_type;
-			log_debug("%s: using local public key of type %s",
-			    __func__, print_map(type, ikev2_cert_map));
+			log_info("%s: using local public key of type %s",
+			    SPI_SH(&sh, __func__),
+			    print_map(type, ikev2_cert_map));
 			break;
 		}
 
@@ -855,6 +859,50 @@ ca_by_subjectaltname(X509_STORE *ctx, struct iked_static_id *id)
 	}
 
 	return (NULL);
+}
+
+void
+ca_store_certs_info(const char *msg, X509_STORE *ctx)
+{
+	STACK_OF(X509_OBJECT)	*h;
+	X509_OBJECT		*xo;
+	X509			*cert;
+	int			 i;
+
+	h = ctx->objs;
+	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
+		xo = sk_X509_OBJECT_value(h, i);
+		if (xo->type != X509_LU_X509)
+			continue;
+		cert = xo->data.x509;
+		ca_cert_info(msg, cert);
+	}
+}
+
+void
+ca_cert_info(const char *msg, X509 *cert)
+{
+	ASN1_INTEGER	*asn1_serial;
+	BUF_MEM		*memptr;
+	BIO		*rawserial = NULL;
+	char		 buf[BUFSIZ];
+
+	if ((asn1_serial = X509_get_serialNumber(cert)) == NULL ||
+	    (rawserial = BIO_new(BIO_s_mem())) == NULL ||
+	    i2a_ASN1_INTEGER(rawserial, asn1_serial) <= 0)
+		goto out;
+	if (X509_NAME_oneline(X509_get_issuer_name(cert), buf, sizeof(buf)))
+		log_info("%s: issuer: %s", msg, buf);
+	BIO_get_mem_ptr(rawserial, &memptr);
+	if (memptr->data != NULL && memptr->length < INT32_MAX)
+		log_info("%s: serial: %.*s", msg, (int)memptr->length,
+		    memptr->data);
+	if (X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof(buf)))
+		log_info("%s: subject: %s", msg, buf);
+	ca_x509_subjectaltname_log(cert, msg);
+out:
+	if (rawserial)
+		BIO_free(rawserial);
 }
 
 int

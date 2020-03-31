@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.137 2020/03/24 19:14:53 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.138 2020/03/31 20:19:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -984,6 +984,7 @@ void	 ca_sslerror(const char *);
 char	*ca_asn1_name(uint8_t *, size_t);
 char	*ca_x509_name(void *);
 void	*ca_x509_name_parse(char *);
+void	 ca_cert_info(const char *, X509 *);
 
 /* timer.c */
 void	 timer_set(struct iked *, struct iked_timer *,
