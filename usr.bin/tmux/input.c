@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.172 2020/03/31 06:35:38 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.173 2020/03/31 07:00:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1679,10 +1679,14 @@ input_csi_dispatch_rm_private(struct input_ctx *ictx)
 		case 1047:
 			if (wp != NULL)
 				window_pane_alternate_off(wp, gc, 0);
+			else
+				screen_alternate_off(sctx->s, gc, 0);
 			break;
 		case 1049:
 			if (wp != NULL)
 				window_pane_alternate_off(wp, gc, 1);
+			else
+				screen_alternate_off(sctx->s, gc, 1);
 			break;
 		case 2004:
 			screen_write_mode_clear(sctx, MODE_BRACKETPASTE);
@@ -1780,10 +1784,14 @@ input_csi_dispatch_sm_private(struct input_ctx *ictx)
 		case 1047:
 			if (wp != NULL)
 				window_pane_alternate_on(wp, gc, 0);
+			else
+				screen_alternate_on(sctx->s, gc, 0);
 			break;
 		case 1049:
 			if (wp != NULL)
 				window_pane_alternate_on(wp, gc, 1);
+			else
+				screen_alternate_on(sctx->s, gc, 1);
 			break;
 		case 2004:
 			screen_write_mode_set(sctx, MODE_BRACKETPASTE);

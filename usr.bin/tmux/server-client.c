@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.309 2020/03/24 08:09:44 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.310 2020/03/31 07:00:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1400,7 +1400,7 @@ server_client_resize_event(__unused int fd, __unused short events, void *data)
 	log_debug("%s: %%%u timer fired (was%s resized)", __func__, wp->id,
 	    (wp->flags & PANE_RESIZED) ? "" : " not");
 
-	if (wp->saved_grid == NULL && (wp->flags & PANE_RESIZED)) {
+	if (wp->base.saved_grid == NULL && (wp->flags & PANE_RESIZED)) {
 		log_debug("%s: %%%u deferring timer", __func__, wp->id);
 		server_client_start_resize_timer(wp);
 	} else if (!server_client_resize_force(wp)) {

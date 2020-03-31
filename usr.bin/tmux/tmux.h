@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.968 2020/03/31 06:35:38 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.969 2020/03/31 07:00:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -754,8 +754,12 @@ struct screen {
 
 	int			 mode;
 
-	bitstr_t		*tabs;
+	u_int			 saved_cx;
+	u_int			 saved_cy;
+	struct grid		*saved_grid;
+	struct grid_cell	 saved_cell;
 
+	bitstr_t		*tabs;
 	struct screen_sel	*sel;
 };
 
@@ -916,12 +920,6 @@ struct window_pane {
 
 	struct screen	 status_screen;
 	size_t		 status_size;
-
-	/* Saved in alternative screen mode. */
-	u_int		 saved_cx;
-	u_int		 saved_cy;
-	struct grid	*saved_grid;
-	struct grid_cell saved_cell;
 
 	TAILQ_HEAD (, window_mode_entry) modes;
 	struct event	 modetimer;
@@ -2459,6 +2457,9 @@ void	 screen_hide_selection(struct screen *);
 int	 screen_check_selection(struct screen *, u_int, u_int);
 void	 screen_select_cell(struct screen *, struct grid_cell *,
 	     const struct grid_cell *);
+void	 screen_alternate_on(struct screen *, struct grid_cell *, int);
+void	 screen_alternate_off(struct screen *, struct grid_cell *, int);
+
 
 /* window.c */
 extern struct windows windows;
