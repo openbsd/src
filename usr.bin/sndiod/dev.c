@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.65 2020/03/08 14:52:20 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.66 2020/03/31 06:29:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2398,9 +2398,9 @@ dev_setctl(struct dev *d, int addr, int val)
 			slot_setvol(d->slot + num, val);
 			dev_midi_vol(d, d->slot + num);
 		}
+		c->val_mask = ~0U;
 	}
 	c->curval = val;
-	c->val_mask = ~0U;
 	return 1;
 }
 
