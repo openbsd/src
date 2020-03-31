@@ -1,4 +1,4 @@
-/* $OpenBSD: omap3.c,v 1.5 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: omap3.c,v 1.6 2020/03/31 10:33:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -25,9 +25,6 @@
 #define PRCM_ADDR	0x48004000
 #define PRCM_SIZE	0x2000
 
-#define INTC_ADDR	0x48200000
-#define INTC_SIZE	0x200
-
 #define GPTIMERx_SIZE	0x100
 #define GPTIMER1_ADDR	0x48318000
 #define GPTIMER1_IRQ	37
@@ -46,15 +43,6 @@ struct armv7_dev omap3_devs[] = {
 	{ .name = "prcm",
 	  .unit = 0,
 	  .mem = { { PRCM_ADDR, PRCM_SIZE } },
-	},
-
-	/*
-	 * Interrupt Controller
-	 */
-
-	{ .name = "intc",
-	  .unit = 0,
-	  .mem = { { INTC_ADDR, INTC_SIZE } },
 	},
 
 	/*

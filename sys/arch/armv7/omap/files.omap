@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.23 2018/08/27 10:17:35 jsg Exp $
+#	$OpenBSD: files.omap,v 1.24 2020/03/31 10:33:10 kettenis Exp $
 
 define omap {}
 device omap: omap
@@ -20,11 +20,6 @@ file	arch/armv7/omap/if_cpsw.c		cpsw
 device prcm
 attach prcm at omap
 file	arch/armv7/omap/prcm.c			prcm
-
-device sitaracm
-attach sitaracm at omap
-file	arch/armv7/omap/am335x_cm_padconf.c	sitaracm
-file	arch/armv7/omap/sitara_cm.c		sitaracm
 
 device omgpio: gpiobus
 attach omgpio at fdt
