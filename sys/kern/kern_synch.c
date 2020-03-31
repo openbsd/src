@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.168 2020/03/26 08:03:50 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.169 2020/03/31 09:34:19 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -197,22 +197,6 @@ tsleep_nsec(const volatile void *ident, int priority, const char *wmesg,
 	return tsleep(ident, priority, wmesg, (int)to_ticks);
 }
 
-int
-sleep_finish_all(struct sleep_state *sls, int do_sleep)
-{
-	int error, error1;
-
-	sleep_finish(sls, do_sleep);
-	error1 = sleep_finish_timeout(sls);
-	error = sleep_finish_signal(sls);
-
-	/* Signal errors are higher priority than timeouts. */
-	if (error == 0 && error1 != 0)
-		error = error1;
-
-	return error;
-}
-
 /*
  * Same as tsleep, but if we have a mutex provided, then once we've
  * entered the sleep queue we drop the mutex. After sleeping we re-lock.
@@ -397,6 +381,22 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 	p->p_slptime = 0;
 	p->p_slppri = prio & PRIMASK;
 	TAILQ_INSERT_TAIL(&slpque[LOOKUP(ident)], p, p_runq);
+}
+
+int
+sleep_finish_all(struct sleep_state *sls, int do_sleep)
+{
+	int error, error1;
+
+	sleep_finish(sls, do_sleep);
+	error1 = sleep_finish_timeout(sls);
+	error = sleep_finish_signal(sls);
+
+	/* Signal errors are higher priority than timeouts. */
+	if (error == 0 && error1 != 0)
+		error = error1;
+
+	return error;
 }
 
 void
