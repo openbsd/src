@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.7 2020/02/29 09:42:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.8 2020/03/31 07:27:30 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4141,6 +4141,8 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
 	    rinfo->ht_plcp != IWX_RATE_HT_SISO_MCS_INV_PLCP) {
 		rate_flags |= IWX_RATE_MCS_HT_MSK; 
+		if (ieee80211_node_supports_ht_sgi20(ni))
+			rate_flags |= IWX_RATE_MCS_SGI_MSK;
 		tx->rate_n_flags = htole32(rate_flags | rinfo->ht_plcp);
 	} else
 		tx->rate_n_flags = htole32(rate_flags | rinfo->plcp);
