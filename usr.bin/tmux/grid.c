@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.103 2020/03/21 13:51:30 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.104 2020/03/31 17:13:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -349,6 +349,19 @@ grid_collect_history(struct grid *gd)
 	gd->hsize -= ny;
 	if (gd->hscrolled > gd->hsize)
 		gd->hscrolled = gd->hsize;
+}
+
+/* Remove lines from the bottom of the history. */
+void
+grid_remove_history(struct grid *gd, u_int ny)
+{
+	u_int	yy;
+
+	if (ny > gd->hsize)
+		return;
+	for (yy = 0; yy < ny; yy++)
+		grid_free_line(gd, gd->hsize + gd->sy - 1 - yy);
+	gd->hsize -= ny;
 }
 
 /*
