@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.250 2020/03/19 14:03:49 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.251 2020/03/31 06:35:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -891,8 +891,6 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 	if (gethostname(host, sizeof host) == 0)
 		screen_set_title(&wp->base, host);
 
-	wp->ictx = input_init(wp);
-
 	return (wp);
 }
 
@@ -906,8 +904,8 @@ window_pane_destroy(struct window_pane *wp)
 		bufferevent_free(wp->event);
 		close(wp->fd);
 	}
-
-	input_free(wp->ictx);
+	if (wp->ictx != NULL)
+		input_free(wp->ictx);
 
 	screen_free(&wp->status_screen);
 
@@ -974,6 +972,7 @@ window_pane_set_event(struct window_pane *wp)
 
 	wp->event = bufferevent_new(wp->fd, window_pane_read_callback,
 	    NULL, window_pane_error_callback, wp);
+	wp->ictx = input_init(wp, wp->event);
 
 	bufferevent_setwatermark(wp->event, EV_READ, 0, READ_SIZE);
 	bufferevent_enable(wp->event, EV_READ|EV_WRITE);

@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.4 2020/03/30 07:42:44 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.5 2020/03/31 06:35:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -443,8 +443,6 @@ popup_display(int flags, struct cmdq_item *item, u_int px, u_int py, u_int sx,
 	popup_write_screen(c, pd);
 
 	if (shellcmd != NULL) {
-		pd->ictx = input_init(NULL);
-
 		if (fs != NULL)
 			s = fs->s;
 		else
@@ -455,6 +453,7 @@ popup_display(int flags, struct cmdq_item *item, u_int px, u_int py, u_int sx,
 		pd->job = job_run(shellcmd, s, cwd, popup_job_update_cb,
 		    popup_job_complete_cb, NULL, pd, jobflags, pd->sx - 2,
 		    pd->sy - 2);
+		pd->ictx = input_init(NULL, job_get_event(pd->job));
 	}
 
 	server_client_set_overlay(c, 0, popup_check_cb, popup_mode_cb,

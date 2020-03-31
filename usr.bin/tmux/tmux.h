@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.967 2020/03/30 16:16:48 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.968 2020/03/31 06:35:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2296,7 +2296,7 @@ void	 recalculate_size(struct window *);
 void	 recalculate_sizes(void);
 
 /* input.c */
-struct input_ctx *input_init(struct window_pane *);
+struct input_ctx *input_init(struct window_pane *, struct bufferevent *);
 void	 input_free(struct input_ctx *);
 void	 input_reset(struct input_ctx *, int);
 struct evbuffer *input_pending(struct input_ctx *);
@@ -2334,6 +2334,7 @@ struct grid *grid_create(u_int, u_int, u_int);
 void	 grid_destroy(struct grid *);
 int	 grid_compare(struct grid *, struct grid *);
 void	 grid_collect_history(struct grid *);
+void	 grid_remove_history(struct grid *, u_int );
 void	 grid_scroll_history(struct grid *, u_int);
 void	 grid_scroll_history_region(struct grid *, u_int, u_int, u_int);
 void	 grid_clear_history(struct grid *);
