@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.970 2020/03/31 11:38:35 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.971 2020/03/31 16:53:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -927,7 +927,9 @@ struct window_pane {
 	TAILQ_HEAD (, window_mode_entry) modes;
 	struct event	 modetimer;
 	time_t		 modelast;
+
 	char		*searchstr;
+	int		 searchregex;
 
 	TAILQ_ENTRY(window_pane) entry;
 	RB_ENTRY(window_pane) tree_entry;
