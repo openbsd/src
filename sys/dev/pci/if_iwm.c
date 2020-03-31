@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.301 2020/03/31 07:23:23 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.302 2020/03/31 11:32:43 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5288,6 +5288,17 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 		    |= htole32(IWM_STA_FLG_MAX_AGG_SIZE_MSK |
 		    IWM_STA_FLG_AGG_MPDU_DENS_MSK);
 
+		if (!sc->sc_nvm.sku_cap_mimo_disable) {
+			if (in->in_ni.ni_rxmcs[1] != 0) {
+				add_sta_cmd.station_flags |=
+				    htole32(IWM_STA_FLG_MIMO_EN_MIMO2);
+			}
+			if (in->in_ni.ni_rxmcs[2] != 0) {
+				add_sta_cmd.station_flags |=
+				    htole32(IWM_STA_FLG_MIMO_EN_MIMO3);
+			}
+		}
+
 		add_sta_cmd.station_flags
 		    |= htole32(IWM_STA_FLG_MAX_AGG_SIZE_64K);
 		switch (ic->ic_ampdu_params & IEEE80211_AMPDU_PARAM_SS) {
@@ -6669,6 +6680,14 @@ iwm_run(struct iwm_softc *sc)
 			    DEVNAME(sc));
 			return err;
 		}
+	}
+
+	/* Update STA again, for HT-related settings such as MIMO. */
+	err = iwm_add_sta_cmd(sc, in, 1);
+	if (err) {
+		printf("%s: could not update STA (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
 	}
 
 	/* We have now been assigned an associd by the AP. */
