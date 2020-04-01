@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.59 2020/03/06 17:42:45 job Exp $ */
+/*	$OpenBSD: main.c,v 1.60 2020/04/01 10:54:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1025,7 +1025,7 @@ proc_parser_crl(struct entity *entp, X509_STORE *store,
 		crl->x509_crl = x509_crl;
 
 		if (RB_INSERT(crl_tree, crlt, crl) != NULL) {
-			warnx("%s: dup aki %s", __func__, crl->aki);
+			warnx("%s: duplicate AKI %s", entp->uri, crl->aki);
 			free_crl(crl);
 		}
 	}
