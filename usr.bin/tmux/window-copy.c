@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.260 2020/04/01 07:35:10 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.261 2020/04/01 07:52:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2523,8 +2523,9 @@ window_copy_cstrtocellpos(struct grid *gd, u_int ncells, u_int *ppx, u_int *ppy,
 		cells[cell].d = window_copy_cellstring(gl, px,
 		    &cells[cell].dlen);
 		cell++;
-		px = (px + 1) % gd->sx;
-		if (px == 0) {
+		px++;
+		if (px == gd->sx) {
+			px = 0;
 			pywrap++;
 			gl = grid_peek_line(gd, pywrap);
 		}
