@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.312 2020/03/31 17:14:40 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.313 2020/04/01 11:47:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -506,7 +506,6 @@ server_client_check_mouse(struct client *c, struct key_event *event)
 				type = TRIPLE;
 				x = m->x, y = m->y, b = m->b;
 				log_debug("triple-click at %u,%u", x, y);
-				ignore = 1;
 				goto have_event;
 			}
 		} else {
