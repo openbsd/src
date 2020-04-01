@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.77 2020/03/26 16:50:46 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.78 2020/04/01 07:15:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -664,6 +664,14 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 #ifdef PIPEX_PPPOE
 	struct ifnet *over_ifp = NULL;
 #endif
+
+	/*
+	 * XXX: As long as `session' is allocated as part of a `pxi'
+	 *	it isn't possible to free it separately.  So disallow
+	 *	the timeout feature until this is fixed.
+	 */
+	if (req->pr_timeout_sec != 0)
+		return (EINVAL);
 
 	switch (req->pr_protocol) {
 #ifdef PIPEX_PPPOE
