@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.104 2020/03/21 12:08:31 patrick Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.105 2020/04/01 08:43:33 patrick Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -305,7 +305,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 		if (xfer->rqflags & URQ_AUTO_DMABUF)
 			printf("usbd_transfer: has old buffer!\n");
 #endif
-		err = usb_allocmem(bus, xfer->length, 0, 0, &xfer->dmabuf);
+		err = usb_allocmem(bus, xfer->length, 0, USB_DMA_COHERENT,
+		    &xfer->dmabuf);
 		if (err)
 			return (err);
 		xfer->rqflags |= URQ_AUTO_DMABUF;
