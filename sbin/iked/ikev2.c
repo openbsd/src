@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.207 2020/03/31 20:19:51 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.208 2020/04/01 21:09:27 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -850,7 +850,7 @@ ikev2_ike_auth(struct iked *env, struct iked_sa *sa)
 			else
 				certreqtype = env->sc_certreqtype;
 			return (ca_setreq(env, sa,
-			    &pol->pol_localid, certreqtype,
+			    &pol->pol_localid, certreqtype, 0,
 			    ibuf_data(env->sc_certreq),
 			    ibuf_size(env->sc_certreq), PROC_CERT));
 		} else if ((sa->sa_stateflags & IKED_REQ_CERT) == 0)
@@ -2947,6 +2947,7 @@ ikev2_handle_certreq(struct iked* env, struct iked_message *msg)
 {
 	struct iked_certreq	*cr;
 	struct iked_sa		*sa;
+	uint8_t more;
 
 	if ((sa = msg->msg_sa) == NULL)
 		return (-1);
@@ -2961,8 +2962,13 @@ ikev2_handle_certreq(struct iked* env, struct iked_message *msg)
 		else
 			sa->sa_statevalid |= IKED_REQ_CERT;
 
+		if (SLIST_NEXT(cr, cr_entry) != NULL)
+			more = 1;
+		else
+			more = 0;
+
 		ca_setreq(env, sa, &sa->sa_policy->pol_localid, cr->cr_type,
-		    ibuf_data(cr->cr_data),
+		    more, ibuf_data(cr->cr_data),
 		    ibuf_length(cr->cr_data),
 		    PROC_CERT);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.138 2020/03/31 20:19:51 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.139 2020/04/01 21:09:26 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -971,7 +971,7 @@ void	 pfkey_init(struct iked *, int fd);
 /* ca.c */
 pid_t	 caproc(struct privsep *, struct privsep_proc *);
 int	 ca_setreq(struct iked *, struct iked_sa *, struct iked_static_id *,
-	    uint8_t, uint8_t *, size_t, enum privsep_procid);
+	    uint8_t, uint8_t, uint8_t *, size_t, enum privsep_procid);
 int	 ca_setcert(struct iked *, struct iked_sahdr *, struct iked_id *,
 	    uint8_t, uint8_t *, size_t, enum privsep_procid);
 int	 ca_setauth(struct iked *, struct iked_sa *,

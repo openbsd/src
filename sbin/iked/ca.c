@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.54 2020/03/31 20:19:51 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.55 2020/04/01 21:09:26 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -281,10 +281,10 @@ ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
 
 int
 ca_setreq(struct iked *env, struct iked_sa *sa,
-    struct iked_static_id *localid, uint8_t type, uint8_t *data,
+    struct iked_static_id *localid, uint8_t type, uint8_t more, uint8_t *data,
     size_t len, enum privsep_procid procid)
 {
-	struct iovec		iov[4];
+	struct iovec		iov[5];
 	int			iovcnt = 0;
 	struct iked_static_id	idb;
 	struct iked_id		id;
@@ -310,6 +310,9 @@ ca_setreq(struct iked *env, struct iked_sa *sa,
 	iovcnt++;
 	iov[iovcnt].iov_base = &type;
 	iov[iovcnt].iov_len = sizeof(type);
+	iovcnt++;
+	iov[iovcnt].iov_base = &more;
+	iov[iovcnt].iov_len = sizeof(more);
 	iovcnt++;
 	iov[iovcnt].iov_base = data;
 	iov[iovcnt].iov_len = len;
@@ -438,7 +441,7 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 {
 	struct ca_store		*store = env->sc_priv;
 	struct iked_sahdr	 sh;
-	uint8_t			 type;
+	uint8_t			 type, more;
 	uint8_t			*ptr;
 	size_t			 len;
 	unsigned int		 i, n;
@@ -449,7 +452,7 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 
 	ptr = (uint8_t *)imsg->data;
 	len = IMSG_DATA_SIZE(imsg);
-	i = sizeof(id) + sizeof(uint8_t) + sizeof(sh);
+	i = sizeof(id) + sizeof(uint8_t) + sizeof(sh) + sizeof(more);
 	if (len < i || ((len - i) % SHA_DIGEST_LENGTH) != 0)
 		return (-1);
 
@@ -457,7 +460,8 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 	if (id.id_type == IKEV2_ID_NONE)
 		return (-1);
 	memcpy(&sh, ptr + sizeof(id), sizeof(sh));
-	memcpy(&type, ptr + sizeof(id) + sizeof(sh), sizeof(uint8_t));
+	memcpy(&type, ptr + sizeof(id) + sizeof(sh), sizeof(type));
+	memcpy(&more, ptr + sizeof(id) + sizeof(sh) + sizeof(type), sizeof(more));
 
 	switch (type) {
 	case IKEV2_CERT_RSA_KEY:
@@ -497,9 +501,13 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 
  fallback:
 		/*
-		 * If no certificate matching one of the CAs was found, try to
-		 * find one with subjectAltName matching the ID
+		 * If no certificate or key matching any of the trust-anchors
+		 * was found and this was the last CERTREQ, try to find one with
+		 * subjectAltName matching the ID
 		 */
+		if (more)
+			return (0);
+
 		if (cert == NULL)
 			cert = ca_by_subjectaltname(store->ca_certs, &id);
 
