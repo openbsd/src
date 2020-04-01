@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.5 2019/09/21 05:49:38 jmc Exp $
+.\"	$OpenBSD: sndiod.8,v 1.6 2020/04/01 16:54:17 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 21 2019 $
+.Dd $Mdocdate: April 1 2020 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -271,6 +271,14 @@ the need to restart programs using it.
 .It Fl q Ar port
 Expose the given MIDI port.
 This allows multiple programs to share the port.
+If no
+.Fl q
+option is used,
+.Nm
+will use
+.Pa rmidi/0 , rmidi/1 ,
+.No ... ,
+.Pa rmidi/7 .
 .It Fl r Ar rate
 Attempt to force the device to use this sample rate in Hertz.
 The default is 48000.
