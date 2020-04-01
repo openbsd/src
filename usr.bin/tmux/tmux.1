@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.728 2020/03/31 17:14:40 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.729 2020/04/01 07:35:10 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2020 $
+.Dd $Mdocdate: April 1 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2312,7 +2312,8 @@ and unzoomed (its normal position in the layout).
 .Fl M
 begins mouse resizing (only valid if bound to a mouse key binding, see
 .Sx MOUSE SUPPORT ) .
-.Pp T
+.Pp
+.Fl T
 trims all lines below the current cursor position and moves lines out of the
 history to replace them.
 .It Xo Ic resize-window
