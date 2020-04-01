@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/11/20 12:49:56 bluhm Exp $
+# $OpenBSD: Makefile,v 1.5 2020/04/01 15:26:53 claudio Exp $
 
 # This table lists pledge(2), socket(2), getsockopt(2), and setsockopt(2)
 # calls with their expected outcome.  The constants are compiled into
@@ -49,10 +49,10 @@ run-regress-${promises}-${domain}-${type}-${protocol}-${call}-${level}-${optname
 	    -DLEVEL=${level} -DOPTNAME=${optname} -DOPTVAL=${optval} \
 	    -DERRNO=${errno}' ${.MAKE} sockopt
 .if "${abort}" == 0
-	ktrace ./sockopt
+	ulimit -c unlimited && ktrace ./sockopt
 	! [ -f sockopt.core ]
 .else
-	sh -c 'ktrace ./sockopt ; [ $$? = 134 ]'
+	ulimit -c unlimited && sh -c 'ktrace ./sockopt ; [ $$? = 134 ]'
 	[ -f sockopt.core ]
 	kdump | fgrep -q 'PLDG  ${call}sockopt, "${abort}", errno ${errno} '
 .endif
