@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.295 2020/03/13 00:31:05 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.296 2020/04/01 20:10:17 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -94,7 +94,6 @@ static	void	 post_fn(POST_ARGS);
 static	void	 post_fname(POST_ARGS);
 static	void	 post_fo(POST_ARGS);
 static	void	 post_hyph(POST_ARGS);
-static	void	 post_ignpar(POST_ARGS);
 static	void	 post_it(POST_ARGS);
 static	void	 post_lb(POST_ARGS);
 static	void	 post_nd(POST_ARGS);
@@ -107,6 +106,7 @@ static	void	 post_prevpar(POST_ARGS);
 static	void	 post_root(POST_ARGS);
 static	void	 post_rs(POST_ARGS);
 static	void	 post_rv(POST_ARGS);
+static	void	 post_section(POST_ARGS);
 static	void	 post_sh(POST_ARGS);
 static	void	 post_sh_head(POST_ARGS);
 static	void	 post_sh_name(POST_ARGS);
@@ -127,7 +127,7 @@ static	const v_post mdoc_valids[MDOC_MAX - MDOC_Dd] = {
 	post_dt,	/* Dt */
 	post_os,	/* Os */
 	post_sh,	/* Sh */
-	post_ignpar,	/* Ss */
+	post_section,	/* Ss */
 	post_par,	/* Pp */
 	post_display,	/* D1 */
 	post_display,	/* Dl */
@@ -2187,7 +2187,7 @@ post_sx(POST_ARGS)
 static void
 post_sh(POST_ARGS)
 {
-	post_ignpar(mdoc);
+	post_section(mdoc);
 
 	switch (mdoc->last->type) {
 	case ROFFT_HEAD:
@@ -2520,15 +2520,31 @@ post_xr(POST_ARGS)
 }
 
 static void
-post_ignpar(POST_ARGS)
+post_section(POST_ARGS)
 {
-	struct roff_node *np;
+	struct roff_node *n, *nch;
+	char		 *cp, *tag;
 
-	switch (mdoc->last->type) {
+	n = mdoc->last;
+	switch (n->type) {
 	case ROFFT_BLOCK:
 		post_prevpar(mdoc);
 		return;
 	case ROFFT_HEAD:
+		tag = NULL;
+		deroff(&tag, n);
+		if (tag != NULL) {
+			for (cp = tag; *cp != '\0'; cp++)
+				if (*cp == ' ')
+					*cp = '_';
+			if ((nch = n->child) != NULL &&
+			    nch->type == ROFFT_TEXT &&
+			    strcmp(nch->string, tag) == 0)
+				tag_put(NULL, TAG_WEAK, n);
+			else
+				tag_put(tag, TAG_FALLBACK, n);
+			free(tag);
+		}
 		post_delim(mdoc);
 		post_hyph(mdoc);
 		return;
@@ -2537,23 +2553,21 @@ post_ignpar(POST_ARGS)
 	default:
 		return;
 	}
-
-	if ((np = mdoc->last->child) != NULL)
-		if (np->tok == MDOC_Pp ||
-		    np->tok == ROFF_br || np->tok == ROFF_sp) {
-			mandoc_msg(MANDOCERR_PAR_SKIP, np->line, np->pos,
-			    "%s after %s", roff_name[np->tok],
-			    roff_name[mdoc->last->tok]);
-			roff_node_delete(mdoc, np);
-		}
-
-	if ((np = mdoc->last->last) != NULL)
-		if (np->tok == MDOC_Pp || np->tok == ROFF_br) {
-			mandoc_msg(MANDOCERR_PAR_SKIP, np->line, np->pos,
-			    "%s at the end of %s", roff_name[np->tok],
-			    roff_name[mdoc->last->tok]);
-			roff_node_delete(mdoc, np);
-		}
+	if ((nch = n->child) != NULL &&
+	    (nch->tok == MDOC_Pp || nch->tok == ROFF_br ||
+	     nch->tok == ROFF_sp)) {
+		mandoc_msg(MANDOCERR_PAR_SKIP, nch->line, nch->pos,
+		    "%s after %s", roff_name[nch->tok],
+		    roff_name[n->tok]);
+		roff_node_delete(mdoc, nch);
+	}
+	if ((nch = n->last) != NULL &&
+	    (nch->tok == MDOC_Pp || nch->tok == ROFF_br)) {
+		mandoc_msg(MANDOCERR_PAR_SKIP, nch->line, nch->pos,
+		    "%s at the end of %s", roff_name[nch->tok],
+		    roff_name[n->tok]);
+		roff_node_delete(mdoc, nch);
+	}
 }
 
 static void

@@ -2,8 +2,22 @@
 </section>
 </section>
 <section class="Sh">
+<h1 class="Sh" id="DESCRIPTION_2"><a class="permalink" href="#DESCRIPTION_2">DESCRIPTION</a></h1>
+<p class="Pp">Text in duplicate description section.</p>
+</section>
+<section class="Sh">
 <h1 class="Sh" id="examples"><a class="permalink" href="#examples">EXAMPLES</a></h1>
 <p class="Pp">Text introducing examples.</p>
 <section class="Ss">
 <h2 class="Ss" id="example"><a class="permalink" href="#example">Subsection</a></h2>
 <p class="Pp">Example text.</p>
+</section>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="WEIRD_SECTION"><a class="permalink" href="#WEIRD_SECTION">	
+  WEIRD SECTION	 </a></h1>
+<p class="Pp">Text in weird section.</p>
+</section>
+<section class="Sh">
+<h1 class="Sh">&#x00A0;</h1>
+<p class="Pp">Text in section with empty header.</p>

@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.211 2020/03/13 00:31:05 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.212 2020/04/01 20:10:17 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -567,7 +567,6 @@ mdoc_sh_pre(MDOC_ARGS)
 		print_otag(h, TAG_SECTION, "c", "Sh");
 		break;
 	case ROFFT_HEAD:
-		n->flags |= NODE_ID;
 		print_otag_id(h, TAG_H1, "Sh", n);
 		break;
 	case ROFFT_BODY:
@@ -589,7 +588,6 @@ mdoc_ss_pre(MDOC_ARGS)
 		print_otag(h, TAG_SECTION, "c", "Ss");
 		break;
 	case ROFFT_HEAD:
-		n->flags |= NODE_ID;
 		print_otag_id(h, TAG_H2, "Ss", n);
 		break;
 	case ROFFT_BODY:

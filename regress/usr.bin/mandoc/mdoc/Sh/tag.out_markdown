@@ -14,6 +14,10 @@ BEGINTEST
 
 Text in the subsection.
 
+# DESCRIPTION
+
+Text in duplicate description section.
+
 # EXAMPLES
 
 Text introducing examples.
@@ -22,6 +26,14 @@ Text introducing examples.
 
 Example text.
 
+# 	 WEIRD SECTION	 
+
+Text in weird section.
+
+# &#160;
+
+Text in section with empty header.
+
 ENDTEST
 
-OpenBSD - February 27, 2020
+OpenBSD - April 1, 2020

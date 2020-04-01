@@ -11,12 +11,21 @@ DDEESSCCRRIIPPTTIIOONN
 
      Text in the subsection.
 
+DDEESSCCRRIIPPTTIIOONN
+     Text in duplicate description section.
+
 EEXXAAMMPPLLEESS
      Text introducing examples.
 
    SSuubbsseeccttiioonn
      Example text.
 
+      WWEEIIRRDD SSEECCTTIIOONN
+     Text in weird section.
+
+
+     Text in section with empty header.
+
      ENDTEST
 
-OpenBSD                        February 27, 2020                       OpenBSD
+OpenBSD                          April 1, 2020                         OpenBSD
