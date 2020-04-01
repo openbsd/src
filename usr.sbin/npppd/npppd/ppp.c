@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.28 2019/02/27 04:52:19 denis Exp $ */
+/*	$OpenBSD: ppp.c,v 1.29 2020/04/01 08:33:52 mpi Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.28 2019/02/27 04:52:19 denis Exp $ */
+/* $Id: ppp.c,v 1.29 2020/04/01 08:33:52 mpi Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -1134,8 +1134,12 @@ ppp_on_network_pipex(npppd_ppp *_this)
 	    (!MPPE_MUST_NEGO(_this) || _this->ccp.fsm.state == OPENED ||
 		    _this->ccp.fsm.state == STOPPED)) {
 		/* IPCP is opened and MPPE is not required or MPPE is opened */
-		if (npppd_ppp_pipex_enable(_this->pppd, _this) != 0)
+		if (npppd_ppp_pipex_enable(_this->pppd, _this) != 0) {
 			ppp_log(_this, LOG_WARNING, "failed enable pipex: %m");
+			/* failed to create pipex session */
+			ppp_phy_downed(_this);
+			return;
+		}
 		ppp_log(_this, LOG_NOTICE, "Using pipex=%s",
 		    (_this->pipex_enabled != 0)? "yes" : "no");
 		_this->pipex_started = 1;
