@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwreal.S,v 1.5 2019/09/03 14:37:22 deraadt Exp $	*/
+/*	$OpenBSD: ofwreal.S,v 1.6 2020/04/02 19:27:51 gkoehler Exp $	*/
 /*	$NetBSD: ofwreal.S,v 1.1 1996/09/30 16:34:51 ws Exp $	*/
 
 /*
@@ -355,96 +355,32 @@ _ENTRY(_C_LABEL(fwentry))
 	addi	%r1,%r1,16
 	blr
 
+.lcomm	firmstk,NBPG,16
+.comm	_C_LABEL(OF_buf),NBPG
+
 /*
  * OpenFirmware entry point
+ *
+ * Note: caller has to set the machine state register (msr)
+ * to be correct for OpenFirmware.
  */
 _ENTRY(_C_LABEL(openfirmware))
-	stwu	%r1,-16(%r1)
-	mflr	%r0			/* save return address */
-	stw	%r0,20(%r1)
+	mflr	%r0
+	stw	%r0,4(%r1)		/* save return address */
+
+	/* switch to OpenFirmware real mode stack */
+	lis	%r7,firmstk+NBPG-16@ha
+	addi	%r7,%r7,firmstk+NBPG-16@l
+	stw	%r1,0(%r7)
+	mr	%r1,%r7
 
 	lis	%r4,fwcall@ha
 	lwz	%r4,fwcall@l(%r4)
 
-	mtlr	%r4
-	blrl
+	mtctr	%r4
+	bctrl
 
-	lwz	%r0,20(%r1)
-	mtlr	%r0
-	lwz	%r1,0(%r1)
-	blr
-
-/*
- * Switch to/from OpenFirmware real mode stack
- *
- * Note: has to be called as the very first thing in OpenFirmware interface routines.
- * E.g.:
- * int
- * OF_xxx(arg1, arg2)
- * type arg1, arg2;
- * {
- *	static struct {
- *		char *name;
- *		int nargs;
- *		int nreturns;
- *		char *method;
- *		int arg1;
- *		int arg2;
- *		int ret;
- *	} args = {
- *		"xxx",
- *		2,
- *		1,
- *	};
- *
- *	ofw_stack();
- *	args.arg1 = arg1;
- *	args.arg2 = arg2;
- *	if (openfirmware(&args) < 0)
- *		return -1;
- *	return args.ret;
- * }
- */
-.lcomm	firmstk,NBPG,16
-.comm	_C_LABEL(OF_buf),NBPG
-
-_ENTRY(_C_LABEL(ofw_stack))
-	mfmsr	%r8			/* turn off interrupts */
-	andi.	%r0,%r8,~(PSL_EE|PSL_RI)@l
-	mtmsr	%r0
-	stw	%r8,4(%r1)		/* abuse return address slot */
-
-	lwz	%r5,0(%r1)		/* get length of stack frame */
-	subf	%r5,%r1,%r5
-
-	lis	%r7,firmstk+NBPG-8@ha
-	addi	%r7,%r7,firmstk+NBPG-8@l
-	li	%r6,0xf
-	andc	%r7,%r7,%r6
-	lis	%r6,ofw_back@ha
-	addi	%r6,%r6,ofw_back@l
-	subf	%r4,%r5,%r7		/* make room for stack frame on new stack */
-	stwu	%r1,-16(%r7)
-	stw	%r6,4(%r7)		/* setup return pointer */
-
-	stw	%r7,-16(%r4)
-
-	addi	%r3,%r1,%r8
-	addi	%r1,%r4,-16
-	subi	%r5,%r5,%r8
-	subi	%r4,%r4,%r8
-
-	b	_C_LABEL(ofbcopy)	/* and copy it */
-
-	.type ofw_back,@function
-ofw_back:
 	lwz	%r1,0(%r1)		/* get callers original stack pointer */
-
-	lwz	%r0,4(%r1)		/* get saved msr from abused slot */
-	mtmsr	%r0
-
-	lwz	%r1,0(%r1)		/* return */
 	lwz	%r0,4(%r1)
 	mtlr	%r0
 	blr
-

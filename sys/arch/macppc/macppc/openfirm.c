@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.12 2019/09/03 17:51:52 deraadt Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.13 2020/04/02 19:27:51 gkoehler Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -34,11 +34,12 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/stdarg.h>
+#include <machine/cpu.h>
 #include <machine/psl.h>
 
 #include <dev/ofw/openfirm.h>
+#include "ofw_machdep.h"
 
-extern void ofw_stack(void);
 extern void ofbcopy(const void *, void *, size_t);
 
 int
@@ -55,12 +56,17 @@ OF_peer(int phandle)
 		1,
 		1,
 	};
+	uint32_t s;
+	int ret;
 
-	ofw_stack();
+	s = ofw_msr();
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
-		return 0;
-	return args.sibling;
+		ret = 0;
+	else
+		ret = args.sibling;
+	ppc_mtmsr(s);
+	return ret;
 }
 
 int
@@ -77,12 +83,17 @@ OF_child(int phandle)
 		1,
 		1,
 	};
+	uint32_t s;
+	int ret;
 
-	ofw_stack();
+	s = ofw_msr();
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
-		return 0;
-	return args.child;
+		ret = 0;
+	else
+		ret = args.child;
+	ppc_mtmsr(s);
+	return ret;
 }
 
 int
@@ -99,12 +110,17 @@ OF_parent(int phandle)
 		1,
 		1,
 	};
+	uint32_t s;
+	int ret;
 
-	ofw_stack();
+	s = ofw_msr();
 	args.phandle = phandle;
 	if (openfirmware(&args) == -1)
-		return 0;
-	return args.parent;
+		ret = 0;
+	else
+		ret = args.parent;
+	ppc_mtmsr(s);
+	return ret;
 }
 
 int
@@ -122,13 +138,18 @@ OF_getproplen(int handle, char *prop)
 		2,
 		1,
 	};
+	uint32_t s;
+	int ret;
 
-	ofw_stack();
+	s = ofw_msr();
 	args.phandle = handle;
 	args.prop = prop;
 	if (openfirmware(&args) == -1)
-		return -1;
-	return args.size;
+		ret = -1;
+	else
+		ret = args.size;
+	ppc_mtmsr(s);
+	return ret;
 }
 
 int
@@ -148,19 +169,25 @@ OF_getprop(int handle, char *prop, void *buf, int buflen)
 		4,
 		1,
 	};
+	uint32_t s;
+	int ret;
 
-	ofw_stack();
 	if (buflen > NBPG)
 		return -1;
+	s = ofw_msr();
 	args.phandle = handle;
 	args.prop = prop;
 	args.buf = OF_buf;
 	args.buflen = buflen;
 	if (openfirmware(&args) == -1)
-		return -1;
-	if (args.size > 0)
-		ofbcopy(OF_buf, buf, args.size);
-	return args.size;
+		ret = -1;
+	else {
+		if (args.size > 0)
+			ofbcopy(OF_buf, buf, args.size);
+		ret = args.size;
+	}
+	ppc_mtmsr(s);
+	return ret;
 }
 
 int
@@ -180,18 +207,23 @@ OF_setprop(int handle, char *prop, const void *buf, int buflen)
 		4,
 		1,
 	};
+	uint32_t s;
+	int ret;
 	
-	ofw_stack();
 	if (buflen > NBPG)
 		return -1;
+	s = ofw_msr();
 	args.phandle = handle;
 	args.prop = prop;
 	ofbcopy(buf, OF_buf, buflen);
 	args.buf = OF_buf;
 	args.buflen = buflen;
 	if (openfirmware(&args) == -1)
-		return -1;
-	return args.size;
+		ret = -1;
+	else
+		ret = args.size;
+	ppc_mtmsr(s);
+	return ret;
 }
 
 int
@@ -210,22 +242,27 @@ OF_nextprop(int handle, char *prop, void *nextprop)
 		3,
 		1,
 	};
+	uint32_t s;
+	int ret;
 
-	ofw_stack();
+	s = ofw_msr();
 	args.phandle = handle;
 	args.prop = prop;
 	args.buf = OF_buf;
 	if (openfirmware(&args) == -1)
-		return -1;
-	strlcpy(nextprop, OF_buf, 32);
-	return args.flag;
+		ret = -1;
+	else {
+		strlcpy(nextprop, OF_buf, 32);
+		ret = args.flag;
+	}
+	ppc_mtmsr(s);
+	return ret;
 }
 
 int
 OF_interpret(char *cmd, int nreturns, ...)
 {
 	va_list ap;
-	int i;
 	static struct {
 		char *name;
 		int nargs;
@@ -238,23 +275,29 @@ OF_interpret(char *cmd, int nreturns, ...)
 		1,
 		2,
 	};
+	uint32_t s;
+	int i, ret;
 
-	ofw_stack();
 	if (nreturns > 8)
 		return -1;
 	if ((i = strlen(cmd)) >= NBPG)
 		return -1;
+	s = ofw_msr();
 	ofbcopy(cmd, OF_buf, i + 1);
 	args.cmd = OF_buf;
 	args.nargs = 1;
 	args.nreturns = nreturns + 1;
 	if (openfirmware(&args) == -1)
-		return -1;
-	va_start(ap, nreturns);
-	for (i = 0; i < nreturns; i++)
-		*va_arg(ap, int *) = args.results[i];
-	va_end(ap);
-	return args.status;
+		ret = -1;
+	else {
+		va_start(ap, nreturns);
+		for (i = 0; i < nreturns; i++)
+			*va_arg(ap, int *) = args.results[i];
+		va_end(ap);
+		ret = args.status;
+	}
+	ppc_mtmsr(s);
+	return ret;
 }
 
 
@@ -272,12 +315,17 @@ OF_finddevice(char *name)
 		1,
 		1,
 	};
+	uint32_t s;
+	int ret;
 
-	ofw_stack();
+	s = ofw_msr();
 	args.device = name;
 	if (openfirmware(&args) == -1)
-		return -1;
-	return args.phandle;
+		ret = -1;
+	else
+		ret = args.phandle;
+	ppc_mtmsr(s);
+	return ret;
 }
 static void OF_rboot(char *bootspec);
 
@@ -293,12 +341,14 @@ OF_rboot(char *bootspec)
 		0,
 		0,
 	};
+	uint32_t s;
 	int l;
 
 	if ((l = strlen(bootspec)) >= NBPG)
 		panic("OF_boot");
-	ofw_stack();
+	s = ofw_msr();
 	openfirmware(&args);
+	ppc_mtmsr(s);
 	/* will attempt exit in OF_boot */
 }
 
@@ -325,7 +375,7 @@ OF_exit(void)
 		0,
 	};
 
-	ofw_stack();
+	ofw_msr();
 	openfirmware(&args);
 	panic ("OF_exit returned!");		/* just in case */
 	while (1);
@@ -343,9 +393,11 @@ OF_quiesce(void)
 		0,
 		0,
 	};
+	uint32_t s;
 
-	ofw_stack();
+	s = ofw_msr();
 	openfirmware(&args);
+	ppc_mtmsr(s);
 }
 
 /* XXX What is the reason to have this instead of bcopy/memcpy? */
