@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.296 2020/04/01 20:10:17 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.297 2020/04/02 14:55:29 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2149,10 +2149,11 @@ post_rs(POST_ARGS)
 static void
 post_hyph(POST_ARGS)
 {
-	struct roff_node	*nch;
+	struct roff_node	*n, *nch;
 	char			*cp;
 
-	for (nch = mdoc->last->child; nch != NULL; nch = nch->next) {
+	n = mdoc->last;
+	for (nch = n->child; nch != NULL; nch = nch->next) {
 		if (nch->type != ROFFT_TEXT)
 			continue;
 		cp = nch->string;
@@ -2161,8 +2162,11 @@ post_hyph(POST_ARGS)
 		while (*(++cp) != '\0')
 			if (*cp == '-' &&
 			    isalpha((unsigned char)cp[-1]) &&
-			    isalpha((unsigned char)cp[1]))
+			    isalpha((unsigned char)cp[1])) {
+				if (n->string == NULL && n->flags & NODE_ID)
+					n->string = mandoc_strdup(nch->string);
 				*cp = ASCII_HYPH;
+			}
 	}
 }
 

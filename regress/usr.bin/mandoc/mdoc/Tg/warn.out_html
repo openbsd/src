@@ -1,4 +1,4 @@
-<p class="Pp"><mark id="start"></mark>initial text
+<p class="Pp"><mark id="start-tag"></mark>initial text
     <a class="permalink" href="#macro"><code class="Ic" id="macro">macro</code></a>
     too many badstart badend whitespace <mark id="sub"></mark></p>
 <section class="Ss">

@@ -26,6 +26,10 @@ Text introducing examples.
 
 Example text.
 
+## Sub-section
+
+More example text.
+
 # 	 WEIRD SECTION	 
 
 Text in weird section.
@@ -36,4 +40,4 @@ Text in section with empty header.
 
 ENDTEST
 
-OpenBSD - April 1, 2020
+OpenBSD - April 2, 2020

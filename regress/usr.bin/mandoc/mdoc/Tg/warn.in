@@ -1,5 +1,5 @@
-.\" $OpenBSD: warn.in,v 1.1 2020/03/13 00:31:06 schwarze Exp $
-.Dd $Mdocdate: March 13 2020 $
+.\" $OpenBSD: warn.in,v 1.2 2020/04/02 14:55:29 schwarze Exp $
+.Dd $Mdocdate: April 2 2020 $
 .Dt TG-WARN 1
 .Os
 .Sh NAME
@@ -8,7 +8,7 @@
 .Sh DESCRIPTION
 BEGINTEST
 .Pp
-.Tg start
+.Tg start-tag
 initial
 text
 .Tg

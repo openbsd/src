@@ -1,5 +1,5 @@
-.\" $OpenBSD: tag.in,v 1.2 2020/04/01 20:10:18 schwarze Exp $
-.Dd $Mdocdate: April 1 2020 $
+.\" $OpenBSD: tag.in,v 1.3 2020/04/02 14:55:29 schwarze Exp $
+.Dd $Mdocdate: April 2 2020 $
 .Dt SH-TAG 1
 .Os
 .Sh NAME
@@ -19,6 +19,8 @@ Text introducing examples.
 .Tg example
 .Ss Subsection
 Example text.
+.Ss Sub-section
+More example text.
 .Sh "\&	 WEIRD SECTION	 "
 Text in weird section.
 .Sh \ \&

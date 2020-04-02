@@ -2,7 +2,7 @@
   <dt><a class="permalink" href="#one"><i class="Em" id="one">one</i></a> |
     <a class="permalink" href="#two"><i class="Em" id="two">two</i></a></dt>
   <dd>text</dd>
-  <dt><a class="permalink" href="#three"><i class="Em" id="three">three</i></a></dt>
+  <dt><a class="permalink" href="#three-with-hyphens"><i class="Em" id="three-with-hyphens">three-with-hyphens</i></a></dt>
   <dd>text</dd>
 </dl>
 <a class="permalink" href="#four"><i class="Em" id="four">four</i></a>
