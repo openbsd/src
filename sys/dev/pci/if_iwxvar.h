@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.2 2020/02/28 14:17:48 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.3 2020/04/02 12:25:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -245,7 +245,6 @@ struct iwx_tx_data {
 	bus_addr_t	cmd_paddr;
 	struct mbuf	*m;
 	struct iwx_node *in;
-	int done;
 };
 
 struct iwx_tx_ring {

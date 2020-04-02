@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.8 2020/03/31 07:27:30 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.9 2020/04/02 12:25:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3627,9 +3627,6 @@ iwx_txd_done(struct iwx_softc *sc, struct iwx_tx_data *txd)
 	KASSERT(txd->in);
 	ieee80211_release_node(ic, &txd->in->in_ni);
 	txd->in = NULL;
-
-	KASSERT(txd->done == 0);
-	txd->done = 1;
 }
 
 void
@@ -3650,7 +3647,7 @@ iwx_rx_tx_cmd(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 	sc->sc_tx_timer = 0;
 
 	txd = &ring->data[idx];
-	if (txd->done)
+	if (txd->m == NULL)
 		return;
 
 	iwx_rx_tx_cmd_single(sc, pkt, txd->in);
@@ -3663,7 +3660,7 @@ iwx_rx_tx_cmd(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 	 */
 	while (ring->tail != idx) {
 		txd = &ring->data[ring->tail];
-		if (!txd->done) {
+		if (txd->m != NULL) {
 			DPRINTF(("%s: missed Tx completion: tail=%d idx=%d\n",
 			    __func__, ring->tail, idx));
 			iwx_txd_done(sc, txd);
@@ -4309,7 +4306,6 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	}
 	data->m = m;
 	data->in = in;
-	data->done = 0;
 
 	/* Fill TX descriptor. */
 	num_tbs = 2 + data->map->dm_nsegs;
