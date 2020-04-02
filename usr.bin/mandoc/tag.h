@@ -1,4 +1,4 @@
-/* $OpenBSD: tag.h,v 1.11 2020/03/13 00:31:05 schwarze Exp $ */
+/* $OpenBSD: tag.h,v 1.12 2020/04/02 22:10:27 schwarze Exp $ */
 /*
  * Copyright (c) 2015, 2018, 2019, 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -28,17 +28,7 @@
 #define	TAG_FALLBACK	(INT_MAX - 1)	/* Tag only used if unique. */
 #define	TAG_DELETE	(INT_MAX)	/* Tag not used at all. */
 
-/*
- * Return values of tag_check().
- */
-enum tag_result {
-	TAG_OK,		/* Argument exists as a tag. */
-	TAG_MISS,	/* Argument not found. */
-	TAG_EMPTY	/* No tag exists at all. */
-};
-
-
 void		 tag_alloc(void);
+int		 tag_exists(const char *);
 void		 tag_put(const char *, int, struct roff_node *);
-enum tag_result	 tag_check(const char *);
 void		 tag_free(void);

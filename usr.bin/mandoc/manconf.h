@@ -1,6 +1,6 @@
-/*	$OpenBSD: manconf.h,v 1.7 2018/11/22 11:30:15 schwarze Exp $ */
+/* $OpenBSD: manconf.h,v 1.8 2020/04/02 22:10:27 schwarze Exp $ */
 /*
- * Copyright (c) 2011, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011,2015,2017,2018,2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -14,6 +14,9 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Public interface to man(1) configuration management.
+ * For use by the main program and by the formatters.
  */
 
 /* List of unique, absolute paths to manual trees. */
@@ -37,6 +40,7 @@ struct	manoutput {
 	int	  mdoc;
 	int	  noval;
 	int	  synopsisonly;
+	int	  tag_found;
 	int	  toc;
 };
 

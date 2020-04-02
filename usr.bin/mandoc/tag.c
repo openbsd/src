@@ -1,4 +1,4 @@
-/* $OpenBSD: tag.c,v 1.30 2020/03/21 00:17:01 schwarze Exp $ */
+/* $OpenBSD: tag.c,v 1.31 2020/04/02 22:10:27 schwarze Exp $ */
 /*
  * Copyright (c) 2015,2016,2018,2019,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -174,16 +174,8 @@ tag_put(const char *s, int prio, struct roff_node *n)
 	}
 }
 
-enum tag_result
-tag_check(const char *test_tag)
+int
+tag_exists(const char *tag)
 {
-	unsigned int slot;
-
-	if (ohash_first(&tag_data, &slot) == NULL)
-		return TAG_EMPTY;
-	else if (test_tag != NULL && ohash_find(&tag_data,
-	    ohash_qlookup(&tag_data, test_tag)) == NULL)
-		return TAG_MISS;
-	else
-		return TAG_OK;
+	return ohash_find(&tag_data, ohash_qlookup(&tag_data, tag)) != NULL;
 }
