@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.6 2019/11/29 05:14:11 benno Exp $ */
+/*	$OpenBSD: cms.c,v 1.7 2020/04/02 09:16:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -42,6 +42,7 @@ cms_parse_validate(X509 **xp, const char *fn,
 	ASN1_OCTET_STRING	**os = NULL;
 	BIO			*bio = NULL, *shamd;
 	CMS_ContentInfo		*cms;
+	FILE			*f;
 	char			 buf[128], mdbuf[EVP_MAX_MD_SIZE];
 	int			 rc = 0, sz;
 	STACK_OF(X509)		*certs = NULL;
@@ -55,10 +56,13 @@ cms_parse_validate(X509 **xp, const char *fn,
 	 * This is usually fopen() failure, so let it pass through to
 	 * the handler, which will in turn ignore the entity.
 	 */
+	if ((f = fopen(fn, "rb")) == NULL) {
+		warn("%s", fn);
+		return NULL;
+	}
 
-	if ((bio = BIO_new_file(fn, "rb")) == NULL) {
-		if (verbose > 0)
-			cryptowarnx("%s: BIO_new_file", fn);
+	if ((bio = BIO_new_fp(f, BIO_CLOSE)) == NULL) {
+		cryptowarnx("%s: BIO_new_fp", fn);
 		return NULL;
 	}
 
