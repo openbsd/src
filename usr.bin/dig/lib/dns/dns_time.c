@@ -14,12 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dns_time.c,v 1.6 2020/02/24 13:49:38 jsg Exp $ */
+/* $Id: dns_time.c,v 1.7 2020/04/02 16:57:45 florian Exp $ */
 
 /*! \file */
 
 #include <stdio.h>
-#include <string.h>		/* Required for HP/UX (and others?) */
+#include <string.h>
 #include <time.h>
 
 #include <isc/region.h>
@@ -28,65 +28,18 @@
 
 #include <dns/time.h>
 
-static const int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-
-isc_result_t
-dns_time64_totext(int64_t t, isc_buffer_t *target) {
-	struct tm tm;
-	char buf[sizeof("!!!!!!YYYY!!!!!!!!MM!!!!!!!!DD!!!!!!!!HH!!!!!!!!MM!!!!!!!!SS")];
-	int secs;
-	unsigned int l;
+static isc_result_t
+dns_time64_totext(time_t t, isc_buffer_t *target) {
+	struct tm *tm;
+	char buf[sizeof("YYYYMMDDHHMMSS")];
+	size_t l;
 	isc_region_t region;
 
-/*
- * Warning. Do NOT use arguments with side effects with these macros.
- */
-#define is_leap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
-#define year_secs(y) ((is_leap(y) ? 366 : 365 ) * 86400)
-#define month_secs(m,y) ((days[m] + ((m == 1 && is_leap(y)) ? 1 : 0 )) * 86400)
-
-	tm.tm_year = 70;
-	while (t < 0) {
-		if (tm.tm_year == 0)
-			return (ISC_R_RANGE);
-		tm.tm_year--;
-		secs = year_secs(tm.tm_year + 1900);
-		t += secs;
-	}
-	while ((secs = year_secs(tm.tm_year + 1900)) <= t) {
-		t -= secs;
-		tm.tm_year++;
-		if (tm.tm_year + 1900 > 9999)
-			return (ISC_R_RANGE);
-	}
-	tm.tm_mon = 0;
-	while ((secs = month_secs(tm.tm_mon, tm.tm_year + 1900)) <= t) {
-		t -= secs;
-		tm.tm_mon++;
-	}
-	tm.tm_mday = 1;
-	while (86400 <= t) {
-		t -= 86400;
-		tm.tm_mday++;
-	}
-	tm.tm_hour = 0;
-	while (3600 <= t) {
-		t -= 3600;
-		tm.tm_hour++;
-	}
-	tm.tm_min = 0;
-	while (60 <= t) {
-		t -= 60;
-		tm.tm_min++;
-	}
-	tm.tm_sec = (int)t;
-				 /* yyyy  mm  dd  HH  MM  SS */
-	snprintf(buf, sizeof(buf), "%04d%02d%02d%02d%02d%02d",
-		 tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-		 tm.tm_hour, tm.tm_min, tm.tm_sec);
+	tm = gmtime(&t);
+	if ((l = strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", tm)) == 0)
+		return (ISC_R_NOSPACE);
 
 	isc_buffer_availableregion(target, &region);
-	l = strlen(buf);
 
 	if (l > region.length)
 		return (ISC_R_NOSPACE);
@@ -96,24 +49,20 @@ dns_time64_totext(int64_t t, isc_buffer_t *target) {
 	return (ISC_R_SUCCESS);
 }
 
-int64_t
+static time_t
 dns_time64_from32(uint32_t value) {
-	time_t now;
-	int64_t start;
-	int64_t t;
+	uint32_t now32;
+	time_t start;
+	time_t t;
 
-	/*
-	 * Adjust the time to the closest epoch.  This should be changed
-	 * to use a 64-bit counterpart to time() if one ever
-	 * is defined, but even the current code is good until the year
-	 * 2106.
-	 */
-	time(&now);
-	start = (int64_t) now;
-	if (isc_serial_gt(value, now))
-		t = start + (value - now);
+	time(&start);
+	now32 = (uint32_t) start;
+
+	/* Adjust the time to the closest epoch. */
+	if (isc_serial_gt(value, now32))
+		t = start + (value - now32);
 	else
-		t = start - (now - value);
+		t = start - (now32 - value);
 
 	return (t);
 }
