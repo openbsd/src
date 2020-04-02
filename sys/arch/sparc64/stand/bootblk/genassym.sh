@@ -1,8 +1,7 @@
-#	$OpenBSD: genassym.sh,v 1.3 2003/07/02 00:37:31 avsm Exp $
-#	$NetBSD: genassym.sh,v 1.1 2000/08/20 14:58:45 mrg Exp $
-
+#!/bin/sh -
+#	$OpenBSD: genassym.sh,v 1.4 2020/04/02 06:06:22 otto Exp $
+#	$NetBSD: genassym.sh,v 1.8 2014/01/06 22:43:15 christos Exp $
 #
-# Copyright (c) 1998 Eduardo E. Horvath.
 # Copyright (c) 1997 Matthias Pfaller.
 # All rights reserved.
 #
@@ -14,11 +13,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by Matthias Pfaller.
-# 4. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission
 #
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -32,33 +26,76 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# If first argument is -c, create a temporary C file,
-# compile it and execute the result.
+progname="$(basename "${0}")"
+: ${AWK:=awk}
 
-awk=${AWK:-awk}
-TMP1=`mktemp /tmp/genassym1.XXXXXXXXXX` || exit 1
-TMP2=`mktemp /tmp/genassym2.XXXXXXXXXX` || {
-	rm -f $TMP1
-	exit 1
+ccode=0		# generate temporary C file, compile it, execute result
+fcode=0		# generate Forth code
+
+usage()
+{
+
+	echo "usage: ${progname} [-c | -f] -- compiler command" >&2
 }
 
-trap 'rm -f $TMP1 $TMP2' 0 1 2 3 13 15
+set -e
 
-if [ $1 = '-c' ] ; then
-	shift
-	ccode=1
-else
-	ccode=0
+while getopts cf i
+do
+	case "$i" in
+	c)
+		ccode=1
+		;;
+	f)
+		fcode=1
+		;;
+	esac
+done
+shift "$(($OPTIND - 1))"
+if [ $# -eq 0 ]; then
+	usage
+	exit 1
 fi
 
-$awk '
+# Deal with any leading environment settings..
+
+while [ -n "$1" ]
+do
+	case "$1" in
+	*=*)
+		eval export "$1"
+		shift
+		;;
+	*)
+		break
+		;;
+	esac
+done
+
+genassym_temp="$(mktemp -d "${TMPDIR-/tmp}/genassym.XXXXXX")"
+
+
+if [ ! -d $genassym_temp ]; then
+	echo "${progname}: unable to create temporary directory" >&2
+	exit 1
+fi
+trap "rm -rf $genassym_temp" 0 1 2 3 15
+
+$AWK '
 BEGIN {
-	printf("#ifndef _KERNEL\n#define _KERNEL\n#endif\n");
+	printf("#if __GNUC__ >= 4\n");
+	printf("#define	offsetof(type, member) __builtin_offsetof(type, member)\n");
+	printf("#else\n");
 	printf("#define	offsetof(type, member) ((size_t)(&((type *)0)->member))\n");
+	printf("#endif\n");
 	defining = 0;
 	type = "long";
 	asmtype = "n";
 	asmprint = "";
+}
+
+{
+	doing_member = 0;
 }
 
 $0 ~ /^[ \t]*#.*/ || $0 ~ /^[ \t]*$/ {
@@ -98,6 +135,15 @@ $0 ~ /^endif/ {
 	# fall through
 }
 
+/^member[ \t]/ {
+	if (NF > 2)
+		$0 = "define " $2 " offsetof(struct " structname ", " $3 ")";
+	else
+		$0 = "define " $2 " offsetof(struct " structname ", " $2 ")";
+	doing_member = 1;
+	# fall through
+}
+
 /^export[ \t]/ {
 	$0 = "define " $2 " " $2;
 	# fall through
@@ -107,7 +153,7 @@ $0 ~ /^endif/ {
 	if (defining == 0) {
 		defining = 1;
 		printf("void f" FNR "(void);\n");
-		printf("void f" FNR "() {\n");
+		printf("void f" FNR "(void) {\n");
 		if (ccode)
 			call[FNR] = "f" FNR;
 		defining = 1;
@@ -116,27 +162,13 @@ $0 ~ /^endif/ {
 	gsub("^define[ \t]+[A-Za-z_][A-Za-z_0-9]*[ \t]+", "", value)
 	if (ccode)
 		printf("printf(\"#define " $2 " %%ld\\n\", (%s)" value ");\n", type);
-	else
-		printf("__asm(\"XYZZY d# %%%s0 constant %s\" : : \"%s\" (%s));\n", asmprint, $2, asmtype, value);
-	next;
-}
-
-/^member[ \t]/ {
-	$0 = "define " $2 " offsetof(struct " structname ", " $2 ")";
-	if (defining == 0) {
-		defining = 1;
-		printf("void f" FNR "(void);\n");
-		printf("void f" FNR "() {\n");
-		if (ccode)
-			call[FNR] = "f" FNR;
-		defining = 1;
-	}
-	value = $0
-	gsub("^define[ \t]+[A-Za-z_][A-Za-z_0-9]*[ \t]+", "", value)
-	if (ccode)
-		printf("printf(\"#define " $2 " %%ld\\n\", (%s)" value ");\n", type);
-	else
-		printf("__asm(\"XYZZY : %s d\# %%%s0 + ;\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
+	else if (fcode) {
+		if (doing_member)
+			printf("__asm(\"XYZZY : %s d# %%%s0 + ;\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
+		else
+			printf("__asm(\"XYZZY d# %%%s0 constant %s\" : : \"%s\" (%s));\n", asmprint, $2, asmtype, value);
+	} else
+		printf("__asm(\"XYZZY %s %%%s0\" : : \"%s\" (%s));\n", $2, asmprint, asmtype, value);
 	next;
 }
 
@@ -163,13 +195,21 @@ END {
 		printf("return(0); }\n");
 	}
 }
-' ccode=$ccode > $TMP1 || exit 1
+' ccode="$ccode" fcode="$fcode" > "${genassym_temp}/assym.c" || exit 1
 
-if [ $ccode = 1 ] ; then
-	"$@" -x c $TMP1 -o $TMP2 && $TMP2
+if [ "$ccode" = 1 ]; then
+	"$@" "${genassym_temp}/assym.c" -o "${genassym_temp}/genassym" && \
+	    "${genassym_temp}/genassym"
+elif [ "$fcode" = 1 ]; then
+	# Kill all of the "#" and "$" modifiers; locore.s already
+	# prepends the correct "constant" modifier.
+	"$@" -S "${genassym_temp}/assym.c" -o - | sed -e 's/\$//g' | \
+	    sed -n 's/.*XYZZY//gp'
 else
 	# Kill all of the "#" and "$" modifiers; locore.s already
 	# prepends the correct "constant" modifier.
-	"$@" -x c -S ${TMP1} -o ${TMP2} || exit 1
-	sed 's/\$//g' ${TMP2} | sed -n 's/.*XYZZY//gp'
+	"$@" -S "${genassym_temp}/assym.c" -o - > \
+	    "${genassym_temp}/genassym.out" && \
+	    sed -e 's/#//g' -e 's/\$//g' < "${genassym_temp}/genassym.out" | \
+	    sed -n 's/.*XYZZY/#define/gp'
 fi
