@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.122 2020/01/07 10:12:16 mpi Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.123 2020/04/02 17:36:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -434,13 +434,13 @@ zyd_detach(struct device *self, int flags)
 		return 0;
 	}
 
+	zyd_free_rx_list(sc);
+	zyd_free_tx_list(sc);
+
 	if (ifp->if_softc != NULL) {
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);
 	}
-
-	zyd_free_rx_list(sc);
-	zyd_free_tx_list(sc);
 
 	sc->attached = 0;
 
@@ -2216,6 +2216,7 @@ zyd_tx(struct zyd_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	    ZYD_TX_TIMEOUT, zyd_txeof);
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_IN_PROGRESS && error != 0) {
+		data->ni = NULL;
 		ifp->if_oerrors++;
 		return EIO;
 	}
