@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.52 2020/04/02 12:25:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.53 2020/04/02 12:34:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -374,7 +374,6 @@ struct iwm_softc {
 	struct task		init_task; /* NB: not reference-counted */
 	struct refcnt		task_refs;
 	struct task		newstate_task;
-	struct task		setrates_task;
 	enum ieee80211_state	ns_nstate;
 	int			ns_arg;
 

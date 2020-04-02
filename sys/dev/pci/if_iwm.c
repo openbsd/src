@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.303 2020/04/02 12:25:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.304 2020/04/02 12:34:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -453,8 +453,7 @@ int	iwm_run(struct iwm_softc *);
 int	iwm_run_stop(struct iwm_softc *);
 struct ieee80211_node *iwm_node_alloc(struct ieee80211com *);
 void	iwm_calib_timeout(void *);
-void	iwm_setrates_task(void *);
-void	iwm_setrates(struct iwm_node *);
+void	iwm_setrates(struct iwm_node *, int);
 int	iwm_media_change(struct ifnet *);
 void	iwm_newstate_task(void *);
 int	iwm_newstate(struct ieee80211com *, enum ieee80211_state, int);
@@ -4206,7 +4205,7 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 			best_mcs = ieee80211_mira_get_best_mcs(&in->in_mn);
 			if (best_mcs != in->chosen_txmcs) {
 				in->chosen_txmcs = best_mcs;
-				iwm_add_task(sc, systq, &sc->setrates_task);
+				iwm_setrates(in, 1);
 			}
 
 			/* Fall back to CCK rates if MCS 0 is failing. */
@@ -6753,7 +6752,7 @@ iwm_run(struct iwm_softc *sc)
 	in->in_ni.ni_txmcs = 0;
 	in->chosen_txrate = 0;
 	in->chosen_txmcs = 0;
-	iwm_setrates(in);
+	iwm_setrates(in, 0);
 
 	timeout_add_msec(&sc->sc_calib_to, 500);
 	iwm_led_enable(sc);
@@ -6834,7 +6833,7 @@ iwm_calib_timeout(void *arg)
 		 */
 		if (ni->ni_txrate != in->chosen_txrate) {
 			in->chosen_txrate = ni->ni_txrate;
-			iwm_add_task(sc, systq, &sc->setrates_task);
+			iwm_setrates(in, 1);
 		}
 		if (in->ht_force_cck) {
 			struct ieee80211_rateset *rs = &ni->ni_rates;
@@ -6851,27 +6850,7 @@ iwm_calib_timeout(void *arg)
 }
 
 void
-iwm_setrates_task(void *arg)
-{
-	struct iwm_softc *sc = arg;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwm_node *in = (struct iwm_node *)ic->ic_bss;
-	int s = splnet();
-
-	if (sc->sc_flags & IWM_FLAG_SHUTDOWN) {
-		refcnt_rele_wake(&sc->task_refs);
-		splx(s);
-		return;
-	}
-
-	/* Update rates table based on new TX rate determined by AMRR. */
-	iwm_setrates(in);
-	refcnt_rele_wake(&sc->task_refs);
-	splx(s);
-}
-
-void
-iwm_setrates(struct iwm_node *in)
+iwm_setrates(struct iwm_node *in, int async)
 {
 	struct ieee80211_node *ni = &in->in_ni;
 	struct ieee80211com *ic = ni->ni_ic;
@@ -6883,6 +6862,8 @@ iwm_setrates(struct iwm_node *in)
 		.id = IWM_LQ_CMD,
 		.len = { sizeof(lqcmd), },
 	};
+
+	cmd.flags = async ? IWM_CMD_ASYNC : 0;
 
 	memset(&lqcmd, 0, sizeof(lqcmd));
 	lqcmd.sta_id = IWM_STATION_ID;
@@ -7128,7 +7109,6 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		ieee80211_mira_cancel_timeouts(&in->in_mn);
 		iwm_del_task(sc, systq, &sc->ba_task);
 		iwm_del_task(sc, systq, &sc->htprot_task);
-		iwm_del_task(sc, systq, &sc->setrates_task);
 	}
 
 	sc->ns_nstate = nstate;
@@ -7902,7 +7882,6 @@ iwm_stop(struct ifnet *ifp)
 	/* Cancel scheduled tasks and let any stale tasks finish up. */
 	task_del(systq, &sc->init_task);
 	iwm_del_task(sc, sc->sc_nswq, &sc->newstate_task);
-	iwm_del_task(sc, systq, &sc->setrates_task);
 	iwm_del_task(sc, systq, &sc->ba_task);
 	iwm_del_task(sc, systq, &sc->htprot_task);
 	KASSERT(sc->task_refs.refs >= 1);
@@ -9330,7 +9309,6 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_led_blink_to, iwm_led_blink_timeout, sc);
 	task_set(&sc->init_task, iwm_init_task, sc);
 	task_set(&sc->newstate_task, iwm_newstate_task, sc);
-	task_set(&sc->setrates_task, iwm_setrates_task, sc);
 	task_set(&sc->ba_task, iwm_ba_task, sc);
 	task_set(&sc->htprot_task, iwm_htprot_task, sc);
 
