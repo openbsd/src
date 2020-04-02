@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.304 2020/04/02 12:34:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.305 2020/04/02 13:17:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -373,7 +373,6 @@ void	iwm_rx_rx_phy_cmd(struct iwm_softc *, struct iwm_rx_packet *,
 int	iwm_get_noise(const struct iwm_statistics_rx_non_phy *);
 void	iwm_rx_frame(struct iwm_softc *, struct mbuf *, int, int, int, uint32_t,
 	    struct ieee80211_rxinfo *, struct mbuf_list *);
-void	iwm_enable_ht_cck_fallback(struct iwm_softc *, struct iwm_node *);
 void	iwm_rx_tx_cmd_single(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_node *);
 void	iwm_rx_tx_cmd(struct iwm_softc *, struct iwm_rx_packet *,
@@ -4126,37 +4125,6 @@ iwm_rx_mpdu_mq(struct iwm_softc *sc, struct mbuf *m, void *pktdata,
 }
 
 void
-iwm_enable_ht_cck_fallback(struct iwm_softc *sc, struct iwm_node *in)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = &in->in_ni;
-	struct ieee80211_rateset *rs = &ni->ni_rates;
-	uint8_t rval = (rs->rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL);
-	uint8_t min_rval = ieee80211_min_basic_rate(ic);
-	int i;
-
-	/* Are CCK frames forbidden in our BSS? */
-	if (IWM_RVAL_IS_OFDM(min_rval))
-		return;
-
-	in->ht_force_cck = 1;
-
-	ieee80211_mira_cancel_timeouts(&in->in_mn);
-	ieee80211_mira_node_init(&in->in_mn);
-	ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
-
-	/* Choose initial CCK Tx rate. */
-	ni->ni_txrate = 0;
-	for (i = 0; i < rs->rs_nrates; i++) {
-		rval = (rs->rs_rates[i] & IEEE80211_RATE_VAL);
-		if (rval == min_rval) {
-			ni->ni_txrate = i;
-			break;
-		}
-	}
-}
-
-void
 iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
     struct iwm_node *in)
 {
@@ -4173,16 +4141,11 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	    status != IWM_TX_STATUS_DIRECT_DONE);
 
 	/* Update rate control statistics. */
-	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0 || in->ht_force_cck) {
+	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0) {
 		in->in_amn.amn_txcnt++;
-		if (in->ht_force_cck) {
-			/*
-			 * We want to move back to OFDM quickly if possible.
-			 * Only show actual Tx failures to AMRR, not retries.
-			 */
-			if (txfail)
-				in->in_amn.amn_retrycnt++;
-		} else if (tx_resp->failure_frame > 0)
+		if (txfail)
+			in->in_amn.amn_retrycnt++;
+		if (tx_resp->failure_frame > 0)
 			in->in_amn.amn_retrycnt++;
 	} else if (ic->ic_fixed_mcs == -1) {
 		in->in_mn.frames += tx_resp->frame_count;
@@ -4192,7 +4155,7 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 			in->in_mn.retries += tx_resp->failure_frame;
 		if (txfail)
 			in->in_mn.txfail += tx_resp->frame_count;
-		if (ic->ic_state == IEEE80211_S_RUN && !in->ht_force_cck) {
+		if (ic->ic_state == IEEE80211_S_RUN) {
 			int best_mcs;
 
 			ieee80211_mira_choose(&in->in_mn, ic, &in->in_ni);
@@ -4207,11 +4170,6 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 				in->chosen_txmcs = best_mcs;
 				iwm_setrates(in, 1);
 			}
-
-			/* Fall back to CCK rates if MCS 0 is failing. */
-			if (txfail && IEEE80211_IS_CHAN_2GHZ(ni->ni_chan) &&
-			    in->chosen_txmcs == 0 && best_mcs == 0)
-				iwm_enable_ht_cck_fallback(sc, in);
 		}
 	}
 
@@ -4756,11 +4714,11 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 		ridx = sc->sc_fixed_ridx;
 	} else if (ic->ic_fixed_rate != -1) {
 		ridx = sc->sc_fixed_ridx;
-	} else if ((ni->ni_flags & IEEE80211_NODE_HT) && !in->ht_force_cck &&
+	} else if ((ni->ni_flags & IEEE80211_NODE_HT) &&
 	    ieee80211_mira_is_probing(&in->in_mn)) {
 		/* Keep Tx rate constant while mira is probing. */
 		ridx = iwm_mcs2ridx[ni->ni_txmcs];
-	} else if ((ni->ni_flags & IEEE80211_NODE_HT) && in->ht_force_cck) {
+	} else if ((ni->ni_flags & IEEE80211_NODE_HT)) {
 		uint8_t rval;
 		rval = (rs->rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL);
 		ridx = iwm_rval2ridx(rval);
@@ -6822,7 +6780,7 @@ iwm_calib_timeout(void *arg)
 
 	s = splnet();
 	if ((ic->ic_fixed_rate == -1 || ic->ic_fixed_mcs == -1) &&
-	    ((ni->ni_flags & IEEE80211_NODE_HT) == 0 || in->ht_force_cck) &&
+	    (ni->ni_flags & IEEE80211_NODE_HT) == 0 &&
 	    ic->ic_opmode == IEEE80211_M_STA && ic->ic_bss) {
 		ieee80211_amrr_choose(&sc->sc_amrr, &in->in_ni, &in->in_amn);
 		/* 
@@ -6834,13 +6792,6 @@ iwm_calib_timeout(void *arg)
 		if (ni->ni_txrate != in->chosen_txrate) {
 			in->chosen_txrate = ni->ni_txrate;
 			iwm_setrates(in, 1);
-		}
-		if (in->ht_force_cck) {
-			struct ieee80211_rateset *rs = &ni->ni_rates;
-			uint8_t rv;
-			rv = (rs->rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL);
-			if (IWM_RVAL_IS_OFDM(rv))
-				in->ht_force_cck = 0;
 		}
 	}
 

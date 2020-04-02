@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.53 2020/04/02 12:34:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.54 2020/04/02 13:17:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -549,10 +549,6 @@ struct iwm_node {
 	int chosen_txrate;
 	struct ieee80211_mira_node in_mn;
 	int chosen_txmcs;
-
-	/* Set in 11n mode if we don't receive ACKs for OFDM frames. */
-	int ht_force_cck;
-
 };
 #define IWM_STATION_ID 0
 #define IWM_AUX_STA_ID 1
