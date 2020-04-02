@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslimits.h,v 1.13 2015/01/18 21:47:16 millert Exp $	*/
+/*	$OpenBSD: syslimits.h,v 1.14 2020/04/02 18:00:00 deraadt Exp $	*/
 /*	$NetBSD: syslimits.h,v 1.12 1995/10/05 05:26:19 thorpej Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #if __POSIX_VISIBLE || __XPG_VISIBLE || __BSD_VISIBLE
-#define	ARG_MAX		 (256 * 1024)	/* max bytes for an exec function */
+#define	ARG_MAX		 (512 * 1024)	/* max bytes for an exec function */
 #define	CHILD_MAX		   80	/* max simultaneous processes */
 #define	LINK_MAX		32767	/* max file link count */
 #define	MAX_CANON		  255	/* max bytes in term canon input line */
