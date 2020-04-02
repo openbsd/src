@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.128 2020/03/20 04:14:50 cheloha Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.129 2020/04/02 07:00:25 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -61,6 +61,7 @@ void	kqueue_init(void);
 void	KQREF(struct kqueue *);
 void	KQRELE(struct kqueue *);
 
+int	kqueue_sleep(struct kqueue *, struct timespec *);
 int	kqueue_scan(struct kqueue *kq, int maxevents,
 		    struct kevent *ulistp, struct timespec *timeout,
 		    struct proc *p, int *retval);
@@ -556,6 +557,10 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		error = copyin(SCARG(uap, timeout), &ts, sizeof(ts));
 		if (error)
 			goto done;
+		if (ts.tv_sec < 0 || !timespecisvalid(&ts)) {
+			error = EINVAL;
+			goto done;
+		}
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
@@ -838,24 +843,43 @@ done:
 }
 
 int
+kqueue_sleep(struct kqueue *kq, struct timespec *tsp)
+{
+	struct timespec elapsed, start, stop;
+	uint64_t nsecs;
+	int error;
+
+	splassert(IPL_HIGH);
+
+	if (tsp != NULL) {
+		getnanouptime(&start);
+		nsecs = MIN(TIMESPEC_TO_NSEC(tsp), MAXTSLP);
+	} else
+		nsecs = INFSLP;
+	error = tsleep_nsec(kq, PSOCK | PCATCH, "kqread", nsecs);
+	if (tsp != NULL) {
+		getnanouptime(&stop);
+		timespecsub(&stop, &start, &elapsed);
+		timespecsub(tsp, &elapsed, tsp);
+		if (tsp->tv_sec < 0)
+			timespecclear(tsp);
+	}
+
+	return (error);
+}
+
+int
 kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
     struct timespec *tsp, struct proc *p, int *retval)
 {
 	struct kevent *kevp;
-	struct timespec elapsed, start, stop;
 	struct knote mend, mstart, *kn;
-	uint64_t nsecs;
 	int s, count, nkev = 0, error = 0;
 	struct kevent kev[KQ_NEVENTS];
 
 	count = maxevents;
 	if (count == 0)
 		goto done;
-
-	if (tsp != NULL && (tsp->tv_sec < 0 || !timespecisvalid(tsp))) {
-		error = EINVAL;
-		goto done;
-	}
 
 	memset(&mstart, 0, sizeof(mstart));
 	memset(&mend, 0, sizeof(mend));
@@ -875,19 +899,7 @@ retry:
 			goto done;
 		}
 		kq->kq_state |= KQ_SLEEP;
-		if (tsp != NULL) {
-			getnanouptime(&start);
-			nsecs = MIN(TIMESPEC_TO_NSEC(tsp), MAXTSLP);
-		} else
-			nsecs = INFSLP;
-		error = tsleep_nsec(kq, PSOCK | PCATCH, "kqread", nsecs);
-		if (tsp != NULL) {
-			getnanouptime(&stop);
-			timespecsub(&stop, &start, &elapsed);
-			timespecsub(tsp, &elapsed, tsp);
-			if (tsp->tv_sec < 0)
-				timespecclear(tsp);
-		}
+		error = kqueue_sleep(kq, tsp);
 		splx(s);
 		if (error == 0 || error == EWOULDBLOCK)
 			goto retry;
