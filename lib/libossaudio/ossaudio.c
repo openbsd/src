@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.20 2019/06/28 13:32:42 deraadt Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.21 2020/04/02 19:57:10 ratchov Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -36,26 +36,38 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/audioio.h>
-#include <sys/stat.h>
 #include <errno.h>
-
+#include <poll.h>
+#include <sndio.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "soundcard.h"
-#undef ioctl
+
+#ifdef DEBUG
+#define DPRINTF(...) do { fprintf(stderr, __VA_ARGS__); } while (0)
+#else
+#define DPRINTF(...) do {} while (0)
+#endif
 
 #define GET_DEV(com) ((com) & 0xff)
+#define INTARG (*(int*)argp)
 
-#define TO_OSSVOL(x)	(((x) * 100 + 127) / 255)
-#define FROM_OSSVOL(x)	((((x) > 100 ? 100 : (x)) * 255 + 50) / 100)
-
-static struct audiodevinfo *getdevinfo(int);
+struct control {
+	struct control *next;
+	int type;		/* one of SOUND_MIXER_xxx */
+	int chan;		/* 0 -> left, 1 -> right, -1 -> mono */
+	int addr;		/* sioctl control id */
+	int value;		/* current value */
+	int max;
+};
 
 static int mixer_ioctl(int, unsigned long, void *);
-static int opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq);
-static int enum_to_ord(struct audiodevinfo *di, int enm);
-static int enum_to_mask(struct audiodevinfo *di, int enm);
 
-#define INTARG (*(int*)argp)
+static int initialized;
+static struct control *controls;
+static struct sioctl_hdl *hdl;
+static char *dev_name = SIO_DEVANY;
+static struct pollfd *pfds;
 
 int
 _oss_ioctl(int fd, unsigned long com, ...)
@@ -71,201 +83,163 @@ _oss_ioctl(int fd, unsigned long com, ...)
 	else if (IOCGROUP(com) == 'M')
 		return mixer_ioctl(fd, com, argp);
 	else
-		return ioctl(fd, com, argp);
-}
-
-/* If the mixer device should have more than MAX_MIXER_DEVS devices
- * some will not be available to Linux */
-#define MAX_MIXER_DEVS 64
-struct audiodevinfo {
-	int done;
-	dev_t dev;
-	ino_t ino;
-	int16_t devmap[SOUND_MIXER_NRDEVICES],
-	        rdevmap[MAX_MIXER_DEVS];
-	char names[MAX_MIXER_DEVS][MAX_AUDIO_DEV_LEN];
-	int enum2opaque[MAX_MIXER_DEVS];
-        u_long devmask, recmask, stereomask;
-	u_long caps, recsource;
-};
-
-static int
-opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq)
-{
-	int i, o;
-
-	for (i = 0; i < MAX_MIXER_DEVS; i++) {
-		o = di->enum2opaque[i];
-		if (o == opq)
-			break;
-		if (o == -1 && label != NULL &&
-		    !strncmp(di->names[i], label->name, sizeof di->names[i])) {
-			di->enum2opaque[i] = opq;
-			break;
-		}
-	}
-	if (i >= MAX_MIXER_DEVS)
-		i = -1;
-	/*printf("opq_to_enum %s %d -> %d\n", label->name, opq, i);*/
-	return (i);
-}
-
-static int
-enum_to_ord(struct audiodevinfo *di, int enm)
-{
-	if (enm >= MAX_MIXER_DEVS)
-		return (-1);
-
-	/*printf("enum_to_ord %d -> %d\n", enm, di->enum2opaque[enm]);*/
-	return (di->enum2opaque[enm]);
-}
-
-static int
-enum_to_mask(struct audiodevinfo *di, int enm)
-{
-	int m;
-	if (enm >= MAX_MIXER_DEVS)
-		return (0);
-
-	m = di->enum2opaque[enm];
-	if (m == -1)
-		m = 0;
-	/*printf("enum_to_mask %d -> %d\n", enm, di->enum2opaque[enm]);*/
-	return (m);
+		return (ioctl)(fd, com, argp);
 }
 
 /*
- * Collect the audio device information to allow faster
- * emulation of the Linux mixer ioctls.  Cache the information
- * to eliminate the overhead of repeating all the ioctls needed
- * to collect the information.
+ * new control
  */
-static struct audiodevinfo *
-getdevinfo(int fd)
+static void
+mixer_ondesc(void *unused, struct sioctl_desc *d, int val)
 {
-	mixer_devinfo_t mi, cl;
-	int i, j, e;
-	static struct {
-		char *name;
-		int code;
-	} *dp, devs[] = {
-		{ AudioNmicrophone,	SOUND_MIXER_MIC },
-		{ AudioNline,		SOUND_MIXER_LINE },
-		{ AudioNcd,		SOUND_MIXER_CD },
-		{ AudioNdac,		SOUND_MIXER_PCM },
-		{ AudioNaux,		SOUND_MIXER_LINE1 },
-		{ AudioNrecord,		SOUND_MIXER_IMIX },
-		{ AudioNmaster,		SOUND_MIXER_VOLUME },
-		{ AudioNtreble,		SOUND_MIXER_TREBLE },
-		{ AudioNbass,		SOUND_MIXER_BASS },
-		{ AudioNspeaker,	SOUND_MIXER_SPEAKER },
-		{ AudioNoutput,		SOUND_MIXER_OGAIN },
-		{ AudioNinput,		SOUND_MIXER_IGAIN },
-		{ AudioNfmsynth,	SOUND_MIXER_SYNTH },
-		{ AudioNmidi,		SOUND_MIXER_SYNTH },
-		{ 0, -1 }
-	};
-	static struct audiodevinfo devcache = { 0 };
-	struct audiodevinfo *di = &devcache;
-	struct stat sb;
+	struct control *i, **pi;
+	int type;
 
-	/* Figure out what device it is so we can check if the
-	 * cached data is valid.
+	if (d == NULL)
+		return;
+
+	/*
+	 * delete existing control with the same address
 	 */
-	if (fstat(fd, &sb) < 0)
-		return 0;
-	if (di->done && (di->dev == sb.st_dev && di->ino == sb.st_ino))
-		return di;
+	for (pi = &controls; (i = *pi) != NULL; pi = &i->next) {
+		if (d->addr == i->addr) {
+			*pi = i->next;
+			free(i);
+			break;
+		}
+	}
 
-	di->done = 1;
-	di->dev = sb.st_dev;
-	di->ino = sb.st_ino;
-	di->devmask = 0;
-	di->recmask = 0;
-	di->stereomask = 0;
-	di->recsource = ~0;
-	di->caps = 0;
-	for(i = 0; i < SOUND_MIXER_NRDEVICES; i++)
-		di->devmap[i] = -1;
-	for(i = 0; i < MAX_MIXER_DEVS; i++) {
-		di->rdevmap[i] = -1;
-		di->names[i][0] = '\0';
-		di->enum2opaque[i] = -1;
+	/*
+	 * we support only numeric "level" controls, first 2 channels
+	 */
+	if (d->type != SIOCTL_NUM || d->node0.unit >= 2 ||
+	    strcmp(d->func, "level") != 0)
+		return;
+
+	/*
+	 * We expose top-level input.level and output.level as OSS
+	 * volume and microphone knobs. By default sndiod exposes
+	 * the underlying hardware knobs as hw/input.level and
+	 * hw/output.level that we map to OSS gain controls. This
+	 * ensures useful knobs are exposed no matter if sndiod
+	 * is running or not.
+	 */ 
+	if (d->group[0] == 0) {
+		if (strcmp(d->node0.name, "output") == 0)
+			type = SOUND_MIXER_VOLUME;
+		else if (strcmp(d->node0.name, "input") == 0)
+			type = SOUND_MIXER_MIC;
+		else
+			return;
+	} else if (strcmp(d->group, "hw") == 0) {
+		if (strcmp(d->node0.name, "output") == 0)
+			type = SOUND_MIXER_OGAIN;
+		else if (strcmp(d->node0.name, "input") == 0)
+			type = SOUND_MIXER_IGAIN;
+		else
+			return;
+	} else
+		return;
+
+	i = malloc(sizeof(struct control));
+	if (i == NULL) {
+		DPRINTF("%s: cannot allocate control\n", __func__);		
+		return;
 	}
-	for(i = 0; i < MAX_MIXER_DEVS; i++) {
-		mi.index = i;
-		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &mi) == -1)
-			break;
-		switch(mi.type) {
-		case AUDIO_MIXER_VALUE:
-			for(dp = devs; dp->name; dp++)
-		    		if (strcmp(dp->name, mi.label.name) == 0)
-					break;
-			if (dp->code >= 0) {
-				di->devmap[dp->code] = i;
-				di->rdevmap[i] = dp->code;
-				di->devmask |= 1 << dp->code;
-				if (mi.un.v.num_channels == 2)
-					di->stereomask |= 1 << dp->code;
-				strncpy(di->names[i], mi.label.name,
-					sizeof di->names[i]);
-			}
-			break;
-		}
-	}
-	for(i = 0; i < MAX_MIXER_DEVS; i++) {
-		mi.index = i;
-		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &mi) == -1)
-			break;
-		if (strcmp(mi.label.name, AudioNsource) != 0)
-			continue;
-		cl.index = mi.mixer_class;
-		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &cl) == -1)
-			break;
-		if ((cl.type != AUDIO_MIXER_CLASS) ||
-		    (strcmp(cl.label.name, AudioCrecord) != 0))
-			continue;
-		di->recsource = i;
-		switch(mi.type) {
-		case AUDIO_MIXER_ENUM:
-			for(j = 0; j < mi.un.e.num_mem; j++) {
-				e = opaque_to_enum(di,
-						   &mi.un.e.member[j].label,
-						   mi.un.e.member[j].ord);
-				if (e >= 0)
-					di->recmask |= 1 << di->rdevmap[e];
-			}
-			di->caps = SOUND_CAP_EXCL_INPUT;
-			break;
-		case AUDIO_MIXER_SET:
-			for(j = 0; j < mi.un.s.num_mem; j++) {
-				e = opaque_to_enum(di,
-						   &mi.un.s.member[j].label,
-						   mi.un.s.member[j].mask);
-				if (e >= 0)
-					di->recmask |= 1 << di->rdevmap[e];
-			}
-			break;
-		}
-	}
-	return di;
+
+	i->addr = d->addr;
+	i->chan = d->node0.unit;
+	i->max = d->maxval;
+	i->value = val;
+	i->type = type;
+	i->next = controls;
+	controls = i;
+	DPRINTF("%s: %d: used as %d, chan = %d, value = %d\n", __func__,
+	    i->addr, i->type, i->chan, i->value);
 }
 
-int
+/*
+ * control value changed
+ */
+static void
+mixer_onval(void *unused, unsigned int addr, unsigned int value)
+{
+	struct control *c;
+
+	for (c = controls; ; c = c->next) {
+		if (c == NULL) {
+			DPRINTF("%s: %d: change ignored\n", __func__, addr);
+			return;
+		}
+		if (c->addr == addr)
+			break;
+	}
+
+	DPRINTF("%s: %d: changed to %d\n", __func__, addr, value);
+	c->value = value;
+}
+
+static int
+mixer_init(void)
+{
+	if (initialized)
+		return hdl != NULL;
+
+	initialized = 1;
+
+	hdl = sioctl_open(dev_name, SIOCTL_READ | SIOCTL_WRITE, 0);
+	if (hdl == NULL) {
+		DPRINTF("%s: cannot open audio control device\n", __func__);
+		return 0;
+	}
+
+	pfds = calloc(sioctl_nfds(hdl), sizeof(struct pollfd));
+	if (pfds == NULL) {
+		DPRINTF("%s: cannot allocate pfds\n", __func__);
+		goto bad_close;
+	}
+
+	if (!sioctl_ondesc(hdl, mixer_ondesc, NULL)) {
+		DPRINTF("%s: cannot get controls descriptions\n", __func__);
+		goto bad_free;
+	}
+
+	if (!sioctl_onval(hdl, mixer_onval, NULL)) {
+		DPRINTF("%s: cannot get controls values\n", __func__);
+		goto bad_free;
+	}
+
+	return 1;
+
+bad_free:
+	free(pfds);
+bad_close:
+	sioctl_close(hdl);
+	return 0;
+}
+
+static int
 mixer_ioctl(int fd, unsigned long com, void *argp)
 {
-	struct audiodevinfo *di;
+	struct control *c;
 	struct mixer_info *omi;
-	struct audio_device adev;
-	mixer_ctrl_t mc;
 	int idat = 0;
-	int i;
-	int retval;
-	int l, r, n, error, e;
+	int v, n;
 
-	di = getdevinfo(fd);
-	if (di == 0)
+	if (!mixer_init()) {
+		DPRINTF("%s: not initialized\n", __func__);
+		errno = EIO;
 		return -1;
+	}
+
+	n = sioctl_pollfd(hdl, pfds, POLLIN);
+	if (n > 0) {
+		n = poll(pfds, n, 0);
+		if (n == -1)
+			return -1;
+		if (n > 0)
+			sioctl_revents(hdl, pfds);
+	}
 
 	switch (com) {
 	case OSS_GETVERSION:
@@ -273,122 +247,80 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SOUND_MIXER_INFO:
 	case SOUND_OLD_MIXER_INFO:
-		error = ioctl(fd, AUDIO_GETDEV, &adev);
-		if (error == -1)
-			return (error);
 		omi = argp;
 		if (com == SOUND_MIXER_INFO)
 			omi->modify_counter = 1;
-		strncpy(omi->id, adev.name, sizeof omi->id);
-		strncpy(omi->name, adev.name, sizeof omi->name);
+		strlcpy(omi->id, dev_name, sizeof omi->id);
+		strlcpy(omi->name, dev_name, sizeof omi->name);
 		return 0;
 	case SOUND_MIXER_READ_RECSRC:
-		if (di->recsource == -1)
-			return EINVAL;
-		mc.dev = di->recsource;
-		if (di->caps & SOUND_CAP_EXCL_INPUT) {
-			mc.type = AUDIO_MIXER_ENUM;
-			retval = ioctl(fd, AUDIO_MIXER_READ, &mc);
-			if (retval == -1)
-				return retval;
-			e = opaque_to_enum(di, NULL, mc.un.ord);
-			if (e >= 0)
-				idat = 1 << di->rdevmap[e];
-		} else {
-			mc.type = AUDIO_MIXER_SET;
-			retval = ioctl(fd, AUDIO_MIXER_READ, &mc);
-			if (retval == -1)
-				return retval;
-			e = opaque_to_enum(di, NULL, mc.un.mask);
-			if (e >= 0)
-				idat = 1 << di->rdevmap[e];
-		}
+	case SOUND_MIXER_READ_RECMASK:
+		idat = 0;
+		for (c = controls; c != NULL; c = c->next)
+			idat |= 1 << c->type;
+		idat &= (1 << SOUND_MIXER_MIC) | (1 << SOUND_MIXER_IGAIN);
+		DPRINTF("%s: SOUND_MIXER_READ_RECSRC: %d\n", __func__, idat);
 		break;
 	case SOUND_MIXER_READ_DEVMASK:
-		idat = di->devmask;
-		break;
-	case SOUND_MIXER_READ_RECMASK:
-		idat = di->recmask;
+		idat = 0;
+		for (c = controls; c != NULL; c = c->next)
+			idat |= 1 << c->type;
+		DPRINTF("%s: SOUND_MIXER_READ_DEVMASK: %d\n", __func__, idat);
 		break;
 	case SOUND_MIXER_READ_STEREODEVS:
-		idat = di->stereomask;
+		idat = 0;
+		for (c = controls; c != NULL; c = c->next) {
+			if (c->chan == 1)
+				idat |= 1 << c->type;
+		}
+		DPRINTF("%s: SOUND_MIXER_STEREODEVS: %d\n", __func__, idat);
 		break;
 	case SOUND_MIXER_READ_CAPS:
-		idat = di->caps;
+		idat = 0;
+		DPRINTF("%s: SOUND_MIXER_READ_CAPS: %d\n", __func__, idat);
 		break;
 	case SOUND_MIXER_WRITE_RECSRC:
 	case SOUND_MIXER_WRITE_R_RECSRC:
-		if (di->recsource == -1)
-			return EINVAL;
-		mc.dev = di->recsource;
-		idat = INTARG;
-		if (di->caps & SOUND_CAP_EXCL_INPUT) {
-			mc.type = AUDIO_MIXER_ENUM;
-			for(i = 0; i < SOUND_MIXER_NRDEVICES; i++)
-				if (idat & (1 << i))
-					break;
-			if (i >= SOUND_MIXER_NRDEVICES ||
-			    di->devmap[i] == -1)
-				return EINVAL;
-			mc.un.ord = enum_to_ord(di, di->devmap[i]);
-		} else {
-			mc.type = AUDIO_MIXER_SET;
-			mc.un.mask = 0;
-			for(i = 0; i < SOUND_MIXER_NRDEVICES; i++) {
-				if (idat & (1 << i)) {
-					if (di->devmap[i] == -1)
-						return EINVAL;
-					mc.un.mask |= enum_to_mask(di, di->devmap[i]);
-				}
-			}
-		}
-		return ioctl(fd, AUDIO_MIXER_WRITE, &mc);
+		DPRINTF("%s: SOUND_MIXER_WRITE_RECSRC\n", __func__);
+		errno = EINVAL;
+		return -1;
 	default:
 		if (MIXER_READ(SOUND_MIXER_FIRST) <= com &&
 		    com < MIXER_READ(SOUND_MIXER_NRDEVICES)) {
+		doread:
+			idat = 0;
 			n = GET_DEV(com);
-			if (di->devmap[n] == -1)
-				return EINVAL;
-			mc.dev = di->devmap[n];
-			mc.type = AUDIO_MIXER_VALUE;
-		    doread:
-			mc.un.value.num_channels = di->stereomask & (1<<n) ? 2 : 1;
-			retval = ioctl(fd, AUDIO_MIXER_READ, &mc);
-			if (retval == -1)
-				return retval;
-			if (mc.type != AUDIO_MIXER_VALUE)
-				return EINVAL;
-			if (mc.un.value.num_channels != 2) {
-				l = r = mc.un.value.level[AUDIO_MIXER_LEVEL_MONO];
-			} else {
-				l = mc.un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-				r = mc.un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+			for (c = controls; c != NULL; c = c->next) {
+				if (c->type != n)
+					continue;
+				v = (c->value * 100 + c->max / 2) / c->max;
+				if (c->chan == 1)
+					v <<= 8;
+				idat |= v;
 			}
-			idat = TO_OSSVOL(l) | (TO_OSSVOL(r) << 8);
+			DPRINTF("%s: MIXER_READ: %d: 0x%04x\n",
+			    __func__, n, idat);
 			break;
 		} else if ((MIXER_WRITE_R(SOUND_MIXER_FIRST) <= com &&
 			   com < MIXER_WRITE_R(SOUND_MIXER_NRDEVICES)) ||
 			   (MIXER_WRITE(SOUND_MIXER_FIRST) <= com &&
 			   com < MIXER_WRITE(SOUND_MIXER_NRDEVICES))) {
-			n = GET_DEV(com);
-			if (di->devmap[n] == -1)
-				return EINVAL;
 			idat = INTARG;
-			l = FROM_OSSVOL( idat       & 0xff);
-			r = FROM_OSSVOL((idat >> 8) & 0xff);
-			mc.dev = di->devmap[n];
-			mc.type = AUDIO_MIXER_VALUE;
-			if (di->stereomask & (1<<n)) {
-				mc.un.value.num_channels = 2;
-				mc.un.value.level[AUDIO_MIXER_LEVEL_LEFT] = l;
-				mc.un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
-			} else {
-				mc.un.value.num_channels = 1;
-				mc.un.value.level[AUDIO_MIXER_LEVEL_MONO] = (l+r)/2;
+			n = GET_DEV(com);
+			for (c = controls; c != NULL; c = c->next) {
+				if (c->type != n)
+					continue;
+				v = idat;
+				if (c->chan == 1)
+					v >>= 8;
+				v &= 0xff;
+				if (v > 100)
+					v = 100;
+				v = (v * c->max + 50) / 100;
+				sioctl_setval(hdl, c->addr, v);
+				DPRINTF("%s: MIXER_WRITE: %d: %d\n",
+				    __func__, n, v);
 			}
-			retval = ioctl(fd, AUDIO_MIXER_WRITE, &mc);
-			if (retval == -1)
-				return retval;
 			if (MIXER_WRITE(SOUND_MIXER_FIRST) <= com &&
 			   com < MIXER_WRITE(SOUND_MIXER_NRDEVICES))
 				return 0;
@@ -398,6 +330,7 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 			return -1;
 		}
 	}
+
 	INTARG = idat;
 	return 0;
 }
