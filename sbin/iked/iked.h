@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.139 2020/04/01 21:09:26 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.140 2020/04/02 19:44:41 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -595,6 +595,7 @@ struct iked_message {
 #define IKED_MSG_FLAGS_AUTHENTICATION_FAILED		0x0020
 #define IKED_MSG_FLAGS_INVALID_KE			0x0040
 #define IKED_MSG_FLAGS_IPCOMP_SUPPORTED			0x0080
+#define IKED_MSG_FLAGS_USE_TRANSPORT			0x0100
 
 
 struct iked_user {

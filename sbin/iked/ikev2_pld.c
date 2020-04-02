@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.79 2020/03/16 09:13:01 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.80 2020/04/02 19:44:41 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1189,7 +1189,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    " notification (policy)", __func__);
 			return (0);
 		}
-		msg->msg_sa->sa_use_transport_mode = 1;
+		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_USE_TRANSPORT;
 		break;
 	case IKEV2_N_UPDATE_SA_ADDRESSES:
 		if (!msg->msg_e) {

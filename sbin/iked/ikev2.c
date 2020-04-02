@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.208 2020/04/01 21:09:27 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.209 2020/04/02 19:44:41 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2616,6 +2616,9 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 	/* Signature hash algorithm */
 	if (msg->msg_flags & IKED_MSG_FLAGS_SIGSHA2)
 		sa->sa_sigsha2 = 1;
+	if (msg->msg_flags & IKED_MSG_FLAGS_USE_TRANSPORT)
+		sa->sa_use_transport_mode = 1;
+
 	return (0);
 }
 
