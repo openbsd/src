@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.54 2020/04/02 13:17:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.55 2020/04/03 08:32:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -258,6 +258,8 @@ struct iwm_tx_data {
 	bus_addr_t	scratch_paddr;
 	struct mbuf	*m;
 	struct iwm_node *in;
+	int txmcs;
+	int txrate;
 };
 
 struct iwm_tx_ring {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.305 2020/04/02 13:17:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.306 2020/04/03 08:32:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -374,7 +374,7 @@ int	iwm_get_noise(const struct iwm_statistics_rx_non_phy *);
 void	iwm_rx_frame(struct iwm_softc *, struct mbuf *, int, int, int, uint32_t,
 	    struct ieee80211_rxinfo *, struct mbuf_list *);
 void	iwm_rx_tx_cmd_single(struct iwm_softc *, struct iwm_rx_packet *,
-	    struct iwm_node *);
+	    struct iwm_node *, int, int);
 void	iwm_rx_tx_cmd(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_rx_data *);
 void	iwm_rx_bmiss(struct iwm_softc *, struct iwm_rx_packet *,
@@ -4126,7 +4126,7 @@ iwm_rx_mpdu_mq(struct iwm_softc *sc, struct mbuf *m, void *pktdata,
 
 void
 iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
-    struct iwm_node *in)
+    struct iwm_node *in, int txmcs, int txrate)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = &in->in_ni;
@@ -4140,14 +4140,23 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	txfail = (status != IWM_TX_STATUS_SUCCESS &&
 	    status != IWM_TX_STATUS_DIRECT_DONE);
 
-	/* Update rate control statistics. */
+	/*
+	 * Update rate control statistics.
+	 * Only report frames which were actually queued with the currently
+	 * selected Tx rate. Because Tx queues are relatively long we may
+	 * encounter previously selected rates here during Tx bursts.
+	 * Providing feedback based on such frames can lead to suboptimal
+	 * Tx rate control decisions.
+	 */
 	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0) {
-		in->in_amn.amn_txcnt++;
-		if (txfail)
-			in->in_amn.amn_retrycnt++;
-		if (tx_resp->failure_frame > 0)
-			in->in_amn.amn_retrycnt++;
-	} else if (ic->ic_fixed_mcs == -1) {
+		if (txrate == ni->ni_txrate) {
+			in->in_amn.amn_txcnt++;
+			if (txfail)
+				in->in_amn.amn_retrycnt++;
+			if (tx_resp->failure_frame > 0)
+				in->in_amn.amn_retrycnt++;
+		}
+	} else if (ic->ic_fixed_mcs == -1 && txmcs == ni->ni_txmcs) {
 		in->in_mn.frames += tx_resp->frame_count;
 		in->in_mn.ampdu_size = le16toh(tx_resp->byte_cnt);
 		in->in_mn.agglen = tx_resp->frame_count;
@@ -4214,7 +4223,7 @@ iwm_rx_tx_cmd(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	if (txd->m == NULL)
 		return;
 
-	iwm_rx_tx_cmd_single(sc, pkt, txd->in);
+	iwm_rx_tx_cmd_single(sc, pkt, txd->in, txd->txmcs, txd->txrate);
 	iwm_txd_done(sc, txd);
 
 	/*
@@ -4944,6 +4953,8 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	}
 	data->m = m;
 	data->in = in;
+	data->txmcs = ni->ni_txmcs;
+	data->txrate = ni->ni_txrate;
 
 	/* Fill TX descriptor. */
 	desc->num_tbs = 2 + data->map->dm_nsegs;
