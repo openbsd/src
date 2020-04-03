@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.116 2020/03/29 09:31:11 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.117 2020/04/03 16:29:17 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -277,6 +277,10 @@ file	dev/fdt/rkpcie.c		rkpcie
 device	rkpwm
 attach	rkpwm at fdt
 file	dev/fdt/rkpwm.c			rkpwm
+
+device	rkrng
+attach	rkrng at fdt
+file	dev/fdt/rkrng.c			rkrng
 
 device	rktemp
 attach	rktemp at fdt
