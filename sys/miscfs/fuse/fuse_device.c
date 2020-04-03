@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.31 2020/02/20 16:56:52 visa Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.32 2020/04/03 08:08:51 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -523,7 +523,7 @@ fusepoll(dev_t dev, int events, struct proc *p)
 
 	fd = fuse_lookup(minor(dev));
 	if (fd == NULL)
-		return (EINVAL);
+		return (POLLERR);
 
 	if (events & (POLLIN | POLLRDNORM))
 		if (!SIMPLEQ_EMPTY(&fd->fd_fbufs_in))
