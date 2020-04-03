@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.28 2020/03/22 15:59:05 tobhe Exp $	*/
+/*	$OpenBSD: control.c,v 1.29 2020/04/03 08:20:32 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -309,10 +309,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			break;
 		case IMSG_CTL_RESET_ID:
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
+			break;
 		case IMSG_CTL_SHOW_SA:
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
 			c->flags |= CTL_CONN_NOTIFY;
-			break;
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",
