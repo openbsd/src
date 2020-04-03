@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.82 2020/01/25 23:02:13 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.83 2020/04/03 04:32:21 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -73,7 +73,6 @@ SRCS_KEX+=	sntrup4591761.c
 
 SRCS_KEY+=	sshkey.c
 SRCS_KEY+=	cipher.c
-SRCS_KEY+=	cipher-chachapoly.c
 SRCS_KEY+=	chacha.c
 SRCS_KEY+=	poly1305.c
 .if (${OPENSSL:L} == "yes")
@@ -83,10 +82,12 @@ SRCS_KEY+=	ssh-ecdsa-sk.c
 SRCS_KEY+=	ssh-rsa.c
 SRCS_KEY+=	sshbuf-getput-crypto.c
 SRCS_KEY+=	digest-openssl.c
+SRCS_KEY+=	cipher-chachapoly-libcrypto.c
 .else
 SRCS_KEY+=	cipher-aesctr.c
 SRCS_KEY+=	rijndael.c
 SRCS_KEY+=	digest-libc.c
+SRCS_KEY+=	cipher-chachapoly.c
 .endif
 SRCS_KEY+=	ssh-ed25519.c
 SRCS_KEY+=	ssh-ed25519-sk.c
