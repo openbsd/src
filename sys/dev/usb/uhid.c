@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.77 2020/02/20 16:56:52 visa Exp $ */
+/*	$OpenBSD: uhid.c,v 1.78 2020/04/03 08:24:53 mpi Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -485,7 +485,7 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 		return (ENXIO);
 
 	if (usbd_is_dying(sc->sc_hdev.sc_udev))
-		return (EIO);
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:

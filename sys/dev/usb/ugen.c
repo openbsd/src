@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.103 2020/02/22 14:01:34 jasper Exp $ */
+/*	$OpenBSD: ugen.c,v 1.104 2020/04/03 08:24:53 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1365,7 +1365,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	/* XXX always IN */
 	sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
 	if (sce == NULL)
-		return (EINVAL);
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:

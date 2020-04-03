@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiapm.c,v 1.1 2007/11/25 15:45:17 tedu Exp $ */
+/*	$OpenBSD: acpiapm.c,v 1.2 2020/04/03 08:24:52 mpi Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  *
@@ -53,6 +53,6 @@ int
 acpiapmkqfilter(dev_t dev, struct knote *kn)
 {
 	if (!acpiapm_kqfilter)
-		return ENODEV;
+		return EOPNOTSUPP;
 	return acpiapm_kqfilter(dev, kn);
 }

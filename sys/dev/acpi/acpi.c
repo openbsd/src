@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.378 2020/02/20 16:56:52 visa Exp $ */
+/* $OpenBSD: acpi.c,v 1.379 2020/04/03 08:24:52 mpi Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3539,7 +3539,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 int
 acpikqfilter(dev_t dev, struct knote *kn)
 {
-	return (ENXIO);
+	return (EOPNOTSUPP);
 }
 
 #endif /* SMALL_KERNEL */

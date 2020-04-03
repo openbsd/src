@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.28 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: cons.c,v 1.29 2020/04/03 08:24:52 mpi Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ cnkqfilter(dev_t dev, struct knote *kn)
 		dev = cn_tab->cn_dev;
 	if (cdevsw[major(dev)].d_kqfilter)
 		return ((*cdevsw[major(dev)].d_kqfilter)(dev, kn));
-	return (ENXIO);
+	return (EOPNOTSUPP);
 }
 
 int
