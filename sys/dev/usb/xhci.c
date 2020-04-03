@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.113 2020/03/02 16:30:39 visa Exp $ */
+/* $OpenBSD: xhci.c,v 1.114 2020/04/03 20:11:47 patrick Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -851,6 +851,10 @@ xhci_event_xfer_generic(struct xhci_softc *sc, struct usbd_xfer *xfer,
 			else
 				xfer->actlen = xfer->length;
 		}
+		if (xfer->actlen)
+			usb_syncmem(&xfer->dmabuf, 0, xfer->actlen,
+			    usbd_xfer_isread(xfer) ?
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		xfer->status = USBD_NORMAL_COMPLETION;
 		break;
 	case XHCI_CODE_SHORT_XFER:
@@ -871,6 +875,10 @@ xhci_event_xfer_generic(struct xhci_softc *sc, struct usbd_xfer *xfer,
 			    DEVNAME(sc), xfer, xx->index));
 			return (1);
 		}
+		if (xfer->actlen)
+			usb_syncmem(&xfer->dmabuf, 0, xfer->actlen,
+			    usbd_xfer_isread(xfer) ?
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		xfer->status = USBD_NORMAL_COMPLETION;
 		break;
 	case XHCI_CODE_TXERR:
@@ -975,6 +983,9 @@ xhci_event_xfer_isoc(struct usbd_xfer *xfer, struct xhci_pipe *xp,
 		xp->skip = 0;
 	}
 
+	usb_syncmem(&xfer->dmabuf, 0, xfer->length,
+	    usbd_xfer_isread(xfer) ?
+	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	xfer->status = USBD_NORMAL_COMPLETION;
 
 	return (0);
@@ -2809,6 +2820,11 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	if (xp->free_trbs < 3)
 		return (USBD_NOMEM);
 
+	if (len != 0)
+		usb_syncmem(&xfer->dmabuf, 0, len,
+		    usbd_xfer_isread(xfer) ?
+		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+
 	/* We'll toggle the setup TRB once we're finished with the stages. */
 	trb0 = xhci_xfer_get_trb(sc, xfer, &toggle, 0);
 
@@ -2934,6 +2950,10 @@ xhci_device_generic_start(struct usbd_xfer *xfer)
 
 	if (xp->free_trbs < (ntrb + zerotd))
 		return (USBD_NOMEM);
+
+	usb_syncmem(&xfer->dmabuf, 0, xfer->length,
+	    usbd_xfer_isread(xfer) ?
+	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	/* We'll toggle the first TRB once we're finished with the chain. */
 	trb0 = xhci_xfer_get_trb(sc, xfer, &toggle, (ntrb == 1));
@@ -3090,6 +3110,10 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 
 	if (xp->free_trbs < ntrb)
 		return (USBD_NOMEM);
+
+	usb_syncmem(&xfer->dmabuf, 0, xfer->length,
+	    usbd_xfer_isread(xfer) ?
+	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	paddr = DMAADDR(&xfer->dmabuf, 0);
 

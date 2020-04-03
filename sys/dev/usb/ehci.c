@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.209 2020/03/30 22:29:04 krw Exp $ */
+/*	$OpenBSD: ehci.c,v 1.210 2020/04/03 20:11:47 patrick Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -856,6 +856,10 @@ ehci_isoc_idone(struct usbd_xfer *xfer)
 #endif
 	xfer->actlen = actlen;
 	xfer->status = USBD_NORMAL_COMPLETION;
+
+	usb_syncmem(&xfer->dmabuf, 0, xfer->length,
+	    usbd_xfer_isread(xfer) ?
+	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	usb_transfer_complete(xfer);
 }
 
@@ -911,9 +915,10 @@ ehci_idone(struct usbd_xfer *xfer)
 	} else
 		xfer->status = USBD_NORMAL_COMPLETION;
 
-	/* XXX transfer_complete memcpys out transfer data (for in endpoints)
-	 * during this call, before methods->done is called: dma sync required
-	 * beforehand? */
+	if (xfer->actlen)
+		usb_syncmem(&xfer->dmabuf, 0, xfer->actlen,
+		    usbd_xfer_isread(xfer) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	usb_transfer_complete(xfer);
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p done\n", ex));
 }
@@ -3208,9 +3213,6 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 	if (xfer->pipe->repeat) {
 		ehci_free_sqtd_chain(sc, ex);
 
-		usb_syncmem(&xfer->dmabuf, 0, xfer->length,
-		    usbd_xfer_isread(xfer) ?
-		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		sqh = epipe->sqh;
 
 		err = ehci_alloc_sqtd_chain(sc, xfer->length, xfer, &data, &dataend);
@@ -3408,6 +3410,9 @@ ehci_alloc_itd_chain(struct ehci_softc *sc, struct usbd_xfer *xfer)
 	if (nframes == 0)
 		return (1);
 
+	usb_syncmem(&xfer->dmabuf, 0, xfer->length,
+	    usbd_xfer_isread(xfer) ?
+	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	for (i = 0; i < nframes; i++) {
 		uint32_t froffs = offs;
 
@@ -3522,6 +3527,9 @@ ehci_alloc_sitd_chain(struct ehci_softc *sc, struct usbd_xfer *xfer)
 	if (usbd_xfer_isread(xfer))
 		endp |= EHCI_SITD_SET_DIR(1);
 
+	usb_syncmem(&xfer->dmabuf, 0, xfer->length,
+	    usbd_xfer_isread(xfer) ?
+	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	for (i = 0; i < nframes; i++) {
 		uint32_t addr = DMAADDR(&xfer->dmabuf, offs);
 		uint32_t page = EHCI_PAGE(addr + xfer->frlengths[i] - 1);
