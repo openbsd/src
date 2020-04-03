@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pipex.4,v 1.11 2017/04/18 03:21:48 yasuoka Exp $
+.\"	$OpenBSD: pipex.4,v 1.12 2020/04/03 07:46:04 mpi Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\" Copyright (c) 2010 SUENAGA Hiroki <hsuenaga@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 18 2017 $
+.Dd $Mdocdate: April 3 2020 $
 .Dt PIPEX 4
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Sh DESCRIPTION
 .Nm
 is used with
-.Xr tun 4
+.Xr pppac 4
 and
 .Xr pppx 4 ,
 and handles PPP frames and forwards IP packets in-kernel.
@@ -51,7 +51,7 @@ using
 adds some extensions to the
 .Xr ioctl 2
 requests to
-.Xr tun 4
+.Xr pppac 4
 or
 .Xr pppx 4
 devices.
@@ -104,8 +104,7 @@ struct pipex_session_req {
     uint16_t    pr_peer_mru;         /* peer's mru */
     uint16_t    pr_timeout_sec;      /* idle timer */
 
-    struct in_addr      pr_ip_srcaddr;    /* local IP address.
-					     not used by tun(4) */
+    struct in_addr      pr_ip_srcaddr;    /* local IP address */
     struct in_addr      pr_ip_address;    /* framed IP address */
     struct in_addr      pr_ip_netmask;    /* framed IP netmask */
     struct sockaddr_in6 pr_ip6_address;   /* framed IPv6 address */
@@ -171,10 +170,10 @@ struct pipex_mppe_req {
 .It Dv PIPEXDSESSION Fa "struct pipex_session_close_req *"
 Delete the specified session from the kernel.
 Specify the session using a
-.Vt pipex_session_stat_req
+.Vt pipex_session_close_req
 structure, which has the following definition:
 .Bd -literal
-struct pipex_session_stat_req {
+struct pipex_session_close_req {
     int                      psr_protocol;   /* tunnel protocol */
     uint16_t                 psr_session_id; /* session-id */
     struct pipex_statistics  psr_stat;       /* statistics */
@@ -265,7 +264,7 @@ Set the
 .Xr pppx 4
 interface's description of the session.
 This command doesn't work on
-.Xr tun 4
+.Xr pppac 4
 devices.
 Specify the session and its description using a
 .Vt pipex_session_descr_req
@@ -280,12 +279,12 @@ struct pipex_session_descr_req {
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
+.Xr pppac 4 ,
 .Xr pppx 4 ,
-.Xr tun 4 ,
 .Xr npppd 8 ,
 .Xr sysctl 8
 .Sh AUTHORS
 The
 .Nm
 was written by
-.An Internet Initiative Japan Inc.
+.An Internet Initiative Japan Inc .
