@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.81 2020/03/31 17:14:40 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.82 2020/04/03 13:54:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -108,7 +108,8 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'P')) {
 		if ((template = args_get(args, 'F')) == NULL)
 			template = NEW_WINDOW_TEMPLATE;
-		cp = format_single(item, template, c, s, new_wl, NULL);
+		cp = format_single(item, template, c, s, new_wl,
+		    new_wl->window->active);
 		cmdq_print(item, "%s", cp);
 		free(cp);
 	}
