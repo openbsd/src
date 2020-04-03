@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.41 2020/01/16 20:05:00 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.42 2020/04/03 09:11:23 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -228,17 +228,17 @@ parent_configure(struct iked *env)
 	ss.ss_family = AF_INET;
 
 	if ((env->sc_opts & IKED_OPT_NATT) == 0 && env->sc_nattport == IKED_NATT_PORT)
-		config_setsocket(env, &ss, ntohs(IKED_IKE_PORT), PROC_IKEV2);
+		config_setsocket(env, &ss, htons(IKED_IKE_PORT), PROC_IKEV2);
 	if ((env->sc_opts & IKED_OPT_NONATT) == 0)
-		config_setsocket(env, &ss, ntohs(env->sc_nattport), PROC_IKEV2);
+		config_setsocket(env, &ss, htons(env->sc_nattport), PROC_IKEV2);
 
 	bzero(&ss, sizeof(ss));
 	ss.ss_family = AF_INET6;
 
 	if ((env->sc_opts & IKED_OPT_NATT) == 0 && env->sc_nattport == IKED_NATT_PORT)
-		config_setsocket(env, &ss, ntohs(IKED_IKE_PORT), PROC_IKEV2);
+		config_setsocket(env, &ss, htons(IKED_IKE_PORT), PROC_IKEV2);
 	if ((env->sc_opts & IKED_OPT_NONATT) == 0)
-		config_setsocket(env, &ss, ntohs(env->sc_nattport), PROC_IKEV2);
+		config_setsocket(env, &ss, htons(env->sc_nattport), PROC_IKEV2);
 
 	/*
 	 * pledge in the parent process:
