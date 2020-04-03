@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.264 2020/04/02 17:03:10 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.265 2020/04/03 05:18:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2825,11 +2825,8 @@ window_copy_search_marks(struct window_mode_entry *wme, struct screen *ssp,
 		}
 	}
 	time(&tstart);
-	py = gd->hsize - data->oy;
-	if (py > 0)
-		py--;
-	for (; py > 0; py--) {
-		gl = grid_peek_line(gd, py);
+	for (py = gd->hsize - data->oy; py > 0; py--) {
+		gl = grid_peek_line(gd, py - 1);
 		if (~gl->flags & GRID_LINE_WRAPPED)
 			break;
 	}
