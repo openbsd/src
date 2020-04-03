@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.20 2020/01/25 23:02:14 djm Exp $
+#	$OpenBSD: Makefile,v 1.21 2020/04/03 02:26:56 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	ssh-keysign.c readconf.c compat.c
 SRCS+=	cleanup.c fatal.c
-SRCS+=	uidswap.c
+SRCS+=	uidswap.c utf8.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEY} ${SRCS_KEYP} ${SRCS_KRL} ${SRCS_PKT} \
 	${SRCS_UTL} ${SRCS_SK_CLIENT}
 PROG=	ssh-keysign
