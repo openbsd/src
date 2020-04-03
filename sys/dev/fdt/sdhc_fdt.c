@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.4 2019/11/29 22:02:16 patrick Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.5 2020/04/03 16:26:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -94,6 +94,7 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	pinctrl_byname(faa->fa_node, "default");
 
+	clock_set_assigned(faa->fa_node);
 	clock_enable_all(faa->fa_node);
 	reset_deassert_all(faa->fa_node);
 
