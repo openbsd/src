@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_markdown.c,v 1.34 2020/02/27 01:25:57 schwarze Exp $ */
+/* $OpenBSD: mdoc_markdown.c,v 1.35 2020/04/03 11:34:19 schwarze Exp $ */
 /*
  * Copyright (c) 2017, 2018, 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -13,6 +13,8 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Markdown formatter for mdoc(7) used by mandoc(1).
  */
 #include <sys/types.h>
 
@@ -29,16 +31,16 @@
 #include "main.h"
 
 struct	md_act {
-	int		(*cond)(struct roff_node *n);
-	int		(*pre)(struct roff_node *n);
-	void		(*post)(struct roff_node *n);
+	int		(*cond)(struct roff_node *);
+	int		(*pre)(struct roff_node *);
+	void		(*post)(struct roff_node *);
 	const char	 *prefix; /* pre-node string constant */
 	const char	 *suffix; /* post-node string constant */
 };
 
 static	void	 md_nodelist(struct roff_node *);
 static	void	 md_node(struct roff_node *);
-static	const char *md_stack(char c);
+static	const char *md_stack(char);
 static	void	 md_preword(void);
 static	void	 md_rawword(const char *);
 static	void	 md_word(const char *);

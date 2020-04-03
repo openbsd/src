@@ -1,7 +1,7 @@
-/*	$OpenBSD: libmandoc.h,v 1.63 2020/01/19 16:16:32 schwarze Exp $ */
+/* $OpenBSD: libmandoc.h,v 1.64 2020/04/03 11:34:19 schwarze Exp $ */
 /*
- * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2015,2017,2018,2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,9 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Internal interfaces for parser utilities needed by multiple parsers
+ * and the top-level functions to call the mdoc, man, and roff parsers.
  */
 
 /*
@@ -73,7 +76,7 @@ void		 roff_man_reset(struct roff_man *);
 int		 roff_parseln(struct roff *, int, struct buf *, int *);
 void		 roff_userret(struct roff *);
 void		 roff_endparse(struct roff *);
-void		 roff_setreg(struct roff *, const char *, int, char sign);
+void		 roff_setreg(struct roff *, const char *, int, char);
 int		 roff_getreg(struct roff *, const char *);
 char		*roff_strdup(const struct roff *, const char *);
 char		*roff_getarg(struct roff *, char **, int, int *);

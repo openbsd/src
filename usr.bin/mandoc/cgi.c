@@ -1,7 +1,7 @@
-/*	$OpenBSD: cgi.c,v 1.109 2020/01/10 15:20:49 schwarze Exp $ */
+/* $OpenBSD: cgi.c,v 1.110 2020/04/03 11:34:19 schwarze Exp $ */
 /*
- * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@usta.de>
+ * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Implementation of the man.cgi(8) program.
  */
 #include <sys/types.h>
 #include <sys/time.h>
@@ -66,9 +68,9 @@ enum	focus {
 static	void		 html_print(const char *);
 static	void		 html_putchar(char);
 static	int		 http_decode(char *);
-static	void		 http_encode(const char *p);
+static	void		 http_encode(const char *);
 static	void		 parse_manpath_conf(struct req *);
-static	void		 parse_path_info(struct req *req, const char *path);
+static	void		 parse_path_info(struct req *, const char *);
 static	void		 parse_query_string(struct req *, const char *);
 static	void		 pg_error_badrequest(const char *);
 static	void		 pg_error_internal(void);

@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandocdb.c,v 1.215 2020/01/26 21:24:58 schwarze Exp $ */
+/* $OpenBSD: mandocdb.c,v 1.216 2020/04/03 11:34:19 schwarze Exp $ */
 /*
- * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2016 Ed Maste <emaste@freebsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,6 +15,8 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Implementation of the makewhatis(8) program.
  */
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -107,7 +109,7 @@ struct	mdoc_handler {
 int		 mandocdb(int, char *[]);
 
 static	void	 dbadd(struct dba *, struct mpage *);
-static	void	 dbadd_mlink(const struct mlink *mlink);
+static	void	 dbadd_mlink(const struct mlink *);
 static	void	 dbprune(struct dba *);
 static	void	 dbwrite(struct dba *);
 static	void	 filescan(const char *);

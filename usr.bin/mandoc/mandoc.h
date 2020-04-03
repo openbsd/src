@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc.h,v 1.208 2020/01/19 17:59:01 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.209 2020/04/03 11:34:19 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Error handling, escape sequence, and character utilities.
+ * Can be used by all code in the mandoc package.
  */
 
 #define ASCII_NBRSP	 31  /* non-breaking space */
@@ -299,7 +300,7 @@ enum	mandoc_esc {
 };
 
 
-enum mandoc_esc	  mandoc_font(const char *, int sz);
+enum mandoc_esc	  mandoc_font(const char *, int);
 enum mandoc_esc	  mandoc_escape(const char **, const char **, int *);
 void		  mandoc_msg_setoutfile(FILE *);
 const char	 *mandoc_msg_getinfilename(void);

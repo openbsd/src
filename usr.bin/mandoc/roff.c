@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff.c,v 1.243 2020/02/27 21:38:27 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.244 2020/04/03 11:34:19 schwarze Exp $ */
 /*
- * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Implementation of the roff(7) parser for mandoc(1).
  */
 #include <sys/types.h>
 
@@ -194,7 +196,7 @@ static	int		 roff_ds(ROFF_ARGS);
 static	int		 roff_ec(ROFF_ARGS);
 static	int		 roff_eo(ROFF_ARGS);
 static	int		 roff_eqndelim(struct roff *, struct buf *, int);
-static	int		 roff_evalcond(struct roff *r, int, char *, int *);
+static	int		 roff_evalcond(struct roff *, int, char *, int *);
 static	int		 roff_evalnum(struct roff *, int,
 				const char *, int *, int *, int);
 static	int		 roff_evalpar(struct roff *, int,
