@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_mutex_destroy.3,v 1.10 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_mutex_destroy.3,v 1.11 2020/04/03 13:05:08 stsp Exp $
 .\"
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: pthread_mutex_destroy.3,v 1.5 1999/08/28 00:03:07 peter Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: April 3 2020 $
 .Dt PTHREAD_MUTEX_DESTROY 3
 .Os
 .Sh NAME
@@ -59,7 +59,7 @@ The value specified by
 is invalid.
 .It Bq Er EBUSY
 .Fa mutex
-is locked by another thread.
+is locked or referenced by another thread.
 .El
 .Sh SEE ALSO
 .Xr pthread_mutex_init 3 ,
