@@ -1,4 +1,4 @@
-/*	$OpenBSD: smr.h,v 1.3 2020/02/25 16:55:33 visa Exp $	*/
+/*	$OpenBSD: smr.h,v 1.4 2020/04/03 03:36:57 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -38,8 +38,6 @@ void	smr_startup_thread(void);
 void	smr_idle(void);
 void	smr_read_enter(void);
 void	smr_read_leave(void);
-void	smr_assert_critical(void);
-void	smr_assert_noncritical(void);
 
 void	smr_call_impl(struct smr_entry *, void (*)(void *), void *, int);
 void	smr_barrier_impl(int);
@@ -56,8 +54,14 @@ smr_init(struct smr_entry *smr)
 }
 
 #ifdef DIAGNOSTIC
-#define SMR_ASSERT_CRITICAL()		smr_assert_critical()
-#define SMR_ASSERT_NONCRITICAL()	smr_assert_noncritical()
+#define SMR_ASSERT_CRITICAL() do {					\
+	if (panicstr == NULL && !db_active)				\
+		KASSERT(curcpu()->ci_schedstate.spc_smrdepth > 0);	\
+} while (0)
+#define SMR_ASSERT_NONCRITICAL() do {					\
+	if (panicstr == NULL && !db_active)				\
+		KASSERT(curcpu()->ci_schedstate.spc_smrdepth == 0);	\
+} while (0)
 #else
 #define SMR_ASSERT_CRITICAL()		do {} while (0)
 #define SMR_ASSERT_NONCRITICAL()	do {} while (0)

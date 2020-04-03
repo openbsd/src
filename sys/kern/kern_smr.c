@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_smr.c,v 1.7 2020/02/25 16:55:33 visa Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.8 2020/04/03 03:36:56 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -215,28 +215,6 @@ smr_idle(void)
 	if (spc->spc_ndeferred > 0)
 		smr_dispatch(spc);
 }
-
-#ifdef DIAGNOSTIC
-
-void
-smr_assert_critical(void)
-{
-	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
-
-	if (panicstr == NULL && !db_active)
-		KASSERT(spc->spc_smrdepth > 0);
-}
-
-void
-smr_assert_noncritical(void)
-{
-	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
-
-	if (panicstr == NULL && !db_active)
-		KASSERT(spc->spc_smrdepth == 0);
-}
-
-#endif /* DIAGNOSTIC */
 
 void
 smr_call_impl(struct smr_entry *smr, void (*func)(void *), void *arg,
