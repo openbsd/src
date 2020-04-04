@@ -575,14 +575,19 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Transform %rd = UpdateGBR(%rt, %ri)
     // Into: lwz %rt, .L0$poff - .L0$pb(%ri)
     //       add %rd, %rt, %ri
-    // or into (if secure plt mode is on):
+    // or into (-msecure-plt -fpic):
+    //       addis r30, r30, _GLOBAL_OFFSET_TABLE_ - .L0$pb@ha
+    //       addi r30, r30, _GLOBAL_OFFSET_TABLE_ - .L0$pb@l
+    // or into (-msecure-plt -fPIC):
     //       addis r30, r30, .LTOC - .L0$pb@ha
     //       addi r30, r30, .LTOC - .L0$pb@l
     // Get the offset from the GOT Base Register to the GOT
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, isDarwin);
     if (Subtarget->isSecurePlt() && isPositionIndependent() ) {
       unsigned PICR = TmpInst.getOperand(0).getReg();
-      MCSymbol *LTOCSymbol = OutContext.getOrCreateSymbol(StringRef(".LTOC"));
+      StringRef Name = (PL == PICLevel::SmallPIC ?
+                        "_GLOBAL_OFFSET_TABLE_" : ".LTOC");
+      MCSymbol *LTOCSymbol = OutContext.getOrCreateSymbol(Name);
       const MCExpr *PB =
         MCSymbolRefExpr::create(MF->getPICBaseSymbol(),
                                 OutContext);
