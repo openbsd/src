@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.18 2019/06/08 15:49:22 deraadt Exp $
+# $OpenBSD: disktab,v 1.19 2020/04/04 13:28:46 deraadt Exp $
 
 miniroot:\
 	:dt=rdroot:se#512:nt#2:ns#64:nc#90:\
@@ -27,7 +27,6 @@ fakecdrom|Fake image for Bootable CDROM:\
 	:pd#1310720:od#0:bd#8192:fd#1024:td=4.2BSD:
 
 fakeramdisk:\
-	:dt=rdroot:se#512:nt#1:ns#32:nc#190:\
-	:pa#6080:oa#0:ba#8192:fa#4096:ta=4.2BSD:\
-	:pc#6080:oc#0:
-
+	:dt=rdroot:se#512:nt#1:ns#32:nc#200:\
+	:pa#6400:oa#0:ba#8192:fa#4096:ta=4.2BSD:\
+	:pc#6400:oc#0:
