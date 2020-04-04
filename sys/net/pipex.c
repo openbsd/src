@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.109 2020/03/26 16:50:46 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.110 2020/04/04 16:41:23 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -230,7 +230,7 @@ pipex_ioctl(struct pipex_iface_context *pipex_iface, u_long cmd, caddr_t data)
 
 	case PIPEXDSESSION:
 		ret = pipex_close_session(
-		    (struct pipex_session_close_req *)data);
+		    (struct pipex_session_close_req *)data, pipex_iface);
 		break;
 
 	case PIPEXCSESSION:
@@ -489,7 +489,8 @@ pipex_notify_close_session_all(void)
 }
 
 Static int
-pipex_close_session(struct pipex_session_close_req *req)
+pipex_close_session(struct pipex_session_close_req *req,
+    struct pipex_iface_context *iface)
 {
 	struct pipex_session *session;
 
@@ -497,6 +498,8 @@ pipex_close_session(struct pipex_session_close_req *req)
 	session = pipex_lookup_by_session_id(req->pcr_protocol,
 	    req->pcr_session_id);
 	if (session == NULL)
+		return (EINVAL);
+	if (session->pipex_iface != iface)
 		return (EINVAL);
 
 	/* remove from close_wait list */
