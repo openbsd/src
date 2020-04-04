@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.32 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.33 2020/04/04 08:43:08 ratchov Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -249,7 +249,7 @@ main(int argc, char **argv)
 	int ndev;
 
 	if ((file = getenv("MIXERDEVICE")) == 0 || *file == '\0')
-		file = "/dev/mixer";
+		file = "/dev/audioctl0";
 
 	while ((ch = getopt(argc, argv, "af:nqtvw")) != -1) {
 		switch (ch) {
@@ -284,19 +284,14 @@ main(int argc, char **argv)
 	if (argc == 0 && tflag == 0)
 		aflag = 1;
 
-	if (unveil(file, "rw") == -1)
+	if (unveil(file, "w") == -1)
 		err(1, "unveil");
-
-	if ((fd = open(file, O_RDWR)) == -1) {
-		if (unveil(file, "r") == -1)
-			err(1, "unveil");
-
-		if ((fd = open(file, O_RDONLY)) == -1)
-			err(1, "%s", file);
-	}
 
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
+
+	if ((fd = open(file, O_WRONLY)) == -1)
+		err(1, "%s", file);
 
 	for (ndev = 0; ; ndev++) {
 		dinfo.index = ndev;

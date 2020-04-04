@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mixerctl.conf.5,v 1.8 2020/02/10 13:18:20 schwarze Exp $
+.\"	$OpenBSD: mixerctl.conf.5,v 1.9 2020/04/04 08:43:08 ratchov Exp $
 .\"
 .\" Copyright (c) 2008 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: April 4 2020 $
 .Dt MIXERCTL.CONF 5
 .Os
 .Sh NAME
@@ -135,7 +135,7 @@ The file can then be played back to determine quality.
 .Dl $ aucat -o test.wav
 .Sh FILES
 .Bl -tag -width /etc/examples/mixerctl.conf -compact
-.It Pa /dev/mixer0
+.It Pa /dev/audioctl0
 Default audio mixing device.
 .It Pa /etc/mixerctl.conf
 .Xr mixerctl 1
