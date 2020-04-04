@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.19 2019/11/07 16:26:07 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.20 2020/04/04 08:41:54 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 7 2019 $
+.Dd $Mdocdate: April 4 2020 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -1098,19 +1098,29 @@ Currents commands are as follows:
 .It Cm addhost Ar hostline
 Add a new host
 .It Cm addpath Ar fullpkgpath ...
-Add new fullpkgpath to scan
+Add fullpkgpath to scan
 .It Cm bye
 close the socket connection.
 .It Cm dontclean Ar pkgpath ...
 Add new pkgpath to list of paths that should not be cleaned after build
 .It Cm help
 Self explanatory
+.It Cm info Ar cores
+Debug info for cores (to be extended to other data)
+.It Cm rescan
+Force
+.Nm
+to rescan all ignored paths (for various errors, including bogus dependencies)
 .It Cm stats
 Show the current stats line
 .It Cm status Ar fullpkgpath ...
 Show the current status of fullpkgpath, whether it's built, installable,
 ready to build, to build later, along with current dependencies if
 applicable.
+.It Cm stub Ar fullpkgpath ...
+Stub out
+.Ar fullpkgpath
+and unlock it if needed.
 .It Cm wipe Ar fullpkgpath ...
 Wipe out an existing lock: clean up the corresponding
 .Ar fullpkgpath
