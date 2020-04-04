@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.33 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.34 2020/04/04 08:57:36 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -42,14 +42,14 @@
 
 #define EVFILT_SYSCOUNT		8
 
-#define EV_SET(kevp_, a, b, c, d, e, f) do {	\
-	struct kevent *kevp = (kevp_);		\
-	(kevp)->ident = (a);			\
-	(kevp)->filter = (b);			\
-	(kevp)->flags = (c);			\
-	(kevp)->fflags = (d);			\
-	(kevp)->data = (e);			\
-	(kevp)->udata = (f);			\
+#define EV_SET(kevp, a, b, c, d, e, f) do {	\
+	struct kevent *__kevp = (kevp);		\
+	(__kevp)->ident = (a);			\
+	(__kevp)->filter = (b);			\
+	(__kevp)->flags = (c);			\
+	(__kevp)->fflags = (d);			\
+	(__kevp)->data = (e);			\
+	(__kevp)->udata = (f);			\
 } while(0)
 
 struct kevent {
