@@ -599,8 +599,8 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   stw     %r30,128(%r3)
   stw     %r31,132(%r3)
 
-  // save VRSave register
-  mfspr  %r0,256
+  // zero VRSave register; saveVectorRegisters() will save it
+  li     %r0,0
   stw    %r0,156(%r3)
   // save CR registers
   mfcr  %r0
@@ -643,12 +643,29 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   stfd    %f30,400(%r3)
   stfd    %f31,408(%r3)
 
+  li  %r3, 0    // return UNW_ESUCCESS
+  blr
 
-  // save vector registers
+//
+// void libunwind::Registers_ppc::saveVectorRegisters() const
+//
+// On entry:
+//  thread_state pointer is in r3
+//
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZNK9libunwind13Registers_ppc19saveVectorRegistersEv)
+  // return if we have already saved VRsave
+  lwz    %r0,156(%r3)
+  cmpwi  %r0,0
+  bnelr
 
-  subi  %r4,%r1,16
-  rlwinm  %r4,%r4,0,0,27  // mask low 4-bits
-  // r4 is now a 16-byte aligned pointer into the red zone
+  stwu   %r1,-32(%r1)  // allocate a stack frame
+  addi   %r4,%r1,16
+  clrrwi %r4,%r4,4
+  // r4 is now a 16-byte aligned pointer
+
+  // save VRsave register
+  mfvrsave %r0
+  stw      %r0,156(%r3)
 
 #define SAVE_VECTOR_UNALIGNED(_vec, _offset) \
   stvx  _vec,0,%r4           ;\
@@ -694,9 +711,8 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   SAVE_VECTOR_UNALIGNED(%v30, 424+0x1E0)
   SAVE_VECTOR_UNALIGNED(%v31, 424+0x1F0)
 
-  li  %r3, 0    // return UNW_ESUCCESS
+  addi   %r1,%r1,32  // drop the stack frame
   blr
-
 
 #elif defined(__arm64__) || defined(__aarch64__)
 

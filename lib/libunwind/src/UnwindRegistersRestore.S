@@ -476,11 +476,11 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_ppc6jumptoEv)
   cmpwi  %r5,0
   beq    Lnovec
 
-  subi  %r4,%r1,16
-  rlwinm  %r4,%r4,0,0,27  // mask low 4-bits
-  // r4 is now a 16-byte aligned pointer into the red zone
-  // the _vectorRegisters may not be 16-byte aligned so copy via red zone temp buffer
-
+  stwu   %r1,-32(%r1)  // allocate a stack frame
+  addi   %r4,%r1,16
+  clrrwi %r4,%r4,4
+  // r4 is now a 16-byte aligned pointer
+  // the _vectorRegisters may not be 16-byte aligned so copy via r4
 
 #define LOAD_VECTOR_UNALIGNEDl(_index) \
   andis.  %r0,%r5,(1<<(15-_index))  ;\
@@ -543,6 +543,8 @@ Ldone  ## _index:
   LOAD_VECTOR_UNALIGNEDh(29)
   LOAD_VECTOR_UNALIGNEDh(30)
   LOAD_VECTOR_UNALIGNEDh(31)
+
+  addi   %r1,%r1,32  // drop the stack frame
 
 Lnovec:
   lwz    %r0, 136(%r3) // __cr

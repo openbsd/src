@@ -630,7 +630,7 @@ private:
     unsigned int __lr;     /* Link register */
     unsigned int __ctr;    /* Count register */
     unsigned int __mq;     /* MQ register (601 only) */
-    unsigned int __vrsave; /* Vector Save Register */
+    mutable unsigned int __vrsave; /* Vector Save Register */
   };
 
   struct ppc_float_state_t {
@@ -640,9 +640,11 @@ private:
     unsigned int __fpscr;     /* floating point status register */
   };
 
+  void saveVectorRegisters() const;
+
   ppc_thread_state_t _registers;
   ppc_float_state_t  _floatRegisters;
-  v128               _vectorRegisters[32]; // offset 424
+  mutable v128       _vectorRegisters[32]; // offset 424
 };
 
 inline Registers_ppc::Registers_ppc(const void *registers) {
@@ -657,10 +659,8 @@ inline Registers_ppc::Registers_ppc(const void *registers) {
          sizeof(_floatRegisters));
   static_assert(sizeof(ppc_thread_state_t) + sizeof(ppc_float_state_t) == 424,
                 "expected vector register offset to be 424 bytes");
-  memcpy(_vectorRegisters,
-         static_cast<const uint8_t *>(registers) + sizeof(ppc_thread_state_t) +
-             sizeof(ppc_float_state_t),
-         sizeof(_vectorRegisters));
+  // no values until saveVectorRegisters()
+  memset(&_vectorRegisters, 0, sizeof(_vectorRegisters));
 }
 
 inline Registers_ppc::Registers_ppc() {
@@ -780,6 +780,7 @@ inline uint32_t Registers_ppc::getRegister(int regNum) const {
   case UNW_PPC_CR7:
     return (_registers.__cr & 0x0000000F);
   case UNW_PPC_VRSAVE:
+    saveVectorRegisters();
     return _registers.__vrsave;
   }
   _LIBUNWIND_ABORT("unsupported ppc register");
@@ -932,6 +933,7 @@ inline void Registers_ppc::setRegister(int regNum, uint32_t value) {
     _registers.__cr |= (value & 0x0000000F);
     return;
   case UNW_PPC_VRSAVE:
+    saveVectorRegisters();
     _registers.__vrsave = value;
     return;
     // not saved
@@ -976,12 +978,14 @@ inline bool Registers_ppc::validVectorRegister(int regNum) const {
 
 inline v128 Registers_ppc::getVectorRegister(int regNum) const {
   assert(validVectorRegister(regNum));
+  saveVectorRegisters();
   v128 result = _vectorRegisters[regNum - UNW_PPC_V0];
   return result;
 }
 
 inline void Registers_ppc::setVectorRegister(int regNum, v128 value) {
   assert(validVectorRegister(regNum));
+  saveVectorRegisters();
   _vectorRegisters[regNum - UNW_PPC_V0] = value;
 }
 
