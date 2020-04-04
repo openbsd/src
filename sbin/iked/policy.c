@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.57 2020/03/10 18:54:52 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.58 2020/04/04 20:36:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -81,7 +81,7 @@ policy_lookup(struct iked *env, struct iked_message *msg,
 	if (msg->msg_sa != NULL && msg->msg_sa->sa_policy != NULL) {
 		/* Existing SA with policy */
 		msg->msg_policy = msg->msg_sa->sa_policy;
-		goto found;
+		return (0);
 	}
 
 	bzero(&pol, sizeof(pol));
@@ -102,17 +102,14 @@ policy_lookup(struct iked *env, struct iked_message *msg,
 
 	/* Try to find a matching policy for this message */
 	if ((msg->msg_policy = policy_test(env, &pol)) != NULL)
-		goto found;
+		return (0);
 
 	/* No matching policy found, try the default */
 	if ((msg->msg_policy = env->sc_defaultcon) != NULL)
-		goto found;
+		return (0);
 
 	/* No policy found */
 	return (-1);
-
- found:
-	return (0);
 }
 
 /*
@@ -164,6 +161,7 @@ policy_test(struct iked *env, struct iked_policy *key)
 			}
 			/* make sure the peer ID matches */
 			if (key->pol_peerid.id_type &&
+			    p->pol_peerid.id_type &&
 			    (key->pol_peerid.id_type != p->pol_peerid.id_type ||
 			    memcmp(key->pol_peerid.id_data,
 			    p->pol_peerid.id_data,

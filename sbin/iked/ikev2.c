@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.209 2020/04/02 19:44:41 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.210 2020/04/04 20:36:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -688,8 +688,14 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		struct iked_policy	*old = sa->sa_policy;
 
 		sa->sa_policy = NULL;
-		if (policy_lookup(env, msg, &sa->sa_proposals) == 0 && msg->msg_policy &&
-		    msg->msg_policy != old) {
+		if (policy_lookup(env, msg, &sa->sa_proposals) != 0 ||
+		    msg->msg_policy == NULL) {
+			log_info("%s: no compatible policy found",
+			    SPI_SA(sa, __func__));
+			ikev2_send_auth_failed(env, sa);
+			return (-1);
+		}
+		if (msg->msg_policy != old) {
 			/* move sa to new policy */
 			policy = sa->sa_policy = msg->msg_policy;
 			TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
