@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.36 2019/10/05 09:15:53 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.37 2020/04/04 01:48:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2070,7 +2070,7 @@ static void	mcx_arm_cq(struct mcx_softc *, struct mcx_cq *);
 static void	mcx_arm_eq(struct mcx_softc *);
 static int	mcx_intr(void *);
 
-static void	mcx_up(struct mcx_softc *);
+static int	mcx_up(struct mcx_softc *);
 static void	mcx_down(struct mcx_softc *);
 static int	mcx_ioctl(struct ifnet *, u_long, caddr_t);
 static int	mcx_rxrinfo(struct mcx_softc *, struct if_rxrinfo *);
@@ -5871,7 +5871,7 @@ mcx_free_slots(struct mcx_softc *sc, struct mcx_slot *slots, int allocated,
 	free(slots, M_DEVBUF, total * sizeof(*ms));
 }
 
-static void
+static int
 mcx_up(struct mcx_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -5883,7 +5883,7 @@ mcx_up(struct mcx_softc *sc)
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 	if (sc->sc_rx_slots == NULL) {
 		printf("%s: failed to allocate rx slots\n", DEVNAME(sc));
-		return;
+		return ENOMEM;
 	}
 
 	for (i = 0; i < (1 << MCX_LOG_RQ_SIZE); i++) {
@@ -6008,7 +6008,7 @@ mcx_up(struct mcx_softc *sc)
 	ifq_clr_oactive(&ifp->if_snd);
 	ifq_restart(&ifp->if_snd);
 
-	return;
+	return ENETRESET;
 destroy_tx_slots:
 	mcx_free_slots(sc, sc->sc_tx_slots, i, (1 << MCX_LOG_SQ_SIZE));
 	sc->sc_rx_slots = NULL;
@@ -6019,6 +6019,7 @@ destroy_rx_slots:
 	sc->sc_rx_slots = NULL;
 down:
 	mcx_down(sc);
+	return ENOMEM;
 }
 
 static void
@@ -6105,7 +6106,7 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				error = ENETRESET;
 			else
-				mcx_up(sc);
+				error = mcx_up(sc);
 		} else {
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				mcx_down(sc);
