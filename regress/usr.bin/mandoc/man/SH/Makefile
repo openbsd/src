@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile,v 1.7 2020/02/27 01:25:58 schwarze Exp $
+# $OpenBSD: Makefile,v 1.8 2020/04/04 20:23:07 schwarze Exp $
 
 REGRESS_TARGETS	= broken broken_eline empty_before longarg noarg paragraph vert
 LINT_TARGETS	= broken broken_eline empty_before noarg
 HTML_TARGETS	= paragraph
+TAG_TARGETS	= paragraph
 
 # groff-1.22.3 defects:
 # - .SH without args just before EOF causes two additional blank lines.

@@ -1,4 +1,4 @@
-/* $OpenBSD: man_html.c,v 1.130 2020/03/13 00:31:05 schwarze Exp $ */
+/* $OpenBSD: man_html.c,v 1.131 2020/04/04 20:23:06 schwarze Exp $ */
 /*
  * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -325,7 +325,6 @@ man_SH_pre(MAN_ARGS)
 		print_otag(h, TAG_SECTION, "c", class);
 		break;
 	case ROFFT_HEAD:
-		n->flags |= NODE_ID;
 		print_otag_id(h, tag, class, n);
 		break;
 	case ROFFT_BODY:
