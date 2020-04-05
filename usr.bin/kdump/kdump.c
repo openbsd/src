@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.141 2020/01/18 23:56:31 cheloha Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.142 2020/04/05 07:31:45 visa Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1375,7 +1375,7 @@ ktrexec(const char *ptr, size_t len)
 static void
 ktrpledge(struct ktr_pledge *pledge, size_t len)
 {
-	char *name = "";
+	const char *name = "";
 	int i;
 
 	if (len < sizeof(struct ktr_pledge))

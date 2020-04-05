@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.261 2020/02/15 09:35:48 anton Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.262 2020/04/05 07:31:45 visa Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -527,7 +527,7 @@ pledge_syscall(struct proc *p, int code, uint64_t *tval)
 int
 pledge_fail(struct proc *p, int error, uint64_t code)
 {
-	char *codes = "";
+	const char *codes = "";
 	int i;
 	struct sigaction sa;
 
