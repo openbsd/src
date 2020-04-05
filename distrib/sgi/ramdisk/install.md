@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.44 2017/07/28 18:15:44 rpe Exp $
+#	$OpenBSD: install.md,v 1.45 2020/04/05 15:15:42 krw Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,10 @@
 IPARCH=$(sysctl -n hw.model)
 NCPU=$(sysctl -n hw.ncpufound)
 MDKERNEL=GENERIC-$IPARCH
+
+# FFS2 not supported, use FFS1
+MDFSOPT=-O1
+MDROOTFSOPT=-O1
 
 MDSETS="bsd.$IPARCH bsd.rd.$IPARCH"
 MDSANESETS=bsd.$IPARCH

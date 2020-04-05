@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1149 2020/03/06 21:14:20 gkoehler Exp $
+#	$OpenBSD: install.sub,v 1.1150 2020/04/05 15:15:42 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -505,11 +505,12 @@ configure_disk() {
 		while read _pp _mp _fstype _rest; do
 			[[ $_fstype == ffs ]] || continue
 
-			# Use machine-dependent newfs options for the root
-			# partition if defined.
-			_opt=$MDFSOPT
-			[[ $_mp == / ]] && _opt=$MDROOTFSOPT
-
+			# Default to FFS2 unless otherwise directed.
+			if [[ $_mp == / ]]; then
+				_opt=${MDROOTFSOPT:--O2}
+			else
+				_opt=${MDFSOPT:--O2}
+			fi
 			newfs -q $_opt ${_pp##/dev/}
 
 			# N.B.: '!' is lexically < '/'.
@@ -3328,8 +3329,8 @@ umount -af >/dev/null 2>&1
 #
 # The following variables can be provided if required:
 #	MDEFI       - set to 'y' on archs that support GPT partitioning
-#	MDFSOPT     - newfs options for non-root partitions
-#	MDROOTFSOPT - newfs options for the root partition
+#	MDFSOPT     - newfs options for non-root partitions, '-O2' assumed if not provided
+#	MDROOTFSOPT - newfs options for the root partition, '-O2' assumed if not provided
 #	MDSETS	    - list of files to add to DEFAULT and ALLSETS
 #	MDSANESETS  - list of files to add to SANESETS
 #	MDTERM      - 'vt220' assumed if not provided
