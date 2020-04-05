@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.54 2015/11/01 21:26:48 jmc Exp $
+.\" $OpenBSD: authpf.8,v 1.55 2020/04/05 10:11:07 jmc Exp $
 .\"
 .\" Copyright (c) 1998-2007 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 1 2015 $
+.Dd $Mdocdate: April 5 2020 $
 .Dt AUTHPF 8
 .Os
 .Sh NAME
@@ -379,7 +379,6 @@ must be properly configured to detect and defeat network attacks.
 To that end, the following options should be added to
 .Xr sshd_config 5 :
 .Bd -literal -offset indent
-Protocol 2
 ClientAliveInterval 15
 ClientAliveCountMax 3
 .Ed
