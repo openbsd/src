@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.50 2019/05/26 09:27:09 remi Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.51 2020/04/05 18:19:04 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1103,10 +1103,10 @@ show_rib_msg(struct imsg *imsg)
 			errx(1, "Invalid route type");
 		}
 
-		printf("%-20s %-17s %-12s %-9s %-7d %s\n", dstnet,
+		printf("%-20s %-16s%s %-12s %-9s %-7d %s\n", dstnet,
 		    log_in6addr_scope(&rt->nexthop, rt->ifindex),
-		    path_type_name(rt->p_type), dst_type_name(rt->d_type),
-		    rt->cost,
+		    rt->connected ? "C" : " ", path_type_name(rt->p_type),
+		    dst_type_name(rt->d_type), rt->cost,
 		    rt->uptime == 0 ? "-" : fmt_timeframe_core(rt->uptime));
 		free(dstnet);
 		break;

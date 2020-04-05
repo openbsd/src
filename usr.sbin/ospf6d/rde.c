@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.85 2020/03/29 11:59:11 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.86 2020/04/05 18:19:04 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -886,6 +886,9 @@ rde_send_change_kroute(struct rt_node *r)
 	TAILQ_FOREACH(rn, &r->nexthop, entry) {
 		if (rn->invalid)
 			continue;
+		if (rn->connected)
+			/* skip self-originated routes */
+			continue;
 		krcount++;
 
 		bzero(&kr, sizeof(kr));
@@ -899,8 +902,12 @@ rde_send_change_kroute(struct rt_node *r)
 		kr.ext_tag = r->ext_tag;
 		imsg_add(wbuf, &kr, sizeof(kr));
 	}
-	if (krcount == 0)
-		fatalx("rde_send_change_kroute: no valid nexthop found");
+	if (krcount == 0) {
+		/* no valid nexthop or self originated, so remove */
+		ibuf_free(wbuf);
+		rde_send_delete_kroute(r);
+		return;
+	}
 
 	imsg_close(&iev_main->ibuf, wbuf);
 	imsg_event_add(iev_main);

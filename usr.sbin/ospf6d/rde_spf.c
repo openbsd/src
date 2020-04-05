@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.27 2020/03/29 11:59:11 denis Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.28 2020/04/05 18:19:04 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -897,7 +897,9 @@ rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh, u_int16_t type,
 		rn->ifindex = vn->ifindex;
 		rn->adv_rtr.s_addr = adv_rtr.s_addr;
 		rn->uptime = now.tv_sec;
-		rn->connected = vn->prev == spf_root;
+		rn->connected = (type == LSA_TYPE_NETWORK &&
+		    vn->prev == spf_root) ||
+		    (IN6_IS_ADDR_UNSPECIFIED(&vn->nexthop));
 		rn->invalid = 0;
 
 		r->invalid = 0;
@@ -952,21 +954,24 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 			fatalx("rt_dump: invalid RIB type");
 		}
 
+		memset(&rtctl, 0, sizeof(rtctl));
+		rtctl.prefix = r->prefix;
+		rtctl.area.s_addr = r->area.s_addr;
+		rtctl.cost = r->cost;
+		rtctl.cost2 = r->cost2;
+		rtctl.p_type = r->p_type;
+		rtctl.d_type = r->d_type;
+		rtctl.flags = r->flags;
+		rtctl.prefixlen = r->prefixlen;
+
 		TAILQ_FOREACH(rn, &r->nexthop, entry) {
 			if (rn->invalid)
 				continue;
 
-			rtctl.prefix = r->prefix;
+			rtctl.connected = rn->connected;
 			rtctl.nexthop = rn->nexthop;
 			rtctl.ifindex = rn->ifindex;
-			rtctl.area.s_addr = r->area.s_addr;
 			rtctl.adv_rtr.s_addr = rn->adv_rtr.s_addr;
-			rtctl.cost = r->cost;
-			rtctl.cost2 = r->cost2;
-			rtctl.p_type = r->p_type;
-			rtctl.d_type = r->d_type;
-			rtctl.flags = r->flags;
-			rtctl.prefixlen = r->prefixlen;
 			rtctl.uptime = now.tv_sec - rn->uptime;
 
 			rde_imsg_compose_ospfe(IMSG_CTL_SHOW_RIB, 0, pid,
