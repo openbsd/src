@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.142 2020/04/05 07:31:45 visa Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.143 2020/04/05 08:32:14 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1128,7 +1128,6 @@ doerr:
 			/* syscalls that return errno values */
 			case SYS_getlogin_r:
 			case SYS___thrsleep:
-			case SYS_futex:
 				if ((error = ret) != 0)
 					goto doerr;
 				/* FALLTHROUGH */
