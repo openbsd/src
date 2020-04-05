@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.210 2020/04/04 20:36:34 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.211 2020/04/05 13:52:14 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -278,16 +278,9 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_CERTVALID:
 	case IMSG_CERTINVALID:
-		if (IMSG_DATA_SIZE(imsg) < sizeof(type) + sizeof(sh))
-			fatalx("bad length imsg received");
-
-		memcpy(&sh, imsg->data, sizeof(sh));
-		memcpy(&type, (uint8_t *)imsg->data + sizeof(sh),
-		    sizeof(type));
-
 		/* Ignore invalid or unauthenticated SAs */
-		if ((sa = sa_lookup(env,
-		    sh.sh_ispi, sh.sh_rspi, sh.sh_initiator)) == NULL ||
+		if ((sa = ikev2_getimsgdata(env, imsg,
+		    &sh, &type, &ptr, &len)) == NULL ||
 		    sa->sa_state < IKEV2_STATE_EAP)
 			break;
 
@@ -453,12 +446,18 @@ ikev2_getimsgdata(struct iked *env, struct imsg *imsg, struct iked_sahdr *sh,
 	size_t		 len;
 	struct iked_sa	*sa;
 
-	IMSG_SIZE_CHECK(imsg, sh);
-
 	ptr = imsg->data;
-	len = IMSG_DATA_SIZE(imsg) - sizeof(*sh) - sizeof(*type);
+	len = IMSG_DATA_SIZE(imsg);
+	if (len < sizeof(*sh))
+		fatalx("ikev2_getimsgdata: length too small for sh");
 	memcpy(sh, ptr, sizeof(*sh));
-	memcpy(type, ptr + sizeof(*sh), sizeof(*type));
+	len -= sizeof(*sh);
+	ptr += sizeof(*sh);
+	if (len < sizeof(*type))
+		fatalx("ikev2_getimsgdata: length too small for type");
+	memcpy(type, ptr, sizeof(*type));
+	len -= sizeof(*type);
+	ptr += sizeof(*type);
 
 	sa = sa_lookup(env, sh->sh_ispi, sh->sh_rspi, sh->sh_initiator);
 
@@ -473,7 +472,7 @@ ikev2_getimsgdata(struct iked *env, struct imsg *imsg, struct iked_sahdr *sh,
 	if (sa == NULL)
 		return (NULL);
 
-	*buf = ptr + sizeof(*sh) + sizeof(*type);
+	*buf = ptr;
 	*size = len;
 
 	return (sa);
