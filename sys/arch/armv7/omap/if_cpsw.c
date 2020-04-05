@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.46 2020/03/31 13:00:27 kettenis Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.47 2020/04/05 14:02:29 kettenis Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -86,6 +86,7 @@
 #include <arch/armv7/omap/if_cpswreg.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
@@ -342,7 +343,6 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	int node;
 	u_int i;
 	uint32_t memsize;
-	char name[32];
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -357,14 +357,10 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	pinctrl_byname(faa->fa_node, "default");
 
 	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
-		memset(name, 0, sizeof(name));
-
-		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
-			continue;
-
-		if (strcmp(name, "ti,davinci_mdio") != 0)
-			continue;
-		pinctrl_byname(node, "default");
+		if (OF_is_compatible(node, "ti,davinci_mdio")) {
+			clock_enable(node, "fck");
+			pinctrl_byname(node, "default");
+		}
 	}
 
 	timeout_set(&sc->sc_tick, cpsw_tick, sc);
