@@ -79,7 +79,7 @@
 ./usr/lib/gcc-lib/mips64-unknown-openbsd6.6/4.2.1/specs
 ./usr/lib/libLLVM.so.2.0
 ./usr/lib/libc++.so.4.0
-./usr/lib/libc++abi.so.2.0
+./usr/lib/libc++abi.so.2.1
 ./usr/lib/libcompiler_rt.a
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/mips64-openbsd
