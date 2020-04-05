@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.730 2020/04/02 05:35:15 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.731 2020/04/05 08:40:31 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2020 $
+.Dd $Mdocdate: April 5 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1048,9 +1048,12 @@ If
 is specified, list only clients connected to that session.
 .It Xo Ic list-commands
 .Op Fl F Ar format
+.Op Ar command
 .Xc
 .D1 (alias: Ic lscm )
-List the syntax of all commands supported by
+List the syntax of
+.Ar command
+or - if omitted - of all commands supported by
 .Nm .
 .It Ic list-sessions Op Fl F Ar format
 .D1 (alias: Ic ls )
@@ -2731,7 +2734,7 @@ command.
 .It Xo Ic list-keys
 .Op Fl 1aN
 .Op Fl P Ar prefix-string Fl T Ar key-table
-.Op key
+.Op Ar key
 .Xc
 .D1 (alias: Ic lsk )
 List key bindings.
