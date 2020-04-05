@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.127 2019/12/17 13:08:55 reyk Exp $
+#	$OpenBSD: GENERIC,v 1.128 2020/04/05 13:11:13 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -78,6 +78,7 @@ pinctrl*	at fdt?			# pin muxing
 omdog*		at fdt?			# watchdog timer
 omgpio*		at fdt?			# user-visible GPIO pins?
 gpio*		at omgpio?
+omrng*		at fdt?
 tiiic*		at fdt?
 iic*		at tiiic?
 gptimer*	at omap?		# general purpose timers

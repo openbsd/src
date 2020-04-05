@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.113 2020/04/03 23:18:36 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.114 2020/04/05 13:11:13 kettenis Exp $
 
 machine		armv7 arm
 
@@ -71,6 +71,7 @@ pinctrl*	at fdt?			# pin muxing
 omdog*		at fdt?			# watchdog timer
 omgpio*		at fdt?			# user-visible GPIO pins?
 gpio*		at omgpio?
+omrng*		at fdt?
 tiiic*		at fdt?
 iic*		at tiiic?
 gptimer*	at omap?		# general purpose timers

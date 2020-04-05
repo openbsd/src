@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.24 2020/03/31 10:33:10 kettenis Exp $
+#	$OpenBSD: files.omap,v 1.25 2020/04/05 13:11:13 kettenis Exp $
 
 define omap {}
 device omap: omap
@@ -56,6 +56,10 @@ file	arch/armv7/omap/omapid.c		omapid
 device omdog
 attach omdog at fdt
 file	arch/armv7/omap/omdog.c			omdog
+
+device omrng
+attach omrng at fdt
+file	arch/armv7/omap/omrng.c			omrng
 
 attach ohci at omap with omohci
 file	arch/armv7/omap/omohci.c		omohci

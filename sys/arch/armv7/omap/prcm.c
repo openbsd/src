@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.13 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: prcm.c,v 1.14 2020/04/05 13:11:13 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -380,6 +380,8 @@ prcm_am335x_clkctrl(int mod)
 		return PRCM_AM335X_I2C2_CLKCTRL;
 	case PRCM_LCDC:
 		return PRCM_AM335X_LCDC_CLKCTRL;
+	case PRCM_RNG:
+		return PRCM_AM335X_RNG_CLKCTRL;
 	default:
 		panic("%s: module not found\n", __func__);
 	}
