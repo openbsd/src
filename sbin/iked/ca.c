@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.55 2020/04/01 21:09:26 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.56 2020/04/06 20:23:16 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1383,8 +1383,6 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 		ca_sslerror(__func__);
  done:
 	ibuf_release(idp.id_buf);
-	if (peerkey != NULL)
-		EVP_PKEY_free(peerkey);
 	if (localkey != NULL)
 		EVP_PKEY_free(localkey);
 	if (peerrsa != NULL)
@@ -1393,8 +1391,11 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 		EC_KEY_free(peerec);
 	if (localrsa != NULL)
 		RSA_free(localrsa);
-	if (rawcert != NULL)
+	if (rawcert != NULL) {
 		BIO_free(rawcert);
+		if (peerkey != NULL)
+			EVP_PKEY_free(peerkey);
+	}
 
 	return (ret);
 }
@@ -1407,6 +1408,7 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	X509_STORE_CTX	 csc;
 	BIO		*rawcert = NULL;
 	X509		*cert = NULL;
+	EVP_PKEY	*pkey;
 	int		 ret = -1, result, error;
 	X509_NAME	*subject;
 	const char	*errstr = "failed";
@@ -1429,8 +1431,13 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	}
 
 	if (id != NULL) {
-		if ((ret = ca_validate_pubkey(env, id, X509_get_pubkey(cert),
-		    0)) == 0) {
+		if ((pkey = X509_get_pubkey(cert)) == NULL) {
+			errstr = "no public key in cert";
+			goto done;
+		}
+		ret = ca_validate_pubkey(env, id, pkey, 0);
+		EVP_PKEY_free(pkey);
+		if (ret == 0) {
 			errstr = "in public key file, ok";
 			goto done;
 		}
