@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.973 2020/04/01 09:05:27 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.974 2020/04/06 17:51:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -904,7 +904,6 @@ struct window_pane {
 
 	int		 fd;
 	struct bufferevent *event;
-	u_int		 disabled;
 
 	struct event	 resize_timer;
 
@@ -925,8 +924,6 @@ struct window_pane {
 	size_t		 status_size;
 
 	TAILQ_HEAD (, window_mode_entry) modes;
-	struct event	 modetimer;
-	time_t		 modelast;
 
 	char		*searchstr;
 	int		 searchregex;
