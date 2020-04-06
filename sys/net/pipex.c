@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.110 2020/04/04 16:41:23 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.111 2020/04/06 12:31:30 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -235,15 +235,17 @@ pipex_ioctl(struct pipex_iface_context *pipex_iface, u_long cmd, caddr_t data)
 
 	case PIPEXCSESSION:
 		ret = pipex_config_session(
-		    (struct pipex_session_config_req *)data);
+		    (struct pipex_session_config_req *)data, pipex_iface);
 		break;
 
 	case PIPEXGSTAT:
-		ret = pipex_get_stat((struct pipex_session_stat_req *)data);
+		ret = pipex_get_stat((struct pipex_session_stat_req *)data,
+		    pipex_iface);
 		break;
 
 	case PIPEXGCLOSED:
-		ret = pipex_get_closed((struct pipex_session_list_req *)data);
+		ret = pipex_get_closed((struct pipex_session_list_req *)data,
+		    pipex_iface);
 		break;
 
 	default:
@@ -514,7 +516,8 @@ pipex_close_session(struct pipex_session_close_req *req,
 }
 
 Static int
-pipex_config_session(struct pipex_session_config_req *req)
+pipex_config_session(struct pipex_session_config_req *req,
+    struct pipex_iface_context *iface)
 {
 	struct pipex_session *session;
 
@@ -523,36 +526,44 @@ pipex_config_session(struct pipex_session_config_req *req)
 	    req->pcr_session_id);
 	if (session == NULL)
 		return (EINVAL);
+	if (session->pipex_iface != iface)
+		return (EINVAL);
 	session->ip_forward = req->pcr_ip_forward;
 
 	return (0);
 }
 
 Static int
-pipex_get_stat(struct pipex_session_stat_req *req)
+pipex_get_stat(struct pipex_session_stat_req *req,
+    struct pipex_iface_context *iface)
 {
 	struct pipex_session *session;
 
 	NET_ASSERT_LOCKED();
 	session = pipex_lookup_by_session_id(req->psr_protocol,
 	    req->psr_session_id);
-	if (session == NULL) {
+	if (session == NULL)
 		return (EINVAL);
-	}
+	if (session->pipex_iface != iface)
+		return (EINVAL);
 	req->psr_stat = session->stat;
 
 	return (0);
 }
 
 Static int
-pipex_get_closed(struct pipex_session_list_req *req)
+pipex_get_closed(struct pipex_session_list_req *req,
+    struct pipex_iface_context *iface)
 {
-	struct pipex_session *session;
+	struct pipex_session *session, *session_next;
 
 	NET_ASSERT_LOCKED();
 	bzero(req, sizeof(*req));
-	while (!LIST_EMPTY(&pipex_close_wait_list)) {
-		session = LIST_FIRST(&pipex_close_wait_list);
+	for (session = LIST_FIRST(&pipex_close_wait_list);
+	    session; session = session_next) {
+		session_next = LIST_NEXT(session, state_list);
+		if (session->pipex_iface != iface)
+			continue;
 		req->plr_ppp_id[req->plr_ppp_id_count++] = session->ppp_id;
 		LIST_REMOVE(session, state_list);
 		session->state = PIPEX_STATE_CLOSE_WAIT2;

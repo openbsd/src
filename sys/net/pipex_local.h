@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.32 2020/04/04 16:41:23 mpi Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.33 2020/04/06 12:31:30 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -371,9 +371,12 @@ void                  pipex_iface_stop (struct pipex_iface_context *);
 int                   pipex_add_session (struct pipex_session_req *, struct pipex_iface_context *);
 int                   pipex_close_session (struct pipex_session_close_req *,
                           struct pipex_iface_context *);
-int                   pipex_config_session (struct pipex_session_config_req *);
-int                   pipex_get_stat (struct pipex_session_stat_req *);
-int                   pipex_get_closed (struct pipex_session_list_req *);
+int                   pipex_config_session (struct pipex_session_config_req *,
+                          struct pipex_iface_context *);
+int                   pipex_get_stat (struct pipex_session_stat_req *,
+                          struct pipex_iface_context *);
+int                   pipex_get_closed (struct pipex_session_list_req *,
+                          struct pipex_iface_context *);
 int                   pipex_destroy_session (struct pipex_session *);
 struct pipex_session  *pipex_lookup_by_ip_address (struct in_addr);
 struct pipex_session  *pipex_lookup_by_session_id (int, int);
