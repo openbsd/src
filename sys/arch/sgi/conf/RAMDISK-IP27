@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.40 2019/09/04 14:29:42 cheloha Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.41 2020/04/06 02:10:33 visa Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -17,6 +17,7 @@ option		USBVERBOSE
 option		ONEWIREVERBOSE
 
 option		FFS
+option		FFS2
 option		CD9660
 option		NFSCLIENT
 option		INET6

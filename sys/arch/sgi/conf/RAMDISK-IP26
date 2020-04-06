@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP26,v 1.5 2019/09/04 14:29:42 cheloha Exp $
+#	$OpenBSD: RAMDISK-IP26,v 1.6 2020/04/06 02:10:33 visa Exp $
 #
 # THIS KERNEL IS FOR POWER INDIGO2 R8000 (IP26) SYSTEMS ONLY.
 
@@ -16,6 +16,7 @@ option		EISAVERBOSE
 option		PCIVERBOSE
 
 option		FFS
+option		FFS2
 option		CD9660
 option		NFSCLIENT
 option		INET6

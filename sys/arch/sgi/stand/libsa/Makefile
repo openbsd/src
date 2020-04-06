@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2019/08/03 15:22:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2020/04/06 02:10:33 visa Exp $
 
 LIB=	sa
 
@@ -25,7 +25,7 @@ SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fchmod.c \
 	fstat.c ioctl.c lseek.c open.c read.c stat.c write.c cread.c
 
 # boot filesystems
-SRCS+=	ufs.c nfs.c cd9660.c
+SRCS+=	ufs.c ufs2.c nfs.c cd9660.c
 
 ${OBJS}:	${.CURDIR}/../Makefile.inc
 
