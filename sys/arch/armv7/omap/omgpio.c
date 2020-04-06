@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.10 2016/08/12 03:22:41 jsg Exp $ */
+/* $OpenBSD: omgpio.c,v 1.11 2020/04/06 13:01:36 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -37,6 +37,7 @@
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 
 #include "gpio.h"
 
@@ -178,6 +179,7 @@ struct omgpio_softc {
 	int 			sc_min_il;
 	int			sc_node;
 	struct intrhand		*sc_handlers[GPIO_NUM_PINS];
+	struct gpio_controller	sc_gc;
 	int			sc_omap_ver;
 	struct gpio_chipset_tag	sc_gpio_gc;
 	gpio_pin_t		sc_gpio_pins[GPIO_NUM_PINS];
@@ -200,6 +202,10 @@ int omgpio_irq(void *);
 int omgpio_irq_dummy(void *);
 int omgpio_pin_dir_read(struct omgpio_softc *, unsigned int);
 void omgpio_pin_dir_write(struct omgpio_softc *, unsigned int, unsigned int);
+
+void	omgpio_config_pin(void *, uint32_t *, int);
+int	omgpio_get_pin(void *, uint32_t *);
+void	omgpio_set_pin(void *, uint32_t *, int);
 
 struct cfattach omgpio_ca = {
 	sizeof (struct omgpio_softc), omgpio_match, omgpio_attach
@@ -359,6 +365,13 @@ omgpio_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_gpio_pins[i].pin_flags = GPIO_PIN_SET;
 	}
 
+	sc->sc_gc.gc_node = sc->sc_node;
+	sc->sc_gc.gc_cookie = sc;
+	sc->sc_gc.gc_config_pin = omgpio_config_pin;
+	sc->sc_gc.gc_get_pin = omgpio_get_pin;
+	sc->sc_gc.gc_set_pin = omgpio_set_pin;
+	gpio_controller_register(&sc->sc_gc);
+
 	sc->sc_gpio_gc.gp_cookie = sc;
 	sc->sc_gpio_gc.gp_pin_read = omgpio_pin_read;
 	sc->sc_gpio_gc.gp_pin_write = omgpio_pin_write;
@@ -389,6 +402,53 @@ omgpio_set_function(unsigned int gpio, unsigned int fn)
 {
 }
 #endif
+
+void
+omgpio_config_pin(void *cookie, uint32_t *cells, int config)
+{
+	struct omgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+
+	if (pin >= GPIO_NUM_PINS)
+		return;
+
+	if (config & GPIO_CONFIG_OUTPUT)
+		omgpio_pin_dir_write(sc, pin, OMGPIO_DIR_OUT);
+	else
+		omgpio_pin_dir_write(sc, pin, OMGPIO_DIR_IN);
+}
+
+int
+omgpio_get_pin(void *cookie, uint32_t *cells)
+{
+	struct omgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+	int val;
+
+	if (pin >= GPIO_NUM_PINS)
+		return 0;
+
+	val = omgpio_pin_read(sc, pin);
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	return val;
+}
+
+void
+omgpio_set_pin(void *cookie, uint32_t *cells, int val)
+{
+	struct omgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+
+	if (pin >= GPIO_NUM_PINS)
+		return;
+
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	omgpio_pin_write(sc, pin, val);
+}
 
 unsigned int
 omgpio_get_bit(unsigned int gpio)
