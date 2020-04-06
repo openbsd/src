@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.46 2020/03/10 17:23:25 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.47 2020/04/06 16:28:38 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -177,9 +177,12 @@ tls13_client_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 		goto err;
 
 	/* Either 32-random bytes or zero length... */
-	arc4random_buf(ctx->hs->legacy_session_id,
-	    sizeof(ctx->hs->legacy_session_id));
-	ctx->hs->legacy_session_id_len = sizeof(ctx->hs->legacy_session_id);
+	if (ctx->hs->max_version >= TLS1_3_VERSION) {
+		arc4random_buf(ctx->hs->legacy_session_id,
+		    sizeof(ctx->hs->legacy_session_id));
+		ctx->hs->legacy_session_id_len =
+		    sizeof(ctx->hs->legacy_session_id);
+	}
 
 	if (!CBB_add_u8_length_prefixed(cbb, &session_id))
 		goto err;
