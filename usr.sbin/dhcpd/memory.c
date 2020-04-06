@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.28 2017/02/13 23:04:05 krw Exp $ */
+/*	$OpenBSD: memory.c,v 1.29 2020/04/06 17:05:40 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -502,7 +502,8 @@ supersede_lease(struct lease *comp, struct lease *lease, int commit)
 			uid_hash_delete(comp);
 			enter_uid = 1;
 			if (comp->uid != &comp->uid_buf[0]) {
-				free(comp->uid);
+				if (comp->uid != lease->uid)
+					free(comp->uid);
 				comp->uid_max = 0;
 				comp->uid_len = 0;
 			}
