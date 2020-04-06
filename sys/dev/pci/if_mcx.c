@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.37 2020/04/04 01:48:03 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.38 2020/04/06 01:28:58 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2766,6 +2766,31 @@ mcx_cmdq_mboxes_copyin(struct mcx_dmamem *mxm, unsigned int nmb,
 }
 
 static void
+mcx_cmdq_mboxes_pas(struct mcx_dmamem *mxm, int offset, int npages,
+    struct mcx_dmamem *buf)
+{
+	uint64_t *pas;
+	int mbox, mbox_pages, i;
+
+	mbox = offset / MCX_CMDQ_MAILBOX_DATASIZE;
+	offset %= MCX_CMDQ_MAILBOX_DATASIZE;
+
+	pas = mcx_cq_mbox_data(mcx_cq_mbox(mxm, mbox));
+	pas += (offset / sizeof(*pas));
+	mbox = 0;
+	mbox_pages = (MCX_CMDQ_MAILBOX_DATASIZE - offset) / sizeof(*pas);
+	for (i = 0; i < npages; i++) {
+		*pas = htobe64(MCX_DMA_DVA(buf) + (i * MCX_PAGE_SIZE));
+		pas++;
+		if (i == mbox_pages) {
+			mbox++;
+			pas = mcx_cq_mbox_data(mcx_cq_mbox(mxm, mbox));
+			mbox_pages += MCX_CMDQ_MAILBOX_DATASIZE / sizeof(*pas);
+		}
+	}
+}
+
+static void
 mcx_cmdq_mboxes_copyout(struct mcx_dmamem *mxm, int nmb, void *b, size_t len)
 {
 	caddr_t buf = b;
@@ -3602,11 +3627,7 @@ mcx_create_eq(struct mcx_softc *sc)
 	    (1ull << MCX_EVENT_TYPE_PAGE_REQUEST));
 
 	/* physical addresses follow the mailbox in data */
-	pas = (uint64_t *)(mbin + 1);
-	for (i = 0; i < npages; i++) {
-		pas[i] = htobe64(MCX_DMA_DVA(&sc->sc_eq_mem) +
-		    (i * MCX_PAGE_SIZE));
-	}
+	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin), npages, &sc->sc_eq_mem);
 	mcx_cmdq_mboxes_sign(&mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE));
 	mcx_cmdq_post(sc, cqe, 0);
 
@@ -3895,10 +3916,7 @@ mcx_create_cq(struct mcx_softc *sc, int eqn)
 	    MCX_CQ_DOORBELL_OFFSET + (MCX_CQ_DOORBELL_SIZE * sc->sc_num_cq));
 
 	/* physical addresses follow the mailbox in data */
-	pas = (uint64_t *)(mbin + 1);
-	for (i = 0; i < npages; i++) {
-		pas[i] = htobe64(MCX_DMA_DVA(&cq->cq_mem) + (i * MCX_PAGE_SIZE));
-	}
+	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin), npages, &cq->cq_mem);
 	mcx_cmdq_post(sc, cmde, 0);
 
 	error = mcx_cmdq_poll(sc, cmde, 1000);
@@ -3986,7 +4004,7 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 	int error;
 	uint64_t *pas;
 	uint8_t *doorbell;
-	int insize, npages, paslen, i, token;
+	int insize, npages, paslen, token;
 
 	npages = howmany((1 << MCX_LOG_RQ_SIZE) * sizeof(struct mcx_rq_entry),
 	    MCX_PAGE_SIZE);
@@ -4026,11 +4044,7 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 	mbin->rq_wq.wq_log_size = MCX_LOG_RQ_SIZE;
 
 	/* physical addresses follow the mailbox in data */
-	pas = (uint64_t *)(mbin + 1);
-	for (i = 0; i < npages; i++) {
-		pas[i] = htobe64(MCX_DMA_DVA(&sc->sc_rq_mem) +
-		    (i * MCX_PAGE_SIZE));
-	}
+	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin), npages, &sc->sc_rq_mem);
 	mcx_cmdq_post(sc, cqe, 0);
 
 	error = mcx_cmdq_poll(sc, cqe, 1000);
@@ -4259,7 +4273,7 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	int error;
 	uint64_t *pas;
 	uint8_t *doorbell;
-	int insize, npages, paslen, i, token;
+	int insize, npages, paslen, token;
 
 	npages = howmany((1 << MCX_LOG_SQ_SIZE) * sizeof(struct mcx_sq_entry),
 	    MCX_PAGE_SIZE);
@@ -4302,11 +4316,7 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	mbin->sq_wq.wq_log_size = MCX_LOG_SQ_SIZE;
 
 	/* physical addresses follow the mailbox in data */
-	pas = (uint64_t *)(mbin + 1);
-	for (i = 0; i < npages; i++) {
-		pas[i] = htobe64(MCX_DMA_DVA(&sc->sc_sq_mem) +
-		    (i * MCX_PAGE_SIZE));
-	}
+	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin), npages, &sc->sc_sq_mem);
 	mcx_cmdq_post(sc, cqe, 0);
 
 	error = mcx_cmdq_poll(sc, cqe, 1000);
