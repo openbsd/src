@@ -1,10 +1,10 @@
-/*	$OpenBSD: tsc.c,v 1.15 2019/10/12 14:05:50 kettenis Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.16 2020/04/06 00:01:08 pirofti Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
  * Copyright (c) 2017 Mike Belopuhov <mike@openbsd.org>
- * Copyright (c) 2019 Paul Irofti <pirofti@openbsd.org>
+ * Copyright (c) 2019 Paul Irofti <paul@irofti.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

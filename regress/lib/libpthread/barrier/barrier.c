@@ -1,5 +1,5 @@
-/*	$OpenBSD: barrier.c,v 1.1 2012/04/11 18:39:24 pirofti Exp $	*/
-/* Paul Irofti <pirofti@openbsd.org>, 2012. Public Domain. */
+/*	$OpenBSD: barrier.c,v 1.2 2020/04/06 00:01:08 pirofti Exp $	*/
+/* Paul Irofti <paul@irofti.net>, 2012. Public Domain. */
 
 #include <stdio.h>
 

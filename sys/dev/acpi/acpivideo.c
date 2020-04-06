@@ -1,7 +1,7 @@
-/*	$OpenBSD: acpivideo.c,v 1.12 2020/02/08 19:08:17 patrick Exp $	*/
+/*	$OpenBSD: acpivideo.c,v 1.13 2020/04/06 00:01:08 pirofti Exp $	*/
 /*
  * Copyright (c) 2008 Federico G. Schwindt <fgsch@openbsd.org>
- * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
+ * Copyright (c) 2009 Paul Irofti <paul@irofti.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

@@ -1,6 +1,6 @@
-/*	$OpenBSD: octrng.c,v 1.7 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: octrng.c,v 1.8 2020/04/06 00:01:08 pirofti Exp $	*/
 /*
- * Copyright (c) 2013 Paul Irofti <pirofti@openbsd.org>
+ * Copyright (c) 2013 Paul Irofti <paul@irofti.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

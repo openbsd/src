@@ -1,5 +1,5 @@
-/*	$OpenBSD: spinlock.c,v 1.1 2012/05/03 09:07:17 pirofti Exp $	*/
-/* Paul Irofti <pirofti@openbsd.org>, 2012. Public Domain. */
+/*	$OpenBSD: spinlock.c,v 1.2 2020/04/06 00:01:08 pirofti Exp $	*/
+/* Paul Irofti <paul@irofti.net>, 2012. Public Domain. */
 
 #include <stdio.h>
 #include <stdlib.h>

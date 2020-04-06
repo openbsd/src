@@ -1,8 +1,8 @@
-/* $OpenBSD: acpipwrres.c,v 1.7 2014/09/14 14:17:24 jsg Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.8 2020/04/06 00:01:08 pirofti Exp $ */
 
 /*
  * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
- * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
+ * Copyright (c) 2009 Paul Irofti <paul@irofti.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

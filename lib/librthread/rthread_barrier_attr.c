@@ -1,6 +1,6 @@
-/*	$OpenBSD: rthread_barrier_attr.c,v 1.2 2012/04/23 08:30:33 pirofti Exp $	*/
+/*	$OpenBSD: rthread_barrier_attr.c,v 1.3 2020/04/06 00:01:08 pirofti Exp $	*/
 /*
- * Copyright (c) 2012 Paul Irofti <pirofti@openbsd.org>
+ * Copyright (c) 2012 Paul Irofti <paul@irofti.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

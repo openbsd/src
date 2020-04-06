@@ -1,6 +1,6 @@
-/*	$OpenBSD: acpivout.c,v 1.20 2020/03/23 14:23:19 ratchov Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.21 2020/04/06 00:01:08 pirofti Exp $	*/
 /*
- * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
+ * Copyright (c) 2009 Paul Irofti <paul@irofti.net>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
