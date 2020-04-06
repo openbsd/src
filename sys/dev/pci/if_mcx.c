@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.38 2020/04/06 01:28:58 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.39 2020/04/06 11:27:23 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2777,7 +2777,6 @@ mcx_cmdq_mboxes_pas(struct mcx_dmamem *mxm, int offset, int npages,
 
 	pas = mcx_cq_mbox_data(mcx_cq_mbox(mxm, mbox));
 	pas += (offset / sizeof(*pas));
-	mbox = 0;
 	mbox_pages = (MCX_CMDQ_MAILBOX_DATASIZE - offset) / sizeof(*pas);
 	for (i = 0; i < npages; i++) {
 		*pas = htobe64(MCX_DMA_DVA(buf) + (i * MCX_PAGE_SIZE));
@@ -4044,7 +4043,7 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 	mbin->rq_wq.wq_log_size = MCX_LOG_RQ_SIZE;
 
 	/* physical addresses follow the mailbox in data */
-	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin), npages, &sc->sc_rq_mem);
+	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin) + 0x10, npages, &sc->sc_rq_mem);
 	mcx_cmdq_post(sc, cqe, 0);
 
 	error = mcx_cmdq_poll(sc, cqe, 1000);
@@ -4316,7 +4315,7 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	mbin->sq_wq.wq_log_size = MCX_LOG_SQ_SIZE;
 
 	/* physical addresses follow the mailbox in data */
-	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin), npages, &sc->sc_sq_mem);
+	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin) + 0x10, npages, &sc->sc_sq_mem);
 	mcx_cmdq_post(sc, cqe, 0);
 
 	error = mcx_cmdq_poll(sc, cqe, 1000);
