@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.111 2020/04/06 12:31:30 claudio Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.112 2020/04/06 13:14:04 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -177,17 +177,15 @@ pipex_iface_start(struct pipex_iface_context *pipex_iface)
 Static void
 pipex_iface_stop(struct pipex_iface_context *pipex_iface)
 {
-	struct pipex_session *session;
-	struct pipex_session *session_next;
+	struct pipex_session *session, *session_tmp;
 
 	pipex_iface->pipexmode = 0;
 	/*
 	 * traversal all pipex sessions.
 	 * it will become heavy if the number of pppac devices bocomes large.
 	 */
-	for (session = LIST_FIRST(&pipex_session_list);
-	    session; session = session_next) {
-		session_next = LIST_NEXT(session, session_list);
+	LIST_FOREACH_SAFE(session, &pipex_session_list, session_list,
+	    session_tmp) {
 		if (session->pipex_iface == pipex_iface)
 			pipex_destroy_session(session);
 	}
@@ -555,13 +553,12 @@ Static int
 pipex_get_closed(struct pipex_session_list_req *req,
     struct pipex_iface_context *iface)
 {
-	struct pipex_session *session, *session_next;
+	struct pipex_session *session, *session_tmp;
 
 	NET_ASSERT_LOCKED();
 	bzero(req, sizeof(*req));
-	for (session = LIST_FIRST(&pipex_close_wait_list);
-	    session; session = session_next) {
-		session_next = LIST_NEXT(session, state_list);
+	LIST_FOREACH_SAFE(session, &pipex_close_wait_list, state_list,
+	    session_tmp) {
 		if (session->pipex_iface != iface)
 			continue;
 		req->plr_ppp_id[req->plr_ppp_id_count++] = session->ppp_id;
@@ -763,16 +760,14 @@ pipex_timer_stop(void)
 Static void
 pipex_timer(void *ignored_arg)
 {
-	struct pipex_session *session;
-	struct pipex_session *session_next;
+	struct pipex_session *session, *session_tmp;
 
 	timeout_add_sec(&pipex_timer_ch, pipex_prune);
 
 	NET_LOCK();
 	/* walk through */
-	for (session = LIST_FIRST(&pipex_session_list); session;
-	    session = session_next) {
-		session_next = LIST_NEXT(session, session_list);
+	LIST_FOREACH_SAFE(session, &pipex_session_list, session_list,
+	    session_tmp) {
 		switch (session->state) {
 		case PIPEX_STATE_OPENED:
 			if (session->timeout_sec == 0)
