@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.24 2020/03/16 04:15:19 cheloha Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.25 2020/04/06 17:54:50 cheloha Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -81,18 +81,18 @@ static void playinit(void);
 static void playtone(int, int, int);
 static void playstring(char *, size_t);
 
-/* emit tone of frequency hz for given number of ticks */
+/* emit tone of frequency freq for given number of milliseconds */
 static void
-tone(hz, nticks)
-	u_int hz, nticks;
+tone(freq, ms)
+	u_int freq, ms;
 {
-	pcppi_bell(ppicookie, hz, nticks, PCPPI_BELL_SLEEP);
+	pcppi_bell(ppicookie, freq, ms, PCPPI_BELL_SLEEP);
 }
 
-/* rest for given number of ticks */
+/* rest for given number of milliseconds */
 static void
-rest(nticks)
-	int nticks;
+rest(ms)
+	int ms;
 {
 	/*
 	 * Set timeout to endrest function, then give up the timeslice.
@@ -100,10 +100,10 @@ rest(nticks)
 	 * waited out.
 	 */
 #ifdef SPKRDEBUG
-	printf("rest: %d\n", nticks);
+	printf("rest: %dms\n", ms);
 #endif /* SPKRDEBUG */
-	if (nticks > 0)
-		tsleep(rest, SPKRPRI | PCATCH, "rest", nticks);
+	if (ms > 0)
+		tsleep_nsec(rest, SPKRPRI | PCATCH, "rest", MSEC_TO_NSEC(ms));
 }
 
 /**************** PLAY STRING INTERPRETER BEGINS HERE **********************
@@ -119,7 +119,7 @@ rest(nticks)
 #define dtoi(c)		((c) - '0')
 
 static int octave;	/* currently selected octave */
-static int whole;	/* whole-note time at current tempo, in ticks */
+static int whole;	/* whole-note time at current tempo, in milliseconds */
 static int value;	/* whole divisor for note time, quarter note = 1 */
 static int fill;	/* controls spacing of notes */
 static int octtrack;	/* octave-tracking on? */
@@ -169,7 +169,7 @@ static void
 playinit(void)
 {
 	octave = DFLT_OCTAVE;
-	whole = (hz * SECS_PER_MIN * WHOLE_NOTE) / DFLT_TEMPO;
+	whole = (1000 * SECS_PER_MIN * WHOLE_NOTE) / DFLT_TEMPO;
 	fill = NORMAL;
 	value = DFLT_VALUE;
 	octtrack = 0;
@@ -198,7 +198,7 @@ playtone(int pitch, int value, int sustain)
 		    (FILLTIME * value * sdenom);
 
 #ifdef SPKRDEBUG
-		printf("playtone: pitch %d for %d ticks, rest for %d ticks\n",
+		printf("playtone: pitch %d for %dms, rest for %dms\n",
 		    pitch, sound, silence);
 #endif /* SPKRDEBUG */
 
@@ -353,7 +353,7 @@ do { \
 			GETNUM(cp, tempo);
 			if (tempo < MIN_TEMPO || tempo > MAX_TEMPO)
 				tempo = DFLT_TEMPO;
-			whole = (hz * SECS_PER_MIN * WHOLE_NOTE) / tempo;
+			whole = (1000 * SECS_PER_MIN * WHOLE_NOTE) / tempo;
 			break;
 
 		case 'M':

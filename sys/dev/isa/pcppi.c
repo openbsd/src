@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.15 2019/12/31 10:05:32 mpi Exp $ */
+/* $OpenBSD: pcppi.c,v 1.16 2020/04/06 17:54:50 cheloha Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -184,9 +184,9 @@ pcppi_attach(parent, self, aux)
 }
 
 void
-pcppi_bell(self, pitch, period, slp)
+pcppi_bell(self, pitch, period_ms, slp)
 	pcppi_tag_t self;
-	int pitch, period;
+	int pitch, period_ms;
 	int slp;
 {
 	struct pcppi_softc *sc = self;
@@ -197,10 +197,10 @@ pcppi_bell(self, pitch, period, slp)
 	else if (pitch > INT_MAX - TIMER_FREQ)
 		pitch = INT_MAX - TIMER_FREQ;
 
-	if (period < 0)
-		period = 0;
-	else if (period > INT_MAX / 1000000)
-		period = INT_MAX / 1000000;
+	if (period_ms < 0)
+		period_ms = 0;
+	else if (period_ms > INT_MAX / 1000)
+		period_ms = INT_MAX / 1000;
 
 	s1 = spltty(); /* ??? */
 	if (sc->sc_bellactive) {
@@ -211,7 +211,7 @@ pcppi_bell(self, pitch, period, slp)
 		if (sc->sc_slp)
 			wakeup(pcppi_bell_stop);
 	}
-	if (pitch == 0 || period == 0) {
+	if (pitch == 0 || period_ms == 0) {
 		pcppi_bell_stop(sc);
 		sc->sc_bellpitch = 0;
 		splx(s1);
@@ -236,11 +236,11 @@ pcppi_bell(self, pitch, period, slp)
 	sc->sc_bellactive = 1;
 
 	if (slp & PCPPI_BELL_POLL) {
-		delay((period * 1000000) / hz);
+		delay(period_ms * 1000);
 		pcppi_bell_stop(sc);
 	} else {
 		sc->sc_timeout = 1;
-		timeout_add(&sc->sc_bell_timeout, period);
+		timeout_add_msec(&sc->sc_bell_timeout, period_ms);
 		if (slp & PCPPI_BELL_SLEEP) {
 			sc->sc_slp = 1;
 			tsleep_nsec(pcppi_bell_stop, PCPPIPRI | PCATCH, "bell",
@@ -279,9 +279,9 @@ pcppi_kbd_bell(arg, pitch, period, volume, poll)
 	int poll;
 {
 	/*
-	 * Comes in as ms, goes out as ticks; volume ignored.
+	 * NB: volume ignored.
 	 */
-	pcppi_bell(arg, volume ? pitch : 0, (period * hz) / 1000,
+	pcppi_bell(arg, volume ? pitch : 0, period,
 	    poll ? PCPPI_BELL_POLL : 0);
 }
 #endif /* NPCKBD > 0 || NHIDKBD > 0 */
