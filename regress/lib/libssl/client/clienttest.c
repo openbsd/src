@@ -388,7 +388,7 @@ client_hello_test(int testno, struct client_hello_test *cht)
 
 	if (make_client_hello(cht->protocol, &client_hello,
 	    &client_hello_len) != 0)
-		goto failure;
+		errx(1, "failed to make client hello");
 
 	if ((size_t)len != client_hello_len) {
 		fprintf(stderr, "FAIL: test returned ClientHello length %li, "
