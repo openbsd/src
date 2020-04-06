@@ -395,6 +395,9 @@ client_hello_test(int testno, struct client_hello_test *cht)
 		    "want %zu\n", len, client_hello_len);
 		fprintf(stderr, "received:\n");
 		hexdump(wbuf, len);
+		fprintf(stderr, "test data:\n");
+		hexdump(client_hello, client_hello_len);
+		fprintf(stderr, "\n");
 		goto failure;
 	}
 
