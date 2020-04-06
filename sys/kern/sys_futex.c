@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.15 2020/03/20 17:17:31 cheloha Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.16 2020/04/06 02:44:31 cheloha Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -244,7 +244,7 @@ futex_wait(uint32_t *uaddr, uint32_t val, const struct timespec *timeout,
 #endif
 		if (ts.tv_sec < 0 || !timespecisvalid(&ts))
 			return EINVAL;
-		nsecs = MIN(TIMESPEC_TO_NSEC(&ts), MAXTSLP);
+		nsecs = MAX(1, MIN(TIMESPEC_TO_NSEC(&ts), MAXTSLP));
 	}
 
 	f = futex_get(uaddr, flags | FT_CREATE);
