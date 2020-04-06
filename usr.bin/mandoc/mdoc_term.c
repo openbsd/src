@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_term.c,v 1.278 2020/03/13 00:31:05 schwarze Exp $ */
+/* $OpenBSD: mdoc_term.c,v 1.279 2020/04/06 09:55:49 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -333,7 +333,8 @@ print_mdoc_node(DECL_ARGS)
 	memset(&npair, 0, sizeof(struct termpair));
 	npair.ppair = pair;
 
-	if (n->flags & NODE_ID)
+	if (n->flags & NODE_ID && n->tok != MDOC_Pp &&
+	    (n->tok != MDOC_It || n->type != ROFFT_BLOCK))
 		term_tag_write(n, p->line);
 
 	/*
@@ -628,6 +629,8 @@ termp_it_pre(DECL_ARGS)
 
 	if (n->type == ROFFT_BLOCK) {
 		print_bvspace(p, n->parent->parent, n);
+		if (n->flags & NODE_ID)
+			term_tag_write(n, p->line);
 		return 1;
 	}
 
@@ -1108,7 +1111,6 @@ termp_ex_pre(DECL_ARGS)
 static int
 termp_nd_pre(DECL_ARGS)
 {
-
 	if (n->type == ROFFT_BODY)
 		term_word(p, "\\(en");
 	return 1;
@@ -1117,14 +1119,20 @@ termp_nd_pre(DECL_ARGS)
 static int
 termp_bl_pre(DECL_ARGS)
 {
-
-	return n->type != ROFFT_HEAD;
+	switch (n->type) {
+	case ROFFT_BLOCK:
+		term_newln(p);
+		return 1;
+	case ROFFT_HEAD:
+		return 0;
+	default:
+		return 1;
+	}
 }
 
 static void
 termp_bl_post(DECL_ARGS)
 {
-
 	if (n->type != ROFFT_BLOCK)
 		return;
 	term_newln(p);
@@ -1138,7 +1146,6 @@ termp_bl_post(DECL_ARGS)
 static int
 termp_xr_pre(DECL_ARGS)
 {
-
 	if (NULL == (n = n->child))
 		return 0;
 
@@ -1553,6 +1560,8 @@ static int
 termp_pp_pre(DECL_ARGS)
 {
 	term_vspace(p);
+	if (n->flags & NODE_ID)
+		term_tag_write(n, p->line);
 	return 0;
 }
 

@@ -1,0 +1,14 @@
+TG-LIST(1)                  General Commands Manual                 TG-LIST(1)
+
+NNAAMMEE
+     TTgg--lliisstt - explicit tagging of lists and list elements
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     --   item
+
+     tag     text
+     ENDTEST
+
+OpenBSD                          April 6, 2020                         OpenBSD

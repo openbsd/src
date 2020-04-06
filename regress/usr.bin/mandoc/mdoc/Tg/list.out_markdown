@@ -1,0 +1,19 @@
+TG-LIST(1) - General Commands Manual
+
+# NAME
+
+**Tg-list** - explicit tagging of lists and list elements
+
+# DESCRIPTION
+
+BEGINTEST
+
+-	item
+
+tag
+
+> text
+
+ENDTEST
+
+OpenBSD - April 6, 2020

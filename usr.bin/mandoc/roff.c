@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.244 2020/04/03 11:34:19 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.245 2020/04/06 09:55:49 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1121,7 +1121,13 @@ roff_node_transparent(struct roff_node *n)
 		return 0;
 	if (n->type == ROFFT_COMMENT || n->flags & NODE_NOPRT)
 		return 1;
-	switch (n->tok) {
+	return roff_tok_transparent(n->tok);
+}
+
+int
+roff_tok_transparent(enum roff_tok tok)
+{
+	switch (tok) {
 	case ROFF_ft:
 	case ROFF_ll:
 	case ROFF_mc:

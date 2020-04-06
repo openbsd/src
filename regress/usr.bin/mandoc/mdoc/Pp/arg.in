@@ -1,5 +1,5 @@
-.\" $OpenBSD: arg.in,v 1.4 2017/07/04 14:53:26 schwarze Exp $
-.Dd $Mdocdate: July 4 2017 $
+.\" $OpenBSD: arg.in,v 1.5 2020/04/06 09:55:50 schwarze Exp $
+.Dd $Mdocdate: April 6 2020 $
 .Dt PP-ARG 1
 .Os
 .Sh NAME
@@ -7,9 +7,13 @@
 .Nd paragraph macro with arguments
 .Sh DESCRIPTION
 line 1
+.Tg first
 .Pp drop this
 line 2
 .br drop this
 line 3
 .sp 1v drop this
 line 4
+.Tg last
+.Pp
+final text

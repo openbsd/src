@@ -1,0 +1,7 @@
+<ul class="Bl-dash" id="dashlist">
+  <li id="dashitem"><a class="permalink" href="#dashitem">item</a></li>
+</ul>
+<dl class="Bl-tag" id="taglist">
+  <dt id="tagitem"><a class="permalink" href="#tagitem">tag</a></dt>
+  <dd>text</dd>
+</dl>

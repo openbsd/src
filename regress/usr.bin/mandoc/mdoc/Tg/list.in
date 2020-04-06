@@ -1,0 +1,22 @@
+.\" $OpenBSD: list.in,v 1.1 2020/04/06 09:55:50 schwarze Exp $
+.Dd $Mdocdate: April 6 2020 $
+.Dt TG-LIST 1
+.Os
+.Sh NAME
+.Nm Tg-list
+.Nd explicit tagging of lists and list elements
+.Sh DESCRIPTION
+BEGINTEST
+.Tg dashlist
+.Bl -dash
+.Tg dashitem
+.It
+item
+.El
+.Tg taglist
+.Bl -tag -width Ds
+.Tg tagitem
+.It tag
+text
+.El
+ENDTEST

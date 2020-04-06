@@ -1,5 +1,5 @@
-.\" $OpenBSD: paragraph.in,v 1.1 2019/01/07 06:51:37 schwarze Exp $
-.Dd $Mdocdate: January 7 2019 $
+.\" $OpenBSD: paragraph.in,v 1.2 2020/04/06 09:55:49 schwarze Exp $
+.Dd $Mdocdate: April 6 2020 $
 .Dt BD-PARAGRAPH 1
 .Os
 .Sh NAME
@@ -9,12 +9,15 @@
 BEGINTEST
 initial
 text
+.Tg npara
 .Pp
 normal
 paragraph
+.Tg filled
 .Bd -filled
 filled
 display
+.Tg fpara
 .Pp
 paragraph
 in display
@@ -24,9 +27,11 @@ to normal
 .Pp
 another
 paragraph
+.Tg unfilled
 .Bd -unfilled
 unfilled
 display
+.Tg upara
 .Pp
 unfilled
 paragraph

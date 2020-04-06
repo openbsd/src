@@ -1,4 +1,4 @@
-/* $OpenBSD: html.c,v 1.135 2020/03/13 00:31:04 schwarze Exp $ */
+/* $OpenBSD: html.c,v 1.136 2020/04/06 09:55:49 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -360,7 +360,7 @@ html_make_id(const struct roff_node *n, int unique)
 				return NULL;
 			break;
 		default:
-			if (n->child->type != ROFFT_TEXT)
+			if (n->child == NULL || n->child->type != ROFFT_TEXT)
 				return NULL;
 			buf = mandoc_strdup(n->child->string);
 			break;
@@ -767,13 +767,15 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 
 /*
  * Print an element with an optional "id=" attribute.
- * If there is an "id=" attribute, also add a permalink:
- * outside if it's a phrasing element, or inside otherwise.
+ * If the element has phrasing content and an "id=" attribute,
+ * also add a permalink: outside if it can be in phrasing context,
+ * inside otherwise.
  */
 struct tag *
 print_otag_id(struct html *h, enum htmltag elemtype, const char *cattr,
     struct roff_node *n)
 {
+	struct roff_node *nch;
 	struct tag	*ret, *t;
 	const char	*id;
 
@@ -786,8 +788,17 @@ print_otag_id(struct html *h, enum htmltag elemtype, const char *cattr,
 	t = print_otag(h, elemtype, "ci", cattr, id);
 	if (ret == NULL) {
 		ret = t;
-		if (id != NULL)
-			print_otag(h, TAG_A, "chR", "permalink", id);
+		if (id != NULL && (nch = n->child) != NULL) {
+			/* man(7) is safe, it tags phrasing content only. */
+			if (n->tok > MDOC_MAX ||
+			    htmltags[elemtype].flags & HTML_TOPHRASE)
+				nch = NULL;
+			else  /* For mdoc(7), beware of nested blocks. */
+				while (nch != NULL && nch->type == ROFFT_TEXT)
+					nch = nch->next;
+			if (nch == NULL)
+				print_otag(h, TAG_A, "chR", "permalink", id);
+		}
 	}
 	return ret;
 }

@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.5 2019/01/07 06:51:37 schwarze Exp $
+# $OpenBSD: Makefile,v 1.6 2020/04/06 09:55:49 schwarze Exp $
 
 REGRESS_TARGETS	 = spacing
+TAG_TARGETS	 = spacing
 LINT_TARGETS	 = spacing
 HTML_TARGETS	 = spacing
 

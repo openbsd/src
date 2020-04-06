@@ -1,5 +1,7 @@
 <p class="Pp">preceding paragraph</p>
-<div class="Bd Bd-indent">spacing in and around one-line displays</div>
+<div class="Bd
+  Bd-indent" id="display"><a class="permalink" href="#display">spacing in and
+  around one-line displays</a></div>
 empty display:
 <div class="Bd Bd-indent"></div>
 following text

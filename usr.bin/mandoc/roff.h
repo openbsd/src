@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff.h,v 1.54 2020/02/27 21:38:27 schwarze Exp $	*/
+/* $OpenBSD: roff.h,v 1.55 2020/04/06 09:55:49 schwarze Exp $	*/
 /*
- * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -557,3 +557,4 @@ struct roff_node *roff_node_child(struct roff_node *);
 struct roff_node *roff_node_next(struct roff_node *);
 struct roff_node *roff_node_prev(struct roff_node *);
 int		  roff_node_transparent(struct roff_node *);
+int		  roff_tok_transparent(enum roff_tok);

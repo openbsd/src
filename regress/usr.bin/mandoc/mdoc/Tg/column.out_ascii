@@ -1,0 +1,13 @@
+TG-COLUMN(1)                General Commands Manual               TG-COLUMN(1)
+
+NNAAMMEE
+     TTgg--ccoolluummnn - explicit tagging of column lists and rows
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     one    two
+     1      2
+     ENDTEST
+
+OpenBSD                          April 6, 2020                         OpenBSD
