@@ -289,7 +289,7 @@ hexdump(const unsigned char *buf, size_t len)
 	size_t i;
 
 	for (i = 1; i <= len; i++)
-		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
+		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 && i != len ? "" : "\n");
 
 	fprintf(stderr, "\n");
 }
@@ -342,7 +342,7 @@ make_client_hello(int protocol, char **out, size_t *outlen)
 	case TLS1_2_VERSION:
 		client_hello = client_hello_tls12;
 		client_hello_len = sizeof(client_hello_tls12);
-		if (ssl_aes_is_accelerated() == 1)
+		if (ssl_aes_is_accelerated())
 			cipher_list = cipher_list_tls12_aes;
 		else
 			cipher_list = cipher_list_tls12_chacha;
@@ -450,7 +450,7 @@ client_hello_test(int testno, struct client_hello_test *cht)
 
 	ret = 0;
 
-failure:
+ failure:
 	SSL_CTX_free(ssl_ctx);
 	SSL_free(ssl);
 
