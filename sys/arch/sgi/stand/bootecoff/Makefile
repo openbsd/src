@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2012/03/19 17:38:31 miod Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/04/06 16:23:44 visa Exp $
 
 .include "${.CURDIR}/../Makefile32.inc"
 STRIP?=		strip
@@ -8,7 +8,7 @@ PROG=		bootecoff
 .PATH:	${.CURDIR}/../boot
 .include "${.CURDIR}/../boot/Makefile"
 
-SRCS+=	ashrdi3.c moddi3.c udivdi3.c umoddi3.c qdivrem.c
+SRCS+=	ashrdi3.c divdi3.c moddi3.c udivdi3.c umoddi3.c qdivrem.c
 
 ${PROG}: $(OBJS) $(LDADD)
 	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS) -L${LIBSADIR} ${LIBSA} \
