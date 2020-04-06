@@ -200,12 +200,21 @@ static struct client_hello_test client_hello_tests[] = {
 		.random_start = SSL3_RANDOM_OFFSET,
 		.ssl_method = TLSv1_2_client_method,
 	},
+#if 0
 	{
 		.desc = "SSLv23 default",
-		.protocol = TLS1_2_VERSION,
+		.protocol = TLS1_3_VERSION,
 		.random_start = SSL3_RANDOM_OFFSET,
 		.ssl_method = SSLv23_client_method,
 		.ssl_options = 0,
+	},
+#endif
+	{
+		.desc = "SSLv23 default (no TLSv1.3)",
+		.protocol = TLS1_2_VERSION,
+		.random_start = SSL3_RANDOM_OFFSET,
+		.ssl_method = SSLv23_client_method,
+		.ssl_options = SSL_OP_NO_TLSv1_3,
 	},
 	{
 		.desc = "SSLv23 (no TLSv1.2)",
@@ -221,12 +230,21 @@ static struct client_hello_test client_hello_tests[] = {
 		.ssl_method = SSLv23_client_method,
 		.ssl_options = SSL_OP_NO_TLSv1_1,
 	},
+#if 0
 	{
 		.desc = "TLS default",
-		.protocol = TLS1_2_VERSION,
+		.protocol = TLS1_3_VERSION,
 		.random_start = SSL3_RANDOM_OFFSET,
 		.ssl_method = TLS_client_method,
 		.ssl_options = 0,
+	},
+#endif
+	{
+		.desc = "TLS (no TLSv1.3)",
+		.protocol = TLS1_2_VERSION,
+		.random_start = SSL3_RANDOM_OFFSET,
+		.ssl_method = TLS_client_method,
+		.ssl_options = SSL_OP_NO_TLSv1_3,
 	},
 	{
 		.desc = "TLS (no TLSv1.2)",
@@ -242,13 +260,24 @@ static struct client_hello_test client_hello_tests[] = {
 		.ssl_method = TLS_client_method,
 		.ssl_options = SSL_OP_NO_TLSv1_1,
 	},
+#if 0
 	{
 		.desc = "TLS (no TLSv1.0, no TLSv1.1)",
-		.protocol = TLS1_2_VERSION,
+		.protocol = TLS1_3_VERSION,
 		.random_start = SSL3_RANDOM_OFFSET,
 		.ssl_method = TLS_client_method,
 		.ssl_options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1,
 	},
+#endif
+#if 0
+	{
+		.desc = "TLS (no TLSv1.0, no TLSv1.1, no TLSv1.2)",
+		.protocol = TLS1_3_VERSION,
+		.random_start = SSL3_RANDOM_OFFSET,
+		.ssl_method = TLS_client_method,
+		.ssl_options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2,
+	},
+#endif
 };
 
 #define N_CLIENT_HELLO_TESTS \
