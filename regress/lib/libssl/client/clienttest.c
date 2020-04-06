@@ -347,7 +347,6 @@ client_hello_test(int testno, struct client_hello_test *cht)
 	size_t client_hello_len;
 	char *wbuf, rbuf[1];
 	int ret = 1;
-	size_t i;
 	long len;
 
 	fprintf(stderr, "Test %i - %s\n", testno, cht->desc);
@@ -402,14 +401,17 @@ client_hello_test(int testno, struct client_hello_test *cht)
 	}
 
 	/* We expect the client random to differ. */
-	i = cht->random_start + SSL3_RANDOM_SIZE;
-	if (memcmp(client_hello, wbuf, cht->random_start) != 0 ||
-	    memcmp(&client_hello[cht->random_start],
-		&wbuf[cht->random_start], SSL3_RANDOM_SIZE) == 0 ||
-	    memcmp(&client_hello[i], &wbuf[i], len - i) != 0) {
+	if (memcmp(&client_hello[cht->random_start], &wbuf[cht->random_start],
+	    SSL3_RANDOM_SIZE) == 0) {
+		fprintf(stderr, "FAIL: ClientHello has zeroed random\n");
+		goto failure;
+	}
+
+	memset(&wbuf[cht->random_start], 0, SSL3_RANDOM_SIZE);
+
+	if (memcmp(client_hello, wbuf, client_hello_len) != 0) {
 		fprintf(stderr, "FAIL: ClientHello differs:\n");
 		fprintf(stderr, "received:\n");
-		memset(&wbuf[cht->random_start], 0, SSL3_RANDOM_SIZE);
 		hexdump(wbuf, len);
 		fprintf(stderr, "test data:\n");
 		hexdump(client_hello, client_hello_len);
