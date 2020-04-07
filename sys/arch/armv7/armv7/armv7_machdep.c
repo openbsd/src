@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.58 2019/05/06 03:32:48 mlarkin Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.59 2020/04/07 10:11:01 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -173,8 +173,6 @@ vaddr_t msgbufphys;
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
 extern u_int undefined_handler_address;
-
-uint32_t	board_id;
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
@@ -389,14 +387,6 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 
 	if (arg0)
 		esym = (uint32_t)arg0;
-
-	board_id = (uint32_t)arg1;
-	/*
-	 * u-boot has decided the top four bits are
-	 * 'compatibility revision' for sunxi
-	 */
-	if (board_id != 0xffffffff)
-		board_id &= 0x0fffffff;
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -853,7 +843,6 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	if (boothowto & RB_KDB)
 		db_enter();
 #endif
-	printf("board type: %u\n", board_id);
 
 	cpu_setup();
 
