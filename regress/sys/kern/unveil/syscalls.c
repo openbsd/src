@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.26 2020/04/07 13:30:23 claudio Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.27 2020/04/07 18:05:47 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -149,7 +149,6 @@ test_openat(int do_uv)
 	UV_SHOULD_ENOENT(((dirfd2after = open(uv_dir2, O_RDONLY | O_DIRECTORY)) == -1), "open");
 
 	UV_SHOULD_ENOENT((openat(slashbefore, "etc/hosts", O_RDONLY) == -1), "openat");
-	UV_SHOULD_ENOENT((openat(slashbefore, "hooray", O_RDWR|O_CREAT, 0644) == -1), "openat");
 	UV_SHOULD_SUCCEED((openat(slashbefore, uv_file1, O_RDWR) == -1), "openat");
 	UV_SHOULD_ENOENT((openat(slashbefore, uv_file2, O_RDWR) == -1), "openat");
 
