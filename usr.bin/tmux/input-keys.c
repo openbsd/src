@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.70 2020/04/01 09:05:27 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.71 2020/04/07 13:38:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -270,6 +270,8 @@ input_key_get_mouse(struct screen *s, struct mouse_event *m, u_int x, u_int y,
 
 	/* If this pane is not in button or all mode, discard motion events. */
 	if (MOUSE_DRAG(m->b) && (s->mode & MOTION_MOUSE_MODES) == 0)
+		return (0);
+	if ((s->mode & ALL_MOUSE_MODES) == 0)
 		return (0);
 
 	/*
