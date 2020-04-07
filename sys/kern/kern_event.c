@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.129 2020/04/02 07:00:25 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.130 2020/04/07 12:52:27 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1102,7 +1102,12 @@ kqueue_task(void *arg)
 {
 	struct kqueue *kq = arg;
 
-	KNOTE(&kq->kq_sel.si_note, 0);
+	if (kq->kq_state & KQ_SEL) {
+		kq->kq_state &= ~KQ_SEL;
+		selwakeup(&kq->kq_sel);
+	} else {
+		KNOTE(&kq->kq_sel.si_note, 0);
+	}
 	KQRELE(kq);
 }
 
@@ -1114,10 +1119,7 @@ kqueue_wakeup(struct kqueue *kq)
 		kq->kq_state &= ~KQ_SLEEP;
 		wakeup(kq);
 	}
-	if (kq->kq_state & KQ_SEL) {
-		kq->kq_state &= ~KQ_SEL;
-		selwakeup(&kq->kq_sel);
-	} else if (!SLIST_EMPTY(&kq->kq_sel.si_note)) {
+	if ((kq->kq_state & KQ_SEL) || !SLIST_EMPTY(&kq->kq_sel.si_note)) {
 		/* Defer activation to avoid recursion. */
 		KQREF(kq);
 		if (!task_add(systq, &kq->kq_task))
