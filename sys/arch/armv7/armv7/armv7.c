@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.15 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: armv7.c,v 1.16 2020/04/07 09:32:44 kettenis Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -89,8 +89,6 @@ armv7_find_dev(const char *name, int unit)
 	return (NULL);
 }
 
-extern char *hw_prod;
-
 void
 armv7_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -122,4 +120,3 @@ armv7_attach(struct device *parent, struct device *self, void *aux)
 			    DEVNAME(sc), bd->name, bd->unit);
 	}
 }
-
