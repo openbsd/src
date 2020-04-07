@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SMR_LIST_INIT.9,v 1.3 2020/04/07 13:33:50 visa Exp $
+.\"	$OpenBSD: SMR_LIST_INIT.9,v 1.4 2020/04/07 13:36:18 visa Exp $
 .\"
 .\" Copyright (c) 2019 Visa Hankala
 .\"
@@ -195,7 +195,7 @@ return the successor of the element
 or NULL if there are no more elements on the list.
 .Pp
 .Fn SMR_SLIST_EMPTY_LOCKED
-returns true of the list
+returns true if the list
 .Fa head
 is empty.
 .Pp
@@ -259,8 +259,8 @@ return the successor of the element
 .Fa elm ,
 or NULL if there are no more elements on the list.
 .Pp
-.Fn SMR_SLIST_EMPTY_LOCKED
-returns true of the list
+.Fn SMR_LIST_EMPTY_LOCKED
+returns true if the list
 .Fa head
 is empty.
 .Pp
