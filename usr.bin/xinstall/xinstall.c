@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.73 2019/06/28 13:35:05 deraadt Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.74 2020/04/07 09:40:09 espie Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 		usage();
 
 	/* must have at least two arguments, except when creating directories */
-	if (argc < 2 && !dodir)
+	if (argc == 0 || (argc == 1 && !dodir))
 		usage();
 
 	/* get group and owner id's */
