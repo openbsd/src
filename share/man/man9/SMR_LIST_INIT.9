@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SMR_LIST_INIT.9,v 1.2 2019/07/05 04:41:23 dlg Exp $
+.\"	$OpenBSD: SMR_LIST_INIT.9,v 1.3 2020/04/07 13:33:50 visa Exp $
 .\"
 .\" Copyright (c) 2019 Visa Hankala
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 5 2019 $
+.Dd $Mdocdate: April 7 2020 $
 .Dt SMR_LIST_INIT 9
 .Os
 .Sh NAME
@@ -50,7 +50,25 @@
 .Nm SMR_LIST_INSERT_HEAD_LOCKED ,
 .Nm SMR_LIST_INSERT_AFTER_LOCKED ,
 .Nm SMR_LIST_INSERT_BEFORE_LOCKED ,
-.Nm SMR_LIST_REMOVE_LOCKED
+.Nm SMR_LIST_REMOVE_LOCKED ,
+.Nm SMR_TAILQ_ENTRY ,
+.Nm SMR_TAILQ_HEAD ,
+.Nm SMR_TAILQ_HEAD_INITIALIZER ,
+.Nm SMR_TAILQ_INIT ,
+.Nm SMR_TAILQ_FIRST ,
+.Nm SMR_TAILQ_NEXT ,
+.Nm SMR_TAILQ_FOREACH ,
+.Nm SMR_TAILQ_FIRST_LOCKED ,
+.Nm SMR_TAILQ_NEXT_LOCKED ,
+.Nm SMR_TAILQ_LAST_LOCKED ,
+.Nm SMR_TAILQ_EMPTY_LOCKED ,
+.Nm SMR_TAILQ_FOREACH_LOCKED ,
+.Nm SMR_TAILQ_FOREACH_SAFE_LOCKED ,
+.Nm SMR_TAILQ_INSERT_HEAD_LOCKED ,
+.Nm SMR_TAILQ_INSERT_TAIL_LOCKED ,
+.Nm SMR_TAILQ_INSERT_AFTER_LOCKED ,
+.Nm SMR_TAILQ_INSERT_BEFORE_LOCKED ,
+.Nm SMR_TAILQ_REMOVE_LOCKED
 .Nd SMR list macros
 .Sh SYNOPSIS
 .In sys/smr.h
@@ -102,8 +120,34 @@
 .Fn SMR_LIST_INSERT_BEFORE_LOCKED "struct TYPE *listelm" "struct TYPE *elm" "FIELDNAME"
 .Ft void
 .Fn SMR_LIST_REMOVE_LOCKED "struct TYPE *elm" "FIELDNAME"
+.Ft void
+.Fn SMR_TAILQ_INIT "SMR_TAILQ_HEAD *head"
+.Ft TYPE *
+.Fn SMR_TAILQ_FIRST "SMR_TAILQ_HEAD *head"
+.Ft TYPE *
+.Fn SMR_TAILQ_NEXT "TYPE *elm" "FIELDNAME"
+.Ft TYPE *
+.Fn SMR_TAILQ_FIRST_LOCKED "SMR_TAILQ_HEAD *head"
+.Ft TYPE *
+.Fn SMR_TAILQ_NEXT_LOCKED "TYPE *elm" "FIELDNAME"
+.Ft TYPE *
+.Fn SMR_TAILQ_LAST_LOCKED "SMR_TAILQ_HEAD *head"
+.Fn SMR_TAILQ_FOREACH "VARNAME" "SMR_TAILQ_HEAD *head" "FIELDNAME"
+.Fn SMR_TAILQ_FOREACH_LOCKED "VARNAME" "SMR_TAILQ_HEAD *head" "FIELDNAME"
+.Fn SMR_TAILQ_FOREACH_SAFE_LOCKED "VARNAME" "SMR_TAILQ_HEAD *head" "FIELDNAME" "TEMP_VARNAME"
+.Ft void
+.Fn SMR_TAILQ_INSERT_HEAD_LOCKED "SMR_TAILQ_HEAD *head" "struct TYPE *elm" "FIELDNAME"
+.Ft void
+.Fn SMR_TAILQ_INSERT_TAIL_LOCKED "SMR_TAILQ_HEAD *head" "struct TYPE *elm" "FIELDNAME"
+.Ft void
+.Fn SMR_TAILQ_INSERT_AFTER_LOCKED "struct TYPE *listelm" "struct TYPE *elm" "FIELDNAME"
+.Ft void
+.Fn SMR_TAILQ_INSERT_BEFORE_LOCKED "struct TYPE *listelm" "struct TYPE *elm" "FIELDNAME"
+.Ft void
+.Fn SMR_TAILQ_REMOVE_LOCKED "struct TYPE *elm" "FIELDNAME"
 .Sh DESCRIPTION
-The SMR list macros define and operate on singly-linked lists and lists
+The SMR list macros define and operate on singly-linked lists,
+lists and tail queues
 that can be used with the safe memory reclamation mechanism.
 A data structure built with these macros can be accessed concurrently
 by multiple readers and a single writer.
@@ -258,45 +302,89 @@ removes the element
 .Fa elm
 from the list
 .Fa head .
-.Sh CONTEXT
-.Nm SMR_SLIST_FIRST ,
-.Nm SMR_SLIST_NEXT ,
-.Nm SMR_SLIST_FOREACH ,
-.Nm SMR_SLIST_INIT ,
-.Nm SMR_SLIST_FIRST_LOCKED ,
-.Nm SMR_SLIST_NEXT_LOCKED ,
-.Nm SMR_SLIST_EMPTY_LOCKED ,
-.Nm SMR_SLIST_FOREACH_LOCKED ,
-.Nm SMR_SLIST_FOREACH_SAFE_LOCKED ,
-.Nm SMR_SLIST_INSERT_HEAD_LOCKED ,
-.Nm SMR_SLIST_INSERT_AFTER_LOCKED ,
-.Nm SMR_SLIST_REMOVE_HEAD_LOCKED ,
-.Nm SMR_SLIST_REMOVE_AFTER_LOCKED ,
-.Nm SMR_SLIST_REMOVE_LOCKED ,
-.Nm SMR_LIST_FIRST ,
-.Nm SMR_LIST_NEXT ,
-.Nm SMR_LIST_FOREACH ,
-.Nm SMR_LIST_INIT ,
-.Nm SMR_LIST_FIRST_LOCKED ,
-.Nm SMR_LIST_NEXT_LOCKED ,
-.Nm SMR_LIST_EMPTY_LOCKED ,
-.Nm SMR_LIST_FOREACH_LOCKED ,
-.Nm SMR_LIST_FOREACH_SAFE_LOCKED ,
-.Nm SMR_LIST_INSERT_HEAD_LOCKED ,
-.Nm SMR_LIST_INSERT_AFTER_LOCKED ,
-.Nm SMR_LIST_INSERT_BEFORE_LOCKED
+.Sh TAIL QUEUES
+.Fn SMR_TAILQ_INIT
+initialies the tail queue
+.Fa head
+to an empty state.
+.Pp
+.Fn SMR_TAILQ_FIRST
 and
-.Nm SMR_LIST_REMOVE_LOCKED
-can be used during autoconf, from process context,
+.Fn SMR_TAILQ_FIRST_LOCKED
+return the first element in the queue
+.Fa head ,
+or NULL if the queue is empty.
+.Pp
+.Fn SMR_TAILQ_NEXT
+and
+.Fn SMR_TAILQ_NEXT_LOCKED
+return the successor of the element
+.Fa elm ,
+or NULL if there are no more elements in the queue.
+.Pp
+.Fn SMR_TAILQ_EMPTY_LOCKED
+returns true if the queue
+.Fa head
+is empty.
+.Pp
+.Fn SMR_TAILQ_FOREACH
+and
+.Fn SMR_TAILQ_FOREACH_LOCKED
+traverse the queue
+.Fa head
+in forward direction.
+.Pp
+.Fn SMR_TAILQ_FOREACH_SAFE_LOCKED
+traverses the queue
+.Fa head
+in forward direction.
+It is permitted to remove the element referenced by variable
+.Fa VARNAME
+from the queue and defer its freeing using
+.Xr smr_call 9 .
+.Pp
+.Fn SMR_TAILQ_INSERT_HEAD_LOCKED
+inserts the new element
+.Fa elm
+at the head of the queue.
+.Pp
+.Fn SMR_TAILQ_INSERT_TAIL_LOCKED
+inserts the new element
+.Fa elm
+at the tail of the queue.
+.Pp
+.Fn SMR_TAILQ_INSERT_AFTER_LOCKED
+inserts the new element
+.Fa elm
+after the element
+.Fa listelm .
+.Pp
+.Fn SMR_TAILQ_INSERT_BEFORE_LOCKED
+inserts the new element
+.Fa elm
+before the element
+.Fa listelm .
+.Pp
+.Fn SMR_TAILQ_REMOVE_LOCKED
+removes the element
+.Fa elm
+from the queue
+.Fa head .
+.Sh CONTEXT
+.Pp
+All SMR list macros can be used during autoconf, from process context,
 or from interrupt context.
 .Pp
 .Nm SMR_SLIST_FIRST ,
 .Nm SMR_SLIST_NEXT ,
 .Nm SMR_SLIST_FOREACH ,
 .Nm SMR_LIST_FIRST ,
-.Nm SMR_LIST_NEXT
+.Nm SMR_LIST_NEXT ,
+.Nm SMR_LIST_FOREACH ,
+.Nm SMR_TAILQ_FIRST ,
+.Nm SMR_TAILQ_NEXT
 and
-.Nm SMR_LIST_FOREACH
+.Nm SMR_TAILQ_FOREACH
 can be used from SMR read-side critical section.
 .Pp
 .Nm SMR_SLIST_INIT ,
@@ -318,9 +406,20 @@ can be used from SMR read-side critical section.
 .Nm SMR_LIST_FOREACH_SAFE_LOCKED ,
 .Nm SMR_LIST_INSERT_HEAD_LOCKED ,
 .Nm SMR_LIST_INSERT_AFTER_LOCKED ,
-.Nm SMR_LIST_INSERT_BEFORE_LOCKED
+.Nm SMR_LIST_INSERT_BEFORE_LOCKED ,
+.Nm SMR_LIST_REMOVE_LOCKED ,
+.Nm SMR_TAILQ_INIT ,
+.Nm SMR_TAILQ_FIRST_LOCKED ,
+.Nm SMR_TAILQ_NEXT_LOCKED ,
+.Nm SMR_TAILQ_EMPTY_LOCKED ,
+.Nm SMR_TAILQ_FOREACH_LOCKED ,
+.Nm SMR_TAILQ_FOREACH_SAFE_LOCKED ,
+.Nm SMR_TAILQ_INSERT_HEAD_LOCKED ,
+.Nm SMR_TAILQ_INSERT_TAIL_LOCKED ,
+.Nm SMR_TAILQ_INSERT_AFTER_LOCKED ,
+.Nm SMR_TAILQ_INSERT_BEFORE_LOCKED ,
 and
-.Nm SMR_LIST_REMOVE_LOCKED
+.Nm SMR_TAILQ_REMOVE_LOCKED
 can be used from writer context.
 .Sh SEE ALSO
 .Xr queue 3 ,
