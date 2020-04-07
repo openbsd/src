@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.974 2020/04/06 17:51:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.975 2020/04/07 13:55:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -761,6 +761,7 @@ struct screen {
 	u_int			 saved_cy;
 	struct grid		*saved_grid;
 	struct grid_cell	 saved_cell;
+	int			 saved_flags;
 
 	bitstr_t		*tabs;
 	struct screen_sel	*sel;
