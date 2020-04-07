@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.80 2020/04/07 07:09:47 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.81 2020/04/07 07:11:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -718,6 +718,11 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	default:
 		return (EPROTONOSUPPORT);
 	}
+
+	session = pipex_lookup_by_session_id(req->pr_protocol,
+	    req->pr_session_id);
+	if (session)
+		return (EEXIST);
 
 	pxi = pool_get(pppx_if_pl, PR_WAITOK | PR_ZERO);
 

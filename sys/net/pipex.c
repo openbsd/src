@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.112 2020/04/06 13:14:04 claudio Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.113 2020/04/07 07:11:22 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -311,6 +311,11 @@ pipex_add_session(struct pipex_session_req *req,
 	default:
 		return (EPROTONOSUPPORT);
 	}
+
+	session = pipex_lookup_by_session_id(req->pr_protocol,
+	    req->pr_session_id);
+	if (session)
+		return (EEXIST);
 
 	/* prepare a new session */
 	session = pool_get(&pipex_session_pool, PR_WAITOK | PR_ZERO);
