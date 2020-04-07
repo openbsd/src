@@ -1,4 +1,4 @@
-/* $OpenBSD: omap4.c,v 1.5 2017/03/01 05:10:05 jsg Exp $ */
+/* $OpenBSD: omap4.c,v 1.6 2020/04/07 09:04:34 kettenis Exp $ */
 
 /*
  * Copyright (c) 2011 Uwe Stuehler <uwe@openbsd.org>
@@ -33,20 +33,6 @@
 #define CM1_SIZE	0x1000
 #define CM2_ADDR	0x4a008000
 #define CM2_SIZE	0x2000
-#define SCRM_ADDR	0x4a30a000
-#define SCRM_SIZE	0x1000
-#define PCNF1_ADDR	0x4a100000
-#define PCNF1_SIZE	0x1000
-#define PCNF2_ADDR	0x4a31e000
-#define PCNF2_SIZE	0x1000
-
-#define HSUSBHOST_ADDR	0x4a064000
-#define HSUSBHOST_SIZE	0x800
-#define USBEHCI_ADDR	0x4a064c00
-#define USBEHCI_SIZE	0x400
-#define USBOHCI_ADDR	0x4a064800
-#define USBOHCI_SIZE	0x400
-#define USBEHCI_IRQ	77
 
 struct armv7_dev omap4_devs[] = {
 
@@ -70,19 +56,6 @@ struct armv7_dev omap4_devs[] = {
 	{ .name = "omapid",
 	  .unit = 0,
 	  .mem = { { OMAPID_ADDR, OMAPID_SIZE } },
-	},
-
-	/*
-	 * USB
-	 */
-
-	{ .name = "ehci",
-	  .unit = 0,
-	  .mem = {
-		  { USBEHCI_ADDR, USBEHCI_SIZE },
-		  { HSUSBHOST_ADDR, HSUSBHOST_SIZE },
-	  },
-	  .irq = { USBEHCI_IRQ }
 	},
 
 	/* Terminator */
