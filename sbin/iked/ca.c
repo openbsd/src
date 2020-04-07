@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.56 2020/04/06 20:23:16 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.57 2020/04/07 18:52:57 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -329,6 +329,20 @@ ca_setreq(struct iked *env, struct iked_sa *sa,
 	return (ret);
 }
 
+static int
+auth_sig_compatible(uint8_t type)
+{
+	switch (type) {
+	case IKEV2_AUTH_RSA_SIG:
+	case IKEV2_AUTH_ECDSA_256:
+	case IKEV2_AUTH_ECDSA_384:
+	case IKEV2_AUTH_ECDSA_521:
+	case IKEV2_AUTH_SIG_ANY:
+		return (1);
+	}
+	return (0);
+}
+
 int
 ca_setauth(struct iked *env, struct iked_sa *sa,
     struct ibuf *authmsg, enum privsep_procid id)
@@ -340,8 +354,9 @@ ca_setauth(struct iked *env, struct iked_sa *sa,
 
 	if (id == PROC_CERT) {
 		/* switch encoding to IKEV2_AUTH_SIG if SHA2 is supported */
-		if (sa->sa_sigsha2 && type == IKEV2_AUTH_RSA_SIG) {
-			log_debug("%s: switching RSA_SIG to SIG", __func__);
+		if (sa->sa_sigsha2 && auth_sig_compatible(type)) {
+			log_debug("%s: switching %s to SIG", __func__,
+			    print_map(type, ikev2_auth_map));
 			type = IKEV2_AUTH_SIG;
 		} else if (!sa->sa_sigsha2 && type == IKEV2_AUTH_SIG_ANY) {
 			log_debug("%s: switching SIG to RSA_SIG(*)", __func__);
