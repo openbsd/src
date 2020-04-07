@@ -1,4 +1,4 @@
-/* $OpenBSD: rkvop.c,v 1.2 2020/03/16 21:51:25 kettenis Exp $ */
+/* $OpenBSD: rkvop.c,v 1.3 2020/04/07 15:23:42 kettenis Exp $ */
 /* $NetBSD: rk_vop.c,v 1.6 2020/01/05 12:14:35 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -216,6 +216,7 @@ rkvop_attach(struct device *parent, struct device *self, void *aux)
 	struct rkvop_softc *sc = (struct rkvop_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	int i, port, ep, nep;
+	paddr_t paddr;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -253,6 +254,15 @@ rkvop_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ports.dp_ep_activate = rkvop_ep_activate;
 	sc->sc_ports.dp_ep_get_cookie = rkvop_ep_get_cookie;
 	device_ports_register(&sc->sc_ports, EP_DRM_CRTC);
+
+	paddr = HREAD4(sc, VOP_WIN0_YRGB_MST);
+	if (paddr != 0) {
+		uint32_t stride, height;
+
+		stride = HREAD4(sc, VOP_WIN0_VIR) & 0xffff;
+		height = (HREAD4(sc, VOP_WIN0_DSP_INFO) >> 16) + 1;
+		rasops_claim_framebuffer(paddr, height * stride * 4, self);
+	}
 }
 
 int
