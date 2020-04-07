@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.6 2020/04/01 09:05:27 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.7 2020/04/07 13:33:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -200,9 +200,9 @@ popup_handle_drag(struct client *c, struct popup_data *pd,
 		pd->dy = m->y - pd->py;
 		server_redraw_client(c);
 	} else if (pd->dragging == SIZE) {
-		if (m->x < pd->px + 2)
+		if (m->x < pd->px + 3)
 			return;
-		if (m->y < pd->py + 2)
+		if (m->y < pd->py + 3)
 			return;
 		pd->sx = m->x - pd->px;
 		pd->sy = m->y - pd->py;
