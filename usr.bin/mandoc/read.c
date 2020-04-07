@@ -1,4 +1,4 @@
-/* $OpenBSD: read.c,v 1.187 2020/03/13 16:14:14 schwarze Exp $ */
+/* $OpenBSD: read.c,v 1.188 2020/04/07 22:45:37 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2019 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -706,6 +706,7 @@ mparse_result(struct mparse *curp)
 			mdoc_validate(curp->man);
 		else
 			man_validate(curp->man);
+		tag_postprocess(curp->man->meta.first);
 	}
 	return &curp->man->meta;
 }

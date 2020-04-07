@@ -1,4 +1,4 @@
-/* $OpenBSD: tag.h,v 1.12 2020/04/02 22:10:27 schwarze Exp $ */
+/* $OpenBSD: tag.h,v 1.13 2020/04/07 22:45:37 schwarze Exp $ */
 /*
  * Copyright (c) 2015, 2018, 2019, 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -31,4 +31,5 @@
 void		 tag_alloc(void);
 int		 tag_exists(const char *);
 void		 tag_put(const char *, int, struct roff_node *);
+void		 tag_postprocess(struct roff_node *);
 void		 tag_free(void);

@@ -7,6 +7,6 @@
 <section class="Sh">
 <h1 class="Sh" id="ERRORS"><a class="permalink" href="#ERRORS">ERRORS</a></h1>
 <dl class="Bl-tag">
-  <dt>[<a class="permalink" href="#ENOENT"><code class="Er" id="ENOENT">ENOENT</code></a>]</dt>
+  <dt id="ENOENT">[<a class="permalink" href="#ENOENT"><code class="Er">ENOENT</code></a>]</dt>
   <dd>text</dd>
 </dl>

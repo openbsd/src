@@ -1,15 +1,15 @@
 <dl class="Bl-tag">
-  <dt><a class="permalink" href="#one"><code class="Cm" id="one">one</code></a>
+  <dt id="one"><a class="permalink" href="#one"><code class="Cm">one</code></a>
     |
     <a class="permalink" href="#two"><code class="Cm" id="two">two</code></a></dt>
   <dd>text</dd>
-  <dt><a class="permalink" href="#three"><code class="Cm" id="three">three</code></a></dt>
+  <dt id="three"><a class="permalink" href="#three"><code class="Cm">three</code></a></dt>
   <dd>text</dd>
-  <dt><a class="permalink" href="#hyphen"><code class="Cm" id="hyphen">-hyphen</code></a></dt>
+  <dt id="hyphen"><a class="permalink" href="#hyphen"><code class="Cm">-hyphen</code></a></dt>
   <dd>text</dd>
-  <dt><a class="permalink" href="#minus"><code class="Cm" id="minus">-minus-sign</code></a></dt>
+  <dt id="minus"><a class="permalink" href="#minus"><code class="Cm">-minus-sign</code></a></dt>
   <dd>text</dd>
-  <dt><a class="permalink" href="#backslash"><code class="Cm" id="backslash">\backslash</code></a></dt>
+  <dt id="backslash"><a class="permalink" href="#backslash"><code class="Cm">\backslash</code></a></dt>
   <dd>text</dd>
 </dl>
 <a class="permalink" href="#four"><code class="Cm" id="four">four</code></a>

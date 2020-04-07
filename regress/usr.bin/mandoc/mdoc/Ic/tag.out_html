@@ -1,9 +1,9 @@
 <dl class="Bl-tag">
-  <dt><a class="permalink" href="#one"><code class="Ic" id="one">one</code></a>
+  <dt id="one"><a class="permalink" href="#one"><code class="Ic">one</code></a>
     |
     <a class="permalink" href="#two"><code class="Ic" id="two">two</code></a></dt>
   <dd>text</dd>
-  <dt><a class="permalink" href="#three"><code class="Ic" id="three">three</code></a></dt>
+  <dt id="three"><a class="permalink" href="#three"><code class="Ic">three</code></a></dt>
   <dd>text</dd>
 </dl>
 <a class="permalink" href="#four"><code class="Ic" id="four">four</code></a>

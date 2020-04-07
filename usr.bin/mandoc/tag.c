@@ -1,4 +1,4 @@
-/* $OpenBSD: tag.c,v 1.32 2020/04/03 10:29:01 schwarze Exp $ */
+/* $OpenBSD: tag.c,v 1.33 2020/04/07 22:45:37 schwarze Exp $ */
 /*
  * Copyright (c) 2015,2016,2018,2019,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -29,6 +29,7 @@
 #include "mandoc_aux.h"
 #include "mandoc_ohash.h"
 #include "roff.h"
+#include "mdoc.h"
 #include "tag.h"
 
 struct tag_entry {
@@ -38,6 +39,8 @@ struct tag_entry {
 	int	 prio;
 	char	 s[];
 };
+
+static void		 tag_move_id(struct roff_node *);
 
 static struct ohash	 tag_data;
 
@@ -179,4 +182,95 @@ int
 tag_exists(const char *tag)
 {
 	return ohash_find(&tag_data, ohash_qlookup(&tag_data, tag)) != NULL;
+}
+
+/*
+ * For in-line elements, move the link target
+ * to the enclosing paragraph when appropriate.
+ */
+static void
+tag_move_id(struct roff_node *n)
+{
+	struct roff_node *np;
+
+	np = n;
+	for (;;) {
+		if (np->prev != NULL)
+			np = np->prev;
+		else if ((np = np->parent) == NULL)
+			return;
+		switch (np->tok) {
+		case MDOC_It:
+			switch (np->parent->parent->norm->Bl.type) {
+			case LIST_column:
+				/* Target the ROFFT_BLOCK = <tr>. */
+				np = np->parent;
+				break;
+			case LIST_diag:
+			case LIST_hang:
+			case LIST_inset:
+			case LIST_ohang:
+			case LIST_tag:
+				/* Target the ROFFT_HEAD = <dt>. */
+				np = np->parent->head;
+				break;
+			default:
+				/* Target the ROFF_BODY = <li>. */
+				break;
+			}
+			/* FALLTHROUGH */
+		case MDOC_Pp:	/* Target the ROFFT_ELEM = <p>. */
+			if (np->string == NULL) {
+				np->string = mandoc_strdup(n->string == NULL ?
+				    n->child->string : n->string);
+				np->flags |= NODE_ID;
+				n->flags &= ~NODE_ID;
+			}
+			return;
+		case MDOC_Sh:
+		case MDOC_Ss:
+		case MDOC_Bd:
+		case MDOC_Bl:
+		case MDOC_D1:
+		case MDOC_Dl:
+		case MDOC_Rs:
+			/* Do not move past major blocks. */
+			return;
+		default:
+			/*
+			 * Move past in-line content and partial
+			 * blocks, for example .It Xo or .It Bq Er.
+			 */
+			break;
+		}
+	}
+}
+
+/*
+ * When all tags have been set, decide where to put
+ * the associated permalinks, and maybe move some tags
+ * to the beginning of the respective paragraphs.
+ */
+void
+tag_postprocess(struct roff_node *n)
+{
+	if (n->flags & NODE_ID) {
+		switch (n->tok) {
+		case MDOC_Bd:
+		case MDOC_Bl:
+		case MDOC_Pp:
+			/* XXX No permalink for now. */
+			break;
+		default:
+			if (n->type == ROFFT_ELEM || n->tok == MDOC_Fo)
+				tag_move_id(n);
+			if (n->tok != MDOC_Tg)
+				n->flags |= NODE_HREF;
+			else if ((n->flags & NODE_ID) == 0)
+				n->flags |= NODE_NOPRT;
+			break;
+		}
+	}
+	for (n = n->child; n != NULL; n = n->next)
+		tag_postprocess(n);
 }
