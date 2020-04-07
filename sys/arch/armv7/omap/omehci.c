@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.4 2016/08/11 01:53:18 jsg Exp $ */
+/*	$OpenBSD: omehci.c,v 1.5 2020/04/07 09:09:46 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -61,10 +61,10 @@
 
 #include <armv7/armv7/armv7var.h>
 #include <armv7/omap/prcmvar.h>
-#include <armv7/omap/omgpiovar.h>
 #include <armv7/omap/omehcivar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/usb/ehcireg.h>
@@ -85,10 +85,6 @@ struct omehci_softc {
 	uint32_t		 tll_avail;
 
 	uint32_t		 port_mode[OMAP_HS_USB_PORTS];
-	uint32_t		 phy_reset[OMAP_HS_USB_PORTS];
-	uint32_t		 reset_gpio_pin[OMAP_HS_USB_PORTS];
-
-	void			 (*early_init)(void);
 };
 
 int omehci_init(struct omehci_softc *);
@@ -97,9 +93,7 @@ void omehci_enable(struct omehci_softc *);
 void omehci_disable(struct omehci_softc *);
 void omehci_utmi_init(struct omehci_softc *sc, unsigned int en_mask);
 void misc_setup(struct omehci_softc *sc);
-void omehci_phy_reset(uint32_t on, uint32_t _delay);
 void omehci_uhh_init(struct omehci_softc *sc);
-void omehci_v4_early_init(void);
 
 struct cfattach omehci_ca = {
 	sizeof (struct omehci_softc), omehci_match, omehci_attach,
@@ -138,21 +132,8 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_bus.dmatag = faa->fa_dmat;
 
 	/* set defaults */
-	for (i = 0; i < OMAP_HS_USB_PORTS; i++) {
-		sc->phy_reset[i] = 0;
+	for (i = 0; i < OMAP_HS_USB_PORTS; i++)
 		sc->port_mode[i] = EHCI_HCD_OMAP_MODE_UNKNOWN;
-		sc->reset_gpio_pin[i] = -1;
-	}
-
-	switch (board_id)
-	{
-	case BOARD_ID_OMAP4_PANDA:
-		sc->tll_avail = 0;
-		sc->early_init = omehci_v4_early_init;
-		break;
-	default:
-		break;
-	}
 
 	strlcpy(name, "portX-mode", sizeof(name));
 
@@ -207,8 +188,8 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	if (sc->early_init)
-		sc->early_init();
+	for (i = 0; i < OMAP_HS_USB_PORTS; i++)
+		phy_enable_idx(faa->fa_node, i);
 
 	if (omehci_init(sc))
 		return;
@@ -263,19 +244,6 @@ omehci_init(struct omehci_softc *sc)
 
 	/* enable high speed usb host clock */
 	prcm_enablemodule(PRCM_USB);
-
-	/* Hold the PHY in reset while configuring */
-	for (i = 0; i < OMAP_HS_USB_PORTS; i++) {
-		if (sc->phy_reset[i]) {
-			/* Configure the GPIO to drive low (hold in reset) */
-			if (sc->reset_gpio_pin[i] != -1) {
-				omgpio_set_dir(sc->reset_gpio_pin[i],
-				    OMGPIO_DIR_OUT);
-				omgpio_clear_bit(sc->reset_gpio_pin[i]);
-				reset_performed = 1;
-			}
-		}
-	}
 
 	/* Hold the PHY in RESET for enough time till DIR is high */
 	if (reset_performed)
@@ -412,18 +380,6 @@ omehci_init(struct omehci_softc *sc)
 		omap_ehci_utmi_init(sc, tll_ch_mask);
 #endif
 
-	/* Release the PHY reset signal now we have configured everything */
-	if (reset_performed) {
-		/* Delay for 10ms */
-		delay(10000);
-
-		/* Release reset */
-		for (i = 0; i < 3; i++) {
-			if (sc->phy_reset[i] && (sc->reset_gpio_pin[i] != -1))
-				omgpio_set_bit(sc->reset_gpio_pin[i]);
-		}
-	}
-
 	/* Set the interrupt threshold control, it controls the maximum rate at
 	 * which the host controller issues interrupts.  We set it to 1 microframe
 	 * at startup - the default is 8 mircoframes (equates to 1ms).
@@ -520,22 +476,4 @@ omehci_activate(struct device *self, int act)
 		break;
 	}
 	return 0;
-}
-
-void
-omehci_v4_early_init()
-{
-	omgpio_set_dir(1, OMGPIO_DIR_OUT);
-	omgpio_clear_bit(1);
-	omgpio_set_dir(62, OMGPIO_DIR_OUT);
-	omgpio_clear_bit(62);
-
-	/* wait for power down */
-	delay(1000);
-
-	omgpio_set_bit(1);
-	omgpio_set_bit(62);
-
-	/* wait until powered up */
-	delay(1000);
 }
