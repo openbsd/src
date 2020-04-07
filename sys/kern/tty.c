@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.153 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: tty.c,v 1.154 2020/04/07 13:27:51 visa Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1126,7 +1126,7 @@ ttkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = tp;
 
 	s = spltty();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	klist_insert(klist, kn);
 	splx(s);
 
 	return (0);
@@ -1139,7 +1139,7 @@ filt_ttyrdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&tp->t_rsel.si_note, kn, knote, kn_selnext);
+	klist_remove(&tp->t_rsel.si_note, kn);
 	splx(s);
 }
 
@@ -1166,7 +1166,7 @@ filt_ttywdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&tp->t_wsel.si_note, kn, knote, kn_selnext);
+	klist_remove(&tp->t_wsel.si_note, kn);
 	splx(s);
 }
 

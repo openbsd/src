@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.97 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.98 2020/04/07 13:27:51 visa Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -655,7 +655,7 @@ filt_ptcrdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&pti->pt_selr.si_note, kn, knote, kn_selnext);
+	klist_remove(&pti->pt_selr.si_note, kn);
 	splx(s);
 }
 
@@ -691,7 +691,7 @@ filt_ptcwdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&pti->pt_selw.si_note, kn, knote, kn_selnext);
+	klist_remove(&pti->pt_selw.si_note, kn);
 	splx(s);
 }
 
@@ -753,7 +753,7 @@ ptckqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = (caddr_t)pti;
 
 	s = spltty();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	klist_insert(klist, kn);
 	splx(s);
 
 	return (0);

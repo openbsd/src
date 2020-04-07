@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.32 2020/04/03 08:08:51 mpi Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.33 2020/04/07 13:27:51 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -564,7 +564,7 @@ fusekqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = fd;
 
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	klist_insert(klist, kn);
 
 	return (0);
 }
@@ -575,7 +575,7 @@ filt_fuse_rdetach(struct knote *kn)
 	struct fuse_d *fd = kn->kn_hook;
 	struct klist *klist = &fd->fd_rsel.si_note;
 
-	SLIST_REMOVE(klist, kn, knote, kn_selnext);
+	klist_remove(klist, kn);
 }
 
 int

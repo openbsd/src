@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.173 2020/03/04 21:19:15 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.174 2020/04/07 13:27:51 visa Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -472,7 +472,7 @@ filt_drmdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&dev->note, kn, knote, kn_selnext);
+	klist_remove(&dev->note, kn);
 	splx(s);
 }
 
@@ -512,7 +512,7 @@ drmkqfilter(dev_t kdev, struct knote *kn)
 	kn->kn_hook = dev;
 
 	s = spltty();
-	SLIST_INSERT_HEAD(&dev->note, kn, kn_selnext);
+	klist_insert(&dev->note, kn);
 	splx(s);
 
 	return (0);

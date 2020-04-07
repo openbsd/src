@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.29 2020/02/20 16:56:52 visa Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.30 2020/04/07 13:27:52 visa Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -184,7 +184,7 @@ filt_nfsdetach(struct knote *kn)
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 	struct kevq *ke;
 
-	SLIST_REMOVE(&vp->v_selectinfo.si_note, kn, knote, kn_selnext);
+	klist_remove(&vp->v_selectinfo.si_note, kn);
 
 	/* Remove the vnode from watch list */
 	rw_enter_write(&nfskevq_lock);
@@ -339,7 +339,7 @@ nfs_kqfilter(void *v)
 	/* kick the poller */
 	wakeup(pnfskq);
 
-	SLIST_INSERT_HEAD(&vp->v_selectinfo.si_note, kn, kn_selnext);
+	klist_insert(&vp->v_selectinfo.si_note, kn);
 
 out:
 	rw_exit_write(&nfskevq_lock);

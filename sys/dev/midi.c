@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.46 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: midi.c,v 1.47 2020/04/07 13:27:51 visa Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -363,7 +363,7 @@ midikqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = (void *)sc;
 
 	mtx_enter(&audio_lock);
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	klist_insert(klist, kn);
 	mtx_leave(&audio_lock);
 done:
 	device_unref(&sc->dev);
@@ -376,7 +376,7 @@ filt_midirdetach(struct knote *kn)
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
 
 	mtx_enter(&audio_lock);
-	SLIST_REMOVE(&sc->rsel.si_note, kn, knote, kn_selnext);
+	klist_remove(&sc->rsel.si_note, kn);
 	mtx_leave(&audio_lock);
 }
 
@@ -399,7 +399,7 @@ filt_midiwdetach(struct knote *kn)
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
 
 	mtx_enter(&audio_lock);
-	SLIST_REMOVE(&sc->wsel.si_note, kn, knote, kn_selnext);
+	klist_remove(&sc->wsel.si_note, kn);
 	mtx_leave(&audio_lock);
 }
 

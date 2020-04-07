@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.8 2020/02/14 16:50:25 visa Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.9 2020/04/07 13:27:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -49,10 +49,10 @@ struct kqueue {
 
 	LIST_ENTRY(kqueue) kq_next;
 
-	int		kq_knlistsize;		/* size of knlist */
-	struct		klist *kq_knlist;	/* list of attached knotes */
-	u_long		kq_knhashmask;		/* size of knhash */
-	struct		klist *kq_knhash;	/* hash table for attached knotes */
+	int		kq_knlistsize;		/* size of kq_knlist */
+	struct		knlist *kq_knlist;	/* list of attached knotes */
+	u_long		kq_knhashmask;		/* size of kq_knhash */
+	struct		knlist *kq_knhash;	/* hash table for attached knotes */
 	struct		task kq_task;		/* deferring of activation */
 
 	int		kq_state;

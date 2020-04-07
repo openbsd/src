@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.104 2020/04/03 08:24:53 mpi Exp $ */
+/*	$OpenBSD: ugen.c,v 1.105 2020/04/07 13:27:51 visa Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1298,7 +1298,7 @@ filt_ugenrdetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&sce->rsel.si_note, kn, knote, kn_selnext);
+	klist_remove(&sce->rsel.si_note, kn);
 	splx(s);
 }
 
@@ -1418,7 +1418,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = (void *)sce;
 
 	s = splusb();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	klist_insert(klist, kn);
 	splx(s);
 
 	return (0);

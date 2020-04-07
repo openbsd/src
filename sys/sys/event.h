@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.34 2020/04/04 08:57:36 mpi Exp $	*/
+/*	$OpenBSD: event.h,v 1.35 2020/04/07 13:27:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -121,7 +121,11 @@ struct kevent {
  */
 #include <sys/queue.h>
 struct knote;
-SLIST_HEAD(klist, knote);
+SLIST_HEAD(knlist, knote);
+
+struct klist {
+	struct knlist		 kl_list;
+};
 
 #ifdef _KERNEL
 
@@ -191,13 +195,16 @@ extern const struct filterops sig_filtops;
 
 extern void	knote(struct klist *list, long hint);
 extern void	knote_activate(struct knote *);
-extern void	knote_remove(struct proc *p, struct klist *list);
+extern void	knote_remove(struct proc *p, struct knlist *list);
 extern void	knote_fdclose(struct proc *p, int fd);
 extern void	knote_processexit(struct proc *);
 extern int	kqueue_register(struct kqueue *kq,
 		    struct kevent *kev, struct proc *p);
 extern int	filt_seltrue(struct knote *kn, long hint);
 extern int	seltrue_kqfilter(dev_t, struct knote *);
+extern void	klist_insert(struct klist *, struct knote *);
+extern void	klist_remove(struct klist *, struct knote *);
+extern int	klist_empty(struct klist *);
 extern void	klist_invalidate(struct klist *);
 
 #else	/* !_KERNEL */

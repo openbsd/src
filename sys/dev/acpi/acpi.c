@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.379 2020/04/03 08:24:52 mpi Exp $ */
+/* $OpenBSD: acpi.c,v 1.380 2020/04/07 13:27:51 visa Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3476,7 +3476,7 @@ acpi_filtdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(sc->sc_note, kn, knote, kn_selnext);
+	klist_remove(sc->sc_note, kn);
 	splx(s);
 }
 
@@ -3510,7 +3510,7 @@ acpikqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	s = spltty();
-	SLIST_INSERT_HEAD(sc->sc_note, kn, kn_selnext);
+	klist_insert(sc->sc_note, kn);
 	splx(s);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.219 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.220 2020/04/07 13:27:52 visa Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -1001,7 +1001,7 @@ tun_dev_kqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = (caddr_t)sc; /* XXX give the sc_ref to the hook? */
 
 	s = splhigh();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	klist_insert(klist, kn);
 	splx(s);
 
 put:
@@ -1016,7 +1016,7 @@ filt_tunrdetach(struct knote *kn)
 	struct tun_softc	*sc = kn->kn_hook;
 
 	s = splhigh();
-	SLIST_REMOVE(&sc->sc_rsel.si_note, kn, knote, kn_selnext);
+	klist_remove(&sc->sc_rsel.si_note, kn);
 	splx(s);
 }
 
@@ -1038,7 +1038,7 @@ filt_tunwdetach(struct knote *kn)
 	struct tun_softc	*sc = kn->kn_hook;
 
 	s = splhigh();
-	SLIST_REMOVE(&sc->sc_wsel.si_note, kn, knote, kn_selnext);
+	klist_remove(&sc->sc_wsel.si_note, kn);
 	splx(s);
 }
 

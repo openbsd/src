@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.118 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.119 2020/04/07 13:27:51 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -908,7 +908,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &pipe_rfiltops;
-		SLIST_INSERT_HEAD(&rpipe->pipe_sel.si_note, kn, kn_selnext);
+		klist_insert(&rpipe->pipe_sel.si_note, kn);
 		break;
 	case EVFILT_WRITE:
 		if (wpipe == NULL) {
@@ -917,7 +917,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 			break;
 		}
 		kn->kn_fop = &pipe_wfiltops;
-		SLIST_INSERT_HEAD(&wpipe->pipe_sel.si_note, kn, kn_selnext);
+		klist_insert(&wpipe->pipe_sel.si_note, kn);
 		break;
 	default:
 		error = EINVAL;
@@ -939,12 +939,12 @@ filt_pipedetach(struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		SLIST_REMOVE(&rpipe->pipe_sel.si_note, kn, knote, kn_selnext);
+		klist_remove(&rpipe->pipe_sel.si_note, kn);
 		break;
 	case EVFILT_WRITE:
 		if (wpipe == NULL)
 			break;
-		SLIST_REMOVE(&wpipe->pipe_sel.si_note, kn, knote, kn_selnext);
+		klist_remove(&wpipe->pipe_sel.si_note, kn);
 		break;
 	}
 

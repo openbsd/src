@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.65 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.66 2020/04/07 13:27:51 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ logkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = (void *)msgbufp;
 
 	s = splhigh();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	klist_insert(klist, kn);
 	splx(s);
 
 	return (0);
@@ -290,7 +290,7 @@ filt_logrdetach(struct knote *kn)
 	int s;
 
 	s = splhigh();
-	SLIST_REMOVE(&logsoftc.sc_selp.si_note, kn, knote, kn_selnext);
+	klist_remove(&logsoftc.sc_selp.si_note, kn);
 	splx(s);
 }
 

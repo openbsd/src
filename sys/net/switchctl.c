@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.20 2020/02/20 16:56:52 visa Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.21 2020/04/07 13:27:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -409,7 +409,7 @@ switchkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = (caddr_t)sc;
 
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	klist_insert(klist, kn);
 
 	return (0);
 }
@@ -420,7 +420,7 @@ filt_switch_rdetach(struct knote *kn)
 	struct switch_softc	*sc = (struct switch_softc *)kn->kn_hook;
 	struct klist		*klist = &sc->sc_swdev->swdev_rsel.si_note;
 
-	SLIST_REMOVE(klist, kn, knote, kn_selnext);
+	klist_remove(klist, kn);
 }
 
 int
@@ -444,7 +444,7 @@ filt_switch_wdetach(struct knote *kn)
 	struct switch_softc	*sc = (struct switch_softc *)kn->kn_hook;
 	struct klist		*klist = &sc->sc_swdev->swdev_wsel.si_note;
 
-	SLIST_REMOVE(klist, kn, knote, kn_selnext);
+	klist_remove(klist, kn);
 }
 
 int
