@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2004/01/29 20:11:09 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/04/07 09:29:45 mpi Exp $
 
 PROG=fifotest
 FIFO=fi.fo.fum
@@ -8,6 +8,6 @@ CFLAGS+= -Wall
 REGRESS_TARGETS=runtest
 
 runtest: ${PROG}
-	./${PROG} ${FIFO} | diff - ${.CURDIR}/${PROG}.out
+	./${PROG} ${FIFO} | diff -u - ${.CURDIR}/${PROG}.out
 
 .include <bsd.regress.mk>
