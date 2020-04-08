@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.6 2020/04/08 10:54:15 kettenis Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.7 2020/04/08 11:30:48 kettenis Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -124,6 +124,13 @@ rkdrm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = faa->fa_node;
 
 	printf("\n");
+
+	/*
+	 * Update our understanding of the console output node if
+	 * we're using the framebuffer console.
+	 */
+	if (OF_is_compatible(stdout_node, "simple-framebuffer"))
+		stdout_node = sc->sc_node;
 
 	memset(&arg, 0, sizeof(arg));
 	arg.driver = &rkdrm_driver;
@@ -430,7 +437,12 @@ rkdrm_attachhook(struct device *dev)
 	struct drm_device *ddev;
 	uint32_t *ports;
 	int i, portslen, nports;
+	int console = 0;
+	long defattr;
 	int error;
+
+	if (sc->sc_node == stdout_node)
+		console = 1;
 
 	portslen = OF_getproplen(sc->sc_node, "ports");
 	if (portslen < 0) {
@@ -509,10 +521,17 @@ rkdrm_attachhook(struct device *dev)
 	rkdrm_stdscreen.fontwidth = ri->ri_font->fontwidth;
 	rkdrm_stdscreen.fontheight = ri->ri_font->fontheight;
 
+	if (console) {
+		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		wsdisplay_cnattach(&rkdrm_stdscreen, ri->ri_active,
+		    ri->ri_ccol, ri->ri_crow, defattr);
+	}
+
 	memset(&aa, 0, sizeof(aa));
 	aa.scrdata = &rkdrm_screenlist;
 	aa.accessops = &rkdrm_accessops;
 	aa.accesscookie = ri;
+	aa.console = console;
 
 	printf("%s: %dx%d, %dbpp\n", sc->sc_dev.dv_xname,
 	    ri->ri_width, ri->ri_height, ri->ri_depth);
