@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.54 2019/12/11 06:45:16 pd Exp $	*/
+/*	$OpenBSD: vm.c,v 1.55 2020/04/08 07:39:48 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -81,6 +81,7 @@ void init_emulated_hw(struct vmop_create_params *, int,
 void restore_emulated_hw(struct vm_create_params *, int, int *,
     int[][VM_MAX_BASE_PER_DISK],int);
 void vcpu_exit_inout(struct vm_run_params *);
+int vcpu_exit_eptviolation(struct vm_run_params *);
 uint8_t vcpu_exit_pci(struct vm_run_params *);
 int vcpu_pic_intr(uint32_t, uint32_t, uint8_t);
 int loadfile_bios(FILE *, struct vcpu_reg_state *);
@@ -1600,6 +1601,38 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 }
 
 /*
+ * vcpu_exit_eptviolation
+ *
+ * handle an EPT Violation
+ *
+ *
+ * Parameters:
+ *  vrp: vcpu run parameters containing guest state for this exit
+ *
+ * Return values:
+ *  0: no action required
+ *  EAGAIN: a protection fault occured, kill the vm.
+ */
+int
+vcpu_exit_eptviolation(struct vm_run_params *vrp)
+{
+	struct vm_exit *ve = vrp->vrp_exit;
+	/*
+	 * vmd may be exiting to vmd to handle a pending interrupt
+	 * but last exit type may have bee VMX_EXIT_EPT_VIOLATION,
+	 * check the fault_type to ensure we really are processing
+	 * a VMX_EXIT_EPT_VIOLATION.
+	 */
+	if (ve->vee.vee_fault_type == VEE_FAULT_PROTECT) {
+		log_debug("%s: EPT Violation: rip=0x%llx",
+		    __progname, vrp->vrp_exit->vrs.vrs_gprs[VCPU_REGS_RIP]);
+		return (EAGAIN);
+	}
+
+	return (0);
+}
+
+/*
  * vcpu_exit
  *
  * Handle a vcpu exit. This function is called when it is determined that
@@ -1629,7 +1662,6 @@ vcpu_exit(struct vm_run_params *vrp)
 	case VMX_EXIT_CPUID:
 	case VMX_EXIT_EXTINT:
 	case SVM_VMEXIT_INTR:
-	case VMX_EXIT_EPT_VIOLATION:
 	case SVM_VMEXIT_NPF:
 	case SVM_VMEXIT_MSR:
 	case SVM_VMEXIT_CPUID:
@@ -1640,6 +1672,12 @@ vcpu_exit(struct vm_run_params *vrp)
 		 * here (and falling through to the default case below results
 		 * in more vmd log spam).
 		 */
+		break;
+	case VMX_EXIT_EPT_VIOLATION:
+		ret = vcpu_exit_eptviolation(vrp);
+		if (ret)
+			return (ret);
+
 		break;
 	case VMX_EXIT_IO:
 	case SVM_VMEXIT_IOIO:

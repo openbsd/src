@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.86 2019/12/20 07:49:31 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.87 2020/04/08 07:39:48 pd Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -954,9 +954,10 @@
 #define IA32_VMX_TRUE_ENTRY_CTLS	0x490
 #define IA32_VMX_VMFUNC			0x491
 
-#define IA32_EPT_VPID_CAP_PAGE_WALK_4	(1ULL << 6)
-#define IA32_EPT_VPID_CAP_WB		(1ULL << 14)
-#define IA32_EPT_VPID_CAP_AD_BITS	(1ULL << 21)
+#define IA32_EPT_VPID_CAP_XO_TRANSLATIONS	0x0
+#define IA32_EPT_VPID_CAP_PAGE_WALK_4		(1ULL << 6)
+#define IA32_EPT_VPID_CAP_WB			(1ULL << 14)
+#define IA32_EPT_VPID_CAP_AD_BITS		(1ULL << 21)
 
 #define IA32_EPT_PAGING_CACHE_TYPE_UC	0x0
 #define IA32_EPT_PAGING_CACHE_TYPE_WB	0x6

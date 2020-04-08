@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.69 2020/04/08 07:32:56 pd Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.70 2020/04/08 07:39:48 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -322,6 +322,10 @@ enum {
 };
 
 enum {
+	VEE_FAULT_PROTECT
+};
+
+enum {
 	VMM_CPU_MODE_REAL,
 	VMM_CPU_MODE_PROT,
 	VMM_CPU_MODE_PROT32,
@@ -349,6 +353,12 @@ struct vm_exit_inout {
 	uint8_t			vei_encoding;	/* operand encoding */
 	uint16_t		vei_port;	/* port */
 	uint32_t		vei_data;	/* data */
+};
+/*
+ *  vm_exit_eptviolation	: describes an EPT VIOLATION exit
+ */
+struct vm_exit_eptviolation {
+	uint8_t		vee_fault_type;
 };
 
 /*
@@ -447,7 +457,8 @@ struct vm_mem_range {
  */
 struct vm_exit {
 	union {
-		struct vm_exit_inout	vei;		/* IN/OUT exit */
+		struct vm_exit_inout		vei;	/* IN/OUT exit */
+		struct vm_exit_eptviolation	vee;	/* EPT VIOLATION exit*/
 	};
 
 	struct vcpu_reg_state		vrs;
@@ -558,6 +569,15 @@ struct vm_rwregs_params {
 	struct vcpu_reg_state	vrwp_regs;
 };
 
+struct vm_mprotect_ept_params {
+	/* Input parameters to VMM_IOC_MPROTECT_EPT */
+	uint32_t		vmep_vm_id;
+	uint32_t		vmep_vcpu_id;
+	vaddr_t			vmep_sgpa;
+	size_t			vmep_size;
+	int			vmep_prot;
+};
+
 /* IOCTL definitions */
 #define VMM_IOC_CREATE _IOWR('V', 1, struct vm_create_params) /* Create VM */
 #define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
@@ -571,7 +591,8 @@ struct vm_rwregs_params {
 #define VMM_IOC_READVMPARAMS _IOWR('V', 9, struct vm_rwvmparams_params)
 /* Set VM params */
 #define VMM_IOC_WRITEVMPARAMS _IOW('V', 10, struct vm_rwvmparams_params)
-
+/* Control the protection of ept pages*/
+#define VMM_IOC_MPROTECT_EPT _IOW('V', 11, struct vm_mprotect_ept_params)
 
 /* CPUID masks */
 /*
