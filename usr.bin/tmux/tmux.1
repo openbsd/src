@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.732 2020/04/06 17:51:34 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.733 2020/04/08 11:26:07 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 6 2020 $
+.Dd $Mdocdate: April 8 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4409,6 +4409,7 @@ The following variables are available, where appropriate:
 .It Li "pane_at_top" Ta "" Ta "1 if pane is at the top of window"
 .It Li "pane_bottom" Ta "" Ta "Bottom of pane"
 .It Li "pane_current_command" Ta "" Ta "Current command if available"
+.It Li "pane_current_path" Ta "" Ta "Current path if available"
 .It Li "pane_dead" Ta "" Ta "1 if pane is dead"
 .It Li "pane_dead_status" Ta "" Ta "Exit status of process in dead pane"
 .It Li "pane_format" Ta "" Ta "1 if format is for a pane"

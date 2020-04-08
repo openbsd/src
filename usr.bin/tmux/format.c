@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.232 2020/03/31 11:58:05 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.233 2020/04/08 11:26:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -739,6 +739,21 @@ format_cb_current_command(struct format_tree *ft, struct format_entry *fe)
 	}
 	fe->value = parse_window_name(cmd);
 	free(cmd);
+}
+
+/* Callback for pane_current_path. */
+static void
+format_cb_current_path(struct format_tree *ft, struct format_entry *fe)
+{
+	struct window_pane	*wp = ft->wp;
+	char			*cwd;
+
+	if (wp == NULL)
+		return;
+
+	cwd = get_proc_cwd(wp->fd);
+	if (cwd != NULL)
+		fe->value = xstrdup(cwd);
 }
 
 /* Callback for history_bytes. */
@@ -2722,6 +2737,7 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "pane_pid", "%ld", (long) wp->pid);
 	format_add_cb(ft, "pane_start_command", format_cb_start_command);
 	format_add_cb(ft, "pane_current_command", format_cb_current_command);
+	format_add_cb(ft, "pane_current_path", format_cb_current_path);
 
 	format_add(ft, "cursor_x", "%u", wp->base.cx);
 	format_add(ft, "cursor_y", "%u", wp->base.cy);
