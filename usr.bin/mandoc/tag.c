@@ -1,4 +1,4 @@
-/* $OpenBSD: tag.c,v 1.33 2020/04/07 22:45:37 schwarze Exp $ */
+/* $OpenBSD: tag.c,v 1.34 2020/04/08 11:54:14 schwarze Exp $ */
 /*
  * Copyright (c) 2015,2016,2018,2019,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -81,6 +81,7 @@ void
 tag_put(const char *s, int prio, struct roff_node *n)
 {
 	struct tag_entry	*entry;
+	struct roff_node	*nold;
 	const char		*se;
 	size_t			 len;
 	unsigned int		 slot;
@@ -153,9 +154,12 @@ tag_put(const char *s, int prio, struct roff_node *n)
 	 */
 
 	else if (entry->prio > prio || prio == TAG_FALLBACK) {
-		while (entry->nnodes > 0)
-			entry->nodes[--entry->nnodes]->flags &= ~NODE_ID;
-
+		while (entry->nnodes > 0) {
+			nold = entry->nodes[--entry->nnodes];
+			nold->flags &= ~NODE_ID;
+			free(nold->tag);
+			nold->tag = NULL;
+		}
 		if (prio == TAG_FALLBACK) {
 			entry->prio = TAG_DELETE;
 			return;
@@ -173,8 +177,8 @@ tag_put(const char *s, int prio, struct roff_node *n)
 	entry->prio = prio;
 	n->flags |= NODE_ID;
 	if (n->child == NULL || n->child->string != s || *se != '\0') {
-		assert(n->string == NULL);
-		n->string = mandoc_strndup(s, len);
+		assert(n->tag == NULL);
+		n->tag = mandoc_strndup(s, len);
 	}
 }
 
@@ -220,9 +224,9 @@ tag_move_id(struct roff_node *n)
 			}
 			/* FALLTHROUGH */
 		case MDOC_Pp:	/* Target the ROFFT_ELEM = <p>. */
-			if (np->string == NULL) {
-				np->string = mandoc_strdup(n->string == NULL ?
-				    n->child->string : n->string);
+			if (np->tag == NULL) {
+				np->tag = mandoc_strdup(n->tag == NULL ?
+				    n->child->string : n->tag);
 				np->flags |= NODE_ID;
 				n->flags &= ~NODE_ID;
 			}
@@ -266,8 +270,11 @@ tag_postprocess(struct roff_node *n)
 				tag_move_id(n);
 			if (n->tok != MDOC_Tg)
 				n->flags |= NODE_HREF;
-			else if ((n->flags & NODE_ID) == 0)
+			else if ((n->flags & NODE_ID) == 0) {
 				n->flags |= NODE_NOPRT;
+				free(n->tag);
+				n->tag = NULL;
+			}
 			break;
 		}
 	}

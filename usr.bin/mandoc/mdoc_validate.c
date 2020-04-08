@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.298 2020/04/06 09:55:49 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.299 2020/04/08 11:54:14 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2197,8 +2197,8 @@ post_hyph(POST_ARGS)
 			if (*cp == '-' &&
 			    isalpha((unsigned char)cp[-1]) &&
 			    isalpha((unsigned char)cp[1])) {
-				if (n->string == NULL && n->flags & NODE_ID)
-					n->string = mandoc_strdup(nch->string);
+				if (n->tag == NULL && n->flags & NODE_ID)
+					n->tag = mandoc_strdup(nch->string);
 				*cp = ASCII_HYPH;
 			}
 	}

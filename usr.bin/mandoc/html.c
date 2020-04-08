@@ -1,4 +1,4 @@
-/* $OpenBSD: html.c,v 1.137 2020/04/07 22:45:37 schwarze Exp $ */
+/* $OpenBSD: html.c,v 1.138 2020/04/08 11:54:14 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -342,8 +342,8 @@ html_make_id(const struct roff_node *n, int unique)
 	unsigned int		 slot;
 	int			 suffix;
 
-	if (n->string != NULL)
-		buf = mandoc_strdup(n->string);
+	if (n->tag != NULL)
+		buf = mandoc_strdup(n->tag);
 	else {
 		switch (n->tok) {
 		case MDOC_Sh:
