@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.113 2020/02/22 11:58:29 anton Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.114 2020/04/08 08:07:51 mpi Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -619,7 +619,7 @@ vn_closefile(struct file *fp, struct proc *p)
 int
 vn_kqfilter(struct file *fp, struct knote *kn)
 {
-	return (VOP_KQFILTER(fp->f_data, kn));
+	return (VOP_KQFILTER(fp->f_data, fp->f_flag, kn));
 }
 
 int

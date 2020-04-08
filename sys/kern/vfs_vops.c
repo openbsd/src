@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.27 2020/03/31 06:54:05 mpi Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.28 2020/04/08 08:07:51 mpi Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -307,10 +307,11 @@ VOP_POLL(struct vnode *vp, int fflag, int events, struct proc *p)
 }
 
 int
-VOP_KQFILTER(struct vnode *vp, struct knote *kn)
+VOP_KQFILTER(struct vnode *vp, int fflag, struct knote *kn)
 {
 	struct vop_kqfilter_args a;
 	a.a_vp = vp;
+	a.a_fflag = fflag;
 	a.a_kn = kn;
 
 	if (vp->v_op->vop_kqfilter == NULL)

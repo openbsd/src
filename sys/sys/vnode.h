@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.155 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.156 2020/04/08 08:07:52 mpi Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -412,9 +412,10 @@ int VOP_POLL(struct vnode *, int, int, struct proc *);
 
 struct vop_kqfilter_args {
 	struct vnode *a_vp;
+	int a_fflag;
 	struct knote *a_kn;
 };
-int VOP_KQFILTER(struct vnode *, struct knote *);
+int VOP_KQFILTER(struct vnode *, int, struct knote *);
 
 struct vop_revoke_args {
 	struct vnode *a_vp;
