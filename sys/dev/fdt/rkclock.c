@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.51 2020/03/01 17:57:33 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.52 2020/04/08 21:32:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -883,6 +883,11 @@ struct rkclock rk3328_clocks[] = {
 		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL }
 	},
 	{
+		RK3328_CLK_CRYPTO, RK3328_CRU_CLKSEL_CON(20),
+		SEL(7, 7), DIV(4, 0),
+		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL }
+	},
+	{
 		RK3328_CLK_PDM, RK3328_CRU_CLKSEL_CON(20),
 		SEL(15, 14), DIV(12, 8),
 		{ RK3328_PLL_CPLL, RK3328_PLL_GPLL, RK3328_PLL_APLL },
@@ -1421,6 +1426,9 @@ rk3328_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		mux = (reg & RK3328_CRU_VOP_DCLK_SRC_SEL_MASK) >>
 		    RK3328_CRU_VOP_DCLK_SRC_SEL_SHIFT;
 		idx = (mux == 0) ? RK3328_HDMIPHY : RK3328_DCLK_LCDC_SRC;
+		return rk3328_set_frequency(sc, &idx, freq);
+	case RK3328_HCLK_CRYPTO_SLV:
+		idx = RK3328_HCLK_BUS_PRE;
 		return rk3328_set_frequency(sc, &idx, freq);
 	default:
 		break;
