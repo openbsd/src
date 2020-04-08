@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.269 2020/03/29 11:34:30 tobhe Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.270 2020/04/08 07:32:56 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2699,6 +2699,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		goto exit;
 	}
 
+	vcpu->vc_vmx_cr0_fixed1 = want1;
+	vcpu->vc_vmx_cr0_fixed0 = want0;
 	/*
 	 * Determine which bits in CR4 have to be set to a fixed
 	 * value as per Intel SDM A.8.
@@ -5660,34 +5662,50 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 	int ret;
 
 	/* Check must-be-0 bits */
-	mask = ~(curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1);
-	if (r & mask) {
+	mask = vcpu->vc_vmx_cr0_fixed1;
+	if (~r & mask) {
 		/* Inject #GP, let the guest handle it */
 		DPRINTF("%s: guest set invalid bits in %%cr0. Zeros "
 		    "mask=0x%llx, data=0x%llx\n", __func__,
-		    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed1, r);
+		    vcpu->vc_vmx_cr0_fixed1, r);
 		vmm_inject_gp(vcpu);
 		return (0);
 	}
 
 	/* Check must-be-1 bits */
-	mask = curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0;
+	mask = vcpu->vc_vmx_cr0_fixed0;
 	if ((r & mask) != mask) {
 		/* Inject #GP, let the guest handle it */
 		DPRINTF("%s: guest set invalid bits in %%cr0. Ones "
 		    "mask=0x%llx, data=0x%llx\n", __func__,
-		    curcpu()->ci_vmm_cap.vcc_vmx.vmx_cr0_fixed0, r);
+		    vcpu->vc_vmx_cr0_fixed0, r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
+
+	if (r & 0xFFFFFFFF00000000ULL) {
+		DPRINTF("%s: setting bits 63:32 of %%cr0 is invalid,"
+		    " inject #GP, cr0=0x%llx\n", __func__, r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
+
+	if ((r & CR0_PG) && (r & CR0_PE) == 0) {
+		DPRINTF("%s: PG flag set when the PE flag is clear,"
+		    " inject #GP, cr0=0x%llx\n", __func__, r);
+		vmm_inject_gp(vcpu);
+		return (0);
+	}
+
+	if ((r & CR0_NW) && (r & CR0_CD) == 0) {
+		DPRINTF("%s: NW flag set when the CD flag is clear,"
+		    " inject #GP, cr0=0x%llx\n", __func__, r);
 		vmm_inject_gp(vcpu);
 		return (0);
 	}
 
 	if (vmread(VMCS_GUEST_IA32_CR0, &oldcr0)) {
 		printf("%s: can't read guest cr0\n", __func__);
-		return (EINVAL);
-	}
-
-	if (vmread(VMCS_GUEST_IA32_CR4, &cr4)) {
-		printf("%s: can't read guest cr4\n", __func__);
 		return (EINVAL);
 	}
 
@@ -5700,50 +5718,50 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 	}
 
 	/* If the guest hasn't enabled paging ... */
-	if (!(r & CR0_PG)) {
-		if (oldcr0 & CR0_PG) {
-			 /* Paging was disabled (prev. enabled) - Flush TLB */
-			if ((vmm_softc->mode == VMM_MODE_VMX ||
-			    vmm_softc->mode == VMM_MODE_EPT) &&
-			    vcpu->vc_vmx_vpid_enabled) {
-				vid.vid_vpid = vcpu->vc_parent->vm_id;
-				vid.vid_addr = 0;
-				invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
-			}
+	if (!(r & CR0_PG) && (oldcr0 & CR0_PG)) {
+		/* Paging was disabled (prev. enabled) - Flush TLB */
+		if ((vmm_softc->mode == VMM_MODE_VMX ||
+		    vmm_softc->mode == VMM_MODE_EPT) &&
+		    vcpu->vc_vmx_vpid_enabled) {
+			vid.vid_vpid = vcpu->vc_parent->vm_id;
+			vid.vid_addr = 0;
+			invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
+		}
+	} else if (!(oldcr0 & CR0_PG) && (r & CR0_PG)) {
+		/*
+		 * Since the guest has enabled paging, then the IA32_VMX_IA32E_MODE_GUEST
+		 * control must be set to the same as EFER_LME.
+		 */
+		msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+
+		if (vmread(VMCS_ENTRY_CTLS, &ectls)) {
+			printf("%s: can't read entry controls", __func__);
+			return (EINVAL);
 		}
 
-		/* Nothing more to do in the no-paging case */
-		return (0);
-	}
+		if (msr_store[VCPU_REGS_EFER].vms_data & EFER_LME)
+			ectls |= IA32_VMX_IA32E_MODE_GUEST;
+		else
+			ectls &= ~IA32_VMX_IA32E_MODE_GUEST;
 
-	/*
-	 * Since the guest has enabled paging, then the IA32_VMX_IA32E_MODE_GUEST
-	 * control must be set to the same as EFER_LME.
-	 */
-	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
+		if (vmwrite(VMCS_ENTRY_CTLS, ectls)) {
+			printf("%s: can't write entry controls", __func__);
+			return (EINVAL);
+		}
 
-	if (vmread(VMCS_ENTRY_CTLS, &ectls)) {
-		printf("%s: can't read entry controls", __func__);
-		return (EINVAL);
-	}
+		if (vmread(VMCS_GUEST_IA32_CR4, &cr4)) {
+			printf("%s: can't read guest cr4\n", __func__);
+			return (EINVAL);
+		}
 
-	if (msr_store[VCPU_REGS_EFER].vms_data & EFER_LME)
-		ectls |= IA32_VMX_IA32E_MODE_GUEST;
-	else
-		ectls &= ~IA32_VMX_IA32E_MODE_GUEST;
+		/* Load PDPTEs if PAE guest enabling paging */
+		if (cr4 & CR4_PAE) {
+			ret = vmx_load_pdptes(vcpu);
 
-	if (vmwrite(VMCS_ENTRY_CTLS, ectls)) {
-		printf("%s: can't write entry controls", __func__);
-		return (EINVAL);
-	}
-
-	/* Load PDPTEs if PAE guest enabling paging */
-	if (!(oldcr0 & CR0_PG) && (r & CR0_PG) && (cr4 & CR4_PAE)) {
-		ret = vmx_load_pdptes(vcpu);
-
-		if (ret) {
-			printf("%s: updating PDPTEs failed\n", __func__);
-			return (ret);
+			if (ret) {
+				printf("%s: updating PDPTEs failed\n", __func__);
+				return (ret);
+			}
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.68 2020/01/22 03:29:58 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.69 2020/04/08 07:32:56 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -933,6 +933,8 @@ struct vcpu {
 	vaddr_t vc_vmx_msr_entry_load_va;
 	paddr_t vc_vmx_msr_entry_load_pa;
 	uint8_t vc_vmx_vpid_enabled;
+	uint64_t vc_vmx_cr0_fixed1;
+	uint64_t vc_vmx_cr0_fixed0;
 
 	/* SVM only */
 	vaddr_t vc_svm_hsa_va;
