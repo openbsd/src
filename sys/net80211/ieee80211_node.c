@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.179 2020/01/15 09:34:27 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.180 2020/04/08 09:34:29 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1441,6 +1441,21 @@ ieee80211_end_scan(struct ifnet *ifp)
 					ic->ic_bgscan_fail *= 2;
 			}
 			ic->ic_flags &= ~IEEE80211_F_BGSCAN;
+
+			/*
+			 * HT is negotiated during association so we must use
+			 * ic_bss to check HT. The nodes tree was re-populated
+			 * during background scan and therefore selbs and curbs
+			 * may not carry HT information.
+			 */
+			ni = ic->ic_bss;
+			if (ni->ni_flags & IEEE80211_NODE_VHT)
+				ieee80211_setmode(ic, IEEE80211_MODE_11AC);
+			else if (ni->ni_flags & IEEE80211_NODE_HT)
+				ieee80211_setmode(ic, IEEE80211_MODE_11N);
+			else
+				ieee80211_setmode(ic,
+				    ieee80211_chan2mode(ic, ni->ni_chan));
 			return;
 		}
 	
