@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.33 2019/07/07 06:40:10 kevlo Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.34 2020/04/08 09:49:32 kettenis Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -184,7 +184,7 @@ void
 smsc_enaddr_OF(struct smsc_softc *sc)
 {
 	char *device = "/axi/usb/hub/ethernet";
-	char prop[64];
+	char prop[128];
 	int node;
 
 	if (sc->sc_dev.dv_unit != 0)
