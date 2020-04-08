@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.5 2020/03/22 15:53:30 bmercer Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.6 2020/04/08 10:54:15 kettenis Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -493,7 +493,13 @@ rkdrm_attachhook(struct device *dev)
 	ri->ri_width = helper->fb->width;
 	ri->ri_height = helper->fb->height;
 	ri->ri_stride = ri->ri_width * ri->ri_depth / 8;
-	rasops_init(ri, helper->fb->height, helper->fb->width);
+	ri->ri_rnum = 8;	/* ARGB8888 */
+	ri->ri_rpos = 16;
+	ri->ri_gnum = 8;
+	ri->ri_gpos = 8;
+	ri->ri_bnum = 8;
+	ri->ri_bpos = 0;
+	rasops_init(ri, 160, 160);
 	ri->ri_hw = sc;
 
 	rkdrm_stdscreen.capabilities = ri->ri_caps;
