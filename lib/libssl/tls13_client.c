@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.47 2020/04/06 16:28:38 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.48 2020/04/08 16:23:58 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -57,6 +57,19 @@ tls13_client_init(struct tls13_ctx *ctx)
 		return 0;
 
 	arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
+
+	/*
+	 * The legacy session identifier should either be set to an
+	 * unpredictable 32-byte value or zero length... a non-zero length
+	 * legacy session identifier triggers compatibility mode (see RFC 8446
+	 * Appendix D.4). In the pre-TLSv1.3 case a zero length value is used.
+	 */
+	if (ctx->hs->max_version >= TLS1_3_VERSION) {
+		arc4random_buf(ctx->hs->legacy_session_id,
+		    sizeof(ctx->hs->legacy_session_id));
+		ctx->hs->legacy_session_id_len =
+		    sizeof(ctx->hs->legacy_session_id);
+	}
 
 	return 1;
 }
@@ -175,14 +188,6 @@ tls13_client_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 		goto err;
 	if (!CBB_add_bytes(cbb, s->s3->client_random, SSL3_RANDOM_SIZE))
 		goto err;
-
-	/* Either 32-random bytes or zero length... */
-	if (ctx->hs->max_version >= TLS1_3_VERSION) {
-		arc4random_buf(ctx->hs->legacy_session_id,
-		    sizeof(ctx->hs->legacy_session_id));
-		ctx->hs->legacy_session_id_len =
-		    sizeof(ctx->hs->legacy_session_id);
-	}
 
 	if (!CBB_add_u8_length_prefixed(cbb, &session_id))
 		goto err;
