@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.140 2020/04/02 19:44:41 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.141 2020/04/08 20:04:19 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -647,7 +647,7 @@ struct privsep_proc {
 	const char		*p_chroot;
 	struct privsep		*p_ps;
 	struct iked		*p_env;
-	void			(*p_shutdown)(void);
+	void			(*p_shutdown)(struct privsep_proc *);
 	unsigned int		 p_instance;
 };
 

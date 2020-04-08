@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.57 2020/04/07 18:52:57 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.58 2020/04/08 20:04:19 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -47,6 +47,7 @@
 #include "ikev2.h"
 
 void	 ca_run(struct privsep *, struct privsep_proc *, void *);
+void	 ca_shutdown(struct privsep_proc *);
 void	 ca_reset(struct privsep *);
 int	 ca_reload(struct iked *);
 
@@ -117,6 +118,23 @@ ca_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 		fatal("%s: failed to allocate cert store", __func__);
 
 	env->sc_priv = store;
+	p->p_shutdown = ca_shutdown;
+}
+
+void
+ca_shutdown(struct privsep_proc *p)
+{
+	struct iked             *env = p->p_env;
+	struct ca_store		*store;
+
+	if (env == NULL)
+		return;
+	ibuf_release(env->sc_certreq);
+	if ((store = env->sc_priv) == NULL)
+		return;
+	ibuf_release(store->ca_pubkey.id_buf);
+	ibuf_release(store->ca_privkey.id_buf);
+	free(store);
 }
 
 void
@@ -618,6 +636,7 @@ ca_getauth(struct iked *env, struct imsg *imsg)
 	ret = ca_setauth(env, &sa, sa.sa_localauth.id_buf, PROC_IKEV2);
 
 	ibuf_release(sa.sa_localauth.id_buf);
+	sa.sa_localauth.id_buf = NULL;
 	ibuf_release(authmsg);
 
 	return (ret);
