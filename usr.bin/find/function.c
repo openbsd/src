@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.48 2020/04/09 10:27:32 jca Exp $	*/
+/*	$OpenBSD: function.c,v 1.49 2020/04/09 15:07:49 jca Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -588,6 +588,8 @@ c_exec(char *unused, char ***argvp, int isok)
 
 	if (new->flags & F_PLUSSET) {
 		long arg_max;
+		extern char **environ;
+		char **ep;
 		u_int c, bufsize;
 
 		cnt = ap - *argvp - 1;			/* units are words */
@@ -605,7 +607,11 @@ c_exec(char *unused, char ***argvp, int isok)
 		 */
 		arg_max = sysconf(_SC_ARG_MAX);
 		if (arg_max == -1)
-			err(1, "sysconf(_SC_ARG_MAX) failed");
+			err(1, "-exec: sysconf(_SC_ARG_MAX) failed");
+		for (ep = environ; *ep != NULL; ep++) {
+			/* 1 byte for each '\0' */
+			arg_max -= strlen(*ep) + 1 + sizeof(*ep);
+		}
 
 		/*
 		 * Count up the space of the user's arguments, and
@@ -617,6 +623,8 @@ c_exec(char *unused, char ***argvp, int isok)
 			c += strlen(*argv) + 1;
  			new->e_argv[cnt] = *argv;
  		}
+		if (arg_max < 4 * 1024 + c)
+			errx(1, "-exec: no space left to run child command");
 		bufsize = arg_max - 4 * 1024 - c;
 
 		/*
