@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.123 2020/04/03 13:54:31 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.124 2020/04/09 13:57:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -207,7 +207,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 				goto fail;
 			}
 		}
-	}
+	} else
+		dsx = 80;
 	if (args_has(args, 'y')) {
 		tmp = args_get(args, 'y');
 		if (strcmp(tmp, "-") == 0) {
@@ -222,7 +223,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 				goto fail;
 			}
 		}
-	}
+	} else
+		dsy = 24;
 
 	/* Find new session size. */
 	if (!detached && !is_control) {
@@ -233,13 +235,14 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	} else {
 		tmp = options_get_string(global_s_options, "default-size");
 		if (sscanf(tmp, "%ux%u", &sx, &sy) != 2) {
-			sx = 80;
-			sy = 24;
-		}
-		if (args_has(args, 'x'))
 			sx = dsx;
-		if (args_has(args, 'y'))
 			sy = dsy;
+		} else {
+			if (args_has(args, 'x'))
+				sx = dsx;
+			if (args_has(args, 'y'))
+				sy = dsy;
+		}
 	}
 	if (sx == 0)
 		sx = 1;
