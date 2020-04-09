@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.139 2020/03/30 15:49:23 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.140 2020/04/09 13:52:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -644,7 +644,7 @@ client_read_open(void *data, size_t datalen)
 	struct msg_read_done	 reply;
 	struct client_file	 find, *cf;
 	const int		 flags = O_NONBLOCK|O_RDONLY;
-	int			 error = 0;
+	int			 error;
 
 	if (datalen < sizeof *msg)
 		fatalx("bad MSG_READ_OPEN size");

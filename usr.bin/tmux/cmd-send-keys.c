@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.53 2020/03/19 14:03:48 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.54 2020/04/09 13:52:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -152,7 +152,7 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 			return (CMD_RETURN_ERROR);
 		}
 		if (wme != NULL && (args_has(args, 'X') || args->argc == 0)) {
-			if (wme == NULL || wme->mode->command == NULL) {
+			if (wme->mode->command == NULL) {
 				cmdq_error(item, "not in a mode");
 				return (CMD_RETURN_ERROR);
 			}

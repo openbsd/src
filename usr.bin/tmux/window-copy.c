@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.266 2020/04/06 17:51:34 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.267 2020/04/09 13:52:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4151,7 +4151,6 @@ window_copy_cursor_previous_word_pos(struct window_mode_entry *wme,
 				    data->oy >=
 				    screen_hsize(data->backing) - 1))
 					goto out;
-				py--;
 
 				py = screen_hsize(data->backing) + data->cy -
 				    data->oy;

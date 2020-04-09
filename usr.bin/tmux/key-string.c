@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.55 2020/03/31 11:38:35 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.56 2020/04/09 13:52:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -229,10 +229,8 @@ key_string_lookup_string(const char *string)
 			key -= 64;
 		else if (key == 32)
 			key = 0;
-		else if (key == '?')
-			key = 127;
 		else if (key == 63)
-			key = KEYC_BSPACE;
+			key = 127;
 		else
 			return (KEYC_UNKNOWN);
 		modifiers &= ~KEYC_CTRL;
