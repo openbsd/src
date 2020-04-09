@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.35 2019/07/29 10:50:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.36 2020/04/09 07:20:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -67,6 +67,13 @@ struct iwn_tx_data {
 	struct mbuf		*m;
 	struct ieee80211_node	*ni;
 	int totlen;
+	int retries;
+	int txfail;
+	int txmcs;
+	int txrate;
+	int flags;
+#define IWN_TXDATA_IS_AMPDU_SUBFRAME	0x01
+	int actual_txmcs; /* for retried A-MPDU subframes */
 };
 
 struct iwn_tx_ring {
