@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkrng.c,v 1.1 2020/04/03 16:29:17 kettenis Exp $	*/
+/*	$OpenBSD: rkrng.c,v 1.2 2020/04/09 09:25:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -25,6 +25,7 @@
 
 #include <dev/rndvar.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
 /* Registers */
@@ -89,6 +90,9 @@ rkrng_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	clock_set_assigned(faa->fa_node);
+	clock_enable_all(faa->fa_node);
 
 	timeout_set(&sc->sc_to, rkrng_rnd, sc);
 	rkrng_rnd(sc);
