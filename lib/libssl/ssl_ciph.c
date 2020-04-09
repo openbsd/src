@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.112 2020/04/09 17:24:11 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.113 2020/04/09 17:54:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -907,7 +907,7 @@ ssl_cipher_strength_sort(CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 
 static int
 ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
-    CIPHER_ORDER **tail_p, const SSL_CIPHER **ca_list)
+    CIPHER_ORDER **tail_p, const SSL_CIPHER **ca_list, int *tls13_seen)
 {
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
 	unsigned long algo_strength;
@@ -915,6 +915,8 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 	unsigned long cipher_id = 0;
 	const char *l, *buf;
 	char ch;
+
+	*tls13_seen = 0;
 
 	retval = 1;
 	l = rule_str;
@@ -1083,6 +1085,8 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 				 * pattern!
 				 */
 				cipher_id = ca_list[j]->id;
+				if (ca_list[j]->algorithm_ssl == SSL_TLSV1_3)
+					*tls13_seen = 1;
 			} else {
 				/*
 				 * not an explicit ciphersuite; only in this
@@ -1128,6 +1132,8 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 			while ((*l != '\0') && !ITEM_SEP(*l))
 				l++;
 		} else if (found) {
+			if (alg_ssl == SSL_TLSV1_3)
+				*tls13_seen = 1;
 			ssl_cipher_apply_rule(cipher_id, alg_mkey, alg_auth,
 			    alg_enc, alg_mac, alg_ssl, algo_strength, rule,
 			    -1, head_p, tail_p);
@@ -1164,6 +1170,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	const char *rule_p;
 	CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
 	const SSL_CIPHER **ca_list = NULL;
+	int tls13_seen = 0;
 
 	/*
 	 * Return with error if nothing to do.
@@ -1279,14 +1286,15 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	rule_p = rule_str;
 	if (strncmp(rule_str, "DEFAULT", 7) == 0) {
 		ok = ssl_cipher_process_rulestr(SSL_DEFAULT_CIPHER_LIST,
-		&head, &tail, ca_list);
+		    &head, &tail, ca_list, &tls13_seen);
 		rule_p += 7;
 		if (*rule_p == ':')
 			rule_p++;
 	}
 
 	if (ok && (strlen(rule_p) > 0))
-		ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list);
+		ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list,
+		    &tls13_seen);
 
 	free((void *)ca_list);	/* Not needed anymore */
 
@@ -1308,11 +1316,16 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	/*
 	 * The cipher selection for the list is done. The ciphers are added
 	 * to the resulting precedence to the STACK_OF(SSL_CIPHER).
+	 *
+	 * If the rule string did not contain any references to TLSv1.3,
+	 * include inactive TLSv1.3 cipher suites. This avoids attempts to
+	 * use TLSv1.3 with an older rule string that does not include
+	 * TLSv1.3 cipher suites.
 	 */
 	for (curr = head; curr != NULL; curr = curr->next) {
-		if (curr->active) {
+		if (curr->active ||
+		    (!tls13_seen && curr->cipher->algorithm_ssl == SSL_TLSV1_3))
 			sk_SSL_CIPHER_push(cipherstack, curr->cipher);
-		}
 	}
 	free(co_list);	/* Not needed any longer */
 
