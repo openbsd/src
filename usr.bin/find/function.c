@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.47 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.48 2020/04/09 10:27:32 jca Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -538,7 +538,7 @@ run_f_exec(PLAN *plan)
  *
  *	If -exec ... {} +, use only the first array, but make it large
  *	enough to hold 5000 args (cf. src/usr.bin/xargs/xargs.c for a
- *	discussion), and then allocate ARG_MAX - 4K of space for args.
+ *	discussion), and then allocate space for args.
  */
 PLAN *
 c_exec(char *unused, char ***argvp, int isok)
@@ -587,6 +587,7 @@ c_exec(char *unused, char ***argvp, int isok)
 		errx(1, "-ok: terminating \"+\" not permitted.");
 
 	if (new->flags & F_PLUSSET) {
+		long arg_max;
 		u_int c, bufsize;
 
 		cnt = ap - *argvp - 1;			/* units are words */
@@ -599,6 +600,14 @@ c_exec(char *unused, char ***argvp, int isok)
 		new->ep_narg = 0;
 
 		/*
+		 * Compute the maximum space we can use for arguments
+		 * passed to execve(2).
+		 */
+		arg_max = sysconf(_SC_ARG_MAX);
+		if (arg_max == -1)
+			err(1, "sysconf(_SC_ARG_MAX) failed");
+
+		/*
 		 * Count up the space of the user's arguments, and
 		 * subtract that from what we allocate.
 		 */
@@ -608,8 +617,7 @@ c_exec(char *unused, char ***argvp, int isok)
 			c += strlen(*argv) + 1;
  			new->e_argv[cnt] = *argv;
  		}
-		bufsize = ARG_MAX - 4 * 1024 - c;
-
+		bufsize = arg_max - 4 * 1024 - c;
 
 		/*
 		 * Allocate, and then initialize current, base, and
