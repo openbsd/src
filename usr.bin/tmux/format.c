@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.233 2020/04/08 11:26:07 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.234 2020/04/09 13:53:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -900,11 +900,12 @@ static void
 format_cb_pane_at_top(struct format_tree *ft, struct format_entry *fe)
 {
 	struct window_pane	*wp = ft->wp;
-	struct window		*w = wp->window;
+	struct window		*w;
 	int			 status, flag;
 
 	if (wp == NULL)
 		return;
+	w = wp->window;
 
 	status = options_get_number(w->options, "pane-border-status");
 	if (status == PANE_STATUS_TOP)
@@ -919,11 +920,12 @@ static void
 format_cb_pane_at_bottom(struct format_tree *ft, struct format_entry *fe)
 {
 	struct window_pane	*wp = ft->wp;
-	struct window		*w = wp->window;
+	struct window		*w;
 	int			 status, flag;
 
 	if (wp == NULL)
 		return;
+	w = wp->window;
 
 	status = options_get_number(w->options, "pane-border-status");
 	if (status == PANE_STATUS_BOTTOM)

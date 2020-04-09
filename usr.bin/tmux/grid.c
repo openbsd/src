@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.104 2020/03/31 17:13:20 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.105 2020/04/09 13:53:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1343,17 +1343,13 @@ grid_wrap_position(struct grid *gd, u_int px, u_int py, u_int *wx, u_int *wy)
 void
 grid_unwrap_position(struct grid *gd, u_int *px, u_int *py, u_int wx, u_int wy)
 {
-	u_int	yy, ax = 0, ay = 0;
+	u_int	yy, ay = 0;
 
 	for (yy = 0; yy < gd->hsize + gd->sy - 1; yy++) {
 		if (ay == wy)
 			break;
-		if (gd->linedata[yy].flags & GRID_LINE_WRAPPED)
-			ax += gd->linedata[yy].cellused;
-		else {
-			ax = 0;
+		if (~gd->linedata[yy].flags & GRID_LINE_WRAPPED)
 			ay++;
-		}
 	}
 
 	/*
