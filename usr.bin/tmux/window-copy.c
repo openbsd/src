@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.268 2020/04/09 14:23:34 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.269 2020/04/09 14:30:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1055,14 +1055,15 @@ window_copy_cmd_history_bottom(struct window_copy_cmd_state *cs)
 {
 	struct window_mode_entry	*wme = cs->wme;
 	struct window_copy_mode_data	*data = wme->data;
+	struct screen			*s = data->backing;
 	u_int				 oy;
 
-	oy = screen_hsize(data->backing) + data->cy - data->oy;
+	oy = screen_hsize(s) + data->cy - data->oy;
 	if (data->lineflag == LINE_SEL_RIGHT_LEFT && oy == data->endsely)
 		window_copy_other_end(wme);
 
 	data->cy = screen_size_y(&data->screen) - 1;
-	data->cx = window_copy_find_length(wme, data->cy);
+	data->cx = window_copy_find_length(wme, screen_hsize(s) + data->cy);
 	data->oy = 0;
 
 	if (data->searchmark != NULL && !data->timeout)
