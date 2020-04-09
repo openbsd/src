@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.111 2020/04/09 17:22:52 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.112 2020/04/09 17:24:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -758,13 +758,12 @@ ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list, int num_of_group_aliases,
 static void
 ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long alg_mkey,
     unsigned long alg_auth, unsigned long alg_enc, unsigned long alg_mac,
-    unsigned long alg_ssl, unsigned long algo_strength,
-    int rule, int strength_bits, CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
+    unsigned long alg_ssl, unsigned long algo_strength, int rule,
+    int strength_bits, CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 {
 	CIPHER_ORDER *head, *tail, *curr, *next, *last;
 	const SSL_CIPHER *cp;
 	int reverse = 0;
-
 
 	if (rule == CIPHER_DEL)
 		reverse = 1; /* needed to maintain sorting between currently deleted ciphers */
