@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.55 2020/03/24 13:32:36 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.56 2020/04/09 19:55:19 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -545,6 +545,10 @@ config_getreset(struct iked *env, struct imsg *imsg)
 	return (0);
 }
 
+/*
+ * The first call of this function sets the UDP socket for IKEv2.
+ * The second call is optional, setting the UDP socket used for NAT-T.
+ */
 int
 config_setsocket(struct iked *env, struct sockaddr_storage *ss,
     in_port_t port, enum privsep_procid id)
@@ -562,7 +566,7 @@ int
 config_getsocket(struct iked *env, struct imsg *imsg,
     void (*cb)(int, short, void *))
 {
-	struct iked_socket	*sock, **sptr, **nptr;
+	struct iked_socket	*sock, **sock0, **sock1;
 
 	log_debug("%s: received socket fd %d", __func__, imsg->fd);
 
@@ -577,23 +581,24 @@ config_getsocket(struct iked *env, struct imsg *imsg,
 
 	switch (sock->sock_addr.ss_family) {
 	case AF_INET:
-		sptr = &env->sc_sock4[0];
-		nptr = &env->sc_sock4[1];
+		sock0 = &env->sc_sock4[0];
+		sock1 = &env->sc_sock4[1];
 		break;
 	case AF_INET6:
-		sptr = &env->sc_sock6[0];
-		nptr = &env->sc_sock6[1];
+		sock0 = &env->sc_sock6[0];
+		sock1 = &env->sc_sock6[1];
 		break;
 	default:
-		fatal("config_getsocket: socket af");
+		fatal("config_getsocket: socket af: %u",
+		    sock->sock_addr.ss_family);
 		/* NOTREACHED */
 	}
-	if (*sptr == NULL)
-		*sptr = sock;
-	if (*nptr == NULL &&
-	    socket_getport((struct sockaddr *)&sock->sock_addr) ==
-	    IKED_NATT_PORT)
-		*nptr = sock;
+	if (*sock0 == NULL)
+		*sock0 = sock;
+	else if (*sock1 == NULL)
+		*sock1 = sock;
+	else
+		fatalx("%s: too many call", __func__);
 
 	event_set(&sock->sock_ev, sock->sock_fd,
 	    EV_READ|EV_PERSIST, cb, sock);

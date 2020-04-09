@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.141 2020/04/08 20:04:19 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.142 2020/04/09 19:55:19 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -661,10 +661,17 @@ TAILQ_HEAD(iked_ocsp_requests, iked_ocsp_entry);
  * Daemon configuration
  */
 
+enum natt_mode {
+	NATT_DEFAULT,	/* send/recv with both :500 and NAT-T port */
+	NATT_DISABLE,	/* send/recv with only :500 */
+	NATT_FORCE,	/* send/recv with only NAT-T port */
+};
+
 struct iked {
 	char				 sc_conffile[PATH_MAX];
 
 	uint32_t			 sc_opts;
+	enum natt_mode			 natt_mode;
 	uint8_t				 sc_passive;
 	uint8_t				 sc_decoupled;
 	in_port_t			 sc_nattport;

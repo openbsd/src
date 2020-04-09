@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.42 2020/04/03 09:11:23 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.43 2020/04/09 19:55:19 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -67,6 +67,7 @@ main(int argc, char *argv[])
 	int		 c;
 	int		 debug = 0, verbose = 0;
 	int		 opts = 0;
+	enum natt_mode	 natt_mode = NATT_DEFAULT;
 	in_port_t	 port = IKED_NATT_PORT;
 	const char	*conffile = IKED_CONFIG;
 	struct iked	*env = NULL;
@@ -103,14 +104,20 @@ main(int argc, char *argv[])
 			opts |= IKED_OPT_PASSIVE;
 			break;
 		case 'T':
-			opts |= IKED_OPT_NONATT;
+			if (natt_mode == NATT_FORCE)
+				errx(1, "-T and -t/-p are mutually exclusive");
+			natt_mode = NATT_DISABLE;
 			break;
 		case 't':
-			opts |= IKED_OPT_NATT;
+			if (natt_mode == NATT_DISABLE)
+				errx(1, "-T and -t are mutually exclusive");
+			natt_mode = NATT_FORCE;
 			break;
 		case 'p':
+			if (natt_mode == NATT_DISABLE)
+				errx(1, "-T and -p are mutually exclusive");
 			port = atoi(optarg);
-			opts |= IKED_OPT_NATT;
+			natt_mode = NATT_FORCE;
 			break;
 		default:
 			usage();
@@ -126,15 +133,12 @@ main(int argc, char *argv[])
 		fatal("calloc: env");
 
 	env->sc_opts = opts;
+	env->natt_mode = natt_mode;
 	env->sc_nattport = port;
 
 	ps = &env->sc_ps;
 	ps->ps_env = env;
 	TAILQ_INIT(&ps->ps_rcsocks);
-
-	if ((opts & (IKED_OPT_NONATT|IKED_OPT_NATT)) ==
-	    (IKED_OPT_NONATT|IKED_OPT_NATT))
-		errx(1, "conflicting NAT-T options");
 
 	if (strlcpy(env->sc_conffile, conffile, PATH_MAX) >= PATH_MAX)
 		errx(1, "config file exceeds PATH_MAX");
@@ -227,17 +231,18 @@ parent_configure(struct iked *env)
 	bzero(&ss, sizeof(ss));
 	ss.ss_family = AF_INET;
 
-	if ((env->sc_opts & IKED_OPT_NATT) == 0 && env->sc_nattport == IKED_NATT_PORT)
+	/* see comment on config_setsocket() */
+	if (env->natt_mode != NATT_FORCE)
 		config_setsocket(env, &ss, htons(IKED_IKE_PORT), PROC_IKEV2);
-	if ((env->sc_opts & IKED_OPT_NONATT) == 0)
+	if (env->natt_mode != NATT_DISABLE)
 		config_setsocket(env, &ss, htons(env->sc_nattport), PROC_IKEV2);
 
 	bzero(&ss, sizeof(ss));
 	ss.ss_family = AF_INET6;
 
-	if ((env->sc_opts & IKED_OPT_NATT) == 0 && env->sc_nattport == IKED_NATT_PORT)
+	if (env->natt_mode != NATT_FORCE)
 		config_setsocket(env, &ss, htons(IKED_IKE_PORT), PROC_IKEV2);
-	if ((env->sc_opts & IKED_OPT_NONATT) == 0)
+	if (env->natt_mode != NATT_DISABLE)
 		config_setsocket(env, &ss, htons(env->sc_nattport), PROC_IKEV2);
 
 	/*
