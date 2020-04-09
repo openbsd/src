@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.52 2020/04/05 08:40:31 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.53 2020/04/09 13:56:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -269,7 +269,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 				tmpsize *= 2;
 				tmp = xrealloc(tmp, tmpsize);
 			}
-			tmpused = strlcat(tmp, cp, tmpsize);
+			strlcat(tmp, cp, tmpsize);
 			tmpused = strlcat(tmp, " ", tmpsize);
 			free(cp);
 
@@ -279,7 +279,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 				tmpsize *= 2;
 				tmp = xrealloc(tmp, tmpsize);
 			}
-			tmpused = strlcat(tmp, cp, tmpsize);
+			strlcat(tmp, cp, tmpsize);
 			tmpused = strlcat(tmp, " ", tmpsize);
 			free(cp);
 

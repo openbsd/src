@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.57 2019/06/20 13:39:17 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.58 2020/04/09 13:56:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -212,11 +212,9 @@ cmd_show_options_all(struct cmd *self, struct cmdq_item *item, int scope,
 
 		if ((self->entry != &cmd_show_hooks_entry &&
 		    !args_has(self->args, 'H') &&
-		    oe != NULL &&
 		    (oe->flags & OPTIONS_TABLE_IS_HOOK)) ||
 		    (self->entry == &cmd_show_hooks_entry &&
-		    (oe == NULL ||
-		    (~oe->flags & OPTIONS_TABLE_IS_HOOK))))
+		    (~oe->flags & OPTIONS_TABLE_IS_HOOK)))
 			continue;
 
 		o = options_get_only(oo, oe->name);
