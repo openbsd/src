@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.110 2020/01/26 12:39:16 inoguchi Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.111 2020/04/09 17:22:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1201,7 +1201,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
 	ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
 
-	if (ssl_aes_is_accelerated() == 1) {
+	if (ssl_aes_is_accelerated()) {
 		/*
 		 * We have hardware assisted AES - prefer AES as a symmetric
 		 * cipher, with CHACHA20 second.
