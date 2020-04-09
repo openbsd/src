@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.234 2020/04/09 13:53:50 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.235 2020/04/09 15:35:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1617,7 +1617,7 @@ format_build_modifiers(struct format_tree *ft, const char **s, u_int *count)
 		return (NULL);
 	}
 	*s = cp + 1;
-	return list;
+	return (list);
 }
 
 /* Match against an fnmatch(3) pattern or regular expression. */
@@ -1909,7 +1909,7 @@ format_replace_expression(struct format_modifier *mexp, struct format_tree *ft,
 
 	free(right);
 	free(left);
-	return value;
+	return (value);
 
 fail:
 	free(right);

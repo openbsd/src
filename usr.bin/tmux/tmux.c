@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.195 2020/03/31 17:14:40 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.196 2020/04/09 15:35:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -224,7 +224,7 @@ getversion(void)
 			fatalx("uname failed");
 		xasprintf(&version, "openbsd-%s", u.release);
 	}
-	return version;
+	return (version);
 }
 
 int

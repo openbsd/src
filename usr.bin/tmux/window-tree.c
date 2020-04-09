@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.45 2020/03/20 17:26:14 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.46 2020/04/09 15:35:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -833,7 +833,7 @@ window_tree_search(__unused void *modedata, void *itemdata, const char *ss)
 			return (0);
 		retval = (strstr(cmd, ss) != NULL);
 		free(cmd);
-		return retval;
+		return (retval);
 	}
 	return (0);
 }

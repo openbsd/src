@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.15 2020/03/07 10:58:32 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.16 2020/04/09 15:35:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -804,7 +804,7 @@ format_width(const char *expanded)
 		if (cp[0] == '#' && cp[1] == '[') {
 			end = format_skip(cp + 2, "]");
 			if (end == NULL)
-				return 0;
+				return (0);
 			cp = end + 1;
 		} else if ((more = utf8_open(&ud, *cp)) == UTF8_MORE) {
 			while (*++cp != '\0' && more == UTF8_MORE)
