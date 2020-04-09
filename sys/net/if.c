@@ -1821,8 +1821,10 @@ int
 if_createrdomain(int rdomain, struct ifnet *ifp)
 {
 	int error;
-	struct ifnet *loifp;
+	struct ifreq ifr;
+	struct ifnet *loifp, *encifp;
 	char loifname[IFNAMSIZ];
+	char encifname[IFNAMSIZ];
 	unsigned int unit = rdomain;
 
 	if (!rtable_exists(rdomain) && (error = rtable_add(rdomain)) != 0)
@@ -1830,16 +1832,31 @@ if_createrdomain(int rdomain, struct ifnet *ifp)
 	if (!rtable_empty(rdomain))
 		return (EEXIST);
 
-	/* Create rdomain including its loopback if with unit == rdomain */
+	/* Create rdomain including its loopback and enc with unit == rdomain */
 	snprintf(loifname, sizeof(loifname), "lo%u", unit);
 	error = if_clone_create(loifname, 0);
 	if ((loifp = ifunit(loifname)) == NULL)
 		return (ENXIO);
-	if (error && (ifp != loifp || error != EEXIST))
+	if (error && ((ifp && ifp != loifp) || error != EEXIST))
+		return (error);
+	snprintf(encifname, sizeof(encifname), "enc%u", unit);
+	error = if_clone_create(encifname, 0);
+	if ((encifp = ifunit(encifname)) == NULL)
+		return (ENXIO);
+	if (error && ((ifp && ifp != encifp) || error != EEXIST))
 		return (error);
 
-	rtable_l2set(rdomain, rdomain, loifp->if_index);
+	if (ifp)
+		rtable_l2set(rdomain, rdomain, loifp->if_index);
 	loifp->if_rdomain = rdomain;
+	encifp->if_rdomain = rdomain;
+
+	/* Let devices enc(4) know about the change */
+	ifr.ifr_rdomainid = rdomain;
+	if ((error = (*encifp->if_ioctl)(encifp, SIOCSIFRDOMAIN,
+	    (caddr_t)&ifr)) != ENOTTY)
+		return (error);
+	error = 0;
 
 	return (0);
 }

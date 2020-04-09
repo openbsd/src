@@ -151,6 +151,7 @@ struct iked_flow {
 	struct iked_addr		 flow_src;
 	struct iked_addr		 flow_dst;
 	unsigned int			 flow_dir;	/* in/out */
+	int				 flow_rdomain;
 	struct iked_addr		 flow_prenat;
 
 	unsigned int			 flow_loaded;	/* pfkey done */
@@ -261,6 +262,7 @@ struct iked_policy {
 	uint8_t				 pol_certreqtype;
 
 	int				 pol_af;
+	int				 pol_rdomain;
 	uint8_t				 pol_saproto;
 	unsigned int			 pol_ipproto;
 

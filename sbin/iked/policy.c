@@ -875,6 +875,8 @@ flow_cmp(struct iked_flow *a, struct iked_flow *b)
 	int		diff = 0;
 
 	if (!diff)
+		diff = a->flow_rdomain - b->flow_rdomain;
+	if (!diff)
 		diff = (int)a->flow_ipproto - (int)b->flow_ipproto;
 	if (!diff)
 		diff = (int)a->flow_saproto - (int)b->flow_saproto;

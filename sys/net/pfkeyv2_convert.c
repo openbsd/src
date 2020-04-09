@@ -840,6 +840,27 @@ export_udpencap(void **p, struct tdb *tdb)
 	*p += sizeof(struct sadb_x_udpencap);
 }
 
+/* Import rdomain switch for SA */
+void
+import_rdomain(struct tdb *tdb, struct sadb_x_rdomain *srdomain)
+{
+	if (srdomain)
+		tdb->tdb_rdomain_post = srdomain->sadb_x_rdomain_dom2;
+}
+
+/* Export rdomain switch for SA */
+void
+export_rdomain(void **p, struct tdb *tdb)
+{
+	struct sadb_x_rdomain *srdomain = (struct sadb_x_rdomain *)*p;
+
+	srdomain->sadb_x_rdomain_dom1 = tdb->tdb_rdomain;
+	srdomain->sadb_x_rdomain_dom2 = tdb->tdb_rdomain_post;
+	srdomain->sadb_x_rdomain_len =
+	    sizeof(struct sadb_x_rdomain) / sizeof(uint64_t);
+	*p += sizeof(struct sadb_x_rdomain);
+}
+
 #if NPF > 0
 /* Import PF tag information for SA */
 void

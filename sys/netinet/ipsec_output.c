@@ -592,6 +592,8 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	pf_tag_packet(m, tdb->tdb_tag, -1);
 	pf_pkt_addr_changed(m);
 #endif
+	if (tdb->tdb_rdomain != tdb->tdb_rdomain_post)
+		m->m_pkthdr.ph_rtableid = tdb->tdb_rdomain_post;
 
 	/*
 	 * We're done with IPsec processing, transmit the packet using the
