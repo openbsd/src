@@ -1712,7 +1712,7 @@ elf32_hppa_hide_symbol (struct bfd_link_info *info,
   if (! hppa_elf_hash_entry(eh)->plabel)
     {
       eh->needs_plt = 0;
-      eh->plt = elf_hash_table (info)->init_plt_refcount;
+      eh->plt = elf_hash_table (info)->init_plt_offset;
     }
 }
 
@@ -1735,6 +1735,12 @@ elf32_hppa_adjust_dynamic_symbol (struct bfd_link_info *info,
   if (eh->type == STT_FUNC
       || eh->needs_plt)
     {
+      /* We must always allocate a .plt entry if the symbol is used by
+	 a plabel.  For hidden symbols the refcount may have been
+	 reset .  Fix it here to avoidlosing the .plt entry later.  */
+      if (hppa_elf_hash_entry (eh)->plabel)
+	eh->plt.refcount = 1;
+
       if (eh->plt.refcount <= 0
 	  || (eh->def_regular
 	      && eh->root.type != bfd_link_hash_defweak
