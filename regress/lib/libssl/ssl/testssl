@@ -53,7 +53,7 @@ echo test sslv2/sslv3 with both client and server authentication via BIO pair an
 $ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
 
 echo "Testing ciphersuites"
-for protocol in TLSv1.2; do
+for protocol in SSLv3 TLSv1.2; do
   echo "Testing ciphersuites for $protocol"
   for cipher in `$openssl ciphers "$protocol+aRSA" | tr ':' ' '`; do
     echo "Testing $cipher"
