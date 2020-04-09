@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.306 2020/04/03 08:32:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.307 2020/04/09 21:36:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4705,7 +4705,6 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = &in->in_ni;
-	struct ieee80211_rateset *rs = &ni->ni_rates;
 	const struct iwm_rate *rinfo;
 	int type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	int min_ridx = iwm_rval2ridx(ieee80211_min_basic_rate(ic));
@@ -4727,12 +4726,6 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	    ieee80211_mira_is_probing(&in->in_mn)) {
 		/* Keep Tx rate constant while mira is probing. */
 		ridx = iwm_mcs2ridx[ni->ni_txmcs];
-	} else if ((ni->ni_flags & IEEE80211_NODE_HT)) {
-		uint8_t rval;
-		rval = (rs->rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL);
-		ridx = iwm_rval2ridx(rval);
-		if (ridx < min_ridx)
-			ridx = min_ridx;
  	} else {
 		int i;
 		/* Use firmware rateset retry table. */
