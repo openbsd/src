@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.659 2020/01/26 10:31:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.660 2020/04/09 16:08:18 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2315,8 +2315,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 
 	go_daemon();
 
-	if (log_procname != NULL)
-		free(log_procname);
+	free(log_procname);
 	rslt = asprintf(&log_procname, "%s [priv]", ifi->name);
 	if (rslt == -1)
 		fatal("log_procname");
