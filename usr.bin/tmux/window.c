@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.253 2020/04/06 17:51:34 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.254 2020/04/09 13:49:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1213,7 +1213,7 @@ window_pane_search(struct window_pane *wp, const char *term, int regex,
 		}
 		log_debug("%s: %s", __func__, line);
 		if (!regex)
-			found = (fnmatch(new, line, 0) == 0);
+			found = (fnmatch(new, line, flags) == 0);
 		else
 			found = (regexec(&r, line, 0, NULL, 0) == 0);
 		free(line);
