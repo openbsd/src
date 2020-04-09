@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.31 2017/01/21 21:58:32 natano Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.32 2020/04/09 16:19:00 krw Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -448,8 +448,7 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 		}
 		bufrem -= i;
 	}
-	if (buf)
-		free(buf);
+	free(buf);
 
 		/* make the file system */
 	if (Tflag) {
@@ -706,8 +705,7 @@ ffs_populate_dir(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	}
 
 		/* cleanup */
-	if (dirbuf.buf != NULL)
-		free(dirbuf.buf);
+	free(dirbuf.buf);
 	return (1);
 }
 
@@ -803,8 +801,7 @@ ffs_write_file(union dinode *din, uint32_t ino, void *buf, fsinfo_t *fsopts)
 	ffs_write_inode(&in.i_din, in.i_number, fsopts);
 
  leave_ffs_write_file:
-	if (fbuf)
-		free(fbuf);
+	free(fbuf);
 	if (ffd != -1)
 		close(ffd);
 }
