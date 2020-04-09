@@ -55,7 +55,8 @@ $ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
 echo "Testing ciphersuites"
 for protocol in SSLv3 TLSv1.2; do
   echo "Testing ciphersuites for $protocol"
-  for cipher in `$openssl ciphers "$protocol+aRSA" | tr ':' ' '`; do
+  for cipher in `$openssl ciphers -v "$protocol+aRSA" |
+    awk "/ $protocol / { print \\$1 }"`; do
     echo "Testing $cipher"
     $ssltest -cipher $cipher
     if [ $? -ne 0 ] ; then
@@ -107,7 +108,8 @@ $ssltest -dtls1 -server_auth -client_auth $CA $extra || exit 1
 echo "Testing DTLS ciphersuites"
 for protocol in SSLv3; do
   echo "Testing ciphersuites for $protocol"
-  for cipher in `$openssl ciphers "RSA+$protocol" | tr ':' '\n' |
+  for cipher in `$openssl ciphers -v "RSA+$protocol" |
+    awk "/ $protocol / { print \\$1 }" |
     grep -v RC4`; do
     echo "Testing $cipher"
     $ssltest -cipher $cipher -dtls1
