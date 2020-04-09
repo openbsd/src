@@ -112,6 +112,8 @@ _quick3p=
     perl5281delta 1			pod/perl5281delta.pod \
     perl5282delta 1			pod/perl5282delta.pod \
     perl5300delta 1			pod/perl5300delta.pod \
+    perl5301delta 1			pod/perl5301delta.pod \
+    perl5302delta 1			pod/perl5302delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \
@@ -696,7 +698,7 @@ _quick3p=
     Term::ANSIColor 3p			lib/Term/ANSIColor.pm \
     Term::Cap 3p			lib/Term/Cap.pm \
     Term::Complete 3p			lib/Term/Complete.pm \
-    Term::ReadKey 3p			cpan/Term-ReadKey/ReadKey.pm \
+    Term::ReadKey 3p			lib/Term/ReadKey.pm \
     Term::ReadLine 3p			lib/Term/ReadLine.pm \
     Test 3p				lib/Test.pm \
     Test2 3p				lib/Test2.pm \
