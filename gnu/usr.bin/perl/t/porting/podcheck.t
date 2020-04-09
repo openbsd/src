@@ -78,7 +78,7 @@ points to just one target.  (The destination pod could have two targets with
 the same name.)
 
 The way that the C<LE<lt>E<gt>> pod command works (for links outside the pod)
-is to actually create a link to C<search.cpan.org> with an embedded query for
+is to actually create a link to C<metacpan.org> with an embedded query for
 the desired pod or man page.  That means that links outside the distribution
 are valid.  podcheck.t doesn't verify the validity of such links, but instead
 keeps a database of those known to be valid.  This means that if a link to a

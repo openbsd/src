@@ -1275,7 +1275,7 @@ B<perlbug> S<[ B<-v> ]> S<[ B<-r> I<returnaddress> ]>
 =head1 DESCRIPTION
 
 
-This program is designed to help you generate and send bug reports
+This program is designed to help you generate bug reports
 (and thank-you notes) about perl5 and the modules which ship with it.
 
 In most cases, you can just run it interactively from a command
@@ -1287,17 +1287,16 @@ non-core module (such as Tk, DBI, etc), then please see the
 documentation that came with that distribution to determine the
 correct place to report bugs.
 
-If you are unable to send your report using B<perlbug> (most likely
-because your system doesn't have a way to send mail that perlbug
-recognizes), you may be able to use this tool to compose your report
-and save it to a file which you can then send to B<perlbug@perl.org>
-using your regular mail client.
+Bug reports should be submitted to the GitHub issue tracker at
+L<https://github.com/Perl/perl5/issues>. The B<perlbug@perl.org>
+address no longer automatically opens tickets. You can use this tool
+to compose your report and save it to a file which you can then submit
+to the issue tracker.
 
 In extreme cases, B<perlbug> may not work well enough on your system
 to guide you through composing a bug report. In those cases, you
-may be able to use B<perlbug -d> to get system configuration
-information to include in a manually composed bug report to
-B<perlbug@perl.org>.
+may be able to use B<perlbug -d> or B<perl -V> to get system
+configuration information to include in your issue report.
 
 
 When reporting a bug, please run through this checklist:
@@ -1371,7 +1370,7 @@ Be sure to include the B<exact> error messages, if any.
 
 If you get a core dump (or equivalent), you may use a debugger
 (B<dbx>, B<gdb>, etc) to produce a stack trace to include in the bug
-report.  
+report.
 
 NOTE: unless your Perl has been compiled with debug info
 (often B<-g>), the stack trace is likely to be somewhat hard to use
@@ -1390,9 +1389,11 @@ will help a great deal.  In other words, try to analyze the problem
 
 If so, that's great news; bug reports with patches are likely to
 receive significantly more attention and interest than those without
-patches.  Please attach your patch to the report using the C<-p> option.
-When sending a patch, create it using C<git format-patch> if possible,
-though a unified diff created with C<diff -pu> will do nearly as well.
+patches.  Please submit your patch via the GitHub Pull Request workflow
+as described in B<perldoc> L<perlhack>.  You may also send patches to
+B<perl5-porters@perl.org>.  When sending a patch, create it using
+C<git format-patch> if possible, though a unified diff created with
+C<diff -pu> will do nearly as well.
 
 Your patch may be returned with requests for changes, or requests for more
 detailed explanations about your fix.
@@ -1407,21 +1408,6 @@ same style as the code you are trying to patch.  Make sure your patch
 really does work (C<make test>, if the thing you're patching is covered
 by Perl's test suite).
 
-=item Can you use C<perlbug> to submit the report?
-
-B<perlbug> will, amongst other things, ensure your report includes
-crucial information about your version of perl.  If C<perlbug> is
-unable to mail your report after you have typed it in, you may have
-to compose the message yourself, add the output produced by C<perlbug
--d> and email it to B<perlbug@perl.org>.  If, for some reason, you
-cannot run C<perlbug> at all on your system, be sure to include the
-entire output produced by running C<perl -V> (note the uppercase V).
-
-Whether you use C<perlbug> or send the email manually, please make
-your Subject line informative.  "a bug" is not informative.  Neither
-is "perl crashes" nor is "HELP!!!".  These don't help.  A compact
-description of what's wrong is fine.
-
 =item Can you use C<perlbug> to submit a thank-you note?
 
 Yes, you can do this by using the C<-T> option.
@@ -1429,6 +1415,10 @@ Thank-you notes are good. It makes people
 smile. 
 
 =back
+
+Please make your issue title informative.  "a bug" is not informative.
+Neither is "perl crashes" nor is "HELP!!!".  These don't help.  A compact
+description of what's wrong is fine.
 
 Having done your bit, please be prepared to wait, to be told the
 bug is in your code, or possibly to get no reply at all.  The
@@ -1438,8 +1428,8 @@ a duplicate of an existing report, you may not receive a personal
 reply.
 
 If it is important to you that your bug be fixed, do monitor the
-perl5-porters@perl.org mailing list (mailing lists are moderated, your
-message may take a while to show up) and the commit logs to development
+issue tracker (you will be subscribed to notifications for issues you
+submit or comment on) and the commit logs to development
 versions of Perl, and encourage the maintainers with kind words or
 offers of frosty beverages.  (Please do be kind to the maintainers.
 Harassing or flaming them is likely to have the opposite effect of the

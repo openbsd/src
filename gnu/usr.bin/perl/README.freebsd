@@ -36,5 +36,6 @@ C<argv[0]> value for C<$^X>.
 Nicholas Clark <nick@ccl4.org>, collating wisdom supplied by Slaven Rezic
 and Tim Bunce.
 
-Please report any errors, updates, or suggestions to L<mailto:perlbug@perl.org>.
+Please report any errors, updates, or suggestions to
+L<https://github.com/Perl/perl5/issues>.
 

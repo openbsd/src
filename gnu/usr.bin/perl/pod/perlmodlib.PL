@@ -119,7 +119,7 @@ push @mod, "=item Config\n\nAccess Perl configuration information\n\n";
 # parse as (reasonably) sane Pod as-is to anything that attempts to
 # brute-force treat it as such. The content is already useful - this just
 # makes it tidier, by stopping anything doing this mistaking the rest of the
-# Perl code for Pod. eg http://search.cpan.org/dist/perl/pod/perlmodlib.PL
+# Perl code for Pod. eg https://metacpan.org/pod/perlmodlib
 
 print $out <<'=cut';
 =head1 NAME

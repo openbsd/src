@@ -1234,8 +1234,8 @@ character sets internally (usually Character Code Set ID 0037 for OS/400
 and either 1047 or POSIX-BC for S/390 systems).
 
 The rest of this section may need updating, but we don't know what it
-should say.  Please email comments to
-L<perlbug@perl.org|mailto:perlbug@perl.org>.
+should say.  Please submit comments to
+L<https://github.com/Perl/perl5/issues>.
 
 On the mainframe Perl currently works under the "Unix system
 services for OS/390" (formerly known as OpenEdition), VM/ESA OpenEdition, or
@@ -2475,7 +2475,8 @@ the past (5.005_03 and earlier), but we haven't been able to verify
 their status for the current release, either because the
 hardware/software platforms are rare or because we don't have an
 active champion on these platforms--or both.  They used to work,
-though, so go ahead and try compiling them, and let perlbug@perl.org
+though, so go ahead and try compiling them, and let
+L<https://github.com/Perl/perl5/issues> know
 of any trouble.
 
         3b1

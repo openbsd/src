@@ -13234,7 +13234,9 @@ Perl_sv_vcatpvfn_flags(pTHX_ SV *const sv, const char *const pat, const STRLEN p
                         Perl_croak_nocontext(
                             "Missing argument for %%n in %s",
                                 PL_op ? OP_DESC(PL_op) : "sv_vcatpvfn()");
-                    sv_setuv_mg(argsv, has_utf8 ? (UV)sv_len_utf8(sv) : (UV)len);
+                    sv_setuv_mg(argsv, has_utf8
+                        ? (UV)utf8_length((U8*)SvPVX(sv), (U8*)SvEND(sv))
+                        : (UV)len);
                 }
                 goto done_valid_conversion;
             }
@@ -13393,6 +13395,13 @@ Perl_sv_vcatpvfn_flags(pTHX_ SV *const sv, const char *const pat, const STRLEN p
 		PL_op ? OP_DESC(PL_op) : "sv_vcatpvfn()");
     }
 
+    if (SvTYPE(sv) >= SVt_PVMG && SvMAGIC(sv)) {
+        /* while we shouldn't set the cache, it may have been previously
+           set in the caller, so clear it */
+        MAGIC *mg = mg_find(sv, PERL_MAGIC_utf8);
+        if (mg)
+            magic_setutf8(sv,mg); /* clear UTF8 cache */
+    }
     SvTAINT(sv);
 
 #ifdef USE_LOCALE_NUMERIC

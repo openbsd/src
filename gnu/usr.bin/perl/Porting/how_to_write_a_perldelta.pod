@@ -165,7 +165,7 @@ for the particular file in core.)
 
 =item Utility Changes
 
-Changes to installed programs such as F<perlbug> and F<xsubpp> go here. Most
+Changes to installed programs such as F<perldoc> and F<xsubpp> go here. Most
 of these are built within the directory F<utils>.
 
 =item New Documentation

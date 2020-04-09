@@ -207,7 +207,7 @@ $define|true|[yY]*)
 	0.*|1.*|2.0*|2.1*)   cat <<EOM >&4
 I did not know that FreeBSD $osvers supports POSIX threads.
 
-Feel free to tell perlbug@perl.org otherwise.
+Feel free to tell https://github.com/Perl/perl5/issues otherwise.
 EOM
 	      exit 1
 	      ;;

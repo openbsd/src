@@ -11,7 +11,7 @@ use Carp ;
 use bytes ;
 our ($VERSION, $XS_VERSION, @ISA, @EXPORT, $AUTOLOAD);
 
-$VERSION = '2.084';
+$VERSION = '2.089';
 $XS_VERSION = $VERSION; 
 $VERSION = eval $VERSION;
 
@@ -354,6 +354,12 @@ The following bzip2 constants are exported by this module
 		BZ_OUTBUFF_FULL
 		BZ_CONFIG_ERROR
 
+=head1 SUPPORT
+
+General feedback/questions/bug reports should be sent to 
+L<https://github.com/pmqs/Compress-Raw-Bzip2/issues> (preferred) or
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=Compress-Raw-Bzip2>.
+
 =head1 SEE ALSO
 
 L<Compress::Zlib>, L<IO::Compress::Gzip>, L<IO::Uncompress::Gunzip>, L<IO::Compress::Deflate>, L<IO::Uncompress::Inflate>, L<IO::Compress::RawDeflate>, L<IO::Uncompress::RawInflate>, L<IO::Compress::Bzip2>, L<IO::Uncompress::Bunzip2>, L<IO::Compress::Lzma>, L<IO::Uncompress::UnLzma>, L<IO::Compress::Xz>, L<IO::Uncompress::UnXz>, L<IO::Compress::Lzip>, L<IO::Uncompress::UnLzip>, L<IO::Compress::Lzop>, L<IO::Uncompress::UnLzop>, L<IO::Compress::Lzf>, L<IO::Uncompress::UnLzf>, L<IO::Compress::Zstd>, L<IO::Uncompress::UnZstd>, L<IO::Uncompress::AnyInflate>, L<IO::Uncompress::AnyUncompress>
@@ -364,7 +370,7 @@ L<File::GlobMapper|File::GlobMapper>, L<Archive::Zip|Archive::Zip>,
 L<Archive::Tar|Archive::Tar>,
 L<IO::Zlib|IO::Zlib>
 
-The primary site for the bzip2 program is L<http://www.bzip.org>.
+The primary site for the bzip2 program is L<https://sourceware.org/bzip2/>.
 
 See the module L<Compress::Bzip2|Compress::Bzip2>
 

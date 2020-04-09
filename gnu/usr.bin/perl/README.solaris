@@ -709,4 +709,5 @@ The original was written by Andy Dougherty F<doughera@lafayette.edu>
 drawing heavily on advice from Alan Burlison, Nick Ing-Simmons, Tim Bunce,
 and many other Solaris users over the years.
 
-Please report any errors, updates, or suggestions to F<perlbug@perl.org>.
+Please report any errors, updates, or suggestions to
+L<https://github.com/Perl/perl5/issues>.

@@ -581,9 +581,11 @@ if (defined $nm_err_tmp) {
         while (<$nm_err_fh>) {
             # OS X has weird error where nm warns about
             # "no name list" but then outputs fine.
-            if (/nm: no name list/ && $^O eq 'darwin') {
-                print "# $^O ignoring $nm output: $_";
-                next;
+            if ( $^O eq 'darwin' ) {
+                if (/nm: no name list/ || /^no symbols$/ ) {
+                    print "# $^O ignoring $nm output: $_";
+                    next;
+                }
             }
             warn "$0: Unexpected $nm error: $_";
             $error++;

@@ -1924,7 +1924,7 @@ called as barewords.  Something like this will work:
 
 (P) This is either an error in Perl, or, if you're using
 one, your L<custom regular expression engine|perlreapi>.  If not the
-latter, report the problem through the L<perlbug> utility.
+latter, report the problem to L<https://github.com/Perl/perl5/issues>.
 
 =item corrupted regexp pointers
 
@@ -4845,7 +4845,7 @@ utility to report; in regex; marked by S<<-- HERE> in m/%s/
 (S regexp) You used a regular expression with case-insensitive matching,
 and there is a bug in Perl in which the built-in regular expression
 folding rules are not accurate.  This may lead to incorrect results.
-Please report this as a bug using the L<perlbug> utility.
+Please report this as a bug to L<https://github.com/Perl/perl5/issues>.
 
 =item PerlIO layer ':win32' is experimental
 

@@ -609,7 +609,7 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.30.1.
+By default, Configure will use the following directories for 5.30.2.
 $version is the full perl version number, including subversion, e.g.
 5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
@@ -2388,30 +2388,28 @@ settings"> above.
 
 =head1 Reporting Problems
 
-Wherever possible please use the perlbug tool supplied with this Perl
-to report problems, as it automatically includes summary configuration
-information about your perl, which may help us track down problems far
-more quickly. But first you should read the advice in this file,
-carefully re-read the error message and check the relevant manual pages
-on your system, as these may help you find an immediate solution.
-Once you've exhausted the documentation, please report bugs to us using
-the 'perlbug' tool.
+Please report problems to the GitHub issue tracker at
+https://github.com/Perl/perl5/issues, which will ask for the
+appropriate summary configuration information about your perl, which
+may help us track down problems far more quickly.  But first you should
+read the advice in this file, carefully re-read the error message and
+check the relevant manual pages on your system, as these may help you
+find an immediate solution.  Once you've exhausted the documentation,
+please report bugs to us using the GitHub tracker.
 
-The perlbug tool is installed along with perl, so after you have
-completed C<make install> it should be possible to run it with plain
-C<perlbug>.  If the install fails, or you want to report problems with
-C<make test> without installing perl, then you can use C<make nok> to
-run perlbug to report the problem, or run it by hand from this source
-directory with C<./perl -Ilib utils/perlbug>
+The summary configuration information can be printed with C<perl -V>.
+If the install fails, or you want to report problems with C<make test>
+without installing perl, then you can run it by hand from this source
+directory with C<./perl -V>.
 
-If the build fails too early to run perlbug uninstalled, then please
-B<run> the C<./myconfig> shell script, and mail its output along with
-an accurate description of your problem to perlbug@perl.org
+If the build fails too early to run perl, then please
+B<run> the C<./myconfig> shell script, and include its output along
+with an accurate description of your problem.
 
 If Configure itself fails, and does not generate a config.sh file
-(needed to run C<./myconfig>), then please mail perlbug@perl.org the
+(needed to run C<./myconfig>), then please open an issue with the
 description of how Configure fails along with details of your system
--- for example the output from running C<uname -a>
+-- for example the output from running C<uname -a>.
 
 Please try to make your message brief but clear.  Brief, clear bug
 reports tend to get answered more quickly.  Please don't worry if your
@@ -2424,13 +2422,10 @@ config.sh or a complete Configure or make log) unless absolutely
 necessary.  Do not include a complete transcript of your build
 session.  Just include the failing commands, the relevant error
 messages, and whatever preceding commands are necessary to give the
-appropriate context.  Plain text should usually be sufficient -- fancy
-attachments or encodings may actually reduce the number of people who
-read your message.  Your message will get relayed to over 400
-subscribers around the world so please try to keep it brief but clear.
+appropriate context.
 
 If the bug you are reporting has security implications which make it
-inappropriate to send to a publicly archived mailing list, then see
+inappropriate to send to a public issue tracker, then see
 L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION>
 for details of how to report the issue.
 
@@ -2440,7 +2435,7 @@ http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.30.1 is not binary compatible with versions of Perl earlier than
+Perl 5.30.2 is not binary compatible with versions of Perl earlier than
 5.30.0.
 In other words, you will have to recompile your XS modules.
 
@@ -2516,9 +2511,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.30.1
+	sh Configure -Dprefix=/opt/perl5.30.2
 
-and adding /opt/perl5.30.1/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.30.2/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2533,11 +2528,11 @@ yet.
 
 =head2 Upgrading from 5.29.10 or earlier
 
-B<Perl 5.30.1 may not be binary compatible with Perl 5.29.10 or
+B<Perl 5.30.2 may not be binary compatible with Perl 5.29.10 or
 earlier Perl releases.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.30.1.  If you find you do need to rebuild an extension with
-5.30.1, you may safely do so without disturbing the older
+used with 5.30.2.  If you find you do need to rebuild an extension with
+5.30.2, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2570,15 +2565,15 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux with perl-5.30.1 is as follows (under $Config{prefix}):
+in Linux with perl-5.30.2 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.30.1/strict.pm
-  ./lib/perl5/5.30.1/warnings.pm
-  ./lib/perl5/5.30.1/i686-linux/File/Glob.pm
-  ./lib/perl5/5.30.1/feature.pm
-  ./lib/perl5/5.30.1/XSLoader.pm
-  ./lib/perl5/5.30.1/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.30.2/strict.pm
+  ./lib/perl5/5.30.2/warnings.pm
+  ./lib/perl5/5.30.2/i686-linux/File/Glob.pm
+  ./lib/perl5/5.30.2/feature.pm
+  ./lib/perl5/5.30.2/XSLoader.pm
+  ./lib/perl5/5.30.2/i686-linux/auto/File/Glob/Glob.so
 
 Secondly, for perl-5.10.1, the Debian perl-base package contains 591
 files, (of which 510 are for lib/unicore) totaling about 3.5MB in its

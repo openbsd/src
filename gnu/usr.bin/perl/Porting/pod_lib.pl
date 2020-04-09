@@ -547,7 +547,7 @@ Hash reference; each element provides either a list or a lookup table for
 information about various types of POD files.
 
   'aux'             => [ # utility programs like
-                            'h2xs' and 'perlbug' ]
+                            'h2xs' and 'perldoc' ]
   'generated'       => { # lookup table for generated POD files
                             like 'perlapi.pod' }
   'ignore'          => { # lookup table for files to be ignored }

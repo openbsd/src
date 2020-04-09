@@ -17,6 +17,75 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.31.9 - Sten Nadolny, book The Discovery of Slowness
+
+L<Announced on 2020-01-20 by Renee Bäcker|https://www.nntp.perl.org/group/perl.perl5.porters/2020/02/msg257144.html>
+
+  „When people talk too fast the content becomes as superfluous as the speed.“
+
+=head2 v5.31.8 - Joe Perham, "Joe Perham's Guide to Hunting and Guide to Fishing in Maine"
+
+L<Announced on 2020-01-20 by Matthew Horsfall|https://www.nntp.perl.org/group/perl.perl5.porters/2020/01/msg256894.html>
+
+  Harry used to cut wood for the Brown company over in Stoneham Red
+  Rock Basin. And of course he was the best shot in camp. One day the
+  foreman told him to go get some meat.
+
+  "Take any gun you want."
+
+  Harry says "I'll take the .45-70."
+
+  Foreman said "That gun's only got one bullet."
+
+  Harry says "I only need one bullet."
+
+  Took the .45-70, went out, an hour later he was back with two Moose,
+  a dozen trout you see, and a fluffy partridge. Went back to work.
+
+  Well at supper that night foreman says "Harry, um, something's
+  bothering me here a little bit. How did you get all that food with
+  only one bullet. I'm a little confused about the... the partridge,
+  there ain't a mark on him."
+
+  "Well", Harry says, "I'll tell ya. I took that .45-70, went back into
+  the woods a piece there I come to this brook. And I just uh, got to
+  the other side when I happen to see two moose in the swamp off
+  there. I figured I could get both of 'em. So I took out my huntin'
+  knife and stuck it into the mud, hilt foremost, sharp edge on the
+  blade towards me of course. I took dead aim on that knife, fired,
+  split that bullet and killed those two moose. Well you know the
+  recoil knocked me back into the brook. When I come up out of the
+  water, my pants were so full of fish that it popped a button off my
+  fly and killed that bird."
+
+=head2 v5.31.7 - Bernard Werber
+
+L<Announced on 2019-12-20 by Atoomic|https://www.nntp.perl.org/group/perl.perl5.porters/2019/12/msg256802.html>
+
+  Be quiet. Look at the stars and appreciate what you live.
+
+=head2 v5.31.6 - Neal Stephenson, "Quicksilver"
+
+L<Announced on 2019-11-20 by Chris 'BinGOs' Williams|https://www.nntp.perl.org/group/perl.perl5.porters/2019/11/msg256646.html>
+
+  Invocation
+
+  State your intentions, Muse. I know you're there.
+  Dead bards who pined for you have said
+  You're bright as flame, but fickle as the air.
+  My pen and I, submerged in liquid shade,
+  Much dark can spread, on days and over reams
+  But without you, no radiance can shed.
+  Why rustle in the dark, when fledged with fire?
+  Craze the night with flails of light. Reave
+  Your turbid shroud. Bestow what I require.
+
+  But you're not in the dark. I do believe
+  I swim, like squid, in clouds of my own make,
+  To you, offensive. To us both, opaque.
+  What's constituted so, only a pen
+  Can penetrate. I have one here; let's go.
+
 =head2 v5.31.5 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": The Daddy Long-legs and the Fly
 
 L<Announced on 2019-10-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2019/10/msg256478.html>
@@ -149,6 +218,67 @@ L<Announced on 2019-05-24 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5
 
   The secrets inside her mind are like flowers in a garden at
   nighttime, filling the darkness with perfume.
+
+=head2 v5.30.2-RC1 - Francesco Maria Piave, trans. Deutsche Grammophon GmbH, "La traviata", Act II, Scene 2
+
+L<Announced on 2020-02-29 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2020/02/msg257163.html>
+
+  ALFREDO
+  For me this woman lost
+  all she possessed.
+  I was blind, a wretched coward,
+  I accepted it all.
+  But it's time now for me to clear
+  myself from debt.
+  I call you all to witness here
+  that I've paid her back!
+
+  (Contemptuously, he throws his winnings at Violetta's feet.
+  She swoons in Flora's arms. Alfredo's father arrives suddenly.)
+
+  ALL
+  What you have done
+  is shameful!
+  To strike down
+  a tender heart that way!
+  You have insulted
+  a woman!
+  Get out of here!
+  We've no use for the likes of you!
+  Go!
+
+  GERMONT
+  (dignified in his anger)
+  A man who offends a woman, even in anger,
+  deserves nothing but scorn.
+  Where is my son? I no longer see him
+  in you, Alfredo.
+
+  ALFREDO
+  (What have I done? Yes, I despise myself!
+  Jealous madness, love deceived,
+  ravaged my soul, destroyed my reason.
+  How can I ever gain her pardon?
+  I would have left her, but I couldn't;
+  I came here to vent my anger,
+  But now I've done that, wretch that I am,
+  I feel nothing but deep remorse!)
+
+=head2 v5.30.1 - Francesco Maria Piave, trans. Deutsche Grammophon GmbH, "La traviata", Act I: Brindisi
+
+L<Announced on 2019-11-10 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2019/11/msg256610.html>
+
+  VIOLETTA:
+  With you I would share
+  my days of happiness;
+  everything is folly in this world
+  that does not give us pleasure.
+  Let us enjoy life,
+  for the pleasures of love are swift and fleeting
+  as a flower that lives and dies
+  and can be enjoyed no more.
+  Let's take our pleasure while its ardent,
+  brilliant summons lures us on!
 
 =head2 v5.30.1-RC1 - Francesco Maria Piave, trans. Deutsche Grammophon GmbH, "La traviata", Act I: Brindisi
 

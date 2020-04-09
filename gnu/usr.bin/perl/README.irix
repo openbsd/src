@@ -134,5 +134,6 @@ at least the shuffle.t and sort.t failures.
 
 Jarkko Hietaniemi <jhi@iki.fi>
 
-Please report any errors, updates, or suggestions to F<perlbug@perl.org>.
+Please report any errors, updates, or suggestions to
+L<https://github.com/Perl/perl5/issues>.
 

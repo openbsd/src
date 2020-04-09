@@ -131,6 +131,8 @@ struct RExC_state_t {
     char	*parse;			/* Input-scan pointer. */
     char        *copy_start;            /* start of copy of input within
                                            constructed parse string */
+    char        *save_copy_start;       /* Provides one level of saving
+                                           and restoring 'copy_start' */
     char        *copy_start_in_input;   /* Position in input string
                                            corresponding to copy_start */
     SSize_t	whilem_seen;		/* number of WHILEM in this expr */
@@ -229,6 +231,7 @@ struct RExC_state_t {
 #define RExC_precomp	(pRExC_state->precomp)
 #define RExC_copy_start_in_input (pRExC_state->copy_start_in_input)
 #define RExC_copy_start_in_constructed  (pRExC_state->copy_start)
+#define RExC_save_copy_start_in_constructed  (pRExC_state->save_copy_start)
 #define RExC_precomp_end (pRExC_state->precomp_end)
 #define RExC_rx_sv	(pRExC_state->rx_sv)
 #define RExC_rx		(pRExC_state->rx)
@@ -817,8 +820,13 @@ static const scan_data_t zero_scan_data = {
 } STMT_END
 
 /* Setting this to NULL is a signal to not output warnings */
-#define TURN_OFF_WARNINGS_IN_SUBSTITUTE_PARSE RExC_copy_start_in_constructed = NULL
-#define RESTORE_WARNINGS RExC_copy_start_in_constructed = RExC_precomp
+#define TURN_OFF_WARNINGS_IN_SUBSTITUTE_PARSE                               \
+    STMT_START {                                                            \
+      RExC_save_copy_start_in_constructed  = RExC_copy_start_in_constructed;\
+      RExC_copy_start_in_constructed = NULL;                                \
+    } STMT_END
+#define RESTORE_WARNINGS                                                    \
+    RExC_copy_start_in_constructed = RExC_save_copy_start_in_constructed
 
 /* Since a warning can be generated multiple times as the input is reparsed, we
  * output it the first time we come to that point in the parse, but suppress it
@@ -2761,7 +2769,12 @@ S_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
         if (OP(noper) == NOTHING) {
             /* skip past a NOTHING at the start of an alternation
              * eg, /(?:)a|(?:b)/ should be the same as /a|b/
+             *
+             * If the next node is not something we are supposed to process
+             * we will just ignore it due to the condition guarding the
+             * next block.
              */
+
             regnode *noper_next= regnext(noper);
             if (noper_next < tail)
                 noper= noper_next;
@@ -2983,6 +2996,9 @@ S_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                 regnode *noper_next= regnext(noper);
                 if (noper_next < tail)
                     noper= noper_next;
+                /* we will undo this assignment if noper does not
+                 * point at a trieable type in the else clause of
+                 * the following statement. */
             }
 
             if (    noper < tail
@@ -3044,7 +3060,13 @@ S_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                         Perl_croak( aTHX_ "panic! In trie construction, no char mapping for %" IVdf, uvc );
 		    }
 		}
-	    }
+            } else {
+                /* If we end up here it is because we skipped past a NOTHING, but did not end up
+                 * on a trieable type. So we need to reset noper back to point at the first regop
+                 * in the branch before we call TRIE_HANDLE_WORD()
+                */
+                noper= NEXTOPER(cur);
+            }
             TRIE_HANDLE_WORD(state);
 
         } /* end second pass */
@@ -3208,6 +3230,9 @@ S_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                 regnode *noper_next= regnext(noper);
                 if (noper_next < tail)
                     noper= noper_next;
+                /* we will undo this assignment if noper does not
+                 * point at a trieable type in the else clause of
+                 * the following statement. */
             }
 
             if (    noper < tail
@@ -3248,6 +3273,12 @@ S_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                     /* charid is now 0 if we dont know the char read, or
                      * nonzero if we do */
                 }
+            } else {
+                /* If we end up here it is because we skipped past a NOTHING, but did not end up
+                 * on a trieable type. So we need to reset noper back to point at the first regop
+                 * in the branch before we call TRIE_HANDLE_WORD().
+                */
+                noper= NEXTOPER(cur);
             }
             accept_state = TRIE_NODENUM( state );
             TRIE_HANDLE_WORD(accept_state);
@@ -11299,10 +11330,15 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
                         return 0;
                     }
 
-                    REGTAIL(pRExC_state, ret, atomic);
+                    if (! REGTAIL(pRExC_state, ret, atomic)) {
+                        REQUIRE_BRANCHJ(flagp, 0);
+                    }
 
-                    REGTAIL(pRExC_state, atomic,
-                           reg_node(pRExC_state, SRCLOSE));
+                    if (! REGTAIL(pRExC_state, atomic, reg_node(pRExC_state,
+                                                                SRCLOSE)))
+                    {
+                        REQUIRE_BRANCHJ(flagp, 0);
+                    }
 
                     RExC_in_script_run = 0;
                     return ret;
@@ -11761,7 +11797,9 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
                                        RExC_flags & RXf_PMf_COMPILETIME
                                       );
                     FLAGS(REGNODE_p(ret)) = 2;
-                    REGTAIL(pRExC_state, ret, eval);
+                    if (! REGTAIL(pRExC_state, ret, eval)) {
+                        REQUIRE_BRANCHJ(flagp, 0);
+                    }
                     /* deal with the length of this later - MJD */
 		    return ret;
 		}
@@ -11814,7 +11852,9 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
 
                     tail = reg(pRExC_state, 1, &flag, depth+1);
                     RETURN_FAIL_ON_RESTART(flag, flagp);
-                    REGTAIL(pRExC_state, ret, tail);
+                    if (! REGTAIL(pRExC_state, ret, tail)) {
+                        REQUIRE_BRANCHJ(flagp, 0);
+                    }
                     goto insert_if;
                 }
 		else if (   RExC_parse[0] == '<'     /* (?(<NAME>)...) */
@@ -11906,15 +11946,22 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
 		    }
 		    nextchar(pRExC_state);
 		  insert_if:
-                    REGTAIL(pRExC_state, ret, reganode(pRExC_state, IFTHEN, 0));
+                    if (! REGTAIL(pRExC_state, ret, reganode(pRExC_state,
+                                                             IFTHEN, 0)))
+                    {
+                        REQUIRE_BRANCHJ(flagp, 0);
+                    }
                     br = regbranch(pRExC_state, &flags, 1, depth+1);
 		    if (br == 0) {
                         RETURN_FAIL_ON_RESTART(flags,flagp);
                         FAIL2("panic: regbranch returned failure, flags=%#" UVxf,
                               (UV) flags);
                     } else
-                        REGTAIL(pRExC_state, br, reganode(pRExC_state,
-                                                          LONGJMP, 0));
+                    if (! REGTAIL(pRExC_state, br, reganode(pRExC_state,
+                                                             LONGJMP, 0)))
+                    {
+                        REQUIRE_BRANCHJ(flagp, 0);
+                    }
 		    c = UCHARAT(RExC_parse);
                     nextchar(pRExC_state);
 		    if (flags&HASWIDTH)
@@ -11931,7 +11978,9 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
                             FAIL2("panic: regbranch returned failure, flags=%#" UVxf,
                                   (UV) flags);
                         }
-                        REGTAIL(pRExC_state, ret, lastbr);
+                        if (! REGTAIL(pRExC_state, ret, lastbr)) {
+                            REQUIRE_BRANCHJ(flagp, 0);
+                        }
 		 	if (flags&HASWIDTH)
 			    *flagp |= HASWIDTH;
                         c = UCHARAT(RExC_parse);
@@ -11946,16 +11995,26 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
                             vFAIL("Switch (?(condition)... contains too many branches");
                     }
 		    ender = reg_node(pRExC_state, TAIL);
-                    REGTAIL(pRExC_state, br, ender);
+                    if (! REGTAIL(pRExC_state, br, ender)) {
+                        REQUIRE_BRANCHJ(flagp, 0);
+                    }
 		    if (lastbr) {
-                        REGTAIL(pRExC_state, lastbr, ender);
-                        REGTAIL(pRExC_state, REGNODE_OFFSET(
-                                                NEXTOPER(
-                                                NEXTOPER(REGNODE_p(lastbr)))),
-                                             ender);
+                        if (! REGTAIL(pRExC_state, lastbr, ender)) {
+                            REQUIRE_BRANCHJ(flagp, 0);
+                        }
+                        if (! REGTAIL(pRExC_state,
+                                      REGNODE_OFFSET(
+                                                 NEXTOPER(
+                                                 NEXTOPER(REGNODE_p(lastbr)))),
+                                      ender))
+                        {
+                            REQUIRE_BRANCHJ(flagp, 0);
+                        }
 		    }
 		    else
-                        REGTAIL(pRExC_state, ret, ender);
+                        if (! REGTAIL(pRExC_state, ret, ender)) {
+                            REQUIRE_BRANCHJ(flagp, 0);
+                        }
 #if 0  /* Removing this doesn't cause failures in the test suite -- khw */
                     RExC_size++; /* XXX WHY do we need this?!!
                                     For large programs it seems to be required
@@ -12105,7 +12164,9 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
 	*flagp |= flags&SIMPLE;
     }
     if (is_open) {				/* Starts with OPEN. */
-        REGTAIL(pRExC_state, ret, br);          /* OPEN -> first. */
+        if (! REGTAIL(pRExC_state, ret, br)) {  /* OPEN -> first. */
+            REQUIRE_BRANCHJ(flagp, 0);
+        }
     }
     else if (paren != '?')		/* Not Conditional */
 	ret = br;
@@ -12113,12 +12174,15 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
     lastbr = br;
     while (*RExC_parse == '|') {
 	if (RExC_use_BRANCHJ) {
+            bool shut_gcc_up;
+
 	    ender = reganode(pRExC_state, LONGJMP, 0);
 
             /* Append to the previous. */
-            REGTAIL(pRExC_state,
-                    REGNODE_OFFSET(NEXTOPER(NEXTOPER(REGNODE_p(lastbr)))),
-                    ender);
+            shut_gcc_up = REGTAIL(pRExC_state,
+                         REGNODE_OFFSET(NEXTOPER(NEXTOPER(REGNODE_p(lastbr)))),
+                         ender);
+            PERL_UNUSED_VAR(shut_gcc_up);
 	}
 	nextchar(pRExC_state);
 	if (freeze_paren) {
@@ -12193,7 +12257,7 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
             }
 	    break;
 	}
-        DEBUG_PARSE_r(
+        DEBUG_PARSE_r({
             DEBUG_PARSE_MSG("lsbr");
             regprop(RExC_rx, RExC_mysv1, REGNODE_p(lastbr), NULL, pRExC_state);
             regprop(RExC_rx, RExC_mysv2, REGNODE_p(ender), NULL, pRExC_state);
@@ -12204,7 +12268,7 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
                           (IV)ender,
                           (IV)(ender - lastbr)
             );
-        );
+        });
         if (! REGTAIL(pRExC_state, lastbr, ender)) {
             REQUIRE_BRANCHJ(flagp, 0);
         }
@@ -12229,9 +12293,10 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
                         is_nothing= 0;
 		}
 		else if (op == BRANCHJ) {
-                    REGTAIL_STUDY(pRExC_state,
-                                  REGNODE_OFFSET(NEXTOPER(NEXTOPER(br))),
-                                  ender);
+                    bool shut_gcc_up = REGTAIL_STUDY(pRExC_state,
+                                        REGNODE_OFFSET(NEXTOPER(NEXTOPER(br))),
+                                        ender);
+                    PERL_UNUSED_VAR(shut_gcc_up);
                     /* for now we always disable this optimisation * /
                     if ( OP(NEXTOPER(NEXTOPER(br))) != NOTHING
                          || regnext(NEXTOPER(NEXTOPER(br))) != REGNODE_p(ender))
@@ -12244,7 +12309,7 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
                 br= PL_regkind[OP(ret_as_regnode)] != BRANCH
                                ? regnext(ret_as_regnode)
                                : ret_as_regnode;
-                DEBUG_PARSE_r(
+                DEBUG_PARSE_r({
                     DEBUG_PARSE_MSG("NADA");
                     regprop(RExC_rx, RExC_mysv1, ret_as_regnode,
                                      NULL, pRExC_state);
@@ -12257,7 +12322,7 @@ S_reg(pTHX_ RExC_state_t *pRExC_state, I32 paren, I32 *flagp, U32 depth)
                                   (IV)ender,
                                   (IV)(ender - ret)
                     );
-                );
+                });
                 OP(br)= NOTHING;
                 if (OP(REGNODE_p(ender)) == TAIL) {
                     NEXT_OFF(br)= 0;
@@ -12543,7 +12608,9 @@ S_regpiece(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth)
 		const regnode_offset w = reg_node(pRExC_state, WHILEM);
 
 		FLAGS(REGNODE_p(w)) = 0;
-                REGTAIL(pRExC_state, ret, w);
+                if (!  REGTAIL(pRExC_state, ret, w)) {
+                    REQUIRE_BRANCHJ(flagp, 0);
+                }
 		if (RExC_use_BRANCHJ) {
 		    reginsert(pRExC_state, LONGJMP, ret, depth+1);
 		    reginsert(pRExC_state, NOTHING, ret, depth+1);
@@ -12558,7 +12625,11 @@ S_regpiece(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth)
 		if (RExC_use_BRANCHJ)
                     NEXT_OFF(REGNODE_p(ret)) = 3;   /* Go over NOTHING to
                                                        LONGJMP. */
-                REGTAIL(pRExC_state, ret, reg_node(pRExC_state, NOTHING));
+                if (! REGTAIL(pRExC_state, ret, reg_node(pRExC_state,
+                                                          NOTHING)))
+                {
+                    REQUIRE_BRANCHJ(flagp, 0);
+                }
                 RExC_whilem_seen++;
                 MARK_NAUGHTY_EXP(1, 4);     /* compound interest */
 	    }
@@ -12630,16 +12701,22 @@ S_regpiece(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth)
     if (*RExC_parse == '?') {
 	nextchar(pRExC_state);
 	reginsert(pRExC_state, MINMOD, ret, depth+1);
-        REGTAIL(pRExC_state, ret, ret + NODE_STEP_REGNODE);
+        if (! REGTAIL(pRExC_state, ret, ret + NODE_STEP_REGNODE)) {
+            REQUIRE_BRANCHJ(flagp, 0);
+        }
     }
     else if (*RExC_parse == '+') {
         regnode_offset ender;
         nextchar(pRExC_state);
         ender = reg_node(pRExC_state, SUCCEED);
-        REGTAIL(pRExC_state, ret, ender);
+        if (! REGTAIL(pRExC_state, ret, ender)) {
+            REQUIRE_BRANCHJ(flagp, 0);
+        }
         reginsert(pRExC_state, SUSPEND, ret, depth+1);
         ender = reg_node(pRExC_state, TAIL);
-        REGTAIL(pRExC_state, ret, ender);
+        if (! REGTAIL(pRExC_state, ret, ender)) {
+            REQUIRE_BRANCHJ(flagp, 0);
+        }
     }
 
     if (ISMULT2(RExC_parse)) {
@@ -14683,6 +14760,21 @@ S_regatom(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth)
                          * are above 255 */
                         if (maybe_exactfu) {
                             node_type = EXACTFLU8;
+                        }
+                        else if (UNLIKELY(
+                             _invlist_contains_cp(PL_HasMultiCharFold, ender)))
+                        {
+                            /* A character that folds to more than one will
+                             * match multiple characters, so can't be SIMPLE.
+                             * We don't have to worry about this with EXACTFLU8
+                             * nodes just above, as they have already been
+                             * folded (since the fold doesn't vary at run
+                             * time).  Here, if the final character in the node
+                             * folds to multiple, it can't be simple.  (This
+                             * only has an effect if the node has only a single
+                             * character, hence the final one, as elsewhere we
+                             * turn off simple for nodes whose length > 1 */
+                            maybe_SIMPLE = 0;
                         }
                     }
                     else if (node_type == EXACTF) {  /* Means is /di */
@@ -18090,6 +18182,7 @@ S_regclass(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth,
 
                 /* Likewise for 'posixes' */
                 _invlist_union(posixes, cp_list, &cp_list);
+                SvREFCNT_dec(posixes);
 
                 /* Likewise for anything else in the range that matched only
                  * under UTF-8 */
@@ -19814,8 +19907,8 @@ S_regtail(pTHX_ RExC_state_t * pRExC_state,
     }
     else {
         if (val - scan > U16_MAX) {
-            /* Since not all callers check the return value, populate this with
-             * something that won't loop and will likely lead to a crash if
+            /* Populate this with something that won't loop and will likely
+             * lead to a crash if the caller ignores the failure return, and
              * execution continues */
             NEXT_OFF(REGNODE_p(scan)) = U16_MAX;
             return FALSE;
@@ -19926,6 +20019,9 @@ S_regtail_study(pTHX_ RExC_state_t *pRExC_state, regnode_offset p,
     }
     else {
         if (val - scan > U16_MAX) {
+            /* Populate this with something that won't loop and will likely
+             * lead to a crash if the caller ignores the failure return, and
+             * execution continues */
             NEXT_OFF(REGNODE_p(scan)) = U16_MAX;
             return FALSE;
         }

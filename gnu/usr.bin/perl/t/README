@@ -19,7 +19,8 @@ will fail, you may want to use Test::Harness thusly:
         ./perl harness
 This method pinpoints failed tests automatically.
 
-If you come up with new tests, please send them to perlbug@perl.org.
+If you come up with new tests, please submit them to
+https://github.com/Perl/perl5/issues.
 
 Tests in the t/base/ directory ought to be runnable with plain miniperl.
 That is, they should not require Config.pm nor should they require any

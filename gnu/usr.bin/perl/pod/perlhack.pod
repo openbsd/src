@@ -117,12 +117,9 @@ these commands:
 
 =head1 BUG REPORTING
 
-If you want to report a bug in Perl, you must use the F<perlbug>
-command line tool.  This tool will ensure that your bug report includes
-all the relevant system and configuration information.
-
-To browse existing Perl bugs and patches, you can use the web interface
-at L<http://rt.perl.org/>.
+If you want to report a bug in Perl, or browse existing Perl bugs and
+patches, use the GitHub issue tracker at
+L<https://github.com/perl/perl5/issues>.
 
 Please check the archive of the perl5-porters list (see below) and/or
 the bug tracking system before submitting a bug report.  Often, you'll
@@ -1172,11 +1169,11 @@ configurations.
 
 Both efforts welcome volunteers.  In order to get involved in smoke
 testing of the perl itself visit
-L<http://search.cpan.org/dist/Test-Smoke/>.  In order to start smoke
+L<https://metacpan.org/release/Test-Smoke>.  In order to start smoke
 testing CPAN modules visit
-L<http://search.cpan.org/dist/CPANPLUS-YACSmoke/> or
-L<http://search.cpan.org/dist/minismokebox/> or
-L<http://search.cpan.org/dist/CPAN-Reporter/>.
+L<https://metacpan.org/release/CPANPLUS-YACSmoke> or
+L<https://metacpan.org/release/minismokebox> or
+L<https://metacpan.org/release/CPAN-Reporter>.
 
 =head1 WHAT NEXT?
 

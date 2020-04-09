@@ -1214,8 +1214,8 @@ illustrated above.
 
 Due to the way that Perl parses things, your parentheses and brackets
 may need to be balanced, even including comments.  If you run into any
-examples, please send them to C<perlbug@perl.org>, so that we can have a
-concrete example for this man page.
+examples, please submit them to L<https://github.com/Perl/perl5/issues>,
+so that we can have a concrete example for this man page.
 
 We may change it so that things that remain legal uses in normal bracketed
 character classes might become illegal within this experimental

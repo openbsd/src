@@ -234,7 +234,7 @@ sub _system_groups {
 #
 # If these tests fail, report the particular incantation you use
 # on this platform to find *all* the groups that an arbitrary
-# user may belong to, using the 'perlbug' program.
+# user may belong to, using the issue tracker.
 EOM
         }
         return ( $cmd, $str );

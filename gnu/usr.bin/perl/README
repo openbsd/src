@@ -1,6 +1,6 @@
 Perl is Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012,
-2013, 2014, 2015, 2016, 2017, 2018, 2019 by Larry Wall and others.
+2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 by Larry Wall and others.
 All rights reserved.
 
 
@@ -61,8 +61,7 @@ Perl is a large and complex system that's used for everything from
 knitting to rocket science.  If you run into trouble, it's quite
 likely that someone else has already solved the problem you're
 facing. Once you've exhausted the documentation, please report bugs to us
-using the 'perlbug' tool. For more information about perlbug, either type
-'perldoc perlbug' or just 'perlbug' on a line by itself.
+at the GitHub issue tracker at https://github.com/Perl/perl5/issues
 
 While it was current when we made it available, Perl is constantly evolving
 and there may be a more recent version that fixes bugs you've run into or

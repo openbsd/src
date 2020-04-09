@@ -671,13 +671,19 @@ the strings?).
  Sawyer X  5.30.0       2019-May-22
  Steve     5.30.1-RC1   2019-Oct-27
  Steve     5.30.1       2019-Nov-10
+ Steve     5.30.2-RC1   2020-Feb-29
+ Steve     5.30.2       2020-Mar-14
 
- Sawyer X  5.31.0       2018-May-24     The 5.31 development track
+ Sawyer X  5.31.0       2019-May-24     The 5.31 development track
  Ether     5.31.1       2019-Jun-20
  Steve     5.31.2       2019-Jul-20
  Tom H     5.31.3       2019-Aug-20
  Max M     5.31.4       2019-Sep-20
  Steve     5.31.5       2019-Oct-20
+ BinGOs    5.31.6       2019-Nov-20
+ Nicolas R 5.31.7       2019-Dec-20
+ Matthew H 5.31.8       2020-Jan-20
+ Renee     5.31.9       2020-Feb-20
 
 =head2 SELECTED RELEASE SIZES
 

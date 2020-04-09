@@ -140,7 +140,7 @@ If you used WinZip, this was already done for you.
 You'll need the C<nmake> utility, available at
 L<http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/nmake15.exe>
 or dmake, available on CPAN.
-L<http://search.cpan.org/dist/dmake/>
+L<https://metacpan.org/release/dmake>
 
 Does the module require compilation (i.e. does it have files that end
 in .xs, .c, .h, .y, .cc, .cxx, or .C)?  If it does, life is now

@@ -109,7 +109,7 @@ polling loop.
 
 A port of dmake for Windows is available from:
 
-L<http://search.cpan.org/dist/dmake/>
+L<https://metacpan.org/release/dmake>
 
 Fetch and install dmake somewhere on your path.
 
@@ -691,8 +691,8 @@ or any invocation of make.
 If a module does not build for some reason, look carefully for
 why it failed, and report problems to the module author.  If
 it looks like the extension building support is at fault, report
-that with full details of how the build failed using the perlbug
-utility.
+that with full details of how the build failed using the GitHub
+issue tracker at L<https://github.com/Perl/perl5/issues>.
 
 =item Command-line Wildcard Expansion
 
@@ -880,9 +880,8 @@ executable built during the installation process.  Usage is exactly
 the same as normal C<perl> on Windows, except that options like C<-h>
 don't work (since they need a command-line window to print to).
 
-If you find bugs in perl, you can run C<perlbug> to create a
-bug report (you may have to send it manually if C<perlbug> cannot
-find a mailer on your system).
+If you find bugs in perl, you can report them to
+L<https://github.com/Perl/perl5/issues>.
 
 =head1 BUGS AND CAVEATS
 
@@ -930,8 +929,8 @@ variable in the handler.  Using signals under this port should
 currently be considered unsupported.
 
 Please send detailed descriptions of any problems and solutions that
-you may find to E<lt>F<perlbug@perl.org>E<gt>, along with the output
-produced by C<perl -V>.
+you may find to E<lt>L<https://github.com/Perl/perl5/issues>E<gt>,
+along with the output produced by C<perl -V>.
 
 =head1 ACKNOWLEDGEMENTS
 

@@ -106,10 +106,10 @@ and in particular, extending Perl with C.
 
 =item L<perlbug|perlbug>
 
-F<perlbug> is the recommended way to report bugs in the perl interpreter
-itself or any of the standard library modules back to the developers;
-please read through the documentation for F<perlbug> thoroughly before
-using it to submit a bug report.
+F<perlbug> used to be the recommended way to report bugs in the perl
+interpreter itself or any of the standard library modules back to the
+developers; bug reports and patches should now be submitted to
+L<https://github.com/Perl/perl5/issues>.
 
 =item L<perlthanks|perlbug>
 

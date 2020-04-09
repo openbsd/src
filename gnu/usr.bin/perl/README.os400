@@ -7,7 +7,7 @@ designed to be readable as is.
 perlos400 - Perl version 5 on OS/400
 
 B<This document needs to be updated, but we don't know what it should say.
-Please email comments to L<perlbug@perl.org|mailto:perlbug@perl.org>.>
+Please submit comments to L<https://github.com/Perl/perl5/issues>.>
 
 =head1 DESCRIPTION
 

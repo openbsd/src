@@ -1937,7 +1937,7 @@ WriteMakefile(
     AUTHOR            => '$author <$email>',
     #LICENSE           => 'perl',
     #Value must be from legacy list of licenses here
-    #http://search.cpan.org/perldoc?Module%3A%3ABuild%3A%3AAPI
+    #https://metacpan.org/pod/Module::Build::API
 END
 if (!$opt_X) { # print C stuff, unless XS is disabled
   $opt_F = '' unless defined $opt_F;
@@ -1999,7 +1999,7 @@ $generate_code
 __END__
 gave unexpected error $@
 Please report the circumstances of this bug in h2xs version $H2XS_VERSION
-using the perlbug script.
+using the issue tracker at https://github.com/Perl/perl5/issues.
 EOM
   } else {
     my $fail;
@@ -2020,7 +2020,7 @@ the files $ext$modpname/$constscfname and $ext$modpname/$constsxsfname
 correctly.
 
 Please report the circumstances of this bug in h2xs version $H2XS_VERSION
-using the perlbug script.
+using the issue tracker at https://github.com/Perl/perl5/issues.
 EOM
     } else {
       unlink $constscfname, $constsxsfname;

@@ -56,6 +56,10 @@ foreach my $filename (@filenames) {
         next
             if $uri =~ m{^https?://rt.perl.org/(?:rt3/)?Ticket/Display.html?id=\d+$};
 
+        # no need to hit github
+        next
+            if $uri =~ m{^https?://(?:www\.)?github\.com/[pP]erl/perl5/issues/\d+$};
+
         # no need to hit rt.cpan.org
         next
             if $uri =~ m{^https?://rt.cpan.org/Public/Bug/Display.html?id=\d+$};

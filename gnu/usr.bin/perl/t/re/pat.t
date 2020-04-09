@@ -25,7 +25,7 @@ BEGIN {
 skip_all('no re module') unless defined &DynaLoader::boot_DynaLoader;
 skip_all_without_unicode_tables();
 
-plan tests => 864;  # Update this when adding/deleting tests.
+plan tests => 869;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -2006,6 +2006,13 @@ CODE
     {   # [perl #133871], ASAN/valgrind out-of-bounds access
         fresh_perl_like('qr/(?|(())|())|//', qr/syntax error/, {}, "[perl #133871]");
     }
+    {   # [perl #133871], ASAN/valgrind out-of-bounds access
+        fresh_perl_like('qr/\p{nv:NAnq}/', qr/Can't find Unicode property definition/, {}, "GH #17367");
+    }
+    {   # GH #17370, ASAN/valgrind out-of-bounds access
+        fresh_perl_like('qr/\p{nv:qnan}/', qr/Can't find Unicode property definition/, {}, "GH #17370");
+    }
+
     {   # [perl #133921], segfault
         fresh_perl_is('qr0||ß+p00000F00000ù\Q00000ÿ00000x00000x0c0e0\Qx0\Qx0\x{0c!}\;\;î0\x ÿÿÿþ   ù\Q`\Qx` {0c!}e;   ù\ò`\Qm`\x{0c!}\;\;îçÿ  ç   ! F  /;îçÿù\Q   xÿÿÿÿ   ù   `x{0c!}e;   ù\Q`\Qx`\x{c!}\;\;îç!}\;îçÿù\Q \x ÿÿÿÿ  >=\Qx`\Qx`  ù\ò`\Qx`\x{0c!};\;îçÿ  F n0t0 c  d;t    ù  ç  !00000000000000000000000m/0000000000000000000000000000000m/\x{){} )|i', "", {}, "[perl #133921]");
         fresh_perl_is('|ß+W0ü0r0\Qx0\Qx0x0c0G00000000000000000O000000000x0x0x0c!}\;îçÿù\Q0 \x ÿÿÿÿ   ù\Q`\Qx` {0d ;   ù\ò`\Qm`\x{0c!}\;\;îçÿ  ç   ! F  /;îçÿù\Q   xÿÿÿÿ   ù   `x{0c!};   ù\Q`\Qq`\x{c!}\;\;îç!}\;îçÿù\Q \x ÿÿÿÿ  >=\Qx`\Qx`  ù\ò`\Qx`\x{0c!};\;îçÿ  0000000F m0t0 c  d;t    ù  ç  !00000000000000000000000m/0000000000000000000000000000000m/\x{){} )|i', "", {}, "[perl #133921]");
@@ -2114,6 +2121,25 @@ x{0c!}\;\;îçÿ  /0f/! F  /;îçÿù\Q   xÿÿÿÿ   ù   `x{0c!};   ù\Q
                         $ff x 48;
         like(runperl(prog => "$s", stderr => 1), qr/Unmatched \(/);
    }
+
+SKIP:
+    {   # [perl #134334], Assertion failure
+        my $utf8_locale = find_utf8_ctype_locale();
+        skip "no UTF-8 locale available" unless $utf8_locale;
+        fresh_perl_like("use POSIX; POSIX::setlocale(&LC_CTYPE, '$utf8_locale'); 'ssss' =~ /\xDF+?sX/il;",
+                        qr/^$/,
+                        {},
+                        "Assertion failure matching /il on single char folding to multi");
+    }
+
+    # gh17490: test recursion check
+    {
+        my $eval = '(?{1})';
+        my $re = sprintf '(?&FOO)(?(DEFINE)(?<FOO>%sfoo))', $eval x 20;
+        my $result = eval qq{"foo" =~ /$re/};
+        is($@ // '', '', "many evals did not die");
+        ok($result, "regexp correctly matched");
+    }
 
 } # End of sub run_tests
 

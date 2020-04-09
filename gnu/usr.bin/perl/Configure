@@ -1534,8 +1534,8 @@ case "$sh" in
 $me:  Fatal Error:  I can't find a Bourne Shell anywhere.
 
 Usually it's in /bin/sh.  How did you even get this far?
-Please contact me (Perl Maintainers) at perlbug@perl.org and
-we'll try to straighten this all out.
+Please contact me (Perl Maintainers) at https://github.com/Perl/perl5/issues
+and we'll try to straighten this all out.
 EOM
 	exit 1
 	;;
@@ -2118,7 +2118,7 @@ THIS PACKAGE SEEMS TO BE INCOMPLETE.
 You have the option of continuing the configuration process, despite the
 distinct possibility that your kit is damaged, by typing 'y'es.  If you
 do, don't blame me if something goes wrong.  I advise you to type 'n'o
-and contact the author (perlbug@perl.org).
+and contact the author (https://github.com/Perl/perl5/issues).
 
 EOM
 		echo $n "Continue? [n] $c" >&4
@@ -2398,7 +2398,7 @@ Much effort has been expended to ensure that this shell script will run on any
 Unix system.  If despite that it blows up on yours, your best bet is to edit
 Configure and run it again.  If you can't run Configure for some reason,
 you'll have to generate a config.sh file by hand.  Whatever problems you
-have, let me (perlbug@perl.org) know how I blew it.
+have, let me (https://github.com/Perl/perl5/issues) know how I blew it.
 
 This installation script affects things in two ways:
 
@@ -3367,7 +3367,7 @@ EOM
 	(cd $src/hints; ls -C *.sh) | $sed 's/\.sh/   /g' >&4
 	dflt=''
 	: Half the following guesses are probably wrong... If you have better
-	: tests or hints, please send them to perlbug@perl.org
+	: tests or hints, please send them to https://github.com/Perl/perl5/issues
 	: The metaconfig authors would also appreciate a copy...
 	$test -f /irix && osname=irix
 	$test -f /xenix && osname=sco_xenix
@@ -4696,7 +4696,7 @@ else
 fi
 $rm -f try try.*
 case "$gccversion" in
-1*) cpp=`./loc gcc-cpp $cpp $pth` ;;
+1.*) cpp=`./loc gcc-cpp $cpp $pth` ;;
 esac
 case "$gccversion" in
 '') gccosandvers='' ;;
@@ -4736,7 +4736,7 @@ esac
 # gcc 3.* complain about adding -Idirectories that they already know about,
 # so we will take those off from locincpth.
 case "$gccversion" in
-3*)
+3.*)
     echo "main(){}">try.c
     for incdir in $locincpth; do
        warn=`$cc $ccflags -I$incdir -c try.c 2>&1 | \
@@ -5462,13 +5462,13 @@ fi
 case "$hint" in
 default|recommended)
 	case "$gccversion" in
-	1*) dflt="$dflt -fpcc-struct-return" ;;
+	1.*) dflt="$dflt -fpcc-struct-return" ;;
 	esac
 	case "$optimize:$DEBUGGING" in
 	*-g*:old) dflt="$dflt -DDEBUGGING";;
 	esac
 	case "$gccversion" in
-	2*) if $test -d /etc/conf/kconfig.d &&
+	2.*) if $test -d /etc/conf/kconfig.d &&
 			$contains _POSIX_VERSION $usrinc/sys/unistd.h >/dev/null 2>&1
 		then
 			# Interactive Systems (ISC) POSIX mode.
@@ -5477,7 +5477,7 @@ default|recommended)
 		;;
 	esac
 	case "$gccversion" in
-	1*) ;;
+	1.*) ;;
 	2.[0-8]*) ;;
 	?*)	set strict-aliasing -fno-strict-aliasing
 		eval $checkccflag
@@ -5614,7 +5614,7 @@ case "$cppflags" in
     ;;
 esac
 case "$gccversion" in
-1*) cppflags="$cppflags -D__GNUC__"
+1.*) cppflags="$cppflags -D__GNUC__"
 esac
 case "$mips_type" in
 '');;
@@ -5800,7 +5800,7 @@ compile='
 mc_file=$1;
 shift;
 case "$usedevel" in $define|true|[yY]*) if $test ! -f "${mc_file}.c"; then
-echo "Internal Configure script bug - compiler test file ${mc_file}.c is missing. Please report this to perlbug@perl.org" >&4;
+echo "Internal Configure script bug - compiler test file ${mc_file}.c is missing. Please report this to https://github.com/Perl/perl5/issues" >&4;
 exit 1;
 fi;
 esac;
@@ -8792,7 +8792,7 @@ case "$shrpdir" in
 *)	$cat >&4 <<EOM
 WARNING:  Use of the shrpdir variable for the installation location of
 the shared $libperl is not supported.  It was never documented and
-will not work in this version.  Let me (perlbug@perl.org)
+will not work in this version.  Let me (https://github.com/Perl/perl5/issues)
 know of any problems this may cause.
 
 EOM
@@ -23199,7 +23199,7 @@ fi
 
 : add -D_FORTIFY_SOURCE if feasible and not already there
 case "$gccversion" in
-[456789].*)	case "$optimize$ccflags" in
+[456789].*|[1-9][0-9]*)	case "$optimize$ccflags" in
 	*-O*)	case "$ccflags$cppsymbols" in
 		*_FORTIFY_SOURCE=*) # Don't add it again.
 			echo "You seem to have -D_FORTIFY_SOURCE already, not adding it." >&4

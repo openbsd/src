@@ -2248,7 +2248,7 @@ Perl_my_setenv(pTHX_ const char *nam, const char *val)
     envstr = S_env_alloc(NULL, nlen, vlen, 2, 1);
     my_setenv_format(envstr, nam, nlen, val, vlen);
     (void)PerlEnv_putenv(envstr);
-    Safefree(envstr);
+    safesysfree(envstr);
 }
 
 #  endif /* WIN32 || NETWARE */

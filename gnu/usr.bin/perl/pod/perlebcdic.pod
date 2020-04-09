@@ -19,7 +19,7 @@ not all
 the modules found on CPAN but shipped with core Perl work on z/OS.
 
 If you want to use Perl on a non-z/OS EBCDIC machine, please let us know
-by sending mail to perlbug@perl.org
+at L<https://github.com/Perl/perl5/issues>.
 
 Writing Perl on an EBCDIC platform is really no different than writing
 on an L</ASCII> one, but with different underlying numbers, as we'll see

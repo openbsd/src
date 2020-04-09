@@ -181,6 +181,7 @@ aux h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
 
     perlhist		Perl history records
     perldelta		Perl changes since previous version
+    perl5301delta	Perl changes in version 5.30.1
     perl5300delta	Perl changes in version 5.30.0
     perl5282delta	Perl changes in version 5.28.2
     perl5281delta	Perl changes in version 5.28.1
@@ -420,11 +421,9 @@ displayed by diagnostics are internally stored as short integers,
 so they are limited to a maximum of 65535 (higher numbers usually being
 affected by wraparound).
 
-You may mail your bug reports (be sure to include full configuration
+You may submit your bug reports (be sure to include full configuration
 information as output by the myconfig program in the perl source
-tree, or by C<perl -V>) to perlbug@perl.org .  If you've succeeded
-in compiling perl, the L<perlbug> script in the F<utils/> subdirectory
-can be used to help mail in a bug report.
+tree, or by C<perl -V>) to L<https://github.com/Perl/perl5/issues>.
 
 Perl actually stands for Pathologically Eclectic Rubbish Lister, but
 don't tell anyone I said that.

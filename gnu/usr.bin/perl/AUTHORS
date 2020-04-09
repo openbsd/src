@@ -3,7 +3,8 @@
 # (hopefully) current and preferred email addresses from the commits.
 # These people have either submitted patches or suggestions, or their bug
 # reports or comments have inspired the appropriate patches.  Corrections,
-# additions, deletions welcome; send them to perlbug@perl.org, preferably
+# additions, deletions welcome; send them as a pull request to
+# https://github.com/Perl/perl5, or to perl5-porters@perl.org, preferably
 # as the output of diff(1), diff -u or diff -c between the original and a
 # corrected version of this file.
 #

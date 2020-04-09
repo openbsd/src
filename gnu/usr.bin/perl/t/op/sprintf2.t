@@ -1152,4 +1152,14 @@ foreach(
     is sprintf("%.0f", $_), sprintf("%-.0f", $_), "special-case %.0f on $_";
 }
 
+{
+    # gh #17221
+    my ($off1, $off2);
+    my $x = eval { sprintf "%n0%n\x{100}", $off1, $off2 };
+    is($@, "", "no exception");
+    is($x, "0\x{100}", "reasonable result");
+    is($off1, 0, "offset at start");
+    is($off2, 1, "offset after 0");
+}
+
 done_testing();

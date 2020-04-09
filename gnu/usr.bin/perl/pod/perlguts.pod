@@ -2339,8 +2339,8 @@ part of the API.  (See L</Internal
 Functions>.)  The easiest way to be B<sure> a
 function is part of the API is to find its entry in L<perlapi>.
 If it exists in L<perlapi>, it's part of the API.  If it doesn't, and you
-think it should be (i.e., you need it for your extension), send mail via
-L<perlbug> explaining why you think it should be.
+think it should be (i.e., you need it for your extension), submit an issue at
+L<https://github.com/Perl/perl5/issues> explaining why you think it should be.
 
 Second problem: there must be a syntax so that the same subroutine
 declarations and calls can pass a structure as their first argument,

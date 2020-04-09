@@ -157,8 +157,8 @@ XXX Description of the purpose of the new file here
 =head2 Changes to Existing Documentation
 
 We have attempted to update the documentation to reflect the changes
-listed in this document.  If you find any we have missed, send email
-to L<perlbug@perl.org|mailto:perlbug@perl.org>.
+listed in this document.  If you find any we have missed, open an issue
+at L<https://github.com/Perl/perl5/issues>.
 
 XXX Changes which significantly change existing files in F<pod/> go here.
 However, any changes to F<pod/perldiag.pod> should go in the L</Diagnostics>
@@ -224,7 +224,7 @@ XXX Describe change here
 
 =head1 Utility Changes
 
-XXX Changes to installed programs such as F<perlbug> and F<xsubpp> go here.
+XXX Changes to installed programs such as F<perldoc> and F<xsubpp> go here.
 Most of these are built within the directory F<utils>.
 
 [ List utility changes as a =head2 entry for each utility and =item
@@ -403,21 +403,20 @@ died, add a short obituary here.
 
 XXX Generate this with:
 
-  perl Porting/acknowledgements.pl v5.30.1..HEAD
+  perl Porting/acknowledgements.pl v5.30.2..HEAD
 
 =head1 Reporting Bugs
 
 If you find what you think is a bug, you might check the perl bug database
-at L<https://rt.perl.org/>.  There may also be information at
+at L<https://github.com/Perl/perl5/issues>.  There may also be information at
 L<http://www.perl.org/>, the Perl Home Page.
 
-If you believe you have an unreported bug, please run the L<perlbug> program
-included with your release.  Be sure to trim your bug down to a tiny but
-sufficient test case.  Your bug report, along with the output of C<perl -V>,
-will be sent off to perlbug@perl.org to be analysed by the Perl porting team.
+If you believe you have an unreported bug, please open an issue at
+L<https://github.com/Perl/perl5/issues>.  Be sure to trim your bug down to a
+tiny but sufficient test case.
 
 If the bug you are reporting has security implications which make it
-inappropriate to send to a publicly archived mailing list, then see
+inappropriate to send to a public issue tracker, then see
 L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION>
 for details of how to report the issue.
 

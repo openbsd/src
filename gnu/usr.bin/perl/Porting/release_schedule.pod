@@ -15,8 +15,8 @@ deemed necessary by the Pumpking.
 
 Code freezes (which happen in the 5.31.X series)
 
-  2020-01-20  5.31.8          Contentious changes freeze
-  2020-02-20  5.31.9          User-visible changes to correctly
+  2020-01-20  5.31.8 ✓        Contentious changes freeze
+  2020-02-20  5.31.9 ✓        User-visible changes to correctly
                               functioning programs freeze
   2020-03-20  5.31.10         Full code freeze
   2020-04-20  5.32.0          Stable release!
@@ -24,7 +24,7 @@ Code freezes (which happen in the 5.31.X series)
 =head2 Perl 5.30
 
   2019-05-22  5.30.0 ✓        Sawyer X
-  2019-11-10  5.30.1          Steve Hay
+  2019-11-10  5.30.1 ✓        Steve Hay
   2020-03-??  5.30.2          Steve Hay
 
 =head2 Perl 5.28
@@ -62,11 +62,11 @@ you should reset the version numbers to the next blead series.
   2019-08-20  5.31.3 ✓       Tom Hukins
   2019-09-20  5.31.4 ✓       Max Maischein
   2019-10-20  5.31.5 ✓       Steve Hay
-  2019-11-20  5.31.6             BinGOs
-  2019-12-18  5.31.7
-  2020-01-20  5.31.8
-  2020-02-20  5.31.9         Renee Backer
-  2020-03-20  5.31.10
+  2019-11-20  5.31.6 ✓       BinGOs
+  2019-12-20  5.31.7 ✓       Atoomic
+  2020-01-20  5.31.8 ✓       Matthew Horsfall
+  2020-02-20  5.31.9 ✓       Renee Bäcker
+  2020-03-20  5.31.10        Sawyer X
 
 (RC0 for 5.32.0 will be released once we think that all the blockers have been
 addressed.  This typically means some time in April or May.)

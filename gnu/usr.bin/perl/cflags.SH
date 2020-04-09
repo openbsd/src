@@ -156,7 +156,7 @@ esac
 
 case "$gccversion" in
 '') ;;
-[12]*) ;; # gcc versions 1 (gasp!) and 2 are not good for this.
+[12].*) ;; # gcc versions 1 (gasp!) and 2 are not good for this.
 Intel*) ;; # # Is that you, Intel C++?
 #
 # NOTE 1: the -std=c89 without -pedantic is a bit pointless.

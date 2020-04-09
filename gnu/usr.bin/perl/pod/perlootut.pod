@@ -23,7 +23,7 @@ version.
 This document provides an introduction to object-oriented programming
 in Perl. It begins with a brief overview of the concepts behind object
 oriented design. Then it introduces several different OO systems from
-L<CPAN|http://search.cpan.org> which build on top of what Perl
+L<CPAN|https://www.cpan.org> which build on top of what Perl
 provides.
 
 By default, Perl's built-in OO system is very minimal, leaving you to
@@ -547,7 +547,7 @@ C<Moose> itself.
 =item * Rich ecosystem
 
 There is a rich ecosystem of C<Moose> extensions on CPAN under the
-L<MooseX|http://search.cpan.org/search?query=MooseX&mode=dist>
+L<MooseX|https://metacpan.org/search?q=MooseX>
 namespace. In addition, many modules on CPAN already use C<Moose>,
 providing you with lots of examples to learn from.
 
@@ -556,7 +556,7 @@ providing you with lots of examples to learn from.
 C<Moose> is a very powerful tool, and we can't cover all of its
 features here. We encourage you to learn more by reading the C<Moose>
 documentation, starting with
-L<Moose::Manual|http://search.cpan.org/perldoc?Moose::Manual>.
+L<Moose::Manual|https://metacpan.org/pod/Moose::Manual>.
 
 =back
 

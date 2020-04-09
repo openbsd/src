@@ -141,11 +141,11 @@ Andreas' email address at:
 
     https://pause.perl.org/pause/query?ACTION=pause_04imprint
 
-=head3 rt.perl.org update access
+=head3 GitHub issue management access
 
-Make sure you have permission to close tickets on L<https://rt.perl.org/>
+Make sure you have permission to close tickets on L<https://github.com/Perl/perl5/issues>
 so you can respond to bug reports as necessary during your stint.  If you
-don't, make an account (if you don't have one) and contact the pumpking
+don't, make a GitHub account (if you don't have one) and contact the pumpking
 with your username to get ticket-closing permission.
 
 =head3 git checkout and commit bit
@@ -387,6 +387,14 @@ That page accepts a query parameter, C<pair> that takes a pair of
 colon-delimited versions to use for comparison.  For example:
 
 L<http://analysis.cpantesters.org/beforemaintrelease?pair=5.20.2:5.22.0%20RC1>
+
+=head3 Monitor Continuous Integration smokers
+
+Currently both "Travis CI" and "GitHub Actions" smokers are setup.
+Their current status is available at:
+
+L<https://github.com/Perl/perl5/actions>
+L<https://travis-ci.org/Perl/perl5>
 
 =head3 update perldelta
 
@@ -750,9 +758,9 @@ formatting, e.g.
     $ ./perl -Ilib ext/Pod-Html/bin/pod2html pod/perldelta.pod > \
         ~/perldelta.html
 
-You can add pod links for RT references thusly:
+You should add pod links for GitHub issue references thusly:
 
-    $ perl -p -i -e'BEGIN{undef $/}; s{(\[perl\s+#)(\d+)\]}{L<$1$2\]|https://rt.perl.org/Ticket/Display.html?id=$2>}mg' pod/perldelta.pod
+    $ perl -p -i -e'BEGIN{undef $/}; s{(GH\s+#)(\d+)}{L<$1$2|https://github.com/Perl/perl5/issues/$2>}mg' pod/perldelta.pod
 
 If you make changes, be sure to commit them.
 
@@ -1031,9 +1039,9 @@ which is why you should test from the tarball.
 
 =head4 Run the Installation Verification Procedure utility
 
-    $ ./perl -Ilib ./perlivp
+    $ ./perl -Ilib ./utils/perlivp
     # Or, perhaps:
-    $ ./perl5.x.y ./perlivp5.x.y
+    $ ./perl5.x.y ./utils/perlivp5.x.y
     ...
     All tests successful.
     $
@@ -1101,9 +1109,7 @@ Test L<perlbug> with the following:
     Action (Send/Display/Edit/Subject/Save to File): Q
 
 and carefully examine the output (in F<perlbug.rep]>), especially
-the "Locally applied patches" section. If everything appears okay, then
-delete the file, and try it again, this time actually submitting the bug
-report. Check that it shows up, then remember to close it!
+the "Locally applied patches" section.
 
 =for checklist skip BLEAD-POINT
 
@@ -1563,8 +1569,8 @@ If they haven't, ask Ask <ask@perl.org>.
 
 =item *
 
-Check L<https://search.cpan.org> to see if it has indexed the distribution.
-It should be visible at a URL like C<https://search.cpan.org/dist/perl-5.10.1/>.
+Check L<https://metacpan.org> to see if it has indexed the distribution.
+It should be visible at a URL like C<https://metacpan.org/release/DAPM/perl-5.10.1>.
 
 =back
 

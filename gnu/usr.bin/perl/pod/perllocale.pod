@@ -1693,7 +1693,8 @@ effect.  See L<perlembed/Using embedded Perl with POSIX locales>.
 It becomes more important for perl to know about all the possible
 locale categories on the platform, even if they aren't apparently used
 in your program.  Perl knows all of the Linux ones.  If your platform
-has others, you can send email to L<mailto:perlbug@perl.org> for
+has others, you can submit an issue at
+L<https://github.com/Perl/perl5/issues> for
 inclusion of it in the next release.  In the meantime, it is possible to
 edit the Perl source to teach it about the category, and then recompile.
 Search for instances of, say, C<LC_PAPER> in the source, and use that as
@@ -1714,11 +1715,12 @@ In certain systems, the operating system's locale support
 is broken and cannot be fixed or used by Perl.  Such deficiencies can
 and will result in mysterious hangs and/or Perl core dumps when
 C<use locale> is in effect.  When confronted with such a system,
-please report in excruciating detail to <F<perlbug@perl.org>>, and
+please report in excruciating detail to
+<L<https://github.com/Perl/perl5/issues>>, and
 also contact your vendor: bug fixes may exist for these problems
 in your operating system.  Sometimes such bug fixes are called an
 operating system upgrade.  If you have the source for Perl, include in
-the perlbug email the output of the test described above in L</Testing
+the bug report the output of the test described above in L</Testing
 for broken locales>.
 
 =head1 SEE ALSO
