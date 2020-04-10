@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.133 2020/02/24 23:54:27 millert Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.134 2020/04/10 19:28:57 beck Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1664,8 +1664,12 @@ mta_cert_verify_cb(void *arg, int status)
 			match = 0;
 			(void)ssl_check_name(cert, s->mxname, &match);
 			X509_free(cert);
-			if (!match)
+			if (!match) {
+				log_info("%016"PRIx64" mta "
+				    "ssl_check_name: no match for '%s' in cert",
+				    s->id, s->mxname);
 				status = CERT_INVALID;
+			}
 		}
 	}
 
