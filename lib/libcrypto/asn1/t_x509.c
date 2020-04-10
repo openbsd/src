@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.31 2018/05/18 18:23:24 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.32 2020/04/10 07:05:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,8 +145,10 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 			goto err;
 
 		bs = X509_get_serialNumber(x);
-		if (bs->length <= (int)sizeof(long)) {
+		l = -1;
+		if (bs->length <= (int)sizeof(long))
 			l = ASN1_INTEGER_get(bs);
+		if (l != -1) {
 			if (bs->type == V_ASN1_NEG_INTEGER) {
 				l = -l;
 				neg = "-";
