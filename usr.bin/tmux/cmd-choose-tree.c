@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.43 2019/08/16 11:49:12 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.44 2020/04/10 07:44:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -86,6 +86,6 @@ cmd_choose_tree_exec(struct cmd *self, struct cmdq_item *item)
 	} else
 		mode = &window_tree_mode;
 
-	window_pane_set_mode(wp, mode, &item->target, args);
+	window_pane_set_mode(wp, NULL, mode, &item->target, args);
 	return (CMD_RETURN_NORMAL);
 }

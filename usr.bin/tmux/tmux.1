@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.734 2020/04/09 06:28:55 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.735 2020/04/10 07:44:26 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 9 2020 $
+.Dd $Mdocdate: April 10 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1608,6 +1608,7 @@ command is:
 .Bl -tag -width Ds
 .It Xo Ic copy-mode
 .Op Fl eHMqu
+.Op Fl s Ar src-pane
 .Op Fl t Ar target-pane
 .Xc
 Enter copy mode.
@@ -1621,6 +1622,11 @@ begins a mouse drag (only valid if bound to a mouse key binding, see
 hides the position indicator in the top right.
 .Fl q
 cancels copy mode and any other modes.
+.Fl s
+copies from
+.Ar src-pane
+instead of
+.Ar target-pane.
 .Pp
 .Fl e
 specifies that scrolling to the bottom of the history (to the visible screen)

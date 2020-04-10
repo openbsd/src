@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.46 2019/06/20 20:31:04 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.47 2020/04/10 07:44:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -116,7 +116,8 @@ cmd_find_window_exec(struct cmd *self, struct cmdq_item *item)
 		args_set(new_args, 'Z', NULL);
 	args_set(new_args, 'f', filter);
 
-	window_pane_set_mode(wp, &window_tree_mode, &item->target, new_args);
+	window_pane_set_mode(wp, NULL, &window_tree_mode, &item->target,
+	    new_args);
 
 	args_free(new_args);
 	free(filter);
