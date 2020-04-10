@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_acpi.c,v 1.1 2018/07/02 11:23:19 kettenis Exp $	*/
+/*	$OpenBSD: xhci_acpi.c,v 1.2 2020/04/10 21:25:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -151,6 +151,13 @@ xhci_acpi_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
 		if (sc->sc_size == 0) {
 			sc->sc_addr = crs->lr_m32fixed._bas;
 			sc->sc_size = crs->lr_m32fixed._len;
+		}
+		break;
+	case LR_QWORD:
+		/* XHCI registers are specified by the first resource. */
+		if (sc->sc_size == 0) {
+			sc->sc_addr = crs->lr_qword._min;
+			sc->sc_size = crs->lr_qword._len;
 		}
 		break;
 	case LR_EXTIRQ:
