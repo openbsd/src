@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.53 2019/12/01 18:17:31 naddy Exp $
+.\"	$OpenBSD: execve.2,v 1.54 2020/04/10 07:31:45 jca Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)execve.2	8.3 (Berkeley) 1/24/94
 .\"
-.Dd $Mdocdate: December 1 2019 $
+.Dd $Mdocdate: April 10 2020 $
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -290,7 +290,7 @@ is allowed by the imposed maximum
 .It Bq Er E2BIG
 The number of bytes in the new process's argument list
 is larger than the system-imposed limit.
-The limit in the system as released is 262144 bytes
+The limit in the system as released is 524288 bytes
 .Pf ( Dv ARG_MAX ) .
 .It Bq Er EFAULT
 The new process file is not as long as indicated by
