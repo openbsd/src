@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.58 2020/04/08 20:04:19 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.59 2020/04/10 20:58:32 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1375,7 +1375,7 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 		}
 	}
 
-	lc_string(idstr);
+	lc_idtype(idstr);
 	if (strlcpy(file, IKED_PUBKEY_DIR, sizeof(file)) >= sizeof(file) ||
 	    strlcat(file, idstr, sizeof(file)) >= sizeof(file)) {
 		log_debug("%s: public key id too long %s", __func__, idstr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.142 2020/04/09 19:55:19 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.143 2020/04/10 20:58:32 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1044,7 +1044,7 @@ const char *
 	 print_spi(uint64_t, int);
 const char *
 	 print_map(unsigned int, struct iked_constmap *);
-void	 lc_string(char *);
+void	 lc_idtype(char *);
 void	 print_hex(const uint8_t *, off_t, size_t);
 void	 print_hexval(const uint8_t *, off_t, size_t);
 const char *

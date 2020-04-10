@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.38 2020/02/13 16:27:02 tobhe Exp $	*/
+/*	$OpenBSD: util.c,v 1.39 2020/04/10 20:58:33 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -459,9 +459,9 @@ print_map(unsigned int type, struct iked_constmap *map)
 }
 
 void
-lc_string(char *str)
+lc_idtype(char *str)
 {
-	for (; *str != '\0'; str++)
+	for (; *str != '\0' && *str != '/'; str++)
 		*str = tolower((unsigned char)*str);
 }
 
