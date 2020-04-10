@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.14 2019/11/07 16:08:08 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.15 2020/04/10 07:23:21 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/stacktrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -221,4 +222,40 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		--count;
 	}
 	(*pr)("end trace frame: 0x%lx, count: %d\n", sp, count);
+}
+
+void
+stacktrace_save_at(struct stacktrace *st, unsigned int skip)
+{
+	vaddr_t		 lr, sp, lastsp;
+
+	sp = (vaddr_t)__builtin_frame_address(0);
+	if (!INKERNEL(sp) && !ININTSTK(sp))
+		return;
+
+	st->st_count = 0;
+	while (st->st_count < STACKTRACE_MAX) {
+		lr = *(vaddr_t *)(sp + 4) - 4;
+		if (lr & 3)
+			break;
+
+		if (skip == 0)
+			st->st_pc[st->st_count++] = lr;
+		else
+			skip--;
+
+		lastsp = sp;
+		sp = *(vaddr_t *)sp;
+
+		if ((sp == 0) || (sp & 3) || (sp <= lastsp))
+			break;
+		if (!INKERNEL(sp) && !ININTSTK(sp))
+			break;
+	}
+}
+
+void
+stacktrace_save(struct stacktrace *st)
+{
+	return stacktrace_save_at(st, 0);
 }
