@@ -1,4 +1,4 @@
-#	$OpenBSD: files.omap,v 1.25 2020/04/05 13:11:13 kettenis Exp $
+#	$OpenBSD: files.omap,v 1.26 2020/04/10 22:02:45 kettenis Exp $
 
 define omap {}
 device omap: omap
@@ -8,6 +8,14 @@ file	arch/armv7/omap/omap.c			omap
 file	arch/armv7/omap/omap3.c
 file	arch/armv7/omap/omap4.c
 file	arch/armv7/omap/am335x.c
+
+device omcm: fdt
+attach omcm at fdt
+file	arch/armv7/omap/omcm.c			omcm
+
+device omclock
+attach omclock at fdt
+file	arch/armv7/omap/omclock.c		omclock
 
 device ommmc: sdmmcbus
 attach ommmc at fdt
@@ -67,6 +75,10 @@ file	arch/armv7/omap/omohci.c		omohci
 device omehci: usbus
 attach omehci at fdt
 file	arch/armv7/omap/omehci.c		omehci
+
+device omsysc: fdt
+attach omsysc at fdt
+file	arch/armv7/omap/omsysc.c		omsysc
 
 device omusbtll
 attach omusbtll at omap

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.128 2020/04/05 13:11:13 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.129 2020/04/10 22:02:45 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -70,7 +70,9 @@ omap0		at mainbus?
 omapid*		at omap?
 
 # OMAP on-chip devices
-intc*		at fdt?			# OMAP3 interrupt controller
+intc*		at fdt? early 1		# OMAP3 interrupt controller
+omclock*	at fdt? early 1
+omcm*		at fdt? early 1
 omwugen*	at fdt?			# Wake-up generator
 #edma*		at fdt?			# OMAP3 dma controller
 prcm*		at omap?		# power/clock controller
@@ -79,6 +81,8 @@ omdog*		at fdt?			# watchdog timer
 omgpio*		at fdt?			# user-visible GPIO pins?
 gpio*		at omgpio?
 omrng*		at fdt?
+omsysc*		at fdt? early 1
+omsysc*		at fdt?
 tiiic*		at fdt?
 iic*		at tiiic?
 gptimer*	at omap?		# general purpose timers

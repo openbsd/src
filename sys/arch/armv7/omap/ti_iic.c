@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.12 2020/01/13 13:32:17 mpi Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.13 2020/04/10 22:02:45 kettenis Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -174,7 +174,7 @@ ti_iic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = faa->fa_iot;
 	sc->sc_node = faa->fa_node;
 
-	unit = 0;
+	unit = -1;
 	if ((len = OF_getprop(faa->fa_node, "ti,hwmods", hwmods,
 	    sizeof(hwmods))) == 5) {
 		if (!strncmp(hwmods, "i2c", 3) &&
@@ -195,7 +195,8 @@ ti_iic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_NET,
 	    ti_iic_intr, sc, DEVNAME(sc));
 
-	prcm_enablemodule(PRCM_I2C0 + unit);
+	if (unit != -1)
+		prcm_enablemodule(PRCM_I2C0 + unit);
 
 	rev = I2C_READ_REG(sc, AM335X_I2C_REVNB_LO);
 	printf(" rev %d.%d\n",

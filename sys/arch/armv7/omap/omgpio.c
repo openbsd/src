@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.11 2020/04/06 13:01:36 kettenis Exp $ */
+/* $OpenBSD: omgpio.c,v 1.12 2020/04/10 22:02:45 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -265,7 +265,7 @@ omgpio_attach(struct device *parent, struct device *self, void *aux)
 	if (faa->fa_nreg < 1)
 		return;
 
-	unit = 0;
+	unit = -1;
 	if ((len = OF_getprop(faa->fa_node, "ti,hwmods", hwmods,
 	    sizeof(hwmods))) == 6) {
 		if ((strncmp(hwmods, "gpio", 4) == 0) &&
@@ -273,7 +273,8 @@ omgpio_attach(struct device *parent, struct device *self, void *aux)
 			unit = hwmods[4] - '1';
 	}
 
-	prcm_enablemodule(PRCM_GPIO0 + unit);
+	if (unit != -1)
+		prcm_enablemodule(PRCM_GPIO0 + unit);
 
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;

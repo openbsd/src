@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.34 2020/04/06 13:03:02 kettenis Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.35 2020/04/10 22:02:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -320,7 +320,7 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 		size = faa->fa_reg[0].size;
 	}
 
-	unit = 0;
+	unit = -1;
 	if ((len = OF_getprop(faa->fa_node, "ti,hwmods", hwmods,
 	    sizeof(hwmods))) == 5) {
 		if (!strncmp(hwmods, "mmc", 3) &&
@@ -338,7 +338,8 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 	pinctrl_byname(faa->fa_node, "default");
 
 	/* Enable ICLKEN, FCLKEN? */
-	prcm_enablemodule(PRCM_MMC0 + unit);
+	if (unit != -1)
+		prcm_enablemodule(PRCM_MMC0 + unit);
 
 	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_SDMMC,
 	    ommmc_intr, sc, DEVNAME(sc));
@@ -448,7 +449,7 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 	}
 	width = OF_getpropint(faa->fa_node, "bus-width", 1);
 	/* with bbb emmc width > 1 ommmc_wait_intr MMCHS_STAT_CC times out */
-	if (unit != 0)
+	if (unit > 0)
 		width = 1;
 	if (width >= 8)
 		saa.caps |= SMC_CAPS_8BIT_MODE;
