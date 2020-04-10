@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.979 2020/04/10 07:44:26 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.980 2020/04/10 20:53:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -843,7 +843,6 @@ struct window_mode {
 	void		 (*formats)(struct window_mode_entry *,
 			     struct format_tree *);
 };
-#define WINDOW_MODE_TIMEOUT 180
 
 /* Active window mode. */
 struct window_mode_entry {
