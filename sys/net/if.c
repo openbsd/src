@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.601 2020/03/10 09:11:55 tobhe Exp $	*/
+/*	$OpenBSD: if.c,v 1.602 2020/04/11 10:49:27 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -938,10 +938,10 @@ if_input_process(struct ifnet *ifp, struct mbuf_list *ml)
 	 * to PF globals, pipex globals, unicast and multicast addresses
 	 * lists.
 	 */
-	NET_RLOCK();
+	NET_LOCK();
 	while ((m = ml_dequeue(ml)) != NULL)
 		if_ih_input(ifp, m);
-	NET_RUNLOCK();
+	NET_UNLOCK();
 }
 
 void
@@ -975,14 +975,14 @@ if_netisr(void *unused)
 {
 	int n, t = 0;
 
-	NET_RLOCK();
+	NET_LOCK();
 
 	while ((n = netisr) != 0) {
 		/* Like sched_pause() but with a rwlock dance. */
 		if (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD) {
-			NET_RUNLOCK();
+			NET_UNLOCK();
 			yield();
-			NET_RLOCK();
+			NET_LOCK();
 		}
 
 		atomic_clearbits_int(&netisr, n);
@@ -1037,7 +1037,7 @@ if_netisr(void *unused)
 	}
 #endif
 
-	NET_RUNLOCK();
+	NET_UNLOCK();
 }
 
 void
