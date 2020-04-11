@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.213 2020/04/09 19:55:19 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.214 2020/04/11 20:14:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -489,6 +489,15 @@ ikev2_getimsgdata(struct iked *env, struct imsg *imsg, struct iked_sahdr *sh,
 	return (sa);
 }
 
+static time_t
+gettime(void)
+{
+	struct timespec ts;
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
+		return (-1);
+	return ts.tv_sec;
+}
+
 void
 ikev2_recv(struct iked *env, struct iked_message *msg)
 {
@@ -527,6 +536,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 
 	if ((sa = msg->msg_sa) == NULL)
 		goto done;
+
+	sa->sa_last_recvd = gettime();
 
 	if (hdr->ike_exchange == IKEV2_EXCHANGE_CREATE_CHILD_SA)
 		flag = IKED_REQ_CHILDSA;
@@ -1354,6 +1365,7 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 void
 ikev2_enable_timer(struct iked *env, struct iked_sa *sa)
 {
+	sa->sa_last_recvd = gettime();
 	timer_set(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
 	timer_add(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
 	timer_set(env, &sa->sa_keepalive, ikev2_ike_sa_keepalive, sa);
@@ -4302,9 +4314,9 @@ ikev2_ike_sa_alive(struct iked *env, void *arg)
 {
 	struct iked_sa			*sa = arg;
 	struct iked_childsa		*csa = NULL;
-	struct timeval			 tv;
 	uint64_t			 last_used, diff;
 	int				 foundin = 0, foundout = 0;
+	int				 ikeidle = 0;
 
 	/* check for incoming traffic on any child SA */
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
@@ -4312,8 +4324,7 @@ ikev2_ike_sa_alive(struct iked *env, void *arg)
 			continue;
 		if (pfkey_sa_last_used(env->sc_pfkey, csa, &last_used) != 0)
 			continue;
-		gettimeofday(&tv, NULL);
-		diff = (uint32_t)(tv.tv_sec - last_used);
+		diff = (uint32_t)(gettime() - last_used);
 		log_debug("%s: %s CHILD SA spi %s last used %llu second(s) ago",
 		    __func__,
 		    csa->csa_dir == IPSP_DIRECTION_IN ? "incoming" : "outgoing",
@@ -4328,8 +4339,22 @@ ikev2_ike_sa_alive(struct iked *env, void *arg)
 		}
 	}
 
-	/* send probe if any outging SA has been used, but no incoming SA */
-	if (!foundin && foundout) {
+	diff = (uint32_t)(gettime() - sa->sa_last_recvd);
+	if (diff >= IKED_IKE_SA_LAST_RECVD_TIMEOUT) {
+		ikeidle = 1;
+		log_debug("%s: IKE SA %p ispi %s rspi %s last received %llu"
+		    " second(s) ago", __func__, sa,
+		    print_spi(sa->sa_hdr.sh_ispi, 8),
+		    print_spi(sa->sa_hdr.sh_rspi, 8), diff);
+	}
+
+	/*
+	 * send probe if any outgoing SA has been used, but no incoming
+	 * SA, or if we haven't received an IKE message. but only if we
+	 * are not already waiting for an answer.
+	 */
+	if (((!foundin && foundout) || ikeidle) &&
+	    (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF)) == 0) {
 		log_debug("%s: sending alive check", __func__);
 		ikev2_send_ike_e(env, sa, NULL, IKEV2_PAYLOAD_NONE,
 		    IKEV2_EXCHANGE_INFORMATIONAL, 0);

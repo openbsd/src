@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.143 2020/04/10 20:58:32 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.144 2020/04/11 20:14:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -510,6 +510,8 @@ struct iked_sa {
 
 	struct iked_addr		*sa_addrpool6;	/* address from pool */
 	RB_ENTRY(iked_sa)		 sa_addrpool6_entry;	/* pool entries */
+	time_t				 sa_last_recvd;
+#define IKED_IKE_SA_LAST_RECVD_TIMEOUT	 300		/* 5 minutes */
 };
 RB_HEAD(iked_sas, iked_sa);
 RB_HEAD(iked_addrpool, iked_sa);
