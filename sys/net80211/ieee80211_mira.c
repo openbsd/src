@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.26 2020/04/11 13:43:34 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.27 2020/04/11 13:44:06 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -1141,9 +1141,8 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 {
 	struct ieee80211_mira_goodput_stats *g = &mn->g[ni->ni_txmcs];
 	int s;
-#ifdef MIRA_AGGRESSIVE_DOWNWARDS_PROBING
 	int sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
-#endif
+	const struct ieee80211_ht_rateset *rs;
 
 	s = splnet();
 
@@ -1187,7 +1186,9 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 	}
 
 	/* Check if event-based probing should be triggered. */
-	if (g->measured < g->average - 2 * g->stddeviation) {
+	rs = ieee80211_mira_get_rateset(ni->ni_txmcs, sgi);
+	if (g->measured < g->average - 2 * g->stddeviation &&
+	    ni->ni_txmcs != rs->min_mcs) {
 		/* Channel becomes bad. Probe downwards. */
 		DPRINTFN(2, ("channel becomes bad; probe downwards\n"));
 		DPRINTFN(3, ("measured: %s Mbit/s\n",
@@ -1208,7 +1209,8 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 		    (1 << ieee80211_mira_next_lower_intra_rate(mn, ni));
 #endif
 		ieee80211_mira_cancel_timeouts(mn);
-	} else if (g->measured > g->average + 2 * g->stddeviation) {
+	} else if (g->measured > g->average + 2 * g->stddeviation &&
+	    ni->ni_txmcs != rs->max_mcs) {
 		/* Channel becomes good. */
 		DPRINTFN(2, ("channel becomes good; probe upwards\n"));
 		DPRINTFN(3, ("measured: %s Mbit/s\n",
