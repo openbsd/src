@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.13 2020/04/01 14:15:49 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.14 2020/04/11 15:53:44 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,12 +19,13 @@
 #include <err.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sha2.h>
 
 #include <openssl/ssl.h>
+#include <openssl/sha.h>
 
 #include "extern.h"
 
@@ -89,26 +90,6 @@ check_validity(const ASN1_GENERALIZEDTIME *from,
 
 	return 1;
 }
-
-static int
-hex_pton(u_char const *src, size_t srclen, char *target, size_t targlen)
-{
-	static const char hex[] = "0123456789abcdef";
-	size_t i, t = 0;
-
-	for (i = 0; i < srclen; i++) {
-		if (t + 1 >= targlen)
-			return -1;
-		target[t++] = hex[src[i] >> 4];
-		target[t++] = hex[src[i] & 0x0f];
-	}
-	if (t >= targlen)
-		return -1;
-	target[t] = '\0';
-
-	return t;
-}
-
 
 /*
  * Parse an individual "FileAndHash", RFC 6486, sec. 4.2.
@@ -440,13 +421,12 @@ out:
 static int
 mft_validfilehash(const char *fn, const struct mftfile *m)
 {
-	char	file_hash[SHA256_DIGEST_STRING_LENGTH];
-	char	mft_hash[SHA256_DIGEST_STRING_LENGTH];
+	char	filehash[SHA256_DIGEST_LENGTH];
+	char	buffer[8192];
 	char	*cp, *path = NULL;
-
-	if (hex_pton(m->hash, SHA256_DIGEST_LENGTH,
-	    mft_hash, sizeof(mft_hash)) == -1)
-		errx(1, "hexnum conversion failed");
+	SHA256_CTX ctx;
+	ssize_t	nr;
+	int	fd;
 
 	/* Check hash of file now, but first build path for it */
 	cp = strrchr(fn, '/');
@@ -454,14 +434,21 @@ mft_validfilehash(const char *fn, const struct mftfile *m)
 	if (asprintf(&path, "%.*s/%s", (int)(cp - fn), fn, m->file) == -1)
 		err(1, "asprintf");
 
-	if (SHA256File(path, file_hash) == NULL) {
+	if ((fd = open(path, O_RDONLY)) == -1) {
 		warn("%s: referenced file %s", fn, m->file);
 		free(path);
 		return 0;
 	}
 	free(path);
 
-	if (strcmp(file_hash, mft_hash) != 0) {
+	SHA256_Init(&ctx);
+	while ((nr = read(fd, buffer, sizeof(buffer))) > 0) {
+		SHA256_Update(&ctx, buffer, nr);
+	}
+	close(fd);
+
+	SHA256_Final(filehash, &ctx);
+	if (memcmp(m->hash, filehash, SHA256_DIGEST_LENGTH) != 0) {
 		warnx("%s: bad message digest for %s", fn, m->file);
 		return 0;
 	}
