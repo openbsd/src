@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.163 2020/02/12 19:14:56 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.164 2020/04/11 07:49:48 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,7 @@
 
 volatile sig_atomic_t	 ntp_quit = 0;
 struct imsgbuf		*ibuf_main;
-struct imsgbuf		*ibuf_dns;
+static struct imsgbuf	*ibuf_dns;
 struct ntpd_conf	*conf;
 struct ctl_conns	 ctl_conns;
 u_int			 peer_cnt;

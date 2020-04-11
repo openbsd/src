@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.24 2019/06/27 15:18:42 otto Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.25 2020/04/11 07:49:48 otto Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -39,7 +39,7 @@
 #include "ntpd.h"
 
 volatile sig_atomic_t	 quit_dns = 0;
-struct imsgbuf		*ibuf_dns;
+static struct imsgbuf	*ibuf_dns;
 
 void	sighdlr_dns(int);
 int	dns_dispatch_imsg(struct ntpd_conf *);

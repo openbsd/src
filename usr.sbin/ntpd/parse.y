@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.76 2019/11/11 06:32:52 otto Exp $ */
+/*	$OpenBSD: parse.y,v 1.77 2020/04/11 07:49:48 otto Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -57,7 +57,6 @@ int		 lgetc(int);
 int		 lungetc(int);
 int		 findeol(void);
 
-struct ntpd_conf		*conf;
 struct sockaddr_in		 query_addr4;
 struct sockaddr_in6		 query_addr6;
 int				 poolseqnum;
