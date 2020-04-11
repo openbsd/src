@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.17 2020/03/27 12:46:00 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.18 2020/04/11 15:52:24 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -142,7 +142,7 @@ struct tal *
 tal_parse(const char *fn, char *buf)
 {
 	struct tal	*p;
-	char		*d;
+	const char	*d;
 	size_t		 dlen;
 
 	p = tal_parse_buffer(fn, buf);
@@ -150,9 +150,11 @@ tal_parse(const char *fn, char *buf)
 		return NULL;
 
 	/* extract the TAL basename (without .tal suffix) */
-	d = basename(fn);
+	d = strrchr(fn, '/');
 	if (d == NULL)
-		err(1, "%s: basename", fn);
+		d = fn;
+	else
+		d++;
 	dlen = strlen(d);
 	if (strcasecmp(d + dlen - 4, ".tal") == 0)
 		dlen -= 4;
