@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.9 2020/03/10 14:22:26 jca Exp $ */
+/*	$OpenBSD: output.c,v 1.10 2020/04/11 15:23:23 benno Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -139,7 +139,7 @@ output_cleantmp(void)
  * Signal handler that clears the temporary files.
  */
 static void
-sig_handler(int sig __unused)
+sig_handler(int sig)
 {
 	output_cleantmp();
 	_exit(2);
