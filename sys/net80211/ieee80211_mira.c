@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.27 2020/04/11 13:44:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.28 2020/04/11 13:47:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -1164,9 +1164,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 			}
 			DPRINTFN(4, ("probing MCS %d\n", ni->ni_txmcs));
 		} else if (ieee80211_mira_inter_mode_ra_finished(mn, ni)) {
-			int best = ieee80211_mira_best_rate(mn, ni);
-			if (mn->best_mcs != best)
-				mn->best_mcs = best;
+			mn->best_mcs = ieee80211_mira_best_rate(mn, ni);
 			ni->ni_txmcs = mn->best_mcs;
 			ieee80211_mira_probe_done(mn);
 		}
