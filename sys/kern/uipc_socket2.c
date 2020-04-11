@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.103 2020/02/14 14:32:44 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.104 2020/04/11 14:07:06 claudio Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -619,6 +619,7 @@ sbappend(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 	if (m == NULL)
 		return;
 
+	soassertlocked(so);
 	SBLASTRECORDCHK(sb, "sbappend 1");
 
 	if ((n = sb->sb_lastrecord) != NULL) {
@@ -783,6 +784,8 @@ sbappendaddr(struct socket *so, struct sockbuf *sb, const struct sockaddr *asa,
 {
 	struct mbuf *m, *n, *nlast;
 	int space = asa->sa_len;
+
+	soassertlocked(so);
 
 	if (m0 && (m0->m_flags & M_PKTHDR) == 0)
 		panic("sbappendaddr");
