@@ -1244,10 +1244,13 @@
 ./usr/share/man/man4/armv7/intc.4
 ./usr/share/man/man4/armv7/intro.4
 ./usr/share/man/man4/armv7/omap.4
+./usr/share/man/man4/armv7/omclock.4
+./usr/share/man/man4/armv7/omcm.4
 ./usr/share/man/man4/armv7/omdog.4
 ./usr/share/man/man4/armv7/omgpio.4
 ./usr/share/man/man4/armv7/ommmc.4
 ./usr/share/man/man4/armv7/omrng.4
+./usr/share/man/man4/armv7/omsysc.4
 ./usr/share/man/man4/armv7/omwugen.4
 ./usr/share/man/man4/armv7/prcm.4
 ./usr/share/man/man4/armv7/sxie.4
