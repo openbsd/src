@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.267 2019/11/07 11:46:42 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.268 2020/04/11 10:23:16 stsp Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2178,7 +2178,7 @@ pfsync_q_ins(struct pf_state *st, int q)
 
 #if defined(PFSYNC_DEBUG)
 	if (sc->sc_len < PFSYNC_MINPKT)
-		panic("pfsync pkt len is too low %d", sc->sc_len);
+		panic("pfsync pkt len is too low %zd", sc->sc_len);
 #endif
 	if (TAILQ_EMPTY(&sc->sc_qs[q]))
 		nlen += sizeof(struct pfsync_subheader);
