@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.48 2016/10/25 06:48:58 pirofti Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.49 2020/04/11 11:01:18 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -293,11 +293,8 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	}
 	if (pp->type == AML_OBJTYPE_DEVICE) {
 		node = pp->node;
-		if (aml_evalinteger(sc->sc_acpi, node, "_STA", 0, NULL, &sta)) {
-			printf("no _STA method\n");
-			return;
-		}
 
+		sta = acpi_getsta(sc->sc_acpi, node);
 		if ((sta & STA_PRESENT) == 0)
 			return;
 
@@ -446,11 +443,7 @@ acpiprt_route_interrupt(int bus, int dev, int pin)
 	if (node == NULL)
 		return;
 
-	if (aml_evalinteger(sc->sc_acpi, node, "_STA", 0, NULL, &sta)) {
-		printf("no _STA method\n");
-		return;
-	}
-
+	sta = acpi_getsta(sc->sc_acpi, node);
 	KASSERT(sta & STA_PRESENT);
 
 	if (aml_evalname(sc->sc_acpi, node, "_CRS", 0, NULL, &res)) {
