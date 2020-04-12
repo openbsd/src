@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.220 2020/04/07 13:27:52 visa Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.221 2020/04/12 11:56:52 mpi Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -866,9 +866,9 @@ tun_dev_write(dev_t dev, struct uio *uio, int ioflag, int align)
 	if (error != 0)
 		goto drop;
 
-	NET_RLOCK();
+	NET_LOCK();
 	if_vinput(ifp, m0);
-	NET_RUNLOCK();
+	NET_UNLOCK();
 
 	tun_put(sc);
 	return (0);

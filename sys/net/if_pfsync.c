@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.269 2020/04/11 10:56:42 stsp Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.270 2020/04/12 11:56:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1523,7 +1523,7 @@ pfsync_send_dispatch(void *xmq)
 	if (ml_empty(&ml))
 		return;
 
-	NET_RLOCK();
+	NET_LOCK();
 	sc = pfsyncif;
 	if (sc == NULL) {
 		ml_purge(&ml);
@@ -1541,7 +1541,7 @@ pfsync_send_dispatch(void *xmq)
 		}
 	}
 done:
-	NET_RUNLOCK();
+	NET_UNLOCK();
 }
 
 void

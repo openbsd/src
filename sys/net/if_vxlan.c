@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.76 2019/11/08 07:16:29 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.77 2020/04/12 11:56:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -329,11 +329,11 @@ vxlan_send_dispatch(void *xsc)
 	if (ml_empty(&ml))
 		return;
 
-	NET_RLOCK();
+	NET_LOCK();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		vxlan_output(ifp, m);
 	}
-	NET_RUNLOCK();
+	NET_UNLOCK();
 }
 
 

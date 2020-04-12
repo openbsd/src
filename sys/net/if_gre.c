@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.155 2019/11/10 11:44:10 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.156 2020/04/12 11:56:52 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -3904,12 +3904,12 @@ nvgre_send4(struct nvgre_softc *sc, struct mbuf_list *ml)
 	imo.imo_ttl = sc->sc_tunnel.t_ttl;
 	imo.imo_loop = 0;
 
-	NET_RLOCK();
+	NET_LOCK();
 	while ((m = ml_dequeue(ml)) != NULL) {
 		if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &imo, NULL, 0) != 0)
 			oerrors++;
 	}
-	NET_RUNLOCK();
+	NET_UNLOCK();
 
 	return (oerrors);
 }
@@ -3926,12 +3926,12 @@ nvgre_send6(struct nvgre_softc *sc, struct mbuf_list *ml)
 	im6o.im6o_hlim = sc->sc_tunnel.t_ttl;
 	im6o.im6o_loop = 0;
 
-	NET_RLOCK();
+	NET_LOCK();
 	while ((m = ml_dequeue(ml)) != NULL) {
 		if (ip6_output(m, NULL, NULL, 0, &im6o, NULL) != 0)
 			oerrors++;
 	}
-	NET_RUNLOCK();
+	NET_UNLOCK();
 
 	return (oerrors);
 }
