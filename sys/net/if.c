@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.602 2020/04/11 10:49:27 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.603 2020/04/12 07:04:03 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3030,6 +3030,8 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	struct ifreq ifr;
 	unsigned short oif_flags;
 	int oif_pcount, error;
+
+	NET_ASSERT_LOCKED(); /* modifying if_flags and if_pcount */
 
 	oif_flags = ifp->if_flags;
 	oif_pcount = ifp->if_pcount;
