@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.380 2020/04/07 13:27:51 visa Exp $ */
+/* $OpenBSD: acpi.c,v 1.381 2020/04/12 09:21:19 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3122,6 +3122,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	char		 	 dev[32];
 	struct acpi_attach_args	 aaa;
 	int64_t			 sta;
+	int64_t			 cca;
 #ifndef SMALL_KERNEL
 	int			 i;
 #endif
@@ -3133,12 +3134,15 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	if ((sta & STA_PRESENT) == 0)
 		return (0);
 
+	if (aml_evalinteger(sc, node->parent, "_CCA", 0, NULL, &cca))
+		cca = 1;
+
 	acpi_attach_deps(sc, node->parent);
 
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_iot = sc->sc_iot;
 	aaa.aaa_memt = sc->sc_memt;
-	aaa.aaa_dmat = sc->sc_dmat;
+	aaa.aaa_dmat = cca ? sc->sc_cc_dmat : sc->sc_ci_dmat;
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
 	aaa.aaa_cdev = cdev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.105 2019/09/07 13:46:20 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.106 2020/04/12 09:21:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -208,7 +208,8 @@ struct acpi_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_tag_t		sc_memt;
-	bus_dma_tag_t		sc_dmat;
+	bus_dma_tag_t		sc_cc_dmat;
+	bus_dma_tag_t		sc_ci_dmat;
 
 	/*
 	 * First-level ACPI tables

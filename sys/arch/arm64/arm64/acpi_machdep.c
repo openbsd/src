@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.3 2019/08/27 22:39:53 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.4 2020/04/12 09:21:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -56,13 +56,14 @@ acpi_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	bus_dma_tag_t dmat;
 
+	sc->sc_memt = faa->fa_iot;
+	sc->sc_ci_dmat = faa->fa_dmat;
+
 	/* Create coherent DMA tag. */
-	dmat = malloc(sizeof(*sc->sc_dmat), M_DEVBUF, M_WAITOK | M_ZERO);
+	dmat = malloc(sizeof(*sc->sc_cc_dmat), M_DEVBUF, M_WAITOK | M_ZERO);
 	memcpy(dmat, faa->fa_dmat, sizeof(*dmat));
 	dmat->_flags |= BUS_DMA_COHERENT;
-	
-	sc->sc_memt = faa->fa_iot;
-	sc->sc_dmat = dmat;
+	sc->sc_cc_dmat = dmat;
 
 	acpi_attach_common(sc, faa->fa_reg[0].addr);
 }
