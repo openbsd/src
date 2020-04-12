@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.59 2020/04/10 20:58:32 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.60 2020/04/12 20:18:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1383,7 +1383,7 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 	}
 
 	if ((fp = fopen(file, "r")) == NULL) {
-		log_debug("%s: could not open public key %s", __func__, file);
+		log_info("%s: could not open public key %s", __func__, file);
 		goto done;
 	}
 	localkey = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
