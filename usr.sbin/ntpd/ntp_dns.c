@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.25 2020/04/11 07:49:48 otto Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.26 2020/04/12 14:20:56 otto Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -40,6 +40,7 @@
 
 volatile sig_atomic_t	 quit_dns = 0;
 static struct imsgbuf	*ibuf_dns;
+extern int		 non_numeric;
 
 void	sighdlr_dns(int);
 int	dns_dispatch_imsg(struct ntpd_conf *);
@@ -101,7 +102,10 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
 
-	probe_root();
+	if (non_numeric)
+		probe_root();
+	else
+		log_debug("all addresses numeric, no dns probe");
 
 	while (quit_dns == 0) {
 		pfd[0].fd = ibuf_dns->fd;

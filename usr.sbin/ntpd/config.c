@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.32 2019/07/07 07:14:57 otto Exp $ */
+/*	$OpenBSD: config.c,v 1.33 2020/04/12 14:20:56 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,6 +35,7 @@ int		 host_dns1(const char *, struct ntp_addr **, int);
 
 static u_int32_t		 maxid = 0;
 static u_int32_t		 constraint_maxid = 0;
+int				 non_numeric;
 
 void
 host(const char *s, struct ntp_addr **hn)
@@ -45,8 +46,10 @@ host(const char *s, struct ntp_addr **hn)
 		if ((h = calloc(1, sizeof(*h))) == NULL)
 			fatal(NULL);
 	} else {
-		if ((h = host_ip(s)) == NULL)
+		if ((h = host_ip(s)) == NULL) {
+			non_numeric = 1;
 			return;
+		}
 	}
 
 	*hn = h;
