@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.103 2019/11/08 07:16:29 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.104 2020/04/12 07:02:43 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ struct ifnet {				/* and the entries */
 				/* [I] check or clean routes (+ or -)'d */
 	void	(*if_rtrequest)(struct ifnet *, int, struct rtentry *);
 	char	if_xname[IFNAMSIZ];	/* [I] external name (name + unit) */
-	int	if_pcount;		/* [k] # of promiscuous listeners */
+	int	if_pcount;		/* [N] # of promiscuous listeners */
 	unsigned int if_bridgeidx;	/* [k] used by bridge ports */
 	caddr_t	if_bpf;			/* packet filter structure */
 	caddr_t if_switchport;		/* used by switch ports */
