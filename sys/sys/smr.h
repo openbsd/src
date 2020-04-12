@@ -1,4 +1,4 @@
-/*	$OpenBSD: smr.h,v 1.5 2020/04/07 08:23:54 claudio Exp $	*/
+/*	$OpenBSD: smr.h,v 1.6 2020/04/12 07:20:33 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -114,8 +114,8 @@ smr_init(struct smr_entry *smr)
 #include <sys/_null.h>
 
 /*
- * This file defines two types of data structures: singly-linked lists,
- * and lists.
+ * This file defines three types of data structures: singly-linked lists,
+ * lists, and tail queues.
  *
  *
  * A singly-linked list is headed by a single forward pointer. The elements
@@ -134,6 +134,14 @@ smr_init(struct smr_entry *smr)
  * traverse the list. New elements can be added to the list before
  * or after an existing element or at the head of the list. A list
  * may only be traversed in the forward direction.
+ *
+ * A tail queue is headed by a pair of pointers, one to the head of the
+ * list and the other to the tail of the list. The elements are doubly
+ * linked so that an arbitrary element can be removed without a need to
+ * traverse the list. New elements can be added to the list before or
+ * after an existing element, at the head of the list, or at the end of
+ * the list. A tail queue may only be traversed in the forward direction
+ * by lock-free readers.
  */
 
 /*
