@@ -8,22 +8,21 @@
 #include <linux/preempt.h>
 #include <linux/bottom_half.h>
 
-static inline void
-spin_lock_irqsave(struct mutex *mtxp, __unused unsigned long flags)
-{
-	mtx_enter(mtxp);
-}
-static inline void
-spin_lock_irqsave_nested(struct mutex *mtxp, __unused unsigned long flags,
-    __unused int subclass)
-{
-	mtx_enter(mtxp);
-}
-static inline void
-spin_unlock_irqrestore(struct mutex *mtxp, __unused unsigned long flags)
-{
-	mtx_leave(mtxp);
-}
+#define spin_lock_irqsave(_mtxp, _flags) do {			\
+		_flags = 0;					\
+		mtx_enter(_mtxp);				\
+	} while (0)
+
+#define spin_lock_irqsave_nested(_mtxp, _flags, _subclass) do {	\
+		(void)(_subclass);				\
+		_flags = 0;					\
+		mtx_enter(_mtxp);				\
+	} while (0)
+
+#define spin_unlock_irqrestore(_mtxp, _flags) do {		\
+		(void)(_flags);					\
+		mtx_leave(_mtxp);				\
+	} while (0)
 
 #define spin_lock(mtxp)			mtx_enter(mtxp)
 #define spin_lock_nested(mtxp, l)	mtx_enter(mtxp)

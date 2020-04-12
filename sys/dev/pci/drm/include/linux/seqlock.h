@@ -99,12 +99,16 @@ write_seqlock(seqlock_t *sl)
 }
 
 static inline void
-write_seqlock_irqsave(seqlock_t *sl, __unused long flags)
+__write_seqlock_irqsave(seqlock_t *sl)
 {
 	mtx_enter(&sl->lock);
 	sl->seq++;
 	membar_producer();
 }
+#define write_seqlock_irqsave(_sl, _flags) do {			\
+		_flags = 0;					\
+		__write_seqlock_irqsave(_sl);			\
+	} while (0)
 
 static inline void
 write_sequnlock(seqlock_t *sl)
@@ -115,12 +119,16 @@ write_sequnlock(seqlock_t *sl)
 }
 
 static inline void
-write_sequnlock_irqrestore(seqlock_t *sl, __unused long flags)
+__write_sequnlock_irqrestore(seqlock_t *sl)
 {
 	membar_producer();
 	sl->seq++;
 	mtx_leave(&sl->lock);
 }
+#define write_sequnlock_irqrestore(_sl, _flags) do {		\
+		(void)(_flags);					\
+		__write_sequnlock_irqrestore(_sl);		\
+	} while (0)
 
 static inline unsigned int
 read_seqbegin(seqlock_t *sl)
