@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-panes.c,v 1.33 2017/05/01 12:20:55 nicm Exp $ */
+/* $OpenBSD: cmd-list-panes.c,v 1.34 2020/04/12 08:36:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -38,8 +38,8 @@ const struct cmd_entry cmd_list_panes_entry = {
 	.name = "list-panes",
 	.alias = "lsp",
 
-	.args = { "asF:t:", 0, 0 },
-	.usage = "[-as] [-F format] " CMD_TARGET_WINDOW_USAGE,
+	.args = { "asF:f:t:", 0, 0 },
+	.usage = "[-as] [-F format] [-f filter] " CMD_TARGET_WINDOW_USAGE,
 
 	.target = { 't', CMD_FIND_WINDOW, 0 },
 
@@ -91,8 +91,9 @@ cmd_list_panes_window(struct cmd *self, struct session *s, struct winlink *wl,
 	struct window_pane	*wp;
 	u_int			 n;
 	struct format_tree	*ft;
-	const char		*template;
-	char			*line;
+	const char		*template, *filter;
+	char			*line, *expanded;
+	int			 flag;
 
 	template = args_get(args, 'F');
 	if (template == NULL) {
@@ -120,6 +121,7 @@ cmd_list_panes_window(struct cmd *self, struct session *s, struct winlink *wl,
 			break;
 		}
 	}
+	filter = args_get(args, 'f');
 
 	n = 0;
 	TAILQ_FOREACH(wp, &wl->window->panes, entry) {
@@ -127,9 +129,17 @@ cmd_list_panes_window(struct cmd *self, struct session *s, struct winlink *wl,
 		format_add(ft, "line", "%u", n);
 		format_defaults(ft, NULL, s, wl, wp);
 
-		line = format_expand(ft, template);
-		cmdq_print(item, "%s", line);
-		free(line);
+		if (filter != NULL) {
+			expanded = format_expand(ft, filter);
+			flag = format_true(expanded);
+			free(expanded);
+		} else
+			flag = 1;
+		if (flag) {
+			line = format_expand(ft, template);
+			cmdq_print(item, "%s", line);
+			free(line);
+		}
 
 		format_free(ft);
 		n++;
