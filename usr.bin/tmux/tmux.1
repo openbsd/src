@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.736 2020/04/10 20:53:54 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.737 2020/04/12 08:13:41 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 10 2020 $
+.Dd $Mdocdate: April 12 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3318,6 +3318,9 @@ with
 .Fl np .
 .It Ic message-command-style Ar style
 Set status line message command style.
+This is used for the command prompt with
+.Xr vi 1
+keys when in command mode.
 For how to specify
 .Ar style ,
 see the
@@ -3325,6 +3328,7 @@ see the
 section.
 .It Ic message-style Ar style
 Set status line message style.
+This is used for messages and for the command prompt.
 For how to specify
 .Ar style ,
 see the
