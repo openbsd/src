@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.83 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.84 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -52,12 +52,14 @@ static enum cmd_retval
 cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
-	struct cmd_find_state	*current = &item->shared->current;
+	struct cmdq_shared	*shared = cmdq_get_shared(item);
+	struct cmd_find_state	*current = &shared->current;
+	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct spawn_context	 sc;
 	struct client		*c = cmd_find_client(item, NULL, 1);
-	struct session		*s = item->target.s;
-	struct winlink		*wl = item->target.wl;
-	int			 idx = item->target.idx;
+	struct session		*s = target->s;
+	struct winlink		*wl = target->wl;
+	int			 idx = target->idx;
 	struct winlink		*new_wl;
 	char			*cause = NULL, *cp;
 	const char		*template, *add;

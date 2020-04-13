@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.30 2020/04/13 07:25:33 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.31 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -189,17 +189,18 @@ notify_add(const char *name, struct cmd_find_state *fs, struct client *c,
 void
 notify_hook(struct cmdq_item *item, const char *name)
 {
-	struct notify_entry	ne;
+	struct cmd_find_state	*target = cmdq_get_target(item);
+	struct notify_entry	 ne;
 
 	memset(&ne, 0, sizeof ne);
 
 	ne.name = name;
-	cmd_find_copy_state(&ne.fs, &item->target);
+	cmd_find_copy_state(&ne.fs, target);
 
-	ne.client = item->client;
-	ne.session = item->target.s;
-	ne.window = item->target.w;
-	ne.pane = item->target.wp->id;
+	ne.client = cmdq_get_client(item);
+	ne.session = target->s;
+	ne.window = target->w;
+	ne.pane = target->wp->id;
 
 	notify_insert_hook(item, &ne);
 }

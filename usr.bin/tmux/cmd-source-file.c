@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.46 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.47 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -125,7 +125,7 @@ cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args			*args = cmd_get_args(self);
 	struct cmd_source_file_data	*cdata;
-	struct client			*c = item->client;
+	struct client			*c = cmdq_get_client(item);
 	enum cmd_retval			 retval = CMD_RETURN_NORMAL;
 	char				*pattern, *cwd;
 	const char			*path, *error;

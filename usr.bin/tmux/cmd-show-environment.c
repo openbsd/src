@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.25 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.26 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -98,13 +98,14 @@ static enum cmd_retval
 cmd_show_environment_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
+	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct environ		*env;
 	struct environ_entry	*envent;
-	const char		*target;
+	const char		*tflag;
 
-	if ((target = args_get(args, 't')) != NULL) {
-		if (item->target.s == NULL) {
-			cmdq_error(item, "no such session: %s", target);
+	if ((tflag = args_get(args, 't')) != NULL) {
+		if (target->s == NULL) {
+			cmdq_error(item, "no such session: %s", tflag);
 			return (CMD_RETURN_ERROR);
 		}
 	}
@@ -112,15 +113,15 @@ cmd_show_environment_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'g'))
 		env = global_environ;
 	else {
-		if (item->target.s == NULL) {
-			target = args_get(args, 't');
-			if (target != NULL)
-				cmdq_error(item, "no such session: %s", target);
+		if (target->s == NULL) {
+			tflag = args_get(args, 't');
+			if (tflag != NULL)
+				cmdq_error(item, "no such session: %s", tflag);
 			else
 				cmdq_error(item, "no current session");
 			return (CMD_RETURN_ERROR);
 		}
-		env = item->target.s->environ;
+		env = target->s->environ;
 	}
 
 	if (args->argc != 0) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-wait-for.c,v 1.19 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-wait-for.c,v 1.20 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -167,7 +167,7 @@ static enum cmd_retval
 cmd_wait_for_wait(struct cmdq_item *item, const char *name,
     struct wait_channel *wc)
 {
-	struct client		*c = item->client;
+	struct client		*c = cmdq_get_client(item);
 	struct wait_item	*wi;
 
 	if (c == NULL) {
@@ -198,7 +198,7 @@ cmd_wait_for_lock(struct cmdq_item *item, const char *name,
 {
 	struct wait_item	*wi;
 
-	if (item->client == NULL) {
+	if (cmdq_get_client(item) == NULL) {
 		cmdq_error(item, "not able to lock");
 		return (CMD_RETURN_ERROR);
 	}

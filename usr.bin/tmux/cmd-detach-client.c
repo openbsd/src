@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.33 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.34 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -57,11 +57,12 @@ const struct cmd_entry cmd_suspend_client_entry = {
 static enum cmd_retval
 cmd_detach_client_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args	*args = cmd_get_args(self);
-	struct client	*c, *cloop;
-	struct session	*s;
-	enum msgtype	 msgtype;
-	const char	*cmd = args_get(args, 'E');
+	struct args		*args = cmd_get_args(self);
+	struct cmd_find_state	*source = cmdq_get_source(item);
+	struct client		*c, *cloop;
+	struct session		*s;
+	enum msgtype		 msgtype;
+	const char		*cmd = args_get(args, 'E');
 
 	if ((c = cmd_find_client(item, args_get(args, 't'), 0)) == NULL)
 		return (CMD_RETURN_ERROR);
@@ -77,7 +78,7 @@ cmd_detach_client_exec(struct cmd *self, struct cmdq_item *item)
 		msgtype = MSG_DETACH;
 
 	if (args_has(args, 's')) {
-		s = item->source.s;
+		s = source->s;
 		if (s == NULL)
 			return (CMD_RETURN_NORMAL);
 		TAILQ_FOREACH(cloop, &clients, entry) {

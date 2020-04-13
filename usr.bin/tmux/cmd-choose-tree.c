@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.45 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.46 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -72,7 +72,8 @@ static enum cmd_retval
 cmd_choose_tree_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args			*args = cmd_get_args(self);
-	struct window_pane		*wp = item->target.wp;
+	struct cmd_find_state		*target = cmdq_get_target(item);
+	struct window_pane		*wp = target->wp;
 	const struct window_mode	*mode;
 
 	if (cmd_get_entry(self) == &cmd_choose_buffer_entry) {
@@ -86,6 +87,6 @@ cmd_choose_tree_exec(struct cmd *self, struct cmdq_item *item)
 	} else
 		mode = &window_tree_mode;
 
-	window_pane_set_mode(wp, NULL, mode, &item->target, args);
+	window_pane_set_mode(wp, NULL, mode, target, args);
 	return (CMD_RETURN_NORMAL);
 }

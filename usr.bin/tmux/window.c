@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.255 2020/04/10 07:44:26 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.256 2020/04/13 10:59:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1536,7 +1536,7 @@ int
 window_pane_start_input(struct window_pane *wp, struct cmdq_item *item,
     char **cause)
 {
-	struct client			*c = item->client;
+	struct client			*c = cmdq_get_client(item);
 	struct window_pane_input_data	*cdata;
 
 	if (~wp->flags & PANE_EMPTY) {

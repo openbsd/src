@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.54 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.55 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -329,7 +329,7 @@ cmd_list_keys_commands(struct cmd *self, struct cmdq_item *item)
 		    "#{command_list_usage}";
 	}
 
-	ft = format_create(item->client, item, FORMAT_NONE, 0);
+	ft = format_create(cmdq_get_client(item), item, FORMAT_NONE, 0);
 	format_defaults(ft, NULL, NULL, NULL, NULL);
 
 	for (entryp = cmd_table; *entryp != NULL; entryp++) {

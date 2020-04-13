@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.52 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.53 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -193,8 +193,8 @@ static enum cmd_retval
 cmd_capture_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
-	struct client		*c = item->client;
-	struct window_pane	*wp = item->target.wp;
+	struct client		*c = cmdq_get_client(item);
+	struct window_pane	*wp = cmdq_get_target(item)->wp;
 	char			*buf, *cause;
 	const char		*bufname;
 	size_t			 len;

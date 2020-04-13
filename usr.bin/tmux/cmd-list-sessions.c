@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-sessions.c,v 1.32 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-list-sessions.c,v 1.33 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -66,7 +66,7 @@ cmd_list_sessions_exec(struct cmd *self, struct cmdq_item *item)
 
 	n = 0;
 	RB_FOREACH(s, sessions, &sessions) {
-		ft = format_create(item->client, item, FORMAT_NONE, 0);
+		ft = format_create(cmdq_get_client(item), item, FORMAT_NONE, 0);
 		format_add(ft, "line", "%u", n);
 		format_defaults(ft, NULL, s, NULL, NULL);
 

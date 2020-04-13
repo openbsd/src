@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-panes.c,v 1.35 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-list-panes.c,v 1.36 2020/04/13 10:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -50,9 +50,10 @@ const struct cmd_entry cmd_list_panes_entry = {
 static enum cmd_retval
 cmd_list_panes_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args	*args = cmd_get_args(self);
-	struct session	*s = item->target.s;
-	struct winlink	*wl = item->target.wl;
+	struct args		*args = cmd_get_args(self);
+	struct cmd_find_state	*target = cmdq_get_target(item);
+	struct session		*s = target->s;
+	struct winlink		*wl = target->wl;
 
 	if (args_has(args, 'a'))
 		cmd_list_panes_server(self, item);
@@ -125,7 +126,7 @@ cmd_list_panes_window(struct cmd *self, struct session *s, struct winlink *wl,
 
 	n = 0;
 	TAILQ_FOREACH(wp, &wl->window->panes, entry) {
-		ft = format_create(item->client, item, FORMAT_NONE, 0);
+		ft = format_create(cmdq_get_client(item), item, FORMAT_NONE, 0);
 		format_add(ft, "line", "%u", n);
 		format_defaults(ft, NULL, s, wl, wp);
 
