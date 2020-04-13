@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.988 2020/04/13 16:19:37 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.989 2020/04/13 18:59:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2089,6 +2089,12 @@ void	    	 cmd_parse_empty(struct cmd_parse_input *);
 struct cmd_parse_result *cmd_parse_from_file(FILE *, struct cmd_parse_input *);
 struct cmd_parse_result *cmd_parse_from_string(const char *,
 		     struct cmd_parse_input *);
+enum cmd_parse_status cmd_parse_and_insert(const char *,
+		     struct cmd_parse_input *, struct cmdq_item *,
+		     struct cmdq_state *, char **);
+enum cmd_parse_status cmd_parse_and_append(const char *,
+		     struct cmd_parse_input *, struct client *,
+		     struct cmdq_state *, char **);
 struct cmd_parse_result *cmd_parse_from_buffer(const void *, size_t,
 		     struct cmd_parse_input *);
 struct cmd_parse_result *cmd_parse_from_arguments(int, char **,

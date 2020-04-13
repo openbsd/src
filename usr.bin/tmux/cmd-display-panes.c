@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.32 2020/04/13 15:55:51 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.33 2020/04/13 18:59:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -197,11 +197,10 @@ static int
 cmd_display_panes_key(struct client *c, struct key_event *event)
 {
 	struct cmd_display_panes_data	*cdata = c->overlay_data;
-	struct cmdq_item		*new_item;
-	char				*cmd, *expanded;
+	char				*cmd, *expanded, *error;
 	struct window			*w = c->session->curw->window;
 	struct window_pane		*wp;
-	struct cmd_parse_result		*pr;
+	enum cmd_parse_status		 status;
 
 	if (event->key < '0' || event->key > '9')
 		return (-1);
@@ -214,21 +213,10 @@ cmd_display_panes_key(struct client *c, struct key_event *event)
 	xasprintf(&expanded, "%%%u", wp->id);
 	cmd = cmd_template_replace(cdata->command, expanded, 1);
 
-	pr = cmd_parse_from_string(cmd, NULL);
-	switch (pr->status) {
-	case CMD_PARSE_EMPTY:
-		new_item = NULL;
-		break;
-	case CMD_PARSE_ERROR:
-		new_item = cmdq_get_error(pr->error);
-		free(pr->error);
-		cmdq_append(c, new_item);
-		break;
-	case CMD_PARSE_SUCCESS:
-		new_item = cmdq_get_command(pr->cmdlist, NULL);
-		cmd_list_free(pr->cmdlist);
-		cmdq_append(c, new_item);
-		break;
+	status = cmd_parse_and_append(cmd, NULL, c, NULL, &error);
+	if (status == CMD_PARSE_ERROR) {
+		cmdq_append(c, cmdq_get_error(error));
+		free(error);
 	}
 
 	free(cmd);

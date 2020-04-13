@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.25 2020/04/13 16:19:37 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.26 2020/04/13 18:59:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -791,6 +791,58 @@ cmd_parse_from_string(const char *s, struct cmd_parse_input *pi)
 	 */
 	pi->flags |= CMD_PARSE_ONEGROUP;
 	return (cmd_parse_from_buffer(s, strlen(s), pi));
+}
+
+enum cmd_parse_status
+cmd_parse_and_insert(const char *s, struct cmd_parse_input *pi,
+    struct cmdq_item *after, struct cmdq_state *state, char **error)
+{
+	struct cmd_parse_result	*pr;
+	struct cmdq_item	*item;
+
+	pr = cmd_parse_from_string(s, pi);
+	switch (pr->status) {
+	case CMD_PARSE_EMPTY:
+		break;
+	case CMD_PARSE_ERROR:
+		if (error != NULL)
+			*error = pr->error;
+		else
+			free(pr->error);
+		break;
+	case CMD_PARSE_SUCCESS:
+		item = cmdq_get_command(pr->cmdlist, state);
+		cmdq_insert_after(after, item);
+		cmd_list_free(pr->cmdlist);
+		break;
+	}
+	return (pr->status);
+}
+
+enum cmd_parse_status
+cmd_parse_and_append(const char *s, struct cmd_parse_input *pi,
+    struct client *c, struct cmdq_state *state, char **error)
+{
+	struct cmd_parse_result	*pr;
+	struct cmdq_item	*item;
+
+	pr = cmd_parse_from_string(s, pi);
+	switch (pr->status) {
+	case CMD_PARSE_EMPTY:
+		break;
+	case CMD_PARSE_ERROR:
+		if (error != NULL)
+			*error = pr->error;
+		else
+			free(pr->error);
+		break;
+	case CMD_PARSE_SUCCESS:
+		item = cmdq_get_command(pr->cmdlist, state);
+		cmdq_append(c, item);
+		cmd_list_free(pr->cmdlist);
+		break;
+	}
+	return (pr->status);
 }
 
 struct cmd_parse_result *
