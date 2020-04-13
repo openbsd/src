@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-window.c,v 1.24 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-rename-window.c,v 1.25 2020/04/13 20:51:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -47,11 +47,10 @@ cmd_rename_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
 	struct cmd_find_state	*target = cmdq_get_target(item);
-	struct client		*c = cmd_find_client(item, NULL, 1);
 	struct winlink		*wl = target->wl;
 	char			*newname;
 
-	newname = format_single_from_target(item, args->argv[0], c);
+	newname = format_single_from_target(item, args->argv[0]);
 	window_set_name(wl->window, newname);
 	options_set_number(wl->window->options, "automatic-rename", 0);
 

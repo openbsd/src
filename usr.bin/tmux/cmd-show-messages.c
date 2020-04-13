@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.29 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.30 2020/04/13 20:51:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_show_messages_entry = {
 	.args = { "JTt:", 0, 0 },
 	.usage = "[-JT] " CMD_TARGET_CLIENT_USAGE,
 
-	.flags = CMD_AFTERHOOK,
+	.flags = CMD_AFTERHOOK|CMD_CLIENT_TFLAG,
 	.exec = cmd_show_messages_exec
 };
 
@@ -74,9 +74,6 @@ cmd_show_messages_exec(struct cmd *self, struct cmdq_item *item)
 	struct message_entry	*msg;
 	char			*tim;
 	int			 done, blank;
-
-	if ((c = cmd_find_client(item, args_get(args, 't'), 0)) == NULL)
-		return (CMD_RETURN_ERROR);
 
 	done = blank = 0;
 	if (args_has(args, 'T')) {

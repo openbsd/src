@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.270 2020/04/10 07:44:26 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.271 2020/04/13 20:51:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -130,7 +130,8 @@ static void	window_copy_rectangle_toggle(struct window_mode_entry *);
 static void	window_copy_move_mouse(struct mouse_event *);
 static void	window_copy_drag_update(struct client *, struct mouse_event *);
 static void	window_copy_drag_release(struct client *, struct mouse_event *);
-static struct screen* window_copy_clone_screen(struct screen *, struct screen*);
+static struct screen *window_copy_clone_screen(struct screen *,
+		    struct screen *);
 
 const struct window_mode window_copy_mode = {
 	.name = "copy-mode",

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.49 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.50 2020/04/13 20:51:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -74,7 +74,6 @@ static enum cmd_retval
 cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
-	struct client		*c = cmd_find_client(item, NULL, 1);
 	struct paste_buffer	*pb;
 	int			 flags;
 	const char		*bufname = args_get(args, 'b'), *bufdata;
@@ -98,7 +97,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	if (cmd_get_entry(self) == &cmd_show_buffer_entry)
 		path = xstrdup("-");
 	else
-		path = format_single_from_target(item, args->argv[0], c);
+		path = format_single_from_target(item, args->argv[0]);
 	if (args_has(args, 'a'))
 		flags = O_APPEND;
 	else

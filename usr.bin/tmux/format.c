@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.240 2020/04/13 14:46:04 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.241 2020/04/13 20:51:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2429,12 +2429,12 @@ format_single(struct cmdq_item *item, const char *fmt, struct client *c,
 
 /* Expand a single string using target. */
 char *
-format_single_from_target(struct cmdq_item *item, const char *fmt,
-    struct client *c)
+format_single_from_target(struct cmdq_item *item, const char *fmt)
 {
 	struct cmd_find_state	*target = cmdq_get_target(item);
+	struct client		*tc = cmdq_get_target_client(item);
 
-	return (format_single(item, fmt, c, target->s, target->wl, target->wp));
+	return (format_single(item, fmt, tc, target->s, target->wl, target->wp));
 }
 
 /* Set defaults for any of arguments that are not NULL. */

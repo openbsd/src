@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.102 2020/04/13 14:46:04 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.103 2020/04/13 20:51:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -57,7 +57,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct cmd_find_state	*current = cmdq_get_current(item);
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct spawn_context	 sc;
-	struct client		*c = cmd_find_client(item, NULL, 1);
+	struct client		*tc = cmdq_get_target_client(item);
 	struct session		*s = target->s;
 	struct winlink		*wl = target->wl;
 	struct window_pane	*wp = target->wp, *new_wp;
@@ -174,7 +174,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'P')) {
 		if ((template = args_get(args, 'F')) == NULL)
 			template = SPLIT_WINDOW_TEMPLATE;
-		cp = format_single(item, template, c, s, wl, new_wp);
+		cp = format_single(item, template, tc, s, wl, new_wp);
 		cmdq_print(item, "%s", cp);
 		free(cp);
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.256 2020/04/13 10:59:59 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.257 2020/04/13 20:51:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1150,7 +1150,7 @@ window_pane_key(struct window_pane *wp, struct client *c, struct session *s,
 
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme != NULL) {
-		if (wme->mode->key != NULL)
+		if (wme->mode->key != NULL && c != NULL)
 			wme->mode->key(wme, c, s, wl, (key & ~KEYC_XTERM), m);
 		return (0);
 	}

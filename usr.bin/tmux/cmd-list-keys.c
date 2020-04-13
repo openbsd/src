@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.55 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.56 2020/04/13 20:51:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -85,7 +85,7 @@ static int
 cmd_list_keys_print_notes(struct cmdq_item *item, struct args *args,
     const char *tablename, u_int keywidth, key_code only, const char *prefix)
 {
-	struct client		*c = cmd_find_client(item, NULL, 1);
+	struct client		*tc = cmdq_get_target_client(item);
 	struct key_table	*table;
 	struct key_binding	*bd;
 	const char		*key;
@@ -111,8 +111,8 @@ cmd_list_keys_print_notes(struct cmdq_item *item, struct args *args,
 		else
 			note = xstrdup(bd->note);
 		tmp = utf8_padcstr(key, keywidth + 1);
-		if (args_has(args, '1') && c != NULL)
-			status_message_set(c, "%s%s%s", prefix, tmp, note);
+		if (args_has(args, '1') && tc != NULL)
+			status_message_set(tc, "%s%s%s", prefix, tmp, note);
 		else
 			cmdq_print(item, "%s%s%s", prefix, tmp, note);
 		free(tmp);

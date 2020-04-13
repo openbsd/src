@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.20 2020/04/13 10:59:59 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.21 2020/04/13 20:51:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -153,7 +153,7 @@ spawn_window(struct spawn_context *sc, char **cause)
 			xasprintf(cause, "couldn't add window %d", idx);
 			return (NULL);
 		}
-		default_window_size(sc->c, s, NULL, &sx, &sy, &xpixel, &ypixel,
+		default_window_size(sc->tc, s, NULL, &sx, &sy, &xpixel, &ypixel,
 		    -1);
 		if ((w = window_create(sx, sy, xpixel, ypixel)) == NULL) {
 			winlink_remove(&s->windows, sc->wl);
@@ -163,7 +163,7 @@ spawn_window(struct spawn_context *sc, char **cause)
 		if (s->curw == NULL)
 			s->curw = sc->wl;
 		sc->wl->session = s;
-		w->latest = sc->c;
+		w->latest = sc->tc;
 		winlink_set_window(sc->wl, w);
 	} else
 		w = NULL;
