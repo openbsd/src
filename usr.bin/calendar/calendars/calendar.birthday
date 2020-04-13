@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.64 2016/08/31 12:33:03 schwarze Exp $
+ * $OpenBSD: calendar.birthday,v 1.65 2020/04/13 13:28:26 jmc Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -73,7 +73,7 @@
 02/15	Galileo Galilei born in Pisa, Italy, 1564
 02/15	Susan B. Anthony born, 1820
 02/16	Pierre Bouguer born, 1698, founder of photometry
-02/17	Federic Eugene Ives born, 1856, pioneer of halftone process
+02/17	Frederic Eugene Ives born, 1856, pioneer of halftone process
 02/17	T. J. Watson, Sr. born, 1874
 02/17	Marion Anderson born, 1902
 02/18	Ernst Mach born, 1838, philosopher & optics pioneer
