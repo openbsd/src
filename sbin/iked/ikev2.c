@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.214 2020/04/11 20:14:11 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.215 2020/04/13 19:10:32 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -408,6 +408,21 @@ ikev2_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (-1);
 	}
 
+	return (0);
+}
+
+/* try to delete established SA if no other exchange is active */
+int
+ikev2_ike_sa_delete(struct iked *env, struct iked_sa *sa)
+{
+	if (sa->sa_state != IKEV2_STATE_ESTABLISHED)
+		return (-1);
+	if (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF))
+		return (-1);
+	ikev2_disable_timer(env, sa);
+	ikev2_ike_sa_setreason(sa, "reset sa control message");
+	ikev2_ikesa_delete(env, sa, 1);
+	timer_add(env, &sa->sa_timer, 0);
 	return (0);
 }
 

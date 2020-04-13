@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.56 2020/04/09 19:55:19 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.57 2020/04/13 19:10:32 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -527,8 +527,12 @@ config_getreset(struct iked *env, struct imsg *imsg)
 		for (sa = RB_MIN(iked_sas, &env->sc_sas);
 		    sa != NULL; sa = nextsa) {
 			nextsa = RB_NEXT(iked_sas, &env->sc_sas, sa);
-			RB_REMOVE(iked_sas, &env->sc_sas, sa);
-			config_free_sa(env, sa);
+			/* for RESET_SA we try send a DELETE */
+			if (mode == RESET_ALL ||
+			    ikev2_ike_sa_delete(env, sa) != 0) {
+				RB_REMOVE(iked_sas, &env->sc_sas, sa);
+				config_free_sa(env, sa);
+			}
 		}
 	}
 
