@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.100 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.101 2020/04/13 14:04:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,8 +54,8 @@ static enum cmd_retval
 cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
-	struct cmdq_shared	*shared = cmdq_get_shared(item);
-	struct cmd_find_state	*current = &shared->current;
+	struct cmdq_state	*state = cmdq_get_state(item);
+	struct cmd_find_state	*current = &state->current;
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct spawn_context	 sc;
 	struct client		*c = cmd_find_client(item, NULL, 1);

@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.26 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.27 2020/04/13 14:04:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -86,7 +86,7 @@ control_callback(__unused struct client *c, __unused const char *path,
 			break;
 		case CMD_PARSE_SUCCESS:
 			item = cmdq_get_command(pr->cmdlist, NULL, NULL, 0);
-			cmdq_get_shared(item)->flags |= CMDQ_SHARED_CONTROL;
+			cmdq_get_state(item)->flags |= CMDQ_STATE_CONTROL;
 			cmdq_append(c, item);
 			cmd_list_free(pr->cmdlist);
 			break;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.56 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.57 2020/04/13 14:04:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -85,8 +85,8 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
 	const struct cmd_entry	*entry = cmd_get_entry(self);
-	struct cmdq_shared	*shared = cmdq_get_shared(item);
-	struct cmd_find_state	*current = &shared->current;
+	struct cmdq_state	*state = cmdq_get_state(item);
+	struct cmd_find_state	*current = &state->current;
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct client		*c = cmd_find_client(item, NULL, 1);
 	struct winlink		*wl = target->wl;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.44 2020/04/13 13:42:35 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.45 2020/04/13 14:04:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -50,7 +50,7 @@ static enum cmd_retval
 cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
-	struct cmdq_shared	*shared = cmdq_get_shared(item);
+	struct cmdq_state	*state = cmdq_get_state(item);
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct window_pane	*wp = target->wp;
 	struct winlink		*wl = target->wl;
@@ -76,12 +76,12 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	if (args_has(args, 'M')) {
-		if (cmd_mouse_window(&shared->event.m, &s) == NULL)
+		if (cmd_mouse_window(&state->event.m, &s) == NULL)
 			return (CMD_RETURN_NORMAL);
 		if (c == NULL || c->session != s)
 			return (CMD_RETURN_NORMAL);
 		c->tty.mouse_drag_update = cmd_resize_pane_mouse_update;
-		cmd_resize_pane_mouse_update(c, &shared->event.m);
+		cmd_resize_pane_mouse_update(c, &state->event.m);
 		return (CMD_RETURN_NORMAL);
 	}
 
