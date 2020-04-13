@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.79 2020/04/10 07:44:26 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.80 2020/04/13 15:55:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -183,7 +183,7 @@ load_cfg(const char *path, struct client *c, struct cmdq_item *item, int flags,
 		return (0);
 	}
 
-	new_item0 = cmdq_get_command(pr->cmdlist, NULL, NULL, 0);
+	new_item0 = cmdq_get_command(pr->cmdlist, NULL);
 	if (item != NULL)
 		new_item0 = cmdq_insert_after(item, new_item0);
 	else
@@ -229,7 +229,7 @@ load_cfg_from_buffer(const void *buf, size_t len, const char *path,
 		return (0);
 	}
 
-	new_item0 = cmdq_get_command(pr->cmdlist, NULL, NULL, 0);
+	new_item0 = cmdq_get_command(pr->cmdlist, NULL);
 	if (item != NULL)
 		new_item0 = cmdq_insert_after(item, new_item0);
 	else

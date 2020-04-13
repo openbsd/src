@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.158 2020/04/13 08:26:27 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.159 2020/04/13 15:55:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -392,6 +392,13 @@ cmd_get_args(struct cmd *cmd)
 	return (cmd->args);
 }
 
+/* Get group for command. */
+u_int
+cmd_get_group(struct cmd *cmd)
+{
+	return (cmd->group);
+}
+
 /* Get file and line for command. */
 void
 cmd_get_source(struct cmd *cmd, const char **file, u_int *line)
@@ -646,24 +653,16 @@ cmd_list_print(struct cmd_list *cmdlist, int escaped)
 
 /* Get first command in list. */
 struct cmd *
-cmd_list_first(struct cmd_list *cmdlist, u_int *group)
+cmd_list_first(struct cmd_list *cmdlist)
 {
-	struct cmd	*cmd;
-
-	cmd = TAILQ_FIRST(cmdlist->list);
-	if (cmd != NULL && group != NULL)
-		*group = cmd->group;
-	return (cmd);
+	return (TAILQ_FIRST(cmdlist->list));
 }
 
 /* Get next command in list. */
 struct cmd *
-cmd_list_next(struct cmd *cmd, u_int *group)
+cmd_list_next(struct cmd *cmd)
 {
-	cmd = TAILQ_NEXT(cmd, qentry);
-	if (cmd != NULL && group != NULL)
-		*group = cmd->group;
-	return (cmd);
+	return (TAILQ_NEXT(cmd, qentry));
 }
 
 /* Do all of the commands in this command list have this flag? */

@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.317 2020/04/13 14:46:04 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.318 2020/04/13 15:55:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1949,7 +1949,7 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 	}
 	cmd_free_argv(argc, argv);
 
-	cmdq_append(c, cmdq_get_command(pr->cmdlist, NULL, NULL, 0));
+	cmdq_append(c, cmdq_get_command(pr->cmdlist, NULL));
 	cmdq_append(c, cmdq_get_callback(server_client_command_done, NULL));
 
 	cmd_list_free(pr->cmdlist);
