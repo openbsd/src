@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rotate-window.c,v 1.30 2020/04/13 14:04:25 nicm Exp $ */
+/* $OpenBSD: cmd-rotate-window.c,v 1.31 2020/04/13 14:46:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,8 +44,7 @@ static enum cmd_retval
 cmd_rotate_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
-	struct cmdq_state	*state = cmdq_get_state(item);
-	struct cmd_find_state	*current = &state->current;
+	struct cmd_find_state	*current = cmdq_get_current(item);
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct winlink		*wl = target->wl;
 	struct window		*w = wl->window;

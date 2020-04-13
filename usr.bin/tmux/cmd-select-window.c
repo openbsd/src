@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-window.c,v 1.26 2020/04/13 14:04:25 nicm Exp $ */
+/* $OpenBSD: cmd-select-window.c,v 1.27 2020/04/13 14:46:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -85,8 +85,7 @@ static enum cmd_retval
 cmd_select_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
-	struct cmdq_state	*state = cmdq_get_state(item);
-	struct cmd_find_state	*current = &state->current;
+	struct cmd_find_state	*current = cmdq_get_current(item);
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct winlink		*wl = target->wl;
 	struct session		*s = target->s;

@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.18 2020/04/13 14:04:25 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.19 2020/04/13 14:46:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -282,10 +282,10 @@ chosen:
 		break;
 	case CMD_PARSE_SUCCESS:
 		if (md->item != NULL)
-			m = &cmdq_get_state(md->item)->event.m;
+			event = cmdq_get_event(md->item);
 		else
-			m = NULL;
-		new_item = cmdq_get_command(pr->cmdlist, &md->fs, m, 0);
+			event = NULL;
+		new_item = cmdq_get_command(pr->cmdlist, &md->fs, event, 0);
 		cmd_list_free(pr->cmdlist);
 		cmdq_append(c, new_item);
 		break;

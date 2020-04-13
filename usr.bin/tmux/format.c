@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.239 2020/04/13 14:04:25 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.240 2020/04/13 14:46:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1124,16 +1124,13 @@ format_merge(struct format_tree *ft, struct format_tree *from)
 static void
 format_create_add_item(struct format_tree *ft, struct cmdq_item *item)
 {
-	struct cmdq_state	*state = cmdq_get_state(item);
-	struct mouse_event	*m;
+	struct key_event	*event = cmdq_get_event(item);
+	struct mouse_event	*m = &event->m;
 	struct window_pane	*wp;
 	u_int			 x, y;
 
 	cmdq_merge_formats(item, ft);
 
-	if (state == NULL)
-		return;
-	m = &state->event.m;
 	if (m->valid && ((wp = cmd_mouse_pane(m, NULL, NULL)) != NULL)) {
 		format_add(ft, "mouse_pane", "%%%u", wp->id);
 		if (cmd_mouse_at(wp, m, &x, &y, 0) == 0) {
