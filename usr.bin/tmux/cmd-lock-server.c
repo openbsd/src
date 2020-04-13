@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-lock-server.c,v 1.29 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-lock-server.c,v 1.30 2020/04/13 20:54:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -64,7 +64,6 @@ const struct cmd_entry cmd_lock_client_entry = {
 static enum cmd_retval
 cmd_lock_server_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = cmd_get_args(self);
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct client		*tc = cmdq_get_target_client(item);
 

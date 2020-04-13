@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.62 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.63 2020/04/13 20:54:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -79,7 +79,6 @@ cmd_show_options_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args			*args = cmd_get_args(self);
 	struct cmd_find_state		*target = cmdq_get_target(item);
-	struct client			*tc = cmdq_get_target_client(item);
 	struct options			*oo;
 	char				*argument, *name = NULL, *cause;
 	int				 window, idx, ambiguous, parent, scope;

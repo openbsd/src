@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.132 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.133 2020/04/13 20:54:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -84,7 +84,6 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 	struct args			*args = cmd_get_args(self);
 	int				 append = args_has(args, 'a');
 	struct cmd_find_state		*target = cmdq_get_target(item);
-	struct client			*tc = cmdq_get_target_client(item);
 	struct client			*loop;
 	struct session			*s = target->s;
 	struct window			*w;
