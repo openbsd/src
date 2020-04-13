@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.32 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.33 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -57,7 +57,7 @@ const struct cmd_entry cmd_suspend_client_entry = {
 static enum cmd_retval
 cmd_detach_client_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args	*args = self->args;
+	struct args	*args = cmd_get_args(self);
 	struct client	*c, *cloop;
 	struct session	*s;
 	enum msgtype	 msgtype;
@@ -66,7 +66,7 @@ cmd_detach_client_exec(struct cmd *self, struct cmdq_item *item)
 	if ((c = cmd_find_client(item, args_get(args, 't'), 0)) == NULL)
 		return (CMD_RETURN_ERROR);
 
-	if (self->entry == &cmd_suspend_client_entry) {
+	if (cmd_get_entry(self) == &cmd_suspend_client_entry) {
 		server_client_suspend(c);
 		return (CMD_RETURN_NORMAL);
 	}

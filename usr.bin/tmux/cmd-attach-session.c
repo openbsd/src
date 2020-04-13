@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.79 2019/11/29 16:04:07 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.80 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -177,7 +177,7 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 static enum cmd_retval
 cmd_attach_session_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args	*args = self->args;
+	struct args	*args = cmd_get_args(self);
 
 	return (cmd_attach_session(item, args_get(args, 't'),
 	    args_has(args, 'd'), args_has(args, 'x'), args_has(args, 'r'),

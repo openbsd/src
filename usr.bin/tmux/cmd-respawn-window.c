@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-window.c,v 1.41 2020/03/31 17:14:40 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-window.c,v 1.42 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -47,7 +47,7 @@ const struct cmd_entry cmd_respawn_window_entry = {
 static enum cmd_retval
 cmd_respawn_window_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
+	struct args		*args = cmd_get_args(self);
 	struct spawn_context	 sc;
 	struct session		*s = item->target.s;
 	struct winlink		*wl = item->target.wl;

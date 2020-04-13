@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.64 2020/04/10 07:44:26 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.65 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -89,7 +89,7 @@ cmd_run_shell_print(struct job *job, const char *msg)
 static enum cmd_retval
 cmd_run_shell_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args			*args = self->args;
+	struct args			*args = cmd_get_args(self);
 	struct cmd_run_shell_data	*cdata;
 	struct client			*c = cmd_find_client(item, NULL, 1);
 	struct session			*s = item->target.s;

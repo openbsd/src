@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-session.c,v 1.25 2019/04/17 14:37:48 nicm Exp $ */
+/* $OpenBSD: cmd-kill-session.c,v 1.26 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -45,7 +45,7 @@ const struct cmd_entry cmd_kill_session_entry = {
 static enum cmd_retval
 cmd_kill_session_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args	*args = self->args;
+	struct args	*args = cmd_get_args(self);
 	struct session	*s, *sloop, *stmp;
 	struct winlink	*wl;
 

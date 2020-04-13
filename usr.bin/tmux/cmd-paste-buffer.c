@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.38 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.39 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -47,7 +47,7 @@ const struct cmd_entry cmd_paste_buffer_entry = {
 static enum cmd_retval
 cmd_paste_buffer_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
+	struct args		*args = cmd_get_args(self);
 	struct window_pane	*wp = item->target.wp;
 	struct paste_buffer	*pb;
 	const char		*sepstr, *bufname, *bufdata, *bufend, *line;

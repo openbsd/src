@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.57 2019/12/12 11:39:56 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.58 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -83,7 +83,7 @@ cmd_load_buffer_done(__unused struct client *c, const char *path, int error,
 static enum cmd_retval
 cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args			*args = self->args;
+	struct args			*args = cmd_get_args(self);
 	struct cmd_load_buffer_data	*cdata;
 	struct client			*c = cmd_find_client(item, NULL, 1);
 	struct session			*s = item->target.s;

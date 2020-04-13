@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-wait-for.c,v 1.18 2019/06/18 11:08:42 nicm Exp $ */
+/* $OpenBSD: cmd-wait-for.c,v 1.19 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -120,7 +120,7 @@ cmd_wait_for_remove(struct wait_channel *wc)
 static enum cmd_retval
 cmd_wait_for_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args     	*args = self->args;
+	struct args     	*args = cmd_get_args(self);
 	const char		*name = args->argv[0];
 	struct wait_channel	*wc, wc0;
 

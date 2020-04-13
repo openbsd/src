@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.28 2018/08/23 15:45:05 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.29 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -69,7 +69,7 @@ cmd_show_messages_terminals(struct cmdq_item *item, int blank)
 static enum cmd_retval
 cmd_show_messages_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
+	struct args		*args = cmd_get_args(self);
 	struct client		*c;
 	struct message_entry	*msg;
 	char			*tim;

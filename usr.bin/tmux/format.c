@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.235 2020/04/09 15:35:27 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.236 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1128,8 +1128,10 @@ format_create_add_item(struct format_tree *ft, struct cmdq_item *item)
 	struct window_pane	*wp;
 	u_int			 x, y;
 
-	if (item->cmd != NULL)
-		format_add(ft, "command", "%s", item->cmd->entry->name);
+	if (item->cmd != NULL) {
+		format_add(ft, "command", "%s",
+		    cmd_get_entry (item->cmd)->name);
+	}
 
 	if (item->shared == NULL)
 		return;

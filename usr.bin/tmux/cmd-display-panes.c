@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.30 2020/03/24 08:09:43 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.31 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -239,7 +239,7 @@ cmd_display_panes_key(struct client *c, struct key_event *event)
 static enum cmd_retval
 cmd_display_panes_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args			*args = self->args;
+	struct args			*args = cmd_get_args(self);
 	struct client			*c;
 	struct session			*s;
 	u_int		 		 delay;

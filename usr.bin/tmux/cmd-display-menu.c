@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.12 2020/04/08 10:58:09 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.13 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -171,7 +171,7 @@ cmd_display_menu_get_position(struct client *c, struct cmdq_item *item,
 static enum cmd_retval
 cmd_display_menu_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
+	struct args		*args = cmd_get_args(self);
 	struct client		*c;
 	struct session		*s = item->target.s;
 	struct winlink		*wl = item->target.wl;
@@ -239,7 +239,7 @@ cmd_display_menu_exec(struct cmd *self, struct cmdq_item *item)
 static enum cmd_retval
 cmd_display_popup_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
+	struct args		*args = cmd_get_args(self);
 	struct client		*c;
 	struct cmd_find_state	*fs = &item->target;
 	const char		*value, *cmd = NULL, **lines = NULL;

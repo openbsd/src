@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.117 2020/04/06 17:51:34 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.118 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -537,19 +537,13 @@ struct cmdq_item *
 key_bindings_dispatch(struct key_binding *bd, struct cmdq_item *item,
     struct client *c, struct mouse_event *m, struct cmd_find_state *fs)
 {
-	struct cmd		*cmd;
 	struct cmdq_item	*new_item;
 	int			 readonly;
 
 	if (c == NULL || (~c->flags & CLIENT_READONLY))
 		readonly = 1;
-	else {
-		readonly = 1;
-		TAILQ_FOREACH(cmd, &bd->cmdlist->list, qentry) {
-			if (~cmd->entry->flags & CMD_READONLY)
-				readonly = 0;
-		}
-	}
+	else
+		readonly = cmd_list_all_have(bd->cmdlist, CMD_READONLY);
 	if (!readonly)
 		new_item = cmdq_get_callback(key_bindings_read_only, NULL);
 	else {

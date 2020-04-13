@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.82 2020/04/03 13:54:31 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.83 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -51,7 +51,7 @@ const struct cmd_entry cmd_new_window_entry = {
 static enum cmd_retval
 cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
+	struct args		*args = cmd_get_args(self);
 	struct cmd_find_state	*current = &item->shared->current;
 	struct spawn_context	 sc;
 	struct client		*c = cmd_find_client(item, NULL, 1);

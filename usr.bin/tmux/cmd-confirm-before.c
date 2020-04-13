@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.37 2019/05/23 11:13:30 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.38 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -53,7 +53,7 @@ struct cmd_confirm_before_data {
 static enum cmd_retval
 cmd_confirm_before_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args			*args = self->args;
+	struct args			*args = cmd_get_args(self);
 	struct cmd_confirm_before_data	*cdata;
 	struct client			*c;
 	char				*cmd, *copy, *new_prompt, *ptr;

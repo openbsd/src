@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.41 2020/04/10 07:44:26 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.42 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -56,7 +56,7 @@ const struct cmd_entry cmd_clock_mode_entry = {
 static enum cmd_retval
 cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
+	struct args		*args = cmd_get_args(self);
 	struct cmdq_shared	*shared = item->shared;
 	struct client		*c = item->client;
 	struct session		*s;
@@ -74,7 +74,7 @@ cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 			return (CMD_RETURN_NORMAL);
 	}
 
-	if (self->entry == &cmd_clock_mode_entry) {
+	if (cmd_get_entry(self) == &cmd_clock_mode_entry) {
 		window_pane_set_mode(wp, NULL, &window_clock_mode, NULL, NULL);
 		return (CMD_RETURN_NORMAL);
 	}
@@ -87,7 +87,7 @@ cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 		if (args_has(args, 'M'))
 			window_copy_start_drag(c, &shared->mouse);
 	}
-	if (args_has(self->args, 'u'))
+	if (args_has(args, 'u'))
 		window_copy_pageup(wp, 0);
 
 	return (CMD_RETURN_NORMAL);

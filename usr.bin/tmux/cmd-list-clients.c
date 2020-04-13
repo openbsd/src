@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-clients.c,v 1.34 2017/05/01 12:20:55 nicm Exp $ */
+/* $OpenBSD: cmd-list-clients.c,v 1.35 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -51,7 +51,7 @@ const struct cmd_entry cmd_list_clients_entry = {
 static enum cmd_retval
 cmd_list_clients_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args 		*args = self->args;
+	struct args 		*args = cmd_get_args(self);
 	struct client		*c;
 	struct session		*s;
 	struct format_tree	*ft;

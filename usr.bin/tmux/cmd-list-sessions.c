@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-sessions.c,v 1.31 2020/04/12 08:36:18 nicm Exp $ */
+/* $OpenBSD: cmd-list-sessions.c,v 1.32 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -52,7 +52,7 @@ const struct cmd_entry cmd_list_sessions_entry = {
 static enum cmd_retval
 cmd_list_sessions_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
+	struct args		*args = cmd_get_args(self);
 	struct session		*s;
 	u_int		 	 n;
 	struct format_tree	*ft;

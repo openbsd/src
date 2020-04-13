@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.36 2020/01/30 08:02:25 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.37 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_bind_key_entry = {
 static enum cmd_retval
 cmd_bind_key_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		 *args = self->args;
+	struct args		 *args = cmd_get_args(self);
 	key_code		  key;
 	const char		 *tablename, *note;
 	struct cmd_parse_result	 *pr;

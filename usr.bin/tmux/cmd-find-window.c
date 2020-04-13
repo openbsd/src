@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find-window.c,v 1.47 2020/04/10 07:44:26 nicm Exp $ */
+/* $OpenBSD: cmd-find-window.c,v 1.48 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,7 +44,7 @@ const struct cmd_entry cmd_find_window_entry = {
 static enum cmd_retval
 cmd_find_window_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args, *new_args;
+	struct args		*args = cmd_get_args(self), *new_args;
 	struct window_pane	*wp = item->target.wp;
 	const char		*s = args->argv[0];
 	char			*filter, *argv = { NULL };

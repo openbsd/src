@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.47 2020/01/27 08:53:13 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.48 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -64,7 +64,7 @@ struct cmd_command_prompt_cdata {
 static enum cmd_retval
 cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args			*args = self->args;
+	struct args			*args = cmd_get_args(self);
 	const char			*inputs, *prompts;
 	struct cmd_command_prompt_cdata	*cdata;
 	struct client			*c;

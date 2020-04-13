@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-environment.c,v 1.23 2020/03/31 17:14:40 nicm Exp $ */
+/* $OpenBSD: cmd-set-environment.c,v 1.24 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -46,7 +46,7 @@ const struct cmd_entry cmd_set_environment_entry = {
 static enum cmd_retval
 cmd_set_environment_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args	*args = self->args;
+	struct args	*args = cmd_get_args(self);
 	struct environ	*env;
 	const char	*name, *value, *target;
 
@@ -65,7 +65,7 @@ cmd_set_environment_exec(struct cmd *self, struct cmdq_item *item)
 	else
 		value = args->argv[1];
 
-	if (args_has(self->args, 'g'))
+	if (args_has(args, 'g'))
 		env = global_environ;
 	else {
 		if (item->target.s == NULL) {
@@ -79,13 +79,13 @@ cmd_set_environment_exec(struct cmd *self, struct cmdq_item *item)
 		env = item->target.s->environ;
 	}
 
-	if (args_has(self->args, 'u')) {
+	if (args_has(args, 'u')) {
 		if (value != NULL) {
 			cmdq_error(item, "can't specify a value with -u");
 			return (CMD_RETURN_ERROR);
 		}
 		environ_unset(env, name);
-	} else if (args_has(self->args, 'r')) {
+	} else if (args_has(args, 'r')) {
 		if (value != NULL) {
 			cmdq_error(item, "can't specify a value with -r");
 			return (CMD_RETURN_ERROR);

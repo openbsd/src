@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-panes.c,v 1.34 2020/04/12 08:36:18 nicm Exp $ */
+/* $OpenBSD: cmd-list-panes.c,v 1.35 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -50,7 +50,7 @@ const struct cmd_entry cmd_list_panes_entry = {
 static enum cmd_retval
 cmd_list_panes_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args	*args = self->args;
+	struct args	*args = cmd_get_args(self);
 	struct session	*s = item->target.s;
 	struct winlink	*wl = item->target.wl;
 
@@ -87,7 +87,7 @@ static void
 cmd_list_panes_window(struct cmd *self, struct session *s, struct winlink *wl,
     struct cmdq_item *item, int type)
 {
-	struct args		*args = self->args;
+	struct args		*args = cmd_get_args(self);
 	struct window_pane	*wp;
 	u_int			 n;
 	struct format_tree	*ft;

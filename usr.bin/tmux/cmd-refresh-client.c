@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.30 2019/11/28 09:05:34 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.31 2020/04/13 08:26:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -45,7 +45,7 @@ const struct cmd_entry cmd_refresh_client_entry = {
 static enum cmd_retval
 cmd_refresh_client_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args	*args = self->args;
+	struct args	*args = cmd_get_args(self);
 	struct client	*c;
 	struct tty	*tty;
 	struct window	*w;
