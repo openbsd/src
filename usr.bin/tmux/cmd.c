@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.159 2020/04/13 15:55:51 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.160 2020/04/13 16:19:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -624,7 +624,7 @@ cmd_list_free(struct cmd_list *cmdlist)
 char *
 cmd_list_print(struct cmd_list *cmdlist, int escaped)
 {
-	struct cmd	*cmd;
+	struct cmd	*cmd, *next;
 	char		*buf, *this;
 	size_t		 len;
 
@@ -634,15 +634,24 @@ cmd_list_print(struct cmd_list *cmdlist, int escaped)
 	TAILQ_FOREACH(cmd, cmdlist->list, qentry) {
 		this = cmd_print(cmd);
 
-		len += strlen(this) + 4;
+		len += strlen(this) + 6;
 		buf = xrealloc(buf, len);
 
 		strlcat(buf, this, len);
-		if (TAILQ_NEXT(cmd, qentry) != NULL) {
-			if (escaped)
-				strlcat(buf, " \\; ", len);
-			else
-				strlcat(buf, " ; ", len);
+
+		next = TAILQ_NEXT(cmd, qentry);
+		if (next != NULL) {
+			if (cmd->group != next->group) {
+				if (escaped)
+					strlcat(buf, " \\;\\; ", len);
+				else
+					strlcat(buf, " ;; ", len);
+			} else {
+				if (escaped)
+					strlcat(buf, " \\; ", len);
+				else
+					strlcat(buf, " ; ", len);
+			}
 		}
 
 		free(this);
