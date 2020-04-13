@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.128 2020/03/17 11:10:12 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.129 2020/04/13 07:25:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -69,10 +69,10 @@ const struct cmd_entry cmd_set_hook_entry = {
 	.name = "set-hook",
 	.alias = NULL,
 
-	.args = { "agRt:u", 1, 2 },
-	.usage = "[-agRu] " CMD_TARGET_SESSION_USAGE " hook [command]",
+	.args = { "agpRt:uw", 1, 2 },
+	.usage = "[-agpRuw] " CMD_TARGET_PANE_USAGE " hook [command]",
 
-	.target = { 't', CMD_FIND_SESSION, CMD_FIND_CANFAIL },
+	.target = { 't', CMD_FIND_PANE, CMD_FIND_CANFAIL },
 
 	.flags = CMD_AFTERHOOK,
 	.exec = cmd_set_option_exec
