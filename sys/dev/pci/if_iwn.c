@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.222 2020/04/09 07:20:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.223 2020/04/13 18:41:30 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2259,7 +2259,6 @@ void
 iwn_rx_compressed_ba(struct iwn_softc *sc, struct iwn_rx_desc *desc,
     struct iwn_rx_data *data)
 {
-	struct iwn_ops *ops = &sc->ops;
 	struct iwn_compressed_ba *cba = (struct iwn_compressed_ba *)(desc + 1);
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
@@ -2322,9 +2321,9 @@ iwn_rx_compressed_ba(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		idx = IWN_AGG_SSN_TO_TXQ_IDX(ssn);
 		while (nsent && idx != end_idx) {
 			struct iwn_tx_data *txdata = &txq->data[idx];
-			int have_ack = (le64toh(cba->bitmap) & (1 << bit++));
+			int have_ack = (le64toh(cba->bitmap) & (1 << bit));
 
-			if (txdata->m != NULL) {
+			if ((ba->ba_bitmap & (1 << bit)) == 0) {
 				/*
 				 * Don't report frames to MiRA which were sent
 				 * at a different Tx rate than ni->ni_txmcs.
@@ -2339,18 +2338,15 @@ iwn_rx_compressed_ba(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 					if (!have_ack || txdata->txfail > 0)
 						wn->mn.txfail++;
 				}
-				if (have_ack) {
+				if (have_ack)
 					ieee80211_output_ba_record_ack(ic,
 					    ni, cba->tid, ssn);
-					ops->reset_sched(sc, qid, idx);
-					iwn_tx_done_free_txdata(sc, txdata);
-					txq->queued--;
-				}
 			}
 
 			idx = (idx + 1) % IWN_TX_RING_COUNT;
 			ssn = (ssn + 1) % 0xfff;
 			nsent--;
+			bit++;
 		}
 
 		if (wn->mn.ampdu_size > 0)
