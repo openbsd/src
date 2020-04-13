@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.982 2020/04/13 10:59:59 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.983 2020/04/13 13:32:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1385,17 +1385,13 @@ struct cmdq_shared {
 	int			 flags;
 #define CMDQ_SHARED_REPEAT 0x1
 #define CMDQ_SHARED_CONTROL 0x2
+#define CMDQ_SHARED_NOHOOKS 0x4
 
 	struct format_tree	*formats;
 
 	struct mouse_event	 mouse;
 	struct cmd_find_state	 current;
 };
-
-/* Command queue flags. */
-#define CMDQ_FIRED 0x1
-#define CMDQ_WAITING 0x2
-#define CMDQ_NOHOOKS 0x4
 
 /* Command queue callback. */
 typedef enum cmd_retval (*cmdq_cb) (struct cmdq_item *, void *);
