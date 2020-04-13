@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.68 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.69 2020/04/13 13:42:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -65,7 +65,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 	struct args			*args = cmd_get_args(self);
 	struct cmdq_shared		*shared = cmdq_get_shared(item);
 	struct cmd_find_state		*target = cmdq_get_target(item);
-	struct mouse_event		*m = &shared->mouse;
+	struct mouse_event		*m = &shared->event.m;
 	struct cmd_if_shell_data	*cdata;
 	char				*shellcmd, *cmd;
 	const char			*file;

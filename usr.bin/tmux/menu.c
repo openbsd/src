@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.16 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.17 2020/04/13 13:42:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -282,7 +282,7 @@ chosen:
 		break;
 	case CMD_PARSE_SUCCESS:
 		if (md->item != NULL)
-			m = &cmdq_get_shared(md->item)->mouse;
+			m = &cmdq_get_shared(md->item)->event.m;
 		else
 			m = NULL;
 		new_item = cmdq_get_command(pr->cmdlist, &md->fs, m, 0);

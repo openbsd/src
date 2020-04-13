@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.983 2020/04/13 13:32:09 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.984 2020/04/13 13:42:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1389,7 +1389,7 @@ struct cmdq_shared {
 
 	struct format_tree	*formats;
 
-	struct mouse_event	 mouse;
+	struct key_event	 event;
 	struct cmd_find_state	 current;
 };
 

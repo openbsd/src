@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.84 2020/04/13 13:32:09 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.85 2020/04/13 13:42:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -333,8 +333,11 @@ cmdq_get_command(struct cmd_list *cmdlist, struct cmd_find_state *current,
 				cmd_find_copy_state(&shared->current, current);
 			else
 				cmd_find_clear_state(&shared->current, 0);
-			if (m != NULL)
-				memcpy(&shared->mouse, m, sizeof shared->mouse);
+			if (m != NULL) {
+				shared->event.key = KEYC_NONE;
+				memcpy(&shared->event.m, m,
+				    sizeof shared->event.m);
+			}
 			shared->flags = flags;
 			last_group = group;
 		}

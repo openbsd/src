@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.43 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.44 2020/04/13 13:42:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -76,12 +76,12 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	if (args_has(args, 'M')) {
-		if (cmd_mouse_window(&shared->mouse, &s) == NULL)
+		if (cmd_mouse_window(&shared->event.m, &s) == NULL)
 			return (CMD_RETURN_NORMAL);
 		if (c == NULL || c->session != s)
 			return (CMD_RETURN_NORMAL);
 		c->tty.mouse_drag_update = cmd_resize_pane_mouse_update;
-		cmd_resize_pane_mouse_update(c, &shared->mouse);
+		cmd_resize_pane_mouse_update(c, &shared->event.m);
 		return (CMD_RETURN_NORMAL);
 	}
 

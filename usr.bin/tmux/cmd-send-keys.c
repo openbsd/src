@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.56 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.57 2020/04/13 13:42:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -140,7 +140,7 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 	struct window_pane		*wp = target->wp;
 	struct session			*s = target->s;
 	struct winlink			*wl = target->wl;
-	struct mouse_event		*m = &shared->mouse;
+	struct mouse_event		*m = &shared->event.m;
 	struct window_mode_entry	*wme = TAILQ_FIRST(&wp->modes);
 	int				 i;
 	key_code			 key;
