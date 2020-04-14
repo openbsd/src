@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.28 2017/05/11 15:47:45 visa Exp $	*/
+/*	$OpenBSD: bus.h,v 1.29 2020/04/14 17:35:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -143,8 +143,10 @@ static __inline void							      \
 CAT(bus_space_read_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
      bus_addr_t ba, CAT3(u_int,m,_t) *x, size_t cnt)			      \
 {									      \
-	while (cnt--)							      \
-		*x++ = CAT(bus_space_read_,n)(bst, bsh, ba++);		      \
+	while (cnt--) {							      \
+		*x++ = CAT(bus_space_read_,n)(bst, bsh, ba);		      \
+		ba += (n);						      \
+	}								      \
 }
 
 bus_space_read_region(1,8)
@@ -177,9 +179,8 @@ static __inline void							      \
 CAT(bus_space_write_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
      bus_size_t o, const CAT3(u_int,m,_t) *x, size_t cnt)		      \
 {									      \
-	while (cnt--) {							      \
+	while (cnt--)							      \
 		CAT(bus_space_write_,n)(bst, bsh, o, *x++);		      \
-	}								      \
 }
 
 bus_space_write_multi(1,8)
@@ -195,7 +196,7 @@ CAT(bus_space_write_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,   \
 {									      \
 	while (cnt--) {							      \
 		CAT(bus_space_write_,n)(bst, bsh, ba, *x++);		      \
-		ba += sizeof(x);					      \
+		ba += (n);						      \
 	}								      \
 }
 
@@ -231,7 +232,7 @@ CAT(bus_space_set_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,     \
 {									      \
 	while (cnt--) {							      \
 		CAT(bus_space_write_,n)(bst, bsh, ba, x);		      \
-		ba += sizeof(x);					      \
+		ba += (n);						      \
 	}								      \
 }
 
