@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.46 2019/12/15 16:34:08 deraadt Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.47 2020/04/14 06:44:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -755,7 +755,7 @@ configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = rtm_type;
 	rtm.rtm_msglen = sizeof(rtm);
-	rtm.rtm_tableid = 0; /* XXX imsg->rdomain; */
+	rtm.rtm_tableid = getrtable();
 	rtm.rtm_index = dfr->if_index;
 	rtm.rtm_seq = ++rtm_seq;
 	rtm.rtm_priority = RTP_NONE;
@@ -852,7 +852,7 @@ send_rdns_proposal(struct imsg_propose_rdns *rdns)
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_PROPOSAL;
 	rtm.rtm_msglen = sizeof(rtm);
-	rtm.rtm_tableid = 0; /* XXX imsg->rdomain; */
+	rtm.rtm_tableid = getrtable();
 	rtm.rtm_index = rdns->if_index;
 	rtm.rtm_seq = ++rtm_seq;
 	rtm.rtm_priority = RTP_PROPOSAL_SLAAC;
