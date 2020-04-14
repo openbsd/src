@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.400 2020/04/06 16:29:53 visa Exp $ */
+/* $OpenBSD: softraid.c,v 1.401 2020/04/14 07:38:21 jca Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3666,7 +3666,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 	struct sr_meta_opt_item *omi;
 	struct sr_meta_boot	*sbm;
 	struct disk		*dk;
-	u_int32_t		bbs, bls, secsize;
+	u_int32_t		bbs = 0, bls = 0, secsize;
 	u_char			duid[8];
 	int			rv = EINVAL;
 	int			i;
