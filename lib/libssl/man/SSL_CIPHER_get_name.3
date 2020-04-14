@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CIPHER_get_name.3,v 1.10 2018/04/25 13:51:34 schwarze Exp $
+.\" $OpenBSD: SSL_CIPHER_get_name.3,v 1.11 2020/04/14 15:27:35 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 25 2018 $
+.Dd $Mdocdate: April 14 2020 $
 .Dt SSL_CIPHER_GET_NAME 3
 .Os
 .Sh NAME
@@ -212,9 +212,10 @@ consists of several fields separated by whitespace:
 Textual representation of the cipher name.
 .It Aq Ar protocol version
 Protocol version:
-.Sy SSLv3
+.Sy SSLv3 ,
+.Sy TLSv1.2 ,
 or
-.Sy TLSv1.2 .
+.Sy TLSv1.3 .
 The TLSv1.0 ciphers are flagged with SSLv3.
 No new ciphers were added by TLSv1.1.
 .It Kx= Ns Aq Ar key exchange
@@ -222,25 +223,23 @@ Key exchange method:
 .Sy DH ,
 .Sy ECDH ,
 .Sy GOST ,
+.Sy RSA ,
 or
-.Sy RSA .
+.Sy TLSv1.3 .
 .It Au= Ns Aq Ar authentication
 Authentication method:
-.Sy DSS ,
 .Sy ECDSA ,
 .Sy GOST01 ,
 .Sy RSA ,
+.Sy TLSv1.3 ,
 or
 .Sy None .
 .Sy None
 is the representation of anonymous ciphers.
 .It Enc= Ns Aq Ar symmetric encryption method
 Encryption method with number of secret bits:
-.Sy DES(56) ,
 .Sy 3DES(168) ,
-.Sy RC4(64) ,
 .Sy RC4(128) ,
-.Sy IDEA(128) ,
 .Sy AES(128) ,
 .Sy AES(256) ,
 .Sy AESCGM(128) ,
@@ -248,7 +247,6 @@ Encryption method with number of secret bits:
 .Sy Camellia(128) ,
 .Sy Camellia(256) ,
 .Sy ChaCha20-Poly1305 ,
-.Sy ChaCha20-Poly1305-Old ,
 .Sy GOST-28178-89-CNT ,
 or
 .Sy None .
@@ -261,8 +259,8 @@ Message digest:
 .Sy AEAD ,
 .Sy GOST94 ,
 .Sy GOST89IMIT ,
-.Sy STREEBOG256 ,
-.Sy STREEBOG512 .
+or
+.Sy STREEBOG256 .
 .El
 .Sh RETURN VALUES
 .Fn SSL_CIPHER_get_name
@@ -315,7 +313,7 @@ ECDHE-RSA-AES256-GCM-SHA256 TLSv1.2 Kx=ECDH Au=RSA Enc=AESGCM(256) Mac=AEAD
 .Pp
 A complete list can be retrieved by invoking the following command:
 .Pp
-.Dl $ openssl ciphers -v ALL
+.Dl $ openssl ciphers -v ALL:COMPLEMENTOFALL
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr ssl 3 ,
