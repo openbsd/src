@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.149 2020/04/03 16:29:17 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.150 2020/04/14 21:20:47 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -138,12 +138,13 @@ ssdfb*		at spi?
 wsdisplay*	at ssdfb?
 imxtmu*		at fdt?
 
-# Raspberry Pi 3
+# Raspberry Pi 3/4
 bcmaux*		at fdt?
 bcmintc*	at fdt?
 bcmdog*		at fdt?
 bcmrng*		at fdt?
 bcmtemp*	at fdt?
+bse*		at acpi?
 dwctwo*		at fdt?
 usb*		at dwctwo?
 
@@ -383,6 +384,7 @@ bwfm*		at uhub?		# Broadcom FullMAC
 
 amphy*		at mii?			# AMD 79C873 PHYs
 atphy*		at mii?			# Attansic F1 PHYs
+brgphy*		at mii?			# Broadcom Gigabit PHYs
 eephy*		at mii?			# Marvell 88E1000 series PHY
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
 rlphy*		at mii?			# Realtek 8139 internal PHYs

@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.112 2020/04/03 16:29:17 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.113 2020/04/14 21:20:47 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -124,11 +124,12 @@ bdpmic*		at iic?
 imxesdhc*	at fdt?
 sdmmc*		at imxesdhc?
 
-# Raspberry Pi 3
+# Raspberry Pi 3/4
 bcmaux*		at fdt?
 bcmintc*	at fdt?
 bcmdog*		at fdt?
 bcmrng*		at fdt?
+bse*		at acpi?
 dwctwo*		at fdt?
 usb*		at dwctwo?
 
@@ -267,6 +268,7 @@ urtwn*		at uhub?		# Realtek RTL8188CU/RTL8192CU
 
 amphy*		at mii?			# AMD 79C873 PHYs
 atphy*		at mii?			# Attansic F1 PHYs
+brgphy*		at mii?			# Broadcom Gigabit PHYs
 eephy*		at mii?			# Marvell 88E1000 series PHY
 rgephy*		at mii?			# Realtek 8169S/8110S PHY
 rlphy*		at mii?			# Realtek 8139 internal PHYs
