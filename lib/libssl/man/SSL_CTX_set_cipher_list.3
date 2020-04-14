@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_cipher_list.3,v 1.12 2020/04/14 11:57:31 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_cipher_list.3,v 1.13 2020/04/14 13:02:28 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -160,7 +160,7 @@ Equivalent to
 .Cm kEDH Ns + Ns Cm aNULL .
 .It Cm aDSS
 Cipher suites using DSS server authentication.
-LibreSSL does not provide any such cipher suites.
+LibreSSL no longer provides any such cipher suites.
 .It Cm AEAD
 Cipher suites using Authenticated Encryption with Additional Data.
 .It Cm AECDH
@@ -218,6 +218,7 @@ except for the order of the cipher suites which are
 selected.
 .It Cm DES
 Cipher suites using single DES for symmetric encryption.
+LibreSSL no longer provides any such cipher suites.
 .It Cm 3DES
 Cipher suites using triple DES for symmetric encryption.
 .It Cm DH
