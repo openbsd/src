@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.105 2015/07/19 06:28:12 yuo Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.106 2020/04/14 21:00:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -92,6 +92,7 @@ void	brgphy_crc_bug(struct mii_softc *);
 void	brgphy_disable_early_dac(struct mii_softc *sc);
 void	brgphy_jumbo_settings(struct mii_softc *);
 void	brgphy_eth_wirespeed(struct mii_softc *);
+void	brgphy_bcm54xx_clock_delay(struct mii_softc *);
 
 const struct mii_phy_funcs brgphy_copper_funcs = {            
 	brgphy_service, brgphy_copper_status, brgphy_reset,          
@@ -180,6 +181,8 @@ static const struct mii_phydesc brgphys[] = {
 	  MII_STR_xxBROADCOM3_BCM57765 },
 	{ MII_OUI_xxBROADCOM3,		MII_MODEL_xxBROADCOM3_BCM57780,
 	  MII_STR_xxBROADCOM3_BCM57780 },
+	{ MII_OUI_xxBROADCOM4,		MII_MODEL_xxBROADCOM4_BCM54210E,
+	  MII_STR_xxBROADCOM4_BCM54210E },
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5906,
 	  MII_STR_BROADCOM2_BCM5906 },
 
@@ -789,6 +792,12 @@ brgphy_reset(struct mii_softc *sc)
 			break;
 		}
 		break;
+	case MII_OUI_xxBROADCOM4:
+		switch (sc->mii_model) {
+		case MII_MODEL_xxBROADCOM4_BCM54210E:
+			brgphy_bcm54xx_clock_delay(sc);
+			break;
+		}
 	}
 
 	/* Handle any bge (NetXtreme/NetLink) workarounds. */
@@ -1187,11 +1196,38 @@ brgphy_jumbo_settings(struct mii_softc *sc)
 void
 brgphy_eth_wirespeed(struct mii_softc *sc)
 {
-	u_int32_t val;
+	uint16_t val;
 
 	/* Enable Ethernet@Wirespeed */
-	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
-	val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
-	PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
-		(val | (1 << 15) | (1 << 4)));
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, BRGPHY_AUXCTL_SHADOW_MISC |
+	    BRGPHY_AUXCTL_SHADOW_MISC << BRGPHY_AUXCTL_MISC_READ_SHIFT);
+	val = PHY_READ(sc, BRGPHY_MII_AUXCTL) & BRGPHY_AUXCTL_MISC_DATA_MASK;
+	val |= BRGPHY_AUXCTL_MISC_WIRESPEED_EN;
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, BRGPHY_AUXCTL_MISC_WRITE_EN |
+	    BRGPHY_AUXCTL_SHADOW_MISC | val);
+}
+
+void
+brgphy_bcm54xx_clock_delay(struct mii_softc *sc)
+{
+	uint16_t val;
+
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, BRGPHY_AUXCTL_SHADOW_MISC |
+	    BRGPHY_AUXCTL_SHADOW_MISC << BRGPHY_AUXCTL_MISC_READ_SHIFT);
+	val = PHY_READ(sc, BRGPHY_MII_AUXCTL) & BRGPHY_AUXCTL_MISC_DATA_MASK;
+	if (sc->mii_flags & MIIF_RXID)
+		val |= BRGPHY_AUXCTL_MISC_RGMII_SKEW_EN;
+	else
+		val &= ~BRGPHY_AUXCTL_MISC_RGMII_SKEW_EN;
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, BRGPHY_AUXCTL_MISC_WRITE_EN |
+	    BRGPHY_AUXCTL_SHADOW_MISC | val);
+
+	PHY_WRITE(sc, BRGPHY_MII_SHADOW_1C, BRGPHY_SHADOW_1C_CLK_CTRL);
+	val = PHY_READ(sc, BRGPHY_MII_SHADOW_1C) & BRGPHY_SHADOW_1C_DATA_MASK;
+	if (sc->mii_flags & MIIF_TXID)
+		val |= BRGPHY_SHADOW_1C_GTXCLK_EN;
+	else
+		val &= ~BRGPHY_SHADOW_1C_GTXCLK_EN;
+	PHY_WRITE(sc, BRGPHY_MII_SHADOW_1C, BRGPHY_SHADOW_1C_WRITE_EN |
+	    BRGPHY_SHADOW_1C_CLK_CTRL | val);
 }
