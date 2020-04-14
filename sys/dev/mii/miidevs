@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.128 2019/09/24 14:35:22 visa Exp $
+$OpenBSD: miidevs,v 1.129 2020/04/14 20:57:22 kettenis Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -96,6 +96,7 @@ oui xxLEVEL1			0x1e0400	Level 1
 /* Don't know what's going on here. */
 oui xxBROADCOM2			0x0050ef	Broadcom
 oui xxBROADCOM3			0x00d897	Broadcom
+oui xxBROADCOM4			0x180361	Broadcom
 oui xxDAVICOM			0x006040	Davicom
 
 /* This is the OUI of the gigE PHY in the Realtek 8169S/8110S chips */
@@ -165,6 +166,7 @@ model xxBROADCOM3 BCM5717C	0x0020	BCM5717C 10/100/1000baseT PHY
 model xxBROADCOM3 BCM5719C	0x0022	BCM5719C 10/100/1000baseT PHY
 model xxBROADCOM3 BCM57765	0x0024	BCM57765 10/100/1000baseT PHY
 model xxBROADCOM3 BCM5720C	0x0036	BCM5720C 10/100/1000baseT PHY
+model xxBROADCOM4 BCM54210E	0x000a  BCM54210E 10/100/1000baseT PHY
 model BROADCOM BCM5400		0x0004	BCM5400 1000baseT PHY
 model BROADCOM BCM5401		0x0005	BCM5401 1000baseT PHY
 model BROADCOM BCM5411		0x0007	BCM5411 1000baseT PHY
