@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.47 2019/12/08 12:29:42 mpi Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.48 2020/04/15 16:46:34 kettenis Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -44,7 +44,7 @@ buf_mem_init(vsize_t size)
 	if (uvm_map(kernel_map, &buf_kva_start, size, NULL,
 	    UVM_UNKNOWN_OFFSET, PAGE_SIZE, UVM_MAPFLAG(PROT_NONE,
 	    PROT_NONE, MAP_INHERIT_NONE, MADV_NORMAL, 0)))
-		panic("bufinit: can't reserve VM for buffers");
+		panic("%s: can't reserve VM for buffers", __func__);
 	buf_kva_end = buf_kva_start + size;
 
 	/* Contiguous mapping */
