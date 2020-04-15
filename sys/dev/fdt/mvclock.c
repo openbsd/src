@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvclock.c,v 1.5 2019/10/07 19:28:43 patrick Exp $	*/
+/*	$OpenBSD: mvclock.c,v 1.6 2020/04/15 15:40:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -250,6 +250,7 @@ cp110_enable(void *cookie, uint32_t *cells, int on)
 #define PERIPH_NB_SQF			0x7
 #define PERIPH_NB_I2C2			0x9
 #define PERIPH_NB_I2C1			0xa
+#define PERIPH_NB_CPU			0x10
 #define PERIPH_SB_GBE1_CORE		0x7
 #define PERIPH_SB_GBE0_CORE		0x8
 #define PERIPH_SB_USB32_USB2_SYS	0xb
@@ -266,6 +267,7 @@ cp110_enable(void *cookie, uint32_t *cells, int on)
 
 void	 a3700_periph_enable(struct mvclock_softc *, uint32_t, int);
 uint32_t a3700_periph_tbg_get_frequency(struct mvclock_softc *, uint32_t);
+uint32_t a3700_periph_get_div(struct mvclock_softc *, uint32_t, uint32_t);
 uint32_t a3700_periph_get_double_div(struct mvclock_softc *, uint32_t,
 	   uint32_t, uint32_t);
 
@@ -308,6 +310,10 @@ a3700_periph_nb_get_frequency(void *cookie, uint32_t *cells)
 		freq = a3700_periph_tbg_get_frequency(sc, 12);
 		freq /= a3700_periph_get_double_div(sc,
 		    PERIPH_DIV_SEL1, 27, 24);
+		return freq;
+	case PERIPH_NB_CPU:
+		freq = a3700_periph_tbg_get_frequency(sc, 22);
+		freq /= a3700_periph_get_div(sc, PERIPH_DIV_SEL0, 28);
 		return freq;
 	default:
 		break;
@@ -370,6 +376,13 @@ a3700_periph_tbg_get_frequency(struct mvclock_softc *sc, uint32_t idx)
 	reg &= PERIPH_TBG_SEL_MASK;
 
 	return clock_get_frequency_idx(sc->sc_cd.cd_node, reg);
+}
+
+uint32_t
+a3700_periph_get_div(struct mvclock_softc *sc, uint32_t off, uint32_t idx)
+{
+	uint32_t reg = HREAD4(sc, off);
+	return ((reg >> idx) & PERIPH_DIV_SEL_MASK);
 }
 
 uint32_t
