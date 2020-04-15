@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.30 2020/01/24 22:46:36 procter Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.31 2020/04/15 20:19:25 remi Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -288,6 +288,12 @@ gre_print_0(const u_char *p, u_int length)
 		break;
 	case 0x2000:
 		cdp_print(p, length, l, 0);
+		break;
+#ifndef ETHERTYPE_NHRP
+#define ETHERTYPE_NHRP 0x2001
+#endif
+	case ETHERTYPE_NHRP:
+		nhrp_print(p, length);
 		break;
 	default:
 		printf("unknown-proto-%04x", proto);
