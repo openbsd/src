@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.105 2020/04/09 13:53:50 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.106 2020/04/15 12:59:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -47,8 +47,6 @@ const struct grid_cell grid_cleared_cell = {
 static const struct grid_cell_entry grid_cleared_entry = {
 	GRID_FLAG_CLEARED, { .data = { 0, 8, 8, ' ' } }
 };
-
-static void	grid_empty_line(struct grid *, u_int, u_int);
 
 /* Store cell in entry. */
 static void
@@ -454,7 +452,7 @@ grid_expand_line(struct grid *gd, u_int py, u_int sx, u_int bg)
 }
 
 /* Empty a line and set background colour if needed. */
-static void
+void
 grid_empty_line(struct grid *gd, u_int py, u_int bg)
 {
 	memset(&gd->linedata[py], 0, sizeof gd->linedata[py]);

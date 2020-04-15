@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.991 2020/04/14 06:00:52 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.992 2020/04/15 12:59:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2312,6 +2312,7 @@ int	 attributes_fromstring(const char *);
 
 /* grid.c */
 extern const struct grid_cell grid_default_cell;
+void	 grid_empty_line(struct grid *, u_int, u_int);
 int	 grid_cells_equal(const struct grid_cell *, const struct grid_cell *);
 struct grid *grid_create(u_int, u_int, u_int);
 void	 grid_destroy(struct grid *);
