@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.67 2020/04/15 14:21:35 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.68 2020/04/15 14:22:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2330,10 +2330,12 @@ dev_rmctl(struct dev *d, int addr)
 	}
 #endif
 	c->refs_mask &= ~CTL_DEVMASK;
-	if (c->refs_mask != 0)
+	if (c->refs_mask == 0) {
+		*pc = c->next;
+		xfree(c);
 		return;
-	*pc = c->next;
-	xfree(c);
+	}
+	c->desc_mask = ~0;
 }
 
 void
