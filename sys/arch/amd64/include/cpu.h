@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.133 2019/12/20 07:49:31 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.134 2020/04/15 16:38:24 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -375,7 +375,6 @@ int	cpu_amd64speed(int *);
 void	dumpconf(void);
 void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
-void	x86_64_bufinit(void);
 void	cpu_proc_fork(struct proc *, struct proc *);
 int	amd64_pa_used(paddr_t);
 extern void (*cpu_idle_cycle_fcn)(void);
