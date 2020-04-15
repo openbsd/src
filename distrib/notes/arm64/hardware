@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.8 2020/01/17 15:51:35 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.9 2020/04/15 11:40:26 kettenis Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5
@@ -15,13 +15,15 @@ The following machines are targeted by OpenBSD/MACHINE:
 	Ampere eMAG
 		Lenovo ThinkSystem HR330A
 		Lenovo ThinkSystem HR350A
-	Broadcom BCM2837
+	Broadcom BCM2837/BCM2711
 		Raspberry Pi 3
+		Raspberry Pi 4
 	Marvell ARMADA 7K/8K
 		SolidRun/Marvell MACCHIATObin
 	Rockchip RK3328/RK3399
 		Pine64 ROCK64
 		Pine64 ROCKPro64
+		Pinebook Pro
 		Firefly-RK3399
 		FriendlyElec NanoPC-T4
 		Theobroma Systems RK3399-Q7
