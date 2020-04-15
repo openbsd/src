@@ -1,7 +1,7 @@
-/*	$OpenBSD: bt_parser.h,v 1.5 2020/03/19 15:52:30 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.6 2020/04/15 15:00:04 mpi Exp $	*/
 
 /*
- * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
+ * Copyright (c) 2019-2020 Martin Pieuchot <mpi@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -39,7 +39,10 @@ struct bt_probe {
 };
 
 /*
- * Representation of a filter (aka predicate).
+ * Filters correspond to predicates performed in kernel.
+ *
+ * When a probe fires the check is performed, if it isn't true no event
+ * is recorded.
  */
 struct bt_filter {
 	enum bt_operand {
