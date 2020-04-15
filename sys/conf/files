@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.685 2020/03/02 10:37:22 kettenis Exp $
+#	$OpenBSD: files,v 1.686 2020/04/15 09:26:49 patrick Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -305,6 +305,10 @@ file	dev/ic/gem.c			gem
 
 device	ti: ether, ifnet, ifmedia, mii, firmload
 file	dev/ic/ti.c			ti
+
+# Broadcom BCM7XXX Ethernet controller
+device	bse: ether, ifnet, ifmedia, mii
+file	dev/ic/bcmgenet.c		bse
 
 # 8250/16[45]50-based "com" ports
 device	com: tty
