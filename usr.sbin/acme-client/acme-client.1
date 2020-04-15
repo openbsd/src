@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.32 2019/06/15 17:06:44 florian Exp $
+.\"	$OpenBSD: acme-client.1,v 1.33 2020/04/15 03:24:08 millert Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 15 2019 $
+.Dd $Mdocdate: April 15 2020 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -122,8 +122,8 @@ On renewal,
 .Xr httpd 8
 is reloaded:
 .Bd -literal -offset indent
-0	*	*	*	*	sleep $((RANDOM \e% 2048)) && \e
-	acme-client example.com && rcctl reload httpd
+~	*	*	*	*	acme-client example.com && \e
+	rcctl reload httpd
 .Ed
 .Sh SEE ALSO
 .Xr openssl 1 ,
