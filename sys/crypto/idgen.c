@@ -107,7 +107,7 @@ idgen32_rekey(struct idgen32_ctx *ctx)
 	ctx->id32_hibit ^= 0x80000000;
 	ctx->id32_offset = arc4random();
 	arc4random_buf(ctx->id32_key, sizeof(ctx->id32_key));
-	ctx->id32_rekey_time = time_second + IDGEN32_REKEY_TIME;
+	ctx->id32_rekey_time = time_uptime + IDGEN32_REKEY_TIME;
 }
 
 void
@@ -126,7 +126,7 @@ idgen32(struct idgen32_ctx *ctx)
 	do {
 		/* Rekey a little early to avoid "card counting" attack */
 		if (ctx->id32_counter > IDGEN32_REKEY_LIMIT ||
-		    ctx->id32_rekey_time < time_second)
+		    ctx->id32_rekey_time < time_uptime)
 			idgen32_rekey(ctx);
 		ret = ctx->id32_hibit | idgen32_permute(ctx,
 		    (ctx->id32_offset + ctx->id32_counter++) & 0x7fffffff);
