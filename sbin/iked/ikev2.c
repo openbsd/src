@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.215 2020/04/13 19:10:32 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.216 2020/04/15 18:41:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -955,7 +955,7 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 	if (ikev2_handle_notifies(env, msg) != 0)
 		return;
 
-	if (sa && msg->msg_nat_detected && sa->sa_natt == 0 &&
+	if (msg->msg_nat_detected && sa->sa_natt == 0 &&
 	    (sock = ikev2_msg_getsocket(env,
 	    sa->sa_local.addr_af, 1)) != NULL) {
 		/*
