@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.8 2020/01/10 08:37:31 jsg Exp $
+dnl	$OpenBSD: prep,v 1.9 2020/04/15 11:41:08 kettenis Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -8,11 +8,11 @@ BeagleBone will not function as a console.  You need to be able to
 interact with the firmware on the console.  Often this requires a 3.3V
 TTL level adapter connected to pins or a header on the board.
 
-Firmware which provides an EFI interface with a Device Tree Blob (DTB)
-file is required to boot.  In most cases this is provided by images of
-U-Boot 2016.07 or newer on SD/MMC devices or in SPI flash.  If the
-miniroot images are used, U-Boot and DTB files are distributed as part
-of the miniroot disk images.
+Firmware which provides an UEFI interface with a Device Tree Blob
+(DTB) file or ACPI support is required to boot.  In most cases this is
+provided by images of U-Boot 2016.07 or newer on SD/MMC devices or in
+SPI flash.  If the miniroot images are used, U-Boot and DTB files are
+distributed as part of the miniroot disk images.
 
 OpenBSD can be installed onto a disk by copying the miniroot for your
 board "miniroot{:--:}OSrev.fs" image to an SD card.
