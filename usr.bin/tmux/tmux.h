@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.992 2020/04/15 12:59:20 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.993 2020/04/15 16:11:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2382,7 +2382,8 @@ void	 screen_write_fast_copy(struct screen_write_ctx *, struct screen *,
 	     u_int, u_int, u_int, u_int);
 void	 screen_write_hline(struct screen_write_ctx *, u_int, int, int);
 void	 screen_write_vline(struct screen_write_ctx *, u_int, int, int);
-void	 screen_write_menu(struct screen_write_ctx *, struct menu *, int);
+void	 screen_write_menu(struct screen_write_ctx *, struct menu *, int,
+	     const struct grid_cell *);
 void	 screen_write_box(struct screen_write_ctx *, u_int, u_int);
 void	 screen_write_preview(struct screen_write_ctx *, struct screen *, u_int,
 	     u_int);
