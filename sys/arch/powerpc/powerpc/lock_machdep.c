@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.8 2020/03/05 09:28:31 claudio Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.9 2020/04/15 08:09:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -27,7 +27,7 @@
 #include <ddb/db_output.h>
 
 void
-__mp_lock_init(struct __mp_lock *lock)
+__ppc_lock_init(struct __ppc_lock *lock)
 {
 	lock->mpl_cpu = NULL;
 	lock->mpl_count = 0;
@@ -43,7 +43,7 @@ extern int __mp_lock_spinout;
 #endif
 
 static __inline void
-__mp_lock_spin(struct __mp_lock *mpl)
+__ppc_lock_spin(struct __ppc_lock *mpl)
 {
 #ifndef MP_LOCKDEBUG
 	while (mpl->mpl_count != 0)
@@ -55,14 +55,14 @@ __mp_lock_spin(struct __mp_lock *mpl)
 		CPU_BUSY_CYCLE();
 
 	if (nticks == 0) {
-		db_printf("__mp_lock(%p): lock spun out\n", mpl);
+		db_printf("__ppc_lock(%p): lock spun out\n", mpl);
 		db_enter();
 	}
 #endif
 }
 
 void
-__mp_lock(struct __mp_lock *mpl)
+__ppc_lock(struct __ppc_lock *mpl)
 {
 	/*
 	 * Please notice that mpl_count gets incremented twice for the
@@ -92,18 +92,18 @@ __mp_lock(struct __mp_lock *mpl)
 		}
 		ppc_intr_enable(s);
 
-		__mp_lock_spin(mpl);
+		__ppc_lock_spin(mpl);
 	}
 }
 
 void
-__mp_unlock(struct __mp_lock *mpl)
+__ppc_unlock(struct __ppc_lock *mpl)
 {
 	int s;
 
 #ifdef MP_LOCKDEBUG
 	if (mpl->mpl_cpu != curcpu()) {
-		db_printf("__mp_unlock(%p): not held lock\n", mpl);
+		db_printf("__ppc_unlock(%p): not held lock\n", mpl);
 		db_enter();
 	}
 #endif
@@ -118,14 +118,14 @@ __mp_unlock(struct __mp_lock *mpl)
 }
 
 int
-__mp_release_all(struct __mp_lock *mpl)
+__ppc_release_all(struct __ppc_lock *mpl)
 {
 	int rv = mpl->mpl_count - 1;
 	int s;
 
 #ifdef MP_LOCKDEBUG
 	if (mpl->mpl_cpu != curcpu()) {
-		db_printf("__mp_release_all(%p): not held lock\n", mpl);
+		db_printf("__ppc_release_all(%p): not held lock\n", mpl);
 		db_enter();
 	}
 #endif
@@ -140,13 +140,13 @@ __mp_release_all(struct __mp_lock *mpl)
 }
 
 int
-__mp_release_all_but_one(struct __mp_lock *mpl)
+__ppc_release_all_but_one(struct __ppc_lock *mpl)
 {
 	int rv = mpl->mpl_count - 2;
 
 #ifdef MP_LOCKDEBUG
 	if (mpl->mpl_cpu != curcpu()) {
-		db_printf("__mp_release_all_but_one(%p): not held lock\n", mpl);
+		db_printf("__ppc_release_all_but_one(%p): not held lock\n", mpl);
 		db_enter();
 	}
 #endif
@@ -157,14 +157,14 @@ __mp_release_all_but_one(struct __mp_lock *mpl)
 }
 
 void
-__mp_acquire_count(struct __mp_lock *mpl, int count)
+__ppc_acquire_count(struct __ppc_lock *mpl, int count)
 {
 	while (count--)
-		__mp_lock(mpl);
+		__ppc_lock(mpl);
 }
 
 int
-__mp_lock_held(struct __mp_lock *mpl, struct cpu_info *ci)
+__ppc_lock_held(struct __ppc_lock *mpl, struct cpu_info *ci)
 {
 	return mpl->mpl_cpu == ci;
 }

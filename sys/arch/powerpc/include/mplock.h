@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.3 2017/12/04 09:51:03 mpi Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.4 2020/04/15 08:09:00 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -27,25 +27,27 @@
 #ifndef _POWERPC_MPLOCK_H_
 #define _POWERPC_MPLOCK_H_
 
+#define __USE_MI_MPLOCK
+
 /*
  * Really simple spinlock implementation with recursive capabilities.
  * Correctness is paramount, no fancyness allowed.
  */
 
-struct __mp_lock {
+struct __ppc_lock {
 	volatile struct cpu_info *mpl_cpu;
 	volatile long		mpl_count;
 };
 
 #ifndef _LOCORE
 
-void __mp_lock_init(struct __mp_lock *);
-void __mp_lock(struct __mp_lock *);
-void __mp_unlock(struct __mp_lock *);
-int __mp_release_all(struct __mp_lock *);
-int __mp_release_all_but_one(struct __mp_lock *);
-void __mp_acquire_count(struct __mp_lock *, int);
-int __mp_lock_held(struct __mp_lock *, struct cpu_info *);
+void __ppc_lock_init(struct __ppc_lock *);
+void __ppc_lock(struct __ppc_lock *);
+void __ppc_unlock(struct __ppc_lock *);
+int __ppc_release_all(struct __ppc_lock *);
+int __ppc_release_all_but_one(struct __ppc_lock *);
+void __ppc_acquire_count(struct __ppc_lock *, int);
+int __ppc_lock_held(struct __ppc_lock *, struct cpu_info *);
 
 #endif
 
