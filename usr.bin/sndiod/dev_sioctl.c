@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sioctl.c,v 1.2 2020/03/08 14:52:20 ratchov Exp $	*/
+/*	$OpenBSD: dev_sioctl.c,v 1.3 2020/04/15 14:26:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -115,8 +115,16 @@ dev_sioctl_onval(void *arg, unsigned int addr, unsigned int val)
 void
 dev_sioctl_open(struct dev *d)
 {
-	if (d->sioctl.hdl == NULL)
+	if (d->sioctl.hdl == NULL) {
+		/*
+		 * At this point there are clients, for instance if we're
+		 * called by dev_reopen() but the control device couldn't
+		 * be opened. In this case controls have changed (thoseof
+		 * old device are just removed) so we need to notify clients.
+		 */
+		dev_ctlsync(d);
 		return;
+	}
 	sioctl_ondesc(d->sioctl.hdl, dev_sioctl_ondesc, d);
 	sioctl_onval(d->sioctl.hdl, dev_sioctl_onval, d);
 	d->sioctl.file = file_new(&dev_sioctl_ops, d, "mix",
