@@ -17,9 +17,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.37 2020/01/06 19:44:09 job Exp $
+.\" $OpenBSD: crontab.5,v 1.38 2020/04/15 01:59:34 millert Exp $
 .\"
-.Dd $Mdocdate: January 6 2020 $
+.Dd $Mdocdate: April 15 2020 $
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -144,7 +144,18 @@ For example,
 .Ar hour
 entry specifies execution at hours 8, 9, 10 and 11.
 .Pp
-Step values can be used in conjunction with ranges.
+A random value (within the legal range) may be obtained by using the
+.Ql ~
+character in a field.
+The interval of the random value may be specified explicitly, for example
+.Dq 0~30
+will result in a random value between 0 and 30 inclusive.
+If either (or both) of the numbers on either side of the
+.Ql ~
+are omitted, the appropriate limit (low or high) for the field will be used.
+.Pp
+Step values can be used in conjunction with ranges (but not random ranges
+which represent a single number).
 Following a range with
 .No / Ns Ar number
 specifies skips of
@@ -318,6 +329,9 @@ MAILTO=paul
 23 0-23/2 * * * echo "run 23 minutes after midn, 2am, 4am ..., everyday"
 
 5 4 * * sun     echo "run at 5 after 4 every sunday"
+
+# run hourly at a random time within the first 30 minutes of the hour
+0~30 * * * *   /usr/libexec/spamd-setup
 .Ed
 .Sh SEE ALSO
 .Xr crontab 1 ,
@@ -337,6 +351,10 @@ field may use 7 to represent Sunday.
 .It
 Ranges may include
 .Dq steps .
+.It
+Random intervals are supported using the
+.Ql ~
+character.
 .It
 Months or days of the week can be specified by name.
 .It

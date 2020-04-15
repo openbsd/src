@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.49 2018/06/13 11:27:30 job Exp $	*/
+/*	$OpenBSD: entry.c,v 1.50 2020/04/15 01:59:34 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -450,33 +450,29 @@ static int
 get_range(bitstr_t *bits, int low, int high, const char *names[],
 	  int ch, FILE *file)
 {
-	/* range = number | number "-" number [ "/" number ]
+	/* range = number | number* "~" number* | number "-" number ["/" number]
 	 */
 
 	int i, num1, num2, num3;
 
+	num1 = low;
+	num2 = high;
+
 	if (ch == '*') {
-		/* '*' means "first-last" but can still be modified by /step
+		/* '*' means [low, high] but can still be modified by /step
 		 */
-		num1 = low;
-		num2 = high;
 		ch = get_char(file);
 		if (ch == EOF)
 			return (EOF);
 	} else {
-		ch = get_number(&num1, low, names, ch, file, ",- \t\n");
-		if (ch == EOF)
-			return (EOF);
-
-		if (ch != '-') {
-			/* not a range, it's a single number.
-			 */
-			if (EOF == set_element(bits, low, high, num1)) {
-				unget_char(ch, file);
+		if (ch != '~') {
+			ch = get_number(&num1, low, names, ch, file, ",-~ \t\n");
+			if (ch == EOF)
 				return (EOF);
-			}
-			return (ch);
-		} else {
+		}
+
+		switch (ch) {
+		case '-':
 			/* eat the dash
 			 */
 			ch = get_char(file);
@@ -488,6 +484,37 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 			ch = get_number(&num2, low, names, ch, file, "/, \t\n");
 			if (ch == EOF || num1 > num2)
 				return (EOF);
+			break;
+		case '~':
+			/* eat the tilde
+			 */
+			ch = get_char(file);
+			if (ch == EOF)
+				return (EOF);
+
+			/* get the (optional) number following the tilde
+			 */
+			ch = get_number(&num2, low, names, ch, file, ", \t\n");
+			if (ch == EOF)
+				ch = get_char(file);
+			if (ch == EOF || num1 > num2) {
+				unget_char(ch, file);
+				return (EOF);
+			}
+
+			/* get a random number in the interval [num1, num2]
+			 */
+			num3 = num1;
+			num1 = arc4random_uniform(num2 - num3 + 1) + num3;
+			/* FALLTHROUGH */
+		default:
+			/* not a range, it's a single number.
+			 */
+			if (EOF == set_element(bits, low, high, num1)) {
+				unget_char(ch, file);
+				return (EOF);
+			}
+			return (ch);
 		}
 	}
 
