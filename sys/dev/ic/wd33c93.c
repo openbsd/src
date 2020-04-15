@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.10 2017/04/30 16:45:46 mpi Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.11 2020/04/15 02:18:39 cheloha Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -678,7 +678,7 @@ wd33c93_sched(struct wd33c93_softc *sc)
 			if (lun < SBIC_NLUN)
 				ti->lun[lun] = li;
 		}
-		li->last_used = time_second;
+		li->last_used = time_uptime;
 
 		/*
 		 * We've found a potential command, but is the target/lun busy?
@@ -2284,7 +2284,7 @@ wd33c93_watchdog(void *arg)
 	struct wd33c93_linfo *li;
 	int t, s, l;
 	/* scrub LUN's that have not been used in the last 10min. */
-	time_t old = time_second - (10 * 60);
+	time_t old = time_uptime - (10 * 60);
 
 	for (t = 0; t < SBIC_NTARG; t++) {
 		ti = &sc->sc_tinfo[t];
