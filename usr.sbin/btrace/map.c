@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.4 2020/03/19 15:52:30 mpi Exp $ */
+/*	$OpenBSD: map.c,v 1.5 2020/04/15 14:51:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -43,7 +43,7 @@
 
 RB_HEAD(mtree, mentry);
 
-#define	KLEN 64
+#define	KLEN 256
 
 struct mentry {
 	RB_ENTRY(mentry)	 mlink;
