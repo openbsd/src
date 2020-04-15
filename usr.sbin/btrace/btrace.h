@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.h,v 1.3 2020/01/28 16:39:51 mpi Exp $ */
+/*	$OpenBSD: btrace.h,v 1.4 2020/04/15 16:59:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -39,13 +39,14 @@ void			 kelf_close(void);
 int			 kelf_snprintsym(char *, size_t, unsigned long);
 
 /* map.c */
-void			 map_clear(struct bt_var *);
-void			 map_delete(struct bt_var *, const char *);
-struct bt_arg		*map_get(struct bt_var *, const char *);
-void			 map_insert(struct bt_var *, const char *,
+struct map;
+void			 map_clear(struct map *);
+void			 map_delete(struct map *, const char *);
+struct bt_arg		*map_get(struct map *, const char *);
+struct map		*map_insert(struct map *, const char *,
 			     struct bt_arg *);
-void			 map_print(struct bt_var *, size_t);
-void			 map_zero(struct bt_var *);
+void			 map_print(struct map *, size_t, const char *);
+void			 map_zero(struct map *);
 
 /* printf.c */
 int			 stmt_printf(struct bt_stmt *, struct dt_evt *);

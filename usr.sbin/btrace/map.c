@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.5 2020/04/15 14:51:45 mpi Exp $ */
+/*	$OpenBSD: map.c,v 1.6 2020/04/15 16:59:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -41,7 +41,7 @@
 #define	MAX(_a,_b) ((_a) > (_b) ? (_a) : (_b))
 #endif
 
-RB_HEAD(mtree, mentry);
+RB_HEAD(map, mentry);
 
 #define	KLEN 256
 
@@ -52,9 +52,9 @@ struct mentry {
 };
 
 int		 mcmp(struct mentry *, struct mentry *);
-struct mentry	*mget(struct mtree *, const char *);
+struct mentry	*mget(struct map *, const char *);
 
-RB_GENERATE(mtree, mentry, mlink, mcmp);
+RB_GENERATE(map, mentry, mlink, mcmp);
 
 int
 mcmp(struct mentry *me0, struct mentry *me1)
@@ -63,59 +63,54 @@ mcmp(struct mentry *me0, struct mentry *me1)
 }
 
 struct mentry *
-mget(struct mtree *map, const char *key)
+mget(struct map *map, const char *key)
 {
 	struct mentry me, *mep;
 
 	strlcpy(me.mkey, key, KLEN);
-	mep = RB_FIND(mtree, map, &me);
+	mep = RB_FIND(map, map, &me);
 	if (mep == NULL) {
 		mep = calloc(1, sizeof(struct mentry));
 		if (mep == NULL)
 			err(1, "mentry: calloc");
 
 		strlcpy(mep->mkey, key, KLEN);
-		RB_INSERT(mtree, map, mep);
+		RB_INSERT(map, map, mep);
 	}
 
 	return mep;
 }
 
 void
-map_clear(struct bt_var *bv)
+map_clear(struct map *map)
 {
-	struct mtree *map = (struct mtree *)bv->bv_value;
 	struct mentry *mep;
 
-	while ((mep = RB_MIN(mtree, map)) != NULL) {
-		RB_REMOVE(mtree, map, mep);
+	while ((mep = RB_MIN(map, map)) != NULL) {
+		RB_REMOVE(map, map, mep);
 		free(mep);
 	}
 
 	assert(RB_EMPTY(map));
 	free(map);
-
-	bv->bv_value = NULL;
 }
 
 void
-map_delete(struct bt_var *bv, const char *key)
+map_delete(struct map *map, const char *key)
 {
-	struct mtree *map = (struct mtree *)bv->bv_value;
 	struct mentry me, *mep;
 
 	strlcpy(me.mkey, key, KLEN);
-	mep = RB_FIND(mtree, map, &me);
+	mep = RB_FIND(map, map, &me);
 	if (mep != NULL) {
-		RB_REMOVE(mtree, map, mep);
+		RB_REMOVE(map, map, mep);
 		free(mep);
 	}
 }
 
 struct bt_arg *
-map_get(struct bt_var *bv, const char *key)
+map_get(struct map *map, const char *key)
 {
-	struct mtree *map = (struct mtree *)bv->bv_value;
 	struct mentry *mep;
 
 	mep = mget(map, key);
@@ -124,18 +119,17 @@ map_get(struct bt_var *bv, const char *key)
 
 	return mep->mval;
 }
-void
-map_insert(struct bt_var *bv, const char *key, struct bt_arg *bval)
+
+struct map *
+map_insert(struct map *map, const char *key, struct bt_arg *bval)
 {
-	struct mtree *map = (struct mtree *)bv->bv_value;
 	struct mentry *mep;
 	long val;
 
 	if (map == NULL) {
-		map = calloc(1, sizeof(struct mtree));
+		map = calloc(1, sizeof(struct map));
 		if (map == NULL)
-			err(1, "mtree: calloc");
-		bv->bv_value = (struct bt_arg *)map;
+			err(1, "map: calloc");
 	}
 
 	mep = mget(map, key);
@@ -176,6 +170,8 @@ map_insert(struct bt_var *bv, const char *key, struct bt_arg *bval)
 	default:
 		errx(1, "no insert support for type %d", bval->ba_type);
 	}
+
+	return map;
 }
 
 static struct bt_arg nullba = { {NULL }, (void *)0, NULL, B_AT_LONG };
@@ -183,9 +179,8 @@ static struct bt_arg maxba = { { NULL }, (void *)LONG_MAX, NULL, B_AT_LONG };
 
 /* Print at most `top' entries of the map ordered by value. */
 void
-map_print(struct bt_var *bv, size_t top)
+map_print(struct map *map, size_t top, const char *mapname)
 {
-	struct mtree *map = (void *)bv->bv_value;
 	struct mentry *mep, *mcur;
 	struct bt_arg *bhigh, *bprev;
 	size_t i;
@@ -197,7 +192,7 @@ map_print(struct bt_var *bv, size_t top)
 	for (i = 0; i < top; i++) {
 		mcur = NULL;
 		bhigh = &nullba;
-		RB_FOREACH(mep, mtree, map) {
+		RB_FOREACH(mep, map, map) {
 			if (bacmp(mep->mval, bhigh) >= 0 &&
 			    bacmp(mep->mval, bprev) < 0 &&
 			    mep->mval != bprev) {
@@ -207,19 +202,18 @@ map_print(struct bt_var *bv, size_t top)
 		}
 		if (mcur == NULL)
 			break;
-		printf("@%s[%s]: %s\n", bv_name(bv), mcur->mkey,
+		printf("@%s[%s]: %s\n", mapname, mcur->mkey,
 		    ba2str(mcur->mval, NULL));
 		bprev = mcur->mval;
 	}
 }
 
 void
-map_zero(struct bt_var *bv)
+map_zero(struct map *map)
 {
-	struct mtree *map = (struct mtree *)bv->bv_value;
 	struct mentry *mep;
 
-	RB_FOREACH(mep, mtree, map) {
+	RB_FOREACH(mep, map, map) {
 		mep->mval->ba_value = 0;
 		mep->mval->ba_type = B_AT_LONG;
 	}
