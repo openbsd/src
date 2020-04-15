@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.12 2020/03/27 16:22:26 cheloha Exp $ */
+/*	$OpenBSD: btrace.c,v 1.13 2020/04/15 14:50:14 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -605,10 +605,6 @@ builtin_nsecs(struct dt_evt *dtev)
 	return TIMESPEC_TO_NSEC(&dtev->dtev_tsp);
 }
 
-#include <machine/vmparam.h>
-#include <machine/param.h>
-#define	INKERNEL(va)	((va) >= VM_MIN_KERNEL_ADDRESS)
-
 const char *
 builtin_stack(struct dt_evt *dtev, int kernel)
 {
@@ -617,19 +613,12 @@ builtin_stack(struct dt_evt *dtev, int kernel)
 	size_t i;
 	int n = 0;
 
-	if (st->st_count == 0)
+	if (!kernel || st->st_count == 0)
 		return "";
 
 	for (i = 0; i < st->st_count; i++) {
-		if (INKERNEL(st->st_pc[i])) {
-			if (!kernel)
-				continue;
-			n += kelf_snprintsym(buf + n, sizeof(buf) - 1 - n,
-			    st->st_pc[i]);
-		} else if (!kernel) {
-			n += snprintf(buf + n, sizeof(buf) - 1 - n, "0x%lx\n",
-			    st->st_pc[1]);
-		}
+		n += kelf_snprintsym(buf + n, sizeof(buf) - 1 - n,
+		    st->st_pc[i]);
 	}
 
 	return buf;
