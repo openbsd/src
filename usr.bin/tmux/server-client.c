@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.318 2020/04/13 15:55:51 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.319 2020/04/16 14:25:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2056,7 +2056,7 @@ server_client_dispatch_identify(struct client *c, struct imsg *imsg)
 			c->fd = -1;
 		} else {
 			if (c->flags & CLIENT_UTF8)
-				c->tty.flags |= TTY_UTF8;
+				c->tty.term_flags |= TERM_UTF8;
 			if (c->flags & CLIENT_256COLOURS)
 				c->tty.term_flags |= TERM_256COLOURS;
 			tty_resize(&c->tty);

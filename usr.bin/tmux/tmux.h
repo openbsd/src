@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.997 2020/04/16 14:03:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.998 2020/04/16 14:25:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1183,6 +1183,7 @@ struct tty_term {
 #define TERM_DECFRA 0x8
 #define TERM_RGBCOLOURS 0x10
 #define TERM_SYNC 0x20
+#define TERM_UTF8 0x40
 	int		 flags;
 
 	LIST_ENTRY(tty_term) entry;
@@ -1235,7 +1236,7 @@ struct tty {
 #define TTY_NOCURSOR 0x1
 #define TTY_FREEZE 0x2
 #define TTY_TIMER 0x4
-#define TTY_UTF8 0x8
+/* 0x8 unused */
 #define TTY_STARTED 0x10
 #define TTY_OPENED 0x20
 #define TTY_FOCUS 0x40

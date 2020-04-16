@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.349 2020/04/16 14:03:51 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.350 2020/04/16 14:25:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1255,7 +1255,7 @@ tty_check_codeset(struct tty *tty, const struct grid_cell *gc)
 		return (gc);
 
 	/* UTF-8 terminal and a UTF-8 character - fine. */
-	if (tty->flags & TTY_UTF8)
+	if (tty_get_flags(tty) & TERM_UTF8)
 		return (gc);
 
 	/* Replace by the right number of underscores. */
