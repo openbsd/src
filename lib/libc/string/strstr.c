@@ -1,7 +1,7 @@
-/*	$OpenBSD: strstr.c,v 1.8 2018/04/30 07:44:56 denis Exp $ */
+/*	$OpenBSD: strstr.c,v 1.9 2020/04/16 12:37:52 claudio Exp $ */
 
 /*
- * Copyright (c) 2005-2014 Rich Felker
+ * Copyright (c) 2005-2018 Rich Felker
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -24,12 +24,7 @@
  */
 
 #include <string.h>
-#include <stdlib.h>
 #include <stdint.h>
-
-#ifdef DEBUG
-#include <stdio.h>
-#endif
 
 static char *
 twobyte_strstr(const unsigned char *h, const unsigned char *n)
@@ -146,11 +141,8 @@ twoway_strstr(const unsigned char *h, const unsigned char *n)
 		/* Check last byte first; advance by shift on mismatch */
 		if (BITOP(byteset, h[l-1], &)) {
 			k = l-shift[h[l-1]];
-#ifdef DEBUG
-			printf("adv by %zu (on %c) at [%s] (%zu;l=%zu)\n", k, h[l-1], h, shift[h[l-1]], l);
-#endif
 			if (k) {
-				if (mem0 && mem && k < p) k = l-p;
+				if (k < mem) k = mem;
 				h += k;
 				mem = 0;
 				continue;
