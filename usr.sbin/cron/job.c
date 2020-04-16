@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.13 2015/11/09 01:12:27 millert Exp $	*/
+/*	$OpenBSD: job.c,v 1.14 2020/04/16 17:51:56 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,7 @@
 #include <bitstring.h>		/* for structs.h */
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 #include <time.h>		/* for structs.h */
 
 #include "macros.h"
@@ -32,6 +33,7 @@ typedef	struct _job {
 	SIMPLEQ_ENTRY(_job) entries;
 	entry		*e;
 	user		*u;
+	pid_t		pid;
 } job;
 
 
@@ -43,31 +45,84 @@ job_add(entry *e, user *u)
 	job *j;
 
 	/* if already on queue, keep going */
-	SIMPLEQ_FOREACH(j, &jobs, entries)
+	SIMPLEQ_FOREACH(j, &jobs, entries) {
 		if (j->e == e && j->u == u)
 			return;
+	}
 
 	/* build a job queue element */
 	if ((j = malloc(sizeof(job))) == NULL)
 		return;
 	j->e = e;
 	j->u = u;
+	j->pid = -1;
 
 	/* add it to the tail */
 	SIMPLEQ_INSERT_TAIL(&jobs, j, entries);
 }
 
+void
+job_remove(entry *e, user *u)
+{
+	job *j, *prev = NULL;
+
+	SIMPLEQ_FOREACH(j, &jobs, entries) {
+		if (j->e == e && j->u == u) {
+			if (prev == NULL)
+				SIMPLEQ_REMOVE_HEAD(&jobs, entries);
+			else
+				SIMPLEQ_REMOVE_AFTER(&jobs, prev, entries);
+			free(j);
+			break;
+		}
+		prev = j;
+	}
+}
+
+void
+job_exit(pid_t jobpid)
+{
+	job *j, *prev = NULL;
+
+	/* If a singleton exited, remove and free it. */
+	SIMPLEQ_FOREACH(j, &jobs, entries) {
+		if (jobpid == j->pid) {
+			if (prev == NULL)
+				SIMPLEQ_REMOVE_HEAD(&jobs, entries);
+			else
+				SIMPLEQ_REMOVE_AFTER(&jobs, prev, entries);
+			free(j);
+			break;
+		}
+		prev = j;
+	}
+}
+
 int
 job_runqueue(void)
 {
+	struct job_queue singletons = SIMPLEQ_HEAD_INITIALIZER(singletons);
 	job *j;
 	int run = 0;
 
 	while ((j = SIMPLEQ_FIRST(&jobs))) {
 		SIMPLEQ_REMOVE_HEAD(&jobs, entries);
-		do_command(j->e, j->u);
-		free(j);
-		run++;
+
+		/* Only start the job if it is not a running singleton. */
+		if (j->pid == -1) {
+			j->pid = do_command(j->e, j->u);
+			run++;
+		} else if ((j->e->flags & DONT_LOG) == 0) {
+			syslog(LOG_INFO, "(%s) SKIPPING (%s)",
+			    j->u->name, j->e->cmd);
+		}
+
+		/* Singleton jobs persist in the queue until they exit. */
+		if (j->pid != -1)
+			SIMPLEQ_INSERT_TAIL(&singletons, j, entries);
+		else
+			free(j);
 	}
+	SIMPLEQ_CONCAT(&jobs, &singletons);
 	return (run);
 }

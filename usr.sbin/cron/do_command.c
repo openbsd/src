@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.60 2019/06/28 13:32:47 deraadt Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.61 2020/04/16 17:51:56 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -47,9 +47,10 @@
 
 static void		child_process(entry *, user *);
 
-void
+pid_t
 do_command(entry *e, user *u)
 {
+	pid_t pid;
 
 	/* fork to become asynchronous -- parent process is done immediately,
 	 * and continues to run the normal cron code, which means return to
@@ -58,7 +59,7 @@ do_command(entry *e, user *u)
 	 * vfork() is unsuitable, since we have much to do, and the parent
 	 * needs to be able to run off and fork other processes.
 	 */
-	switch (fork()) {
+	switch ((pid = fork())) {
 	case -1:
 		syslog(LOG_ERR, "(CRON) CAN'T FORK (%m)");
 		break;
@@ -69,8 +70,13 @@ do_command(entry *e, user *u)
 		break;
 	default:
 		/* parent process */
+		if ((e->flags & SINGLE_JOB) == 0)
+			pid = -1;
 		break;
 	}
+
+	/* only return pid if a singleton */
+	return (pid);
 }
 
 static void

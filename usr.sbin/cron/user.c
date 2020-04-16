@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.21 2018/02/05 03:52:37 millert Exp $	*/
+/*	$OpenBSD: user.c,v 1.22 2020/04/16 17:51:56 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -41,6 +41,7 @@ free_user(user *u)
 
 	while ((e = SLIST_FIRST(&u->crontab))) {
 		SLIST_REMOVE_HEAD(&u->crontab, entries);
+		job_remove(e, u);
 		free_entry(e);
 	}
 	free(u->name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.29 2018/02/05 03:52:37 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.30 2020/04/16 17:51:56 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,8 @@
 
 void		load_database(cron_db **),
 		job_add(entry *, user *),
-		do_command(entry *, user *),
+		job_remove(entry *, user *),
+		job_exit(pid_t),
 		free_user(user *),
 		env_free(char **),
 		unget_char(int, FILE *),
@@ -32,6 +33,8 @@ void		load_database(cron_db **),
 		skip_comments(FILE *),
 		poke_daemon(unsigned char),
 		atrun(at_db *, double, time_t);
+
+pid_t		do_command(entry *, user *);
 
 int		job_runqueue(void),
 		get_char(FILE *),
