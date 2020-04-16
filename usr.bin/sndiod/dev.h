@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.24 2020/03/08 14:52:20 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.25 2020/04/16 12:26:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -244,7 +244,9 @@ struct dev {
 #define MMC_START	2			/* attempting to start */
 #define MMC_RUN		3			/* started */
 	unsigned int tstate;			/* one of above */
-	unsigned int master;			/* master volume controller */
+
+	unsigned int master;			/* software vol. knob */
+	unsigned int master_enabled;		/* 1 if h/w has no vo. knob */
 
 	/*
 	 * control

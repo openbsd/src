@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sioctl.c,v 1.3 2020/04/15 14:26:40 ratchov Exp $	*/
+/*	$OpenBSD: dev_sioctl.c,v 1.4 2020/04/16 12:26:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -64,18 +64,17 @@ dev_sioctl_ondesc(void *arg, struct sioctl_desc *desc, int val)
 	dev_rmctl(d, addr);
 
 	/*
-	 * prefix group names we use (top-level and "app") with "hw."
+	 * prefix group names we use (currently "app") with "hw/"
 	 * to ensure that all controls have unique names when multiple
 	 * sndiod's are chained
 	 */
-	if (desc->group[0] == 0)
-		group = GROUP_PREFIX;
-	else {
+	if (strcmp(desc->group, "app") == 0) {
 		group = group_buf;
 		if (snprintf(group_buf, CTL_NAMEMAX, GROUP_PREFIX "/%s",
 		    desc->group) >= CTL_NAMEMAX)
 			return;
-	}
+	} else
+		group = desc->group;
 
 	dev_addctl(d, group, desc->type, addr,
 	    desc->node0.name, desc->node0.unit, desc->func,
