@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.18 2019/11/11 05:48:46 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.19 2020/04/16 05:28:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -71,13 +71,13 @@ main(int argc, char *argv[])
 	int			 done = 0;
 	int			 n, verbose = 0;
 	int			 ch;
-	char			*sockname;
+	char			*sockname = NULL;
 
-	sockname = SLAACD_SOCKET;
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch (ch) {
 		case 's':
-			sockname = optarg;
+			if ((sockname = strdup(optarg)) == NULL)
+				err(1, NULL);
 			break;
 		default:
 			usage();
@@ -85,6 +85,12 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (sockname == NULL) {
+		if (asprintf(&sockname, "%s.%d", SLAACD_SOCKET, getrtable()) ==
+		    -1)
+			err(1, NULL);
+	}
 
 	if (pledge("stdio unix", NULL) == -1)
 		err(1, "pledge");
@@ -100,6 +106,7 @@ main(int argc, char *argv[])
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path));
+	free(sockname);
 
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", sockname);

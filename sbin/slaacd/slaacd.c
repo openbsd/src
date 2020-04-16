@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.47 2020/04/14 06:44:59 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.48 2020/04/16 05:28:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 	int			 pipe_main2engine[2];
 	int			 icmp6sock, on = 1;
 	int			 frontend_routesock, rtfilter;
-	char			*csock = SLAACD_SOCKET;
+	char			*csock = NULL;
 #ifndef SMALL
 	struct imsg_propose_rdns rdns;
 	int			 control_fd;
@@ -151,7 +151,8 @@ main(int argc, char *argv[])
 			frontend_flag = 1;
 			break;
 		case 's':
-			csock = optarg;
+			if ((csock = strdup(optarg)) == NULL)
+				fatal(NULL);
 			break;
 		case 'v':
 			verbose++;
@@ -277,8 +278,13 @@ main(int argc, char *argv[])
 		fatal("setsockopt(ROUTE_MSGFILTER)");
 
 #ifndef SMALL
+	if (csock == NULL) {
+		if (asprintf(&csock, "%s.%d", SLAACD_SOCKET, getrtable()) == -1)
+			fatal(NULL);
+	}
 	if ((control_fd = control_init(csock)) == -1)
 		fatalx("control socket setup failed");
+	free(csock);
 #endif /* SMALL */
 
 	if (pledge("stdio sendfd wroute", NULL) == -1)
