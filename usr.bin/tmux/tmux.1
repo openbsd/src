@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.740 2020/04/13 07:25:33 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.741 2020/04/16 13:35:24 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 13 2020 $
+.Dd $Mdocdate: April 16 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5511,6 +5511,8 @@ $ printf '\e033[4 q'
 If
 .Em Se
 is not set, \&Ss with argument 0 will be used to reset the cursor style instead.
+.It Em \&Sync
+Show that the terminal supports synchronized updates.
 .It Em \&Tc
 Indicate that the terminal supports the
 .Ql direct colour

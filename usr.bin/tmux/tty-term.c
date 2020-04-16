@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.71 2020/01/28 11:39:51 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.72 2020/04/16 13:35:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -260,6 +260,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_SMUL] = { TTYCODE_STRING, "smul" },
 	[TTYC_SMXX] =  { TTYCODE_STRING, "smxx" },
 	[TTYC_SS] = { TTYCODE_STRING, "Ss" },
+	[TTYC_SYNC] = { TTYCODE_FLAG, "Sync" },
 	[TTYC_TC] = { TTYCODE_FLAG, "Tc" },
 	[TTYC_TSL] = { TTYCODE_STRING, "tsl" },
 	[TTYC_U8] = { TTYCODE_NUMBER, "U8" },
@@ -531,6 +532,10 @@ tty_term_find(char *name, int fd, char **cause)
 	    (tty_term_has(term, TTYC_SETRGBF) &&
 	    tty_term_has(term, TTYC_SETRGBB)))
 		term->flags |= TERM_RGBCOLOURS;
+
+	/* Set flag if terminal has synchronized updates. */
+	if (tty_term_flag(term, TTYC_SYNC))
+		term->flags |= TERM_SYNC;
 
 	/*
 	 * Terminals without xenl (eat newline glitch) wrap at at $COLUMNS - 1
