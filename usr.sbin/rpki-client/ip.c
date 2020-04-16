@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.9 2019/11/27 17:18:24 deraadt Exp $ */
+/*	$OpenBSD: ip.c,v 1.10 2020/04/16 11:25:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,8 +41,7 @@
 int
 ip_addr_afi_parse(const char *fn, const ASN1_OCTET_STRING *p, enum afi *afi)
 {
-	char	 buf[2];
-	short	 v;
+	uint16_t v;
 
 	if (p->length == 0 || p->length > 3) {
 		warnx("%s: invalid field length, want 1--3, have %d",
@@ -50,8 +49,8 @@ ip_addr_afi_parse(const char *fn, const ASN1_OCTET_STRING *p, enum afi *afi)
 		return 0;
 	}
 
-	memcpy(buf, p->data, sizeof(uint16_t));
-	v = ntohs(*(uint16_t *)buf);
+	memcpy(&v, p->data, sizeof(v));
+	v = ntohs(v);
 
 	/* Only accept IPv4 and IPv6 AFIs. */
 

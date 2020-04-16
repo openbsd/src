@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2020/04/01 14:15:49 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.62 2020/04/16 11:25:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1250,7 +1250,7 @@ out:
 
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
-	ERR_remove_state(0);
+	ERR_remove_thread_state(NULL);
 	ERR_free_strings();
 
 	exit(rc);
