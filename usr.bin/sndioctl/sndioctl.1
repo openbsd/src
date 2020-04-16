@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndioctl.1,v 1.4 2020/02/26 15:36:27 ratchov Exp $
+.\" $OpenBSD: sndioctl.1,v 1.5 2020/04/16 09:07:24 ratchov Exp $
 .\"
 .\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2020 $
+.Dd $Mdocdate: April 16 2020 $
 .Dt SNDIOCTL 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl dimv
+.Op Fl dimnv
 .Op Fl f Ar device
 .Op Ar command ...
 .Ek
@@ -47,6 +47,8 @@ Display characteristics of requested parameters
 instead of their values.
 .It Fl m
 Monitor and display audio parameter changes.
+.It Fl n
+Suppress printing of the variable name.
 .It Fl v
 Enable verbose mode, a.k.a. multi-channel mode.
 By default parameters affecting different channels
@@ -59,6 +61,7 @@ If no commands are specified all valid parameters are displayed on
 Unless
 .Fl d ,
 .Fl m ,
+.Fl n ,
 or
 .Fl i
 are used, displayed parameters are valid commands.

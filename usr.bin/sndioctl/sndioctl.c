@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.2 2020/02/26 14:47:48 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.3 2020/04/16 09:07:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -64,7 +64,7 @@ void onctl(void *, unsigned, unsigned);
 
 struct sioctl_hdl *hdl;
 struct info *infolist;
-int i_flag = 0, v_flag = 0, m_flag = 0;
+int i_flag = 0, v_flag = 0, m_flag = 0, n_flag = 0;
 
 static inline int
 isname_first(int c)
@@ -401,12 +401,14 @@ print_val(struct info *p, int mono)
 void
 print_par(struct info *p, int mono, char *comment)
 {
-	if (p->desc.group[0] != 0) {
-		printf("%s", p->desc.group);
-		printf("/");
+	if (!n_flag) {
+		if (p->desc.group[0] != 0) {
+			printf("%s", p->desc.group);
+			printf("/");
+		}
+		print_node(&p->desc.node0, mono);
+		printf(".%s=", p->desc.func);
 	}
-	print_node(&p->desc.node0, mono);
-	printf(".%s=", p->desc.func);
 	if (i_flag)
 		print_desc(p, mono);
 	else
@@ -853,7 +855,7 @@ main(int argc, char **argv)
 	struct pollfd *pfds;
 	int nfds, revents;
 
-	while ((c = getopt(argc, argv, "df:imv")) != -1) {
+	while ((c = getopt(argc, argv, "df:imnv")) != -1) {
 		switch (c) {
 		case 'd':
 			d_flag = 1;
@@ -867,12 +869,15 @@ main(int argc, char **argv)
 		case 'm':
 			m_flag = 1;
 			break;
+		case 'n':
+			n_flag = 1;
+			break;
 		case 'v':
 			v_flag++;
 			break;
 		default:
 			fprintf(stderr, "usage: sndioctl "
-			    "[-dimv] [-f device] [command ...]\n");
+			    "[-dimnv] [-f device] [command ...]\n");
 			exit(1);
 		}
 	}
