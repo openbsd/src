@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.275 2020/04/15 19:06:49 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.276 2020/04/16 05:22:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -704,7 +704,7 @@ window_copy_size_changed(struct window_mode_entry *wme)
 	window_copy_clear_marks(wme);
 
 	screen_write_start(&ctx, NULL, s);
-	window_copy_write_lines(wme, &ctx, 0, screen_size_y(s) - 1);
+	window_copy_write_lines(wme, &ctx, 0, screen_size_y(s));
 	screen_write_stop(&ctx);
 
 	if (search && !data->timeout)
