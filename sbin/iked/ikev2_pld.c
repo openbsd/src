@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.82 2020/04/11 21:11:22 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.83 2020/04/16 19:28:22 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1329,6 +1329,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 	struct iked_sa		*sa = msg->msg_sa;
 	struct ikev2_delete	 del, *localdel;
 	struct ibuf		*resp = NULL;
+	struct ibuf		*spibuf = NULL;
 	uint64_t		*localspi = NULL;
 	uint64_t		 spi64, spi = 0;
 	uint32_t		 spi32;
@@ -1424,8 +1425,14 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 		if (ikev2_childsa_delete(env, sa, del.del_protoid, spi,
 		    &localspi[i], 0) == -1)
 			failed++;
-		else
+		else {
 			found++;
+
+			/* append SPI to log buffer */
+			if (ibuf_strlen(spibuf))
+				ibuf_strcat(&spibuf, ", ");
+			ibuf_strcat(&spibuf, print_spi(spi, sz));
+		}
 
 		/*
 		 * Flows are left in the require mode so that it would be
@@ -1471,8 +1478,11 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 				break;
 			}
 		}
-
-		log_info("%s: deleted %zu spis", SPI_SA(sa, __func__), found);
+		log_info("%s: deleted %zu SPI%s: %.*s",
+		    SPI_SA(sa, NULL), found,
+		    found == 1 ? "" : "s",
+		    spibuf ? ibuf_strlen(spibuf) : 0,
+		    spibuf ? (char *)ibuf_data(spibuf) : "");
 	}
 
 	if (found) {
@@ -1487,6 +1497,7 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
  done:
 	free(localspi);
 	free(peersas);
+	ibuf_release(spibuf);
 	ibuf_release(resp);
 	return (ret);
 }
