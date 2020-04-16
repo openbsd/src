@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.998 2020/04/16 14:25:35 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.999 2020/04/16 15:14:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1261,6 +1261,7 @@ struct tty {
 	struct event	 key_timer;
 	struct tty_key	*key_tree;
 };
+#define tty_term_flags(tty) (tty->term->flags|tty->term_flags)
 
 /* TTY command context. */
 struct tty_ctx {
