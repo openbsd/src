@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.3 2020/04/16 09:07:24 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.4 2020/04/16 10:13:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -64,7 +64,7 @@ void onctl(void *, unsigned, unsigned);
 
 struct sioctl_hdl *hdl;
 struct info *infolist;
-int i_flag = 0, v_flag = 0, m_flag = 0, n_flag = 0;
+int i_flag = 0, v_flag = 0, m_flag = 0, n_flag = 0, q_flag = 0;
 
 static inline int
 isname_first(int c)
@@ -855,7 +855,7 @@ main(int argc, char **argv)
 	struct pollfd *pfds;
 	int nfds, revents;
 
-	while ((c = getopt(argc, argv, "df:imnv")) != -1) {
+	while ((c = getopt(argc, argv, "df:imnqv")) != -1) {
 		switch (c) {
 		case 'd':
 			d_flag = 1;
@@ -872,12 +872,15 @@ main(int argc, char **argv)
 		case 'n':
 			n_flag = 1;
 			break;
+		case 'q':
+			q_flag = 1;
+			break;
 		case 'v':
 			v_flag++;
 			break;
 		default:
 			fprintf(stderr, "usage: sndioctl "
-			    "[-dimnv] [-f device] [command ...]\n");
+			    "[-dimnqv] [-f device] [command ...]\n");
 			exit(1);
 		}
 	}
@@ -913,7 +916,8 @@ main(int argc, char **argv)
 			}
 		}
 		commit();
-		list();
+		if (!q_flag)
+			list();
 	}
 	if (m_flag) {
 		pfds = malloc(sizeof(struct pollfd) * sioctl_nfds(hdl));

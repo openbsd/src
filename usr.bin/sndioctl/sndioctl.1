@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndioctl.1,v 1.5 2020/04/16 09:07:24 ratchov Exp $
+.\" $OpenBSD: sndioctl.1,v 1.6 2020/04/16 10:13:12 ratchov Exp $
 .\"
 .\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl dimnv
+.Op Fl dimnqv
 .Op Fl f Ar device
 .Op Ar command ...
 .Ek
@@ -49,6 +49,8 @@ instead of their values.
 Monitor and display audio parameter changes.
 .It Fl n
 Suppress printing of the variable name.
+.It Fl q
+Suppress all printing when setting a variable.
 .It Fl v
 Enable verbose mode, a.k.a. multi-channel mode.
 By default parameters affecting different channels
