@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.39 2020/04/16 17:51:56 millert Exp $
+.\" $OpenBSD: crontab.5,v 1.40 2020/04/16 19:30:50 deraadt Exp $
 .\"
 .Dd $Mdocdate: April 16 2020 $
 .Dt CRONTAB 5
@@ -92,7 +92,7 @@ to preserve leading or trailing blanks.
 .Pp
 Lines in the system
 .Nm
-have six fixed fields plus a command, in the form:
+have six fixed fields, an options field, plus a command, in the form:
 .Bd -ragged -offset indent
 .Ar minute
 .Ar hour
@@ -100,18 +100,20 @@ have six fixed fields plus a command, in the form:
 .Ar month
 .Ar day-of-week
 .Ar user
+.Op Ar options
 .Ar command
 .Ed
 .Pp
 While lines in a user
 .Nm
-have five fixed fields plus a command, in the form:
+have five fixed fields, an options field, plus a command, in the form:
 .Bd -ragged -offset indent
 .Ar minute
 .Ar hour
 .Ar day-of-month
 .Ar month
 .Ar day-of-week
+.Op Ar options
 .Ar command
 .Ed
 .Pp
@@ -126,6 +128,7 @@ The allowed values for the fields are:
 .It Ar month Ta * or 1\(en12 or a name (see below)
 .It Ar day-of-week Ta * or 0\(en7 or a name (0 or 7 is Sunday)
 .It Ar user Ta a valid username
+.It Op Ar options Ta runtime options starting with -
 .It Ar command Ta text
 .El
 .Pp
@@ -184,6 +187,34 @@ Use the first three letters of the particular
 day or month (case doesn't matter).
 Ranges or lists of names are not allowed.
 .Pp
+Some
+.Ar options
+related to process operation can be provided before the
+.Ar command
+field.
+All options start with
+.Fl
+as follows:
+.Bl -tag -width Ds
+.It Fl n Ar command
+No mail is sent after a successful run.
+The execution output will only be mailed if the command exits with a non-zero
+exit code.
+The
+.Fl n
+option is an attempt to cure potentially copious volumes of mail coming from
+.Xr cron 8 .
+.It Fl s Ar command
+Only a single instance of
+.Ar command
+will be run concurrently.
+Additional instances of
+.Ar command
+will not be scheduled until the earlier one completes.
+.It Fl q Ar command
+Execution will not be logged.
+.El
+.Pp
 The
 .Ar command
 field (the rest of the line) is the command to be
@@ -204,27 +235,6 @@ will be changed into newline characters, and all data
 after the first
 .Ql %
 will be sent to the command as standard input.
-.Pp
-Commands may be modified as follows:
-.Bl -tag -width Ds
-.It Fl n Ar command
-No mail is sent after a successful run.
-The execution output will only be mailed if the command exits with a non-zero
-exit code.
-The
-.Fl n
-option is an attempt to cure potentially copious volumes of mail coming from
-.Xr cron 8 .
-.It Fl q Ar command
-Execution will not be logged.
-.It Fl s Ar command
-Only a single instance of
-.Ar command
-will be run concurrently.
-Additional instances of
-.Ar command
-will not be scheduled until the earlier one completes.
-.El
 .Pp
 Commands are executed by
 .Xr cron 8
