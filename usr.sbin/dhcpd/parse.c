@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.26 2017/02/16 00:24:43 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.27 2020/04/16 23:23:21 dtucker Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -46,6 +46,7 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -218,8 +219,8 @@ void
 parse_hardware_param(FILE *cfile, struct hardware *hardware)
 {
 	char *val;
-	int token, hlen;
-	unsigned char *t;
+	int token, hlen = 0;
+	unsigned char *e, *t = NULL;
 
 	token = next_token(&val, cfile);
 	switch (token) {
@@ -235,6 +236,20 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 		return;
 	}
 
+
+	/* Try looking up in /etc/ethers first. */
+	if (hardware->htype == HTYPE_ETHER) {
+		token = peek_token(&val, cfile);
+		hlen = sizeof(struct ether_addr);
+		if ((e = malloc(hlen)) == NULL)
+			fatalx("can't allocate space for ethernet address.");
+		if (ether_hostton(val, (struct ether_addr *)e) == 0) {
+			(void)next_token(&val, cfile); /* consume token */
+			t = e;
+		} else
+			free(e);
+	}
+
 	/*
 	 * Parse the hardware address information.   Technically, it
 	 * would make a lot of sense to restrict the length of the data
@@ -244,8 +259,9 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 	 * accept that data in the lease file rather than simply failing
 	 * on such clients.   Yuck.
 	 */
-	hlen = 0;
-	t = parse_numeric_aggregate(cfile, NULL, &hlen, ':', 16, 8);
+	if (!t)
+		t = parse_numeric_aggregate(cfile, NULL, &hlen, ':', 16, 8);
+
 	if (!t)
 		return;
 	if (hlen > sizeof(hardware->haddr)) {
