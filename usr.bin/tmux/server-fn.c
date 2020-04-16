@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.123 2019/12/12 11:39:56 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.124 2020/04/16 07:28:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -334,8 +334,8 @@ server_destroy_pane(struct window_pane *wp, int notify)
 			    tim);
 		} else if (WIFSIGNALED(wp->status)) {
 			screen_write_nputs(&ctx, -1, &gc,
-			    "Pane is dead (signal %d, %s)",
-			    WTERMSIG(wp->status),
+			    "Pane is dead (signal %s, %s)",
+			    sig2name(WTERMSIG(wp->status)),
 			    tim);
 		}
 

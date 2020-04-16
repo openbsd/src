@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.196 2020/04/09 15:35:27 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.197 2020/04/16 07:28:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,6 +28,7 @@
 #include <locale.h>
 #include <paths.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -165,6 +166,17 @@ setblocking(int fd, int state)
 			mode &= ~O_NONBLOCK;
 		fcntl(fd, F_SETFL, mode);
 	}
+}
+
+const char *
+sig2name(int signo)
+{
+     static char	s[11];
+
+     if (signo > 0 && signo < NSIG)
+	     return (sys_signame[signo]);
+     xsnprintf(s, sizeof s, "%d", signo);
+     return (s);
 }
 
 const char *
