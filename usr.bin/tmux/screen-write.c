@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.165 2020/04/16 20:32:51 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.166 2020/04/16 21:16:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -957,7 +957,6 @@ screen_write_clearendofline(struct screen_write_ctx *ctx, u_int bg)
 {
 	struct screen			 *s = ctx->s;
 	struct grid_line		 *gl;
-	struct tty_ctx			  ttyctx;
 	u_int				  sx = screen_size_x(s);
 	struct screen_write_collect_item *ci = ctx->item;
 
@@ -969,9 +968,6 @@ screen_write_clearendofline(struct screen_write_ctx *ctx, u_int bg)
 	gl = grid_get_line(s->grid, s->grid->hsize + s->cy);
 	if (s->cx > sx - 1 || (s->cx >= gl->cellsize && COLOUR_DEFAULT(bg)))
 		return;
-
-	screen_write_initctx(ctx, &ttyctx, 1);
-	ttyctx.bg = bg;
 
 	grid_view_clear(s->grid, s->cx, s->cy, sx - s->cx, 1, bg);
 
@@ -989,7 +985,6 @@ void
 screen_write_clearstartofline(struct screen_write_ctx *ctx, u_int bg)
 {
 	struct screen			 *s = ctx->s;
-	struct tty_ctx			  ttyctx;
 	u_int				  sx = screen_size_x(s);
 	struct screen_write_collect_item *ci = ctx->item;
 
@@ -997,9 +992,6 @@ screen_write_clearstartofline(struct screen_write_ctx *ctx, u_int bg)
 		screen_write_clearline(ctx, bg);
 		return;
 	}
-
-	screen_write_initctx(ctx, &ttyctx, 1);
-	ttyctx.bg = bg;
 
 	if (s->cx > sx - 1)
 		grid_view_clear(s->grid, 0, s->cy, sx, 1, bg);
