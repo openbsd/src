@@ -1,4 +1,4 @@
-/*	$OpenBSD: locale.c,v 1.12 2016/02/05 12:59:12 jca Exp $	*/
+/*	$OpenBSD: locale.c,v 1.13 2020/04/17 10:45:04 schwarze Exp $	*/
 /*
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <err.h>
+#include <langinfo.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -169,7 +170,7 @@ show_locales(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-a | -m]\n", __progname);
+	fprintf(stderr, "usage: %s [-a | -m | charmap]\n", __progname);
 	exit(1);
 }
 
@@ -203,12 +204,16 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 0 || (aflag && mflag))
+	if (aflag + mflag + argc > 1)
 		usage();
 	else if (aflag)
 		show_locales();
 	else if (mflag)
 		printf("UTF-8\n");
+	else if (strcmp(*argv, "charmap") == 0)
+		printf("%s\n", nl_langinfo(CODESET));
+	else
+		usage();
 
 	return 0;
 }

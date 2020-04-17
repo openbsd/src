@@ -1,6 +1,6 @@
-.\" $OpenBSD: locale.1,v 1.7 2016/10/26 01:00:27 schwarze Exp $
+.\" $OpenBSD: locale.1,v 1.8 2020/04/17 10:45:04 schwarze Exp $
 .\"
-.\" Copyright 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright 2016, 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright 2013 Stefan Sperling <stsp@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2016 $
+.Dd $Mdocdate: April 17 2020 $
 .Dt LOCALE 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd character encoding and localization conventions
 .Sh SYNOPSIS
 .Nm locale
-.Op Fl a | Fl m
+.Op Fl a | Fl m | Cm charmap
 .Sh DESCRIPTION
 If the
 .Nm
@@ -31,7 +31,7 @@ utility is invoked without any arguments, the current locale
 configuration is shown.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width charmap
 .It Fl a
 Display a list of supported locales.
 .It Fl m
@@ -39,6 +39,11 @@ Display a list of supported character encodings.
 On
 .Ox ,
 this always returns UTF-8 only.
+.It Cm charmap
+Display the currently selected character encoding.
+On
+.Ox ,
+this returns either US-ASCII or UTF-8.
 .El
 .Pp
 A locale is a set of environment variables telling programs which
