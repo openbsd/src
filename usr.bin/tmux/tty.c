@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.353 2020/04/17 21:33:18 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.354 2020/04/17 22:16:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2150,6 +2150,9 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 	struct tty_term	*term = tty->term;
 	u_int		 thisx, thisy;
 	int		 change;
+
+	if (tty->flags & TTY_BLOCK)
+		return;
 
 	if (cx > tty->sx - 1)
 		cx = tty->sx - 1;
