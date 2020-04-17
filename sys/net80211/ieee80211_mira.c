@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.28 2020/04/11 13:47:53 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.29 2020/04/17 07:09:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -670,6 +670,9 @@ ieee80211_mira_probe_next_rateset(struct ieee80211_mira_node *mn,
 			break;
 		}
 	}
+	/* If all rates are lower the maximum rate is the closest match. */
+	if (i == rsnext->nrates)
+		ni->ni_txmcs = rsnext->max_mcs;
 
 	/* Add rates from the next rateset as candidates. */
 	mn->candidate_rates |= (1 << ni->ni_txmcs);
