@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.64 2020/03/10 09:42:40 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.65 2020/04/17 20:54:23 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1130,6 +1130,12 @@ ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
 		log_warn("%s: sendtofrom", __func__);
 		return (-1);
 	}
+	log_info("%sretransmit %s res %u local %s peer %s",
+	    SPI_SA(sa, NULL),
+	    print_map(msg->msg_exchange, ikev2_exchange_map),
+	    msg->msg_msgid,
+	    print_host((struct sockaddr *)&msg->msg_local, NULL, 0),
+	    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0));
 
 	timer_add(env, &msg->msg_timer, IKED_RESPONSE_TIMEOUT);
 	return (0);
@@ -1164,8 +1170,15 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 		/* Exponential timeout */
 		timer_add(env, &msg->msg_timer,
 		    IKED_RETRANSMIT_TIMEOUT * (2 << (msg->msg_tries++)));
+		log_info("%sretransmit %d %s req %u peer %s local %s",
+		    SPI_SA(sa, NULL),
+		    msg->msg_tries,
+		    print_map(msg->msg_exchange, ikev2_exchange_map),
+		    msg->msg_msgid,
+		    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
+		    print_host((struct sockaddr *)&msg->msg_local, NULL, 0));
 	} else {
-		log_debug("%s: retransmit limit reached for msgid %u",
+		log_debug("%s: retransmit limit reached for req %u",
 		    __func__, msg->msg_msgid);
 		ikev2_ike_sa_setreason(sa, "retransmit limit reached");
 		sa_free(env, sa);
