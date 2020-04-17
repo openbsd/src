@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.34 2020/02/05 18:06:42 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.35 2020/04/17 17:24:03 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3127,7 +3127,7 @@ test_tlsext_keyshare_client(void)
 		errx(1, "failed to create SSL");
 
 	if ((S3I(ssl)->hs_tls13.key_share =
-	    tls13_key_share_new(NID_X25519)) == NULL)
+	    tls13_key_share_new_nid(NID_X25519)) == NULL)
 		errx(1, "failed to create key share");
 	if (!tls13_key_share_generate(S3I(ssl)->hs_tls13.key_share))
 		errx(1, "failed to generate key share");
@@ -3265,7 +3265,7 @@ test_tlsext_keyshare_server(void)
 	}
 
 	if ((S3I(ssl)->hs_tls13.key_share =
-	    tls13_key_share_new(NID_X25519)) == NULL)
+	    tls13_key_share_new_nid(NID_X25519)) == NULL)
 		errx(1, "failed to create key share");
 	if (!tls13_key_share_generate(S3I(ssl)->hs_tls13.key_share))
 		errx(1, "failed to generate key share");
@@ -3298,7 +3298,7 @@ test_tlsext_keyshare_server(void)
 	}
 
 	if ((S3I(ssl)->hs_tls13.key_share =
-	    tls13_key_share_new(NID_X25519)) == NULL)
+	    tls13_key_share_new_nid(NID_X25519)) == NULL)
 		errx(1, "failed to create key share");
 	if (!tls13_key_share_generate(S3I(ssl)->hs_tls13.key_share))
 		errx(1, "failed to generate key share");
