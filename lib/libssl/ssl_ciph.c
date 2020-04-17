@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.113 2020/04/09 17:54:38 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.114 2020/04/17 17:26:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1171,6 +1171,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
 	const SSL_CIPHER **ca_list = NULL;
 	int tls13_seen = 0;
+	int active;
 
 	/*
 	 * Return with error if nothing to do.
@@ -1320,13 +1321,20 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 * If the rule string did not contain any references to TLSv1.3,
 	 * include inactive TLSv1.3 cipher suites. This avoids attempts to
 	 * use TLSv1.3 with an older rule string that does not include
-	 * TLSv1.3 cipher suites.
+	 * TLSv1.3 cipher suites. If the rule string resulted in no active
+	 * cipher suites then we return an empty stack.
 	 */
+	active = 0;
 	for (curr = head; curr != NULL; curr = curr->next) {
 		if (curr->active ||
 		    (!tls13_seen && curr->cipher->algorithm_ssl == SSL_TLSV1_3))
 			sk_SSL_CIPHER_push(cipherstack, curr->cipher);
+		if (curr->active)
+			active++;
 	}
+	if (active == 0)
+		sk_SSL_CIPHER_zero(cipherstack);
+
 	free(co_list);	/* Not needed any longer */
 
 	tmp_cipher_list = sk_SSL_CIPHER_dup(cipherstack);
