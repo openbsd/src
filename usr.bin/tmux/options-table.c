@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.116 2020/04/13 07:25:33 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.117 2020/04/17 08:03:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -196,6 +196,12 @@ const struct options_table_entry options_table[] = {
 			 "choose-window=choose-tree -w,"
 			 "choose-session=choose-tree -s",
 	  .separator = ","
+	},
+
+	{ .name = "copy-command",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .default_str = ""
 	},
 
 	{ .name = "default-terminal",

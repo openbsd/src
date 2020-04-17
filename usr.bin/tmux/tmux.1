@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.741 2020/04/16 13:35:24 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.742 2020/04/17 08:03:22 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 16 2020 $
+.Dd $Mdocdate: April 17 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1483,9 +1483,9 @@ The following commands are supported in copy mode:
 .It Li "clear-selection" Ta "Escape" Ta "C-g"
 .It Li "copy-end-of-line [<prefix>]" Ta "D" Ta "C-k"
 .It Li "copy-line [<prefix>]" Ta "" Ta ""
-.It Li "copy-pipe <command> [<prefix>]" Ta "" Ta ""
-.It Li "copy-pipe-no-clear <command> [<prefix>]" Ta "" Ta ""
-.It Li "copy-pipe-and-cancel <command> [<prefix>]" Ta "" Ta ""
+.It Li "copy-pipe [<command>] [<prefix>]" Ta "" Ta ""
+.It Li "copy-pipe-no-clear [<command>] [<prefix>]" Ta "" Ta ""
+.It Li "copy-pipe-and-cancel [<command>] [<prefix>]" Ta "" Ta ""
 .It Li "copy-selection [<prefix>]" Ta "" Ta ""
 .It Li "copy-selection-no-clear [<prefix>]" Ta "" Ta ""
 .It Li "copy-selection-and-cancel [<prefix>]" Ta "Enter" Ta "M-w"
@@ -3090,6 +3090,10 @@ be set to
 .Ql screen ,
 .Ql tmux
 or a derivative of them.
+.It Ic copy-command Ar shell-command
+Give the command to pipe to if the
+.Ic copy-pipe
+copy mode command is used without arguments.
 .It Ic escape-time Ar time
 Set the time in milliseconds for which
 .Nm
