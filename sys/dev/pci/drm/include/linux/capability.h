@@ -13,7 +13,7 @@ static inline int
 capable(int cap) 
 { 
 	KASSERT(cap == CAP_SYS_ADMIN);
-	return suser(curproc);
+	return suser(curproc) == 0;
 } 
 
 #endif
