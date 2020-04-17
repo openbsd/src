@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.124 2020/04/16 15:14:25 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.125 2020/04/17 09:06:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,6 +61,9 @@ struct tty_default_key_raw {
 	key_code	 	key;
 };
 static const struct tty_default_key_raw tty_default_raw_keys[] = {
+	/* Application escape. */
+	{ "\033O[", '\033' },
+
 	/*
 	 * Numeric keypad. Just use the vt100 escape sequences here and always
 	 * put the terminal into keypad_xmit mode. Translation of numbers
@@ -1065,7 +1068,7 @@ tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
 	case 'M': /* mintty */
 		flags |= (TERM_256COLOURS|TERM_RGBCOLOURS);
 		break;
-	case 'T': /* tmux - if newer will have the DSR as well */
+	case 'T': /* tmux - new versons reply to DSR which will set RGB */
 		flags |= (TERM_UTF8|TERM_256COLOURS);
 		break;
 	case 'U': /* rxvt-unicode */
