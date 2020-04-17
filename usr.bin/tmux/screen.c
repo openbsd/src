@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.62 2020/04/15 17:50:02 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.63 2020/04/17 14:06:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -230,7 +230,9 @@ screen_resize_cursor(struct screen *s, u_int sx, u_int sy, int reflow,
 		cy = &tcy;
 	*cy = s->grid->hsize + s->cy;
 
-	log_debug("%s: start %u,%u (%u,%u)", __func__, s->cx, s->cy, *cx, *cy);
+	log_debug("%s: new size %ux%u, now %ux%u (cursor %u,%u = %u,%u)",
+	    __func__, sx, sy, screen_size_x(s), screen_size_y(s), s->cx, s->cy,
+	    *cx, *cy);
 
 	if (sx < 1)
 		sx = 1;
@@ -256,7 +258,8 @@ screen_resize_cursor(struct screen *s, u_int sx, u_int sy, int reflow,
 		s->cx = 0;
 		s->cy = 0;
 	}
-	log_debug("%s: finish %u,%u (%u,%u)", __func__, s->cx, s->cy, *cx, *cy);
+	log_debug("%s: cursor finished at %u,%u = %u,%u", __func__, s->cx,
+	    s->cy, *cx, *cy);
 }
 
 /* Resize screen. */

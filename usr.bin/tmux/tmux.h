@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1000 2020/04/16 16:13:56 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1001 2020/04/17 14:06:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -79,7 +79,7 @@ struct winlink;
 #define NAME_INTERVAL 500000
 
 /* Maximum size of data to hold from a pane. */
-#define READ_SIZE 4096
+#define READ_SIZE 8192
 
 /* Default pixel cell sizes. */
 #define DEFAULT_XPIXEL 16
