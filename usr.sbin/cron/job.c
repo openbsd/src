@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.14 2020/04/16 17:51:56 millert Exp $	*/
+/*	$OpenBSD: job.c,v 1.15 2020/04/17 02:12:56 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -46,8 +46,13 @@ job_add(entry *e, user *u)
 
 	/* if already on queue, keep going */
 	SIMPLEQ_FOREACH(j, &jobs, entries) {
-		if (j->e == e && j->u == u)
+		if (j->e == e && j->u == u) {
+			if ((j->e->flags & DONT_LOG) == 0) {
+				syslog(LOG_INFO, "(%s) SKIPPING (%s)",
+				    j->u->name, j->e->cmd);
+			}
 			return;
+		}
 	}
 
 	/* build a job queue element */
@@ -112,9 +117,6 @@ job_runqueue(void)
 		if (j->pid == -1) {
 			j->pid = do_command(j->e, j->u);
 			run++;
-		} else if ((j->e->flags & DONT_LOG) == 0) {
-			syslog(LOG_INFO, "(%s) SKIPPING (%s)",
-			    j->u->name, j->e->cmd);
 		}
 
 		/* Singleton jobs persist in the queue until they exit. */
