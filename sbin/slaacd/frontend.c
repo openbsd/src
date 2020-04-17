@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.31 2019/11/11 05:48:46 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.32 2020/04/17 06:27:32 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -69,6 +69,7 @@ void		 get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		 icmp6_receive(int, short, void *);
 int		 get_flags(char *);
 int		 get_xflags(char *);
+int		 get_ifrdomain(char *);
 void		 get_lladdr(char *, struct ether_addr *, struct sockaddr_in6 *);
 void		 send_solicitation(uint32_t);
 #ifndef	SMALL
@@ -480,14 +481,31 @@ get_xflags(char *if_name)
 	return ifr.ifr_flags;
 }
 
+int
+get_ifrdomain(char *if_name)
+{
+	struct ifreq		 ifr;
+
+	(void) strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
+	if (ioctl(ioctlsock, SIOCGIFRDOMAIN, (caddr_t)&ifr) == -1) {
+		log_warn("SIOCGIFRDOMAIN");
+		return -1;
+	}
+	return ifr.ifr_rdomainid;
+}
+
 void
 update_iface(uint32_t if_index, char* if_name)
 {
 	struct imsg_ifinfo	 imsg_ifinfo;
-	int			 flags, xflags;
+	int			 flags, xflags, ifrdomain;
 
 	if ((flags = get_flags(if_name)) == -1 || (xflags =
-	    get_xflags(if_name)) == -1)
+	    get_xflags(if_name)) == -1 || (ifrdomain = get_ifrdomain(if_name))
+	    == -1)
+		return;
+
+	if (ifrdomain != getrtable())
 		return;
 
 	if (!(xflags & IFXF_AUTOCONF6))
@@ -520,9 +538,12 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 	struct sockaddr_in6	*sin6;
 	struct imsg_link_state	 imsg_link_state;
 	time_t			 t;
-	int			 xflags;
+	int			 xflags, ifrdomain;
 
-	if ((xflags = get_xflags(if_name)) == -1)
+	if ((xflags = get_xflags(if_name)) == -1 || (ifrdomain =
+	    get_ifrdomain(if_name)) == -1)
+		return;
+	if (ifrdomain != getrtable())
 		return;
 
 	if (!(xflags & IFXF_AUTOCONF6))
