@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_share.c,v 1.3 2020/02/04 18:06:26 jsing Exp $ */
+/* $OpenBSD: tls13_key_share.c,v 1.4 2020/04/17 17:16:53 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -36,24 +36,32 @@ struct tls13_key_share {
 };
 
 struct tls13_key_share *
-tls13_key_share_new(int nid)
+tls13_key_share_new(uint16_t group_id)
 {
 	struct tls13_key_share *ks;
+	int nid;
+
+	if ((nid = tls1_ec_curve_id2nid(group_id)) == 0)
+		return NULL;
 
 	if ((ks = calloc(1, sizeof(struct tls13_key_share))) == NULL)
-		goto err;
+		return NULL;
 
-	if ((ks->group_id = tls1_ec_nid2curve_id(nid)) == 0)
-		goto err;
-
+	ks->group_id = group_id;
 	ks->nid = nid;
 
 	return ks;
+}
 
- err:
-	tls13_key_share_free(ks);
+struct tls13_key_share *
+tls13_key_share_new_nid(int nid)
+{
+	uint16_t group_id;
 
-	return NULL;
+	if ((group_id = tls1_ec_nid2curve_id(nid)) == 0)
+		return NULL;
+
+	return tls13_key_share_new(group_id);
 }
 
 void

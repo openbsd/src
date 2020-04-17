@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.48 2020/04/08 16:23:58 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.49 2020/04/17 17:16:53 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -36,6 +36,8 @@ tls13_connect(struct tls13_ctx *ctx)
 static int
 tls13_client_init(struct tls13_ctx *ctx)
 {
+	const uint16_t *groups;
+	size_t groups_len;
 	SSL *s = ctx->ssl;
 
 	if (!ssl_supported_version_range(s, &ctx->hs->min_version,
@@ -51,7 +53,11 @@ tls13_client_init(struct tls13_ctx *ctx)
 	if (!tls1_transcript_init(s))
 		return 0;
 
-	if ((ctx->hs->key_share = tls13_key_share_new(NID_X25519)) == NULL)
+	/* Generate a key share using our preferred group. */
+	tls1_get_group_list(s, 0, &groups, &groups_len);
+	if (groups_len < 1)
+		return 0;
+	if ((ctx->hs->key_share = tls13_key_share_new(groups[0])) == NULL)
 		return 0;
 	if (!tls13_key_share_generate(ctx->hs->key_share))
 		return 0;
@@ -560,23 +566,20 @@ tls13_server_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 int
 tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	int nid;
-
 	/*
-	 * Ensure that the server supported group is not the same
-	 * as the one we previously offered and that it was one that
-	 * we listed in our supported groups.
+	 * Ensure that the server supported group is one that we listed in our
+	 * supported groups and is not the same as the key share we previously
+	 * offered.
 	 */
-	if (ctx->hs->server_group == tls13_key_share_group(ctx->hs->key_share))
+	if (!tls1_check_curve(ctx->ssl, ctx->hs->server_group))
 		return 0; /* XXX alert */
-	if ((nid = tls1_ec_curve_id2nid(ctx->hs->server_group)) == 0)
-		return 0;
-	if (nid != NID_X25519 && nid != NID_X9_62_prime256v1 && nid != NID_secp384r1)
+	if (ctx->hs->server_group == tls13_key_share_group(ctx->hs->key_share))
 		return 0; /* XXX alert */
 
 	/* Switch to new key share. */
 	tls13_key_share_free(ctx->hs->key_share);
-	if ((ctx->hs->key_share = tls13_key_share_new(nid)) == NULL)
+	if ((ctx->hs->key_share =
+	    tls13_key_share_new(ctx->hs->server_group)) == NULL)
 		return 0;
 	if (!tls13_key_share_generate(ctx->hs->key_share))
 		return 0;

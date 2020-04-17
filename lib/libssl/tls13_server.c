@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.28 2020/03/10 17:23:25 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.29 2020/04/17 17:16:53 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -49,7 +49,7 @@ tls13_server_init(struct tls13_ctx *ctx)
 	if ((s->session = SSL_SESSION_new()) == NULL)
 		return 0;
 
-	if ((ctx->hs->key_share = tls13_key_share_new(NID_X25519)) == NULL)
+	if ((ctx->hs->key_share = tls13_key_share_new_nid(NID_X25519)) == NULL)
 		return 0;
 	if (!tls13_key_share_generate(ctx->hs->key_share))
 		return 0;
