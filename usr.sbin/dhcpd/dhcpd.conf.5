@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.24 2018/07/03 12:51:44 krw Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.25 2020/04/17 06:24:28 dtucker Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: July 3 2018 $
+.Dd $Mdocdate: April 17 2020 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -571,8 +571,10 @@ although support for DHCP-over-IPsec virtual interface type
 is provided.
 The
 .Ar hardware-address
-should be a set of hexadecimal octets (numbers from 0 through ff)
-separated by colons.
+should be a set of colon-separated hexadecimal octets (0-ff)
+or a hostname that can be looked up in
+.Xr ethers 5
+when the configuration is read.
 The
 .Ic hardware
 statement may also be used for DHCP clients.
