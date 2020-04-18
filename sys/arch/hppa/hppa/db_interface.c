@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.47 2020/01/20 15:58:23 visa Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.48 2020/04/18 04:45:20 visa Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -316,7 +316,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 }
 
 void
-stacktrace_save(struct stacktrace *st)
+stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 {
 	register_t *fp, pc, rp;
 	int	i;
@@ -327,7 +327,10 @@ stacktrace_save(struct stacktrace *st)
 
 	st->st_count = 0;
 	for (i = 0; i < STACKTRACE_MAX; i++) {
-		st->st_pc[st->st_count++] = rp;
+		if (skip == 0)
+			st->st_pc[st->st_count++] = rp;
+		else
+			skip--;
 
 		/* next frame */
 		pc = rp;

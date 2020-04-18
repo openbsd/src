@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.143 2020/01/20 15:58:23 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.144 2020/04/18 04:45:20 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1477,7 +1477,7 @@ end:
 
 #ifdef DDB
 void
-stacktrace_save(struct stacktrace *st)
+stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 {
 	extern char k_general[];
 	extern char u_general[];
@@ -1503,8 +1503,12 @@ stacktrace_save(struct stacktrace *st)
 		if (!VALID_ADDRESS(pc) || !VALID_ADDRESS(sp))
 			break;
 
-		if (!first)
-			st->st_pc[st->st_count++] = pc;
+		if (!first) {
+			if (skip == 0)
+				st->st_pc[st->st_count++] = pc;
+			else
+				skip--;
+		}
 		first = 0;
 
 		/* Determine the start address of the current subroutine. */

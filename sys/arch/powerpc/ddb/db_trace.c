@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.15 2020/04/10 07:23:21 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.16 2020/04/18 04:45:20 visa Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -252,10 +252,4 @@ stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 		if (!INKERNEL(sp) && !ININTSTK(sp))
 			break;
 	}
-}
-
-void
-stacktrace_save(struct stacktrace *st)
-{
-	return stacktrace_save_at(st, 0);
 }
