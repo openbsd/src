@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1001 2020/04/17 14:06:42 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1002 2020/04/18 06:10:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1244,6 +1244,7 @@ struct tty {
 #define TTY_BLOCK 0x80
 #define TTY_HAVEDA 0x100
 #define TTY_HAVEDSR 0x200
+#define TTY_SYNCING 0x400
 	int		 flags;
 
 	struct tty_term	*term;
@@ -1538,12 +1539,14 @@ struct client {
 #define CLIENT_CONTROL_NOOUTPUT 0x4000000
 #define CLIENT_DEFAULTSOCKET 0x8000000
 #define CLIENT_STARTSERVER 0x10000000
+#define CLIENT_REDRAWPANES 0x20000000
 #define CLIENT_ALLREDRAWFLAGS		\
 	(CLIENT_REDRAWWINDOW|		\
 	 CLIENT_REDRAWSTATUS|		\
 	 CLIENT_REDRAWSTATUSALWAYS|	\
 	 CLIENT_REDRAWBORDERS|		\
-	 CLIENT_REDRAWOVERLAY)
+	 CLIENT_REDRAWOVERLAY|		\
+	 CLIENT_REDRAWPANES)
 #define CLIENT_UNATTACHEDFLAGS	\
 	(CLIENT_DEAD|		\
 	 CLIENT_SUSPENDED|	\
