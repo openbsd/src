@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1006 2020/04/18 07:32:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1007 2020/04/18 14:21:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -934,8 +934,8 @@ struct window_pane {
 	char		*searchstr;
 	int		 searchregex;
 
-	u_int		 written;
-	u_int		 skipped;
+	size_t		 written;
+	size_t		 skipped;
 
 	TAILQ_ENTRY(window_pane) entry;
 	RB_ENTRY(window_pane) tree_entry;

@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.244 2020/04/18 09:00:31 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.245 2020/04/18 14:21:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -954,7 +954,7 @@ format_cb_cursor_character(struct format_tree *ft, struct format_entry *fe)
 char *
 format_grid_word(struct grid *gd, u_int x, u_int y)
 {
-	struct grid_line	*gl;
+	const struct grid_line	*gl;
 	struct grid_cell	 gc;
 	const char		*ws;
 	struct utf8_data	*ud = NULL;
