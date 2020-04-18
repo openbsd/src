@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.113 2020/04/14 21:20:47 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.114 2020/04/18 07:55:06 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -129,6 +129,7 @@ bcmaux*		at fdt?
 bcmintc*	at fdt?
 bcmdog*		at fdt?
 bcmrng*		at fdt?
+bse*		at fdt?
 bse*		at acpi?
 dwctwo*		at fdt?
 usb*		at dwctwo?
