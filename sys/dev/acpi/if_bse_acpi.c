@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bse_acpi.c,v 1.1 2020/04/14 21:02:39 kettenis Exp $	*/
+/*	$OpenBSD: if_bse_acpi.c,v 1.2 2020/04/18 10:03:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  *
@@ -34,7 +34,6 @@
 #include <dev/acpi/dsdt.h>
 
 #include <dev/mii/miivar.h>
-
 #include <dev/ic/bcmgenetvar.h>
 
 struct bse_acpi_softc {
@@ -144,7 +143,6 @@ disestablish:
 #endif
 unmap:
 	bus_space_unmap(sc->sc.sc_bst, sc->sc.sc_bsh, sc->sc_size);
-	return;
 }
 
 int
