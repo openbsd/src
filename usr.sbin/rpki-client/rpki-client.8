@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.22 2020/03/06 22:22:31 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.23 2020/04/18 13:26:37 sthen Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 6 2020 $
+.Dd $Mdocdate: April 18 2020 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ The directory where
 .Nm
 will store the cached repository data.
 Defaults to
-.Pa /var/db/rpki-client/ .
+.Pa /var/cache/rpki-client .
 .It Fl e Ar rsync_prog
 Use
 .Ar rsync_prog
