@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_share.c,v 1.5 2020/04/18 13:43:47 jsing Exp $ */
+/* $OpenBSD: tls13_key_share.c,v 1.6 2020/04/18 14:07:56 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -84,6 +84,22 @@ uint16_t
 tls13_key_share_group(struct tls13_key_share *ks)
 {
 	return ks->group_id;
+}
+
+int
+tls13_key_share_peer_pkey(struct tls13_key_share *ks, EVP_PKEY *pkey)
+{
+	if (ks->nid == NID_X25519 && ks->x25519_peer_public != NULL) {
+		if (!ssl_kex_dummy_ecdhe_x25519(pkey))
+			return 0;
+	} else if (ks->ecdhe_peer != NULL) {
+		if (!EVP_PKEY_set1_EC_KEY(pkey, ks->ecdhe_peer))
+			return 0;
+	} else {
+		return 0;
+	}
+
+	return 1;
 }
 
 static int

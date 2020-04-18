@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.271 2020/03/16 15:25:14 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.272 2020/04/18 14:07:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1288,6 +1288,7 @@ int ssl3_get_client_certificate(SSL *s);
 int ssl3_get_client_key_exchange(SSL *s);
 int ssl3_get_cert_verify(SSL *s);
 
+int ssl_kex_dummy_ecdhe_x25519(EVP_PKEY *pkey);
 int ssl_kex_generate_ecdhe_ecp(EC_KEY *ecdh, int nid);
 int ssl_kex_public_ecdhe_ecp(EC_KEY *ecdh, CBB *cbb);
 int ssl_kex_peer_public_ecdhe_ecp(EC_KEY *ecdh, int nid, CBS *cbs);

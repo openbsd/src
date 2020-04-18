@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.62 2020/04/17 17:16:53 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.63 2020/04/18 14:07:56 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -128,6 +128,7 @@ struct tls13_key_share *tls13_key_share_new_nid(int nid);
 void tls13_key_share_free(struct tls13_key_share *ks);
 
 uint16_t tls13_key_share_group(struct tls13_key_share *ks);
+int tls13_key_share_peer_pkey(struct tls13_key_share *ks, EVP_PKEY *pkey);
 int tls13_key_share_generate(struct tls13_key_share *ks);
 int tls13_key_share_public(struct tls13_key_share *ks, CBB *cbb);
 int tls13_key_share_peer_public(struct tls13_key_share *ks, uint16_t group,

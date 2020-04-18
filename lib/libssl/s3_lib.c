@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.191 2020/02/16 14:33:04 inoguchi Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.192 2020/04/18 14:07:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1652,10 +1652,6 @@ static long
 ssl_ctrl_get_server_tmp_key(SSL *s, EVP_PKEY **pkey_tmp)
 {
 	EVP_PKEY *pkey = NULL;
-	EC_GROUP *group = NULL;
-	EC_POINT *point = NULL;
-	EC_KEY *ec_key = NULL;
-	BIGNUM *order = NULL;
 	SESS_CERT *sc;
 	int ret = 0;
 
@@ -1672,41 +1668,29 @@ ssl_ctrl_get_server_tmp_key(SSL *s, EVP_PKEY **pkey_tmp)
 		return 0;
 
 	if (sc->peer_dh_tmp != NULL) {
-		ret = EVP_PKEY_set1_DH(pkey, sc->peer_dh_tmp);
+		if (!EVP_PKEY_set1_DH(pkey, sc->peer_dh_tmp))
+			goto err;
 	} else if (sc->peer_ecdh_tmp) {
-		ret = EVP_PKEY_set1_EC_KEY(pkey, sc->peer_ecdh_tmp);
+		if (!EVP_PKEY_set1_EC_KEY(pkey, sc->peer_ecdh_tmp))
+			goto err;
 	} else if (sc->peer_x25519_tmp != NULL) {
-		/* Fudge up an EC_KEY that looks like X25519... */
-		if ((group = EC_GROUP_new_by_curve_name(
-		    NID_X9_62_prime256v1)) == NULL)
+		if (!ssl_kex_dummy_ecdhe_x25519(pkey))
 			goto err;
-		if ((point = EC_POINT_new(group)) == NULL)
+	} else if (S3I(s)->hs_tls13.key_share != NULL) {
+		if (!tls13_key_share_peer_pkey(S3I(s)->hs_tls13.key_share,
+		    pkey))
 			goto err;
-		if ((order = BN_new()) == NULL)
-			goto err;
-		if (!BN_set_bit(order, 252))
-			goto err;
-		if (!EC_GROUP_set_generator(group, point, order, NULL))
-			goto err;
-		EC_GROUP_set_curve_name(group, NID_X25519);
-		if ((ec_key = EC_KEY_new()) == NULL)
-			goto err;
-		if (!EC_KEY_set_group(ec_key, group))
-			goto err;
-		ret = EVP_PKEY_set1_EC_KEY(pkey, ec_key);
+	} else {
+		goto err;
 	}
 
-	if (ret == 1) {
-		*pkey_tmp = pkey;
-		pkey = NULL;
-	}
+	*pkey_tmp = pkey;
+	pkey = NULL;
 
-  err:
+	ret = 1;
+
+ err:
 	EVP_PKEY_free(pkey);
-	EC_GROUP_free(group);
-	EC_POINT_free(point);
-	EC_KEY_free(ec_key);
-	BN_free(order);
 
 	return (ret);
 }
