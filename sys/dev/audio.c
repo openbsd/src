@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.188 2020/03/08 15:15:57 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.189 2020/04/18 21:32:21 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -53,7 +53,6 @@
 #define AUDIO_UNIT(n)		(minor(n) & 0x0f)
 #define AUDIO_DEV(n)		(minor(n) & 0xf0)
 #define AUDIO_DEV_AUDIO		0	/* minor of /dev/audio0 */
-#define AUDIO_DEV_MIXER		0x10	/* minor of /dev/mixer0 */
 #define AUDIO_DEV_AUDIOCTL	0xc0	/* minor of /dev/audioctl */
 #define AUDIO_BUFSZ		65536	/* buffer size in bytes */
 
@@ -1352,7 +1351,6 @@ audio_detach(struct device *self, int flags)
 	mn = self->dv_unit;
 	vdevgone(maj, mn | AUDIO_DEV_AUDIO, mn | AUDIO_DEV_AUDIO, VCHR);
 	vdevgone(maj, mn | AUDIO_DEV_AUDIOCTL, mn | AUDIO_DEV_AUDIOCTL, VCHR);
-	vdevgone(maj, mn | AUDIO_DEV_MIXER, mn | AUDIO_DEV_MIXER, VCHR);
 
 	/*
 	 * The close() method did nothing, quickly halt DMA (normally
@@ -2044,9 +2042,6 @@ audioopen(dev_t dev, int flags, int mode, struct proc *p)
 		case AUDIO_DEV_AUDIOCTL:
 			error = audio_mixer_open(sc, flags);
 			break;
-		case AUDIO_DEV_MIXER:
-			error = 0;
-			break;
 		default:
 			error = ENXIO;
 		}
@@ -2071,9 +2066,6 @@ audioclose(dev_t dev, int flags, int ifmt, struct proc *p)
 	case AUDIO_DEV_AUDIOCTL:
 		error = audio_mixer_close(sc, flags);
 		break;
-	case AUDIO_DEV_MIXER:
-		error = 0;
-		break;
 	default:
 		error = ENXIO;
 	}
@@ -2097,9 +2089,6 @@ audioread(dev_t dev, struct uio *uio, int ioflag)
 	case AUDIO_DEV_AUDIOCTL:
 		error = audio_mixer_read(sc, uio, ioflag);
 		break;
-	case AUDIO_DEV_MIXER:
-		error = ENODEV;
-		break;
 	default:
 		error = ENXIO;
 	}
@@ -2121,7 +2110,6 @@ audiowrite(dev_t dev, struct uio *uio, int ioflag)
 		error = audio_write(sc, uio, ioflag);
 		break;
 	case AUDIO_DEV_AUDIOCTL:
-	case AUDIO_DEV_MIXER:
 		error = ENODEV;
 		break;
 	default:
@@ -2160,9 +2148,6 @@ audioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		else
 			error = audio_ioctl(sc, cmd, addr);
 		break;
-	case AUDIO_DEV_MIXER:
-		error = audio_ioctl_mixer(sc, cmd, addr, p);
-		break;
 	default:
 		error = ENXIO;
 	}
@@ -2186,7 +2171,6 @@ audiopoll(dev_t dev, int events, struct proc *p)
 	case AUDIO_DEV_AUDIOCTL:
 		revents = audio_mixer_poll(sc, events, p);
 		break;
-	case AUDIO_DEV_MIXER:
 	default:
 		revents = 0;
 		break;
