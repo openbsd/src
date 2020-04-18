@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1009 2020/04/18 17:20:25 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1010 2020/04/18 21:35:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1561,6 +1561,8 @@ struct client {
 	 CLIENT_DETACHING)
 	int		 flags;
 	struct key_table *keytable;
+
+	uint64_t	 redraw_panes;
 
 	char		*message_string;
 	struct event	 message_timer;
