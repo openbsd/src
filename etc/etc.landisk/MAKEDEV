@@ -251,7 +251,7 @@ tun*)
 	;;
 
 rmidi*)
-	M rmidi$U c 57 $U 666
+	M rmidi$U c 57 $U 660 _sndiop
 	;;
 
 *random)
@@ -314,10 +314,8 @@ bio)
 	;;
 
 audio*)
-	M audio$U	c 36 $U
-	M mixer$U	c 36 $(($U+16))
-	M audioctl$U	c 36 $(($U+192))
-	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
+	M audio$U	c 36 $U 660 _sndiop
+	M audioctl$U	c 36 $(($U+192)) 660 _sndiop
 	;;
 
 usb*)

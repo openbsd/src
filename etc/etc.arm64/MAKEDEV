@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.arm64/MAKEDEV.md,v 1.7 2020/01/23 02:47:28 dlg Exp 
+#	OpenBSD: etc.arm64/MAKEDEV.md,v 1.8 2020/03/12 16:38:58 patrick Exp 
 #	OpenBSD: MAKEDEV.common,v 1.109 2020/01/23 02:47:29 dlg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -264,7 +264,7 @@ tun*)
 	;;
 
 rmidi*)
-	M rmidi$U c 52 $U 666
+	M rmidi$U c 52 $U 660 _sndiop
 	;;
 
 *random)
@@ -345,10 +345,8 @@ bio)
 	;;
 
 audio*)
-	M audio$U	c 42 $U
-	M mixer$U	c 42 $(($U+16))
-	M audioctl$U	c 42 $(($U+192))
-	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
+	M audio$U	c 42 $U 660 _sndiop
+	M audioctl$U	c 42 $(($U+192)) 660 _sndiop
 	;;
 
 apm*)

@@ -307,10 +307,8 @@ bio)
 	;;
 
 audio*)
-	M audio$U	c 44 $U
-	M mixer$U	c 44 $(($U+16))
-	M audioctl$U	c 44 $(($U+192))
-	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
+	M audio$U	c 44 $U 660 _sndiop
+	M audioctl$U	c 44 $(($U+192)) 660 _sndiop
 	;;
 
 apm*)
