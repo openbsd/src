@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.109 2020/01/23 02:47:29 dlg Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.110 2020/04/18 21:28:35 ratchov Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -424,10 +424,8 @@ _mkdev(acpi, acpi*, {-M acpi	c major_acpi_c 0 644-})dnl
 __devitem(pctr, pctr*, PC Performance Tuning Register access device)dnl
 _mkdev(pctr, pctr, {-M pctr c major_pctr_c 0 644-})dnl
 __devitem(au, audio*, Audio devices,audio)dnl
-_mkdev(au, audio*, {-M audio$U	c major_au_c $U
-	M mixer$U	c major_au_c Add($U, 16)
-	M audioctl$U	c major_au_c Add($U, 192)
-	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"-})dnl
+_mkdev(au, audio*, {-M audio$U	c major_au_c $U 660 _sndiop
+	M audioctl$U	c major_au_c Add($U, 192) 660 _sndiop-})dnl
 __devitem(vi, video*, Video V4L2 devices,video)dnl
 _mkdev(vi, video*, {-M video$U  c major_vi_c $U 600
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"-})dnl
@@ -503,7 +501,7 @@ _mkdev(bpp, {-bpp*-}, {-M bpp$U c major_bpp_c $U 600-}, 600)dnl
 __devitem(vscsi, vscsi*, Virtual SCSI controller, vscsi 4)dnl
 _mcdev(vscsi, vscsi*, vscsi, {-major_vscsi_c-}, 600)dnl
 __devitem(rmidi, rmidi*, Raw MIDI devices,midi)dnl
-_mcdev(rmidi, rmidi*, rmidi, {-major_rmidi_c-}, 666)dnl
+_mcdev(rmidi, rmidi*, rmidi, {-major_rmidi_c-}, 660 _sndiop)dnl
 __devitem(diskmap, diskmap, Disk mapper, diskmap)dnl
 _mkdev(diskmap, diskmap, {-M diskmap c major_diskmap_c 0 640 operator-})dnl
 __devitem(pppx, pppx*, PPP Multiplexer, pppx 4)dnl
