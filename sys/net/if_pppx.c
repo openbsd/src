@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.83 2020/04/10 07:36:52 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.84 2020/04/18 04:03:56 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -344,7 +344,7 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 	if (m == NULL)
 		return (ENOBUFS);
 	mlen = MHLEN;
-	if (uio->uio_resid >= MINCLSIZE) {
+	if (uio->uio_resid > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if (!(m->m_flags & M_EXT)) {
 			m_free(m);
@@ -1368,7 +1368,7 @@ pppacwrite(dev_t dev, struct uio *uio, int ioflag)
 	if (m == NULL)
 		return (ENOMEM);
 
-	if (uio->uio_resid > MINCLSIZE) {
+	if (uio->uio_resid > MHLEN) {
 		m_clget(m, M_WAITOK, uio->uio_resid);
 		if (!ISSET(m->m_flags, M_EXT)) {
 			m_free(m);
