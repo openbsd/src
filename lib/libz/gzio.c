@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzio.c,v 1.14 2005/07/20 15:56:41 millert Exp $	*/
+/*	$OpenBSD: gzio.c,v 1.15 2020/04/18 17:11:37 schwarze Exp $	*/
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2005 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -307,7 +307,7 @@ local void check_header(s)
         s->stream.avail_in += len;
         s->stream.next_in = s->inbuf;
         if (s->stream.avail_in < 2) {
-            s->transparent = s->stream.avail_in;
+            s->transparent = 1;
             return;
         }
     }
