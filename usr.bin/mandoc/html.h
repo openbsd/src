@@ -1,4 +1,4 @@
-/* $OpenBSD: html.h,v 1.69 2020/03/13 00:31:04 schwarze Exp $ */
+/* $OpenBSD: html.h,v 1.70 2020/04/18 20:28:46 schwarze Exp $ */
 /*
  * Copyright (c) 2017, 2018, 2019, 2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -127,6 +127,8 @@ struct tag	 *print_otag_id(struct html *, enum htmltag, const char *,
 			struct roff_node *);
 void		  print_tagq(struct html *, const struct tag *);
 void		  print_stagq(struct html *, const struct tag *);
+void		  print_tagged_text(struct html *, const char *,
+			struct roff_node *);
 void		  print_text(struct html *, const char *);
 void		  print_tblclose(struct html *);
 void		  print_tbl(struct html *, const struct tbl_span *);

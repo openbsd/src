@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.213 2020/04/06 09:55:49 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.214 2020/04/18 20:28:46 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -375,10 +375,13 @@ print_mdoc_node(MDOC_ARGS)
 		}
 		t = h->tag;
 		t->refcnt++;
-		if (NODE_DELIMC & n->flags)
+		if (n->flags & NODE_DELIMC)
 			h->flags |= HTML_NOSPACE;
-		print_text(h, n->string);
-		if (NODE_DELIMO & n->flags)
+		if (n->flags & NODE_HREF)
+			print_tagged_text(h, n->string, n);
+		else
+			print_text(h, n->string);
+		if (n->flags & NODE_DELIMO)
 			h->flags |= HTML_NOSPACE;
 		break;
 	case ROFFT_EQN:

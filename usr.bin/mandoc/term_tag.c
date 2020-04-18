@@ -1,4 +1,4 @@
-/* $OpenBSD: term_tag.c,v 1.3 2020/04/08 11:54:14 schwarze Exp $ */
+/* $OpenBSD: term_tag.c,v 1.4 2020/04/18 20:28:46 schwarze Exp $ */
 /*
  * Copyright (c) 2015,2016,2018,2019,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -29,6 +29,7 @@
 
 #include "mandoc.h"
 #include "roff.h"
+#include "roff_int.h"
 #include "tag.h"
 #include "term_tag.h"
 

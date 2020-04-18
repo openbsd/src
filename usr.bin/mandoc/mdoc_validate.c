@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.299 2020/04/08 11:54:14 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.300 2020/04/18 20:28:46 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -35,11 +35,11 @@
 #include "mandoc.h"
 #include "mandoc_xr.h"
 #include "roff.h"
-#include "tag.h"
 #include "mdoc.h"
 #include "libmandoc.h"
 #include "roff_int.h"
 #include "libmdoc.h"
+#include "tag.h"
 
 /* FIXME: .Bl -diag can't have non-text children in HEAD. */
 

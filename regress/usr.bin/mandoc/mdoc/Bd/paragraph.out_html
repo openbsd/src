@@ -1,6 +1,8 @@
-<p class="Pp" id="npara">normal paragraph</p>
+<p class="Pp" id="npara"><a class="permalink" href="#npara">normal</a>
+  paragraph</p>
 <div class="Bd Pp" id="filled">filled display
-<p class="Pp" id="fpara">paragraph in display</p>
+<p class="Pp" id="fpara"><a class="permalink" href="#fpara">paragraph</a> in
+    display</p>
 </div>
 back to normal
 <p class="Pp">another paragraph</p>
@@ -9,7 +11,7 @@ back to normal
 unfilled
 display
 <mark id="upara"></mark>
-unfilled
+<a class="permalink" href="#upara">unfilled</a>
 paragraph
 </pre>
 </div>

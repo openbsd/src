@@ -6,6 +6,8 @@ PP-ARG(1) - General Commands Manual
 
 # DESCRIPTION
 
+BEGINTEST
+
 line 1
 
 line 2  
@@ -13,6 +15,9 @@ line 3
 
 line 4
 
-final text
+final
+text
 
-OpenBSD - April 6, 2020
+ENDTEST
+
+OpenBSD - April 18, 2020

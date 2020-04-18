@@ -1,4 +1,4 @@
-/* $OpenBSD: man_validate.c,v 1.122 2020/04/04 20:23:07 schwarze Exp $ */
+/* $OpenBSD: man_validate.c,v 1.123 2020/04/18 20:28:46 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -32,11 +32,11 @@
 #include "mandoc_aux.h"
 #include "mandoc.h"
 #include "roff.h"
-#include "tag.h"
 #include "man.h"
 #include "libmandoc.h"
 #include "roff_int.h"
 #include "libman.h"
+#include "tag.h"
 
 #define	CHKARGS	  struct roff_man *man, struct roff_node *n
 

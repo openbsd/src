@@ -1,4 +1,4 @@
-/* $OpenBSD: html.c,v 1.138 2020/04/08 11:54:14 schwarze Exp $ */
+/* $OpenBSD: html.c,v 1.139 2020/04/18 20:28:46 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -876,6 +876,15 @@ print_gen_comment(struct html *h, struct roff_node *n)
 void
 print_text(struct html *h, const char *word)
 {
+	print_tagged_text(h, word, NULL);
+}
+
+void
+print_tagged_text(struct html *h, const char *word, struct roff_node *n)
+{
+	struct tag	*t;
+	char		*href;
+
 	/*
 	 * Always wrap text in a paragraph unless already contained in
 	 * some flow container; never put it directly into a section.
@@ -896,13 +905,20 @@ print_text(struct html *h, const char *word)
 	}
 
 	/*
-	 * Print the text, optionally surrounded by HTML whitespace,
-	 * optionally manually switching fonts before and after.
+	 * Optionally switch fonts, optionally write a permalink, then
+	 * print the text, optionally surrounded by HTML whitespace.
 	 */
 
 	assert(h->metaf == NULL);
 	print_metaf(h);
 	print_indent(h);
+
+	if (n != NULL && (href = html_make_id(n, 0)) != NULL) {
+		t = print_otag(h, TAG_A, "chR", "permalink", href);
+		free(href);
+	} else
+		t = NULL;
+
 	if ( ! print_encode(h, word, NULL, 0)) {
 		if ( ! (h->flags & HTML_NONOSPACE))
 			h->flags &= ~HTML_NOSPACE;
@@ -913,7 +929,8 @@ print_text(struct html *h, const char *word)
 	if (h->metaf != NULL) {
 		print_tagq(h, h->metaf);
 		h->metaf = NULL;
-	}
+	} else if (t != NULL)
+		print_tagq(h, t);
 
 	h->flags &= ~HTML_IGNDELIM;
 }

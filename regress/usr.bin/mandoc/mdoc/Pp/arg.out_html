@@ -1,0 +1,6 @@
+<p class="Pp">line 1</p>
+<p class="Pp" id="first"><a class="permalink" href="#first">line 2</a>
+  <br/>
+  line 3</p>
+<p class="Pp">line 4</p>
+<p class="Pp" id="last"><a class="permalink" href="#last">final</a> text</p>
