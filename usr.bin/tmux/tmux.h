@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1008 2020/04/18 15:12:28 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1009 2020/04/18 17:20:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -782,7 +782,6 @@ struct screen_write_ctx {
 	int			 sync;
 
 	struct screen_write_collect_item *item;
-	struct screen_write_collect_line *list;
 	u_int			 scrolled;
 	u_int			 bg;
 
