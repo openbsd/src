@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.170 2020/04/18 15:12:28 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.171 2020/04/18 15:22:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1381,6 +1381,7 @@ screen_write_collect_scroll(struct screen_write_ctx *ctx)
 		ctx->list[y].data = cl->data;
 	}
 	ctx->list[s->rlower].data = saved;
+	ctx->list[s->rlower].bg = 1 + 8;
 }
 
 /* Flush collected lines. */
