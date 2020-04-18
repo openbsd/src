@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1003 2020/04/18 06:15:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1004 2020/04/18 06:20:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1244,6 +1244,7 @@ struct tty {
 #define TTY_BLOCK 0x80
 #define TTY_HAVEDA 0x100
 #define TTY_HAVEDSR 0x200
+#define TTY_SYNCING 0x400
 	int		 flags;
 
 	struct tty_term	*term;

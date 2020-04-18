@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.322 2020/04/18 06:15:07 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.323 2020/04/18 06:20:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1741,6 +1741,7 @@ server_client_check_redraw(struct client *c)
 		 */
 		TAILQ_FOREACH(wp, &c->session->curw->window->panes, entry) {
 			if (wp->flags & PANE_REDRAW) {
+				log_debug("%s: redrawing pane %%%u", __func__, wp->id);
 				tty_update_mode(tty, tty->mode, NULL);
 				screen_redraw_pane(c, wp);
 			}

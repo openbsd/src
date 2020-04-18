@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.356 2020/04/18 06:15:07 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.357 2020/04/18 06:20:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1438,15 +1438,19 @@ tty_draw_line(struct tty *tty, struct window_pane *wp, struct screen *s,
 void
 tty_sync_start(struct tty *tty)
 {
-	if (tty_get_flags(tty) & TERM_SYNC)
+	if ((~tty->flags & TTY_SYNCING) && (tty_get_flags(tty) & TERM_SYNC)) {
 		tty_puts(tty, "\033P=1s\033\\");
+		tty->flags |= TTY_SYNCING;
+	}
 }
 
 void
 tty_sync_end(struct tty *tty)
 {
-	if (tty_get_flags(tty) & TERM_SYNC)
+	if (tty_get_flags(tty) & TERM_SYNC) {
 		tty_puts(tty, "\033P=2s\033\\");
+		tty->flags &= ~TTY_SYNCING;
+	}
 }
 
 static int
