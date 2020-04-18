@@ -17,9 +17,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.40 2020/04/16 19:30:50 deraadt Exp $
+.\" $OpenBSD: crontab.5,v 1.41 2020/04/18 17:11:40 jmc Exp $
 .\"
-.Dd $Mdocdate: April 16 2020 $
+.Dd $Mdocdate: April 18 2020 $
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -92,7 +92,7 @@ to preserve leading or trailing blanks.
 .Pp
 Lines in the system
 .Nm
-have six fixed fields, an options field, plus a command, in the form:
+have six fixed fields, an optional flags field, and a command, in the form:
 .Bd -ragged -offset indent
 .Ar minute
 .Ar hour
@@ -100,20 +100,20 @@ have six fixed fields, an options field, plus a command, in the form:
 .Ar month
 .Ar day-of-week
 .Ar user
-.Op Ar options
+.Op Ar flags
 .Ar command
 .Ed
 .Pp
 While lines in a user
 .Nm
-have five fixed fields, an options field, plus a command, in the form:
+have five fixed fields, an optional flags field, and a command, in the form:
 .Bd -ragged -offset indent
 .Ar minute
 .Ar hour
 .Ar day-of-month
 .Ar month
 .Ar day-of-week
-.Op Ar options
+.Op Ar flags
 .Ar command
 .Ed
 .Pp
@@ -128,7 +128,7 @@ The allowed values for the fields are:
 .It Ar month Ta * or 1\(en12 or a name (see below)
 .It Ar day-of-week Ta * or 0\(en7 or a name (0 or 7 is Sunday)
 .It Ar user Ta a valid username
-.It Op Ar options Ta runtime options starting with -
+.It Op Ar flags Ta runtime flags, denoted with '-'
 .It Ar command Ta text
 .El
 .Pp
@@ -188,13 +188,11 @@ day or month (case doesn't matter).
 Ranges or lists of names are not allowed.
 .Pp
 Some
-.Ar options
-related to process operation can be provided before the
+.Ar flags
+relating to process operation can be provided before the
 .Ar command
 field.
-All options start with
-.Fl
-as follows:
+Flags are denoted with '-' and may be combined.
 .Bl -tag -width Ds
 .It Fl n Ar command
 No mail is sent after a successful run.
@@ -204,6 +202,8 @@ The
 .Fl n
 option is an attempt to cure potentially copious volumes of mail coming from
 .Xr cron 8 .
+.It Fl q Ar command
+Execution will not be logged.
 .It Fl s Ar command
 Only a single instance of
 .Ar command
@@ -211,8 +211,6 @@ will be run concurrently.
 Additional instances of
 .Ar command
 will not be scheduled until the earlier one completes.
-.It Fl q Ar command
-Execution will not be logged.
 .El
 .Pp
 The
@@ -375,12 +373,6 @@ character.
 .It
 Months or days of the week can be specified by name.
 .It
-Mailing after a successful run can be suppressed with
-.Fl n .
-.It
-Logging can be suppressed with
-.Ql -q .
-.It
 Environment variables can be set in a crontab.
 .It
 Command output can be mailed to a person other than the crontab
@@ -390,6 +382,10 @@ at all.
 All of the
 .Ql @
 commands that can appear in place of the first five fields.
+.It
+All of the
+.Op Fl nqs
+flags.
 .El
 .Sh AUTHORS
 .Nm
