@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.51 2020/04/16 17:51:56 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.52 2020/04/18 16:19:02 deraadt Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -37,7 +37,7 @@
 
 typedef	enum ecode {
 	e_none, e_minute, e_hour, e_dom, e_month, e_dow,
-	e_cmd, e_timespec, e_username, e_option, e_memory
+	e_cmd, e_timespec, e_username, e_option, e_memory, e_flags
 } ecode_e;
 
 static const char *ecodes[] = {
@@ -51,7 +51,8 @@ static const char *ecodes[] = {
 	"bad time specifier",
 	"bad username",
 	"bad option",
-	"out of memory"
+	"out of memory",
+	"bad flags"
 };
 
 static const char *MonthNames[] = {
@@ -333,50 +334,44 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		e->envp = tenvp;
 	}
 
-	/* If the first character of the command is '-' it is a cron option.
+	/* An optional series of '-'-prefixed flags in getopt style can
+	 * occur before the command.
 	 */
 	ch = get_char(file);
 	while (ch == '-') {
-		switch (ch = get_char(file)) {
-		case 'n':
-			/* only allow the user to set the option once */
-			if ((e->flags & MAIL_WHEN_ERR) == MAIL_WHEN_ERR) {
-				ecode = e_option;
+		int flags = 0, loop = 1;
+
+		while (loop) {
+			switch (ch = get_char(file)) {
+			case 'n':
+				flags |= MAIL_WHEN_ERR;
+				break;
+			case 'q':
+				flags |= DONT_LOG;
+				break;
+			case 's':
+				flags |= SINGLE_JOB;
+				break;
+			case ' ':
+			case '\t':
+				Skip_Blanks(ch, file)
+				loop = 0;
+				break;
+			case EOF:
+			case '\n':
+				ecode = e_cmd;
+				goto eof;
+			default:
+				ecode = e_flags;
 				goto eof;
 			}
-			e->flags |= MAIL_WHEN_ERR;
-			break;
-		case 'q':
-			/* only allow the user to set the option once */
-			if ((e->flags & DONT_LOG) == DONT_LOG) {
-				ecode = e_option;
-				goto eof;
-			}
-			e->flags |= DONT_LOG;
-			break;
-		case 's':
-			/* only allow the user to set the option once */
-			if ((e->flags & SINGLE_JOB) == SINGLE_JOB) {
-				ecode = e_option;
-				goto eof;
-			}
-			e->flags |= SINGLE_JOB;
-			break;
-		default:
-			ecode = e_option;
-			goto eof;
-		}
-		ch = get_char(file);
-		if (ch!='\t' && ch!=' ') {
-			ecode = e_option;
-			goto eof;
 		}
 
-		Skip_Blanks(ch, file)
-		if (ch == EOF || ch == '\n') {
-			ecode = e_cmd;
+		if (flags == 0) {
+			ecode = e_flags;
 			goto eof;
 		}
+		e->flags |= flags;
 	}
 	unget_char(ch, file);
 
