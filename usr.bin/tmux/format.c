@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.243 2020/04/18 07:19:28 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.244 2020/04/18 09:00:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -977,7 +977,7 @@ format_grid_word(struct grid *gd, u_int x, u_int y)
 		if (x == 0) {
 			if (y == 0)
 				break;
-			gl = &gd->linedata[y - 1];
+			gl = grid_peek_line(gd, y - 1);
 			if (~gl->flags & GRID_LINE_WRAPPED)
 				break;
 			y--;
@@ -993,7 +993,7 @@ format_grid_word(struct grid *gd, u_int x, u_int y)
 			if (end == 0 || x == end - 1) {
 				if (y == gd->hsize + gd->sy - 1)
 					break;
-				gl = &gd->linedata[y];
+				gl = grid_peek_line(gd, y);
 				if (~gl->flags & GRID_LINE_WRAPPED)
 					break;
 				y++;
