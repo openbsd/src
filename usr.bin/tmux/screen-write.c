@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.168 2020/04/17 15:44:58 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.169 2020/04/18 07:19:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -174,6 +174,10 @@ screen_write_stop(struct screen_write_ctx *ctx)
 
 	log_debug("%s: %u cells (%u written, %u skipped)", __func__,
 	    ctx->cells, ctx->written, ctx->skipped);
+	if (ctx->wp != NULL) {
+		ctx->wp->written += ctx->written;
+		ctx->wp->skipped += ctx->skipped;
+	}
 
 	if (ctx->sync) {
 		screen_write_initctx(ctx, &ttyctx, 0);
