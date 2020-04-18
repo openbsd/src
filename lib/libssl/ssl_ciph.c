@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.115 2020/04/18 13:47:58 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.116 2020/04/18 14:41:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1275,9 +1275,8 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return(NULL);	/* Failure */
 	}
-	ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,
-	disabled_mkey, disabled_auth, disabled_enc,
-	disabled_mac, disabled_ssl, head);
+	ssl_cipher_collect_aliases(ca_list, num_of_group_aliases, disabled_mkey,
+	    disabled_auth, disabled_enc, disabled_mac, disabled_ssl, head);
 
 	/*
 	 * If the rule_string begins with DEFAULT, apply the default rule
