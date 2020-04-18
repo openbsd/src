@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.68 2020/04/18 06:10:15 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.69 2020/04/18 06:15:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -438,24 +438,17 @@ screen_redraw_screen(struct client *c)
 	tty_sync_start(&c->tty);
 
 	if (flags & (CLIENT_REDRAWWINDOW|CLIENT_REDRAWBORDERS)) {
-		log_debug("%s: redrawing borders", c->name);
 		if (ctx.pane_status != PANE_STATUS_OFF)
 			screen_redraw_draw_pane_status(&ctx);
 		screen_redraw_draw_borders(&ctx);
 	}
-	if (flags & CLIENT_REDRAWWINDOW) {
-		log_debug("%s: redrawing panes", c->name);
+	if (flags & CLIENT_REDRAWWINDOW)
 		screen_redraw_draw_panes(&ctx);
-	}
 	if (ctx.statuslines != 0 &&
-	    (flags & (CLIENT_REDRAWSTATUS|CLIENT_REDRAWSTATUSALWAYS))) {
-		log_debug("%s: redrawing status", c->name);
+	    (flags & (CLIENT_REDRAWSTATUS|CLIENT_REDRAWSTATUSALWAYS)))
 		screen_redraw_draw_status(&ctx);
-	}
-	if (c->overlay_draw != NULL && (flags & CLIENT_REDRAWOVERLAY)) {
-		log_debug("%s: redrawing overlay", c->name);
+	if (c->overlay_draw != NULL && (flags & CLIENT_REDRAWOVERLAY))
 		c->overlay_draw(c, &ctx);
-	}
 
 	tty_reset(&c->tty);
 	tty_sync_end(&c->tty);
