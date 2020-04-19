@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.151 2020/04/18 07:55:06 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.152 2020/04/19 09:20:45 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -142,6 +142,8 @@ imxtmu*		at fdt?
 bcmaux*		at fdt?
 bcmintc*	at fdt?
 bcmdog*		at fdt?
+bcmpcie*	at fdt?
+pci*		at bcmpcie?
 bcmrng*		at fdt?
 bcmtemp*	at fdt?
 bse*		at fdt?
