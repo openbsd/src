@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.136 2020/03/22 07:59:59 anton Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.137 2020/04/19 15:05:14 kettenis Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2367,6 +2367,118 @@ wsdisplay_burner(void *v)
 	}
 }
 #endif
+
+int
+wsdisplay_get_param(struct wsdisplay_softc *sc, struct wsdisplay_param *dp)
+{
+	int error = ENXIO;
+	int i;
+
+	if (sc != NULL)
+		return wsdisplay_param(&sc->sc_dv, WSDISPLAYIO_GETPARAM, dp);
+
+	for (i = 0; i < wsdisplay_cd.cd_ndevs; i++) {
+		sc = wsdisplay_cd.cd_devs[i];
+		if (sc == NULL)
+			continue;
+		error = wsdisplay_param(&sc->sc_dv, WSDISPLAYIO_GETPARAM, dp);
+		if (error == 0)
+			break;
+	}
+
+	if (error && ws_get_param)
+		error = ws_get_param(dp);
+
+	return error;
+}
+
+int
+wsdisplay_set_param(struct wsdisplay_softc *sc, struct wsdisplay_param *dp)
+{
+	int error = ENXIO;
+	int i;
+
+	if (sc != NULL)
+		return wsdisplay_param(&sc->sc_dv, WSDISPLAYIO_SETPARAM, dp);
+
+	for (i = 0; i < wsdisplay_cd.cd_ndevs; i++) {
+		sc = wsdisplay_cd.cd_devs[i];
+		if (sc == NULL)
+			continue;
+		error = wsdisplay_param(&sc->sc_dv, WSDISPLAYIO_SETPARAM, dp);
+		if (error == 0)
+			break;
+	}
+
+	if (error && ws_set_param)
+		error = ws_set_param(dp);
+
+	return error;
+}
+
+void
+wsdisplay_brightness_step(struct device *dev, int dir)
+{
+	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
+	struct wsdisplay_param dp;
+	int delta, new;
+
+	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+	if (wsdisplay_get_param(sc, &dp))
+		return;
+
+	/* Use a step size of approximately 5%. */
+	delta = max(1, ((dp.max - dp.min) * 5) / 100);
+	new = dp.curval;
+
+	if (dir > 0) {
+		if (delta > dp.max - dp.curval)
+			new = dp.max;
+		else
+			new += delta;
+	} else if (dir < 0) {
+		if (delta > dp.curval - dp.min)
+			new = dp.min;
+		else
+			new -= delta;
+	}
+
+	if (dp.curval == new)
+		return;
+
+	dp.curval = new;
+	wsdisplay_set_param(sc, &dp);
+}
+
+void
+wsdisplay_brightness_zero(struct device *dev)
+{
+	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
+	struct wsdisplay_param dp;
+
+	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+	if (wsdisplay_get_param(sc, &dp))
+		return;
+
+	dp.curval = dp.min;
+	wsdisplay_set_param(sc, &dp);
+}
+
+void
+wsdisplay_brightness_cycle(struct device *dev)
+{
+	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
+	struct wsdisplay_param dp;
+
+	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
+	if (wsdisplay_get_param(sc, &dp))
+		return;
+
+	if (dp.curval == dp.max)
+		wsdisplay_brightness_zero(dev);
+	else
+		wsdisplay_brightness_step(dev, 1);
+}
 
 #ifdef HAVE_WSMOUSED_SUPPORT
 /*

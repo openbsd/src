@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.103 2020/03/24 08:11:59 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.104 2020/04/19 15:05:15 kettenis Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1559,11 +1559,13 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 		    ksym == KS_Cmd_BacklightToggle ? 1 : 0);
 		return (1);
 	case KS_Cmd_BrightnessUp:
+		wsdisplay_brightness_step(sc->sc_displaydv, 1);
+		return (1);
 	case KS_Cmd_BrightnessDown:
+		wsdisplay_brightness_step(sc->sc_displaydv, -1);
+		return (1);
 	case KS_Cmd_BrightnessRotate:
-		change_displayparam(sc, WSDISPLAYIO_PARAM_BRIGHTNESS,
-		    ksym == KS_Cmd_BrightnessDown ? -1 : 1,
-		    ksym == KS_Cmd_BrightnessRotate ? 1 : 0);
+		wsdisplay_brightness_cycle(sc->sc_displaydv);
 		return (1);
 	case KS_Cmd_ContrastUp:
 	case KS_Cmd_ContrastDown:

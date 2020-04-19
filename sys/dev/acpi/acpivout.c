@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.21 2020/04/06 00:01:08 pirofti Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.22 2020/04/19 15:05:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <paul@irofti.net>
  *
@@ -64,9 +64,6 @@ struct acpivout_softc {
 	int	sc_brightness;
 };
 
-void	acpivout_brightness_cycle(struct acpivout_softc *);
-void	acpivout_brightness_step(struct acpivout_softc *, int);
-void	acpivout_brightness_zero(struct acpivout_softc *);
 int	acpivout_get_brightness(struct acpivout_softc *);
 int	acpivout_select_brightness(struct acpivout_softc *, int);
 int	acpivout_find_brightness(struct acpivout_softc *, int);
@@ -130,21 +127,18 @@ acpivout_notify(struct aml_node *node, int notify, void *arg)
 {
 	struct acpivout_softc *sc = arg;
 
-	if (ws_get_param == NULL || ws_set_param == NULL)
-		return (0);
-
 	switch (notify) {
 	case NOTIFY_BRIGHTNESS_CYCLE:
-		acpivout_brightness_cycle(sc);
+		wsdisplay_brightness_cycle(NULL);
 		break;
 	case NOTIFY_BRIGHTNESS_UP:
-		acpivout_brightness_step(sc, 1);
+		wsdisplay_brightness_step(NULL, 1);
 		break;
 	case NOTIFY_BRIGHTNESS_DOWN:
-		acpivout_brightness_step(sc, -1);
+		wsdisplay_brightness_step(NULL, -1);
 		break;
 	case NOTIFY_BRIGHTNESS_ZERO:
-		acpivout_brightness_zero(sc);
+		wsdisplay_brightness_zero(NULL);
 		break;
 	case NOTIFY_DISPLAY_OFF:
 		/* TODO: D3 state change */
@@ -157,64 +151,6 @@ acpivout_notify(struct aml_node *node, int notify, void *arg)
 	return (0);
 }
 
-void
-acpivout_brightness_cycle(struct acpivout_softc *sc)
-{
-	struct wsdisplay_param dp;
-
-	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
-	if (ws_get_param(&dp))
-		return;
-
-	if (dp.curval == dp.max)
-		acpivout_brightness_zero(sc);
-	else
-		acpivout_brightness_step(sc, 1);
-}
-
-void
-acpivout_brightness_step(struct acpivout_softc *sc, int dir)
-{
-	struct wsdisplay_param dp;
-	int delta, new;
-
-	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
-	if (ws_get_param(&dp))
-		return;
-
-	new = dp.curval;
-	delta = ((dp.max - dp.min) * BRIGHTNESS_STEP) / 100;
-	if (dir > 0) {
-		if (delta > dp.max - dp.curval)
-			new = dp.max;
-		else
-			new += delta;
-	} else if (dir < 0) {
-		if (delta > dp.curval - dp.min)
-			new = dp.min;
-		else
-			new -= delta;
-	}
-
-	if (dp.curval == new)
-		return;
-
-	dp.curval = new;
-	ws_set_param(&dp);
-}
-
-void
-acpivout_brightness_zero(struct acpivout_softc *sc)
-{
-	struct wsdisplay_param dp;
-
-	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
-	if (ws_get_param(&dp))
-		return;
-
-	dp.curval = dp.min;
-	ws_set_param(&dp);
-}
 
 int
 acpivout_get_brightness(struct acpivout_softc *sc)

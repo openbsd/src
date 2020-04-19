@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.34 2019/10/13 10:56:31 kettenis Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.35 2020/04/19 15:05:14 kettenis Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -243,6 +243,10 @@ const struct wsscreen_descr *
 struct wsdisplay_param;
 extern int (*ws_get_param)(struct wsdisplay_param *);
 extern int (*ws_set_param)(struct wsdisplay_param *);
+
+void wsdisplay_brightness_step(struct device *, int);
+void wsdisplay_brightness_zero(struct device *);
+void wsdisplay_brightness_cycle(struct device *);
 
 /*
  * for use by wskbd
