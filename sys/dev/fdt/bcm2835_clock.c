@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_clock.c,v 1.1 2020/04/19 14:58:20 tobhe Exp $	*/
+/*	$OpenBSD: bcm2835_clock.c,v 1.2 2020/04/19 16:48:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -99,7 +99,8 @@ bcmclock_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "brcm,bcm2835-cprman");
+	return (OF_is_compatible(faa->fa_node, "brcm,bcm2711-cprman") ||
+	    OF_is_compatible(faa->fa_node, "brcm,bcm2835-cprman"));
 }
 
 void
