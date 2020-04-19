@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.116 2020/04/18 14:41:05 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.117 2020/04/19 14:54:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -395,6 +395,28 @@ static const SSL_CIPHER cipher_aliases[] = {
 		.name = SSL_TXT_TLSV1_3,
 		.algorithm_ssl = SSL_TLSV1_3,
 	},
+
+	/* cipher suite aliases */
+#ifdef LIBRESSL_HAS_TLS1_3
+	{
+		.valid = 1,
+		.name = "TLS_AES_128_GCM_SHA256",
+		.id = TLS1_3_CK_AES_128_GCM_SHA256,
+		.algorithm_ssl = SSL_TLSV1_3,
+	},
+	{
+		.valid = 1,
+		.name = "TLS_AES_256_GCM_SHA384",
+		.id = TLS1_3_CK_AES_256_GCM_SHA384,
+		.algorithm_ssl = SSL_TLSV1_3,
+	},
+	{
+		.valid = 1,
+		.name = "TLS_CHACHA20_POLY1305_SHA256",
+		.id = TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+		.algorithm_ssl = SSL_TLSV1_3,
+	},
+#endif
 
 	/* strength classes */
 	{
@@ -961,7 +983,8 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 			while (((ch >= 'A') && (ch <= 'Z')) ||
 			    ((ch >= '0') && (ch <= '9')) ||
 			    ((ch >= 'a') && (ch <= 'z')) ||
-			    (ch == '-') || (ch == '.')) {
+			    (ch == '-') || (ch == '.') ||
+			    (ch == '_')) {
 				ch = *(++l);
 				buflen++;
 			}
