@@ -1,7 +1,7 @@
 /*
  * Fictional events
  *
- * $OpenBSD: calendar.fictional,v 1.4 2007/06/10 17:34:04 simon Exp $
+ * $OpenBSD: calendar.fictional,v 1.5 2020/04/19 21:08:39 jmc Exp $
  */
 
 #ifndef _calendar_fictional_
@@ -52,6 +52,6 @@
 05/25	Oral Roberts sees 900 foot tall Jesus Christ, Tulsa OK, 1980
 /* Not really a fictional event, just a fictional time */
 05/08	Beginning of ostrich mating season
-10/23	Earth created at 6:30 AM, 4004BC.
+10/23	Earth created at 6:30 AM, 4004 BC.
 
 #endif /* !_calendar_fictional_ */
