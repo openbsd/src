@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.3 2020/04/19 06:39:47 feinerer Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.4 2020/04/19 09:54:56 jmc Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -113,7 +113,7 @@ argument.
 .Pp
 Controls are described by the
 .Va sioctl_ondesc
-stucture as follows:
+structure as follows:
 .Bd -literal
 struct sioctl_node {
 	char name[SIOCTL_NAMEMAX];	/* ex. "spkr" */
