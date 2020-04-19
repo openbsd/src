@@ -1,4 +1,4 @@
-/* $OpenBSD: html.c,v 1.139 2020/04/18 20:28:46 schwarze Exp $ */
+/* $OpenBSD: html.c,v 1.140 2020/04/19 15:15:54 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -110,6 +110,11 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 };
 
 /* Avoid duplicate HTML id= attributes. */
+
+struct	id_entry {
+	int	 ord;	/* Ordinal number of the latest occurrence. */
+	char	 id[];	/* The id= attribute without any ordinal suffix. */
+};
 static	struct ohash	 id_unique;
 
 static	void	 html_reset_internal(struct html *);
@@ -144,7 +149,7 @@ html_alloc(const struct manoutput *outopts)
 	if (outopts->toc)
 		h->oflags |= HTML_TOC;
 
-	mandoc_ohash_init(&id_unique, 4, 0);
+	mandoc_ohash_init(&id_unique, 4, offsetof(struct id_entry, id));
 
 	return h;
 }
@@ -153,17 +158,17 @@ static void
 html_reset_internal(struct html *h)
 {
 	struct tag	*tag;
-	char		*cp;
+	struct id_entry	*entry;
 	unsigned int	 slot;
 
 	while ((tag = h->tag) != NULL) {
 		h->tag = tag->next;
 		free(tag);
 	}
-	cp = ohash_first(&id_unique, &slot);
-	while (cp != NULL) {
-		free(cp);
-		cp = ohash_next(&id_unique, &slot);
+	entry = ohash_first(&id_unique, &slot);
+	while (entry != NULL) {
+		free(entry);
+		entry = ohash_next(&id_unique, &slot);
 	}
 	ohash_delete(&id_unique);
 }
@@ -172,7 +177,7 @@ void
 html_reset(void *p)
 {
 	html_reset_internal(p);
-	mandoc_ohash_init(&id_unique, 4, 0);
+	mandoc_ohash_init(&id_unique, 4, offsetof(struct id_entry, id));
 }
 
 void
@@ -327,20 +332,24 @@ html_fillmode(struct html *h, enum roff_tok want)
  * element and/or as a segment identifier for a URI in an <a> element.
  * The function may fail and return NULL if the node lacks text data
  * to create the attribute from.
- * If the "unique" argument is 0, the caller is responsible for
- * free(3)ing the returned string after using it.
+ * The caller is responsible for free(3)ing the returned string.
+ *
  * If the "unique" argument is non-zero, the "id_unique" ohash table
- * is used for de-duplication and owns the returned string, so the
- * caller must not free(3) it.  In this case, it will be freed
- * automatically by html_reset() or html_free().
+ * is used for de-duplication.  If the "unique" argument is 1,
+ * it is the first time the function is called for this tag and
+ * location, so if an ordinal suffix is needed, it is incremented.
+ * If the "unique" argument is 2, it is the second time the function
+ * is called for this tag and location, so the ordinal suffix
+ * remains unchanged.
  */
 char *
 html_make_id(const struct roff_node *n, int unique)
 {
 	const struct roff_node	*nch;
-	char			*buf, *bufs, *cp;
+	struct id_entry		*entry;
+	char			*buf, *cp;
+	size_t			 len;
 	unsigned int		 slot;
-	int			 suffix;
 
 	if (n->tag != NULL)
 		buf = mandoc_strdup(n->tag);
@@ -384,25 +393,21 @@ html_make_id(const struct roff_node *n, int unique)
 
 	/* Avoid duplicate HTML id= attributes. */
 
-	bufs = NULL;
-	suffix = 1;
 	slot = ohash_qlookup(&id_unique, buf);
-	cp = ohash_find(&id_unique, slot);
-	if (cp != NULL) {
-		while (cp != NULL) {
-			free(bufs);
-			if (++suffix > 127) {
-				free(buf);
-				return NULL;
-			}
-			mandoc_asprintf(&bufs, "%s_%d", buf, suffix);
-			slot = ohash_qlookup(&id_unique, bufs);
-			cp = ohash_find(&id_unique, slot);
-		}
-		free(buf);
-		buf = bufs;
+	if ((entry = ohash_find(&id_unique, slot)) == NULL) {
+		len = strlen(buf) + 1;
+		entry = mandoc_malloc(sizeof(*entry) + len);
+		entry->ord = 1;
+		memcpy(entry->id, buf, len);
+		ohash_insert(&id_unique, slot, entry);
+	} else if (unique == 1)
+		entry->ord++;
+
+	if (entry->ord > 1) {
+		cp = buf;
+		mandoc_asprintf(&buf, "%s_%d", cp, entry->ord);
+		free(cp);
 	}
-	ohash_insert(&id_unique, slot, buf);
 	return buf;
 }
 
@@ -784,7 +789,7 @@ print_otag_id(struct html *h, enum htmltag elemtype, const char *cattr,
 	if (n->flags & NODE_ID)
 		id = html_make_id(n, 1);
 	if (n->flags & NODE_HREF)
-		href = id == NULL ? html_make_id(n, 0) : id;
+		href = id == NULL ? html_make_id(n, 2) : id;
 	if (href != NULL && htmltags[elemtype].flags & HTML_INPHRASE)
 		ret = print_otag(h, TAG_A, "chR", "permalink", href);
 	t = print_otag(h, elemtype, "ci", cattr, id);
@@ -802,6 +807,7 @@ print_otag_id(struct html *h, enum htmltag elemtype, const char *cattr,
 				print_otag(h, TAG_A, "chR", "permalink", href);
 		}
 	}
+	free(id);
 	if (id == NULL)
 		free(href);
 	return ret;
@@ -913,7 +919,7 @@ print_tagged_text(struct html *h, const char *word, struct roff_node *n)
 	print_metaf(h);
 	print_indent(h);
 
-	if (n != NULL && (href = html_make_id(n, 0)) != NULL) {
+	if (n != NULL && (href = html_make_id(n, 2)) != NULL) {
 		t = print_otag(h, TAG_A, "chR", "permalink", href);
 		free(href);
 	} else
