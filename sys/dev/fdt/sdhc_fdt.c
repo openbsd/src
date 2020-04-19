@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.5 2020/04/03 16:26:14 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.6 2020/04/19 16:17:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -67,7 +67,8 @@ sdhc_fdt_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "arasan,sdhci-5.1");
+	return (OF_is_compatible(faa->fa_node, "arasan,sdhci-5.1") ||
+	    OF_is_compatible(faa->fa_node, "brcm,bcm2835-sdhci"));
 }
 
 void
@@ -76,7 +77,7 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct sdhc_fdt_softc *sc = (struct sdhc_fdt_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct regmap *rm = NULL;
-	uint32_t phandle, freq;
+	uint32_t phandle, freq, cap = 0;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -152,12 +153,22 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		phy_enable(faa->fa_node, "phy_arasan");
 		sc->sc.sc_flags |= SDHC_F_NOPWR0;
+
+		/* XXX Doesn't work on Rockchip RK3399. */
+		sc->sc.sc_flags |= SDHC_F_NODDR50;
 	}
 
-	/* XXX Doesn't work on Rockchip RK3399. */
-	sc->sc.sc_flags |= SDHC_F_NODDR50;
+	if (OF_is_compatible(faa->fa_node, "brcm,bcm2835-sdhci")) {
+		cap = SDHC_VOLTAGE_SUPP_3_3V | SDHC_HIGH_SPEED_SUPP;
+		cap |= SDHC_MAX_BLK_LEN_1024 << SDHC_MAX_BLK_LEN_SHIFT;
 
-	sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh, sc->sc_size, 1, 0);
+		freq = clock_get_frequency(faa->fa_node, NULL);
+		sc->sc.sc_clkbase = freq / 1000;
+
+		sc->sc.sc_flags |= SDHC_F_32BIT_ACCESS;
+	}
+
+	sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh, sc->sc_size, 1, cap);
 	return;
 
 unmap:
