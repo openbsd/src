@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.272 2020/04/19 13:44:14 krw Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.273 2020/04/19 19:29:52 krw Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4448,7 +4448,7 @@ vmm_translate_gva(struct vcpu *vcpu, uint64_t va, uint64_t *pa, int mode)
 		}
 	}
 
-	low_mask = (1 << shift) - 1;
+	low_mask = ((uint64_t)1ULL << shift) - 1;
 	high_mask = (((uint64_t)1ULL << ((pte_size * 8) - 1)) - 1) ^ low_mask;
 	*pa = (pte & high_mask) | (va & low_mask);
 
