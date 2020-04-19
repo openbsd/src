@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.35 2020/03/14 01:30:34 jsg Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.36 2020/04/19 21:40:21 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -222,12 +222,12 @@ bwfm_sdio_match(struct device *parent, void *match, void *aux)
 	case 0x4345:
 	case 0x4354:
 	case 0x4356:
-	case 0xa887:
-	case 0xa94c:
-	case 0xa94d:
-	case 0xa962:
-	case 0xa9a6:
-	case 0xa9bf:
+	case 0xa887:	/* BCM43143 */
+	case 0xa94c:	/* BCM43340 */
+	case 0xa94d:	/* BCM43341 */
+	case 0xa962:	/* BCM43362 */
+	case 0xa9a6:	/* BCM43430 */
+	case 0xa9bf:	/* BCM43364 */
 		break;
 	default:
 		return 0;
