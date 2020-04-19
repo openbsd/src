@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.271 2020/04/08 07:39:48 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.272 2020/04/19 13:44:14 krw Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5415,6 +5415,7 @@ vmx_get_guest_faulttype(void)
 	if (exit_qual & IA32_VMX_EPT_FAULT_WAS_EXECABLE)
 		was_prot |= PROT_EXEC;
 
+	prot = 0;
 	if (exit_qual & IA32_VMX_EPT_FAULT_READ)
 		prot = PROT_READ;
 	else if (exit_qual & IA32_VMX_EPT_FAULT_WRITE)
