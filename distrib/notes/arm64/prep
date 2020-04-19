@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.9 2020/04/15 11:41:08 kettenis Exp $
+dnl	$OpenBSD: prep,v 1.10 2020/04/19 23:41:19 sthen Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -24,11 +24,11 @@ Booting from an SD card:
   storage devices.  Under OpenBSD, it will appear as a ``sd'' device, for
   example sd1.
   
-  Use the dd(1) utility to copy the miniroot to the hard drive.
+  Use the dd(1) utility to copy the miniroot to the SD card.
   The command would likely be, under OpenBSD:
   	dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c bs=1m
   
-  When you have connected the serial to you computer, a command such
+  When you have connected the serial to your computer, a command such
   as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
   should connect you to the board's console.
 
@@ -48,6 +48,35 @@ script.
 	=> bootefi ${kernel_addr_r} ${fdt_addr_r}
 The bootloader will then run and try to load sd0a:/bsd off an FFS
 filesystem after a timeout.
+
+Install on Raspberry Pi 4:
+
+  You will need a microSD card (only a small one is needed), a USB
+  storage device, a TTL serial interface adapter (e.g. CP2102 USB-UART
+  converter), and a cable to attach this to the TXD/RXD/GND pins on the
+  https://pinout.xyz/ header on the board.
+
+  Follow the installation instructions at https://github.com/pftf/RPi4
+  to install UEFI firmware to a FAT-formatted microSD card.
+
+  Use the dd(1) utility to copy the miniroot to the USB storage device.
+  The command would likely be, under OpenBSD:
+	dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c bs=1m
+
+  When you have connected the serial to your computer, a command such
+  as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
+  should connect you to the board's console.
+
+  Shortly after powering the board, you should see messages on the serial
+  console starting with "Initialising SDRAM" followed by messages from the
+  UEFI firmware.  If you have a monitor connected to the HDMI port, you
+  should see a multi-coloured screen followed by UEFI firmware output.
+  If you do not see this, re-check your UEFI firmware installation.
+
+  OpenBSD should boot automatically soon after loading the UEFI firmware.
+  If a monitor is connected you will see messages from the boot loader,
+  but after the kernel has started running you will only see output on
+  the serial console.
 
 Install on systems without a supported miniroot:
 
