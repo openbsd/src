@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.63 2020/01/22 07:52:37 deraadt Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.64 2020/04/19 16:15:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -57,22 +57,27 @@ struct sdhc_host {
 	bus_dmamap_t adma_map;
 	bus_dma_segment_t adma_segs[1];
 	caddr_t adma2;
+
+	uint16_t block_size;
+	uint16_t block_count;
+	uint16_t transfer_mode;
 };
 
 /* flag values */
 #define SHF_USE_DMA		0x0001
 #define SHF_USE_DMA64		0x0002
+#define SHF_USE_32BIT_ACCESS	0x0004
 
 #define HREAD1(hp, reg)							\
-	(bus_space_read_1((hp)->iot, (hp)->ioh, (reg)))
+	(sdhc_read_1((hp), (reg)))
 #define HREAD2(hp, reg)							\
-	(bus_space_read_2((hp)->iot, (hp)->ioh, (reg)))
+	(sdhc_read_2((hp), (reg)))
 #define HREAD4(hp, reg)							\
 	(bus_space_read_4((hp)->iot, (hp)->ioh, (reg)))
 #define HWRITE1(hp, reg, val)						\
-	bus_space_write_1((hp)->iot, (hp)->ioh, (reg), (val))
+	sdhc_write_1((hp), (reg), (val))
 #define HWRITE2(hp, reg, val)						\
-	bus_space_write_2((hp)->iot, (hp)->ioh, (reg), (val))
+	sdhc_write_2((hp), (reg), (val))
 #define HWRITE4(hp, reg, val)						\
 	bus_space_write_4((hp)->iot, (hp)->ioh, (reg), (val))
 #define HCLR1(hp, reg, bits)						\
@@ -141,6 +146,99 @@ struct cfdriver sdhc_cd = {
 };
 
 /*
+ * Some controllers live on a bus that only allows 32-bit
+ * transactions.  In that case we use a RMW cycle for 8-bit and 16-bit
+ * register writes.  However that doesn't work for the Transfer Mode
+ * register as this register lives in the same 32-bit word as the
+ * Command register and writing the Command register triggers SD
+ * command generation.  We avoid this issue by using a shadow variable
+ * for the Transfer Mode register that we write out when we write the
+ * Command register.
+ *
+ * The Arasan controller controller integrated on the Broadcom SoCs
+ * used in the Raspberry Pi has an interesting bug where writing the
+ * same 32-bit register twice doesn't work.  This means that we lose
+ * writes to the Block Sine and/or Block Count register.  We work
+ * around that issue by using shadow variables as well.
+ */
+
+uint8_t
+sdhc_read_1(struct sdhc_host *hp, bus_size_t offset)
+{
+	uint32_t reg;
+
+	if (hp->flags & SHF_USE_32BIT_ACCESS) {
+		reg = bus_space_read_4(hp->iot, hp->ioh, offset & ~3);
+		return (reg >> ((offset & 3) * 8)) & 0xff;
+	}
+
+	return bus_space_read_1(hp->iot, hp->ioh, offset);
+}
+
+uint16_t
+sdhc_read_2(struct sdhc_host *hp, bus_size_t offset)
+{
+	uint32_t reg;
+
+	if (hp->flags & SHF_USE_32BIT_ACCESS) {
+		reg = bus_space_read_4(hp->iot, hp->ioh, offset & ~2);
+		return (reg >> ((offset & 2) * 8)) & 0xffff;
+	}
+
+	return bus_space_read_2(hp->iot, hp->ioh, offset);
+}
+
+void
+sdhc_write_1(struct sdhc_host *hp, bus_size_t offset, uint8_t value)
+{
+	uint32_t reg;
+
+	if (hp->flags & SHF_USE_32BIT_ACCESS) {
+		reg = bus_space_read_4(hp->iot, hp->ioh, offset & ~3);
+		reg &= ~(0xff << ((offset & 3) * 8));
+		reg |= (value << ((offset & 3) * 8));
+		bus_space_write_4(hp->iot, hp->ioh, offset & ~3, reg);
+		return;
+	}
+
+	bus_space_write_1(hp->iot, hp->ioh, offset, value);
+}
+
+void
+sdhc_write_2(struct sdhc_host *hp, bus_size_t offset, uint16_t value)
+{
+	uint32_t reg;
+
+	if (hp->flags & SHF_USE_32BIT_ACCESS) {
+		switch (offset) {
+		case SDHC_BLOCK_SIZE:
+			hp->block_size = value;
+			return;
+		case SDHC_BLOCK_COUNT:
+			hp->block_count = value;
+			return;
+		case SDHC_TRANSFER_MODE:
+			hp->transfer_mode = value;
+			return;
+		case SDHC_COMMAND:
+			bus_space_write_4(hp->iot, hp->ioh, SDHC_BLOCK_SIZE,
+			    (hp->block_count << 16) | hp->block_size);
+			bus_space_write_4(hp->iot, hp->ioh, SDHC_TRANSFER_MODE,
+			    (value << 16) | hp->transfer_mode);
+			return;
+		}
+
+		reg = bus_space_read_4(hp->iot, hp->ioh, offset & ~2);
+		reg &= ~(0xffff << ((offset & 2) * 8));
+		reg |= (value << ((offset & 2) * 8));
+		bus_space_write_4(hp->iot, hp->ioh, offset & ~2, reg);
+		return;
+	}
+
+	bus_space_write_2(hp->iot, hp->ioh, offset, value);
+}
+
+/*
  * Called by attachment driver.  For each SD card slot there is one SD
  * host controller standard register set. (1.3)
  */
@@ -152,26 +250,14 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	struct sdhc_host *hp;
 	int error = 1;
 	int max_clock;
-#ifdef SDHC_DEBUG
-	u_int16_t version;
-
-	version = bus_space_read_2(iot, ioh, SDHC_HOST_CTL_VERSION);
-	printf("%s: SD Host Specification/Vendor Version ",
-	    sc->sc_dev.dv_xname);
-	switch(SDHC_SPEC_VERSION(version)) {
-	case 0x00:
-		printf("1.0/%u\n", SDHC_VENDOR_VERSION(version));
-		break;
-	default:
-		printf(">1.0/%u\n", SDHC_VENDOR_VERSION(version));
-		break;
-	}
-#endif
 
 	/* Allocate one more host structure. */
 	sc->sc_nhosts++;
 	hp = malloc(sizeof(*hp), M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->sc_host[sc->sc_nhosts - 1] = hp;
+
+	if (ISSET(sc->sc_flags, SDHC_F_32BIT_ACCESS))
+		SET(hp->flags, SHF_USE_32BIT_ACCESS);
 
 	/* Fill in the new host structure. */
 	hp->sc = sc;
@@ -179,7 +265,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	hp->ioh = ioh;
 
 	/* Store specification version. */
-	hp->version = bus_space_read_2(iot, ioh, SDHC_HOST_CTL_VERSION);
+	hp->version = HREAD2(hp, SDHC_HOST_CTL_VERSION);
 
 	/*
 	 * Reset the host controller and enable interrupts.
