@@ -1,14 +1,20 @@
-.\" $OpenBSD: spacing.in,v 1.5 2020/04/06 09:55:49 schwarze Exp $
-.Dd $Mdocdate: April 6 2020 $
+.\" $OpenBSD: spacing.in,v 1.6 2020/04/19 16:26:11 schwarze Exp $
+.Dd $Mdocdate: April 19 2020 $
 .Dt DL-SPACING 1
 .Os
 .Sh NAME
 .Nm Dl-spacing
 .Nd spacing in and around one-line literal displays
 .Sh DESCRIPTION
+BEGINTEST
+.Pp
 preceding text
 .Tg display
 .Dl spacing  in  and around one-line literal displays
 empty display:
 .Dl
 following text
+.br
+ENDTEST
+.br
+end of file

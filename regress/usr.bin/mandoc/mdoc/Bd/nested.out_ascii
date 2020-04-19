@@ -4,6 +4,8 @@ NNAAMMEE
      BBdd--nneesstteedd - nested displays and lists
 
 DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
      regular text
 
            outer text (default indent)
@@ -25,5 +27,6 @@ DDEESSCCRRIIPPTTIIOONN
 
                inner text (2n)
              outer text
+     ENDTEST
 
-OpenBSD                          April 6, 2020                         OpenBSD
+OpenBSD                         April 19, 2020                         OpenBSD

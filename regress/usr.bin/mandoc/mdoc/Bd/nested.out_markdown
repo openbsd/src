@@ -6,14 +6,16 @@ BD-NESTED(1) - General Commands Manual
 
 # DESCRIPTION
 
+BEGINTEST
+
 regular
 text
 
-> outer
-> text (default indent)
+> outer text
+> (default indent)
 
-> > inner
-> > text (default indent)
+> > inner text
+> > (default indent)
 
 > outer
 > text
@@ -43,4 +45,6 @@ tag
 
 > outer text
 
-OpenBSD - April 6, 2020
+ENDTEST
+
+OpenBSD - April 19, 2020

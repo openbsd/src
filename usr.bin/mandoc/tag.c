@@ -1,4 +1,4 @@
-/* $OpenBSD: tag.c,v 1.35 2020/04/18 20:28:46 schwarze Exp $ */
+/* $OpenBSD: tag.c,v 1.36 2020/04/19 16:26:11 schwarze Exp $ */
 /*
  * Copyright (c) 2015,2016,2018,2019,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -41,6 +41,8 @@ struct tag_entry {
 	char	 s[];
 };
 
+static void		 tag_move_href(struct roff_man *,
+				struct roff_node *, const char *);
 static void		 tag_move_id(struct roff_node *);
 
 static struct ohash	 tag_data;
@@ -252,6 +254,39 @@ tag_move_id(struct roff_node *n)
 }
 
 /*
+ * When a paragraph is tagged and starts with text,
+ * move the permalink to the first few words.
+ */
+static void
+tag_move_href(struct roff_man *man, struct roff_node *n, const char *tag)
+{
+	char	*cp;
+
+	if (n == NULL || n->type != ROFFT_TEXT ||
+	    *n->string == '\0' || *n->string == ' ')
+		return;
+
+	cp = n->string;
+	while (cp != NULL && cp - n->string < 5)
+		cp = strchr(cp + 1, ' ');
+
+	/* If the first text node is longer, split it. */
+
+	if (cp != NULL && cp[1] != '\0') {
+		man->last = n;
+		man->next = ROFF_NEXT_SIBLING;
+		roff_word_alloc(man, n->line,
+		    n->pos + (cp - n->string), cp + 1);
+		man->last->flags = n->flags & ~NODE_LINE;
+		*cp = '\0';
+	}
+
+	assert(n->tag == NULL);
+	n->tag = mandoc_strdup(tag);
+	n->flags |= NODE_HREF;
+}
+
+/*
  * When all tags have been set, decide where to put
  * the associated permalinks, and maybe move some tags
  * to the beginning of the respective paragraphs.
@@ -259,34 +294,16 @@ tag_move_id(struct roff_node *n)
 void
 tag_postprocess(struct roff_man *man, struct roff_node *n)
 {
-	struct roff_node	*nn;
-	char			*cp;
-
 	if (n->flags & NODE_ID) {
 		switch (n->tok) {
 		case MDOC_Pp:
-			nn = n->next;
-			if (nn == NULL || nn->type != ROFFT_TEXT ||
-			    *nn->string == '\0' || *nn->string == ' ')
-				break;
-			/* Use the first few letters for the permalink. */
-			cp = nn->string;
-			while (cp != NULL && cp - nn->string < 5)
-				cp = strchr(cp + 1, ' ');
-			if (cp != NULL && cp[1] != '\0') {
-				/* Split a longer text node. */
-				man->last = nn;
-				man->next = ROFF_NEXT_SIBLING;
-				roff_word_alloc(man, nn->line,
-				    nn->pos + (cp - nn->string), cp + 1);
-				man->last->flags = nn->flags;
-				*cp = '\0';
-			}
-			assert(nn->tag == NULL);
-			nn->tag = mandoc_strdup(n->tag);
-			nn->flags |= NODE_HREF;
+			tag_move_href(man, n->next, n->tag);
 			break;
 		case MDOC_Bd:
+		case MDOC_D1:
+		case MDOC_Dl:
+			tag_move_href(man, n->child, n->tag);
+			break;
 		case MDOC_Bl:
 			/* XXX No permalink for now. */
 			break;

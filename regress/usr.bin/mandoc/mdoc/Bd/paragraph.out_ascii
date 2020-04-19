@@ -15,13 +15,13 @@ DDEESSCCRRIIPPTTIIOONN
 
      another paragraph
 
-     unfilled
+     unfilled literal
      display
 
-     unfilled
+     unfilled literal
      paragraph
      again back to normal
      ENDTEST
      end of file
 
-OpenBSD                          April 6, 2020                         OpenBSD
+OpenBSD                         April 19, 2020                         OpenBSD

@@ -1,5 +1,5 @@
-.\" $OpenBSD: paragraph.in,v 1.2 2020/04/06 09:55:49 schwarze Exp $
-.Dd $Mdocdate: April 6 2020 $
+.\" $OpenBSD: paragraph.in,v 1.3 2020/04/19 16:26:11 schwarze Exp $
+.Dd $Mdocdate: April 19 2020 $
 .Dt BD-PARAGRAPH 1
 .Os
 .Sh NAME
@@ -28,12 +28,12 @@ to normal
 another
 paragraph
 .Tg unfilled
-.Bd -unfilled
-unfilled
+.Bd -literal
+unfilled literal
 display
 .Tg upara
 .Pp
-unfilled
+unfilled literal
 paragraph
 .Ed
 again back

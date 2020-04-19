@@ -1,0 +1,28 @@
+<p class="Pp">regular text</p>
+<div class="Bd Pp
+  Bd-indent" id="outer"><a class="permalink" href="#outer">outer</a> text
+  (default indent)
+<div class="Bd Pp
+  Bd-indent" id="inner"><a class="permalink" href="#inner">inner</a> text
+  (default indent)</div>
+outer text</div>
+regular text
+<div class="Bd Pp
+  Bd-indent" id="outer_2"><a class="permalink" href="#outer_2">outer</a> text
+  (4n)
+<div class="Bd Pp
+  Bd-indent" id="inner_2"><a class="permalink" href="#inner_2">inner</a> text
+  (2n)</div>
+outer text
+<dl class="Bl-tag">
+  <dt>tag</dt>
+  <dd>text</dd>
+</dl>
+outer text</div>
+regular text
+<dl class="Bl-tag">
+  <dt>tag</dt>
+  <dd>outer text
+    <div class="Bd Pp Bd-indent">inner text (2n)</div>
+    outer text</dd>
+</dl>

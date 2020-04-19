@@ -4,9 +4,13 @@ NNAAMMEE
      DDll--ssppaacciinngg - spacing in and around one-line literal displays
 
 DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
      preceding text
            spacing in and around one-line literal displays
      empty display:
      following text
+     ENDTEST
+     end of file
 
-OpenBSD                          April 6, 2020                         OpenBSD
+OpenBSD                         April 19, 2020                         OpenBSD

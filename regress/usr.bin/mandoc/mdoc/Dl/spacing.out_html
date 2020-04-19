@@ -1,0 +1,8 @@
+<p class="Pp">preceding text</p>
+<div class="Bd
+  Bd-indent" id="display"><code class="Li"><a class="permalink" href="#display">spacing</a>
+  in and around one-line literal displays</code></div>
+empty display:
+<div class="Bd Bd-indent"><code class="Li"></code></div>
+following text
+<br/>

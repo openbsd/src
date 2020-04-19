@@ -1,21 +1,23 @@
-.\" $OpenBSD: nested.in,v 1.3 2020/04/06 09:55:49 schwarze Exp $
-.Dd $Mdocdate: April 6 2020 $
+.\" $OpenBSD: nested.in,v 1.4 2020/04/19 16:26:11 schwarze Exp $
+.Dd $Mdocdate: April 19 2020 $
 .Dt BD-NESTED 1
 .Os
 .Sh NAME
 .Nm Bd-nested
 .Nd nested displays and lists
 .Sh DESCRIPTION
+BEGINTEST
+.Pp
 regular
 text
 .Tg outer
 .Bd -ragged -offset indent
-outer
-text (default indent)
+outer text
+.Pq default indent
 .Tg inner
 .Bd -ragged -offset indent
-inner
-text (default indent)
+inner text
+.Pq default indent
 .Ed
 outer
 text
@@ -45,3 +47,4 @@ inner text (2n)
 .Ed
 outer text
 .El
+ENDTEST

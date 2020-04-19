@@ -6,12 +6,16 @@ DL-SPACING(1) - General Commands Manual
 
 # DESCRIPTION
 
+BEGINTEST
+
 preceding text
 
 	spacing in and around one-line literal displays
 
 empty display:
 
-following text
+following text  
+ENDTEST  
+end of file
 
-OpenBSD - April 6, 2020
+OpenBSD - April 19, 2020
