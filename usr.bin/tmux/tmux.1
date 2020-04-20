@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.744 2020/04/20 13:25:36 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.745 2020/04/20 13:38:48 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -5572,7 +5572,7 @@ If
 .Em Se
 is not set, \&Ss with argument 0 will be used to reset the cursor style instead.
 .It Em \&Sync
-Show that the terminal supports synchronized updates.
+Start (parameter is 1) or end (parameter is 2) a synchronized update.
 .It Em \&Tc
 Indicate that the terminal supports the
 .Ql direct colour
