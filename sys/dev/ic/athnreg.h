@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.23 2019/05/17 01:05:20 kevlo Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.24 2020/04/20 08:50:06 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -233,6 +233,7 @@
 #define AR_WOW_EXACT_REG		0x829c
 #define AR_2040_MODE			0x8318
 #define AR_EXTRCCNT			0x8328
+#define AR_PCU_BA_BAR_CTRL		0x8330
 #define AR_SELFGEN_MASK			0x832c
 #define AR_PCU_TXBUF_CTRL		0x8340
 #define AR_PCU_MISC_MODE2		0x8344
@@ -1183,6 +1184,14 @@
 #define AR_BT_BCN_MISS_CNT_S	8
 #define AR_BT_HOLD_RX_CLEAR	0x00010000
 #define AR_BT_DISABLE_BT_ANT	0x00100000
+
+/* Bits for AR_PCU_BA_BAR_CTRL. */
+#define AR_PCU_BA_BAR_COMRESSED			0x00000100
+#define AR_PCU_BA_BAR_ACK_POLICY		0x00000200
+#define AR_PCU_BA_BAR_ACK_POLICY_OFFSET_M	0x000000f0
+#define AR_PCU_BA_BAR_ACK_POLICY_OFFSET_S	4
+#define AR_PCU_BA_BAR_COMPRESSED_OFFSET_M	0x0000000f
+#define AR_PCU_BA_BAR_COMPRESSED_OFFSET_S	0
 
 /* Bits for AR_PCU_TXBUF_CTRL. */
 #define AR_PCU_TXBUF_CTRL_SIZE_M		0x000007ff
