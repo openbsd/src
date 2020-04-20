@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.361 2020/04/20 14:59:31 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.362 2020/04/20 15:37:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -469,7 +469,8 @@ tty_update_features(struct tty *tty)
 {
 	struct client	*c = tty->client;
 
-	tty_apply_features(tty->term, c->term_features);
+	if (tty_apply_features(tty->term, c->term_features))
+		tty_term_apply_overrides(tty->term);
 
 	if (tty_use_margin(tty))
 		tty_puts(tty, "\033[?69h"); /* DECLRMM */
