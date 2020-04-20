@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.326 2020/04/18 21:35:32 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.327 2020/04/20 06:07:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1726,11 +1726,15 @@ server_client_check_redraw(struct client *c)
 			log_debug("redraw timer started");
 			evtimer_add(&ev, &tv);
 		}
-		if (new_flags & CLIENT_REDRAWPANES) {
+
+		if (~c->flags & CLIENT_REDRAWWINDOW) {
 			c->redraw_panes = 0;
 			TAILQ_FOREACH(wp, &w->panes, entry) {
-				if (wp->flags & PANE_REDRAW)
+				if (wp->flags & PANE_REDRAW) {
+					log_debug("%s: pane %%%u needs redraw",
+					    c->name, wp->id);
 					c->redraw_panes |= (1 << bit);
+				}
 				if (++bit == 64) {
 					/*
 					 * If more that 64 panes, give up and
@@ -1741,6 +1745,8 @@ server_client_check_redraw(struct client *c)
 					break;
 				}
 			}
+			if (c->redraw_panes != 0)
+				c->flags |= CLIENT_REDRAWPANES;
 		}
 		c->flags |= new_flags;
 		return;
