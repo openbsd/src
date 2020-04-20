@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.1 2020/04/19 09:20:45 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.2 2020/04/20 16:01:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -115,7 +115,7 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
 
-	if (faa->fa_nreg < 2) {
+	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
 		return;
 	}
