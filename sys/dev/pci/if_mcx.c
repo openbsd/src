@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.40 2020/04/20 12:11:17 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.41 2020/04/20 12:23:53 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2776,13 +2776,13 @@ mcx_cmdq_mboxes_pas(struct mcx_dmamem *mxm, int offset, int npages,
 	pas += (offset / sizeof(*pas));
 	mbox_pages = (MCX_CMDQ_MAILBOX_DATASIZE - offset) / sizeof(*pas);
 	for (i = 0; i < npages; i++) {
-		*pas = htobe64(MCX_DMA_DVA(buf) + (i * MCX_PAGE_SIZE));
-		pas++;
 		if (i == mbox_pages) {
 			mbox++;
 			pas = mcx_cq_mbox_data(mcx_cq_mbox(mxm, mbox));
 			mbox_pages += MCX_CMDQ_MAILBOX_DATASIZE / sizeof(*pas);
 		}
+		*pas = htobe64(MCX_DMA_DVA(buf) + (i * MCX_PAGE_SIZE));
+		pas++;
 	}
 }
 
