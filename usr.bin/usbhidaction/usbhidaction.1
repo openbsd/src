@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbhidaction.1,v 1.13 2017/12/25 16:01:35 anton Exp $
+.\" $OpenBSD: usbhidaction.1,v 1.14 2020/04/20 20:54:31 ratchov Exp $
 .\" $NetBSD: usbhidaction.1,v 1.6 2002/01/18 14:38:59 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 25 2017 $
+.Dd $Mdocdate: April 20 2020 $
 .Dt USBHIDACTION 1
 .Os
 .Sh NAME
@@ -118,7 +118,7 @@ Consumer:Mute							   1
 .Pp
 A sample invocation using this configuration would be
 .Bd -literal -offset indent
-$ usbhidaction -f /dev/uhid1 -c conf /dev/mixer0
+$ usbhidaction -f /dev/uhid1 -c conf /dev/audioctl0
 .Ed
 .Sh SEE ALSO
 .Xr usbhidctl 1 ,
