@@ -8,10 +8,10 @@
 outer text</div>
 regular text
 <div class="Bd Pp
-  Bd-indent" id="outer_2"><a class="permalink" href="#outer_2">outer</a> text
+  Bd-indent" id="outer~2"><a class="permalink" href="#outer~2">outer</a> text
   (4n)
 <div class="Bd Pp
-  Bd-indent" id="inner_2"><a class="permalink" href="#inner_2">inner</a> text
+  Bd-indent" id="inner~2"><a class="permalink" href="#inner~2">inner</a> text
   (2n)</div>
 outer text
 <dl class="Bl-tag">

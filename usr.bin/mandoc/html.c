@@ -1,4 +1,4 @@
-/* $OpenBSD: html.c,v 1.140 2020/04/19 15:15:54 schwarze Exp $ */
+/* $OpenBSD: html.c,v 1.141 2020/04/20 12:59:24 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -381,11 +381,12 @@ html_make_id(const struct roff_node *n, int unique)
 	 * permitted in URL-fragment strings according to the
 	 * explicit list at:
 	 * https://url.spec.whatwg.org/#url-fragment-string
+	 * In addition, reserve '~' for ordinal suffixes.
 	 */
 
 	for (cp = buf; *cp != '\0'; cp++)
 		if (isalnum((unsigned char)*cp) == 0 &&
-		    strchr("!$&'()*+,-./:;=?@_~", *cp) == NULL)
+		    strchr("!$&'()*+,-./:;=?@_", *cp) == NULL)
 			*cp = '_';
 
 	if (unique == 0)
@@ -405,7 +406,7 @@ html_make_id(const struct roff_node *n, int unique)
 
 	if (entry->ord > 1) {
 		cp = buf;
-		mandoc_asprintf(&buf, "%s_%d", cp, entry->ord);
+		mandoc_asprintf(&buf, "%s~%d", cp, entry->ord);
 		free(cp);
 	}
 	return buf;
