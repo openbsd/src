@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1919 2020/02/05 14:50:57 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1920 2020/04/20 20:30:45 patrick Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -25817,6 +25817,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_WDSXXXG2X0C,
+	    "WD Black NVMe",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_WDSXXXG3X0C,
 	    "WD Black NVMe",
 	},
 	{
