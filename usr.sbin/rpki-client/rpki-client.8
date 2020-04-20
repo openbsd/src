@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.24 2020/04/20 11:15:14 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.25 2020/04/20 19:47:28 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -137,6 +137,13 @@ produces a list of unique
 statements in
 .Fl o
 (OpenBGPD compatible) output.
+.Pp
+.Xr rpki-client 8
+should be run hourly by
+.Xr cron 8 ,
+use
+.Xr crontab 1
+to uncomment the entry in root's crontab.
 .\" .Sh ENVIRONMENT
 .\" For sections 1, 6, 7, and 8 only.
 .Sh FILES
