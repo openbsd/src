@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.392 2020/04/15 14:04:18 mpi Exp $	*/
+/*	$OpenBSD: route.c,v 1.393 2020/04/20 17:25:23 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1668,7 +1668,7 @@ rt_if_track(struct ifnet *ifp)
 {
 	unsigned int rtableid;
 	struct rtentry *rt = NULL;
-	int i, error;
+	int i, error = 0;
 
 	for (rtableid = 0; rtableid < rtmap_limit; rtableid++) {
 		/* skip rtables that are not in the rdomain of the ifp */
