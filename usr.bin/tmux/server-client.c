@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.329 2020/04/20 13:25:36 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.330 2020/04/20 14:59:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1541,7 +1541,7 @@ server_client_reset_state(struct client *c)
 	struct window_pane	*wp = w->active, *loop;
 	struct screen		*s;
 	struct options		*oo = c->session->options;
-	int			 mode, cursor;
+	int			 mode, cursor, flags;
 	u_int			 cx = 0, cy = 0, ox, oy, sx, sy;
 
 	if (c->flags & (CLIENT_CONTROL|CLIENT_SUSPENDED))
@@ -1606,6 +1606,16 @@ server_client_reset_state(struct client *c)
 	/* Set the terminal mode and reset attributes. */
 	tty_update_mode(&c->tty, mode, s);
 	tty_reset(&c->tty);
+
+	/*
+	 * All writing must be done, send a sync end (if it was started). It
+	 * may have been started by redrawing so needs to go out even if the
+	 * block flag is set.
+	 */
+	flags = (c->tty.flags & TTY_BLOCK);
+	c->tty.flags &= ~TTY_BLOCK;
+	tty_sync_end(&c->tty);
+	c->tty.flags |= flags;
 }
 
 /* Repeat time callback. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.72 2020/04/18 21:35:32 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.73 2020/04/20 14:59:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -458,7 +458,6 @@ screen_redraw_screen(struct client *c)
 	}
 
 	tty_reset(&c->tty);
-	tty_sync_end(&c->tty);
 }
 
 /* Redraw a single pane. */
@@ -476,7 +475,6 @@ screen_redraw_pane(struct client *c, struct window_pane *wp)
 	screen_redraw_draw_pane(&ctx, wp);
 
 	tty_reset(&c->tty);
-	tty_sync_end(&c->tty);
 }
 
 /* Draw a border cell. */
