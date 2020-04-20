@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.132 2020/01/26 12:41:21 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.133 2020/04/20 08:17:33 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -598,7 +598,10 @@ found_delimiter(const char *s)
 		do {
 			p += strcspn(p, "!:");
 			if (*p == '\0')
-			    break;
+			    	break;
+			/* always prefer : to ! if not space separated */
+			if (*p == ':' && *s == '!')
+				return false;
 			p++;
 		} while (*p != '\0' && !ISSPACE(*p));
 
