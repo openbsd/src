@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.24 2020/04/08 20:04:19 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.25 2020/04/20 20:03:38 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -577,8 +577,6 @@ dsa_free(struct iked_dsa *dsa)
 		EVP_MD_CTX_destroy((EVP_MD_CTX *)dsa->dsa_ctx);
 		if (dsa->dsa_key)
 			EVP_PKEY_free(dsa->dsa_key);
-		if (dsa->dsa_cert)
-			X509_free(dsa->dsa_cert);
 	}
 
 	ibuf_release(dsa->dsa_keydata);
@@ -609,7 +607,6 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 			goto sslerr;
 		if ((pkey = X509_get_pubkey(cert)) == NULL)
 			goto sslerr;
-		dsa->dsa_cert = cert;
 		dsa->dsa_key = pkey;
 		break;
 	case IKEV2_CERT_RSA_KEY:
@@ -629,7 +626,6 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 			goto sslerr;
 
 		RSA_free(rsa);		/* pkey now has the reference */
-		dsa->dsa_cert = NULL;
 		dsa->dsa_key = pkey;
 		break;
 	case IKEV2_CERT_ECDSA:
@@ -647,7 +643,6 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 			goto sslerr;
 
 		EC_KEY_free(ec);	/* pkey now has the reference */
-		dsa->dsa_cert = NULL;
 		dsa->dsa_key = pkey;
 		break;
 	default:
