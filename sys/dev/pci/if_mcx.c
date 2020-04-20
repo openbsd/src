@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.39 2020/04/06 11:27:23 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.40 2020/04/20 12:11:17 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2450,11 +2450,8 @@ mcx_cmdq_poll(struct mcx_softc *sc, struct mcx_cmdq_entry *cqe,
 		    0, MCX_DMA_LEN(&sc->sc_cmdq_mem), BUS_DMASYNC_POSTRW);
 
 		if ((cqe->cq_status & MCX_CQ_STATUS_OWN_MASK) ==
-		    MCX_CQ_STATUS_OWN_SW) {
-			if (sc->sc_eqn != 0)
-				mcx_intr(sc);
+		    MCX_CQ_STATUS_OWN_SW)
 			return (0);
-		}
 
 		delay(1000);
 	}
