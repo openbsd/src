@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.327 2020/04/20 06:07:39 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.328 2020/04/20 09:07:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1767,6 +1767,7 @@ server_client_check_redraw(struct client *c)
 				redraw = 1;
 			else if (c->flags & CLIENT_REDRAWPANES)
 				redraw = !!(c->redraw_panes & (1 << bit));
+			bit++;
 			if (!redraw)
 				continue;
 			log_debug("%s: redrawing pane %%%u", __func__, wp->id);
