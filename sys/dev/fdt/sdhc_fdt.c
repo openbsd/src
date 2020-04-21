@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.6 2020/04/19 16:17:03 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.7 2020/04/21 07:58:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -68,6 +68,7 @@ sdhc_fdt_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "arasan,sdhci-5.1") ||
+	    OF_is_compatible(faa->fa_node, "brcm,bcm2711-emmc2") ||
 	    OF_is_compatible(faa->fa_node, "brcm,bcm2835-sdhci"));
 }
 
@@ -157,6 +158,9 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		/* XXX Doesn't work on Rockchip RK3399. */
 		sc->sc.sc_flags |= SDHC_F_NODDR50;
 	}
+
+	if (OF_is_compatible(faa->fa_node, "brcm,bcm2711-emmc2"))
+		sc->sc.sc_flags |= SDHC_F_NOPWR0;
 
 	if (OF_is_compatible(faa->fa_node, "brcm,bcm2835-sdhci")) {
 		cap = SDHC_VOLTAGE_SUPP_3_3V | SDHC_HIGH_SPEED_SUPP;
