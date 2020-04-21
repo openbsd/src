@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.55 2020/04/08 07:39:48 pd Exp $	*/
+/*	$OpenBSD: vm.c,v 1.56 2020/04/21 03:36:56 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -112,8 +112,7 @@ pthread_cond_t threadcond;
 
 pthread_cond_t vcpu_run_cond[VMM_MAX_VCPUS_PER_VM];
 pthread_mutex_t vcpu_run_mtx[VMM_MAX_VCPUS_PER_VM];
-pthread_cond_t vcpu_pause_cond[VMM_MAX_VCPUS_PER_VM];
-pthread_mutex_t vcpu_pause_mtx[VMM_MAX_VCPUS_PER_VM];
+pthread_barrier_t vm_pause_barrier;
 pthread_cond_t vcpu_unpause_cond[VMM_MAX_VCPUS_PER_VM];
 pthread_mutex_t vcpu_unpause_mtx[VMM_MAX_VCPUS_PER_VM];
 uint8_t vcpu_hlt[VMM_MAX_VCPUS_PER_VM];
@@ -744,33 +743,33 @@ pause_vm(struct vm_create_params *vcp)
 
 	current_vm->vm_state |= VM_STATE_PAUSED;
 
-	for (n = 0; n < vcp->vcp_ncpus; n++) {
-		ret = pthread_mutex_lock(&vcpu_pause_mtx[n]);
-		if (ret) {
-			log_warnx("%s: can't lock vcpu pause mtx (%d)",
-			    __func__, (int)ret);
-			return;
-		}
+	ret = pthread_barrier_init(&vm_pause_barrier, NULL, vcp->vcp_ncpus + 1);
+	if (ret) {
+		log_warnx("%s: cannot initialize pause barrier (%d)",
+		    __progname, ret);
+		return;
+	}
 
+	for (n = 0; n < vcp->vcp_ncpus; n++) {
 		ret = pthread_cond_broadcast(&vcpu_run_cond[n]);
 		if (ret) {
 			log_warnx("%s: can't broadcast vcpu run cond (%d)",
 			    __func__, (int)ret);
 			return;
 		}
+	}
+	ret = pthread_barrier_wait(&vm_pause_barrier);
+	if (ret != 0 && ret != PTHREAD_BARRIER_SERIAL_THREAD) {
+		log_warnx("%s: could not wait on pause barrier (%d)",
+		    __func__, (int)ret);
+		return;
+	}
 
-		ret = pthread_cond_wait(&vcpu_pause_cond[n], &vcpu_pause_mtx[n]);
-		if (ret) {
-			log_warnx("%s: can't wait on vcpu pause cond (%d)",
-			    __func__, (int)ret);
-			return;
-		}
-		ret = pthread_mutex_unlock(&vcpu_pause_mtx[n]);
-		if (ret) {
-			log_warnx("%s: can't unlock vcpu mtx (%d)",
-			    __func__, (int)ret);
-			return;
-		}
+	ret = pthread_barrier_destroy(&vm_pause_barrier);
+	if (ret) {
+		log_warnx("%s: could not destroy pause barrier (%d)",
+		    __progname, ret);
+		return;
 	}
 
 	i8253_stop();
@@ -1261,19 +1260,7 @@ run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
 			    __progname, ret);
 			return (ret);
 		}
-		ret = pthread_cond_init(&vcpu_pause_cond[i], NULL);
-		if (ret) {
-			log_warnx("%s: cannot initialize pause cond var (%d)",
-			    __progname, ret);
-			return (ret);
-		}
 
-		ret = pthread_mutex_init(&vcpu_pause_mtx[i], NULL);
-		if (ret) {
-			log_warnx("%s: cannot initialize pause mtx (%d)",
-			    __progname, ret);
-			return (ret);
-		}
 		ret = pthread_cond_init(&vcpu_unpause_cond[i], NULL);
 		if (ret) {
 			log_warnx("%s: cannot initialize unpause var (%d)",
@@ -1411,10 +1398,10 @@ vcpu_run_loop(void *arg)
 
 		/* If we are halted and need to pause, pause */
 		if (vcpu_hlt[n] && (current_vm->vm_state & VM_STATE_PAUSED)) {
-			ret = pthread_cond_broadcast(&vcpu_pause_cond[n]);
-			if (ret) {
-				log_warnx("%s: can't broadcast vcpu pause mtx"
-				    "(%d)", __func__, (int)ret);
+			ret = pthread_barrier_wait(&vm_pause_barrier);
+			if (ret != 0 && ret != PTHREAD_BARRIER_SERIAL_THREAD) {
+				log_warnx("%s: could not wait on pause barrier (%d)",
+				    __func__, (int)ret);
 				return ((void *)ret);
 			}
 
