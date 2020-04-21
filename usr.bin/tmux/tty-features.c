@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.4 2020/04/21 10:37:11 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.5 2020/04/21 13:48:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,8 +33,8 @@
  * - alternate escape (under XT).
  *
  * Also:
- * - XT is used to decide whether to send DA and DSR,
- * - DECSLRM and DECFRA use a flag instead of capabilities.
+ * - XT is used to decide whether to send DA and DSR;
+ * - DECSLRM and DECFRA use a flag instead of capabilities;
  * - UTF-8 is a separate flag on the client; needed for unattached clients.
  */
 
