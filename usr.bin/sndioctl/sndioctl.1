@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndioctl.1,v 1.7 2020/04/21 13:05:04 ratchov Exp $
+.\" $OpenBSD: sndioctl.1,v 1.8 2020/04/21 13:13:16 ratchov Exp $
 .\"
 .\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -80,7 +80,7 @@ the affected stream name, and the optional channel number.
 Examples of left-hand side terms:
 .Pp
 .Dl output.level
-.Dl hw/spkr[6].mute
+.Dl output[0].level
 .Pp
 Values are numbers between 0 and 1.
 Two-state controls (switches) take either 0 or 1 as value,
@@ -96,24 +96,21 @@ current value of the control.
 If
 .Qq \&!
 is used instead of a number, then the switch is toggled.
-Examples:
-.Pp
-.Dl hw/spkr.level=0.85
-.Dl hw/spkr.level=+0.1
-.Dl hw/spkr.mute=0
-.Dl hw/spkr.mute=!
 .Sh EXAMPLES
 The following will set all
+.Ar output
+channels
 .Ar level
-parameters that control the
-.Ar spkr
-stream to zero:
+control to zero:
 .Pp
-.Dl $ sndioctl hw/spkr.level=0
+.Dl $ sndioctl output.level=0
 .Pp
-The following commands are equivalent:
+The following set all
+.Ar output
+channels
+.Ar mute
+control:
 .Pp
-.Dl $ sndioctl hw/record[0].source=mic0 hw/record[1].source=mic1
-.Dl $ sndioctl hw/record.source=mic
+.Dl $ sndioctl output.mute=0
 .Sh SEE ALSO
 .Xr sioctl_open 3
