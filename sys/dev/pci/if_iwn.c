@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.223 2020/04/13 18:41:30 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.224 2020/04/21 10:33:30 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3422,8 +3422,17 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			flags |= IWN_TX_NEED_ACK;
 	}
 	if (type == IEEE80211_FC0_TYPE_CTL &&
-	    subtype == IEEE80211_FC0_SUBTYPE_BAR)
+	    subtype == IEEE80211_FC0_SUBTYPE_BAR) {
+		struct ieee80211_frame_min *mwh;
+		uint8_t *barfrm;
+		uint16_t ctl;
+		mwh = mtod(m, struct ieee80211_frame_min *);
+		barfrm = (uint8_t *)&mwh[1];
+		ctl = LE_READ_2(barfrm);
+		tid = (ctl & IEEE80211_BA_TID_INFO_MASK) >>
+		    IEEE80211_BA_TID_INFO_SHIFT;
 		flags |= (IWN_TX_NEED_ACK | IWN_TX_IMM_BA);
+	}
 
 	if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG)
 		flags |= IWN_TX_MORE_FRAG;	/* Cannot happen yet. */
