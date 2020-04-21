@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.27 2020/03/22 14:59:11 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.28 2020/04/21 07:54:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -457,6 +457,24 @@ efi_console(void)
 	fdt_node_add_property(node, "stdout-path", path, strlen(path) + 1);
 }
 
+uint64_t dma_constraint[2] = { 0, -1 };
+
+void
+efi_dma_constraint(void)
+{
+	void *node;
+
+	/* Raspberry Pi 4 is "special". */
+	node = fdt_find_node("/");
+	if (fdt_node_is_compatible(node, "brcm,bcm2711"))
+		dma_constraint[1] = htobe64(0x3bffffff);
+
+	/* Pass DMA constraint. */
+	node = fdt_find_node("/chosen");
+	fdt_node_add_property(node, "openbsd,dma-constraint",
+	    dma_constraint, sizeof(dma_constraint));
+}
+
 int acpi = 0;
 void *fdt = NULL;
 char *bootmac = NULL;
@@ -534,6 +552,7 @@ efi_makebootargs(char *bootargs)
 
 	efi_framebuffer();
 	efi_console();
+	efi_dma_constraint();
 
 	fdt_finalize();
 
