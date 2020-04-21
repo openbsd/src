@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndioctl.1,v 1.10 2020/04/21 13:24:29 ratchov Exp $
+.\" $OpenBSD: sndioctl.1,v 1.11 2020/04/21 14:04:17 ratchov Exp $
 .\"
 .\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm sndioctl
-.Nd control audio parameters
+.Nd manipulate audio device controls
 .Sh SYNOPSIS
 .Nm
 .Bk -words
@@ -30,35 +30,35 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility can display or change parameters of
+utility can display or manipulate controls of
 .Xr sndio 7
-audio devices.
+audio devices, like the output level.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
-Dump the raw list of available parameters and exit.
+Dump the raw list of available controls and exit.
 Useful as a debugging tool.
 .It Fl f Ar device
 Use this
 .Xr sndio 7
 audio device.
 .It Fl i
-Display characteristics of requested parameters
+Display characteristics of requested controls
 instead of their values.
 .It Fl m
-Monitor and display audio parameter changes.
+Monitor and display audio controls changes.
 .It Fl n
 Suppress printing of the variable name.
 .It Fl q
 Suppress all printing when setting a variable.
 .It Fl v
 Enable verbose mode, a.k.a. multi-channel mode.
-By default parameters affecting different channels
+By default controls affecting different channels
 of the same stream are disguised as a single mono
-parameter to hide details that are not essential.
+control to hide details that are not essential.
 .El
 .Pp
-If no commands are specified all valid parameters are displayed on
+If no commands are specified all valid controls are displayed on
 .Em stdout .
 Unless
 .Fl d ,
@@ -66,16 +66,16 @@ Unless
 .Fl n ,
 or
 .Fl i
-are used, displayed parameters are valid commands.
-The set of available controls depends on the control device.
+are used, displayed lines are valid commands.
+The set of available controls depends on the audio device.
 .Pp
-Commands use the following two formats to display and set
-parameters respectively:
+Commands use the following two formats to display and change
+controls respectively:
 .Pp
 .Dl group/stream[channel].function
 .Dl group/stream[channel].function=value
 .Pp
-On the left-hand side are specified the parameter group (if any),
+On the left-hand side are specified the control group (if any),
 the affected stream name, and the optional channel number.
 Examples of left-hand side terms:
 .Pp
