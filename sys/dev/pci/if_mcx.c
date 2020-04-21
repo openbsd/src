@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.42 2020/04/20 12:33:03 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.43 2020/04/21 05:49:25 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2152,6 +2152,12 @@ static const struct mcx_eth_proto_capability mcx_eth_cap_map[] = {
 };
 
 static int
+mcx_get_id(uint32_t val)
+{
+	return betoh32(val) & 0x00ffffff;
+}
+
+static int
 mcx_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid(aux, mcx_devices, nitems(mcx_devices)));
@@ -3564,7 +3570,7 @@ mcx_alloc_uar(struct mcx_softc *sc)
 		return (-1);
 	}
 
-	sc->sc_uar = betoh32(out->cmd_uar);
+	sc->sc_uar = mcx_get_id(out->cmd_uar);
 
 	return (0);
 }
@@ -3645,7 +3651,7 @@ mcx_create_eq(struct mcx_softc *sc)
 		goto free;
 	}
 
-	sc->sc_eqn = betoh32(out->cmd_eqn);
+	sc->sc_eqn = mcx_get_id(out->cmd_eqn);
 	mcx_arm_eq(sc);
 free:
 	mcx_dmamem_free(sc, &mxm);
@@ -3685,7 +3691,7 @@ mcx_alloc_pd(struct mcx_softc *sc)
 		return (-1);
 	}
 
-	sc->sc_pd = betoh32(out->cmd_pd);
+	sc->sc_pd = mcx_get_id(out->cmd_pd);
 	return (0);
 }
 
@@ -3723,7 +3729,7 @@ mcx_alloc_tdomain(struct mcx_softc *sc)
 		return (-1);
 	}
 
-	sc->sc_tdomain = betoh32(out->cmd_tdomain);
+	sc->sc_tdomain = mcx_get_id(out->cmd_tdomain);
 	return (0);
 }
 
@@ -3933,7 +3939,7 @@ mcx_create_cq(struct mcx_softc *sc, int eqn)
 		goto free;
 	}
 
-	cq->cq_n = betoh32(out->cmd_cqn);
+	cq->cq_n = mcx_get_id(out->cmd_cqn);
 	cq->cq_cons = 0;
 	cq->cq_count = 0;
 	cq->cq_doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem) +
@@ -4061,7 +4067,7 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 		goto free;
 	}
 
-	sc->sc_rqn = betoh32(out->cmd_rqn);
+	sc->sc_rqn = mcx_get_id(out->cmd_rqn);
 
 	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
 	sc->sc_rx_doorbell = (uint32_t *)(doorbell + MCX_RQ_DOORBELL_OFFSET);
@@ -4212,7 +4218,7 @@ mcx_create_tir(struct mcx_softc *sc)
 		goto free;
 	}
 
-	sc->sc_tirn = betoh32(out->cmd_tirn);
+	sc->sc_tirn = mcx_get_id(out->cmd_tirn);
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
@@ -4333,7 +4339,7 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 		goto free;
 	}
 
-	sc->sc_sqn = betoh32(out->cmd_sqn);
+	sc->sc_sqn = mcx_get_id(out->cmd_sqn);
 
 	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
 	sc->sc_tx_doorbell = (uint32_t *)(doorbell + MCX_SQ_DOORBELL_OFFSET + 4);
@@ -4482,7 +4488,7 @@ mcx_create_tis(struct mcx_softc *sc)
 		goto free;
 	}
 
-	sc->sc_tisn = betoh32(out->cmd_tisn);
+	sc->sc_tisn = mcx_get_id(out->cmd_tisn);
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
@@ -4618,7 +4624,7 @@ mcx_create_flow_table(struct mcx_softc *sc, int log_size)
 		goto free;
 	}
 
-	sc->sc_flow_table_id = betoh32(out->cmd_table_id);
+	sc->sc_flow_table_id = mcx_get_id(out->cmd_table_id);
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
@@ -4789,7 +4795,7 @@ mcx_create_flow_group(struct mcx_softc *sc, int group, int start, int size,
 		goto free;
 	}
 
-	sc->sc_flow_group_id[group] = betoh32(out->cmd_group_id);
+	sc->sc_flow_group_id[group] = mcx_get_id(out->cmd_group_id);
 	sc->sc_flow_group_size[group] = size;
 	sc->sc_flow_group_start[group] = start;
 
