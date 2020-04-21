@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.660 2020/04/09 16:08:18 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.661 2020/04/21 13:44:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2779,7 +2779,7 @@ release_lease(struct interface_info *ifi)
 	if (opt->len == sizeof(in_addr_t))
 		ifi->destination.s_addr = *(in_addr_t *)opt->data;
 	else
-		ifi->destination.s_addr = INADDR_ANY;
+		ifi->destination.s_addr = INADDR_BROADCAST;
 	strlcpy(destbuf, inet_ntoa(ifi->destination), sizeof(destbuf));
 
 	ifi->xid = arc4random();
