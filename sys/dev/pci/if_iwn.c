@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.224 2020/04/21 10:33:30 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.225 2020/04/21 10:34:24 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3513,10 +3513,12 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	else
 		tx->rflags = rinfo->flags;
 	/*
-	 * Skip rate control if our Tx rate is fixed.
-	 * Keep the Tx rate constant while mira is probing.
+	 * Keep the Tx rate constant while mira is probing, or if this is
+	 * an aggregation queue in which case a fixed Tx rate works around
+	 * FIFO_UNDERRUN Tx errors.
 	 */
 	if (tx->id == sc->broadcast_id || ieee80211_mira_is_probing(&wn->mn) ||
+	    qid >= sc->first_agg_txq ||
 	    ic->ic_fixed_mcs != -1 || ic->ic_fixed_rate != -1) {
 		/* Group or management frame, or probing, or fixed Tx rate. */
 		tx->linkq = 0;
