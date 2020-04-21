@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.12 2020/03/03 10:33:50 kettenis Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.13 2020/04/21 07:57:17 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -449,7 +449,8 @@ _dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags)
 {
 	return _dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, (paddr_t)0, (paddr_t)-1);
+	    segs, nsegs, rsegs, flags, dma_constraint.ucr_low,
+	    dma_constraint.ucr_high);
 }
 
 /*

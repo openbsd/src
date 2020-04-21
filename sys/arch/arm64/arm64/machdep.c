@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.43 2019/08/26 09:10:22 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.44 2020/04/21 07:57:17 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -83,7 +83,10 @@ paddr_t msgbufphys;
 struct user *proc0paddr;
 
 struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
-struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
+struct uvm_constraint_range *uvm_md_constraints[] = {
+	&dma_constraint,
+	NULL,
+};
 
 /* the following is used externally (sysctl_hw) */
 char    machine[] = MACHINE;            /* from <machine/param.h> */
@@ -874,6 +877,12 @@ initarm(struct arm64_bootparams *abp)
 		len = fdt_node_property(node, "openbsd,uefi-system-table", &prop);
 		if (len == sizeof(system_table))
 			system_table = bemtoh64((uint64_t *)prop);
+
+		len = fdt_node_property(node, "openbsd,dma-constraint", &prop);
+		if (len == sizeof(dma_constraint)) {
+			dma_constraint.ucr_low = bemtoh64((uint64_t *)prop);
+			dma_constraint.ucr_high = bemtoh64((uint64_t *)prop + 1);
+		}
 	}
 
 	/* Set the pcpu data, this is needed by pmap_bootstrap */
