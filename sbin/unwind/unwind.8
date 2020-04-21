@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.8,v 1.7 2019/11/10 20:51:52 landry Exp $
+.\"	$OpenBSD: unwind.8,v 1.8 2020/04/21 17:03:44 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2019 $
+.Dd $Mdocdate: April 21 2020 $
 .Dt UNWIND 8
 .Os
 .Sh NAME
@@ -52,7 +52,7 @@ in
 .Pp
 Adding
 .Pp
-.Dl prepend domain-name-servers 127.0.0.1;
+.Dl supersede domain-name-servers 127.0.0.1;
 .Pp
 to
 .Pa /etc/dhclient.conf
