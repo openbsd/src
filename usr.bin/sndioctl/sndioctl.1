@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndioctl.1,v 1.8 2020/04/21 13:13:16 ratchov Exp $
+.\" $OpenBSD: sndioctl.1,v 1.9 2020/04/21 13:18:27 ratchov Exp $
 .\"
 .\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -81,6 +81,9 @@ Examples of left-hand side terms:
 .Pp
 .Dl output.level
 .Dl output[0].level
+.Pp
+If the channel number (including the brackets) is omitted,
+the command is applied to all channels.
 .Pp
 Values are numbers between 0 and 1.
 Two-state controls (switches) take either 0 or 1 as value,
