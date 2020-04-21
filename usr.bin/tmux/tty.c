@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.362 2020/04/20 15:37:32 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.363 2020/04/21 06:32:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1491,6 +1491,7 @@ tty_write(void (*cmdfn)(struct tty *, const struct tty_ctx *),
 			 * Redraw is already deferred to redraw another pane -
 			 * redraw this one also when that happens.
 			 */
+			log_debug("adding %%%u to deferred redraw", wp->id);
 			wp->flags |= PANE_REDRAW;
 			break;
 		}

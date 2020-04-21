@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.330 2020/04/20 14:59:31 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.331 2020/04/21 06:32:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1738,7 +1738,6 @@ server_client_check_redraw(struct client *c)
 		}
 
 		if (~c->flags & CLIENT_REDRAWWINDOW) {
-			c->redraw_panes = 0;
 			TAILQ_FOREACH(wp, &w->panes, entry) {
 				if (wp->flags & PANE_REDRAW) {
 					log_debug("%s: pane %%%u needs redraw",
@@ -1784,6 +1783,7 @@ server_client_check_redraw(struct client *c)
 			tty_update_mode(tty, mode, NULL);
 			screen_redraw_pane(c, wp);
 		}
+		c->redraw_panes = 0;
 		c->flags &= ~CLIENT_REDRAWPANES;
 	}
 
