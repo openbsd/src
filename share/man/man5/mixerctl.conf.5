@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mixerctl.conf.5,v 1.9 2020/04/04 08:43:08 ratchov Exp $
+.\"	$OpenBSD: mixerctl.conf.5,v 1.10 2020/04/21 21:32:26 deraadt Exp $
 .\"
 .\" Copyright (c) 2008 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 4 2020 $
+.Dd $Mdocdate: April 21 2020 $
 .Dt MIXERCTL.CONF 5
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh DESCRIPTION
 .Nm
 is the configuration file for
-.Xr mixerctl 1 .
+.Xr mixerctl 8 .
 It allows the user to specify settings for the audio mixer
 at system startup.
 The exact set of variables available are
@@ -96,7 +96,7 @@ Check that the direction of the corresponding connectors is set to
 .Ar output .
 Other devices may need to set _source variables to work correctly.
 The maximum possible value of the
-.Xr audioctl 1
+.Xr audioctl 8
 variable
 .Ic play.channels
 shows the number of channels available.
@@ -138,12 +138,12 @@ The file can then be played back to determine quality.
 .It Pa /dev/audioctl0
 Default audio mixing device.
 .It Pa /etc/mixerctl.conf
-.Xr mixerctl 1
+.Xr mixerctl 8
 configuration file.
 .It Pa /etc/examples/mixerctl.conf
 Example configuration file.
 .El
 .Sh SEE ALSO
 .Xr aucat 1 ,
-.Xr audioctl 1 ,
-.Xr mixerctl 1
+.Xr audioctl 8 ,
+.Xr mixerctl 8

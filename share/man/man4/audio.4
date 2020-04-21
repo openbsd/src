@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.83 2020/04/20 20:29:22 ratchov Exp $
+.\"	$OpenBSD: audio.4,v 1.84 2020/04/21 21:32:26 deraadt Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 20 2020 $
+.Dd $Mdocdate: April 21 2020 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@ driver exposes the
 .Va record.enable
 control.
 The superuser can change it with
-.Xr mixerctl 1 .
+.Xr mixerctl 8 .
 It accepts the following values:
 .Pp
 .Bl -tag -offset indent -width "sysctl" -compact
@@ -505,9 +505,9 @@ Control device.
 .El
 .Sh SEE ALSO
 .Xr aucat 1 ,
-.Xr audioctl 1 ,
+.Xr audioctl 8 ,
 .Xr cdio 1 ,
-.Xr mixerctl 1 ,
+.Xr mixerctl 8 ,
 .Xr sndioctl 1 ,
 .Xr ioctl 2 ,
 .Xr sio_open 3 ,

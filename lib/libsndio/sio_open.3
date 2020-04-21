@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.48 2019/01/18 08:43:49 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.49 2020/04/21 21:32:26 deraadt Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 18 2019 $
+.Dd $Mdocdate: April 21 2020 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -630,7 +630,7 @@ It specifies the weight the audio subsystem will
 give to this stream.
 It is not meant to control hardware parameters like
 speaker gain; the
-.Xr mixerctl 1
+.Xr mixerctl 8
 interface should be used for that purpose instead.
 .Pp
 An application can use the
