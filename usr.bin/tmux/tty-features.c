@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.3 2020/04/20 15:37:32 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.4 2020/04/21 10:37:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -74,6 +74,7 @@ static struct tty_feature tty_feature_clipboard = {
  * 256 palette.
  */
 static const char *tty_feature_rgb_capabilities[] = {
+	"AX",
 	"setrgbf=\\E[38;2;%p1%d;%p2%d;%p3%dm",
 	"setrgbb=\\E[48;2;%p1%d;%p2%d;%p3%dm",
 	"setab=\\E[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m",
@@ -88,6 +89,7 @@ static struct tty_feature tty_feature_rgb = {
 
 /* Terminal supports 256 colours. */
 static const char *tty_feature_256_capabilities[] = {
+	"AX",
 	"setab=\\E[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m",
 	"setaf=\\E[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m",
 	NULL
