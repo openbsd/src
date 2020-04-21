@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.154 2020/04/19 16:04:34 tobhe Exp $
+# $OpenBSD: GENERIC,v 1.155 2020/04/21 19:10:32 tobhe Exp $
 #
 # GENERIC machine description file
 #
@@ -153,6 +153,7 @@ dwctwo*		at fdt?
 usb*		at dwctwo?
 bcmmbox*	at fdt? early 1
 bcmclock*	at fdt? early 1
+bcmdmac*	at fdt? early 1
 
 # Amlogic SoCs
 amlclock*	at fdt? early 1
