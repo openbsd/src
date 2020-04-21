@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndioctl.1,v 1.6 2020/04/16 10:13:12 ratchov Exp $
+.\" $OpenBSD: sndioctl.1,v 1.7 2020/04/21 13:05:04 ratchov Exp $
 .\"
 .\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 16 2020 $
+.Dd $Mdocdate: April 21 2020 $
 .Dt SNDIOCTL 1
 .Os
 .Sh NAME
@@ -82,8 +82,6 @@ Examples of left-hand side terms:
 .Dl output.level
 .Dl hw/spkr[6].mute
 .Pp
-There are 4 parameter types: switches, numbers, selectors, and vectors.
-.Pp
 Values are numbers between 0 and 1.
 Two-state controls (switches) take either 0 or 1 as value,
 typically corresponding to the
@@ -104,31 +102,6 @@ Examples:
 .Dl hw/spkr.level=+0.1
 .Dl hw/spkr.mute=0
 .Dl hw/spkr.mute=!
-.Pp
-Selector values are substreams; they are specified
-as the stream name followed by an optional channel
-number.
-If no channel number is specified, the same
-number as the stream specified on the left-hand side is used.
-For instance the following are equivalent:
-.Pp
-.Dl hw/record[1].source=mic
-.Dl hw/record[1].source=mic1
-.Pp
-Vectors are arrays of numbers.
-Values are specified as comma-separated components.
-Each component is a substream, followed by
-a colon, followed by a number.
-If the colon and the number are omitted, then 1 is assumed.
-If a component is missing, then 0 is assumed.
-Example:
-.Pp
-.Dl hw/monitor.mix=play:0.12,linein:0.85
-.Dl hw/record.source=mic,linein
-.Pp
-Numbers are specified as discussed above.
-Note that a vector of switches is equivalent to
-a list.
 .Sh EXAMPLES
 The following will set all
 .Ar level
