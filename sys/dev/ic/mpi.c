@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.212 2020/02/13 15:11:32 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.213 2020/04/21 19:27:03 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -175,7 +175,7 @@ void		mpi_refresh_sensors(void *);
 #define mpi_pop_reply(s)	bus_space_read_4((s)->sc_iot, (s)->sc_ioh, \
 				    MPI_REPLY_QUEUE)
 #define mpi_push_reply_db(s, v) bus_space_write_4((s)->sc_iot, (s)->sc_ioh, \
-				    MPI_REPLY_QUEUE, (v))	
+				    MPI_REPLY_QUEUE, (v))
 
 #define mpi_wait_db_int(s)	mpi_wait_ne((s), MPI_INTR_STATUS, \
 				    MPI_INTR_STATUS_DOORBELL, 0)
@@ -294,7 +294,8 @@ mpi_attach(struct mpi_softc *sc)
 	}
 
 	if (mpi_manufacturing(sc) != 0) {
-		printf("%s: unable to fetch manufacturing info\n", DEVNAME(sc));		goto free_replies;
+		printf("%s: unable to fetch manufacturing info\n", DEVNAME(sc));
+		goto free_replies;
 	}
 
 	switch (sc->sc_porttype) {
@@ -348,7 +349,7 @@ mpi_attach(struct mpi_softc *sc)
 
 			sc->sc_vol_list = (struct mpi_cfg_raid_vol *)
 			    (sc->sc_vol_page + 1);
- 
+
 			sc->sc_ioctl = mpi_ioctl;
 		}
 	}
@@ -359,7 +360,7 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_target;
 	sc->sc_link.adapter_buswidth = sc->sc_buswidth;
-	sc->sc_link.openings = sc->sc_maxcmds - 1;
+	sc->sc_link.openings = MAX(sc->sc_maxcmds / sc->sc_buswidth, 16);
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	memset(&saa, 0, sizeof(saa));
@@ -3399,7 +3400,7 @@ mpi_create_sensors(struct mpi_softc *sc)
 		/* skip if not a virtual disk */
 		if (!(link->flags & SDEV_VIRTUAL))
 			continue;
-		
+
 		vol++;
 	}
 	if (vol == 0)
