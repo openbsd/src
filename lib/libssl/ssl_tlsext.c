@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.62 2020/02/18 16:12:14 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.63 2020/04/21 17:06:16 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1288,13 +1288,27 @@ tlsext_keyshare_server_parse(SSL *s, CBS *cbs, int *alert)
 			return 0;
 
 		/*
-		 * XXX support other groups later.
-		 * XXX enforce group can only appear once.
+		 * XXX - check key exchange against supported groups from client.
+		 * XXX - check that groups only appear once.
 		 */
-		if (S3I(s)->hs_tls13.key_share == NULL ||
-		    tls13_key_share_group(S3I(s)->hs_tls13.key_share) != group)
+
+		/*
+		 * Ignore this client share if we're using earlier than TLSv1.3
+		 * or we've already selected a key share.
+		 */
+		if (S3I(s)->hs_tls13.max_version < TLS1_3_VERSION)
+			continue;
+		if (S3I(s)->hs_tls13.key_share != NULL)
 			continue;
 
+		/* XXX - consider implementing server preference. */
+		if (!tls1_check_curve(s, group))
+			continue;
+
+		/* Decode and store the selected key share. */
+		S3I(s)->hs_tls13.key_share = tls13_key_share_new(group);
+		if (S3I(s)->hs_tls13.key_share == NULL)
+			goto err;
 		if (!tls13_key_share_peer_public(S3I(s)->hs_tls13.key_share,
 		    group, &key_exchange))
 			goto err;
