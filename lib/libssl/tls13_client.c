@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.49 2020/04/17 17:16:53 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.50 2020/04/21 16:55:17 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -250,16 +250,6 @@ tls13_client_hello_sent(struct tls13_ctx *ctx)
 
 	return 1;
 }
-
-/*
- * HelloRetryRequest hash - RFC 8446 section 4.1.3.
- */
-static const uint8_t tls13_hello_retry_request_hash[] = {
-	0xcf, 0x21, 0xad, 0x74, 0xe5, 0x9a, 0x61, 0x11,
-	0xbe, 0x1d, 0x8c, 0x02, 0x1e, 0x65, 0xb8, 0x91,
-	0xc2, 0xa2, 0x11, 0x16, 0x7a, 0xbb, 0x8c, 0x5e,
-	0x07, 0x9e, 0x09, 0xe2, 0xc8, 0xa8, 0x33, 0x9c,
-};
 
 static int
 tls13_server_hello_is_legacy(CBS *cbs)

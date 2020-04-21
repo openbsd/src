@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.63 2020/04/18 14:07:56 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.64 2020/04/21 16:55:17 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -339,11 +339,12 @@ int tls13_error_setx(struct tls13_error *error, int code, int subcode,
 	tls13_error_setx(&(ctx)->error, (code), (subcode), __FILE__, __LINE__, \
 	    (fmt), __VA_ARGS__)
 
-extern uint8_t tls13_downgrade_12[8];
-extern uint8_t tls13_downgrade_11[8];
-extern uint8_t tls13_cert_verify_pad[64];
-extern uint8_t tls13_cert_client_verify_context[];
-extern uint8_t tls13_cert_server_verify_context[];
+extern const uint8_t tls13_downgrade_12[8];
+extern const uint8_t tls13_downgrade_11[8];
+extern const uint8_t tls13_hello_retry_request_hash[32];
+extern const uint8_t tls13_cert_verify_pad[64];
+extern const uint8_t tls13_cert_client_verify_context[];
+extern const uint8_t tls13_cert_server_verify_context[];
 
 __END_HIDDEN_DECLS
 
