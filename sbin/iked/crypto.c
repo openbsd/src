@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.25 2020/04/20 20:03:38 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.26 2020/04/22 17:26:54 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -651,6 +651,10 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 		log_debug("%s: unsupported key type", __func__);
 		goto err;
 	}
+
+	if (cert != NULL)
+		X509_free(cert);
+	BIO_free(rawcert);	/* temporary for parsing */
 
 	return (dsa->dsa_keydata);
 
