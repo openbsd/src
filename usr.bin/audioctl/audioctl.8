@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.8,v 1.2 2020/04/22 05:37:00 jmc Exp $
+.\" $OpenBSD: audioctl.8,v 1.3 2020/04/22 21:39:21 jmc Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -133,12 +133,12 @@ audio devices
 Display the number of bytes of silence inserted during play buffer
 underruns since device started:
 .Bd -literal -offset indent
-$ audioctl play.errors
+# audioctl play.errors
 .Ed
 .Pp
 Use signed 24-bit samples and 44100Hz sample rate:
 .Bd -literal -offset indent
-$ audioctl -f /dev/audio0 encoding=s24 rate=44100
+# audioctl -f /dev/audio0 encoding=s24 rate=44100
 .Ed
 .Pp
 Note the use of
