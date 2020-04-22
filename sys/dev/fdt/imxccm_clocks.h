@@ -317,6 +317,7 @@ struct imxccm_mux imx7d_muxs[] = {
 #define IMX8MM_CLK_I2C2_ROOT		0xa5
 #define IMX8MM_CLK_I2C3_ROOT		0xa6
 #define IMX8MM_CLK_I2C4_ROOT		0xa7
+#define IMX8MM_CLK_OCOTP_ROOT		0xa8
 #define IMX8MM_CLK_UART1_ROOT		0xbc
 #define IMX8MM_CLK_UART2_ROOT		0xbd
 #define IMX8MM_CLK_UART3_ROOT		0xbe
@@ -349,6 +350,7 @@ struct imxccm_gate imx8mm_gates[] = {
 	[IMX8MM_CLK_I2C2_ROOT] = { 0x4180, 0, IMX8MM_CLK_I2C2 },
 	[IMX8MM_CLK_I2C3_ROOT] = { 0x4190, 0, IMX8MM_CLK_I2C3 },
 	[IMX8MM_CLK_I2C4_ROOT] = { 0x41a0, 0, IMX8MM_CLK_I2C4 },
+	[IMX8MM_CLK_OCOTP_ROOT] = { 0x4220, 0 },
 	[IMX8MM_CLK_UART1_ROOT] = { 0x4490, 0, IMX8MM_CLK_UART1 },
 	[IMX8MM_CLK_UART2_ROOT] = { 0x44a0, 0, IMX8MM_CLK_UART2 },
 	[IMX8MM_CLK_UART3_ROOT] = { 0x44b0, 0, IMX8MM_CLK_UART3 },
@@ -478,6 +480,8 @@ struct imxccm_mux imx8mm_muxs[] = {
 #define IMX8MQ_CLK_USB2_PHY_ROOT	0xd1
 #define IMX8MQ_CLK_USDHC1_ROOT		0xd2
 #define IMX8MQ_CLK_USDHC2_ROOT		0xd3
+#define IMX8MQ_CLK_TMU_ROOT		0xf6
+#define IMX8MQ_CLK_OCOTP_ROOT		0xfa
 #define IMX8MQ_CLK_ARM			0x102
 
 struct imxccm_gate imx8mq_gates[] = {
@@ -537,6 +541,8 @@ struct imxccm_gate imx8mq_gates[] = {
 	[IMX8MQ_CLK_USB2_PHY_ROOT] = { 0x4500, 0, IMX8MQ_CLK_USB_PHY_REF },
 	[IMX8MQ_CLK_USDHC1_ROOT] = { 0x4510, 0, IMX8MQ_CLK_USDHC1 },
 	[IMX8MQ_CLK_USDHC2_ROOT] = { 0x4520, 0, IMX8MQ_CLK_USDHC2 },
+	[IMX8MQ_CLK_TMU_ROOT] = { 0x4620, 0 },
+	[IMX8MQ_CLK_OCOTP_ROOT] = { 0x4220, 0 },
 };
 
 struct imxccm_divider imx8mq_divs[] = {
