@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.246 2020/04/20 13:25:36 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.247 2020/04/22 20:47:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2529,6 +2529,11 @@ format_defaults_session(struct format_tree *ft, struct session *s)
 
 	format_add_cb(ft, "session_alerts", format_cb_session_alerts);
 	format_add_cb(ft, "session_stack", format_cb_session_stack);
+
+	if (server_check_marked() && marked_pane.s == s)
+	    format_add(ft, "session_marked", "1");
+	else
+	    format_add(ft, "session_marked", "0");
 }
 
 /* Set default format keys for a client. */
