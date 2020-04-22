@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.746 2020/04/20 14:59:31 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.747 2020/04/22 06:57:13 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 20 2020 $
+.Dd $Mdocdate: April 22 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3711,6 +3711,9 @@ Set the width or height of the main (left or top) pane in the
 or
 .Ic main-vertical
 layouts.
+If suffixed by
+.Ql % ,
+this is a percentage of the window size.
 .Pp
 .It Xo Ic mode-keys
 .Op Ic vi | emacs
@@ -3764,6 +3767,9 @@ and
 .Ic other-pane-height
 options are set, the main pane will grow taller to make the other panes the
 specified height, but will never shrink to do so.
+If suffixed by
+.Ql % ,
+this is a percentage of the window size.
 .Pp
 .It Ic other-pane-width Ar width
 Like

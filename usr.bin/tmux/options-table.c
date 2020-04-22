@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.119 2020/04/21 05:26:13 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.120 2020/04/22 06:57:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -647,19 +647,15 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "main-pane-height",
-	  .type = OPTIONS_TABLE_NUMBER,
+	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .minimum = 1,
-	  .maximum = INT_MAX,
-	  .default_num = 24
+	  .default_str = "24"
 	},
 
 	{ .name = "main-pane-width",
-	  .type = OPTIONS_TABLE_NUMBER,
+	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .minimum = 1,
-	  .maximum = INT_MAX,
-	  .default_num = 80
+	  .default_str = "80"
 	},
 
 	{ .name = "mode-keys",
@@ -696,19 +692,15 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "other-pane-height",
-	  .type = OPTIONS_TABLE_NUMBER,
+	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .minimum = 0,
-	  .maximum = INT_MAX,
-	  .default_num = 0
+	  .default_str = "0"
 	},
 
 	{ .name = "other-pane-width",
-	  .type = OPTIONS_TABLE_NUMBER,
+	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .minimum = 0,
-	  .maximum = INT_MAX,
-	  .default_num = 0
+	  .default_str = "0"
 	},
 
 	{ .name = "pane-active-border-style",

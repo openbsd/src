@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1013 2020/04/20 15:37:32 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1014 2020/04/22 06:57:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2043,6 +2043,8 @@ long long	 args_strtonum(struct args *, u_char, long long, long long,
 		     char **);
 long long	 args_percentage(struct args *, u_char, long long,
 		     long long, long long, char **);
+long long	 args_string_percentage(const char *, long long, long long,
+		     long long, char **);
 
 /* cmd-find.c */
 int		 cmd_find_target(struct cmd_find_state *, struct cmdq_item *,
