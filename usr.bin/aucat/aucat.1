@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.115 2020/04/21 21:32:26 deraadt Exp $
+.\"	$OpenBSD: aucat.1,v 1.116 2020/04/22 05:37:00 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2020 $
+.Dd $Mdocdate: April 22 2020 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -289,11 +289,11 @@ $ aucat -n -i stereo.wav -c 0:0 -o left.wav \e
 	-c 1:1 -o right.wav
 .Ed
 .Sh SEE ALSO
-.Xr audioctl 8 ,
 .Xr cdio 1 ,
-.Xr mixerctl 8 ,
 .Xr audio 4 ,
 .Xr sndio 7 ,
+.Xr audioctl 8 ,
+.Xr mixerctl 8 ,
 .Xr sndiod 8
 .Sh BUGS
 Resampling is low quality.
