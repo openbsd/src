@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.30 2020/04/21 17:06:16 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.31 2020/04/22 17:05:07 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -280,11 +280,11 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 		return 1;
 
 	/*
-	 * If no matching key share was provided, we need to send a
-	 * HelloRetryRequest, if matching security parameters exist.
+	 * If a matching key share was provided, we do not need to
+	 * send a HelloRetryRequest.
 	 */
-	if (ctx->hs->key_share == NULL)
-		ctx->handshake_stage.hs_type |= WITH_HRR;
+	if (ctx->hs->key_share != NULL)
+		ctx->handshake_stage.hs_type |= WITHOUT_HRR;
 
 	/* XXX - check this is the correct point */
 	tls13_record_layer_allow_ccs(ctx->rl, 1);
@@ -608,7 +608,7 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 }
 
 int
-tls13_server_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
+tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	return 0;
 }

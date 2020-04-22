@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_handshake.h,v 1.4 2020/03/10 17:15:02 jsing Exp $ */
+/* $OpenBSD: tls13_handshake.h,v 1.5 2020/04/22 17:05:07 jsing Exp $ */
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -24,7 +24,7 @@ __BEGIN_HIDDEN_DECLS
 
 #define INITIAL			0x00
 #define NEGOTIATED		0x01
-#define WITH_HRR		0x02
+#define WITHOUT_HRR		0x02
 #define WITHOUT_CR		0x04
 #define WITH_PSK		0x08
 #define WITH_CCV		0x10
@@ -33,9 +33,9 @@ __BEGIN_HIDDEN_DECLS
 enum tls13_message_type {
 	INVALID,
 	CLIENT_HELLO,
-	SERVER_HELLO,
+	SERVER_HELLO_RETRY_REQUEST,
 	CLIENT_HELLO_RETRY,
-	SERVER_HELLO_RETRY,
+	SERVER_HELLO,
 	SERVER_ENCRYPTED_EXTENSIONS,
 	SERVER_CERTIFICATE_REQUEST,
 	SERVER_CERTIFICATE,
