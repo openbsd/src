@@ -1,4 +1,4 @@
-.\"	$OpenBSD: clean-old-distfiles.1,v 1.2 2020/04/20 16:06:15 espie Exp $
+.\"	$OpenBSD: clean-old-distfiles.1,v 1.3 2020/04/22 05:38:19 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 20 2020 $
+.Dd $Mdocdate: April 22 2020 $
 .Dt CLEAN-OLD-DISTFILES 1
 .Os
 .Sh NAME
@@ -37,10 +37,9 @@ is run for a full scan of the ports tree, it appends to
 an history log that records obsolete distfiles.
 .Pp
 Note that you can run it
-solely for that purpose, by using
-.Bd -literal -offset indent
-.Li Nm dpb Fl D Ns Ar HISTORY_ONLY
-.Ed
+solely for that purpose, by using:
+.Pp
+.D1 $ Nm dpb Fl D Ns Ar HISTORY_ONLY
 .Pp
 .Nm
 can be used to prune that log prior to a given
