@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.65 2018/12/30 23:09:58 guenther Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.66 2020/04/22 11:35:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -729,6 +729,9 @@ envelope_validate(struct envelope *ep)
 
 	if (memchr(ep->errorline, '\0', sizeof(ep->errorline)) == NULL)
 		return "invalid error line";
+
+	if (dict_get(env->sc_dispatchers, ep->dispatcher) == NULL)
+		return "unknown dispatcher";
 
 	return NULL;
 }

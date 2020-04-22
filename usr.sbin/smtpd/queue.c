@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.189 2018/12/30 23:09:58 guenther Exp $	*/
+/*	$OpenBSD: queue.c,v 1.190 2020/04/22 11:35:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -686,7 +686,6 @@ static void
 queue_timeout(int fd, short event, void *p)
 {
 	static uint32_t	 msgid = 0;
-	struct dispatcher *dsp;
 	struct envelope	 evp;
 	struct event	*ev = p;
 	struct timeval	 tv;
@@ -705,13 +704,6 @@ queue_timeout(int fd, short event, void *p)
 	}
 
 	if (r) {
-		dsp = dict_get(env->sc_dispatchers, evp.dispatcher);
-		if (dsp == NULL) {
-			log_warnx("warn: queue: missing dispatcher \"%s\""
-			    " for envelope %016"PRIx64", ignoring",
-			    evp.dispatcher, evp.id);
-			goto reset;
-		}
 		if (msgid && evpid_to_msgid(evp.id) != msgid) {
 			m_create(p_scheduler, IMSG_QUEUE_MESSAGE_COMMIT,
 			    0, 0, -1);
@@ -724,7 +716,6 @@ queue_timeout(int fd, short event, void *p)
 		m_close(p_scheduler);
 	}
 
-reset:
 	tv.tv_sec = 0;
 	tv.tv_usec = 10;
 	evtimer_add(ev, &tv);
