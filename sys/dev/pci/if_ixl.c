@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.46 2019/11/19 03:33:43 yasuoka Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.47 2020/04/22 07:09:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -4263,7 +4263,6 @@ ixl_clear_hw(struct ixl_softc *sc)
 	uint32_t num_vfs;
 	uint32_t i, j;
 	uint32_t val;
-	uint32_t eol = 0x7ff;
 
 	/* get number of interrupts, queues, and vfs */
 	val = ixl_rd(sc, I40E_GLPCI_CNF2);
@@ -4299,11 +4298,11 @@ ixl_clear_hw(struct ixl_softc *sc)
 		ixl_wr(sc, I40E_PFINT_DYN_CTLN(i), val);
 
 	/* Set the FIRSTQ_INDX field to 0x7FF in PFINT_LNKLSTx */
-	val = eol << I40E_PFINT_LNKLST0_FIRSTQ_INDX_SHIFT;
+	val = I40E_QUEUE_TYPE_EOL << I40E_PFINT_LNKLST0_FIRSTQ_INDX_SHIFT;
 	ixl_wr(sc, I40E_PFINT_LNKLST0, val);
 	for (i = 0; i < num_pf_int - 2; i++)
 		ixl_wr(sc, I40E_PFINT_LNKLSTN(i), val);
-	val = eol << I40E_VPINT_LNKLST0_FIRSTQ_INDX_SHIFT;
+	val = I40E_QUEUE_TYPE_EOL << I40E_VPINT_LNKLST0_FIRSTQ_INDX_SHIFT;
 	for (i = 0; i < num_vfs; i++)
 		ixl_wr(sc, I40E_VPINT_LNKLST0(i), val);
 	for (i = 0; i < num_vf_int - 2; i++)
