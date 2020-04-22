@@ -230,6 +230,7 @@
 ./usr/include/dev/ic/atxxreg.h
 ./usr/include/dev/ic/ax88190reg.h
 ./usr/include/dev/ic/ax88190var.h
+./usr/include/dev/ic/bcm2835_dmac.h
 ./usr/include/dev/ic/bcm2835_mbox.h
 ./usr/include/dev/ic/bcm2835_vcprop.h
 ./usr/include/dev/ic/bcmgenetreg.h

@@ -20,7 +20,6 @@
 ./usr/share/man/man1/atq.1
 ./usr/share/man/man1/atrm.1
 ./usr/share/man/man1/aucat.1
-./usr/share/man/man1/audioctl.1
 ./usr/share/man/man1/awk.1
 ./usr/share/man/man1/banner.1
 ./usr/share/man/man1/basename.1
@@ -167,7 +166,6 @@
 ./usr/share/man/man1/mesg.1
 ./usr/share/man/man1/mg.1
 ./usr/share/man/man1/midicat.1
-./usr/share/man/man1/mixerctl.1
 ./usr/share/man/man1/mkdep.1
 ./usr/share/man/man1/mkdir.1
 ./usr/share/man/man1/mkfifo.1
@@ -2270,6 +2268,7 @@
 ./usr/share/man/man8/armv7/gpioctl.8
 ./usr/share/man/man8/arp.8
 ./usr/share/man/man8/atactl.8
+./usr/share/man/man8/audioctl.8
 ./usr/share/man/man8/authpf.8
 ./usr/share/man/man8/autoinstall.8
 ./usr/share/man/man8/badsect.8
@@ -2405,6 +2404,7 @@
 ./usr/share/man/man8/makemap.8
 ./usr/share/man/man8/makewhatis.8
 ./usr/share/man/man8/map-mbone.8
+./usr/share/man/man8/mixerctl.8
 ./usr/share/man/man8/mkalias.8
 ./usr/share/man/man8/mkhybrid.8
 ./usr/share/man/man8/mknetid.8
