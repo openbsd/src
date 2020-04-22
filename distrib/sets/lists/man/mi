@@ -1281,11 +1281,13 @@
 ./usr/share/man/man4/bce.4
 ./usr/share/man/man4/bcmaux.4
 ./usr/share/man/man4/bcmclock.4
+./usr/share/man/man4/bcmdmac.4
 ./usr/share/man/man4/bcmdog.4
 ./usr/share/man/man4/bcmirng.4
 ./usr/share/man/man4/bcmmbox.4
 ./usr/share/man/man4/bcmpcie.4
 ./usr/share/man/man4/bcmrng.4
+./usr/share/man/man4/bcmsdhost.4
 ./usr/share/man/man4/bcmtemp.4
 ./usr/share/man/man4/bdpmic.4
 ./usr/share/man/man4/berkwdt.4
