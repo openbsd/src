@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.229 2019/11/29 16:41:01 nayden Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.230 2020/04/22 07:45:31 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1111,17 +1111,11 @@ nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
 
 	rt = nd6_lookup(from, 0, ifp, ifp->if_rdomain);
 	if (rt == NULL) {
-#if 0
-		/* nothing must be done if there's no lladdr */
-		if (!lladdr || !lladdrlen)
-			return NULL;
-#endif
-
 		rt = nd6_lookup(from, 1, ifp, ifp->if_rdomain);
 		is_newentry = 1;
 	} else {
-		/* do nothing if static ndp is set */
-		if (rt->rt_flags & RTF_STATIC) {
+		/* do not overwrite local or static entry */
+		if (ISSET(rt->rt_flags, RTF_STATIC|RTF_LOCAL)) {
 			rtfree(rt);
 			return;
 		}
