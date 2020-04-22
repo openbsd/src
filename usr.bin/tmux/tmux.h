@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1014 2020/04/22 06:57:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1015 2020/04/22 21:01:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2621,7 +2621,8 @@ typedef void (*mode_tree_each_cb)(void *, void *, struct client *, key_code);
 u_int	 mode_tree_count_tagged(struct mode_tree_data *);
 void	*mode_tree_get_current(struct mode_tree_data *);
 void	 mode_tree_expand_current(struct mode_tree_data *);
-void	 mode_tree_set_current(struct mode_tree_data *, uint64_t);
+void	 mode_tree_expand(struct mode_tree_data *, uint64_t);
+int	 mode_tree_set_current(struct mode_tree_data *, uint64_t);
 void	 mode_tree_each_tagged(struct mode_tree_data *, mode_tree_each_cb,
 	     struct client *, key_code, int);
 void	 mode_tree_down(struct mode_tree_data *, int);
