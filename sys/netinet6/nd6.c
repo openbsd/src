@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.230 2020/04/22 07:45:31 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.231 2020/04/22 07:51:38 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -306,6 +306,7 @@ nd6_llinfo_settimer(struct llinfo_nd6 *ln, unsigned int secs)
 	time_t expire = time_uptime + secs;
 
 	NET_ASSERT_LOCKED();
+	KASSERT(!ISSET(ln->ln_rt->rt_flags, RTF_LOCAL));
 
 	ln->ln_rt->rt_expire = expire;
 	if (!timeout_pending(&nd6_timer_to) || expire < nd6_timer_next) {
