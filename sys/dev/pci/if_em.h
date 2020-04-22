@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.76 2020/03/23 15:02:51 mpi Exp $ */
+/* $OpenBSD: if_em.h,v 1.77 2020/04/22 08:47:11 mpi Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -366,6 +366,12 @@ struct em_queue {
 
 	struct timeout		 rx_refill;
 };
+
+
+#define FOREACH_QUEUE(_sc, _que)				\
+	for ((_que) = (_sc)->queues;				\
+	     (_que) < ((_sc)->queues + (_sc)->num_queues);	\
+	     (_que)++)
 
 /* Our adapter structure */
 struct em_softc {

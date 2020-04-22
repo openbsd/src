@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.107 2020/03/08 11:43:43 mpi Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.108 2020/04/22 08:47:11 mpi Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -1120,7 +1120,7 @@ STATIC void
 em_initialize_hardware_bits(struct em_softc *sc)
 {
 	struct em_hw *hw = &sc->hw;
-	struct em_queue *que = sc->queues; /* Use only first queue. */
+	struct em_queue *que;
 
 	DEBUGFUNC("em_initialize_hardware_bits");
 
@@ -1133,10 +1133,11 @@ em_initialize_hardware_bits(struct em_softc *sc)
 		reg_tarc0 = E1000_READ_REG(hw, TARC0);
 		reg_tarc0 &= ~0x78000000;	/* Clear bits 30, 29, 28, and
 						 * 27 */
-
-		reg_txdctl = E1000_READ_REG(hw, TXDCTL(que->me));
-		reg_txdctl |= E1000_TXDCTL_COUNT_DESC;	/* Set bit 22 */
-		E1000_WRITE_REG(hw, TXDCTL(que->me), reg_txdctl);
+		FOREACH_QUEUE(sc, que) {
+			reg_txdctl = E1000_READ_REG(hw, TXDCTL(que->me));
+			reg_txdctl |= E1000_TXDCTL_COUNT_DESC;	/* Set bit 22 */
+			E1000_WRITE_REG(hw, TXDCTL(que->me), reg_txdctl);
+		}
 
 		/*
 		 * Old code always initialized queue 1,
@@ -1444,7 +1445,7 @@ int32_t
 em_init_hw(struct em_softc *sc)
 {
 	struct em_hw *hw = &sc->hw;
-	struct em_queue *que = sc->queues; /* Use only first queue. */
+	struct em_queue *que;
 	uint32_t ctrl;
 	uint32_t i;
 	int32_t  ret_val;
@@ -1639,10 +1640,12 @@ em_init_hw(struct em_softc *sc)
 
 	/* Set the transmit descriptor write-back policy */
 	if (hw->mac_type > em_82544) {
-		ctrl = E1000_READ_REG(hw, TXDCTL(que->me));
-		ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) | 
-		    E1000_TXDCTL_FULL_TX_DESC_WB;
-		E1000_WRITE_REG(hw, TXDCTL(que->me), ctrl);
+		FOREACH_QUEUE(sc, que) {
+			ctrl = E1000_READ_REG(hw, TXDCTL(que->me));
+			ctrl = (ctrl & ~E1000_TXDCTL_WTHRESH) |
+			    E1000_TXDCTL_FULL_TX_DESC_WB;
+			E1000_WRITE_REG(hw, TXDCTL(que->me), ctrl);
+		}
 	}
 	if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) {
 		em_enable_tx_pkt_filtering(hw);
