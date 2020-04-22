@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.216 2020/04/15 18:41:45 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.217 2020/04/22 16:52:04 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -815,7 +815,8 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		ibuf_release(authmsg);
 
 		if (ret != 0) {
-			log_debug("%s: ikev2_msg_authverify failed", __func__);
+			log_info("%s: ikev2_msg_authverify failed",
+			    SPI_SA(sa, __func__));
 			ikev2_send_auth_failed(env, sa);
 			return (-1);
 		}
