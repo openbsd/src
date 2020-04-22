@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.15 2019/10/23 09:27:43 patrick Exp $ */
+/* $OpenBSD: mainbus.c,v 1.16 2020/04/22 11:10:07 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -178,7 +178,10 @@ mainbus_print(void *aux, const char *pnp)
 		if (strcmp(buf, "aliases") == 0 ||
 		    strcmp(buf, "chosen") == 0 ||
 		    strcmp(buf, "cpus") == 0 ||
-		    strcmp(buf, "memory") == 0)
+		    strcmp(buf, "memory") == 0 ||
+		    strcmp(buf, "reserved-memory") == 0 ||
+		    strcmp(buf, "thermal-zones") == 0 ||
+		    strncmp(buf, "__", 2) == 0)
 			return (QUIET);
 		printf("\"%s\"", buf);
 	} else
