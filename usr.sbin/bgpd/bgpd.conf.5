@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.201 2020/02/16 22:10:47 kn Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.202 2020/04/23 16:17:48 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1018,6 +1018,7 @@ daemons on both sides, the session should be established.
 After changing settings a session needs to be reset to use the new keys.
 .Pp
 .It Ic local-address Ar address
+.It Ic no Ic local-address
 When
 .Xr bgpd 8
 initiates the TCP connection to the neighbor system, it normally does not
@@ -1027,6 +1028,8 @@ If a
 is given,
 .Xr bgpd 8
 binds to this address first.
+.Ic no local-address
+reverts back to the default.
 .Pp
 .It Ic local-as Ar as-number Op Ar as-number
 Set the AS number sent to the remote system.
