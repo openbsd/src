@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.4 2020/03/20 12:07:48 kn Exp $
+.\"	$OpenBSD: bt.5,v 1.5 2020/04/23 18:36:51 mpi Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 20 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt BT 5
 .Os
 .Sh NAME
@@ -87,22 +87,26 @@ by the associated
 Variable names with special meaning:
 .Pp
 .Bl -tag -width "kstack " -compact
-.It Va pid
-Process ID of the current thread
-.It Va tid
-Thread ID of the current thread
-.It Va comm
-Command name of the current process
-.It Va nsecs
-Timestamp of the event in nanoseconds
-.It Va kstack
-Kernel stack of the current thread
-.It Va ustack
-Userland stack of the current thread
 .It Va argN
 Argument
 .Va N
 of the corresponding probe
+.It Va comm
+Command name of the current process
+.It Va cpu
+ID of the processor that recorded the event
+.It Va kstack
+Kernel stack of the current thread
+.It Va nsecs
+Timestamp of the event in nanoseconds
+.It Va pid
+Process ID of the current thread
+.It Va retval
+Return value of the traced syscall
+.It Va tid
+Thread ID of the current thread
+.\".It Va ustack
+.\"Userland stack of the current thread
 .El
 .Pp
 Functions:

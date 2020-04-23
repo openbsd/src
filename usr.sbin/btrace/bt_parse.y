@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.11 2020/04/23 14:54:12 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.12 2020/04/23 18:36:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -101,7 +101,7 @@ static int	 yylex(void);
 %token	ERROR OP_EQ OP_NEQ BEGIN END
 /* Builtins */
 %token	ARG0 ARG1 ARG2 ARG3 ARG4 ARG5 ARG6 ARG7 ARG8 ARG9
-%token	COMM HZ KSTACK USTACK NSECS PID RETVAL TID
+%token	COMM CPU HZ KSTACK USTACK NSECS PID RETVAL TID
 /* Functions */
 %token  F_CLEAR F_DELETE F_EXIT F_PRINT F_PRINTF F_TIME F_ZERO
 /* Map functions */
@@ -155,6 +155,7 @@ predicate	: /* empty */			{ $$ = NULL; }
 builtin		: PID 				{ $$ = B_AT_BI_PID; }
 		| TID 				{ $$ = B_AT_BI_TID; }
 		| COMM 				{ $$ = B_AT_BI_COMM; }
+		| CPU 				{ $$ = B_AT_BI_CPU; }
 		| NSECS 			{ $$ = B_AT_BI_NSECS; }
 		| KSTACK			{ $$ = B_AT_BI_KSTACK; }
 		| USTACK			{ $$ = B_AT_BI_USTACK; }
@@ -537,6 +538,7 @@ lookup(char *s)
 		{ "clear",	F_CLEAR },
 		{ "comm",	COMM },
 		{ "count",	M_COUNT },
+		{ "cpu",	CPU },
 		{ "delete",	F_DELETE },
 		{ "exit",	F_EXIT },
 		{ "hz",		HZ },

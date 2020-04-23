@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.16 2020/04/23 14:54:12 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.17 2020/04/23 18:36:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -947,6 +947,10 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_BI_COMM:
 		str = dtev->dtev_comm;
 		break;
+	case B_AT_BI_CPU:
+		snprintf(buf, sizeof(buf) - 1, "%u", dtev->dtev_cpu);
+		str = buf;
+		break;
 	case B_AT_BI_PID:
 		snprintf(buf, sizeof(buf) - 1, "%d", dtev->dtev_pid);
 		str = buf;
@@ -1018,6 +1022,7 @@ ba2dtflags(struct bt_arg *ba)
 		case B_AT_BI_COMM:
 			flags |= DTEVT_EXECNAME;
 			break;
+		case B_AT_BI_CPU:
 		case B_AT_BI_PID:
 		case B_AT_BI_TID:
 		case B_AT_BI_NSECS:

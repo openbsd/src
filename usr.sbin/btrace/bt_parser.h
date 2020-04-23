@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.6 2020/04/15 15:00:04 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.7 2020/04/23 18:36:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Martin Pieuchot <mpi@openbsd.org>
@@ -111,6 +111,7 @@ struct bt_arg {
 		B_AT_BI_PID,
 		B_AT_BI_TID,
 		B_AT_BI_COMM,
+		B_AT_BI_CPU,
 		B_AT_BI_NSECS,
 		B_AT_BI_KSTACK,
 		B_AT_BI_USTACK,

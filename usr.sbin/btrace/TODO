@@ -10,7 +10,6 @@ Missing language features:
 - str(args->buf, args->count)
 - @ = hist(x)
 - @ = lhist(x, min, max, step)
-- 'cpu' builtin, reports cpuid
 - 'argv'
 - $1 support
 
