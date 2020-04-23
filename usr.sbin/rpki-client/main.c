@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.64 2020/04/18 00:00:58 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.65 2020/04/23 12:55:44 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1404,9 +1404,9 @@ main(int argc, char *argv[])
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
 			err(1, "unable to revoke privs");
 
-		cachedir = RPKI_PATH_BASE_DIR;
-		outputdir = RPKI_PATH_OUT_DIR;
 	}
+	cachedir = RPKI_PATH_BASE_DIR;
+	outputdir = RPKI_PATH_OUT_DIR;
 
 	if (pledge("stdio rpath wpath cpath fattr proc exec unveil", NULL) == -1)
 		err(1, "pledge");
