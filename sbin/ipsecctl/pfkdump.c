@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.49 2019/07/03 03:24:02 deraadt Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.50 2020/04/23 19:57:01 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -56,6 +56,7 @@ static void	print_life(struct sadb_ext *, struct sadb_msg *, int);
 static void	print_ident(struct sadb_ext *, struct sadb_msg *, int);
 static void	print_udpenc(struct sadb_ext *, struct sadb_msg *, int);
 static void	print_tag(struct sadb_ext *, struct sadb_msg *, int);
+static void	print_rdomain(struct sadb_ext *, struct sadb_msg *, int);
 static void	print_tap(struct sadb_ext *, struct sadb_msg *, int);
 static void	print_satype(struct sadb_ext *, struct sadb_msg *, int);
 static void	print_counter(struct sadb_ext *, struct sadb_msg *, int);
@@ -106,6 +107,7 @@ struct idname ext_types[] = {
 	{ SADB_X_EXT_UDPENCAP,		"udpencap",		print_udpenc },
 	{ SADB_X_EXT_LIFETIME_LASTUSE,	"lifetime_lastuse",	print_life },
 	{ SADB_X_EXT_TAG,		"tag",			print_tag },
+	{ SADB_X_EXT_RDOMAIN,		"rdomain",		print_rdomain },
 	{ SADB_X_EXT_TAP,		"tap",			print_tap },
 	{ SADB_X_EXT_SATYPE2,		"satype2",		print_satype },
 	{ SADB_X_EXT_COUNTER,		"counter",		print_counter },
@@ -580,6 +582,16 @@ print_udpenc(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	struct sadb_x_udpencap *x_udpencap = (struct sadb_x_udpencap *)ext;
 
 	printf("udpencap port %u", ntohs(x_udpencap->sadb_x_udpencap_port));
+}
+
+/* ARGSUSED1 */
+static void
+print_rdomain(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+{
+	struct sadb_x_rdomain *srdomain = (struct sadb_x_rdomain *)ext;
+
+	printf("%d/%d", srdomain->sadb_x_rdomain_dom1,
+	    srdomain->sadb_x_rdomain_dom2);
 }
 
 static void
