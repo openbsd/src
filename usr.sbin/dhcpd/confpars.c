@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.35 2019/05/10 15:03:58 visa Exp $ */
+/*	$OpenBSD: confpars.c,v 1.36 2020/04/23 15:00:27 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -47,6 +47,7 @@
 #include <netdb.h>
 #include <resolv.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -852,40 +853,40 @@ parse_group_declaration(FILE *cfile, struct group *group)
  * bit-count :== 0..32
  */
 int
-parse_cidr(FILE *cfile, unsigned char *addr, unsigned char *prefix)
+parse_cidr(FILE *cfile, unsigned char *subnet, unsigned char *subnetlen)
 {
-	const char *errstr;
-	char *val;
-	int token;
-	int len = 4;
+	uint8_t		 cidr[5];
+	const char	*errstr;
+	char		*val;
+	long long	 numval;
+	unsigned int	 i;
+	int		 token;
 
-	token = peek_token(&val, cfile);
+	memset(cidr, 0, sizeof(cidr));
+	i = 1;	/* Last four octets hold subnet, first octet the # of bits. */
+	do {
+		token = next_token(&val, cfile);
+		if (i == 0)
+			numval = strtonum(val, 0, 32, &errstr);
+		else
+			numval = strtonum(val, 0, UINT8_MAX, &errstr);
+		if (errstr != NULL)
+			break;
+		cidr[i++] = numval;
+		if (i == 1) {
+			memcpy(subnet, &cidr[1], 4); /* XXX Need cidr_t */
+			*subnetlen = cidr[0];
+			return 1;
+		}
+		token = next_token(NULL, cfile);
+		if (token == '/')
+			i = 0;
+		if (i == sizeof(cidr))
+			break;
+	} while (token == '.' || token == '/');
 
-	if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8)) {
-		parse_warn("Expecting CIDR subnet");
-		goto nocidr;
-	}
+	parse_warn("expecting IPv4 CIDR block.");
 
-	token = next_token(&val, cfile);
-	if (token != '/') {
-		parse_warn("Expecting '/'");
-		goto nocidr;
-	}
-
-	token = next_token(&val, cfile);
-
-	if (token == TOK_NUMBER_OR_NAME)
-		*prefix = strtonum(val, 0, 32, &errstr);
-
-	if (token != TOK_NUMBER_OR_NAME || errstr) {
-		*prefix = 0;
-		parse_warn("Expecting CIDR prefix length, got '%s'", val);
-		goto nocidr;
-	}
-
-	return 1;
-
-nocidr:
 	if (token != ';')
 		skip_to_semi(cfile);
 	return 0;
