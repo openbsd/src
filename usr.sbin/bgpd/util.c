@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.52 2020/02/12 10:33:56 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.53 2020/04/23 16:13:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -844,7 +844,7 @@ addr2sa(struct bgpd_addr *addr, u_int16_t port, socklen_t *len)
 	struct sockaddr_in		*sa_in = (struct sockaddr_in *)&ss;
 	struct sockaddr_in6		*sa_in6 = (struct sockaddr_in6 *)&ss;
 
-	if (addr->aid == AID_UNSPEC)
+	if (addr == NULL || addr->aid == AID_UNSPEC)
 		return (NULL);
 
 	bzero(&ss, sizeof(ss));

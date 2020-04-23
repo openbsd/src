@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.405 2020/03/16 14:47:30 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.406 2020/04/23 16:13:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1260,8 +1260,27 @@ peeropts	: REMOTEAS as4number	{
 			free($2);
 		}
 		| LOCALADDR address	{
-			memcpy(&curpeer->conf.local_addr, &$2,
-			    sizeof(curpeer->conf.local_addr));
+			if ($2.aid == AID_INET)
+				memcpy(&curpeer->conf.local_addr_v4, &$2,
+				    sizeof(curpeer->conf.local_addr_v4));
+			else if ($2.aid == AID_INET6)
+				memcpy(&curpeer->conf.local_addr_v6, &$2,
+				    sizeof(curpeer->conf.local_addr_v6));
+			else {
+				yyerror("Unsupported address family %s for "
+				    "local-addr", aid2str($2.aid));
+				YYERROR;
+			}
+		}
+		| yesno LOCALADDR	{
+			if ($1) {
+				yyerror("bad local-address definition");
+				YYERROR;
+			}
+			memset(&curpeer->conf.local_addr_v4, 0,
+			    sizeof(curpeer->conf.local_addr_v4));
+			memset(&curpeer->conf.local_addr_v6, 0,
+			    sizeof(curpeer->conf.local_addr_v6));
 		}
 		| MULTIHOP NUMBER	{
 			if ($2 < 2 || $2 > 255) {
@@ -4176,11 +4195,17 @@ str2key(char *s, char *dest, size_t max_len)
 int
 neighbor_consistent(struct peer *p)
 {
-	/* local-address and peer's address: same address family */
-	if (p->conf.local_addr.aid &&
-	    p->conf.local_addr.aid != p->conf.remote_addr.aid) {
-		yyerror("local-address and neighbor address "
-		    "must be of the same address family");
+	struct bgpd_addr *local_addr;
+
+	switch (p->conf.remote_addr.aid) {
+	case AID_INET:
+		local_addr = &p->conf.local_addr_v4;
+		break;
+	case AID_INET6:
+		local_addr = &p->conf.local_addr_v6;
+		break;
+	default:
+		yyerror("Bad address family for remote-addr");
 		return (-1);
 	}
 
@@ -4189,7 +4214,7 @@ neighbor_consistent(struct peer *p)
 	    p->conf.auth.method == AUTH_IPSEC_IKE_AH ||
 	    p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP ||
 	    p->conf.auth.method == AUTH_IPSEC_MANUAL_AH) &&
-	    !p->conf.local_addr.aid) {
+	    local_addr->aid == AID_UNSPEC) {
 		yyerror("neighbors with any form of IPsec configured "
 		    "need local-address to be specified");
 		return (-1);

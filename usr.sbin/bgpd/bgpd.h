@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.401 2020/02/14 13:54:31 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.402 2020/04/23 16:13:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -365,7 +365,8 @@ struct capabilities {
 
 struct peer_config {
 	struct bgpd_addr	 remote_addr;
-	struct bgpd_addr	 local_addr;
+	struct bgpd_addr	 local_addr_v4;
+	struct bgpd_addr	 local_addr_v6;
 	struct peer_auth	 auth;
 	struct capabilities	 capabilities;
 	char			 group[PEER_DESCR_LEN];

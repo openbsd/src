@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.141 2020/01/24 05:44:05 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.142 2020/04/23 16:13:11 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -608,8 +608,12 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tmultihop %u\n", c, p->distance);
 	if (p->passive)
 		printf("%s\tpassive\n", c);
-	if (p->local_addr.aid)
-		printf("%s\tlocal-address %s\n", c, log_addr(&p->local_addr));
+	if (p->local_addr_v4.aid)
+		printf("%s\tlocal-address %s\n", c,
+		   log_addr(&p->local_addr_v4));
+	if (p->local_addr_v6.aid)
+		printf("%s\tlocal-address %s\n", c,
+		   log_addr(&p->local_addr_v6));
 	if (p->max_prefix) {
 		printf("%s\tmax-prefix %u", c, p->max_prefix);
 		if (p->max_prefix_restart)

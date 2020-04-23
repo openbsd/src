@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.60 2019/10/01 11:05:30 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.61 2020/04/23 16:13:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -54,6 +54,18 @@ int	pfkey_send(int, uint8_t, uint8_t, uint8_t,
 #define pfkey_flow(fd, satype, cmd, dir, from, to, sport, dport) \
 	pfkey_send(fd, satype, cmd, dir, from, to, \
 	    0, 0, 0, NULL, 0, 0, NULL, sport, dport)
+
+static struct bgpd_addr *
+pfkey_localaddr(struct peer *p)
+{
+	switch (p->conf.remote_addr.aid) {
+	case AID_INET:
+		return &p->conf.local_addr_v4;
+	case AID_INET6:
+		return &p->conf.local_addr_v6;
+	}
+	fatalx("Unknown AID in pfkey_localaddr");
+}
 
 int
 pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
@@ -530,12 +542,12 @@ pfkey_md5sig_establish(struct peer *p)
 	u_int32_t spi_out = 0;
 	u_int32_t spi_in = 0;
 
-	if (pfkey_sa_add(&p->conf.local_addr, &p->conf.remote_addr,
+	if (pfkey_sa_add(pfkey_localaddr(p), &p->conf.remote_addr,
 	    p->conf.auth.md5key_len, p->conf.auth.md5key,
 	    &spi_out) == -1)
 		goto fail;
 
-	if (pfkey_sa_add(&p->conf.remote_addr, &p->conf.local_addr,
+	if (pfkey_sa_add(&p->conf.remote_addr, pfkey_localaddr(p),
 	    p->conf.auth.md5key_len, p->conf.auth.md5key,
 	    &spi_in) == -1)
 		goto fail;
@@ -582,6 +594,7 @@ static int
 pfkey_ipsec_establish(struct peer *p)
 {
 	uint8_t satype = SADB_SATYPE_ESP;
+	struct bgpd_addr *local_addr = pfkey_localaddr(p);
 
 	/* cleanup first, unlike in the TCP MD5 case */
 	if (p->auth.established) {
@@ -601,7 +614,7 @@ pfkey_ipsec_establish(struct peer *p)
 		satype = p->auth.method == AUTH_IPSEC_MANUAL_ESP ?
 		    SADB_SATYPE_ESP : SADB_SATYPE_AH;
 		if (pfkey_send(pfkey_fd, satype, SADB_ADD, 0,
-		    &p->conf.local_addr, &p->conf.remote_addr,
+		    local_addr, &p->conf.remote_addr,
 		    p->conf.auth.spi_out,
 		    p->conf.auth.auth_alg_out,
 		    p->conf.auth.auth_keylen_out,
@@ -614,7 +627,7 @@ pfkey_ipsec_establish(struct peer *p)
 		if (pfkey_reply(pfkey_fd, NULL) == -1)
 			goto fail_key;
 		if (pfkey_send(pfkey_fd, satype, SADB_ADD, 0,
-		    &p->conf.remote_addr, &p->conf.local_addr,
+		    &p->conf.remote_addr, local_addr,
 		    p->conf.auth.spi_in,
 		    p->conf.auth.auth_alg_in,
 		    p->conf.auth.auth_keylen_in,
@@ -632,25 +645,25 @@ pfkey_ipsec_establish(struct peer *p)
 	}
 
 	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
-	    &p->conf.local_addr, &p->conf.remote_addr, 0, BGP_PORT) == -1)
+	    local_addr, &p->conf.remote_addr, 0, BGP_PORT) == -1)
 		goto fail_flow;
 	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		goto fail_flow;
 
 	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
-	    &p->conf.local_addr, &p->conf.remote_addr, BGP_PORT, 0) == -1)
+	    local_addr, &p->conf.remote_addr, BGP_PORT, 0) == -1)
 		goto fail_flow;
 	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		goto fail_flow;
 
 	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
-	    &p->conf.remote_addr, &p->conf.local_addr, 0, BGP_PORT) == -1)
+	    &p->conf.remote_addr, local_addr, 0, BGP_PORT) == -1)
 		goto fail_flow;
 	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		goto fail_flow;
 
 	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
-	    &p->conf.remote_addr, &p->conf.local_addr, BGP_PORT, 0) == -1)
+	    &p->conf.remote_addr, local_addr, BGP_PORT, 0) == -1)
 		goto fail_flow;
 	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		goto fail_flow;
@@ -768,7 +781,7 @@ pfkey_establish(struct peer *p)
 	 * remote_addr cannot change, so no copy, SPI are
 	 * handled by the method specific functions.
 	 */
-	memcpy(&p->auth.local_addr, &p->conf.local_addr,
+	memcpy(&p->auth.local_addr, pfkey_localaddr(p),
 	    sizeof(p->auth.local_addr));
 	p->auth.method = p->conf.auth.method;
 

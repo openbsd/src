@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.399 2020/02/12 10:33:56 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.400 2020/04/23 16:13:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1039,6 +1039,7 @@ int
 session_connect(struct peer *peer)
 {
 	struct sockaddr		*sa;
+	struct bgpd_addr	*bind_addr = NULL;
 	socklen_t		 sa_len;
 
 	/*
@@ -1066,8 +1067,16 @@ session_connect(struct peer *peer)
 	tcp_md5_set(peer->fd, peer);
 	peer->wbuf.fd = peer->fd;
 
-	/* if update source is set we need to bind() */
-	if ((sa = addr2sa(&peer->conf.local_addr, 0, &sa_len)) != NULL) {
+	/* if local-address is set we need to bind() */
+	switch (peer->conf.remote_addr.aid) {
+	case AID_INET:
+		bind_addr = &peer->conf.local_addr_v4;
+		break;
+	case AID_INET6:
+		bind_addr = &peer->conf.local_addr_v6;
+		break;
+	}
+	if (bind_addr && (sa = addr2sa(bind_addr, 0, &sa_len)) != NULL) {
 		if (bind(peer->fd, sa, sa_len) == -1) {
 			log_peer_warn(&peer->conf, "session_connect bind");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
