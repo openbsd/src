@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.18 2020/03/21 12:53:24 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.19 2020/04/23 14:56:28 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -1175,7 +1175,22 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 	if (idx == 0)
 		return;
 
-	if (sc->sc_gates == imx8mq_gates) {
+	if (sc->sc_gates == imx8mm_gates) {
+		switch (idx) {
+		case IMX8MM_CLK_PCIE1_CTRL:
+		case IMX8MM_CLK_PCIE2_CTRL:
+			pcells[0] = sc->sc_phandle;
+			pcells[1] = IMX8MM_SYS_PLL2_250M;
+			imxccm_set_parent(cookie, &idx, pcells);
+			break;
+		case IMX8MM_CLK_PCIE1_PHY:
+		case IMX8MM_CLK_PCIE2_PHY:
+			pcells[0] = sc->sc_phandle;
+			pcells[1] = IMX8MM_SYS_PLL2_100M;
+			imxccm_set_parent(cookie, &idx, pcells);
+			break;
+		}
+	} else if (sc->sc_gates == imx8mq_gates) {
 		switch (idx) {
 		case IMX8MQ_CLK_32K:
 			/* always on */
@@ -1620,6 +1635,24 @@ imxccm_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 				mux |= (0x1 << sc->sc_muxs[idx].shift);
 			if (pidx == IMX8MM_SYS_PLL1_800M)
 				mux |= (0x4 << sc->sc_muxs[idx].shift);
+			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
+			return 0;
+		case IMX8MM_CLK_PCIE1_CTRL:
+		case IMX8MM_CLK_PCIE2_CTRL:
+			if (pidx != IMX8MM_SYS_PLL2_250M)
+				break;
+			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
+			mux |= (0x1 << sc->sc_muxs[idx].shift);
+			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
+			return 0;
+		case IMX8MM_CLK_PCIE1_PHY:
+		case IMX8MM_CLK_PCIE2_PHY:
+			if (pidx != IMX8MM_SYS_PLL2_100M)
+				break;
+			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
+			mux |= (0x1 << sc->sc_muxs[idx].shift);
 			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
 			return 0;
 		}
