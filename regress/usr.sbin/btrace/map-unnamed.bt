@@ -1,13 +1,13 @@
 BEGIN
 {
-	@[8 - 1] = count();
+	@[8 - 1, "test"] = count();
 	printf("=> Print with one element\n");
 	print(@);
 }
 
 END
 {
-	@[7] = count();
+	@[7, "test"] = count();
 	printf("=> Print all map:\n");
 	print(@);
 }
