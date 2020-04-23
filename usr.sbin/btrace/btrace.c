@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.14 2020/04/15 16:59:04 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.15 2020/04/23 09:14:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -669,15 +669,17 @@ stmt_delete(struct bt_stmt *bs, struct dt_evt *dtev)
 {
 	struct bt_arg *bkey, *bmap = SLIST_FIRST(&bs->bs_args);
 	struct bt_var *bv = bmap->ba_value;
+	const char *hash;
 
 	assert(bmap->ba_type == B_AT_MAP);
 	assert(bs->bs_var == NULL);
 
 	bkey = bmap->ba_key;
+	hash = ba2hash(bkey, dtev);
 	debug("map=%p '%s' delete key=%p '%s'\n", bv->bv_value, bv_name(bv),
-	    bkey, ba2hash(bkey, dtev));
+	    bkey, hash);
 
-	map_delete((struct map *)bv->bv_value, ba2hash(bkey, dtev));
+	map_delete((struct map *)bv->bv_value, hash);
 }
 
 /*
@@ -692,16 +694,18 @@ stmt_insert(struct bt_stmt *bs, struct dt_evt *dtev)
 	struct bt_arg *bkey, *bmap = SLIST_FIRST(&bs->bs_args);
 	struct bt_arg *bval = (struct bt_arg *)bs->bs_var;
 	struct bt_var *bv = bmap->ba_value;
+	const char *hash;
 
 	assert(bmap->ba_type == B_AT_MAP);
 	assert(SLIST_NEXT(bval, ba_next) == NULL);
 
 	bkey = bmap->ba_key;
+	hash = ba2hash(bkey, dtev);
 	debug("map=%p '%s' insert key=%p '%s' bval=%p\n", bv->bv_value,
-	    bv_name(bv), bkey, ba2hash(bkey, dtev), bval);
+	    bv_name(bv), bkey, hash, bval);
 
 	bv->bv_value = (struct bt_arg *)map_insert((struct map *)bv->bv_value,
-	    ba2hash(bkey, dtev), bval);
+	    hash, bval);
 }
 
 /*
@@ -726,10 +730,9 @@ stmt_print(struct bt_stmt *bs, struct dt_evt *dtev)
 		assert(SLIST_NEXT(btop, ba_next) == NULL);
 		top = ba2long(btop, dtev);
 	}
+	debug("map=%p '%s' print (top=%d)\n", bv->bv_value, bv_name(bv), top);
 
 	map_print((struct map *)bv->bv_value, top, bv_name(bv));
-
-	debug("map=%p '%s' print (top=%d)\n", bv->bv_value, bv_name(bv), top);
 }
 
 /*
@@ -888,8 +891,6 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 		xabort("no long conversion for type %d", ba->ba_type);
 	}
 
-	debug("ba=%p long='%ld'\n", ba, val);
-
 	return  val;
 }
 
@@ -960,8 +961,6 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 	default:
 		xabort("no string conversion for type %d", ba->ba_type);
 	}
-
-	debug("ba=%p str='%s'\n", ba, str);
 
 	return str;
 }
