@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm_init.9,v 1.2 2019/12/06 10:42:33 mpi Exp $
+.\"	$OpenBSD: uvm_init.9,v 1.3 2020/04/23 07:57:27 mpi Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -28,7 +28,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: December 6 2019 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt UVM_INIT 9
 .Os
 .Sh NAME
@@ -272,7 +272,7 @@ int nswapdev;	/* number of configured swap devices in system */
 int swpages;	/* number of PAGE_SIZE'ed swap pages */
 int swpginuse;	/* number of swap pages in use */
 int swpgonly;	/* number of swap pages in use, not also in RAM */
-int nswget;	/* number of times fault calls uvm_swap_get() */
+int nswget;	/* number of swap pages moved from disk to RAM */
 int nanon;	/* XXX number total of anon's in system */
 int unused05;	/* formerly nanonneeded */
 int unused06;	/* formerly nfreeanon */

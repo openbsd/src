@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.116 2020/04/22 15:00:46 schwarze Exp $
+.\"	$OpenBSD: systat.1,v 1.117 2020/04/23 07:57:27 mpi Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: April 22 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -715,8 +715,7 @@ swap pages in use
 .It swpgonly
 in use swap pages not in RAM
 .It nswget
-fault called
-.Fn uvm_swap_get
+swap pages moved from disk to RAM
 .It nanon
 total anon's
 .Pp

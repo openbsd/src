@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.4 2018/11/06 07:49:38 otto Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.5 2020/04/23 07:57:27 mpi Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -78,7 +78,7 @@ struct uvmexp {
 	int swpages;	/* number of PAGE_SIZE'ed swap pages */
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
-	int nswget;	/* number of times fault calls uvm_swap_get() */
+	int nswget;	/* number of swap pages moved from disk to RAM */
 	int nanon;	/* XXX number total of anon's in system */
 	int unused05;	/* formerly nanonneeded */
 	int unused06;	/* formerly nfreeanon */
