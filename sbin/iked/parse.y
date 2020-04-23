@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.93 2020/04/14 11:30:15 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.94 2020/04/23 20:17:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -351,7 +351,8 @@ void			 copy_transforms(unsigned int,
 			    const struct ipsec_xf **, unsigned int,
 			    struct iked_transform **, unsigned int *,
 			    struct iked_transform *, size_t);
-int			 create_ike(char *, int, uint8_t, struct ipsec_hosts *,
+int			 create_ike(char *, int, uint8_t,
+			    int, struct ipsec_hosts *,
 			    struct ipsec_hosts *, struct ipsec_mode *,
 			    struct ipsec_mode *, uint8_t,
 			    uint8_t, char *, char *,
@@ -408,7 +409,7 @@ typedef struct {
 %token	PASSIVE ACTIVE ANY TAG TAP PROTO LOCAL GROUP NAME CONFIG EAP USER
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
-%token	IPCOMP OCSP IKELIFETIME MOBIKE NOMOBIKE
+%token	IPCOMP OCSP IKELIFETIME MOBIKE NOMOBIKE RDOMAIN
 %token	FRAGMENTATION NOFRAGMENTATION
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
@@ -418,7 +419,7 @@ typedef struct {
 %type	<v.number>		protoval
 %type	<v.hosts>		hosts hosts_list
 %type	<v.port>		port
-%type	<v.number>		portval af
+%type	<v.number>		portval af rdomain
 %type	<v.peers>		peers
 %type	<v.anyhost>		anyhost
 %type	<v.host>		host host_spec
@@ -491,12 +492,12 @@ user		: USER STRING STRING		{
 		}
 		;
 
-ikev2rule	: IKEV2 name ikeflags satype af proto hosts_list peers
+ikev2rule	: IKEV2 name ikeflags satype af proto rdomain hosts_list peers
 		    ike_sas child_sas ids ikelifetime lifetime ikeauth ikecfg
 		    filters {
-			if (create_ike($2, $5, $6, $7, &$8, $9, $10, $4, $3,
-			    $11.srcid, $11.dstid, $12, &$13, &$14,
-			    $16, $15) == -1) {
+			if (create_ike($2, $5, $6, $7, $8, &$9, $10, $11, $4,
+			    $3, $12.srcid, $12.dstid, $13, &$14, &$15,
+			    $17, $16) == -1) {
 				yyerror("create_ike failed");
 				YYERROR;
 			}
@@ -576,6 +577,15 @@ protoval	: STRING			{
 			}
 		}
 		;
+
+rdomain		: /* empty */ 			{ $$ = -1; }
+		| RDOMAIN NUMBER		{
+			if ($2 > 255 || $2 < 0) {
+				yyerror("rdomain outside range");
+				YYERROR;
+			}
+			$$ = $2;
+		}
 
 hosts_list	: hosts				{ $$ = $1; }
 		| hosts_list comma hosts	{
@@ -1264,6 +1274,7 @@ lookup(char *s)
 		{ "proto",		PROTO },
 		{ "psk",		PSK },
 		{ "quick",		QUICK },
+		{ "rdomain",		RDOMAIN },
 		{ "sa",			SA },
 		{ "set",		SET },
 		{ "skip",		SKIP },
@@ -2499,6 +2510,9 @@ print_policy(struct iked_policy *pol)
 			print_verbose(" inet6");
 	}
 
+	if (pol->pol_rdomain)
+		print_verbose(" rdomain %d", pol->pol_rdomain);
+
 	RB_FOREACH(flow, iked_flows, &pol->pol_flows) {
 		print_verbose(" from %s",
 		    print_host((struct sockaddr *)&flow->flow_src.addr, NULL,
@@ -2681,7 +2695,8 @@ copy_transforms(unsigned int type,
 }
 
 int
-create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
+create_ike(char *name, int af, uint8_t ipproto,
+    int rdomain, struct ipsec_hosts *hosts,
     struct ipsec_hosts *peers, struct ipsec_mode *ike_sa,
     struct ipsec_mode *ipsec_sa, uint8_t saproto,
     uint8_t flags, char *srcid, char *dstid,
@@ -2711,6 +2726,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 	pol.pol_saproto = saproto;
 	pol.pol_ipproto = ipproto;
 	pol.pol_flags = flags;
+	pol.pol_rdomain = rdomain;
 	memcpy(&pol.pol_auth, authtype, sizeof(struct iked_auth));
 
 	if (name != NULL) {
@@ -2971,6 +2987,7 @@ create_ike(char *name, int af, uint8_t ipproto, struct ipsec_hosts *hosts,
 		}
 
 		flow->flow_ipproto = ipproto;
+		flow->flow_rdomain = rdomain;
 
 		if (RB_INSERT(iked_flows, &pol.pol_flows, flow) == NULL)
 			pol.pol_nflows++;

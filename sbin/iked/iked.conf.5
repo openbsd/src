@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.63 2020/02/21 15:17:34 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.64 2020/04/23 20:17:48 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 21 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -311,6 +311,18 @@ For a list of all the protocol name to number mappings used by
 .Xr iked 8 ,
 see the file
 .Pa /etc/protocols .
+.It Ic rdomain Ar number
+Specify a different routing domain for unencrypted traffic.
+The resulting IPsec SAs will match outgoing packets in the specified
+.Ic rdomain Ar number
+and move the encrypted packets to the rdomain the
+.Xr iked 8
+instance is running in.
+Vice versa, incoming
+.Xr ipsec 4
+traffic is moved to
+.Ic rdomain Ar number
+after decryption.
 .It Xo
 .Ic from Ar src
 .Op Ic port Ar sport

@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.58 2020/04/04 20:36:34 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.59 2020/04/23 20:17:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -874,6 +874,8 @@ flow_cmp(struct iked_flow *a, struct iked_flow *b)
 {
 	int		diff = 0;
 
+	if (!diff)
+		diff = a->flow_rdomain - b->flow_rdomain;
 	if (!diff)
 		diff = (int)a->flow_ipproto - (int)b->flow_ipproto;
 	if (!diff)

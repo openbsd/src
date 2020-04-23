@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.63 2020/01/14 22:28:29 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.64 2020/04/23 20:17:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -40,7 +40,7 @@
 #include "ikev2.h"
 
 #define ROUNDUP(x) (((x) + (PFKEYV2_CHUNK - 1)) & ~(PFKEYV2_CHUNK - 1))
-#define IOV_CNT 20
+#define IOV_CNT 21
 
 #define PFKEYV2_CHUNK sizeof(uint64_t)
 #define PFKEY_REPLY_TIMEOUT 1000
@@ -50,6 +50,8 @@
 
 static uint32_t sadb_msg_seq = 0;
 static unsigned int sadb_decoupled = 0;
+
+static int iked_rdomain = 0;
 
 static struct event pfkey_timer_ev;
 static struct timeval pfkey_timer_tv;
@@ -184,6 +186,7 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 	struct sadb_address	 sa_src, sa_dst, sa_local, sa_peer, sa_smask,
 				 sa_dmask;
 	struct sadb_protocol	 sa_flowtype, sa_protocol;
+	struct sadb_x_rdomain	 sa_rdomain;
 	struct sadb_ident	*sa_srcid, *sa_dstid;
 	struct sockaddr_storage	 ssrc, sdst, slocal, speer, smask, dmask;
 	struct iovec		 iov[IOV_CNT];
@@ -335,6 +338,14 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 		    SADB_EXT_IDENTITY_DST);
 	}
 
+	if (flow->flow_rdomain >= 0) {
+		/* install flow in specific rdomain */
+		bzero(&sa_rdomain, sizeof(sa_rdomain));
+		sa_rdomain.sadb_x_rdomain_exttype = SADB_X_EXT_RDOMAIN;
+		sa_rdomain.sadb_x_rdomain_len = sizeof(sa_rdomain) / 8;
+		sa_rdomain.sadb_x_rdomain_dom1 = flow->flow_rdomain;
+	}
+
 	iov_cnt = 0;
 
 	/* header */
@@ -427,6 +438,13 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 		iov_cnt++;
 	}
 
+	if (flow->flow_rdomain >= 0) {
+		iov[iov_cnt].iov_base = &sa_rdomain;
+		iov[iov_cnt].iov_len = sizeof(sa_rdomain);
+		smsg.sadb_msg_len += sa_rdomain.sadb_x_rdomain_len;
+		iov_cnt++;
+	}
+
 	ret = pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL);
 
 	free(sa_srcid);
@@ -447,6 +465,7 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 	struct sadb_x_tag	 sa_tag;
 	char			*tag = NULL;
 	struct sadb_x_tap	 sa_tap;
+	struct sadb_x_rdomain	 sa_rdomain;
 	struct sockaddr_storage	 ssrc, sdst, spxy;
 	struct sadb_ident	*sa_srcid, *sa_dstid;
 	struct iked_lifetime	*lt;
@@ -531,6 +550,24 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 	bzero(&udpencap, sizeof udpencap);
 	bzero(&sa_ltime_hard, sizeof(sa_ltime_hard));
 	bzero(&sa_ltime_soft, sizeof(sa_ltime_soft));
+
+	if (pol->pol_rdomain >= 0) {
+		bzero(&sa_rdomain, sizeof(sa_rdomain));
+		sa_rdomain.sadb_x_rdomain_exttype = SADB_X_EXT_RDOMAIN;
+		sa_rdomain.sadb_x_rdomain_len = sizeof(sa_rdomain) / 8;
+		if (satype == SADB_X_SATYPE_IPCOMP) {
+			/* IPCOMP SAs are always in the pol_rdomain */
+			sa_rdomain.sadb_x_rdomain_dom1 = pol->pol_rdomain;
+			sa_rdomain.sadb_x_rdomain_dom2 = pol->pol_rdomain;
+		} else if (sa->csa_dir == IPSP_DIRECTION_OUT) {
+			/* switch rdomain on encrypt/decrypt */
+			sa_rdomain.sadb_x_rdomain_dom1 = pol->pol_rdomain;
+			sa_rdomain.sadb_x_rdomain_dom2 = iked_rdomain;
+		} else {
+			sa_rdomain.sadb_x_rdomain_dom1 = iked_rdomain;
+			sa_rdomain.sadb_x_rdomain_dom2 = pol->pol_rdomain;
+		}
+	}
 
 	if (action == SADB_DELETE)
 		goto send;
@@ -775,6 +812,13 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 		iov_cnt++;
 	}
 
+	if (pol->pol_rdomain >= 0) {
+		iov[iov_cnt].iov_base = &sa_rdomain;
+		iov[iov_cnt].iov_len = sizeof(sa_rdomain);
+		smsg.sadb_msg_len += sa_rdomain.sadb_x_rdomain_len;
+		iov_cnt++;
+	}
+
 	ret = pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL);
 
 	free(sa_srcid);
@@ -786,15 +830,17 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 int
 pfkey_sa_last_used(int sd, struct iked_childsa *sa, uint64_t *last_used)
 {
+	struct iked_policy	*pol = sa->csa_ikesa->sa_policy;
 	struct sadb_msg		*msg, smsg;
 	struct sadb_address	 sa_src, sa_dst;
 	struct sadb_sa		 sadb;
+	struct sadb_x_rdomain	 sa_rdomain;
 	struct sadb_lifetime	*sa_life;
 	struct sockaddr_storage	 ssrc, sdst;
 	struct iovec		 iov[IOV_CNT];
 	uint8_t			*data;
 	ssize_t			 n;
-	int			 iov_cnt, ret = -1;
+	int			 iov_cnt, ret = -1, rdomain;
 	uint8_t			 satype;
 
 	*last_used = 0;
@@ -830,6 +876,15 @@ pfkey_sa_last_used(int sd, struct iked_childsa *sa, uint64_t *last_used)
 	sadb.sadb_sa_spi = htonl(sa->csa_spi.spi);
 	sadb.sadb_sa_state = SADB_SASTATE_MATURE;
 	sadb.sadb_sa_replay = 64;
+
+	if (pol->pol_rdomain >= 0) {
+		rdomain = (sa->csa_dir == IPSP_DIRECTION_IN) ?
+		    iked_rdomain : pol->pol_rdomain;
+		bzero(&sa_rdomain, sizeof(sa_rdomain));
+		sa_rdomain.sadb_x_rdomain_exttype = SADB_X_EXT_RDOMAIN;
+		sa_rdomain.sadb_x_rdomain_len = sizeof(sa_rdomain) / 8;
+		sa_rdomain.sadb_x_rdomain_dom1 = rdomain;
+	}
 
 	bzero(&sa_src, sizeof(sa_src));
 	sa_src.sadb_address_len = (sizeof(sa_src) + ROUNDUP(ssrc.ss_len)) / 8;
@@ -869,6 +924,13 @@ pfkey_sa_last_used(int sd, struct iked_childsa *sa, uint64_t *last_used)
 	iov[iov_cnt].iov_len = ROUNDUP(sdst.ss_len);
 	smsg.sadb_msg_len += sa_dst.sadb_address_len;
 	iov_cnt++;
+
+	if (pol->pol_rdomain >= 0) {
+		iov[iov_cnt].iov_base = &sa_rdomain;
+		iov[iov_cnt].iov_len = sizeof(sa_rdomain);
+		smsg.sadb_msg_len += sa_rdomain.sadb_x_rdomain_len;
+		iov_cnt++;
+	}
 
 	if ((ret = pfkey_write(sd, &smsg, iov, iov_cnt, &data, &n)) != 0)
 		return (-1);
@@ -1010,8 +1072,11 @@ pfkey_sagroup(int sd, uint8_t satype1, uint8_t action,
 	struct sadb_address	sa_dst1, sa_dst2;
 	struct sockaddr_storage	sdst1, sdst2;
 	struct sadb_protocol	sa_proto;
+	struct sadb_x_rdomain	sa_rdomain;
+	struct iked_policy	*pol;
 	struct iovec		iov[IOV_CNT];
 	int			iov_cnt;
+	int			group_rdomain;
 	uint8_t			satype2;
 
 	if (pfkey_map(pfkey_satype, sa2->csa_saproto, &satype2) == -1)
@@ -1052,6 +1117,28 @@ pfkey_sagroup(int sd, uint8_t satype1, uint8_t action,
 	sadb2.sadb_sa_exttype = SADB_X_EXT_SA2;
 	sadb2.sadb_sa_spi = htonl(sa2->csa_spi.spi);
 	sadb2.sadb_sa_state = SADB_SASTATE_MATURE;
+
+	/* Incoming SA1 (IPCOMP) and SA2 (ESP) are in different/other rdomain */
+	group_rdomain =
+	    (pol = sa1->csa_ikesa->sa_policy) != NULL &&
+	    pol->pol_rdomain >= 0 &&
+	    satype1 == SADB_X_SATYPE_IPCOMP &&
+	    satype2 == SADB_SATYPE_ESP;
+	if (group_rdomain) {
+		bzero(&sa_rdomain, sizeof(sa_rdomain));
+		sa_rdomain.sadb_x_rdomain_exttype = SADB_X_EXT_RDOMAIN;
+		sa_rdomain.sadb_x_rdomain_len = sizeof(sa_rdomain) / 8;
+		if (sa1->csa_dir == IPSP_DIRECTION_IN) {
+			/* only ESP SA is iked's rdomain */
+			sa_rdomain.sadb_x_rdomain_dom1 = pol->pol_rdomain;
+			sa_rdomain.sadb_x_rdomain_dom2 = iked_rdomain;
+		} else {
+			/* both SAs are in pol_rdomain */
+			sa_rdomain.sadb_x_rdomain_dom1 = pol->pol_rdomain;
+			sa_rdomain.sadb_x_rdomain_dom2 = pol->pol_rdomain;
+		}
+	}
+
 	iov_cnt = 0;
 
 	bzero(&sa_dst1, sizeof(sa_dst1));
@@ -1110,6 +1197,14 @@ pfkey_sagroup(int sd, uint8_t satype1, uint8_t action,
 	iov[iov_cnt].iov_len = sizeof(sa_proto);
 	smsg.sadb_msg_len += sa_proto.sadb_protocol_len;
 	iov_cnt++;
+
+	/* SA1 and SA2 are from different rdomains */
+	if (group_rdomain) {
+		iov[iov_cnt].iov_base = &sa_rdomain;
+		iov[iov_cnt].iov_len = sizeof(sa_rdomain);
+		smsg.sadb_msg_len += sa_rdomain.sadb_x_rdomain_len;
+		iov_cnt++;
+	}
 
 	return (pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL));
 }
@@ -1467,6 +1562,8 @@ pfkey_init(struct iked *env, int fd)
 	struct sadb_msg		smsg;
 	struct iovec		iov;
 
+	iked_rdomain = getrtable();
+
 	/* Set up a timer to process messages deferred by the pfkey_reply */
 	pfkey_timer_tv.tv_sec = 1;
 	pfkey_timer_tv.tv_usec = 0;
@@ -1787,6 +1884,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			goto out;
 		}
 		flow.flow_dir = sa_proto->sadb_protocol_direction;
+		flow.flow_rdomain = -1;	/* XXX get from kernel */
 
 		log_debug("%s: flow %s from %s/%s to %s/%s via %s", __func__,
 		    flow.flow_dir == IPSP_DIRECTION_IN ? "in" : "out",

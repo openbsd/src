@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.217 2020/04/22 16:52:04 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.218 2020/04/23 20:17:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5412,6 +5412,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			flowa->flow_dir = IPSP_DIRECTION_OUT;
 			flowa->flow_saproto = ic ? IKEV2_SAPROTO_IPCOMP :
 			    prop->prop_protoid;
+			flowa->flow_rdomain = sa->sa_policy->pol_rdomain;
 			flowa->flow_local = &sa->sa_local;
 			flowa->flow_peer = &sa->sa_peer;
 			flowa->flow_ikesa = sa;
@@ -6481,7 +6482,7 @@ ikev2_info_flow(struct iked *env, int dolog, const char *msg, struct iked_flow *
 	int		buflen;
 
 	buflen = asprintf(&buf,
-	    "%s: %p %s %s %s/%d -> %s/%d [%u] (%s) @%p\n", msg, flow,
+	    "%s: %p %s %s %s/%d -> %s/%d [%u]@%d (%s) @%p\n", msg, flow,
 	    print_map(flow->flow_saproto, ikev2_saproto_map),
 	    flow->flow_dir == IPSP_DIRECTION_IN ? "in" : "out",
 	    print_host((struct sockaddr *)&flow->flow_src.addr, NULL, 0),
@@ -6489,6 +6490,7 @@ ikev2_info_flow(struct iked *env, int dolog, const char *msg, struct iked_flow *
 	    print_host((struct sockaddr *)&flow->flow_dst.addr, NULL, 0),
 	    flow->flow_dst.addr_mask,
 	    flow->flow_ipproto,
+	    flow->flow_rdomain,
 	    flow->flow_loaded ? "L" : "",
 	    flow->flow_ikesa);
 
