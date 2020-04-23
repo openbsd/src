@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.16 2020/04/23 19:48:26 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.17 2020/04/23 19:50:52 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -671,6 +671,7 @@ dwpcie_imx8mq_init(struct dwpcie_softc *sc)
 	clock_enable(sc->sc_node, "pcie_phy");
 	clock_enable(sc->sc_node, "pcie_bus");
 	clock_enable(sc->sc_node, "pcie");
+	clock_enable(sc->sc_node, "pcie_aux");
 
 	/* Allow clocks to stabilize. */
 	delay(200);
