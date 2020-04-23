@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.8,v 1.6 2020/04/23 05:54:35 ratchov Exp $
+.\" $OpenBSD: mixerctl.8,v 1.7 2020/04/23 14:47:20 ratchov Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm mixerctl
-.Nd manipulate audio hardware controls
+.Nd manipulate controls for audio hardware
 .Sh SYNOPSIS
 .Nm mixerctl
 .Op Fl anv
@@ -52,12 +52,25 @@
 .Sh DESCRIPTION
 The
 .Nm
-command displays or sets various audio device controls.
+command displays or sets various controls for audio hardware,
+such as microphone reference voltage or output level.
+Where hardware defaults are not the desired ones,
+controls can be set at system startup using the configuration file
+.Xr mixerctl.conf 5 .
+.Pp
+.Nm
+itself can only be run by the superuser.
+Common controls should be adjusted at runtime using
+.Xr sndioctl 1 ,
+which is intended for every day use and requires no superuser privileges.
+Manual use of
+.Nm
+is intended for controls which cannot be set using
+.Xr sndioctl 1 .
+.Pp
 If a list of control names is present on the command line,
 .Nm
 prints the current value of those controls for the specified device.
-Controls can also be set up at system startup using the configuration file
-.Xr mixerctl.conf 5 .
 .Pp
 The options are as follows:
 .Bl -tag -width "-f file"
