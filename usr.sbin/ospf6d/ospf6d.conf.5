@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.22 2020/02/10 13:18:21 schwarze Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.23 2020/04/23 21:10:54 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ Setting
 to
 .Ic \&no
 will implicitly set the
-.Ic stub Ic router
+.Ic stub router
 option to ensure that no traffic tries to transit via this router.
 .Pp
 .It Ic rdomain Ar tableid
@@ -216,7 +216,7 @@ shortest path first calculations.
 The default value is 5 seconds; the valid range is 1\-5 seconds.
 .Pp
 .It Xo
-.Ic stub Ic router
+.Ic stub router
 .Pq Ic yes Ns | Ns Ic no
 .Xc
 If set to
@@ -225,7 +225,7 @@ all interfaces with active neighbors will have a metric of infinity.
 This ensures that the other routers prefer routes around this router while
 still being able to reach directly connected IP prefixes.
 The
-.Ic stub Ic router
+.Ic stub router
 option is automatically enabled if either the
 .Xr sysctl 8
 variable

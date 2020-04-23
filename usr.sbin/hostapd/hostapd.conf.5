@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.47 2020/02/10 13:18:21 schwarze Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.48 2020/04/23 21:10:53 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt HOSTAPD.CONF 5
 .Os
 .Sh NAME
@@ -477,7 +477,7 @@ The following frames types are supported at present:
 Send a data frame.
 This is normally used to encapsulate ordinary IEEE 802.3
 frames into IEEE 802.11 wireless frames.
-.It Ic type Ic management Ar subtype
+.It Ic type management Ar subtype
 Send a management frame with the specified subtype.
 Management frames are used to control states and to find access points
 and IBSS nodes in IEEE 802.11 networks.

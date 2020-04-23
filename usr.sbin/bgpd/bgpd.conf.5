@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.202 2020/04/23 16:17:48 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.203 2020/04/23 21:10:53 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -285,7 +285,7 @@ where the metric is only compared between peers belonging to the same AS.
 .It Xo
 .Ic rde
 .Ic rib Ar name
-.Op Ic no Ic evaluate
+.Op Ic no evaluate
 .Xc
 .It Xo
 .Ic rde
@@ -297,7 +297,7 @@ Create an additional RIB named
 The degree to which its routes may be utilized is configurable.
 They may be excluded from the decision process that selects usable routes
 with the
-.Ic no Ic evaluate
+.Ic no evaluate
 flag, and this precludes their export to any kernel routing table.
 By default its routes will be evaluated, but not exported to the kernel.
 They may be both evaluated and exported if associated with a given
@@ -1018,7 +1018,7 @@ daemons on both sides, the session should be established.
 After changing settings a session needs to be reset to use the new keys.
 .Pp
 .It Ic local-address Ar address
-.It Ic no Ic local-address
+.It Ic no local-address
 When
 .Xr bgpd 8
 initiates the TCP connection to the neighbor system, it normally does not
@@ -1559,13 +1559,13 @@ prefix 10.0.0.0/8 prefixlen > 16
 .Ic or-longer
 is a shorthand for:
 .Bd -literal -offset indent
-.Ic prefix Ar address Ns Li / Ns Ar len Ic prefixlen Ic >= Ar len
+.Ic prefix Ar address Ns Li / Ns Ar len Ic prefixlen >= Ar len
 .Ed
 .Pp
 .Ic maxlen Ar mlen
 is a shorthand for:
 .Bd -literal -offset indent
-.Ic prefix Ar address Ns Li / Ns Ar len Ic prefixlen Ic <= Ar mlen
+.Ic prefix Ar address Ns Li / Ns Ar len Ic prefixlen <= Ar mlen
 .Ed
 .Pp
 .It Ic prefix-set Ar name Op Ic or-longer
@@ -1579,7 +1579,7 @@ the
 .Em UPDATES
 will match any prefix in the prefix-set where
 .Bd -literal -offset indent
-.Ic address Ns Li / Ns Ar len Ic prefixlen Ic >= Ar len
+.Ic address Ns Li / Ns Ar len Ic prefixlen >= Ar len
 .Ed
 .Pp
 .It Ic quick

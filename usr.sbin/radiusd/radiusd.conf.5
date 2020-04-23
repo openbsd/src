@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.12 2020/02/10 13:18:21 schwarze Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.13 2020/04/23 21:10:54 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@ Message authentication is required if
 .Dq yes
 is specified.
 .El
-.It Ic module Ic load Ar name path
+.It Ic module load Ar name path
 Load a module
 from
 .Ar path
@@ -85,7 +85,7 @@ The
 .Dq radius
 module provides authentication from upstream RADIUS servers.
 .El
-.It Ic module Ic set Ar module Ar key Ar value ...
+.It Ic module set Ar module Ar key Ar value ...
 Configure the module specific configurations by
 .Ar key
 and
