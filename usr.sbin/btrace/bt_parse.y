@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.10 2020/03/27 09:37:06 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.11 2020/04/23 14:54:12 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -208,7 +208,7 @@ term		: '(' term ')'			{ $$ = $2; }
 gvar		: '@' STRING			{ $$ = $2; }
 		| '@'				{ $$ = UNNAMED_MAP; }
 
-map		: gvar '[' arg ']'		{ $$ = bm_get($1, $3); }
+map		: gvar '[' arglist ']'		{ $$ = bm_get($1, $3); }
 		;
 
 marg		: arg				{ $$ = $1; }
@@ -229,7 +229,7 @@ NL		: /* empty */ | '\n'
 
 stmt		: ';' NL			{ $$ = NULL; }
 		| gvar '=' arg			{ $$ = bv_set($1, $3); }
-		| gvar '[' arg ']' '=' marg	{ $$ = bm_set($1, $3, $6); }
+		| gvar '[' arglist ']' '=' marg	{ $$ = bm_set($1, $3, $6); }
 		| fnN '(' arglist ')'		{ $$ = bs_new($1, $3, NULL); }
 		| fn1 '(' arg ')'		{ $$ = bs_new($1, $3, NULL); }
 		| fn0 '(' ')'			{ $$ = bs_new($1, NULL, NULL); }
@@ -695,7 +695,7 @@ again:
 	}
 
 #define allowed_to_end_number(x) \
-	(isspace(x) || x == ')' || x == '/' || x == '{' || x == ';' || x == ']')
+    (isspace(x) || x == ')' || x == '/' || x == '{' || x == ';' || x == ']' || x == ',')
 
 	/* parsing number */
 	if (isdigit(c)) {

@@ -7,9 +7,12 @@ Missing language features:
 - if/else
 - scratch variable ($name)
 - `args', tracepoint arguments support (requires kernel work)
-- str()
+- str(args->buf, args->count)
 - @ = hist(x)
 - @ = lhist(x, min, max, step)
+- 'cpu' builtin, reports cpuid
+- 'argv'
+- $1 support
 
 Improvements:
 

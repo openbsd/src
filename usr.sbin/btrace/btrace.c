@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.15 2020/04/23 09:14:27 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.16 2020/04/23 14:54:12 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -85,10 +85,8 @@ void			 stmt_store(struct bt_stmt *, struct dt_evt *);
 void			 stmt_time(struct bt_stmt *, struct dt_evt *);
 void			 stmt_zero(struct bt_stmt *);
 struct bt_arg		*ba_read(struct bt_arg *);
-int			 ba2dtflag(struct bt_arg *);
-
-/* FIXME: use a real hash. */
-#define ba2hash(_b, _e)	ba2str((_b), (_e))
+const char		*ba2hash(struct bt_arg *, struct dt_evt *);
+int			 ba2dtflags(struct bt_arg *);
 
 /*
  * Debug routines.
@@ -435,7 +433,7 @@ rules_setup(int fd)
 			struct bt_arg *ba;
 
 			SLIST_FOREACH(ba, &bs->bs_args, ba_next)
-				dtrq->dtrq_evtflags |= ba2dtflag(ba);
+				dtrq->dtrq_evtflags |= ba2dtflags(ba);
 		}
 
 		if (dtrq->dtrq_evtflags & DTEVT_KSTACK)
@@ -819,6 +817,34 @@ ba_read(struct bt_arg *ba)
 	return bv->bv_value;
 }
 
+const char *
+ba2hash(struct bt_arg *ba, struct dt_evt *dtev)
+{
+	static char buf[256];
+	char *hash;
+	int l, len;
+
+	l = snprintf(buf, sizeof(buf), "%s", ba2str(ba, dtev));
+	if (l < 0 || (size_t)l > sizeof(buf)) {
+		warn("string too long %d > %lu", l, sizeof(buf));
+		return buf;
+	}
+
+	len = 0;
+	while ((ba = SLIST_NEXT(ba, ba_next)) != NULL) {
+		len += l;
+		hash = buf + len;
+
+		l = snprintf(hash, sizeof(buf) - len, ", %s", ba2str(ba, dtev));
+		if (l < 0 || (size_t)l > (sizeof(buf) - len)) {
+			warn("hash too long %d > %lu", l + len, sizeof(buf));
+			break;
+		}
+	}
+
+	return buf;
+}
+
 /*
  * Helper to evaluate the operation encoded in `ba' and return its
  * result.
@@ -966,52 +992,54 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 }
 
 /*
- * Return dt(4) flag indicating which data should be recorded by the
+ * Return dt(4) flags indicating which data should be recorded by the
  * kernel, if any, for a given `ba'.
  */
 int
-ba2dtflag(struct bt_arg *ba)
+ba2dtflags(struct bt_arg *ba)
 {
-	int flag = 0;
+	int flags = 0;
 
 	if (ba->ba_type == B_AT_MAP)
 		ba = ba->ba_key;
 
-	switch (ba->ba_type) {
-	case B_AT_STR:
-	case B_AT_LONG:
-	case B_AT_VAR:
-		break;
-	case B_AT_BI_KSTACK:
-		flag = DTEVT_KSTACK;
-		break;
-	case B_AT_BI_USTACK:
-		flag = DTEVT_USTACK;
-		break;
-	case B_AT_BI_COMM:
-		flag = DTEVT_EXECNAME;
-		break;
-	case B_AT_BI_PID:
-	case B_AT_BI_TID:
-	case B_AT_BI_NSECS:
-		break;
-	case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
-		flag = DTEVT_FUNCARGS;
-		break;
-	case B_AT_BI_RETVAL:
-		flag = DTEVT_RETVAL;
-		break;
-	case B_AT_MF_COUNT:
-	case B_AT_MF_MAX:
-	case B_AT_MF_MIN:
-	case B_AT_MF_SUM:
-	case B_AT_OP_ADD ... B_AT_OP_DIVIDE:
-		break;
-	default:
-		xabort("invalid argument type %d", ba->ba_type);
-	}
+	do {
+		switch (ba->ba_type) {
+		case B_AT_STR:
+		case B_AT_LONG:
+		case B_AT_VAR:
+			break;
+		case B_AT_BI_KSTACK:
+			flags |= DTEVT_KSTACK;
+			break;
+		case B_AT_BI_USTACK:
+			flags |= DTEVT_USTACK;
+			break;
+		case B_AT_BI_COMM:
+			flags |= DTEVT_EXECNAME;
+			break;
+		case B_AT_BI_PID:
+		case B_AT_BI_TID:
+		case B_AT_BI_NSECS:
+			break;
+		case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
+			flags |= DTEVT_FUNCARGS;
+			break;
+		case B_AT_BI_RETVAL:
+			flags |= DTEVT_RETVAL;
+			break;
+		case B_AT_MF_COUNT:
+		case B_AT_MF_MAX:
+		case B_AT_MF_MIN:
+		case B_AT_MF_SUM:
+		case B_AT_OP_ADD ... B_AT_OP_DIVIDE:
+			break;
+		default:
+			xabort("invalid argument type %d", ba->ba_type);
+		}
+	} while ((ba = SLIST_NEXT(ba, ba_next)) != NULL);
 
-	return flag;
+	return flags;
 }
 
 long
