@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.25 2018/06/11 09:22:50 kettenis Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.1 2020/04/23 22:14:49 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -222,7 +222,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	EOWRITE4(&sc->sc, EHCI_PORTSC(1),
 	    EOREAD4(&sc->sc, EHCI_PORTSC(1)) & ~EHCI_PS_PTS_UTMI_MASK);
 
-	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_USB,
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_USB,
 	    ehci_intr, &sc->sc, devname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");
@@ -241,7 +241,7 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	goto out;
 
 intr:
-	arm_intr_disestablish(sc->sc_ih);
+	fdt_intr_disestablish(sc->sc_ih);
 	sc->sc_ih = NULL;
 mem2:
 	bus_space_unmap(sc->sc.iot, sc->nc_ioh, misc_reg[1]);
@@ -264,7 +264,7 @@ imxehci_detach(struct device *self, int flags)
 		return (rv);
 
 	if (sc->sc_ih != NULL) {
-		arm_intr_disestablish(sc->sc_ih);
+		fdt_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 
