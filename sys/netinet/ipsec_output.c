@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.75 2018/09/14 23:40:10 mestre Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.76 2020/04/23 19:38:09 tobhe Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -592,6 +592,8 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	pf_tag_packet(m, tdb->tdb_tag, -1);
 	pf_pkt_addr_changed(m);
 #endif
+	if (tdb->tdb_rdomain != tdb->tdb_rdomain_post)
+		m->m_pkthdr.ph_rtableid = tdb->tdb_rdomain_post;
 
 	/*
 	 * We're done with IPsec processing, transmit the packet using the

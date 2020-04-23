@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.66 2019/03/04 08:42:12 stsp Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.67 2020/04/23 19:38:08 tobhe Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -838,6 +838,27 @@ export_udpencap(void **p, struct tdb *tdb)
 	sadb_udpencap->sadb_x_udpencap_len =
 	    sizeof(struct sadb_x_udpencap) / sizeof(uint64_t);
 	*p += sizeof(struct sadb_x_udpencap);
+}
+
+/* Import rdomain switch for SA */
+void
+import_rdomain(struct tdb *tdb, struct sadb_x_rdomain *srdomain)
+{
+	if (srdomain)
+		tdb->tdb_rdomain_post = srdomain->sadb_x_rdomain_dom2;
+}
+
+/* Export rdomain switch for SA */
+void
+export_rdomain(void **p, struct tdb *tdb)
+{
+	struct sadb_x_rdomain *srdomain = (struct sadb_x_rdomain *)*p;
+
+	srdomain->sadb_x_rdomain_dom1 = tdb->tdb_rdomain;
+	srdomain->sadb_x_rdomain_dom2 = tdb->tdb_rdomain_post;
+	srdomain->sadb_x_rdomain_len =
+	    sizeof(struct sadb_x_rdomain) / sizeof(uint64_t);
+	*p += sizeof(struct sadb_x_rdomain);
 }
 
 #if NPF > 0

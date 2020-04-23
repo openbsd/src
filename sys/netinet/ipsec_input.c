@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.169 2019/09/30 01:53:05 dlg Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.170 2020/04/23 19:38:08 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -299,7 +299,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	}
 
 	if (sproto != IPPROTO_IPCOMP) {
-		if ((encif = enc_getif(tdbp->tdb_rdomain,
+		if ((encif = enc_getif(tdbp->tdb_rdomain_post,
 		    tdbp->tdb_tap)) == NULL) {
 			DPRINTF(("%s: no enc%u interface for SA %s/%08x/%u\n",
 			    __func__,
@@ -657,6 +657,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	pf_tag_packet(m, tdbp->tdb_tag, -1);
 	pf_pkt_addr_changed(m);
 #endif
+	if (tdbp->tdb_rdomain != tdbp->tdb_rdomain_post)
+		m->m_pkthdr.ph_rtableid = tdbp->tdb_rdomain_post;
 
 	if (tdbp->tdb_flags & TDBF_TUNNELING)
 		m->m_flags |= M_TUNNEL;
@@ -665,7 +667,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	tdbp->tdb_idecompbytes += m->m_pkthdr.len;
 
 #if NBPFILTER > 0
-	if ((encif = enc_getif(tdbp->tdb_rdomain, tdbp->tdb_tap)) != NULL) {
+	if ((encif = enc_getif(tdbp->tdb_rdomain_post, tdbp->tdb_tap)) != NULL) {
 		encif->if_ipackets++;
 		encif->if_ibytes += m->m_pkthdr.len;
 
@@ -966,7 +968,7 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 
 		memcpy(&spi, (caddr_t)ip + hlen, sizeof(u_int32_t));
 
-		tdbp = gettdb(rdomain, spi, (union sockaddr_union *)&dst,
+		tdbp = gettdb_rev(rdomain, spi, (union sockaddr_union *)&dst,
 		    proto);
 		if (tdbp == NULL || tdbp->tdb_flags & TDBF_INVALID)
 			return;
@@ -1025,7 +1027,8 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	src.sin_addr.s_addr = ip->ip_src.s_addr;
 	su_src = (union sockaddr_union *)&src;
 
-	tdbp = gettdbbysrcdst(rdomain, 0, su_src, su_dst, IPPROTO_ESP);
+	tdbp = gettdbbysrcdst_rev(rdomain, 0, su_src, su_dst,
+	    IPPROTO_ESP);
 
 	for (; tdbp != NULL; tdbp = tdbp->tdb_snext) {
 		if (tdbp->tdb_sproto == IPPROTO_ESP &&

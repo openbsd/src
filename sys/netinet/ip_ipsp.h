@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.193 2018/08/28 15:15:02 mpi Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.194 2020/04/23 19:38:08 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -409,6 +409,7 @@ struct tdb {				/* tunnel descriptor block */
 	u_int32_t	tdb_tap;		/* Alternate enc(4) interface */
 
 	u_int		tdb_rdomain;		/* Routing domain */
+	u_int		tdb_rdomain_post;	/* Change domain */
 
 	struct sockaddr_encap   tdb_filter; /* What traffic is acceptable */
 	struct sockaddr_encap   tdb_filtermask; /* And the mask */
@@ -574,15 +575,19 @@ int spd_table_walk(unsigned int,
 /* TDB management routines */
 uint32_t reserve_spi(u_int, u_int32_t, u_int32_t, union sockaddr_union *,
 		union sockaddr_union *, u_int8_t, int *);
-struct	tdb *gettdb(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
+struct	tdb *gettdb_dir(u_int, u_int32_t, union sockaddr_union *, u_int8_t, int);
+#define gettdb(a,b,c,d)		gettdb_dir((a),(b),(c),(d),0)
+#define gettdb_rev(a,b,c,d)	gettdb_dir((a),(b),(c),(d),1)
 struct	tdb *gettdbbydst(u_int, union sockaddr_union *, u_int8_t,
 		struct ipsec_ids *,
 		struct sockaddr_encap *, struct sockaddr_encap *);
 struct	tdb *gettdbbysrc(u_int, union sockaddr_union *, u_int8_t,
 		struct ipsec_ids *,
 		struct sockaddr_encap *, struct sockaddr_encap *);
-struct	tdb *gettdbbysrcdst(u_int, u_int32_t, union sockaddr_union *,
-		union sockaddr_union *, u_int8_t);
+struct	tdb *gettdbbysrcdst_dir(u_int, u_int32_t, union sockaddr_union *,
+		union sockaddr_union *, u_int8_t, int);
+#define gettdbbysrcdst(a,b,c,d,e) gettdbbysrcdst_dir((a),(b),(c),(d),(e),0)
+#define gettdbbysrcdst_rev(a,b,c,d,e) gettdbbysrcdst_dir((a),(b),(c),(d),(e),1)
 void	puttdb(struct tdb *);
 void	tdb_delete(struct tdb *);
 struct	tdb *tdb_alloc(u_int);

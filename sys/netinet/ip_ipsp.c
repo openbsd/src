@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.234 2019/05/11 17:16:21 benno Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.235 2020/04/23 19:38:08 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -84,7 +84,7 @@ void		tdb_timeout(void *);
 void		tdb_firstuse(void *);
 void		tdb_soft_timeout(void *);
 void		tdb_soft_firstuse(void *);
-int		tdb_hash(u_int, u_int32_t, union sockaddr_union *, u_int8_t);
+int		tdb_hash(u_int32_t, union sockaddr_union *, u_int8_t);
 
 int ipsec_in_use = 0;
 u_int64_t ipsec_last_added = 0;
@@ -185,7 +185,7 @@ static int tdb_count;
  * so we cannot be DoS-attacked via choosing of the data to hash.
  */
 int
-tdb_hash(u_int rdomain, u_int32_t spi, union sockaddr_union *dst,
+tdb_hash(u_int32_t spi, union sockaddr_union *dst,
     u_int8_t proto)
 {
 	SIPHASH_CTX ctx;
@@ -193,7 +193,6 @@ tdb_hash(u_int rdomain, u_int32_t spi, union sockaddr_union *dst,
 	NET_ASSERT_LOCKED();
 
 	SipHash24_Init(&ctx, &tdbkey);
-	SipHash24_Update(&ctx, &rdomain, sizeof(rdomain));
 	SipHash24_Update(&ctx, &spi, sizeof(spi));
 	SipHash24_Update(&ctx, &proto, sizeof(proto));
 	SipHash24_Update(&ctx, dst, dst->sa.sa_len);
@@ -306,7 +305,8 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
  * is really one of our addresses if we received the packet!
  */
 struct tdb *
-gettdb(u_int rdomain, u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
+gettdb_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *dst, u_int8_t proto,
+    int reverse)
 {
 	u_int32_t hashval;
 	struct tdb *tdbp;
@@ -316,11 +316,12 @@ gettdb(u_int rdomain, u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 	if (tdbh == NULL)
 		return (struct tdb *) NULL;
 
-	hashval = tdb_hash(rdomain, spi, dst, proto);
+	hashval = tdb_hash(spi, dst, proto);
 
 	for (tdbp = tdbh[hashval]; tdbp != NULL; tdbp = tdbp->tdb_hnext)
 		if ((tdbp->tdb_spi == spi) && (tdbp->tdb_sproto == proto) &&
-		    (tdbp->tdb_rdomain == rdomain) &&
+		    ((!reverse && tdbp->tdb_rdomain == rdomain) ||
+		    (reverse && tdbp->tdb_rdomain_post == rdomain)) &&
 		    !memcmp(&tdbp->tdb_dst, dst, dst->sa.sa_len))
 			break;
 
@@ -333,8 +334,8 @@ gettdb(u_int rdomain, u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
  * matches all SPIs.
  */
 struct tdb *
-gettdbbysrcdst(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
-    union sockaddr_union *dst, u_int8_t proto)
+gettdbbysrcdst_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
+    union sockaddr_union *dst, u_int8_t proto, int reverse)
 {
 	u_int32_t hashval;
 	struct tdb *tdbp;
@@ -345,12 +346,13 @@ gettdbbysrcdst(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 	if (tdbsrc == NULL)
 		return (struct tdb *) NULL;
 
-	hashval = tdb_hash(rdomain, 0, src, proto);
+	hashval = tdb_hash(0, src, proto);
 
 	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext)
 		if (tdbp->tdb_sproto == proto &&
 		    (spi == 0 || tdbp->tdb_spi == spi) &&
-		    (tdbp->tdb_rdomain == rdomain) &&
+		    ((!reverse && tdbp->tdb_rdomain == rdomain) ||
+		    (reverse && tdbp->tdb_rdomain_post == rdomain)) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (tdbp->tdb_dst.sa.sa_family == AF_UNSPEC ||
 		    !memcmp(&tdbp->tdb_dst, dst, dst->sa.sa_len)) &&
@@ -362,12 +364,13 @@ gettdbbysrcdst(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 
 	memset(&su_null, 0, sizeof(su_null));
 	su_null.sa.sa_len = sizeof(struct sockaddr);
-	hashval = tdb_hash(rdomain, 0, &su_null, proto);
+	hashval = tdb_hash(0, &su_null, proto);
 
 	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext)
 		if (tdbp->tdb_sproto == proto &&
 		    (spi == 0 || tdbp->tdb_spi == spi) &&
-		    (tdbp->tdb_rdomain == rdomain) &&
+		    ((!reverse && tdbp->tdb_rdomain == rdomain) ||
+		    (reverse && tdbp->tdb_rdomain_post == rdomain)) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 		    (tdbp->tdb_dst.sa.sa_family == AF_UNSPEC ||
 		    !memcmp(&tdbp->tdb_dst, dst, dst->sa.sa_len)) &&
@@ -431,7 +434,7 @@ gettdbbydst(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
 	if (tdbdst == NULL)
 		return (struct tdb *) NULL;
 
-	hashval = tdb_hash(rdomain, 0, dst, sproto);
+	hashval = tdb_hash(0, dst, sproto);
 
 	for (tdbp = tdbdst[hashval]; tdbp != NULL; tdbp = tdbp->tdb_dnext)
 		if ((tdbp->tdb_sproto == sproto) &&
@@ -464,7 +467,7 @@ gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
 	if (tdbsrc == NULL)
 		return (struct tdb *) NULL;
 
-	hashval = tdb_hash(rdomain, 0, src, sproto);
+	hashval = tdb_hash(0, src, sproto);
 
 	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext)
 		if ((tdbp->tdb_sproto == sproto) &&
@@ -620,8 +623,7 @@ tdb_rehash(void)
 	for (i = 0; i <= old_hashmask; i++) {
 		for (tdbp = tdbh[i]; tdbp != NULL; tdbp = tdbnp) {
 			tdbnp = tdbp->tdb_hnext;
-			hashval = tdb_hash(tdbp->tdb_rdomain,
-			    tdbp->tdb_spi, &tdbp->tdb_dst,
+			hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst,
 			    tdbp->tdb_sproto);
 			tdbp->tdb_hnext = new_tdbh[hashval];
 			new_tdbh[hashval] = tdbp;
@@ -629,18 +631,14 @@ tdb_rehash(void)
 
 		for (tdbp = tdbdst[i]; tdbp != NULL; tdbp = tdbnp) {
 			tdbnp = tdbp->tdb_dnext;
-			hashval = tdb_hash(tdbp->tdb_rdomain,
-			    0, &tdbp->tdb_dst,
-			    tdbp->tdb_sproto);
+			hashval = tdb_hash(0, &tdbp->tdb_dst, tdbp->tdb_sproto);
 			tdbp->tdb_dnext = new_tdbdst[hashval];
 			new_tdbdst[hashval] = tdbp;
 		}
 
 		for (tdbp = tdbsrc[i]; tdbp != NULL; tdbp = tdbnp) {
 			tdbnp = tdbp->tdb_snext;
-			hashval = tdb_hash(tdbp->tdb_rdomain,
-			    0, &tdbp->tdb_src,
-			    tdbp->tdb_sproto);
+			hashval = tdb_hash(0, &tdbp->tdb_src, tdbp->tdb_sproto);
 			tdbp->tdb_snext = new_srcaddr[hashval];
 			new_srcaddr[hashval] = tdbp;
 		}
@@ -676,8 +674,7 @@ puttdb(struct tdb *tdbp)
 		    M_TDB, M_WAITOK | M_ZERO);
 	}
 
-	hashval = tdb_hash(tdbp->tdb_rdomain, tdbp->tdb_spi,
-	    &tdbp->tdb_dst, tdbp->tdb_sproto);
+	hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
 	/*
 	 * Rehash if this tdb would cause a bucket to have more than
@@ -690,20 +687,18 @@ puttdb(struct tdb *tdbp)
 	if (tdbh[hashval] != NULL && tdbh[hashval]->tdb_hnext != NULL &&
 	    tdb_count * 10 > tdb_hashmask + 1) {
 		tdb_rehash();
-		hashval = tdb_hash(tdbp->tdb_rdomain, tdbp->tdb_spi,
-		    &tdbp->tdb_dst, tdbp->tdb_sproto);
+		hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst,
+		    tdbp->tdb_sproto);
 	}
 
 	tdbp->tdb_hnext = tdbh[hashval];
 	tdbh[hashval] = tdbp;
 
-	hashval = tdb_hash(tdbp->tdb_rdomain, 0, &tdbp->tdb_dst,
-	    tdbp->tdb_sproto);
+	hashval = tdb_hash(0, &tdbp->tdb_dst, tdbp->tdb_sproto);
 	tdbp->tdb_dnext = tdbdst[hashval];
 	tdbdst[hashval] = tdbp;
 
-	hashval = tdb_hash(tdbp->tdb_rdomain, 0, &tdbp->tdb_src,
-	    tdbp->tdb_sproto);
+	hashval = tdb_hash(0, &tdbp->tdb_src, tdbp->tdb_sproto);
 	tdbp->tdb_snext = tdbsrc[hashval];
 	tdbsrc[hashval] = tdbp;
 
@@ -727,8 +722,7 @@ tdb_unlink(struct tdb *tdbp)
 	if (tdbh == NULL)
 		return;
 
-	hashval = tdb_hash(tdbp->tdb_rdomain, tdbp->tdb_spi,
-	    &tdbp->tdb_dst, tdbp->tdb_sproto);
+	hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
 	if (tdbh[hashval] == tdbp) {
 		tdbh[hashval] = tdbp->tdb_hnext;
@@ -744,8 +738,7 @@ tdb_unlink(struct tdb *tdbp)
 
 	tdbp->tdb_hnext = NULL;
 
-	hashval = tdb_hash(tdbp->tdb_rdomain, 0, &tdbp->tdb_dst,
-	    tdbp->tdb_sproto);
+	hashval = tdb_hash(0, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
 	if (tdbdst[hashval] == tdbp) {
 		tdbdst[hashval] = tdbp->tdb_dnext;
@@ -761,8 +754,7 @@ tdb_unlink(struct tdb *tdbp)
 
 	tdbp->tdb_dnext = NULL;
 
-	hashval = tdb_hash(tdbp->tdb_rdomain, 0, &tdbp->tdb_src,
-	    tdbp->tdb_sproto);
+	hashval = tdb_hash(0, &tdbp->tdb_src, tdbp->tdb_sproto);
 
 	if (tdbsrc[hashval] == tdbp) {
 		tdbsrc[hashval] = tdbp->tdb_snext;
@@ -816,6 +808,7 @@ tdb_alloc(u_int rdomain)
 
 	/* Save routing domain */
 	tdbp->tdb_rdomain = rdomain;
+	tdbp->tdb_rdomain_post = rdomain;
 
 	/* Initialize timeouts. */
 	timeout_set_proc(&tdbp->tdb_timer_tmo, tdb_timeout, tdbp);

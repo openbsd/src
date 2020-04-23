@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.199 2020/03/18 11:56:40 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.200 2020/04/23 19:38:08 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -855,6 +855,9 @@ pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp)
 	if (tdb->tdb_udpencap_port)
 		i += sizeof(struct sadb_x_udpencap);
 
+	if (tdb->tdb_rdomain != tdb->tdb_rdomain_post)
+		i += sizeof(struct sadb_x_rdomain);
+
 #if NPF > 0
 	if (tdb->tdb_tag)
 		i += sizeof(struct sadb_x_tag) + PADUP(PF_TAG_NAME_SIZE);
@@ -943,6 +946,12 @@ pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp)
 	if (tdb->tdb_udpencap_port) {
 		headers[SADB_X_EXT_UDPENCAP] = p;
 		export_udpencap(&p, tdb);
+	}
+
+	/* Export rdomain switch, if present */
+	if (tdb->tdb_rdomain != tdb->tdb_rdomain_post) {
+		headers[SADB_X_EXT_RDOMAIN] = p;
+		export_rdomain(&p, tdb);
 	}
 
 #if NPF > 0
@@ -1109,7 +1118,8 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	struct sadb_supported *ssup;
 	struct sadb_ident *sid, *did;
 	struct srp_ref sr;
-	u_int rdomain;
+	struct sadb_x_rdomain *srdomain;
+	u_int rdomain = 0;
 	int promisc, s;
 
 	mtx_enter(&pfkeyv2_mtx);
@@ -1155,7 +1165,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 
 		/* Send to all promiscuous listeners */
 		SRPL_FOREACH(bkp, &sr, &pkptable.pkp_list, kcb_list) {
-			if (bkp->kcb_rdomain != rdomain)
+			if (bkp->kcb_rdomain != kp->kcb_rdomain)
 				continue;
 
 			s = keylock(bkp);
@@ -1176,6 +1186,17 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	/* Validate message format */
 	if ((rval = pfkeyv2_parsemessage(message, len, headers)) != 0)
 		goto ret;
+
+	/* use specified rdomain */
+	srdomain = (struct sadb_x_rdomain *) headers[SADB_X_EXT_RDOMAIN];
+	if (srdomain) {
+		if (!rtable_exists(srdomain->sadb_x_rdomain_dom1) ||
+		    !rtable_exists(srdomain->sadb_x_rdomain_dom2)) {
+			rval = EINVAL;
+			goto ret;
+		}
+		rdomain = srdomain->sadb_x_rdomain_dom1;
+	}
 
 	smsg = (struct sadb_msg *) headers[0];
 	switch (smsg->sadb_msg_type) {
@@ -1316,6 +1337,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			    headers[SADB_X_EXT_PROTOCOL],
 			    headers[SADB_X_EXT_FLOW_TYPE]);
 			import_udpencap(newsa, headers[SADB_X_EXT_UDPENCAP]);
+			import_rdomain(newsa, headers[SADB_X_EXT_RDOMAIN]);
 #if NPF > 0
 			import_tag(newsa, headers[SADB_X_EXT_TAG]);
 			import_tap(newsa, headers[SADB_X_EXT_TAP]);
@@ -1486,6 +1508,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			    headers[SADB_X_EXT_PROTOCOL],
 			    headers[SADB_X_EXT_FLOW_TYPE]);
 			import_udpencap(newsa, headers[SADB_X_EXT_UDPENCAP]);
+			import_rdomain(newsa, headers[SADB_X_EXT_RDOMAIN]);
 #if NPF > 0
 			import_tag(newsa, headers[SADB_X_EXT_TAG]);
 			import_tap(newsa, headers[SADB_X_EXT_TAP]);
@@ -1720,7 +1743,9 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		    sizeof(struct sadb_address));
 		sa_proto = (struct sadb_protocol *) headers[SADB_X_EXT_SATYPE2];
 
-		tdb2 = gettdb(rdomain, ssa->sadb_sa_spi, sunionp,
+		/* optionally fetch tdb2 from rdomain2 */
+		tdb2 = gettdb(srdomain ? srdomain->sadb_x_rdomain_dom2 : rdomain,
+		    ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(sa_proto->sadb_protocol_proto));
 		if (tdb2 == NULL) {
 			rval = ESRCH;
@@ -1983,7 +2008,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 				goto ret;
 
 			SRPL_FOREACH(bkp, &sr, &pkptable.pkp_list, kcb_list) {
-				if (bkp == kp || bkp->kcb_rdomain != rdomain)
+				if (bkp == kp || bkp->kcb_rdomain != kp->kcb_rdomain)
 					continue;
 
 				if (!smsg->sadb_msg_seq ||
@@ -2061,7 +2086,7 @@ ret:
 		}
 	}
 
-	rval = pfkeyv2_sendmessage(headers, mode, so, 0, 0, rdomain);
+	rval = pfkeyv2_sendmessage(headers, mode, so, 0, 0, kp->kcb_rdomain);
 
 realret:
 
@@ -2360,6 +2385,12 @@ pfkeyv2_expire(struct tdb *tdb, u_int16_t type)
 	if ((rval = pfkeyv2_sendmessage(headers, PFKEYV2_SENDMESSAGE_BROADCAST,
 	    NULL, 0, 0, tdb->tdb_rdomain)) != 0)
 		goto ret;
+	/* XXX */
+	if (tdb->tdb_rdomain != tdb->tdb_rdomain_post)
+		if ((rval = pfkeyv2_sendmessage(headers,
+		    PFKEYV2_SENDMESSAGE_BROADCAST, NULL, 0, 0,
+		    tdb->tdb_rdomain_post)) != 0)
+			goto ret;
 
 	rval = 0;
 
@@ -2620,6 +2651,7 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	struct pfkeyv2_sysctl_walk w;
 	int error = EINVAL;
 	u_int rdomain;
+	u_int tableid;
 
 	if (new)
 		return (EPERM);
@@ -2630,7 +2662,13 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	w.w_where = oldp;
 	w.w_len = oldp ? *oldlenp : 0;
 
-	rdomain = rtable_l2(curproc->p_p->ps_rtableid);
+	if (namelen == 3) {
+		tableid = name[2];
+		if (!rtable_exists(tableid))
+			return (ENOENT);
+	} else
+		tableid = curproc->p_p->ps_rtableid;
+	rdomain = rtable_l2(tableid);
 
 	switch(w.w_op) {
 	case NET_KEY_SADB_DUMP:
