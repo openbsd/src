@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.90 2020/04/14 06:00:52 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.91 2020/04/23 05:48:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -243,8 +243,12 @@ cmdq_copy_state(struct cmdq_state *state)
 void
 cmdq_free_state(struct cmdq_state *state)
 {
-	if (--state->references == 0)
-		free(state);
+	if (--state->references != 0)
+		return;
+
+	if (state->formats != NULL)
+		format_free(state->formats);
+	free(state);
 }
 
 /* Add a format to command queue. */
