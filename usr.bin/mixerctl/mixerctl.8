@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.8,v 1.5 2020/04/23 00:16:59 schwarze Exp $
+.\" $OpenBSD: mixerctl.8,v 1.6 2020/04/23 05:54:35 ratchov Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,17 +52,17 @@
 .Sh DESCRIPTION
 The
 .Nm
-command displays or sets various audio device variables.
-If a list of variables is present on the command line,
+command displays or sets various audio device controls.
+If a list of control names is present on the command line,
 .Nm
-prints the current value of those variables for the specified device.
-Variables can also be set at system startup using the configuration file
+prints the current value of those controls for the specified device.
+Controls can also be set up at system startup using the configuration file
 .Xr mixerctl.conf 5 .
 .Pp
 The options are as follows:
 .Bl -tag -width "-f file"
 .It Fl a
-Print all device variables and their current values.
+Print all device controls and their current values.
 This is the default, if no parameters are given to
 .Nm .
 .It Fl f Ar file
@@ -70,23 +70,23 @@ Specify an alternative audio control device.
 The default is
 .Pa /dev/audioctl0 .
 .It Fl n
-Suppress printing of the variable name.
+Suppress printing of the control name.
 .It Fl q
-Suppress all printing when setting a variable.
+Suppress all printing when setting a control.
 .It Fl t
 Toggle.
 Attempt to select the next possible value
 of an enum
 (see below).
 .It Fl v
-Show all possible values of variables.
+Show all possible values of controls.
 Enum values are shown in
 .Sq []
 and values belonging to a set are shown in
 .Sq {}
 (see below).
 .It Ar name Ns = Ns Ar value
-Attempt to set the specified variable
+Attempt to set the control with given
 .Ar name
 to
 .Ar value .
@@ -160,7 +160,7 @@ Default audio control device.
 configuration file.
 .El
 .Sh EXAMPLES
-Show possible values for all device variables,
+Show possible values for all controls,
 and their current settings:
 .Bd -literal -offset indent
 # mixerctl -av
