@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.344 2020/02/24 10:05:34 stsp Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.345 2020/04/23 21:28:08 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 24 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -631,7 +631,7 @@ command for setting the protocol version.
 Set the transmit hold count, which is the number of spanning tree protocol
 packets transmitted before being rate limited.
 Defaults to 6, minimum of 1, maximum of 10.
-.It Cm ifcost Ar interface Ar num
+.It Cm ifcost Ar interface num
 Set the spanning tree path cost of
 .Ar interface
 to
@@ -643,7 +643,7 @@ Automatically calculate the spanning tree priority of
 .Ar interface
 based on the current link speed, interface status, and spanning tree mode.
 This is the default for interfaces added to the bridge.
-.It Cm ifpriority Ar interface Ar num
+.It Cm ifpriority Ar interface num
 Set the spanning tree priority of
 .Ar interface
 to
@@ -1729,7 +1729,7 @@ The default value is 10000.
 .It Cm maxgroup Ar number
 Set the maximum number of groups.
 The default value is 1000.
-.It Cm portno Ar interface Ar number
+.It Cm portno Ar interface number
 Set the port number for the port named
 .Ar interface .
 The default value is the interface index of the
@@ -1916,10 +1916,10 @@ Clear the virtual network identifier.
 .Nm ifconfig
 .Ar umb-interface
 .Op Oo Fl Oc Ns Cm apn Ar apn
-.Op Cm chgpin Ar oldpin Ar newpin
+.Op Cm chgpin Ar oldpin newpin
 .Op Oo Fl Oc Ns Cm class Ar class,class,...
 .Op Cm pin Ar pin
-.Op Cm puk Ar puk Ar newpin
+.Op Cm puk Ar puk newpin
 .Op Oo Fl Oc Ns Cm roaming
 .Ek
 .nr nS 0
@@ -1932,7 +1932,7 @@ interface:
 Set the Access Point Name (APN) required by the network provider.
 .It Cm -apn
 Clear the current APN.
-.It Cm chgpin Ar oldpin Ar newpin
+.It Cm chgpin Ar oldpin newpin
 Permanently change the PIN of the SIM card from the current value
 .Ar oldpin
 to
@@ -1957,7 +1957,7 @@ and deregister with the service provider.
 Enter the PIN required to unlock the SIM card.
 Most SIM cards will not be able to establish a network association without
 providing a PIN.
-.It Cm puk Ar puk Ar newpin
+.It Cm puk Ar puk newpin
 Sets the PIN of the SIM card to
 .Ar newpin
 using the PUK

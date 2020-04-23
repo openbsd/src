@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.117 2020/02/20 16:44:01 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.118 2020/04/23 21:28:10 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: February 20 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -310,7 +310,7 @@ The following annotations can be inserted manually (but commonly
 is used for creating most packing-list contents):
 .Pp
 .Bl -tag -width Ds -compact
-.It Cm @ask-update Ar pkgspec Ar message
+.It Cm @ask-update Ar pkgspec message
 Mechanism to prevent unwanted updates.
 If the new package is installed as part of an update matching
 .Ar pkgspec ,
@@ -398,7 +398,7 @@ If
 does not begin with an @, same as
 .Dl name/
 .Pp
-.It Cm @define-tag Ar tag Ar mode Ar params
+.It Cm @define-tag Ar tag mode params
 Define a tag of name
 .Ar tag .
 Tags define actions to be performed at specific time during

@@ -1,5 +1,5 @@
-.\"	$OpenBSD: zic.8,v 1.2 2015/02/16 16:21:25 bentley Exp $
-.Dd $Mdocdate: February 16 2015 $
+.\"	$OpenBSD: zic.8,v 1.3 2020/04/23 21:28:10 jmc Exp $
+.Dd $Mdocdate: April 23 2020 $
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -14,7 +14,7 @@
 .Op Fl l Ar timezone
 .Op Fl p Ar timezone
 .Op Fl y Ar command
-.Op Ar filename Ar ...
+.Op Ar filename ...
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -135,7 +135,7 @@ is something else, then
 .Nm
 executes the command
 .Pp
-.Dl yearistype Ar year Ar type
+.Dl yearistype Ar year type
 .Pp
 to check the type of a year:
 an exit status of zero is taken to mean that the year is of the given type;

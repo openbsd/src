@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eigrpd.conf.5,v 1.8 2020/02/10 13:18:21 schwarze Exp $
+.\"	$OpenBSD: eigrpd.conf.5,v 1.9 2020/04/23 21:28:09 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt EIGRPD.CONF 5
 .Os
 .Sh NAME
@@ -150,7 +150,7 @@ Specify an address-family section, grouping one or more autonomous-systems.
 .It Ic autonomous-system Ar number
 Specify the autonomous-system, grouping one or more interfaces.
 Valid range is 1\-65535.
-.It Ic default-metric Ar bandwidth Ar delay Ar reliability Ar load Ar mtu
+.It Ic default-metric Ar bandwidth delay reliability load mtu
 Specify a default metric for all routes redistributed into EIGRP.
 Valid ranges are: 1\-10000000 for the bandwidth, 1\-16777215 for the delay,
 1\-255 for the reliability, 1\-255 for the load and 1\-65535 for the mtu.
@@ -174,12 +174,12 @@ The default value is 4; valid range is 1\-32.
 .Po Ic static Ns | Ns Ic connected Ns | Ns Ic ospf | Ns Ic rip | Ns
 .Ic default Pc
 .Sm on
-.Op Ic metric Ar bandwidth Ar delay Ar reliability Ar load Ar mtu
+.Op Ic metric Ar bandwidth delay reliability load mtu
 .Xc
 .It Xo
 .Op Ic no
 .Ic redistribute Ar prefix
-.Op Ic metric Ar bandwidth Ar delay Ar reliability Ar load Ar mtu
+.Op Ic metric Ar bandwidth delay reliability load mtu
 .Xc
 If set to
 .Ic connected ,

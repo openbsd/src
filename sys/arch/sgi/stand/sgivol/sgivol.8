@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sgivol.8,v 1.6 2008/02/18 15:58:27 jsing Exp $
+.\"	$OpenBSD: sgivol.8,v 1.7 2020/04/23 21:28:10 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: February 18 2008 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt SGIVOL 8 sgi
 .Os
 .Sh NAME
@@ -50,11 +50,11 @@
 .Ar disk
 .Nm sgivol
 .Op Fl q
-.Fl r Ar vhfilename Ar diskfilename
+.Fl r Ar vhfilename diskfilename
 .Ar disk
 .Nm sgivol
 .Op Fl q
-.Fl w Ar vhfilename Ar diskfilename
+.Fl w Ar vhfilename diskfilename
 .Ar disk
 .Sh DESCRIPTION
 .Nm
@@ -84,13 +84,13 @@ to the file
 within the filesystem storage space in the volume header.
 .It Fl q
 Be quiet about various diagnostic issues.
-.It Fl r Ar vhfilename Ar diskfilename
+.It Fl r Ar vhfilename diskfilename
 Locate the file
 .Ar vhfilename
 in the storage space of the volume header, and copy it to the
 standard file
 .Ar diskfilename .
-.It Fl w Ar vhfilename Ar diskfilename
+.It Fl w Ar vhfilename diskfilename
 Copy the standard file
 .Ar diskfilename
 to the filesystem storage space in the volume header, placing

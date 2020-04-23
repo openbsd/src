@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.203 2020/04/23 21:10:53 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.204 2020/04/23 21:28:09 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -603,8 +603,8 @@ up
 The VPN properties are as follows:
 .Pp
 .Bl -tag -width Ds -compact
-.It Ic export-target Ar subtype Ar as-number : Ns Ar local
-.It Ic export-target Ar subtype Ar IP : Ns Ar local
+.It Ic export-target Ar subtype as-number : Ns Ar local
+.It Ic export-target Ar subtype IP : Ns Ar local
 Classify announced networks by tagging them with an
 .Em extended community
 of the given arguments.
@@ -632,8 +632,8 @@ routing table.
 The default is
 .Ic yes .
 .Pp
-.It Ic import-target Ar subtype Ar as-number : Ns Ar local
-.It Ic import-target Ar subtype Ar IP : Ns Ar local
+.It Ic import-target Ar subtype as-number : Ns Ar local
+.It Ic import-target Ar subtype IP : Ns Ar local
 The rdomain imports only those prefixes tagged with an
 .Em extended community
 matching an
@@ -1358,15 +1358,15 @@ which is expanded to the locally assigned AS number.
 .Pp
 .It Xo
 .Ic ext-community
-.Ar subtype Ar as-number : Ns Ar local
+.Ar subtype as-number : Ns Ar local
 .Xc
 .It Xo
 .Ic ext-community
-.Ar subtype Ar IP : Ns Ar local
+.Ar subtype IP : Ns Ar local
 .Xc
 .It Xo
 .Ic ext-community
-.Ar subtype Ar numvalue
+.Ar subtype numvalue
 .Xc
 .It Xo
 .Ic ext-community
@@ -1688,15 +1688,15 @@ to do wildcard matching.
 .Pp
 .It Xo
 .Ic ext-community Op Ar delete
-.Ar subtype Ar as-number : Ns Ar local
+.Ar subtype as-number : Ns Ar local
 .Xc
 .It Xo
 .Ic ext-community Op Ar delete
-.Ar subtype Ar IP : Ns Ar local
+.Ar subtype IP : Ns Ar local
 .Xc
 .It Xo
 .Ic ext-community Op Ar delete
-.Ar subtype Ar numvalue
+.Ar subtype numvalue
 .Xc
 .It Xo
 .Ic ext-community Op Ar delete

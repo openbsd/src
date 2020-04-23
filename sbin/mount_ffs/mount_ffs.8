@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_ffs.8,v 1.18 2016/10/06 13:16:21 schwarze Exp $
+.\"	$OpenBSD: mount_ffs.8,v 1.19 2020/04/23 21:28:09 jmc Exp $
 .\"	$NetBSD: mount_ffs.8,v 1.2 1996/02/05 06:33:47 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mount.8	8.7 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: October 6 2016 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt MOUNT_FFS 8
 .Os
 .Sh NAME
@@ -53,11 +53,11 @@ This command is invoked by
 when using any of the following syntax:
 .Bd -ragged -offset 4n
 .Nm mount Op options
-.Ar special Ar node
+.Ar special node
 .br
 .Nm mount Op options
 -t ffs
-.Ar special Ar node
+.Ar special node
 .br
 .Ed
 .Pp

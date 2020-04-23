@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-filters.7,v 1.4 2020/01/06 13:42:42 gilles Exp $
+.\"	$OpenBSD: smtpd-filters.7,v 1.5 2020/04/23 21:28:10 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: January 6 2020 $
+.Dd $Mdocdate: April 23 2020 $
 .Dt FILTERS 7
 .Os
 .Sh NAME
@@ -213,7 +213,7 @@ mail.openbsd.org|pass|199.185.178.25:33174|45.77.67.80:25
 .Pp
 The list of events and event-specific parameters are provided here for smtp-in:
 .Bl -tag -width Ds
-.It Ic link-connect : Ar rdns Ar fcrdns Ar src Ar dest
+.It Ic link-connect : Ar rdns fcrdns src dest
 This event is generated upon connection.
 .Pp
 .Ar rdns
@@ -244,7 +244,7 @@ This event is generated upon display of the server banner.
 .Pp
 .Ar hostname
 contains the hostname displayed in the banner.
-.It Ic link-identify : Ar method Ar identity
+.It Ic link-identify : Ar method identity
 This event is generated upon
 .Dq HELO
 or
@@ -268,7 +268,7 @@ contains a colon-separated list of TLS properties including the TLS version,
 the cipher suite used by the session and the cipher strenght in bits.
 .It Ic link-disconnect
 This event is generated upon disconnection of the client.
-.It Ic link-auth : Ar username Ar result
+.It Ic link-auth : Ar username result
 This event is generated upon authentication attempt of the client.
 .Pp
 .Ar username
@@ -292,7 +292,7 @@ This event is generated when a transaction is initiated.
 .Pp
 .Ar message-id
 contains the identifier for the transaction.
-.It Ic tx-mail : Ar message-id Ar address Ar result
+.It Ic tx-mail : Ar message-id Ar address result
 This event is generated when client emits
 .Dq MAIL FROM .
 .Pp
@@ -318,7 +318,7 @@ if it was rejected
 or
 .Dq tempfail
 if it was rejected for a transient error.
-.It Ic tx-rcpt : Ar message-id Ar address Ar result
+.It Ic tx-rcpt : Ar message-id Ar address result
 This event is generated when client emits
 .Dq RCPT TO .
 .Pp
@@ -391,7 +391,7 @@ It contains the raw response as emitted by the server.
 .Pp
 .Ar response
 contains the response emitted by the server to the client.
-.It Ic filter-report : Ar filter-kind Ar name Ar message
+.It Ic filter-report : Ar filter-kind Ar name message
 This event is generated when a filter emits a report.
 .Pp
 .Ar filter-kind may be either
@@ -407,7 +407,7 @@ is the name of the filter that generated the report.
 .Pp
 .Ar message
 is a filter-specific message.
-.It Ic filter-response : Ar phase Ar response Op param
+.It Ic filter-response : Ar phase response Op param
 This event is generated when a filter responds to a filtering request.
 .Pp
 .Ar phase
@@ -543,7 +543,7 @@ filter-dataline|7641df9771b4ed00|1ef1c203cc576e5d|.
 .Pp
 The list of events and event-specific parameters are provided here for smtp-in:
 .Bl -tag -width Ds
-.It Ic connect : Ar rdns Ar fcrdns Ar src Ar dest
+.It Ic connect : Ar rdns fcrdns src dest
 This request is emitted after connection,
 before the banner is displayed.
 .It Ic helo : Ar identity
