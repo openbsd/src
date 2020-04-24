@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.164 2020/04/06 08:31:04 mpi Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.165 2020/04/24 08:50:23 mpi Exp $	*/
 
 /******************************************************************************
 
@@ -152,6 +152,7 @@ void	ixgbe_rx_checksum(uint32_t, struct mbuf *, uint32_t);
 void	ixgbe_iff(struct ix_softc *);
 #ifdef IX_DEBUG
 void	ixgbe_print_hw_stats(struct ix_softc *);
+void	ixgbe_map_queue_statistics(struct ix_softc *);
 #endif
 void	ixgbe_update_link_status(struct ix_softc *);
 int	ixgbe_get_buf(struct rx_ring *, int);
@@ -2898,6 +2899,11 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		rxcsum |= IXGBE_RXCSUM_PCSD;
 	}
 
+#ifdef IX_DEBUG
+	/* Map QPRC/QPRDC/QPTC on a per queue basis */
+	ixgbe_map_queue_statistics(sc);
+#endif
+
 	/* This is useful for calculating UDP/IP fragment checksums */
 	if (!(rxcsum & IXGBE_RXCSUM_PCSD))
 		rxcsum |= IXGBE_RXCSUM_IPPCSE;
@@ -3505,14 +3511,16 @@ ixgbe_update_stats_counters(struct ix_softc *sc)
 {
 	struct ifnet	*ifp = &sc->arpcom.ac_if;
 	struct ixgbe_hw	*hw = &sc->hw;
-	uint64_t	total_missed_rx = 0;
+	uint64_t	crcerrs, rlec, total_missed_rx = 0;
 #ifdef IX_DEBUG
 	uint32_t	missed_rx = 0, bprc, lxon, lxoff, total;
 	int		i;
 #endif
 
-	sc->stats.crcerrs += IXGBE_READ_REG(hw, IXGBE_CRCERRS);
-	sc->stats.rlec += IXGBE_READ_REG(hw, IXGBE_RLEC);
+	crcerrs = IXGBE_READ_REG(hw, IXGBE_CRCERRS);
+	sc->stats.crcerrs += crcerrs;
+	rlec = IXGBE_READ_REG(hw, IXGBE_RLEC);
+	sc->stats.rlec += rlec;
 
 #ifdef IX_DEBUG
 	for (i = 0; i < 8; i++) {
@@ -3592,12 +3600,21 @@ ixgbe_update_stats_counters(struct ix_softc *sc)
 	sc->stats.ptc1023 += IXGBE_READ_REG(hw, IXGBE_PTC1023);
 	sc->stats.ptc1522 += IXGBE_READ_REG(hw, IXGBE_PTC1522);
 	sc->stats.bptc += IXGBE_READ_REG(hw, IXGBE_BPTC);
+	for (i = 0; i < 16; i++) {
+		uint32_t dropped;
+
+		dropped = IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
+		sc->stats.qprdc[i] += dropped;
+		missed_rx += dropped;
+		sc->stats.qprc[i] += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
+		sc->stats.qptc[i] += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
+	}
 #endif
 
 	/* Fill out the OS statistics structure */
 	ifp->if_collisions = 0;
 	ifp->if_oerrors = sc->watchdog_events;
-	ifp->if_ierrors = total_missed_rx + sc->stats.crcerrs + sc->stats.rlec;
+	ifp->if_ierrors = total_missed_rx + crcerrs + rlec;
 }
 
 #ifdef IX_DEBUG
@@ -3612,6 +3629,7 @@ void
 ixgbe_print_hw_stats(struct ix_softc * sc)
 {
 	struct ifnet   *ifp = &sc->arpcom.ac_if;
+	int i;
 
 	printf("%s: missed pkts %llu, rx len errs %llu, crc errs %llu, "
 	    "dropped pkts %lu, watchdog timeouts %ld, "
@@ -3632,5 +3650,40 @@ ixgbe_print_hw_stats(struct ix_softc * sc)
 	    (long long)sc->stats.gprc,
 	    (long long)sc->stats.gptc,
 	    sc->tso_tx);
+
+	printf("%s: per queue statistics\n", ifp->if_xname);
+	for (i = 0; i < sc->num_queues; i++) {
+		printf("\tqueue %d: rx pkts %llu, rx drops %llu, "
+		    "tx pkts %llu\n",
+		    i, sc->stats.qprc[i], sc->stats.qprdc[i],
+		    sc->stats.qptc[i]);
+	}
+}
+
+void
+ixgbe_map_queue_statistics(struct ix_softc *sc)
+{
+	int i;
+	uint32_t r;
+
+	for (i = 0; i < 32; i++) {
+		/*
+		 * Queues 0-15 are mapped 1:1
+		 * Queue 0 -> Counter 0
+		 * Queue 1 -> Counter 1
+		 * Queue 2 -> Counter 2....
+		 * Queues 16-127 are mapped to Counter 0
+		 */
+		if (i < 4) {
+			r = (i * 4 + 0);
+			r |= (i * 4 + 1) << 8;
+			r |= (i * 4 + 2) << 16;
+			r |= (i * 4 + 3) << 24;
+		} else
+			r = 0;
+
+		IXGBE_WRITE_REG(&sc->hw, IXGBE_RQSMR(i), r);
+		IXGBE_WRITE_REG(&sc->hw, IXGBE_TQSM(i), r);
+	}
 }
 #endif
