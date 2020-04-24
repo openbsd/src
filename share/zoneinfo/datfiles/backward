@@ -1,4 +1,4 @@
-# $OpenBSD: backward,v 1.36 2019/03/26 17:06:58 millert Exp $
+# $OpenBSD: backward,v 1.37 2020/04/24 14:21:35 millert Exp $
 # tzdb links for backward compatibility
 
 # This file is in the public domain, so clarified as of
@@ -18,6 +18,7 @@ Link	America/Atikokan	America/Coral_Harbour
 Link	America/Argentina/Cordoba	America/Cordoba
 Link	America/Tijuana		America/Ensenada
 Link	America/Indiana/Indianapolis	America/Fort_Wayne
+Link	America/Nuuk		America/Godthab
 Link	America/Indiana/Indianapolis	America/Indianapolis
 Link	America/Argentina/Jujuy	America/Jujuy
 Link	America/Indiana/Knox	America/Knox_IN
