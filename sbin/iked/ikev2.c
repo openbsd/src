@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.219 2020/04/24 21:15:05 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.220 2020/04/24 21:20:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1030,7 +1030,7 @@ ikev2_init_ike_sa(struct iked *env, void *arg)
 			continue;
 		}
 
-		log_debug("%s: initiating \"%s\"", __func__, pol->pol_name);
+		log_info("%s: initiating \"%s\"", __func__, pol->pol_name);
 
 		if (ikev2_init_ike_sa_peer(env, pol, &pol->pol_peer, NULL))
 			log_debug("%s: failed to initiate with peer %s",
@@ -2600,6 +2600,8 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 
 	if (msg->msg_flags & IKED_MSG_FLAGS_AUTHENTICATION_FAILED) {
 		log_debug("%s: AUTHENTICATION_FAILED, closing SA", __func__);
+		ikev2_log_cert_info(SPI_SA(sa, __func__),
+		    sa->sa_hdr.sh_initiator ? &sa->sa_rcert : &sa->sa_icert);
 		ikev2_ike_sa_setreason(sa,
 		    "authentication failed notification from peer");
 		sa_state(env, sa, IKEV2_STATE_CLOSED);
@@ -3517,6 +3519,7 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 		 * We cannot initiate multiple concurrent CREATE_CHILD_SA
 		 * exchanges, so retry in one minute.
 		 */
+		log_info("%s: busy, delaying rekey", SPI_SA(sa, __func__));
 		timer_add(env, &sa->sa_rekey, 60);
 		return;
 	}
