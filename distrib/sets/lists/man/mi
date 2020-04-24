@@ -1283,6 +1283,7 @@
 ./usr/share/man/man4/bcmclock.4
 ./usr/share/man/man4/bcmdmac.4
 ./usr/share/man/man4/bcmdog.4
+./usr/share/man/man4/bcmgpio.4
 ./usr/share/man/man4/bcmirng.4
 ./usr/share/man/man4/bcmmbox.4
 ./usr/share/man/man4/bcmpcie.4
