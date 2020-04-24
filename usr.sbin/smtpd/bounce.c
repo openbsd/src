@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.81 2019/11/25 12:11:26 eric Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.82 2020/04/24 11:34:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -727,6 +727,10 @@ bounce_io(struct io *io, int evt, void *arg)
 
 		if (line == NULL)
 			break;
+
+		/* Strip trailing '\r' */
+		if (len && line[len - 1] == '\r')
+			line[--len] = '\0';
 
 		log_trace(TRACE_BOUNCE, "bounce: %p: <<< %s", s, line);
 

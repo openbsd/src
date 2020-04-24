@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.61 2020/04/17 14:20:13 eric Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.62 2020/04/24 11:34:07 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -851,7 +851,7 @@ filter_data_internal(struct filter_session *fs, uint64_t token, uint64_t reqid, 
 
 	/* no filter_entry, we either had none or reached end of chain */
 	if (filter_entry == NULL) {
-		io_printf(fs->io, "%s\r\n", line);
+		io_printf(fs->io, "%s\n", line);
 		return;
 	}
 

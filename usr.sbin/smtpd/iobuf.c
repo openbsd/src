@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobuf.c,v 1.12 2019/10/03 07:03:23 gilles Exp $	*/
+/*	$OpenBSD: iobuf.c,v 1.13 2020/04/24 11:34:07 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -174,10 +174,9 @@ iobuf_getline(struct iobuf *iobuf, size_t *rlen)
 			 * the next call to iobuf_normalize() or iobuf_extend().
 			 */
 			iobuf_drop(iobuf, i + 1);
-			len = (i && buf[i - 1] == '\r') ? i - 1 : i;
-			buf[len] = '\0';
+			buf[i] = '\0';
 			if (rlen)
-				*rlen = len;
+				*rlen = i;
 			return (buf);
 		}
 
