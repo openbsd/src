@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.300 2020/04/18 20:28:46 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.301 2020/04/24 11:58:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2750,8 +2750,14 @@ post_dt(POST_ARGS)
 		mandoc_msg(MANDOCERR_MSEC_BAD,
 		    nn->line, nn->pos, "Dt ... %s", nn->string);
 		mdoc->meta.vol = mandoc_strdup(nn->string);
-	} else
+	} else {
 		mdoc->meta.vol = mandoc_strdup(cp);
+		if (mdoc->filesec != '\0' &&
+		    mdoc->filesec != *nn->string &&
+		    *nn->string >= '1' && *nn->string <= '9')
+			mandoc_msg(MANDOCERR_MSEC_FILE, nn->line, nn->pos,
+			    "*.%c vs Dt ... %c", mdoc->filesec, *nn->string);
+	}
 
 	/* Optional third argument: architecture. */
 

@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mandoc.1,v 1.166 2020/02/15 15:28:01 schwarze Exp $
+.\" $OpenBSD: mandoc.1,v 1.167 2020/04/24 11:58:02 schwarze Exp $
 .\"
-.\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2020 $
+.Dd $Mdocdate: April 24 2020 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1078,6 +1078,20 @@ macro lacks the mandatory section argument.
 The section number in a
 .Ic \&Dt
 line is invalid, but still used.
+.It Sy "filename/section mismatch"
+.Pq mdoc , man
+The name of the input file being processed is known and its file
+name extension starts with a non-zero digit, but the
+.Ic \&Dt
+or
+.Ic \&TH
+macro contains a
+.Ar section
+argument that starts with a different non-zero digit.
+The
+.Ar section
+argument is used as provided anyway.
+Consider checking whether the file name or the argument need a correction.
 .It Sy "missing date, using \(dq\(dq"
 .Pq mdoc, man
 The document was parsed as

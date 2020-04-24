@@ -1,4 +1,4 @@
-/* $OpenBSD: man_validate.c,v 1.123 2020/04/18 20:28:46 schwarze Exp $ */
+/* $OpenBSD: man_validate.c,v 1.124 2020/04/24 11:58:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -508,9 +508,14 @@ post_TH(CHKARGS)
 
 	if (n != NULL)
 		n = n->next;
-	if (n != NULL && n->string != NULL)
+	if (n != NULL && n->string != NULL) {
 		man->meta.msec = mandoc_strdup(n->string);
-	else {
+		if (man->filesec != '\0' &&
+		    man->filesec != *n->string &&
+		    *n->string >= '1' && *n->string <= '9')
+			mandoc_msg(MANDOCERR_MSEC_FILE, n->line, n->pos,
+			    "*.%c vs TH ... %c", man->filesec, *n->string);
+	} else {
 		man->meta.msec = mandoc_strdup("");
 		mandoc_msg(MANDOCERR_MSEC_MISSING,
 		    nb->line, nb->pos, "TH %s", man->meta.title);

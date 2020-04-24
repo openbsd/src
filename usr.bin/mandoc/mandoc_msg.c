@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc_msg.c,v 1.8 2020/01/19 17:59:01 schwarze Exp $ */
+/* $OpenBSD: mandoc_msg.c,v 1.9 2020/04/24 11:58:02 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Implementation of warning and error messages for mandoc(1).
  */
 #include <stdarg.h>
 #include <stdio.h>
@@ -81,6 +83,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"missing manual title, using \"\"",
 	"missing manual section, using \"\"",
 	"unknown manual section",
+	"filename/section mismatch",
 	"missing date, using \"\"",
 	"cannot parse date, using it verbatim",
 	"date in the future, using it anyway",

@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.h,v 1.209 2020/04/03 11:34:19 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.210 2020/04/24 11:58:02 schwarze Exp $ */
 /*
  * Copyright (c) 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -84,6 +84,7 @@ enum	mandocerr {
 	MANDOCERR_TH_NOTITLE, /* missing manual title, using "": [macro] */
 	MANDOCERR_MSEC_MISSING, /* missing manual section, using "": macro */
 	MANDOCERR_MSEC_BAD, /* unknown manual section: Dt ... section */
+	MANDOCERR_MSEC_FILE, /* filename/section mismatch: ... */
 	MANDOCERR_DATE_MISSING, /* missing date, using "": [macro] */
 	MANDOCERR_DATE_BAD, /* cannot parse date, using it verbatim: date */
 	MANDOCERR_DATE_FUTURE, /* date in the future, using it anyway: date */
