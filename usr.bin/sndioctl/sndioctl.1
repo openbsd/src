@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndioctl.1,v 1.11 2020/04/21 14:04:17 ratchov Exp $
+.\" $OpenBSD: sndioctl.1,v 1.12 2020/04/24 12:18:55 schwarze Exp $
 .\"
 .\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2020 $
+.Dd $Mdocdate: April 24 2020 $
 .Dt SNDIOCTL 1
 .Os
 .Sh NAME
@@ -100,20 +100,22 @@ If
 .Qq \&!
 is used instead of a number, then the switch is toggled.
 .Sh EXAMPLES
-The following will set all
-.Ar output
-channels
-.Ar level
-control to zero:
+Increase the
+.Cm level
+control affecting all
+.Cm output
+channels by 10% of the maximum:
 .Pp
-.Dl $ sndioctl output.level=0
+.Dl $ sndioctl output.level=+0.1
 .Pp
-The following set all
-.Ar output
-channels
-.Ar mute
+Mute all output channels:
+.Pp
+.Dl $ sndioctl output.mute=1
+.Pp
+Toggle the above
+.Cm mute
 control:
 .Pp
-.Dl $ sndioctl output.mute=0
+.Dl $ sndioctl output.mute=!
 .Sh SEE ALSO
 .Xr sioctl_open 3
