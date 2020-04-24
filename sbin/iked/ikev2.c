@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.218 2020/04/23 20:17:48 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.219 2020/04/24 21:15:05 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
@@ -536,7 +537,9 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	if (policy_lookup(env, msg, NULL) != 0)
 		return;
 
-	log_info("%srecv %s %s %u peer %s local %s, %ld bytes, policy '%s'",
+	logit(hdr->ike_exchange == IKEV2_EXCHANGE_INFORMATIONAL ?
+	    LOG_DEBUG : LOG_INFO,
+	    "%srecv %s %s %u peer %s local %s, %ld bytes, policy '%s'",
 	    SPI_IH(hdr),
 	    print_map(hdr->ike_exchange, ikev2_exchange_map),
 	    msg->msg_response ? "res" : "req",
