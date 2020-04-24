@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.661 2020/04/21 13:44:29 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.662 2020/04/24 18:07:06 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1642,7 +1642,7 @@ make_discover(struct interface_info *ifi, struct client_lease *lease)
 }
 
 void
-make_request(struct interface_info *ifi, struct client_lease * lease)
+make_request(struct interface_info *ifi, struct client_lease *lease)
 {
 	struct option_data	 options[DHO_COUNT];
 	struct dhcp_packet	*packet = &ifi->sent_packet;
