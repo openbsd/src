@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.70 2020/04/16 12:26:55 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.71 2020/04/24 11:33:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1269,7 +1269,6 @@ int
 dev_reopen(struct dev *d)
 {
 	struct slot *s;
-	struct ctl *c, **pc;
 	long long pos;
 	unsigned int pstate;
 	int delta;
@@ -1323,23 +1322,8 @@ dev_reopen(struct dev *d)
 		}
 	}
 
-	/* remove controls of old device */
-	pc = &d->ctl_list;
-	while ((c = *pc) != NULL) {
-		if (c->addr >= CTLADDR_END) {
-			c->refs_mask &= ~CTL_DEVMASK;
-			if (c->refs_mask == 0) {
-				*pc = c->next;
-				xfree(c);
-				continue;
-			}
-			c->type = CTL_NONE;
-			c->desc_mask = ~0;
-		}
-		pc = &c->next;
-	}
-
-	/* add new device controls */
+	/* remove old controls and add new ones */
+	dev_sioctl_close(d);
 	dev_sioctl_open(d);
 
 	/* start the device if needed */

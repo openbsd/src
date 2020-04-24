@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sioctl.c,v 1.4 2020/04/16 12:26:55 ratchov Exp $	*/
+/*	$OpenBSD: dev_sioctl.c,v 1.5 2020/04/24 11:33:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -126,8 +126,6 @@ dev_sioctl_open(struct dev *d)
 	}
 	sioctl_ondesc(d->sioctl.hdl, dev_sioctl_ondesc, d);
 	sioctl_onval(d->sioctl.hdl, dev_sioctl_onval, d);
-	d->sioctl.file = file_new(&dev_sioctl_ops, d, "mix",
-	    sioctl_nfds(d->sioctl.hdl));
 }
 
 /*
@@ -136,9 +134,24 @@ dev_sioctl_open(struct dev *d)
 void
 dev_sioctl_close(struct dev *d)
 {
-	if (d->sioctl.hdl == NULL)
-		return;
-	file_del(d->sioctl.file);
+	struct ctl *c, **pc;
+
+	/* remove controls */
+	pc = &d->ctl_list;
+	while ((c = *pc) != NULL) {
+		if (c->addr >= CTLADDR_END) {
+			c->refs_mask &= ~CTL_DEVMASK;
+			if (c->refs_mask == 0) {
+				*pc = c->next;
+				xfree(c);
+				continue;
+			}
+			c->type = CTL_NONE;
+			c->desc_mask = ~0;
+		}
+		pc = &c->next;
+	}
+	dev_ctlsync(d);
 }
 
 int
@@ -207,4 +220,7 @@ dev_sioctl_hup(void *arg)
 	struct dev *d = arg;
 
 	dev_sioctl_close(d);
+	file_del(d->sioctl.file);
+	sioctl_close(d->sioctl.hdl);
+	d->sioctl.hdl = NULL;
 }
