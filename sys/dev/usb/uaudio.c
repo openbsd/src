@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.151 2020/03/23 17:10:02 bluhm Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.152 2020/04/24 21:34:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -4289,8 +4289,13 @@ uaudio_query_devinfo(void *arg, struct mixer_devinfo *devinfo)
 		 */
 		strlcpy(devinfo->label.name, u->name, MAX_AUDIO_DEV_LEN);
 	} else {
-		snprintf(devinfo->label.name,
-		    MAX_AUDIO_DEV_LEN, "%s_%s", u->name, m->fname);
+		if (m->chan == -1) {
+			snprintf(devinfo->label.name, MAX_AUDIO_DEV_LEN,
+			    "%s_%s", u->name, m->fname);
+		} else {
+			snprintf(devinfo->label.name, MAX_AUDIO_DEV_LEN,
+			    "%s_%s%u", u->name, m->fname, m->chan);
+		}
 	}
 
 	devinfo->mixer_class = u->mixer_class;
