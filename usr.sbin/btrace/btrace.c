@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.17 2020/04/23 18:36:51 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.18 2020/04/24 14:56:43 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -411,8 +411,10 @@ rules_setup(int fd)
 		bp = r->br_probe;
 		dtpi_cache(fd);
 		dtpi = dtpi_get_by_value(bp->bp_prov, bp->bp_func, bp->bp_name);
-		if (dtpi == NULL)
-			errx(1, "probe not found");
+		if (dtpi == NULL) {
+			errx(1, "probe '%s:%s:%s' not found", bp->bp_prov,
+			    bp->bp_func, bp->bp_name);
+		}
 
 		dtrq = calloc(1, sizeof(*dtrq));
 		if (dtrq == NULL)
