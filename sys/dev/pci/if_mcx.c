@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.43 2020/04/21 05:49:25 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.44 2020/04/24 07:28:37 mestre Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6023,7 +6023,7 @@ mcx_up(struct mcx_softc *sc)
 	return ENETRESET;
 destroy_tx_slots:
 	mcx_free_slots(sc, sc->sc_tx_slots, i, (1 << MCX_LOG_SQ_SIZE));
-	sc->sc_rx_slots = NULL;
+	sc->sc_tx_slots = NULL;
 
 	i = (1 << MCX_LOG_RQ_SIZE);
 destroy_rx_slots:
