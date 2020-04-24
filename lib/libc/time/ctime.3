@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ctime.3,v 1.44 2015/09/14 13:08:01 schwarze Exp $
+.\"	$OpenBSD: ctime.3,v 1.45 2020/04/24 10:32:33 schwarze Exp $
 .\"
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: April 24 2020 $
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -201,7 +201,7 @@ with a negative value for
 .Fa tm_isdst .
 .Pp
 .Fn timegm
-is a deprecated interface that converts the broken-down time, as returned by
+converts the broken-down time, as returned by
 .Fn gmtime ,
 into a calendar time value with the same encoding as that of the values
 returned by the
@@ -295,12 +295,65 @@ UTC leap seconds are loaded from
 .Xr tzset 3 ,
 .Xr tzfile 5 ,
 .Xr zic 8
+.Sh STANDARDS
+The functions
+.Fn asctime ,
+.Fn ctime ,
+.Fn difftime ,
+.Fn gmtime ,
+.Fn localtime ,
+and
+.Fn mktime
+conform to
+.St -ansiC .
+.Pp
+The functions
+.Fn asctime_r ,
+.Fn ctime_r ,
+.Fn gmtime_r ,
+and
+.Fn localtime_r
+conform to
+.St -p1003.1-2008 .
+.Pp
+The functions
+.Fn timegm
+and
+.Fn timelocal
+are extensions to these standards.
 .Sh HISTORY
 A
 .Fn ctime
 function first appeared in
 .At v1 .
-.Sh NOTES
+.Pp
+The functions
+.Fn asctime ,
+.Fn gmtime ,
+and
+.Fn localtime
+first appeared in
+.At v5 ,
+.Fn difftime
+and
+.Fn mktime
+in
+.Bx 4.3 Reno ,
+and
+.Fn timegm
+and
+.Fn timelocal
+in SunOS 4.0.
+.Pp
+The functions
+.Fn asctime_r ,
+.Fn ctime_r ,
+.Fn gmtime_r ,
+and
+.Fn localtime_r
+have been available since since
+.Ox 2.5 .
+.Sh CAVEATS
 The return values
 of the non re-entrant functions
 point to static data;
