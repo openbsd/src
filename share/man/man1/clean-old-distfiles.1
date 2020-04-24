@@ -1,4 +1,4 @@
-.\"	$OpenBSD: clean-old-distfiles.1,v 1.3 2020/04/22 05:38:19 jmc Exp $
+.\"	$OpenBSD: clean-old-distfiles.1,v 1.4 2020/04/24 12:56:37 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 22 2020 $
+.Dd $Mdocdate: April 24 2020 $
 .Dt CLEAN-OLD-DISTFILES 1
 .Os
 .Sh NAME
 .Nm clean-old-distfiles
-.Nd remove old distfiles
+.Nd remove obsolete ports distfiles
 .Sh SYNOPSIS
 .Nm clean-old-distfiles
 .Op Fl nv
@@ -27,40 +27,47 @@
 .Op Fl h Ar history
 .Op Ar timestamp
 .Sh DESCRIPTION
-.Nm
-uses information provided by
+Each time
 .Xr dpb 1
-to remove obsolete distfiles:
-each time
-.Xr dpb 1
-is run for a full scan of the ports tree, it appends to
-an history log that records obsolete distfiles.
+is run for a full scan of the
+.Xr ports 7
+tree, it appends to the
+.Pa history
+log, listing files in the
+.Pa distfiles
+directory that are not, or no longer,
+needed for building the complete tree.
+It can also be run solely for that purpose, by using:
 .Pp
-Note that you can run it
-solely for that purpose, by using:
+.D1 $ Sy dpb Fl D Cm HISTORY_ONLY
 .Pp
-.D1 $ Nm dpb Fl D Ns Ar HISTORY_ONLY
-.Pp
+When
 .Nm
-can be used to prune that log prior to a given
+is run later, it uses the information from the history log
+to delete unneeded files.
+When a file is deleted, the corresponding entry is also deleted
+from the history log.
+.Pp
+By default,
+.Nm
+deletes all files listed in the history log.
+If a
 .Ar timestamp
-and remove the corresponding distfiles.
+is given, it is interpreted as a number of seconds since the Epoch,
+similar to the
+.Xr date 1
+.Fl r
+argument, and only those files are deleted that were recorded as
+obsolete at that time or earlier.
 .Pp
 For normal files,
 .Nm
 verifies
 .Xr sha256 1
 checksums prior to removal.
-.Nm
-also removes links under
+It also removes links under
 .Pa by_cipher/sha256 ,
 but it trusts that the checksums for these are accurate.
-.Pp
-The
-.Ar timestamp
-optional argument is given in seconds since the epoch,
-see
-.Xr date 1 .
 .Pp
 Options are as follows:
 .Bl -tag -width nnnn
@@ -80,7 +87,7 @@ as this is a testing option.
 Don't really remove files.
 .It Fl v
 Display what will be removed, as
-.Li rm file
+.Ql rm file
 lines.
 .El
 .Sh FILES
