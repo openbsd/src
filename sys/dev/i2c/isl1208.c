@@ -1,4 +1,4 @@
-/*	$OpenBSD: isl1208.c,v 1.2 2020/04/24 21:22:26 kettenis Exp $	*/
+/*	$OpenBSD: isl1208.c,v 1.3 2020/04/24 22:42:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,7 +18,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <dev/i2c/i2cvar.h>
 
