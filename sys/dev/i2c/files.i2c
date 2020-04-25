@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.64 2019/09/06 09:38:19 patrick Exp $
+# $OpenBSD: files.i2c,v 1.65 2020/04/25 15:10:52 kettenis Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -83,6 +83,11 @@ file	dev/i2c/ds1307.c			maxrtc
 device	maxds
 attach	maxds at i2c
 file	dev/i2c/ds1631.c			maxds
+
+# Maxim DS3231
+device	dsxrtc
+attach	dsxrtc at i2c
+file	dev/i2c/ds3231.c			dsxrtc
 
 # Apple FCU
 device	fcu
