@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1921 2020/04/20 21:52:02 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1922 2020/04/25 15:23:48 kevlo Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -7165,6 +7165,8 @@ product REALTEK RTL8723AE	0x8723	8723AE
 product REALTEK RTL8821AE	0x8821	8821AE
 product REALTEK RTL8723BE	0xb723	8723BE
 product REALTEK RTL8822BE	0xb822	8822BE
+product REALTEK RTL8821CE	0xc821	8821CE
+product REALTEK RTL8822CE	0xc822	8822CE
 
 /* Red Hat products */
 product REDHAT PPB		0x0001	Qemu PCI-PCI
