@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.6 2020/04/01 16:54:17 ratchov Exp $
+.\"	$OpenBSD: sndiod.8,v 1.7 2020/04/25 05:35:52 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 1 2020 $
+.Dd $Mdocdate: April 25 2020 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -208,6 +208,14 @@ Sub-devices
 that are applied after will be attached to this device.
 Device mode and parameters are determined from sub-devices
 attached to it.
+If no
+.Fl f
+option is used,
+.Nm
+will use
+.Pa rsnd/0 , rsnd/1 ,
+.No ... ,
+.Pa rsnd/3 .
 .It Fl j Ar flag
 Control whether program channels are joined or expanded if
 the number of channels requested by a program is not equal
