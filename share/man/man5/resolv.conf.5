@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.59 2020/01/24 06:16:47 tedu Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.60 2020/04/25 14:22:04 jca Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: January 24 2020 $
+.Dd $Mdocdate: April 25 2020 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -259,12 +259,13 @@ as is often the case with
 .Xr pppoe 4
 or with tunnels.
 .It Cm inet6
-Enables support for IPv6-only applications, by setting RES_USE_INET6 in
-_res.options (see
-.Xr res_init 3 ) .
 On
 .Ox
 this option does nothing.
+On some operating systems, this option enables IPv6 support in
+.Xr gethostbyname 3
+by setting RES_USE_INET6 in _res.options (see
+.Xr res_init 3 ) .
 .It Cm insecure1
 Do not require IP source address on the reply packet to be equal to the
 server's address.
