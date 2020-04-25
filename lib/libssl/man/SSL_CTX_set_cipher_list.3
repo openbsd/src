@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_cipher_list.3,v 1.14 2020/04/25 13:50:05 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_cipher_list.3,v 1.15 2020/04/25 14:03:38 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -157,17 +157,14 @@ is selected.
 Cipher suites using ephemeral DH for key exchange
 without doing any server authentication.
 Equivalent to
-.Cm kEDH Ns + Ns Cm aNULL .
-.It Cm aDSS
-Cipher suites using DSS server authentication.
-LibreSSL no longer provides any such cipher suites.
+.Cm DH Ns + Ns Cm aNULL .
 .It Cm AEAD
 Cipher suites using Authenticated Encryption with Additional Data.
 .It Cm AECDH
 Cipher suites using ephemeral ECDH for key exchange
 without doing any server authentication.
 Equivalent to
-.Cm kEECDH Ns + Ns Cm aNULL .
+.Cm ECDH Ns + Ns Cm aNULL .
 .It Cm aECDSA
 Cipher suites using ECDSA server authentication.
 .It Cm AES
@@ -216,45 +213,31 @@ Currently similar to
 except for the order of the cipher suites which are
 .Em not
 selected.
-.It Cm DES
-Cipher suites using single DES for symmetric encryption.
-LibreSSL no longer provides any such cipher suites.
 .It Cm 3DES
 Cipher suites using triple DES for symmetric encryption.
 .It Cm DH
-An alias for
-.Cm kEDH .
+Cipher suites using ephemeral DH for key exchange.
 .It Cm DHE
 Cipher suites using ephemeral DH for key exchange,
 but excluding those that don't do any server authentication.
 Similar to
-.Cm kEDH Ns :! Ns Cm aNULL
+.Cm DH Ns :! Ns Cm aNULL
 except for the order of the cipher suites which are
 .Em not
 selected.
-.It Cm DSS
-An alias for
-.Cm aDSS .
 .It Cm ECDH
-An alias for
-.Cm kEECDH .
+Cipher suites using ephemeral ECDH for key exchange.
 .It Cm ECDHE
 Cipher suites using ephemeral ECDH for key exchange,
 but excluding those that don't do any server authentication.
 Similar to
-.Cm kEECDH Ns :! Ns Cm aNULL
+.Cm ECDH Ns :! Ns Cm aNULL
 except for the order of the cipher suites which are
 .Em not
 selected.
 .It Cm ECDSA
 An alias for
 .Cm aECDSA .
-.It Cm EDH
-An alias for
-.Cm DHE .
-.It Cm EECDH
-An alias for
-.Cm ECDHE .
 .It Cm eNULL
 Cipher suites that do not use any encryption.
 Not enabled by
@@ -269,13 +252,6 @@ Cipher suites using HMAC based on GOST R 34.11-94
 for message authentication.
 .It Cm HIGH
 Cipher suites of high strength.
-.It Cm IDEA
-Cipher suites using IDEA for symmetric encryption.
-LibreSSL does not provide any such cipher suites.
-.It Cm kEDH
-Cipher suites using ephemeral DH for key exchange.
-.It Cm kEECDH
-Cipher suites using ephemeral ECDH for key exchange.
 .It Cm kGOST
 Cipher suites using VKO 34.10 key exchange, specified in RFC 4357.
 .It Cm kRSA
@@ -328,6 +304,28 @@ The full words returned by the
 .Xr openssl 1
 .Cm ciphers
 command can be used to select individual cipher suites.
+.Pp
+The following words do not match anything because
+LibreSSL no longer provides any such cipher suites:
+.Pp
+.Bl -tag -width Ds -compact
+.It Cm DES
+Cipher suites using single DES for symmetric encryption.
+.It Cm DSS
+Cipher suites using DSS server authentication.
+.It Cm IDEA
+Cipher suites using IDEA for symmetric encryption.
+.El
+.Pp
+The following are deprecated aliases:
+.Pp
+.Bl -column kEECDH ECDHE -compact -offset indent
+.It    avoid: Ta    use:
+.It Cm EDH    Ta Cm DHE
+.It Cm EECDH  Ta Cm ECDHE
+.It Cm kEDH   Ta Cm DH
+.It Cm kEECDH Ta Cm ECDH
+.El
 .Pp
 Unknown words are silently ignored, selecting no cipher suites.
 Failure is only flagged if the
