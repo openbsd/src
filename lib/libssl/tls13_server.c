@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.31 2020/04/22 17:05:07 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.32 2020/04/25 18:06:28 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -280,11 +280,16 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 		return 1;
 
 	/*
-	 * If a matching key share was provided, we do not need to
-	 * send a HelloRetryRequest.
+	 * If a matching key share was provided, we do not need to send a
+	 * HelloRetryRequest.
+	 */
+	/*
+	 * XXX - ideally NEGOTIATED would only be added after record protection
+	 * has been enabled. This would probably mean using either an
+	 * INITIAL | WITHOUT_HRR state, or another intermediate state.
 	 */
 	if (ctx->hs->key_share != NULL)
-		ctx->handshake_stage.hs_type |= WITHOUT_HRR;
+		ctx->handshake_stage.hs_type |= NEGOTIATED | WITHOUT_HRR;
 
 	/* XXX - check this is the correct point */
 	tls13_record_layer_allow_ccs(ctx->rl, 1);
