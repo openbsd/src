@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.120 2020/02/19 20:42:12 kn Exp $
+.\" $OpenBSD: openssl.1,v 1.121 2020/04/25 19:18:40 schwarze Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: February 19 2020 $
+.Dd $Mdocdate: April 25 2020 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2405,7 +2405,7 @@ The value to use for the generator
 .Ar g .
 .It ec_paramgen_curve : Ns Ar curve
 (EC)
-The EC curve to use.
+The elliptic curve to use.
 .El
 .It Fl text
 Print the private/public key in plain text.
@@ -4224,7 +4224,7 @@ Verify the input data and output the recovered data.
 .Op Fl debug
 .Op Fl dtls1
 .Op Fl extended_crl
-.Op Fl groups
+.Op Fl groups Ar list
 .Op Fl host Ar host
 .Op Fl ign_eof
 .Op Fl ignore_critical
@@ -4368,8 +4368,11 @@ as required by some servers.
 Print extensive debugging information, including a hex dump of all traffic.
 .It Fl dtls1
 Permit only DTLS1.0.
-.It Fl groups Ar ecgroups
-Specify a colon-separated list of permitted EC curve groups.
+.It Fl groups Ar list
+Set the supported elliptic curve groups to the colon separated
+.Ar list
+of group NIDs or names as documented in
+.Xr SSL_CTX_set1_groups_list 3 .
 .It Fl host Ar host
 The
 .Ar host
@@ -4528,6 +4531,7 @@ will be used.
 .Op Fl dkeyform Cm der | pem
 .Op Fl dpass Ar arg
 .Op Fl dtls1
+.Op Fl groups Ar list
 .Op Fl HTTP
 .Op Fl id_prefix Ar arg
 .Op Fl key Ar keyfile
@@ -4692,6 +4696,11 @@ If this fails, a static set of parameters hard coded into the
 program will be used.
 .It Fl dtls1
 Permit only DTLS1.0.
+.It Fl groups Ar list
+Set the supported elliptic curve groups to the colon separated
+.Ar list
+of group NIDs or names as documented in
+.Xr SSL_CTX_set1_groups_list 3 .
 .It Fl HTTP
 Emulate a simple web server.
 Pages are resolved relative to the current directory.
@@ -4728,6 +4737,9 @@ Show all protocol messages with hex dump.
 Set the link layer MTU.
 .It Fl named_curve Ar arg
 Specify the elliptic curve name to use for ephemeral ECDH keys.
+This option is deprecated; use
+.Fl groups
+instead.
 .It Fl nbio
 Turn on non-blocking I/O.
 .It Fl nbio_test
