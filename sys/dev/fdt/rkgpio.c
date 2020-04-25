@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgpio.c,v 1.3 2020/04/07 09:06:52 kettenis Exp $	*/
+/*	$OpenBSD: rkgpio.c,v 1.4 2020/04/25 10:41:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -181,7 +181,6 @@ rkgpio_get_pin(void *cookie, uint32_t *cells)
 		return 0;
 
 	reg = HREAD4(sc, GPIO_EXT_PORTA);
-	reg &= (1 << pin);
 	val = (reg >> pin) & 1;
 	if (flags & GPIO_ACTIVE_LOW)
 		val = !val;
