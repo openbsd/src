@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.104 2020/04/25 15:16:00 kettenis Exp $
+.\"	$OpenBSD: iic.4,v 1.105 2020/04/25 23:00:11 kettenis Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -38,6 +38,7 @@
 .Cd "iic* at gdiumiic?              # loongson"
 .Cd "iic* at tsciic?                # alpha"
 .Cd "iic* at amliic?                # arm64"
+.Cd "iic* at bcmbsc?                # arm64"
 .Cd "iic* at dwiic?                 # amd64 arm64"
 .Cd "iic* at octiic?                # octeon"
 .Cd "iic* at imxiic?                # arm64 armv7"
@@ -90,6 +91,8 @@ AMD-8111 SMBus controller
 AMD-756/766/768/8111 Power Management and SMBus controller
 .It Xr amliic 4
 Amlogic I2C controller
+.I Xr bcmbsc 4
+Broadcom Serial Control controller
 .It Xr dwiic 4
 Synopsys DesignWare I2C controller
 .It Xr glxpcib 4
