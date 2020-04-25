@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.20 2019/12/06 00:14:08 schwarze Exp $
+.\" $OpenBSD: unveil.2,v 1.21 2020/04/25 13:23:01 beck Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 6 2019 $
+.Dd $Mdocdate: April 25 2020 $
 .Dt UNVEIL 2
 .Os
 .Sh NAME
@@ -27,6 +27,8 @@
 .Sh DESCRIPTION
 The first call to
 .Fn unveil
+that specifies a
+.Fa path
 removes visibility of the entire filesystem from all other
 filesystem-related system calls (such as
 .Xr open 2 ,
@@ -167,10 +169,3 @@ The
 .Fn unveil
 system call first appeared in
 .Ox 6.4 .
-.Sh BUGS
-.Xr readlink 2
-partially bypasses
-.Fn unveil
-restrictions required by
-.Xr realpath 3 .
-Future changes intend to repair this problem.
