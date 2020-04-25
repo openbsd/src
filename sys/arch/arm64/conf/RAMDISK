@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.121 2020/04/24 09:52:43 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.122 2020/04/25 15:32:11 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -297,8 +297,10 @@ uk*		at scsibus?
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC
 fusbtc*		at iic?			# USB Type-C controller
+dsxrtc*		at iic?			# DS3231 RTC
 islrtc*		at iic?			# ISL1208 RTC
 mcprtc*		at iic?			# MCP794XX RTC
+pcfrtc*		at iic?			# PCF8523 RTC
 pcxrtc*		at iic?			# PCF8563 RTC
 rkpmic*		at iic?			# RK808 PMIC
 
