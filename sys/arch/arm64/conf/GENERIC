@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.159 2020/04/25 15:32:11 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.160 2020/04/25 17:49:51 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -412,11 +412,12 @@ uk*		at scsibus?
 
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC
+dsxrtc*		at iic?			# DS3231 RTC
 fanpwr*		at iic?			# FAN53555 regulator
 fusbtc*		at iic?			# USB Type-C controller
 ipmi*		at iic?			# IPMI (SIIF)
-dsxrtc*		at iic?			# DS3231 RTC
 islrtc*		at iic?			# ISL1208 RTC
+maxrtc*		at iic?			# DS1307 RTC
 mcprtc*		at iic?			# MCP794XX RTC
 pcfrtc*		at iic?			# PCF8523 RTC
 pcxrtc*		at iic?			# PCF8563 RTC
