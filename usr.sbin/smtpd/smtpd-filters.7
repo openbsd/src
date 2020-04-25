@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-filters.7,v 1.5 2020/04/23 21:28:10 jmc Exp $
+.\"	$OpenBSD: smtpd-filters.7,v 1.6 2020/04/25 09:44:02 eric Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: April 25 2020 $
 .Dt FILTERS 7
 .Os
 .Sh NAME
@@ -159,6 +159,13 @@ report|0.5|1576147242.200225|smtp-in|link-connect|7641dfb3798eb5bf|mail.openbsd.
 report|0.5|1576148447.982572|smtp-in|link-connect|7641dfc063102cbd|mail.openbsd.org|pass|199.185.178.25:24786|45.77.67.80:25
 .Ed
 .Pp
+The char
+.Dq |
+may only appear in the last field of a payload,
+in which case it should be considered a regular char and not a separator.
+Other fields have strict formatting excluding the possibility of having a
+.Dq | .
+.Pp
 The list of subsystems and events,
 as well as the format of requests and reponses,
 will be documented in the sections below.
@@ -292,22 +299,12 @@ This event is generated when a transaction is initiated.
 .Pp
 .Ar message-id
 contains the identifier for the transaction.
-.It Ic tx-mail : Ar message-id Ar address result
+.It Ic tx-mail : Ar message-id Ar result address
 This event is generated when client emits
 .Dq MAIL FROM .
 .Pp
 .Ar message-id
 contains the identifier for the transaction.
-.Pp
-.Ar address
-contains the e-mail address of the sender.
-The address is normalized and sanitized,
-the protocol
-.Dq <
-and
-.Dq >
-are removed and so are parameters to
-.Dq MAIL FROM .
 .Pp
 .Ar result
 contains
@@ -318,22 +315,22 @@ if it was rejected
 or
 .Dq tempfail
 if it was rejected for a transient error.
-.It Ic tx-rcpt : Ar message-id Ar address result
-This event is generated when client emits
-.Dq RCPT TO .
-.Pp
-.Ar message-id
-contains the identifier for the transaction.
 .Pp
 .Ar address
-contains the e-mail address of the recipient.
+contains the e-mail address of the sender.
 The address is normalized and sanitized,
 the protocol
 .Dq <
 and
 .Dq >
 are removed and so are parameters to
+.Dq MAIL FROM .
+.It Ic tx-rcpt : Ar message-id Ar result address
+This event is generated when client emits
 .Dq RCPT TO .
+.Pp
+.Ar message-id
+contains the identifier for the transaction.
 .Pp
 .Ar result
 contains
@@ -344,6 +341,16 @@ if it was rejected
 or
 .Dq tempfail
 if it was rejected for a transient error.
+.Pp
+.Ar address
+contains the e-mail address of the recipient.
+The address is normalized and sanitized,
+the protocol
+.Dq <
+and
+.Dq >
+are removed and so are parameters to
+.Dq RCPT TO .
 .It Ic tx-envelope : Ar message-id Ar envelope-id
 This event is generated when an envelope is accepted.
 .Pp
