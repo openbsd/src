@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.160 2020/04/25 17:49:51 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.161 2020/04/25 22:28:12 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -142,6 +142,8 @@ imxtmu*		at fdt?
 
 # Raspberry Pi 3/4
 bcmaux*		at fdt? early 1
+bcmbsc*		at fdt?
+iic*		at bcmbsc?
 bcmclock*	at fdt? early 1
 bcmdmac*	at fdt? early 1
 bcmdog*		at fdt?

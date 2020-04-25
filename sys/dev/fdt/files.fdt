@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.127 2020/04/24 11:27:25 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.128 2020/04/25 22:28:12 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -80,6 +80,10 @@ file	dev/fdt/sypwr.c			sypwr
 device	bcmaux
 attach	bcmaux at fdt
 file	dev/fdt/bcm2835_aux.c		bcmaux
+
+device	bcmbsc: i2cbus
+attach	bcmbsc at fdt
+file	dev/fdt/bcm2835_bsc.c		bcmbsc
 
 device	bcmclock
 attach	bcmclock at fdt
