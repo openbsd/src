@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_gpio.c,v 1.1 2020/04/24 09:52:43 kettenis Exp $	*/
+/*	$OpenBSD: bcm2835_gpio.c,v 1.2 2020/04/25 22:15:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -118,7 +118,7 @@ bcmgpio_config_func(struct bcmgpio_softc *sc, int pin, int func)
 	int reg = (pin / 10);
 	int shift = (pin % 10) * 3;
 	uint32_t val;
-	
+
 	val = HREAD4(sc, GPFSEL(reg));
 	val &= ~(GPFSEL_MASK << shift);
 	HWRITE4(sc, GPFSEL(reg), val);
@@ -184,7 +184,7 @@ bcmgpio_pinctrl(uint32_t phandle, void *cookie)
 
 	for (i = 0; i < len / sizeof(uint32_t); i++) {
 		bcmgpio_config_func(sc, pins[i], func);
-		if (i < plen / sizeof(uint32_t))
+		if (plen > 0 && i < plen / sizeof(uint32_t))
 			sc->sc_config_pull(sc, pins[i], pull[i]);
 	}
 
