@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1921 2020/04/20 21:52:02 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1922 2020/04/25 15:23:48 kevlo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7170,6 +7170,8 @@
 #define	PCI_PRODUCT_REALTEK_RTL8821AE	0x8821		/* 8821AE */
 #define	PCI_PRODUCT_REALTEK_RTL8723BE	0xb723		/* 8723BE */
 #define	PCI_PRODUCT_REALTEK_RTL8822BE	0xb822		/* 8822BE */
+#define	PCI_PRODUCT_REALTEK_RTL8821CE	0xc821		/* 8821CE */
+#define	PCI_PRODUCT_REALTEK_RTL8822CE	0xc822		/* 8822CE */
 
 /* Red Hat products */
 #define	PCI_PRODUCT_REDHAT_PPB	0x0001		/* Qemu PCI-PCI */
