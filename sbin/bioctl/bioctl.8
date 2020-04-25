@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.105 2018/07/09 14:10:58 schwarze Exp $
+.\"	$OpenBSD: bioctl.8,v 1.106 2020/04/25 14:37:43 krw Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 9 2018 $
+.Dd $Mdocdate: April 25 2020 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -226,11 +226,11 @@ CONCAT:
 A concatenating discipline.
 .El
 .Pp
-The RAID 0, RAID 1 and CONCAT disciplines require a minimum of two chunks to
+The CONCAT discipline requires a minimum of one chunk, RAID 0 and RAID 1
+disciplines require a minimum of two chunks, RAID 5 requires a minimum
+of three chunks and the CRYPTO discipline requires exactly one chunk to
 be provided via
 .Fl l .
-RAID 5 requires at least three chunks
-and the CRYPTO discipline requires exactly one.
 .It Fl d
 Delete volume specified by
 .Ar device .
