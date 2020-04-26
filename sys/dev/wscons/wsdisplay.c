@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.137 2020/04/19 15:05:14 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.138 2020/04/26 11:31:07 bru Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -426,9 +426,9 @@ wsdisplay_getscreen(struct wsdisplay_softc *sc,
 	if (scr == NULL)
 		return (ENXIO);
 
-	strncpy(sd->screentype, scr->scr_dconf->scrdata->name,
+	strlcpy(sd->screentype, scr->scr_dconf->scrdata->name,
 	    WSSCREEN_NAME_SIZE);
-	strncpy(sd->emul, scr->scr_dconf->wsemul->name, WSEMUL_NAME_SIZE);
+	strlcpy(sd->emul, scr->scr_dconf->wsemul->name, WSEMUL_NAME_SIZE);
 
 	return (0);
 }
@@ -1265,7 +1265,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			return(EINVAL);
 
 		d->nidx = sc->sc_scrdata->nscreens;
-		strncpy(d->name, sc->sc_scrdata->screens[d->idx]->name,
+		strlcpy(d->name, sc->sc_scrdata->screens[d->idx]->name,
 			WSSCREEN_NAME_SIZE);
 		d->ncols = sc->sc_scrdata->screens[d->idx]->ncols;
 		d->nrows = sc->sc_scrdata->screens[d->idx]->nrows;
@@ -1277,7 +1277,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #define d ((struct wsdisplay_emultype *)data)
 		if (wsemul_getname(d->idx) == NULL)
 			return(EINVAL);
-		strncpy(d->name, wsemul_getname(d->idx), WSEMUL_NAME_SIZE);
+		strlcpy(d->name, wsemul_getname(d->idx), WSEMUL_NAME_SIZE);
 		return (0);
 #undef d
         }
