@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxgpc.c,v 1.6 2020/03/11 12:13:47 patrick Exp $	*/
+/*	$OpenBSD: imxgpc.c,v 1.7 2020/04/26 13:20:41 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -58,6 +58,7 @@ imxgpc_match(struct device *parent, void *match, void *aux)
 
 	return (OF_is_compatible(faa->fa_node, "fsl,imx6q-gpc") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx7d-gpc") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx8mm-gpc") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-gpc"));
 }
 
@@ -76,7 +77,8 @@ imxgpc_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	if (OF_is_compatible(faa->fa_node, "fsl,imx8mq-gpc")) {
+	if (OF_is_compatible(faa->fa_node, "fsl,imx8mm-gpc") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-gpc")) {
 		list = OF_child(faa->fa_node);
 		if (!list)
 			return;
