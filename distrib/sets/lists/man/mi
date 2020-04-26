@@ -1280,6 +1280,7 @@
 ./usr/share/man/man4/azalia.4
 ./usr/share/man/man4/bce.4
 ./usr/share/man/man4/bcmaux.4
+./usr/share/man/man4/bcmbsc.4
 ./usr/share/man/man4/bcmclock.4
 ./usr/share/man/man4/bcmdmac.4
 ./usr/share/man/man4/bcmdog.4
@@ -1336,6 +1337,7 @@
 ./usr/share/man/man4/diskmap.4
 ./usr/share/man/man4/divert.4
 ./usr/share/man/man4/drm.4
+./usr/share/man/man4/dsxrtc.4
 ./usr/share/man/man4/dt.4
 ./usr/share/man/man4/dwctwo.4
 ./usr/share/man/man4/dwdog.4
