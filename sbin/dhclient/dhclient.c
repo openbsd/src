@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.662 2020/04/24 18:07:06 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.663 2020/04/26 14:02:23 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -937,6 +937,11 @@ dhcpack(struct interface_info *ifi, struct option_data *options,
 void
 dhcpnak(struct interface_info *ifi, const char *src)
 {
+	struct client_lease		*ll, *pl;
+	time_t				 cur_time;
+
+	time(&cur_time);
+
 	if (ifi->state != S_REBOOTING &&
 	    ifi->state != S_REQUESTING &&
 	    ifi->state != S_RENEWING) {
@@ -945,24 +950,28 @@ dhcpnak(struct interface_info *ifi, const char *src)
 		return;
 	}
 
-	if (ifi->active == NULL) {
-		log_debug("%s: unexpected DHCPNAK from %s - no active lease",
-		    log_procname, src);
-		return;
-	}
-
 	log_debug("%s: DHCPNAK from %s", log_procname, src);
-	revoke_proposal(ifi->configured);
 
-	/* XXX Do we really want to remove a NAK'd lease from the database? */
-	TAILQ_REMOVE(&ifi->lease_db, ifi->active, next);
-	free_client_lease(ifi->active);
-
-	ifi->active = NULL;
-	free(ifi->configured);
-	ifi->configured = NULL;
-	free(ifi->unwind_info);
-	ifi->unwind_info = NULL;
+	/* Remove expired leases and the NAK'd address from the database. */
+	TAILQ_FOREACH_SAFE(ll, &ifi->lease_db, next, pl) {
+		if (lease_expiry(ll) < cur_time || (
+		    ifi->ssid_len == ll->ssid_len &&
+		    memcmp(ifi->ssid, ll->ssid, ll->ssid_len) == 0 &&
+		    ll->address.s_addr == ifi->requested_address.s_addr)) {
+			if (ll == ifi->active) {
+				tell_unwind(NULL, ifi->flags);
+				free(ifi->unwind_info);
+				ifi->unwind_info = NULL;
+				revoke_proposal(ifi->configured);
+				free(ifi->configured);
+				ifi->configured = NULL;
+				ifi->active = NULL;
+			}
+			TAILQ_REMOVE(&ifi->lease_db, ll, next);
+			free_client_lease(ll);
+			write_lease_db(&ifi->lease_db);
+		}
+	}
 
 	/* Stop sending DHCPREQUEST packets. */
 	cancel_timeout(ifi);
@@ -1674,7 +1683,6 @@ make_request(struct interface_info *ifi, struct client_lease *lease)
 	}
 	if (ifi->state == S_REQUESTING ||
 	    ifi->state == S_REBOOTING) {
-		ifi->requested_address = lease->address;
 		i = DHO_DHCP_REQUESTED_ADDRESS;
 		options[i].data = (char *)&lease->address.s_addr;
 		options[i].len = sizeof(lease->address.s_addr);
@@ -1713,6 +1721,7 @@ make_request(struct interface_info *ifi, struct client_lease *lease)
 	 * If we own the address we're requesting, put it in ciaddr. Otherwise
 	 * set ciaddr to zero.
 	 */
+	ifi->requested_address = lease->address;
 	if (ifi->state == S_BOUND ||
 	    ifi->state == S_RENEWING)
 		packet->ciaddr.s_addr = lease->address.s_addr;
