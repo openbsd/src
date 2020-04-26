@@ -1,4 +1,4 @@
-.\"	$OpenBSD: insque.3,v 1.11 2020/04/26 13:59:56 jmc Exp $
+.\"	$OpenBSD: insque.3,v 1.12 2020/04/26 16:36:14 schwarze Exp $
 .\" Copyright (c) 1993 John Brezak
 .\" All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .Sh NAME
 .Nm insque ,
 .Nm remque
-.Nd insert/remove element from a queue
+.Nd legacy doubly linked lists
 .Sh SYNOPSIS
 .In search.h
 .Ft void
@@ -49,9 +49,9 @@ macros and are provided for compatibility with legacy code.
 .Fn insque
 and
 .Fn remque
-manipulate queues built from doubly linked lists.
-The queue can be either circular or linear.
-Each element in the queue must be of the following form:
+manipulate a legacy variety of intrusive doubly linked lists.
+A list can be either circular or linear.
+Each element in the list must be of the following form:
 .Bd -literal -offset indent
 struct qelem {
 	struct qelem   *q_forw;
@@ -60,25 +60,25 @@ struct qelem {
 };
 .Ed
 .Pp
-The first two elements in the struct must be pointers of the
+The first two members of the struct must be pointers of the
 same type that point to the next and previous elements in
-the queue respectively.
+the list, respectively.
 Any subsequent data in the struct is application-dependent.
 .Pp
 The
 .Fn insque
 function inserts
 .Fa elem
-into a queue immediately after
+into a list immediately after
 .Fa pred .
 .Pp
 The
 .Fn remque
 function removes
 .Fa elem
-from the queue.
+from the list.
 .Pp
-These functions are not atomic unless that machine architecture allows it.
+These functions are not atomic.
 .Sh SEE ALSO
 .Xr queue 3
 .Sh STANDARDS
