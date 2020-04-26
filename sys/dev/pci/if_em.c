@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.350 2020/04/22 08:47:11 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.351 2020/04/26 20:49:56 patrick Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2113,7 +2113,7 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size, struct em_dma_alloc *dma)
 		goto destroy;
 
 	r = bus_dmamem_map(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg, size,
-	    &dma->dma_vaddr, BUS_DMA_WAITOK);
+	    &dma->dma_vaddr, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (r != 0)
 		goto free;
 
