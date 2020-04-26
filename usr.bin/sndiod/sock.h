@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.6 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.7 2020/04/26 14:13:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -64,6 +64,7 @@ struct sock {
 #define SOCK_CTLVAL	2		/* send value changes */
 	unsigned int ctlops;		/* bitmap of above */
 	int ctlsyncpending;		/* CTLSYNC waiting to be transmitted */
+	unsigned int sesrefs;		/* 1 if socket belongs to a session */
 };
 
 struct sock *sock_new(int fd);
