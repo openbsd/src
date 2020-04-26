@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.13 2020/01/25 05:29:10 tb Exp $ */
+/* $OpenBSD: s_cb.c,v 1.14 2020/04/26 02:09:21 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -742,20 +742,62 @@ tlsext_cb(SSL * s, int client_server, int type, unsigned char *data, int len,
 		extname = "heartbeat";
 		break;
 
-	case TLSEXT_TYPE_session_ticket:
-		extname = "session ticket";
-		break;
-
-	case TLSEXT_TYPE_renegotiate:
-		extname = "renegotiation info";
-		break;
-
 	case TLSEXT_TYPE_application_layer_protocol_negotiation:
 		extname = "application layer protocol negotiation";
 		break;
 
 	case TLSEXT_TYPE_padding:
 		extname = "TLS padding";
+		break;
+
+	case TLSEXT_TYPE_session_ticket:
+		extname = "session ticket";
+		break;
+
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+	case TLSEXT_TYPE_pre_shared_key:
+		extname = "pre shared key";
+		break;
+
+	case TLSEXT_TYPE_early_data:
+		extname = "early data";
+		break;
+
+	case TLSEXT_TYPE_supported_versions:
+		extname = "supported versions";
+		break;
+
+	case TLSEXT_TYPE_cookie:
+		extname = "cookie";
+		break;
+
+	case TLSEXT_TYPE_psk_key_exchange_modes:
+		extname = "PSK key exchange modes";
+		break;
+
+	case TLSEXT_TYPE_certificate_authorities:
+		extname = "certificate authorities";
+		break;
+
+	case TLSEXT_TYPE_oid_filters:
+		extname = "OID filters";
+		break;
+
+	case TLSEXT_TYPE_post_handshake_auth:
+		extname = "post handshake auth";
+		break;
+
+	case TLSEXT_TYPE_signature_algorithms_cert:
+		extname = "signature algorithms cert";
+		break;
+
+	case TLSEXT_TYPE_key_share:
+		extname = "key share";
+		break;
+#endif
+
+	case TLSEXT_TYPE_renegotiate:
+		extname = "renegotiation info";
 		break;
 
 	default:
