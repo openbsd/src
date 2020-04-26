@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.43 2020/04/19 17:05:55 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.44 2020/04/26 01:59:27 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -293,7 +293,7 @@ s_client_main(int argc, char **argv)
 {
 	unsigned int off = 0, clr = 0;
 	SSL *con = NULL;
-	int s, k, p, pending, state = 0, af = AF_UNSPEC;
+	int s, k, p = 0, pending = 0, state = 0, af = AF_UNSPEC;
 	char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL, *pbuf = NULL;
 	int cbuf_len, cbuf_off;
 	int sbuf_len, sbuf_off;
