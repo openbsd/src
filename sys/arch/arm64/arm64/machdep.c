@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.44 2020/04/21 07:57:17 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.45 2020/04/26 10:35:05 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -90,19 +90,21 @@ struct uvm_constraint_range *uvm_md_constraints[] = {
 
 /* the following is used externally (sysctl_hw) */
 char    machine[] = MACHINE;            /* from <machine/param.h> */
-extern todr_chip_handle_t todr_handle;
 
 int safepri = 0;
 
 struct cpu_info cpu_info_primary;
 struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
 
+todr_chip_handle_t todr_handle;
+
+#define MINYEAR		((OpenBSD / 100) - 1)	/* minimum plausible year */
+
 /*
  * inittodr:
  *
  *      Initialize time from the time-of-day register.
  */
-#define MINYEAR         2003    /* minimum plausible year */
 void
 inittodr(time_t base)
 {
@@ -121,17 +123,15 @@ inittodr(time_t base)
 
 	if (todr_handle == NULL ||
 	    todr_gettime(todr_handle, &rtctime) != 0 ||
-	    rtctime.tv_sec == 0) {
+	    rtctime.tv_sec < (MINYEAR - 1970) * SECYR) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
 		 */
 		rtctime.tv_sec = base;
 		rtctime.tv_usec = 0;
-		if (todr_handle != NULL && !badbase) {
-			printf("WARNING: preposterous clock chip time\n");
-			resettodr();
-		}
+		if (todr_handle != NULL && !badbase)
+			printf("WARNING: bad clock chip time\n");
 		ts.tv_sec = rtctime.tv_sec;
 		ts.tv_nsec = rtctime.tv_usec * 1000;
 		tc_setclock(&ts);
@@ -152,12 +152,34 @@ inittodr(time_t base)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;         /* all is well */
-		printf("WARNING: clock %s %ld days\n",
+#ifndef SMALL_KERNEL
+		printf("WARNING: clock %s %lld days\n",
 		    rtctime.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
+		    (long long)(deltat / SECDAY));
+#endif
 	}
  bad:
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
+}
+
+/*
+ * resettodr:
+ *
+ *      Reset the time-of-day register with the current time.
+ */
+void
+resettodr(void)
+{
+	struct timeval rtctime;
+
+	if (time_second == 1)
+		return;
+
+	microtime(&rtctime);
+
+	if (todr_handle != NULL &&
+	    todr_settime(todr_handle, &rtctime) != 0)
+		printf("WARNING: can't update clock chip time\n");
 }
 
 static int

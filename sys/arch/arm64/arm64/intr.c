@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.14 2019/05/13 20:55:22 drahn Exp $ */
+/* $OpenBSD: intr.c,v 1.15 2020/04/26 10:35:05 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -773,28 +773,6 @@ arm_dflt_delay(u_int usecs)
 		for (j = 100; j > 0; j--)
 			;
 
-}
-
-todr_chip_handle_t todr_handle;
-
-/*
- * resettodr:
- *
- *      Reset the time-of-day register with the current time.
- */
-void
-resettodr(void)
-{
-	struct timeval rtctime;
-
-	if (time_second == 1)
-		return;
-
-	microtime(&rtctime);
-
-	if (todr_handle != NULL &&
-	   todr_settime(todr_handle, &rtctime) != 0)
-		printf("resettodr: failed to set time\n");
 }
 
 void
