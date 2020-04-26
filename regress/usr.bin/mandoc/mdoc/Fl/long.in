@@ -1,0 +1,16 @@
+.\" $OpenBSD: long.in,v 1.1 2020/04/26 21:29:46 schwarze Exp $
+.Dd $Mdocdate: April 26 2020 $
+.Dt FL-LONG 1
+.Os
+.Sh NAME
+.Nm Fl-long
+.Nd GNU-style long options
+.Sh DESCRIPTION
+BEGINTEST
+.Bl -tag -width Ds
+.It Fl \-long
+options
+.It Fl Fl long
+options
+.El
+ENDTEST

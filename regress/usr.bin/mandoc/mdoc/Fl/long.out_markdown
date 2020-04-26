@@ -1,0 +1,21 @@
+FL-LONG(1) - General Commands Manual
+
+# NAME
+
+**Fl-long** - GNU-style long options
+
+# DESCRIPTION
+
+BEGINTEST
+
+**-&#45;long**
+
+> options
+
+**-&#45;long**
+
+> options
+
+ENDTEST
+
+OpenBSD - April 26, 2020
