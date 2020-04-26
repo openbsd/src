@@ -292,14 +292,17 @@ struct imxccm_mux imx7d_muxs[] = {
  */
 
 #define IMX8MM_ARM_PLL			0x18
+#define IMX8MM_SYS_PLL1_100M		0x32
 #define IMX8MM_SYS_PLL1_800M		0x38
 #define IMX8MM_SYS_PLL2_100M		0x3a
 #define IMX8MM_SYS_PLL2_250M		0x3e
+#define IMX8MM_SYS_PLL2_500M		0x40
 #define IMX8MM_CLK_A53_SRC		0x42
 #define IMX8MM_ARM_PLL_OUT		0x2c
 #define IMX8MM_CLK_A53_CG		0x47
 #define IMX8MM_CLK_A53_DIV		0x4c
 #define IMX8MM_CLK_ENET_AXI		0x52
+#define IMX8MM_CLK_USB_BUS		0x58
 #define IMX8MM_CLK_PCIE1_CTRL		0x67
 #define IMX8MM_CLK_PCIE1_PHY		0x68
 #define IMX8MM_CLK_PCIE1_AUX		0x69
@@ -316,6 +319,8 @@ struct imxccm_mux imx7d_muxs[] = {
 #define IMX8MM_CLK_UART2		0x80
 #define IMX8MM_CLK_UART3		0x81
 #define IMX8MM_CLK_UART4		0x82
+#define IMX8MM_CLK_USB_CORE_REF		0x83
+#define IMX8MM_CLK_USB_PHY_REF		0x84
 #define IMX8MM_CLK_USDHC3		0x91
 #define IMX8MM_CLK_PCIE2_CTRL		0x98
 #define IMX8MM_CLK_PCIE2_PHY		0x99
@@ -331,6 +336,7 @@ struct imxccm_mux imx7d_muxs[] = {
 #define IMX8MM_CLK_UART2_ROOT		0xbd
 #define IMX8MM_CLK_UART3_ROOT		0xbe
 #define IMX8MM_CLK_UART4_ROOT		0xbf
+#define IMX8MM_CLK_USB1_CTRL_ROOT	0xc0
 #define IMX8MM_CLK_USDHC1_ROOT		0xc2
 #define IMX8MM_CLK_USDHC2_ROOT		0xc3
 #define IMX8MM_CLK_USDHC3_ROOT		0xd0
@@ -340,6 +346,7 @@ struct imxccm_mux imx7d_muxs[] = {
 struct imxccm_gate imx8mm_gates[] = {
 	[IMX8MM_CLK_A53_CG] = { 0x8000, 14 },
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 14 },
+	[IMX8MM_CLK_USB_BUS] = { 0x8b80, 14 },
 	[IMX8MM_CLK_PCIE1_CTRL] = { 0xa300, 14 },
 	[IMX8MM_CLK_PCIE1_PHY] = { 0xa380, 14 },
 	[IMX8MM_CLK_PCIE1_AUX] = { 0xa400, 14 },
@@ -356,6 +363,8 @@ struct imxccm_gate imx8mm_gates[] = {
 	[IMX8MM_CLK_UART2] = { 0xaf80, 14 },
 	[IMX8MM_CLK_UART3] = { 0xb000, 14 },
 	[IMX8MM_CLK_UART4] = { 0xb080, 14 },
+	[IMX8MM_CLK_USB_CORE_REF] = { 0xb100, 14 },
+	[IMX8MM_CLK_USB_PHY_REF] = { 0xb180, 14 },
 	[IMX8MM_CLK_USDHC3] = { 0xbc80, 14 },
 	[IMX8MM_CLK_PCIE2_CTRL] = { 0xc000, 24, 0x7 },
 	[IMX8MM_CLK_PCIE2_PHY] = { 0xc080, 24, 0x7 },
@@ -371,6 +380,7 @@ struct imxccm_gate imx8mm_gates[] = {
 	[IMX8MM_CLK_UART2_ROOT] = { 0x44a0, 0, IMX8MM_CLK_UART2 },
 	[IMX8MM_CLK_UART3_ROOT] = { 0x44b0, 0, IMX8MM_CLK_UART3 },
 	[IMX8MM_CLK_UART4_ROOT] = { 0x44c0, 0, IMX8MM_CLK_UART4 },
+	[IMX8MM_CLK_USB1_CTRL_ROOT] = { 0x44d0, 0, IMX8MM_CLK_USB_CORE_REF },
 	[IMX8MM_CLK_USDHC1_ROOT] = { 0x4510, 0, IMX8MM_CLK_USDHC1 },
 	[IMX8MM_CLK_USDHC2_ROOT] = { 0x4520, 0, IMX8MM_CLK_USDHC2 },
 	[IMX8MM_CLK_USDHC3_ROOT] = { 0x45e0, 0, IMX8MM_CLK_USDHC3 },
@@ -380,6 +390,7 @@ struct imxccm_gate imx8mm_gates[] = {
 struct imxccm_divider imx8mm_divs[] = {
 	[IMX8MM_CLK_A53_DIV] = { 0x8000, 0, 0x7, IMX8MM_CLK_A53_CG },
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 0, 0x3f },
+	[IMX8MM_CLK_USB_BUS] = { 0x8b80, 0, 0x3f },
 	[IMX8MM_CLK_PCIE1_CTRL] = { 0xa300, 0, 0x3f },
 	[IMX8MM_CLK_PCIE1_PHY] = { 0xa380, 0, 0x3f },
 	[IMX8MM_CLK_PCIE1_AUX] = { 0xa400, 0, 0x3f },
@@ -393,6 +404,8 @@ struct imxccm_divider imx8mm_divs[] = {
 	[IMX8MM_CLK_UART2] = { 0xaf80, 0, 0x3f },
 	[IMX8MM_CLK_UART3] = { 0xb000, 0, 0x3f },
 	[IMX8MM_CLK_UART4] = { 0xb080, 0, 0x3f },
+	[IMX8MM_CLK_USB_CORE_REF] = { 0xb100, 0, 0x3f },
+	[IMX8MM_CLK_USB_PHY_REF] = { 0xb180, 0, 0x3f },
 	[IMX8MM_CLK_USDHC3] = { 0xbc80, 0, 0x3f },
 	[IMX8MM_CLK_PCIE2_CTRL] = { 0xc000, 0, 0x3f },
 	[IMX8MM_CLK_PCIE2_PHY] = { 0xc080, 0, 0x3f },
@@ -401,6 +414,7 @@ struct imxccm_divider imx8mm_divs[] = {
 
 struct imxccm_divider imx8mm_predivs[] = {
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 16, 0x7 },
+	[IMX8MM_CLK_USB_BUS] = { 0x8b80, 16, 0x7 },
 	[IMX8MM_CLK_PCIE1_CTRL] = { 0xa300, 16, 0x7 },
 	[IMX8MM_CLK_PCIE1_PHY] = { 0xa380, 16, 0x7 },
 	[IMX8MM_CLK_PCIE1_AUX] = { 0xa400, 16, 0x7 },
@@ -414,6 +428,8 @@ struct imxccm_divider imx8mm_predivs[] = {
 	[IMX8MM_CLK_UART2] = { 0xaf80, 16, 0x7 },
 	[IMX8MM_CLK_UART3] = { 0xb000, 16, 0x7 },
 	[IMX8MM_CLK_UART4] = { 0xb080, 16, 0x7 },
+	[IMX8MM_CLK_USB_CORE_REF] = { 0xb100, 16, 0x7 },
+	[IMX8MM_CLK_USB_PHY_REF] = { 0xb180, 16, 0x7 },
 	[IMX8MM_CLK_USDHC3] = { 0xbc80, 16, 0x7 },
 	[IMX8MM_CLK_PCIE2_CTRL] = { 0xc000, 16, 0x7 },
 	[IMX8MM_CLK_PCIE2_PHY] = { 0xc080, 16, 0x7 },
@@ -423,6 +439,7 @@ struct imxccm_divider imx8mm_predivs[] = {
 struct imxccm_mux imx8mm_muxs[] = {
 	[IMX8MM_CLK_A53_SRC] = { 0x8000, 24, 0x7 },
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 24, 0x7 },
+	[IMX8MM_CLK_USB_BUS] = { 0x8b80, 24, 0x7 },
 	[IMX8MM_CLK_PCIE1_CTRL] = { 0xa300, 24, 0x7 },
 	[IMX8MM_CLK_PCIE1_PHY] = { 0xa380, 24, 0x7 },
 	[IMX8MM_CLK_PCIE1_AUX] = { 0xa400, 24, 0x7 },
@@ -436,6 +453,8 @@ struct imxccm_mux imx8mm_muxs[] = {
 	[IMX8MM_CLK_UART2] = { 0xaf80, 24, 0x7 },
 	[IMX8MM_CLK_UART3] = { 0xb000, 24, 0x7 },
 	[IMX8MM_CLK_UART4] = { 0xb080, 24, 0x7 },
+	[IMX8MM_CLK_USB_CORE_REF] = { 0xb100, 24, 0x7 },
+	[IMX8MM_CLK_USB_PHY_REF] = { 0xb180, 24, 0x7 },
 	[IMX8MM_CLK_USDHC3] = { 0xbc80, 24, 0x7 },
 	[IMX8MM_CLK_PCIE2_CTRL] = { 0xc000, 24, 0x7 },
 	[IMX8MM_CLK_PCIE2_PHY] = { 0xc080, 24, 0x7 },
