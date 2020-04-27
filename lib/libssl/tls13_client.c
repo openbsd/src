@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.51 2020/04/22 17:05:07 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.52 2020/04/27 20:15:17 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -23,15 +23,6 @@
 #include "ssl_tlsext.h"
 #include "tls13_handshake.h"
 #include "tls13_internal.h"
-
-static int
-tls13_connect(struct tls13_ctx *ctx)
-{
-	if (ctx->mode != TLS13_HS_CLIENT)
-		return TLS13_IO_FAILURE;
-
-	return tls13_handshake_perform(ctx);
-}
 
 static int
 tls13_client_init(struct tls13_ctx *ctx)
@@ -78,6 +69,15 @@ tls13_client_init(struct tls13_ctx *ctx)
 	}
 
 	return 1;
+}
+
+static int
+tls13_connect(struct tls13_ctx *ctx)
+{
+	if (ctx->mode != TLS13_HS_CLIENT)
+		return TLS13_IO_FAILURE;
+
+	return tls13_handshake_perform(ctx);
 }
 
 int
@@ -570,6 +570,33 @@ tls13_server_hello_retry_request_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
+tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
+{
+	/*
+	 * Ensure that the server supported group is one that we listed in our
+	 * supported groups and is not the same as the key share we previously
+	 * offered.
+	 */
+	if (!tls1_check_curve(ctx->ssl, ctx->hs->server_group))
+		return 0; /* XXX alert */
+	if (ctx->hs->server_group == tls13_key_share_group(ctx->hs->key_share))
+		return 0; /* XXX alert */
+
+	/* Switch to new key share. */
+	tls13_key_share_free(ctx->hs->key_share);
+	if ((ctx->hs->key_share =
+	    tls13_key_share_new(ctx->hs->server_group)) == NULL)
+		return 0;
+	if (!tls13_key_share_generate(ctx->hs->key_share))
+		return 0;
+
+	if (!tls13_client_hello_build(ctx, cbb))
+		return 0;
+
+	return 1;
+}
+
+int
 tls13_server_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	SSL *s = ctx->ssl;
@@ -603,33 +630,6 @@ tls13_server_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 		return 0;
 
 	ctx->handshake_stage.hs_type |= NEGOTIATED;
-
-	return 1;
-}
-
-int
-tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
-{
-	/*
-	 * Ensure that the server supported group is one that we listed in our
-	 * supported groups and is not the same as the key share we previously
-	 * offered.
-	 */
-	if (!tls1_check_curve(ctx->ssl, ctx->hs->server_group))
-		return 0; /* XXX alert */
-	if (ctx->hs->server_group == tls13_key_share_group(ctx->hs->key_share))
-		return 0; /* XXX alert */
-
-	/* Switch to new key share. */
-	tls13_key_share_free(ctx->hs->key_share);
-	if ((ctx->hs->key_share =
-	    tls13_key_share_new(ctx->hs->server_group)) == NULL)
-		return 0;
-	if (!tls13_key_share_generate(ctx->hs->key_share))
-		return 0;
-
-	if (!tls13_client_hello_build(ctx, cbb))
-		return 0;
 
 	return 1;
 }
@@ -945,70 +945,6 @@ tls13_server_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 int
-tls13_client_finished_send(struct tls13_ctx *ctx, CBB *cbb)
-{
-	struct tls13_secrets *secrets = ctx->hs->secrets;
-	struct tls13_secret context = { .data = "", .len = 0 };
-	struct tls13_secret finished_key;
-	uint8_t transcript_hash[EVP_MAX_MD_SIZE];
-	size_t transcript_hash_len;
-	uint8_t key[EVP_MAX_MD_SIZE];
-	uint8_t *verify_data;
-	size_t hmac_len;
-	unsigned int hlen;
-	HMAC_CTX *hmac_ctx = NULL;
-	int ret = 0;
-
-	finished_key.data = key;
-	finished_key.len = EVP_MD_size(ctx->hash);
-
-	if (!tls13_hkdf_expand_label(&finished_key, ctx->hash,
-	    &secrets->client_handshake_traffic, "finished",
-	    &context))
-		goto err;
-
-	if (!tls1_transcript_hash_value(ctx->ssl, transcript_hash,
-	    sizeof(transcript_hash), &transcript_hash_len))
-		goto err;
-
-	if ((hmac_ctx = HMAC_CTX_new()) == NULL)
-		goto err;
-	if (!HMAC_Init_ex(hmac_ctx, finished_key.data, finished_key.len,
-	    ctx->hash, NULL))
-		goto err;
-	if (!HMAC_Update(hmac_ctx, transcript_hash, transcript_hash_len))
-		goto err;
-
-	hmac_len = HMAC_size(hmac_ctx);
-	if (!CBB_add_space(cbb, &verify_data, hmac_len))
-		goto err;
-	if (!HMAC_Final(hmac_ctx, verify_data, &hlen))
-		goto err;
-	if (hlen != hmac_len)
-		goto err;
-
-	ret = 1;
-
- err:
-	HMAC_CTX_free(hmac_ctx);
-
-	return ret;
-}
-
-int
-tls13_client_finished_sent(struct tls13_ctx *ctx)
-{
-	struct tls13_secrets *secrets = ctx->hs->secrets;
-
-	/*
-	 * Any records following the client finished message must be encrypted
-	 * using the client application traffic keys.
-	 */
-	return tls13_record_layer_set_write_traffic_key(ctx->rl,
-	    &secrets->client_application_traffic);
-}
-
-int
 tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	SSL *s = ctx->ssl;
@@ -1134,4 +1070,74 @@ tls13_client_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 	free(sig);
 
 	return ret;
+}
+
+int
+tls13_client_end_of_early_data_send(struct tls13_ctx *ctx, CBB *cbb)
+{
+	return 0;
+}
+
+int
+tls13_client_finished_send(struct tls13_ctx *ctx, CBB *cbb)
+{
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+	struct tls13_secret context = { .data = "", .len = 0 };
+	struct tls13_secret finished_key;
+	uint8_t transcript_hash[EVP_MAX_MD_SIZE];
+	size_t transcript_hash_len;
+	uint8_t key[EVP_MAX_MD_SIZE];
+	uint8_t *verify_data;
+	size_t hmac_len;
+	unsigned int hlen;
+	HMAC_CTX *hmac_ctx = NULL;
+	int ret = 0;
+
+	finished_key.data = key;
+	finished_key.len = EVP_MD_size(ctx->hash);
+
+	if (!tls13_hkdf_expand_label(&finished_key, ctx->hash,
+	    &secrets->client_handshake_traffic, "finished",
+	    &context))
+		goto err;
+
+	if (!tls1_transcript_hash_value(ctx->ssl, transcript_hash,
+	    sizeof(transcript_hash), &transcript_hash_len))
+		goto err;
+
+	if ((hmac_ctx = HMAC_CTX_new()) == NULL)
+		goto err;
+	if (!HMAC_Init_ex(hmac_ctx, finished_key.data, finished_key.len,
+	    ctx->hash, NULL))
+		goto err;
+	if (!HMAC_Update(hmac_ctx, transcript_hash, transcript_hash_len))
+		goto err;
+
+	hmac_len = HMAC_size(hmac_ctx);
+	if (!CBB_add_space(cbb, &verify_data, hmac_len))
+		goto err;
+	if (!HMAC_Final(hmac_ctx, verify_data, &hlen))
+		goto err;
+	if (hlen != hmac_len)
+		goto err;
+
+	ret = 1;
+
+ err:
+	HMAC_CTX_free(hmac_ctx);
+
+	return ret;
+}
+
+int
+tls13_client_finished_sent(struct tls13_ctx *ctx)
+{
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+
+	/*
+	 * Any records following the client finished message must be encrypted
+	 * using the client application traffic keys.
+	 */
+	return tls13_record_layer_set_write_traffic_key(ctx->rl,
+	    &secrets->client_application_traffic);
 }
