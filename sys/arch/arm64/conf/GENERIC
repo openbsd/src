@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.163 2020/04/27 12:15:30 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.164 2020/04/27 21:31:37 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -427,6 +427,7 @@ pcfrtc*		at iic?			# PCF8523 RTC
 pcxrtc*		at iic?			# PCF8563 RTC
 rkpmic*		at iic?			# RK808 PMIC
 sypwr*		at iic?			# SY8106A regulator
+tcpci*		at iic?			# USB Type-C controller
 
 # GPIO "pin bus" drivers
 gpioiic*	at gpio?		# I2C bus bit-banging
