@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_gpio.c,v 1.2 2020/04/25 22:15:00 kettenis Exp $	*/
+/*	$OpenBSD: bcm2835_gpio.c,v 1.3 2020/04/27 12:15:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,15 +17,20 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/gpio.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
+#include <dev/gpio/gpiovar.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
+
+#include "gpio.h"
 
 /* Registers */
 #define GPFSEL(n)		(0x00 + ((n) * 4))
@@ -38,6 +43,9 @@
 #define  GPFSEL_ALT3		0x7
 #define  GPFSEL_ALT4		0x3
 #define  GPFSEL_ALT5		0x2
+#define GPSET(n)		(0x1c + ((n) * 4))
+#define GPCLR(n)		(0x28 + ((n) * 4))
+#define GPLEV(n)		(0x34 + ((n) * 4))
 #define GPPUD			0x94
 #define  GPPUD_PUD		0x3
 #define  GPPUD_PUD_OFF		0x0
@@ -46,6 +54,8 @@
 #define GPPUDCLK(n)		(0x98 + ((n) * 4))
 #define GPPULL(n)		(0xe4 + ((n) * 4))
 #define  GPPULL_MASK		0x3
+
+#define BCMGPIO_MAX_PINS	58
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -58,6 +68,13 @@ struct bcmgpio_softc {
 	bus_space_handle_t	sc_ioh;
 
 	void	(*sc_config_pull)(struct bcmgpio_softc *, int, int);
+	int			sc_num_pins;
+
+	struct gpio_controller	sc_gc;
+
+	struct gpio_chipset_tag	sc_gpio_tag;
+	gpio_pin_t		sc_gpio_pins[BCMGPIO_MAX_PINS];
+	int			sc_gpio_claimed[BCMGPIO_MAX_PINS];
 };
 
 int	bcmgpio_match(struct device *, void *, void *);
@@ -74,6 +91,10 @@ struct cfdriver bcmgpio_cd = {
 void	bcm2711_config_pull(struct bcmgpio_softc *, int, int);
 void	bcm2835_config_pull(struct bcmgpio_softc *, int, int);
 int	bcmgpio_pinctrl(uint32_t, void *);
+void	bcmgpio_config_pin(void *, uint32_t *, int);
+int	bcmgpio_get_pin(void *, uint32_t *);
+void	bcmgpio_set_pin(void *, uint32_t *, int);
+void	bcmgpio_attach_gpio(struct device *);
 
 int
 bcmgpio_match(struct device *parent, void *match, void *aux)
@@ -104,12 +125,24 @@ bcmgpio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	if (OF_is_compatible(faa->fa_node, "brcm,bcm2711-gpio"))
+	if (OF_is_compatible(faa->fa_node, "brcm,bcm2711-gpio")) {
 	    sc->sc_config_pull = bcm2711_config_pull;
-	else
+	    sc->sc_num_pins = 58;
+	} else {
 	    sc->sc_config_pull = bcm2835_config_pull;
+	    sc->sc_num_pins = 54;
+	}
 
 	pinctrl_register(faa->fa_node, bcmgpio_pinctrl, sc);
+
+	sc->sc_gc.gc_node = faa->fa_node;
+	sc->sc_gc.gc_cookie = sc;
+	sc->sc_gc.gc_config_pin = bcmgpio_config_pin;
+	sc->sc_gc.gc_get_pin = bcmgpio_get_pin;
+	sc->sc_gc.gc_set_pin = bcmgpio_set_pin;
+	gpio_controller_register(&sc->sc_gc);
+
+	config_mountroot(self, bcmgpio_attach_gpio);
 }
 
 void
@@ -186,6 +219,7 @@ bcmgpio_pinctrl(uint32_t phandle, void *cookie)
 		bcmgpio_config_func(sc, pins[i], func);
 		if (plen > 0 && i < plen / sizeof(uint32_t))
 			sc->sc_config_pull(sc, pins[i], pull[i]);
+		sc->sc_gpio_claimed[pins[i]] = 1;
 	}
 
 	free(pull, M_TEMP, plen);
@@ -196,4 +230,176 @@ fail:
 	free(pull, M_TEMP, plen);
 	free(pins, M_TEMP, len);
 	return -1;
+}
+
+void
+bcmgpio_config_pin(void *cookie, uint32_t *cells, int config)
+{
+	struct bcmgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+
+	if (pin >= sc->sc_num_pins)
+		return;
+
+	if (config & GPIO_CONFIG_OUTPUT)
+		bcmgpio_config_func(sc, pin, GPFSEL_GPIO_OUT);
+	else
+		bcmgpio_config_func(sc, pin, GPFSEL_GPIO_OUT);
+	if (config & GPIO_CONFIG_PULL_UP)
+		sc->sc_config_pull(sc, pin, GPPUD_PUD_UP);
+	else if (config & GPIO_CONFIG_PULL_DOWN)
+		sc->sc_config_pull(sc, pin, GPPUD_PUD_DOWN);
+	else
+		sc->sc_config_pull(sc, pin, GPPUD_PUD_OFF);
+}
+
+int
+bcmgpio_get_pin(void *cookie, uint32_t *cells)
+{
+	struct bcmgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+	uint32_t reg;
+	int val;
+
+	if (pin >= sc->sc_num_pins)
+		return 0;
+
+	reg = HREAD4(sc, GPLEV(pin / 32));
+	val = (reg >> (pin % 32)) & 1;
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	return val;
+}
+
+void
+bcmgpio_set_pin(void *cookie, uint32_t *cells, int val)
+{
+	struct bcmgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+
+	if (pin >= sc->sc_num_pins)
+		return;
+
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	if (val)
+		HWRITE4(sc, GPSET(pin / 32), (1 << (pin % 32)));
+	else
+		HWRITE4(sc, GPCLR(pin / 32), (1 << (pin % 32)));
+}
+
+/*
+ * GPIO support code
+ */
+
+int	bcmgpio_pin_read(void *, int);
+void	bcmgpio_pin_write(void *, int, int);
+void	bcmgpio_pin_ctl(void *, int, int);
+
+static const struct gpio_chipset_tag bcmgpio_gpio_tag = {
+	.gp_pin_read = bcmgpio_pin_read,
+	.gp_pin_write = bcmgpio_pin_write,
+	.gp_pin_ctl = bcmgpio_pin_ctl
+};
+
+int
+bcmgpio_pin_read(void *cookie, int pin)
+{
+	struct bcmgpio_softc *sc = cookie;
+	uint32_t cells[2];
+
+	cells[0] = pin;
+	cells[1] = 0;
+
+	return bcmgpio_get_pin(sc, cells) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
+}
+
+void
+bcmgpio_pin_write(void *cookie, int pin, int val)
+{
+	struct bcmgpio_softc *sc = cookie;
+	uint32_t cells[2];
+
+	cells[0] = pin;
+	cells[1] = 0;
+
+	bcmgpio_set_pin(sc, cells, val);
+}
+
+void
+bcmgpio_pin_ctl(void *cookie, int pin, int flags)
+{
+	struct bcmgpio_softc *sc = cookie;
+	uint32_t cells[2];
+	uint32_t config;
+
+	cells[0] = pin;
+	cells[1] = 0;
+
+	config = 0;
+	if (ISSET(flags, GPIO_PIN_OUTPUT))
+		config |= GPIO_CONFIG_OUTPUT;
+	if (ISSET(flags, GPIO_PIN_PULLUP))
+		config |= GPIO_CONFIG_PULL_UP;
+	if (ISSET(flags, GPIO_PIN_PULLDOWN))
+		config |= GPIO_CONFIG_PULL_DOWN;
+
+	bcmgpio_config_pin(sc, cells, config);
+}
+
+void
+bcmgpio_attach_gpio(struct device *parent)
+{
+	struct bcmgpio_softc *sc = (struct bcmgpio_softc *)parent;
+	struct gpiobus_attach_args gba;
+	uint32_t reg;
+	int func, state, flags;
+	int pin;
+
+	for (pin = 0; pin < sc->sc_num_pins; pin++) {
+		/* Skip pins claimed by other devices. */
+		if (sc->sc_gpio_claimed[pin])
+			continue;
+
+		/* Get pin configuration. */
+		reg = HREAD4(sc, GPFSEL(pin / 10));
+		func = (reg >> ((pin % 10) * 3)) & GPFSEL_MASK;
+
+		switch (func) {
+		case GPFSEL_GPIO_IN:
+			flags = GPIO_PIN_SET | GPIO_PIN_INPUT;
+			break;
+		case GPFSEL_GPIO_OUT:
+			flags = GPIO_PIN_SET | GPIO_PIN_OUTPUT;
+			break;
+		default:
+			/* Ignore pins with an assigned function. */
+			continue;
+		}
+
+		/* Get pin state. */
+		reg = HREAD4(sc, GPLEV(pin / 32));
+		state = (reg >> (pin % 32)) & 1;
+
+		sc->sc_gpio_pins[pin].pin_caps =
+		    GPIO_PIN_INPUT | GPIO_PIN_OUTPUT |
+		    GPIO_PIN_PULLUP | GPIO_PIN_PULLDOWN;
+		sc->sc_gpio_pins[pin].pin_flags = flags;
+		sc->sc_gpio_pins[pin].pin_state = state;
+		sc->sc_gpio_pins[pin].pin_num = pin;
+	}
+
+	memcpy(&sc->sc_gpio_tag, &bcmgpio_gpio_tag, sizeof(bcmgpio_gpio_tag));
+	sc->sc_gpio_tag.gp_cookie = sc;
+
+	gba.gba_name = "gpio";
+	gba.gba_gc = &sc->sc_gpio_tag;
+	gba.gba_pins = &sc->sc_gpio_pins[0];
+	gba.gba_npins = sc->sc_num_pins;
+
+#if NGPIO > 0
+	config_found(&sc->sc_dev, &gba, gpiobus_print);
+#endif
 }
