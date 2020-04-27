@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1307.c,v 1.1 2016/06/20 13:42:42 mglocker Exp $ */
+/*	$OpenBSD: ds1307.c,v 1.2 2020/04/27 12:41:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016 Marcus Glocker <mglocker@openbsd.org>
@@ -96,7 +96,8 @@ maxrtc_match(struct device *parent, void *v, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 
-	if (strcmp(ia->ia_name, "ds1307") == 0)
+	if (strcmp(ia->ia_name, "dallas,ds1307") == 0 ||
+	    strcmp(ia->ia_name, "ds1307") == 0)
 		return (1);
 
 	return (0);
@@ -123,12 +124,6 @@ maxrtc_attach(struct device *parent, struct device *self, void *arg)
 	if (maxrtc_set_24h_mode(sc) == -1)
 		return;
 
-	/* register our time handlers */
-	if (todr_handle != NULL) {
-		printf("%s: overwriting existing rtc handler\n",
-		    sc->sc_dev.dv_xname);
-	}
-	/* XXX just overwrite existing rtc handler? */
 	todr_handle = &sc->sc_todr;
 }
 
