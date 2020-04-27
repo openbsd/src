@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.19 2020/04/27 11:41:31 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.20 2020/04/27 12:17:29 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -226,11 +226,11 @@ void	dwpcie_atu_config(struct dwpcie_softc *, int, int,
 void	dwpcie_link_config(struct dwpcie_softc *);
 int	dwpcie_link_up(struct dwpcie_softc *);
 
-void	dwpcie_armada8k_init(struct dwpcie_softc *);
+int	dwpcie_armada8k_init(struct dwpcie_softc *);
 int	dwpcie_armada8k_link_up(struct dwpcie_softc *);
 int	dwpcie_armada8k_intr(void *);
 
-void	dwpcie_imx8mq_init(struct dwpcie_softc *);
+int	dwpcie_imx8mq_init(struct dwpcie_softc *);
 int	dwpcie_imx8mq_intr(void *);
 
 void	dwpcie_attach_hook(struct device *, struct device *,
@@ -268,6 +268,7 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
 	pcireg_t bir, blr, csr;
+	int error = 0;
 
 	if (faa->fa_nreg < 2) {
 		printf(": no registers\n");
@@ -364,10 +365,20 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	clock_set_assigned(sc->sc_node);
 
 	if (OF_is_compatible(sc->sc_node, "marvell,armada8k-pcie"))
-		dwpcie_armada8k_init(sc);
+		error = dwpcie_armada8k_init(sc);
 	if (OF_is_compatible(sc->sc_node, "fsl,imx8mm-pcie") ||
 	    OF_is_compatible(sc->sc_node, "fsl,imx8mq-pcie"))
-		dwpcie_imx8mq_init(sc);
+		error = dwpcie_imx8mq_init(sc);
+	if (error != 0) {
+		bus_space_unmap(sc->sc_iot, sc->sc_cfg1_ioh, sc->sc_cfg1_size);
+		bus_space_unmap(sc->sc_iot, sc->sc_cfg0_ioh, sc->sc_cfg0_size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
+		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
+		    sizeof(struct dwpcie_range));
+		printf("%s: can't initialize hardware\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	if (HREAD4(sc, IATU_VIEWPORT) == 0xffffffff) {
 		sc->sc_atu_base = 0x300000;
@@ -541,7 +552,7 @@ dwpcie_link_config(struct dwpcie_softc *sc)
 	HWRITE4(sc, PCIE_LINK_WIDTH_SPEED_CTRL, reg);
 }
 
-void
+int
 dwpcie_armada8k_init(struct dwpcie_softc *sc)
 {
 	uint32_t reg;
@@ -585,6 +596,8 @@ dwpcie_armada8k_init(struct dwpcie_softc *sc)
 			break;
 		delay(1000);
 	}
+	if (timo == 0)
+		return ETIMEDOUT;
 
 	sc->sc_ih = fdt_intr_establish(sc->sc_node, IPL_AUDIO | IPL_MPSAFE,
 	    dwpcie_armada8k_intr, sc, sc->sc_dev.dv_xname);
@@ -593,6 +606,8 @@ dwpcie_armada8k_init(struct dwpcie_softc *sc)
 	HWRITE4(sc, PCIE_GLOBAL_INT_MASK,
 	    PCIE_GLOBAL_INT_MASK_INT_A | PCIE_GLOBAL_INT_MASK_INT_B |
 	    PCIE_GLOBAL_INT_MASK_INT_C | PCIE_GLOBAL_INT_MASK_INT_D);
+
+	return 0;
 }
 
 int
@@ -620,14 +635,14 @@ dwpcie_armada8k_intr(void *arg)
 	return 0;
 }
 
-void
+int
 dwpcie_imx8mq_init(struct dwpcie_softc *sc)
 {
 	uint32_t *clkreq_gpio, *disable_gpio, *reset_gpio;
 	ssize_t clkreq_gpiolen, disable_gpiolen, reset_gpiolen;
 	struct regmap *anatop, *gpr, *phy;
 	uint32_t off, reg;
-	int timo;
+	int error, timo;
 
 	if (OF_is_compatible(sc->sc_node, "fsl,imx8mm-pcie")) {
 		anatop = regmap_bycompatible("fsl,imx8mm-anatop");
@@ -767,8 +782,10 @@ dwpcie_imx8mq_init(struct dwpcie_softc *sc)
 				break;
 			delay(10);
 		}
-		if (timo == 0)
-			printf("%s:%d: timeout\n", __func__, __LINE__);
+		if (timo == 0) {
+			error = ETIMEDOUT;
+			goto err;
+		}
 	}
 
 	reg = HREAD4(sc, 0x100000 + PCIE_RC_LCR);
@@ -790,8 +807,10 @@ dwpcie_imx8mq_init(struct dwpcie_softc *sc)
 			break;
 		delay(10);
 	}
-	if (timo == 0)
-		printf("%s:%d: timeout\n", __func__, __LINE__);
+	if (timo == 0) {
+		error = ETIMEDOUT;
+		goto err;
+	}
 
 	if (OF_getpropint(sc->sc_node, "fsl,max-link-speed", 1) >= 2) {
 		reg = HREAD4(sc, PCIE_RC_LCR);
@@ -808,8 +827,10 @@ dwpcie_imx8mq_init(struct dwpcie_softc *sc)
 				break;
 			delay(10);
 		}
-		if (timo == 0)
-			printf("%s:%d: timeout\n", __func__, __LINE__);
+		if (timo == 0) {
+			error = ETIMEDOUT;
+			goto err;
+		}
 	}
 
 	sc->sc_ih = fdt_intr_establish(sc->sc_node, IPL_AUDIO | IPL_MPSAFE,
@@ -820,12 +841,15 @@ dwpcie_imx8mq_init(struct dwpcie_softc *sc)
 	    PCIE_GLOBAL_INT_MASK_INT_A | PCIE_GLOBAL_INT_MASK_INT_B |
 	    PCIE_GLOBAL_INT_MASK_INT_C | PCIE_GLOBAL_INT_MASK_INT_D);
 
+	error = 0;
+err:
 	if (clkreq_gpiolen > 0)
 		free(clkreq_gpio, M_TEMP, clkreq_gpiolen);
 	if (disable_gpiolen > 0)
 		free(disable_gpio, M_TEMP, disable_gpiolen);
 	if (reset_gpiolen > 0)
 		free(reset_gpio, M_TEMP, reset_gpiolen);
+	return error;
 }
 
 int
