@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.225 2020/04/21 10:34:24 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.226 2020/04/27 08:01:50 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -157,6 +157,7 @@ void		iwn_rx_phy(struct iwn_softc *, struct iwn_rx_desc *,
 		    struct iwn_rx_data *);
 void		iwn_rx_done(struct iwn_softc *, struct iwn_rx_desc *,
 		    struct iwn_rx_data *, struct mbuf_list *);
+void		iwn_mira_choose(struct iwn_softc *, struct ieee80211_node *);
 void		iwn_rx_compressed_ba(struct iwn_softc *, struct iwn_rx_desc *,
 		    struct iwn_rx_data *);
 void		iwn5000_rx_calib_results(struct iwn_softc *,
@@ -1864,8 +1865,12 @@ iwn_iter_func(void *arg, struct ieee80211_node *ni)
 	struct iwn_softc *sc = arg;
 	struct iwn_node *wn = (void *)ni;
 
-	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0)
+	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0) {
+		int old_txrate = ni->ni_txrate;
 		ieee80211_amrr_choose(&sc->amrr, ni, &wn->amn);
+		if (old_txrate != ni->ni_txrate)
+			iwn_set_link_quality(sc, ni);
+	}
 }
 
 void
@@ -2254,6 +2259,29 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	ieee80211_release_node(ic, ni);
 }
 
+void
+iwn_mira_choose(struct iwn_softc *sc, struct ieee80211_node *ni)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwn_node *wn = (void *)ni;
+	int best_mcs = ieee80211_mira_get_best_mcs(&wn->mn);
+
+	ieee80211_mira_choose(&wn->mn, ic, ni);
+
+	/*
+	 * Update firmware's LQ retry table if MiRA has chosen a new MCS.
+	 *
+	 * We only need to do this if the best MCS has changed because
+	 * we ask firmware to use a fixed MCS while MiRA is probing a
+	 * candidate MCS.
+	 * While not probing we ask firmware to retry at lower rates in case
+	 * Tx at the newly chosen best MCS ends up failing, and then report
+	 * any resulting Tx retries to MiRA in order to trigger probing.
+	 */
+	if (best_mcs != ieee80211_mira_get_best_mcs(&wn->mn))
+		iwn_set_link_quality(sc, ni);
+}
+
 /* Process an incoming Compressed BlockAck. */
 void
 iwn_rx_compressed_ba(struct iwn_softc *sc, struct iwn_rx_desc *desc,
@@ -2350,7 +2378,7 @@ iwn_rx_compressed_ba(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		}
 
 		if (wn->mn.ampdu_size > 0)
-			ieee80211_mira_choose(&wn->mn, ic, ni);
+			iwn_mira_choose(sc, ni);
 	}
 }
 
@@ -2584,7 +2612,7 @@ iwn_ampdu_tx_done(struct iwn_softc *sc, struct iwn_tx_ring *txq,
 			wn->mn.retries++;
 		if (txfail)
 			wn->mn.txfail++;
-		ieee80211_mira_choose(&wn->mn, ic, ni);
+		iwn_mira_choose(sc, ni);
 	}
 
 	if (txfail)
@@ -2778,7 +2806,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 				wn->mn.retries++;
 			if (txfail)
 				wn->mn.txfail++;
-			ieee80211_mira_choose(&wn->mn, ic, data->ni);
+			iwn_mira_choose(sc, data->ni);
 		}
 	} else if (data->txrate == data->ni->ni_txrate) {
 		wn->amn.amn_txcnt++;
@@ -3526,11 +3554,8 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		txant = IWN_LSB(sc->txchainmask);
 		tx->rflags |= IWN_RFLAG_ANT(txant);
 	} else {
-		if (ni->ni_flags & IEEE80211_NODE_HT)
-			tx->linkq = 7 - ni->ni_txmcs; /* XXX revisit for MIMO */
-		else
-			tx->linkq = ni->ni_rates.rs_nrates - ni->ni_txrate - 1;
-		flags |= IWN_TX_LINKQ;	/* enable MRR */
+		tx->linkq = 0; /* initial index into firmware LQ retry table */
+		flags |= IWN_TX_LINKQ;	/* enable multi-rate retry */
 	}
 	/* Set physical address of "scratch area". */
 	tx->loaddr = htole32(IWN_LOADDR(data->scratch_paddr));
@@ -3882,11 +3907,10 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwn_node *wn = (void *)ni;
-	struct ieee80211_rateset *rs = &ni->ni_rates;
 	struct iwn_cmd_link_quality linkq;
 	const struct iwn_rate *rinfo;
 	uint8_t txant;
-	int i, txrate;
+	int i;
 
 	/* Use the first valid TX antenna. */
 	txant = IWN_LSB(sc->txchainmask);
@@ -3899,11 +3923,11 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 	linkq.ampdu_threshold = 3;
 	linkq.ampdu_limit = htole16(4000);	/* 4ms */
 
+	i = 0;
 	if (ni->ni_flags & IEEE80211_NODE_HT) {
-		/* Fill LQ table with MCS 7 - 0 (XXX revisit for MIMO) */
-		i = 0;
-		for (txrate = 7; txrate >= 0; txrate--) {
-			rinfo = &iwn_rates[iwn_mcs2ridx[txrate]];
+		int txmcs;
+		for (txmcs = ni->ni_txmcs; txmcs >= 0; txmcs--) {
+			rinfo = &iwn_rates[iwn_mcs2ridx[txmcs]];
 			linkq.retry[i].plcp = rinfo->ht_plcp;
 			linkq.retry[i].rflags = rinfo->ht_flags;
 
@@ -3916,27 +3940,25 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 			if (++i >= IWN_MAX_TX_RETRIES)
 				break;
 		}
-
-		/* Fill the rest with the lowest basic rate. */
-		rinfo = &iwn_rates[iwn_rval2ridx(ieee80211_min_basic_rate(ic))];
-		while (i < IWN_MAX_TX_RETRIES) {
-			linkq.retry[i].plcp = rinfo->plcp;
-			linkq.retry[i].rflags = rinfo->flags;
-			linkq.retry[i].rflags |= IWN_RFLAG_ANT(txant);
-			i++;
-		}
 	} else {
-		/* Start at highest available bit-rate. */
-		txrate = rs->rs_nrates - 1;
-		for (i = 0; i < IWN_MAX_TX_RETRIES; i++) {
+		int txrate;
+		for (txrate = ni->ni_txrate; txrate >= 0; txrate--) {
 			rinfo = &iwn_rates[wn->ridx[txrate]];
 			linkq.retry[i].plcp = rinfo->plcp;
 			linkq.retry[i].rflags = rinfo->flags;
 			linkq.retry[i].rflags |= IWN_RFLAG_ANT(txant);
-			/* Next retry at immediate lower bit-rate. */
-			if (txrate > 0)
-				txrate--;
+			if (++i >= IWN_MAX_TX_RETRIES)
+				break;
 		}
+	}
+
+	/* Fill the rest with the lowest basic rate. */
+	rinfo = &iwn_rates[iwn_rval2ridx(ieee80211_min_basic_rate(ic))];
+	while (i < IWN_MAX_TX_RETRIES) {
+		linkq.retry[i].plcp = rinfo->plcp;
+		linkq.retry[i].rflags = rinfo->flags;
+		linkq.retry[i].rflags |= IWN_RFLAG_ANT(txant);
+		i++;
 	}
 
 	return iwn_cmd(sc, IWN_CMD_LINK_QUALITY, &linkq, sizeof linkq, 1);
