@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.21 2019/09/03 09:00:44 sf Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.22 2020/04/27 10:06:45 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -2816,7 +2816,8 @@ bnxt_hwrm_set_filter(struct bnxt_softc *softc, struct bnxt_vnic_info *vnic)
 	resp = BNXT_DMA_KVA(softc->sc_cmd_resp);
 	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_CFA_L2_FILTER_ALLOC);
 
-	req.flags = htole32(HWRM_CFA_L2_FILTER_ALLOC_INPUT_FLAGS_PATH_RX);
+	req.flags = htole32(HWRM_CFA_L2_FILTER_ALLOC_INPUT_FLAGS_PATH_RX
+	    | HWRM_CFA_L2_FILTER_ALLOC_INPUT_FLAGS_OUTERMOST);
 	enables = HWRM_CFA_L2_FILTER_ALLOC_INPUT_ENABLES_L2_ADDR
 	    | HWRM_CFA_L2_FILTER_ALLOC_INPUT_ENABLES_L2_ADDR_MASK
 	    | HWRM_CFA_L2_FILTER_ALLOC_INPUT_ENABLES_DST_ID;
