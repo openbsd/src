@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.18 2020/04/26 15:17:21 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.19 2020/04/27 11:41:31 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -325,6 +325,8 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
+		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
+		    sizeof(struct dwpcie_range));
 		printf(": can't map ctrl registers\n");
 		return;
 	}
@@ -337,6 +339,8 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, sc->sc_cfg0_base,
 	    sc->sc_cfg1_size, 0, &sc->sc_cfg0_ioh)) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
+		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
+		    sizeof(struct dwpcie_range));
 		printf(": can't map config registers\n");
 		return;
 	}
@@ -345,6 +349,8 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_cfg1_size, 0, &sc->sc_cfg1_ioh)) {
 		bus_space_unmap(sc->sc_iot, sc->sc_cfg0_ioh, sc->sc_cfg0_size);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
+		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
+		    sizeof(struct dwpcie_range));
 		printf(": can't map config registers\n");
 		return;
 	}
