@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8523.c,v 1.3 2016/05/20 20:33:53 kettenis Exp $	*/
+/*	$OpenBSD: pcf8523.c,v 1.4 2020/04/27 12:36:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -165,13 +165,6 @@ pcfrtc_attach(struct device *parent, struct device *self, void *arg)
 	/* Report battery status. */
 	reg = pcfrtc_reg_read(sc, PCF8523_CONTROL3);
 	printf(": battery %s\n", (reg & PCF8523_CONTROL3_BLF) ? "low" : "ok");
-
-	/* Clear OS flag.  */
-	reg = pcfrtc_reg_read(sc, PCF8523_SECONDS);
-	if (reg & PCF8523_SECONDS_OS) {
-		reg &= ~PCF8523_SECONDS_OS;
-		pcfrtc_reg_write(sc, PCF8523_SECONDS, reg);
-	}
 }
 
 int
@@ -194,11 +187,19 @@ pcfrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
 	struct pcfrtc_softc *sc = ch->cookie;
 	struct clock_ymdhms dt;
+	uint8_t reg;
 
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
 	if (pcfrtc_clock_write(sc, &dt) == 0)
 		return (-1);
+
+	/* Clear OS flag.  */
+	reg = pcfrtc_reg_read(sc, PCF8523_SECONDS);
+	if (reg & PCF8523_SECONDS_OS) {
+		reg &= ~PCF8523_SECONDS_OS;
+		pcfrtc_reg_write(sc, PCF8523_SECONDS, reg);
+	}
+
 	return (0);
 }
 
