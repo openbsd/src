@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.142 2020/04/20 13:25:36 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.143 2020/04/27 08:35:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -518,7 +518,7 @@ client_write_open(void *data, size_t datalen)
 			errno = EBADF;
 		else {
 			cf->fd = dup(msg->fd);
-			if (client_flags & CLIENT_CONTROL)
+			if (~client_flags & CLIENT_CONTROL)
 				close(msg->fd); /* can only be used once */
 		}
 	}
@@ -673,7 +673,8 @@ client_read_open(void *data, size_t datalen)
 			errno = EBADF;
 		else {
 			cf->fd = dup(msg->fd);
-			close(msg->fd); /* can only be used once */
+			if (~client_flags & CLIENT_CONTROL)
+				close(msg->fd); /* can only be used once */
 		}
 	}
 	if (cf->fd == -1) {
