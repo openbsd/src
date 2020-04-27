@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008reg.h,v 1.6 2019/07/24 07:53:57 stsp Exp $	*/
+/*	$OpenBSD: ar5008reg.h,v 1.7 2020/04/27 08:21:34 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -927,6 +927,7 @@ struct ar_rx_desc {
 #define AR_RXS8_KEY_IDX_S		9
 #define AR_RXS8_POST_DELIM_CRC_ERR	0x00040000
 #define AR_RXS8_DECRYPT_BUSY_ERR	0x40000000
+#define AR_RXS8_KEY_MISS		0x80000000
 
 #define AR_MAX_PWR_RANGE_IN_HALF_DB	64
 #define AR9285_PD_GAIN_BOUNDARY_DEFAULT	58

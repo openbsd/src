@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.104 2019/05/17 01:05:20 kevlo Exp $	*/
+/*	$OpenBSD: athn.c,v 1.105 2020/04/27 08:21:34 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -244,9 +244,10 @@ athn_attach(struct athn_softc *sc)
 	/*
 	 * In HostAP mode, the number of STAs that we can handle is
 	 * limited by the number of entries in the HW key cache.
-	 * TKIP keys consume 2 entries in the cache.
+	 * TKIP keys would consume 2 entries in this cache but we
+	 * only use the hardware crypto engine for CCMP.
 	 */
-	ic->ic_max_nnodes = (sc->kc_entries / 2) - IEEE80211_WEP_NKID;
+	ic->ic_max_nnodes = sc->kc_entries - IEEE80211_WEP_NKID;
 	if (ic->ic_max_nnodes > IEEE80211_CACHE_SIZE)
 		ic->ic_max_nnodes = IEEE80211_CACHE_SIZE;
 
@@ -373,10 +374,8 @@ athn_attach(struct athn_softc *sc)
 	ic->ic_newassoc = athn_newassoc;
 	ic->ic_updateslot = athn_updateslot;
 	ic->ic_updateedca = athn_updateedca;
-#ifdef notyet
 	ic->ic_set_key = athn_set_key;
 	ic->ic_delete_key = athn_delete_key;
-#endif
 
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
@@ -990,6 +989,12 @@ athn_reset_key(struct athn_softc *sc, int entry)
 	 * NB: Key cache registers access special memory area that requires
 	 * two 32-bit writes to actually update the values in the internal
 	 * memory.  Consequently, writes must be grouped by pair.
+	 *
+	 * All writes to registers with an offset of 0x0 or 0x8 write to a
+	 * temporary register. A write to a register with an offset of 0x4
+	 * or 0xc writes concatenates the written value with the value in
+	 * the temporary register and writes the result to key cache memory.
+	 * The actual written memory area is 50 bits wide.
 	 */
 	AR_WRITE(sc, AR_KEYTABLE_KEY0(entry), 0);
 	AR_WRITE(sc, AR_KEYTABLE_KEY1(entry), 0);
@@ -1011,58 +1016,29 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_key *k)
 {
 	struct athn_softc *sc = ic->ic_softc;
-	const uint8_t *txmic, *rxmic, *key, *addr;
-	uintptr_t entry, micentry;
-	uint32_t type, lo, hi;
+	const uint8_t *key, *addr;
+	uintptr_t entry;
+	uint32_t lo, hi, unicast;
 
-	switch (k->k_cipher) {
-	case IEEE80211_CIPHER_WEP40:
-		type = AR_KEYTABLE_TYPE_40;
-		break;
-	case IEEE80211_CIPHER_WEP104:
-		type = AR_KEYTABLE_TYPE_104;
-		break;
-	case IEEE80211_CIPHER_TKIP:
-		type = AR_KEYTABLE_TYPE_TKIP;
-		break;
-	case IEEE80211_CIPHER_CCMP:
-		type = AR_KEYTABLE_TYPE_CCM;
-		break;
-	default:
-		/* Fallback to software crypto for other ciphers. */
-		return (ieee80211_set_key(ic, ni, k));
+	if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
+		/* Use software crypto for ciphers other than CCMP. */
+		return ieee80211_set_key(ic, ni, k);
 	}
 
-	if (!(k->k_flags & IEEE80211_KEY_GROUP))
+	if (!(k->k_flags & IEEE80211_KEY_GROUP)) {
 		entry = IEEE80211_WEP_NKID + IEEE80211_AID(ni->ni_associd);
-	else
+		if (entry >= sc->kc_entries - IEEE80211_WEP_NKID)
+			return ENOSPC;
+	} else {
 		entry = k->k_id;
+		if (entry > IEEE80211_WEP_NKID)
+			return ENOSPC;
+	}
 	k->k_priv = (void *)entry;
 
 	/* NB: See note about key cache registers access above. */
 	key = k->k_key;
-	if (type == AR_KEYTABLE_TYPE_TKIP) {
-#ifndef IEEE80211_STA_ONLY
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-			txmic = &key[16];
-			rxmic = &key[24];
-		} else
-#endif
-		{
-			rxmic = &key[16];
-			txmic = &key[24];
-		}
-		/* Tx+Rx MIC key is at entry + 64. */
-		micentry = entry + 64;
-		AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry), LE_READ_4(&rxmic[0]));
-		AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry), LE_READ_2(&txmic[2]));
 
-		AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry), LE_READ_4(&rxmic[4]));
-		AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), LE_READ_2(&txmic[0]));
-
-		AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry), LE_READ_4(&txmic[4]));
-		AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry), AR_KEYTABLE_TYPE_CLR);
-	}
 	AR_WRITE(sc, AR_KEYTABLE_KEY0(entry), LE_READ_4(&key[ 0]));
 	AR_WRITE(sc, AR_KEYTABLE_KEY1(entry), LE_READ_2(&key[ 4]));
 
@@ -1070,18 +1046,45 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	AR_WRITE(sc, AR_KEYTABLE_KEY3(entry), LE_READ_2(&key[10]));
 
 	AR_WRITE(sc, AR_KEYTABLE_KEY4(entry), LE_READ_4(&key[12]));
-	AR_WRITE(sc, AR_KEYTABLE_TYPE(entry), type);
+	AR_WRITE(sc, AR_KEYTABLE_TYPE(entry), AR_KEYTABLE_TYPE_CCM);
 
+	unicast = AR_KEYTABLE_VALID;
 	if (!(k->k_flags & IEEE80211_KEY_GROUP)) {
 		addr = ni->ni_macaddr;
 		lo = LE_READ_4(&addr[0]);
 		hi = LE_READ_2(&addr[4]);
 		lo = lo >> 1 | hi << 31;
 		hi = hi >> 1;
-	} else
-		lo = hi = 0;
+	} else {
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			uint8_t groupaddr[ETHER_ADDR_LEN];
+			IEEE80211_ADDR_COPY(groupaddr, ic->ic_myaddr);
+			groupaddr[0] |= 0x01;
+			lo = LE_READ_4(&groupaddr[0]);
+			hi = LE_READ_2(&groupaddr[4]);
+			lo = lo >> 1 | hi << 31;
+			hi = hi >> 1;
+			/*
+			 * KEYTABLE_VALID indicates that the address
+			 * is a unicast address which must match the
+			 * transmitter address when decrypting frames.
+			 * Not setting KEYTABLE_VALID allows hardware to
+			 * use this key for multicast frame decryption.
+			 */
+			unicast = 0;
+		} else
+#endif
+			lo = hi = 0;
+	}
 	AR_WRITE(sc, AR_KEYTABLE_MAC0(entry), lo);
-	AR_WRITE(sc, AR_KEYTABLE_MAC1(entry), hi | AR_KEYTABLE_VALID);
+	AR_WRITE(sc, AR_KEYTABLE_MAC1(entry), hi | unicast);
+
+	AR_WRITE_BARRIER(sc);
+
+	/* Enable HW crypto. */
+	AR_CLRBITS(sc, AR_DIAG_SW, AR_DIAG_ENCRYPT_DIS | AR_DIAG_DECRYPT_DIS);
+
 	AR_WRITE_BARRIER(sc);
 	return (0);
 }
@@ -1093,22 +1096,12 @@ athn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct athn_softc *sc = ic->ic_softc;
 	uintptr_t entry;
 
-	switch (k->k_cipher) {
-	case IEEE80211_CIPHER_WEP40:
-	case IEEE80211_CIPHER_WEP104:
-	case IEEE80211_CIPHER_CCMP:
+	if (k->k_cipher == IEEE80211_CIPHER_CCMP) {
 		entry = (uintptr_t)k->k_priv;
 		athn_reset_key(sc, entry);
-		break;
-	case IEEE80211_CIPHER_TKIP:
-		entry = (uintptr_t)k->k_priv;
-		athn_reset_key(sc, entry);
-		athn_reset_key(sc, entry + 64);
-		break;
-	default:
-		/* Fallback to software crypto for other ciphers. */
+		explicit_bzero(k, sizeof(*k));
+	} else
 		ieee80211_delete_key(ic, ni, k);
-	}
 }
 
 void

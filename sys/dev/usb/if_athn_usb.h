@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.h,v 1.10 2018/02/05 09:52:03 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.h,v 1.11 2020/04/27 08:21:35 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -338,6 +338,11 @@ struct ar_rx_status {
 	uint64_t	rs_tstamp;
 	uint16_t	rs_datalen;
 	uint8_t		rs_status;
+#define AR_RXS_RXERR_CRC               0x01
+#define AR_RXS_RXERR_PHY               0x02
+#define AR_RXS_RXERR_FIFO              0x04
+#define AR_RXS_RXERR_DECRYPT           0x08
+#define AR_RXS_RXERR_MIC               0x10
 	uint8_t		rs_phyerr;
 	int8_t		rs_rssi;
 	int8_t		rs_rssi_ctl[AR_MAX_CHAINS];
