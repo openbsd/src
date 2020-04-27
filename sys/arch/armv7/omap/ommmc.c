@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.35 2020/04/10 22:02:45 kettenis Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.36 2020/04/27 11:37:23 ians Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -927,10 +927,9 @@ ommmc_start_command(struct ommmc_softc *sc, struct sdmmc_command *cmd)
 	int error;
 	int s;
 
-	DPRINTF(1,("%s: start cmd %u arg=%#x data=%p dlen=%d flags=%#x "
-	    "proc=\"%s\"\n", DEVNAME(sc), cmd->c_opcode, cmd->c_arg,
-	    cmd->c_data, cmd->c_datalen, cmd->c_flags, curproc ?
-	    curproc->p_p->ps_comm : ""));
+	DPRINTF(1,("%s: start cmd %u arg=%#x data=%p dlen=%d flags=%#x\n",
+	    DEVNAME(sc), cmd->c_opcode, cmd->c_arg, cmd->c_data,
+	    cmd->c_datalen, cmd->c_flags));
 
 	/*
 	 * The maximum block length for commands should be the minimum

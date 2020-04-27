@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.64 2020/04/19 16:15:20 kettenis Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.65 2020/04/27 11:37:23 ians Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -908,10 +908,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	int seg;
 	int s;
 	
-	DPRINTF(1,("%s: start cmd %u arg=%#x data=%p dlen=%d flags=%#x "
-	    "proc=\"%s\"\n", DEVNAME(hp->sc), cmd->c_opcode, cmd->c_arg,
-	    cmd->c_data, cmd->c_datalen, cmd->c_flags, curproc ?
-	    curproc->p_p->ps_comm : ""));
+	DPRINTF(1,("%s: start cmd %u arg=%#x data=%p dlen=%d flags=%#x\n",
+	    DEVNAME(hp->sc), cmd->c_opcode, cmd->c_arg, cmd->c_data,
+	    cmd->c_datalen, cmd->c_flags));
 
 	/*
 	 * The maximum block length for commands should be the minimum

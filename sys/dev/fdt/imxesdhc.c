@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.14 2020/03/20 09:16:42 patrick Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.15 2020/04/27 11:37:23 ians Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -871,10 +871,9 @@ imxesdhc_start_command(struct imxesdhc_softc *sc, struct sdmmc_command *cmd)
 	int seg;
 	int s;
 
-	DPRINTF(1,("%s: start cmd %u arg=%#x data=%p dlen=%d flags=%#x "
-	    "proc=\"%s\"\n", HDEVNAME(sc), cmd->c_opcode, cmd->c_arg,
-	    cmd->c_data, cmd->c_datalen, cmd->c_flags, curproc ?
-	    curproc->p_p->ps_comm : ""));
+	DPRINTF(1,("%s: start cmd %u arg=%#x data=%p dlen=%d flags=%#x\n",
+	    HDEVNAME(sc), cmd->c_opcode, cmd->c_arg, cmd->c_data,
+	    cmd->c_datalen, cmd->c_flags));
 
 	/*
 	 * The maximum block length for commands should be the minimum
