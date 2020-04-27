@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.116 2020/01/27 00:37:59 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.117 2020/04/27 19:34:59 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -1117,7 +1117,7 @@ func checkAeadOpen(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 	}
 
 	success := false
-	if bytes.Equal(openedMsg, msg) || wt.Result == "invalid" {
+	if bytes.Equal(openedMsg, msg) == (wt.Result != "invalid") {
 		if acceptableAudit && wt.Result == "acceptable" {
 			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 		}
@@ -1163,7 +1163,7 @@ func checkAeadSeal(ctx *C.EVP_AEAD_CTX, iv []byte, ivLen int, aad []byte, aadLen
 	sealedTag := sealed[msgLen:maxOutLen]
 
 	success := false
-	if bytes.Equal(sealedCt, ct) && bytes.Equal(sealedTag, tag) || wt.Result == "invalid" {
+	if (bytes.Equal(sealedCt, ct) && bytes.Equal(sealedTag, tag)) == (wt.Result != "invalid") {
 		if acceptableAudit && wt.Result == "acceptable" {
 			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
 		}
