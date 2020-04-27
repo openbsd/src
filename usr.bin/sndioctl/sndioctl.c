@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.5 2020/04/16 12:57:14 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.6 2020/04/27 21:44:47 schwarze Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -374,7 +374,14 @@ print_val(struct info *p, int mono)
 	switch (p->desc.type) {
 	case SIOCTL_NUM:
 	case SIOCTL_SW:
-		printf("%.2g", p->curval / (float)p->desc.maxval);
+		if (p->desc.maxval == 1)
+			printf("%d", p->curval);
+		else
+			/*
+			 * For now, maxval is always 127 or 255,
+			 * so three decimals is always ideal.
+			 */
+			printf("%.3f", p->curval / (float)p->desc.maxval);
 		break;
 	case SIOCTL_VEC:
 	case SIOCTL_LIST:
@@ -389,7 +396,11 @@ print_val(struct info *p, int mono)
 			if (more)
 				printf(",");
 			print_node(&e->desc.node1, mono);
-			printf(":%.2g", e->curval / (float)e->desc.maxval);
+			if (e->desc.maxval == 1)
+				printf(":%d", e->curval);
+			else
+				printf(":%.3f",
+				    e->curval / (float)e->desc.maxval);
 			more = 1;
 		}
 	}
