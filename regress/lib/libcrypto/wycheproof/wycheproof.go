@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.117 2020/04/27 19:34:59 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.118 2020/04/27 19:42:34 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -605,13 +605,13 @@ func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen i
 		return false
 	}
 
-	openedMsg := out[0:cipherOutLen]
+	openedMsg := cipherOut[0:cipherOutLen]
 	if outLen == 0 {
 		out = nil
 	}
 
 	success := false
-	if bytes.Equal(openedMsg, out) || wt.Result == "invalid" {
+	if bytes.Equal(openedMsg, out) == (wt.Result != "invalid") {
 		success = true
 		if acceptableAudit && wt.Result == "acceptable" {
 			gatherAcceptableStatistics(wt.TCID, wt.Comment, wt.Flags)
