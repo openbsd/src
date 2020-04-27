@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.3 2020/04/27 20:09:55 patrick Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.4 2020/04/27 20:15:41 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -110,7 +110,8 @@ imxehci_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "fsl,imx27-usb");
+	return (OF_is_compatible(faa->fa_node, "fsl,imx27-usb") ||
+	    OF_is_compatible(faa->fa_node, "fsl,imx7d-usb"));
 }
 
 void
