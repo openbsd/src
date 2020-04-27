@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.36 2020/04/09 07:20:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.37 2020/04/27 08:02:24 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -71,9 +71,12 @@ struct iwn_tx_data {
 	int txfail;
 	int txmcs;
 	int txrate;
-	int flags;
-#define IWN_TXDATA_IS_AMPDU_SUBFRAME	0x01
-	int actual_txmcs; /* for retried A-MPDU subframes */
+
+	/* A-MPDU subframes */
+	int ampdu_id;
+	int ampdu_txmcs;
+	int ampdu_nframes;
+	int ampdu_size;
 };
 
 struct iwn_tx_ring {
@@ -111,6 +114,7 @@ struct iwn_node {
 	uint16_t			disable_tid;
 	uint8_t				id;
 	uint8_t				ridx[IEEE80211_RATE_MAXSIZE];
+	uint32_t			next_ampdu_id;
 };
 
 struct iwn_calib_state {
