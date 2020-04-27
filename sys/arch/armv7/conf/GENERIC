@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.129 2020/04/10 22:02:45 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.130 2020/04/27 20:40:15 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -167,8 +167,10 @@ exrtc*		at fdt?
 exuart*		at fdt?
 
 # Raspberry Pi 2/3
-bcmintc*	at fdt?
+bcmclock*	at fdt? early 1
 bcmdog*		at fdt?
+bcmintc*	at fdt? early 1
+bcmmbox*	at fdt? early 1
 dwctwo*		at fdt?
 usb*		at dwctwo?
 
