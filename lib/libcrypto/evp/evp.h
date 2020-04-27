@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.78 2019/10/24 15:43:09 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.79 2020/04/27 19:31:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1507,6 +1507,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_INPUT_NOT_INITIALIZED			 111
 #define EVP_R_INVALID_DIGEST				 152
 #define EVP_R_INVALID_FIPS_MODE				 168
+#define EVP_R_INVALID_IV_LENGTH				 194
 #define EVP_R_INVALID_KEY_LENGTH			 130
 #define EVP_R_INVALID_OPERATION				 148
 #define EVP_R_IV_TOO_LARGE				 102

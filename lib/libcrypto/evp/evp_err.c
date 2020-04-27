@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_err.c,v 1.25 2019/03/18 05:34:29 tb Exp $ */
+/* $OpenBSD: evp_err.c,v 1.26 2020/04/27 19:31:02 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -111,6 +111,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
 	{ERR_REASON(EVP_R_INPUT_NOT_INITIALIZED) , "input not initialized"},
 	{ERR_REASON(EVP_R_INVALID_DIGEST)        , "invalid digest"},
 	{ERR_REASON(EVP_R_INVALID_FIPS_MODE)     , "invalid fips mode"},
+	{ERR_REASON(EVP_R_INVALID_IV_LENGTH)     , "invalid iv length"},
 	{ERR_REASON(EVP_R_INVALID_KEY_LENGTH)    , "invalid key length"},
 	{ERR_REASON(EVP_R_INVALID_OPERATION)     , "invalid operation"},
 	{ERR_REASON(EVP_R_IV_TOO_LARGE)          , "iv too large"},

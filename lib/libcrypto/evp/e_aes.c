@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.39 2019/05/12 15:52:46 tb Exp $ */
+/* $OpenBSD: e_aes.c,v 1.40 2020/04/27 19:31:02 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1441,6 +1441,11 @@ aead_aes_gcm_seal(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
 	}
 
 	memcpy(&gcm, &gcm_ctx->gcm, sizeof(gcm));
+
+	if (nonce_len == 0) {
+		EVPerror(EVP_R_INVALID_IV_LENGTH);
+		return 0;
+	}
 	CRYPTO_gcm128_setiv(&gcm, nonce, nonce_len);
 
 	if (ad_len > 0 && CRYPTO_gcm128_aad(&gcm, ad, ad_len))
@@ -1487,6 +1492,11 @@ aead_aes_gcm_open(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
 	}
 
 	memcpy(&gcm, &gcm_ctx->gcm, sizeof(gcm));
+
+	if (nonce_len == 0) {
+		EVPerror(EVP_R_INVALID_IV_LENGTH);
+		return 0;
+	}
 	CRYPTO_gcm128_setiv(&gcm, nonce, nonce_len);
 
 	if (CRYPTO_gcm128_aad(&gcm, ad, ad_len))
