@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.84 2020/04/18 19:47:45 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.85 2020/04/27 19:28:13 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1418,7 +1418,8 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 		if ((peersas[i] = childsa_lookup(sa, spi,
 		    del.del_protoid)) == NULL) {
 			log_warnx("%s: CHILD SA doesn't exist for spi %s",
-			    __func__, print_spi(spi, del.del_spisize));
+			    SPI_SA(sa, __func__),
+			    print_spi(spi, del.del_spisize));
 			continue;
 		}
 
@@ -1933,7 +1934,7 @@ ikev2_pld_eap(struct iked *env, struct ikev2_payload *pld,
 	len = betoh16(hdr.eap_length);
 
 	if (len < sizeof(*eap)) {
-		log_info("%s: %s id %d length %d", __func__,
+		log_info("%s: %s id %d length %d", SPI_SA(sa, __func__),
 		    print_map(hdr.eap_code, eap_code_map),
 		    hdr.eap_id, betoh16(hdr.eap_length));
 	} else {
@@ -1943,7 +1944,7 @@ ikev2_pld_eap(struct iked *env, struct ikev2_payload *pld,
 			return (-1);
 		}
 
-		log_info("%s: %s id %d length %d EAP-%s", __func__,
+		log_info("%s: %s id %d length %d EAP-%s", SPI_SA(sa, __func__),
 		    print_map(eap->eap_code, eap_code_map),
 		    eap->eap_id, betoh16(eap->eap_length),
 		    print_map(eap->eap_type, eap_type_map));
