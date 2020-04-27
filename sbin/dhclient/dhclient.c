@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.663 2020/04/26 14:02:23 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.664 2020/04/27 15:40:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -814,6 +814,7 @@ state_selecting(struct interface_info *ifi)
 	}
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
+	time(&ifi->first_sending);
 	ifi->interval = 0;
 
 	/*
@@ -1460,32 +1461,26 @@ send_request(struct interface_info *ifi)
 	/* Figure out how long it's been since we started transmitting. */
 	interval = cur_time - ifi->first_sending;
 
-	/*
-	 * If we're in the INIT-REBOOT state and we've been trying longer
-	 * than reboot_timeout, go to INIT state and DISCOVER an address.
-	 *
-	 * In the INIT-REBOOT state, if we don't get an ACK, it
-	 * means either that we're on a network with no DHCP server,
-	 * or that our server is down.  In the latter case, assuming
-	 * that there is a backup DHCP server, DHCPDISCOVER will get
-	 * us a new address, but we could also have successfully
-	 * reused our old address.  In the former case, we're hosed
-	 * anyway.  This is not a win-prone situation.
-	 */
-	if (ifi->state == S_REBOOTING && interval >
-	    config->reboot_timeout) {
+	switch (ifi->state) {
+	case S_REBOOTING:
+		if (interval > config->reboot_timeout)
+			ifi->state = S_INIT;
+		break;
+	case S_RENEWING:
+		if (cur_time > ifi->expiry)
+			ifi->state = S_INIT;
+		break;
+	case S_REQUESTING:
+		if (interval > config->timeout)
+			ifi->state = S_INIT;
+		break;
+	default:
+		/* Something has gone wrong. Start over. */
 		ifi->state = S_INIT;
-		cancel_timeout(ifi);
-		state_init(ifi);
-		return;
+		break;
 	}
-
-	/*
-	 * If the lease has expired go back to the INIT state.
-	 */
-	if (ifi->state != S_REQUESTING && cur_time > ifi->expiry) {
-		ifi->active = NULL;
-		ifi->state = S_INIT;
+	if (ifi->state == S_INIT) {
+		cancel_timeout(ifi);
 		state_init(ifi);
 		return;
 	}
