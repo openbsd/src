@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.1 2020/04/23 22:14:49 patrick Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.2 2020/04/27 20:07:39 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -36,6 +36,7 @@
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
@@ -170,6 +171,8 @@ imxehci_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	pinctrl_byname(faa->fa_node, "default");
+	power_domain_enable(faa->fa_node);
+	clock_set_assigned(faa->fa_node);
 	clock_enable(faa->fa_node, NULL);
 	delay(1000);
 
@@ -391,5 +394,6 @@ nop_xceiv_init(struct imxehci_softc *sc, uint32_t *cells)
 	node = OF_getnodebyphandle(cells[0]);
 	KASSERT(node != 0);
 
+	clock_set_assigned(node);
 	clock_enable(node, NULL);
 }
