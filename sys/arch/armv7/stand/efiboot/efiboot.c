@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.28 2020/03/30 11:55:47 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.29 2020/04/27 20:13:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -627,16 +627,7 @@ _rtt(void)
 	printf("Hit any key to reboot\n");
 	efi_cons_getc(0);
 #endif
-	/*
-	 * XXX ResetSystem doesn't seem to work on U-Boot 2017.03 on
-	 * the CuBox-i.  So trigger an unimplemented instruction trap
-	 * instead.
-	 */
-#if 1
-	asm volatile(".word 0xa000f7f0\n");
-#else
 	RS->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
-#endif
 	for (;;)
 		continue;
 }
