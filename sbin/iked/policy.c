@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.59 2020/04/23 20:17:48 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.60 2020/04/28 17:56:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -172,8 +172,8 @@ policy_test(struct iked *env, struct iked_policy *key)
 
 			/* Make sure the proposals are compatible */
 			if (TAILQ_FIRST(&key->pol_proposals) &&
-			    proposals_negotiate(NULL, &key->pol_proposals,
-			    &p->pol_proposals, 0) == -1) {
+			    proposals_negotiate(NULL, &p->pol_proposals,
+			    &key->pol_proposals, 0) == -1) {
 				p = TAILQ_NEXT(p, pol_entry);
 				continue;
 			}
