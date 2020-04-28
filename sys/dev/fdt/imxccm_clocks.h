@@ -302,7 +302,10 @@ struct imxccm_mux imx7d_muxs[] = {
 #define IMX8MM_CLK_A53_CG		0x47
 #define IMX8MM_CLK_A53_DIV		0x4c
 #define IMX8MM_CLK_ENET_AXI		0x52
+#define IMX8MM_CLK_NAND_USDHC_BUS	0x53
 #define IMX8MM_CLK_USB_BUS		0x58
+#define IMX8MM_CLK_AHB			0x5d
+#define IMX8MM_CLK_IPG_ROOT		0x5f
 #define IMX8MM_CLK_PCIE1_CTRL		0x67
 #define IMX8MM_CLK_PCIE1_PHY		0x68
 #define IMX8MM_CLK_PCIE1_AUX		0x69
@@ -346,7 +349,9 @@ struct imxccm_mux imx7d_muxs[] = {
 struct imxccm_gate imx8mm_gates[] = {
 	[IMX8MM_CLK_A53_CG] = { 0x8000, 14 },
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 14 },
+	[IMX8MM_CLK_NAND_USDHC_BUS] = { 0x8900, 14 },
 	[IMX8MM_CLK_USB_BUS] = { 0x8b80, 14 },
+	[IMX8MM_CLK_AHB] = { 0x9000, 14 },
 	[IMX8MM_CLK_PCIE1_CTRL] = { 0xa300, 14 },
 	[IMX8MM_CLK_PCIE1_PHY] = { 0xa380, 14 },
 	[IMX8MM_CLK_PCIE1_AUX] = { 0xa400, 14 },
@@ -390,7 +395,10 @@ struct imxccm_gate imx8mm_gates[] = {
 struct imxccm_divider imx8mm_divs[] = {
 	[IMX8MM_CLK_A53_DIV] = { 0x8000, 0, 0x7, IMX8MM_CLK_A53_CG },
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 0, 0x3f },
+	[IMX8MM_CLK_NAND_USDHC_BUS] = { 0x8900, 0, 0x3f },
 	[IMX8MM_CLK_USB_BUS] = { 0x8b80, 0, 0x3f },
+	[IMX8MM_CLK_AHB] = { 0x9000, 0, 0x3f },
+	[IMX8MM_CLK_IPG_ROOT] = { 0x9080, 0, 0x1, IMX8MM_CLK_AHB },
 	[IMX8MM_CLK_PCIE1_CTRL] = { 0xa300, 0, 0x3f },
 	[IMX8MM_CLK_PCIE1_PHY] = { 0xa380, 0, 0x3f },
 	[IMX8MM_CLK_PCIE1_AUX] = { 0xa400, 0, 0x3f },
@@ -414,7 +422,9 @@ struct imxccm_divider imx8mm_divs[] = {
 
 struct imxccm_divider imx8mm_predivs[] = {
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 16, 0x7 },
+	[IMX8MM_CLK_NAND_USDHC_BUS] = { 0x8900, 16, 0x7 },
 	[IMX8MM_CLK_USB_BUS] = { 0x8b80, 16, 0x7 },
+	[IMX8MM_CLK_AHB] = { 0x9000, 16, 0x7 },
 	[IMX8MM_CLK_PCIE1_CTRL] = { 0xa300, 16, 0x7 },
 	[IMX8MM_CLK_PCIE1_PHY] = { 0xa380, 16, 0x7 },
 	[IMX8MM_CLK_PCIE1_AUX] = { 0xa400, 16, 0x7 },
@@ -439,7 +449,9 @@ struct imxccm_divider imx8mm_predivs[] = {
 struct imxccm_mux imx8mm_muxs[] = {
 	[IMX8MM_CLK_A53_SRC] = { 0x8000, 24, 0x7 },
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 24, 0x7 },
+	[IMX8MM_CLK_NAND_USDHC_BUS] = { 0x8900, 24, 0x7 },
 	[IMX8MM_CLK_USB_BUS] = { 0x8b80, 24, 0x7 },
+	[IMX8MM_CLK_AHB] = { 0x9000, 24, 0x7 },
 	[IMX8MM_CLK_PCIE1_CTRL] = { 0xa300, 24, 0x7 },
 	[IMX8MM_CLK_PCIE1_PHY] = { 0xa380, 24, 0x7 },
 	[IMX8MM_CLK_PCIE1_AUX] = { 0xa400, 24, 0x7 },
@@ -481,6 +493,7 @@ struct imxccm_mux imx8mm_muxs[] = {
 #define IMX8MQ_CLK_ENET_AXI		0x68
 #define IMX8MQ_CLK_NAND_USDHC_BUS	0x69
 #define IMX8MQ_CLK_USB_BUS		0x6e
+#define IMX8MQ_CLK_AHB			0x74
 #define IMX8MQ_CLK_PCIE1_CTRL		0x7c
 #define IMX8MQ_CLK_PCIE1_PHY		0x7d
 #define IMX8MQ_CLK_PCIE1_AUX		0x7e
@@ -533,6 +546,7 @@ struct imxccm_mux imx8mm_muxs[] = {
 #define IMX8MQ_CLK_USB2_PHY_ROOT	0xd1
 #define IMX8MQ_CLK_USDHC1_ROOT		0xd2
 #define IMX8MQ_CLK_USDHC2_ROOT		0xd3
+#define IMX8MQ_CLK_IPG_ROOT		0xec
 #define IMX8MQ_CLK_TMU_ROOT		0xf6
 #define IMX8MQ_CLK_OCOTP_ROOT		0xfa
 #define IMX8MQ_CLK_ARM			0x102
@@ -542,6 +556,7 @@ struct imxccm_gate imx8mq_gates[] = {
 	[IMX8MQ_CLK_ENET_AXI] = { 0x8880, 14 },
 	[IMX8MQ_CLK_NAND_USDHC_BUS] = { 0x8900, 14 },
 	[IMX8MQ_CLK_USB_BUS] = { 0x8b80, 14 },
+	[IMX8MQ_CLK_AHB] = { 0x9000, 14 },
 	[IMX8MQ_CLK_PCIE1_CTRL] = { 0xa300, 14 },
 	[IMX8MQ_CLK_PCIE1_PHY] = { 0xa380, 14 },
 	[IMX8MQ_CLK_PCIE1_AUX] = { 0xa400, 14 },
@@ -603,6 +618,7 @@ struct imxccm_divider imx8mq_divs[] = {
 	[IMX8MQ_CLK_ENET_AXI] = { 0x8880, 0, 0x3f },
 	[IMX8MQ_CLK_NAND_USDHC_BUS] = { 0x8900, 0, 0x3f },
 	[IMX8MQ_CLK_USB_BUS] = { 0x8b80, 0, 0x3f },
+	[IMX8MQ_CLK_AHB] = { 0x9000, 0, 0x3f },
 	[IMX8MQ_CLK_PCIE1_CTRL] = { 0xa300, 0, 0x3f },
 	[IMX8MQ_CLK_PCIE1_PHY] = { 0xa380, 0, 0x3f },
 	[IMX8MQ_CLK_PCIE1_AUX] = { 0xa400, 0, 0x3f },
@@ -631,12 +647,14 @@ struct imxccm_divider imx8mq_divs[] = {
 	[IMX8MQ_CLK_PCIE2_PHY] = { 0xc080, 0, 0x3f },
 	[IMX8MQ_CLK_PCIE2_AUX] = { 0xc100, 0, 0x3f },
 	[IMX8MQ_CLK_ECSPI3] = { 0xc180, 0, 0x3f },
+	[IMX8MQ_CLK_IPG_ROOT] = { 0x9080, 0, 0x1, IMX8MQ_CLK_AHB },
 };
 
 struct imxccm_divider imx8mq_predivs[] = {
 	[IMX8MQ_CLK_ENET_AXI] = { 0x8880, 16, 0x7 },
 	[IMX8MQ_CLK_NAND_USDHC_BUS] = { 0x8900, 16, 0x7 },
 	[IMX8MQ_CLK_USB_BUS] = { 0x8b80, 16, 0x7 },
+	[IMX8MQ_CLK_AHB] = { 0x9000, 16, 0x7 },
 	[IMX8MQ_CLK_PCIE1_CTRL] = { 0xa300, 16, 0x7 },
 	[IMX8MQ_CLK_PCIE1_PHY] = { 0xa380, 16, 0x7 },
 	[IMX8MQ_CLK_PCIE1_AUX] = { 0xa400, 16, 0x7 },
@@ -672,6 +690,7 @@ struct imxccm_mux imx8mq_muxs[] = {
 	[IMX8MQ_CLK_ENET_AXI] = { 0x8880, 24, 0x7 },
 	[IMX8MQ_CLK_NAND_USDHC_BUS] = { 0x8900, 24, 0x7 },
 	[IMX8MQ_CLK_USB_BUS] = { 0x8b80, 24, 0x7 },
+	[IMX8MQ_CLK_AHB] = { 0x9000, 24, 0x7 },
 	[IMX8MQ_CLK_PCIE1_CTRL] = { 0xa300, 24, 0x7 },
 	[IMX8MQ_CLK_PCIE1_PHY] = { 0xa380, 24, 0x7 },
 	[IMX8MQ_CLK_PCIE1_AUX] = { 0xa400, 24, 0x7 },
