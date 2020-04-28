@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.127 2019/06/16 14:24:42 espie Exp $
+.\" $OpenBSD: ports.7,v 1.128 2020/04/28 13:11:32 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: June 16 2019 $
+.Dd $Mdocdate: April 28 2020 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -618,11 +618,23 @@ Normally
 If set,
 try to use as options to
 .Xr pkg_add 1
-to install the missing packages from
+to install missing packages from
 .Ev PKG_PATH .
-For instance:
+.Xr bsd.port.mk 5
+does not set
+.Ev FETCH_PACKAGES ,
+so even an empty value amounts to setting the variable.
+.Pp
+For instance, to run
+.Xr pkg_add 1
+with default options :
 .Bd -literal -offset indent
 make FETCH_PACKAGES=
+.Ed
+.Pp
+or, to use the snapshots directory during the final beta period:
+.Bd -literal -offset indent
+make FETCH_PACKAGES=-Dsnap
 .Ed
 .It Ev PATCH_DEBUG
 If defined, display verbose output when applying each patch.
