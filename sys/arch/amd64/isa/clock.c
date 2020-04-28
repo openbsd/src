@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.31 2019/08/21 20:44:09 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.32 2020/04/28 12:58:28 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -86,8 +86,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * Primitive clock interrupt routines.
  */
 
-/* #define CLOCKDEBUG */
-/* #define CLOCK_PARANOIA */
+/* #define CLOCK_DEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +100,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
+#include <dev/clock_subr.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
@@ -344,8 +344,6 @@ bintobcd(int n)
 	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
 }
 
-static int timeset;
-
 /*
  * check whether the CMOS layout is "standard"-like (ie, not PS/2-like),
  * to be called at splclock()
@@ -422,47 +420,21 @@ clock_expandyear(int clockyear)
 	return (clockyear);
 }
 
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(time_t base)
+int
+rtcgettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct timespec ts;
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
 	int s;
-
-	ts.tv_nsec = 0;
-
-	/*
-	 * We mostly ignore the suggested time (which comes from the
-	 * file system) and go for the RTC clock time stored in the
-	 * CMOS RAM.  If the time can't be obtained from the CMOS, or
-	 * if the time obtained from the CMOS is 5 or more years less
-	 * than the suggested time, we used the suggested time.  (In
-	 * the latter case, it's likely that the CMOS battery has
-	 * died.)
-	 */
-
-	/*
-	 * if the file system time is more than a year older than the
-	 * kernel, warn and then set the base time to the CONFIG_TIME.
-	 */
-	if (base < 30*SECYR) {	/* if before 2000, something's odd... */
-		printf("WARNING: preposterous time in file system\n");
-		base = 30*SECYR;
-	}
-
+	
 	s = splclock();
 	if (rtcget(&rtclk)) {
 		splx(s);
-		printf("WARNING: invalid time in clock chip\n");
-		goto fstime;
+		return EINVAL;
 	}
 	splx(s);
-#ifdef DEBUG_CLOCK
+
+#ifdef CLOCK_DEBUG
 	printf("readclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR],
 	    rtclk[MC_MONTH], rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN],
 	    rtclk[MC_SEC]);
@@ -475,43 +447,17 @@ inittodr(time_t base)
 	dt.dt_mon = bcdtobin(rtclk[MC_MONTH]);
 	dt.dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
 
-	ts.tv_sec = clock_ymdhms_to_secs(&dt) - utc_offset;
-
-	if (base != 0 && base < ts.tv_sec - 5*SECYR)
-		printf("WARNING: file system time much less than clock time\n");
-	else if (base > ts.tv_sec + 5*SECYR) {
-		printf("WARNING: clock time much less than file system time\n");
-		printf("WARNING: using file system time\n");
-		goto fstime;
-	}
-
-	tc_setclock(&ts);
-	timeset = 1;
-	return;
-
-fstime:
-	ts.tv_sec = base;
-	tc_setclock(&ts);
-	timeset = 1;
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
+	tv->tv_sec = clock_ymdhms_to_secs(&dt) - utc_offset;
+	tv->tv_usec = 0;
+	return 0;
 }
 
-/*
- * Reset the clock.
- */
-void
-resettodr(void)
+int
+rtcsettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
 	int century, s;
-
-	/*
-	 * We might have been called by boot() due to a crash early
-	 * on.  Don't reset the clock chip in this case.
-	 */
-	if (!timeset)
-		return;
 
 	s = splclock();
 	if (rtcget(&rtclk))
@@ -528,10 +474,11 @@ resettodr(void)
 	rtclk[MC_MONTH] = bintobcd(dt.dt_mon);
 	rtclk[MC_DOM] = bintobcd(dt.dt_day);
 
-#ifdef DEBUG_CLOCK
+#ifdef CLOCK_DEBUG
 	printf("setclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR], rtclk[MC_MONTH],
 	   rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN], rtclk[MC_SEC]);
 #endif
+
 	s = splclock();
 	rtcput(&rtclk);
 	if (rtc_update_century > 0) {
@@ -539,6 +486,18 @@ resettodr(void)
 		mc146818_write(NULL, centb, century); /* XXX softc */
 	}
 	splx(s);
+	return 0;
+}
+
+extern todr_chip_handle_t todr_handle;
+struct todr_chip_handle rtc_todr;
+
+void
+rtcinit(void)
+{
+	rtc_todr.todr_gettime = rtcgettime;
+	rtc_todr.todr_settime = rtcsettime;
+	todr_handle = &rtc_todr;
 }
 
 void

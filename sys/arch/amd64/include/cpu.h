@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.134 2020/04/15 16:38:24 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.135 2020/04/28 12:58:28 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -390,6 +390,7 @@ void	proc_trampoline(void);
 /* clock.c */
 extern void (*initclock_func)(void);
 void	startclocks(void);
+void	rtcinit(void);
 void	rtcstart(void);
 void	rtcstop(void);
 void	i8254_delay(int);
