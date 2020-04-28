@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.105 2020/04/27 08:21:34 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.106 2020/04/28 06:58:09 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2420,6 +2420,12 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	/* Setup Rx interrupt mitigation. */
 	AR_WRITE(sc, AR_RIMT, SM(AR_RIMT_FIRST, 2000) | SM(AR_RIMT_LAST, 500));
+
+	/* Setup Tx interrupt mitigation. */
+	AR_WRITE(sc, AR_TIMT, SM(AR_TIMT_FIRST, 2000) | SM(AR_TIMT_LAST, 500));
+
+	/* Set maximum interrupt rate threshold (in micro seconds). */
+	AR_WRITE(sc, AR_MIRT, SM(AR_MIRT_RATE_THRES, 2000));
 
 	ops->init_baseband(sc);
 
