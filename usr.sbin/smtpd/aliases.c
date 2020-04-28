@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.77 2018/12/28 12:47:28 eric Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.78 2020/04/28 21:46:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -163,6 +163,10 @@ aliases_virtual_get(struct expand *expand, const struct mailaddr *maddr)
 		return (-1);
 	if (ret)
 		goto expand;
+
+	/* Do not try catch-all entries if there is no domain */
+	if (domain[0] == '\0')
+		return 0;
 
 	if (!bsnprintf(buf, sizeof(buf), "@%s", domain))
 		return 0;
