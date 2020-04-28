@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.65 2020/04/23 12:55:44 benno Exp $ */
+/*	$OpenBSD: main.c,v 1.66 2020/04/28 13:41:35 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -75,26 +75,6 @@
  * Maximum number of TAL files we'll load.
  */
 #define	TALSZ_MAX	8
-
-/*
- * Statistics collected during run-time.
- */
-struct	stats {
-	size_t	 tals; /* total number of locators */
-	size_t	 mfts; /* total number of manifests */
-	size_t	 mfts_fail; /* failing syntactic parse */
-	size_t	 mfts_stale; /* stale manifests */
-	size_t	 certs; /* certificates */
-	size_t	 certs_fail; /* failing syntactic parse */
-	size_t	 certs_invalid; /* invalid resources */
-	size_t	 roas; /* route origin authorizations */
-	size_t	 roas_fail; /* failing syntactic parse */
-	size_t	 roas_invalid; /* invalid resources */
-	size_t	 repos; /* repositories */
-	size_t	 crls; /* revocation lists */
-	size_t	 vrps; /* total number of vrps */
-	size_t	 uniqs; /* number of unique vrps */
-};
 
 /*
  * An rsync repository.
@@ -479,6 +459,8 @@ queue_add_from_mft_set(int fd, struct entityq *q, const struct mft *mft,
 	}
 }
 
+char	*talnames;
+
 /*
  * Add a local TAL file (RFC 7730) to the queue of files to fetch.
  */
@@ -490,6 +472,16 @@ queue_add_tal(int fd, struct entityq *q, const char *file, size_t *eid)
 	if ((nfile = strdup(file)) == NULL)
 		err(1, "strdup");
 	buf = tal_read_file(file);
+
+	/* Record tal for later reporting */
+	if (talnames == NULL)
+		talnames = strdup(file);
+	else {
+		char *tmp;
+		asprintf(&tmp, "%s %s", talnames, file);
+		free(talnames);
+		talnames = tmp;
+	}
 
 	/* Not in a repository, so directly add to queue. */
 	entityq_add(fd, q, nfile, RTYPE_TAL, NULL, NULL, NULL, 0, buf, eid);
@@ -1656,7 +1648,8 @@ main(int argc, char *argv[])
 		rc = 1;
 	}
 
-	if (outputfiles(&v))
+	stats.talnames = talnames;
+	if (outputfiles(&v, &stats))
 		rc = 1;
 
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",

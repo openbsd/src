@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.16 2019/12/04 23:03:05 benno Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.17 2020/04/28 13:41:35 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -21,10 +21,13 @@
 #include "extern.h"
 
 int
-output_bgpd(FILE *out, struct vrp_tree *vrps)
+output_bgpd(FILE *out, struct vrp_tree *vrps, struct stats *st)
 {
 	char		 buf1[64], buf2[32];
 	struct vrp	*v;
+
+	if (outputheader(out, st) < 0)
+		return -1;
 
 	if (fprintf(out, "roa-set {\n") < 0)
 		return -1;

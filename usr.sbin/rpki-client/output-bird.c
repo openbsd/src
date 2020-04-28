@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.7 2020/03/06 17:36:42 benno Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.8 2020/04/28 13:41:35 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2020 Robert Scheck <robert@fedoraproject.org>
@@ -22,11 +22,14 @@
 #include "extern.h"
 
 int
-output_bird1v4(FILE *out, struct vrp_tree *vrps)
+output_bird1v4(FILE *out, struct vrp_tree *vrps, struct stats *st)
 {
 	extern		const char *bird_tablename;
 	char		 buf[64];
 	struct vrp	*v;
+
+	if (outputheader(out, st) < 0)
+		return -1;
 
 	if (fprintf(out, "roa table %s {\n", bird_tablename) < 0)
 		return -1;
@@ -46,11 +49,14 @@ output_bird1v4(FILE *out, struct vrp_tree *vrps)
 }
 
 int
-output_bird1v6(FILE *out, struct vrp_tree *vrps)
+output_bird1v6(FILE *out, struct vrp_tree *vrps, struct stats *st)
 {
 	extern		const char *bird_tablename;
 	char		 buf[64];
 	struct vrp	*v;
+
+	if (outputheader(out, st) < 0)
+		return -1;
 
 	if (fprintf(out, "roa table %s {\n", bird_tablename) < 0)
 		return -1;
@@ -70,14 +76,17 @@ output_bird1v6(FILE *out, struct vrp_tree *vrps)
 }
 
 int
-output_bird2(FILE *out, struct vrp_tree *vrps)
+output_bird2(FILE *out, struct vrp_tree *vrps, struct stats *st)
 {
 	extern		const char *bird_tablename;
 	char		 buf[64];
 	struct vrp	*v;
 	time_t		 now = time(NULL);
 
-	if (fprintf(out, "define force_roa_table_update = %lld;\n\n"
+	if (outputheader(out, st) < 0)
+		return -1;
+
+	if (fprintf(out, "\ndefine force_roa_table_update = %lld;\n\n"
 	    "roa4 table %s4;\nroa6 table %s6;\n\n"
 	    "protocol static {\n\troa4 { table %s4; };\n\n",
 	    (long long) now, bird_tablename, bird_tablename,

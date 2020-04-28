@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.27 2020/04/01 14:15:49 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.28 2020/04/28 13:41:35 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -244,6 +244,27 @@ enum rtype {
 	RTYPE_CRL
 };
 
+/*
+ * Statistics collected during run-time.
+ */
+struct	stats {
+	size_t	 tals; /* total number of locators */
+	size_t	 mfts; /* total number of manifests */
+	size_t	 mfts_fail; /* failing syntactic parse */
+	size_t	 mfts_stale; /* stale manifests */
+	size_t	 certs; /* certificates */
+	size_t	 certs_fail; /* failing syntactic parse */
+	size_t	 certs_invalid; /* invalid resources */
+	size_t	 roas; /* route origin authorizations */
+	size_t	 roas_fail; /* failing syntactic parse */
+	size_t	 roas_invalid; /* invalid resources */
+	size_t	 repos; /* repositories */
+	size_t	 crls; /* revocation lists */
+	size_t	 vrps; /* total number of vrps */
+	size_t	 uniqs; /* number of unique vrps */
+	char	*talnames;
+};
+
 /* global variables */
 extern int verbose;
 
@@ -370,13 +391,14 @@ extern int	 outformats;
 #define FORMAT_JSON	0x08
 extern char*	 outputdir;
 
-int		 outputfiles(struct vrp_tree *v);
-int		 output_bgpd(FILE *, struct vrp_tree *);
-int		 output_bird1v4(FILE *, struct vrp_tree *);
-int		 output_bird1v6(FILE *, struct vrp_tree *);
-int		 output_bird2(FILE *, struct vrp_tree *);
-int		 output_csv(FILE *, struct vrp_tree *);
-int		 output_json(FILE *, struct vrp_tree *);
+int		 outputfiles(struct vrp_tree *v, struct stats *);
+int		 outputheader(FILE *, struct stats *);
+int		 output_bgpd(FILE *, struct vrp_tree *, struct stats *);
+int		 output_bird1v4(FILE *, struct vrp_tree *, struct stats *);
+int		 output_bird1v6(FILE *, struct vrp_tree *, struct stats *);
+int		 output_bird2(FILE *, struct vrp_tree *, struct stats *);
+int		 output_csv(FILE *, struct vrp_tree *, struct stats *);
+int		 output_json(FILE *, struct vrp_tree *, struct stats *);
 
 void	logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));

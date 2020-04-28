@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-csv.c,v 1.6 2019/12/04 23:03:05 benno Exp $ */
+/*	$OpenBSD: output-csv.c,v 1.7 2020/04/28 13:41:35 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -21,7 +21,7 @@
 #include "extern.h"
 
 int
-output_csv(FILE *out, struct vrp_tree *vrps)
+output_csv(FILE *out, struct vrp_tree *vrps, struct stats *st)
 {
 	char		 buf[64];
 	struct vrp	*v;
