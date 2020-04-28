@@ -1,38 +1,9 @@
-dnl	$OpenBSD: contents,v 1.62 2017/09/25 10:47:46 jsg Exp $
+dnl	$OpenBSD: contents,v 1.63 2020/04/28 13:02:10 benno Exp $
 TopPart
 
 OpenBSDminiroot
 			It can be copied to the swap partition of an existing
 			disk to allow installing or upgrading to OpenBSD OSREV.
-
-OpenBSDfloppy
-			This floppy image will boot on the following MACHINE
-			models:
-			- AlphaStation 200, 250, 255, 400
-			- AlphaServer 300 and 400
-			- AlphaStation 500, 600
-			- AlphaStation 600A, 1200
-			- AlphaServer 800, 1000, 1000A, 1200, 4000 and 4100
-			- AXPpci33 based machines, including ``Noname'',
-			  UDB, Multia
-			- EB164 based machines, including PC164, 164SX,
-			  and 164LX
-			- Personal Workstation (Miata)
-
-	floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy; see
-			below.
-			This floppy image will boot on the following MACHINE
-			models:
-   			- Alpha Processor, Inc. UP1000, UP1100, UP2000 and
-			  UP2000+
-			- XP900, XP1000, CS20, DS10, DS20, DS20L, ES40 and
-			  264DP
-
-	floppyC{:--:}OSrev.fs	Another MACHINE boot and installation floppy; see
-			below.
-			This floppy image will boot on the following MACHINE
-			models:
-   			- Tadpole AlphaBook
 
 OpenBSDdistsets
 
@@ -56,8 +27,6 @@ OpenBSDcd
 
 	netboot.mop	The OpenBSD/MACHINE network boot loader, for MOP
 			protocol.
-
-OpenBSDfloppydesc(three,Each,s)
 
 DistributionDescription(eight)
 

@@ -1,46 +1,30 @@
-dnl	$OpenBSD: xfer,v 1.33 2019/08/01 19:42:52 jmc Exp $
+dnl	$OpenBSD: xfer,v 1.34 2020/04/28 13:02:10 benno Exp $
 Installation is supported from several media types, including:
 
-	CD-ROM (NOT supported if booting from floppy)
+	CD-ROM
 	FFS partitions
 	HTTP
 
 If you can burn the bootable CD-ROM mini image, you can boot from it.
-Otherwise, you will need to create a bootable floppy disk.
 
 OpenBSDXferCDROM
 
-OpenBSDXferFloppyFromDOS
+If you do not have a CD-ROM drive on your alpha:
 
-OpenBSDXferFloppyFromUNIX
+	You can copy the miniroot image onto the hard disk you intend to
+	install OpenBSD on.  Doing so will overwrite the disk's old contents,
+	however.
 
-If you neither have a floppy drive nor a CD-ROM drive on your alpha:
-
-	If you don't have a floppy drive you can copy the floppy
-	image onto the hard disk you intend to install OpenBSD on.
-	Doing so will overwrite the disk's old contents, however.
-
-	You must use a Unix-like system to write the floppy image
+	You must use a Unix-like system to write the miniroot image
 	to the hard disk you will be using for OpenBSD/MACHINE.  You
 	should use the "dd" command to copy the file system image
-	(floppy{:--:}OSrev.fs or floppyB{:--:}OSrev.fs) directly to the raw 'c'
+	(miniroot{:--:}OSrev.fs) directly to the raw 'c'
 	device (whole disk) of the target hard disk.  It is suggested
 	that you read the dd(1) manual page or ask your system
 	administrator to determine the correct set of arguments to use;
 	it will be slightly different from system to system, and a
 	comprehensive list of the possibilities is beyond the scope of
 	this document.
-
-	Please note that this will put a floppy disklabel on your
-	disk which will confuse the install script.  To fix this
-	you need to ask for a shell (answer "s" to the first question)
-	when booting your disk and do "dd if=/dev/zero of=/dev/rsd0c
-	count=20", assuming you booted from sd0.  After doing this you will
-	not be able to boot that disk again unless you complete
-	the install.  You can now enter "install" and start the
-	actual install process.
-
-
 
 OpenBSDXferShortPrelude
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.32 2014/02/03 05:35:40 miod Exp $
+dnl	$OpenBSD: prep,v 1.33 2020/04/28 13:02:10 benno Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -63,8 +63,7 @@ Using the SRM console:
 
     To see a list of devices connected to your alpha, you can
     use the "show device" command.  For booting, the devices you
-    are interested in are "dva0" (the floppy drive) and
-    "dka*" (the disk drives).
+    are interested in are "dka*" (the disk drives).
 
     You can set ROM variables by saying "set VARIABLE VALUE".
     Some variables you will want to set:

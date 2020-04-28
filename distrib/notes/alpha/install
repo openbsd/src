@@ -1,24 +1,10 @@
-dnl	$OpenBSD: install,v 1.41 2019/08/01 19:42:52 jmc Exp $
+dnl	$OpenBSD: install,v 1.42 2020/04/28 13:02:10 benno Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way is
 to boot from the bootable CD-ROM mini image, then install from your favorite
-source. You can also use one of the OpenBSD installation floppies, if your
-machine has a floppy drive. Network booting is supported through means of
+source. Network booting is supported through means of
 dhcpd(8) and tftpd(8).
-
-Booting from Floppy Disk installation media:
-
-	At the SRM console prompt, enter
-		boot dva0
-	You should see info about the primary and secondary boot
-	and then the kernel should start to load.  It will take a
-	while to load the kernel from the floppy, most likely more
-	than a minute.  If some action doesn't eventually happen,
-	or the spinning cursor has stopped and nothing further has
-	happened, or the machine spontaneously reboots, then either
-	you have a bad boot floppy (in which case you should try
-	another) or your alpha is not currently supported by OpenBSD.
 
 Booting from CD-ROM installation media:
 
@@ -36,12 +22,12 @@ Booting from CD-ROM installation media:
 		boot DEVICE
 	where DEVICE is the dka device name.
 
-	You should see info about the primary and secondary boot
-	and then the kernel should start to load.  If the kernel
-	fails to load or the spinning cursor has stopped and nothing
-	further has happened, you either have a hardware problem or
-	your MACHINE is not currently supported by OpenBSD; try booting
-	from a floppy instead if possible.
+	You should see info about the primary and secondary boot and then the
+	kernel should start to load.  If the kernel fails to load or the
+	spinning cursor has stopped and nothing further has happened, you
+	either have a hardware problem or your MACHINE is not currently
+	supported by OpenBSD; try booting from the network instead if
+	possible.
 
 Booting from Network:
 
@@ -124,7 +110,7 @@ Booting from Network:
 	    Once loaded, the boot loader will mount /alpha over NFS and load
 	    the kernel from there.
 
-Installing using the Floppy, CD-ROM or Network procedure:
+Installing using the CD-ROM or Network procedure:
 
 OpenBSDInstallPart2
 
