@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.294 2020/04/06 07:52:12 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.295 2020/04/28 08:29:40 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -392,7 +392,7 @@ struct proc {
 	u_int	p_estcpu;		/* [s] Time averaged val of p_cpticks */
 	int	p_pledge_syscall;	/* Cache of current syscall */
 
-	struct	ucred *p_ucred;		/* cached credentials */
+	struct	ucred *p_ucred;		/* [o] cached credentials */
 	struct	sigaltstack p_sigstk;	/* sp & on stack state variable */
 
 	u_long	p_prof_addr;	/* tmp storage for profiling addr until AST */
