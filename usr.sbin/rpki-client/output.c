@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.11 2020/04/28 13:41:35 deraadt Exp $ */
+/*	$OpenBSD: output.c,v 1.12 2020/04/28 15:04:05 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -183,26 +183,23 @@ outputheader(FILE *out, struct stats *st)
 
 	gethostname(hn, sizeof hn);
 
-	if (fprintf(out, "# Generated on host %s at %s\n", hn, tbuf) < 0)
-		return -1;
 	if (fprintf(out,
-	    "# Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n",
-            st->roas, st->roas_fail, st->roas_invalid) < 0)
-		return -1;
-	if (fprintf(out, "# Certificates: %zu (%zu failed parse, %zu invalid)\n",
-            st->certs, st->certs_fail, st->certs_invalid) < 0)
-		return -1;
-	if (fprintf(out, "# Trust Anchor Locators: %zu (%s)\n",
-	    st->tals, st->talnames) < 0)
-		return -1;
-	if (fprintf(out, "# Manifests: %zu (%zu failed parse, %zu stale)\n",
-	    st->mfts, st->mfts_fail, st->mfts_stale) < 0)
-		return -1;
-	if (fprintf(out, "# Certificate revocation lists: %zu\n", st->crls) < 0)
-		return -1;
-	if (fprintf(out, "# Repositories: %zu\n", st->repos) < 0)
-		return -1;
-	if (fprintf(out, "# VRP Entries: %zu (%zu unique)\n", st->vrps, st->uniqs) < 0)
+	    "# Generated on host %s at %s\n"
+	    "# Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n"
+	    "# Certificates: %zu (%zu failed parse, %zu invalid)\n"
+	    "# Trust Anchor Locators: %zu (%s)\n"
+	    "# Manifests: %zu (%zu failed parse, %zu stale)\n"
+	    "# Certificate revocation lists: %zu\n"
+	    "# Repositories: %zu\n"
+	    "# VRP Entries: %zu (%zu unique)\n",
+	    hn, tbuf,
+            st->roas, st->roas_fail, st->roas_invalid,
+            st->certs, st->certs_fail, st->certs_invalid,
+	    st->tals, st->talnames,
+	    st->mfts, st->mfts_fail, st->mfts_stale,
+	    st->crls,
+	    st->repos,
+	    st->vrps, st->uniqs) < 0)
 		return -1;
 	return 0;
 }
