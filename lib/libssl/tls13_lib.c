@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.35 2020/04/21 16:55:17 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.36 2020/04/28 20:30:41 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -368,4 +368,47 @@ tls13_cert_add(CBB *cbb, X509 *cert)
 		return 0;
 
 	return 1;
+}
+
+int
+tls13_synthetic_handshake_message(struct tls13_ctx *ctx)
+{
+	struct tls13_handshake_msg *hm = NULL;
+	unsigned char buf[EVP_MAX_MD_SIZE];
+	size_t hash_len;
+	CBB cbb;
+	CBS cbs;
+	SSL *s = ctx->ssl;
+	int ret = 0;
+
+	/*
+	 * Replace ClientHello with synthetic handshake message - see
+	 * RFC 8446 section 4.4.1.
+	 */
+	if (!tls1_transcript_hash_init(s))
+		goto err;
+	if (!tls1_transcript_hash_value(s, buf, sizeof(buf), &hash_len))
+		goto err;
+
+	if ((hm = tls13_handshake_msg_new()) == NULL)
+		goto err;
+	if (!tls13_handshake_msg_start(hm, &cbb, TLS13_MT_MESSAGE_HASH))
+		goto err;
+	if (!CBB_add_bytes(&cbb, buf, hash_len))
+		goto err;
+	if (!tls13_handshake_msg_finish(hm))
+		goto err;
+
+	tls13_handshake_msg_data(hm, &cbs);
+
+	tls1_transcript_reset(ctx->ssl);
+	if (!tls1_transcript_record(ctx->ssl, CBS_data(&cbs), CBS_len(&cbs)))
+		goto err;
+
+	ret = 1;
+
+ err:
+	tls13_handshake_msg_free(hm);
+
+	return ret;
 }
