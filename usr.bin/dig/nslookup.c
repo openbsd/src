@@ -719,10 +719,12 @@ do_next_command(char *input) {
 	if (ptr == NULL)
 		return;
 	arg = next_token(&input, " \t\r\n");
-	if ((strcasecmp(ptr, "set") == 0) &&
-	    (arg != NULL))
-		setoption(arg);
-	else if ((strcasecmp(ptr, "server") == 0) ||
+	if (strcasecmp(ptr, "set") == 0) {
+		if (arg == NULL)
+			printf("Usage: set keyword=value, or set all\n");
+		else
+			setoption(arg);
+	} else if ((strcasecmp(ptr, "server") == 0) ||
 		 (strcasecmp(ptr, "lserver") == 0)) {
 		isc_result_t res;
 
