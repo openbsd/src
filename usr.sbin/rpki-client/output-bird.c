@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.8 2020/04/28 13:41:35 deraadt Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.9 2020/04/28 15:03:39 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2020 Robert Scheck <robert@fedoraproject.org>
@@ -31,7 +31,7 @@ output_bird1v4(FILE *out, struct vrp_tree *vrps, struct stats *st)
 	if (outputheader(out, st) < 0)
 		return -1;
 
-	if (fprintf(out, "roa table %s {\n", bird_tablename) < 0)
+	if (fprintf(out, "\nroa table %s {\n", bird_tablename) < 0)
 		return -1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
@@ -58,7 +58,7 @@ output_bird1v6(FILE *out, struct vrp_tree *vrps, struct stats *st)
 	if (outputheader(out, st) < 0)
 		return -1;
 
-	if (fprintf(out, "roa table %s {\n", bird_tablename) < 0)
+	if (fprintf(out, "\nroa table %s {\n", bird_tablename) < 0)
 		return -1;
 
 	RB_FOREACH(v, vrp_tree, vrps) {
