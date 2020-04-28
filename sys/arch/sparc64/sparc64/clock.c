@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.59 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: clock.c,v 1.60 2020/04/28 12:24:20 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -882,100 +882,6 @@ schedintr(arg)
 	if (curproc)
 		schedclock(curproc);
 	return (1);
-}
-
-
-/*
- * `sparc_clock_time_is_ok' is used in cpu_reboot() to determine
- * whether it is appropriate to call resettodr() to consolidate
- * pending time adjustments.
- */
-int sparc_clock_time_is_ok;
-
-/*
- * Set up the system's time, given a `reasonable' time value.
- */
-void
-inittodr(time_t base)
-{
-	int badbase = 0, waszero = base == 0;
-	char *bad = NULL;
-	struct timeval tv;
-	struct timespec ts;
-
-	tv.tv_sec = tv.tv_usec = 0;
-
-	if (base < 5 * SECYR) {
-		/*
-		 * If base is 0, assume filesystem time is just unknown
-		 * in stead of preposterous. Don't bark.
-		 */
-		if (base != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* not going to use it anyway, if the chip is readable */
-		base = 21*SECYR + 186*SECDAY + SECDAY/2;
-		badbase = 1;
-	}
-
-	if (todr_handle != NULL)
-		todr_gettime(todr_handle, &tv);
-
-	if (tv.tv_sec == 0) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-		bad = "WARNING: bad date in battery clock";
-		tv.tv_sec = base;
-		tv.tv_usec = 0;
-		if (!badbase)
-			resettodr();
-	} else {
-		time_t deltat = tv.tv_sec - base;
-
-		sparc_clock_time_is_ok = 1;
-
-		if (deltat < 0)
-			deltat = -deltat;
-		if (!(waszero || deltat < 2 * SECDAY)) {
-#ifndef SMALL_KERNEL
-			printf("WARNING: clock %s %lld days",
-			    tv.tv_sec < base ? "lost" : "gained",
-			    (long long)(deltat / SECDAY));
-			bad = "";
-#endif
-		}
-	}
-
-	ts.tv_sec = tv.tv_sec;
-	ts.tv_nsec = tv.tv_usec * 1000;
-	tc_setclock(&ts);
-
-	if (bad) {
-		printf("%s", bad);
-		printf(" -- CHECK AND RESET THE DATE!\n");
-	}
-}
-
-/*
- * Reset the clock based on the current time.
- * Used when the current clock is preposterous, when the time is changed,
- * and when rebooting.  Do nothing if the time is not yet known, e.g.,
- * when crashing during autoconfig.
- */
-void
-resettodr(void)
-{
-	struct timeval tv;
-
-	if (time_second == 1)
-		return;
-
-	microtime(&tv);
-
-	sparc_clock_time_is_ok = 1;
-	if (todr_handle == 0 || todr_settime(todr_handle, &tv) != 0)
-		printf("Cannot set time in time-of-day clock\n");
 }
 
 void
