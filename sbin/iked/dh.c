@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.22 2019/04/02 09:42:55 sthen Exp $	*/
+/*	$OpenBSD: dh.c,v 1.23 2020/04/28 15:18:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -35,7 +35,7 @@ int	modp_getlen(struct group *);
 int	modp_create_exchange(struct group *, uint8_t *);
 int	modp_create_shared(struct group *, uint8_t *, uint8_t *);
 
-/* EC2N/ECP */
+/* ECP */
 int	ec_init(struct group *);
 int	ec_getlen(struct group *);
 int	ec_secretlen(struct group *);
@@ -83,8 +83,6 @@ const struct group_id ike_groups[] = {
 	    "FFFFFFFFFFFFFFFF",
 	    "02"
 	},
-	{ GROUP_EC2N, 3, 155, NULL, NULL, NID_ipsec3 },
-	{ GROUP_EC2N, 4, 185, NULL, NULL, NID_ipsec4 },
 	{ GROUP_MODP, 5, 1536,
 	    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
 	    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
@@ -290,7 +288,6 @@ group_get(uint32_t id)
 		group->exchange = modp_create_exchange;
 		group->shared = modp_create_shared;
 		break;
-	case GROUP_EC2N:
 	case GROUP_ECP:
 		group->init = ec_init;
 		group->getlen = ec_getlen;

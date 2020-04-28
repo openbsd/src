@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.66 2020/04/27 22:40:09 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.67 2020/04/28 15:18:52 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2020 $
+.Dd $Mdocdate: April 28 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -907,11 +907,9 @@ The following group types are permitted with the
 keyword:
 .Bl -column "modp1024-160" "Group" "Size" "Type" -offset indent
 .It Em Name Ta Em Group Ta Em Size Ta Em Type
-.It Li modp768 Ta grp1 Ta 768 Ta "MODP"
-.It Li modp1024 Ta grp2 Ta 1024 Ta "MODP"
-.It Li ec2n155 Ta grp3 Ta 155 Ta "EC2N [insecure]"
-.It Li ec2n185 Ta grp4 Ta 185 Ta "EC2N [insecure]"
-.It Li modp1536 Ta grp5 Ta 1536 Ta "MODP"
+.It Li modp768 Ta grp1 Ta 768 Ta "MODP" [insecure]
+.It Li modp1024 Ta grp2 Ta 1024 Ta "MODP" [weak]
+.It Li modp1536 Ta grp5 Ta 1536 Ta "MODP" [weak]
 .It Li modp2048 Ta grp14 Ta 2048 Ta "MODP"
 .It Li modp3072 Ta grp15 Ta 3072 Ta "MODP"
 .It Li modp4096 Ta grp16 Ta 4096 Ta "MODP"
@@ -931,11 +929,11 @@ keyword:
 .Pp
 The currently supported group types are either
 MODP (exponentiation groups modulo a prime),
-EC2N (elliptic curve groups over GF[2^N]),
 ECP (elliptic curve groups modulo a prime),
 or Curve25519.
-Please note that the EC2N groups are considered as insecure and only
-provided for backwards compatibility.
+Please note that MODP groups of less than 2048 bits are considered
+as weak or insecure (see RFC 8247 section 2.4) and only provided for
+backwards compatibility.
 .Sh FILES
 .Bl -tag -width /etc/examples/iked.conf -compact
 .It Pa /etc/iked.conf
