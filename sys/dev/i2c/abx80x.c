@@ -1,4 +1,4 @@
-/*	$OpenBSD: abx80x.c,v 1.4 2020/04/29 18:44:28 patrick Exp $	*/
+/*	$OpenBSD: abx80x.c,v 1.5 2020/04/29 19:00:18 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -56,7 +56,8 @@ extern todr_chip_handle_t todr_handle;
 #define  ABX8XX_TRICKLE_RESISTOR_6	(2 << 0)
 #define  ABX8XX_TRICKLE_RESISTOR_11	(3 << 0)
 #define  ABX8XX_TRICKLE_DIODE_SCHOTTKY	(1 << 2)
-#define  ABX8XX_TRICKLE_DIODE_STANDARD	(1 << 3)
+#define  ABX8XX_TRICKLE_DIODE_STANDARD	(2 << 2)
+#define  ABX8XX_TRICKLE_ENABLE		(0xa << 4)
 
 #define ABX8XX_NRTC_REGS	8
 
@@ -288,7 +289,7 @@ void
 abcrtc_trickle_charger(struct abcrtc_softc *sc, int node)
 {
 	char diode[16] = { 0 };
-	uint8_t reg = 0;
+	uint8_t reg = ABX8XX_TRICKLE_ENABLE;
 
 	OF_getprop(node, "abracon,tc-diode", diode, sizeof(diode));
 	if (!strcmp(diode, "standard"))
