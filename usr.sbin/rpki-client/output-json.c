@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.8 2020/04/28 15:04:05 deraadt Exp $ */
+/*	$OpenBSD: output-json.c,v 1.9 2020/04/29 04:29:40 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -42,11 +42,11 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"roas\": %zu,\n"
 	    "\t\t\"failedroas\": %zu,\n"
 	    "\t\t\"invalidroas\": %zu,\n"
-	    "\t\t\"tals\": %zu,\n"
-	    "\t\t\"talfiles\": \"%s\",\n"
 	    "\t\t\"certificates\": %zu,\n"
 	    "\t\t\"failcertificates\": %zu,\n"
 	    "\t\t\"invalidcertificates\": %zu,\n"
+	    "\t\t\"tals\": %zu,\n"
+	    "\t\t\"talfiles\": \"%s\",\n"
 	    "\t\t\"manifests\": %zu,\n"
 	    "\t\t\"failedmanifests\": %zu,\n"
 	    "\t\t\"stalemanifests\": %zu,\n"
@@ -57,8 +57,8 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t},\n\n",
 	    hn, tbuf,
 	    st->roas, st->roas_fail, st->roas_invalid,
-	    st->tals, st->talnames,
 	    st->certs, st->certs_fail, st->certs_invalid,
+	    st->tals, st->talnames,
 	    st->mfts, st->mfts_fail, st->mfts_stale,
 	    st->crls,
 	    st->repos,
