@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_cis.c,v 1.7 2016/04/23 14:15:59 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc_cis.c,v 1.8 2020/04/29 09:44:49 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -76,12 +76,6 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 			continue;
 
 		tpllen = sdmmc_io_read_1(sf0, reg++);
-		if (tpllen == 0) {
-			printf("%s: CIS parse error at %d, "
-			    "tuple code %#x, length %d\n",
-			    DEVNAME(sf->sc), reg, tplcode, tpllen);
-			break;
-		}
 
 		switch (tplcode) {
 		case SD_IO_CISTPL_FUNCID:
