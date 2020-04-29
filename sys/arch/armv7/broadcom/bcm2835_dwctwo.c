@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_dwctwo.c,v 1.3 2019/10/11 15:12:43 jsg Exp $	*/
+/*	$OpenBSD: bcm2835_dwctwo.c,v 1.4 2020/04/29 15:25:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
  *
@@ -41,9 +41,6 @@
 
 struct bcm_dwctwo_softc {
 	struct dwc2_softc	sc_dwc2;
-	struct arm32_bus_dma_tag sc_dmat;
-	struct arm32_dma_range	sc_dmarange[1];
-
 	void			*sc_ih;
 };
 
@@ -101,21 +98,13 @@ bcm_dwctwo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bcm_dwctwo_softc *sc = (struct bcm_dwctwo_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	extern int physmem;
 	int idx;
 
 	printf("\n");
 
-	memcpy(&sc->sc_dmat, faa->fa_dmat, sizeof(sc->sc_dmat));
-	sc->sc_dmarange[0].dr_sysbase = 0;
-	sc->sc_dmarange[0].dr_busbase = 0xC0000000;
-	sc->sc_dmarange[0].dr_len = physmem * PAGE_SIZE;
-	sc->sc_dmat._ranges = sc->sc_dmarange;
-	sc->sc_dmat._nranges = 1;
-
 	sc->sc_dwc2.sc_iot = faa->fa_iot;
 	sc->sc_dwc2.sc_bus.pipe_size = sizeof(struct usbd_pipe);
-	sc->sc_dwc2.sc_bus.dmatag = &sc->sc_dmat;
+	sc->sc_dwc2.sc_bus.dmatag = faa->fa_dmat;
 	sc->sc_dwc2.sc_params = &bcm_dwctwo_params;
 
 	if (bus_space_map(faa->fa_iot, faa->fa_reg[0].addr,

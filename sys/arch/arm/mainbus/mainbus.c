@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.21 2019/10/23 09:27:43 patrick Exp $ */
+/* $OpenBSD: mainbus.c,v 1.22 2020/04/29 15:25:07 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -60,8 +60,6 @@ struct cfdriver mainbus_cd = {
 };
 
 struct arm32_bus_dma_tag mainbus_dma_tag = {
-	0,
-	0,
 	NULL,
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
@@ -69,6 +67,7 @@ struct arm32_bus_dma_tag mainbus_dma_tag = {
 	_bus_dmamap_load_mbuf,
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
+	_bus_dmamap_load_buffer,
 	_bus_dmamap_unload,
 	_bus_dmamap_sync,
 	_bus_dmamem_alloc,

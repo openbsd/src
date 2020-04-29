@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.17 2017/05/08 00:27:45 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.18 2020/04/29 15:25:07 kettenis Exp $	*/
 /*	$NetBSD: bus.h,v 1.12 2003/10/23 15:03:24 scw Exp $	*/
 
 /*-
@@ -663,17 +663,6 @@ struct arm32_bus_dma_segment {
 typedef struct arm32_bus_dma_segment	bus_dma_segment_t;
 
 /*
- *	arm32_dma_range
- *
- *	This structure describes a valid DMA range.
- */
-struct arm32_dma_range {
-	bus_addr_t	dr_sysbase;	/* system base address */
-	bus_addr_t	dr_busbase;	/* appears here on bus */
-	bus_size_t	dr_len;		/* length of range */
-};
-
-/*
  *	bus_dma_tag_t
  *
  *	A machine-dependent opaque type describing the implementation of
@@ -681,15 +670,6 @@ struct arm32_dma_range {
  */
 
 struct arm32_bus_dma_tag {
-	/*
-	 * DMA range for this tag.  If the page doesn't fall within
-	 * one of these ranges, an error is returned.  The caller
-	 * may then decide what to do with the transfer.  If the
-	 * range pointer is NULL, it is ignored.
-	 */
-	struct arm32_dma_range *_ranges;
-	int _nranges;
-
 	/*
 	 * Opaque cookie for use by back-end.
 	 */
@@ -709,6 +689,8 @@ struct arm32_bus_dma_tag {
 		    struct uio *, int);
 	int	(*_dmamap_load_raw) (bus_dma_tag_t, bus_dmamap_t,
 		    bus_dma_segment_t *, int, bus_size_t, int);
+	int	(*_dmamap_load_buffer)(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 	void	(*_dmamap_unload) (bus_dma_tag_t, bus_dmamap_t);
 	void	(*_dmamap_sync) (bus_dma_tag_t, bus_dmamap_t,
 		    bus_addr_t, bus_size_t, int);
@@ -794,9 +776,6 @@ struct arm32_bus_dmamap {
 #define	ARM32_BUFTYPE_UIO		3
 #define	ARM32_BUFTYPE_RAW		4
 
-int	arm32_dma_range_intersect(struct arm32_dma_range *, int,
-	    paddr_t pa, psize_t size, paddr_t *pap, psize_t *sizep);
-
 int	_bus_dmamap_create (bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
 void	_bus_dmamap_destroy (bus_dma_tag_t, bus_dmamap_t);
@@ -808,6 +787,8 @@ int	_bus_dmamap_load_uio (bus_dma_tag_t, bus_dmamap_t,
 	    struct uio *, int);
 int	_bus_dmamap_load_raw (bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int);
+int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 void	_bus_dmamap_unload (bus_dma_tag_t, bus_dmamap_t);
 void	_bus_dmamap_sync (bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int);

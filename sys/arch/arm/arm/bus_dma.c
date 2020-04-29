@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.39 2018/09/06 11:50:54 jsg Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.40 2020/04/29 15:25:07 kettenis Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -49,53 +49,7 @@
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
-
 #include <arm/cpufunc.h>
-
-int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
-struct arm32_dma_range *_bus_dma_inrange(struct arm32_dma_range *,
-	    int, bus_addr_t);
-
-
-/*
- * Check to see if the specified busaddr is in an allowed DMA range.
- */
-static inline paddr_t
-_bus_dma_busaddr_to_paddr(bus_dma_tag_t t, bus_addr_t curaddr)
-{
-	struct arm32_dma_range *dr;
-	u_int i;
-
-	if (t->_nranges == 0)
-		return curaddr;
-
-	for (i = 0, dr = t->_ranges; i < t->_nranges; i++, dr++) {
-		if (dr->dr_busbase <= curaddr
-		    && round_page(curaddr) <= dr->dr_busbase + dr->dr_len)
-			return curaddr - dr->dr_busbase + dr->dr_sysbase;
-	}
-	panic("%s: curaddr %#lx not in range", __func__, curaddr);
-}
-
-/*
- * Check to see if the specified page is in an allowed DMA range.
- */
-__inline struct arm32_dma_range *
-_bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
-    bus_addr_t curaddr)
-{
-	struct arm32_dma_range *dr;
-	int i;
-
-	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
-		if (curaddr >= dr->dr_sysbase &&
-		    round_page(curaddr) <= (dr->dr_sysbase + dr->dr_len))
-			return (dr);
-	}
-
-	return (NULL);
-}
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -198,7 +152,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
 
 	seg = 0;
-	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags,
+	error = (*t->_dmamap_load_buffer)(t, map, buf, buflen, p, flags,
 	    &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
@@ -220,9 +174,6 @@ int
 _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
     int flags)
 {
-#if 0
-	struct arm32_dma_range *dr;
-#endif
 	paddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
@@ -258,7 +209,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
+		error = (*t->_dmamap_load_buffer)(t, map, m->m_data, m->m_len,
 		    NULL, flags, &lastaddr, &seg, first);
 		first = 0;
 	}
@@ -320,7 +271,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
 		addr = (caddr_t)iov[i].iov_base;
 
-		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
+		error = (*t->_dmamap_load_buffer)(t, map, addr, minlen,
 		    p, flags, &lastaddr, &seg, first);
 		first = 0;
 
@@ -344,7 +295,6 @@ int
 _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
-	struct arm32_dma_range *dr;
 	bus_addr_t paddr, baddr, bmask, lastaddr = 0;
 	bus_size_t plen, sgsize, mapsize;
 	vaddr_t vaddr;
@@ -378,23 +328,6 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			map->_dm_flags &= ~ARM32_DMAMAP_COHERENT;
 
 		while (plen > 0) {
-			/*
-			 * Make sure we're in an allowed DMA range.
-			 */
-			if (t->_ranges != NULL) {
-				/* XXX cache last result? */
-				dr = _bus_dma_inrange(t->_ranges, t->_nranges,
-				    paddr);
-				if (dr == NULL)
-					return (EINVAL);
-
-				/*
-				 * In a valid DMA range.  Translate the physical
-				 * memory address to an address in the DMA window.
-				 */
-				paddr = (paddr - dr->dr_sysbase) + dr->dr_busbase;
-			}
-
 			/*
 			 * Compute the segment size, and adjust counts.
 			 */
@@ -558,7 +491,7 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			ds++;
 		}
 
-		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + offset);
+		paddr_t pa = ds->ds_addr + offset;
 		size_t seglen = min(len, ds->ds_len - offset);
 
 		_bus_dmamap_sync_segment(va + offset, pa, seglen, ops);
@@ -595,7 +528,7 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 */
 		vsize_t seglen = min(len, min(m->m_len - voff, ds->ds_len - ds_off));
 		vaddr_t va = mtod(m, vaddr_t) + voff;
-		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
+		paddr_t pa = ds->ds_addr + ds_off;
 
 		/*
 		 * We can save a lot of work here if we know the mapping
@@ -650,7 +583,7 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 */
 		vsize_t seglen = min(len, min(iov->iov_len - voff, ds->ds_len - ds_off));
 		vaddr_t va = (vaddr_t) iov->iov_base + voff;
-		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
+		paddr_t pa = ds->ds_addr + ds_off;
 
 		_bus_dmamap_sync_segment(va, pa, seglen, ops);
 
@@ -673,7 +606,7 @@ _bus_dmamap_sync_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		}
 
 		vaddr_t va = ds->_ds_vaddr + offset;
-		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + offset);
+		paddr_t pa = ds->ds_addr + offset;
 		size_t seglen = min(len, ds->ds_len - offset);
 
 		_bus_dmamap_sync_segment(va, pa, seglen, ops);
@@ -795,8 +728,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	struct arm32_dma_range *dr;
-	int error, i;
+	int error;
 
 #ifdef DEBUG_DMA
 	printf("dmamem_alloc t=%p size=%lx align=%lx boundary=%lx "
@@ -804,22 +736,8 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	    boundary, segs, nsegs, rsegs, flags);
 #endif
 
-	if ((dr = t->_ranges) != NULL) {
-		error = ENOMEM;
-		for (i = 0; i < t->_nranges; i++, dr++) {
-			if (dr->dr_len == 0)
-				continue;
-			error = _bus_dmamem_alloc_range(t, size, alignment,
-			    boundary, segs, nsegs, rsegs, flags,
-			    trunc_page(dr->dr_sysbase),
-			    trunc_page(dr->dr_sysbase + dr->dr_len) - 1);
-			if (error == 0)
-				break;
-		}
-	} else {
-		error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
-		    segs, nsegs, rsegs, flags, 0, -1);
-	}
+	error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, 0, -1);
 
 #ifdef DEBUG_DMA
 	printf("dmamem_alloc: =%d\n", error);
@@ -987,7 +905,6 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
     int *segp, int first)
 {
-	struct arm32_dma_range *dr;
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
@@ -1049,23 +966,6 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		} else {
 			(void) pmap_extract(pmap, vaddr, &curaddr);
 			map->_dm_flags &= ~ARM32_DMAMAP_COHERENT;
-		}
-
-		/*
-		 * Make sure we're in an allowed DMA range.
-		 */
-		if (t->_ranges != NULL) {
-			/* XXX cache last result? */
-			dr = _bus_dma_inrange(t->_ranges, t->_nranges,
-			    curaddr);
-			if (dr == NULL)
-				return (EINVAL);
-			
-			/*
-			 * In a valid DMA range.  Translate the physical
-			 * memory address to an address in the DMA window.
-			 */
-			curaddr = (curaddr - dr->dr_sysbase) + dr->dr_busbase;
 		}
 
 		/*
@@ -1196,46 +1096,6 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	*rsegs = curseg + 1;
 
-	return (0);
-}
-
-/*
- * Check if a memory region intersects with a DMA range, and return the
- * page-rounded intersection if it does.
- */
-int
-arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
-    paddr_t pa, psize_t size, paddr_t *pap, psize_t *sizep)
-{
-	struct arm32_dma_range *dr;
-	int i;
-
-	if (ranges == NULL)
-		return (0);
-
-	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
-		if (dr->dr_sysbase <= pa &&
-		    pa < (dr->dr_sysbase + dr->dr_len)) {
-			/*
-			 * Beginning of region intersects with this range.
-			 */
-			*pap = trunc_page(pa);
-			*sizep = round_page(min(pa + size,
-			    dr->dr_sysbase + dr->dr_len) - pa);
-			return (1);
-		}
-		if (pa < dr->dr_sysbase && dr->dr_sysbase < (pa + size)) {
-			/*
-			 * End of region intersects with this range.
-			 */
-			*pap = trunc_page(dr->dr_sysbase);
-			*sizep = round_page(min((pa + size) - dr->dr_sysbase,
-			    dr->dr_len));
-			return (1);
-		}
-	}
-
-	/* No intersection found. */
 	return (0);
 }
 

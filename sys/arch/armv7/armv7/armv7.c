@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.16 2020/04/07 09:32:44 kettenis Exp $ */
+/* $OpenBSD: armv7.c,v 1.17 2020/04/29 15:25:07 kettenis Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -27,8 +27,6 @@
 #include <armv7/armv7/armv7_machdep.h>
 
 struct arm32_bus_dma_tag armv7_bus_dma_tag = {
-	0,
-	0,
 	NULL,
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
@@ -36,6 +34,7 @@ struct arm32_bus_dma_tag armv7_bus_dma_tag = {
 	_bus_dmamap_load_mbuf,
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
+	_bus_dmamap_load_buffer,
 	_bus_dmamap_unload,
 	_bus_dmamap_sync,
 	_bus_dmamem_alloc,

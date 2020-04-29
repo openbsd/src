@@ -1,4 +1,4 @@
-/*	$OpenBSD: cortex.c,v 1.5 2016/05/02 08:15:55 patrick Exp $	*/
+/*	$OpenBSD: cortex.c,v 1.6 2020/04/29 15:25:07 kettenis Exp $	*/
 /* $NetBSD: mainbus.c,v 1.3 2001/06/13 17:52:43 nathanw Exp $ */
 
 /*
@@ -54,8 +54,6 @@
 #include <arm/mainbus/mainbus.h>
 
 struct arm32_bus_dma_tag cortex_bus_dma_tag = {
-	0,
-	0,
 	NULL,
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
@@ -63,6 +61,7 @@ struct arm32_bus_dma_tag cortex_bus_dma_tag = {
 	_bus_dmamap_load_mbuf,
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
+	_bus_dmamap_load_buffer,
 	_bus_dmamap_unload,
 	_bus_dmamap_sync,
 	_bus_dmamem_alloc,
