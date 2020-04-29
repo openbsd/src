@@ -1,4 +1,4 @@
-/*	$OpenBSD: abx80x.c,v 1.2 2020/04/29 15:50:48 patrick Exp $	*/
+/*	$OpenBSD: abx80x.c,v 1.3 2020/04/29 15:52:25 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -24,6 +24,10 @@
 
 #include <dev/clock_subr.h>
 
+#if defined(__HAVE_FDT)
+#include <dev/ofw/openfirm.h>
+#endif
+
 extern todr_chip_handle_t todr_handle;
 
 #define ABX8XX_HTH		0x00
@@ -43,6 +47,16 @@ extern todr_chip_handle_t todr_handle;
 #define ABX8XX_OSS		0x1d
 #define ABX8XX_OSS_OF			(1 << 1)
 #define ABX8XX_OSS_OMODE		(1 << 4)
+#define ABX8XX_CFG_KEY		0x1f
+#define  ABX8XX_CFG_KEY_OSC		0xa1
+#define  ABX8XX_CFG_KEY_MISC		0x9d
+#define ABX8XX_TRICKLE		0x20
+#define  ABX8XX_TRICKLE_RESISTOR_0	(0 << 0)
+#define  ABX8XX_TRICKLE_RESISTOR_3	(1 << 0)
+#define  ABX8XX_TRICKLE_RESISTOR_6	(2 << 0)
+#define  ABX8XX_TRICKLE_RESISTOR_11	(3 << 0)
+#define  ABX8XX_TRICKLE_DIODE_SCHOTTKY	(1 << 2)
+#define  ABX8XX_TRICKLE_DIODE_STANDARD	(1 << 3)
 
 #define ABX8XX_NRTC_REGS	8
 
@@ -72,6 +86,10 @@ int	abcrtc_clock_write(struct abcrtc_softc *, struct clock_ymdhms *);
 int	abcrtc_gettime(struct todr_chip_handle *, struct timeval *);
 int	abcrtc_settime(struct todr_chip_handle *, struct timeval *);
 
+#if defined(__HAVE_FDT)
+void	abcrtc_trickle_charger(struct abcrtc_softc *, int);
+#endif
+
 int
 abcrtc_match(struct device *parent, void *match, void *aux)
 {
@@ -89,9 +107,16 @@ abcrtc_attach(struct device *parent, struct device *self, void *aux)
 	struct abcrtc_softc *sc = (struct abcrtc_softc *)self;
 	struct i2c_attach_args *ia = aux;
 	uint8_t reg;
+#if defined(__HAVE_FDT)
+	int node = *(int *)ia->ia_cookie;
+#endif
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
+
+#if defined(__HAVE_FDT)
+	abcrtc_trickle_charger(sc, node);
+#endif
 
 	reg = abcrtc_reg_read(sc, ABX8XX_CTRL);
 	reg &= ~(ABX8XX_CTRL_ARST | ABX8XX_CTRL_12_24);
@@ -258,3 +283,40 @@ abcrtc_clock_write(struct abcrtc_softc *sc, struct clock_ymdhms *dt)
 
 	return 0;
 }
+
+#if defined(__HAVE_FDT)
+void
+abcrtc_trickle_charger(struct abcrtc_softc *sc, int node)
+{
+	char diode[16] = { 0 };
+	uint8_t reg = 0;
+
+	OF_getprop(node, "abracon,tc-diode", diode, sizeof(diode));
+	if (!strcmp(diode, "standard"))
+		reg |= ABX8XX_TRICKLE_DIODE_STANDARD;
+	else if (!strcmp(diode, "schottky"))
+		reg |= ABX8XX_TRICKLE_DIODE_SCHOTTKY;
+	else
+		return;
+
+	switch (OF_getpropint(node, "abracon,tc-resistor", -1)) {
+	case 0:
+		reg |= ABX8XX_TRICKLE_RESISTOR_0;
+		break;
+	case 3:
+		reg |= ABX8XX_TRICKLE_RESISTOR_3;
+		break;
+	case 6:
+		reg |= ABX8XX_TRICKLE_RESISTOR_6;
+		break;
+	case 11:
+		reg |= ABX8XX_TRICKLE_RESISTOR_11;
+		break;
+	default:
+		return;
+	}
+
+	abcrtc_reg_write(sc, ABX8XX_CFG_KEY, ABX8XX_CFG_KEY_MISC);
+	abcrtc_reg_write(sc, ABX8XX_TRICKLE, reg);
+}
+#endif
