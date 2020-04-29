@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.199 2020/03/12 17:38:02 visa Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.200 2020/04/29 02:25:48 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -807,6 +807,7 @@ bdwrite(struct buf *bp)
 
 	/* The "write" is done, so mark and release the buffer. */
 	CLR(bp->b_flags, B_NEEDCOMMIT);
+	CLR(bp->b_flags, B_NOCACHE); /* Must cache delayed writes */
 	SET(bp->b_flags, B_DONE);
 	brelse(bp);
 }
