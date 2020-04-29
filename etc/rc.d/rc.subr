@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.133 2020/02/22 18:58:13 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.134 2020/04/29 15:38:31 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -149,7 +149,7 @@ _rc_parse_conf() {
 		while IFS=' 	' read -r _l; do
 			[[ $_l == [!#=]*=* ]] || continue
 			_key=${_l%%*([[:blank:]])=*}
-			[[ $_key == *_@(flags|rtable|user|timeout) ]] ||
+			[[ $_key == *_@(flags|rtable|timeout|user) ]] ||
 				[[ " ${_allowed_keys[*]} " == *" $_key "* ]] ||
 				continue
 			[[ $_key == "" ]] && continue
@@ -284,20 +284,20 @@ shift $((OPTIND-1))
 _RC_RUNDIR=/var/run/rc.d
 _RC_RUNFILE=${_RC_RUNDIR}/${_name}
 
-# parse /etc/rc.conf{.local} for the daemon_flags
+# parse /etc/rc.conf{.local} for the daemon variables
 _rc_do _rc_parse_conf
 
 eval _rcflags=\${${_name}_flags}
 eval _rcrtable=\${${_name}_rtable}
-eval _rcuser=\${${_name}_user}
 eval _rctimeout=\${${_name}_timeout}
+eval _rcuser=\${${_name}_user}
 
 # set default values; duplicated in rcctl(8)
 getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && daemon_class=${_name} ||
 	daemon_class=daemon
 [ -z "${daemon_rtable}" ] && daemon_rtable=0
-[ -z "${daemon_user}" ] && daemon_user=root
 [ -z "${daemon_timeout}" ] && daemon_timeout=30
+[ -z "${daemon_user}" ] && daemon_user=root
 
 # use flags from the rc.d script if daemon is not enabled
 [ -n "${_RC_FORCE}" -o "$1" != "start" ] && [ X"${_rcflags}" = X"NO" ] &&
@@ -305,8 +305,8 @@ getcap -f /etc/login.conf ${_name} 1>/dev/null 2>&1 && daemon_class=${_name} ||
 
 [ -n "${_rcflags}" ] && daemon_flags=${_rcflags}
 [ -n "${_rcrtable}" ] && daemon_rtable=${_rcrtable}
-[ -n "${_rcuser}" ] && daemon_user=${_rcuser}
 [ -n "${_rctimeout}" ] && daemon_timeout=${_rctimeout}
+[ -n "${_rcuser}" ] && daemon_user=${_rcuser}
 
 if [ -n "${_RC_DEBUG}" ]; then
 	echo -n "${_name}_flags "
@@ -315,7 +315,7 @@ if [ -n "${_RC_DEBUG}" ]; then
 fi
 
 readonly daemon_class
-unset _rcflags _rcrtable _rcuser _rctimeout
+unset _rcflags _rcrtable _rctimeout _rcuser
 # the shell will strip the quotes from daemon_flags when starting a daemon;
 # make sure pexp matches the process (i.e. doesn't include the quotes)
 pexp="$(eval echo ${daemon}${daemon_flags:+ ${daemon_flags}})"
