@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.117 2020/04/27 20:40:15 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.118 2020/04/29 19:30:58 kettenis Exp $
 
 machine		armv7 arm
 
@@ -154,10 +154,18 @@ exrtc*		at fdt?
 exuart*		at fdt?
 
 # Raspberry Pi 2/3
+bcmaux*		at fdt? early 1
+bcmbsc*		at fdt?
+iic*		at bcmbsc?
 bcmclock*	at fdt? early 1
 bcmdog*		at fdt?
+bcmdmac*	at fdt? early 1
+bcmgpio*	at fdt? early 1
 bcmintc*	at fdt? early 1
 bcmmbox*	at fdt? early 1
+bcmrng*		at fdt?
+bcmsdhost*	at fdt?
+sdmmc*		at bcmsdhost?
 dwctwo*		at fdt?
 usb*		at dwctwo?
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.130 2020/04/27 20:40:15 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.131 2020/04/29 19:30:58 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -167,10 +167,20 @@ exrtc*		at fdt?
 exuart*		at fdt?
 
 # Raspberry Pi 2/3
+bcmaux*		at fdt? early 1
+bcmbsc*		at fdt?
+iic*		at bcmbsc?
 bcmclock*	at fdt? early 1
+bcmdmac*	at fdt? early 1
 bcmdog*		at fdt?
+bcmgpio*	at fdt? early 1
+gpio*		at bcmgpio?
 bcmintc*	at fdt? early 1
 bcmmbox*	at fdt? early 1
+bcmrng*		at fdt?
+bcmsdhost*	at fdt?
+sdmmc*		at bcmsdhost?
+bcmtemp*	at fdt?
 dwctwo*		at fdt?
 usb*		at dwctwo?
 
@@ -201,11 +211,17 @@ iic*		at rkiic?
 rktemp*		at fdt?
 dwdog*		at fdt?
 
+# I2C devices
+abcrtc*		at iic?			# Abracon x80x RTC
 axppmic*	at iic?			# axp209 pmic
 crosec*		at iic?
 wskbd*		at crosec? mux 1
-pcfrtc*		at iic?
-pcxrtc*		at iic?
+dsxrtc*		at iic?			# DS3231 RTC
+islrtc*		at iic?			# ISL1208 RTC
+maxrtc*		at iic?			# DS1307 RTC
+mcprtc*		at iic?			# MCP794XX RTC
+pcfrtc*		at iic?			# PCF8523 RTC
+pcxrtc*		at iic?			# PCF8563 RTC
 rkpmic*		at iic?			# RK808 PMIC
 tpspmic*	at iic?
 pcagpio*	at iic?
