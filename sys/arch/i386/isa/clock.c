@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.56 2019/08/22 01:11:19 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.57 2020/04/29 08:53:45 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -99,6 +99,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
+#include <dev/clock_subr.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
@@ -110,8 +111,6 @@ int	clockintr(void *);
 int	gettick(void);
 int	rtcget(mc_todregs *);
 void	rtcput(mc_todregs *);
-int	hexdectodec(int);
-int	dectohexdec(int);
 int	rtcintr(void *);
 void	rtcdrain(void *);
 int	calibrate_cyclecounter_ctr(void);
@@ -481,20 +480,16 @@ rtcput(mc_todregs *regs)
 }
 
 int
-hexdectodec(int n)
+bcdtobin(int n)
 {
-
 	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
 }
 
 int
-dectohexdec(int n)
+bintobcd(int n)
 {
-
 	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
 }
-
-static int timeset;
 
 /*
  * check whether the CMOS layout is "standard"-like (ie, not PS/2-like),
@@ -551,7 +546,7 @@ clock_expandyear(int clockyear)
 #endif
 		return (clockyear);
 	}
-	cmoscentury = hexdectodec(cmoscentury);
+	cmoscentury = bcdtobin(cmoscentury);
 
 	if (cmoscentury != clockcentury) {
 		/* XXX note: saying "century is 20" might confuse the naive. */
@@ -566,7 +561,7 @@ clock_expandyear(int clockyear)
 			       clockcentury);
 			s = splclock();
 			mc146818_write(NULL, NVRAM_CENTURY,
-				       dectohexdec(clockcentury));
+				       bintobcd(clockcentury));
 			splx(s);
 		}
 	} else if (cmoscentury == 19 && rtc_update_century == 0)
@@ -575,110 +570,84 @@ clock_expandyear(int clockyear)
 	return (clockyear);
 }
 
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-void
-inittodr(time_t base)
+int
+rtcgettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct timespec ts;
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
 	int s;
-
-
-	ts.tv_nsec = 0;
-
-	/*
-	 * We mostly ignore the suggested time and go for the RTC clock time
-	 * stored in the CMOS RAM.  If the time can't be obtained from the
-	 * CMOS, or if the time obtained from the CMOS is 5 or more years
-	 * less than the suggested time, we used the suggested time.  (In
-	 * the latter case, it's likely that the CMOS battery has died.)
-	 */
-
-	if (base < 15*SECYR) {	/* if before 1985, something's odd... */
-		printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = 17*SECYR + 186*SECDAY + SECDAY/2;
-	}
-
+	
 	s = splclock();
 	if (rtcget(&rtclk)) {
 		splx(s);
-		printf("WARNING: invalid time in clock chip\n");
-		goto fstime;
+		return EINVAL;
 	}
 	splx(s);
 
-	dt.dt_sec = hexdectodec(rtclk[MC_SEC]);
-	dt.dt_min = hexdectodec(rtclk[MC_MIN]);
-	dt.dt_hour = hexdectodec(rtclk[MC_HOUR]);
-	dt.dt_day = hexdectodec(rtclk[MC_DOM]);
-	dt.dt_mon = hexdectodec(rtclk[MC_MONTH]);
-	dt.dt_year = clock_expandyear(hexdectodec(rtclk[MC_YEAR]));
+#ifdef CLOCK_DEBUG
+	printf("readclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR],
+	    rtclk[MC_MONTH], rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN],
+	    rtclk[MC_SEC]);
+#endif
 
-	ts.tv_sec = clock_ymdhms_to_secs(&dt) - utc_offset;
+	dt.dt_sec = bcdtobin(rtclk[MC_SEC]);
+	dt.dt_min = bcdtobin(rtclk[MC_MIN]);
+	dt.dt_hour = bcdtobin(rtclk[MC_HOUR]);
+	dt.dt_day = bcdtobin(rtclk[MC_DOM]);
+	dt.dt_mon = bcdtobin(rtclk[MC_MONTH]);
+	dt.dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
 
-	if (base < ts.tv_sec - 5*SECYR)
-		printf("WARNING: file system time much less than clock time\n");
-	else if (base > ts.tv_sec + 5*SECYR) {
-		printf("WARNING: clock time much less than file system time\n");
-		printf("WARNING: using file system time\n");
-		goto fstime;
-	}
-
-	tc_setclock(&ts);
-	timeset = 1;
-	return;
-
-fstime:
-	ts.tv_sec = base;
-	tc_setclock(&ts);
-	timeset = 1;
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
+	tv->tv_sec = clock_ymdhms_to_secs(&dt) - utc_offset;
+	tv->tv_usec = 0;
+	return 0;
 }
 
-/*
- * Reset the clock.
- */
-void
-resettodr(void)
+int
+rtcsettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
-	int century;
-	int s;
-
-	/*
-	 * We might have been called by boot() due to a crash early
-	 * on.  Don't reset the clock chip in this case.
-	 */
-	if (!timeset)
-		return;
+	int century, s;
 
 	s = splclock();
 	if (rtcget(&rtclk))
-		bzero(&rtclk, sizeof(rtclk));
+		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
 	clock_secs_to_ymdhms(time_second + utc_offset, &dt);
 
-	rtclk[MC_SEC] = dectohexdec(dt.dt_sec);
-	rtclk[MC_MIN] = dectohexdec(dt.dt_min);
-	rtclk[MC_HOUR] = dectohexdec(dt.dt_hour);
-	rtclk[MC_DOW] = dt.dt_wday;
-	rtclk[MC_YEAR] = dectohexdec(dt.dt_year % 100);
-	rtclk[MC_MONTH] = dectohexdec(dt.dt_mon);
-	rtclk[MC_DOM] = dectohexdec(dt.dt_day);
+	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
+	rtclk[MC_MIN] = bintobcd(dt.dt_min);
+	rtclk[MC_HOUR] = bintobcd(dt.dt_hour);
+	rtclk[MC_DOW] = dt.dt_wday + 1;
+	rtclk[MC_YEAR] = bintobcd(dt.dt_year % 100);
+	rtclk[MC_MONTH] = bintobcd(dt.dt_mon);
+	rtclk[MC_DOM] = bintobcd(dt.dt_day);
+
+#ifdef CLOCK_DEBUG
+	printf("setclock: %x/%x/%x %x:%x:%x\n", rtclk[MC_YEAR], rtclk[MC_MONTH],
+	   rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN], rtclk[MC_SEC]);
+#endif
+
 	s = splclock();
 	rtcput(&rtclk);
 	if (rtc_update_century > 0) {
-		century = dectohexdec(dt.dt_year / 100);
+		century = bintobcd(dt.dt_year / 100);
 		mc146818_write(NULL, NVRAM_CENTURY, century); /* XXX softc */
 	}
 	splx(s);
+	return 0;
+}
+
+extern todr_chip_handle_t todr_handle;
+struct todr_chip_handle rtc_todr;
+
+void
+rtcinit(void)
+{
+	rtc_todr.todr_gettime = rtcgettime;
+	rtc_todr.todr_settime = rtcsettime;
+	todr_handle = &rtc_todr;
 }
 
 void
