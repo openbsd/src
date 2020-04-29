@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.342 2019/11/08 07:51:41 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.343 2020/04/29 07:04:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -404,7 +404,7 @@ carp_hmac_verify(struct carp_vhost_entry *vhe, u_int32_t counter[2],
 	unsigned char md2[20];
 	u_int8_t i;
 
-	for (i = 0; i < HMAC_MAX; i++) { 
+	for (i = 0; i < HMAC_MAX; i++) {
 		carp_hmac_generate(vhe, counter, md2, i);
 		if (!timingsafe_bcmp(md, md2, sizeof(md2)))
 			return (0);
@@ -699,7 +699,7 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
 		/*
 		 * If we're pre-empting masters who advertise slower than us,
 		 * and do not have a better demote count, treat them as down.
-		 * 
+		 *
 		 */
 		if (carp_opts[CARPCTL_PREEMPT] &&
 		    timercmp(&sc_tv, &ch_tv, <) &&
@@ -711,7 +711,7 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
 		/*
 		 * Take over masters advertising with a higher demote count,
 		 * regardless of CARPCTL_PREEMPT.
-		 */ 
+		 */
 		if (ch->carp_demote > carp_group_demote_count(sc)) {
 			carp_master_down(vhe);
 			break;
@@ -800,7 +800,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	refcnt_init(&sc->sc_refcnt);
-	
+
 	SRPL_INIT(&sc->carp_vhosts);
 	sc->sc_vhe_count = 0;
 	if (carp_new_vhost(sc, 0, 0)) {
