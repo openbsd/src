@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.10 2020/04/03 08:32:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.11 2020/04/29 13:13:30 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -294,6 +294,7 @@ int	iwx_nvm_read_section(struct iwx_softc *, uint16_t, uint8_t *,
 void	iwx_init_channel_map(struct iwx_softc *, const uint16_t * const,
 	    const uint8_t *nvm_channels, int nchan);
 void	iwx_setup_ht_rates(struct iwx_softc *);
+int	iwx_mimo_enabled(struct iwx_softc *);
 void	iwx_htprot_task(void *);
 void	iwx_update_htprot(struct ieee80211com *, struct ieee80211_node *);
 int	iwx_ampdu_rx_start(struct ieee80211com *, struct ieee80211_node *,
@@ -2709,6 +2710,15 @@ iwx_init_channel_map(struct iwx_softc *sc, const uint16_t * const nvm_ch_flags,
 	}
 }
 
+int
+iwx_mimo_enabled(struct iwx_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	return !sc->sc_nvm.sku_cap_mimo_disable &&
+	    (ic->ic_userflags & IEEE80211_F_NOMIMO) == 0;
+}
+
 void
 iwx_setup_ht_rates(struct iwx_softc *sc)
 {
@@ -2718,9 +2728,10 @@ iwx_setup_ht_rates(struct iwx_softc *sc)
 	/* TX is supported with the same MCS as RX. */
 	ic->ic_tx_mcs_set = IEEE80211_TX_MCS_SET_DEFINED;
 
+	memset(ic->ic_sup_mcs, 0, sizeof(ic->ic_sup_mcs));
 	ic->ic_sup_mcs[0] = 0xff;		/* MCS 0-7 */
 
-	if (sc->sc_nvm.sku_cap_mimo_disable)
+	if (!iwx_mimo_enabled(sc))
 		return;
 
 	rx_ant = iwx_fw_valid_rx_ant(sc);
@@ -5751,7 +5762,7 @@ iwx_run(struct iwx_softc *sc)
 	/* Configure Rx chains for MIMO. */
 	if ((ic->ic_opmode == IEEE80211_M_MONITOR ||
 	    (in->in_ni.ni_flags & IEEE80211_NODE_HT)) &&
-	    !sc->sc_nvm.sku_cap_mimo_disable) {
+	    iwx_mimo_enabled(sc)) {
 		err = iwx_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0],
 		    2, 2, IWX_FW_CTXT_ACTION_MODIFY, 0);
 		if (err) {
@@ -5872,7 +5883,7 @@ iwx_run_stop(struct iwx_softc *sc)
 
 	/* Reset Tx chains in case MIMO was enabled. */
 	if ((in->in_ni.ni_flags & IEEE80211_NODE_HT) &&
-	    !sc->sc_nvm.sku_cap_mimo_disable) {
+	    iwx_mimo_enabled(sc)) {
 		err = iwx_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
 		    IWX_FW_CTXT_ACTION_MODIFY, 0);
 		if (err) {
@@ -6429,6 +6440,9 @@ iwx_init(struct ifnet *ifp)
 			iwx_stop(ifp);
 		return err;
 	}
+
+	if (sc->sc_nvm.sku_cap_11n_enable)
+		iwx_setup_ht_rates(sc);
 
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;

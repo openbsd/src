@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.307 2020/04/09 21:36:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.308 2020/04/29 13:13:30 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -324,6 +324,7 @@ int	iwm_nvm_read_section(struct iwm_softc *, uint16_t, uint8_t *,
 	    uint16_t *, size_t);
 void	iwm_init_channel_map(struct iwm_softc *, const uint16_t * const,
 	    const uint8_t *nvm_channels, int nchan);
+int	iwm_mimo_enabled(struct iwm_softc *);
 void	iwm_setup_ht_rates(struct iwm_softc *);
 void	iwm_htprot_task(void *);
 void	iwm_update_htprot(struct ieee80211com *, struct ieee80211_node *);
@@ -2861,6 +2862,15 @@ iwm_init_channel_map(struct iwm_softc *sc, const uint16_t * const nvm_ch_flags,
 	}
 }
 
+int
+iwm_mimo_enabled(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	return !sc->sc_nvm.sku_cap_mimo_disable &&
+	    (ic->ic_userflags & IEEE80211_F_NOMIMO) == 0;
+}
+
 void
 iwm_setup_ht_rates(struct iwm_softc *sc)
 {
@@ -2870,9 +2880,10 @@ iwm_setup_ht_rates(struct iwm_softc *sc)
 	/* TX is supported with the same MCS as RX. */
 	ic->ic_tx_mcs_set = IEEE80211_TX_MCS_SET_DEFINED;
 
+	memset(ic->ic_sup_mcs, 0, sizeof(ic->ic_sup_mcs));
 	ic->ic_sup_mcs[0] = 0xff;		/* MCS 0-7 */
 
-	if (sc->sc_nvm.sku_cap_mimo_disable)
+	if (!iwm_mimo_enabled(sc))
 		return;
 
 	rx_ant = iwm_fw_valid_rx_ant(sc);
@@ -5245,7 +5256,7 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 		    |= htole32(IWM_STA_FLG_MAX_AGG_SIZE_MSK |
 		    IWM_STA_FLG_AGG_MPDU_DENS_MSK);
 
-		if (!sc->sc_nvm.sku_cap_mimo_disable) {
+		if (iwm_mimo_enabled(sc)) {
 			if (in->in_ni.ni_rxmcs[1] != 0) {
 				add_sta_cmd.station_flags |=
 				    htole32(IWM_STA_FLG_MIMO_EN_MIMO2);
@@ -6629,7 +6640,7 @@ iwm_run(struct iwm_softc *sc)
 	/* Configure Rx chains for MIMO. */
 	if ((ic->ic_opmode == IEEE80211_M_MONITOR ||
 	    (in->in_ni.ni_flags & IEEE80211_NODE_HT)) &&
-	    !sc->sc_nvm.sku_cap_mimo_disable) {
+	    iwm_mimo_enabled(sc)) {
 		err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0],
 		    2, 2, IWM_FW_CTXT_ACTION_MODIFY, 0);
 		if (err) {
@@ -6755,7 +6766,7 @@ iwm_run_stop(struct iwm_softc *sc)
 
 	/* Reset Tx chains in case MIMO was enabled. */
 	if ((in->in_ni.ni_flags & IEEE80211_NODE_HT) &&
-	    !sc->sc_nvm.sku_cap_mimo_disable) {
+	    iwm_mimo_enabled(sc)) {
 		err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
 		    IWM_FW_CTXT_ACTION_MODIFY, 0);
 		if (err) {
@@ -7726,6 +7737,9 @@ iwm_init(struct ifnet *ifp)
 			iwm_stop(ifp);
 		return err;
 	}
+
+	if (sc->sc_nvm.sku_cap_11n_enable)
+		iwm_setup_ht_rates(sc);
 
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;

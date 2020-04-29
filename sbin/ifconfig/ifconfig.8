@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.345 2020/04/23 21:28:08 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.346 2020/04/29 13:13:29 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: April 29 2020 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1053,6 +1053,13 @@ flag will disable the direct bridging of frames between associated
 nodes when operating in Host AP mode.
 Setting this flag will block and filter direct inter-station
 communications.
+.It nomimo
+The
+.Ql nomimo
+flag will disable MIMO reception and transmission even if the driver
+and wireless network device support MIMO.
+This flag can be used to work around packet loss in 11n mode if the
+wireless network device has unused antenna connectors.
 .It stayauth
 The
 .Ql stayauth

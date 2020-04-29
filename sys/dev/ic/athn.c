@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.106 2020/04/28 06:58:09 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.107 2020/04/29 13:13:29 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -180,6 +180,53 @@ struct cfdriver athn_cd = {
 	NULL, "athn", DV_IFNET
 };
 
+void
+athn_config_ht(struct athn_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	int i, ntxstreams, nrxstreams;
+
+	if ((sc->flags & ATHN_FLAG_11N) == 0)
+		return;
+
+	/* Set HT capabilities. */
+	ic->ic_htcaps = (IEEE80211_HTCAP_SMPS_DIS <<
+	    IEEE80211_HTCAP_SMPS_SHIFT);
+#ifdef notyet
+	ic->ic_htcaps |= IEEE80211_HTCAP_CBW20_40 |
+	    IEEE80211_HTCAP_SGI40 |
+	    IEEE80211_HTCAP_DSSSCCK40;
+#endif
+	ic->ic_htxcaps = 0;
+#ifdef notyet
+	if (AR_SREV_9271(sc) || AR_SREV_9287_10_OR_LATER(sc))
+		ic->ic_htcaps |= IEEE80211_HTCAP_SGI20;
+	if (AR_SREV_9380_10_OR_LATER(sc))
+		ic->ic_htcaps |= IEEE80211_HTCAP_LDPC;
+	if (AR_SREV_9280_10_OR_LATER(sc)) {
+		ic->ic_htcaps |= IEEE80211_HTCAP_TXSTBC;
+		ic->ic_htcaps |= 1 << IEEE80211_HTCAP_RXSTBC_SHIFT;
+	}
+#endif
+	ntxstreams = sc->ntxchains;
+	nrxstreams = sc->nrxchains;
+	if (!AR_SREV_9380_10_OR_LATER(sc)) {
+		ntxstreams = MIN(ntxstreams, 2);
+		nrxstreams = MIN(nrxstreams, 2);
+	}
+	/* Set supported HT rates. */
+	if (ic->ic_userflags & IEEE80211_F_NOMIMO)
+		ntxstreams = nrxstreams = 1;
+	memset(ic->ic_sup_mcs, 0, sizeof(ic->ic_sup_mcs));
+	for (i = 0; i < nrxstreams; i++)
+		ic->ic_sup_mcs[i] = 0xff;
+	ic->ic_tx_mcs_set = IEEE80211_TX_MCS_SET_DEFINED;
+	if (ntxstreams != nrxstreams) {
+		ic->ic_tx_mcs_set |= IEEE80211_TX_RX_MCS_NOT_EQUAL;
+		ic->ic_tx_mcs_set |= (ntxstreams - 1) << 2;
+	}
+}
+
 int
 athn_attach(struct athn_softc *sc)
 {
@@ -302,43 +349,7 @@ athn_attach(struct athn_softc *sc)
 	    IEEE80211_C_SHPREAMBLE |	/* Short preamble supported. */
 	    IEEE80211_C_PMGT;		/* Power saving supported. */
 
-	if (sc->flags & ATHN_FLAG_11N) {
-		int i, ntxstreams, nrxstreams;
-
-		/* Set HT capabilities. */
-		ic->ic_htcaps = (IEEE80211_HTCAP_SMPS_DIS <<
-		    IEEE80211_HTCAP_SMPS_SHIFT);
-#ifdef notyet
-		ic->ic_htcaps |= IEEE80211_HTCAP_CBW20_40 |
-		    IEEE80211_HTCAP_SGI40 |
-		    IEEE80211_HTCAP_DSSSCCK40;
-#endif
-		ic->ic_htxcaps = 0;
-#ifdef notyet
-		if (AR_SREV_9271(sc) || AR_SREV_9287_10_OR_LATER(sc))
-			ic->ic_htcaps |= IEEE80211_HTCAP_SGI20;
-		if (AR_SREV_9380_10_OR_LATER(sc))
-			ic->ic_htcaps |= IEEE80211_HTCAP_LDPC;
-		if (AR_SREV_9280_10_OR_LATER(sc)) {
-			ic->ic_htcaps |= IEEE80211_HTCAP_TXSTBC;
-			ic->ic_htcaps |= 1 << IEEE80211_HTCAP_RXSTBC_SHIFT;
-		}
-#endif
-		ntxstreams = sc->ntxchains;
-		nrxstreams = sc->nrxchains;
-		if (!AR_SREV_9380_10_OR_LATER(sc)) {
-			ntxstreams = MIN(ntxstreams, 2);
-			nrxstreams = MIN(nrxstreams, 2);
-		}
-		/* Set supported HT rates. */
-		for (i = 0; i < nrxstreams; i++)
-			ic->ic_sup_mcs[i] = 0xff;
-		ic->ic_tx_mcs_set |= IEEE80211_TX_MCS_SET_DEFINED;
-		if (ntxstreams != nrxstreams) {
-			ic->ic_tx_mcs_set |= IEEE80211_TX_RX_MCS_NOT_EQUAL;
-			ic->ic_tx_mcs_set |= (ntxstreams - 1) << 2;
-		}
-	}
+	athn_config_ht(sc);
 
 	/* Set supported rates. */
 	if (sc->flags & ATHN_FLAG_11G) {
@@ -3069,6 +3080,8 @@ athn_init(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname, error);
 		goto fail;
 	}
+
+	athn_config_ht(sc);
 
 	/* Enable Rx. */
 	athn_rx_start(sc);
