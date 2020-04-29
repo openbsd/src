@@ -1,4 +1,4 @@
-/*	$OpenBSD: abx80x.c,v 1.1 2019/01/02 21:15:47 patrick Exp $	*/
+/*	$OpenBSD: abx80x.c,v 1.2 2020/04/29 15:50:48 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -170,7 +170,7 @@ abcrtc_reg_write(struct abcrtc_softc *sc, int reg, uint8_t data)
 	int error;
 
 	val[0] = 1;
-	val[1] = reg;
+	val[1] = data;
 
 	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
 	error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
