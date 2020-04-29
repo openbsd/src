@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.96 2020/04/28 15:18:52 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.97 2020/04/29 14:55:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2908,7 +2908,7 @@ create_ike(char *name, int af, uint8_t ipproto,
 				goto done;
 			}
 			if (noauth && ipsec_sa->xfs[i]->nauthxf) {
-				yyerror("authentication is implicit for given"
+				yyerror("authentication is implicit for given "
 				    "encryption transforms");
 				goto done;
 			}
