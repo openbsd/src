@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.94 2018/06/23 23:19:11 rob Exp $
+.\"	$OpenBSD: release.8,v 1.95 2020/04/29 15:02:51 sthen Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"	Copyright (c) 2016 Theo Buehler <tb@openbsd.org>
@@ -10,7 +10,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: June 23 2018 $
+.Dd $Mdocdate: April 29 2020 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -156,6 +156,13 @@ that will be made into a release.
 The base system release consists of at least one generic kernel,
 some installation media, the release tarballs,
 installation instructions, and checksum files.
+.Pp
+On arm64 and armv7 architectures, additional files are required.
+For armv7, install u-boot-arm and dtb using
+.Xr pkg_add 1
+or from
+.Xr ports 7 .
+For arm64, install raspberrypi-firmware and u-boot-aarch64.
 .Pp
 Create a
 .Va RELEASEDIR
