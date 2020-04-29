@@ -1,4 +1,4 @@
-/*	$OpenBSD: abx80x.c,v 1.5 2020/04/29 19:00:18 patrick Exp $	*/
+/*	$OpenBSD: abx80x.c,v 1.6 2020/04/29 19:18:31 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -115,14 +115,14 @@ abcrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-#if defined(__HAVE_FDT)
-	abcrtc_trickle_charger(sc, node);
-#endif
-
 	reg = abcrtc_reg_read(sc, ABX8XX_CTRL);
 	reg &= ~(ABX8XX_CTRL_ARST | ABX8XX_CTRL_12_24);
 	reg |= ABX8XX_CTRL_WRITE;
 	abcrtc_reg_write(sc, ABX8XX_CTRL, reg);
+
+#if defined(__HAVE_FDT)
+	abcrtc_trickle_charger(sc, node);
+#endif
 
 	abcrtc_reg_write(sc, ABX8XX_CD_TIMER_CTL, ABX8XX_CD_TIMER_CTL_EN);
 
