@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.154 2020/04/30 12:35:22 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.155 2020/04/30 12:38:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -219,6 +219,9 @@ struct uaudio_softc {
 		char name[UAUDIO_NAMEMAX];
 		unsigned int nch;
 		int type, id;
+
+		/* terminal or clock type */
+		unsigned int term;
 
 		/* clock source, if a terminal or selector */
 		struct uaudio_unit *clock;
@@ -1258,7 +1261,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 {
 	struct uaudio_blob p;
 	struct uaudio_unit *u, *s;
-	unsigned int i, j, term, size, attr, ctl, type, subtype, assoc, clk;
+	unsigned int i, j, size, ctl, type, subtype, assoc, clk;
 #ifdef UAUDIO_DEBUG
 	unsigned int bit;
 #endif
@@ -1275,6 +1278,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 		u = malloc(sizeof(struct uaudio_unit), M_DEVBUF, M_WAITOK);
 		u->id = id;
 		u->type = subtype;
+		u->term = 0;
 		u->src_list = NULL;
 		u->dst_list = NULL;
 		u->clock = NULL;
@@ -1308,7 +1312,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 
 	switch (u->type) {
 	case UAUDIO_AC_INPUT:
-		if (!uaudio_getnum(&p, 2, &term))
+		if (!uaudio_getnum(&p, 2, &u->term))
 			return 0;
 		if (!uaudio_getnum(&p, 1, &assoc))
 			return 0;
@@ -1325,13 +1329,12 @@ uaudio_process_unit(struct uaudio_softc *sc,
 		}
 		if (!uaudio_getnum(&p, 1, &u->nch))
 			return 0;
-		uaudio_mkname(sc, uaudio_tname(term, 0), u->name);
 		DPRINTF("%02u: "
 		    "in, nch = %d, term = 0x%x, assoc = %d\n",
-		    u->id, u->nch, term, assoc);
+		    u->id, u->nch, u->term, assoc);
 		break;
 	case UAUDIO_AC_OUTPUT:
-		if (!uaudio_getnum(&p, 2, &term))
+		if (!uaudio_getnum(&p, 2, &u->term))
 			return 0;
 		if (!uaudio_getnum(&p, 1, &assoc))
 			return 0;
@@ -1353,10 +1356,9 @@ uaudio_process_unit(struct uaudio_softc *sc,
 		u->src_list = s;
 		s->src_next = NULL;
 		u->nch = s->nch;
-		uaudio_mkname(sc, uaudio_tname(term, 1), u->name);
 		DPRINTF("%02u: "
 		    "out, id = %d, nch = %d, term = 0x%x, assoc = %d\n",
-		    u->id, id, u->nch, term, assoc);
+		    u->id, id, u->nch, u->term, assoc);
 		break;
 	case UAUDIO_AC_MIXER:
 		if (!uaudio_process_srcs(sc, u, units, &p))
@@ -1480,13 +1482,12 @@ uaudio_process_unit(struct uaudio_softc *sc,
 		}
 		break;
 	case UAUDIO_AC_CLKSRC:
-		if (!uaudio_getnum(&p, 1, &attr))
+		if (!uaudio_getnum(&p, 1, &u->term))
 			return 0;
 		if (!uaudio_getnum(&p, 1, &ctl))
 			return 0;
 		DPRINTF("%02u: clock source, attr = 0x%x, ctl = 0x%x\n",
-		    u->id, attr, ctl);
-		uaudio_mkname(sc, uaudio_clkname(attr), u->name);
+		    u->id, u->term, ctl);
 		break;
 	case UAUDIO_AC_CLKSEL:
 		DPRINTF("%02u: clock sel\n", u->id);
@@ -1497,7 +1498,6 @@ uaudio_process_unit(struct uaudio_softc *sc,
 			    DEVNAME(sc), u->id);
 			return 0;
 		}
-		uaudio_mkname(sc, "clksel", u->name);
 		break;
 	case UAUDIO_AC_CLKMULT:
 		DPRINTF("%02u: clock mult\n", u->id);
@@ -2109,10 +2109,22 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
 	}
 
 	/*
-	 * set effect and processor unit names
+	 * set terminal, effect, and processor unit names
 	 */
 	for (u = sc->unit_list; u != NULL; u = u->unit_next) {
 		switch (u->type) {
+		case UAUDIO_AC_INPUT:
+			uaudio_mkname(sc, uaudio_tname(u->term, 0), u->name);
+			break;
+		case UAUDIO_AC_OUTPUT:
+			uaudio_mkname(sc, uaudio_tname(u->term, 1), u->name);
+			break;
+		case UAUDIO_AC_CLKSRC:
+			uaudio_mkname(sc, uaudio_clkname(u->term), u->name);
+			break;
+		case UAUDIO_AC_CLKSEL:
+			uaudio_mkname(sc, "clksel", u->name);
+			break;
 		case UAUDIO_AC_EFFECT:
 			uaudio_mkname(sc, "fx", u->name);
 			break;
