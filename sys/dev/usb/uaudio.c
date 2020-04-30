@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.156 2020/04/30 12:41:39 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.157 2020/04/30 12:43:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -230,10 +230,9 @@ struct uaudio_softc {
 		struct uaudio_ranges rates;
 
 		/* mixer(4) bits */
-#define UAUDIO_CLASS_REC	0
-#define UAUDIO_CLASS_OUT	1
-#define UAUDIO_CLASS_IN		2
-#define UAUDIO_CLASS_COUNT	3
+#define UAUDIO_CLASS_OUT	0
+#define UAUDIO_CLASS_IN		1
+#define UAUDIO_CLASS_COUNT	2
 		int mixer_class;
 		struct uaudio_mixent {
 			struct uaudio_mixent *next;
@@ -2164,7 +2163,7 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
 		if (u->type != UAUDIO_AC_FEATURE)
 			continue;
 		if (uaudio_setname_dsts(sc, u, UAUDIO_NAME_REC)) {
-			u->mixer_class = UAUDIO_CLASS_REC;
+			u->mixer_class = UAUDIO_CLASS_IN;
 			continue;
 		}
 		if (uaudio_setname_srcs(sc, u, UAUDIO_NAME_PLAY)) {
@@ -4303,11 +4302,6 @@ uaudio_query_devinfo(void *arg, struct mixer_devinfo *devinfo)
 	devinfo->next = -1;
 	devinfo->prev = -1;
 	switch (devinfo->index) {
-	case UAUDIO_CLASS_REC:
-		strlcpy(devinfo->label.name, AudioCrecord, MAX_AUDIO_DEV_LEN);
-		devinfo->type = AUDIO_MIXER_CLASS;
-		devinfo->mixer_class = -1;
-		return 0;
 	case UAUDIO_CLASS_IN:
 		strlcpy(devinfo->label.name, AudioCinputs, MAX_AUDIO_DEV_LEN);
 		devinfo->type = AUDIO_MIXER_CLASS;
