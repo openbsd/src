@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.173 2020/03/31 07:00:34 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.174 2020/04/30 13:31:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2348,7 +2348,7 @@ input_exit_rename(struct input_ctx *ictx)
 		return;
 
 	if (ictx->input_len == 0) {
-		oe = options_get(wp->window->options, "automatic-rename");
+		oe = options_get_only(wp->window->options, "automatic-rename");
 		if (oe != NULL)
 			options_remove(oe);
 		return;
