@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.67 2020/04/30 13:46:39 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.68 2020/04/30 16:08:04 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -251,7 +251,7 @@ repo_lookup(int fd, struct repotab *rt, const char *uri)
 
 	i = rt->reposz - 1;
 
-	logx("%s/%s: loading", rp->host, rp->module);
+	logx("%s/%s: pulling from network", rp->host, rp->module);
 	io_simple_write(fd, &i, sizeof(size_t));
 	io_str_write(fd, rp->host);
 	io_str_write(fd, rp->module);
@@ -1604,7 +1604,7 @@ main(int argc, char *argv[])
 			assert(i < rt.reposz);
 			assert(!rt.repos[i].loaded);
 			rt.repos[i].loaded = 1;
-			logx("%s/%s: loaded", rt.repos[i].host,
+			logx("%s/%s: loaded from cache", rt.repos[i].host,
 			    rt.repos[i].module);
 			stats.repos++;
 			entityq_flush(proc, &q, &rt.repos[i]);
