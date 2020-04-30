@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.40 2020/04/27 19:31:02 tb Exp $ */
+/* $OpenBSD: e_aes.c,v 1.41 2020/04/30 18:43:11 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -721,6 +721,10 @@ aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	case EVP_CTRL_INIT:
 		gctx->key_set = 0;
 		gctx->iv_set = 0;
+		if (c->cipher->iv_len == 0) {
+			EVPerror(EVP_R_INVALID_IV_LENGTH);
+			return 0;
+		}
 		gctx->ivlen = c->cipher->iv_len;
 		gctx->iv = c->iv;
 		gctx->taglen = -1;
