@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.56 2020/04/27 08:21:34 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.57 2020/04/30 08:52:56 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -947,9 +947,8 @@ ar5008_rx_process(struct athn_softc *sc, struct mbuf_list *ml)
 		else if (ds->ds_status8 & AR_RXS8_PHY_ERR)
 			DPRINTFN(6, ("PHY error=0x%x\n",
 			    MS(ds->ds_status8, AR_RXS8_PHY_ERR_CODE)));
-		else if ((ds->ds_status8 & AR_RXS8_DECRYPT_CRC_ERR) ||
-		    (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-		    (ds->ds_status8 & AR_RXS8_KEY_MISS))) {
+		else if (ds->ds_status8 & (AR_RXS8_DECRYPT_CRC_ERR |
+		    AR_RXS8_KEY_MISS | AR_RXS8_DECRYPT_BUSY_ERR)) {
 			DPRINTFN(6, ("Decryption CRC error\n"));
 			ic->ic_stats.is_ccmp_dec_errs++;
 		} else if (ds->ds_status8 & AR_RXS8_MICHAEL_ERR) {
@@ -961,8 +960,7 @@ ar5008_rx_process(struct athn_softc *sc, struct mbuf_list *ml)
 			 * XXX Check that it is not a control frame
 			 * (invalid MIC failures on valid ctl frames).
 			 */
-		} else if (ds->ds_status8 & AR_RXS8_DECRYPT_BUSY_ERR)
-			ic->ic_stats.is_ccmp_dec_errs++;
+		}
 		ifp->if_ierrors++;
 		goto skip;
 	}
