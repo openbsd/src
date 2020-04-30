@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.153 2020/04/24 21:36:06 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.154 2020/04/30 12:35:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -169,6 +169,12 @@
  * 80 works. So we use the least common multiplier of both.
  */
 #define UAUDIO_SPF_DIV			327680
+
+/*
+ * names of DAC and ADC unit names
+ */
+#define UAUDIO_NAME_PLAY	"play"
+#define UAUDIO_NAME_REC		"record"
 
 /*
  * read/write pointers for secure sequencial access of binary data,
@@ -613,7 +619,7 @@ uaudio_tname(unsigned int type, int isout)
 	switch (hi) {
 	case 1:
 		/* usb data stream */
-		name = isout ? "record" : "play";
+		name = isout ? UAUDIO_NAME_REC : UAUDIO_NAME_PLAY;
 		break;
 	case 2:
 		/* embedded inputs */
@@ -2145,11 +2151,11 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
 	for (u = sc->unit_list; u != NULL; u = u->unit_next) {
 		if (u->type != UAUDIO_AC_FEATURE)
 			continue;
-		if (uaudio_setname_dsts(sc, u, "record")) {
+		if (uaudio_setname_dsts(sc, u, UAUDIO_NAME_REC)) {
 			u->mixer_class = UAUDIO_CLASS_REC;
 			continue;
 		}
-		if (uaudio_setname_srcs(sc, u, "play")) {
+		if (uaudio_setname_srcs(sc, u, UAUDIO_NAME_PLAY)) {
 			u->mixer_class = UAUDIO_CLASS_OUT;
 			continue;
 		}
