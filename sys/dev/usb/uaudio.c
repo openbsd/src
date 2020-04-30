@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.155 2020/04/30 12:38:36 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.156 2020/04/30 12:41:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -173,7 +173,7 @@
 /*
  * names of DAC and ADC unit names
  */
-#define UAUDIO_NAME_PLAY	"play"
+#define UAUDIO_NAME_PLAY	"dac"
 #define UAUDIO_NAME_REC		"record"
 
 /*
