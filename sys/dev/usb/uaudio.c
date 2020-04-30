@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.157 2020/04/30 12:43:32 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.158 2020/04/30 12:45:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -251,6 +251,11 @@ struct uaudio_softc {
 	 * Current clock, UAC v2.0 only
 	 */
 	struct uaudio_unit *clock;
+
+	/*
+	 * Number of input and output terminals
+	 */
+	unsigned int nin, nout;
 
 	/*
 	 * When unique names are needed, they are generated using a
@@ -610,7 +615,7 @@ uaudio_unit_byid(struct uaudio_softc *sc, unsigned int id)
  * Return a terminal name for the given terminal type.
  */
 char *
-uaudio_tname(unsigned int type, int isout)
+uaudio_tname(struct uaudio_softc *sc, unsigned int type, int isout)
 {
 	unsigned int hi, lo;
 	char *name;
@@ -618,6 +623,20 @@ uaudio_tname(unsigned int type, int isout)
 	hi = type >> 8;
 	lo = type & 0xff;
 
+	/* usb data stream */
+	if (hi == 1)
+		return isout ? UAUDIO_NAME_REC : UAUDIO_NAME_PLAY;
+
+	/* if theres only one input (output) use "input" ("output") */
+	if (isout) {
+		if (sc->nout == 1)
+			return "output";
+	} else {
+		if (sc->nin == 1)
+			return "input";
+	}
+
+	/* determine name from USB terminal type */
 	switch (hi) {
 	case 1:
 		/* usb data stream */
@@ -1315,6 +1334,8 @@ uaudio_process_unit(struct uaudio_softc *sc,
 			return 0;
 		if (!uaudio_getnum(&p, 1, &assoc))
 			return 0;
+		if (u->term >> 8 != 1)
+			sc->nin++;
 		switch (sc->version) {
 		case UAUDIO_V1:
 			break;
@@ -1341,6 +1362,8 @@ uaudio_process_unit(struct uaudio_softc *sc,
 			return 0;
 		if (!uaudio_process_unit(sc, u, id, units, &s))
 			return 0;
+		if (u->term >> 8 != 1)
+			sc->nout++;
 		switch (sc->version) {
 		case UAUDIO_V1:
 			break;
@@ -2113,10 +2136,10 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
 	for (u = sc->unit_list; u != NULL; u = u->unit_next) {
 		switch (u->type) {
 		case UAUDIO_AC_INPUT:
-			uaudio_mkname(sc, uaudio_tname(u->term, 0), u->name);
+			uaudio_mkname(sc, uaudio_tname(sc, u->term, 0), u->name);
 			break;
 		case UAUDIO_AC_OUTPUT:
-			uaudio_mkname(sc, uaudio_tname(u->term, 1), u->name);
+			uaudio_mkname(sc, uaudio_tname(sc, u->term, 1), u->name);
 			break;
 		case UAUDIO_AC_CLKSRC:
 			uaudio_mkname(sc, uaudio_clkname(u->term), u->name);
