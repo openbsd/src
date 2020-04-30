@@ -189,7 +189,13 @@ dma_fence_wait_timeout(struct dma_fence *fence, bool intr, long timeout)
 static inline long
 dma_fence_wait(struct dma_fence *fence, bool intr)
 {
-	return dma_fence_wait_timeout(fence, intr, MAX_SCHEDULE_TIMEOUT);
+	long ret;
+
+	ret = dma_fence_wait_timeout(fence, intr, MAX_SCHEDULE_TIMEOUT);
+	if (ret < 0)
+		return ret;
+	
+	return 0;
 }
 
 static inline void
