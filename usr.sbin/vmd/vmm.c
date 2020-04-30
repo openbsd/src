@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.95 2019/12/11 06:45:17 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.96 2020/04/30 03:50:53 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -537,10 +537,6 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 			break;
 		case IMSG_VMDOP_SEND_VM_RESPONSE:
 			IMSG_SIZE_CHECK(&imsg, &vmr);
-			memcpy(&vmr, imsg.data, sizeof(vmr));
-			if (!vmr.vmr_result) {
-				vm_remove(vm, __func__);
-			}
 		case IMSG_VMDOP_PAUSE_VM_RESPONSE:
 		case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
 			for (i = 0; i < sizeof(procs); i++) {

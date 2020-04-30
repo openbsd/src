@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.56 2020/04/21 03:36:56 pd Exp $	*/
+/*	$OpenBSD: vm.c,v 1.57 2020/04/30 03:50:53 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -469,6 +469,10 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			    IMSG_VMDOP_SEND_VM_RESPONSE,
 			    imsg.hdr.peerid, imsg.hdr.pid, -1, &vmr,
 			    sizeof(vmr));
+			if (!vmr.vmr_result) {
+				imsg_flush(&current_vm->vm_iev.ibuf);
+				_exit(0);
+			}
 			break;
 		default:
 			fatalx("%s: got invalid imsg %d from %s",
