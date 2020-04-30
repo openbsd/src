@@ -82,12 +82,22 @@ static int
 initmute(struct sioctl_sun_hdl *hdl, struct mixer_devinfo *info)
 {
 	struct mixer_devinfo mi;
+	char name[MAX_AUDIO_DEV_LEN];
 
-	mi.index = info->next;
 	for (mi.index = info->next; mi.index != -1; mi.index = mi.next) {
 		if (ioctl(hdl->fd, AUDIO_MIXER_DEVINFO, &mi) < 0)
 			break;
 		if (strcmp(mi.label.name, AudioNmute) == 0)
+			return mi.index;
+	}
+
+	/* try "_mute" suffix */
+	snprintf(name, sizeof(name), "%s_mute", info->label.name);
+	for (mi.index = 0; ; mi.index++) {
+		if (ioctl(hdl->fd, AUDIO_MIXER_DEVINFO, &mi) < 0)
+			break;
+		if (info->mixer_class == mi.mixer_class &&
+		    strcmp(mi.label.name, name) == 0)
 			return mi.index;
 	}
 	return -1;
