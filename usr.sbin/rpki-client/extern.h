@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.28 2020/04/28 13:41:35 deraadt Exp $ */
+/*	$OpenBSD: extern.h,v 1.29 2020/04/30 13:46:39 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -18,6 +18,7 @@
 #define EXTERN_H
 
 #include <sys/tree.h>
+#include <sys/time.h>
 
 enum cert_as_type {
 	CERT_AS_ID, /* single identifier */
@@ -263,6 +264,9 @@ struct	stats {
 	size_t	 vrps; /* total number of vrps */
 	size_t	 uniqs; /* number of unique vrps */
 	char	*talnames;
+	struct timeval	elapsed_time;
+	struct timeval	user_time;
+	struct timeval	system_time;
 };
 
 /* global variables */

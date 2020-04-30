@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.9 2020/04/29 04:29:40 deraadt Exp $ */
+/*	$OpenBSD: output-json.c,v 1.10 2020/04/30 13:46:39 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -39,6 +39,9 @@ outputheader_json(FILE *out, struct stats *st)
 	    "{\n\t\"metadata\": {\n"
 	    "\t\t\"buildmachine\": \"%s\",\n"
 	    "\t\t\"buildtime\": \"%s\",\n"
+	    "\t\t\"elapsedtime\": \"%lld\",\n"
+	    "\t\t\"usertime\": \"%lld\",\n"
+	    "\t\t\"systemtime\": \"%lld\",\n"
 	    "\t\t\"roas\": %zu,\n"
 	    "\t\t\"failedroas\": %zu,\n"
 	    "\t\t\"invalidroas\": %zu,\n"
@@ -55,7 +58,8 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"vrps\": %zu,\n"
 	    "\t\t\"uniquevrps\": %zu\n"
 	    "\t},\n\n",
-	    hn, tbuf,
+	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
+	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
 	    st->roas, st->roas_fail, st->roas_invalid,
 	    st->certs, st->certs_fail, st->certs_invalid,
 	    st->tals, st->talnames,

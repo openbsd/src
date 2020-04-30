@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.12 2020/04/28 15:04:05 deraadt Exp $ */
+/*	$OpenBSD: output.c,v 1.13 2020/04/30 13:46:39 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -185,6 +185,7 @@ outputheader(FILE *out, struct stats *st)
 
 	if (fprintf(out,
 	    "# Generated on host %s at %s\n"
+	    "# Processing time %lld seconds (%lld seconds user, %lld seconds system)\n"
 	    "# Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n"
 	    "# Certificates: %zu (%zu failed parse, %zu invalid)\n"
 	    "# Trust Anchor Locators: %zu (%s)\n"
@@ -192,7 +193,8 @@ outputheader(FILE *out, struct stats *st)
 	    "# Certificate revocation lists: %zu\n"
 	    "# Repositories: %zu\n"
 	    "# VRP Entries: %zu (%zu unique)\n",
-	    hn, tbuf,
+	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
+	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
             st->roas, st->roas_fail, st->roas_invalid,
             st->certs, st->certs_fail, st->certs_invalid,
 	    st->tals, st->talnames,

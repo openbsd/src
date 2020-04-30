@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.66 2020/04/28 13:41:35 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.67 2020/04/30 13:46:39 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -44,6 +44,7 @@
 
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/tree.h>
 #include <sys/types.h>
@@ -139,6 +140,8 @@ static void	build_crls(const struct auth *, struct crl_tree *,
 const char	*bird_tablename = "ROAS";
 
 int	 verbose;
+
+struct stats	 stats;
 
 /*
  * Log a message to stderr if and only if "verbose" is non-zero.
@@ -459,8 +462,6 @@ queue_add_from_mft_set(int fd, struct entityq *q, const struct mft *mft,
 	}
 }
 
-char	*talnames;
-
 /*
  * Add a local TAL file (RFC 7730) to the queue of files to fetch.
  */
@@ -474,13 +475,13 @@ queue_add_tal(int fd, struct entityq *q, const char *file, size_t *eid)
 	buf = tal_read_file(file);
 
 	/* Record tal for later reporting */
-	if (talnames == NULL)
-		talnames = strdup(file);
+	if (stats.talnames == NULL)
+		stats.talnames = strdup(file);
 	else {
 		char *tmp;
-		asprintf(&tmp, "%s %s", talnames, file);
-		free(talnames);
-		talnames = tmp;
+		asprintf(&tmp, "%s %s", stats.talnames, file);
+		free(stats.talnames);
+		stats.talnames = tmp;
 	}
 
 	/* Not in a repository, so directly add to queue. */
@@ -1376,13 +1377,16 @@ main(int argc, char *argv[])
 	struct entity	*ent;
 	struct pollfd	 pfd[2];
 	struct repotab	 rt;
-	struct stats	 stats;
 	struct roa	**out = NULL;
 	char		*rsync_prog = "openrsync";
 	char		*bind_addr = NULL;
 	const char	*cachedir = NULL;
 	const char	*tals[TALSZ_MAX];
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
+	struct rusage	ru;
+	struct timeval	start_time, now_time;
+
+	gettimeofday(&start_time, NULL);
 
 	/* If started as root, priv-drop to _rpki-client */
 	if (getuid() == 0) {
@@ -1473,7 +1477,6 @@ main(int argc, char *argv[])
 		err(1, "no TAL files found in %s", "/etc/rpki");
 
 	memset(&rt, 0, sizeof(struct repotab));
-	memset(&stats, 0, sizeof(struct stats));
 	TAILQ_INIT(&q);
 
 	/*
@@ -1648,7 +1651,17 @@ main(int argc, char *argv[])
 		rc = 1;
 	}
 
-	stats.talnames = talnames;
+	gettimeofday(&now_time, NULL);
+	timersub(&now_time, &start_time, &stats.elapsed_time);
+	if (getrusage(RUSAGE_SELF, &ru) == 0) {
+		stats.user_time = ru.ru_utime;
+		stats.system_time = ru.ru_stime;
+	}
+	if (getrusage(RUSAGE_CHILDREN, &ru) == 0) {
+		timeradd(&stats.user_time, &ru.ru_utime, &stats.user_time);
+		timeradd(&stats.system_time, &ru.ru_stime, &stats.system_time);
+	}
+
 	if (outputfiles(&v, &stats))
 		rc = 1;
 
