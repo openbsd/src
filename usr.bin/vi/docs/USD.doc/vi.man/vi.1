@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.77 2019/10/04 20:12:01 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.78 2020/04/30 10:40:21 millert Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: October 4 2019 $
+.Dd $Mdocdate: April 30 2020 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -1606,6 +1606,11 @@ and
 characters to move forward to the next
 .Ar shiftwidth
 column boundary.
+If the
+.Cm expandtab
+option is set, only insert
+.Aq space
+characters.
 .Pp
 .It Aq Cm erase
 .It Aq Cm control-H
@@ -2343,6 +2348,16 @@ key mapping.
 .Nm ex
 only.
 Announce error messages with a bell.
+.It Cm expandtab , et Bq off
+Expand
+.Aq tab
+characters to
+.Aq space
+when inserting, replacing or shifting text, autoindenting,
+indenting with
+.Aq Ic control-T ,
+or outdenting with
+.Aq Ic control-D .
 .It Cm exrc , ex Bq off
 Read the startup files in the local directory.
 .It Cm extended Bq off

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_txt.c,v 1.16 2016/05/27 09:18:12 martijn Exp $	*/
+/*	$OpenBSD: ex_txt.c,v 1.17 2020/04/30 10:40:21 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -400,8 +400,12 @@ txt_dent(SCR *sp, TEXT *tp)
 	 *
 	 * Count up spaces/tabs needed to get to the target.
 	 */
-	for (cno = 0, tabs = 0; cno + COL_OFF(cno, ts) <= scno; ++tabs)
-		cno += COL_OFF(cno, ts);
+	cno = 0;
+	tabs = 0;
+	if (!O_ISSET(sp, O_EXPANDTAB)) {
+		for (; cno + COL_OFF(cno, ts) <= scno; ++tabs)
+			cno += COL_OFF(cno, ts);
+	}
 	spaces = scno - cno;
 
 	/* Make sure there's enough room. */

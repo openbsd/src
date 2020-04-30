@@ -1,4 +1,4 @@
-.\"	$OpenBSD: set.opt.roff,v 1.12 2016/08/08 15:09:33 sobrado Exp $
+.\"	$OpenBSD: set.opt.roff,v 1.13 2020/04/30 10:40:21 millert Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -96,7 +96,9 @@ the first nonblank character of the line from which you created it.
 Lines are indented using tab characters to the extent possible (based on
 the value of the
 .OP tabstop
-option) and then using space characters as necessary.
+option, and if
+.OP expandtab
+is not set) and then using space characters as necessary.
 For commands inserting text into the middle of a line, any blank characters
 to the right of the cursor are discarded, and the first nonblank character
 to the right of the cursor is aligned as described above.
@@ -400,6 +402,17 @@ only.
 error messages are normally presented in inverse video.
 If that is not possible for the terminal, setting this option causes
 error messages to be announced by ringing the terminal bell.
+.KY expandtab
+.IP "expandtab, et [off]"
+Expand
+.LI <tab>
+characters to
+.LI <space>
+when inserting, replacing or shifting text, autoindenting,
+indenting with
+.CO <control-T>,
+or outdenting with
+.CO <control-D>.
 .KY exrc
 .IP "exrc, ex [off]"
 If this option is turned on in the EXINIT environment variables,
