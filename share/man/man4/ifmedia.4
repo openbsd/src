@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.25 2020/04/30 10:12:00 stsp Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.26 2020/04/30 10:29:45 stsp Exp $
 .\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -414,8 +414,8 @@ Each 20 Mhz channel used by 802.11a and 802.11g provides space for
 48 OFDM sub-carriers for data.
 The sub-carriers use BPSK, QPSK, 16QAM, or 64QAM modulation, combined with
 a particular coding rate for error correction at the receiver.
-The coding rate specifies the ratio of redundantly transmitted data bits per
-payload data bit transmitted.
+The coding rate specifies how many data bits in a frame are transmitted
+without redundancy.
 .Bl -column "Modulation" "Coding Rate " "Mbit/s" -offset 6n
 .It Em Modulation Ta Em Coding Rate Ta Em Mbit/s
 .It BPSK Ta 1/2 Ta 6
