@@ -45,6 +45,7 @@ acpibtn*	at acpi?
 acpicpu*	at acpi?
 acpicmos*	at acpi?
 acpidock*	at acpi?
+acpidmar0	at acpi?
 acpiec*		at acpi?
 acpipci*	at acpi?
 acpiprt*	at acpi?

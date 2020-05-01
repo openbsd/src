@@ -88,7 +88,8 @@ const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *, const char *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
-#define	pci_probe_device_hook(c, a)	(0)
+int		pci_probe_device_hook(pci_chipset_tag_t,
+		    struct pci_attach_args *);
 
 void 		pci_dev_postattach(struct device *, struct pci_attach_args *);
 

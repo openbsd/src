@@ -47,6 +47,7 @@ sdhc*		at acpi?
 acpihve*	at acpi?
 chvgpio*        at acpi?
 glkgpio*	at acpi?
+acpidmar0	at acpi?
 
 mpbios0		at bios0
 
