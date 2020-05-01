@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.42 2019/09/03 17:51:52 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.43 2020/05/01 20:00:26 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -42,6 +42,8 @@
 #include <machine/pio.h>
 #include <machine/intr.h>
 #include <machine/vmparam.h>
+
+#include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
 
 void decr_intr(struct clockframe *frame);
@@ -77,95 +79,31 @@ static struct evcount stat_count;
 static int clk_irq = PPC_CLK_IRQ;
 static int stat_irq = PPC_STAT_IRQ;
 
+extern todr_chip_handle_t todr_handle;
+struct todr_chip_handle rtc_todr;
 
-/*
- * Set up the system's time, given a `reasonable' time value.
- */
-void
-inittodr(time_t base)
+int
+rtc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	int badbase = 0, waszero = base == 0;
-	char *bad = NULL;
-	struct timeval tv;
-	struct timespec ts;
+	time_t sec;
 
-        if (base < 5 * SECYR) {
-                /*
-                 * If base is 0, assume filesystem time is just unknown
-                 * instead of preposterous. Don't bark.
-                 */
-                if (base != 0)
-                        printf("WARNING: preposterous time in file system\n");
-                /* not going to use it anyway, if the chip is readable */
-                base = 21*SECYR + 186*SECDAY + SECDAY/2;
-                badbase = 1;
-        }
+	if (time_read == NULL)
+		return ENXIO;
 
-	if (time_read != NULL) {
-		time_t cursec;
-		(*time_read)(&cursec);
-		tv.tv_sec = cursec;
-		tv.tv_usec = 0;
-	} else {
-		/* force failure */
-		tv.tv_sec = tv.tv_usec = 0;
-	}
-
-	if (tv.tv_sec == 0) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the clock.
-		 */
-		bad = "WARNING: unable to get date/time";
-		tv.tv_sec = base;
-		tv.tv_usec = 0;
-		if (!badbase)
-			resettodr();
-	} else {
-		int deltat;
-
-		tv.tv_sec -= utc_offset;
-		deltat = tv.tv_sec - base;
-
-		if (deltat < 0)
-			deltat = -deltat;
-		if (!(waszero || deltat < 2 * SECDAY)) {
-			printf("WARNING: clock %s %ld days",
-			    tv.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
-			bad = "";
-
-			if (tv.tv_sec < base && deltat > 1000 * SECDAY) {
-				printf(", using FS time");
-				tv.tv_sec = base;
-			}
-		}
-	}
-
-	ts.tv_sec = tv.tv_sec;
-	ts.tv_nsec = tv.tv_usec * 1000;
-	tc_setclock(&ts);
-
-	if (bad) {
-		printf("%s", bad);
-		printf(" -- CHECK AND RESET THE DATE!\n");
-	}
+	(*time_read)(&sec);
+	tv->tv_sec = sec - utc_offset;
+	tv->tv_usec = 0;
+	return 0;
 }
 
-/*
- * Similar to the above
- */
-void
-resettodr(void)
+int
+rtc_settime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct timeval tv;
+	if (time_write == NULL)
+		return ENXIO;
 
-	if (time_second == 1)
-		return;
-
-	microtime(&tv);
-
-	if (time_write != NULL)
-		(*time_write)(tv.tv_sec + utc_offset);
+	(*time_write)(tv->tv_sec + utc_offset);
+	return 0;
 }
 
 void
@@ -289,6 +227,10 @@ cpu_initclocks(void)
 		    ticks_per_sec);
 #endif
 	}
+
+	rtc_todr.todr_gettime = rtc_gettime;
+	rtc_todr.todr_settime = rtc_settime;
+	todr_handle = &rtc_todr;
 
 	intrstate = ppc_intr_disable();
 
