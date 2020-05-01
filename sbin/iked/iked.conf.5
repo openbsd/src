@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.67 2020/04/28 15:18:52 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.68 2020/05/01 17:44:02 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2020 $
+.Dd $Mdocdate: May 1 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -114,21 +114,33 @@ Here are the settings that can be set globally:
 .It Ic set active
 Set
 .Xr iked 8
-to active mode.
+to global active mode.
+In active mode the per-policy
+.Ar mode
+setting is respected.
+.Xr iked 8
+will initiate policies set to
+.Ar active
+and wait for incoming requests for policies set to
+.Ar passive .
 This is the default.
 .It Ic set passive
 Set
 .Xr iked 8
-to passive mode.
+to global passive mode.
 In passive mode no packets are sent to peers and no connections are
 initiated by
-.Xr iked 8 .
+.Xr iked 8 ,
+even for
+.Ar active
+policies.
 This option is used for setups using
 .Xr sasyncd 8
 and
 .Xr carp 4
 to provide redundancy.
-iked will run in passive mode until sasyncd has determined that the host
+.Xr iked 8
+will run in passive mode until sasyncd has determined that the host
 is the master and can switch to active mode.
 .It Ic set couple
 Load the negotiated security associations (SAs) and flows into the kernel.
