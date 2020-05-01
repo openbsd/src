@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.227 2020/04/27 08:02:24 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.228 2020/05/01 14:04:17 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2402,6 +2402,7 @@ iwn_rx_compressed_ba(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 			 */
 			if (txdata->m != NULL && txdata->ampdu_id == id &&
 			    txdata->ampdu_txmcs == ni->ni_txmcs &&
+			    txdata->ampdu_nframes > 0 &&
 			    (SEQ_LT(ba->ba_winend, s) ||
 			    (ba->ba_bitmap & (1 << bit)) == 0)) {
 				have_ack++;
