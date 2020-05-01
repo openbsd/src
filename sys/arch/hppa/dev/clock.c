@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.29 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: clock.c,v 1.30 2020/05/01 19:56:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -42,7 +42,6 @@
 #include <machine/autoconf.h>
 
 u_long	cpu_hzticks;
-int	timeset;
 
 int	cpu_hardclock(void *);
 u_int	itmr_get_timecount(struct timecounter *);
@@ -51,11 +50,49 @@ struct timecounter itmr_timecounter = {
 	itmr_get_timecount, NULL, 0xffffffff, 0, "itmr", 0, NULL
 };
 
+extern todr_chip_handle_t todr_handle;
+struct todr_chip_handle pdc_todr;
+
+int
+pdc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
+{
+	struct pdc_tod tod PDC_ALIGNMENT;
+	int error;
+
+	if ((error = pdc_call((iodcio_t)pdc, 1, PDC_TOD, PDC_TOD_READ,
+	    &tod, 0, 0, 0, 0, 0))) {
+		printf("clock: failed to fetch (%d)\n", error);
+		return EIO;
+	}
+
+	tv->tv_sec = tod.sec;
+	tv->tv_usec = tod.usec;
+	return 0;
+}
+
+int
+pdc_settime(struct todr_chip_handle *handle, struct timeval *tv)
+{
+	int error;
+
+	if ((error = pdc_call((iodcio_t)pdc, 1, PDC_TOD, PDC_TOD_WRITE,
+	    tv->tv_sec, tv->tv_usec))) {
+		printf("clock: failed to save (%d)\n", error);
+		return EIO;
+	}
+
+	return 0;
+}
+
 void
 cpu_initclocks(void)
 {
 	struct cpu_info *ci = curcpu();
 	u_long __itmr;
+
+	pdc_todr.todr_gettime = pdc_gettime;
+	pdc_todr.todr_settime = pdc_settime;
+	todr_handle = &pdc_todr;
 
 	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
 
@@ -126,68 +163,6 @@ cpu_hardclock(void *v)
 	__asm volatile("mtctl	%0, %%cr15":: "r" (eiem));
 
 	return (1);
-}
-
-/*
- * initialize the system time from the time of day clock
- */
-void
-inittodr(time_t t)
-{
-	struct pdc_tod tod PDC_ALIGNMENT;
-	int 	error, tbad = 0;
-	struct timespec ts;
-
-	if (t < 12*SECYR) {
-		printf ("WARNING: preposterous time in file system");
-		t = 6*SECYR + 186*SECDAY + SECDAY/2;
-		tbad = 1;
-	}
-
-	if ((error = pdc_call((iodcio_t)pdc,
-	    1, PDC_TOD, PDC_TOD_READ, &tod, 0, 0, 0, 0, 0)))
-		printf("clock: failed to fetch (%d)\n", error);
-
-	ts.tv_sec = tod.sec;
-	ts.tv_nsec = tod.usec * 1000;
-	tc_setclock(&ts);
-	timeset = 1;
-
-	if (!tbad) {
-		u_long	dt;
-
-		dt = (tod.sec < t)?  t - tod.sec : tod.sec - t;
-
-		if (dt < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %ld days",
-		    tod.sec < t? "lost" : "gained", dt / SECDAY);
-	}
-
-	printf (" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * reset the time of day clock to the value in time
- */
-void
-resettodr()
-{
-	struct timeval tv;
-	int error;
-
-	/*
-	 * We might have been called by boot() due to a crash early
-	 * on.  Don't reset the clock chip in this case.
-	 */
-	if (!timeset)
-		return;
-
-	microtime(&tv);
-
-	if ((error = pdc_call((iodcio_t)pdc, 1, PDC_TOD, PDC_TOD_WRITE,
-	    tv.tv_sec, tv.tv_usec)))
-		printf("clock: failed to save (%d)\n", error);
 }
 
 void
