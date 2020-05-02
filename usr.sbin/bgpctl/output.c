@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.6 2020/03/20 07:56:34 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.7 2020/05/02 14:20:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -200,6 +200,7 @@ show_neighbor_msgstats(struct peer *p)
 static void
 show_neighbor_full(struct peer *p, struct parse_result *res)
 {
+	const char		*errstr;
 	struct in_addr		 ina;
 	char			*s;
 	int			 hascapamp = 0;
@@ -216,7 +217,6 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	} else if ((s = strdup(log_addr(&p->conf.remote_addr))) == NULL)
 			err(1, "strdup");
 
-	ina.s_addr = p->remote_bgpid;
 	printf("BGP neighbor is %s, ", s);
 	free(s);
 	if (p->conf.remote_as == 0 && p->conf.template)
@@ -249,16 +249,19 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	if (p->conf.max_prefix || p->conf.max_out_prefix)
 		printf("\n");
 
-	printf("  BGP version 4, remote router-id %s",
-	    inet_ntoa(ina));
-	printf("%s\n", fmt_auth_method(p->auth.method));
+	if (p->state == STATE_ESTABLISHED) {
+		ina.s_addr = p->remote_bgpid;
+		printf("  BGP version 4, remote router-id %s",
+		    inet_ntoa(ina));
+		printf("%s\n", fmt_auth_method(p->auth.method));
+	}
 	printf("  BGP state = %s", statenames[p->state]);
 	if (p->conf.down) {
 		printf(", marked down");
-		if (*(p->conf.shutcomm)) {
-			printf(" with shutdown reason \"%s\"",
-			    log_shutcomm(p->conf.shutcomm));
-		}
+	}
+	if (*(p->conf.shutcomm)) {
+		printf(" with shutdown reason \"%s\"",
+		    log_shutcomm(p->conf.shutcomm));
 	}
 	if (p->stats.last_updown != 0)
 		printf(", %s for %s",
@@ -295,18 +298,17 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 		printf("  Last received shutdown reason: \"%s\"\n",
 		    log_shutcomm(p->stats.last_shutcomm));
 	}
-	if (p->state == STATE_IDLE) {
-		const char *errstr;
 
-		errstr = fmt_errstr(p->stats.last_sent_errcode,
-		    p->stats.last_sent_suberr);
-		if (errstr)
-			printf("  Last error sent: %s\n\n", errstr);
-		errstr = fmt_errstr(p->stats.last_rcvd_errcode,
-		    p->stats.last_rcvd_suberr);
-		if (errstr)
-			printf("  Last error received: %s\n\n", errstr);
-	} else {
+	errstr = fmt_errstr(p->stats.last_sent_errcode,
+	    p->stats.last_sent_suberr);
+	if (errstr)
+		printf("  Last error sent: %s\n", errstr);
+	errstr = fmt_errstr(p->stats.last_rcvd_errcode,
+	    p->stats.last_rcvd_suberr);
+	if (errstr)
+		printf("  Last error received: %s\n", errstr);
+
+	if (p->state >= STATE_OPENSENT) {
 		printf("  Local host:  %20s, Local port:  %5u\n",
 		    log_addr(&p->local), p->local_port);
 
@@ -468,7 +470,7 @@ show_communities(u_char *data, size_t len, struct parse_result *res)
 	struct community c;
 	size_t	i;
 	u_int64_t ext;
-	u_int8_t type = 0, nt;
+	u_int8_t type = 0;
 
 	if (len % sizeof(c))
 		return;
@@ -476,16 +478,15 @@ show_communities(u_char *data, size_t len, struct parse_result *res)
 	for (i = 0; i < len; i += sizeof(c)) {
 		memcpy(&c, data + i, sizeof(c));
 
-		nt = c.flags;
-		if (type != nt) {
+		if (type != c.flags) {
 			if (type != 0)
 				printf("%c", EOL0(res->flags));
-			printf("    %s:", fmt_attr(nt,
+			printf("    %s:", fmt_attr(c.flags,
 			    ATTR_OPTIONAL | ATTR_TRANSITIVE));
-			type = nt;
+			type = c.flags;
 		}
 
-		switch (nt) {
+		switch (c.flags) {
 		case COMMUNITY_TYPE_BASIC:
 			printf(" %s", fmt_community(c.data1, c.data2));
 			break;
@@ -525,8 +526,10 @@ show_community(u_char *data, u_int16_t len)
 	u_int16_t	a, v;
 	u_int16_t	i;
 
-	if (len & 0x3)
+	if (len & 0x3) {
+		printf("bad length");
 		return;
+	}
 
 	for (i = 0; i < len; i += 4) {
 		memcpy(&a, data + i, sizeof(a));
@@ -546,8 +549,10 @@ show_large_community(u_char *data, u_int16_t len)
 	u_int32_t	a, l1, l2;
 	u_int16_t	i;
 
-	if (len % 12)
+	if (len % 12) {
+		printf("bad length");
 		return;
+	}
 
 	for (i = 0; i < len; i += 12) {
 		memcpy(&a, data + i, sizeof(a));
@@ -556,7 +561,7 @@ show_large_community(u_char *data, u_int16_t len)
 		a = ntohl(a);
 		l1 = ntohl(l1);
 		l2 = ntohl(l2);
-			printf("%s", fmt_large_community(a, l1, l2));
+		printf("%s", fmt_large_community(a, l1, l2));
 
 		if (i + 12 < len)
 			printf(" ");
@@ -568,8 +573,10 @@ show_ext_community(u_char *data, u_int16_t len)
 {
 	u_int16_t	i;
 
-	if (len & 0x7)
+	if (len & 0x7) {
+		printf("bad length");
 		return;
+	}
 
 	for (i = 0; i < len; i += 8) {
 		printf("%s", fmt_ext_community(data + i));
@@ -591,16 +598,20 @@ show_attr(u_char *data, size_t len, struct parse_result *res)
 	u_int8_t	 flags, type, safi, aid, prefixlen;
 	int		 i, pos, e2, e4;
 
-	if (len < 3)
-		errx(1, "show_attr: too short bgp attr");
+	if (len < 3) {
+		warnx("Too short BGP attrbute");
+		return;
+	}
 
 	flags = data[0];
 	type = data[1];
 
 	/* get the attribute length */
 	if (flags & ATTR_EXTLEN) {
-		if (len < 4)
-			errx(1, "show_attr: too short bgp attr");
+		if (len < 4) {
+			warnx("Too short BGP attrbute");
+			return;
+		}
 		memcpy(&alen, data+2, sizeof(u_int16_t));
 		alen = ntohs(alen);
 		data += 4;
@@ -612,15 +623,17 @@ show_attr(u_char *data, size_t len, struct parse_result *res)
 	}
 
 	/* bad imsg len how can that happen!? */
-	if (alen > len)
-		errx(1, "show_attr: bad length");
+	if (alen > len) {
+		warnx("Bad BGP attrbute length");
+		return;
+	}
 
 	printf("    %s: ", fmt_attr(type, flags));
 
 	switch (type) {
 	case ATTR_ORIGIN:
 		if (alen == 1)
-			printf("%u", *data);
+			printf("%s", fmt_origin(*data, 0));
 		else
 			printf("bad length");
 		break;
@@ -683,8 +696,11 @@ show_attr(u_char *data, size_t len, struct parse_result *res)
 		show_community(data, alen);
 		break;
 	case ATTR_ORIGINATOR_ID:
-		memcpy(&id, data, sizeof(id));
-		printf("%s", inet_ntoa(id));
+		if (alen == 4) {
+			memcpy(&id, data, sizeof(id));
+			printf("%s", inet_ntoa(id));
+		} else
+			printf("bad length");
 		break;
 	case ATTR_CLUSTER_LIST:
 		for (ioff = 0; ioff + sizeof(id) <= alen;
@@ -722,7 +738,7 @@ show_attr(u_char *data, size_t len, struct parse_result *res)
 			alen--;
 			if (nhlen > len)
 				goto bad_len;
-			bzero(&nexthop, sizeof(nexthop));
+			memset(&nexthop, 0, sizeof(nexthop));
 			switch (aid) {
 			case AID_INET6:
 				nexthop.aid = aid;
@@ -736,6 +752,13 @@ show_attr(u_char *data, size_t len, struct parse_result *res)
 				nexthop.aid = AID_INET;
 				memcpy(&nexthop.v4, data + sizeof(u_int64_t),
 				    sizeof(nexthop.v4));
+				break;
+			case AID_VPN_IPv6:
+				if (nhlen != 24)
+					goto bad_len;
+				nexthop.aid = AID_INET6;
+				memcpy(&nexthop.v6, data + sizeof(u_int64_t),
+				    sizeof(nexthop.v6));
 				break;
 			default:
 				printf("unhandled AID #%u", aid);
@@ -756,6 +779,10 @@ show_attr(u_char *data, size_t len, struct parse_result *res)
 				break;
 			case AID_VPN_IPv4:
 				pos = nlri_get_vpn4(data, alen, &prefix,
+				    &prefixlen, 1);
+				break;
+			case AID_VPN_IPv6:
+				pos = nlri_get_vpn6(data, alen, &prefix,
 				    &prefixlen, 1);
 				break;
 			default:
@@ -933,11 +960,9 @@ show_result(u_int rescode)
 {
 	if (rescode == 0)
 		printf("request processed\n");
-	else {
-		if (rescode >
-		    sizeof(ctl_res_strerror)/sizeof(ctl_res_strerror[0]))
-			printf("unknown result error code %u\n", rescode);
-		else
-			printf("%s\n", ctl_res_strerror[rescode]);
-	}
+	else if (rescode >
+	    sizeof(ctl_res_strerror)/sizeof(ctl_res_strerror[0]))
+		printf("unknown result error code %u\n", rescode);
+	else
+		printf("%s\n", ctl_res_strerror[rescode]);
 }
