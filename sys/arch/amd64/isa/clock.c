@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.32 2020/04/28 12:58:28 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.33 2020/05/02 10:44:48 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -464,7 +464,7 @@ rtcsettime(struct todr_chip_handle *handle, struct timeval *tv)
 		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
-	clock_secs_to_ymdhms(time_second + utc_offset, &dt);
+	clock_secs_to_ymdhms(tv->tv_sec + utc_offset, &dt);
 
 	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
 	rtclk[MC_MIN] = bintobcd(dt.dt_min);
