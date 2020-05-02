@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.31 2020/04/29 01:22:28 inoguchi Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.32 2020/05/02 00:31:54 inoguchi Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -166,7 +166,7 @@ tls13_record_layer_rbuf(struct tls13_record_layer *rl, CBS *cbs)
 	CBS_dup(&rl->rbuf_cbs, cbs);
 }
 
-uint8_t tls13_max_seq_num[TLS13_RECORD_SEQ_NUM_LEN] = {
+static const uint8_t tls13_max_seq_num[TLS13_RECORD_SEQ_NUM_LEN] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 };
 
