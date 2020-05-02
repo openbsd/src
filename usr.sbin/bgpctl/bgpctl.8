@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.93 2019/10/19 11:40:26 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.94 2020/05/02 14:45:40 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 19 2019 $
+.Dd $Mdocdate: May 2 2020 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd control the Border Gateway Protocol daemon
 .Sh SYNOPSIS
 .Nm bgpctl
-.Op Fl n
+.Op Fl jn
 .Op Fl s Ar socket
 .Ar command
 .Op Ar argument ...
@@ -39,6 +39,8 @@ for
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl j
+Create output as JSON object.
 .It Fl n
 Show neighbors' IP addresses instead of their description.
 .It Fl s Ar socket
