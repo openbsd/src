@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.7 2020/05/02 14:20:54 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.8 2020/05/02 14:28:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -32,7 +32,9 @@
 #include "bgpctl.h"
 #include "parser.h"
 
-void
+const size_t  pt_sizes[AID_MAX] = AID_PTSIZE;
+
+static void
 show_head(struct parse_result *res)
 {
 	switch (res->action) {
@@ -318,7 +320,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	}
 }
 
-void
+static void
 show_neighbor(struct peer *p, struct parse_result *res)
 {
 	char *s;
@@ -362,7 +364,7 @@ show_neighbor(struct peer *p, struct parse_result *res)
 	}
 }
 
-void
+static void
 show_timer(struct ctl_timer *t)
 {
 	printf("  %-20s ", timernames[t->type]);
@@ -373,7 +375,7 @@ show_timer(struct ctl_timer *t)
 		printf("due in %-13s\n", fmt_timeframe(t->val));
 }
 
-void
+static void
 show_fib(struct kroute_full *kf)
 {
 	char			*p;
@@ -390,7 +392,7 @@ show_fib(struct kroute_full *kf)
 	printf("\n");
 }
 
-void
+static void
 show_fib_table(struct ktable *kt)
 {
 	printf("%5i %-20s %-8s%s\n", kt->rtableid, kt->descr,
@@ -398,7 +400,7 @@ show_fib_table(struct ktable *kt)
 	    kt->fib_sync != kt->fib_conf ? "*" : "");
 }
 
-void
+static void
 show_nexthop(struct ctl_show_nexthop *nh)
 {
 	struct kroute		*k;
@@ -447,7 +449,7 @@ show_nexthop(struct ctl_show_nexthop *nh)
 	printf("\n");
 }
 
-void
+static void
 show_interface(struct ctl_show_interface *iface)
 {
 	printf("%-15s", iface->ifname);
@@ -464,7 +466,7 @@ show_interface(struct ctl_show_interface *iface)
 	printf("\n");
 }
 
-void
+static void
 show_communities(u_char *data, size_t len, struct parse_result *res)
 {
 	struct community c;
@@ -586,7 +588,7 @@ show_ext_community(u_char *data, u_int16_t len)
 	}
 }
 
-void
+static void
 show_attr(u_char *data, size_t len, struct parse_result *res)
 {
 	u_char		*path;
@@ -872,7 +874,7 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	    fmt_timeframe(r->age), EOL0(flag0));
 }
 
-void
+static void
 show_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
     struct parse_result *res)
 {
@@ -882,10 +884,9 @@ show_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 		show_rib_brief(r, asdata, aslen);
 }
 
-void
+static void
 show_rib_mem(struct rde_memstats *stats)
 {
-	static size_t  pt_sizes[AID_MAX] = AID_PTSIZE;
 	size_t			pts = 0;
 	int			i;
 
@@ -942,7 +943,7 @@ show_rib_mem(struct rde_memstats *stats)
 	printf("\nRDE hash statistics\n");
 }
 
-void
+static void
 show_rib_hash(struct rde_hashstats *hash)
 {
 	double avg, dev;
@@ -955,7 +956,7 @@ show_rib_hash(struct rde_hashstats *hash)
 	    hash->min, hash->max, avg, dev);
 }
 
-void
+static void
 show_result(u_int rescode)
 {
 	if (rescode == 0)
@@ -966,3 +967,26 @@ show_result(u_int rescode)
 	else
 		printf("%s\n", ctl_res_strerror[rescode]);
 }
+
+static void
+show_tail(void)
+{
+	/* nothing */
+}
+
+const struct output show_output = {
+	.head = show_head,
+	.neighbor = show_neighbor,
+	.timer = show_timer,
+	.fib = show_fib,
+	.fib_table = show_fib_table,
+	.nexthop = show_nexthop,
+	.interface = show_interface,
+	.communities = show_communities,
+	.attr = show_attr,
+	.rib = show_rib,
+	.rib_mem = show_rib_mem,
+	.rib_hash = show_rib_hash,
+	.result = show_result,
+	.tail = show_tail
+};

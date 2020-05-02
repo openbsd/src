@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.259 2020/03/20 07:56:34 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.260 2020/05/02 14:28:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -60,6 +60,7 @@ int		 match_aspath(void *, u_int16_t, struct filter_as *);
 struct imsgbuf	*ibuf;
 struct mrt_parser show_mrt = { show_mrt_dump, show_mrt_state, show_mrt_msg };
 struct mrt_parser net_mrt = { network_mrt_dump, NULL, NULL };
+const struct output	*output = &show_output;
 int tableid;
 int nodescr;
 
@@ -139,7 +140,7 @@ main(int argc, char *argv[])
 		if (res->flags & F_CTL_NEIGHBORS)
 			show_mrt.dump = show_mrt_dump_neighbors;
 		else
-			show_head(res);
+			output->head(res);
 		mrt_parse(res->mrtfd, &show_mrt, 1);
 		exit(0);
 	default:
@@ -351,7 +352,7 @@ main(int argc, char *argv[])
 		if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
 			err(1, "write error");
 
-	show_head(res);
+	output->head(res);
 
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -369,6 +370,9 @@ main(int argc, char *argv[])
 			imsg_free(&imsg);
 		}
 	}
+
+	output->tail();
+
 	close(fd);
 	free(ibuf);
 
@@ -394,33 +398,33 @@ show(struct imsg *imsg, struct parse_result *res)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
-		show_neighbor(p, res);
+		output->neighbor(p, res);
 		break;
 	case IMSG_CTL_SHOW_TIMER:
 		t = imsg->data;
 		if (t->type > 0 && t->type < Timer_Max)
-			show_timer(t);
+			output->timer(t);
 		break;
 	case IMSG_CTL_SHOW_INTERFACE:
 		iface = imsg->data;
-		show_interface(iface);
+		output->interface(iface);
 		break;
 	case IMSG_CTL_SHOW_NEXTHOP:
 		nh = imsg->data;
-		show_nexthop(nh);
+		output->nexthop(nh);
 		break;
 	case IMSG_CTL_KROUTE:
 	case IMSG_CTL_SHOW_NETWORK:
 		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(*kf))
 			errx(1, "wrong imsg len");
 		kf = imsg->data;
-		show_fib(kf);
+		output->fib(kf);
 		break;
 	case IMSG_CTL_SHOW_FIB_TABLES:
 		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(*kt))
 			errx(1, "wrong imsg len");
 		kt = imsg->data;
-		show_fib_table(kt);
+		output->fib_table(kt);
 		break;
 	case IMSG_CTL_SHOW_RIB:
 		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(rib))
@@ -429,7 +433,7 @@ show(struct imsg *imsg, struct parse_result *res)
 		aslen = imsg->hdr.len - IMSG_HEADER_SIZE - sizeof(rib);
 		asdata = imsg->data;
 		asdata += sizeof(rib);
-		show_rib(&rib, asdata, aslen, res);
+		output->rib(&rib, asdata, aslen, res);
 		break;
 	case IMSG_CTL_SHOW_RIB_COMMUNITIES:
 		ilen = imsg->hdr.len - IMSG_HEADER_SIZE;
@@ -437,7 +441,7 @@ show(struct imsg *imsg, struct parse_result *res)
 			warnx("bad IMSG_CTL_SHOW_RIB_COMMUNITIES received");
 			break;
 		}
-		show_communities(imsg->data, ilen, res);
+		output->communities(imsg->data, ilen, res);
 		break;
 	case IMSG_CTL_SHOW_RIB_ATTR:
 		ilen = imsg->hdr.len - IMSG_HEADER_SIZE;
@@ -445,15 +449,15 @@ show(struct imsg *imsg, struct parse_result *res)
 			warnx("bad IMSG_CTL_SHOW_RIB_ATTR received");
 			break;
 		}
-		show_attr(imsg->data, ilen, res);
+		output->attr(imsg->data, ilen, res);
 		break;
 	case IMSG_CTL_SHOW_RIB_MEM:
 		memcpy(&stats, imsg->data, sizeof(stats));
-		show_rib_mem(&stats);
+		output->rib_mem(&stats);
 		break;
 	case IMSG_CTL_SHOW_RIB_HASH:
 		memcpy(&hash, imsg->data, sizeof(hash));
-		show_rib_hash(&hash);
+		output->rib_hash(&hash);
 		break;
 	case IMSG_CTL_RESULT:
 		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(rescode)) {
@@ -461,7 +465,7 @@ show(struct imsg *imsg, struct parse_result *res)
 			break;
 		}
 		memcpy(&rescode, imsg->data, sizeof(rescode));
-		show_result(rescode);
+		output->result(rescode);
 		return (1);
 	case IMSG_CTL_END:
 		return (1);
@@ -1123,10 +1127,10 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		    !match_aspath(mre->aspath, mre->aspath_len, &req->as))
 			continue;
 
-		show_rib(&ctl, mre->aspath, mre->aspath_len, &res);
+		output->rib(&ctl, mre->aspath, mre->aspath_len, &res);
 		if (req->flags & F_CTL_DETAIL) {
 			for (j = 0; j < mre->nattrs; j++)
-				show_attr(mre->attrs[j].attr,
+				output->attr(mre->attrs[j].attr,
 				    mre->attrs[j].attr_len, &res);
 		}
 	}
@@ -1509,6 +1513,7 @@ show_mrt_notification(u_char *p, u_int16_t len)
 	}
 }
 
+/* XXX this function does not handle JSON output */
 static void
 show_mrt_update(u_char *p, u_int16_t len)
 {
@@ -1579,7 +1584,7 @@ show_mrt_update(u_char *p, u_int16_t len)
 			attrlen += 1 + 2;
 		}
 
-		show_attr(p, attrlen, 0);
+		output->attr(p, attrlen, 0);
 		p += attrlen;
 		alen -= attrlen;
 		len -= attrlen;
