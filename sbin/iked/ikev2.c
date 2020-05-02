@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.222 2020/05/01 21:07:06 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.223 2020/05/02 13:01:37 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -508,10 +508,9 @@ ikev2_getimsgdata(struct iked *env, struct imsg *imsg, struct iked_sahdr *sh,
 static time_t
 gettime(void)
 {
-	struct timespec ts;
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
-		return (-1);
-	return ts.tv_sec;
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec;
 }
 
 void
