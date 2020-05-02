@@ -49,8 +49,7 @@ const char	*fmt_ovs(u_int8_t, int);
 const char	*fmt_auth_method(enum auth_method);
 const char	*fmt_mem(long long);
 const char	*fmt_errstr(u_int8_t, u_int8_t);
-const char	*fmt_attr(u_int8_t, u_int8_t);
+const char	*fmt_attr(u_int8_t, int);
 const char	*fmt_community(u_int16_t, u_int16_t);
 const char	*fmt_large_community(u_int32_t, u_int32_t, u_int32_t);
 const char	*fmt_ext_community(u_int8_t *);
-

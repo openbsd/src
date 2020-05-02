@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.260 2020/05/02 14:28:10 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.261 2020/05/02 14:31:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -766,7 +766,7 @@ fmt_errstr(u_int8_t errcode, u_int8_t subcode)
 }
 
 const char *
-fmt_attr(u_int8_t type, u_int8_t flags)
+fmt_attr(u_int8_t type, int flags)
 {
 #define CHECK_FLAGS(s, t, m)	\
 	if (((s) & ~(ATTR_DEFMASK | (m))) != (t)) pflags = 1
@@ -845,7 +845,7 @@ fmt_attr(u_int8_t type, u_int8_t flags)
 		pflags = 1;
 		break;
 	}
-	if (pflags) {
+	if (flags != -1 && pflags) {
 		strlcat(cstr, " flags [", sizeof(cstr));
 		if (flags & ATTR_OPTIONAL)
 			strlcat(cstr, "O", sizeof(cstr));
