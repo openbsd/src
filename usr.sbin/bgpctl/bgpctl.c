@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.261 2020/05/02 14:31:32 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.262 2020/05/02 14:33:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -69,7 +69,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-n] [-s socket] command [argument ...]\n",
+	fprintf(stderr, "usage: %s [-jn] [-s socket] command [argument ...]\n",
 	    __progname);
 	exit(1);
 }
@@ -94,11 +94,14 @@ main(int argc, char *argv[])
 	if (asprintf(&sockname, "%s.%d", SOCKET_NAME, tableid) == -1)
 		err(1, "asprintf");
 
-	while ((ch = getopt(argc, argv, "ns:")) != -1) {
+	while ((ch = getopt(argc, argv, "jns:")) != -1) {
 		switch (ch) {
 		case 'n':
 			if (++nodescr > 1)
 				usage();
+			break;
+		case 'j':
+			output = &json_output;
 			break;
 		case 's':
 			sockname = optarg;

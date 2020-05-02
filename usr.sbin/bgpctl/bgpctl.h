@@ -34,7 +34,7 @@ struct output {
 	void	(*tail)(void);
 };
 
-extern const struct output show_output;
+extern const struct output show_output, json_output;
 extern const size_t pt_sizes[];
 
 #define EOL0(flag)	((flag & F_CTL_SSV) ? ';' : '\n')
