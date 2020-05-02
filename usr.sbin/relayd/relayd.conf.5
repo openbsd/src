@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.195 2020/04/23 21:28:10 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.196 2020/05/02 19:02:57 benno Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: May 2 2020 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -960,17 +960,21 @@ suites, in order of preference.
 The special value of "default" will use the default curves; see
 .Xr tls_config_set_ecdhecurves 3
 for further details.
-.It Ic edh Op Ic params Ar maximum
+.It Ic edh Op Ic params Pq Ic none Ns | Ns Ic auto Ns | Ns Ic legacy
 Enable EDH-based cipher suites with Perfect Forward Secrecy (PFS) for
 older clients that do not support ECDHE.
-If the
-.Ar maximum
-length of the DH params for EDH is not specified, the default value of
-1024 bits will be used.
-Other possible values are numbers between 1024 and 8192, including
-1024, 1536, 2048, 4096, or 8192.
-Values higher than 1024 bits can cause incompatibilities with older
-TLS clients.
+In
+.Ic auto
+mode, the key size of the ephemeral key is automatically selected
+based on the size of the private key used for signing.
+In
+.Ic legacy
+mode, a 1024 bit ephemeral key is used.
+If
+.Ic params
+is omitted,
+.Ic auto
+is used.
 The default is
 .Ic no edh .
 .It Ic keypair Ar name
