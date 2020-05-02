@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.13 2019/08/22 17:14:21 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.14 2020/05/02 13:29:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -268,6 +268,10 @@ acpipci_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
 		break;
 	case LR_TYPE_BUS:
 		extent_free(sc->sc_busex, min, len, EX_WAITOK);
+		/*
+		 * Let _CRS minimum bus number override _BBN.
+		 */
+		sc->sc_bus = min;
 		break;
 	}
 
