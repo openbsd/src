@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.1 2020/05/02 14:33:33 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.2 2020/05/03 18:34:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -178,7 +178,7 @@ json_neighbor_full(struct peer *p)
 			    p->conf.max_prefix_restart);
 	}
 	if (p->conf.max_out_prefix) {
-		json_do_uint("max_prefix", p->conf.max_out_prefix);
+		json_do_uint("max_out_prefix", p->conf.max_out_prefix);
 		if (p->conf.max_out_prefix_restart)
 			json_do_uint("max_out_prefix_restart",
 			    p->conf.max_out_prefix_restart);
@@ -251,6 +251,8 @@ json_neighbor(struct peer *p, struct parse_result *res)
 	json_do_printf("remote_as", "%s", log_as(p->conf.remote_as));
 	if (p->conf.descr[0])
 		json_do_printf("description", "%s", p->conf.descr);
+	if (p->conf.group[0])
+		json_do_printf("group", "%s", p->conf.group);
 	if (!p->conf.template)
 		json_do_printf("remote_addr", "%s",
 		    log_addr(&p->conf.remote_addr));
