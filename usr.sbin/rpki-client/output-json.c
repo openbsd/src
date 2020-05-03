@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.10 2020/04/30 13:46:39 deraadt Exp $ */
+/*	$OpenBSD: output-json.c,v 1.11 2020/05/03 19:41:54 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -38,7 +38,7 @@ outputheader_json(FILE *out, struct stats *st)
 	if (fprintf(out,
 	    "{\n\t\"metadata\": {\n"
 	    "\t\t\"buildmachine\": \"%s\",\n"
-	    "\t\t\"buildtime\": \"%s\",\n"
+	    "\t\t\"buildtime\": \"%s UTC\",\n"
 	    "\t\t\"elapsedtime\": \"%lld\",\n"
 	    "\t\t\"usertime\": \"%lld\",\n"
 	    "\t\t\"systemtime\": \"%lld\",\n"

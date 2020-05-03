@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.13 2020/04/30 13:46:39 deraadt Exp $ */
+/*	$OpenBSD: output.c,v 1.14 2020/05/03 19:41:54 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -184,7 +184,7 @@ outputheader(FILE *out, struct stats *st)
 	gethostname(hn, sizeof hn);
 
 	if (fprintf(out,
-	    "# Generated on host %s at %s\n"
+	    "# Generated on host %s at %s UTC\n"
 	    "# Processing time %lld seconds (%lld seconds user, %lld seconds system)\n"
 	    "# Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n"
 	    "# Certificates: %zu (%zu failed parse, %zu invalid)\n"
