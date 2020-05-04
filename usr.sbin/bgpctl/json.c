@@ -200,7 +200,7 @@ json_do_bool(const char *name, int v)
 }
 
 void
-json_do_uint(const char *name, uint64_t v)
+json_do_uint(const char *name, unsigned long long v)
 {
 	do_comma_indent();
 	do_name(name);
@@ -208,7 +208,7 @@ json_do_uint(const char *name, uint64_t v)
 }
 
 void
-json_do_int(const char *name, int64_t v)
+json_do_int(const char *name, long long v)
 {
 	do_comma_indent();
 	do_name(name);

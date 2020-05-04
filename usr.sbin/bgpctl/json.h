@@ -26,6 +26,6 @@ void json_do_printf(const char *, const char *, ...)
 	__attribute__((__format__ (printf, 2, 3)));
 void json_do_hexdump(const char *, void *, size_t);
 void json_do_bool(const char *, int);
-void json_do_uint(const char *, uint64_t);
-void json_do_int(const char *, int64_t);
+void json_do_uint(const char *, unsigned long long);
+void json_do_int(const char *, long long);
 void json_do_double(const char *, double);
