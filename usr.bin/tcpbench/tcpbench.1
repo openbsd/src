@@ -1,4 +1,4 @@
-.\" $OpenBSD: tcpbench.1,v 1.27 2020/05/02 22:00:29 procter Exp $
+.\" $OpenBSD: tcpbench.1,v 1.28 2020/05/04 12:13:09 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Damien Miller <djm@mindrot.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 2 2020 $
+.Dd $Mdocdate: May 4 2020 $
 .Dt TCPBENCH 1
 .Os
 .Sh NAME
@@ -82,6 +82,15 @@ Its accuracy may be increased by decreasing the
 .Ar interval .
 The summary bytes and duration cover the interval from transfer start
 to process exit.
+The summary information can also be displayed while
+.Nm
+is running by sending it a
+.Dv SIGINFO
+signal (see the
+.Cm status
+argument of
+.Xr stty 1
+for more information).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
