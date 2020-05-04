@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.15 2019/12/28 09:25:24 denis Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.16 2020/05/04 14:36:51 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -37,7 +37,7 @@
 extern struct ospfd_conf	*oeconf;
 extern struct imsgev		*iev_rde;
 
-struct ibuf	*prepare_ls_update(struct iface *);
+struct ibuf	*prepare_ls_update(struct iface *, int);
 int		 add_ls_update(struct ibuf *, struct iface *, void *, u_int16_t,
 		    u_int16_t);
 int		 send_ls_update(struct ibuf *, struct iface *, struct in6_addr,
@@ -151,24 +151,28 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 }
 
 struct ibuf *
-prepare_ls_update(struct iface *iface)
+prepare_ls_update(struct iface *iface, int bigpkt)
 {
 	struct ibuf		*buf;
-	size_t			 reserved;
+	size_t			 size;
+
+	size = bigpkt ? IPV6_MAXPACKET : iface->mtu;
+	if (size < IPV6_MMTU)
+		size = IPV6_MMTU;
+	size -= sizeof(struct ip6_hdr);
 
 	/*
 	 * Reserve space for optional ah or esp encryption.  The
 	 * algorithm is taken from ah_output and esp_output, the
 	 * values are the maxima of crypto/xform.c.
 	 */
-	reserved = max(
+	size -= max(
 	    /* base-ah-header replay authsize */
 	    AH_FLENGTH + sizeof(u_int32_t) + 32,
 	    /* spi sequence ivlen blocksize pad-length next-header authsize */
 	    2 * sizeof(u_int32_t) + 16 + 16 + 2 * sizeof(u_int8_t) + 32);
 
-	if ((buf = ibuf_dynamic(IPV6_MMTU - sizeof(struct ip6_hdr) - reserved,
-	    IPV6_MAXPACKET - sizeof(struct ip6_hdr) - reserved)) == NULL)
+	if ((buf = ibuf_open(size)) == NULL)
 		fatal("prepare_ls_update");
 
 	/* OSPF header */
@@ -441,7 +445,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 	struct lsa_entry	*le;
 	struct ibuf		*buf;
 	time_t			 now;
-	int			 d;
+	int			 d, bigpkt;
 	u_int32_t		 nlsa = 0;
 
 	if ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) != NULL)
@@ -477,7 +481,8 @@ ls_retrans_timer(int fd, short event, void *bula)
 	} else
 		memcpy(&addr, &nbr->addr, sizeof(addr));
 
-	if ((buf = prepare_ls_update(nbr->iface)) == NULL) {
+	bigpkt = le->le_ref->len > 1024;
+	if ((buf = prepare_ls_update(nbr->iface, bigpkt)) == NULL) {
 		le->le_when = 1;
 		goto done;
 	}
