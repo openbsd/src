@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.158 2020/04/30 12:45:52 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.159 2020/05/04 19:19:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -638,10 +638,6 @@ uaudio_tname(struct uaudio_softc *sc, unsigned int type, int isout)
 
 	/* determine name from USB terminal type */
 	switch (hi) {
-	case 1:
-		/* usb data stream */
-		name = isout ? UAUDIO_NAME_REC : UAUDIO_NAME_PLAY;
-		break;
 	case 2:
 		/* embedded inputs */
 		name = isout ? "mic-out" : "mic";
