@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.180 2020/04/08 09:34:29 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.181 2020/05/05 18:14:42 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1595,6 +1595,10 @@ ieee80211_node_cleanup(struct ieee80211com *ic, struct ieee80211_node *ni)
 	free(ni->ni_unref_arg, M_DEVBUF, ni->ni_unref_arg_size);
 	ni->ni_unref_arg = NULL;
 	ni->ni_unref_arg_size = 0;
+
+#ifndef IEEE80211_STA_ONLY
+	mq_purge(&ni->ni_savedq);
+#endif
 }
 
 void
@@ -2047,7 +2051,7 @@ ieee80211_free_allnodes(struct ieee80211com *ic, int clear_ic_bss)
 	splx(s);
 
 	if (clear_ic_bss && ic->ic_bss != NULL)
-		ieee80211_node_cleanup(ic, ic->ic_bss);	/* for station mode */
+		ieee80211_node_cleanup(ic, ic->ic_bss);
 }
 
 void
