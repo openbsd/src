@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.68 2020/04/30 16:08:04 job Exp $ */
+/*	$OpenBSD: main.c,v 1.69 2020/05/06 12:15:50 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -722,7 +722,7 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 				err(1, "pledge");
 			i = 0;
 			args[i++] = (char *)prog;
-			args[i++] = "-rlt";
+			args[i++] = "-rt";
 			args[i++] = "--delete";
 			if (bind_addr != NULL) {
 				args[i++] = "--address";
