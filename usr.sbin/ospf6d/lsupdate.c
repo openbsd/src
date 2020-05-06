@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.16 2020/05/04 14:36:51 denis Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.17 2020/05/06 15:15:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -194,13 +194,13 @@ int
 add_ls_update(struct ibuf *buf, struct iface *iface, void *data, u_int16_t len,
     u_int16_t older)
 {
-	void		*lsage;
-	u_int16_t	 age;
+	size_t		ageoff;
+	u_int16_t	age;
 
 	if (buf->wpos + len >= buf->max)
 		return (0);
 
-	lsage = ibuf_reserve(buf, 0);
+	ageoff = ibuf_size(buf);
 	if (ibuf_add(buf, data, len)) {
 		log_warn("add_ls_update");
 		return (0);
@@ -212,7 +212,7 @@ add_ls_update(struct ibuf *buf, struct iface *iface, void *data, u_int16_t len,
 	if ((age += older + iface->transmit_delay) >= MAX_AGE)
 		age = MAX_AGE;
 	age = htons(age);
-	memcpy(lsage, &age, sizeof(age));
+	memcpy(ibuf_seek(buf, ageoff, sizeof(age)), &age, sizeof(age));
 
 	return (1);
 }
