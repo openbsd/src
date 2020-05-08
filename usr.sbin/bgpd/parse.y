@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.406 2020/04/23 16:13:11 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.407 2020/05/08 07:44:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1565,7 +1565,7 @@ peeropts	: REMOTEAS as4number	{
 			if (merge_filterset(&r->set, $2) == -1)
 				YYERROR;
 		}
-		| SET "{" optnl filter_set_l optnl "}"	{
+		| SET '{' optnl filter_set_l optnl '}'	{
 			struct filter_rule	*r;
 			struct filter_set	*s;
 
@@ -2352,7 +2352,7 @@ filter_set	: /* empty */					{ $$ = NULL; }
 			TAILQ_INIT($$);
 			TAILQ_INSERT_TAIL($$, $2, entry);
 		}
-		| SET "{" optnl filter_set_l optnl "}"	{ $$ = $4; }
+		| SET '{' optnl filter_set_l optnl '}'	{ $$ = $4; }
 		;
 
 filter_set_l	: filter_set_l comma filter_set_opt	{
