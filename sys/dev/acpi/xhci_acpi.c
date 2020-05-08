@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_acpi.c,v 1.2 2020/04/10 21:25:00 kettenis Exp $	*/
+/*	$OpenBSD: xhci_acpi.c,v 1.3 2020/05/08 11:18:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -40,12 +40,6 @@ struct xhci_acpi_softc {
 	struct xhci_softc sc;
 	struct acpi_softc *sc_acpi;
 	struct aml_node *sc_node;
-
-	bus_addr_t	sc_addr;
-	bus_size_t	sc_size;
-
-	int		sc_irq;
-	int		sc_irq_flags;
 	void		*sc_ih;
 };
 
@@ -61,8 +55,6 @@ const char *xhci_hids[] = {
 	NULL
 };
 
-int	xhci_acpi_parse_resources(int, union acpi_resource *, void *);
-
 int
 xhci_acpi_match(struct device *parent, void *match, void *aux)
 {
@@ -77,39 +69,37 @@ xhci_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xhci_acpi_softc *sc = (struct xhci_acpi_softc *)self;
 	struct acpi_attach_args *aaa = aux;
-	struct aml_value res;
 	int error;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
 	printf(" %s", sc->sc_node->name);
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_node, "_CRS", 0, NULL, &res)) {
-		printf(": can't find registers\n");
+	if (aaa->aaa_naddr < 1) {
+		printf(": no registers\n");
 		return;
 	}
 
-	aml_parse_resource(&res, xhci_acpi_parse_resources, sc);
-	printf(" addr 0x%lx/0x%lx", sc->sc_addr, sc->sc_size);
-	if (sc->sc_addr == 0 || sc->sc_size == 0) {
-		printf("\n");
+	if (aaa->aaa_nirq < 1) {
+		printf(": no interrupt\n");
 		return;
 	}
 
-	printf(" irq %d", sc->sc_irq);
+	printf(" addr 0x%llx/0x%llx", aaa->aaa_addr[0], aaa->aaa_size[0]);
+	printf(" irq %d", aaa->aaa_irq[0]);
 
-	sc->sc.iot = aaa->aaa_memt;
-	sc->sc.sc_size = sc->sc_size;
+	sc->sc.iot = aaa->aaa_bst[0];
+	sc->sc.sc_size = aaa->aaa_size[0];
 	sc->sc.sc_bus.dmatag = aaa->aaa_dmat;
 
-	if (bus_space_map(sc->sc.iot, sc->sc_addr, sc->sc_size, 0,
-	    &sc->sc.ioh)) {
+	if (bus_space_map(sc->sc.iot, aaa->aaa_addr[0], aaa->aaa_size[0],
+	    0, &sc->sc.ioh)) {
 		printf(": can't map registers\n");
 		return;
 	}
 
-	sc->sc_ih = acpi_intr_establish(sc->sc_irq, sc->sc_irq_flags, IPL_USB,
-	    xhci_intr, sc, sc->sc.sc_bus.bdev.dv_xname);
+	sc->sc_ih = acpi_intr_establish(aaa->aaa_irq[0], aaa->aaa_irq_flags[0],
+	    IPL_USB, xhci_intr, sc, sc->sc.sc_bus.bdev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt\n");
 		goto unmap;
@@ -137,34 +127,4 @@ disestablish_ret:
 unmap:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 	return;
-}
-
-int
-xhci_acpi_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
-{
-	struct xhci_acpi_softc *sc = arg;
-	int type = AML_CRSTYPE(crs);
-
-	switch (type) {
-	case LR_MEM32FIXED:
-		/* XHCI registers are specified by the first resource. */
-		if (sc->sc_size == 0) {
-			sc->sc_addr = crs->lr_m32fixed._bas;
-			sc->sc_size = crs->lr_m32fixed._len;
-		}
-		break;
-	case LR_QWORD:
-		/* XHCI registers are specified by the first resource. */
-		if (sc->sc_size == 0) {
-			sc->sc_addr = crs->lr_qword._min;
-			sc->sc_size = crs->lr_qword._len;
-		}
-		break;
-	case LR_EXTIRQ:
-		sc->sc_irq = crs->lr_extirq.irq[0];
-		sc->sc_irq_flags = crs->lr_extirq.flags;
-		break;
-	}
-
-	return 0;
 }

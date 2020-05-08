@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.13 2020/02/18 12:13:39 mpi Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.14 2020/05/08 11:18:01 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -32,9 +32,6 @@
 struct dwiic_crs {
 	int irq_int;
 	uint8_t irq_flags;
-	uint32_t addr_min;
-	uint32_t addr_bas;
-	uint32_t addr_len;
 	uint16_t i2c_addr;
 	struct aml_node *devnode;
 	struct aml_node *gpio_int_node;
@@ -100,15 +97,20 @@ void
 dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dwiic_softc *sc = (struct dwiic_softc *)self;
-	struct acpi_attach_args *aa = aux;
+	struct acpi_attach_args *aaa = aux;
 	struct aml_value res;
 	struct dwiic_crs crs;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
-	sc->sc_devnode = aa->aaa_node;
-	memcpy(&sc->sc_hid, aa->aaa_dev, sizeof(sc->sc_hid));
+	sc->sc_devnode = aaa->aaa_node;
+	memcpy(&sc->sc_hid, aaa->aaa_dev, sizeof(sc->sc_hid));
 
 	printf(" %s", sc->sc_devnode->name);
+
+	if (aaa->aaa_naddr < 1) {
+		printf(": no registers\n");
+		return;
+	}
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CRS", 0, NULL, &res)) {
 		printf(", no _CRS method\n");
@@ -125,17 +127,12 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	aml_parse_resource(&res, dwiic_acpi_parse_crs, &crs);
 	aml_freevalue(&res);
 
-	if (crs.addr_bas == 0) {
-		printf(", can't find address\n");
-		return;
-	}
+	printf(" addr 0x%llx/0x%llx", aaa->aaa_addr[0], aaa->aaa_size[0]);
 
-	printf(" addr 0x%x/0x%x", crs.addr_bas, crs.addr_len);
-
-	sc->sc_iot = aa->aaa_memt;
-	if (bus_space_map(sc->sc_iot, crs.addr_bas, crs.addr_len, 0,
-	    &sc->sc_ioh)) {
-		printf(", failed mapping at 0x%x\n", crs.addr_bas);
+	sc->sc_iot = aaa->aaa_bst[0];
+	if (bus_space_map(sc->sc_iot, aaa->aaa_addr[0], aaa->aaa_size[0],
+	    0, &sc->sc_ioh)) {
+		printf(": can't map registers\n");
 		return;
 	}
 
@@ -149,7 +146,7 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	if (dwiic_init(sc)) {
 		printf(", failed initializing\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, crs.addr_len);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, aaa->aaa_size[0]);
 		return;
 	}
 
@@ -159,13 +156,13 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	dwiic_read(sc, DW_IC_CLR_INTR);
 
 	/* try to register interrupt with apic, but not fatal without it */
-	if (crs.irq_int > 0) {
-		printf(" irq %d", crs.irq_int);
+	if (aaa->aaa_nirq > 0) {
+		printf(" irq %d", aaa->aaa_irq[0]);
 
-		sc->sc_ih = acpi_intr_establish(crs.irq_int, crs.irq_flags,
+		sc->sc_ih = acpi_intr_establish(aaa->aaa_irq[0], aaa->aaa_irq_flags[0],
 		    IPL_BIO, dwiic_intr, sc, sc->sc_dev.dv_xname);
 		if (sc->sc_ih == NULL)
-			printf(", can't establish interrupt");
+			printf(": can't establish interrupt");
 	}
 
 	printf("\n");
@@ -192,8 +189,6 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devnode->i2c = &sc->sc_i2c_tag;
 	acpi_register_gsb(sc->sc_acpi, sc->sc_devnode);
 #endif
-
-	return;
 }
 
 int
@@ -202,11 +197,23 @@ dwiic_acpi_parse_crs(int crsidx, union acpi_resource *crs, void *arg)
 	struct dwiic_crs *sc_crs = arg;
 	struct aml_node *node;
 	uint16_t pin;
+	uint8_t flags;
 
 	switch (AML_CRSTYPE(crs)) {
 	case SR_IRQ:
 		sc_crs->irq_int = ffs(letoh16(crs->sr_irq.irq_mask)) - 1;
-		sc_crs->irq_flags = crs->sr_irq.irq_flags;
+		/* Default is exclusive, active-high, edge triggered. */
+		if (AML_CRSLEN(crs) < 3)
+			flags = SR_IRQ_MODE;
+		else
+			flags = crs->sr_irq.irq_flags;
+		/* Map flags to those of the extended interrupt descriptor. */
+		if (flags & SR_IRQ_SHR)
+			sc_crs->irq_flags |= LR_EXTIRQ_SHR;
+		if (flags & SR_IRQ_POLARITY)
+			sc_crs->irq_flags |= LR_EXTIRQ_POLARITY;
+		if (flags & SR_IRQ_MODE)
+			sc_crs->irq_flags |= LR_EXTIRQ_MODE;
 		break;
 
 	case LR_EXTIRQ:
@@ -225,19 +232,13 @@ dwiic_acpi_parse_crs(int crsidx, union acpi_resource *crs, void *arg)
 		}
 		break;
 
-	case LR_MEM32:
-		sc_crs->addr_min = letoh32(crs->lr_m32._min);
-		sc_crs->addr_len = letoh32(crs->lr_m32._len);
-		break;
-
-	case LR_MEM32FIXED:
-		sc_crs->addr_bas = letoh32(crs->lr_m32fixed._bas);
-		sc_crs->addr_len = letoh32(crs->lr_m32fixed._len);
-		break;
-
 	case LR_SERBUS:
 		if (crs->lr_serbus.type == LR_SERBUS_I2C)
 			sc_crs->i2c_addr = letoh16(crs->lr_i2cbus._adr);
+		break;
+
+	case LR_MEM32:
+	case LR_MEM32FIXED:
 		break;
 
 	default:

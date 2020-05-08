@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bse_acpi.c,v 1.2 2020/04/18 10:03:32 kettenis Exp $	*/
+/*	$OpenBSD: if_bse_acpi.c,v 1.3 2020/05/08 11:18:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  *
@@ -40,12 +40,6 @@ struct bse_acpi_softc {
 	struct genet_softc sc;
 	struct acpi_softc *sc_acpi;
 	struct aml_node *sc_node;
-
-	bus_addr_t	sc_addr;
-	bus_size_t	sc_size;
-
-	int		sc_irq;
-	int		sc_irq_flags;
 };
 
 int	bse_acpi_match(struct device *, void *, void *);
@@ -59,8 +53,6 @@ const char *bse_hids[] = {
 	"BCM6E4E",
 	NULL
 };
-
-int	bse_acpi_parse_resources(int, union acpi_resource *, void *);
 
 int
 bse_acpi_match(struct device *parent, void *match, void *aux)
@@ -76,7 +68,6 @@ bse_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bse_acpi_softc *sc = (struct bse_acpi_softc *)self;
 	struct acpi_attach_args *aaa = aux;
-	struct aml_value res;
 	char phy_mode[16] = { 0 };
 	int error;
 
@@ -84,31 +75,31 @@ bse_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = aaa->aaa_node;
 	printf(" %s", sc->sc_node->name);
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_node, "_CRS", 0, NULL, &res)) {
-		printf(": can't find registers\n");
+	if (aaa->aaa_naddr < 1) {
+		printf(": no registers\n");
 		return;
 	}
 
-	aml_parse_resource(&res, bse_acpi_parse_resources, sc);
-	printf(" addr 0x%lx/0x%lx", sc->sc_addr, sc->sc_size);
-	if (sc->sc_addr == 0 || sc->sc_size == 0) {
-		printf("\n");
+	if (aaa->aaa_nirq < 1) {
+		printf(": no interrupt\n");
 		return;
 	}
 
-	printf(" irq %d", sc->sc_irq);
+	printf(" addr 0x%llx/0x%llx", aaa->aaa_addr[0], aaa->aaa_size[0]);
+	printf(" irq %d", aaa->aaa_irq[0]);
 
-	sc->sc.sc_bst = aaa->aaa_memt;
+	sc->sc.sc_bst = aaa->aaa_bst[0];
 	sc->sc.sc_dmat = aaa->aaa_dmat;
 
-	if (bus_space_map(sc->sc.sc_bst, sc->sc_addr, sc->sc_size, 0,
-	    &sc->sc.sc_bsh)) {
+	if (bus_space_map(sc->sc.sc_bst, aaa->aaa_addr[0], aaa->aaa_size[0],
+	    0, &sc->sc.sc_bsh)) {
 		printf(": can't map registers\n");
 		return;
 	}
 
-	sc->sc.sc_ih = acpi_intr_establish(sc->sc_irq, sc->sc_irq_flags,
-	    IPL_NET, genet_intr, sc, sc->sc.sc_dev.dv_xname);
+	sc->sc.sc_ih = acpi_intr_establish(aaa->aaa_irq[0],
+	    aaa->aaa_irq_flags[0], IPL_NET, genet_intr,
+	    sc, sc->sc.sc_dev.dv_xname);
 	if (sc->sc.sc_ih == NULL) {
 		printf(": can't establish interrupt\n");
 		goto unmap;
@@ -142,25 +133,5 @@ disestablish:
 	acpi_intr_disestablish(sc->sc.sc_ih);
 #endif
 unmap:
-	bus_space_unmap(sc->sc.sc_bst, sc->sc.sc_bsh, sc->sc_size);
-}
-
-int
-bse_acpi_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
-{
-	struct bse_acpi_softc *sc = arg;
-	int type = AML_CRSTYPE(crs);
-
-	switch (type) {
-	case LR_MEM32FIXED:
-		sc->sc_addr = crs->lr_m32fixed._bas;
-		sc->sc_size = crs->lr_m32fixed._len;
-		break;
-	case LR_EXTIRQ:
-		sc->sc_irq = crs->lr_extirq.irq[0];
-		sc->sc_irq_flags = crs->lr_extirq.flags;
-		break;
-	}
-
-	return 0;
+	bus_space_unmap(sc->sc.sc_bst, sc->sc.sc_bsh, aaa->aaa_size[0]);
 }
