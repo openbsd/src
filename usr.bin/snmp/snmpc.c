@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.22 2020/03/22 08:59:22 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.23 2020/05/08 12:21:07 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -987,7 +987,7 @@ snmpc_df(int argc, char *argv[])
 				snprintf(df[i].avail, sizeof(df[i].avail),
 				    "%lld", (units * (size - used)) / 1024);
 			len = (int) strlen(df[i].avail);
-			if (len > usedlen)
+			if (len > availlen)
 				availlen = len;
 			if (size == 0)
 				strlcpy(df[i].proc, "0%", sizeof(df[i].proc));
