@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.154 2020/04/07 13:27:51 visa Exp $	*/
+/*	$OpenBSD: tty.c,v 1.155 2020/05/08 07:31:46 mpi Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -80,6 +80,8 @@ void 	filt_ttyrdetach(struct knote *kn);
 int	filt_ttywrite(struct knote *kn, long hint);
 void 	filt_ttywdetach(struct knote *kn);
 void	ttystats_init(struct itty **, size_t *);
+int	ttywait_nsec(struct tty *, uint64_t);
+int	ttysleep_nsec(struct tty *, void *, int, char *, uint64_t);
 
 /* Symbolic sleep message strings. */
 char ttclos[]	= "ttycls";
@@ -1202,10 +1204,10 @@ ttnread(struct tty *tp)
 }
 
 /*
- * Wait for output to drain.
+ * Wait for output to drain, or if this times out, flush it.
  */
 int
-ttywait(struct tty *tp)
+ttywait_nsec(struct tty *tp, uint64_t nsecs)
 {
 	int error, s;
 
@@ -1219,7 +1221,10 @@ ttywait(struct tty *tp)
 		    (ISSET(tp->t_state, TS_CARR_ON) || ISSET(tp->t_cflag, CLOCAL))
 		    && tp->t_oproc) {
 			SET(tp->t_state, TS_ASLEEP);
-			error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout);
+			error = ttysleep_nsec(tp, &tp->t_outq, TTOPRI | PCATCH,
+			    ttyout, nsecs);
+			if (error == EWOULDBLOCK)
+				ttyflush(tp, FWRITE);
 			if (error)
 				break;
 		} else
@@ -1227,6 +1232,12 @@ ttywait(struct tty *tp)
 	}
 	splx(s);
 	return (error);
+}
+
+int
+ttywait(struct tty *tp)
+{
+	return (ttywait_nsec(tp, INFSLP));
 }
 
 /*
@@ -1237,7 +1248,8 @@ ttywflush(struct tty *tp)
 {
 	int error;
 
-	if ((error = ttywait(tp)) == 0)
+	error = ttywait_nsec(tp, SEC_TO_NSEC(5));
+	if (error == 0 || error == EWOULDBLOCK)
 		ttyflush(tp, FREAD);
 	return (error);
 }
@@ -2281,11 +2293,17 @@ tputchar(int c, struct tty *tp)
 int
 ttysleep(struct tty *tp, void *chan, int pri, char *wmesg)
 {
+	return (ttysleep_nsec(tp, chan, pri, wmesg, INFSLP));
+}
+
+int
+ttysleep_nsec(struct tty *tp, void *chan, int pri, char *wmesg, uint64_t nsecs)
+{
 	int error;
 	short gen;
 
 	gen = tp->t_gen;
-	if ((error = tsleep_nsec(chan, pri, wmesg, INFSLP)) != 0)
+	if ((error = tsleep_nsec(chan, pri, wmesg, nsecs)) != 0)
 		return (error);
 	return (tp->t_gen == gen ? 0 : ERESTART);
 }
