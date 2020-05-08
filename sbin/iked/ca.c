@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.60 2020/04/12 20:18:45 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.61 2020/05/08 19:33:13 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1198,23 +1198,10 @@ ca_asn1_name(uint8_t *asn1, size_t len)
 	p = asn1;
 	if ((name = d2i_X509_NAME(NULL, &p, len)) == NULL)
 		return (NULL);
-	str = ca_x509_name(name);
+	str = X509_NAME_oneline(name, NULL, 0);
 	X509_NAME_free(name);
 
 	return (str);
-}
-
-char *
-ca_x509_name(void *ptr)
-{
-	char		 buf[BUFSIZ];
-	X509_NAME	*name = ptr;
-
-	bzero(buf, sizeof(buf));
-	if (!X509_NAME_oneline(name, buf, sizeof(buf) - 1))
-		return (NULL);
-
-	return (strdup(buf));
 }
 
 /*

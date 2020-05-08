@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.147 2020/04/23 20:17:48 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.148 2020/05/08 19:33:13 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -994,7 +994,6 @@ int	 ca_pubkey_serialize(EVP_PKEY *, struct iked_id *);
 void	 ca_sslinit(void);
 void	 ca_sslerror(const char *);
 char	*ca_asn1_name(uint8_t *, size_t);
-char	*ca_x509_name(void *);
 void	*ca_x509_name_parse(char *);
 void	 ca_cert_info(const char *, X509 *);
 
