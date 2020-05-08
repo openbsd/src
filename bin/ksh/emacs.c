@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.86 2019/04/03 14:55:12 jca Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.87 2020/05/08 14:30:42 jca Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -41,8 +41,10 @@ static	Area	aedit;
 #define	KEOL	1		/* ^M, ^J */
 #define	KINTR	2		/* ^G, ^C */
 
+typedef int (*kb_func)(int);
+
 struct	x_ftab {
-	int		(*xf_func)(int c);
+	kb_func		xf_func;
 	const char	*xf_name;
 	short		xf_flags;
 };
@@ -861,7 +863,7 @@ x_eot_del(int c)
 		return (x_del_char(c));
 }
 
-static void *
+static kb_func
 kb_find_hist_func(char c)
 {
 	struct kb_entry		*k;
@@ -1315,7 +1317,7 @@ kb_del(struct kb_entry *k)
 }
 
 static struct kb_entry *
-kb_add_string(void *func, void *args, char *str)
+kb_add_string(kb_func func, void *args, char *str)
 {
 	unsigned int		ele, count;
 	struct kb_entry		*k;
@@ -1350,7 +1352,7 @@ kb_add_string(void *func, void *args, char *str)
 }
 
 static struct kb_entry *
-kb_add(void *func, ...)
+kb_add(kb_func func, ...)
 {
 	va_list			ap;
 	unsigned char		ch;
