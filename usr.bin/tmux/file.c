@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.5 2019/12/16 16:39:03 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.6 2020/05/08 14:15:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/uio.h>
 
 #include <errno.h>
 #include <fcntl.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.143 2020/04/27 08:35:09 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.144 2020/05/08 14:15:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 
