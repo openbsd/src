@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.664 2020/04/27 15:40:21 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.665 2020/05/08 18:47:02 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1985,7 +1985,6 @@ lease_as_proposal(struct client_lease *lease)
 		fatal("proposal");
 
 	proposal->ifa = lease->address;
-	proposal->addrs |= RTA_IFA;
 
 	opt = &lease->options[DHO_INTERFACE_MTU];
 	if (opt->len == sizeof(uint16_t)) {
@@ -1996,7 +1995,6 @@ lease_as_proposal(struct client_lease *lease)
 
 	opt = &lease->options[DHO_SUBNET_MASK];
 	if (opt->len == sizeof(proposal->netmask)) {
-		proposal->addrs |= RTA_NETMASK;
 		proposal->netmask.s_addr =
 		    ((struct in_addr *)opt->data)->s_addr;
 	}
@@ -2006,7 +2004,6 @@ lease_as_proposal(struct client_lease *lease)
 		if (opt->len < sizeof(proposal->rtstatic)) {
 			proposal->rtstatic_len = opt->len;
 			memcpy(&proposal->rtstatic, opt->data, opt->len);
-			proposal->addrs |= RTA_STATIC;
 		} else
 			log_warnx("%s: CLASSLESS_STATIC_ROUTES too long",
 			    log_procname);
@@ -2015,7 +2012,6 @@ lease_as_proposal(struct client_lease *lease)
 		if (opt->len < sizeof(proposal->rtstatic)) {
 			proposal->rtstatic_len = opt->len;
 			memcpy(&proposal->rtstatic[1], opt->data, opt->len);
-			proposal->addrs |= RTA_STATIC;
 		} else
 			log_warnx("%s: MS_CLASSLESS_STATIC_ROUTES too long",
 			    log_procname);
@@ -2027,7 +2023,6 @@ lease_as_proposal(struct client_lease *lease)
 			proposal->rtstatic[0] = 0;
 			memcpy(&proposal->rtstatic[1], opt->data,
 			    sizeof(in_addr_t));
-			proposal->addrs |= RTA_STATIC;
 		} else
 			log_warnx("%s: DHO_ROUTERS invalid", log_procname);
 	}
@@ -2038,7 +2033,6 @@ lease_as_proposal(struct client_lease *lease)
 			proposal->rtsearch_len = strlen(opt->data);
 			memcpy(proposal->rtsearch, opt->data,
 			    proposal->rtsearch_len);
-			proposal->addrs |= RTA_SEARCH;
 		} else
 			log_warnx("%s: DOMAIN_SEARCH too long", log_procname);
 	} else if (lease->options[DHO_DOMAIN_NAME].len != 0) {
@@ -2046,7 +2040,6 @@ lease_as_proposal(struct client_lease *lease)
 		if (opt->len < sizeof(proposal->rtsearch)) {
 			proposal->rtsearch_len = opt->len;
 			memcpy(proposal->rtsearch, opt->data, opt->len);
-			proposal->addrs |= RTA_SEARCH;
 		} else
 			log_warnx("%s: DOMAIN_NAME too long", log_procname);
 	}
@@ -2058,7 +2051,6 @@ lease_as_proposal(struct client_lease *lease)
 		if (servers > MAXNS)
 			servers = MAXNS;
 		if (servers > 0) {
-			proposal->addrs |= RTA_DNS;
 			proposal->rtdns_len = servers * sizeof(in_addr_t);
 			memcpy(proposal->rtdns, opt->data, proposal->rtdns_len);
 		}
