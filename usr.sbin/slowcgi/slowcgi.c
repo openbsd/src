@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.55 2018/10/19 08:13:34 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.56 2020/05/08 07:41:33 claudio Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -406,8 +406,7 @@ slowcgi_listen(char *path, struct passwd *pw)
 		if (errno != ENOENT)
 			lerr(1, "slowcgi_listen: unlink %s", path);
 
-	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|
-	    S_IXOTH);
+	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
 
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		lerr(1,"slowcgi_listen: bind: %s", path);
@@ -433,7 +432,7 @@ slowcgi_paused(int fd, short events, void *arg)
 
 int
 accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
-	int reserve, volatile int *counter)
+    int reserve, volatile int *counter)
 {
 	int ret;
 	if (getdtablecount() + reserve +
@@ -708,6 +707,7 @@ parse_begin_request(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 	SLIST_INIT(&c->env);
 	c->env_count = 0;
 }
+
 void
 parse_params(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 {
