@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.172 2019/11/22 22:45:52 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.173 2020/05/08 19:00:19 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -962,7 +962,7 @@ priv_propose(char *name, int ioctlfd, struct imsg_propose *imsg,
 	    proposal->rtdns,
 	    proposal->rtdns_len);
 
-	if ((proposal->inits & RTV_MTU) != 0) {
+	if (proposal->mtu != 0) {
 		if (proposal->mtu < 68)
 			log_warnx("%s: mtu size %u < 68: ignored", log_procname,
 			    proposal->mtu);

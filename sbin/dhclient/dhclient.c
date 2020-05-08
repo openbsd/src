@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.665 2020/05/08 18:47:02 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.666 2020/05/08 19:00:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1990,7 +1990,6 @@ lease_as_proposal(struct client_lease *lease)
 	if (opt->len == sizeof(uint16_t)) {
 		memcpy(&proposal->mtu, opt->data, sizeof(proposal->mtu));
 		proposal->mtu = ntohs(proposal->mtu);
-		proposal->inits |= RTV_MTU;
 	}
 
 	opt = &lease->options[DHO_SUBNET_MASK];

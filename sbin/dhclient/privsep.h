@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.62 2020/05/08 18:47:02 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.63 2020/05/08 19:00:19 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,6 @@ struct proposal {
 	unsigned int	rtsearch_len;
 	unsigned int	rtdns_len;
 	int		mtu;
-	int		inits;
 };
 
 struct unwind_info {
