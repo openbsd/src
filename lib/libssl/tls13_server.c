@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.35 2020/05/09 08:26:16 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.36 2020/05/09 10:17:58 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -242,7 +242,7 @@ err:
 	return 0;
 }
 
-static int                                                                                                                                                                                                                       
+static int
 tls13_server_engage_record_protection(struct tls13_ctx *ctx) 
 {
 	struct tls13_secrets *secrets;
