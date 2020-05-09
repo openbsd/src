@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.64 2020/03/06 16:36:47 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.65 2020/05/09 13:54:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -903,8 +903,7 @@ ssl3_get_server_hello(SSL *s)
 	if (!CBS_get_u8_length_prefixed(&cbs, &session_id))
 		goto truncated;
 
-	if ((CBS_len(&session_id) > sizeof(s->session->session_id)) ||
-	    (CBS_len(&session_id) > SSL3_SESSION_ID_SIZE)) {
+	if (CBS_len(&session_id) > SSL3_SESSION_ID_SIZE) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerror(s, SSL_R_SSL3_SESSION_ID_TOO_LONG);
 		goto f_err;
