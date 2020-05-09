@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.55 2020/05/09 15:05:50 beck Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.56 2020/05/09 15:30:21 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -61,7 +61,7 @@ tls13_client_init(struct tls13_ctx *ctx)
 	 * legacy session identifier triggers compatibility mode (see RFC 8446
 	 * Appendix D.4). In the pre-TLSv1.3 case a zero length value is used.
 	 */
-	if (ctx->hs->max_version >= TLS1_3_VERSION) {
+	if (ctx->middlebox_compat && ctx->hs->max_version >= TLS1_3_VERSION) {
 		arc4random_buf(ctx->hs->legacy_session_id,
 		    sizeof(ctx->hs->legacy_session_id));
 		ctx->hs->legacy_session_id_len =

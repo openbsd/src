@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.37 2020/05/09 15:05:50 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.38 2020/05/09 15:30:21 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -350,6 +350,8 @@ tls13_ctx_new(int mode)
 	ctx->handshake_message_sent_cb = tls13_legacy_handshake_message_sent_cb;
 	ctx->handshake_message_recv_cb = tls13_legacy_handshake_message_recv_cb;
 	ctx->ocsp_status_recv_cb = tls13_legacy_ocsp_status_recv_cb;
+
+	ctx->middlebox_compat = 1;
 
 	return ctx;
 
