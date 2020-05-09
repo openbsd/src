@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.223 2020/05/02 13:01:37 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.224 2020/05/09 19:23:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4454,6 +4454,8 @@ ikev2_send_informational(struct iked *env, struct iked_message *msg)
 		    print_map(msg->msg_error, ikev2_n_map));
 		goto done;
 	}
+	log_info("%s: %s", SPI_SA(sa, __func__),
+	    print_map(msg->msg_error, ikev2_n_map));
 
 	if (ikev2_next_payload(pld, sizeof(*n), IKEV2_PAYLOAD_NONE) == -1)
 		goto done;
