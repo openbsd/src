@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.47 2020/04/22 07:09:40 mpi Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.48 2020/05/09 08:39:11 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1092,6 +1092,13 @@ struct ixl_atq {
 };
 SIMPLEQ_HEAD(ixl_atq_list, ixl_atq);
 
+struct ixl_queue_intr {
+	struct ixl_softc	*sc;
+	int			 queue;
+	void			*ihc;
+	char			 name[8];
+};
+
 struct ixl_softc {
 	struct device		 sc_dev;
 	struct arpcom		 sc_ac;
@@ -1103,6 +1110,7 @@ struct ixl_softc {
 	pci_intr_handle_t	 sc_ih;
 	void			*sc_ihc;
 	pcitag_t		 sc_tag;
+	struct ixl_queue_intr	*sc_qintr;
 
 	bus_dma_tag_t		 sc_dmat;
 	bus_space_tag_t		 sc_memt;
@@ -1160,6 +1168,8 @@ struct ixl_softc {
 static void	ixl_clear_hw(struct ixl_softc *);
 static int	ixl_pf_reset(struct ixl_softc *);
 
+static int	ixl_setup_msix(struct ixl_softc *, struct pci_attach_args *);
+
 static int	ixl_dmamem_alloc(struct ixl_softc *, struct ixl_dmamem *,
 		    bus_size_t, u_int);
 static void	ixl_dmamem_free(struct ixl_softc *, struct ixl_dmamem *);
@@ -1214,7 +1224,8 @@ static void	ixl_media_status(struct ifnet *, struct ifmediareq *);
 static void	ixl_watchdog(struct ifnet *);
 static int	ixl_ioctl(struct ifnet *, u_long, caddr_t);
 static void	ixl_start(struct ifqueue *);
-static int	ixl_intr(void *);
+static int	ixl_intr0(void *);
+static int	ixl_intr_queue(void *);
 static int	ixl_up(struct ixl_softc *);
 static int	ixl_down(struct ixl_softc *);
 static int	ixl_iff(struct ixl_softc *);
@@ -1524,13 +1535,24 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 		goto shutdown;
 	}
 
-	if (pci_intr_map_msi(pa, &sc->sc_ih) != 0 &&
-	    pci_intr_map(pa, &sc->sc_ih) != 0) {
-		printf(", unable to map interrupt\n");
-		goto shutdown;
+	if (pci_intr_map_msix(pa, 0, &sc->sc_ih) == 0) {
+		sc->sc_qintr = mallocarray(sizeof(struct ixl_queue_intr),
+		    ixl_nqueues(sc), M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
+		if (sc->sc_qintr == NULL) {
+			printf(", unable to allocate queue interrupts\n");
+			goto shutdown;
+		}
+	} else {
+		if (pci_intr_map_msi(pa, &sc->sc_ih) != 0 &&
+		    pci_intr_map(pa, &sc->sc_ih) != 0) {
+			printf(", unable to map interrupt\n");
+			goto shutdown;
+		}
 	}
 
-	printf(", %s, address %s\n", pci_intr_string(sc->sc_pc, sc->sc_ih),
+	printf(", %s, %d queue%s, address %s\n",
+	    pci_intr_string(sc->sc_pc, sc->sc_ih), ixl_nqueues(sc),
+	    (ixl_nqueues(sc) > 1 ? "s" : ""),
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	if (ixl_hmc(sc) != 0) {
@@ -1585,10 +1607,15 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_ihc = pci_intr_establish(sc->sc_pc, sc->sc_ih,
-	    IPL_NET | IPL_MPSAFE, ixl_intr, sc, DEVNAME(sc));
+	    IPL_NET | IPL_MPSAFE, ixl_intr0, sc, DEVNAME(sc));
 	if (sc->sc_ihc == NULL) {
 		printf("%s: unable to establish interrupt handler\n",
 		    DEVNAME(sc));
+		goto free_scratch;
+	}
+
+	if (ixl_setup_msix(sc, pa) != 0) {
+		/* error printed by ixl_setup_msix */
 		goto free_scratch;
 	}
 
@@ -1667,6 +1694,9 @@ shutdown:
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 	ixl_arq_unfill(sc);
+
+	free(sc->sc_qintr, M_DEVBUF, ixl_nqueues(sc) *
+	    sizeof(struct ixl_queue_intr));
 free_arq:
 	ixl_dmamem_free(sc, &sc->sc_arq);
 free_atq:
@@ -1903,25 +1933,67 @@ ixl_up(struct ixl_softc *sc)
 
 	SET(ifp->if_flags, IFF_RUNNING);
 
-	ixl_wr(sc, I40E_PFINT_LNKLST0,
-	    (I40E_INTR_NOTX_QUEUE << I40E_PFINT_LNKLST0_FIRSTQ_INDX_SHIFT) |
-	    (I40E_QUEUE_TYPE_RX << I40E_PFINT_LNKLSTN_FIRSTQ_TYPE_SHIFT));
+	if (sc->sc_qintr == NULL) {
+		ixl_wr(sc, I40E_PFINT_LNKLST0,
+		    (I40E_INTR_NOTX_QUEUE <<
+		     I40E_PFINT_LNKLST0_FIRSTQ_INDX_SHIFT) |
+		    (I40E_QUEUE_TYPE_RX <<
+		     I40E_PFINT_LNKLSTN_FIRSTQ_TYPE_SHIFT));
 
-	ixl_wr(sc, I40E_QINT_RQCTL(I40E_INTR_NOTX_QUEUE),
-	    (I40E_INTR_NOTX_INTR << I40E_QINT_RQCTL_MSIX_INDX_SHIFT) |
-	    (I40E_ITR_INDEX_RX << I40E_QINT_RQCTL_ITR_INDX_SHIFT) |
-	    (I40E_INTR_NOTX_RX_QUEUE << I40E_QINT_RQCTL_MSIX0_INDX_SHIFT) |
-	    (I40E_INTR_NOTX_QUEUE << I40E_QINT_RQCTL_NEXTQ_INDX_SHIFT) |
-	    (I40E_QUEUE_TYPE_TX << I40E_QINT_RQCTL_NEXTQ_TYPE_SHIFT) |
-	    I40E_QINT_RQCTL_CAUSE_ENA_MASK);
+		ixl_wr(sc, I40E_QINT_RQCTL(I40E_INTR_NOTX_QUEUE),
+		    (I40E_INTR_NOTX_INTR << I40E_QINT_RQCTL_MSIX_INDX_SHIFT) |
+		    (I40E_ITR_INDEX_RX << I40E_QINT_RQCTL_ITR_INDX_SHIFT) |
+		    (I40E_INTR_NOTX_RX_QUEUE <<
+		     I40E_QINT_RQCTL_MSIX0_INDX_SHIFT) |
+		    (I40E_INTR_NOTX_QUEUE << I40E_QINT_RQCTL_NEXTQ_INDX_SHIFT) |
+		    (I40E_QUEUE_TYPE_TX << I40E_QINT_RQCTL_NEXTQ_TYPE_SHIFT) |
+		    I40E_QINT_RQCTL_CAUSE_ENA_MASK);
 
-	ixl_wr(sc, I40E_QINT_TQCTL(I40E_INTR_NOTX_QUEUE),
-	    (I40E_INTR_NOTX_INTR << I40E_QINT_TQCTL_MSIX_INDX_SHIFT) |
-	    (I40E_ITR_INDEX_TX << I40E_QINT_TQCTL_ITR_INDX_SHIFT) |
-	    (I40E_INTR_NOTX_TX_QUEUE << I40E_QINT_TQCTL_MSIX0_INDX_SHIFT) |
-	    (I40E_QUEUE_TYPE_EOL << I40E_QINT_TQCTL_NEXTQ_INDX_SHIFT) |
-	    (I40E_QUEUE_TYPE_RX << I40E_QINT_TQCTL_NEXTQ_TYPE_SHIFT) |
-	    I40E_QINT_TQCTL_CAUSE_ENA_MASK);
+		ixl_wr(sc, I40E_QINT_TQCTL(I40E_INTR_NOTX_QUEUE),
+		    (I40E_INTR_NOTX_INTR << I40E_QINT_TQCTL_MSIX_INDX_SHIFT) |
+		    (I40E_ITR_INDEX_TX << I40E_QINT_TQCTL_ITR_INDX_SHIFT) |
+		    (I40E_INTR_NOTX_TX_QUEUE <<
+		     I40E_QINT_TQCTL_MSIX0_INDX_SHIFT) |
+		    (I40E_QUEUE_TYPE_EOL << I40E_QINT_TQCTL_NEXTQ_INDX_SHIFT) |
+		    (I40E_QUEUE_TYPE_RX << I40E_QINT_TQCTL_NEXTQ_TYPE_SHIFT) |
+		    I40E_QINT_TQCTL_CAUSE_ENA_MASK);
+	} else {
+		int i;
+		/* vector 0 has no queues */
+		ixl_wr(sc, I40E_PFINT_LNKLST0,
+		    I40E_QUEUE_TYPE_EOL <<
+		    I40E_PFINT_LNKLST0_FIRSTQ_INDX_SHIFT);
+
+		/* queue n is mapped to vector n+1 */
+		for (i = 0; i < ixl_nqueues(sc); i++) {
+			/* LNKLSTN(i) configures vector i+1 */
+			ixl_wr(sc, I40E_PFINT_LNKLSTN(i),
+			    (i << I40E_PFINT_LNKLSTN_FIRSTQ_INDX_SHIFT) |
+			    (I40E_QUEUE_TYPE_RX <<
+			     I40E_PFINT_LNKLSTN_FIRSTQ_TYPE_SHIFT));
+			ixl_wr(sc, I40E_QINT_RQCTL(i),
+			    ((i+1) << I40E_QINT_RQCTL_MSIX_INDX_SHIFT) |
+			    (I40E_ITR_INDEX_RX <<
+			     I40E_QINT_RQCTL_ITR_INDX_SHIFT) |
+			    (i << I40E_QINT_RQCTL_NEXTQ_INDX_SHIFT) |
+			    (I40E_QUEUE_TYPE_TX <<
+			     I40E_QINT_RQCTL_NEXTQ_TYPE_SHIFT) |
+			    I40E_QINT_RQCTL_CAUSE_ENA_MASK);
+			ixl_wr(sc, I40E_QINT_TQCTL(i),
+			    ((i+1) << I40E_QINT_TQCTL_MSIX_INDX_SHIFT) |
+			    (I40E_ITR_INDEX_TX <<
+			     I40E_QINT_TQCTL_ITR_INDX_SHIFT) |
+			    (I40E_QUEUE_TYPE_EOL <<
+			     I40E_QINT_TQCTL_NEXTQ_INDX_SHIFT) |
+			    (I40E_QUEUE_TYPE_RX <<
+			     I40E_QINT_TQCTL_NEXTQ_TYPE_SHIFT) |
+			    I40E_QINT_TQCTL_CAUSE_ENA_MASK);
+
+			ixl_wr(sc, I40E_PFINT_ITRN(0, i), 0x7a);
+			ixl_wr(sc, I40E_PFINT_ITRN(1, i), 0x7a);
+			ixl_wr(sc, I40E_PFINT_ITRN(2, i), 0);
+		}
+	}
 
 	ixl_wr(sc, I40E_PFINT_ITR0(0), 0x7a);
 	ixl_wr(sc, I40E_PFINT_ITR0(1), 0x7a);
@@ -2040,6 +2112,9 @@ ixl_down(struct ixl_softc *sc)
 		ifq_barrier(ifp->if_ifqs[i]);
 
 		timeout_del_barrier(&rxr->rxr_refill);
+
+		if (sc->sc_qintr != NULL)
+			intr_barrier(sc->sc_qintr[i].ihc);
 	}
 
 	/* XXX wait at least 400 usec for all tx queues in one go */
@@ -2852,7 +2927,7 @@ ixl_rxrinfo(struct ixl_softc *sc, struct if_rxrinfo *ifri)
 }
 
 static int
-ixl_intr(void *xsc)
+ixl_intr0(void *xsc)
 {
 	struct ixl_softc *sc = xsc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -2877,6 +2952,24 @@ ixl_intr(void *xsc)
 		rv |= ixl_rxeof(sc, ifp->if_iqs[0]);
 	if (ISSET(icr, I40E_INTR_NOTX_TX_MASK))
 		rv |= ixl_txeof(sc, ifp->if_ifqs[0]);
+
+	return (rv);
+}
+
+static int
+ixl_intr_queue(void *xqi)
+{
+	struct ixl_queue_intr *qi = xqi;
+	struct ifnet *ifp = &qi->sc->sc_ac.ac_if;
+	int rv = 0;
+
+	rv |= ixl_rxeof(qi->sc, ifp->if_iqs[qi->queue]);
+	rv |= ixl_txeof(qi->sc, ifp->if_ifqs[qi->queue]);
+
+	ixl_wr(qi->sc, I40E_PFINT_DYN_CTLN(qi->queue),
+	    I40E_PFINT_DYN_CTLN_INTENA_MASK |
+	    I40E_PFINT_DYN_CTLN_CLEARPBA_MASK |
+	    (IXL_NOITR << I40E_PFINT_DYN_CTLN_ITR_INDX_SHIFT));
 
 	return (rv);
 }
@@ -4252,6 +4345,38 @@ ixl_arq_unfill(struct ixl_softc *sc)
 		    BUS_DMASYNC_POSTREAD);
 		ixl_aqb_free(sc, aqb);
 	}
+}
+
+static int
+ixl_setup_msix(struct ixl_softc *sc, struct pci_attach_args *pa)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pci_intr_handle_t ih;
+	int i;
+
+	if (sc->sc_qintr == NULL)
+		return (0);
+
+	for (i = 0; i < ixl_nqueues(sc); i++) {
+		sc->sc_qintr[i].sc = sc;
+		sc->sc_qintr[i].queue = i;
+		if (pci_intr_map_msix(pa, i + 1, &ih))
+			return (ENODEV);
+
+		snprintf(sc->sc_qintr[i].name, sizeof(sc->sc_qintr[i].name),
+		    "%s:%d", DEVNAME(sc), i);
+
+		sc->sc_qintr[i].ihc = pci_intr_establish(pc, ih,
+		    IPL_NET | IPL_MPSAFE, ixl_intr_queue, &sc->sc_qintr[i],
+		    sc->sc_qintr[i].name);
+
+		ixl_wr(sc, I40E_PFINT_DYN_CTLN(i),
+		    I40E_PFINT_DYN_CTLN_INTENA_MASK |
+		    I40E_PFINT_DYN_CTLN_CLEARPBA_MASK |
+		    (IXL_NOITR << I40E_PFINT_DYN_CTLN_ITR_INDX_SHIFT));
+	}
+
+	return (0);
 }
 
 static void
