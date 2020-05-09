@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.56 2020/05/09 08:39:44 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.57 2020/05/09 15:47:11 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -331,6 +331,12 @@ tls13_handshake_send_action(struct tls13_ctx *ctx,
 {
 	ssize_t ret;
 	CBB cbb;
+
+	if (ctx->send_dummy_ccs) {
+		if ((ret = tls13_send_dummy_ccs(ctx->rl)) != TLS13_IO_SUCCESS)
+			return ret;
+		ctx->send_dummy_ccs = 0;
+	}
 
 	/* If we have no handshake message, we need to build one. */
 	if (ctx->hs_msg == NULL) {

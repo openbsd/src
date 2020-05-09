@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.35 2020/05/09 15:39:18 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.36 2020/05/09 15:47:11 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -30,6 +30,7 @@ struct tls13_record_layer {
 
 	int ccs_allowed;
 	int ccs_seen;
+	int ccs_sent;
 	int handshake_completed;
 	int legacy_alerts_allowed;
 	int phh;
@@ -603,7 +604,14 @@ tls13_record_layer_seal_record_plaintext(struct tls13_record_layer *rl,
 	size_t data_len = 0;
 	CBB cbb, body;
 
-	if (rl->aead != NULL)
+	/*
+	 * Allow dummy CCS messages to be sent in plaintext even when
+	 * record protection has been engaged, as long as the handshake
+	 * has not yet completed.
+	 */
+	if (rl->handshake_completed)
+		return 0;
+	if (rl->aead != NULL && content_type != SSL3_RT_CHANGE_CIPHER_SPEC)
 		return 0;
 
 	/*
@@ -752,7 +760,7 @@ tls13_record_layer_seal_record(struct tls13_record_layer *rl,
 	if ((rl->wrec = tls13_record_new()) == NULL)
 		return 0;
 
-	if (rl->aead == NULL)
+	if (rl->aead == NULL || content_type == SSL3_RT_CHANGE_CIPHER_SPEC)
 		return tls13_record_layer_seal_record_plaintext(rl,
 		    content_type, content, content_len);
 
@@ -1069,6 +1077,25 @@ tls13_record_layer_write(struct tls13_record_layer *rl, uint8_t content_type,
 	} while (ret == TLS13_IO_WANT_RETRY);
 
 	return ret;
+}
+
+static const uint8_t tls13_dummy_ccs[] = { 0x01 };
+
+ssize_t
+tls13_send_dummy_ccs(struct tls13_record_layer *rl)
+{
+	ssize_t ret;
+
+	if (rl->ccs_sent)
+		return TLS13_IO_FAILURE;
+
+	if ((ret = tls13_record_layer_write(rl, SSL3_RT_CHANGE_CIPHER_SPEC,
+	    tls13_dummy_ccs, sizeof(tls13_dummy_ccs))) <= 0)
+		return ret;
+
+	rl->ccs_sent = 1;
+
+	return TLS13_IO_SUCCESS;
 }
 
 ssize_t

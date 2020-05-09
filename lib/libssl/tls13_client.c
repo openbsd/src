@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.56 2020/05/09 15:30:21 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.57 2020/05/09 15:47:11 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -149,6 +149,9 @@ tls13_client_hello_sent(struct tls13_ctx *ctx)
 	tls13_record_layer_allow_ccs(ctx->rl, 1);
 
 	tls1_transcript_freeze(ctx->ssl);
+
+	if (ctx->middlebox_compat)
+		ctx->send_dummy_ccs = 1;
 
 	return 1;
 }
@@ -544,6 +547,7 @@ tls13_server_certificate_request_recv(struct tls13_ctx *ctx, CBS *cbs)
  err:
 	if (ctx->alert == 0)
 		ctx->alert = TLS1_AD_DECODE_ERROR;
+
 	return 0;
 }
 
