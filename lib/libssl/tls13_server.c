@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.37 2020/05/09 10:51:55 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.38 2020/05/09 14:02:24 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -89,6 +89,8 @@ tls13_client_hello_is_legacy(CBS *cbs)
 	return (max_version < TLS1_3_VERSION);
 }
 
+static const uint8_t tls13_compression_null_only[] = { 0 };
+
 static int
 tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 {
@@ -96,8 +98,7 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
 	const SSL_CIPHER *cipher;
 	uint16_t legacy_version;
-	uint8_t compression_method;
-	int alert_desc, comp_null;
+	int alert_desc;
 	SSL *s = ctx->ssl;
 	int ret = 0;
 
@@ -155,15 +156,9 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	}
 	S3I(s)->hs.new_cipher = cipher;
 
-	/* Ensure they advertise the NULL compression method. */
-	comp_null = 0;
-	while (CBS_len(&compression_methods) > 0) {
-		if (!CBS_get_u8(&compression_methods, &compression_method))
-			goto err;
-		if (compression_method == 0)
-			comp_null = 1;
-	}
-	if (!comp_null) {
+	/* Ensure only the NULL compression method is advertised. */
+	if (!CBS_mem_equal(&compression_methods, tls13_compression_null_only,
+	    sizeof(tls13_compression_null_only))) {
 		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
 		goto err;
 	}
