@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.54 2020/04/28 20:37:22 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.55 2020/05/09 15:05:50 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -550,13 +550,13 @@ tls13_server_certificate_request_recv(struct tls13_ctx *ctx, CBS *cbs)
 int
 tls13_server_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
-	CBS cert_request_context, cert_list, cert_data, cert_exts;
+	CBS cert_request_context, cert_list, cert_data;
 	struct stack_st_X509 *certs = NULL;
 	SSL *s = ctx->ssl;
 	X509 *cert = NULL;
 	EVP_PKEY *pkey;
 	const uint8_t *p;
-	int cert_idx;
+	int cert_idx, alert_desc;
 	int ret = 0;
 
 	if ((certs = sk_X509_new_null()) == NULL)
@@ -572,8 +572,12 @@ tls13_server_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	while (CBS_len(&cert_list) > 0) {
 		if (!CBS_get_u24_length_prefixed(&cert_list, &cert_data))
 			goto err;
-		if (!CBS_get_u16_length_prefixed(&cert_list, &cert_exts))
+
+		if (!tlsext_client_parse(ctx->ssl, &cert_list, &alert_desc,
+		    SSL_TLSEXT_MSG_CT)) {
+			ctx->alert = alert_desc;
 			goto err;
+		}
 
 		p = CBS_data(&cert_data);
 		if ((cert = d2i_X509(NULL, &p, CBS_len(&cert_data))) == NULL)
@@ -627,6 +631,10 @@ tls13_server_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	X509_up_ref(cert);
 	s->session->peer = cert;
 	s->session->verify_result = s->verify_result;
+
+	if (ctx->ocsp_status_recv_cb != NULL &&
+	    !ctx->ocsp_status_recv_cb(ctx))
+		goto err;
 
 	ret = 1;
 

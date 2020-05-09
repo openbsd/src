@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.36 2020/04/28 20:30:41 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.37 2020/05/09 15:05:50 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -163,6 +163,33 @@ tls13_legacy_handshake_message_sent_cb(void *arg)
 }
 
 static int
+tls13_legacy_ocsp_status_recv_cb(void *arg)
+{
+	struct tls13_ctx *ctx = arg;
+	SSL *s = ctx->ssl;
+	int ret;
+
+	if (s->ctx->internal->tlsext_status_cb == NULL ||
+	    s->internal->tlsext_ocsp_resplen == 0)
+		return 1;
+
+	ret = s->ctx->internal->tlsext_status_cb(s,
+	    s->ctx->internal->tlsext_status_arg);
+	if (ret < 0) {
+		ctx->alert = SSL_AD_INTERNAL_ERROR;
+		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	if (ret == 0) {
+		ctx->alert = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
+		SSLerror(s, SSL_R_INVALID_STATUS_RESPONSE);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
 tls13_phh_update_local_traffic_secret(struct tls13_ctx *ctx)
 {
 	struct tls13_secrets *secrets = ctx->hs->secrets;
@@ -322,6 +349,7 @@ tls13_ctx_new(int mode)
 
 	ctx->handshake_message_sent_cb = tls13_legacy_handshake_message_sent_cb;
 	ctx->handshake_message_recv_cb = tls13_legacy_handshake_message_recv_cb;
+	ctx->ocsp_status_recv_cb = tls13_legacy_ocsp_status_recv_cb;
 
 	return ctx;
 
