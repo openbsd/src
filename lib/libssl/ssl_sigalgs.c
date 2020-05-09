@@ -1,6 +1,6 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.20 2019/04/01 02:09:21 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.21 2020/05/09 16:52:15 beck Exp $ */
 /*
- * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -320,6 +320,12 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 
 		if ((sigalg = ssl_sigalg(sig_alg, tls_sigalgs,
 		    tls_sigalgs_len)) == NULL)
+			continue;
+
+		/* RSA cannot be used without PSS in TLSv1.3. */
+		if (TLS1_get_version(s) >= TLS1_3_VERSION &&
+		    sigalg->key_type == EVP_PKEY_RSA &&
+		    (sigalg->flags & SIGALG_FLAG_RSA_PSS) == 0)
 			continue;
 
 		if (ssl_sigalg_pkey_ok(sigalg, pkey, check_curve))
