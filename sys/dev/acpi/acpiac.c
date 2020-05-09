@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.31 2018/07/01 19:40:49 mlarkin Exp $ */
+/* $OpenBSD: acpiac.c,v 1.32 2020/05/09 00:40:48 jca Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -36,7 +36,7 @@ void acpiac_attach(struct device *, struct device *, void *);
 int  acpiac_notify(struct aml_node *, int, void *);
 
 void acpiac_refresh(void *);
-int acpiac_getsta(struct acpiac_softc *);
+int acpiac_getpsr(struct acpiac_softc *);
 
 struct cfattach acpiac_ca = {
 	sizeof(struct acpiac_softc), acpiac_match, acpiac_attach
@@ -70,7 +70,7 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
 
-	acpiac_getsta(sc);
+	acpiac_getpsr(sc);
 	printf(": AC unit ");
 	if (sc->sc_ac_stat == PSR_ONLINE)
 		printf("online\n");
@@ -97,27 +97,23 @@ acpiac_refresh(void *arg)
 {
 	struct acpiac_softc *sc = arg;
 
-	acpiac_getsta(sc);
+	acpiac_getpsr(sc);
 	sc->sc_sens[0].value = sc->sc_ac_stat;
 	acpi_record_event(sc->sc_acpi, APM_POWER_CHANGE);
 }
 
 int
-acpiac_getsta(struct acpiac_softc *sc)
+acpiac_getpsr(struct acpiac_softc *sc)
 {
-	int64_t sta;
+	int64_t psr;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, NULL)) {
-		dnprintf(10, "%s: no _STA\n",
-		    DEVNAME(sc));
-	}
-
-	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_PSR", 0, NULL, &sta)) {
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_PSR", 0, NULL, &psr)) {
 		dnprintf(10, "%s: no _PSR\n",
 		    DEVNAME(sc));
 		return (1);
 	}
-	sc->sc_ac_stat = sta;
+	sc->sc_ac_stat = psr;
+
 	return (0);
 }
 
