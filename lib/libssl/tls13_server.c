@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.34 2020/04/28 20:37:22 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.35 2020/05/09 08:26:16 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -242,35 +242,8 @@ err:
 	return 0;
 }
 
-int
-tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb)
-{
-	return 0;
-}
-
-int
-tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
-{
-	return 0;
-}
-
-int
-tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
-{
-	if (ctx->hs->key_share == NULL)
-		return 0;
-
-	if (!tls13_key_share_generate(ctx->hs->key_share))
-		return 0;
-
-	if (!tls13_server_hello_build(ctx, cbb))
-		return 0;
-
-	return 1;
-}
-
-int
-tls13_server_hello_sent(struct tls13_ctx *ctx)
+static int                                                                                                                                                                                                                       
+tls13_server_engage_record_protection(struct tls13_ctx *ctx) 
 {
 	struct tls13_secrets *secrets;
 	struct tls13_secret context;
@@ -335,6 +308,39 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
  err:
 	freezero(shared_key, shared_key_len);
 	return ret;
+}
+
+int
+tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb)
+{
+	return 0;
+}
+
+int
+tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
+{
+	return 0;
+}
+
+int
+tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
+{
+	if (ctx->hs->key_share == NULL)
+		return 0;
+
+	if (!tls13_key_share_generate(ctx->hs->key_share))
+		return 0;
+
+	if (!tls13_server_hello_build(ctx, cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+tls13_server_hello_sent(struct tls13_ctx *ctx)
+{
+	return tls13_server_engage_record_protection(ctx);
 }
 
 int
