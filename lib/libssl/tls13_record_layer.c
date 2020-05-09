@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.34 2020/05/07 18:56:09 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.35 2020/05/09 15:39:18 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -343,7 +343,7 @@ tls13_record_layer_send_phh(struct tls13_record_layer *rl)
 
 	/* Push out pending post-handshake handshake messages. */
 	if ((ret = tls13_record_layer_write_chunk(rl, SSL3_RT_HANDSHAKE,
-	    CBS_data(&rl->phh_cbs), CBS_len(&rl->phh_cbs))) < 0)
+	    CBS_data(&rl->phh_cbs), CBS_len(&rl->phh_cbs))) <= 0)
 		return ret;
 	if (!CBS_skip(&rl->phh_cbs, ret))
 		return TLS13_IO_FAILURE;
