@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.36 2020/05/09 10:17:58 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.37 2020/05/09 10:51:55 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -210,17 +210,25 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 static int
-tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb)
+tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb, int hrr)
 {
+	uint16_t tlsext_msg_type = SSL_TLSEXT_MSG_SH;
+	const uint8_t *server_random;
 	CBB session_id;
 	SSL *s = ctx->ssl;
 	uint16_t cipher;
 
 	cipher = SSL_CIPHER_get_value(S3I(s)->hs.new_cipher);
+	server_random = s->s3->server_random;
+
+	if (hrr) {
+		server_random = tls13_hello_retry_request_hash;
+		tlsext_msg_type = SSL_TLSEXT_MSG_HRR;
+	}
 
 	if (!CBB_add_u16(cbb, TLS1_2_VERSION))
 		goto err;
-	if (!CBB_add_bytes(cbb, s->s3->server_random, SSL3_RANDOM_SIZE))
+	if (!CBB_add_bytes(cbb, server_random, SSL3_RANDOM_SIZE))
 		goto err;
 	if (!CBB_add_u8_length_prefixed(cbb, &session_id))
 		goto err;
@@ -231,7 +239,7 @@ tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 		goto err;
 	if (!CBB_add_u8(cbb, 0))
 		goto err;
-	if (!tlsext_server_build(s, cbb, SSL_TLSEXT_MSG_SH))
+	if (!tlsext_server_build(s, cbb, tlsext_msg_type))
 		goto err;
 
 	if (!CBB_flush(cbb))
@@ -313,13 +321,37 @@ tls13_server_engage_record_protection(struct tls13_ctx *ctx)
 int
 tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	return 0;
+	int nid;
+
+	if (!tls13_synthetic_handshake_message(ctx))
+		return 0;
+
+	if (ctx->hs->key_share != NULL)
+		return 0;
+	if ((nid = tls1_get_shared_curve(ctx->ssl)) == NID_undef)
+		return 0;
+	if ((ctx->hs->server_group = tls1_ec_nid2curve_id(nid)) == 0)
+		return 0;
+
+	if (!tls13_server_hello_build(ctx, cbb, 1))
+		return 0;
+
+	return 1;
 }
 
 int
 tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
-	return 0;
+	SSL *s = ctx->ssl;
+
+	if (!tls13_client_hello_process(ctx, cbs))
+		return 0;
+
+	/* XXX - need further checks. */
+	if (s->method->internal->version < TLS1_3_VERSION)
+		return 0;
+
+	return 1;
 }
 
 int
@@ -327,11 +359,12 @@ tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	if (ctx->hs->key_share == NULL)
 		return 0;
-
 	if (!tls13_key_share_generate(ctx->hs->key_share))
 		return 0;
 
-	if (!tls13_server_hello_build(ctx, cbb))
+	ctx->hs->server_group = 0;
+
+	if (!tls13_server_hello_build(ctx, cbb, 0))
 		return 0;
 
 	return 1;

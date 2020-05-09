@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.63 2020/04/21 17:06:16 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.64 2020/05/09 10:51:55 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -221,6 +221,31 @@ tlsext_supportedgroups_server_parse(SSL *s, CBS *cbs, int *alert)
 	if (!s->internal->hit) {
 		uint16_t *groups;
 		int i;
+
+		if (SSI(s)->tlsext_supportedgroups != NULL) {
+			/*
+			 * We should only end up here in the case of a TLSv1.3
+			 * HelloRetryRequest... and the client cannot change
+			 * supported groups.
+			 */
+			/* XXX - we should know this is a HRR. */
+			if (groups_len != SSI(s)->tlsext_supportedgroups_length) {
+				*alert = SSL_AD_ILLEGAL_PARAMETER;
+				return 0;
+			}
+			for (i = 0; i < groups_len; i++) {
+				uint16_t group;
+
+				if (!CBS_get_u16(&grouplist, &group))
+					goto err;
+				if (SSI(s)->tlsext_supportedgroups[i] != group) {
+					*alert = SSL_AD_ILLEGAL_PARAMETER;
+					return 0;
+				}
+			}
+
+			return 1;
+		}
 
 		if (SSI(s)->tlsext_supportedgroups != NULL)
 			goto err;
@@ -672,7 +697,7 @@ tlsext_sni_server_parse(SSL *s, CBS *cbs, int *alert)
 		return 0;
 	}
 
-	if (s->internal->hit) {
+	if (s->internal->hit || S3I(s)->hs_tls13.hrr) {
 		if (s->session->tlsext_hostname == NULL) {
 			*alert = TLS1_AD_UNRECOGNIZED_NAME;
 			return 0;
@@ -1333,6 +1358,11 @@ tlsext_keyshare_server_needs(SSL *s)
 int
 tlsext_keyshare_server_build(SSL *s, CBB *cbb)
 {
+	/* In the case of a HRR, we only send the server selected group. */
+	/* XXX - we should know this is a HRR. */
+	if (S3I(s)->hs_tls13.server_group != 0)
+		return CBB_add_u16(cbb, S3I(s)->hs_tls13.server_group);
+
 	if (S3I(s)->hs_tls13.key_share == NULL)
 		return 0;
 
