@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.250 2020/04/06 23:16:50 cheloha Exp $ */
+/* $OpenBSD: dsdt.c,v 1.251 2020/05/09 10:34:25 jca Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -102,7 +102,7 @@ struct aml_value	*aml_callosi(struct aml_scope *, struct aml_value *);
 const char		*aml_getname(const char *);
 int64_t			aml_hextoint(const char *);
 void			aml_dump(int, uint8_t *);
-void			_aml_die(const char *fn, int line, const char *fmt, ...);
+__dead void		_aml_die(const char *fn, int line, const char *fmt, ...);
 #define aml_die(x...)	_aml_die(__FUNCTION__, __LINE__, x)
 
 void aml_notify_task(void *, int);
