@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.57 2020/05/09 15:47:11 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.58 2020/05/09 16:43:05 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -102,6 +102,7 @@ static const struct tls13_handshake_action state_machine[] = {
 		.sender = TLS13_HS_SERVER,
 		.send = tls13_server_hello_retry_request_send,
 		.recv = tls13_server_hello_retry_request_recv,
+		.sent = tls13_server_hello_retry_request_sent,
 	},
 	[SERVER_ENCRYPTED_EXTENSIONS] = {
 		.handshake_type = TLS13_MT_ENCRYPTED_EXTENSIONS,
@@ -372,6 +373,12 @@ tls13_handshake_send_action(struct tls13_ctx *ctx,
 
 	if (action->sent != NULL && !action->sent(ctx))
 		return TLS13_IO_FAILURE;
+
+	if (ctx->send_dummy_ccs) {
+		if ((ret = tls13_send_dummy_ccs(ctx->rl)) != TLS13_IO_SUCCESS)
+			return ret;
+		ctx->send_dummy_ccs = 0;
+	}
 
 	return TLS13_IO_SUCCESS;
 }

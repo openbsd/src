@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.38 2020/05/09 14:02:24 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.39 2020/05/09 16:43:05 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -335,6 +335,20 @@ tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb)
 }
 
 int
+tls13_server_hello_retry_request_sent(struct tls13_ctx *ctx)
+{
+	/*
+	 * If the client has requested middlebox compatibility mode,
+	 * we MUST send a dummy CCS following our first handshake message.
+	 * See RFC 8446 Appendix D.4.
+	 */
+	if (ctx->hs->legacy_session_id_len > 0)
+		ctx->send_dummy_ccs = 1;
+
+	return 1;
+}
+
+int
 tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	SSL *s = ctx->ssl;
@@ -368,6 +382,15 @@ tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 int
 tls13_server_hello_sent(struct tls13_ctx *ctx)
 {
+	/*
+	 * If the client has requested middlebox compatibility mode,
+	 * we MUST send a dummy CCS following our first handshake message.
+	 * See RFC 8446 Appendix D.4.
+	 */
+	if ((ctx->handshake_stage.hs_type & WITHOUT_HRR) &&
+	    ctx->hs->legacy_session_id_len > 0)
+		ctx->send_dummy_ccs = 1;
+
 	return tls13_server_engage_record_protection(ctx);
 }
 
