@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.73 2020/03/06 16:31:30 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.74 2020/05/09 13:51:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -834,6 +834,11 @@ ssl3_get_client_hello(SSL *s)
 		goto truncated;
 	if (!CBS_get_u8_length_prefixed(&cbs, &session_id))
 		goto truncated;
+	if (CBS_len(&session_id) > SSL3_SESSION_ID_SIZE) {
+		al = SSL_AD_ILLEGAL_PARAMETER;
+		SSLerror(s, SSL_R_SSL3_SESSION_ID_TOO_LONG);
+		goto f_err;
+	}
 	if (SSL_IS_DTLS(s)) {
 		if (!CBS_get_u8_length_prefixed(&cbs, &cookie))
 			goto truncated;
