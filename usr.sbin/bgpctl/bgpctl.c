@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.262 2020/05/02 14:33:33 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.263 2020/05/10 13:38:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -120,7 +120,7 @@ main(int argc, char *argv[])
 	memcpy(&neighbor.addr, &res->peeraddr, sizeof(neighbor.addr));
 	strlcpy(neighbor.descr, res->peerdesc, sizeof(neighbor.descr));
 	neighbor.is_group = res->is_group;
-	strlcpy(neighbor.shutcomm, res->shutcomm, sizeof(neighbor.shutcomm));
+	strlcpy(neighbor.reason, res->reason, sizeof(neighbor.reason));
 
 	switch (res->action) {
 	case SHOW_MRT:
@@ -246,8 +246,12 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB_MEM, 0, 0, -1, NULL, 0);
 		break;
 	case RELOAD:
-		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
-		printf("reload request sent.\n");
+		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1,
+		    res->reason, sizeof(res->reason));
+		if (res->reason[0])
+			printf("reload request sent: %s\n", res->reason);
+		else
+			printf("reload request sent.\n");
 		break;
 	case FIB:
 		errx(1, "action==FIB");
@@ -1459,8 +1463,8 @@ show_mrt_notification(u_char *p, u_int16_t len)
 {
 	u_int16_t i;
 	u_int8_t errcode, subcode;
-	size_t shutcomm_len;
-	char shutcomm[SHUT_COMM_LEN];
+	size_t reason_len;
+	char reason[REASON_LEN];
 
 	memcpy(&errcode, p, sizeof(errcode));
 	p += sizeof(errcode);
@@ -1476,22 +1480,22 @@ show_mrt_notification(u_char *p, u_int16_t len)
 	if (errcode == ERR_CEASE && (subcode == ERR_CEASE_ADMIN_DOWN ||
 	    subcode == ERR_CEASE_ADMIN_RESET)) {
 		if (len > 1) {
-			shutcomm_len = *p++;
+			reason_len = *p++;
 			len--;
-			if (len < shutcomm_len) {
+			if (len < reason_len) {
 				printf("truncated shutdown reason");
 				return;
 			}
-			if (shutcomm_len > SHUT_COMM_LEN - 1) {
+			if (reason_len > REASON_LEN - 1) {
 				printf("overly long shutdown reason");
 				return;
 			}
-			memcpy(shutcomm, p, shutcomm_len);
-			shutcomm[shutcomm_len] = '\0';
+			memcpy(reason, p, reason_len);
+			reason[reason_len] = '\0';
 			printf("shutdown reason: \"%s\"",
-			    log_shutcomm(shutcomm));
-			p += shutcomm_len;
-			len -= shutcomm_len;
+			    log_reason(reason));
+			p += reason_len;
+			len -= reason_len;
 		}
 	}
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_CAPA) {

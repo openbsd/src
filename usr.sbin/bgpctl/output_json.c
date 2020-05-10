@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.2 2020/05/03 18:34:34 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.3 2020/05/10 13:38:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -201,12 +201,12 @@ json_neighbor_full(struct peer *p)
 	json_neighbor_stats(p);
 
 	/* errors */
-	if (*(p->conf.shutcomm))
+	if (*(p->conf.reason))
 		json_do_printf("my_shutdown_reason", "%s",
-		    log_shutcomm(p->conf.shutcomm));
-	if (*(p->stats.last_shutcomm))
+		    log_reason(p->conf.reason));
+	if (*(p->stats.last_reason))
 		json_do_printf("last_shutdown_reason", "%s",
-		    log_shutcomm(p->stats.last_shutcomm));
+		    log_reason(p->stats.last_reason));
 	errstr = fmt_errstr(p->stats.last_sent_errcode,
 	    p->stats.last_sent_suberr);
 	if (errstr)

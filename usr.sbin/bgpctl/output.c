@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.8 2020/05/02 14:28:10 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.9 2020/05/10 13:38:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -261,9 +261,9 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	if (p->conf.down) {
 		printf(", marked down");
 	}
-	if (*(p->conf.shutcomm)) {
+	if (*(p->conf.reason)) {
 		printf(" with shutdown reason \"%s\"",
-		    log_shutcomm(p->conf.shutcomm));
+		    log_reason(p->conf.reason));
 	}
 	if (p->stats.last_updown != 0)
 		printf(", %s for %s",
@@ -296,9 +296,9 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 
 	show_neighbor_msgstats(p);
 	printf("\n");
-	if (*(p->stats.last_shutcomm)) {
+	if (*(p->stats.last_reason)) {
 		printf("  Last received shutdown reason: \"%s\"\n",
-		    log_shutcomm(p->stats.last_shutcomm));
+		    log_reason(p->stats.last_reason));
 	}
 
 	errstr = fmt_errstr(p->stats.last_sent_errcode,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.400 2020/04/23 16:13:11 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.401 2020/05/10 13:38:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -516,9 +516,9 @@ session_main(int debug, int verbose)
 
 	RB_FOREACH_SAFE(p, peer_head, &conf->peers, next) {
 		RB_REMOVE(peer_head, &conf->peers, p);
-		strlcpy(p->conf.shutcomm,
+		strlcpy(p->conf.reason,
 		    "bgpd shutting down",
-		    sizeof(p->conf.shutcomm));
+		    sizeof(p->conf.reason));
 		session_stop(p, ERR_CEASE_ADMIN_DOWN);
 		timer_remove_all(p);
 		free(p);
@@ -2242,7 +2242,7 @@ parse_notification(struct peer *peer)
 	u_int8_t	 subcode;
 	u_int8_t	 capa_code;
 	u_int8_t	 capa_len;
-	size_t		 shutcomm_len;
+	size_t		 reason_len;
 	u_int8_t	 i;
 
 	/* just log */
@@ -2343,25 +2343,25 @@ parse_notification(struct peer *peer)
 	    (subcode == ERR_CEASE_ADMIN_DOWN ||
 	     subcode == ERR_CEASE_ADMIN_RESET)) {
 		if (datalen > 1) {
-			shutcomm_len = *p++;
+			reason_len = *p++;
 			datalen--;
-			if (datalen < shutcomm_len) {
+			if (datalen < reason_len) {
 			    log_peer_warnx(&peer->conf,
 				"received truncated shutdown reason");
 			    return (0);
 			}
-			if (shutcomm_len > SHUT_COMM_LEN - 1) {
+			if (reason_len > REASON_LEN - 1) {
 			    log_peer_warnx(&peer->conf,
 				"received overly long shutdown reason");
 			    return (0);
 			}
-			memcpy(peer->stats.last_shutcomm, p, shutcomm_len);
-			peer->stats.last_shutcomm[shutcomm_len] = '\0';
+			memcpy(peer->stats.last_reason, p, reason_len);
+			peer->stats.last_reason[reason_len] = '\0';
 			log_peer_warnx(&peer->conf,
 			    "received shutdown reason: \"%s\"",
-			    log_shutcomm(peer->stats.last_shutcomm));
-			p += shutcomm_len;
-			datalen -= shutcomm_len;
+			    log_reason(peer->stats.last_reason));
+			p += reason_len;
+			datalen -= reason_len;
 		}
 	}
 
@@ -3222,25 +3222,25 @@ session_demote(struct peer *p, int level)
 void
 session_stop(struct peer *peer, u_int8_t subcode)
 {
-	char data[SHUT_COMM_LEN];
+	char data[REASON_LEN];
 	size_t datalen;
-	size_t shutcomm_len;
+	size_t reason_len;
 	char *communication;
 
 	datalen = 0;
-	communication = peer->conf.shutcomm;
+	communication = peer->conf.reason;
 
 	if ((subcode == ERR_CEASE_ADMIN_DOWN ||
 	    subcode == ERR_CEASE_ADMIN_RESET)
 	    && communication && *communication) {
-		shutcomm_len = strlen(communication);
-		if (shutcomm_len > SHUT_COMM_LEN - 1) {
+		reason_len = strlen(communication);
+		if (reason_len > REASON_LEN - 1) {
 		    log_peer_warnx(&peer->conf,
 			"trying to send overly long shutdown reason");
 		} else {
-			data[0] = shutcomm_len;
-			datalen = shutcomm_len + sizeof(data[0]);
-			memcpy(data + 1, communication, shutcomm_len);
+			data[0] = reason_len;
+			datalen = reason_len + sizeof(data[0]);
+			memcpy(data + 1, communication, reason_len);
 		}
 	}
 	switch (peer->state) {

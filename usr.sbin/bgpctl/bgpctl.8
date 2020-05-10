@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.94 2020/05/02 14:45:40 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.95 2020/05/10 13:38:46 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 2 2020 $
+.Dd $Mdocdate: May 10 2020 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -171,7 +171,7 @@ The supported families are
 .Em inet
 and
 .Em inet6 .
-.It Cm reload
+.It Cm reload Op reason
 Reload the configuration file.
 Changes to the following neighbor options in
 .Xr bgpd.conf 5
