@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.65 2020/05/09 13:54:19 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.66 2020/05/10 14:17:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1830,7 +1830,6 @@ int
 ssl3_get_cert_status(SSL *s)
 {
 	CBS			 cert_status, response;
-	size_t			 stow_len;
 	int			 ok, al;
 	long			 n;
 	uint8_t			 status_type;
@@ -1871,13 +1870,11 @@ ssl3_get_cert_status(SSL *s)
 	}
 
 	if (!CBS_stow(&response, &s->internal->tlsext_ocsp_resp,
-	    &stow_len) || stow_len > INT_MAX) {
-		s->internal->tlsext_ocsp_resplen = 0;
+	    &s->internal->tlsext_ocsp_resp_len)) {
  		al = SSL_AD_INTERNAL_ERROR;
  		SSLerror(s, ERR_R_MALLOC_FAILURE);
  		goto f_err;
  	}
-	s->internal->tlsext_ocsp_resplen = (int)stow_len;
 
 	if (s->ctx->internal->tlsext_status_cb) {
 		int ret;

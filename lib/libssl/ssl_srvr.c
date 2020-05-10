@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.74 2020/05/09 13:51:44 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.75 2020/05/10 14:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2624,7 +2624,7 @@ ssl3_send_cert_status(SSL *s)
 		if (!CBB_add_u24_length_prefixed(&certstatus, &ocspresp))
 			goto err;
 		if (!CBB_add_bytes(&ocspresp, s->internal->tlsext_ocsp_resp,
-		    s->internal->tlsext_ocsp_resplen))
+		    s->internal->tlsext_ocsp_resp_len))
 			goto err;
 		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;

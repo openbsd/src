@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.66 2020/05/10 14:07:01 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.67 2020/05/10 14:17:48 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -922,7 +922,6 @@ int
 tlsext_ocsp_client_parse(SSL *s, CBS *cbs, int *alert)
 {
 	CBS response;
-	size_t stow_len;
 	uint16_t version = TLS1_get_client_version(s);
 	uint8_t status_type;
 
@@ -944,12 +943,10 @@ tlsext_ocsp_client_parse(SSL *s, CBS *cbs, int *alert)
 			return 0;
 		}
 		if (!CBS_stow(&response, &s->internal->tlsext_ocsp_resp,
-		    &stow_len)) {
-			s->internal->tlsext_ocsp_resplen = 0;
+		    &s->internal->tlsext_ocsp_resp_len)) {
 			*alert = SSL_AD_INTERNAL_ERROR;
 			return 0;
 		}
-		s->internal->tlsext_ocsp_resplen = (int)stow_len;
 	} else {
 		if (s->tlsext_status_type == -1) {
 			*alert = TLS1_AD_UNSUPPORTED_EXTENSION;

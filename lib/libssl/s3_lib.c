@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.192 2020/04/18 14:07:56 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.193 2020/05/10 14:17:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1842,16 +1842,30 @@ _SSL_set_tlsext_status_ids(SSL *s, STACK_OF(OCSP_RESPID) *ids)
 static int
 _SSL_get_tlsext_status_ocsp_resp(SSL *s, unsigned char **resp)
 {
-	*resp = s->internal->tlsext_ocsp_resp;
-	return s->internal->tlsext_ocsp_resplen;
+	if (s->internal->tlsext_ocsp_resp != NULL &&
+	    s->internal->tlsext_ocsp_resp_len < INT_MAX) {
+		*resp = s->internal->tlsext_ocsp_resp;
+		return (int)s->internal->tlsext_ocsp_resp_len;
+	}
+
+	*resp = NULL;
+
+	return -1;
 }
 
 static int
 _SSL_set_tlsext_status_ocsp_resp(SSL *s, unsigned char *resp, int resp_len)
 {
 	free(s->internal->tlsext_ocsp_resp);
+	s->internal->tlsext_ocsp_resp = NULL;
+	s->internal->tlsext_ocsp_resp_len = 0;
+
+	if (resp_len < 0)
+		return 0;
+
 	s->internal->tlsext_ocsp_resp = resp;
-	s->internal->tlsext_ocsp_resplen = resp_len;
+	s->internal->tlsext_ocsp_resp_len = (size_t)resp_len;
+
 	return 1;
 }
 

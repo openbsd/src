@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.165 2020/03/10 17:02:21 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.166 2020/05/10 14:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -717,12 +717,11 @@ ssl_check_serverhello_tlsext(SSL *s)
 	if ((s->tlsext_status_type != -1) && !(s->internal->tlsext_status_expected) &&
 	    s->ctx && s->ctx->internal->tlsext_status_cb) {
 		int r;
-		/* Set resp to NULL, resplen to -1 so callback knows
- 		 * there is no response.
- 		 */
+
 		free(s->internal->tlsext_ocsp_resp);
 		s->internal->tlsext_ocsp_resp = NULL;
-		s->internal->tlsext_ocsp_resplen = -1;
+		s->internal->tlsext_ocsp_resp_len = 0;
+
 		r = s->ctx->internal->tlsext_status_cb(s,
 		    s->ctx->internal->tlsext_status_arg);
 		if (r == 0) {
