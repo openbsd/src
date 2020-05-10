@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.4 2020/05/10 16:56:11 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.5 2020/05/10 16:59:51 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -118,6 +118,9 @@ tls13_legacy_error(SSL *ssl)
 		break;
 	case TLS13_ERR_NO_SHARED_CIPHER:
 		reason = SSL_R_NO_SHARED_CIPHER;
+		break;
+	case TLS13_ERR_NO_PEER_CERTIFICATE:
+		reason = SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.41 2020/05/10 16:56:11 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.42 2020/05/10 16:59:51 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -619,9 +619,14 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	if (!CBS_get_u24_length_prefixed(cbs, &cert_list))
 		goto err;
-
-	if (CBS_len(&cert_list) == 0)
-		return 1;
+	if (CBS_len(&cert_list) == 0) {
+		if (!(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT))
+			return 1;
+		ctx->alert = TLS13_ALERT_CERTIFICATE_REQUIRED;
+		tls13_set_errorx(ctx, TLS13_ERR_NO_PEER_CERTIFICATE, 0,
+		    "peer did not provide a certificate", NULL);
+		goto err;
+	}
 
 	if ((certs = sk_X509_new_null()) == NULL)
 		goto err;
@@ -648,8 +653,7 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	 * be preferable to keep the chain and verify once we have successfully
 	 * processed the CertificateVerify message.
 	 */
-	if (ssl_verify_cert_chain(s, certs) <= 0 &&
-	    s->verify_mode != SSL_VERIFY_NONE) {
+	if (ssl_verify_cert_chain(s, certs) <= 0) {
 		ctx->alert = ssl_verify_alarm_type(s->verify_result);
 		tls13_set_errorx(ctx, TLS13_ERR_VERIFY_FAILED, 0,
 		    "failed to verify peer certificate", NULL);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.73 2020/05/10 16:56:11 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.74 2020/05/10 16:59:51 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -43,6 +43,7 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_ERR_HRR_FAILED		17
 #define TLS13_ERR_TRAILING_DATA		18
 #define TLS13_ERR_NO_SHARED_CIPHER	19
+#define TLS13_ERR_NO_PEER_CERTIFICATE	20
 
 #define TLS13_ALERT_LEVEL_WARNING			1
 #define TLS13_ALERT_LEVEL_FATAL				2
