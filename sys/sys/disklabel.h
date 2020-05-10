@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.75 2017/10/24 09:36:13 jsg Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.76 2020/05/10 00:56:06 guenther Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -156,37 +156,37 @@ struct	__partitionv0 {		/* old (v0) partition table entry */
 
 #define DL_GETPSIZE(p)		(((u_int64_t)(p)->p_sizeh << 32) + (p)->p_size)
 #define DL_SETPSIZE(p, n)	do { \
-					u_int64_t x = (n); \
-					(p)->p_sizeh = x >> 32; \
-					(p)->p_size = x; \
+					u_int64_t __x = (n); \
+					(p)->p_sizeh = __x >> 32; \
+					(p)->p_size = __x; \
 				} while (0)
 #define DL_GETPOFFSET(p)	(((u_int64_t)(p)->p_offseth << 32) + (p)->p_offset)
 #define DL_SETPOFFSET(p, n)	do { \
-					u_int64_t x = (n); \
-					(p)->p_offseth = x >> 32; \
-					(p)->p_offset = x; \
+					u_int64_t __x = (n); \
+					(p)->p_offseth = __x >> 32; \
+					(p)->p_offset = __x; \
 				} while (0)
 
 #define DL_GETDSIZE(d)		(((u_int64_t)(d)->d_secperunith << 32) + \
 				    (d)->d_secperunit)
 #define DL_SETDSIZE(d, n)	do { \
-					u_int64_t x = (n); \
-					(d)->d_secperunith = x >> 32; \
-					(d)->d_secperunit = x; \
+					u_int64_t __x = (n); \
+					(d)->d_secperunith = __x >> 32; \
+					(d)->d_secperunit = __x; \
 				} while (0)
 #define DL_GETBSTART(d)		(((u_int64_t)(d)->d_bstarth << 32) + \
 				    (d)->d_bstart)
 #define DL_SETBSTART(d, n)	do { \
-					u_int64_t x = (n); \
-					(d)->d_bstarth = x >> 32; \
-					(d)->d_bstart = x; \
+					u_int64_t __x = (n); \
+					(d)->d_bstarth = __x >> 32; \
+					(d)->d_bstart = __x; \
 				} while (0)
 #define DL_GETBEND(d)		(((u_int64_t)(d)->d_bendh << 32) + \
 				    (d)->d_bend)
 #define DL_SETBEND(d, n)	do { \
-					u_int64_t x = (n); \
-					(d)->d_bendh = x >> 32; \
-					(d)->d_bend = x; \
+					u_int64_t __x = (n); \
+					(d)->d_bendh = __x >> 32; \
+					(d)->d_bend = __x; \
 				} while (0)
 
 #define DL_BLKSPERSEC(d)	((d)->d_secsize / DEV_BSIZE)

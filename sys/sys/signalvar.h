@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.40 2020/03/13 09:25:21 mpi Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.41 2020/05/10 00:56:06 guenther Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -86,9 +86,9 @@ struct	sigacts {
  * Clear a pending signal from a process.
  */
 #define CLRSIG(p, sig)	do {						\
-	int _mask = sigmask(sig);					\
-	atomic_clearbits_int(&(p)->p_siglist, _mask);			\
-	atomic_clearbits_int(&(p)->p_p->ps_siglist, _mask);		\
+	int __mask = sigmask(sig);					\
+	atomic_clearbits_int(&(p)->p_siglist, __mask);			\
+	atomic_clearbits_int(&(p)->p_p->ps_siglist, __mask);		\
 } while (0)
 
 /*

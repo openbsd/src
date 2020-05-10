@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.40 2019/11/29 06:34:46 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.41 2020/05/10 00:56:06 guenther Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -179,18 +179,18 @@ void	new_vmcmd(struct exec_vmcmd_set *evsp,
 #define NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
 	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,0)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) do { \
-	struct exec_vmcmd *vcp; \
+	struct exec_vmcmd *__vcp; \
 	if ((evsp)->evs_used >= (evsp)->evs_cnt) \
 		vmcmdset_extend(evsp); \
-	vcp = &(evsp)->evs_cmds[(evsp)->evs_used++]; \
-	vcp->ev_proc = (proc); \
-	vcp->ev_len = (len); \
-	vcp->ev_addr = (addr); \
-	if ((vcp->ev_vp = (vp)) != NULLVP) \
+	__vcp = &(evsp)->evs_cmds[(evsp)->evs_used++]; \
+	__vcp->ev_proc = (proc); \
+	__vcp->ev_len = (len); \
+	__vcp->ev_addr = (addr); \
+	if ((__vcp->ev_vp = (vp)) != NULLVP) \
 		vref(vp); \
-	vcp->ev_offset = (offset); \
-	vcp->ev_prot = (prot); \
-	vcp->ev_flags = (flags); \
+	__vcp->ev_offset = (offset); \
+	__vcp->ev_prot = (prot); \
+	__vcp->ev_flags = (flags); \
 } while (0)
 
 #endif /* DEBUG */
