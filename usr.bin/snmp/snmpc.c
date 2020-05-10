@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.23 2020/05/08 12:21:07 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.24 2020/05/10 21:14:30 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -111,10 +111,10 @@ main(int argc, char *argv[])
 	const EVP_CIPHER *cipher = NULL;
 	struct snmp_sec *sec;
 	char *user = NULL;
-	enum usm_key_level authkeylevel;
+	enum usm_key_level authkeylevel = USM_KEY_UNSET;
 	char *authkey = NULL;
 	size_t authkeylen = 0;
-	enum usm_key_level privkeylevel;
+	enum usm_key_level privkeylevel = USM_KEY_UNSET;
 	char *privkey = NULL;
 	size_t privkeylen = 0;
 	int seclevel = SNMP_MSGFLAG_REPORT;
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 	char *ctxengineid = NULL, *secengineid = NULL;
 	size_t ctxengineidlen, secengineidlen;
 	int zflag = 0;
-	long long boots, time;
+	long long boots = 0, time = 0;
 	char optstr[BUFSIZ];
 	const char *errstr;
 	char *strtolp;
