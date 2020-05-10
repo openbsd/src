@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.33 2020/04/19 17:05:55 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.34 2020/05/10 16:55:28 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1727,8 +1727,10 @@ www_body(char *hostname, int s, unsigned char *context)
 					ERR_print_errors(bio_err);
 				goto err;
 			} else {
-				BIO_printf(bio_s_out, "read R BLOCK\n");
-				sleep(1);
+				if (s_debug)  {
+					BIO_printf(bio_s_out, "read R BLOCK\n");
+					sleep(1);
+				}
 				continue;
 			}
 		} else if (i == 0) {	/* end of input */
