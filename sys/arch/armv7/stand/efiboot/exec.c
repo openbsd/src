@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.14 2019/07/22 11:51:30 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.15 2020/05/10 11:51:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -179,7 +179,7 @@ run_loadfile(uint64_t *marks, int howto)
 	else
 		*++cp = 0;
 
-	fdt = efi_makebootargs(args, &board_id);
+	fdt = efi_makebootargs(args, howto, &board_id);
 
 	efi_cleanup();
 
