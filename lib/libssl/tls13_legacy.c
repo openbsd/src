@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.3 2020/04/28 20:37:22 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.4 2020/05/10 16:56:11 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -486,7 +486,7 @@ tls13_legacy_shutdown(SSL *ssl)
 	/* Send close notify. */
 	if (!ctx->close_notify_sent) {
 		ctx->close_notify_sent = 1;
-		if ((ret = tls13_send_alert(ctx->rl, SSL_AD_CLOSE_NOTIFY)) < 0)
+		if ((ret = tls13_send_alert(ctx->rl, TLS13_ALERT_CLOSE_NOTIFY)) < 0)
 			return tls13_legacy_return_code(ssl, ret);
 	}
 

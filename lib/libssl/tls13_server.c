@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.40 2020/05/09 20:38:19 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.41 2020/05/10 16:56:11 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -129,13 +129,13 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	 * TLS 1.3 or later. This requires the legacy version be set to 0x0303.
 	 */
 	if (legacy_version != TLS1_2_VERSION) {
-		ctx->alert = SSL_AD_PROTOCOL_VERSION;
+		ctx->alert = TLS13_ALERT_PROTOCOL_VERSION;
 		goto err;
 	}
 
 	/* Store legacy session identifier so we can echo it. */
 	if (CBS_len(&session_id) > sizeof(ctx->hs->legacy_session_id)) {
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
 	if (!CBS_write_bytes(&session_id, ctx->hs->legacy_session_id,
@@ -144,14 +144,14 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 
 	/* Parse cipher suites list and select preferred cipher. */
 	if ((ciphers = ssl_bytes_to_cipher_list(s, &cipher_suites)) == NULL) {
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
 	cipher = ssl3_choose_cipher(s, ciphers, SSL_get_ciphers(s));
 	if (cipher == NULL) {
 		tls13_set_errorx(ctx, TLS13_ERR_NO_SHARED_CIPHER, 0,
 		    "no shared cipher found", NULL);
-		ctx->alert = SSL_AD_HANDSHAKE_FAILURE;
+		ctx->alert = TLS13_ALERT_HANDSHAKE_FAILURE;
 		goto err;
 	}
 	S3I(s)->hs.new_cipher = cipher;
@@ -159,7 +159,7 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	/* Ensure only the NULL compression method is advertised. */
 	if (!CBS_mem_equal(&compression_methods, tls13_compression_null_only,
 	    sizeof(tls13_compression_null_only))) {
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
 
@@ -517,7 +517,7 @@ tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 
  err:
 	if (!ret && ctx->alert == 0)
-		ctx->alert = TLS1_AD_INTERNAL_ERROR;
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
 
 	CBB_cleanup(&sig_cbb);
 	EVP_MD_CTX_free(mdctx);
@@ -757,12 +757,12 @@ tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 			goto err;
 	}
 	if (!EVP_DigestVerifyUpdate(mdctx, sig_content, sig_content_len)) {
-		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		ctx->alert = TLS13_ALERT_DECRYPT_ERROR;
 		goto err;
 	}
 	if (EVP_DigestVerifyFinal(mdctx, CBS_data(&signature),
 	    CBS_len(&signature)) <= 0) {
-		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		ctx->alert = TLS13_ALERT_DECRYPT_ERROR;
 		goto err;
 	}
 
@@ -770,7 +770,7 @@ tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 
  err:
 	if (!ret && ctx->alert == 0) {
-		ctx->alert = TLS1_AD_DECODE_ERROR;
+		ctx->alert = TLS13_ALERT_DECODE_ERROR;
 	}
 	CBB_cleanup(&cbb);
 	EVP_MD_CTX_free(mdctx);
@@ -826,7 +826,7 @@ tls13_client_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 
 	if (!CBS_mem_equal(cbs, verify_data, verify_data_len)) {
-		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		ctx->alert = TLS13_ALERT_DECRYPT_ERROR;
 		goto err;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.40 2020/05/10 14:17:48 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.41 2020/05/10 16:56:11 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -108,14 +108,14 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 	struct tls13_ctx *ctx = arg;
 	SSL *s = ctx->ssl;
 
-	if (alert_desc == SSL_AD_CLOSE_NOTIFY) {
+	if (alert_desc == TLS13_ALERT_CLOSE_NOTIFY) {
 		ctx->close_notify_recv = 1;
 		ctx->ssl->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
 		S3I(ctx->ssl)->warn_alert = alert_desc;
 		return;
 	}
 
-	if (alert_desc == SSL_AD_USER_CANCELLED) {
+	if (alert_desc == TLS13_ALERT_USER_CANCELED) {
 		/*
 		 * We treat this as advisory, since a close_notify alert
 		 * SHOULD follow this alert (RFC 8446 section 6.1).
@@ -176,12 +176,12 @@ tls13_legacy_ocsp_status_recv_cb(void *arg)
 	ret = s->ctx->internal->tlsext_status_cb(s,
 	    s->ctx->internal->tlsext_status_arg);
 	if (ret < 0) {
-		ctx->alert = SSL_AD_INTERNAL_ERROR;
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	if (ret == 0) {
-		ctx->alert = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
+		ctx->alert = TLS13_ALERT_BAD_CERTIFICATE_STATUS_RESPONSE;
 		SSLerror(s, SSL_R_INVALID_STATUS_RESPONSE);
 		return 0;
 	}
@@ -296,7 +296,7 @@ tls13_phh_received_cb(void *cb_arg, CBS *cbs)
 	CBS phh_cbs;
 
 	if (!tls13_phh_limit_check(ctx))
-		return tls13_send_alert(ctx->rl, SSL3_AD_UNEXPECTED_MESSAGE);
+		return tls13_send_alert(ctx->rl, TLS13_ALERT_UNEXPECTED_MESSAGE);
 
 	if ((ctx->hs_msg == NULL) &&
 	    ((ctx->hs_msg = tls13_handshake_msg_new()) == NULL))

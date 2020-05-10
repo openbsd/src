@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.57 2020/05/09 15:47:11 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.58 2020/05/10 16:56:11 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -239,7 +239,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 			    sizeof(tls13_downgrade_12)) ||
 			    CBS_mem_equal(&server_random, tls13_downgrade_11,
 			    sizeof(tls13_downgrade_11))) {
-				ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+				ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 				goto err;
 			}
 		}
@@ -276,14 +276,14 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	 */
 	if (ctx->hs->server_version != 0) {
 		if (legacy_version != TLS1_2_VERSION) {
-			ctx->alert = SSL_AD_PROTOCOL_VERSION;
+			ctx->alert = TLS13_ALERT_PROTOCOL_VERSION;
 			goto err;
 		}
 	} else {
 		if (legacy_version < ctx->hs->min_version ||
 		    legacy_version > ctx->hs->max_version ||
 		    legacy_version > TLS1_2_VERSION) {
-			ctx->alert = SSL_AD_PROTOCOL_VERSION;
+			ctx->alert = TLS13_ALERT_PROTOCOL_VERSION;
 			goto err;
 		}
 		ctx->hs->server_version = legacy_version;
@@ -292,7 +292,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	/* The session_id must match. */
 	if (!CBS_mem_equal(&session_id, ctx->hs->legacy_session_id,
 	    ctx->hs->legacy_session_id_len)) {
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
 
@@ -303,19 +303,19 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	cipher = ssl3_get_cipher_by_value(cipher_suite);
 	if (cipher == NULL ||
 	    sk_SSL_CIPHER_find(ssl_get_ciphers_by_id(s), cipher) < 0) {
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
 	if (ctx->hs->server_version == TLS1_3_VERSION &&
 	    cipher->algorithm_ssl != SSL_TLSV1_3) {
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
 	/* XXX - move this to hs_tls13? */
 	S3I(s)->hs.new_cipher = cipher;
 
 	if (compression_method != 0) {
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
 
@@ -323,7 +323,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 
  err:
 	if (ctx->alert == 0)
-		ctx->alert = TLS1_AD_DECODE_ERROR;
+		ctx->alert = TLS13_ALERT_DECODE_ERROR;
 
 	return 0;
 }
@@ -484,7 +484,7 @@ tls13_server_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 
 	if (ctx->hs->hrr) {
 		/* The server has sent two HelloRetryRequests. */
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		return 0;
 	}
 
@@ -510,7 +510,7 @@ tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx, CBS *cbs)
 
  err:
 	if (ctx->alert == 0)
-		ctx->alert = TLS1_AD_DECODE_ERROR;
+		ctx->alert = TLS13_ALERT_DECODE_ERROR;
 
 	return 0;
 }
@@ -546,7 +546,7 @@ tls13_server_certificate_request_recv(struct tls13_ctx *ctx, CBS *cbs)
 
  err:
 	if (ctx->alert == 0)
-		ctx->alert = TLS1_AD_DECODE_ERROR;
+		ctx->alert = TLS13_ALERT_DECODE_ERROR;
 
 	return 0;
 }
@@ -712,12 +712,12 @@ tls13_server_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 			goto err;
 	}
 	if (!EVP_DigestVerifyUpdate(mdctx, sig_content, sig_content_len)) {
-		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		ctx->alert = TLS13_ALERT_DECRYPT_ERROR;
 		goto err;
 	}
 	if (EVP_DigestVerifyFinal(mdctx, CBS_data(&signature),
 	    CBS_len(&signature)) <= 0) {
-		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		ctx->alert = TLS13_ALERT_DECRYPT_ERROR;
 		goto err;
 	}
 
@@ -725,7 +725,7 @@ tls13_server_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 
  err:
 	if (!ret && ctx->alert == 0)
-		ctx->alert = TLS1_AD_DECODE_ERROR;
+		ctx->alert = TLS13_ALERT_DECODE_ERROR;
 	CBB_cleanup(&cbb);
 	EVP_MD_CTX_free(mdctx);
 	free(sig_content);
@@ -776,7 +776,7 @@ tls13_server_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 
 	if (!CBS_mem_equal(cbs, verify_data, verify_data_len)) {
-		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		ctx->alert = TLS13_ALERT_DECRYPT_ERROR;
 		goto err;
 	}
 
@@ -933,7 +933,7 @@ tls13_client_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 
  err:
 	if (!ret && ctx->alert == 0)
-		ctx->alert = TLS1_AD_INTERNAL_ERROR;
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
 
 	CBB_cleanup(&sig_cbb);
 	EVP_MD_CTX_free(mdctx);
