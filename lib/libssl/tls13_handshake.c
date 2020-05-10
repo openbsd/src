@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.61 2020/05/10 16:56:11 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.62 2020/05/10 17:13:29 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -102,6 +102,7 @@ static const struct tls13_handshake_action state_machine[] = {
 		.sender = TLS13_HS_SERVER,
 		.send = tls13_server_hello_retry_request_send,
 		.recv = tls13_server_hello_retry_request_recv,
+		.sent = tls13_server_hello_retry_request_sent,
 	},
 	[SERVER_ENCRYPTED_EXTENSIONS] = {
 		.handshake_type = TLS13_MT_ENCRYPTED_EXTENSIONS,
@@ -391,6 +392,10 @@ tls13_handshake_send_action(struct tls13_ctx *ctx,
 		if ((ret = tls13_send_dummy_ccs(ctx->rl)) != TLS13_IO_SUCCESS)
 			return ret;
 		ctx->send_dummy_ccs = 0;
+		if (ctx->send_dummy_ccs_after) {
+			ctx->send_dummy_ccs_after = 0;
+			return TLS13_IO_SUCCESS;
+		}
 	}
 
 	/* If we have no handshake message, we need to build one. */
@@ -427,6 +432,14 @@ tls13_handshake_send_action(struct tls13_ctx *ctx,
 
 	if (action->sent != NULL && !action->sent(ctx))
 		return TLS13_IO_FAILURE;
+
+	if (ctx->send_dummy_ccs_after) {
+		ctx->send_dummy_ccs = 1;
+		if ((ret = tls13_send_dummy_ccs(ctx->rl)) != TLS13_IO_SUCCESS)
+			return ret;
+		ctx->send_dummy_ccs = 0;
+		ctx->send_dummy_ccs_after = 0;
+	}
 
 	return TLS13_IO_SUCCESS;
 }
