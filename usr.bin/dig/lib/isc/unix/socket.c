@@ -1454,7 +1454,7 @@ dispatch_recv(isc_socket_t *sock) {
 	ev = ISC_LIST_HEAD(sock->recv_list);
 	if (ev == NULL)
 		return;
-	socket_log(sock, NULL, EVENT, NULL, 0, 0,
+	socket_log(sock, NULL, EVENT,
 		   "dispatch_recv:  event %p -> task %p",
 		   ev, ev->ev_sender);
 	sender = ev->ev_sender;
@@ -1481,7 +1481,7 @@ dispatch_send(isc_socket_t *sock) {
 	ev = ISC_LIST_HEAD(sock->send_list);
 	if (ev == NULL)
 		return;
-	socket_log(sock, NULL, EVENT, NULL, 0, 0,
+	socket_log(sock, NULL, EVENT,
 		   "dispatch_send:  event %p -> task %p",
 		   ev, ev->ev_sender);
 	sender = ev->ev_sender;
@@ -1970,7 +1970,7 @@ socket_recv(isc_socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 			select_poke(sock->manager, sock->fd, SELECT_POKE_READ);
 		ISC_LIST_ENQUEUE(sock->recv_list, dev, ev_link);
 
-		socket_log(sock, NULL, EVENT, NULL, 0, 0,
+		socket_log(sock, NULL, EVENT,
 			   "socket_recv: event %p -> task %p",
 			   dev, ntask);
 
@@ -2102,7 +2102,7 @@ socket_send(isc_socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 					    SELECT_POKE_WRITE);
 			ISC_LIST_ENQUEUE(sock->send_list, dev, ev_link);
 
-			socket_log(sock, NULL, EVENT, NULL, 0, 0,
+			socket_log(sock, NULL, EVENT,
 				   "socket_send: event %p -> task %p",
 				   dev, ntask);
 
