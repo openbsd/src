@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.22 2020/02/10 13:18:21 schwarze Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.23 2020/05/10 12:06:18 benno Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: May 10 2020 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -102,15 +102,22 @@ under which the ACME API is reachable.
 .Sh DOMAINS
 The certificates to be obtained through ACME.
 .Bl -tag -width Ds
-.It Ic domain Ar name Brq ...
+.It Ic domain Ar handle Brq ...
 Each domain section begins with the
 .Ic domain
-keyword followed by the name to be used as the common name component
-of the subject of the X.509 certificate.
+keyword followed by an identifier for this domain block.
 .El
 .Pp
 It is followed by a block of options enclosed in curly brackets:
 .Bl -tag -width Ds
+.It Ic domain name Ar name
+The
+.Ar name
+to be used as the common name component of the subject of the
+X.509 certificate.
+This is optional. If not specified, the
+.Ar handle
+of the domain block will be used as common name.
 .It Ic alternative names Brq ...
 Specify a list of alternative names for which the certificate will be valid.
 The common name is included automatically if this option is present,

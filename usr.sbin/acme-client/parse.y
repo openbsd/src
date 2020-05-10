@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2019/12/27 16:56:40 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.40 2020/05/10 12:06:18 benno Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -247,6 +247,11 @@ domain		: DOMAIN STRING {
 				YYERROR;
 			}
 		} '{' optnl domainopts_l '}' {
+			if (domain->domain == NULL) {
+				if ((domain->domain = strdup(domain->handle))
+				    == NULL)
+					err(EXIT_FAILURE, "strdup");
+			}
 			/* enforce minimum config here */
 			if (domain->key == NULL) {
 				yyerror("no domain key file specified for "
@@ -273,6 +278,16 @@ domainopts_l	: domainopts_l domainoptsl nl
 		;
 
 domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
+		| DOMAIN NAME STRING {
+			char *s;
+			if (domain->domain != NULL) {
+				yyerror("duplicate domain name");
+				YYERROR;
+			}
+			if ((s = strdup($3)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+			domain->domain = s;
+		}
 		| DOMAIN KEY STRING keytype {
 			char *s;
 			if (domain->key != NULL) {
@@ -932,26 +947,26 @@ conf_new_domain(struct acme_conf *c, char *s)
 {
 	struct domain_c *d;
 
-	d = domain_find(c, s);
+	d = domain_find_handle(c, s);
 	if (d != NULL)
 		return (NULL);
 	if ((d = calloc(1, sizeof(struct domain_c))) == NULL)
 		err(EXIT_FAILURE, "%s", __func__);
 	TAILQ_INSERT_TAIL(&c->domain_list, d, entry);
 
-	d->domain = s;
+	d->handle = s;
 	TAILQ_INIT(&d->altname_list);
 
 	return d;
 }
 
 struct domain_c *
-domain_find(struct acme_conf *c, char *s)
+domain_find_handle(struct acme_conf *c, char *s)
 {
 	struct domain_c	*d;
 
 	TAILQ_FOREACH(d, &c->domain_list, entry) {
-		if (strncmp(d->domain, s, DOMAIN_MAXLEN) == 0) {
+		if (strncmp(d->handle, s, DOMAIN_MAXLEN) == 0) {
 			return d;
 		}
 	}
@@ -1031,7 +1046,9 @@ print_config(struct acme_conf *xconf)
 	}
 	TAILQ_FOREACH(d, &xconf->domain_list, entry) {
 		f = 0;
-		printf("domain %s {\n", d->domain);
+		printf("domain %s {\n", d->handle);
+		if (d->domain != NULL)
+			printf("\tdomain name \"%s\"\n", d->domain);
 		TAILQ_FOREACH(ac, &d->altname_list, entry) {
 			if (!f)
 				printf("\talternative names {");
