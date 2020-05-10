@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.59 2020/05/09 20:38:19 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.60 2020/05/10 14:22:51 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -248,6 +248,52 @@ const enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 
 const size_t handshake_count = sizeof(handshakes) / sizeof(handshakes[0]);
 
+#ifndef TLS13_DEBUG
+#define DEBUGF(...)
+#else
+#define DEBUGF(...) fprintf(stderr, __VA_ARGS__)
+
+static const char *
+tls13_handshake_mode_name(uint8_t mode)
+{
+	switch (mode) {
+	case TLS13_HS_CLIENT:
+		return "Client";
+	case TLS13_HS_SERVER:
+		return "Server";
+	}
+	return "Unknown";
+}
+
+static const char *
+tls13_handshake_message_name(uint8_t msg_type)
+{
+	switch (msg_type) {
+	case TLS13_MT_CLIENT_HELLO:
+		return "ClientHello";
+	case TLS13_MT_SERVER_HELLO:
+		return "ServerHello";
+	case TLS13_MT_NEW_SESSION_TICKET:
+		return "NewSessionTicket";
+	case TLS13_MT_END_OF_EARLY_DATA:
+		return "EndOfEarlyData";
+	case TLS13_MT_ENCRYPTED_EXTENSIONS:
+		return "EncryptedExtensions";
+	case TLS13_MT_CERTIFICATE:
+		return "Certificate";
+	case TLS13_MT_CERTIFICATE_REQUEST:
+		return "CertificateRequest";
+	case TLS13_MT_CERTIFICATE_VERIFY:
+		return "CertificateVerify";
+	case TLS13_MT_FINISHED:
+		return "Finished";
+	case TLS13_MT_KEY_UPDATE:
+		return "KeyUpdate";
+	}
+	return "Unknown";
+}
+#endif
+
 static const enum tls13_message_type
 tls13_handshake_active_state(struct tls13_ctx *ctx)
 {
@@ -306,6 +352,10 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 			return TLS13_IO_SUCCESS;
 		}
 
+		DEBUGF("%s %s %s\n", tls13_handshake_mode_name(ctx->mode),
+		    (action->sender == ctx->mode) ? "sending" : "receiving",
+		    tls13_handshake_message_name(action->handshake_type));
+
 		if (ctx->alert)
 			return tls13_send_alert(ctx->rl, ctx->alert);
 
@@ -317,8 +367,13 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 		if (ctx->alert)
 			return tls13_send_alert(ctx->rl, ctx->alert);
 
-		if (ret <= 0)
+		if (ret <= 0) {
+			DEBUGF("%s %s returned %d\n",
+			    tls13_handshake_mode_name(ctx->mode),
+			    (action->sender == ctx->mode) ? "send" : "recv",
+			    ret);
 			return ret;
+		}
 
 		if (!tls13_handshake_advance_state_machine(ctx))
 			return TLS13_IO_FAILURE;
