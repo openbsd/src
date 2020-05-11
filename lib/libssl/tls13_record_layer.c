@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.38 2020/05/11 17:28:33 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.39 2020/05/11 17:46:46 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -320,6 +320,8 @@ tls13_record_layer_send_alert(struct tls13_record_layer *rl)
 		rl->write_closed = 1;
 		ret = TLS13_IO_ALERT;
 	}
+
+	rl->cb.alert_sent(rl->alert_desc, rl->cb_arg);
 
 	return ret;
 }

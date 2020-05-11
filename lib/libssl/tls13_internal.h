@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.76 2020/05/11 17:28:33 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.77 2020/05/11 17:46:46 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -178,6 +178,7 @@ struct tls13_record_layer_callbacks {
 	tls13_read_cb wire_read;
 	tls13_write_cb wire_write;
 	tls13_alert_cb alert_recv;
+	tls13_alert_cb alert_sent;
 	tls13_phh_recv_cb phh_recv;
 	tls13_phh_sent_cb phh_sent;
 };

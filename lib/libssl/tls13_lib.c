@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.42 2020/05/11 17:28:33 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.43 2020/05/11 17:46:46 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -106,7 +106,6 @@ static void
 tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 {
 	struct tls13_ctx *ctx = arg;
-	SSL *s = ctx->ssl;
 
 	if (alert_desc == TLS13_ALERT_CLOSE_NOTIFY) {
 		ctx->close_notify_recv = 1;
@@ -129,7 +128,25 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 	SSLerror(ctx->ssl, SSL_AD_REASON_OFFSET + alert_desc);
 	ERR_asprintf_error_data("SSL alert number %d", alert_desc);
 
-	SSL_CTX_remove_session(s->ctx, s->session);
+	SSL_CTX_remove_session(ctx->ssl->ctx, ctx->ssl->session);
+}
+
+static void
+tls13_alert_sent_cb(uint8_t alert_desc, void *arg)
+{
+	struct tls13_ctx *ctx = arg;
+
+	if (alert_desc == SSL_AD_CLOSE_NOTIFY) {
+		ctx->close_notify_sent = 1;
+		return;
+	}
+
+	if (alert_desc == SSL_AD_USER_CANCELLED) {
+		return;
+	}
+
+	/* All other alerts are treated as fatal in TLSv1.3. */
+	SSLerror(ctx->ssl, SSL_AD_REASON_OFFSET + alert_desc);
 }
 
 static void
@@ -336,6 +353,7 @@ static const struct tls13_record_layer_callbacks rl_callbacks = {
 	.wire_read = tls13_legacy_wire_read_cb,
 	.wire_write = tls13_legacy_wire_write_cb,
 	.alert_recv = tls13_alert_received_cb,
+	.alert_sent = tls13_alert_sent_cb,
 	.phh_recv = tls13_phh_received_cb,
 	.phh_sent = tls13_phh_done_cb,
 };
