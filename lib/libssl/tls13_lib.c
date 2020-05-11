@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.41 2020/05/10 16:56:11 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.42 2020/05/11 17:28:33 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -332,6 +332,14 @@ tls13_phh_received_cb(void *cb_arg, CBS *cbs)
 	return ret;
 }
 
+static const struct tls13_record_layer_callbacks rl_callbacks = {
+	.wire_read = tls13_legacy_wire_read_cb,
+	.wire_write = tls13_legacy_wire_write_cb,
+	.alert_recv = tls13_alert_received_cb,
+	.phh_recv = tls13_phh_received_cb,
+	.phh_sent = tls13_phh_done_cb,
+};
+
 struct tls13_ctx *
 tls13_ctx_new(int mode)
 {
@@ -342,9 +350,7 @@ tls13_ctx_new(int mode)
 
 	ctx->mode = mode;
 
-	if ((ctx->rl = tls13_record_layer_new(tls13_legacy_wire_read_cb,
-	    tls13_legacy_wire_write_cb, tls13_alert_received_cb,
-	    tls13_phh_received_cb, tls13_phh_done_cb, ctx)) == NULL)
+	if ((ctx->rl = tls13_record_layer_new(&rl_callbacks, ctx)) == NULL)
 		goto err;
 
 	ctx->handshake_message_sent_cb = tls13_legacy_handshake_message_sent_cb;
