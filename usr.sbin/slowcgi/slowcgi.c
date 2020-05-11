@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.56 2020/05/08 07:41:33 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.57 2020/05/11 10:40:12 claudio Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -300,7 +300,7 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "dp:s:U:u:")) != -1) {
 		switch (c) {
 		case 'd':
-			debug = 1;
+			debug++;
 			break;
 		case 'p':
 			chrootpath = optarg;
@@ -605,7 +605,7 @@ slowcgi_response(int fd, short events, void *arg)
 
 	while ((resp = TAILQ_FIRST(&c->response_head))) {
 		header = (struct fcgi_record_header*) resp->data;
-		if (debug)
+		if (debug > 1)
 			dump_fcgi_record("resp ", header);
 
 		n = write(fd, resp->data + resp->data_pos, resp->data_len);
@@ -842,7 +842,7 @@ parse_record(uint8_t *buf, size_t n, struct request *c)
 
 	h = (struct fcgi_record_header*) buf;
 
-	if (debug)
+	if (debug > 1)
 		dump_fcgi_record("", h);
 
 	if (n < sizeof(struct fcgi_record_header) + ntohs(h->content_len)
@@ -1292,9 +1292,6 @@ void
 syslog_debug(const char *fmt, ...)
 {
 	va_list ap;
-
-	if (!debug)
-		return;
 
 	va_start(ap, fmt);
 	vsyslog(LOG_DEBUG, fmt, ap);
