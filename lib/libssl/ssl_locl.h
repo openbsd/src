@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.273 2020/05/10 14:17:47 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.274 2020/05/11 18:19:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -171,6 +171,10 @@ __BEGIN_HIDDEN_DECLS
 
 #ifndef LIBRESSL_HAS_TLS1_3_CLIENT
 #define LIBRESSL_HAS_TLS1_3_CLIENT
+#endif
+
+#ifndef LIBRESSL_HAS_TLS1_3_SERVER
+#define LIBRESSL_HAS_TLS1_3_SERVER
 #endif
 
 #if defined(LIBRESSL_HAS_TLS1_3_CLIENT) || defined(LIBRESSL_HAS_TLS1_3_SERVER)
