@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.224 2020/05/09 19:23:17 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.225 2020/05/11 20:11:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4775,6 +4775,28 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 	struct iked_transform	*xform;
 	struct iked_policy	*old;
 
+	/* re-lookup policy based on 'msg' (unless IKESA is rekeyed) */
+	if (osa == NULL) {
+		old = sa->sa_policy;
+		sa->sa_policy = NULL;
+		if (policy_lookup(env, msg, &msg->msg_proposals) != 0 ||
+		    msg->msg_policy == NULL) {
+			sa->sa_policy = old;
+			log_info("%s: no proposal chosen", __func__);
+			msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
+			return (-1);
+		}
+		/* move sa to new policy */
+		sa->sa_policy = msg->msg_policy;
+		TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
+		TAILQ_INSERT_TAIL(&sa->sa_policy->pol_sapeers,
+		    sa, sa_peer_entry);
+		if (old->pol_flags & IKED_POLICY_REFCNT)
+			policy_unref(env, old);
+		if (sa->sa_policy->pol_flags & IKED_POLICY_REFCNT)
+			policy_ref(env, sa->sa_policy);
+	}
+
 	sa_state(env, sa, IKEV2_STATE_SA_INIT);
 
 	ibuf_release(sa->sa_1stmsg);
@@ -4797,25 +4819,6 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 	}
 
 	/* XXX we need a better way to get this */
-	old = sa->sa_policy;
-	sa->sa_policy = NULL;
-	if (policy_lookup(env, msg, &msg->msg_proposals) != 0 || msg->msg_policy == NULL) {
-		sa->sa_policy = old;
-		log_info("%s: no proposal chosen", __func__);
-		msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
-		return (-1);
-	}
-	sa->sa_policy = msg->msg_policy;
-	/* move sa to new policy */
-	sa->sa_policy = msg->msg_policy;
-	TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
-	TAILQ_INSERT_TAIL(&sa->sa_policy->pol_sapeers,
-	    sa, sa_peer_entry);
-	if (old->pol_flags & IKED_POLICY_REFCNT)
-		policy_unref(env, old);
-	if (sa->sa_policy->pol_flags & IKED_POLICY_REFCNT)
-		policy_ref(env, sa->sa_policy);
-
 	if (proposals_negotiate(&sa->sa_proposals,
 	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0) != 0) {
 		log_info("%s: proposals_negotiate", __func__);
