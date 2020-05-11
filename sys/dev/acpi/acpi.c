@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.383 2020/05/08 11:18:01 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.384 2020/05/11 17:57:17 jca Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3503,7 +3503,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct acpi_sbs *sbs;
 	struct apm_power_info *pi = (struct apm_power_info *)data;
 	int bats;
-	unsigned int remaining, rem, minutes, rate;
+	unsigned int capacity, remaining, minutes, rate;
 	int s;
 
 	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
@@ -3554,7 +3554,8 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		pi->battery_life = 0;
 		pi->minutes_left = 0;
 		bats = 0;
-		remaining = rem = 0;
+		capacity = 0;
+		remaining = 0;
 		minutes = 0;
 		rate = 0;
 		SLIST_FOREACH(bat, &sc->sc_bat, aba_link) {
@@ -3565,11 +3566,9 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				continue;
 
 			bats++;
-			rem = (bat->aba_softc->sc_bst.bst_capacity * 100) /
-			    bat->aba_softc->sc_bix.bix_last_capacity;
-			if (rem > 100)
-				rem = 100;
-			remaining += rem;
+			capacity += bat->aba_softc->sc_bix.bix_last_capacity;
+			remaining += min(bat->aba_softc->sc_bst.bst_capacity,
+			    bat->aba_softc->sc_bix.bix_last_capacity);
 
 			if (bat->aba_softc->sc_bst.bst_rate == BST_UNKNOWN)
 				continue;
@@ -3587,10 +3586,9 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				continue;
 
 			bats++;
-			rem = sbs->asbs_softc->sc_battery.rel_charge;
-			if (rem > 100)
-				rem = 100;
-			remaining += rem;
+			capacity += 100;
+			remaining += min(100,
+			    sbs->asbs_softc->sc_battery.rel_charge);
 
 			if (sbs->asbs_softc->sc_battery.run_time ==
 			    ACPISBS_VALUE_UNKNOWN)
@@ -3613,7 +3611,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			pi->minutes_left = 60 * minutes / rate;
 
 		/* running on battery */
-		pi->battery_life = remaining / bats;
+		pi->battery_life = remaining * 100 / capacity;
 		if (pi->battery_life > 50)
 			pi->battery_state = APM_BATT_HIGH;
 		else if (pi->battery_life > 25)
