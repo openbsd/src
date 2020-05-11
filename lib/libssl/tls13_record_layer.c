@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.39 2020/05/11 17:46:46 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.40 2020/05/11 18:03:51 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -769,11 +769,18 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 			goto err;
 	}
 
-	if ((ret = tls13_record_recv(rl->rrec, rl->cb.wire_read, rl->cb_arg)) <= 0)
+	if ((ret = tls13_record_recv(rl->rrec, rl->cb.wire_read, rl->cb_arg)) <= 0) {
+		switch (ret) {
+		case TLS13_IO_RECORD_VERSION:
+			return tls13_send_alert(rl, SSL_AD_PROTOCOL_VERSION);
+		}
 		return ret;
-
-	/* XXX - record version checks. */
-
+	}
+ 
+	if (rl->legacy_version == TLS1_2_VERSION &&
+	    tls13_record_version(rl->rrec) != TLS1_2_VERSION)
+		return tls13_send_alert(rl, SSL_AD_PROTOCOL_VERSION);
+ 
 	content_type = tls13_record_content_type(rl->rrec);
 
 	/*

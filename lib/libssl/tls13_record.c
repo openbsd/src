@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record.c,v 1.4 2020/02/15 14:36:58 jsing Exp $ */
+/* $OpenBSD: tls13_record.c,v 1.5 2020/05/11 18:03:51 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -146,6 +146,8 @@ tls13_record_recv(struct tls13_record *rec, tls13_read_cb wire_read,
 			return TLS13_IO_FAILURE;
 
 		/* XXX - record overflow alert. */
+		if ((rec_version >> 8) != SSL3_VERSION_MAJOR)
+			return TLS13_IO_RECORD_VERSION;
 		if (rec_len > TLS13_RECORD_MAX_CIPHERTEXT_LEN)
 			return TLS13_IO_FAILURE;
 
