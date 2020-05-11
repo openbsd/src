@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.35 2020/04/17 17:24:03 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.36 2020/05/11 18:20:01 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1407,6 +1407,7 @@ test_tlsext_ri_server(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
+	ssl->version = TLS1_2_VERSION;
 	if (tlsext_ri_server_needs(ssl)) {
 		FAIL("server should not need RI\n");
 		goto err;
@@ -2812,12 +2813,14 @@ test_tlsext_clienthello_build(void)
 	return (failure);
 }
 
-unsigned char tlsext_serverhello_default[] = {};
+unsigned char tlsext_serverhello_default[] = {
+	0x00, 0x06, 0x00, 0x2b, 0x00, 0x02, 0x03, 0x04,
+};
 
 unsigned char tlsext_serverhello_enabled[] = {
-	0x00, 0x13, 0xff, 0x01, 0x00, 0x01, 0x00, 0x00,
-	0x05, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x02, 0x01,
-	0x00, 0x00, 0x23, 0x00, 0x00,
+	0x00, 0x10, 0x00, 0x2b, 0x00, 0x02, 0x03, 0x04,
+	0x00, 0x0b, 0x00, 0x02, 0x01, 0x00, 0x00, 0x23,
+	0x00, 0x00,
 };
 
 static int
