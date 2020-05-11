@@ -1,4 +1,4 @@
-/* $OpenBSD: servertest.c,v 1.2 2020/01/25 05:02:27 jsing Exp $ */
+/* $OpenBSD: servertest.c,v 1.3 2020/05/11 18:18:21 jsing Exp $ */
 /*
  * Copyright (c) 2015, 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -24,6 +24,8 @@
 #include <err.h>
 #include <stdio.h>
 #include <string.h>
+
+const SSL_METHOD *tls_legacy_server_method(void);
 
 char *server_ca_file;
 char *server_cert_file;
@@ -89,7 +91,7 @@ static struct server_hello_test server_hello_tests[] = {
 		.desc = "TLSv1.0 in SSLv2 record",
 		.client_hello = sslv2_client_hello_tls10,
 		.client_hello_len = sizeof(sslv2_client_hello_tls10),
-		.ssl_method = TLS_server_method,
+		.ssl_method = tls_legacy_server_method,
 		.ssl_clear_options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1,
 		.ssl_set_options = 0,
 	},
@@ -97,7 +99,7 @@ static struct server_hello_test server_hello_tests[] = {
 		.desc = "TLSv1.2 in SSLv2 record",
 		.client_hello = sslv2_client_hello_tls12,
 		.client_hello_len = sizeof(sslv2_client_hello_tls12),
-		.ssl_method = TLS_server_method,
+		.ssl_method = tls_legacy_server_method,
 		.ssl_clear_options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1,
 		.ssl_set_options = 0,
 	},
