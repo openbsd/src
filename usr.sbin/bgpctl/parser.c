@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.102 2020/05/10 13:38:46 deraadt Exp $ */
+/*	$OpenBSD: parser.c,v 1.103 2020/05/11 07:55:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -582,6 +582,11 @@ match_token(int *argc, char **argv[], const struct token table[])
 				t = &table[i];
 				res.aid = AID_VPN_IPv4;
 			}
+			if (!strcasecmp(word, "VPNv6")) {
+				match++;
+				t = &table[i];
+				res.aid = AID_VPN_IPv6;
+			}
 			break;
 		case ADDRESS:
 			if (parse_addr(word, &res.addr)) {
@@ -879,7 +884,8 @@ show_valid_args(const struct token table[])
 			fprintf(stderr, "  <pftable>\n");
 			break;
 		case FAMILY:
-			fprintf(stderr, "  [ inet | inet6 | IPv4 | IPv6 | VPNv4 ]\n");
+			fprintf(stderr, "  [ inet | inet6 | IPv4 | IPv6 | "
+			    "VPNv4 | VPNv6 ]\n");
 			break;
 		case FILENAME:
 			fprintf(stderr, "  <filename>\n");
