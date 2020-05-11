@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2020/01/25 16:03:31 jsing Exp $
+# $OpenBSD: Makefile,v 1.4 2020/05/11 18:20:24 jsing Exp $
 
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl)
@@ -69,9 +69,8 @@ REGRESS_TARGETS +=	run-protocol-client-${clib}
 
 run-protocol-client-${clib}: client-netcat-client-${clib}-server-nc.out
 	@echo '\n======== $@ ========'
-	# check that LibTLS protocol version is TLS 1.2
-	# XXX adapt when LibreSSL supports TLS 1.3
-	grep 'Protocol *: TLSv1.2' client-netcat-client-${clib}-server-nc.out
+	# check that LibTLS protocol version is TLS 1.2 or TLS 1.3
+	grep 'Protocol *: TLSv1.[23]' client-netcat-client-${clib}-server-nc.out
 
 .endfor
 
