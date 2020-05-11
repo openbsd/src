@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.78 2020/05/11 18:03:51 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.79 2020/05/11 18:08:11 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -39,6 +39,7 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_IO_WANT_RETRY		-5 /* Retry the previous call immediately. */
 #define TLS13_IO_USE_LEGACY		-6
 #define TLS13_IO_RECORD_VERSION		-7
+#define TLS13_IO_RECORD_OVERFLOW	-8
 
 #define TLS13_ERR_VERIFY_FAILED		16
 #define TLS13_ERR_HRR_FAILED		17
