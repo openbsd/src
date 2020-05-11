@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.44 2020/05/11 17:23:35 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.45 2020/05/11 17:49:46 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -36,6 +36,8 @@ tls13_server_init(struct tls13_ctx *ctx)
 
 	if (!ssl_get_new_session(s, 0)) /* XXX */
 		return 0;
+
+	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_VERSION);
 
 	if (!tls1_transcript_init(s))
 		return 0;
@@ -182,6 +184,8 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 	/* See if we switched back to the legacy client method. */
 	if (s->method->internal->version < TLS1_3_VERSION)
 		return 1;
+
+	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_2_VERSION);
 
 	/*
 	 * If a matching key share was provided, we do not need to send a
