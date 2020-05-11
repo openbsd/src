@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.46 2020/04/27 13:01:23 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.47 2020/05/11 13:25:32 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -1263,6 +1263,9 @@ inittodr(time_t base)
 		badbase = 1;
 	} else
 		badbase = 0;
+
+	rtctime.tv_sec = base;
+	rtctime.tv_usec = 0;
 
 	if (todr_handle == NULL ||
 	    todr_gettime(todr_handle, &rtctime) != 0 ||

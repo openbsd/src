@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.256 2020/05/01 19:56:11 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.257 2020/05/11 13:25:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1524,6 +1524,9 @@ inittodr(time_t base)
 		badbase = 1;
 	} else
 		badbase = 0;
+
+	rtctime.tv_sec = base;
+	rtctime.tv_usec = 0;
 
 	if (todr_handle == NULL ||
 	    todr_gettime(todr_handle, &rtctime) != 0 ||

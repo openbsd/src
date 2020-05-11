@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.192 2020/04/28 12:24:20 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.193 2020/05/11 13:25:32 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -2143,6 +2143,9 @@ inittodr(time_t base)
 		badbase = 1;
 	} else
 		badbase = 0;
+
+	rtctime.tv_sec = base;
+	rtctime.tv_usec = 0;
 
 	if (todr_handle == NULL ||
 	    todr_gettime(todr_handle, &rtctime) != 0 ||

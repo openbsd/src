@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.27 2020/05/09 22:12:18 kettenis Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.28 2020/05/11 13:25:32 kettenis Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -250,23 +250,15 @@ rtc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 	struct tod_desc *cd = &sys_tod;
 	struct clock_ymdhms dt;
 	struct tod_time c;
-	time_t base;
 
 	KASSERT(cd->tod_get);
-
-	/*
-	 * Set base to a random time in this century just in case one
-	 * of the supported RTCs uses it to determine the current
-	 * century.
-	 */
-	base = 1234567890;
 
 	/*
 	 * Read RTC chip registers NOTE: Read routines are responsible
 	 * for sanity checking clock. Dates after 19991231 should be
 	 * returned as year >= 100.
 	 */
-	(*cd->tod_get)(cd->tod_cookie, base, &c);
+	(*cd->tod_get)(cd->tod_cookie, tv->tv_sec, &c);
 
 	dt.dt_sec = c.sec;
 	dt.dt_min = c.min;
@@ -524,6 +516,9 @@ inittodr(time_t base)
 		badbase = 1;
 	} else
 		badbase = 0;
+
+	rtctime.tv_sec = base;
+	rtctime.tv_usec = 0;
 
 	if (todr_handle == NULL ||
 	    todr_gettime(todr_handle, &rtctime) != 0 ||
