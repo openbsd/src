@@ -1,4 +1,4 @@
-.\"	$OpenBSD: if_rxr_init.9,v 1.8 2020/05/12 08:49:54 jan Exp $
+.\"	$OpenBSD: if_rxr_init.9,v 1.9 2020/05/12 20:47:58 jmc Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -21,7 +21,10 @@
 .Nm if_rxr_init ,
 .Nm if_rxr_get ,
 .Nm if_rxr_put ,
+.Nm if_rxr_livelocked ,
+.Nm if_rxr_needrefill ,
 .Nm if_rxr_inuse ,
+.Nm if_rxr_cwm ,
 .Nm if_rxr_ioctl ,
 .Nm if_rxr_info_ioctl
 .Nd Interface Receive Ring accounting
