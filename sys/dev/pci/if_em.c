@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.351 2020/04/26 20:49:56 patrick Exp $ */
+/* $OpenBSD: if_em.c,v 1.352 2020/05/12 08:49:54 jan Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2833,7 +2833,7 @@ em_rxrefill(void *arg)
 
 	if (em_rxfill(que))
 		E1000_WRITE_REG(&sc->hw, RDT(que->me), que->rx.sc_rx_desc_head);
-	else if (if_rxr_inuse(&que->rx.sc_rx_ring) == 0)
+	else if (if_rxr_needrefill(&que->rx.sc_rx_ring))
 		timeout_add(&que->rx_refill, 1);
 }
 
