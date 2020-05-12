@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.36 2019/03/31 19:43:41 sthen Exp $
+ * $OpenBSD: calendar.music,v 1.37 2020/05/12 20:45:32 jmc Exp $
  */
 
 #ifndef _calendar_music_
@@ -199,7 +199,7 @@
 05/11	Max Reger dies in Leipzig, Germany, 1916
 05/12	Pink Floyd performs the first quadrophonic concert, 1977
 05/12	Jules Emile Frederic Massenet is born, 1842
-05/12	Berdrich Smetana dies, 1884
+05/12	Bedrich Smetana dies, 1884
 05/14	Lou Harrison is born in Portland, Oregon, 1917
 05/17	Erik Satie is born in Honfleur, France, 1866
 05/17	Paul Dukas dies in Paris, France, 1935
