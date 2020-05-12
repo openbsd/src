@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.13 2017/11/03 09:07:54 aoyama Exp $ */
+/* $OpenBSD: clock.c,v 1.14 2020/05/12 15:13:18 kettenis Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -61,7 +61,31 @@
 struct device *clockdev;
 const struct clockfns *clockfns;
 struct evcount *clockevc;
-int clockinitted, todrvalid;
+int clockinitted;
+
+extern todr_chip_handle_t todr_handle;
+struct todr_chip_handle rtc_todr;
+
+int
+rtc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
+{
+	struct clock_ymdhms dt;
+
+	(*clockfns->cf_get)(clockdev, tv->tv_sec, &dt);
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return 0;
+}
+
+int
+rtc_settime(struct todr_chip_handle *handle, struct timeval *tv)
+{
+	struct clock_ymdhms dt;
+
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
+	(*clockfns->cf_set)(clockdev, &dt);
+	return 0;
+}
 
 void
 clockattach(struct device *dev, const struct clockfns *fns,
@@ -79,15 +103,6 @@ clockattach(struct device *dev, const struct clockfns *fns,
 
 /*
  * Machine-dependent clock routines.
- *
- * Startrtclock restarts the real-time clock, which provides
- * hardclock interrupts to kern_clock.c.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.  Its primary function is to use some file
- * system information in case the hardare clock lost state.
- *
- * Resettodr restores the time of day hardware after a time change.
  */
 
 u_int	clock_get_tc(struct timecounter *);
@@ -117,6 +132,10 @@ cpu_initclocks()
 	clock_tc.tc_frequency = hz;
 	tc_init(&clock_tc);
 	clockinitted = 1;
+
+	rtc_todr.todr_gettime = rtc_gettime;
+	rtc_todr.todr_settime = rtc_settime;
+	todr_handle = &rtc_todr;
 }
 
 /*
@@ -128,87 +147,6 @@ void
 setstatclockrate(int newhz)
 {
 	/* nothing we can do */
-}
-
-/*
- * Initialze the time of day register, based on the time base which is, e.g.
- * from a filesystem.  Base provides the time to within six months,
- * and the time of year clock (if any) provides the rest.
- */
-void
-inittodr(time_t base)
-{
-	struct clock_ymdhms dt;
-	struct timespec ts;
-	time_t deltat;
-	int badbase;
-
-	ts.tv_sec = ts.tv_nsec = 0;
-
-	if (base < (2012 - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system");
-		/* read the system clock anyway */
-		base = (2012 - 1970) * SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	(*clockfns->cf_get)(clockdev, base, &dt);
-	todrvalid = 1;
-	/* simple sanity checks */
-	if (dt.dt_year < 1970 || dt.dt_mon < 1 || dt.dt_mon > 12
-		|| dt.dt_day < 1 || dt.dt_day > 31
-		|| dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 59) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		ts.tv_sec = base;
-		tc_setclock(&ts);
-		if (!badbase) {
-			printf("WARNING: preposterous clock chip time");
-			resettodr();
-		}
-		goto bad;
-	}
-	/* now have days since Jan 1, 1970; the rest is easy... */
-	ts.tv_sec = clock_ymdhms_to_secs(&dt);
-	tc_setclock(&ts);
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days;
-		 * if so, assume something is amiss.
-		 */
-		deltat = ts.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %d days",
-		    ts.tv_sec < base ? "lost" : "gained",
-		    (int) (deltat / SECDAY));
-	}
-bad:
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
- */
-void
-resettodr()
-{
-	struct clock_ymdhms dt;
-
-	if (!todrvalid)
-		return;
-	clock_secs_to_ymdhms(time_second, &dt);
-	(*clockfns->cf_set)(clockdev, &dt);
 }
 
 /*
