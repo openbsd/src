@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.23 2020/05/10 12:06:18 benno Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.24 2020/05/12 20:46:30 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 10 2020 $
+.Dd $Mdocdate: May 12 2020 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -115,7 +115,8 @@ The
 .Ar name
 to be used as the common name component of the subject of the
 X.509 certificate.
-This is optional. If not specified, the
+This is optional.
+If not specified, the
 .Ar handle
 of the domain block will be used as common name.
 .It Ic alternative names Brq ...
