@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.666 2020/05/08 19:00:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.667 2020/05/13 20:28:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1221,7 +1221,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			options[i].data = strdup(pretty);
 			if (options[i].data == NULL)
 				fatal("RFC1035 string");
-			options[i].len = strlen(options[i].data) + 1;
+			options[i].len = strlen(options[i].data);
 		} else
 			pretty = pretty_print_option(i, &options[i], 0);
 		if (strlen(pretty) == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.197 2020/05/13 20:14:39 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.198 2020/05/13 20:28:10 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -494,7 +494,7 @@ parse_domain_list(FILE *cfile, int *len, char **dp)
 			*dp = strdup(buf);
 			if (*dp == NULL)
 				fatal("domain name list");
-			*len = strlen(*dp) + 1;
+			*len = strlen(*dp);
 			return 1;
 		}
 		token = next_token(NULL, cfile);
@@ -882,7 +882,7 @@ parse_option(FILE *cfile, int *code, struct option_data *options)
 				dp = strdup(val);
 				if (dp == NULL)
 					fatal("RFC1035 hex octets");
-				len = strlen(dp) + 1;
+				len = strlen(dp);
 				freedp = 1;
 				break;
 			default:
