@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.189 2020/04/07 13:27:52 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.190 2020/05/13 21:34:37 cheloha Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -379,8 +379,8 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 	smr_init(&bd->bd_smr);
 	sigio_init(&bd->bd_sigio);
 
-	if (flag & FNONBLOCK)
-		bd->bd_rtout = -1;
+	bd->bd_rtout = 0;	/* no timeout by default */
+	bd->bd_rnonblock = ISSET(flag, FNONBLOCK);
 
 	bpf_get(bd);
 	LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
@@ -453,7 +453,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 	 * If there's a timeout, bd_rdStart is tagged when we start the read.
 	 * we can then figure out when we're done reading.
 	 */
-	if (d->bd_rtout != -1 && d->bd_rdStart == 0)
+	if (d->bd_rnonblock == 0 && d->bd_rdStart == 0)
 		d->bd_rdStart = ticks;
 	else
 		d->bd_rdStart = 0;
@@ -482,7 +482,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		if (d->bd_rtout == -1) {
+		if (d->bd_rnonblock) {
 			/* User requested non-blocking I/O */
 			error = EWOULDBLOCK;
 		} else {
@@ -960,9 +960,9 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	case FIONBIO:		/* Non-blocking I/O */
 		if (*(int *)addr)
-			d->bd_rtout = -1;
+			d->bd_rnonblock = 1;
 		else
-			d->bd_rtout = 0;
+			d->bd_rnonblock = 0;
 		break;
 
 	case FIOASYNC:		/* Send signal on receive packets */
@@ -1153,7 +1153,7 @@ bpfpoll(dev_t dev, int events, struct proc *p)
 			 * if there's a timeout, mark the time we
 			 * started waiting.
 			 */
-			if (d->bd_rtout != -1 && d->bd_rdStart == 0)
+			if (d->bd_rnonblock == 0 && d->bd_rdStart == 0)
 				d->bd_rdStart = ticks;
 			selrecord(p, &d->bd_sel);
 		}
@@ -1193,7 +1193,7 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 	klist_insert(klist, kn);
 
 	mtx_enter(&d->bd_mtx);
-	if (d->bd_rtout != -1 && d->bd_rdStart == 0)
+	if (d->bd_rnonblock == 0 && d->bd_rdStart == 0)
 		d->bd_rdStart = ticks;
 	mtx_leave(&d->bd_mtx);
 
