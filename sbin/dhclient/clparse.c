@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.196 2020/05/13 19:48:10 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.197 2020/05/13 20:14:39 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -785,7 +785,6 @@ parse_option(FILE *cfile, int *code, struct option_data *options)
 	long long		 number;
 	unsigned int		 hunkix = 0;
 	int			 i, freedp, len, token;
-	int			 nul_term = 0;
 
 	token = next_token(&val, cfile);
 	i = name_to_code(val);
@@ -913,10 +912,10 @@ parse_option(FILE *cfile, int *code, struct option_data *options)
 	} while (*fmt == 'A' && token == ',');
 
 	free(options[i].data);
-	options[i].data = malloc(hunkix + nul_term);
+	options[i].data = malloc(hunkix);
 	if (options[i].data == NULL)
 		fatal("option data");
-	memcpy(options[i].data, hunkbuf, hunkix + nul_term);
+	memcpy(options[i].data, hunkbuf, hunkix);
 	options[i].len = hunkix;
 
 	*code = i;
