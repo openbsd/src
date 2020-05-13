@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.45 2020/05/11 17:49:46 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.46 2020/05/13 17:53:15 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -115,7 +115,7 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	if (!CBS_get_u8_length_prefixed(cbs, &compression_methods))
 		goto err;
 
-	if (tls13_client_hello_is_legacy(cbs)) {
+	if (tls13_client_hello_is_legacy(cbs) || s->version < TLS1_3_VERSION) {
 		if (!CBS_skip(cbs, CBS_len(cbs)))
 			goto err;
 		return tls13_use_legacy_server(ctx);
