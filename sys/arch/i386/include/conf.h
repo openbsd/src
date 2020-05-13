@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.17 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: conf.h,v 1.18 2020/05/13 08:32:43 mpi Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ cdev_decl(pms);
 
 cdev_decl(joy);
 
-#define biospoll seltrue
 cdev_decl(bios);
 
 cdev_decl(acpi);
@@ -74,5 +73,4 @@ cdev_decl(apm);
 
 cdev_decl(acpiapm);
 
-#define pctrpoll seltrue
 cdev_decl(pctr);
