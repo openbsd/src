@@ -51,6 +51,12 @@
 
 /* #define SK_DEBUG 1 */
 
+#ifdef SK_DEBUG
+#define SSH_FIDO_INIT_ARG	FIDO_DEBUG
+#else
+#define SSH_FIDO_INIT_ARG	0
+#endif
+
 #define MAX_FIDO_DEVICES	256
 
 /* Compatibility with OpenSSH 1.0.x */
@@ -453,9 +459,8 @@ sk_enroll(uint32_t alg, const uint8_t *challenge, size_t challenge_len,
 	int r;
 	char *device = NULL;
 
-#ifdef SK_DEBUG
-	fido_init(FIDO_DEBUG);
-#endif
+	fido_init(SSH_FIDO_INIT_ARG);
+
 	if (enroll_response == NULL) {
 		skdebug(__func__, "enroll_response == NULL");
 		goto out;
@@ -743,9 +748,7 @@ sk_sign(uint32_t alg, const uint8_t *data, size_t datalen,
 	int ret = SSH_SK_ERR_GENERAL;
 	int r;
 
-#ifdef SK_DEBUG
-	fido_init(FIDO_DEBUG);
-#endif
+	fido_init(SSH_FIDO_INIT_ARG);
 
 	if (sign_response == NULL) {
 		skdebug(__func__, "sign_response == NULL");
@@ -988,6 +991,8 @@ sk_load_resident_keys(const char *pin, struct sk_option **options,
 	char *device = NULL;
 	*rksp = NULL;
 	*nrksp = 0;
+
+	fido_init(SSH_FIDO_INIT_ARG);
 
 	if (check_sign_load_resident_options(options, &device) != 0)
 		goto out; /* error already logged */
