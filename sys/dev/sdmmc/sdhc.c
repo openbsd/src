@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.65 2020/04/27 11:37:23 ians Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.66 2020/05/13 17:31:16 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/time.h>
 
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
@@ -35,10 +36,11 @@
 #include <dev/sdmmc/sdmmcvar.h>
 #include <dev/sdmmc/sdmmc_ioreg.h>
 
-#define SDHC_COMMAND_TIMEOUT	hz
-#define SDHC_BUFFER_TIMEOUT	hz
-#define SDHC_TRANSFER_TIMEOUT	hz
-#define SDHC_DMA_TIMEOUT	(hz*3)
+/* Timeouts in seconds */
+#define SDHC_COMMAND_TIMEOUT	1
+#define SDHC_BUFFER_TIMEOUT	1
+#define SDHC_TRANSFER_TIMEOUT	1
+#define SDHC_DMA_TIMEOUT	3
 
 struct sdhc_host {
 	struct sdhc_softc *sc;		/* host controller device */
@@ -1188,12 +1190,12 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 }
 
 int
-sdhc_wait_intr_cold(struct sdhc_host *hp, int mask, int timo)
+sdhc_wait_intr_cold(struct sdhc_host *hp, int mask, int secs)
 {
-	int status;
+	int status, usecs;
 
 	mask |= SDHC_ERROR_INTERRUPT;
-	timo = timo * tick;
+	usecs = secs * 1000000;
 	status = hp->intr_status;
 	while ((status & mask) == 0) {
 
@@ -1227,7 +1229,7 @@ sdhc_wait_intr_cold(struct sdhc_host *hp, int mask, int timo)
 		}
 
 		delay(1);
-		if (timo-- == 0) {
+		if (usecs-- == 0) {
 			status |= SDHC_ERROR_INTERRUPT;
 			break;
 		}
@@ -1238,21 +1240,21 @@ sdhc_wait_intr_cold(struct sdhc_host *hp, int mask, int timo)
 }
 
 int
-sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo)
+sdhc_wait_intr(struct sdhc_host *hp, int mask, int secs)
 {
 	int status;
 	int s;
 
 	if (cold)
-		return (sdhc_wait_intr_cold(hp, mask, timo));
+		return (sdhc_wait_intr_cold(hp, mask, secs));
 
 	mask |= SDHC_ERROR_INTERRUPT;
 
 	s = splsdmmc();
 	status = hp->intr_status & mask;
 	while (status == 0) {
-		if (tsleep(&hp->intr_status, PWAIT, "hcintr", timo)
-		    == EWOULDBLOCK) {
+		if (tsleep_nsec(&hp->intr_status, PWAIT, "hcintr",
+		    SEC_TO_NSEC(secs)) == EWOULDBLOCK) {
 			status |= SDHC_ERROR_INTERRUPT;
 			break;
 		}
