@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.198 2020/05/13 20:28:10 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.199 2020/05/13 20:55:41 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -873,16 +873,17 @@ parse_option(FILE *cfile, int *code, struct option_data *options)
 					if (parse_domain_list(cfile, &len,
 					    (char **)&dp) == 0)
 						return 0;
-				} else if (parse_hex_octets(cfile, &len, &dp)
-				    == 0) {
-					return 0;
+				} else {
+					if (parse_hex_octets(cfile, &len, &dp)
+					    == 0)
+						return 0;
+					val = rfc1035_as_string(dp, len);
+					free(dp);
+					dp = strdup(val);
+					if (dp == NULL)
+						fatal("RFC1035 hex octets");
+					len = strlen(dp);
 				}
-				val = rfc1035_as_string(dp, len);
-				free(dp);
-				dp = strdup(val);
-				if (dp == NULL)
-					fatal("RFC1035 hex octets");
-				len = strlen(dp);
 				freedp = 1;
 				break;
 			default:
