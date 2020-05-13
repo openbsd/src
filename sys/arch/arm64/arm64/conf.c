@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2020/01/23 02:40:21 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2020/05/13 08:10:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -83,7 +83,7 @@ int	nblkdev = nitems(bdevsw);
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
+	(dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
 
 /* open, close, ioctl, select -- XXX should be a generic device */
 #define cdev_ocis_init(c,n) { \
@@ -97,7 +97,7 @@ int	nblkdev = nitems(bdevsw);
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, (dev_type_ioctl((*))) enodev, \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev, 0 }
+	(dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
 
 
 #define	mmread	mmrw
