@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.64 2020/04/23 20:17:48 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.65 2020/05/13 18:28:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -198,19 +198,10 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 	flow_dst = &flow->flow_dst;
 
 	if (flow->flow_prenat.addr_af == flow_src->addr_af) {
-		switch (flow->flow_type) {
-		case SADB_X_FLOW_TYPE_USE:
+		if (flow->flow_dir == IPSP_DIRECTION_IN)
 			flow_dst = &flow->flow_prenat;
-			break;
-		case SADB_X_FLOW_TYPE_REQUIRE:
+		else
 			flow_src = &flow->flow_prenat;
-			break;
-		case 0:
-			if (flow->flow_dir == IPSP_DIRECTION_IN)
-				flow_dst = &flow->flow_prenat;
-			else
-				flow_src = &flow->flow_prenat;
-		}
 	}
 
 	bzero(&ssrc, sizeof(ssrc));
@@ -289,8 +280,7 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 	sa_flowtype.sadb_protocol_exttype = SADB_X_EXT_FLOW_TYPE;
 	sa_flowtype.sadb_protocol_len = sizeof(sa_flowtype) / 8;
 	sa_flowtype.sadb_protocol_direction = flow->flow_dir;
-	sa_flowtype.sadb_protocol_proto =
-	    flow->flow_type ? flow->flow_type : SADB_X_FLOW_TYPE_REQUIRE;
+	sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_REQUIRE;
 
 	bzero(&sa_protocol, sizeof(sa_protocol));
 	sa_protocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;

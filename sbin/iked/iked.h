@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.148 2020/05/08 19:33:13 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.149 2020/05/13 18:28:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -158,7 +158,6 @@ struct iked_flow {
 
 	uint8_t				 flow_saproto;
 	uint8_t				 flow_ipproto;
-	uint8_t				 flow_type;
 
 	struct iked_addr		*flow_local;	/* outer source */
 	struct iked_addr		*flow_peer;	/* outer dest */
