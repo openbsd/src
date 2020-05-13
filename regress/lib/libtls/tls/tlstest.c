@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.10 2018/03/19 16:36:12 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.11 2020/05/13 17:57:27 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -292,11 +292,57 @@ test_tls_socket(struct tls *client, struct tls *server)
 }
 
 static int
+test_tls(char *client_protocols, char *server_protocols, char *ciphers)
+{
+	struct tls_config *client_cfg, *server_cfg;
+	struct tls *client, *server;
+	uint32_t protocols;
+
+	if ((client = tls_client()) == NULL)
+		errx(1, "failed to create tls client");
+	if ((client_cfg = tls_config_new()) == NULL)
+		errx(1, "failed to create tls client config");
+	tls_config_insecure_noverifyname(client_cfg);
+	if (tls_config_parse_protocols(&protocols, client_protocols) == -1)
+		errx(1, "failed to parse protocols: %s", tls_config_error(client_cfg));
+	if (tls_config_set_protocols(client_cfg, protocols) == -1)
+		errx(1, "failed to set protocols: %s", tls_config_error(client_cfg));
+	if (tls_config_set_ciphers(client_cfg, ciphers) == -1)
+		errx(1, "failed to set ciphers: %s", tls_config_error(client_cfg));
+	if (tls_config_set_ca_file(client_cfg, cafile) == -1)
+		errx(1, "failed to set ca: %s", tls_config_error(client_cfg));
+
+	if ((server = tls_server()) == NULL)
+		errx(1, "failed to create tls server");
+	if ((server_cfg = tls_config_new()) == NULL)
+		errx(1, "failed to create tls server config");
+	if (tls_config_parse_protocols(&protocols, server_protocols) == -1)
+		errx(1, "failed to parse protocols: %s", tls_config_error(server_cfg));
+	if (tls_config_set_protocols(server_cfg, protocols) == -1)
+		errx(1, "failed to set protocols: %s", tls_config_error(server_cfg));
+	if (tls_config_set_ciphers(server_cfg, ciphers) == -1)
+		errx(1, "failed to set ciphers: %s", tls_config_error(server_cfg));
+	if (tls_config_set_keypair_file(server_cfg, certfile, keyfile) == -1)
+		errx(1, "failed to set keypair: %s",
+		    tls_config_error(server_cfg));
+
+	if (tls_configure(client, client_cfg) == -1)
+		errx(1, "failed to configure client: %s", tls_error(client));
+	tls_reset(server);
+	if (tls_configure(server, server_cfg) == -1)
+		errx(1, "failed to configure server: %s", tls_error(server));
+
+	return test_tls_cbs(client, server);
+}
+
+static int
 do_tls_tests(void)
 {
 	struct tls_config *client_cfg, *server_cfg;
 	struct tls *client, *server;
 	int failure = 0;
+
+	printf("== TLS tests ==\n");
 
 	if ((client = tls_client()) == NULL)
 		errx(1, "failed to create tls client");
@@ -347,6 +393,8 @@ do_tls_tests(void)
 	tls_free(client);
 	tls_free(server);
 
+	printf("\n");
+
 	return (failure);
 }
 
@@ -357,7 +405,7 @@ do_tls_ordering_tests(void)
 	struct tls_config *client_cfg, *server_cfg;
 	int failure = 0;
 
-	circular_init();
+	printf("== TLS ordering tests ==\n");
 
 	if ((client = tls_client()) == NULL)
 		errx(1, "failed to create tls client");
@@ -425,7 +473,52 @@ do_tls_ordering_tests(void)
 	tls_free(server);
 	tls_free(server_cctx);
 
+	printf("\n");
+
 	return (failure);
+}
+
+struct test_versions {
+	char *client;
+	char *server;
+};
+
+static struct test_versions tls_test_versions[] = {
+	{"tlsv1.3", "all"},
+	{"tlsv1.2", "all"},
+	{"tlsv1.1", "all"},
+	{"tlsv1.0", "all"},
+	{"all", "tlsv1.3"},
+	{"all", "tlsv1.2"},
+	{"all", "tlsv1.1"},
+	{"all", "tlsv1.0"},
+	{"tlsv1.3", "tlsv1.3"},
+	{"tlsv1.2", "tlsv1.2"},
+	{"tlsv1.1", "tlsv1.1"},
+	{"tlsv1.0", "tlsv1.0"},
+};
+
+#define N_TLS_VERSION_TESTS \
+    (sizeof(tls_test_versions) / sizeof(*tls_test_versions))
+
+static int
+do_tls_version_tests(void)
+{
+	struct test_versions *tv;
+	int failure = 0;
+	size_t i;
+
+	printf("== TLS version tests ==\n");
+
+	for (i = 0; i < N_TLS_VERSION_TESTS; i++) {
+		tv = &tls_test_versions[i];
+		printf("INFO: version test %zu - client versions '%s' "
+		    "and server versions '%s'\n", i, tv->client, tv->server);
+		failure |= test_tls(tv->client, tv->server, "legacy");
+		printf("\n");
+	}
+
+	return failure;
 }
 
 int
@@ -445,6 +538,7 @@ main(int argc, char **argv)
 
 	failure |= do_tls_tests();
 	failure |= do_tls_ordering_tests();
+	failure |= do_tls_version_tests();
 
 	return (failure);
 }
