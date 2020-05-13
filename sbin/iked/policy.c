@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.61 2020/05/11 20:11:35 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.62 2020/05/13 23:03:20 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -88,11 +88,8 @@ policy_lookup(struct iked *env, struct iked_message *msg,
 	if (proposals != NULL)
 		pol.pol_proposals = *proposals;
 	pol.pol_af = msg->msg_peer.ss_family;
-	if (msg->msg_flags & IKED_MSG_FLAGS_USE_TRANSPORT) {
-		log_info("Checking transport mode.");
+	if (msg->msg_flags & IKED_MSG_FLAGS_USE_TRANSPORT)
 		pol.pol_flags |= IKED_POLICY_TRANSPORT;
-	} else
-		log_info("Checking without transport mode.");
 	memcpy(&pol.pol_peer.addr, &msg->msg_peer, sizeof(msg->msg_peer));
 	memcpy(&pol.pol_local.addr, &msg->msg_local, sizeof(msg->msg_local));
 	if (msg->msg_id.id_type &&
