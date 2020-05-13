@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.67 2020/05/10 14:17:48 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.68 2020/05/13 17:55:34 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1487,7 +1487,7 @@ tlsext_versions_server_parse(SSL *s, CBS *cbs, int *alert)
 	if (!CBS_get_u8_length_prefixed(cbs, &versions))
 		goto err;
 
-	 while (CBS_len(&versions) > 0) {
+	while (CBS_len(&versions) > 0) {
 		if (!CBS_get_u16(&versions, &version))
 			goto err;
 		/*
