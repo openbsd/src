@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.58 2020/05/10 16:56:11 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.59 2020/05/13 17:51:48 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -145,7 +145,6 @@ tls13_client_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 int
 tls13_client_hello_sent(struct tls13_ctx *ctx)
 {
-	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_2_VERSION);
 	tls13_record_layer_allow_ccs(ctx->rl, 1);
 
 	tls1_transcript_freeze(ctx->ssl);
@@ -252,6 +251,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	}
 
 	/* From here on in we know we are doing TLSv1.3. */
+	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_2_VERSION);
 	tls13_record_layer_allow_legacy_alerts(ctx->rl, 0);
 
 	/* See if this is a HelloRetryRequest. */
