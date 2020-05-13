@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.41 2020/05/11 18:08:11 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.42 2020/05/13 17:54:26 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -876,8 +876,6 @@ tls13_record_layer_read_internal(struct tls13_record_layer *rl,
 	if (CBS_len(&rl->rbuf_cbs) == 0) {
 		if ((ret = tls13_record_layer_read_record(rl)) <= 0)
 			return ret;
-
-		/* XXX - need to check record version. */
 	}
 
 	/*
