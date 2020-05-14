@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.285 2020/01/23 22:39:35 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.286 2020/05/14 13:57:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -167,7 +167,7 @@ char			*code_to_name(int);
 char			*code_to_format(int);
 int			 code_to_action(int, int);
 int			 name_to_code(char *);
-void			 merge_option_data(struct option_data *,
+void			 merge_option_data(char *, struct option_data *,
     struct option_data *, struct option_data *);
 
 /* conflex.c */

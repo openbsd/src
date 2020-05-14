@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.120 2019/07/03 03:24:01 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.121 2020/05/14 13:57:13 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -963,15 +963,40 @@ unpack_options(struct dhcp_packet *packet)
 }
 
 void
-merge_option_data(struct option_data *first,
+merge_option_data(char *fmt, struct option_data *first,
     struct option_data *second, struct option_data *dest)
 {
-	free(dest->data);
-	dest->len = first->len + second->len;
-	dest->data = calloc(1, dest->len);
-	if (dest->data == NULL)
-		fatal("merged option data");
+	int		 rslt;
 
-	memcpy(dest->data, first->data, first->len);
-	memcpy(dest->data + first->len, second->data, second->len);
+	free(dest->data);
+	dest->data = NULL;
+	dest->len = first->len + second->len;
+	if (dest->len == 0)
+		return;
+
+	switch (fmt[0]) {
+	case 'D':
+		rslt = asprintf((char **)&dest->data, "%s%s%s",
+		    (first->len > 0) ? (char *)first->data : "",
+		    (first->len > 0 && second->len > 0) ? " " : "",
+		    (second->len > 0) ? (char *)second->data : "");
+		if (rslt == -1)
+			fatal("merged 'D'");
+		dest->len = strlen(dest->data);
+		break;
+	case 't':
+		rslt = asprintf((char **)&dest->data, "%s%s",
+		    (first->len > 0) ? (char *)first->data : "",
+		    (second->len > 0) ? (char *)second->data : "");
+		if (rslt == -1)
+			fatal("merged 't'");
+		break;
+	default:
+		dest->data = calloc(1, dest->len);
+		if (dest->data == NULL)
+			fatal("merged option data");
+		memcpy(dest->data, first->data, first->len);
+		memcpy(dest->data + first->len, second->data, second->len);
+		break;
+	}
 }

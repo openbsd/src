@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.667 2020/05/13 20:28:10 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.668 2020/05/14 13:57:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2405,6 +2405,7 @@ apply_defaults(struct client_lease *lease)
 {
 	struct option_data	 emptyopt = {0, NULL};
 	struct client_lease	*newlease;
+	char			*fmt;
 	int			 i;
 
 	newlease = clone_lease(lease);
@@ -2425,31 +2426,31 @@ apply_defaults(struct client_lease *lease)
 		newlease->next_server.s_addr = config->next_server.s_addr;
 
 	for (i = 0; i < DHO_COUNT; i++) {
+		fmt = code_to_format(i);
 		switch (config->default_actions[i]) {
 		case ACTION_IGNORE:
-			free(newlease->options[i].data);
-			newlease->options[i].data = NULL;
-			newlease->options[i].len = 0;
+			merge_option_data(fmt, &emptyopt, &emptyopt,
+			    &newlease->options[i]);
 			break;
 
 		case ACTION_SUPERSEDE:
-			merge_option_data(&config->defaults[i], &emptyopt,
+			merge_option_data(fmt, &config->defaults[i], &emptyopt,
 			    &newlease->options[i]);
 			break;
 
 		case ACTION_PREPEND:
-			merge_option_data(&config->defaults[i],
+			merge_option_data(fmt, &config->defaults[i],
 			    &lease->options[i], &newlease->options[i]);
 			break;
 
 		case ACTION_APPEND:
-			merge_option_data(&lease->options[i],
+			merge_option_data(fmt, &lease->options[i],
 			    &config->defaults[i], &newlease->options[i]);
 			break;
 
 		case ACTION_DEFAULT:
 			if (newlease->options[i].len == 0)
-				merge_option_data(&config->defaults[i],
+				merge_option_data(fmt, &config->defaults[i],
 				    &emptyopt, &newlease->options[i]);
 			break;
 
