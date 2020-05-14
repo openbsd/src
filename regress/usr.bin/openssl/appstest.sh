@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.32 2020/01/26 12:37:06 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.33 2020/05/14 12:29:55 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1274,6 +1274,25 @@ function test_pkcs {
 	check_exit_status $?
 }
 
+function test_server_client_by_protocol_version {
+	ver=$1
+	msg=$2
+
+	s_client_out=$user1_dir/s_client_${sc}_${ver}.out
+	
+	start_message "s_client ... connect to TLS/SSL test server by $ver"
+	sleep $test_pause_sec
+	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-$ver -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+	
+	grep "$msg" $s_client_out > /dev/null
+	check_exit_status $?
+	
+	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+	check_exit_status $?
+}
+
 function test_server_client {
 	# --- client/server operations (TLS) ---
 	section_message "client/server operations (TLS)"
@@ -1322,53 +1341,11 @@ function test_server_client {
 	echo "s_server pid = [ $s_server_pid ]"
 	sleep 1
 	
-	# protocol = TLSv1
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_1_0.out
-	
-	start_message "s_client ... connect to TLS/SSL test server by TLSv1"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep 'Protocol  : TLSv1$' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	# protocol = TLSv1.1
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_1_1.out
-	
-	start_message "s_client ... connect to TLS/SSL test server by TLSv1.1"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1_1 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep 'Protocol  : TLSv1\.1$' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	# protocol = TLSv1.2
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_1_2.out
-	
-	start_message "s_client ... connect to TLS/SSL test server by TLSv1.2"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1_2 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep 'Protocol  : TLSv1\.2$' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	check_exit_status $?
+	# test by protocol version
+	test_server_client_by_protocol_version tls1 'Protocol  : TLSv1$'
+	test_server_client_by_protocol_version tls1_1 'Protocol  : TLSv1\.1$'
+	test_server_client_by_protocol_version tls1_2 'Protocol  : TLSv1\.2$'
+	test_server_client_by_protocol_version tls1_3 'Protocol  : TLSv1\.3$'
 	
 	# all available ciphers with random order
 	
@@ -1499,7 +1476,7 @@ function test_version {
 #---------#---------#---------#---------#---------#---------#---------#---------
 
 openssl_bin=${OPENSSL:-/usr/bin/openssl}
-other_openssl_bin=${OTHER_OPENSSL:-/usr/local/bin/eopenssl}
+other_openssl_bin=${OTHER_OPENSSL:-/usr/local/bin/eopenssl11}
 
 interop_tests=0
 no_long_tests=0
