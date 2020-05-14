@@ -429,4 +429,9 @@ int file_inside_chroot(const char* fname, const char* chr);
 /** Something went wrong, give error messages and exit. */
 void error(const char *format, ...) ATTR_FORMAT(printf, 1, 2) ATTR_NORETURN;
 
+#if HAVE_CPUSET_T
+int number_of_cpus(void);
+int set_cpu_affinity(cpuset_t *set);
+#endif
+
 #endif /* _UTIL_H_ */

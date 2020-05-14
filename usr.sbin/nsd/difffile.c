@@ -1042,6 +1042,12 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 	qcount = QDCOUNT(packet);
 	ancount = ANCOUNT(packet);
 	buffer_skip(packet, QHEADERSZ);
+	/* qcount should be 0 or 1 really, ancount limited by 64k packet */
+	if(qcount > 64 || ancount > 65530) {
+		log_msg(LOG_ERR, "RR count impossibly high");
+		region_destroy(region);
+		return 0;
+	}
 
 	/* skip queries */
 	for(i=0; i<qcount; ++i)
@@ -1631,7 +1637,7 @@ void* task_new_stat_info(udb_base* udb, udb_ptr* last, struct nsdst* stat,
 	p = TASKLIST(&e)->zname;
 	memcpy(p, stat, sizeof(*stat));
 	udb_ptr_unlink(&e, udb);
-	return p + sizeof(*stat);
+	return (char*)p + sizeof(*stat);
 }
 #endif /* BIND8_STATS */
 
@@ -1653,7 +1659,7 @@ task_new_add_zone(udb_base* udb, udb_ptr* last, const char* zone,
 	TASKLIST(&e)->yesno = zonestatid;
 	p = TASKLIST(&e)->zname;
 	memcpy(p, zone, zlen+1);
-	memmove(p+zlen+1, pattern, plen+1);
+	memmove((char*)p+zlen+1, pattern, plen+1);
 	udb_ptr_unlink(&e, udb);
 }
 

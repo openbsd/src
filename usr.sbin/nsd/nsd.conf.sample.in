@@ -15,22 +15,61 @@ server:
 	# Number of NSD servers to fork.  Put the number of CPUs to use here.
 	# server-count: 1
 
-	# uncomment to specify specific interfaces to bind (default are the
-	# wildcard interfaces 0.0.0.0 and ::0).
+	# Set overall CPU affinity for NSD processes on Linux and FreeBSD.
+	# Any server/xfrd CPU affinity value will be masked by this value.
+	# cpu-affinity: 0 1 2 3
+
+	# Bind NSD server(s), configured by server-count (1-based), to a
+	# dedicated core. Single core affinity improves L1/L2 cache hits and
+	# reduces pipeline stalls/flushes.
+	#
+	# server-1-cpu-affinity: 0
+	# server-2-cpu-affinity: 1
+	# ...
+	# server-<N>-cpu-affinity: 2
+
+	# Bind xfrd to a dedicated core.
+	# xfrd-cpu-affinity: 3
+
+	# Specify specific interfaces to bind (default are the wildcard
+	# interfaces 0.0.0.0 and ::0).
 	# For servers with multiple IP addresses, list them one by one,
 	# or the source address of replies could be wrong.
 	# Use ip-transparent to be able to list addresses that turn on later.
 	# ip-address: 1.2.3.4
 	# ip-address: 1.2.3.4@5678
 	# ip-address: 12fe::8ef0
+	#
+	# IP addresses can be configured per-server to avoid waking up more
+	# than one server when a packet comes in (thundering herd problem) or
+	# to partition sockets across servers to improve select/poll
+	# performance.
+	#
+	# ip-address: 1.2.3.4       servers="1-2 3"
+	# ip-address: 1.2.3.4@5678  servers="4-5 6"
+	#
+	# When several interfaces are configured to listen on the same subnet,
+	# care must be taken to ensure responses go out the same interface the
+	# corresponding query came in on to avoid problems with load balancers
+	# and VLAN tagged interfaces. Linux offers the SO_BINDTODEVICE socket
+	# option to bind a socket to a specified device. For FreeBSD, to
+	# achieve the same result, specify the routing table to use after the
+	# IP address to use SO_SETFIB.
+	#
+	# Complement with socket partitioning and CPU affinity for attack
+	# mitigation benefits. i.e. only a single core is maxed out if a
+	# specific IP address is under attack.
+	#
+	# ip-address: 1.2.3.4       setfib=0  bindtodevice=yes
+	# ip-address: 1.2.3.5@6789  setfib=1  bindtodevice=yes
 
 	# Allow binding to non local addresses. Default no.
 	# ip-transparent: no
 
-	# Allow binding to addresses that are down.  Default no.
+	# Allow binding to addresses that are down. Default no.
 	# ip-freebind: no
 
-	# use the reuseport socket option for performance. Default no.
+	# Use SO_REUSEPORT socket option for performance. Default no.
 	# reuseport: no
 
 	# override maximum socket send buffer size.  Default of 0 results in
@@ -83,7 +122,7 @@ server:
 	# pidfile: "@pidfile@"
 
 	# The file where secondary zone refresh and expire timeouts are kept.
-	# If you delete this file, all secondary zones are forced to be 
+	# If you delete this file, all secondary zones are forced to be
 	# 'refreshing' (as if nsd got a notify).  Set to "" to disable.
 	# xfrdfile: "@xfrdfile@"
 
@@ -95,6 +134,9 @@ server:
 
 	# don't answer HOSTNAME.BIND and ID.SERVER CHAOS class queries
 	# hide-identity: no
+
+	# Drop UPDATE queries
+	# drop-updates: no
 
 	# version string the server responds with for chaos queries.
 	# default is 'NSD x.y.z' with the server's version number.
@@ -141,7 +183,7 @@ server:
 
 	# Number of seconds between reloads triggered by xfrd.
 	# xfrd-reload-timeout: 1
-	
+
 	# log timestamp in ascii (y-m-d h:m:s.msec), yes is default.
 	# log-time-ascii: yes
 
@@ -161,7 +203,7 @@ server:
 
 	# check mtime of all zone files on start and sighup
 	# zonefiles-check: yes
-	
+
 	# write changed zonefiles to disk, every N seconds.
 	# default is 0(disabled) or 3600(if database is "").
 	# zonefiles-write: 3600
@@ -186,11 +228,11 @@ server:
 	# rrl-slip: 2
 
 	# Response Rate Limiting, IPv4 prefix length. Addresses are
-	# grouped by netblock. 
+	# grouped by netblock.
 	# rrl-ipv4-prefix-length: 24
 
 	# Response Rate Limiting, IPv6 prefix length. Addresses are
-	# grouped by netblock. 
+	# grouped by netblock.
 	# rrl-ipv6-prefix-length: 64
 
 	# Response Rate Limiting, maximum QPS allowed (from one query source)
@@ -262,7 +304,7 @@ remote-control:
 
 
 # Patterns have zone configuration and they are shared by one or more zones.
-# 
+#
 # pattern:
 	# name by which the pattern is referred to
 	#name: "myzones"
@@ -274,7 +316,7 @@ remote-control:
 	# if label or character does not exist you get a dot '.'.
 	# for example "%s.zone" or "zones/%1/%2/%3/%s" or "secondary/%z/%s"
 	#zonefile: "%s.zone"
-	
+
 	# If no master and slave access control elements are provided,
 	# this zone will not be served to/from other servers.
 
@@ -299,7 +341,7 @@ remote-control:
 	# If you want to make use of IXFR/UDP use: UDP addr tsigkey
 	# for a master that only speaks AXFR (like NSD) use AXFR addr tsigkey
 	#request-xfr: 192.0.2.2 the_tsig_key_name
-	# Attention: You cannot use UDP and AXFR together. AXFR is always over 
+	# Attention: You cannot use UDP and AXFR together. AXFR is always over
 	# TCP. If you use UDP, we higly recommend you to deploy TSIG.
 	# Allow AXFR fallback if the master does not support IXFR. Default
 	# is yes.
@@ -312,6 +354,7 @@ remote-control:
 	#min-refresh-time: 0
 	#max-retry-time: 1209600
 	#min-retry-time: 0
+
 	# Slave server tries zone transfer to all masters and picks highest
 	# zone version available, for when masters have different versions.
 	#multi-master-check: no
@@ -325,7 +368,7 @@ remote-control:
 	# zonestats: "%s"
 
 	# if you give another pattern name here, at this point the settings
-	# from that pattern are inserted into this one (as if it were a 
+	# from that pattern are inserted into this one (as if it were a
 	# macro).  The statement can be given in between other statements,
 	# because the order of access control elements can make a difference
 	# (which master to request from first, which slave to notify first).
@@ -336,13 +379,13 @@ remote-control:
 # Zones that are dynamically added and deleted are put in the zonelist file.
 #
 # zone:
- 	# name: "example.com"
- 	# you can give a pattern here, all the settings from that pattern
- 	# are then inserted at this point
- 	# include-pattern: "master"
- 	# You can also specify (additional) options directly for this zone.
- 	# zonefile: "example.com.zone"
- 	# request-xfr: 192.0.2.1 example.com.key
+	# name: "example.com"
+	# you can give a pattern here, all the settings from that pattern
+	# are then inserted at this point
+	# include-pattern: "master"
+	# You can also specify (additional) options directly for this zone.
+	# zonefile: "example.com.zone"
+	# request-xfr: 192.0.2.1 example.com.key
 
 	# RRLconfig
 	# Response Rate Limiting, whitelist types

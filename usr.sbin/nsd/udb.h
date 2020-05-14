@@ -52,9 +52,9 @@ typedef struct udb_alloc udb_alloc;
 typedef uint64_t udb_void;
 
 /** convert relptr to usable pointer */
-#define UDB_REL(base, relptr) ((base) + (relptr))
+#define UDB_REL(base, relptr) ((void*)((char*)(base) + (relptr)))
 /** from system pointer to relative pointer */
-#define UDB_SYSTOREL(base, ptr) ((udb_void)((void*)(ptr) - (base)))
+#define UDB_SYSTOREL(base, ptr) ((udb_void)((char*)(ptr) - (char*)(base)))
 
 /** MAX 2**x exponent of alloced chunks, for 1Mbytes.  The smallest
  * chunk is 16bytes (8preamble+8data), so 0-3 is unused. */

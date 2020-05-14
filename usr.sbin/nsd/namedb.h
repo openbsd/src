@@ -443,4 +443,21 @@ rrset_rrclass(rrset_type* rrset)
 	return rrset->rrs[0].klass;
 }
 
-#endif
+/*
+ * zone_rr_iter can be used to iterate over all RRs in a given zone. the
+ * SOA RRSET is guaranteed to be returned first.
+ */
+typedef struct zone_rr_iter zone_rr_iter_type;
+
+struct zone_rr_iter {
+	zone_type *zone;
+	domain_type *domain;
+	rrset_type *rrset;
+	ssize_t index;
+};
+
+void zone_rr_iter_init(zone_rr_iter_type *iter, zone_type *zone);
+
+rr_type *zone_rr_iter_next(zone_rr_iter_type *iter);
+
+#endif /* _NAMEDB_H_ */

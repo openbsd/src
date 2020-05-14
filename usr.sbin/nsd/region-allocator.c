@@ -272,7 +272,7 @@ region_alloc(region_type *region, size_t size)
 		region->total_allocated += size;
 		++region->large_objects;
 
-		return result + sizeof(struct large_elem);
+		return (char *)result + sizeof(struct large_elem);
 	}
 
 	if (region->recycle_bin && region->recycle_bin[aligned_size]) {
@@ -469,7 +469,7 @@ region_recycle(region_type *region, void *block, size_t size)
 		region->total_allocated -= size;
 		--region->large_objects;
 
-		l = (struct large_elem*)(block-sizeof(struct large_elem));
+		l = (struct large_elem*)((char*)block-sizeof(struct large_elem));
 		if(l->prev)
 			l->prev->next = l->next;
 		else	region->large_list = l->next;

@@ -1,5 +1,93 @@
 NSD RELEASE NOTES
 
+4.3.1
+================
+BUG FIXES:
+	- Fix #70: error: 'fd_set' undeclared.
+	- Fix #71: error: 'for' loop initial declaration used outside C99
+	  mode.
+	- Fix to move declarations out of for loops in event test too.
+	- Fix #76: cpuid typedef for Hurd, DragonflyBSD compile.
+	- Fix #75: configure test for sched_setaffinity, and use
+	  cpuset_setaffinity otherwise.  Also test for presence of sysconf.
+	- Fix #74: GNU Hurd fix cast from pointer to integer of different size.
+	- Fix for #74, #75: cpuset test for header contents and provide code.
+	- Fix #78: Fix SO_SETFIB error on FreeBSD.
+	- Merge PR #83 from noloader: Fix GNU HURD sched_setaffinity compile.
+	- Fix #80: NetBSD and implicit declaration of reallocarray.
+	- Fix unknown u_long in util.c for Issue #80 .
+	- Merge PR #86 from noloader: Use precious variables for GREP, EGREP,
+	  SED, AWK, LEX and YACC.
+	- For PR #86: Fix that programs loaded after CFLAGS and stuff is
+	  set, specifically the compiler, so that it can work if it needs
+	  special flags from that.  Fix that lex only needs to support -i
+	  if actually defined, otherwise the output included in the source
+	  tarball can be used.
+	- Merge PR #90 by phicoh: O_CLOEXEC should be FD_CLOEXEC.
+	- Merge PR #92 by tonysgi: Fix typo.
+	- Merge PR #91 by gearnode: nsd-control-setup recreate certificates.
+	  The '-r' option recreates certificates.  Without it it creates them
+	  if they do not exist, and does not modify them otherwise.
+
+
+4.3.0
+================
+FEATURES:
+	- Fix to use getrandom() for randomness, if available.
+	- Fix #56: Drop sparse TSIG signing support in NSD.
+	  Sign every axfr packet with TSIG, according to the latest
+	  draft-ietf-dnsop-rfc2845bis-06, Section 5.3.1.
+	- Merge pull request #59 from buddyns: add FreeBSD support
+	  for conf key ip-transparent.
+	- Add feature to pin server processes to specific cpus.
+	- Add feature to pin IP addresses to selected server processes.
+	- Set process title to identify individual processes.
+	- Merge PR#22: minimise-any: prefer polular and not large RRset,
+	  from Daisuke Higashi.
+	- Add support for SO_BINDTODEVICE on Linux.
+	- Add support for SO_SETFIB on FreeBSD.
+	- Add feature to drop queries with opcode UPDATE.
+BUG FIXES:
+	- Fix fname null check of fname in namedb_read_zonefile.
+	- Fix implicit cast of size in udb_radnode_array_grow.
+	- Fix ignore of return value of ssl_printf in remote.c.
+	- Fix unused check of fd in parent_handle_reload_command.
+	- Attempt to fix signedness of nscount lookup in ixfr query_process.
+	- Fix identical branches for ssl_print of errors in remote.c.
+	- Fix type cast bounds, signedness of opt_rdlen in edns_parse_record.
+	- Fix to separate header and data lines in parse_zone_list_file.
+	- Fix to define max number of EDNS records we are willing to
+	  spend time on.
+	- Fix size of string len and capacity type cast in udbradtree.
+	- Fix to protect rrcount in tsig_find_rr from overflow.
+	- Annotate radix_find_prefix_node not reachable trail code.
+	- Fix to protect rrcount in packet_find_notify_serial from overflow.
+	- Fix to close socket on error in create_tcp_accept_sock.
+	- Fix to log on failure to chmod for socket for remote control.
+	- Fix to remove unneeded if in open of socket for remote control.
+	- Fix to restore input parameter on call failure in create_dirs.
+	- Please checker by terminating and initialising string read
+	  by remote control.
+	- Fix to define upper bounds on rr counts read from untrusted packet
+	  data.
+	- Separate acl_addr_match_range functions for ip4 and ip6, to
+	  please checkers.
+	- Avoid unused variable warning in new match_range_v4 function.
+	- Fix whitespace in nsd.conf.sample.in, patch from Paul Wouters.
+	- use-systemd is ignored in nsd.conf, when NSD is compiled with
+	  libsystemd it always signals readiness, if possible.
+	- Note that use-systemd is not necessary and ignored in man page.
+	- Fix unreachable code in ssl set options code.
+	- Fix bad shift in assertion code analyzer complaint.
+	- Fix responses for IXFR so that the authority section is not echoed
+	  in the response.
+	- Merge PR#60: Minor portability fixes from michaelforney, with
+	  avoid pointer arithmetic on void* and avoid unnecessary VLA.
+	- Fix that the retry wait does not exceed one day for zone transfers.
+CHANGES:
+	- Set FD_CLOEXEC on opened sockets.
+
+
 4.2.4
 ================
 FEATURES:
