@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.33 2020/05/14 12:29:55 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.34 2020/05/14 14:09:11 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1274,9 +1274,10 @@ function test_pkcs {
 	check_exit_status $?
 }
 
-function test_server_client_by_protocol_version {
-	ver=$1
-	msg=$2
+function test_sc_by_protocol_version {
+	cid=$1
+	ver=$2
+	msg=$3
 
 	s_client_out=$user1_dir/s_client_${sc}_${ver}.out
 	
@@ -1286,8 +1287,12 @@ function test_server_client_by_protocol_version {
 		-$ver -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
-	grep "$msg" $s_client_out > /dev/null
-	check_exit_status $?
+	# OpenSSL1.1.1 with TLSv1.3 does not call SSL_SESSION_print() until 
+	# NewSessionTicket arrival
+	if ! [ $cid = "1" -a $ver = "tls1_3" ] ; then
+		grep "$msg" $s_client_out > /dev/null
+		check_exit_status $?
+	fi
 	
 	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
 	check_exit_status $?
@@ -1342,10 +1347,10 @@ function test_server_client {
 	sleep 1
 	
 	# test by protocol version
-	test_server_client_by_protocol_version tls1 'Protocol  : TLSv1$'
-	test_server_client_by_protocol_version tls1_1 'Protocol  : TLSv1\.1$'
-	test_server_client_by_protocol_version tls1_2 'Protocol  : TLSv1\.2$'
-	test_server_client_by_protocol_version tls1_3 'Protocol  : TLSv1\.3$'
+	test_sc_by_protocol_version $c_id tls1 'Protocol  : TLSv1$'
+	test_sc_by_protocol_version $c_id tls1_1 'Protocol  : TLSv1\.1$'
+	test_sc_by_protocol_version $c_id tls1_2 'Protocol  : TLSv1\.2$'
+	test_sc_by_protocol_version $c_id tls1_3 'Protocol  : TLSv1\.3$'
 	
 	# all available ciphers with random order
 	
