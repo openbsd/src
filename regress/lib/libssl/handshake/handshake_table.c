@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.14 2020/05/04 14:20:36 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.15 2020/05/14 18:04:19 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -21,9 +21,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define MAX_FLAGS (UINT8_MAX + 1)
-
 #include "tls13_handshake.h"
+
+#define MAX_FLAGS (UINT8_MAX + 1)
 
 /*
  * From RFC 8446:
