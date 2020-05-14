@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.119 2020/05/14 18:09:25 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.120 2020/05/14 18:11:45 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -1536,10 +1536,10 @@ func runECDHTest(nid int, variant testVariant, wt *wycheproofTestECDH) bool {
 	}
 
 	// XXX The shared fields of the secp224k1 test cases have a 0 byte preprended.
-	if len(shared) == int(secLen) + 1 && shared[0] == 0 {
+	if len(shared) == int(secLen)+1 && shared[0] == 0 {
 		fmt.Printf("INFO: Test case %d (%q) %v - prepending 0 byte\n", wt.TCID, wt.Comment, wt.Flags)
 		// shared = shared[1:];
-		zero := make([]byte, 1, secLen + 1)
+		zero := make([]byte, 1, secLen+1)
 		secret = append(zero, secret...)
 	}
 
