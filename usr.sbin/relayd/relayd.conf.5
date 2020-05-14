@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.196 2020/05/02 19:02:57 benno Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.197 2020/05/14 17:27:39 pvk Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 2 2020 $
+.Dd $Mdocdate: May 14 2020 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -1015,6 +1015,9 @@ Disable TLS session tickets.
 supports stateless TLS session tickets (RFC 5077) to implement TLS session
 resumption.
 The default is to enable session tickets.
+.It Ic no tlsv1.3
+Disable the TLSv1.3 protocol.
+The default is to enable TLSv1.3.
 .It Ic no tlsv1.2
 Disable the TLSv1.2 protocol.
 The default is to enable TLSv1.2.
@@ -1027,8 +1030,9 @@ Enable all TLSv1 protocols.
 This is an alias that includes
 .Ic tlsv1.0 ,
 .Ic tlsv1.1 ,
+.Ic tlsv1.2 ,
 and
-.Ic tlsv1.2 .
+.Ic tlsv1.3 .
 The default is
 .Ic no tlsv1 .
 .It Ic tlsv1.0
