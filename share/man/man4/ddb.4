@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.95 2019/12/06 19:15:16 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.96 2020/05/14 06:58:54 mpi Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: December 6 2019 $
+.Dd $Mdocdate: May 14 2020 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -539,19 +539,19 @@ argument.
 .\" --------------------
 .It Xo
 .Ic trace
-.Op Cm /pu
+.Op Cm /tu
 .Op Ar frameaddr Ns
 .Op Ic \&, Ns Ar count
 .Xc
 Show the stack trace.
 The
-.Cm /p
+.Cm /t
 modifier interprets the
 .Ar frameaddr
 argument as the TID of a process and shows the stack trace of
 that process.
 The
-.Cm /p
+.Cm /t
 modifier is not supported on all platforms.
 The
 .Cm /u
