@@ -1,5 +1,88 @@
+3 December 2019: Wouter
+	- Fix #52: do not log transient network full errors unless higher
+	  verbosity is set.
+	- Fix checkconf test for new error output string.
+	- tag for 4.2.4rc1 release.
+
+27 November 2017 Jeroen
+	- Fix regressions in configparser.y
+
+22 November 2019: Wouter
+	- Fix #48: Add make distclean that removes config.h made by configure.
+	  And add maintainer-clean that removes bison and flex output.
+
+18 November 2019: Wouter
+	- Detect fixed time memcmp for openssl 0.9.8 compatibility.
+	- Detect EC_KEY_new_by_curve_name for openssl 0.9.8.
+	- include limits.h for UINT_MAX.
+	- If no recvmmsg, dont use msg_flags member, but errno for error,
+	  where our fallback function left it, msg_flags also does not exist
+	  on some systems.
+	- Remove unused variable warning for portability.
+
+14 November 2019: Wouter
+	- Fix checkconf test with filenames that sort in the same order.
+	- Tag for 4.2.3rc1.  Branch master is 4.2.4 in development.
+
+11 November 2019: Wouter
+	- Fix #44: document that remote-control is a top-level nsd.conf
+	  attribute.
+	- Fix compile on OSX.
+	- Fix for #44: nicer top-level clause documentation.
+
+22 October 2019: Jeroen
+	- Number of different UDP handlers has been reduced to one. recvmmsg
+	  and sendmmsg implementations are now used on all platforms.
+	  Compatible implementations are in place for systems that lack the
+	  system calls.
+	- Socket options are now set in designated functions for easy reuse.
+	- Socket setup has been simplified for easy reuse.
+	- Configuration parser is now aware of the context in which an option
+	  was specified.
+
+21 October 2019: Wouter
+	- For #21 add
+	  contrib/patch_for_s6_startup_and_other_service_supervisors.diff
+	  that adds support for readiness notification with READY_FD from
+	  Cameron Nemo.
+
+17 October 2019: Jeroen
+	- Fix #40: Merge small fixes for confine-to-zone by Greg Bock.
+
+15 October 2019: Jeroen
+	- For #39: Merge confine-to-zone feature contributes by Greg Bock.
+
+26 September 2019: Wouter
+	- Fix #38: log address and failure reason with tls handshake errors,
+	  squelches (the same as unbound) some unless high verbosity is used.
+	- Fixup clang analysis warning in xfrd_parse_received_xfr_packet
+	  master dereference.
+
+25 September 2019: Wouter
+	- The nsd.conf includes are sorted ascending, for include statements
+	  with a '*' from glob.
+
+16 September 2019: Wouter
+	- Fixup warnings during --disable-ipv6 compile.
+	- Fixup unit test executable to run without IPv6.
+
+4 September 2019: Wouter
+	- Fix #35: excessive logging of ixfr failures, it stops the log when
+	  fallback to axfr is possible. log is enabled at high verbosity.
+
+2 September 2019: Wouter
+	- For #21: pidfile "" allows to run NSD without a pidfile, for
+	  startup management tools like daemontools.
+
+28 August 2019: Wouter
+	- In tests check for tls test tool availability.
+
+19 August 2019: Wouter
+	- Tag for 4.2.2 release.  Git master contains 4.2.3 in development.
+
 13 August 2019: Wouter
 	- Fix error message for out of zone data to have more information.
+	- Tag for 4.2.2rc2.
 
 12 August 2019: Wouter
 	- Fix #33: Fix segfault in service of remaining streams on exit.
