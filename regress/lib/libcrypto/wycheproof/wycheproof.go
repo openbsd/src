@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.118 2020/04/27 19:42:34 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.119 2020/05/14 18:09:25 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -2761,10 +2761,9 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to glob %v test vectors: %v", test.name, err)
 		}
-		// XXX put check back after wycheproof-testvectors update to 20191214
-		// if len(tvs) == 0 {
-		// 	log.Fatalf("Failed to find %v test vectors at %q\n", test.name, testVectorPath)
-		// }
+		if len(tvs) == 0 {
+			log.Fatalf("Failed to find %v test vectors at %q\n", test.name, testVectorPath)
+		}
 		for _, tv := range tvs {
 			if test.variant == Skip || (test.variant == Normal && skipNormal.Match([]byte(tv))) {
 				fmt.Printf("INFO: Skipping tests from \"%s\"\n", strings.TrimPrefix(tv, testVectorPath+"/"))
