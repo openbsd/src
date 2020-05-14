@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.66 2020/04/24 21:15:05 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.67 2020/05/14 15:08:30 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -377,7 +377,10 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 
 	cipher_setkey(sa->sa_encr, encr->buf, ibuf_length(encr));
 	cipher_setiv(sa->sa_encr, NULL, 0);	/* XXX ivlen */
-	cipher_init_encrypt(sa->sa_encr);
+	if (cipher_init_encrypt(sa->sa_encr) == -1) {
+		log_info("%s: error initiating cipher.", __func__);
+		goto done;
+	}
 
 	if ((dst = ibuf_dup(sa->sa_encr->encr_iv)) == NULL)
 		goto done;
@@ -387,8 +390,11 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 		goto done;
 
 	outlen = ibuf_size(out);
-	cipher_update(sa->sa_encr,
-	    ibuf_data(src), encrlen, ibuf_data(out), &outlen);
+	if (cipher_update(sa->sa_encr, ibuf_data(src), encrlen,
+	    ibuf_data(out), &outlen) == -1) {
+		log_info("%s: error updating cipher.", __func__);
+		goto done;
+	}
 
 	if (outlen && ibuf_add(dst, ibuf_data(out), outlen) != 0)
 		goto done;
@@ -548,15 +554,21 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 
 	cipher_setkey(sa->sa_encr, encr->buf, ibuf_length(encr));
 	cipher_setiv(sa->sa_encr, ibuf_data(src) + ivoff, ivlen);
-	cipher_init_decrypt(sa->sa_encr);
+	if (cipher_init_decrypt(sa->sa_encr) == -1) {
+		log_info("%s: error initiating cipher.", __func__);
+		goto done;
+	}
 
 	if ((out = ibuf_new(NULL, cipher_outlength(sa->sa_encr,
 	    encrlen))) == NULL)
 		goto done;
 
 	if ((outlen = ibuf_length(out)) != 0) {
-		cipher_update(sa->sa_encr, ibuf_data(src) + encroff, encrlen,
-		    ibuf_data(out), &outlen);
+		if (cipher_update(sa->sa_encr, ibuf_data(src) + encroff,
+		    encrlen, ibuf_data(out), &outlen) == -1) {
+			log_info("%s: error updating cipher.", __func__);
+			goto done;
+		}
 
 		ptr = ibuf_seek(out, outlen - 1, 1);
 		pad = *ptr;

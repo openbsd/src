@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.26 2020/04/22 17:26:54 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.27 2020/05/14 15:08:30 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -406,53 +406,58 @@ cipher_free(struct iked_cipher *encr)
 	free(encr);
 }
 
-void
+int
 cipher_init(struct iked_cipher *encr, int enc)
 {
-	EVP_CipherInit_ex(encr->encr_ctx, encr->encr_priv, NULL,
-	    ibuf_data(encr->encr_key), ibuf_data(encr->encr_iv), enc);
+	if (EVP_CipherInit_ex(encr->encr_ctx, encr->encr_priv, NULL,
+	    ibuf_data(encr->encr_key), ibuf_data(encr->encr_iv), enc) != 1)
+		return (-1);
 	EVP_CIPHER_CTX_set_padding(encr->encr_ctx, 0);
+	return (0);
 }
 
-void
+int
 cipher_init_encrypt(struct iked_cipher *encr)
 {
-	cipher_init(encr, 1);
+	return (cipher_init(encr, 1));
 }
 
-void
+int
 cipher_init_decrypt(struct iked_cipher *encr)
 {
-	cipher_init(encr, 0);
+	return (cipher_init(encr, 0));
 }
 
-void
+int
 cipher_update(struct iked_cipher *encr, void *in, size_t inlen,
     void *out, size_t *outlen)
 {
 	int	 olen;
 
 	olen = 0;
-	if (!EVP_CipherUpdate(encr->encr_ctx, out, &olen, in, inlen)) {
+	if (EVP_CipherUpdate(encr->encr_ctx, out, &olen, in, inlen) != 1) {
 		ca_sslerror(__func__);
 		*outlen = 0;
-		return;
+		return (-1);
 	}
 	*outlen = (size_t)olen;
+	return (0);
 }
 
-void
-cipher_final(struct iked_cipher *encr, void *out, size_t *outlen)
+int
+cipher_final(struct iked_cipher *encr)
 {
 	int	 olen;
 
-	olen = 0;
-	if (!EVP_CipherFinal_ex(encr->encr_ctx, out, &olen)) {
+	/*
+	 * We always have EVP_CIPH_NO_PADDING set.  This means arg
+         * out is not used and olen should always be 0.
+         */
+	if (EVP_CipherFinal_ex(encr->encr_ctx, NULL, &olen) != 1) {
 		ca_sslerror(__func__);
-		*outlen = 0;
-		return;
+		return (-1);
 	}
-	*outlen = (size_t)olen;
+	return (0);
 }
 
 size_t

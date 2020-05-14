@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.149 2020/05/13 18:28:51 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.150 2020/05/14 15:08:30 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -842,11 +842,11 @@ struct ibuf *
 struct ibuf *
 	 cipher_setiv(struct iked_cipher *, void *, size_t);
 void	 cipher_free(struct iked_cipher *);
-void	 cipher_init(struct iked_cipher *, int);
-void	 cipher_init_encrypt(struct iked_cipher *);
-void	 cipher_init_decrypt(struct iked_cipher *);
-void	 cipher_update(struct iked_cipher *, void *, size_t, void *, size_t *);
-void	 cipher_final(struct iked_cipher *, void *, size_t *);
+int	 cipher_init(struct iked_cipher *, int);
+int	 cipher_init_encrypt(struct iked_cipher *);
+int	 cipher_init_decrypt(struct iked_cipher *);
+int	 cipher_update(struct iked_cipher *, void *, size_t, void *, size_t *);
+int	 cipher_final(struct iked_cipher *);
 size_t	 cipher_length(struct iked_cipher *);
 size_t	 cipher_keylength(struct iked_cipher *);
 size_t	 cipher_ivlength(struct iked_cipher *);
