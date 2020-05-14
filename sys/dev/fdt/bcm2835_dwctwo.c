@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_dwctwo.c,v 1.3 2019/10/11 15:12:43 jsg Exp $	*/
+/*	$OpenBSD: bcm2835_dwctwo.c,v 1.1 2020/05/14 15:44:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
  *
