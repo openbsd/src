@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.36 2020/05/15 14:38:40 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.37 2020/05/15 15:44:16 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1394,6 +1394,75 @@ function test_sc_all_cipher {
 	done
 }
 
+function test_sc_session_reuse {
+	sc=$1
+	ver=$2
+	sess_dat=$user1_dir/s_client_${sc}_${ver}_sess.dat
+
+	# Get session ticket to reuse
+	
+	s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_reuse_1.out
+	
+	start_message "s_client ... connect to TLS/SSL test server to get session id $ver"
+	sleep $test_pause_sec
+	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-$ver -alpn "spdy/3,http/1.1" -sess_out $sess_dat \
+		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+	
+	grep '^New, TLS.*$' $s_client_out > /dev/null
+	check_exit_status $?
+	
+	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+	check_exit_status $?
+	
+	# Reuse session ticket
+	
+	s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_reuse_2.out
+	
+	start_message "s_client ... connect to TLS/SSL test server reusing session id $ver"
+	sleep $test_pause_sec
+	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-$ver -sess_in $sess_dat \
+		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+	
+	grep '^Reused, TLS.*$' $s_client_out > /dev/null
+	check_exit_status $?
+	
+	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+	check_exit_status $?
+
+	# sess_id
+
+	start_message "sess_id"
+	$c_bin sess_id -in $sess_dat -text -out $sess_dat.out
+	check_exit_status $?
+}
+
+function test_sc_verify {
+	sc=$1
+	ver=$2
+
+	# invalid verification pattern
+	
+	s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_invalid.out
+	
+	start_message "s_client ... connect to tls/ssl test server but verify error $ver"
+	sleep $test_pause_sec
+	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-$ver -showcerts -crl_check -issuer_checks -policy_check \
+		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+	
+	grep 'verify return code: 0 (ok)' $s_client_out > /dev/null
+	if [ $? -eq 0 ] ; then
+		check_exit_status 1
+	else
+		check_exit_status 0
+	fi
+}
+
 function test_server_client {
 	# --- client/server operations (TLS) ---
 	section_message "client/server operations (TLS)"
@@ -1421,7 +1490,6 @@ function test_server_client {
 
 	host="localhost"
 	port=4433
-	sess_dat=$user1_dir/s_client_${sc}_sess.dat
 	s_server_out=$server_dir/s_server_${sc}_tls.out
 
 	if [ $ecdsa_tests = 0 ] ; then
@@ -1464,66 +1532,16 @@ function test_server_client {
 	test_sc_all_cipher $sc tls1_2
 	test_sc_all_cipher $sc tls1_3
 	
-	# Get session ticket to reuse
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_reuse_1.out
-	
-	start_message "s_client ... connect to TLS/SSL test server to get session id"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1_2 -alpn "spdy/3,http/1.1" -sess_out $sess_dat \
-		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep '^New, TLS.*$' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	# Reuse session ticket
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_reuse_2.out
-	
-	start_message "s_client ... connect to TLS/SSL test server reusing session id"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1_2 -sess_in $sess_dat \
-		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep '^Reused, TLS.*$' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	check_exit_status $?
+	# session resumption
+	test_sc_session_reuse $sc tls1_2
 	
 	# invalid verification pattern
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_invalid.out
-	
-	start_message "s_client ... connect to TLS/SSL test server but verify error"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1_2 -showcerts -crl_check -issuer_checks -policy_check \
-		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	if [ $? -eq 0 ] ; then
-		check_exit_status 1
-	else
-		check_exit_status 0
-	fi
+	test_sc_verify $sc tls1_2
+	test_sc_verify $sc tls1_3
 	
 	# s_time
 	start_message "s_time ... connect to TLS/SSL test server"
 	$c_bin s_time -connect $host:$port -CApath $ca_dir -time 2
-	check_exit_status $?
-	
-	# sess_id
-	start_message "sess_id"
-	$c_bin sess_id -in $sess_dat -text -out $sess_dat.out
 	check_exit_status $?
 	
 	stop_s_server
