@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.174 2020/05/09 16:46:22 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.175 2020/05/15 11:14:00 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -928,7 +928,7 @@ priv_propose(char *name, int ioctlfd, struct imsg_propose *imsg,
 
 	if (proposal->mtu != 0) {
 		if (proposal->mtu < 68)
-			log_warnx("%s: mtu size %u < 68: ignored", log_procname,
+			log_warnx("%s: mtu size %d < 68: ignored", log_procname,
 			    proposal->mtu);
 		else
 			set_mtu(name, ioctlfd, proposal->mtu);
