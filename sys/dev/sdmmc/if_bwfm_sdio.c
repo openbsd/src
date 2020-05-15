@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.36 2020/04/19 21:40:21 stsp Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.37 2020/05/15 14:09:14 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -487,6 +487,17 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 		    DEVNAME(sc), name);
 		free(ucode, M_DEVBUF, size);
 		goto err;
+	}
+
+	if (sysname != NULL) {
+		r = snprintf(name, sizeof(name), "brcmfmac%s-sdio.%s.clm_blob",
+		    chip, sysname);
+		if (r > 0 && r < sizeof(name))
+			loadfirmware(name, &bwfm->sc_clm, &bwfm->sc_clmsize);
+	}
+	if (bwfm->sc_clmsize == 0) {
+		snprintf(name, sizeof(name), "brcmfmac%s-sdio.clm_blob", chip);
+		loadfirmware(name, &bwfm->sc_clm, &bwfm->sc_clmsize);
 	}
 
 	sc->sc_alp_only = 1;
