@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.57 2020/04/30 08:52:56 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.58 2020/05/15 14:21:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -794,9 +794,8 @@ ar5008_ccmp_decap(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *
 	struct ieee80211_frame *wh;
 	struct ieee80211_rx_ba *ba;
 	uint64_t pn, *prsc;
-	u_int8_t *ivp, *mmie;
+	u_int8_t *ivp;
 	uint8_t tid;
-	uint16_t kid;
 	int hdrlen, hasqos;
 	uintptr_t entry;
 
@@ -805,35 +804,8 @@ ar5008_ccmp_decap(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *
 	ivp = mtod(m, u_int8_t *) + hdrlen;
 
 	/* find key for decryption */
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		k = &ni->ni_pairwise_key;
-	} else if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
-	    IEEE80211_FC0_TYPE_MGT) {
-		/* retrieve group data key id from IV field */
-		/* check that IV field is present */
-		if (m->m_len < hdrlen + 4)
-			return 1;
-		kid = ivp[3] >> 6;
-		k = &ic->ic_nw_keys[kid];
-	} else {
-		/* retrieve integrity group key id from MMIE */
-		if (m->m_len < sizeof(*wh) + IEEE80211_MMIE_LEN) {
-			return 1;
-		}
-		/* it is assumed management frames are contiguous */
-		mmie = (u_int8_t *)wh + m->m_len - IEEE80211_MMIE_LEN;
-		/* check that MMIE is valid */
-		if (mmie[0] != IEEE80211_ELEMID_MMIE || mmie[1] != 16) {
-			return 1;
-		}
-		kid = LE_READ_2(&mmie[2]);
-		if (kid != 4 && kid != 5) {
-			return 1;
-		}
-		k = &ic->ic_nw_keys[kid];
-	}
-
-	if (k->k_cipher != IEEE80211_CIPHER_CCMP)
+	k = ieee80211_get_rxkey(ic, m, ni);
+	if (k == NULL || k->k_cipher != IEEE80211_CIPHER_CCMP)
 		return 1;
 
 	/* Sanity checks to ensure this is really a key we installed. */
@@ -853,7 +825,7 @@ ar5008_ccmp_decap(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *
 	hasqos = ieee80211_has_qos(wh);
 	tid = hasqos ? ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
 	ba = hasqos ? &ni->ni_rx_ba[tid] : NULL;
-	prsc = &k->k_rsc[0];
+	prsc = &k->k_rsc[tid];
 
 	/* Extract the 48-bit PN from the CCMP header. */
 	pn = (uint64_t)ivp[0]       |
@@ -863,30 +835,12 @@ ar5008_ccmp_decap(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *
 	     (uint64_t)ivp[6] << 32 |
 	     (uint64_t)ivp[7] << 40;
 	if (pn <= *prsc) {
-		if (hasqos && ba->ba_state == IEEE80211_BA_AGREED) {
-			/*
-			 * This is an A-MPDU subframe.
-			 * Such frames may be received out of order due to
-			 * legitimate retransmissions of failed subframes
-			 * in previous A-MPDUs. Duplicates will be handled
-			 * in ieee80211_inputm() as part of A-MPDU reordering.
-			 *
-			 * XXX TODO We can probably do better than this! Store
-			 * re-ordered PN in BA agreement state and check it?
-			 */
-		} else {
-			ic->ic_stats.is_ccmp_replays++;
-			return 1;
-		}
+		ic->ic_stats.is_ccmp_replays++;
+		return 1;
 	}
-	/* Update last seen packet number. */
-	*prsc = pn;
+	/* Last seen packet number is updated in ieee80211_inputm(). */
 
-	/* Clear Protected bit and strip IV. */
-	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
-	memmove(mtod(m, caddr_t) + IEEE80211_CCMP_HDRLEN, wh, hdrlen);
-	m_adj(m, IEEE80211_CCMP_HDRLEN);
-	/* Strip MIC. */
+	/* Strip MIC. IV will be stripped by ieee80211_inputm(). */
 	m_adj(m, -IEEE80211_CCMP_MICLEN);
 	return 0;
 }

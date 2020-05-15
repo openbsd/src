@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.149 2019/09/30 01:53:05 dlg Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.150 2020/05/15 14:21:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1132,6 +1132,7 @@ wpi_calib_timeout(void *arg)
 int
 wpi_ccmp_decap(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_key *k)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_frame *wh;
 	uint64_t pn, *prsc;
 	uint8_t *ivp;
@@ -1159,21 +1160,13 @@ wpi_ccmp_decap(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_key *k)
 	     (uint64_t)ivp[6] << 32 |
 	     (uint64_t)ivp[7] << 40;
 	if (pn <= *prsc) {
-		/*
-		 * Not necessarily a replayed frame since we did not check
-		 * the sequence number of the 802.11 header yet.
-		 */
 		DPRINTF(("CCMP replayed\n"));
+		ic->ic_stats.is_ccmp_replays++;
 		return 1;
 	}
-	/* Update last seen packet number. */
-	*prsc = pn;
+	/* Last seen packet number is updated in ieee80211_inputm(). */
 
-	/* Clear Protected bit and strip IV. */
-	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
-	memmove(mtod(m, caddr_t) + IEEE80211_CCMP_HDRLEN, wh, hdrlen);
-	m_adj(m, IEEE80211_CCMP_HDRLEN);
-	/* Strip MIC. */
+	/* Strip MIC. IV will be stripped by ieee80211_inputm(). */
 	m_adj(m, -IEEE80211_CCMP_MICLEN);
 	return 0;
 }

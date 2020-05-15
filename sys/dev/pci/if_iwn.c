@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.229 2020/05/05 09:41:33 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.230 2020/05/15 14:21:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1938,47 +1938,13 @@ iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	     (uint64_t)ivp[6] << 32 |
 	     (uint64_t)ivp[7] << 40;
 	if (pn <= *prsc) {
-		if (hasqos && ba->ba_state == IEEE80211_BA_AGREED) {
-			/*
-			 * This is an A-MPDU subframe.
-			 * Such frames may be received out of order due to
-			 * legitimate retransmissions of failed subframes
-			 * in previous A-MPDUs. Duplicates will be handled
-			 * in ieee80211_inputm() as part of A-MPDU reordering.
-			 */
-		} else if (ieee80211_has_seq(wh)) {
-			/*
-			 * Not necessarily a replayed frame since we did not
-			 * check the sequence number of the 802.11 header yet.
-			 */
-			int nrxseq, orxseq;
-
-			nrxseq = letoh16(*(u_int16_t *)wh->i_seq) >>
-			    IEEE80211_SEQ_SEQ_SHIFT;
-			if (hasqos)
-				orxseq = ni->ni_qos_rxseqs[tid];
-			else
-				orxseq = ni->ni_rxseq;
-			if (nrxseq < orxseq) {
-				DPRINTF(("CCMP replayed (n=%d < o=%d)\n",
-				    nrxseq, orxseq));
-				ic->ic_stats.is_ccmp_replays++;
-				return 1;
-			}
-		} else {
-			DPRINTF(("CCMP replayed\n"));
-			ic->ic_stats.is_ccmp_replays++;
-			return 1;
-		}
+		DPRINTF(("CCMP replayed\n"));
+		ic->ic_stats.is_ccmp_replays++;
+		return 1;
 	}
-	/* Update last seen packet number. */
-	*prsc = pn;
+	/* Last seen packet number is updated in ieee80211_inputm(). */
 
-	/* Clear Protected bit and strip IV. */
-	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
-	memmove(mtod(m, caddr_t) + IEEE80211_CCMP_HDRLEN, wh, hdrlen);
-	m_adj(m, IEEE80211_CCMP_HDRLEN);
-	/* Strip MIC. */
+	/* Strip MIC. IV will be stripped by ieee80211_inputm(). */
 	m_adj(m, -IEEE80211_CCMP_MICLEN);
 	return 0;
 }
