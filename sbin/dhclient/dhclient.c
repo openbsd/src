@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.669 2020/05/15 11:13:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.670 2020/05/15 11:24:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2030,7 +2030,7 @@ lease_as_proposal(struct client_lease *lease)
 	if (lease->options[DHO_DOMAIN_SEARCH].len != 0) {
 		opt = &lease->options[DHO_DOMAIN_SEARCH];
 		if (opt->len < sizeof(proposal->rtsearch)) {
-			proposal->rtsearch_len = strlen(opt->data);
+			proposal->rtsearch_len = opt->len;
 			memcpy(proposal->rtsearch, opt->data,
 			    proposal->rtsearch_len);
 		} else
