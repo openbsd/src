@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.34 2020/05/14 14:09:11 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.35 2020/05/15 13:45:36 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -733,6 +733,37 @@ revoke.test_dummy.com
 __EOF__
 	check_exit_status $?
 
+	ecdsa_key=$server_dir/ecdsa_key.pem
+	ecdsa_csr=$server_dir/ecdsa_csr.pem
+	ecdsa_pass=test-ecdsa-pass
+
+	if [ $mingw = 0 ] ; then
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=ecdsa.test_dummy.com/'
+	else
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=ecdsa.test_dummy.com\'
+	fi
+	
+	start_message "ecparam ... generate server key#3"
+
+	$openssl_bin ecparam -name prime256v1 -genkey -out $ecdsa_key
+	check_exit_status $?
+
+	start_message "req ... generate server csr#3"
+
+	$openssl_bin req -new -subj $subj -sha256 \
+		-key $ecdsa_key -keyform pem -passin pass:$ecdsa_pass \
+		-addext 'subjectAltName = DNS:localhost.test_dummy.com' \
+		-out $ecdsa_csr -outform pem
+	check_exit_status $?
+	
+	start_message "req ... verify server csr#3"
+
+	$openssl_bin req -verify -in $ecdsa_csr -inform pem \
+		-newhdr -noout -pubkey -subject -modulus -text \
+		-nameopt multiline -reqopt compatible \
+		-out $ecdsa_csr.verify.out
+	check_exit_status $?
+
 	#---------#---------#---------#---------#---------#---------#---------
 	
 	# --- CA operations (issue cert for server) ---
@@ -752,6 +783,13 @@ __EOF__
 		-CAkey $ca_key -CAkeyform pem \
 		-CAserial $ca_dir/serial -set_serial 10 \
 		-passin pass:$ca_pass -CAcreateserial -out $revoke_cert
+	check_exit_status $?
+	
+	start_message "ca ... issue cert for server csr#3"
+	
+	ecdsa_cert=$server_dir/ecdsa_cert.pem
+	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
+		-in $ecdsa_csr -out $ecdsa_cert
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -1328,6 +1366,18 @@ function test_server_client {
 	sess_dat=$user1_dir/s_client_${sc}_sess.dat
 	s_server_out=$server_dir/s_server_${sc}_tls.out
 
+	if [ $ecdsa_tests = 0 ] ; then
+		echo "Using RSA certificate"
+		crt=$server_cert
+		key=$server_key
+		pwd=$server_pass
+	else
+		echo "Using ECDSA certificate"
+		crt=$ecdsa_cert
+		key=$ecdsa_key
+		pwd=$ecdsa_pass
+	fi
+
 	$s_bin version | grep 'OpenSSL 1.1.1' > /dev/null
 	if [ $? -eq 0 ] ; then
 		extra_opts="-4"
@@ -1337,7 +1387,7 @@ function test_server_client {
 	
 	start_message "s_server ... start TLS/SSL test server"
 	$s_bin s_server -accept $port -CAfile $ca_cert \
-		-cert $server_cert -key $server_key -pass pass:$server_pass \
+		-cert $crt -key $key -pass pass:$pwd \
 		-context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
 		-alpn "http/1.1,spdy/3" -www -cipher ALL $extra_opts \
 		-msg -tlsextdebug > $s_server_out 2>&1 &
@@ -1355,18 +1405,26 @@ function test_server_client {
 	# all available ciphers with random order
 	
 	s_ciph=$server_dir/s_ciph_${sc}
+	cipher_string=""
 	if [ $s_id = "0" ] ; then
-		$s_bin ciphers -v ALL:!ECDSA:!kGOST:!TLSv1.3 | awk '{print $1}' > $s_ciph
-	else
-		$s_bin ciphers -v | awk '{print $1}' > $s_ciph
+		if [ $ecdsa_tests = 0 ] ; then
+			cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
+		else
+			cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
+		fi
 	fi
+	$s_bin ciphers -v $cipher_string | awk '{print $1}' > $s_ciph
 
 	c_ciph=$user1_dir/c_ciph_${sc}
+	cipher_string=""
 	if [ $c_id = "0" ] ; then
-		$c_bin ciphers -v ALL:!ECDSA:!kGOST:!TLSv1.3 | awk '{print $1}' > $c_ciph
-	else
-		$c_bin ciphers -v | awk '{print $1}' > $c_ciph
+		if [ $ecdsa_tests = 0 ] ; then
+			cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
+		else
+			cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
+		fi
 	fi
+	$c_bin ciphers -v $cipher_string | awk '{print $1}' > $c_ciph
 
 	ciphers=$user1_dir/ciphers_${sc}
 	grep -x -f $s_ciph $c_ciph | sort -R > $ciphers
@@ -1483,11 +1541,16 @@ function test_version {
 openssl_bin=${OPENSSL:-/usr/bin/openssl}
 other_openssl_bin=${OTHER_OPENSSL:-/usr/local/bin/eopenssl11}
 
+ecdsa_tests=0
 interop_tests=0
 no_long_tests=0
 
 while [ "$1" != "" ]; do
 	case $1 in
+		-e | --ecdsa)
+					shift
+					ecdsa_tests=1
+					;;
 		-i | --interop)		shift
 					interop_tests=1
 					;;
