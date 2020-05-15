@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.206 2020/05/15 13:48:57 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.207 2020/05/15 13:53:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -92,39 +92,6 @@
  * Transactions on Modeling and Computer Simulation 2(3):179-194.
  * Also see M. Matsumoto & Y. Kurita, 1994.  Twisted GFSR generators
  * II.  ACM Transactions on Modeling and Computer Simulation 4:254-266)
- *
- * Thanks to Colin Plumb for suggesting this.
- *
- * We have not analyzed the resultant polynomial to prove it primitive;
- * in fact it almost certainly isn't.  Nonetheless, the irreducible factors
- * of a random large-degree polynomial over GF(2) are more than large enough
- * that periodicity is not a concern.
- *
- * The input hash is much less sensitive than the output hash.  All
- * we want from it is to be a good non-cryptographic hash -
- * i.e. to not produce collisions when fed "random" data of the sort
- * we expect to see.  As long as the pool state differs for different
- * inputs, we have preserved the input entropy and done a good job.
- * The fact that an intelligent attacker can construct inputs that
- * will produce controlled alterations to the pool's state is not
- * important because we don't consider such inputs to contribute any
- * randomness.  The only property we need with respect to them is that
- * the attacker can't increase his/her knowledge of the pool's state.
- * Since all additions are reversible (knowing the final state and the
- * input, you can reconstruct the initial state), if an attacker has
- * any uncertainty about the initial state, he/she can only shuffle
- * that uncertainty about, but never cause any collisions (which would
- * decrease the uncertainty).
- *
- * The chosen system lets the state of the pool be (essentially) the input
- * modulo the generator polynomial.  Now, for random primitive polynomials,
- * this is a universal class of hash functions, meaning that the chance
- * of a collision is limited by the attacker's knowledge of the generator
- * polynomial, so if it is chosen at random, an attacker can never force
- * a collision.  Here, we use a fixed polynomial, but we *can* assume that
- * ###--> it is unknown to the processes generating the input entropy. <-###
- * Because of this important property, this is a good, collision-resistant
- * hash; hash collisions will occur no more often than chance.
  */
 
 /*
