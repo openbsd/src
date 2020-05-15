@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.208 2020/05/15 13:58:37 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.209 2020/05/15 14:02:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -202,11 +202,7 @@ rnd_qlen(void)
 }
 
 /*
- * This function adds entropy to the entropy pool by using timing delays.
- *
- * The number "val" is also added to the pool - it should somehow describe
- * the type of event which just happened.  Currently the values of 0-255
- * are for keyboard scan codes, 256 and upwards - for interrupts.
+ * This function mixes entropy and timing into the entropy input ring.
  */
 void
 enqueue_randomness(u_int val)
