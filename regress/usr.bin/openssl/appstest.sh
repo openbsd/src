@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.35 2020/05/15 13:45:36 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.36 2020/05/15 14:38:40 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1336,6 +1336,64 @@ function test_sc_by_protocol_version {
 	check_exit_status $?
 }
 
+function test_sc_all_cipher {
+	sc=$1
+	ver=$2
+
+	s_ciph=$server_dir/s_ciph_${sc}_${ver}
+	cipher_string=""
+	if [ $s_id = "0" ] ; then
+		if [ $ver = "tls1_3" ] ; then
+			cipher_string="TLSv1.3"
+		else
+			if [ $ecdsa_tests = 0 ] ; then
+				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
+			else
+				cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
+			fi
+		fi
+	fi
+	$s_bin ciphers -v $cipher_string | awk '{print $1}' > $s_ciph
+
+	c_ciph=$user1_dir/c_ciph_${sc}_${ver}
+	cipher_string=""
+	if [ $c_id = "0" ] ; then
+		if [ $ver = "tls1_3" ] ; then
+			cipher_string="TLSv1.3"
+		else
+			if [ $ecdsa_tests = 0 ] ; then
+				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
+			else
+				cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
+			fi
+		fi
+	fi
+	$c_bin ciphers -v $cipher_string | awk '{print $1}' > $c_ciph
+
+	ciphers=$user1_dir/ciphers_${sc}_${ver}
+	grep -x -f $s_ciph $c_ciph | sort -R > $ciphers
+
+	cnum=0
+	for c in `cat $ciphers` ; do
+		cnum=`expr $cnum + 1`
+		cnstr=`printf %03d $cnum`
+		s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_${cnstr}_${c}.out
+	
+		start_message "s_client ... connect to TLS/SSL test server with [ $cnstr ] $ver $c"
+		sleep $test_pause_sec
+		$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+			-$ver -cipher $c \
+			-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+		check_exit_status $?
+	
+		grep "Cipher    : $c" $s_client_out > /dev/null
+		check_exit_status $?
+	
+		grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+		check_exit_status $?
+	done
+}
+
 function test_server_client {
 	# --- client/server operations (TLS) ---
 	section_message "client/server operations (TLS)"
@@ -1403,51 +1461,8 @@ function test_server_client {
 	test_sc_by_protocol_version $c_id tls1_3 'Protocol  : TLSv1\.3$'
 	
 	# all available ciphers with random order
-	
-	s_ciph=$server_dir/s_ciph_${sc}
-	cipher_string=""
-	if [ $s_id = "0" ] ; then
-		if [ $ecdsa_tests = 0 ] ; then
-			cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
-		else
-			cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
-		fi
-	fi
-	$s_bin ciphers -v $cipher_string | awk '{print $1}' > $s_ciph
-
-	c_ciph=$user1_dir/c_ciph_${sc}
-	cipher_string=""
-	if [ $c_id = "0" ] ; then
-		if [ $ecdsa_tests = 0 ] ; then
-			cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
-		else
-			cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
-		fi
-	fi
-	$c_bin ciphers -v $cipher_string | awk '{print $1}' > $c_ciph
-
-	ciphers=$user1_dir/ciphers_${sc}
-	grep -x -f $s_ciph $c_ciph | sort -R > $ciphers
-
-	cnum=0
-	for c in `cat $ciphers` ; do
-		cnum=`expr $cnum + 1`
-		cnstr=`printf %03d $cnum`
-		s_client_out=$user1_dir/s_client_${sc}_tls_${cnstr}_${c}.out
-	
-		start_message "s_client ... connect to TLS/SSL test server with [ $cnstr ] $c"
-		sleep $test_pause_sec
-		$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-			-tls1_2 -cipher $c \
-			-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-		check_exit_status $?
-	
-		grep "Cipher    : $c" $s_client_out > /dev/null
-		check_exit_status $?
-	
-		grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-		check_exit_status $?
-	done
+	test_sc_all_cipher $sc tls1_2
+	test_sc_all_cipher $sc tls1_3
 	
 	# Get session ticket to reuse
 	
