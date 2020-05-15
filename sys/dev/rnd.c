@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.204 2020/03/06 16:04:14 tobhe Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.205 2020/05/15 13:39:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -111,13 +111,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/disk.h>
 #include <sys/event.h>
-#include <sys/limits.h>
-#include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <sys/fcntl.h>
 #include <sys/timeout.h>
 #include <sys/mutex.h>
 #include <sys/task.h>
