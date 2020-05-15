@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.207 2020/05/15 13:53:00 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.208 2020/05/15 13:58:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -115,7 +115,7 @@
 
 /*
  * Raw entropy collection from device drivers; at interrupt context or not.
- * enqueue_randomness() provide data which is put into the entropy queue.
+ * enqueue_randomness() is used to submit data into the entropy input ring.
  */
 
 #define QEVLEN	128		 /* must be a power of 2 */
