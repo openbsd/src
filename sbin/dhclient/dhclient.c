@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.670 2020/05/15 11:24:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.671 2020/05/15 19:40:44 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1977,14 +1977,56 @@ lease_as_unwind_info(struct client_lease *lease)
 struct proposal *
 lease_as_proposal(struct client_lease *lease)
 {
-	struct proposal		*proposal;
+	uint8_t			 defroute[5];	/* 1 + sizeof(in_addr_t) */
+	struct option_data	 fake;
 	struct option_data	*opt;
+	struct proposal		*proposal;
+	uint8_t			*routes, *search, *dns;
+	unsigned int		 routes_len = 0, search_len = 0, dns_len = 0;
 	uint16_t		 mtu;
 
+	/* Determine sizes of variable length data. */
+	opt = NULL;
+	if (lease->options[DHO_CLASSLESS_STATIC_ROUTES].len != 0) {
+		opt = &lease->options[DHO_CLASSLESS_STATIC_ROUTES];
+	} else if (lease->options[DHO_CLASSLESS_MS_STATIC_ROUTES].len != 0) {
+		opt = &lease->options[DHO_CLASSLESS_MS_STATIC_ROUTES];
+	} else if (lease->options[DHO_ROUTERS].len != 0) {
+		/* Fake a classless static default route. */
+		opt = &lease->options[DHO_ROUTERS];
+		fake.len = sizeof(defroute);
+		fake.data = defroute;
+		fake.data[0] = 0;
+		memcpy(&fake.data[1], opt->data, sizeof(defroute) - 1);
+		opt = &fake;
+	}
+	if (opt != NULL) {
+		routes_len = opt->len;
+		routes = opt->data;
+	}
+
+	opt = NULL;
+	if (lease->options[DHO_DOMAIN_SEARCH].len != 0)
+		opt = &lease->options[DHO_DOMAIN_SEARCH];
+	else if (lease->options[DHO_DOMAIN_NAME].len != 0)
+		opt = &lease->options[DHO_DOMAIN_NAME];
+	if (opt != NULL) {
+		search_len = opt->len;
+		search = opt->data;
+	}
+
+	if (lease->options[DHO_DOMAIN_NAME_SERVERS].len != 0) {
+		opt = &lease->options[DHO_DOMAIN_NAME_SERVERS];
+		dns = opt->data;
+		dns_len = opt->len;
+	}
+
+	/* Allocate proposal. */
 	proposal = calloc(1, sizeof(*proposal));
 	if (proposal == NULL)
 		fatal("proposal");
 
+	/* Fill in proposal. */
 	proposal->ifa = lease->address;
 
 	opt = &lease->options[DHO_INTERFACE_MTU];
@@ -1994,66 +2036,20 @@ lease_as_proposal(struct client_lease *lease)
 	}
 
 	opt = &lease->options[DHO_SUBNET_MASK];
-	if (opt->len == sizeof(proposal->netmask)) {
-		proposal->netmask.s_addr =
-		    ((struct in_addr *)opt->data)->s_addr;
-	}
+	if (opt->len == sizeof(proposal->netmask))
+		memcpy(&proposal->netmask, opt->data, opt->len);
 
-	if (lease->options[DHO_CLASSLESS_STATIC_ROUTES].len != 0) {
-		opt = &lease->options[DHO_CLASSLESS_STATIC_ROUTES];
-		if (opt->len < sizeof(proposal->rtstatic)) {
-			proposal->rtstatic_len = opt->len;
-			memcpy(&proposal->rtstatic, opt->data, opt->len);
-		} else
-			log_warnx("%s: CLASSLESS_STATIC_ROUTES too long",
-			    log_procname);
-	} else if (lease->options[DHO_CLASSLESS_MS_STATIC_ROUTES].len != 0) {
-		opt = &lease->options[DHO_CLASSLESS_MS_STATIC_ROUTES];
-		if (opt->len < sizeof(proposal->rtstatic)) {
-			proposal->rtstatic_len = opt->len;
-			memcpy(&proposal->rtstatic[1], opt->data, opt->len);
-		} else
-			log_warnx("%s: MS_CLASSLESS_STATIC_ROUTES too long",
-			    log_procname);
-	} else if (lease->options[DHO_ROUTERS].len != 0) {
-		opt = &lease->options[DHO_ROUTERS];
-		if (opt->len >= sizeof(in_addr_t) &&
-		    (1 + sizeof(in_addr_t)) < sizeof(proposal->rtstatic)) {
-			proposal->rtstatic_len = 1 + sizeof(in_addr_t);
-			proposal->rtstatic[0] = 0;
-			memcpy(&proposal->rtstatic[1], opt->data,
-			    sizeof(in_addr_t));
-		} else
-			log_warnx("%s: DHO_ROUTERS invalid", log_procname);
+	if (routes_len > 0 && routes_len < sizeof(proposal->rtstatic)) {
+		memcpy(proposal->rtstatic, routes, routes_len);
+		proposal->rtstatic_len = routes_len;
 	}
-
-	if (lease->options[DHO_DOMAIN_SEARCH].len != 0) {
-		opt = &lease->options[DHO_DOMAIN_SEARCH];
-		if (opt->len < sizeof(proposal->rtsearch)) {
-			proposal->rtsearch_len = opt->len;
-			memcpy(proposal->rtsearch, opt->data,
-			    proposal->rtsearch_len);
-		} else
-			log_warnx("%s: DOMAIN_SEARCH too long", log_procname);
-	} else if (lease->options[DHO_DOMAIN_NAME].len != 0) {
-		opt = &lease->options[DHO_DOMAIN_NAME];
-		if (opt->len < sizeof(proposal->rtsearch)) {
-			proposal->rtsearch_len = opt->len;
-			memcpy(proposal->rtsearch, opt->data, opt->len);
-		} else
-			log_warnx("%s: DOMAIN_NAME too long", log_procname);
+	if (search_len > 0 && search_len < sizeof(proposal->rtsearch)) {
+		memcpy(proposal->rtsearch, search, search_len);
+		proposal->rtsearch_len = search_len;
 	}
-
-	if (lease->options[DHO_DOMAIN_NAME_SERVERS].len != 0) {
-		int servers;
-		opt = &lease->options[DHO_DOMAIN_NAME_SERVERS];
-		servers = opt->len / sizeof(in_addr_t);
-		if (servers > MAXNS)
-			servers = MAXNS;
-		if (servers > 0) {
-			proposal->rtdns_len = servers * sizeof(in_addr_t);
-			memcpy(proposal->rtdns, opt->data, proposal->rtdns_len);
-		}
+	if (dns_len > 0 && dns_len <= sizeof(proposal->rtdns)) {
+		memcpy(proposal->rtdns, dns, dns_len);
+		proposal->rtdns_len = dns_len;
 	}
 
 	return proposal;
