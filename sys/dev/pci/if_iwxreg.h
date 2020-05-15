@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.2 2020/02/28 14:51:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.3 2020/05/15 13:05:04 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -5302,7 +5302,7 @@ struct iwx_scan_channel_cfg_umac {
 	uint8_t channel_num;
 	uint8_t iter_count;
 	uint16_t iter_interval;
-} __packed; /* SCAN_CHANNEL_CFG_S_VER2 */
+} __packed; /* SCAN_CHANNEL_CFG_S_VER1 */
 
 /**
  * struct iwx_scan_umac_schedule
