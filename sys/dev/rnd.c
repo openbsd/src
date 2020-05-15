@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.209 2020/05/15 14:02:06 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.210 2020/05/15 14:04:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -228,17 +228,8 @@ enqueue_randomness(u_int val)
 }
 
 /*
- * This function adds a byte into the entropy pool.  It does not
- * update the entropy estimate.  The caller must do this if appropriate.
- *
- * The pool is stirred with a polynomial of degree POOLWORDS over GF(2);
- * see POOL_TAP[1-4] above
- *
- * Rotate the input word by a changing number of bits, to help assure
- * that all bits in the entropy get toggled.  Otherwise, if the pool
- * is consistently fed small numbers (such as keyboard scan codes)
- * then the upper bits of the entropy pool will frequently remain
- * untouched.
+ * This function merges entropy ring information into the buffer using
+ * a polynomial to spread the bits.
  */
 void
 add_entropy_words(const u_int32_t *buf, u_int n)
