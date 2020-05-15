@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.17 2019/12/24 13:13:33 millert Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.18 2020/05/15 17:25:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -56,7 +56,7 @@ main(int argc, char *argv[])
 {
 	FILE *back = NULL;
 	char *class = NULL, *username = NULL, *wheel = NULL;
-	char response[1024], pbuf[1024], *pass = NULL;
+	char response[1024], pbuf[1024], *pass = "";
 	int ch, rc, mode = 0, lastchance = 0;
 	struct passwd *pwd;
 
@@ -151,6 +151,8 @@ main(int argc, char *argv[])
 		if (pwd == NULL || *pwd->pw_passwd != '\0') {
 			pass = readpassphrase("Password:", pbuf, sizeof(pbuf),
 			    RPP_ECHO_OFF);
+			if (pass == NULL)
+				fprintf(back, BI_REJECT "\n");
 		}
 	}
 
@@ -160,8 +162,7 @@ main(int argc, char *argv[])
 	}
 
 	rc = crypt_checkpass(pass, pwd ? pwd->pw_passwd : NULL);
-	if (pass != NULL)
-		explicit_bzero(pass, strlen(pass));
+	explicit_bzero(pass, strlen(pass));
 	if (rc == 0) {
 		if (login_check_expire(back, pwd, class, lastchance) == 0) {
 		    fprintf(back, BI_AUTH "\n");
