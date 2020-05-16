@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.3 2020/05/15 13:05:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.4 2020/05/16 11:26:51 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -2794,7 +2794,15 @@ struct iwx_fw_channel_info {
  * @acquisition_data: ???
  * @dsp_cfg_flags: set to 0
  */
-struct iwx_phy_context_cmd {
+/*
+ * XXX Intel forgot to bump the PHY_CONTEXT command API when they increased
+ * the size of fw_channel_info from v1 to v2.
+ * To keep things simple we define two versions of this struct, and both
+ * are labled as CMD_API_VER_1. (The Linux iwlwifi driver performs dark
+ * magic with pointers to struct members instead.)
+ */
+/* This version must be used if IWX_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS is set: */
+struct iwx_phy_context_cmd_uhb {
 	/* COMMON_INDEX_HDR_API_S_VER_1 */
 	uint32_t id_and_color;
 	uint32_t action;
@@ -2807,6 +2815,21 @@ struct iwx_phy_context_cmd {
 	uint32_t acquisition_data;
 	uint32_t dsp_cfg_flags;
 } __packed; /* IWX_PHY_CONTEXT_CMD_API_VER_1 */
+/* This version must be used otherwise: */
+struct iwx_phy_context_cmd {
+	/* COMMON_INDEX_HDR_API_S_VER_1 */
+	uint32_t id_and_color;
+	uint32_t action;
+	/* IWX_PHY_CONTEXT_DATA_API_S_VER_1 */
+	uint32_t apply_time;
+	uint32_t tx_param_color;
+	struct iwx_fw_channel_info_v1 ci;
+	uint32_t txchain_info;
+	uint32_t rxchain_info;
+	uint32_t acquisition_data;
+	uint32_t dsp_cfg_flags;
+} __packed; /* IWX_PHY_CONTEXT_CMD_API_VER_1 */
+
 
 #define IWX_RX_INFO_PHY_CNT 8
 #define IWX_RX_INFO_ENERGY_ANT_ABC_IDX 1

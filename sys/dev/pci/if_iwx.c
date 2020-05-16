@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.11 2020/04/29 13:13:30 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.12 2020/05/16 11:26:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -343,10 +343,8 @@ void	iwx_rx_tx_cmd(struct iwx_softc *, struct iwx_rx_packet *,
 void	iwx_rx_bmiss(struct iwx_softc *, struct iwx_rx_packet *,
 	    struct iwx_rx_data *);
 int	iwx_binding_cmd(struct iwx_softc *, struct iwx_node *, uint32_t);
-void	iwx_phy_ctxt_cmd_hdr(struct iwx_softc *, struct iwx_phy_ctxt *,
-	    struct iwx_phy_context_cmd *, uint32_t, uint32_t);
-void	iwx_phy_ctxt_cmd_data(struct iwx_softc *, struct iwx_phy_context_cmd *,
-	    struct ieee80211_channel *, uint8_t, uint8_t);
+int	iwx_phy_ctxt_cmd_uhb(struct iwx_softc *, struct iwx_phy_ctxt *, uint8_t,
+	    uint8_t, uint32_t, uint32_t);
 int	iwx_phy_ctxt_cmd(struct iwx_softc *, struct iwx_phy_ctxt *, uint8_t,
 	    uint8_t, uint32_t, uint32_t);
 int	iwx_send_cmd(struct iwx_softc *, struct iwx_host_cmd *);
@@ -3773,52 +3771,38 @@ iwx_binding_cmd(struct iwx_softc *sc, struct iwx_node *in, uint32_t action)
 	return err;
 }
 
-void
-iwx_phy_ctxt_cmd_hdr(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
-    struct iwx_phy_context_cmd *cmd, uint32_t action, uint32_t apply_time)
-{
-	memset(cmd, 0, sizeof(struct iwx_phy_context_cmd));
-
-	cmd->id_and_color = htole32(IWX_FW_CMD_ID_AND_COLOR(ctxt->id,
-	    ctxt->color));
-	cmd->action = htole32(action);
-	cmd->apply_time = htole32(apply_time);
-}
-
-void
-iwx_phy_ctxt_cmd_data(struct iwx_softc *sc, struct iwx_phy_context_cmd *cmd,
-    struct ieee80211_channel *chan, uint8_t chains_static,
-    uint8_t chains_dynamic)
+int
+iwx_phy_ctxt_cmd_uhb(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
+    uint8_t chains_static, uint8_t chains_dynamic, uint32_t action,
+    uint32_t apply_time)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwx_phy_context_cmd_uhb cmd;
 	uint8_t active_cnt, idle_cnt;
+	struct ieee80211_channel *chan = ctxt->channel;
 
-	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS)) {
-		cmd->ci.band = IEEE80211_IS_CHAN_2GHZ(chan) ?
-		    IWX_PHY_BAND_24 : IWX_PHY_BAND_5;
-		cmd->ci.channel = htole32(ieee80211_chan2ieee(ic, chan));
-		cmd->ci.width = IWX_PHY_VHT_CHANNEL_MODE20;
-		cmd->ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
-	} else {
-		struct iwx_fw_channel_info_v1 *ci_v1;
-		ci_v1 = (struct iwx_fw_channel_info_v1 *)&cmd->ci;
-		ci_v1->band = IEEE80211_IS_CHAN_2GHZ(chan) ?
-		    IWX_PHY_BAND_24 : IWX_PHY_BAND_5;
-		ci_v1->channel = ieee80211_chan2ieee(ic, chan);
-		ci_v1->width = IWX_PHY_VHT_CHANNEL_MODE20;
-		ci_v1->ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
-	}
-	/* Set rx the chains */
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.id_and_color = htole32(IWX_FW_CMD_ID_AND_COLOR(ctxt->id,
+	    ctxt->color));
+	cmd.action = htole32(action);
+	cmd.apply_time = htole32(apply_time);
+
+	cmd.ci.band = IEEE80211_IS_CHAN_2GHZ(chan) ?
+	    IWX_PHY_BAND_24 : IWX_PHY_BAND_5;
+	cmd.ci.channel = htole32(ieee80211_chan2ieee(ic, chan));
+	cmd.ci.width = IWX_PHY_VHT_CHANNEL_MODE20;
+	cmd.ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
+
 	idle_cnt = chains_static;
 	active_cnt = chains_dynamic;
-
-	cmd->rxchain_info = htole32(iwx_fw_valid_rx_ant(sc) <<
+	cmd.rxchain_info = htole32(iwx_fw_valid_rx_ant(sc) <<
 					IWX_PHY_RX_CHAIN_VALID_POS);
-	cmd->rxchain_info |= htole32(idle_cnt << IWX_PHY_RX_CHAIN_CNT_POS);
-	cmd->rxchain_info |= htole32(active_cnt <<
+	cmd.rxchain_info |= htole32(idle_cnt << IWX_PHY_RX_CHAIN_CNT_POS);
+	cmd.rxchain_info |= htole32(active_cnt <<
 	    IWX_PHY_RX_CHAIN_MIMO_CNT_POS);
+	cmd.txchain_info = htole32(iwx_fw_valid_tx_ant(sc));
 
-	cmd->txchain_info = htole32(iwx_fw_valid_tx_ant(sc));
+	return iwx_send_cmd_pdu(sc, IWX_PHY_CONTEXT_CMD, 0, sizeof(cmd), &cmd);
 }
 
 int
@@ -3826,23 +3810,44 @@ iwx_phy_ctxt_cmd(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
     uint8_t chains_static, uint8_t chains_dynamic, uint32_t action,
     uint32_t apply_time)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwx_phy_context_cmd cmd;
-	size_t len;
-
-	iwx_phy_ctxt_cmd_hdr(sc, ctxt, &cmd, action, apply_time);
+	uint8_t active_cnt, idle_cnt;
+	struct ieee80211_channel *chan = ctxt->channel;
 
 	/*
-	 * Intel resized fw_channel_info struct and neglected to resize the
-	 * phy_context_cmd struct which contains it; so magic happens with
-	 * command length adjustments at run-time... :(
+	 * Intel increased the size of the fw_channel_info struct and neglected
+	 * to bump the phy_context_cmd struct, which contains an fw_channel_info
+	 * member in the middle.
+	 * To keep things simple we use a separate function to handle the larger
+	 * variant of the phy context command.
 	 */
-	iwx_phy_ctxt_cmd_data(sc, &cmd, ctxt->channel,
-	    chains_static, chains_dynamic);
-	len = sizeof(struct iwx_phy_context_cmd);
-	if (!isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS))
-		len -= (sizeof(struct iwx_fw_channel_info) -
-		    sizeof(struct iwx_fw_channel_info_v1));
-	return iwx_send_cmd_pdu(sc, IWX_PHY_CONTEXT_CMD, 0, len, &cmd);
+	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS))
+		return iwx_phy_ctxt_cmd_uhb(sc, ctxt, chains_static,
+		    chains_dynamic, action, apply_time);
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.id_and_color = htole32(IWX_FW_CMD_ID_AND_COLOR(ctxt->id,
+	    ctxt->color));
+	cmd.action = htole32(action);
+	cmd.apply_time = htole32(apply_time);
+
+	cmd.ci.band = IEEE80211_IS_CHAN_2GHZ(chan) ?
+	    IWX_PHY_BAND_24 : IWX_PHY_BAND_5;
+	cmd.ci.channel = ieee80211_chan2ieee(ic, chan);
+	cmd.ci.width = IWX_PHY_VHT_CHANNEL_MODE20;
+	cmd.ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
+
+	idle_cnt = chains_static;
+	active_cnt = chains_dynamic;
+	cmd.rxchain_info = htole32(iwx_fw_valid_rx_ant(sc) <<
+					IWX_PHY_RX_CHAIN_VALID_POS);
+	cmd.rxchain_info |= htole32(idle_cnt << IWX_PHY_RX_CHAIN_CNT_POS);
+	cmd.rxchain_info |= htole32(active_cnt <<
+	    IWX_PHY_RX_CHAIN_MIMO_CNT_POS);
+	cmd.txchain_info = htole32(iwx_fw_valid_tx_ant(sc));
+
+	return iwx_send_cmd_pdu(sc, IWX_PHY_CONTEXT_CMD, 0, sizeof(cmd), &cmd);
 }
 
 int
