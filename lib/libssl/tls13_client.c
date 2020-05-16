@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.59 2020/05/13 17:51:48 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.60 2020/05/16 14:44:55 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -593,6 +593,14 @@ tls13_server_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 			goto err;
 
 		cert = NULL;
+	}
+
+	/* A server must always provide a non-empty certificate list. */
+	if (sk_X509_num(certs) < 1) {
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
+		tls13_set_errorx(ctx, TLS13_ERR_NO_PEER_CERTIFICATE, 0,
+		    "peer failed to provide a certificate", NULL);
+		goto err;
 	}
 
 	/*
