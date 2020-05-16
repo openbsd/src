@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1020 2020/05/16 14:34:44 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1021 2020/05/16 14:39:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -280,6 +280,7 @@ enum tty_code_code {
 	TTYC_DL,
 	TTYC_DL1,
 	TTYC_DSBP,
+	TTYC_DSFCS,
 	TTYC_DSMG,
 	TTYC_E3,
 	TTYC_ECH,
@@ -288,6 +289,7 @@ enum tty_code_code {
 	TTYC_EL1,
 	TTYC_ENACS,
 	TTYC_ENBP,
+	TTYC_ENFCS,
 	TTYC_ENMG,
 	TTYC_FSL,
 	TTYC_HOME,

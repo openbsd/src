@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.366 2020/05/16 14:34:44 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.367 2020/05/16 14:39:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -330,13 +330,12 @@ tty_start_tty(struct tty *tty)
 		tty_puts(tty, "\033[?1006l\033[?1005l");
 	}
 
-	if (tty_term_flag(tty->term, TTYC_XT)) {
-		if (options_get_number(global_options, "focus-events")) {
-			tty->flags |= TTY_FOCUS;
-			tty_puts(tty, "\033[?1004h");
-		}
-		tty_puts(tty, "\033[?7727h");
+	if (options_get_number(global_options, "focus-events")) {
+		tty->flags |= TTY_FOCUS;
+		tty_raw(tty, tty_term_string(tty->term, TTYC_ENFCS));
 	}
+	if (tty_term_flag(tty->term, TTYC_XT))
+		tty_puts(tty, "\033[?7727h");
 
 	evtimer_set(&tty->start_timer, tty_start_timer_callback, tty);
 	evtimer_add(&tty->start_timer, &tv);
@@ -417,13 +416,12 @@ tty_stop_tty(struct tty *tty)
 		tty_raw(tty, "\033[?1006l\033[?1005l");
 	}
 
-	if (tty_term_flag(tty->term, TTYC_XT)) {
-		if (tty->flags & TTY_FOCUS) {
-			tty->flags &= ~TTY_FOCUS;
-			tty_raw(tty, "\033[?1004l");
-		}
-		tty_raw(tty, "\033[?7727l");
+	if (tty->flags & TTY_FOCUS) {
+		tty->flags &= ~TTY_FOCUS;
+		tty_raw(tty, tty_term_string(tty->term, TTYC_DSFCS));
 	}
+	if (tty_term_flag(tty->term, TTYC_XT))
+		tty_raw(tty, "\033[?7727l");
 
 	if (tty_use_margin(tty))
 		tty_raw(tty, tty_term_string(tty->term, TTYC_DSMG));
