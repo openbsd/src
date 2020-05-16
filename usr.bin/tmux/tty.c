@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.373 2020/05/16 15:34:08 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.374 2020/05/16 15:36:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -963,21 +963,16 @@ tty_redraw_region(struct tty *tty, const struct tty_ctx *ctx)
 
 /* Is this position visible in the pane? */
 static int
-tty_is_visible(struct tty *tty, const struct tty_ctx *ctx, u_int px, u_int py,
-    u_int nx, u_int ny)
+tty_is_visible(__unused struct tty *tty, const struct tty_ctx *ctx, u_int px,
+    u_int py, u_int nx, u_int ny)
 {
-	u_int	xoff = ctx->xoff + px, yoff = ctx->yoff + py, lines;
+	u_int	xoff = ctx->rxoff + px, yoff = ctx->ryoff + py;
 
 	if (!ctx->bigger)
 		return (1);
 
-	if (status_at_line(tty->client) == 0)
-		lines = status_line_size(tty->client);
-	else
-		lines = 0;
-
 	if (xoff + nx <= ctx->wox || xoff >= ctx->wox + ctx->wsx ||
-	    yoff + ny <= ctx->woy || yoff >= lines + ctx->woy + ctx->wsy)
+	    yoff + ny <= ctx->woy || yoff >= ctx->woy + ctx->wsy)
 		return (0);
 	return (1);
 }
