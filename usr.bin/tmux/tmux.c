@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.200 2020/05/16 15:24:28 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.201 2020/05/16 16:07:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -57,7 +57,7 @@ static __dead void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-2CluvV] [-c shell-command] [-f file] [-L socket-name]\n"
+	    "usage: %s [-2CDluvV] [-c shell-command] [-f file] [-L socket-name]\n"
 	    "            [-S socket-path] [-T features] [command [flags]]\n",
 	    getprogname());
 	exit(1);
@@ -336,13 +336,16 @@ main(int argc, char **argv)
 	if (**argv == '-')
 		flags = CLIENT_LOGIN;
 
-	while ((opt = getopt(argc, argv, "2c:Cdf:lL:qS:T:uUvV")) != -1) {
+	while ((opt = getopt(argc, argv, "2c:CDdf:lL:qS:T:uUvV")) != -1) {
 		switch (opt) {
 		case '2':
 			tty_add_features(&feat, "256", ":,");
 			break;
 		case 'c':
 			shell_command = optarg;
+			break;
+		case 'D':
+			flags |= CLIENT_NOFORK;
 			break;
 		case 'C':
 			if (flags & CLIENT_CONTROL)
@@ -386,6 +389,8 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (shell_command != NULL && argc != 0)
+		usage();
+	if ((flags & CLIENT_NOFORK) && argc != 0)
 		usage();
 
 	if ((ptm_fd = getptmfd()) == -1)

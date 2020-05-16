@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.190 2020/05/16 15:47:22 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.191 2020/05/16 16:07:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -161,29 +161,35 @@ server_start(struct tmuxproc *client, int flags, struct event_base *base,
 	struct client	*c;
 	char		*cause = NULL;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
-		fatal("socketpair failed");
-	server_client_flags = flags;
-
 	sigfillset(&set);
 	sigprocmask(SIG_BLOCK, &set, &oldset);
-	switch (fork()) {
-	case -1:
-		fatal("fork failed");
-	case 0:
-		break;
-	default:
-		sigprocmask(SIG_SETMASK, &oldset, NULL);
-		close(pair[1]);
-		return (pair[0]);
+
+	if (~flags & CLIENT_NOFORK) {
+		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
+			fatal("socketpair failed");
+
+		switch (fork()) {
+		case -1:
+			fatal("fork failed");
+		case 0:
+			break;
+		default:
+			sigprocmask(SIG_SETMASK, &oldset, NULL);
+			close(pair[1]);
+			return (pair[0]);
+		}
+		close(pair[0]);
+		if (daemon(1, 0) != 0)
+			fatal("daemon failed");
 	}
-	close(pair[0]);
-	if (daemon(1, 0) != 0)
-		fatal("daemon failed");
+
+	server_client_flags = flags;
 	proc_clear_signals(client, 0);
+
 	if (event_reinit(base) != 0)
 		fatalx("event_reinit failed");
 	server_proc = proc_start("server");
+
 	proc_set_signals(server_proc, server_signal);
 	sigprocmask(SIG_SETMASK, &oldset, NULL);
 
@@ -205,7 +211,10 @@ server_start(struct tmuxproc *client, int flags, struct event_base *base,
 	server_fd = server_create_socket(flags, &cause);
 	if (server_fd != -1)
 		server_update_socket();
-	c = server_client_create(pair[1]);
+	if (~flags & CLIENT_NOFORK)
+		c = server_client_create(pair[1]);
+	else
+		options_set_number(global_options, "exit-empty", 0);
 
 	if (lockfd >= 0) {
 		unlink(lockfile);
@@ -396,6 +405,7 @@ server_signal(int sig)
 
 	log_debug("%s: %s", __func__, strsignal(sig));
 	switch (sig) {
+	case SIGINT:
 	case SIGTERM:
 		server_exit = 1;
 		server_send_exit();

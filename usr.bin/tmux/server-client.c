@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.338 2020/05/16 15:47:22 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.339 2020/05/16 16:07:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -238,11 +238,22 @@ server_client_create(int fd)
 int
 server_client_open(struct client *c, char **cause)
 {
+	const char	*ttynam = _PATH_TTY;
+
 	if (c->flags & CLIENT_CONTROL)
 		return (0);
 
-	if (strcmp(c->ttyname, "/dev/tty") == 0) {
-		*cause = xstrdup("can't use /dev/tty");
+	if (strcmp(c->ttyname, ttynam) == 0||
+	    ((isatty(STDIN_FILENO) &&
+	    (ttynam = ttyname(STDIN_FILENO)) != NULL &&
+	    strcmp(c->ttyname, ttynam) == 0) ||
+	    (isatty(STDOUT_FILENO) &&
+	    (ttynam = ttyname(STDOUT_FILENO)) != NULL &&
+	    strcmp(c->ttyname, ttynam) == 0) ||
+	    (isatty(STDERR_FILENO) &&
+	    (ttynam = ttyname(STDERR_FILENO)) != NULL &&
+	    strcmp(c->ttyname, ttynam) == 0))) {
+		xasprintf(cause, "can't use %s", c->ttyname);
 		return (-1);
 	}
 

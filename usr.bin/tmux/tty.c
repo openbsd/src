@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.374 2020/05/16 15:36:57 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.375 2020/05/16 16:07:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -154,16 +154,21 @@ tty_read_callback(__unused int fd, __unused short events, void *data)
 {
 	struct tty	*tty = data;
 	struct client	*c = tty->client;
+	const char	*name = c->name;
 	size_t		 size = EVBUFFER_LENGTH(tty->in);
 	int		 nread;
 
 	nread = evbuffer_read(tty->in, tty->fd, -1);
 	if (nread == 0 || nread == -1) {
+		if (nread == 0)
+			log_debug("%s: read closed", name);
+		else
+			log_debug("%s: read error: %s", name, strerror(errno));
 		event_del(&tty->event_in);
 		server_client_lost(tty->client);
 		return;
 	}
-	log_debug("%s: read %d bytes (already %zu)", c->name, nread, size);
+	log_debug("%s: read %d bytes (already %zu)", name, nread, size);
 
 	while (tty_keys_next(tty))
 		;
