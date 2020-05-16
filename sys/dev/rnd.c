@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.210 2020/05/15 14:04:00 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.211 2020/05/16 15:53:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -393,7 +393,7 @@ _rs_seed(u_char *buf, size_t n)
 
 	/* invalidate rs_buf */
 	rs_have = 0;
-	memset(rs_buf, 0, RSBUFSZ);
+	memset(rs_buf, 0, sizeof(rs_buf));
 
 	rs_count = 1600000;
 }
@@ -432,8 +432,8 @@ _rs_stir_if_needed(size_t len)
 	static int rs_initialized;
 
 	if (!rs_initialized) {
-		memcpy(entropy_pool, entropy_pool0, sizeof entropy_pool);
-		memcpy(rs_buf, rs_buf0, sizeof rs_buf);
+		memcpy(entropy_pool, entropy_pool0, sizeof(entropy_pool));
+		memcpy(rs_buf, rs_buf0, sizeof(rs_buf));
 		/* seeds cannot be cleaned yet, random_start() will do so */
 		_rs_init(rs_buf, KEYSZ + IVSZ);
 		rs_count = 1024 * 1024 * 1024;	/* until main() runs */
@@ -457,7 +457,7 @@ _rs_clearseed(const void *p, size_t s)
 	while (s > 0) {
 		pmap_extract(pmap_kernel(), va, &pa);
 
-		memset(&kd_avoidalias, 0, sizeof kd_avoidalias);
+		memset(&kd_avoidalias, 0, sizeof(kd_avoidalias));
 		kd_avoidalias.kd_prefer = pa;
 		kd_avoidalias.kd_waitok = 1;
 		rwva = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, &kp_none,
@@ -484,10 +484,10 @@ static inline void
 _rs_rekey(u_char *dat, size_t datlen)
 {
 #ifndef KEYSTREAM_ONLY
-	memset(rs_buf, 0, RSBUFSZ);
+	memset(rs_buf, 0, sizeof(rs_buf));
 #endif
 	/* fill rs_buf with the keystream */
-	chacha_encrypt_bytes(&rs, rs_buf, rs_buf, RSBUFSZ);
+	chacha_encrypt_bytes(&rs, rs_buf, rs_buf, sizeof(rs_buf));
 	/* mix in optional user provided data */
 	if (dat) {
 		size_t i, m;
@@ -499,7 +499,7 @@ _rs_rekey(u_char *dat, size_t datlen)
 	/* immediately reinit for backtracking resistance */
 	_rs_init(rs_buf, KEYSZ + IVSZ);
 	memset(rs_buf, 0, KEYSZ + IVSZ);
-	rs_have = RSBUFSZ - KEYSZ - IVSZ;
+	rs_have = sizeof(rs_buf) - KEYSZ - IVSZ;
 }
 
 static inline void
@@ -512,8 +512,8 @@ _rs_random_buf(void *_buf, size_t n)
 	while (n > 0) {
 		if (rs_have > 0) {
 			m = MIN(n, rs_have);
-			memcpy(buf, rs_buf + RSBUFSZ - rs_have, m);
-			memset(rs_buf + RSBUFSZ - rs_have, 0, m);
+			memcpy(buf, rs_buf + sizeof(rs_buf) - rs_have, m);
+			memset(rs_buf + sizeof(rs_buf) - rs_have, 0, m);
 			buf += m;
 			n -= m;
 			rs_have -= m;
@@ -529,8 +529,8 @@ _rs_random_u32(u_int32_t *val)
 	_rs_stir_if_needed(sizeof(*val));
 	if (rs_have < sizeof(*val))
 		_rs_rekey(NULL, 0);
-	memcpy(val, rs_buf + RSBUFSZ - rs_have, sizeof(*val));
-	memset(rs_buf + RSBUFSZ - rs_have, 0, sizeof(*val));
+	memcpy(val, rs_buf + sizeof(rs_buf) - rs_have, sizeof(*val));
+	memset(rs_buf + sizeof(rs_buf) - rs_have, 0, sizeof(*val));
 	rs_have -= sizeof(*val);
 }
 
@@ -662,8 +662,8 @@ random_start(void)
 		printf("warning: no entropy supplied by boot loader\n");
 #endif
 
-	_rs_clearseed(entropy_pool0, sizeof entropy_pool0);
-	_rs_clearseed(rs_buf0, sizeof rs_buf0);
+	_rs_clearseed(entropy_pool0, sizeof(entropy_pool0));
+	_rs_clearseed(rs_buf0, sizeof(rs_buf0));
 
 	/* Message buffer may contain data from previous boot */
 	if (msgbufp->msg_magic == MSG_MAGIC)
