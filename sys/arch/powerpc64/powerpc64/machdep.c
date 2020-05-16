@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2020/05/16 17:11:14 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 2020/05/16 23:06:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -46,20 +47,29 @@ extern void opal_cec_reboot(void);
 
 void opal_printf(const char *fmt, ...);
 
+extern char _start[], _end[];
 extern char __bss_start[];
-extern char end[];
 
 extern uint64_t opal_base;
 extern uint64_t opal_entry;
 
+struct fdt_reg memreg[VM_PHYSSEG_MAX];
+int nmemreg;
+
+void memreg_add(const struct fdt_reg *);
+void memreg_remove(const struct fdt_reg *);
+
 void
 init_powernv(void *fdt)
 {
+	struct fdt_reg reg;
 	char *prop;
 	void *node;
+	int len;
+	int i;
 
 	/* Clear BSS. */
-	memset(__bss_start, 0, end - __bss_start);
+	memset(__bss_start, 0, _end - __bss_start);
 
 	if (!fdt_init(fdt) || fdt_get_size(fdt) == 0)
 		panic("%s: no FDT\r\n", __func__);
@@ -71,11 +81,13 @@ init_powernv(void *fdt)
 		fdt_node_property(node, "opal-entry-address", &prop);
 		opal_entry = bemtoh64((uint64_t *)prop);
 		fdt_node_property(node, "compatible", &prop);
-		printf("%s\n", prop);
 	}
 
 	node = fdt_find_node("/");
 	fdt_node_property(node, "compatible", &prop);
+	printf("%s\n", prop);
+
+	fdt_node_property(node, "model-name", &prop);
 	printf("%s\n", prop);
 
 	fdt_node_property(node, "model", &prop);
@@ -84,10 +96,6 @@ init_powernv(void *fdt)
 	uint32_t pvr;
 	__asm volatile("mfspr %0,287" : "=r"(pvr));
 	printf("PVR %x\n", pvr);
-
-	uint32_t hid;
-	__asm volatile("mfspr %0,1008" : "=r"(hid));
-	printf("HID %x\n", hid);
 
 	uint64_t lpcr;
 	__asm volatile("mfspr %0,318" : "=r"(lpcr));
@@ -101,12 +109,109 @@ init_powernv(void *fdt)
 	__asm volatile("mfmsr %0" : "=r"(msr));
 	printf("MSR %llx\n", msr);
 
-	uint64_t toc;
-	__asm volatile("mr %0, %%r2" : "=r"(toc));
-	printf("TOC %llx\n", toc);
+	/* Add all memory. */
+	node = fdt_find_node("/");
+	for (node = fdt_child_node(node); node; node = fdt_next_node(node)) {
+		len = fdt_node_property(node, "device_type", &prop);
+		if (len <= 0)
+			continue;
+		if (strcmp(prop, "memory") != 0)
+			continue;
+		for (i = 0; nmemreg < nitems(memreg); i++) {
+			if (fdt_get_reg(node, i, &reg))
+				break;
+			if (reg.size == 0)
+				continue;
+			memreg_add(&reg);
+		}
+	}
+
+	/* Remove reserved memory. */
+	node = fdt_find_node("/reserved-memory");
+	if (node) {
+		for (node = fdt_child_node(node); node;
+		     node = fdt_next_node(node)) {
+			if (fdt_get_reg(node, 0, &reg))
+				continue;
+			if (reg.size == 0)
+				continue;
+			memreg_remove(&reg);
+		}
+	}
+
+	/* Remove kernel. */
+	reg.addr = trunc_page((paddr_t)_start);
+	reg.size = round_page((paddr_t)_end) - reg.addr;
+	memreg_remove(&reg);
+
+	/* Remove FDT. */
+	reg.addr = trunc_page((paddr_t)fdt);
+	reg.size = round_page((paddr_t)fdt + fdt_get_size(fdt)) - reg.addr;
+	memreg_remove(&reg);
+
+	for (i = 0; i < nmemreg; i++) {
+		paddr_t start = memreg[i].addr;
+		paddr_t end = start + memreg[i].size;
+
+		printf("0x%016lx - 0x%016lx\n", start, end - 1);
+#ifdef notyet
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), 0);
+#endif
+		physmem += atop(end - start);
+	}
 
 	printf("Hello, World!\n");
 	opal_cec_reboot();
+}
+
+void
+memreg_add(const struct fdt_reg *reg)
+{
+	memreg[nmemreg++] = *reg;
+}
+
+void
+memreg_remove(const struct fdt_reg *reg)
+{
+	uint64_t start = reg->addr;
+	uint64_t end = reg->addr + reg->size;
+	int i, j;
+
+	for (i = 0; i < nmemreg; i++) {
+		uint64_t memstart = memreg[i].addr;
+		uint64_t memend = memreg[i].addr + memreg[i].size;
+
+		if (end <= memstart)
+			continue;
+		if (start >= memend)
+			continue;
+
+		if (start <= memstart)
+			memstart = MIN(end, memend);
+		if (end >= memend)
+			memend = MAX(start, memstart);
+
+		if (start > memstart && end < memend) {
+			if (nmemreg < nitems(memreg)) {
+				memreg[nmemreg].addr = end;
+				memreg[nmemreg].size = memend - end;
+				nmemreg++;
+			}
+			memend = start;
+		}
+		memreg[i].addr = memstart;
+		memreg[i].size = memend - memstart;
+	}
+
+	/* Remove empty slots. */
+	for (i = nmemreg - 1; i >= 0; i--) {
+		if (memreg[i].size == 0) {
+			for (j = i; (j + 1) < nmemreg; j++)
+				memreg[j] = memreg[j + 1];
+			nmemreg--;
+		}
+	}
 }
 
 #define R_PPC64_RELATIVE	22
