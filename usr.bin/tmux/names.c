@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.41 2017/07/21 12:58:02 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.42 2020/05/16 15:01:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -96,6 +96,7 @@ check_window_name(struct window *w)
 	if (strcmp(name, w->name) != 0) {
 		log_debug("@%u new name %s (was %s)", w->id, name, w->name);
 		window_set_name(w, name);
+		server_redraw_window_borders(w);
 		server_status_window(w);
 	} else
 		log_debug("@%u name not changed (still %s)", w->id, w->name);

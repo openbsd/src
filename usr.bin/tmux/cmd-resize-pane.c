@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.46 2020/04/13 14:46:04 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.47 2020/05/16 15:01:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -91,7 +91,6 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 		else
 			window_zoom(wp);
 		server_redraw_window(w);
-		server_status_window(w);
 		return (CMD_RETURN_NORMAL);
 	}
 	server_unzoom_window(w);

@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.24 2020/05/16 14:53:23 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.25 2020/05/16 15:01:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -151,8 +151,7 @@ menu_draw_cb(struct client *c, __unused struct screen_redraw_ctx *ctx0)
 	u_int			 i, px = md->px, py = md->py;
 	struct grid_cell	 gc;
 
-	memcpy(&gc, &grid_default_cell, sizeof gc);
-	style_apply(&gc, c->session->curw->window->options, "mode-style");
+	style_apply(&gc, c->session->curw->window->options, "mode-style", NULL);
 
 	screen_write_start(&ctx, NULL, s);
 	screen_write_clearscreen(&ctx, 8);

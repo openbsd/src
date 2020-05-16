@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.370 2020/05/16 14:53:23 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.371 2020/05/16 15:01:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2687,6 +2687,14 @@ tty_try_colour(struct tty *tty, int colour, const char *type)
 }
 
 static void
+tty_window_default_style(struct grid_cell *gc, struct window_pane *wp)
+{
+	memcpy(gc, &grid_default_cell, sizeof *gc);
+	gc->fg = wp->fg;
+	gc->bg = wp->bg;
+}
+
+static void
 tty_default_colours(struct grid_cell *gc, struct window_pane *wp)
 {
 	struct options	*oo = wp->options;
@@ -2694,8 +2702,12 @@ tty_default_colours(struct grid_cell *gc, struct window_pane *wp)
 
 	if (wp->flags & PANE_STYLECHANGED) {
 		wp->flags &= ~PANE_STYLECHANGED;
-		style_apply(&wp->cached_active_gc, oo, "window-active-style");
-		style_apply(&wp->cached_gc, oo, "window-style");
+
+		tty_window_default_style(&wp->cached_active_gc, wp);
+		style_add(&wp->cached_active_gc, oo, "window-active-style",
+		    NULL);
+		tty_window_default_style(&wp->cached_gc, wp);
+		style_add(&wp->cached_gc, oo, "window-style", NULL);
 	}
 
 	if (gc->fg == 8) {

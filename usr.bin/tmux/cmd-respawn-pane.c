@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.32 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.33 2020/05/16 15:01:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -90,6 +90,7 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	wp->flags |= PANE_REDRAW;
+	server_redraw_window_borders(wp->window);
 	server_status_window(wp->window);
 
 	environ_free(sc.environ);

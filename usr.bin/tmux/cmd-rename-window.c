@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-window.c,v 1.25 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-rename-window.c,v 1.26 2020/05/16 15:01:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,6 +54,7 @@ cmd_rename_window_exec(struct cmd *self, struct cmdq_item *item)
 	window_set_name(wl->window, newname);
 	options_set_number(wl->window->options, "automatic-rename", 0);
 
+	server_redraw_window_borders(wl->window);
 	server_status_window(wl->window);
 	free(newname);
 
