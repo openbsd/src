@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-window.c,v 1.27 2020/04/13 14:46:04 nicm Exp $ */
+/* $OpenBSD: cmd-select-window.c,v 1.28 2020/05/16 16:45:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -85,6 +85,7 @@ static enum cmd_retval
 cmd_select_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
+	struct client		*c = cmdq_get_client(item);
 	struct cmd_find_state	*current = cmdq_get_current(item);
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct winlink		*wl = target->wl;
@@ -141,6 +142,8 @@ cmd_select_window_exec(struct cmd *self, struct cmdq_item *item)
 		}
 		cmdq_insert_hook(s, item, current, "after-select-window");
 	}
+	if (c->session != NULL)
+		s->curw->window->latest = c;
 	recalculate_sizes();
 
 	return (CMD_RETURN_NORMAL);
