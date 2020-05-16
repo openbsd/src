@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.251 2020/05/16 14:55:38 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.252 2020/05/16 15:45:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2678,11 +2678,11 @@ format_defaults_client(struct format_tree *ft, struct client *c)
 		format_add(ft, "client_utf8", "%d", 1);
 	else
 		format_add(ft, "client_utf8", "%d", 0);
-
 	if (c->flags & CLIENT_READONLY)
 		format_add(ft, "client_readonly", "%d", 1);
 	else
 		format_add(ft, "client_readonly", "%d", 0);
+	format_add(ft, "client_flags", "%s", server_client_get_flags(c));
 
 	s = c->session;
 	if (s != NULL)

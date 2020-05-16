@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.336 2020/05/16 15:34:08 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.337 2020/05/16 15:45:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2252,4 +2252,62 @@ server_client_get_cwd(struct client *c, struct session *s)
 	if ((home = find_home()) != NULL)
 		return (home);
 	return ("/");
+}
+
+/* Set client flags. */
+void
+server_client_set_flags(struct client *c, const char *flags)
+{
+	char	*s, *copy, *next;
+	int	 flag, not;
+
+	s = copy = xstrdup (flags);
+	while ((next = strsep(&s, ",")) != NULL) {
+		not = (*next == '!');
+		if (not)
+			next++;
+
+		if (strcmp(next, "no-output") == 0)
+			flag = CLIENT_CONTROL_NOOUTPUT;
+		else if (strcmp(next, "read-only") == 0)
+			flag = CLIENT_READONLY;
+		else if (strcmp(next, "ignore-size") == 0)
+			flag = CLIENT_IGNORESIZE;
+		else
+			continue;
+
+		log_debug("client %s set flag %s", c->name, next);
+		if (not)
+			c->flags &= ~flag;
+		else
+			c->flags |= flag;
+	}
+	free(copy);
+
+}
+
+/*Get client flags. This is only flags useful to show to users. */
+const char *
+server_client_get_flags(struct client *c)
+{
+	static char s[256];
+
+	*s = '\0';
+	if (c->flags & CLIENT_ATTACHED)
+		strlcat(s, "attached,", sizeof s);
+	if (c->flags & CLIENT_CONTROL)
+		strlcat(s, "control-mode,", sizeof s);
+	if (c->flags & CLIENT_IGNORESIZE)
+		strlcat(s, "ignore-size,", sizeof s);
+	if (c->flags & CLIENT_CONTROL_NOOUTPUT)
+		strlcat(s, "no-output,", sizeof s);
+	if (c->flags & CLIENT_READONLY)
+		strlcat(s, "read-only,", sizeof s);
+	if (c->flags & CLIENT_SUSPENDED)
+		strlcat(s, "suspended,", sizeof s);
+	if (c->flags & CLIENT_UTF8)
+		strlcat(s, "UTF-8,", sizeof s);
+	if (*s != '\0')
+		s[strlen(s) - 1] = '\0';
+	return (s);
 }
