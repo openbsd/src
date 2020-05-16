@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.17 2020/05/16 15:24:28 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.18 2020/05/16 15:34:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -242,7 +242,7 @@ format_draw_left(struct screen_write_ctx *octx, u_int available, u_int ocx,
 
 	/* If there is no list left, pass off to the no list function. */
 	if (width_list == 0) {
-		screen_write_start(&ctx, NULL, left);
+		screen_write_start(&ctx, left);
 		screen_write_fast_copy(&ctx, after, 0, 0, width_after, 1);
 		screen_write_stop(&ctx);
 
@@ -334,7 +334,7 @@ format_draw_centre(struct screen_write_ctx *octx, u_int available, u_int ocx,
 
 	/* If there is no list left, pass off to the no list function. */
 	if (width_list == 0) {
-		screen_write_start(&ctx, NULL, centre);
+		screen_write_start(&ctx, centre);
 		screen_write_fast_copy(&ctx, after, 0, 0, width_after, 1);
 		screen_write_stop(&ctx);
 
@@ -431,7 +431,7 @@ format_draw_right(struct screen_write_ctx *octx, u_int available, u_int ocx,
 
 	/* If there is no list left, pass off to the no list function. */
 	if (width_list == 0) {
-		screen_write_start(&ctx, NULL, right);
+		screen_write_start(&ctx, right);
 		screen_write_fast_copy(&ctx, after, 0, 0, width_after, 1);
 		screen_write_stop(&ctx);
 
@@ -536,7 +536,7 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 	 */
 	for (i = 0; i < TOTAL; i++) {
 		screen_init(&s[i], size, 1, 0);
-		screen_write_start(&ctx[i], NULL, &s[i]);
+		screen_write_start(&ctx[i], &s[i]);
 		screen_write_clearendofline(&ctx[i], current_default.bg);
 		width[i] = 0;
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.259 2020/05/16 15:01:31 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.260 2020/05/16 15:34:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -993,26 +993,6 @@ window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 		wme->mode->resize(wme, sx, sy);
 
 	wp->flags |= (PANE_RESIZE|PANE_RESIZED);
-}
-
-void
-window_pane_alternate_on(struct window_pane *wp, struct grid_cell *gc,
-    int cursor)
-{
-	if (!options_get_number(wp->options, "alternate-screen"))
-		return;
-	screen_alternate_on(&wp->base, gc, cursor);
-	wp->flags |= PANE_REDRAW;
-}
-
-void
-window_pane_alternate_off(struct window_pane *wp, struct grid_cell *gc,
-    int cursor)
-{
-	if (!options_get_number(wp->options, "alternate-screen"))
-		return;
-	screen_alternate_off(&wp->base, gc, cursor);
-	wp->flags |= PANE_REDRAW;
 }
 
 void

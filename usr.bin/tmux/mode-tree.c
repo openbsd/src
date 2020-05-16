@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.42 2020/05/16 15:01:31 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.43 2020/05/16 15:34:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -562,7 +562,7 @@ mode_tree_draw(struct mode_tree_data *mtd)
 	w = mtd->width;
 	h = mtd->height;
 
-	screen_write_start(&ctx, NULL, s);
+	screen_write_start(&ctx, s);
 	screen_write_clearscreen(&ctx, 8);
 
 	if (mtd->line_size > 10)
