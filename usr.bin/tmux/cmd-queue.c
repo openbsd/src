@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.95 2020/05/16 16:16:07 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.96 2020/05/16 16:20:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -809,7 +809,7 @@ cmdq_print(struct cmdq_item *item, const char *fmt, ...)
 		}
 		file_print(c, "%s\n", msg);
 	} else {
-		wp = c->session->curw->window->active;
+		wp = server_client_get_pane(c);
 		wme = TAILQ_FIRST(&wp->modes);
 		if (wme == NULL || wme->mode != &window_view_mode) {
 			window_pane_set_mode(wp, NULL, &window_view_mode, NULL,

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.56 2020/04/22 21:15:33 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.57 2020/05/16 16:20:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -89,6 +89,7 @@ cmd_break_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	TAILQ_REMOVE(&w->panes, wp, entry);
+	server_client_remove_pane(wp);
 	window_lost_pane(w, wp);
 	layout_close_pane(wp);
 
