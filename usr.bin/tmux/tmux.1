@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.756 2020/05/16 14:39:40 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.757 2020/05/16 15:11:52 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -3716,6 +3716,22 @@ layouts.
 If suffixed by
 .Ql % ,
 this is a percentage of the window size.
+.Pp
+.It Ic copy-mode-match-style Ar style
+Set the style of search matches in copy mode.
+For how to specify
+.Ar style ,
+see the
+.Sx STYLES
+section.
+.Pp
+.It Ic copy-mode-current-match-style Ar style
+Set the style of the current search match in copy mode.
+For how to specify
+.Ar style ,
+see the
+.Sx STYLES
+section.
 .Pp
 .It Xo Ic mode-keys
 .Op Ic vi | emacs

@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.123 2020/05/16 15:01:31 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.124 2020/05/16 15:11:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -654,6 +654,22 @@ const struct options_table_entry options_table[] = {
 	  .scope = OPTIONS_TABLE_WINDOW,
 	  .choices = options_table_clock_mode_style_list,
 	  .default_num = 1
+	},
+
+	{ .name = "copy-mode-match-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "bg=cyan,fg=black",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ","
+	},
+
+	{ .name = "copy-mode-current-match-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "bg=magenta,fg=black",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ","
 	},
 
 	{ .name = "main-pane-height",
