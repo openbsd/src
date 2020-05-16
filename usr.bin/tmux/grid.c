@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.107 2020/05/16 14:53:23 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.108 2020/05/16 15:49:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1285,7 +1285,7 @@ grid_reflow(struct grid *gd, u_int sx)
 
 		/*
 		 * If the line is exactly right or the first character is wider
-		 * than the targe width, just move it across unchanged.
+		 * than the target width, just move it across unchanged.
 		 */
 		if (width == sx || first > sx) {
 			grid_reflow_move(target, gl);

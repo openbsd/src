@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1034 2020/05/16 15:47:22 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1035 2020/05/16 15:49:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2529,8 +2529,7 @@ void	 screen_set_path(struct screen *, const char *);
 void	 screen_push_title(struct screen *);
 void	 screen_pop_title(struct screen *);
 void	 screen_resize(struct screen *, u_int, u_int, int);
-void	 screen_resize_cursor(struct screen *, u_int, u_int, int, int, u_int *,
-	     u_int *);
+void	 screen_resize_cursor(struct screen *, u_int, u_int, int, int, int);
 void	 screen_set_selection(struct screen *, u_int, u_int, u_int, u_int,
 	     u_int, int, struct grid_cell *);
 void	 screen_clear_selection(struct screen *);
