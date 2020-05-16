@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.28 2020/05/16 15:24:28 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.29 2020/05/16 15:35:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -233,7 +233,7 @@ window_buffer_draw(__unused void *modedata, void *itemdata,
 		while (end != pdata + psize && *end != '\n')
 			end++;
 		buf = xreallocarray(buf, 4, end - start + 1);
-		utf8_strvis(buf, start, end - start, VIS_OCTAL|VIS_TAB);
+		utf8_strvis(buf, start, end - start, VIS_OCTAL|VIS_CSTYLE|VIS_TAB);
 		if (*buf != '\0') {
 			screen_write_cursormove(ctx, cx, cy + i, 0);
 			screen_write_nputs(ctx, sx, &grid_default_cell, "%s",

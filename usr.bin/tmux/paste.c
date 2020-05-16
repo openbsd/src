@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.41 2020/05/16 15:24:28 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.42 2020/05/16 15:35:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -312,7 +312,7 @@ paste_make_sample(struct paste_buffer *pb)
 {
 	char		*buf;
 	size_t		 len, used;
-	const int	 flags = VIS_OCTAL|VIS_TAB|VIS_NL;
+	const int	 flags = VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL;
 	const size_t	 width = 200;
 
 	len = pb->size;
