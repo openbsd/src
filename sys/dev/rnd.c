@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.211 2020/05/16 15:53:48 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.212 2020/05/16 19:07:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -142,8 +142,6 @@ struct timeout rnd_timeout;
 
 static u_int32_t entropy_pool[POOLWORDS];
 u_int32_t entropy_pool0[POOLWORDS] __attribute__((section(".openbsd.randomdata")));
-u_int	entropy_add_ptr;
-u_char	entropy_input_rotate;
 
 void	dequeue_randomness(void *);
 void	add_entropy_words(const u_int32_t *, u_int);
@@ -239,6 +237,8 @@ add_entropy_words(const u_int32_t *buf, u_int n)
 		0x00000000, 0x3b6e20c8, 0x76dc4190, 0x4db26158,
 		0xedb88320, 0xd6d6a3e8, 0x9b64c2b0, 0xa00ae278
 	};
+	static u_int	entropy_add_ptr;
+	static u_char	entropy_input_rotate;
 
 	for (; n--; buf++) {
 		u_int32_t w = (*buf << entropy_input_rotate) |
