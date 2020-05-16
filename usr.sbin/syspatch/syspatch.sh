@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.159 2019/12/10 17:11:06 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.160 2020/05/16 12:36:01 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -43,7 +43,8 @@ apply_patch()
 	echo "Installing patch ${_patch##${_OSrev}-}"
 	install -d ${_edir} ${_PDIR}/${_patch}
 
-	${_BSDMP} && _s="-s @usr/share/relink/kernel/GENERIC/.*@@g" ||
+	(($(sysctl -n hw.ncpufound) > 1)) &&
+		_s="-s @usr/share/relink/kernel/GENERIC/.*@@g" ||
 		_s="-s @usr/share/relink/kernel/GENERIC.MP/.*@@g"
 	_files="$(tar -xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_edir} \
 		${_s})" || { rm -r ${_PDIR}/${_patch}; return 1; }
@@ -284,13 +285,12 @@ _MIRROR=$(while read _line; do _line=${_line%%#*}; [[ -n ${_line} ]] &&
 	_MIRROR=https://cdn.openbsd.org/pub/OpenBSD
 _MIRROR="${_MIRROR}/syspatch/${_KERNV[0]}/$(machine)"
 
-(($(sysctl -n hw.ncpufound) > 1)) && _BSDMP=true || _BSDMP=false
 _PATCH_APPLIED=false
 _PDIR="/var/syspatch"
 _TMP=$(mktemp -d -p ${TMPDIR:-/tmp} syspatch.XXXXXXXXXX)
 _KARL=false
 
-readonly _BSDMP _KERNV _MIRROR _OSrev _PDIR _TMP
+readonly _KERNV _MIRROR _OSrev _PDIR _TMP
 
 trap 'trap_handler' EXIT
 trap exit HUP INT TERM
