@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.751 2020/05/16 14:10:29 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.752 2020/05/16 14:13:37 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -4661,7 +4661,8 @@ for the terminal default colour; or a hexadecimal RGB string such as
 Set the background colour.
 .It Ic none
 Set no attributes (turn off any active attributes).
-.It Xo Ic bright
+.It Xo Ic acs ,
+.Ic bright
 (or
 .Ic bold ) ,
 .Ic dim ,
@@ -4681,6 +4682,8 @@ Set an attribute.
 Any of the attributes may be prefixed with
 .Ql no
 to unset.
+.Ic acs
+is the terminal alternate character set.
 .It Xo Ic align=left
 (or
 .Ic noalign ) ,

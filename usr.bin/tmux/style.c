@@ -1,4 +1,4 @@
-/* $OpenBSD: style.c,v 1.24 2019/09/15 21:42:57 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.25 2020/05/16 14:13:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -26,7 +26,7 @@
 #include "tmux.h"
 
 /* Mask for bits not included in style. */
-#define STYLE_ATTR_MASK (~GRID_ATTR_CHARSET)
+#define STYLE_ATTR_MASK (~0)
 
 /* Default style. */
 static struct style style_default = {
@@ -247,7 +247,7 @@ style_tostring(struct style *sy)
 		    colour_tostring(gc->bg));
 		comma = ",";
 	}
-	if (gc->attr != 0 && gc->attr != GRID_ATTR_CHARSET) {
+	if (gc->attr != 0) {
 		xsnprintf(s + off, sizeof s - off, "%s%s", comma,
 		    attributes_tostring(gc->attr));
 		comma = ",";
