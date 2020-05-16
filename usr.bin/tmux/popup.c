@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.13 2020/04/13 18:59:41 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.14 2020/05/16 15:24:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,6 +40,8 @@ struct popup_data {
 	struct job		 *job;
 	struct input_ctx	 *ictx;
 	int			  status;
+	popup_close_cb		  cb;
+	void			 *arg;
 
 	u_int			  px;
 	u_int			  py;
@@ -149,6 +151,9 @@ popup_free_cb(struct client *c)
 	struct popup_data	*pd = c->overlay_data;
 	struct cmdq_item	*item = pd->item;
 	u_int			 i;
+
+	if (pd->cb != NULL)
+		pd->cb(pd->status, pd->arg);
 
 	if (item != NULL) {
 		if (pd->ictx != NULL &&
@@ -403,7 +408,7 @@ int
 popup_display(int flags, struct cmdq_item *item, u_int px, u_int py, u_int sx,
     u_int sy, u_int nlines, const char **lines, const char *shellcmd,
     const char *cmd, const char *cwd, struct client *c,
-    struct cmd_find_state *fs)
+    struct cmd_find_state *fs, popup_close_cb cb, void *arg)
 {
 	struct popup_data	*pd;
 	u_int			 i;
@@ -422,6 +427,8 @@ popup_display(int flags, struct cmdq_item *item, u_int px, u_int py, u_int sx,
 	pd->c = c;
 	pd->c->references++;
 
+	pd->cb = cb;
+	pd->arg = arg;
 	pd->status = 128 + SIGHUP;
 
 	if (fs != NULL)

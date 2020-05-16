@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.40 2019/04/02 09:03:39 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.41 2020/05/16 15:24:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -295,6 +295,15 @@ paste_set(char *data, size_t size, const char *name, char **cause)
 	RB_INSERT(paste_time_tree, &paste_by_time, pb);
 
 	return (0);
+}
+
+/* Set paste data without otherwise changing it. */
+void
+paste_replace(struct paste_buffer *pb, char *data, size_t size)
+{
+	free(pb->data);
+	pb->data = data;
+	pb->size = size;
 }
 
 /* Convert start of buffer into a nice string. */

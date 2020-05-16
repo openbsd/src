@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.199 2020/05/16 14:26:33 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.200 2020/05/16 15:24:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -443,6 +443,7 @@ main(int argc, char **argv)
 
 	/* Override keys to vi if VISUAL or EDITOR are set. */
 	if ((s = getenv("VISUAL")) != NULL || (s = getenv("EDITOR")) != NULL) {
+		options_set_string(global_options, "editor", 0, "%s", s);
 		if (strrchr(s, '/') != NULL)
 			s = strrchr(s, '/') + 1;
 		if (strstr(s, "vi") != NULL)

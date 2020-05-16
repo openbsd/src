@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.16 2020/04/09 15:35:27 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.17 2020/05/16 15:24:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -738,7 +738,7 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 
 	/*
 	 * Draw the screens. How they are arranged depends on where the list
-	 * appearsq.
+	 * appears.
 	 */
 	switch (list_align) {
 	case STYLE_ALIGN_DEFAULT:

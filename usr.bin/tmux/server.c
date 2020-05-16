@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.188 2020/03/12 09:26:34 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.189 2020/05/16 15:24:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -481,4 +481,5 @@ server_child_stopped(pid_t pid, int status)
 			}
 		}
 	}
+	job_check_died(pid, status);
 }
