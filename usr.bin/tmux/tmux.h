@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1023 2020/05/16 14:49:50 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1024 2020/05/16 14:53:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -928,8 +928,8 @@ struct window_pane {
 
 	struct input_ctx *ictx;
 
-	struct style	 cached_style;
-	struct style	 cached_active_style;
+	struct grid_cell cached_gc;
+	struct grid_cell cached_active_gc;
 	int		*palette;
 
 	int		 pipe_fd;
@@ -1825,7 +1825,14 @@ char		*format_expand(struct format_tree *, const char *);
 char		*format_single(struct cmdq_item *, const char *,
 		     struct client *, struct session *, struct winlink *,
 		     struct window_pane *);
+char		*format_single_from_state(struct cmdq_item *, const char *,
+		    struct client *, struct cmd_find_state *);
 char		*format_single_from_target(struct cmdq_item *, const char *);
+struct format_tree *format_create_defaults(struct cmdq_item *, struct client *,
+		     struct session *, struct winlink *, struct window_pane *);
+struct format_tree *format_create_from_state(struct cmdq_item *,
+		     struct client *, struct cmd_find_state *);
+struct format_tree *format_create_from_target(struct cmdq_item *);
 void		 format_defaults(struct format_tree *, struct client *,
 		     struct session *, struct winlink *, struct window_pane *);
 void		 format_defaults_window(struct format_tree *, struct window *);
@@ -2356,6 +2363,8 @@ int	 attributes_fromstring(const char *);
 extern const struct grid_cell grid_default_cell;
 void	 grid_empty_line(struct grid *, u_int, u_int);
 int	 grid_cells_equal(const struct grid_cell *, const struct grid_cell *);
+int	 grid_cells_look_equal(const struct grid_cell *,
+	     const struct grid_cell *);
 struct grid *grid_create(u_int, u_int, u_int);
 void	 grid_destroy(struct grid *);
 int	 grid_compare(struct grid *, struct grid *);
@@ -2811,10 +2820,8 @@ int		 style_parse(struct style *,const struct grid_cell *,
 const char	*style_tostring(struct style *);
 void		 style_apply(struct grid_cell *, struct options *,
 		     const char *);
-int		 style_equal(struct style *, struct style *);
 void		 style_set(struct style *, const struct grid_cell *);
 void		 style_copy(struct style *, struct style *);
-int		 style_is_default(struct style *);
 
 /* spawn.c */
 struct winlink	*spawn_window(struct spawn_context *, char **);
