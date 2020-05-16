@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.77 2020/05/16 14:22:51 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.78 2020/05/16 14:34:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -83,6 +83,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_DIM] = { TTYCODE_STRING, "dim" },
 	[TTYC_DL1] = { TTYCODE_STRING, "dl1" },
 	[TTYC_DL] = { TTYCODE_STRING, "dl" },
+	[TTYC_DSBP] = { TTYCODE_STRING, "Dsbp" },
 	[TTYC_DSMG] = { TTYCODE_STRING, "Dsmg" },
 	[TTYC_E3] = { TTYCODE_STRING, "E3" },
 	[TTYC_ECH] = { TTYCODE_STRING, "ech" },
@@ -90,6 +91,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_EL1] = { TTYCODE_STRING, "el1" },
 	[TTYC_EL] = { TTYCODE_STRING, "el" },
 	[TTYC_ENACS] = { TTYCODE_STRING, "enacs" },
+	[TTYC_ENBP] = { TTYCODE_STRING, "Enbp" },
 	[TTYC_ENMG] = { TTYCODE_STRING, "Enmg" },
 	[TTYC_FSL] = { TTYCODE_STRING, "fsl" },
 	[TTYC_HOME] = { TTYCODE_STRING, "home" },
@@ -555,11 +557,11 @@ tty_term_create(struct tty *tty, char *name, int *feat, int fd, char **cause)
 	if ((tty_term_flag(term, TTYC_TC) || tty_term_has(term, TTYC_RGB)) &&
 	    (!tty_term_has(term, TTYC_SETRGBF) ||
 	    !tty_term_has(term, TTYC_SETRGBB)))
-		tty_add_features(feat, "RGB", ":,");
+		tty_add_features(feat, "RGB", ",");
 
-	/* Add feature if terminal has XT. */
+	/* Add some features if terminal has XT. */
 	if (tty_term_flag(term, TTYC_XT))
-		tty_add_features(feat, "title", ":,");
+		tty_add_features(feat, "bpaste,title", ",");
 
 	/* Apply the features and overrides again. */
 	tty_apply_features(term, *feat);

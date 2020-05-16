@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.754 2020/05/16 14:30:17 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.755 2020/05/16 14:34:44 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -5568,6 +5568,8 @@ $ printf '\e033]12;red\e033\e\e'
 .Ed
 .It Em \&Cmg, \&Clmg, \&Dsmg , \&Enmg
 Set, clear, disable or enable DECSLRM margins.
+.It Em \&Dsbp , \&Enbp
+Disable and enable bracketed paste.
 .It Em \&Smol
 Enable the overline attribute.
 .It Em \&Smulx

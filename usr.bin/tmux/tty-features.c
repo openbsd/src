@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.10 2020/05/16 14:31:35 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.11 2020/05/16 14:34:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -25,7 +25,6 @@
 
 /*
  * Still hardcoded:
- * - bracket paste (sent if application asks for it);
  * - mouse (under kmous capability);
  * - focus events (under XT and focus-events option);
  * - default colours (under AX or op capabilities);
@@ -123,6 +122,18 @@ static struct tty_feature tty_feature_usstyle = {
 	0
 };
 
+/* Terminal supports cursor bracketed paste. */
+static const char *tty_feature_bpaste_capabilities[] = {
+	"Enbp=\E[?2004h",
+	"Dsbp=\\E[?2004l",
+	NULL
+};
+static struct tty_feature tty_feature_bpaste = {
+	"bpaste",
+	tty_feature_bpaste_capabilities,
+	0
+};
+
 /* Terminal supports cursor styles. */
 static const char *tty_feature_cstyle_capabilities[] = {
 	"Ss=\\E[%p1%d q",
@@ -193,6 +204,7 @@ static struct tty_feature tty_feature_rectfill = {
 /* Available terminal features. */
 static const struct tty_feature *tty_features[] = {
 	&tty_feature_256,
+	&tty_feature_bpaste,
 	&tty_feature_clipboard,
 	&tty_feature_ccolour,
 	&tty_feature_cstyle,
@@ -297,19 +309,19 @@ tty_default_features(int *feat, const char *name, u_int version)
 		const char	*features;
 	} table[] = {
 		{ .name = "mintty",
-		  .features = "256,RGB,ccolour,clipboard,cstyle,margins,strikethrough,overline,title"
+		  .features = "256,RGB,bpaste,ccolour,clipboard,cstyle,margins,overline,strikethrough,title"
 		},
 		{ .name = "tmux",
-		  .features = "256,RGB,ccolour,clipboard,cstyle,overline,strikethough,title,usstyle"
+		  .features = "256,RGB,bpaste,ccolour,clipboard,cstyle,overline,strikethough,title,usstyle"
 		},
 		{ .name = "rxvt-unicode",
 		  .features = "256,title"
 		},
 		{ .name = "iTerm2",
-		  .features = "256,RGB,clipboard,cstyle,margins,strikethrough,sync,title"
+		  .features = "256,RGB,bpaste,clipboard,cstyle,margins,strikethrough,sync,title"
 		},
 		{ .name = "XTerm",
-		  .features = "256,RGB,ccolour,clipboard,cstyle,margins,rectfill,strikethrough,title"
+		  .features = "256,RGB,bpaste,ccolour,clipboard,cstyle,margins,rectfill,strikethrough,title"
 		}
 	};
 	u_int	i;
