@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1029 2020/05/16 15:24:28 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1030 2020/05/16 15:27:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1305,19 +1305,21 @@ struct tty_ctx {
 	u_int		 orupper;
 	u_int		 orlower;
 
-	/* Pane offset. */
+	/* Target region (usually pane) offset and size. */
 	u_int		 xoff;
 	u_int		 yoff;
+	u_int		 sx;
+	u_int		 sy;
 
 	/* The background colour used for clearing (erasing). */
 	u_int		 bg;
 
-	/* Window offset and size. */
+	/* Containing region (usually window) offset and size. */
 	int		 bigger;
-	u_int		 ox;
-	u_int		 oy;
-	u_int		 sx;
-	u_int		 sy;
+	u_int		 wox;
+	u_int		 woy;
+	u_int		 wsx;
+	u_int		 wsy;
 };
 
 /* Saved message entry. */
