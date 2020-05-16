@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.286 2020/05/16 16:03:30 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.287 2020/05/16 16:03:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2445,7 +2445,8 @@ window_copy_search_lr_regex(struct grid *gd, u_int *ppx, u_int *psx, u_int py,
 		len += gd->sx;
 	}
 
-	if (regexec(reg, buf, 1, &regmatch, eflags) == 0) {
+	if (regexec(reg, buf, 1, &regmatch, eflags) == 0 &&
+	    regmatch.rm_so != regmatch.rm_eo) {
 		foundx = first;
 		foundy = py;
 		window_copy_cstrtocellpos(gd, len, &foundx, &foundy,
@@ -2547,6 +2548,8 @@ window_copy_last_regex(struct grid *gd, u_int py, u_int first, u_int last,
 	foundy = py;
 	oldx = first;
 	while (regexec(preg, buf + px, 1, &regmatch, eflags) == 0) {
+		if (regmatch.rm_so == regmatch.rm_eo)
+			break;
 		window_copy_cstrtocellpos(gd, len, &foundx, &foundy,
 		    buf + px + regmatch.rm_so);
 		if (foundy > py || foundx >= last)
