@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1031 2020/05/16 15:34:08 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1032 2020/05/16 15:40:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2088,6 +2088,8 @@ char		*args_print(struct args *);
 char		*args_escape(const char *);
 int		 args_has(struct args *, u_char);
 const char	*args_get(struct args *, u_char);
+u_char		 args_first(struct args *, struct args_entry **);
+u_char		 args_next(struct args_entry **);
 const char	*args_first_value(struct args *, u_char, struct args_value **);
 const char	*args_next_value(struct args_value **);
 long long	 args_strtonum(struct args *, u_char, long long, long long,
