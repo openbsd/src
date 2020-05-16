@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.47 2020/04/22 21:01:28 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.48 2020/05/16 14:10:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -38,13 +38,13 @@ static void		 window_tree_key(struct window_mode_entry *,
 #define WINDOW_TREE_DEFAULT_FORMAT \
 	"#{?pane_format," \
 		"#{?pane_marked,#[reverse],}" \
-		"#{pane_current_command}#{?pane_active,*,}#{?pane_marked,M,} \"#{pane_title}\"" \
+		"#{pane_current_command}#{?pane_active,*,}#{?pane_marked,M,}" \
+		"#{?#{&&:#{pane_title},#{!=:#{pane_title},#{host_short}}},: \"#{pane_title}\",}" \
 	"," \
 		"#{?window_format," \
 			"#{?window_marked_flag,#[reverse],}" \
-			"#{window_name}#{window_flags} " \
-			"(#{window_panes} panes)" \
-			"#{?#{==:#{window_panes},1}, \"#{pane_title}\",}" \
+			"#{window_name}#{window_flags}" \
+			"#{?#{&&:#{==:#{window_panes},1},#{&&:#{pane_title},#{!=:#{pane_title},#{host_short}}}},: \"#{pane_title}\",}" \
 		"," \
 			"#{session_windows} windows" \
 			"#{?session_grouped, " \

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.26 2020/01/28 08:06:11 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.27 2020/05/16 14:10:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,8 +37,7 @@ static void		 window_client_key(struct window_mode_entry *,
 #define WINDOW_CLIENT_DEFAULT_COMMAND "detach-client -t '%%'"
 
 #define WINDOW_CLIENT_DEFAULT_FORMAT \
-	"session #{session_name} " \
-	"(#{client_width}x#{client_height}, #{t:client_activity})"
+	"#{t/p:client_activity}: session #{session_name}"
 
 static const struct menu_item window_client_menu_items[] = {
 	{ "Detach", 'd', NULL },
