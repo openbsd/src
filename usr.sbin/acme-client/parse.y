@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2020/05/10 12:06:18 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.41 2020/05/16 20:19:23 sthen Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -101,7 +101,7 @@ typedef struct {
 %}
 
 %token	AUTHORITY URL API ACCOUNT
-%token	DOMAIN ALTERNATIVE NAMES CERT FULL CHAIN KEY SIGN WITH CHALLENGEDIR
+%token	DOMAIN ALTERNATIVE NAME NAMES CERT FULL CHAIN KEY SIGN WITH CHALLENGEDIR
 %token	YES NO
 %token	INCLUDE
 %token	ERROR
@@ -457,6 +457,7 @@ lookup(char *s)
 		{"full",		FULL},
 		{"include",		INCLUDE},
 		{"key",			KEY},
+		{"name",		NAME},
 		{"names",		NAMES},
 		{"rsa",			RSA},
 		{"sign",		SIGN},
