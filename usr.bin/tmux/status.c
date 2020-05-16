@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.211 2020/05/16 16:16:07 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.212 2020/05/16 16:33:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -827,7 +827,7 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 		return (1);
 	case 'b':
 	case 'B':
-		*new_key = 'b'|KEYC_ESCAPE;
+		*new_key = 'b'|KEYC_META;
 		return (1);
 	case 'd':
 		*new_key = '\025';
@@ -836,7 +836,7 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 	case 'E':
 	case 'w':
 	case 'W':
-		*new_key = 'f'|KEYC_ESCAPE;
+		*new_key = 'f'|KEYC_META;
 		return (1);
 	case 'p':
 		*new_key = '\031'; /* C-y */
@@ -1158,7 +1158,7 @@ process_key:
 		c->prompt_index = idx;
 
 		goto changed;
-	case 'f'|KEYC_ESCAPE:
+	case 'f'|KEYC_META:
 	case KEYC_RIGHT|KEYC_CTRL:
 		ws = options_get_string(oo, "word-separators");
 
@@ -1182,7 +1182,7 @@ process_key:
 			c->prompt_index--;
 
 		goto changed;
-	case 'b'|KEYC_ESCAPE:
+	case 'b'|KEYC_META:
 	case KEYC_LEFT|KEYC_CTRL:
 		ws = options_get_string(oo, "word-separators");
 

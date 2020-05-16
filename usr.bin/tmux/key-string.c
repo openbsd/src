@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.56 2020/04/09 13:52:31 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.57 2020/05/16 16:33:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -143,7 +143,7 @@ key_string_get_modifiers(const char **string)
 			break;
 		case 'M':
 		case 'm':
-			modifiers |= KEYC_ESCAPE;
+			modifiers |= KEYC_META;
 			break;
 		case 'S':
 		case 's':
@@ -265,7 +265,7 @@ key_string_lookup_key(key_code key)
 	/* Fill in the modifiers. */
 	if (key & KEYC_CTRL)
 		strlcat(out, "C-", sizeof out);
-	if (key & KEYC_ESCAPE)
+	if (key & KEYC_META)
 		strlcat(out, "M-", sizeof out);
 	if (key & KEYC_SHIFT)
 		strlcat(out, "S-", sizeof out);

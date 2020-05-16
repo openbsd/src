@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.47 2020/05/16 16:16:07 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.48 2020/05/16 16:33:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -987,7 +987,7 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 	choice = -1;
 	if (*key >= '0' && *key <= '9')
 		choice = (*key) - '0';
-	else if (((*key) & KEYC_MASK_MOD) == KEYC_ESCAPE) {
+	else if (((*key) & KEYC_MASK_MOD) == KEYC_META) {
 		tmp = (*key) & KEYC_MASK_KEY;
 		if (tmp >= 'a' && tmp <= 'z')
 			choice = 10 + (tmp - 'a');
@@ -1111,12 +1111,12 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 			mode_tree_build(mtd);
 		}
 		break;
-	case '-'|KEYC_ESCAPE:
+	case '-'|KEYC_META:
 		TAILQ_FOREACH(mti, &mtd->children, entry)
 			mti->expanded = 0;
 		mode_tree_build(mtd);
 		break;
-	case '+'|KEYC_ESCAPE:
+	case '+'|KEYC_META:
 		TAILQ_FOREACH(mti, &mtd->children, entry)
 			mti->expanded = 1;
 		mode_tree_build(mtd);

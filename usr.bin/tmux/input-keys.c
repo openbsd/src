@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.72 2020/05/16 16:30:59 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.73 2020/05/16 16:33:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -336,12 +336,12 @@ static const key_code input_key_modifiers[] = {
 	0,
 	0,
 	KEYC_SHIFT|KEYC_XTERM,
-	KEYC_ESCAPE|KEYC_XTERM,
-	KEYC_SHIFT|KEYC_ESCAPE|KEYC_XTERM,
+	KEYC_META|KEYC_XTERM,
+	KEYC_SHIFT|KEYC_META|KEYC_XTERM,
 	KEYC_CTRL|KEYC_XTERM,
 	KEYC_SHIFT|KEYC_CTRL|KEYC_XTERM,
-	KEYC_ESCAPE|KEYC_CTRL|KEYC_XTERM,
-	KEYC_SHIFT|KEYC_ESCAPE|KEYC_CTRL|KEYC_XTERM
+	KEYC_META|KEYC_CTRL|KEYC_XTERM,
+	KEYC_SHIFT|KEYC_META|KEYC_CTRL|KEYC_XTERM
 };
 
 /* Input key comparison function. */
@@ -449,9 +449,9 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 	 * If this is a normal 7-bit key, just send it, with a leading escape
 	 * if necessary. If it is a UTF-8 key, split it and send it.
 	 */
-	justkey = (key & ~(KEYC_XTERM|KEYC_ESCAPE));
+	justkey = (key & ~(KEYC_XTERM|KEYC_META));
 	if (justkey <= 0x7f) {
-		if (key & KEYC_ESCAPE)
+		if (key & KEYC_META)
 			bufferevent_write(bev, "\033", 1);
 		ud.data[0] = justkey;
 		bufferevent_write(bev, &ud.data[0], 1);
@@ -460,7 +460,7 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 	if (justkey > 0x7f && justkey < KEYC_BASE) {
 		if (utf8_split(justkey, &ud) != UTF8_DONE)
 			return (-1);
-		if (key & KEYC_ESCAPE)
+		if (key & KEYC_META)
 			bufferevent_write(bev, "\033", 1);
 		bufferevent_write(bev, ud.data, ud.size);
 		return (0);
@@ -483,7 +483,7 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 	log_debug("found key 0x%llx: \"%s\"", key, ike->data);
 
 	/* Prefix a \033 for escape. */
-	if (key & KEYC_ESCAPE)
+	if (key & KEYC_META)
 		bufferevent_write(bev, "\033", 1);
 	bufferevent_write(bev, ike->data, datalen);
 	return (0);
