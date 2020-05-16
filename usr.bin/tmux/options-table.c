@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.127 2020/05/16 16:02:24 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.128 2020/05/16 16:10:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -793,6 +793,15 @@ const struct options_table_entry options_table[] = {
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of the current search match in copy mode."
+	},
+
+	{ .name = "copy-mode-mark-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "bg=red,fg=black",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of the marked line in copy mode."
 	},
 
 	{ .name = "main-pane-height",
