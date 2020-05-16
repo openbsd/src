@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.128 2020/05/16 14:16:25 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.129 2020/05/16 14:18:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1150,7 +1150,7 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
 	*size = 5 + i;
 
 	/* Add terminal features. */
-	if (strncmp(tmp, "ITerm2 ", 7) == 0) {
+	if (strncmp(tmp, "iTerm2 ", 7) == 0) {
 		tty_add_features(&c->term_features,
 		    "256,"
 		    "RGB,"
