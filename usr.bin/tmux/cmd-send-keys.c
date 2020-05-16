@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.62 2020/05/16 16:32:21 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.63 2020/05/16 16:35:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -71,13 +71,13 @@ cmd_send_keys_inject_key(struct cmdq_item *item, struct cmdq_item *after,
 
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme == NULL || wme->mode->key_table == NULL) {
-		if (window_pane_key(wp, tc, s, wl, key|KEYC_XTERM, NULL) != 0)
+		if (window_pane_key(wp, tc, s, wl, key, NULL) != 0)
 			return (NULL);
 		return (item);
 	}
 	table = key_bindings_get_table(wme->mode->key_table(wme), 1);
 
-	bd = key_bindings_get(table, key & ~KEYC_XTERM);
+	bd = key_bindings_get(table, key & ~KEYC_MASK_FLAGS);
 	if (bd != NULL) {
 		table->references++;
 		after = key_bindings_dispatch(bd, after, tc, NULL, target);

@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.126 2020/05/16 16:10:28 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.127 2020/05/16 16:35:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -190,7 +190,7 @@ key_bindings_add(const char *name, key_code key, const char *note, int repeat,
 
 	table = key_bindings_get_table(name, 1);
 
-	bd = key_bindings_get(table, key & ~KEYC_XTERM);
+	bd = key_bindings_get(table, key & ~KEYC_MASK_FLAGS);
 	if (bd != NULL) {
 		RB_REMOVE(key_bindings, &table->key_bindings, bd);
 		key_bindings_free(bd);
@@ -217,7 +217,7 @@ key_bindings_remove(const char *name, key_code key)
 	if (table == NULL)
 		return;
 
-	bd = key_bindings_get(table, key & ~KEYC_XTERM);
+	bd = key_bindings_get(table, key & ~KEYC_MASK_FLAGS);
 	if (bd == NULL)
 		return;
 

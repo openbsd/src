@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.28 2020/05/16 15:38:14 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.29 2020/05/16 16:35:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -81,7 +81,7 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 		return;
 	}
 	if (*s != '-' && item->key != KEYC_UNKNOWN && item->key != KEYC_NONE) {
-		key = key_string_lookup_key(item->key);
+		key = key_string_lookup_key(item->key, 0);
 		xasprintf(&name, "%s#[default] #[align=right](%s)", s, key);
 	} else
 		xasprintf(&name, "%s", s);
@@ -226,7 +226,7 @@ menu_key_cb(struct client *c, struct key_event *event)
 			goto chosen;
 		}
 	}
-	switch (event->key) {
+	switch (event->key & ~KEYC_MASK_FLAGS) {
 	case KEYC_UP:
 	case 'k':
 		if (old == -1)

@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.48 2020/05/16 16:33:16 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.49 2020/05/16 16:35:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -987,7 +987,7 @@ mode_tree_key(struct mode_tree_data *mtd, struct client *c, key_code *key,
 	choice = -1;
 	if (*key >= '0' && *key <= '9')
 		choice = (*key) - '0';
-	else if (((*key) & KEYC_MASK_MOD) == KEYC_META) {
+	else if (((*key) & KEYC_MASK_MODIFIERS) == KEYC_META) {
 		tmp = (*key) & KEYC_MASK_KEY;
 		if (tmp >= 'a' && tmp <= 'z')
 			choice = 10 + (tmp - 'a');

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.96 2020/05/16 16:20:59 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.97 2020/05/16 16:35:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -547,7 +547,7 @@ cmdq_add_message(struct cmdq_item *item)
 	if (c != NULL) {
 		name = c->name;
 		if (c->session != NULL && state->event.key != KEYC_NONE) {
-			key = key_string_lookup_key(state->event.key);
+			key = key_string_lookup_key(state->event.key, 0);
 			server_add_message("%s key %s: %s", name, key, tmp);
 		} else
 			server_add_message("%s command: %s", name, tmp);
