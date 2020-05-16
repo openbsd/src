@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1027 2020/05/16 15:11:52 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1028 2020/05/16 15:16:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1602,6 +1602,8 @@ struct client {
 #define PROMPT_INCREMENTAL 0x4
 #define PROMPT_NOFORMAT 0x8
 #define PROMPT_KEY 0x10
+#define PROMPT_WINDOW 0x20
+#define PROMPT_TARGET 0x40
 	int		 prompt_flags;
 
 	struct session	*session;
