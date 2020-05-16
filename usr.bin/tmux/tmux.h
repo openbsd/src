@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1017 2020/05/16 14:22:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1018 2020/05/16 14:26:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -63,9 +63,12 @@ struct winlink;
 /* Client-server protocol version. */
 #define PROTOCOL_VERSION 8
 
-/* Default configuration files. */
+/* Default configuration files and socket paths. */
 #ifndef TMUX_CONF
 #define TMUX_CONF "/etc/tmux.conf:~/.tmux.conf"
+#endif
+#ifndef TMUX_SOCK
+#define TMUX_SOCK "$TMUX_TMPDIR:" _PATH_TMP
 #endif
 
 /* Minimum layout cell size, NOT including border lines. */
@@ -1746,6 +1749,8 @@ const char	*sig2name(int);
 const char	*find_cwd(void);
 const char	*find_home(void);
 const char	*getversion(void);
+void		 expand_paths(const char *, char ***, u_int *);
+
 
 /* proc.c */
 struct imsg;

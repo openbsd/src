@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.7 2020/05/16 14:22:51 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.8 2020/05/16 14:26:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -27,7 +27,7 @@
  * Still hardcoded:
  * - bracket paste (sent if application asks for it);
  * - mouse (under kmous capability);
- * - focus events (under focus-events option);
+ * - focus events (under XT and focus-events option);
  * - default colours (under AX or op capabilities);
  * - AIX colours (under colors >= 16);
  * - alternate escape (under XT).
