@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.15 2019/05/19 08:55:27 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.16 2020/05/16 08:35:49 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -60,7 +60,7 @@ int kd_init(struct kcov_dev *, unsigned long);
 void kd_free(struct kcov_dev *);
 struct kcov_dev *kd_lookup(int);
 
-static inline int inintr(void);
+static struct kcov_dev *kd_curproc(int);
 
 TAILQ_HEAD(, kcov_dev) kd_list = TAILQ_HEAD_INITIALIZER(kd_list);
 
@@ -87,20 +87,8 @@ __sanitizer_cov_trace_pc(void)
 	struct kcov_dev *kd;
 	uint64_t idx;
 
-	/*
-	 * Do not trace before kcovopen() has been called at least once.
-	 * At this point, all secondary CPUs have booted and accessing curcpu()
-	 * is safe.
-	 */
-	if (kcov_cold)
-		return;
-
-	/* Do not trace in interrupts to prevent noisy coverage. */
-	if (inintr())
-		return;
-
-	kd = curproc->p_kd;
-	if (kd == NULL || kd->kd_mode != KCOV_MODE_TRACE_PC)
+	kd = kd_curproc(KCOV_MODE_TRACE_PC);
+	if (kd == NULL)
 		return;
 
 	idx = kd->kd_buf[0];
@@ -124,20 +112,8 @@ trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, uintptr_t pc)
 	struct kcov_dev *kd;
 	uint64_t idx;
 
-	/*
-	 * Do not trace before kcovopen() has been called at least once.
-	 * At this point, all secondary CPUs have booted and accessing curcpu()
-	 * is safe.
-	 */
-	if (kcov_cold)
-		return;
-
-	/* Do not trace in interrupts to prevent noisy coverage. */
-	if (inintr())
-		return;
-
-	kd = curproc->p_kd;
-	if (kd == NULL || kd->kd_mode != KCOV_MODE_TRACE_CMP)
+	kd = kd_curproc(KCOV_MODE_TRACE_CMP);
+	if (kd == NULL)
 		return;
 
 	idx = kd->kd_buf[0];
@@ -430,13 +406,29 @@ kd_free(struct kcov_dev *kd)
 	free(kd, M_SUBPROC, sizeof(*kd));
 }
 
-static inline int
-inintr(void)
+static struct kcov_dev *
+kd_curproc(int mode)
 {
+	struct kcov_dev *kd;
+
+	/*
+	 * Do not trace before kcovopen() has been called at least once.
+	 * At this point, all secondary CPUs have booted and accessing curcpu()
+	 * is safe.
+	 */
+	if (__predict_false(kcov_cold))
+		return (NULL);
+
+	/* Do not trace in interrupts to prevent noisy coverage. */
 #if defined(__amd64__) || defined(__arm__) || defined(__arm64__) || \
     defined(__i386__)
-	return (curcpu()->ci_idepth > 0);
-#else
-	return (0);
+	if (curcpu()->ci_idepth > 0)
+		return (NULL);
 #endif
+
+	kd = curproc->p_kd;
+	if (__predict_true(kd == NULL) || kd->kd_mode != mode)
+		return (NULL);
+	return (kd);
+
 }
