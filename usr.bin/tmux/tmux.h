@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1025 2020/05/16 15:01:31 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1026 2020/05/16 15:06:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2796,6 +2796,7 @@ __dead void printflike(1, 2) fatalx(const char *, ...);
 
 /* menu.c */
 #define MENU_NOMOUSE 0x1
+#define MENU_TAB 0x2
 struct menu	*menu_create(const char *);
 void		 menu_add_items(struct menu *, const struct menu_item *,
 		    struct cmdq_item *, struct client *,
