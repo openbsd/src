@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.94 2020/05/16 15:54:20 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.95 2020/05/16 16:16:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -522,7 +522,7 @@ cmdq_find_flag(struct cmdq_item *item, struct cmd_find_state *fs,
 	const char	*value;
 
 	if (flag->flag == 0) {
-		cmd_find_clear_state(fs, 0);
+		cmd_find_from_client(fs, item->target_client, 0);
 		return (CMD_RETURN_NORMAL);
 	}
 
@@ -609,7 +609,6 @@ cmdq_fire_command(struct cmdq_item *item)
 	retval = cmdq_find_flag(item, &item->target, &entry->target);
 	if (retval == CMD_RETURN_ERROR)
 		goto out;
-
 
 	retval = entry->exec(cmd, item);
 	if (retval == CMD_RETURN_ERROR)
