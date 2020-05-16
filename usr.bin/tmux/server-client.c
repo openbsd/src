@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.333 2020/05/16 14:30:17 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.334 2020/05/16 14:42:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1782,7 +1782,6 @@ server_client_check_redraw(struct client *c)
 			if (!redraw)
 				continue;
 			log_debug("%s: redrawing pane %%%u", __func__, wp->id);
-			tty_update_mode(tty, mode, NULL);
 			screen_redraw_pane(c, wp);
 		}
 		c->redraw_panes = 0;
@@ -1790,7 +1789,6 @@ server_client_check_redraw(struct client *c)
 	}
 
 	if (c->flags & CLIENT_ALLREDRAWFLAGS) {
-		tty_update_mode(tty, mode, NULL);
 		if (options_get_number(s->options, "set-titles"))
 			server_client_set_title(c);
 		screen_redraw_screen(c);
