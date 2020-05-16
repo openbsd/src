@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1041 2020/05/16 16:20:59 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1042 2020/05/16 16:22:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -796,7 +796,9 @@ typedef void (*screen_write_init_ctx_cb)(struct screen_write_ctx *,
 struct screen_write_ctx {
 	struct window_pane	*wp;
 	struct screen		*s;
-	int			 sync;
+
+	int			 flags;
+#define SCREEN_WRITE_SYNC 0x1
 
 	screen_write_init_ctx_cb init_ctx_cb;
 	void			*arg;

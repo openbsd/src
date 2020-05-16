@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.108 2020/05/16 15:49:20 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.109 2020/05/16 16:22:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1391,7 +1391,9 @@ grid_line_length(struct grid *gd, u_int py)
 		px = gd->sx;
 	while (px > 0) {
 		grid_get_cell(gd, px - 1, py, &gc);
-		if (gc.data.size != 1 || *gc.data.data != ' ')
+		if ((gc.flags & GRID_FLAG_PADDING) ||
+		    gc.data.size != 1 ||
+		    *gc.data.data != ' ')
 			break;
 		px--;
 	}
