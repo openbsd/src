@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.8 2020/05/16 14:26:33 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.9 2020/05/16 14:30:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -201,7 +201,7 @@ tty_add_features(int *feat, const char *s, const char *separators)
 	char				 *next, *loop, *copy;
 	u_int				  i;
 
-	log_debug("%s: %s", __func__, s);
+	log_debug("adding terminal features %s", s);
 
 	loop = copy = xstrdup(s);
 	while ((next = strsep(&loop, separators)) != NULL) {
@@ -274,4 +274,40 @@ tty_apply_features(struct tty_term *term, int feat)
 		return (0);
 	term->features |= feat;
 	return (1);
+}
+
+void
+tty_default_features(int *feat, const char *name, u_int version)
+{
+	static struct {
+		const char	*name;
+		u_int		 version;
+		const char	*features;
+	} table[] = {
+		{ .name = "mintty",
+		  .features = "256,RGB,ccolour,clipboard,cstyle,margins,overline,title"
+		},
+		{ .name = "tmux",
+		  .features = "256,RGB,ccolour,clipboard,cstyle,overline,title,usstyle"
+		},
+		{ .name = "rxvt-unicode",
+		  .features = "256,title"
+		},
+		{ .name = "iTerm2",
+		  .features = "256,RGB,clipboard,cstyle,margins,sync,title"
+		},
+		{ .name = "XTerm",
+		  .features = "256,RGB,ccolour,clipboard,cstyle,margins,rectfill,title"
+		}
+	};
+	u_int	i;
+
+	for (i = 0; i < nitems(table); i++) {
+		if (strcmp(table[i].name, name) != 0)
+			continue;
+		if (version != 0 && version < table[i].version)
+			continue;
+		tty_add_features(feat, table[i].features, ",");
+	}
+
 }

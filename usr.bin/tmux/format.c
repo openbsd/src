@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.248 2020/05/16 14:10:29 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.249 2020/05/16 14:30:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2624,6 +2624,8 @@ format_defaults_client(struct format_tree *ft, struct client *c)
 	format_add(ft, "client_termname", "%s", c->term_name);
 	format_add(ft, "client_termfeatures", "%s",
 	    tty_get_features(c->term_features));
+	if (c->term_type != NULL)
+		format_add(ft, "client_termtype", "%s", c->term_type);
 
 	format_add_tv(ft, "client_created", &c->creation_time);
 	format_add_tv(ft, "client_activity", &c->activity_time);

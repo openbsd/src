@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.753 2020/05/16 14:22:51 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.754 2020/05/16 14:30:17 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -4463,7 +4463,8 @@ The following variables are available, where appropriate:
 .It Li "client_readonly" Ta "" Ta "1 if client is readonly"
 .It Li "client_session" Ta "" Ta "Name of the client's session"
 .It Li "client_termname" Ta "" Ta "Terminal name of client"
-.It Li "client_termfeatures" Ta "" Ta "Terminal features of client"
+.It Li "client_termtype" Ta "" Ta "Terminal type of client, if available"
+.It Li "client_termfeatures" Ta "" Ta "Terminal features of client, if any"
 .It Li "client_tty" Ta "" Ta "Pseudo terminal of client"
 .It Li "client_utf8" Ta "" Ta "1 if client supports UTF-8"
 .It Li "client_width" Ta "" Ta "Width of client"
