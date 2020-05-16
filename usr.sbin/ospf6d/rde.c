@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.86 2020/04/05 18:19:04 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.87 2020/05/16 15:53:03 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -733,17 +733,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 
 			orig_intra_area_prefix_lsas(iface->area);
 
-			break;
-		case IMSG_IFADD:
-			if ((iface = malloc(sizeof(struct iface))) == NULL)
-				fatal(NULL);
-			memcpy(iface, imsg.data, sizeof(struct iface));
-
-			LIST_INIT(&iface->nbr_list);
-			TAILQ_INIT(&iface->ls_ack_list);
-			RB_INIT(&iface->lsa_tree);
-
-			LIST_INSERT_HEAD(&iface->area->iface_list, iface, entry);
 			break;
 		case IMSG_IFDELETE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
