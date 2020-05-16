@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.33 2020/05/16 15:47:22 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.34 2020/05/16 16:02:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -28,6 +29,9 @@
 /*
  * Show client message log.
  */
+
+#define SHOW_MESSAGES_TEMPLATE \
+	"#{t/p:message_time}: #{message_text}"
 
 static enum cmd_retval	cmd_show_messages_exec(struct cmd *,
 			    struct cmdq_item *);

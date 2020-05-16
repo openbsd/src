@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.160 2020/04/13 16:19:37 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.161 2020/05/16 16:02:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,6 +40,7 @@ extern const struct cmd_entry cmd_clock_mode_entry;
 extern const struct cmd_entry cmd_command_prompt_entry;
 extern const struct cmd_entry cmd_confirm_before_entry;
 extern const struct cmd_entry cmd_copy_mode_entry;
+extern const struct cmd_entry cmd_customize_mode_entry;
 extern const struct cmd_entry cmd_delete_buffer_entry;
 extern const struct cmd_entry cmd_detach_client_entry;
 extern const struct cmd_entry cmd_display_menu_entry;
@@ -130,6 +131,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_command_prompt_entry,
 	&cmd_confirm_before_entry,
 	&cmd_copy_mode_entry,
+	&cmd_customize_mode_entry,
 	&cmd_delete_buffer_entry,
 	&cmd_detach_client_entry,
 	&cmd_display_menu_entry,

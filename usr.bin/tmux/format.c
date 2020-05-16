@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.254 2020/05/16 15:48:35 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.255 2020/05/16 16:02:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1392,7 +1392,7 @@ format_find(struct format_tree *ft, const char *key, int modifiers,
 	if (o == NULL)
 		o = options_parse_get(global_s_options, key, &idx, 0);
 	if (o != NULL) {
-		found = options_tostring(o, idx, 1);
+		found = options_to_string(o, idx, 1);
 		goto found;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: style.c,v 1.27 2020/05/16 15:01:31 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.28 2020/05/16 16:02:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -31,6 +31,7 @@
 /* Default style. */
 static struct style style_default = {
 	{ { { ' ' }, 0, 1, 1 }, 0, 0, 8, 8, 0  },
+	0,
 
 	8,
 	STYLE_ALIGN_DEFAULT,
@@ -78,7 +79,11 @@ style_parse(struct style *sy, const struct grid_cell *base, const char *in)
 			sy->gc.bg = base->bg;
 			sy->gc.attr = base->attr;
 			sy->gc.flags = base->flags;
-		} else if (strcasecmp(tmp, "push-default") == 0)
+		} else if (strcasecmp(tmp, "ignore") == 0)
+			sy->ignore = 1;
+		else if (strcasecmp(tmp, "noignore") == 0)
+			sy->ignore = 0;
+		else if (strcasecmp(tmp, "push-default") == 0)
 			sy->default_type = STYLE_DEFAULT_PUSH;
 		else if (strcasecmp(tmp, "pop-default") == 0)
 			sy->default_type = STYLE_DEFAULT_POP;
