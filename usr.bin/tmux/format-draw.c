@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.19 2020/05/16 16:02:24 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.20 2020/05/16 16:26:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -600,7 +600,8 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 
 		/* If this style pushed or popped the default, update it. */
 		if (sy.default_type == STYLE_DEFAULT_PUSH) {
-			memcpy(&current_default, &saved_sy.gc, sizeof current_default);
+			memcpy(&current_default, &saved_sy.gc,
+			    sizeof current_default);
 			sy.default_type = STYLE_DEFAULT_BASE;
 		} else if (sy.default_type == STYLE_DEFAULT_POP) {
 			memcpy(&current_default, base, sizeof current_default);
