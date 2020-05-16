@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1035 2020/05/16 15:49:20 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1036 2020/05/16 15:54:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1603,6 +1603,7 @@ struct client {
 
 	uint64_t	 redraw_panes;
 
+	int		 message_ignore_styles;
 	char		*message_string;
 	struct event	 message_timer;
 
@@ -2340,7 +2341,8 @@ struct style_range *status_get_range(struct client *, u_int, u_int);
 void	 status_init(struct client *);
 void	 status_free(struct client *);
 int	 status_redraw(struct client *);
-void printflike(2, 3) status_message_set(struct client *, const char *, ...);
+void printflike(3, 4) status_message_set(struct client *, int, const char *,
+	     ...);
 void	 status_message_clear(struct client *);
 int	 status_message_redraw(struct client *);
 void	 status_prompt_set(struct client *, const char *, const char *,
