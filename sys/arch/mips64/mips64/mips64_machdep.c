@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.28 2020/05/11 13:25:32 kettenis Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.29 2020/05/16 03:35:52 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -343,28 +343,30 @@ cp0_get_timecount(struct timecounter *tc)
 void
 cp0_calibrate(struct cpu_info *ci)
 {
-	struct tod_desc *cd = &sys_tod;
-	struct tod_time ct;
+	struct timeval rtctime;
 	u_int first_cp0, second_cp0, cycles_per_sec;
 	int first_sec;
 
-	if (cd->tod_get == NULL)
+	if (todr_handle == NULL)
 		return;
 
-	(*cd->tod_get)(cd->tod_cookie, 0, &ct);
-	first_sec = ct.sec;
+	if (todr_gettime(todr_handle, &rtctime) != 0)
+		return;
+	first_sec = rtctime.tv_sec;
 
 	/* Let the clock tick one second. */
 	do {
 		first_cp0 = cp0_get_count();
-		(*cd->tod_get)(cd->tod_cookie, 0, &ct);
-	} while (ct.sec == first_sec);
-	first_sec = ct.sec;
+		if (todr_gettime(todr_handle, &rtctime) != 0)
+			return;
+	} while (rtctime.tv_sec == first_sec);
+	first_sec = rtctime.tv_sec;
 	/* Let the clock tick one more second. */
 	do {
 		second_cp0 = cp0_get_count();
-		(*cd->tod_get)(cd->tod_cookie, 0, &ct);
-	} while (ct.sec == first_sec);
+		if (todr_gettime(todr_handle, &rtctime) != 0)
+			return;
+	} while (rtctime.tv_sec == first_sec);
 
 	cycles_per_sec = second_cp0 - first_cp0;
 	ci->ci_hw.clock = cycles_per_sec * CP0_CYCLE_DIVIDER;
