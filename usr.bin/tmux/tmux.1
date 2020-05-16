@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.764 2020/05/16 15:47:22 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.765 2020/05/16 15:48:35 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -4407,6 +4407,21 @@ Adding
 .Ql p (
 .Ql `t/p` )
 will use shorter but less accurate time format for times in the past.
+A custom format may be given using an
+.Ql f
+suffix (note that
+.Ql %
+must be escaped as
+.Ql %%
+if the format is separately being passed through
+.Xr strftime 3 ,
+for example in the
+.Ic status-left
+option):
+.Ql #{t/f/%%H#:%%M:window_activity} ,
+see
+.Xr strftime 3 .
+.Pp
 The
 .Ql b:\&
 and
