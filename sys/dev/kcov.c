@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.16 2020/05/16 08:35:49 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.17 2020/05/16 08:38:34 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -31,13 +31,6 @@
 #define KCOV_CMP_CONST		0x1
 #define KCOV_CMP_SIZE(x)	((x) << 1)
 
-/* #define KCOV_DEBUG */
-#ifdef KCOV_DEBUG
-#define DPRINTF(x...) do { if (kcov_debug) printf(x); } while (0)
-#else
-#define DPRINTF(x...)
-#endif
-
 struct kcov_dev {
 	enum {
 		KCOV_STATE_NONE,
@@ -65,10 +58,6 @@ static struct kcov_dev *kd_curproc(int);
 TAILQ_HEAD(, kcov_dev) kd_list = TAILQ_HEAD_INITIALIZER(kd_list);
 
 int kcov_cold = 1;
-
-#ifdef KCOV_DEBUG
-int kcov_debug = 1;
-#endif
 
 /*
  * Compiling the kernel with the `-fsanitize-coverage=trace-pc' option will
@@ -230,8 +219,6 @@ kcovopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (kcov_cold)
 		kcov_cold = 0;
 
-	DPRINTF("%s: unit=%d\n", __func__, minor(dev));
-
 	kd = malloc(sizeof(*kd), M_SUBPROC, M_WAITOK | M_ZERO);
 	kd->kd_unit = minor(dev);
 	TAILQ_INSERT_TAIL(&kd_list, kd, kd_entry);
@@ -246,9 +233,6 @@ kcovclose(dev_t dev, int flag, int mode, struct proc *p)
 	kd = kd_lookup(minor(dev));
 	if (kd == NULL)
 		return (EINVAL);
-
-	DPRINTF("%s: unit=%d, state=%d, mode=%d\n",
-	    __func__, kd->kd_unit, kd->kd_state, kd->kd_mode);
 
 	if (kd->kd_state == KCOV_STATE_TRACE) {
 		kd->kd_state = KCOV_STATE_DYING;
@@ -304,9 +288,6 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = ENOTTY;
 	}
 
-	DPRINTF("%s: unit=%d, state=%d, mode=%d, error=%d\n",
-	    __func__, kd->kd_unit, kd->kd_state, kd->kd_mode, error);
-
 	return (error);
 }
 
@@ -338,9 +319,6 @@ kcov_exit(struct proc *p)
 	kd = p->p_kd;
 	if (kd == NULL)
 		return;
-
-	DPRINTF("%s: unit=%d, state=%d, mode=%d\n",
-	    __func__, kd->kd_unit, kd->kd_state, kd->kd_mode);
 
 	if (kd->kd_state == KCOV_STATE_DYING) {
 		kd_free(kd);
@@ -397,9 +375,6 @@ kd_init(struct kcov_dev *kd, unsigned long nmemb)
 void
 kd_free(struct kcov_dev *kd)
 {
-	DPRINTF("%s: unit=%d, state=%d, mode=%d\n",
-	    __func__, kd->kd_unit, kd->kd_state, kd->kd_mode);
-
 	TAILQ_REMOVE(&kd_list, kd, kd_entry);
 	if (kd->kd_buf != NULL)
 		km_free(kd->kd_buf, kd->kd_size, &kv_any, &kp_zero);
