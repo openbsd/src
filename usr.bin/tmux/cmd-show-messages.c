@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.32 2020/04/20 13:25:36 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.33 2020/05/16 15:47:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -72,10 +72,10 @@ static enum cmd_retval
 cmd_show_messages_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
-	struct client		*tc = cmdq_get_target_client(item);
 	struct message_entry	*msg;
-	char			*tim;
+	char			*s;
 	int			 done, blank;
+	struct format_tree	*ft;
 
 	done = blank = 0;
 	if (args_has(args, 'T')) {
@@ -89,11 +89,17 @@ cmd_show_messages_exec(struct cmd *self, struct cmdq_item *item)
 	if (done)
 		return (CMD_RETURN_NORMAL);
 
-	TAILQ_FOREACH(msg, &tc->message_log, entry) {
-		tim = ctime(&msg->msg_time);
-		*strchr(tim, '\n') = '\0';
-		cmdq_print(item, "%s %s", tim, msg->msg);
+	ft = format_create_from_target(item);
+	TAILQ_FOREACH_REVERSE(msg, &message_log, message_list, entry) {
+		format_add(ft, "message_text", "%s", msg->msg);
+		format_add(ft, "message_number", "%u", msg->msg_num);
+		format_add_tv(ft, "message_time", &msg->msg_time);
+
+		s = format_expand(ft, SHOW_MESSAGES_TEMPLATE);
+		cmdq_print(item, "%s", s);
+		free(s);
 	}
+	format_free(ft);
 
 	return (CMD_RETURN_NORMAL);
 }

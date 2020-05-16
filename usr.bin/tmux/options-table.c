@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.125 2020/05/16 15:24:28 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.126 2020/05/16 15:47:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -253,7 +253,7 @@ const struct options_table_entry options_table[] = {
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .minimum = 0,
 	  .maximum = INT_MAX,
-	  .default_num = 100
+	  .default_num = 1000
 	},
 
 	{ .name = "set-clipboard",

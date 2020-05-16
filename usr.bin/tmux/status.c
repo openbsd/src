@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.208 2020/05/16 15:34:08 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.209 2020/05/16 15:47:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -436,7 +436,7 @@ status_message_set(struct client *c, const char *fmt, ...)
 	xvasprintf(&c->message_string, fmt, ap);
 	va_end(ap);
 
-	server_client_add_message(c, "%s", c->message_string);
+	server_add_message("%s message: %s", c->name, c->message_string);
 
 	delay = options_get_number(c->session->options, "display-time");
 	if (delay > 0) {
