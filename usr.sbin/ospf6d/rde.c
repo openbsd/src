@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.87 2020/05/16 15:53:03 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.88 2020/05/16 15:54:12 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -651,7 +651,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	ssize_t			 n;
 	int			 shut = 0, link_ok, prev_link_ok, orig_lsa;
-	unsigned int		 ifindex;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -733,19 +732,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 
 			orig_intra_area_prefix_lsas(iface->area);
 
-			break;
-		case IMSG_IFDELETE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(ifindex))
-				fatalx("IFDELETE imsg with wrong len");
-
-			memcpy(&ifindex, imsg.data, sizeof(ifindex));
-			iface = if_find(ifindex);
-			if (iface == NULL)
-				fatalx("interface lost in rde");
-
-			LIST_REMOVE(iface, entry);
-			if_del(iface);
 			break;
 		case IMSG_IFADDRNEW:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +

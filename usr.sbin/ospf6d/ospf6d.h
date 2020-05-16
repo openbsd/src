@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.47 2020/05/16 15:53:03 denis Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.48 2020/05/16 15:54:12 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -103,7 +103,6 @@ enum imsg_type {
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
 	IMSG_IFINFO,
-	IMSG_IFDELETE,
 	IMSG_IFADDRNEW,
 	IMSG_IFADDRDEL,
 	IMSG_NEIGHBOR_UP,
