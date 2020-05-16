@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.17 2020/05/16 16:13:09 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.18 2020/05/16 16:30:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -329,7 +329,7 @@ popup_key_cb(struct client *c, struct key_event *event)
 			bufferevent_write(job_get_event(pd->job), buf, len);
 			return (0);
 		}
-		input_key(NULL, &pd->s, job_get_event(pd->job), event->key);
+		input_key(&pd->s, job_get_event(pd->job), event->key);
 		return (0);
 	}
 

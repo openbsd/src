@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.129 2020/05/16 16:26:34 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.130 2020/05/16 16:30:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1053,11 +1053,12 @@ const struct options_table_entry options_table[] = {
 		  "bottom."
 	},
 
-	{ .name = "xterm-keys",
+	{ .name = "xterm-keys", /* no longer used */
 	  .type = OPTIONS_TABLE_FLAG,
 	  .scope = OPTIONS_TABLE_WINDOW,
 	  .default_num = 1,
-	  .text = "Whether xterm-style function key sequences should be sent."
+	  .text = "Whether xterm-style function key sequences should be sent. "
+	          "This option is no longer used."
 	},
 
 	/* Hook options. */

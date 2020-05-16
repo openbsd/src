@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1043 2020/05/16 16:26:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1044 2020/05/16 16:30:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -123,6 +123,8 @@ struct winlink;
 #define KEYC_SHIFT   0x0400000000000ULL
 #define KEYC_XTERM   0x0800000000000ULL
 #define KEYC_LITERAL 0x1000000000000ULL
+#define KEYC_KEYPAD  0x2000000000000ULL
+#define KEYC_CURSOR  0x4000000000000ULL
 
 /* Available user keys. */
 #define KEYC_NUSER 1000
@@ -2415,15 +2417,11 @@ void	 input_parse_screen(struct input_ctx *, struct screen *,
 	     screen_write_init_ctx_cb, void *, u_char *, size_t);
 
 /* input-key.c */
+void	 input_key_build(void);
 int	 input_key_pane(struct window_pane *, key_code, struct mouse_event *);
-int	 input_key(struct window_pane *, struct screen *, struct bufferevent *,
-	     key_code);
+int	 input_key(struct screen *, struct bufferevent *, key_code);
 int	 input_key_get_mouse(struct screen *, struct mouse_event *, u_int,
 	     u_int, const char **, size_t *);
-
-/* xterm-keys.c */
-char	*xterm_keys_lookup(key_code);
-int	 xterm_keys_find(const char *, size_t, size_t *, key_code *);
 
 /* colour.c */
 int	 colour_find_rgb(u_char, u_char, u_char);
