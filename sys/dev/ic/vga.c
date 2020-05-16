@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.69 2017/06/17 19:20:30 fcambus Exp $ */
+/* $OpenBSD: vga.c,v 1.70 2020/05/16 11:07:54 jsg Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -1213,8 +1213,6 @@ vga_save_palette(struct vga_config *vc)
 	vga_raw_write(vh, VGA_DAC_READ, 0x00);
 	for (i = 0; i < 3 * 256; i++)
 		*palette++ = vga_raw_read(vh, VGA_DAC_DATA);
-
-	vga_raw_read(vh, 0x0a);			/* reset flip/flop */
 }
 
 void
@@ -1231,10 +1229,6 @@ vga_restore_palette(struct vga_config *vc)
 	vga_raw_write(vh, VGA_DAC_WRITE, 0x00);
 	for (i = 0; i < 3 * 256; i++)
 		vga_raw_write(vh, VGA_DAC_DATA, *palette++);
-
-	vga_raw_read(vh, 0x0a);			/* reset flip/flop */
-
-	vga_enable(vh);
 }
 
 void
