@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.189 2020/04/18 21:32:21 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.190 2020/05/16 11:07:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -137,6 +137,7 @@ struct audio_softc {
 	struct selinfo mix_sel;		/* wakeup poll(2) */
 	struct mixer_ev *mix_evbuf;	/* per mixer-control event */
 	struct mixer_ev *mix_pending;	/* list of changed controls */
+	void *mix_softintr;		/* context to call selwakeup() */
 #if NWSKBD > 0
 	struct wskbd_vol spkr, mic;
 	struct task wskbd_task;
@@ -231,6 +232,18 @@ audio_blksz_bytes(int mode,
 	}
 
 	return nr * np / audio_gcd(nr, np);
+}
+
+void
+audio_mixer_wakeup(void *addr)
+{
+	struct audio_softc *sc = addr;
+
+	if (sc->mix_blocking) {
+		wakeup(&sc->mix_blocking);
+		sc->mix_blocking = 0;
+	}
+	selwakeup(&sc->mix_sel);
 }
 
 void
@@ -1199,6 +1212,16 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->mix_softintr = softintr_establish(IPL_SOFTAUDIO,
+	    audio_mixer_wakeup, sc);
+	if (sc->mix_softintr == NULL) {
+		audio_buf_done(sc, &sc->rec);
+		audio_buf_done(sc, &sc->play);
+		sc->ops = 0;
+		printf("%s: can't establish softintr\n", DEVNAME(sc));
+		return;
+	}
+
 	/* set defaults */
 #if BYTE_ORDER == LITTLE_ENDIAN
 	sc->sw_enc = AUDIO_ENCODING_SLINEAR_LE;
@@ -1374,6 +1397,7 @@ audio_detach(struct device *self, int flags)
 	}
 
 	/* free resources */
+	softintr_disestablish(sc->mix_softintr);
 	free(sc->mix_evbuf, M_DEVBUF, sc->mix_nent * sizeof(struct mixer_ev));
 	free(sc->mix_ents, M_DEVBUF, sc->mix_nent * sizeof(struct mixer_ctrl));
 	audio_buf_done(sc, &sc->play);
@@ -1777,11 +1801,7 @@ audio_event(struct audio_softc *sc, int addr)
 			e->next = sc->mix_pending;
 			sc->mix_pending = e;
 		}
-		if (sc->mix_blocking) {
-			wakeup(&sc->mix_blocking);
-			sc->mix_blocking = 0;
-		}
-		selwakeup(&sc->mix_sel);
+		softintr_schedule(sc->mix_softintr);
 	}
 	mtx_leave(&audio_lock);
 }
