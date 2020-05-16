@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.75 2020/05/16 16:38:55 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.76 2020/05/16 16:44:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -497,67 +497,13 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 	}
 
 	/* No builtin key sequence; construct an extended key sequence. */
-	outkey = (key & KEYC_MASK_KEY);
-	if (outkey >= KEYC_BASE) {
-		switch (outkey) {
-		case KEYC_IC:
-			outkey = 2;
-			break;
-		case KEYC_DC:
-			outkey = 3;
-			break;
-		case KEYC_PPAGE:
-			outkey = 5;
-			break;
-		case KEYC_NPAGE:
-			outkey = 6;
-			break;
-		case KEYC_HOME:
-			outkey = 7;
-			break;
-		case KEYC_END:
-			outkey = 8;
-			break;
-		case KEYC_F1:
-			outkey = 11;
-			break;
-		case KEYC_F2:
-			outkey = 12;
-			break;
-		case KEYC_F3:
-			outkey = 13;
-			break;
-		case KEYC_F4:
-			outkey = 14;
-			break;
-		case KEYC_F5:
-			outkey = 15;
-			break;
-		case KEYC_F6:
-			outkey = 17;
-			break;
-		case KEYC_F7:
-			outkey = 18;
-			break;
-		case KEYC_F8:
-			outkey = 19;
-			break;
-		case KEYC_F9:
-			outkey = 20;
-			break;
-		case KEYC_F10:
-			outkey = 21;
-			break;
-		case KEYC_F11:
-			outkey = 23;
-			break;
-		case KEYC_F12:
-			outkey = 24;
-			break;
-		default:
-			goto missing;
-		}
+	if (~s->mode & MODE_KEXTENDED) {
+		if ((key & KEYC_MASK_MODIFIERS) == KEYC_CTRL &&
+		    (key & KEYC_MASK_KEY) < KEYC_BASE)
+			return (input_key(s, bev, key & ~KEYC_CTRL));
+		goto missing;
 	}
+	outkey = (key & KEYC_MASK_KEY);
 	switch (key & KEYC_MASK_MODIFIERS) {
 	case KEYC_SHIFT:
 		modifier = '2';

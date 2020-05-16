@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.135 2020/05/16 16:35:13 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.136 2020/05/16 16:44:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1293,7 +1293,7 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
 	else if (strncmp(tmp, "tmux ", 5) == 0)
 		tty_default_features(&c->term_features, "tmux", 0);
 	else if (strncmp(tmp, "XTerm(", 6) == 0)
-		tty_default_features(&c->term_features, "xterm", 0);
+		tty_default_features(&c->term_features, "XTerm", 0);
 	else if (strncmp(tmp, "mintty ", 7) == 0)
 		tty_default_features(&c->term_features, "mintty", 0);
 	log_debug("%s: received extended DA %.*s", c->name, (int)*size, buf);
