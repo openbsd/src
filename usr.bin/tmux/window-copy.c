@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.279 2020/04/20 06:08:37 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.280 2020/05/16 14:22:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -22,6 +22,7 @@
 #include <regex.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "tmux.h"
 
