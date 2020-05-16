@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.250 2020/05/16 14:53:23 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.251 2020/05/16 14:55:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2550,7 +2550,7 @@ format_defaults(struct format_tree *ft, struct client *c, struct session *s,
 	else
 		log_debug("%s: s=none", __func__);
 	if (wl != NULL)
-		log_debug("%s: wl=%u w=@%u", __func__, wl->idx, wl->window->id);
+		log_debug("%s: wl=%u", __func__, wl->idx);
 	else
 		log_debug("%s: wl=none", __func__);
 	if (wp != NULL)
@@ -2724,10 +2724,8 @@ format_defaults_winlink(struct format_tree *ft, struct winlink *wl)
 	u_int		 ox, oy, sx, sy;
 
 	if (ft->w == NULL)
-		ft->w = wl->window;
+		format_defaults_window(ft, w);
 	ft->wl = wl;
-
-	format_defaults_window(ft, w);
 
 	if (c != NULL) {
 		flag = tty_window_offset(&c->tty, &ox, &oy, &sx, &sy);
@@ -2788,7 +2786,7 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	struct window_mode_entry	*wme;
 
 	if (ft->w == NULL)
-		ft->w = w;
+		format_defaults_window(ft, w);
 	ft->wp = wp;
 
 	format_add(ft, "history_size", "%u", gd->hsize);
