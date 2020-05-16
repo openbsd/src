@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.131 2020/05/16 14:49:50 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.132 2020/05/16 15:25:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,10 +39,10 @@ const struct cmd_entry cmd_new_session_entry = {
 	.name = "new-session",
 	.alias = "new",
 
-	.args = { "Ac:dDEF:n:Ps:t:x:Xy:", 0, -1 },
-	.usage = "[-AdDEPX] [-c start-directory] [-F format] [-n window-name] "
-		 "[-s session-name] " CMD_TARGET_SESSION_USAGE " [-x width] "
-		 "[-y height] [command]",
+	.args = { "Ac:dDe:EF:n:Ps:t:x:Xy:", 0, -1 },
+	.usage = "[-AdDEPX] [-c start-directory] [-e environment] [-F format] "
+		 "[-n window-name] [-s session-name] "
+		 CMD_TARGET_SESSION_USAGE " [-x width] [-y height] [command]",
 
 	.target = { 't', CMD_FIND_SESSION, CMD_FIND_CANFAIL },
 
@@ -75,7 +75,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	struct options		*oo;
 	struct termios		 tio, *tiop;
 	struct session_group	*sg = NULL;
-	const char		*errstr, *template, *group, *tmp;
+	const char		*errstr, *template, *group, *tmp, *add;
 	char			*cause, *cwd = NULL, *cp, *newname = NULL;
 	char			*name, *prefix = NULL;
 	int			 detached, already_attached, is_control = 0;
@@ -83,6 +83,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	struct spawn_context	 sc;
 	enum cmd_retval		 retval;
 	struct cmd_find_state    fs;
+	struct args_value	*value;
 
 	if (cmd_get_entry(self) == &cmd_has_session_entry) {
 		/*
@@ -254,6 +255,11 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	env = environ_create();
 	if (c != NULL && !args_has(args, 'E'))
 		environ_update(global_s_options, c->environ, env);
+	add = args_first_value(args, 'e', &value);
+	while (add != NULL) {
+		environ_put(env, add, 0);
+		add = args_next_value(&value);
+	}
 	s = session_create(prefix, newname, cwd, env, oo, tiop);
 
 	/* Spawn the initial window. */
