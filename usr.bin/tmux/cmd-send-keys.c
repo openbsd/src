@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.61 2020/04/14 13:22:05 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.62 2020/05/16 16:32:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -71,9 +71,7 @@ cmd_send_keys_inject_key(struct cmdq_item *item, struct cmdq_item *after,
 
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme == NULL || wme->mode->key_table == NULL) {
-		if (options_get_number(wp->window->options, "xterm-keys"))
-			key |= KEYC_XTERM;
-		if (window_pane_key(wp, tc, s, wl, key, NULL) != 0)
+		if (window_pane_key(wp, tc, s, wl, key|KEYC_XTERM, NULL) != 0)
 			return (NULL);
 		return (item);
 	}
