@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-session.c,v 1.31 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-rename-session.c,v 1.32 2020/05/16 14:49:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -49,18 +49,14 @@ cmd_rename_session_exec(struct cmd *self, struct cmdq_item *item)
 	struct args		*args = cmd_get_args(self);
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct session		*s = target->s;
-	char			*newname;
+	char			*newname, *tmp;
 
-	newname = format_single_from_target(item, args->argv[0]);
+	tmp = format_single_from_target(item, args->argv[0]);
+	newname = session_check_name(tmp);
+	free(tmp);
 	if (strcmp(newname, s->name) == 0) {
 		free(newname);
 		return (CMD_RETURN_NORMAL);
-	}
-
-	if (!session_check_name(newname)) {
-		cmdq_error(item, "bad session name: %s", newname);
-		free(newname);
-		return (CMD_RETURN_ERROR);
 	}
 	if (session_find(newname) != NULL) {
 		cmdq_error(item, "duplicate session: %s", newname);
