@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rbootd.8,v 1.18 2020/02/10 13:18:21 schwarze Exp $
+.\"	$OpenBSD: rbootd.8,v 1.19 2020/05/16 16:58:12 jmc Exp $
 .\"	$NetBSD: rbootd.8,v 1.3 1995/08/21 17:05:16 thorpej Exp $
 .\"
 .\" Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -41,7 +41,7 @@
 .\" Utah Hdr: rbootd.man 3.1 92/07/06
 .\" Author: Jeff Forys, University of Utah CSS
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: May 16 2020 $
 .Dt RBOOTD 8
 .Os
 .Sh NAME
@@ -136,15 +136,15 @@ Turn off debugging, do nothing if already off.
 .Sh FILES
 .Bl -tag -width /etc/examples/rbootd.conf -compact
 .It Pa /dev/bpf
-packet-filter device
+Packet-filter device.
 .It Pa /etc/rbootd.conf
-configuration file
+Configuration file.
 .It Pa /etc/examples/rbootd.conf
-example configuration file
+Example configuration file.
 .It Pa /tmp/rbootd.dbg
-debug output
+Debug output.
 .It Pa /usr/mdec/rbootd
-directory containing boot files
+Directory containing boot files.
 .El
 .Sh SEE ALSO
 .Xr kill 1 ,
