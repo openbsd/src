@@ -1,0 +1,31 @@
+# $OpenBSD: files.powerpc64,v 1.1 2020/05/16 17:11:14 kettenis Exp $
+
+maxpartitions	16
+maxusers	2 8 128
+
+define	fdt {[early = 0]}
+
+define	mainbus {}
+device	mainbus: fdt
+attach	mainbus at root
+
+# FDT support
+include "dev/ofw/files.ofw"
+
+include "scsi/files.scsi"
+
+file	arch/powerpc64/powerpc64/locore.S
+file	arch/powerpc64/powerpc64/autoconf.c
+file	arch/powerpc64/powerpc64/conf.c
+file	arch/powerpc64/powerpc64/cpu.c
+file	arch/powerpc64/powerpc64/disksubr.c
+file	arch/powerpc64/powerpc64/machdep.c
+file	arch/powerpc64/powerpc64/pmap.c
+file	arch/powerpc64/powerpc64/process_machdep.c
+file	arch/powerpc64/powerpc64/softintr.c
+file	arch/powerpc64/powerpc64/syscall.c
+file	arch/powerpc64/powerpc64/sys_machdep.c
+file	arch/powerpc64/powerpc64/vm_machdep.c
+
+file	netinet/in_cksum.c
+file	netinet/in4_cksum.c

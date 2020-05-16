@@ -1,0 +1,18 @@
+#	$OpenBSD: GENERIC,v 1.1 2020/05/16 17:11:14 kettenis Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		powerpc64
+include		"../../../conf/GENERIC"
+maxusers	80
+
+config		bsd	swap generic
+
+mainbus0	at root
