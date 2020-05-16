@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.12 2020/05/16 14:39:40 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.13 2020/05/16 14:46:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,10 +28,9 @@
  * - mouse (under kmous capability);
  * - default colours (under AX or op capabilities);
  * - AIX colours (under colors >= 16);
- * - alternate escape (under XT).
+ * - alternate escape (if terminal is VT100-like).
  *
  * Also:
- * - XT is used to decide whether to send DA and XDA;
  * - DECFRA uses a flag instead of capabilities;
  * - UTF-8 is a separate flag on the client; needed for unattached clients.
  */

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1021 2020/05/16 14:39:40 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1022 2020/05/16 14:46:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1200,6 +1200,7 @@ struct tty_term {
 #define TERM_DECSLRM 0x4
 #define TERM_DECFRA 0x8
 #define TERM_RGBCOLOURS 0x10
+#define TERM_VT100LIKE 0x20
 	int		 flags;
 
 	LIST_ENTRY(tty_term) entry;

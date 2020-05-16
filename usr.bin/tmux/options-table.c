@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.121 2020/05/16 14:39:40 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.122 2020/05/16 14:46:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -261,7 +261,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .flags = OPTIONS_TABLE_IS_ARRAY,
-	  .default_str = "tmux*:XT,rxvt*:XT,screen*:XT,xterm*:XT",
+	  .default_str = "",
 	  .separator = ","
 	},
 

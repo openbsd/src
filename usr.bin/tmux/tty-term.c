@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.79 2020/05/16 14:39:40 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.80 2020/05/16 14:46:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -549,10 +549,22 @@ tty_term_create(struct tty *tty, char *name, int *feat, int fd, char **cause)
 		goto error;
 	}
 
-	/* These can be emulated so one of the two is required. */
-	if (!tty_term_has(term, TTYC_CUD1) && !tty_term_has(term, TTYC_CUD)) {
-		xasprintf(cause, "terminal does not support cud1 or cud");
-		goto error;
+	/*
+	 * If TERM has XT or clear starts with CSI then it is safe to assume
+	 * the terminal is derived from the VT100. This controls whether device
+	 * attributes requests are sent to get more information.
+	 *
+	 * This is a bit of a hack but there aren't that many alternatives.
+	 * Worst case tmux will just fall back to using whatever terminfo(5)
+	 * says without trying to correct anything that is missing.
+	 *
+	 * Also add few features that VT100-like terminals should either
+	 * support or safely ignore.
+	 */
+	s = tty_term_string(term, TTYC_CLEAR);
+	if (tty_term_flag(term, TTYC_XT) || strncmp(s, "\033[", 2) == 0) {
+		term->flags |= TERM_VT100LIKE;
+		tty_add_features(feat, "bpaste,focus,title", ",");
 	}
 
 	/* Add RGB feature if terminal has RGB colours. */
@@ -560,10 +572,6 @@ tty_term_create(struct tty *tty, char *name, int *feat, int fd, char **cause)
 	    (!tty_term_has(term, TTYC_SETRGBF) ||
 	    !tty_term_has(term, TTYC_SETRGBB)))
 		tty_add_features(feat, "RGB", ",");
-
-	/* Add some features if terminal has XT. */
-	if (tty_term_flag(term, TTYC_XT))
-		tty_add_features(feat, "bpaste,focus,title", ",");
 
 	/* Apply the features and overrides again. */
 	tty_apply_features(term, *feat);
