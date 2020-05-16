@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.39 2020/05/16 15:45:29 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.40 2020/05/16 16:50:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,6 +61,7 @@ resize_window(struct window *w, u_int sx, u_int sy, int xpixel, int ypixel)
 	tty_update_window_offset(w);
 	server_redraw_window(w);
 	notify_window("window-layout-changed", w);
+	w->flags &= ~WINDOW_RESIZE;
 }
 
 static int
@@ -346,16 +347,30 @@ recalculate_size(struct window *w)
 		changed = 0;
 		break;
 	}
-	if (changed && w->sx == sx && w->sy == sy)
-		changed = 0;
+	if (w->flags & WINDOW_RESIZE) {
+		if (changed && w->new_sx == sx && w->new_sy == sy)
+			changed = 0;
+	} else {
+		if (changed && w->sx == sx && w->sy == sy)
+			changed = 0;
+	}
 
 	if (!changed) {
 		tty_update_window_offset(w);
 		return;
 	}
-	log_debug("%s: @%u changed to %u,%u (%ux%u)", __func__, w->id, sx, sy,
-	    xpixel, ypixel);
-	resize_window(w, sx, sy, xpixel, ypixel);
+	log_debug("%s: @%u new size %u,%u", __func__, w->id, sx, sy);
+	if (type == WINDOW_SIZE_MANUAL)
+		resize_window(w, sx, sy, xpixel, ypixel);
+	else {
+		w->new_sx = sx;
+		w->new_sy = sy;
+		w->new_xpixel = xpixel;
+		w->new_ypixel = ypixel;
+
+		w->flags |= WINDOW_RESIZE;
+		tty_update_window_offset(w);
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.261 2020/05/16 16:35:13 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.262 2020/05/16 16:50:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -440,13 +440,15 @@ window_pane_send_resize(struct window_pane *wp, int yadjust)
 {
 	struct window	*w = wp->window;
 	struct winsize	 ws;
+	u_int  		 sy = wp->sy + yadjust;
 
 	if (wp->fd == -1)
 		return;
+	log_debug("%s: %%%u resize to %u,%u", __func__, wp->id, wp->sx, sy);
 
 	memset(&ws, 0, sizeof ws);
 	ws.ws_col = wp->sx;
-	ws.ws_row = wp->sy + yadjust;
+	ws.ws_row = sy;
 	ws.ws_xpixel = w->xpixel * ws.ws_col;
 	ws.ws_ypixel = w->ypixel * ws.ws_row;
 	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
@@ -991,7 +993,6 @@ window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme != NULL && wme->mode->resize != NULL)
 		wme->mode->resize(wme, sx, sy);
-
 	wp->flags |= (PANE_RESIZE|PANE_RESIZED);
 }
 

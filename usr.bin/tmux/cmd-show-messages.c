@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.34 2020/05/16 16:02:24 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.35 2020/05/16 16:50:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -27,7 +27,7 @@
 #include "tmux.h"
 
 /*
- * Show client message log.
+ * Show message log.
  */
 
 #define SHOW_MESSAGES_TEMPLATE \
