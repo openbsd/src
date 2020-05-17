@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.44 2020/05/17 18:22:30 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.45 2020/05/17 19:07:15 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -257,28 +257,41 @@ tls13_phh_limit_check(struct tls13_ctx *ctx)
 static ssize_t
 tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
-	ssize_t ret = TLS13_IO_FAILURE;
+	uint8_t alert = TLS13_ALERT_INTERNAL_ERROR;
+	uint8_t key_update_request;
+	ssize_t ret;
 
-	if (!CBS_get_u8(cbs, &ctx->key_update_request))
+	if (!CBS_get_u8(cbs, &key_update_request)) {
+		alert = TLS13_ALERT_DECODE_ERROR;
 		goto err;
-	if (CBS_len(cbs) != 0)
+	}
+	if (CBS_len(cbs) != 0) {
+		alert = TLS13_ALERT_DECODE_ERROR;
 		goto err;
+	}
+	if (key_update_request > 1) {
+		alert = TLS13_ALERT_ILLEGAL_PARAMETER;
+		goto err;
+	}
 
 	if (!tls13_phh_update_peer_traffic_secret(ctx))
 		goto err;
 
-	if (ctx->key_update_request) {
+	if (key_update_request) {
 		CBB cbb;
 		CBS cbs; /* XXX */
 
 		tls13_handshake_msg_free(ctx->hs_msg);
 		ctx->hs_msg = tls13_handshake_msg_new();
+
 		if (!tls13_handshake_msg_start(ctx->hs_msg, &cbb, TLS13_MT_KEY_UPDATE))
 			goto err;
 		if (!CBB_add_u8(&cbb, 0))
 			goto err;
 		if (!tls13_handshake_msg_finish(ctx->hs_msg))
 			goto err;
+
+		ctx->key_update_request = key_update_request;
 		tls13_handshake_msg_data(ctx->hs_msg, &cbs);
 		ret = tls13_record_layer_phh(ctx->rl, &cbs);
 
@@ -289,9 +302,7 @@ tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 
 	return ret;
  err:
-	ctx->key_update_request = 0;
-	/* XXX alert */
-	return TLS13_IO_FAILURE;
+	return tls13_send_alert(ctx->rl, alert);
 }
 
 static void
