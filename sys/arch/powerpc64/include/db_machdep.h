@@ -9,6 +9,12 @@ extern db_regs_t	ddb_regs;
 #define BKPT_SIZE	4
 #define BKPT_SET(inst)	0xdeadbeef
 
+#define db_clear_single_step(regs)	(0)
+#define db_set_single_step(regs)	(0)
+
+#define IS_BREAKPOINT_TRAP(type, code)	(0)
+#define IS_WATCHPOINT_TRAP(type, code)	(0)
+
 // ALL BROKEN!!!
 #define	inst_trap_return(ins)	((ins) == 0 && (ins) == 1)
 #define	inst_return(ins)	((ins) == 0 && (ins) == 1)
