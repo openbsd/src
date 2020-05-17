@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.38 2020/05/17 01:43:27 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.39 2020/05/17 04:43:16 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -102,7 +102,7 @@ __EOF__
 	section_message "listing operations"
 	
 	start_message "ciphers"
-	$openssl_bin ciphers -V
+	$openssl_bin ciphers -V > $user1_dir/ciphers-V.out
 	check_exit_status $?
 	
 	start_message "errstr"
@@ -250,7 +250,7 @@ function test_key {
 	
 	start_message "gendh - Obsoleted by dhparam."
 	gendh2=$key_dir/gendh2.pem
-	$openssl_bin gendh -2 -out $gendh2
+	$openssl_bin gendh -2 -out $gendh2 > $gendh2.log 2>&1
 	check_exit_status $?
 	
 	start_message "dh - Obsoleted by dhparam."
@@ -260,7 +260,7 @@ function test_key {
 	if [ $no_long_tests = 0 ] ; then
 		start_message "dhparam - Superseded by genpkey and pkeyparam."
 		dhparam2=$key_dir/dhparam2.pem
-		$openssl_bin dhparam -2 -out $dhparam2
+		$openssl_bin dhparam -2 -out $dhparam2 > $dhparam2.log 2>&1
 		check_exit_status $?
 		$openssl_bin dhparam -in $dhparam2 -check -text \
 			-out $dhparam2.out
@@ -273,7 +273,8 @@ function test_key {
 	
 	start_message "dsaparam - Superseded by genpkey and pkeyparam."
 	dsaparam512=$key_dir/dsaparam512.pem
-	$openssl_bin dsaparam -genkey -out $dsaparam512 512
+	$openssl_bin dsaparam -genkey -out $dsaparam512 512 \
+		> $dsaparam512.log 2>&1
 	check_exit_status $?
 	
 	start_message "dsa"
@@ -291,7 +292,7 @@ function test_key {
 	start_message "genrsa - Superseded by genpkey."
 	genrsa_aes256=$key_dir/genrsa_aes256.pem
 	$openssl_bin genrsa -f4 -aes256 -out $genrsa_aes256 \
-		-passout pass:$key_pass 2048
+		-passout pass:$key_pass 2048 > $genrsa_aes256.log 2>&1
 	check_exit_status $?
 	
 	start_message "rsa"
@@ -315,7 +316,7 @@ function test_key {
 	# EC
 	
 	start_message "ecparam -list-curves"
-	$openssl_bin ecparam -list_curves
+	$openssl_bin ecparam -list_curves -out $key_dir/ecparam-list_curves.out
 	check_exit_status $?
 	
 	# get all EC curves
@@ -346,7 +347,7 @@ function test_key {
 	
 	genpkey_dh_param=$key_dir/genpkey_dh_param.pem
 	$openssl_bin genpkey -genparam -algorithm DH -out $genpkey_dh_param \
-		-pkeyopt dh_paramgen_prime_len:1024
+		-pkeyopt dh_paramgen_prime_len:1024 > $genpkey_dh_param.log 2>&1
 	check_exit_status $?
 	
 	genpkey_dh=$key_dir/genpkey_dh.pem
@@ -357,7 +358,7 @@ function test_key {
 	
 	genpkey_dsa_param=$key_dir/genpkey_dsa_param.pem
 	$openssl_bin genpkey -genparam -algorithm DSA -out $genpkey_dsa_param \
-		-pkeyopt dsa_paramgen_bits:1024
+		-pkeyopt dsa_paramgen_bits:1024 > $genpkey_dsa_param.log 2>&1
 	check_exit_status $?
 	
 	genpkey_dsa=$key_dir/genpkey_dsa.pem
@@ -368,7 +369,8 @@ function test_key {
 	
 	genpkey_rsa=$key_dir/genpkey_rsa.pem
 	$openssl_bin genpkey -algorithm RSA -out $genpkey_rsa \
-		-pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_pubexp:3
+		-pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_pubexp:3 \
+		> $genpkey_rsa.log 2>&1
 	check_exit_status $?
 	
 	genpkey_rsa_pss=$key_dir/genpkey_rsa_pss.pem
@@ -376,7 +378,8 @@ function test_key {
 		-pkeyopt rsa_keygen_bits:2048 \
 		-pkeyopt rsa_pss_keygen_mgf1_md:sha256 \
 		-pkeyopt rsa_pss_keygen_md:sha256 \
-		-pkeyopt rsa_pss_keygen_saltlen:32
+		-pkeyopt rsa_pss_keygen_saltlen:32 \
+		> $genpkey_rsa_pss.log 2>&1
 	check_exit_status $?
 	
 	# EC by GENPKEY
@@ -648,7 +651,8 @@ __EOF__
 		-policy policy_match -days 1 -md sha256 -extensions tsa_ext \
 		-sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:32 \
 		-multivalue-rdn -preserveDN -noemailDN \
-		-in $tsa_csr -outdir $tsa_dir -out $tsa_cert -verbose -notext
+		-in $tsa_csr -outdir $tsa_dir -out $tsa_cert -verbose -notext \
+		> $tsa_cert.log 2>&1
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -679,7 +683,7 @@ __EOF__
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -keyform pem \
 		-key $ca_pass -out $ocsp_cert -extensions ocsp_ext \
 		-startdate `date -u '+%y%m%d%H%M%SZ'` -enddate 491223235959Z \
-		-subj $subj -infiles $ocsp_csr
+		-subj $subj -infiles $ocsp_csr > $ocsp_cert.log 2>&1
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -752,7 +756,7 @@ __EOF__
 
 	$openssl_bin req -new -subj $subj -sha256 \
 		-key $ecdsa_key -keyform pem -passin pass:$ecdsa_pass \
-		-addext 'subjectAltName = DNS:localhost.test_dummy.com' \
+		-addext 'subjectAltName = DNS:ecdsa.test_dummy.com' \
 		-out $ecdsa_csr -outform pem
 	check_exit_status $?
 	
@@ -773,7 +777,7 @@ __EOF__
 	
 	server_cert=$server_dir/server_cert.pem
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-in $server_csr -out $server_cert
+		-in $server_csr -out $server_cert > $server_cert.log 2>&1
 	check_exit_status $?
 	
 	start_message "x509 ... issue cert for server csr#2"
@@ -782,14 +786,15 @@ __EOF__
 	$openssl_bin x509 -req -in $revoke_csr -CA $ca_cert -CAform pem \
 		-CAkey $ca_key -CAkeyform pem \
 		-CAserial $ca_dir/serial -set_serial 10 \
-		-passin pass:$ca_pass -CAcreateserial -out $revoke_cert
+		-passin pass:$ca_pass -CAcreateserial -out $revoke_cert \
+		> $revoke_cert.log 2>&1
 	check_exit_status $?
 	
 	start_message "ca ... issue cert for server csr#3"
 	
 	ecdsa_cert=$server_dir/ecdsa_cert.pem
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-in $ecdsa_csr -out $ecdsa_cert
+		-in $ecdsa_csr -out $ecdsa_cert > $ecdsa_cert 2>&1
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -805,14 +810,15 @@ __EOF__
 		-crl_reason unspecified -crl_hold 1.2.840.10040.2.2 \
 		-crl_compromise `date -u '+%Y%m%d%H%M%SZ'` \
 		-crl_CA_compromise `date -u '+%Y%m%d%H%M%SZ'` \
-		-keyfile $ca_key -passin pass:$ca_pass -cert $ca_cert
+		-keyfile $ca_key -passin pass:$ca_pass -cert $ca_cert \
+		> $crl_file.log 2>&1
 	check_exit_status $?
 	
 	start_message "ca ... show certificate status by serial number"
 	$openssl_bin ca -config $ssldir/openssl.cnf -status 1
 
 	start_message "crl ... CA generates CRL"
-	$openssl_bin crl -in $crl_file -fingerprint
+	$openssl_bin crl -in $crl_file -fingerprint >> $crl_file.log 2>&1
 	check_exit_status $?
 	
 	crl_p7=$ca_dir/crl.p7
@@ -846,7 +852,8 @@ __EOF__
 	
 	if [ $mingw = 0 ] ; then
 		start_message "certhash"
-		$openssl_bin certhash -v $server_dir
+		$openssl_bin certhash -v $server_dir \
+			> $server_dir/certhash.log 2>&1
 		check_exit_status $?
 	fi
 	
@@ -887,7 +894,7 @@ __EOF__
 	start_message "ca ... CA signs SPKAC csr"
 	spkaccert=$server_dir/spkac.cert
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-spkac $spkacreq -out $spkaccert
+		-spkac $spkacreq -out $spkaccert > $spkaccert.log 2>&1
 	check_exit_status $?
 	
 	start_message "x509 ... convert DER format SPKAC cert to PEM"
@@ -910,7 +917,8 @@ __EOF__
 	start_message "x509 ... trust testCA cert"
 	user1_trust=$user1_dir/user1_trust_ca.pem
 	$openssl_bin x509 -in $ca_cert -addtrust clientAuth \
-		-setalias "trusted testCA" -purpose -out $user1_trust
+		-setalias "trusted testCA" -purpose -out $user1_trust \
+		> $user1_trust.log 2>&1
 	check_exit_status $?
 	
 	start_message "req ... generate private key and csr for user1"
@@ -926,7 +934,7 @@ __EOF__
 	fi
 	
 	$openssl_bin req -new -keyout $user1_key -out $user1_csr \
-		-passout pass:$user1_pass -subj $subj
+		-passout pass:$user1_pass -subj $subj > $user1_csr.log 2>&1
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -938,7 +946,7 @@ __EOF__
 	
 	user1_cert=$user1_dir/user1_cert.pem
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-in $user1_csr -out $user1_cert
+		-in $user1_csr -out $user1_cert > $user1_cert.log 2>&1
 	check_exit_status $?
 }
 
@@ -963,7 +971,7 @@ __EOF__
 	
 	start_message "ts ... print time stamp request"
 	
-	$openssl_bin ts -query -in $tsa_tsq -text
+	$openssl_bin ts -query -in $tsa_tsq -text -out $tsa_tsq.log
 	check_exit_status $?
 	
 	# Reply
@@ -1047,7 +1055,8 @@ __EOF__
 	$openssl_bin cms -verify -in $cms_dec \
 		-CAfile $ca_cert -certfile $user1_cert -nointern \
 		-check_ss_sig -issuer_checks -policy_check -x509_strict \
-		-signer $cms_sgr -text -out $cms_ver -receipt_request_print
+		-signer $cms_sgr -text -out $cms_ver -receipt_request_print \
+		> $cms_ver.log 2>&1
 	check_exit_status $?
 
 	diff -b $cms_ver $cms_txt
@@ -1303,7 +1312,7 @@ function test_pkcs {
 	
 	start_message "pkcs12 ... verify"
 	$openssl_bin pkcs12 -in $server_cert.p12 -passin pass:$pkcs_pass -info \
-		-noout
+		-noout > $server_cert.p12.log 2>&1
 	check_exit_status $?
 	
 	start_message "pkcs12 ... private key to PEM without encryption"
@@ -1548,7 +1557,8 @@ function test_server_client {
 	
 	# s_time
 	start_message "s_time ... connect to TLS/SSL test server"
-	$c_bin s_time -connect $host:$port -CApath $ca_dir -time 2
+	$c_bin s_time -connect $host:$port -CApath $ca_dir -time 1 \
+		> $server_dir/s_time_${sc}.log
 	check_exit_status $?
 	
 	stop_s_server
