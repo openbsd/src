@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.7 2020/05/17 05:32:01 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.8 2020/05/17 05:35:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -49,8 +49,9 @@ int ismono(struct info *);
 void print_node(struct sioctl_node *, int);
 void print_desc(struct info *, int);
 void print_num(struct info *);
+void print_ent(struct info *, char *);
 void print_val(struct info *, int);
-void print_par(struct info *, int, char *);
+void print_par(struct info *, int);
 int parse_name(char **, char *);
 int parse_unit(char **, int *);
 int parse_val(char **, float *);
@@ -378,6 +379,36 @@ print_num(struct info *p)
 }
 
 /*
+ * print a single control
+ */
+void
+print_ent(struct info *e, char *comment)
+{
+	if (e->desc.group[0] != 0) {
+		printf("%s", e->desc.group);
+		printf("/");
+	}
+	print_node(&e->desc.node0, 0);
+	printf(".%s=", e->desc.func);
+	switch (e->desc.type) {
+	case SIOCTL_NONE:
+		printf("<removed>\n");
+		break;
+	case SIOCTL_VEC:
+	case SIOCTL_LIST:
+		print_node(&e->desc.node1, 0);
+		printf(":");
+		/* FALLTHROUGH */
+	case SIOCTL_SW:
+	case SIOCTL_NUM:
+		print_num(e);
+	}
+	if (comment)
+		printf("\t# %s", comment);
+	printf("\n");
+}
+
+/*
  * print parameter value
  */
 void
@@ -415,7 +446,7 @@ print_val(struct info *p, int mono)
  * print ``<parameter>=<value>'' string (including '\n')
  */
 void
-print_par(struct info *p, int mono, char *comment)
+print_par(struct info *p, int mono)
 {
 	if (!n_flag) {
 		if (p->desc.group[0] != 0) {
@@ -429,8 +460,6 @@ print_par(struct info *p, int mono, char *comment)
 		print_desc(p, mono);
 	else
 		print_val(p, mono);
-	if (comment)
-		printf(" # %s", comment);
 	printf("\n");
 }
 
@@ -707,7 +736,7 @@ cmd(char *line)
 			if (nent == 0) {
 				/* XXX: use print_node()-like routine */
 				fprintf(stderr, "%s[%d]: invalid value\n", vstr, vunit);
-				print_par(g, 0, NULL);
+				print_par(g, 0);
 				exit(1);
 			}
 			comma = 1;
@@ -774,15 +803,15 @@ list(void)
 		if (i_flag) {
 			if (v_flag) {
 				for (p = g; p != NULL; p = nextpar(p))
-					print_par(p, 0, NULL);
+					print_par(p, 0);
 			} else
-				print_par(g, 1, NULL);
+				print_par(g, 1);
 		} else {
 			if (v_flag || !ismono(g)) {
 				for (p = g; p != NULL; p = nextpar(p))
-					print_par(p, 0, NULL);
+					print_par(p, 0);
 			} else
-				print_par(g, 1, NULL);
+				print_par(g, 1);
 		}
 	}
 }
@@ -807,7 +836,7 @@ ondesc(void *arg, struct sioctl_desc *d, int curval)
 	for (pi = &infolist; (i = *pi) != NULL; pi = &i->next) {
 		if (d->addr == i->desc.addr) {
 			if (m_flag)
-				print_par(i, 0, "deleted");
+				print_ent(i, "deleted");
 			*pi = i->next;
 			free(i);
 			break;
@@ -824,7 +853,7 @@ ondesc(void *arg, struct sioctl_desc *d, int curval)
 		cmp = cmpdesc(d, &i->desc);
 		if (cmp == 0) {
 			fprintf(stderr, "fatal: duplicate control:\n");
-			print_par(i, 0, "duplicate");
+			print_ent(i, "duplicate");
 			exit(1);
 		}
 		if (cmp < 0)
@@ -842,7 +871,7 @@ ondesc(void *arg, struct sioctl_desc *d, int curval)
 	i->next = *pi;
 	*pi = i;
 	if (m_flag)
-		print_par(i, 0, "added");
+		print_ent(i, "added");
 }
 
 /*
@@ -858,7 +887,7 @@ onctl(void *arg, unsigned addr, unsigned val)
 			continue;
 		i->curval = val;
 		if (m_flag)
-			print_par(i, 0, "changed");
+			print_ent(i, "changed");
 	}
 }
 
