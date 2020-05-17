@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlmmc.c,v 1.4 2019/09/02 08:21:15 kettenis Exp $	*/
+/*	$OpenBSD: amlmmc.c,v 1.5 2020/05/17 22:19:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -497,7 +497,7 @@ amlmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	if (freq == 0)
 		return 0;
 
-	/* Convert clock frequency from MHz to Hz. */
+	/* Convert clock frequency from kHz to Hz. */
 	freq = freq * 1000;
 
 	if (freq < (sc->sc_clkin1 / SD_EMMC_CLOCK_DIV_MAX)) {
