@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_subr.h,v 1.5 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: clock_subr.h,v 1.6 2020/05/17 13:21:20 visa Exp $	*/
 /*	$NetBSD: clock_subr.h,v 1.2 1997/03/15 18:11:17 is Exp $	*/
 
 /*-
@@ -62,3 +62,4 @@ typedef struct todr_chip_handle *todr_chip_handle_t;
 #define todr_wenable(ct, v)	if ((ct)->todr_setwen) \
 					((*(ct)->todr_setwen)(ct, v))
 
+void	todr_attach(struct todr_chip_handle *);
