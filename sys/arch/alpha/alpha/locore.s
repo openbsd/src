@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.47 2017/06/05 17:49:05 deraadt Exp $ */
+/* $OpenBSD: locore.s,v 1.48 2020/05/17 13:48:29 deraadt Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -1048,6 +1048,7 @@ LEAF(XentRestart, 1)			/* XXX should be NESTED */
 
 /**************************************************************************/
 
+#ifdef DDB
 /*
  * Kernel setjmp and longjmp.  Rather minimalist.
  *
@@ -1111,6 +1112,8 @@ longjmp_botchmsg:
 	.asciz	"longjmp botch from %p"
 	.text
 END(longjmp)
+
+#endif /* DDB */
 
 /*
  * void sts(int rn, u_int32_t *rval);

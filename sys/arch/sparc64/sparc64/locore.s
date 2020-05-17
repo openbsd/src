@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.187 2019/11/05 08:17:21 mpi Exp $	*/
+/*	$OpenBSD: locore.s,v 1.188 2020/05/17 13:48:31 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -7676,6 +7676,7 @@ ENTRY(delay)			! %o0 = n
 	 nop
 END(delay)
 
+#ifdef DDB
 ENTRY(setjmp)
 	save	%sp, -CC64FSZ, %sp	! Need a frame to return to.
 	flushw
@@ -7694,6 +7695,7 @@ ENTRY(longjmp)
 	ret
 	 restore	%i2, 0, %o0
 END(longjmp)
+#endif /* DDB */
 
 #ifdef DDB
 	/*
