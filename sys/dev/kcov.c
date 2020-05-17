@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.17 2020/05/16 08:38:34 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.18 2020/05/17 08:46:05 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -385,6 +385,13 @@ static struct kcov_dev *
 kd_curproc(int mode)
 {
 	struct kcov_dev *kd;
+
+	/*
+	 * Do not trace if the kernel has panicked. This could happen if curproc
+	 * had kcov enabled while panicking.
+	 */
+	if (__predict_false(panicstr || db_active))
+		return (NULL);
 
 	/*
 	 * Do not trace before kcovopen() has been called at least once.
