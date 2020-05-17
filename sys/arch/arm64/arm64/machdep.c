@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.48 2020/05/16 14:44:44 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.49 2020/05/17 11:05:15 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -30,6 +30,7 @@
 #include <sys/buf.h>
 #include <sys/termios.h>
 #include <sys/sensors.h>
+#include <sys/malloc.h>
 
 #include <net/if.h>
 #include <uvm/uvm.h>
@@ -291,12 +292,25 @@ int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
+	char *compatible;
+	int node, len, error;
+
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
-		// none supported currently
+	case CPU_COMPATIBLE:
+		node = OF_finddevice("/");
+		len = OF_getproplen(node, "compatible");
+		if (len <= 0)
+			return (EOPNOTSUPP); 
+		compatible = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
+		OF_getprop(node, "compatible", compatible, len);
+		compatible[len - 1] = 0;
+		error = sysctl_rdstring(oldp, oldlenp, newp, compatible);
+		free(compatible, M_TEMP, len);
+		return error;
 	default:
 		return (EOPNOTSUPP);
 	}
