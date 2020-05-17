@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.48 2020/05/16 15:54:12 denis Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.49 2020/05/17 18:29:25 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -330,7 +330,6 @@ struct iface {
 	u_int8_t		 cflags;
 #define F_IFACE_PASSIVE		0x01
 #define F_IFACE_CONFIGURED	0x02
-#define F_IFACE_AVAIL		0x04
 };
 
 struct ifaddrchange {
