@@ -25,7 +25,13 @@ struct cpu_info {
 
 extern struct cpu_info cpu_info_primary;
 
-#define curcpu()	(&cpu_info_primary)
+static inline struct cpu_info *
+curcpu(void)
+{
+	struct cpu_info *ci;
+	__asm volatile("mr %0, %%r13" : "=r"(ci));
+	return ci;
+}
 
 #define MAXCPUS			1
 #define CPU_IS_PRIMARY(ci)	1
