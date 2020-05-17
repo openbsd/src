@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.9 2020/05/17 05:37:49 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.10 2020/05/17 05:39:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -432,12 +432,21 @@ print_val(struct info *p, int mono)
 				if (e != firstent(p, e->desc.node1.name))
 					continue;
 			}
-			if (more)
-				printf(",");
-			print_node(&e->desc.node1, mono);
-			printf(":");
-			print_num(e);
-			more = 1;
+			if (e->desc.maxval == 1) {
+				if (e->curval) {
+					if (more)
+						printf(",");
+					print_node(&e->desc.node1, mono);
+					more = 1;
+				}
+			} else {
+				if (more)
+					printf(",");
+				print_node(&e->desc.node1, mono);
+				printf(":");
+				print_num(e);
+				more = 1;
+			}
 		}
 	}
 }
