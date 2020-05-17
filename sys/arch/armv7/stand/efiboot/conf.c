@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2020/03/30 11:55:47 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.26 2020/05/17 14:32:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -42,7 +42,7 @@
 #include "efidev.h"
 #include "efipxe.h"
 
-const char version[] = "1.12";
+const char version[] = "1.13";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
