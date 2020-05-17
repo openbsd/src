@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.19 2017/12/14 03:30:43 guenther Exp $	*/
+/*	$OpenBSD: mem.c,v 1.20 2020/05/17 11:12:55 kn Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -87,10 +87,11 @@ mmclose(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
+static struct rwlock physlock = RWLOCK_INITIALIZER("mmrw");
+
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	static struct rwlock physlock = RWLOCK_INITIALIZER("mmrw");
 	vaddr_t o, v;
 	size_t c;
 	struct iovec *iov;
