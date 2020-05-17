@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2020/05/17 12:01:11 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2020/05/17 14:54:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -152,15 +152,14 @@ init_powernv(void *fdt)
 	reg.size = round_page((paddr_t)fdt + fdt_get_size(fdt)) - reg.addr;
 	memreg_remove(&reg);
 
+	uvm_setpagesize();
+
 	for (i = 0; i < nmemreg; i++) {
 		paddr_t start = memreg[i].addr;
 		paddr_t end = start + memreg[i].size;
 
-		printf("0x%016lx - 0x%016lx\n", start, end - 1);
-#ifdef notyet
 		uvm_page_physload(atop(start), atop(end),
 		    atop(start), atop(end), 0);
-#endif
 		physmem += atop(end - start);
 	}
 

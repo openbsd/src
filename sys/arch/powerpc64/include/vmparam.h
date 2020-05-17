@@ -38,7 +38,8 @@
  */
 #define	USRIOSIZE 	300
 
-#define VM_PHYSSEG_MAX	32
+#define VM_PHYSSEG_MAX		32
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
 #define	VM_MIN_ADDRESS		((vaddr_t)PAGE_SIZE)
 #define VM_MAXUSER_ADDRESS	0xbfffffffffffffffUL
