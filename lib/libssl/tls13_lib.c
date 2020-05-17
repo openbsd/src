@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.43 2020/05/11 17:46:46 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.44 2020/05/17 18:22:30 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -271,7 +271,7 @@ tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 		CBB cbb;
 		CBS cbs; /* XXX */
 
-		free(ctx->hs_msg);
+		tls13_handshake_msg_free(ctx->hs_msg);
 		ctx->hs_msg = tls13_handshake_msg_new();
 		if (!tls13_handshake_msg_start(ctx->hs_msg, &cbb, TLS13_MT_KEY_UPDATE))
 			goto err;
