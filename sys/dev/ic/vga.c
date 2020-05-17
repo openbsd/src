@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.70 2020/05/16 11:07:54 jsg Exp $ */
+/* $OpenBSD: vga.c,v 1.71 2020/05/17 14:06:02 jsg Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -820,6 +820,7 @@ vga_doswitch(struct vga_config *vc)
 		vc->currenttype = type;
 	}
 
+	vga_restore_fonts(vc);
 	vga_setfont(vc, scr);
 	vga_restore_palette(vc);
 
