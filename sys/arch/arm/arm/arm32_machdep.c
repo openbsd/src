@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.59 2020/05/16 14:44:44 kettenis Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.60 2020/05/17 15:36:50 kettenis Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+#include <dev/ofw/openfirm.h>
 
 #include <arm/machdep.h>
 #include <machine/conf.h>
@@ -303,6 +304,8 @@ int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
+	char *compatible;
+	int node, len, error;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -330,6 +333,18 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
+
+	case CPU_COMPATIBLE:
+		node = OF_finddevice("/");
+		len = OF_getproplen(node, "compatible");
+		if (len <= 0)
+			return (EOPNOTSUPP); 
+		compatible = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
+		OF_getprop(node, "compatible", compatible, len);
+		compatible[len - 1] = 0;
+		error = sysctl_rdstring(oldp, oldlenp, newp, compatible);
+		free(compatible, M_TEMP, len);
+		return error;
 
 	default:
 		return (EOPNOTSUPP);

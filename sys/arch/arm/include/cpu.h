@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.57 2020/01/12 16:55:00 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.58 2020/05/17 15:36:50 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -67,7 +67,8 @@
 #define	CPU_MAXSPEED		11	/* int: number of valid machdep ids */
 		/*		12	   formerly int: CPU_LIDSUSPEND */
 #define CPU_LIDACTION		13	/* action caused by lid close */
-#define	CPU_MAXID		14	/* number of valid machdep ids */
+#define	CPU_COMPATIBLE		14	/* compatible property */
+#define	CPU_MAXID		15	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -84,6 +85,7 @@
 	{ "maxspeed", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "lidaction", CTLTYPE_INT }, \
+	{ "compatible", CTLTYPE_STRING }, \
 }
 
 #ifdef _KERNEL
