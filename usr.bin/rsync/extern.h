@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.32 2019/08/09 05:28:01 claudio Exp $ */
+/*	$Id: extern.h,v 1.33 2020/05/17 19:54:41 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -221,44 +221,44 @@ extern int verbose;
 #define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
 
 #define LOG0(_fmt, ...) \
-	rsync_log(__FILE__, __LINE__, -1, (_fmt), ##__VA_ARGS__)
+	rsync_log( -1, (_fmt), ##__VA_ARGS__)
 #define LOG1(_fmt, ...) \
-	rsync_log(__FILE__, __LINE__, 0, (_fmt), ##__VA_ARGS__)
+	rsync_log( 0, (_fmt), ##__VA_ARGS__)
 #define LOG2(_fmt, ...) \
-	rsync_log(__FILE__, __LINE__, 1, (_fmt), ##__VA_ARGS__)
+	rsync_log( 1, (_fmt), ##__VA_ARGS__)
 #define LOG3(_fmt, ...) \
-	rsync_log(__FILE__, __LINE__, 2, (_fmt), ##__VA_ARGS__)
+	rsync_log( 2, (_fmt), ##__VA_ARGS__)
 #define LOG4(_fmt, ...) \
-	rsync_log(__FILE__, __LINE__, 3, (_fmt), ##__VA_ARGS__)
+	rsync_log( 3, (_fmt), ##__VA_ARGS__)
 #define ERRX1(_fmt, ...) \
-	rsync_errx1(__FILE__, __LINE__, (_fmt), ##__VA_ARGS__)
+	rsync_errx1( (_fmt), ##__VA_ARGS__)
 #define WARNX(_fmt, ...) \
-	rsync_warnx(__FILE__, __LINE__, (_fmt), ##__VA_ARGS__)
+	rsync_warnx( (_fmt), ##__VA_ARGS__)
 #define WARN(_fmt, ...) \
-	rsync_warn(0, __FILE__, __LINE__, (_fmt), ##__VA_ARGS__)
+	rsync_warn(0,  (_fmt), ##__VA_ARGS__)
 #define WARN1(_fmt, ...) \
-	rsync_warn(1, __FILE__, __LINE__, (_fmt), ##__VA_ARGS__)
+	rsync_warn(1,  (_fmt), ##__VA_ARGS__)
 #define WARN2(_fmt, ...) \
-	rsync_warn(2, __FILE__, __LINE__, (_fmt), ##__VA_ARGS__)
+	rsync_warn(2,  (_fmt), ##__VA_ARGS__)
 #define ERR(_fmt, ...) \
-	rsync_err(__FILE__, __LINE__, (_fmt), ##__VA_ARGS__)
+	rsync_err( (_fmt), ##__VA_ARGS__)
 #define ERRX(_fmt, ...) \
-	rsync_errx(__FILE__, __LINE__, (_fmt), ##__VA_ARGS__)
+	rsync_errx( (_fmt), ##__VA_ARGS__)
 
-void		  rsync_log(const char *, size_t, int, const char *, ...)
-			__attribute__((format(printf, 4, 5)));
-void		  rsync_warnx1(const char *, size_t, const char *, ...)
-			__attribute__((format(printf, 3, 4)));
-void		  rsync_warn(int, const char *, size_t, const char *, ...)
-			__attribute__((format(printf, 4, 5)));
-void		  rsync_warnx(const char *, size_t, const char *, ...)
-			__attribute__((format(printf, 3, 4)));
-void		  rsync_err(const char *, size_t, const char *, ...)
-			__attribute__((format(printf, 3, 4)));
-void		  rsync_errx(const char *, size_t, const char *, ...)
-			__attribute__((format(printf, 3, 4)));
-void		  rsync_errx1(const char *, size_t, const char *, ...)
-			__attribute__((format(printf, 3, 4)));
+void		  rsync_log(int, const char *, ...)
+			__attribute__((format(printf, 2, 3)));
+void		  rsync_warnx1(const char *, ...)
+			__attribute__((format(printf, 1, 2)));
+void		  rsync_warn(int, const char *, ...)
+			__attribute__((format(printf, 2, 3)));
+void		  rsync_warnx(const char *, ...)
+			__attribute__((format(printf, 1, 2)));
+void		  rsync_err(const char *, ...)
+			__attribute__((format(printf, 1, 2)));
+void		  rsync_errx(const char *, ...)
+			__attribute__((format(printf, 1, 2)));
+void		  rsync_errx1(const char *, ...)
+			__attribute__((format(printf, 1, 2)));
 
 int		  flist_del(struct sess *, int,
 			const struct flist *, size_t);
