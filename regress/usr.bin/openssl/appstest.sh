@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.37 2020/05/15 15:44:16 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.38 2020/05/17 01:43:27 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1340,38 +1340,45 @@ function test_sc_all_cipher {
 	sc=$1
 	ver=$2
 
-	s_ciph=$server_dir/s_ciph_${sc}_${ver}
-	cipher_string=""
-	if [ $s_id = "0" ] ; then
-		if [ $ver = "tls1_3" ] ; then
-			cipher_string="TLSv1.3"
-		else
-			if [ $ecdsa_tests = 0 ] ; then
-				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
-			else
-				cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
-			fi
-		fi
-	fi
-	$s_bin ciphers -v $cipher_string | awk '{print $1}' > $s_ciph
-
-	c_ciph=$user1_dir/c_ciph_${sc}_${ver}
-	cipher_string=""
-	if [ $c_id = "0" ] ; then
-		if [ $ver = "tls1_3" ] ; then
-			cipher_string="TLSv1.3"
-		else
-			if [ $ecdsa_tests = 0 ] ; then
-				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
-			else
-				cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
-			fi
-		fi
-	fi
-	$c_bin ciphers -v $cipher_string | awk '{print $1}' > $c_ciph
-
+	copt=cipher
 	ciphers=$user1_dir/ciphers_${sc}_${ver}
-	grep -x -f $s_ciph $c_ciph | sort -R > $ciphers
+
+	if [ $ver = "tls1_3" ] ; then
+		if [ $c_id = "0" ] ; then
+			echo "AEAD-AES256-GCM-SHA384" > $ciphers
+			echo "AEAD-CHACHA20-POLY1305-SHA256" >> $ciphers
+			echo "AEAD-AES128-GCM-SHA256" >> $ciphers
+		else
+			echo "TLS_AES_256_GCM_SHA384" > $ciphers
+			echo "TLS_CHACHA20_POLY1305_SHA256" >> $ciphers
+			echo "TLS_AES_128_GCM_SHA256" >> $ciphers
+			copt=ciphersuites
+		fi
+	else
+		s_ciph=$server_dir/s_ciph_${sc}_${ver}
+		cipher_string=""
+		if [ $s_id = "0" ] ; then
+			if [ $ecdsa_tests = 0 ] ; then
+				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
+			else
+				cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
+			fi
+		fi
+		$s_bin ciphers -v $cipher_string | awk '{print $1}' > $s_ciph
+
+		c_ciph=$user1_dir/c_ciph_${sc}_${ver}
+		cipher_string=""
+		if [ $c_id = "0" ] ; then
+			if [ $ecdsa_tests = 0 ] ; then
+				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
+			else
+				cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
+			fi
+		fi
+		$c_bin ciphers -v $cipher_string | awk '{print $1}' > $c_ciph
+
+		grep -x -f $s_ciph $c_ciph | sort -R > $ciphers
+	fi
 
 	cnum=0
 	for c in `cat $ciphers` ; do
@@ -1382,11 +1389,11 @@ function test_sc_all_cipher {
 		start_message "s_client ... connect to TLS/SSL test server with [ $cnstr ] $ver $c"
 		sleep $test_pause_sec
 		$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-			-$ver -cipher $c \
+			-$ver -$copt $c \
 			-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 		check_exit_status $?
 	
-		grep "Cipher    : $c" $s_client_out > /dev/null
+		grep "Cipher is $c" $s_client_out > /dev/null
 		check_exit_status $?
 	
 		grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
