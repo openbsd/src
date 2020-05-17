@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.6 2020/04/27 21:44:47 schwarze Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.7 2020/05/17 05:32:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -48,6 +48,7 @@ int matchent(struct info *, char *, int);
 int ismono(struct info *);
 void print_node(struct sioctl_node *, int);
 void print_desc(struct info *, int);
+void print_num(struct info *);
 void print_val(struct info *, int);
 void print_par(struct info *, int, char *);
 int parse_name(char **, char *);
@@ -362,6 +363,20 @@ print_desc(struct info *p, int mono)
 	}
 }
 
+void
+print_num(struct info *p)
+{
+	if (p->desc.maxval == 1)
+		printf("%d", p->curval);
+	else {
+		/*
+		 * For now, maxval is always 127 or 255,
+		 * so three decimals is always ideal.
+		 */
+		printf("%.3f", p->curval / (float)p->desc.maxval);
+	}
+}
+
 /*
  * print parameter value
  */
@@ -374,14 +389,7 @@ print_val(struct info *p, int mono)
 	switch (p->desc.type) {
 	case SIOCTL_NUM:
 	case SIOCTL_SW:
-		if (p->desc.maxval == 1)
-			printf("%d", p->curval);
-		else
-			/*
-			 * For now, maxval is always 127 or 255,
-			 * so three decimals is always ideal.
-			 */
-			printf("%.3f", p->curval / (float)p->desc.maxval);
+		print_num(p);
 		break;
 	case SIOCTL_VEC:
 	case SIOCTL_LIST:
@@ -396,11 +404,8 @@ print_val(struct info *p, int mono)
 			if (more)
 				printf(",");
 			print_node(&e->desc.node1, mono);
-			if (e->desc.maxval == 1)
-				printf(":%d", e->curval);
-			else
-				printf(":%.3f",
-				    e->curval / (float)e->desc.maxval);
+			printf(":");
+			print_num(e);
 			more = 1;
 		}
 	}
