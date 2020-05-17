@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.34 2019/11/15 03:10:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.35 2020/05/17 17:04:27 deraadt Exp $
 
-FS=		install${OSrev}.fs
+FS=		install${OSrev}.img
 FSSIZE=		929792
 FSTYPE=		install360
 CDROM=		install${OSrev}.iso

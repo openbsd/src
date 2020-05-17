@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.27 2019/08/01 19:42:52 jmc Exp $
+dnl	$OpenBSD: install,v 1.28 2020/05/17 17:04:28 deraadt Exp $
 dnl lots of texts coming from {mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -64,7 +64,7 @@ Booting from Network:
     file is the ethernet address followed by the LIF filename. Here is an
     example:
 
-	08:00:09:70:c4:11		lif{:--:}OSrev.fs
+	08:00:09:70:c4:11		lif{:--:}OSrev.img
 
     Then start rbootd (or configure /etc/rc.conf to always start rbootd). Once
     rbootd is running, the server name will then appear on the MACHINE as part
@@ -82,7 +82,7 @@ Booting from Network:
 
 	subnet 10.0.0.0 netmask 255.0.0.0 {
 		host boron {
-			filename "lif{:--:}OSrev.fs";
+			filename "lif{:--:}OSrev.img";
 			hardware ethernet 08:00:09:70:c4:11;
 			fixed-address 10.42.42.42;
 		}

@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.44 2019/05/03 20:03:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.45 2020/05/17 17:04:28 deraadt Exp $
 
-FS=		floppyB${OSrev}.fs
+FS=		floppyB${OSrev}.img
 FSSIZE=		2880
 FSDISKTYPE=	floppy
 MOUNT_POINT=	/mnt

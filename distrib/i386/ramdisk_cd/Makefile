@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.15 2019/12/01 05:16:40 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2020/05/17 17:04:27 deraadt Exp $
 
-FS=		miniroot${OSrev}.fs
+FS=		miniroot${OSrev}.img
 FSSIZE=		8064
 FSDISKTYPE=	mini34
 CDROM=		cd${OSrev}.iso
@@ -104,7 +104,7 @@ install:
 
 clean cleandir:
 	rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
-	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
+	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.img \
 	    lib*.a lib*.olist instbin.map boot instbin.conf ${FS}
 	rm -rf mr.fs.d
 	rm -f ${CDROM}

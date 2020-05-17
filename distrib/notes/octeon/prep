@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.9 2018/12/21 14:35:56 visa Exp $
+dnl	$OpenBSD: prep,v 1.10 2020/05/17 17:04:28 deraadt Exp $
 By default MACHINE systems are shipped with a Linux (or proprietary) system
 installed on the CompactFlash card or USB drive.
 
@@ -24,7 +24,7 @@ Booting from a CF card or USB:
   Use the dd(1) utility to copy the miniroot to the hard drive.
   The command would likely be, under OpenBSD:
 
-  	dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c
+  	dd if=miniroot{:--:}OSrev.img of=/dev/rsd1c
 
   On the EdgeRouter Lite, some USB storage devices are not detected
   immediately after power on:

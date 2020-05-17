@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.128 2019/08/01 19:42:51 jmc Exp $
+dnl	$OpenBSD: m4.common,v 1.129 2020/05/17 17:04:27 deraadt Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -173,7 +173,7 @@ dnl
 dnl Floppy and bootable cdrom stuff
 dnl
 define({:-OpenBSDfloppy-:},
-{:-	floppy{:--:}OSrev.fs	The standard MACHINE boot and installation floppy;
+{:-	floppy{:--:}OSrev.img	The standard MACHINE boot and installation floppy;
 			see below.-:})dnl
 dnl
 define({:-OpenBSDinstalliso-:},
@@ -221,12 +221,12 @@ define({:-OpenBSDrd-:},
 			system.-:})dnl
 dnl
 define({:-OpenBSDminiroot-:},
-{:-	miniroot{:--:}OSrev.fs	A miniroot filesystem image to be used if you
+{:-	miniroot{:--:}OSrev.img	A miniroot filesystem image to be used if you
 			for some reason can't or don't want to use the
 			ramdisk installation method.-:})dnl
 dnl
 define({:-OpenBSDinstallfs-:},
-{:-	install{:--:}OSrev.fs	A boot and installation image which contains
+{:-	install{:--:}OSrev.img	A boot and installation image which contains
 			the base and X sets.  An install or upgrade can be
 			done with a USB key without network connectivity.-:})dnl
 dnl
@@ -913,7 +913,7 @@ define({:-OpenBSDXferFloppyFromUNIX-:},
 
 	Next, use the dd(1) utility to copy the file to the floppy drive.
 	The command would likely be, under OpenBSD:
-		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
+		dd if=floppy{:--:}OSrev.img of=/dev/rfd0c bs=36b
 
 	If you are using another operating system, you may have to adapt
 	this to conform to local naming conventions for the floppy and
@@ -941,13 +941,13 @@ define({:-OpenBSDXferUSBFromUNIX-:},
 	problems.
 
 	First, you will need to obtain a local copy of the bootable filesystem
-	image miniroot{:--:}OSrev.fs or install{:--:}OSrev.fs as described above.
+	image miniroot{:--:}OSrev.img or install{:--:}OSrev.img as described above.
 	You should use the signify(1) and sha256(1) commands to verify
 	the integrity of the images with the SHA256.sig file on the mirror site.
 
 	Next, use the dd(1) utility to copy the file to the USB storage device.
 	The command would likely be, under OpenBSD:
-		dd if=miniroot{:--:}OSrev.fs of=/dev/rsdNc bs=1m
+		dd if=miniroot{:--:}OSrev.img of=/dev/rsdNc bs=1m
 
 	where N is the device number.  You can find the correct device number
 	by checking dmesg(8) when inserting the media.

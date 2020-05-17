@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 2019/06/07 14:39:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2020/05/17 17:04:27 deraadt Exp $
 
-FS=		floppy${OSrev}.fs
+FS=		floppy${OSrev}.img
 FSSIZE=		2880
 FSDISKTYPE=	floppy3
 MOUNT_POINT=	/mnt
@@ -82,7 +82,7 @@ install:
 
 clean cleandir:
 	rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
-	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
+	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.img \
 	    lib*.a lib*.olist instbin.map boot instbin.conf ${FS}
 	rm -rf mr.fs.d
 
