@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.49 2020/05/17 11:05:15 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.50 2020/05/17 15:03:06 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -783,6 +783,10 @@ initarm(struct arm64_bootparams *abp)
 		if (len > 0)
 			collect_kernel_args(prop);
 
+		len = fdt_node_property(node, "openbsd,boothowto", &prop);
+		if (len == sizeof(boothowto))
+			boothowto = bemtoh32((uint32_t *)prop);
+
 		len = fdt_node_property(node, "openbsd,bootduid", &prop);
 		if (len == sizeof(bootduid))
 			memcpy(bootduid, prop, sizeof(bootduid));
@@ -1149,23 +1153,20 @@ process_kernel_args(void)
 {
 	char *cp = bootargs;
 
-	if (cp[0] == '\0') {
-		boothowto = RB_AUTOBOOT;
+	if (*cp == 0)
 		return;
-	}
 
-	boothowto = 0;
 	boot_file = bootargs;
 
 	/* Skip the kernel image filename */
 	while (*cp != ' ' && *cp != 0)
-		++cp;
+		cp++;
 
 	if (*cp != 0)
 		*cp++ = 0;
 
 	while (*cp == ' ')
-		++cp;
+		cp++;
 
 	boot_args = cp;
 
@@ -1177,28 +1178,25 @@ process_kernel_args(void)
 		if (*cp++ == '\0')
 			return;
 
-	for (;*++cp;) {
-		int fl;
-
-		fl = 0;
+	while (*cp != 0) {
 		switch(*cp) {
 		case 'a':
-			fl |= RB_ASKNAME;
+			boothowto |= RB_ASKNAME;
 			break;
 		case 'c':
-			fl |= RB_CONFIG;
+			boothowto |= RB_CONFIG;
 			break;
 		case 'd':
-			fl |= RB_KDB;
+			boothowto |= RB_KDB;
 			break;
 		case 's':
-			fl |= RB_SINGLE;
+			boothowto |= RB_SINGLE;
 			break;
 		default:
 			printf("unknown option `%c'\n", *cp);
 			break;
 		}
-		boothowto |= fl;
+		cp++;
 	}
 }
 
