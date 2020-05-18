@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.41 2020/05/18 11:42:34 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.42 2020/05/18 13:55:04 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -984,6 +984,47 @@ __EOF__
 		-passout pass:$cl_rsa_pass -subj $subj > $cl_rsa_csr.log 2>&1
 	check_exit_status $?
 	
+	start_message "req ... generate private key and csr for user2"
+	
+	cl_ecdsa_key=$user1_dir/cl_ecdsa_key.pem
+	cl_ecdsa_csr=$user1_dir/cl_ecdsa_csr.pem
+	cl_ecdsa_pass=test-user1-pass
+	
+	if [ $mingw = 0 ] ; then
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user2.test_dummy.com/'
+	else
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user2.test_dummy.com\'
+	fi
+	
+	$openssl_bin ecparam -name prime256v1 -genkey -out $cl_ecdsa_key
+	check_exit_status $?
+
+	$openssl_bin req -new -subj $subj -sha256 \
+		-key $cl_ecdsa_key -keyform pem -passin pass:$cl_ecdsa_pass \
+		-out $cl_ecdsa_csr -outform pem
+	check_exit_status $?
+	
+	start_message "req ... generate private key and csr for user3"
+	
+	cl_gost_key=$user1_dir/cl_gost_key.pem
+	cl_gost_csr=$user1_dir/cl_gost_csr.pem
+	cl_gost_pass=test-user1-pass
+	
+	if [ $mingw = 0 ] ; then
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user3.test_dummy.com/'
+	else
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user3.test_dummy.com\'
+	fi
+	
+	$openssl_bin genpkey -algorithm GOST2001 -pkeyopt paramset:A \
+		-pkeyopt dgst:streebog512 -out $cl_gost_key
+	check_exit_status $?
+
+	$openssl_bin req -new -subj $subj -streebog512 \
+		-key $cl_gost_key -keyform pem -passin pass:$cl_gost_pass \
+		-out $cl_gost_csr -outform pem
+	check_exit_status $?
+	
 	#---------#---------#---------#---------#---------#---------#---------
 	
 	# --- CA operations (issue cert for user1) ---
@@ -994,6 +1035,20 @@ __EOF__
 	cl_rsa_cert=$user1_dir/cl_rsa_cert.pem
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
 		-in $cl_rsa_csr -out $cl_rsa_cert > $cl_rsa_cert.log 2>&1
+	check_exit_status $?
+
+	start_message "ca ... issue cert for user2"
+	
+	cl_ecdsa_cert=$user1_dir/cl_ecdsa_cert.pem
+	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
+		-in $cl_ecdsa_csr -out $cl_ecdsa_cert > $cl_ecdsa_cert.log 2>&1
+	check_exit_status $?
+	
+	start_message "ca ... issue cert for user3"
+	
+	cl_gost_cert=$user1_dir/cl_gost_cert.pem
+	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
+		-in $cl_gost_csr -out $cl_gost_cert > $cl_gost_cert.log 2>&1
 	check_exit_status $?
 }
 
@@ -1546,6 +1601,38 @@ function test_sc_verify {
 	else
 		check_exit_status 0
 	fi
+
+	# client certificate pattern
+	
+	s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_client_cert.out
+	
+	start_message "s_client ... connect to tls/ssl test server with client certificate $ver"
+
+	if [ $ecdsa_tests = 1 ] ; then
+		echo "Using ECDSA client certificate"
+		crt=$cl_ecdsa_cert
+		key=$cl_ecdsa_key
+		pwd=$cl_ecdsa_pass
+	elif [ $gost_tests = 1 ] ; then
+		echo "Using GOST client certificate"
+		crt=$cl_gost_cert
+		key=$cl_gost_key
+		pwd=$cl_gost_pass
+	else
+		echo "Using RSA client certificate"
+		crt=$cl_rsa_cert
+		key=$cl_rsa_key
+		pwd=$cl_rsa_pass
+	fi
+
+	sleep $test_pause_sec
+	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-$ver -cert $crt -key $key -pass pass:$pwd \
+		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+
+	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+	check_exit_status $?
 }
 
 function test_server_client {
@@ -1606,7 +1693,7 @@ function test_server_client {
 		-cert $crt -key $key -pass pass:$pwd \
 		-context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
 		-alpn "http/1.1,spdy/3" -www -cipher ALL $extra_opts \
-		-msg -tlsextdebug > $s_server_out 2>&1 &
+		-msg -tlsextdebug -verify 3 > $s_server_out 2>&1 &
 	check_exit_status $?
 	s_server_pid=$!
 	echo "s_server pid = [ $s_server_pid ]"
