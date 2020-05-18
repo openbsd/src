@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.5 2014/11/19 20:28:56 miod Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.6 2020/05/18 17:01:02 patrick Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.3 1995/04/22 13:53:48 cgd Exp $	*/
 
 /*
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -56,35 +52,38 @@
  * code and should be modified for each CPU to be as fast as possible.
  * In particular, it should not be this one.
  */
-int
-in_cksum(const void *p, int len)
+u_int16_t
+in_cksum(const void *p, size_t l)
 {
-	int sum = 0, oddbyte = 0, v = 0;
+	unsigned int sum = 0;
+	int len;
 	const u_char *cp = p;
 
-	/* we assume < 2^16 bytes being summed */
-	while (len > 0) {
-		if (oddbyte) {
-			sum += v + *cp++;
-			len--;
-		}
-		if (((long)cp & 1) == 0) {
-			while ((len -= 2) >= 0) {
-				sum += *(const u_short *)cp;
-				cp += 2;
-			}
-		} else {
-			while ((len -= 2) >= 0) {
-				sum += *cp++ << 8;
-				sum += *cp++;
-			}
-		}
-		if ((oddbyte = len & 1) != 0)
-			v = *cp << 8;
+	/* ensure that < 2^16 bytes being summed */
+	if (l >= (1 << 16)) {
+		printf("in_cksum: packet too big\n");
+		return -1;
 	}
-	if (oddbyte)
-		sum += v;
+	len = (int)l;
+
+	if (((long)cp & 1) == 0) {
+		while (len > 1) {
+			sum += htons(*(const u_short *)cp);
+			cp += 2;
+			len -= 2;
+		}
+	} else {
+		while (len > 1) {
+			sum += *cp++ << 8;
+			sum += *cp++;
+			len -= 2;
+		}
+	}
+	if (len == 1)
+		sum += *cp << 8;
+
 	sum = (sum >> 16) + (sum & 0xffff); /* add in accumulated carries */
 	sum += sum >> 16;		/* add potential last carry */
+	sum = ntohs(sum);
 	return (0xffff & ~sum);
 }
