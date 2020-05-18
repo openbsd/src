@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.45 2020/05/17 17:04:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.46 2020/05/18 06:20:44 otto Exp $
 
 FS=		floppyB${OSrev}.img
 FSSIZE=		2880
@@ -19,7 +19,7 @@ ${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	install -c -m 555 -o root -g wheel \
 	    ${DESTDIR}/usr/mdec/ofwboot ${MOUNT_POINT}/ofwboot
