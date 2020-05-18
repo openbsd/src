@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.137 2020/02/25 15:18:41 sthen Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.138 2020/05/18 14:40:06 cwen Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -921,7 +921,10 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	/* A CSS stylesheet allows minimal customization by the user */
 	style = "body { background-color: white; color: black; font-family: "
 	    "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }\n"
-	    "hr { border: 0; border-bottom: 1px dashed; }\n";
+	    "hr { border: 0; border-bottom: 1px dashed; }\n"
+	    "@media (prefers-color-scheme: dark) {\n"
+	    "body { background-color: #1E1F21; color: #EEEFF1; }\n"
+	    "a { color: #BAD7FF; }\n}";
 
 	/* Generate simple HTML error document */
 	if ((bodylen = asprintf(&body,
