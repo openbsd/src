@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.126 2020/04/27 21:31:37 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.127 2020/05/18 10:40:09 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -157,6 +157,7 @@ amlmmc*		at fdt?
 sdmmc*		at amlmmc?
 amlpciephy*	at fdt?
 amlpinctrl*	at fdt? early 1
+amlpwrc*	at fdt? early 1
 amlreset*	at fdt? early 1
 amlrng*		at fdt?
 amluart*	at fdt?
