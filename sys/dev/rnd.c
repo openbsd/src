@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.212 2020/05/16 19:07:04 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.213 2020/05/18 15:00:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -323,7 +323,7 @@ extract_entropy(u_int8_t *buf)
 	memcpy(buf, digest, EBUFSIZE);
 
 	/* Modify pool so next hash will produce different results */
-	enqueue_randomness(EBUFSIZE);
+	enqueue_randomness(extract_pool[0]);
 	dequeue_randomness(NULL);
 
 	/* Wipe data from memory */
