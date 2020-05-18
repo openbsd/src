@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.21 2020/05/17 13:48:30 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.22 2020/05/18 17:24:03 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -264,6 +264,7 @@ ENTRY(longjmp)
 	ldmia	r0, {r4-r14}
 	mov	r0, #0x00000001
 	mov	pc, lr
+#endif /* DDB */
 
 	.data
 	.align	2
@@ -272,4 +273,3 @@ _C_LABEL(esym):	.word	_C_LABEL(end)
 
 ENTRY_NP(abort)
 	b	_C_LABEL(abort)
-#endif /* DDB */
