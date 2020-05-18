@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.69 2020/05/06 12:15:50 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.70 2020/05/18 08:46:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -649,27 +649,28 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 			 * Then we respond to the parent.
 			 */
 
-			if ((pid = waitpid(WAIT_ANY, &st, 0)) == -1)
-				err(1, "waitpid");
+			while ((pid = waitpid(WAIT_ANY, &st, WNOHANG)) > 0) {
+				for (i = 0; i < idsz; i++)
+					if (ids[i].pid == pid)
+						break;
+				assert(i < idsz);
 
-			for (i = 0; i < idsz; i++)
-				if (ids[i].pid == pid)
-					break;
-			assert(i < idsz);
+				if (!WIFEXITED(st)) {
+					warnx("rsync %s terminated abnormally",
+					    ids[i].uri);
+					rc = 1;
+				} else if (WEXITSTATUS(st) != 0) {
+					warnx("rsync %s failed", ids[i].uri);
+				}
 
-			if (!WIFEXITED(st)) {
-				warnx("rsync %s terminated abnormally",
-				    ids[i].uri);
-				rc = 1;
-			} else if (WEXITSTATUS(st) != 0) {
-				warnx("rsync %s failed", ids[i].uri);
+				io_simple_write(fd, &ids[i].id, sizeof(size_t));
+				free(ids[i].uri);
+				ids[i].uri = NULL;
+				ids[i].pid = 0;
+				ids[i].id = 0;
 			}
-
-			io_simple_write(fd, &ids[i].id, sizeof(size_t));
-			free(ids[i].uri);
-			ids[i].uri = NULL;
-			ids[i].pid = 0;
-			ids[i].id = 0;
+			if (pid == -1 && errno != ECHILD)
+				err(1, "waitpid");
 			continue;
 		}
 
