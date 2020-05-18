@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.308 2020/04/29 13:13:30 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.309 2020/05/18 17:56:41 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -372,8 +372,10 @@ int	iwm_rxmq_get_signal_strength(struct iwm_softc *, struct iwm_rx_mpdu_desc *);
 void	iwm_rx_rx_phy_cmd(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_rx_data *);
 int	iwm_get_noise(const struct iwm_statistics_rx_non_phy *);
-void	iwm_rx_frame(struct iwm_softc *, struct mbuf *, int, int, int, uint32_t,
-	    struct ieee80211_rxinfo *, struct mbuf_list *);
+int	iwm_ccmp_decap(struct iwm_softc *, struct mbuf *,
+	    struct ieee80211_node *);
+void	iwm_rx_frame(struct iwm_softc *, struct mbuf *, int, uint32_t, int, int,
+	    uint32_t, struct ieee80211_rxinfo *, struct mbuf_list *);
 void	iwm_rx_tx_cmd_single(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_node *, int, int);
 void	iwm_rx_tx_cmd(struct iwm_softc *, struct iwm_rx_packet *,
@@ -452,6 +454,14 @@ int	iwm_disassoc(struct iwm_softc *);
 int	iwm_run(struct iwm_softc *);
 int	iwm_run_stop(struct iwm_softc *);
 struct ieee80211_node *iwm_node_alloc(struct ieee80211com *);
+int	iwm_set_key_v1(struct ieee80211com *, struct ieee80211_node *,
+	    struct ieee80211_key *);
+int	iwm_set_key(struct ieee80211com *, struct ieee80211_node *,
+	    struct ieee80211_key *);
+void	iwm_delete_key_v1(struct ieee80211com *,
+	    struct ieee80211_node *, struct ieee80211_key *);
+void	iwm_delete_key(struct ieee80211com *,
+	    struct ieee80211_node *, struct ieee80211_key *);
 void	iwm_calib_timeout(void *);
 void	iwm_setrates(struct iwm_node *, int);
 int	iwm_media_change(struct ifnet *);
@@ -3896,16 +3906,65 @@ iwm_get_noise(const struct iwm_statistics_rx_non_phy *stats)
 	return (nbant == 0) ? -127 : (total / nbant) - 107;
 }
 
+int
+iwm_ccmp_decap(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_key *k = &ni->ni_pairwise_key;
+	struct ieee80211_frame *wh;
+	uint64_t pn, *prsc;
+	uint8_t *ivp;
+	uint8_t tid;
+	int hdrlen, hasqos;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	hdrlen = ieee80211_get_hdrlen(wh);
+	ivp = (uint8_t *)wh + hdrlen;
+
+	/* Check that ExtIV bit is be set. */
+	if (!(ivp[3] & IEEE80211_WEP_EXTIV))
+		return 1;
+
+	hasqos = ieee80211_has_qos(wh);
+	tid = hasqos ? ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
+	prsc = &k->k_rsc[tid];
+
+	/* Extract the 48-bit PN from the CCMP header. */
+	pn = (uint64_t)ivp[0]       |
+	     (uint64_t)ivp[1] <<  8 |
+	     (uint64_t)ivp[4] << 16 |
+	     (uint64_t)ivp[5] << 24 |
+	     (uint64_t)ivp[6] << 32 |
+	     (uint64_t)ivp[7] << 40;
+	if (pn <= *prsc) {
+		ic->ic_stats.is_ccmp_replays++;
+		return 1;
+	}
+	/* Last seen packet number is updated in ieee80211_inputm(). */
+
+	/*
+	 * Some firmware versions strip the MIC, and some don't. It is not
+	 * clear which of the capability flags could tell us what to expect.
+	 * For now, keep things simple and just leave the MIC in place if
+	 * it is present.
+	 *
+	 * The IV will be stripped by ieee80211_inputm().
+	 */
+	return 0;
+}
+
 void
 iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m, int chanidx,
-     int is_shortpre, int rate_n_flags, uint32_t device_timestamp,
-     struct ieee80211_rxinfo *rxi, struct mbuf_list *ml)
+    uint32_t rx_pkt_status, int is_shortpre, int rate_n_flags,
+    uint32_t device_timestamp, struct ieee80211_rxinfo *rxi,
+    struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct ieee80211_channel *bss_chan;
 	uint8_t saved_bssid[IEEE80211_ADDR_LEN] = { 0 };
+	struct ifnet *ifp = IC2IFP(ic);
 
 	if (chanidx < 0 || chanidx >= nitems(ic->ic_channels))	
 		chanidx = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
@@ -3921,6 +3980,38 @@ iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 		IEEE80211_ADDR_COPY(&saved_bssid, ni->ni_macaddr);
 	}
 	ni->ni_chan = &ic->ic_channels[chanidx];
+
+	/* Handle hardware decryption. */
+	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL)
+	    && (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
+	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (ni->ni_flags & IEEE80211_NODE_RXPROT) &&
+	    ni->ni_pairwise_key.k_cipher == IEEE80211_CIPHER_CCMP) {
+		if ((rx_pkt_status & IWM_RX_MPDU_RES_STATUS_SEC_ENC_MSK) !=
+		    IWM_RX_MPDU_RES_STATUS_SEC_CCM_ENC) {
+			ic->ic_stats.is_ccmp_dec_errs++;
+			ifp->if_ierrors++;
+			m_freem(m);
+			return;
+		}
+		/* Check whether decryption was successful or not. */
+		if ((rx_pkt_status &
+		    (IWM_RX_MPDU_RES_STATUS_DEC_DONE |
+		    IWM_RX_MPDU_RES_STATUS_MIC_OK)) !=
+		    (IWM_RX_MPDU_RES_STATUS_DEC_DONE |
+		    IWM_RX_MPDU_RES_STATUS_MIC_OK)) {
+			ic->ic_stats.is_ccmp_dec_errs++;
+			ifp->if_ierrors++;
+			m_freem(m);
+			return;
+		}
+		if (iwm_ccmp_decap(sc, m, ni) != 0) {
+			ifp->if_ierrors++;
+			m_freem(m);
+			return;
+		}
+		rxi->rxi_flags |= IEEE80211_RXI_HWDEC;
+	}
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -4046,7 +4137,7 @@ iwm_rx_mpdu(struct iwm_softc *sc, struct mbuf *m, void *pktdata,
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = device_timestamp;
 
-	iwm_rx_frame(sc, m, chanidx,
+	iwm_rx_frame(sc, m, chanidx, rx_pkt_status,
 	    (phy_flags & IWM_PHY_INFO_FLAG_SHPREAMBLE),
 	    rate_n_flags, device_timestamp, &rxi, ml);
 }
@@ -4113,6 +4204,14 @@ iwm_rx_mpdu_mq(struct iwm_softc *sc, struct mbuf *m, void *pktdata,
 			}
 		} else
 			hdrlen = ieee80211_get_hdrlen(wh);
+
+		if ((le16toh(desc->status) &
+		    IWM_RX_MPDU_RES_STATUS_SEC_ENC_MSK) ==
+		    IWM_RX_MPDU_RES_STATUS_SEC_CCM_ENC) {
+			/* Padding is inserted after the IV. */
+			hdrlen += IEEE80211_CCMP_HDRLEN;
+		}
+	
 		memmove(m->m_data + 2, m->m_data, hdrlen);
 		m_adj(m, 2);
 	}
@@ -4130,7 +4229,7 @@ iwm_rx_mpdu_mq(struct iwm_softc *sc, struct mbuf *m, void *pktdata,
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = le64toh(desc->v1.tsf_on_air_rise);
 
-	iwm_rx_frame(sc, m, chanidx,
+	iwm_rx_frame(sc, m, chanidx, le16toh(desc->status),
 	    (phy_info & IWM_RX_MPDU_PHY_SHORT_PREAMBLE),
 	    rate_n_flags, device_timestamp, &rxi, ml);
 }
@@ -4791,6 +4890,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	const struct iwm_rate *rinfo;
+	uint8_t *ivp;
 	uint32_t flags;
 	u_int hdrlen;
 	bus_dma_segment_t *seg;
@@ -4865,15 +4965,23 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		    m, BPF_DIRECTION_OUT);
 	}
 #endif
+	totlen = m->m_pkthdr.len;
 
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
-                k = ieee80211_get_txkey(ic, wh, ni);
-		if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
-			return ENOBUFS;
-		/* 802.11 header may have moved. */
-		wh = mtod(m, struct ieee80211_frame *);
+		k = ieee80211_get_txkey(ic, wh, ni);
+		if ((k->k_flags & IEEE80211_KEY_GROUP) ||
+		    (k->k_cipher != IEEE80211_CIPHER_CCMP)) {
+			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
+				return ENOBUFS;
+			/* 802.11 header may have moved. */
+			wh = mtod(m, struct ieee80211_frame *);
+			totlen = m->m_pkthdr.len;
+			k = NULL; /* skip hardware crypto below */
+		} else {
+			/* HW appends CCMP MIC */
+			totlen += IEEE80211_CCMP_HDRLEN;
+		}
 	}
-	totlen = m->m_pkthdr.len;
 
 	flags = 0;
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
@@ -4925,13 +5033,31 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	/* Copy 802.11 header in TX command. */
 	memcpy(((uint8_t *)tx) + sizeof(*tx), wh, hdrlen);
 
+	if  (k != NULL && k->k_cipher == IEEE80211_CIPHER_CCMP) {
+		/* Trim 802.11 header and prepend CCMP IV. */
+		m_adj(m, hdrlen - IEEE80211_CCMP_HDRLEN);
+		ivp = mtod(m, u_int8_t *);
+		k->k_tsc++;	/* increment the 48-bit PN */
+		ivp[0] = k->k_tsc; /* PN0 */
+		ivp[1] = k->k_tsc >> 8; /* PN1 */
+		ivp[2] = 0;        /* Rsvd */
+		ivp[3] = k->k_id << 6 | IEEE80211_WEP_EXTIV;
+		ivp[4] = k->k_tsc >> 16; /* PN2 */
+		ivp[5] = k->k_tsc >> 24; /* PN3 */
+		ivp[6] = k->k_tsc >> 32; /* PN4 */
+		ivp[7] = k->k_tsc >> 40; /* PN5 */
+
+		tx->sec_ctl = IWM_TX_CMD_SEC_CCM;
+		memcpy(tx->key, k->k_key, MIN(sizeof(tx->key), k->k_len));
+	} else {
+		/* Trim 802.11 header. */
+		m_adj(m, hdrlen);
+		tx->sec_ctl = 0;
+	}
+
 	flags |= IWM_TX_CMD_FLG_BT_DIS | IWM_TX_CMD_FLG_SEQ_CTL;
 
-	tx->sec_ctl = 0;
 	tx->tx_flags |= htole32(flags);
-
-	/* Trim 802.11 header. */
-	m_adj(m, hdrlen);
 
 	err = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
@@ -6784,6 +6910,115 @@ iwm_node_alloc(struct ieee80211com *ic)
 	return malloc(sizeof (struct iwm_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 }
 
+int
+iwm_set_key_v1(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+	struct iwm_add_sta_key_cmd_v1 cmd;
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	cmd.common.key_flags = htole16(IWM_STA_KEY_FLG_CCM |
+	    IWM_STA_KEY_FLG_WEP_KEY_MAP |
+	    ((k->k_id << IWM_STA_KEY_FLG_KEYID_POS) &
+	    IWM_STA_KEY_FLG_KEYID_MSK));
+	if (k->k_flags & IEEE80211_KEY_GROUP)
+		cmd.common.key_flags |= htole16(IWM_STA_KEY_MULTICAST);
+
+	memcpy(cmd.common.key, k->k_key, MIN(sizeof(cmd.common.key), k->k_len));
+	cmd.common.key_offset = 0;
+	cmd.common.sta_id = IWM_STATION_ID;
+
+	return iwm_send_cmd_pdu(sc, IWM_ADD_STA_KEY, IWM_CMD_ASYNC,
+	    sizeof(cmd), &cmd);
+}
+
+int
+iwm_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+	struct iwm_add_sta_key_cmd cmd;
+
+	if ((k->k_flags & IEEE80211_KEY_GROUP) ||
+	    k->k_cipher != IEEE80211_CIPHER_CCMP)  {
+		/* Fallback to software crypto for other ciphers. */
+		return (ieee80211_set_key(ic, ni, k));
+	}
+
+	if (!isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_TKIP_MIC_KEYS))
+		return iwm_set_key_v1(ic, ni, k);
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	cmd.common.key_flags = htole16(IWM_STA_KEY_FLG_CCM |
+	    IWM_STA_KEY_FLG_WEP_KEY_MAP |
+	    ((k->k_id << IWM_STA_KEY_FLG_KEYID_POS) &
+	    IWM_STA_KEY_FLG_KEYID_MSK));
+	if (k->k_flags & IEEE80211_KEY_GROUP)
+		cmd.common.key_flags |= htole16(IWM_STA_KEY_MULTICAST);
+
+	memcpy(cmd.common.key, k->k_key, MIN(sizeof(cmd.common.key), k->k_len));
+	cmd.common.key_offset = 0;
+	cmd.common.sta_id = IWM_STATION_ID;
+
+	cmd.transmit_seq_cnt = htole64(k->k_tsc);
+
+	return iwm_send_cmd_pdu(sc, IWM_ADD_STA_KEY, IWM_CMD_ASYNC,
+	    sizeof(cmd), &cmd);
+}
+
+void
+iwm_delete_key_v1(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+	struct iwm_add_sta_key_cmd_v1 cmd;
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	cmd.common.key_flags = htole16(IWM_STA_KEY_NOT_VALID |
+	    IWM_STA_KEY_FLG_NO_ENC | IWM_STA_KEY_FLG_WEP_KEY_MAP |
+	    ((k->k_id << IWM_STA_KEY_FLG_KEYID_POS) &
+	    IWM_STA_KEY_FLG_KEYID_MSK));
+	memcpy(cmd.common.key, k->k_key, MIN(sizeof(cmd.common.key), k->k_len));
+	cmd.common.key_offset = 0;
+	cmd.common.sta_id = IWM_STATION_ID;
+
+	iwm_send_cmd_pdu(sc, IWM_ADD_STA_KEY, IWM_CMD_ASYNC, sizeof(cmd), &cmd);
+}
+
+void
+iwm_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+	struct iwm_add_sta_key_cmd cmd;
+
+	if ((k->k_flags & IEEE80211_KEY_GROUP) ||
+	    (k->k_cipher != IEEE80211_CIPHER_CCMP)) {
+		/* Fallback to software crypto for other ciphers. */
+                ieee80211_delete_key(ic, ni, k);
+		return;
+	}
+
+	if (!isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_TKIP_MIC_KEYS))
+		return iwm_delete_key_v1(ic, ni, k);
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	cmd.common.key_flags = htole16(IWM_STA_KEY_NOT_VALID |
+	    IWM_STA_KEY_FLG_NO_ENC | IWM_STA_KEY_FLG_WEP_KEY_MAP |
+	    ((k->k_id << IWM_STA_KEY_FLG_KEYID_POS) &
+	    IWM_STA_KEY_FLG_KEYID_MSK));
+	memcpy(cmd.common.key, k->k_key, MIN(sizeof(cmd.common.key), k->k_len));
+	cmd.common.key_offset = 0;
+	cmd.common.sta_id = IWM_STATION_ID;
+
+	iwm_send_cmd_pdu(sc, IWM_ADD_STA_KEY, IWM_CMD_ASYNC, sizeof(cmd), &cmd);
+}
+
 void
 iwm_calib_timeout(void *arg)
 {
@@ -8433,6 +8668,7 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data, struct mbuf_list *ml)
 				 IWM_DTS_MEASUREMENT_NOTIF_WIDE):
 			break;
 
+		case IWM_ADD_STA_KEY:
 		case IWM_PHY_CONFIGURATION_CMD:
 		case IWM_TX_ANT_CONFIGURATION_CMD:
 		case IWM_ADD_STA:
@@ -9283,6 +9519,8 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 
 	ic->ic_node_alloc = iwm_node_alloc;
 	ic->ic_bgscan_start = iwm_bgscan;
+	ic->ic_set_key = iwm_set_key;
+	ic->ic_delete_key = iwm_delete_key;
 
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
