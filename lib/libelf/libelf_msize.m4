@@ -30,7 +30,7 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: libelf_msize.m4,v 1.1 2019/02/01 05:27:38 jsg Exp $");
+ELFTC_VCSID("$Id: libelf_msize.m4,v 1.2 2020/05/18 06:46:23 jsg Exp $");
 
 /* WARNING: GENERATED FROM __file__. */
 
@@ -87,6 +87,14 @@ static struct msize msize[ELF_T_NUM] = {
 MSIZES(ELF_TYPE_LIST)
 };
 
+/*
+ * Returns the memory size of the specified ELF type 't' of ELF
+ * class 'ec' and ELF version 'version'.
+ *
+ * If the specified combination of ELF type, class, and version is
+ * unsupported then a value of 0 will be returned and the appropriate
+ * library error code set.
+ */
 size_t
 _libelf_msize(Elf_Type t, int elfclass, unsigned int version)
 {
@@ -101,6 +109,11 @@ _libelf_msize(Elf_Type t, int elfclass, unsigned int version)
 	}
 
 	sz = (elfclass == ELFCLASS32) ? msize[t].msz32 : msize[t].msz64;
+
+	if (sz == 0) {
+		LIBELF_SET_ERROR(UNIMPL, 0);
+		return (0);
+	}
 
 	return (sz);
 }

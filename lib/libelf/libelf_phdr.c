@@ -31,7 +31,7 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: libelf_phdr.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
+ELFTC_VCSID("$Id: libelf_phdr.c,v 1.3 2020/05/18 06:46:23 jsg Exp $");
 
 void *
 _libelf_getphdr(Elf *e, int ec)
@@ -87,9 +87,8 @@ _libelf_getphdr(Elf *e, int ec)
 		return (NULL);
 	}
 
-	msz = _libelf_msize(ELF_T_PHDR, ec, EV_CURRENT);
-
-	assert(msz > 0);
+	if ((msz = _libelf_msize(ELF_T_PHDR, ec, EV_CURRENT)) == 0)
+		return (NULL);
 
 	if ((phdr = calloc(phnum, msz)) == NULL) {
 		LIBELF_SET_ERROR(RESOURCE, 0);
@@ -130,9 +129,8 @@ _libelf_newphdr(Elf *e, int ec, size_t count)
 	assert(ec == ELFCLASS32 || ec == ELFCLASS64);
 	assert(e->e_version == EV_CURRENT);
 
-	msz = _libelf_msize(ELF_T_PHDR, ec, e->e_version);
-
-	assert(msz > 0);
+	if ((msz = _libelf_msize(ELF_T_PHDR, ec, e->e_version)) == 0)
+		return (NULL);
 
 	newphdr = NULL;
 	if (count > 0 && (newphdr = calloc(count, msz)) == NULL) {

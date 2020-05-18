@@ -36,7 +36,7 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: libelf_allocate.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
+ELFTC_VCSID("$Id: libelf_allocate.c,v 1.3 2020/05/18 06:46:23 jsg Exp $");
 
 Elf *
 _libelf_allocate_elf(void)
@@ -76,7 +76,7 @@ _libelf_init_elf(Elf *e, Elf_Kind kind)
 	}
 }
 
-Elf *
+void
 _libelf_release_elf(Elf *e)
 {
 	Elf_Arhdr *arh;
@@ -114,8 +114,6 @@ _libelf_release_elf(Elf *e)
 	}
 
 	free(e);
-
-	return (NULL);
 }
 
 struct _Libelf_Data *

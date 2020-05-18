@@ -34,7 +34,7 @@
 #include <sys/mman.h>
 #endif
 
-ELFTC_VCSID("$Id: elf_end.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
+ELFTC_VCSID("$Id: elf_end.c,v 1.3 2020/05/18 06:46:23 jsg Exp $");
 
 int
 elf_end(Elf *e)
@@ -88,7 +88,7 @@ elf_end(Elf *e)
 		sv = e;
 		if ((e = e->e_parent) != NULL)
 			e->e_u.e_ar.e_nchildren--;
-		sv = _libelf_release_elf(sv);
+		_libelf_release_elf(sv);
 	}
 
 	return (0);

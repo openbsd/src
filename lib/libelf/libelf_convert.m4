@@ -31,7 +31,7 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: libelf_convert.m4,v 1.2 2019/03/19 02:31:35 jsg Exp $");
+ELFTC_VCSID("$Id: libelf_convert.m4,v 1.3 2020/05/18 06:46:23 jsg Exp $");
 
 /* WARNING: GENERATED FROM __file__. */
 
@@ -971,6 +971,7 @@ _libelf_cvt_NOTE_tom(unsigned char *dst, size_t dsz, unsigned char *src,
 		if (count < sz || dsz < sz)	/* Buffers are too small. */
 			return (0);
 
+		/* Copy the remainder of the note as-is. */
 		(void) memcpy(dst, src, sz);
 
 		src += sz;
@@ -1025,6 +1026,7 @@ _libelf_cvt_NOTE_tof(unsigned char *dst, size_t dsz, unsigned char *src,
 		if (count < sz)
 			sz = count;
 
+		/* Copy the remainder of the note as-is. */
 		(void) memcpy(dst, src, sz);
 
 		src += sz;

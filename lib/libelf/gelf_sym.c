@@ -31,7 +31,7 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: gelf_sym.c,v 1.1 2019/02/01 05:27:38 jsg Exp $");
+ELFTC_VCSID("$Id: gelf_sym.c,v 1.2 2020/05/18 06:46:23 jsg Exp $");
 
 GElf_Sym *
 gelf_getsym(Elf_Data *ed, int ndx, GElf_Sym *dst)
@@ -67,9 +67,9 @@ gelf_getsym(Elf_Data *ed, int ndx, GElf_Sym *dst)
 		return (NULL);
 	}
 
-	msz = _libelf_msize(ELF_T_SYM, ec, e->e_version);
+	if ((msz = _libelf_msize(ELF_T_SYM, ec, e->e_version)) == 0)
+		return (NULL);
 
-	assert(msz > 0);
 	assert(ndx >= 0);
 
 	if (msz * (size_t) ndx >= d->d_data.d_size) {
@@ -129,9 +129,9 @@ gelf_update_sym(Elf_Data *ed, int ndx, GElf_Sym *gs)
 		return (0);
 	}
 
-	msz = _libelf_msize(ELF_T_SYM, ec, e->e_version);
+	if ((msz = _libelf_msize(ELF_T_SYM, ec, e->e_version)) == 0)
+		return (0);
 
-	assert(msz > 0);
 	assert(ndx >= 0);
 
 	if (msz * (size_t) ndx >= d->d_data.d_size) {
