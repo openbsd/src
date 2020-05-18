@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.132 2020/05/14 15:44:07 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.133 2020/05/18 10:39:33 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -222,6 +222,10 @@ file	dev/fdt/amlpinctrl.c		amlpinctrl
 device	amlpwm
 attach	amlpwm at fdt
 file	dev/fdt/amlpwm.c		amlpwm
+
+device	amlpwrc
+attach	amlpwrc at fdt
+file	dev/fdt/amlpwrc.c		amlpwrc
 
 device	amlreset
 attach	amlreset at fdt
