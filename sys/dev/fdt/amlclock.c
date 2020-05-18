@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.10 2020/05/17 22:11:50 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.11 2020/05/18 10:40:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
+/* Clock IDs */
 #define G12A_SYS_PLL		0
 #define G12A_FCLK_DIV2		2
 #define G12A_FCLK_DIV3		3
@@ -51,6 +52,7 @@
 #define G12B_SYS1_PLL		214
 #define G12B_CPUB_CLK		224
 
+/* Registers */
 #define HHI_PCIE_PLL_CNTL0	0x26
 #define HHI_PCIE_PLL_CNTL1	0x27
 #define HHI_PCIE_PLL_CNTL2	0x28
