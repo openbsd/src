@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.69 2020/05/19 01:30:34 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.70 2020/05/19 02:16:16 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -910,6 +910,7 @@ int
 tlsext_ocsp_server_needs(SSL *s)
 {
 	if (s->version >= TLS1_3_VERSION &&
+	    s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp &&
 	    s->ctx->internal->tlsext_status_cb != NULL) {
 		s->internal->tlsext_status_expected = 0;
 		if (s->ctx->internal->tlsext_status_cb(s,
