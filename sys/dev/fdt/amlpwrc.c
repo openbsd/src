@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpwrc.c,v 1.1 2020/05/18 10:39:33 kettenis Exp $	*/
+/*	$OpenBSD: amlpwrc.c,v 1.2 2020/05/19 08:11:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -112,7 +112,7 @@ amlpwrc_attach(struct device *parent, struct device *self, void *aux)
 	power_domain_register(&sc->sc_pd);
 }
 
-inline void
+static inline void
 amlpwrc_toggle(struct regmap *rm, bus_size_t reg, uint32_t mask, int on)
 {
 	uint32_t val;
