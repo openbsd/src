@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.42 2020/05/18 13:55:04 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.43 2020/05/19 12:08:39 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1433,14 +1433,27 @@ function test_sc_by_protocol_version {
 		return
 	fi
 
+	groups_and_cipher=""
+	if [ $ver = "tls1_3" ] ; then
+		# Expect HelloRetryRequest
+		groups_and_cipher="-groups P-521:P-384 -cipher ALL"
+	fi
+
 	s_client_out=$user1_dir/s_client_${sc}_${ver}.out
 	
 	start_message "s_client ... connect to TLS/SSL test server by $ver"
 	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-$ver -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+		-$ver $groups_and_cipher \
+		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
+	if [ $ver = "tls1_3" ] ; then
+		grep 'Server Temp Key: ECDH, P-384, 384 bits' $s_client_out \
+			> /dev/null
+		check_exit_status $?
+	fi
+
 	# OpenSSL1.1.1 with TLSv1.3 does not call SSL_SESSION_print() until 
 	# NewSessionTicket arrival
 	if ! [ $cid = "1" -a $ver = "tls1_3" ] ; then
@@ -1693,7 +1706,8 @@ function test_server_client {
 		-cert $crt -key $key -pass pass:$pwd \
 		-context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
 		-alpn "http/1.1,spdy/3" -www -cipher ALL $extra_opts \
-		-msg -tlsextdebug -verify 3 > $s_server_out 2>&1 &
+		-msg -tlsextdebug -verify 3 -groups X25519:P-384:P-256 \
+		> $s_server_out 2>&1 &
 	check_exit_status $?
 	s_server_pid=$!
 	echo "s_server pid = [ $s_server_pid ]"
