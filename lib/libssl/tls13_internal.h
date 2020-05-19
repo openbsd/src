@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.80 2020/05/16 14:42:35 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.81 2020/05/19 01:30:34 beck Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -380,8 +380,9 @@ int tls13_server_finished_send(struct tls13_ctx *ctx, CBB *cbb);
 int tls13_server_finished_sent(struct tls13_ctx *ctx);
 
 void tls13_error_clear(struct tls13_error *error);
+int tls13_cert_add(struct tls13_ctx *ctx, CBB *cbb, X509 *cert,
+    int(*build_extensions)(SSL *s, CBB *cbb, uint16_t msg_type));
 
-int tls13_cert_add(CBB *cbb, X509 *cert);
 int tls13_synthetic_handshake_message(struct tls13_ctx *ctx);
 
 int tls13_error_set(struct tls13_error *error, int code, int subcode,

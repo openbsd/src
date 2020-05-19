@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.45 2020/05/17 19:07:15 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.46 2020/05/19 01:30:34 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -21,6 +21,7 @@
 #include <openssl/evp.h>
 
 #include "ssl_locl.h"
+#include "ssl_tlsext.h"
 #include "tls13_internal.h"
 
 /*
@@ -410,9 +411,10 @@ tls13_ctx_free(struct tls13_ctx *ctx)
 }
 
 int
-tls13_cert_add(CBB *cbb, X509 *cert)
+tls13_cert_add(struct tls13_ctx *ctx, CBB *cbb, X509 *cert,
+    int(*build_extensions)(SSL *s, CBB *cbb, uint16_t msg_type))
 {
-	CBB cert_data, cert_exts;
+	CBB cert_data;
 	uint8_t *data;
 	int cert_len;
 
@@ -425,10 +427,8 @@ tls13_cert_add(CBB *cbb, X509 *cert)
 		return 0;
 	if (i2d_X509(cert, &data) != cert_len)
 		return 0;
-
-	if (!CBB_add_u16_length_prefixed(cbb, &cert_exts))
+	if (!build_extensions(ctx->ssl, cbb, SSL_TLSEXT_MSG_CT))
 		return 0;
-
 	if (!CBB_flush(cbb))
 		return 0;
 

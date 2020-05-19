@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.61 2020/05/17 14:26:15 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.62 2020/05/19 01:30:34 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -847,12 +847,12 @@ tls13_client_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	if (cpk->x509 == NULL)
 		goto done;
 
-	if (!tls13_cert_add(&cert_list, cpk->x509))
+	if (!tls13_cert_add(ctx, &cert_list, cpk->x509, tlsext_client_build))
 		goto err;
 
 	for (i = 0; i < sk_X509_num(chain); i++) {
 		cert = sk_X509_value(chain, i);
-		if (!tls13_cert_add(&cert_list, cert))
+		if (!tls13_cert_add(ctx, &cert_list, cert, tlsext_client_build))
 			goto err;
 	}
 
