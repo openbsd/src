@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <sys/queue.h>
 
 #include <dev/ic/i8253reg.h>
 #include <dev/isa/isareg.h>
@@ -63,6 +64,8 @@
 #include "mc146818.h"
 #include "fw_cfg.h"
 #include "atomicio.h"
+
+#define pledge(x...) 0
 
 io_fn_t ioports_map[MAX_PORTS];
 
@@ -308,7 +311,7 @@ start_vm(struct vmd_vm *vm, int fd)
 		errno = ret;
 		fatal("create vmm ioctl failed - exiting");
 	}
-
+#if 0
 	/*
 	 * pledge in the vm processes:
 	 * stdio - for malloc and basic I/O including events.
@@ -317,7 +320,7 @@ start_vm(struct vmd_vm *vm, int fd)
 	 */
 	if (pledge("stdio vmm recvfd", NULL) == -1)
 		fatal("pledge");
-
+#endif
 	if (vm->vm_state & VM_STATE_RECEIVED) {
 		ret = read(vm->vm_receive_fd, &vrp, sizeof(vrp));
 		if (ret != sizeof(vrp)) {
@@ -991,6 +994,7 @@ vmm_create_vm(struct vm_create_params *vcp)
 	return (0);
 }
 
+void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun);
 /*
  * init_emulated_hw
  *
@@ -1062,6 +1066,9 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
 
 	/* Initialize virtio devices */
 	virtio_init(current_vm, child_cdrom, child_disks, child_taps);
+
+	//pci_add_pthru(current_vm, 17, 0, 0);
+	pci_add_pthru(current_vm, 0, 31, 3);
 }
 /*
  * restore_emulated_hw
@@ -1591,6 +1598,60 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, intr);
 }
 
+TAILQ_HEAD(,iohandler) memh = TAILQ_HEAD_INITIALIZER(memh);
+
+void register_mem(uint64_t base, uint32_t len, iocb_t handler, void *cookie)
+{
+	struct iohandler *mem;
+
+	fprintf(stderr, "@@@ Registering mem region: %llx - %llx\n", base, base+len-1);
+	TAILQ_FOREACH(mem, &memh, next) {
+		if (base >= mem->start && base+len <= mem->end) {
+			fprintf(stderr,"already registered\n");
+			return;
+		}
+	}
+	mem = calloc(1, sizeof(*mem));
+	mem->start = base;
+	mem->end   = base+len-1;
+	mem->handler = handler;
+	mem->cookie = cookie;
+	TAILQ_INSERT_TAIL(&memh, mem, next);
+}
+
+void unregister_mem(uint64_t base)
+{
+	struct iohandler *mem, *tmp;
+	
+	fprintf(stderr,"@@@ Unregistering base: %llx\n", base);
+	TAILQ_FOREACH_SAFE(mem, &memh, next, tmp) {
+		if (mem->start == base) {
+			fprintf(stderr, "  removed:%llx-%llx\n", mem->start, mem->end);
+			TAILQ_REMOVE(&memh, mem, next);
+		}
+	}
+}
+
+int mem_handler(int dir, uint64_t addr, uint32_t size, void *data)
+{
+	struct iohandler *mem;
+	int rc;
+
+	fprintf(stderr,"Call mem handler %llx\n", addr);
+	TAILQ_FOREACH(mem, &memh, next) {
+		fprintf(stderr,"  %llx-%llx\n", mem->start, mem->end);
+		if (addr >= mem->start && addr+size <= mem->end) {
+			rc = mem->handler(dir, addr, size, data, mem->cookie);
+			if (rc != 0) {
+				fprintf(stderr, "Error mem handler: %llx\n", addr);
+			}
+			return rc;
+		}
+	}
+	log_debug("No mem handler %llx\n", addr);
+	return -1;
+}
+
 /*
  * vcpu_exit_eptviolation
  *
@@ -1604,10 +1665,122 @@ vcpu_exit_inout(struct vm_run_params *vrp)
  *  0: no action required
  *  EAGAIN: a protection fault occured, kill the vm.
  */
+
+struct insn {
+	uint8_t sig[3];
+	int dir;
+	int size;
+	int incr;
+  	int reg;
+} imap[] = {
+  { { 0x8a, 0x04, 0x3e }, VEI_DIR_IN,  1, 3, VCPU_REGS_RAX },
+  { { 0x0f, 0xb7, 0x04 }, VEI_DIR_IN,  2, 4, VCPU_REGS_RAX },
+  { { 0x8b, 0x04, 0x3e }, VEI_DIR_IN,  4, 3, VCPU_REGS_RAX },
+
+  { { 0x88, 0x14, 0x3e }, VEI_DIR_OUT, 1, 3, VCPU_REGS_RDX },
+  { { 0x66, 0x89, 0x14 }, VEI_DIR_OUT, 2, 3, VCPU_REGS_RDX },
+  { { 0x89, 0x14, 0x3e }, VEI_DIR_OUT, 4, 3, VCPU_REGS_RDX },
+
+  { },
+};
+
 int
 vcpu_exit_eptviolation(struct vm_run_params *vrp)
 {
 	struct vm_exit *ve = vrp->vrp_exit;
+	uint64_t data = 0, gip, gpa;
+	uint8_t instr[4] = { 0 };
+	int mode = 0, size = 0, dir = 0;
+	struct vm_rwregs_params vrwp = { 0 };
+	uint64_t *rax, *rdx;
+
+	translate_gva(ve, ve->vrs.vrs_gprs[VCPU_REGS_RIP], &gip, PROT_READ);
+	read_mem(gip, instr, sizeof(instr));	
+	fprintf(stderr, "===============\nept violation: %llx  rip:0x%llx %.2x %.2x %.2x\n",
+		ve->vee.vee_gpa, ve->vrs.vrs_gprs[VCPU_REGS_RIP], instr[0], instr[1], instr[2]);
+#if 0
+	fprintf(stderr, "  rax:0x%.16llx rbx:0x%.16llx rcx:0x%.16llx rdx:0x%.16llx\n",
+		ve->vrs.vrs_gprs[VCPU_REGS_RAX],
+		ve->vrs.vrs_gprs[VCPU_REGS_RBX],
+		ve->vrs.vrs_gprs[VCPU_REGS_RCX],
+		ve->vrs.vrs_gprs[VCPU_REGS_RDX]);
+	fprintf(stderr, "  rsi:0x%.16llx rdi:0x%.16llx rbp:0x%.16llx rsp:0x%.16llx\n",
+		ve->vrs.vrs_gprs[VCPU_REGS_RSI],
+		ve->vrs.vrs_gprs[VCPU_REGS_RDI],
+		ve->vrs.vrs_gprs[VCPU_REGS_RBP],
+		ve->vrs.vrs_gprs[VCPU_REGS_RSP]);
+	fprintf(stderr, "  r8: 0x%.16llx r9: 0x%.16llx r10:0x%.16llx r11:0x%.16llx\n",
+		ve->vrs.vrs_gprs[VCPU_REGS_R8],
+		ve->vrs.vrs_gprs[VCPU_REGS_R9],
+		ve->vrs.vrs_gprs[VCPU_REGS_R10],
+		ve->vrs.vrs_gprs[VCPU_REGS_R11]);
+	fprintf(stderr, "  r12:0x%.16llx r13:0x%.16llx r14:0x%.16llx r15:0x%.16llx\n",
+		ve->vrs.vrs_gprs[VCPU_REGS_R12],
+		ve->vrs.vrs_gprs[VCPU_REGS_R13],
+		ve->vrs.vrs_gprs[VCPU_REGS_R14],
+		ve->vrs.vrs_gprs[VCPU_REGS_R15]);
+#endif
+	vrwp.vrwp_mask = VM_RWREGS_GPRS;
+	vrwp.vrwp_vm_id = vrp->vrp_vm_id;
+	vrwp.vrwp_vcpu_id = vrp->vrp_vcpu_id;
+	vrwp.vrwp_regs = ve->vrs;
+	rax = &vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RAX];
+	rdx = &vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RAX];
+	gpa = ve->vee.vee_gpa;
+#if 1
+	/* Scan for sig match */
+	for (int i = 0; imap[i].size; i++) {
+		if (memcmp(instr, imap[i].sig, 3) == 0) {
+			fprintf(stderr, "matched %c%d %llx\n", imap[i].dir == VEI_DIR_IN ? 'r' : 'w', 
+				imap[i].size, *rax);
+			rax = &vrwp.vrwp_regs.vrs_gprs[imap[i].reg];
+			mem_handler(imap[i].dir, gpa, imap[i].size, rax);
+			vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += imap[i].incr;
+			ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
+			return 0;
+		}
+	}
+#else
+	if (instr[0] == 0x8a && instr[1] == 0x04 && instr[2] == 0x3e) {
+		mem_handler(VEI_DIR_IN, gpa, 1, rax);
+		fprintf(stderr, "  read: %llx\n", *rax);
+		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 3;
+		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
+		return 0;
+	}
+	else if (instr[0] == 0x0f && instr[1] == 0xb7 && instr[2] == 0x04) {
+		mem_handler(VEI_DIR_IN, gpa, 2, rax);
+		fprintf(stderr, "  read: %llx\n", *rax);
+		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 4;
+		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
+		return 0;
+	}
+	else if (instr[0] == 0x8b && instr[1] == 0x04 && instr[2] == 0x3e) {
+		mem_handler(VEI_DIR_IN, gpa, 4, rax);
+		fprintf(stderr, "  read: %llx\n", *rax);
+		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 3;
+		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
+		return 0;
+	}
+	else if (instr[0] == 0x88 && instr[1] == 0x14 && instr[2] == 0x3e) {
+		mem_handler(VEI_DIR_OUT, gpa, 1, rdx);
+		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 3;
+		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
+		return 0;
+	}
+	else if (instr[0] == 0x66 && instr[1] == 0x89 && instr[2] == 0x14) {
+		mem_handler(VEI_DIR_OUT, gpa, 2, rdx);
+		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 3;
+		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
+		return 0;
+	}
+	else if (instr[0] == 0x89 && instr[1] == 0x14 && instr[2] == 0x3e) {
+		mem_handler(VEI_DIR_OUT, gpa, 4, rdx);
+		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 3;
+		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
+		return 0;
+	}
+#endif
 	/*
 	 * vmd may be exiting to vmd to handle a pending interrupt
 	 * but last exit type may have bee VMX_EXIT_EPT_VIOLATION,

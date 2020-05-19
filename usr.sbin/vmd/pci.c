@@ -18,6 +18,8 @@
 
 #include <sys/types.h>
 
+#include <sys/ioctl.h>
+#include <sys/pciio.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pv/virtioreg.h>
@@ -25,19 +27,64 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "vmd.h"
 #include "pci.h"
 #include "vmm.h"
 #include "i8259.h"
 #include "atomicio.h"
+#include <sys/pciio.h>
+#include <sys/mman.h>
 
 struct pci pci;
+
+extern struct vmd *env;
 
 extern char *__progname;
 
 /* PIC IRQs, assigned to devices in order */
 const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 6, 7, 9, 10, 11, 12,
     14, 15};
+
+void _pcicfgwr32(int id, int reg, uint32_t data);
+void _pcicfgwr32(int id, int reg, uint32_t data) {
+  pci.pci_devices[id].pd_cfg_space[reg/4] = data;
+}
+
+int pci_memh2(int, uint64_t, uint32_t, void *, void *);
+uint64_t mbar(uint64_t *base, uint32_t size, uint32_t align);
+
+#define PAGE_MASK 0xFFF
+
+void dump(void *ptr, int len);
+
+int pci_memh2(int dir, uint64_t base, uint32_t size, void *data, void *cookie)
+{
+	int dev = (uintptr_t)cookie;
+	uint64_t hpa, off;
+	int fd = env->vmd_fd;
+	void *va;
+
+	off = (base & PAGE_MASK);
+	hpa = 0xf7901000;
+
+	fprintf(stderr, "entry memh2 %c%d: %llx %.4x\n", dir == VEI_DIR_IN ? 'r' : 'w', size,
+		base, dev);
+	va = mmap(NULL, 4096, PROT_READ, MAP_SHARED, fd, hpa);
+	fprintf(stderr, "mmap: %p %llx %llx\n", va, base, hpa + off);
+	fflush(stderr);
+	if (va == (void *)-1ULL) {
+		return -1;
+	}
+	if (dir == VEI_DIR_IN) {
+		memcpy(data, va + off, size);
+	}
+	else if (0) {
+		memcpy(va + off, data, size);
+	}
+	munmap(va, 4096);
+	return 0;
+}
 
 /*
  * pci_add_bar
@@ -58,9 +105,10 @@ const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 6, 7, 9, 10, 11, 12,
  * Returns 0 if the BAR was added successfully, 1 otherwise.
  */
 int
-pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
+pci_add_bar(uint8_t id, uint32_t type, uint32_t sz, uint32_t flag, void *barfn, void *cookie)
 {
 	uint8_t bar_reg_idx, bar_ct;
+	uint64_t base = 0;
 
 	/* Check id */
 	if (id >= pci.pci_dev_ct)
@@ -74,31 +122,32 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 	/* Compute BAR address and add */
 	bar_reg_idx = (PCI_MAPREG_START + (bar_ct * 4)) / 4;
 	if (type == PCI_MAPREG_TYPE_MEM) {
-		if (pci.pci_next_mmio_bar >= VMM_PCI_MMIO_BAR_END)
+		if (pci.pci_next_mmio_bar + sz >= VMM_PCI_MMIO_BAR_END)
 			return (1);
 
-		pci.pci_devices[id].pd_cfg_space[bar_reg_idx] =
-		    PCI_MAPREG_MEM_ADDR(pci.pci_next_mmio_bar);
-		pci.pci_next_mmio_bar += VMM_PCI_MMIO_BAR_SIZE;
+		// Page align makes easier mapping
+		base = mbar(&pci.pci_next_mmio_bar, sz, 4096);
+		pci.pci_devices[id].pd_cfg_space[bar_reg_idx] = 
+		    PCI_MAPREG_MEM_ADDR(base);
 		pci.pci_devices[id].pd_barfunc[bar_ct] = barfn;
 		pci.pci_devices[id].pd_bar_cookie[bar_ct] = cookie;
 		pci.pci_devices[id].pd_bartype[bar_ct] = PCI_BAR_TYPE_MMIO;
-		pci.pci_devices[id].pd_barsize[bar_ct] = VMM_PCI_MMIO_BAR_SIZE;
+		pci.pci_devices[id].pd_barsize[bar_ct] = sz;
 		pci.pci_devices[id].pd_bar_ct++;
 	} else if (type == PCI_MAPREG_TYPE_IO) {
-		if (pci.pci_next_io_bar >= VMM_PCI_IO_BAR_END)
+		if (pci.pci_next_io_bar + sz >= VMM_PCI_IO_BAR_END)
 			return (1);
 
-		pci.pci_devices[id].pd_cfg_space[bar_reg_idx] =
-		    PCI_MAPREG_IO_ADDR(pci.pci_next_io_bar) |
+		base = mbar(&pci.pci_next_io_bar, sz, 4);
+		pci.pci_devices[id].pd_cfg_space[bar_reg_idx] = 
+		    PCI_MAPREG_IO_ADDR(base) |
 		    PCI_MAPREG_TYPE_IO;
-		pci.pci_next_io_bar += VMM_PCI_IO_BAR_SIZE;
 		pci.pci_devices[id].pd_barfunc[bar_ct] = barfn;
 		pci.pci_devices[id].pd_bar_cookie[bar_ct] = cookie;
 		DPRINTF("%s: adding pci bar cookie for dev %d bar %d = %p",
 		    __progname, id, bar_ct, cookie);
 		pci.pci_devices[id].pd_bartype[bar_ct] = PCI_BAR_TYPE_IO;
-		pci.pci_devices[id].pd_barsize[bar_ct] = VMM_PCI_IO_BAR_SIZE;
+		pci.pci_devices[id].pd_barsize[bar_ct] = sz;
 		pci.pci_devices[id].pd_bar_ct++;
 	}
 
@@ -165,8 +214,10 @@ pci_get_dev_irq(uint8_t id)
 int
 pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
     uint8_t subclass, uint16_t subsys_vid, uint16_t subsys_id,
-    uint8_t irq_needed, pci_cs_fn_t csfunc)
+    uint8_t irq_needed, pci_cs_fn_t csfunc, void *cookie)
 {
+	log_warnx("%s: add_pci: %x.%x.%x\n", __progname, vid, pid, class);
+
 	/* Exceeded max devices? */
 	if (pci.pci_dev_ct >= PCI_CONFIG_MAX_DEV)
 		return (1);
@@ -186,6 +237,7 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 	pci.pci_devices[*id].pd_subsys_id = subsys_id;
 
 	pci.pci_devices[*id].pd_csfunc = csfunc;
+	pci.pci_devices[*id].pd_cookie = cookie;
 
 	if (irq_needed) {
 		pci.pci_devices[*id].pd_irq =
@@ -200,6 +252,103 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 	pci.pci_dev_ct ++;
 
 	return (0);
+}
+
+/* Allocate an aligned BAR address */
+uint64_t mbar(uint64_t *base, uint32_t size, uint32_t align)
+{
+	uint64_t mask = align-1;
+	uint64_t cbase;
+
+	cbase = (*base + mask) & ~mask;
+	*base = (*base + size + mask) & ~mask;
+	fprintf(stderr,"make mbar: %llx/%x\n", cbase, size);
+	return cbase;
+}
+
+void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun);
+
+#define PCIOCUNBIND	_IOWR('p', 9, struct pcisel)
+
+int ppt_csfn(int dir, uint8_t reg, uint8_t *sz, uint32_t *data, void *cookie);
+int ppt_iobar(int dir, uint16_t reg, uint32_t *data, uint8_t *intr, void *cookie, uint8_t size);
+int ppt_mmiobar(int dir, uint32_t ofs, uint32_t *data);
+
+int ppt_csfn(int dir, uint8_t reg, uint8_t *sz, uint32_t *data, void *cookie)
+{
+	return 0;
+}
+
+int ppt_iobar(int dir, uint16_t reg, uint32_t *data, uint8_t *intr, void *cookie, uint8_t size)
+{
+	DPRINTF("iobar: %d.%x/%d cookie:%p\n", dir, reg, size, cookie);
+	return 0;
+}
+
+int ppt_mmiobar(int dir, uint32_t ofs, uint32_t *data)
+{
+	DPRINTF("mmiobar: %d.%x\n", dir, ofs);
+	return 0;
+}
+
+void dump(void *ptr, int len)
+{
+  int i, j, c;
+  unsigned char *b = ptr;
+
+  for (i = 0; i < len; i+=16) {
+    fprintf(stderr,"%.4x ", i);
+    for (j = 0; j < 16; j++) {
+      fprintf(stderr,"%.2x ", b[i+j]);
+    }
+    fprintf(stderr,"  ");
+    for (j = 0; j < 16; j++) {
+      c = b[i+j];
+      if (c < ' ' || c > 'z') c = '.';
+      fprintf(stderr,"%c", c);
+    }
+    fprintf(stderr,"\n");
+  }
+}
+
+void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
+{
+	static uint8_t id;
+	static struct pcisel ptd;
+	struct vm_barinfo bi;
+	int rc, i;
+
+	ptd.pc_bus = bus;
+	ptd.pc_dev = dev;
+	ptd.pc_func = fun;
+	if (bus == 17) {
+		pci_add_device(&id, 0x1217, 0x8520, 8, 5, 0x1028, 0x5cc, 1, NULL, &ptd);
+	}
+	else  {
+		pci_add_device(&id, 0x8086, 0x8c22, 0xc, 5, 0x1028, 0x5cc, 1, NULL, &ptd);
+		_pcicfgwr32(id, 0x40, 0x11);
+	}
+
+	/* Get BARs of native device */
+	bi.seg = 0;
+	bi.bus = bus;
+	bi.dev = dev;
+	bi.func = fun;
+	ioctl(env->vmd_fd, VMM_IOC_BARINFO,  &bi);
+	for (i = 0; i < MAXBAR; i++) {
+		fprintf(stderr,"Bar%d: type:%x base:%llx size:%x\n",
+			i, bi.bars[i].type, bi.bars[i].addr, bi.bars[i].size);
+		bi.bars[i].type &= 0x1;
+		if (bi.bars[i].type == PCI_MAPREG_TYPE_MEM && bi.bars[i].size) {
+			pci_add_bar(id, PCI_MAPREG_TYPE_MEM, bi.bars[i].size, 1, ppt_mmiobar, &ptd);
+		}
+		else if (bi.bars[i].type == PCI_MAPREG_TYPE_IO) {
+			pci_add_bar(id, PCI_MAPREG_TYPE_IO,  bi.bars[i].size, 1, ppt_iobar, &ptd);
+		}
+		else {
+			pci_add_bar(id, -1, 0, 1, ppt_mmiobar, &ptd);
+		}
+	}
 }
 
 /*
@@ -219,7 +368,7 @@ pci_init(void)
 
 	if (pci_add_device(&id, PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_PCHB,
 	    PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_HOST,
-	    PCI_VENDOR_OPENBSD, 0, 0, NULL)) {
+	    PCI_VENDOR_OPENBSD, 0, 0, NULL, NULL)) {
 		log_warnx("%s: can't add PCI host bridge", __progname);
 		return;
 	}
@@ -306,7 +455,9 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 {
 	struct vm_exit *vei = vrp->vrp_exit;
 	uint8_t b, d, f, o, baridx, ofs, sz;
-	int ret;
+	uint32_t data;
+	uint64_t wrdata;
+	int ret, flag = 0;
 	pci_cs_fn_t csfunc;
 
 	/* abort if the address register is wack */
@@ -328,9 +479,16 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	f = (pci.pci_addr_reg >> 8) & 0x7;
 	o = (pci.pci_addr_reg & 0xfc);
 
+	wrdata = vei->vei.vei_data;
+	data = 0;
+	if (d < pci.pci_dev_ct && !b && !f) {
+		data = pci.pci_devices[d].pd_cfg_space[o/4];
+	}
+	
 	csfunc = pci.pci_devices[d].pd_csfunc;
 	if (csfunc != NULL) {
-		ret = csfunc(vei->vei.vei_dir, (o / 4), &vei->vei.vei_data);
+		ret = csfunc(vei->vei.vei_dir, o, sz, &vei->vei.vei_data,
+			     pci.pci_devices[d].pd_cookie);
 		if (ret)
 			log_warnx("cfg space access function failed for "
 			    "pci device %d", d);
@@ -340,13 +498,19 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	/* No config space function, fallback to default simple r/w impl. */
 
 	o += ofs;
-
+	
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
 	 * The guest wrote to the config space location denoted by the current
 	 * value in the address register.
 	 */
+	if (o >= 0x10 && o <= 0x24 && 0)  {
+		fprintf(stderr,"accbar: %c %x.%x.%x %x [%x %x]\n", 
+			vei->vei.vei_dir == VEI_DIR_OUT  ? 'w' : 'r', b,d,f,o,
+			pci.pci_devices[d].pd_cfg_space[o/4],
+			vei->vei.vei_data);
+	}
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		if ((o >= 0x10 && o <= 0x24) &&
 		    vei->vei.vei_data == 0xffffffff) {
@@ -360,8 +524,9 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 			 * o = 0x24 -> baridx = 5
 			 */
 			baridx = (o / 4) - 4;
-			if (baridx < pci.pci_devices[d].pd_bar_ct)
-				vei->vei.vei_data = 0xfffff000;
+			if (baridx < pci.pci_devices[d].pd_bar_ct) {
+				vei->vei.vei_data = ~(pci.pci_devices[d].pd_barsize[baridx] - 1);
+			}
 			else
 				vei->vei.vei_data = 0;
 		}
@@ -373,6 +538,19 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 			    pci.pci_devices[d].pd_bartype[baridx] ==
 			    PCI_BAR_TYPE_IO)
 				vei->vei.vei_data |= 1;
+			if (baridx < pci.pci_devices[d].pd_bar_ct &&
+			    pci.pci_devices[d].pd_bartype[baridx] ==
+			    PCI_BAR_TYPE_MMIO && wrdata != 0xffffffff) {
+				fprintf(stderr, "old/new: %.8x %.8x/%.8x ip:%.16llx\n",
+					pci.pci_devices[d].pd_cfg_space[o / 4],
+					wrdata, 
+					pci.pci_devices[d].pd_barsize[(o - 0x10)/4],
+					vei->vrs.vrs_gprs[VCPU_REGS_RIP]);
+				unregister_mem(pci.pci_devices[d].pd_cfg_space[o/4]);
+				register_mem(wrdata, pci.pci_devices[d].pd_barsize[(o - 0x10)/4],
+					pci_memh2,
+					(void *)(uintptr_t)(d << 8) + ((o - 0x10) / 4));
+			}
 		}
 
 		/*
@@ -395,20 +573,16 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		else {
 			switch (sz) {
 			case 4:
-				set_return_data(vei,
-				    pci.pci_devices[d].pd_cfg_space[o / 4]);
+				set_return_data(vei, data);
 				break;
 			case 2:
 				if (ofs == 0)
-					set_return_data(vei, pci.pci_devices[d].
-					    pd_cfg_space[o / 4]);
+					set_return_data(vei, data);
 				else
-					set_return_data(vei, pci.pci_devices[d].
-					    pd_cfg_space[o / 4] >> 16);
+					set_return_data(vei, data >> 16);
 				break;
 			case 1:
-				set_return_data(vei, pci.pci_devices[d].
-				    pd_cfg_space[o / 4] >> (ofs * 8));
+				set_return_data(vei, data >> (ofs * 8));
 				break;
 			}
 		}

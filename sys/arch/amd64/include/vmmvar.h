@@ -359,6 +359,7 @@ struct vm_exit_inout {
  */
 struct vm_exit_eptviolation {
 	uint8_t		vee_fault_type;
+	uint64_t	vee_gpa;
 };
 
 /*
@@ -578,6 +579,41 @@ struct vm_mprotect_ept_params {
 	int			vmep_prot;
 };
 
+struct vm_bindpci {
+	uint32_t vmbp_vm_id;
+	uint32_t vmbp_vcpu_id;
+	uint32_t seg;
+	uint32_t bus;
+	uint32_t dev;
+	uint32_t fun;
+	void     *va;
+	uint32_t size;
+	uint64_t hpa;
+	uint64_t gpa;
+};
+
+#define MAXBAR 6
+struct vm_barinfo {
+	uint32_t seg;
+	uint32_t bus;
+	uint32_t dev;
+	uint32_t func;
+	struct {
+		uint32_t   type;
+		uint32_t   size;
+		uint64_t   addr;	
+	} bars[MAXBAR];
+};
+
+enum {
+	VMM_MMIO_WRITE_1 = 0x100,
+	VMM_MMIO_WRITE_2,
+	VMM_MMIO_WRITE_4,
+	VMM_MMIO_READ_1,
+	VMM_MMIO_READ_2,
+	VMM_MMIO_READ_4
+};
+
 /* IOCTL definitions */
 #define VMM_IOC_CREATE _IOWR('V', 1, struct vm_create_params) /* Create VM */
 #define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
@@ -593,6 +629,9 @@ struct vm_mprotect_ept_params {
 #define VMM_IOC_WRITEVMPARAMS _IOW('V', 10, struct vm_rwvmparams_params)
 /* Control the protection of ept pages*/
 #define VMM_IOC_MPROTECT_EPT _IOW('V', 11, struct vm_mprotect_ept_params)
+
+#define VMM_IOC_BARINFO	     _IOWR('V', 12, struct vm_barinfo)
+#define VMM_IOC_BINDPCI	     _IOW('V', 13, struct vm_bindpci)
 
 /* CPUID masks */
 /*

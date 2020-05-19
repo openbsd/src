@@ -27,15 +27,16 @@
 
 #define PCI_MAX_PIC_IRQS	10
 
-typedef int (*pci_cs_fn_t)(int dir, uint8_t reg, uint32_t *data);
+typedef int (*pci_cs_fn_t)(int dir, uint8_t reg, uint8_t sz, uint32_t *data, void *cookie);
 typedef int (*pci_iobar_fn_t)(int dir, uint16_t reg, uint32_t *data, uint8_t *,
     void *, uint8_t);
 typedef int (*pci_mmiobar_fn_t)(int dir, uint32_t ofs, uint32_t *data);
 
-union pci_dev {
-	uint32_t pd_cfg_space[PCI_CONFIG_SPACE_SIZE / 4];
+struct pci_dev {
+	union {
+		uint32_t pd_cfg_space[PCI_CONFIG_SPACE_SIZE / 4];
 
-	struct {
+		struct {
 		uint16_t pd_vid;
 		uint16_t pd_did;
 		uint16_t pd_cmd;
@@ -60,16 +61,19 @@ union pci_dev {
 		uint8_t pd_int;
 		uint8_t pd_min_grant;
 		uint8_t pd_max_grant;
+		} __packed;
+	};
+	uint8_t pd_bar_ct;
+	pci_cs_fn_t pd_csfunc;
 
-		uint8_t pd_bar_ct;
-		pci_cs_fn_t pd_csfunc;
-
-		uint8_t pd_bartype[PCI_MAX_BARS];
-		uint32_t pd_barsize[PCI_MAX_BARS];
-		void *pd_barfunc[PCI_MAX_BARS];
-		void *pd_bar_cookie[PCI_MAX_BARS];
-	} __packed;
+	uint8_t pd_bartype[PCI_MAX_BARS];
+	uint32_t pd_barsize[PCI_MAX_BARS];
+	void *pd_barfunc[PCI_MAX_BARS];
+	void *pd_bar_cookie[PCI_MAX_BARS];
+	void *pd_cookie;
 };
+
+typedef struct pci_dev pcidev_t;
 
 struct pci {
 	uint8_t pci_dev_ct;
@@ -79,7 +83,7 @@ struct pci {
 	uint32_t pci_addr_reg;
 	uint32_t pci_data_reg;
 
-	union pci_dev pci_devices[PCI_CONFIG_MAX_DEV];
+	pcidev_t pci_devices[PCI_CONFIG_MAX_DEV];
 };
 
 void pci_handle_address_reg(struct vm_run_params *);
@@ -87,8 +91,8 @@ void pci_handle_data_reg(struct vm_run_params *);
 uint8_t pci_handle_io(struct vm_run_params *);
 void pci_init(void);
 int pci_add_device(uint8_t *, uint16_t, uint16_t, uint8_t, uint8_t, uint16_t,
-    uint16_t, uint8_t, pci_cs_fn_t);
-int pci_add_bar(uint8_t, uint32_t, void *, void *);
+    uint16_t, uint8_t, pci_cs_fn_t, void *);
+int pci_add_bar(uint8_t, uint32_t, uint32_t, uint32_t, void *, void *);
 int pci_set_bar_fn(uint8_t, uint8_t, void *, void *);
 uint8_t pci_get_dev_irq(uint8_t);
 int pci_dump(int);

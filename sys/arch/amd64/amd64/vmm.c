@@ -41,6 +41,9 @@
 #include <dev/isa/isareg.h>
 #include <dev/pv/pvreg.h>
 
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+
 /* #define VMM_DEBUG */
 
 void *l1tf_flush_region;
@@ -50,6 +53,8 @@ void *l1tf_flush_region;
 #else
 #define DPRINTF(x...)
 #endif /* VMM_DEBUG */
+
+int sid_vmap(int sid, paddr_t gpa, paddr_t hpa, size_t sz);
 
 #define DEVNAME(s)  ((s)->sc_dev.dv_xname)
 
@@ -63,6 +68,14 @@ void *l1tf_flush_region;
 #define VMX_EXIT_INFO_HAVE_REASON	0x2
 #define VMX_EXIT_INFO_COMPLETE				\
     (VMX_EXIT_INFO_HAVE_RIP | VMX_EXIT_INFO_HAVE_REASON)
+
+struct mmiomap {
+	uint64_t		base;
+	uint32_t		len;
+	uint64_t		map;
+};
+
+/* Remapping I/O: 64k entry table? remapio[base] = remap */
 
 struct vm {
 	struct vmspace		 *vm_vmspace;
@@ -114,6 +127,7 @@ void vmm_attach(struct device *, struct device *, void *);
 int vmmopen(dev_t, int, int, struct proc *);
 int vmmioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int vmmclose(dev_t, int, int, struct proc *);
+paddr_t vmmmmap(dev_t dev, off_t off, int prot);
 int vmm_start(void);
 int vmm_stop(void);
 size_t vm_create_check_mem_ranges(struct vm_create_params *);
@@ -127,6 +141,7 @@ int vm_rwregs(struct vm_rwregs_params *, int);
 int vm_mprotect_ept(struct vm_mprotect_ept_params *);
 int vm_rwvmparams(struct vm_rwvmparams_params *, int);
 int vm_find(uint32_t, struct vm **);
+struct vcpu *vm_find_vcpu(struct vm *, uint32_t);
 int vcpu_readregs_vmx(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_readregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_writeregs_vmx(struct vcpu *, uint64_t, int, struct vcpu_reg_state *);
@@ -302,6 +317,144 @@ extern struct gate_descriptor *idt;
 #define CR_READ		1
 #define CR_CLTS		2
 #define CR_LMSW		3
+
+
+int vm_bindpci(struct vm_bindpci *ptd)
+{
+	struct vm *vm;
+	int sid, error;
+
+	printf("bindpci: %d.%d.%d va:%p sz:%x gpa:%llx hpa:%llx\n",
+		ptd->bus, ptd->dev, ptd->fun, (void *)ptd->va, ptd->size, ptd->hpa, ptd->gpa);
+	sid = (ptd->bus << 8) | (ptd->dev << 3) | (ptd->fun);
+
+	rw_enter_read(&vmm_softc->vm_lock);
+	error = vm_find(ptd->vmbp_vm_id, &vm);
+	rw_exit_read(&vmm_softc->vm_lock);
+	
+	//sid_vmap(sid, ptd->gpa, ptd->hpa, ptd->size);
+	if (error != 0) {
+		printf("%s: vm id %u not found\n", __func__,
+			ptd->vmbp_vm_id);
+		return (error);
+	}
+#if 0
+	error = uvm_share(vm->vm_map, ptd->gpa, PROT_READ|PROT_WRITE,
+		&p->p_vmspace->vm_map, (vaddr_t)ptd->va, 
+		ptd->size);
+	if (error != 0) {
+		printf("%s: uvm_share failed (%d)\n", __func__, error);
+		/* uvmspace_free calls pmap_destroy for us */
+	}		
+#endif
+	return 0;
+}
+
+struct mmio {
+	uint64_t start;
+	uint64_t end;
+	uint32_t type;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	TAILQ_ENTRY(mmio) next;
+};
+
+TAILQ_HEAD(,mmio) mmios = TAILQ_HEAD_INITIALIZER(mmios);
+
+void vmm_add_mmio(int type, uint64_t start, uint64_t size);
+int vmm_mmio(int cmd, int type, uint64_t offset, uint64_t *val);
+int vm_getbar(struct vm_barinfo *bi);
+
+void vmm_add_mmio(int type, uint64_t start, uint64_t size)
+{
+	struct mmio *mmio;
+
+	TAILQ_FOREACH(mmio, &mmios, next) {
+		if (start >= mmio->start && start+size <= mmio->end)
+			return;
+	}
+	mmio = malloc(sizeof(*mmio), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (!mmio)
+		return;
+	mmio->start = start;
+	mmio->end   = start + size;
+	TAILQ_INSERT_TAIL(&mmios, mmio, next);
+}
+
+int vmm_mmio(int cmd, int type, uint64_t offset, uint64_t *val)
+{
+	struct mmio *mmio;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+
+	TAILQ_FOREACH(mmio, &mmios, next) {
+		if (offset >= mmio->start && offset <= mmio->end && type == mmio->type) {
+			break;
+		}
+	}
+	if (mmio == NULL)
+		return -ENODEV;
+	iot = mmio->iot;
+	ioh = mmio->ioh;
+	offset -= mmio->start;
+
+	// device has called pci_mapreg_map
+	switch (cmd) {
+	case VMM_MMIO_WRITE_1:
+		bus_space_write_1(iot, ioh, offset, *val);
+		break;
+	case VMM_MMIO_WRITE_2:
+		bus_space_write_2(iot, ioh, offset, *val);
+		break;
+	case VMM_MMIO_WRITE_4:
+		bus_space_write_4(iot, ioh, offset, *val);
+		break;
+	case VMM_MMIO_READ_1:
+		*val = bus_space_read_1(iot, ioh, offset);
+		break;
+	case VMM_MMIO_READ_2:
+		*val = bus_space_read_2(iot, ioh, offset);
+		break;
+	case VMM_MMIO_READ_4:
+		*val = bus_space_read_4(iot, ioh, offset);
+		break;
+	default:
+		*val = 0;
+		return EINVAL;
+	}
+	return 0;
+}
+
+int vm_getbar(struct vm_barinfo *bi)
+{
+	pci_chipset_tag_t pc = NULL;
+	pcitag_t tag;
+	bus_addr_t base;
+	bus_size_t size;
+	pcireg_t   type = 0;
+	int i, reg;
+
+	printf("getbar: %d.%d.%d\n",
+		bi->bus, bi->dev, bi->func);
+	tag = pci_make_tag(pc, bi->bus, bi->dev, bi->func);
+	memset(&bi->bars, 0, sizeof(bi->bars));
+	for (i = 0, reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; i++, reg += 4) {
+		if (!pci_mapreg_probe(pc, tag, reg, &type))
+			continue;
+		if (pci_mapreg_info(pc, tag, reg, type, &base, &size, NULL))
+			continue;
+		printf("  %d: %x %lx %lx\n", i, type, size, base);
+		bi->bars[i].type = type;
+		bi->bars[i].size = size;
+		bi->bars[i].addr = base;
+		if (type & PCI_MAPREG_MEM_TYPE_64BIT) {
+			i++;
+			reg += 4;
+		}
+	} 
+	
+	return 0;
+}
 
 /*
  * vmm_enabled
@@ -506,13 +659,25 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VMM_IOC_WRITEVMPARAMS:
 		ret = vm_rwvmparams((struct vm_rwvmparams_params *)data, 1);
 		break;
-
+	case VMM_IOC_BARINFO:
+		ret = vm_getbar((struct vm_barinfo *)data);
+		break;
+	case VMM_IOC_BINDPCI:
+		ret = vm_bindpci((struct vm_bindpci *)data);
+		break;
 	default:
 		DPRINTF("%s: unknown ioctl code 0x%lx\n", __func__, cmd);
 		ret = ENOTTY;
 	}
 
 	return (ret);
+}
+
+paddr_t
+vmmmmap(dev_t dev, off_t off, int prot)
+{
+	printf("vmmmmap: %llx\n", off);
+	return off;
 }
 
 /*
@@ -541,6 +706,8 @@ pledge_ioctl_vmm(struct proc *p, long com)
 	case VMM_IOC_MPROTECT_EPT:
 	case VMM_IOC_READVMPARAMS:
 	case VMM_IOC_WRITEVMPARAMS:
+	case VMM_IOC_BINDPCI:
+	case VMM_IOC_BARINFO:
 		return (0);
 	}
 
@@ -591,13 +758,7 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 		return (error);
 	}
 
-	rw_enter_read(&vm->vm_vcpu_lock);
-	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
-		if (vcpu->vc_id == vrp->vrp_vcpu_id)
-			break;
-	}
-	rw_exit_read(&vm->vm_vcpu_lock);
-
+	vcpu = vm_find_vcpu(vm, vrp->vrp_vcpu_id);
 	if (vcpu == NULL) {
 		DPRINTF("%s: vcpu id %u of vm %u not found\n", __func__,
 		    vrp->vrp_vcpu_id, vrp->vrp_vm_id);
@@ -656,13 +817,8 @@ vm_intr_pending(struct vm_intr_params *vip)
 		rw_exit_read(&vmm_softc->vm_lock);
 		return (error);
 	}
-
-	rw_enter_read(&vm->vm_vcpu_lock);
-	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
-		if (vcpu->vc_id == vip->vip_vcpu_id)
-			break;
-	}
-	rw_exit_read(&vm->vm_vcpu_lock);
+	
+	vcpu = vm_find_vcpu(vm, vip->vip_vcpu_id);
 	rw_exit_read(&vmm_softc->vm_lock);
 
 	if (vcpu == NULL)
@@ -721,13 +877,8 @@ vm_rwvmparams(struct vm_rwvmparams_params *vpp, int dir) {
 		rw_exit_read(&vmm_softc->vm_lock);
 		return (error);
 	}
-
-	rw_enter_read(&vm->vm_vcpu_lock);
-	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
-		if (vcpu->vc_id == vpp->vpp_vcpu_id)
-			break;
-	}
-	rw_exit_read(&vm->vm_vcpu_lock);
+	
+	vcpu = vm_find_vcpu(vm, vpp->vpp_vcpu_id);
 	rw_exit_read(&vmm_softc->vm_lock);
 
 	if (vcpu == NULL)
@@ -786,12 +937,7 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 		return (error);
 	}
 
-	rw_enter_read(&vm->vm_vcpu_lock);
-	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
-		if (vcpu->vc_id == vrwp->vrwp_vcpu_id)
-			break;
-	}
-	rw_exit_read(&vm->vm_vcpu_lock);
+	vcpu = vm_find_vcpu(vm, vrwp->vrwp_vcpu_id);
 	rw_exit_read(&vmm_softc->vm_lock);
 
 	if (vcpu == NULL)
@@ -858,13 +1004,7 @@ vm_mprotect_ept(struct vm_mprotect_ept_params *vmep)
 		return (ret);
 	}
 
-	rw_enter_read(&vm->vm_vcpu_lock);
-	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
-		if (vcpu->vc_id == vmep->vmep_vcpu_id)
-			break;
-	}
-	rw_exit_read(&vm->vm_vcpu_lock);
-
+	vcpu = vm_find_vcpu(vm, vmep->vmep_vcpu_id);
 	if (vcpu == NULL) {
 		DPRINTF("%s: vcpu id %u of vm %u not found\n", __func__,
 		    vmep->vmep_vcpu_id, vmep->vmep_vm_id);
@@ -1137,6 +1277,22 @@ vm_find(uint32_t id, struct vm **res)
 	return (ENOENT);
 }
 
+struct vcpu *
+vm_find_vcpu(struct vm *vm, uint32_t id)
+{
+	struct vcpu *vcpu;
+
+	if (vm == NULL)
+		return NULL;
+	rw_enter_read(&vm->vm_vcpu_lock);
+	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
+		if (vcpu->vc_id == id)
+			break;
+	}
+	rw_exit_read(&vm->vm_vcpu_lock);
+	return vcpu;
+}
+
 /*
  * vmm_start
  *
@@ -1406,6 +1562,8 @@ vm_create_check_mem_ranges(struct vm_create_params *vcp)
 		if (i > 0 && pvmr->vmr_gpa + pvmr->vmr_size > vmr->vmr_gpa)
 			return (0);
 
+		printf("vmm: %lx %lx %lx\n", vmr->vmr_va, vmr->vmr_gpa, vmr->vmr_size);
+
 		memsize += vmr->vmr_size;
 		pvmr = vmr;
 	}
@@ -1552,6 +1710,22 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
 			vm->vm_vmspace = NULL;
 			return (ENOMEM);
 		}
+#if 0
+		{
+			paddr_t vhpa, vgpa;
+			vaddr_t vva;
+			vva = vmr->vmr_va;
+			vgpa = vmr->vmr_gpa;
+			for (int k = 0; k < vmr->vmr_size; k+=PAGE_SIZE) {
+				pmap_extract(pmap_kernel(), vva, &vhpa);
+				printf("va:%lx gpa:%lx size:%lx hpa:%lx\n",
+					vva, vgpa, vmr->vmr_size, vhpa);
+				sid_vmap((17 << 8) | 0, vgpa, vhpa, PAGE_SIZE);
+				vgpa  += PAGE_SIZE;
+				vhpa  += PAGE_SIZE;
+			}
+		}
+#endif
 	}
 
 	ret = pmap_convert(vm->vm_map->pmap, PMAP_TYPE_EPT);
@@ -4918,6 +5092,7 @@ vmx_handle_intr(struct vcpu *vcpu)
 	uint64_t eii;
 	struct gate_descriptor *idte;
 	vaddr_t handler;
+	static uint8_t vech[256];
 
 	if (vmread(VMCS_EXIT_INTERRUPTION_INFO, &eii)) {
 		printf("%s: can't obtain intr info\n", __func__);
@@ -4927,6 +5102,10 @@ vmx_handle_intr(struct vcpu *vcpu)
 	vec = eii & 0xFF;
 
 	/* XXX check "error valid" code in eii, abort if 0 */
+	if (!vech[vec]) {
+		printf("irq %d\n", vec);
+		vech[vec] = 1;
+	}
 	idte=&idt[vec];
 	handler = idte->gd_looffset + ((uint64_t)idte->gd_hioffset << 16);
 	vmm_dispatch_intr(handler);
@@ -5348,7 +5527,6 @@ vmm_get_guest_memtype(struct vm *vm, paddr_t gpa)
 	struct vm_mem_range *vmr;
 
 	if (gpa >= VMM_PCI_MMIO_BAR_BASE && gpa <= VMM_PCI_MMIO_BAR_END) {
-		DPRINTF("guest mmio access @ 0x%llx\n", (uint64_t)gpa);
 		return (VMM_MEM_TYPE_REGULAR);
 	}
 
@@ -5517,7 +5695,8 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 		return (EINVAL);
 	}
 
-	if (fault_type == VM_FAULT_PROTECT) {
+	if ((gpa >= VMM_PCI_MMIO_BAR_BASE && gpa <= VMM_PCI_MMIO_BAR_END) || fault_type == VM_FAULT_PROTECT) {
+		vcpu->vc_exit.vee.vee_gpa = gpa;
 		vcpu->vc_exit.vee.vee_fault_type = VEE_FAULT_PROTECT;
 		return (EAGAIN);
 	}
@@ -5526,7 +5705,7 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
 
 	if (ret)
-		printf("%s: uvm_fault returns %d, GPA=0x%llx, rip=0x%llx\n",
+		printf("%s: uvm_fault returns %d, GPA=0x%llx, rip=0x%llx :(\n",
 		    __func__, ret, (uint64_t)gpa, vcpu->vc_gueststate.vg_rip);
 
 	return (ret);
