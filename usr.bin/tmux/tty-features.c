@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.14 2020/05/16 16:44:54 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.15 2020/05/19 10:59:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -343,7 +343,7 @@ tty_default_features(int *feat, const char *name, u_int version)
 		  .features = "256,bpaste,ccolour,cstyle,title"
 		},
 		{ .name = "iTerm2",
-		  .features = TTY_FEATURES_BASE_MODERN_XTERM ",cstyle,margins,sync"
+		  .features = TTY_FEATURES_BASE_MODERN_XTERM ",cstyle,extkeys,margins,sync"
 		},
 		{ .name = "XTerm",
 		  .features = TTY_FEATURES_BASE_MODERN_XTERM ",ccolour,cstyle,extkeys,focus,margins,rectfill"
