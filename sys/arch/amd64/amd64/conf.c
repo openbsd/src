@@ -109,7 +109,7 @@ int	nblkdev = nitems(bdevsw);
 	(dev_type_write((*))) enodev, \
 	 dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
+	dev_init(c,n,mmap) }
 
 #define	mmread	mmrw
 #define	mmwrite	mmrw
