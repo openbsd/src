@@ -1209,6 +1209,8 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (pci_vga_pci == NULL)
 			return EINVAL;
 		break;
+	case PCIOCUNBIND:
+		break;
 	default:
 		return ENOTTY;
 	}
@@ -1232,6 +1234,25 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	tag = pci_make_tag(pc, sel->pc_bus, sel->pc_dev, sel->pc_func);
 
 	switch (cmd) {
+	case PCIOCUNBIND:
+		{ 
+			struct pci_dev *pd, *pdt;
+			uint32_t val;
+			int i;
+
+			LIST_FOREACH_SAFE(pd, &pci->sc_devs, pd_next, pdt) {
+				if (tag == pd->pd_tag) {
+					for (i = PCI_MAPREG_START; i <= PCI_MAPREG_END; i += 4) {
+						int n = (i - PCI_MAPREG_START) / 4;
+						val = pci_conf_read(NULL, tag, i);
+						printf(" bar%d: %x %x\n", n, val, pd->pd_mask[n]);
+					}
+					config_detach(pd->pd_dev, 0);
+						LIST_REMOVE(pd, pd_next);
+				}
+			}
+		}
+		break;
 	case PCIOCREAD:
 		io = (struct pci_io *)data;
 		switch (io->pi_width) {
