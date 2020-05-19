@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.98 2019/07/03 03:24:02 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.99 2020/05/19 12:48:54 sthen Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ static int	ilog2(int);
 void		initcg(int, time_t);
 void		wtfs(daddr_t, int, void *);
 int		fsinit1(time_t, mode_t, uid_t, gid_t);
-int		fsinit2(time_t);
+int		fsinit2(time_t, mode_t, uid_t, gid_t);
 int		makedir(struct direct *, int);
 void		iput(union dinode *, ino_t);
 void		setblock(struct fs *, unsigned char *, int);
@@ -590,7 +590,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		sblock.fs_ffs1_cstotal.cs_nifree = sblock.fs_cstotal.cs_nifree;
 		sblock.fs_ffs1_cstotal.cs_nffree = sblock.fs_cstotal.cs_nffree;
 	} else {
-		if (fsinit2(utime))
+		if (fsinit2(utime, mfsmode, mfsuid, mfsgid))
 			errx(32, "fsinit2 failed");
 	}
 
@@ -841,7 +841,7 @@ fsinit1(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 }
 
 int
-fsinit2(time_t utime)
+fsinit2(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 	union dinode node;
 
@@ -856,9 +856,15 @@ fsinit2(time_t utime)
 	/*
 	 * Create the root directory.
 	 */
-	node.dp2.di_mode = IFDIR | UMASK;
-	node.dp2.di_uid = geteuid();
-	node.dp2.di_gid = getegid();
+	if (mfs) {
+		node.dp2.di_mode = IFDIR | mfsmode;
+		node.dp2.di_uid = mfsuid;
+		node.dp2.di_gid = mfsgid;
+	} else {
+		node.dp2.di_mode = IFDIR | UMASK;
+		node.dp2.di_uid = geteuid();
+		node.dp2.di_gid = getegid();
+	}
 	node.dp2.di_nlink = PREDEFDIR;
 	node.dp2.di_size = makedir(root_dir, PREDEFDIR);
 
