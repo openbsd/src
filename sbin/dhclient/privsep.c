@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.76 2019/11/19 14:35:08 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.77 2020/05/19 17:59:47 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -66,7 +66,7 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 		switch (imsg.hdr.type) {
 		case IMSG_REVOKE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct imsg_revoke))
+			    sizeof(struct proposal))
 				log_warnx("%s: bad IMSG_REVOKE",
 				    log_procname);
 			else
@@ -76,7 +76,7 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 
 		case IMSG_PROPOSE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct imsg_propose))
+			    sizeof(struct proposal))
 				log_warnx("%s: bad IMSG_PROPOSE",
 				    log_procname);
 			else {
@@ -97,7 +97,7 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 
 		case IMSG_TELL_UNWIND:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct imsg_tell_unwind))
+			    sizeof(struct unwind_info))
 				log_warnx("%s: bad IMSG_TELL_UNWIND",
 				    log_procname);
 			else

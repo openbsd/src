@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.175 2020/05/15 11:14:00 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.176 2020/05/19 17:59:47 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -881,24 +881,20 @@ priv_write_resolv_conf(int index, int routefd, int rdomain, char *contents,
 void
 propose(struct proposal *proposal)
 {
-	struct	imsg_propose	 imsg;
 	int			 rslt;
 
-	memcpy(&imsg.proposal, proposal, sizeof(imsg.proposal));
-
-	rslt = imsg_compose(unpriv_ibuf, IMSG_PROPOSE, 0, 0, -1, &imsg,
-	    sizeof(imsg));
+	rslt = imsg_compose(unpriv_ibuf, IMSG_PROPOSE, 0, 0, -1, proposal,
+	    sizeof(*proposal));
 	if (rslt == -1)
 		log_warn("%s: imsg_compose(IMSG_PROPOSE)", log_procname);
 }
 
 void
-priv_propose(char *name, int ioctlfd, struct imsg_propose *imsg,
+priv_propose(char *name, int ioctlfd, struct proposal *proposal,
     char **resolv_conf, int routefd, int rdomain, int index)
 {
 	struct unwind_info	 unwind_info;
 	struct ifreq		 ifr;
-	struct proposal		*proposal = &imsg->proposal;
 	char			*search = NULL;
 	int			 rslt;
 
@@ -946,26 +942,21 @@ priv_propose(char *name, int ioctlfd, struct imsg_propose *imsg,
 void
 revoke_proposal(struct proposal *proposal)
 {
-	struct	imsg_revoke	 imsg;
 	int			 rslt;
 
 	if (proposal == NULL)
 		return;
 
-	memcpy(&imsg.proposal, proposal, sizeof(imsg.proposal));
-
-	rslt = imsg_compose(unpriv_ibuf, IMSG_REVOKE, 0, 0, -1, &imsg,
-	    sizeof(imsg));
+	rslt = imsg_compose(unpriv_ibuf, IMSG_REVOKE, 0, 0, -1, proposal,
+	    sizeof(*proposal));
 	if (rslt == -1)
 		log_warn("%s: imsg_compose(IMSG_REVOKE)", log_procname);
 }
 
 void
-priv_revoke_proposal(char *name, int ioctlfd, struct imsg_revoke *imsg,
+priv_revoke_proposal(char *name, int ioctlfd, struct proposal *proposal,
     char **resolv_conf)
 {
-	struct proposal		*proposal = &imsg->proposal;
-
 	free(*resolv_conf);
 	*resolv_conf = NULL;
 
@@ -978,25 +969,28 @@ priv_revoke_proposal(char *name, int ioctlfd, struct imsg_revoke *imsg,
 void
 tell_unwind(struct unwind_info *unwind_info, int ifi_flags)
 {
-	struct	imsg_tell_unwind	 imsg;
+	struct	unwind_info	 	 noinfo;
 	int				 rslt;
 
 	if ((ifi_flags & IFI_AUTOCONF) == 0 ||
 	    (ifi_flags & IFI_IN_CHARGE) == 0)
 		return;
 
-	memset(&imsg, 0, sizeof(imsg));
 	if (unwind_info != NULL)
-		memcpy(&imsg.unwind_info, unwind_info, sizeof(imsg.unwind_info));
+		rslt = imsg_compose(unpriv_ibuf, IMSG_TELL_UNWIND, 0, 0, -1,
+		    unwind_info, sizeof(*unwind_info));
+	else {
+		memset(&noinfo, 0, sizeof(noinfo));
+		rslt = imsg_compose(unpriv_ibuf, IMSG_TELL_UNWIND, 0, 0, -1,
+		    &noinfo, sizeof(noinfo));
+	}
 
-	rslt = imsg_compose(unpriv_ibuf, IMSG_TELL_UNWIND, 0, 0, -1, &imsg,
-	    sizeof(imsg));
 	if (rslt == -1)
 		log_warn("%s: imsg_compose(IMSG_TELL_UNWIND)", log_procname);
 }
 
 void
-priv_tell_unwind(int index, int routefd, int rdomain, struct imsg_tell_unwind *imsg)
+priv_tell_unwind(int index, int routefd, int rdomain, struct unwind_info *unwind_info)
 {
 	struct rt_msghdr		 rtm;
 	struct sockaddr_rtdns		 rtdns;
@@ -1022,9 +1016,9 @@ priv_tell_unwind(int index, int routefd, int rdomain, struct imsg_tell_unwind *i
 	memset(&rtdns, 0, sizeof(rtdns));
 	rtdns.sr_family = AF_INET;
 
-	rtdns.sr_len = 2 + imsg->unwind_info.count * sizeof(in_addr_t);
-	memcpy(rtdns.sr_dns, imsg->unwind_info.ns,
-	    imsg->unwind_info.count * sizeof(in_addr_t));
+	rtdns.sr_len = 2 + unwind_info->count * sizeof(in_addr_t);
+	memcpy(rtdns.sr_dns, unwind_info->ns,
+	    unwind_info->count * sizeof(in_addr_t));
 
 	iov[iovcnt].iov_base = &rtdns;
 	iov[iovcnt++].iov_len = sizeof(rtdns);
