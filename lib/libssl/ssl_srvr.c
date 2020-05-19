@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.75 2020/05/10 14:17:48 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.76 2020/05/19 16:35:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1693,7 +1693,7 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 	fakekey[0] = s->client_version >> 8;
 	fakekey[1] = s->client_version & 0xff;
 
-	pkey = s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey;
+	pkey = s->cert->pkeys[SSL_PKEY_RSA].privatekey;
 	if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA) ||
 	    (pkey->pkey.rsa == NULL)) {
 		al = SSL_AD_HANDSHAKE_FAILURE;

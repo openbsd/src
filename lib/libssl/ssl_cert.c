@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.76 2019/05/15 09:13:16 bcook Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.77 2020/05/19 16:35:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,7 +168,7 @@ ssl_cert_new(void)
 		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
-	ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
+	ret->key = &(ret->pkeys[SSL_PKEY_RSA]);
 	ret->references = 1;
 	return (ret);
 }
@@ -240,13 +240,8 @@ ssl_cert_dup(CERT *cert)
 				 * (Nothing at the moment, I think.)
 				 */
 
-			case SSL_PKEY_RSA_ENC:
-			case SSL_PKEY_RSA_SIGN:
+			case SSL_PKEY_RSA:
 				/* We have an RSA key. */
-				break;
-
-			case SSL_PKEY_DH_RSA:
-				/* We have a DH key. */
 				break;
 
 			case SSL_PKEY_ECC:
@@ -377,7 +372,7 @@ ssl_sess_cert_new(void)
 		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	ret->peer_key = &(ret->peer_pkeys[SSL_PKEY_RSA_ENC]);
+	ret->peer_key = &(ret->peer_pkeys[SSL_PKEY_RSA]);
 	ret->references = 1;
 
 	return ret;

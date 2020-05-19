@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.17 2020/03/12 17:15:33 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.18 2020/05/19 16:35:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -591,7 +591,7 @@ ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 
 	i = pk->type;
 	if (i == EVP_PKEY_RSA) {
-		ret = SSL_PKEY_RSA_ENC;
+		ret = SSL_PKEY_RSA;
 	} else if (i == EVP_PKEY_EC) {
 		ret = SSL_PKEY_ECC;
 	} else if (i == NID_id_GostR3410_2001 ||
