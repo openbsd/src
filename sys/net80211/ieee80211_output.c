@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.130 2020/05/19 08:34:19 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.131 2020/05/19 18:57:57 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1384,7 +1384,7 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 		return NULL;
 
 	frm = mtod(m, u_int8_t *);
-	capinfo = 0;
+	capinfo = IEEE80211_CAPINFO_ESS;
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		capinfo |= IEEE80211_CAPINFO_PRIVACY;
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
