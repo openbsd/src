@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.43 2020/05/19 12:08:39 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.44 2020/05/19 13:50:09 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1605,6 +1605,7 @@ function test_sc_verify {
 	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
 		-$ver -showcerts -crl_check -issuer_checks -policy_check \
+		-status -servername xyz \
 		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
@@ -1707,6 +1708,7 @@ function test_server_client {
 		-context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
 		-alpn "http/1.1,spdy/3" -www -cipher ALL $extra_opts \
 		-msg -tlsextdebug -verify 3 -groups X25519:P-384:P-256 \
+		-status -servername xyz -cert2 $crt -key2 $key \
 		> $s_server_out 2>&1 &
 	check_exit_status $?
 	s_server_pid=$!
