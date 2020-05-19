@@ -1797,13 +1797,13 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	    PCI_PRODUCT_QUMRANET_VIO_RNG, PCI_CLASS_SYSTEM,
 	    PCI_SUBCLASS_SYSTEM_MISC,
 	    PCI_VENDOR_OPENBSD,
-	    PCI_PRODUCT_VIRTIO_ENTROPY, 1, NULL)) {
+	    PCI_PRODUCT_VIRTIO_ENTROPY, 1, NULL, NULL)) {
 		log_warnx("%s: can't add PCI virtio rng device",
 		    __progname);
 		return;
 	}
 
-	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_rnd_io, NULL)) {
+	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, 0, virtio_rnd_io, NULL)) {
 		log_warnx("%s: can't add bar for virtio rng device",
 		    __progname);
 		return;
@@ -1835,14 +1835,14 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			    PCI_PRODUCT_QUMRANET_VIO_NET, PCI_CLASS_SYSTEM,
 			    PCI_SUBCLASS_SYSTEM_MISC,
 			    PCI_VENDOR_OPENBSD,
-			    PCI_PRODUCT_VIRTIO_NETWORK, 1, NULL)) {
+			    PCI_PRODUCT_VIRTIO_NETWORK, 1, NULL, NULL)) {
 				log_warnx("%s: can't add PCI virtio net device",
 				    __progname);
 				return;
 			}
 
-			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_net_io,
-			    &vionet[i])) {
+			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, 0,
+			    virtio_net_io, &vionet[i])) {
 				log_warnx("%s: can't add bar for virtio net "
 				    "device", __progname);
 				return;
@@ -1923,13 +1923,13 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			    PCI_CLASS_MASS_STORAGE,
 			    PCI_SUBCLASS_MASS_STORAGE_SCSI,
 			    PCI_VENDOR_OPENBSD,
-			    PCI_PRODUCT_VIRTIO_BLOCK, 1, NULL)) {
+			    PCI_PRODUCT_VIRTIO_BLOCK, 1, NULL, NULL)) {
 				log_warnx("%s: can't add PCI virtio block "
 				    "device", __progname);
 				return;
 			}
-			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_blk_io,
-			    &vioblk[i])) {
+			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, 0,
+			    virtio_blk_io, &vioblk[i])) {
 				log_warnx("%s: can't add bar for virtio block "
 				    "device", __progname);
 				return;
@@ -1971,13 +1971,14 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		    PCI_CLASS_MASS_STORAGE,
 		    PCI_SUBCLASS_MASS_STORAGE_SCSI,
 		    PCI_VENDOR_OPENBSD,
-		    PCI_PRODUCT_VIRTIO_SCSI, 1, NULL)) {
+		    PCI_PRODUCT_VIRTIO_SCSI, 1, NULL, NULL)) {
 			log_warnx("%s: can't add PCI vioscsi device",
 			    __progname);
 			return;
 		}
 
-		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, vioscsi_io, vioscsi)) {
+		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, 0,
+		    vioscsi_io, vioscsi)) {
 			log_warnx("%s: can't add bar for vioscsi device",
 			    __progname);
 			return;
@@ -2013,13 +2014,13 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	    PCI_CLASS_COMMUNICATIONS,
 	    PCI_SUBCLASS_COMMUNICATIONS_MISC,
 	    PCI_VENDOR_OPENBSD,
-	    PCI_PRODUCT_VIRTIO_VMMCI, 1, NULL)) {
+	    PCI_PRODUCT_VIRTIO_VMMCI, 1, NULL, NULL)) {
 		log_warnx("%s: can't add PCI vmm control device",
 		    __progname);
 		return;
 	}
 
-	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, vmmci_io, NULL)) {
+	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, 0, vmmci_io, NULL)) {
 		log_warnx("%s: can't add bar for vmm control device",
 		    __progname);
 		return;

@@ -39,6 +39,8 @@
 
 #define	CONTROL_BACKLOG	5
 
+#define pledge(x...) 0
+
 struct ctl_connlist ctl_conns;
 
 void

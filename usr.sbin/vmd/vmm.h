@@ -22,3 +22,17 @@ void vcpu_assert_pic_irq(uint32_t, uint32_t, int);
 void vcpu_deassert_pic_irq(uint32_t, uint32_t, int);
 void set_return_data(struct vm_exit *, uint32_t);
 void get_input_data(struct vm_exit *, uint32_t *);
+
+typedef int (*iocb_t)(int, uint64_t, uint32_t, void *, void *);
+
+struct iohandler {
+	uint64_t start;
+	uint64_t end;
+	iocb_t handler;
+	void *cookie;
+	TAILQ_ENTRY(iohandler) next;
+};
+
+void register_mem(uint64_t base, uint32_t len, iocb_t handler, void *cookie);
+void unregister_mem(uint64_t base);
+int mem_handler(int dir, uint64_t addr, uint32_t size, void *data);

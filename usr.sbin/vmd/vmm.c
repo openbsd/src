@@ -53,6 +53,8 @@
 #include "vmd.h"
 #include "vmm.h"
 
+#define pledge(x...) 0
+
 void vmm_sighdlr(int, short, void *);
 int vmm_start_vm(struct imsg *, uint32_t *, pid_t *);
 int vmm_dispatch_parent(int, struct privsep_proc *, struct imsg *);
@@ -92,7 +94,7 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	 * send - for sending send/recv fds to vm proc.
 	 * recvfd - for disks, interfaces and other fds.
 	 */
-	if (pledge("stdio vmm sendfd recvfd proc", NULL) == -1)
+	if (pledge("rpath unveil stdio vmm sendfd recvfd proc", NULL) == -1)
 		fatal("pledge");
 
 	/* Get and terminate all running VMs */
