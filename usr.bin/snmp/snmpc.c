@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.24 2020/05/10 21:14:30 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.25 2020/05/19 13:41:01 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -1034,7 +1034,7 @@ snmpc_mibtree(int argc, char *argv[])
 	struct oid *oid;
 	char buf[BUFSIZ];
 
-	for (oid = NULL; (oid = smi_foreach(oid, 0)) != NULL;) {
+	for (oid = NULL; (oid = smi_foreach(oid)) != NULL;) {
 		smi_oid2string(&oid->o_id, buf, sizeof(buf), oid_lookup);
 		printf("%s\n", buf);
 	}
