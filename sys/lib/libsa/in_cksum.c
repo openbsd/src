@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.6 2020/05/18 17:01:02 patrick Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.7 2020/05/19 12:54:37 patrick Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.3 1995/04/22 13:53:48 cgd Exp $	*/
 
 /*
@@ -60,10 +60,8 @@ in_cksum(const void *p, size_t l)
 	const u_char *cp = p;
 
 	/* ensure that < 2^16 bytes being summed */
-	if (l >= (1 << 16)) {
-		printf("in_cksum: packet too big\n");
-		return -1;
-	}
+	if (l >= (1 << 16))
+		panic("in_cksum: packet too big");
 	len = (int)l;
 
 	if (((long)cp & 1) == 0) {
