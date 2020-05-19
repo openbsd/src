@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.190 2020/05/16 11:07:52 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.191 2020/05/19 06:32:24 mpi Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -165,6 +165,36 @@ struct cfdriver audio_cd = {
 	NULL, "audio", DV_DULL
 };
 
+void filt_audioctlrdetach(struct knote *);
+int filt_audioctlread(struct knote *, long);
+
+const struct filterops audioctlread_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_audioctlrdetach,
+	.f_event	= filt_audioctlread,
+};
+
+void filt_audiowdetach(struct knote *);
+int filt_audiowrite(struct knote *, long);
+
+const struct filterops audiowrite_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_audiowdetach,
+	.f_event	= filt_audiowrite,
+};
+
+void filt_audiordetach(struct knote *);
+int filt_audioread(struct knote *, long);
+
+const struct filterops audioread_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_audiordetach,
+	.f_event	= filt_audioread,
+};
+
 /*
  * This mutex protects data structures (including registers on the
  * sound-card) that are manipulated by both the interrupt handler and
@@ -243,7 +273,14 @@ audio_mixer_wakeup(void *addr)
 		wakeup(&sc->mix_blocking);
 		sc->mix_blocking = 0;
 	}
+	/*
+	 * As long as selwakeup() grabs the KERNEL_LOCK() make sure it is
+	 * already held here to avoid lock ordering problems with `audio_lock'
+	 */
+	KERNEL_ASSERT_LOCKED();
+	mtx_enter(&audio_lock);
 	selwakeup(&sc->mix_sel);
+	mtx_leave(&audio_lock);
 }
 
 void
@@ -255,7 +292,14 @@ audio_buf_wakeup(void *addr)
 		wakeup(&buf->blocking);
 		buf->blocking = 0;
 	}
+	/*
+	 * As long as selwakeup() grabs the KERNEL_LOCK() make sure it is
+	 * already held here to avoid lock ordering problems with `audio_lock'
+	 */
+	KERNEL_ASSERT_LOCKED();
+	mtx_enter(&audio_lock);
 	selwakeup(&buf->sel);
+	mtx_leave(&audio_lock);
 }
 
 int
@@ -1383,9 +1427,12 @@ audio_detach(struct device *self, int flags)
 	if (sc->mode != 0) {
 		if (sc->active) {
 			wakeup(&sc->play.blocking);
-			selwakeup(&sc->play.sel);
+			KERNEL_ASSERT_LOCKED();
+			mtx_enter(&audio_lock);
 			wakeup(&sc->rec.blocking);
+			selwakeup(&sc->play.sel);
 			selwakeup(&sc->rec.sel);
+			mtx_leave(&audio_lock);
 			audio_stop(sc);
 		}
 		sc->ops->close(sc->arg);
@@ -1393,8 +1440,14 @@ audio_detach(struct device *self, int flags)
 	}
 	if (sc->mix_isopen) {
 		wakeup(&sc->mix_blocking);
+		KERNEL_ASSERT_LOCKED();
+		mtx_enter(&audio_lock);
 		selwakeup(&sc->mix_sel);
+		mtx_leave(&audio_lock);
 	}
+	klist_invalidate(&sc->play.sel.si_note);
+	klist_invalidate(&sc->rec.sel.si_note);
+	klist_invalidate(&sc->mix_sel.si_note);
 
 	/* free resources */
 	softintr_disestablish(sc->mix_softintr);
@@ -2197,6 +2250,130 @@ audiopoll(dev_t dev, int events, struct proc *p)
 	}
 	device_unref(&sc->dev);
 	return revents;
+}
+
+int
+audiokqfilter(dev_t dev, struct knote *kn)
+{
+	struct audio_softc *sc;
+	struct klist 	  *klist;
+	int error;
+
+	sc = (struct audio_softc *)device_lookup(&audio_cd, AUDIO_UNIT(dev));
+	if (sc == NULL)
+		return ENXIO;
+	error = 0;
+	switch (AUDIO_DEV(dev)) {
+	case AUDIO_DEV_AUDIO:
+		switch (kn->kn_filter) {
+		case EVFILT_READ:
+			klist = &sc->rec.sel.si_note;
+			kn->kn_fop = &audioread_filtops;
+			break;
+		case EVFILT_WRITE:
+			klist = &sc->play.sel.si_note;
+			kn->kn_fop = &audiowrite_filtops;
+			break;
+		default:
+			error = EINVAL;
+			goto done;
+		}
+		break;
+	case AUDIO_DEV_AUDIOCTL:
+		switch (kn->kn_filter) {
+		case EVFILT_READ:
+			klist = &sc->mix_sel.si_note;
+			kn->kn_fop = &audioctlread_filtops;
+			break;
+		default:
+			error = EINVAL;
+			goto done;
+		}
+		break;
+	}
+	kn->kn_hook = sc;
+
+	mtx_enter(&audio_lock);
+	klist_insert(klist, kn);
+	mtx_leave(&audio_lock);
+done:
+	device_unref(&sc->dev);
+	return error;
+}
+
+void
+filt_audiordetach(struct knote *kn)
+{
+	struct audio_softc *sc = kn->kn_hook;
+
+	mtx_enter(&audio_lock);
+	klist_remove(&sc->rec.sel.si_note, kn);
+	mtx_leave(&audio_lock);
+}
+
+int
+filt_audioread(struct knote *kn, long hint)
+{
+	struct audio_softc *sc = kn->kn_hook;
+	int retval = 0;
+
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_enter(&audio_lock);
+	retval = (sc->mode & AUMODE_RECORD) && (sc->rec.used > 0);
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_leave(&audio_lock);
+
+	return retval;
+}
+
+void
+filt_audiowdetach(struct knote *kn)
+{
+	struct audio_softc *sc = kn->kn_hook;
+
+	mtx_enter(&audio_lock);
+	klist_remove(&sc->play.sel.si_note, kn);
+	mtx_leave(&audio_lock);
+}
+
+int
+filt_audiowrite(struct knote *kn, long hint)
+{
+	struct audio_softc *sc = kn->kn_hook;
+	int retval = 0;
+
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_enter(&audio_lock);
+	retval = (sc->mode & AUMODE_PLAY) && (sc->play.used < sc->play.len);
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_leave(&audio_lock);
+
+	return retval;
+}
+
+void
+filt_audioctlrdetach(struct knote *kn)
+{
+	struct audio_softc *sc = kn->kn_hook;
+
+	mtx_enter(&audio_lock);
+	klist_remove(&sc->mix_sel.si_note, kn);
+	mtx_leave(&audio_lock);
+}
+
+int
+filt_audioctlread(struct knote *kn, long hint)
+{
+	struct audio_softc *sc = kn->kn_hook;
+	int retval = 0;
+
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_enter(&audio_lock);
+	retval = (sc->mix_isopen && sc->mix_pending);
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_leave(&audio_lock);
+
+	return retval;
 }
 
 #if NWSKBD > 0
