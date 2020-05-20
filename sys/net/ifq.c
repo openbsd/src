@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.37 2020/03/10 08:45:28 tobhe Exp $ */
+/*	$OpenBSD: ifq.c,v 1.38 2020/05/20 01:28:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -122,7 +122,10 @@ ifq_is_serialized(struct ifqueue *ifq)
 void
 ifq_start(struct ifqueue *ifq)
 {
-	if (ifq_len(ifq) >= min(ifq->ifq_if->if_txmit, ifq->ifq_maxlen)) {
+	struct ifnet *ifp = ifq->ifq_if;
+
+	if (ISSET(ifp->if_xflags, IFXF_MPSAFE) &&
+	    ifq_len(ifq) >= min(ifp->if_txmit, ifq->ifq_maxlen)) {
 		task_del(ifq->ifq_softnet, &ifq->ifq_bundle);
 		ifq_run_start(ifq);
 	} else
@@ -192,7 +195,8 @@ void
 ifq_init(struct ifqueue *ifq, struct ifnet *ifp, unsigned int idx)
 {
 	ifq->ifq_if = ifp;
-	ifq->ifq_softnet = net_tq(ifp->if_index); /* + idx */
+	ifq->ifq_softnet = ISSET(ifp->if_xflags, IFXF_MPSAFE) ?
+	    net_tq(ifp->if_index /* + idx */) : systq;
 	ifq->ifq_softc = NULL;
 
 	mtx_init(&ifq->ifq_mtx, IPL_NET);
