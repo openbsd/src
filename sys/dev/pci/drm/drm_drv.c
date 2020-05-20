@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.174 2020/04/07 13:27:51 visa Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.175 2020/05/20 06:50:12 mpi Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -484,6 +484,35 @@ filt_drmkms(struct knote *kn, long hint)
 	return (kn->kn_fflags != 0);
 }
 
+void
+filt_drmreaddetach(struct knote *kn)
+{
+	struct drm_file		*file_priv = kn->kn_hook;
+	int s;
+
+	s = spltty();
+	klist_remove(&file_priv->rsel.si_note, kn);
+	splx(s);
+}
+
+int
+filt_drmread(struct knote *kn, long hint)
+{
+	struct drm_file		*file_priv = kn->kn_hook;
+	int			 val = 0;
+
+#if notyet
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_enter(&file_priv->minor->dev->event_lock);
+#endif
+	val = !list_empty(&file_priv->event_list);
+#if notyet
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_leave(&file_priv->minor->dev->event_lock);
+#endif
+	return (val);
+}
+
 const struct filterops drm_filtops = {
 	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
@@ -491,29 +520,50 @@ const struct filterops drm_filtops = {
 	.f_event	= filt_drmkms,
 };
 
+const struct filterops drmread_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_drmreaddetach,
+	.f_event	= filt_drmread,
+};
+
 int
 drmkqfilter(dev_t kdev, struct knote *kn)
 {
 	struct drm_device	*dev = NULL;
-	int s;
+	struct drm_file		*file_priv = NULL;
+	int			 s;
 
 	dev = drm_get_device_from_kdev(kdev);
 	if (dev == NULL || dev->dev_private == NULL)
 		return (ENXIO);
 
 	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		mutex_lock(&dev->struct_mutex);
+		file_priv = drm_find_file_by_minor(dev, minor(kdev));
+		mutex_unlock(&dev->struct_mutex);
+		if (file_priv == NULL)
+			return (ENXIO);
+
+		kn->kn_fop = &drmread_filtops;
+		kn->kn_hook = file_priv;
+
+		s = spltty();
+		klist_insert(&file_priv->rsel.si_note, kn);
+		splx(s);
+		break;
 	case EVFILT_DEVICE:
 		kn->kn_fop = &drm_filtops;
+		kn->kn_hook = dev;
+
+		s = spltty();
+		klist_insert(&dev->note, kn);
+		splx(s);
 		break;
 	default:
 		return (EINVAL);
 	}
-
-	kn->kn_hook = dev;
-
-	s = spltty();
-	klist_insert(&dev->note, kn);
-	splx(s);
 
 	return (0);
 }
@@ -772,7 +822,6 @@ out:
 	return (gotone);
 }
 
-/* XXX kqfilter ... */
 int
 drmpoll(dev_t kdev, int events, struct proc *p)
 {
