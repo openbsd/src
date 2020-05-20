@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.179 2020/05/20 23:47:23 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.180 2020/05/20 23:54:53 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -483,8 +483,7 @@ set_routes(char *name, int index, int rdomain, int routefd, struct in_addr addr,
 	in_addr_t		 addrnet, gatewaynet;
 	unsigned int		 i, len;
 
-	if (rtstatic_len <= RTLEN)
-		flush_routes(index, routefd, rdomain, rtstatic, rtstatic_len, addr);
+	flush_routes(index, routefd, rdomain, rtstatic, rtstatic_len, addr);
 
 	addrnet = addr.s_addr & addrmask.s_addr;
 

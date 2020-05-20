@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.66 2020/05/20 19:13:34 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.67 2020/05/20 23:54:53 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -23,8 +23,6 @@ enum imsg_code {
 	IMSG_PROPOSE,
 	IMSG_TELL_UNWIND
 };
-
-#define	RTLEN	128
 
 struct proposal {
 	struct in_addr	ifa;
