@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.43 2020/05/16 18:00:29 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.44 2020/05/20 14:58:33 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -931,7 +931,7 @@ tls13_record_layer_read_internal(struct tls13_record_layer *rl,
 				rl->phh = 0;
 
 				if (ret == TLS13_IO_SUCCESS)
-					return TLS13_IO_WANT_POLLIN;
+					return TLS13_IO_WANT_RETRY;
 
 				return ret;
 			}
