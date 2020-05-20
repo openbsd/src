@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.33 2020/05/16 15:45:29 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.34 2020/05/20 06:18:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -113,26 +113,24 @@ cmd_refresh_client_exec(struct cmd *self, struct cmdq_item *item)
 		server_client_set_flags(tc, args_get(args, 'f'));
 
 	if (args_has(args, 'C')) {
-		if (args_has(args, 'C')) {
-			if (!(tc->flags & CLIENT_CONTROL)) {
-				cmdq_error(item, "not a control client");
-				return (CMD_RETURN_ERROR);
-			}
-			size = args_get(args, 'C');
-			if (sscanf(size, "%u,%u", &x, &y) != 2 &&
-			    sscanf(size, "%ux%u", &x, &y) != 2) {
-				cmdq_error(item, "bad size argument");
-				return (CMD_RETURN_ERROR);
-			}
-			if (x < WINDOW_MINIMUM || x > WINDOW_MAXIMUM ||
-			    y < WINDOW_MINIMUM || y > WINDOW_MAXIMUM) {
-				cmdq_error(item, "size too small or too big");
-				return (CMD_RETURN_ERROR);
-			}
-			tty_set_size(&tc->tty, x, y, 0, 0);
-			tc->flags |= CLIENT_SIZECHANGED;
-			recalculate_sizes();
+		if (~tc->flags & CLIENT_CONTROL) {
+			cmdq_error(item, "not a control client");
+			return (CMD_RETURN_ERROR);
 		}
+		size = args_get(args, 'C');
+		if (sscanf(size, "%u,%u", &x, &y) != 2 &&
+		    sscanf(size, "%ux%u", &x, &y) != 2) {
+			cmdq_error(item, "bad size argument");
+			return (CMD_RETURN_ERROR);
+		}
+		if (x < WINDOW_MINIMUM || x > WINDOW_MAXIMUM ||
+		    y < WINDOW_MINIMUM || y > WINDOW_MAXIMUM) {
+			cmdq_error(item, "size too small or too big");
+			return (CMD_RETURN_ERROR);
+		}
+		tty_set_size(&tc->tty, x, y, 0, 0);
+		tc->flags |= CLIENT_SIZECHANGED;
+		recalculate_sizes();
 		return (CMD_RETURN_NORMAL);
 	}
 
