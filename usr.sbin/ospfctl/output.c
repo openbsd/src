@@ -89,7 +89,8 @@ show_summary(struct ctl_sum *sum)
 }
 
 static void
-show_summary_area(struct ctl_sum_area *sumarea){
+show_summary_area(struct ctl_sum_area *sumarea)
+{
 	printf("\nArea ID: %s\n", inet_ntoa(sumarea->area));
 	printf("  Number of interfaces in this area: %d\n",
 	    sumarea->num_iface);
@@ -150,12 +151,12 @@ show_interface(struct ctl_iface	*iface, int detail)
 {
 	char	*netid;
 
-	// This wasn't previously executed on detail call
+	/* XXX This wasn't previously executed on detail call */
 	if (asprintf(&netid, "%s/%d", inet_ntoa(iface->addr),
 	    mask2prefixlen(iface->mask.s_addr)) == -1)
 			err(1, NULL);
 
-	if(detail){
+	if (detail) {
 		printf("\n");
 		printf("Interface %s, line protocol is %s\n",
 		    iface->name, print_link(iface->flags));
@@ -218,7 +219,7 @@ show_interface(struct ctl_iface	*iface, int detail)
 				break;
 			}
 		}
-	}else{
+	} else {
 		printf("%-11s %-18s %-6s %-10s %-10s %s %3d %3d\n",
 		    iface->name, netid, if_state_name(iface->state),
 		    iface->hello_timer.tv_sec < 0 ? "-" :
@@ -240,7 +241,7 @@ show_neighbor(struct ctl_nbr *nbr, int detail)
 	    if_state_name(nbr->iface_state)) == -1)
 		err(1, NULL);
 
-	if(detail){
+	if (detail) {
 		printf("\nNeighbor %s, ", inet_ntoa(nbr->id));
 		printf("interface address %s\n", inet_ntoa(nbr->addr));
 		printf("  Area %s, interface %s\n", inet_ntoa(nbr->area),
@@ -259,7 +260,7 @@ show_neighbor(struct ctl_nbr *nbr, int detail)
 		printf("  Link State Request List %d\n", nbr->ls_req_lst_cnt);
 		printf("  Link State Retransmission List %d\n",
 		    nbr->ls_retrans_lst_cnt);
-	}else{
+	} else {
 		printf("%-15s %-3d %-12s %-9s", inet_ntoa(nbr->id),
 		    nbr->priority, state, fmt_timeframe_core(nbr->dead_timer));
 		printf("%-15s %-9s %s\n", inet_ntoa(nbr->addr), nbr->name,
@@ -274,7 +275,7 @@ show_rib(struct ctl_rt *rt, int detail)
 	char		*dstnet;
 	static u_int8_t	 lasttype;
 
-	if(detail){
+	if (detail) {
 		switch (rt->p_type) {
 		case PT_INTRA_AREA:
 		case PT_INTER_AREA:
@@ -306,8 +307,7 @@ show_rib(struct ctl_rt *rt, int detail)
 			free(dstnet);
 
 			if (rt->d_type == DT_RTR)
-				printf(" %-7s",
-				    print_ospf_rtr_flags(rt->flags));
+				printf(" %-7s", print_ospf_rtr_flags(rt->flags));
 
 			printf("\n");
 			break;
@@ -316,14 +316,14 @@ show_rib(struct ctl_rt *rt, int detail)
 			if (lasttype != RIB_EXT)
 				show_rib_head(rt->area, rt->d_type, rt->p_type);
 
-			if (asprintf(&dstnet, "%s/%d",
-				inet_ntoa(rt->prefix), rt->prefixlen) == -1)
+			if (asprintf(&dstnet, "%s/%d", inet_ntoa(rt->prefix),
+			    rt->prefixlen) == -1)
 				err(1, NULL);
 
 			printf("%-18s %-15s ", dstnet, inet_ntoa(rt->nexthop));
-			printf("%-15s %-12s %-7d %-7d\n",
-			    inet_ntoa(rt->adv_rtr), path_type_name(rt->p_type),
-			    rt->cost, rt->cost2);
+			printf("%-15s %-12s %-7d %-7d\n", inet_ntoa(rt->adv_rtr),
+			    path_type_name(rt->p_type), rt->cost, rt->cost2);
+
 			free(dstnet);
 
 			lasttype = RIB_EXT;
@@ -331,7 +331,7 @@ show_rib(struct ctl_rt *rt, int detail)
 		default:
 			errx(1, "unknown route type");
 		}
-	}else{
+	} else {
 		switch (rt->d_type) {
 		case DT_NET:
 			if (asprintf(&dstnet, "%s/%d", inet_ntoa(rt->prefix),
@@ -352,6 +352,7 @@ show_rib(struct ctl_rt *rt, int detail)
 		    path_type_name(rt->p_type),
 		    dst_type_name(rt->d_type), rt->cost,
 		    rt->uptime == 0 ? "-" : fmt_timeframe_core(rt->uptime));
+
 		free(dstnet);
 	}
 }
@@ -377,8 +378,7 @@ show_fib(struct kroute *k)
 
 	printf("     ");
 	printf("%4d ", k->priority);
-	if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix), k->prefixlen) ==
-	    -1)
+	if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix), k->prefixlen) == -1)
 		err(1, NULL);
 
 	printf("%-20s ", p);
@@ -512,7 +512,7 @@ show_db_hdr_msg_detail(struct lsa_hdr *lsa)
 
 static void
 show_db_simple(struct lsa_hdr *lsa, struct in_addr area_id, u_int8_t lasttype,
-    char ifname[IF_NAMESIZE])
+    char *ifname)
 {
 	if (lsa->type != lasttype) {
 		show_database_head(area_id, ifname, lsa->type);
@@ -526,7 +526,7 @@ show_db_simple(struct lsa_hdr *lsa, struct in_addr area_id, u_int8_t lasttype,
 }
 static void
 show_db(struct lsa *lsa, struct in_addr	area_id, u_int8_t lasttype,
-	char ifname[IF_NAMESIZE])
+	char *ifname)
 {
 	struct in_addr		 addr, data;
 	struct lsa_asext	*asext;
@@ -538,113 +538,107 @@ show_db(struct lsa *lsa, struct in_addr	area_id, u_int8_t lasttype,
 	show_db_hdr_msg_detail(&lsa->hdr);
 
 	switch (lsa->hdr.type) {
-		case LSA_TYPE_EXTERNAL:
-			addr.s_addr = lsa->data.asext.mask;
-			printf("Network Mask: %s\n", inet_ntoa(addr));
+	case LSA_TYPE_EXTERNAL:
+		addr.s_addr = lsa->data.asext.mask;
+		printf("Network Mask: %s\n", inet_ntoa(addr));
 
-			asext = (struct lsa_asext *)((char *)lsa +
-			    sizeof(lsa->hdr));
+		asext = (struct lsa_asext *)((char *)lsa + sizeof(lsa->hdr));
 
-			printf("    Metric type: ");
-			if (ntohl(lsa->data.asext.metric) & LSA_ASEXT_E_FLAG)
-				printf("2\n");
-			else
-				printf("1\n");
-			printf("    Metric: %d\n", ntohl(asext->metric)
-			    & LSA_METRIC_MASK);
-			addr.s_addr = asext->fw_addr;
-			printf("    Forwarding Address: %s\n", inet_ntoa(addr));
-			printf("    External Route Tag: %d\n\n",
-			    ntohl(asext->ext_tag));
-			break;
-		case LSA_TYPE_NETWORK:
-			addr.s_addr = lsa->data.net.mask;
-			printf("Network Mask: %s\n", inet_ntoa(addr));
+		printf("    Metric type: ");
+		if (ntohl(lsa->data.asext.metric) & LSA_ASEXT_E_FLAG)
+			printf("2\n");
+		else
+			printf("1\n");
+		printf("    Metric: %d\n", ntohl(asext->metric) &
+		    LSA_METRIC_MASK);
+		addr.s_addr = asext->fw_addr;
+		printf("    Forwarding Address: %s\n", inet_ntoa(addr));
+		printf("    External Route Tag: %d\n\n", ntohl(asext->ext_tag));
+		break;
+	case LSA_TYPE_NETWORK:
+		addr.s_addr = lsa->data.net.mask;
+		printf("Network Mask: %s\n", inet_ntoa(addr));
 
-			nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
-			    - sizeof(u_int32_t)) / sizeof(struct lsa_net_link);
-			off = sizeof(lsa->hdr) + sizeof(u_int32_t);
-			printf("Number of Routers: %d\n", nlinks);
+		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
+		    - sizeof(u_int32_t)) / sizeof(struct lsa_net_link);
+		off = sizeof(lsa->hdr) + sizeof(u_int32_t);
+		printf("Number of Routers: %d\n", nlinks);
 
-			for (i = 0; i < nlinks; i++) {
-				addr.s_addr = lsa->data.net.att_rtr[i];
-				printf("    Attached Router: %s\n",
+		for (i = 0; i < nlinks; i++) {
+			addr.s_addr = lsa->data.net.att_rtr[i];
+			printf("    Attached Router: %s\n", inet_ntoa(addr));
+		}
+
+		printf("\n");
+		break;
+	case LSA_TYPE_ROUTER:
+		printf("Flags: %s\n", print_ospf_flags(lsa->data.rtr.flags));
+		nlinks = ntohs(lsa->data.rtr.nlinks);
+		printf("Number of Links: %d\n\n", nlinks);
+
+		off = sizeof(lsa->hdr) + sizeof(struct lsa_rtr);
+
+		for (i = 0; i < nlinks; i++) {
+			rtr_link = (struct lsa_rtr_link *)((char *)lsa + off);
+
+			printf("    Link connected to: %s\n",
+			    print_rtr_link_type(rtr_link->type));
+
+			addr.s_addr = rtr_link->id;
+			data.s_addr = rtr_link->data;
+
+			switch (rtr_link->type) {
+			case LINK_TYPE_POINTTOPOINT:
+			case LINK_TYPE_VIRTUAL:
+				printf("    Link ID (Neighbors Router ID): "
+				    "%s\n", inet_ntoa(addr));
+				printf("    Link Data (Router Interface "
+				    "address): %s\n", inet_ntoa(data));
+				break;
+			case LINK_TYPE_TRANSIT_NET:
+				printf("    Link ID (Designated Router "
+				    "address): %s\n", inet_ntoa(addr));
+				printf("    Link Data (Router Interface "
+				    "address): %s\n", inet_ntoa(data));
+				break;
+			case LINK_TYPE_STUB_NET:
+				printf("    Link ID (Network ID): %s\n",
 				    inet_ntoa(addr));
+				printf("    Link Data (Network Mask): %s\n",
+				    inet_ntoa(data));
+				break;
+			default:
+				printf("    Link ID (Unknown): %s\n",
+				    inet_ntoa(addr));
+				printf("    Link Data (Unknown): %s\n",
+				    inet_ntoa(data));
+				break;
 			}
 
-			printf("\n");
-			break;
-		case LSA_TYPE_ROUTER:
-			printf("Flags: %s\n",
-			    print_ospf_flags(lsa->data.rtr.flags));
-			nlinks = ntohs(lsa->data.rtr.nlinks);
-			printf("Number of Links: %d\n\n", nlinks);
+			printf("    Metric: %d\n\n", ntohs(rtr_link->metric));
 
-			off = sizeof(lsa->hdr) + sizeof(struct lsa_rtr);
+			off += sizeof(struct lsa_rtr_link) +
+			    rtr_link->num_tos * sizeof(u_int32_t);
+		}
+		break;
+	case LSA_TYPE_SUM_ROUTER:
+		if (lsa->hdr.type != lasttype)
+			show_database_head(area_id, ifname, lsa->hdr.type);
 
-			for (i = 0; i < nlinks; i++) {
-				rtr_link =
-				    (struct lsa_rtr_link *)((char *)lsa + off);
+		show_db_hdr_msg_detail(&lsa->hdr);
+		addr.s_addr = lsa->data.sum.mask;
+		printf("Network Mask: %s\n", inet_ntoa(addr));
+		printf("Metric: %d\n\n", ntohl(lsa->data.sum.metric) &
+		    LSA_METRIC_MASK);
+		break;
+	case LSA_TYPE_LINK_OPAQ:
+	case LSA_TYPE_AREA_OPAQ:
+	case LSA_TYPE_AS_OPAQ:
+		if (lsa->hdr.type != lasttype)
+			show_database_head(area_id, ifname, lsa->hdr.type);
 
-				printf("    Link connected to: %s\n",
-				    print_rtr_link_type(rtr_link->type));
-
-				addr.s_addr = rtr_link->id;
-				data.s_addr = rtr_link->data;
-
-				switch (rtr_link->type) {
-				case LINK_TYPE_POINTTOPOINT:
-				case LINK_TYPE_VIRTUAL:
-					printf("    Link ID (Neighbors Router "
-					    "ID): %s\n", inet_ntoa(addr));
-					printf("    Link Data (Router Interface "
-					    "address): %s\n", inet_ntoa(data));
-					break;
-				case LINK_TYPE_TRANSIT_NET:
-					printf("    Link ID (Designated Router "
-					    "address): %s\n", inet_ntoa(addr));
-					printf("    Link Data (Router Interface "
-					    "address): %s\n", inet_ntoa(data));
-					break;
-				case LINK_TYPE_STUB_NET:
-					printf("    Link ID (Network ID): %s\n",
-					    inet_ntoa(addr));
-					printf("    Link Data (Network Mask): "
-					    "%s\n", inet_ntoa(data));
-					break;
-				default:
-					printf("    Link ID (Unknown): %s\n",
-					    inet_ntoa(addr));
-					printf("    Link Data (Unknown): %s\n",
-					    inet_ntoa(data));
-					break;
-				}
-
-				printf("    Metric: %d\n\n",
-				    ntohs(rtr_link->metric));
-
-				off += sizeof(struct lsa_rtr_link) +
-				    rtr_link->num_tos * sizeof(u_int32_t);
-			}
-			break;
-		case LSA_TYPE_SUM_ROUTER:
-			if (lsa->hdr.type != lasttype)
-				show_database_head(area_id, ifname,
-				    lsa->hdr.type);
-			show_db_hdr_msg_detail(&lsa->hdr);
-			addr.s_addr = lsa->data.sum.mask;
-			printf("Network Mask: %s\n", inet_ntoa(addr));
-			printf("Metric: %d\n\n", ntohl(lsa->data.sum.metric) &
-			    LSA_METRIC_MASK);
-			break;
-		case LSA_TYPE_LINK_OPAQ:
-		case LSA_TYPE_AREA_OPAQ:
-		case LSA_TYPE_AS_OPAQ:
-			if (lsa->hdr.type != lasttype)
-				show_database_head(area_id, ifname,
-				    lsa->hdr.type);
-			show_db_hdr_msg_detail(&lsa->hdr);
-			break;
+		show_db_hdr_msg_detail(&lsa->hdr);
+		break;
 	}
 }
 

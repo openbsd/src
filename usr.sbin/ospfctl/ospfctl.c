@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.67 2020/05/18 17:52:18 denis Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.68 2020/05/20 11:11:24 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -43,7 +43,7 @@ __dead void	 usage(void);
 
 int show(struct imsg *, struct parse_result *);
 
-struct imsgbuf	*ibuf;
+struct imsgbuf		*ibuf;
 const struct output	*output = &show_output;
 
 __dead void
@@ -218,7 +218,7 @@ main(int argc, char *argv[])
 			err(1, "write error");
 
 	/* no output for certain commands such as log verbose */
-	if(!done){
+	if (!done) {
 		output->head(res);
 
 		while (!done) {
@@ -563,6 +563,7 @@ const char *
 print_baudrate(u_int64_t baudrate)
 {
 	static char	buf[32];
+
 	if (baudrate > IF_Gbps(1))
 		snprintf(buf, sizeof(buf), "%llu GBit/s", baudrate / IF_Gbps(1));
 	else if (baudrate > IF_Mbps(1))
@@ -573,4 +574,3 @@ print_baudrate(u_int64_t baudrate)
 		snprintf(buf, sizeof(buf), "%llu Bit/s", baudrate);
 	return (buf);
 }
-

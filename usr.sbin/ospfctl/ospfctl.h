@@ -28,9 +28,9 @@ struct output {
 	void	(*fib)(struct kroute *);
 	void	(*fib_interface)(struct kif *);
 	void	(*db)(struct lsa *, struct in_addr, u_int8_t,
-		    char ifname[IF_NAMESIZE]);
+		    char *);
 	void	(*db_simple)(struct lsa_hdr *, struct in_addr, u_int8_t,
-		    char ifname[IF_NAMESIZE]);
+		    char *);
 	void	(*tail)(void);
 };
 
