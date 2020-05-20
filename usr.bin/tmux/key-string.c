@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.59 2020/05/20 06:13:09 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.60 2020/05/20 07:11:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -339,7 +339,7 @@ key_string_lookup_key(key_code key, int with_flags)
 
 	/* Try the key against the string table. */
 	for (i = 0; i < nitems(key_string_table); i++) {
-		if (key == key_string_table[i].key)
+		if (key == (key_string_table[i].key & KEYC_MASK_KEY))
 			break;
 	}
 	if (i != nitems(key_string_table)) {
@@ -359,7 +359,7 @@ key_string_lookup_key(key_code key, int with_flags)
 
 	/* Invalid keys are errors. */
 	if (key > 255) {
-		snprintf(out, sizeof out, "Invalid#%llx", key);
+		snprintf(out, sizeof out, "Invalid#%llx", saved);
 		goto out;
 	}
 

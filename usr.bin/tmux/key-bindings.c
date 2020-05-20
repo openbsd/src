@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.127 2020/05/16 16:35:13 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.128 2020/05/20 07:11:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -197,7 +197,7 @@ key_bindings_add(const char *name, key_code key, const char *note, int repeat,
 	}
 
 	bd = xcalloc(1, sizeof *bd);
-	bd->key = key;
+	bd->key = (key & ~KEYC_MASK_FLAGS);
 	if (note != NULL)
 		bd->note = xstrdup(note);
 	RB_INSERT(key_bindings, &table->key_bindings, bd);
