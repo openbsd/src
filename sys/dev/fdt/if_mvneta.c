@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.8 2019/09/07 13:33:00 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.9 2020/05/20 22:44:32 patrick Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -305,13 +305,14 @@ mvneta_enaddr_write(struct mvneta_softc *sc)
 void
 mvneta_wininit(struct mvneta_softc *sc)
 {
-#ifdef __armv7__
 	uint32_t en;
 	int i;
 
+#ifdef __armv7__
 	if (mvmbus_dram_info == NULL)
 		panic("%s: mbus dram information not set up",
 		    sc->sc_dev.dv_xname);
+#endif
 
 	for (i = 0; i < MVNETA_NWINDOW; i++) {
 		MVNETA_WRITE(sc, MVNETA_BASEADDR(i), 0);
@@ -323,6 +324,7 @@ mvneta_wininit(struct mvneta_softc *sc)
 
 	en = MVNETA_BARE_EN_MASK;
 
+#ifdef __armv7__
 	for (i = 0; i < mvmbus_dram_info->numcs; i++) {
 		struct mbus_dram_window *win = &mvmbus_dram_info->cs[i];
 
@@ -334,9 +336,12 @@ mvneta_wininit(struct mvneta_softc *sc)
 
 		en &= ~(1 << i);
 	}
+#else
+	MVNETA_WRITE(sc, MVNETA_S(0), MVNETA_S_SIZE(0));
+	en &= ~(1 << 0);
+#endif
 
 	MVNETA_WRITE(sc, MVNETA_BARE, en);
-#endif
 }
 
 int
