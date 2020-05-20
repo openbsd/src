@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.177 2020/05/20 18:27:16 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.178 2020/05/20 19:13:34 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -884,8 +884,8 @@ propose(struct proposal *proposal)
 	int			 rslt;
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_PROPOSE, 0, 0, -1, proposal,
-	    sizeof(*proposal) + proposal->rtstatic_len +
-	    proposal->rtsearch_len + proposal->rtdns_len);
+	    sizeof(*proposal) + proposal->routes_len +
+	    proposal->domains_len + proposal->ns_len);
 	if (rslt == -1)
 		log_warn("%s: imsg_compose(IMSG_PROPOSE)", log_procname);
 }
@@ -900,14 +900,14 @@ priv_propose(char *name, int ioctlfd, struct proposal *proposal,
 	char			*search = NULL;
 	int			 rslt;
 
-	if (sz != proposal->rtstatic_len + proposal->rtsearch_len + proposal->rtdns_len) {
+	if (sz != proposal->routes_len + proposal->domains_len + proposal->ns_len) {
 		log_warnx("%s: bad IMSG_PROPOSE data", log_procname);
 		return;
 	}
 
 	routes = (uint8_t *)proposal + sizeof(struct proposal);
-	domains = routes + proposal->rtstatic_len;
-	dns = domains + proposal->rtsearch_len;
+	domains = routes + proposal->routes_len;
+	dns = domains + proposal->domains_len;
 
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
@@ -917,21 +917,21 @@ priv_propose(char *name, int ioctlfd, struct proposal *proposal,
 		return;
 
 	memset(&unwind_info, 0, sizeof(unwind_info));
-	if (proposal->rtdns_len >= sizeof(in_addr_t)) {
-		if (proposal->rtdns_len > sizeof(unwind_info.ns)) {
+	if (proposal->ns_len >= sizeof(in_addr_t)) {
+		if (proposal->ns_len > sizeof(unwind_info.ns)) {
 			memcpy(unwind_info.ns, dns, sizeof(unwind_info.ns));
 			unwind_info.count = sizeof(unwind_info.ns) /
 			    sizeof(in_addr_t);
 		} else {
-			memcpy(unwind_info.ns, dns, proposal->rtdns_len);
-			unwind_info.count = proposal->rtdns_len /
+			memcpy(unwind_info.ns, dns, proposal->ns_len);
+			unwind_info.count = proposal->ns_len /
 			    sizeof(in_addr_t);
 		}
 	}
 
-	if (proposal->rtsearch_len > 0) {
+	if (proposal->domains_len > 0) {
 		rslt = asprintf(&search, "search %.*s\n",
-		    proposal->rtsearch_len, domains);
+		    proposal->domains_len, domains);
 		if (rslt == -1)
 			search = NULL;
 	}
@@ -951,7 +951,7 @@ priv_propose(char *name, int ioctlfd, struct proposal *proposal,
 	set_address(name, ioctlfd, proposal->ifa, proposal->netmask);
 
 	set_routes(name, index, rdomain, routefd, proposal->ifa,
-	    proposal->netmask, routes, proposal->rtstatic_len);
+	    proposal->netmask, routes, proposal->routes_len);
 }
 
 /*
