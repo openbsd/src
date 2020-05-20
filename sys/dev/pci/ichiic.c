@@ -245,7 +245,7 @@ ichiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (st & ICH_SMB_HS_BUSY)
 		return (1);
 
-	if (cold || sc->sc_poll)
+	if (cold || sc->sc_poll || 1)
 		flags |= I2C_F_POLL;
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)

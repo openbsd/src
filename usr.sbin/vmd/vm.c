@@ -1067,8 +1067,9 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
 	/* Initialize virtio devices */
 	virtio_init(current_vm, child_cdrom, child_disks, child_taps);
 
-	//pci_add_pthru(current_vm, 17, 0, 0);
-	pci_add_pthru(current_vm, 0, 31, 3);
+	//pci_add_pthru(current_vm, 0, 25, 0); /* em0 */
+	//pci_add_pthru(current_vm, 17, 0, 0); /* sdmmc0 */
+	pci_add_pthru(current_vm, 0, 31, 3); /* iic */
 }
 /*
  * restore_emulated_hw
@@ -1637,9 +1638,7 @@ int mem_handler(int dir, uint64_t addr, uint32_t size, void *data)
 	struct iohandler *mem;
 	int rc;
 
-	fprintf(stderr,"Call mem handler %llx\n", addr);
 	TAILQ_FOREACH(mem, &memh, next) {
-		fprintf(stderr,"  %llx-%llx\n", mem->start, mem->end);
 		if (addr >= mem->start && addr+size <= mem->end) {
 			rc = mem->handler(dir, addr, size, data, mem->cookie);
 			if (rc != 0) {
@@ -1648,7 +1647,6 @@ int mem_handler(int dir, uint64_t addr, uint32_t size, void *data)
 			return rc;
 		}
 	}
-	log_debug("No mem handler %llx\n", addr);
 	return -1;
 }
 
@@ -1673,15 +1671,17 @@ struct insn {
 	int incr;
   	int reg;
 } imap[] = {
-  { { 0x8a, 0x04, 0x3e }, VEI_DIR_IN,  1, 3, VCPU_REGS_RAX },
-  { { 0x0f, 0xb7, 0x04 }, VEI_DIR_IN,  2, 4, VCPU_REGS_RAX },
-  { { 0x8b, 0x04, 0x3e }, VEI_DIR_IN,  4, 3, VCPU_REGS_RAX },
+	/* bus_space_mem_read_x */
+	{ { 0x8a, 0x04, 0x3e }, VEI_DIR_IN,  1, 3, VCPU_REGS_RAX },
+  	{ { 0x0f, 0xb7, 0x04 }, VEI_DIR_IN,  2, 4, VCPU_REGS_RAX },
+  	{ { 0x8b, 0x04, 0x3e }, VEI_DIR_IN,  4, 3, VCPU_REGS_RAX },
 
-  { { 0x88, 0x14, 0x3e }, VEI_DIR_OUT, 1, 3, VCPU_REGS_RDX },
-  { { 0x66, 0x89, 0x14 }, VEI_DIR_OUT, 2, 3, VCPU_REGS_RDX },
-  { { 0x89, 0x14, 0x3e }, VEI_DIR_OUT, 4, 3, VCPU_REGS_RDX },
+	/* bus_space_mem_write_x */
+  	{ { 0x88, 0x14, 0x3e }, VEI_DIR_OUT, 1, 3, VCPU_REGS_RDX },
+  	{ { 0x66, 0x89, 0x14 }, VEI_DIR_OUT, 2, 3, VCPU_REGS_RDX },
+  	{ { 0x89, 0x14, 0x3e }, VEI_DIR_OUT, 4, 3, VCPU_REGS_RDX },
 
-  { },
+  	{ },
 };
 
 int
@@ -1727,60 +1727,18 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 	rax = &vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RAX];
 	rdx = &vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RAX];
 	gpa = ve->vee.vee_gpa;
-#if 1
-	/* Scan for sig match */
+
+	/* fix: need full emulator. But Scan for sig match for now */
 	for (int i = 0; imap[i].size; i++) {
 		if (memcmp(instr, imap[i].sig, 3) == 0) {
-			fprintf(stderr, "matched %c%d %llx\n", imap[i].dir == VEI_DIR_IN ? 'r' : 'w', 
-				imap[i].size, *rax);
 			rax = &vrwp.vrwp_regs.vrs_gprs[imap[i].reg];
 			mem_handler(imap[i].dir, gpa, imap[i].size, rax);
+			/* skip this instruction when returning to vm */
 			vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += imap[i].incr;
 			ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
 			return 0;
 		}
 	}
-#else
-	if (instr[0] == 0x8a && instr[1] == 0x04 && instr[2] == 0x3e) {
-		mem_handler(VEI_DIR_IN, gpa, 1, rax);
-		fprintf(stderr, "  read: %llx\n", *rax);
-		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 3;
-		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
-		return 0;
-	}
-	else if (instr[0] == 0x0f && instr[1] == 0xb7 && instr[2] == 0x04) {
-		mem_handler(VEI_DIR_IN, gpa, 2, rax);
-		fprintf(stderr, "  read: %llx\n", *rax);
-		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 4;
-		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
-		return 0;
-	}
-	else if (instr[0] == 0x8b && instr[1] == 0x04 && instr[2] == 0x3e) {
-		mem_handler(VEI_DIR_IN, gpa, 4, rax);
-		fprintf(stderr, "  read: %llx\n", *rax);
-		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 3;
-		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
-		return 0;
-	}
-	else if (instr[0] == 0x88 && instr[1] == 0x14 && instr[2] == 0x3e) {
-		mem_handler(VEI_DIR_OUT, gpa, 1, rdx);
-		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 3;
-		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
-		return 0;
-	}
-	else if (instr[0] == 0x66 && instr[1] == 0x89 && instr[2] == 0x14) {
-		mem_handler(VEI_DIR_OUT, gpa, 2, rdx);
-		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 3;
-		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
-		return 0;
-	}
-	else if (instr[0] == 0x89 && instr[1] == 0x14 && instr[2] == 0x3e) {
-		mem_handler(VEI_DIR_OUT, gpa, 4, rdx);
-		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += 3;
-		ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
-		return 0;
-	}
-#endif
 	/*
 	 * vmd may be exiting to vmd to handle a pending interrupt
 	 * but last exit type may have bee VMX_EXIT_EPT_VIOLATION,

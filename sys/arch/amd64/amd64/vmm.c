@@ -349,79 +349,45 @@ int vm_bindpci(struct vm_bindpci *ptd)
 #endif
 	return 0;
 }
-
-struct mmio {
-	uint64_t start;
-	uint64_t end;
-	uint32_t type;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	TAILQ_ENTRY(mmio) next;
-};
-
-TAILQ_HEAD(,mmio) mmios = TAILQ_HEAD_INITIALIZER(mmios);
-
-void vmm_add_mmio(int type, uint64_t start, uint64_t size);
-int vmm_mmio(int cmd, int type, uint64_t offset, uint64_t *val);
 int vm_getbar(struct vm_barinfo *bi);
 
-void vmm_add_mmio(int type, uint64_t start, uint64_t size)
+/* Probably should pre-register bus_space_map */
+int vm_pio(struct vm_pio *pio);
+int vm_pio(struct vm_pio *pio)
 {
-	struct mmio *mmio;
-
-	TAILQ_FOREACH(mmio, &mmios, next) {
-		if (start >= mmio->start && start+size <= mmio->end)
-			return;
-	}
-	mmio = malloc(sizeof(*mmio), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (!mmio)
-		return;
-	mmio->start = start;
-	mmio->end   = start + size;
-	TAILQ_INSERT_TAIL(&mmios, mmio, next);
-}
-
-int vmm_mmio(int cmd, int type, uint64_t offset, uint64_t *val)
-{
-	struct mmio *mmio;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-
-	TAILQ_FOREACH(mmio, &mmios, next) {
-		if (offset >= mmio->start && offset <= mmio->end && type == mmio->type) {
+	if (pio->dir == VEI_DIR_OUT) {
+		switch (pio->size) {
+		case 1:
+			outb(pio->port, pio->data);
+			break;
+		case 2:
+			outw(pio->port, pio->data);
+			break;
+		case 4:
+			outl(pio->port, pio->data);
+			break;
+		default:
+			printf("no wrsize\n");
+			break;
+		}
+	} else {
+		switch (pio->size) {
+		case 1:
+			pio->data = inb(pio->port);
+			break;
+		case 2:
+			pio->data = inw(pio->port);
+			break;
+		case 4:
+			pio->data = inl(pio->port);
+			break;
+		default:
+			printf("no rdsize\n");
 			break;
 		}
 	}
-	if (mmio == NULL)
-		return -ENODEV;
-	iot = mmio->iot;
-	ioh = mmio->ioh;
-	offset -= mmio->start;
-
-	// device has called pci_mapreg_map
-	switch (cmd) {
-	case VMM_MMIO_WRITE_1:
-		bus_space_write_1(iot, ioh, offset, *val);
-		break;
-	case VMM_MMIO_WRITE_2:
-		bus_space_write_2(iot, ioh, offset, *val);
-		break;
-	case VMM_MMIO_WRITE_4:
-		bus_space_write_4(iot, ioh, offset, *val);
-		break;
-	case VMM_MMIO_READ_1:
-		*val = bus_space_read_1(iot, ioh, offset);
-		break;
-	case VMM_MMIO_READ_2:
-		*val = bus_space_read_2(iot, ioh, offset);
-		break;
-	case VMM_MMIO_READ_4:
-		*val = bus_space_read_4(iot, ioh, offset);
-		break;
-	default:
-		*val = 0;
-		return EINVAL;
-	}
+	printf("%ld pio; %s(%x,%llx)\n", sizeof(*pio), 
+		pio->dir == VEI_DIR_OUT ? "out" : "in", pio->port, pio->data);
 	return 0;
 }
 
@@ -443,7 +409,7 @@ int vm_getbar(struct vm_barinfo *bi)
 			continue;
 		if (pci_mapreg_info(pc, tag, reg, type, &base, &size, NULL))
 			continue;
-		printf("  %d: %x %lx %lx\n", i, type, size, base);
+		printf("  %d: %x %.8lx %.16lx\n", i, type, size, base);
 		bi->bars[i].type = type;
 		bi->bars[i].size = size;
 		bi->bars[i].addr = base;
@@ -665,6 +631,9 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VMM_IOC_BINDPCI:
 		ret = vm_bindpci((struct vm_bindpci *)data);
 		break;
+	case VMM_IOC_PIO:
+		ret = vm_pio((struct vm_pio *)data);
+		break;
 	default:
 		DPRINTF("%s: unknown ioctl code 0x%lx\n", __func__, cmd);
 		ret = ENOTTY;
@@ -708,6 +677,7 @@ pledge_ioctl_vmm(struct proc *p, long com)
 	case VMM_IOC_WRITEVMPARAMS:
 	case VMM_IOC_BINDPCI:
 	case VMM_IOC_BARINFO:
+	case VMM_IOC_PIO:
 		return (0);
 	}
 
@@ -5092,7 +5062,6 @@ vmx_handle_intr(struct vcpu *vcpu)
 	uint64_t eii;
 	struct gate_descriptor *idte;
 	vaddr_t handler;
-	static uint8_t vech[256];
 
 	if (vmread(VMCS_EXIT_INTERRUPTION_INFO, &eii)) {
 		printf("%s: can't obtain intr info\n", __func__);
@@ -5102,10 +5071,6 @@ vmx_handle_intr(struct vcpu *vcpu)
 	vec = eii & 0xFF;
 
 	/* XXX check "error valid" code in eii, abort if 0 */
-	if (!vech[vec]) {
-		printf("irq %d\n", vec);
-		vech[vec] = 1;
-	}
 	idte=&idt[vec];
 	handler = idte->gd_looffset + ((uint64_t)idte->gd_hioffset << 16);
 	vmm_dispatch_intr(handler);

@@ -605,13 +605,11 @@ struct vm_barinfo {
 	} bars[MAXBAR];
 };
 
-enum {
-	VMM_MMIO_WRITE_1 = 0x100,
-	VMM_MMIO_WRITE_2,
-	VMM_MMIO_WRITE_4,
-	VMM_MMIO_READ_1,
-	VMM_MMIO_READ_2,
-	VMM_MMIO_READ_4
+struct vm_pio {
+	uint32_t dir;
+	uint32_t size;
+	uint32_t port;
+	uint64_t data;
 };
 
 /* IOCTL definitions */
@@ -632,6 +630,7 @@ enum {
 
 #define VMM_IOC_BARINFO	     _IOWR('V', 12, struct vm_barinfo)
 #define VMM_IOC_BINDPCI	     _IOW('V', 13, struct vm_bindpci)
+#define VMM_IOC_PIO	     _IOWR('V', 14, struct vm_pio)
 
 /* CPUID masks */
 /*

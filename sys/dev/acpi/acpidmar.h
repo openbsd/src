@@ -21,9 +21,7 @@
 #define VTD_STRIDE_SIZE 9
 #define VTD_PAGE_SIZE   4096
 #define VTD_PAGE_MASK   0xFFF
-#define VTD_PTE_MASK    0x0000FFFFFFFFF000LL
 
-/* Page Table levels */
 #define VTD_LEVEL0	12
 #define VTD_LEVEL1	21
 #define VTD_LEVEL2	30 /* Minimum level supported */
@@ -31,6 +29,7 @@
 #define VTD_LEVEL4	48
 #define VTD_LEVEL5	57
 
+#define _xbit(x,y) (((x)>> (y)) & 1)
 #define _xfld(x,y) (uint32_t)(((x)>> y##_SHIFT) & y##_MASK)
 
 #define VTD_AWTOLEVEL(x)    (((x) - 30) / VTD_STRIDE_SIZE)
@@ -157,7 +156,8 @@
 #define CIG_DOMAIN		CCMD_CIRG(CTX_DOMAIN)
 #define CIG_DEVICE		CCMD_CIRG(CTX_DEVICE)
 
-#define DMAR_FSTS_REG		0x34		/* 32:Fault Status register */
+
+#define DMAR_FSTS_REG		0x34	/* 32:Fault Status register */
 #define   FSTS_FRI_MASK		0xFF
 #define   FSTS_FRI_SHIFT	8
 #define   FSTS_PRO		(1LL << 7)
@@ -169,15 +169,10 @@
 #define   FSTS_PPF		(1LL << 1)
 #define   FSTS_PFO		(1LL << 0)
 
-#define DMAR_FECTL_REG		0x38		/* 32:Fault control register */
+#define DMAR_FECTL_REG		0x38	/* 32:Fault control register */
 #define   FECTL_IM		(1LL << 31)
 #define   FECTL_IP		(1LL << 30)
 
-/* Fault Record register */
-#define DMAR_FRIH_REG(x,i)	(cap_fro((x)->cap) + 16*(i) + 8)
-#define DMAR_FRIL_REG(x,i)	(cap_fro((x)->cap) + 16*(i) + 0)
-
-/* Fault Record:128 bits */
 #define FRCD_HI_F		(1LL << (127-64))
 #define FRCD_HI_T		(1LL << (126-64))
 #define FRCD_HI_AT_MASK		0x3
@@ -199,6 +194,9 @@
 
 #define DMAR_IOTLB_REG(x)	(ecap_iro((x)->ecap) + 8)
 #define DMAR_IVA_REG(x)		(ecap_iro((x)->ecap) + 0)
+
+#define DMAR_FRIH_REG(x,i)	(cap_fro((x)->cap) + 16*(i) + 8)
+#define DMAR_FRIL_REG(x,i)	(cap_fro((x)->cap) + 16*(i) + 0)
 
 #define IOTLB_IVT		(1LL << 63)
 #define IOTLB_IIRG_MASK		0x3
@@ -227,18 +225,6 @@
 #define IQA_QS_8K	5	/* 8192 */
 #define IQA_QS_16K	6	/* 16384 */
 #define IQA_QS_32K	7	/* 32768 */
-
-/* Read-Modify-Write helpers */
-static inline void iommu_rmw32(uint32_t *ov, uint32_t mask, uint32_t shift, uint32_t nv)
-{
-	*ov &= ~(mask << shift);
-	*ov |= (nv & mask) << shift;
-}
-static inline void iommu_rmw64(uint64_t *ov, uint32_t mask, uint32_t shift, uint64_t nv)
-{
-	*ov &= ~(mask << shift);
-	*ov |= (nv & mask) << shift;
-}
 
 /*
  * Root Entry: one per bus (256 x 128 bit = 4k)
@@ -284,12 +270,12 @@ enum {
 	CTX_T_PASSTHRU
 };
 
-#define CTX_H_AW_MASK	  0x7
-#define CTX_H_AW_SHIFT	  0
-#define CTX_H_USER_MASK   0xF
-#define CTX_H_USER_SHIFT  3
-#define CTX_H_DID_MASK	  0xFFFF
-#define CTX_H_DID_SHIFT   8
+#define CTX_H_AW_MASK	0x7
+#define CTX_H_AW_SHIFT	0
+#define CTX_H_USER_MASK 0xF
+#define CTX_H_USER_SHIFT 3
+#define CTX_H_DID_MASK	0xFFFF
+#define CTX_H_DID_SHIFT	8
 
 struct context_entry {
 	uint64_t		lo;
@@ -305,7 +291,14 @@ context_set_fpd(struct context_entry *ce, int enable)
 		ce->lo |= CTX_FPD;
 }
 
-/* Set Second Level Page Table Entry Physical Address */
+/* Set context entry present */
+static inline void
+context_set_present(struct context_entry *ce)
+{
+	ce->lo |= CTX_P;
+}
+
+/* Set Second Level Page Table Entry PA */
 static inline void
 context_set_slpte(struct context_entry *ce, paddr_t slpte)
 {
@@ -313,18 +306,35 @@ context_set_slpte(struct context_entry *ce, paddr_t slpte)
 	ce->lo |= (slpte & ~VTD_PAGE_MASK);
 }
 
-/* Get Second Level Page Table Physical Address */
-static inline uint64_t
-context_pte(struct context_entry *ce)
-{
-	return (ce->lo & ~VTD_PAGE_MASK);
-}
-
 /* Set translation type */
 static inline void
 context_set_translation_type(struct context_entry *ce, int tt)
 {
-	iommu_rmw64(&ce->lo, CTX_T_MASK, CTX_T_SHIFT, tt);
+	ce->lo &= ~(CTX_T_MASK << CTX_T_SHIFT);
+	ce->lo |= ((tt & CTX_T_MASK) << CTX_T_SHIFT);
+}
+
+/* Set Address Width (# of Page Table levels) */
+static inline void
+context_set_address_width(struct context_entry *ce, int lvl)
+{
+	ce->hi &= ~(CTX_H_AW_MASK << CTX_H_AW_SHIFT);
+	ce->hi |= ((lvl & CTX_H_AW_MASK) << CTX_H_AW_SHIFT);
+}
+
+/* Set domain ID */
+static inline void
+context_set_domain_id(struct context_entry *ce, int did)
+{
+	ce->hi &= ~(CTX_H_DID_MASK << CTX_H_DID_SHIFT);
+	ce->hi |= ((did & CTX_H_DID_MASK) << CTX_H_DID_SHIFT);
+}
+
+/* Get Second Level Page Table PA */
+static inline uint64_t
+context_pte(struct context_entry *ce)
+{
+	return (ce->lo & ~VTD_PAGE_MASK);
 }
 
 /* Get translation type */
@@ -334,11 +344,11 @@ context_translation_type(struct context_entry *ce)
 	return (ce->lo >> CTX_T_SHIFT) & CTX_T_MASK;
 }
 
-/* Set Address Width (# of Page Table levels) */
-static inline void
-context_set_address_width(struct context_entry *ce, int lvl)
+/* Get domain ID */
+static inline int
+context_domain_id(struct context_entry *ce)
 {
-	iommu_rmw64(&ce->hi, CTX_H_AW_MASK, CTX_H_AW_SHIFT, lvl);
+	return (ce->hi >> CTX_H_DID_SHIFT) & CTX_H_DID_MASK;
 }
 
 /* Get Address Width */
@@ -348,27 +358,6 @@ context_address_width(struct context_entry *ce)
 	return VTD_LEVELTOAW((ce->hi >> CTX_H_AW_SHIFT) & CTX_H_AW_MASK);
 }
 
-/* Set domain ID */
-static inline void
-context_set_domain_id(struct context_entry *ce, int did)
-{
-	iommu_rmw64(&ce->hi, CTX_H_DID_MASK, CTX_H_DID_SHIFT, did);
-}
-
-/* Get domain ID */
-static inline int
-context_domain_id(struct context_entry *ce)
-{
-	return (ce->hi >> CTX_H_DID_SHIFT) & CTX_H_DID_MASK;
-}
-
-/* Set context entry present */
-static inline void
-context_set_present(struct context_entry *ce)
-{
-	ce->lo |= CTX_P;
-}
-
 /* Check if context entry is valid */
 static inline bool
 context_entry_is_valid(struct context_entry *ce)
@@ -376,7 +365,7 @@ context_entry_is_valid(struct context_entry *ce)
 	return (ce->lo & CTX_P);
 }
 
-/* Get/Set User-available bits in context entry */
+/* User-available bits in context entry */
 static inline int
 context_user(struct context_entry *ce)
 {
@@ -386,7 +375,8 @@ context_user(struct context_entry *ce)
 static inline void
 context_set_user(struct context_entry *ce, int v)
 {
-	iommu_rmw64(&ce->hi, CTX_H_USER_MASK, CTX_H_USER_SHIFT, v);
+	ce->hi &= ~(CTX_H_USER_MASK << CTX_H_USER_SHIFT);
+	ce->hi |=  ((v & CTX_H_USER_MASK) << CTX_H_USER_SHIFT);
 }
 
 /*
@@ -398,7 +388,7 @@ context_set_user(struct context_entry *ce, int v)
  *   104:123  = PV
  *   124:125  = Address Translation type
  *   126      = Type (0 = Read, 1 = Write)
- *   127      = Fault valid bit
+ *   127      = Fault bit
  */
 struct fault_entry
 {
@@ -522,18 +512,10 @@ enum {
 	VTD_FAULT_CTX_TT = 0xd,         /* invalid translation type */
 };
 
+#endif
+
 void	acpidmar_pci_hook(pci_chipset_tag_t, struct pci_attach_args *);
 void	dmar_ptmap(bus_dma_tag_t tag, bus_addr_t addr);
 void	acpidmar_sw(int);
 
 extern struct	acpidmar_softc *acpidmar_sc;
-
-/* Map PCI device ID to 16-bit IOMMU Source ID : bus:8 dev:5 fun:3 */
-#define mksid(b,d,f)     (((b) << 8) | ((d) << 3) | (f))
-#define sid_devfn(sid)   ((sid) & 0xFF)
-#define sid_bus(sid)     (((sid) >> 8) & 0xFF)
-#define sid_dev(sid)     (((sid) >> 3) & 0x1F)
-#define sid_fun(sid)     ((sid) & 0x7)
-
-#endif
-
