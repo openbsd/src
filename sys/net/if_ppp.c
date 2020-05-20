@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.112 2018/11/09 14:14:31 claudio Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.113 2020/05/20 06:44:30 mpi Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -204,9 +204,11 @@ int
 ppp_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ppp_softc *sc;
+	struct ifnet *ifp;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->sc_unit = unit;
+	ifp = &sc->sc_if;
 	snprintf(sc->sc_if.if_xname, sizeof sc->sc_if.if_xname, "%s%d",
 	    ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
@@ -224,7 +226,7 @@ ppp_clone_create(struct if_clone *ifc, int unit)
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HDRLEN);
+	bpfattach(&ifp->if_bpf, ifp, DLT_PPP, PPP_HDRLEN);
 #endif
 	NET_LOCK();
 	LIST_INSERT_HEAD(&ppp_softc_list, sc, sc_list);
@@ -754,11 +756,9 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	}
 
 #if NBPFILTER > 0
-	/*
-	 * See if bpf wants to look at the packet.
-	 */
-	if (sc->sc_bpf)
-		bpf_mtap(sc->sc_bpf, m0, BPF_DIRECTION_OUT);
+	/* See if bpf wants to look at the packet. */
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 	/*
@@ -1369,8 +1369,8 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 
 #if NBPFILTER > 0
 	/* See if bpf wants to look at the packet. */
-	if (sc->sc_bpf)
-		bpf_mtap(sc->sc_bpf, m, BPF_DIRECTION_IN);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	rv = 0;
