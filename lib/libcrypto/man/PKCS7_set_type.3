@@ -1,4 +1,4 @@
-.\" $OpenBSD: PKCS7_set_type.3,v 1.1 2020/05/16 00:11:55 schwarze Exp $
+.\" $OpenBSD: PKCS7_set_type.3,v 1.2 2020/05/20 11:40:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: May 20 2020 $
 .Dt PKCS7_SET_TYPE 3
 .Os
 .Sh NAME
@@ -99,6 +99,7 @@ does no error handling at all and always returns 1.
 .Xr ASN1_TYPE_new 3 ,
 .Xr PKCS7_encrypt 3 ,
 .Xr PKCS7_new 3 ,
+.Xr PKCS7_set_content 3 ,
 .Xr PKCS7_sign 3
 .Sh HISTORY
 The function
