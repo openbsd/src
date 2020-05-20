@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.55 2019/12/12 19:30:21 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.56 2020/05/20 17:21:08 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -83,6 +83,7 @@ struct timehands {
 	u_int	 		th_offset_count;	/* [w] */
 	struct bintime		th_boottime;		/* [tw] */
 	struct bintime		th_offset;		/* [w] */
+	struct bintime		th_naptime;		/* [w] */
 	struct timeval		th_microtime;		/* [w] */
 	struct timespec		th_nanotime;		/* [w] */
 	/* Fields not to be copied in tc_windup start with th_generation. */
@@ -116,7 +117,6 @@ static SLIST_HEAD(, timecounter) tc_list = SLIST_HEAD_INITIALIZER(tc_list);
 volatile time_t time_second = 1;
 volatile time_t time_uptime = 0;
 
-struct bintime naptime;
 static int timestepwarnings;
 
 void ntp_update_second(struct timehands *);
@@ -207,6 +207,31 @@ microuptime(struct timeval *tvp)
 
 	binuptime(&bt);
 	BINTIME_TO_TIMEVAL(&bt, tvp);
+}
+
+void
+binruntime(struct bintime *bt)
+{
+	struct timehands *th;
+	u_int gen;
+
+	do {
+		th = timehands;
+		gen = th->th_generation;
+		membar_consumer();
+		bintimeaddfrac(&th->th_offset, th->th_scale * tc_delta(th), bt);
+		bintimesub(bt, &th->th_naptime, bt);
+		membar_consumer();
+	} while (gen == 0 || gen != th->th_generation);
+}
+
+void
+nanoruntime(struct timespec *ts)
+{
+	struct bintime bt;
+
+	binruntime(&bt);
+	BINTIME_TO_TIMESPEC(&bt, ts);
 }
 
 void
@@ -408,10 +433,9 @@ tc_setrealtimeclock(const struct timespec *ts)
 void
 tc_setclock(const struct timespec *ts)
 {
-	struct bintime bt, bt2;
+	struct bintime bt, old_naptime, naptime;
 	struct timespec earlier;
 	static int first = 1;
-	int rewind = 0;
 #ifndef SMALL_KERNEL
 	long long adj_ticks;
 #endif
@@ -431,30 +455,21 @@ tc_setclock(const struct timespec *ts)
 	mtx_enter(&windup_mtx);
 	TIMESPEC_TO_BINTIME(ts, &bt);
 	bintimesub(&bt, &timehands->th_boottime, &bt);
-
-	/*
-	 * Don't rewind the offset.
-	 */
-	if (bintimecmp(&bt, &timehands->th_offset, <))
-		rewind = 1;
-
-	bt2 = timehands->th_offset;
-
+	old_naptime = timehands->th_naptime;
 	/* XXX fiddle all the little crinkly bits around the fiords... */
-	tc_windup(NULL, rewind ? NULL : &bt, NULL);
+	tc_windup(NULL, &bt, NULL);
+	naptime = timehands->th_naptime;
 	mtx_leave(&windup_mtx);
 
-	if (rewind) {
+	if (bintimecmp(&old_naptime, &naptime, ==)) {
 		BINTIME_TO_TIMESPEC(&bt, &earlier);
 		printf("%s: cannot rewind uptime to %lld.%09ld\n",
 		    __func__, (long long)earlier.tv_sec, earlier.tv_nsec);
-		return;
 	}
 
 #ifndef SMALL_KERNEL
 	/* convert the bintime to ticks */
-	bintimesub(&bt, &bt2, &bt);
-	bintimeadd(&naptime, &bt, &naptime);
+	bintimesub(&naptime, &old_naptime, &bt);
 	adj_ticks = (uint64_t)hz * bt.sec +
 	    (((uint64_t)1000000 * (uint32_t)(bt.frac >> 32)) >> 32) / tick;
 	if (adj_ticks > 0) {
@@ -500,13 +515,6 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	memcpy(th, tho, offsetof(struct timehands, th_generation));
 
 	/*
-	 * If changing the boot offset, do so before updating the
-	 * offset fields.
-	 */
-	if (new_offset != NULL)
-		th->th_offset = *new_offset;
-
-	/*
 	 * Capture a timecounter delta on the current timecounter and if
 	 * changing timecounters, a counter value from the new timecounter.
 	 * Update the offset fields accordingly.
@@ -519,6 +527,17 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	th->th_offset_count += delta;
 	th->th_offset_count &= th->th_counter->tc_counter_mask;
 	bintimeaddfrac(&th->th_offset, th->th_scale * delta, &th->th_offset);
+
+	/*
+	 * Ignore new offsets that predate the current offset.
+	 * If changing the offset, first increase the naptime
+	 * accordingly.
+	 */
+	if (new_offset != NULL && bintimecmp(&th->th_offset, new_offset, <)) {
+		bintimesub(new_offset, &th->th_offset, &bt);
+		bintimeadd(&th->th_naptime, &bt, &th->th_naptime);
+		th->th_offset = *new_offset;
+	}
 
 #ifdef notyet
 	/*

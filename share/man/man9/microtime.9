@@ -1,4 +1,4 @@
-.\"	$OpenBSD: microtime.9,v 1.19 2019/10/22 20:19:41 cheloha Exp $
+.\"	$OpenBSD: microtime.9,v 1.20 2020/05/20 17:21:07 cheloha Exp $
 .\"     $NetBSD: microtime.9,v 1.2 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 22 2019 $
+.Dd $Mdocdate: May 20 2020 $
 .Dt MICROTIME 9
 .Os
 .Sh NAME
@@ -41,9 +41,11 @@
 .Nm getnanotime ,
 .Nm nanouptime ,
 .Nm getnanouptime ,
+.Nm nanoruntime ,
 .Nm nanoboottime ,
 .Nm bintime ,
 .Nm binuptime ,
+.Nm binruntime ,
 .Nm binboottime
 .Nd system clocks
 .Sh SYNOPSIS
@@ -85,6 +87,10 @@
 .Fa "struct timespec *tv"
 .Fc
 .Ft void
+.Fo nanoruntime
+.Fa "struct timespec *tv"
+.Fc
+.Ft void
 .Fo nanoboottime
 .Fa "struct timespec *tv"
 .Fc
@@ -97,12 +103,18 @@
 .Fa "struct bintime *tv"
 .Fc
 .Ft void
+.Fo binruntime
+.Fa "struct bintime *tv"
+.Fc
+.Ft void
 .Fo binboottime
 .Fa "struct bintime *tv"
 .Fc
 .Sh DESCRIPTION
 This family of functions return different system clocks in various formats.
 The "uptime" functions return the monotonically increasing time since boot.
+The "runtime" functions return the monotonically increasing time since boot,
+less any time spent suspended.
 The "boottime" functions return the UTC time at which the system booted.
 The "time" functions return the current UTC time.
 The various formats for the result are specified with:
