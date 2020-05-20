@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.64 2020/05/19 17:59:47 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.65 2020/05/20 18:27:16 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -27,9 +27,6 @@ enum imsg_code {
 #define	RTLEN	128
 
 struct proposal {
-	uint8_t		rtstatic[RTLEN];
-	uint8_t		rtsearch[RTLEN];
-	uint8_t		rtdns[RTLEN];
 	struct in_addr	ifa;
 	struct in_addr	netmask;
 	unsigned int	rtstatic_len;
@@ -46,7 +43,7 @@ struct unwind_info {
 void	dispatch_imsg(char *, int, int, int, struct imsgbuf *);
 
 void	priv_write_resolv_conf(int, int, int, char *, int *);
-void	priv_propose(char *, int, struct proposal *, char **, int, int, int);
+void	priv_propose(char *, int, struct proposal *, size_t, char **, int, int, int);
 
 void	priv_revoke_proposal(char *, int, struct proposal *, char **);
 

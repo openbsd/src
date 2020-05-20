@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.77 2020/05/19 17:59:47 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.78 2020/05/20 18:27:16 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -75,12 +75,13 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 			break;
 
 		case IMSG_PROPOSE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			if (imsg.hdr.len < IMSG_HEADER_SIZE +
 			    sizeof(struct proposal))
 				log_warnx("%s: bad IMSG_PROPOSE",
 				    log_procname);
 			else {
 				priv_propose(name, ioctlfd, imsg.data,
+				    imsg.hdr.len - IMSG_HEADER_SIZE - sizeof(struct proposal),
 				    &resolv_conf, routefd, rdomain, index);
 				lastidx = 0; /* Next IMSG_WRITE_RESOLV_CONF */
 			}
