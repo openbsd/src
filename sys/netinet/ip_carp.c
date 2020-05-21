@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.343 2020/04/29 07:04:32 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.344 2020/05/21 03:33:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -233,6 +233,8 @@ int	carp_check_dup_vhids(struct carp_softc *, struct srpl *,
 void	carp_ifgroup_ioctl(struct ifnet *, u_long, caddr_t);
 void	carp_ifgattr_ioctl(struct ifnet *, u_long, caddr_t);
 void	carp_start(struct ifnet *);
+int	carp_enqueue(struct ifnet *, struct mbuf *);
+void	carp_transmit(struct carp_softc *, struct ifnet *, struct mbuf *);
 void	carp_setrun_all(struct carp_softc *, sa_family_t);
 void	carp_setrun(struct carp_vhost_entry *, sa_family_t);
 void	carp_set_state_all(struct carp_softc *, int);
@@ -830,8 +832,8 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = carp_ioctl;
 	ifp->if_start = carp_start;
+	ifp->if_enqueue = carp_enqueue;
 	ifp->if_xflags = IFXF_CLONED;
-	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
 	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -2263,46 +2265,77 @@ void
 carp_start(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
+	struct ifnet *ifp0 = sc->sc_carpdev;
 	struct mbuf *m;
 
-	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == NULL)
-			break;
+	if (ifp0 == NULL) {
+		ifq_purge(&ifp->if_snd);
+		return;
+	}
+
+	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL)
+		carp_transmit(sc, ifp0, m);
+}
+
+void
+carp_transmit(struct carp_softc *sc, struct ifnet *ifp0, struct mbuf *m)
+{
+	struct ifnet *ifp = &sc->sc_if;
 
 #if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+	{
+		caddr_t if_bpf = ifp->if_bpf;
+		if (if_bpf) {
+			if (bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_OUT))
+				m_freem(m);
+		}
+	}
 #endif /* NBPFILTER > 0 */
 
-		if ((ifp->if_carpdev->if_flags & (IFF_UP|IFF_RUNNING)) !=
-		    (IFF_UP|IFF_RUNNING)) {
-			ifp->if_oerrors++;
-			m_freem(m);
-			continue;
-		}
-
-		/*
-		 * Do not leak the multicast address when sending
-		 * advertisements in 'ip' and 'ip-stealth' balacing
-		 * modes.
-		 */
-		if (sc->sc_balancing == CARP_BAL_IP ||
-		    sc->sc_balancing == CARP_BAL_IPSTEALTH) {
-			struct ether_header *eh;
-			uint8_t *esrc;
-
-			eh = mtod(m, struct ether_header *);
-			esrc = ((struct arpcom*)ifp->if_carpdev)->ac_enaddr;
-			memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
-		}
-
-		if (if_enqueue(ifp->if_carpdev, m)) {
-			ifp->if_oerrors++;
-			continue;
-		}
-		ifp->if_opackets++;
+	if (!ISSET(ifp0->if_flags, IFF_RUNNING)) {
+		counters_inc(ifp->if_counters, ifc_oerrors);
+		m_freem(m);
+		return;
 	}
+
+	/*
+	 * Do not leak the multicast address when sending
+	 * advertisements in 'ip' and 'ip-stealth' balacing
+	 * modes.
+	 */
+	if (sc->sc_balancing == CARP_BAL_IP ||
+	    sc->sc_balancing == CARP_BAL_IPSTEALTH) {
+		struct ether_header *eh = mtod(m, struct ether_header *);
+		memcpy(eh->ether_shost, sc->sc_ac.ac_enaddr,
+		    sizeof(eh->ether_shost));
+	}
+
+	if (if_enqueue(ifp0, m))
+		counters_inc(ifp->if_counters, ifc_oerrors);
+}
+
+int
+carp_enqueue(struct ifnet *ifp, struct mbuf *m)
+{
+	struct carp_softc *sc = ifp->if_softc;
+	struct ifnet *ifp0 = sc->sc_carpdev;
+
+	/* no ifq_is_priq, cos hfsc on carp doesn't make sense */
+
+	/*
+	 * If the parent of this carp(4) got destroyed while
+	 * `m' was being processed, silently drop it.
+	 */
+	if (ifp0 == NULL) {
+		m_freem(m);
+		return (0);
+	}
+
+	counters_pkt(ifp->if_counters,
+	    ifc_opackets, ifc_obytes, m->m_pkthdr.len);
+	carp_transmit(sc, ifp0, m);
+
+	return (0);
 }
 
 int
@@ -2313,15 +2346,6 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	struct carp_vhost_entry *vhe;
 	struct srp_ref sr;
 	int ismaster;
-
-	/*
-	 * If the parent of this carp(4) got destroyed while
-	 * `m' was being processed, silently drop it.
-	 */
-	if (sc->sc_carpdev == NULL) {
-		m_freem(m);
-		return (0);
-	}
 
 	if (sc->cur_vhe == NULL) {
 		vhe = SRPL_FIRST(&sr, &sc->carp_vhosts);
