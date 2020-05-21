@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.49 2020/05/19 16:35:21 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.50 2020/05/21 18:34:34 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -320,6 +320,8 @@ int
 tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	int nid;
+
+	ctx->hs->hrr = 1;
 
 	if (!tls13_synthetic_handshake_message(ctx))
 		return 0;
