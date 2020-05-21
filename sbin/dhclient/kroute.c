@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.182 2020/05/21 01:07:52 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.183 2020/05/21 12:31:02 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -256,20 +256,20 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 	}
 }
 /*
- * route_pos() finds the position of the route in *rtm within
- * the list of routes in rtstatic.
+ * route_pos() finds the position of the *rtm route within
+ * routes.
  *
- * If the route is not contained in rtstatic, return rtstatic_len.
+ * If the *rtm route is not in routes, return routes_len.
  */
 unsigned int
-route_pos(struct rt_msghdr *rtm, uint8_t *rtstatic,
-    unsigned int rtstatic_len, struct in_addr ifa)
+route_pos(struct rt_msghdr *rtm, uint8_t *routes, unsigned int routes_len,
+    struct in_addr ifa)
 {
 	struct sockaddr		*rti_info[RTAX_MAX];
 	struct sockaddr		*dst, *netmask, *gateway;
 	in_addr_t		 dstaddr, netmaskaddr, gatewayaddr;
-	in_addr_t		 rtstaticdstaddr, rtstaticnetmaskaddr;
-	in_addr_t		 rtstaticgatewayaddr;
+	in_addr_t		 routesdstaddr, routesnetmaskaddr;
+	in_addr_t		 routesgatewayaddr;
 	unsigned int		 i, len;
 
 	get_rtaddrs(rtm->rtm_addrs,
@@ -281,11 +281,11 @@ route_pos(struct rt_msghdr *rtm, uint8_t *rtstatic,
 	gateway = rti_info[RTAX_GATEWAY];
 
 	if (dst == NULL || netmask == NULL || gateway == NULL)
-		return rtstatic_len;
+		return routes_len;
 
 	if (dst->sa_family != AF_INET || netmask->sa_family != AF_INET ||
 	    gateway->sa_family != AF_INET)
-		return rtstatic_len;
+		return routes_len;
 
 	dstaddr = ((struct sockaddr_in *)dst)->sin_addr.s_addr;
 	netmaskaddr = ((struct sockaddr_in *)netmask)->sin_addr.s_addr;
@@ -293,14 +293,13 @@ route_pos(struct rt_msghdr *rtm, uint8_t *rtstatic,
 
 	dstaddr &= netmaskaddr;
 	i = 0;
-	while (i < rtstatic_len)  {
-		len = extract_route(&rtstatic[i], rtstatic_len - i,
-		    &rtstaticdstaddr, &rtstaticnetmaskaddr,
-		    &rtstaticgatewayaddr);
+	while (i < routes_len)  {
+		len = extract_route(&routes[i], routes_len - i, &routesdstaddr,
+		    &routesnetmaskaddr, &routesgatewayaddr);
 		if (len == 0)
 			break;
 
-		/* Direct route in rtstatic:
+		/* Direct route in routes:
 		 *
 		 * dst=1.2.3.4 netmask=255.255.255.255 gateway=0.0.0.0
 		 *
@@ -310,19 +309,19 @@ route_pos(struct rt_msghdr *rtm, uint8_t *rtstatic,
 		 *
 		 * So replace 0.0.0.0 with ifa for comparison.
 		 */
-		if (rtstaticgatewayaddr == INADDR_ANY)
-			rtstaticgatewayaddr = ifa.s_addr;
-		rtstaticdstaddr &= rtstaticnetmaskaddr;
+		if (routesgatewayaddr == INADDR_ANY)
+			routesgatewayaddr = ifa.s_addr;
+		routesdstaddr &= routesnetmaskaddr;
 
-		if (dstaddr == rtstaticdstaddr &&
-		    netmaskaddr == rtstaticnetmaskaddr &&
-		    gatewayaddr == rtstaticgatewayaddr)
+		if (dstaddr == routesdstaddr &&
+		    netmaskaddr == routesnetmaskaddr &&
+		    gatewayaddr == routesgatewayaddr)
 			return i;
 
 		i += len;
 	}
 
-	return rtstatic_len;
+	return routes_len;
 }
 
 /*
@@ -332,8 +331,8 @@ route_pos(struct rt_msghdr *rtm, uint8_t *rtstatic,
  *	arp -dan
  */
 void
-flush_routes(int index, int routefd, int rdomain, uint8_t *rtstatic,
-    unsigned int rtstatic_len, struct in_addr ifa)
+flush_routes(int index, int routefd, int rdomain, uint8_t *routes,
+    unsigned int routes_len, struct in_addr ifa)
 {
 	static int			 seqno;
 	char				*lim, *buf, *next;
@@ -361,8 +360,8 @@ flush_routes(int index, int routefd, int rdomain, uint8_t *rtstatic,
 			continue;
 
 		/* Don't bother deleting a route we're going to add. */
-		pos = route_pos(rtm, rtstatic, rtstatic_len, ifa);
-		if (pos < rtstatic_len)
+		pos = route_pos(rtm, routes, routes_len, ifa);
+		if (pos < routes_len)
 			continue;
 
 		rtm->rtm_type = RTM_DELETE;
@@ -471,11 +470,11 @@ add_route(char *name, int rdomain, int routefd, struct in_addr dest,
 }
 
 /*
- * set_routes() adds the routes contained in rtstatic to the routing table.
+ * set_routes() adds the routes contained in 'routes' to the routing table.
  */
 void
 set_routes(char *name, int index, int rdomain, int routefd, struct in_addr addr,
-    struct in_addr addrmask, uint8_t *rtstatic, unsigned int rtstatic_len)
+    struct in_addr addrmask, uint8_t *routes, unsigned int routes_len)
 {
 	const struct in_addr	 any = { INADDR_ANY };
 	const struct in_addr	 broadcast = { INADDR_BROADCAST };
@@ -483,14 +482,14 @@ set_routes(char *name, int index, int rdomain, int routefd, struct in_addr addr,
 	in_addr_t		 addrnet, gatewaynet;
 	unsigned int		 i, len;
 
-	flush_routes(index, routefd, rdomain, rtstatic, rtstatic_len, addr);
+	flush_routes(index, routefd, rdomain, routes, routes_len, addr);
 
 	addrnet = addr.s_addr & addrmask.s_addr;
 
 	/* Add classless static routes. */
 	i = 0;
-	while (i < rtstatic_len) {
-		len = extract_route(&rtstatic[i], rtstatic_len - i,
+	while (i < routes_len) {
+		len = extract_route(&routes[i], routes_len - i,
 		    &dest.s_addr, &netmask.s_addr, &gateway.s_addr);
 		if (len == 0)
 			return;
@@ -773,27 +772,27 @@ set_mtu(char *name, int ioctlfd, uint16_t mtu)
 }
 
 /*
- * extract_route() decodes the route pointed to by rtstatic into its
+ * extract_route() decodes the route pointed to by routes into its
  * {destination, netmask, gateway} and returns the number of bytes consumed
- * from rtstatic.
+ * from routes.
  */
 unsigned int
-extract_route(uint8_t *rtstatic, unsigned int rtstatic_len, in_addr_t *dest,
+extract_route(uint8_t *routes, unsigned int routes_len, in_addr_t *dest,
     in_addr_t *netmask, in_addr_t *gateway)
 {
 	unsigned int	 bits, bytes, len;
 
-	if (rtstatic[0] > 32)
+	if (routes[0] > 32)
 		return 0;
 
-	bits = rtstatic[0];
+	bits = routes[0];
 	bytes = (bits + 7) / 8;
 	len = 1 + bytes + sizeof(*gateway);
-	if (len > rtstatic_len)
+	if (len > routes_len)
 		return 0;
 
 	if (dest != NULL)
-		memcpy(dest, &rtstatic[1], bytes);
+		memcpy(dest, &routes[1], bytes);
 
 	if (netmask != NULL) {
 		if (bits == 0)
@@ -805,7 +804,7 @@ extract_route(uint8_t *rtstatic, unsigned int rtstatic_len, in_addr_t *dest,
 	}
 
 	if (gateway != NULL)
-		memcpy(gateway, &rtstatic[1 +  bytes], sizeof(*gateway));
+		memcpy(gateway, &routes[1 +  bytes], sizeof(*gateway));
 
 	return len;
 }
