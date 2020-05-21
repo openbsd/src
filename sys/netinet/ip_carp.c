@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.344 2020/05/21 03:33:44 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.345 2020/05/21 05:24:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -638,8 +638,6 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
 	}
 
 	getmicrotime(&sc->sc_if.if_lastchange);
-	sc->sc_if.if_ipackets++;
-	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
 	/* verify the CARP version. */
 	if (ch->carp_version != CARP_VERSION) {
@@ -1137,8 +1135,6 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 		m->m_data -= sizeof(*ip);
 
 		getmicrotime(&sc->sc_if.if_lastchange);
-		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes += len;
 		carpstat_inc(carps_opackets);
 
 		error = ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo,
@@ -1225,8 +1221,6 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 		m->m_data -= sizeof(*ip6);
 
 		getmicrotime(&sc->sc_if.if_lastchange);
-		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes += len;
 		carpstat_inc(carps_opackets6);
 
 		error = ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL);
