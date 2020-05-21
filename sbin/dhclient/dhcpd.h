@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.286 2020/05/14 13:57:13 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.287 2020/05/21 01:07:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -246,8 +246,8 @@ void		 read_conf(char *, char *, struct ether_addr *);
 void		 read_lease_db(struct client_lease_tq *);
 
 /* kroute.c */
-unsigned int	 extract_classless_route(uint8_t *, unsigned int,
-    in_addr_t *, in_addr_t *, in_addr_t *);
+unsigned int	 extract_route(uint8_t *, unsigned int, in_addr_t *,
+    in_addr_t *, in_addr_t *);
 void		 write_resolv_conf(void);
 
 void		 propose(struct proposal *);

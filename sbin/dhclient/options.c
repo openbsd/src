@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.121 2020/05/14 13:57:13 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.122 2020/05/21 01:07:52 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -621,8 +621,8 @@ pretty_print_classless_routes(unsigned char *src, size_t srclen,
 
 	i = 0;
 	while (i < srclen) {
-		len = extract_classless_route(&src[i], srclen - i,
-		    &dest.s_addr, &netmask.s_addr, &gateway.s_addr);
+		len = extract_route(&src[i], srclen - i, &dest.s_addr,
+		    &netmask.s_addr, &gateway.s_addr);
 		if (len == 0)
 			goto bad;
 		i += len;
