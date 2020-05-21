@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsclock.c,v 1.4 2012/10/03 22:46:09 miod Exp $	*/
+/*	$OpenBSD: dsclock.c,v 1.5 2020/05/21 01:50:42 visa Exp $	*/
 /*	$NetBSD: dsclock.c,v 1.5 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -42,14 +42,14 @@
 
 #include <machine/bus.h>
 
-#include <mips64/dev/clockvar.h>
-
+#include <dev/clock_subr.h>
 #include <dev/ic/ds1286reg.h>
 #include <sgi/hpc/hpcvar.h>
 #include <sgi/sgi/ip22.h>
 
 struct dsclock_softc {
 	struct device		sc_dev;
+	struct todr_chip_handle	sc_todr;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -87,8 +87,8 @@ tobcd(int x)
 	return (x / 10 * 16) + (x % 10);
 }
 
-void	dsclock_gettime(void *, time_t, struct tod_time *);
-void	dsclock_settime(void *, struct tod_time *);
+int	dsclock_gettime(struct todr_chip_handle *, struct timeval *);
+int	dsclock_settime(struct todr_chip_handle *, struct timeval *);
 
 int
 dsclock_match(struct device *parent, void *vcf, void *aux)
@@ -117,10 +117,6 @@ dsclock_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	sys_tod.tod_get = dsclock_gettime;
-	sys_tod.tod_set = dsclock_settime;
-	sys_tod.tod_cookie = self;
-
 	/*
 	 * Try and figure out what year the chip time is relative to.
 	 * Different Indy PROM versions appear to use different base:
@@ -143,17 +139,20 @@ dsclock_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_base != 1940 && sc->sc_base != POSIX_BASE_YEAR)
 		sc->sc_base = 1940;
 
-	/* mips64 clock code expects year relative to 1900 */
-	sc->sc_base -= 1900;
+	sc->sc_todr.cookie = self;
+	sc->sc_todr.todr_gettime = dsclock_gettime;
+	sc->sc_todr.todr_settime = dsclock_settime;
+	todr_attach(&sc->sc_todr);
 }
 
 /*
  * Get the time of day, based on the clock's value and/or the base value.
  */
-void
-dsclock_gettime(void *cookie, time_t base, struct tod_time *ct)
+int
+dsclock_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct dsclock_softc *sc = (void *)cookie;
+	struct clock_ymdhms dt;
+	struct dsclock_softc *sc = handle->cookie;
 	ds1286_todregs regs;
 	int s;
 
@@ -161,57 +160,67 @@ dsclock_gettime(void *cookie, time_t base, struct tod_time *ct)
 	DS1286_GETTOD(sc, &regs)
 	splx(s);
 
-	ct->sec = frombcd(regs[DS1286_SEC]);
-	ct->min = frombcd(regs[DS1286_MIN]);
+	dt.dt_sec = frombcd(regs[DS1286_SEC]);
+	dt.dt_min = frombcd(regs[DS1286_MIN]);
 
 	if (regs[DS1286_HOUR] & DS1286_HOUR_12MODE) {
-		ct->hour = frombcd(regs[DS1286_HOUR] & DS1286_HOUR_12HR_MASK) +
-		    ((regs[DS1286_HOUR] & DS1286_HOUR_12HR_PM) ? 12 : 0);
+		dt.dt_hour = frombcd(regs[DS1286_HOUR] & DS1286_HOUR_12HR_MASK)
+		    + ((regs[DS1286_HOUR] & DS1286_HOUR_12HR_PM) ? 12 : 0);
 
 		/*
 		 * In AM/PM mode, hour range is 01-12, so adding in 12 hours
 		 * for PM gives us 01-24, whereas we want 00-23, so map hour
 		 * 24 to hour 0.
 		 */
-		if (ct->hour == 24)
-			ct->hour = 0;
+		if (dt.dt_hour == 24)
+			dt.dt_hour = 0;
 	} else {
-		 ct->hour = frombcd(regs[DS1286_HOUR] & DS1286_HOUR_24HR_MASK);
+		 dt.dt_hour = frombcd(regs[DS1286_HOUR] &
+		    DS1286_HOUR_24HR_MASK);
 	}
 
-	ct->day = frombcd(regs[DS1286_DOM]);
-	ct->mon = frombcd(regs[DS1286_MONTH] & DS1286_MONTH_MASK);
-	ct->year = frombcd(regs[DS1286_YEAR]) + sc->sc_base;
+	dt.dt_day = frombcd(regs[DS1286_DOM]);
+	dt.dt_mon = frombcd(regs[DS1286_MONTH] & DS1286_MONTH_MASK);
+	dt.dt_year = frombcd(regs[DS1286_YEAR]) + sc->sc_base;
+
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return 0;
 }
 
 /*
  * Reset the TODR based on the time value.
  */
-void
-dsclock_settime(void *cookie, struct tod_time *ct)
+int
+dsclock_settime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct dsclock_softc *sc = (void *)cookie;
+	struct clock_ymdhms dt;
+	struct dsclock_softc *sc = handle->cookie;
 	ds1286_todregs regs;
 	int s;
+
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
 	s = splhigh();
 	DS1286_GETTOD(sc, &regs);
 	splx(s);
 
 	regs[DS1286_SUBSEC] = 0;
-	regs[DS1286_SEC] = tobcd(ct->sec);
-	regs[DS1286_MIN] = tobcd(ct->min);
-	regs[DS1286_HOUR] = tobcd(ct->hour) & DS1286_HOUR_24HR_MASK;
-	regs[DS1286_DOW] = tobcd(ct->dow);
-	regs[DS1286_DOM] = tobcd(ct->day);
+	regs[DS1286_SEC] = tobcd(dt.dt_sec);
+	regs[DS1286_MIN] = tobcd(dt.dt_min);
+	regs[DS1286_HOUR] = tobcd(dt.dt_hour) & DS1286_HOUR_24HR_MASK;
+	regs[DS1286_DOW] = tobcd(dt.dt_wday + 1);
+	regs[DS1286_DOM] = tobcd(dt.dt_day);
 
 	/* Leave wave-generator bits as set originally */
 	regs[DS1286_MONTH] &=  ~DS1286_MONTH_MASK;
-	regs[DS1286_MONTH] |=  tobcd(ct->mon) & DS1286_MONTH_MASK;
+	regs[DS1286_MONTH] |=  tobcd(dt.dt_mon) & DS1286_MONTH_MASK;
 
-	regs[DS1286_YEAR] = tobcd(ct->year - sc->sc_base);
+	regs[DS1286_YEAR] = tobcd(dt.dt_year - sc->sc_base);
 
 	s = splhigh();
 	DS1286_PUTTOD(sc, &regs);
 	splx(s);
+
+	return 0;
 }
