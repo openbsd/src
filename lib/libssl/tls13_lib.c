@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.47 2020/05/21 19:15:54 tb Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.48 2020/05/21 19:27:22 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -259,6 +259,8 @@ static ssize_t
 tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
 	struct tls13_handshake_msg *hs_msg = NULL;
+	CBB cbb_hs;
+	CBS cbs_hs;
 	uint8_t alert = TLS13_ALERT_INTERNAL_ERROR;
 	uint8_t key_update_request;
 	ssize_t ret;
@@ -280,22 +282,19 @@ tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 
 	if (key_update_request == 1) {
-		CBB cbb;
-		CBS cbs; /* XXX */
-
 		if ((hs_msg = tls13_handshake_msg_new()) == NULL)
 			goto err;
-		if (!tls13_handshake_msg_start(hs_msg, &cbb,
+		if (!tls13_handshake_msg_start(hs_msg, &cbb_hs,
 		    TLS13_MT_KEY_UPDATE))
 			goto err;
-		if (!CBB_add_u8(&cbb, 0))
+		if (!CBB_add_u8(&cbb_hs, 0))
 			goto err;
 		if (!tls13_handshake_msg_finish(hs_msg))
 			goto err;
 
 		ctx->key_update_request = 1;
-		tls13_handshake_msg_data(hs_msg, &cbs);
-		ret = tls13_record_layer_phh(ctx->rl, &cbs);
+		tls13_handshake_msg_data(hs_msg, &cbs_hs);
+		ret = tls13_record_layer_phh(ctx->rl, &cbs_hs);
 
 		tls13_handshake_msg_free(hs_msg);
 		hs_msg = NULL;
