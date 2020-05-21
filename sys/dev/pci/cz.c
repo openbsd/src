@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.23 2020/03/11 15:51:15 cheloha Exp $ */
+/*	$OpenBSD: cz.c,v 1.24 2020/05/21 09:31:59 mpi Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -1113,22 +1113,6 @@ czttywrite(dev_t dev, struct uio *uio, int flags)
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flags));
 }
-
-#if 0
-/*
- * czttypoll:
- *
- *	Poll a Cyclades-Z serial port.
- */
-int
-czttypoll(dev_t dev, int events, struct proc *p)
-{
-	struct cztty_softc *sc = CZTTY_SOFTC(dev);
-	struct tty *tp = sc->sc_tty;
- 
-	return ((*linesw[tp->t_line].l_poll)(tp, events, p));
-}
-#endif
 
 /*
  * czttyioctl:
