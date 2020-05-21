@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.202 2020/01/15 00:19:40 kn Exp $
+#	$OpenBSD: netstart,v 1.203 2020/05/21 11:54:41 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -134,7 +134,7 @@ ifstart() {
 	# Parse the hostname.if(5) file and fill _cmds array with interface
 	# configuration commands.
 	set -o noglob
-	while IFS= read -- _line; do
+	while IFS= read -r -- _line; do
 		parse_hn_line $_line
 	done <$_hn
 
