@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.1 2020/05/21 10:38:43 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.2 2020/05/21 19:08:32 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -143,9 +143,14 @@ tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
     Test("test-tls13-shuffled-extentions.py"),    # should reject 2nd CH
     Test("test-tls13-unrecognised-groups.py"),    # unexpected closure
 
-    # systematic failures?
-    # TLSBadRecordMAC("Invalid tag, decryption failure")
+    # 5 failures:
+    #   'app data split, conversation with KeyUpdate msg'
+    #   'fragmented keyupdate msg'
+    #   'multiple KeyUpdate messages'
+    #   'post-handshake KeyUpdate msg with update_not_request'
+    #   'post-handshake KeyUpdate msg with update_request'
     Test("test-tls13-keyupdate.py"),
+ 
     Test("test-tls13-symetric-ciphers.py"),       # unexpected message from peer
 
     # 70 fail and 644 pass. For some reason the tests expect a decode_error
