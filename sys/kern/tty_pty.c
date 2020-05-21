@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.98 2020/04/07 13:27:51 visa Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.99 2020/05/21 09:34:06 mpi Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -708,7 +708,8 @@ filt_ptcwrite(struct knote *kn, long hint)
 		if (ISSET(pti->pt_flags, PF_REMOTE)) {
 			if (tp->t_canq.c_cc == 0)
 				kn->kn_data = tp->t_canq.c_cn;
-		} else if (tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG(tp)-2)
+		} else if ((tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG(tp)-2) ||
+		    (tp->t_canq.c_cc == 0 && ISSET(tp->t_lflag, ICANON)))
 			kn->kn_data = tp->t_canq.c_cn -
 			    (tp->t_rawq.c_cc + tp->t_canq.c_cc);
 	}
