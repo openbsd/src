@@ -311,7 +311,7 @@ start_vm(struct vmd_vm *vm, int fd)
 		errno = ret;
 		fatal("create vmm ioctl failed - exiting");
 	}
-#if 0
+
 	/*
 	 * pledge in the vm processes:
 	 * stdio - for malloc and basic I/O including events.
@@ -320,7 +320,7 @@ start_vm(struct vmd_vm *vm, int fd)
 	 */
 	if (pledge("stdio vmm recvfd", NULL) == -1)
 		fatal("pledge");
-#endif
+
 	if (vm->vm_state & VM_STATE_RECEIVED) {
 		ret = read(vm->vm_receive_fd, &vrp, sizeof(vrp));
 		if (ret != sizeof(vrp)) {

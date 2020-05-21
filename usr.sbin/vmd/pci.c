@@ -90,23 +90,20 @@ void *mapbar(uint64_t base, uint64_t size) {
 int pci_memh2(int dir, uint64_t base, uint32_t size, void *data, void *cookie)
 {
 	int dev = (uintptr_t)cookie;
-	uint64_t hpa, off, mask;
+	uint64_t off, mask;
 	uint8_t barid = (uint8_t)(uintptr_t)cookie;
 	uint8_t *va;
 
-	off = (base & PAGE_MASK);
-	hpa = bi.bars[barid].addr;
-
+	off = base & (bi.bars[barid].size - 1);
 	if (size == 1)
 		mask = 0xff;
 	else if (size == 2)
 		mask = 0xffff;
 	else if (size == 4)
 		mask = 0xffffffff;
-#if 0
+
 	fprintf(stderr, "entry memh2 %c%d: %.16llx %.16llx %.4x\n", dir == VEI_DIR_IN ? 'r' : 'w', size,
-		base, hpa, dev);
-#endif
+		off, bi.bars[barid].addr, dev);
 	va = barva[barid];
 	if (va == NULL) {
 		return -1;
@@ -537,7 +534,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	uint8_t b, d, f, o, baridx, ofs, sz;
 	uint32_t data;
 	uint64_t wrdata;
-	int ret, flag = 0;
+	int ret;
 	pci_cs_fn_t csfunc;
 
 	/* abort if the address register is wack */
@@ -585,21 +582,15 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	 * The guest wrote to the config space location denoted by the current
 	 * value in the address register.
 	 */
-	if (d == 110) {
-		fprintf(stderr, "@@ pci_conf_%s(%.2x,cur:%llx,new:%llx)\n",
-			vei->vei.vei_dir == VEI_DIR_OUT ? "wr" : "rd",
-			o, pci.pci_devices[d].pd_cfg_space[o/4],
-			vei->vei.vei_data);
-	}
 	if (o >= 0x10 && o <= 0x24 && 0)  {
 		fprintf(stderr,"accbar: %c %x.%x.%x %x [%x %x]\n", 
 			vei->vei.vei_dir == VEI_DIR_OUT  ? 'w' : 'r', b,d,f,o,
 			pci.pci_devices[d].pd_cfg_space[o/4],
-			vei->vei.vei_data);
+			wrdata);
 	}
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		if ((o >= 0x10 && o <= 0x24) &&
-		    vei->vei.vei_data == 0xffffffff) {
+		    (wrdata & ~0xF) == 0xfffffff0) {
 			/*
 			 * Compute BAR index:
 			 * o = 0x10 -> baridx = 0
@@ -635,7 +626,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 				unregister_mem(pci.pci_devices[d].pd_cfg_space[o/4]);
 				register_mem(wrdata, pci.pci_devices[d].pd_barsize[(o - 0x10)/4],
 					pci_memh2,
-					(void *)(uintptr_t)(d << 8) + ((o - 0x10) / 4));
+					(void *)(uintptr_t)((d << 8) + ((o - 0x10) / 4)));
 			}
 		}
 

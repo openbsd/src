@@ -94,7 +94,7 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	 * send - for sending send/recv fds to vm proc.
 	 * recvfd - for disks, interfaces and other fds.
 	 */
-	if (pledge("rpath unveil stdio vmm sendfd recvfd proc", NULL) == -1)
+	if (pledge("stdio vmm sendfd recvfd proc", NULL) == -1)
 		fatal("pledge");
 
 	/* Get and terminate all running VMs */

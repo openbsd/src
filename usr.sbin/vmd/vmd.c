@@ -49,7 +49,6 @@
 #include "atomicio.h"
 #include "vmd.h"
 
-#include <sys/mman.h>
 #define pledge(x...) 0
 
 __dead void usage(void);
@@ -721,8 +720,6 @@ usage(void)
 	exit(1);
 }
 
-void dump(void *ptr, int len);
-
 int
 main(int argc, char **argv)
 {
@@ -733,7 +730,6 @@ main(int argc, char **argv)
 	int			 proc_instance = 0;
 	const char		*errp, *title = NULL;
 	int			 argc0 = argc;
-	void *ptr;
 
 	log_init(0, LOG_DAEMON);
 
@@ -915,7 +911,7 @@ vmd_configure(void)
 	 * chown, fattr - change tty ownership
 	 * flock - locking disk files
 	 */
-	if (pledge("rpath unveil stdio rpath wpath proc tty recvfd sendfd getpw"
+	if (pledge("stdio rpath wpath proc tty recvfd sendfd getpw"
 	    " chown fattr flock", NULL) == -1)
 		fatal("pledge");
 

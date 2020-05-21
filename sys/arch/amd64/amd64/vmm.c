@@ -69,14 +69,6 @@ int sid_vmap(int sid, paddr_t gpa, paddr_t hpa, size_t sz);
 #define VMX_EXIT_INFO_COMPLETE				\
     (VMX_EXIT_INFO_HAVE_RIP | VMX_EXIT_INFO_HAVE_REASON)
 
-struct mmiomap {
-	uint64_t		base;
-	uint32_t		len;
-	uint64_t		map;
-};
-
-/* Remapping I/O: 64k entry table? remapio[base] = remap */
-
 struct vm {
 	struct vmspace		 *vm_vmspace;
 	vm_map_t		 vm_map;
@@ -1532,8 +1524,6 @@ vm_create_check_mem_ranges(struct vm_create_params *vcp)
 		if (i > 0 && pvmr->vmr_gpa + pvmr->vmr_size > vmr->vmr_gpa)
 			return (0);
 
-		printf("vmm: %lx %lx %lx\n", vmr->vmr_va, vmr->vmr_gpa, vmr->vmr_size);
-
 		memsize += vmr->vmr_size;
 		pvmr = vmr;
 	}
@@ -1680,22 +1670,6 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
 			vm->vm_vmspace = NULL;
 			return (ENOMEM);
 		}
-#if 0
-		{
-			paddr_t vhpa, vgpa;
-			vaddr_t vva;
-			vva = vmr->vmr_va;
-			vgpa = vmr->vmr_gpa;
-			for (int k = 0; k < vmr->vmr_size; k+=PAGE_SIZE) {
-				pmap_extract(pmap_kernel(), vva, &vhpa);
-				printf("va:%lx gpa:%lx size:%lx hpa:%lx\n",
-					vva, vgpa, vmr->vmr_size, vhpa);
-				sid_vmap((17 << 8) | 0, vgpa, vhpa, PAGE_SIZE);
-				vgpa  += PAGE_SIZE;
-				vhpa  += PAGE_SIZE;
-			}
-		}
-#endif
 	}
 
 	ret = pmap_convert(vm->vm_map->pmap, PMAP_TYPE_EPT);

@@ -630,7 +630,7 @@ struct vm_pio {
 
 #define VMM_IOC_BARINFO	     _IOWR('V', 12, struct vm_barinfo)
 #define VMM_IOC_BINDPCI	     _IOW('V', 13, struct vm_bindpci)
-#define VMM_IOC_PIO	     _IOWR('V', 14, struct vm_pio)
+#define VMM_IOC_PIO          _IOWR('V', 14, struct vm_pio)
 
 /* CPUID masks */
 /*
