@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.144 2019/12/06 02:02:18 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.145 2020/05/21 00:44:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -184,8 +184,6 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = trunk_ioctl;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_capabilities = trunk_capabilities(tr);
-
-	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
 	    ifc->ifc_name, unit);
