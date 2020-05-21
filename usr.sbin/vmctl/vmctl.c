@@ -73,7 +73,8 @@ unsigned int info_flags;
 int
 vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
     char **nics, int ndisks, char **disks, int *disktypes, char *kernel,
-    char *iso, char *instance, unsigned int bootdevice)
+    char *iso, char *instance, unsigned int bootdevice,
+    int npcis, uint32_t *pcis)
 {
 	struct vmop_create_params *vmc;
 	struct vm_create_params *vcp;
@@ -128,6 +129,7 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 	vcp->vcp_ncpus = 1;
 	vcp->vcp_ndisks = ndisks;
 	vcp->vcp_nnics = nnics;
+	vcp->vcp_npcis = npcis;
 	vcp->vcp_id = start_id;
 
 	for (i = 0 ; i < ndisks; i++) {
@@ -153,6 +155,9 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 				errx(1, "interface name too long");
 		}
 	}
+	for (i = 0; i < npcis; i++)
+		vcp->vcp_pcis[i] = pcis[i];
+
 	if (name != NULL) {
 		/*
 		 * Allow VMs names with alphanumeric characters, dot, hyphen

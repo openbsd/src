@@ -32,6 +32,7 @@
 #define VMM_MAX_VCPUS_PER_VM	64
 #define VMM_MAX_VM_MEM_SIZE	32768
 #define VMM_MAX_NICS_PER_VM	4
+#define VMM_MAX_PCI_PTHRU	4
 
 #define VMM_PCI_MMIO_BAR_BASE	0xF0000000ULL
 #define VMM_PCI_MMIO_BAR_END	0xFFFFFFFFULL
@@ -481,6 +482,9 @@ struct vm_create_params {
 
 	/* Output parameter from VMM_IOC_CREATE */
 	uint32_t	vcp_id;
+
+	size_t			vcp_npcis;
+	uint32_t		vcp_pcis[VMM_MAX_PCI_PTHRU];
 };
 
 struct vm_run_params {

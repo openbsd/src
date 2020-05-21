@@ -83,7 +83,7 @@ struct ctl_command ctl_commands[] = {
 	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "start",	CMD_START,	ctl_start,
 	    "[-cL] [-B device] [-b path] [-d disk] [-i count]\n"
-	    "\t\t[-m size] [-n switch] [-r path] [-t name] id | name" },
+	    "\t\t[-m size] [-n switch] [-r path] [-t name] [-p bus:dev:func] id | name" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"[-fw] [id | -a]" },
 	{ "unpause",	CMD_UNPAUSE,	ctl_unpause,	"id" },
@@ -224,7 +224,8 @@ vmmaction(struct parse_result *res)
 	case CMD_START:
 		ret = vm_start(res->id, res->name, res->size, res->nifs,
 		    res->nets, res->ndisks, res->disks, res->disktypes,
-		    res->path, res->isopath, res->instance, res->bootdevice);
+		    res->path, res->isopath, res->instance, res->bootdevice,
+		    res->npcis, res->pcis);
 		if (ret) {
 			errno = ret;
 			err(1, "start VM operation failed");
@@ -478,6 +479,32 @@ parse_disktype(const char *s, const char **ret)
 
 	/* Fallback to raw */
 	return (VMDF_RAW);
+}
+
+int
+parse_pcis(struct parse_result *res, char *pcipath)
+{
+	uint32_t	*pcis;
+	uint32_t	bus, dev, func;
+	
+	if (res->npcis >= VMM_MAX_PCI_PTHRU) {
+		warn("too many pci");
+		return -1;
+	}
+	if (sscanf(pcipath, "%d:%d:%d", &bus, &dev, &func) != 3) {
+		warn("pci format b:d:f");
+		return -1;
+	}
+	if ((pcis = reallocarray(res->pcis, res->npcis + 1,
+	   sizeof(uint32_t *))) == NULL) {
+		warn("reallocarray");
+		return -1;
+	}
+	pcis[res->npcis] = (bus << 8) | ((dev & 0x1f) << 3) | (func & 0x7);
+	res->pcis = pcis;
+	res->npcis++;
+
+	return (0);
 }
 
 int
@@ -835,7 +862,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	char		 path[PATH_MAX];
 	const char	*s;
 
-	while ((ch = getopt(argc, argv, "b:B:cd:i:Lm:n:r:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:cd:i:Lm:n:r:t:p:")) != -1) {
 		switch (ch) {
 		case 'b':
 			if (res->path)
@@ -898,6 +925,10 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 		case 't':
 			if (parse_instance(res, optarg) == -1)
 				errx(1, "invalid name: %s", optarg);
+			break;
+		case 'p':
+			if (parse_pcis(res, optarg) == -1)
+				errx(1, "invalid pci entry: %s", optarg);
 			break;
 		default:
 			ctl_usage(res->ctl);

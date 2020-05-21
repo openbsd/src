@@ -1067,9 +1067,15 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
 	/* Initialize virtio devices */
 	virtio_init(current_vm, child_cdrom, child_disks, child_taps);
 
+	for (i = 0; i < vcp->vcp_npcis; i++) {
+		int bus = (vcp->vcp_pcis[i] >> 8);
+		int dev = (vcp->vcp_pcis[i] >> 3) & 0x1F;
+		int fun = (vcp->vcp_pcis[i] >> 0) & 0x7;
+		pci_add_pthru(current_vm, bus, dev, fun);
+	}
 	//pci_add_pthru(current_vm, 0, 25, 0); /* em0 */
 	//pci_add_pthru(current_vm, 17, 0, 0); /* sdmmc0 */
-	pci_add_pthru(current_vm, 0, 31, 3); /* iic */
+	//pci_add_pthru(current_vm, 0, 31, 3); /* iic */
 }
 /*
  * restore_emulated_hw

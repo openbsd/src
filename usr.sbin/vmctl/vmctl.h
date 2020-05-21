@@ -55,6 +55,8 @@ struct parse_result {
 	size_t			 ndisks;
 	char			**disks;
 	int			*disktypes;
+	int			 npcis;
+	uint32_t		*pcis;
 	int			 verbose;
 	char			*instance;
 	unsigned int		 flags;
@@ -80,6 +82,7 @@ int	 parse_network(struct parse_result *, char *);
 int	 parse_size(struct parse_result *, char *);
 int	 parse_disktype(const char *, const char **);
 int	 parse_disk(struct parse_result *, char *, int);
+int	 parse_pcis(struct parse_result *, char *);
 int	 parse_vmid(struct parse_result *, char *, int);
 int	 parse_instance(struct parse_result *, char *);
 void	 parse_free(struct parse_result *);
@@ -94,7 +97,8 @@ int	 create_imagefile(int, const char *, const char *, long, const char **);
 int	 create_raw_imagefile(const char *, long);
 int	 create_qc2_imagefile(const char *, const char *, long);
 int	 vm_start(uint32_t, const char *, int, int, char **, int,
-	    char **, int *, char *, char *, char *, unsigned int);
+	    char **, int *, char *, char *, char *, unsigned int,
+	    int, uint32_t *);
 int	 vm_start_complete(struct imsg *, int *, int);
 void	 terminate_vm(uint32_t, const char *, unsigned int);
 int	 terminate_vm_complete(struct imsg *, int *, unsigned int);
