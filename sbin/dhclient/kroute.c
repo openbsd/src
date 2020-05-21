@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.180 2020/05/20 23:54:53 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.181 2020/05/21 00:22:37 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -57,7 +57,7 @@ void		 delete_address(char *, int, struct in_addr);
 
 char		*get_routes(int, size_t *);
 void		 get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
-unsigned int	 route_in_rtstatic(struct rt_msghdr *, uint8_t *, unsigned int,
+unsigned int	 route_pos(struct rt_msghdr *, uint8_t *, unsigned int,
     struct in_addr);
 void		 flush_routes(int, int, int, uint8_t *, unsigned int,
     struct in_addr);
@@ -256,13 +256,13 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 	}
 }
 /*
- * route_in_rtstatic() finds the position of the route in *rtm within
+ * route_pos() finds the position of the route in *rtm within
  * the list of routes in rtstatic.
  *
  * If the route is not contained in rtstatic, return rtstatic_len.
  */
 unsigned int
-route_in_rtstatic(struct rt_msghdr *rtm, uint8_t *rtstatic,
+route_pos(struct rt_msghdr *rtm, uint8_t *rtstatic,
     unsigned int rtstatic_len, struct in_addr ifa)
 {
 	struct sockaddr		*rti_info[RTAX_MAX];
@@ -361,7 +361,7 @@ flush_routes(int index, int routefd, int rdomain, uint8_t *rtstatic,
 			continue;
 
 		/* Don't bother deleting a route we're going to add. */
-		pos = route_in_rtstatic(rtm, rtstatic, rtstatic_len, ifa);
+		pos = route_pos(rtm, rtstatic, rtstatic_len, ifa);
 		if (pos < rtstatic_len)
 			continue;
 
