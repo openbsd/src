@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.29 2017/05/25 20:11:03 tedu Exp $	 */
+/* $OpenBSD: main.c,v 1.30 2020/05/21 16:13:23 espie Exp $	 */
 /* $NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	 */
 
 /*
@@ -304,9 +304,9 @@ open_files(void)
 
 	create_file_names();
 
-	if (input_file == 0) {
+	if (input_file == NULL) {
 		input_file = fopen(input_file_name, "r");
-		if (input_file == 0)
+		if (input_file == NULL)
 			open_error(input_file_name);
 	}
 	fd = mkstemp(action_file_name);
@@ -319,7 +319,7 @@ open_files(void)
 
 	if (vflag) {
 		verbose_file = fopen(verbose_file_name, "w");
-		if (verbose_file == 0)
+		if (verbose_file == NULL)
 			open_error(verbose_file_name);
 	}
 	if (dflag) {
@@ -331,12 +331,12 @@ open_files(void)
 			open_error(union_file_name);
 	}
 	output_file = fopen(output_file_name, "w");
-	if (output_file == 0)
+	if (output_file == NULL)
 		open_error(output_file_name);
 
 	if (rflag) {
 		code_file = fopen(code_file_name, "w");
-		if (code_file == 0)
+		if (code_file == NULL)
 			open_error(code_file_name);
 	} else
 		code_file = output_file;
