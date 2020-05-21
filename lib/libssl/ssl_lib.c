@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.214 2020/05/19 16:35:20 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.215 2020/05/21 19:28:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1965,66 +1965,49 @@ SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth)
 	X509_VERIFY_PARAM_set_depth(ctx->param, depth);
 }
 
+static int
+ssl_cert_can_sign(X509 *x)
+{
+	/* This call populates extension flags (ex_flags). */
+	X509_check_purpose(x, -1, 0);
+
+	/* Key usage, if present, must allow signing. */
+	return ((x->ex_flags & EXFLAG_KUSAGE) == 0 ||
+	    (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE));
+}
+
 void
 ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 {
-	int		 rsa, dh_tmp;
-	int		 have_ecc_cert;
-	unsigned long	 mask_k, mask_a;
-	X509		*x = NULL;
-	CERT_PKEY	*cpk;
+	unsigned long mask_a, mask_k;
+	CERT_PKEY *cpk;
 
 	if (c == NULL)
 		return;
 
-	dh_tmp = (c->dh_tmp != NULL || c->dh_tmp_cb != NULL ||
-	    c->dh_tmp_auto != 0);
+	mask_a = SSL_aNULL | SSL_aTLS1_3;
+	mask_k = SSL_kECDHE | SSL_kTLS1_3;
 
-	cpk = &(c->pkeys[SSL_PKEY_RSA]);
-	rsa = (cpk->x509 != NULL && cpk->privatekey != NULL);
+	if (c->dh_tmp != NULL || c->dh_tmp_cb != NULL || c->dh_tmp_auto != 0)
+		mask_k |= SSL_kDHE;
+
 	cpk = &(c->pkeys[SSL_PKEY_ECC]);
-	have_ecc_cert = (cpk->x509 != NULL && cpk->privatekey != NULL);
-
-	mask_k = 0;
-	mask_a = 0;
+	if (cpk->x509 != NULL && cpk->privatekey != NULL) {
+		if (ssl_cert_can_sign(cpk->x509))
+			mask_a |= SSL_aECDSA;
+	}
 
 	cpk = &(c->pkeys[SSL_PKEY_GOST01]);
-	if (cpk->x509 != NULL && cpk->privatekey !=NULL) {
+	if (cpk->x509 != NULL && cpk->privatekey != NULL) {
 		mask_k |= SSL_kGOST;
 		mask_a |= SSL_aGOST01;
 	}
 
-	if (rsa)
-		mask_k |= SSL_kRSA;
-
-	if (dh_tmp)
-		mask_k |= SSL_kDHE;
-
-	if (rsa)
+	cpk = &(c->pkeys[SSL_PKEY_RSA]);
+	if (cpk->x509 != NULL && cpk->privatekey != NULL) {
 		mask_a |= SSL_aRSA;
-
-	mask_a |= SSL_aNULL;
-	mask_a |= SSL_aTLS1_3;
-
-	mask_k |= SSL_kTLS1_3;
-
-	/*
-	 * An ECC certificate may be usable for ECDH and/or
-	 * ECDSA cipher suites depending on the key usage extension.
-	 */
-	if (have_ecc_cert) {
-		x = (c->pkeys[SSL_PKEY_ECC]).x509;
-
-		/* This call populates extension flags (ex_flags). */
-		X509_check_purpose(x, -1, 0);
-
-		/* Key usage, if present, must allow signing. */
-		if ((x->ex_flags & EXFLAG_KUSAGE) == 0 ||
-		    (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE))
-			mask_a |= SSL_aECDSA;
+		mask_k |= SSL_kRSA;
 	}
-
-	mask_k |= SSL_kECDHE;
 
 	c->mask_k = mask_k;
 	c->mask_a = mask_a;
