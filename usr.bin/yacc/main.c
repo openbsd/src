@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.30 2020/05/21 16:13:23 espie Exp $	 */
+/* $OpenBSD: main.c,v 1.31 2020/05/21 16:22:26 espie Exp $	 */
 /* $NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	 */
 
 /*
@@ -103,11 +103,10 @@ void usage(void);
 void getargs(int, char *[]);
 void create_file_names(void);
 void open_files(void);
-
-volatile sig_atomic_t sigdie;
+void cleanup_temp_files(void);
 
 void
-done(int k)
+cleanup_temp_files()
 {
 	if (action_file)
 		unlink(action_file_name);
@@ -115,17 +114,20 @@ done(int k)
 		unlink(text_file_name);
 	if (union_file)
 		unlink(union_file_name);
-	if (sigdie)
-		_exit(k);
-	exit(k);
 }
 
+void
+done(int k)
+{
+	cleanup_temp_files();
+	exit(k);
+}
 
 void
 onintr(__unused int signo)
 {
-	sigdie = 1;
-	done(1);
+	cleanup_temp_files();
+	_exit(1);
 }
 
 
