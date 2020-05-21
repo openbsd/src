@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 2020/05/17 14:54:15 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 2020/05/21 19:54:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -20,6 +20,8 @@
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/extent.h>
+
+#include <machine/trap.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -141,6 +143,11 @@ init_powernv(void *fdt)
 			memreg_remove(&reg);
 		}
 	}
+
+	/* Remove interrupt vectors. */
+	reg.addr = trunc_page(EXC_RSVD);
+	reg.size = round_page(EXC_LAST);
+	memreg_remove(&reg);
 
 	/* Remove kernel. */
 	reg.addr = trunc_page((paddr_t)_start);
