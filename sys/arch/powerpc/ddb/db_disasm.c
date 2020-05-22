@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.18 2019/11/07 16:08:08 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.19 2020/05/22 00:33:45 gkoehler Exp $	*/
 /*
  * Copyright (c) 1996, 2001, 2003 Dale Rahn. All rights reserved.
  *
@@ -56,12 +56,13 @@ enum opf {
 	Opf_TO,
 	Opf_SIMM,
 	Opf_UIMM,
-	Opf_d,
 	Opf_crbA,
 	Opf_crbB,
 	Opf_crbD,
 	Opf_crfD,
 	Opf_crfS,
+	Opf_d,
+	Opf_ds,
 	Opf_spr,
 	Opf_tbr,
 
@@ -112,6 +113,7 @@ struct db_field {
 	{ "crfD",	Opf_crfD },
 	{ "crfS",	Opf_crfS },
 	{ "d",		Opf_d },
+	{ "ds",		Opf_ds },
 	{ "mb",		Opf_mb },
 	{ "sh",		Opf_sh },
 	{ "spr",	Opf_spr },
@@ -387,9 +389,9 @@ const struct opcode opcodes_1f[] = {
 
 /* 3a * 4 = e8 */
 const struct opcode opcodes_3a[] = {
-	{ "ld",		0xfc000003, 0xe8000000, " %{D},${ds}${A}" },
-	{ "ldu",	0xfc000003, 0xe8000001, " %{D},${ds}${A}" },
-	{ "lwa",	0xfc000003, 0xe8000002, " %{D},${ds}${A}" },
+	{ "ld",		0xfc000003, 0xe8000000, " %{D},%{ds}(%{A})" },
+	{ "ldu",	0xfc000003, 0xe8000001, " %{D},%{ds}(%{A})" },
+	{ "lwa",	0xfc000003, 0xe8000002, " %{D},%{ds}(%{A})" },
 	{ "",		0x0,		0x0, "" }
 };
 
@@ -411,8 +413,8 @@ const struct opcode opcodes_3b[] = {
 
 /* 3e * 4 = f8 */
 const struct opcode opcodes_3e[] = {
-	{ "std",	0xfc000003, 0xf8000000, " %{D},${ds}${A}" },
-	{ "stdu",	0xfc000003, 0xf8000001, " %{D},${ds}${A}" },
+	{ "std",	0xfc000003, 0xf8000000, " %{D},%{ds}(%{A})" },
+	{ "stdu",	0xfc000003, 0xf8000001, " %{D},%{ds}(%{A})" },
 	{ "",		0x0,		0x0, "" }
 };
 
@@ -891,6 +893,17 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt,
 			u_int crfS;
 			crfS = extract_field(instr, 13, 3);
 			snprintf(lbuf, sizeof (lbuf), "%d", crfS);
+			strlcat (disasm_buf, lbuf, bufsize);
+		}
+		break;
+	case Opf_ds:
+		{
+			int32_t ds;
+			ds = extract_field(instr, 29, 14);
+			ds = ds << 2;
+			if (ds & 0x8000)
+				ds |= ~0x7fff;
+			snprintf(lbuf, sizeof (lbuf), "%d", ds);
 			strlcat (disasm_buf, lbuf, bufsize);
 		}
 		break;
