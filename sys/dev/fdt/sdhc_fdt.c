@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.8 2020/05/22 09:41:33 patrick Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.9 2020/05/22 09:44:31 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -90,6 +90,7 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = faa->fa_iot;
 	sc->sc_size = faa->fa_reg[0].size;
+	sc->sc_node = faa->fa_node;
 
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
