@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.131 2020/05/16 16:44:54 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.132 2020/05/22 15:08:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -307,7 +307,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .flags = OPTIONS_TABLE_IS_ARRAY,
-	  .default_str = "xterm*:clipboard:ccolour:cstyle:title,"
+	  .default_str = "xterm*:clipboard:ccolour:cstyle:focus:title,"
 			 "screen*:title",
 	  .separator = ",",
 	  .text = "List of terminal features, used if they cannot be "

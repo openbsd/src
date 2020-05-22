@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.378 2020/05/16 16:44:54 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.379 2020/05/22 15:08:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -467,7 +467,7 @@ tty_update_features(struct tty *tty)
 	if (options_get_number(global_options, "extended-keys"))
 		tty_puts(tty, tty_term_string(tty->term, TTYC_ENEKS));
 	if (options_get_number(global_options, "focus-events"))
-		tty_raw(tty, tty_term_string(tty->term, TTYC_ENFCS));
+		tty_puts(tty, tty_term_string(tty->term, TTYC_ENFCS));
 	if (tty->term->flags & TERM_VT100LIKE)
 		tty_puts(tty, "\033[?7727h");
 }
