@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.7 2020/04/21 07:58:57 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.8 2020/05/22 09:41:33 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -25,6 +25,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
@@ -47,6 +48,7 @@ struct sdhc_fdt_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_size;
 	void			*sc_ih;
+	uint32_t		sc_gpio[3];
 
 	struct sdhc_host 	*sc_host;
 	struct clock_device	sc_cd;
@@ -59,6 +61,7 @@ struct cfattach sdhc_fdt_ca = {
 	sizeof(struct sdhc_fdt_softc), sdhc_fdt_match, sdhc_fdt_attach
 };
 
+int	sdhc_fdt_card_detect(struct sdhc_softc *);
 int	sdhc_fdt_signal_voltage(struct sdhc_softc *, int);
 uint32_t sdhc_fdt_get_frequency(void *, uint32_t *);
 
@@ -105,6 +108,14 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt\n");
 		goto unmap;
+	}
+
+	if (OF_getproplen(faa->fa_node, "cd-gpios") > 0 ||
+	    OF_getproplen(faa->fa_node, "non-removable") == 0) {
+		OF_getpropintarray(faa->fa_node, "cd-gpios", sc->sc_gpio,
+		    sizeof(sc->sc_gpio));
+		gpio_controller_config_pin(sc->sc_gpio, GPIO_CONFIG_INPUT);
+		sc->sc.sc_card_detect = sdhc_fdt_card_detect;
 	}
 
 	printf("\n");
@@ -177,6 +188,17 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
+}
+
+int
+sdhc_fdt_card_detect(struct sdhc_softc *ssc)
+{
+	struct sdhc_fdt_softc *sc = (struct sdhc_fdt_softc *)ssc;
+
+	if (OF_getproplen(sc->sc_node, "non-removable") == 0)
+		return 1;
+
+	return gpio_controller_get_pin(sc->sc_gpio);
 }
 
 int
