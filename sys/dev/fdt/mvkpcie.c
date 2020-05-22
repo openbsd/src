@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvkpcie.c,v 1.3 2020/05/22 20:14:04 patrick Exp $	*/
+/*	$OpenBSD: mvkpcie.c,v 1.4 2020/05/22 21:40:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -188,8 +188,6 @@ struct mvkpcie_softc {
 	int			sc_bus;
 
 	uint32_t		sc_bridge_command;
-	uint32_t		sc_bridge_bar0;
-	uint32_t		sc_bridge_bar1;
 	uint32_t		sc_bridge_businfo;
 	uint32_t		sc_bridge_iostatus;
 	uint32_t		sc_bridge_io_hi;
@@ -269,7 +267,7 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t bus_range[2];
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
-	pcireg_t bir, blr;
+	pcireg_t csr, bir, blr;
 	uint32_t reg;
 	int timo;
 
@@ -468,6 +466,14 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_bus = bus_range[0];
 
+	/* Initialize command/status. */
+	csr = PCI_COMMAND_MASTER_ENABLE;
+	if (sc->sc_io_size > 0)
+		csr |= PCI_COMMAND_IO_ENABLE;
+	if (sc->sc_mem_size > 0)
+		csr |= PCI_COMMAND_MEM_ENABLE;
+	sc->sc_bridge_command = csr;
+
 	/* Initialize bus range. */
 	bir = bus_range[0];
 	bir |= ((bus_range[0] + 1) << 8);
@@ -477,8 +483,8 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize I/O window. */
 	iobase = sc->sc_io_bus_addr;
 	iolimit = iobase + sc->sc_io_size - 1;
-	blr = iolimit & PPB_IO_MASK;
-	blr |= (iobase >> PPB_IO_SHIFT);
+	blr = (iolimit & PPB_IO_MASK) | (PPB_IO_32BIT << PPB_IOLIMIT_SHIFT);
+	blr |= ((iobase & PPB_IO_MASK) >> PPB_IO_SHIFT) | PPB_IO_32BIT;
 	sc->sc_bridge_iostatus = blr;
 	blr = (iobase & 0xffff0000) >> 16;
 	blr |= iolimit & 0xffff0000;
@@ -598,10 +604,6 @@ mvkpcie_conf_read_bridge(struct mvkpcie_softc *sc, int reg)
 	case PCI_BHLC_REG:
 		return 1 << PCI_HDRTYPE_SHIFT |
 		    0x10 << PCI_CACHELINE_SHIFT;
-	case PPB_REG_BASE0:
-		return sc->sc_bridge_bar0;
-	case PPB_REG_BASE1:
-		return sc->sc_bridge_bar1;
 	case PPB_REG_BUSINFO:
 		return sc->sc_bridge_businfo;
 	case PPB_REG_IOSTATUS:
@@ -616,7 +618,6 @@ mvkpcie_conf_read_bridge(struct mvkpcie_softc *sc, int reg)
 	case PPB_REG_BRIDGECONTROL:
 		return 0;
 	default:
-		printf("%s: reg %x\n", __func__, reg);
 		break;
 	}
 	return 0;
@@ -625,37 +626,7 @@ mvkpcie_conf_read_bridge(struct mvkpcie_softc *sc, int reg)
 void
 mvkpcie_conf_write_bridge(struct mvkpcie_softc *sc, int reg, pcireg_t data)
 {
-	switch (reg) {
-	case PCI_COMMAND_STATUS_REG: {
-		sc->sc_bridge_command = data & 0xffffff;
-		break;
-	}
-	case PPB_REG_BASE0:
-		sc->sc_bridge_bar0 = data;
-		break;
-	case PPB_REG_BASE1:
-		sc->sc_bridge_bar1 = data;
-		break;
-	case PPB_REG_BUSINFO:
-		sc->sc_bridge_businfo = data;
-		break;
-	case PPB_REG_IOSTATUS:
-		sc->sc_bridge_iostatus = data;
-		break;
-	case PPB_REG_MEM:
-		sc->sc_bridge_mem = data;
-		break;
-	case PPB_REG_IO_HI:
-		sc->sc_bridge_io_hi = data;
-		break;
-	case PPB_REG_PREFMEM:
-	case PPB_REG_PREFBASE_HI32:
-	case PPB_REG_PREFLIM_HI32:
-		break;
-	default:
-		printf("%s: reg %x data %x\n", __func__, reg, data);
-		break;
-	}
+	/* Treat emulated bridge registers as read-only. */
 }
 
 pcireg_t
