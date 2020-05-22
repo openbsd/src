@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvkpcie.c,v 1.2 2020/05/22 18:48:42 kettenis Exp $	*/
+/*	$OpenBSD: mvkpcie.c,v 1.3 2020/05/22 20:14:04 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -262,6 +262,8 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 	struct mvkpcie_softc *sc = (struct mvkpcie_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct pcibus_attach_args pba;
+	uint32_t *reset_gpio;
+	ssize_t reset_gpiolen;
 	bus_addr_t iobase, iolimit;
 	bus_addr_t membase, memlimit;
 	uint32_t bus_range[2];
@@ -347,6 +349,24 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	clock_set_assigned(sc->sc_node);
 	clock_enable_all(sc->sc_node);
+
+	reset_gpiolen = OF_getproplen(sc->sc_node, "reset-gpios");
+	if (reset_gpiolen > 0) {
+		/* Link training needs to be disabled during PCIe reset. */
+		HCLR4(sc, PCIE_CORE_CTRL0, PCIE_CORE_CTRL0_LINK_TRAINING);
+
+		reset_gpio = malloc(reset_gpiolen, M_TEMP, M_WAITOK);
+		OF_getpropintarray(sc->sc_node, "reset-gpios", reset_gpio,
+		    reset_gpiolen);
+
+		/* Issue PCIe reset. */
+		gpio_controller_config_pin(reset_gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(reset_gpio, 1);
+		delay(10000);
+		gpio_controller_set_pin(reset_gpio, 0);
+
+		free(reset_gpio, M_TEMP, reset_gpiolen);
+	}
 
 	reg = HREAD4(sc, CTRL_CORE_CONFIG);
 	reg &= ~CTRL_CORE_CONFIG_MODE_MASK;
