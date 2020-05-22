@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvkpcie.c,v 1.1 2020/05/22 08:48:49 patrick Exp $	*/
+/*	$OpenBSD: mvkpcie.c,v 1.2 2020/05/22 18:48:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -379,7 +379,6 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 	reg |= PCIE_CORE_CTRL0_LANE_1;
 	HWRITE4(sc, PCIE_CORE_CTRL0, reg);
 
-	HSET4(sc, PCIE_CORE_CTRL0, PCIE_CORE_CTRL0_LINK_TRAINING);
 	HSET4(sc, PCIE_CORE_CTRL2, PCIE_CORE_CTRL2_MSI_ENABLE);
 
 	HWRITE4(sc, PCIE_CORE_ISR0_STATUS, PCIE_CORE_ISR0_MASK_ALL);
@@ -398,6 +397,7 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	delay(100 * 1000);
 
+	HSET4(sc, PCIE_CORE_CTRL0, PCIE_CORE_CTRL0_LINK_TRAINING);
 	HSET4(sc, PCIE_LINK_CTRL_STAT, PCIE_LINK_CTRL_STAT_LINK_TRAINING);
 
 	for (timo = 40; timo > 0; timo--) {
