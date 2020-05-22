@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.9 2020/05/20 22:44:32 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.10 2020/05/22 10:02:30 patrick Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -635,12 +635,21 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0,
 	    mvneta_mediachange, mvneta_mediastatus);
 
+	config_defer(self, mvneta_attach_deferred);
+}
+
+void
+mvneta_attach_deferred(struct device *self)
+{
+	struct mvneta_softc *sc = (struct mvneta_softc *) self;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
 	if (!sc->sc_fixed_link) {
 		extern void *mvmdio_sc;
 		sc->sc_mdio = mvmdio_sc;
 
 		if (sc->sc_mdio == NULL) {
-			config_defer(self, mvneta_attach_deferred);
+			printf("%s: mdio bus not yet attached\n", self->dv_xname);
 			return;
 		}
 
@@ -676,40 +685,6 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	return;
-}
-
-void
-mvneta_attach_deferred(struct device *self)
-{
-	struct mvneta_softc *sc = (struct mvneta_softc *) self;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-
-	extern void *mvmdio_sc;
-	sc->sc_mdio = mvmdio_sc;
-	if (sc->sc_mdio == NULL) {
-		printf("%s: mdio bus not yet attached\n", self->dv_xname);
-		return;
-	}
-
-	mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phy,
-	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		printf("%s: no PHY found!\n", self->dv_xname);
-		ifmedia_add(&sc->sc_mii.mii_media,
-		    IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
-
-	/*
-	 * Call MI attach routines.
-	 */
-	if_attach(ifp);
-	ether_ifattach(ifp);
-
-	return;
 }
 
 void
