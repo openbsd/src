@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.30 2020/05/22 05:09:42 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.31 2020/05/22 07:02:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -111,9 +111,9 @@ struct ifiqueue {
  * notifying the driver to start transmission of the queued packets.
  *
  * A network device may have multiple contexts for the transmission
- * of packets, ie, independent transmit rings. An network device
- * represented by a struct ifnet may have multiple ifqueue structures,
- * each of which represents an independent context.
+ * of packets, ie, independent transmit rings. Such a network device,
+ * represented by a struct ifnet, would then have multiple ifqueue
+ * structures, each of which maps to an independent transmit ring.
  *
  * struct ifqueue also provides the point where conditioning of
  * traffic (ie, priq and hfsc) is implemented, and provides some
