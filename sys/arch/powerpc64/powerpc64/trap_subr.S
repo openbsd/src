@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.1 2020/05/22 15:07:47 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.2 2020/05/22 16:27:49 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -39,9 +39,96 @@
 
 	.abiversion 2
 
+#define GET_CPUINFO(r) \
+	mfsprg0  r
+
 #define GET_TOCBASE(r) \
 	ld	r, TRAP_TOCBASE(0)
 
+/*
+ * FRAME_SETUP assumes:
+ *	SPRG1		SP (1)
+ * 	SPRG3		trap type
+ *	savearea	r27-r31,DAR,DSISR   (DAR & DSISR only for DSI traps)
+ *	r28		LR
+ *	r29		CR
+ *	r30		scratch
+ *	r31		scratch
+ *	r1		kernel stack
+ *	SRR0/1		as at start of trap
+ *
+ * NOTE: SPRG1 is never used while the MMU is on, making it safe to reuse
+ * in any real-mode fault handler, including those handling double faults.
+ */
+#define	FRAME_SETUP(savearea)						\
+/* Have to enable translation to allow access of kernel stack: */	\
+	GET_CPUINFO(%r31);						\
+	mfsrr0	%r30;							\
+	std	%r30, (savearea+CPUSAVE_SRR0)(%r31);	/* save SRR0 */	\
+	mfsrr1	%r30;							\
+	std	%r30, (savearea+CPUSAVE_SRR1)(%r31);	/* save SRR1 */	\
+	mfsprg1	%r31;			/* get saved SP (clears SPRG1) */ \
+	mfmsr	%r30;							\
+	ori	%r30, %r30, (PSL_RI)@l;	/* XXX */			\
+	mtmsr	%r30;			/* stack can now be accessed */	\
+	isync;								\
+	stdu	%r31, -(FRAMELEN+288)(%r1); /* save it in the callframe */ \
+	std	%r0, FRAME_0+48(%r1);	/* save r0 in the trapframe */	\
+	std	%r31, FRAME_1+48(%r1);	/* save SP   "      "       */	\
+	std	%r2, FRAME_2+48(%r1);	/* save r2   "      "       */	\
+	std	%r28, FRAME_LR+48(%r1);	/* save LR   "      "       */	\
+	std	%r29, FRAME_CR+48(%r1);	/* save CR   "      "       */	\
+	GET_CPUINFO(%r2);						\
+	ld	%r27, (savearea+CPUSAVE_R27)(%r2); /* get saved r27 */	\
+	ld	%r28, (savearea+CPUSAVE_R28)(%r2); /* get saved r28 */	\
+	ld	%r29, (savearea+CPUSAVE_R29)(%r2); /* get saved r29 */	\
+	ld	%r30, (savearea+CPUSAVE_R30)(%r2); /* get saved r30 */	\
+	ld	%r31, (savearea+CPUSAVE_R31)(%r2); /* get saved r31 */	\
+	std	%r3, FRAME_3+48(%r1);	/* save r3-r31 */		\
+	std	%r4, FRAME_4+48(%r1);					\
+	std	%r5, FRAME_5+48(%r1);					\
+	std	%r6, FRAME_6+48(%r1);					\
+	std	%r7, FRAME_7+48(%r1);					\
+	std	%r8, FRAME_8+48(%r1);					\
+	std	%r9, FRAME_9+48(%r1);					\
+	std	%r10, FRAME_10+48(%r1);					\
+	std	%r11, FRAME_11+48(%r1);					\
+	std	%r12, FRAME_12+48(%r1);					\
+	std	%r13, FRAME_13+48(%r1);					\
+	std	%r14, FRAME_14+48(%r1);					\
+	std	%r15, FRAME_15+48(%r1);					\
+	std	%r16, FRAME_16+48(%r1);					\
+	std	%r17, FRAME_17+48(%r1);					\
+	std	%r18, FRAME_18+48(%r1);					\
+	std	%r19, FRAME_19+48(%r1);					\
+	std	%r20, FRAME_20+48(%r1);					\
+	std	%r21, FRAME_21+48(%r1);					\
+	std	%r22, FRAME_22+48(%r1);					\
+	std	%r23, FRAME_23+48(%r1);					\
+	std	%r24, FRAME_24+48(%r1);					\
+	std	%r25, FRAME_25+48(%r1);					\
+	std	%r26, FRAME_26+48(%r1);					\
+	std	%r27, FRAME_27+48(%r1);					\
+	std	%r28, FRAME_28+48(%r1);					\
+	std	%r29, FRAME_29+48(%r1);					\
+	std	%r30, FRAME_30+48(%r1);					\
+	std	%r31, FRAME_31+48(%r1);					\
+	ld	%r28, (savearea+CPUSAVE_DAR)(%r2);  /* saved DAR */	\
+	ld	%r29, (savearea+CPUSAVE_DSISR)(%r2);/* saved DSISR */	\
+	ld	%r30, (savearea+CPUSAVE_SRR0)(%r2); /* saved SRR0 */	\
+	ld	%r31, (savearea+CPUSAVE_SRR1)(%r2); /* saved SRR1 */	\
+	mfxer	%r3;							\
+	mfctr	%r4;							\
+	mfsprg3	%r5;							\
+	std	%r3,FRAME_XER+48(%r1);	/* save xer/ctr/exc */		\
+	std	%r4,FRAME_CTR+48(%r1);					\
+	std	%r5,FRAME_EXC+48(%r1);					\
+	std	%r28, FRAME_DAR+48(%r1);				\
+	std	%r29, FRAME_DSISR+48(%r1); /* save dsisr/srr0/srr1 */	\
+	std	%r30, FRAME_SRR0+48(%r1);				\
+	std	%r31, FRAME_SRR1+48(%r1);
+
+	
 	.text
 
 	.globl trapcode, trapcodeend
@@ -55,10 +142,35 @@ trapcode:
 	blrl
 trapcodeend:
 
+/*
+ * generictrap does some standard setup for trap handling to minimize
+ * the code that need be installed in the actual vectors. It expects
+ * the following conditions.
+ * 
+ * R1 - Trap vector = LR & (0xff00 | R1)
+ * SPRG1 - Original R1 contents
+ * SPRG2 - Original LR
+ */
+
 	.globl generictrap
 generictrap:
 	/* Save R1 for computing the exception vector */
 	mtsprg3	%r1
+
+	/* Save interesting registers */
+	GET_CPUINFO(%r1)
+	std	%r27, (CI_TEMPSAVE+CPUSAVE_R27)(%r1)	/* free r27-r31 */
+	std	%r28, (CI_TEMPSAVE+CPUSAVE_R28)(%r1)
+	std	%r29, (CI_TEMPSAVE+CPUSAVE_R29)(%r1)
+	std	%r30, (CI_TEMPSAVE+CPUSAVE_R30)(%r1)
+	std	%r31, (CI_TEMPSAVE+CPUSAVE_R31)(%r1)
+	mfdar	%r30
+	std	%r30, (CI_TEMPSAVE+CPUSAVE_DAR)(%r1)
+	mfdsisr	%r30
+	std	%r30, (CI_TEMPSAVE+CPUSAVE_DSISR)(%r1)
+	mfsprg1	%r1			/* restore SP, in case of branch */
+	mfsprg2	%r28			/* save LR */
+	mfcr	%r29			/* save CR */
 
 	/* Compute the exception vector from the link register */
 	mfsprg3 %r31
@@ -68,17 +180,7 @@ generictrap:
 	and	%r30, %r30, %r31
 	mtsprg3	%r30
 
-	mfsprg1	%r1
-	mfmsr	%r30
-	ori	%r30, %r30, PSL_RI@l
-	mtmsr	%r30
-	mfsprg1	%r31
-	stdu	%r31, -(FRAMELEN+288)(%r1)
-	std	%r31, FRAME_1+48(%r1)
-	mfsprg3	%r5
-	std	%r5, FRAME_EXC+48(%r1)
-
+	FRAME_SETUP(CI_TEMPSAVE)
 	GET_TOCBASE(%r2)
-
 	addi	%r3, %r1, 48
 	bl	trap

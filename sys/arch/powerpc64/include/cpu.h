@@ -14,6 +14,9 @@ struct cpu_info {
 
 	struct proc	*ci_curproc;
 
+#define CPUSAVE_LEN	9
+	register_t	ci_tempsave[CPUSAVE_LEN];
+
 	uint32_t	ci_ipending;
 #ifdef DIAGNOSTIC
 	int		ci_mutex_level;

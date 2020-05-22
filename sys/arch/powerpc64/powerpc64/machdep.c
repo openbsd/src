@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2020/05/22 15:29:21 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 2020/05/22 16:27:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -81,6 +81,7 @@ init_powernv(void *fdt, void *tocbase)
 	int i;
 
 	/* Store pointer to our struct cpu_info. */
+	__asm volatile ("mtsprg0 %0" :: "r"(&cpu_info_primary));
 	__asm volatile ("mr %%r13, %0" :: "r"(&cpu_info_primary));
 
 	/* Clear BSS. */
