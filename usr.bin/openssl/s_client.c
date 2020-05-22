@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.44 2020/04/26 01:59:27 inoguchi Exp $ */
+/* $OpenBSD: s_client.c,v 1.45 2020/05/22 16:11:23 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -331,7 +331,7 @@ s_client_main(int argc, char **argv)
 	const char *groups_in = NULL;
 	char *sess_in = NULL;
 	char *sess_out = NULL;
-	struct sockaddr peer;
+	struct sockaddr_storage peer;
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0;
 	long socket_mtu = 0;
@@ -776,7 +776,8 @@ re_start:
 	if (SSL_version(con) == DTLS1_VERSION) {
 
 		sbio = BIO_new_dgram(s, BIO_NOCLOSE);
-		if (getsockname(s, &peer, (void *) &peerlen) == -1) {
+		if (getsockname(s, (struct sockaddr *)&peer,
+		    (void *)&peerlen) == -1) {
 			BIO_printf(bio_err, "getsockname:errno=%d\n",
 			    errno);
 			shutdown(s, SHUT_RD);
