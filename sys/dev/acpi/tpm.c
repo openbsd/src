@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.9 2019/05/15 21:28:21 tedu Exp $ */
+/* $OpenBSD: tpm.c,v 1.10 2020/05/22 10:16:37 kettenis Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -127,19 +127,6 @@ struct tpm_softc {
 	int			sc_enabled;
 };
 
-struct tpm_crs {
-	int irq_int;
-	uint8_t irq_flags;
-	uint32_t addr_min;
-	uint32_t addr_bas;
-	uint32_t addr_len;
-	uint16_t i2c_addr;
-	struct aml_node *devnode;
-	struct aml_node *gpio_int_node;
-	uint16_t gpio_int_pin;
-	uint16_t gpio_int_flags;
-};
-
 const struct {
 	uint32_t devid;
 	char name[32];
@@ -158,7 +145,6 @@ const struct {
 int	tpm_match(struct device *, void *, void *);
 void	tpm_attach(struct device *, struct device *, void *);
 int	tpm_activate(struct device *, int);
-int	tpm_parse_crs(int, union acpi_resource *, void *);
 
 int	tpm_probe(bus_space_tag_t, bus_space_handle_t);
 int	tpm_init(struct tpm_softc *);
@@ -210,96 +196,48 @@ void
 tpm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tpm_softc	*sc = (struct tpm_softc *)self;
-	struct acpi_attach_args *aa = aux;
-	struct tpm_crs	crs;
-	struct aml_value	res;
-	int64_t			st;
+	struct acpi_attach_args *aaa = aux;
+	int64_t			sta;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
-	sc->sc_devnode = aa->aaa_node;
+	sc->sc_devnode = aaa->aaa_node;
 	sc->sc_enabled = 0;
 
-	printf(": %s", sc->sc_devnode->name);
+	printf(" %s", sc->sc_devnode->name);
 
-	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &st))
-		st = STA_PRESENT | STA_ENABLED | STA_DEV_OK;
-	if ((st & (STA_PRESENT | STA_ENABLED | STA_DEV_OK)) !=
+	sta = acpi_getsta(sc->sc_acpi, sc->sc_devnode);
+	if ((sta & (STA_PRESENT | STA_ENABLED | STA_DEV_OK)) !=
 	    (STA_PRESENT | STA_ENABLED | STA_DEV_OK)) {
-		printf(", not enabled\n");
+		printf(": not enabled\n");
 		return;
 	}
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CRS", 0, NULL, &res)) {
-		printf(", no _CRS method\n");
-		return;
-	}
-	if (res.type != AML_OBJTYPE_BUFFER || res.length < 5) {
-		printf(", invalid _CRS object (type %d len %d)\n",
-		    res.type, res.length);
-		aml_freevalue(&res);
-		return;
-	}
-	memset(&crs, 0, sizeof(crs));
-	crs.devnode = sc->sc_devnode;
-	aml_parse_resource(&res, tpm_parse_crs, &crs);
-	aml_freevalue(&res);
-
-	if (crs.addr_bas == 0) {
-		printf(", can't find address\n");
+	if (aaa->aaa_naddr < 1) {
+		printf(": no registers\n");
 		return;
 	}
 
-	printf(" addr 0x%x/0x%x", crs.addr_bas, crs.addr_len);
+	printf(" addr 0x%llx/0x%llx", aaa->aaa_addr[0], aaa->aaa_size[0]);
 
-	sc->sc_bt = aa->aaa_memt;
-	if (bus_space_map(sc->sc_bt, crs.addr_bas, crs.addr_len, 0,
-	    &sc->sc_bh)) {
-		printf(", failed mapping at 0x%x\n", crs.addr_bas);
+	sc->sc_bt = aaa->aaa_bst[0];
+	if (bus_space_map(sc->sc_bt, aaa->aaa_addr[0], aaa->aaa_size[0],
+	    0, &sc->sc_bh)) {
+		printf(": can't map registers\n");
 		return;
 	}
 
 	if (!tpm_probe(sc->sc_bt, sc->sc_bh)) {
-		printf(", probe failed\n");
+		printf(": probe failed\n");
 		return;
 	}
 
 	if (tpm_init(sc) != 0) {
-		printf(", init failed\n");
+		printf(": init failed\n");
 		return;
 	}
 
 	printf("\n");
 	sc->sc_enabled = 1;
-}
-
-int
-tpm_parse_crs(int crsidx, union acpi_resource *crs, void *arg)
-{
-	struct tpm_crs *sc_crs = arg;
-
-	switch (AML_CRSTYPE(crs)) {
-	case LR_MEM32:
-		sc_crs->addr_min = letoh32(crs->lr_m32._min);
-		sc_crs->addr_len = letoh32(crs->lr_m32._len);
-		break;
-
-	case LR_MEM32FIXED:
-		sc_crs->addr_bas = letoh32(crs->lr_m32fixed._bas);
-		sc_crs->addr_len = letoh32(crs->lr_m32fixed._len);
-		break;
-
-	case SR_IOPORT:
-	case SR_IRQ:
-	case LR_EXTIRQ:
-	case LR_GPIO:
-		break;
-
-	default:
-		DPRINTF(("%s: unknown resource type %d\n", __func__,
-		    AML_CRSTYPE(crs)));
-	}
-
-	return 0;
 }
 
 int
