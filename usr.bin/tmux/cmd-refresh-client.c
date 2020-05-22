@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.35 2020/05/21 07:24:13 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.36 2020/05/22 11:07:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -46,7 +46,6 @@ static void
 cmd_refresh_client_update_offset(struct client *tc, const char *value)
 {
 	struct window_pane	*wp;
-	struct client_offset	*co;
 	char			*copy, *colon;
 	u_int			 pane;
 
@@ -63,11 +62,10 @@ cmd_refresh_client_update_offset(struct client *tc, const char *value)
 	if (wp == NULL)
 		goto out;
 
-	co = server_client_add_pane_offset(tc, wp);
 	if (strcmp(colon, "on") == 0)
-		co->flags &= ~CLIENT_OFFSET_OFF;
+		control_set_pane_on(tc, wp);
 	else if (strcmp(colon, "off") == 0)
-		co->flags |= CLIENT_OFFSET_OFF;
+		control_set_pane_off(tc, wp);
 
 out:
 	free(copy);
