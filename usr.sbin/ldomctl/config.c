@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.37 2020/05/22 21:40:16 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.38 2020/05/22 21:54:20 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -2792,6 +2792,18 @@ build_config(const char *filename, int noaction)
 	SIMPLEQ_INIT(&conf.domain_list);
 	if (parse_config(filename, &conf) < 0)
 		exit(1);
+	if (noaction)
+		exit(0);
+
+	pri = md_read("pri");
+	if (pri == NULL)
+		err(1, "unable to get PRI");
+	hvmd = md_read("hv.md");
+	if (hvmd == NULL)
+		err(1, "unable to get Hypervisor MD");
+
+	pri_init(pri);
+	pri_alloc_memory(hv_membase, hv_memsize);
 
 	SIMPLEQ_FOREACH(domain, &conf.domain_list, entry) {
 		if (strcmp(domain->name, "primary") == 0) {
@@ -2810,19 +2822,6 @@ build_config(const char *filename, int noaction)
 		errx(1, "not enough VCPU resources available");
 	if (memory > total_memory || primary_memory == 0)
 		errx(1, "not enough memory available");
-
-	if (noaction)
-		exit(0);
-
-	pri = md_read("pri");
-	if (pri == NULL)
-		err(1, "unable to get PRI");
-	hvmd = md_read("hv.md");
-	if (hvmd == NULL)
-		err(1, "unable to get Hypervisor MD");
-
-	pri_init(pri);
-	pri_alloc_memory(hv_membase, hv_memsize);
 
 	hvmd_init(hvmd);
 	primary = primary_init();
