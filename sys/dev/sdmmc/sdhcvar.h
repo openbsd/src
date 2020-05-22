@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcvar.h,v 1.13 2020/04/19 16:25:33 kettenis Exp $	*/
+/*	$OpenBSD: sdhcvar.h,v 1.14 2020/05/22 10:23:14 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -32,6 +32,8 @@ struct sdhc_softc {
 
 	bus_dma_tag_t sc_dmat;
 
+	void (*sc_bus_clock_pre)(struct sdhc_softc *, int, int);
+	void (*sc_bus_clock_post)(struct sdhc_softc *, int, int);
 	int (*sc_card_detect)(struct sdhc_softc *);
 	int (*sc_signal_voltage)(struct sdhc_softc *, int);
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.66 2020/05/13 17:31:16 cheloha Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.67 2020/05/22 10:23:14 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -670,6 +670,9 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 
 	s = splsdmmc();
 
+	if (hp->sc->sc_bus_clock_pre)
+		hp->sc->sc_bus_clock_pre(hp->sc, freq, timing);
+
 #ifdef DIAGNOSTIC
 	/* Must not stop the clock if commands are in progress. */
 	if (ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_CMD_INHIBIT_MASK) &&
@@ -730,6 +733,9 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	 * Enable SD clock.
 	 */
 	HSET2(hp, SDHC_CLOCK_CTL, SDHC_SDCLK_ENABLE);
+
+	if (hp->sc->sc_bus_clock_post)
+		hp->sc->sc_bus_clock_post(hp->sc, freq, timing);
 
 ret:
 	splx(s);
