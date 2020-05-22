@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.9 2020/05/22 09:44:31 patrick Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.10 2020/05/22 09:52:27 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -48,6 +48,7 @@ struct sdhc_fdt_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_size;
 	void			*sc_ih;
+	int			sc_node;
 	uint32_t		sc_gpio[3];
 
 	struct sdhc_host 	*sc_host;
