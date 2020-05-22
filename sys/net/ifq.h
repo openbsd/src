@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.27 2020/01/25 06:31:32 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.28 2020/05/22 04:54:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -192,7 +192,7 @@ struct ifiqueue {
  * lock with ifq_q_enter(). The caller must pass a reference to the
  * conditioners ifq_ops structure so the infrastructure can ensure the
  * caller is able to understand the internals. ifq_q_enter() returns
- * a pointer to the conditions internal structures, or NULL if the
+ * a pointer to the conditioners internal structures, or NULL if the
  * ifq_ops did not match the current conditioner.
  *
  * === ifq_q_leave()
@@ -233,7 +233,7 @@ struct ifiqueue {
  * = ifqueue work serialisation
  *
  * ifqueues provide a mechanism to dispatch work to be run in a single
- * context. Work in this mechanism is represtented by task structures.
+ * context. Work in this mechanism is represented by task structures.
  *
  * The tasks are run in a context similar to a taskq serviced by a
  * single kernel thread, except the work is run immediately by the
