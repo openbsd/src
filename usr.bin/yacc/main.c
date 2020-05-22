@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.31 2020/05/21 16:22:26 espie Exp $	 */
+/* $OpenBSD: main.c,v 1.32 2020/05/22 09:07:34 espie Exp $	 */
 /* $NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	 */
 
 /*
@@ -299,11 +299,21 @@ create_file_names(void)
 }
 
 
+FILE *
+create_temp(char *template)
+{
+	int fd;
+	FILE *f;
+
+	fd = mkstemp(template);
+	if (fd == -1 || (f = fdopen(fd, "w")) == NULL)
+		open_error(template);
+	return f;
+}
+
 void
 open_files(void)
 {
-	int fd;
-
 	create_file_names();
 
 	if (input_file == NULL) {
@@ -311,13 +321,9 @@ open_files(void)
 		if (input_file == NULL)
 			open_error(input_file_name);
 	}
-	fd = mkstemp(action_file_name);
-	if (fd == -1 || (action_file = fdopen(fd, "w")) == NULL)
-		open_error(action_file_name);
+	action_file = create_temp(action_file_name);
 
-	fd = mkstemp(text_file_name);
-	if (fd == -1 || (text_file = fdopen(fd, "w")) == NULL)
-		open_error(text_file_name);
+	text_file = create_temp(text_file_name);
 
 	if (vflag) {
 		verbose_file = fopen(verbose_file_name, "w");
@@ -328,9 +334,7 @@ open_files(void)
 		defines_file = fopen(defines_file_name, "w");
 		if (defines_file == NULL)
 			open_write_error(defines_file_name);
-		fd = mkstemp(union_file_name);
-		if (fd == -1 || (union_file = fdopen(fd, "w")) == NULL)
-			open_error(union_file_name);
+		union_file = create_temp(union_file_name);
 	}
 	output_file = fopen(output_file_name, "w");
 	if (output_file == NULL)
