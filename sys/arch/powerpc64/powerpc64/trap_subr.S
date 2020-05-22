@@ -1,6 +1,7 @@
-/*	$OpenBSD: signal.h,v 1.2 2020/05/22 15:07:47 kettenis Exp $	*/
+/* $OpenBSD: trap_subr.S,v 1.1 2020/05/22 15:07:47 kettenis Exp $ */
+/* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
-/*
+/*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
@@ -31,45 +32,53 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHDEP_SIGNAL_H_
-#define	_MACHDEP_SIGNAL_H_
+#include "assym.h"
 
-#include <sys/cdefs.h>
+#include <machine/psl.h>
+#include <machine/trap.h>
 
-typedef int sig_atomic_t;
+	.abiversion 2
 
-#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
+#define GET_TOCBASE(r) \
+	ld	r, TRAP_TOCBASE(0)
 
-#include <machine/_types.h>
+	.text
 
-/*
- * We have to save all registers on every trap, because
- *	1. user could attach this process every time
- *	2. we must be able to restore all user registers in case of fork
- * Actually, we do not save the fp registers on trap, since
- * these are not used by the kernel. They are saved only when switching
- * between processes using the FPU.
- *
- */
-struct trapframe {
-	__register_t fixreg[32];
-	__register_t lr;
-	__register_t cr;
-	__register_t xer;
-	__register_t ctr;
-	__register_t srr0;
-	__register_t srr1;
-	__register_t dar;	/* dar & dsisr are only filled on a DSI trap */
-	__register_t dsisr;
-	__register_t exc;
-};
+	.globl trapcode, trapcodeend
+trapcode:
+	mtsprg1	%r1
+	mflr	%r1
+	mtsprg2	%r1
+	ld	%r1, TRAP_ENTRY(0)
+	mtlr	%r1
+	li	%r1, 0xe0
+	blrl
+trapcodeend:
 
-struct sigcontext {
-	long sc_cookie;
-	int sc_mask;			/* saved signal mask */
-	struct trapframe sc_frame;	/* saved registers */
-};
+	.globl generictrap
+generictrap:
+	/* Save R1 for computing the exception vector */
+	mtsprg3	%r1
 
-#endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
+	/* Compute the exception vector from the link register */
+	mfsprg3 %r31
+	ori	%r31, %r31, 0xff00
+	mflr	%r30
+	addi	%r30, %r30, -4 /* The branch instruction, not the next */
+	and	%r30, %r30, %r31
+	mtsprg3	%r30
 
-#endif	/* _MACHDEP_SIGNAL_H_ */
+	mfsprg1	%r1
+	mfmsr	%r30
+	ori	%r30, %r30, PSL_RI@l
+	mtmsr	%r30
+	mfsprg1	%r31
+	stdu	%r31, -(FRAMELEN+288)(%r1)
+	std	%r31, FRAME_1+48(%r1)
+	mfsprg3	%r5
+	std	%r5, FRAME_EXC+48(%r1)
+
+	GET_TOCBASE(%r2)
+
+	addi	%r3, %r1, 48
+	bl	trap

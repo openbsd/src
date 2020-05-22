@@ -142,4 +142,8 @@
 #define	EXC_PGM_PRIV		(1UL << 18)
 #define	EXC_PGM_TRAP		(1UL << 17)
 
+/* Magic pointer to store TOC base and other info for trap handlers */
+#define	TRAP_ENTRY	0x1f0
+#define	TRAP_TOCBASE	0x1f8
+
 #endif	/* _MACHINE_TRAP_H_ */

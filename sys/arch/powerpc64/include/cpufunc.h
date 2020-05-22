@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.2 2020/05/22 15:07:47 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.1 2020/05/22 15:07:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -16,6 +16,40 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-char cpu_model[64];
+#ifndef _MACHINE_CPUFUNC_H_
+#define _MACHINE_CPUFUNC_H_
 
-struct cpu_info *cpu_info_primary;
+static inline uint64_t
+mfmsr(void)
+{
+	uint64_t value;
+	__asm volatile ("mfmsr %0" : "=r"(value));
+	return value;
+}
+
+static inline void
+mtmsr(uint64_t value)
+{
+	__asm volatile ("mtmsr %0" :: "r"(value));
+}
+
+static inline uint64_t
+mflpcr(void)
+{
+	uint64_t value;
+	__asm volatile ("mfspr %0,318" : "=r"(value));
+	return value;
+}
+
+static inline void
+mtlpcr(uint64_t value)
+{
+	__asm volatile ("mtspr 318,%0" :: "r"(value));
+}
+
+
+extern int cacheline_size;
+
+void	__syncicache(void *, size_t);
+
+#endif /* _MACHINE_CPUFUNC_H_ */

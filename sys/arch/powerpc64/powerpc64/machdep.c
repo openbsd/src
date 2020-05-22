@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 2020/05/21 19:54:14 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 2020/05/22 15:07:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -17,16 +17,21 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/extent.h>
 
+#include <machine/cpufunc.h>
+#include <machine/psl.h>
 #include <machine/trap.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/ofw/fdt.h>
 #include <dev/cons.h>
+
+int cacheline_size = 128;
 
 struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
@@ -55,6 +60,9 @@ extern char __bss_start[];
 extern uint64_t opal_base;
 extern uint64_t opal_entry;
 
+extern char trapcode[], trapcodeend[];
+extern char generictrap[];
+
 struct fdt_reg memreg[VM_PHYSSEG_MAX];
 int nmemreg;
 
@@ -62,16 +70,18 @@ void memreg_add(const struct fdt_reg *);
 void memreg_remove(const struct fdt_reg *);
 
 void
-init_powernv(void *fdt)
+init_powernv(void *fdt, void *tocbase)
 {
 	struct fdt_reg reg;
+	paddr_t trap;
+	uint64_t msr;
 	char *prop;
 	void *node;
 	int len;
 	int i;
 
 	/* Store pointer to our struct cpu_info. */
-	__asm volatile("mr %%r13, %0" :: "r"(&cpu_info_primary));
+	__asm volatile ("mr %%r13, %0" :: "r"(&cpu_info_primary));
 
 	/* Clear BSS. */
 	memset(__bss_start, 0, _end - __bss_start);
@@ -88,31 +98,24 @@ init_powernv(void *fdt)
 		fdt_node_property(node, "compatible", &prop);
 	}
 
-	node = fdt_find_node("/");
-	fdt_node_property(node, "compatible", &prop);
-	printf("%s\n", prop);
+	printf("Hello, World!\n");
 
-	fdt_node_property(node, "model-name", &prop);
-	printf("%s\n", prop);
+	printf("MSR 0x%016llx\n", mfmsr());
 
-	fdt_node_property(node, "model", &prop);
-	printf("%s\n", prop);
+	/*
+	 * Initialize all traps with the stub that calls the generic
+	 * trap handler.
+	 */
+	for (trap = EXC_RST; trap < EXC_LAST; trap += 32)
+		memcpy((void *)trap, trapcode, trapcodeend - trapcode);
+	__syncicache(EXC_RSVD, EXC_LAST - EXC_RSVD);
 
-	uint32_t pvr;
-	__asm volatile("mfspr %0,287" : "=r"(pvr));
-	printf("PVR %x\n", pvr);
+	*((void **)TRAP_ENTRY) = generictrap;
+	*((void **)TRAP_TOCBASE) = tocbase;
 
-	uint64_t lpcr;
-	__asm volatile("mfspr %0,318" : "=r"(lpcr));
-	printf("LPCR %llx\n", lpcr);
-
-	uint64_t lpidr;
-	__asm volatile("mfspr %0,319" : "=r"(lpidr));
-	printf("LPIDR %llx\n", lpidr);
-
-	uint64_t msr;
-	__asm volatile("mfmsr %0" : "=r"(msr));
-	printf("MSR %llx\n", msr);
+	/* We're now ready to take traps. */
+	msr = mfmsr();
+	mtmsr(msr | PSL_RI);
 
 	/* Add all memory. */
 	node = fdt_find_node("/");
@@ -170,7 +173,7 @@ init_powernv(void *fdt)
 		physmem += atop(end - start);
 	}
 
-	printf("Hello, World!\n");
+	__asm volatile ("trap");
 	opal_cec_reboot();
 }
 

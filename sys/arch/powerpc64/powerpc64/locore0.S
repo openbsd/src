@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.1 2020/05/16 17:11:14 kettenis Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.2 2020/05/22 15:07:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -59,6 +59,7 @@ _start:
 	bl	self_reloc
 
 	mr	%r3, %r14	/* device tree */
+	mr	%r4, %r2	/* TOC pointer */
 	bl	init_powernv
 
 	b	.

@@ -1,8 +1,10 @@
-/*	$OpenBSD: signal.h,v 1.2 2020/05/22 15:07:47 kettenis Exp $	*/
+/*	$OpenBSD: syncicache.c,v 1.1 2020/05/22 15:07:47 kettenis Exp $	*/
 
-/*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank.
- * Copyright (C) 1995, 1996 TooLs GmbH.
+/*-
+ * SPDX-License-Identifier: BSD-4-Clause
+ *
+ * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
+ * Copyright (C) 1995-1997, 1999 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,47 +31,34 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-#ifndef	_MACHDEP_SIGNAL_H_
-#define	_MACHDEP_SIGNAL_H_
-
-#include <sys/cdefs.h>
-
-typedef int sig_atomic_t;
-
-#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
-
-#include <machine/_types.h>
-
-/*
- * We have to save all registers on every trap, because
- *	1. user could attach this process every time
- *	2. we must be able to restore all user registers in case of fork
- * Actually, we do not save the fp registers on trap, since
- * these are not used by the kernel. They are saved only when switching
- * between processes using the FPU.
  *
+ * $NetBSD: syncicache.c,v 1.2 1999/05/05 12:36:40 tsubai Exp $
  */
-struct trapframe {
-	__register_t fixreg[32];
-	__register_t lr;
-	__register_t cr;
-	__register_t xer;
-	__register_t ctr;
-	__register_t srr0;
-	__register_t srr1;
-	__register_t dar;	/* dar & dsisr are only filled on a DSI trap */
-	__register_t dsisr;
-	__register_t exc;
-};
 
-struct sigcontext {
-	long sc_cookie;
-	int sc_mask;			/* saved signal mask */
-	struct trapframe sc_frame;	/* saved registers */
-};
+#include <sys/param.h>
 
-#endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
+#include <machine/cpufunc.h>
 
-#endif	/* _MACHDEP_SIGNAL_H_ */
+void
+__syncicache(void *from, size_t len)
+{
+	size_t	l, off;
+	char	*p;
+
+	off = (uintptr_t)from & (cacheline_size - 1);
+	l = len += off;
+	p = (char *)from - off;
+
+	do {
+		__asm volatile ("dcbst 0,%0" :: "r"(p));
+		p += cacheline_size;
+	} while ((l -= cacheline_size) > 0);
+	__asm volatile ("sync");
+	p = (char *)from - off;
+	do {
+		__asm __volatile ("icbi 0,%0" :: "r"(p));
+		p += cacheline_size;
+	} while ((len -= cacheline_size) > 0);
+	__asm volatile ("sync; isync");
+}
+
