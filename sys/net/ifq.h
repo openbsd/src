@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.29 2020/05/22 05:08:47 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.30 2020/05/22 05:09:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -377,7 +377,7 @@ struct ifiqueue {
  *		DISABLE_INTERRUPTS();
  *
  *		for (i = 0; i < sc->sc_num_queues; i++) {
- * 			ifq = ifp->if_ifqs[i];
+ *			ifq = ifp->if_ifqs[i];
  *			ifq_barrier(ifq);
  *		}
  *
@@ -386,7 +386,7 @@ struct ifiqueue {
  *		FREE_RESOURCES();
  *
  *		for (i = 0; i < sc->sc_num_queues; i++) {
- * 			ifq = ifp->if_ifqs[i];
+ *			ifq = ifp->if_ifqs[i];
  *			ifq_clr_oactive(ifq);
  *		}
  *	}
