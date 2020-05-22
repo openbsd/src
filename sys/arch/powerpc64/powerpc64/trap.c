@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.1 2020/05/22 15:07:47 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.2 2020/05/22 15:34:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -21,11 +21,8 @@
 
 #include <machine/trap.h>
 
-extern void opal_cec_reboot(void);
-
 void
 trap(struct trapframe *frame)
 {
-	printf("trap type %lx at lr %lx\n", frame->exc, frame->lr);
-	opal_cec_reboot();
+	panic("trap type %lx at lr %lx", frame->exc, frame->lr);
 }
