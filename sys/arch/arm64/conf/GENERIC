@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.166 2020/05/22 08:49:02 patrick Exp $
+# $OpenBSD: GENERIC,v 1.167 2020/05/22 08:53:01 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -263,6 +263,9 @@ mskc*		at pci?			# Marvell Yukon-2
 msk*		at mskc?		#  each port of above
 re*		at pci?			# Realtek 8169/8169S/8110S
 rge*		at pci?			# Realtek 8125
+
+# PCI WiFi
+bwfm*		at pci?			# Broadcom FullMAC
 
 # PCI SCSI
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers
