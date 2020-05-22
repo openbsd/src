@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.346 2020/05/22 11:07:04 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.347 2020/05/22 15:43:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1286,7 +1286,7 @@ forward_key:
 		window_pane_key(wp, c, s, wl, key, m);
 
 out:
-	if (s != NULL)
+	if (s != NULL && key != KEYC_FOCUS_OUT)
 		server_client_update_latest(c);
 	free(event);
 	return (CMD_RETURN_NORMAL);

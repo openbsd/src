@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.136 2020/05/16 16:44:54 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.137 2020/05/22 15:43:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -800,13 +800,10 @@ complete_key:
 	tty->flags &= ~TTY_TIMER;
 
 	/* Check for focus events. */
-	if (key == KEYC_FOCUS_OUT) {
+	if (key == KEYC_FOCUS_OUT)
 		tty->client->flags &= ~CLIENT_FOCUSED;
-		return (1);
-	} else if (key == KEYC_FOCUS_IN) {
+	else if (key == KEYC_FOCUS_IN)
 		tty->client->flags |= CLIENT_FOCUSED;
-		return (1);
-	}
 
 	/* Fire the key. */
 	if (key != KEYC_UNKNOWN) {
