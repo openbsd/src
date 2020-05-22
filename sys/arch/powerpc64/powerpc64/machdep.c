@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 2020/05/22 15:07:47 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 2020/05/22 15:29:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -431,6 +431,8 @@ consinit(void)
 __dead void
 boot(int howto)
 {
+	opal_cec_reboot();
+
 	for (;;)
 		continue;
 	/* NOTREACHED */
