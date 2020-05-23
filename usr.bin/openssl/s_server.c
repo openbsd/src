@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.37 2020/05/23 12:52:54 tb Exp $ */
+/* $OpenBSD: s_server.c,v 1.38 2020/05/23 13:00:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1033,6 +1033,7 @@ s_server_main(int argc, char *argv[])
 			goto end;
 		if (!SSL_CTX_set_max_proto_version(ctx2, max_version))
 			goto end;
+		SSL_CTX_clear_mode(ctx2, SSL_MODE_AUTO_RETRY);
 	}
 	if (ctx2) {
 		BIO_printf(bio_s_out, "Setting secondary ctx parameters\n");
