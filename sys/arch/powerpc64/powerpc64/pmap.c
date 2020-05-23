@@ -3,6 +3,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/pmap.h>
+#include <machine/pte.h>
 
 void
 pmap_virtual_space(vaddr_t *start, vaddr_t *end)
