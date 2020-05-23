@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.309 2020/05/18 17:56:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.310 2020/05/23 08:42:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3921,7 +3921,7 @@ iwm_ccmp_decap(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	hdrlen = ieee80211_get_hdrlen(wh);
 	ivp = (uint8_t *)wh + hdrlen;
 
-	/* Check that ExtIV bit is be set. */
+	/* Check that ExtIV bit is set. */
 	if (!(ivp[3] & IEEE80211_WEP_EXTIV))
 		return 1;
 

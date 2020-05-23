@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.150 2020/05/15 14:21:08 stsp Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.151 2020/05/23 08:42:51 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1143,7 +1143,7 @@ wpi_ccmp_decap(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_key *k)
 	hdrlen = ieee80211_get_hdrlen(wh);
 	ivp = (uint8_t *)wh + hdrlen;
 
-	/* Check that ExtIV bit is be set. */
+	/* Check that ExtIV bit is set. */
 	if (!(ivp[3] & IEEE80211_WEP_EXTIV)) {
 		DPRINTF(("CCMP decap ExtIV not set\n"));
 		return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.58 2020/05/15 14:21:08 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.59 2020/05/23 08:42:50 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -818,7 +818,7 @@ ar5008_ccmp_decap(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *
 	    IEEE80211_AID(ni->ni_associd))
 		return 1;
 
-	/* Check that ExtIV bit is be set. */
+	/* Check that ExtIV bit is set. */
 	if (!(ivp[3] & IEEE80211_WEP_EXTIV))
 		return 1;
 
