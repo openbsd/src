@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.264 2019/12/17 13:08:54 reyk Exp $
+#	$OpenBSD: GENERIC,v 1.265 2020/05/23 06:17:08 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -167,8 +167,6 @@ zstty*	at	zs? channel 1
 tcds*	at	tc?
 asc*	at	tcds?
 asc*	at	tc?
-#cfb*	at	tc?
-#sfb*	at	tc?
 le*	at	tc?
 
 # PCI host bus adapter support
