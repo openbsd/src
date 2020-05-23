@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.81 2020/05/19 01:30:34 beck Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.82 2020/05/23 11:57:41 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -198,6 +198,7 @@ void tls13_record_layer_set_hash(struct tls13_record_layer *rl,
     const EVP_MD *hash);
 void tls13_record_layer_set_legacy_version(struct tls13_record_layer *rl,
     uint16_t version);
+void tls13_record_layer_set_retry_after_phh(struct tls13_record_layer *rl, int retry);
 void tls13_record_layer_handshake_completed(struct tls13_record_layer *rl);
 int tls13_record_layer_set_read_traffic_key(struct tls13_record_layer *rl,
     struct tls13_secret *read_key);

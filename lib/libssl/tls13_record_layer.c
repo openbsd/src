@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.44 2020/05/20 14:58:33 beck Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.45 2020/05/23 11:57:41 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -34,6 +34,7 @@ struct tls13_record_layer {
 	int handshake_completed;
 	int legacy_alerts_allowed;
 	int phh;
+	int phh_retry;
 
 	/*
 	 * Read and/or write channels are closed due to an alert being
@@ -231,6 +232,12 @@ void
 tls13_record_layer_handshake_completed(struct tls13_record_layer *rl)
 {
 	rl->handshake_completed = 1;
+}
+
+void
+tls13_record_layer_set_retry_after_phh(struct tls13_record_layer *rl, int retry)
+{
+	rl->phh_retry = retry;
 }
 
 static ssize_t
@@ -930,8 +937,12 @@ tls13_record_layer_read_internal(struct tls13_record_layer *rl,
 				 */
 				rl->phh = 0;
 
-				if (ret == TLS13_IO_SUCCESS)
-					return TLS13_IO_WANT_RETRY;
+				if (ret == TLS13_IO_SUCCESS) {
+					if (rl->phh_retry)
+						return TLS13_IO_WANT_RETRY;
+
+					return TLS13_IO_WANT_POLLIN;
+				}
 
 				return ret;
 			}
