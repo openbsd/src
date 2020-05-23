@@ -50,7 +50,7 @@
 #include <util.h>
 
 #include <event2/event.h>
-
+#include <event2/thread.h>
 #include "vmd.h"
 #include "vmm.h"
 
@@ -671,11 +671,6 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		vm->vm_pid = ret;
 		close(fds[1]);
 
-		log_debug("%s: parent, evbase: %p, num active: %d",
-		    __func__, evbase,
-		    evbase ?
-		    event_base_get_num_events(evbase, EVENT_BASE_COUNT_ADDED) : -1);
-
 		for (i = 0 ; i < vcp->vcp_ndisks; i++) {
 			for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
 				if (vm->vm_disks[i][j] != -1)
@@ -724,10 +719,10 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		// loop we need to exit it and make a new.
 		event_base_loopexit(evbase, NULL);
 		event_base_free(evbase);
+
+		evthread_enable_lock_debugging();
+		evthread_use_pthreads();
 		evbase = event_base_new();
-		//event_reinit(evbase);
-		log_debug("%s: child, evbase: %p, num active: %d",
-		    __func__, evbase, evbase ? event_base_get_num_events(evbase, EVENT_BASE_COUNT_ADDED) : -1);
 
 		close(fds[0]);
 		close(PROC_PARENT_SOCK_FILENO);
