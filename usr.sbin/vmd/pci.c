@@ -46,7 +46,18 @@ extern char *__progname;
 const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 6, 7, 9, 10, 11, 12,
     14, 15};
 
+struct pci_ptd {
+	uint8_t bus;
+	uint8_t dev;
+	uint8_t fun;
+	uint8_t id;
+};
+
+uint32_t ptd_conf_read(int bus, int dev, int func, uint32_t reg);
+void ptd_conf_write(int bus, int dev, int func, uint32_t reg, uint32_t val);
+
 void _pcicfgwr32(int id, int reg, uint32_t data);
+
 void _pcicfgwr32(int id, int reg, uint32_t data) {
   pci.pci_devices[id].pd_cfg_space[reg/4] = data;
 }
@@ -83,8 +94,35 @@ void *mapbar(uint64_t base, uint64_t size) {
 	}
 	fprintf(stderr, "Mapped bar: %.16llx/%.8llx to %p\n",
 		base, size, va);
-	dump(va, size);
 	return va;
+}
+
+uint32_t ptd_conf_read(int bus, int dev, int func, uint32_t reg)
+{
+	struct vm_pciio pio;
+
+	memset(&pio, 0, sizeof(pio));
+	pio.bus = bus;
+	pio.dev = dev;
+	pio.fun = func;
+	pio.dir = VEI_DIR_IN;
+	pio.reg = reg;
+	ioctl(env->vmd_fd, VMM_IOC_PCIIO, &pio);
+	return pio.val;
+}
+
+void ptd_conf_write(int bus, int dev, int func, uint32_t reg, uint32_t val)
+{
+	struct vm_pciio pio;
+
+	memset(&pio, 0, sizeof(pio));
+	pio.bus = bus;
+	pio.dev = dev;
+	pio.fun = func;
+	pio.dir = VEI_DIR_OUT;
+	pio.reg = reg;
+	pio.val = val;
+	ioctl(env->vmd_fd, VMM_IOC_PCIIO, &pio);
 }
 
 int pci_memh2(int dir, uint64_t base, uint32_t size, void *data, void *cookie)
@@ -310,8 +348,64 @@ int ppt_csfn(int dir, uint8_t reg, uint8_t sz, uint32_t *data, void *cookie);
 int ppt_iobar(int dir, uint16_t reg, uint32_t *data, uint8_t *intr, void *cookie, uint8_t size);
 int ppt_mmiobar(int dir, uint32_t ofs, uint32_t *data);
 
+/* Only certain PCI values are writeable and most are already cached
+ * 00h vendor   : ro
+ * 02h device   : ro
+ * 04h command  : rw
+ * 06h status   : rw
+ * 08h revision : ro
+ * 09h class    : ro
+ * 0ah subclass : ro
+ * 0bh interface: ro
+ * 0ch
+ * 0dh
+ * 0eh hdr type : ro
+ * 0fh
+ * 10h bar      : rw
+ * 14h bar      : rw
+ * 18h bar      : rw
+ * 1ch bar      : rw
+ * 20h bar      : rw
+ * 24h bar      : rw
+ */
 int ppt_csfn(int dir, uint8_t reg, uint8_t sz, uint32_t *data, void *cookie)
 {
+	struct pci_ptd *ptd = cookie;
+	struct pci_dev *pdev;
+	uint32_t ndata = 0, baridx, mask;
+
+	pdev = &pci.pci_devices[ptd->id];
+	if (dir == VEI_DIR_IN) {
+		/* Read direct from cached values */
+		memcpy(data, (uint8_t *)&pdev->pd_cfg_space[reg/4] + (reg & 3), sz);
+	}
+	else if (dir == VEI_DIR_OUT) {
+		/* Read cached value */
+		ndata = pdev->pd_cfg_space[reg/4];
+		if (reg >= 0x10 && reg <= 0x24) {
+			// BAR
+			baridx = (reg - 0x10) / 4;
+			if ((*data & ~0xF) == 0xFFFFFFF0) {
+				printf("modify bar!\n");
+				ndata = ~(pdev->pd_barsize[baridx] - 1);
+			}
+			else if (pdev->pd_bartype[baridx] == PCI_BAR_TYPE_MMIO) {
+				unregister_mem(ndata);
+				register_mem(*data, pdev->pd_barsize[baridx], pci_memh2, 
+				     (void *)(uintptr_t)((ptd->id << 8) + baridx));
+				ndata = *data;
+			}
+			else if (pdev->pd_bartype[baridx] == PCI_BAR_TYPE_IO) {
+				ndata = *data | 1;
+			}
+		}
+		else {
+			memcpy((uint8_t *)&ndata + (reg & 3), data, sz);
+		}
+		/* Write new value */
+		pdev->pd_cfg_space[reg/4] = ndata;
+	}
+	fprintf(stderr, "@pciio: %c:%.2x %d %.8x\n", dir == VEI_DIR_IN ? 'r' : 'w', reg, sz, *data);
 	return 0;
 }
 
@@ -329,23 +423,21 @@ int ppt_iobar(int dir, uint16_t reg, uint32_t *data, uint8_t *intr, void *cookie
 	else if (size == 4)
 		mask = 0xffffffff;
 
-	/* Remap to phys bar address */	
+	/* Remap to physical bar address */	
 	pio.dir = dir;
 	pio.size = size;
 	pio.port = bi.bars[barid].addr + reg;
 	if (dir == VEI_DIR_OUT) {
-		fprintf(stderr,"iobar: %s%d(%.4llx,%llx)\n",
-			dir == VEI_DIR_OUT ? "out" : "in", size, 
-			bi.bars[barid].addr+reg, *data & mask);
+		fprintf(stderr,"iobar: out%d(%.4llx,%llx)\n",
+			size, bi.bars[barid].addr+reg, *data & mask);
 		pio.data = *data & mask;
 		ioctl(env->vmd_fd, VMM_IOC_PIO, &pio);
 	}
 	else  {
 		ioctl(env->vmd_fd, VMM_IOC_PIO, &pio);
 		*data = (*data & ~mask) | (pio.data & mask);
-		fprintf(stderr,"iobar: %s%d(%.4llx,%llx)\n",
-			dir == VEI_DIR_OUT ? "out" : "in", size, 
-			bi.bars[barid].addr+reg, *data & mask);
+		fprintf(stderr,"iobar: in%d(%.4llx,%llx)\n",
+			size, bi.bars[barid].addr+reg, *data & mask);
 	}
 	return 0;
 }
@@ -378,19 +470,40 @@ void dump(void *ptr, int len)
 
 void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 {
-	static uint8_t id;
-	static struct pcisel ptd;
+	static struct pci_ptd ptd;
 	uintptr_t devid;
-	int i;
+	int i, rc;
 
 	for (i = 0; i < MAXBAR; i++) {
 		if (barva[i]) {
 			unmapbar(barva[i], bi.bars[i].size);
 		}
 	}
-	ptd.pc_bus = bus;
-	ptd.pc_dev = dev;
-	ptd.pc_func = fun;
+	for (i = 0; i < vm->vm_params.vmc_params.vcp_nmemranges; i++) {
+		fprintf(stderr,"%p: gpa:%lx size:%lx\n",
+		vm->vm_params.vmc_params.vcp_memranges[i].vmr_va,
+		vm->vm_params.vmc_params.vcp_memranges[i].vmr_gpa,
+		vm->vm_params.vmc_params.vcp_memranges[i].vmr_size);
+	}
+	ptd.bus = bus;
+	ptd.dev = dev;
+	ptd.fun = fun;
+
+	bi.seg = 0;
+	bi.bus = bus;
+	bi.dev = dev;
+	bi.func = fun;
+	rc = ioctl(env->vmd_fd, VMM_IOC_BARINFO,  &bi);
+	if (rc != 0) {
+		fprintf(stderr, "%d:%d:%d not valid pci device\n", bus, dev, fun);
+		return;
+	}
+#if 1
+	pci_add_device(&ptd.id, PCI_VENDOR(bi.id_reg), PCI_PRODUCT(bi.id_reg),
+			PCI_CLASS(bi.class_reg), PCI_SUBCLASS(bi.class_reg),
+			PCI_VENDOR(bi.subid_reg), PCI_PRODUCT(bi.subid_reg),
+			1, NULL, &ptd);
+#else
 	if (bus == 17) {
 		pci_add_device(&id, 0x1217, 0x8520, 8, 5, 0x1028, 0x5cc, 1, NULL, &ptd);
 	}
@@ -401,29 +514,24 @@ void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 		pci_add_device(&id, 0x8086, 0x8c22, 0xc, 5, 0x1028, 0x5cc, 1, NULL, &ptd);
 		_pcicfgwr32(id, 0x40, 0x11);
 	}
-
+#endif
 	/* Get BARs of native device */
-	bi.seg = 0;
-	bi.bus = bus;
-	bi.dev = dev;
-	bi.func = fun;
-	ioctl(env->vmd_fd, VMM_IOC_BARINFO,  &bi);
 	for (i = 0; i < MAXBAR; i++) {
-		devid = (id << 8) | i;
+		devid = (ptd.id << 8) | i;
 		fprintf(stderr,"Bar%d: type:%x base:%llx size:%x\n",
 			i, bi.bars[i].type, bi.bars[i].addr, bi.bars[i].size);
 		bi.bars[i].type &= 0x1;
 		if (bi.bars[i].type == PCI_MAPREG_TYPE_MEM && bi.bars[i].size) {
-			pci_add_bar(id, PCI_MAPREG_TYPE_MEM, bi.bars[i].size, 1, ppt_mmiobar, (void *)devid);
+			pci_add_bar(ptd.id, PCI_MAPREG_TYPE_MEM, bi.bars[i].size, 1, ppt_mmiobar, (void *)devid);
 			barva[i] = mapbar(bi.bars[i].addr, bi.bars[i].size);
 		}
 		else if (bi.bars[i].type == PCI_MAPREG_TYPE_IO) {
 			/* This will get callback via pci_handle_io */
-			pci_add_bar(id, PCI_MAPREG_TYPE_IO,  bi.bars[i].size, 1, ppt_iobar, (void *)devid);
+			pci_add_bar(ptd.id, PCI_MAPREG_TYPE_IO,  bi.bars[i].size, 1, ppt_iobar, (void *)devid);
 		}
 		else {
 			/* Kick bar index */
-			pci.pci_devices[id].pd_bar_ct++;
+			pci.pci_devices[ptd.id].pd_bar_ct++;
 		}
 	}
 }
@@ -564,8 +672,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	
 	csfunc = pci.pci_devices[d].pd_csfunc;
 	if (csfunc != NULL) {
-		ret = csfunc(vei->vei.vei_dir, o, sz, &vei->vei.vei_data,
-			     pci.pci_devices[d].pd_cookie);
+		ret = csfunc(vei->vei.vei_dir, o, sz, &vei->vei.vei_data, pci.pci_devices[d].pd_cookie);
 		if (ret)
 			log_warnx("cfg space access function failed for "
 			    "pci device %d", d);

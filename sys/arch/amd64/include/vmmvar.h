@@ -473,18 +473,17 @@ struct vm_create_params {
 	size_t			vcp_ncpus;
 	size_t			vcp_ndisks;
 	size_t			vcp_nnics;
+	size_t			vcp_npcis;
 	struct vm_mem_range	vcp_memranges[VMM_MAX_MEM_RANGES];
 	char			vcp_disks[VMM_MAX_DISKS_PER_VM][VMM_MAX_PATH_DISK];
 	char			vcp_cdrom[VMM_MAX_PATH_CDROM];
 	char			vcp_name[VMM_MAX_NAME_LEN];
 	char			vcp_kernel[VMM_MAX_KERNEL_PATH];
 	uint8_t			vcp_macs[VMM_MAX_NICS_PER_VM][6];
+	uint32_t		vcp_pcis[VMM_MAX_PCI_PTHRU];
 
 	/* Output parameter from VMM_IOC_CREATE */
 	uint32_t	vcp_id;
-
-	size_t			vcp_npcis;
-	uint32_t		vcp_pcis[VMM_MAX_PCI_PTHRU];
 };
 
 struct vm_run_params {
@@ -583,17 +582,15 @@ struct vm_mprotect_ept_params {
 	int			vmep_prot;
 };
 
-struct vm_bindpci {
-	uint32_t vmbp_vm_id;
-	uint32_t vmbp_vcpu_id;
+struct vm_pciio {
 	uint32_t seg;
 	uint32_t bus;
 	uint32_t dev;
 	uint32_t fun;
-	void     *va;
-	uint32_t size;
-	uint64_t hpa;
-	uint64_t gpa;
+
+	uint32_t dir;
+	uint32_t reg;
+	uint32_t val;
 };
 
 #define MAXBAR 6
@@ -602,6 +599,12 @@ struct vm_barinfo {
 	uint32_t bus;
 	uint32_t dev;
 	uint32_t func;
+
+	/* output */
+	uint32_t id_reg;
+	uint32_t subid_reg;
+	uint32_t class_reg;
+	uint32_t intr_reg;
 	struct {
 		uint32_t   type;
 		uint32_t   size;
@@ -633,7 +636,7 @@ struct vm_pio {
 #define VMM_IOC_MPROTECT_EPT _IOW('V', 11, struct vm_mprotect_ept_params)
 
 #define VMM_IOC_BARINFO	     _IOWR('V', 12, struct vm_barinfo)
-#define VMM_IOC_BINDPCI	     _IOW('V', 13, struct vm_bindpci)
+#define VMM_IOC_PCIIO	     _IOWR('V', 13, struct vm_pciio)
 #define VMM_IOC_PIO          _IOWR('V', 14, struct vm_pio)
 
 /* CPUID masks */

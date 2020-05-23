@@ -43,18 +43,20 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 /* #define VMM_DEBUG */
 
 void *l1tf_flush_region;
+
+extern void *_iommu_domain(int segment, int bus, int dev, int func, int *id);
+extern void  _iommu_map(void *dom, vaddr_t va, bus_addr_t pa, bus_size_t len);
 
 #ifdef VMM_DEBUG
 #define DPRINTF(x...)	do { printf(x); } while(0)
 #else
 #define DPRINTF(x...)
 #endif /* VMM_DEBUG */
-
-int sid_vmap(int sid, paddr_t gpa, paddr_t hpa, size_t sz);
 
 #define DEVNAME(s)  ((s)->sc_dev.dv_xname)
 
@@ -310,41 +312,29 @@ extern struct gate_descriptor *idt;
 #define CR_CLTS		2
 #define CR_LMSW		3
 
-
-int vm_bindpci(struct vm_bindpci *ptd)
-{
-	struct vm *vm;
-	int sid, error;
-
-	printf("bindpci: %d.%d.%d va:%p sz:%x gpa:%llx hpa:%llx\n",
-		ptd->bus, ptd->dev, ptd->fun, (void *)ptd->va, ptd->size, ptd->hpa, ptd->gpa);
-	sid = (ptd->bus << 8) | (ptd->dev << 3) | (ptd->fun);
-
-	rw_enter_read(&vmm_softc->vm_lock);
-	error = vm_find(ptd->vmbp_vm_id, &vm);
-	rw_exit_read(&vmm_softc->vm_lock);
-	
-	//sid_vmap(sid, ptd->gpa, ptd->hpa, ptd->size);
-	if (error != 0) {
-		printf("%s: vm id %u not found\n", __func__,
-			ptd->vmbp_vm_id);
-		return (error);
-	}
-#if 0
-	error = uvm_share(vm->vm_map, ptd->gpa, PROT_READ|PROT_WRITE,
-		&p->p_vmspace->vm_map, (vaddr_t)ptd->va, 
-		ptd->size);
-	if (error != 0) {
-		printf("%s: uvm_share failed (%d)\n", __func__, error);
-		/* uvmspace_free calls pmap_destroy for us */
-	}		
-#endif
-	return 0;
-}
+int vm_pciio(struct vm_pciio *ptd);
+int vm_pio(struct vm_pio *pio);
 int vm_getbar(struct vm_barinfo *bi);
 
-/* Probably should pre-register bus_space_map */
-int vm_pio(struct vm_pio *pio);
+int vm_pciio(struct vm_pciio *ptd)
+{
+	pci_chipset_tag_t pc = NULL;
+	pcitag_t tag;
+
+	if (ptd->reg & 3)
+		return EINVAL;
+	tag = pci_make_tag(pc, ptd->bus, ptd->dev, ptd->fun);
+	if (ptd->dir == VEI_DIR_OUT) {
+		pci_conf_write(pc, tag, ptd->reg, ptd->val);
+	} else {
+		ptd->val = pci_conf_read(pc, tag, ptd->reg);
+	}
+	printf("pciio: %d.%d.%d %d reg:%.2x %.8x\n",
+		ptd->bus, ptd->dev, ptd->fun, ptd->dir, ptd->reg, ptd->val);
+	return 0;
+}
+
+/* Probably should pre-register bus_space_map/bus_space_read_xx? */
 int vm_pio(struct vm_pio *pio)
 {
 	if (pio->dir == VEI_DIR_OUT) {
@@ -359,8 +349,8 @@ int vm_pio(struct vm_pio *pio)
 			outl(pio->port, pio->data);
 			break;
 		default:
-			printf("no wrsize\n");
-			break;
+			printf("pio:no wrsize: %d\n", pio->port);
+			return EINVAL;
 		}
 	} else {
 		switch (pio->size) {
@@ -374,8 +364,8 @@ int vm_pio(struct vm_pio *pio)
 			pio->data = inl(pio->port);
 			break;
 		default:
-			printf("no rdsize\n");
-			break;
+			printf("pio:no rdsize: %d\n", pio->port);
+			return EINVAL;
 		}
 	}
 	printf("%ld pio; %s(%x,%llx)\n", sizeof(*pio), 
@@ -383,6 +373,7 @@ int vm_pio(struct vm_pio *pio)
 	return 0;
 }
 
+/* Get PCI/Bar info */
 int vm_getbar(struct vm_barinfo *bi)
 {
 	pci_chipset_tag_t pc = NULL;
@@ -390,11 +381,23 @@ int vm_getbar(struct vm_barinfo *bi)
 	bus_addr_t base;
 	bus_size_t size;
 	pcireg_t   type = 0;
-	int i, reg;
+	int i, reg, did;
+	void *dom;
+	struct vm *vm;
 
 	printf("getbar: %d.%d.%d\n",
 		bi->bus, bi->dev, bi->func);
 	tag = pci_make_tag(pc, bi->bus, bi->dev, bi->func);
+	bi->id_reg = pci_conf_read(pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(bi->id_reg) == PCI_VENDOR_INVALID)
+		return ENODEV;
+	if (PCI_VENDOR(bi->id_reg) == 0)
+		return ENODEV;
+
+	bi->subid_reg = pci_conf_read(pc, tag, PCI_SUBSYS_ID_REG);
+	bi->class_reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	bi->intr_reg  = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+
 	memset(&bi->bars, 0, sizeof(bi->bars));
 	for (i = 0, reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; i++, reg += 4) {
 		if (!pci_mapreg_probe(pc, tag, reg, &type))
@@ -410,7 +413,24 @@ int vm_getbar(struct vm_barinfo *bi)
 			reg += 4;
 		}
 	} 
-	
+
+	/* don't support if mmio and no domain? */
+	dom = _iommu_domain(0, bi->bus, bi->dev, bi->func, &did);
+	printf("domain is: %p:%x\n", dom, did);
+
+	/* Map DMA */
+	vm = SLIST_FIRST(&vmm_softc->vm_list);
+	if (vm != NULL) {
+		paddr_t pa;
+
+		for (i = 0; i < vm->vm_nmemranges; i++) {
+			printf("va:%lx pa:%lx\n", vm->vm_memranges[i].vmr_va, pa);
+			_iommu_map(dom, 
+				   vm->vm_memranges[i].vmr_va,
+				   vm->vm_memranges[i].vmr_gpa,
+				   vm->vm_memranges[i].vmr_size);
+		}
+	}		
 	return 0;
 }
 
@@ -620,8 +640,8 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VMM_IOC_BARINFO:
 		ret = vm_getbar((struct vm_barinfo *)data);
 		break;
-	case VMM_IOC_BINDPCI:
-		ret = vm_bindpci((struct vm_bindpci *)data);
+	case VMM_IOC_PCIIO:
+		ret = vm_pciio((struct vm_pciio *)data);
 		break;
 	case VMM_IOC_PIO:
 		ret = vm_pio((struct vm_pio *)data);
@@ -667,8 +687,8 @@ pledge_ioctl_vmm(struct proc *p, long com)
 	case VMM_IOC_MPROTECT_EPT:
 	case VMM_IOC_READVMPARAMS:
 	case VMM_IOC_WRITEVMPARAMS:
-	case VMM_IOC_BINDPCI:
 	case VMM_IOC_BARINFO:
+	case VMM_IOC_PCIIO:
 	case VMM_IOC_PIO:
 		return (0);
 	}
@@ -1657,7 +1677,7 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
 	vm->vm_map = &vm->vm_vmspace->vm_map;
 
 	/* Map the new map with an anon */
-	DPRINTF("%s: created vm_map @ %p\n", __func__, vm->vm_map);
+	printf("%s: created vm_map @ %p\n", __func__, vm->vm_map);
 	for (i = 0; i < vm->vm_nmemranges; i++) {
 		vmr = &vm->vm_memranges[i];
 		ret = uvm_share(vm->vm_map, vmr->vmr_gpa,

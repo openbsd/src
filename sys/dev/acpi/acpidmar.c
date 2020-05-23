@@ -1462,6 +1462,38 @@ domain_lookup(struct acpidmar_softc *sc, int segment, int sid)
 	return dom;
 }
 
+void  _iommu_map(void *dom, vaddr_t va, bus_addr_t gpa, bus_size_t len)
+{
+	bus_size_t i;
+	paddr_t hpa;
+
+	if (dom == NULL) {
+		return;
+	}
+	printf("Mapping dma: %lx = %lx/%lx\n", va, gpa, len);
+	for (i = 0; i < len; i += PAGE_SIZE) {
+		hpa = 0;
+		pmap_extract(curproc->p_vmspace->vm_map.pmap, va, &hpa);
+		if (i == 0) {
+			printf("hpa: %lx\n", hpa);
+		}
+		domain_map_page(dom, gpa, hpa, PTE_P | PTE_R | PTE_W);
+		gpa += PAGE_SIZE;
+		va  += PAGE_SIZE;
+	}
+}
+
+void *_iommu_domain(int segment, int bus, int dev, int func, int *id)
+{
+	struct domain *dom;
+
+	dom = domain_lookup(acpidmar_sc, segment, mksid(bus, dev, func));
+	if (dom) {
+		*id = dom->did;
+	}
+	return dom;
+}
+
 void domain_map_device(struct domain *dom, int sid);
 
 void
