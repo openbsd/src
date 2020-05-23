@@ -21,7 +21,9 @@
 #include <sys/uio.h>
 
 #include <imsg.h>
-#include <event.h>
+
+#include <event2/event.h>
+#include <event2/event_struct.h>
 
 #ifndef _PROC_H
 #define _PROC_H
@@ -42,7 +44,7 @@ enum {
 struct imsgev {
 	struct imsgbuf		 ibuf;
 	void			(*handler)(int, short, void *);
-	struct event		 ev;
+	struct event		 *ev;
 	struct privsep_proc	*proc;
 	void			*data;
 	short			 events;
@@ -57,8 +59,8 @@ struct imsgev {
 /* control socket */
 struct control_sock {
 	const char	*cs_name;
-	struct event	 cs_ev;
-	struct event	 cs_evt;
+	struct event	 *cs_ev;
+	struct event	 *cs_evt;
 	int		 cs_fd;
 	int		 cs_restricted;
 	void		*cs_env;
@@ -118,12 +120,12 @@ struct privsep {
 	unsigned int			 ps_instance;
 
 	/* Event and signal handlers */
-	struct event			 ps_evsigint;
-	struct event			 ps_evsigterm;
-	struct event			 ps_evsigchld;
-	struct event			 ps_evsighup;
-	struct event			 ps_evsigpipe;
-	struct event			 ps_evsigusr1;
+	struct event			 *ps_evsigint;
+	struct event			 *ps_evsigterm;
+	struct event			 *ps_evsigchld;
+	struct event			 *ps_evsighup;
+	struct event			 *ps_evsigpipe;
+	struct event			 *ps_evsigusr1;
 
 	void				*ps_env;
 };

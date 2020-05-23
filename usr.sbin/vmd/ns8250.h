@@ -62,9 +62,9 @@ struct ns8250_regs {
 struct ns8250_dev {
 	pthread_mutex_t mutex;
 	struct ns8250_regs regs;
-	struct event event;
-	struct event rate;
-	struct event wake;
+	struct event *event;
+	struct event *rate;
+	struct event *wake;
 	struct timeval rate_tv;
 	enum ns8250_portid portid;
 	int fd;

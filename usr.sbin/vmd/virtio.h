@@ -196,7 +196,7 @@ struct vioscsi_dev {
 
 struct vionet_dev {
 	pthread_mutex_t mutex;
-	struct event event;
+	struct event *event;
 
 	struct virtio_io_cfg cfg;
 
@@ -242,7 +242,7 @@ enum vmmci_cmd {
 
 struct vmmci_dev {
 	struct virtio_io_cfg cfg;
-	struct event timeout;
+	struct event *timeout;
 	struct timeval time;
 	enum vmmci_cmd cmd;
 	uint32_t vm_id;

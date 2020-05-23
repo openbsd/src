@@ -31,10 +31,15 @@
 #include <signal.h>
 #include <paths.h>
 #include <pwd.h>
-#include <event.h>
 #include <imsg.h>
+#include <assert.h>
+
+#include <event2/event.h>
+#include <event2/thread.h>
 
 #include "proc.h"
+
+extern struct event_base *evbase;
 
 void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int, int,
 	    int, char **);
@@ -183,9 +188,9 @@ proc_connect(struct privsep *ps)
 		for (inst = 0; inst < ps->ps_instances[dst]; inst++) {
 			iev = &ps->ps_ievs[dst][inst];
 			imsg_init(&iev->ibuf, ps->ps_pp->pp_pipes[dst][inst]);
-			event_set(&iev->ev, iev->ibuf.fd, iev->events,
+			iev->ev = event_new(evbase, iev->ibuf.fd, iev->events,
 			    iev->handler, iev->data);
-			event_add(&iev->ev, NULL);
+			event_add(iev->ev, NULL);
 		}
 	}
 
@@ -196,6 +201,8 @@ proc_connect(struct privsep *ps)
 			if (src == PROC_PARENT || dst == PROC_PARENT)
 				continue;
 
+			log_debug("%s: going to proc_open src: %d, dest: %d",
+			    __func__, src, dst);
 			proc_open(ps, src, dst);
 		}
 }
@@ -287,10 +294,11 @@ proc_accept(struct privsep *ps, int fd, enum privsep_procid dst,
 	} else
 		pp->pp_pipes[dst][n] = fd;
 
+	log_debug("%s: %s accepted fd %d", __func__, *ps->ps_title, fd);
 	iev = &ps->ps_ievs[dst][n];
 	imsg_init(&iev->ibuf, fd);
-	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
-	event_add(&iev->ev, NULL);
+	iev->ev = event_new(evbase, iev->ibuf.fd, iev->events, iev->handler, iev->data);
+	event_add(iev->ev, NULL);
 }
 
 void
@@ -431,12 +439,16 @@ proc_open(struct privsep *ps, int src, int dst)
 
 			pf.pf_procid = src;
 			pf.pf_instance = i;
+
+			log_debug("%s: sending pipe to dst procid %d", __func__, dst);
 			if (proc_compose_imsg(ps, dst, j, IMSG_CTL_PROCFD,
 			    -1, pb->pp_pipes[src][i], &pf, sizeof(pf)) == -1)
 				fatal("%s: proc_compose_imsg", __func__);
 
 			pf.pf_procid = dst;
 			pf.pf_instance = j;
+
+			log_debug("%s: sending pipe to src procid %d", __func__, src);
 			if (proc_compose_imsg(ps, src, i, IMSG_CTL_PROCFD,
 			    -1, pa->pp_pipes[dst][j], &pf, sizeof(pf)) == -1)
 				fatal("%s: proc_compose_imsg", __func__);
@@ -463,6 +475,7 @@ proc_close(struct privsep *ps)
 
 	pp = ps->ps_pp;
 
+	log_debug("%s: title %s", __func__, *ps->ps_title);
 	for (dst = 0; dst < PROC_MAX; dst++) {
 		if (ps->ps_ievs[dst] == NULL)
 			continue;
@@ -472,7 +485,7 @@ proc_close(struct privsep *ps)
 				continue;
 
 			/* Cancel the fd, close and invalidate the fd */
-			event_del(&(ps->ps_ievs[dst][n].ev));
+			event_free(ps->ps_ievs[dst][n].ev);
 			imsg_clear(&(ps->ps_ievs[dst][n].ibuf));
 			close(pp->pp_pipes[dst][n]);
 			pp->pp_pipes[dst][n] = -1;
@@ -501,6 +514,7 @@ proc_sig_handler(int sig, short event, void *arg)
 {
 	struct privsep_proc	*p = arg;
 
+	log_debug("%s: %s got sig %d, event %d", __func__, p->p_title, sig, event);
 	switch (sig) {
 	case SIGINT:
 	case SIGTERM:
@@ -566,21 +580,27 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("%s: cannot drop privileges", __func__);
 
-	event_init();
+	log_info("%s: %s has evbase: %p, %d current events",
+	    __func__, p->p_title, evbase,
+	    evbase ? event_base_get_num_events(evbase, EVENT_BASE_COUNT_ACTIVE) : -1);
 
-	signal_set(&ps->ps_evsigint, SIGINT, proc_sig_handler, p);
-	signal_set(&ps->ps_evsigterm, SIGTERM, proc_sig_handler, p);
-	signal_set(&ps->ps_evsigchld, SIGCHLD, proc_sig_handler, p);
-	signal_set(&ps->ps_evsighup, SIGHUP, proc_sig_handler, p);
-	signal_set(&ps->ps_evsigpipe, SIGPIPE, proc_sig_handler, p);
-	signal_set(&ps->ps_evsigusr1, SIGUSR1, proc_sig_handler, p);
 
-	signal_add(&ps->ps_evsigint, NULL);
-	signal_add(&ps->ps_evsigterm, NULL);
-	signal_add(&ps->ps_evsigchld, NULL);
-	signal_add(&ps->ps_evsighup, NULL);
-	signal_add(&ps->ps_evsigpipe, NULL);
-	signal_add(&ps->ps_evsigusr1, NULL);
+	evbase = event_base_new();
+	assert(evbase);
+
+	ps->ps_evsigint = evsignal_new(evbase, SIGINT, proc_sig_handler, p);
+	ps->ps_evsigterm = evsignal_new(evbase, SIGTERM, proc_sig_handler, p);
+	ps->ps_evsigchld = evsignal_new(evbase, SIGCHLD, proc_sig_handler, p);
+	ps->ps_evsighup = evsignal_new(evbase, SIGHUP, proc_sig_handler, p);
+	ps->ps_evsigpipe = evsignal_new(evbase, SIGPIPE, proc_sig_handler, p);
+	ps->ps_evsigusr1 = evsignal_new(evbase, SIGUSR1, proc_sig_handler, p);
+
+	evsignal_add(ps->ps_evsigint, NULL);
+	evsignal_add(ps->ps_evsigterm, NULL);
+	evsignal_add(ps->ps_evsigchld, NULL);
+	evsignal_add(ps->ps_evsighup, NULL);
+	evsignal_add(ps->ps_evsigpipe, NULL);
+	evsignal_add(ps->ps_evsigusr1, NULL);
 
 	proc_setup(ps, procs, nproc);
 	proc_accept(ps, PROC_PARENT_SOCK_FILENO, PROC_PARENT, 0);
@@ -599,7 +619,7 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	if (run != NULL)
 		run(ps, p, arg);
 
-	event_dispatch();
+	event_base_dispatch(evbase);
 
 	proc_shutdown(p);
 }
@@ -620,13 +640,17 @@ proc_dispatch(int fd, short event, void *arg)
 	title = ps->ps_title[privsep_process];
 	ibuf = &iev->ibuf;
 
+	log_debug("%s: %s called fd: %d, event: %d", __func__, title, fd, event);
+
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("%s: imsg_read", __func__);
 		if (n == 0) {
+			log_debug("%s: dead pipe being read by %s, %d",
+			    __func__, title, p->p_id);
 			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
+			event_free(iev->ev);
+			event_base_loopexit(evbase, NULL);
 			return;
 		}
 	}
@@ -635,9 +659,11 @@ proc_dispatch(int fd, short event, void *arg)
 		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
 			fatal("%s: msgbuf_write", __func__);
 		if (n == 0) {
+			log_debug("%s: dead pipe being written to by %s",
+			    __func__, title);
 			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
+			event_free(iev->ev);
+			event_base_loopexit(evbase, NULL);
 			return;
 		}
 	}
@@ -649,9 +675,9 @@ proc_dispatch(int fd, short event, void *arg)
 			break;
 
 #if DEBUG > 1
-		log_debug("%s: %s %d got imsg %d peerid %d from %s %d",
+		log_debug("%s: %s (%d) got imsg (%d) from %s (peerid %d)",
 		    __func__, title, ps->ps_instance + 1,
-		    imsg.hdr.type, imsg.hdr.peerid, p->p_title, imsg.hdr.pid);
+		    imsg.hdr.type, p->p_title, imsg.hdr.peerid);
 #endif
 
 		/*
@@ -712,9 +738,15 @@ imsg_event_add(struct imsgev *iev)
 	if (iev->ibuf.w.queued)
 		iev->events |= EV_WRITE;
 
-	event_del(&iev->ev);
-	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
-	event_add(&iev->ev, NULL);
+	if (iev->ev != NULL) {
+		log_debug("%s: seems we already have an event %p, freeing it.",
+		    __func__, iev->ev);
+		event_free(iev->ev);
+	}
+	// ??? Do we need to del it? Probably safe to...
+	// event_del(iev->ev);
+	iev->ev = event_new(evbase, iev->ibuf.fd, iev->events, iev->handler, iev->data);
+	event_add(iev->ev, NULL);
 }
 
 int
@@ -723,6 +755,7 @@ imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
 {
 	int	ret;
 
+	log_debug("%s: composing event type %d to peer %d", __func__, type, peerid);
 	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
 	    pid, fd, data, datalen)) == -1)
 		return (ret);
@@ -736,6 +769,7 @@ imsg_composev_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
 {
 	int	ret;
 
+	log_debug("%s: composing iovec event type %d to peer %d", __func__, type, peerid);
 	if ((ret = imsg_composev(&iev->ibuf, type, peerid,
 	    pid, fd, iov, iovcnt)) == -1)
 		return (ret);

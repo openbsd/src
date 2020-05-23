@@ -37,7 +37,6 @@
 #include <net/if.h>
 
 #include <errno.h>
-#include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
 #include <limits.h>
@@ -49,6 +48,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+
+#include <event2/event.h>
 
 #include "vmd.h"
 #include "vmm.h"
@@ -63,6 +64,7 @@ int get_info_vm(struct privsep *, struct imsg *, int);
 int opentap(char *);
 
 extern struct vmd *env;
+extern struct event_base *evbase;
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	vmm_dispatch_parent  },
@@ -80,9 +82,9 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
 
-	signal_del(&ps->ps_evsigchld);
-	signal_set(&ps->ps_evsigchld, SIGCHLD, vmm_sighdlr, ps);
-	signal_add(&ps->ps_evsigchld, NULL);
+	evsignal_del(ps->ps_evsigchld);
+	ps->ps_evsigchld = evsignal_new(evbase, SIGCHLD, vmm_sighdlr, ps);
+	evsignal_add(ps->ps_evsigchld, NULL);
 
 	/*
 	 * pledge in the vmm process:
@@ -198,7 +200,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 				/*
 				 * Request reboot but mark the VM as shutting
 				 * down. This way we can terminate the VM after
-				 * the triple fault instead of reboot and 
+				 * the triple fault instead of reboot and
 				 * avoid being stuck in the ACPI-less powerdown
 				 * ("press any key to reboot") of the VM.
 				 */
@@ -469,6 +471,8 @@ vmm_pipe(struct vmd_vm *vm, int fd, void (*cb)(int, short, void *))
 {
 	struct imsgev	*iev = &vm->vm_iev;
 
+	log_debug("%s: setting up pipe fd %d for vm %d", __func__, fd, vm->vm_vmid);
+
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
 		log_warn("failed to set nonblocking mode on vm pipe");
 		return (-1);
@@ -477,6 +481,7 @@ vmm_pipe(struct vmd_vm *vm, int fd, void (*cb)(int, short, void *))
 	imsg_init(&iev->ibuf, fd);
 	iev->handler = cb;
 	iev->data = vm;
+
 	imsg_event_add(iev);
 
 	return (0);
@@ -503,7 +508,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 			fatal("%s: imsg_read", __func__);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
+			event_del(iev->ev);
 			return;
 		}
 	}
@@ -513,7 +518,7 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 			fatal("%s: msgbuf_write fd %d", __func__, ibuf->fd);
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
+			event_del(iev->ev);
 			return;
 		}
 	}
@@ -666,6 +671,11 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		vm->vm_pid = ret;
 		close(fds[1]);
 
+		log_debug("%s: parent, evbase: %p, num active: %d",
+		    __func__, evbase,
+		    evbase ?
+		    event_base_get_num_events(evbase, EVENT_BASE_COUNT_ADDED) : -1);
+
 		for (i = 0 ; i < vcp->vcp_ndisks; i++) {
 			for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
 				if (vm->vm_disks[i][j] != -1)
@@ -707,6 +717,18 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		return (0);
 	} else {
 		/* Child */
+
+		// We're inheriting an existing eventbase from our fork,
+		// it needs cleanup. event_reinit() is usually used, but
+		// since we're running in response to an existing event
+		// loop we need to exit it and make a new.
+		event_base_loopexit(evbase, NULL);
+		event_base_free(evbase);
+		evbase = event_base_new();
+		//event_reinit(evbase);
+		log_debug("%s: child, evbase: %p, num active: %d",
+		    __func__, evbase, evbase ? event_base_get_num_events(evbase, EVENT_BASE_COUNT_ADDED) : -1);
+
 		close(fds[0]);
 		close(PROC_PARENT_SOCK_FILENO);
 
