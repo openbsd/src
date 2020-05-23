@@ -1,10 +1,12 @@
-#	$OpenBSD: Makefile,v 1.1 2020/05/21 10:38:43 tb Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/05/23 17:33:51 tb Exp $
 
 .if !exists(/usr/local/share/tlsfuzzer)
 regress:
 	@echo package py3-tlsfuzzer is required for this regress
 	@echo SKIPPED
 .else
+
+REGRESS_TARGETS=regress-tlsfuzzer
 
 localhost.key localhost.crt:
 	openssl req -x509 -newkey rsa -keyout localhost.key -out localhost.crt \
@@ -19,7 +21,7 @@ SLOW		= -s
 TIMING		= # -t
 VERBOSE		= # -v
 
-all: certs
+regress-tlsfuzzer: certs
 	python3 ${.CURDIR}/tlsfuzzer.py ${SLOW} ${TIMING} ${VERBOSE}
 
 failing: certs
