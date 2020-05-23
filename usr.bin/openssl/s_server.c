@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.36 2020/05/23 09:02:02 tb Exp $ */
+/* $OpenBSD: s_server.c,v 1.37 2020/05/23 12:52:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -967,6 +967,8 @@ s_server_main(int argc, char *argv[])
 		ERR_print_errors(bio_err);
 		goto end;
 	}
+
+	SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
 
 	if (!SSL_CTX_set_min_proto_version(ctx, min_version))
 		goto end;
