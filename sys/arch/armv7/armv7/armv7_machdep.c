@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.59 2020/04/07 10:11:01 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.60 2020/05/23 20:32:47 kettenis Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -194,10 +194,10 @@ int   safepri = 0;
 
 /* Prototypes */
 
-char	bootargs[MAX_BOOT_STRING];
 int	bootstrap_bs_map(void *, uint64_t, bus_size_t, int,
     bus_space_handle_t *);
-void	process_kernel_args(char *);
+void	collect_kernel_args(const char *);
+void	process_kernel_args(void);
 void	consinit(void);
 
 bs_protos(bs_notimpl);
@@ -427,7 +427,11 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 
 		len = fdt_node_property(node, "bootargs", &prop);
 		if (len > 0)
-			process_kernel_args(prop);
+			collect_kernel_args(prop);
+
+		len = fdt_node_property(node, "openbsd,boothowto", &prop);
+		if (len == sizeof(boothowto))
+			boothowto = bemtoh32((uint32_t *)prop);
 
 		len = fdt_node_property(node, "openbsd,bootduid", &prop);
 		if (len == sizeof(bootduid))
@@ -452,6 +456,8 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 		if (len == sizeof(mmap_desc_ver))
 			mmap_desc_ver = bemtoh32((uint32_t *)prop);
 	}
+
+	process_kernel_args();
 
 	if (mmap_start != 0)
 		bootstrap_bs_map(NULL, mmap_start, mmap_size, 0,
@@ -850,34 +856,34 @@ initarm(void *arg0, void *arg1, void *arg2, paddr_t loadaddr)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
+char	bootargs[256];
 
 void
-process_kernel_args(char *args)
+collect_kernel_args(const char *args)
 {
-	char *cp = args;
-
-	if (cp == NULL) {
-		boothowto = RB_AUTOBOOT;
-		return;
-	}
-
-	boothowto = 0;
-
 	/* Make a local copy of the bootargs */
-	strncpy(bootargs, cp, MAX_BOOT_STRING - sizeof(int));
+	strlcpy(bootargs, args, sizeof(bootargs));
+}
 
-	cp = bootargs;
+void
+process_kernel_args(void)
+{
+	char *cp = bootargs;
+
+	if (*cp == 0)
+		return;
+
 	boot_file = bootargs;
 
 	/* Skip the kernel image filename */
 	while (*cp != ' ' && *cp != 0)
-		++cp;
+		cp++;
 
 	if (*cp != 0)
 		*cp++ = 0;
 
 	while (*cp == ' ')
-		++cp;
+		cp++;
 
 	boot_args = cp;
 
@@ -889,28 +895,25 @@ process_kernel_args(char *args)
 		if (*cp++ == '\0')
 			return;
 
-	for (;*++cp;) {
-		int fl;
-
-		fl = 0;
+	while (*cp != 0) {
 		switch(*cp) {
 		case 'a':
-			fl |= RB_ASKNAME;
+			boothowto |= RB_ASKNAME;
 			break;
 		case 'c':
-			fl |= RB_CONFIG;
+			boothowto |= RB_CONFIG;
 			break;
 		case 'd':
-			fl |= RB_KDB;
+			boothowto |= RB_KDB;
 			break;
 		case 's':
-			fl |= RB_SINGLE;
+			boothowto |= RB_SINGLE;
 			break;
 		default:
 			printf("unknown option `%c'\n", *cp);
 			break;
 		}
-		boothowto |= fl;
+		cp++;
 	}
 }
 
