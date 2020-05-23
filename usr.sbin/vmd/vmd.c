@@ -46,8 +46,6 @@
 #include <machine/vmmvar.h>
 
 #include <event2/event.h>
-#include <event2/event_struct.h>
-#include <event2/thread.h>
 
 #include "proc.h"
 #include "atomicio.h"
@@ -833,9 +831,6 @@ main(int argc, char **argv)
 	if (title != NULL)
 		ps->ps_title[proc_id] = title;
 
-	//evthread_use_pthreads();
-	//evbase = event_base_new();
-
 	/* only the parent returns */
 	proc_init(ps, procs, nitems(procs), env->vmd_debug, argc0, argv,
 	    proc_id);
@@ -848,7 +843,6 @@ main(int argc, char **argv)
 		log_info("startup");
 
 	assert(evbase == NULL);
-	evthread_use_pthreads();
 	evbase = event_base_new();
 
 	ps->ps_evsigint = evsignal_new(evbase, SIGINT, vmd_sighdlr, ps);
@@ -869,7 +863,6 @@ main(int argc, char **argv)
 	if (vmd_configure() == -1)
 		fatalx("configuration failed");
 
-	log_info("%s: %s starting event loop", __func__, title);
 	ret = event_base_dispatch(evbase);
 
 	log_debug("%s: parent exiting (%d)", __func__, ret);
