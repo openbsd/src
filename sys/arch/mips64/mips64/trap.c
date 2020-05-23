@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.144 2020/04/18 04:45:20 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.145 2020/05/23 07:18:50 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -763,6 +763,14 @@ fault_common_no_miss:
 		    (instr & 0x001fffc0) == ((ZERO << 16) | (7 << 6))) {
 			signal = SIGFPE;
 			sicode = FPE_INTDIV;
+		} else if ((instr & 0xfc00003f) == 0x00000036 /* tne */ &&
+		    (instr & 0x0000ffc0) == (0x52 << 6)) {
+			KERNEL_LOCK();
+			log(LOG_ERR, "%s[%d]: retguard trap\n",
+			    p->p_p->ps_comm, p->p_p->ps_pid);
+			/* Send uncatchable SIGABRT for coredump */
+			sigexit(p, SIGABRT);
+			/* NOTREACHED */
 		} else {
 			signal = SIGEMT; /* Stuff it with something for now */
 			sicode = 0;
