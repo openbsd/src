@@ -37,7 +37,7 @@ struct i8253_channel {
 	uint8_t last_w;		/* last written byte (MSB/LSB) */
 	uint8_t mode;		/* counter mode */
 	uint8_t rbs;		/* channel is in readback status mode */
-	struct event timer;	/* timer event for this counter */
+	struct event *timer;	/* timer event for this counter */
 	uint32_t vm_id;		/* owning VM id */
 	int in_use;		/* denotes if this counter was ever used */
 	uint8_t state;		/* 0 if channel is counting, 1 if fired */

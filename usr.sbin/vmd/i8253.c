@@ -22,11 +22,13 @@
 
 #include <machine/vmmvar.h>
 
-#include <event.h>
 #include <string.h>
 #include <stddef.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <event2/event.h>
+#include <event2/event_struct.h>
 
 #include "i8253.h"
 #include "proc.h"
@@ -34,6 +36,7 @@
 #include "atomicio.h"
 
 extern char *__progname;
+extern struct event_base *evbase;
 
 /*
  * Channel 0 is used to generate the legacy hardclock interrupt (HZ).
@@ -74,9 +77,9 @@ i8253_init(uint32_t vm_id)
 	i8253_channel[2].vm_id = vm_id;
 	i8253_channel[2].state = 0;
 
-	evtimer_set(&i8253_channel[0].timer, i8253_fire, &i8253_channel[0]);
-	evtimer_set(&i8253_channel[1].timer, i8253_fire, &i8253_channel[1]);
-	evtimer_set(&i8253_channel[2].timer, i8253_fire, &i8253_channel[2]);
+	i8253_channel[0].timer = evtimer_new(evbase, i8253_fire, &i8253_channel[0]);
+	i8253_channel[1].timer = evtimer_new(evbase, i8253_fire, &i8253_channel[1]);
+	i8253_channel[2].timer = evtimer_new(evbase, i8253_fire, &i8253_channel[2]);
 }
 
 /*
@@ -311,14 +314,14 @@ i8253_reset(uint8_t chn)
 {
 	struct timeval tv;
 
-	evtimer_del(&i8253_channel[chn].timer);
+	evtimer_del(i8253_channel[chn].timer);
 	timerclear(&tv);
 
 	i8253_channel[chn].in_use = 1;
 	i8253_channel[chn].state = 0;
 	tv.tv_usec = (i8253_channel[chn].start * NS_PER_TICK) / 1000;
 	clock_gettime(CLOCK_MONOTONIC, &i8253_channel[chn].ts);
-	evtimer_add(&i8253_channel[chn].timer, &tv);
+	evtimer_add(i8253_channel[chn].timer, &tv);
 }
 
 /*
@@ -344,7 +347,7 @@ i8253_fire(int fd, short type, void *arg)
 	if (ctr->mode != TIMER_INTTC) {
 		timerclear(&tv);
 		tv.tv_usec = (ctr->start * NS_PER_TICK) / 1000;
-		evtimer_add(&ctr->timer, &tv);
+		evtimer_add(ctr->timer, &tv);
 	} else
 		ctr->state = 1;
 }
@@ -375,7 +378,7 @@ i8253_restore(int fd, uint32_t vm_id)
 	for (i = 0; i < 3; i++) {
 		memset(&i8253_channel[i].timer, 0, sizeof(struct event));
 		i8253_channel[i].vm_id = vm_id;
-		evtimer_set(&i8253_channel[i].timer, i8253_fire,
+		i8253_channel[i].timer = evtimer_new(evbase, i8253_fire,
 		    &i8253_channel[i]);
 		i8253_reset(i);
 	}
@@ -387,7 +390,7 @@ i8253_stop()
 {
 	int i;
 	for (i = 0; i < 3; i++)
-		evtimer_del(&i8253_channel[i].timer);
+		evtimer_del(i8253_channel[i].timer);
 }
 
 void

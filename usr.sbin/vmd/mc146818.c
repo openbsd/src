@@ -22,11 +22,13 @@
 
 #include <machine/vmmvar.h>
 
-#include <event.h>
 #include <stddef.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <event2/event.h>
+#include <event2/event_struct.h>
 
 #include "vmd.h"
 #include "mc146818.h"
@@ -34,6 +36,8 @@
 #include "virtio.h"
 #include "vmm.h"
 #include "atomicio.h"
+
+extern struct event_base *evbase;
 
 #define MC_DIVIDER_MASK 0xe0
 #define MC_RATE_MASK 0xf
@@ -55,9 +59,9 @@ struct mc146818 {
 	uint8_t idx;
 	uint8_t regs[NVRAM_SIZE];
 	uint32_t vm_id;
-	struct event sec;
+	struct event *sec;
 	struct timeval sec_tv;
-	struct event per;
+	struct event *per;
 	struct timeval per_tv;
 };
 
@@ -110,7 +114,7 @@ rtc_fire1(int fd, short type, void *arg)
 		    "resync", __func__, (rtc.now - old));
 		vmmci_ctl(VMMCI_SYNCRTC);
 	}
-	evtimer_add(&rtc.sec, &rtc.sec_tv);
+	evtimer_add(rtc.sec, &rtc.sec_tv);
 }
 
 /*
@@ -131,7 +135,7 @@ rtc_fireper(int fd, short type, void *arg)
 	vcpu_assert_pic_irq((ptrdiff_t)arg, 0, 8);
 	vcpu_deassert_pic_irq((ptrdiff_t)arg, 0, 8);
 
-	evtimer_add(&rtc.per, &rtc.per_tv);
+	evtimer_add(rtc.per, &rtc.per_tv);
 }
 
 /*
@@ -171,10 +175,10 @@ mc146818_init(uint32_t vm_id, uint64_t memlo, uint64_t memhi)
 
 	timerclear(&rtc.per_tv);
 
-	evtimer_set(&rtc.sec, rtc_fire1, NULL);
-	evtimer_add(&rtc.sec, &rtc.sec_tv);
+	rtc.sec = evtimer_new(evbase, rtc_fire1, NULL);
+	evtimer_add(rtc.sec, &rtc.sec_tv);
 
-	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
+	rtc.per = evtimer_new(evbase, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
 }
 
 /*
@@ -193,10 +197,10 @@ rtc_reschedule_per(void)
 		rate = 32768 >> ((rtc.regs[MC_REGA] & MC_RATE_MASK) - 1);
 		us = (1.0 / rate) * 1000000;
 		rtc.per_tv.tv_usec = us;
-		if (evtimer_pending(&rtc.per, NULL))
-			evtimer_del(&rtc.per);
+		if (evtimer_pending(rtc.per, NULL))
+			evtimer_del(rtc.per);
 
-		evtimer_add(&rtc.per, &rtc.per_tv);
+		evtimer_add(rtc.per, &rtc.per_tv);
 	}
 }
 
@@ -340,21 +344,21 @@ mc146818_restore(int fd, uint32_t vm_id)
 
 	memset(&rtc.sec, 0, sizeof(struct event));
 	memset(&rtc.per, 0, sizeof(struct event));
-	evtimer_set(&rtc.sec, rtc_fire1, NULL);
-	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
+	rtc.sec = evtimer_new(evbase, rtc_fire1, NULL);
+	rtc.per = evtimer_new(evbase, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
 	return (0);
 }
 
 void
 mc146818_stop()
 {
-	evtimer_del(&rtc.per);
-	evtimer_del(&rtc.sec);
+	evtimer_del(rtc.per);
+	evtimer_del(rtc.sec);
 }
 
 void
 mc146818_start()
 {
-	evtimer_add(&rtc.sec, &rtc.sec_tv);
+	evtimer_add(rtc.sec, &rtc.sec_tv);
 	rtc_reschedule_per();
 }

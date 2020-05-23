@@ -34,7 +34,6 @@
 #include <arpa/inet.h>
 
 #include <errno.h>
-#include <event.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>

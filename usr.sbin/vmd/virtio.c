@@ -32,12 +32,13 @@
 #include <netinet/if_ether.h>
 
 #include <errno.h>
-#include <event.h>
 #include <poll.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <event2/event.h>
 
 #include "pci.h"
 #include "vmd.h"
@@ -48,6 +49,7 @@
 #include "atomicio.h"
 
 extern char *__progname;
+extern struct event_base *evbase;
 struct viornd_dev viornd;
 struct vioblk_dev *vioblk;
 struct vionet_dev *vionet;
@@ -1587,7 +1589,7 @@ vmmci_ctl(unsigned int cmd)
 
 		/* Add ACK timeout */
 		tv.tv_sec = VMMCI_TIMEOUT;
-		evtimer_add(&vmmci.timeout, &tv);
+		evtimer_add(vmmci.timeout, &tv);
 		break;
 	case VMMCI_SYNCRTC:
 		if (vmmci.cfg.guest_feature & VMMCI_F_SYNCRTC) {
@@ -1627,7 +1629,7 @@ vmmci_ack(unsigned int cmd)
 			log_debug("%s: vm %u requested shutdown", __func__,
 			    vmmci.vm_id);
 			tv.tv_sec = VMMCI_TIMEOUT;
-			evtimer_add(&vmmci.timeout, &tv);
+			evtimer_add(vmmci.timeout, &tv);
 			return;
 		}
 		/* FALLTHROUGH */
@@ -1640,11 +1642,11 @@ vmmci_ack(unsigned int cmd)
 		 * killing it forcefully.
 		 */
 		if (cmd == vmmci.cmd &&
-		    evtimer_pending(&vmmci.timeout, NULL)) {
+		    evtimer_pending(vmmci.timeout, NULL)) {
 			log_debug("%s: vm %u acknowledged shutdown request",
 			    __func__, vmmci.vm_id);
 			tv.tv_sec = VMMCI_SHUTDOWN_TIMEOUT;
-			evtimer_add(&vmmci.timeout, &tv);
+			evtimer_add(vmmci.timeout, &tv);
 		}
 		break;
 	case VMMCI_SYNCRTC:
@@ -1877,9 +1879,9 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			vionet[i].vm_vmid = vm->vm_vmid;
 			vionet[i].irq = pci_get_dev_irq(id);
 
-			event_set(&vionet[i].event, vionet[i].fd,
+			vionet[i].event = event_new(evbase, vionet[i].fd,
 			    EV_READ | EV_PERSIST, vionet_rx_event, &vionet[i]);
-			if (event_add(&vionet[i].event, NULL)) {
+			if (event_add(vionet[i].event, NULL)) {
 				log_warn("could not initialize vionet event "
 				    "handler");
 				return;
@@ -2032,7 +2034,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	vmmci.irq = pci_get_dev_irq(id);
 	vmmci.pci_id = id;
 
-	evtimer_set(&vmmci.timeout, vmmci_timeout, NULL);
+	vmmci.timeout = evtimer_new(evbase, vmmci_timeout, NULL);
 }
 
 void
@@ -2064,8 +2066,7 @@ vmmci_restore(int fd, uint32_t vm_id)
 	}
 	vmmci.vm_id = vm_id;
 	vmmci.irq = pci_get_dev_irq(vmmci.pci_id);
-	memset(&vmmci.timeout, 0, sizeof(struct event));
-	evtimer_set(&vmmci.timeout, vmmci_timeout, NULL);
+	vmmci.timeout = evtimer_new(evbase, vmmci_timeout, NULL);
 	return (0);
 }
 
@@ -2138,7 +2139,7 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 			vionet[i].irq = pci_get_dev_irq(vionet[i].pci_id);
 
 			memset(&vionet[i].event, 0, sizeof(struct event));
-			event_set(&vionet[i].event, vionet[i].fd,
+			vionet[i].event = event_new(evbase, vionet[i].fd,
 			    EV_READ | EV_PERSIST, vionet_rx_event, &vionet[i]);
 		}
 	}
@@ -2339,7 +2340,7 @@ virtio_stop(struct vm_create_params *vcp)
 {
 	uint8_t i;
 	for (i = 0; i < vcp->vcp_nnics; i++) {
-		if (event_del(&vionet[i].event)) {
+		if (event_del(vionet[i].event)) {
 			log_warn("could not initialize vionet event "
 			    "handler");
 			return;
@@ -2352,7 +2353,7 @@ virtio_start(struct vm_create_params *vcp)
 {
 	uint8_t i;
 	for (i = 0; i < vcp->vcp_nnics; i++) {
-		if (event_add(&vionet[i].event, NULL)) {
+		if (event_add(vionet[i].event, NULL)) {
 			log_warn("could not initialize vionet event "
 			    "handler");
 			return;

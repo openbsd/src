@@ -38,7 +38,6 @@
 #include <net/if.h>
 
 #include <errno.h>
-#include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
 #include <limits.h>
@@ -50,6 +49,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+
+#include <event2/event.h>
+#include <event2/thread.h>
 
 #include "vmd.h"
 #include "vmm.h"
@@ -117,6 +119,8 @@ pthread_cond_t vcpu_unpause_cond[VMM_MAX_VCPUS_PER_VM];
 pthread_mutex_t vcpu_unpause_mtx[VMM_MAX_VCPUS_PER_VM];
 uint8_t vcpu_hlt[VMM_MAX_VCPUS_PER_VM];
 uint8_t vcpu_done[VMM_MAX_VCPUS_PER_VM];
+
+extern struct event_base *evbase;
 
 /*
  * Represents a standard register set for an OS to be booted
@@ -363,8 +367,6 @@ start_vm(struct vmd_vm *vm, int fd)
 
 	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++)
 		nicfds[i] = vm->vm_ifs[i].vif_fd;
-
-	event_init();
 
 	if (vm->vm_state & VM_STATE_RECEIVED) {
 		restore_emulated_hw(vcp, vm->vm_receive_fd, nicfds,
@@ -1357,7 +1359,7 @@ event_thread(void *arg)
 	uint8_t *donep = arg;
 	intptr_t ret;
 
-	ret = event_dispatch();
+	ret = event_base_dispatch(evbase);
 
 	mutex_lock(&threadmutex);
 	*donep = 1;

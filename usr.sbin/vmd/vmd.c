@@ -31,7 +31,6 @@
 #include <string.h>
 #include <termios.h>
 #include <errno.h>
-#include <event.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <signal.h>
@@ -41,9 +40,14 @@
 #include <ctype.h>
 #include <pwd.h>
 #include <grp.h>
+#include <assert.h>
 
 #include <machine/specialreg.h>
 #include <machine/vmmvar.h>
+
+#include <event2/event.h>
+#include <event2/event_struct.h>
+#include <event2/thread.h>
 
 #include "proc.h"
 #include "atomicio.h"
@@ -75,7 +79,8 @@ static struct privsep_proc procs[] = {
 	{ "vmm",	PROC_VMM,	vmd_dispatch_vmm, vmm, vmm_shutdown },
 };
 
-struct event staggered_start_timer;
+struct event_base *evbase;
+static struct event *staggered_start_timer;
 
 /* For the privileged process */
 static struct privsep_proc *proc_priv = &procs[0];
@@ -97,8 +102,11 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	uint32_t			 id = 0;
 	struct control_sock		*rcs;
 
+	log_debug("%s: imsg hdr type: %d", __func__, imsg->hdr.type);
+
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
+		log_debug("%s: start vm request", __func__);
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
 		ret = vm_register(ps, &vmc, &vm, 0, vmc.vmc_owner.uid);
@@ -119,9 +127,12 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
+		log_debug("%s: start vm finish cmd: %d, res: %d",
+		    __func__, cmd, res);
 		break;
 	case IMSG_VMDOP_WAIT_VM_REQUEST:
 	case IMSG_VMDOP_TERMINATE_VM_REQUEST:
+		log_debug("%s: wait or terminate vm request", __func__);
 		IMSG_SIZE_CHECK(imsg, &vid);
 		memcpy(&vid, imsg->data, sizeof(vid));
 		flags = vid.vid_flags;
@@ -163,6 +174,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			return (-1);
 		break;
 	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
+		log_debug("%s: get info vm request", __func__);
 		proc_forward_imsg(ps, imsg, PROC_VMM, -1);
 		break;
 	case IMSG_VMDOP_LOAD:
@@ -728,6 +740,7 @@ main(int argc, char **argv)
 	int			 proc_instance = 0;
 	const char		*errp, *title = NULL;
 	int			 argc0 = argc;
+	int			 ret;
 
 	log_init(0, LOG_DAEMON);
 
@@ -820,6 +833,9 @@ main(int argc, char **argv)
 	if (title != NULL)
 		ps->ps_title[proc_id] = title;
 
+	//evthread_use_pthreads();
+	//evbase = event_base_new();
+
 	/* only the parent returns */
 	proc_init(ps, procs, nitems(procs), env->vmd_debug, argc0, argv,
 	    proc_id);
@@ -831,19 +847,21 @@ main(int argc, char **argv)
 	if (ps->ps_noaction == 0)
 		log_info("startup");
 
-	event_init();
+	assert(evbase == NULL);
+	evthread_use_pthreads();
+	evbase = event_base_new();
 
-	signal_set(&ps->ps_evsigint, SIGINT, vmd_sighdlr, ps);
-	signal_set(&ps->ps_evsigterm, SIGTERM, vmd_sighdlr, ps);
-	signal_set(&ps->ps_evsighup, SIGHUP, vmd_sighdlr, ps);
-	signal_set(&ps->ps_evsigpipe, SIGPIPE, vmd_sighdlr, ps);
-	signal_set(&ps->ps_evsigusr1, SIGUSR1, vmd_sighdlr, ps);
+	ps->ps_evsigint = evsignal_new(evbase, SIGINT, vmd_sighdlr, ps);
+	ps->ps_evsigterm = evsignal_new(evbase, SIGTERM, vmd_sighdlr, ps);
+	ps->ps_evsighup = evsignal_new(evbase, SIGHUP, vmd_sighdlr, ps);
+	ps->ps_evsigpipe = evsignal_new(evbase, SIGPIPE, vmd_sighdlr, ps);
+	ps->ps_evsigusr1 = evsignal_new(evbase, SIGUSR1, vmd_sighdlr, ps);
 
-	signal_add(&ps->ps_evsigint, NULL);
-	signal_add(&ps->ps_evsigterm, NULL);
-	signal_add(&ps->ps_evsighup, NULL);
-	signal_add(&ps->ps_evsigpipe, NULL);
-	signal_add(&ps->ps_evsigusr1, NULL);
+	evsignal_add(ps->ps_evsigint, NULL);
+	evsignal_add(ps->ps_evsigterm, NULL);
+	evsignal_add(ps->ps_evsighup, NULL);
+	evsignal_add(ps->ps_evsigpipe, NULL);
+	evsignal_add(ps->ps_evsigusr1, NULL);
 
 	if (!env->vmd_noaction)
 		proc_connect(ps);
@@ -851,9 +869,10 @@ main(int argc, char **argv)
 	if (vmd_configure() == -1)
 		fatalx("configuration failed");
 
-	event_dispatch();
+	log_info("%s: %s starting event loop", __func__, title);
+	ret = event_base_dispatch(evbase);
 
-	log_debug("parent exiting");
+	log_debug("%s: parent exiting (%d)", __func__, ret);
 
 	return (0);
 }
@@ -875,7 +894,7 @@ start_vm_batch(int fd, short type, void *args)
 		}
 		i++;
 		if (i > env->vmd_cfg.parallelism) {
-			evtimer_add(&staggered_start_timer,
+			evtimer_add(staggered_start_timer,
 			    &env->vmd_cfg.delay);
 			break;
 		}
@@ -950,7 +969,7 @@ vmd_configure(void)
 	}
 
 	log_debug("%s: starting vms in staggered fashion", __func__);
-	evtimer_set(&staggered_start_timer, start_vm_batch, NULL);
+	staggered_start_timer = evtimer_new(evbase, start_vm_batch, NULL);
 	/* start first batch */
 	start_vm_batch(0, 0, NULL);
 
@@ -1020,7 +1039,7 @@ vmd_reload(unsigned int reset, const char *filename)
 		}
 
 		log_debug("%s: starting vms in staggered fashion", __func__);
-		evtimer_set(&staggered_start_timer, start_vm_batch, NULL);
+		staggered_start_timer = evtimer_new(evbase, start_vm_batch, NULL);
 		/* start first batch */
 		start_vm_batch(0, 0, NULL);
 
@@ -1144,7 +1163,7 @@ vm_stop(struct vmd_vm *vm, int keeptty, const char *caller)
 	user_put(vm->vm_user);
 
 	if (vm->vm_iev.ibuf.fd != -1) {
-		event_del(&vm->vm_iev.ev);
+		event_del(vm->vm_iev.ev);
 		close(vm->vm_iev.ibuf.fd);
 	}
 	for (i = 0; i < VMM_MAX_DISKS_PER_VM; i++) {
