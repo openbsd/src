@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.63 2020/05/19 16:35:21 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.64 2020/05/23 11:58:46 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -37,6 +37,9 @@ tls13_client_init(struct tls13_ctx *ctx)
 		return 0;
 	}
 	s->client_version = s->version = ctx->hs->max_version;
+
+	tls13_record_layer_set_retry_after_phh(ctx->rl,
+	    (s->internal->mode & SSL_MODE_AUTO_RETRY) != 0);
 
 	if (!ssl_get_new_session(s, 0)) /* XXX */
 		return 0;
