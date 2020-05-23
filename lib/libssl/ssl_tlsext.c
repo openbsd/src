@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.70 2020/05/19 02:16:16 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.71 2020/05/23 08:47:19 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -222,13 +222,15 @@ tlsext_supportedgroups_server_parse(SSL *s, CBS *cbs, int *alert)
 		uint16_t *groups;
 		int i;
 
-		if (SSI(s)->tlsext_supportedgroups != NULL) {
+		if (S3I(s)->hs_tls13.hrr) {
+			if (SSI(s)->tlsext_supportedgroups == NULL) {
+				*alert = SSL_AD_HANDSHAKE_FAILURE;
+				return 0;
+			}
 			/*
-			 * We should only end up here in the case of a TLSv1.3
-			 * HelloRetryRequest... and the client cannot change
-			 * supported groups.
+			 * In the case of TLSv1.3 the client cannot change
+			 * the supported groups.
 			 */
-			/* XXX - we should know this is a HRR. */
 			if (groups_len != SSI(s)->tlsext_supportedgroups_length) {
 				*alert = SSL_AD_ILLEGAL_PARAMETER;
 				return 0;
@@ -1410,9 +1412,11 @@ int
 tlsext_keyshare_server_build(SSL *s, CBB *cbb)
 {
 	/* In the case of a HRR, we only send the server selected group. */
-	/* XXX - we should know this is a HRR. */
-	if (S3I(s)->hs_tls13.server_group != 0)
+	if (S3I(s)->hs_tls13.hrr) {
+		if (S3I(s)->hs_tls13.server_group == 0)
+			return 0;
 		return CBB_add_u16(cbb, S3I(s)->hs_tls13.server_group);
+	}
 
 	if (S3I(s)->hs_tls13.key_share == NULL)
 		return 0;
