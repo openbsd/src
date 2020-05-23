@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.50 2020/05/17 15:03:06 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.51 2020/05/23 19:54:12 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -745,7 +745,7 @@ EFI_MEMORY_DESCRIPTOR *mmap;
 
 void	remap_efi_runtime(EFI_PHYSICAL_ADDRESS);
 
-void	collect_kernel_args(char *);
+void	collect_kernel_args(const char *);
 void	process_kernel_args(void);
 
 void
@@ -1142,7 +1142,7 @@ remap_efi_runtime(EFI_PHYSICAL_ADDRESS system_table)
 char bootargs[256];
 
 void
-collect_kernel_args(char *args)
+collect_kernel_args(const char *args)
 {
 	/* Make a local copy of the bootargs */
 	strlcpy(bootargs, args, sizeof(bootargs));
