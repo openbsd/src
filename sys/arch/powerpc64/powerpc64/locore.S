@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 2020/05/17 23:27:45 gkoehler Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 2020/05/23 11:40:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -16,10 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define OPAL_TEST		0
-#define OPAL_CONSOLE_WRITE	1
-#define OPAL_CEC_POWER_DOWN	5
-#define OPAL_CEC_REBOOT		6
+#include <machine/opal.h>
 
 	.abiversion 2
 
@@ -59,6 +56,10 @@ cpu_idle_leave:
 cpu_switchto:
 	blr
 
+/*
+ * OPAL interfaces
+ */
+
 	.data
 
 	.globl opal_base
@@ -70,10 +71,20 @@ opal_entry:
 
 	.text
 
-	.globl opal_test
-opal_test:
-	mflr	%r0
-	std	%r0, 16(%r1)
+#define OPAL_CALL(opal_token, name) \
+	.globl name;			\
+name:					\
+	li	%r0, opal_token;	\
+	b	opal_call
+
+OPAL_CALL(OPAL_TEST, opal_test)
+OPAL_CALL(OPAL_CONSOLE_WRITE, opal_console_write)
+OPAL_CALL(OPAL_CEC_POWER_DOWN, opal_cec_power_down)
+OPAL_CALL(OPAL_CEC_REBOOT, opal_cec_reboot)
+	
+opal_call:
+	mflr	%r11
+	std	%r11, 16(%r1)
 	stdu	%r1, -32(%r1)
 	std	%r2, 24(%r1)
 
@@ -84,7 +95,6 @@ opal_test:
 	ld	%r11, 0(%r11)
 	ld	%r12, 0(%r12)
 
-	li	%r0, OPAL_TEST
 	mr	%r2, %r11
 	mtctr	%r12
 	bctrl
@@ -95,80 +105,9 @@ opal_test:
 	mtlr	%r0
 	blr
 
-	.globl opal_console_write
-opal_console_write:
-	mflr	%r0
-	std	%r0, 16(%r1)
-	stdu	%r1, -32(%r1)
-	std	%r2, 24(%r1)
-
-	addis	%r11, %r2, opal_base@toc@ha
-	addi	%r11, %r11, opal_base@toc@l
-	addis	%r12, %r2, opal_entry@toc@ha
-	addi	%r12, %r12, opal_entry@toc@l
-	ld	%r11, 0(%r11)
-	ld	%r12, 0(%r12)
-
-	li	%r0, OPAL_CONSOLE_WRITE
-	mr	%r2, %r11
-	mtctr	%r12
-	bctrl
-
-	ld	%r2, 24(%r1)
-	addi	%r1, %r1, 32
-	ld	%r0, 16(%r1)
-	mtlr	%r0
-	blr
-
-	.globl opal_cec_power_down
-opal_cec_power_down:
-	mflr	%r0
-	std	%r0, 16(%r1)
-	stdu	%r1, -32(%r1)
-	std	%r2, 24(%r1)
-
-	addis	%r11, %r2, opal_base@toc@ha
-	addi	%r11, %r11, opal_base@toc@l
-	addis	%r12, %r2, opal_entry@toc@ha
-	addi	%r12, %r12, opal_entry@toc@l
-	ld	%r11, 0(%r11)
-	ld	%r12, 0(%r12)
-
-	li	%r0, OPAL_CEC_POWER_DOWN
-	mr	%r2, %r11
-	mtctr	%r12
-	bctrl
-
-	ld	%r2, 24(%r1)
-	addi	%r1, %r1, 32
-	ld	%r0, 16(%r1)
-	mtlr	%r0
-	blr
-
-	.globl opal_cec_reboot
-opal_cec_reboot:
-	mflr	%r0
-	std	%r0, 16(%r1)
-	stdu	%r1, -32(%r1)
-	std	%r2, 24(%r1)
-
-	addis	%r11, %r2, opal_base@toc@ha
-	addi	%r11, %r11, opal_base@toc@l
-	addis	%r12, %r2, opal_entry@toc@ha
-	addi	%r12, %r12, opal_entry@toc@l
-	ld	%r11, 0(%r11)
-	ld	%r12, 0(%r12)
-
-	li	%r0, OPAL_CEC_REBOOT
-	mr	%r2, %r11
-	mtctr	%r12
-	bctrl
-
-	ld	%r2, 24(%r1)
-	addi	%r1, %r1, 32
-	ld	%r0, 16(%r1)
-	mtlr	%r0
-	blr
+/*
+ * DDB support code
+ */
 
 #ifdef DDB
 	.globl db_enter
