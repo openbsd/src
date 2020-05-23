@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.36 2020/05/11 18:20:01 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.37 2020/05/23 17:13:24 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3544,6 +3544,81 @@ done:
 	return (failure);
 }
 
+unsigned char *valid_hostnames[] = {
+	"openbsd.org",
+	"op3nbsd.org",
+	"org",
+	"3openbsd.com",
+	"3-0penb-d.c-m",
+	"a",
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+	NULL,
+};
+
+static int
+test_tlsext_valid_hostnames(void) {
+	int i, failure = 0;
+	for (i = 0; valid_hostnames[i] != NULL; i++) {
+		CBS cbs;
+		CBS_init(&cbs, valid_hostnames[i], strlen(valid_hostnames[i]));
+		if (!tlsext_sni_is_valid_hostname(&cbs)) {
+			fprintf(stderr, "FAIL: %s\n", valid_hostnames[i]);
+			FAIL("Valid hostname rejected");
+			failure = 1;
+			goto done;
+		}
+	}
+ done:
+	return failure;
+}
+
+unsigned char *invalid_hostnames[] = {
+	"openbsd.org.",
+	"openbsd..org",
+	"openbsd.org-",
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.a",
+	"-p3nbsd.org",
+	"openbs-.org",
+	"openbsd\n.org",
+	"open_bsd.org",
+	"open\178bsd.org",
+	"open\255bsd.org",
+	NULL,
+};
+
+static int
+test_tlsext_invalid_hostnames(void) {
+	int i, failure = 0;
+	CBS cbs;
+	for (i = 0; invalid_hostnames[i] != NULL; i++) {
+		CBS_init(&cbs, invalid_hostnames[i],
+		    strlen(invalid_hostnames[i]));
+		if (tlsext_sni_is_valid_hostname(&cbs)) {
+			fprintf(stderr, "%s\n", invalid_hostnames[i]);
+			FAIL("Invalid hostname accepted");
+			failure = 1;
+			goto done;
+		}
+	}
+	CBS_init(&cbs, valid_hostnames[0],
+	    strlen(valid_hostnames[0]) + 1);
+	if (tlsext_sni_is_valid_hostname(&cbs)) {
+		FAIL("hostname with NUL byte accepted");
+		failure = 1;
+		goto done;
+	}
+ done:
+	return failure;
+}
+
 
 int
 main(int argc, char **argv)
@@ -3594,6 +3669,9 @@ main(int argc, char **argv)
 
 	failed |= test_tlsext_clienthello_build();
 	failed |= test_tlsext_serverhello_build();
+
+	failed |= test_tlsext_valid_hostnames();
+	failed |= test_tlsext_invalid_hostnames();
 
 	return (failed);
 }
