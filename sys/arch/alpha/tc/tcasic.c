@@ -1,4 +1,4 @@
-/* $OpenBSD: tcasic.c,v 1.17 2017/10/29 08:50:43 mpi Exp $ */
+/* $OpenBSD: tcasic.c,v 1.18 2020/05/23 08:40:55 jsg Exp $ */
 /* $NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $ */
 
 /*
@@ -179,93 +179,9 @@ tcasicprint(aux, pnp)
 	return (UNCONF);
 }
 
-#ifdef notyet
-
-#include "wsdisplay.h"
-
-#if NWSDISPLAY > 0
-
-#include "sfb.h"
-#include "sfbp.h"
-#include "cfb.h"
-#include "mfb.h"
-#include "tfb.h"
-#include "px.h"
-#include "pxg.h"
-
-extern void	sfb_cnattach(tc_addr_t);
-extern void	sfbp_cnattach(tc_addr_t);
-extern void	cfb_cnattach(tc_addr_t);
-extern void	mfb_cnattach(tc_addr_t);
-extern void	tfb_cnattach(tc_addr_t);
-extern void	px_cnattach(tc_addr_t);
-extern void	pxg_cnattach(tc_addr_t);
-extern int	tc_checkslot(tc_addr_t, char *);
-
-struct cnboards {
-	const char	*cb_tcname;
-	void	(*cb_cnattach)(tc_addr_t);
-} static const cnboards[] = {
-#if NSFB > 0
-	{ "PMAGB-BA", sfb_cnattach },
-#endif
-#if NSFBP > 0
-	{ "PMAGD   ", sfbp_cnattach },
-#endif
-#if NCFB > 0
-	{ "PMAG-BA ", cfb_cnattach },
-#endif
-#if NMFB > 0
-	{ "PMAG-AA ", mfb_cnattach },
-#endif
-#if NTFB > 0
-	{ "PMAG-JA ", tfb_cnattach },
-#endif
-#if NPX > 0
-	{ "PMAG-CA ", px_cnattach },
-#endif
-#if NPXG > 0
-	{ "PMAG-DA ", pxg_cnattach },
-	{ "PMAG-FA ", pxg_cnattach },
-	{ "PMAG-FB ", pxg_cnattach },
-	{ "PMAGB-FA", pxg_cnattach },
-	{ "PMAGB-FB", pxg_cnattach },
-#endif
-};
-
-/*
- * tc_fb_cnattach --
- *	Attempt to attach the appropriate display driver to the
- * output console.
- */
-int
-tc_fb_cnattach(tcaddr)
-	tc_addr_t tcaddr;
-{
-	char tcname[TC_ROM_LLEN];
-	int i;
-
-	if (tc_badaddr(tcaddr) || (tc_checkslot(tcaddr, tcname) == 0))
-		return (EINVAL);
-
-	for (i = 0; i < sizeof(cnboards) / sizeof(cnboards[0]); i++)
-		if (strncmp(tcname, cnboards[i].cb_tcname, TC_ROM_LLEN) == 0)
-			break;
-
-	if (i == sizeof(cnboards) / sizeof(cnboards[0]))
-		return (ENXIO);
-
-	(cnboards[i].cb_cnattach)(tcaddr);
-	return (0);
-}
-#endif /* if NWSDISPLAY > 0 */
-
-#else
-
 int
 tc_fb_cnattach(tcaddr)
 	tc_addr_t tcaddr;
 {
 		return (ENXIO);
 }
-#endif
