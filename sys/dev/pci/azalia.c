@@ -177,6 +177,9 @@ typedef struct azalia_t {
 	stream_t pstream;
 	stream_t rstream;
 } azalia_t;
+
+
+
 #define XNAME(sc)		((sc)->dev.dv_xname)
 #define AZ_READ_1(z, r)		bus_space_read_1((z)->iot, (z)->ioh, HDA_##r)
 #define AZ_READ_2(z, r)		bus_space_read_2((z)->iot, (z)->ioh, HDA_##r)
@@ -1047,6 +1050,7 @@ azalia_init_corb(azalia_t *az, int resuming)
 	}
 	timeout_set(&az->unsol_to, azalia_rirb_kick_unsol_events, az);
 
+	printf("%s: DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&az->corb_dma));
 	AZ_WRITE_4(az, CORBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->corb_dma));
 	AZ_WRITE_4(az, CORBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->corb_dma)));
 	AZ_WRITE_1(az, CORBSIZE, az->corbsize);
@@ -1132,6 +1136,7 @@ azalia_init_rirb(azalia_t *az, int resuming)
 			return ENOMEM;
 		}
 	}
+	printf("%s: DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&az->rirb_dma));
 	AZ_WRITE_4(az, RIRBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->rirb_dma));
 	AZ_WRITE_4(az, RIRBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->rirb_dma)));
 	AZ_WRITE_1(az, RIRBSIZE, az->rirbsize);
@@ -3702,6 +3707,7 @@ azalia_stream_start(stream_t *this)
 	STR_WRITE_4(this, BDPU, 0);
 
 	/* setup BDL */
+	printf("%s: DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&this->buffer));
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->buffer);
 	dmaend = dmaaddr + this->bufsize;
 	bdlist = (bdlist_entry_t*)this->bdlist.addr;
@@ -3721,6 +3727,7 @@ azalia_stream_start(stream_t *this)
 	    __func__, this->bufsize, this->fmt, index));
 
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->bdlist);
+	printf("%s: DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&this->bdlist));
 	STR_WRITE_4(this, BDPL, dmaaddr);
 	STR_WRITE_4(this, BDPU, PTR_UPPER32(dmaaddr));
 	STR_WRITE_2(this, LVI, (index - 1) & HDA_SD_LVI_LVI);
