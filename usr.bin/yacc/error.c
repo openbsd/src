@@ -1,4 +1,4 @@
-/*		$OpenBSD: error.c,v 1.14 2014/03/08 01:05:39 tedu Exp $		*/
+/*		$OpenBSD: error.c,v 1.15 2020/05/23 21:08:38 espie Exp $		*/
 /*		$NetBSD: error.c,v 1.4 1996/03/19 03:21:32 jtc Exp $		*/
 
 /*
@@ -59,6 +59,14 @@ open_error(char *filename)
 {
 	fprintf(stderr, "%s: cannot open source file %s\n",
 	    input_file_name, filename);
+	done(2);
+}
+
+void
+tempfile_error(void)
+{
+	fprintf(stderr, "%s: cannot create temporary file\n",
+	    input_file_name);
 	done(2);
 }
 
