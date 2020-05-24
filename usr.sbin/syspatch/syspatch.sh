@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.160 2020/05/16 12:36:01 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.161 2020/05/24 16:47:43 tb Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -155,7 +155,7 @@ install_file()
 ls_installed()
 {
 	local _p
-	for _p in ${_PDIR}/${_OSrev}-+([[:digit:]])_+([[:alnum:]_]); do
+	for _p in ${_PDIR}/${_OSrev}-+([[:digit:]])_+([[:alnum:]_-]); do
 		[[ -f ${_p}/rollback.tgz ]] && echo ${_p##*/${_OSrev}-}
 	done | sort -V
 }
@@ -172,7 +172,7 @@ ls_missing()
 
 	# if no earlier version of all files contained in the syspatch exists
 	# on the system, it means a missing set so skip it
-	grep -Eo "syspatch${_OSrev}-[[:digit:]]{3}_[[:alnum:]_]+" ${_sha} |
+	grep -Eo "syspatch${_OSrev}-[[:digit:]]{3}_[[:alnum:]_-]+" ${_sha} |
 		while read _c; do _c=${_c##syspatch${_OSrev}-} &&
 		[[ -n ${_l} ]] && echo ${_c} | grep -qw -- "${_l}" || echo ${_c}
 	done | while read _p; do
@@ -312,7 +312,7 @@ if ((OPTIND == 1)); then
 	# remove non matching release /var/syspatch/ content
 	for _D in ${_PDIR}/{.[!.],}*; do
 		[[ -e ${_D} ]] || continue
-		[[ ${_D##*/} == ${_OSrev}-+([[:digit:]])_+([[:alnum:]]|_) ]] &&
+		[[ ${_D##*/} == ${_OSrev}-+([[:digit:]])_+([[:alnum:]_-]) ]] &&
 			[[ -f ${_D}/rollback.tgz ]] || rm -r ${_D}
 	done
 	_PATCHES=$(ls_missing)
