@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.72 2020/05/23 17:13:24 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.73 2020/05/24 15:13:22 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -17,8 +17,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <openssl/ocsp.h>
 #include <ctype.h>
+
+#include <openssl/ocsp.h>
 
 #include "ssl_locl.h"
 
@@ -674,8 +675,8 @@ tlsext_sni_client_build(SSL *s, CBB *cbb)
 }
 
 /*
- * Does the CBS contain only of a hostname consisting of RFC 5890
- * compliant A-labels? (see RFC 6066 section 3). Not a complete check
+ * Validate that the CBS contains only a hostname consisting of RFC 5890
+ * compliant A-labels (see RFC 6066 section 3). Not a complete check
  * since we don't parse punycode to verify its validity but limits to
  * correct structure and character set.
  */
@@ -686,10 +687,11 @@ tlsext_sni_is_valid_hostname(CBS *cbs)
 	int component = 0;
 	CBS hostname;
 
-	if (CBS_len(cbs) > TLSEXT_MAXLEN_host_name)
+	CBS_dup(cbs, &hostname);
+
+	if (CBS_len(&hostname) > TLSEXT_MAXLEN_host_name)
 		return 0;
 
-	CBS_dup(cbs, &hostname);
 	while(CBS_len(&hostname) > 0) {
 		prev = c;
 		if (!CBS_get_u8(&hostname, &c))
@@ -698,7 +700,7 @@ tlsext_sni_is_valid_hostname(CBS *cbs)
 		if (!isascii(c) || c == '\0')
 			return 0;
 		/* It must be alphanumeric, a '-', or a '.' */
-		if (!(isalnum(c) || c == '-' || c == '.'))
+		if (!isalnum(c) && c != '-' && c != '.')
 			return 0;
 		/* '-' and '.' must not start a component or be at the end. */
 		if (component == 0 || CBS_len(&hostname) == 0) {
@@ -717,6 +719,7 @@ tlsext_sni_is_valid_hostname(CBS *cbs)
 		if (++component > 63)
 			return 0;
 	}
+
 	return 1;
 }
 
@@ -748,7 +751,7 @@ tlsext_sni_server_parse(SSL *s, CBS *cbs, int *alert)
 	 * RFC 6066 section 3 specifies a host name must be at least 1 byte
 	 * so 0 length is a decode error.
 	 */
-	if (CBS_len(&host_name) == 0)
+	if (CBS_len(&host_name) < 1)
 		goto err;
 
 	if (!tlsext_sni_is_valid_hostname(&host_name)) {
