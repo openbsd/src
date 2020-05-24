@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.19 2020/05/23 21:08:38 espie Exp $	*/
+/*	$OpenBSD: defs.h,v 1.20 2020/05/24 17:31:54 espie Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -306,7 +306,6 @@ extern void finalize_closure(void);
 extern __dead void fatal(char *);
 
 extern void reflexive_transitive_closure(unsigned *, int);
-extern __dead void done(int);
 
 extern __dead void no_space(void);
 extern __dead void open_error(char *);

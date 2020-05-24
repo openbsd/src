@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.33 2020/05/23 21:08:38 espie Exp $	 */
+/* $OpenBSD: main.c,v 1.34 2020/05/24 17:31:54 espie Exp $	 */
 /* $NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	 */
 
 /*
@@ -97,12 +97,6 @@ void usage(void);
 void getargs(int, char *[]);
 void create_file_names(void);
 void open_files(void);
-
-void
-done(int k)
-{
-	exit(k);
-}
 
 void
 usage(void)
@@ -300,7 +294,5 @@ main(int argc, char *argv[])
 	make_parser();
 	verbose();
 	output();
-	done(0);
-	/* NOTREACHED */
 	return (0);
 }

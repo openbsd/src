@@ -1,4 +1,4 @@
-/*		$OpenBSD: error.c,v 1.15 2020/05/23 21:08:38 espie Exp $		*/
+/*		$OpenBSD: error.c,v 1.16 2020/05/24 17:31:54 espie Exp $		*/
 /*		$NetBSD: error.c,v 1.4 1996/03/19 03:21:32 jtc Exp $		*/
 
 /*
@@ -42,7 +42,7 @@ void
 fatal(char *msg)
 {
 	fprintf(stderr, "%s: %s\n", input_file_name, msg);
-	done(2);
+	exit(2);
 }
 
 
@@ -50,7 +50,7 @@ void
 no_space(void)
 {
 	fprintf(stderr, "%s: yacc is out of space\n", input_file_name);
-	done(2);
+	exit(2);
 }
 
 
@@ -59,7 +59,7 @@ open_error(char *filename)
 {
 	fprintf(stderr, "%s: cannot open source file %s\n",
 	    input_file_name, filename);
-	done(2);
+	exit(2);
 }
 
 void
@@ -67,7 +67,7 @@ tempfile_error(void)
 {
 	fprintf(stderr, "%s: cannot create temporary file\n",
 	    input_file_name);
-	done(2);
+	exit(2);
 }
 
 void
@@ -75,7 +75,7 @@ open_write_error(char *filename)
 {
 	fprintf(stderr, "%s: cannot open target file %s for writing\n",
 	    input_file_name, filename);
-	done(2);
+	exit(2);
 }
 
 void
@@ -83,7 +83,7 @@ unexpected_EOF(void)
 {
 	fprintf(stderr, "%s:%d: unexpected end-of-file\n",
 	    input_file_name, lineno);
-	done(1);
+	exit(1);
 }
 
 
@@ -117,7 +117,7 @@ syntax_error(int st_lineno, char *st_line, char *st_cptr)
 	fprintf(stderr, "%s:%d: syntax error\n",
 	    input_file_name, st_lineno);
 	print_pos(st_line, st_cptr);
-	done(1);
+	exit(1);
 }
 
 void
@@ -126,7 +126,7 @@ unterminated_comment(int c_lineno, char *c_line, char *c_cptr)
 	fprintf(stderr, "%s:%d: unmatched /*\n",
 	    input_file_name, c_lineno);
 	print_pos(c_line, c_cptr);
-	done(1);
+	exit(1);
 }
 
 void
@@ -135,7 +135,7 @@ unterminated_string(int s_lineno, char *s_line, char *s_cptr)
 	fprintf(stderr, "%s:%d:, unterminated string\n",
 	    input_file_name, s_lineno);
 	print_pos(s_line, s_cptr);
-	done(1);
+	exit(1);
 }
 
 void
@@ -144,7 +144,7 @@ unterminated_text(int t_lineno, char *t_line, char *t_cptr)
 	fprintf(stderr, "%s:%d: unmatched %%{\n",
 	    input_file_name, t_lineno);
 	print_pos(t_line, t_cptr);
-	done(1);
+	exit(1);
 }
 
 void
@@ -153,7 +153,7 @@ unterminated_union(int u_lineno, char *u_line, char *u_cptr)
 	fprintf(stderr, "%s:%d: unterminated %%union declaration\n",
 	    input_file_name, u_lineno);
 	print_pos(u_line, u_cptr);
-	done(1);
+	exit(1);
 }
 
 void
@@ -162,7 +162,7 @@ over_unionized(char *u_cptr)
 	fprintf(stderr, "%s:%d: too many %%union declarations\n",
 	    input_file_name, lineno);
 	print_pos(line, u_cptr);
-	done(1);
+	exit(1);
 }
 
 void
@@ -171,7 +171,7 @@ illegal_tag(int t_lineno, char *t_line, char *t_cptr)
 	fprintf(stderr, "%s:%d: illegal tag\n",
 	    input_file_name, t_lineno);
 	print_pos(t_line, t_cptr);
-	done(1);
+	exit(1);
 }
 
 
@@ -181,7 +181,7 @@ illegal_character(char *c_cptr)
 	fprintf(stderr, "%s:%d: illegal character\n",
 	    input_file_name, lineno);
 	print_pos(line, c_cptr);
-	done(1);
+	exit(1);
 }
 
 
@@ -190,7 +190,7 @@ used_reserved(char *s)
 {
 	fprintf(stderr, "%s:%d: illegal use of reserved symbol %s\n",
 	    input_file_name, lineno, s);
-	done(1);
+	exit(1);
 }
 
 void
@@ -198,7 +198,7 @@ tokenized_start(char *s)
 {
 	fprintf(stderr, "%s:%d: the start symbol %s cannot be declared to be a token\n",
 	    input_file_name, lineno, s);
-	done(1);
+	exit(1);
 }
 
 void
@@ -227,7 +227,7 @@ terminal_start(char *s)
 {
 	fprintf(stderr, "%s:%d: the start symbol %s is a token\n",
 	    input_file_name, lineno, s);
-	done(1);
+	exit(1);
 }
 
 void
@@ -242,7 +242,7 @@ no_grammar(void)
 {
 	fprintf(stderr, "%s:%d: no grammar has been specified\n",
 	    input_file_name, lineno);
-	done(1);
+	exit(1);
 }
 
 void
@@ -250,7 +250,7 @@ terminal_lhs(int s_lineno)
 {
 	fprintf(stderr, "%s:%d: a token appears on the lhs of a production\n",
 	    input_file_name, s_lineno);
-	done(1);
+	exit(1);
 }
 
 void
@@ -266,7 +266,7 @@ unterminated_action(int a_lineno, char *a_line, char *a_cptr)
 	fprintf(stderr, "%s:%d: unterminated action\n",
 	    input_file_name, a_lineno);
 	print_pos(a_line, a_cptr);
-	done(1);
+	exit(1);
 }
 
 void
@@ -282,7 +282,7 @@ dollar_error(int a_lineno, char *a_line, char *a_cptr)
 	fprintf(stderr, "%s:%d: illegal $-name\n",
 	    input_file_name, a_lineno);
 	print_pos(a_line, a_cptr);
-	done(1);
+	exit(1);
 }
 
 
@@ -291,7 +291,7 @@ untyped_lhs(void)
 {
 	fprintf(stderr, "%s:%d: $$ is untyped\n",
 	    input_file_name, lineno);
-	done(1);
+	exit(1);
 }
 
 void
@@ -299,7 +299,7 @@ untyped_rhs(int i, char *s)
 {
 	fprintf(stderr, "%s:%d: $%d (%s) is untyped\n",
 	    input_file_name, lineno, i, s);
-	done(1);
+	exit(1);
 }
 
 void
@@ -307,7 +307,7 @@ unknown_rhs(int i)
 {
 	fprintf(stderr, "%s:%d: $%d is untyped\n",
 	    input_file_name, lineno, i);
-	done(1);
+	exit(1);
 }
 
 void
@@ -321,7 +321,7 @@ void
 undefined_goal(char *s)
 {
 	fprintf(stderr, "%s: the start symbol %s is undefined\n", input_file_name, s);
-	done(1);
+	exit(1);
 }
 
 void
