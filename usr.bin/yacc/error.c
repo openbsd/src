@@ -1,4 +1,4 @@
-/*		$OpenBSD: error.c,v 1.16 2020/05/24 17:31:54 espie Exp $		*/
+/*		$OpenBSD: error.c,v 1.17 2020/05/24 18:27:07 espie Exp $		*/
 /*		$NetBSD: error.c,v 1.4 1996/03/19 03:21:32 jtc Exp $		*/
 
 /*
@@ -36,6 +36,7 @@
 /* routines for printing error messages  */
 
 #include "defs.h"
+#include <errno.h>
 
 
 void
@@ -57,24 +58,24 @@ no_space(void)
 void
 open_error(char *filename)
 {
-	fprintf(stderr, "%s: cannot open source file %s\n",
-	    input_file_name, filename);
+	fprintf(stderr, "%s: cannot open source file %s: %s\n",
+	    input_file_name, filename, strerror(errno));
 	exit(2);
 }
 
 void
 tempfile_error(void)
 {
-	fprintf(stderr, "%s: cannot create temporary file\n",
-	    input_file_name);
+	fprintf(stderr, "%s: cannot create temporary file: %s\n",
+	    input_file_name, strerror(errno));
 	exit(2);
 }
 
 void
 open_write_error(char *filename)
 {
-	fprintf(stderr, "%s: cannot open target file %s for writing\n",
-	    input_file_name, filename);
+	fprintf(stderr, "%s: cannot open target file %s for writing: %s\n",
+	    input_file_name, filename, strerror(errno));
 	exit(2);
 }
 
