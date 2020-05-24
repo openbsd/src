@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.37 2020/05/23 17:13:24 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.38 2020/05/24 14:35:26 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3560,14 +3560,16 @@ unsigned char *valid_hostnames[] = {
 };
 
 static int
-test_tlsext_valid_hostnames(void) {
+test_tlsext_valid_hostnames(void)
+{
 	int i, failure = 0;
+
 	for (i = 0; valid_hostnames[i] != NULL; i++) {
 		CBS cbs;
 		CBS_init(&cbs, valid_hostnames[i], strlen(valid_hostnames[i]));
 		if (!tlsext_sni_is_valid_hostname(&cbs)) {
-			fprintf(stderr, "FAIL: %s\n", valid_hostnames[i]);
-			FAIL("Valid hostname rejected");
+			FAIL("Valid hostname '%s' rejected\n",
+			    valid_hostnames[i]);
 			failure = 1;
 			goto done;
 		}
@@ -3595,15 +3597,17 @@ unsigned char *invalid_hostnames[] = {
 };
 
 static int
-test_tlsext_invalid_hostnames(void) {
+test_tlsext_invalid_hostnames(void)
+{
 	int i, failure = 0;
 	CBS cbs;
+
 	for (i = 0; invalid_hostnames[i] != NULL; i++) {
 		CBS_init(&cbs, invalid_hostnames[i],
 		    strlen(invalid_hostnames[i]));
 		if (tlsext_sni_is_valid_hostname(&cbs)) {
-			fprintf(stderr, "%s\n", invalid_hostnames[i]);
-			FAIL("Invalid hostname accepted");
+			FAIL("Invalid hostname '%s' accepted\n",
+			    invalid_hostnames[i]);
 			failure = 1;
 			goto done;
 		}
