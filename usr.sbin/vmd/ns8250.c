@@ -40,9 +40,6 @@ extern char *__progname;
 extern struct event_base *evbase;
 struct ns8250_dev com1_dev;
 
-static struct event *read_delay_ev;
-static struct timeval read_delay_tv;
-
 static void com_rcv_event(int, short, void *);
 static void com_rcv(struct ns8250_dev *, uint32_t, uint32_t);
 
@@ -65,11 +62,6 @@ ratelimit(int fd, short type, void *arg)
 	com1_dev.regs.iir &= ~IIR_NOPEND;
 	vcpu_assert_pic_irq(com1_dev.vmid, 0, com1_dev.irq);
 	vcpu_deassert_pic_irq(com1_dev.vmid, 0, com1_dev.irq);
-}
-
-static void
-arm_read(int fd, short type, void *arg) {
-	event_add(com1_dev.event, NULL);
 }
 
 void
@@ -107,7 +99,7 @@ ns8250_init(int fd, uint32_t vmid)
 	 */
 	com1_dev.pause_ct = (com1_dev.baudrate / 8) / 1000 * 10;
 
-	com1_dev.event = event_new(evbase, com1_dev.fd, EV_READ,
+	com1_dev.event = event_new(evbase, com1_dev.fd, EV_READ | EV_PERSIST,
 	    com_rcv_event, (void *)(intptr_t)vmid);
 
 	/*
@@ -123,8 +115,6 @@ ns8250_init(int fd, uint32_t vmid)
 	timerclear(&com1_dev.rate_tv);
 	com1_dev.rate_tv.tv_usec = 10000;
 	com1_dev.rate = evtimer_new(evbase, ratelimit, NULL);
-	read_delay_tv.tv_usec = 10000;
-	read_delay_ev = evtimer_new(evbase, arm_read, (void*)(intptr_t)vmid);
 }
 
 static void
@@ -144,7 +134,6 @@ com_rcv_event(int fd, short kind, void *arg)
 	 */
 	if (com1_dev.rcv_pending) {
 		mutex_unlock(&com1_dev.mutex);
-		evtimer_add(read_delay_ev, &read_delay_tv);
 		return;
 	}
 
@@ -160,7 +149,6 @@ com_rcv_event(int fd, short kind, void *arg)
 			vcpu_deassert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
 		}
 	}
-	event_add(com1_dev.event, NULL);
 
 	mutex_unlock(&com1_dev.mutex);
 }
@@ -678,10 +666,6 @@ ns8250_restore(int fd, int con_fd, uint32_t vmid)
 
 	com1_dev.wake = event_new(evbase, com1_dev.fd, EV_WRITE,
 	    com_rcv_event, (void *)(intptr_t)vmid);
-
-	read_delay_tv.tv_usec = 10000;
-	read_delay_ev = evtimer_new(evbase, arm_read,
-	    (void *)(intptr_t)vmid);
 
 	return (0);
 }
