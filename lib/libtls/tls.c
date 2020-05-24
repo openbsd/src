@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.84 2020/01/20 08:39:21 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.85 2020/05/24 15:12:54 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -405,6 +405,8 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 int
 tls_configure_ssl(struct tls *ctx, SSL_CTX *ssl_ctx)
 {
+	SSL_CTX_clear_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
+
 	SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
 	SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
