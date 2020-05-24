@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.39 2020/05/24 15:10:06 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.40 2020/05/24 20:01:58 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -169,7 +169,7 @@ test_tlsext_alpn_client(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_alpn_single_proto)) {
 		FAIL("got client ALPN with length %zu, "
@@ -241,7 +241,7 @@ test_tlsext_alpn_client(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_alpn_multiple_protos)) {
 		FAIL("got client ALPN with length %zu, "
@@ -364,7 +364,7 @@ test_tlsext_alpn_server(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_alpn_single_proto)) {
 		FAIL("got client ALPN with length %zu, "
@@ -574,7 +574,7 @@ test_tlsext_supportedgroups_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_supportedgroups_client_default)) {
 		FAIL("got client Ellipticcurves with length %zu, "
@@ -663,7 +663,7 @@ test_tlsext_supportedgroups_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_supportedgroups_client_nistp192and224)) {
 		FAIL("got client Ellipticcurves with length %zu, "
@@ -879,7 +879,7 @@ test_tlsext_ecpf_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_ecpf_hello_uncompressed)) {
 		FAIL("got client ECPointFormats with length %zu, "
@@ -967,7 +967,7 @@ test_tlsext_ecpf_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_ecpf_hello_prefer_order)) {
 		FAIL("got client ECPointFormats with length %zu, "
@@ -1092,7 +1092,7 @@ test_tlsext_ecpf_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_ecpf_hello_uncompressed)) {
 		FAIL("got server ECPointFormats with length %zu, "
@@ -1175,7 +1175,7 @@ test_tlsext_ecpf_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_ecpf_hello_prefer_order)) {
 		FAIL("got server ECPointFormats with length %zu, "
@@ -1322,7 +1322,7 @@ test_tlsext_ri_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_ri_client)) {
 		FAIL("got client RI with length %zu, "
@@ -1436,7 +1436,7 @@ test_tlsext_ri_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_ri_server)) {
 		FAIL("got server RI with length %zu, "
@@ -1553,7 +1553,7 @@ test_tlsext_sigalgs_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_sigalgs_client)) {
 		fprintf(stderr, "FAIL: got client sigalgs with length %zu, "
@@ -1625,7 +1625,7 @@ test_tlsext_sigalgs_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	CBS_init(&cbs, tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
 	if (tlsext_sigalgs_client_parse(ssl, &cbs, &alert)) {
@@ -1701,7 +1701,7 @@ test_tlsext_sni_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_sni_client)) {
 		FAIL("got client SNI with length %zu, "
@@ -1818,7 +1818,7 @@ test_tlsext_sni_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_sni_server)) {
 		FAIL("got server SNI with length %zu, "
@@ -1912,7 +1912,7 @@ test_tlsext_ocsp_client(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tls_ocsp_client_default)) {
 		FAIL("got ocsp client with length %zu, "
@@ -1987,7 +1987,7 @@ test_tlsext_ocsp_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	failure = 0;
 
@@ -2392,7 +2392,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_srtp_single)) {
 		FAIL("got client SRTP with length %zu, "
@@ -2461,7 +2461,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_srtp_multiple)) {
 		FAIL("got client SRTP with length %zu, "
@@ -2625,7 +2625,7 @@ test_tlsext_srtp_server(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_srtp_single)) {
 		FAIL("got server SRTP with length %zu, "
@@ -2749,7 +2749,7 @@ test_tlsext_clienthello_build(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_clienthello_default)) {
 		FAIL("got clienthello extensions with length %zu, "
@@ -2785,7 +2785,7 @@ test_tlsext_clienthello_build(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_clienthello_disabled)) {
 		FAIL("got clienthello extensions with length %zu, "
@@ -2853,7 +2853,7 @@ test_tlsext_serverhello_build(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_serverhello_default)) {
 		FAIL("got serverhello extensions with length %zu, "
@@ -2890,7 +2890,7 @@ test_tlsext_serverhello_build(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB\n");
+		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_serverhello_enabled)) {
 		FAIL("got serverhello extensions with length %zu, "
