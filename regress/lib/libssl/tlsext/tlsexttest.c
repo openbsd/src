@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.38 2020/05/24 14:35:26 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.39 2020/05/24 15:10:06 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -141,7 +141,7 @@ test_tlsext_alpn_client(void)
 
 	/* By default, we don't need this */
 	if (tlsext_alpn_client_needs(ssl)) {
-		FAIL("client should not need ALPN by default");
+		FAIL("client should not need ALPN by default\n");
 		goto err;
 	}
 
@@ -154,11 +154,11 @@ test_tlsext_alpn_client(void)
 	 */
 	if (SSL_set_alpn_protos(ssl, tlsext_alpn_single_proto_val,
 	    sizeof(tlsext_alpn_single_proto_val)) != 0) {
-		FAIL("should be able to set ALPN to http/1.1");
+		FAIL("should be able to set ALPN to http/1.1\n");
 		goto err;
 	}
 	if (!tlsext_alpn_client_needs(ssl)) {
-		FAIL("client should need ALPN by now");
+		FAIL("client should need ALPN by now\n");
 		goto err;
 	}
 
@@ -169,7 +169,7 @@ test_tlsext_alpn_client(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_alpn_single_proto)) {
 		FAIL("got client ALPN with length %zu, "
@@ -196,11 +196,11 @@ test_tlsext_alpn_client(void)
 	CBS_init(&cbs, tlsext_alpn_single_proto,
 	    sizeof(tlsext_alpn_single_proto));
 	if (!tlsext_alpn_server_parse(ssl, &cbs, &alert)) {
-		FAIL("failed to parse ALPN");
+		FAIL("failed to parse ALPN\n");
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -228,11 +228,11 @@ test_tlsext_alpn_client(void)
 
 	if (SSL_set_alpn_protos(ssl, tlsext_alpn_multiple_protos_val,
 	    sizeof(tlsext_alpn_multiple_protos_val)) != 0) {
-		FAIL("should be able to set ALPN to http/1.1");
+		FAIL("should be able to set ALPN to http/1.1\n");
 		goto err;
 	}
 	if (!tlsext_alpn_client_needs(ssl)) {
-		FAIL("client should need ALPN by now");
+		FAIL("client should need ALPN by now\n");
 		goto err;
 	}
 
@@ -241,7 +241,7 @@ test_tlsext_alpn_client(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_alpn_multiple_protos)) {
 		FAIL("got client ALPN with length %zu, "
@@ -263,11 +263,11 @@ test_tlsext_alpn_client(void)
 	CBS_init(&cbs, tlsext_alpn_multiple_protos,
 	    sizeof(tlsext_alpn_multiple_protos));
 	if (!tlsext_alpn_server_parse(ssl, &cbs, &alert)) {
-		FAIL("failed to parse ALPN");
+		FAIL("failed to parse ALPN\n");
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -298,7 +298,7 @@ test_tlsext_alpn_client(void)
 	ssl->internal->alpn_client_proto_list_len = 0;
 
 	if (tlsext_alpn_client_needs(ssl)) {
-		FAIL("client should need ALPN by default");
+		FAIL("client should need ALPN by default\n");
 		goto err;
 	}
 
@@ -360,11 +360,11 @@ test_tlsext_alpn_server(void)
 	/* Make sure we can build a server with one protocol */
 
 	if (!tlsext_alpn_server_build(ssl, &cbb)) {
-		FAIL("server should be able to build a response");
+		FAIL("server should be able to build a response\n");
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_alpn_single_proto)) {
 		FAIL("got client ALPN with length %zu, "
@@ -393,22 +393,22 @@ test_tlsext_alpn_server(void)
 
 	/* Shouldn't be able to parse without requesting */
 	if (tlsext_alpn_client_parse(ssl, &cbs, &alert)) {
-		FAIL("Should only parse server if we requested it");
+		FAIL("Should only parse server if we requested it\n");
 		goto err;
 	}
 
 	/* Should be able to parse once requested. */
 	if (SSL_set_alpn_protos(ssl, tlsext_alpn_single_proto_val,
 	    sizeof(tlsext_alpn_single_proto_val)) != 0) {
-		FAIL("should be able to set ALPN to http/1.1");
+		FAIL("should be able to set ALPN to http/1.1\n");
 		goto err;
 	}
 	if (!tlsext_alpn_server_parse(ssl, &cbs, &alert)) {
-		FAIL("Should be able to parse server when we request it");
+		FAIL("Should be able to parse server when we request it\n");
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -447,7 +447,7 @@ test_tlsext_alpn_server(void)
 	S3I(ssl)->alpn_selected_len = 0;
 
 	if (tlsext_alpn_server_needs(ssl)) {
-		FAIL("server should need ALPN by default");
+		FAIL("server should need ALPN by default\n");
 		goto err;
 	}
 
@@ -574,7 +574,7 @@ test_tlsext_supportedgroups_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_supportedgroups_client_default)) {
 		FAIL("got client Ellipticcurves with length %zu, "
@@ -611,7 +611,7 @@ test_tlsext_supportedgroups_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -663,7 +663,7 @@ test_tlsext_supportedgroups_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_supportedgroups_client_nistp192and224)) {
 		FAIL("got client Ellipticcurves with length %zu, "
@@ -711,7 +711,7 @@ test_tlsext_supportedgroups_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -879,7 +879,7 @@ test_tlsext_ecpf_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_ecpf_hello_uncompressed)) {
 		FAIL("got client ECPointFormats with length %zu, "
@@ -916,7 +916,7 @@ test_tlsext_ecpf_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -967,7 +967,7 @@ test_tlsext_ecpf_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_ecpf_hello_prefer_order)) {
 		FAIL("got client ECPointFormats with length %zu, "
@@ -1009,7 +1009,7 @@ test_tlsext_ecpf_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -1092,7 +1092,7 @@ test_tlsext_ecpf_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_ecpf_hello_uncompressed)) {
 		FAIL("got server ECPointFormats with length %zu, "
@@ -1129,7 +1129,7 @@ test_tlsext_ecpf_server(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -1175,7 +1175,7 @@ test_tlsext_ecpf_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_ecpf_hello_prefer_order)) {
 		FAIL("got server ECPointFormats with length %zu, "
@@ -1217,7 +1217,7 @@ test_tlsext_ecpf_server(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -1322,7 +1322,7 @@ test_tlsext_ri_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_ri_client)) {
 		FAIL("got client RI with length %zu, "
@@ -1345,7 +1345,7 @@ test_tlsext_ri_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -1436,7 +1436,7 @@ test_tlsext_ri_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_ri_server)) {
 		FAIL("got server RI with length %zu, "
@@ -1459,7 +1459,7 @@ test_tlsext_ri_server(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -1553,7 +1553,7 @@ test_tlsext_sigalgs_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_sigalgs_client)) {
 		fprintf(stderr, "FAIL: got client sigalgs with length %zu, "
@@ -1579,7 +1579,7 @@ test_tlsext_sigalgs_client(void)
 		goto done;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto done;
 	}
 
@@ -1625,7 +1625,7 @@ test_tlsext_sigalgs_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	CBS_init(&cbs, tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
 	if (tlsext_sigalgs_client_parse(ssl, &cbs, &alert)) {
@@ -1701,7 +1701,7 @@ test_tlsext_sni_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_sni_client)) {
 		FAIL("got client SNI with length %zu, "
@@ -1729,7 +1729,7 @@ test_tlsext_sni_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -1818,7 +1818,7 @@ test_tlsext_sni_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_sni_server)) {
 		FAIL("got server SNI with length %zu, "
@@ -1844,7 +1844,7 @@ test_tlsext_sni_server(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -1912,7 +1912,7 @@ test_tlsext_ocsp_client(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tls_ocsp_client_default)) {
 		FAIL("got ocsp client with length %zu, "
@@ -1936,7 +1936,7 @@ test_tlsext_ocsp_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -1987,7 +1987,7 @@ test_tlsext_ocsp_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	failure = 0;
 
@@ -2045,31 +2045,31 @@ test_tlsext_sessionticket_client(void)
 
 	/* Test disabling tickets. */
 	if ((SSL_set_options(ssl, SSL_OP_NO_TICKET) & SSL_OP_NO_TICKET) == 0) {
-		FAIL("Cannot disable tickets in the TLS connection");
+		FAIL("Cannot disable tickets in the TLS connection\n");
 		return 0;
 	}
 	if (tlsext_sessionticket_client_needs(ssl)) {
-		FAIL("client should not need SessionTicket if it was disabled");
+		FAIL("client should not need SessionTicket if it was disabled\n");
 		goto err;
 	}
 
 	/* Test re-enabling tickets. */
 	if ((SSL_clear_options(ssl, SSL_OP_NO_TICKET) & SSL_OP_NO_TICKET) != 0) {
-		FAIL("Cannot re-enable tickets in the TLS connection");
+		FAIL("Cannot re-enable tickets in the TLS connection\n");
 		return 0;
 	}
 	if (!tlsext_sessionticket_client_needs(ssl)) {
-		FAIL("client should need SessionTicket if it was disabled");
+		FAIL("client should need SessionTicket if it was disabled\n");
 		goto err;
 	}
 
 	/* Since we don't have a session, we should build an empty ticket. */
 	if (!tlsext_sessionticket_client_build(ssl, &cbb)) {
-		FAIL("Cannot build a ticket");
+		FAIL("Cannot build a ticket\n");
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("Cannot finish CBB");
+		FAIL("Cannot finish CBB\n");
 		goto err;
 	}
 	if (dlen != 0) {
@@ -2086,15 +2086,15 @@ test_tlsext_sessionticket_client(void)
 	if ((ssl->session = SSL_SESSION_new()) == NULL)
 		errx(1, "failed to create session");
 	if (!tlsext_sessionticket_client_needs(ssl)) {
-		FAIL("Should still want a session ticket with a new session");
+		FAIL("Should still want a session ticket with a new session\n");
 		goto err;
 	}
 	if (!tlsext_sessionticket_client_build(ssl, &cbb)) {
-		FAIL("Cannot build a ticket");
+		FAIL("Cannot build a ticket\n");
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("Cannot finish CBB");
+		FAIL("Cannot finish CBB\n");
 		goto err;
 	}
 	if (dlen != 0) {
@@ -2120,15 +2120,15 @@ test_tlsext_sessionticket_client(void)
 	ssl->session->tlsext_ticklen = sizeof(dummy);
 
 	if (!tlsext_sessionticket_client_needs(ssl)) {
-		FAIL("Should still want a session ticket with a new session");
+		FAIL("Should still want a session ticket with a new session\n");
 		goto err;
 	}
 	if (!tlsext_sessionticket_client_build(ssl, &cbb)) {
-		FAIL("Cannot build a ticket");
+		FAIL("Cannot build a ticket\n");
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("Cannot finish CBB");
+		FAIL("Cannot finish CBB\n");
 		goto err;
 	}
 	if (dlen != sizeof(dummy)) {
@@ -2155,12 +2155,12 @@ test_tlsext_sessionticket_client(void)
 	 * through SSL_set_options().
 	 */
 	if (!SSL_set_session_ticket_ext(ssl, NULL, 0)) {
-		FAIL("Could not set a NULL custom ticket");
+		FAIL("Could not set a NULL custom ticket\n");
 		goto err;
 	}
 	/* Should not need a ticket in this case */
 	if (tlsext_sessionticket_client_needs(ssl)) {
-		FAIL("Should not want to use session tickets with a NULL custom");
+		FAIL("Should not want to use session tickets with a NULL custom\n");
 		goto err;
 	}
 
@@ -2172,26 +2172,26 @@ test_tlsext_sessionticket_client(void)
 	ssl->internal->tlsext_session_ticket = NULL;
 
 	if (!tlsext_sessionticket_client_needs(ssl)) {
-		FAIL("Should need a session ticket again when the custom one is removed");
+		FAIL("Should need a session ticket again when the custom one is removed\n");
 		goto err;
 	}
 
 	/* Test a custom session ticket (not recommended in practice) */
 	if (!SSL_set_session_ticket_ext(ssl, tlsext_sessionticket_hello_max,
 	    sizeof(tlsext_sessionticket_hello_max))) {
-		FAIL("Should be able to set a custom ticket");
+		FAIL("Should be able to set a custom ticket\n");
 		goto err;
 	}
 	if (!tlsext_sessionticket_client_needs(ssl)) {
-		FAIL("Should need a session ticket again when the custom one is not empty");
+		FAIL("Should need a session ticket again when the custom one is not empty\n");
 		goto err;
 	}
 	if (!tlsext_sessionticket_client_build(ssl, &cbb)) {
-		FAIL("Cannot build a ticket with a max length random payload");
+		FAIL("Cannot build a ticket with a max length random payload\n");
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("Cannot finish CBB");
+		FAIL("Cannot finish CBB\n");
 		goto err;
 	}
 	if (dlen != sizeof(tlsext_sessionticket_hello_max)) {
@@ -2201,7 +2201,7 @@ test_tlsext_sessionticket_client(void)
 	}
 	if (memcmp(data, tlsext_sessionticket_hello_max,
 	    sizeof(tlsext_sessionticket_hello_max)) != 0) {
-		FAIL("Expected to get what we passed in");
+		FAIL("Expected to get what we passed in\n");
 		compare_data(data, dlen,
 		    tlsext_sessionticket_hello_max,
 		    sizeof(tlsext_sessionticket_hello_max));
@@ -2250,38 +2250,38 @@ test_tlsext_sessionticket_server(void)
 
 	/* Test disabling tickets. */
 	if ((SSL_set_options(ssl, SSL_OP_NO_TICKET) & SSL_OP_NO_TICKET) == 0) {
-		FAIL("Cannot disable tickets in the TLS connection");
+		FAIL("Cannot disable tickets in the TLS connection\n");
 		return 0;
 	}
 	if (tlsext_sessionticket_server_needs(ssl)) {
-		FAIL("server should not need SessionTicket if it was disabled");
+		FAIL("server should not need SessionTicket if it was disabled\n");
 		goto err;
 	}
 
 	/* Test re-enabling tickets. */
 	if ((SSL_clear_options(ssl, SSL_OP_NO_TICKET) & SSL_OP_NO_TICKET) != 0) {
-		FAIL("Cannot re-enable tickets in the TLS connection");
+		FAIL("Cannot re-enable tickets in the TLS connection\n");
 		return 0;
 	}
 	if (tlsext_sessionticket_server_needs(ssl)) {
-		FAIL("server should not need SessionTicket yet");
+		FAIL("server should not need SessionTicket yet\n");
 		goto err;
 	}
 
 	/* Set expected to require it. */
 	ssl->internal->tlsext_ticket_expected = 1;
 	if (!tlsext_sessionticket_server_needs(ssl)) {
-		FAIL("server should now be required for SessionTicket");
+		FAIL("server should now be required for SessionTicket\n");
 		goto err;
 	}
 
 	/* server hello's session ticket should always be 0 length payload. */
 	if (!tlsext_sessionticket_server_build(ssl, &cbb)) {
-		FAIL("Cannot build a ticket with a max length random payload");
+		FAIL("Cannot build a ticket with a max length random payload\n");
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("Cannot finish CBB");
+		FAIL("Cannot finish CBB\n");
 		goto err;
 	}
 	if (dlen != 0) {
@@ -2392,7 +2392,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_srtp_single)) {
 		FAIL("got client SRTP with length %zu, "
@@ -2427,7 +2427,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -2461,7 +2461,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_srtp_multiple)) {
 		FAIL("got client SRTP with length %zu, "
@@ -2494,7 +2494,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -2525,7 +2525,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -2554,7 +2554,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -2625,7 +2625,7 @@ test_tlsext_srtp_server(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_srtp_single)) {
 		FAIL("got server SRTP with length %zu, "
@@ -2667,7 +2667,7 @@ test_tlsext_srtp_server(void)
 		goto err;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		goto err;
 	}
 
@@ -2749,7 +2749,7 @@ test_tlsext_clienthello_build(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_clienthello_default)) {
 		FAIL("got clienthello extensions with length %zu, "
@@ -2776,7 +2776,7 @@ test_tlsext_clienthello_build(void)
 		goto err;
 	}
 	if ((SSL_set_options(ssl, SSL_OP_NO_TICKET) & SSL_OP_NO_TICKET) == 0) {
-		FAIL("failed to disable session tickets");
+		FAIL("failed to disable session tickets\n");
 		return 0;
 	}
 
@@ -2785,7 +2785,7 @@ test_tlsext_clienthello_build(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_clienthello_disabled)) {
 		FAIL("got clienthello extensions with length %zu, "
@@ -2853,7 +2853,7 @@ test_tlsext_serverhello_build(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_serverhello_default)) {
 		FAIL("got serverhello extensions with length %zu, "
@@ -2890,7 +2890,7 @@ test_tlsext_serverhello_build(void)
 		goto err;
 	}
 	if (!CBB_finish(&cbb, &data, &dlen))
-		errx(1, "failed to finish CBB");
+		errx(1, "failed to finish CBB\n");
 
 	if (dlen != sizeof(tlsext_serverhello_enabled)) {
 		FAIL("got serverhello extensions with length %zu, "
@@ -2987,7 +2987,7 @@ test_tlsext_versions_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("failed to finish CBB");
+		FAIL("failed to finish CBB\n");
 		failure = 1;
 		goto done;
 	}
@@ -3006,7 +3006,7 @@ test_tlsext_versions_client(void)
 		goto done;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		failure = 1;
 		goto done;
 	}
@@ -3062,7 +3062,7 @@ test_tlsext_versions_server(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("failed to finish CBB");
+		FAIL("failed to finish CBB\n");
 		failure = 1;
 		goto done;
 	}
@@ -3081,7 +3081,7 @@ test_tlsext_versions_server(void)
 		goto done;
 	}
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		failure = 1;
 		goto done;
 	}
@@ -3165,7 +3165,7 @@ test_tlsext_keyshare_client(void)
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("failed to finish CBB");
+		FAIL("failed to finish CBB\n");
 		failure = 1;
 		goto done;
 	}
@@ -3187,7 +3187,7 @@ test_tlsext_keyshare_client(void)
 	}
 
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		failure = 1;
 		goto done;
 	}
@@ -3249,20 +3249,20 @@ test_tlsext_keyshare_server(void)
 	}
 
 	if (tls_extension_find(TLSEXT_TYPE_key_share, &idx) == NULL) {
-		FAIL("failed to find keyshare extension");
+		FAIL("failed to find keyshare extension\n");
 		failure = 1;
 		goto done;
 	}
 	S3I(ssl)->hs.extensions_seen |= (1 << idx);
 
 	if (!tlsext_keyshare_server_needs(ssl)) {
-		FAIL("server should need keyshare");
+		FAIL("server should need keyshare\n");
 		failure = 1;
 		goto done;
 	}
 
 	if (tlsext_keyshare_server_build(ssl, &cbb)) {
-		FAIL("server should not have built a keyshare response");
+		FAIL("server should not have built a keyshare response\n");
 		failure = 1;
 		goto done;
 	}
@@ -3276,19 +3276,19 @@ test_tlsext_keyshare_server(void)
 	CBS_init(&cbs, bogokey, sizeof(bogokey));
 	if (!tls13_key_share_peer_public(S3I(ssl)->hs_tls13.key_share,
 	    0x001d, &cbs)) {
-		FAIL("failed to load peer public key");
+		FAIL("failed to load peer public key\n");
 		failure = 1;
 		goto done;
 	}
 
 	if (!tlsext_keyshare_server_build(ssl, &cbb)) {
-		FAIL("server should be able to build a keyshare response");
+		FAIL("server should be able to build a keyshare response\n");
 		failure = 1;
 		goto done;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("failed to finish CBB");
+		FAIL("failed to finish CBB\n");
 		failure = 1;
 		goto done;
 	}
@@ -3315,7 +3315,7 @@ test_tlsext_keyshare_server(void)
 	}
 
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		failure = 1;
 		goto done;
 	}
@@ -3384,19 +3384,19 @@ test_tlsext_cookie_client(void)
 	S3I(ssl)->hs_tls13.cookie_len = strlen(cookie);
 
 	if (!tlsext_cookie_client_needs(ssl)) {
-		FAIL("client should need cookie");
+		FAIL("client should need cookie\n");
 		failure = 1;
 		goto done;
 	}
 
 	if (!tlsext_cookie_client_build(ssl, &cbb)) {
-		FAIL("client should have built a cookie response");
+		FAIL("client should have built a cookie response\n");
 		failure = 1;
 		goto done;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("failed to finish CBB");
+		FAIL("failed to finish CBB\n");
 		failure = 1;
 		goto done;
 	}
@@ -3419,7 +3419,7 @@ test_tlsext_cookie_client(void)
 	}
 
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		failure = 1;
 		goto done;
 	}
@@ -3479,19 +3479,19 @@ test_tlsext_cookie_server(void)
 	S3I(ssl)->hs_tls13.cookie_len = strlen(cookie);
 
 	if (!tlsext_cookie_server_needs(ssl)) {
-		FAIL("server should need cookie");
+		FAIL("server should need cookie\n");
 		failure = 1;
 		goto done;
 	}
 
 	if (!tlsext_cookie_server_build(ssl, &cbb)) {
-		FAIL("server have built a cookie response");
+		FAIL("server have built a cookie response\n");
 		failure = 1;
 		goto done;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
-		FAIL("failed to finish CBB");
+		FAIL("failed to finish CBB\n");
 		failure = 1;
 		goto done;
 	}
@@ -3530,7 +3530,7 @@ test_tlsext_cookie_server(void)
 	}
 
 	if (CBS_len(&cbs) != 0) {
-		FAIL("extension data remaining");
+		FAIL("extension data remaining\n");
 		failure = 1;
 		goto done;
 	}
@@ -3615,7 +3615,7 @@ test_tlsext_invalid_hostnames(void)
 	CBS_init(&cbs, valid_hostnames[0],
 	    strlen(valid_hostnames[0]) + 1);
 	if (tlsext_sni_is_valid_hostname(&cbs)) {
-		FAIL("hostname with NUL byte accepted");
+		FAIL("hostname with NUL byte accepted\n");
 		failure = 1;
 		goto done;
 	}
