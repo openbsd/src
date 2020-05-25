@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.214 2020/05/25 15:24:32 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.215 2020/05/25 17:52:57 naddy Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -589,6 +589,9 @@ arc4random_ctx_free(struct arc4random_ctx *ctx)
 void
 arc4random_ctx_buf(struct arc4random_ctx *ctx, void *buf, size_t n)
 {
+#ifndef KEYSTREAM_ONLY
+	memset(buf, 0, n);
+#endif
 	chacha_encrypt_bytes((chacha_ctx *)ctx, buf, buf, n);
 }
 
@@ -708,40 +711,31 @@ randomclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 randomread(dev_t dev, struct uio *uio, int ioflag)
 {
-	u_char		lbuf[KEYSZ+IVSZ];
-	chacha_ctx	lctx;
+	struct arc4random_ctx *lctx = NULL;
 	size_t		total = uio->uio_resid;
 	u_char		*buf;
-	int		myctx = 0, ret = 0;
+	int		ret = 0;
 
 	if (uio->uio_resid == 0)
 		return 0;
 
 	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
-	if (total > RND_MAIN_MAX_BYTES) {
-		arc4random_buf(lbuf, sizeof(lbuf));
-		chacha_keysetup(&lctx, lbuf, KEYSZ * 8);
-		chacha_ivsetup(&lctx, lbuf + KEYSZ, NULL);
-		explicit_bzero(lbuf, sizeof(lbuf));
-		myctx = 1;
-	}
+	if (total > RND_MAIN_MAX_BYTES)
+		lctx = arc4random_ctx_new();
 
 	while (ret == 0 && uio->uio_resid > 0) {
 		size_t	n = ulmin(POOLBYTES, uio->uio_resid);
 
-		if (myctx) {
-#ifndef KEYSTREAM_ONLY
-			memset(buf, 0, n);
-#endif
-			chacha_encrypt_bytes(&lctx, buf, buf, n);
-		} else
+		if (lctx != NULL)
+			arc4random_ctx_buf(lctx, buf, n);
+		else
 			arc4random_buf(buf, n);
 		ret = uiomove(buf, n, uio);
 		if (ret == 0 && uio->uio_resid > 0)
 			yield();
 	}
-	if (myctx)
-		explicit_bzero(&lctx, sizeof(lctx));
+	if (lctx != NULL)
+		arc4random_ctx_free(lctx);
 	explicit_bzero(buf, POOLBYTES);
 	free(buf, M_TEMP, POOLBYTES);
 	return ret;
