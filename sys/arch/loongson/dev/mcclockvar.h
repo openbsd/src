@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclockvar.h,v 1.1.1.1 2009/11/26 12:14:01 miod Exp $	*/
+/*	$OpenBSD: mcclockvar.h,v 1.2 2020/05/25 13:16:06 visa Exp $	*/
 /*	$NetBSD: mcclockvar.h,v 1.2 1996/04/17 22:22:38 cgd Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
 
 struct mcclock_softc {
 	struct device sc_dev;
+	struct todr_chip_handle sc_todr;
 	const struct mcclock_busfns *sc_busfns;
 };
 
