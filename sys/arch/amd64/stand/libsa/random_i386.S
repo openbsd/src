@@ -1,4 +1,4 @@
-/*	$OpenBSD: random_i386.S,v 1.10 2016/02/12 21:36:33 naddy Exp $	*/
+/*	$OpenBSD: random_i386.S,v 1.11 2020/05/25 14:58:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -40,6 +40,7 @@ ENTRY(mdrandom)
 	pushl	%ecx
 	popfl
 	andl	$PSL_ID, %eax
+	movl	$-1, %eax
 	jz	done
 
 	// CPUID leaf = 1, subleaf = 0
@@ -59,6 +60,7 @@ ENTRY(mdrandom)
 	andl	$CPUID_TSC, %eax	// See if we have rdtsc.
 	jnz	usetsc
 
+	movl	$-1, %eax
 	jmp	done
 
 userand:
@@ -69,6 +71,7 @@ userand:
 	incl	%edi
 	cmpl	%edi, %edx
 	jne	1b
+	movl	$0, %eax
 	jmp	done
 
 usetsc:
@@ -99,6 +102,7 @@ usetsc:
 	incl	%edi
 	cmpl	%edi, %ecx
 	jne	usetsc
+	movl	$0, %eax
 	jmp	done
 
 done:
