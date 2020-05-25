@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.137 2020/05/22 15:43:38 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.138 2020/05/25 18:57:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -578,8 +578,8 @@ tty_keys_next1(struct tty *tty, const char *buf, size_t len, key_code *key,
 	struct tty_key		*tk, *tk1;
 	struct utf8_data	 ud;
 	enum utf8_state		 more;
+	utf8_char		 uc;
 	u_int			 i;
-	wchar_t			 wc;
 
 	log_debug("%s: next key is %zu (%.*s) (expired=%d)", c->name, len,
 	    (int)len, buf, expired);
@@ -611,12 +611,12 @@ tty_keys_next1(struct tty *tty, const char *buf, size_t len, key_code *key,
 		if (more != UTF8_DONE)
 			return (-1);
 
-		if (utf8_combine(&ud, &wc) != UTF8_DONE)
+		if (utf8_from_data(&ud, &uc) != UTF8_DONE)
 			return (-1);
-		*key = wc;
+		*key = uc;
 
 		log_debug("%s: UTF-8 key %.*s %#llx", c->name, (int)ud.size,
-		    buf, *key);
+		    ud.data, *key);
 		return (0);
 	}
 

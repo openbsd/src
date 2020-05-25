@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.63 2020/05/16 16:35:13 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.64 2020/05/25 18:57:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -91,8 +91,8 @@ cmd_send_keys_inject_string(struct cmdq_item *item, struct cmdq_item *after,
     struct args *args, int i)
 {
 	const char		*s = args->argv[i];
-	struct utf8_data	*ud, *uc;
-	wchar_t			 wc;
+	struct utf8_data	*ud, *loop;
+	utf8_char		 uc;
 	key_code		 key;
 	char			*endptr;
 	long			 n;
@@ -117,10 +117,10 @@ cmd_send_keys_inject_string(struct cmdq_item *item, struct cmdq_item *after,
 	}
 	if (literal) {
 		ud = utf8_fromcstr(s);
-		for (uc = ud; uc->size != 0; uc++) {
-			if (utf8_combine(uc, &wc) != UTF8_DONE)
+		for (loop = ud; loop->size != 0; loop++) {
+			if (utf8_from_data(loop, &uc) != UTF8_DONE)
 				continue;
-			after = cmd_send_keys_inject_key(item, after, wc);
+			after = cmd_send_keys_inject_key(item, after, uc);
 		}
 		free(ud);
 	}
