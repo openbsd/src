@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.17 2015/10/01 16:08:19 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.18 2020/05/25 02:04:48 deraadt Exp $	*/
 /*	$NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $	*/
 
 /*
@@ -78,10 +78,14 @@ diskstrategy(void *devdata, int rw, daddr32_t bn, size_t reqcnt, void *addrvoid,
 	sc = (struct disk_softc *)devdata;
 	pp = &sc->sc_label.d_partitions[sc->sc_part];
 
-	ret.bits = prom_read(sc->sc_fd, reqcnt, addr, bn + pp->p_offset);
+	if (rw == F_READ)
+		ret.bits = prom_read(sc->sc_fd, reqcnt, addr, bn + pp->p_offset);
+	else
+		ret.bits = prom_write(sc->sc_fd, reqcnt, addr, bn + pp->p_offset);
 	if (ret.u.status)
 		return (EIO);
-	*cnt = ret.u.retval;
+	if (cnt)
+		*cnt = ret.u.retval;
 	return (0);
 }
 
