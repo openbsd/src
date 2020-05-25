@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.10 2020/05/17 05:39:32 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.11 2020/05/25 09:14:50 mestre Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -948,6 +948,13 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s: can't open control device\n", devname);
 		exit(1);
 	}
+
+	if (pledge("stdio audio", NULL) == -1) {
+		fprintf(stderr, "%s: pledge: %s\n", getprogname(),
+		    strerror(errno));
+		exit(1);
+	}
+
 	if (!sioctl_ondesc(hdl, ondesc, NULL)) {
 		fprintf(stderr, "%s: can't get device description\n", devname);
 		exit(1);
