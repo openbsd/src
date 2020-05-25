@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.38 2020/05/25 06:45:26 jsg Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.39 2020/05/25 09:55:49 jsg Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -57,9 +57,9 @@
 #include <dev/wscons/ascii.h>
 
 void	*wsemul_vt100_cnattach(const struct wsscreen_descr *, void *,
-				  int, int, long);
+				  int, int, uint32_t);
 void	*wsemul_vt100_attach(int, const struct wsscreen_descr *,
-				  void *, int, int, void *, long);
+				  void *, int, int, void *, uint32_t);
 u_int	wsemul_vt100_output(void *, const u_char *, u_int, int);
 void	wsemul_vt100_detach(void *, u_int *, u_int *);
 void	wsemul_vt100_resetop(void *, enum wsemul_resetops);
@@ -77,7 +77,7 @@ const struct wsemul_ops wsemul_vt100_ops = {
 struct wsemul_vt100_emuldata wsemul_vt100_console_emuldata;
 
 void	wsemul_vt100_init(struct wsemul_vt100_emuldata *,
-	    const struct wsscreen_descr *, void *, int, int, long);
+	    const struct wsscreen_descr *, void *, int, int, uint32_t);
 int	wsemul_vt100_jump_scroll(struct wsemul_vt100_emuldata *,
 	    const u_char *, u_int, int);
 int	wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *,
@@ -137,7 +137,7 @@ vt100_handler *vt100_output[] = {
 void
 wsemul_vt100_init(struct wsemul_vt100_emuldata *edp,
     const struct wsscreen_descr *type, void *cookie, int ccol, int crow,
-    long defattr)
+    uint32_t defattr)
 {
 	edp->emulops = type->textops;
 	edp->emulcookie = cookie;
@@ -152,7 +152,7 @@ wsemul_vt100_init(struct wsemul_vt100_emuldata *edp,
 
 void *
 wsemul_vt100_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
-    int crow, long defattr)
+    int crow, uint32_t defattr)
 {
 	struct wsemul_vt100_emuldata *edp;
 	int res;
@@ -198,7 +198,7 @@ wsemul_vt100_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
 
 void *
 wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
-    void *cookie, int ccol, int crow, void *cbcookie, long defattr)
+    void *cookie, int ccol, int crow, void *cbcookie, uint32_t defattr)
 {
 	struct wsemul_vt100_emuldata *edp;
 

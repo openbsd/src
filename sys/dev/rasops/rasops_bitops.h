@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops_bitops.h,v 1.7 2017/09/07 11:27:17 bluhm Exp $ */
+/*	$OpenBSD: rasops_bitops.h,v 1.8 2020/05/25 09:55:49 jsg Exp $ */
 /* 	$NetBSD: rasops_bitops.h,v 1.6 2000/04/12 14:22:30 pk Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  * Erase columns.
  */
 int
-NAME(erasecols)(void *cookie, int row, int col, int num, long attr)
+NAME(erasecols)(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	int lmask, rmask, lclr, rclr, clr;
 	struct rasops_info *ri;

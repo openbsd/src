@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.24 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.25 2020/05/25 09:55:48 jsg Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -552,13 +552,13 @@ cn_get_magic(char *magic, int maglen) {
 #if NWSDISPLAY > 0
 
 int	pcons_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	pcons_cursor(void *, int, int, int);
 void	pcons_free_screen(void *, void *);
 int	pcons_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int	pcons_mapchar(void *, int, unsigned int *);
 paddr_t	pcons_mmap(void *, off_t, int);
-int	pcons_putchar(void *, int, int, u_int, long);
+int	pcons_putchar(void *, int, int, u_int, uint32_t);
 int	pcons_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 
@@ -590,7 +590,7 @@ struct wsdisplay_accessops pcons_accessops = {
 
 int
 pcons_alloc_screen(void *v, const struct wsscreen_descr *typ, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
+    int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct pconssoftc *sc = v;
 	int *rowp, *colp;
@@ -664,7 +664,7 @@ pcons_mapchar(void *v, int uc, unsigned int *idx)
 }
 
 int
-pcons_putchar(void *v, int row, int col, u_int uc, long attr)
+pcons_putchar(void *v, int row, int col, u_int uc, uint32_t attr)
 {
 	u_char buf[1];
 	int s;

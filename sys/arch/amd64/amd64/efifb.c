@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.28 2020/05/25 06:45:25 jsg Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.29 2020/05/25 09:55:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -96,7 +96,7 @@ void	 efifb_rasops_preinit(struct efifb *);
 int	 efifb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	 efifb_mmap(void *, off_t, int);
 int	 efifb_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	 efifb_free_screen(void *, void *);
 int	 efifb_show_screen(void *, void *, int, void (*cb) (void *, int, int),
 	    void *);
@@ -211,7 +211,7 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %dx%d, %dbpp\n", ri->ri_width, ri->ri_height, ri->ri_depth);
 
 	if (console) {
-		long	 defattr = 0;
+		uint32_t defattr = 0;
 
 		ccol = ri->ri_ccol;
 		crow = ri->ri_crow;
@@ -346,7 +346,7 @@ efifb_mmap(void *v, off_t off, int prot)
 
 int
 efifb_alloc_screen(void *v, const struct wsscreen_descr *descr,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct efifb_softc	*sc = v;
 	struct rasops_info	*ri = &sc->sc_fb->rinfo;
@@ -430,7 +430,7 @@ efifb_cnattach_common(void)
 {
 	struct efifb		*fb = &efifb_console;
 	struct rasops_info	*ri = &fb->rinfo;
-	long			 defattr = 0;
+	uint32_t		 defattr = 0;
 
 	ri->ri_bits = (u_char *)efifb_early_map(fb->paddr);
 

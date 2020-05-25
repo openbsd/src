@@ -1,4 +1,4 @@
-/*	$OpenBSD: raptor.c,v 1.8 2013/10/20 20:07:27 miod Exp $	*/
+/*	$OpenBSD: raptor.c,v 1.9 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -154,9 +154,9 @@ int	raptor_putcmap(struct raptor_softc *, struct wsdisplay_cmap *);
 void	raptor_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 int	raptor_copycols(void *, int, int, int, int);
-int	raptor_erasecols(void *, int, int, int, long);
+int	raptor_erasecols(void *, int, int, int, uint32_t);
 int	raptor_copyrows(void *, int, int, int);
-int	raptor_eraserows(void *, int, int, long);
+int	raptor_eraserows(void *, int, int, uint32_t);
 
 void	raptor_init(struct raptor_softc *);
 int	raptor_wait(struct raptor_softc *);
@@ -439,7 +439,7 @@ raptor_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-raptor_erasecols(void *cookie, int row, int col, int num, long attr)
+raptor_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct raptor_softc *sc = ri->ri_hw;
@@ -474,7 +474,7 @@ raptor_copyrows(void *cookie, int src, int dst, int num)
 }
 
 int
-raptor_eraserows(void *cookie, int row, int num, long attr)
+raptor_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct raptor_softc *sc = ri->ri_hw;

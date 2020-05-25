@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.59 2013/10/20 20:07:30 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.60 2020/05/25 09:55:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -67,8 +67,8 @@ int cgsix_intr(void *);
 void cgsix_ras_init(struct cgsix_softc *);
 int cgsix_ras_copyrows(void *, int, int, int);
 int cgsix_ras_copycols(void *, int, int, int, int);
-int cgsix_ras_erasecols(void *, int, int, int, long int);
-int cgsix_ras_eraserows(void *, int, int, long int);
+int cgsix_ras_erasecols(void *, int, int, int, uint32_t);
+int cgsix_ras_eraserows(void *, int, int, uint32_t);
 int cgsix_ras_do_cursor(struct rasops_info *);
 int cgsix_setcursor(struct cgsix_softc *, struct wsdisplay_cursor *);
 int cgsix_updatecursor(struct cgsix_softc *, u_int);
@@ -892,7 +892,7 @@ cgsix_ras_copycols(void *cookie, int row, int src, int dst, int n)
 }
 
 int
-cgsix_ras_erasecols(void *cookie, int row, int col, int n, long int attr)
+cgsix_ras_erasecols(void *cookie, int row, int col, int n, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cgsix_softc *sc = ri->ri_hw;
@@ -936,7 +936,7 @@ cgsix_ras_erasecols(void *cookie, int row, int col, int n, long int attr)
 }
 
 int
-cgsix_ras_eraserows(void *cookie, int row, int n, long int attr)
+cgsix_ras_eraserows(void *cookie, int row, int n, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cgsix_softc *sc = ri->ri_hw;

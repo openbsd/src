@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplayvar.h,v 1.12 2017/05/30 08:24:56 fcambus Exp $ */
+/* $OpenBSD: pcdisplayvar.h,v 1.13 2020/05/25 09:55:48 jsg Exp $ */
 /* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
 
 /*
@@ -77,10 +77,10 @@ void	pcdisplay_cursor_init(struct pcdisplayscreen *, int);
 void	pcdisplay_cursor_reset(struct pcdisplayscreen *);
 int	pcdisplay_cursor(void *, int, int, int);
 int	pcdisplay_mapchar(void *, int, unsigned int *);
-int	pcdisplay_putchar(void *, int, int, u_int, long);
+int	pcdisplay_putchar(void *, int, int, u_int, uint32_t);
 struct wsdisplay_charcell;
 int	pcdisplay_getchar(void *, int, int, struct wsdisplay_charcell *);
 int	pcdisplay_copycols(void *, int, int, int,int);
-int	pcdisplay_erasecols(void *, int, int, int, long);
+int	pcdisplay_erasecols(void *, int, int, int, uint32_t);
 int	pcdisplay_copyrows(void *, int, int, int);
-int	pcdisplay_eraserows(void *, int, int, long);
+int	pcdisplay_eraserows(void *, int, int, uint32_t);

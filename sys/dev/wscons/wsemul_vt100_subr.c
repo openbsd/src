@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.23 2020/05/25 06:45:26 jsg Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.24 2020/05/25 09:55:49 jsg Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -37,7 +37,7 @@
 #include <dev/wscons/wsemul_vt100var.h>
 
 int	vt100_selectattribute(struct wsemul_vt100_emuldata *, int, int, int,
-	    long *, long *);
+	    uint32_t *, uint32_t *);
 int	vt100_ansimode(struct wsemul_vt100_emuldata *, int, int);
 int	vt100_decmode(struct wsemul_vt100_emuldata *, int, int);
 #define VTMODE_SET 33
@@ -218,7 +218,7 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
     struct wsemul_inputstate *instate)
 {
 	int n, help, flags, fgcol, bgcol;
-	long attr, bkgdattr;
+	uint32_t attr, bkgdattr;
 	u_char c;
 	int rc = 0;
 
@@ -701,7 +701,7 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
  */
 int
 vt100_selectattribute(struct wsemul_vt100_emuldata *edp, int flags, int fgcol,
-    int bgcol, long *attr, long *bkgdattr)
+    int bgcol, uint32_t *attr, uint32_t *bkgdattr)
 {
 	int error;
 

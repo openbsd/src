@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.39 2020/05/25 06:45:26 jsg Exp $ */
+/* $OpenBSD: tga.c,v 1.40 2020/05/25 09:55:48 jsg Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -89,7 +89,7 @@ struct tga_devconfig tga_console_dc;
 int	tga_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	tga_mmap(void *, off_t, int);
 int	tga_alloc_screen(void *, const struct wsscreen_descr *,
-	    void **, int *, int *, long *);
+	    void **, int *, int *, uint32_t *);
 void	tga_free_screen(void *, void *);
 int	tga_show_screen(void *, void *, int,
 			   void (*) (void *, int, int), void *);
@@ -99,9 +99,9 @@ void	tga_burner(void *, u_int, u_int);
 
 int	tga_copyrows(void *, int, int, int);
 int	tga_copycols(void *, int, int, int, int);
-int	tga_eraserows(void *, int, int, long);
-int	tga_erasecols(void *, int, int, int, long);
-int	tga_putchar(void *c, int row, int col, u_int uc, long attr);
+int	tga_eraserows(void *, int, int, uint32_t);
+int	tga_erasecols(void *, int, int, int, uint32_t);
+int	tga_putchar(void *c, int row, int col, u_int uc, uint32_t attr);
 
 int	tga_rop(struct rasops_info *, int, int, int, int,
 	struct rasops_info *, int, int);
@@ -731,10 +731,10 @@ tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	const struct wsscreen_descr *type;
 	void **cookiep;
 	int *curxp, *curyp;
-	long *attrp;
+	uint32_t *attrp;
 {
 	struct tga_softc *sc = v;
-	long defattr;
+	uint32_t defattr;
 
 	if (sc->nscreens > 0)
 		return (ENOMEM);
@@ -837,7 +837,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	int bus, device, function;
 {
 	struct tga_devconfig *dcp = &tga_console_dc;
-	long defattr;
+	uint32_t defattr;
 
 	tga_getdevconfig(memt, pc,
 	    pci_make_tag(pc, bus, device, function), dcp);
@@ -1312,7 +1312,7 @@ tga_putchar(c, row, col, uc, attr)
 	void *c;
 	int row, col;
 	u_int uc;
-	long attr;
+	uint32_t attr;
 {
 	struct rasops_info *ri = c;
 	struct tga_devconfig *dc = ri->ri_hw;
@@ -1379,7 +1379,7 @@ int
 tga_eraserows(c, row, num, attr)
 	void *c;
 	int row, num;
-	long attr;
+	uint32_t attr;
 {
 	struct rasops_info *ri = c;
 	struct tga_devconfig *dc = ri->ri_hw;
@@ -1436,7 +1436,7 @@ int
 tga_erasecols (c, row, col, num, attr)
 	void *c;
 	int row, col, num;
-	long attr;
+	uint32_t attr;
 {
 	struct rasops_info *ri = c;
 	struct tga_devconfig *dc = ri->ri_hw;

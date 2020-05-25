@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_subr.c,v 1.13 2017/05/30 21:42:54 fcambus Exp $ */
+/* $OpenBSD: pcdisplay_subr.c,v 1.14 2020/05/25 09:55:48 jsg Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -145,7 +145,7 @@ done:
 }
 
 int
-pcdisplay_putchar(void *id, int row, int col, u_int c, long attr)
+pcdisplay_putchar(void *id, int row, int col, u_int c, uint32_t attr)
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
@@ -220,7 +220,7 @@ pcdisplay_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 }
 
 int
-pcdisplay_erasecols(void *id, int row, int startcol, int ncols, long fillattr)
+pcdisplay_erasecols(void *id, int row, int startcol, int ncols, uint32_t fillattr)
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
@@ -273,7 +273,7 @@ pcdisplay_copyrows(void *id, int srcrow, int dstrow, int nrows)
 }
 
 int
-pcdisplay_eraserows(void *id, int startrow, int nrows, long fillattr)
+pcdisplay_eraserows(void *id, int startrow, int nrows, uint32_t fillattr)
 {
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;

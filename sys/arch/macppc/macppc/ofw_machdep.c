@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.58 2020/05/25 06:45:25 jsg Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.59 2020/05/25 09:55:48 jsg Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -486,7 +486,7 @@ of_display_console(void)
 {
 	struct ofwfb *fb = &ofwfb;
 	struct rasops_info *ri = &fb->ofw_ri;
-	long defattr;
+	uint32_t defattr;
 
 	ri->ri_width = cons_width;
 	ri->ri_height = cons_height;

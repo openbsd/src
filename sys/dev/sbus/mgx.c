@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.13 2013/10/20 20:07:31 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.14 2020/05/25 09:55:49 jsg Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -146,8 +146,8 @@ void	mgx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 int	mgx_ras_copycols(void *, int, int, int, int);
 int	mgx_ras_copyrows(void *, int, int, int);
 int	mgx_ras_do_cursor(struct rasops_info *);
-int	mgx_ras_erasecols(void *, int, int, int, long int);
-int	mgx_ras_eraserows(void *, int, int, long int);
+int	mgx_ras_erasecols(void *, int, int, int, uint32_t);
+int	mgx_ras_eraserows(void *, int, int, uint32_t);
 void	mgx_ras_init(struct mgx_softc *, uint);
 
 uint8_t	mgx_read_1(vaddr_t, uint);
@@ -705,7 +705,7 @@ mgx_ras_copyrows(void *v, int src, int dst, int n)
 }
 
 int
-mgx_ras_erasecols(void *v, int row, int col, int n, long int attr)
+mgx_ras_erasecols(void *v, int row, int col, int n, uint32_t attr)
 {
 	struct rasops_info *ri = v;
 	struct mgx_softc *sc = ri->ri_hw;
@@ -735,7 +735,7 @@ mgx_ras_erasecols(void *v, int row, int col, int n, long int attr)
 }
 
 int
-mgx_ras_eraserows(void *v, int row, int n, long int attr)
+mgx_ras_eraserows(void *v, int row, int n, uint32_t attr)
 {
 	struct rasops_info *ri = v;
 	struct mgx_softc *sc = ri->ri_hw;

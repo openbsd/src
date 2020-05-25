@@ -3160,7 +3160,7 @@ intagp_print(void *vaa, const char *pnp)
 int	inteldrm_wsioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	inteldrm_wsmmap(void *, off_t, int);
 int	inteldrm_alloc_screen(void *, const struct wsscreen_descr *,
-	    void **, int *, int *, long *);
+	    void **, int *, int *, uint32_t *);
 void	inteldrm_free_screen(void *, void *);
 int	inteldrm_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
@@ -3267,7 +3267,7 @@ inteldrm_wsmmap(void *v, off_t off, int prot)
 
 int
 inteldrm_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct inteldrm_softc *dev_priv = v;
 	struct rasops_info *ri = &dev_priv->ro;
@@ -3658,7 +3658,7 @@ inteldrm_attachhook(struct device *self)
 	aa.defaultscreens = 0;
 
 	if (dev_priv->console) {
-		long defattr;
+		uint32_t defattr;
 
 		/*
 		 * Clear the entire screen if we're doing rotation to
