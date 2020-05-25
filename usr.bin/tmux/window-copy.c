@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.289 2020/05/25 09:32:10 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.290 2020/05/25 12:12:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3167,7 +3167,7 @@ window_copy_match_at_cursor(struct window_copy_mode_data *data)
  	 */
 	for (at = start; at <= end; at++) {
 		py = at / sx;
-		px = at % (py * sx);
+		px = at - (py * sx);
 
 		grid_get_cell(gd, px, py, &gc);
 		buf = xrealloc(buf, len + gc.data.size + 1);
