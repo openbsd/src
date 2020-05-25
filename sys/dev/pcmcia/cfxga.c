@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.29 2014/12/13 21:05:33 doug Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.30 2020/05/25 06:45:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -536,7 +536,7 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	LIST_INSERT_HEAD(&sc->sc_scr, scr, scr_link);
 	sc->sc_nscreens++;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, attrp);
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;

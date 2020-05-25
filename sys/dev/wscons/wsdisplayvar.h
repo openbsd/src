@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.35 2020/04/19 15:05:14 kettenis Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.36 2020/05/25 06:45:26 jsg Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -79,7 +79,7 @@ struct wsdisplay_emulops {
 	int	(*erasecols)(void *c, int row, int startcol, int ncols, long);
 	int	(*copyrows)(void *c, int srcrow, int dstrow, int nrows);
 	int	(*eraserows)(void *c, int row, int nrows, long attr);
-	int	(*alloc_attr)(void *c, int fg, int bg, int flags, long *attrp);
+	int	(*pack_attr)(void *c, int fg, int bg, int flags, long *attrp);
 	void	(*unpack_attr)(void *c, long attr, int *fg, int *bg, int *ul);
 /* fg / bg values. Made identical to ANSI terminal color codes. */
 #define WSCOL_BLACK	0
@@ -96,7 +96,6 @@ struct wsdisplay_emulops {
 #define WSATTR_BLINK	4
 #define WSATTR_UNDERLINE 8
 #define WSATTR_WSCOLORS 16
-	/* XXX need a free_attr() ??? */
 };
 
 #define	WSSCREEN_NAME_SIZE	16

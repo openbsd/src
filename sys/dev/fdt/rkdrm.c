@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.7 2020/04/08 11:30:48 kettenis Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.8 2020/05/25 06:45:25 jsg Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -522,7 +522,7 @@ rkdrm_attachhook(struct device *dev)
 	rkdrm_stdscreen.fontheight = ri->ri_font->fontheight;
 
 	if (console) {
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&rkdrm_stdscreen, ri->ri_active,
 		    ri->ri_ccol, ri->ri_crow, defattr);
 	}

@@ -3667,7 +3667,7 @@ inteldrm_attachhook(struct device *self)
 		if (ri->ri_flg & (RI_ROTATE_CW | RI_ROTATE_CCW))
 			memset(ri->ri_bits, 0, ri->ri_height * ri->ri_stride);
 
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&inteldrm_stdscreen, ri->ri_active,
 		    0, 0, defattr);
 	}

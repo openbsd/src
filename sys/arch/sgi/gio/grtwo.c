@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.13 2017/01/15 20:22:33 fcambus Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.14 2020/05/25 06:45:25 jsg Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -469,7 +469,7 @@ grtwo_cnattach(struct gio_attach_args *ga)
 	if (rc != 0)
 		return rc;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	cell = grtwo_console_bs;
 	for (i = ri->ri_cols * ri->ri_rows; i != 0; i--, cell++)
 		cell->attr = defattr;
@@ -828,7 +828,7 @@ grtwo_alloc_screen(void *v, const struct wsscreen_descr * type, void **cookiep,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &dc->dc_defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &dc->dc_defattr);
 	*attrp = dc->dc_defattr;
 
 	cell = dc->dc_bs;

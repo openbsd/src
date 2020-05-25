@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.71 2020/05/17 14:06:02 jsg Exp $ */
+/* $OpenBSD: vga.c,v 1.72 2020/05/25 06:45:26 jsg Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -113,7 +113,7 @@ void	vga_pick_monitor_type(struct vga_config *);
 
 int	vga_mapchar(void *, int, unsigned int *);
 int	vga_putchar(void *, int, int, u_int, long);
-int	vga_alloc_attr(void *, int, int, int, long *);
+int	vga_pack_attr(void *, int, int, int, long *);
 int	vga_copyrows(void *, int, int, int);
 void	vga_unpack_attr(void *, long, int *, int *, int *);
 
@@ -125,7 +125,7 @@ static const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_erasecols,
 	vga_copyrows,
 	pcdisplay_eraserows,
-	vga_alloc_attr,
+	vga_pack_attr,
 	vga_unpack_attr
 };
 
@@ -439,11 +439,11 @@ vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 		/*
 		 * DEC firmware uses a blue background.
 		 */
-		res = vga_alloc_attr(scr, WSCOL_WHITE, WSCOL_BLUE,
+		res = vga_pack_attr(scr, WSCOL_WHITE, WSCOL_BLUE,
 				     WSATTR_WSCOLORS, attrp);
 	else
 #endif
-	res = vga_alloc_attr(scr, 0, 0, 0, attrp);
+	res = vga_pack_attr(scr, 0, 0, 0, attrp);
 #ifdef DIAGNOSTIC
 	if (res)
 		panic("vga_init_screen: attribute botch");
@@ -985,7 +985,7 @@ vga_scrollback(void *v, void *cookie, int lines)
 }
 
 int
-vga_alloc_attr(void *id, int fg, int bg, int flags, long *attrp)
+vga_pack_attr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	struct vgascreen *scr = id;
 	struct vga_config *vc = scr->cfg;

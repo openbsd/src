@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeonfb.c,v 1.2 2017/01/15 20:22:33 fcambus Exp $	*/
+/*	$OpenBSD: radeonfb.c,v 1.3 2020/05/25 06:45:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -263,7 +263,7 @@ radeonfb_alloc_screen(void *v, const struct wsscreen_descr *type,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, attrp);
 	sc->sc_nscr++;
 
 	return 0;
@@ -722,7 +722,7 @@ radeonfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
 		return rc;
 
 	ri = &radeonfbcn.ri;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&radeonfbcn.wsd, ri, 0, 0, defattr);
 
 	return 0;

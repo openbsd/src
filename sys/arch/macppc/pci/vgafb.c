@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.60 2014/07/28 15:00:27 jsg Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.61 2020/05/25 06:45:25 jsg Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ vgafb_console_init(struct vgafb_softc *sc)
 	sc->sc_wsd.fontwidth = ri->ri_font->fontwidth;
 	sc->sc_wsd.fontheight = ri->ri_font->fontheight;
 
-	ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&sc->sc_wsd, ri->ri_active, ri->ri_ccol, ri->ri_crow,
 	    defattr);
 

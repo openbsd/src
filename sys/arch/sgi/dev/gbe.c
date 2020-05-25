@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.21 2013/10/21 10:36:16 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.22 2020/05/25 06:45:25 jsg Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -401,7 +401,7 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach as console if necessary. */
 	if (strncmp(bios_console, "video", 5) == 0) {
-		screen->ri.ri_ops.alloc_attr(&screen->ri, 0, 0, 0, &attr);
+		screen->ri.ri_ops.pack_attr(&screen->ri, 0, 0, 0, &attr);
 		wsdisplay_cnattach(&gbe_stdscreen, &screen->ri, 0, 0, attr);
 		gsc->console = 1;
 	}
@@ -964,7 +964,7 @@ gbe_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*curyp = 0;
 
 	/* Correct screen attributes. */
-	screen->ri.ri_ops.alloc_attr(&screen->ri, 0, 0, 0, attrp);
+	screen->ri.ri_ops.pack_attr(&screen->ri, 0, 0, 0, attrp);
 
 	return (0);
 }
@@ -1402,7 +1402,7 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	/*
 	 * Attach wsdisplay.
 	 */
-	gbe_consdata.ri.ri_ops.alloc_attr(&gbe_consdata.ri, 0, 0, 0, &attr);
+	gbe_consdata.ri.ri_ops.pack_attr(&gbe_consdata.ri, 0, 0, 0, &attr);
 	wsdisplay_cnattach(&gbe_stdscreen, &gbe_consdata.ri, 0, 0, attr);
 	gbe_console = 1;
 

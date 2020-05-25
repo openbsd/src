@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.23 2018/08/27 09:30:07 kettenis Exp $ */
+/*	$OpenBSD: rasops.h,v 1.24 2020/05/25 06:45:26 jsg Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -135,7 +135,7 @@ struct rasops_info {
 	int	(*ri_erasecols)(void *, int, int, int, long);
 	int	(*ri_copyrows)(void *, int, int, int);
 	int	(*ri_eraserows)(void *, int, int, long);
-	int	(*ri_alloc_attr)(void *, int, int, int, long *);
+	int	(*ri_pack_attr)(void *, int, int, int, long *);
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))

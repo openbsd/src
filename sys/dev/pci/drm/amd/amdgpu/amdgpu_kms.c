@@ -1828,7 +1828,7 @@ amdgpu_attachhook(struct device *self)
 	if (adev->console) {
 		long defattr;
 
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&amdgpu_stdscreen, ri->ri_active,
 		    ri->ri_ccol, ri->ri_crow, defattr);
 	}

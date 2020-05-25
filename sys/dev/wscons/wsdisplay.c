@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.139 2020/05/10 20:50:55 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.140 2020/05/25 06:45:26 jsg Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2692,7 +2692,7 @@ inverse_char(struct wsscreen *scr, u_int pos)
 	} else if (dconf->scrdata->capabilities & WSSCREEN_REVERSE) {
 		flags |= WSATTR_REVERSE;
 	}
-	if ((*dconf->emulops->alloc_attr)(dconf->emulcookie, fg, bg, flags |
+	if ((*dconf->emulops->pack_attr)(dconf->emulcookie, fg, bg, flags |
 	    (ul ? WSATTR_UNDERLINE : 0), &attr) == 0) {
 		cell.attr = attr;
 		PUTCHAR(dconf, pos, cell.uc, cell.attr);

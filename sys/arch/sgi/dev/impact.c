@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.9 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: impact.c,v 1.10 2020/05/25 06:45:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010, 2012 Miodrag Vallat.
@@ -448,7 +448,7 @@ impact_alloc_screen(void *v, const struct wsscreen_descr *type,
 	*cookiep = ri;
 	*curxp = 0;
 	*curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &scr->defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &scr->defattr);
 	*attrp = scr->defattr;
 
 	return 0;
@@ -769,7 +769,7 @@ impact_cnattach_common(bus_space_tag_t iot, bus_space_handle_t ioh, int has_hq4)
 	if (rc != 0)
 		return rc;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &scr->defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &scr->defattr);
 	wsdisplay_cnattach(&scr->wsd, ri, 0, 0, scr->defattr);
 
 	return 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.22 2020/03/22 07:59:59 anton Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.23 2020/05/25 06:45:26 jsg Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -712,7 +712,7 @@ vt100_selectattribute(struct wsemul_vt100_emuldata *edp, int flags, int fgcol,
 		printf("colors ignored (impossible)\n");
 #endif
 	}
-	error = (*edp->emulops->alloc_attr)(edp->emulcookie, fgcol, bgcol,
+	error = (*edp->emulops->pack_attr)(edp->emulcookie, fgcol, bgcol,
 	    flags & WSATTR_WSCOLORS, bkgdattr);
 	if (error)
 		return (error);
@@ -764,7 +764,7 @@ vt100_selectattribute(struct wsemul_vt100_emuldata *edp, int flags, int fgcol,
 #endif
 		}
 	}
-	error = (*edp->emulops->alloc_attr)(edp->emulcookie, fgcol, bgcol,
+	error = (*edp->emulops->pack_attr)(edp->emulcookie, fgcol, bgcol,
 					    flags, attr);
 	if (error)
 		return (error);

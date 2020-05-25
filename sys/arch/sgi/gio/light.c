@@ -1,4 +1,4 @@
-/*	$OpenBSD: light.c,v 1.8 2017/01/15 20:22:33 fcambus Exp $	*/
+/*	$OpenBSD: light.c,v 1.9 2020/05/25 06:45:25 jsg Exp $	*/
 /*	$NetBSD: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $	*/
 
 /*
@@ -447,7 +447,7 @@ light_cnattach(struct gio_attach_args *ga)
 	light_attach_common(&light_console_dc, ga);
 	light_init_screen(&light_console_dc);
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&light_console_dc.dc_wsd, ri, 0, 0, defattr);
 
 	return 0;
@@ -743,7 +743,7 @@ light_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &dc->dc_defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &dc->dc_defattr);
 	*attrp = dc->dc_defattr;
 
 	return 0;

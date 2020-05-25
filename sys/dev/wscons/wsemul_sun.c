@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.32 2015/08/28 00:03:53 deraadt Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.33 2020/05/25 06:45:26 jsg Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -213,12 +213,12 @@ wsemul_sun_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
 #define WS_KERNEL_MONOATTR 0
 #endif
 	if (type->capabilities & WSSCREEN_WSCOLORS)
-		res = (*edp->emulops->alloc_attr)(cookie,
+		res = (*edp->emulops->pack_attr)(cookie,
 					    WS_KERNEL_FG, WS_KERNEL_BG,
 					    WS_KERNEL_COLATTR | WSATTR_WSCOLORS,
 					    &edp->kernattr);
 	else
-		res = (*edp->emulops->alloc_attr)(cookie, 0, 0,
+		res = (*edp->emulops->pack_attr)(cookie, 0, 0,
 					    WS_KERNEL_MONOATTR,
 					    &edp->kernattr);
 	if (res)
@@ -899,7 +899,7 @@ wsemul_sun_selectattribute(struct wsemul_sun_emuldata *edp, int flags,
 		flags |= WSATTR_WSCOLORS;
 	}
 
-	error = (*edp->emulops->alloc_attr)(edp->emulcookie, fgcol, bgcol,
+	error = (*edp->emulops->pack_attr)(edp->emulcookie, fgcol, bgcol,
 					    flags & WSATTR_WSCOLORS, bkgdattr);
 	if (error)
 		return (error);
@@ -936,7 +936,7 @@ wsemul_sun_selectattribute(struct wsemul_sun_emuldata *edp, int flags,
 			flags |= WSATTR_WSCOLORS;
 		}
 	}
-	error = (*edp->emulops->alloc_attr)(edp->emulcookie, fgcol, bgcol,
+	error = (*edp->emulops->pack_attr)(edp->emulcookie, fgcol, bgcol,
 					    flags, attr);
 	if (error)
 		return (error);

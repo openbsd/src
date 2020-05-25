@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.59 2019/03/18 16:10:39 fcambus Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.60 2020/05/25 06:45:26 jsg Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -151,8 +151,8 @@ int	rasops_copycols(void *, int, int, int, int);
 int	rasops_copyrows(void *, int, int, int);
 int	rasops_mapchar(void *, int, u_int *);
 int	rasops_cursor(void *, int, int, int);
-int	rasops_alloc_cattr(void *, int, int, int, long *);
-int	rasops_alloc_mattr(void *, int, int, int, long *);
+int	rasops_pack_cattr(void *, int, int, int, long *);
+int	rasops_pack_mattr(void *, int, int, int, long *);
 int	rasops_do_cursor(struct rasops_info *);
 void	rasops_init_devcmap(struct rasops_info *);
 void	rasops_unpack_attr(void *, long, int *, int *, int *);
@@ -187,7 +187,7 @@ int	rasops_vcons_copycols(void *, int, int, int, int);
 int	rasops_vcons_erasecols(void *, int, int, int, long);
 int	rasops_vcons_copyrows(void *, int, int, int);
 int	rasops_vcons_eraserows(void *, int, int, long);
-int	rasops_vcons_alloc_attr(void *, int, int, int, long *);
+int	rasops_vcons_pack_attr(void *, int, int, int, long *);
 void	rasops_vcons_unpack_attr(void *, long, int *, int *, int *);
 
 int	rasops_wronly_putchar(void *, int, int, u_int, long);
@@ -283,7 +283,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 	ri->ri_erasecols = ri->ri_ops.erasecols;
 	ri->ri_copyrows = ri->ri_ops.copyrows;
 	ri->ri_eraserows = ri->ri_ops.eraserows;
-	ri->ri_alloc_attr = ri->ri_ops.alloc_attr;
+	ri->ri_pack_attr = ri->ri_ops.pack_attr;
 
 	if (ri->ri_flg & RI_VCONS) {
 		void *cookie;
@@ -304,7 +304,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_ops.erasecols = rasops_vcons_erasecols;
 		ri->ri_ops.copyrows = rasops_vcons_copyrows;
 		ri->ri_ops.eraserows = rasops_vcons_eraserows;
-		ri->ri_ops.alloc_attr = rasops_vcons_alloc_attr;
+		ri->ri_ops.pack_attr = rasops_vcons_pack_attr;
 		ri->ri_ops.unpack_attr = rasops_vcons_unpack_attr;
 		ri->ri_do_cursor = rasops_wronly_do_cursor;
 	} else if ((ri->ri_flg & RI_WRONLY) && ri->ri_bs != NULL) {
@@ -319,7 +319,7 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		ri->ri_do_cursor = rasops_wronly_do_cursor;
 
 		if (ri->ri_flg & RI_CLEAR) {
-			ri->ri_alloc_attr(ri, 0, 0, 0, &attr);
+			ri->ri_pack_attr(ri, 0, 0, 0, &attr);
 			for (i = 0; i < ri->ri_rows * ri->ri_cols; i++) {
 				ri->ri_bs[i].uc = ' ';
 				ri->ri_bs[i].attr = attr;
@@ -446,10 +446,10 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	ri->ri_updatecursor = NULL;
 
 	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
-		ri->ri_ops.alloc_attr = rasops_alloc_mattr;
+		ri->ri_ops.pack_attr = rasops_pack_mattr;
 		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	} else {
-		ri->ri_ops.alloc_attr = rasops_alloc_cattr;
+		ri->ri_ops.pack_attr = rasops_pack_cattr;
 		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}
@@ -548,10 +548,10 @@ rasops_mapchar(void *cookie, int c, u_int *cp)
 }
 
 /*
- * Allocate a color attribute.
+ * Pack a color attribute.
  */
 int
-rasops_alloc_cattr(void *cookie, int fg, int bg, int flg, long *attr)
+rasops_pack_cattr(void *cookie, int fg, int bg, int flg, long *attr)
 {
 	int swap;
 
@@ -589,10 +589,10 @@ rasops_alloc_cattr(void *cookie, int fg, int bg, int flg, long *attr)
 }
 
 /*
- * Allocate a mono attribute.
+ * Pack a mono attribute.
  */
 int
-rasops_alloc_mattr(void *cookie, int fg, int bg, int flg, long *attr)
+rasops_pack_mattr(void *cookie, int fg, int bg, int flg, long *attr)
 {
 	int swap;
 
@@ -1423,7 +1423,7 @@ rasops_alloc_screen(void *v, void **cookiep,
 	*cookiep = scr;
 	*curxp = 0;
 	*curyp = 0;
-	ri->ri_alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_pack_attr(ri, 0, 0, 0, attrp);
 
 	scr->rs_ri = ri;
 	scr->rs_visible = (ri->ri_nscreens == 0);
@@ -1678,11 +1678,11 @@ rasops_vcons_eraserows(void *cookie, int row, int num, long attr)
 }
 
 int
-rasops_vcons_alloc_attr(void *cookie, int fg, int bg, int flg, long *attr)
+rasops_vcons_pack_attr(void *cookie, int fg, int bg, int flg, long *attr)
 {
 	struct rasops_screen *scr = cookie;
 
-	return scr->rs_ri->ri_alloc_attr(scr->rs_ri, fg, bg, flg, attr);
+	return scr->rs_ri->ri_pack_attr(scr->rs_ri, fg, bg, flg, attr);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: omrasops.c,v 1.14 2017/03/20 19:37:54 miod Exp $ */
+/* $OpenBSD: omrasops.c,v 1.15 2020/05/25 06:45:25 jsg Exp $ */
 /* $NetBSD: omrasops.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -74,7 +74,7 @@ int	om4_windowmove(struct rasops_info *, u_int16_t, u_int16_t, u_int16_t,
 		u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
 
 /* MI function in src/sys/dev/rasops/rasops.c */
-int     rasops_alloc_cattr(void *, int, int, int, long *);
+int     rasops_pack_cattr(void *, int, int, int, long *);
 
 static int (*om_windowmove)(struct rasops_info *, u_int16_t, u_int16_t,
 		u_int16_t, u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
@@ -534,8 +534,8 @@ setup_omrasops4(struct rasops_info *ri)
 		= WSSCREEN_HILIT | WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	/*
 	 * Since we set ri->ri_depth == 1, rasops_init() set
-	 * rasops_alloc_mattr for us.  But we use the color version,
-	 * rasops_alloc_cattr, on 4bpp/8bpp frame buffer.
+	 * rasops_pack_mattr for us.  But we use the color version,
+	 * rasops_pack_cattr, on 4bpp/8bpp frame buffer.
 	 */
-	ri->ri_ops.alloc_attr = rasops_alloc_cattr;
+	ri->ri_ops.pack_attr = rasops_pack_cattr;
 }

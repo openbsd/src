@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.8 2020/01/22 05:25:05 patrick Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.9 2020/05/25 06:45:25 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -177,7 +177,7 @@ simplefb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wsl.screens = (const struct wsscreen_descr **)sc->sc_scrlist;
 
 	if (console) {
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&sc->sc_wsd, ri->ri_active,
 		    simplefb_ri.ri_ccol, simplefb_ri.ri_crow, defattr);
 	}
@@ -343,7 +343,7 @@ simplefb_init_cons(bus_space_tag_t iot)
 	simplefb_wsd.fontwidth = ri->ri_font->fontwidth;
 	simplefb_wsd.fontheight = ri->ri_font->fontheight;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&simplefb_wsd, ri, 0, 0, defattr);
 
 #if NUKBD > 0

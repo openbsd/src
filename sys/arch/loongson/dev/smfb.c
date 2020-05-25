@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.17 2017/01/10 08:26:41 fcambus Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.18 2020/05/25 06:45:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -251,7 +251,7 @@ smfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, attrp);
 	sc->sc_nscr++;
 
 	return 0;
@@ -721,7 +721,7 @@ smfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
 		return rc;
 
 	ri = &smfbcn.ri;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&smfbcn.wsd, ri, 0, 0, defattr);
 
 	return 0;

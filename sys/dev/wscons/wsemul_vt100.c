@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.37 2020/03/22 07:59:59 anton Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.38 2020/05/25 06:45:26 jsg Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -177,11 +177,11 @@ wsemul_vt100_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
 #define WS_KERNEL_MONOATTR 0
 #endif
 	if (type->capabilities & WSSCREEN_WSCOLORS)
-		res = (*edp->emulops->alloc_attr)(cookie,
+		res = (*edp->emulops->pack_attr)(cookie,
 		    WS_KERNEL_FG, WS_KERNEL_BG,
 		    WS_KERNEL_COLATTR | WSATTR_WSCOLORS, &edp->kernattr);
 	else
-		res = (*edp->emulops->alloc_attr)(cookie, 0, 0,
+		res = (*edp->emulops->pack_attr)(cookie, 0, 0,
 		    WS_KERNEL_MONOATTR, &edp->kernattr);
 	if (res)
 		edp->kernattr = defattr;

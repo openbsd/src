@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.91 2020/01/09 14:36:26 mpi Exp $ */
+/*	$OpenBSD: udl.c,v 1.92 2020/05/25 06:45:26 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -627,7 +627,7 @@ udl_alloc_screen(void *v, const struct wsscreen_descr *type,
 	sc->sc_ri.ri_ops.putchar = udl_putchar;
 	sc->sc_ri.ri_do_cursor = udl_do_cursor;
 
-	sc->sc_ri.ri_ops.alloc_attr(&sc->sc_ri, 0, 0, 0, attrp);
+	sc->sc_ri.ri_ops.pack_attr(&sc->sc_ri, 0, 0, 0, attrp);
 
 	udl_stdscreen.nrows = sc->sc_ri.ri_rows;
 	udl_stdscreen.ncols = sc->sc_ri.ri_cols;

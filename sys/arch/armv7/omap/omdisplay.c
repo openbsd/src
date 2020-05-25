@@ -1,4 +1,4 @@
-/* $OpenBSD: omdisplay.c,v 1.6 2019/05/06 03:45:58 mlarkin Exp $ */
+/* $OpenBSD: omdisplay.c,v 1.7 2020/05/25 06:45:25 jsg Exp $ */
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
@@ -1170,7 +1170,7 @@ omdisplay_alloc_screen(void *v, const struct wsscreen_descr *_type,
 	omdisplay_setup_rasops(sc, ri);
 
 	/* assumes 16 bpp */
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, attrp);
 
 	*cookiep = ri;
 	*curxp = 0;

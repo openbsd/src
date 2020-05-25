@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.57 2019/09/03 17:51:52 deraadt Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.58 2020/05/25 06:45:25 jsg Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -511,7 +511,7 @@ of_display_console(void)
 	fb->ofw_wsd.fontheight = ri->ri_font->fontheight;
 #endif
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&fb->ofw_wsd, ri, 0, 0, defattr);
 }
 #endif

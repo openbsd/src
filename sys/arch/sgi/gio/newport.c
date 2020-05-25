@@ -1,4 +1,4 @@
-/*	$OpenBSD: newport.c,v 1.11 2017/01/15 20:22:33 fcambus Exp $	*/
+/*	$OpenBSD: newport.c,v 1.12 2020/05/25 06:45:25 jsg Exp $	*/
 /*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
 
 /*
@@ -588,7 +588,7 @@ newport_cnattach(struct gio_attach_args *ga)
 	if (rc != 0)
 		return rc;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&newport_console_dc.dc_wsd, ri, 0, 0, defattr);
 
 	return 0;
@@ -823,7 +823,7 @@ newport_alloc_screen(void *v, const struct wsscreen_descr *type,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &dc->dc_defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &dc->dc_defattr);
 	*attrp = dc->dc_defattr;
 
 	return 0;

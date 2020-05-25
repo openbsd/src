@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.27 2020/01/24 05:27:31 kettenis Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.28 2020/05/25 06:45:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -222,7 +222,7 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 
 		rasops_init(ri, efifb_std_descr.nrows, efifb_std_descr.ncols);
 
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&efifb_std_descr, ri->ri_active, ccol, crow,
 		    defattr);
 	}
@@ -445,7 +445,7 @@ efifb_cnattach_common(void)
 	efifb_std_descr.fontheight = ri->ri_font->fontheight;
 	efifb_std_descr.capabilities = ri->ri_caps;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&efifb_std_descr, ri, 0, 0, defattr);
 }
 

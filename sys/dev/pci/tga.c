@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.38 2013/10/21 10:36:23 miod Exp $ */
+/* $OpenBSD: tga.c,v 1.39 2020/05/25 06:45:26 jsg Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -742,7 +742,7 @@ tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = &sc->sc_dc->dc_rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	sc->sc_dc->dc_rinfo.ri_ops.alloc_attr(&sc->sc_dc->dc_rinfo, 
+	sc->sc_dc->dc_rinfo.ri_ops.pack_attr(&sc->sc_dc->dc_rinfo, 
 		0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
@@ -871,7 +871,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 				tga_bt463_rd);
 		}
 	}
-	dcp->dc_rinfo.ri_ops.alloc_attr(&dcp->dc_rinfo, 0, 0, 0, &defattr);
+	dcp->dc_rinfo.ri_ops.pack_attr(&dcp->dc_rinfo, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&tga_stdscreen, &dcp->dc_rinfo, 0, 0, defattr);
 	
 	return(0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: exdisplay.c,v 1.4 2016/07/26 22:10:10 patrick Exp $ */
+/* $OpenBSD: exdisplay.c,v 1.5 2020/05/25 06:45:25 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -152,7 +152,7 @@ exdisplay_attach(struct device *parent, struct device *self, void *args)
 		ri->ri_bits = (u_char *)sc->sc_fbioh;
 		exdisplay_setup_rasops(ri, &exdisplay_stdscreen);
 
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&exdisplay_stdscreen, ri->ri_active,
 		    0, 0, defattr);
 	}
@@ -184,7 +184,7 @@ exdisplay_cnattach(bus_space_tag_t iot, bus_addr_t iobase, size_t size)
 	exdisplay_setup_rasops(ri, descr);
 
 	/* assumes 16 bpp */
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 
 	wsdisplay_cnattach(descr, ri, ri->ri_ccol, ri->ri_crow, defattr);
 

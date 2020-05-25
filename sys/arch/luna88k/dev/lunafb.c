@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.25 2017/11/03 06:54:06 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.26 2020/05/25 06:45:25 jsg Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -221,7 +221,7 @@ omfb_cnattach(void)
 	long defattr;
 
 	omfb_getdevconfig(OMFB_FB_WADDR, dc);
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&omfb_stdscreen, ri, 0, 0, defattr);
 	omfb_console = 1;
 	return (0);
@@ -480,7 +480,7 @@ omfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*cookiep = ri;
 	*curxp = 0;
 	*curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, attrp);
 	sc->nscreens++;
 	return (0);
 }

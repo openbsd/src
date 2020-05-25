@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.78 2017/06/11 02:06:36 deraadt Exp $	*/
+/*	$OpenBSD: sti.c,v 1.79 2020/05/25 06:45:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -53,7 +53,7 @@ struct cfdriver sti_cd = {
 	NULL, "sti", DV_DULL
 };
 
-int	sti_alloc_attr(void *, int, int, int, long *);
+int	sti_pack_attr(void *, int, int, int, long *);
 int	sti_copycols(void *, int, int, int, int);
 int	sti_copyrows(void *, int, int, int);
 int	sti_cursor(void *, int, int, int);
@@ -71,7 +71,7 @@ struct wsdisplay_emulops sti_emulops = {
 	.erasecols = sti_erasecols,
 	.copyrows = sti_copyrows,
 	.eraserows = sti_eraserows,
-	.alloc_attr = sti_alloc_attr,
+	.pack_attr = sti_pack_attr,
 	.unpack_attr = sti_unpack_attr
 };
 
@@ -772,7 +772,7 @@ sti_end_attach_screen(struct sti_softc *sc, struct sti_screen *scr, int console)
 	if (console && !ISSET(sc->sc_flags, STI_ATTACHED)) {
 		long defattr;
 
-		sti_alloc_attr(scr, 0, 0, 0, &defattr);
+		sti_pack_attr(scr, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&scr->scr_wsd, scr,
 		    0, scr->scr_wsd.nrows - 1, defattr);
 		sc->sc_flags |= STI_ATTACHED;
@@ -1205,7 +1205,7 @@ sti_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*cookiep = scr;
 	*cxp = 0;
 	*cyp = 0;
-	sti_alloc_attr(scr, 0, 0, 0, defattr);
+	sti_pack_attr(scr, 0, 0, 0, defattr);
 	scr->scr_nscreens++;
 	return 0;
 }
@@ -1419,7 +1419,7 @@ sti_eraserows(void *v, int srcrow, int nrows, long attr)
 }
 
 int
-sti_alloc_attr(void *v, int fg, int bg, int flags, long *pattr)
+sti_pack_attr(void *v, int fg, int bg, int flags, long *pattr)
 {
 #if 0
 	struct sti_screen *scr = (struct sti_screen *)v;
