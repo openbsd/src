@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.120 2020/05/25 12:56:03 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.121 2020/05/25 13:04:25 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -155,6 +155,30 @@ struct timecounter ioclock_timecounter = {
 	.tc_priv = 0			/* clock register,
 					 * determined at runtime */
 };
+
+static int
+atoi(const char *s)
+{
+	int n, neg;
+
+	n = 0;
+	neg = 0;
+
+	while (*s == '-') {
+		s++;
+		neg = !neg;
+	}
+
+	while (*s != '\0') {
+		if (*s < '0' || *s > '9')
+			break;
+
+		n = (10 * n) + (*s - '0');
+		s++;
+	}
+
+	return (neg ? -n : n);
+}
 
 static struct octeon_bootmem_block *
 pa_to_block(paddr_t addr)
@@ -760,10 +784,11 @@ process_bootargs(void)
 		printf("boot_desc->argv[%d] = %s\n", i, arg);
 #endif
 
-		/*
-		 * XXX: We currently only expect one other argument,
-		 * rootdev=ROOTDEV.
-		 */
+		if (strncmp(arg, "boothowto=", 10) == 0) {
+			boothowto = atoi(arg + 10);
+			continue;
+		}
+
 		if (strncmp(arg, "rootdev=", 8) == 0) {
 			parse_uboot_root(arg + 8);
 			continue;

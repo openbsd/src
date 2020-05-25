@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdboot.c,v 1.3 2019/11/01 20:54:52 deraadt Exp $	*/
+/*	$OpenBSD: rdboot.c,v 1.4 2020/05/25 13:04:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -150,7 +150,7 @@ void
 kexec(void)
 {
 	struct octboot_kexec_args kargs;
-	char kernelflags[8];
+	char boothowtostr[32];
 	char rootdev[32];
 	const char *path;
 	int argc, ret;
@@ -163,12 +163,9 @@ kexec(void)
 	kargs.path = path;
 	argc = 0;
 	if (cmd.boothowto != 0) {
-		snprintf(kernelflags, sizeof(kernelflags), "-%s%s%s%s",
-		    (cmd.boothowto & RB_ASKNAME) ? "a" : "",
-		    (cmd.boothowto & RB_CONFIG) ? "c" : "",
-		    (cmd.boothowto & RB_KDB) ? "d" : "",
-		    (cmd.boothowto & RB_SINGLE) ? "s" : "");
-		kargs.argv[argc++] = kernelflags;
+		snprintf(boothowtostr, sizeof(boothowtostr), "boothowto=%d",
+		    cmd.boothowto);
+		kargs.argv[argc++] = boothowtostr;
 	}
 	if (cmd.hasduid) {
 		snprintf(rootdev, sizeof(rootdev),
