@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.119 2019/12/20 13:34:41 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.120 2020/05/25 12:56:03 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -78,6 +78,7 @@
 #include <machine/memconf.h>
 
 #include <dev/cons.h>
+#include <dev/rndvar.h>
 #include <dev/ofw/fdt.h>
 
 #include <octeon/dev/cn30xxcorereg.h>
@@ -249,6 +250,7 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 {
 	uint prid;
 	vaddr_t xtlb_handler;
+	size_t len;
 	int i;
 	struct boot_desc *boot_desc;
 	struct boot_info *boot_info;
@@ -498,6 +500,17 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 	 */
 	if (!(octeon_boot_info->core_mask & 1))
 		panic("cannot run without physical CPU 0");
+
+	/*
+	 * Use bits of board information to improve initial entropy.
+	 */
+	enqueue_randomness((octeon_boot_info->board_type << 16) |
+	    (octeon_boot_info->board_rev_major << 8) |
+	    octeon_boot_info->board_rev_minor);
+	len = strnlen(octeon_boot_info->board_serial,
+	    sizeof(octeon_boot_info->board_serial));
+	for (i = 0; i < len; i++)
+		enqueue_randomness(octeon_boot_info->board_serial[i]);
 
 	/*
 	 * Init message buffer.
