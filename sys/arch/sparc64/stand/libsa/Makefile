@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2020/03/15 17:44:20 otto Exp $
+#	$OpenBSD: Makefile,v 1.15 2020/05/25 16:27:07 deraadt Exp $
 
 LIB=	sa
 
@@ -20,8 +20,8 @@ SRCS=	alloc.c exit.c getfile.c getln.c globals.c \
 	memcmp.c memcpy.c memmove.c memset.c printf.c snprintf.c strerror.c strncpy.c
 
 # io routines
-SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
-	open.c read.c stat.c write.c cread.c
+SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c fchmod.c \
+	ioctl.c lseek.c open.c read.c stat.c write.c cread.c
 
 # network routines
 SRCS+=	arp.c ether.c in_cksum.c net.c netif.c netudp.c rpc.c
