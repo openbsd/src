@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.69 2020/05/13 08:32:43 mpi Exp $	*/
+/*	$OpenBSD: conf.c,v 1.70 2020/05/25 06:37:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -74,12 +74,6 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 19 was: RAIDframe disk driver */
 };
 int	nblkdev = nitems(bdevsw);
-
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_pc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), D_TTY }
 
 /* open, close, read, ioctl */
 #define cdev_joy_init(c,n) { \
