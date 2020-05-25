@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.39 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.40 2020/05/25 15:24:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996,2000 Michael Shalayeff.
@@ -32,7 +32,7 @@
 #define __RNDVAR_H__
 
 #ifdef _KERNEL
-void random_start(void);
+void random_start(int);
 
 void enqueue_randomness(unsigned int);
 void suspend_randomness(void);

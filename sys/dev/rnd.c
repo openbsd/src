@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.213 2020/05/18 15:00:16 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.214 2020/05/25 15:24:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -651,7 +651,7 @@ rnd_reinit(void *v)
  * entropy forward, hash it, and re-seed the random stream as needed.
  */
 void
-random_start(void)
+random_start(int goodseed)
 {
 	extern char etext[];
 
@@ -677,6 +677,13 @@ random_start(void)
 	timeout_set(&rndreinit_timeout, rnd_reinit, NULL);
 	rnd_reinit(NULL);
 	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
+
+	if (goodseed)
+		printf("random: good seed from bootblocks\n");
+	else {
+		/* XXX kernel should work harder here */
+		printf("random: boothowto does not indicate good seed\n");
+	}
 }
 
 int
