@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.51 2020/05/25 15:28:21 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.52 2020/05/25 15:49:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -107,7 +107,8 @@ boot(dev_t bootdev)
 			} while(!getcmd());
 		}
 
-		loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata));
+		if (loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata)) == 0)
+			cmd.boothowto |= RB_GOODRANDOM;
 #ifdef MDRANDOM
 		if (mdrandom(rnddata, sizeof(rnddata)) == 0)
 			cmd.boothowto |= RB_GOODRANDOM;
@@ -160,12 +161,12 @@ boot(dev_t bootdev)
 	run_loadfile(marks, cmd.boothowto);
 }
 
-void
+int
 loadrandom(char *name, char *buf, size_t buflen)
 {
 	char path[MAXPATHLEN];
 	struct stat sb;
-	int fd, i;
+	int fd, i, error = 0;
 
 #define O_RDONLY	0
 
@@ -186,13 +187,17 @@ loadrandom(char *name, char *buf, size_t buflen)
 	if (fd == -1) {
 		if (errno != EPERM)
 			printf("cannot open %s: %s\n", path, strerror(errno));
-		return;
+		return -1;
 	}
-	if (fstat(fd, &sb) == -1 ||
-	    sb.st_uid != 0 ||
-	    (sb.st_mode & (S_IWOTH|S_IROTH)))
-		goto fail;
-	(void) read(fd, buf, buflen);
-fail:
+	if (fstat(fd, &sb) == -1) {
+		error = -1;
+		goto done;
+	}
+	if (read(fd, buf, buflen) != buflen) {
+		error = -1;
+		goto done;
+	}
+done:
 	close(fd);
+	return (error);
 }

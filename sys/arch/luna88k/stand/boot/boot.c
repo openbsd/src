@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.8 2019/10/29 02:55:51 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.9 2020/05/25 15:49:42 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -228,21 +228,23 @@ int
 loadrandom(const char *name, char *buf, size_t buflen)
 {
 	struct stat sb;
-	int fd;
-	int rc = 0;
+	int fd, error = 0;
 
 	fd = open(name, O_RDONLY);
 	if (fd == -1) {
 		if (errno != EPERM)
 			printf("cannot open %s: %s\n", name, strerror(errno));
-		return 0;
+		return -1;
 	}
-	if (fstat(fd, &sb) == -1 || sb.st_uid != 0 || !S_ISREG(sb.st_mode) ||
-	    (sb.st_mode & (S_IWOTH|S_IROTH)))
-		goto fail;
-	(void) read(fd, buf, buflen);
-	rc = 1;
-fail:
+	if (fstat(fd, &sb) == -1) {
+		error = -1;
+		goto done;
+	}
+	if (read(fd, buf, buflen) != buflen) {
+		error = -1;
+		goto done;
+	}
+done:
 	close(fd);
-	return rc;
+	return (error);
 }
