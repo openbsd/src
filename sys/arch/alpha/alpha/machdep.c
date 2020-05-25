@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.189 2020/05/16 14:44:44 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.190 2020/05/25 15:00:22 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -284,6 +284,7 @@ alpha_init(unused, ptb, bim, bip, biv)
 			bcopy(v1p->booted_kernel, bootinfo.booted_kernel,
 			    min(sizeof v1p->booted_kernel,
 			      sizeof bootinfo.booted_kernel));
+			boothowto = v1p->howto;
 			/* booted dev not provided in bootinfo */
 			init_prom_interface((struct rpb *)
 			    ALPHA_PHYS_TO_K0SEG(bootinfo.hwrpb_phys));

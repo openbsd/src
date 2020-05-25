@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.25 2019/10/29 02:55:50 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.26 2020/05/25 15:00:23 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ main()
 	bootinfo_v1.cngetc = NULL;
 	bootinfo_v1.cnputc = NULL;
 	bootinfo_v1.cnpollc = NULL;
+	bootinfo_v1.howto = boothowto;
 
 	entry = marks[MARK_START];
 	(*(void (*)(u_int64_t, u_int64_t, u_int64_t, void *, u_int64_t,
