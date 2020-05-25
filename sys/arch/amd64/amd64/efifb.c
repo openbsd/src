@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.29 2020/05/25 09:55:47 jsg Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.30 2020/05/25 14:12:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -100,6 +100,7 @@ int	 efifb_alloc_screen(void *, const struct wsscreen_descr *, void **,
 void	 efifb_free_screen(void *, void *);
 int	 efifb_show_screen(void *, void *, int, void (*cb) (void *, int, int),
 	    void *);
+int	 efifb_getchar(void *, int, int, struct wsdisplay_charcell *);
 int	 efifb_list_font(void *, struct wsdisplay_font *);
 int	 efifb_load_font(void *, void *, struct wsdisplay_font *);
 void	 efifb_scrollback(void *, void *, int lines);
@@ -133,6 +134,7 @@ struct wsdisplay_accessops efifb_accessops = {
 	.alloc_screen = efifb_alloc_screen,
 	.free_screen = efifb_free_screen,
 	.show_screen = efifb_show_screen,
+	.getchar = efifb_getchar,
 	.load_font = efifb_load_font,
 	.list_font = efifb_list_font,
 	.scrollback = efifb_scrollback,
@@ -371,6 +373,15 @@ efifb_show_screen(void *v, void *cookie, int waitok,
 	struct rasops_info	*ri = &sc->sc_fb->rinfo;
 
 	return rasops_show_screen(ri, cookie, waitok, cb, cb_arg);
+}
+
+int
+efifb_getchar(void *v, int row, int col, struct wsdisplay_charcell *cell)
+{
+	struct efifb_softc	*sc = v;
+	struct rasops_info	*ri = &sc->sc_fb->rinfo;
+
+	return rasops_getchar(ri, row, col, cell);
 }
 
 int
