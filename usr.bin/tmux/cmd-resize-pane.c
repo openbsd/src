@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.47 2020/05/16 15:01:30 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.48 2020/05/25 18:17:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -117,7 +117,7 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'y')) {
 		y = args_percentage(args, 'y', 0, INT_MAX, w->sy, &cause);
 		if (cause != NULL) {
-			cmdq_error(item, "width %s", cause);
+			cmdq_error(item, "height %s", cause);
 			free(cause);
 			return (CMD_RETURN_ERROR);
 		}
