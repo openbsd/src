@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.22 2020/05/19 07:46:10 jmc Exp $
+.\" $OpenBSD: sndio.7,v 1.23 2020/05/25 12:25:16 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,14 +14,16 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 19 2020 $
+.Dd $Mdocdate: May 25 2020 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
 .Nm sndio
 .Nd interface to audio and MIDI
 .Sh DESCRIPTION
-Programs access audio and MIDI hardware using the sndio library.
+Programs access audio and MIDI hardware using the
+.Nm sndio
+library.
 It allows both access through the
 .Xr sndiod 8
 server and raw access to the hardware.
@@ -34,10 +36,9 @@ and
 .Ev MIDIDEVICE
 environment variables if there's no device selection method.
 .Pp
-Most programs connect to the
+Usually, programs access the hardware via the
 .Xr sndiod 8
-server, which does the hardware access for them because
-direct access to the raw hardware is exclusive and
+server, because raw access to the hardware is exclusive and
 requires additional privileges.
 The
 .Xr sndiod 8
@@ -47,7 +48,7 @@ It performs the necessary audio processing on the fly to
 overcome any incompatibility between software and hardware.
 Connections to
 .Xr sndiod 8
-may be established through the network, including from virtual machines.
+may also be established through the network, including from virtual machines.
 .Pp
 The
 .Xr sndiod 8
@@ -158,15 +159,16 @@ If that fails, it then tries to use
 .Li rsnd/0 .
 This allows the
 .Xr sndiod 8
-audio server to be used by default and the bare hardware as fallback;
+audio server to be used by default and the raw hardware as fallback;
 programs don't have to be reconfigured when
 .Xr sndiod 8
 is started or stopped.
 .Pp
-If
+Similarly, if no MIDI descriptor is provided to a program
+or when the reserved word
 .Cm default
-is used as the MIDI port, the program will use the
-one specified in the
+is passed as the device descriptor,
+the program uses the one specified in the
 .Ev MIDIDEVICE
 environment variable.
 If it is not set, the program first tries to connect to
@@ -196,9 +198,11 @@ can connect to the server using the same cookie.
 .Sh ENVIRONMENT
 .Bl -tag -width "AUDIODEVICEXXX" -compact
 .It Ev AUDIODEVICE
-Audio device to use if the program offers no audio device selection method.
+Audio device descriptor to use
+when no descriptor is explicitly specified to a program.
 .It Ev MIDIDEVICE
-MIDI port to use if the program offers no MIDI port selection method.
+MIDI port descriptor to use
+when no descriptor is explicitly specified to a program.
 .El
 .Pp
 These environment variables are ignored by
@@ -214,6 +218,9 @@ Audio devices.
 MIDI ports.
 .El
 .Sh SEE ALSO
+.Xr aucat 1 ,
+.Xr midicat 1 ,
+.Xr sndioctl 1 ,
 .Xr mio_open 3 ,
 .Xr sio_open 3 ,
 .Xr sioctl_open 3 ,
