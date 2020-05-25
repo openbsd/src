@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.712 2020/03/10 01:11:30 kevlo Exp $
+$OpenBSD: usbdevs,v 1.713 2020/05/25 12:45:56 patrick Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -631,6 +631,7 @@ vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor ARUBA		0x2626	Aruba
 vendor XIAOMI		0x2717	Xiaomi
 vendor NHJ		0x2770	NHJ
+vendor THINGM		0x27b8	ThingM
 vendor ASUSTEK		0x2821	ASUSTeK Computer
 vendor PLANEX		0x2c02	Planex Communications
 vendor LINKINSTRUMENTS	0x3195	Link Instruments
@@ -4242,6 +4243,9 @@ product TESTO 174		0x0007	174 USB interface
 product TESTO 556		0x0009	556/560 USB interface
 product TESTO SERIAL_1		0x000a	USB adapter
 product TESTO SERIAL_2		0xf001	USB to serial converter
+
+/* ThingM products */
+product THINGM BLINK1		0x01ed	USB notification light
 
 /* Thrustmaster products */
 product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
