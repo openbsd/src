@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdboot.c,v 1.5 2020/05/26 13:21:58 visa Exp $	*/
+/*	$OpenBSD: rdboot.c,v 1.6 2020/05/26 13:30:47 visa Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -46,7 +46,7 @@
 #define BOOTRANDOM_MAX	256	/* no point being greater than RC4STATE */
 #define KERNEL		"/bsd"
 
-void	loadrandom(void);
+int	loadrandom(void);
 void	kexec(void);
 
 struct cmd_state cmd;
@@ -102,7 +102,9 @@ main(void)
 			} while (!getcmd());
 		}
 
-		loadrandom();
+		if (loadrandom() == 0)
+			cmd.boothowto |= RB_GOODRANDOM;
+
 		kexec();
 
 		hasboot = 0;
@@ -113,23 +115,34 @@ main(void)
 	return 0;
 }
 
-void
+int
 loadrandom(void)
 {
 	char buf[BOOTRANDOM_MAX];
-	int fd;
+	struct stat sb;
+	int fd, ret = 0;
 
 	/* Read the file from the device specified by the kernel path. */
 	if (disk_open(cmd.path) == NULL)
-		return;
+		return -1;
 	fd = open(BOOTRANDOM, O_RDONLY);
 	if (fd == -1) {
 		fprintf(stderr, "%s: cannot open %s: %s", __func__, BOOTRANDOM,
 		    strerror(errno));
 		disk_close();
-		return;
+		return -1;
 	}
-	read(fd, buf, sizeof(buf));
+	if (fstat(fd, &sb) == 0) {
+		if (sb.st_mode & S_ISTXT) {
+			printf("NOTE: random seed is being reused.\n");
+			ret = -1;
+		}
+		if (read(fd, buf, sizeof(buf)) != sizeof(buf))
+			ret = -1;
+		fchmod(fd, sb.st_mode | S_ISTXT);
+	} else {
+		ret = -1;
+	}
 	close(fd);
 	disk_close();
 
@@ -142,10 +155,11 @@ loadrandom(void)
 	if (fd == -1) {
 		fprintf(stderr, "%s: cannot open %s: %s", __func__,
 		    DEVRANDOM, strerror(errno));
-		return;
+		return -1;
 	}
 	write(fd, buf, sizeof(buf));
 	close(fd);
+	return ret;
 }
 
 void
