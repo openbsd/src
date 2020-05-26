@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.85 2020/05/26 07:01:54 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.86 2020/05/26 08:02:54 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1202,20 +1202,20 @@ static void	filt_pppac_rdetach(struct knote *);
 static int	filt_pppac_read(struct knote *, long);
 
 static const struct filterops pppac_rd_filtops = {
-	1,
-	NULL,
-	filt_pppac_rdetach,
-	filt_pppac_read
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_pppac_rdetach,
+	.f_event	= filt_pppac_read
 };
 
 static void	filt_pppac_wdetach(struct knote *);
 static int	filt_pppac_write(struct knote *, long);
 
 static const struct filterops pppac_wr_filtops = {
-	1,
-	NULL,
-	filt_pppac_wdetach,
-	filt_pppac_write
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_pppac_wdetach,
+	.f_event	= filt_pppac_write
 };
 
 static struct pppac_list pppac_devs = LIST_HEAD_INITIALIZER(pppac_devs);
