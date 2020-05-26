@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.18 2020/05/26 12:05:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.19 2020/05/26 12:07:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1263,7 +1263,7 @@ iwx_read_firmware(struct iwx_softc *sc)
 		case IWX_UCODE_TLV_FW_FSEQ_VERSION:
 			break;
 
-		/* undocumented TLVs found in ax200-cc-a0-46 image */
+		/* undocumented TLVs found in iwx-cc-a0-46 image */
 		case 58:
 		case 0x1000003:
 		case 0x1000004:
