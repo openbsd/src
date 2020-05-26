@@ -39,9 +39,12 @@
 #include "netfs.h"
  
 struct fs_ops file_system[] = {
-	{ netfs_open, netfs_close, netfs_read, netfs_write, netfs_seek, netfs_stat },
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
-	{ ufs2_open, ufs2_close, ufs2_read, ufs2_write, ufs2_seek, ufs2_stat },
+	{ netfs_open,  netfs_close,  netfs_read,  netfs_write,  netfs_seek,
+	  netfs_stat },
+	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
+	  ufs_stat,    ufs_readdir,  ufs_fchmod },
+	{ ufs2_open,   ufs2_close,   ufs2_read,   ufs2_write,   ufs2_seek,
+	  ufs2_stat,   ufs2_readdir, ufs2_fchmod },
 };
  
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
