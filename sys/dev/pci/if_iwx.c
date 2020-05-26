@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.15 2020/05/26 11:57:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.16 2020/05/26 11:58:33 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6240,7 +6240,7 @@ iwx_send_bt_init_conf(struct iwx_softc *sc)
 	struct iwx_bt_coex_cmd bt_cmd;
 
 	bt_cmd.mode = htole32(IWX_BT_COEX_WIFI);
-	bt_cmd.enabled_modules = htole32(IWX_BT_COEX_HIGH_BAND_RET);
+	bt_cmd.enabled_modules = 0;
 
 	return iwx_send_cmd_pdu(sc, IWX_BT_CONFIG, 0, sizeof(bt_cmd),
 	    &bt_cmd);
