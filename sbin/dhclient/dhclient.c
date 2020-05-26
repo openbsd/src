@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.673 2020/05/20 19:13:34 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.674 2020/05/26 23:28:40 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2759,7 +2759,6 @@ tick_msg(const char *preamble, int success, time_t start)
 void
 release_lease(struct interface_info *ifi)
 {
-	char			 destbuf[INET_ADDRSTRLEN];
 	char			 ifabuf[INET_ADDRSTRLEN];
 	struct option_data	*opt;
 
@@ -2772,7 +2771,6 @@ release_lease(struct interface_info *ifi)
 		ifi->destination.s_addr = *(in_addr_t *)opt->data;
 	else
 		ifi->destination.s_addr = INADDR_BROADCAST;
-	strlcpy(destbuf, inet_ntoa(ifi->destination), sizeof(destbuf));
 
 	ifi->xid = arc4random();
 	make_release(ifi, ifi->active);
@@ -2799,7 +2797,8 @@ release_lease(struct interface_info *ifi)
 	free(ifi->unwind_info);
 	ifi->unwind_info = NULL;
 
-	log_warnx("%s: %s RELEASED to %s", log_procname, ifabuf, destbuf);
+	log_warnx("%s: %s RELEASED to %s", log_procname, ifabuf,
+	    inet_ntoa(ifi->destination));
 }
 
 void
