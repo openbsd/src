@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.150 2020/05/14 15:08:30 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.151 2020/05/26 20:24:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -309,6 +309,7 @@ struct iked_hash {
 	size_t		 hash_length;	/* Output length */
 	size_t		 hash_trunc;	/* Truncate the output length */
 	struct iked_hash *hash_prf;	/* PRF pointer */
+	int		 hash_isaead;
 };
 
 struct iked_cipher {
@@ -321,6 +322,8 @@ struct iked_cipher {
 	struct ibuf	*encr_iv;	/* Initialization Vector */
 	size_t		 encr_ivlength;	/* IV length */
 	size_t		 encr_length;	/* Block length */
+	size_t		 encr_saltlength;	/* IV salt length */
+	uint16_t	 encr_authid;	/* ID of associated authentication */
 };
 
 struct iked_dsa {
@@ -841,10 +844,13 @@ struct ibuf *
 	 cipher_setkey(struct iked_cipher *, void *, size_t);
 struct ibuf *
 	 cipher_setiv(struct iked_cipher *, void *, size_t);
+int	 cipher_settag(struct iked_cipher *, uint8_t *, size_t);
+int	 cipher_gettag(struct iked_cipher *, uint8_t *, size_t);
 void	 cipher_free(struct iked_cipher *);
 int	 cipher_init(struct iked_cipher *, int);
 int	 cipher_init_encrypt(struct iked_cipher *);
 int	 cipher_init_decrypt(struct iked_cipher *);
+void	 cipher_aad(struct iked_cipher *, void *, size_t, size_t *);
 int	 cipher_update(struct iked_cipher *, void *, size_t, void *, size_t *);
 int	 cipher_final(struct iked_cipher *);
 size_t	 cipher_length(struct iked_cipher *);
@@ -933,7 +939,8 @@ int	 ikev2_msg_send(struct iked *, struct iked_message *);
 int	 ikev2_msg_send_encrypt(struct iked *, struct iked_sa *,
 	    struct ibuf **, uint8_t, uint8_t, int);
 struct ibuf
-	*ikev2_msg_encrypt(struct iked *, struct iked_sa *, struct ibuf *);
+	*ikev2_msg_encrypt(struct iked *, struct iked_sa *, struct ibuf *,
+	    struct ibuf *);
 struct ibuf *
 	 ikev2_msg_decrypt(struct iked *, struct iked_sa *,
 	    struct ibuf *, struct ibuf *);
@@ -1129,5 +1136,6 @@ void	 print_policy(struct iked_policy *);
 size_t	 keylength_xf(unsigned int, unsigned int, unsigned int);
 size_t	 noncelength_xf(unsigned int, unsigned int);
 int	 cmdline_symset(char *);
+int	 encxf_noauth(unsigned int);
 
 #endif /* IKED_H */

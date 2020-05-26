@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.225 2020/05/11 20:11:35 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.226 2020/05/26 20:24:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4473,7 +4473,7 @@ ikev2_send_informational(struct iked *env, struct iked_message *msg)
 			goto done;
 
 		/* Encrypt message and add as an E payload */
-		if ((e = ikev2_msg_encrypt(env, sa, e)) == NULL) {
+		if ((e = ikev2_msg_encrypt(env, sa, e, buf)) == NULL) {
 			log_debug("%s: encryption failed", __func__);
 			goto done;
 		}
@@ -4666,6 +4666,16 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 		}
 	}
 
+	/* For AEAD ciphers integrity is implicit */
+	if (sa->sa_encr->encr_authid && sa->sa_integr == NULL) {
+		if ((sa->sa_integr = hash_new(IKEV2_XFORMTYPE_INTEGR,
+		    sa->sa_encr->encr_authid)) == NULL) {
+			log_info("%s: failed to get AEAD integr",
+			    SPI_SA(sa, __func__));
+			return (-1);
+		}
+	}
+
 	if (sa->sa_prf == NULL) {
 		if ((xform = config_findtransform(&sa->sa_proposals,
 		    IKEV2_XFORMTYPE_PRF, 0)) == NULL) {
@@ -4840,6 +4850,16 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 		}
 	}
 
+	/* For AEAD ciphers integrity is implicit */
+	if (sa->sa_encr->encr_authid && sa->sa_integr == NULL) {
+		if ((sa->sa_integr = hash_new(IKEV2_XFORMTYPE_INTEGR,
+		    sa->sa_encr->encr_authid)) == NULL) {
+			log_info("%s: failed to get AEAD integr",
+			    SPI_SA(sa, __func__));
+			return (-1);
+		}
+	}
+
 	if (sa->sa_prf == NULL) {
 		if ((xform = config_findtransform(&sa->sa_proposals,
 		    IKEV2_XFORMTYPE_PRF, 0)) == NULL) {
@@ -4883,6 +4903,7 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 	size_t			 nonceminlen, ilen, rlen, tmplen;
 	uint64_t		 ispi, rspi;
 	int			 ret = -1;
+	int			 isaead = 0;
 
 	ninr = dhsecret = skeyseed = s = t = NULL;
 
@@ -4894,6 +4915,9 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 		    SPI_SA(sa, __func__));
 		return (-1);
 	}
+
+	/* For AEADs no auth keys are required (see RFC 5282) */
+	isaead = !!integr->hash_isaead;
 
 	if (prf->hash_fixedkey)
 		nonceminlen = prf->hash_fixedkey;
@@ -5026,13 +5050,13 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 	 * Get the size of the key material we need and the number
 	 * of rounds we need to run the prf+ function.
 	 */
-	ilen = hash_length(prf) +	/* SK_d */
-	    hash_keylength(integr) +	/* SK_ai */
-	    hash_keylength(integr) +	/* SK_ar */
-	    cipher_keylength(encr) +	/* SK_ei */
-	    cipher_keylength(encr) +	/* SK_er */
-	    hash_keylength(prf) +	/* SK_pi */
-	    hash_keylength(prf);	/* SK_pr */
+	ilen = hash_length(prf) +			/* SK_d */
+	    (isaead ? 0 : hash_keylength(integr)) +	/* SK_ai */
+	    (isaead ? 0 : hash_keylength(integr)) +	/* SK_ar */
+	    cipher_keylength(encr) +			/* SK_ei */
+	    cipher_keylength(encr) +			/* SK_er */
+	    hash_keylength(prf) +			/* SK_pi */
+	    hash_keylength(prf);			/* SK_pr */
 
 	if ((t = ikev2_prfplus(prf, skeyseed, s, ilen)) == NULL) {
 		log_info("%s: failed to get IKE SA key material",
@@ -5042,8 +5066,10 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 
 	/* ibuf_get() returns a new buffer from the next read offset */
 	if ((sa->sa_key_d = ibuf_get(t, hash_length(prf))) == NULL ||
-	    (sa->sa_key_iauth = ibuf_get(t, hash_keylength(integr))) == NULL ||
-	    (sa->sa_key_rauth = ibuf_get(t, hash_keylength(integr))) == NULL ||
+	    (!isaead &&
+	    (sa->sa_key_iauth = ibuf_get(t, hash_keylength(integr))) == NULL) ||
+	    (!isaead &&
+	    (sa->sa_key_rauth = ibuf_get(t, hash_keylength(integr))) == NULL) ||
 	    (sa->sa_key_iencr = ibuf_get(t, cipher_keylength(encr))) == NULL ||
 	    (sa->sa_key_rencr = ibuf_get(t, cipher_keylength(encr))) == NULL ||
 	    (sa->sa_key_iprf = ibuf_get(t, hash_length(prf))) == NULL ||
@@ -5055,12 +5081,16 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 	log_debug("%s: SK_d with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_d));
 	print_hex(sa->sa_key_d->buf, 0, ibuf_length(sa->sa_key_d));
-	log_debug("%s: SK_ai with %zu bytes", __func__,
-	    ibuf_length(sa->sa_key_iauth));
-	print_hex(sa->sa_key_iauth->buf, 0, ibuf_length(sa->sa_key_iauth));
-	log_debug("%s: SK_ar with %zu bytes", __func__,
-	    ibuf_length(sa->sa_key_rauth));
-	print_hex(sa->sa_key_rauth->buf, 0, ibuf_length(sa->sa_key_rauth));
+	if (!isaead) {
+		log_debug("%s: SK_ai with %zu bytes", __func__,
+		    ibuf_length(sa->sa_key_iauth));
+		print_hex(sa->sa_key_iauth->buf, 0,
+		    ibuf_length(sa->sa_key_iauth));
+		log_debug("%s: SK_ar with %zu bytes", __func__,
+		    ibuf_length(sa->sa_key_rauth));
+		print_hex(sa->sa_key_rauth->buf, 0,
+		    ibuf_length(sa->sa_key_rauth));
+	}
 	log_debug("%s: SK_ei with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_iencr));
 	print_hex(sa->sa_key_iencr->buf, 0, ibuf_length(sa->sa_key_iencr));

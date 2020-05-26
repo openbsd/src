@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.68 2020/05/01 17:44:02 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.69 2020/05/26 20:24:31 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 1 2020 $
+.Dd $Mdocdate: May 26 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -864,9 +864,11 @@ keyword:
 .It Li aes-128-ctr Ta "160 bits" Ta "[ESP only]"
 .It Li aes-192-ctr Ta "224 bits" Ta "[ESP only]"
 .It Li aes-256-ctr Ta "288 bits" Ta "[ESP only]"
-.It Li aes-128-gcm Ta "160 bits" Ta "[ESP only]"
+.It Li aes-128-gcm Ta "160 bits" Ta ""
 .It Li aes-192-gcm Ta "224 bits" Ta "[ESP only]"
-.It Li aes-256-gcm Ta "288 bits" Ta "[ESP only]"
+.It Li aes-256-gcm Ta "288 bits" Ta ""
+.It Li aes-128-gcm-12 Ta "160 bits" Ta "[IKE only]"
+.It Li aes-256-gcm-12 Ta "288 bits" Ta "[IKE only]"
 .It Li blowfish Ta "160 bits" Ta "[ESP only]"
 .It Li cast Ta "128 bits" Ta "[ESP only]"
 .It Li chacha20-poly1305 Ta "288 bits" Ta "[ESP only]"
