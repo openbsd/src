@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdboot.c,v 1.6 2020/05/26 13:30:47 visa Exp $	*/
+/*	$OpenBSD: rdboot.c,v 1.7 2020/05/26 14:00:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -51,7 +51,7 @@ void	kexec(void);
 
 struct cmd_state cmd;
 int octbootfd = -1;
-const char version[] = "1.1";
+const char version[] = "1.2";
 
 int
 main(void)
