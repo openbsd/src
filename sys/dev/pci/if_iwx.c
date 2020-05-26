@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.12 2020/05/16 11:26:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.13 2020/05/26 11:55:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4403,8 +4403,16 @@ int
 iwx_beacon_filter_send_cmd(struct iwx_softc *sc,
     struct iwx_beacon_filter_cmd *cmd)
 {
+	size_t len;
+
+	if (isset(sc->sc_ucode_api, IWX_UCODE_TLV_API_BEACON_FILTER_V4))
+		len = sizeof(struct iwx_beacon_filter_cmd);
+	else
+		len = offsetof(struct iwx_beacon_filter_cmd,
+		    bf_threshold_absolute_low);
+
 	return iwx_send_cmd_pdu(sc, IWX_REPLY_BEACON_FILTERING_CMD,
-	    0, sizeof(struct iwx_beacon_filter_cmd), cmd);
+	    0, len, cmd);
 }
 
 int
