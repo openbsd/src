@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.21 2013/03/23 16:08:28 deraadt Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.22 2020/05/26 13:38:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -201,8 +201,9 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 	}
 
 	xfer = 0;
-	/* see if we can scratch anything from buffer */
-	if (dp->last_blk <= blk && (dp->last_blk + dp->last_read) > blk) {
+	/* On read, see if we can scratch anything from buffer */
+	if (rw == F_READ &&
+	    dp->last_blk <= blk && (dp->last_blk + dp->last_read) > blk) {
 		twiddle();
 		offset = blk - dp->last_blk;
 		xfer = min(dp->last_read - offset, size);
@@ -222,6 +223,12 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 	 */
 	for (; size; size -= ret, buf += ret, blk += ret, xfer += ret) {
 		offset = blk & IOPGOFSET;
+		if (rw != F_READ) {
+			/* put block into cache, but invalidate cache */
+			bcopy(buf, dp->buf, size);
+			dp->last_blk = 0;
+			dp->last_read = 0;
+		}
 		if ((ret = ((iodcio_t)pzdev->pz_iodc_io)(pzdev->pz_hpa,
 		    (rw == F_READ? IODC_IO_READ: IODC_IO_WRITE),
 		    pzdev->pz_spa, pzdev->pz_layers, pdcbuf,
@@ -238,11 +245,13 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 		}
 		if ((ret = pdcbuf[0]) <= 0)
 			break;
-		dp->last_blk = blk - offset;
-		dp->last_read = ret;
-		if ((ret -= offset) > size)
-			ret = size;
-		bcopy(dp->buf + offset, buf, ret);
+		if (rw == F_READ) {
+			dp->last_blk = blk - offset;
+			dp->last_read = ret;
+			if ((ret -= offset) > size)
+				ret = size;
+			bcopy(dp->buf + offset, buf, ret);
+		}
 #ifdef PDCDEBUG
 		if (debug)
 			printf("read %d(%d,%d)@%x ", ret,
