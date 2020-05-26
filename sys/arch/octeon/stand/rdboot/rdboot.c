@@ -1,7 +1,7 @@
-/*	$OpenBSD: rdboot.c,v 1.4 2020/05/25 13:04:25 visa Exp $	*/
+/*	$OpenBSD: rdboot.c,v 1.5 2020/05/26 13:21:58 visa Exp $	*/
 
 /*
- * Copyright (c) 2019 Visa Hankala
+ * Copyright (c) 2019-2020 Visa Hankala
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,12 +22,14 @@
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/select.h>
+#include <sys/stat.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
@@ -150,17 +152,47 @@ void
 kexec(void)
 {
 	struct octboot_kexec_args kargs;
+	struct stat sb;
 	char boothowtostr[32];
 	char rootdev[32];
+	char *kimg = NULL;
 	const char *path;
-	int argc, ret;
+	ssize_t n;
+	off_t pos;
+	int argc, fd = -1, ret;
 
 	path = disk_open(cmd.path);
 	if (path == NULL)
 		return;
 
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		goto load_failed;
+	if (fstat(fd, &sb) == -1)
+		goto load_failed;
+	if (!S_ISREG(sb.st_mode) || sb.st_size == 0) {
+		errno = ENOEXEC;
+		goto load_failed;
+	}
+
+	kimg = malloc(sb.st_size);
+	if (kimg == NULL)
+		goto load_failed;
+
+	pos = 0;
+	while (pos < sb.st_size) {
+		n = read(fd, kimg + pos, sb.st_size - pos);
+		if (n == -1)
+			goto load_failed;
+		pos += n;
+	}
+
+	close(fd);
+	disk_close();
+
 	memset(&kargs, 0, sizeof(kargs));
-	kargs.path = path;
+	kargs.kimg = kimg;
+	kargs.klen = sb.st_size;
 	argc = 0;
 	if (cmd.boothowto != 0) {
 		snprintf(boothowtostr, sizeof(boothowtostr), "boothowto=%d",
@@ -184,6 +216,14 @@ kexec(void)
 		    cmd.path, strerror(errno));
 	else
 		fprintf(stderr, "kexec() returned unexpectedly\n");
+	free(kimg);
+	return;
 
+load_failed:
+	fprintf(stderr, "failed to load kernel %s: %s\n",
+	    cmd.path, strerror(errno));
+	if (fd != -1)
+		close(fd);
 	disk_close();
+	free(kimg);
 }

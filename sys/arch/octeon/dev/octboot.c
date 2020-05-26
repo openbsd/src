@@ -1,7 +1,7 @@
-/*	$OpenBSD: octboot.c,v 1.1 2019/07/17 14:36:32 visa Exp $	*/
+/*	$OpenBSD: octboot.c,v 1.2 2020/05/26 13:21:58 visa Exp $	*/
 
 /*
- * Copyright (c) 2019 Visa Hankala
+ * Copyright (c) 2019-2020 Visa Hankala
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,9 +20,7 @@
 #include <sys/systm.h>
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
-#include <sys/namei.h>
 #include <sys/proc.h>
-#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -36,7 +34,7 @@ typedef void (*kentry)(register_t, register_t, register_t, register_t);
 #define PRIMARY 1
 
 int	octboot_kexec(struct octboot_kexec_args *, struct proc *);
-int	octboot_read(struct proc *, struct vnode *, void *, size_t, off_t);
+int	octboot_read(struct octboot_kexec_args *, void *, size_t, off_t);
 
 uint64_t	octeon_boot_entry;
 uint32_t	octeon_boot_ready;
@@ -94,28 +92,11 @@ octboot_kexec(struct octboot_kexec_args *kargs, struct proc *p)
 	Elf_Ehdr eh;
 	Elf_Phdr *ph = NULL;
 	Elf_Shdr *sh = NULL;
-	struct nameidata nid;
-	struct vattr va;
 	paddr_t ekern = 0, elfp, maxp = 0, off, pa, shp;
 	size_t len, phsize, shsize, shstrsize, size;
 	char *argbuf = NULL, *argptr;
 	char *shstr = NULL;
 	int argc = 0, error, havesyms = 0, i, nalloc = 0;
-
-	NDINIT(&nid, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, kargs->path, p);
-	error = namei(&nid);
-	if (error != 0)
-		return error;
-	error = VOP_GETATTR(nid.ni_vp, &va, p->p_ucred, p);
-	if (error != 0)
-		goto fail;
-	if (nid.ni_vp->v_type != VREG || va.va_size == 0) {
-		error = EINVAL;
-		goto fail;
-	}
-	error = VOP_ACCESS(nid.ni_vp, VREAD, p->p_ucred, p);
-	if (error != 0)
-		goto fail;
 
 	/*
 	 * Load kernel arguments into a temporary buffer.
@@ -140,7 +121,7 @@ octboot_kexec(struct octboot_kexec_args *kargs, struct proc *p)
 	/*
 	 * Read the headers and validate them.
 	 */
-	error = octboot_read(p, nid.ni_vp, &eh, sizeof(eh), 0);
+	error = octboot_read(kargs, &eh, sizeof(eh), 0);
 	if (error != 0)
 		goto fail;
 
@@ -151,7 +132,7 @@ octboot_kexec(struct octboot_kexec_args *kargs, struct proc *p)
 		goto fail;
 	}
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
-	error = octboot_read(p, nid.ni_vp, ph, phsize, eh.e_phoff);
+	error = octboot_read(kargs, ph, phsize, eh.e_phoff);
 	if (error != 0)
 		goto fail;
 
@@ -162,7 +143,7 @@ octboot_kexec(struct octboot_kexec_args *kargs, struct proc *p)
 		goto fail;
 	}
 	shsize = eh.e_shnum * sizeof(Elf_Shdr);
-	error = octboot_read(p, nid.ni_vp, sh, shsize, eh.e_shoff);
+	error = octboot_read(kargs, sh, shsize, eh.e_shoff);
 	if (error != 0)
 		goto fail;
 
@@ -208,7 +189,7 @@ octboot_kexec(struct octboot_kexec_args *kargs, struct proc *p)
 		if (ph[i].p_type != PT_LOAD)
 			continue;
 
-		error = octboot_read(p, nid.ni_vp, (caddr_t)ph[i].p_paddr,
+		error = octboot_read(kargs, (caddr_t)ph[i].p_paddr,
 		    ph[i].p_filesz, ph[i].p_offset);
 		if (error != 0)
 			goto fail;
@@ -250,7 +231,7 @@ octboot_kexec(struct octboot_kexec_args *kargs, struct proc *p)
 			error = ENOMEM;
 			goto fail;
 		}
-		error = octboot_read(p, nid.ni_vp, shstr, shstrsize,
+		error = octboot_read(kargs, shstr, shstrsize,
 		    sh[eh.e_shstrndx].sh_offset);
 		if (error != 0)
 			goto fail;
@@ -269,7 +250,7 @@ octboot_kexec(struct octboot_kexec_args *kargs, struct proc *p)
 					error = ENOMEM;
 					goto fail;
 				}
-				error = octboot_read(p, nid.ni_vp,
+				error = octboot_read(kargs,
 				    (caddr_t)PHYS_TO_CKSEG0(maxp),
 				    sh[i].sh_size, sh[i].sh_offset);
 				maxp += bsize;
@@ -366,22 +347,14 @@ fail:
 	free(sh, M_TEMP, shsize);
 	free(ph, M_TEMP, phsize);
 	free(argbuf, M_TEMP, PAGE_SIZE);
-	vput(nid.ni_vp);
 	return error;
 }
 
 int
-octboot_read(struct proc *p, struct vnode *vp, void *buf, size_t size,
+octboot_read(struct octboot_kexec_args *kargs, void *buf, size_t size,
     off_t off)
 {
-	size_t resid;
-	int error;
-
-	error = vn_rdwr(UIO_READ, vp, buf, size, off, UIO_SYSSPACE, 0,
-	    p->p_ucred, &resid, p);
-	if (error != 0)
-		return error;
-	if (resid != 0)
+	if (off + size < off || off + size > kargs->klen)
 		return ENOEXEC;
-	return 0;
+	return copyin(kargs->kimg + off, buf, size);
 }
