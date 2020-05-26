@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.13 2020/05/26 11:55:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.14 2020/05/26 11:56:25 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3757,7 +3757,8 @@ iwx_binding_cmd(struct iwx_softc *sc, struct iwx_node *in, uint32_t action)
 	for (i = 1; i < IWX_MAX_MACS_IN_BINDING; i++)
 		cmd.macs[i] = htole32(IWX_FW_CTXT_INVALID);
 
-	if (IEEE80211_IS_CHAN_2GHZ(phyctxt->channel))
+	if (IEEE80211_IS_CHAN_2GHZ(phyctxt->channel) ||
+	    !isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_CDB_SUPPORT))
 		cmd.lmac_id = htole32(IWX_LMAC_24G_INDEX);
 	else
 		cmd.lmac_id = htole32(IWX_LMAC_5G_INDEX);
