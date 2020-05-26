@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.144 2020/05/08 14:15:11 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.145 2020/05/26 08:41:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -402,6 +402,8 @@ client_main(struct event_base *base, int argc, char **argv, int flags, int feat)
 	} else if (client_exitreason != CLIENT_EXIT_NONE)
 		fprintf(stderr, "%s\n", client_exit_message());
 	setblocking(STDIN_FILENO, 1);
+	setblocking(STDOUT_FILENO, 1);
+	setblocking(STDERR_FILENO, 1);
 	return (client_exitval);
 }
 
@@ -429,6 +431,9 @@ client_send_identify(const char *ttynam, const char *cwd, int feat)
 	if ((fd = dup(STDIN_FILENO)) == -1)
 		fatal("dup failed");
 	proc_send(client_peer, MSG_IDENTIFY_STDIN, fd, NULL, 0);
+	if ((fd = dup(STDOUT_FILENO)) == -1)
+		fatal("dup failed");
+	proc_send(client_peer, MSG_IDENTIFY_STDOUT, fd, NULL, 0);
 
 	pid = getpid();
 	proc_send(client_peer, MSG_IDENTIFY_CLIENTPID, -1, &pid, sizeof pid);
