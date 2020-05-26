@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.151 2020/05/13 08:10:03 mpi Exp $	*/
+/*	$OpenBSD: conf.h,v 1.152 2020/05/26 07:53:00 mpi Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -312,7 +312,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
+	(dev_type_mmap((*))) enodev, 0, 0, dev_init(c,n,kqfilter) }
 
 /* open, close, read, write, ioctl, poll, kqfilter */
 #define cdev_midi_init(c,n) { \
@@ -390,12 +390,12 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, selfalse, \
 	(dev_type_mmap((*))) enodev }
 
-/* open, close, ioctl, read, mmap, poll */
+/* open, close, ioctl, read, mmap, poll, kqfilter */
 #define cdev_video_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
+	dev_init(c,n,mmap), 0, 0, dev_init(c,n,kqfilter) }
 
 /* open, close, write, ioctl */
 #define cdev_spkr_init(c,n) { \
