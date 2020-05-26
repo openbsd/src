@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.4 2020/04/03 08:32:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.5 2020/05/26 11:59:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -496,6 +496,10 @@ struct iwx_softc {
 	int sc_integrated;
 	int sc_tx_with_siso_diversity;
 	int sc_max_tfd_queue_size;
+	int sc_ltr_delay;
+	int sc_xtal_latency;
+	int sc_low_latency_xtal;
+
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;

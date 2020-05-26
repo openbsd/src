@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.5 2020/05/26 11:55:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.6 2020/05/26 11:59:48 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1865,6 +1865,31 @@ struct iwx_alive_resp_v4 {
 	struct iwx_lmac_alive lmac_data[2];
 	struct iwx_umac_alive umac_data;
 } __packed; /* ALIVE_RES_API_S_VER_4 */
+
+#define IWX_SOC_CONFIG_CMD_FLAGS_DISCRETE	(1 << 0)
+#define IWX_SOC_CONFIG_CMD_FLAGS_LOW_LATENCY	(1 << 1)
+
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_MASK		0xc
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE		0
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_200		1
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_2500		2
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_1820		3
+
+/**
+ * struct iwx_soc_configuration_cmd - Set device stabilization latency
+ *
+ * @flags: soc settings flags.  In VER_1, we can only set the DISCRETE
+ *	flag, because the FW treats the whole value as an integer. In
+ *	VER_2, we can set the bits independently.
+ * @latency: time for SOC to ensure stable power & XTAL
+ */
+struct iwx_soc_configuration_cmd {
+	uint32_t flags;
+	uint32_t latency;
+} __packed; /*
+	     * SOC_CONFIGURATION_CMD_S_VER_1 (see description above)
+	     * SOC_CONFIGURATION_CMD_S_VER_2
+	     */
 
 /**
  * commands driver may send before finishing init flow
