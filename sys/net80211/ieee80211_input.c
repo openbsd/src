@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.216 2020/05/15 14:21:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.217 2020/05/26 11:45:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -178,9 +178,12 @@ ieee80211_input_hwdecrypt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_CCMP:
 		if (!(wh->i_fc[1] & IEEE80211_FC1_PROTECTED)) {
-			/* drop unencrypted */
-			ic->ic_stats.is_rx_unencrypted++;
-			return NULL;
+			/*
+			 * If the protected bit is clear then hardware has
+			 * stripped the IV and we must trust that it handles
+			 * replay detection correctly.
+			 */
+			break;
 		}
 		if (ieee80211_ccmp_get_pn(&pn, &prsc, m, k) != 0)
 			return NULL;
@@ -200,9 +203,12 @@ ieee80211_input_hwdecrypt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		break;
 	 case IEEE80211_CIPHER_TKIP:
 		if (!(wh->i_fc[1] & IEEE80211_FC1_PROTECTED)) {
-			/* drop unencrypted */
-			ic->ic_stats.is_rx_unencrypted++;
-			return NULL;
+			/*
+			 * If the protected bit is clear then hardware has
+			 * stripped the IV and we must trust that it handles
+			 * replay detection correctly.
+			 */
+			break;
 		}
 		if (ieee80211_tkip_get_tsc(&pn, &prsc, m, k) != 0)
 			return NULL;
