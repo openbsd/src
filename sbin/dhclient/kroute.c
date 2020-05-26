@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.183 2020/05/21 12:31:02 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.184 2020/05/26 23:42:11 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -900,7 +900,8 @@ priv_propose(char *name, int ioctlfd, struct proposal *proposal,
 	char			*search = NULL;
 	int			 rslt;
 
-	if (sz != proposal->routes_len + proposal->domains_len + proposal->ns_len) {
+	if (sz != proposal->routes_len + proposal->domains_len +
+	    proposal->ns_len) {
 		log_warnx("%s: bad IMSG_PROPOSE data", log_procname);
 		return;
 	}
@@ -1008,7 +1009,8 @@ tell_unwind(struct unwind_info *unwind_info, int ifi_flags)
 }
 
 void
-priv_tell_unwind(int index, int routefd, int rdomain, struct unwind_info *unwind_info)
+priv_tell_unwind(int index, int routefd, int rdomain,
+    struct unwind_info *unwind_info)
 {
 	struct rt_msghdr		 rtm;
 	struct sockaddr_rtdns		 rtdns;

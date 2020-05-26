@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.674 2020/05/26 23:28:40 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.675 2020/05/26 23:42:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2233,12 +2233,16 @@ res_hnok_list(const char *names)
 }
 
 /*
- * Decode a byte string encoding a list of domain names as specified in RFC 1035
+ * Decode a byte string encoding a list of domain names as specified in RFC1035
  * section 4.1.4.
  *
  * The result is a string consisting of a blank separated list of domain names.
  *
- e.g. 3:65:6e:67:5:61:70:70:6c:65:3:63:6f:6d:0:9:6d:61:72:6b:65:74:69:6e:67:c0:04
+ * e.g.
+ *
+ * 3:65:6e:67:5:61:70:70:6c:65:3:63:6f:6d:0:9:6d:61:72:6b:65:74:69:6e:67:c0:04
+ *
+ * which represents
  *
  *    3 |'e'|'n'|'g'| 5 |'a'|'p'|'p'|'l'|
  *   'e'| 3 |'c'|'o'|'m'| 0 | 9 |'m'|'a'|

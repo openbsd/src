@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.67 2020/05/20 23:54:53 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.68 2020/05/26 23:42:11 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,8 @@ struct unwind_info {
 void	dispatch_imsg(char *, int, int, int, struct imsgbuf *);
 
 void	priv_write_resolv_conf(int, int, int, char *, int *);
-void	priv_propose(char *, int, struct proposal *, size_t, char **, int, int, int);
+void	priv_propose(char *, int, struct proposal *, size_t, char **, int, int,
+    int);
 
 void	priv_revoke_proposal(char *, int, struct proposal *, char **);
 
