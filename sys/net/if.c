@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.603 2020/04/12 07:04:03 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.604 2020/05/26 14:58:55 visa Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -85,6 +85,7 @@
 #include <sys/atomic.h>
 #include <sys/percpu.h>
 #include <sys/proc.h>
+#include <sys/stdint.h>	/* uintptr_t */
 
 #include <dev/rndvar.h>
 
@@ -924,7 +925,7 @@ if_input_process(struct ifnet *ifp, struct mbuf_list *ml)
 		return;
 
 	if (!ISSET(ifp->if_xflags, IFXF_CLONED))
-		enqueue_randomness(ml_len(ml));
+		enqueue_randomness(ml_len(ml) ^ (uintptr_t)MBUF_LIST_FIRST(ml));
 
 	/*
 	 * We grab the NET_LOCK() before processing any packet to
