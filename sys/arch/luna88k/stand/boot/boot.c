@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.9 2020/05/25 15:49:42 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.10 2020/05/26 13:47:29 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -244,6 +244,12 @@ loadrandom(const char *name, char *buf, size_t buflen)
 		error = -1;
 		goto done;
 	}
+	if (sb.st_mode & S_ISTXT) {
+		printf("NOTE: random seed is being reused.\n");
+		error = -1;
+		goto done;
+	}
+	fchmod(fd, sb.st_mode | S_ISTXT);
 done:
 	close(fd);
 	return (error);
