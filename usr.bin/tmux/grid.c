@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.112 2020/05/25 18:57:24 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.113 2020/05/26 08:56:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -496,7 +496,6 @@ grid_get_cell1(struct grid_line *gl, u_int px, struct grid_cell *gc)
 			gc->fg = gee->fg;
 			gc->bg = gee->bg;
 			gc->us = gee->us;
-			log_debug("!!! %x", gc->flags);
 			utf8_to_data(gee->data, &gc->data);
 		}
 		return;
