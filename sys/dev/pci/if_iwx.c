@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.14 2020/05/26 11:56:25 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.15 2020/05/26 11:57:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5673,6 +5673,12 @@ iwx_deauth(struct iwx_softc *sc)
 	iwx_unprotect_session(sc, in);
 
 	if (sc->sc_flags & IWX_FLAG_STA_ACTIVE) {
+		err = iwx_flush_tx_path(sc);
+		if (err) {
+			printf("%s: could not flush Tx path (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
 		err = iwx_rm_sta_cmd(sc, in);
 		if (err) {
 			printf("%s: could not remove STA (error %d)\n",
@@ -5680,13 +5686,6 @@ iwx_deauth(struct iwx_softc *sc)
 			return err;
 		}
 		sc->sc_flags &= ~IWX_FLAG_STA_ACTIVE;
-	}
-
-	err = iwx_flush_tx_path(sc);
-	if (err) {
-		printf("%s: could not flush Tx path (error %d)\n",
-		    DEVNAME(sc), err);
-		return err;
 	}
 
 	if (sc->sc_flags & IWX_FLAG_BINDING_ACTIVE) {
