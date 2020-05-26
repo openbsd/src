@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.45 2020/05/23 11:57:41 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.46 2020/05/26 16:54:50 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -548,6 +548,9 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 	    CBS_data(&header), CBS_len(&header)))
 		goto err;
 
+	if (out_len > TLS13_RECORD_MAX_INNER_PLAINTEXT_LEN)
+		goto err;
+
 	if (!tls13_record_layer_inc_seq_num(rl->read_seq_num))
 		goto err;
 
@@ -561,6 +564,8 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 	while (content_len >= 0 && content[content_len] == 0)
 		content_len--;
 	if (content_len < 0)
+		goto err;
+	if (content_len > TLS13_RECORD_MAX_PLAINTEXT_LEN)
 		goto err;
 	content_type = content[content_len];
 
