@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndioctl.1,v 1.12 2020/04/24 12:18:55 schwarze Exp $
+.\" $OpenBSD: sndioctl.1,v 1.13 2020/05/27 17:15:00 espie Exp $
 .\"
 .\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2020 $
+.Dd $Mdocdate: May 27 2020 $
 .Dt SNDIOCTL 1
 .Os
 .Sh NAME
@@ -117,5 +117,14 @@ Toggle the above
 control:
 .Pp
 .Dl $ sndioctl output.mute=!
+.Pp
+Allow audio recording and set all 
+.Cm input 
+channels to 50%.
+.Pp
+.Bd -literal -offset indent
+# sysctl kern.audio.record=1
+$ sndioctl input.mute=0 input.level=0.5
+.Ed
 .Sh SEE ALSO
 .Xr sioctl_open 3
