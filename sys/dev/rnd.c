@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.216 2020/05/26 14:27:24 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.217 2020/05/27 02:17:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -51,15 +51,18 @@
  * the entropy collection mechanism enqueue_randomness() and timeout-driven
  * mixing into the chacha state.  The first submissions come from device
  * probes, later on interrupt-time submissions are more common.  Entropy
- * data (and timing information) is XOR spread over the entropy input ring
- * rnd_event_space[] for later integration.
+ * data (and timing information) get mixed over the entropy input ring
+ * rnd_event_space[] -- the goal is to collect damage.
  *
- * Based upon timeouts, data in the entropy input ring rnd_event_space[] is
- * drawn down, CRC bit-distributed and mixed into entropy_pool[].
+ * Based upon timeouts, a selection of the entropy ring rnd_event_space[]
+ * CRC bit-distributed and XOR mixed into entropy_pool[].
  *
  * From time to time, entropy_pool[] is SHA512-whitened, mixed with time
  * information again, XOR'd with the inner and outer states of the existing
  * chacha state, to create a new chacha state.
+ *
+ * During early boot (until cold=0), enqueue operations are immediately
+ * dequeued, and mixed into the chacha.
  */
 
 #include <sys/param.h>
