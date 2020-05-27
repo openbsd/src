@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.2 2020/05/22 16:27:49 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.3 2020/05/27 22:22:04 gkoehler Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -128,7 +128,54 @@
 	std	%r30, FRAME_SRR0+48(%r1);				\
 	std	%r31, FRAME_SRR1+48(%r1);
 
-	
+#define FRAME_LEAVE(savearea)						\
+/* Now restore regs: */							\
+	ld	%r3, FRAME_LR+48(%r1);					\
+	ld	%r4, FRAME_CR+48(%r1);					\
+	ld	%r5, FRAME_XER+48(%r1);					\
+	ld	%r6, FRAME_CTR+48(%r1);					\
+	ld	%r7, FRAME_SRR0+48(%r1);				\
+	ld	%r8, FRAME_SRR1+48(%r1);				\
+	mtlr	%r3;							\
+	mtcr	%r4;							\
+	mtxer	%r5;							\
+	mtctr	%r6;							\
+	mtsrr0	%r7;							\
+	mtsrr1	%r8;							\
+	ld	%r0, FRAME_0+48(%r1);					\
+	ld	%r2, FRAME_2+48(%r1);					\
+	ld	%r3, FRAME_3+48(%r1);					\
+	ld	%r4, FRAME_4+48(%r1);					\
+	ld	%r5, FRAME_5+48(%r1);					\
+	ld	%r6, FRAME_6+48(%r1);					\
+	ld	%r7, FRAME_7+48(%r1);					\
+	ld	%r8, FRAME_8+48(%r1);					\
+	ld	%r9, FRAME_9+48(%r1);					\
+	ld	%r10, FRAME_10+48(%r1);					\
+	ld	%r11, FRAME_11+48(%r1);					\
+	ld	%r12, FRAME_12+48(%r1);					\
+	ld	%r13, FRAME_13+48(%r1);					\
+	ld	%r14, FRAME_14+48(%r1);					\
+	ld	%r15, FRAME_15+48(%r1);					\
+	ld	%r16, FRAME_16+48(%r1);					\
+	ld	%r17, FRAME_17+48(%r1);					\
+	ld	%r18, FRAME_18+48(%r1);					\
+	ld	%r19, FRAME_19+48(%r1);					\
+	ld	%r20, FRAME_20+48(%r1);					\
+	ld	%r21, FRAME_21+48(%r1);					\
+	ld	%r22, FRAME_22+48(%r1);					\
+	ld	%r23, FRAME_23+48(%r1);					\
+	ld	%r24, FRAME_24+48(%r1);					\
+	ld	%r25, FRAME_25+48(%r1);					\
+	ld	%r26, FRAME_26+48(%r1);					\
+	ld	%r27, FRAME_27+48(%r1);					\
+	ld	%r28, FRAME_28+48(%r1);					\
+	ld	%r29, FRAME_29+48(%r1);					\
+	ld	%r30, FRAME_30+48(%r1);					\
+	ld	%r31, FRAME_31+48(%r1);					\
+	ld	%r1, FRAME_1+48(%r1);
+
+
 	.text
 
 	.globl trapcode, trapcodeend
@@ -184,3 +231,6 @@ generictrap:
 	GET_TOCBASE(%r2)
 	addi	%r3, %r1, 48
 	bl	trap
+
+	FRAME_LEAVE(CI_TEMPSAVE)
+	rfid

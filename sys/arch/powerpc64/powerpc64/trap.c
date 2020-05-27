@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.2 2020/05/22 15:34:43 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.3 2020/05/27 22:22:04 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -19,10 +19,22 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
 #include <machine/trap.h>
 
 void
 trap(struct trapframe *frame)
 {
+#ifdef DDB
+	/* At a trap instruction, enter the debugger. */
+	if (frame->exc == EXC_PGM && (frame->srr1 & EXC_PGM_TRAP)) {
+		db_ktrap(T_BREAKPOINT, frame);
+		frame->srr0 += 4; /* Step to next instruction. */
+		return;
+	}
+#endif
+
 	panic("trap type %lx at lr %lx", frame->exc, frame->lr);
 }

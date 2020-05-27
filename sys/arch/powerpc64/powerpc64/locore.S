@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.3 2020/05/23 11:40:16 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.4 2020/05/27 22:22:04 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -79,8 +79,10 @@ name:					\
 
 OPAL_CALL(OPAL_TEST, opal_test)
 OPAL_CALL(OPAL_CONSOLE_WRITE, opal_console_write)
+OPAL_CALL(OPAL_CONSOLE_READ, opal_console_read)
 OPAL_CALL(OPAL_CEC_POWER_DOWN, opal_cec_power_down)
 OPAL_CALL(OPAL_CEC_REBOOT, opal_cec_reboot)
+OPAL_CALL(OPAL_POLL_EVENTS, opal_poll_events)	
 	
 opal_call:
 	mflr	%r11
@@ -112,6 +114,7 @@ opal_call:
 #ifdef DDB
 	.globl db_enter
 db_enter:
+	trap
 	blr
 	
 	.globl setjmp

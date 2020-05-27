@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc64,v 1.1 2020/05/16 17:11:14 kettenis Exp $
+#	$OpenBSD: Makefile.powerpc64,v 1.2 2020/05/27 22:22:04 gkoehler Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -160,6 +160,8 @@ cleandir: clean
 depend obj:
 
 locore0.o: ${_machdir}/${_mach}/locore0.S assym.h
+
+trap_subr.o: ${_machdir}/${_mach}/trap_subr.S assym.h
 
 hardlink-obsd:
 	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
