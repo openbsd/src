@@ -1953,6 +1953,7 @@
 ./usr/share/man/man3/PKCS12_newpass.3
 ./usr/share/man/man3/PKCS12_parse.3
 ./usr/share/man/man3/PKCS5_PBKDF2_HMAC.3
+./usr/share/man/man3/PKCS7_dataFinal.3
 ./usr/share/man/man3/PKCS7_dataInit.3
 ./usr/share/man/man3/PKCS7_decrypt.3
 ./usr/share/man/man3/PKCS7_encrypt.3
