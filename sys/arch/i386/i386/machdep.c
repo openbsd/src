@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.633 2020/05/16 14:44:44 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.634 2020/05/27 05:08:54 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1847,6 +1847,17 @@ identifycpu(struct cpu_info *ci)
 		}
 	}
 
+	if (ci->ci_feature_flags & CPUID_CFLUSH) {
+		u_int regs[4];
+
+		/* to get the cacheline size you must do cpuid
+		 * with eax 0x01
+		 */
+
+		cpuid(0x01, regs); 
+		ci->ci_cflushsz = ((regs[1] >> 8) & 0xff) * 8;
+	}
+
 	if (vendor == CPUVENDOR_INTEL) {
 		u_int regs[4];
 		/*
@@ -1859,15 +1870,6 @@ identifycpu(struct cpu_info *ci)
 		 */
 		if (ci->ci_family == 6 && ci->ci_model < 15)
 		    ci->ci_feature_flags &= ~CPUID_PAT;
-
-		if (ci->ci_feature_flags & CPUID_CFLUSH) {
-			/* to get the cacheline size you must do cpuid
-			 * with eax 0x01
-			 */
-
-			cpuid(0x01, regs); 
-			ci->ci_cflushsz = ((regs[1] >> 8) & 0xff) * 8;
-		}
 
 		if (cpuid_level >= 0x1) {
 			cpuid(0x80000000, regs);

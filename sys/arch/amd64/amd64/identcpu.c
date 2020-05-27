@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.114 2020/03/17 03:09:04 dlg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.115 2020/05/27 05:08:53 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -716,8 +716,8 @@ identifycpu(struct cpu_info *ci)
 		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 			replacesmap();
 	}
-#ifndef SMALL_KERNEL
-	if (!strncmp(mycpu_model, "Intel", 5)) {
+
+	if (ci->ci_feature_flags & CPUID_CFLUSH) {
 		u_int32_t cflushsz;
 
 		CPUID(0x01, dummy, cflushsz, dummy, dummy);
@@ -725,6 +725,7 @@ identifycpu(struct cpu_info *ci)
 		ci->ci_cflushsz = ((cflushsz >> 8) & 0xff) * 8;
 	}
 
+#ifndef SMALL_KERNEL
 	if (CPU_IS_PRIMARY(ci) && (ci->ci_feature_tpmflags & TPM_SENSOR)) {
 		strlcpy(ci->ci_sensordev.xname, ci->ci_dev->dv_xname,
 		    sizeof(ci->ci_sensordev.xname));
