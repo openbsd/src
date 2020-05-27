@@ -1,4 +1,4 @@
-/*	$OpenBSD: savefile.c,v 1.16 2015/12/22 19:51:04 mmcc Exp $	*/
+/*	$OpenBSD: savefile.c,v 1.17 2020/05/27 04:24:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -306,6 +306,23 @@ pcap_offline_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 
 	while (status == 0) {
 		struct pcap_pkthdr h;
+
+		/*
+		 * Has "pcap_breakloop()" been called?
+		 * If so, return immediately - if we haven't read any
+		 * packets, clear the flag and return -2 to indicate
+		 * that we were told to break out of the loop, otherwise
+		 * leave the flag set, so that the *next* call will break
+		 * out of the loop without having read any packets, and
+		 * return the number of packets we've processed so far.
+		 */
+		if (p->break_loop) {
+			if (n == 0) {
+				p->break_loop = 0;
+				return (PCAP_ERROR_BREAK);
+			} else
+				return (n);
+		}
 
 		status = sf_next_packet(p, &h, p->buffer, p->bufsize);
 		if (status) {
