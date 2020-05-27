@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.235 2020/03/15 05:34:14 visa Exp $	*/
+/*	$OpenBSD: in6.c,v 1.236 2020/05/27 11:19:29 mpi Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 			return (error);
 	}
 
-	NET_RLOCK();
+	NET_RLOCK_IN_IOCTL();
 
 	if (sa6 != NULL) {
 		error = in6_check_embed_scope(sa6, ifp->if_index);
@@ -506,7 +506,7 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 	}
 
 err:
-	NET_RUNLOCK();
+	NET_RUNLOCK_IN_IOCTL();
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.123 2020/03/15 05:34:14 visa Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.124 2020/05/27 11:19:29 mpi Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -250,16 +250,16 @@ mrt6_ioctl(struct socket *so, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
-		NET_RLOCK();
+		NET_RLOCK_IN_IOCTL();
 		error = get_sg6_cnt((struct sioc_sg_req6 *)data,
 		    inp->inp_rtableid);
-		NET_RUNLOCK();
+		NET_RUNLOCK_IN_IOCTL();
 		break;
 	case SIOCGETMIFCNT_IN6:
-		NET_RLOCK();
+		NET_RLOCK_IN_IOCTL();
 		error = get_mif6_cnt((struct sioc_mif_req6 *)data,
 		    inp->inp_rtableid);
-		NET_RUNLOCK();
+		NET_RUNLOCK_IN_IOCTL();
 		break;
 	default:
 		error = ENOTTY;
