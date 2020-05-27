@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndioctl.1,v 1.13 2020/05/27 17:15:00 espie Exp $
+.\" $OpenBSD: sndioctl.1,v 1.14 2020/05/27 17:34:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -108,7 +108,9 @@ channels by 10% of the maximum:
 .Pp
 .Dl $ sndioctl output.level=+0.1
 .Pp
-Mute all output channels:
+Mute all
+.Cm output
+channels:
 .Pp
 .Dl $ sndioctl output.mute=1
 .Pp
@@ -118,10 +120,9 @@ control:
 .Pp
 .Dl $ sndioctl output.mute=!
 .Pp
-Allow audio recording and set all 
-.Cm input 
-channels to 50%.
-.Pp
+Allow audio recording and set all
+.Cm input
+channels to 50%:
 .Bd -literal -offset indent
 # sysctl kern.audio.record=1
 $ sndioctl input.mute=0 input.level=0.5
