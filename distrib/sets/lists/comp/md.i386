@@ -76,7 +76,6 @@
 ./usr/include/i386/tcb.h
 ./usr/include/i386/trap.h
 ./usr/include/i386/tss.h
-./usr/include/i386/varargs.h
 ./usr/include/i386/vga_post.h
 ./usr/include/i386/vmmvar.h
 ./usr/include/i386/vmparam.h

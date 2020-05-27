@@ -54,7 +54,6 @@
 ./usr/include/hppa/stdarg.h
 ./usr/include/hppa/tcb.h
 ./usr/include/hppa/trap.h
-./usr/include/hppa/varargs.h
 ./usr/include/hppa/vmparam.h
 ./usr/include/ieeefp.h
 ./usr/include/unwind.h
