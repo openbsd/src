@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.47 2020/05/26 06:13:10 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.48 2020/05/27 04:03:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -1953,6 +1953,7 @@ struct mcx_softc {
 	uint32_t		 sc_eq_cons;
 	struct mcx_dmamem	 sc_eq_mem;
 	int			 sc_hardmtu;
+	int			 sc_rxbufsz;
 
 	struct task		 sc_port_change;
 
@@ -3859,6 +3860,7 @@ mcx_set_port_mtu(struct mcx_softc *sc, int mtu)
 	}
 
 	sc->sc_hardmtu = mtu;
+	sc->sc_rxbufsz = roundup(mtu + ETHER_ALIGN, sizeof(long));
 	return 0;
 }
 
@@ -5510,7 +5512,7 @@ free:
 
 int
 mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
-    uint *prod, int bufsize, uint nslots)
+    uint *prod, uint nslots)
 {
 	struct mcx_rq_entry *rqe;
 	struct mcx_slot *ms;
@@ -5522,12 +5524,13 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
 	rqe = ring;
 	for (fills = 0; fills < nslots; fills++) {
 		ms = &slots[slot];
-		m = MCLGETI(NULL, M_DONTWAIT, NULL, bufsize + ETHER_ALIGN);
+		m = MCLGETI(NULL, M_DONTWAIT, NULL, sc->sc_rxbufsz);
 		if (m == NULL)
 			break;
 
+		m->m_data += (m->m_ext.ext_size - sc->sc_rxbufsz);
 		m->m_data += ETHER_ALIGN;
-		m->m_len = m->m_pkthdr.len = bufsize;
+		m->m_len = m->m_pkthdr.len = sc->sc_hardmtu;
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m,
 		    BUS_DMA_NOWAIT) != 0) {
 			m_freem(m);
@@ -5535,7 +5538,8 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
 		}
 		ms->ms_m = m;
 
-		rqe[slot].rqe_byte_count = htobe32(bufsize);
+		rqe[slot].rqe_byte_count =
+		    htobe32(ms->ms_map->dm_segs[0].ds_len);
 		rqe[slot].rqe_addr = htobe64(ms->ms_map->dm_segs[0].ds_addr);
 		rqe[slot].rqe_lkey = htobe32(sc->sc_lkey);
 
@@ -5565,7 +5569,7 @@ mcx_rx_fill(struct mcx_softc *sc)
 		return (1);
 
 	slots = mcx_rx_fill_slots(sc, MCX_DMA_KVA(&sc->sc_rq_mem),
-	    sc->sc_rx_slots, &sc->sc_rx_prod, sc->sc_hardmtu, slots);
+	    sc->sc_rx_slots, &sc->sc_rx_prod, slots);
 	if_rxr_put(&sc->sc_rxr, slots);
 	return (0);
 }
