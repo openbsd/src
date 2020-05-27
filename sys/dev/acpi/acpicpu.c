@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.84 2019/10/16 01:27:59 mlarkin Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.85 2020/05/27 05:02:21 jsg Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -1224,7 +1224,8 @@ acpicpu_idle(void)
 		atomic_setbits_int(&ci->ci_mwait, MWAIT_IDLING);
 		if (cpu_is_idle(ci)) {
 			/* intel errata AAI65: cflush before monitor */
-			if (ci->ci_cflushsz != 0) {
+			if (ci->ci_cflushsz != 0 &&
+			    strcmp(cpu_vendor, "GenuineIntel") == 0) {
 				membar_sync();
 				clflush((unsigned long)&ci->ci_mwait);
 				membar_sync();
