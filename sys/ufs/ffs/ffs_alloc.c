@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.110 2020/02/21 11:13:55 otto Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.111 2020/05/28 15:48:29 otto Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -413,16 +413,13 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 
 	/*
 	 * Set up a new generation number for this inode.
-	 * XXX - just increment for now, this is wrong! (millert)
-	 *       Need a way to preserve randomization.
+	 * On wrap, we make sure to assign a number != 0 and != UINT_MAX
+	 * (the origial value).
 	 */
 	if (DIP(ip, gen) != 0)
 		DIP_ADD(ip, gen, 1);
-	if (DIP(ip, gen) == 0)
-		DIP_ASSIGN(ip, gen, arc4random() & INT_MAX);
-
-	if (DIP(ip, gen) == 0 || DIP(ip, gen) == -1)
-		DIP_ASSIGN(ip, gen, 1);	/* Shouldn't happen */
+	while (DIP(ip, gen) == 0)
+		DIP_ASSIGN(ip, gen, arc4random_uniform(UINT_MAX));
 
 	return (0);
 
@@ -1205,9 +1202,10 @@ gotit:
                 memset(ibp->b_data, 0, fs->fs_bsize);
                 dp2 = (struct ufs2_dinode *)(ibp->b_data);
 
-		/* Give each inode a positive generation number */
+		/* Give each inode a generation number */
                 for (i = 0; i < INOPB(fs); i++) {
-                        dp2->di_gen = (arc4random() & INT32_MAX) / 2 + 1;
+                        while (dp2->di_gen == 0)
+				dp2->di_gen = arc4random();
                         dp2++;
                 }
 

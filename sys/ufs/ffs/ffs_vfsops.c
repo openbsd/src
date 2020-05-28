@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.183 2020/02/21 11:11:15 otto Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.184 2020/05/28 15:48:29 otto Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1422,9 +1422,8 @@ retry:
 	 * already have one. This should only happen on old filesystems.
 	 */
 	if (DIP(ip, gen) == 0) {
-		DIP_ASSIGN(ip, gen, arc4random() & INT_MAX);
-		if (DIP(ip, gen) == 0 || DIP(ip, gen) == -1)
-			DIP_ASSIGN(ip, gen, 1);	/* Shouldn't happen */
+		while (DIP(ip, gen) == 0)
+			DIP_ASSIGN(ip, gen, arc4random());
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}

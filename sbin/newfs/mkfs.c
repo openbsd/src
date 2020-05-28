@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.99 2020/05/19 12:48:54 sthen Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.100 2020/05/28 15:48:29 otto Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -738,10 +738,10 @@ initcg(int cylno, time_t utime)
 	dp2 = (struct ufs2_dinode *)(&iobuf[start]);
 	for (i = MINIMUM(sblock.fs_ipg, 2 * INOPB(&sblock)); i != 0; i--) {
 		if (sblock.fs_magic == FS_UFS1_MAGIC) {
-			dp1->di_gen = (u_int32_t)arc4random();
+			dp1->di_gen = arc4random();
 			dp1++;
 		} else {
-			dp2->di_gen = (u_int32_t)arc4random();
+			dp2->di_gen = arc4random();
 			dp2++;
 		}
 	}
@@ -754,7 +754,7 @@ initcg(int cylno, time_t utime)
 		    i += sblock.fs_frag) {
 			dp1 = (struct ufs1_dinode *)(&iobuf[start]);
 			for (j = 0; j < INOPB(&sblock); j++) {
-				dp1->di_gen = (u_int32_t)arc4random();
+				dp1->di_gen = arc4random();
 				dp1++;
 			}
 			wtfs(fsbtodb(&sblock, cgimin(&sblock, cylno) + i),
@@ -983,9 +983,9 @@ iput(union dinode *ip, ino_t ino)
 	daddr_t d;
 
 	if (Oflag <= 1)
-		ip->dp1.di_gen = (u_int32_t)arc4random();
+		ip->dp1.di_gen = arc4random();
 	else
-		ip->dp2.di_gen = (u_int32_t)arc4random();
+		ip->dp2.di_gen = arc4random();
 
 	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
 	    (char *)&acg);
