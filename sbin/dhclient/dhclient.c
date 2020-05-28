@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.676 2020/05/28 15:23:46 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.677 2020/05/28 16:02:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2763,12 +2763,12 @@ tick_msg(const char *preamble, int success, time_t start)
 void
 release_lease(struct interface_info *ifi)
 {
-	char			 ifabuf[INET_ADDRSTRLEN];
+	char			 buf[INET_ADDRSTRLEN];
 	struct option_data	*opt;
 
 	if (ifi->configured == NULL || ifi->active == NULL)
 		return;	/* Nothing to release. */
-	strlcpy(ifabuf, inet_ntoa(ifi->configured->address), sizeof(ifabuf));
+	strlcpy(buf, inet_ntoa(ifi->configured->address), sizeof(buf));
 
 	opt = &ifi->active->options[DHO_DHCP_SERVER_IDENTIFIER];
 	if (opt->len == sizeof(in_addr_t))
@@ -2801,7 +2801,7 @@ release_lease(struct interface_info *ifi)
 	free(ifi->unwind_info);
 	ifi->unwind_info = NULL;
 
-	log_warnx("%s: %s RELEASED to %s", log_procname, ifabuf,
+	log_warnx("%s: %s RELEASED to %s", log_procname, buf,
 	    inet_ntoa(ifi->destination));
 }
 

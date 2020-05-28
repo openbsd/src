@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.186 2020/05/28 15:45:10 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.187 2020/05/28 16:02:56 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -307,7 +307,7 @@ route_pos(struct rt_msghdr *rtm, uint8_t *routes, unsigned int routes_len,
 		 *
 		 * dst=1.2.3.4 netmask=255.255.255.255 gateway = address
 		 *
-		 * So replace 0.0.0.0 with ifa for comparison.
+		 * So replace 0.0.0.0 with address for comparison.
 		 */
 		if (routesgatewayaddr == INADDR_ANY)
 			routesgatewayaddr = address.s_addr;
