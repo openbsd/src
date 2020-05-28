@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.31 2020/05/27 07:48:02 jsg Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.32 2020/05/28 20:26:25 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -222,7 +222,7 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 		ri->ri_flg &= ~RI_CLEAR;
 		ri->ri_flg |= RI_VCONS | RI_WRONLY;
 
-		rasops_init(ri, efifb_std_descr.nrows, efifb_std_descr.ncols);
+		rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
 
 		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&efifb_std_descr, ri->ri_active, ccol, crow,
@@ -480,7 +480,7 @@ efifb_cnremap(void)
 	ri->ri_flg &= ~RI_CLEAR;
 	ri->ri_flg |= RI_CENTER | RI_WRONLY;
 
-	rasops_init(ri, efifb_std_descr.nrows, efifb_std_descr.ncols);
+	rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
 
 	efifb_early_cleanup();
 }
