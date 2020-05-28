@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.675 2020/05/26 23:42:11 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.676 2020/05/28 15:23:46 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1571,7 +1571,7 @@ send_release(struct interface_info *ifi)
 {
 	ssize_t		rslt;
 
-	rslt = send_packet(ifi, ifi->configured->ifa, ifi->destination,
+	rslt = send_packet(ifi, ifi->configured->address, ifi->destination,
 	    "DHCPRELEASE");
 	if (rslt != -1)
 		log_debug("%s: DHCPRELEASE", log_procname);
@@ -2028,7 +2028,7 @@ lease_as_proposal(struct client_lease *lease)
 		fatal("proposal");
 
 	/* Fill in proposal. */
-	proposal->ifa = lease->address;
+	proposal->address = lease->address;
 
 	opt = &lease->options[DHO_INTERFACE_MTU];
 	if (opt->len == sizeof(mtu)) {
@@ -2768,7 +2768,7 @@ release_lease(struct interface_info *ifi)
 
 	if (ifi->configured == NULL || ifi->active == NULL)
 		return;	/* Nothing to release. */
-	strlcpy(ifabuf, inet_ntoa(ifi->configured->ifa), sizeof(ifabuf));
+	strlcpy(ifabuf, inet_ntoa(ifi->configured->address), sizeof(ifabuf));
 
 	opt = &ifi->active->options[DHO_DHCP_SERVER_IDENTIFIER];
 	if (opt->len == sizeof(in_addr_t))

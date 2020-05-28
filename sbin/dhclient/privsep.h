@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.68 2020/05/26 23:42:11 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.69 2020/05/28 15:23:46 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -25,7 +25,7 @@ enum imsg_code {
 };
 
 struct proposal {
-	struct in_addr	ifa;
+	struct in_addr	address;
 	struct in_addr	netmask;
 	unsigned int	routes_len;
 	unsigned int	domains_len;
