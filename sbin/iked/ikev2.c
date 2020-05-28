@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.226 2020/05/26 20:24:31 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.227 2020/05/28 19:09:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -108,6 +108,7 @@ void	 ikev2_ike_sa_rekey_schedule(struct iked *, struct iked_sa *);
 void	 ikev2_ike_sa_alive(struct iked *, void *);
 void	 ikev2_ike_sa_keepalive(struct iked *, void *);
 
+int	 ikev2_sa_negotiate_common(struct iked *, struct iked_sa *, struct iked_message *);
 int	 ikev2_sa_initiator(struct iked *, struct iked_sa *,
 	    struct iked_sa *, struct iked_message *);
 int	 ikev2_sa_responder(struct iked *, struct iked_sa *, struct iked_sa *,
@@ -4612,41 +4613,14 @@ ikev2_sa_initiator_dh(struct iked_sa *sa, struct iked_message *msg,
 }
 
 int
-ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
-    struct iked_sa *osa, struct iked_message *msg)
+ikev2_sa_negotiate_common(struct iked *env, struct iked_sa *sa, struct iked_message *msg)
 {
 	struct iked_transform	*xform;
-
-	if (ikev2_sa_initiator_dh(sa, msg, 0, osa) < 0)
-		return (-1);
-
-	if (!ibuf_length(sa->sa_inonce)) {
-		if ((sa->sa_inonce = ibuf_random(IKED_NONCE_SIZE)) == NULL) {
-			log_debug("%s: failed to get local nonce", __func__);
-			return (-1);
-		}
-	}
-
-	/* Initial message */
-	if (msg == NULL)
-		return (0);
-
-	if (!ibuf_length(sa->sa_rnonce)) {
-		if (!ibuf_length(msg->msg_nonce)) {
-			log_debug("%s: invalid peer nonce", __func__);
-			return (-1);
-		}
-		if ((sa->sa_rnonce = ibuf_dup(msg->msg_nonce)) == NULL) {
-			log_debug("%s: failed to get peer nonce", __func__);
-			return (-1);
-		}
-	}
 
 	/* XXX we need a better way to get this */
 	if (proposals_negotiate(&sa->sa_proposals,
 	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0) != 0) {
-		log_info("%s: no proposal chosen", __func__);
-		msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
+		log_info("%s: proposals_negotiate", __func__);
 		return (-1);
 	} else if (sa_stateok(sa, IKEV2_STATE_SA_INIT))
 		sa_stateflags(sa, IKED_REQ_SA);
@@ -4704,6 +4678,41 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 			return (-1);
 		}
 	}
+
+	return (0);
+}
+
+int
+ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
+    struct iked_sa *osa, struct iked_message *msg)
+{
+	if (ikev2_sa_initiator_dh(sa, msg, 0, osa) < 0)
+		return (-1);
+
+	if (!ibuf_length(sa->sa_inonce)) {
+		if ((sa->sa_inonce = ibuf_random(IKED_NONCE_SIZE)) == NULL) {
+			log_debug("%s: failed to get local nonce", __func__);
+			return (-1);
+		}
+	}
+
+	/* Initial message */
+	if (msg == NULL)
+		return (0);
+
+	if (!ibuf_length(sa->sa_rnonce)) {
+		if (!ibuf_length(msg->msg_nonce)) {
+			log_debug("%s: invalid peer nonce", __func__);
+			return (-1);
+		}
+		if ((sa->sa_rnonce = ibuf_dup(msg->msg_nonce)) == NULL) {
+			log_debug("%s: failed to get peer nonce", __func__);
+			return (-1);
+		}
+	}
+
+	if (ikev2_sa_negotiate_common(env, sa, msg) != 0)
+		return (-1);
 
 	ibuf_release(sa->sa_2ndmsg);
 	if ((sa->sa_2ndmsg = ibuf_dup(msg->msg_data)) == NULL) {
@@ -4782,7 +4791,6 @@ int
 ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
     struct iked_message *msg)
 {
-	struct iked_transform	*xform;
 	struct iked_policy	*old;
 
 	/* re-lookup policy based on 'msg' (unless IKESA is rekeyed) */
@@ -4828,64 +4836,8 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 		return (-1);
 	}
 
-	/* XXX we need a better way to get this */
-	if (proposals_negotiate(&sa->sa_proposals,
-	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0) != 0) {
-		log_info("%s: proposals_negotiate", __func__);
+	if (ikev2_sa_negotiate_common(env, sa, msg) != 0)
 		return (-1);
-	}
-	if (sa_stateok(sa, IKEV2_STATE_SA_INIT))
-		sa_stateflags(sa, IKED_REQ_SA);
-
-	if (sa->sa_encr == NULL) {
-		if ((xform = config_findtransform(&sa->sa_proposals,
-		    IKEV2_XFORMTYPE_ENCR, 0)) == NULL) {
-			log_debug("%s: did not find encr transform", __func__);
-			return (-1);
-		}
-		if ((sa->sa_encr = cipher_new(xform->xform_type,
-		    xform->xform_id, xform->xform_length)) == NULL) {
-			log_debug("%s: failed to get encr", __func__);
-			return (-1);
-		}
-	}
-
-	/* For AEAD ciphers integrity is implicit */
-	if (sa->sa_encr->encr_authid && sa->sa_integr == NULL) {
-		if ((sa->sa_integr = hash_new(IKEV2_XFORMTYPE_INTEGR,
-		    sa->sa_encr->encr_authid)) == NULL) {
-			log_info("%s: failed to get AEAD integr",
-			    SPI_SA(sa, __func__));
-			return (-1);
-		}
-	}
-
-	if (sa->sa_prf == NULL) {
-		if ((xform = config_findtransform(&sa->sa_proposals,
-		    IKEV2_XFORMTYPE_PRF, 0)) == NULL) {
-			log_debug("%s: did not find prf transform", __func__);
-			return (-1);
-		}
-		if ((sa->sa_prf =
-		    hash_new(xform->xform_type, xform->xform_id)) == NULL) {
-			log_debug("%s: failed to get prf", __func__);
-			return (-1);
-		}
-	}
-
-	if (sa->sa_integr == NULL) {
-		if ((xform = config_findtransform(&sa->sa_proposals,
-		    IKEV2_XFORMTYPE_INTEGR, 0)) == NULL) {
-			log_debug("%s: did not find integr transform",
-			    __func__);
-			return (-1);
-		}
-		if ((sa->sa_integr =
-		    hash_new(xform->xform_type, xform->xform_id)) == NULL) {
-			log_debug("%s: failed to get integr", __func__);
-			return (-1);
-		}
-	}
 
 	if (ikev2_sa_responder_dh(&sa->sa_kex, &sa->sa_proposals, msg, 0) < 0)
 		return (-1);
