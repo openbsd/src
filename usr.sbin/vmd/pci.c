@@ -125,6 +125,23 @@ void ptd_conf_write(int bus, int dev, int func, uint32_t reg, uint32_t val)
 	ioctl(env->vmd_fd, VMM_IOC_PCIIO, &pio);
 }
 
+extern uint8_t memintr;
+
+int mem_chkint()
+{
+	uint8_t *va;
+	uint8_t intr = 0xff;
+	uint32_t sts;
+
+	va = barva[0];
+	sts = *(uint32_t *)(va + 0x24);
+	fprintf(stderr, "  intsts: %llx\n", sts);
+	if (sts != 0 && sts != 0xffffffff) {
+		intr = 9;
+	}
+	return intr;
+}
+
 int pci_memh2(int dir, uint64_t base, uint32_t size, void *data, void *cookie)
 {
 	int dev = (uintptr_t)cookie;
@@ -151,11 +168,17 @@ int pci_memh2(int dir, uint64_t base, uint32_t size, void *data, void *cookie)
 		fprintf(stderr, "  memh_rd%d: %.16llx %.16llx %p\n", 
 			size, base, *(uint64_t *)data & mask, cookie);
 	}
-	else if (1) {
+	else {
 		fprintf(stderr, "  memh_wr%d: %.16llx %.16llx %p\n", 
 			size, base, *(uint64_t *)data & mask, cookie);
-		fflush(stdout);
 		memcpy(va + off, data, size);
+	}
+
+	// check azalia interrupt
+	off = *(uint32_t *)(va + 0x24);
+	fprintf(stderr, "  intsts: %llx\n", off);
+	if (off != 0 && off != 0xffffffff) {
+		memintr = 9;
 	}
 	return 0;
 }
@@ -416,6 +439,7 @@ int ppt_iobar(int dir, uint16_t reg, uint32_t *data, uint8_t *intr, void *cookie
 	struct vm_pio pio;
 	uint64_t mask;
 
+	*intr = 0xFF;
 	if (size == 1)
 		mask = 0xff;
 	else if (size == 2)
@@ -503,16 +527,8 @@ void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 			PCI_CLASS(bi.class_reg), PCI_SUBCLASS(bi.class_reg),
 			PCI_VENDOR(bi.subid_reg), PCI_PRODUCT(bi.subid_reg),
 			1, NULL, &ptd);
-#else
-	if (bus == 17) {
-		pci_add_device(&id, 0x1217, 0x8520, 8, 5, 0x1028, 0x5cc, 1, NULL, &ptd);
-	}
-	else if (dev == 25) {
-		pci_add_device(&id, 0x8086, 0x153a, 0x02, 0, 0x1028, 0x5cc, 1, NULL, &ptd);
-	}
-	else  {
-		pci_add_device(&id, 0x8086, 0x8c22, 0xc, 5, 0x1028, 0x5cc, 1, NULL, &ptd);
-		_pcicfgwr32(id, 0x40, 0x11);
+	if (dev == 31) {
+		_pcicfgwr32(ptd.id, 0x40, 0x11);
 	}
 #endif
 	/* Get BARs of native device */

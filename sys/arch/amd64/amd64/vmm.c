@@ -316,6 +316,38 @@ int vm_pciio(struct vm_pciio *ptd);
 int vm_pio(struct vm_pio *pio);
 int vm_getbar(struct vm_barinfo *bi);
 
+struct vppt {
+	pci_chipset_tag_t pc;
+	pcitag_t         tag;
+	pci_intr_handle_t ih;
+	TAILQ_ENTRY(vppt) next;
+};
+TAILQ_HEAD(,vppt) vppts = TAILQ_HEAD_INITIALIZER(vppts);
+
+void vmm_mapintr(pci_chipset_tag_t pc, struct pci_attach_args *pa)
+{
+	int bus, dev, fun;
+	struct vppt *ppt;
+
+	TAILQ_FOREACH(ppt, &vppts, next) {
+		if (ppt->pc == pc && ppt->tag == pa->pa_tag)
+			return;
+	}
+	ppt = malloc(sizeof(*ppt), M_DEVBUF, M_ZERO | M_WAITOK);
+	if (!ppt)
+		return;
+	ppt->pc = pc;
+	ppt->tag = pa->pa_tag;
+	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &fun);
+	if (pci_intr_map(pa, &ppt->ih)) {
+		printf("Couldn't map %d/%d/%d\n", bus, dev, fun);
+		free(ppt, M_DEVBUF, sizeof(*ppt));
+		return;
+	}
+	printf("Mapped %d/%d/%d intr %d/%d\n", bus, dev, fun, ppt->ih.line, ppt->ih.pin);
+	TAILQ_INSERT_TAIL(&vppts, ppt, next);
+}
+
 int vm_pciio(struct vm_pciio *ptd)
 {
 	pci_chipset_tag_t pc = NULL;
@@ -368,8 +400,17 @@ int vm_pio(struct vm_pio *pio)
 			return EINVAL;
 		}
 	}
+#if 0
 	printf("%ld pio; %s(%x,%llx)\n", sizeof(*pio), 
 		pio->dir == VEI_DIR_OUT ? "out" : "in", pio->port, pio->data);
+#endif
+	return 0;
+}
+
+int vmm_intr(void *arg);
+
+int vmm_intr(void *arg)
+{
 	return 0;
 }
 
@@ -384,6 +425,7 @@ int vm_getbar(struct vm_barinfo *bi)
 	int i, reg, did;
 	void *dom;
 	struct vm *vm;
+	struct vppt *ppt;
 
 	printf("getbar: %d.%d.%d\n",
 		bi->bus, bi->dev, bi->func);
@@ -431,6 +473,17 @@ int vm_getbar(struct vm_barinfo *bi)
 				   vm->vm_memranges[i].vmr_size);
 		}
 	}		
+
+	/* Map intr */
+#if 1
+	TAILQ_FOREACH(ppt, &vppts, next) {
+		if (ppt->tag == tag) {
+			if (pci_intr_establish(ppt->pc, ppt->ih, IPL_BIO, vmm_intr, ppt, "ppt") == NULL) {
+				printf("No intr\n");
+			}
+		}
+	}
+#endif
 	return 0;
 }
 
@@ -5063,6 +5116,8 @@ vmx_handle_intr(struct vcpu *vcpu)
 	}
 
 	vec = eii & 0xFF;
+	if (vec != 0x6b)
+	printf("vec: %x\n", vec);
 
 	/* XXX check "error valid" code in eii, abort if 0 */
 	idte=&idt[vec];

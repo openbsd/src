@@ -3707,7 +3707,7 @@ azalia_stream_start(stream_t *this)
 	STR_WRITE_4(this, BDPU, 0);
 
 	/* setup BDL */
-	printf("%s: DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&this->buffer));
+	printf("%s: buffer.DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&this->buffer));
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->buffer);
 	dmaend = dmaaddr + this->bufsize;
 	bdlist = (bdlist_entry_t*)this->bdlist.addr;
@@ -3727,7 +3727,7 @@ azalia_stream_start(stream_t *this)
 	    __func__, this->bufsize, this->fmt, index));
 
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->bdlist);
-	printf("%s: DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&this->bdlist));
+	printf("%s: bdlist.DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&this->bdlist));
 	STR_WRITE_4(this, BDPL, dmaaddr);
 	STR_WRITE_4(this, BDPU, PTR_UPPER32(dmaaddr));
 	STR_WRITE_2(this, LVI, (index - 1) & HDA_SD_LVI_LVI);
@@ -3748,6 +3748,7 @@ azalia_stream_start(stream_t *this)
 	STR_WRITE_1(this, CTL, STR_READ_1(this, CTL) |
 	    HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE |
 	    HDA_SD_CTL_RUN);
+
 	return (0);
 }
 
@@ -3756,6 +3757,7 @@ azalia_stream_halt(stream_t *this)
 {
 	uint16_t ctl;
 
+	printf("stream halt\n");
 	ctl = STR_READ_2(this, CTL);
 	ctl &= ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN);
 	STR_WRITE_2(this, CTL, ctl);

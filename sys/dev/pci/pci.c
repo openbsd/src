@@ -1248,7 +1248,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 						printf(" bar%d: %x %x\n", n, val, pd->pd_mask[n]);
 					}
 					config_detach(pd->pd_dev, 0);
-						LIST_REMOVE(pd, pd_next);
+					LIST_REMOVE(pd, pd_next);
 				}
 			}
 		}

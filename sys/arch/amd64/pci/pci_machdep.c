@@ -413,6 +413,7 @@ msi_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 
 	addr = 0xfee00000UL | (ci->ci_apicid << 12);
 
+	printf("Addroute: %x, %x %x\n", addr, vec, pin);
 	if (reg & PCI_MSI_MC_C64) {
 		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
 		pci_conf_write(pc, tag, off + PCI_MSI_MAU32, 0);
@@ -851,6 +852,8 @@ pci_init_extents(void)
 	}
 }
 
+extern void vmm_mapintr(pci_chipset_tag_t pc, struct pci_attach_args *pa);
+
 int
 pci_probe_device_hook(pci_chipset_tag_t pc, struct pci_attach_args *pa)
 {
@@ -858,7 +861,8 @@ pci_probe_device_hook(pci_chipset_tag_t pc, struct pci_attach_args *pa)
 	if (acpidmar_sc)
 		acpidmar_pci_hook(pc, pa);
 #endif
-       return 0;
+	vmm_mapintr(pc, pa);
+	return 0;
 }
 
 #if NACPI > 0

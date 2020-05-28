@@ -371,30 +371,6 @@ dmar_ptmap(bus_dma_tag_t tag, bus_addr_t addr)
 	domain_map_page(dom, addr, addr, PTE_P | PTE_R | PTE_W);
 }
 
-int
-sid_vmap(int sid, paddr_t gpa, paddr_t hpa, size_t sz)
-{
-	struct domain *dom;
-	int i;
-
-	printf("%d.%d.%d Sid VMAP: %lx %lx %lx\n",
-		sid_bus(sid), sid_dev(sid), sid_fun(sid),
-		gpa, hpa, sz);
-	dom = domain_lookup(acpidmar_sc, 0, sid);
-	if (dom == NULL) {
-		printf("no domain\n");
-		return -1;
-	}
-	printf("did: %x\n", dom->did);
-	for (i = 0; i < sz; i += PAGE_SIZE) {
-		printf("mapping page: %lx %lx\n", gpa, hpa);
-		domain_map_page(dom, gpa, hpa, PTE_P | PTE_R | PTE_W);
-		gpa += PAGE_SIZE;
-		hpa += PAGE_SIZE;
-	}
-	return 0;
-}
-
 /* Map a range of pages 1:1 */
 void
 domain_map_pthru(struct domain *dom, paddr_t start, paddr_t end)
@@ -1474,8 +1450,8 @@ void  _iommu_map(void *dom, vaddr_t va, bus_addr_t gpa, bus_size_t len)
 	for (i = 0; i < len; i += PAGE_SIZE) {
 		hpa = 0;
 		pmap_extract(curproc->p_vmspace->vm_map.pmap, va, &hpa);
-		if (i == 0) {
-			printf("hpa: %lx\n", hpa);
+		if (i < 25 * PAGE_SIZE) {
+			printf("  hpa: %lx %lx\n", gpa, hpa);
 		}
 		domain_map_page(dom, gpa, hpa, PTE_P | PTE_R | PTE_W);
 		gpa += PAGE_SIZE;

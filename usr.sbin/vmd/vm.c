@@ -951,7 +951,7 @@ alloc_guest_mem(struct vm_create_params *vcp)
 
 			return (ret);
 		}
-
+		memset(p, 0, vmr->vmr_size);
 		vmr->vmr_va = (vaddr_t)p;
 	}
 
@@ -1598,7 +1598,7 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 	if (ioports_map[vei->vei.vei_port] != NULL)
 		intr = ioports_map[vei->vei.vei_port](vrp);
 	else if (vei->vei.vei_dir == VEI_DIR_IN)
-			set_return_data(vei, 0xFFFFFFFF);
+		set_return_data(vei, 0xFFFFFFFF);
 
 	if (intr != 0xFF)
 		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, intr);
@@ -1689,6 +1689,9 @@ struct insn {
   	{ },
 };
 
+uint8_t memintr;
+extern int mem_chkint();
+
 int
 vcpu_exit_eptviolation(struct vm_run_params *vrp)
 {
@@ -1736,11 +1739,15 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 	/* fix: need full emulator. But Scan for sig match for now */
 	for (int i = 0; imap[i].size; i++) {
 		if (memcmp(instr, imap[i].sig, 3) == 0) {
+			memintr = 0xff;
 			rax = &vrwp.vrwp_regs.vrs_gprs[imap[i].reg];
 			mem_handler(imap[i].dir, gpa, imap[i].size, rax);
 			/* skip this instruction when returning to vm */
 			vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += imap[i].incr;
 			ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
+			
+			if (memintr != 0xff)
+				vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, memintr);
 			return 0;
 		}
 	}
@@ -1787,7 +1794,6 @@ vcpu_exit(struct vm_run_params *vrp)
 	case VMX_EXIT_INT_WINDOW:
 	case SVM_VMEXIT_VINTR:
 	case VMX_EXIT_CPUID:
-	case VMX_EXIT_EXTINT:
 	case SVM_VMEXIT_INTR:
 	case SVM_VMEXIT_NPF:
 	case SVM_VMEXIT_MSR:
@@ -1799,6 +1805,9 @@ vcpu_exit(struct vm_run_params *vrp)
 		 * here (and falling through to the default case below results
 		 * in more vmd log spam).
 		 */
+		break;
+	case VMX_EXIT_EXTINT:
+		fprintf(stderr, "extint...\n");
 		break;
 	case VMX_EXIT_EPT_VIOLATION:
 		ret = vcpu_exit_eptviolation(vrp);
@@ -1838,6 +1847,12 @@ vcpu_exit(struct vm_run_params *vrp)
 	/* Process any pending traffic */
 	vionet_process_rx(vrp->vrp_vm_id);
 
+	{
+		uint8_t intr;
+		if ((intr = mem_chkint()) != 0xff) {
+			vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, intr);
+		}
+	}
 	vrp->vrp_continue = 1;
 
 	return (0);
