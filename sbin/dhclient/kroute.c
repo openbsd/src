@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.185 2020/05/28 15:23:46 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.186 2020/05/28 15:45:10 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -263,7 +263,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
  */
 unsigned int
 route_pos(struct rt_msghdr *rtm, uint8_t *routes, unsigned int routes_len,
-    struct in_addr ifa)
+    struct in_addr address)
 {
 	struct sockaddr		*rti_info[RTAX_MAX];
 	struct sockaddr		*dst, *netmask, *gateway;
@@ -305,12 +305,12 @@ route_pos(struct rt_msghdr *rtm, uint8_t *routes, unsigned int routes_len,
 		 *
 		 * direct route in rtm:
 		 *
-		 * dst=1.2.3.4 netmask=255.255.255.255 gateway = ifa
+		 * dst=1.2.3.4 netmask=255.255.255.255 gateway = address
 		 *
 		 * So replace 0.0.0.0 with ifa for comparison.
 		 */
 		if (routesgatewayaddr == INADDR_ANY)
-			routesgatewayaddr = ifa.s_addr;
+			routesgatewayaddr = address.s_addr;
 		routesdstaddr &= routesnetmaskaddr;
 
 		if (dstaddr == routesdstaddr &&
@@ -332,7 +332,7 @@ route_pos(struct rt_msghdr *rtm, uint8_t *routes, unsigned int routes_len,
  */
 void
 flush_routes(int index, int routefd, int rdomain, uint8_t *routes,
-    unsigned int routes_len, struct in_addr ifa)
+    unsigned int routes_len, struct in_addr address)
 {
 	static int			 seqno;
 	char				*lim, *buf, *next;
@@ -360,7 +360,7 @@ flush_routes(int index, int routefd, int rdomain, uint8_t *routes,
 			continue;
 
 		/* Don't bother deleting a route we're going to add. */
-		pos = route_pos(rtm, routes, routes_len, ifa);
+		pos = route_pos(rtm, routes, routes_len, address);
 		if (pos < routes_len)
 			continue;
 
@@ -384,7 +384,7 @@ flush_routes(int index, int routefd, int rdomain, uint8_t *routes,
  */
 void
 add_route(char *name, int rdomain, int routefd, struct in_addr dest,
-    struct in_addr netmask, struct in_addr gateway, struct in_addr ifa,
+    struct in_addr netmask, struct in_addr gateway, struct in_addr address,
     int flags)
 {
 	char			 destbuf[INET_ADDRSTRLEN];
@@ -444,12 +444,12 @@ add_route(char *name, int rdomain, int routefd, struct in_addr dest,
 	iov[iovcnt].iov_base = &samask;
 	iov[iovcnt++].iov_len = sizeof(samask);
 
-	if (ifa.s_addr != INADDR_ANY) {
+	if (address.s_addr != INADDR_ANY) {
 		/* Add the ifa */
 		memset(&saifa, 0, sizeof(saifa));
 		saifa.sin_len = sizeof(saifa);
 		saifa.sin_family = AF_INET;
-		saifa.sin_addr.s_addr = ifa.s_addr;
+		saifa.sin_addr.s_addr = address.s_addr;
 
 		rtm.rtm_msglen += sizeof(saifa);
 		iov[iovcnt].iov_base = &saifa;
