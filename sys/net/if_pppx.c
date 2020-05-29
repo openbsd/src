@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.86 2020/05/26 08:02:54 mpi Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.87 2020/05/29 06:51:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1004,6 +1004,7 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 	struct pipex_session *session;
 
 	NET_ASSERT_LOCKED();
+	pxi->pxi_ready = 0;
 	session = &pxi->pxi_session;
 	ifp = &pxi->pxi_if;
 
