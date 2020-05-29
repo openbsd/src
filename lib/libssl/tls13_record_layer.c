@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.46 2020/05/26 16:54:50 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.47 2020/05/29 17:54:58 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -888,6 +888,15 @@ tls13_record_layer_read_internal(struct tls13_record_layer *rl,
 	if (CBS_len(&rl->rbuf_cbs) == 0) {
 		if ((ret = tls13_record_layer_read_record(rl)) <= 0)
 			return ret;
+
+		/*
+		 * We may have read a valid 0-byte application data record,
+		 * in which case we need to read the next record.
+		 */
+		if (CBS_len(&rl->rbuf_cbs) == 0) {
+			tls13_record_layer_rbuf_free(rl);
+			return TLS13_IO_WANT_POLLIN;
+		}
 	}
 
 	/*
