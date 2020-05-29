@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.371 2020/03/09 19:59:53 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.372 2020/05/29 01:22:53 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -85,7 +85,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
-#include <dev/rndvar.h>
 
 #include <net/route.h>
 #include <netinet/in.h>
