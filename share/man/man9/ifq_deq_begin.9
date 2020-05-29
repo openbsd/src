@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_deq_begin.9,v 1.3 2020/05/28 23:37:44 dlg Exp $
+.\"     $OpenBSD: ifq_deq_begin.9,v 1.4 2020/05/29 03:06:09 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 28 2020 $
+.Dd $Mdocdate: May 29 2020 $
 .Dt IFQ_DEQ_BEGIN 9
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@ set of functions provides a non-atomic alternative to
 .Xr ifq_dequeue 9 .
 Their use is discouraged, code should use
 .Xr ifq_dequeue 9
-whenever possible. 
+whenever possible.
 .Bl -tag -width Ds
 .It Fn ifq_deq_begin "struct ifqueue *ifq"
 Get a reference to the next mbuf to be transmitted from the
