@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.166 2020/05/10 14:17:48 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.167 2020/05/29 17:39:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -629,7 +629,6 @@ ssl_check_clienthello_tlsext_early(SSL *s)
 		ssl3_send_alert(s, SSL3_AL_WARNING, al);
 		return 1;
 	case SSL_TLSEXT_ERR_NOACK:
-		s->internal->servername_done = 0;
 	default:
 		return 1;
 	}
@@ -737,14 +736,11 @@ ssl_check_serverhello_tlsext(SSL *s)
 	switch (ret) {
 	case SSL_TLSEXT_ERR_ALERT_FATAL:
 		ssl3_send_alert(s, SSL3_AL_FATAL, al);
-
 		return -1;
 	case SSL_TLSEXT_ERR_ALERT_WARNING:
 		ssl3_send_alert(s, SSL3_AL_WARNING, al);
-
 		return 1;
 	case SSL_TLSEXT_ERR_NOACK:
-		s->internal->servername_done = 0;
 	default:
 		return 1;
 	}

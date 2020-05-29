@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.73 2020/05/24 15:13:22 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.74 2020/05/29 17:39:42 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2133,7 +2133,6 @@ tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server, uint16_t msg_type)
 static void
 tlsext_server_reset_state(SSL *s)
 {
-	s->internal->servername_done = 0;
 	s->tlsext_status_type = -1;
 	S3I(s)->renegotiate_seen = 0;
 	free(S3I(s)->alpn_selected);

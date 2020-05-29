@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.275 2020/05/19 16:35:20 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.276 2020/05/29 17:39:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -737,12 +737,6 @@ typedef struct ssl_internal_st {
 	int debug;
 	long max_cert_list;
 	int first_packet;
-
-	int servername_done;	/* no further mod of servername
-				   0 : call the servername extension callback.
-				   1 : prepare 2, allow last ack just after in server callback.
-				   2 : don't call servername callback, no ack in server hello
-				   */
 
 	/* Expect OCSP CertificateStatus message */
 	int tlsext_status_expected;
