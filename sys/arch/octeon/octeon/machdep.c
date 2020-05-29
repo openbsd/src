@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.121 2020/05/25 13:04:25 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.122 2020/05/29 04:42:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -78,7 +78,6 @@
 #include <machine/memconf.h>
 
 #include <dev/cons.h>
-#include <dev/rndvar.h>
 #include <dev/ofw/fdt.h>
 
 #include <octeon/dev/cn30xxcorereg.h>

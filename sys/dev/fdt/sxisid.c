@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxisid.c,v 1.2 2020/01/23 03:27:56 kettenis Exp $	*/
+/*	$OpenBSD: sxisid.c,v 1.3 2020/05/29 04:42:25 deraadt Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -28,7 +28,6 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
-#include <dev/rndvar.h>
 
 /* Registers */
 #define SID_PRCTL		0x40

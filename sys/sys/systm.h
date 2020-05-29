@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.146 2020/05/27 11:19:29 mpi Exp $	*/
+/*	$OpenBSD: systm.h,v 1.147 2020/05/29 04:42:25 deraadt Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -210,6 +210,11 @@ int	copyin(const void *, void *, size_t)
 		__attribute__ ((__bounded__(__buffer__,2,3)));
 int	copyout(const void *, void *, size_t);
 int	copyin32(const uint32_t *, uint32_t *);
+
+void	random_start(int);
+void	enqueue_randomness(unsigned int);
+void	suspend_randomness(void);
+void	resume_randomness(char *, size_t);
 
 struct arc4random_ctx;
 void	arc4random_buf(void *, size_t)

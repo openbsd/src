@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.194 2020/05/16 14:44:45 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.195 2020/05/29 04:42:24 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -95,7 +95,6 @@
 
 #include <sys/sysctl.h>
 #include <sys/exec_elf.h>
-#include <dev/rndvar.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>

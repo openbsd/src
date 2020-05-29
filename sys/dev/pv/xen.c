@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.95 2020/02/13 15:39:02 mikeb Exp $	*/
+/*	$OpenBSD: xen.c,v 1.96 2020/05/29 04:42:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -48,8 +48,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/i82489var.h>
-
-#include <dev/rndvar.h>
 
 #include <dev/pv/pvvar.h>
 #include <dev/pv/pvreg.h>

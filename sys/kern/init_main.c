@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.298 2020/05/25 15:24:30 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.299 2020/05/29 04:42:25 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -82,8 +82,6 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <dev/rndvar.h>
 
 #include <ufs/ufs/quota.h>
 

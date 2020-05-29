@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.236 2020/03/13 09:30:22 mpi Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.237 2020/05/29 04:42:25 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -63,7 +63,6 @@
 
 #include <net/if.h>
 
-#include <dev/rndvar.h>
 #include <dev/cons.h>
 
 #include <lib/libz/zlib.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.132 2020/05/16 14:44:44 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.133 2020/05/29 04:42:24 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -76,7 +76,6 @@
 #include <sys/extent.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
-#include <dev/rndvar.h>
 
 #include <machine/asm.h>
 #include <machine/asm_macro.h>

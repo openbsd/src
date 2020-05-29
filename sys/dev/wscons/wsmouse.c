@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.64 2020/03/24 12:34:14 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.65 2020/05/29 04:42:25 deraadt Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -111,7 +111,6 @@
 #include <dev/wscons/wsmousevar.h>
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wsmouseinput.h>
-#include <dev/rndvar.h>
 
 #include "wsmux.h"
 #include "wsdisplay.h"
