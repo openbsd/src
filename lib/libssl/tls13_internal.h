@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.82 2020/05/23 11:57:41 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.83 2020/05/29 17:47:30 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -311,6 +311,7 @@ int tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len,
     int peek);
 int tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len);
 int tls13_legacy_shutdown(SSL *ssl);
+int tls13_legacy_servername_process(struct tls13_ctx *ctx, uint8_t *alert);
 
 /*
  * Message Types - RFC 8446, Section B.3.

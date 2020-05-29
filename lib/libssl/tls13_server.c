@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.53 2020/05/23 11:58:46 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.54 2020/05/29 17:47:30 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -373,12 +373,27 @@ tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
 	return 1;
 }
 
+static int
+tls13_servername_process(struct tls13_ctx *ctx)
+{
+	uint8_t alert = TLS13_ALERT_INTERNAL_ERROR;
+
+	if (!tls13_legacy_servername_process(ctx, &alert)) {
+		ctx->alert = alert;
+		return 0;
+	}
+
+	return 1;
+}
+
 int
 tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	if (ctx->hs->key_share == NULL)
 		return 0;
 	if (!tls13_key_share_generate(ctx->hs->key_share))
+		return 0;
+	if (!tls13_servername_process(ctx))
 		return 0;
 
 	ctx->hs->server_group = 0;
