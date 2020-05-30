@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.133 2020/05/25 15:54:10 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.134 2020/05/30 14:10:17 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -57,6 +57,8 @@
 #include <sys/timeout.h>
 #include <sys/wait.h>
 
+void	kqueue_terminate(struct proc *p, struct kqueue *);
+void	kqueue_free(struct kqueue *);
 void	kqueue_init(void);
 void	KQREF(struct kqueue *);
 void	KQRELE(struct kqueue *);
@@ -181,6 +183,12 @@ KQRELE(struct kqueue *kq)
 		fdpunlock(fdp);
 	}
 
+	kqueue_free(kq);
+}
+
+void
+kqueue_free(struct kqueue *kq)
+{
 	free(kq->kq_knlist, M_KEVENT, kq->kq_knlistsize *
 	    sizeof(struct knlist));
 	hashfree(kq->kq_knhash, KN_HASHSIZE, M_KEVENT);
@@ -492,6 +500,20 @@ static const struct filterops dead_filtops = {
 	.f_event	= filt_dead,
 };
 
+struct kqueue *
+kqueue_alloc(struct filedesc *fdp)
+{
+	struct kqueue *kq;
+
+	kq = pool_get(&kqueue_pool, PR_WAITOK | PR_ZERO);
+	kq->kq_refs = 1;
+	kq->kq_fdp = fdp;
+	TAILQ_INIT(&kq->kq_head);
+	task_set(&kq->kq_task, kqueue_task, kq);
+
+	return (kq);
+}
+
 int
 sys_kqueue(struct proc *p, void *v, register_t *retval)
 {
@@ -500,11 +522,7 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int fd, error;
 
-	kq = pool_get(&kqueue_pool, PR_WAITOK | PR_ZERO);
-	kq->kq_refs = 1;
-	kq->kq_fdp = fdp;
-	TAILQ_INIT(&kq->kq_head);
-	task_set(&kq->kq_task, kqueue_task, kq);
+	kq = kqueue_alloc(fdp);
 
 	fdplock(fdp);
 	error = falloc(p, &fp, &fd);
@@ -1069,13 +1087,12 @@ kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
 	return (0);
 }
 
-int
-kqueue_close(struct file *fp, struct proc *p)
+void
+kqueue_terminate(struct proc *p, struct kqueue *kq)
 {
-	struct kqueue *kq = fp->f_data;
 	int i;
 
-	KERNEL_LOCK();
+	KERNEL_ASSERT_LOCKED();
 
 	for (i = 0; i < kq->kq_knlistsize; i++)
 		knote_remove(p, &kq->kq_knlist[i]);
@@ -1083,13 +1100,22 @@ kqueue_close(struct file *fp, struct proc *p)
 		for (i = 0; i < kq->kq_knhashmask + 1; i++)
 			knote_remove(p, &kq->kq_knhash[i]);
 	}
-	fp->f_data = NULL;
-
 	kq->kq_state |= KQ_DYING;
 	kqueue_wakeup(kq);
 
 	KASSERT(klist_empty(&kq->kq_sel.si_note));
 	task_del(systq, &kq->kq_task);
+
+}
+
+int
+kqueue_close(struct file *fp, struct proc *p)
+{
+	struct kqueue *kq = fp->f_data;
+
+	KERNEL_LOCK();
+	kqueue_terminate(p, kq);
+	fp->f_data = NULL;
 
 	KQRELE(kq);
 
