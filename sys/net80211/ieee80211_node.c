@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.181 2020/05/05 18:14:42 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.182 2020/05/31 09:08:33 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2704,8 +2704,6 @@ void
 ieee80211_node_leave_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	int rekeysta = 0;
-
-	ni->ni_rsn_state = RSNA_DISCONNECTED;
 
 	ni->ni_rsn_state = RSNA_INITIALIZE;
 	if (ni->ni_flags & IEEE80211_NODE_REKEY) {
