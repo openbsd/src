@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.277 2020/05/29 18:00:10 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.278 2020/05/31 16:36:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1095,6 +1095,7 @@ int ssl_version_set_min(const SSL_METHOD *meth, uint16_t ver, uint16_t max_ver,
 int ssl_version_set_max(const SSL_METHOD *meth, uint16_t ver, uint16_t min_ver,
     uint16_t *out_ver);
 uint16_t ssl_max_server_version(SSL *s);
+int ssl_downgrade_max_version(SSL *s, uint16_t *max_ver);
 int ssl_cipher_is_permitted(const SSL_CIPHER *cipher, uint16_t min_ver,
     uint16_t max_ver);
 

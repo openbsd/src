@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.76 2020/05/19 16:35:20 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.77 2020/05/31 16:36:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -852,6 +852,8 @@ ssl3_get_client_hello(SSL *s)
 	 * Use version from inside client hello, not from record header.
 	 * (may differ: see RFC 2246, Appendix E, second paragraph)
 	 */
+	if (!ssl_downgrade_max_version(s, &max_version))
+		goto err;
 	if (ssl_max_shared_version(s, client_version, &shared_version) != 1) {
 		SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
 		if ((s->client_version >> 8) == SSL3_VERSION_MAJOR &&
@@ -1047,8 +1049,6 @@ ssl3_get_client_hello(SSL *s)
 	 */
 	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
 
-	if (!SSL_IS_DTLS(s) && !ssl_enabled_version_range(s, NULL, &max_version))
-		goto err;
 	if (!SSL_IS_DTLS(s) && max_version >= TLS1_2_VERSION &&
 	    s->version < max_version) {
 		/*

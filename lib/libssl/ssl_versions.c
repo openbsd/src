@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.4 2018/11/06 01:40:23 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.5 2020/05/31 16:36:35 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -222,4 +222,36 @@ ssl_max_server_version(SSL *s)
 		return 0;
 
 	return (max_version);
+}
+
+int
+ssl_downgrade_max_version(SSL *s, uint16_t *max_ver)
+{
+	uint16_t min_version, max_version;
+
+	/*
+	 * The downgrade maximum version is based on the versions that are
+	 * enabled, however we also have to then limit to the versions
+	 * supported by the method. The SSL method will be changed during
+	 * version negotiation and when switching from the new stack to
+	 * the legacy context, as such we want to use the method from the
+	 * context.
+	 */
+
+	if (SSL_IS_DTLS(s)) {
+		*max_ver = DTLS1_VERSION;
+		return 1;
+	}
+
+	if (!ssl_enabled_version_range(s, &min_version, &max_version))
+		return 0;
+
+	if (!ssl_clamp_version_range(&min_version, &max_version,
+	    s->ctx->method->internal->min_version,
+	    s->ctx->method->internal->max_version))
+		return 0;
+
+	*max_ver = max_version;
+
+	return 1;
 }

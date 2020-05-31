@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.67 2020/05/19 16:35:20 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.68 2020/05/31 16:36:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -873,7 +873,7 @@ ssl3_get_server_hello(SSL *s)
 	    sizeof(s->s3->server_random), NULL))
 		goto err;
 
-	if (!SSL_IS_DTLS(s) && !ssl_enabled_version_range(s, NULL, &max_version))
+	if (!ssl_downgrade_max_version(s, &max_version))
 		goto err;
 	if (!SSL_IS_DTLS(s) && max_version >= TLS1_2_VERSION &&
 	    s->version < max_version) {
