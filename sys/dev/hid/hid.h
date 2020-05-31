@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.h,v 1.6 2019/12/17 13:08:54 reyk Exp $ */
+/*	$OpenBSD: hid.h,v 1.7 2020/05/31 18:15:37 jcs Exp $ */
 /*	$NetBSD: hid.h,v 1.8 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
@@ -396,6 +396,11 @@ int	hid_is_collection(const void *, int, uint8_t, int32_t);
 #define HUL_KANA		0x0005
 
 /* Usages, Consumer */
+#define HUC_CONTROL		0x0001
+#define HUC_PLAY_PAUSE		0x00cd
+#define HUC_MUTE		0x00e2
+#define HUC_VOL_INC		0x00e9
+#define HUC_VOL_DEC		0x00ea
 #define HUC_AC_PAN		0x0238
 
 /* Usages, FIDO */
