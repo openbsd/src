@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.25 2020/05/19 13:41:01 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.26 2020/05/31 21:01:59 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -1098,7 +1098,7 @@ snmpc_printerror(enum snmp_error error, struct ber_element *varbind,
 
 	if (index >= 1) {
 		/* Only print if the index is in the reply */
-		for (i = 1; varbind != NULL && i <= index;
+		for (i = 1; varbind != NULL && i < index;
 		    varbind = varbind->be_next)
 			i++;
 		if (varbind != NULL &&
