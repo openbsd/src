@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.133 2020/05/29 04:42:24 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.134 2020/05/31 06:23:57 dlg Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1355,3 +1355,12 @@ m88k_broadcast_ipi(int ipi)
 	}
 }
 #endif
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
+}

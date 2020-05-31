@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.58 2020/05/17 15:36:50 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.59 2020/05/31 06:23:57 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -248,6 +248,8 @@ void cpu_boot_secondary_processors(void);
 #define CPU_BUSY_CYCLE()	do {} while (0)
 
 #define curpcb		curcpu()->ci_curpcb
+
+unsigned int cpu_rnd_messybits(void);
 
 /*
  * Scheduling glue

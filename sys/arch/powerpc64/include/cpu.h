@@ -51,6 +51,8 @@ register struct cpu_info *__curcpu asm("r13");
 #define CPU_BUSY_CYCLE()	do {} while (0)
 #define signotify(p)		setsoftast()
 
+unsigned int cpu_rnd_messybits(void);
+
 void need_resched(struct cpu_info *);
 #define clear_resched(ci)	((ci)->ci_want_resched = 0)
 

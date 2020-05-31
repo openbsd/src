@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.635 2020/05/29 04:42:23 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.636 2020/05/31 06:23:57 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -4037,4 +4037,13 @@ void
 intr_barrier(void *ih)
 {
 	sched_barrier(NULL);
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

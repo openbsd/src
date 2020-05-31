@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.51 2020/05/23 19:54:12 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.52 2020/05/31 06:23:57 dlg Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -1246,4 +1246,13 @@ dumpregs(struct trapframe *frame)
 	printf("lr: 0x%016lx\n", frame->tf_lr);
 	printf("pc: 0x%016lx\n", frame->tf_elr);
 	printf("spsr: 0x%016lx\n", frame->tf_spsr);
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

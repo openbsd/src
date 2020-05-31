@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.161 2019/12/20 13:34:41 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.162 2020/05/31 06:23:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1016,4 +1016,13 @@ void
 intr_barrier(void *cookie)
 {
 	sched_barrier(NULL);
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

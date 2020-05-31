@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.265 2020/05/28 15:06:36 yasuoka Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.266 2020/05/31 06:23:56 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -2054,4 +2054,13 @@ check_context(const struct reg *regs, struct trapframe *tf)
 		return EINVAL;
 
 	return 0;
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

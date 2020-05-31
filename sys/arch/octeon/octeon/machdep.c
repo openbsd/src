@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.122 2020/05/29 04:42:24 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.123 2020/05/31 06:23:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -1247,3 +1247,12 @@ hw_cpu_hatch(struct cpu_info *ci)
 	cpu_switchto(NULL, sched_chooseproc());
 }
 #endif /* MULTIPROCESSOR */
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
+}

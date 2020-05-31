@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.219 2020/05/29 04:42:24 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.220 2020/05/31 06:23:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -177,13 +177,11 @@ void
 enqueue_randomness(u_int val)
 {
 	struct rand_event *rep;
-	struct timespec	ts;
 	int e;
 
-	nanotime(&ts);
 	e = (atomic_inc_int_nv(&rnd_event_prod) - 1) & (QEVLEN-1);
 	rep = &rnd_event_space[e];
-	rep->re_time += ts.tv_nsec ^ (ts.tv_sec << 20);
+	rep->re_time += cpu_rnd_messybits();
 	rep->re_val += val;
 
 	if (rnd_cold) {

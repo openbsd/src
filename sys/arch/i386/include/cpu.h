@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.169 2020/04/29 08:53:45 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.170 2020/05/31 06:23:57 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -266,6 +266,8 @@ void cpu_unidle(struct cpu_info *);
 #define curpcb			curcpu()->ci_curpcb
 
 #define want_resched (curcpu()->ci_want_resched)
+
+unsigned int cpu_rnd_messybits(void);
 
 /*
  * Preempt the current process if in interrupt from user mode,

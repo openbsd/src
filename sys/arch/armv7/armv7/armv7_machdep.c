@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.60 2020/05/23 20:32:47 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.61 2020/05/31 06:23:57 dlg Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -1012,4 +1012,13 @@ board_startup(void)
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

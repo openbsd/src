@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.91 2018/12/05 10:28:21 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.92 2020/05/31 06:23:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -237,6 +237,7 @@ int	copy_on_fault(void);
 void	switch_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
+unsigned int cpu_rnd_messybits(void);
 
 #ifdef MULTIPROCESSOR
 void	cpu_boot_secondary_processors(void);

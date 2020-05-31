@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.135 2020/04/28 12:58:28 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.136 2020/05/31 06:23:56 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -303,6 +303,8 @@ void cpu_unidle(struct cpu_info *);
 
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
+
+unsigned int cpu_rnd_messybits(void);
 
 #endif /* _KERNEL */
 

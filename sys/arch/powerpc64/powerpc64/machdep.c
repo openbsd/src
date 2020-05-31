@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 2020/05/27 22:22:04 gkoehler Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 2020/05/31 06:23:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -459,4 +459,13 @@ boot(int howto)
 	for (;;)
 		continue;
 	/* NOTREACHED */
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }
