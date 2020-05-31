@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.714 2020/05/26 06:03:12 jsg Exp $
+$OpenBSD: usbdevs,v 1.715 2020/05/31 18:12:04 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3023,6 +3023,8 @@ product MICROSOFT XBOX360	0x0292	XBOX 360 WLAN
 product MICROSOFT WLMOBILEMOUSE3500 0x0745  Wireless Mobile Mouse 3500
 product MICROSOFT LIFECAM	0x074a	Microsoft LifeCam
 product MICROSOFT WLARCMOUSE	0x074f	Wireless Arc Mouse (Model 1350)
+product MICROSOFT TYPECOVER	0x096f	Surface Go Type Cover
+product MICROSOFT TYPECOVER2	0x09b5	Surface Go Type Cover
 
 /* Microtech products */
 product MICROTECH SCSIDB25	0x0004	SCSI-DB25
