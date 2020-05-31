@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.5 2020/05/31 16:36:35 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.6 2020/05/31 18:03:32 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -198,30 +198,6 @@ ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
 	*max_ver = shared_version;
 
 	return 1;
-}
-
-uint16_t
-ssl_max_server_version(SSL *s)
-{
-	uint16_t max_version, min_version = 0;
-
-	if (SSL_IS_DTLS(s))
-		return (DTLS1_VERSION);
-
-	if (!ssl_enabled_version_range(s, &min_version, &max_version))
-		return 0;
-
-	/*
-	 * Limit to the versions supported by this method. The SSL method
-	 * will be changed during version negotiation, as such we want to
-	 * use the SSL method from the context.
-	 */
-	if (!ssl_clamp_version_range(&min_version, &max_version,
-	    s->ctx->method->internal->min_version,
-	    s->ctx->method->internal->max_version))
-		return 0;
-
-	return (max_version);
 }
 
 int

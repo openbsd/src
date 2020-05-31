@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.3 2019/05/15 09:13:16 bcook Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.4 2020/05/31 18:03:32 jsing Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018 Joel Sing <jsing@openbsd.org>
@@ -133,8 +133,9 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 			 * Fail if the current version is an unexpected
 			 * downgrade.
 			 */
-			max_version = ssl_max_server_version(s);
-			if (max_version == 0 || s->version < max_version) {
+			if (!ssl_downgrade_max_version(s, &max_version))
+				goto err;
+			if (s->version < max_version) {
 				SSLerror(s, SSL_R_INAPPROPRIATE_FALLBACK);
 				ssl3_send_alert(s, SSL3_AL_FATAL,
 					SSL_AD_INAPPROPRIATE_FALLBACK);
