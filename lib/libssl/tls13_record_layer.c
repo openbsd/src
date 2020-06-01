@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.48 2020/06/01 07:59:49 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.49 2020/06/01 19:51:31 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -885,6 +885,40 @@ tls13_record_layer_pending(struct tls13_record_layer *rl, uint8_t content_type)
 }
 
 static ssize_t
+tls13_record_layer_recv_phh(struct tls13_record_layer *rl)
+{
+	ssize_t ret = TLS13_IO_FAILURE;
+
+	rl->phh = 1;
+
+	/*
+	 * The post handshake handshake receive callback is allowed to return:
+	 *
+	 * TLS13_IO_WANT_POLLIN  need more handshake data.
+	 * TLS13_IO_WANT_POLLOUT got whole handshake message, response enqueued.
+	 * TLS13_IO_SUCCESS	 got the whole handshake, nothing more to do.
+	 * TLS13_IO_FAILURE	 something broke.
+	 */
+	if (rl->cb.phh_recv != NULL)
+		ret = rl->cb.phh_recv(rl->cb_arg, &rl->rbuf_cbs);
+
+	tls13_record_layer_rbuf_free(rl);
+
+	/* Leave post handshake handshake mode unless we need more data. */
+	if (ret != TLS13_IO_WANT_POLLIN)
+		rl->phh = 0;
+
+	if (ret == TLS13_IO_SUCCESS) {
+		if (rl->phh_retry)
+			return TLS13_IO_WANT_RETRY;
+
+		return TLS13_IO_WANT_POLLIN;
+	}
+
+	return ret;
+}
+
+static ssize_t
 tls13_record_layer_read_internal(struct tls13_record_layer *rl,
     uint8_t content_type, uint8_t *buf, size_t n, int peek)
 {
@@ -912,68 +946,23 @@ tls13_record_layer_read_internal(struct tls13_record_layer *rl,
 	}
 
 	/*
-	 * If we are in post handshake handshake mode, we may not see
+	 * If we are in post handshake handshake mode, we must not see
 	 * any record type that isn't a handshake until we are done.
 	 */
 	if (rl->phh && rl->rbuf_content_type != SSL3_RT_HANDSHAKE)
 		return tls13_send_alert(rl, TLS13_ALERT_UNEXPECTED_MESSAGE);
 
+	/*
+	 * Handshake content can appear as post-handshake messages (yup,
+	 * the RFC reused the same content type...), which means we can
+	 * be trying to read application data and need to handle a
+	 * post-handshake handshake message instead...
+	 */
 	if (rl->rbuf_content_type != content_type) {
-		/*
-		 * Handshake content can appear as post-handshake messages (yup,
-		 * the RFC reused the same content type...), which means we can
-		 * be trying to read application data and need to handle a
-		 * post-handshake handshake message instead...
-		 */
 		if (rl->rbuf_content_type == SSL3_RT_HANDSHAKE) {
-			if (rl->handshake_completed) {
-				rl->phh = 1;
-				ret = TLS13_IO_FAILURE;
-
-				/*
-				 * The post handshake handshake
-				 * receive callback is allowed to
-				 * return:
-				 *
-				 * TLS13_IO_WANT_POLLIN ->
-				 * I need more handshake data.
-				 *
-				 * TLS13_IO_WANT_POLLOUT -> I got the
-				 * whole handshake message, and have
-				 * enqueued a response
-				 *
-				 * TLS13_IO_SUCCESS -> I got the whole handshake,
-				 * nothing more to do
-				 *
-				 * TLS13_IO_FAILURE -> something broke.
-				 */
-				if (rl->cb.phh_recv != NULL) {
-					ret = rl->cb.phh_recv(
-					    rl->cb_arg, &rl->rbuf_cbs);
-				}
-
-				tls13_record_layer_rbuf_free(rl);
-
-				if (ret == TLS13_IO_WANT_POLLIN)
-					return ret;
-
-				/*
-				 * leave post handshake handshake mode
-				 * if we do not need more handshake data
-				 */
-				rl->phh = 0;
-
-				if (ret == TLS13_IO_SUCCESS) {
-					if (rl->phh_retry)
-						return TLS13_IO_WANT_RETRY;
-
-					return TLS13_IO_WANT_POLLIN;
-				}
-
-				return ret;
-			}
+			if (rl->handshake_completed)
+				return tls13_record_layer_recv_phh(rl);
 		}
-
 		return tls13_send_alert(rl, TLS13_ALERT_UNEXPECTED_MESSAGE);
 	}
 
