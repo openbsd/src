@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1924 2020/05/22 15:19:13 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1925 2020/06/01 03:42:18 jcs Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -341,6 +341,7 @@
 #define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
 #define	PCI_VENDOR_WCH2	0x1c00		/* Nanjing QinHeng Electronics */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
+#define	PCI_VENDOR_SKHYNIX	0x1c5c		/* SK hynix */
 #define	PCI_VENDOR_ADATA	0x1cc1		/* ADATA Technology */
 #define	PCI_VENDOR_UMIS	0x1cc4		/* Union Memory */
 #define	PCI_VENDOR_ROCKCHIP	0x1d87		/* Rockchip */
@@ -7692,6 +7693,9 @@
 #define	PCI_PRODUCT_SYMPHONY_82C105	0x0105		/* 82C105 */
 #define	PCI_PRODUCT_SYMPHONY_82C565	0x0565		/* 82C565 ISA */
 #define	PCI_PRODUCT_SYMPHONY2_82C101	0x0001		/* 82C101 */
+
+/* SK hynix products */
+#define	PCI_PRODUCT_SKHYNIX_SSD	0x1327		/* BC501 NVMe */
 
 /* Tamarack Microelectronics */
 #define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* TC9021 */
