@@ -53,6 +53,8 @@ struct pci_ptd {
 	uint8_t id;
 };
 
+struct pci_ptd ptd;
+
 uint32_t ptd_conf_read(int bus, int dev, int func, uint32_t reg);
 void ptd_conf_write(int bus, int dev, int func, uint32_t reg, uint32_t val);
 
@@ -127,6 +129,7 @@ void ptd_conf_write(int bus, int dev, int func, uint32_t reg, uint32_t val)
 
 extern uint8_t memintr;
 
+int mem_chkint(void);
 int mem_chkint()
 {
 	uint8_t *va;
@@ -135,9 +138,8 @@ int mem_chkint()
 
 	va = barva[0];
 	sts = *(uint32_t *)(va + 0x24);
-	fprintf(stderr, "  intsts: %llx\n", sts);
 	if (sts != 0 && sts != 0xffffffff) {
-		intr = 9;
+		intr = pci.pci_devices[ptd.id].pd_irq;
 	}
 	return intr;
 }
@@ -172,13 +174,6 @@ int pci_memh2(int dir, uint64_t base, uint32_t size, void *data, void *cookie)
 		fprintf(stderr, "  memh_wr%d: %.16llx %.16llx %p\n", 
 			size, base, *(uint64_t *)data & mask, cookie);
 		memcpy(va + off, data, size);
-	}
-
-	// check azalia interrupt
-	off = *(uint32_t *)(va + 0x24);
-	fprintf(stderr, "  intsts: %llx\n", off);
-	if (off != 0 && off != 0xffffffff) {
-		memintr = 9;
 	}
 	return 0;
 }
@@ -393,11 +388,11 @@ int ppt_mmiobar(int dir, uint32_t ofs, uint32_t *data);
  */
 int ppt_csfn(int dir, uint8_t reg, uint8_t sz, uint32_t *data, void *cookie)
 {
-	struct pci_ptd *ptd = cookie;
+	struct pci_ptd *pd = cookie;
 	struct pci_dev *pdev;
-	uint32_t ndata = 0, baridx, mask;
+	uint32_t ndata = 0, baridx;
 
-	pdev = &pci.pci_devices[ptd->id];
+	pdev = &pci.pci_devices[pd->id];
 	if (dir == VEI_DIR_IN) {
 		/* Read direct from cached values */
 		memcpy(data, (uint8_t *)&pdev->pd_cfg_space[reg/4] + (reg & 3), sz);
@@ -415,7 +410,7 @@ int ppt_csfn(int dir, uint8_t reg, uint8_t sz, uint32_t *data, void *cookie)
 			else if (pdev->pd_bartype[baridx] == PCI_BAR_TYPE_MMIO) {
 				unregister_mem(ndata);
 				register_mem(*data, pdev->pd_barsize[baridx], pci_memh2, 
-				     (void *)(uintptr_t)((ptd->id << 8) + baridx));
+				     (void *)(uintptr_t)((pd->id << 8) + baridx));
 				ndata = *data;
 			}
 			else if (pdev->pd_bartype[baridx] == PCI_BAR_TYPE_IO) {
@@ -494,7 +489,6 @@ void dump(void *ptr, int len)
 
 void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 {
-	static struct pci_ptd ptd;
 	uintptr_t devid;
 	int i, rc;
 
@@ -522,7 +516,6 @@ void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 		fprintf(stderr, "%d:%d:%d not valid pci device\n", bus, dev, fun);
 		return;
 	}
-#if 1
 	pci_add_device(&ptd.id, PCI_VENDOR(bi.id_reg), PCI_PRODUCT(bi.id_reg),
 			PCI_CLASS(bi.class_reg), PCI_SUBCLASS(bi.class_reg),
 			PCI_VENDOR(bi.subid_reg), PCI_PRODUCT(bi.subid_reg),
@@ -530,7 +523,6 @@ void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 	if (dev == 31) {
 		_pcicfgwr32(ptd.id, 0x40, 0x11);
 	}
-#endif
 	/* Get BARs of native device */
 	for (i = 0; i < MAXBAR; i++) {
 		devid = (ptd.id << 8) | i;
@@ -546,6 +538,7 @@ void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 			pci_add_bar(ptd.id, PCI_MAPREG_TYPE_IO,  bi.bars[i].size, 1, ppt_iobar, (void *)devid);
 		}
 		else {
+			fprintf(stderr,"skipio\n");
 			/* Kick bar index */
 			pci.pci_devices[ptd.id].pd_bar_ct++;
 		}

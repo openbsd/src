@@ -1917,11 +1917,13 @@ re_init(struct ifnet *ifp)
 	    RL_ADDR_HI(sc->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr));
 	CSR_WRITE_4(sc, RL_RXLIST_ADDR_LO,
 	    RL_ADDR_LO(sc->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr));
+	printf("RXDMA: %lx\n", sc->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr);
 
 	CSR_WRITE_4(sc, RL_TXLIST_ADDR_HI,
 	    RL_ADDR_HI(sc->rl_ldata.rl_tx_list_map->dm_segs[0].ds_addr));
 	CSR_WRITE_4(sc, RL_TXLIST_ADDR_LO,
 	    RL_ADDR_LO(sc->rl_ldata.rl_tx_list_map->dm_segs[0].ds_addr));
+	printf("TXDMA: %lx\n", sc->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr);
 
 	if (sc->rl_flags & RL_FLAG_RXDV_GATED)
 		CSR_WRITE_4(sc, RL_MISC, CSR_READ_4(sc, RL_MISC) &

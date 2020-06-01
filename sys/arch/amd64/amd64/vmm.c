@@ -329,6 +329,7 @@ void vmm_mapintr(pci_chipset_tag_t pc, struct pci_attach_args *pa)
 	int bus, dev, fun;
 	struct vppt *ppt;
 
+	return;
 	TAILQ_FOREACH(ppt, &vppts, next) {
 		if (ppt->pc == pc && ppt->tag == pa->pa_tag)
 			return;
@@ -425,12 +426,12 @@ int vm_getbar(struct vm_barinfo *bi)
 	int i, reg, did;
 	void *dom;
 	struct vm *vm;
-	struct vppt *ppt;
+	//struct vppt *ppt;
 
-	printf("getbar: %d.%d.%d\n",
-		bi->bus, bi->dev, bi->func);
 	tag = pci_make_tag(pc, bi->bus, bi->dev, bi->func);
 	bi->id_reg = pci_conf_read(pc, tag, PCI_ID_REG);
+	printf("getbar: %d.%d.%d %x\n",
+		bi->bus, bi->dev, bi->func, bi->id_reg);
 	if (PCI_VENDOR(bi->id_reg) == PCI_VENDOR_INVALID)
 		return ENODEV;
 	if (PCI_VENDOR(bi->id_reg) == 0)
@@ -457,9 +458,12 @@ int vm_getbar(struct vm_barinfo *bi)
 	} 
 
 	/* don't support if mmio and no domain? */
+	did = 0xdeadcafe;
 	dom = _iommu_domain(0, bi->bus, bi->dev, bi->func, &did);
 	printf("domain is: %p:%x\n", dom, did);
-
+	if (!dom) {
+		return 0;
+	}
 	/* Map DMA */
 	vm = SLIST_FIRST(&vmm_softc->vm_list);
 	if (vm != NULL) {
@@ -475,7 +479,7 @@ int vm_getbar(struct vm_barinfo *bi)
 	}		
 
 	/* Map intr */
-#if 1
+#if 0
 	TAILQ_FOREACH(ppt, &vppts, next) {
 		if (ppt->tag == tag) {
 			if (pci_intr_establish(ppt->pc, ppt->ih, IPL_BIO, vmm_intr, ppt, "ppt") == NULL) {
@@ -5648,6 +5652,12 @@ svm_fault_page(struct vcpu *vcpu, paddr_t gpa)
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 
 	fault_type = svm_get_guest_faulttype(vmcb);
+
+	if ((gpa >= VMM_PCI_MMIO_BAR_BASE && gpa <= VMM_PCI_MMIO_BAR_END) || fault_type == VM_FAULT_PROTECT) {
+		vcpu->vc_exit.vee.vee_gpa = gpa;
+		vcpu->vc_exit.vee.vee_fault_type = VEE_FAULT_PROTECT;
+		return (EAGAIN);
+	}
 
 	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, fault_type,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);

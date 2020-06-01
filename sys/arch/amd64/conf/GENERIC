@@ -378,7 +378,7 @@ drm0		at radeondrm? primary 1
 drm*		at radeondrm?
 wsdisplay0	at radeondrm? primary 1
 wsdisplay*	at radeondrm? mux -1
-amdgpu*		at pci?
+amdgpu*		at pci? disable
 drm0		at amdgpu? primary 1
 drm*		at amdgpu?
 wsdisplay0	at amdgpu? primary 1

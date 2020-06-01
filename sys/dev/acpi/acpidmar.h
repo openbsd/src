@@ -21,6 +21,7 @@
 #define VTD_STRIDE_SIZE 9
 #define VTD_PAGE_SIZE   4096
 #define VTD_PAGE_MASK   0xFFF
+#define VTD_PTE_MASK    0x0000FFFFFFFFF000LL
 
 #define VTD_LEVEL0	12
 #define VTD_LEVEL1	21
@@ -225,6 +226,18 @@
 #define IQA_QS_8K	5	/* 8192 */
 #define IQA_QS_16K	6	/* 16384 */
 #define IQA_QS_32K	7	/* 32768 */
+
+/* Read-Modify-Write helpers */
+static inline void iommu_rmw32(uint32_t *ov, uint32_t mask, uint32_t shift, uint32_t nv)
+{
+	*ov &= ~(mask << shift);
+	*ov |= (nv & mask) << shift;
+}
+static inline void iommu_rmw64(uint64_t *ov, uint32_t mask, uint32_t shift, uint64_t nv)
+{
+	*ov &= ~(mask << shift);
+	*ov |= (nv & mask) << shift;
+}
 
 /*
  * Root Entry: one per bus (256 x 128 bit = 4k)
@@ -519,3 +532,5 @@ void	dmar_ptmap(bus_dma_tag_t tag, bus_addr_t addr);
 void	acpidmar_sw(int);
 
 extern struct	acpidmar_softc *acpidmar_sc;
+
+#define __EXTRACT(v,m) (((v) >> m##_SHIFT) & m##_MASK)

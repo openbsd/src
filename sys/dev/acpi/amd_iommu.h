@@ -238,7 +238,8 @@ static inline void dte_set_tv(struct ivhd_dte *dte)
  */
 static inline void dte_set_valid(struct ivhd_dte *dte)
 {
-  dte->dw0 |= DTE_V | DTE_IR | DTE_IW;
+  dte->dw0 |=DTE_IR | DTE_IW;
+  dte->dw0 |= DTE_V;
 }
 
 /* Check if Device Table Entry is valid */
@@ -276,19 +277,20 @@ enum {
 struct ivhd_event {
   uint32_t dw0;
   uint32_t dw1;
-  uint32_t dw2;
-  uint32_t dw3;
+  uint32_t dw2;  			// address.lo
+  uint32_t dw3;				// address.hi
 } __packed;
 
-#define EVT_TYPE_SHIFT		28
+#define EVT_TYPE_SHIFT		28       // dw1.0xF0000000
 #define EVT_TYPE_MASK		0xF
-#define EVT_SID_SHIFT		0
+#define EVT_SID_SHIFT		0        // dw0.0x0000FFFF
 #define EVT_SID_MASK		0xFFFF
 #define EVT_DID_SHIFT		0
-#define EVT_DID_MASK		0xFFFF
+#define EVT_DID_MASK		0xFFFF   // dw1.0x0000FFFF
 #define EVT_FLAG_SHIFT  	16
-#define EVT_FLAG_MASK   	0xFFF
+#define EVT_FLAG_MASK   	0xFFF    // dw1.0x0FFF0000
 
+/* IOMMU Fault reasons */
 enum {
   ILLEGAL_DEV_TABLE_ENTRY	= 0x1,
   IO_PAGE_FAULT			= 0x2,
@@ -317,5 +319,7 @@ int ivhd_invalidate_iommu_all(struct iommu_softc *iommu);
 int ivhd_invalidate_interrupt_table(struct iommu_softc *iommu, int did);
 int ivhd_issue_command(struct iommu_softc *iommu, const struct ivhd_command *cmd, int wait);
 int ivhd_invalidate_domain(struct iommu_softc *iommu, int did);
+
+void _dumppte(struct pte_entry *pte, int lvl, vaddr_t va );
 
 #endif

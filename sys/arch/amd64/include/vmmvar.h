@@ -473,17 +473,18 @@ struct vm_create_params {
 	size_t			vcp_ncpus;
 	size_t			vcp_ndisks;
 	size_t			vcp_nnics;
-	size_t			vcp_npcis;
 	struct vm_mem_range	vcp_memranges[VMM_MAX_MEM_RANGES];
 	char			vcp_disks[VMM_MAX_DISKS_PER_VM][VMM_MAX_PATH_DISK];
 	char			vcp_cdrom[VMM_MAX_PATH_CDROM];
 	char			vcp_name[VMM_MAX_NAME_LEN];
 	char			vcp_kernel[VMM_MAX_KERNEL_PATH];
 	uint8_t			vcp_macs[VMM_MAX_NICS_PER_VM][6];
-	uint32_t		vcp_pcis[VMM_MAX_PCI_PTHRU];
 
 	/* Output parameter from VMM_IOC_CREATE */
 	uint32_t	vcp_id;
+
+	size_t			vcp_npcis;
+	uint32_t		vcp_pcis[VMM_MAX_PCI_PTHRU];
 };
 
 struct vm_run_params {
