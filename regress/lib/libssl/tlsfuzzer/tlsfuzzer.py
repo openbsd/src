@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.3 2020/05/24 10:35:57 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.4 2020/06/01 08:05:32 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -219,6 +219,7 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
     Test("test-conversation.py"),
     Test("test-cve-2016-2107.py"),
     Test("test-dhe-rsa-key-exchange.py"),
+    Test("test-dhe-rsa-key-exchange-with-bad-messages.py"),
     Test("test-early-application-data.py"),
     Test("test-empty-extensions.py"),
     Test("test-fuzzed-MAC.py"),
@@ -304,9 +305,6 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     # abrupt closure
     Test("test-cve-2016-6309.py"),
 
-    # failing tests are fixed by sending illegal_parameter alert after
-    # DH_compute_keyTest() in ssl_srvr.c
-    Test("test-dhe-rsa-key-exchange-with-bad-messages.py"),
     # Tests expect an illegal_parameter alert
     Test("test-ecdhe-rsa-key-exchange-with-bad-messages.py"),
 
