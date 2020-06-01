@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.4 2020/06/01 08:05:32 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.5 2020/06/01 10:46:45 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -79,6 +79,15 @@ tls13_tests = TestGroup("TLSv1.3 tests", [
     Test("test-tls13-legacy-version.py"),
     Test("test-tls13-nociphers.py"),
     Test("test-tls13-record-padding.py"),
+
+    # The skipped tests fail due to a bug in BIO_gets() which masks the retry
+    # signalled from an SSL_read() failure. Testing with httpd(8) shows we're
+    # handling these corner cases correctly since tls13_record_layer.c -r1.47.
+    Test("test-tls13-zero-length-data.py", [
+        "-e", "zero-length app data",
+        "-e", "zero-length app data with large padding",
+        "-e", "zero-length app data with padding",
+    ]),
 ])
 
 # Tests that take a lot of time (> ~30s on an x280)
@@ -125,13 +134,6 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
     # Most failing tests expect the CCS right before finished.
     # What's up with that?
     Test("test-tls13-version-negotiation.py"),
-
-    # The following three tests fail due to broken pipe.
-    # AssertionError: Unexpected closure from peer:
-    # 'zero-length app data'
-    # 'zero-length app data with large padding'
-    # 'zero-length app data with padding'
-    Test("test-tls13-zero-length-data.py"),
 ])
 
 tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
