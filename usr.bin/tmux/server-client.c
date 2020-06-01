@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.352 2020/06/01 09:43:01 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.353 2020/06/01 20:58:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1510,6 +1510,7 @@ server_client_check_pane_buffer(struct window_pane *wp)
 	struct window_pane_offset	*wpo;
 	int				 off = 1, flag;
 	u_int				 attached_clients = 0;
+	size_t				 new_size;
 
 	/*
 	 * Work out the minimum used size. This is the most that can be removed
@@ -1535,12 +1536,15 @@ server_client_check_pane_buffer(struct window_pane *wp)
 		if (!flag)
 			off = 0;
 
-		log_debug("%s: %s has %zu bytes used for %%%u", __func__,
-		    c->name, wpo->used - wp->base_offset, wp->id);
-		if (wpo->used - wp->base_offset > SERVER_CLIENT_PANE_LIMIT) {
+		window_pane_get_new_data(wp, wpo, &new_size);
+		log_debug("%s: %s has %zu bytes used and %zu left for %%%u",
+		    __func__, c->name, wpo->used - wp->base_offset, new_size,
+		    wp->id);
+		if (new_size > SERVER_CLIENT_PANE_LIMIT) {
 			control_flush(c);
 			c->flags |= CLIENT_EXIT;
-		} else if (wpo->used < minimum)
+		}
+		if (wpo->used < minimum)
 			minimum = wpo->used;
 	}
 	if (attached_clients == 0)
