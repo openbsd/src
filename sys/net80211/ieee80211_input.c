@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.217 2020/05/26 11:45:32 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.218 2020/06/01 08:51:13 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2657,11 +2657,6 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 		DPRINTF(("frame too short\n"));
 		return;
 	}
-
-	/* No point in starting block-ack before the WPA handshake is done. */
-	if ((ic->ic_flags & IEEE80211_F_RSNON) && !ni->ni_port_valid)
-		return;
-
 	/* MLME-ADDBA.indication */
 	wh = mtod(m, struct ieee80211_frame *);
 	frm = (const u_int8_t *)&wh[1];
