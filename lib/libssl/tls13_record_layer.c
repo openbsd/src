@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.47 2020/05/29 17:54:58 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.48 2020/06/01 07:59:49 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -51,6 +51,9 @@ struct tls13_record_layer {
 	uint8_t wrec_content_type;
 	size_t wrec_appdata_len;
 	size_t wrec_content_len;
+
+	/* Alert to be sent on return from current read handler. */
+	uint8_t alert;
 
 	/* Pending alert messages. */
 	uint8_t *alert_data;
@@ -504,6 +507,11 @@ tls13_record_layer_open_record_plaintext(struct tls13_record_layer *rl)
 	if (!tls13_record_content(rl->rrec, &cbs))
 		return 0;
 
+	if (CBS_len(&cbs) > TLS13_RECORD_MAX_PLAINTEXT_LEN) {
+		rl->alert = SSL_AD_RECORD_OVERFLOW;
+		return 0;
+	}
+
 	tls13_record_layer_rbuf_free(rl);
 
 	if (!CBS_stow(&cbs, &rl->rbuf, &rl->rbuf_len))
@@ -548,8 +556,10 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 	    CBS_data(&header), CBS_len(&header)))
 		goto err;
 
-	if (out_len > TLS13_RECORD_MAX_INNER_PLAINTEXT_LEN)
+	if (out_len > TLS13_RECORD_MAX_INNER_PLAINTEXT_LEN) {
+		rl->alert = SSL_AD_RECORD_OVERFLOW;
 		goto err;
+	}
 
 	if (!tls13_record_layer_inc_seq_num(rl->read_seq_num))
 		goto err;
@@ -565,8 +575,10 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 		content_len--;
 	if (content_len < 0)
 		goto err;
-	if (content_len > TLS13_RECORD_MAX_PLAINTEXT_LEN)
+	if (content_len > TLS13_RECORD_MAX_PLAINTEXT_LEN) {
+		rl->alert = SSL_AD_RECORD_OVERFLOW;
 		goto err;
+	}
 	content_type = content[content_len];
 
 	tls13_record_layer_rbuf_free(rl);
@@ -995,6 +1007,9 @@ tls13_record_layer_peek(struct tls13_record_layer *rl, uint8_t content_type,
 		ret = tls13_record_layer_read_internal(rl, content_type, buf, n, 1);
 	} while (ret == TLS13_IO_WANT_RETRY);
 
+	if (rl->alert != 0)
+		return tls13_send_alert(rl, rl->alert);
+
 	return ret;
 }
 
@@ -1007,6 +1022,9 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 	do {
 		ret = tls13_record_layer_read_internal(rl, content_type, buf, n, 0);
 	} while (ret == TLS13_IO_WANT_RETRY);
+
+	if (rl->alert != 0)
+		return tls13_send_alert(rl, rl->alert);
 
 	return ret;
 }
