@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.55 2020/05/29 18:00:10 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.56 2020/06/02 04:50:17 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -255,7 +255,7 @@ err:
 }
 
 static int
-tls13_server_engage_record_protection(struct tls13_ctx *ctx) 
+tls13_server_engage_record_protection(struct tls13_ctx *ctx)
 {
 	struct tls13_secrets *secrets;
 	struct tls13_secret context;
@@ -469,7 +469,7 @@ tls13_server_check_certificate(struct tls13_ctx *ctx, CERT_PKEY *cpk,
 	/*
 	 * The digitalSignature bit MUST be set if the Key Usage extension is
 	 * present as per RFC 8446 section 4.4.2.2.
-	 */ 
+	 */
 	if ((cpk->x509->ex_flags & EXFLAG_KUSAGE) &&
 	    !(cpk->x509->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE))
 		goto done;
@@ -483,7 +483,7 @@ tls13_server_check_certificate(struct tls13_ctx *ctx, CERT_PKEY *cpk,
  done:
 	return 1;
 }
- 
+
 static int
 tls13_server_select_certificate(struct tls13_ctx *ctx, CERT_PKEY **out_cpk,
     const struct ssl_sigalg **out_sigalg)
@@ -586,7 +586,7 @@ tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 	memset(&sig_cbb, 0, sizeof(sig_cbb));
 
 	if ((cpk = ctx->hs->cpk) == NULL)
- 		goto err;
+		goto err;
 	if ((sigalg = ctx->hs->sigalg) == NULL)
 		goto err;
 	pkey = cpk->privatekey;
