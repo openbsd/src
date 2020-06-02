@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.353 2020/06/01 20:58:42 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.354 2020/06/02 08:17:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1779,7 +1779,9 @@ server_client_check_exit(struct client *c)
 	struct client_file	*cf;
 	const char		*name = c->exit_session;
 
-	if ((c->flags & CLIENT_EXITED) || (~c->flags & CLIENT_EXIT))
+	if (c->flags & (CLIENT_DEAD|CLIENT_EXITED))
+		return;
+	if (~c->flags & CLIENT_EXIT)
 		return;
 
 	if (c->flags & CLIENT_CONTROL) {

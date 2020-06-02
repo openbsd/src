@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.138 2020/05/25 18:57:25 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.139 2020/06/02 08:17:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -636,8 +636,6 @@ tty_keys_next(struct tty *tty)
 	key_code		 key;
 	struct mouse_event	 m = { 0 };
 	struct key_event	*event;
-
-	gettimeofday(&tv, NULL);
 
 	/* Get key buffer. */
 	buf = EVBUFFER_DATA(tty->in);

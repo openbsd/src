@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.291 2020/05/25 18:19:29 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.292 2020/06/02 08:17:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2934,15 +2934,6 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 	return (found);
 }
 
-static uint64_t
-window_copy_get_time(void)
-{
-	struct timeval	tv;
-
-	gettimeofday(&tv, NULL);
-	return ((tv.tv_sec * 1000ULL) + (tv.tv_usec / 1000ULL));
-}
-
 static int
 window_copy_search_marks(struct window_mode_entry *wme, struct screen *ssp,
     int regex)
@@ -2985,11 +2976,11 @@ window_copy_search_marks(struct window_mode_entry *wme, struct screen *ssp,
 			return (0);
 		}
 	}
-	tstart = window_copy_get_time();
+	tstart = get_timer();
 
 	start = 0;
 	end = gd->hsize + gd->sy;
-	stop = window_copy_get_time() + WINDOW_COPY_SEARCH_ALL_TIMEOUT;
+	stop = get_timer() + WINDOW_COPY_SEARCH_ALL_TIMEOUT;
 
 again:
 	free(data->searchmark);
@@ -3027,7 +3018,7 @@ again:
 			px++;
 		}
 
-		t = window_copy_get_time();
+		t = get_timer();
 		if (t - tstart > WINDOW_COPY_SEARCH_TIMEOUT) {
 			data->timeout = 1;
 			break;
