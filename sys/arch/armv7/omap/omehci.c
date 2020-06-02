@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.5 2020/04/07 09:09:46 kettenis Exp $ */
+/*	$OpenBSD: omehci.c,v 1.6 2020/06/02 03:16:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -188,8 +188,7 @@ omehci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	for (i = 0; i < OMAP_HS_USB_PORTS; i++)
-		phy_enable_idx(faa->fa_node, i);
+	phy_enable_idx(node, 0);
 
 	if (omehci_init(sc))
 		return;
