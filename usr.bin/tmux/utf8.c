@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.49 2020/05/26 12:50:03 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.50 2020/06/02 11:29:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -135,6 +135,8 @@ utf8_from_data(const struct utf8_data *ud, utf8_char *uc)
 	union utf8_map	 m = { .uc = 0 };
 	u_int		 offset;
 
+	if (ud->width == 0)
+		goto fail;
 	if (ud->width != 1 && ud->width != 2)
 		fatalx("invalid UTF-8 width");
 	if (ud->size == 0)
