@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.161 2020/06/02 12:24:09 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.162 2020/06/02 12:24:44 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -163,7 +163,6 @@ really_kill(Job *job, int signo)
 	if (getpgid(pid) != getpgrp()) {
 		if (killpg(pid, signo) == 0)
 			return "group got signal";
-		pid = -pid;
 	} else {
 		if (kill(pid, signo) == 0)
 			return "process got signal";
