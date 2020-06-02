@@ -507,13 +507,13 @@ domain_map_page_amd(struct domain *dom, vaddr_t va, paddr_t pa, uint64_t flags)
 	pte = pte_lvl(iommu, pte, va, 21, PTE_NXTLVL(1) | PTE_IR | PTE_IW | PTE_P);
 	//pte = pte_lvl(iommu, pte, va, 12, PTE_NXTLVL(7) | PTE_IR | PTE_IW | PTE_P);
 	idx = (va >> 12) & 0x1FF;
-	pte[idx].val = pa | flags | PTE_P | PTE_NXTLVL(0) | PTE_R|PTE_W|PTE_IW|PTE_IR;
-#if 0
+	//pte[idx].val = pa | flags | PTE_P | PTE_NXTLVL(0) | PTE_R|PTE_W|PTE_IW|PTE_IR;
+
 	/* Level 0: Page Table - add physical address */
 	if (flags)
-		flags = PTE_P |PTE_R |PTE_W | PTE_IW | PTE_IR;
-	pte->val = pa | flags;
-#endif
+		flags = PTE_P | PTE_R | PTE_W | PTE_IW | PTE_IR | PTE_NXTLVL(0);
+	pte[idx].val = pa | flags;
+
 	iommu_flush_cache(iommu, pte, sizeof(*pte));
 }
 
@@ -591,7 +591,6 @@ domain_load_map(struct domain *dom, bus_dmamap_t map, int flags, int pteflag, co
 	int			i;
 
 	iommu = dom->iommu;
-	printf("load map\n");
 	if (!iommu_enabled(iommu)) {
 		/* Lazy enable translation when required */
 		if (iommu_enable_translation(iommu, 1)) {
@@ -687,7 +686,6 @@ dmar_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf,
 	int		rc;
 
 	rc = _bus_dmamap_load(tag, dmam, buf, buflen, p, flags);
-	printf("dmamap_load: %x\n", rc);
 	if (!rc) {
 		dmar_dumpseg(tag, dmam->dm_nsegs, dmam->dm_segs,
 		    __FUNCTION__);
@@ -794,7 +792,6 @@ dmar_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment,
 	rc = _bus_dmamem_alloc(tag, size, alignment, boundary, segs, nsegs,
 	    rsegs, flags);
 	if (!rc) {
-		printf("%s: dmamem_alloc(%lx)\n", dom_bdf(dom), size);
 		dmar_dumpseg(tag, *rsegs, segs, __FUNCTION__);
 	}
 	return (rc);
@@ -812,7 +809,6 @@ dmar_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
     size_t size, caddr_t *kvap, int flags)
 {
 	dmar_dumpseg(tag, nsegs, segs, __FUNCTION__);
-	printf("%s: dmamem_map(%lx)\n", dom_bdf(tag->_cookie), size);
 	return (_bus_dmamem_map(tag, segs, nsegs, size, kvap, flags));
 }
 
@@ -1689,6 +1685,7 @@ acpidmar_pci_attach(struct acpidmar_softc *sc, int segment, int sid, int mapctx)
 }
 
 int ismap(int bus, int dev, int fun) {
+	return (bus > 0);
 	return (bus == 1);
 
 	if (bus == 3 && dev == 0 && fun == 6)
