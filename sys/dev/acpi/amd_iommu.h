@@ -25,7 +25,7 @@
 #define  EFR_GLXSUP_SHIFT	14
 #define  EFR_GLXSUP_MASK	0x3
 #define  EFR_SMIFSUP_SHIFT	16
-#define  EFR_SMIFSUP_MASK	0x3
+#define  EFR_SMIFSUP_MASK	0x3        
 #define  EFR_SMIFRC_SHIFT	18
 #define  EFR_SMIFRC_MASK	0x7
 #define  EFR_GAMSUP_SHIFT	21
@@ -163,7 +163,7 @@ struct ivhd_dte {
 #define PTE_LVL2                21
 #define PTE_LVL1                12
 
-#define PTE_NXTLVL(x)           ((x) << 9)
+#define PTE_NXTLVL(x)           (((x) & 0x7) << 9)
 #define PTE_PADDR_MASK		0x000FFFFFFFFFF000LL
 #define PTE_IR                  (1LL << 61)
 #define PTE_IW                  (1LL << 62)

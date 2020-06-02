@@ -111,36 +111,6 @@ typedef struct {
 } azalia_dma_t;
 #define AZALIA_DMA_DMAADDR(p)	((p)->map->dm_segs[0].ds_addr)
 
-#if 0
-void az_bus_space_write_1(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint8_t v) {
-	printf("write1: %x %x\n", reg, v);
-	bus_space_write_1(iot, ioh, reg, v);
-}
-void az_bus_space_write_2(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint16_t v) {
-	printf("write2: %x %x\n", reg, v);
-	bus_space_write_2(iot, ioh, reg, v);
-}
-void az_bus_space_write_4(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint32_t v) {
-	printf("write4: %x %x\n", reg, v);
-	bus_space_write_1(iot, ioh, reg, v);
-}
-uint8_t az_bus_space_read_1(bus_space_tag_t iot, bus_space_handle_t ioh, int reg) {
-	uint8_t v = bus_space_read_1(iot, ioh, reg);
-	printf("read1: %x %x\n", reg, v);
-	return v;
-}
-uint16_t az_bus_space_read_2(bus_space_tag_t iot, bus_space_handle_t ioh, int reg) {
-	uint16_t v = bus_space_read_1(iot, ioh, reg);
-	printf("read2: %x %x\n", reg, v);
-	return v;
-}
-uint32_t az_bus_space_read_4(bus_space_tag_t iot, bus_space_handle_t ioh, int reg) {
-	uint32_t v = bus_space_read_1(iot, ioh, reg);
-	printf("read4: %x %x\n", reg, v);
-	return v;
-}
-#endif
-
 typedef struct {
 	struct azalia_t *az;
 	int regbase;
@@ -387,9 +357,16 @@ void azalia_showregs(azalia_t *az)
 	printf("DPLBASE :  %x\n", AZ_READ_4(az, DPLBASE));
 	printf("DPUBASE :  %x\n", AZ_READ_4(az, DPUBASE));
 	printf("CORBCTL :  %x\n", AZ_READ_1(az, CORBCTL));
+	printf("CORBRP  :  %x\n", AZ_READ_2(az, CORBRP));
 	printf("CORBWP  :  %x\n", AZ_READ_2(az, CORBWP));
+	printf("CORBLBASE: %x\n", AZ_READ_4(az, CORBLBASE));
+	printf("CORBUBASE: %x\n", AZ_READ_4(az, CORBUBASE));
+	printf("CORBSIZE:  %x\n", AZ_READ_1(az, CORBSIZE));
 	printf("RIRBCTL :  %x\n", AZ_READ_1(az, RIRBCTL));
 	printf("RIRBSTS :  %x\n", AZ_READ_1(az, RIRBSTS));
+	printf("RIRBLBASE: %x\n", AZ_READ_4(az, RIRBLBASE));
+	printf("RIRBUBASE: %x\n", AZ_READ_4(az, RIRBUBASE));
+	printf("RIRBSIZE:  %x\n", AZ_READ_1(az, RIRBSIZE));
 	printf("RIRBWP  :  %x\n", AZ_READ_2(az, RIRBWP));
 }
 
@@ -1224,13 +1201,11 @@ azalia_comresp(const codec_t *codec, nid_t nid, uint32_t control,
 	int err;
 
 	mtx_enter(&audio_lock);
-	printf("@@@ comresp: %x %x %x\n", nid, control, param);
 	err = azalia_set_command(codec->az, codec->address, nid, control,
 	    param);
 	if (err)
 		goto exit;
 	err = azalia_get_response(codec->az, result);
-	printf("--- response: %d %lx\n", err, result ? *result : 0xdeadacafe);
 exit:
 	mtx_leave(&audio_lock);
 	return(err);
@@ -1269,7 +1244,6 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 	int i;
 	uint16_t wp;
 
-	azalia_showregs(az);
 	if ((AZ_READ_1(az, RIRBCTL) & HDA_RIRBCTL_RIRBDMAEN) == 0) {
 		printf("%s: RIRB is not running.\n", XNAME(az));
 		return(-1);
@@ -1371,7 +1345,6 @@ azalia_alloc_dmamem(azalia_t *az, size_t size, size_t align, azalia_dma_t *d)
 		goto free;
 	err = bus_dmamem_map(az->dmat, d->segments, 1, size,
 	    &d->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
-	printf("@@@ map: %p\n", d->addr);
 	if (err)
 		goto free;
 	err = bus_dmamap_create(az->dmat, size, 1, size, 0,
