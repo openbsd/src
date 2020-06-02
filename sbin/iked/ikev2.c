@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.228 2020/05/30 17:44:35 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.229 2020/06/02 19:37:47 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1257,8 +1257,10 @@ ikev2_init_auth(struct iked *env, struct iked_message *msg)
 
 	if (ca_setauth(env, sa, authmsg, PROC_CERT) == -1) {
 		log_debug("%s: failed to get cert", __func__);
+		ibuf_release(authmsg);
 		return (-1);
 	}
+	ibuf_release(authmsg);
 
 	return (ikev2_init_ike_auth(env, sa));
 }
