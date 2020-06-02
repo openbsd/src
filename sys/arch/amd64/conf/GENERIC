@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.489 2020/05/31 18:15:36 jcs Exp $
+#	$OpenBSD: GENERIC,v 1.490 2020/06/02 16:24:24 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -71,6 +71,7 @@ acpials*	at acpi?
 tpm*		at acpi?
 acpihve*	at acpi?
 acpisurface*	at acpi?
+acpihid*	at acpi?
 ipmi0		at acpi? disable
 ccpmic*		at iic?
 tipmic*		at iic?

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.54 2020/04/14 21:02:39 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.55 2020/06/02 16:24:24 jcs Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -216,3 +216,8 @@ file	dev/acpi/amdgpio.c		amdgpio
 # Broadcom BC7XXX Ethernet controller
 attach	bse at acpi with bse_acpi
 file	dev/acpi/if_bse_acpi.c		bse_acpi
+
+# Intel HID event and 5-button array
+device	acpihid
+attach	acpihid at acpi
+file	dev/acpi/acpihid.c		acpihid
