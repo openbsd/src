@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.310 2020/05/23 08:42:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.311 2020/06/02 02:26:36 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3992,6 +3992,7 @@ iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 			ic->ic_stats.is_ccmp_dec_errs++;
 			ifp->if_ierrors++;
 			m_freem(m);
+			ieee80211_release_node(ic, ni);
 			return;
 		}
 		/* Check whether decryption was successful or not. */
@@ -4003,11 +4004,13 @@ iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 			ic->ic_stats.is_ccmp_dec_errs++;
 			ifp->if_ierrors++;
 			m_freem(m);
+			ieee80211_release_node(ic, ni);
 			return;
 		}
 		if (iwm_ccmp_decap(sc, m, ni) != 0) {
 			ifp->if_ierrors++;
 			m_freem(m);
+			ieee80211_release_node(ic, ni);
 			return;
 		}
 		rxi->rxi_flags |= IEEE80211_RXI_HWDEC;
