@@ -1597,9 +1597,10 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 
 	if (ioports_map[vei->vei.vei_port] != NULL)
 		intr = ioports_map[vei->vei.vei_port](vrp);
-	else if (vei->vei.vei_dir == VEI_DIR_IN)
+	else if (vei->vei.vei_dir == VEI_DIR_IN) {
+		fprintf(stderr, "exit_inout: %x\n", vei->vei.vei_port);
 		set_return_data(vei, 0xFFFFFFFF);
-
+	}
 	if (intr != 0xFF)
 		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, intr);
 }

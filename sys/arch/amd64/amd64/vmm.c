@@ -714,7 +714,6 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 paddr_t
 vmmmmap(dev_t dev, off_t off, int prot)
 {
-	printf("vmmmmap: %llx\n", off);
 	return off;
 }
 

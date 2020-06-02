@@ -165,8 +165,8 @@ struct ivhd_dte {
 
 #define PTE_NXTLVL(x)           ((x) << 9)
 #define PTE_PADDR_MASK		0x000FFFFFFFFFF000LL
-#define PTE_IW                  (1LL << 62)
 #define PTE_IR                  (1LL << 61)
+#define PTE_IW                  (1LL << 62)
 
 #define DTE_GCR312_MASK		0x3
 #define DTE_GCR312_SHIFT	24
@@ -218,8 +218,10 @@ static inline void dte_set_host_page_table_root_ptr(struct ivhd_dte *dte, paddr_
 {
   uint64_t ov;
 
-  ov = _get64(&dte->dw0);
-  _put64(&dte->dw0, (ov & ~DTE_HPTRP_MASK) | (paddr & DTE_HPTRP_MASK));
+  ov = _get64(&dte->dw0) & ~DTE_HPTRP_MASK;
+  ov |= (paddr & DTE_HPTRP_MASK) | PTE_IW | PTE_IR;
+
+  _put64(&dte->dw0, ov);
 }
 
 /* Set Page Table Levels Mask */
@@ -238,7 +240,6 @@ static inline void dte_set_tv(struct ivhd_dte *dte)
  */
 static inline void dte_set_valid(struct ivhd_dte *dte)
 {
-  dte->dw0 |=DTE_IR | DTE_IW;
   dte->dw0 |= DTE_V;
 }
 
