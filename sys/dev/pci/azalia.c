@@ -177,7 +177,6 @@ typedef struct azalia_t {
 	stream_t pstream;
 	stream_t rstream;
 } azalia_t;
-
 #define XNAME(sc)		((sc)->dev.dv_xname)
 #define AZ_READ_1(z, r)		bus_space_read_1((z)->iot, (z)->ioh, HDA_##r)
 #define AZ_READ_2(z, r)		bus_space_read_2((z)->iot, (z)->ioh, HDA_##r)
@@ -348,27 +347,6 @@ static const char *line_colors[16] = {
 #define INTEL_PCIE_NOSNOOP_REG		0x79
 #define INTEL_PCIE_NOSNOOP_MASK		0xf7
 #define INTEL_PCIE_NOSNOOP_ENABLE	0x08
-
-void azalia_showregs(azalia_t *az)
-{
-	printf("STATESTS:  %x\n", AZ_READ_2(az, STATESTS));
-	printf("INTCTL  :  %x\n", AZ_READ_4(az, INTCTL));
-	printf("INTSTS  :  %x\n", AZ_READ_4(az, INTSTS));
-	printf("DPLBASE :  %x\n", AZ_READ_4(az, DPLBASE));
-	printf("DPUBASE :  %x\n", AZ_READ_4(az, DPUBASE));
-	printf("CORBCTL :  %x\n", AZ_READ_1(az, CORBCTL));
-	printf("CORBRP  :  %x\n", AZ_READ_2(az, CORBRP));
-	printf("CORBWP  :  %x\n", AZ_READ_2(az, CORBWP));
-	printf("CORBLBASE: %x\n", AZ_READ_4(az, CORBLBASE));
-	printf("CORBUBASE: %x\n", AZ_READ_4(az, CORBUBASE));
-	printf("CORBSIZE:  %x\n", AZ_READ_1(az, CORBSIZE));
-	printf("RIRBCTL :  %x\n", AZ_READ_1(az, RIRBCTL));
-	printf("RIRBSTS :  %x\n", AZ_READ_1(az, RIRBSTS));
-	printf("RIRBLBASE: %x\n", AZ_READ_4(az, RIRBLBASE));
-	printf("RIRBUBASE: %x\n", AZ_READ_4(az, RIRBUBASE));
-	printf("RIRBSIZE:  %x\n", AZ_READ_1(az, RIRBSIZE));
-	printf("RIRBWP  :  %x\n", AZ_READ_2(az, RIRBWP));
-}
 
 uint8_t
 azalia_pci_read(pci_chipset_tag_t pc, pcitag_t pa, int reg)
@@ -703,7 +681,6 @@ azalia_intr(void *v)
 
 	mtx_enter(&audio_lock);
 	intsts = AZ_READ_4(az, INTSTS);
-	printf("azalia_intr: %x\n", intsts);
 	if (intsts == 0 || intsts == 0xffffffff) {
 		mtx_leave(&audio_lock);
 		return (ret);
@@ -1070,7 +1047,6 @@ azalia_init_corb(azalia_t *az, int resuming)
 	}
 	timeout_set(&az->unsol_to, azalia_rirb_kick_unsol_events, az);
 
-	printf("%s: DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&az->corb_dma));
 	AZ_WRITE_4(az, CORBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->corb_dma));
 	AZ_WRITE_4(az, CORBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->corb_dma)));
 	AZ_WRITE_1(az, CORBSIZE, az->corbsize);
@@ -1156,7 +1132,6 @@ azalia_init_rirb(azalia_t *az, int resuming)
 			return ENOMEM;
 		}
 	}
-	printf("%s: DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&az->rirb_dma));
 	AZ_WRITE_4(az, RIRBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->rirb_dma));
 	AZ_WRITE_4(az, RIRBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->rirb_dma)));
 	AZ_WRITE_1(az, RIRBSIZE, az->rirbsize);
@@ -3727,7 +3702,6 @@ azalia_stream_start(stream_t *this)
 	STR_WRITE_4(this, BDPU, 0);
 
 	/* setup BDL */
-	printf("%s: buffer.DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&this->buffer));
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->buffer);
 	dmaend = dmaaddr + this->bufsize;
 	bdlist = (bdlist_entry_t*)this->bdlist.addr;
@@ -3747,7 +3721,6 @@ azalia_stream_start(stream_t *this)
 	    __func__, this->bufsize, this->fmt, index));
 
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->bdlist);
-	printf("%s: bdlist.DMA: %lx\n", __FUNCTION__, AZALIA_DMA_DMAADDR(&this->bdlist));
 	STR_WRITE_4(this, BDPL, dmaaddr);
 	STR_WRITE_4(this, BDPU, PTR_UPPER32(dmaaddr));
 	STR_WRITE_2(this, LVI, (index - 1) & HDA_SD_LVI_LVI);
@@ -3768,7 +3741,6 @@ azalia_stream_start(stream_t *this)
 	STR_WRITE_1(this, CTL, STR_READ_1(this, CTL) |
 	    HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE |
 	    HDA_SD_CTL_RUN);
-
 	return (0);
 }
 
@@ -3777,7 +3749,6 @@ azalia_stream_halt(stream_t *this)
 {
 	uint16_t ctl;
 
-	printf("stream halt\n");
 	ctl = STR_READ_2(this, CTL);
 	ctl &= ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN);
 	STR_WRITE_2(this, CTL, ctl);
