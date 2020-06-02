@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihid.c,v 1.1 2020/06/02 16:24:24 jcs Exp $ */
+/* $OpenBSD: acpihid.c,v 1.2 2020/06/02 19:26:36 jcs Exp $ */
 /*
  * ACPI HID event and 5-button array driver
  *
@@ -36,7 +36,6 @@
 #include "wskbd.h"
 
 /* #define ACPIHID_DEBUG */
-#define ACPIHID_DEBUG
 
 #ifdef ACPIHID_DEBUG
 #define DPRINTF(x) printf x
@@ -358,9 +357,9 @@ acpihid_button_array_enable(struct acpihid_softc *sc, int enable)
 int
 acpihid_notify(struct aml_node *node, int notify_type, void *arg)
 {
+#ifdef ACPIHID_DEBUG
 	struct acpihid_softc *sc = arg;
 
-#ifdef ACPIHID_DEBUG
 	DPRINTF(("%s: %s: %.2x\n", sc->sc_dev.dv_xname, __func__,
 	    notify_type));
 #endif
@@ -393,8 +392,8 @@ acpihid_notify(struct aml_node *node, int notify_type, void *arg)
 	case 0xcf: /* power button release */
 		break;
 	default:
-		printf("%s: unhandled button 0x%x\n", sc->sc_dev.dv_xname,
-		    notify_type);
+		DPRINTF(("%s: unhandled button 0x%x\n", sc->sc_dev.dv_xname,
+		    notify_type));
 	}
 
 	return 0;
