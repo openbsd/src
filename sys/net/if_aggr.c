@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.29 2020/04/12 06:59:54 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.30 2020/06/02 00:58:09 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -466,7 +466,7 @@ static int	aggr_del_port(struct aggr_softc *,
 static int	aggr_group(struct aggr_softc *, struct aggr_port *, u_long);
 static int	aggr_multi(struct aggr_softc *, struct aggr_port *,
 		    const struct aggr_multiaddr *, u_long);
-static uint32_t	aggr_hardmtu(struct aggr_softc *);
+static void	aggr_update_capabilities(struct aggr_softc *);
 static void	aggr_set_lacp_mode(struct aggr_softc *, int);
 static void	aggr_set_lacp_timeout(struct aggr_softc *, int);
 static int	aggr_multi_add(struct aggr_softc *, struct ifreq *);
@@ -1059,7 +1059,6 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	struct arpcom *ac0;
 	struct aggr_port *p;
 	struct aggr_multiaddr *ma;
-	uint32_t hardmtu;
 	int past = ticks - (hz * LACP_TIMEOUT_FACTOR);
 	int i;
 	int error;
@@ -1075,11 +1074,8 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	if (ifp0->if_type != IFT_ETHER)
 		return (EPROTONOSUPPORT);
 
-	hardmtu = ifp0->if_hardmtu;
-	if (hardmtu < ifp->if_mtu)
+	if (ifp0->if_hardmtu < ifp->if_mtu)
 		return (ENOBUFS);
-	if (ifp->if_hardmtu < hardmtu)
-		hardmtu = ifp->if_hardmtu;
 
 	ac0 = (struct arpcom *)ifp0;
 	if (ac0->ac_trunkport != NULL)
@@ -1162,10 +1158,10 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	DPRINTF(sc, "%s %s trunkport: creating port\n",
 	    ifp->if_xname, ifp0->if_xname);
 
-	ifp->if_hardmtu = hardmtu;
-
 	TAILQ_INSERT_TAIL(&sc->sc_ports, p, p_entry);
 	sc->sc_nports++;
+
+	aggr_update_capabilities(sc);
 
 	ac0->ac_trunkport = p;
 	/* make sure p is visible before handlers can run */
@@ -1445,7 +1441,7 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	free(p, M_DEVBUF, sizeof(*p));
 
 	/* XXX this is a pretty ugly place to update this */
-	ifp->if_hardmtu = aggr_hardmtu(sc);
+	aggr_update_capabilities(sc);
 }
 
 static void
@@ -2593,22 +2589,27 @@ aggr_media_change(struct ifnet *ifp)
 	return (EOPNOTSUPP);
 }
 
-static uint32_t
-aggr_hardmtu(struct aggr_softc *sc)
+static void
+aggr_update_capabilities(struct aggr_softc *sc)
 {
 	struct aggr_port *p;
 	uint32_t hardmtu = ETHER_MAX_HARDMTU_LEN;
+	uint32_t capabilities = ~0;
+	int set = 0;
 
 	rw_enter_read(&sc->sc_lock);
 	TAILQ_FOREACH(p, &sc->sc_ports, p_entry) {
 		struct ifnet *ifp0 = p->p_ifp0;
 
+		set = 1;
+		capabilities &= ifp0->if_capabilities;
 		if (ifp0->if_hardmtu < hardmtu)
 			hardmtu = ifp0->if_hardmtu;
 	}
 	rw_exit_read(&sc->sc_lock);
 
-	return (hardmtu);
+	sc->sc_if.if_hardmtu = hardmtu;
+	sc->sc_if.if_capabilities = (set ? capabilities : 0);
 }
 
 static void
