@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.293 2020/06/02 19:10:26 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.294 2020/06/02 19:16:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3721,7 +3721,7 @@ window_copy_get_selection(struct window_mode_entry *wme, size_t *len)
 	/* Don't bother if no data. */
 	if (off == 0) {
 		free(buf);
-		*len = 0
+		*len = 0;
 		return (NULL);
 	}
 	if (keys == MODEKEY_EMACS || lastex <= ey_last)
