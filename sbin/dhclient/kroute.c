@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.187 2020/05/28 16:02:56 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.188 2020/06/03 18:15:57 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -390,79 +390,52 @@ add_route(char *name, int rdomain, int routefd, struct in_addr dest,
 	char			 destbuf[INET_ADDRSTRLEN];
 	char			 maskbuf[INET_ADDRSTRLEN];
 	struct iovec		 iov[5];
+	struct sockaddr_in	 sockaddr_in[4];
 	struct rt_msghdr	 rtm;
-	struct sockaddr_in	 sadest, sagateway, samask, saifa;
-	int			 index, iovcnt = 0;
-
-	index = if_nametoindex(name);
-	if (index == 0)
-		return;
-
-	/* Build RTM header */
+	int			 i, iovcnt = 0;
 
 	memset(&rtm, 0, sizeof(rtm));
+	rtm.rtm_index = if_nametoindex(name);
+	if (rtm.rtm_index == 0)
+		return;
 
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_ADD;
-	rtm.rtm_index = index;
 	rtm.rtm_tableid = rdomain;
 	rtm.rtm_priority = RTP_NONE;
-	rtm.rtm_addrs =	RTA_DST | RTA_NETMASK | RTA_GATEWAY;
 	rtm.rtm_flags = flags;
 
-	rtm.rtm_msglen = sizeof(rtm);
-	iov[iovcnt].iov_base = &rtm;
-	iov[iovcnt++].iov_len = sizeof(rtm);
+	iov[0].iov_base = &rtm;
+	iov[0].iov_len = sizeof(rtm);
 
-	/* Add the destination address. */
-	memset(&sadest, 0, sizeof(sadest));
-	sadest.sin_len = sizeof(sadest);
-	sadest.sin_family = AF_INET;
-	sadest.sin_addr.s_addr = dest.s_addr;
-
-	rtm.rtm_msglen += sizeof(sadest);
-	iov[iovcnt].iov_base = &sadest;
-	iov[iovcnt++].iov_len = sizeof(sadest);
-
-	/* Add the gateways address. */
-	memset(&sagateway, 0, sizeof(sagateway));
-	sagateway.sin_len = sizeof(sagateway);
-	sagateway.sin_family = AF_INET;
-	sagateway.sin_addr.s_addr = gateway.s_addr;
-
-	rtm.rtm_msglen += sizeof(sagateway);
-	iov[iovcnt].iov_base = &sagateway;
-	iov[iovcnt++].iov_len = sizeof(sagateway);
-
-	/* Add the network mask. */
-	memset(&samask, 0, sizeof(samask));
-	samask.sin_len = sizeof(samask);
-	samask.sin_family = AF_INET;
-	samask.sin_addr.s_addr = netmask.s_addr;
-
-	rtm.rtm_msglen += sizeof(samask);
-	iov[iovcnt].iov_base = &samask;
-	iov[iovcnt++].iov_len = sizeof(samask);
-
-	if (address.s_addr != INADDR_ANY) {
-		/* Add the ifa */
-		memset(&saifa, 0, sizeof(saifa));
-		saifa.sin_len = sizeof(saifa);
-		saifa.sin_family = AF_INET;
-		saifa.sin_addr.s_addr = address.s_addr;
-
-		rtm.rtm_msglen += sizeof(saifa);
-		iov[iovcnt].iov_base = &saifa;
-		iov[iovcnt++].iov_len = sizeof(saifa);
-		rtm.rtm_addrs |= RTA_IFA;
+	memset(sockaddr_in, 0, sizeof(sockaddr_in));
+	for (i = 0; i < 4; i++) {
+		sockaddr_in[i].sin_len = sizeof(sockaddr_in[i]);
+		sockaddr_in[i].sin_family = AF_INET;
+		iov[i+1].iov_base = &sockaddr_in[i];
+		iov[i+1].iov_len = sizeof(sockaddr_in[i]);
 	}
+
+	/* Order of sockaddr_in's is mandatory! */
+	sockaddr_in[0].sin_addr = dest;
+	sockaddr_in[1].sin_addr = gateway;
+	sockaddr_in[2].sin_addr = netmask;
+	sockaddr_in[3].sin_addr = address;
+	if (address.s_addr == INADDR_ANY) {
+		rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
+		iovcnt = 4;
+	} else {
+		rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_IFA;
+		iovcnt = 5;
+	}
+
+	for (i = 0; i < iovcnt; i++)
+		rtm.rtm_msglen += iov[i].iov_len;
 
 	if (writev(routefd, iov, iovcnt) == -1) {
 		if (errno != EEXIST || log_getverbose() != 0) {
-			strlcpy(destbuf, inet_ntoa(dest),
-			    sizeof(destbuf));
-			strlcpy(maskbuf, inet_ntoa(netmask),
-			    sizeof(maskbuf));
+			strlcpy(destbuf, inet_ntoa(dest), sizeof(destbuf));
+			strlcpy(maskbuf, inet_ntoa(netmask),sizeof(maskbuf));
 			log_warn("%s: add route %s/%s via %s", log_procname,
 			    destbuf, maskbuf, inet_ntoa(gateway));
 		}
