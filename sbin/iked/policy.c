@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.63 2020/05/26 20:24:31 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.64 2020/06/03 17:56:42 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -541,13 +541,12 @@ sa_free_flows(struct iked *env, struct iked_saflows *head)
 
 
 int
-sa_address(struct iked_sa *sa, struct iked_addr *addr,
-    struct sockaddr_storage *peer)
+sa_address(struct iked_sa *sa, struct iked_addr *addr, struct sockaddr *peer)
 {
 	bzero(addr, sizeof(*addr));
-	addr->addr_af = peer->ss_family;
-	addr->addr_port = htons(socket_getport((struct sockaddr *)peer));
-	memcpy(&addr->addr, peer, sizeof(*peer));
+	addr->addr_af = peer->sa_family;
+	addr->addr_port = htons(socket_getport(peer));
+	memcpy(&addr->addr, peer, peer->sa_len);
 	if (socket_af((struct sockaddr *)&addr->addr, addr->addr_port) == -1) {
 		log_debug("%s: invalid address", __func__);
 		return (-1);
