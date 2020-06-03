@@ -1,4 +1,4 @@
-.\" $OpenBSD: PKCS7_dataInit.3,v 1.1 2020/05/24 12:37:30 schwarze Exp $
+.\" $OpenBSD: PKCS7_dataInit.3,v 1.2 2020/06/03 13:41:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2020 $
+.Dd $Mdocdate: June 3 2020 $
 .Dt PKCS7_DATAINIT 3
 .Os
 .Sh NAME
@@ -110,6 +110,20 @@ are typically required to create
 to choose its desired type, and to allocate the nested
 .Vt ContentInfo
 structure.
+Alternatively, for
+.Vt SignedData ,
+.Xr PKCS7_sign 3
+can be used with the
+.Dv PKCS7_PARTIAL
+or
+.Dv PKCS7_STREAM
+.Fa flags
+or for
+.Vt EnvelopedData ,
+.Xr PKCS7_encrypt 3
+with the
+.Dv PKCS7_STREAM
+flag.
 .Pp
 After calling
 .Fn PKCS7_dataInit ,
@@ -130,7 +144,10 @@ does support the
 .Vt EnvelopedData
 and
 .Vt SignedAndEnvelopedData
-types, using it for these types is awkward and error prone because
+types, using it for these types is awkward and error prone
+except when using
+.Xr PKCS7_encrypt 3
+for the setup because
 .Xr PKCS7_content_new 3
 does not support these two types.
 So in addition to creating
@@ -183,6 +200,8 @@ or for various other reasons.
 .Xr BIO_read 3 ,
 .Xr PKCS7_content_new 3 ,
 .Xr PKCS7_dataFinal 3 ,
+.Xr PKCS7_encrypt 3 ,
+.Xr PKCS7_final 3 ,
 .Xr PKCS7_new 3 ,
 .Xr PKCS7_set_type 3 ,
 .Xr PKCS7_sign 3
