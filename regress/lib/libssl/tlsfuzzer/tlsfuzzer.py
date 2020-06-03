@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.5 2020/06/01 10:46:45 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.6 2020/06/03 04:47:03 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -98,6 +98,13 @@ tls13_slow_tests = TestGroup("slow TLSv1.3 tests", [
 
     Test("test-tls13-invalid-ciphers.py"),
     Test("test-tls13-serverhello-random.py", tls13_unsupported_ciphers),
+
+    # Mark two tests cases as xfail for now. The tests expect an arguably
+    # correct decode_error while we send a decrypt_error (like fizz/boring).
+    Test("test-tls13-record-layer-limits.py", [
+        "-x", "max size payload (2**14) of Finished msg, with 16348 bytes of left padding, cipher TLS_AES_128_GCM_SHA256",
+        "-x", "max size payload (2**14) of Finished msg, with 16348 bytes of left padding, cipher TLS_CHACHA20_POLY1305_SHA256",
+    ]),
 ])
 
 tls13_extra_cert_tests = TestGroup("TLSv1.3 certificate tests", [
@@ -137,10 +144,6 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
 ])
 
 tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
-    # After adding record overflow alert, 14 tests fail because
-    # they expect ExpectNewSessionTicket().
-    Test("test-tls13-record-layer-limits.py" ),
-
     # Other test failures bugs in keyshare/tlsext negotiation?
     Test("test-tls13-shuffled-extentions.py"),    # should reject 2nd CH
     Test("test-tls13-unrecognised-groups.py"),    # unexpected closure
