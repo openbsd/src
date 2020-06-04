@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.15 2020/05/19 10:59:09 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.16 2020/06/04 10:36:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -332,21 +332,26 @@ tty_default_features(int *feat, const char *name, u_int version)
 		u_int		 version;
 		const char	*features;
 	} table[] = {
-#define TTY_FEATURES_BASE_MODERN_XTERM "256,RGB,bpaste,clipboard,strikethrough,title"
+#define TTY_FEATURES_BASE_MODERN_XTERM \
+	"256,RGB,bpaste,clipboard,strikethrough,title"
 		{ .name = "mintty",
-		  .features = TTY_FEATURES_BASE_MODERN_XTERM ",ccolour,cstyle,extkeys,margins,overline"
+		  .features = TTY_FEATURES_BASE_MODERN_XTERM
+			      ",ccolour,cstyle,extkeys,margins,overline"
 		},
 		{ .name = "tmux",
-		  .features = TTY_FEATURES_BASE_MODERN_XTERM ",ccolour,cstyle,focus,overline,usstyle"
+		  .features = TTY_FEATURES_BASE_MODERN_XTERM
+			      ",ccolour,cstyle,focus,overline,usstyle"
 		},
 		{ .name = "rxvt-unicode",
 		  .features = "256,bpaste,ccolour,cstyle,title"
 		},
 		{ .name = "iTerm2",
-		  .features = TTY_FEATURES_BASE_MODERN_XTERM ",cstyle,extkeys,margins,sync"
+		  .features = TTY_FEATURES_BASE_MODERN_XTERM
+			      ",cstyle,extkeys,margins,sync"
 		},
 		{ .name = "XTerm",
-		  .features = TTY_FEATURES_BASE_MODERN_XTERM ",ccolour,cstyle,extkeys,focus,margins,rectfill"
+		  .features = TTY_FEATURES_BASE_MODERN_XTERM
+			      ",ccolour,cstyle,extkeys,focus,margins,rectfill"
 		}
 	};
 	u_int	i;
