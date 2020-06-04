@@ -1,4 +1,4 @@
-.\" $OpenBSD: PKCS7_add_attribute.3,v 1.1 2020/06/04 10:24:27 schwarze Exp $
+.\" $OpenBSD: PKCS7_add_attribute.3,v 1.2 2020/06/04 21:21:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -123,7 +123,9 @@ exist.
 and
 .Fn PKCS7_add_signed_attribute
 return 1 on success or 0 on failure.
-The most common reason for failure is lack of memory.
+The most common reasons for failure are an invalid
+.Fa nid
+argument or lack of memory.
 .Pp
 .Fn PKCS7_get_attribute
 and
@@ -153,16 +155,6 @@ These functions first appeared in OpenSSL 0.9.1
 and have been available since
 .Ox 2.6 .
 .Sh BUGS
-Adding an attribute with an invalid
-.Fa nid
-ought to fail, but it actually succeeds
-setting the type of the new attribute to
-.Dv NULL .
-Subsequent attempts to retrieve attributes
-may cause the program to crash due to
-.Dv NULL
-pointer access.
-.Pp
 A function to remove individual attributes from these lists
 does not appear to exist.
 A program desiring to do that might have to manually iterate the fields
