@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.131 2019/07/08 17:49:57 mpi Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.132 2020/06/04 04:27:51 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2085,11 +2085,28 @@ int
 pfr_match_addr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af)
 {
 	struct pfr_kentry	*ke = NULL;
+	int			 match;
+
+	ke = pfr_kentry_byaddr(kt, a, af, 0);
+
+	match = (ke && !(ke->pfrke_flags & PFRKE_FLAG_NOT));
+	if (match)
+		kt->pfrkt_match++;
+	else
+		kt->pfrkt_nomatch++;
+
+	return (match);
+}
+
+struct pfr_kentry *
+pfr_kentry_byaddr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
+    int exact)
+{
+	struct pfr_kentry	*ke = NULL;
 	struct sockaddr_in	 tmp4;
 #ifdef INET6
 	struct sockaddr_in6	 tmp6;
 #endif /* INET6 */
-	int			 match;
 
 	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
 		kt = kt->pfrkt_root;
@@ -2116,12 +2133,10 @@ pfr_match_addr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af)
 	default:
 		unhandled_af(af);
 	}
-	match = (ke && !(ke->pfrke_flags & PFRKE_FLAG_NOT));
-	if (match)
-		kt->pfrkt_match++;
-	else
-		kt->pfrkt_nomatch++;
-	return (match);
+	if (exact && ke && KENTRY_NETWORK(ke))
+		ke = NULL;
+
+	return (ke);
 }
 
 void
@@ -2497,39 +2512,6 @@ pfr_states_decrease(struct pfr_ktable *kt, struct pf_addr *addr, int af)
 		    "pfr_states_decrease: states-- when states <= 0");
 
 	return ke->pfrke_counters->states;
-}
-
-/*
- * Added for load balancing to find a kentry outside of the table.
- * We need to create a custom pfr_addr struct.
- */
-struct pfr_kentry *
-pfr_kentry_byaddr(struct pfr_ktable *kt, struct pf_addr *addr, sa_family_t af,
-    int exact)
-{
-	struct pfr_kentry *ke;
-	struct pfr_addr p;
-
-	bzero(&p, sizeof(p));
-	p.pfra_af = af;
-	switch (af) {
-	case AF_INET:
-		p.pfra_net = 32;
-		p.pfra_ip4addr = addr->v4;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		p.pfra_net = 128;
-		p.pfra_ip6addr = addr->v6;
-		break;
-#endif /* INET6 */
-	default:
-		unhandled_af(af);
-	}
-
-	ke = pfr_lookup_addr(kt, &p, exact);
-
-	return ke;
 }
 
 void
