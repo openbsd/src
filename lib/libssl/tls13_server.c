@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.56 2020/06/02 04:50:17 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.57 2020/06/04 18:46:21 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -508,7 +508,8 @@ tls13_server_select_certificate(struct tls13_ctx *ctx, CERT_PKEY **out_cpk,
 	if (cert_ok)
 		goto done;
 
-	return 0;
+	cpk = NULL;
+	sigalg = NULL;
 
  done:
 	*out_cpk = cpk;
@@ -528,7 +529,10 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	X509 *cert;
 	int i, ret = 0;
 
-	if (!tls13_server_select_certificate(ctx, &cpk, &sigalg)) {
+	if (!tls13_server_select_certificate(ctx, &cpk, &sigalg))
+		goto err;
+
+	if (cpk == NULL) {
 		/* A server must always provide a certificate. */
 		ctx->alert = TLS13_ALERT_HANDSHAKE_FAILURE;
 		tls13_set_errorx(ctx, TLS13_ERR_NO_CERTIFICATE, 0,
