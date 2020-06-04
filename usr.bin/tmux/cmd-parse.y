@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.29 2020/06/04 08:30:44 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.30 2020/06/04 16:06:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -535,9 +535,11 @@ argument_statements	: statement '}'
 			{
 				$$ = $1;
 			}
-			| statements '}'
+			| statements statement '}'
 			{
 				$$ = $1;
+				TAILQ_CONCAT($$, $2, entry);
+				free($2);
 			}
 
 %%
