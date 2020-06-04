@@ -17,9 +17,34 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.31.11 - John F. Kennedy, National Committee for a Sane Nuclear Policy
+
+L<Announced on 2020-04-28 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2020/04/msg257385.html>
+
+Mankind must put an end to war, or war will put an end to mankind.
+
+=head2 v5.31.10 - Christina Rossetti, "Remember"
+
+L<Announced on 2020-03-20 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2020/03/msg257274.html>
+
+    Remember me when I am gone away,
+        Gone far away into the silent land;
+        When you can no more hold me by the hand,
+    Nor I half turn to go yet turning stay.
+    Remember me when no more day by day
+        You tell me of our future that you plann'd:
+        Only remember me; you understand
+    It will be late to counsel then or pray.
+    Yet if you should forget me for a while
+        And afterwards remember, do not grieve:
+        For if the darkness and corruption leave
+        A vestige of the thoughts that once I had,
+    Better by far you should forget and smile
+        Than that you should remember and be sad.
+
 =head2 v5.31.9 - Sten Nadolny, book The Discovery of Slowness
 
-L<Announced on 2020-01-20 by Renee Bäcker|https://www.nntp.perl.org/group/perl.perl5.porters/2020/02/msg257144.html>
+L<Announced on 2020-02-20 by Renee Bäcker|https://www.nntp.perl.org/group/perl.perl5.porters/2020/02/msg257144.html>
 
   „When people talk too fast the content becomes as superfluous as the speed.“
 
@@ -218,6 +243,46 @@ L<Announced on 2019-05-24 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5
 
   The secrets inside her mind are like flowers in a garden at
   nighttime, filling the darkness with perfume.
+
+=head2 v5.30.2 - Francesco Maria Piave, trans. Deutsche Grammophon GmbH, "La traviata", Act II, Scene 2
+
+L<Announced on 2020-03-14 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2020/03/msg257227.html>
+
+  FLORA, GASTON, DOCTOR, MARQUIS, CHORUS
+  (to Violetta)
+  Yes, you have suffered, but take heart!
+  Every one of us has shared your pain;
+  friends are around you to dry the tears
+  you have shed.
+
+  GERMONT
+  (I alone know the true devotion
+  this poor girl hides within her breast;
+  I know her faithful heart,
+  but I'm vowed so cruelly to silence.)
+
+  BARON
+  (softly to Alfredo)
+  Your deadly insult to this lady
+  offends us all, but such an outrage
+  shall not go unavenged!
+  I shall find a way to humble your pride!
+
+  ALFREDO
+  (Alas, what have I done? I feel terrible about it.
+  She will never forgive me.)
+
+  VIOLETTA
+  (coming to herself)
+  Alfredo, how should you understand
+  all the love that's in my heart?
+  How should you know that I have proved it,
+  even at the price of your contempt?
+
+  But the time will come when you will know,
+  when you'll admit how much I loved you.
+  God save you then from all remorse!
+  Even after death I shall still love you.
 
 =head2 v5.30.2-RC1 - Francesco Maria Piave, trans. Deutsche Grammophon GmbH, "La traviata", Act II, Scene 2
 
