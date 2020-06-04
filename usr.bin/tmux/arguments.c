@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.33 2020/05/25 18:17:14 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.34 2020/06/04 07:12:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -224,6 +224,11 @@ args_escape(const char *s)
 	    (strchr(quoted, s[0]) != NULL || s[0] == '~') &&
 	    s[1] == '\0') {
 		xasprintf(&escaped, "\\%c", s[0]);
+		return (escaped);
+	}
+
+	if (strchr(s, ' ') != NULL && strchr(s, '\'') == NULL) {
+		xasprintf(&escaped, "'%s'", s);
 		return (escaped);
 	}
 
