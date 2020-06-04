@@ -1,4 +1,4 @@
-.\" $OpenBSD: PKCS7_sign.3,v 1.11 2020/06/03 13:41:27 schwarze Exp $
+.\" $OpenBSD: PKCS7_sign.3,v 1.12 2020/06/04 10:24:27 schwarze Exp $
 .\" full merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 3 2020 $
+.Dd $Mdocdate: June 4 2020 $
 .Dt PKCS7_SIGN 3
 .Os
 .Sh NAME
@@ -196,7 +196,9 @@ if the
 .Dv PKCS7_PARTIAL
 flag is set.
 One or more signers can be added using the function
-.Xr PKCS7_sign_add_signer 3 .
+.Xr PKCS7_sign_add_signer 3
+and attributes can be added using the functions described in
+.Xr PKCS7_add_attribute 3 .
 .Xr PKCS7_final 3
 must also be called to finalize the structure if streaming is not
 enabled.
@@ -228,6 +230,7 @@ if an error occurred.
 The error can be obtained from
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
+.Xr PKCS7_add_attribute 3 ,
 .Xr PKCS7_encrypt 3 ,
 .Xr PKCS7_final 3 ,
 .Xr PKCS7_new 3 ,
