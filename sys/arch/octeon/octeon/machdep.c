@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.119 2019/12/20 13:34:41 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.123 2020/05/31 06:23:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -155,6 +155,30 @@ struct timecounter ioclock_timecounter = {
 					 * determined at runtime */
 };
 
+static int
+atoi(const char *s)
+{
+	int n, neg;
+
+	n = 0;
+	neg = 0;
+
+	while (*s == '-') {
+		s++;
+		neg = !neg;
+	}
+
+	while (*s != '\0') {
+		if (*s < '0' || *s > '9')
+			break;
+
+		n = (10 * n) + (*s - '0');
+		s++;
+	}
+
+	return (neg ? -n : n);
+}
+
 static struct octeon_bootmem_block *
 pa_to_block(paddr_t addr)
 {
@@ -249,6 +273,7 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 {
 	uint prid;
 	vaddr_t xtlb_handler;
+	size_t len;
 	int i;
 	struct boot_desc *boot_desc;
 	struct boot_info *boot_info;
@@ -500,6 +525,17 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 		panic("cannot run without physical CPU 0");
 
 	/*
+	 * Use bits of board information to improve initial entropy.
+	 */
+	enqueue_randomness((octeon_boot_info->board_type << 16) |
+	    (octeon_boot_info->board_rev_major << 8) |
+	    octeon_boot_info->board_rev_minor);
+	len = strnlen(octeon_boot_info->board_serial,
+	    sizeof(octeon_boot_info->board_serial));
+	for (i = 0; i < len; i++)
+		enqueue_randomness(octeon_boot_info->board_serial[i]);
+
+	/*
 	 * Init message buffer.
 	 */
 	msgbufbase = (caddr_t)pmap_steal_memory(MSGBUFSIZE, NULL,NULL);
@@ -747,10 +783,11 @@ process_bootargs(void)
 		printf("boot_desc->argv[%d] = %s\n", i, arg);
 #endif
 
-		/*
-		 * XXX: We currently only expect one other argument,
-		 * rootdev=ROOTDEV.
-		 */
+		if (strncmp(arg, "boothowto=", 10) == 0) {
+			boothowto = atoi(arg + 10);
+			continue;
+		}
+
 		if (strncmp(arg, "rootdev=", 8) == 0) {
 			parse_uboot_root(arg + 8);
 			continue;
@@ -1210,3 +1247,12 @@ hw_cpu_hatch(struct cpu_info *ci)
 	cpu_switchto(NULL, sched_chooseproc());
 }
 #endif /* MULTIPROCESSOR */
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
+}

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.81 2020/05/19 01:30:34 beck Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.83 2020/05/29 17:47:30 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -198,6 +198,7 @@ void tls13_record_layer_set_hash(struct tls13_record_layer *rl,
     const EVP_MD *hash);
 void tls13_record_layer_set_legacy_version(struct tls13_record_layer *rl,
     uint16_t version);
+void tls13_record_layer_set_retry_after_phh(struct tls13_record_layer *rl, int retry);
 void tls13_record_layer_handshake_completed(struct tls13_record_layer *rl);
 int tls13_record_layer_set_read_traffic_key(struct tls13_record_layer *rl,
     struct tls13_secret *read_key);
@@ -310,6 +311,7 @@ int tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len,
     int peek);
 int tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len);
 int tls13_legacy_shutdown(SSL *ssl);
+int tls13_legacy_servername_process(struct tls13_ctx *ctx, uint8_t *alert);
 
 /*
  * Message Types - RFC 8446, Section B.3.

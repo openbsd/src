@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.255 2020/04/18 21:55:56 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.256 2020/05/31 04:58:38 jsg Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -474,6 +474,10 @@ azalia_configure_pci(azalia_t *az)
 	}
 }
 
+const struct pci_matchid azalia_pci_devices[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_U_HDA }
+};
+
 int
 azalia_pci_match(struct device *parent, void *match, void *aux)
 {
@@ -483,7 +487,8 @@ azalia_pci_match(struct device *parent, void *match, void *aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MULTIMEDIA
 	    && PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MULTIMEDIA_HDAUDIO)
 		return 1;
-	return 0;
+	return pci_matchbyid((struct pci_attach_args *)aux, azalia_pci_devices,
+	    nitems(azalia_pci_devices));
 }
 
 void

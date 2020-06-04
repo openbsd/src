@@ -1,4 +1,4 @@
-/*	$OpenBSD: omrng.c,v 1.1 2020/04/05 13:11:13 kettenis Exp $	*/
+/*	$OpenBSD: omrng.c,v 1.2 2020/05/29 04:42:23 deraadt Exp $	*/
 /*
  * Copyright (c) 2018, 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -23,7 +23,6 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <dev/rndvar.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 

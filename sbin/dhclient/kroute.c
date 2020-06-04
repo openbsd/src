@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.183 2020/05/21 12:31:02 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.188 2020/06/03 18:15:57 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -263,7 +263,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
  */
 unsigned int
 route_pos(struct rt_msghdr *rtm, uint8_t *routes, unsigned int routes_len,
-    struct in_addr ifa)
+    struct in_addr address)
 {
 	struct sockaddr		*rti_info[RTAX_MAX];
 	struct sockaddr		*dst, *netmask, *gateway;
@@ -305,12 +305,12 @@ route_pos(struct rt_msghdr *rtm, uint8_t *routes, unsigned int routes_len,
 		 *
 		 * direct route in rtm:
 		 *
-		 * dst=1.2.3.4 netmask=255.255.255.255 gateway = ifa
+		 * dst=1.2.3.4 netmask=255.255.255.255 gateway = address
 		 *
-		 * So replace 0.0.0.0 with ifa for comparison.
+		 * So replace 0.0.0.0 with address for comparison.
 		 */
 		if (routesgatewayaddr == INADDR_ANY)
-			routesgatewayaddr = ifa.s_addr;
+			routesgatewayaddr = address.s_addr;
 		routesdstaddr &= routesnetmaskaddr;
 
 		if (dstaddr == routesdstaddr &&
@@ -332,7 +332,7 @@ route_pos(struct rt_msghdr *rtm, uint8_t *routes, unsigned int routes_len,
  */
 void
 flush_routes(int index, int routefd, int rdomain, uint8_t *routes,
-    unsigned int routes_len, struct in_addr ifa)
+    unsigned int routes_len, struct in_addr address)
 {
 	static int			 seqno;
 	char				*lim, *buf, *next;
@@ -360,7 +360,7 @@ flush_routes(int index, int routefd, int rdomain, uint8_t *routes,
 			continue;
 
 		/* Don't bother deleting a route we're going to add. */
-		pos = route_pos(rtm, routes, routes_len, ifa);
+		pos = route_pos(rtm, routes, routes_len, address);
 		if (pos < routes_len)
 			continue;
 
@@ -384,85 +384,58 @@ flush_routes(int index, int routefd, int rdomain, uint8_t *routes,
  */
 void
 add_route(char *name, int rdomain, int routefd, struct in_addr dest,
-    struct in_addr netmask, struct in_addr gateway, struct in_addr ifa,
+    struct in_addr netmask, struct in_addr gateway, struct in_addr address,
     int flags)
 {
 	char			 destbuf[INET_ADDRSTRLEN];
 	char			 maskbuf[INET_ADDRSTRLEN];
 	struct iovec		 iov[5];
+	struct sockaddr_in	 sockaddr_in[4];
 	struct rt_msghdr	 rtm;
-	struct sockaddr_in	 sadest, sagateway, samask, saifa;
-	int			 index, iovcnt = 0;
-
-	index = if_nametoindex(name);
-	if (index == 0)
-		return;
-
-	/* Build RTM header */
+	int			 i, iovcnt = 0;
 
 	memset(&rtm, 0, sizeof(rtm));
+	rtm.rtm_index = if_nametoindex(name);
+	if (rtm.rtm_index == 0)
+		return;
 
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = RTM_ADD;
-	rtm.rtm_index = index;
 	rtm.rtm_tableid = rdomain;
 	rtm.rtm_priority = RTP_NONE;
-	rtm.rtm_addrs =	RTA_DST | RTA_NETMASK | RTA_GATEWAY;
 	rtm.rtm_flags = flags;
 
-	rtm.rtm_msglen = sizeof(rtm);
-	iov[iovcnt].iov_base = &rtm;
-	iov[iovcnt++].iov_len = sizeof(rtm);
+	iov[0].iov_base = &rtm;
+	iov[0].iov_len = sizeof(rtm);
 
-	/* Add the destination address. */
-	memset(&sadest, 0, sizeof(sadest));
-	sadest.sin_len = sizeof(sadest);
-	sadest.sin_family = AF_INET;
-	sadest.sin_addr.s_addr = dest.s_addr;
-
-	rtm.rtm_msglen += sizeof(sadest);
-	iov[iovcnt].iov_base = &sadest;
-	iov[iovcnt++].iov_len = sizeof(sadest);
-
-	/* Add the gateways address. */
-	memset(&sagateway, 0, sizeof(sagateway));
-	sagateway.sin_len = sizeof(sagateway);
-	sagateway.sin_family = AF_INET;
-	sagateway.sin_addr.s_addr = gateway.s_addr;
-
-	rtm.rtm_msglen += sizeof(sagateway);
-	iov[iovcnt].iov_base = &sagateway;
-	iov[iovcnt++].iov_len = sizeof(sagateway);
-
-	/* Add the network mask. */
-	memset(&samask, 0, sizeof(samask));
-	samask.sin_len = sizeof(samask);
-	samask.sin_family = AF_INET;
-	samask.sin_addr.s_addr = netmask.s_addr;
-
-	rtm.rtm_msglen += sizeof(samask);
-	iov[iovcnt].iov_base = &samask;
-	iov[iovcnt++].iov_len = sizeof(samask);
-
-	if (ifa.s_addr != INADDR_ANY) {
-		/* Add the ifa */
-		memset(&saifa, 0, sizeof(saifa));
-		saifa.sin_len = sizeof(saifa);
-		saifa.sin_family = AF_INET;
-		saifa.sin_addr.s_addr = ifa.s_addr;
-
-		rtm.rtm_msglen += sizeof(saifa);
-		iov[iovcnt].iov_base = &saifa;
-		iov[iovcnt++].iov_len = sizeof(saifa);
-		rtm.rtm_addrs |= RTA_IFA;
+	memset(sockaddr_in, 0, sizeof(sockaddr_in));
+	for (i = 0; i < 4; i++) {
+		sockaddr_in[i].sin_len = sizeof(sockaddr_in[i]);
+		sockaddr_in[i].sin_family = AF_INET;
+		iov[i+1].iov_base = &sockaddr_in[i];
+		iov[i+1].iov_len = sizeof(sockaddr_in[i]);
 	}
+
+	/* Order of sockaddr_in's is mandatory! */
+	sockaddr_in[0].sin_addr = dest;
+	sockaddr_in[1].sin_addr = gateway;
+	sockaddr_in[2].sin_addr = netmask;
+	sockaddr_in[3].sin_addr = address;
+	if (address.s_addr == INADDR_ANY) {
+		rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
+		iovcnt = 4;
+	} else {
+		rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_IFA;
+		iovcnt = 5;
+	}
+
+	for (i = 0; i < iovcnt; i++)
+		rtm.rtm_msglen += iov[i].iov_len;
 
 	if (writev(routefd, iov, iovcnt) == -1) {
 		if (errno != EEXIST || log_getverbose() != 0) {
-			strlcpy(destbuf, inet_ntoa(dest),
-			    sizeof(destbuf));
-			strlcpy(maskbuf, inet_ntoa(netmask),
-			    sizeof(maskbuf));
+			strlcpy(destbuf, inet_ntoa(dest), sizeof(destbuf));
+			strlcpy(maskbuf, inet_ntoa(netmask),sizeof(maskbuf));
 			log_warn("%s: add route %s/%s via %s", log_procname,
 			    destbuf, maskbuf, inet_ntoa(gateway));
 		}
@@ -900,7 +873,8 @@ priv_propose(char *name, int ioctlfd, struct proposal *proposal,
 	char			*search = NULL;
 	int			 rslt;
 
-	if (sz != proposal->routes_len + proposal->domains_len + proposal->ns_len) {
+	if (sz != proposal->routes_len + proposal->domains_len +
+	    proposal->ns_len) {
 		log_warnx("%s: bad IMSG_PROPOSE data", log_procname);
 		return;
 	}
@@ -948,9 +922,9 @@ priv_propose(char *name, int ioctlfd, struct proposal *proposal,
 			set_mtu(name, ioctlfd, proposal->mtu);
 	}
 
-	set_address(name, ioctlfd, proposal->ifa, proposal->netmask);
+	set_address(name, ioctlfd, proposal->address, proposal->netmask);
 
-	set_routes(name, index, rdomain, routefd, proposal->ifa,
+	set_routes(name, index, rdomain, routefd, proposal->address,
 	    proposal->netmask, routes, proposal->routes_len);
 }
 
@@ -978,7 +952,7 @@ priv_revoke_proposal(char *name, int ioctlfd, struct proposal *proposal,
 	free(*resolv_conf);
 	*resolv_conf = NULL;
 
-	delete_address(name, ioctlfd, proposal->ifa);
+	delete_address(name, ioctlfd, proposal->address);
 }
 
 /*
@@ -1008,7 +982,8 @@ tell_unwind(struct unwind_info *unwind_info, int ifi_flags)
 }
 
 void
-priv_tell_unwind(int index, int routefd, int rdomain, struct unwind_info *unwind_info)
+priv_tell_unwind(int index, int routefd, int rdomain,
+    struct unwind_info *unwind_info)
 {
 	struct rt_msghdr		 rtm;
 	struct sockaddr_rtdns		 rtdns;

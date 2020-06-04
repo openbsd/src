@@ -63,8 +63,6 @@
 
 #include <machine/i82489var.h>
 
-#include <dev/rndvar.h>
-
 #include <dev/pv/pvvar.h>
 #include <dev/pv/pvreg.h>
 #include <dev/pv/hypervreg.h>

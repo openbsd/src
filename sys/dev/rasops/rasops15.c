@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops15.c,v 1.8 2010/08/28 12:48:14 miod Exp $	*/
+/*	$OpenBSD: rasops15.c,v 1.9 2020/05/25 09:55:49 jsg Exp $	*/
 /*	$NetBSD: rasops15.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -38,18 +38,18 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-int 	rasops15_putchar(void *, int, int, u_int, long attr);
+int 	rasops15_putchar(void *, int, int, u_int, uint32_t attr);
 #ifndef RASOPS_SMALL
-int 	rasops15_putchar8(void *, int, int, u_int, long attr);
-int 	rasops15_putchar12(void *, int, int, u_int, long attr);
-int 	rasops15_putchar16(void *, int, int, u_int, long attr);
-void	rasops15_makestamp(struct rasops_info *, long);
+int 	rasops15_putchar8(void *, int, int, u_int, uint32_t attr);
+int 	rasops15_putchar12(void *, int, int, u_int, uint32_t attr);
+int 	rasops15_putchar16(void *, int, int, u_int, uint32_t attr);
+void	rasops15_makestamp(struct rasops_info *, uint32_t);
 
 /*
  * (2x2)x1 stamp for optimized character blitting
  */
 static int32_t	stamp[32];
-static long	stamp_attr;
+static uint32_t	stamp_attr;
 static int	stamp_mutex;	/* XXX see note in readme */
 #endif
 
@@ -105,7 +105,7 @@ rasops15_init(struct rasops_info *ri)
  * Paint a single character.
  */
 int
-rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
+rasops15_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	int fb, width, height, cnt, clr[2];
 	struct rasops_info *ri;
@@ -177,7 +177,7 @@ rasops15_putchar(void *cookie, int row, int col, u_int uc, long attr)
  * Recompute the (2x2)x1 blitting stamp.
  */
 void
-rasops15_makestamp(struct rasops_info *ri, long attr)
+rasops15_makestamp(struct rasops_info *ri, uint32_t attr)
 {
 	int32_t fg, bg;
 	int i;
@@ -205,7 +205,7 @@ rasops15_makestamp(struct rasops_info *ri, long attr)
  * Paint a single character. This is for 8-pixel wide fonts.
  */
 int
-rasops15_putchar8(void *cookie, int row, int col, u_int uc, long attr)
+rasops15_putchar8(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -281,7 +281,7 @@ rasops15_putchar8(void *cookie, int row, int col, u_int uc, long attr)
  * Paint a single character. This is for 12-pixel wide fonts.
  */
 int
-rasops15_putchar12(void *cookie, int row, int col, u_int uc, long attr)
+rasops15_putchar12(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -361,7 +361,7 @@ rasops15_putchar12(void *cookie, int row, int col, u_int uc, long attr)
  * Paint a single character. This is for 16-pixel wide fonts.
  */
 int
-rasops15_putchar16(void *cookie, int row, int col, u_int uc, long attr)
+rasops15_putchar16(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;

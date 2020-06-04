@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.28 2020/01/02 10:16:46 denis Exp $ */
+/*	$OpenBSD: interface.c,v 1.29 2020/05/27 09:03:56 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -27,7 +27,6 @@
 #include <net/if_types.h>
 #include <ctype.h>
 #include <err.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

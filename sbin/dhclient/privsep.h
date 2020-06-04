@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.67 2020/05/20 23:54:53 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.69 2020/05/28 15:23:46 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -25,7 +25,7 @@ enum imsg_code {
 };
 
 struct proposal {
-	struct in_addr	ifa;
+	struct in_addr	address;
 	struct in_addr	netmask;
 	unsigned int	routes_len;
 	unsigned int	domains_len;
@@ -41,7 +41,8 @@ struct unwind_info {
 void	dispatch_imsg(char *, int, int, int, struct imsgbuf *);
 
 void	priv_write_resolv_conf(int, int, int, char *, int *);
-void	priv_propose(char *, int, struct proposal *, size_t, char **, int, int, int);
+void	priv_propose(char *, int, struct proposal *, size_t, char **, int, int,
+    int);
 
 void	priv_revoke_proposal(char *, int, struct proposal *, char **);
 

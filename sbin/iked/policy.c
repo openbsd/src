@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.62 2020/05/13 23:03:20 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.64 2020/06/03 17:56:42 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -541,13 +541,12 @@ sa_free_flows(struct iked *env, struct iked_saflows *head)
 
 
 int
-sa_address(struct iked_sa *sa, struct iked_addr *addr,
-    struct sockaddr_storage *peer)
+sa_address(struct iked_sa *sa, struct iked_addr *addr, struct sockaddr *peer)
 {
 	bzero(addr, sizeof(*addr));
-	addr->addr_af = peer->ss_family;
-	addr->addr_port = htons(socket_getport((struct sockaddr *)peer));
-	memcpy(&addr->addr, peer, sizeof(*peer));
+	addr->addr_af = peer->sa_family;
+	addr->addr_port = htons(socket_getport(peer));
+	memcpy(&addr->addr, peer, peer->sa_len);
 	if (socket_af((struct sockaddr *)&addr->addr, addr->addr_port) == -1) {
 		log_debug("%s: invalid address", __func__);
 		return (-1);
@@ -774,7 +773,7 @@ proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
     struct iked_transform **xforms, int rekey)
 {
 	struct iked_transform	*tpeer, *tlocal;
-	unsigned int		 i, j, type, score, requiredh = 0;
+	unsigned int		 i, j, type, score, requiredh = 0, noauth = 0;
 	uint8_t			 protoid = peer->prop_protoid;
 	uint8_t			 peerxfs[IKEV2_XFORMTYPE_MAX];
 
@@ -782,8 +781,18 @@ proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
 
 	for (i = 0; i < peer->prop_nxforms; i++) {
 		tpeer = peer->prop_xforms + i;
+		/* If any of the ENC transforms is an AEAD, ignore auth */
+		if (tpeer->xform_type == IKEV2_XFORMTYPE_ENCR &&
+		    encxf_noauth(tpeer->xform_id))
+			noauth = 1;
+	}
+
+	for (i = 0; i < peer->prop_nxforms; i++) {
+		tpeer = peer->prop_xforms + i;
 		if (tpeer->xform_type > IKEV2_XFORMTYPE_MAX)
 			continue;
+		if (noauth && tpeer->xform_type == IKEV2_XFORMTYPE_INTEGR)
+			return (0);
 
 		/*
 		 * Record all transform types from the peer's proposal,
@@ -832,7 +841,8 @@ proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
 	for (i = score = 0; i < IKEV2_XFORMTYPE_MAX; i++) {
 		if (protoid == IKEV2_SAPROTO_IKE && xforms[i] == NULL &&
 		    (i == IKEV2_XFORMTYPE_ENCR || i == IKEV2_XFORMTYPE_PRF ||
-		     i == IKEV2_XFORMTYPE_INTEGR || i == IKEV2_XFORMTYPE_DH)) {
+		    (!noauth && i == IKEV2_XFORMTYPE_INTEGR) ||
+		    i == IKEV2_XFORMTYPE_DH)) {
 			score = 0;
 			break;
 		} else if (protoid == IKEV2_SAPROTO_AH && xforms[i] == NULL &&

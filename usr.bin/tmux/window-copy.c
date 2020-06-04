@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.288 2020/05/16 16:10:28 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.295 2020/06/04 10:24:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -175,6 +175,12 @@ enum window_copy_cmd_action {
 	WINDOW_COPY_CMD_NOTHING,
 	WINDOW_COPY_CMD_REDRAW,
 	WINDOW_COPY_CMD_CANCEL,
+};
+
+enum window_copy_cmd_clear {
+	WINDOW_COPY_CMD_CLEAR_ALWAYS,
+	WINDOW_COPY_CMD_CLEAR_NEVER,
+	WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 };
 
 struct window_copy_cmd_state {
@@ -2116,144 +2122,144 @@ static const struct {
 	const char			 *command;
 	int				  minargs;
 	int				  maxargs;
-	int				  ismotion;
+	enum window_copy_cmd_clear	  clear;
 	enum window_copy_cmd_action	(*f)(struct window_copy_cmd_state *);
 } window_copy_cmd_table[] = {
-	{ "append-selection", 0, 0, 0,
+	{ "append-selection", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_append_selection },
-	{ "append-selection-and-cancel", 0, 0, 0,
+	{ "append-selection-and-cancel", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_append_selection_and_cancel },
-	{ "back-to-indentation", 0, 0, 0,
+	{ "back-to-indentation", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_back_to_indentation },
-	{ "begin-selection", 0, 0, 0,
+	{ "begin-selection", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_begin_selection },
-	{ "bottom-line", 0, 0, 1,
+	{ "bottom-line", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_bottom_line },
-	{ "cancel", 0, 0, 0,
+	{ "cancel", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_cancel },
-	{ "clear-selection", 0, 0, 0,
+	{ "clear-selection", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_clear_selection },
-	{ "copy-end-of-line", 0, 1, 0,
+	{ "copy-end-of-line", 0, 1, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_copy_end_of_line },
-	{ "copy-line", 0, 1, 0,
+	{ "copy-line", 0, 1, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_copy_line },
-	{ "copy-pipe-no-clear", 0, 2, 0,
+	{ "copy-pipe-no-clear", 0, 2, WINDOW_COPY_CMD_CLEAR_NEVER,
 	  window_copy_cmd_copy_pipe_no_clear },
-	{ "copy-pipe", 0, 2, 0,
+	{ "copy-pipe", 0, 2, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_copy_pipe },
-	{ "copy-pipe-and-cancel", 0, 2, 0,
+	{ "copy-pipe-and-cancel", 0, 2, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_copy_pipe_and_cancel },
-	{ "copy-selection-no-clear", 0, 1, 0,
+	{ "copy-selection-no-clear", 0, 1, WINDOW_COPY_CMD_CLEAR_NEVER,
 	  window_copy_cmd_copy_selection_no_clear },
-	{ "copy-selection", 0, 1, 0,
+	{ "copy-selection", 0, 1, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_copy_selection },
-	{ "copy-selection-and-cancel", 0, 1, 0,
+	{ "copy-selection-and-cancel", 0, 1, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_copy_selection_and_cancel },
-	{ "cursor-down", 0, 0, 1,
+	{ "cursor-down", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_cursor_down },
-	{ "cursor-down-and-cancel", 0, 0, 0,
+	{ "cursor-down-and-cancel", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_cursor_down_and_cancel },
-	{ "cursor-left", 0, 0, 1,
+	{ "cursor-left", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_cursor_left },
-	{ "cursor-right", 0, 0, 1,
+	{ "cursor-right", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_cursor_right },
-	{ "cursor-up", 0, 0, 1,
+	{ "cursor-up", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_cursor_up },
-	{ "end-of-line", 0, 0, 1,
+	{ "end-of-line", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_end_of_line },
-	{ "goto-line", 1, 1, 1,
+	{ "goto-line", 1, 1, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_goto_line },
-	{ "halfpage-down", 0, 0, 1,
+	{ "halfpage-down", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_halfpage_down },
-	{ "halfpage-down-and-cancel", 0, 0, 0,
+	{ "halfpage-down-and-cancel", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_halfpage_down_and_cancel },
-	{ "halfpage-up", 0, 0, 1,
+	{ "halfpage-up", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_halfpage_up },
-	{ "history-bottom", 0, 0, 1,
+	{ "history-bottom", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_history_bottom },
-	{ "history-top", 0, 0, 1,
+	{ "history-top", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_history_top },
-	{ "jump-again", 0, 0, 1,
+	{ "jump-again", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_jump_again },
-	{ "jump-backward", 1, 1, 1,
+	{ "jump-backward", 1, 1, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_jump_backward },
-	{ "jump-forward", 1, 1, 1,
+	{ "jump-forward", 1, 1, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_jump_forward },
-	{ "jump-reverse", 0, 0, 1,
+	{ "jump-reverse", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_jump_reverse },
-	{ "jump-to-backward", 1, 1, 1,
+	{ "jump-to-backward", 1, 1, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_jump_to_backward },
-	{ "jump-to-forward", 1, 1, 1,
+	{ "jump-to-forward", 1, 1, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_jump_to_forward },
-	{ "jump-to-mark", 0, 0, 0,
+	{ "jump-to-mark", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_jump_to_mark },
-	{ "middle-line", 0, 0, 1,
+	{ "middle-line", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_middle_line },
-	{ "next-matching-bracket", 0, 0, 0,
+	{ "next-matching-bracket", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_next_matching_bracket },
-	{ "next-paragraph", 0, 0, 1,
+	{ "next-paragraph", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_next_paragraph },
-	{ "next-space", 0, 0, 1,
+	{ "next-space", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_next_space },
-	{ "next-space-end", 0, 0, 1,
+	{ "next-space-end", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_next_space_end },
-	{ "next-word", 0, 0, 1,
+	{ "next-word", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_next_word },
-	{ "next-word-end", 0, 0, 1,
+	{ "next-word-end", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_next_word_end },
-	{ "other-end", 0, 0, 1,
+	{ "other-end", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_other_end },
-	{ "page-down", 0, 0, 1,
+	{ "page-down", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_page_down },
-	{ "page-down-and-cancel", 0, 0, 0,
+	{ "page-down-and-cancel", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_page_down_and_cancel },
-	{ "page-up", 0, 0, 1,
+	{ "page-up", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_page_up },
-	{ "previous-matching-bracket", 0, 0, 0,
+	{ "previous-matching-bracket", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_previous_matching_bracket },
-	{ "previous-paragraph", 0, 0, 1,
+	{ "previous-paragraph", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_previous_paragraph },
-	{ "previous-space", 0, 0, 1,
+	{ "previous-space", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_previous_space },
-	{ "previous-word", 0, 0, 1,
+	{ "previous-word", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_previous_word },
-	{ "rectangle-toggle", 0, 0, 0,
+	{ "rectangle-toggle", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_rectangle_toggle },
-	{ "refresh-from-pane", 0, 0, 0,
+	{ "refresh-from-pane", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_refresh_from_pane },
-	{ "scroll-down", 0, 0, 1,
+	{ "scroll-down", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_scroll_down },
-	{ "scroll-down-and-cancel", 0, 0, 0,
+	{ "scroll-down-and-cancel", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_scroll_down_and_cancel },
-	{ "scroll-up", 0, 0, 1,
+	{ "scroll-up", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_scroll_up },
-	{ "search-again", 0, 0, 0,
+	{ "search-again", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_search_again },
-	{ "search-backward", 0, 1, 0,
+	{ "search-backward", 0, 1, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_search_backward },
-	{ "search-backward-text", 0, 1, 0,
+	{ "search-backward-text", 0, 1, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_search_backward_text },
-	{ "search-backward-incremental", 1, 1, 0,
+	{ "search-backward-incremental", 1, 1, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_search_backward_incremental },
-	{ "search-forward", 0, 1, 0,
+	{ "search-forward", 0, 1, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_search_forward },
-	{ "search-forward-text", 0, 1, 0,
+	{ "search-forward-text", 0, 1, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_search_forward_text },
-	{ "search-forward-incremental", 1, 1, 0,
+	{ "search-forward-incremental", 1, 1, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_search_forward_incremental },
-	{ "search-reverse", 0, 0, 0,
+	{ "search-reverse", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_search_reverse },
-	{ "select-line", 0, 0, 0,
+	{ "select-line", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_select_line },
-	{ "select-word", 0, 0, 0,
+	{ "select-word", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_select_word },
-	{ "set-mark", 0, 0, 0,
+	{ "set-mark", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_set_mark },
-	{ "start-of-line", 0, 0, 1,
+	{ "start-of-line", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_start_of_line },
-	{ "stop-selection", 0, 0, 0,
+	{ "stop-selection", 0, 0, WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  window_copy_cmd_stop_selection },
-	{ "top-line", 0, 0, 1,
+	{ "top-line", 0, 0, WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
 	  window_copy_cmd_top_line },
 };
 
@@ -2265,9 +2271,10 @@ window_copy_command(struct window_mode_entry *wme, struct client *c,
 	struct window_copy_mode_data	*data = wme->data;
 	struct window_copy_cmd_state	 cs;
 	enum window_copy_cmd_action	 action;
+	enum window_copy_cmd_clear	 clear = WINDOW_COPY_CMD_CLEAR_NEVER;
 	const char			*command;
 	u_int				 i;
-	int				 ismotion = 0, keys;
+	int				 keys;
 
 	if (args->argc == 0)
 		return;
@@ -2290,7 +2297,7 @@ window_copy_command(struct window_mode_entry *wme, struct client *c,
 			if (args->argc - 1 < window_copy_cmd_table[i].minargs ||
 			    args->argc - 1 > window_copy_cmd_table[i].maxargs)
 				break;
-			ismotion = window_copy_cmd_table[i].ismotion;
+			clear = window_copy_cmd_table[i].clear;
 			action = window_copy_cmd_table[i].f (&cs);
 			break;
 		}
@@ -2298,7 +2305,10 @@ window_copy_command(struct window_mode_entry *wme, struct client *c,
 
 	if (strncmp(command, "search-", 7) != 0 && data->searchmark != NULL) {
 		keys = options_get_number(wme->wp->window->options, "mode-keys");
-		if (keys != MODEKEY_VI || !ismotion) {
+		if (clear == WINDOW_COPY_CMD_CLEAR_EMACS_ONLY &&
+		    keys == MODEKEY_VI)
+			clear = WINDOW_COPY_CMD_CLEAR_NEVER;
+		if (clear != WINDOW_COPY_CMD_CLEAR_NEVER) {
 			window_copy_clear_marks(wme);
 			data->searchx = data->searchy = -1;
 		} else if (data->searchthis != -1) {
@@ -2551,23 +2561,33 @@ window_copy_search_rl_regex(struct grid *gd, u_int *ppx, u_int *psx, u_int py,
 }
 
 static const char *
-window_copy_cellstring(const struct grid_line *gl, u_int px, size_t *size)
+window_copy_cellstring(const struct grid_line *gl, u_int px, size_t *size,
+    int *allocated)
 {
+	static struct utf8_data	 ud;
 	struct grid_cell_entry	*gce;
+	char			*copy;
 
 	if (px >= gl->cellsize) {
 		*size = 1;
+		*allocated = 0;
 		return (" ");
 	}
 
 	gce = &gl->celldata[px];
 	if (~gce->flags & GRID_FLAG_EXTENDED) {
 		*size = 1;
+		*allocated = 0;
 		return (&gce->data.data);
 	}
 
-	*size = gl->extddata[gce->offset].data.size;
-	return (gl->extddata[gce->offset].data.data);
+	utf8_to_data(gl->extddata[gce->offset].data, &ud);
+	*size = ud.size;
+	*allocated = 1;
+
+	copy = xmalloc(ud.size);
+	memcpy(copy, ud.data, ud.size);
+	return (copy);
 }
 
 /* Find last match in given range. */
@@ -2630,6 +2650,7 @@ window_copy_stringify(struct grid *gd, u_int py, u_int first, u_int last,
 	const struct grid_line	*gl;
 	const char		*d;
 	size_t			 bufsize = 1024, dlen;
+	int			 allocated;
 
 	while (bufsize < newsize)
 		bufsize *= 2;
@@ -2638,7 +2659,7 @@ window_copy_stringify(struct grid *gd, u_int py, u_int first, u_int last,
 	gl = grid_peek_line(gd, py);
 	bx = *size - 1;
 	for (ax = first; ax < last; ax++) {
-		d = window_copy_cellstring(gl, ax, &dlen);
+		d = window_copy_cellstring(gl, ax, &dlen, &allocated);
 		newsize += dlen;
 		while (bufsize < newsize) {
 			bufsize *= 2;
@@ -2650,6 +2671,8 @@ window_copy_stringify(struct grid *gd, u_int py, u_int first, u_int last,
 			memcpy(buf + bx, d, dlen);
 			bx += dlen;
 		}
+		if (allocated)
+			free((void *)d);
 	}
 	buf[newsize - 1] = '\0';
 
@@ -2670,6 +2693,7 @@ window_copy_cstrtocellpos(struct grid *gd, u_int ncells, u_int *ppx, u_int *ppy,
 	struct {
 		const char	*d;
 		size_t		 dlen;
+		int		 allocated;
 	} *cells;
 
 	/* Populate the array of cell data. */
@@ -2680,7 +2704,7 @@ window_copy_cstrtocellpos(struct grid *gd, u_int ncells, u_int *ppx, u_int *ppy,
 	gl = grid_peek_line(gd, pywrap);
 	while (cell < ncells) {
 		cells[cell].d = window_copy_cellstring(gl, px,
-		    &cells[cell].dlen);
+		    &cells[cell].dlen, &cells[cell].allocated);
 		cell++;
 		px++;
 		if (px == gd->sx) {
@@ -2738,6 +2762,10 @@ window_copy_cstrtocellpos(struct grid *gd, u_int ncells, u_int *ppx, u_int *ppy,
 	*ppy = pywrap;
 
 	/* Free cell data. */
+	for (cell = 0; cell < ncells; cell++) {
+		if (cells[cell].allocated)
+			free((void *)cells[cell].d);
+	}
 	free(cells);
 }
 
@@ -2916,15 +2944,6 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 	return (found);
 }
 
-static uint64_t
-window_copy_get_time(void)
-{
-	struct timeval	tv;
-
-	gettimeofday(&tv, NULL);
-	return ((tv.tv_sec * 1000ULL) + (tv.tv_usec / 1000ULL));
-}
-
 static int
 window_copy_search_marks(struct window_mode_entry *wme, struct screen *ssp,
     int regex)
@@ -2967,11 +2986,11 @@ window_copy_search_marks(struct window_mode_entry *wme, struct screen *ssp,
 			return (0);
 		}
 	}
-	tstart = window_copy_get_time();
+	tstart = get_timer();
 
 	start = 0;
 	end = gd->hsize + gd->sy;
-	stop = window_copy_get_time() + WINDOW_COPY_SEARCH_ALL_TIMEOUT;
+	stop = get_timer() + WINDOW_COPY_SEARCH_ALL_TIMEOUT;
 
 again:
 	free(data->searchmark);
@@ -3009,7 +3028,7 @@ again:
 			px++;
 		}
 
-		t = window_copy_get_time();
+		t = get_timer();
 		if (t - tstart > WINDOW_COPY_SEARCH_TIMEOUT) {
 			data->timeout = 1;
 			break;
@@ -3149,7 +3168,7 @@ window_copy_match_at_cursor(struct window_copy_mode_data *data)
  	 */
 	for (at = start; at <= end; at++) {
 		py = at / sx;
-		px = at % (py * sx);
+		px = at - (py * sx);
 
 		grid_get_cell(gd, px, py, &gc);
 		buf = xrealloc(buf, len + gc.data.size + 1);
@@ -3619,6 +3638,8 @@ window_copy_get_selection(struct window_mode_entry *wme, size_t *len)
 		buf = window_copy_match_at_cursor(data);
 		if (buf != NULL)
 			*len = strlen(buf);
+		else
+			*len = 0;
 		return (buf);
 	}
 
@@ -3710,6 +3731,7 @@ window_copy_get_selection(struct window_mode_entry *wme, size_t *len)
 	/* Don't bother if no data. */
 	if (off == 0) {
 		free(buf);
+		*len = 0;
 		return (NULL);
 	}
 	if (keys == MODEKEY_EMACS || lastex <= ey_last)
@@ -3744,9 +3766,6 @@ window_copy_copy_pipe(struct window_mode_entry *wme, struct session *s,
 	struct job	*job;
 
 	buf = window_copy_get_selection(wme, &len);
-	if (buf == NULL)
-		return;
-
 	if (cmd == NULL || *cmd == '\0')
 		cmd = options_get_string(global_options, "copy-command");
 	if (cmd != NULL && *cmd != '\0') {
@@ -3754,7 +3773,8 @@ window_copy_copy_pipe(struct window_mode_entry *wme, struct session *s,
 		    -1, -1);
 		bufferevent_write(job_get_event(job), buf, len);
 	}
-	window_copy_copy_buffer(wme, prefix, buf, len);
+	if (buf != NULL)
+		window_copy_copy_buffer(wme, prefix, buf, len);
 }
 
 static void

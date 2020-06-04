@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.12 2020/05/16 11:26:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.19 2020/05/26 12:07:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -409,6 +409,7 @@ void	iwx_fill_sf_command(struct iwx_softc *, struct iwx_sf_cfg_cmd *,
 	    struct ieee80211_node *);
 int	iwx_sf_config(struct iwx_softc *, int);
 int	iwx_send_bt_init_conf(struct iwx_softc *);
+int	iwx_send_soc_conf(struct iwx_softc *);
 int	iwx_send_update_mcc_cmd(struct iwx_softc *, const char *);
 int	iwx_init_hw(struct iwx_softc *);
 int	iwx_init(struct ifnet *);
@@ -437,7 +438,6 @@ int	iwx_resume(struct iwx_softc *);
 void	iwx_radiotap_attach(struct iwx_softc *);
 #endif
 
-#ifdef notyet
 uint8_t
 iwx_lookup_cmd_ver(struct iwx_softc *sc, uint8_t grp, uint8_t cmd)
 {
@@ -452,7 +452,6 @@ iwx_lookup_cmd_ver(struct iwx_softc *sc, uint8_t grp, uint8_t cmd)
 
 	return IWX_FW_CMD_VER_UNKNOWN;
 }
-#endif
 
 int
 iwx_is_mimo_ht_plcp(uint8_t ht_plcp)
@@ -1261,10 +1260,18 @@ iwx_read_firmware(struct iwx_softc *sc)
 		case IWX_UCODE_TLV_FW_RECOVERY_INFO:
 			break;
 
-		/* undocumented TLVs found in ax200-cc-a0-46 image */
+		case IWX_UCODE_TLV_FW_FSEQ_VERSION:
+			break;
+
+		/* undocumented TLVs found in iwx-cc-a0-46 image */
 		case 58:
 		case 0x1000003:
 		case 0x1000004:
+			break;
+
+		/* undocumented TLVs found in iwx-cc-a0-48 image */
+		case 0x1000000:
+		case 0x1000002:
 			break;
 
 		default:
@@ -3757,7 +3764,8 @@ iwx_binding_cmd(struct iwx_softc *sc, struct iwx_node *in, uint32_t action)
 	for (i = 1; i < IWX_MAX_MACS_IN_BINDING; i++)
 		cmd.macs[i] = htole32(IWX_FW_CTXT_INVALID);
 
-	if (IEEE80211_IS_CHAN_2GHZ(phyctxt->channel))
+	if (IEEE80211_IS_CHAN_2GHZ(phyctxt->channel) ||
+	    !isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_CDB_SUPPORT))
 		cmd.lmac_id = htole32(IWX_LMAC_24G_INDEX);
 	else
 		cmd.lmac_id = htole32(IWX_LMAC_5G_INDEX);
@@ -4403,8 +4411,16 @@ int
 iwx_beacon_filter_send_cmd(struct iwx_softc *sc,
     struct iwx_beacon_filter_cmd *cmd)
 {
+	size_t len;
+
+	if (isset(sc->sc_ucode_api, IWX_UCODE_TLV_API_BEACON_FILTER_V4))
+		len = sizeof(struct iwx_beacon_filter_cmd);
+	else
+		len = offsetof(struct iwx_beacon_filter_cmd,
+		    bf_threshold_absolute_low);
+
 	return iwx_send_cmd_pdu(sc, IWX_REPLY_BEACON_FILTERING_CMD,
-	    0, sizeof(struct iwx_beacon_filter_cmd), cmd);
+	    0, len, cmd);
 }
 
 int
@@ -5664,6 +5680,12 @@ iwx_deauth(struct iwx_softc *sc)
 	iwx_unprotect_session(sc, in);
 
 	if (sc->sc_flags & IWX_FLAG_STA_ACTIVE) {
+		err = iwx_flush_tx_path(sc);
+		if (err) {
+			printf("%s: could not flush Tx path (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
 		err = iwx_rm_sta_cmd(sc, in);
 		if (err) {
 			printf("%s: could not remove STA (error %d)\n",
@@ -5671,13 +5693,6 @@ iwx_deauth(struct iwx_softc *sc)
 			return err;
 		}
 		sc->sc_flags &= ~IWX_FLAG_STA_ACTIVE;
-	}
-
-	err = iwx_flush_tx_path(sc);
-	if (err) {
-		printf("%s: could not flush Tx path (error %d)\n",
-		    DEVNAME(sc), err);
-		return err;
 	}
 
 	if (sc->sc_flags & IWX_FLAG_BINDING_ACTIVE) {
@@ -6232,10 +6247,48 @@ iwx_send_bt_init_conf(struct iwx_softc *sc)
 	struct iwx_bt_coex_cmd bt_cmd;
 
 	bt_cmd.mode = htole32(IWX_BT_COEX_WIFI);
-	bt_cmd.enabled_modules = htole32(IWX_BT_COEX_HIGH_BAND_RET);
+	bt_cmd.enabled_modules = 0;
 
 	return iwx_send_cmd_pdu(sc, IWX_BT_CONFIG, 0, sizeof(bt_cmd),
 	    &bt_cmd);
+}
+
+int
+iwx_send_soc_conf(struct iwx_softc *sc)
+{
+	struct iwx_soc_configuration_cmd cmd;
+	int err;
+	uint32_t cmd_id, flags = 0;
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	/*
+	 * In VER_1 of this command, the discrete value is considered
+	 * an integer; In VER_2, it's a bitmask.  Since we have only 2
+	 * values in VER_1, this is backwards-compatible with VER_2,
+	 * as long as we don't set any other flag bits.
+	 */
+	if (!sc->sc_integrated) { /* VER_1 */
+		flags = IWX_SOC_CONFIG_CMD_FLAGS_DISCRETE;
+	} else { /* VER_2 */
+		uint8_t scan_cmd_ver;
+		if (sc->sc_ltr_delay != IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE)
+			flags |= (sc->sc_ltr_delay &
+			    IWX_SOC_FLAGS_LTR_APPLY_DELAY_MASK);
+		scan_cmd_ver = iwx_lookup_cmd_ver(sc, IWX_LONG_GROUP,
+		    IWX_SCAN_REQ_UMAC);
+		if (scan_cmd_ver >= 2 && sc->sc_low_latency_xtal)
+			flags |= IWX_SOC_CONFIG_CMD_FLAGS_LOW_LATENCY;
+	}
+	cmd.flags = htole32(flags);
+
+	cmd.latency = htole32(sc->sc_xtal_latency);
+
+	cmd_id = iwx_cmd_id(IWX_SOC_CONFIGURATION_CMD, IWX_SYSTEM_GROUP, 0);
+	err = iwx_send_cmd_pdu(sc, cmd_id, 0, sizeof(cmd), &cmd);
+	if (err)
+		printf("%s: failed to set soc latency: %d\n", DEVNAME(sc), err);
+	return err;
 }
 
 int
@@ -6329,6 +6382,10 @@ iwx_init_hw(struct iwx_softc *sc)
 		    DEVNAME(sc), err);
 		return err;
 	}
+
+	err = iwx_send_soc_conf(sc);
+	if (err)
+		return err;
 
 	err = iwx_send_dqa_cmd(sc);
 	if (err)
@@ -7191,6 +7248,9 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP, IWX_DQA_ENABLE_CMD):
 			break;
 
+		case IWX_WIDE_ID(IWX_SYSTEM_GROUP, IWX_SOC_CONFIGURATION_CMD):
+			break;
+
 		case IWX_WIDE_ID(IWX_SYSTEM_GROUP, IWX_INIT_EXTENDED_CFG_CMD):
 			break;
 
@@ -7657,6 +7717,9 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
 		sc->sc_nvm_max_section_size = 32768;
 		sc->sc_integrated = 1;
+		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE;
+		sc->sc_low_latency_xtal = 0;
+		sc->sc_xtal_latency = 0;
 		sc->sc_tx_with_siso_diversity = 0;
 		break;
 	default:

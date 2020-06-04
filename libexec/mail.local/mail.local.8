@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.local.8,v 1.31 2014/09/16 21:28:51 jmc Exp $
+.\"	$OpenBSD: mail.local.8,v 1.32 2020/05/27 03:12:06 millert Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
 .\"
-.Dd $Mdocdate: September 16 2014 $
+.Dd $Mdocdate: May 27 2020 $
 .Dt MAIL.LOCAL 8
 .Os
 .Sh NAME
@@ -77,19 +77,18 @@ is prepended to any line in the message which could be mistaken for a
 .Dq "From\&\ "
 delimiter line.
 .Pp
-Significant efforts have been made to ensure that
+Significant effort has been made to ensure that
 .Nm
-acts as securely as possible if the spool directory is mode 1777 or 755.
-The default of mode 755 is more secure, but it prevents mail clients from using
-.Pa username.lock
-style locking.
-The use of 1777 is more flexible in an NFS shared-spool environment,
-so many sites use it.
-However, it does carry some risks, such as attackers filling the spool disk.
-Some of these problems may be alleviated
-by making the spool a separate filesystem, and placing quotas on it.
-The use of any mode other than 1777 and 755 for the spool directory is
-recommended against but may work properly.
+acts as securely as possible.
+It will only deliver to a mail spool directory that is not world-writable.
+The default mode of
+.Pa /var/mail
+on
+.Ox
+is 755, which prevents non-root processes from creating mail spool files.
+The MTA is expected to either create the mail spool file itself, or call
+.Nm
+as root.
 .Pp
 The mailbox is always locked using
 .Xr flock 2

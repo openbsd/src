@@ -1,5 +1,5 @@
-.\" $OpenBSD: OPENSSL_init_crypto.3,v 1.4 2019/06/14 13:41:31 schwarze Exp $
-.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\" $OpenBSD: OPENSSL_init_crypto.3,v 1.5 2020/05/24 12:21:31 schwarze Exp $
+.\" Copyright (c) 2018, 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -13,11 +13,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: May 24 2020 $
 .Dt OPENSSL_INIT_CRYPTO 3
 .Os
 .Sh NAME
-.Nm OPENSSL_init_crypto
+.Nm OPENSSL_init_crypto ,
+.Nm OPENSSL_init
 .Nd initialise the crypto library
 .Sh SYNOPSIS
 .In openssl/crypto.h
@@ -26,10 +27,16 @@
 .Fa "uint64_t options"
 .Fa "const void *dummy"
 .Fc
+.Ft void
+.Fn OPENSSL_init void
 .Sh DESCRIPTION
-This function is deprecated.
-It is never useful for any application program to call it explicitly.
-The library automatically calls it internally with an
+These functions are deprecated.
+It is never useful for an application program
+to call either of them explicitly.
+.Pp
+The library automatically calls
+.Fn OPENSSL_init_crypto
+internally with an
 .Fa options
 argument of 0 whenever needed.
 It is safest to assume that any function may do so.
@@ -76,6 +83,9 @@ argument has no effect.
 .Pp
 If this function is called more than once, none of the calls except
 the first one have any effect.
+.Pp
+.Fn OPENSSL_init
+has no effect at all.
 .Sh RETURN VALUES
 .Fn OPENSSL_init_crypto
 is intended to return 1 on success or 0 on error.
@@ -85,6 +95,12 @@ is intended to return 1 on success or 0 on error.
 .Xr OPENSSL_load_builtin_modules 3 ,
 .Xr openssl.cnf 5
 .Sh HISTORY
+.Fn OPENSSL_init
+first appeared in OpenSSL 1.0.0e and has been available since
+.Ox 5.3 .
+It stopped having any effect in OpenSSL 1.1.1 and in
+.Ox 5.6 .
+.Pp
 .Fn OPENSSL_init_crypto
 first appeared in OpenSSL 1.1.0 and has been available since
 .Ox 6.3 .

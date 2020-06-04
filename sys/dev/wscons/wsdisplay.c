@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.139 2020/05/10 20:50:55 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.141 2020/05/25 09:55:49 jsg Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -133,7 +133,7 @@ struct wsscreen {
 };
 
 struct wsscreen *wsscreen_attach(struct wsdisplay_softc *, int, const char *,
-	    const struct wsscreen_descr *, void *, int, int, long);
+	    const struct wsscreen_descr *, void *, int, int, uint32_t);
 void	wsscreen_detach(struct wsscreen *);
 int	wsdisplay_addscreen(struct wsdisplay_softc *, int, const char *,
 	    const char *);
@@ -267,7 +267,7 @@ int	wsdisplay_clearonclose;
 struct wsscreen *
 wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
     const struct wsscreen_descr *type, void *cookie, int ccol, int crow,
-    long defattr)
+    uint32_t defattr)
 {
 	struct wsscreen_internal *dconf;
 	struct wsscreen *scr;
@@ -368,7 +368,7 @@ wsdisplay_addscreen(struct wsdisplay_softc *sc, int idx,
 	int error;
 	void *cookie;
 	int ccol, crow;
-	long defattr;
+	uint32_t defattr;
 	struct wsscreen *scr;
 	int s;
 
@@ -803,7 +803,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 
 void
 wsdisplay_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
-    int crow, long defattr)
+    int crow, uint32_t defattr)
 {
 	const struct wsemul_ops *wsemul;
 	const struct wsdisplay_emulops *emulops;
@@ -2671,7 +2671,7 @@ inverse_char(struct wsscreen *scr, u_int pos)
 	int fg, bg, ul;
 	int flags;
 	int tmp;
-	long attr;
+	uint32_t attr;
 
 	GETCHAR(scr, pos, &cell);
 
@@ -2692,7 +2692,7 @@ inverse_char(struct wsscreen *scr, u_int pos)
 	} else if (dconf->scrdata->capabilities & WSSCREEN_REVERSE) {
 		flags |= WSATTR_REVERSE;
 	}
-	if ((*dconf->emulops->alloc_attr)(dconf->emulcookie, fg, bg, flags |
+	if ((*dconf->emulops->pack_attr)(dconf->emulcookie, fg, bg, flags |
 	    (ul ? WSATTR_UNDERLINE : 0), &attr) == 0) {
 		cell.attr = attr;
 		PUTCHAR(dconf, pos, cell.uc, cell.attr);

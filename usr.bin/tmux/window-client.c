@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.28 2020/05/16 16:02:24 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.29 2020/06/01 09:43:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -166,7 +166,7 @@ window_client_build(void *modedata, struct mode_tree_sort_criteria *sort_crit,
 	data->item_size = 0;
 
 	TAILQ_FOREACH(c, &clients, entry) {
-		if (c->session == NULL || (c->flags & (CLIENT_DETACHING)))
+		if (c->session == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
 			continue;
 
 		item = window_client_add_item(data);

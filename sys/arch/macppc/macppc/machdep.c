@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.189 2020/05/16 14:44:45 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.191 2020/05/31 06:23:57 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -262,6 +262,9 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 				break;
 			case 'c':
 				boothowto |= RB_CONFIG;
+				break;
+			case 'R':
+				boothowto |= RB_GOODRANDOM;
 				break;
 			default:
 				break;
@@ -909,4 +912,13 @@ cpu_switchto(struct proc *oldproc, struct proc *newproc)
 #endif
 
 	cpu_switchto_asm(oldproc, newproc);
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

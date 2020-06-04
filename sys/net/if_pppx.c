@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.84 2020/04/18 04:03:56 yasuoka Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.87 2020/05/29 06:51:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -165,7 +165,6 @@ pppx_if_cmp(const struct pppx_if *a, const struct pppx_if *b)
 	return memcmp(&a->pxi_key, &b->pxi_key, sizeof(a->pxi_key));
 }
 
-struct rwlock			pppx_ifs_lk = RWLOCK_INITIALIZER("pppxifs");
 RBT_HEAD(pppx_ifs, pppx_if)	pppx_ifs = RBT_INITIALIZER(&pppx_ifs);
 RBT_PROTOTYPE(pppx_ifs, pppx_if, pxi_entry, pppx_if_cmp);
 
@@ -620,8 +619,6 @@ pppx_if_next_unit(void)
 	struct pppx_if *pxi;
 	int unit = 0;
 
-	rw_assert_wrlock(&pppx_ifs_lk);
-
 	/* this is safe without splnet since we're not modifying it */
 	do {
 		int found = 0;
@@ -650,11 +647,9 @@ pppx_if_find(struct pppx_dev *pxd, int session_id, int protocol)
 	key.pxik_session_id = session_id;
 	key.pxik_protocol = protocol;
 
-	rw_enter_read(&pppx_ifs_lk);
 	pxi = RBT_FIND(pppx_ifs, &pppx_ifs, (struct pppx_if *)&key);
 	if (pxi && pxi->pxi_ready == 0)
 		pxi = NULL;
-	rw_exit_read(&pppx_ifs_lk);
 
 	return pxi;
 }
@@ -828,12 +823,10 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 #endif
 
 	/* try to set the interface up */
-	rw_enter_write(&pppx_ifs_lk);
 	unit = pppx_if_next_unit();
 	if (unit < 0) {
 		pool_put(pppx_if_pl, pxi);
 		error = ENOMEM;
-		rw_exit_write(&pppx_ifs_lk);
 		goto out;
 	}
 
@@ -846,14 +839,12 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	if (RBT_FIND(pppx_ifs, &pppx_ifs, pxi) != NULL) {
 		pool_put(pppx_if_pl, pxi);
 		error = EADDRINUSE;
-		rw_exit_write(&pppx_ifs_lk);
 		goto out;
 	}
 
 	if (RBT_INSERT(pppx_ifs, &pppx_ifs, pxi) != NULL)
 		panic("%s: pppx_ifs modified while lock was held", __func__);
 	LIST_INSERT_HEAD(&pxd->pxd_pxis, pxi, pxi_list);
-	rw_exit_write(&pppx_ifs_lk);
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", "pppx", unit);
 	ifp->if_mtu = req->pr_peer_mru;	/* XXX */
@@ -935,9 +926,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	} else {
 		if_addrhooks_run(ifp);
 	}
-	rw_enter_write(&pppx_ifs_lk);
 	pxi->pxi_ready = 1;
-	rw_exit_write(&pppx_ifs_lk);
 
 out:
 	return (error);
@@ -1015,6 +1004,7 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 	struct pipex_session *session;
 
 	NET_ASSERT_LOCKED();
+	pxi->pxi_ready = 0;
 	session = &pxi->pxi_session;
 	ifp = &pxi->pxi_if;
 
@@ -1038,11 +1028,9 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 	if_detach(ifp);
 	NET_LOCK();
 
-	rw_enter_write(&pppx_ifs_lk);
 	if (RBT_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
 		panic("%s: pppx_ifs modified while lock was held", __func__);
 	LIST_REMOVE(pxi, pxi_list);
-	rw_exit_write(&pppx_ifs_lk);
 
 	pool_put(pppx_if_pl, pxi);
 }
@@ -1215,20 +1203,20 @@ static void	filt_pppac_rdetach(struct knote *);
 static int	filt_pppac_read(struct knote *, long);
 
 static const struct filterops pppac_rd_filtops = {
-	1,
-	NULL,
-	filt_pppac_rdetach,
-	filt_pppac_read
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_pppac_rdetach,
+	.f_event	= filt_pppac_read
 };
 
 static void	filt_pppac_wdetach(struct knote *);
 static int	filt_pppac_write(struct knote *, long);
 
 static const struct filterops pppac_wr_filtops = {
-	1,
-	NULL,
-	filt_pppac_wdetach,
-	filt_pppac_write
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_pppac_wdetach,
+	.f_event	= filt_pppac_write
 };
 
 static struct pppac_list pppac_devs = LIST_HEAD_INITIALIZER(pppac_devs);

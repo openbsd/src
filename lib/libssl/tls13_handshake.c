@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.62 2020/05/10 17:13:29 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.63 2020/06/02 13:57:09 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -36,7 +36,7 @@ struct tls13_handshake_action {
 	int (*recv)(struct tls13_ctx *ctx, CBS *cbs);
 };
 
-static const enum tls13_message_type
+static enum tls13_message_type
     tls13_handshake_active_state(struct tls13_ctx *ctx);
 
 static const struct tls13_handshake_action *
@@ -295,7 +295,7 @@ tls13_handshake_message_name(uint8_t msg_type)
 }
 #endif
 
-static const enum tls13_message_type
+static enum tls13_message_type
 tls13_handshake_active_state(struct tls13_ctx *ctx)
 {
 	struct tls13_handshake_stage hs = ctx->handshake_stage;

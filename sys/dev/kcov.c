@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.18 2020/05/17 08:46:05 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.19 2020/05/25 14:00:15 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -235,6 +235,10 @@ kcovclose(dev_t dev, int flag, int mode, struct proc *p)
 		return (EINVAL);
 
 	if (kd->kd_state == KCOV_STATE_TRACE) {
+		/*
+		 * Another thread is currently using the kcov descriptor,
+		 * postpone freeing to kcov_exit().
+		 */
 		kd->kd_state = KCOV_STATE_DYING;
 		kd->kd_mode = KCOV_MODE_NONE;
 	} else {

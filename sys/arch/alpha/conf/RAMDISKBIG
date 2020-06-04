@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.103 2020/05/23 06:17:08 jsg Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.104 2020/05/23 06:28:29 jsg Exp $
 
 machine		alpha
 maxusers	4
@@ -206,8 +206,6 @@ pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
 atapiscsi*	at pciide?
 
-#wsdisplay*	at cfb?
-#wsdisplay*	at sfb?
 wsdisplay*	at vga?
 wsdisplay*	at tga?
 wskbd*		at pckbd?

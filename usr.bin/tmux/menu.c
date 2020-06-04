@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.29 2020/05/16 16:35:13 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.30 2020/05/25 11:59:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -111,6 +111,7 @@ menu_create(const char *title)
 
 	menu = xcalloc(1, sizeof *menu);
 	menu->title = xstrdup(title);
+	menu->width = format_width(title);
 
 	return (menu);
 }

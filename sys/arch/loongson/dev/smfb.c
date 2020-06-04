@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.17 2017/01/10 08:26:41 fcambus Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.19 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -108,7 +108,7 @@ struct cfdriver smfb_cd = {
 };
 
 int	smfb_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
-	    int *, long *);
+	    int *, uint32_t *);
 void	smfb_burner(void *, uint, uint);
 void	smfb_free_screen(void *, void *);
 int	smfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -137,8 +137,8 @@ void	smfb_fillrect(struct smfb *, int, int, int, int, int);
 int	smfb_copyrows(void *, int, int, int);
 int	smfb_copycols(void *, int, int, int, int);
 int	smfb_do_cursor(struct rasops_info *);
-int	smfb_erasecols(void *, int, int, int, long);
-int	smfb_eraserows(void *, int, int, long);
+int	smfb_erasecols(void *, int, int, int, uint32_t);
+int	smfb_eraserows(void *, int, int, uint32_t);
 int	smfb_wait(struct smfb *);
 
 void	smfb_wait_panel_vsync(struct smfb *, int);
@@ -241,7 +241,7 @@ smfb_attach_common(struct smfb_softc *sc, int is5xx, bus_space_tag_t memt,
 
 int
 smfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
+    int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct smfb_softc *sc = (struct smfb_softc *)v;
 	struct rasops_info *ri = &sc->sc_fb->ri;
@@ -251,7 +251,7 @@ smfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, attrp);
 	sc->sc_nscr++;
 
 	return 0;
@@ -560,7 +560,7 @@ smfb_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-smfb_erasecols(void *cookie, int row, int col, int num, long attr)
+smfb_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct smfb *fb = ri->ri_hw;
@@ -580,7 +580,7 @@ smfb_erasecols(void *cookie, int row, int col, int num, long attr)
 }
 
 int
-smfb_eraserows(void *cookie, int row, int num, long attr)
+smfb_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct smfb *fb = ri->ri_hw;
@@ -676,7 +676,7 @@ int
 smfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
     pcireg_t id)
 {
-	long defattr;
+	uint32_t defattr;
 	struct rasops_info *ri;
 	bus_space_handle_t fbh, mmioh;
 	pcireg_t bar;
@@ -721,7 +721,7 @@ smfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
 		return rc;
 
 	ri = &smfbcn.ri;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&smfbcn.wsd, ri, 0, 0, defattr);
 
 	return 0;

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1924 2020/05/22 15:19:13 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1925 2020/06/01 03:42:18 jcs Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -27200,6 +27200,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82C101",
 	},
 	{
+	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_SSD,
+	    "BC501 NVMe",
+	},
+	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,
 	    "TC9021",
 	},
@@ -30730,6 +30734,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SYMPHONY2,
 	    "Symphony Labs",
+	},
+	{
+	    PCI_VENDOR_SKHYNIX,
+	    "SK hynix",
 	},
 	{
 	    PCI_VENDOR_ADATA,

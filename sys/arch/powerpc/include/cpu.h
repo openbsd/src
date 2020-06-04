@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.66 2020/03/17 10:14:45 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.67 2020/05/31 06:23:58 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -160,6 +160,8 @@ extern int ppc_proc_is_64b;
 extern int ppc_nobat;
 
 void	cpu_bootstrap(void);
+
+unsigned int cpu_rnd_messybits(void);
 
 /*
  * This is used during profiling to integrate system time.

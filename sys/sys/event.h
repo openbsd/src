@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.37 2020/05/17 10:53:14 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.38 2020/05/25 15:54:10 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -189,15 +189,6 @@ struct knote {
 #define kn_fp		kn_ptr.p_fp
 };
 
-struct kqueue_scan_state {
-	struct kqueue	*kqs_kq;		/* kqueue of this scan */
-	struct knote	 kqs_start;		/* start marker */
-	struct knote	 kqs_end;		/* end marker */
-	int		 kqs_nevent;		/* number of events collected */
-	int		 kqs_queued;		/* if set, end marker is
-						 * in queue */
-};
-
 struct proc;
 
 extern const struct filterops sig_filtops;
@@ -209,8 +200,6 @@ extern void	knote_fdclose(struct proc *p, int fd);
 extern void	knote_processexit(struct proc *);
 extern int	kqueue_register(struct kqueue *kq,
 		    struct kevent *kev, struct proc *p);
-extern void	kqueue_scan_setup(struct kqueue_scan_state *, struct kqueue *);
-extern void	kqueue_scan_finish(struct kqueue_scan_state *);
 extern int	filt_seltrue(struct knote *kn, long hint);
 extern int	seltrue_kqfilter(dev_t, struct knote *);
 extern void	klist_insert(struct klist *, struct knote *);

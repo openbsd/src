@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.11 2020/05/22 10:26:00 patrick Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.12 2020/05/31 11:47:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -307,9 +307,6 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		freq = clock_get_frequency(faa->fa_node, NULL);
 		sc->sc.sc_clkbase = freq / 1000;
 		sc->sc.sc_bus_clock_post = sdhc_fdt_xenon_bus_clock_post;
-
-		/* XXX: not yet implemented */
-		sc->sc.sc_flags |= SDHC_F_NODDR50;
 	}
 
 	sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh, sc->sc_size, 1, cap);

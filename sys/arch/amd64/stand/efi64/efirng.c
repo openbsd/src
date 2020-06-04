@@ -1,4 +1,4 @@
-/*	$OpenBSD: efirng.c,v 1.1 2019/05/11 02:36:10 mlarkin Exp $	*/
+/*	$OpenBSD: efirng.c,v 1.2 2020/05/25 14:53:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -59,23 +59,25 @@ typedef struct _EFI_RNG_PROTOCOL {
 
 static EFI_GUID			rng_guid = EFI_RNG_PROTOCOL_GUID;
 
-void
+int
 fwrandom(char *buf, size_t buflen)
 {
 	EFI_STATUS		 status;
 	EFI_RNG_PROTOCOL	*rng = NULL;
 	UINT8			*random;
 	size_t			 i;
+	int			 ret = 0;
 
 	status = EFI_CALL(BS->LocateProtocol, &rng_guid, NULL, (void **)&rng);
 	if (rng == NULL || EFI_ERROR(status))
-		return;
+		return -1;
 
 	random = alloc(buflen);
 
 	status = EFI_CALL(rng->GetRNG, rng, NULL, buflen, random);
 	if (EFI_ERROR(status)) {
 		printf("RNG GetRNG() failed (%d)\n", status);
+		ret = -1;
 		goto out;
 	}
 
@@ -84,4 +86,5 @@ fwrandom(char *buf, size_t buflen)
 
 out:
 	free(random, buflen);
+	return ret;
 }

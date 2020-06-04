@@ -53,7 +53,6 @@
 ./usr/include/macppc/stdarg.h
 ./usr/include/macppc/tcb.h
 ./usr/include/macppc/trap.h
-./usr/include/macppc/varargs.h
 ./usr/include/macppc/vmparam.h
 ./usr/include/macppc/z8530var.h
 ./usr/include/powerpc
@@ -98,7 +97,6 @@
 ./usr/include/powerpc/stdarg.h
 ./usr/include/powerpc/tcb.h
 ./usr/include/powerpc/trap.h
-./usr/include/powerpc/varargs.h
 ./usr/include/ppc-asm.h
 ./usr/include/spe.h
 ./usr/include/unwind.h

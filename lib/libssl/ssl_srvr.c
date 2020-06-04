@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.76 2020/05/19 16:35:20 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.78 2020/06/01 08:04:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -852,6 +852,8 @@ ssl3_get_client_hello(SSL *s)
 	 * Use version from inside client hello, not from record header.
 	 * (may differ: see RFC 2246, Appendix E, second paragraph)
 	 */
+	if (!ssl_downgrade_max_version(s, &max_version))
+		goto err;
 	if (ssl_max_shared_version(s, client_version, &shared_version) != 1) {
 		SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
 		if ((s->client_version >> 8) == SSL3_VERSION_MAJOR &&
@@ -1047,8 +1049,6 @@ ssl3_get_client_hello(SSL *s)
 	 */
 	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
 
-	if (!SSL_IS_DTLS(s) && !ssl_enabled_version_range(s, NULL, &max_version))
-		goto err;
 	if (!SSL_IS_DTLS(s) && max_version >= TLS1_2_VERSION &&
 	    s->version < max_version) {
 		/*
@@ -1778,7 +1778,8 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 static int
 ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 {
-	int key_size = 0, key_len, al;
+	int key_size = 0;
+	int key_is_invalid, key_len, al;
 	unsigned char *key = NULL;
 	BIGNUM *bn = NULL;
 	CBS dh_Yc;
@@ -1809,9 +1810,20 @@ ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if ((key_len = DH_compute_key(key, bn, dh)) <= 0) {
+	if (!DH_check_pub_key(dh, bn, &key_is_invalid)) {
+		al = SSL_AD_INTERNAL_ERROR;
 		SSLerror(s, ERR_R_DH_LIB);
-		goto err;
+		goto f_err;
+	}
+	if (key_is_invalid) {
+		al = SSL_AD_ILLEGAL_PARAMETER;
+		SSLerror(s, ERR_R_DH_LIB);
+		goto f_err;
+	}
+	if ((key_len = DH_compute_key(key, bn, dh)) <= 0) {
+		al = SSL_AD_INTERNAL_ERROR;
+		SSLerror(s, ERR_R_DH_LIB);
+		goto f_err;
 	}
 
 	s->session->master_key_length = tls1_generate_master_secret(s,

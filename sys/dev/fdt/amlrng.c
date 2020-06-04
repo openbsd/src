@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlrng.c,v 1.1 2019/08/27 22:21:52 kettenis Exp $	*/
+/*	$OpenBSD: amlrng.c,v 1.2 2020/05/29 04:42:24 deraadt Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -23,7 +23,6 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <dev/rndvar.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 

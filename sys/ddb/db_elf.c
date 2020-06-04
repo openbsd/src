@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.29 2019/11/07 13:16:25 mpi Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.30 2020/05/26 21:35:43 gkoehler Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -152,8 +152,7 @@ db_elf_sym_init(int symsize, void *symtab, void *esymtab, const char *name)
 	 * Now, sanity check the symbols against the string table.
 	 */
 	if (symtab_start == NULL || strtab_start == NULL ||
-	    ALIGNED_POINTER(symtab_start, long) == 0 ||
-	    ALIGNED_POINTER(strtab_start, long) == 0) {
+	    ALIGNED_POINTER(symtab_start, long) == 0) {
 		errstr = "symtab unaligned";
 		goto badheader;
 	}

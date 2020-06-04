@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.38 2020/05/22 21:54:20 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.40 2020/05/24 22:08:54 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -2792,8 +2792,6 @@ build_config(const char *filename, int noaction)
 	SIMPLEQ_INIT(&conf.domain_list);
 	if (parse_config(filename, &conf) < 0)
 		exit(1);
-	if (noaction)
-		exit(0);
 
 	pri = md_read("pri");
 	if (pri == NULL)
@@ -2822,6 +2820,9 @@ build_config(const char *filename, int noaction)
 		errx(1, "not enough VCPU resources available");
 	if (memory > total_memory || primary_memory == 0)
 		errx(1, "not enough memory available");
+
+	if (noaction)
+		exit(0);
 
 	hvmd_init(hvmd);
 	primary = primary_init();

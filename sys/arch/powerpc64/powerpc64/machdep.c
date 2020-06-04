@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 2020/05/22 16:27:49 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 2020/05/31 06:23:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/extent.h>
 
 #include <machine/cpufunc.h>
+#include <machine/opal.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 
@@ -30,6 +31,12 @@
 
 #include <dev/ofw/fdt.h>
 #include <dev/cons.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_interface.h>
+#endif
 
 int cacheline_size = 128;
 
@@ -49,11 +56,6 @@ struct user *proc0paddr;
 
 caddr_t esym;
 
-extern void opal_console_write(int64_t, int64_t *, const uint8_t *);
-extern void opal_cec_reboot(void);
-
-void opal_printf(const char *fmt, ...);
-
 extern char _start[], _end[];
 extern char __bss_start[];
 
@@ -65,6 +67,10 @@ extern char generictrap[];
 
 struct fdt_reg memreg[VM_PHYSSEG_MAX];
 int nmemreg;
+
+#ifdef DDB
+struct fdt_reg initrd_reg;
+#endif
 
 void memreg_add(const struct fdt_reg *);
 void memreg_remove(const struct fdt_reg *);
@@ -162,6 +168,13 @@ init_powernv(void *fdt, void *tocbase)
 	reg.addr = trunc_page((paddr_t)fdt);
 	reg.size = round_page((paddr_t)fdt + fdt_get_size(fdt)) - reg.addr;
 	memreg_remove(&reg);
+
+#ifdef DDB
+	/* Load symbols from initrd. */
+	db_machine_init();
+	if (initrd_reg.addr != 0)
+		memreg_remove(&initrd_reg);
+#endif
 
 	uvm_setpagesize();
 
@@ -299,7 +312,16 @@ opal_cninit(struct consdev *cd)
 int
 opal_cngetc(dev_t dev)
 {
-	return -1;
+	uint64_t len;
+	char ch;
+
+	for (;;) {
+		len = 1;
+		opal_console_read(0, &len, &ch);
+		if (len)
+			return ch;
+		opal_poll_events(NULL);
+	}
 }
 
 void
@@ -437,4 +459,13 @@ boot(int howto)
 	for (;;)
 		continue;
 	/* NOTREACHED */
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

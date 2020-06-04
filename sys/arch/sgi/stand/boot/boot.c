@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.27 2019/10/29 02:55:52 deraadt Exp $ */
+/*	$OpenBSD: boot.c,v 1.29 2020/05/26 13:47:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -44,7 +44,7 @@
 #include "loadfile.h"
 
 void	 dobootopts(int, char **);
-void	 loadrandom(const char *, const char *, void *, size_t);
+int	 loadrandom(const char *, const char *, void *, size_t);
 char	*strstr(char *, const char *);	/* strstr.c */
 
 enum {
@@ -107,8 +107,9 @@ boot_main(int argc, char *argv[])
 	if (bootauto != AUTO_MINI &&
 	    strstr(OSLoadPartition, "bootp(") == NULL &&
 	    strstr(OSLoadPartition, "cdrom(") == NULL) {
-		loadrandom(OSLoadPartition, BOOTRANDOM, rnddata,
-		    sizeof(rnddata));
+		if (loadrandom(OSLoadPartition, BOOTRANDOM, rnddata,
+		    sizeof(rnddata)) == 0)
+			boothowto |= RB_GOODRANDOM;
 	}
 
 	rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
@@ -286,12 +287,12 @@ check_phdr(void *v)
 /*
  * Load the saved randomness file.
  */
-void
+int
 loadrandom(const char *partition, const char *name, void *buf, size_t buflen)
 {
 	char path[MAXPATHLEN];
 	struct stat sb;
-	int fd;
+	int fd, error = 0;
 
 	strlcpy(path, partition, sizeof path);
 	strlcat(path, name, sizeof path);
@@ -300,12 +301,23 @@ loadrandom(const char *partition, const char *name, void *buf, size_t buflen)
 	if (fd == -1) {
 		if (errno != EPERM)
 			printf("cannot open %s: %s\n", path, strerror(errno));
-		return;
+		return (-1);
 	}
-	if (fstat(fd, &sb) == -1 || sb.st_uid != 0 || !S_ISREG(sb.st_mode) ||
-	    (sb.st_mode & (S_IWOTH|S_IROTH)))
-		goto fail;
-	(void) read(fd, buf, buflen);
-fail:
+	if (fstat(fd, &sb) == -1) {
+		error = -1;
+		goto done;
+	}
+	if (read(fd, buf, buflen) != buflen) {
+		error = -1;
+		goto done;
+	}
+	if (sb.st_mode & S_ISTXT) {
+		printf("NOTE: random seed is being reused.\n");
+		error = -1;
+		goto done;
+	}
+	fchmod(fd, sb.st_mode | S_ISTXT);
+done:
 	close(fd);
+	return (error);
 }

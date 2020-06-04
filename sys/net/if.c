@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.603 2020/04/12 07:04:03 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.606 2020/05/29 04:42:25 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -85,8 +85,7 @@
 #include <sys/atomic.h>
 #include <sys/percpu.h>
 #include <sys/proc.h>
-
-#include <dev/rndvar.h>
+#include <sys/stdint.h>	/* uintptr_t */
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -924,7 +923,7 @@ if_input_process(struct ifnet *ifp, struct mbuf_list *ml)
 		return;
 
 	if (!ISSET(ifp->if_xflags, IFXF_CLONED))
-		enqueue_randomness(ml_len(ml));
+		enqueue_randomness(ml_len(ml) ^ (uintptr_t)MBUF_LIST_FIRST(ml));
 
 	/*
 	 * We grab the NET_LOCK() before processing any packet to
@@ -936,7 +935,7 @@ if_input_process(struct ifnet *ifp, struct mbuf_list *ml)
 	 *
 	 * Since we have a NET_LOCK() we also use it to serialize access
 	 * to PF globals, pipex globals, unicast and multicast addresses
-	 * lists.
+	 * lists and the socket layer.
 	 */
 	NET_LOCK();
 	while ((m = ml_dequeue(ml)) != NULL)
@@ -2338,27 +2337,27 @@ ifioctl_get(u_long cmd, caddr_t data)
 
 	switch(cmd) {
 	case SIOCGIFCONF:
-		NET_RLOCK();
+		NET_RLOCK_IN_IOCTL();
 		error = ifconf(data);
-		NET_RUNLOCK();
+		NET_RUNLOCK_IN_IOCTL();
 		return (error);
 	case SIOCIFGCLONERS:
 		error = if_clone_list((struct if_clonereq *)data);
 		return (error);
 	case SIOCGIFGMEMB:
-		NET_RLOCK();
+		NET_RLOCK_IN_IOCTL();
 		error = if_getgroupmembers(data);
-		NET_RUNLOCK();
+		NET_RUNLOCK_IN_IOCTL();
 		return (error);
 	case SIOCGIFGATTR:
-		NET_RLOCK();
+		NET_RLOCK_IN_IOCTL();
 		error = if_getgroupattribs(data);
-		NET_RUNLOCK();
+		NET_RUNLOCK_IN_IOCTL();
 		return (error);
 	case SIOCGIFGLIST:
-		NET_RLOCK();
+		NET_RLOCK_IN_IOCTL();
 		error = if_getgrouplist(data);
-		NET_RUNLOCK();
+		NET_RUNLOCK_IN_IOCTL();
 		return (error);
 	}
 
@@ -2366,7 +2365,7 @@ ifioctl_get(u_long cmd, caddr_t data)
 	if (ifp == NULL)
 		return (ENXIO);
 
-	NET_RLOCK();
+	NET_RLOCK_IN_IOCTL();
 
 	switch(cmd) {
 	case SIOCGIFFLAGS:
@@ -2434,7 +2433,7 @@ ifioctl_get(u_long cmd, caddr_t data)
 		panic("invalid ioctl %lu", cmd);
 	}
 
-	NET_RUNLOCK();
+	NET_RUNLOCK_IN_IOCTL();
 
 	return (error);
 }

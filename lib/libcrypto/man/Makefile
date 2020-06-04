@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.162 2020/05/20 11:40:26 schwarze Exp $
+# $OpenBSD: Makefile,v 1.166 2020/06/04 10:24:27 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -214,8 +214,12 @@ MAN=	\
 	PKCS12_parse.3 \
 	PKCS12_SAFEBAG_new.3 \
 	PKCS5_PBKDF2_HMAC.3 \
+	PKCS7_add_attribute.3 \
+	PKCS7_dataFinal.3 \
+	PKCS7_dataInit.3 \
 	PKCS7_decrypt.3 \
 	PKCS7_encrypt.3 \
+	PKCS7_final.3 \
 	PKCS7_new.3 \
 	PKCS7_set_content.3 \
 	PKCS7_set_type.3 \

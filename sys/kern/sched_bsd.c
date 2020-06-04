@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.62 2020/01/30 08:51:27 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.63 2020/05/30 14:42:59 solene Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -576,6 +576,8 @@ setperf_auto(void *v)
 	j = 0;
 	speedup = 0;
 	CPU_INFO_FOREACH(cii, ci) {
+		if (!cpu_is_online(ci))
+			continue;
 		total = 0;
 		for (i = 0; i < CPUSTATES; i++) {
 			total += ci->ci_schedstate.spc_cp_time[i];

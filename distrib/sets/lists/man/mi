@@ -1119,6 +1119,7 @@
 ./usr/share/man/man4/acpicpu.4
 ./usr/share/man/man4/acpidock.4
 ./usr/share/man/man4/acpiec.4
+./usr/share/man/man4/acpihid.4
 ./usr/share/man/man4/acpihpet.4
 ./usr/share/man/man4/acpihve.4
 ./usr/share/man/man4/acpimadt.4
@@ -1999,6 +2000,7 @@
 ./usr/share/man/man4/umodem.4
 ./usr/share/man/man4/ums.4
 ./usr/share/man/man4/umsm.4
+./usr/share/man/man4/umstc.4
 ./usr/share/man/man4/umt.4
 ./usr/share/man/man4/unix.4
 ./usr/share/man/man4/uoaklux.4
@@ -2251,7 +2253,6 @@
 ./usr/share/man/man8/alpha/boot_alpha.8
 ./usr/share/man/man8/alpha/installboot.8
 ./usr/share/man/man8/alpha/setnetbootinfo.8
-./usr/share/man/man8/alpha/wsmoused.8
 ./usr/share/man/man8/amd.8
 ./usr/share/man/man8/amd64/MAKEDEV.8
 ./usr/share/man/man8/amd64/apm.8
@@ -2264,7 +2265,6 @@
 ./usr/share/man/man8/amd64/hostctl.8
 ./usr/share/man/man8/amd64/memconfig.8
 ./usr/share/man/man8/amd64/pxeboot.8
-./usr/share/man/man8/amd64/wsmoused.8
 ./usr/share/man/man8/amq.8
 ./usr/share/man/man8/arm64/MAKEDEV.8
 ./usr/share/man/man8/arm64/apm.8
@@ -2349,7 +2349,6 @@
 ./usr/share/man/man8/i386/hostctl.8
 ./usr/share/man/man8/i386/memconfig.8
 ./usr/share/man/man8/i386/pxeboot.8
-./usr/share/man/man8/i386/wsmoused.8
 ./usr/share/man/man8/identd.8
 ./usr/share/man/man8/ifconfig.8
 ./usr/share/man/man8/ifstated.8
@@ -2587,6 +2586,7 @@
 ./usr/share/man/man8/wsconscfg.8
 ./usr/share/man/man8/wsconsctl.8
 ./usr/share/man/man8/wsfontload.8
+./usr/share/man/man8/wsmoused.8
 ./usr/share/man/man8/yp.8
 ./usr/share/man/man8/ypbind.8
 ./usr/share/man/man8/ypinit.8

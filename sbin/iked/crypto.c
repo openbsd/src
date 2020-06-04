@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.27 2020/05/14 15:08:30 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.28 2020/05/26 20:24:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -92,7 +92,7 @@ hash_new(uint8_t type, uint16_t id)
 	struct iked_hash	*hash;
 	const EVP_MD		*md = NULL;
 	HMAC_CTX		*ctx = NULL;
-	int			 length = 0, fixedkey = 0, trunc = 0;
+	int			 length = 0, fixedkey = 0, trunc = 0, isaead = 0;
 
 	switch (type) {
 	case IKEV2_XFORMTYPE_PRF:
@@ -156,6 +156,14 @@ hash_new(uint8_t type, uint16_t id)
 			length = SHA512_DIGEST_LENGTH;
 			trunc = 32;
 			break;
+		case IKEV2_XFORMAUTH_AES_GCM_12:
+			length = 12;
+			isaead = 1;
+			break;
+		case IKEV2_XFORMAUTH_AES_GCM_16:
+			length = 16;
+			isaead = 1;
+			break;
 		case IKEV2_XFORMAUTH_NONE:
 		case IKEV2_XFORMAUTH_DES_MAC:
 		case IKEV2_XFORMAUTH_KPDK_MD5:
@@ -177,7 +185,7 @@ hash_new(uint8_t type, uint16_t id)
 		    print_map(id, ikev2_xformtype_map));
 		break;
 	}
-	if (md == NULL)
+	if (!isaead && md == NULL)
 		return (NULL);
 
 	if ((hash = calloc(1, sizeof(*hash))) == NULL) {
@@ -192,6 +200,10 @@ hash_new(uint8_t type, uint16_t id)
 	hash->hash_trunc = trunc;
 	hash->hash_length = length;
 	hash->hash_fixedkey = fixedkey;
+	hash->hash_isaead = isaead;
+
+	if (isaead)
+		return (hash);
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
 		log_debug("%s: alloc hash ctx", __func__);
@@ -276,6 +288,7 @@ cipher_new(uint8_t type, uint16_t id, uint16_t id_length)
 	const EVP_CIPHER	*cipher = NULL;
 	EVP_CIPHER_CTX		*ctx = NULL;
 	int			 length = 0, fixedkey = 0, ivlength = 0;
+	int			 saltlength = 0, authid = 0;
 
 	switch (type) {
 	case IKEV2_XFORMTYPE_ENCR:
@@ -308,6 +321,36 @@ cipher_new(uint8_t type, uint16_t id, uint16_t id_length)
 			length = EVP_CIPHER_block_size(cipher);
 			ivlength = EVP_CIPHER_iv_length(cipher);
 			fixedkey = EVP_CIPHER_key_length(cipher);
+			break;
+		case IKEV2_XFORMENCR_AES_GCM_16:
+		case IKEV2_XFORMENCR_AES_GCM_12:
+			switch (id_length) {
+			case 128:
+				cipher = EVP_aes_128_gcm();
+				break;
+			case 256:
+				cipher = EVP_aes_256_gcm();
+				break;
+			default:
+				log_debug("%s: invalid key length %d"
+				    " for cipher %s", __func__, id_length,
+				    print_map(id, ikev2_xformencr_map));
+				break;
+			}
+			if (cipher == NULL)
+				break;
+			switch(id) {
+			case IKEV2_XFORMENCR_AES_GCM_16:
+				authid = IKEV2_XFORMAUTH_AES_GCM_16;
+				break;
+			case IKEV2_XFORMENCR_AES_GCM_12:
+				authid = IKEV2_XFORMAUTH_AES_GCM_12;
+				break;
+			}
+			length = EVP_CIPHER_block_size(cipher);
+			ivlength = 8;
+			saltlength = 4;
+			fixedkey = EVP_CIPHER_key_length(cipher) + saltlength;
 			break;
 		case IKEV2_XFORMENCR_DES_IV64:
 		case IKEV2_XFORMENCR_DES:
@@ -346,6 +389,8 @@ cipher_new(uint8_t type, uint16_t id, uint16_t id_length)
 	encr->encr_length = length;
 	encr->encr_fixedkey = fixedkey;
 	encr->encr_ivlength = ivlength ? ivlength : length;
+	encr->encr_saltlength = saltlength;
+	encr->encr_authid = authid;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
 		log_debug("%s: alloc cipher ctx", __func__);
@@ -392,6 +437,20 @@ cipher_setiv(struct iked_cipher *encr, void *iv, size_t len)
 	return (encr->encr_iv);
 }
 
+int
+cipher_settag(struct iked_cipher *encr, uint8_t *data, size_t len)
+{
+	return (EVP_CIPHER_CTX_ctrl(encr->encr_ctx,
+	    EVP_CTRL_GCM_SET_TAG, len, data) != 1);
+}
+
+int
+cipher_gettag(struct iked_cipher *encr, uint8_t *data, size_t len)
+{
+	return (EVP_CIPHER_CTX_ctrl(encr->encr_ctx,
+	    EVP_CTRL_GCM_GET_TAG, len, data) != 1);
+}
+
 void
 cipher_free(struct iked_cipher *encr)
 {
@@ -409,11 +468,33 @@ cipher_free(struct iked_cipher *encr)
 int
 cipher_init(struct iked_cipher *encr, int enc)
 {
+	struct ibuf	*nonce = NULL;
+	int		 ret = -1;
+
 	if (EVP_CipherInit_ex(encr->encr_ctx, encr->encr_priv, NULL,
-	    ibuf_data(encr->encr_key), ibuf_data(encr->encr_iv), enc) != 1)
+	    NULL, NULL, enc) != 1)
 		return (-1);
+	if (encr->encr_saltlength > 0) {
+		/* For AEADs the nonce is salt + IV  (see RFC5282) */
+		nonce = ibuf_new(ibuf_data(encr->encr_key) +
+		    ibuf_size(encr->encr_key) - encr->encr_saltlength,
+		    encr->encr_saltlength);
+		if (nonce == NULL)
+			return (-1);
+		if (ibuf_add(nonce, ibuf_data(encr->encr_iv) , ibuf_size(encr->encr_iv)) != 0)
+			goto done;
+		if (EVP_CipherInit_ex(encr->encr_ctx, NULL, NULL,
+		    ibuf_data(encr->encr_key), ibuf_data(nonce), enc) != 1)
+			goto done;
+	} else
+		if (EVP_CipherInit_ex(encr->encr_ctx, NULL, NULL,
+		    ibuf_data(encr->encr_key), ibuf_data(encr->encr_iv), enc) != 1)
+			return (-1);
 	EVP_CIPHER_CTX_set_padding(encr->encr_ctx, 0);
-	return (0);
+	ret = 0;
+ done:
+	ibuf_free(nonce);
+	return (ret);
 }
 
 int
@@ -426,6 +507,20 @@ int
 cipher_init_decrypt(struct iked_cipher *encr)
 {
 	return (cipher_init(encr, 0));
+}
+
+void
+cipher_aad(struct iked_cipher *encr, void *in, size_t inlen,
+    size_t *outlen)
+{
+	int	 olen = 0;
+
+	if (EVP_CipherUpdate(encr->encr_ctx, NULL, &olen, in, inlen) != 1) {
+		ca_sslerror(__func__);
+		*outlen = 0;
+		return;
+	}
+	*outlen = (size_t)olen;
 }
 
 int

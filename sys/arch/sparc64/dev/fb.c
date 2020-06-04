@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.28 2016/03/29 22:06:50 kettenis Exp $	*/
+/*	$OpenBSD: fb.c,v 1.30 2020/05/25 09:55:48 jsg Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -118,7 +118,7 @@ void	fb_initwsd(struct sunfb *);
 void	fb_updatecursor(struct rasops_info *);
 
 int	fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	fb_free_screen(void *, void *);
 int	fb_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
@@ -311,7 +311,7 @@ fbwscons_console_init(struct sunfb *sf, int row)
 {
 	struct rasops_info *ri = &sf->sf_ro;
 	void *cookie;
-	long defattr;
+	uint32_t defattr;
 
 	if (romgetcursoraddr(&sf->sf_crowp, &sf->sf_ccolp))
 		sf->sf_ccolp = sf->sf_crowp = NULL;
@@ -363,10 +363,10 @@ fbwscons_console_init(struct sunfb *sf, int row)
 		cookie = ri;
 
 	if (ISSET(ri->ri_caps, WSSCREEN_WSCOLORS))
-		ri->ri_ops.alloc_attr(cookie,
+		ri->ri_ops.pack_attr(cookie,
 		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
 	else
-		ri->ri_ops.alloc_attr(cookie, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(cookie, 0, 0, 0, &defattr);
 
 	fb_initwsd(sf);
 	wsdisplay_cnattach(&sf->sf_wsd, cookie,
@@ -444,7 +444,7 @@ fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
  */
 int
 fb_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct sunfb *sf = v;
 	struct rasops_info *ri = &sf->sf_ro;
@@ -462,10 +462,10 @@ fb_alloc_screen(void *v, const struct wsscreen_descr *type,
 	*curyp = 0;
 	*curxp = 0;
 	if (ISSET(ri->ri_caps, WSSCREEN_WSCOLORS))
-		ri->ri_ops.alloc_attr(cookie,
+		ri->ri_ops.pack_attr(cookie,
 		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
 	else
-		ri->ri_ops.alloc_attr(cookie, 0, 0, 0, attrp);
+		ri->ri_ops.pack_attr(cookie, 0, 0, 0, attrp);
 	sf->sf_nscreens++;
 	return (0);
 }

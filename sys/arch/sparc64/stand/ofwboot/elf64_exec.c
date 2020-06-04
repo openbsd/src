@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.10 2019/10/29 02:55:52 deraadt Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.11 2020/05/25 15:31:59 kettenis Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -71,6 +71,8 @@
 
 #include "openfirm.h"
 
+extern int boothowto;
+
 void syncicache(void *, int);
 
 int
@@ -103,12 +105,19 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 		if (phdr.p_type == PT_OPENBSD_BOOTDATA) {
 			memset((void *) (long)phdr.p_paddr, 0, phdr.p_filesz);
 
-			if (phdr.p_filesz < sizeof(struct openbsd_bootdata))
+			if (phdr.p_filesz < BOOTDATA_LEN_SOFTRAID)
 				continue;
 
+			/*
+			 * Kernels up to and including OpenBSD 6.7
+			 * check for an exact match if the length.
+			 * Lie here to make sure we can still boot
+			 * older kernels with softraid.
+			 */
 			obd = (struct openbsd_bootdata *)(long)phdr.p_paddr;
 			obd->version = BOOTDATA_VERSION;
-			obd->len = sizeof(struct openbsd_bootdata);
+			obd->len = BOOTDATA_LEN_SOFTRAID;
+
 #ifdef SOFTRAID
 			/* 
 			 * If booting from softraid we must pass additional
@@ -126,6 +135,11 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 			}
 
 #endif
+
+			if (phdr.p_filesz < BOOTDATA_LEN_BOOTHOWTO)
+				continue;
+
+			obd->boothowto = boothowto;
 			continue;
 		}
 

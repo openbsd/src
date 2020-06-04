@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.32 2018/09/16 02:44:06 millert Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.33 2020/05/28 15:48:28 otto Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -708,20 +708,20 @@ CMDFUNCSTART(chaflags)
 CMDFUNCSTART(chgen)
 {
 	int rval = 1;
-	long gen;
+	long long gen;
 	char *cp;
 
 	if (!checkactive())
 		return 1;
 
-	gen = strtol(argv[1], &cp, 0);
+	gen = strtoll(argv[1], &cp, 0);
 	if (cp == argv[1] || *cp != '\0' ) {
 		warnx("bad gen `%s'", argv[1]);
 		return 1;
 	}
 
-	if (gen > INT_MAX || gen < INT_MIN) {
-		warnx("gen set beyond 32-bit range of field (%lx)", gen);
+	if (gen > UINT_MAX || gen < 0) {
+		warnx("gen set beyond 32-bit range of field (%llx)", gen);
 		return(1);
 	}
 	DIP_SET(curinode, di_gen, gen);

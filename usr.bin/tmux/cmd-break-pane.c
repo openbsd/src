@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.57 2020/05/16 16:20:59 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.58 2020/05/26 09:01:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -79,6 +79,10 @@ cmd_break_pane_exec(struct cmd *self, struct cmdq_item *item)
 			cmdq_error(item, "%s", cause);
 			free(cause);
 			return (CMD_RETURN_ERROR);
+		}
+		if (args_has(args, 'n')) {
+			window_set_name(w, args_get(args, 'n'));
+			options_set_number(w->options, "automatic-rename", 0);
 		}
 		server_unlink_window(src_s, wl);
 		return (CMD_RETURN_NORMAL);

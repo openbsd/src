@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.297 2020/03/13 09:25:21 mpi Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.299 2020/05/29 04:42:25 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -82,8 +82,6 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <dev/rndvar.h>
 
 #include <ufs/ufs/quota.h>
 
@@ -234,7 +232,7 @@ main(void *framep)
 	tty_init();		/* initialise tty's */
 	cpu_startup();
 
-	random_start();		/* Start the flow */
+	random_start(boothowto & RB_GOODRANDOM);	/* Start the flow */
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to

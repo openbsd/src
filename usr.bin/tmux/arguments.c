@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.32 2020/05/16 15:40:04 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.34 2020/06/04 07:12:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -227,6 +227,11 @@ args_escape(const char *s)
 		return (escaped);
 	}
 
+	if (strchr(s, ' ') != NULL && strchr(s, '\'') == NULL) {
+		xasprintf(&escaped, "'%s'", s);
+		return (escaped);
+	}
+
 	flags = VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL;
 	if (s[strcspn(s, quoted)] != '\0')
 		flags |= VIS_DQ;
@@ -407,11 +412,11 @@ args_string_percentage(const char *value, long long minval, long long maxval,
 		}
 		ll = (curval * ll) / 100;
 		if (ll < minval) {
-			*cause = xstrdup("too large");
+			*cause = xstrdup("too small");
 			return (0);
 		}
 		if (ll > maxval) {
-			*cause = xstrdup("too small");
+			*cause = xstrdup("too large");
 			return (0);
 		}
 	} else {

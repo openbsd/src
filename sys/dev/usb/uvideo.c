@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.206 2020/01/16 09:59:26 mpi Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.207 2020/05/30 09:01:04 feinerer Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -186,6 +186,7 @@ usbd_status	uvideo_usb_control(struct uvideo_softc *sc, uint8_t rt, uint8_t r,
 
 #ifdef UVIDEO_DEBUG
 #include <sys/namei.h>
+#include <sys/proc.h>
 #include <sys/vnode.h>
 
 void		uvideo_dump_desc_all(struct uvideo_softc *);

@@ -64,8 +64,6 @@
 
 #include <machine/i82489var.h>
 
-#include <dev/rndvar.h>
-
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>

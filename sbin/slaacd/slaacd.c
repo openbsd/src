@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.48 2020/04/16 05:28:30 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.49 2020/05/25 16:52:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -185,8 +185,6 @@ main(int argc, char *argv[])
 
 	if (!debug)
 		daemon(0, 0);
-
-	log_info("startup");
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    PF_UNSPEC, pipe_main2frontend) == -1)

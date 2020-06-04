@@ -4112,7 +4112,7 @@ ppc64_elf_archive_symbol_lookup (bfd *abfd,
   len = strlen (name);
   dot_name = bfd_alloc (abfd, len + 2);
   if (dot_name == NULL)
-    return (struct elf_link_hash_entry *) 0 - 1;
+    return (struct elf_link_hash_entry *) -1;
   dot_name[0] = '.';
   memcpy (dot_name + 1, name, len + 1);
   h = _bfd_elf_archive_symbol_lookup (abfd, info, dot_name);

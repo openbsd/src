@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.213 2020/05/18 15:00:16 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.220 2020/05/31 06:23:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Theo de Raadt.
@@ -51,24 +51,26 @@
  * the entropy collection mechanism enqueue_randomness() and timeout-driven
  * mixing into the chacha state.  The first submissions come from device
  * probes, later on interrupt-time submissions are more common.  Entropy
- * data (and timing information) is XOR spread over the entropy input ring
- * rnd_event_space[] for later integration.
+ * data (and timing information) get mixed over the entropy input ring
+ * rnd_event_space[] -- the goal is to collect damage.
  *
- * Based upon timeouts, data in the entropy input ring rnd_event_space[] is
- * drawn down, CRC bit-distributed and mixed into entropy_pool[].
+ * Based upon timeouts, a selection of the entropy ring rnd_event_space[]
+ * CRC bit-distributed and XOR mixed into entropy_pool[].
  *
  * From time to time, entropy_pool[] is SHA512-whitened, mixed with time
  * information again, XOR'd with the inner and outer states of the existing
  * chacha state, to create a new chacha state.
+ *
+ * During early boot (until cold=0), enqueue operations are immediately
+ * dequeued, and mixed into the chacha.
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/event.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
-#include <sys/mutex.h>
+#include <sys/atomic.h>
 #include <sys/task.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
@@ -79,9 +81,6 @@
 #define KEYSTREAM_ONLY
 #include <crypto/chacha_private.h>
 
-#include <dev/rndvar.h>
-
-#include <uvm/uvm_param.h>
 #include <uvm/uvm_extern.h>
 
 /*
@@ -119,7 +118,7 @@
  */
 
 #define QEVLEN	128		 /* must be a power of 2 */
-#define QEVSLOW (QEVLEN * 3 / 4) /* yet another 0.75 for 60-minutes hour /-; */
+#define QEVCONSUME 8		 /* how many events to consume a time */
 
 #define KEYSZ	32
 #define IVSZ	8
@@ -128,17 +127,17 @@
 #define EBUFSIZE KEYSZ + IVSZ
 
 struct rand_event {
-	u_int re_time;
-	u_int re_val;
+	u_int	re_time;
+	u_int	re_val;
 } rnd_event_space[QEVLEN];
 
-u_int rnd_event_cons;
-u_int rnd_event_prod;
+u_int	rnd_event_cons;
+u_int	rnd_event_prod;
+int	rnd_cold = 1;
+int	rnd_slowextract = 1;
 
-struct mutex rnd_enqlck = MUTEX_INITIALIZER(IPL_HIGH);
-struct mutex rnd_deqlck = MUTEX_INITIALIZER(IPL_HIGH);
-
-struct timeout rnd_timeout;
+void	rnd_reinit(void *v);		/* timeout to start reinit */
+void	rnd_init(void *);			/* actually do the reinit */
 
 static u_int32_t entropy_pool[POOLWORDS];
 u_int32_t entropy_pool0[POOLWORDS] __attribute__((section(".openbsd.randomdata")));
@@ -147,6 +146,8 @@ void	dequeue_randomness(void *);
 void	add_entropy_words(const u_int32_t *, u_int);
 void	extract_entropy(u_int8_t *)
     __attribute__((__bounded__(__minbytes__,1,EBUFSIZE)));
+
+struct timeout rnd_timeout = TIMEOUT_INITIALIZER(dequeue_randomness, NULL);
 
 int	filt_randomread(struct knote *, long);
 void	filt_randomdetach(struct knote *);
@@ -169,36 +170,6 @@ const struct filterops randomwrite_filtops = {
 	.f_event	= filt_randomwrite,
 };
 
-static inline struct rand_event *
-rnd_get(void)
-{
-	u_int idx;
-
-	/* nothing to do if queue is empty */
-	if (rnd_event_prod == rnd_event_cons)
-		return NULL;
-
-	if (rnd_event_prod - rnd_event_cons > QEVLEN)
-		rnd_event_cons = rnd_event_prod - QEVLEN;
-	idx = rnd_event_cons++;
-	return &rnd_event_space[idx & (QEVLEN - 1)];
-}
-
-static inline struct rand_event *
-rnd_put(void)
-{
-	u_int idx = rnd_event_prod++;
-
-	/* allow wrapping. caller will mix it in. */
-	return &rnd_event_space[idx & (QEVLEN - 1)];
-}
-
-static inline u_int
-rnd_qlen(void)
-{
-	return rnd_event_prod - rnd_event_cons;
-}
-
 /*
  * This function mixes entropy and timing into the entropy input ring.
  */
@@ -206,23 +177,23 @@ void
 enqueue_randomness(u_int val)
 {
 	struct rand_event *rep;
-	struct timespec	ts;
-	u_int qlen;
+	int e;
 
-	timespecclear(&ts);
-	if (timeout_initialized(&rnd_timeout))
-		nanotime(&ts);
-
-	mtx_enter(&rnd_enqlck);
-	rep = rnd_put();
-	rep->re_time += ts.tv_nsec ^ (ts.tv_sec << 20);
+	e = (atomic_inc_int_nv(&rnd_event_prod) - 1) & (QEVLEN-1);
+	rep = &rnd_event_space[e];
+	rep->re_time += cpu_rnd_messybits();
 	rep->re_val += val;
-	qlen = rnd_qlen();
-	mtx_leave(&rnd_enqlck);
 
-	if (qlen > QEVSLOW/2 && timeout_initialized(&rnd_timeout) &&
-	    !timeout_pending(&rnd_timeout))
-		timeout_add(&rnd_timeout, 1);
+	if (rnd_cold) {
+		dequeue_randomness(NULL);
+		rnd_init(NULL);
+		if (!cold)
+			rnd_cold = 0;
+	} else if (!timeout_pending(&rnd_timeout) &&
+	    (rnd_event_prod - rnd_event_cons) > QEVCONSUME) {
+		rnd_slowextract = min(rnd_slowextract * 2, 5000);
+		timeout_add_msec(&rnd_timeout, rnd_slowextract * 10);
+	}
 }
 
 /*
@@ -267,28 +238,40 @@ add_entropy_words(const u_int32_t *buf, u_int n)
 }
 
 /*
- * Pulls entropy out of the queue and merges it into the pool
- * with the CRC.
+ * Pulls entropy out of the queue and merges it into the poll with the
+ * CRC.  This takes a mix of fresh entries from the producer end of the
+ * queue and entries from the consumer end of the queue which are
+ * likely to have collected more damage.
  */
 /* ARGSUSED */
 void
 dequeue_randomness(void *v)
 {
-	struct rand_event *rep;
 	u_int32_t buf[2];
+	u_int startp, startc, i;
 
-	if (timeout_initialized(&rnd_timeout))
+	if (!rnd_cold)
 		timeout_del(&rnd_timeout);
 
-	mtx_enter(&rnd_deqlck);
-	while ((rep = rnd_get())) {
-		buf[0] = rep->re_time;
-		buf[1] = rep->re_val;
-		mtx_leave(&rnd_deqlck);
+	/* Some very new damage */
+	startp = rnd_event_prod - QEVCONSUME;
+	for (i = 0; i < QEVCONSUME; i++) {
+		u_int e = (startp + i) & (QEVLEN-1);
+
+		buf[0] = rnd_event_space[e].re_time;
+		buf[1] = rnd_event_space[e].re_val;
 		add_entropy_words(buf, 2);
-		mtx_enter(&rnd_deqlck);
 	}
-	mtx_leave(&rnd_deqlck);
+	/* and some probably more damaged */
+	startc = rnd_event_cons;
+	for (i = 0; i < QEVCONSUME; i++) {
+		u_int e = (startc + i) & (QEVLEN-1);
+
+		buf[0] = rnd_event_space[e].re_time;
+		buf[1] = rnd_event_space[e].re_val;
+		add_entropy_words(buf, 2);
+	}
+	rnd_event_cons = startp + QEVCONSUME;
 }
 
 /*
@@ -322,8 +305,12 @@ extract_entropy(u_int8_t *buf)
 	/* Copy data to destination buffer */
 	memcpy(buf, digest, EBUFSIZE);
 
-	/* Modify pool so next hash will produce different results */
-	enqueue_randomness(extract_pool[0]);
+	/*
+	 * Modify pool so next hash will produce different results.
+	 * During boot-time enqueue/dequeue stage, avoid recursion.
+	*/
+	if (!rnd_cold)
+		enqueue_randomness(extract_pool[0]);
 	dequeue_randomness(NULL);
 
 	/* Wipe data from memory */
@@ -333,11 +320,8 @@ extract_entropy(u_int8_t *buf)
 
 /* random keystream by ChaCha */
 
-void rnd_reinit(void *v);		/* timeout to start reinit */
-void rnd_init(void *);			/* actually do the reinit */
-
 struct mutex rndlock = MUTEX_INITIALIZER(IPL_HIGH);
-struct timeout rndreinit_timeout;
+struct timeout rndreinit_timeout = TIMEOUT_INITIALIZER(rnd_reinit, NULL);
 struct task rnd_task = TASK_INITIALIZER(rnd_init, NULL);
 
 static chacha_ctx rs;		/* chacha context for random keystream */
@@ -422,8 +406,10 @@ _rs_stir(int do_lock)
 	_rs_seed(buf, sizeof(buf));
 	if (do_lock)
 		mtx_leave(&rndlock);
-
 	explicit_bzero(buf, sizeof(buf));
+
+	/* encourage fast-dequeue again */
+	rnd_slowextract = 1;
 }
 
 static inline void
@@ -589,6 +575,9 @@ arc4random_ctx_free(struct arc4random_ctx *ctx)
 void
 arc4random_ctx_buf(struct arc4random_ctx *ctx, void *buf, size_t n)
 {
+#ifndef KEYSTREAM_ONLY
+	memset(buf, 0, n);
+#endif
 	chacha_encrypt_bytes((chacha_ctx *)ctx, buf, buf, n);
 }
 
@@ -651,7 +640,7 @@ rnd_reinit(void *v)
  * entropy forward, hash it, and re-seed the random stream as needed.
  */
 void
-random_start(void)
+random_start(int goodseed)
 {
 	extern char etext[];
 
@@ -674,9 +663,14 @@ random_start(void)
 
 	dequeue_randomness(NULL);
 	rnd_init(NULL);
-	timeout_set(&rndreinit_timeout, rnd_reinit, NULL);
 	rnd_reinit(NULL);
-	timeout_set(&rnd_timeout, dequeue_randomness, NULL);
+
+	if (goodseed)
+		printf("random: good seed from bootblocks\n");
+	else {
+		/* XXX kernel should work harder here */
+		printf("random: boothowto does not indicate good seed\n");
+	}
 }
 
 int
@@ -701,40 +695,31 @@ randomclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 randomread(dev_t dev, struct uio *uio, int ioflag)
 {
-	u_char		lbuf[KEYSZ+IVSZ];
-	chacha_ctx	lctx;
+	struct arc4random_ctx *lctx = NULL;
 	size_t		total = uio->uio_resid;
 	u_char		*buf;
-	int		myctx = 0, ret = 0;
+	int		ret = 0;
 
 	if (uio->uio_resid == 0)
 		return 0;
 
 	buf = malloc(POOLBYTES, M_TEMP, M_WAITOK);
-	if (total > RND_MAIN_MAX_BYTES) {
-		arc4random_buf(lbuf, sizeof(lbuf));
-		chacha_keysetup(&lctx, lbuf, KEYSZ * 8);
-		chacha_ivsetup(&lctx, lbuf + KEYSZ, NULL);
-		explicit_bzero(lbuf, sizeof(lbuf));
-		myctx = 1;
-	}
+	if (total > RND_MAIN_MAX_BYTES)
+		lctx = arc4random_ctx_new();
 
 	while (ret == 0 && uio->uio_resid > 0) {
 		size_t	n = ulmin(POOLBYTES, uio->uio_resid);
 
-		if (myctx) {
-#ifndef KEYSTREAM_ONLY
-			memset(buf, 0, n);
-#endif
-			chacha_encrypt_bytes(&lctx, buf, buf, n);
-		} else
+		if (lctx != NULL)
+			arc4random_ctx_buf(lctx, buf, n);
+		else
 			arc4random_buf(buf, n);
 		ret = uiomove(buf, n, uio);
 		if (ret == 0 && uio->uio_resid > 0)
 			yield();
 	}
-	if (myctx)
-		explicit_bzero(&lctx, sizeof(lctx));
+	if (lctx != NULL)
+		arc4random_ctx_free(lctx);
 	explicit_bzero(buf, POOLBYTES);
 	free(buf, M_TEMP, POOLBYTES);
 	return ret;

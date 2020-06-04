@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2020/02/21 19:39:28 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2020/05/23 13:19:13 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -166,10 +166,18 @@ domainoptsl	: domainopts nl
 		;
 
 domainopts	: VCPU vcpu {
+			if (domain->vcpu) {
+				yyerror("duplicate vcpu option");
+				YYERROR;
+			}
 			domain->vcpu = $2.count;
 			domain->vcpu_stride = $2.stride;
 		}
 		| MEMORY memory {
+			if (domain->memory) {
+				yyerror("duplicate memory option");
+				YYERROR;
+			}
 			domain->memory = $2;
 		}
 		| VDISK STRING vdisk_opts {
@@ -192,10 +200,19 @@ domainopts	: VCPU vcpu {
 			SIMPLEQ_INSERT_TAIL(&domain->var_list, var, entry);
 		}
 		| IODEVICE STRING {
-			struct iodev *iodev = xmalloc(sizeof(struct iodev));
+			struct domain *odomain;
+			struct iodev *iodev;
+			SIMPLEQ_FOREACH(odomain, &conf->domain_list, entry)
+				SIMPLEQ_FOREACH(iodev, &odomain->iodev_list, entry)
+					if (strcmp(iodev->path, $2) == 0) {
+						yyerror("iodevice %s already"
+						    " assigned", $2);
+						YYERROR;
+					}
+			iodev = xmalloc(sizeof(struct iodev));
 			iodev->path = $2;
 			SIMPLEQ_INSERT_TAIL(&domain->iodev_list, iodev, entry);
-		    }
+		}
 		;
 
 vdisk_opts	:	{ vdisk_opts_default(); }

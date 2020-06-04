@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.215 2020/05/21 19:28:32 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.217 2020/05/23 12:14:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1743,6 +1743,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->method = meth;
 	ret->internal->min_version = meth->internal->min_version;
 	ret->internal->max_version = meth->internal->max_version;
+	ret->internal->mode = SSL_MODE_AUTO_RETRY;
 
 	ret->cert_store = NULL;
 	ret->internal->session_cache_mode = SSL_SESS_CACHE_SERVER;
@@ -1945,8 +1946,8 @@ SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u)
 }
 
 void
-SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx, int (*cb)(X509_STORE_CTX *,
-    void *), void *arg)
+SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,
+    int (*cb)(X509_STORE_CTX *, void *), void *arg)
 {
 	ctx->internal->app_verify_callback = cb;
 	ctx->internal->app_verify_arg = arg;

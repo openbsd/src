@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.78 2017/06/11 02:06:36 deraadt Exp $	*/
+/*	$OpenBSD: sti.c,v 1.80 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -53,15 +53,15 @@ struct cfdriver sti_cd = {
 	NULL, "sti", DV_DULL
 };
 
-int	sti_alloc_attr(void *, int, int, int, long *);
+int	sti_pack_attr(void *, int, int, int, uint32_t *);
 int	sti_copycols(void *, int, int, int, int);
 int	sti_copyrows(void *, int, int, int);
 int	sti_cursor(void *, int, int, int);
-int	sti_erasecols(void *, int, int, int, long);
-int	sti_eraserows(void *, int, int, long);
+int	sti_erasecols(void *, int, int, int, uint32_t);
+int	sti_eraserows(void *, int, int, uint32_t);
 int	sti_mapchar(void *, int, u_int *);
-int	sti_putchar(void *, int, int, u_int, long);
-void	sti_unpack_attr(void *, long, int *, int *, int *);
+int	sti_putchar(void *, int, int, u_int, uint32_t);
+void	sti_unpack_attr(void *, uint32_t, int *, int *, int *);
 
 struct wsdisplay_emulops sti_emulops = {
 	.cursor = sti_cursor,
@@ -71,12 +71,12 @@ struct wsdisplay_emulops sti_emulops = {
 	.erasecols = sti_erasecols,
 	.copyrows = sti_copyrows,
 	.eraserows = sti_eraserows,
-	.alloc_attr = sti_alloc_attr,
+	.pack_attr = sti_pack_attr,
 	.unpack_attr = sti_unpack_attr
 };
 
 int	sti_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
-	    int *, long *);
+	    int *, uint32_t *);
 void	sti_free_screen(void *, void *);
 int	sti_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t sti_mmap(void *, off_t, int);
@@ -770,9 +770,9 @@ sti_end_attach_screen(struct sti_softc *sc, struct sti_screen *scr, int console)
 
 	/* attach as console if required */
 	if (console && !ISSET(sc->sc_flags, STI_ATTACHED)) {
-		long defattr;
+		uint32_t defattr;
 
-		sti_alloc_attr(scr, 0, 0, 0, &defattr);
+		sti_pack_attr(scr, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&scr->scr_wsd, scr,
 		    0, scr->scr_wsd.nrows - 1, defattr);
 		sc->sc_flags |= STI_ATTACHED;
@@ -1195,7 +1195,7 @@ sti_mmap(void *v, off_t offset, int prot)
 
 int
 sti_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *cxp, int *cyp, long *defattr)
+    int *cxp, int *cyp, uint32_t *defattr)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
 
@@ -1205,7 +1205,7 @@ sti_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*cookiep = scr;
 	*cxp = 0;
 	*cyp = 0;
-	sti_alloc_attr(scr, 0, 0, 0, defattr);
+	sti_pack_attr(scr, 0, 0, 0, defattr);
 	scr->scr_nscreens++;
 	return 0;
 }
@@ -1304,7 +1304,7 @@ sti_mapchar(void *v, int uni, u_int *index)
 }
 
 int
-sti_putchar(void *v, int row, int col, u_int uc, long attr)
+sti_putchar(void *v, int row, int col, u_int uc, uint32_t attr)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
 	struct sti_rom *rom = scr->scr_rom;
@@ -1381,7 +1381,7 @@ sti_copycols(void *v, int row, int srccol, int dstcol, int ncols)
 }
 
 int
-sti_erasecols(void *v, int row, int startcol, int ncols, long attr)
+sti_erasecols(void *v, int row, int startcol, int ncols, uint32_t attr)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
 	struct sti_font *fp = &scr->scr_curfont;
@@ -1407,7 +1407,7 @@ sti_copyrows(void *v, int srcrow, int dstrow, int nrows)
 }
 
 int
-sti_eraserows(void *v, int srcrow, int nrows, long attr)
+sti_eraserows(void *v, int srcrow, int nrows, uint32_t attr)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
 	struct sti_font *fp = &scr->scr_curfont;
@@ -1419,7 +1419,7 @@ sti_eraserows(void *v, int srcrow, int nrows, long attr)
 }
 
 int
-sti_alloc_attr(void *v, int fg, int bg, int flags, long *pattr)
+sti_pack_attr(void *v, int fg, int bg, int flags, uint32_t *pattr)
 {
 #if 0
 	struct sti_screen *scr = (struct sti_screen *)v;
@@ -1430,7 +1430,7 @@ sti_alloc_attr(void *v, int fg, int bg, int flags, long *pattr)
 }
 
 void
-sti_unpack_attr(void *v, long attr, int *fg, int *bg, int *ul)
+sti_unpack_attr(void *v, uint32_t attr, int *fg, int *bg, int *ul)
 {
 #if 0
 	struct sti_screen *scr = (struct sti_screen *)v;

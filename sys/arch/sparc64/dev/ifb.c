@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.22 2013/10/20 20:07:27 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.23 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -331,18 +331,18 @@ void	ifb_rop_ifb(void *, int, int, int, int, int, int, uint32_t, int32_t);
 void	ifb_rop_jfb(void *, int, int, int, int, int, int, uint32_t, int32_t);
 int	ifb_rop_wait(struct ifb_softc *);
 
-int	ifb_putchar_dumb(void *, int, int, u_int, long);
+int	ifb_putchar_dumb(void *, int, int, u_int, uint32_t);
 int	ifb_copycols_dumb(void *, int, int, int, int);
-int	ifb_erasecols_dumb(void *, int, int, int, long);
+int	ifb_erasecols_dumb(void *, int, int, int, uint32_t);
 int	ifb_copyrows_dumb(void *, int, int, int);
-int	ifb_eraserows_dumb(void *, int, int, long);
+int	ifb_eraserows_dumb(void *, int, int, uint32_t);
 int	ifb_do_cursor_dumb(struct rasops_info *);
 
-int	ifb_putchar(void *, int, int, u_int, long);
+int	ifb_putchar(void *, int, int, u_int, uint32_t);
 int	ifb_copycols(void *, int, int, int, int);
-int	ifb_erasecols(void *, int, int, int, long);
+int	ifb_erasecols(void *, int, int, int, uint32_t);
 int	ifb_copyrows(void *, int, int, int);
-int	ifb_eraserows(void *, int, int, long);
+int	ifb_eraserows(void *, int, int, uint32_t);
 int	ifb_do_cursor(struct rasops_info *);
 
 int
@@ -843,7 +843,7 @@ ifb_mapregs(struct ifb_softc *sc, struct pci_attach_args *pa)
  */
 
 int
-ifb_putchar_dumb(void *cookie, int row, int col, u_int uc, long attr)
+ifb_putchar_dumb(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;
@@ -871,7 +871,7 @@ ifb_copycols_dumb(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-ifb_erasecols_dumb(void *cookie, int row, int col, int num, long attr)
+ifb_erasecols_dumb(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;
@@ -899,7 +899,7 @@ ifb_copyrows_dumb(void *cookie, int src, int dst, int num)
 }
 
 int
-ifb_eraserows_dumb(void *cookie, int row, int num, long attr)
+ifb_eraserows_dumb(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;
@@ -1016,7 +1016,7 @@ ifb_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-ifb_erasecols(void *cookie, int row, int col, int num, long attr)
+ifb_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;
@@ -1051,7 +1051,7 @@ ifb_copyrows(void *cookie, int src, int dst, int num)
 }
 
 int
-ifb_eraserows(void *cookie, int row, int num, long attr)
+ifb_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;

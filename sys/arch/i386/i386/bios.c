@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.124 2019/10/23 10:14:46 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.125 2020/05/29 04:42:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -61,8 +61,6 @@
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-
-#include <dev/rndvar.h>
 
 #include "apm.h"
 #include "acpi.h"

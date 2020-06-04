@@ -1,0 +1,179 @@
+.\" $OpenBSD: PKCS7_add_attribute.3,v 1.1 2020/06/04 10:24:27 schwarze Exp $
+.\"
+.\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 4 2020 $
+.Dt PKCS7_ADD_ATTRIBUTE 3
+.Os
+.Sh NAME
+.Nm PKCS7_add_attribute ,
+.Nm PKCS7_get_attribute ,
+.Nm PKCS7_add_signed_attribute ,
+.Nm PKCS7_get_signed_attribute
+.Nd attributes of SignerInfo objects
+.Sh SYNOPSIS
+.In openssl/pkcs7.h
+.Ft int
+.Fo PKCS7_add_attribute
+.Fa "PKCS7_SIGNER_INFO *si"
+.Fa "int nid"
+.Fa "int attrtype"
+.Fa "void *value"
+.Fc
+.Ft ASN1_TYPE *
+.Fo PKCS7_get_attribute
+.Fa "PKCS7_SIGNER_INFO *si"
+.Fa "int nid"
+.Fc
+.Ft int
+.Fo PKCS7_add_signed_attribute
+.Fa "PKCS7_SIGNER_INFO *si"
+.Fa "int nid"
+.Fa "int attrtype"
+.Fa "void *value"
+.Fc
+.Ft ASN1_TYPE *
+.Fo PKCS7_get_signed_attribute
+.Fa "PKCS7_SIGNER_INFO *si"
+.Fa "int nid"
+.Fc
+.Sh DESCRIPTION
+.Fn PKCS7_add_attribute
+appends a new attribute of type
+.Fa nid
+to the
+.Fa unauthenticatedAttributes
+list of
+.Fa si ,
+and it adds a new ASN.1 ANY object of type
+.Fa attrtype
+with the given
+.Fa value
+to the new attribute.
+Ownership of the
+.Fa value
+is transferred into the new attribute object, so the calling code
+must not
+.Xr free 3
+the
+.Fa value .
+If the list already contains an unauthenticated attribute of type
+.Fa nid
+before the call, the new attribute replaces the old one
+instead of being appended to the end of the list.
+.Pp
+.Fn PKCS7_get_attribute
+retrieves the first ASN.1 ANY member of the attribute of type
+.Fa nid
+from the
+.Fa unauthenticatedAttributes
+list of
+.Fa si .
+.Pp
+The behaviour of
+.Fn PKCS7_add_signed_attribute
+and
+.Fn PKCS7_get_signed_attribute
+is identical except that they operate on the list of
+.Fa authenticatedAttributes .
+.Pp
+The normal way to use
+.Fn PKCS7_add_signed_attribute
+is to first create a
+.Vt SignedInfo
+object with
+.Xr PKCS7_sign 3
+using the
+.Dv PKCS7_PARTIAL
+or
+.Dv PKCS7_STREAM
+flag, retrieve the
+.Vt PKCS7_SIGNER_INFO
+object with the undocumented function
+.Fn PKCS7_get_signer_info
+or add an additional one with
+.Xr PKCS7_sign_add_signer 3 ,
+call
+.Fn PKCS7_add_signed_attribute
+for each desired additional attribute, then do the signing with
+.Xr PKCS7_final 3
+or with another finalizing function.
+.Pp
+For particular types of attributes, undocumented wrapper functions
+.Fn PKCS7_add_attrib_content_type ,
+.Fn PKCS7_add1_attrib_digest ,
+.Fn PKCS7_add0_attrib_signing_time ,
+and
+.Fn PKCS7_add_attrib_smimecap
+exist.
+.Sh RETURN VALUES
+.Fn PKCS7_add_attribute
+and
+.Fn PKCS7_add_signed_attribute
+return 1 on success or 0 on failure.
+The most common reason for failure is lack of memory.
+.Pp
+.Fn PKCS7_get_attribute
+and
+.Fn PKCS7_get_signed_attribute
+return an internal pointer to an ASN.1 ANY object or
+.Dv NULL
+on failure.
+They fail if
+.Fa nid
+is invalid, if the respective list in
+.Fa si
+contains no attribute of the requested type, or if an invalid element
+is found in the list before finding the attribute of the requested type.
+.Sh SEE ALSO
+.Xr ASN1_TYPE_new 3 ,
+.Xr PKCS7_final 3 ,
+.Xr PKCS7_new 3 ,
+.Xr PKCS7_sign 3 ,
+.Xr PKCS7_sign_add_signer 3 ,
+.Xr STACK_OF 3 ,
+.Xr X509_ATTRIBUTE_new 3
+.Sh STANDARDS
+RFC 2315: PKCS #7: Cryptographic Message Syntax Version 1.5,
+section 9.2: SignerInfo type
+.Sh HISTORY
+These functions first appeared in OpenSSL 0.9.1
+and have been available since
+.Ox 2.6 .
+.Sh BUGS
+Adding an attribute with an invalid
+.Fa nid
+ought to fail, but it actually succeeds
+setting the type of the new attribute to
+.Dv NULL .
+Subsequent attempts to retrieve attributes
+may cause the program to crash due to
+.Dv NULL
+pointer access.
+.Pp
+A function to remove individual attributes from these lists
+does not appear to exist.
+A program desiring to do that might have to manually iterate the fields
+.Fa auth_attr
+and
+.Fa unauth_attr
+of
+.Fa si ,
+which are both of type
+.Vt STACK_OF(X509_ATTRIBUTE) ,
+using the facilities described in
+.Xr STACK_OF 3
+and
+.Xr OPENSSL_sk_new 3 .

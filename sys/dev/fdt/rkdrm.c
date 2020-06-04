@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.7 2020/04/08 11:30:48 kettenis Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.9 2020/05/25 09:55:48 jsg Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -268,7 +268,7 @@ void rkdrm_burner(void *, u_int, u_int);
 int rkdrm_wsioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t rkdrm_wsmmap(void *, off_t, int);
 int rkdrm_alloc_screen(void *, const struct wsscreen_descr *,
-    void **, int *, int *, long *);
+    void **, int *, int *, uint32_t *);
 void rkdrm_free_screen(void *, void *);
 int rkdrm_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
@@ -363,7 +363,7 @@ rkdrm_wsmmap(void *v, off_t off, int prot)
 
 int
 rkdrm_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	return rasops_alloc_screen(v, cookiep, curxp, curyp, attrp);
 }
@@ -438,7 +438,7 @@ rkdrm_attachhook(struct device *dev)
 	uint32_t *ports;
 	int i, portslen, nports;
 	int console = 0;
-	long defattr;
+	uint32_t defattr;
 	int error;
 
 	if (sc->sc_node == stdout_node)
@@ -522,7 +522,7 @@ rkdrm_attachhook(struct device *dev)
 	rkdrm_stdscreen.fontheight = ri->ri_font->fontheight;
 
 	if (console) {
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&rkdrm_stdscreen, ri->ri_active,
 		    ri->ri_ccol, ri->ri_crow, defattr);
 	}

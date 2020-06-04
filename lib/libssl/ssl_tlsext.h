@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.22 2020/01/25 12:58:27 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.23 2020/05/23 17:13:24 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -58,6 +58,7 @@ int tlsext_sni_client_parse(SSL *s, CBS *cbs, int *alert);
 int tlsext_sni_server_needs(SSL *s);
 int tlsext_sni_server_build(SSL *s, CBB *cbb);
 int tlsext_sni_server_parse(SSL *s, CBS *cbs, int *alert);
+int tlsext_sni_is_valid_hostname(CBS *cbs);
 
 int tlsext_supportedgroups_client_needs(SSL *s);
 int tlsext_supportedgroups_client_build(SSL *s, CBB *cbb);

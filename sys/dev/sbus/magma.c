@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.31 2020/02/18 00:12:08 cheloha Exp $	*/
+/*	$OpenBSD: magma.c,v 1.32 2020/05/23 09:44:20 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -1340,6 +1340,7 @@ mtty_param(struct tty *tp, struct termios *t)
  *	mbppwrite	write to mbpp
  *	mbppioctl	do ioctl on mbpp
  *	mbpppoll	do poll on mbpp
+ *	mbppkqfilter	kqueue on mbpp
  *	mbpp_rw		general rw routine
  *	mbpp_timeout	rw timeout
  *	mbpp_start	rw start after delay
@@ -1513,6 +1514,12 @@ int
 mbpppoll(dev_t dev, int events, struct proc *p)
 {
 	return (seltrue(dev, events, p));
+}
+
+int
+mbppkqfilter(dev_t dev, struct knote *kn)
+{
+	return (seltrue_kqfilter(dev, kn));
 }
 
 int

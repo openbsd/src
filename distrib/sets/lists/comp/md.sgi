@@ -51,7 +51,6 @@
 ./usr/include/mips64/sysarch.h
 ./usr/include/mips64/tcb.h
 ./usr/include/mips64/trap.h
-./usr/include/mips64/varargs.h
 ./usr/include/mips64/vmparam.h
 ./usr/include/sgi
 ./usr/include/sgi/_float.h
@@ -103,7 +102,6 @@
 ./usr/include/sgi/sysarch.h
 ./usr/include/sgi/tcb.h
 ./usr/include/sgi/trap.h
-./usr/include/sgi/varargs.h
 ./usr/include/sgi/vmparam.h
 ./usr/include/sgi/z8530var.h
 ./usr/include/unwind.h

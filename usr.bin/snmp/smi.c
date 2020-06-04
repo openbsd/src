@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.8 2020/05/19 13:41:01 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.9 2020/05/31 20:38:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -549,7 +549,7 @@ smi_oid2string(struct ber_oid *o, char *buf, size_t len,
 					continue;
 			}
 		} else
-			snprintf(str, sizeof(str), "%d", key.o_oid[i]);
+			snprintf(str, sizeof(str), "%u", key.o_oid[i]);
 		if (*buf != '\0' || i == 0)
 			strlcat(buf, ".", len);
 		strlcat(buf, str, len);

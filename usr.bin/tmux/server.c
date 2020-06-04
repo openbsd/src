@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.192 2020/05/16 16:30:59 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.193 2020/06/01 09:43:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -295,9 +295,8 @@ server_send_exit(void)
 		if (c->flags & CLIENT_SUSPENDED)
 			server_client_lost(c);
 		else {
-			if (c->flags & CLIENT_ATTACHED)
-				notify_client("client-detached", c);
-			proc_send(c->peer, MSG_SHUTDOWN, -1, NULL, 0);
+			c->flags |= CLIENT_EXIT;
+			c->exit_type = CLIENT_EXIT_SHUTDOWN;
 		}
 		c->session = NULL;
 	}

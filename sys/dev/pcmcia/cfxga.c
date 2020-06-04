@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.29 2014/12/13 21:05:33 doug Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.31 2020/05/25 09:55:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -109,7 +109,7 @@ struct cfdriver cfxga_cd = {
 };
 
 int	cfxga_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	cfxga_burner(void *, u_int, u_int);
 void	cfxga_free_screen(void *, void *);
 int	cfxga_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -144,14 +144,14 @@ struct cfxga_screen {
 int	cfxga_copycols(void *, int, int, int, int);
 int	cfxga_copyrows(void *, int, int, int);
 int	cfxga_do_cursor(struct rasops_info *);
-int	cfxga_erasecols(void *, int, int, int, long);
-int	cfxga_eraserows(void *, int, int, long);
-int	cfxga_putchar(void *, int, int, u_int, long);
+int	cfxga_erasecols(void *, int, int, int, uint32_t);
+int	cfxga_eraserows(void *, int, int, uint32_t);
+int	cfxga_putchar(void *, int, int, u_int, uint32_t);
 
 int	cfxga_install_function(struct pcmcia_function *);
 void	cfxga_remove_function(struct pcmcia_function *);
 
-int	cfxga_expand_char(struct cfxga_screen *, u_int, int, int, long);
+int	cfxga_expand_char(struct cfxga_screen *, u_int, int, int, uint32_t);
 int	cfxga_repaint_screen(struct cfxga_screen *);
 void	cfxga_reset_video(struct cfxga_softc *);
 void	cfxga_reset_and_repaint(struct cfxga_softc *);
@@ -430,7 +430,7 @@ cfxga_detach(struct device *dev, int flags)
 
 int
 cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
+    int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct cfxga_softc *sc = v;
 	struct cfxga_screen *scr;
@@ -536,7 +536,7 @@ cfxga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	LIST_INSERT_HEAD(&sc->sc_scr, scr, scr_link);
 	sc->sc_nscreens++;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, attrp);
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
@@ -862,7 +862,8 @@ cfxga_synchronize(struct cfxga_softc *sc)
  * Display a character.
  */
 int
-cfxga_expand_char(struct cfxga_screen *scr, u_int uc, int x, int y, long attr)
+cfxga_expand_char(struct cfxga_screen *scr, u_int uc, int x, int y,
+    uint32_t attr)
 {
 	struct cfxga_softc *sc = scr->scr_sc;
 	struct rasops_info *ri = &scr->scr_ri;
@@ -1133,7 +1134,7 @@ cfxga_do_cursor(struct rasops_info *ri)
 }
 
 int
-cfxga_erasecols(void *cookie, int row, int col, int num, long attr)
+cfxga_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cfxga_screen *scr = ri->ri_hw;
@@ -1158,7 +1159,7 @@ cfxga_erasecols(void *cookie, int row, int col, int num, long attr)
 }
 
 int
-cfxga_eraserows(void *cookie, int row, int num, long attr)
+cfxga_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cfxga_screen *scr = ri->ri_hw;
@@ -1187,7 +1188,7 @@ cfxga_eraserows(void *cookie, int row, int num, long attr)
 }
 
 int
-cfxga_putchar(void *cookie, int row, int col, u_int uc, long attr)
+cfxga_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct cfxga_screen *scr = ri->ri_hw;

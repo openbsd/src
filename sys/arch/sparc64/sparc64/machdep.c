@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.194 2020/05/16 14:44:45 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.196 2020/05/31 06:23:58 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -95,7 +95,6 @@
 
 #include <sys/sysctl.h>
 #include <sys/exec_elf.h>
-#include <dev/rndvar.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
@@ -2114,4 +2113,13 @@ blink_led_timeout(void *vsc)
 	 */
 	t = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
 	timeout_add(&sc->bls_to, t);
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

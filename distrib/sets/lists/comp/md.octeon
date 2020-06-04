@@ -51,7 +51,6 @@
 ./usr/include/mips64/sysarch.h
 ./usr/include/mips64/tcb.h
 ./usr/include/mips64/trap.h
-./usr/include/mips64/varargs.h
 ./usr/include/mips64/vmparam.h
 ./usr/include/octeon
 ./usr/include/octeon/_float.h
@@ -107,7 +106,6 @@
 ./usr/include/octeon/sysarch.h
 ./usr/include/octeon/tcb.h
 ./usr/include/octeon/trap.h
-./usr/include/octeon/varargs.h
 ./usr/include/octeon/vmparam.h
 ./usr/include/unwind.h
 ./usr/libdata/ldscripts

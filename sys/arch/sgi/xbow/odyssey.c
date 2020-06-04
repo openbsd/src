@@ -1,4 +1,4 @@
-/*	$OpenBSD: odyssey.c,v 1.12 2017/09/08 05:36:52 deraadt Exp $ */
+/*	$OpenBSD: odyssey.c,v 1.14 2020/05/25 09:55:48 jsg Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -63,7 +63,7 @@ struct odyssey_screen {
 
 	struct rasops_info ri;		/* Screen raster display info. */
 	struct odyssey_cmap cmap;	/* Display colour map. */
-	long attr;			/* Rasops attributes. */
+	uint32_t attr;			/* Rasops attributes. */
 
 	int width;			/* Width in pixels. */
 	int height;			/* Height in pixels. */
@@ -109,11 +109,11 @@ void	odyssey_rop(struct odyssey_softc *, int, int, int, int, int, int);
 void	odyssey_copyrect(struct odyssey_softc *, int, int, int, int, int, int);
 void	odyssey_fillrect(struct odyssey_softc *, int, int, int, int, u_int);
 int	odyssey_do_cursor(struct rasops_info *);
-int	odyssey_putchar(void *, int, int, u_int, long);
+int	odyssey_putchar(void *, int, int, u_int, uint32_t);
 int	odyssey_copycols(void *, int, int, int, int);
-int	odyssey_erasecols(void *, int, int, int, long);
+int	odyssey_erasecols(void *, int, int, int, uint32_t);
 int	odyssey_copyrows(void *, int, int, int);
-int	odyssey_eraserows(void *, int, int, long);
+int	odyssey_eraserows(void *, int, int, uint32_t);
 
 u_int32_t ieee754_sp(uint);
 
@@ -123,7 +123,7 @@ u_int32_t ieee754_sp(uint);
 int 	odyssey_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t odyssey_mmap(void *, off_t, int);
 int	odyssey_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	odyssey_free_screen(void *, void *);
 int	odyssey_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
@@ -653,7 +653,7 @@ odyssey_mmap(void *v, off_t offset, int protection)
 
 int
 odyssey_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct odyssey_screen *screen = (struct odyssey_screen *)v;
 	struct odyssey_softc *sc = (struct odyssey_softc *)screen->sc;
@@ -672,7 +672,7 @@ odyssey_alloc_screen(void *v, const struct wsscreen_descr *type,
 	*curyp = 0;
 
 	/* Correct screen attributes. */
-	screen->ri.ri_ops.alloc_attr(&screen->ri, 0, 0, 0, attrp);
+	screen->ri.ri_ops.pack_attr(&screen->ri, 0, 0, 0, attrp);
 	screen->attr = *attrp;
 
 	return (0);
@@ -802,7 +802,7 @@ odyssey_do_cursor(struct rasops_info *ri)
 }
 
 int
-odyssey_putchar(void *cookie, int row, int col, u_int uc, long attr)
+odyssey_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct odyssey_softc *sc = ri->ri_hw;
@@ -970,7 +970,7 @@ odyssey_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-odyssey_erasecols(void *cookie, int row, int col, int num, long attr)
+odyssey_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct odyssey_softc *sc = ri->ri_hw;
@@ -1022,7 +1022,7 @@ odyssey_copyrows(void *cookie, int src, int dst, int num)
 }
 
 int
-odyssey_eraserows(void *cookie, int row, int num, long attr)
+odyssey_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct odyssey_softc *sc = ri->ri_hw;
@@ -1135,7 +1135,7 @@ odyssey_cnattach()
 	/*
 	 * Attach wsdisplay.
 	 */
-	screen->ri.ri_ops.alloc_attr(&screen->ri, 0, 0, 0, &screen->attr);
+	screen->ri.ri_ops.pack_attr(&screen->ri, 0, 0, 0, &screen->attr);
 	wsdisplay_cnattach(&odyssey_stdscreen, &screen->ri, 0, 0, screen->attr);
 
 	return 0;

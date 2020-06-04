@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.99 2020/04/30 21:11:13 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.100 2020/05/26 20:24:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -198,6 +198,10 @@ const struct ipsec_xf ikeencxfs[] = {
 	{ "aes-128",		IKEV2_XFORMENCR_AES_CBC,	16, 16 },
 	{ "aes-192",		IKEV2_XFORMENCR_AES_CBC,	24, 24 },
 	{ "aes-256",		IKEV2_XFORMENCR_AES_CBC,	32, 32 },
+	{ "aes-128-gcm",	IKEV2_XFORMENCR_AES_GCM_16,	16, 16, 4, 1 },
+	{ "aes-256-gcm",	IKEV2_XFORMENCR_AES_GCM_16,	32, 32, 4, 1 },
+	{ "aes-128-gcm-12",	IKEV2_XFORMENCR_AES_GCM_12,	16, 16, 4, 1 },
+	{ "aes-256-gcm-12",	IKEV2_XFORMENCR_AES_GCM_12,	32, 32, 4, 1 },
 	{ NULL }
 };
 
@@ -2417,6 +2421,17 @@ print_xf(unsigned int id, unsigned int length, const struct ipsec_xf xfs[])
 	return ("unknown");
 }
 
+int
+encxf_noauth(unsigned int id)
+{
+	int i;
+
+	for (i = 0; ikeencxfs[i].name != NULL; i++)
+		if (ikeencxfs[i].id == id)
+			return ikeencxfs[i].noauth;
+	return (0);
+}
+
 size_t
 keylength_xf(unsigned int saproto, unsigned int type, unsigned int id)
 {
@@ -2852,8 +2867,23 @@ create_ike(char *name, int af, uint8_t ipproto,
 		pol.pol_nproposals++;
 	} else {
 		for (i = 0; i < ike_sa->nxfs; i++) {
+			noauth = 0;
+			for (j = 0; j < ike_sa->xfs[i]->nencxf; j++) {
+				if (ike_sa->xfs[i]->encxf[j]->noauth)
+					noauth++;
+			}
 			if (ike_sa->xfs[i]->nesnxf) {
 				yyerror("cannot use ESN with ikesa.");
+				goto done;
+			}
+			if (noauth && noauth != ike_sa->xfs[i]->nencxf) {
+				yyerror("cannot mix encryption transforms with "
+				    "implicit and non-implicit authentication");
+				goto done;
+			}
+			if (noauth && ike_sa->xfs[i]->nauthxf) {
+				yyerror("authentication is implicit for given "
+				    "encryption transforms");
 				goto done;
 			}
 
@@ -2862,11 +2892,12 @@ create_ike(char *name, int af, uint8_t ipproto,
 
 			xf = NULL;
 			xfi = 0;
-			copy_transforms(IKEV2_XFORMTYPE_INTEGR,
-			    ike_sa->xfs[i]->authxf,
-			    ike_sa->xfs[i]->nauthxf, &xf, &xfi,
-			    ikev2_default_ike_transforms,
-			    ikev2_default_nike_transforms);
+			if (!ike_sa->xfs[i]->nencxf || !noauth)
+				copy_transforms(IKEV2_XFORMTYPE_INTEGR,
+				    ike_sa->xfs[i]->authxf,
+				    ike_sa->xfs[i]->nauthxf, &xf, &xfi,
+				    ikev2_default_ike_transforms,
+				    ikev2_default_nike_transforms);
 			copy_transforms(IKEV2_XFORMTYPE_ENCR,
 			    ike_sa->xfs[i]->encxf,
 			    ike_sa->xfs[i]->nencxf, &xf, &xfi,

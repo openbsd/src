@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeonfb.c,v 1.5 2013/10/20 20:07:27 miod Exp $	*/
+/*	$OpenBSD: radeonfb.c,v 1.6 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -142,9 +142,9 @@ int	radeonfb_putcmap(struct radeonfb_softc *, struct wsdisplay_cmap *);
 void	radeonfb_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 int	radeonfb_copycols(void *, int, int, int, int);
-int	radeonfb_erasecols(void *, int, int, int, long);
+int	radeonfb_erasecols(void *, int, int, int, uint32_t);
 int	radeonfb_copyrows(void *, int, int, int);
-int	radeonfb_eraserows(void *, int, int, long);
+int	radeonfb_eraserows(void *, int, int, uint32_t);
 
 void	radeonfb_init(struct radeonfb_softc *);
 void	radeonfb_wait_fifo(struct radeonfb_softc *, int);
@@ -467,7 +467,7 @@ radeonfb_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-radeonfb_erasecols(void *cookie, int row, int col, int num, long attr)
+radeonfb_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct radeonfb_softc *sc = ri->ri_hw;
@@ -502,7 +502,7 @@ radeonfb_copyrows(void *cookie, int src, int dst, int num)
 }
 
 int
-radeonfb_eraserows(void *cookie, int row, int num, long attr)
+radeonfb_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct radeonfb_softc *sc = ri->ri_hw;

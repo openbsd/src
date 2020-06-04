@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.29 2020/03/15 17:44:20 otto Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.30 2020/05/26 16:28:49 kettenis Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -156,7 +156,8 @@ strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 			continue;
 		if (n < 0)
 			break;
-		*rsize = n;
+		if (rsize)
+			*rsize = n;
 		return 0;
 	}
 	return EIO;
@@ -193,21 +194,24 @@ int ndevs = sizeof devsw / sizeof devsw[0];
 
 #ifdef SPARC_BOOT_UFS
 static struct fs_ops file_system_ufs = {
-	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
+	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek,
+	ufs_stat, ufs_readdir, ufs_fchmod
 };
 static struct fs_ops file_system_ufs2 = {
-	ufs2_open, ufs2_close, ufs2_read, ufs2_write, ufs2_seek, ufs2_stat
+	ufs2_open, ufs2_close, ufs2_read, ufs2_write, ufs2_seek,
+	ufs2_stat, ufs2_readdir, ufs2_fchmod
 };
 #endif
 #ifdef SPARC_BOOT_HSFS
 static struct fs_ops file_system_cd9660 = {
 	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	    cd9660_stat
+	cd9660_stat, cd9660_readdir
 };
 #endif
 #ifdef NETBOOT
 static struct fs_ops file_system_nfs = {
-	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
+	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek,
+	nfs_stat, nfs_readdir
 };
 #endif
 

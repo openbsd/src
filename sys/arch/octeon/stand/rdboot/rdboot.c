@@ -1,7 +1,7 @@
-/*	$OpenBSD: rdboot.c,v 1.3 2019/11/01 20:54:52 deraadt Exp $	*/
+/*	$OpenBSD: rdboot.c,v 1.7 2020/05/26 14:00:42 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2019 Visa Hankala
+ * Copyright (c) 2019-2020 Visa Hankala
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,12 +22,14 @@
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/select.h>
+#include <sys/stat.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
@@ -44,12 +46,12 @@
 #define BOOTRANDOM_MAX	256	/* no point being greater than RC4STATE */
 #define KERNEL		"/bsd"
 
-void	loadrandom(void);
+int	loadrandom(void);
 void	kexec(void);
 
 struct cmd_state cmd;
 int octbootfd = -1;
-const char version[] = "1.1";
+const char version[] = "1.2";
 
 int
 main(void)
@@ -100,7 +102,9 @@ main(void)
 			} while (!getcmd());
 		}
 
-		loadrandom();
+		if (loadrandom() == 0)
+			cmd.boothowto |= RB_GOODRANDOM;
+
 		kexec();
 
 		hasboot = 0;
@@ -111,23 +115,34 @@ main(void)
 	return 0;
 }
 
-void
+int
 loadrandom(void)
 {
 	char buf[BOOTRANDOM_MAX];
-	int fd;
+	struct stat sb;
+	int fd, ret = 0;
 
 	/* Read the file from the device specified by the kernel path. */
 	if (disk_open(cmd.path) == NULL)
-		return;
+		return -1;
 	fd = open(BOOTRANDOM, O_RDONLY);
 	if (fd == -1) {
 		fprintf(stderr, "%s: cannot open %s: %s", __func__, BOOTRANDOM,
 		    strerror(errno));
 		disk_close();
-		return;
+		return -1;
 	}
-	read(fd, buf, sizeof(buf));
+	if (fstat(fd, &sb) == 0) {
+		if (sb.st_mode & S_ISTXT) {
+			printf("NOTE: random seed is being reused.\n");
+			ret = -1;
+		}
+		if (read(fd, buf, sizeof(buf)) != sizeof(buf))
+			ret = -1;
+		fchmod(fd, sb.st_mode | S_ISTXT);
+	} else {
+		ret = -1;
+	}
 	close(fd);
 	disk_close();
 
@@ -140,35 +155,63 @@ loadrandom(void)
 	if (fd == -1) {
 		fprintf(stderr, "%s: cannot open %s: %s", __func__,
 		    DEVRANDOM, strerror(errno));
-		return;
+		return -1;
 	}
 	write(fd, buf, sizeof(buf));
 	close(fd);
+	return ret;
 }
 
 void
 kexec(void)
 {
 	struct octboot_kexec_args kargs;
-	char kernelflags[8];
+	struct stat sb;
+	char boothowtostr[32];
 	char rootdev[32];
+	char *kimg = NULL;
 	const char *path;
-	int argc, ret;
+	ssize_t n;
+	off_t pos;
+	int argc, fd = -1, ret;
 
 	path = disk_open(cmd.path);
 	if (path == NULL)
 		return;
 
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		goto load_failed;
+	if (fstat(fd, &sb) == -1)
+		goto load_failed;
+	if (!S_ISREG(sb.st_mode) || sb.st_size == 0) {
+		errno = ENOEXEC;
+		goto load_failed;
+	}
+
+	kimg = malloc(sb.st_size);
+	if (kimg == NULL)
+		goto load_failed;
+
+	pos = 0;
+	while (pos < sb.st_size) {
+		n = read(fd, kimg + pos, sb.st_size - pos);
+		if (n == -1)
+			goto load_failed;
+		pos += n;
+	}
+
+	close(fd);
+	disk_close();
+
 	memset(&kargs, 0, sizeof(kargs));
-	kargs.path = path;
+	kargs.kimg = kimg;
+	kargs.klen = sb.st_size;
 	argc = 0;
 	if (cmd.boothowto != 0) {
-		snprintf(kernelflags, sizeof(kernelflags), "-%s%s%s%s",
-		    (cmd.boothowto & RB_ASKNAME) ? "a" : "",
-		    (cmd.boothowto & RB_CONFIG) ? "c" : "",
-		    (cmd.boothowto & RB_KDB) ? "d" : "",
-		    (cmd.boothowto & RB_SINGLE) ? "s" : "");
-		kargs.argv[argc++] = kernelflags;
+		snprintf(boothowtostr, sizeof(boothowtostr), "boothowto=%d",
+		    cmd.boothowto);
+		kargs.argv[argc++] = boothowtostr;
 	}
 	if (cmd.hasduid) {
 		snprintf(rootdev, sizeof(rootdev),
@@ -187,6 +230,14 @@ kexec(void)
 		    cmd.path, strerror(errno));
 	else
 		fprintf(stderr, "kexec() returned unexpectedly\n");
+	free(kimg);
+	return;
 
+load_failed:
+	fprintf(stderr, "failed to load kernel %s: %s\n",
+	    cmd.path, strerror(errno));
+	if (fd != -1)
+		close(fd);
 	disk_close();
+	free(kimg);
 }

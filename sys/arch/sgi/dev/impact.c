@@ -1,4 +1,4 @@
-/*	$OpenBSD: impact.c,v 1.9 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: impact.c,v 1.11 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010, 2012 Miodrag Vallat.
@@ -71,7 +71,7 @@ struct cfdriver impact_cd = {
 
 struct impact_screen {
 	struct rasops_info		 ri;
-	long				 defattr;
+	uint32_t			 defattr;
 	struct wsdisplay_charcell	*bs;
 
 	struct impact_softc		*sc;
@@ -101,11 +101,11 @@ int	impact_init_screen(struct impact_screen *);
 void	impact_rop(struct impact_screen *, int, int, int, int, int, u_int);
 void	impact_fillrect(struct impact_screen *, int, int, int, int, u_int);
 int	impact_do_cursor(struct rasops_info *);
-int	impact_putchar(void *, int, int, u_int, long);
+int	impact_putchar(void *, int, int, u_int, uint32_t);
 int	impact_copycols(void *, int, int, int, int);
-int	impact_erasecols(void *, int, int, int, long);
+int	impact_erasecols(void *, int, int, int, uint32_t);
 int	impact_copyrows(void *, int, int, int);
-int	impact_eraserows(void *, int, int, long);
+int	impact_eraserows(void *, int, int, uint32_t);
 
 /*
  * Interfaces for wscons.
@@ -113,7 +113,7 @@ int	impact_eraserows(void *, int, int, long);
 int 	impact_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t impact_mmap(void *, off_t, int);
 int	impact_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	impact_free_screen(void *, void *);
 int	impact_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
@@ -433,7 +433,7 @@ impact_mmap(void *v, off_t offset, int prot)
 
 int
 impact_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct impact_screen *scr = (struct impact_screen *)v;
 	struct rasops_info *ri = &scr->ri;
@@ -448,7 +448,7 @@ impact_alloc_screen(void *v, const struct wsscreen_descr *type,
 	*cookiep = ri;
 	*curxp = 0;
 	*curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &scr->defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &scr->defattr);
 	*attrp = scr->defattr;
 
 	return 0;
@@ -537,7 +537,7 @@ impact_do_cursor(struct rasops_info *ri)
 }
 
 int
-impact_putchar(void *cookie, int row, int col, u_int uc, long attr)
+impact_putchar(void *cookie, int row, int col, u_int uc, uint32_tattr)
 {
 	struct rasops_info *ri = cookie;
 	struct impact_screen *scr = ri->ri_hw;
@@ -660,7 +660,7 @@ impact_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-impact_erasecols(void *cookie, int row, int col, int num, long attr)
+impact_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct impact_screen *scr = ri->ri_hw;
@@ -709,7 +709,7 @@ impact_copyrows(void *cookie, int src, int dst, int num)
 }
 
 int
-impact_eraserows(void *cookie, int row, int num, long attr)
+impact_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct impact_screen *scr = ri->ri_hw;
@@ -769,7 +769,7 @@ impact_cnattach_common(bus_space_tag_t iot, bus_space_handle_t ioh, int has_hq4)
 	if (rc != 0)
 		return rc;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &scr->defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &scr->defattr);
 	wsdisplay_cnattach(&scr->wsd, ri, 0, 0, scr->defattr);
 
 	return 0;

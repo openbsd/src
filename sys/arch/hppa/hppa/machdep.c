@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.258 2020/05/16 14:44:44 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.259 2020/05/31 06:23:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1495,4 +1495,13 @@ blink_led_timeout(void *vsc)
 	 */
 	t = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
 	timeout_add(&sc->bls_to, t);
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

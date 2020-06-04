@@ -1,4 +1,4 @@
-/* $OpenBSD: tty_update.c,v 1.16 2010/01/12 23:22:07 nicm Exp $ */
+/* $OpenBSD: tty_update.c,v 1.17 2020/05/29 20:46:13 nicm Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -80,7 +80,7 @@
 #include <ctype.h>
 #include <term.h>
 
-MODULE_ID("$Id: tty_update.c,v 1.16 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: tty_update.c,v 1.17 2020/05/29 20:46:13 nicm Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -540,7 +540,11 @@ EmitRange(const NCURSES_CH_T * ntext, int num)
 		} else {
 		    return 1;	/* cursor stays in the middle */
 		}
-	    } else if (repeat_char && runcount > SP->_rep_cost) {
+	    } else if (repeat_char &&
+#if BSD_TPUTS
+                       !isdigit(UChar(CharOf(ntext0))) &&
+#endif
+                       runcount > SP->_rep_cost) {
 		bool wrap_possible = (SP->_curscol + runcount >= screen_columns);
 		int rep_count = runcount;
 

@@ -1590,7 +1590,7 @@ void amdgpu_burner(void *, u_int, u_int);
 int amdgpu_wsioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t amdgpu_wsmmap(void *, off_t, int);
 int amdgpu_alloc_screen(void *, const struct wsscreen_descr *,
-    void **, int *, int *, long *);
+    void **, int *, int *, uint32_t *);
 void amdgpu_free_screen(void *, void *);
 int amdgpu_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
@@ -1684,7 +1684,7 @@ amdgpu_wsmmap(void *v, off_t off, int prot)
 
 int
 amdgpu_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	return rasops_alloc_screen(v, cookiep, curxp, curyp, attrp);
 }
@@ -1826,9 +1826,9 @@ amdgpu_attachhook(struct device *self)
 	aa.defaultscreens = 0;
 
 	if (adev->console) {
-		long defattr;
+		uint32_t defattr;
 
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&amdgpu_stdscreen, ri->ri_active,
 		    ri->ri_ccol, ri->ri_crow, defattr);
 	}

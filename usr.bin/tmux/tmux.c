@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.201 2020/05/16 16:07:55 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.202 2020/06/02 08:17:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -238,6 +238,20 @@ setblocking(int fd, int state)
 			mode &= ~O_NONBLOCK;
 		fcntl(fd, F_SETFL, mode);
 	}
+}
+
+uint64_t
+get_timer(void)
+{
+	struct timespec	ts;
+
+	/*
+	 * We want a timestamp in milliseconds suitable for time measurement,
+	 * so prefer the monotonic clock.
+	 */
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+		clock_gettime(CLOCK_REALTIME, &ts);
+	return ((ts.tv_sec * 1000ULL) + (ts.tv_nsec / 1000000ULL));
 }
 
 const char *

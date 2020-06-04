@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.27 2020/01/24 05:27:31 kettenis Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.32 2020/05/28 20:26:25 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -96,10 +96,11 @@ void	 efifb_rasops_preinit(struct efifb *);
 int	 efifb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	 efifb_mmap(void *, off_t, int);
 int	 efifb_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	 efifb_free_screen(void *, void *);
 int	 efifb_show_screen(void *, void *, int, void (*cb) (void *, int, int),
 	    void *);
+int	 efifb_getchar(void *, int, int, struct wsdisplay_charcell *);
 int	 efifb_list_font(void *, struct wsdisplay_font *);
 int	 efifb_load_font(void *, void *, struct wsdisplay_font *);
 void	 efifb_scrollback(void *, void *, int lines);
@@ -114,8 +115,8 @@ const struct cfattach efifb_ca = {
 	sizeof(struct efifb_softc), efifb_match, efifb_attach, NULL
 };
 
-#define	EFIFB_WIDTH	100
-#define	EFIFB_HEIGHT	31
+#define	EFIFB_WIDTH	160
+#define	EFIFB_HEIGHT	160
 
 struct wsscreen_descr efifb_std_descr = { "std" };
 
@@ -133,6 +134,7 @@ struct wsdisplay_accessops efifb_accessops = {
 	.alloc_screen = efifb_alloc_screen,
 	.free_screen = efifb_free_screen,
 	.show_screen = efifb_show_screen,
+	.getchar = efifb_getchar,
 	.load_font = efifb_load_font,
 	.list_font = efifb_list_font,
 	.scrollback = efifb_scrollback,
@@ -211,7 +213,7 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %dx%d, %dbpp\n", ri->ri_width, ri->ri_height, ri->ri_depth);
 
 	if (console) {
-		long	 defattr = 0;
+		uint32_t defattr = 0;
 
 		ccol = ri->ri_ccol;
 		crow = ri->ri_crow;
@@ -220,9 +222,9 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 		ri->ri_flg &= ~RI_CLEAR;
 		ri->ri_flg |= RI_VCONS | RI_WRONLY;
 
-		rasops_init(ri, efifb_std_descr.nrows, efifb_std_descr.ncols);
+		rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
 
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&efifb_std_descr, ri->ri_active, ccol, crow,
 		    defattr);
 	}
@@ -346,7 +348,7 @@ efifb_mmap(void *v, off_t off, int prot)
 
 int
 efifb_alloc_screen(void *v, const struct wsscreen_descr *descr,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct efifb_softc	*sc = v;
 	struct rasops_info	*ri = &sc->sc_fb->rinfo;
@@ -371,6 +373,15 @@ efifb_show_screen(void *v, void *cookie, int waitok,
 	struct rasops_info	*ri = &sc->sc_fb->rinfo;
 
 	return rasops_show_screen(ri, cookie, waitok, cb, cb_arg);
+}
+
+int
+efifb_getchar(void *v, int row, int col, struct wsdisplay_charcell *cell)
+{
+	struct efifb_softc	*sc = v;
+	struct rasops_info	*ri = &sc->sc_fb->rinfo;
+
+	return rasops_getchar(ri, row, col, cell);
 }
 
 int
@@ -430,7 +441,7 @@ efifb_cnattach_common(void)
 {
 	struct efifb		*fb = &efifb_console;
 	struct rasops_info	*ri = &fb->rinfo;
-	long			 defattr = 0;
+	uint32_t		 defattr = 0;
 
 	ri->ri_bits = (u_char *)efifb_early_map(fb->paddr);
 
@@ -445,7 +456,7 @@ efifb_cnattach_common(void)
 	efifb_std_descr.fontheight = ri->ri_font->fontheight;
 	efifb_std_descr.capabilities = ri->ri_caps;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&efifb_std_descr, ri, 0, 0, defattr);
 }
 
@@ -469,7 +480,7 @@ efifb_cnremap(void)
 	ri->ri_flg &= ~RI_CLEAR;
 	ri->ri_flg |= RI_CENTER | RI_WRONLY;
 
-	rasops_init(ri, efifb_std_descr.nrows, efifb_std_descr.ncols);
+	rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
 
 	efifb_early_cleanup();
 }

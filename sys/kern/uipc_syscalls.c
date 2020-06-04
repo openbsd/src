@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.184 2020/01/15 13:17:35 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.185 2020/05/28 07:17:50 mpi Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -97,7 +97,6 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	KERNEL_LOCK();
 	fdplock(fdp);
 	error = falloc(p, &fp, &fd);
 	if (error) {
@@ -114,7 +113,6 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 		FRELE(fp, p);
 		*retval = fd;
 	}
-	KERNEL_UNLOCK();
 	return (error);
 }
 
@@ -450,7 +448,6 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		if (error != 0)
 			goto free2;
 	}
-	KERNEL_LOCK();
 	fdplock(fdp);
 	if ((error = falloc(p, &fp1, &sv[0])) != 0)
 		goto free3;
@@ -475,7 +472,6 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		fdpunlock(fdp);
 		FRELE(fp1, p);
 		FRELE(fp2, p);
-		KERNEL_UNLOCK();
 		return (0);
 	}
 	fdremove(fdp, sv[1]);
@@ -487,7 +483,6 @@ free4:
 	so1 = NULL;
 free3:
 	fdpunlock(fdp);
-	KERNEL_UNLOCK();
 free2:
 	if (so2 != NULL)
 		(void)soclose(so2, 0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.128 2020/05/20 07:11:45 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.129 2020/06/03 16:35:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -311,7 +311,7 @@ key_bindings_init(void)
 		"bind -N 'Switch to the last client' L switch-client -l",
 		"bind -N 'Clear the marked pane' M select-pane -M",
 		"bind -N 'Enter copy mode' [ copy-mode",
-		"bind -N 'Paste the most recent paste buffer' ] paste-buffer",
+		"bind -N 'Paste the most recent paste buffer' ] paste-buffer -p",
 		"bind -N 'Create a new window' c new-window",
 		"bind -N 'Detach the current client' d detach-client",
 		"bind -N 'Search for a pane' f command-prompt \"find-window -Z -- '%%'\"",

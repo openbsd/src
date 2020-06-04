@@ -1,4 +1,4 @@
-/*	$OpenBSD: uonerng.c,v 1.4 2018/07/09 20:06:12 jasper Exp $ */
+/*	$OpenBSD: uonerng.c,v 1.5 2020/05/29 04:42:25 deraadt Exp $ */
 /*
  * Copyright (C) 2015 Devin Reade <gdr@gno.org>
  * Copyright (C) 2015 Sean Levy <attila@stalphonsos.com>
@@ -43,8 +43,6 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbcdc.h>
-
-#include <dev/rndvar.h>
 
 /*
  * The OneRNG is documented to provide ~350kbits/s of entropy at

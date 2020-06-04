@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulvar.h,v 1.16 2017/03/06 09:08:45 mpi Exp $ */
+/* $OpenBSD: wsemulvar.h,v 1.17 2020/05/25 09:55:49 jsg Exp $ */
 /* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
 
 /*
@@ -64,9 +64,9 @@ struct wsemul_ops {
 	char name[WSEMUL_NAME_SIZE];
 
 	void	*(*cnattach)(const struct wsscreen_descr *, void *,
-				  int, int, long);
+				  int, int, uint32_t);
 	void	*(*attach)(int, const struct wsscreen_descr *, void *,
-				int, int, void *, long);
+				int, int, void *, uint32_t);
 	u_int	(*output)(void *, const u_char *, u_int, int);
 	int	(*translate)(void *, kbd_t, keysym_t, const u_char **);
 	void	(*detach)(void *, u_int *, u_int *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay.c,v 1.12 2013/10/20 20:07:29 miod Exp $ */
+/* $OpenBSD: pcdisplay.c,v 1.14 2020/05/25 09:55:48 jsg Exp $ */
 /* $NetBSD: pcdisplay.c,v 1.9.4.1 2000/06/30 16:27:48 simonb Exp $ */
 
 /*
@@ -70,8 +70,8 @@ static int pcdisplay_probe_mono(bus_space_tag_t, bus_space_tag_t);
 static void pcdisplay_init(struct pcdisplay_config *,
 			     bus_space_tag_t, bus_space_tag_t,
 			     int);
-static int pcdisplay_alloc_attr(void *, int, int, int, long *);
-static void pcdisplay_unpack_attr(void *, long, int *, int *, int *);
+static int pcdisplay_pack_attr(void *, int, int, int, uint32_t *);
+static void pcdisplay_unpack_attr(void *, uint32_t, int *, int *, int *);
 
 struct cfattach pcdisplay_ca = {
 	sizeof(struct pcdisplay_softc), pcdisplay_match, pcdisplay_attach,
@@ -85,7 +85,7 @@ const struct wsdisplay_emulops pcdisplay_emulops = {
 	pcdisplay_erasecols,
 	pcdisplay_copyrows,
 	pcdisplay_eraserows,
-	pcdisplay_alloc_attr,
+	pcdisplay_pack_attr,
 	pcdisplay_unpack_attr
 };
 
@@ -108,7 +108,7 @@ const struct wsscreen_list pcdisplay_screenlist = {
 static int pcdisplay_ioctl(void *, u_long, caddr_t, int, struct proc *);
 static paddr_t pcdisplay_mmap(void *, off_t, int);
 static int pcdisplay_alloc_screen(void *, const struct wsscreen_descr *,
-				       void **, int *, int *, long *);
+				       void **, int *, int *, uint32_t *);
 static void pcdisplay_free_screen(void *, void *);
 static int pcdisplay_show_screen(void *, void *, int,
 				 void (*) (void *, int, int), void *);
@@ -335,7 +335,7 @@ pcdisplay_mmap(void *v, off_t offset, int prot)
 
 static int
 pcdisplay_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *defattrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *defattrp)
 {
 	struct pcdisplay_softc *sc = v;
 
@@ -375,7 +375,7 @@ pcdisplay_show_screen(void *v, void *cookie, int waitok,
 }
 
 static int
-pcdisplay_alloc_attr(void *id, int fg, int bg, int flags, long *attrp)
+pcdisplay_pack_attr(void *id, int fg, int bg, int flags, uint32_t *attrp)
 {
 	if (flags & WSATTR_REVERSE)
 		*attrp = FG_BLACK | BG_LIGHTGREY;
@@ -385,7 +385,7 @@ pcdisplay_alloc_attr(void *id, int fg, int bg, int flags, long *attrp)
 }
 
 static void
-pcdisplay_unpack_attr(void *id, long attr, int *fg, int *bg, int *ul)
+pcdisplay_unpack_attr(void *id, uint32_t attr, int *fg, int *bg, int *ul)
 {
 	if (attr == (FG_BLACK | BG_LIGHTGREY)) {
 		*fg = WSCOL_BLACK;

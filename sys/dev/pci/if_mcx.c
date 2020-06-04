@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.45 2020/05/21 02:08:31 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.49 2020/06/02 08:17:15 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -18,6 +18,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +93,7 @@
 	((1 << MCX_LOG_FLOW_TABLE_SIZE) - MCX_NUM_STATIC_FLOWS)
 
 #define MCX_SQ_INLINE_SIZE	 18
+CTASSERT(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN == MCX_SQ_INLINE_SIZE);
 
 /* doorbell offsets */
 #define MCX_CQ_DOORBELL_OFFSET	 0
@@ -1258,6 +1260,8 @@ struct mcx_cq_entry {
 #define MCX_CQ_ENTRY_FLAGS_L4_OK		(1 << 26)
 #define MCX_CQ_ENTRY_FLAGS_L3_OK		(1 << 25)
 #define MCX_CQ_ENTRY_FLAGS_L2_OK		(1 << 24)
+#define MCX_CQ_ENTRY_FLAGS_CV			(1 << 16)
+#define MCX_CQ_ENTRY_FLAGS_VLAN_MASK		(0xffff)
 
 	uint32_t		cq_lro_srqn;
 	uint32_t		__reserved__[2];
@@ -1953,6 +1957,7 @@ struct mcx_softc {
 	uint32_t		 sc_eq_cons;
 	struct mcx_dmamem	 sc_eq_mem;
 	int			 sc_hardmtu;
+	int			 sc_rxbufsz;
 
 	struct task		 sc_port_change;
 
@@ -2362,6 +2367,9 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
 	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_UDPv6 | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_TCPv6;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1024);
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, mcx_media_change,
@@ -3859,6 +3867,7 @@ mcx_set_port_mtu(struct mcx_softc *sc, int mtu)
 	}
 
 	sc->sc_hardmtu = mtu;
+	sc->sc_rxbufsz = roundup(mtu + ETHER_ALIGN, sizeof(long));
 	return 0;
 }
 
@@ -4011,6 +4020,7 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 	struct mcx_rq_ctx *mbin;
 	int error;
 	uint64_t *pas;
+	uint32_t rq_flags;
 	uint8_t *doorbell;
 	int insize, npages, paslen, token;
 
@@ -4042,7 +4052,11 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 		goto free;
 	}
 	mbin = (struct mcx_rq_ctx *)(((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
-	mbin->rq_flags = htobe32(MCX_RQ_CTX_RLKEY | MCX_RQ_CTX_VLAN_STRIP_DIS);
+	rq_flags = MCX_RQ_CTX_RLKEY;
+#if NVLAN == 0
+	rq_flags |= MCX_RQ_CTX_VLAN_STRIP_DIS;
+#endif
+	mbin->rq_flags = htobe32(rq_flags);
 	mbin->rq_cqn = htobe32(cqn);
 	mbin->rq_wq.wq_type = MCX_WQ_CTX_TYPE_CYCLIC;
 	mbin->rq_wq.wq_pd = htobe32(sc->sc_pd);
@@ -5510,7 +5524,7 @@ free:
 
 int
 mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
-    uint *prod, int bufsize, uint nslots)
+    uint *prod, uint nslots)
 {
 	struct mcx_rq_entry *rqe;
 	struct mcx_slot *ms;
@@ -5522,12 +5536,13 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
 	rqe = ring;
 	for (fills = 0; fills < nslots; fills++) {
 		ms = &slots[slot];
-		m = MCLGETI(NULL, M_DONTWAIT, NULL, bufsize + ETHER_ALIGN);
+		m = MCLGETI(NULL, M_DONTWAIT, NULL, sc->sc_rxbufsz);
 		if (m == NULL)
 			break;
 
+		m->m_data += (m->m_ext.ext_size - sc->sc_rxbufsz);
 		m->m_data += ETHER_ALIGN;
-		m->m_len = m->m_pkthdr.len = bufsize;
+		m->m_len = m->m_pkthdr.len = sc->sc_hardmtu;
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m,
 		    BUS_DMA_NOWAIT) != 0) {
 			m_freem(m);
@@ -5535,7 +5550,8 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
 		}
 		ms->ms_m = m;
 
-		rqe[slot].rqe_byte_count = htobe32(bufsize);
+		rqe[slot].rqe_byte_count =
+		    htobe32(ms->ms_map->dm_segs[0].ds_len);
 		rqe[slot].rqe_addr = htobe64(ms->ms_map->dm_segs[0].ds_addr);
 		rqe[slot].rqe_lkey = htobe32(sc->sc_lkey);
 
@@ -5565,7 +5581,7 @@ mcx_rx_fill(struct mcx_softc *sc)
 		return (1);
 
 	slots = mcx_rx_fill_slots(sc, MCX_DMA_KVA(&sc->sc_rq_mem),
-	    sc->sc_rx_slots, &sc->sc_rx_prod, sc->sc_hardmtu, slots);
+	    sc->sc_rx_slots, &sc->sc_rx_prod, slots);
 	if_rxr_put(&sc->sc_rxr, slots);
 	return (0);
 }
@@ -5667,8 +5683,8 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_cq_entry *cqe,
 {
 	struct mcx_slot *ms;
 	struct mbuf *m;
-	int slot;
 	uint32_t flags;
+	int slot;
 
 	slot = betoh16(cqe->cq_wqe_count) % (1 << MCX_LOG_RQ_SIZE);
 
@@ -5693,6 +5709,13 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_cq_entry *cqe,
 	if (flags & MCX_CQ_ENTRY_FLAGS_L4_OK)
 		m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
 		    M_UDP_CSUM_IN_OK;
+#if NVLAN > 0
+	if (flags & MCX_CQ_ENTRY_FLAGS_CV) {
+		m->m_pkthdr.ether_vtag = (flags &
+		    MCX_CQ_ENTRY_FLAGS_VLAN_MASK);
+		m->m_flags |= M_VLANTAG;
+	}
+#endif
 
 	if (c->c_tdiff) {
 		uint64_t t = bemtoh64(&cqe->cq_timestamp) - c->c_timestamp;
@@ -6323,6 +6346,7 @@ mcx_start(struct ifqueue *ifq)
 	struct mbuf *m;
 	u_int idx, free, used;
 	uint64_t *bf;
+	uint32_t csum;
 	size_t bf_base;
 	int i, seg, nseg;
 
@@ -6357,11 +6381,33 @@ mcx_start(struct ifqueue *ifq)
 		sqe->sqe_signature = htobe32(MCX_SQE_CE_CQE_ALWAYS);
 
 		/* eth segment */
-		sqe->sqe_mss_csum = htobe32(MCX_SQE_L3_CSUM | MCX_SQE_L4_CSUM);
+		csum = 0;
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+			csum |= MCX_SQE_L3_CSUM;
+		if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
+			csum |= MCX_SQE_L4_CSUM;
+		sqe->sqe_mss_csum = htobe32(csum);
 		sqe->sqe_inline_header_size = htobe16(MCX_SQ_INLINE_SIZE);
-		m_copydata(m, 0, MCX_SQ_INLINE_SIZE,
-		    (caddr_t)sqe->sqe_inline_headers);
-		m_adj(m, MCX_SQ_INLINE_SIZE);
+#if NVLAN > 0
+		if (m->m_flags & M_VLANTAG) {
+			struct ether_vlan_header *evh;
+			evh = (struct ether_vlan_header *)
+			    &sqe->sqe_inline_headers;
+
+			/* slightly cheaper vlan_inject() */
+			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)evh);
+			evh->evl_proto = evh->evl_encap_proto;
+			evh->evl_encap_proto = htons(ETHERTYPE_VLAN);
+			evh->evl_tag = htons(m->m_pkthdr.ether_vtag);
+
+			m_adj(m, ETHER_HDR_LEN);
+		} else
+#endif
+		{
+			m_copydata(m, 0, MCX_SQ_INLINE_SIZE,
+			    (caddr_t)sqe->sqe_inline_headers);
+			m_adj(m, MCX_SQ_INLINE_SIZE);
+		}
 
 		if (mcx_load_mbuf(sc, ms, m) != 0) {
 			m_freem(m);

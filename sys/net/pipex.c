@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.113 2020/04/07 07:11:22 claudio Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.114 2020/05/31 03:14:59 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1453,10 +1453,7 @@ pipex_pptp_output(struct mbuf *m0, struct pipex_session *session,
 	gre->flags = htons(gre->flags);
 
 	m0->m_pkthdr.ph_ifidx = session->pipex_iface->ifnet_this->if_index;
-	if (ip_output(m0, NULL, NULL, 0, NULL, NULL, 0) != 0) {
-		PIPEX_DBG((session, LOG_DEBUG, "ip_output failed."));
-		goto drop;
-	}
+	ip_send(m0);
 	if (len > 0) {	/* network layer only */
 		/* countup statistics */
 		session->stat.opackets++;
@@ -1901,11 +1898,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		ip->ip_tos = 0;
 		ip->ip_off = 0;
 
-		if (ip_output(m0, NULL, NULL, 0, NULL, NULL,
-		    session->proto.l2tp.ipsecflowinfo) != 0) {
-			PIPEX_DBG((session, LOG_DEBUG, "ip_output failed."));
-			goto drop;
-		}
+		ip_send(m0);
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -1920,10 +1913,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		    &session->peer.sin6, NULL);
 		/* ip6->ip6_plen will be filled in ip6_output. */
 
-		if (ip6_output(m0, NULL, NULL, 0, NULL, NULL) != 0) {
-			PIPEX_DBG((session, LOG_DEBUG, "ip6_output failed."));
-			goto drop;
-		}
+		ip6_send(m0);
 		break;
 #endif
 	}

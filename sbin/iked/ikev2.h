@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.32 2020/04/28 15:18:52 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.33 2020/05/26 20:24:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -224,6 +224,11 @@ extern struct iked_constmap ikev2_xformprf_map[];
 #define IKEV2_XFORMAUTH_HMAC_SHA2_256_128 12	/* RFC4868 */
 #define IKEV2_XFORMAUTH_HMAC_SHA2_384_192 13	/* RFC4868 */
 #define IKEV2_XFORMAUTH_HMAC_SHA2_512_256 14	/* RFC4868 */
+
+/* Placeholders for AEAD ciphers (only used internally) */
+#define IKEV2_XFORMAUTH_AES_GCM_8	2018	/* internal */
+#define IKEV2_XFORMAUTH_AES_GCM_12	2019	/* internal */
+#define IKEV2_XFORMAUTH_AES_GCM_16	2020	/* internal */
 
 extern struct iked_constmap ikev2_xformauth_map[];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.4 2020/05/16 11:26:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.6 2020/05/26 11:59:48 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -909,6 +909,7 @@ enum msix_ivar_for_cause {
 #define IWX_UCODE_TLV_API_ADAPTIVE_DWELL	32
 #define IWX_UCODE_TLV_API_NEW_RX_STATS		35
 #define IWX_UCODE_TLV_API_ADAPTIVE_DWELL_V2	42
+#define IWX_UCODE_TLV_API_BEACON_FILTER_V4	47
 #define IWX_UCODE_TLV_API_REDUCED_SCAN_CONFIG   56
 #define IWX_UCODE_TLV_API_SCAN_EXT_CHAN_VER	58
 #define IWX_NUM_UCODE_TLV_API			128
@@ -1864,6 +1865,31 @@ struct iwx_alive_resp_v4 {
 	struct iwx_lmac_alive lmac_data[2];
 	struct iwx_umac_alive umac_data;
 } __packed; /* ALIVE_RES_API_S_VER_4 */
+
+#define IWX_SOC_CONFIG_CMD_FLAGS_DISCRETE	(1 << 0)
+#define IWX_SOC_CONFIG_CMD_FLAGS_LOW_LATENCY	(1 << 1)
+
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_MASK		0xc
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE		0
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_200		1
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_2500		2
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_1820		3
+
+/**
+ * struct iwx_soc_configuration_cmd - Set device stabilization latency
+ *
+ * @flags: soc settings flags.  In VER_1, we can only set the DISCRETE
+ *	flag, because the FW treats the whole value as an integer. In
+ *	VER_2, we can set the bits independently.
+ * @latency: time for SOC to ensure stable power & XTAL
+ */
+struct iwx_soc_configuration_cmd {
+	uint32_t flags;
+	uint32_t latency;
+} __packed; /*
+	     * SOC_CONFIGURATION_CMD_S_VER_1 (see description above)
+	     * SOC_CONFIGURATION_CMD_S_VER_2
+	     */
 
 /**
  * commands driver may send before finishing init flow
@@ -3996,6 +4022,13 @@ struct iwx_uapsd_misbehaving_ap_notif {
  * @ba_escape_timer: Fully receive and parse beacon if no beacons were passed
  *      for a longer period of time then this escape-timeout. Units: Beacons.
  * @ba_enable_beacon_abort: 1, beacon abort is enabled; 0, disabled.
+ * @bf_threshold_absolute_low: See below.
+ * @bf_threshold_absolute_high: Send Beacon to driver if Energy value calculated
+ *      for this beacon crossed this absolute threshold. For the 'Increase'
+ *      direction the bf_energy_absolute_low[i] is used. For the 'Decrease'
+ *      direction the bf_energy_absolute_high[i] is used. Zero value means
+ *      that this specific threshold is ignored for beacon filtering, and
+ *      beacon will not be forced to be sent to driver due to this setting.
  */
 struct iwx_beacon_filter_cmd {
 	uint32_t bf_energy_delta;
@@ -4009,7 +4042,9 @@ struct iwx_beacon_filter_cmd {
 	uint32_t bf_escape_timer;
 	uint32_t ba_escape_timer;
 	uint32_t ba_enable_beacon_abort;
-} __packed;
+	uint32_t bf_threshold_absolute_low[2];
+	uint32_t bf_threshold_absolute_high[2];
+} __packed; /* BEACON_FILTER_CONFIG_API_S_VER_4 */
 
 /* Beacon filtering and beacon abort */
 #define IWX_BF_ENERGY_DELTA_DEFAULT 5

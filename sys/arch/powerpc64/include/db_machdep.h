@@ -1,25 +1,80 @@
-typedef long		db_expr_t;
+/*	$OpenBSD: db_machdep.h,v 1.3 2020/05/27 22:22:04 gkoehler Exp $*/
+/*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
-typedef long		db_regs_t;
+/*
+ * Mach Operating System
+ * Copyright (c) 1992 Carnegie Mellon University
+ * All Rights Reserved.
+ *
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ *
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
+ * the rights to redistribute these changes.
+ */
 
-extern db_regs_t	ddb_regs;
+/*
+ * Machine-dependent defines for new kernel debugger.
+ */
+#ifndef _MACHINE_DB_MACHDEP_H_
+#define _MACHINE_DB_MACHDEP_H_
 
-#define PC_REGS(regs)	(*regs)
+#include <sys/types.h>
+#include <uvm/uvm_param.h>
+#include <machine/trap.h>
 
-#define BKPT_SIZE	4
-#define BKPT_SET(inst)	0xdeadbeef
+typedef vaddr_t	db_addr_t;	/* address - unsigned */
+typedef long		db_expr_t;	/* expression - signed */
+typedef struct trapframe db_regs_t;
+extern db_regs_t ddb_regs;		/* register state */
 
-#define db_clear_single_step(regs)	(0)
-#define db_set_single_step(regs)	(0)
+#define PC_REGS(regs)	((regs)->srr0)
+#define SET_PC_REGS(regs, value)	PC_REGS(regs) = (value)
 
-#define IS_BREAKPOINT_TRAP(type, code)	(0)
-#define IS_WATCHPOINT_TRAP(type, code)	(0)
+#define BKPT_INST	0x7C810808	/* breakpoint instruction */
 
-// ALL BROKEN!!!
-#define	inst_trap_return(ins)	((ins) == 0 && (ins) == 1)
-#define	inst_return(ins)	((ins) == 0 && (ins) == 1)
-				
-#define	inst_call(ins)		((ins) == 0 && (ins) == 1)
-#define	inst_branch(ins)	((ins) == 0 && (ins) == 1)
-#define inst_unconditional_flow_transfer(ins)	(0)
+#define BKPT_SIZE	(4)		/* size of breakpoint inst */
+#define BKPT_SET(inst)	(BKPT_INST)
 
+#define FIXUP_PC_AFTER_BREAK(regs)	((regs)->srr0 -= 4)
+
+#define SR_SINGLESTEP 0x8000
+#define db_clear_single_step(regs)	((regs)->srr1 &= ~SR_SINGLESTEP)
+#define db_set_single_step(regs)	((regs)->srr1 |=  SR_SINGLESTEP)
+
+#define T_BREAKPOINT	0xffff
+#define IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
+#define IS_WATCHPOINT_TRAP(type, code)	0
+
+#define M_RTS		0xfc0007fe
+#define I_RTS		0x4c000020
+#define M_BC		0xfc000000
+#define I_BC		0x40000000
+#define M_B		0xfc000000
+#define I_B		0x50000000
+#define M_RFI		0xfc0007fe
+#define I_RFI		0x4c000064
+
+#define inst_trap_return(ins)	(((ins)&M_RFI) == I_RFI)
+#define inst_return(ins)	(((ins)&M_RTS) == I_RTS)
+#define inst_call(ins)		(((ins)&M_BC ) == I_BC  || \
+				 ((ins)&M_B  ) == I_B )
+
+struct trapframe;
+void db_ktrap(int, db_regs_t *);
+
+#endif /* _MACHINE_DB_MACHDEP_H_ */

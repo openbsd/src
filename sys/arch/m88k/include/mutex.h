@@ -1,6 +1,6 @@
 #ifndef _M88K_MUTEX_H_
 #define _M88K_MUTEX_H_
-/*	$OpenBSD: mutex.h,v 1.7 2018/01/13 15:18:11 mpi Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.8 2020/05/26 11:55:10 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -30,7 +30,7 @@
 #include <sys/_lock.h>
 
 struct mutex {
-	volatile int mtx_lock;	/* mutex.S relies upon this field being first */
+	volatile int mtx_lock;
 	int mtx_wantipl;
 	int mtx_oldipl;
 	volatile void *mtx_owner;
@@ -68,12 +68,12 @@ void __mtx_init(struct mutex *, int);
 #ifdef DIAGNOSTIC
 
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
-	if ((mtx)->mtx_owner != curcpu())				\
+	if (((mtx)->mtx_owner != curcpu()) && !(panicstr || db_active))	\
 		panic("mutex %p not held in %s", (mtx), __func__);	\
 } while (0)
 
 #define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
-	if ((mtx)->mtx_owner == curcpu())				\
+	if (((mtx)->mtx_owner == curcpu()) && !(panicstr || db_active))	\
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
 

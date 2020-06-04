@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.231 2020/04/22 07:51:38 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.232 2020/05/27 11:19:29 mpi Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1022,9 +1022,9 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 
 	switch (cmd) {
 	case SIOCGIFINFO_IN6:
-		NET_RLOCK();
+		NET_RLOCK_IN_IOCTL();
 		ndi->ndi = *ND_IFINFO(ifp);
-		NET_RUNLOCK();
+		NET_RUNLOCK_IN_IOCTL();
 		return (0);
 	case SIOCGNBRINFO_IN6:
 	{
@@ -1032,7 +1032,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		struct in6_addr nb_addr = nbi->addr; /* make local for safety */
 		time_t expire;
 
-		NET_RLOCK();
+		NET_RLOCK_IN_IOCTL();
 		/*
 		 * XXX: KAME specific hack for scoped addresses
 		 *      XXXX: for other scopes than link-local?
@@ -1049,7 +1049,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		if (rt == NULL ||
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) {
 			rtfree(rt);
-			NET_RUNLOCK();
+			NET_RUNLOCK_IN_IOCTL();
 			return (EINVAL);
 		}
 		expire = ln->ln_rt->rt_expire;
@@ -1064,7 +1064,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		nbi->expire = expire;
 
 		rtfree(rt);
-		NET_RUNLOCK();
+		NET_RUNLOCK_IN_IOCTL();
 		return (0);
 	}
 	}

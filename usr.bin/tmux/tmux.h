@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1050 2020/05/22 11:07:05 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1062 2020/06/02 20:51:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -30,7 +30,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <termios.h>
-#include <wchar.h>
 
 #include "xmalloc.h"
 
@@ -45,7 +44,7 @@ struct cmdq_item;
 struct cmdq_list;
 struct cmdq_state;
 struct cmds;
-struct control_offsets;
+struct control_state;
 struct environ;
 struct format_job_tree;
 struct format_tree;
@@ -85,9 +84,6 @@ struct winlink;
 
 /* Automatic name refresh interval, in microseconds. Must be < 1 second. */
 #define NAME_INTERVAL 500000
-
-/* Maximum size of data to hold from a pane. */
-#define READ_SIZE 8192
 
 /* Default pixel cell sizes. */
 #define DEFAULT_XPIXEL 16
@@ -499,6 +495,7 @@ enum msgtype {
 	MSG_IDENTIFY_CLIENTPID,
 	MSG_IDENTIFY_CWD,
 	MSG_IDENTIFY_FEATURES,
+	MSG_IDENTIFY_STDOUT,
 
 	MSG_COMMAND = 200,
 	MSG_DETACH,
@@ -596,12 +593,15 @@ struct msg_write_close {
 #define ALL_MOUSE_MODES (MODE_MOUSE_STANDARD|MODE_MOUSE_BUTTON|MODE_MOUSE_ALL)
 #define MOTION_MOUSE_MODES (MODE_MOUSE_BUTTON|MODE_MOUSE_ALL)
 
+/* A single UTF-8 character. */
+typedef u_int utf8_char;
+
 /*
- * A single UTF-8 character. UTF8_SIZE must be big enough to hold
- * combining characters as well, currently at most five (of three
- * bytes) are supported.
-*/
-#define UTF8_SIZE 18
+ * An expanded UTF-8 character. UTF8_SIZE must be big enough to hold combining
+ * characters as well. It can't be more than 32 bytes without changes to how
+ * characters are stored.
+ */
+#define UTF8_SIZE 21
 struct utf8_data {
 	u_char	data[UTF8_SIZE];
 
@@ -609,7 +609,7 @@ struct utf8_data {
 	u_char	size;
 
 	u_char	width;	/* 0xff if invalid */
-} __packed;
+};
 enum utf8_state {
 	UTF8_MORE,
 	UTF8_DONE,
@@ -663,13 +663,25 @@ enum utf8_state {
 
 /* Grid cell data. */
 struct grid_cell {
-	struct utf8_data	data; /* 21 bytes */
+	struct utf8_data	data;
+	u_short			attr;
+	u_char			flags;
+	int			fg;
+	int			bg;
+	int			us;
+};
+
+/* Grid extended cell entry. */
+struct grid_extd_entry {
+	utf8_char		data;
 	u_short			attr;
 	u_char			flags;
 	int			fg;
 	int			bg;
 	int			us;
 } __packed;
+
+/* Grid cell entry. */
 struct grid_cell_entry {
 	u_char			flags;
 	union {
@@ -690,7 +702,7 @@ struct grid_line {
 	struct grid_cell_entry	*celldata;
 
 	u_int			 extdsize;
-	struct grid_cell	*extddata;
+	struct grid_extd_entry	*extddata;
 
 	int			 flags;
 } __packed;
@@ -900,7 +912,6 @@ struct window_mode_entry {
 /* Offsets into pane buffer. */
 struct window_pane_offset {
 	size_t	used;
-	size_t	acknowledged;
 };
 
 /* Child window structure. */
@@ -953,6 +964,7 @@ struct window_pane {
 
 	int		 fd;
 	struct bufferevent *event;
+
 	struct window_pane_offset offset;
 	size_t		 base_offset;
 
@@ -1283,7 +1295,6 @@ struct tty {
 	u_int		 rleft;
 	u_int		 rright;
 
-	int		 fd;
 	struct event	 event_in;
 	struct evbuffer	*in;
 	struct event	 event_out;
@@ -1564,10 +1575,11 @@ struct client {
 	struct cmdq_list *queue;
 
 	struct client_windows windows;
-	struct control_offsets *offsets;
+	struct control_state *control_state;
 
 	pid_t		 pid;
 	int		 fd;
+	int		 out_fd;
 	struct event	 event;
 	int		 retval;
 
@@ -1611,7 +1623,7 @@ struct client {
 #define CLIENT_DEAD 0x200
 #define CLIENT_REDRAWBORDERS 0x400
 #define CLIENT_READONLY 0x800
-#define CLIENT_DETACHING 0x1000
+/* 0x1000 unused */
 #define CLIENT_CONTROL 0x2000
 #define CLIENT_CONTROLCONTROL 0x4000
 #define CLIENT_FOCUSED 0x8000
@@ -1641,12 +1653,21 @@ struct client {
 #define CLIENT_UNATTACHEDFLAGS	\
 	(CLIENT_DEAD|		\
 	 CLIENT_SUSPENDED|	\
-	 CLIENT_DETACHING)
+	 CLIENT_EXIT)
 #define CLIENT_NOSIZEFLAGS	\
 	(CLIENT_DEAD|		\
 	 CLIENT_SUSPENDED|	\
-	 CLIENT_DETACHING)
+	 CLIENT_EXIT)
 	uint64_t	 flags;
+
+	enum {
+		CLIENT_EXIT_RETURN,
+		CLIENT_EXIT_SHUTDOWN,
+		CLIENT_EXIT_DETACH
+	}		 exit_type;
+	enum msgtype	 exit_msgtype;
+	char		*exit_session;
+
 	struct key_table *keytable;
 
 	uint64_t	 redraw_panes;
@@ -1831,6 +1852,7 @@ extern int		 ptm_fd;
 extern const char	*shell_command;
 int		 checkshell(const char *);
 void		 setblocking(int, int);
+uint64_t	 get_timer(void);
 const char	*sig2name(int);
 const char	*find_cwd(void);
 const char	*find_home(void);
@@ -1891,6 +1913,7 @@ char		*paste_make_sample(struct paste_buffer *);
 #define FORMAT_WINDOW 0x40000000U
 struct format_tree;
 struct format_modifier;
+typedef char *(*format_cb)(struct format_tree *);
 const char	*format_skip(const char *, const char *);
 int		 format_true(const char *);
 struct format_tree *format_create(struct client *, struct cmdq_item *, int,
@@ -1901,6 +1924,7 @@ void printflike(3, 4) format_add(struct format_tree *, const char *,
 		     const char *, ...);
 void		 format_add_tv(struct format_tree *, const char *,
 		     struct timeval *);
+void		 format_add_cb(struct format_tree *, const char *, format_cb);
 void		 format_each(struct format_tree *, void (*)(const char *,
 		     const char *, void *), void *);
 char		*format_expand_time(struct format_tree *, const char *);
@@ -2064,7 +2088,7 @@ void	tty_putc(struct tty *, u_char);
 void	tty_putn(struct tty *, const void *, size_t, u_int);
 void	tty_cell(struct tty *, const struct grid_cell *,
 	    const struct grid_cell *, int *);
-int	tty_init(struct tty *, struct client *, int);
+int	tty_init(struct tty *, struct client *);
 void	tty_resize(struct tty *);
 void	tty_set_size(struct tty *, u_int, u_int, u_int, u_int);
 void	tty_start_tty(struct tty *);
@@ -2475,6 +2499,7 @@ void	 grid_clear_history(struct grid *);
 const struct grid_line *grid_peek_line(struct grid *, u_int);
 void	 grid_get_cell(struct grid *, u_int, u_int, struct grid_cell *);
 void	 grid_set_cell(struct grid *, u_int, u_int, const struct grid_cell *);
+void	 grid_set_padding(struct grid *, u_int, u_int);
 void	 grid_set_cells(struct grid *, u_int, u_int, const struct grid_cell *,
 	     const char *, size_t);
 struct grid_line *grid_get_line(struct grid *, u_int);
@@ -2496,6 +2521,7 @@ u_int	 grid_line_length(struct grid *, u_int);
 void	 grid_view_get_cell(struct grid *, u_int, u_int, struct grid_cell *);
 void	 grid_view_set_cell(struct grid *, u_int, u_int,
 	     const struct grid_cell *);
+void	 grid_view_set_padding(struct grid *, u_int, u_int);
 void	 grid_view_set_cells(struct grid *, u_int, u_int,
 	     const struct grid_cell *, const char *, size_t);
 void	 grid_view_clear_history(struct grid *, u_int);
@@ -2696,8 +2722,6 @@ int		 window_pane_start_input(struct window_pane *,
 void		*window_pane_get_new_data(struct window_pane *,
 		     struct window_pane_offset *, size_t *);
 void		 window_pane_update_used_data(struct window_pane *,
-		     struct window_pane_offset *, size_t, int);
-void		 window_pane_acknowledge_data(struct window_pane *,
 		     struct window_pane_offset *, size_t);
 
 /* layout.c */
@@ -2813,14 +2837,17 @@ char	*default_window_name(struct window *);
 char	*parse_window_name(const char *);
 
 /* control.c */
+void	control_flush(struct client *);
 void	control_start(struct client *);
+void	control_stop(struct client *);
 void	control_set_pane_on(struct client *, struct window_pane *);
 void	control_set_pane_off(struct client *, struct window_pane *);
 struct window_pane_offset *control_pane_offset(struct client *,
 	   struct window_pane *, int *);
-void	control_free_offsets(struct client *);
+void	control_reset_offsets(struct client *);
 void printflike(2, 3) control_write(struct client *, const char *, ...);
 void	control_write_output(struct client *, struct window_pane *);
+int	control_all_done(struct client *);
 
 /* control-notify.c */
 void	control_notify_input(struct client *, struct window_pane *,
@@ -2877,12 +2904,13 @@ u_int		 session_group_attached_count(struct session_group *);
 void		 session_renumber_windows(struct session *);
 
 /* utf8.c */
+utf8_char	 utf8_build_one(u_char);
+enum utf8_state	 utf8_from_data(const struct utf8_data *, utf8_char *);
+void		 utf8_to_data(utf8_char, struct utf8_data *);
 void		 utf8_set(struct utf8_data *, u_char);
 void		 utf8_copy(struct utf8_data *, const struct utf8_data *);
 enum utf8_state	 utf8_open(struct utf8_data *, u_char);
 enum utf8_state	 utf8_append(struct utf8_data *, u_char);
-enum utf8_state	 utf8_combine(const struct utf8_data *, wchar_t *);
-enum utf8_state	 utf8_split(wchar_t, struct utf8_data *);
 int		 utf8_isvalid(const char *);
 int		 utf8_strvis(char *, const char *, size_t, int);
 int		 utf8_stravis(char **, const char *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.50 2020/04/23 19:57:01 tobhe Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.51 2020/06/01 21:00:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -267,7 +267,7 @@ print_flags(uint32_t flags)
 	int i, comma = 0, n;
 
 	len = snprintf(fstr, sizeof(fstr), "%#x<", flags);
-	if (len < 0 || len >= sizeof(fstr))
+	if (len < 0 || (size_t)len >= sizeof(fstr))
 		return (NULL);
 	for (i = 0; i < 32; i++) {
 		if ((flags & (1 << i)) == 0 ||
@@ -275,7 +275,7 @@ print_flags(uint32_t flags)
 			continue;
 		n = snprintf(fstr + len, sizeof(fstr) - len - 1,
 		    comma ? ",%s" : "%s", entry->name);
-		if (n < 0 || n >= sizeof(fstr) - len - 1)
+		if (n < 0 || (size_t)n >= sizeof(fstr) - len - 1)
 			return (NULL);
 		len += n;
 		comma = 1;

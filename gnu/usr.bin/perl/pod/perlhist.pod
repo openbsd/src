@@ -673,6 +673,8 @@ the strings?).
  Steve     5.30.1       2019-Nov-10
  Steve     5.30.2-RC1   2020-Feb-29
  Steve     5.30.2       2020-Mar-14
+ Steve     5.30.3-RC1   2020-May-18
+ Steve     5.30.3       2020-Jun-01
 
  Sawyer X  5.31.0       2019-May-24     The 5.31 development track
  Ether     5.31.1       2019-Jun-20
@@ -684,6 +686,8 @@ the strings?).
  Nicolas R 5.31.7       2019-Dec-20
  Matthew H 5.31.8       2020-Jan-20
  Renee     5.31.9       2020-Feb-20
+ Sawyer X  5.31.10      2020-Mar-20
+ Sawyer X  5.31.11      2020-Apr-28
 
 =head2 SELECTED RELEASE SIZES
 

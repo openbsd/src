@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 2014/07/16 20:07:03 okan Exp $	
+#	$OpenBSD: Makefile,v 1.8 2020/05/28 20:38:21 fcambus Exp $	
 
-.if ${MACHINE} == "i386" || ${MACHINE} == "amd64" ||\
+.if ${MACHINE} == "i386" || ${MACHINE} == "amd64" || \
+    ${MACHINE} == "arm64" || ${MACHINE} == "armv7" || \
     ${MACHINE} == "alpha"
 
 PROG=	wsmoused
@@ -13,6 +14,5 @@ NOPROG=yes
 .endif
 
 MAN=	wsmoused.8 
-MANSUBDIR=	i386 amd64 alpha
 
 .include <bsd.prog.mk>

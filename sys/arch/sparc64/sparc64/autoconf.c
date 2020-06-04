@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.134 2020/01/04 23:43:54 kn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.135 2020/05/25 15:31:59 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -435,6 +435,15 @@ bootstrap(int nctx)
 	ncpus = get_ncpus();
 	pmap_bootstrap(KERNBASE, (u_long)&end, nctx, ncpus);
 
+	/*
+	 * This length check deliberately checks BOOTDATA_LEN_SOFTRAID
+	 * instead of BOOTDATA_LEN_BOOTHOWTO.  See the ofwboot code
+	 * for an explanation.
+	 */
+	if (obd.version == BOOTDATA_VERSION &&
+	    obd.len >= BOOTDATA_LEN_SOFTRAID)
+		boothowto = obd.boothowto;
+
 #ifdef SUN4V
 	if (CPU_ISSUN4V) {
 		sun4v_soft_state_init();
@@ -539,7 +548,7 @@ bootpath_build(void)
 	bp->name[0] = 0;
 	
 	bootpath_nodes(bootpath, nbootpath);
-	
+
 	/* Setup pointer to boot flags */
 	OF_getprop(chosen, "bootargs", buf, sizeof(buf));
 	cp = buf;
@@ -691,7 +700,7 @@ cpu_configure(void)
 #endif
 
 	if (obd.version == BOOTDATA_VERSION &&
-	    obd.len == sizeof(struct openbsd_bootdata)) {
+	    obd.len >= BOOTDATA_LEN_SOFTRAID) {
 #if NSOFTRAID > 0
 		memcpy(sr_bootuuid.sui_id, obd.sr_uuid,
 		    sizeof(sr_bootuuid.sui_id));

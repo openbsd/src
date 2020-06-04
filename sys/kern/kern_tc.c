@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.56 2020/05/20 17:21:08 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.57 2020/05/29 04:42:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -34,7 +34,6 @@
 #include <sys/timetc.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
-#include <dev/rndvar.h>
 
 /*
  * A large step happens on boot.  This constant detects such steps.

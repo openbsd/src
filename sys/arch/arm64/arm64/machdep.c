@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.50 2020/05/17 15:03:06 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.52 2020/05/31 06:23:57 dlg Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -745,7 +745,7 @@ EFI_MEMORY_DESCRIPTOR *mmap;
 
 void	remap_efi_runtime(EFI_PHYSICAL_ADDRESS);
 
-void	collect_kernel_args(char *);
+void	collect_kernel_args(const char *);
 void	process_kernel_args(void);
 
 void
@@ -1142,7 +1142,7 @@ remap_efi_runtime(EFI_PHYSICAL_ADDRESS system_table)
 char bootargs[256];
 
 void
-collect_kernel_args(char *args)
+collect_kernel_args(const char *args)
 {
 	/* Make a local copy of the bootargs */
 	strlcpy(bootargs, args, sizeof(bootargs));
@@ -1246,4 +1246,13 @@ dumpregs(struct trapframe *frame)
 	printf("lr: 0x%016lx\n", frame->tf_lr);
 	printf("pc: 0x%016lx\n", frame->tf_elr);
 	printf("spsr: 0x%016lx\n", frame->tf_spsr);
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }
