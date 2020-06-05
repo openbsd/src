@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.17 2020/05/31 06:23:57 dlg Exp $ */
+/* $OpenBSD: cpu.h,v 1.18 2020/06/05 23:16:24 naddy Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -183,7 +183,16 @@ void cpu_boot_secondary_processors(void);
 
 #define curpcb		curcpu()->ci_curpcb
 
-unsigned int		cpu_rnd_messybits(void);
+static inline unsigned int
+cpu_rnd_messybits(void)
+{
+	uint64_t val, rval;
+
+	__asm volatile("mrs %0, CNTVCT_EL0; rbit %1, %0;"
+	    : "=r" (val), "=r" (rval));
+
+	return (val ^ rval);
+}
 
 /*
  * Scheduling glue
