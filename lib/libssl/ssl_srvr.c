@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.78 2020/06/01 08:04:02 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.79 2020/06/05 17:53:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2196,6 +2196,13 @@ ssl3_get_cert_verify(SSL *s)
 		    (!EVP_PKEY_CTX_set_rsa_padding
 		    (pctx, RSA_PKCS1_PSS_PADDING) ||
 		    !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))) {
+			al = SSL_AD_INTERNAL_ERROR;
+			goto f_err;
+		}
+		if (sigalg->key_type == EVP_PKEY_GOSTR01 &&
+		    EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_VERIFY,
+		    EVP_PKEY_CTRL_GOST_SIG_FORMAT, GOST_SIG_FORMAT_RS_LE,
+		    NULL) <= 0) {
 			al = SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 		}

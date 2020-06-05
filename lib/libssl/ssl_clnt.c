@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.68 2020/05/31 16:36:35 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.69 2020/06/05 17:53:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2338,6 +2338,12 @@ ssl3_send_client_verify_sigalgs(SSL *s, CBB *cert_verify)
 		goto err;
 	}
 	if (!EVP_DigestSignInit(&mctx, &pctx, md, NULL, pkey)) {
+		SSLerror(s, ERR_R_EVP_LIB);
+		goto err;
+	}
+	if (sigalg->key_type == EVP_PKEY_GOSTR01 &&
+	    EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
+	    EVP_PKEY_CTRL_GOST_SIG_FORMAT, GOST_SIG_FORMAT_RS_LE, NULL) <= 0) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
