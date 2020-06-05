@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.22 2020/05/26 07:06:37 mpi Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.23 2020/06/05 19:50:59 denis Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -205,7 +205,6 @@ int                   pipex_notify_close_session(struct pipex_session *session);
 int                   pipex_notify_close_session_all(void);
 
 struct mbuf           *pipex_output (struct mbuf *, int, int, struct pipex_iface_context *);
-struct pipex_session  *pipex_pppoe_lookup_session (struct mbuf *);
 struct pipex_session  *pipex_pppoe_lookup_session (struct mbuf *);
 struct mbuf           *pipex_pppoe_input (struct mbuf *, struct pipex_session *);
 struct pipex_session  *pipex_pptp_lookup_session (struct mbuf *);

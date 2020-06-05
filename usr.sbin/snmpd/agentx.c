@@ -1,4 +1,4 @@
-/*      $OpenBSD: agentx.c,v 1.13 2018/06/17 18:19:59 rob Exp $    */
+/*      $OpenBSD: agentx.c,v 1.14 2020/06/05 19:50:59 denis Exp $    */
 /*
  * Copyright (c) 2013,2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -657,7 +657,6 @@ snmp_agentx_unregister_pdu(struct snmp_oid *oid, int range_index,
 	uhdr.reserved2 = 0;
 
 	if (snmp_agentx_raw(pdu, &uhdr, sizeof(uhdr)) == -1 ||
-	    snmp_agentx_oid(pdu, oid) == -1 ||
 	    snmp_agentx_oid(pdu, oid) == -1 ||
 	    (range_index && snmp_agentx_int(pdu, &range_bound) == -1)) {
 		snmp_agentx_pdu_free(pdu);
