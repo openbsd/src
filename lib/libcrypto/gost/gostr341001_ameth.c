@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.15 2018/08/24 20:22:15 tb Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.16 2020/06/05 17:17:22 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -96,15 +96,19 @@ decode_gost01_algor_params(EVP_PKEY *pkey, const unsigned char **p, int len)
 	ec = pkey->pkey.gost;
 	if (ec == NULL) {
 		ec = GOST_KEY_new();
-		if (ec == NULL)
+		if (ec == NULL) {
+			GOSTerror(ERR_R_MALLOC_FAILURE);
 			return 0;
+		}
 		if (EVP_PKEY_assign_GOST(pkey, ec) == 0)
 			return 0;
 	}
 
 	group = EC_GROUP_new_by_curve_name(param_nid);
-	if (group == NULL)
+	if (group == NULL) {
+		GOSTerror(EC_R_EC_GROUP_NEW_BY_NAME_FAILURE);
 		return 0;
+	}
 	EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
 	if (GOST_KEY_set_group(ec, group) == 0) {
 		EC_GROUP_free(group);
@@ -207,8 +211,10 @@ pub_decode_gost01(EVP_PKEY *pk, X509_PUBKEY *pub)
 		return 0;
 	}
 	p = pval->data;
-	if (decode_gost01_algor_params(pk, &p, pval->length) == 0)
+	if (decode_gost01_algor_params(pk, &p, pval->length) == 0) {
+		GOSTerror(GOST_R_BAD_KEY_PARAMETERS_FORMAT);
 		return 0;
+	}
 
 	octet = d2i_ASN1_OCTET_STRING(NULL, &pubkey_buf, pub_len);
 	if (octet == NULL) {
@@ -407,8 +413,10 @@ priv_decode_gost01(EVP_PKEY *pk, const PKCS8_PRIV_KEY_INFO *p8inf)
 	int ptype = V_ASN1_UNDEF;
 	ASN1_STRING *pval = NULL;
 
-	if (PKCS8_pkey_get0(&palg_obj, &pkey_buf, &priv_len, &palg, p8inf) == 0)
+	if (PKCS8_pkey_get0(&palg_obj, &pkey_buf, &priv_len, &palg, p8inf) == 0) {
+		GOSTerror(GOST_R_BAD_KEY_PARAMETERS_FORMAT);
 		return 0;
+	}
 	(void)EVP_PKEY_assign_GOST(pk, NULL);
 	X509_ALGOR_get0(NULL, &ptype, (const void **)&pval, palg);
 	if (ptype != V_ASN1_SEQUENCE) {
@@ -416,8 +424,10 @@ priv_decode_gost01(EVP_PKEY *pk, const PKCS8_PRIV_KEY_INFO *p8inf)
 		return 0;
 	}
 	p = pval->data;
-	if (decode_gost01_algor_params(pk, &p, pval->length) == 0)
+	if (decode_gost01_algor_params(pk, &p, pval->length) == 0) {
+		GOSTerror(GOST_R_BAD_KEY_PARAMETERS_FORMAT);
 		return 0;
+	}
 	p = pkey_buf;
 	if (V_ASN1_OCTET_STRING == *p) {
 		/* New format - Little endian octet string */
