@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.77 2020/05/19 16:35:20 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.78 2020/06/05 17:55:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -246,6 +246,10 @@ ssl_cert_dup(CERT *cert)
 
 			case SSL_PKEY_ECC:
 				/* We have an ECC key */
+				break;
+
+			case SSL_PKEY_GOST01:
+				/* We have a GOST key */
 				break;
 
 			default:
