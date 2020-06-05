@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.191 2020/05/31 06:23:56 dlg Exp $ */
+/* $OpenBSD: machdep.c,v 1.192 2020/06/05 14:25:05 naddy Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1854,12 +1854,3 @@ alpha_XXX_dmamap(v)						/* XXX */
 	return (vtophys(v) | alpha_XXX_dmamap_or);		/* XXX */
 }								/* XXX */
 /* XXX XXX END XXX XXX */
-
-unsigned int
-cpu_rnd_messybits(void)
-{
-	struct timespec ts;
-
-	nanotime(&ts);
-	return (ts.tv_nsec ^ (ts.tv_sec << 20));
-}

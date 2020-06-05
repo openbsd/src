@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.94 2020/05/31 06:23:58 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.95 2020/06/05 14:25:05 naddy Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -211,7 +211,15 @@ void	cpu_unidle(struct cpu_info *);
 #define curpcb		__curcpu->ci_cpcb
 #define fpproc		__curcpu->ci_fpproc
 
-unsigned int cpu_rnd_messybits(void);
+static inline unsigned int
+cpu_rnd_messybits(void)
+{
+	u_int64_t tick;
+
+	__asm volatile("rd %%tick, %0" : "=r" (tick) :);
+
+	return ((tick >> 32) ^ tick);
+}
 
 /*
  * On processors with multiple threads we force a thread switch.

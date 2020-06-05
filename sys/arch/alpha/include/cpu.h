@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.62 2020/05/31 06:23:56 dlg Exp $ */
+/* $OpenBSD: cpu.h,v 1.63 2020/06/05 14:25:05 naddy Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -288,7 +288,11 @@ do {									\
  */
 #define	cpu_number()		alpha_pal_whami()
 
-unsigned int cpu_rnd_messybits(void);
+static inline unsigned int
+cpu_rnd_messybits(void)
+{
+	return alpha_rpcc();
+}
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
