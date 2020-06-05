@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.193 2020/05/10 14:17:47 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.194 2020/06/05 17:58:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2547,8 +2547,6 @@ ssl3_get_req_cert_types(SSL *s, CBB *cbb)
 
 #ifndef OPENSSL_NO_GOST
 	if ((alg_k & SSL_kGOST) != 0) {
-		if (!CBB_add_u8(cbb, TLS_CT_GOST94_SIGN))
-			return 0;
 		if (!CBB_add_u8(cbb, TLS_CT_GOST01_SIGN))
 			return 0;
 		if (!CBB_add_u8(cbb, TLS_CT_GOST12_256_SIGN))
