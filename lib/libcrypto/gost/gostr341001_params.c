@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_params.c,v 1.3 2015/07/20 22:42:56 bcook Exp $ */
+/* $OpenBSD: gostr341001_params.c,v 1.4 2020/06/05 17:12:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -98,8 +98,8 @@ static const GostR3410_params GostR3410_256_params[] = {
 };
 
 static const GostR3410_params GostR3410_512_params[] = {
-	{ "A",  NID_id_tc26_gost_3410_2012_512_paramSetA },
-	{ "B",  NID_id_tc26_gost_3410_2012_512_paramSetB },
+	{ "A",  NID_id_tc26_gost_3410_12_512_paramSetA },
+	{ "B",  NID_id_tc26_gost_3410_12_512_paramSetB },
 	{ NULL, NID_undef },
 };
 
