@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.36 2020/05/22 11:07:04 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.37 2020/06/05 07:33:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -66,6 +66,8 @@ cmd_refresh_client_update_offset(struct client *tc, const char *value)
 		control_set_pane_on(tc, wp);
 	else if (strcmp(colon, "off") == 0)
 		control_set_pane_off(tc, wp);
+	else if (strcmp(colon, "continue") == 0)
+		control_continue_pane(tc, wp);
 
 out:
 	free(copy);
@@ -168,7 +170,7 @@ cmd_refresh_client_exec(struct cmd *self, struct cmdq_item *item)
 		}
 		tty_set_size(&tc->tty, x, y, 0, 0);
 		tc->flags |= CLIENT_SIZECHANGED;
-		recalculate_sizes();
+		recalculate_sizes_now(1);
 		return (CMD_RETURN_NORMAL);
 	}
 
