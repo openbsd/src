@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.100 2020/05/26 20:24:31 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.101 2020/06/05 14:47:26 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -159,6 +159,28 @@ struct iked_transform ikev2_default_ike_transforms[] = {
 size_t ikev2_default_nike_transforms = ((sizeof(ikev2_default_ike_transforms) /
     sizeof(ikev2_default_ike_transforms[0])) - 1);
 
+struct iked_transform ikev2_default_ike_transforms_noauth[] = {
+	{ IKEV2_XFORMTYPE_ENCR,	IKEV2_XFORMENCR_AES_GCM_16, 128 },
+	{ IKEV2_XFORMTYPE_ENCR,	IKEV2_XFORMENCR_AES_GCM_16, 256 },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA2_512 },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA2_384 },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA2_256 },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA1 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_CURVE25519 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_ECP_521 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_ECP_384 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_ECP_256 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_4096 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_3072 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_2048 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_1536 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_1024 },
+	{ 0 }
+};
+size_t ikev2_default_nike_transforms_noauth =
+    ((sizeof(ikev2_default_ike_transforms_noauth) /
+    sizeof(ikev2_default_ike_transforms_noauth[0])) - 1);
+
 struct iked_transform ikev2_default_esp_transforms[] = {
 	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 256 },
 	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 192 },
@@ -171,6 +193,17 @@ struct iked_transform ikev2_default_esp_transforms[] = {
 };
 size_t ikev2_default_nesp_transforms = ((sizeof(ikev2_default_esp_transforms) /
     sizeof(ikev2_default_esp_transforms[0])) - 1);
+
+struct iked_transform ikev2_default_esp_transforms_noauth[] = {
+	{ IKEV2_XFORMTYPE_ENCR,	IKEV2_XFORMENCR_AES_GCM_16, 128 },
+	{ IKEV2_XFORMTYPE_ENCR,	IKEV2_XFORMENCR_AES_GCM_16, 256 },
+	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_ESN },
+	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_NONE },
+	{ 0 }
+};
+size_t ikev2_default_nesp_transforms_noauth =
+    ((sizeof(ikev2_default_esp_transforms_noauth) /
+    sizeof(ikev2_default_esp_transforms_noauth[0])) - 1);
 
 const struct ipsec_xf authxfs[] = {
 	{ "hmac-md5",		IKEV2_XFORMAUTH_HMAC_MD5_96,		16 },
@@ -2727,7 +2760,7 @@ create_ike(char *name, int af, uint8_t ipproto,
 	struct iked_policy	 pol;
 	struct iked_proposal	*p, *ptmp;
 	struct iked_transform	*xf;
-	unsigned int		 i, j, xfi, noauth;
+	unsigned int		 i, j, xfi, noauth, auth;
 	unsigned int		 ikepropid = 1, ipsecpropid = 1;
 	struct iked_flow	*flow, *ftmp;
 	static unsigned int	 policy_id = 0;
@@ -2857,6 +2890,17 @@ create_ike(char *name, int af, uint8_t ipproto,
 	RB_INIT(&pol.pol_flows);
 
 	if (ike_sa == NULL || ike_sa->nxfs == 0) {
+		/* AES-GCM proposal */
+		if ((p = calloc(1, sizeof(*p))) == NULL)
+			err(1, "%s", __func__);
+		p->prop_id = ikepropid++;
+		p->prop_protoid = IKEV2_SAPROTO_IKE;
+		p->prop_nxforms = ikev2_default_nike_transforms_noauth;
+		p->prop_xforms = ikev2_default_ike_transforms_noauth;
+		TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+		pol.pol_nproposals++;
+
+		/* Non GCM proposal */
 		if ((p = calloc(1, sizeof(*p))) == NULL)
 			err(1, "%s", __func__);
 		p->prop_id = ikepropid++;
@@ -2867,11 +2911,16 @@ create_ike(char *name, int af, uint8_t ipproto,
 		pol.pol_nproposals++;
 	} else {
 		for (i = 0; i < ike_sa->nxfs; i++) {
-			noauth = 0;
+			noauth = auth = 0;
 			for (j = 0; j < ike_sa->xfs[i]->nencxf; j++) {
 				if (ike_sa->xfs[i]->encxf[j]->noauth)
 					noauth++;
+				else
+					auth++;
 			}
+			if (ike_sa->xfs[i]->nauthxf)
+				auth++;
+
 			if (ike_sa->xfs[i]->nesnxf) {
 				yyerror("cannot use ESN with ikesa.");
 				goto done;
@@ -2887,43 +2936,82 @@ create_ike(char *name, int af, uint8_t ipproto,
 				goto done;
 			}
 
-			if ((p = calloc(1, sizeof(*p))) == NULL)
-				err(1, "%s", __func__);
+			if (!auth) {
+				if ((p = calloc(1, sizeof(*p))) == NULL)
+					err(1, "%s", __func__);
 
-			xf = NULL;
-			xfi = 0;
-			if (!ike_sa->xfs[i]->nencxf || !noauth)
+				xf = NULL;
+				xfi = 0;
+				copy_transforms(IKEV2_XFORMTYPE_ENCR,
+				    ike_sa->xfs[i]->encxf,
+				    ike_sa->xfs[i]->nencxf, &xf, &xfi,
+				    ikev2_default_ike_transforms_noauth,
+				    ikev2_default_nike_transforms_noauth);
+				copy_transforms(IKEV2_XFORMTYPE_DH,
+				    ike_sa->xfs[i]->groupxf,
+				    ike_sa->xfs[i]->ngroupxf, &xf, &xfi,
+				    ikev2_default_ike_transforms_noauth,
+				    ikev2_default_nike_transforms_noauth);
+				copy_transforms(IKEV2_XFORMTYPE_PRF,
+				    ike_sa->xfs[i]->prfxf,
+				    ike_sa->xfs[i]->nprfxf, &xf, &xfi,
+				    ikev2_default_ike_transforms_noauth,
+				    ikev2_default_nike_transforms_noauth);
+
+				p->prop_id = ikepropid++;
+				p->prop_protoid = IKEV2_SAPROTO_IKE;
+				p->prop_xforms = xf;
+				p->prop_nxforms = xfi;
+				TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+				pol.pol_nproposals++;
+			}
+			if (!noauth) {
+				if ((p = calloc(1, sizeof(*p))) == NULL)
+					err(1, "%s", __func__);
+
+				xf = NULL;
+				xfi = 0;
 				copy_transforms(IKEV2_XFORMTYPE_INTEGR,
 				    ike_sa->xfs[i]->authxf,
 				    ike_sa->xfs[i]->nauthxf, &xf, &xfi,
 				    ikev2_default_ike_transforms,
 				    ikev2_default_nike_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_ENCR,
-			    ike_sa->xfs[i]->encxf,
-			    ike_sa->xfs[i]->nencxf, &xf, &xfi,
-			    ikev2_default_ike_transforms,
-			    ikev2_default_nike_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_DH,
-			    ike_sa->xfs[i]->groupxf,
-			    ike_sa->xfs[i]->ngroupxf, &xf, &xfi,
-			    ikev2_default_ike_transforms,
-			    ikev2_default_nike_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_PRF,
-			    ike_sa->xfs[i]->prfxf,
-			    ike_sa->xfs[i]->nprfxf, &xf, &xfi,
-			    ikev2_default_ike_transforms,
-			    ikev2_default_nike_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_ENCR,
+				    ike_sa->xfs[i]->encxf,
+				    ike_sa->xfs[i]->nencxf, &xf, &xfi,
+				    ikev2_default_ike_transforms,
+				    ikev2_default_nike_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_DH,
+				    ike_sa->xfs[i]->groupxf,
+				    ike_sa->xfs[i]->ngroupxf, &xf, &xfi,
+				    ikev2_default_ike_transforms,
+				    ikev2_default_nike_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_PRF,
+				    ike_sa->xfs[i]->prfxf,
+				    ike_sa->xfs[i]->nprfxf, &xf, &xfi,
+				    ikev2_default_ike_transforms,
+				    ikev2_default_nike_transforms);
 
-			p->prop_id = ikepropid++;
-			p->prop_protoid = IKEV2_SAPROTO_IKE;
-			p->prop_xforms = xf;
-			p->prop_nxforms = xfi;
-			TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
-			pol.pol_nproposals++;
+				p->prop_id = ikepropid++;
+				p->prop_protoid = IKEV2_SAPROTO_IKE;
+				p->prop_xforms = xf;
+				p->prop_nxforms = xfi;
+				TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+				pol.pol_nproposals++;
+			}
 		}
 	}
 
 	if (ipsec_sa == NULL || ipsec_sa->nxfs == 0) {
+		if ((p = calloc(1, sizeof(*p))) == NULL)
+			err(1, "%s", __func__);
+		p->prop_id = ipsecpropid++;
+		p->prop_protoid = saproto;
+		p->prop_nxforms = ikev2_default_nesp_transforms_noauth;
+		p->prop_xforms = ikev2_default_esp_transforms_noauth;
+		TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+		pol.pol_nproposals++;
+
 		if ((p = calloc(1, sizeof(*p))) == NULL)
 			err(1, "%s", __func__);
 		p->prop_id = ipsecpropid++;
@@ -2934,11 +3022,16 @@ create_ike(char *name, int af, uint8_t ipproto,
 		pol.pol_nproposals++;
 	} else {
 		for (i = 0; i < ipsec_sa->nxfs; i++) {
-			noauth = 0;
+			noauth = auth = 0;
 			for (j = 0; j < ipsec_sa->xfs[i]->nencxf; j++) {
 				if (ipsec_sa->xfs[i]->encxf[j]->noauth)
 					noauth++;
+				else
+					auth++;
 			}
+			if (ipsec_sa->xfs[i]->nauthxf)
+				auth++;
+
 			if (noauth && noauth != ipsec_sa->xfs[i]->nencxf) {
 				yyerror("cannot mix encryption transforms with "
 				    "implicit and non-implicit authentication");
@@ -2950,39 +3043,69 @@ create_ike(char *name, int af, uint8_t ipproto,
 				goto done;
 			}
 
-			if ((p = calloc(1, sizeof(*p))) == NULL)
-				err(1, "%s", __func__);
+			if (!auth) {
+				if ((p = calloc(1, sizeof(*p))) == NULL)
+					err(1, "%s", __func__);
 
-			xf = NULL;
-			xfi = 0;
-			if (!ipsec_sa->xfs[i]->nencxf || !noauth)
+				xf = NULL;
+				xfi = 0;
+				copy_transforms(IKEV2_XFORMTYPE_ENCR,
+				    ipsec_sa->xfs[i]->encxf,
+				    ipsec_sa->xfs[i]->nencxf, &xf, &xfi,
+				    ikev2_default_esp_transforms_noauth,
+				    ikev2_default_nesp_transforms_noauth);
+				copy_transforms(IKEV2_XFORMTYPE_DH,
+				    ipsec_sa->xfs[i]->groupxf,
+				    ipsec_sa->xfs[i]->ngroupxf, &xf, &xfi,
+				    ikev2_default_esp_transforms_noauth,
+				    ikev2_default_nesp_transforms_noauth);
+				copy_transforms(IKEV2_XFORMTYPE_ESN,
+				    ipsec_sa->xfs[i]->esnxf,
+				    ipsec_sa->xfs[i]->nesnxf, &xf, &xfi,
+				    ikev2_default_esp_transforms_noauth,
+				    ikev2_default_nesp_transforms_noauth);
+
+				p->prop_id = ipsecpropid++;
+				p->prop_protoid = saproto;
+				p->prop_xforms = xf;
+				p->prop_nxforms = xfi;
+				TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+				pol.pol_nproposals++;
+			}
+			if (!noauth) {
+				if ((p = calloc(1, sizeof(*p))) == NULL)
+					err(1, "%s", __func__);
+
+				xf = NULL;
+				xfi = 0;
 				copy_transforms(IKEV2_XFORMTYPE_INTEGR,
 				    ipsec_sa->xfs[i]->authxf,
 				    ipsec_sa->xfs[i]->nauthxf, &xf, &xfi,
 				    ikev2_default_esp_transforms,
 				    ikev2_default_nesp_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_ENCR,
-			    ipsec_sa->xfs[i]->encxf,
-			    ipsec_sa->xfs[i]->nencxf, &xf, &xfi,
-			    ikev2_default_esp_transforms,
-			    ikev2_default_nesp_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_DH,
-			    ipsec_sa->xfs[i]->groupxf,
-			    ipsec_sa->xfs[i]->ngroupxf, &xf, &xfi,
-			    ikev2_default_esp_transforms,
-			    ikev2_default_nesp_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_ESN,
-			    ipsec_sa->xfs[i]->esnxf,
-			    ipsec_sa->xfs[i]->nesnxf, &xf, &xfi,
-			    ikev2_default_esp_transforms,
-			    ikev2_default_nesp_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_ENCR,
+				    ipsec_sa->xfs[i]->encxf,
+				    ipsec_sa->xfs[i]->nencxf, &xf, &xfi,
+				    ikev2_default_esp_transforms,
+				    ikev2_default_nesp_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_DH,
+				    ipsec_sa->xfs[i]->groupxf,
+				    ipsec_sa->xfs[i]->ngroupxf, &xf, &xfi,
+				    ikev2_default_esp_transforms,
+				    ikev2_default_nesp_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_ESN,
+				    ipsec_sa->xfs[i]->esnxf,
+				    ipsec_sa->xfs[i]->nesnxf, &xf, &xfi,
+				    ikev2_default_esp_transforms,
+				    ikev2_default_nesp_transforms);
 
-			p->prop_id = ipsecpropid++;
-			p->prop_protoid = saproto;
-			p->prop_xforms = xf;
-			p->prop_nxforms = xfi;
-			TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
-			pol.pol_nproposals++;
+				p->prop_id = ipsecpropid++;
+				p->prop_protoid = saproto;
+				p->prop_xforms = xf;
+				p->prop_nxforms = xfi;
+				TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+				pol.pol_nproposals++;
+			}
 		}
 	}
 
@@ -3099,7 +3222,9 @@ done:
 	}
 	TAILQ_FOREACH_SAFE(p, &pol.pol_proposals, prop_entry, ptmp) {
 		if (p->prop_xforms != ikev2_default_ike_transforms &&
-		    p->prop_xforms != ikev2_default_esp_transforms)
+		    p->prop_xforms != ikev2_default_ike_transforms_noauth &&
+		    p->prop_xforms != ikev2_default_esp_transforms &&
+		    p->prop_xforms != ikev2_default_esp_transforms_noauth)
 			free(p->prop_xforms);
 		free(p);
 	}
