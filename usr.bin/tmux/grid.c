@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.117 2020/06/04 21:41:31 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.118 2020/06/05 09:35:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -114,6 +114,7 @@ grid_extended_cell(struct grid_line *gl, struct grid_cell_entry *gce,
 {
 	struct grid_extd_entry	*gee;
 	int			 flags = (gc->flags & ~GRID_FLAG_CLEARED);
+	utf8_char		 uc;
 
 	if (~gce->flags & GRID_FLAG_EXTENDED)
 		grid_get_extended_cell(gl, gce, flags);
@@ -121,8 +122,10 @@ grid_extended_cell(struct grid_line *gl, struct grid_cell_entry *gce,
 		fatalx("offset too big");
 	gl->flags |= GRID_LINE_EXTENDED;
 
+	utf8_from_data(&gc->data, &uc);
+
 	gee = &gl->extddata[gce->offset];
-	utf8_from_data(&gc->data, &gee->data);
+	gee->data = uc;
 	gee->attr = gc->attr;
 	gee->flags = flags;
 	gee->fg = gc->fg;
