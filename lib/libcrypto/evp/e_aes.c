@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.41 2020/04/30 18:43:11 tb Exp $ */
+/* $OpenBSD: e_aes.c,v 1.42 2020/06/05 18:44:42 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1636,9 +1636,35 @@ aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return ret != 0 ? ret : -1;
 }
 
+static int
+aes_wrap_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+{
+	EVP_AES_WRAP_CTX *wctx = c->cipher_data;
+
+	switch (type) {
+	case EVP_CTRL_COPY:
+	    {
+		EVP_CIPHER_CTX *out = ptr;
+		EVP_AES_WRAP_CTX *wctx_out = out->cipher_data;
+
+		if (wctx->iv != NULL) {
+			if (c->iv != wctx->iv)
+				return 0;
+
+			wctx_out->iv = out->iv;
+		}
+
+		return 1;
+	    }
+	}
+
+	return -1;
+}
+
 #define WRAP_FLAGS \
     ( EVP_CIPH_WRAP_MODE | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER | \
-      EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_FLAG_DEFAULT_ASN1 )
+      EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_FLAG_DEFAULT_ASN1 | \
+      EVP_CIPH_CUSTOM_COPY )
 
 static const EVP_CIPHER aes_128_wrap = {
 	.nid = NID_id_aes128_wrap,
@@ -1652,7 +1678,7 @@ static const EVP_CIPHER aes_128_wrap = {
 	.ctx_size = sizeof(EVP_AES_WRAP_CTX),
 	.set_asn1_parameters = NULL,
 	.get_asn1_parameters = NULL,
-	.ctrl = NULL,
+	.ctrl = aes_wrap_ctrl,
 	.app_data = NULL,
 };
 
@@ -1674,7 +1700,7 @@ static const EVP_CIPHER aes_192_wrap = {
 	.ctx_size = sizeof(EVP_AES_WRAP_CTX),
 	.set_asn1_parameters = NULL,
 	.get_asn1_parameters = NULL,
-	.ctrl = NULL,
+	.ctrl = aes_wrap_ctrl,
 	.app_data = NULL,
 };
 
@@ -1696,7 +1722,7 @@ static const EVP_CIPHER aes_256_wrap = {
 	.ctx_size = sizeof(EVP_AES_WRAP_CTX),
 	.set_asn1_parameters = NULL,
 	.get_asn1_parameters = NULL,
-	.ctrl = NULL,
+	.ctrl = aes_wrap_ctrl,
 	.app_data = NULL,
 };
 
