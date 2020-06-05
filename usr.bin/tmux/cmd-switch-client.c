@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.66 2020/05/16 15:45:29 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.67 2020/06/05 11:20:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -116,7 +116,7 @@ cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 	} else {
 		if (cmdq_get_client(item) == NULL)
 			return (CMD_RETURN_NORMAL);
-		if (wl != NULL && wp != NULL) {
+		if (wl != NULL && wp != NULL && wp != wl->window->active) {
 			w = wl->window;
 			if (window_push_zoom(w, args_has(args, 'Z')))
 				server_redraw_window(w);

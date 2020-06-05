@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1064 2020/06/05 09:32:15 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1065 2020/06/05 11:20:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -928,9 +928,6 @@ struct window_pane {
 	u_int		 sx;
 	u_int		 sy;
 
-	u_int		 osx;
-	u_int		 osy;
-
 	u_int		 xoff;
 	u_int		 yoff;
 
@@ -951,7 +948,7 @@ struct window_pane {
 #define PANE_STATUSDRAWN 0x400
 #define PANE_EMPTY 0x800
 #define PANE_STYLECHANGED 0x1000
-#define PANE_RESIZED 0x2000
+#define PANE_RESIZENOW 0x2000
 
 	int		 argc;
 	char	       **argv;
@@ -969,6 +966,7 @@ struct window_pane {
 	size_t		 base_offset;
 
 	struct event	 resize_timer;
+	struct event	 force_timer;
 
 	struct input_ctx *ictx;
 
