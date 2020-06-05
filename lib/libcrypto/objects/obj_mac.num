@@ -996,3 +996,5 @@ id_tc26_gost_3410_12_256_paramSetC		995
 id_tc26_gost_3410_12_256_paramSetD		996
 id_tc26_gost_3410_12_512_paramSetTest		997
 id_tc26_gost_3410_12_512_paramSetC		998
+id_tc26_hmac_gost_3411_12_256	999
+id_tc26_hmac_gost_3411_12_512	1000
