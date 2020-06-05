@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.88 2020/05/31 06:23:57 dlg Exp $ */
+/*	$OpenBSD: machdep.c,v 1.89 2020/06/05 13:35:20 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -1354,12 +1354,3 @@ hw_ipi_intr_clear(u_long cpuid)
 }
 
 #endif /* MULTIPROCESSOR */
-
-unsigned int
-cpu_rnd_messybits(void)
-{
-	struct timespec ts;
-
-	nanotime(&ts);
-	return (ts.tv_nsec ^ (ts.tv_sec << 20));
-}
