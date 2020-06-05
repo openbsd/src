@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.40 2020/06/04 15:19:31 jsing Exp $
+# $OpenBSD: Makefile,v 1.41 2020/06/05 15:28:33 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -274,7 +274,7 @@ SRCS+= x509name.c x509_v3.c x509_ext.c x509_att.c
 SRCS+= x509type.c x509_lu.c x_all.c x509_txt.c
 SRCS+= x509_trs.c by_file.c by_dir.c by_mem.c x509_vpm.c
 SRCS+= x509_bcons.c x509_bitst.c x509_conf.c x509_extku.c x509_ia5.c x509_lib.c
-SRCS+= x509_prn.c x509_utl.c v3err.c x509_genn.c x509_alt.c x509_skey.c x509_akey.c x509_pku.c
+SRCS+= x509_prn.c x509_utl.c x509_genn.c x509_alt.c x509_skey.c x509_akey.c x509_pku.c
 SRCS+= x509_int.c x509_enum.c x509_sxnet.c x509_cpols.c x509_crld.c x509_purp.c x509_info.c
 SRCS+= x509_ocsp.c x509_akeya.c x509_pmaps.c x509_pcons.c x509_ncons.c x509_pcia.c x509_pci.c
 SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
