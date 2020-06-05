@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.11 2019/10/05 11:27:02 kettenis Exp $ */
+/* $OpenBSD: agtimer.c,v 1.12 2020/06/05 22:14:25 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -169,8 +169,6 @@ agtimer_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": tick rate %d KHz\n", sc->sc_ticks_per_second /1000);
 
-	/* XXX: disable user access */
-
 #ifdef AMPTIMER_DEBUG
 	evcount_attach(&sc->sc_clk_count, "clock", NULL);
 	evcount_attach(&sc->sc_stat_count, "stat", NULL);
@@ -281,12 +279,13 @@ agtimer_set_clockrate(int32_t new_frequency)
 }
 
 void
-agtimer_cpu_initclocks()
+agtimer_cpu_initclocks(void)
 {
 	struct agtimer_softc	*sc = agtimer_cd.cd_devs[0];
 	struct agtimer_pcpu_softc *pc = &sc->sc_pstat[CPU_INFO_UNIT(curcpu())];
 	uint32_t		 reg;
 	uint64_t		 next;
+	uint64_t		 kctl;
 
 	stathz = hz;
 	profhz = hz * 10;
@@ -313,6 +312,10 @@ agtimer_cpu_initclocks()
 	reg |= GTIMER_CNTV_CTL_ENABLE;
 	agtimer_set_tval(sc->sc_ticks_per_second);
 	agtimer_set_ctrl(reg);
+
+	/* enable userland access to virtual counter */
+	kctl = READ_SPECIALREG(CNTKCTL_EL1);
+	WRITE_SPECIALREG(CNTKCTL_EL1, kctl | CNTKCTL_EL0VCTEN);
 }
 
 void
@@ -378,6 +381,7 @@ agtimer_startclock(void)
 	struct agtimer_softc	*sc = agtimer_cd.cd_devs[0];
 	struct agtimer_pcpu_softc *pc = &sc->sc_pstat[CPU_INFO_UNIT(curcpu())];
 	uint64_t nextevent;
+	uint64_t kctl;
 	uint32_t reg;
 
 	nextevent = agtimer_readcnt64() + sc->sc_ticks_per_intr;
@@ -390,6 +394,10 @@ agtimer_startclock(void)
 	reg |= GTIMER_CNTV_CTL_ENABLE;
 	agtimer_set_tval(sc->sc_ticks_per_second);
 	agtimer_set_ctrl(reg);
+
+	/* enable userland access to virtual counter */
+	kctl = READ_SPECIALREG(CNTKCTL_EL1);
+	WRITE_SPECIALREG(CNTKCTL_EL1, kctl | CNTKCTL_EL0VCTEN);
 }
 
 void
