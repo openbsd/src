@@ -1,6 +1,6 @@
-.\"     $OpenBSD: ifiq_input.9,v 1.1 2020/06/05 02:24:12 dlg Exp $
+.\" $OpenBSD: ifiq_input.9,v 1.2 2020/06/05 02:26:50 dlg Exp $
 .\"
-.\"  Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
+.\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -59,7 +59,7 @@ stack to process.
 If possible, the caller should attempt to reduce the number of mbufs
 being generated in the future, eg, if mbufs are being received from
 hardware managed with the interface RX ring API,
-.Xr rxr_livelocked 9
+.Xr if_rxr_livelocked 9
 can be called to indicate to the hardware that backpressure is required.
 .Sh SEE ALSO
-.Xr rxr_livelocked 9
+.Xr if_rxr_livelocked 9
