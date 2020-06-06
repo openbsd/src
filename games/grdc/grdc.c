@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.32 2020/06/06 13:21:40 cheloha Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.33 2020/06/06 17:03:16 cheloha Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -35,6 +35,7 @@ short disp[11] = {
 };
 long old[6], next[6], new[6], mask;
 
+volatile sig_atomic_t sigalrmed = 0;
 volatile sig_atomic_t sigtermed = 0;
 volatile sig_atomic_t sigwinched = 0;
 
@@ -44,6 +45,12 @@ void getwinsize(int *, int *);
 void set(int, int);
 void standt(int);
 void __dead usage(void);
+
+void
+sigalrm(int signo)
+{
+	sigalrmed = signo;
+}
 
 void
 sighndl(int signo)
@@ -63,8 +70,8 @@ main(int argc, char *argv[])
 	long t, a;
 	int i, j, s, k, rv;
 	int scrol;
-	int n = 0;
-	struct timespec delay, end;
+	unsigned int n = 0;
+	struct timespec delay;
 	struct pollfd pfd;
 	const char *errstr;
 	long scroldelay = 50000000;
@@ -92,7 +99,7 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		usage();
 	if (argc == 1) {
-		n = strtonum(*argv, 1, INT_MAX, &errstr);
+		n = strtonum(*argv, 1, UINT_MAX, &errstr);
 		if (errstr) {
 			warnx("number of seconds is %s", errstr);
 			usage();
@@ -130,8 +137,10 @@ main(int argc, char *argv[])
 	sigwinched = 1;	/* force initial sizing */
 
 	clock_gettime(CLOCK_REALTIME, &now);
-	if (n)
-		end.tv_sec = now.tv_sec + n - 1;
+	if (n) {
+		signal(SIGALRM, sigalrm);
+		alarm(n);
+	}
 	do {
 		if (sigwinched) {
 			sigwinched = 0;
@@ -235,10 +244,8 @@ main(int argc, char *argv[])
 		if (rv == 1) {
 			char q = 0;
 			read(STDIN_FILENO, &q, 1);
-			if (q == 'q') {
-				n = 1;
-				end.tv_sec = now.tv_sec;
-			}
+			if (q == 'q')
+				sigalrmed = 1;
 		}
 		now.tv_sec++;
 
@@ -249,7 +256,7 @@ main(int argc, char *argv[])
 			endwin();
 			errx(1, "terminated by signal %d", sigtermed);
 		}
-	} while (n == 0 || now.tv_sec < end.tv_sec);
+	} while (!sigalrmed);
 	standend();
 	clear();
 	refresh();
