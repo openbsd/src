@@ -1,4 +1,4 @@
-/*	$OpenBSD: netio.c,v 1.1 2012/03/19 17:38:31 miod Exp $	*/
+/*	$OpenBSD: netio.c,v 1.2 2020/06/06 10:54:41 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -31,11 +31,15 @@ netstrategy(void *devdata, int rw, daddr32_t bn, size_t reqcnt, void *addr,
 	long result;
 	int rc;
 
+	if (rw != F_READ)
+		return EOPNOTSUPP;
+
 	rc = Bios_Read(fd, addr, reqcnt, &result);
 	if (rc != 0)
 		return (EIO);
 
-	*cnt = result;
+	if (cnt != NULL)
+		*cnt = result;
 	return 0;
 }
 
