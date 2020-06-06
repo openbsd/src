@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.29 2020/05/26 13:47:29 deraadt Exp $ */
+/*	$OpenBSD: boot.c,v 1.30 2020/06/06 10:53:09 visa Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -107,9 +107,9 @@ boot_main(int argc, char *argv[])
 	if (bootauto != AUTO_MINI &&
 	    strstr(OSLoadPartition, "bootp(") == NULL &&
 	    strstr(OSLoadPartition, "cdrom(") == NULL) {
-		if (loadrandom(OSLoadPartition, BOOTRANDOM, rnddata,
-		    sizeof(rnddata)) == 0)
-			boothowto |= RB_GOODRANDOM;
+		/* XXX set RB_GOODRANDOM in boothowto */
+		loadrandom(OSLoadPartition, BOOTRANDOM, rnddata,
+		    sizeof(rnddata));
 	}
 
 	rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
