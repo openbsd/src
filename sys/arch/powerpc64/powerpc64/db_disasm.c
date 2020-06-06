@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.2 2020/05/22 01:11:04 gkoehler Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.3 2020/06/06 22:52:35 kettenis Exp $	*/
 /*
  * Copyright (c) 1996, 2001, 2003 Dale Rahn. All rights reserved.
  *
@@ -668,11 +668,11 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt,
 		break;
 	case Opf_BD:
 		{
-			u_int BD;
+			int BD;
 			BD = extract_field(instr, 29, 14);
 			BD = BD << 2;
 			if (BD & 0x00008000) {
-				BD &= ~0x00007fff;
+				BD |= ~0x00007fff;
 			}
 			if ((instr & (1 << 1)) == 0) {
 				/* CHECK AA bit */
@@ -824,7 +824,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt,
 	case Opf_SIMM:
 	case Opf_d:
 		{
-			int32_t IMM;
+			int IMM;
 			IMM = extract_field(instr, 31, 16);
 			if (IMM & 0x8000)
 				IMM |= ~0x7fff;
@@ -834,7 +834,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt,
 		break;
 	case Opf_UIMM:
 		{
-			u_int32_t IMM;
+			u_int IMM;
 			IMM = extract_field(instr, 31, 16);
 			snprintf(lbuf, sizeof (lbuf), "0x%x", IMM);
 			strlcat (disasm_buf, lbuf, bufsize);
@@ -898,7 +898,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt,
 		break;
 	case Opf_ds:
 		{
-			int32_t ds;
+			int ds;
 			ds = extract_field(instr, 29, 14);
 			ds = ds << 2;
 			if (ds & 0x8000)
