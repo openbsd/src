@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.19 2020/04/07 09:08:15 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.20 2020/06/06 16:59:43 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -87,6 +87,9 @@ struct regmap *
 regmap_byphandle(uint32_t phandle)
 {
 	struct regmap *rm;
+
+	if (phandle == 0)
+		return NULL;
 
 	LIST_FOREACH(rm, &regmaps, rm_list) {
 		if (rm->rm_phandle == phandle)
@@ -273,6 +276,9 @@ i2c_byphandle(uint32_t phandle)
 {
 	struct i2c_bus *ib;
 
+	if (phandle == 0)
+		return NULL;
+
 	LIST_FOREACH(ib, &i2c_busses, ib_list) {
 		if (ib->ib_phandle == phandle)
 			return ib->ib_ic;
@@ -302,6 +308,9 @@ int
 sfp_get_sffpage(uint32_t phandle, struct if_sffpage *sff)
 {
 	struct sfp_device *sd;
+
+	if (phandle == 0)
+		return ENXIO;
 
 	LIST_FOREACH(sd, &sfp_devices, sd_list) {
 		if (sd->sd_phandle == phandle)
@@ -436,6 +445,9 @@ nvmem_read(uint32_t phandle, bus_addr_t addr, void *data, bus_size_t size)
 {
 	struct nvmem_device *nd;
 
+	if (phandle == 0)
+		return ENXIO;
+
 	LIST_FOREACH(nd, &nvmem_devices, nd_list) {
 		if (nd->nd_phandle == phandle)
 			return nd->nd_read(nd->nd_cookie, addr, data, size);
@@ -545,6 +557,9 @@ endpoint_byphandle(uint32_t phandle)
 {
 	struct endpoint *ep;
 
+	if (phandle == 0)
+		return NULL;
+
 	LIST_FOREACH(ep, &endpoints, ep_list) {
 		if (ep->ep_phandle == phandle)
 			return ep;
@@ -611,6 +626,9 @@ device_port_activate(uint32_t phandle, void *arg)
 	struct endpoint *ep, *rep;
 	int count;
 	int error;
+
+	if (phandle == 0)
+		return ENXIO;
 
 	LIST_FOREACH(ep, &endpoints, ep_list) {
 		if (ep->ep_port->dp_phandle == phandle) {
