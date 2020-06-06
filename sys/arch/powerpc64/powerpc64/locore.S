@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 2020/05/27 22:22:04 gkoehler Exp $	*/
+/*	$OpenBSD: locore.S,v 1.5 2020/06/06 22:33:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <machine/opal.h>
+#include <machine/psl.h>
 
 	.abiversion 2
 
@@ -97,9 +98,23 @@ opal_call:
 	ld	%r11, 0(%r11)
 	ld	%r12, 0(%r12)
 
+	/* Save MSR */
+	std	%r31, 12(%r1)
+	mfmsr	%r31
+
+	/* Disable transaltion and external interrupts */
+	andi.	%r2, %r31, ~(PSL_DR|PSL_IR|PSL_EE)@l
+	mtmsr	%r2
+	isync
+
 	mr	%r2, %r11
 	mtctr	%r12
 	bctrl
+
+	/* Restore MSR */
+	mtmsrd	%r31
+	isync
+	ld	%r31, 12(%r1)
 
 	ld	%r2, 24(%r1)
 	addi	%r1, %r1, 32
