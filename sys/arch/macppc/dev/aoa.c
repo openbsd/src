@@ -1,4 +1,4 @@
-/*	$OpenBSD: aoa.c,v 1.9 2016/09/19 06:46:43 ratchov Exp $	*/
+/*	$OpenBSD: aoa.c,v 1.10 2020/06/06 21:01:30 gkoehler Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -57,6 +57,8 @@ void aoa_attach(struct device *, struct device *, void *);
 void aoa_defer(struct device *);
 void aoa_set_volume(struct aoa_softc *, int, int);
 
+extern char *hw_prod;
+
 struct cfattach aoa_ca = {
 	sizeof(struct aoa_softc), aoa_match, aoa_attach
 };
@@ -107,7 +109,8 @@ aoa_match(struct device *parent, void *match, void *aux)
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
-	if (strcmp(compat, "AOAKeylargo") == 0)
+	if (strcmp(compat, "AOAKeylargo") == 0 &&
+	    strcmp(hw_prod, "PowerBook5,4") != 0)
 		return (1);
 	if (strcmp(compat, "AOAK2") == 0)
 		return (1);
