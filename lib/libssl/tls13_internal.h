@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.83 2020/05/29 17:47:30 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.84 2020/06/06 01:40:09 beck Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -386,6 +386,13 @@ int tls13_cert_add(struct tls13_ctx *ctx, CBB *cbb, X509 *cert,
     int(*build_extensions)(SSL *s, CBB *cbb, uint16_t msg_type));
 
 int tls13_synthetic_handshake_message(struct tls13_ctx *ctx);
+int tls13_clienthello_hash_init(struct tls13_ctx *ctx);
+void tls13_clienthello_hash_clear(struct ssl_handshake_tls13_st *hs);
+int tls13_clienthello_hash_update_bytes(struct tls13_ctx *ctx, void *data,
+    size_t len);
+int tls13_clienthello_hash_update(struct tls13_ctx *ctx, CBS *cbs);
+int tls13_clienthello_hash_finalize(struct tls13_ctx *ctx);
+int tls13_clienthello_hash_validate(struct tls13_ctx *ctx);
 
 int tls13_error_set(struct tls13_error *error, int code, int subcode,
     const char *file, int line, const char *fmt, ...);

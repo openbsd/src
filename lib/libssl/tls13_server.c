@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.57 2020/06/04 18:46:21 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.58 2020/06/06 01:40:09 beck Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -126,9 +126,50 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		return tls13_use_legacy_server(ctx);
 	}
 
+	/* Add decoded values to the current ClientHello hash */
+	if (!tls13_clienthello_hash_init(ctx)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+	if (!tls13_clienthello_hash_update_bytes(ctx, (void *)&legacy_version,
+	    sizeof(legacy_version))) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+	if (!tls13_clienthello_hash_update(ctx, &client_random)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+	if (!tls13_clienthello_hash_update(ctx, &session_id)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+	if (!tls13_clienthello_hash_update(ctx, &cipher_suites)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+	if (!tls13_clienthello_hash_update(ctx, &compression_methods)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+
 	if (!tlsext_server_parse(s, cbs, &alert_desc, SSL_TLSEXT_MSG_CH)) {
 		ctx->alert = alert_desc;
 		goto err;
+	}
+
+	/* Finalize first ClientHello hash, or validate against it */
+	if (!ctx->hs->hrr) {
+		if (!tls13_clienthello_hash_finalize(ctx)) {
+			ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+			goto err;
+		}
+	} else {
+		if (!tls13_clienthello_hash_validate(ctx)) {
+			ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
+			goto err;
+		}
+		tls13_clienthello_hash_clear(ctx->hs);
 	}
 
 	/*
@@ -146,8 +187,11 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	}
 	if (!CBS_write_bytes(&session_id, ctx->hs->legacy_session_id,
-	    sizeof(ctx->hs->legacy_session_id), &ctx->hs->legacy_session_id_len))
+	    sizeof(ctx->hs->legacy_session_id),
+	    &ctx->hs->legacy_session_id_len)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
 		goto err;
+	}
 
 	/* Parse cipher suites list and select preferred cipher. */
 	if ((ciphers = ssl_bytes_to_cipher_list(s, &cipher_suites)) == NULL) {

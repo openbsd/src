@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.6 2020/06/03 04:47:03 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.7 2020/06/06 01:40:08 beck Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -79,6 +79,7 @@ tls13_tests = TestGroup("TLSv1.3 tests", [
     Test("test-tls13-legacy-version.py"),
     Test("test-tls13-nociphers.py"),
     Test("test-tls13-record-padding.py"),
+    Test("test-tls13-shuffled-extentions.py"),
 
     # The skipped tests fail due to a bug in BIO_gets() which masks the retry
     # signalled from an SSL_read() failure. Testing with httpd(8) shows we're
@@ -145,7 +146,6 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
 
 tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
     # Other test failures bugs in keyshare/tlsext negotiation?
-    Test("test-tls13-shuffled-extentions.py"),    # should reject 2nd CH
     Test("test-tls13-unrecognised-groups.py"),    # unexpected closure
 
     # 5 failures:

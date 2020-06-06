@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.50 2020/05/22 02:37:27 beck Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.51 2020/06/06 01:40:09 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -486,3 +486,82 @@ tls13_synthetic_handshake_message(struct tls13_ctx *ctx)
 
 	return ret;
 }
+
+int
+tls13_clienthello_hash_init(struct tls13_ctx *ctx)
+{
+	if (ctx->hs->clienthello_md_ctx != NULL)
+		return 0;
+	if ((ctx->hs->clienthello_md_ctx = EVP_MD_CTX_new()) == NULL)
+		return 0;
+	if (!EVP_DigestInit_ex(ctx->hs->clienthello_md_ctx,
+	    EVP_sha256(), NULL))
+		return 0;
+
+	if ((ctx->hs->clienthello_hash == NULL) &&
+	    (ctx->hs->clienthello_hash = calloc(1, EVP_MAX_MD_SIZE)) ==
+	    NULL)
+		return 0;
+
+	return 1;
+}
+
+void
+tls13_clienthello_hash_clear(struct ssl_handshake_tls13_st *hs)
+{
+	EVP_MD_CTX_free(hs->clienthello_md_ctx);
+	hs->clienthello_md_ctx = NULL;
+	freezero(hs->clienthello_hash, EVP_MAX_MD_SIZE);
+	hs->clienthello_hash = NULL;
+}
+
+int
+tls13_clienthello_hash_update_bytes(struct tls13_ctx *ctx, void *data,
+    size_t len)
+{
+	return EVP_DigestUpdate(ctx->hs->clienthello_md_ctx, data, len);
+}
+
+int
+tls13_clienthello_hash_update(struct tls13_ctx *ctx, CBS *cbs)
+{
+	return tls13_clienthello_hash_update_bytes(ctx, (void *)CBS_data(cbs),
+	    CBS_len(cbs));
+}
+
+int
+tls13_clienthello_hash_finalize(struct tls13_ctx *ctx)
+{
+	if (!EVP_DigestFinal_ex(ctx->hs->clienthello_md_ctx,
+	    ctx->hs->clienthello_hash,
+	    &ctx->hs->clienthello_hash_len))
+		return 0;
+	EVP_MD_CTX_free(ctx->hs->clienthello_md_ctx);
+	ctx->hs->clienthello_md_ctx = NULL;
+	return 1;
+}
+
+int
+tls13_clienthello_hash_validate(struct tls13_ctx *ctx)
+{
+	unsigned char new_ch_hash[EVP_MAX_MD_SIZE];
+	unsigned int new_ch_hash_len;
+
+	if (ctx->hs->clienthello_hash == NULL)
+		return 0;
+
+	if (!EVP_DigestFinal_ex(ctx->hs->clienthello_md_ctx,
+	    new_ch_hash, &new_ch_hash_len))
+		return 0;
+	EVP_MD_CTX_free(ctx->hs->clienthello_md_ctx);
+	ctx->hs->clienthello_md_ctx = NULL;
+
+	if (ctx->hs->clienthello_hash_len != new_ch_hash_len)
+		return 0;
+	if (memcmp(ctx->hs->clienthello_hash, new_ch_hash,
+	    new_ch_hash_len) != 0)
+		return 0;
+
+	return 1;
+}
+

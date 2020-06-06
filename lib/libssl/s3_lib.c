@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.195 2020/06/05 18:14:05 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.196 2020/06/06 01:40:08 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1568,6 +1568,7 @@ ssl3_free(SSL *s)
 	tls13_key_share_free(S3I(s)->hs_tls13.key_share);
 	tls13_secrets_destroy(S3I(s)->hs_tls13.secrets);
 	freezero(S3I(s)->hs_tls13.cookie, S3I(s)->hs_tls13.cookie_len);
+	tls13_clienthello_hash_clear(&S3I(s)->hs_tls13);
 
 	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
 
@@ -1612,6 +1613,7 @@ ssl3_clear(SSL *s)
 	freezero(S3I(s)->hs_tls13.cookie, S3I(s)->hs_tls13.cookie_len);
 	S3I(s)->hs_tls13.cookie = NULL;
 	S3I(s)->hs_tls13.cookie_len = 0;
+	tls13_clienthello_hash_clear(&S3I(s)->hs_tls13);
 
 	S3I(s)->hs.extensions_seen = 0;
 

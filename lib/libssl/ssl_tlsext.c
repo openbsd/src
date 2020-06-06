@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.74 2020/05/29 17:39:42 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.75 2020/06/06 01:40:09 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2059,6 +2059,33 @@ tlsext_build(SSL *s, CBB *cbb, int is_server, uint16_t msg_type)
 	return 1;
 }
 
+int
+tlsext_clienthello_hash_extension(SSL *s, uint16_t type, CBS *cbs)
+{
+	/*
+	 * RFC 8446 4.1.2. For subsequent CH, early data will be removed,
+	 * cookie may be added, padding may be removed.
+	 */
+	struct tls13_ctx *ctx = s->internal->tls13;
+
+	if (type == TLSEXT_TYPE_early_data || type == TLSEXT_TYPE_cookie ||
+	    type == TLSEXT_TYPE_padding)
+		return 1;
+	if (!tls13_clienthello_hash_update_bytes(ctx, (void *)&type,
+	    sizeof(type)))
+		return 0;
+	/*
+	 * key_share data may be changed, and pre_shared_key data may
+	 * be changed
+	 */
+	if (type == TLSEXT_TYPE_pre_shared_key || type == TLSEXT_TYPE_key_share)
+		return 1;
+	if (!tls13_clienthello_hash_update(ctx, cbs))
+		return 0;
+
+	return 1;
+}
+
 static int
 tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server, uint16_t msg_type)
 {
@@ -2097,6 +2124,13 @@ tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server, uint16_t msg_type)
 			    (unsigned char *)CBS_data(&extension_data),
 			    CBS_len(&extension_data),
 			    s->internal->tlsext_debug_arg);
+
+		if (!SSL_IS_DTLS(s) && version >= TLS1_3_VERSION && is_server &&
+		    msg_type == SSL_TLSEXT_MSG_CH) {
+			if (!tlsext_clienthello_hash_extension(s, type,
+			    &extension_data))
+				goto err;
+		}
 
 		/* Unknown extensions are ignored. */
 		if ((tlsext = tls_extension_find(type, &idx)) == NULL)

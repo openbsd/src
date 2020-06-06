@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.279 2020/05/31 18:03:32 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.280 2020/06/06 01:40:09 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -470,6 +470,12 @@ typedef struct ssl_handshake_tls13_st {
 	/* Legacy session ID. */
 	uint8_t legacy_session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
 	size_t legacy_session_id_len;
+
+	/* ClientHello hash, used to validate following HelloRetryRequest */
+	EVP_MD_CTX *clienthello_md_ctx;
+	unsigned char *clienthello_hash;
+	unsigned int clienthello_hash_len;
+
 } SSL_HANDSHAKE_TLS13;
 
 typedef struct ssl_ctx_internal_st {
