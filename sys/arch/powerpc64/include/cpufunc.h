@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.1 2020/05/22 15:07:47 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.2 2020/06/06 22:36:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -19,6 +19,68 @@
 #ifndef _MACHINE_CPUFUNC_H_
 #define _MACHINE_CPUFUNC_H_
 
+static inline void
+eieio(void)
+{
+	__asm volatile ("eieio" ::: "memory");
+}
+
+static inline void
+isync(void)
+{
+	__asm volatile ("isync" ::: "memory");
+}
+
+static inline void
+ptesync(void)
+{
+	__asm volatile ("ptesync" ::: "memory");
+}
+
+static inline void
+slbia(void)
+{
+	__asm volatile ("slbia");
+}
+
+static inline void
+slbie(uint64_t esid)
+{
+	__asm volatile ("slbie %0" :: "r"(esid));
+}
+
+static inline uint64_t
+slbmfee(uint64_t entry)
+{
+	uint64_t value;
+	__asm volatile ("slbmfee %0, %1" : "=r"(value) : "r"(entry));
+	return value;
+}
+
+static inline void
+slbmte(uint64_t slbv, uint64_t slbe)
+{
+	__asm volatile ("slbmte %0, %1" :: "r"(slbv), "r"(slbe));
+}
+
+static inline void
+tlbie(uint64_t ava)
+{
+	__asm volatile ("tlbie %0, %1" :: "r"(ava), "r"(0));
+}
+
+static inline void
+tlbiel(uint64_t ava)
+{
+	__asm volatile ("tlbiel %0" :: "r"(ava));
+}
+
+static inline void
+tlbsync(void)
+{
+	__asm volatile ("tlbsync" ::: "memory");
+}
+
 static inline uint64_t
 mfmsr(void)
 {
@@ -34,19 +96,48 @@ mtmsr(uint64_t value)
 }
 
 static inline uint64_t
+mftb(void)
+{
+	uint64_t value;
+	__asm volatile ("mftb %0" : "=r"(value));
+	return value;
+}
+
+static inline uint32_t
+mfdsisr(void)
+{
+	uint32_t value;
+	__asm volatile ("mfdsisr %0" : "=r"(value));
+	return value;
+}
+
+static inline uint64_t
+mfdar(void)
+{
+	uint64_t value;
+	__asm volatile ("mfdar %0" : "=r"(value));
+	return value;
+}
+
+static inline uint64_t
 mflpcr(void)
 {
 	uint64_t value;
-	__asm volatile ("mfspr %0,318" : "=r"(value));
+	__asm volatile ("mfspr %0, 318" : "=r"(value));
 	return value;
 }
 
 static inline void
 mtlpcr(uint64_t value)
 {
-	__asm volatile ("mtspr 318,%0" :: "r"(value));
+	__asm volatile ("mtspr 318, %0" :: "r"(value));
 }
 
+static inline void
+mtptcr(uint64_t value)
+{
+	__asm volatile ("mtspr 464, %0" :: "r"(value));
+}
 
 extern int cacheline_size;
 

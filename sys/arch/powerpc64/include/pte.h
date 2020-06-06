@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.1 2020/05/23 14:49:32 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.2 2020/06/06 22:36:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -33,6 +33,7 @@ struct pte {
 #define PTE_HID			0x0000000000000002ULL
 #define PTE_WIRED		0x0000000000000004ULL /* SW */
 #define PTE_AVPN		0x3fffffffffffff80ULL
+#define PTE_VSID_SHIFT		12
 
 /* Low doubleword: */
 #define PTE_PP			0x0000000000000003ULL
@@ -46,5 +47,20 @@ struct pte {
 #define PTE_CHG			0x0000000000000080ULL
 #define PTE_REF			0x0000000000000100ULL
 #define PTE_RPGN		0x0ffffffffffff000ULL
+
+#define ADDR_PIDX		0x000000000ffff000ULL
+#define ADDR_PIDX_SHIFT		12
+#define ADDR_ESID_SHIFT		28
+#define ADDR_VSID_SHIFT		28
+
+struct pate {
+	uint64_t pate_htab;
+	uint64_t pate_prt;
+};
+
+#define SLBE_ESID_SHIFT	28
+#define SLBE_VALID	0x0000000008000000UL
+
+#define SLBV_VSID_SHIFT	12
 
 #endif

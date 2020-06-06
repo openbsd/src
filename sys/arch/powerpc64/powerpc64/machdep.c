@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 2020/05/31 06:23:58 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 2020/06/06 22:36:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -20,7 +20,7 @@
 #include <sys/systm.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/extent.h>
+#include <sys/msgbuf.h>
 
 #include <machine/cpufunc.h>
 #include <machine/opal.h>
@@ -124,6 +124,12 @@ init_powernv(void *fdt, void *tocbase)
 	msr = mfmsr();
 	mtmsr(msr | PSL_RI);
 
+#define LPCR_LPES	0x0000000000000008UL
+#define LPCR_HVICE	0x0000000000000002UL
+
+	mtlpcr(LPCR_LPES | LPCR_HVICE);
+	isync();
+
 	/* Add all memory. */
 	node = fdt_find_node("/");
 	for (node = fdt_child_node(node); node; node = fdt_next_node(node)) {
@@ -138,6 +144,7 @@ init_powernv(void *fdt, void *tocbase)
 			if (reg.size == 0)
 				continue;
 			memreg_add(&reg);
+			physmem += atop(reg.size);
 		}
 	}
 
@@ -176,6 +183,7 @@ init_powernv(void *fdt, void *tocbase)
 		memreg_remove(&initrd_reg);
 #endif
 
+	pmap_bootstrap();
 	uvm_setpagesize();
 
 	for (i = 0; i < nmemreg; i++) {
@@ -184,11 +192,16 @@ init_powernv(void *fdt, void *tocbase)
 
 		uvm_page_physload(atop(start), atop(end),
 		    atop(start), atop(end), 0);
-		physmem += atop(end - start);
 	}
 
-	__asm volatile ("trap");
-	opal_cec_reboot();
+#ifdef notyet
+	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
+#endif
+
+	/* Enable translation. */
+	msr = mfmsr();
+	mtmsr(msr | (PSL_DR|PSL_IR));
+	isync();
 }
 
 void
