@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.19 2020/05/25 14:00:15 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.20 2020/06/07 19:23:33 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -31,13 +31,13 @@
 #define KCOV_CMP_CONST		0x1
 #define KCOV_CMP_SIZE(x)	((x) << 1)
 
+#define KCOV_STATE_NONE		0
+#define KCOV_STATE_READY	1
+#define KCOV_STATE_TRACE	2
+#define KCOV_STATE_DYING	3
+
 struct kcov_dev {
-	enum {
-		KCOV_STATE_NONE,
-		KCOV_STATE_READY,
-		KCOV_STATE_TRACE,
-		KCOV_STATE_DYING,
-	}		 kd_state;
+	int		 kd_state;
 	int		 kd_mode;
 	int		 kd_unit;	/* device minor */
 	uintptr_t	*kd_buf;	/* traced coverage */
