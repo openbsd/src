@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.27 2019/12/19 17:40:11 mpi Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.28 2020/06/07 23:23:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -36,6 +36,13 @@ static struct lock_type taskq_lock_type = {
 
 #endif /* WITNESS */
 
+struct taskq_thread {
+	SLIST_ENTRY(taskq_thread)
+				 tt_entry;
+	struct proc		*tt_thread;
+};
+SLIST_HEAD(taskq_threads, taskq_thread);
+
 struct taskq {
 	enum {
 		TQ_S_CREATED,
@@ -43,13 +50,18 @@ struct taskq {
 		TQ_S_DESTROYED
 	}			 tq_state;
 	unsigned int		 tq_running;
-	unsigned int		 tq_waiting;
 	unsigned int		 tq_nthreads;
 	unsigned int		 tq_flags;
 	const char		*tq_name;
 
 	struct mutex		 tq_mtx;
 	struct task_list	 tq_worklist;
+
+	struct taskq_threads	 tq_threads;
+	unsigned int		 tq_barriers;
+	unsigned int		 tq_bgen;
+	unsigned int		 tq_bthreads;
+
 #ifdef WITNESS
 	struct lock_object	 tq_lock_object;
 #endif
@@ -58,18 +70,24 @@ struct taskq {
 static const char taskq_sys_name[] = "systq";
 
 struct taskq taskq_sys = {
-	TQ_S_CREATED,
-	0,
-	0,
-	1,
-	0,
-	taskq_sys_name,
-	MUTEX_INITIALIZER(IPL_HIGH),
-	TAILQ_HEAD_INITIALIZER(taskq_sys.tq_worklist),
+	.tq_state	= TQ_S_CREATED,
+	.tq_running	= 0,
+	.tq_nthreads	= 1,
+	.tq_flags	= 0,
+	.tq_name	= taskq_sys_name,
+	.tq_mtx		= MUTEX_INITIALIZER_FLAGS(IPL_HIGH,
+			      taskq_sys_name, 0),
+	.tq_worklist	= TAILQ_HEAD_INITIALIZER(taskq_sys.tq_worklist),
+
+	.tq_threads	= SLIST_HEAD_INITIALIZER(taskq_sys.tq_threads),
+	.tq_barriers	= 0,
+	.tq_bgen	= 0,
+	.tq_bthreads	= 0,
+
 #ifdef WITNESS
-	{
-		.lo_name = taskq_sys_name,
-		.lo_flags = TASKQ_LOCK_FLAGS,
+	.tq_lock_object	= {
+		.lo_name	= taskq_sys_name,
+		.lo_flags	= TASKQ_LOCK_FLAGS,
 	},
 #endif
 };
@@ -77,18 +95,24 @@ struct taskq taskq_sys = {
 static const char taskq_sys_mp_name[] = "systqmp";
 
 struct taskq taskq_sys_mp = {
-	TQ_S_CREATED,
-	0,
-	0,
-	1,
-	TASKQ_MPSAFE,
-	taskq_sys_mp_name,
-	MUTEX_INITIALIZER(IPL_HIGH),
-	TAILQ_HEAD_INITIALIZER(taskq_sys_mp.tq_worklist),
+	.tq_state	= TQ_S_CREATED,
+	.tq_running	= 0,
+	.tq_nthreads	= 1,
+	.tq_flags	= TASKQ_MPSAFE,
+	.tq_name	= taskq_sys_mp_name,
+	.tq_mtx		= MUTEX_INITIALIZER_FLAGS(IPL_HIGH,
+			      taskq_sys_mp_name, 0),
+	.tq_worklist	= TAILQ_HEAD_INITIALIZER(taskq_sys_mp.tq_worklist),
+
+	.tq_threads	= SLIST_HEAD_INITIALIZER(taskq_sys_mp.tq_threads),
+	.tq_barriers	= 0,
+	.tq_bgen	= 0,
+	.tq_bthreads	= 0,
+
 #ifdef WITNESS
-	{
-		.lo_name = taskq_sys_mp_name,
-		.lo_flags = TASKQ_LOCK_FLAGS,
+	.tq_lock_object = {
+		.lo_name	= taskq_sys_mp_name,
+		.lo_flags	= TASKQ_LOCK_FLAGS,
 	},
 #endif
 };
@@ -125,13 +149,17 @@ taskq_create(const char *name, unsigned int nthreads, int ipl,
 
 	tq->tq_state = TQ_S_CREATED;
 	tq->tq_running = 0;
-	tq->tq_waiting = 0;
 	tq->tq_nthreads = nthreads;
 	tq->tq_name = name;
 	tq->tq_flags = flags;
 
 	mtx_init_flags(&tq->tq_mtx, ipl, name, 0);
 	TAILQ_INIT(&tq->tq_worklist);
+
+	SLIST_INIT(&tq->tq_threads);
+	tq->tq_barriers = 0;
+	tq->tq_bgen = 0;
+	tq->tq_bthreads = 0;
 
 #ifdef WITNESS
 	memset(&tq->tq_lock_object, 0, sizeof(tq->tq_lock_object));
@@ -221,39 +249,91 @@ taskq_create_thread(void *arg)
 }
 
 void
-taskq_barrier(struct taskq *tq)
-{
-	struct cond c = COND_INITIALIZER();
-	struct task t = TASK_INITIALIZER(taskq_barrier_task, &c);
-
-	WITNESS_CHECKORDER(&tq->tq_lock_object, LOP_NEWORDER, NULL);
-
-	SET(t.t_flags, TASK_BARRIER);
-	task_add(tq, &t);
-	cond_wait(&c, "tqbar");
-}
-
-void
-taskq_del_barrier(struct taskq *tq, struct task *del)
-{
-	struct cond c = COND_INITIALIZER();
-	struct task t = TASK_INITIALIZER(taskq_barrier_task, &c);
-
-	WITNESS_CHECKORDER(&tq->tq_lock_object, LOP_NEWORDER, NULL);
-
-	if (task_del(tq, del))
-		return;
-
-	SET(t.t_flags, TASK_BARRIER);
-	task_add(tq, &t);
-	cond_wait(&c, "tqbar");
-}
-
-void
 taskq_barrier_task(void *p)
 {
-	struct cond *c = p;
-	cond_signal(c);
+	struct taskq *tq = p;
+	unsigned int gen;
+
+	mtx_enter(&tq->tq_mtx);
+	tq->tq_bthreads++;
+	wakeup(&tq->tq_bthreads);
+
+	gen = tq->tq_bgen;
+	do {
+		msleep_nsec(&tq->tq_bgen, &tq->tq_mtx,
+		    PWAIT, "tqbarend", INFSLP);
+	} while (gen == tq->tq_bgen);
+	mtx_leave(&tq->tq_mtx);
+}
+
+static void
+taskq_do_barrier(struct taskq *tq)
+{
+	struct task t = TASK_INITIALIZER(taskq_barrier_task, tq);
+	struct proc *thread = curproc;
+	struct taskq_thread *tt;
+
+	mtx_enter(&tq->tq_mtx);
+	tq->tq_barriers++;
+
+	/* is the barrier being run from a task inside the taskq? */
+	SLIST_FOREACH(tt, &tq->tq_threads, tt_entry) {
+		if (tt->tt_thread == thread) {
+			tq->tq_bthreads++;
+			wakeup(&tq->tq_bthreads);
+			break;
+		}
+	}
+
+	while (tq->tq_bthreads < tq->tq_nthreads) {
+		/* shove the task into the queue for a worker to pick up */
+		SET(t.t_flags, TASK_ONQUEUE);
+		TAILQ_INSERT_HEAD(&tq->tq_worklist, &t, t_entry);
+		wakeup_one(tq);
+
+		msleep_nsec(&tq->tq_bthreads, &tq->tq_mtx,
+		    PWAIT, "tqbar", INFSLP);
+
+		/*
+                 * another thread running a barrier might have have
+                 * done this work for us.
+		 */
+		if (ISSET(t.t_flags, TASK_ONQUEUE))
+			TAILQ_REMOVE(&tq->tq_worklist, &t, t_entry);
+	}
+
+	if (--tq->tq_barriers == 0) {
+		/* we're the last one out */
+		tq->tq_bgen++;
+		wakeup(&tq->tq_bgen);
+		tq->tq_bthreads = 0;
+	} else {
+		unsigned int gen = tq->tq_bgen;
+		do {
+			msleep_nsec(&tq->tq_bgen, &tq->tq_mtx,
+			    PWAIT, "tqbarwait", INFSLP);
+		} while (gen == tq->tq_bgen);
+	}
+	mtx_leave(&tq->tq_mtx);
+}
+
+void
+taskq_barrier(struct taskq *tq)
+{
+	WITNESS_CHECKORDER(&tq->tq_lock_object, LOP_NEWORDER, NULL);
+
+	taskq_do_barrier(tq);
+}
+
+void
+taskq_del_barrier(struct taskq *tq, struct task *t)
+{
+	WITNESS_CHECKORDER(&tq->tq_lock_object, LOP_NEWORDER, NULL);
+
+	if (task_del(tq, t))
+		return;
+
+	taskq_do_barrier(tq);
 }
 
 void
@@ -311,30 +391,13 @@ taskq_next_work(struct taskq *tq, struct task *work)
 	struct task *next;
 
 	mtx_enter(&tq->tq_mtx);
-retry:
 	while ((next = TAILQ_FIRST(&tq->tq_worklist)) == NULL) {
 		if (tq->tq_state != TQ_S_RUNNING) {
 			mtx_leave(&tq->tq_mtx);
 			return (0);
 		}
 
-		tq->tq_waiting++;
 		msleep_nsec(tq, &tq->tq_mtx, PWAIT, "bored", INFSLP);
-		tq->tq_waiting--;
-	}
-
-	if (ISSET(next->t_flags, TASK_BARRIER)) {
-		/*
-		 * Make sure all other threads are sleeping before we
-		 * proceed and run the barrier task.
-		 */
-		if (++tq->tq_waiting == tq->tq_nthreads) {
-			tq->tq_waiting--;
-		} else {
-			msleep_nsec(tq, &tq->tq_mtx, PWAIT, "tqblk", INFSLP);
-			tq->tq_waiting--;
-			goto retry;
-		}
 	}
 
 	TAILQ_REMOVE(&tq->tq_worklist, next, t_entry);
@@ -354,12 +417,17 @@ retry:
 void
 taskq_thread(void *xtq)
 {
+	struct taskq_thread self = { .tt_thread = curproc };
 	struct taskq *tq = xtq;
 	struct task work;
 	int last;
 
 	if (ISSET(tq->tq_flags, TASKQ_MPSAFE))
 		KERNEL_UNLOCK();
+
+	mtx_enter(&tq->tq_mtx);
+	SLIST_INSERT_HEAD(&tq->tq_threads, &self, tt_entry);
+	mtx_leave(&tq->tq_mtx);
 
 	WITNESS_CHECKORDER(&tq->tq_lock_object, LOP_NEWORDER, NULL);
 
@@ -371,6 +439,7 @@ taskq_thread(void *xtq)
 	}
 
 	mtx_enter(&tq->tq_mtx);
+	SLIST_REMOVE(&tq->tq_threads, &self, taskq_thread, tt_entry);
 	last = (--tq->tq_running == 0);
 	mtx_leave(&tq->tq_mtx);
 
