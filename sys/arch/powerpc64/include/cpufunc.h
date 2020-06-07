@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.2 2020/06/06 22:36:22 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.3 2020/06/07 13:17:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -137,6 +137,14 @@ static inline void
 mtptcr(uint64_t value)
 {
 	__asm volatile ("mtspr 464, %0" :: "r"(value));
+}
+
+static inline uint32_t
+mfpir(void)
+{
+	uint32_t value;
+	__asm volatile ("mfspr %0, 1023" : "=r"(value));
+	return value;
 }
 
 extern int cacheline_size;

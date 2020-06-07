@@ -1,18 +1,7 @@
-# $OpenBSD: files.powerpc64,v 1.4 2020/05/27 22:22:04 gkoehler Exp $
+# $OpenBSD: files.powerpc64,v 1.5 2020/06/07 13:17:24 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
-
-define	fdt {[early = 0]}
-
-define	mainbus {}
-device	mainbus: fdt
-attach	mainbus at root
-
-# FDT support
-include "dev/ofw/files.ofw"
-
-include "scsi/files.scsi"
 
 file	arch/powerpc64/powerpc64/locore.S
 file	arch/powerpc64/powerpc64/autoconf.c
@@ -36,3 +25,19 @@ file	arch/powerpc64/powerpc64/vm_machdep.c
 
 file	netinet/in_cksum.c
 file	netinet/in4_cksum.c
+
+define	fdt {[early = 0]}
+
+# mainbus files
+define	mainbus {}
+device	mainbus: fdt
+attach	mainbus at root
+file	arch/powerpc64/dev/mainbus.c		mainbus
+
+device  cpu {}
+attach  cpu at mainbus
+
+# FDT support
+include "dev/ofw/files.ofw"
+
+include "scsi/files.scsi"

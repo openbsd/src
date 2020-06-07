@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2020/06/07 12:14:08 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.4 2020/06/07 13:17:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -17,9 +17,59 @@
  */
 
 #include <sys/param.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
 #include <machine/cpu.h>
+#include <machine/cpufunc.h>
+#include <machine/fdt.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 char cpu_model[64];
 
 struct cpu_info cpu_info_primary;
+
+int	cpu_match(struct device *, void *, void *);
+void	cpu_attach(struct device *, struct device *, void *);
+
+struct cfattach cpu_ca = {
+	sizeof(struct device), cpu_match, cpu_attach
+};
+
+struct cfdriver cpu_cd = {
+	NULL, "cpu", DV_DULL
+};
+
+int
+cpu_match(struct device *parent, void *cfdata, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+	char buf[32];
+
+	if (OF_getprop(faa->fa_node, "device_type", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "cpu") != 0)
+		return 0;
+
+	if (ncpus < MAXCPUS || faa->fa_reg[0].addr == mfpir())
+		return 1;
+
+	return 0;
+}
+
+void
+cpu_attach(struct device *parent, struct device *dev, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+	char name[64];
+
+	printf(" pir %llx:", faa->fa_reg[0].addr);
+
+	if (OF_getprop(faa->fa_node, "name", &name, sizeof(name)) > 0) {
+		name[sizeof(name) - 1] = 0;
+		printf(" %s", name);
+	}
+		
+	printf("\n");
+}

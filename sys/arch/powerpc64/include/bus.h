@@ -10,4 +10,7 @@ typedef struct bus_space *bus_space_tag_t;
 #define bus_space_write_4(t, h, o, v)
 #define bus_space_read_4(t, h, o) 0xffffffff
 
+struct bus_dma_tag;
+typedef struct bus_dma_tag *bus_dma_tag_t;
+
 #endif /* _MACHINE_BUS_H_ */
