@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.2 2020/05/22 15:07:47 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.3 2020/06/07 12:14:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -16,6 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>
+
+#include <machine/cpu.h>
+
 char cpu_model[64];
 
-struct cpu_info *cpu_info_primary;
+struct cpu_info cpu_info_primary;
