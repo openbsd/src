@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.2 2020/05/27 22:22:04 gkoehler Exp $	*/
+/*	$OpenBSD: opal.h,v 1.3 2020/06/07 16:13:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -19,12 +19,16 @@
 #ifndef _MACHINE_OPAL_H_
 #define _MACHINE_OPAL_H_
 
-#define OPAL_TEST		0
-#define OPAL_CONSOLE_WRITE	1
-#define OPAL_CONSOLE_READ	2
-#define OPAL_CEC_POWER_DOWN	5
-#define OPAL_CEC_REBOOT		6
-#define OPAL_POLL_EVENTS	10
+#define OPAL_TEST			0
+#define OPAL_CONSOLE_WRITE		1
+#define OPAL_CONSOLE_READ		2
+#define OPAL_CEC_POWER_DOWN		5
+#define OPAL_CEC_REBOOT			6
+#define OPAL_POLL_EVENTS		10
+#define OPAL_PCI_CONFIG_READ_WORD	15
+#define OPAL_PCI_CONFIG_WRITE_WORD	18
+
+#define OPAL_SUCCESS			0
 
 #ifndef _LOCORE
 int64_t	opal_test(uint64_t);
@@ -33,6 +37,8 @@ int64_t	opal_console_read(int64_t, int64_t *, uint8_t *);
 int64_t	opal_cec_power_down(uint64_t);
 int64_t	opal_cec_reboot(void);
 int64_t	opal_poll_events(uint64_t *);
+int64_t opal_pci_config_read_word(uint64_t, uint64_t, uint64_t, uint32_t *);
+int64_t opal_pci_config_write_word(uint64_t, uint64_t, uint64_t, uint32_t);
 
 void	opal_printf(const char *fmt, ...);
 #endif

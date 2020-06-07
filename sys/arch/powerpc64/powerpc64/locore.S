@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.5 2020/06/06 22:33:02 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.6 2020/06/07 16:13:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -83,8 +83,10 @@ OPAL_CALL(OPAL_CONSOLE_WRITE, opal_console_write)
 OPAL_CALL(OPAL_CONSOLE_READ, opal_console_read)
 OPAL_CALL(OPAL_CEC_POWER_DOWN, opal_cec_power_down)
 OPAL_CALL(OPAL_CEC_REBOOT, opal_cec_reboot)
-OPAL_CALL(OPAL_POLL_EVENTS, opal_poll_events)	
-	
+OPAL_CALL(OPAL_POLL_EVENTS, opal_poll_events)
+OPAL_CALL(OPAL_PCI_CONFIG_READ_WORD, opal_pci_config_read_word)
+OPAL_CALL(OPAL_PCI_CONFIG_WRITE_WORD, opal_pci_config_write_word)
+
 opal_call:
 	mflr	%r11
 	std	%r11, 16(%r1)
