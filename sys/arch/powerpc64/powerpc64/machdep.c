@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 2020/06/07 11:54:45 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 2020/06/07 17:19:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/msgbuf.h>
+#include <sys/reboot.h>
 
 #include <machine/cpufunc.h>
 #include <machine/opal.h>
@@ -502,9 +503,34 @@ consinit(void)
 {
 }
 
+void
+opal_powerdown(void)
+{
+	int64_t error;
+
+	do {
+		error = opal_cec_power_down(0);
+		if (error == OPAL_BUSY_EVENT)
+			opal_poll_events(NULL);
+	} while (error == OPAL_BUSY || error == OPAL_BUSY_EVENT);
+
+	if (error != OPAL_SUCCESS)
+		return;
+
+	/* Wait for the actual powerdown to happen. */
+	for (;;)
+		opal_poll_events(NULL);
+}
+
 __dead void
 boot(int howto)
 {
+	if ((howto & RB_HALT) != 0) {
+		if ((howto & RB_POWERDOWN) != 0)
+			opal_powerdown();
+	}
+
+	printf("rebooting...\n");
 	opal_cec_reboot();
 
 	for (;;)
