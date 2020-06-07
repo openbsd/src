@@ -37,7 +37,7 @@ register struct cpu_info *__curcpu asm("r13");
 #define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci) \
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
-
+#define cpu_number()		0
 
 #define CLKF_INTR(frame)	0
 #define CLKF_USERMODE(frame)	0
