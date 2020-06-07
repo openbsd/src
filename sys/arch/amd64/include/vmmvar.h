@@ -614,9 +614,10 @@ struct vm_barinfo {
 };
 
 struct vm_pio {
+	uint32_t type;
 	uint32_t dir;
 	uint32_t size;
-	uint32_t port;
+	uint32_t base;
 	uint64_t data;
 };
 

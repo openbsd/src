@@ -1803,7 +1803,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		return;
 	}
 
-	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, 0, virtio_rnd_io, NULL)) {
+	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, virtio_rnd_io, NULL)) {
 		log_warnx("%s: can't add bar for virtio rng device",
 		    __progname);
 		return;
@@ -1841,7 +1841,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 				return;
 			}
 
-			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, 0,
+			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE,
 			    virtio_net_io, &vionet[i])) {
 				log_warnx("%s: can't add bar for virtio net "
 				    "device", __progname);
@@ -1928,7 +1928,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 				    "device", __progname);
 				return;
 			}
-			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, 0,
+			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE,
 			    virtio_blk_io, &vioblk[i])) {
 				log_warnx("%s: can't add bar for virtio block "
 				    "device", __progname);
@@ -1977,7 +1977,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			return;
 		}
 
-		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, 0,
+		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE,
 		    vioscsi_io, vioscsi)) {
 			log_warnx("%s: can't add bar for vioscsi device",
 			    __progname);
@@ -2020,7 +2020,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		return;
 	}
 
-	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, 0, vmmci_io, NULL)) {
+	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, VMM_PCI_IO_BAR_SIZE, vmmci_io, NULL)) {
 		log_warnx("%s: can't add bar for vmm control device",
 		    __progname);
 		return;

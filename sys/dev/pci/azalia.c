@@ -76,6 +76,7 @@ struct audio_format {
 };
 
 
+#define AZALIA_DEBUG
 #ifdef AZALIA_DEBUG
 # define DPRINTFN(n,x)	do { if (az_debug > (n)) printf x; } while (0/*CONSTCOND*/)
 int az_debug = 0;
@@ -178,13 +179,38 @@ typedef struct azalia_t {
 	stream_t rstream;
 } azalia_t;
 #define XNAME(sc)		((sc)->dev.dv_xname)
-#define AZ_READ_1(z, r)		bus_space_read_1((z)->iot, (z)->ioh, HDA_##r)
-#define AZ_READ_2(z, r)		bus_space_read_2((z)->iot, (z)->ioh, HDA_##r)
-#define AZ_READ_4(z, r)		bus_space_read_4((z)->iot, (z)->ioh, HDA_##r)
-#define AZ_WRITE_1(z, r, v)	bus_space_write_1((z)->iot, (z)->ioh, HDA_##r, v)
-#define AZ_WRITE_2(z, r, v)	bus_space_write_2((z)->iot, (z)->ioh, HDA_##r, v)
-#define AZ_WRITE_4(z, r, v)	bus_space_write_4((z)->iot, (z)->ioh, HDA_##r, v)
+#define AZ_READ_1(z, r)		az_space_read_1((z)->iot, (z)->ioh, HDA_##r)
+#define AZ_READ_2(z, r)		az_space_read_2((z)->iot, (z)->ioh, HDA_##r)
+#define AZ_READ_4(z, r)		az_space_read_4((z)->iot, (z)->ioh, HDA_##r)
+#define AZ_WRITE_1(z, r, v)	az_space_write_1((z)->iot, (z)->ioh, HDA_##r, v)
+#define AZ_WRITE_2(z, r, v)	az_space_write_2((z)->iot, (z)->ioh, HDA_##r, v)
+#define AZ_WRITE_4(z, r, v)	az_space_write_4((z)->iot, (z)->ioh, HDA_##r, v)
 
+uint8_t az_space_read_1(bus_space_tag_t iot, bus_space_handle_t ioh, int reg) {
+	uint8_t v = bus_space_read_1(iot, ioh, reg);
+	return v;
+}
+uint16_t az_space_read_2(bus_space_tag_t iot, bus_space_handle_t ioh, int reg) {
+	uint16_t v = bus_space_read_2(iot, ioh, reg);
+	return v;
+}
+uint32_t az_space_read_4(bus_space_tag_t iot, bus_space_handle_t ioh, int reg) {
+	uint32_t v = bus_space_read_4(iot, ioh, reg);
+	printf("read4: %.8x\n", v);
+	return v;
+}
+void az_space_write_1(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint8_t v) {
+	printf("write1: %.4x %.2x\n", reg, v);
+	bus_space_write_1(iot, ioh, reg, v);
+}
+void az_space_write_2(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint16_t v) {
+	printf("write2: %.4x %.4x\n", reg, v);
+	bus_space_write_1(iot, ioh, reg, v);
+}
+void az_space_write_4(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint32_t v) {
+	printf("write4: %.4x %.8x\n", reg, v);
+	bus_space_write_1(iot, ioh, reg, v);
+}
 
 /* prototypes */
 uint8_t azalia_pci_read(pci_chipset_tag_t, pcitag_t, int);
@@ -681,6 +707,7 @@ azalia_intr(void *v)
 
 	mtx_enter(&audio_lock);
 	intsts = AZ_READ_4(az, INTSTS);
+	printf("azalia_intr: %x\n", intsts);
 	if (intsts == 0 || intsts == 0xffffffff) {
 		mtx_leave(&audio_lock);
 		return (ret);
@@ -1046,7 +1073,7 @@ azalia_init_corb(azalia_t *az, int resuming)
 		DPRINTF(("%s: CORB allocation succeeded.\n", __func__));
 	}
 	timeout_set(&az->unsol_to, azalia_rirb_kick_unsol_events, az);
-
+	printf("CORB DMA: %lx\n", AZALIA_DMA_DMAADDR(&az->corb_dma));
 	AZ_WRITE_4(az, CORBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->corb_dma));
 	AZ_WRITE_4(az, CORBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->corb_dma)));
 	AZ_WRITE_1(az, CORBSIZE, az->corbsize);
@@ -1132,6 +1159,7 @@ azalia_init_rirb(azalia_t *az, int resuming)
 			return ENOMEM;
 		}
 	}
+	printf("RIRB DMA: %lx\n", AZALIA_DMA_DMAADDR(&az->rirb_dma));
 	AZ_WRITE_4(az, RIRBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->rirb_dma));
 	AZ_WRITE_4(az, RIRBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->rirb_dma)));
 	AZ_WRITE_1(az, RIRBSIZE, az->rirbsize);
@@ -1176,11 +1204,13 @@ azalia_comresp(const codec_t *codec, nid_t nid, uint32_t control,
 	int err;
 
 	mtx_enter(&audio_lock);
+	printf("Set command: %x, %x, %x\n", nid, control, param);
 	err = azalia_set_command(codec->az, codec->address, nid, control,
 	    param);
 	if (err)
 		goto exit;
 	err = azalia_get_response(codec->az, result);
+	printf("result = %d,%x\n", err, result ? *result : 0xdeadcafe);
 exit:
 	mtx_leave(&audio_lock);
 	return(err);

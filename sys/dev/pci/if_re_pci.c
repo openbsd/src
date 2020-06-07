@@ -153,7 +153,16 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 				printf(": can't map mem or i/o space\n");
 				return;
 			}
+			else {
+				printf("MAPIO\n");
+			}
 		}
+		else {
+			printf("MAP32\n");
+		}
+	}
+	else {
+		printf("MAP64\n");
 	}
 
 	/* Allocate interrupt */

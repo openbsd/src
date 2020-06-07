@@ -46,8 +46,11 @@ ccp_attach(struct ccp_softc *sc)
 	timeout_set(&sc->sc_tick, ccp_rng, sc);
 	ccp_rng(sc);
 
+	
 	printf("\n");
 }
+
+static int nrep;
 
 static void
 ccp_rng(void *arg)
@@ -56,6 +59,10 @@ ccp_rng(void *arg)
 	uint32_t trng;
 
 	trng = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CCP_REG_TRNG);
+	if (nrep < 10) {
+		printf("ccp: %x\n", trng);
+		nrep++;
+	}
 	if (trng != 0)
 		enqueue_randomness(trng);
 

@@ -1611,7 +1611,7 @@ void register_mem(uint64_t base, uint32_t len, iocb_t handler, void *cookie)
 {
 	struct iohandler *mem;
 
-	fprintf(stderr, "@@@ Registering mem region: %llx - %llx\n", base, base+len-1);
+	//fprintf(stderr, "@@@ Registering mem region: %llx - %llx\n", base, base+len-1);
 	TAILQ_FOREACH(mem, &memh, next) {
 		if (base >= mem->start && base+len <= mem->end) {
 			fprintf(stderr,"already registered\n");
@@ -1629,8 +1629,8 @@ void register_mem(uint64_t base, uint32_t len, iocb_t handler, void *cookie)
 void unregister_mem(uint64_t base)
 {
 	struct iohandler *mem, *tmp;
-	
-	fprintf(stderr,"@@@ Unregistering base: %llx\n", base);
+
+	//fprintf(stderr,"@@@ Unregistering base: %llx\n", base);
 	TAILQ_FOREACH_SAFE(mem, &memh, next, tmp) {
 		if (mem->start == base) {
 			fprintf(stderr, "  removed:%llx-%llx\n", mem->start, mem->end);
@@ -1690,7 +1690,6 @@ struct insn {
   	{ },
 };
 
-uint8_t memintr;
 extern int mem_chkint();
 
 int
@@ -1701,7 +1700,7 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 	uint8_t instr[4] = { 0 };
 	int mode = 0, size = 0, dir = 0;
 	struct vm_rwregs_params vrwp = { 0 };
-	uint64_t *rax, *rdx;
+	uint64_t *rax;
 
 	translate_gva(ve, ve->vrs.vrs_gprs[VCPU_REGS_RIP], &gip, PROT_READ);
 	read_mem(gip, instr, sizeof(instr));	
@@ -1733,22 +1732,19 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 	vrwp.vrwp_vm_id = vrp->vrp_vm_id;
 	vrwp.vrwp_vcpu_id = vrp->vrp_vcpu_id;
 	vrwp.vrwp_regs = ve->vrs;
-	rax = &vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RAX];
-	rdx = &vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RAX];
 	gpa = ve->vee.vee_gpa;
 
 	/* fix: need full emulator. But Scan for sig match for now */
 	for (int i = 0; imap[i].size; i++) {
 		if (memcmp(instr, imap[i].sig, 3) == 0) {
-			memintr = 0xff;
 			rax = &vrwp.vrwp_regs.vrs_gprs[imap[i].reg];
+			fprintf(stderr,"pre:%llx\n", *rax);
 			mem_handler(imap[i].dir, gpa, imap[i].size, rax);
 			/* skip this instruction when returning to vm */
 			vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += imap[i].incr;
-			ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp);
-			
-			if (memintr != 0xff)
-				vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, memintr);
+			fprintf(stderr, "result: %llx\n", *rax);
+			if (ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp))
+				fprintf(stderr,"writeregs fails\n");
 			return 0;
 		}
 	}
@@ -1796,7 +1792,6 @@ vcpu_exit(struct vm_run_params *vrp)
 	case SVM_VMEXIT_VINTR:
 	case VMX_EXIT_CPUID:
 	case SVM_VMEXIT_INTR:
-	case SVM_VMEXIT_NPF:
 	case SVM_VMEXIT_MSR:
 	case SVM_VMEXIT_CPUID:
 		/*
@@ -1811,6 +1806,7 @@ vcpu_exit(struct vm_run_params *vrp)
 		fprintf(stderr, "extint...\n");
 		break;
 	case VMX_EXIT_EPT_VIOLATION:
+	case SVM_VMEXIT_NPF:
 		ret = vcpu_exit_eptviolation(vrp);
 		if (ret)
 			return (ret);

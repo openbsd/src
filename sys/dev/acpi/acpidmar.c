@@ -506,12 +506,12 @@ domain_map_page_amd(struct domain *dom, vaddr_t va, paddr_t pa, uint64_t flags)
 	pte = pte_lvl(iommu, pte, va, 30, PTE_NXTLVL(2) | PTE_IR | PTE_IW | PTE_P);
 	pte = pte_lvl(iommu, pte, va, 21, PTE_NXTLVL(1) | PTE_IR | PTE_IW | PTE_P);
 	//pte = pte_lvl(iommu, pte, va, 12, PTE_NXTLVL(7) | PTE_IR | PTE_IW | PTE_P);
-	idx = (va >> 12) & 0x1FF;
-	//pte[idx].val = pa | flags | PTE_P | PTE_NXTLVL(0) | PTE_R|PTE_W|PTE_IW|PTE_IR;
 
-	/* Level 0: Page Table - add physical address */
 	if (flags)
 		flags = PTE_P | PTE_R | PTE_W | PTE_IW | PTE_IR | PTE_NXTLVL(0);
+
+	/* Level 1: Page Table - add physical address */
+	idx = (va >> 12) & 0x1FF;
 	pte[idx].val = pa | flags;
 
 	iommu_flush_cache(iommu, pte, sizeof(*pte));
@@ -764,11 +764,11 @@ static void
 dmar_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset,
     bus_size_t len, int ops)
 {
-	//struct domain *dom = tag->_cookie;
+	struct domain *dom = tag->_cookie;
 	//int		flag;
 
 	//flag = PTE_P;
-	//acpidmar_intr(dom->iommu);
+	acpidmar_intr(dom->iommu);
 	//if (ops == BUS_DMASYNC_PREREAD) {
 	//	/* make readable */
 	//	flag |= PTE_R;
@@ -786,7 +786,6 @@ dmar_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	struct domain *dom = tag->_cookie;
 	int rc;
 
 	rc = _bus_dmamem_alloc(tag, size, alignment, boundary, segs, nsegs,
@@ -1572,8 +1571,8 @@ void  _iommu_map(void *dom, vaddr_t va, bus_addr_t gpa, bus_size_t len)
 	for (i = 0; i < len; i += PAGE_SIZE) {
 		hpa = 0;
 		pmap_extract(curproc->p_vmspace->vm_map.pmap, va, &hpa);
-		if (i < 25 * PAGE_SIZE) {
-			printf("  hpa: %lx %lx\n", gpa, hpa);
+		if (i < 10*PAGE_SIZE) {
+			printf("hpa:%lx gpa:%lx\n", hpa, gpa);
 		}
 		domain_map_page(dom, gpa, hpa, PTE_P | PTE_R | PTE_W);
 		gpa += PAGE_SIZE;

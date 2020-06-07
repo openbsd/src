@@ -329,7 +329,6 @@ void vmm_mapintr(pci_chipset_tag_t pc, struct pci_attach_args *pa)
 	int bus, dev, fun;
 	struct vppt *ppt;
 
-	return;
 	TAILQ_FOREACH(ppt, &vppts, next) {
 		if (ppt->pc == pc && ppt->tag == pa->pa_tag)
 			return;
@@ -370,40 +369,84 @@ int vm_pciio(struct vm_pciio *ptd)
 /* Probably should pre-register bus_space_map/bus_space_read_xx? */
 int vm_pio(struct vm_pio *pio)
 {
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int rc;
+
+	iot = (pio->type == 1 ? X86_BUS_SPACE_IO : X86_BUS_SPACE_MEM);
+	rc = bus_space_map(iot, pio->base, pio->size, 0, &ioh);
+	if (rc != 0) {
+		printf("iomap of %x fails %x\n", pio->base, rc);
+		return -EINVAL;
+	}
 	if (pio->dir == VEI_DIR_OUT) {
 		switch (pio->size) {
 		case 1:
-			outb(pio->port, pio->data);
-			break;
+			bus_space_write_1(iot, ioh, 0, pio->data);
+			break;	
 		case 2:
-			outw(pio->port, pio->data);
+			bus_space_write_2(iot, ioh, 0, pio->data);
 			break;
 		case 4:
-			outl(pio->port, pio->data);
+			bus_space_write_4(iot, ioh, 0, pio->data);
 			break;
 		default:
-			printf("pio:no wrsize: %d\n", pio->port);
+			printf("pio:no wrsize: %d\n", pio->base);
 			return EINVAL;
 		}
 	} else {
 		switch (pio->size) {
 		case 1:
-			pio->data = inb(pio->port);
+			pio->data = bus_space_read_1(iot, ioh, 0);
 			break;
 		case 2:
-			pio->data = inw(pio->port);
+			pio->data = bus_space_read_2(iot, ioh, 0);
 			break;
 		case 4:
-			pio->data = inl(pio->port);
+			pio->data = bus_space_read_4(iot, ioh, 0);
 			break;
 		default:
-			printf("pio:no rdsize: %d\n", pio->port);
+			printf("pio:no rdsize: %d\n", pio->base);
 			return EINVAL;
 		}
 	}
+	bus_space_unmap(iot, ioh, pio->size);
 #if 0
+	if (pio->dir == VEI_DIR_OUT) {
+		switch (pio->size) {
+		case 1:
+			outb(pio->base, pio->data);
+			break;
+		case 2:
+			outw(pio->base, pio->data);
+			break;
+		case 4:
+			outl(pio->base, pio->data);
+			break;
+		default:
+			printf("pio:no wrsize: %d\n", pio->base);
+			return EINVAL;
+		}
+	} else {
+		switch (pio->size) {
+		case 1:
+			pio->data = inb(pio->base);
+			break;
+		case 2:
+			pio->data = inw(pio->base);
+			break;
+		case 4:
+			pio->data = inl(pio->base);
+			break;
+		default:
+			printf("pio:no rdsize: %d\n", pio->base);
+			return EINVAL;
+		}
+	}
+#endif
+#if 1
 	printf("%ld pio; %s(%x,%llx)\n", sizeof(*pio), 
-		pio->dir == VEI_DIR_OUT ? "out" : "in", pio->port, pio->data);
+		pio->dir == VEI_DIR_OUT ? "out" : "in", pio->base, pio->data);
 #endif
 	return 0;
 }
@@ -426,7 +469,6 @@ int vm_getbar(struct vm_barinfo *bi)
 	int i, reg, did;
 	void *dom;
 	struct vm *vm;
-	//struct vppt *ppt;
 
 	tag = pci_make_tag(pc, bi->bus, bi->dev, bi->func);
 	bi->id_reg = pci_conf_read(pc, tag, PCI_ID_REG);
@@ -470,7 +512,7 @@ int vm_getbar(struct vm_barinfo *bi)
 		paddr_t pa;
 
 		for (i = 0; i < vm->vm_nmemranges; i++) {
-			printf("va:%lx pa:%lx\n", vm->vm_memranges[i].vmr_va, pa);
+			printf("mapping va:%lx pa:%lx\n", vm->vm_memranges[i].vmr_va, pa);
 			_iommu_map(dom, 
 				   vm->vm_memranges[i].vmr_va,
 				   vm->vm_memranges[i].vmr_gpa,
@@ -2101,6 +2143,7 @@ vcpu_readregs_svm(struct vcpu *vcpu, uint64_t regmask,
 		gprs[VCPU_REGS_R14] = vcpu->vc_gueststate.vg_r14;
 		gprs[VCPU_REGS_R15] = vcpu->vc_gueststate.vg_r15;
 		gprs[VCPU_REGS_RBP] = vcpu->vc_gueststate.vg_rbp;
+		gprs[VCPU_REGS_RAX] = vmcb->v_rax;
 		gprs[VCPU_REGS_RIP] = vmcb->v_rip;
 		gprs[VCPU_REGS_RSP] = vmcb->v_rsp;
 		gprs[VCPU_REGS_RFLAGS] = vmcb->v_rflags;
@@ -2249,6 +2292,7 @@ vcpu_writeregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
 		vcpu->vc_gueststate.vg_r15 = gprs[VCPU_REGS_R15];
 		vcpu->vc_gueststate.vg_rbp = gprs[VCPU_REGS_RBP];
 		vcpu->vc_gueststate.vg_rip = gprs[VCPU_REGS_RIP];
+
 		if (vmwrite(VMCS_GUEST_IA32_RIP, gprs[VCPU_REGS_RIP]))
 			goto errout;
 		if (vmwrite(VMCS_GUEST_IA32_RSP, gprs[VCPU_REGS_RSP]))
@@ -2380,6 +2424,7 @@ vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
 		vcpu->vc_gueststate.vg_rbp = gprs[VCPU_REGS_RBP];
 		vcpu->vc_gueststate.vg_rip = gprs[VCPU_REGS_RIP];
 
+		vmcb->v_rax = gprs[VCPU_REGS_RAX];
 		vmcb->v_rip = gprs[VCPU_REGS_RIP];
 		vmcb->v_rsp = gprs[VCPU_REGS_RSP];
 		vmcb->v_rflags = gprs[VCPU_REGS_RFLAGS];
@@ -4393,6 +4438,7 @@ vm_run(struct vm_run_params *vrp)
 
 		if (copyout(&vcpu->vc_exit, vrp->vrp_exit,
 		    sizeof(struct vm_exit)) == EFAULT) {
+			printf("efault\n");
 			ret = EFAULT;
 		} else
 			ret = 0;
@@ -5273,6 +5319,8 @@ svm_handle_exit(struct vcpu *vcpu)
 		break;
 	case SVM_VMEXIT_NPF:
 		ret = svm_handle_np_fault(vcpu);
+		if (ret == EAGAIN)
+			update_rip = 1;
 		break;
 	case SVM_VMEXIT_CPUID:
 		ret = vmm_handle_cpuid(vcpu);
@@ -5365,6 +5413,8 @@ vmx_handle_exit(struct vcpu *vcpu)
 		break;
 	case VMX_EXIT_EPT_VIOLATION:
 		ret = vmx_handle_np_fault(vcpu);
+		if (ret == EAGAIN)
+			update_rip = 1;
 		break;
 	case VMX_EXIT_CPUID:
 		ret = vmm_handle_cpuid(vcpu);
@@ -7153,6 +7203,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 				    vcpu->vc_exit.vei.vei_data;
 				vmcb->v_rax = vcpu->vc_gueststate.vg_rax;
 			}
+			break;
 		}
 	}
 
