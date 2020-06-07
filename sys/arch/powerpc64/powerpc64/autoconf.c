@@ -1,14 +1,17 @@
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 void
 cpu_configure(void)
 {
+	config_rootfound("mainbus", NULL);
 }
 
 void
 diskconf(void)
 {
+	printf("%s\n", __func__);
 }
 
 void
@@ -40,4 +43,5 @@ mainbus_match(struct device *parent, void *cfdata, void *aux)
 void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
+	printf("\n");
 }

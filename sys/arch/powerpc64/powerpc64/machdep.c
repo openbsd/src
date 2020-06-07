@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 2020/06/07 09:27:06 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 2020/06/07 10:16:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/msgbuf.h>
@@ -361,36 +362,42 @@ struct consdev *cn_tab = &opal_consdev;
 int
 copyin(const void *src, void *dst, size_t size)
 {
+	printf("%s\n", __func__);
 	return EFAULT;
 }
 
 int
 copyout(const void *src, void *dst, size_t size)
 {
+	printf("%s\n", __func__);
 	return EFAULT;
 }
 
 int
 copystr(const void *src, void *dst, size_t len, size_t *lenp)
 {
+	printf("%s\n", __func__);
 	return EFAULT;
 }
 
 int
 copyinstr(const void *src, void *dst, size_t size, size_t *lenp)
 {
+	printf("%s\n", __func__);
 	return EFAULT;
 }
 
 int
 copyoutstr(const void *src, void *dst, size_t size, size_t *lenp)
 {
+	printf("%s\n", __func__);
 	return EFAULT;
 }
 
 int
 kcopy(const void *src, void *dst, size_t size)
 {
+	printf("%s\n", __func__);
 	return EFAULT;
 }
 
@@ -403,37 +410,46 @@ need_resched(struct cpu_info *ci)
 void
 delay(u_int us)
 {
+	printf("%s\n", __func__);
 }
 
 void
 cpu_startup(void)
 {
+	printf("%s", version);
+
+	bufinit();
 }
 
 void
 cpu_initclocks(void)
 {
+	printf("%s\n", __func__);
 }
 
 void
 setstatclockrate(int new)
 {
+	printf("%s\n", __func__);
 }
 
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
+	printf("%s\n", __func__);
 }
 
 void
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
+	printf("%s\n", __func__);
 }
 
 int
 sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
+	printf("%s\n", __func__);
 	return EJUSTRETURN;
 }
 
