@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 2020/06/07 17:19:04 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 2020/06/07 20:50:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -413,12 +413,6 @@ void
 need_resched(struct cpu_info *ci)
 {
 	ci->ci_want_resched = 1;
-}
-
-void
-delay(u_int us)
-{
-	printf("%s\n", __func__);
 }
 
 void

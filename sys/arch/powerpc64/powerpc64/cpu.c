@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2020/06/07 13:17:24 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 2020/06/07 20:50:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -28,6 +28,7 @@
 #include <dev/ofw/fdt.h>
 
 char cpu_model[64];
+uint64_t tb_freq = 512000000;	/* POWER8, POWER9 */
 
 struct cpu_info cpu_info_primary;
 
@@ -72,4 +73,18 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	}
 		
 	printf("\n");
+
+	/* Update timebase frequency to reflect reality. */
+	tb_freq = OF_getpropint(faa->fa_node, "timebase-frequency", tb_freq);
+}
+
+void
+delay(u_int us)
+{
+	uint64_t tb;
+
+	tb = mftb();
+	tb += (us * tb_freq + 999999) / 1000000;
+	while (tb > mftb())
+		continue;
 }
