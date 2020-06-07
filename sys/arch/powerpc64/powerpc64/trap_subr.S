@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.3 2020/05/27 22:22:04 gkoehler Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.4 2020/06/07 09:27:06 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -43,7 +43,10 @@
 	mfsprg0  r
 
 #define GET_TOCBASE(r) \
-	ld	r, TRAP_TOCBASE(0)
+	bl	99f;							\
+99:	mflr	r;							\
+	addis	r, r, (.TOC. - 99b)@ha;					\
+	addi	r, r, (.TOC. - 99b)@l;
 
 /*
  * FRAME_SETUP assumes:
@@ -69,7 +72,7 @@
 	std	%r30, (savearea+CPUSAVE_SRR1)(%r31);	/* save SRR1 */	\
 	mfsprg1	%r31;			/* get saved SP (clears SPRG1) */ \
 	mfmsr	%r30;							\
-	ori	%r30, %r30, (PSL_RI)@l;	/* XXX */			\
+	ori	%r30, %r30, (PSL_DR|PSL_IR|PSL_RI)@l; /* relocation on */ \
 	mtmsr	%r30;			/* stack can now be accessed */	\
 	isync;								\
 	stdu	%r31, -(FRAMELEN+288)(%r1); /* save it in the callframe */ \

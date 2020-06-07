@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.3 2020/06/06 22:36:22 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.4 2020/06/07 09:27:06 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -470,6 +470,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 extern struct fdt_reg memreg[];
 extern int nmemreg;
 
+#ifdef DDB
+extern struct fdt_reg initrd_reg;
+#endif
+
 void memreg_add(const struct fdt_reg *);
 void memreg_remove(const struct fdt_reg *);
 
@@ -699,6 +703,14 @@ pmap_bootstrap(void)
 			prot = PROT_READ | PROT_WRITE;
 		pmap_kenter_pa(pa, pa, prot);
 	}
+
+#ifdef DDB
+	/* Map initrd. */
+	start = initrd_reg.addr;
+	end = initrd_reg.addr + initrd_reg.size;
+	for (pa = start; pa < end; pa += PAGE_SIZE)
+		pmap_kenter_pa(pa, pa, PROT_READ | PROT_WRITE);
+#endif
 
 	/* Allocate partition table. */
 	pmap_pat = pmap_steal_avail(PATMEMSZ, PATMEMSZ);

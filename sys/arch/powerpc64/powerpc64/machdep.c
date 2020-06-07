@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 2020/06/06 22:36:22 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 2020/06/07 09:27:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -118,7 +118,6 @@ init_powernv(void *fdt, void *tocbase)
 	__syncicache(EXC_RSVD, EXC_LAST - EXC_RSVD);
 
 	*((void **)TRAP_ENTRY) = generictrap;
-	*((void **)TRAP_TOCBASE) = tocbase;
 
 	/* We're now ready to take traps. */
 	msr = mfmsr();
@@ -179,7 +178,7 @@ init_powernv(void *fdt, void *tocbase)
 #ifdef DDB
 	/* Load symbols from initrd. */
 	db_machine_init();
-	if (initrd_reg.addr != 0)
+	if (initrd_reg.size != 0)
 		memreg_remove(&initrd_reg);
 #endif
 
@@ -194,14 +193,12 @@ init_powernv(void *fdt, void *tocbase)
 		    atop(start), atop(end), 0);
 	}
 
-#ifdef notyet
-	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
-#endif
-
 	/* Enable translation. */
 	msr = mfmsr();
 	mtmsr(msr | (PSL_DR|PSL_IR));
 	isync();
+
+	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
 }
 
 void
