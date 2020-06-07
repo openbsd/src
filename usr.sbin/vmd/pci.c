@@ -206,7 +206,6 @@ int mem_chkint()
 			intr = pci.pci_devices[ptd.id].pd_irq;
 		}
 	}
-	printf("chkint: %p %x\n", va, sts);
 	return intr;
 }
 

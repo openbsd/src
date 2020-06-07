@@ -196,20 +196,16 @@ uint16_t az_space_read_2(bus_space_tag_t iot, bus_space_handle_t ioh, int reg) {
 }
 uint32_t az_space_read_4(bus_space_tag_t iot, bus_space_handle_t ioh, int reg) {
 	uint32_t v = bus_space_read_4(iot, ioh, reg);
-	printf("read4: %.8x\n", v);
 	return v;
 }
 void az_space_write_1(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint8_t v) {
-	printf("write1: %.4x %.2x\n", reg, v);
 	bus_space_write_1(iot, ioh, reg, v);
 }
 void az_space_write_2(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint16_t v) {
-	printf("write2: %.4x %.4x\n", reg, v);
-	bus_space_write_1(iot, ioh, reg, v);
+	bus_space_write_2(iot, ioh, reg, v);
 }
 void az_space_write_4(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint32_t v) {
-	printf("write4: %.4x %.8x\n", reg, v);
-	bus_space_write_1(iot, ioh, reg, v);
+	bus_space_write_4(iot, ioh, reg, v);
 }
 
 /* prototypes */
@@ -707,7 +703,6 @@ azalia_intr(void *v)
 
 	mtx_enter(&audio_lock);
 	intsts = AZ_READ_4(az, INTSTS);
-	printf("azalia_intr: %x\n", intsts);
 	if (intsts == 0 || intsts == 0xffffffff) {
 		mtx_leave(&audio_lock);
 		return (ret);
@@ -1204,13 +1199,11 @@ azalia_comresp(const codec_t *codec, nid_t nid, uint32_t control,
 	int err;
 
 	mtx_enter(&audio_lock);
-	printf("Set command: %x, %x, %x\n", nid, control, param);
 	err = azalia_set_command(codec->az, codec->address, nid, control,
 	    param);
 	if (err)
 		goto exit;
 	err = azalia_get_response(codec->az, result);
-	printf("result = %d,%x\n", err, result ? *result : 0xdeadcafe);
 exit:
 	mtx_leave(&audio_lock);
 	return(err);
