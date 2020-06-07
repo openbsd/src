@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 2020/06/07 10:16:53 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 2020/06/07 11:54:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -76,6 +76,9 @@ struct fdt_reg initrd_reg;
 void memreg_add(const struct fdt_reg *);
 void memreg_remove(const struct fdt_reg *);
 
+paddr_t fdt_pa;
+size_t fdt_size;
+
 void
 init_powernv(void *fdt, void *tocbase)
 {
@@ -95,8 +98,9 @@ init_powernv(void *fdt, void *tocbase)
 	memset(__bss_start, 0, _end - __bss_start);
 
 	if (!fdt_init(fdt) || fdt_get_size(fdt) == 0)
-		panic("%s: no FDT\r\n", __func__);
+		panic("no FDT");
 
+	/* Get OPAL base and entry addresses from FDT. */
 	node = fdt_find_node("/ibm,opal");
 	if (node) {
 		fdt_node_property(node, "opal-base-address", &prop);
@@ -106,9 +110,12 @@ init_powernv(void *fdt, void *tocbase)
 		fdt_node_property(node, "compatible", &prop);
 	}
 
+	/* At this point we can call OPAL runtime services and use printf(9). */
 	printf("Hello, World!\n");
 
-	printf("MSR 0x%016llx\n", mfmsr());
+	/* Stash these such that we can remap the FDT later. */
+	fdt_pa = (paddr_t)fdt;
+	fdt_size = fdt_get_size(fdt);
 
 	/*
 	 * Initialize all traps with the stub that calls the generic
@@ -416,9 +423,27 @@ delay(u_int us)
 void
 cpu_startup(void)
 {
+	paddr_t pa, epa;
+	vaddr_t va;
+	void *fdt;
+	
 	printf("%s", version);
 
 	bufinit();
+
+	/* Remap the FDT. */
+	pa = trunc_page(fdt_pa);
+	epa = round_page(fdt_pa + fdt_size);
+	va = (vaddr_t)km_alloc(epa - pa, &kv_any, &kp_none, &kd_waitok);
+	fdt = (void *)(va + (fdt_pa & PAGE_MASK));
+	while (pa < epa) {
+		pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
+
+	if (!fdt_init(fdt) || fdt_get_size(fdt) == 0)
+		panic("can't remap FDT");
 }
 
 void
