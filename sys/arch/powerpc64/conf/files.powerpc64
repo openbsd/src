@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.5 2020/06/07 13:17:24 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.6 2020/06/07 16:14:47 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -23,6 +23,8 @@ file	arch/powerpc64/powerpc64/trap.c
 file	arch/powerpc64/powerpc64/trap_subr.S
 file	arch/powerpc64/powerpc64/vm_machdep.c
 
+file	arch/powerpc64/dev/pci_machdep.c
+
 file	netinet/in_cksum.c
 file	netinet/in4_cksum.c
 
@@ -41,3 +43,11 @@ attach  cpu at mainbus
 include "dev/ofw/files.ofw"
 
 include "scsi/files.scsi"
+
+# MII and PCI
+include "dev/mii/files.mii"
+include "dev/pci/files.pci"
+
+device	phb: pcibus
+attach	phb at fdt
+file	arch/powerpc64/dev/phb.c		phb
