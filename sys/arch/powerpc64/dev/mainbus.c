@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.1 2020/06/07 13:17:24 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.2 2020/06/07 20:08:49 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -59,6 +59,28 @@ struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
 };
 
+struct bus_space mainbus_bus_space = {
+	._space_read_1 =	generic_space_read_1,
+	._space_write_1 =	generic_space_write_1,
+	._space_read_2 =	generic_space_read_2,
+	._space_write_2 =	generic_space_write_2,
+	._space_read_4 =	generic_space_read_4,
+	._space_write_4 =	generic_space_write_4,
+	._space_read_8 =	generic_space_read_8,
+	._space_write_8 =	generic_space_write_8,
+	._space_read_raw_2 =	generic_space_read_raw_2,
+	._space_write_raw_2 =	generic_space_write_raw_2,
+	._space_read_raw_4 =	generic_space_read_raw_4,
+	._space_write_raw_4 =	generic_space_write_raw_4,
+	._space_read_raw_8 =	generic_space_read_raw_8,
+	._space_write_raw_8 =	generic_space_write_raw_8,
+	._space_map =		generic_space_map,
+	._space_unmap =		generic_space_unmap,
+	._space_subregion =	generic_space_region,
+	._space_vaddr =		generic_space_vaddr,
+	._space_mmap =		generic_space_mmap
+};
+
 #if 0
 
 struct machine_bus_dma_tag mainbus_dma_tag = {
@@ -103,7 +125,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	int node, len;
 
 	sc->sc_node = OF_peer(0);
-//	sc->sc_iot = &arm64_bs_tag;
+	sc->sc_iot = &mainbus_bus_space;
 //	sc->sc_dmat = &mainbus_dma_tag;
 	sc->sc_acells = OF_getpropint(OF_peer(0), "#address-cells", 1);
 	sc->sc_scells = OF_getpropint(OF_peer(0), "#size-cells", 1);
