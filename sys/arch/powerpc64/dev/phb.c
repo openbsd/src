@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.1 2020/06/07 16:14:47 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.2 2020/06/07 20:13:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -30,12 +30,28 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
+struct phb_range {
+	uint32_t		flags;
+	uint64_t		pci_base;
+	uint64_t		phys_base;
+	uint64_t		size;
+};
+
 struct phb_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
 
+	int			sc_node;
 	uint64_t		sc_phb_id;
+	int			sc_acells;
+	int			sc_scells;
+	int			sc_pacells;
+	int			sc_pscells;
+	struct phb_range	*sc_ranges;
+	int			sc_nranges;
+
+	struct bus_space	sc_bus_iot;
+	struct bus_space	sc_bus_memt;
 
 	struct ppc64_pci_chipset sc_pc;
 	int			sc_bus;
@@ -67,6 +83,11 @@ void	*phb_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *, char *);
 void	phb_intr_disestablish(void *, void *);
 
+int	phb_bs_iomap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+int	phb_bs_memmap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+
 int
 phb_match(struct device *parent, void *match, void *aux)
 {
@@ -81,15 +102,84 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 	struct phb_softc *sc = (struct phb_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct pcibus_attach_args pba;
+	uint32_t *ranges;
+	int i, j, nranges, rangeslen;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
 		return;
 	}
 
-	sc->sc_phb_id = OF_getpropint64(faa->fa_node, "ibm,opal-phbid", 0);
+	sc->sc_iot = faa->fa_iot;
+	sc->sc_node = faa->fa_node;
+	sc->sc_phb_id = OF_getpropint64(sc->sc_node, "ibm,opal-phbid", 0);
+
+	sc->sc_acells = OF_getpropint(sc->sc_node, "#address-cells",
+	    faa->fa_acells);
+	sc->sc_scells = OF_getpropint(sc->sc_node, "#size-cells",
+	    faa->fa_scells);
+	sc->sc_pacells = faa->fa_acells;
+	sc->sc_pscells = faa->fa_scells;
+
+	rangeslen = OF_getproplen(sc->sc_node, "ranges");
+	if (rangeslen <= 0 || (rangeslen % sizeof(uint32_t)) ||
+	     (rangeslen / sizeof(uint32_t)) % (sc->sc_acells +
+	     sc->sc_pacells + sc->sc_scells)) {
+		printf(": invalid ranges property\n");
+		return;
+	}
+
+	ranges = malloc(rangeslen, M_TEMP, M_WAITOK);
+	OF_getpropintarray(sc->sc_node, "ranges", ranges,
+	    rangeslen);
+
+	nranges = (rangeslen / sizeof(uint32_t)) /
+	    (sc->sc_acells + sc->sc_pacells + sc->sc_scells);
+	sc->sc_ranges = mallocarray(nranges,
+	    sizeof(struct phb_range), M_TEMP, M_WAITOK);
+	sc->sc_nranges = nranges;
+
+	for (i = 0, j = 0; i < sc->sc_nranges; i++) {
+		sc->sc_ranges[i].flags = ranges[j++];
+		sc->sc_ranges[i].pci_base = ranges[j++];
+		if (sc->sc_acells - 1 == 2) {
+			sc->sc_ranges[i].pci_base <<= 32;
+			sc->sc_ranges[i].pci_base |= ranges[j++];
+		}
+		sc->sc_ranges[i].phys_base = ranges[j++];
+		if (sc->sc_pacells == 2) {
+			sc->sc_ranges[i].phys_base <<= 32;
+			sc->sc_ranges[i].phys_base |= ranges[j++];
+		}
+		sc->sc_ranges[i].size = ranges[j++];
+		if (sc->sc_scells == 2) {
+			sc->sc_ranges[i].size <<= 32;
+			sc->sc_ranges[i].size |= ranges[j++];
+		}
+	}
+
+	free(ranges, M_TEMP, rangeslen);
 
 	printf("\n");
+
+	memcpy(&sc->sc_bus_iot, sc->sc_iot, sizeof(sc->sc_bus_iot));
+	sc->sc_bus_iot.bus_private = sc;
+	sc->sc_bus_iot._space_map = phb_bs_iomap;
+	sc->sc_bus_iot._space_read_2 = little_space_read_2;
+	sc->sc_bus_iot._space_read_4 = little_space_read_4;
+	sc->sc_bus_iot._space_read_8 = little_space_read_8;
+	sc->sc_bus_iot._space_write_2 = little_space_write_2;
+	sc->sc_bus_iot._space_write_4 = little_space_write_4;
+	sc->sc_bus_iot._space_write_8 = little_space_write_8;
+	memcpy(&sc->sc_bus_memt, sc->sc_iot, sizeof(sc->sc_bus_memt));
+	sc->sc_bus_memt.bus_private = sc;
+	sc->sc_bus_memt._space_map = phb_bs_memmap;
+	sc->sc_bus_memt._space_read_2 = little_space_read_2;
+	sc->sc_bus_memt._space_read_4 = little_space_read_4;
+	sc->sc_bus_memt._space_read_8 = little_space_read_8;
+	sc->sc_bus_memt._space_write_2 = little_space_write_2;
+	sc->sc_bus_memt._space_write_4 = little_space_write_4;
+	sc->sc_bus_memt._space_write_8 = little_space_write_8;
 
 	sc->sc_pc.pc_conf_v = sc;
 	sc->sc_pc.pc_attach_hook = phb_attach_hook;
@@ -110,8 +200,8 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_busname = "pci";
-	pba.pba_iot = faa->fa_iot;
-	pba.pba_memt = faa->fa_iot;
+	pba.pba_iot = &sc->sc_bus_iot;
+	pba.pba_memt = &sc->sc_bus_memt;
 	pba.pba_dmat = faa->fa_dmat;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
@@ -219,10 +309,54 @@ void *
 phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, char *name)
 {
-	return NULL;
+	return v;
 }
 
 void
 phb_intr_disestablish(void *v, void *cookie)
 {
+}
+
+int
+phb_bs_iomap(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
+    int flags, bus_space_handle_t *bshp)
+{
+	struct phb_softc *sc = t->bus_private;
+	int i;
+
+	for (i = 0; i < sc->sc_nranges; i++) {
+		uint64_t pci_start = sc->sc_ranges[i].pci_base;
+		uint64_t pci_end = pci_start + sc->sc_ranges[i].size;
+		uint64_t phys_start = sc->sc_ranges[i].phys_base;
+
+		if ((sc->sc_ranges[i].flags & 0x03000000) == 0x01000000 &&
+		    addr >= pci_start && addr + size <= pci_end) {
+			return bus_space_map(sc->sc_iot,
+			    addr - pci_start + phys_start, size, flags, bshp);
+		}
+	}
+	
+	return ENXIO;
+}
+
+int
+phb_bs_memmap(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
+    int flags, bus_space_handle_t *bshp)
+{
+	struct phb_softc *sc = t->bus_private;
+	int i;
+
+	for (i = 0; i < sc->sc_nranges; i++) {
+		uint64_t pci_start = sc->sc_ranges[i].pci_base;
+		uint64_t pci_end = pci_start + sc->sc_ranges[i].size;
+		uint64_t phys_start = sc->sc_ranges[i].phys_base;
+
+		if ((sc->sc_ranges[i].flags & 0x03000000) == 0x02000000 &&
+		    addr >= pci_start && addr + size <= pci_end) {
+			return bus_space_map(sc->sc_iot,
+			    addr - pci_start + phys_start, size, flags, bshp);
+		}
+	}
+	
+	return ENXIO;
 }
