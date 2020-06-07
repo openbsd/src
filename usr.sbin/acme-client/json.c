@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.18 2020/06/07 13:28:17 florian Exp $ */
+/*	$Id: json.c,v 1.19 2020/06/07 13:29:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -481,7 +481,7 @@ json_parse_order(struct jsmnn *n, struct order *order)
 	}
 	return 1;
 err:
-	json_free_order(order);	
+	json_free_order(order);
 	return 0;
 }
 
@@ -507,7 +507,7 @@ json_free_order(struct order *order)
 	for(i = 0; i < order->authsz; i++)
 		free(order->auths[i]);
 	free(order->auths);
-	
+
 	order->finalize = NULL;
 	order->auths = NULL;
 	order->authsz = 0;
