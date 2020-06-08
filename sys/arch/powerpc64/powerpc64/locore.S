@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.6 2020/06/07 16:13:30 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.7 2020/06/08 18:35:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -86,6 +86,14 @@ OPAL_CALL(OPAL_CEC_REBOOT, opal_cec_reboot)
 OPAL_CALL(OPAL_POLL_EVENTS, opal_poll_events)
 OPAL_CALL(OPAL_PCI_CONFIG_READ_WORD, opal_pci_config_read_word)
 OPAL_CALL(OPAL_PCI_CONFIG_WRITE_WORD, opal_pci_config_write_word)
+OPAL_CALL(OPAL_PCI_EEH_FREEZE_STATUS, opal_pci_eeh_freeze_status)
+OPAL_CALL(OPAL_PCI_EEH_FREEZE_CLEAR, opal_pci_eeh_freeze_clear)
+OPAL_CALL(OPAL_PCI_PHB_MMIO_ENABLE, opal_pci_phb_mmio_enable)
+OPAL_CALL(OPAL_PCI_SET_PHB_MEM_WINDOW, opal_pci_set_phb_mem_window)
+OPAL_CALL(OPAL_PCI_MAP_PE_MMIO_WINDOW, opal_pci_map_pe_mmio_window)
+OPAL_CALL(OPAL_PCI_SET_PE, opal_pci_set_pe)
+OPAL_CALL(OPAL_PCI_MAP_PE_DMA_WINDOW_REAL, opal_pci_map_pe_dma_window_real)
+OPAL_CALL(OPAL_PCI_RESET, opal_pci_reset)
 
 opal_call:
 	mflr	%r11
