@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.83 2020/04/07 13:27:51 visa Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.84 2020/06/08 08:04:09 mpi Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -1035,6 +1035,9 @@ filt_cd9660read(struct knote *kn, long hint)
 		kn->kn_fflags |= NOTE_EOF;
 		return (1);
 	}
+
+	if (kn->kn_flags & EV_OLDAPI)
+		return (1);
 
 	return (kn->kn_data != 0);
 }

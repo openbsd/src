@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.30 2020/04/07 13:27:52 visa Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.31 2020/06/08 08:04:10 mpi Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -50,9 +50,12 @@
 #include <nfs/nfs_var.h>
 
 void	nfs_kqpoll(void *);
+int	nfs_kqwatch(struct vnode *);
+void	nfs_kqunwatch(struct vnode *);
 
 void	filt_nfsdetach(struct knote *);
 int	filt_nfsread(struct knote *, long);
+int	filt_nfswrite(struct knote *, long);
 int	filt_nfsvnode(struct knote *, long);
 
 struct kevq {
@@ -182,11 +185,19 @@ void
 filt_nfsdetach(struct knote *kn)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
-	struct kevq *ke;
 
 	klist_remove(&vp->v_selectinfo.si_note, kn);
 
 	/* Remove the vnode from watch list */
+	if ((kn->kn_flags & EV_OLDAPI) == 0)
+		nfs_kqunwatch(vp);
+}
+
+void
+nfs_kqunwatch(struct vnode *vp)
+{
+	struct kevq *ke;
+
 	rw_enter_write(&nfskevq_lock);
 	SLIST_FOREACH(ke, &kevlist, kev_link) {
 		if (ke->vp == vp) {
@@ -234,7 +245,27 @@ filt_nfsread(struct knote *kn, long hint)
 		kn->kn_fflags |= NOTE_EOF;
 		return (1);
 	}
+
+	if (kn->kn_flags & EV_OLDAPI)
+		return (1);
+
         return (kn->kn_data != 0);
+}
+
+int
+filt_nfswrite(struct knote *kn, long hint)
+{
+	/*
+	 * filesystem is gone, so set the EOF flag and schedule
+	 * the knote for deletion.
+	 */
+	if (hint == NOTE_REVOKE) {
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		return (1);
+	}
+
+	kn->kn_data = 0;
+	return (1);
 }
 
 int
@@ -256,6 +287,13 @@ static const struct filterops nfsread_filtops = {
 	.f_event	= filt_nfsread,
 };
 
+static const struct filterops nfswrite_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_nfsdetach,
+	.f_event	= filt_nfswrite,
+};
+
 static const struct filterops nfsvnode_filtops = {
 	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
@@ -269,10 +307,6 @@ nfs_kqfilter(void *v)
 	struct vop_kqfilter_args *ap = v;
 	struct vnode *vp;
 	struct knote *kn;
-	struct kevq *ke;
-	int error = 0;
-	struct vattr attr;
-	struct proc *p = curproc;	/* XXX */
 
 	vp = ap->a_vp;
 	kn = ap->a_kn;
@@ -286,6 +320,9 @@ nfs_kqfilter(void *v)
 	case EVFILT_READ:
 		kn->kn_fop = &nfsread_filtops;
 		break;
+	case EVFILT_WRITE:
+		kn->kn_fop = &nfswrite_filtops;
+		break;
 	case EVFILT_VNODE:
 		kn->kn_fop = &nfsvnode_filtops;
 		break;
@@ -298,7 +335,27 @@ nfs_kqfilter(void *v)
 	/*
 	 * Put the vnode to watched list.
 	 */
-	
+	if ((kn->kn_flags & EV_OLDAPI) == 0) {
+		int error;
+
+		error = nfs_kqwatch(vp);
+		if (error)
+			return (error);
+	}
+
+	klist_insert(&vp->v_selectinfo.si_note, kn);
+
+	return (0);
+}
+
+int
+nfs_kqwatch(struct vnode *vp)
+{
+	struct proc *p = curproc;	/* XXX */
+	struct vattr attr;
+	struct kevq *ke;
+	int error = 0;
+
 	/*
 	 * Fetch current attributes. It's only needed when the vnode
 	 * is not watched yet, but we need to do this without lock
@@ -338,8 +395,6 @@ nfs_kqfilter(void *v)
 
 	/* kick the poller */
 	wakeup(pnfskq);
-
-	klist_insert(&vp->v_selectinfo.si_note, kn);
 
 out:
 	rw_exit_write(&nfskevq_lock);
