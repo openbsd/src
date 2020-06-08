@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 2020/06/07 20:50:24 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 2020/06/08 18:37:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -48,6 +48,7 @@ struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 int cold = 1;
 int safepri = 0;
 int physmem;
+paddr_t physmax;
 
 struct vm_map *exec_map;
 struct vm_map *phys_map;
@@ -153,6 +154,7 @@ init_powernv(void *fdt, void *tocbase)
 				continue;
 			memreg_add(&reg);
 			physmem += atop(reg.size);
+			physmax = MAX(physmax, reg.addr + reg.size);
 		}
 	}
 
