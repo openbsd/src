@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cbus.4,v 1.4 2015/03/05 21:35:57 aoyama Exp $
+.\"	$OpenBSD: cbus.4,v 1.5 2020/06/08 00:56:19 aoyama Exp $
 .\"
 .\" Copyright (c) 2014 Kenji Aoyama.
 .\"
@@ -13,7 +13,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: March 5 2015 $
+.Dd $Mdocdate: June 8 2020 $
 .Dt CBUS 4 luna88k
 .Os
 .Sh NAME
@@ -32,6 +32,8 @@ The devices currently supported on
 are:
 .Pp
 .Bl -tag -width 10n -offset 3n -compact
+.It Xr ne 4
+Allied Telesis CentreCOM LA-98 series
 .It Xr necsb 4
 NEC PC-9801-86 sound board
 .It Xr pcexmem 4
