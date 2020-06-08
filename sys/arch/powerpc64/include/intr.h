@@ -11,6 +11,7 @@
 #define IPL_STATCLOCK	IPL_CLOCK
 #define IPL_HIGH	15
 #define IPL_MPFLOOR	IPL_TTY
+#define IPL_MPSAFE	0
 
 #define spl0()		9
 #define splsoftclock()	0
@@ -28,5 +29,8 @@
 #define splx(s)		(void)s
 
 #define splassert(x)
+#define splsoftassert(x)
+
+#define intr_barrier(x)
 
 #include <machine/softintr.h>
