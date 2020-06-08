@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.5 2020/06/07 09:59:45 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.6 2020/06/08 18:40:06 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -346,6 +346,8 @@ pte_insert(struct pte_desc *pted)
 		pte[i].pte_hi |= PTE_VALID;
 		ptesync();	/* Ensure updates completed. */
 
+		if (i > 1)
+			printf("%s: primary %d\n", __func__, i);
 		goto out;
 	}
 
@@ -364,7 +366,7 @@ pte_insert(struct pte_desc *pted)
 		pte[i].pte_hi |= (PTE_HID|PTE_VALID);
 		ptesync();	/* Ensure updates completed. */
 
-		printf("%s: second\n", __func__);
+		printf("%s: secondary %d\n", __func__, i);
 		goto out;
 	}
 
@@ -616,13 +618,25 @@ pmap_clear_modify(struct vm_page *pg)
 int
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 {
+	struct pte_desc pted;
+	struct pte *pte;
+	int s;
+
 	if (pm == pmap_kernel() &&
 	    va >= (vaddr_t)_start && va < (vaddr_t)_end) {
 		*pa = va;
 		return 1;
 	}
-	panic(__func__);
-	return 0;
+
+	pmap_fill_pte(pm, va, 0, &pted, 0, 0);
+	pted.pted_pte.pte_hi |= PTE_VALID;
+
+	PMAP_HASH_LOCK(s);
+	if ((pte = pmap_ptedinhash(&pted)) != NULL)
+		*pa = (pte->pte_lo & PTE_RPGN) | (va & PAGE_MASK);
+	PMAP_HASH_UNLOCK(s);
+
+	return (pte != NULL);
 }
 
 void
