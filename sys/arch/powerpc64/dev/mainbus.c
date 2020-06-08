@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.2 2020/06/07 20:08:49 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.3 2020/06/08 18:44:32 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -81,8 +81,6 @@ struct bus_space mainbus_bus_space = {
 	._space_mmap =		generic_space_mmap
 };
 
-#if 0
-
 struct machine_bus_dma_tag mainbus_dma_tag = {
 	NULL,
 	0,
@@ -101,8 +99,6 @@ struct machine_bus_dma_tag mainbus_dma_tag = {
 	_dmamem_unmap,
 	_dmamem_mmap,
 };
-
-#endif
 
 /*
  * Mainbus takes care of FDT and non-FDT machines, so we
@@ -126,7 +122,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_node = OF_peer(0);
 	sc->sc_iot = &mainbus_bus_space;
-//	sc->sc_dmat = &mainbus_dma_tag;
+	sc->sc_dmat = &mainbus_dma_tag;
 	sc->sc_acells = OF_getpropint(OF_peer(0), "#address-cells", 1);
 	sc->sc_scells = OF_getpropint(OF_peer(0), "#size-cells", 1);
 
