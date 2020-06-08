@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.58 2020/03/15 10:14:49 claudio Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.59 2020/06/08 04:47:58 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -16,18 +16,38 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <drm/drmP.h>
-#include <dev/pci/ppbreg.h>
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/event.h>
 #include <sys/filedesc.h>
 #include <sys/kthread.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
+#include <sys/proc.h>
+#include <sys/pool.h>
+#include <sys/fcntl.h>
+
+#include <dev/pci/ppbreg.h>
+
 #include <linux/dma-buf.h>
 #include <linux/mod_devicetable.h>
 #include <linux/acpi.h>
 #include <linux/pagevec.h>
 #include <linux/dma-fence-array.h>
+#include <linux/interrupt.h>
+#include <linux/err.h>
+#include <linux/idr.h>
+#include <linux/scatterlist.h>
+#include <linux/i2c.h>
+#include <linux/pci.h>
+#include <linux/notifier.h>
+#include <linux/backlight.h>
+#include <linux/shrinker.h>
+#include <linux/fb.h>
+#include <linux/xarray.h>
+
+#include <drm/drm_device.h>
+#include <drm/drm_print.h>
 
 #if defined(__amd64__) || defined(__i386__)
 #include "bios.h"
@@ -111,6 +131,13 @@ schedule_timeout(long timeout)
 	sch_ident = curproc;
 
 	return timeout > 0 ? timeout : 0;
+}
+
+long
+schedule_timeout_uninterruptible(long timeout)
+{
+	tsleep(curproc, PWAIT, "schtou", timeout);
+	return 0;
 }
 
 int
@@ -816,6 +843,113 @@ ida_simple_remove(struct ida *ida, int id)
 }
 
 int
+xarray_cmp(struct xarray_entry *a, struct xarray_entry *b)
+{
+	return (a->id < b->id ? -1 : a->id > b->id);
+}
+
+SPLAY_PROTOTYPE(xarray_tree, xarray_entry, entry, xarray_cmp);
+struct pool xa_pool;
+SPLAY_GENERATE(xarray_tree, xarray_entry, entry, xarray_cmp);
+
+void
+xa_init_flags(struct xarray *xa, gfp_t flags)
+{
+	static int initialized;
+
+	if (!initialized) {
+		pool_init(&xa_pool, sizeof(struct xarray_entry), 0, IPL_TTY, 0,
+		    "xapl", NULL);
+		initialized = 1;
+	}
+	SPLAY_INIT(&xa->xa_tree);
+}
+
+void
+xa_destroy(struct xarray *xa)
+{
+	struct xarray_entry *id;
+
+	while ((id = SPLAY_MIN(xarray_tree, &xa->xa_tree))) {
+		SPLAY_REMOVE(xarray_tree, &xa->xa_tree, id);
+		pool_put(&xa_pool, id);
+	}
+}
+
+int
+xa_alloc(struct xarray *xa, u32 *id, void *entry, int limit, gfp_t gfp)
+{
+	struct xarray_entry *xid;
+	int flags = (gfp & GFP_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
+	int start = (xa->xa_flags & XA_FLAGS_ALLOC1) ? 1 : 0;
+	int begin;
+
+	xid = pool_get(&xa_pool, flags);
+	if (xid == NULL)
+		return -ENOMEM;
+
+	if (limit <= 0)
+		limit = INT_MAX;
+
+	xid->id = begin = start;
+
+	while (SPLAY_INSERT(xarray_tree, &xa->xa_tree, xid)) {
+		if (++xid->id == limit)
+			xid->id = start;
+		if (xid->id == begin) {
+			pool_put(&xa_pool, xid);
+			return -EBUSY;
+		}
+	}
+	xid->ptr = entry;
+	*id = xid->id;
+	return 0;
+}
+
+void *
+xa_erase(struct xarray *xa, unsigned long index)
+{
+	struct xarray_entry find, *res;
+	void *ptr = NULL;
+
+	find.id = index;
+	res = SPLAY_FIND(xarray_tree, &xa->xa_tree, &find);
+	if (res) {
+		SPLAY_REMOVE(xarray_tree, &xa->xa_tree, res);
+		ptr = res->ptr;
+		pool_put(&xa_pool, res);
+	}
+	return ptr;
+}
+
+void *
+xa_load(struct xarray *xa, unsigned long index)
+{
+	struct xarray_entry find, *res;
+
+	find.id = index;
+	res = SPLAY_FIND(xarray_tree, &xa->xa_tree, &find);
+	if (res == NULL)
+		return NULL;
+	return res->ptr;
+}
+
+void *
+xa_get_next(struct xarray *xa, unsigned long *index)
+{
+	struct xarray_entry *res;
+
+	SPLAY_FOREACH(res, xarray_tree, &xa->xa_tree) {
+		if (res->id >= *index) {
+			*index = res->id;
+			return res->ptr;
+		}
+	}
+
+	return NULL;
+}
+
+int
 sg_alloc_table(struct sg_table *table, unsigned int nents, gfp_t gfp_mask)
 {
 	table->sgl = mallocarray(nents, sizeof(struct scatterlist),
@@ -891,10 +1025,20 @@ fail:
 int
 i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 {
-	if (adap->algo)
-		return adap->algo->master_xfer(adap, msgs, num);
+	int ret;
 
-	return i2c_master_xfer(adap, msgs, num);
+	if (adap->lock_ops)
+		adap->lock_ops->lock_bus(adap, 0);
+
+	if (adap->algo)
+		ret = adap->algo->master_xfer(adap, msgs, num);
+	else
+		ret = i2c_master_xfer(adap, msgs, num);
+
+	if (adap->lock_ops)
+		adap->lock_ops->unlock_bus(adap, 0);
+
+	return ret;
 }
 
 int
@@ -1199,18 +1343,40 @@ backlight_schedule_update_status(struct backlight_device *bd)
 	task_add(systq, &bd->task);
 }
 
+inline int
+backlight_enable(struct backlight_device *bd)
+{
+	if (bd == NULL)
+		return 0;
+
+	bd->props.power = FB_BLANK_UNBLANK;
+
+	return bd->ops->update_status(bd);
+}
+
+inline int
+backlight_disable(struct backlight_device *bd)
+{
+	if (bd == NULL)
+		return 0;
+
+	bd->props.power = FB_BLANK_POWERDOWN;
+
+	return bd->ops->update_status(bd);
+}
+
 void
 drm_sysfs_hotplug_event(struct drm_device *dev)
 {
 	KNOTE(&dev->note, NOTE_CHANGE);
 }
 
-unsigned int drm_fence_count;
+static atomic64_t drm_fence_context_count = ATOMIC64_INIT(1);
 
-unsigned int
+uint64_t
 dma_fence_context_alloc(unsigned int num)
 {
-	return __sync_add_and_fetch(&drm_fence_count, num) - num;
+  return atomic64_add_return(num, &drm_fence_context_count) - num;
 }
 
 struct default_wait_cb {
@@ -1352,6 +1518,34 @@ cb_cleanup:
 		dma_fence_remove_callback(fences[i], &cb[i].base);
 	free(cb, M_DRM, count * sizeof(*cb));
 	return ret;
+}
+
+static struct dma_fence dma_fence_stub;
+static struct mutex dma_fence_stub_mtx = MUTEX_INITIALIZER(IPL_TTY);
+
+static const char *
+dma_fence_stub_get_name(struct dma_fence *fence)
+{
+	return "stub";
+}
+
+static const struct dma_fence_ops dma_fence_stub_ops = {
+	.get_driver_name = dma_fence_stub_get_name,
+	.get_timeline_name = dma_fence_stub_get_name,
+};
+
+struct dma_fence *
+dma_fence_get_stub(void)
+{
+	mtx_enter(&dma_fence_stub_mtx);
+	if (dma_fence_stub.ops == NULL) {
+		dma_fence_init(&dma_fence_stub, &dma_fence_stub_ops,
+		    &dma_fence_stub_mtx, 0, 0);
+		dma_fence_signal_locked(&dma_fence_stub);
+	}
+	mtx_leave(&dma_fence_stub_mtx);
+
+	return dma_fence_get(&dma_fence_stub);
 }
 
 static const char *
@@ -1567,6 +1761,7 @@ dma_buf_export(const struct dma_buf_export_info *info)
 	dmabuf->size = info->size;
 	dmabuf->file = fp;
 	fp->f_data = dmabuf;
+	INIT_LIST_HEAD(&dmabuf->attachments);
 	return dmabuf;
 }
 
@@ -1729,6 +1924,8 @@ autoremove_wake_function(struct wait_queue_entry *wqe, unsigned int mode,
 	return 0;
 }
 
+static wait_queue_head_t bit_waitq;
+wait_queue_head_t var_waitq;
 struct mutex wait_bit_mtx = MUTEX_INITIALIZER(IPL_TTY);
 
 int
@@ -1780,7 +1977,22 @@ wake_up_bit(void *word, int bit)
 	mtx_leave(&wait_bit_mtx);
 }
 
+void
+clear_and_wake_up_bit(int bit, void *word)
+{
+	clear_bit(bit, word);
+	wake_up_bit(word, bit);
+}
+
+wait_queue_head_t *
+bit_waitqueue(void *word, int bit)
+{
+	/* XXX hash table of wait queues? */
+	return &bit_waitq;
+}
+
 struct workqueue_struct *system_wq;
+struct workqueue_struct *system_highpri_wq;
 struct workqueue_struct *system_unbound_wq;
 struct workqueue_struct *system_long_wq;
 struct taskq *taskletq;
@@ -1791,6 +2003,10 @@ drm_linux_init(void)
 	if (system_wq == NULL) {
 		system_wq = (struct workqueue_struct *)
 		    taskq_create("drmwq", 4, IPL_HIGH, 0);
+	}
+	if (system_highpri_wq == NULL) {
+		system_highpri_wq = (struct workqueue_struct *)
+		    taskq_create("drmhpwq", 4, IPL_HIGH, 0);
 	}
 	if (system_unbound_wq == NULL) {
 		system_unbound_wq = (struct workqueue_struct *)
@@ -1803,6 +2019,9 @@ drm_linux_init(void)
 
 	if (taskletq == NULL)
 		taskletq = taskq_create("drmtskl", 1, IPL_HIGH, 0);
+
+	init_waitqueue_head(&bit_waitq);
+	init_waitqueue_head(&var_waitq);
 }
 
 #define PCIE_ECAP_RESIZE_BAR	0x15
@@ -1887,4 +2106,51 @@ drmbackoff(long npages)
 		npages -= ret;
 		shrinker = TAILQ_NEXT(shrinker, next);
 	}
+}
+
+void *
+bitmap_zalloc(u_int n, gfp_t flags)
+{
+	return kcalloc(BITS_TO_LONGS(n), sizeof(long), flags);
+}
+
+void
+bitmap_free(void *p)
+{
+	kfree(p);
+}
+
+int
+atomic_dec_and_mutex_lock(volatile int *v, struct rwlock *lock)
+{
+	if (atomic_add_unless(v, -1, 1))
+		return 0;
+
+	rw_enter_write(lock);
+	if (atomic_dec_return(v) == 0)
+		return 1;
+	rw_exit_write(lock);
+	return 0;
+}
+
+int
+printk(const char *fmt, ...)
+{
+	int ret, level;
+	va_list ap;
+
+	if (fmt != NULL && *fmt == '\001') {
+		level = fmt[1];
+#ifndef DRMDEBUG
+		if (level >= KERN_INFO[1] && level <= '9')
+			return 0;
+#endif
+		fmt += 2;
+	}
+
+	va_start(ap, fmt);
+	ret = vprintf(fmt, ap);
+	va_end(ap);
+
+	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma-buf.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: dma-buf.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -20,7 +20,8 @@
 
 #include <sys/types.h>
 #include <sys/systm.h>
-#include <linux/reservation.h>
+#include <linux/dma-resv.h>
+#include <linux/list.h>
 
 struct dma_buf_ops;
 
@@ -29,9 +30,17 @@ struct dma_buf {
 	void *priv;
 	size_t size;
 	struct file *file;
+	struct list_head attachments;
+	struct dma_resv *resv;
 };
 
-struct dma_buf_attachment;
+struct dma_buf_attachment {
+	void *importer_priv;
+};
+
+struct dma_buf_attach_ops {
+	void (*move_notify)(struct dma_buf_attachment *);
+};
 
 void	get_dma_buf(struct dma_buf *);
 struct dma_buf *dma_buf_get(int);
@@ -47,7 +56,7 @@ struct dma_buf_export_info {
 	size_t size;
 	int flags;
 	void *priv;
-	struct reservation_object *resv;
+	struct dma_resv *resv;
 };
 
 #define DEFINE_DMA_BUF_EXPORT_INFO(x)  struct dma_buf_export_info x 

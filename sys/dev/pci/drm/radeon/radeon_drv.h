@@ -33,11 +33,8 @@
 
 #include <linux/firmware.h>
 #include <linux/platform_device.h>
-#ifdef __linux__
 #include <drm/drm_legacy.h>
 
-#include <drm/ati_pcigart.h>
-#endif
 #include "radeon_family.h"
 
 /* General customization:

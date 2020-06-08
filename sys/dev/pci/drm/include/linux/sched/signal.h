@@ -3,6 +3,7 @@
 #ifndef _LINUX_SCHED_SIGNAL_H
 #define _LINUX_SCHED_SIGNAL_H
 
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 

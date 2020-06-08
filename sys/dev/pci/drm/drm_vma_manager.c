@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_vma_manager.c,v 1.4 2019/04/14 10:14:51 jsg Exp $	*/
+/*	$OpenBSD: drm_vma_manager.c,v 1.5 2020/06/08 04:47:58 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * Copyright (c) 2012 David Airlie <airlied@linux.ie>
@@ -23,10 +23,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <drm/drmP.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/rbtree.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+
 #include <drm/drm_mm.h>
 #include <drm/drm_vma_manager.h>
-#include <linux/rbtree.h>
 
 /**
  * DOC: vma offset manager
@@ -105,36 +110,6 @@ void drm_vma_offset_manager_destroy(struct drm_vma_offset_manager *mgr)
 	write_unlock(&mgr->vm_lock);
 }
 EXPORT_SYMBOL(drm_vma_offset_manager_destroy);
-
-/**
- * drm_vma_offset_lookup() - Find node in offset space
- * @mgr: Manager object
- * @start: Start address for object (page-based)
- * @pages: Size of object (page-based)
- *
- * Find a node given a start address and object size. This returns the _best_
- * match for the given node. That is, @start may point somewhere into a valid
- * region and the given node will be returned, as long as the node spans the
- * whole requested area (given the size in number of pages as @pages).
- *
- * RETURNS:
- * Returns NULL if no suitable node can be found. Otherwise, the best match
- * is returned. It's the caller's responsibility to make sure the node doesn't
- * get destroyed before the caller can access it.
- */
-struct drm_vma_offset_node *drm_vma_offset_lookup(struct drm_vma_offset_manager *mgr,
-						  unsigned long start,
-						  unsigned long pages)
-{
-	struct drm_vma_offset_node *node;
-
-	read_lock(&mgr->vm_lock);
-	node = drm_vma_offset_lookup_locked(mgr, start, pages);
-	read_unlock(&mgr->vm_lock);
-
-	return node;
-}
-EXPORT_SYMBOL(drm_vma_offset_lookup);
 
 /**
  * drm_vma_offset_lookup_locked() - Find node in offset space

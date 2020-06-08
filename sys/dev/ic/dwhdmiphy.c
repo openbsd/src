@@ -1,4 +1,4 @@
-/* $OpenBSD: dwhdmiphy.c,v 1.1 2020/03/02 10:37:23 kettenis Exp $ */
+/* $OpenBSD: dwhdmiphy.c,v 1.2 2020/06/08 04:47:58 jsg Exp $ */
 /* $NetBSD: dw_hdmi_phy.c,v 1.2 2019/11/10 10:36:01 jmcneill Exp $ */
 
 /*-
@@ -28,8 +28,6 @@
  */
 
 #include <sys/param.h>
-
-#include <drm/drmP.h>
 
 #include <dev/ic/dwhdmi.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktime.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: ktime.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -98,6 +98,12 @@ ktime_add(struct timeval a, struct timeval b)
 	struct timeval res;
 	timeradd(&a, &b, &res);
 	return res;
+}
+
+static inline struct timeval
+ktime_add_us(struct timeval tv, int64_t us)
+{
+	return ns_to_timeval(timeval_to_ns(&tv) + (us * NSEC_PER_USEC));
 }
 
 static inline struct timeval

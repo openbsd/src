@@ -12,6 +12,7 @@
 #include <uvm/uvm_extern.h>
 #include <linux/fs.h>
 #include <linux/shrinker.h>
+#include <linux/overflow.h>
 #include <asm/pgtable.h>
 
 #define PageHighMem(x)	0
@@ -21,13 +22,14 @@
 #define page_to_pfn(pp)		(VM_PAGE_TO_PHYS(pp) / PAGE_SIZE)
 #define pfn_to_page(pfn)	(PHYS_TO_VM_PAGE(ptoa(pfn)))
 #define nth_page(page, n)	(&(page)[(n)])
-#define offset_in_page(off)	((off) & PAGE_MASK)
+#define offset_in_page(off)	((vaddr_t)(off) & PAGE_MASK)
 #define set_page_dirty(page)	atomic_clearbits_int(&page->pg_flags, PG_CLEAN)
 
 #define PAGE_ALIGN(addr)	(((addr) + PAGE_MASK) & ~PAGE_MASK)
 
 #define PFN_UP(x)		(((x) + PAGE_SIZE-1) >> PAGE_SHIFT)
 #define PFN_DOWN(x)		((x) >> PAGE_SHIFT)
+#define PFN_PHYS(x)		((x) << PAGE_SHIFT)
 
 #define is_vmalloc_addr(ptr)	true
 

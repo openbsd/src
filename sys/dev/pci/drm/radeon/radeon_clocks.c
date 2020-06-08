@@ -25,12 +25,16 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-#include <drm/drmP.h>
+
+#include <linux/pci.h>
+
+#include <drm/drm_device.h>
 #include <drm/radeon_drm.h>
-#include "radeon_reg.h"
+
+#include "atom.h"
 #include "radeon.h"
 #include "radeon_asic.h"
-#include "atom.h"
+#include "radeon_reg.h"
 
 #if defined(__macppc__) || defined(__sparc64__)
 #include <dev/ofw/openfirm.h>
@@ -255,7 +259,7 @@ static bool radeon_read_clocks_OF(struct drm_device *dev)
 }
 #endif /* CONFIG_OF */
 
-#endif
+#endif /* !__linux__ */
 
 void radeon_get_clock_info(struct drm_device *dev)
 {

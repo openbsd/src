@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.137 2019/12/08 12:25:30 mpi Exp $
+#	$OpenBSD: Makefile.i386,v 1.138 2020/06/08 04:47:58 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -23,7 +23,8 @@ _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/include \
-		-I$S/dev/pci/drm/include/uapi
+		-I$S/dev/pci/drm/include/uapi \
+		-I$S/dev/pci/drm/i915
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \

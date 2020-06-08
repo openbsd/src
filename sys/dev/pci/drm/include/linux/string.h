@@ -54,6 +54,9 @@ kstrdup(const char *str, int flags)
 	size_t len;
 	char *p;
 
+	if (str == NULL)
+		return NULL;
+
 	len = strlen(str) + 1;
 	p = malloc(len, M_DRM, flags);
 	if (p)

@@ -1,6 +1,5 @@
 /* Public Domain */
 
-#include <drm/drmP.h>
 #include <drm/drm_gem.h>
 
 void drm_gem_cma_free_object(struct drm_gem_object *);

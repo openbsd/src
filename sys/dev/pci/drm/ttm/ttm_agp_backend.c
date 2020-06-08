@@ -32,7 +32,6 @@
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
-#include <drm/drmP.h>
 #include <drm/ttm/ttm_module.h>
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_page_alloc.h>
@@ -42,6 +41,8 @@
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <asm/agp.h>
+
+#include <drm/drm_agpsupport.h>
 
 struct ttm_agp_backend {
 	struct ttm_tt ttm;
@@ -53,7 +54,7 @@ struct ttm_agp_backend {
 static int ttm_agp_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
 {
 	struct ttm_agp_backend	*agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
-	struct vm_page *dummy_read_page = ttm->bdev->glob->dummy_read_page;
+	struct vm_page *dummy_read_page = ttm_bo_glob.dummy_read_page;
 	struct drm_mm_node *node = bo_mem->mm_node;
 	struct agp_softc *sc = agp_be->agp->agpdev;
 	bus_addr_t addr;

@@ -18,4 +18,11 @@ ktime_get_real_seconds(void)
 	return ktime_get().tv_sec;
 }
 
+static inline uint64_t
+ktime_get_ns(void)
+{
+	struct timeval tv = ktime_get();
+	return timeval_to_ns(&tv);
+}
+
 #endif

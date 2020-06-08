@@ -3,6 +3,7 @@
 #ifndef _LINUX_KGDB_H
 #define _LINUX_KGDB_H
 
+#include <sys/types.h>
 #include <sys/systm.h>
 
 static inline int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaccess.h,v 1.2 2019/12/18 08:56:19 kettenis Exp $	*/
+/*	$OpenBSD: uaccess.h,v 1.3 2020/06/08 04:48:15 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -21,9 +21,6 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <linux/sched.h>
-
-#define user_access_begin()
-#define user_access_end()
 
 static inline unsigned long
 __copy_to_user(void *to, const void *from, unsigned len)
@@ -70,10 +67,13 @@ copy_from_user(void *to, const void *from, unsigned len)
 #define VERIFY_READ     0x1
 #define VERIFY_WRITE    0x2
 static inline int
-access_ok(int type, const void *addr, unsigned long size)
+access_ok(const void *addr, unsigned long size)
 {
-	return true;
+	return 1;
 }
+
+#define user_access_begin(addr, size)	access_ok(addr, size)
+#define user_access_end()
 
 #if defined(__i386__) || defined(__amd64__)
 

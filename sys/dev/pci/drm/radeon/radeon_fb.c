@@ -23,26 +23,27 @@
  * Authors:
  *     David Airlie
  */
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/pm_runtime.h>
 
-#include <drm/drmP.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <linux/vga_switcheroo.h>
+
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
-#include <drm/radeon_drm.h>
-#include "radeon.h"
-
 #include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/radeon_drm.h>
 
-#include <linux/vga_switcheroo.h>
+#include "radeon.h"
 
 /* object hierarchy -
  * this contains a helper + a radeon fb
  * the helper contains a pointer to radeon framebuffer baseclass.
  */
 struct radeon_fbdev {
-	struct drm_fb_helper helper;
+	struct drm_fb_helper helper; /* must be first */
 	struct drm_framebuffer fb;
 	struct radeon_device *rdev;
 };
@@ -73,7 +74,7 @@ radeonfb_release(struct fb_info *info, int user)
 	return 0;
 }
 
-static struct fb_ops radeonfb_ops = {
+static const struct fb_ops radeonfb_ops = {
 	.owner = THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
 	.fb_open = radeonfb_open,
@@ -128,6 +129,7 @@ static int radeonfb_create_pinned_object(struct radeon_fbdev *rfbdev,
 					 struct drm_mode_fb_cmd2 *mode_cmd,
 					 struct drm_gem_object **gobj_p)
 {
+	const struct drm_format_info *info;
 	struct radeon_device *rdev = rfbdev->rdev;
 	struct drm_gem_object *gobj = NULL;
 	struct radeon_bo *rbo = NULL;
@@ -138,7 +140,8 @@ static int radeonfb_create_pinned_object(struct radeon_fbdev *rfbdev,
 	int height = mode_cmd->height;
 	u32 cpp;
 
-	cpp = drm_format_plane_cpp(mode_cmd->pixel_format, 0);
+	info = drm_get_format_info(rdev->ddev, mode_cmd);
+	cpp = info->cpp[0];
 
 	/* need to align pitch with crtc limits */
 	mode_cmd->pitches[0] = radeon_align_pitch(rdev, mode_cmd->width, cpp,
@@ -248,7 +251,8 @@ static int radeonfb_create(struct drm_fb_helper *helper,
 		goto out;
 	}
 
-	info->par = rfbdev;
+	/* radeon resume is fragile and needs a vt switch to help it along */
+	info->skip_vt_switch = false;
 
 	ret = radeon_framebuffer_init(rdev->ddev, &rfbdev->fb, &mode_cmd, gobj);
 	if (ret) {
@@ -264,10 +268,6 @@ static int radeonfb_create(struct drm_fb_helper *helper,
 	memset_io(rbo->kptr, 0x0, radeon_bo_size(rbo));
 
 #ifdef __linux__
-	strcpy(info->fix.id, "radeondrmfb");
-
-	drm_fb_helper_fill_fix(info, fb->pitches[0], fb->format->depth);
-
 	info->fbops = &radeonfb_ops;
 #endif
 
@@ -277,9 +277,11 @@ static int radeonfb_create(struct drm_fb_helper *helper,
 	info->fix.smem_len = radeon_bo_size(rbo);
 	info->screen_base = rbo->kptr;
 	info->screen_size = radeon_bo_size(rbo);
+#endif
 
-	drm_fb_helper_fill_var(info, &rfbdev->helper, sizes->fb_width, sizes->fb_height);
+	drm_fb_helper_fill_info(info, &rfbdev->helper, sizes);
 
+#ifdef __linux__
 	/* setup aperture base/size for vesafb takeover */
 	info->apertures->ranges[0].base = rdev->ddev->mode_config.fb_base;
 	info->apertures->ranges[0].size = rdev->mc.aper_size;
@@ -325,9 +327,7 @@ static int radeonfb_create(struct drm_fb_helper *helper,
 		break;
 	}
 
-#ifdef __linux__
 	vga_switcheroo_client_fb_set(rdev->ddev->pdev, info);
-#endif
 	return 0;
 
 out:
@@ -393,29 +393,21 @@ int radeon_fbdev_init(struct radeon_device *rdev)
 	drm_fb_helper_prepare(rdev->ddev, &rfbdev->helper,
 			      &radeon_fb_helper_funcs);
 
-	ret = drm_fb_helper_init(rdev->ddev, &rfbdev->helper,
-				 RADEONFB_CONN_LIMIT);
+	ret = drm_fb_helper_init(rdev->ddev, &rfbdev->helper);
 	if (ret)
 		goto free;
 
 	task_set(&rdev->burner_task, radeondrm_burner_cb, rdev);
 
-	ret = drm_fb_helper_single_add_all_connectors(&rfbdev->helper);
-	if (ret)
-		goto fini;
-
 #ifdef __sparc64__
 {
 	struct drm_fb_helper *fb_helper = &rfbdev->helper;
-	struct drm_fb_helper_connector *fb_helper_conn;
-	int i;
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *connector;
+	struct drm_cmdline_mode *mode;
 
-	for (i = 0; i < fb_helper->connector_count; i++) {
-		struct drm_cmdline_mode *mode;
-		struct drm_connector *connector;
-
-		fb_helper_conn = fb_helper->connector_info[i];
-		connector = fb_helper_conn->connector;
+	drm_connector_list_iter_begin(fb_helper->dev, &conn_iter);
+	drm_client_for_each_connector_iter(connector, &conn_iter) {
 		mode = &connector->cmdline_mode;
 
 		mode->specified = true;
@@ -424,6 +416,7 @@ int radeon_fbdev_init(struct radeon_device *rdev)
 		mode->bpp_specified = true;
 		mode->bpp = rdev->sf.sf_depth;
 	}
+	drm_connector_list_iter_end(&conn_iter);
 }
 #endif
 
@@ -459,10 +452,8 @@ void radeon_fbdev_fini(struct radeon_device *rdev)
 
 void radeon_fbdev_set_suspend(struct radeon_device *rdev, int state)
 {
-#ifdef __linux__
 	if (rdev->mode_info.rfbdev)
 		drm_fb_helper_set_suspend(&rdev->mode_info.rfbdev->helper, state);
-#endif
 }
 
 bool radeon_fbdev_robj_is_fb(struct radeon_device *rdev, struct radeon_bo *robj)
@@ -473,18 +464,6 @@ bool radeon_fbdev_robj_is_fb(struct radeon_device *rdev, struct radeon_bo *robj)
 	if (robj == gem_to_radeon_bo(rdev->mode_info.rfbdev->fb.obj[0]))
 		return true;
 	return false;
-}
-
-void radeon_fb_add_connector(struct radeon_device *rdev, struct drm_connector *connector)
-{
-	if (rdev->mode_info.rfbdev)
-		drm_fb_helper_add_one_connector(&rdev->mode_info.rfbdev->helper, connector);
-}
-
-void radeon_fb_remove_connector(struct radeon_device *rdev, struct drm_connector *connector)
-{
-	if (rdev->mode_info.rfbdev)
-		drm_fb_helper_remove_one_connector(&rdev->mode_info.rfbdev->helper, connector);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: list.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
 /* drm_linux_list.h -- linux list functions for the BSDs.
  * Created: Mon Apr 7 14:30:16 1999 by anholt@FreeBSD.org
  */
@@ -36,6 +36,7 @@
 #include <sys/param.h>
 #include <linux/kernel.h>
 #include <linux/types.h>
+#include <linux/poison.h>
 
 #define list_entry(ptr, type, member) container_of(ptr, type, member)
 
@@ -58,6 +59,13 @@ list_empty(const struct list_head *head) {
 static inline int
 list_is_singular(const struct list_head *head) {
 	return !list_empty(head) && ((head)->next == (head)->prev);
+}
+
+static inline int
+list_is_first(const struct list_head *list,
+    const struct list_head *head)
+{
+	return list->prev == head;
 }
 
 static inline int
@@ -121,6 +129,18 @@ static inline void list_move_tail(struct list_head *list,
 }
 
 static inline void
+list_bulk_move_tail(struct list_head *head, struct list_head *first,
+    struct list_head *last)
+{
+	first->prev->next = last->next;
+	last->next->prev = first->prev;
+	head->prev->next = first;
+	first->prev = head->prev;
+	last->next = head;
+	head->prev = last;
+}
+
+static inline void
 list_del_init(struct list_head *entry) {
 	(entry)->next->prev = (entry)->prev;
 	(entry)->prev->next = (entry)->next;
@@ -132,6 +152,9 @@ list_del_init(struct list_head *entry) {
 
 #define list_prev_entry(pos, member)				\
 	list_entry(((pos)->member.prev), typeof(*(pos)), member)
+
+#define list_safe_reset_next(pos, n, member)			\
+	n = list_next_entry(pos, member)
 
 #define list_for_each(entry, head)				\
     for (entry = (head)->next; entry != head; entry = (entry)->next)

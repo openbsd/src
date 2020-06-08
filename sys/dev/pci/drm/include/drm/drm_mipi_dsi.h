@@ -1,7 +1,7 @@
 /* Public domain. */
 
-#ifndef _DEV_PCI_DRM_DRM_MIPI_DSI_H_
-#define _DEV_PCI_DRM_DRM_MIPI_DSI_H_
+#ifndef _DRM_MIPI_DSI_H_
+#define _DRM_MIPI_DSI_H_
 
 #include <sys/types.h>
 #include <linux/errno.h>
@@ -10,6 +10,7 @@
 struct mipi_dsi_host;
 struct mipi_dsi_device;
 struct mipi_dsi_msg;
+struct drm_dsc_picture_parameter_set;
 
 struct mipi_dsi_host_ops {
 	int (*attach)(struct mipi_dsi_host *, struct mipi_dsi_device *);
@@ -33,7 +34,7 @@ struct mipi_dsi_msg {
 	uint8_t channel;
 	uint16_t flags;
 #define MIPI_DSI_MSG_USE_LPM	(1 << 0)
-	const uint8_t *tx_buf;
+	const void *tx_buf;
 	size_t tx_len;
 	uint8_t *rx_buf;
 	size_t rx_len;
@@ -65,6 +66,12 @@ ssize_t mipi_dsi_dcs_write_buffer(struct mipi_dsi_device *, const void *,
     size_t);
 ssize_t mipi_dsi_dcs_read(struct mipi_dsi_device *, u8, void *, size_t);
 ssize_t mipi_dsi_dcs_write(struct mipi_dsi_device *, u8, const void *, size_t);
+int mipi_dsi_dcs_nop(struct mipi_dsi_device *);
+int mipi_dsi_set_maximum_return_packet_size(struct mipi_dsi_device *, u16);
+bool mipi_dsi_packet_format_is_long(u8);
+ssize_t mipi_dsi_compression_mode(struct mipi_dsi_device *, bool);
+ssize_t mipi_dsi_picture_parameter_set(struct mipi_dsi_device *,
+    const struct drm_dsc_picture_parameter_set *);
 
 static inline int
 mipi_dsi_pixel_format_to_bpp(enum mipi_dsi_pixel_format fmt)

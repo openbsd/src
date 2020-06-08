@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: time.h,v 1.2 2020/06/08 04:48:15 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -20,10 +20,14 @@
 
 #include <sys/time.h>
 #include <linux/math64.h>
+#include <linux/seqlock.h>
 
 #define NSEC_PER_USEC	1000L
 #define NSEC_PER_MSEC	1000000L
 #define NSEC_PER_SEC	1000000000L
+
+#define USEC_PER_MSEC	1000L
+#define USEC_PER_SEC	1000000L
 
 extern struct timespec ns_to_timespec(const int64_t);
 extern int64_t timeval_to_ms(const struct timeval *);

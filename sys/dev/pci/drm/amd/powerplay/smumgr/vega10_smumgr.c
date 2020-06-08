@@ -21,6 +21,8 @@
  *
  */
 
+#include <linux/pci.h>
+
 #include "smumgr.h"
 #include "vega10_inc.h"
 #include "soc15_common.h"
@@ -37,6 +39,7 @@ static int vega10_copy_table_from_smc(struct pp_hwmgr *hwmgr,
 		uint8_t *table, int16_t table_id)
 {
 	struct vega10_smumgr *priv = hwmgr->smu_backend;
+	struct amdgpu_device *adev = hwmgr->adev;
 
 	PP_ASSERT_WITH_CODE(table_id < MAX_SMU_TABLE,
 			"Invalid SMU Table ID!", return -EINVAL);
@@ -54,6 +57,9 @@ static int vega10_copy_table_from_smc(struct pp_hwmgr *hwmgr,
 			PPSMC_MSG_TransferTableSmu2Dram,
 			priv->smu_tables.entry[table_id].table_id);
 
+	/* flush hdp cache */
+	amdgpu_asic_flush_hdp(adev, NULL);
+
 	memcpy(table, priv->smu_tables.entry[table_id].table,
 			priv->smu_tables.entry[table_id].size);
 
@@ -64,6 +70,13 @@ static int vega10_copy_table_to_smc(struct pp_hwmgr *hwmgr,
 		uint8_t *table, int16_t table_id)
 {
 	struct vega10_smumgr *priv = hwmgr->smu_backend;
+	struct amdgpu_device *adev = hwmgr->adev;
+
+	/* under sriov, vbios or hypervisor driver
+	 * has already copy table to smc so here only skip it
+	 */
+	if (!hwmgr->not_vf)
+		return 0;
 
 	PP_ASSERT_WITH_CODE(table_id < MAX_SMU_TABLE,
 			"Invalid SMU Table ID!", return -EINVAL);
@@ -74,6 +87,8 @@ static int vega10_copy_table_to_smc(struct pp_hwmgr *hwmgr,
 
 	memcpy(priv->smu_tables.entry[table_id].table, table,
 			priv->smu_tables.entry[table_id].size);
+
+	amdgpu_asic_flush_hdp(adev, NULL);
 
 	smu9_send_msg_to_smc_with_parameter(hwmgr,
 			PPSMC_MSG_SetDriverDramAddrHigh,
@@ -88,8 +103,26 @@ static int vega10_copy_table_to_smc(struct pp_hwmgr *hwmgr,
 	return 0;
 }
 
-static int vega10_get_smc_features(struct pp_hwmgr *hwmgr,
-		uint32_t *features_enabled)
+int vega10_enable_smc_features(struct pp_hwmgr *hwmgr,
+			       bool enable, uint32_t feature_mask)
+{
+	int msg = enable ? PPSMC_MSG_EnableSmuFeatures :
+			PPSMC_MSG_DisableSmuFeatures;
+
+	/* VF has no permission to change smu feature due
+	 * to security concern even under pp one vf mode
+	 * it still can't do it. For vega10, the smu in
+	 * vbios will enable the appropriate features.
+	 * */
+	if (!hwmgr->not_vf)
+		return 0;
+
+	return smum_send_msg_to_smc_with_parameter(hwmgr,
+			msg, feature_mask);
+}
+
+int vega10_get_enabled_smc_features(struct pp_hwmgr *hwmgr,
+			    uint64_t *features_enabled)
 {
 	if (features_enabled == NULL)
 		return -EINVAL;
@@ -102,9 +135,9 @@ static int vega10_get_smc_features(struct pp_hwmgr *hwmgr,
 
 static bool vega10_is_dpm_running(struct pp_hwmgr *hwmgr)
 {
-	uint32_t features_enabled = 0;
+	uint64_t features_enabled = 0;
 
-	vega10_get_smc_features(hwmgr, &features_enabled);
+	vega10_get_enabled_smc_features(hwmgr, &features_enabled);
 
 	if (features_enabled & SMC_DPM_FEATURES)
 		return true;
@@ -336,6 +369,7 @@ static int vega10_smc_table_manager(struct pp_hwmgr *hwmgr, uint8_t *table,
 }
 
 const struct pp_smumgr_func vega10_smu_funcs = {
+	.name = "vega10_smu",
 	.smu_init = &vega10_smu_init,
 	.smu_fini = &vega10_smu_fini,
 	.start_smu = &vega10_start_smu,

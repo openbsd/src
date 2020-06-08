@@ -55,7 +55,7 @@ struct ww_acquire_ctx {
 struct ww_mutex {
 	struct mutex			base;
 	volatile int			acquired;
-	volatile struct ww_acquire_ctx	*ctx;
+	struct ww_acquire_ctx		*ctx;
 	volatile struct proc		*owner;
 };
 

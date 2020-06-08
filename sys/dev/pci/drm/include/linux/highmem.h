@@ -1,4 +1,4 @@
-/*	$OpenBSD: highmem.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: highmem.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -18,6 +18,7 @@
 #ifndef _LINUX_HIGHMEM_H
 #define _LINUX_HIGHMEM_H
 
+#include <sys/param.h>
 #include <uvm/uvm_extern.h>
 #include <linux/uaccess.h>
 

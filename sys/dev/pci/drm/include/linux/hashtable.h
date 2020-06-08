@@ -1,4 +1,4 @@
-/*	$OpenBSD: hashtable.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: hashtable.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -19,6 +19,7 @@
 #define _LINUX_HASHTABLE_H
 
 #include <linux/list.h>
+#include <linux/hash.h>
 
 #define DECLARE_HASHTABLE(name, bits) struct hlist_head name[1 << (bits)]
 

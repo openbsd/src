@@ -24,7 +24,7 @@
 #include <linux/firmware.h>
 #include <linux/slab.h>
 #include <linux/module.h>
-#include <drm/drmP.h>
+
 #include "radeon.h"
 #include "radeon_ucode.h"
 
@@ -52,10 +52,8 @@ void radeon_ucode_print_mc_hdr(const struct common_firmware_header *hdr)
 	radeon_ucode_print_common_hdr(hdr);
 
 	if (version_major == 1) {
-#ifdef DRMDEBUG
 		const struct mc_firmware_header_v1_0 *mc_hdr =
 			container_of(hdr, struct mc_firmware_header_v1_0, header);
-#endif
 
 		DRM_DEBUG("io_debug_size_bytes: %u\n",
 			  le32_to_cpu(mc_hdr->io_debug_size_bytes));
@@ -75,10 +73,8 @@ void radeon_ucode_print_smc_hdr(const struct common_firmware_header *hdr)
 	radeon_ucode_print_common_hdr(hdr);
 
 	if (version_major == 1) {
-#ifdef DRMDEBUG
 		const struct smc_firmware_header_v1_0 *smc_hdr =
 			container_of(hdr, struct smc_firmware_header_v1_0, header);
-#endif
 
 		DRM_DEBUG("ucode_start_addr: %u\n", le32_to_cpu(smc_hdr->ucode_start_addr));
 	} else {
@@ -95,10 +91,8 @@ void radeon_ucode_print_gfx_hdr(const struct common_firmware_header *hdr)
 	radeon_ucode_print_common_hdr(hdr);
 
 	if (version_major == 1) {
-#ifdef DRMDEBUG
 		const struct gfx_firmware_header_v1_0 *gfx_hdr =
 			container_of(hdr, struct gfx_firmware_header_v1_0, header);
-#endif
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(gfx_hdr->ucode_feature_version));
@@ -118,10 +112,8 @@ void radeon_ucode_print_rlc_hdr(const struct common_firmware_header *hdr)
 	radeon_ucode_print_common_hdr(hdr);
 
 	if (version_major == 1) {
-#ifdef DRMDEBUG
 		const struct rlc_firmware_header_v1_0 *rlc_hdr =
 			container_of(hdr, struct rlc_firmware_header_v1_0, header);
-#endif
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(rlc_hdr->ucode_feature_version));
@@ -147,10 +139,8 @@ void radeon_ucode_print_sdma_hdr(const struct common_firmware_header *hdr)
 	radeon_ucode_print_common_hdr(hdr);
 
 	if (version_major == 1) {
-#ifdef DRMDEBUG
 		const struct sdma_firmware_header_v1_0 *sdma_hdr =
 			container_of(hdr, struct sdma_firmware_header_v1_0, header);
-#endif
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(sdma_hdr->ucode_feature_version));

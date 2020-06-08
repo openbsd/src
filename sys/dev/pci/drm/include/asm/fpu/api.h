@@ -3,6 +3,8 @@
 #ifndef _ASM_FPU_API_H
 #define _ASM_FPU_API_H
 
+#include <linux/bottom_half.h>
+
 #ifdef __i386__
 #include <machine/npx.h>
 #endif

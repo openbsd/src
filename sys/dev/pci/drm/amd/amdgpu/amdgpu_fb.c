@@ -23,20 +23,21 @@
  * Authors:
  *     David Airlie
  */
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/pm_runtime.h>
 
-#include <drm/drmP.h>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
+#include <linux/slab.h>
+#include <linux/vga_switcheroo.h>
+
+#include <drm/amdgpu_drm.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
-#include <drm/amdgpu_drm.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
+
 #include "amdgpu.h"
 #include "cikd.h"
-
-#include <drm/drm_fb_helper.h>
-
-#include <linux/vga_switcheroo.h>
+#include "amdgpu_gem.h"
 
 #include "amdgpu_display.h"
 
@@ -48,12 +49,11 @@
 static int
 amdgpufb_open(struct fb_info *info, int user)
 {
-	struct amdgpu_fbdev *rfbdev = info->par;
-	struct amdgpu_device *adev = rfbdev->adev;
-	int ret = pm_runtime_get_sync(adev->ddev->dev);
+	struct drm_fb_helper *fb_helper = info->par;
+	int ret = pm_runtime_get_sync(fb_helper->dev->dev);
 	if (ret < 0 && ret != -EACCES) {
-		pm_runtime_mark_last_busy(adev->ddev->dev);
-		pm_runtime_put_autosuspend(adev->ddev->dev);
+		pm_runtime_mark_last_busy(fb_helper->dev->dev);
+		pm_runtime_put_autosuspend(fb_helper->dev->dev);
 		return ret;
 	}
 	return 0;
@@ -62,16 +62,15 @@ amdgpufb_open(struct fb_info *info, int user)
 static int
 amdgpufb_release(struct fb_info *info, int user)
 {
-	struct amdgpu_fbdev *rfbdev = info->par;
-	struct amdgpu_device *adev = rfbdev->adev;
+	struct drm_fb_helper *fb_helper = info->par;
 
-	pm_runtime_mark_last_busy(adev->ddev->dev);
-	pm_runtime_put_autosuspend(adev->ddev->dev);
+	pm_runtime_mark_last_busy(fb_helper->dev->dev);
+	pm_runtime_put_autosuspend(fb_helper->dev->dev);
 	return 0;
 }
 
-#ifdef notyet
-static struct fb_ops amdgpufb_ops = {
+#ifdef __linux__
+static const struct fb_ops amdgpufb_ops = {
 	.owner = THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
 	.fb_open = amdgpufb_open,
@@ -125,6 +124,7 @@ static int amdgpufb_create_pinned_object(struct amdgpu_fbdev *rfbdev,
 					 struct drm_mode_fb_cmd2 *mode_cmd,
 					 struct drm_gem_object **gobj_p)
 {
+	const struct drm_format_info *info;
 	struct amdgpu_device *adev = rfbdev->adev;
 	struct drm_gem_object *gobj = NULL;
 	struct amdgpu_bo *abo = NULL;
@@ -134,21 +134,21 @@ static int amdgpufb_create_pinned_object(struct amdgpu_fbdev *rfbdev,
 	int aligned_size, size;
 	int height = mode_cmd->height;
 	u32 cpp;
+	u64 flags = AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED |
+			       AMDGPU_GEM_CREATE_VRAM_CONTIGUOUS     |
+			       AMDGPU_GEM_CREATE_VRAM_CLEARED;
 
-	cpp = drm_format_plane_cpp(mode_cmd->pixel_format, 0);
+	info = drm_get_format_info(adev->ddev, mode_cmd);
+	cpp = info->cpp[0];
 
 	/* need to align pitch with crtc limits */
 	mode_cmd->pitches[0] = amdgpu_align_pitch(adev, mode_cmd->width, cpp,
 						  fb_tiled);
-	domain = amdgpu_display_supported_domains(adev);
-
+	domain = amdgpu_display_supported_domains(adev, flags);
 	height = roundup2(mode_cmd->height, 8);
 	size = mode_cmd->pitches[0] * height;
 	aligned_size = roundup2(size, PAGE_SIZE);
-	ret = amdgpu_gem_object_create(adev, aligned_size, 0, domain,
-				       AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED |
-				       AMDGPU_GEM_CREATE_VRAM_CONTIGUOUS |
-				       AMDGPU_GEM_CREATE_VRAM_CLEARED,
+	ret = amdgpu_gem_object_create(adev, aligned_size, 0, domain, flags,
 				       ttm_bo_type_kernel, NULL, &gobj);
 	if (ret) {
 		pr_err("failed to allocate framebuffer (%d)\n", aligned_size);
@@ -169,7 +169,6 @@ static int amdgpufb_create_pinned_object(struct amdgpu_fbdev *rfbdev,
 		if (ret)
 			dev_err(adev->dev, "FB failed to set tiling flags\n");
 	}
-
 
 	ret = amdgpu_bo_pin(abo, domain);
 	if (ret) {
@@ -236,9 +235,6 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 		goto out;
 	}
 
-	info->par = rfbdev;
-	info->skip_vt_switch = true;
-
 	ret = amdgpu_display_framebuffer_init(adev->ddev, &rfbdev->rfb,
 					      &mode_cmd, gobj);
 	if (ret) {
@@ -252,10 +248,6 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 	rfbdev->helper.fb = fb;
 
 #ifdef __linux__
-	strcpy(info->fix.id, "amdgpudrmfb");
-
-	drm_fb_helper_fill_fix(info, fb->pitches[0], fb->format->depth);
-
 	info->fbops = &amdgpufb_ops;
 #endif
 
@@ -265,9 +257,11 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 	info->fix.smem_len = amdgpu_bo_size(abo);
 	info->screen_base = amdgpu_bo_kptr(abo);
 	info->screen_size = amdgpu_bo_size(abo);
+#endif
 
-	drm_fb_helper_fill_var(info, &rfbdev->helper, sizes->fb_width, sizes->fb_height);
+	drm_fb_helper_fill_info(info, &rfbdev->helper, sizes);
 
+#ifdef __linux__
 	/* setup aperture base/size for vesafb takeover */
 	info->apertures->ranges[0].base = adev->ddev->mode_config.fb_base;
 	info->apertures->ranges[0].size = adev->gmc.aper_size;
@@ -378,16 +372,13 @@ int amdgpu_fbdev_init(struct amdgpu_device *adev)
 	drm_fb_helper_prepare(adev->ddev, &rfbdev->helper,
 			&amdgpu_fb_helper_funcs);
 
-	ret = drm_fb_helper_init(adev->ddev, &rfbdev->helper,
-				 AMDGPUFB_CONN_LIMIT);
+	ret = drm_fb_helper_init(adev->ddev, &rfbdev->helper);
 	if (ret) {
 		kfree(rfbdev);
 		return ret;
 	}
 
 	task_set(&adev->burner_task, amdgpu_burner_cb, adev);
-
-	drm_fb_helper_single_add_all_connectors(&rfbdev->helper);
 
 	/* disable all the possible outputs/crtcs before entering KMS mode */
 	if (!amdgpu_device_has_dc_support(adev))

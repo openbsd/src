@@ -3,6 +3,8 @@
 #ifndef _LINUX_PREEMPT_H
 #define _LINUX_PREEMPT_H
 
+#include <asm/preempt.h>
+
 #define preempt_enable()
 #define preempt_disable()
 
@@ -19,5 +21,6 @@ in_irq(void)
 
 #define in_interrupt()	in_irq()
 #define in_task()	(!in_irq())
+#define in_atomic()	0
 
 #endif

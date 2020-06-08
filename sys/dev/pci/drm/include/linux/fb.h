@@ -8,6 +8,14 @@
 #include <linux/notifier.h>
 #include <linux/backlight.h>
 #include <linux/kgdb.h>
+#include <linux/fs.h>
+
+struct fb_cmap;
+struct fb_fillrect;
+struct fb_copyarea;
+struct fb_image;
+
+struct apertures_struct;
 
 struct fb_var_screeninfo {
 	int pixclock;
@@ -21,7 +29,10 @@ struct fb_info {
 	void *par;
 	int fbcon_rotate_hint;
 	bool skip_vt_switch;
+	int flags;
 };
+
+#define KHZ2PICOS(a)	(1000000000UL/(a))
 
 #define FB_BLANK_UNBLANK	0
 #define FB_BLANK_NORMAL		1
@@ -32,14 +43,45 @@ struct fb_info {
 #define FBINFO_STATE_RUNNING	0
 #define FBINFO_STATE_SUSPENDED	1
 
+#define FBINFO_HIDE_SMEM_START	0
+
 #define FB_ROTATE_UR		0
 #define FB_ROTATE_CW		1
 #define FB_ROTATE_UD		2
 #define FB_ROTATE_CCW		3
 
-#define framebuffer_alloc(flags, device) \
-	kzalloc(sizeof(struct fb_info), GFP_KERNEL)
+static inline struct fb_info *
+framebuffer_alloc(size_t size, void *dev)
+{
+	return kzalloc(sizeof(struct fb_info) + size, GFP_KERNEL);
+}
 
-#define fb_set_suspend(x, y)
+static inline void
+fb_set_suspend(struct fb_info *fbi, int s)
+{
+}
+
+static inline void
+framebuffer_release(struct fb_info *fbi)
+{
+	kfree(fbi);
+}
+
+static inline int
+fb_get_options(const char *name, char **opt)
+{
+	return 0;
+}
+
+static inline int
+register_framebuffer(struct fb_info *fbi)
+{
+	return 0;
+}
+
+static inline void
+unregister_framebuffer(struct fb_info *fbi)
+{
+}
 
 #endif

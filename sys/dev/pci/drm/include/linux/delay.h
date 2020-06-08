@@ -31,4 +31,6 @@ mdelay(unsigned long msecs)
 		DELAY(1000);
 }
 
+#define drm_msleep(x)		mdelay(x)
+
 #endif

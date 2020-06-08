@@ -24,16 +24,22 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
-#include <drm/drmP.h>
+
+#include <linux/pci.h>
+
+#include <drm/drm_device.h>
 #include <drm/radeon_drm.h>
+
 #include "radeon.h"
 #include "atom.h"
 
-#ifdef CONFIG_PPC_PMAC
+#if defined(CONFIG_PPC_PMAC) && defined(__linux__)
 /* not sure which of these are needed */
 #include <asm/machdep.h>
 #include <asm/pmac_feature.h>
 #include <asm/prom.h>
+#elif defined(CONFIG_PPC_PMAC)
+#include <linux/of.h>
 #endif /* CONFIG_PPC_PMAC */
 
 /* from radeon_legacy_encoder.c */
@@ -1463,7 +1469,7 @@ bool radeon_get_legacy_connector_info_from_table(struct drm_device *dev)
 
 	rdev->mode_info.connector_table = radeon_connector_table;
 	if (rdev->mode_info.connector_table == CT_NONE) {
-#ifdef __macppc__
+#ifdef CONFIG_PPC_PMAC
 		if (of_machine_is_compatible("PowerBook3,3")) {
 			/* powerbook with VGA */
 			rdev->mode_info.connector_table = CT_POWERBOOK_VGA;
@@ -1529,7 +1535,7 @@ bool radeon_get_legacy_connector_info_from_table(struct drm_device *dev)
 			/* SAM440ep RV250 embedded board */
 			rdev->mode_info.connector_table = CT_SAM440EP;
 		} else
-#endif /* __macppc__ */
+#endif /* CONFIG_PPC_PMAC */
 #ifdef CONFIG_PPC64
 		if (ASIC_IS_RN50(rdev))
 			rdev->mode_info.connector_table = CT_RN50_POWER;
@@ -2632,19 +2638,17 @@ bool radeon_get_legacy_connector_info_from_bios(struct drm_device *dev)
 	return true;
 }
 
-#ifdef DRMDEBUG
 static const char *thermal_controller_names[] = {
 	"NONE",
 	"lm63",
 	"adm1032",
 };
-#endif
 
 void radeon_combios_get_power_modes(struct radeon_device *rdev)
 {
 	struct drm_device *dev = rdev->ddev;
 	u16 offset, misc, misc2 = 0;
-	u8 rev, blocks, tmp;
+	u8 rev, tmp;
 	int state_index = 0;
 	struct radeon_i2c_bus_rec i2c_bus;
 
@@ -2741,7 +2745,6 @@ void radeon_combios_get_power_modes(struct radeon_device *rdev)
 		offset = combios_get_table_offset(dev, COMBIOS_POWERPLAY_INFO_TABLE);
 		if (offset) {
 			rev = RBIOS8(offset);
-			blocks = RBIOS8(offset + 0x2);
 			/* power mode 0 tends to be the only valid one */
 			rdev->pm.power_state[state_index].num_clock_modes = 1;
 			rdev->pm.power_state[state_index].clock_info[0].mclk = RBIOS32(offset + 0x5 + 0x2);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: completion.h,v 1.3 2019/12/30 09:30:31 mpi Exp $	*/
+/*	$OpenBSD: completion.h,v 1.4 2020/06/08 04:48:14 jsg Exp $	*/
 /*
  * Copyright (c) 2015, 2018 Mark Kettenis
  *
@@ -35,6 +35,12 @@ init_completion(struct completion *x)
 	mtx_init(&x->wait.lock, IPL_TTY);
 }
 
+static inline void
+reinit_completion(struct completion *x)
+{
+	x->done = 0;
+}
+
 static inline u_long
 wait_for_completion_timeout(struct completion *x, u_long timo)
 {
@@ -54,6 +60,27 @@ wait_for_completion_timeout(struct completion *x, u_long timo)
 	mtx_leave(&x->wait.lock);
 
 	return 1;
+}
+
+static inline u_long
+wait_for_completion(struct completion *x)
+{
+	int ret;
+
+	KASSERT(!cold);
+
+	mtx_enter(&x->wait.lock);
+	while (x->done == 0) {
+		ret = msleep_nsec(x, &x->wait.lock, 0, "wfci", INFSLP);
+		if (ret) {
+			mtx_leave(&x->wait.lock);
+			return (ret == EWOULDBLOCK) ? 0 : -ret;
+		}
+	}
+	x->done--;
+	mtx_leave(&x->wait.lock);
+
+	return 0;
 }
 
 static inline u_long
@@ -96,6 +123,16 @@ wait_for_completion_interruptible_timeout(struct completion *x, u_long timo)
 	mtx_leave(&x->wait.lock);
 
 	return 1;
+}
+
+static inline void
+complete(struct completion *x)
+{
+	mtx_enter(&x->wait.lock);
+	if (x->done != UINT_MAX)
+		x->done++;
+	mtx_leave(&x->wait.lock);
+	wakeup(x);
 }
 
 static inline void

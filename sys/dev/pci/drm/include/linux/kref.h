@@ -1,4 +1,4 @@
-/*	$OpenBSD: kref.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: kref.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -86,6 +86,23 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *kref),
 			return 1;
 		}
 		rw_exit_write(lock);
+		return 0;
+	}
+
+	return 0;
+}
+
+static inline int
+kref_put_lock(struct kref *kref, void (*release)(struct kref *kref),
+    struct mutex *lock)
+{
+	if (!atomic_add_unless(&kref->refcount, -1, 1)) {
+		mtx_enter(lock);
+		if (likely(atomic_dec_and_test(&kref->refcount))) {
+			release(kref);
+			return 1;
+		}
+		mtx_leave(lock);
 		return 0;
 	}
 

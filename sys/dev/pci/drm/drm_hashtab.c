@@ -32,22 +32,18 @@
  * Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
-#include <drm/drmP.h>
-#include <drm/drm_hashtab.h>
-#include <linux/hash.h>
-#include <linux/slab.h>
 #include <linux/export.h>
+#include <linux/hash.h>
+#include <linux/mm.h>
+#include <linux/rculist.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
 
-struct hlist_node *
-	 drm_ht_find_key(struct drm_open_hash *, unsigned long);
-struct hlist_node *
-	 drm_ht_find_key_rcu(struct drm_open_hash *, unsigned long);
+#include <drm/drm_hashtab.h>
+#include <drm/drm_print.h>
 
 int drm_ht_create(struct drm_open_hash *ht, unsigned int order)
 {
-	printf("%s stub\n", __func__);
-	return -ENOSYS;
-#ifdef notyet
 	unsigned int size = 1 << order;
 
 	ht->order = order;
@@ -55,20 +51,17 @@ int drm_ht_create(struct drm_open_hash *ht, unsigned int order)
 	if (size <= PAGE_SIZE / sizeof(*ht->table))
 		ht->table = kcalloc(size, sizeof(*ht->table), GFP_KERNEL);
 	else
-		ht->table = vzalloc(size*sizeof(*ht->table));
+		ht->table = vzalloc(array_size(size, sizeof(*ht->table)));
 	if (!ht->table) {
 		DRM_ERROR("Out of memory for hash table\n");
 		return -ENOMEM;
 	}
 	return 0;
-#endif
 }
 EXPORT_SYMBOL(drm_ht_create);
 
 void drm_ht_verbose_list(struct drm_open_hash *ht, unsigned long key)
 {
-	printf("%s stub\n", __func__);
-#ifdef notyet
 	struct drm_hash_item *entry;
 	struct hlist_head *h_list;
 	unsigned int hashed_key;
@@ -79,16 +72,12 @@ void drm_ht_verbose_list(struct drm_open_hash *ht, unsigned long key)
 	h_list = &ht->table[hashed_key];
 	hlist_for_each_entry(entry, h_list, head)
 		DRM_DEBUG("count %d, key: 0x%08lx\n", count++, entry->key);
-#endif
 }
 
-struct hlist_node *
-drm_ht_find_key(struct drm_open_hash *ht,
+#ifdef notyet
+static struct hlist_node *drm_ht_find_key(struct drm_open_hash *ht,
 					  unsigned long key)
 {
-	printf("%s stub\n", __func__);
-	return NULL;
-#ifdef notyet
 	struct drm_hash_item *entry;
 	struct hlist_head *h_list;
 	unsigned int hashed_key;
@@ -102,14 +91,13 @@ drm_ht_find_key(struct drm_open_hash *ht,
 			break;
 	}
 	return NULL;
-#endif
 }
+#endif
 
-struct hlist_node *
-drm_ht_find_key_rcu(struct drm_open_hash *ht,
+static struct hlist_node *drm_ht_find_key_rcu(struct drm_open_hash *ht,
 					      unsigned long key)
 {
-	printf("%s stub\n", __func__);
+	STUB();
 	return NULL;
 #ifdef notyet
 	struct drm_hash_item *entry;
@@ -130,7 +118,7 @@ drm_ht_find_key_rcu(struct drm_open_hash *ht,
 
 int drm_ht_insert_item(struct drm_open_hash *ht, struct drm_hash_item *item)
 {
-	printf("%s stub\n", __func__);
+	STUB();
 	return -ENOSYS;
 #ifdef notyet
 	struct drm_hash_item *entry;
@@ -150,7 +138,7 @@ int drm_ht_insert_item(struct drm_open_hash *ht, struct drm_hash_item *item)
 		parent = &entry->head;
 	}
 	if (parent) {
-		hlist_add_after_rcu(parent, &item->head);
+		hlist_add_behind_rcu(&item->head, parent);
 	} else {
 		hlist_add_head_rcu(&item->head, h_list);
 	}
@@ -167,11 +155,8 @@ int drm_ht_just_insert_please(struct drm_open_hash *ht, struct drm_hash_item *it
 			      unsigned long seed, int bits, int shift,
 			      unsigned long add)
 {
-	printf("%s stub\n", __func__);
-	return -ENOSYS;
-#ifdef notyet
 	int ret;
-	unsigned long mask = (1 << bits) - 1;
+	unsigned long mask = (1UL << bits) - 1;
 	unsigned long first, unshifted_key;
 
 	unshifted_key = hash_long(seed, bits);
@@ -188,16 +173,12 @@ int drm_ht_just_insert_please(struct drm_open_hash *ht, struct drm_hash_item *it
 		return -EINVAL;
 	}
 	return 0;
-#endif
 }
 EXPORT_SYMBOL(drm_ht_just_insert_please);
 
 int drm_ht_find_item(struct drm_open_hash *ht, unsigned long key,
 		     struct drm_hash_item **item)
 {
-	printf("%s stub\n", __func__);
-	return -ENOSYS;
-#ifdef notyet
 	struct hlist_node *list;
 
 	list = drm_ht_find_key_rcu(ht, key);
@@ -206,13 +187,12 @@ int drm_ht_find_item(struct drm_open_hash *ht, unsigned long key,
 
 	*item = hlist_entry(list, struct drm_hash_item, head);
 	return 0;
-#endif
 }
 EXPORT_SYMBOL(drm_ht_find_item);
 
 int drm_ht_remove_key(struct drm_open_hash *ht, unsigned long key)
 {
-	printf("%s stub\n", __func__);
+	STUB();
 	return -ENOSYS;
 #ifdef notyet
 	struct hlist_node *list;
@@ -228,7 +208,7 @@ int drm_ht_remove_key(struct drm_open_hash *ht, unsigned long key)
 
 int drm_ht_remove_item(struct drm_open_hash *ht, struct drm_hash_item *item)
 {
-	printf("%s stub\n", __func__);
+	STUB();
 	return -ENOSYS;
 #ifdef notyet
 	hlist_del_init_rcu(&item->head);
@@ -239,15 +219,9 @@ EXPORT_SYMBOL(drm_ht_remove_item);
 
 void drm_ht_remove(struct drm_open_hash *ht)
 {
-	printf("%s stub\n", __func__);
-#ifdef notyet
 	if (ht->table) {
-		if ((PAGE_SIZE / sizeof(*ht->table)) >> ht->order)
-			kfree(ht->table);
-		else
-			vfree(ht->table);
+		kvfree(ht->table);
 		ht->table = NULL;
 	}
-#endif
 }
 EXPORT_SYMBOL(drm_ht_remove);

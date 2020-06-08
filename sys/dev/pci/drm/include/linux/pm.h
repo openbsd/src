@@ -8,4 +8,7 @@
 struct dev_pm_domain {
 };
 
+typedef struct {
+} pm_message_t;
+
 #endif

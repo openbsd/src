@@ -23,6 +23,7 @@
 #include "pp_debug.h"
 #include <linux/types.h>
 #include <linux/kernel.h>
+#include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/gfp.h>
 
@@ -192,6 +193,7 @@ static int tonga_start_in_non_protection_mode(struct pp_hwmgr *hwmgr)
 
 static int tonga_start_smu(struct pp_hwmgr *hwmgr)
 {
+	struct tonga_smumgr *priv = hwmgr->smu_backend;
 	int result;
 
 	/* Only start SMC if SMC RAM is not running */
@@ -208,6 +210,14 @@ static int tonga_start_smu(struct pp_hwmgr *hwmgr)
 				return result;
 		}
 	}
+
+	/* Setup SoftRegsStart here to visit the register UcodeLoadStatus
+	 * to check fw loading state
+	 */
+	smu7_read_smc_sram_dword(hwmgr,
+			SMU72_FIRMWARE_HEADER_LOCATION +
+			offsetof(SMU72_Firmware_Header, SoftRegisters),
+			&(priv->smu7_data.soft_regs_start), 0x40000);
 
 	result = smu7_request_smu_load_fw(hwmgr);
 
@@ -1004,6 +1014,7 @@ static int tonga_populate_single_memory_level(
 	memory_level->DisplayWatermark = PPSMC_DISPLAY_WATERMARK_LOW;
 
 	data->display_timing.num_existing_displays = hwmgr->display_config->num_display;
+	data->display_timing.vrefresh = hwmgr->display_config->vrefresh;
 
 	if ((mclk_stutter_mode_threshold != 0) &&
 	    (memory_clock <= mclk_stutter_mode_threshold) &&
@@ -2601,6 +2612,8 @@ static uint32_t tonga_get_offsetof(uint32_t type, uint32_t member)
 			return offsetof(SMU72_SoftRegisters, VoltageChangeTimeout);
 		case AverageGraphicsActivity:
 			return offsetof(SMU72_SoftRegisters, AverageGraphicsActivity);
+		case AverageMemoryActivity:
+			return offsetof(SMU72_SoftRegisters, AverageMemoryActivity);
 		case PreVBlankGap:
 			return offsetof(SMU72_SoftRegisters, PreVBlankGap);
 		case VBlankTimeout:
@@ -3104,8 +3117,6 @@ static int tonga_initialize_mc_reg_table(struct pp_hwmgr *hwmgr)
 	cgs_write_register(hwmgr->device, mmMC_SEQ_WR_CTL_2_LP,
 			cgs_read_register(hwmgr->device, mmMC_SEQ_WR_CTL_2));
 
-	memset(table, 0x00, sizeof(pp_atomctrl_mc_reg_table));
-
 	result = atomctrl_initialize_mc_reg_table(hwmgr, module_index, table);
 
 	if (!result)
@@ -3228,6 +3239,7 @@ static int tonga_update_dpm_settings(struct pp_hwmgr *hwmgr,
 }
 
 const struct pp_smumgr_func tonga_smu_funcs = {
+	.name = "tonga_smu",
 	.smu_init = &tonga_smu_init,
 	.smu_fini = &smu7_smu_fini,
 	.start_smu = &tonga_start_smu,

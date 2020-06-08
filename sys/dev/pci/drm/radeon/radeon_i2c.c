@@ -23,11 +23,14 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
-#include <linux/export.h>
 
-#include <drm/drmP.h>
+#include <linux/export.h>
+#include <linux/pci.h>
+
+#include <drm/drm_device.h>
 #include <drm/drm_edid.h>
 #include <drm/radeon_drm.h>
+
 #include "radeon.h"
 #include "atom.h"
 
@@ -234,6 +237,8 @@ static void set_data(void *i2c_priv, int data)
 	WREG32(rec->en_data_reg, val);
 }
 
+#ifdef __OpenBSD__
+
 void	radeon_bb_set_bits(void *, uint32_t);
 void	radeon_bb_set_dir(void *, uint32_t);
 uint32_t radeon_bb_read_bits(void *);
@@ -326,6 +331,7 @@ radeon_write_byte(void *cookie, u_int8_t byte, int flags)
 	return (i2c_bitbang_write_byte(cookie, byte, flags, &radeon_bbops));
 }
 
+#endif /* __OpenBSD__ */
 
 /* hw i2c */
 
@@ -1036,10 +1042,8 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 			 "Radeon i2c hw bus %s", name);
 		i2c->adapter.algo = &radeon_i2c_algo;
 		ret = i2c_add_adapter(&i2c->adapter);
-		if (ret) {
-			DRM_ERROR("Failed to register hw i2c %s\n", name);
+		if (ret)
 			goto out_free;
-		}
 	} else if (rec->hw_capable &&
 		   radeon_hw_i2c &&
 		   ASIC_IS_DCE3(rdev)) {
@@ -1048,10 +1052,8 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 			 "Radeon i2c hw bus %s", name);
 		i2c->adapter.algo = &radeon_atom_i2c_algo;
 		ret = i2c_add_adapter(&i2c->adapter);
-		if (ret) {
-			DRM_ERROR("Failed to register hw i2c %s\n", name);
+		if (ret)
 			goto out_free;
-		}
 	} else {
 		/* set the radeon bit adapter */
 		snprintf(i2c->adapter.name, sizeof(i2c->adapter.name),
@@ -1095,9 +1097,8 @@ void radeon_i2c_destroy(struct radeon_i2c_chan *i2c)
 {
 	if (!i2c)
 		return;
+	WARN_ON(i2c->has_aux);
 	i2c_del_adapter(&i2c->adapter);
-	if (i2c->has_aux)
-		drm_dp_aux_unregister(&i2c->aux);
 	kfree(i2c);
 }
 

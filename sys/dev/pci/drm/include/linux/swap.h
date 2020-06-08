@@ -3,6 +3,18 @@
 #ifndef _LINUX_SWAP_H
 #define _LINUX_SWAP_H
 
+/*
+ * normally clock.h would be indirectly included via
+ *
+ * linux/swap.h
+ * linux/memcontrol.h
+ * linux/writeback.h
+ * linux/blk-cgroup.h
+ * linux/blkdev.h
+ * linux/sched/clock.h
+ */
+#include <linux/sched/clock.h>
+
 #include <uvm/uvm_extern.h>
 
 static inline long
