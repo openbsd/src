@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.401 2020/04/14 07:38:21 jca Exp $ */
+/* $OpenBSD: softraid.c,v 1.402 2020/06/08 19:17:12 kn Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3704,11 +3704,17 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 		goto done;
 	}
 
-	if (bb->bb_bootblk_size > SR_BOOT_BLOCKS_SIZE * DEV_BSIZE)
+	if (bb->bb_bootblk_size > SR_BOOT_BLOCKS_SIZE * DEV_BSIZE) {
+		sr_error(sc, "boot block too large (%d > %d)",
+		    bb->bb_bootblk_size, SR_BOOT_BLOCKS_SIZE * DEV_BSIZE);
 		goto done;
+	}
 
-	if (bb->bb_bootldr_size > SR_BOOT_LOADER_SIZE * DEV_BSIZE)
+	if (bb->bb_bootldr_size > SR_BOOT_LOADER_SIZE * DEV_BSIZE) {
+		sr_error(sc, "boot loader too large (%d > %d)",
+		    bb->bb_bootldr_size, SR_BOOT_LOADER_SIZE * DEV_BSIZE);
 		goto done;
+	}
 
 	secsize = sd->sd_meta->ssdi.ssd_secsize;
 
