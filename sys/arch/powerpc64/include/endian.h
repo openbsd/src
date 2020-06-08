@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.1 2020/05/16 17:11:14 kettenis Exp $ */
+/*	$OpenBSD: endian.h,v 1.2 2020/06/08 14:12:00 naddy Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -36,7 +36,7 @@ __mswap16(volatile const __uint16_t *m)
 
 	__asm("lhbrx %0, 0, %1"
 	    : "=r" (v)
-            : "r" (m), "m" (*m));
+	    : "r" (m), "m" (*m));
 
 	return (v);
 }
@@ -48,7 +48,7 @@ __mswap32(volatile const __uint32_t *m)
 
 	__asm("lwbrx %0, 0, %1"
 	    : "=r" (v)
-            : "r" (m), "m" (*m));
+	    : "r" (m), "m" (*m));
 
 	return (v);
 }
@@ -56,11 +56,11 @@ __mswap32(volatile const __uint32_t *m)
 static inline __uint64_t
 __mswap64(volatile const __uint64_t *m)
 {
-	__uint32_t *a = (__uint32_t *)m;
 	__uint64_t v;
 
-	v = (__uint64_t)__mswap32(a + 1) << 32 |
-	    (__uint64_t)__mswap32(a);
+	__asm("ldbrx %0, 0, %1"
+	    : "=r" (v)
+	    : "r" (m), "m" (*m));
 
 	return (v);
 }
@@ -84,10 +84,9 @@ __swapm32(volatile __uint32_t *m, __uint32_t v)
 static inline void
 __swapm64(volatile __uint64_t *m, __uint64_t v)
 {
-	__uint32_t *a = (__uint32_t *)m;
-
-	__swapm32(a + 1, v >> 32);
-	__swapm32(a, v);
+	__asm("stdbrx %1, 0, %2"
+	    : "=m" (*m)
+	    : "r" (v), "r" (m));
 }
 
 #define __HAVE_MD_SWAPIO
