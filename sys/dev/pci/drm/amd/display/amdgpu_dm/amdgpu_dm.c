@@ -655,9 +655,6 @@ static int amdgpu_dm_audio_init(struct amdgpu_device *adev)
 	if (!amdgpu_audio)
 		return 0;
 
-	STUB();
-	return 0;
-#ifdef notyet
 	adev->mode_info.audio.enabled = true;
 
 	adev->mode_info.audio.num_pins = adev->dm.dc->res_pool->audio_count;
@@ -681,7 +678,6 @@ static int amdgpu_dm_audio_init(struct amdgpu_device *adev)
 	adev->dm.audio_registered = true;
 
 	return 0;
-#endif
 }
 
 static void amdgpu_dm_audio_fini(struct amdgpu_device *adev)
@@ -689,8 +685,6 @@ static void amdgpu_dm_audio_fini(struct amdgpu_device *adev)
 	if (!amdgpu_audio)
 		return;
 
-	STUB();
-#ifdef notyet
 	if (!adev->mode_info.audio.enabled)
 		return;
 
@@ -702,7 +696,6 @@ static void amdgpu_dm_audio_fini(struct amdgpu_device *adev)
 	/* TODO: Disable audio? */
 
 	adev->mode_info.audio.enabled = false;
-#endif
 }
 
 void amdgpu_dm_audio_eld_notify(struct amdgpu_device *adev, int pin)
