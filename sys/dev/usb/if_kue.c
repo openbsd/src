@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.89 2018/10/02 19:49:10 stsp Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.90 2020/06/09 07:43:39 gerhard Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -829,6 +829,7 @@ kue_send(struct kue_softc *sc, struct mbuf *m, int idx)
 	if (err != USBD_IN_PROGRESS) {
 		printf("%s: kue_send error=%s\n", sc->kue_dev.dv_xname,
 		       usbd_errstr(err));
+		c->kue_mbuf = NULL;
 		kue_stop(sc);
 		return (EIO);
 	}
@@ -852,17 +853,15 @@ kue_start(struct ifnet *ifp)
 	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
-	m_head = ifq_deq_begin(&ifp->if_snd);
+	m_head = ifq_dequeue(&ifp->if_snd);
 	if (m_head == NULL)
 		return;
 
 	if (kue_send(sc, m_head, 0)) {
-		ifq_deq_rollback(&ifp->if_snd, m_head);
+		m_freem(m_head);
 		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
-
-	ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	/*

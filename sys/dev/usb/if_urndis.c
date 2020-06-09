@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.69 2019/01/22 18:06:05 mpi Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.70 2020/06/09 07:43:39 gerhard Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -804,6 +804,7 @@ urndis_encap(struct urndis_softc *sc, struct mbuf *m, int idx)
 	/* Transmit */
 	err = usbd_transfer(c->sc_xfer);
 	if (err != USBD_IN_PROGRESS) {
+		c->sc_mbuf = NULL;
 		urndis_stop(sc);
 		return(EIO);
 	}
@@ -1190,16 +1191,15 @@ urndis_start(struct ifnet *ifp)
 	if (usbd_is_dying(sc->sc_udev) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
-	m_head = ifq_deq_begin(&ifp->if_snd);
+	m_head = ifq_dequeue(&ifp->if_snd);
 	if (m_head == NULL)
 		return;
 
 	if (urndis_encap(sc, m_head, 0)) {
-		ifq_deq_rollback(&ifp->if_snd, m_head);
+		m_freem(m_head);
 		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
-	ifq_deq_commit(&ifp->if_snd, m_head);
 
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame
