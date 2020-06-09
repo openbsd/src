@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.22 2020/04/27 10:06:45 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.23 2020/06/09 02:01:57 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -45,6 +45,7 @@
 
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +89,7 @@
 #define BNXT_CP_PAGES		4
 
 #define BNXT_MAX_TX_SEGS	32	/* a bit much? */
+#define BNXT_TX_SLOTS(bs)	(bs->bs_map->dm_nsegs + 1)
 
 #define BNXT_HWRM_SHORT_REQ_LEN	sizeof(struct hwrm_short_input)
 
@@ -600,8 +602,12 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_qstart = bnxt_start;
 	ifp->if_watchdog = bnxt_watchdog;
 	ifp->if_hardmtu = BNXT_MAX_MTU;
-	ifp->if_capabilities = IFCAP_VLAN_MTU;	 /* ? */
-	/* checksum flags, hwtagging? */
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv6 |
+	    IFCAP_CSUM_TCPv6;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1024);	/* ? */
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, bnxt_media_change,
@@ -1093,6 +1099,7 @@ bnxt_start(struct ifqueue *ifq)
 {
 	struct ifnet *ifp = ifq->ifq_if;
 	struct tx_bd_short *txring;
+	struct tx_bd_long_hi *txhi;
 	struct bnxt_softc *sc = ifp->if_softc;
 	struct bnxt_slot *bs;
 	bus_dmamap_t map;
@@ -1112,7 +1119,8 @@ bnxt_start(struct ifqueue *ifq)
 	used = 0;
 
 	for (;;) {
-		if (used + BNXT_MAX_TX_SEGS > free) {
+		/* +1 for tx_bd_long_hi */
+		if (used + BNXT_MAX_TX_SEGS + 1 > free) {
 			ifq_set_oactive(ifq);
 			break;
 		}
@@ -1135,28 +1143,59 @@ bnxt_start(struct ifqueue *ifq)
 		map = bs->bs_map;
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
-		used += map->dm_nsegs;
+		used += BNXT_TX_SLOTS(bs);
+
+		/* first segment */
+		laststart = idx;
+		txring[idx].len = htole16(map->dm_segs[0].ds_len);
+		txring[idx].opaque = sc->sc_tx_prod;
+		txring[idx].addr = htole64(map->dm_segs[0].ds_addr);
 
 		if (map->dm_mapsize < 512)
-			txflags = TX_BD_SHORT_FLAGS_LHINT_LT512;
+			txflags = TX_BD_LONG_FLAGS_LHINT_LT512;
 		else if (map->dm_mapsize < 1024)
-			txflags = TX_BD_SHORT_FLAGS_LHINT_LT1K;
+			txflags = TX_BD_LONG_FLAGS_LHINT_LT1K;
 		else if (map->dm_mapsize < 2048)
-			txflags = TX_BD_SHORT_FLAGS_LHINT_LT2K;
+			txflags = TX_BD_LONG_FLAGS_LHINT_LT2K;
 		else
-			txflags = TX_BD_SHORT_FLAGS_LHINT_GTE2K;
+			txflags = TX_BD_LONG_FLAGS_LHINT_GTE2K;
+		txflags |= TX_BD_LONG_TYPE_TX_BD_LONG |
+		    TX_BD_LONG_FLAGS_NO_CMPL |
+		    (BNXT_TX_SLOTS(bs) << TX_BD_LONG_FLAGS_BD_CNT_SFT);
+		if (map->dm_nsegs == 1)
+			txflags |= TX_BD_SHORT_FLAGS_PACKET_END;
+		txring[idx].flags_type = htole16(txflags);
 
-		txflags |= TX_BD_SHORT_TYPE_TX_BD_SHORT |
-		    TX_BD_SHORT_FLAGS_NO_CMPL |
-		    (map->dm_nsegs << TX_BD_SHORT_FLAGS_BD_CNT_SFT);
-		laststart = idx;
+		idx++;
+		if (idx == sc->sc_tx_ring.ring_size)
+			idx = 0;
 
-		for (i = 0; i < map->dm_nsegs; i++) {
-			txring[idx].flags_type = htole16(txflags);
+		/* long tx descriptor */
+		txhi = (struct tx_bd_long_hi *)&txring[idx];
+		memset(txhi, 0, sizeof(*txhi));
+		txflags = 0;
+		if (m->m_pkthdr.csum_flags & (M_UDP_CSUM_OUT | M_TCP_CSUM_OUT))
+			txflags |= TX_BD_LONG_LFLAGS_TCP_UDP_CHKSUM;
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+			txflags |= TX_BD_LONG_LFLAGS_IP_CHKSUM;
+		txhi->lflags = htole16(txflags);
+
+		if (m->m_flags & M_VLANTAG) {
+			txhi->cfa_meta = htole32(m->m_pkthdr.ether_vtag |
+			    TX_BD_LONG_CFA_META_VLAN_TPID_TPID8100 |
+			    TX_BD_LONG_CFA_META_KEY_VLAN_TAG);
+		}
+
+		idx++;
+		if (idx == sc->sc_tx_ring.ring_size)
+			idx = 0;
+
+		/* remaining segments */
+		txflags = TX_BD_SHORT_TYPE_TX_BD_SHORT;
+		for (i = 1; i < map->dm_nsegs; i++) {
 			if (i == map->dm_nsegs - 1)
-				txring[idx].flags_type |=
-				    TX_BD_SHORT_FLAGS_PACKET_END;
-			txflags = TX_BD_SHORT_TYPE_TX_BD_SHORT;
+				txflags |= TX_BD_SHORT_FLAGS_PACKET_END;
+			txring[idx].flags_type = htole16(txflags);
 
 			txring[idx].len =
 			    htole16(bs->bs_map->dm_segs[i].ds_len);
@@ -1970,7 +2009,7 @@ bnxt_txeof(struct bnxt_softc *sc, int *txfree, struct cmpl_base *cmpl)
 		bs = &sc->sc_tx_slots[sc->sc_tx_cons];
 		map = bs->bs_map;
 
-		segs = map->dm_nsegs;
+		segs = BNXT_TX_SLOTS(bs);
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, map);
