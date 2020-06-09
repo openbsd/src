@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.230 2020/06/03 17:56:42 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.231 2020/06/09 21:53:26 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -716,6 +716,16 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 	struct iked_auth	 ikeauth;
 	struct iked_policy	*policy = sa->sa_policy;
 	int			 ret = -1;
+
+	/* The AUTH payload indicates if the responder wants EAP or not */
+	if (msg->msg_auth.id_type != IKEV2_AUTH_NONE &&
+	    !sa_stateok(sa, IKEV2_STATE_EAP))
+		sa_state(env, sa, IKEV2_STATE_AUTH_REQUEST);
+
+	if (!sa->sa_hdr.sh_initiator &&
+	    !sa_stateok(sa, IKEV2_STATE_AUTH_REQUEST) &&
+	    sa->sa_policy->pol_auth.auth_eap)
+		sa_state(env, sa, IKEV2_STATE_EAP);
 
 	if (sa->sa_hdr.sh_initiator) {
 		id = &sa->sa_rid;
@@ -2540,10 +2550,6 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
 		}
-
-		if (!sa_stateok(sa, IKEV2_STATE_AUTH_REQUEST) &&
-		    sa->sa_policy->pol_auth.auth_eap)
-			sa_state(env, sa, IKEV2_STATE_EAP);
 
 		if (ikev2_ike_auth_recv(env, sa, msg) != 0) {
 			log_debug("%s: failed to send auth response", __func__);
