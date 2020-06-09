@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.256 2020/05/31 04:58:38 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.257 2020/06/09 03:36:05 jsg Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -475,6 +475,7 @@ azalia_configure_pci(azalia_t *az)
 }
 
 const struct pci_matchid azalia_pci_devices[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_200SERIES_U_HDA },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_U_HDA }
 };
 
