@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.352 2020/05/12 08:49:54 jan Exp $ */
+/* $OpenBSD: if_em.c,v 1.353 2020/06/09 07:36:10 mpi Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2625,6 +2625,7 @@ em_setup_receive_structures(struct em_softc *sc)
 		if (em_rxfill(que) == 0) {
 			printf("%s: unable to fill any rx descriptors\n",
 			    DEVNAME(sc));
+			return (ENOMEM);
 		}
 	}
 
@@ -2642,6 +2643,7 @@ em_initialize_receive_unit(struct em_softc *sc)
 	struct em_queue *que;
 	u_int32_t	reg_rctl;
 	u_int32_t	reg_rxcsum;
+	u_int32_t	reg_srrctl;
 	u_int64_t	bus_addr;
 
 	INIT_DEBUGOUT("em_initialize_receive_unit: begin");
@@ -2712,6 +2714,16 @@ em_initialize_receive_unit(struct em_softc *sc)
 		E1000_WRITE_REG(&sc->hw, RDTR, 0x20);
 
 	FOREACH_QUEUE(sc, que) {
+		if (sc->num_queues > 1) {
+			/*
+			 * Disable Drop Enable for every queue, default has
+			 * it enabled for queues > 0
+			 */
+			reg_srrctl = E1000_READ_REG(&sc->hw, SRRCTL(que->me));
+			reg_srrctl &= ~E1000_SRRCTL_DROP_EN;
+			E1000_WRITE_REG(&sc->hw, SRRCTL(que->me), reg_srrctl);
+		}
+
 		/* Setup the Base and Length of the Rx Descriptor Ring */
 		bus_addr = que->rx.sc_rx_dma.dma_map->dm_segs[0].ds_addr;
 		E1000_WRITE_REG(&sc->hw, RDLEN(que->me),
@@ -3395,25 +3407,36 @@ em_update_stats_counters(struct em_softc *sc)
 {
 	struct em_queue *que = sc->queues; /* Use only first queue. */
 	struct ifnet   *ifp = &sc->sc_ac.ac_if;
+	uint64_t	colc, rxerrc, crcerrs, algnerrc;
+	uint64_t	ruc, roc, mpc, cexterr;
+	uint64_t	ecol, latecol;
 
-	sc->stats.crcerrs += E1000_READ_REG(&sc->hw, CRCERRS);
-	sc->stats.mpc += E1000_READ_REG(&sc->hw, MPC);
-	sc->stats.ecol += E1000_READ_REG(&sc->hw, ECOL);
+	crcerrs = E1000_READ_REG(&sc->hw, CRCERRS);
+	sc->stats.crcerrs += crcerrs;
+	mpc = E1000_READ_REG(&sc->hw, MPC);
+	sc->stats.mpc += mpc;
+	ecol = E1000_READ_REG(&sc->hw, ECOL);
+	sc->stats.ecol += ecol;
 
-	sc->stats.latecol += E1000_READ_REG(&sc->hw, LATECOL);
-	sc->stats.colc += E1000_READ_REG(&sc->hw, COLC);
+	latecol = E1000_READ_REG(&sc->hw, LATECOL);
+	sc->stats.latecol += latecol;
+	colc = E1000_READ_REG(&sc->hw, COLC);
+	sc->stats.colc += colc;
 
-	sc->stats.ruc += E1000_READ_REG(&sc->hw, RUC);
-	sc->stats.roc += E1000_READ_REG(&sc->hw, ROC);
+	ruc = E1000_READ_REG(&sc->hw, RUC);
+	sc->stats.ruc += ruc;
+	roc = E1000_READ_REG(&sc->hw, ROC);
+	sc->stats.roc += roc;
 
+	algnerrc = rxerrc = cexterr = 0;
 	if (sc->hw.mac_type >= em_82543) {
-		sc->stats.algnerrc += 
-		E1000_READ_REG(&sc->hw, ALGNERRC);
-		sc->stats.rxerrc += 
-		E1000_READ_REG(&sc->hw, RXERRC);
-		sc->stats.cexterr += 
-		E1000_READ_REG(&sc->hw, CEXTERR);
+		algnerrc = E1000_READ_REG(&sc->hw, ALGNERRC);
+		rxerrc = E1000_READ_REG(&sc->hw, RXERRC);
+		cexterr = E1000_READ_REG(&sc->hw, CEXTERR);
 	}
+	sc->stats.algnerrc += algnerrc;
+	sc->stats.rxerrc += rxerrc;
+	sc->stats.cexterr += cexterr;
 
 #ifdef EM_DEBUG
 	if (sc->hw.media_type == em_media_type_copper ||
@@ -3490,20 +3513,22 @@ em_update_stats_counters(struct em_softc *sc)
 #endif
 
 	/* Fill out the OS statistics structure */
-	ifp->if_collisions = sc->stats.colc;
+	ifp->if_collisions = colc;
 
 	/* Rx Errors */
 	ifp->if_ierrors =
 	    que->rx.dropped_pkts +
-	    sc->stats.rxerrc +
-	    sc->stats.crcerrs +
-	    sc->stats.algnerrc +
-	    sc->stats.ruc + sc->stats.roc +
-	    sc->stats.mpc + sc->stats.cexterr +
+	    rxerrc +
+	    crcerrs +
+	    algnerrc +
+	    ruc +
+	    roc +
+	    mpc +
+	    cexterr +
 	    sc->rx_overruns;
 
 	/* Tx Errors */
-	ifp->if_oerrors = sc->stats.ecol + sc->stats.latecol +
+	ifp->if_oerrors = ecol + latecol +
 	    sc->watchdog_events;
 }
 
@@ -3519,6 +3544,7 @@ void
 em_print_hw_stats(struct em_softc *sc)
 {
 	const char * const unit = DEVNAME(sc);
+	struct em_queue *que;
 
 	printf("%s: Excessive collisions = %lld\n", unit,
 		(long long)sc->stats.ecol);
@@ -3584,6 +3610,10 @@ em_print_hw_stats(struct em_softc *sc)
 	    (long long)sc->stats.mprc);
 	printf("%s: Rx Packets to Host Count = %lld\n", unit,
 	    (long long)sc->stats.rpthc);
+	FOREACH_QUEUE(sc, que) {
+		printf("%s: Queue %d Good Packets Received = %d\n", unit,
+		    que->me, E1000_READ_REG(&sc->hw, PQGPRC(que->me)));
+	}
 }
 #endif
 
