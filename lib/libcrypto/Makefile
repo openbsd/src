@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.41 2020/06/05 15:28:33 jsing Exp $
+# $OpenBSD: Makefile,v 1.42 2020/06/09 16:53:52 deraadt Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -407,16 +407,6 @@ HDRS_GEN=\
 	${.OBJDIR}/obj_mac.h
 
 prereq: obj_mac.h
-
-check_includes: prereq
-	@cd ${.CURDIR}; for i in $(HDRS) $(HDRS_GEN); do \
-	    j="cmp -s $$i ${DESTDIR}/usr/include/openssl/`basename $$i` || \
-		(echo \"`basename $$i` differs from installed version; \" \
-	        \"did you forget 'make includes'?\" && false)"; \
-	    eval "$$j"; \
-	done;
-
-all: check_includes
 
 includes: prereq
 	@test -d ${DESTDIR}/usr/include/openssl || \
