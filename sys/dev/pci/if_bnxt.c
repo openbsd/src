@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.23 2020/06/09 02:01:57 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.24 2020/06/09 07:03:12 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -758,7 +758,8 @@ bnxt_up(struct bnxt_softc *sc)
 	sc->sc_vnic.mru = BNXT_MAX_MTU;
 	sc->sc_vnic.cos_rule = (uint16_t)HWRM_NA_SIGNATURE;
 	sc->sc_vnic.lb_rule = (uint16_t)HWRM_NA_SIGNATURE;
-	sc->sc_vnic.flags = BNXT_VNIC_FLAG_DEFAULT;
+	sc->sc_vnic.flags = BNXT_VNIC_FLAG_DEFAULT |
+	    BNXT_VNIC_FLAG_VLAN_STRIP;
 	if (bnxt_hwrm_vnic_alloc(sc, &sc->sc_vnic) != 0) {
 		printf("%s: failed to allocate vnic\n", DEVNAME(sc));
 		goto dealloc_vnic_ctx;
@@ -1180,11 +1181,13 @@ bnxt_start(struct ifqueue *ifq)
 			txflags |= TX_BD_LONG_LFLAGS_IP_CHKSUM;
 		txhi->lflags = htole16(txflags);
 
+#if NVLAN > 0
 		if (m->m_flags & M_VLANTAG) {
 			txhi->cfa_meta = htole32(m->m_pkthdr.ether_vtag |
 			    TX_BD_LONG_CFA_META_VLAN_TPID_TPID8100 |
 			    TX_BD_LONG_CFA_META_KEY_VLAN_TAG);
 		}
+#endif
 
 		idx++;
 		if (idx == sc->sc_tx_ring.ring_size)
@@ -1951,6 +1954,8 @@ bnxt_rx(struct bnxt_softc *sc, struct bnxt_cp_ring *cpr, struct mbuf_list *ml,
 	struct rx_pkt_cmpl *rx = (struct rx_pkt_cmpl *)cmpl;
 	struct rx_pkt_cmpl_hi *rxhi;
 	struct rx_abuf_cmpl *ag;
+	uint32_t flags;
+	uint16_t errors;
 
 	/* second part of the rx completion */
 	rxhi = (struct rx_pkt_cmpl_hi *)bnxt_cpr_next_cmpl(sc, cpr);
@@ -1976,6 +1981,26 @@ bnxt_rx(struct bnxt_softc *sc, struct bnxt_cp_ring *cpr, struct mbuf_list *ml,
 	bs->bs_m = NULL;
 	m->m_pkthdr.len = m->m_len = letoh16(rx->len);
 	(*slots)++;
+
+	/* checksum flags */
+	flags = lemtoh32(&rxhi->flags2);
+	errors = lemtoh16(&rxhi->errors_v2);
+	if ((flags & RX_PKT_CMPL_FLAGS2_IP_CS_CALC) != 0 &&
+	    (errors & RX_PKT_CMPL_ERRORS_IP_CS_ERROR) == 0)
+		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+
+	if ((flags & RX_PKT_CMPL_FLAGS2_L4_CS_CALC) != 0 &&
+	    (errors & RX_PKT_CMPL_ERRORS_L4_CS_ERROR) == 0)
+		m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
+		    M_UDP_CSUM_IN_OK;
+
+#if NVLAN > 0
+	if ((flags & RX_PKT_CMPL_FLAGS2_META_FORMAT_MASK) ==
+	    RX_PKT_CMPL_FLAGS2_META_FORMAT_VLAN) {
+		m->m_pkthdr.ether_vtag = lemtoh16(&rxhi->metadata);
+		m->m_flags |= M_VLANTAG;
+	}
+#endif
 
 	if (ag != NULL) {
 		bs = &sc->sc_rx_ag_slots[ag->opaque];
