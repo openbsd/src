@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.276 2020/02/20 16:40:49 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.277 2020/06/09 20:16:12 sthen Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1740,6 +1740,7 @@ sub finish
 	@l = grep {-d $_} @l;
 
 	if (@l != 0) {
+		$state->print("Updating font cache: ") if $state->verbose < 2;
 		require OpenBSD::Error;
 
 		map { update_fontalias($state, $_) } @l;
@@ -1748,6 +1749,7 @@ sub finish
 		map { restore_fontdir($state, $_) } @l;
 
 		run_if_exists($state, OpenBSD::Paths->fc_cache, '--', @l);
+		$state->say("ok") if $state->verbose < 2;
 	}
 }
 
