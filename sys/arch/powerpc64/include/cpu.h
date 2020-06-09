@@ -1,8 +1,40 @@
+/*	$OpenBSD: cpu.h,v 1.8 2020/06/09 18:58:58 kettenis Exp $	*/
+
+/*
+ * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
 #ifndef _MACHINE_CPU_H_
 #define _MACHINE_CPU_H_
 
-#include <machine/intr.h>
+/*
+ * User-visible definitions
+ */
+
+/* Nothing yet */
+
+#ifdef _KERNEL
+
+/*
+ * Kernel-only definitions
+ */
+
+#include <machine/cpufunc.h>
 #include <machine/frame.h>
+#include <machine/intr.h>
+#include <machine/psl.h>
 
 #include <sys/device.h>
 #include <sys/sched.h>
@@ -64,7 +96,28 @@ void delay(u_int);
 #define PROC_STACK(p)		0
 #define PROC_PC(p)		0
 
-#define intr_disable()		0
-#define intr_restore(s)		do {} while (0)
+static inline void
+intr_enable(void)
+{
+	mtmsr(mfmsr() | PSL_EE);
+}
+
+static inline u_long
+intr_disable(void)
+{
+	u_long msr;
+
+	msr = mfmsr();
+	mtmsr(msr & ~PSL_EE);
+	return msr;
+}
+
+static inline void
+intr_restore(u_long msr)
+{
+	mtmsr(msr);
+}
+
+#endif /* _KERNEL */
 
 #endif /* _MACHINE_CPU_H_ */
