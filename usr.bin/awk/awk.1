@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.46 2020/01/22 03:47:38 deraadt Exp $
+.\"	$OpenBSD: awk.1,v 1.47 2020/06/10 21:00:01 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 22 2020 $
+.Dd $Mdocdate: June 10 2020 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -162,7 +162,7 @@ as the field separator, use the
 option with a value of
 .Sq [t] .
 .Pp
-A pattern-action statement has the form
+A pattern-action statement has the form:
 .Pp
 .D1 Ar pattern Ic \&{ Ar action Ic \&}
 .Pp
@@ -288,9 +288,9 @@ The
 .Ic print
 statement prints its arguments on the standard output
 (or on a file if
-.Pf > Ar file
+.Pf >\ \& Ar file
 or
-.Pf >> Ar file
+.Pf >>\ \& Ar file
 is present or on a pipe if
 .Pf |\ \& Ar cmd
 is present), separated by the current output field separator,
@@ -303,7 +303,8 @@ identical string values in different statements denote
 the same open file.
 The
 .Ic printf
-statement formats its expression list according to the format
+statement formats its expression list according to the
+.Ar format
 (see
 .Xr printf 1 ) .
 .Pp
@@ -373,6 +374,9 @@ may be used to capture control after processing is finished.
 and
 .Ic END
 do not combine with other patterns.
+They may appear multiple times in a program and execute
+in the order they are read by
+.Nm .
 .Pp
 Variable names with special meanings:
 .Pp
@@ -502,7 +506,8 @@ occurs, or 0 if it does not.
 The length of
 .Fa s
 taken as a string,
-or of
+number of elements in an array for an array argument,
+or length of
 .Va $0
 if no argument is given.
 .It Fn match s r
@@ -658,7 +663,7 @@ and
 returns 1 for a successful input, 0 for end of file, and \-1 for an error.
 .It Xo
 .Ic getline Op Va var
-.Pf \ \&< Ar file
+.Pf <\ \& Ar file
 .Xc
 Sets
 .Va $0
@@ -687,6 +692,19 @@ remains open until explicitly closed with a call to
 Executes
 .Fa cmd
 and returns its exit status.
+This will be \-1 upon error,
+.Ar cmd Ns 's
+exit status upon a normal exit,
+256 +
+.Em sig
+if
+.Fa cmd
+was terminated by a signal, where
+.Em sig
+is the number of the signal,
+or 512 +
+.Em sig
+if there was a core dump.
 .El
 .Ss Bit-Operation Functions
 .Bl -tag -width "lshift(a, b)"
@@ -718,7 +736,7 @@ Print first two fields in opposite order:
 .Pp
 .Dl { print $2, $1 }
 .Pp
-Same, with input fields separated by comma and/or blanks and tabs:
+Same, with input fields separated by comma and/or spaces and tabs:
 .Bd -literal -offset indent
 BEGIN { FS = ",[ \et]*|[ \et]+" }
       { print $2, $1 }
@@ -749,6 +767,7 @@ Print an error message to standard error:
 .Ed
 .Sh SEE ALSO
 .Xr cut 1 ,
+.Xr grep 1 ,
 .Xr lex 1 ,
 .Xr printf 1 ,
 .Xr sed 1 ,
@@ -795,3 +814,7 @@ to it.
 .Pp
 The scope rules for variables in functions are a botch;
 the syntax is worse.
+.Pp
+POSIX-standard interval expressions in regular expressions are not supported.
+.Pp
+Only eight-bit character sets are handled correctly.

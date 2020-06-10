@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.11 2020/02/27 21:43:46 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.12 2020/06/10 21:00:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -125,6 +125,7 @@ extern	void	setclvar(char *);
 extern	void	fldbld(void);
 extern	void	cleanfld(int, int);
 extern	void	newfld(int);
+extern	void	setlastfld(int);
 extern	int	refldbld(const char *, const char *);
 extern	void	recbld(void);
 extern	Cell	*fieldadr(int);
@@ -194,3 +195,5 @@ extern	Cell	*gsub(Node **, int);
 
 extern	FILE	*popen(const char *, const char *);
 extern	int	pclose(FILE *);
+
+extern  const char	*flags2str(int flags);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.25 2017/12/08 17:04:15 deraadt Exp $	*/
+/*	$OpenBSD: lib.c,v 1.26 2020/06/10 21:00:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -359,6 +359,7 @@ void fldbld(void)	/* create fields from current record */
 		}
 	}
 	setfval(nfloc, (Awkfloat) lastfld);
+	donerec = 1; /* restore */
 	if (dbg) {
 		for (j = 0; j <= lastfld; j++) {
 			p = fldtab[j];
@@ -388,6 +389,19 @@ void newfld(int n)	/* add field n after end of existing lastfld */
 	cleanfld(lastfld+1, n);
 	lastfld = n;
 	setfval(nfloc, (Awkfloat) n);
+}
+
+void setlastfld(int n)	/* set lastfld cleaning fldtab cells if necessary */
+{
+	if (n > nfields)
+		growfldtab(n);
+
+	if (lastfld < n)
+	    cleanfld(lastfld+1, n);
+	else
+	    cleanfld(n+1, lastfld);
+
+	lastfld = n;
 }
 
 Cell *fieldadr(int n)	/* get nth field */

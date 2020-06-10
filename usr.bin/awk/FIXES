@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.18 2020/06/10 20:59:06 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.19 2020/06/10 21:00:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,41 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Aug 23, 2018:
+        A long list of fixes courtesy of Arnold Robbins,
+        to whom profound thanks.
+
+        1. ofs-rebuild: OFS value used to rebuild the record was incorrect.
+        Fixed August 19, 2014. Revised fix August 2018.
+
+        2. system-status: Instead of a floating-point division by 256, use
+        the wait(2) macros to create a reasonable exit status.
+        Fixed March 12, 2016.
+
+        3. space: Use provided xisblank() function instead of ispace() for
+        matching [[:blank:]].
+
+        4. a-format: Add POSIX standard %a and %A to supported formats. Check
+        at runtime that this format is available.
+
+        5. decr-NF: Decrementing NF did not change $0. This is a decades-old
+        bug. There are interactions with the old and new value of OFS as well.
+        Most of the fix came from the NetBSD awk.
+
+        6. string-conv: String conversions of scalars were sticky.  Once a
+        conversion to string happened, even with OFMT, that value was used until
+        a new numeric value was assigned, even if OFMT differed from CONVFMT,
+        and also if CONVFMT changed.
+
+        7. unary-plus: Unary plus on a string constant returned the string.
+        Instead, it should convert the value to numeric and give that value.
+
+	Also added Arnold's tests for these to awktest.tar as T.arnold.
+
+Aug 15, 2018:
+	fixed mangled awktest.tar (thanks, Arnold), posted all
+	current (very minor) fixes to github / onetrueawk
 
 Jun 7, 2018:
 	(yes, a long layoff)
@@ -510,6 +545,8 @@ May 12, 1998:
 
 Mar 12, 1998:
 	added -V to print version number and die.
+
+[notify dave kerns, dkerns@dacsoup.ih.lucent.com]
 
 Feb 11, 1998:
 	subtle silent bug in lex.c: if the program ended with a number

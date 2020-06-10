@@ -1,4 +1,4 @@
-/*	$OpenBSD: maketab.c,v 1.11 2010/06/13 17:58:19 millert Exp $	*/
+/*	$OpenBSD: maketab.c,v 1.12 2020/06/10 21:00:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -63,6 +63,7 @@ struct xx
 	{ DIVIDE, "arith", " / " },
 	{ MOD, "arith", " % " },
 	{ UMINUS, "arith", " -" },
+	{ UPLUS, "arith", " +" },
 	{ POWER, "arith", " **" },
 	{ PREINCR, "incrdecr", "++" },
 	{ POSTINCR, "incrdecr", "++" },
