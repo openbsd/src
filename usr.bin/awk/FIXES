@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.17 2020/02/27 21:43:46 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.18 2020/06/10 20:59:06 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,23 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Jun 7, 2018:
+	(yes, a long layoff)
+	Updated some broken tests (beebe.tar, T.lilly)
+	[thanks to Arnold Robbins]
+
+Mar 26, 2015:
+	buffer overflow in error reporting; thanks to tobias ulmer
+	and john-mark gurney for spotting it and the fix.
+
+Feb 4, 2013:
+	cleaned up a handful of tests that didn't seem to actually
+	test for correct behavior: T.latin1, T.gawk.
+
+Jan 5, 2013:
+	added ,NULL initializer to static Cells in run.c; not really
+	needed but cleaner.  Thanks to Michael Bombardieri.
 
 Dec 20, 2012:
 	fiddled makefile to get correct yacc and bison flags.  pick yacc

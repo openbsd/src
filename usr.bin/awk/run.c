@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.45 2020/06/08 03:22:23 guenther Exp $	*/
+/*	$OpenBSD: run.c,v 1.46 2020/06/10 20:59:06 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -73,23 +73,23 @@ extern	Awkfloat	srand_seed;
 Node	*winner = NULL;	/* root of parse tree */
 Cell	*tmps;		/* free temporary cells for execution */
 
-static Cell	truecell	={ OBOOL, BTRUE, 0, 0, 1.0, NUM };
+static Cell	truecell	={ OBOOL, BTRUE, 0, 0, 1.0, NUM, NULL };
 Cell	*True	= &truecell;
-static Cell	falsecell	={ OBOOL, BFALSE, 0, 0, 0.0, NUM };
+static Cell	falsecell	={ OBOOL, BFALSE, 0, 0, 0.0, NUM, NULL };
 Cell	*False	= &falsecell;
-static Cell	breakcell	={ OJUMP, JBREAK, 0, 0, 0.0, NUM };
+static Cell	breakcell	={ OJUMP, JBREAK, 0, 0, 0.0, NUM, NULL };
 Cell	*jbreak	= &breakcell;
-static Cell	contcell	={ OJUMP, JCONT, 0, 0, 0.0, NUM };
+static Cell	contcell	={ OJUMP, JCONT, 0, 0, 0.0, NUM, NULL };
 Cell	*jcont	= &contcell;
-static Cell	nextcell	={ OJUMP, JNEXT, 0, 0, 0.0, NUM };
+static Cell	nextcell	={ OJUMP, JNEXT, 0, 0, 0.0, NUM, NULL };
 Cell	*jnext	= &nextcell;
-static Cell	nextfilecell	={ OJUMP, JNEXTFILE, 0, 0, 0.0, NUM };
+static Cell	nextfilecell	={ OJUMP, JNEXTFILE, 0, 0, 0.0, NUM, NULL };
 Cell	*jnextfile	= &nextfilecell;
-static Cell	exitcell	={ OJUMP, JEXIT, 0, 0, 0.0, NUM };
+static Cell	exitcell	={ OJUMP, JEXIT, 0, 0, 0.0, NUM, NULL };
 Cell	*jexit	= &exitcell;
-static Cell	retcell		={ OJUMP, JRET, 0, 0, 0.0, NUM };
+static Cell	retcell		={ OJUMP, JRET, 0, 0, 0.0, NUM, NULL };
 Cell	*jret	= &retcell;
-static Cell	tempcell	={ OCELL, CTEMP, 0, "", 0.0, NUM|STR|DONTFREE };
+static Cell	tempcell	={ OCELL, CTEMP, 0, "", 0.0, NUM|STR|DONTFREE, NULL };
 
 Node	*curnode = NULL;	/* the node being executed, for debugging */
 
@@ -224,7 +224,7 @@ struct Frame *fp = NULL;	/* frame pointer. bottom level unused */
 
 Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 {
-	static Cell newcopycell = { OCELL, CCOPY, 0, "", 0.0, NUM|STR|DONTFREE };
+	static Cell newcopycell = { OCELL, CCOPY, 0, "", 0.0, NUM|STR|DONTFREE, NULL };
 	int i, ncall, ndef;
 	int freed = 0; /* handles potential double freeing when fcn & param share a tempcell */
 	Node *x;
