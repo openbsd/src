@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.386 2020/05/29 04:42:24 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.387 2020/06/10 22:26:40 jca Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1941,20 +1941,11 @@ void
 acpi_sleep_task(void *arg0, int sleepmode)
 {
 	struct acpi_softc *sc = arg0;
-	struct acpi_ac *ac;
-	struct acpi_bat *bat;
-	struct acpi_sbs *sbs;
 
 	/* System goes to sleep here.. */
 	acpi_sleep_state(sc, sleepmode);
-
-	/* AC and battery information needs refreshing */
-	SLIST_FOREACH(ac, &sc->sc_ac, aac_link)
-		aml_notify(ac->aac_softc->sc_devnode, 0x80);
-	SLIST_FOREACH(bat, &sc->sc_bat, aba_link)
-		aml_notify(bat->aba_softc->sc_devnode, 0x80);
-	SLIST_FOREACH(sbs, &sc->sc_sbs, asbs_link)
-		aml_notify(sbs->asbs_softc->sc_devnode, 0x80);
+	/* Tell userland to recheck A/C and battery status */
+	acpi_record_event(sc, APM_POWER_CHANGE);
 }
 
 #endif /* SMALL_KERNEL */

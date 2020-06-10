@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.32 2020/05/09 00:40:48 jca Exp $ */
+/* $OpenBSD: acpiac.c,v 1.33 2020/06/10 22:26:40 jca Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -33,13 +33,18 @@
 
 int  acpiac_match(struct device *, void *, void *);
 void acpiac_attach(struct device *, struct device *, void *);
+int  acpiac_activate(struct device *, int);
 int  acpiac_notify(struct aml_node *, int, void *);
 
 void acpiac_refresh(void *);
 int acpiac_getpsr(struct acpiac_softc *);
 
 struct cfattach acpiac_ca = {
-	sizeof(struct acpiac_softc), acpiac_match, acpiac_attach
+	sizeof(struct acpiac_softc),
+	acpiac_match,
+	acpiac_attach,
+	NULL,
+	acpiac_activate,
 };
 
 struct cfdriver acpiac_cd = {
@@ -92,6 +97,21 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	    acpiac_notify, sc, ACPIDEV_NOPOLL);
 }
 
+int
+acpiac_activate(struct device *self, int act)
+{
+	struct acpiac_softc *sc = (struct acpiac_softc *)self;
+
+	switch (act) {
+	case DVACT_WAKEUP:
+		acpiac_refresh(sc);
+		dnprintf(10, "A/C status: %d\n", sc->sc_ac_stat);
+		break;
+	}
+
+	return (0);
+}
+
 void
 acpiac_refresh(void *arg)
 {
@@ -99,7 +119,6 @@ acpiac_refresh(void *arg)
 
 	acpiac_getpsr(sc);
 	sc->sc_sens[0].value = sc->sc_ac_stat;
-	acpi_record_event(sc->sc_acpi, APM_POWER_CHANGE);
 }
 
 int
@@ -136,6 +155,7 @@ acpiac_notify(struct aml_node *node, int notify_type, void *arg)
 		/* FALLTHROUGH */
 	case 0x80:
 		acpiac_refresh(sc);
+		acpi_record_event(sc->sc_acpi, APM_POWER_CHANGE);
 		dnprintf(10, "A/C status: %d\n", sc->sc_ac_stat);
 		break;
 	}

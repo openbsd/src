@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisbs.c,v 1.9 2020/01/27 11:04:18 jca Exp $ */
+/* $OpenBSD: acpisbs.c,v 1.10 2020/06/10 22:26:40 jca Exp $ */
 /*
  * Smart Battery subsystem device driver
  * ACPI 5.0 spec section 10
@@ -128,6 +128,7 @@ extern void acpiec_write(struct acpiec_softc *, uint8_t, int, uint8_t *);
 
 int	acpisbs_match(struct device *, void *, void *);
 void	acpisbs_attach(struct device *, struct device *, void *);
+int	acpisbs_activate(struct device *, int);
 void	acpisbs_setup_sensors(struct acpisbs_softc *);
 void	acpisbs_refresh_sensors(struct acpisbs_softc *);
 void	acpisbs_read(struct acpisbs_softc *);
@@ -139,6 +140,8 @@ const struct cfattach acpisbs_ca = {
 	sizeof(struct acpisbs_softc),
 	acpisbs_match,
 	acpisbs_attach,
+	NULL,
+	acpisbs_activate,
 };
 
 struct cfdriver acpisbs_cd = {
@@ -355,6 +358,21 @@ acpisbs_refresh_sensors(struct acpisbs_softc *sc)
 			sc->sc_sensors[i].flags = SENSOR_FUNKNOWN;
 		}
 	}
+}
+
+int
+acpisbs_activate(struct device *self, int act)
+{
+	struct acpisbs_softc *sc = (struct acpisbs_softc *)self;
+
+	switch (act) {
+	case DVACT_WAKEUP:
+		acpisbs_read(sc);
+		acpisbs_refresh_sensors(sc);
+		break;
+	}
+
+	return 0;
 }
 
 int
