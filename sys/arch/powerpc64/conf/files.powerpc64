@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.8 2020/06/08 18:44:32 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.9 2020/06/10 15:01:40 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -49,6 +49,10 @@ include "scsi/files.scsi"
 # MII and PCI
 include "dev/mii/files.mii"
 include "dev/pci/files.pci"
+
+device	opal
+attach	opal at fdt
+file	arch/powerpc64/dev/opal.c		opal
 
 device	phb: pcibus
 attach	phb at fdt
