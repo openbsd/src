@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.5 2020/06/08 18:35:10 kettenis Exp $	*/
+/*	$OpenBSD: opal.h,v 1.6 2020/06/10 14:33:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -23,6 +23,8 @@
 #define OPAL_TEST			0
 #define OPAL_CONSOLE_WRITE		1
 #define OPAL_CONSOLE_READ		2
+#define OPAL_RTC_READ			3
+#define OPAL_RTC_WRITE			4
 #define OPAL_CEC_POWER_DOWN		5
 #define OPAL_CEC_REBOOT			6
 #define OPAL_POLL_EVENTS		10
@@ -91,6 +93,8 @@
 int64_t	opal_test(uint64_t);
 int64_t	opal_console_write(int64_t, int64_t *, const uint8_t *);
 int64_t	opal_console_read(int64_t, int64_t *, uint8_t *);
+int64_t	opal_rtc_read(uint32_t *, uint64_t *);
+int64_t	opal_rtc_write(uint32_t, uint64_t);
 int64_t	opal_cec_power_down(uint64_t);
 int64_t	opal_cec_reboot(void);
 int64_t	opal_poll_events(uint64_t *);
