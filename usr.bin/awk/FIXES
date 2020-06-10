@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.30 2020/06/10 21:04:40 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.31 2020/06/10 21:05:02 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,25 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+January 31, 2020:
+	Merge PR #70, which avoids use of variable length arrays. Thanks
+	to GitHub user michaelforney.  Fix issue #60 ({0} in interval
+	expressions doesn't work). Thanks to Arnold Robbins.
+
+January 24, 2020:
+	A number of small cleanups from Christos Zoulas.  Add the close
+	on exec flag to files/pipes opened for redirection; courtesy of
+	Arnold Robbins.
+
+January 19, 2020:
+	If POSIXLY_CORRECT is set in the environment, then sub and gsub
+	use POSIX rules for multiple backslashes.  This fixes Issue #66,
+	while maintaining backwards compatibility.
+
+January 9, 2020:
+	Input/output errors on closing files are now fatal instead of
+	mere warnings. Thanks to Martijn Dekker <martijn@inlv.org>.
 
 January 5, 2020:
 	Fix a bug in the concatentation of two string constants into
@@ -64,13 +83,13 @@ October 25, 2019:
 
 October 24, 2019:
 	Import second round of code cleanups from NetBSD. Much thanks
-	to Christos Zoulas (Github user zoulasc). Merges PR 53.
+	to Christos Zoulas (GitHub user zoulasc). Merges PR 53.
 	Add an optimization for string concatenation, also from
 	Christos.
 
 October 17, 2019:
 	Import code cleanups from NetBSD. Much thanks to Christos
-	Zoulas (Github user zoulasc). Merges PR 51.
+	Zoulas (GitHub user zoulasc). Merges PR 51.
 
 October 6, 2019:
 	Import code from NetBSD awk that implements RS as a regular
@@ -78,7 +97,7 @@ October 6, 2019:
 
 September 10, 2019:
 	Fixes for various array / memory overruns found via gcc's
-	-fsanitize=unknown. Thanks to Alexander Richardson (Github
+	-fsanitize=unknown. Thanks to Alexander Richardson (GitHub
 	user arichardson). Merges PRs 47 and 48.
 
 July 28, 2019:

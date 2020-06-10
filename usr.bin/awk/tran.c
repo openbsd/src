@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.25 2020/06/10 21:04:40 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.26 2020/06/10 21:05:02 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -529,12 +529,14 @@ Cell *catstr(Cell *a, Cell *b) /* concatenate a and b */
 	if (p == NULL)
 		FATAL("out of space concatenating %s and %s", sa, sb);
 	snprintf(p, l, "%s%s", sa, sb);
-	char *newbuf = malloc(strlen(p) + 2);
+
+	l++;	// add room for ' '
+	char *newbuf = malloc(l);
 	if (newbuf == NULL)
 		FATAL("out of space concatenating %s and %s", sa, sb);
 	// See string() in lex.c; a string "xx" is stored in the symbol
 	// table as "xx ".
-	sprintf(newbuf, "%s ", p);
+	snprintf(newbuf, l, "%s ", p);
 	c = setsymtab(newbuf, p, 0.0, CON|STR|DONTFREE, symtab);
 	free(p);
 	free(newbuf);

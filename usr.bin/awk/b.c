@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.30 2020/06/10 21:04:40 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.31 2020/06/10 21:05:02 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -271,6 +271,8 @@ void penter(Node *p)	/* set up parent pointers and leaf indices */
 		parent(left(p)) = p;
 		parent(right(p)) = p;
 		break;
+	case ZERO:
+		break;
 	default:	/* can't happen */
 		FATAL("can't happen: unknown type %d in penter", type(p));
 		break;
@@ -285,6 +287,7 @@ void freetr(Node *p)	/* free parse tree */
 		xfree(p);
 		break;
 	UNARY
+	case ZERO:
 		freetr(left(p));
 		xfree(p);
 		break;
@@ -444,6 +447,8 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 		cfoll(f,left(v));
 		cfoll(f,right(v));
 		break;
+	case ZERO:
+		break;
 	default:	/* can't happen */
 		FATAL("can't happen: unknown type %d in cfoll", type(v));
 	}
@@ -487,6 +492,8 @@ int first(Node *p)	/* collects initially active leaves of p into setvec */
 		b = first(right(p));
 		if (first(left(p)) == 0 || b == 0) return(0);
 		return(1);
+	case ZERO:
+		return 0;
 	}
 	FATAL("can't happen: unknown type %d in first", type(p));	/* can't happen */
 	return(-1);
@@ -846,6 +853,9 @@ Node *unary(Node *np)
 	case QUEST:
 		rtok = relex();
 		return (unary(op2(QUEST, np, NIL)));
+	case ZERO:
+		rtok = relex();
+		return (unary(op2(ZERO, np, NIL)));
 	default:
 		return (np);
 	}
@@ -880,7 +890,7 @@ int (xisblank)(int c)
 
 #endif
 
-struct charclass {
+static const struct charclass {
 	const char *cc_name;
 	int cc_namelen;
 	int (*cc_func)(int);
@@ -916,7 +926,7 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	int i, j;
 	uschar *buf = NULL;
 	int ret = 1;
-	bool init_q = (firstnum == 0);		/* first added char will be ? */
+	int init_q = (firstnum == 0);		/* first added char will be ? */
 	int n_q_reps = secondnum-firstnum;	/* m>n, so reduce until {1,m-n} left  */
 	int prefix_length = reptok - basestr;	/* prefix includes first rep	*/
 	int suffix_length = strlen((const char *) reptok) - reptoklen;	/* string after rep specifier	*/
@@ -1024,7 +1034,7 @@ int relex(void)		/* lexical analyzer for reparse */
 	static uschar *buf = NULL;
 	static int bufsz = 100;
 	uschar *bp;
-	struct charclass *cc;
+	const struct charclass *cc;
 	int i;
 	int num, m;
 	bool commafound, digitfound;
@@ -1198,7 +1208,7 @@ rescan:
 				if (repeat(starttok, prestr-starttok, lastatom,
 					   startreptok - lastatom, n, m) > 0) {
 					if (n == 0 && m == 0) {
-						return EMPTYRE;
+						return ZERO;
 					}
 					/* must rescan input for next token */
 					goto rescan;

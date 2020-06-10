@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.17 2020/06/10 21:04:40 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.18 2020/06/10 21:05:02 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -44,7 +44,7 @@ typedef struct Keyword {
 	int	type;
 } Keyword;
 
-Keyword keywords[] ={	/* keep sorted: binary searched */
+const Keyword keywords[] = {	/* keep sorted: binary searched */
 	{ "BEGIN",	XBEGIN,		XBEGIN },
 	{ "END",	XEND,		XEND },
 	{ "NF",		VARNF,		VARNF },
@@ -102,14 +102,14 @@ int peek(void);
 int gettok(char **, int *);
 int binsearch(char *, Keyword *, int);
 
-int peek(void)
+static int peek(void)
 {
 	int c = input();
 	unput(c);
 	return c;
 }
 
-int gettok(char **pbuf, int *psz)	/* get next input token */
+static int gettok(char **pbuf, int *psz)	/* get next input token */
 {
 	int c, retc;
 	char *buf = *pbuf;
@@ -401,7 +401,7 @@ int string(void)
 			case 'r': *bp++ = '\r'; break;
 			case 'b': *bp++ = '\b'; break;
 			case 'v': *bp++ = '\v'; break;
-			case 'a': *bp++ = '\007'; break;
+			case 'a': *bp++ = '\a'; break;
 			case '\\': *bp++ = '\\'; break;
 
 			case '0': case '1': case '2': /* octal: \d \dd \ddd */
@@ -451,7 +451,7 @@ int string(void)
 }
 
 
-int binsearch(char *w, Keyword *kp, int n)
+static int binsearch(char *w, const Keyword *kp, int n)
 {
 	int cond, low, mid, high;
 
@@ -471,7 +471,7 @@ int binsearch(char *w, Keyword *kp, int n)
 
 int word(char *w)
 {
-	Keyword *kp;
+	const Keyword *kp;
 	int c, n;
 
 	n = binsearch(w, keywords, sizeof(keywords)/sizeof(keywords[0]));
@@ -587,6 +587,8 @@ int input(void)	/* get next lexical input character */
 
 void unput(int c)	/* put lexical character back on input */
 {
+	if (c == '\n')  
+		lineno--;
 	if (yysptr >= yysbuf + sizeof(yysbuf))
 		FATAL("pushed back too much: %.20s...", yysbuf);
 	*yysptr++ = c;

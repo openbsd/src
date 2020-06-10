@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.55 2020/06/10 21:04:40 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.56 2020/06/10 21:05:02 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -27,6 +27,7 @@ THIS SOFTWARE.
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <setjmp.h>
 #include <limits.h>
 #include <math.h>
@@ -91,7 +92,7 @@ static Cell	exitcell	={ OJUMP, JEXIT, 0, 0, 0.0, NUM, NULL };
 Cell	*jexit	= &exitcell;
 static Cell	retcell		={ OJUMP, JRET, 0, 0, 0.0, NUM, NULL };
 Cell	*jret	= &retcell;
-static Cell	tempcell	={ OCELL, CTEMP, 0, "", 0.0, NUM|STR|DONTFREE, NULL };
+static Cell	tempcell	={ OCELL, CTEMP, 0, EMPTY, 0.0, NUM|STR|DONTFREE, NULL };
 
 Node	*curnode = NULL;	/* the node being executed, for debugging */
 
@@ -226,7 +227,7 @@ struct Frame *fp = NULL;	/* frame pointer. bottom level unused */
 
 Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 {
-	static Cell newcopycell = { OCELL, CCOPY, 0, "", 0.0, NUM|STR|DONTFREE, NULL };
+	static Cell newcopycell = { OCELL, CCOPY, 0, EMPTY, 0.0, NUM|STR|DONTFREE, NULL };
 	int i, ncall, ndef;
 	int freed = 0; /* handles potential double freeing when fcn & param share a tempcell */
 	Node *x;
@@ -1254,7 +1255,8 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 {
 	Cell *x = NULL, *y, *ap;
 	const char *s, *origs, *t;
-	char *fs = NULL, *origfs = NULL;
+	const char *fs = NULL;
+	char *origfs = NULL;
 	int sep;
 	char temp, num[50];
 	int n, tempstat, arg3type;
@@ -1268,7 +1270,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 		fs = getsval(fsloc);
 	else if (arg3type == STRING) {	/* split(str,arr,"string") */
 		x = execute(a[2]);
-		origfs = fs = strdup(getsval(x));
+		fs = origfs = strdup(getsval(x));
 		if (fs == NULL)
 			FATAL("out of space in split");
 		tempfree(x);
@@ -1820,6 +1822,8 @@ FILE *openfile(int a, const char *us)
 		files[i].fname = tostring(s);
 		files[i].fp = fp;
 		files[i].mode = m;
+		if (fp != stdin && fp != stdout && fp != stderr)
+			(void) fcntl(fileno(fp), F_SETFD, FD_CLOEXEC);
 	}
 	return fp;
 }
@@ -1845,13 +1849,13 @@ Cell *closefile(Node **a, int n)
 	for (i = 0; i < nfiles; i++) {
 		if (files[i].fname && strcmp(x->sval, files[i].fname) == 0) {
 			if (ferror(files[i].fp))
-				WARNING( "i/o error occurred on %s", files[i].fname );
+				FATAL( "i/o error occurred on %s", files[i].fname );
 			if (files[i].mode == '|' || files[i].mode == LE)
 				stat = pclose(files[i].fp);
 			else
 				stat = fclose(files[i].fp);
 			if (stat == EOF)
-				WARNING( "i/o error occurred closing %s", files[i].fname );
+				FATAL( "i/o error occurred closing %s", files[i].fname );
 			if (i > 2)	/* don't do /dev/std... */
 				xfree(files[i].fname);
 			files[i].fname = NULL;	/* watch out for ref thru this */
@@ -1871,13 +1875,13 @@ void closeall(void)
 	for (i = 0; i < FOPEN_MAX; i++) {
 		if (files[i].fp) {
 			if (ferror(files[i].fp))
-				WARNING( "i/o error occurred on %s", files[i].fname );
+				FATAL( "i/o error occurred on %s", files[i].fname );
 			if (files[i].mode == '|' || files[i].mode == LE)
 				stat = pclose(files[i].fp);
 			else
 				stat = fclose(files[i].fp);
 			if (stat == EOF)
-				WARNING( "i/o error occurred while closing %s", files[i].fname );
+				FATAL( "i/o error occurred while closing %s", files[i].fname );
 		}
 	}
 }
@@ -2059,6 +2063,13 @@ void backsub(char **pb_ptr, const char **sptr_ptr)	/* handle \\& variations */
 {						/* sptr[0] == '\\' */
 	char *pb = *pb_ptr;
 	const char *sptr = *sptr_ptr;
+	static bool first = true;
+	static bool do_posix = false;
+
+	if (first) {
+		first = false;
+		do_posix = (getenv("POSIXLY_CORRECT") != NULL);
+	}
 
 	if (sptr[1] == '\\') {
 		if (sptr[2] == '\\' && sptr[3] == '&') { /* \\\& -> \& */
@@ -2068,6 +2079,9 @@ void backsub(char **pb_ptr, const char **sptr_ptr)	/* handle \\& variations */
 		} else if (sptr[2] == '&') {	/* \\& -> \ + matched */
 			*pb++ = '\\';
 			sptr += 2;
+		} else if (do_posix) {		/* \\x -> \x */
+			sptr++;
+			*pb++ = *sptr++;
 		} else {			/* \\x -> \\x */
 			*pb++ = *sptr++;
 			*pb++ = *sptr++;

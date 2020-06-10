@@ -1,4 +1,4 @@
-/*	$OpenBSD: maketab.c,v 1.16 2020/06/10 21:03:36 millert Exp $	*/
+/*	$OpenBSD: maketab.c,v 1.17 2020/06/10 21:05:02 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -123,8 +123,6 @@ int main(int argc, char *argv[])
 	printf("#include <stdio.h>\n");
 	printf("#include \"awk.h\"\n");
 	printf("#include \"ytab.h\"\n\n");
-	for (i = SIZE; --i >= 0; )
-		names[i] = "";
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: maketab YTAB_H\n");
@@ -161,10 +159,8 @@ int main(int argc, char *argv[])
 		table[p->token-FIRSTTOKEN] = p->name;
 	printf("\nCell *(*proctab[%d])(Node **, int) = {\n", SIZE);
 	for (i=0; i<SIZE; i++)
-		if (table[i]==NULL)
-			printf("\tnullproc,\t/* %s */\n", names[i]);
-		else
-			printf("\t%s,\t/* %s */\n", table[i], names[i]);
+		printf("\t%s,\t/* %s */\n",
+		    table[i] ? table[i] : "nullproc", names[i] ? names[i] : "");
 	printf("};\n\n");
 
 	printf("const char *tokname(int n)\n");	/* print a tokname() function */

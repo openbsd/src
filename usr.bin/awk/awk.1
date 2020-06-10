@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.49 2020/06/10 21:02:53 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.50 2020/06/10 21:05:02 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -726,6 +726,14 @@ Returns integer argument x shifted by n bits to the left.
 .It Fn rshift x n
 Returns integer argument x shifted by n bits to the right.
 .El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm :
+.Bl -tag -width POSIXLY_CORRECT
+.It Ev POSIXLY_CORRECT
+When set, behave in accordance with the standard, even when it conflicts
+with historical behavior.
+.El
 .Sh EXIT STATUS
 .Ex -std awk
 .Pp
@@ -792,7 +800,12 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification.
+specification except that consecutive backslashes in the replacement
+string argument for
+.Fn sub
+and
+.Fn gsub
+are not collapsed.
 .Pp
 The flags
 .Op Fl \&dV
