@@ -1958,6 +1958,7 @@
 ./usr/share/man/man3/PKCS7_decrypt.3
 ./usr/share/man/man3/PKCS7_encrypt.3
 ./usr/share/man/man3/PKCS7_final.3
+./usr/share/man/man3/PKCS7_get_signer_info.3
 ./usr/share/man/man3/PKCS7_new.3
 ./usr/share/man/man3/PKCS7_set_content.3
 ./usr/share/man/man3/PKCS7_set_type.3
