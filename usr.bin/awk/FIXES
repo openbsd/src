@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.23 2020/06/10 21:01:50 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.24 2020/06/10 21:02:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -26,6 +26,34 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
 
+June 17, 2019:
+	Disallow deleting SYMTAB and its elements, which creates
+	use-after-free bugs. Thanks to GitHub user Cody Mello (melloc)
+	for the fix. (Merged from PR #43.)
+
+June 5, 2019:
+	Allow unmatched right parenthesis in a regular expression to
+	be treated literally. Fixes Issue #40. Thanks to GitHub user
+	Warner Losh (bsdimp) for the report. Thanks to Arnold Robbins
+	for the fix.
+
+May 29,2019:
+	Fix check for command line arguments to no longer require that
+	first character after '=' not be another '='. Reverts change of
+	August 11, 1989. Thanks to GitHub user Jamie Landeg Jones for
+	pointing out the issue; from Issue #38.
+
+Apr 7, 2019:
+	Update awktest.tar(p.50) to use modern options to sort. Needed
+	for Android development. Thanks to GitHub user mohd-akram (Mohamed
+	Akram).  From Issue #33.
+
+Mar 12, 2019:
+	Added very simplistic support for cross-compiling in the
+	makefile.  We are NOT going to go in the direction of the
+	autotools, though.  Thanks to GitHub user nee-san for
+	the basic change. (Merged from PR #34.)
+
 Mar 5, 2019:
 	Added support for POSIX-standard interval expressions (a.k.a.
 	bounds, a.k.a. repetition expressions) in regular expressions,
@@ -38,7 +66,7 @@ Mar 3, 2019:
 	#12: Avoid undefined behaviour when using ctype(3) functions in
 	     relex(). Thanks to GitHub user iamleot.
 	#31: Make getline handle numeric strings, and update FIXES. Thanks
-	     to GitHub user arnoldrobbins
+	     to GitHub user arnoldrobbins.
 	#32: maketab: support build systems with read-only source. Thanks
 	     to GitHub user enh.
 

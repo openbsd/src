@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.27 2020/06/10 21:01:32 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.28 2020/06/10 21:02:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -727,7 +727,7 @@ int isclvar(const char *s)	/* is s of form var=something ? */
 	for ( ; *s; s++)
 		if (!(isalnum((uschar) *s) || *s == '_'))
 			break;
-	return *s == '=' && s > os && *(s+1) != '=';
+	return *s == '=' && s > os;
 }
 
 /* strtod is supposed to be a proper test of what's a valid number */

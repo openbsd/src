@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.16 2020/06/10 21:01:32 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.17 2020/06/10 21:02:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -106,6 +106,7 @@ extern Cell	*rsloc;		/* RS */
 extern Cell	*rstartloc;	/* RSTART */
 extern Cell	*rlengthloc;	/* RLENGTH */
 extern Cell	*subseploc;	/* SUBSEP */
+extern Cell	*symtabloc;	/* SYMTAB */
 
 /* Cell.tval values: */
 #define	NUM	01	/* number value is valid */

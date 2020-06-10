@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.49 2020/06/10 21:01:32 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.50 2020/06/10 21:02:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -515,6 +515,9 @@ Cell *awkdelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts *
 	int nsub;
 
 	x = execute(a[0]);	/* Cell* for symbol table */
+	if (x == symtabloc) {
+		FATAL("cannot delete SYMTAB or its elements");
+	}
 	if (!isarr(x))
 		return True;
 	if (a[1] == 0) {	/* delete the elements, not the table */
