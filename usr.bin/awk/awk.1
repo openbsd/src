@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.48 2020/06/10 21:01:50 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.49 2020/06/10 21:02:53 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -419,6 +419,11 @@ The length of the string matched by the
 function.
 .It Va RS
 Input record separator (default newline).
+If empty, blank lines separate records.
+If more than one character long,
+.Va RS
+is treated as a regular expression, and records are
+separated by text matching the expression.
 .It Va RSTART
 The starting position of the string matched by the
 .Fn match

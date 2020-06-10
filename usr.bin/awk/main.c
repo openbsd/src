@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2020/06/10 21:02:33 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2020/06/10 21:02:53 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -23,7 +23,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-const char	*version = "version 20190910";
+const char	*version = "version 20191006";
 
 #define DEBUG
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.29 2020/06/10 21:02:33 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.30 2020/06/10 21:02:53 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -206,41 +206,53 @@ void nextfile(void)
 
 int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf */
 {
-	int sep, c;
+	int sep, c, isrec;
 	char *rr, *buf = *pbuf;
 	int bufsize = *pbufsize;
 	char *rs = getsval(rsloc);
 
-	if ((sep = *rs) == 0) {
-		sep = '\n';
-		while ((c=getc(inf)) == '\n' && c != EOF)	/* skip leading \n's */
-			;
-		if (c != EOF)
-			ungetc(c, inf);
-	}
-	for (rr = buf; ; ) {
-		for (; (c=getc(inf)) != sep && c != EOF; ) {
-			if (rr-buf+1 > bufsize)
-				if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 1"))
-					FATAL("input record `%.30s...' too long", buf);
+	if (*rs && rs[1]) {
+		int found;
+
+		fa *pfa = makedfa(rs, 1);
+		found = fnematch(pfa, inf, &buf, &bufsize, recsize);
+		if (found)
+			*patbeg = 0;
+	} else {
+		if ((sep = *rs) == 0) {
+			sep = '\n';
+			while ((c=getc(inf)) == '\n' && c != EOF)	/* skip leading \n's */
+				;
+			if (c != EOF)
+				ungetc(c, inf);
+		}
+		for (rr = buf; ; ) {
+			for (; (c=getc(inf)) != sep && c != EOF; ) {
+				if (rr-buf+1 > bufsize)
+					if (!adjbuf(&buf, &bufsize, 1+rr-buf,
+					    recsize, &rr, "readrec 1"))
+						FATAL("input record `%.30s...' too long", buf);
+				*rr++ = c;
+			}
+			if (*rs == sep || c == EOF)
+				break;
+			if ((c = getc(inf)) == '\n' || c == EOF)	/* 2 in a row */
+				break;
+			if (!adjbuf(&buf, &bufsize, 2+rr-buf, recsize, &rr,
+			    "readrec 2"))
+				FATAL("input record `%.30s...' too long", buf);
+			*rr++ = '\n';
 			*rr++ = c;
 		}
-		if (*rs == sep || c == EOF)
-			break;
-		if ((c = getc(inf)) == '\n' || c == EOF) /* 2 in a row */
-			break;
-		if (!adjbuf(&buf, &bufsize, 2+rr-buf, recsize, &rr, "readrec 2"))
+		if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 3"))
 			FATAL("input record `%.30s...' too long", buf);
-		*rr++ = '\n';
-		*rr++ = c;
+		*rr = 0;
 	}
-	if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 3"))
-		FATAL("input record `%.30s...' too long", buf);
-	*rr = 0;
-	   DPRINTF( ("readrec saw <%s>, returns %d\n", buf, c == EOF && rr == buf ? 0 : 1) );
 	*pbuf = buf;
 	*pbufsize = bufsize;
-	return c == EOF && rr == buf ? 0 : 1;
+	isrec = *buf || !feof(inf);
+	DPRINTF( ("readrec saw <%s>, returns %d\n", buf, isrec) );
+	return isrec;
 }
 
 char *getargv(int n)	/* get ARGV[n] */

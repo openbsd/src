@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.13 2020/06/10 21:02:33 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.14 2020/06/10 21:02:53 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -55,6 +55,7 @@ extern	int	member(int, const char *);
 extern	int	match(fa *, const char *);
 extern	int	pmatch(fa *, const char *);
 extern	int	nematch(fa *, const char *);
+extern	int	fnematch(fa *, FILE *, char **, int *, int);
 extern	Node	*reparse(const char *);
 extern	Node	*regexp(void);
 extern	Node	*primary(void);
