@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.17 2020/06/10 21:02:19 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.18 2020/06/10 21:02:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -33,7 +33,7 @@ typedef	unsigned char uschar;
 
 #define	xfree(a)	{ if ((a) != NULL) { free((void *) (a)); (a) = NULL; } }
 
-#define	NN(p)	((p) ? (p) : "(null)")	/* guaranteed non-null for DPRINTF 
+#define	NN(p)	((p) ? (p) : "(null)")	/* guaranteed non-null for DPRINTF
 */
 #define	DEBUG
 #ifdef	DEBUG
@@ -169,7 +169,7 @@ extern Node	*nullnode;
 #define CCOPY	6
 #define CCON	5
 #define CTEMP	4
-#define CNAME	3 
+#define CNAME	3
 #define CVAR	2
 #define CFLD	1
 #define	CUNK	0
@@ -219,6 +219,7 @@ extern	int	pairstack[], paircnt;
 
 #define NCHARS	(256+3)		/* 256 handles 8-bit chars; 128 does 7-bit */
 				/* watch out in match(), etc. */
+#define	HAT	(NCHARS+2)	/* matches ^ in regular expr */
 #define NSTATES	32
 
 typedef struct rrow {
@@ -232,7 +233,7 @@ typedef struct rrow {
 } rrow;
 
 typedef struct fa {
-	uschar	gototab[NSTATES][NCHARS];
+	uschar	gototab[NSTATES][HAT + 1];
 	uschar	out[NSTATES];
 	uschar	*restr;
 	int	*posns[NSTATES];

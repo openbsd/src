@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.24 2020/06/10 21:02:19 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.25 2020/06/10 21:02:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -35,8 +35,6 @@ THIS SOFTWARE.
 #include "awk.h"
 #include "ytab.h"
 
-#define	HAT	(NCHARS+2)	/* matches ^ in regular expr */
-				/* NCHARS is 2**n */
 #define MAXLIN 22
 
 #define type(v)		(v)->nobj	/* badly overloaded here */
@@ -89,11 +87,11 @@ fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
 	fa *pfa;
 	static int now = 1;
 
-	if (setvec == 0) {	/* first time through any RE */
+	if (setvec == NULL) {	/* first time through any RE */
 		maxsetvec = MAXLIN;
 		setvec = (int *) calloc(maxsetvec, sizeof(int));
 		tmpset = (int *) calloc(maxsetvec, sizeof(int));
-		if (setvec == 0 || tmpset == 0)
+		if (setvec == NULL || tmpset == NULL)
 			overflo("out of space initializing makedfa");
 	}
 
@@ -169,7 +167,7 @@ int makeinit(fa *f, int anchor)
 	f->out[2] = 0;
 	f->reset = 0;
 	k = *(f->re[0].lfollow);
-	xfree(f->posns[2]);			
+	xfree(f->posns[2]);
 	if ((f->posns[2] = (int *) calloc(k+1, sizeof(int))) == NULL)
 		overflo("out of space in makeinit");
 	for (i=0; i <= k; i++) {
@@ -272,8 +270,6 @@ int quoted(uschar **pp)	/* pick up next thing after a \\ */
 
 	if ((c = *p++) == 't')
 		c = '\t';
-	else if (c == 'v')
-		c = '\v';
 	else if (c == 'n')
 		c = '\n';
 	else if (c == 'f')
@@ -282,8 +278,10 @@ int quoted(uschar **pp)	/* pick up next thing after a \\ */
 		c = '\r';
 	else if (c == 'b')
 		c = '\b';
+	else if (c == 'v')
+		c = '\v';
 	else if (c == 'a')
-		c = '\007';
+		c = '\a';
 	else if (c == '\\')
 		c = '\\';
 	else if (c == 'x') {	/* hexadecimal goo follows */
@@ -307,11 +305,11 @@ char *cclenter(const char *argp)	/* add a character class */
 	int i, c, c2;
 	uschar *p = (uschar *) argp;
 	uschar *op, *bp;
-	static uschar *buf = 0;
+	static uschar *buf = NULL;
 	static int bufsz = 100;
 
 	op = p;
-	if (buf == 0 && (buf = (uschar *) malloc(bufsz)) == NULL)
+	if (buf == NULL && (buf = (uschar *) malloc(bufsz)) == NULL)
 		FATAL("out of space for character class [%.10s...] 1", p);
 	bp = buf;
 	for (i = 0; (c = *p++) != 0; ) {
@@ -368,7 +366,7 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 			    4 * sizeof(int));
 			tmpset = reallocarray(tmpset, maxsetvec,
 			    4 * sizeof(int));
-			if (setvec == 0 || tmpset == 0)
+			if (setvec == NULL || tmpset == NULL)
 				overflo("out of space in cfoll()");
 			maxsetvec *= 4;
 		}
@@ -411,7 +409,7 @@ int first(Node *p)	/* collects initially active leaves of p into setvec */
 			    4 * sizeof(int));
 			tmpset = reallocarray(tmpset, maxsetvec,
 			    4 * sizeof(int));
-			if (setvec == 0 || tmpset == 0)
+			if (setvec == NULL || tmpset == NULL)
 				overflo("out of space in first()");
 			maxsetvec *= 4;
 		}
@@ -551,7 +549,7 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 		if (f->reset) {
 			for (i = 2; i <= f->curstat; i++)
 				xfree(f->posns[i]);
-			k = *f->posns[0];			
+			k = *f->posns[0];
 			if ((f->posns[2] = (int *) calloc(k+1, sizeof(int))) == NULL)
 				overflo("out of space in pmatch");
 			for (i = 0; i <= k; i++)
@@ -608,7 +606,7 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 		if (f->reset) {
 			for (i = 2; i <= f->curstat; i++)
 				xfree(f->posns[i]);
-			k = *f->posns[0];			
+			k = *f->posns[0];
 			if ((f->posns[2] = (int *) calloc(k+1, sizeof(int))) == NULL)
 				overflo("out of state space");
 			for (i = 0; i <= k; i++)
@@ -913,7 +911,7 @@ int relex(void)		/* lexical analyzer for reparse */
 {
 	int c, n;
 	int cflag;
-	static uschar *buf = 0;
+	static uschar *buf = NULL;
 	static int bufsz = 100;
 	uschar *bp;
 	struct charclass *cc;
@@ -952,8 +950,8 @@ rescan:
 	default:
 		rlxval = c;
 		return CHAR;
-	case '[': 
-		if (buf == 0 && (buf = (uschar *) malloc(bufsz)) == NULL)
+	case '[':
+		if (buf == NULL && (buf = (uschar *) malloc(bufsz)) == NULL)
 			FATAL("out of space in reg expr %.10s..", lastre);
 		bp = buf;
 		if (*prestr == '^') {
@@ -1128,7 +1126,7 @@ int cgoto(fa *f, int s, int c)
 	while (f->accept >= maxsetvec) {	/* guessing here! */
 		setvec = reallocarray(setvec, maxsetvec, 4 * sizeof(int));
 		tmpset = reallocarray(tmpset, maxsetvec, 4 * sizeof(int));
-		if (setvec == 0 || tmpset == 0)
+		if (setvec == NULL || tmpset == NULL)
 			overflo("out of space in cgoto()");
 		maxsetvec *= 4;
 	}

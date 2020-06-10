@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.12 2020/06/10 21:00:01 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.13 2020/06/10 21:02:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -112,11 +112,13 @@ extern	char	*getsval(Cell *);
 extern	char	*getpssval(Cell *);     /* for print */
 extern	char	*tostring(const char *);
 extern	char	*qstring(const char *, int);
+extern	Cell	*catstr(Cell *, Cell *);
 
 extern	void	recinit(unsigned int);
 extern	void	initgetrec(void);
 extern	void	makefields(int, int);
 extern	void	growfldtab(int n);
+extern	void	savefs(void);
 extern	int	getrec(char **, int *, int);
 extern	void	nextfile(void);
 extern	int	readrec(char **buf, int *bufsize, FILE *inf);

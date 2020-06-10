@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.24 2020/06/10 21:02:19 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.25 2020/06/10 21:02:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,41 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+September 10, 2019:
+	Fixes for various array / memory overruns found via gcc's
+	-fsanitize=unknown. Thanks to Alexander Richardson (Github
+	user arichardson). Merges PRs 47 and 48.
+
+July 28, 2019:
+	Import grammar optimization from NetBSD: Two string constants
+	concatenated together get turned into a single string.
+
+July 26, 2019:
+	Support POSIX-specified C-style escape sequences "\a" (alarm)
+	and "\v" (vertical tab) in command line arguments and regular
+	expressions, further to the support for them in strings added on
+	Apr 9, 1989. These now no longer match as literal "a" and "v"
+	characters (as they don't on other awk implementations).
+	Thanks to Martijn Dekker.
+
+July 17, 2019:
+	Pull in a number of code cleanups and minor fixes from
+	Warner Losh's bsd-ota branch.  The only user visible change
+	is the use of random(3) as the random number generator.
+	Thanks to Warner Losh for collecting all these fixes in
+	one easy place to get them from.
+
+July 16, 2019:
+	Fix field splitting to use FS value as of the time a record
+	was read or assigned to.  Thanks to GitHub user Cody Mello (melloc)
+	for the fix. (Merged from his branch, via PR #42.) Updated
+	testdir/T.split per said PR as well.
+
+June 24, 2019:
+	Extract awktest.tar into testdir directory. Add some very
+	simple mechanics to the makefile for running the tests and
+	for cleaning up. No changes to awk itself.
 
 June 17, 2019:
 	Disallow deleting SYMTAB and its elements, which creates
@@ -171,10 +206,10 @@ Jun 12, 2011:
 	/pat/, \n /pat/ {...} is now legal, though bad style to use.
 
 	added checks to new -v code that permits -vnospace; thanks to
-	ruslan ermilov for spotting this and providing the patch. 
+	ruslan ermilov for spotting this and providing the patch.
 
 	removed fixed limit on number of open files; thanks to aleksey
-	cheusov and christos zoulos. 
+	cheusov and christos zoulos.
 
 	fixed day 1 bug that resurrected deleted elements of ARGV when
 	used as filenames (in lib.c).
@@ -192,10 +227,10 @@ May 1, 2011:
 	and arnold robbins, changed srand() to return the previous
 	seed (which is 1 on the first call of srand).  the seed is
 	an Awkfloat internally though converted to unsigned int to
-	pass to the library srand().  thanks, everyone. 
+	pass to the library srand().  thanks, everyone.
 
 	fixed a subtle (and i hope low-probability) overflow error
-	in fldbld, by adding space for one extra \0.  thanks to 
+	in fldbld, by adding space for one extra \0.  thanks to
 	robert bassett for spotting this one and providing a fix.
 
 	removed the files related to compilation on windows.  i no
@@ -232,7 +267,7 @@ Oct 8, 2008:
 
 Oct 23, 2007:
 	minor fix in lib.c: increase inputFS to 100, change malloc
-	for fields to n+1.  
+	for fields to n+1.
 
 	fixed memory fault caused by out of order test in setsval.
 
@@ -279,7 +314,7 @@ Jan 17, 2006:
 
 	core dump on linux with BEGIN {nextfile}, now fixed.
 
-	removed some #ifdef's in run.c and lex.c that appear to no 
+	removed some #ifdef's in run.c and lex.c that appear to no
 	longer be necessary.
 
 Apr 24, 2005:
@@ -293,8 +328,8 @@ Jan 14, 2005:
 	rethinking it.
 
 Dec 31, 2004:
-	prevent overflow of -f array in main, head off potential error in 
-	call of SYNTAX(), test malloc return in lib.c, all with thanks to 
+	prevent overflow of -f array in main, head off potential error in
+	call of SYNTAX(), test malloc return in lib.c, all with thanks to
 	todd miller.
 
 Dec 22, 2004:
@@ -322,8 +357,8 @@ Nov 22, 2003:
 	code known to man.
 
 	fixed a storage leak in call() that appears to have been there since
-	1983 or so -- a function without an explicit return that assigns a 
-	string to a parameter leaked a Cell.  thanks to moinak ghosh for 
+	1983 or so -- a function without an explicit return that assigns a
+	string to a parameter leaked a Cell.  thanks to moinak ghosh for
 	spotting this very subtle one.
 
 Jul 31, 2003:
@@ -345,7 +380,7 @@ Jul 28, 2003:
 	radix character in programs and command line arguments regardless of
 	the locale; otherwise, the locale should prevail for input and output
 	of numbers.  so it's intended to work that way.
-	
+
 	i have rescinded the attempt to use strcoll in expanding shorthands in
 	regular expressions (cclenter).  its properties are much too
 	surprising; for example [a-c] matches aAbBc in locale en_US but abBcC
@@ -409,7 +444,7 @@ Nov 29, 2002:
 Jun 28, 2002:
 	modified run/format() and tran/getsval() to do a slightly better
 	job on using OFMT for output from print and CONVFMT for other
-	number->string conversions, as promised by posix and done by 
+	number->string conversions, as promised by posix and done by
 	gawk and mawk.  there are still places where it doesn't work
 	right if CONVFMT is changed; by then the STR attribute of the
 	variable has been irrevocably set.  thanks to arnold robbins for
@@ -441,7 +476,7 @@ Feb 10, 2002:
 Jan 1, 2002:
 	fflush() or fflush("") flushes all files and pipes.
 
-	length(arrayname) returns number of elements; thanks to 
+	length(arrayname) returns number of elements; thanks to
 	arnold robbins for suggestion.
 
 	added a makefile.win to make it easier to build on windows.
@@ -491,7 +526,7 @@ July 5, 2000:
 
 May 25, 2000:
 	yet another attempt at making 8-bit input work, with another
-	band-aid in b.c (member()), and some (uschar) casts to head 
+	band-aid in b.c (member()), and some (uschar) casts to head
 	off potential errors in subscripts (like isdigit).  also
 	changed HAT to NCHARS-2.  thanks again to santiago vila.
 
@@ -538,7 +573,7 @@ Apr 21, 1999:
 	the test case.)
 
 Apr 16, 1999:
-	with code kindly provided by Bruce Lilly, awk now parses 
+	with code kindly provided by Bruce Lilly, awk now parses
 	/=/ and similar constructs more sensibly in more places.
 	Bruce also provided some helpful test cases.
 
@@ -595,7 +630,7 @@ Jan 13, 1999:
 
 Oct 19, 1998:
 	fixed a couple of bugs in getrec: could fail to update $0
-	after a getline var; because inputFS wasn't initialized, 
+	after a getline var; because inputFS wasn't initialized,
 	could split $0 on every character, a misleading diversion.
 
 	fixed caching bug in makedfa: LRU was actually removing
@@ -743,7 +778,7 @@ May 2, 1996:
 	input file. (thanks to arnold robbins for inspiration and code).
 
 	small fixes to regexpr code:  can now handle []], [[], and
-	variants;  [] is now a syntax error, rather than matching 
+	variants;  [] is now a syntax error, rather than matching
 	everything;  [z-a] is now empty, not z.  far from complete
 	or correct, however.  (thanks to jeffrey friedl for pointing out
 	some awful behaviors.)

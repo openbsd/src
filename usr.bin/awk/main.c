@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2020/06/10 21:02:19 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2020/06/10 21:02:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -23,7 +23,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-const char	*version = "version 20190617";
+const char	*version = "version 20190910";
 
 #define DEBUG
 #include <stdio.h>
@@ -95,14 +95,14 @@ int main(int argc, char *argv[])
 		case 'f':	/* next argument is program filename */
 			if (argv[1][2] != 0) {  /* arg is -fsomething */
 				if (npfile >= MAX_PFILE - 1)
-					FATAL("too many -f options"); 
+					FATAL("too many -f options");
 				pfile[npfile++] = &argv[1][2];
 			} else {		/* arg is -f something */
 				argc--; argv++;
 				if (argc <= 1)
 					FATAL("no program filename");
 				if (npfile >= MAX_PFILE - 1)
-					FATAL("too many -f options"); 
+					FATAL("too many -f options");
 				pfile[npfile++] = argv[1];
 			}
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.28 2020/06/10 21:02:19 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.29 2020/06/10 21:02:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -107,6 +107,22 @@ void initgetrec(void)
 	infile = stdin;		/* no filenames, so use stdin */
 }
 
+/*
+ * POSIX specifies that fields are supposed to be evaluated as if they were
+ * split using the value of FS at the time that the record's value ($0) was
+ * read.
+ *
+ * Since field-splitting is done lazily, we save the current value of FS
+ * whenever a new record is read in (implicitly or via getline), or when
+ * a new value is assigned to $0.
+ */
+void savefs(void)
+{
+	if (strlen(getsval(fsloc)) >= sizeof (inputFS))
+		FATAL("field separator %.10s... is too long", *FS);
+	strlcpy(inputFS, *FS, sizeof(inputFS));
+}
+
 static int firsttime = 1;
 
 int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
@@ -125,6 +141,7 @@ int getrec(char **pbuf, int *pbufsize, int isrecord)	/* get next input record */
 	if (isrecord) {
 		donefld = 0;
 		donerec = 1;
+		savefs();
 	}
 	saveb0 = buf[0];
 	buf[0] = 0;
@@ -194,10 +211,6 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf *
 	int bufsize = *pbufsize;
 	char *rs = getsval(rsloc);
 
-	if (strlen(getsval(fsloc)) >= sizeof (inputFS))
-		FATAL("field separator %.10s... is too long", *FS);
-	/*fflush(stdout); avoids some buffering problem but makes it 25% slower*/
-	strlcpy(inputFS, *FS, sizeof inputFS);	/* for subsequent field splitting */
 	if ((sep = *rs) == 0) {
 		sep = '\n';
 		while ((c=getc(inf)) == '\n' && c != EOF)	/* skip leading \n's */
@@ -287,9 +300,6 @@ void fldbld(void)	/* create fields from current record */
 	}
 	fr = fields;
 	i = 0;	/* number of fields accumulated here */
-	if (strlen(getsval(fsloc)) >= sizeof (inputFS))
-		FATAL("field separator %.10s... is too long", *FS);
-	strlcpy(inputFS, *FS, sizeof(inputFS));
 	if (strlen(inputFS) > 1) {	/* it's a regular expression */
 		i = refldbld(r, inputFS);
 	} else if ((sep = *inputFS) == ' ') {	/* default whitespace */
@@ -480,7 +490,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 			break;
 		}
 	}
-	return i;		
+	return i;
 }
 
 void recbld(void)	/* create $0 from $1..$NF if necessary */
@@ -661,8 +671,7 @@ void eprint(void)	/* try to print context around error */
 	static int been_here = 0;
 	extern char ebuf[], *ep;
 
-	if (compile_time == 2 || compile_time == 0 || been_here++ > 0 ||
-	    ebuf == ep)
+	if (compile_time == 2 || compile_time == 0 || been_here++ > 0 || ebuf == ep)
 		return;
 	p = ep - 1;
 	if (p > ebuf && *p == '\n')

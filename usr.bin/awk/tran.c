@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.21 2020/06/10 21:01:32 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.22 2020/06/10 21:02:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -192,10 +192,10 @@ void freesymtab(Cell *ap)	/* free a symbol table */
 			if (freeable(cp))
 				xfree(cp->sval);
 			temp = cp->cnext;	/* avoids freeing then using */
-			free(cp); 
+			free(cp);
 			tp->nelem--;
 		}
-		tp->tab[i] = 0;
+		tp->tab[i] = NULL;
 	}
 	if (tp->nelem != 0)
 		WARNING("can't happen: inconsistent element count freeing %s", ap->nval);
@@ -208,7 +208,7 @@ void freeelem(Cell *ap, const char *s)	/* free elem s from ap (i.e., ap["s"] */
 	Array *tp;
 	Cell *p, *prev = NULL;
 	int h;
-	
+
 	tp = (Array *) ap->sval;
 	h = hash(s, tp->size);
 	for (p = tp->tab[h]; p != NULL; prev = p, p = p->cnext)
@@ -304,7 +304,7 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 	int fldno;
 
 	f += 0.0;		/* normalise negative zero to positive zero */
-	if ((vp->tval & (NUM | STR)) == 0) 
+	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "assign to");
 	if (isfld(vp)) {
 		donerec = 0;	/* mark $0 invalid */
@@ -319,6 +319,7 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 	} else if (isrec(vp)) {
 		donefld = 0;	/* mark $1... invalid */
 		donerec = 1;
+		savefs();
 	} else if (vp == ofsloc) {
 		if (donerec == 0)
 			recbld();
@@ -350,7 +351,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	int fldno;
 	Awkfloat f;
 
-	   DPRINTF( ("starting setsval %p: %s = \"%s\", t=%o, r,f=%d,%d\n", 
+	   DPRINTF( ("starting setsval %p: %s = \"%s\", t=%o, r,f=%d,%d\n",
 		(void*)vp, NN(vp->nval), s, vp->tval, donerec, donefld) );
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "assign to");
@@ -363,6 +364,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	} else if (isrec(vp)) {
 		donefld = 0;	/* mark $1... invalid */
 		donerec = 1;
+		savefs();
 	} else if (vp == ofsloc) {
 		if (donerec == 0)
 			recbld();
@@ -374,7 +376,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	vp->tval |= STR;
 	vp->fmt = NULL;
 	setfree(vp);
-	   DPRINTF( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n", 
+	   DPRINTF( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n",
 		(void*)vp, NN(vp->nval), t, (void *) t, vp->tval, donerec, donefld) );
 	vp->sval = t;
 	if (&vp->fval == NF) {
@@ -515,6 +517,22 @@ char *tostring(const char *s)	/* make a copy of string s */
 	return p;
 }
 
+Cell *catstr(Cell *a, Cell *b) /* concatenate a and b */
+{
+	Cell *c;
+	char *p;
+	char *sa = getsval(a);
+	char *sb = getsval(b);
+	size_t l = strlen(sa) + strlen(sb) + 1;
+	p = malloc(l);
+	if (p == NULL)
+		FATAL("out of space concatenating %s and %s", sa, sb);
+	snprintf(p, l, "%s%s", sa, sb);
+	c = setsymtab(p, p, 0.0, CON|STR|DONTFREE, symtab);
+	free(p);
+	return c;
+}
+
 char *qstring(const char *is, int delim)	/* collect string up to next delim */
 {
 	const char *os = is;
@@ -534,16 +552,16 @@ char *qstring(const char *is, int delim)	/* collect string up to next delim */
 			if (c == 0) {	/* \ at end */
 				*bp++ = '\\';
 				break;	/* for loop */
-			}	
+			}
 			switch (c) {
 			case '\\':	*bp++ = '\\'; break;
 			case 'n':	*bp++ = '\n'; break;
 			case 't':	*bp++ = '\t'; break;
-			case 'v':	*bp++ = '\v'; break;
 			case 'b':	*bp++ = '\b'; break;
 			case 'f':	*bp++ = '\f'; break;
 			case 'r':	*bp++ = '\r'; break;
-			case 'a':	*bp++ = '\007'; break;
+			case 'v':	*bp++ = '\v'; break;
+			case 'a':	*bp++ = '\a'; break;
 			default:
 				if (!isdigit(c)) {
 					*bp++ = c;

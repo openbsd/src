@@ -1,4 +1,4 @@
-/*	$OpenBSD: README,v 1.7 2011/09/28 19:27:18 millert Exp $	*/
+/*	$OpenBSD: README,v 1.8 2020/06/10 21:02:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -84,10 +84,6 @@ interpreted within double quotes.
 
 This compiles without change on Macintosh OS X using gcc and
 the standard developer tools.
-
-This is also said to compile on Macintosh OS 9 systems, using the
-file "buildmac" provided by Dan Allen (danallen@microsoft.com),
-to whom many thanks.
 
 The version of malloc that comes with some systems is sometimes
 astonishly slow.  If awk seems slow, you might try fixing that.
