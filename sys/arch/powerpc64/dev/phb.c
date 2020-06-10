@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.3 2020/06/08 19:06:47 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.4 2020/06/10 16:31:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -420,7 +420,8 @@ const char *
 phb_intr_string(void *v, pci_intr_handle_t ih)
 {
 	switch (ih.ih_type) {
-	case PCI_MSI:
+	case PCI_MSI32:
+	case PCI_MSI64:
 		return "msi";
 	case PCI_MSIX:
 		return "msix";
@@ -433,7 +434,42 @@ void *
 phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, char *name)
 {
-	return NULL;
+	struct phb_softc *sc = v;
+	void *cookie;
+
+	KASSERT(ih.ih_type != PCI_NONE);
+
+	if (ih.ih_type != PCI_INTX) {
+		uint32_t addr32, data;
+		uint64_t addr;
+		uint32_t xive;
+		int64_t error;
+
+		/* XXX Allocate a real interrupt vector. */
+		xive = 0;
+
+		if (ih.ih_type == PCI_MSI32) {
+			error = opal_get_msi_32(sc->sc_phb_id, 0, xive,
+			    1, &addr32, &data);
+			addr = addr32;
+		} else {
+			error = opal_get_msi_64(sc->sc_phb_id, 0, xive,
+			    1, &addr, &data);
+		}
+		if (error != OPAL_SUCCESS)
+			return NULL;
+
+		/* XXX Allocate a real cookie. */
+		cookie = sc;
+
+		if (ih.ih_type == PCI_MSIX) {
+			pci_msix_enable(ih.ih_pc, ih.ih_tag,
+			    sc->sc_iot, ih.ih_intrpin, addr, data);
+		} else
+			pci_msi_enable(ih.ih_pc, ih.ih_tag, addr, data);
+	}
+	
+	return cookie;
 }
 
 void
