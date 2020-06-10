@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.778 2020/06/05 07:33:57 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.779 2020/06/10 06:23:43 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2020 $
+.Dd $Mdocdate: June 10 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5910,6 +5910,17 @@ or an error occurred.
 If present,
 .Ar reason
 describes why the client exited.
+.It Ic %extended-output Ar pane-id Ar age Ar ... : Ar value
+New form of
+.Ic %output
+sent when the
+.Ar pause-after
+flag is set.
+.Ar age
+is the time in milliseconds for which tmux had buffered the output before it was sent.
+Any subsequent arguments up until a single
+.Ql \&:
+are for future use and should be ignored.
 .It Ic %layout-change Ar window-id Ar window-layout Ar window-visible-layout Ar window-flags
 The layout of a window with ID
 .Ar window-id
