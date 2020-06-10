@@ -1,4 +1,4 @@
-/*	$OpenBSD: maketab.c,v 1.12 2020/06/10 21:00:01 millert Exp $	*/
+/*	$OpenBSD: maketab.c,v 1.13 2020/06/10 21:01:13 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -136,6 +136,8 @@ int main(int argc, char *argv[])
 		n = sscanf(buf, "%1c %s %s %d", &c, def, name, &tok);
 		if (n != 4 || c != '#' || strcmp(def, "define") != 0)
 			continue;	/* not a valid #define */
+		if (strcmp(name, "YYSTYPE_IS_DECLARED") == 0)
+			continue;
 		if (tok < FIRSTTOKEN || tok > LASTTOKEN) {
 			/* fprintf(stderr, "maketab: funny token %d %s ignored\n", tok, buf); */
 			continue;
