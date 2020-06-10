@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.167 2020/05/22 08:53:01 patrick Exp $
+# $OpenBSD: GENERIC,v 1.168 2020/06/10 17:52:06 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -422,6 +422,7 @@ uk*		at scsibus?
 
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC
+cwfg*		at iic?			# CellWise CW201x fuel gauge
 dsxrtc*		at iic?			# DS3231 RTC
 fanpwr*		at iic?			# FAN53555 regulator
 fusbtc*		at iic?			# USB Type-C controller
