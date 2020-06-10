@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.24 2020/06/10 21:03:56 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.25 2020/06/10 21:04:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -115,6 +115,7 @@ void syminit(void)	/* initialize symbol table with builtin vars */
 	rlengthloc = setsymtab("RLENGTH", "", 0.0, NUM, symtab);
 	RLENGTH = &rlengthloc->fval;
 	symtabloc = setsymtab("SYMTAB", "", 0.0, ARR, symtab);
+	free(symtabloc->sval);
 	symtabloc->sval = (char *) symtab;
 }
 
@@ -127,6 +128,7 @@ void arginit(int ac, char **av)	/* set up ARGV and ARGC */
 	ARGC = &setsymtab("ARGC", "", (Awkfloat) ac, NUM, symtab)->fval;
 	cp = setsymtab("ARGV", "", 0.0, ARR, symtab);
 	ARGVtab = makesymtab(NSYMTAB);	/* could be (int) ARGC as well */
+	free(cp->sval);
 	cp->sval = (char *) ARGVtab;
 	for (i = 0; i < ac; i++) {
 		snprintf(temp, sizeof temp, "%d", i);
@@ -145,6 +147,7 @@ void envinit(char **envp)	/* set up ENVIRON variable */
 
 	cp = setsymtab("ENVIRON", "", 0.0, ARR, symtab);
 	ENVtab = makesymtab(NSYMTAB);
+	free(cp->sval);
 	cp->sval = (char *) ENVtab;
 	for ( ; *envp; envp++) {
 		if ((p = strchr(*envp, '=')) == NULL)
@@ -526,8 +529,15 @@ Cell *catstr(Cell *a, Cell *b) /* concatenate a and b */
 	if (p == NULL)
 		FATAL("out of space concatenating %s and %s", sa, sb);
 	snprintf(p, l, "%s%s", sa, sb);
-	c = setsymtab(p, p, 0.0, CON|STR|DONTFREE, symtab);
+	char *newbuf = malloc(strlen(p) + 2);
+	if (newbuf == NULL)
+		FATAL("out of space concatenating %s and %s", sa, sb);
+	// See string() in lex.c; a string "xx" is stored in the symbol
+	// table as "xx ".
+	sprintf(newbuf, "%s ", p);
+	c = setsymtab(newbuf, p, 0.0, CON|STR|DONTFREE, symtab);
 	free(p);
+	free(newbuf);
 	return c;
 }
 

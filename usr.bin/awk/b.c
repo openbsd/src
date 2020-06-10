@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.29 2020/06/10 21:03:56 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.30 2020/06/10 21:04:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -188,7 +188,7 @@ fa *makedfa(const char *s, bool anchor)	/* returns dfa for reg expr s */
 }
 
 fa *mkdfa(const char *s, bool anchor)	/* does the real work of making a dfa */
-				/* anchor = 1 for anchored matches, else 0 */
+				/* anchor = true for anchored matches, else false */
 {
 	Node *p, *p1;
 	fa *f;
@@ -231,17 +231,17 @@ int makeinit(fa *f, bool anchor)
 	k = *(f->re[0].lfollow);
 	xfree(f->posns[2]);
 	f->posns[2] = intalloc(k + 1,  __func__);
-	for (i=0; i <= k; i++) {
+	for (i = 0; i <= k; i++) {
 		(f->posns[2])[i] = (f->re[0].lfollow)[i];
 	}
 	if ((f->posns[2])[1] == f->accept)
 		f->out[2] = 1;
-	for (i=0; i < NCHARS; i++)
+	for (i = 0; i < NCHARS; i++)
 		f->gototab[2][i] = 0;
 	f->curstat = cgoto(f, 2, HAT);
 	if (anchor) {
 		*f->posns[2] = k-1;	/* leave out position 0 */
-		for (i=0; i < k; i++) {
+		for (i = 0; i < k; i++) {
 			(f->posns[0])[i] = (f->posns[2])[i];
 		}
 
@@ -471,9 +471,10 @@ int first(Node *p)	/* collects initially active leaves of p into setvec */
 		}
 		if (type(p) == CCL && (*(char *) right(p)) == '\0')
 			return(0);		/* empty CCL */
-		else return(1);
+		return(1);
 	case PLUS:
-		if (first(left(p)) == 0) return(0);
+		if (first(left(p)) == 0)
+			return(0);
 		return(1);
 	case STAR:
 	case QUEST:
@@ -722,7 +723,7 @@ bool fnematch(fa *pfa, FILE *f, char **pbuf, int *pbufsize, int quantum)
 			if (buf[--k] && ungetc(buf[k], f) == EOF)
 				FATAL("unable to ungetc '%c'", buf[k]);
 		while (k > i + patlen);
-		buf[k] = 0;
+		buf[k] = '\0';
 		return true;
 	}
 	else
@@ -915,7 +916,7 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	int i, j;
 	uschar *buf = NULL;
 	int ret = 1;
-	int init_q = (firstnum == 0);		/* first added char will be ? */
+	bool init_q = (firstnum == 0);		/* first added char will be ? */
 	int n_q_reps = secondnum-firstnum;	/* m>n, so reduce until {1,m-n} left  */
 	int prefix_length = reptok - basestr;	/* prefix includes first rep	*/
 	int suffix_length = strlen((const char *) reptok) - reptoklen;	/* string after rep specifier	*/
@@ -942,7 +943,7 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 		buf[j++] = '(';
 		buf[j++] = ')';
 	}
-	for (i=1; i < firstnum; i++) {		/* copy x reps 	*/
+	for (i = 1; i < firstnum; i++) {	/* copy x reps 	*/
 		memcpy(&buf[j], atom, atomlen);
 		j += atomlen;
 	}
@@ -951,7 +952,7 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	} else if (special_case == REPEAT_WITH_Q) {
 		if (init_q)
 			buf[j++] = '?';
-		for (i = 0; i < n_q_reps; i++) {	/* copy x? reps */
+		for (i = init_q; i < n_q_reps; i++) {	/* copy x? reps */
 			memcpy(&buf[j], atom, atomlen);
 			j += atomlen;
 			buf[j++] = '?';
@@ -1173,15 +1174,17 @@ rescan:
 				if (commafound) {
 					if (digitfound) { /* {n,m} */
 						m = num;
-						if (m<n)
+						if (m < n)
 							FATAL("illegal repetition expression: class %.20s",
 								lastre);
-						if ((n==0) && (m==1)) {
+						if (n == 0 && m == 1) {
 							return QUEST;
 						}
 					} else {	/* {n,} */
-						if (n==0) return STAR;
-						if (n==1) return PLUS;
+						if (n == 0)
+							return STAR;
+						else if (n == 1)
+							return PLUS;
 					}
 				} else {
 					if (digitfound) { /* {n} same as {n,n} */
@@ -1194,7 +1197,7 @@ rescan:
 				}
 				if (repeat(starttok, prestr-starttok, lastatom,
 					   startreptok - lastatom, n, m) > 0) {
-					if ((n==0) && (m==0)) {
+					if (n == 0 && m == 0) {
 						return EMPTYRE;
 					}
 					/* must rescan input for next token */
@@ -1280,7 +1283,8 @@ int cgoto(fa *f, int s, int c)
 			if (tmpset[j] != p[j])
 				goto different;
 		/* setvec is state i */
-		f->gototab[s][c] = i;
+		if (c != HAT)
+			f->gototab[s][c] = i;
 		return i;
 	  different:;
 	}
@@ -1294,7 +1298,8 @@ int cgoto(fa *f, int s, int c)
 	p = intalloc(setcnt + 1, __func__);
 
 	f->posns[f->curstat] = p;
-	f->gototab[s][c] = f->curstat;
+	if (c != HAT)
+		f->gototab[s][c] = f->curstat;
 	for (i = 0; i <= setcnt; i++)
 		p[i] = tmpset[i];
 	if (setvec[f->accept])
@@ -1318,7 +1323,7 @@ void freefa(fa *f)	/* free a finite automaton */
 	for (i = 0; i <= f->accept; i++) {
 		xfree(f->re[i].lfollow);
 		if (f->re[i].ltype == CCL || f->re[i].ltype == NCCL)
-			xfree((f->re[i].lval.np));
+			xfree(f->re[i].lval.np);
 	}
 	xfree(f->restr);
 	xfree(f->out);

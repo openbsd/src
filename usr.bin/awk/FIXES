@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.29 2020/06/10 21:03:56 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.30 2020/06/10 21:04:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,26 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+January 5, 2020:
+	Fix a bug in the concatentation of two string constants into
+	one done in the grammar.  Fixes GitHub issue #61.  Thanks
+	to GitHub user awkfan77 for pointing out the direction for
+	the fix.  New test T.concat added to the test suite.
+	Fix a few memory leaks reported by valgrind, as well.
+
+December 27, 2019:
+	Fix a bug whereby a{0,3} could match four a's.  Thanks to
+	"Anonymous AWK fan" for the report.
+
+December 11, 2019:
+	Further printf-related fixes for 32 bit systems.
+	Thanks again to Christos Zoulas.
+
+December 8, 2019:
+	Fix the return value of sprintf("%d") on 32 bit systems.
+	Thanks to Jim Lowe for the report and to Christos Zoulas
+	for the fix.
 
 November 10, 2019:
 	Convert a number of Boolean integer variables into

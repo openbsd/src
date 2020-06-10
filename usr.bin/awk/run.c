@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.54 2020/06/10 21:03:56 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.55 2020/06/10 21:04:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -859,8 +859,13 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		for (t = fmt; (*t++ = *s) != '\0'; s++) {
 			if (!adjbuf(&fmt, &fmtsz, MAXNUMSIZE+1+t-fmt, recsize, &t, "format3"))
 				FATAL("format item %.30s... ran format() out of memory", os);
-			if (isalpha((uschar)*s) && *s != 'l' && *s != 'h' && *s != 'L')
-				break;	/* the ansi panoply */
+			/* Ignore size specifiers */
+			if (strchr("hjLlqtz", *s) != NULL) {	/* the ansi panoply */
+				t--;
+				continue;
+			}
+			if (isalpha((uschar)*s))
+				break;
 			if (*s == '$') {
 				FATAL("'$' not permitted in awk formats");
 			}
@@ -893,16 +898,9 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		case 'f': case 'e': case 'g': case 'E': case 'G':
 			flag = 'f';
 			break;
-		case 'd': case 'i':
-			flag = 'd';
-			if(*(s-1) == 'l') break;
+		case 'd': case 'i': case 'o': case 'x': case 'X': case 'u':
+			flag = (*s == 'd' || *s == 'i') ? 'd' : 'u';
 			*(t-1) = 'j';
-			*t = 'd';
-			*++t = '\0';
-			break;
-		case 'o': case 'x': case 'X': case 'u':
-			flag = *(s-1) == 'l' ? 'd' : 'u';
-			*(t-1) = 'l';
 			*t = *s;
 			*++t = '\0';
 			break;
@@ -939,8 +937,8 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		case 'a':
 		case 'A':
 		case 'f':	snprintf(p, BUFSZ(p), fmt, getfval(x)); break;
-		case 'd':	snprintf(p, BUFSZ(p), fmt, (long) getfval(x)); break;
-		case 'u':	snprintf(p, BUFSZ(p), fmt, (int) getfval(x)); break;
+		case 'd':	snprintf(p, BUFSZ(p), fmt, (intmax_t) getfval(x)); break;
+		case 'u':	snprintf(p, BUFSZ(p), fmt, (uintmax_t) getfval(x)); break;
 		case 's':
 			t = getsval(x);
 			n = strlen(t);

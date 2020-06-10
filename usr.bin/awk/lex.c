@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.16 2020/06/10 21:03:56 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.17 2020/06/10 21:04:40 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -201,7 +201,9 @@ int yylex(void)
 		if (isalpha(c) || c == '_')
 			return word(buf);
 		if (isdigit(c)) {
-			yylval.cp = setsymtab(buf, tostring(buf), atof(buf), CON|NUM, symtab);
+			char *cp = tostring(buf);
+			yylval.cp = setsymtab(buf, cp, atof(buf), CON|NUM, symtab);
+			free(cp);
 			/* should this also have STR set? */
 			RET(NUMBER);
 		}
@@ -442,8 +444,9 @@ int string(void)
 	}
 	*bp = 0;
 	s = tostring(buf);
-	*bp++ = ' '; *bp++ = 0;
+	*bp++ = ' '; *bp++ = '\0';
 	yylval.cp = setsymtab(buf, s, 0.0, CON|STR|DONTFREE, symtab);
+	free(s);
 	RET(STRING);
 }
 
