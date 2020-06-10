@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.18 2020/06/10 21:02:33 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.19 2020/06/10 21:03:12 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -233,16 +233,16 @@ typedef struct rrow {
 } rrow;
 
 typedef struct fa {
-	uschar	gototab[NSTATES][HAT + 1];
-	uschar	out[NSTATES];
+	unsigned int	**gototab;
+	uschar	*out;
 	uschar	*restr;
-	int	*posns[NSTATES];
+	int	**posns;
+	int	state_count;
 	int	anchor;
 	int	use;
 	int	initstat;
 	int	curstat;
 	int	accept;
-	int	reset;
 	struct	rrow re[1];	/* variable: actual size set by calling malloc */
 } fa;
 

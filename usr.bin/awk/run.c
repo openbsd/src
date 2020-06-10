@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.51 2020/06/10 21:02:33 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.52 2020/06/10 21:03:12 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -720,7 +720,7 @@ Cell *gettemp(void)	/* get a tempcell */
 		tmps = (Cell *) calloc(100, sizeof(Cell));
 		if (!tmps)
 			FATAL("out of space for temporaries");
-		for(i = 1; i < 100; i++)
+		for (i = 1; i < 100; i++)
 			tmps[i-1].cnext = &tmps[i];
 		tmps[i-1].cnext = NULL;
 	}

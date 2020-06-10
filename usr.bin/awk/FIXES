@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.26 2020/06/10 21:02:53 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.27 2020/06/10 21:03:12 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,10 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+October 17, 2019:
+	Import code cleanups from NetBSD. Much thanks to Christos
+	Zoulas (Github user zoulasc). Merges PR 51.
 
 October 6, 2019:
 	Import code from NetBSD awk that implements RS as a regular
