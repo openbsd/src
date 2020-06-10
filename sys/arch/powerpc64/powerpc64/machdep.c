@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2020/06/08 18:37:16 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 2020/06/10 19:06:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -441,18 +441,6 @@ cpu_startup(void)
 
 	if (!fdt_init(fdt) || fdt_get_size(fdt) == 0)
 		panic("can't remap FDT");
-}
-
-void
-cpu_initclocks(void)
-{
-	printf("%s\n", __func__);
-}
-
-void
-setstatclockrate(int new)
-{
-	printf("%s\n", __func__);
 }
 
 void

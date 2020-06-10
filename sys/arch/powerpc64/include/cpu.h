@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 2020/06/09 18:58:58 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 2020/06/10 19:06:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -49,6 +49,12 @@ struct cpu_info {
 #define CPUSAVE_LEN	9
 	register_t	ci_tempsave[CPUSAVE_LEN];
 
+	uint64_t	ci_lasttb;
+	uint64_t	ci_nexttimerevent;
+	uint64_t	ci_nextstatevent;
+	int		ci_statspending;
+	
+	volatile int 	ci_cpl;
 	uint32_t	ci_ipending;
 #ifdef DIAGNOSTIC
 	int		ci_mutex_level;

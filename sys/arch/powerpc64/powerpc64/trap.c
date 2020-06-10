@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 2020/05/27 22:22:04 gkoehler Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 2020/06/10 19:06:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -24,9 +24,17 @@
 #endif
 #include <machine/trap.h>
 
+void	decr_intr(struct trapframe *); /* clock.c */
+
 void
 trap(struct trapframe *frame)
 {
+	switch (frame->exc) {
+	case EXC_DECR:
+		decr_intr(frame);
+		return;
+	}
+
 #ifdef DDB
 	/* At a trap instruction, enter the debugger. */
 	if (frame->exc == EXC_PGM && (frame->srr1 & EXC_PGM_TRAP)) {
@@ -35,6 +43,9 @@ trap(struct trapframe *frame)
 		return;
 	}
 #endif
+
+	if (frame->exc == EXC_DSI)
+		printf("dsisr %lx dar %lx\n", frame->dsisr, frame->dar);
 
 	panic("trap type %lx at lr %lx", frame->exc, frame->lr);
 }
