@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.134 2020/05/22 08:48:49 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.135 2020/06/10 17:51:21 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -512,3 +512,7 @@ file	dev/fdt/bd718x7.c		bdpmic
 device	tcpci
 attach	tcpci at i2c
 file	dev/fdt/tcpci.c			tcpci
+
+device	cwfg
+attach	cwfg at i2c
+file	dev/fdt/cwfg.c			cwfg
