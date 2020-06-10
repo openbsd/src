@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.31 2020/06/10 21:05:02 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.32 2020/06/10 21:05:50 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -26,10 +26,28 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
 
+February 28, 2020:
+	More cleanups from Christos Zoulas: notably backslash continuation
+	inside strings removes the newline and a fix for RS = "^a".
+	Fix for address sanitizer-found problem. Thanks to GitHub user
+	enh-google.
+
+February 19, 2020:
+	More small cleanups from Christos Zoulas.
+
+February 18, 2020:
+	Additional cleanups from Christos Zoulas. It's no longer necessary
+	to use the -y flag to bison.
+
+February 6, 2020:
+	Additional small cleanups from Christos Zoulas. awk is now
+	a little more robust about reporting I/O errors upon exit.
+
 January 31, 2020:
 	Merge PR #70, which avoids use of variable length arrays. Thanks
 	to GitHub user michaelforney.  Fix issue #60 ({0} in interval
-	expressions doesn't work). Thanks to Arnold Robbins.
+	expressions doesn't work).  Also get all tests working again.
+	Thanks to Arnold Robbins.
 
 January 24, 2020:
 	A number of small cleanups from Christos Zoulas.  Add the close

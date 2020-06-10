@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.33 2020/06/10 21:05:02 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.34 2020/06/10 21:05:50 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -29,7 +29,6 @@ THIS SOFTWARE.
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <stdarg.h>
 #include <limits.h>
 #include "awk.h"
@@ -37,6 +36,7 @@ THIS SOFTWARE.
 
 char	EMPTY[] = { '\0' };
 FILE	*infile	= NULL;
+bool	innew;		/* true = infile has not been read by readrec */
 char	*file	= EMPTY;
 char	*record;
 int	recsize	= RECSIZE;
@@ -57,8 +57,8 @@ int	lastfld	= 0;	/* last used field */
 int	argno	= 1;	/* current input argument number */
 extern	Awkfloat *ARGC;
 
-static Cell dollar0 = { OCELL, CFLD, NULL, EMPTY, 0.0, REC|STR|DONTFREE };
-static Cell dollar1 = { OCELL, CFLD, NULL, EMPTY, 0.0, FLD|STR|DONTFREE };
+static Cell dollar0 = { OCELL, CFLD, NULL, EMPTY, 0.0, REC|STR|DONTFREE, NULL, NULL };
+static Cell dollar1 = { OCELL, CFLD, NULL, EMPTY, 0.0, FLD|STR|DONTFREE, NULL, NULL };
 
 void recinit(unsigned int n)
 {
@@ -108,6 +108,7 @@ void initgetrec(void)
 		argno++;
 	}
 	infile = stdin;		/* no filenames, so use stdin */
+	innew = true;
 }
 
 /*
@@ -177,7 +178,9 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 				FATAL("can't open file %s", file);
 			setfval(fnrloc, 0.0);
 		}
-		c = readrec(&buf, &bufsize, infile);
+		c = readrec(&buf, &bufsize, infile, innew);
+		if (innew)
+			innew = false;
 		if (c != 0 || buf[0] != '\0') {	/* normal record */
 			if (isrecord) {
 				if (freeable(fldtab[0]))
@@ -215,7 +218,7 @@ void nextfile(void)
 	argno++;
 }
 
-int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf */
+int readrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag)	/* read one record into buf */
 {
 	int sep, c, isrec;
 	char *rr, *buf = *pbuf;
@@ -226,7 +229,14 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf *
 		bool found;
 
 		fa *pfa = makedfa(rs, 1);
-		found = fnematch(pfa, inf, &buf, &bufsize, recsize);
+		if (newflag)
+			found = fnematch(pfa, inf, &buf, &bufsize, recsize);
+		else {
+			int tempstat = pfa->initstat;
+			pfa->initstat = 2;
+			found = fnematch(pfa, inf, &buf, &bufsize, recsize);
+			pfa->initstat = tempstat;
+		}
 		if (found)
 			setptr(patbeg, '\0');
 	} else {
@@ -463,7 +473,7 @@ void growfldtab(int n)	/* make new fields up to at least $n */
 	if (n > nf)
 		nf = n;
 	s = (nf+1) * (sizeof (struct Cell *));  /* freebsd: how much do we need? */
-	if (s / sizeof(struct Cell *) - 1 == nf) /* didn't overflow */
+	if (s / sizeof(struct Cell *) - 1 == (size_t)nf) /* didn't overflow */
 		fldtab = realloc(fldtab, s);
 	else					/* overflow sizeof int */
 		xfree(fldtab);	/* make it null */
@@ -584,33 +594,6 @@ void SYNTAX(const char *fmt, ...)
 	fprintf(stderr, "\n");
 	errorflag = 2;
 	eprint();
-}
-
-void fpecatch(int sig)
-{
-	extern Node *curnode;
-
-	dprintf(STDERR_FILENO, "floating point exception\n");
-
-	if (compile_time != 2 && NR && *NR > 0) {
-		dprintf(STDERR_FILENO, " input record number %d", (int) (*FNR));
-		if (strcmp(*FILENAME, "-") != 0) {
-			dprintf(STDERR_FILENO, ", file %s", *FILENAME);
-		}
-		dprintf(STDERR_FILENO, "\n");
-	}
-	if (compile_time != 2 && curnode) {
-		dprintf(STDERR_FILENO, " source line number %d", curnode->lineno);
-	} else if (compile_time != 2 && lineno) {
-		dprintf(STDERR_FILENO, " source line number %d", lineno);
-	}
-	if (compile_time == 1 && cursource() != NULL) {
-		dprintf(STDERR_FILENO, " source file %s", cursource());
-	}
-	dprintf(STDERR_FILENO, "\n");
-	if (dbg > 1)		/* core dump if serious debugging on */
-		abort();
-	_exit(1);
 }
 
 extern int bracecnt, brackcnt, parencnt;

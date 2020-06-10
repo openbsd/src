@@ -1,4 +1,4 @@
-$OpenBSD: README.md,v 1.1 2020/06/10 21:04:40 millert Exp $
+$OpenBSD: README.md,v 1.2 2020/06/10 21:05:50 millert Exp $
 
 # The One True Awk
 
@@ -44,7 +44,19 @@ Thanks.
 
 ## Submitting Pull Requests
 
-Pull requests are welcome.  However, please create them with a request
+Pull requests are welcome. Some guidelines:
+
+* Please do not use functions or facilities that are not standard (e.g.,
+`strlcpy()`, `fpurge()`).
+
+* Please run the test suite and make sure that your changes pass before
+posting the pull request. To do so:
+
+  1. Save the previous version of `awk` somewhere in your path. Call it `nawk` (for example).
+  1. Run `oldawk=nawk make check > check.out 2>&1`.
+  1. Search for `BAD` or `error` in the result. In general, look over it manually to make sure there are no errors.
+
+* Please create the pull request with a request
 to merge into the `staging` branch instead of into the `master` branch.
 This allows us to do testing, and to make any additional edits or changes
 after the merge but before merging to `master`.

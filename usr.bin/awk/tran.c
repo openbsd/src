@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.26 2020/06/10 21:05:02 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.27 2020/06/10 21:05:50 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -345,7 +345,7 @@ void funnyvar(Cell *vp, const char *rw)
 	if (vp->tval & FCN)
 		FATAL("can't %s %s; it's a function.", rw, vp->nval);
 	WARNING("funny variable %p: n=%s s=\"%s\" f=%g t=%o",
-		vp, vp->nval, vp->sval, vp->fval, vp->tval);
+		(void *)vp, vp->nval, vp->sval, vp->fval, vp->tval);
 }
 
 char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
@@ -515,6 +515,17 @@ char *tostring(const char *s)	/* make a copy of string s */
 	char *p = strdup(s);
 	if (p == NULL)
 		FATAL("out of space in tostring on %s", s);
+	return(p);
+}
+
+char *tostringN(const char *s, size_t n)	/* make a copy of string s */
+{
+	char *p;
+
+	p = malloc(n);
+	if (p == NULL)
+		FATAL("out of space in tostring on %s", s);
+	strlcpy(p, s, n);
 	return(p);
 }
 

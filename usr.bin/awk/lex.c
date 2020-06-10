@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.18 2020/06/10 21:05:02 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.19 2020/06/10 21:05:50 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -31,7 +31,7 @@ THIS SOFTWARE.
 #include "ytab.h"
 
 extern YYSTYPE	yylval;
-extern int	infunc;
+extern bool	infunc;
 
 int	lineno	= 1;
 int	bracecnt = 0;
@@ -97,10 +97,6 @@ const Keyword keywords[] = {	/* keep sorted: binary searched */
 };
 
 #define	RET(x)	{ if(dbg)printf("lex %s\n", tokname(x)); return(x); }
-
-int peek(void);
-int gettok(char **, int *);
-int binsearch(char *, Keyword *, int);
 
 static int peek(void)
 {
@@ -221,6 +217,11 @@ int yylex(void)
 			while ((c = input()) != '\n' && c != 0)
 				;
 			unput(c);
+			/*
+			 * Next line is a hack, itcompensates for
+			 * unput's treatment of \n.
+			 */
+			lineno++;
 			break;
 		case ';':
 			RET(';');
@@ -394,6 +395,7 @@ int string(void)
 		case '\\':
 			c = input();
 			switch (c) {
+			case '\n': break;
 			case '"': *bp++ = '"'; break;
 			case 'n': *bp++ = '\n'; break;
 			case 't': *bp++ = '\t'; break;
