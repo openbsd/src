@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.30 2020/06/10 21:02:53 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.31 2020/06/10 21:03:36 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -59,10 +59,10 @@ static Cell dollar1 = { OCELL, CFLD, NULL, "", 0.0, FLD|STR|DONTFREE };
 
 void recinit(unsigned int n)
 {
-	if ( (record = (char *) malloc(n)) == NULL
-	  || (fields = (char *) malloc(n+1)) == NULL
-	  || (fldtab = (Cell **) calloc(nfields+2, sizeof(Cell *))) == NULL
-	  || (fldtab[0] = (Cell *) malloc(sizeof(Cell))) == NULL )
+	if ( (record = malloc(n)) == NULL
+	  || (fields = malloc(n+1)) == NULL
+	  || (fldtab = calloc(nfields+2, sizeof(*fldtab))) == NULL
+	  || (fldtab[0] = malloc(sizeof(**fldtab))) == NULL)
 		FATAL("out of space for $0 and fields");
 	*record = '\0';
 	*fldtab[0] = dollar0;
@@ -77,11 +77,11 @@ void makefields(int n1, int n2)		/* create $n1..$n2 inclusive */
 	int i;
 
 	for (i = n1; i <= n2; i++) {
-		fldtab[i] = (Cell *) malloc(sizeof (struct Cell));
+		fldtab[i] = malloc(sizeof(**fldtab));
 		if (fldtab[i] == NULL)
 			FATAL("out of space in makefields %d", i);
 		*fldtab[i] = dollar1;
-		snprintf(temp, sizeof temp, "%d", i);
+		snprintf(temp, sizeof(temp), "%d", i);
 		fldtab[i]->nval = tostring(temp);
 	}
 }
@@ -217,7 +217,7 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf *
 		fa *pfa = makedfa(rs, 1);
 		found = fnematch(pfa, inf, &buf, &bufsize, recsize);
 		if (found)
-			*patbeg = 0;
+			setptr(patbeg, '\0');
 	} else {
 		if ((sep = *rs) == 0) {
 			sep = '\n';
@@ -261,7 +261,7 @@ char *getargv(int n)	/* get ARGV[n] */
 	char *s, temp[50];
 	extern Array *ARGVtab;
 
-	snprintf(temp, sizeof temp, "%d", n);
+	snprintf(temp, sizeof(temp), "%d", n);
 	if (lookup(temp, ARGVtab) == NULL)
 		return NULL;
 	x = setsymtab(temp, "", 0.0, STR, ARGVtab);
@@ -306,7 +306,7 @@ void fldbld(void)	/* create fields from current record */
 	n = strlen(r);
 	if (n > fieldssize) {
 		xfree(fields);
-		if ((fields = (char *) malloc(n+2)) == NULL) /* possibly 2 final \0s */
+		if ((fields = malloc(n+2)) == NULL) /* possibly 2 final \0s */
 			FATAL("out of space for fields in fldbld %d", n);
 		fieldssize = n;
 	}
@@ -449,7 +449,7 @@ void growfldtab(int n)	/* make new fields up to at least $n */
 		nf = n;
 	s = (nf+1) * (sizeof (struct Cell *));  /* freebsd: how much do we need? */
 	if (s / sizeof(struct Cell *) - 1 == nf) /* didn't overflow */
-		fldtab = (Cell **) realloc(fldtab, s);
+		fldtab = realloc(fldtab, s);
 	else					/* overflow sizeof int */
 		xfree(fldtab);	/* make it null */
 	if (fldtab == NULL)
@@ -469,7 +469,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 	n = strlen(rec);
 	if (n > fieldssize) {
 		xfree(fields);
-		if ((fields = (char *) malloc(n+1)) == NULL)
+		if ((fields = malloc(n+1)) == NULL)
 			FATAL("out of space for fields in refldbld %d", n);
 		fieldssize = n;
 	}

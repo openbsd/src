@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.14 2020/06/10 21:02:33 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.15 2020/06/10 21:03:36 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -184,7 +184,7 @@ int yylex(void)
 	static char *buf = NULL;
 	static int bufsize = 5; /* BUG: setting this small causes core dump! */
 
-	if (buf == NULL && (buf = (char *) malloc(bufsize)) == NULL)
+	if (buf == NULL && (buf = malloc(bufsize)) == NULL)
 		FATAL( "out of space in yylex" );
 	if (sc) {
 		sc = 0;
@@ -374,7 +374,7 @@ int string(void)
 	static char *buf = NULL;
 	static int bufsz = 500;
 
-	if (buf == NULL && (buf = (char *) malloc(bufsz)) == NULL)
+	if (buf == NULL && (buf = malloc(bufsz)) == NULL)
 		FATAL("out of space for strings");
 	for (bp = buf; (c = input()) != '"'; ) {
 		if (!adjbuf(&buf, &bufsz, bp-buf+2, 500, &bp, "string"))
@@ -521,7 +521,7 @@ int regexpr(void)
 	static int bufsz = 500;
 	char *bp;
 
-	if (buf == NULL && (buf = (char *) malloc(bufsz)) == NULL)
+	if (buf == NULL && (buf = malloc(bufsz)) == NULL)
 		FATAL("out of space for rex expr");
 	bp = buf;
 	for ( ; ((c = input()) != '/' || openclass == 1) && c != 0; ) {

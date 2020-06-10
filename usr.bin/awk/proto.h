@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.14 2020/06/10 21:02:53 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.15 2020/06/10 21:03:36 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -44,8 +44,8 @@ extern	fa	*mkdfa(const char *, int);
 extern	int	makeinit(fa *, int);
 extern	void	penter(Node *);
 extern	void	freetr(Node *);
-extern	int	hexstr(uschar **);
-extern	int	quoted(uschar **);
+extern	int	hexstr(const uschar **);
+extern	int	quoted(const uschar **);
 extern	char	*cclenter(const char *);
 extern	void	overflo(const char *) __attribute__((__noreturn__));
 extern	void	cfoll(fa *, Node *);
@@ -90,7 +90,7 @@ extern	Node	*pa2stat(Node *, Node *, Node *);
 extern	Node	*linkum(Node *, Node *);
 extern	void	defn(Cell *, Node *, Node *);
 extern	int	isarg(const char *);
-extern	char	*tokname(int);
+extern	const char *tokname(int);
 extern	Cell	*(*proctab[])(Node **, int);
 extern	int	ptoi(void *);
 extern	Node	*itonp(int);
