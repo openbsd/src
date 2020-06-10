@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.7 2020/06/06 01:40:08 beck Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.8 2020/06/10 22:14:37 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -290,6 +290,10 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     # many tests fail due to unexpected server_name extension
     Test("test-bleichenbacher-workaround.py"),
 
+    # timeout:
+    # 'padding of length 255 (256 with the length byte), error at position 0'
+    Test("test-lucky13.py"),
+
     # need client key and cert plus extra server setup
     Test("test-certificate-malformed.py"),
     Test("test-certificate-request.py"),
@@ -441,6 +445,8 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
 tls12_unsupported_tests = TestGroup("TLSv1.2 for unsupported features", [
     # protocol_version
     Test("test-SSLv3-padding.py"),
+    # we don't do RSA key exchanges
+    Test("test-bleichenbacher-timing.py"),
 ])
 
 # These tests take a ton of time to fail against an 1.3 server,
