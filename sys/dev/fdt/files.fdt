@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.135 2020/06/10 17:51:21 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.136 2020/06/10 23:55:19 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -6,6 +6,10 @@
 device	pinctrl
 attach	pinctrl at fdt
 file	dev/fdt/pinctrl.c		pinctrl
+
+device	simpleaudio: audio
+attach	simpleaudio at fdt
+file	dev/fdt/simpleaudio.c		simpleaudio
 
 device	simplefb: wsemuldisplaydev, rasops15, rasops16, rasops24, rasops32
 attach	simplefb at fdt
