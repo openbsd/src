@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.47 2020/06/10 21:00:01 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.48 2020/06/10 21:00:31 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -119,7 +119,7 @@ int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
 		if (rminlen)
 			minlen += quantum - rminlen;
 		tbuf = (char *) realloc(*pbuf, minlen);
-		DPRINTF( ("adjbuf %s: %d %d (pbuf=%p, tbuf=%p)\n", whatrtn, *psiz, minlen, *pbuf, tbuf) );
+		DPRINTF( ("adjbuf %s: %d %d (pbuf=%p, tbuf=%p)\n", whatrtn, *psiz, minlen, (void *) *pbuf, (void *) tbuf) );
 		if (tbuf == NULL) {
 			if (whatrtn)
 				FATAL("out of memory in %s", whatrtn);
@@ -862,6 +862,9 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 				FATAL("format item %.30s... ran format() out of memory", os);
 			if (isalpha((uschar)*s) && *s != 'l' && *s != 'h' && *s != 'L')
 				break;	/* the ansi panoply */
+			if (*s == '$') {
+				FATAL("'$' not permitted in awk formats");
+			}
 			if (*s == '*') {
 				if (a == NULL)
 					FATAL("not enough args in printf(%s)", os);
@@ -879,7 +882,6 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		if (fmtwd < 0)
 			fmtwd = -fmtwd;
 		adjbuf(&buf, &bufsize, fmtwd+1+p-buf, recsize, &p, "format4");
-
 		switch (*s) {
 		case 'a': case 'A':
 			if (have_a_format)
@@ -1717,8 +1719,6 @@ Cell *printstat(Node **a, int n)	/* print a[0] */
 
 Cell *nullproc(Node **a, int n)
 {
-	n = n;
-	a = a;
 	return 0;
 }
 
@@ -1832,7 +1832,6 @@ Cell *closefile(Node **a, int n)
 	Cell *x;
 	int i, stat;
 
-	n = n;
 	x = execute(a[0]);
 	getsval(x);
 	stat = -1;

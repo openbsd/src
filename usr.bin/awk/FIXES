@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.19 2020/06/10 21:00:01 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.20 2020/06/10 21:00:31 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,13 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Aug 27, 2018:
+	Disallow '$' in printf formats; arguments evaluated in order
+	and printed in order.
+
+	Added some casts to silence warnings on debugging printfs.
+	(Thanks, Arnold.)
 
 Aug 23, 2018:
         A long list of fixes courtesy of Arnold Robbins,

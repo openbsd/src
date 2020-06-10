@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.19 2020/06/10 21:00:01 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.20 2020/06/10 21:00:31 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -348,7 +348,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 		fldno = atoi(vp->nval);
 		if (fldno > *NF)
 			newfld(fldno);
-		   DPRINTF( ("setting field %d to %s (%p)\n", fldno, s, s) );
+		   DPRINTF( ("setting field %d to %s (%p)\n", fldno, s, (void *) s) );
 	} else if (isrec(vp)) {
 		donefld = 0;	/* mark $1... invalid */
 		donerec = 1;
@@ -364,7 +364,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	vp->fmt = NULL;
 	setfree(vp);
 	   DPRINTF( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n", 
-		(void*)vp, NN(vp->nval), t,t, vp->tval, donerec, donefld) );
+		(void*)vp, NN(vp->nval), t, (void *) t, vp->tval, donerec, donefld) );
 	vp->sval = t;
 	if (&vp->fval == NF) {
 		donerec = 0;	/* mark $0 invalid */
@@ -479,7 +479,7 @@ static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cel
 	}
 done:
 	   DPRINTF( ("getsval %p: %s = \"%s (%p)\", t=%o\n",
-		(void*)vp, NN(vp->nval), vp->sval, vp->sval, vp->tval) );
+		(void*)vp, NN(vp->nval), vp->sval, (void *) vp->sval, vp->tval) );
 	return(vp->sval);
 }
 
