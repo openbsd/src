@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.6 2020/06/10 14:33:29 kettenis Exp $	*/
+/*	$OpenBSD: opal.h,v 1.7 2020/06/10 16:30:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -36,6 +36,8 @@
 #define OPAL_PCI_SET_PHB_MEM_WINDOW	28
 #define OPAL_PCI_MAP_PE_MMIO_WINDOW	29
 #define OPAL_PCI_SET_PE			31
+#define OPAL_GET_MSI_32			39
+#define OPAL_GET_MSI_64			40
 #define OPAL_PCI_MAP_PE_DMA_WINDOW_REAL	45
 #define OPAL_PCI_RESET			49
 
@@ -110,6 +112,10 @@ int64_t opal_pci_map_pe_mmio_window(uint64_t, uint64_t, uint16_t,
 	    uint16_t, uint16_t);
 int64_t opal_pci_set_pe(uint64_t, uint64_t, uint64_t, uint8_t, uint8_t,
 	    uint8_t, uint8_t);
+int64_t	opal_get_msi_32(uint64_t, uint32_t, uint32_t, uint8_t,
+	    uint32_t *, uint32_t *);
+int64_t	opal_get_msi_64(uint64_t, uint32_t, uint32_t, uint8_t,
+	    uint64_t *, uint32_t *);
 int64_t opal_pci_map_pe_dma_window_real(uint64_t, uint64_t, uint16_t,
 	    uint64_t, uint64_t);
 int64_t opal_pci_reset(uint64_t, uint8_t, uint8_t);
