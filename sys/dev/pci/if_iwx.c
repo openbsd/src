@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.19 2020/05/26 12:07:36 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.20 2020/06/10 09:20:30 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1670,13 +1670,13 @@ iwx_alloc_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring, int qid)
 	 *
 	 * In DQA mode we use 1 command queue + 4 DQA mgmt/data queues.
 	 * The command is queue 0 (sc->txq[0]), and 4 mgmt/data frame queues
-	 * are sc->tqx[IWX_DQA_MIN_MGMT_QUEUE + ac], i.e. sc->txq[5:8],
+	 * are sc->tqx[ac + IWX_DQA_AUX_QUEUE + 1], i.e. sc->txq[2:5],
 	 * in order to provide one queue per EDCA category.
 	 *
 	 * Tx aggregation will require additional queues (one queue per TID
 	 * for which aggregation is enabled) but we do not implement this yet.
 	 */
-	if (qid > IWX_DQA_MAX_MGMT_QUEUE)
+	if (qid > IWX_DQA_MIN_MGMT_QUEUE)
 		return 0;
 
 	err = iwx_dma_contig_alloc(sc->sc_dmat, &ring->bc_tbl,
@@ -4242,7 +4242,7 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	 * Tx aggregation will require additional queues (one queue per TID
 	 * for which aggregation is enabled) but we do not implement this yet.
 	 */
-	ring = &sc->txq[IWX_DQA_MIN_MGMT_QUEUE + ac];
+	ring = &sc->txq[ac + IWX_DQA_AUX_QUEUE + 1];
 	desc = &ring->desc[ring->cur];
 	memset(desc, 0, sizeof(*desc));
 	data = &ring->data[ring->cur];
