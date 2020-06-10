@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.185 2020/05/28 07:17:50 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.186 2020/06/10 13:24:57 visa Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -420,7 +420,7 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		syscallarg(int *) rsv;
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
-	struct file *fp1, *fp2;
+	struct file *fp1 = NULL, *fp2 = NULL;
 	struct socket *so1, *so2;
 	int type, cloexec, nonblock, fflag, error, sv[2];
 
@@ -475,14 +475,19 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		return (0);
 	}
 	fdremove(fdp, sv[1]);
-	closef(fp2, p);
-	so2 = NULL;
 free4:
 	fdremove(fdp, sv[0]);
-	closef(fp1, p);
-	so1 = NULL;
 free3:
 	fdpunlock(fdp);
+
+	if (fp2 != NULL) {
+		closef(fp2, p);
+		so2 = NULL;
+	}
+	if (fp1 != NULL) {
+		closef(fp1, p);
+		so1 = NULL;
+	}
 free2:
 	if (so2 != NULL)
 		(void)soclose(so2, 0);
