@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.21 2020/06/10 21:01:13 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.22 2020/06/10 21:01:32 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,16 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Jan 25, 2019:
+	Make getline handle numeric strings properly in all cases.
+	(Thanks, Arnold.)
+
+Jan 21, 2019:
+	Merged a number of small fixes from GitHub pull requests.
+	Thanks to GitHub users Arnold Robbins (arnoldrobbins),
+	Cody Mello (melloc) and Christoph Junghans (junghans).
+	PR numbers: 13-21, 23, 24, 27.
 
 Oct 25, 2018:
 	Added test in maketab.c to prevent generating a proctab entry

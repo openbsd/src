@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.15 2020/06/10 21:00:01 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.16 2020/06/10 21:01:32 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -98,9 +98,14 @@ extern Array	*symtab;
 
 extern Cell	*nrloc;		/* NR */
 extern Cell	*fnrloc;	/* FNR */
+extern Cell	*fsloc;		/* FS */
 extern Cell	*nfloc;		/* NF */
+extern Cell	*ofsloc;	/* OFS */
+extern Cell	*orsloc;	/* ORS */
+extern Cell	*rsloc;		/* RS */
 extern Cell	*rstartloc;	/* RSTART */
 extern Cell	*rlengthloc;	/* RLENGTH */
+extern Cell	*subseploc;	/* SUBSEP */
 
 /* Cell.tval values: */
 #define	NUM	01	/* number value is valid */

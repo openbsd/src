@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.48 2020/06/10 21:00:31 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.49 2020/06/10 21:01:32 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -428,6 +428,10 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 		} else if (a[0] != NULL) {	/* getline var <file */
 			x = execute(a[0]);
 			setsval(x, buf);
+			if (is_number(x->sval)) {
+				x->fval = atof(x->sval);
+				x->tval |= NUM;
+			}
 			tempfree(x);
 		} else {			/* getline <file */
 			setsval(fldtab[0], buf);
@@ -443,6 +447,10 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 			n = getrec(&buf, &bufsize, 0);
 			x = execute(a[0]);
 			setsval(x, buf);
+			if (is_number(x->sval)) {
+				x->fval = atof(x->sval);
+				x->tval |= NUM;
+			}
 			tempfree(x);
 		}
 	}
@@ -465,7 +473,7 @@ Cell *array(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 	Node *np;
 	char *buf;
 	int bufsz = recsize;
-	int nsub = strlen(*SUBSEP);
+	int nsub;
 
 	if ((buf = (char *) malloc(bufsz)) == NULL)
 		FATAL("out of memory in array");
@@ -475,6 +483,7 @@ Cell *array(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 	for (np = a[1]; np; np = np->nnext) {
 		y = execute(np);	/* subscript */
 		s = getsval(y);
+		nsub = strlen(getsval(subseploc));
 		if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, "array"))
 			FATAL("out of memory for %s[%s...]", x->nval, buf);
 		strlcat(buf, s, bufsz);
@@ -503,7 +512,7 @@ Cell *awkdelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts *
 	Cell *x, *y;
 	Node *np;
 	char *s;
-	int nsub = strlen(*SUBSEP);
+	int nsub;
 
 	x = execute(a[0]);	/* Cell* for symbol table */
 	if (!isarr(x))
@@ -522,9 +531,10 @@ Cell *awkdelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts *
 		for (np = a[1]; np; np = np->nnext) {
 			y = execute(np);	/* subscript */
 			s = getsval(y);
+			nsub = strlen(getsval(subseploc));
 			if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, "awkdelete"))
 				FATAL("out of memory deleting %s[%s...]", x->nval, buf);
-			strlcat(buf, s, bufsz);	
+			strlcat(buf, s, bufsz);
 			if (np->nnext)
 				strlcat(buf, *SUBSEP, bufsz);
 			tempfree(y);
@@ -543,7 +553,7 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 	char *buf;
 	char *s;
 	int bufsz = recsize;
-	int nsub = strlen(*SUBSEP);
+	int nsub;
 
 	ap = execute(a[1]);	/* array name */
 	if (!isarr(ap)) {
@@ -561,6 +571,7 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 	for (p = a[0]; p; p = p->nnext) {
 		x = execute(p);	/* expr */
 		s = getsval(x);
+		nsub = strlen(getsval(subseploc));
 		if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, "intest"))
 			FATAL("out of memory deleting %s[%s...]", x->nval, buf);
 		strlcat(buf, s, bufsz);
@@ -866,8 +877,9 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 				FATAL("'$' not permitted in awk formats");
 			}
 			if (*s == '*') {
-				if (a == NULL)
+				if (a == NULL) {
 					FATAL("not enough args in printf(%s)", os);
+				}
 				x = execute(a);
 				a = a->nnext;
 				snprintf(t-1, fmt + fmtsz - (t-1), "%d", fmtwd=(int) getfval(x));
@@ -1125,8 +1137,8 @@ Cell *assign(Node **a, int n)	/* a[0] = a[1], a[0] += a[1], etc. */
 	y = execute(a[1]);
 	x = execute(a[0]);
 	if (n == ASSIGN) {	/* ordinary assignment */
-		if (x == y && !(x->tval & (FLD|REC)))	/* self-assignment: */
-			;		/* leave alone unless it's a field */
+		if (x == y && !(x->tval & (FLD|REC)) && x != nfloc)
+			;	/* self-assignment: leave alone unless it's a field or NF */
 		else if ((y->tval & (STR|NUM)) == (STR|NUM)) {
 			setsval(x, getsval(y));
 			x->fval = getfval(y);
@@ -1185,27 +1197,26 @@ Cell *cat(Node **a, int q)	/* a[0] cat a[1] */
 {
 	Cell *x, *y, *z;
 	int n1, n2;
-	char *s;
-	size_t len;
+	char *s = NULL;
+	int ssz = 0;
 
 	x = execute(a[0]);
+	n1 = strlen(getsval(x));
+	adjbuf(&s, &ssz, n1 + 1, recsize, 0, "cat1");
+	strlcpy(s, x->sval, ssz);
+
 	y = execute(a[1]);
-	getsval(x);
-	getsval(y);
-	n1 = strlen(x->sval);
-	n2 = strlen(y->sval);
-	len = n1 + n2 + 1;
-	s = (char *) malloc(len);
-	if (s == NULL)
-		FATAL("out of space concatenating %.15s... and %.15s...",
-			x->sval, y->sval);
-	strlcpy(s, x->sval, len);
-	strlcpy(s+n1, y->sval, len - n1);
+	n2 = strlen(getsval(y));
+	adjbuf(&s, &ssz, n1 + n2 + 1, recsize, 0, "cat2");
+	strlcpy(s + n1, y->sval, ssz - n1);
+
 	tempfree(x);
 	tempfree(y);
+
 	z = gettemp();
 	z->sval = s;
 	z->tval = STR;
+
 	return(z);
 }
 
@@ -1252,8 +1263,9 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 {
 	Cell *x = 0, *y, *ap;
 	char *s, *origs;
+	char *fs, *origfs = NULL;
 	int sep;
-	char *t, temp, num[50], *fs = 0;
+	char *t, temp, num[50];
 	int n, tempstat, arg3type;
 
 	y = execute(a[0]);	/* source string */
@@ -1262,10 +1274,13 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 		FATAL("out of space in split");
 	arg3type = ptoi(a[3]);
 	if (a[2] == 0)		/* fs string */
-		fs = *FS;
+		fs = getsval(fsloc);
 	else if (arg3type == STRING) {	/* split(str,arr,"string") */
 		x = execute(a[2]);
-		fs = getsval(x);
+		origfs = fs = strdup(getsval(x));
+		if (fs == NULL)
+			FATAL("out of space in split");
+		tempfree(x);
 	} else if (arg3type == REGEXPR)
 		fs = "(regexpr)";	/* split(str,arr,/regexpr/) */
 	else
@@ -1380,9 +1395,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	tempfree(ap);
 	tempfree(y);
 	free(origs);
-	if (a[2] != 0 && arg3type == STRING) {
-		tempfree(x);
-	}
+	free(origfs);
 	x = gettemp();
 	x->tval = NUM;
 	x->fval = n;
@@ -1706,9 +1719,9 @@ Cell *printstat(Node **a, int n)	/* print a[0] */
 		fputs(getpssval(y), fp);
 		tempfree(y);
 		if (x->nnext == NULL)
-			fputs(*ORS, fp);
+			fputs(getsval(orsloc), fp);
 		else
-			fputs(*OFS, fp);
+			fputs(getsval(ofsloc), fp);
 	}
 	if (a[1] != 0)
 		fflush(fp);
