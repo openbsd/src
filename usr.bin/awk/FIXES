@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.28 2020/06/10 21:03:36 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.29 2020/06/10 21:03:56 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,18 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+November 10, 2019:
+	Convert a number of Boolean integer variables into
+	actual bools. Convert compile_time variable into an
+	enum and simplify some of the related code.  Thanks
+	to Arnold Robbins.
+
+November 8, 2019:
+	Fix from Ori Bernstein to get UTF-8 characters instead of
+	bytes when FS = "".  This is currently the only bit of
+	the One True Awk that understands multibyte characters.
+	From Arnold Robbins, apply some cleanups in the test suite.
 
 October 25, 2019:
 	More fixes and cleanups from NetBSD, courtesy of Christos

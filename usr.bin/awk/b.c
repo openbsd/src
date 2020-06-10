@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.28 2020/06/10 21:03:36 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.29 2020/06/10 21:03:56 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -149,7 +149,7 @@ out:
 	overflo(__func__);
 }
 
-fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
+fa *makedfa(const char *s, bool anchor)	/* returns dfa for reg expr s */
 {
 	int i, use, nuse;
 	fa *pfa;
@@ -159,7 +159,7 @@ fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
 		allocsetvec(__func__);
 	}
 
-	if (compile_time)	/* a constant for sure */
+	if (compile_time != RUNNING)	/* a constant for sure */
 		return mkdfa(s, anchor);
 	for (i = 0; i < nfatab; i++)	/* is it there already? */
 		if (fatab[i]->anchor == anchor
@@ -187,7 +187,7 @@ fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
 	return pfa;
 }
 
-fa *mkdfa(const char *s, int anchor)	/* does the real work of making a dfa */
+fa *mkdfa(const char *s, bool anchor)	/* does the real work of making a dfa */
 				/* anchor = 1 for anchored matches, else 0 */
 {
 	Node *p, *p1;
@@ -222,7 +222,7 @@ fa *mkdfa(const char *s, int anchor)	/* does the real work of making a dfa */
 	return f;
 }
 
-int makeinit(fa *f, int anchor)
+int makeinit(fa *f, bool anchor)
 {
 	int i, k;
 
@@ -653,11 +653,11 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
  *     a match is found, patbeg and patlen are set appropriately.
  *
  * RETURN VALUES
- *     0    No match found.
- *     1    Match found.
+ *     false    No match found.
+ *     true     Match found.
  */
 
-int fnematch(fa *pfa, FILE *f, char **pbuf, int *pbufsize, int quantum)
+bool fnematch(fa *pfa, FILE *f, char **pbuf, int *pbufsize, int quantum)
 {
 	char *buf = *pbuf;
 	int bufsize = *pbufsize;
@@ -723,10 +723,10 @@ int fnematch(fa *pfa, FILE *f, char **pbuf, int *pbufsize, int quantum)
 				FATAL("unable to ungetc '%c'", buf[k]);
 		while (k > i + patlen);
 		buf[k] = 0;
-		return 1;
+		return true;
 	}
 	else
-		return 0;
+		return false;
 }
 
 Node *reparse(const char *p)	/* parses regular expression pointed to by p */
@@ -915,7 +915,7 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	int i, j;
 	uschar *buf = NULL;
 	int ret = 1;
-	int init_q = (firstnum==0);		/* first added char will be ? */
+	int init_q = (firstnum == 0);		/* first added char will be ? */
 	int n_q_reps = secondnum-firstnum;	/* m>n, so reduce until {1,m-n} left  */
 	int prefix_length = reptok - basestr;	/* prefix includes first rep	*/
 	int suffix_length = strlen((const char *) reptok) - reptoklen;	/* string after rep specifier	*/
@@ -949,8 +949,9 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	if (special_case == REPEAT_PLUS_APPENDED) {
 		buf[j++] = '+';
 	} else if (special_case == REPEAT_WITH_Q) {
-		if (init_q) buf[j++] = '?';
-		for (i=0; i < n_q_reps; i++) {	/* copy x? reps */
+		if (init_q)
+			buf[j++] = '?';
+		for (i = 0; i < n_q_reps; i++) {	/* copy x? reps */
 			memcpy(&buf[j], atom, atomlen);
 			j += atomlen;
 			buf[j++] = '?';
@@ -1024,7 +1025,8 @@ int relex(void)		/* lexical analyzer for reparse */
 	uschar *bp;
 	struct charclass *cc;
 	int i;
-	int num, m, commafound, digitfound;
+	int num, m;
+	bool commafound, digitfound;
 	const uschar *startreptok;
 	static int parens = 0;
 
@@ -1158,8 +1160,8 @@ rescan:
 		if (isdigit(*(prestr))) {
 			num = 0;	/* Process as a repetition */
 			n = -1; m = -1;
-			commafound = 0;
-			digitfound = 0;
+			commafound = false;
+			digitfound = false;
 			startreptok = prestr-1;
 			/* Remember start of previous atom here ? */
 		} else {        	/* just a { char, not a repetition */
@@ -1206,15 +1208,15 @@ rescan:
 					lastre);
 			} else if (isdigit(c)) {
 				num = 10 * num + c - '0';
-				digitfound = 1;
+				digitfound = true;
 			} else if (c == ',') {
 				if (commafound)
 					FATAL("illegal repetition expression: class %.20s",
 						lastre);
 				/* looking for {n,} or {n,m} */
-				commafound = 1;
+				commafound = true;
 				n = num;
-				digitfound = 0; /* reset */
+				digitfound = false; /* reset */
 				num = 0;
 			} else {
 				FATAL("illegal repetition expression: class %.20s",

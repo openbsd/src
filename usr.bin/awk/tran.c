@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.23 2020/06/10 21:03:36 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.24 2020/06/10 21:03:56 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -307,21 +307,21 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "assign to");
 	if (isfld(vp)) {
-		donerec = 0;	/* mark $0 invalid */
+		donerec = false;	/* mark $0 invalid */
 		fldno = atoi(vp->nval);
 		if (fldno > *NF)
 			newfld(fldno);
 		   DPRINTF( ("setting field %d to %g\n", fldno, f) );
 	} else if (&vp->fval == NF) {
-		donerec = 0;	/* mark $0 invalid */
+		donerec = false;	/* mark $0 invalid */
 		setlastfld(f);
 		DPRINTF( ("setting NF to %g\n", f) );
 	} else if (isrec(vp)) {
-		donefld = 0;	/* mark $1... invalid */
-		donerec = 1;
+		donefld = false;	/* mark $1... invalid */
+		donerec = true;
 		savefs();
 	} else if (vp == ofsloc) {
-		if (donerec == 0)
+		if (!donerec)
 			recbld();
 	}
 	if (freeable(vp))
@@ -356,17 +356,17 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "assign to");
 	if (isfld(vp)) {
-		donerec = 0;	/* mark $0 invalid */
+		donerec = false;	/* mark $0 invalid */
 		fldno = atoi(vp->nval);
 		if (fldno > *NF)
 			newfld(fldno);
 		   DPRINTF( ("setting field %d to %s (%p)\n", fldno, s, s) );
 	} else if (isrec(vp)) {
-		donefld = 0;	/* mark $1... invalid */
-		donerec = 1;
+		donefld = false;	/* mark $1... invalid */
+		donerec = true;
 		savefs();
 	} else if (vp == ofsloc) {
-		if (donerec == 0)
+		if (!donerec)
 			recbld();
 	}
 	t = s ? tostring(s) : tostring("");	/* in case it's self-assign */
@@ -380,7 +380,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 		(void*)vp, NN(vp->nval), t, t, vp->tval, donerec, donefld) );
 	vp->sval = t;
 	if (&vp->fval == NF) {
-		donerec = 0;	/* mark $0 invalid */
+		donerec = false;	/* mark $0 invalid */
 		f = getfval(vp);
 		setlastfld(f);
 		DPRINTF( ("setting NF to %g\n", f) );
@@ -393,9 +393,9 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 {
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "read value of");
-	if (isfld(vp) && donefld == 0)
+	if (isfld(vp) && !donefld)
 		fldbld();
-	else if (isrec(vp) && donerec == 0)
+	else if (isrec(vp) && !donerec)
 		recbld();
 	if (!isnum(vp)) {	/* not a number */
 		vp->fval = atof(vp->sval);	/* best guess */
@@ -414,9 +414,9 @@ static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cel
 
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "read value of");
-	if (isfld(vp) && donefld == 0)
+	if (isfld(vp) && ! donefld)
 		fldbld();
-	else if (isrec(vp) && donerec == 0)
+	else if (isrec(vp) && ! donerec)
 		recbld();
 
 	/*

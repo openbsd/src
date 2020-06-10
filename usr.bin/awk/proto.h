@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.15 2020/06/10 21:03:36 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.16 2020/06/10 21:03:56 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -39,9 +39,9 @@ extern	int	yylook(void);
 extern	int	yyback(int *, int);
 extern	int	yyinput(void);
 
-extern	fa	*makedfa(const char *, int);
-extern	fa	*mkdfa(const char *, int);
-extern	int	makeinit(fa *, int);
+extern	fa	*makedfa(const char *, bool);
+extern	fa	*mkdfa(const char *, bool);
+extern	int	makeinit(fa *, bool);
 extern	void	penter(Node *);
 extern	void	freetr(Node *);
 extern	int	hexstr(const uschar **);
@@ -55,7 +55,7 @@ extern	int	member(int, const char *);
 extern	int	match(fa *, const char *);
 extern	int	pmatch(fa *, const char *);
 extern	int	nematch(fa *, const char *);
-extern	int	fnematch(fa *, FILE *, char **, int *, int);
+extern	bool	fnematch(fa *, FILE *, char **, int *, int);
 extern	Node	*reparse(const char *);
 extern	Node	*regexp(void);
 extern	Node	*primary(void);
@@ -120,7 +120,7 @@ extern	void	initgetrec(void);
 extern	void	makefields(int, int);
 extern	void	growfldtab(int n);
 extern	void	savefs(void);
-extern	int	getrec(char **, int *, int);
+extern	int	getrec(char **, int *, bool);
 extern	void	nextfile(void);
 extern	int	readrec(char **buf, int *bufsize, FILE *inf);
 extern	char	*getargv(int);

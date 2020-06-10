@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.20 2020/06/10 21:03:36 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.21 2020/06/10 21:03:56 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,7 @@ THIS SOFTWARE.
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef double	Awkfloat;
 
@@ -49,8 +50,13 @@ typedef	unsigned char uschar;
 #	define	DPRINTF(x)
 #endif
 
-extern int	compile_time;	/* 1 if compiling, 0 if running */
-extern int	safe;		/* 0 => unsafe, 1 => safe */
+extern enum compile_states {
+	RUNNING,
+	COMPILING,
+	ERROR_PRINTING
+} compile_time;
+
+extern bool	safe;		/* false => unsafe, true => safe */
 
 #define	RECSIZE	(8 * 1024)	/* sets limit on records, fields, etc., etc. */
 extern int	recsize;	/* size of current record, orig RECSIZE */
@@ -71,8 +77,8 @@ extern Awkfloat *RLENGTH;
 extern char	*record;	/* points to $0 */
 extern int	lineno;		/* line number in awk program */
 extern int	errorflag;	/* 1 if error has occurred */
-extern int	donefld;	/* 1 if record broken into fields */
-extern int	donerec;	/* 1 if record is valid (no fld has changed */
+extern bool	donefld;	/* true if record broken into fields */
+extern bool	donerec;	/* true if record is valid (no fld has changed */
 extern char	inputFS[];	/* FS at time of input, for field splitting */
 
 extern int	dbg;
@@ -244,7 +250,7 @@ typedef struct fa {
 	uschar	*restr;
 	int	**posns;
 	int	state_count;
-	int	anchor;
+	bool	anchor;
 	int	use;
 	int	initstat;
 	int	curstat;
