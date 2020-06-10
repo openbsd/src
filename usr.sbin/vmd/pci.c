@@ -198,11 +198,16 @@ int mem_chkint()
 	uint8_t *va;
 	uint8_t intr = 0xff;
 	uint32_t sts = 0xffffffff;
+	int i;
 
-	va = ptd.barinfo[0].va;
+	for (i = 0; i < MAXBAR; i++) {
+		va = ptd.barinfo[i].va;
+		if (va) 
+			break;
+	}
 	if (va != NULL) {
-		sts = *(uint32_t *)(va + 0x24);
-		if (sts != 0 && sts != 0xffffffff) {
+		sts = *(uint16_t *)(va + 0x3E);
+		if (sts != 0 && sts != 0xffff) {
 			intr = pci.pci_devices[ptd.id].pd_irq;
 		}
 	}
@@ -634,6 +639,7 @@ void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 			pci_add_bar(ptd.id, type, ptd.barinfo[i].size, 
 				    ppt_mmiobar, PTD_DEVID(ptd.id, i));
 			ptd.barinfo[i].va = mapbar(i, ptd.barinfo[i].addr, ptd.barinfo[i].size);
+			dump(ptd.barinfo[i].va, 0x100);
 		}
 		else if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 			/* This will get callback via pci_handle_io */

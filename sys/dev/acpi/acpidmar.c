@@ -635,11 +635,13 @@ nomap:
 			    PTE_P | pteflag);
 		}
 	}
+#if 0
 	if ((iommu->cap & CAP_CM) || force_cm) {
 		iommu_flush_tlb(iommu, IOTLB_DOMAIN, dom->did);
 	} else {
 		iommu_flush_write_buffer(iommu);
 	}
+#endif
 }
 
 const char *
@@ -1610,7 +1612,7 @@ domain_map_device(struct domain *dom, int sid)
 	/* AMD attach device */
 	if (iommu->dte) {
 		struct ivhd_dte *dte = &iommu->dte[sid];
-		ivhd_intr_map(iommu);
+		//ivhd_intr_map(iommu);
 		if (!dte->dw0) {
 			/* Setup Device Table Entry: bus.devfn */
 			printf("@@@ PCI Attach: %.4x[%s] %.4x\n", sid, dmar_bdf(sid), dom->did);
@@ -2181,7 +2183,7 @@ int
 ivhd_issue_command(struct iommu_softc *iommu, const struct ivhd_command *cmd, int wait)
 {
 	struct ivhd_command wq = { 0 };
-	uint64_t wv __aligned(16) = 0;
+	uint64_t wv __aligned(16) = 0xDEADBEEFFEEDC0DELL;
 	paddr_t paddr;
 	int rc, i;
 
@@ -2192,18 +2194,18 @@ ivhd_issue_command(struct iommu_softc *iommu, const struct ivhd_command *cmd, in
 		pmap_extract(pmap_kernel(), (vaddr_t)&wv, &paddr);
 		wq.dw0 = (paddr & ~0x7) | 0x1;
 		wq.dw1 = (COMPLETION_WAIT << CMD_SHIFT) | ((paddr >> 32) & 0xFFFFF);
-		_put64(&wq.dw2, 0x0123456789ABCDEFLL);
-
+		wq.dw2 = 0;
+		wq.dw3 = 0;
+		
 		rc = _ivhd_issue_command(iommu, &wq);
-		/* Memory will change when command is complete */
-		for (i = 0; i < 1000; i++) {
-			if (wv != 0) {
-				break;
-			}
+		/* wv will change to value in dw2/dw3 when command is complete */
+		for (i = 0; i < 1000 && wv; i++) {
+			printf(".. %llx: %i\n", wv, i);
 			DELAY(1000);
 		}
 		if (i == 1000) {
-			printf("ivhd command timeout: %x\n", cmd->dw0);
+			printf("ivhd command timeout: %.8x %.8x %.8x %.8x\n", 
+				cmd->dw0, cmd->dw1, cmd->dw2, cmd->dw3);
 			ivhd_showcmd(iommu);
 		}
 	}
@@ -2222,6 +2224,7 @@ int ivhd_flush_devtab(struct iommu_softc *iommu, int did)
 int ivhd_invalidate_iommu_all(struct iommu_softc *iommu)
 {
   struct ivhd_command cmd = { .dw1 = INVALIDATE_IOMMU_ALL << CMD_SHIFT };
+#if 0	
   int i;
 
   for (i = 0; i < 65536; i++) {
@@ -2233,6 +2236,7 @@ int ivhd_invalidate_iommu_all(struct iommu_softc *iommu)
 			(unsigned long)iommu->dte[i].dw3);
 	}
   }
+#endif
   return ivhd_issue_command(iommu, &cmd, 0); 
 }
 
@@ -2286,6 +2290,7 @@ void ivhd_checkerr(struct iommu_softc *iommu)
 	ivhd_issue_command(iommu, &cmd, 0);
 	ivhd_poll_events(iommu);
 
+	/* Generate page hardware error */
 }
 
 /* AMD: Show Device Table Entry */
@@ -2336,6 +2341,10 @@ ivhd_iommu_init(struct acpidmar_softc *sc, struct iommu_softc *iommu,
 	paddr_t paddr;
 	uint64_t ov;
 
+	if (sc == NULL || iommu == NULL || ivhd == NULL) {
+		printf("Bad pointer to iommu_init!\n");
+		return -1;
+	}
 	if (_bus_space_map(sc->sc_memt, ivhd->address, 0x80000, 0, &iommu->ioh) != 0) {
 		printf("Bus Space Map fails\n");
 		return -1;
@@ -2350,7 +2359,7 @@ ivhd_iommu_init(struct acpidmar_softc *sc, struct iommu_softc *iommu,
 	iommu->agaw = 48;
 	iommu->flags = 1;
 	iommu->segment = 0;
-	iommu->ndoms = 16;
+	iommu->ndoms = 256;
 
 	iommu->ecap = iommu_readq(iommu, EXTFEAT_REG);
 	printf("ecap = %.16llx\n", iommu->ecap);
@@ -2367,20 +2376,17 @@ ivhd_iommu_init(struct acpidmar_softc *sc, struct iommu_softc *iommu,
 		_c(EFR_HATS), _c(EFR_GATS), _c(EFR_GLXSUP), _c(EFR_SMIFSUP),
 		_c(EFR_SMIFRC), _c(EFR_GAMSUP));
 
-	/* Setup command buffer with 4k buffer */
+	/* Setup command buffer with 4k buffer (128 entries) */
 	iommu->cmd_tbl = iommu_alloc_page(iommu, &paddr);
-	printf("paddr cmd_table: %lx\n", paddr);
 	iommu_writeq(iommu, CMD_BASE_REG, (paddr & CMD_BASE_MASK) | CMD_TBL_LEN_4K);
 	iommu_writel(iommu, CMD_HEAD_REG, 0x00);
 	iommu_writel(iommu, CMD_TAIL_REG, 0x00);
-	printf("cmd_tbl = %.16llx\n", (uint64_t)paddr);
 
-	/* Setup event log with 4k buffer */
+	/* Setup event log with 4k buffer (128 entries) */
 	iommu->evt_tbl = iommu_alloc_page(iommu, &paddr);
 	iommu_writeq(iommu, EVT_BASE_REG, (paddr & EVT_BASE_MASK) | EVT_TBL_LEN_4K);
 	iommu_writel(iommu, EVT_HEAD_REG, 0x00);
 	iommu_writel(iommu, EVT_TAIL_REG, 0x00);
-	printf("evt_tbl = %.16llx\n", (uint64_t)paddr);
 
 	/* Setup device table
 	 * 1 entry per source ID (bus:device:function - 64k entries)
@@ -2686,8 +2692,8 @@ acpidmar_attach(struct device *parent, struct device *self, void *aux)
 		acpidmar_init(sc, dmar);
 	}
 	if (memcmp(hdr->signature, IVRS_SIG, sizeof(IVRS_SIG) - 1) == 0) {
-		acpiivrs_init(sc, ivrs);
 		acpidmar_sc = sc;
+		acpiivrs_init(sc, ivrs);
 	}
 }
 

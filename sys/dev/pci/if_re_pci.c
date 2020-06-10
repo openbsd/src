@@ -144,7 +144,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_mapreg_map(pa, RL_PCI_LOMEM64, PCI_MAPREG_TYPE_MEM |
 	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->rl_btag, &sc->rl_bhandle,
 	    NULL, &psc->sc_iosize, 0)) {
-		if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM |
+		if (pci_mapreg_map(pa, RL_PCI_LOMEM64, PCI_MAPREG_TYPE_MEM |
 		    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->rl_btag, &sc->rl_bhandle,
 		    NULL, &psc->sc_iosize, 0)) {
 			if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO,
@@ -195,8 +195,8 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		reg &= ~(PCI_PCIE_LCSR_ASPM_L0S | PCI_PCIE_LCSR_ASPM_L1 |
 		    PCI_PCIE_LCSR_ECPM);
 		pci_conf_write(pc, pa->pa_tag, offset + PCI_PCIE_LCSR, reg);
-		sc->rl_flags |= RL_FLAG_PCIE;
 	}
+	sc->rl_flags |= RL_FLAG_PCIE;
 
 	if (!(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139)) {

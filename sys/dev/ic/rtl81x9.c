@@ -758,6 +758,7 @@ rl_intr(void *arg)
 		/* If the card has gone away, the read returns 0xffff. */
 		if (status == 0xffff)
 			break;
+		printf("rl_intr2: %x\n", status);
 		if (status != 0)
 			CSR_WRITE_2(sc, RL_ISR, status);
 		if ((status & RL_INTRS) == 0)

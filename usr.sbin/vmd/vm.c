@@ -1704,9 +1704,9 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 
 	translate_gva(ve, ve->vrs.vrs_gprs[VCPU_REGS_RIP], &gip, PROT_READ);
 	read_mem(gip, instr, sizeof(instr));	
+#if 0
 	fprintf(stderr, "===============\nept violation: %llx  rip:0x%llx %.2x %.2x %.2x\n",
 		ve->vee.vee_gpa, ve->vrs.vrs_gprs[VCPU_REGS_RIP], instr[0], instr[1], instr[2]);
-#if 0
 	fprintf(stderr, "  rax:0x%.16llx rbx:0x%.16llx rcx:0x%.16llx rdx:0x%.16llx\n",
 		ve->vrs.vrs_gprs[VCPU_REGS_RAX],
 		ve->vrs.vrs_gprs[VCPU_REGS_RBX],
@@ -1738,11 +1738,9 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 	for (int i = 0; imap[i].size; i++) {
 		if (memcmp(instr, imap[i].sig, 3) == 0) {
 			rax = &vrwp.vrwp_regs.vrs_gprs[imap[i].reg];
-			fprintf(stderr,"pre:%llx\n", *rax);
 			mem_handler(imap[i].dir, gpa, imap[i].size, rax);
 			/* skip this instruction when returning to vm */
 			vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += imap[i].incr;
-			fprintf(stderr, "result: %llx\n", *rax);
 			if (ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp))
 				fprintf(stderr,"writeregs fails\n");
 			return 0;
@@ -1785,7 +1783,7 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 int
 vcpu_exit(struct vm_run_params *vrp)
 {
-	int ret;
+	int ret = 0;
 
 	switch (vrp->vrp_exit_reason) {
 	case VMX_EXIT_INT_WINDOW:
@@ -1808,9 +1806,6 @@ vcpu_exit(struct vm_run_params *vrp)
 	case VMX_EXIT_EPT_VIOLATION:
 	case SVM_VMEXIT_NPF:
 		ret = vcpu_exit_eptviolation(vrp);
-		if (ret)
-			return (ret);
-
 		break;
 	case VMX_EXIT_IO:
 	case SVM_VMEXIT_IOIO:
@@ -1843,7 +1838,6 @@ vcpu_exit(struct vm_run_params *vrp)
 
 	/* Process any pending traffic */
 	vionet_process_rx(vrp->vrp_vm_id);
-
 	{
 		uint8_t intr;
 		if ((intr = mem_chkint()) != 0xff) {

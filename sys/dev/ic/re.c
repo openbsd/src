@@ -143,8 +143,9 @@
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/revar.h>
 
+#define RE_DEBUG
 #ifdef RE_DEBUG
-int redebug = 0;
+int redebug = 1;
 #define DPRINTF(x)	do { if (redebug) printf x; } while (0)
 #else
 #define DPRINTF(x)

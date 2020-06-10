@@ -947,24 +947,52 @@ struct rl_softc {
 #define RL_TXPADDADDR(sc)	\
 	((sc)->rl_ldata.rl_rx_list_map->dm_segs[0].ds_addr + RL_TXPADOFF(sc))
 
+static inline uint8_t re_space_read_1(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, const char *rn) {
+	uint8_t v = bus_space_read_1(iot, ioh, reg);
+//	printf("read1: %s %.2x\n", rn, v);
+	return v;
+}
+static inline uint16_t re_space_read_2(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, const char *rn) {
+	uint16_t v = bus_space_read_2(iot, ioh, reg);
+//	printf("read2: %s %.4x\n", rn, v);
+	return v;
+}
+static inline uint32_t re_space_read_4(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, const char *rn) {
+	uint32_t v = bus_space_read_4(iot, ioh, reg);
+//	printf("read4: %s %.8x\n", rn, v);
+	return v;
+}
+static inline void re_space_write_1(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint8_t v, const char *rn) {
+//	printf("write1: %s %.2x\n", rn, v);
+	bus_space_write_1(iot, ioh, reg, v);
+}
+static inline void re_space_write_2(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint16_t v, const char *rn) {
+//	printf("write2: %s %.4x\n", rn, v);
+	bus_space_write_2(iot, ioh, reg, v);
+}
+static inline void re_space_write_4(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, uint32_t v, const char *rn) {
+//	printf("write4: %s %.8x\n", rn, v);
+	bus_space_write_4(iot, ioh, reg, v);
+}
+
 /*
  * register space access macros
  */
 #define CSR_WRITE_RAW_4(sc, csr, val) \
 	bus_space_write_raw_region_4(sc->rl_btag, sc->rl_bhandle, csr, val, 4)
 #define CSR_WRITE_4(sc, csr, val) \
-	bus_space_write_4(sc->rl_btag, sc->rl_bhandle, csr, val)
+	re_space_write_4(sc->rl_btag, sc->rl_bhandle, csr, val, #csr)
 #define CSR_WRITE_2(sc, csr, val) \
-	bus_space_write_2(sc->rl_btag, sc->rl_bhandle, csr, val)
+	re_space_write_2(sc->rl_btag, sc->rl_bhandle, csr, val, #csr)
 #define CSR_WRITE_1(sc, csr, val) \
-	bus_space_write_1(sc->rl_btag, sc->rl_bhandle, csr, val)
+	re_space_write_1(sc->rl_btag, sc->rl_bhandle, csr, val, #csr)
 
 #define CSR_READ_4(sc, csr) \
-	bus_space_read_4(sc->rl_btag, sc->rl_bhandle, csr)
+	re_space_read_4(sc->rl_btag, sc->rl_bhandle, csr, #csr)
 #define CSR_READ_2(sc, csr) \
-	bus_space_read_2(sc->rl_btag, sc->rl_bhandle, csr)
+	re_space_read_2(sc->rl_btag, sc->rl_bhandle, csr, #csr)
 #define CSR_READ_1(sc, csr) \
-	bus_space_read_1(sc->rl_btag, sc->rl_bhandle, csr)
+	re_space_read_1(sc->rl_btag, sc->rl_bhandle, csr, #csr)
 
 #define CSR_SETBIT_1(sc, offset, val)		\
 	CSR_WRITE_1(sc, offset, CSR_READ_1(sc, offset) | (val))
