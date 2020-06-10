@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.25 2020/03/22 15:59:05 tobhe Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.26 2020/06/10 17:44:44 kn Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -405,7 +405,7 @@ show_string(struct imsg *imsg)
 		return (done);
 
 	if (IMSG_DATA_SIZE(imsg) > 0)
-		printf("%s", imsg->data);
+		printf("%s", (char *)imsg->data);
 	else
 		done = 1;
 
