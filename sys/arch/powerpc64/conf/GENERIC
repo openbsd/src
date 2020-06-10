@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 2020/06/10 15:01:40 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.5 2020/06/10 15:10:51 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -24,3 +24,16 @@ phb*		at fdt?
 pci*		at phb?
 ppb*		at pci?
 pci*		at ppb?
+ahci*		at pci? disable
+bge*		at pci?
+xhci*		at pci? disable
+usb*		at xhci?
+
+scsibus*	at scsi?
+sd*		at scsibus?
+
+# USB devices
+uhub*		at usb?			# USB Hubs
+uhub*		at uhub?		# USB Hubs
+
+brgphy*		at mii?			# Broadcom Gigabit PHYs

@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.9 2020/06/10 15:01:40 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.10 2020/06/10 15:10:51 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -44,7 +44,11 @@ attach  cpu at mainbus
 # FDT support
 include "dev/ofw/files.ofw"
 
+# Machine-independent SCSI drivers
 include "scsi/files.scsi"
+
+# Machine-independent ATA drivers
+include "dev/ata/files.ata"
 
 # MII and PCI
 include "dev/mii/files.mii"
@@ -57,3 +61,9 @@ file	arch/powerpc64/dev/opal.c		opal
 device	phb: pcibus
 attach	phb at fdt
 file	arch/powerpc64/dev/phb.c		phb
+
+# Machine-independent HID support
+include	"dev/hid/files.hid"
+
+# Include USB stuff
+include "dev/usb/files.usb"
