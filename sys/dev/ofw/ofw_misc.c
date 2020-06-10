@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.20 2020/06/06 16:59:43 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.21 2020/06/10 23:43:06 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -655,4 +655,35 @@ device_port_activate(uint32_t phandle, void *arg)
 	}
 
 	return count ? 0 : ENXIO;
+}
+
+/* Digital audio interface support */
+
+LIST_HEAD(, dai_device) dai_devices =
+	LIST_HEAD_INITIALIZER(dai_devices);
+
+void
+dai_register(struct dai_device *dd)
+{
+	dd->dd_phandle = OF_getpropint(dd->dd_node, "phandle", 0);
+	if (dd->dd_phandle == 0)
+		return;
+
+	LIST_INSERT_HEAD(&dai_devices, dd, dd_list);
+}
+
+struct dai_device *
+dai_byphandle(uint32_t phandle)
+{
+	struct dai_device *dd;
+
+	if (phandle == 0)
+		return NULL;
+
+	LIST_FOREACH(dd, &dai_devices, dd_list) {
+		if (dd->dd_phandle == phandle)
+			return dd;
+	}
+
+	return NULL;
 }
