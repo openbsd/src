@@ -1,4 +1,4 @@
-.\"	$OpenBSD: register-plist.1,v 1.5 2020/06/09 21:02:37 espie Exp $
+.\"	$OpenBSD: register-plist.1,v 1.6 2020/06/10 07:44:38 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 9 2020 $
+.Dd $Mdocdate: June 10 2020 $
 .Dt REGISTER-PLIST 1
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Nm register-plist
 .Op Fl n
+.Op Fl s Ar snapdir
 .Ar dir
 .Op Ar pkgname ...
 .Nm
@@ -99,6 +100,15 @@ If option
 is specified,
 .Nm
 will do the exact same checks, but will not write any new packing-list.
+.Pp
+If option
+.Fl s Ar snapdir
+is specified,
+.Nm
+will write the packing-list into a separate
+.Ar snapdir
+directory if there have been no errors
+(snapshot directory, to record all packing-lists from the current snapshot).
 .Pp
 .Nm
 can also be invoked with
