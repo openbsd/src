@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.47 2020/06/10 21:00:01 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.48 2020/06/10 21:01:50 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -787,10 +787,7 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification,
-except
-.Nm
-does not support {n,m} pattern matching.
+specification.
 .Pp
 The flags
 .Op Fl \&dV
@@ -814,7 +811,5 @@ to it.
 .Pp
 The scope rules for variables in functions are a botch;
 the syntax is worse.
-.Pp
-POSIX-standard interval expressions in regular expressions are not supported.
 .Pp
 Only eight-bit character sets are handled correctly.

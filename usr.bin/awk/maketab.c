@@ -1,4 +1,4 @@
-/*	$OpenBSD: maketab.c,v 1.13 2020/06/10 21:01:13 millert Exp $	*/
+/*	$OpenBSD: maketab.c,v 1.14 2020/06/10 21:01:50 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -126,8 +126,12 @@ int main(int argc, char *argv[])
 	for (i = SIZE; --i >= 0; )
 		names[i] = "";
 
-	if ((fp = fopen("ytab.h", "r")) == NULL) {
-		fprintf(stderr, "maketab: can't open ytab.h!\n");
+	if (argc != 2) {
+		fprintf(stderr, "usage: maketab YTAB_H\n");
+		exit(1);
+	}
+	if ((fp = fopen(argv[1], "r")) == NULL) {
+		fprintf(stderr, "maketab can't open %s!\n", argv[1]);
 		exit(1);
 	}
 	printf("static char *printname[%d] = {\n", SIZE);

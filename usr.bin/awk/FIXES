@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.22 2020/06/10 21:01:32 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.23 2020/06/10 21:01:50 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,22 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Mar 5, 2019:
+	Added support for POSIX-standard interval expressions (a.k.a.
+	bounds, a.k.a. repetition expressions) in regular expressions,
+	backported (via NetBSD) from Apple awk-24 (20070501).
+	Thanks to Martijn Dekker <martijn@inlv.org> for the port.
+	(Merged from PR #30.)
+
+Mar 3, 2019:
+	Merge PRs as follows:
+	#12: Avoid undefined behaviour when using ctype(3) functions in
+	     relex(). Thanks to GitHub user iamleot.
+	#31: Make getline handle numeric strings, and update FIXES. Thanks
+	     to GitHub user arnoldrobbins
+	#32: maketab: support build systems with read-only source. Thanks
+	     to GitHub user enh.
 
 Jan 25, 2019:
 	Make getline handle numeric strings properly in all cases.
