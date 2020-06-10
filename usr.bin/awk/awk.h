@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.22 2020/06/10 21:05:02 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.23 2020/06/10 21:06:09 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -26,6 +26,11 @@ THIS SOFTWARE.
 #include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
+#if __STDC_VERSION__ <= 199901L
+#define noreturn __dead
+#else
+#include <stdnoreturn.h>
+#endif
 
 typedef double	Awkfloat;
 

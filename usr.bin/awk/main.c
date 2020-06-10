@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2020/06/10 21:05:50 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2020/06/10 21:06:09 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -23,7 +23,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-const char	*version = "version 20200228";
+const char	*version = "version 20200605";
 
 #define DEBUG
 #include <stdio.h>
@@ -55,7 +55,7 @@ static size_t	curpfile;	/* current filename */
 
 bool	safe = false;	/* true => "safe" mode */
 
-static __attribute__((__noreturn__)) void fpecatch(int n
+static noreturn void fpecatch(int n
 #ifdef SA_SIGINFO
 	, siginfo_t *si, void *uc
 #endif

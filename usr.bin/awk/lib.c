@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.34 2020/06/10 21:05:50 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.35 2020/06/10 21:06:09 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -333,6 +333,8 @@ void fldbld(void)	/* create fields from current record */
 	}
 	fr = fields;
 	i = 0;	/* number of fields accumulated here */
+	if (inputFS == NULL)	/* make sure we have a copy of FS */
+		savefs();
 	if (strlen(inputFS) > 1) {	/* it's a regular expression */
 		i = refldbld(r, inputFS);
 	} else if ((sep = *inputFS) == ' ') {	/* default whitespace */
@@ -624,7 +626,7 @@ void bcheck2(int n, int c1, int c2)
 		fprintf(stderr, "\t%d extra %c's\n", -n, c2);
 }
 
-__dead void FATAL(const char *fmt, ...)
+void FATAL(const char *fmt, ...)
 {
 	extern char *cmdname;
 	va_list varg;

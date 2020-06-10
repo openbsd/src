@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.17 2020/06/10 21:05:50 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.18 2020/06/10 21:06:09 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -47,7 +47,7 @@ extern	void	freetr(Node *);
 extern	int	hexstr(const uschar **);
 extern	int	quoted(const uschar **);
 extern	char	*cclenter(const char *);
-extern	void	overflo(const char *) __attribute__((__noreturn__));
+extern	noreturn void	overflo(const char *);
 extern	void	cfoll(fa *, Node *);
 extern	int	first(Node *);
 extern	void	follow(Node *);
@@ -138,8 +138,8 @@ extern	void	bracecheck(void);
 extern	void	bcheck2(int, int, int);
 extern	void	SYNTAX(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-extern	void	FATAL(const char *, ...)
-    __attribute__((__format__(__printf__, 1, 2), __noreturn__));
+extern	noreturn void	FATAL(const char *, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 extern	void	WARNING(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 extern	void	error(void);
