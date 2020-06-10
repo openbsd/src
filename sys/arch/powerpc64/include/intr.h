@@ -33,4 +33,6 @@
 
 #define intr_barrier(x)
 
+#define intr_establish(girq, type, level, func, arg) (arg)
+
 #include <machine/softintr.h>

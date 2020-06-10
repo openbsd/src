@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.4 2020/06/10 16:31:27 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.5 2020/06/10 19:02:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -56,6 +56,8 @@ struct phb_softc {
 
 	uint64_t		sc_phb_id;
 	uint64_t		sc_pe_number;
+	uint32_t		sc_msi_ranges[2];
+	uint32_t		sc_xive;
 
 	struct bus_space	sc_bus_iot;
 	struct bus_space	sc_bus_memt;
@@ -268,6 +270,9 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 		window++;
 	}
 
+	OF_getpropintarray(sc->sc_node, "ibm,opal-msi-ranges",
+	    sc->sc_msi_ranges, sizeof(sc->sc_msi_ranges));
+
 	printf("\n");
 
 	memcpy(&sc->sc_bus_iot, sc->sc_iot, sizeof(sc->sc_bus_iot));
@@ -445,8 +450,16 @@ phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		uint32_t xive;
 		int64_t error;
 
-		/* XXX Allocate a real interrupt vector. */
-		xive = 0;
+		if (sc->sc_xive >= sc->sc_msi_ranges[1])
+			return NULL;
+
+		/* Allocate an MSI. */
+		xive = sc->sc_xive++;
+
+		error = opal_pci_set_xive_pe(sc->sc_phb_id,
+		    sc->sc_pe_number, xive);
+		if (error != OPAL_SUCCESS)
+			return NULL;
 
 		if (ih.ih_type == PCI_MSI32) {
 			error = opal_get_msi_32(sc->sc_phb_id, 0, xive,
@@ -459,8 +472,10 @@ phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		if (error != OPAL_SUCCESS)
 			return NULL;
 
-		/* XXX Allocate a real cookie. */
-		cookie = sc;
+		cookie = intr_establish(sc->sc_msi_ranges[0] + xive,
+		    IST_EDGE, level, func, arg);
+		if (cookie == NULL)
+			return NULL;
 
 		if (ih.ih_type == PCI_MSIX) {
 			pci_msix_enable(ih.ih_pc, ih.ih_tag,
