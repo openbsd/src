@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.6 2020/05/26 12:05:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.7 2020/06/10 09:29:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -346,13 +346,15 @@ struct iwx_bf_data {
 /**
  * struct iwx_self_init_dram - dram data used by self init process
  * @fw: lmac and umac dram data
- * @fw_cnt: total number of items in array
+ * @lmac_cnt: number of lmac sections in fw image
+ * @umac_cnt: number of umac sections in fw image
  * @paging: paging dram data
- * @paging_cnt: total number of items in array
+ * @paging_cnt: number of paging sections needed by fw image
  */
 struct iwx_self_init_dram {
 	struct iwx_dma_info *fw;
-	int fw_cnt;
+	int lmac_cnt;
+	int umac_cnt;
 	struct iwx_dma_info *paging;
 	int paging_cnt;
 };

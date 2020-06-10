@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.20 2020/06/10 09:20:30 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.21 2020/06/10 09:29:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -230,7 +230,7 @@ int	iwx_alloc_fw_monitor_block(struct iwx_softc *, uint8_t, uint8_t);
 int	iwx_alloc_fw_monitor(struct iwx_softc *, uint8_t);
 int	iwx_apply_debug_destination(struct iwx_softc *);
 int	iwx_ctxt_info_init(struct iwx_softc *, const struct iwx_fw_sects *);
-void	iwx_ctxt_info_free(struct iwx_softc *);
+void	iwx_ctxt_info_free_fw_img(struct iwx_softc *);
 void	iwx_ctxt_info_free_paging(struct iwx_softc *);
 int	iwx_init_fw_sec(struct iwx_softc *, const struct iwx_fw_sects *,
 	    struct iwx_context_info_dram *);
@@ -535,52 +535,60 @@ iwx_init_fw_sec(struct iwx_softc *sc, const struct iwx_fw_sects *fws,
     struct iwx_context_info_dram *ctxt_dram)
 {
 	struct iwx_self_init_dram *dram = &sc->init_dram;
-	int i, ret, lmac_cnt, umac_cnt, paging_cnt;
+	int i, ret, fw_cnt = 0;
 
 	KASSERT(dram->paging == NULL);
 
-	lmac_cnt = iwx_get_num_sections(fws, 0);
+	dram->lmac_cnt = iwx_get_num_sections(fws, 0);
 	/* add 1 due to separator */
-	umac_cnt = iwx_get_num_sections(fws, lmac_cnt + 1);
+	dram->umac_cnt = iwx_get_num_sections(fws, dram->lmac_cnt + 1);
 	/* add 2 due to separators */
-	paging_cnt = iwx_get_num_sections(fws, lmac_cnt + umac_cnt + 2);
+	dram->paging_cnt = iwx_get_num_sections(fws,
+	    dram->lmac_cnt + dram->umac_cnt + 2);
 
-	dram->fw = mallocarray(umac_cnt + lmac_cnt, sizeof(*dram->fw),
-	    M_DEVBUF,  M_ZERO | M_NOWAIT);
-	if (!dram->fw)
+	dram->fw = mallocarray(dram->umac_cnt + dram->lmac_cnt,
+	    sizeof(*dram->fw), M_DEVBUF,  M_ZERO | M_NOWAIT);
+	if (!dram->fw) {
+		printf("%s: could not allocate memory for firmware sections\n",
+		    DEVNAME(sc));
 		return ENOMEM;
-	dram->paging = mallocarray(paging_cnt, sizeof(*dram->paging),
+	}
+
+	dram->paging = mallocarray(dram->paging_cnt, sizeof(*dram->paging),
 	    M_DEVBUF, M_ZERO | M_NOWAIT);
-	if (!dram->paging)
+	if (!dram->paging) {
+		printf("%s: could not allocate memory for firmware paging\n",
+		    DEVNAME(sc));
 		return ENOMEM;
+	}
 
 	/* initialize lmac sections */
-	for (i = 0; i < lmac_cnt; i++) {
+	for (i = 0; i < dram->lmac_cnt; i++) {
 		ret = iwx_ctxt_info_alloc_dma(sc, &fws->fw_sect[i],
-						   &dram->fw[dram->fw_cnt]);
+						   &dram->fw[fw_cnt]);
 		if (ret)
 			return ret;
 		ctxt_dram->lmac_img[i] =
-			htole64(dram->fw[dram->fw_cnt].paddr);
+			htole64(dram->fw[fw_cnt].paddr);
 		DPRINTF(("%s: firmware LMAC section %d at 0x%llx size %lld\n", __func__, i,
-		    (unsigned long long)dram->fw[dram->fw_cnt].paddr,
-		    (unsigned long long)dram->fw[dram->fw_cnt].size));
-		dram->fw_cnt++;
+		    (unsigned long long)dram->fw[fw_cnt].paddr,
+		    (unsigned long long)dram->fw[fw_cnt].size));
+		fw_cnt++;
 	}
 
 	/* initialize umac sections */
-	for (i = 0; i < umac_cnt; i++) {
+	for (i = 0; i < dram->umac_cnt; i++) {
 		/* access FW with +1 to make up for lmac separator */
 		ret = iwx_ctxt_info_alloc_dma(sc,
-		    &fws->fw_sect[dram->fw_cnt + 1], &dram->fw[dram->fw_cnt]);
+		    &fws->fw_sect[fw_cnt + 1], &dram->fw[fw_cnt]);
 		if (ret)
 			return ret;
 		ctxt_dram->umac_img[i] =
-			htole64(dram->fw[dram->fw_cnt].paddr);
+			htole64(dram->fw[fw_cnt].paddr);
 		DPRINTF(("%s: firmware UMAC section %d at 0x%llx size %lld\n", __func__, i,
-			(unsigned long long)dram->fw[dram->fw_cnt].paddr,
-			(unsigned long long)dram->fw[dram->fw_cnt].size));
-		dram->fw_cnt++;
+			(unsigned long long)dram->fw[fw_cnt].paddr,
+			(unsigned long long)dram->fw[fw_cnt].size));
+		fw_cnt++;
 	}
 
 	/*
@@ -593,9 +601,9 @@ iwx_init_fw_sec(struct iwx_softc *sc, const struct iwx_fw_sects *fws,
 	 * Given that, the logic here in accessing the fw image is a bit
 	 * different - fw_cnt isn't changing so loop counter is added to it.
 	 */
-	for (i = 0; i < paging_cnt; i++) {
+	for (i = 0; i < dram->paging_cnt; i++) {
 		/* access FW with +2 to make up for lmac & umac separators */
-		int fw_idx = dram->fw_cnt + i + 2;
+		int fw_idx = fw_cnt + i + 2;
 
 		ret = iwx_ctxt_info_alloc_dma(sc,
 		    &fws->fw_sect[fw_idx], &dram->paging[i]);
@@ -606,7 +614,6 @@ iwx_init_fw_sec(struct iwx_softc *sc, const struct iwx_fw_sects *fws,
 		DPRINTF(("%s: firmware paging section %d at 0x%llx size %lld\n", __func__, i,
 		    (unsigned long long)dram->paging[i].paddr,
 		    (unsigned long long)dram->paging[i].size));
-		dram->paging_cnt++;
 	}
 
 	return 0;
@@ -758,13 +765,6 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 	uint32_t control_flags = 0, rb_size;
 	int err;
 
-	err = iwx_dma_contig_alloc(sc->sc_dmat, &sc->ctxt_info_dma,
-	    sizeof(*ctxt_info), 0);
-	if (err) {
-		printf("%s: could not allocate context info DMA memory\n",
-		    DEVNAME(sc));
-		return err;
-	}
 	ctxt_info = sc->ctxt_info_dma.vaddr;
 
 	ctxt_info->version.version = 0;
@@ -800,15 +800,17 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 	/* allocate ucode sections in dram and set addresses */
 	err = iwx_init_fw_sec(sc, fws, &ctxt_info->dram);
 	if (err) {
-		iwx_ctxt_info_free(sc);
+		iwx_ctxt_info_free_fw_img(sc);
 		return err;
 	}
 
 	/* Configure debug, if exists */
 	if (sc->sc_fw.dbg_dest_tlv_v1) {
 		err = iwx_apply_debug_destination(sc);
-		if (err)
+		if (err) {
+			iwx_ctxt_info_free_fw_img(sc);
 			return err;
+		}
 	}
 
 	/* kick FW self load */
@@ -829,24 +831,17 @@ iwx_ctxt_info_free_fw_img(struct iwx_softc *sc)
 	struct iwx_self_init_dram *dram = &sc->init_dram;
 	int i;
 
-	if (!dram->fw) {
-		KASSERT(dram->fw_cnt == 0);
+	if (!dram->fw)
 		return;
-	}
 
-	for (i = 0; i < dram->fw_cnt; i++)
+	for (i = 0; i < dram->lmac_cnt + dram->umac_cnt; i++)
 		iwx_dma_contig_free(&dram->fw[i]);
 
-	free(dram->fw, M_DEVBUF, dram->fw_cnt * sizeof(dram->fw[0]));
-	dram->fw_cnt = 0;
+	free(dram->fw, M_DEVBUF,
+	    (dram->lmac_cnt + dram->umac_cnt) * sizeof(*dram->fw));
+	dram->lmac_cnt = 0;
+	dram->umac_cnt = 0;
 	dram->fw = NULL;
-}
-
-void
-iwx_ctxt_info_free(struct iwx_softc *sc)
-{
-	iwx_dma_contig_free(&sc->ctxt_info_dma);
-	iwx_ctxt_info_free_fw_img(sc);
 }
 
 int
@@ -2410,7 +2405,6 @@ void
 iwx_post_alive(struct iwx_softc *sc)
 {
 	iwx_ict_reset(sc);
-	iwx_ctxt_info_free(sc);
 }
 
 /*
@@ -3113,6 +3107,9 @@ iwx_load_firmware(struct iwx_softc *sc)
 	}
 	if (err || !sc->sc_uc.uc_ok)
 		printf("%s: could not load firmware\n", DEVNAME(sc));
+
+	iwx_ctxt_info_free_fw_img(sc);
+
 	if (!sc->sc_uc.uc_ok)
 		return EINVAL;
 
@@ -7774,6 +7771,15 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* Allocate DMA memory for loading firmware. */
+	err = iwx_dma_contig_alloc(sc->sc_dmat, &sc->ctxt_info_dma,
+	    sizeof(struct iwx_context_info), 0);
+	if (err) {
+		printf("%s: could not allocate memory for loading firmware\n",
+		    DEVNAME(sc));
+		return;
+	}
+
 	/* 
 	 * Allocate DMA memory for firmware transfers.
 	 * Must be aligned on a 16-byte boundary.
@@ -7781,9 +7787,9 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	err = iwx_dma_contig_alloc(sc->sc_dmat, &sc->fw_dma,
 	    sc->sc_fwdmasegsz, 16);
 	if (err) {
-		printf("%s: could not allocate memory for firmware\n",
+		printf("%s: could not allocate memory for firmware transfers\n",
 		    DEVNAME(sc));
-		return;
+		goto fail0;
 	}
 
 	/* Allocate interrupt cause table (ICT).*/
@@ -7915,6 +7921,7 @@ fail3:	if (sc->ict_dma.vaddr != NULL)
 		iwx_dma_contig_free(&sc->ict_dma);
 	
 fail1:	iwx_dma_contig_free(&sc->fw_dma);
+fail0:	iwx_dma_contig_free(&sc->ctxt_info_dma);
 	return;
 }
 
