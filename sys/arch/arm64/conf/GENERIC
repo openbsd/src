@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.168 2020/06/10 17:52:06 patrick Exp $
+# $OpenBSD: GENERIC,v 1.169 2020/06/11 00:05:55 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -104,6 +104,10 @@ vioscsi*	at virtio?
 option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
 option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
+
+simpleamp*	at fdt?
+simpleaudio*	at fdt?
+audio*		at simpleaudio?
 
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
@@ -222,6 +226,7 @@ rkemmcphy*	at fdt?
 rkgpio*		at fdt?
 rkiic*		at fdt?
 iic*		at rkiic?
+rkiis*		at fdt?
 rkpcie*		at fdt?
 pci*		at rkpcie?
 rkpwm*		at fdt?
@@ -424,6 +429,7 @@ uk*		at scsibus?
 abcrtc*		at iic?			# Abracon x80x RTC
 cwfg*		at iic?			# CellWise CW201x fuel gauge
 dsxrtc*		at iic?			# DS3231 RTC
+escodec*	at iic?			# ES8316 audio codec
 fanpwr*		at iic?			# FAN53555 regulator
 fusbtc*		at iic?			# USB Type-C controller
 ipmi*		at iic?			# IPMI (SIIF)
