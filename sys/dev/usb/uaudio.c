@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.159 2020/05/04 19:19:26 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.160 2020/06/11 16:00:10 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3854,6 +3854,8 @@ uaudio_detach(struct device *self, int flags)
 
 	rv = config_detach_children(self, flags);
 
+	usbd_ref_wait(sc->udev);
+
 	while ((alt = sc->alts) != NULL) {
 		sc->alts = alt->next;
 		free(alt, M_DEVBUF, sizeof(struct uaudio_alt));
@@ -3892,6 +3894,8 @@ uaudio_open(void *self, int flags)
 	if (usbd_is_dying(sc->udev))
 		return EIO;
 
+	usbd_ref_incr(sc->udev);
+
 	flags &= (FREAD | FWRITE);
 
 	for (p = sc->params_list; p != NULL; p = p->next) {
@@ -3914,6 +3918,7 @@ uaudio_open(void *self, int flags)
 		}
 	}
 
+	usbd_ref_decr(sc->udev);
 	return ENXIO;
 }
 
@@ -3923,6 +3928,7 @@ uaudio_close(void *self)
 	struct uaudio_softc *sc = self;
 
 	sc->mode = 0;
+	usbd_ref_decr(sc->udev);
 }
 
 int
@@ -4183,9 +4189,8 @@ uaudio_get_props(void *self)
 }
 
 int
-uaudio_get_port(void *arg, struct mixer_ctrl *ctl)
+uaudio_get_port_do(struct uaudio_softc *sc, struct mixer_ctrl *ctl)
 {
-	struct uaudio_softc *sc = arg;
 	struct uaudio_unit *u;
 	struct uaudio_mixent *m;
 	unsigned char req_buf[4];
@@ -4253,9 +4258,8 @@ uaudio_get_port(void *arg, struct mixer_ctrl *ctl)
 }
 
 int
-uaudio_set_port(void *arg, struct mixer_ctrl *ctl)
+uaudio_set_port_do(struct uaudio_softc *sc, struct mixer_ctrl *ctl)
 {
-	struct uaudio_softc *sc = arg;
 	struct uaudio_unit *u;
 	struct uaudio_mixent *m;
 	unsigned char req_buf[4];
@@ -4312,9 +4316,8 @@ uaudio_set_port(void *arg, struct mixer_ctrl *ctl)
 }
 
 int
-uaudio_query_devinfo(void *arg, struct mixer_devinfo *devinfo)
+uaudio_query_devinfo_do(struct uaudio_softc *sc, struct mixer_devinfo *devinfo)
 {
-	struct uaudio_softc *sc = arg;
 	struct uaudio_unit *u;
 	struct uaudio_mixent *m;
 
@@ -4379,4 +4382,40 @@ uaudio_query_devinfo(void *arg, struct mixer_devinfo *devinfo)
 		break;
 	}
 	return 0;
+}
+
+int
+uaudio_get_port(void *arg, struct mixer_ctrl *ctl)
+{
+	struct uaudio_softc *sc = arg;
+	int rc;
+
+	usbd_ref_incr(sc->udev);
+	rc = uaudio_get_port_do(sc, ctl);
+	usbd_ref_decr(sc->udev);
+	return rc;
+}
+
+int
+uaudio_set_port(void *arg, struct mixer_ctrl *ctl)
+{
+	struct uaudio_softc *sc = arg;
+	int rc;
+
+	usbd_ref_incr(sc->udev);
+	rc = uaudio_set_port_do(sc, ctl);
+	usbd_ref_decr(sc->udev);
+	return rc;
+}
+
+int
+uaudio_query_devinfo(void *arg, struct mixer_devinfo *devinfo)
+{
+	struct uaudio_softc *sc = arg;
+	int rc;
+
+	usbd_ref_incr(sc->udev);
+	rc = uaudio_query_devinfo_do(sc, devinfo);
+	usbd_ref_decr(sc->udev);
+	return rc;
 }
