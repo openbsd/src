@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.22 2020/06/11 08:17:32 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.23 2020/06/11 08:18:24 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -392,6 +392,7 @@ int	iwx_rm_sta_cmd(struct iwx_softc *, struct iwx_node *);
 int	iwx_fill_probe_req(struct iwx_softc *, struct iwx_scan_probe_req *);
 int	iwx_config_umac_scan(struct iwx_softc *);
 int	iwx_umac_scan(struct iwx_softc *, int);
+void	iwx_mcc_update(struct iwx_softc *, struct iwx_mcc_chub_notif *);
 uint8_t	iwx_ridx2rate(struct ieee80211_rateset *, int);
 int	iwx_rval2ridx(int);
 void	iwx_ack_rates(struct iwx_softc *, struct iwx_node *, int *, int *);
@@ -2709,11 +2710,14 @@ iwx_init_channel_map(struct iwx_softc *sc, uint16_t *channel_profile_v3,
 		if (is_5ghz && !data->sku_cap_band_52GHz_enable)
 			ch_flags &= ~IWX_NVM_CHANNEL_VALID;
 
-		if (!(ch_flags & IWX_NVM_CHANNEL_VALID))
-			continue;
-
 		hw_value = nvm_channels[ch_idx];
 		channel = &ic->ic_channels[hw_value];
+
+		if (!(ch_flags & IWX_NVM_CHANNEL_VALID)) {
+			channel->ic_freq = 0;
+			channel->ic_flags = 0;
+			continue;
+		}
 
 		if (!is_5ghz) {
 			flags = IEEE80211_CHAN_2GHZ;
@@ -5245,6 +5249,24 @@ iwx_umac_scan(struct iwx_softc *sc, int bgscan)
 	return err;
 }
 
+void
+iwx_mcc_update(struct iwx_softc *sc, struct iwx_mcc_chub_notif *notif)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = IC2IFP(ic);
+	char alpha2[3];
+
+	snprintf(alpha2, sizeof(alpha2), "%c%c",
+	    (le16toh(notif->mcc) & 0xff00) >> 8, le16toh(notif->mcc) & 0xff);
+
+	if (ifp->if_flags & IFF_DEBUG) {
+		printf("%s: firmware has detected regulatory domain '%s' "
+		    "(0x%x)\n", DEVNAME(sc), alpha2, le16toh(notif->mcc));
+	}
+
+	/* TODO: Schedule a task to send MCC_UPDATE_CMD? */
+}
+
 uint8_t
 iwx_ridx2rate(struct ieee80211_rateset *rs, int ridx)
 {
@@ -6454,6 +6476,9 @@ iwx_send_update_mcc_cmd(struct iwx_softc *sc, const char *alpha2)
 		.flags = IWX_CMD_WANT_RESP,
 		.data = { &mcc_cmd },
 	};
+	struct iwx_rx_packet *pkt;
+	struct iwx_mcc_update_resp *resp;
+	size_t resp_len;
 	int err;
 
 	memset(&mcc_cmd, 0, sizeof(mcc_cmd));
@@ -6465,16 +6490,41 @@ iwx_send_update_mcc_cmd(struct iwx_softc *sc, const char *alpha2)
 		mcc_cmd.source_id = IWX_MCC_SOURCE_OLD_FW;
 
 	hcmd.len[0] = sizeof(struct iwx_mcc_update_cmd);
-	hcmd.resp_pkt_len = sizeof(struct iwx_rx_packet) +
-	    sizeof(struct iwx_mcc_update_resp);
+	hcmd.resp_pkt_len = IWX_CMD_RESP_MAX;
 
 	err = iwx_send_cmd(sc, &hcmd);
 	if (err)
 		return err;
 
+	pkt = hcmd.resp_pkt;
+	if (!pkt || (pkt->hdr.flags & IWX_CMD_FAILED_MSK)) {
+		err = EIO;
+		goto out;
+	}
+
+	resp_len = iwx_rx_packet_payload_len(pkt);
+	if (resp_len < sizeof(*resp)) {
+		err = EIO;
+		goto out;
+	}
+
+	resp = (void *)pkt->data;
+	if (resp_len != sizeof(*resp) +
+	    resp->n_channels * sizeof(resp->channels[0])) {
+		err = EIO;
+		goto out;
+	}
+
+	DPRINTF(("MCC status=0x%x mcc=0x%x cap=0x%x time=0x%x geo_info=0x%x source_id=0x%d n_channels=%u\n",
+	    resp->status, resp->mcc, resp->cap, resp->time, resp->geo_info, resp->source_id, resp->n_channels));
+
+	/* Update channel map for net80211 and our scan configuration. */
+	iwx_init_channel_map(sc, NULL, resp->channels, resp->n_channels);
+
+out:
 	iwx_free_resp(sc, &hcmd);
 
-	return 0;
+	return err;
 }
 
 int
@@ -7365,6 +7415,13 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			break;
 		}
 
+		case IWX_MCC_CHUB_UPDATE_CMD: {
+			struct iwx_mcc_chub_notif *notif;
+			SYNC_RESP_STRUCT(notif, pkt);
+			iwx_mcc_update(sc, notif);
+			break;
+		}
+	
 		case IWX_REPLY_ERROR: {
 			struct iwx_error_resp *resp;
 			SYNC_RESP_STRUCT(resp, pkt);

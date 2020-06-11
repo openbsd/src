@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.7 2020/06/11 08:17:32 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.8 2020/06/11 08:18:24 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1525,6 +1525,7 @@ struct iwx_tx_queue_cfg_rsp {
 
 /* Location Aware Regulatory */
 #define IWX_MCC_UPDATE_CMD	0xc8
+#define IWX_MCC_CHUB_UPDATE_CMD	0xc9
 
 /* BT Coex */
 #define IWX_BT_COEX_PRIO_TABLE	0xcc
@@ -6180,7 +6181,7 @@ struct iwx_bt_coex_cmd {
  * 'ZZ' MCC will be used to switch to NVM default profile; in this case, the
  * MCC in the cmd response will be the relevant MCC in the NVM.
  * @mcc: given mobile country code
- * @source_id: the source from where we got the MCC, see iwx_mcc_source
+ * @source_id: the source from where we got the MCC, see IWX_MCC_SOURCE_*
  * @reserved: reserved for alignment
  * @key: integrity key for MCC API OEM testing
  * @reserved2: reserved
@@ -6194,14 +6195,14 @@ struct iwx_mcc_update_cmd {
 } __packed; /* LAR_UPDATE_MCC_CMD_API_S_VER_2 */
 
 /**
- * iwx_mcc_update_resp - response to MCC_UPDATE_CMD.
+ * iwx_mcc_update_resp_v3 - response to MCC_UPDATE_CMD.
  * Contains the new channel control profile map, if changed, and the new MCC
  * (mobile country code).
  * The new MCC may be different than what was requested in MCC_UPDATE_CMD.
  * @status: see &enum iwx_mcc_update_status
  * @mcc: the new applied MCC
  * @cap: capabilities for all channels which matches the MCC
- * @source_id: the MCC source, see iwx_mcc_source
+ * @source_id: the MCC source, see IWX_MCC_SOURCE_*
  * @time: time elapsed from the MCC test start (in 30 seconds TU)
  * @reserved: reserved.
  * @n_channels: number of channels in @channels_data (may be 14, 39, 50 or 51
@@ -6209,16 +6210,87 @@ struct iwx_mcc_update_cmd {
  * @channels: channel control data map, DWORD for each channel. Only the first
  *	16bits are used.
  */
-struct iwx_mcc_update_resp {
+struct iwx_mcc_update_resp_v3 {
 	uint32_t status;
 	uint16_t mcc;
 	uint8_t cap;
 	uint8_t source_id;
 	uint16_t time;
-	uint16_t reserved;
+	uint16_t geo_info;
 	uint32_t n_channels;
 	uint32_t channels[0];
-} __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_2 */
+} __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_3 */
+
+/**
+ * geographic information.
+ * @GEO_NO_INFO: no special info for this geo profile.
+ * @GEO_WMM_ETSI_5GHZ_INFO: this geo profile limits the WMM params
+ *	for the 5 GHz band.
+ */
+#define IWX_GEO_NO_INFO			0
+#define IWX_GEO_WMM_ETSI_5GHZ_INFO (1 << 0)
+
+/**
+ * struct iwx_mcc_update_resp - response to MCC_UPDATE_CMD.
+ * Contains the new channel control profile map, if changed, and the new MCC
+ * (mobile country code).
+ * The new MCC may be different than what was requested in MCC_UPDATE_CMD.
+ * @status: see &enum iwl_mcc_update_status
+ * @mcc: the new applied MCC
+ * @cap: capabilities for all channels which matches the MCC
+ * @time: time elapsed from the MCC test start (in units of 30 seconds)
+ * @geo_info: geographic specific profile information
+ *	see IWX_GEO_*
+ * @source_id: the MCC source, see IWX_MCC_SOURCE_*
+ * @reserved: for four bytes alignment.
+ * @n_channels: number of channels in @channels_data.
+ * @channels: channel control data map, DWORD for each channel. Only the first
+ *	16bits are used.
+ */
+struct iwx_mcc_update_resp {
+	uint32_t status;
+	uint16_t mcc;
+	uint16_t cap;
+	uint16_t time;
+	uint16_t geo_info;
+	uint8_t source_id;
+	uint8_t reserved[3];
+	uint32_t n_channels;
+	uint32_t channels[0];
+} __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_4 */
+
+/**
+ * struct iwx_mcc_chub_notif - chub notifies of mcc change
+ * (MCC_CHUB_UPDATE_CMD = 0xc9)
+ * The Chub (Communication Hub, CommsHUB) is a HW component that connects to
+ * the cellular and connectivity cores that gets updates of the mcc, and
+ * notifies the ucode directly of any mcc change.
+ * The ucode requests the driver to request the device to update geographic
+ * regulatory  profile according to the given MCC (Mobile Country Code).
+ * The MCC is two letter-code, ascii upper case[A-Z] or '00' for world domain.
+ * 'ZZ' MCC will be used to switch to NVM default profile; in this case, the
+ * MCC in the cmd response will be the relevant MCC in the NVM.
+ * @mcc: given mobile country code
+ * @source_id: identity of the change originator, see IWX_MCC_SOURCE_*
+ * @reserved1: reserved for alignment
+ */
+struct iwx_mcc_chub_notif {
+	uint16_t mcc;
+	uint8_t source_id;
+	uint8_t reserved1;
+} __packed; /* LAR_MCC_NOTIFY_S */
+
+enum iwx_mcc_update_status {
+	IWX_MCC_RESP_NEW_CHAN_PROFILE,
+	IWX_MCC_RESP_SAME_CHAN_PROFILE,
+	IWX_MCC_RESP_INVALID,
+	IWX_MCC_RESP_NVM_DISABLED,
+	IWX_MCC_RESP_ILLEGAL,
+	IWX_MCC_RESP_LOW_PRIORITY,
+	IWX_MCC_RESP_TEST_MODE_ACTIVE,
+	IWX_MCC_RESP_TEST_MODE_NOT_ACTIVE,
+	IWX_MCC_RESP_TEST_MODE_DENIAL_OF_SERVICE,
+};
 
 #define IWX_MCC_SOURCE_OLD_FW			0
 #define IWX_MCC_SOURCE_ME			1
