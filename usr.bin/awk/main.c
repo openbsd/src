@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2020/06/10 21:06:09 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2020/06/11 13:51:18 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	const char *fs = NULL;
 	char *fn, *vn;
 
-	setlocale(LC_ALL, "");
+	setlocale(LC_CTYPE, "");
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
 
 	cmdname = __progname;
