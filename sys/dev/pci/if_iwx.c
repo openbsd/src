@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.23 2020/06/11 08:18:24 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.24 2020/06/11 08:19:17 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6546,20 +6546,6 @@ iwx_init_hw(struct iwx_softc *sc)
 	err = iwx_run_init_mvm_ucode(sc, 0);
 	if (err)
 		return err;
-
-	/* Should stop and start HW since INIT image just loaded. */
-	iwx_stop_device(sc);
-	err = iwx_start_hw(sc);
-	if (err) {
-		printf("%s: could not initialize hardware\n", DEVNAME(sc));
-		return err;
-	}
-
-	err = iwx_load_ucode_wait_alive(sc);
-	if (err) {
-		printf("%s: could not load firmware\n", DEVNAME(sc));
-		goto err;
-	}
 
 	if (!iwx_nic_lock(sc))
 		return EBUSY;
