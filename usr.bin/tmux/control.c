@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.40 2020/06/10 07:27:10 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.41 2020/06/11 09:55:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -262,6 +262,20 @@ control_continue_pane(struct client *c, struct window_pane *wp)
 		memcpy(&cp->offset, &wp->offset, sizeof cp->offset);
 		memcpy(&cp->queued, &wp->offset, sizeof cp->queued);
 		control_write(c, "%%continue %%%u", wp->id);
+	}
+}
+
+/* Pause a pane. */
+void
+control_pause_pane(struct client *c, struct window_pane *wp)
+{
+	struct control_pane	*cp;
+
+	cp = control_add_pane(c, wp);
+	if (~cp->flags & CONTROL_PANE_PAUSED) {
+		cp->flags |= CONTROL_PANE_PAUSED;
+		control_discard_pane(c, cp);
+		control_write(c, "%%pause %%%u", wp->id);
 	}
 }
 

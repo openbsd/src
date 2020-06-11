@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.37 2020/06/05 07:33:57 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.38 2020/06/11 09:55:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -68,6 +68,8 @@ cmd_refresh_client_update_offset(struct client *tc, const char *value)
 		control_set_pane_off(tc, wp);
 	else if (strcmp(colon, "continue") == 0)
 		control_continue_pane(tc, wp);
+	else if (strcmp(colon, "pause") == 0)
+		control_pause_pane(tc, wp);
 
 out:
 	free(copy);

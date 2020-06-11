@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.780 2020/06/10 07:27:10 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.781 2020/06/11 09:55:47 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2020 $
+.Dd $Mdocdate: June 11 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1304,9 +1304,10 @@ The argument is a pane ID (with leading
 .Ql % ) ,
 a colon, then one of
 .Ql on ,
-.Ql off
+.Ql off ,
+.Ql continue
 or
-.Ql continue .
+.Ql pause .
 If
 .Ql off ,
 .Nm
@@ -1315,9 +1316,13 @@ the pane off, will stop reading from the pane.
 If
 .Ql continue ,
 .Nm
-will return to sending output to a paused pane (see the
+will return to sending output to the pane if it was paused (manually or with the
 .Ar pause-after
 flag).
+If
+.Ql pause ,
+.Nm
+will pause the pane.
 .Fl A
 may be given multiple times for different panes.
 .Pp
