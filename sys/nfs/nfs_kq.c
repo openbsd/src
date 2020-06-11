@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.31 2020/06/08 08:04:10 mpi Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.32 2020/06/11 09:18:43 mpi Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -189,7 +189,7 @@ filt_nfsdetach(struct knote *kn)
 	klist_remove(&vp->v_selectinfo.si_note, kn);
 
 	/* Remove the vnode from watch list */
-	if ((kn->kn_flags & EV_OLDAPI) == 0)
+	if ((kn->kn_flags & __EV_POLL) == 0)
 		nfs_kqunwatch(vp);
 }
 
@@ -246,7 +246,7 @@ filt_nfsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-	if (kn->kn_flags & EV_OLDAPI)
+	if (kn->kn_flags & __EV_POLL)
 		return (1);
 
         return (kn->kn_data != 0);
@@ -335,7 +335,7 @@ nfs_kqfilter(void *v)
 	/*
 	 * Put the vnode to watched list.
 	 */
-	if ((kn->kn_flags & EV_OLDAPI) == 0) {
+	if ((kn->kn_flags & __EV_POLL) == 0) {
 		int error;
 
 		error = nfs_kqwatch(vp);

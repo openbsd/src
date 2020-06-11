@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.151 2020/06/08 08:04:10 mpi Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.152 2020/06/11 09:18:43 mpi Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1973,7 +1973,7 @@ filt_ufsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-	if (kn->kn_flags & EV_OLDAPI)
+	if (kn->kn_flags & __EV_POLL)
 		return (1);
 
 	return (kn->kn_data != 0);

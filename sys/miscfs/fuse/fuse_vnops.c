@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.60 2020/06/08 08:04:09 mpi Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.61 2020/06/11 09:18:43 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -188,7 +188,7 @@ filt_fusefsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-	if (kn->kn_flags & EV_OLDAPI)
+	if (kn->kn_flags & __EV_POLL)
 		return (1);
 
 	return (kn->kn_data != 0);
