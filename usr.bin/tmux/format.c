@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.257 2020/06/01 19:39:25 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.258 2020/06/11 19:43:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1154,6 +1154,13 @@ format_merge(struct format_tree *ft, struct format_tree *from)
 		if (fe->value != NULL)
 			format_add(ft, fe->key, "%s", fe->value);
 	}
+}
+
+/* Get format pane. */
+struct window_pane *
+format_get_pane(struct format_tree *ft)
+{
+	return (ft->wp);
 }
 
 /* Add item bits to tree. */
