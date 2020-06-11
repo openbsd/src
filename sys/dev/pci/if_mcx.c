@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.49 2020/06/02 08:17:15 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.50 2020/06/11 23:11:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2232,9 +2232,11 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	mcx_wr(sc, MCX_CMDQ_ADDR_HI, MCX_DMA_DVA(&sc->sc_cmdq_mem) >> 32);
-	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint32_t), BUS_SPACE_BARRIER_WRITE);
+	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint32_t),
+	    BUS_SPACE_BARRIER_WRITE);
 	mcx_wr(sc, MCX_CMDQ_ADDR_LO, MCX_DMA_DVA(&sc->sc_cmdq_mem));
-	mcx_bar(sc, MCX_CMDQ_ADDR_LO, sizeof(uint32_t), BUS_SPACE_BARRIER_WRITE);
+	mcx_bar(sc, MCX_CMDQ_ADDR_LO, sizeof(uint32_t),
+	    BUS_SPACE_BARRIER_WRITE);
 
 	if (mcx_init_wait(sc) != 0) {
 		printf(", timeout waiting for init\n");
@@ -2402,13 +2404,16 @@ teardown:
 	/* error printed by mcx_teardown_hca, and we're already unwinding */
 cqfree:
 	mcx_wr(sc, MCX_CMDQ_ADDR_HI, MCX_DMA_DVA(&sc->sc_cmdq_mem) >> 32);
-	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint64_t), BUS_SPACE_BARRIER_WRITE);
+	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint64_t),
+	    BUS_SPACE_BARRIER_WRITE);
 	mcx_wr(sc, MCX_CMDQ_ADDR_LO, MCX_DMA_DVA(&sc->sc_cmdq_mem) |
 	    MCX_CMDQ_INTERFACE_DISABLED);
-	mcx_bar(sc, MCX_CMDQ_ADDR_LO, sizeof(uint64_t), BUS_SPACE_BARRIER_WRITE);
+	mcx_bar(sc, MCX_CMDQ_ADDR_LO, sizeof(uint64_t),
+	    BUS_SPACE_BARRIER_WRITE);
 
 	mcx_wr(sc, MCX_CMDQ_ADDR_HI, 0);
-	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint64_t), BUS_SPACE_BARRIER_WRITE);
+	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint64_t),
+	    BUS_SPACE_BARRIER_WRITE);
 	mcx_wr(sc, MCX_CMDQ_ADDR_LO, MCX_CMDQ_INTERFACE_DISABLED);
 
 	mcx_dmamem_free(sc, &sc->sc_cmdq_mem);
@@ -2895,7 +2900,8 @@ mcx_access_hca_reg(struct mcx_softc *sc, uint16_t reg, int op, void *data,
 	in->cmd_register_id = htobe16(reg);
 
 	nmb = howmany(len, MCX_CMDQ_MAILBOX_DATASIZE);
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, nmb, &cqe->cq_output_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, nmb,
+	    &cqe->cq_output_ptr, token) != 0) {
 		printf(", unable to allocate access reg mailboxen\n");
 		return (-1);
 	}
@@ -2938,7 +2944,8 @@ free:
 }
 
 static int
-mcx_set_issi(struct mcx_softc *sc, struct mcx_cmdq_entry *cqe, unsigned int slot)
+mcx_set_issi(struct mcx_softc *sc, struct mcx_cmdq_entry *cqe,
+    unsigned int slot)
 {
 	struct mcx_cmd_set_issi_in *in;
 	struct mcx_cmd_set_issi_out *out;
@@ -3511,16 +3518,17 @@ mcx_iff(struct mcx_softc *sc)
 	    MCX_CMD_MODIFY_NIC_VPORT_CONTEXT_FIELD_MTU);
 
 	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
-		printf(", unable to allocate modify nic vport context mailboxen\n");
+		printf(", unable to allocate modify "
+		    "nic vport context mailboxen\n");
 		return (-1);
 	}
 	ctx = (struct mcx_nic_vport_ctx *)
 	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 240);
 	ctx->vp_mtu = htobe32(sc->sc_hardmtu);
 	/*
-	 * always leave promisc-all enabled on the vport since we can't give it
-	 * a vlan list, and we're already doing multicast filtering in the flow
-	 * table.
+         * always leave promisc-all enabled on the vport since we
+         * can't give it a vlan list, and we're already doing multicast
+         * filtering in the flow table.
 	 */
 	ctx->vp_flags = htobe16(MCX_NIC_VPORT_CTX_PROMISC_ALL);
 
@@ -3628,7 +3636,8 @@ mcx_create_eq(struct mcx_softc *sc)
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_EQ);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm,
+	    howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
 	    &cqe->cq_input_ptr, token) != 0) {
 		printf(", unable to allocate create eq mailboxen\n");
 		return (-1);
@@ -3767,8 +3776,10 @@ mcx_query_nic_vport_context(struct mcx_softc *sc)
 	in->cmd_op_mod = htobe16(0);
 	in->cmd_allowed_list_type = 0;
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_output_ptr, token) != 0) {
-		printf(", unable to allocate query nic vport context mailboxen\n");
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_output_ptr, token) != 0) {
+		printf(", unable to allocate "
+		    "query nic vport context mailboxen\n");
 		return (-1);
 	}
 	mcx_cmdq_mboxes_sign(&mxm, 1);
@@ -3792,7 +3803,8 @@ mcx_query_nic_vport_context(struct mcx_softc *sc)
 		goto free;
 	}
 
-	ctx = (struct mcx_nic_vport_ctx *)(mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
+	ctx = (struct mcx_nic_vport_ctx *)
+	    mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	addr = (uint8_t *)&ctx->vp_perm_addr;
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		sc->sc_ac.ac_enaddr[i] = addr[i + 2];
@@ -3915,9 +3927,11 @@ mcx_create_cq(struct mcx_softc *sc, int eqn)
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_CQ);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm,
+	    howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
 	    &cmde->cq_input_ptr, token) != 0) {
-		printf("%s: unable to allocate create cq mailboxen\n", DEVNAME(sc));
+		printf("%s: unable to allocate create cq mailboxen\n",
+		    DEVNAME(sc));
 		error = -1;
 		goto free;
 	}
@@ -4044,14 +4058,16 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_RQ);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm,
+	    howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
 	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate create rq mailboxen\n",
 		    DEVNAME(sc));
 		error = -1;
 		goto free;
 	}
-	mbin = (struct mcx_rq_ctx *)(((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
+	mbin = (struct mcx_rq_ctx *)
+	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
 	rq_flags = MCX_RQ_CTX_RLKEY;
 #if NVLAN == 0
 	rq_flags |= MCX_RQ_CTX_VLAN_STRIP_DIS;
@@ -4110,15 +4126,18 @@ mcx_ready_rq(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_MODIFY_RQ);
 	in->cmd_op_mod = htobe16(0);
 	in->cmd_rq_state = htobe32((MCX_QUEUE_STATE_RST << 28) | sc->sc_rqn);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
-		printf("%s: unable to allocate modify rq mailbox\n", DEVNAME(sc));
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate modify rq mailbox\n",
+		    DEVNAME(sc));
 		return (-1);
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
@@ -4203,13 +4222,15 @@ mcx_create_tir(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_TIR);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate create tir mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4304,7 +4325,8 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 
 	if (mcx_dmamem_alloc(sc, &sc->sc_sq_mem, npages * MCX_PAGE_SIZE,
 	    MCX_PAGE_SIZE) != 0) {
-		printf("%s: unable to allocate send queue memory\n", DEVNAME(sc));
+		printf("%s: unable to allocate send queue memory\n",
+		    DEVNAME(sc));
 		return (-1);
 	}
 
@@ -4317,13 +4339,16 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_SQ);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm,
+	    howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
 	    &cqe->cq_input_ptr, token) != 0) {
-		printf("%s: unable to allocate create sq mailboxen\n", DEVNAME(sc));
+		printf("%s: unable to allocate create sq mailboxen\n",
+		    DEVNAME(sc));
 		error = -1;
 		goto free;
 	}
-	mbin = (struct mcx_sq_ctx *)(((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
+	mbin = (struct mcx_sq_ctx *)
+	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
 	mbin->sq_flags = htobe32(MCX_SQ_CTX_RLKEY |
 	    (1 << MCX_SQ_CTX_MIN_WQE_INLINE_SHIFT));
 	mbin->sq_cqn = htobe32(cqn);
@@ -4338,7 +4363,8 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	mbin->sq_wq.wq_log_size = MCX_LOG_SQ_SIZE;
 
 	/* physical addresses follow the mailbox in data */
-	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin) + 0x10, npages, &sc->sc_sq_mem);
+	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin) + 0x10,
+	    npages, &sc->sc_sq_mem);
 	mcx_cmdq_post(sc, cqe, 0);
 
 	error = mcx_cmdq_poll(sc, cqe, 1000);
@@ -4362,7 +4388,8 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	sc->sc_sqn = mcx_get_id(out->cmd_sqn);
 
 	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
-	sc->sc_tx_doorbell = (uint32_t *)(doorbell + MCX_SQ_DOORBELL_OFFSET + 4);
+	sc->sc_tx_doorbell =
+	    (uint32_t *)(doorbell + MCX_SQ_DOORBELL_OFFSET + 4);
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
@@ -4421,14 +4448,16 @@ mcx_ready_sq(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_MODIFY_SQ);
 	in->cmd_op_mod = htobe16(0);
 	in->cmd_sq_state = htobe32((MCX_QUEUE_STATE_RST << 28) | sc->sc_sqn);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate modify sq mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4475,14 +4504,17 @@ mcx_create_tis(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_TIS);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
-		printf("%s: unable to allocate create tis mailbox\n", DEVNAME(sc));
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate create tis mailbox\n",
+		    DEVNAME(sc));
 		return (-1);
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
@@ -4609,13 +4641,15 @@ mcx_create_flow_table(struct mcx_softc *sc, int log_size)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_FLOW_TABLE);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate create flow table mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4663,13 +4697,15 @@ mcx_set_flow_table_root(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_SET_FLOW_TABLE_ROOT);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate set flow table root mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4723,7 +4759,8 @@ mcx_destroy_flow_table(struct mcx_softc *sc)
 	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_FLOW_TABLE);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate destroy flow table mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4740,7 +4777,8 @@ mcx_destroy_flow_table(struct mcx_softc *sc)
 		goto free;
 	}
 	if (mcx_cmdq_verify(cqe) != 0) {
-		printf("%s: destroy flow table command corrupt\n", DEVNAME(sc));
+		printf("%s: destroy flow table command corrupt\n",
+		    DEVNAME(sc));
 		goto free;
 	}
 
@@ -4843,7 +4881,8 @@ mcx_destroy_flow_group(struct mcx_softc *sc, int group)
 	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_FLOW_GROUP);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate destroy flow group mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4973,9 +5012,10 @@ mcx_delete_flow_table_entry(struct mcx_softc *sc, int group, int index)
 	in->cmd_opcode = htobe16(MCX_CMD_DELETE_FLOW_TABLE_ENTRY);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token) != 0) {
-		printf("%s: unable to allocate delete flow table entry mailbox\n",
-		    DEVNAME(sc));
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
+	    &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate "
+		    "delete flow table entry mailbox\n", DEVNAME(sc));
 		return (-1);
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
@@ -5109,7 +5149,8 @@ mcx_dump_flow_table_entry(struct mcx_softc *sc, int index)
 	CTASSERT(sizeof(*mbout) <= MCX_CMDQ_MAILBOX_DATASIZE*2);
 	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
 	    &cqe->cq_output_ptr, token) != 0) {
-		printf(", unable to allocate query flow table entry mailboxes\n");
+		printf(", unable to allocate "
+		    "query flow table entry mailboxes\n");
 		return (-1);
 	}
 	cqe->cq_input_ptr = cqe->cq_output_ptr;
@@ -5410,8 +5451,10 @@ mcx_dump_counters(struct mcx_softc *sc)
 	in->cmd_opcode = htobe16(MCX_CMD_QUERY_VPORT_COUNTERS);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_output_ptr, token) != 0) {
-		printf(", unable to allocate query nic vport counters mailboxen\n");
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_output_ptr, token) != 0) {
+		printf(", unable to allocate "
+		    query nic vport counters mailboxen\n");
 		return (-1);
 	}
 	cqe->cq_input_ptr = cqe->cq_output_ptr;
@@ -5480,7 +5523,8 @@ mcx_dump_flow_counter(struct mcx_softc *sc, int index, const char *what)
 	in->cmd_opcode = htobe16(MCX_CMD_QUERY_FLOW_COUNTER);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_output_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_output_ptr, token) != 0) {
 		printf(", unable to allocate query flow counter mailboxen\n");
 		return (-1);
 	}
@@ -5510,7 +5554,8 @@ mcx_dump_flow_counter(struct mcx_softc *sc, int index, const char *what)
 		goto free;
 	}
 
-	counters = (struct mcx_counter *)(mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
+	counters = (struct mcx_counter *)
+	    (mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
 	if (counters->packets)
 		printf("%s: %s inflow %llx\n", DEVNAME(sc), what,
 		    betoh64(counters->packets));
@@ -5802,11 +5847,13 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 		case MCX_CQ_ENTRY_OPCODE_REQ_ERR:
 		case MCX_CQ_ENTRY_OPCODE_SEND_ERR:
 			cqp = (uint8_t *)cqe;
-			/* printf("%s: cq completion error: %x\n", DEVNAME(sc), cqp[0x37]); */
+			/* printf("%s: cq completion error: %x\n",
+			    DEVNAME(sc), cqp[0x37]); */
 			break;
 
 		default:
-			/* printf("%s: cq completion opcode %x??\n", DEVNAME(sc), opcode); */
+			/* printf("%s: cq completion opcode %x??\n",
+			    DEVNAME(sc), opcode); */
 			break;
 		}
 
@@ -5853,7 +5900,8 @@ mcx_next_eq_entry(struct mcx_softc *sc)
 
 	eqe = (struct mcx_eq_entry *)MCX_DMA_KVA(&sc->sc_eq_mem);
 	next = sc->sc_eq_cons % (1 << MCX_LOG_EQ_SIZE);
-	if ((eqe[next].eq_owner & 1) == ((sc->sc_eq_cons >> MCX_LOG_EQ_SIZE) & 1)) {
+	if ((eqe[next].eq_owner & 1) ==
+	    ((sc->sc_eq_cons >> MCX_LOG_EQ_SIZE) & 1)) {
 		sc->sc_eq_cons++;
 		return (&eqe[next]);
 	}
