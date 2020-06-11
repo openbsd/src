@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.232 2020/06/03 11:37:39 jmatthew Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.233 2020/06/11 11:27:44 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5190,7 +5190,6 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags, int bgscan)
 	struct ieee80211_frame *wh;
 	struct ieee80211_rateset *rs;
 	struct ieee80211_channel *c;
-	struct ifnet *ifp = &ic->ic_if;
 	uint8_t *buf, *frm;
 	uint16_t rxchain, dwell_active, dwell_passive;
 	uint8_t txant;
@@ -5294,7 +5293,6 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags, int bgscan)
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
 	    IEEE80211_FC0_SUBTYPE_PROBE_REQ;
 	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	IEEE80211_ADDR_COPY(wh->i_addr1, etherbroadcastaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, etherbroadcastaddr);
