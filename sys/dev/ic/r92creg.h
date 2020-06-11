@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.24 2019/03/11 06:19:33 kevlo Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.25 2020/06/11 00:56:12 jmatthew Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -687,6 +687,16 @@
 #define R92C_CAMCMD_WRITE	0x00010000
 #define R92C_CAMCMD_CLR		0x40000000
 #define R92C_CAMCMD_POLLING	0x80000000
+
+/* Bits for R92C_SECCFG. */
+#define R92C_SECCFG_TXUCKEY_DEF 0x0001
+#define R92C_SECCFG_RXUCKEY_DEF	0x0002
+#define R92C_SECCFG_TXENC_ENA	0x0004
+#define R92C_SECCFG_RXENC_ENA	0x0008
+#define R92C_SECCFG_CMP_A2	0x0010
+#define R92C_SECCFG_MC_SRCH_DIS	0x0020
+#define R92C_SECCFG_TXBCKEY_DEF 0x0040
+#define R92C_SECCFG_RXBCKEY_DEF 0x0080
 
 /* IMR */
  
