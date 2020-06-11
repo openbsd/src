@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.24 2020/06/11 08:19:17 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.25 2020/06/11 08:30:03 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4333,10 +4333,6 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 	return rinfo;
 }
 
-#if 0
-/*
- * necessary only for block ack mode
- */
 void
 iwx_tx_update_byte_tbl(struct iwx_tx_ring *txq, uint16_t byte_cnt,
     uint16_t num_tbs)
@@ -4363,7 +4359,6 @@ iwx_tx_update_byte_tbl(struct iwx_tx_ring *txq, uint16_t byte_cnt,
 	bc_ent = htole16(len | (num_fetch_chunks << 12));
 	scd_bc_tbl->tfd_offset[txq->cur] = bc_ent;
 }
-#endif
 
 int
 iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
@@ -4531,9 +4526,7 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	    (char *)(void *)desc - (char *)(void *)ring->desc_dma.vaddr,
 	    sizeof (*desc), BUS_DMASYNC_PREWRITE);
 
-#if 0
 	iwx_tx_update_byte_tbl(ring, totlen, num_tbs);
-#endif
 
 	/* Kick TX ring. */
 	ring->cur = (ring->cur + 1) % IWX_TX_RING_COUNT;
