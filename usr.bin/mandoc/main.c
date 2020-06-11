@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.251 2020/04/02 22:10:27 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.252 2020/06/11 16:12:14 otto Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -874,7 +874,7 @@ parse(struct mparse *mp, int fd, const char *file,
 	if (outst->outdata == NULL)
 		outdata_alloc(outst, outconf);
 	else if (outst->outtype == OUTT_HTML)
-		html_reset(outst);
+		html_reset(outst->outdata);
 
 	mandoc_xr_reset();
 	meta = mparse_result(mp);
