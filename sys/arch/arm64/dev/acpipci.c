@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.14 2020/05/02 13:29:23 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.15 2020/06/11 18:13:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -592,7 +592,7 @@ struct acpi_iort_node {
 
 struct acpi_iort_mapping {
 	uint32_t	input_base;
-	uint32_t	length;
+	uint32_t	number_of_ids;
 	uint32_t	output_base;
 	uint32_t	output_reference;
 	uint32_t	flags;
@@ -617,8 +617,9 @@ acpipci_iort_map_node(struct acpi_iort *iort,
 			return acpipci_iort_map(iort, offset, id);
 		}
 
+		/* Mapping encodes number of IDs in the range minus one. */
 		if (map[i].input_base <= id &&
-		    id < map[i].input_base + map[i].length) {
+		    id <= map[i].input_base + map[i].number_of_ids) {
 			id = map[i].output_base + (id - map[i].input_base);
 			return acpipci_iort_map(iort, offset, id);
 		}
