@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.35 2020/06/10 21:06:09 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.36 2020/06/11 12:00:51 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -124,7 +124,7 @@ void savefs(void)
 {
 	size_t len;
 	if ((len = strlen(getsval(fsloc))) < len_inputFS) {
-		strlcpy(inputFS, *FS, sizeof(inputFS));	/* for subsequent field splitting */
+		strlcpy(inputFS, *FS, len_inputFS);	/* for subsequent field splitting */
 		return;
 	}
 
