@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.7 2020/06/10 09:29:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.8 2020/06/11 08:17:32 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -192,9 +192,12 @@ struct iwx_nvm_data {
 	int sku_cap_band_24GHz_enable;
 	int sku_cap_band_52GHz_enable;
 	int sku_cap_11n_enable;
+	int sku_cap_11ac_enable;
+	int sku_cap_11ax_enable;
 	int sku_cap_amt_enable;
 	int sku_cap_ipan_enable;
 	int sku_cap_mimo_disable;
+	int lar_enabled;
 
 	uint8_t radio_cfg_type;
 	uint8_t radio_cfg_step;
@@ -501,7 +504,7 @@ struct iwx_softc {
 	int sc_ltr_delay;
 	int sc_xtal_latency;
 	int sc_low_latency_xtal;
-
+	int sc_uhb_supported;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;
