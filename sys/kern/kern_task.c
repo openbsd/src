@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.29 2020/06/11 06:03:54 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.30 2020/06/11 06:06:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -230,7 +230,7 @@ taskq_create_thread(void *arg)
 		mtx_leave(&tq->tq_mtx);
 
 		rv = kthread_create(taskq_thread, tq, NULL, tq->tq_name);
-		
+
 		mtx_enter(&tq->tq_mtx);
 		if (rv != 0) {
 			printf("unable to create thread for \"%s\" taskq\n",
@@ -295,8 +295,8 @@ taskq_do_barrier(struct taskq *tq)
 		    PWAIT, "tqbar", INFSLP);
 
 		/*
-                 * another thread running a barrier might have have
-                 * done this work for us.
+		 * another thread running a barrier might have
+		 * done this work for us.
 		 */
 		if (ISSET(t.t_flags, TASK_ONQUEUE))
 			TAILQ_REMOVE(&tq->tq_worklist, &t, t_entry);
