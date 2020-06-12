@@ -43,6 +43,11 @@ DT_STATIC_PROBE0(sched, on__cpu);
 DT_STATIC_PROBE0(sched, remain__cpu);
 DT_STATIC_PROBE0(sched, sleep);
 DT_STATIC_PROBE0(sched, wakeup);
+DT_STATIC_PROBE0(softintr, init);
+DT_STATIC_PROBE1(softintr, dispatch, "int");
+DT_STATIC_PROBE1(softintr, establish, "int");
+DT_STATIC_PROBE1(softintr, disestablish, "void *");
+DT_STATIC_PROBE0(clock, hardclock);
 
 /*
  * Raw syscalls
@@ -65,6 +70,11 @@ struct dt_probe *dtps_static[] = {
 	/* Raw syscalls */
 	&_DT_STATIC_P(raw_syscalls, sys_enter),
 	&_DT_STATIC_P(raw_syscalls, sys_exit),
+	&_DT_STATIC_P(softintr, init),
+	&_DT_STATIC_P(softintr, dispatch),
+	&_DT_STATIC_P(softintr, establish),
+	&_DT_STATIC_P(softintr, disestablish),
+	&_DT_STATIC_P(clock, hardclock),
 };
 
 int

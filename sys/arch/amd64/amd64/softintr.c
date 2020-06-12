@@ -41,6 +41,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/tracepoint.h>
+
 struct x86_soft_intr x86_soft_intrs[X86_NSOFTINTR];
 
 const int x86_soft_intr_to_ssir[X86_NSOFTINTR] = {
@@ -60,6 +62,7 @@ softintr_init(void)
 	struct x86_soft_intr *si;
 	int i;
 
+	TRACEPOINT(softintr, init, NULL);
 	for (i = 0; i < X86_NSOFTINTR; i++) {
 		si = &x86_soft_intrs[i];
 		TAILQ_INIT(&si->softintr_q);
@@ -80,6 +83,8 @@ softintr_dispatch(int which)
 	struct x86_soft_intr *si = &x86_soft_intrs[which];
 	struct x86_soft_intrhand *sih;
 	int floor;
+
+	TRACEPOINT(softintr, dispatch, which);
 
 	floor = ci->ci_handled_intr_level;
 	ci->ci_handled_intr_level = ci->ci_ilevel;
@@ -117,6 +122,8 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 	struct x86_soft_intr *si;
 	struct x86_soft_intrhand *sih;
 	int which;
+
+	TRACEPOINT(softintr, establish, ipl);
 
 	switch (ipl) {
 	case IPL_SOFTCLOCK:
@@ -158,6 +165,8 @@ softintr_disestablish(void *arg)
 {
 	struct x86_soft_intrhand *sih = arg;
 	struct x86_soft_intr *si = sih->sih_intrhead;
+
+	TRACEPOINT(softintr, disestablish, arg);
 
 	mtx_enter(&si->softintr_lock);
 	if (sih->sih_pending) {

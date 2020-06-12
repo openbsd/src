@@ -60,6 +60,8 @@
 #include <dev/dt/dtvar.h>
 #endif
 
+#include <sys/tracepoint.h>
+
 /*
  * Clock handling routines.
  *
@@ -186,6 +188,7 @@ hardclock(struct clockframe *frame)
 	if (CPU_IS_PRIMARY(ci) == 0)
 		return;
 
+	TRACEPOINT(clock, hardclock, NULL);
 	tc_ticktock();
 	ticks++;
 	jiffies++;
