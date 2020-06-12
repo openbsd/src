@@ -165,7 +165,6 @@ EXPORT_SYMBOL(drm_legacy_ioremapfree);
 
 bool drm_need_swiotlb(int dma_bits)
 {
-	STUB();
 	return false;
 #ifdef notyet
 	struct resource *tmp;
