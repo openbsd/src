@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.86 2019/04/17 20:34:21 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.87 2020/06/12 06:22:32 remi Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 17 2019 $
+.Dd $Mdocdate: June 12 2020 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -74,6 +74,8 @@
 .Op Fl i | I Ar interface
 .Nm
 .Op Fl W Ar interface
+.Nm
+.Op Fl R
 .Sh DESCRIPTION
 The
 .Nm
@@ -267,6 +269,8 @@ Otherwise the states of the matching sockets are shown.
 Only show interfaces that have seen packets (or bytes if
 .Fl b
 is specified).
+.It Fl R
+List all rdomains with associated interfaces and routing tables.
 .It Fl r
 Show the routing tables.
 The output is explained in more detail below.
