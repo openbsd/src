@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.71 2020/04/24 11:33:28 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.72 2020/06/12 15:40:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -59,7 +59,6 @@ struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
 void dev_adjpar(struct dev *, int, int, int);
 int dev_allocbufs(struct dev *);
 int dev_open(struct dev *);
-void dev_exitall(struct dev *);
 void dev_freebufs(struct dev *);
 void dev_close(struct dev *);
 int dev_ref(struct dev *);
@@ -1193,10 +1192,10 @@ dev_open(struct dev *d)
 }
 
 /*
- * Force all slots to exit
+ * Force all slots to exit and close device, called after an error
  */
 void
-dev_exitall(struct dev *d)
+dev_abort(struct dev *d)
 {
 	int i;
 	struct slot *s;
@@ -1214,6 +1213,9 @@ dev_exitall(struct dev *d)
 			c->ops->exit(c->arg);
 		c->ops = NULL;
 	}
+
+	if (d->pstate != DEV_CFG)
+		dev_close(d);
 }
 
 /*
@@ -1249,7 +1251,6 @@ dev_close(struct dev *d)
 {
 	struct ctl *c;
 
-	dev_exitall(d);
 	d->pstate = DEV_CFG;
 	dev_sio_close(d);
 	dev_freebufs(d);

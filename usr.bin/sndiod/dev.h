@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.25 2020/04/16 12:26:55 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.26 2020/06/12 15:40:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -260,7 +260,7 @@ struct dev {
 extern struct dev *dev_list;
 
 void dev_log(struct dev *);
-void dev_close(struct dev *);
+void dev_abort(struct dev *);
 int dev_reopen(struct dev *);
 struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
     unsigned int, unsigned int, unsigned int, unsigned int);
