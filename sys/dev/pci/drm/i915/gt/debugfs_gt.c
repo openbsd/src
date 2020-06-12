@@ -13,8 +13,7 @@
 
 void debugfs_gt_register(struct intel_gt *gt)
 {
-	STUB();
-#ifdef notyet
+#ifdef __linux__
 	struct dentry *root;
 
 	if (!gt->i915->drm.primary->debugfs_root)
@@ -34,8 +33,7 @@ void debugfs_gt_register_files(struct intel_gt *gt,
 			       const struct debugfs_gt_file *files,
 			       unsigned long count)
 {
-	STUB();
-#ifdef notyet
+#ifdef __linux__
 	while (count--) {
 		if (!files->eval || files->eval(gt))
 			debugfs_create_file(files->name,
