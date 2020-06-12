@@ -7,7 +7,6 @@ int
 drm_connector_attach_content_protection_property(struct drm_connector *connector,
     bool hdcp_content_type)
 {
-	STUB();
 	return -ENOSYS;
 }
 
