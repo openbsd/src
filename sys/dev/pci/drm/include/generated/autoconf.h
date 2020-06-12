@@ -5,7 +5,6 @@
 #define CONFIG_BACKLIGHT_CLASS_DEVICE		1
 #define CONFIG_DRM_FBDEV_EMULATION		1
 #define CONFIG_DRM_PANEL			1
-#define CONFIG_DRM_I915_FBDEV			1
 #define CONFIG_DRM_I915_CAPTURE_ERROR		1
 #define CONFIG_DRM_AMD_DC			1
 #if defined(__amd64__) || defined(__i386__)
