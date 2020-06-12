@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.51 2020/06/12 05:28:10 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.52 2020/06/12 11:41:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -5451,7 +5451,7 @@ mcx_dump_counters(struct mcx_softc *sc)
 	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
 	    &cqe->cq_output_ptr, token) != 0) {
 		printf(", unable to allocate "
-		    query nic vport counters mailboxen\n");
+		    "query nic vport counters mailboxen\n");
 		return (-1);
 	}
 	cqe->cq_input_ptr = cqe->cq_output_ptr;
