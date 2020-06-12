@@ -353,8 +353,15 @@ void drm_dev_printk(const struct device *dev, const char *level,
 {
 	va_list args;
 
+#ifndef DRMDEBUG
+	if (level[0] == '\001') {
+		if (level[1] >= KERN_INFO[1] && level[1] < '9')
+			return;
+	}
+#endif
+
 	va_start(args, format);
-	printk("%s" "[" DRM_NAME "] ", level);
+	printk("[" DRM_NAME "] ");
 	vprintf(format, args);
 	va_end(args);
 }
