@@ -3722,8 +3722,7 @@ int i915_perf_open_ioctl(struct drm_device *dev, void *data,
  */
 void i915_perf_register(struct drm_i915_private *i915)
 {
-	STUB();
-#ifdef notyet
+#ifdef __linux__
 	struct i915_perf *perf = &i915->perf;
 	int ret;
 
