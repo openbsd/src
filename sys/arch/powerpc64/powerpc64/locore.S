@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 2020/06/10 19:00:02 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.11 2020/06/12 22:01:01 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -145,8 +145,8 @@ opal_call:
 	.globl db_enter
 db_enter:
 	trap
-	blr
-	
+	/* The trap handler will return from db_enter(). */
+
 	.globl setjmp
 setjmp:
 	mflr	%r0

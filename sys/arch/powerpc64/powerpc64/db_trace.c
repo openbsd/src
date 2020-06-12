@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.2 2020/05/27 22:22:04 gkoehler Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.3 2020/06/12 22:01:01 gkoehler Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -28,10 +28,13 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
+#include <ddb/db_access.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
 db_regs_t ddb_regs;
@@ -79,8 +82,87 @@ struct db_variable db_regs[] = {
 
 struct db_variable *db_eregs = db_regs + nitems(db_regs);
 
+/* stdu r1,_(r1) */
+#define inst_establish_frame(ins) ((ins & 0xffff0003) == 0xf8210001)
+
 void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
+	vaddr_t		 callpc, lr, sp, lastsp;
+	db_expr_t	 offset;
+	char		*name;
+	char		 c, *cp = modif;
+	Elf_Sym		*sym;
+	int		 has_frame, trace_proc = 0;
+
+	while ((c = *cp++) != 0) {
+		if (c == 't')
+			trace_proc = 1;
+	}
+
+	if (!have_addr) {
+		sp = ddb_regs.fixreg[1];
+		callpc = ddb_regs.srr0;
+		has_frame = 0;
+	} else {
+		if (trace_proc) {
+			(*pr)("trace/t not yet implemented!\n");
+			return;
+		} else
+			sp = addr;
+		/* The 1st return address is in the 2nd frame. */
+		db_read_bytes(sp, sizeof(vaddr_t), (char *)&sp);
+		db_read_bytes(sp + 16, sizeof(vaddr_t), (char *)&lr);
+		callpc = lr - 4;
+		has_frame = 1;
+	}
+
+	while (count && sp != 0) {
+		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
+		db_symbol_values(sym, &name, NULL);
+
+		/* Guess whether this function has a stack frame. */
+		if (!has_frame && sym) {
+			vaddr_t iaddr, limit;
+			uint32_t ins;
+
+			iaddr = sym->st_value;
+			limit = MIN(iaddr + 0x100, callpc);
+			for (; iaddr < limit; iaddr += 4) {
+				db_read_bytes(iaddr, sizeof(ins),
+				    (char *)&ins);
+				if (inst_establish_frame(ins)) {
+					has_frame = 1;
+					break;
+				}
+			}
+		}
+
+		if (name == NULL || strcmp(name, "end") == 0) {
+			(*pr)("at 0x%lx", callpc);
+		} else {
+			db_printsym(callpc, DB_STGY_PROC, pr);
+		}
+		(*pr)("\n");
+
+		/* Go to the next frame. */
+		lastsp = sp;
+		if (!has_frame) {
+			lr = ddb_regs.lr;
+			has_frame = 1;
+		} else {
+			db_read_bytes(sp, sizeof(vaddr_t), (char *)&sp);
+			if (sp == 0)
+				break;
+			if (sp <= lastsp) {
+				(*pr)("Bad frame pointer: 0x%lx\n", sp);
+				break;
+			}
+			db_read_bytes(sp + 16, sizeof(vaddr_t), (char *)&lr);
+		}
+		callpc = lr - 4;
+
+		--count;
+	}
 }

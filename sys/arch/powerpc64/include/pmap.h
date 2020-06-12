@@ -37,4 +37,9 @@ extern struct pmap kernel_pmap_store;
 
 void	pmap_bootstrap(void);
 
+#ifdef DDB
+struct pte;
+struct pte *pmap_get_kernel_pte(vaddr_t);
+#endif
+
 #endif /* _MACHINE_PMAP_H_ */

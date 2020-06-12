@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.4 2020/06/10 19:06:53 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 2020/06/12 22:01:01 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -33,16 +33,22 @@ trap(struct trapframe *frame)
 	case EXC_DECR:
 		decr_intr(frame);
 		return;
-	}
-
 #ifdef DDB
-	/* At a trap instruction, enter the debugger. */
-	if (frame->exc == EXC_PGM && (frame->srr1 & EXC_PGM_TRAP)) {
-		db_ktrap(T_BREAKPOINT, frame);
-		frame->srr0 += 4; /* Step to next instruction. */
+	case EXC_PGM:
+		/* At a trap instruction, enter the debugger. */
+		if (frame->srr1 & EXC_PGM_TRAP) {
+			/* Return from db_enter(). */
+			if (frame->srr0 == (register_t)db_enter)
+				frame->srr0 = frame->lr;
+			db_ktrap(T_BREAKPOINT, frame);
+			return;
+		}
+		break;
+	case EXC_TRC:
+		db_ktrap(T_BREAKPOINT, frame); /* single-stepping */
 		return;
-	}
 #endif
+	}
 
 	if (frame->exc == EXC_DSI)
 		printf("dsisr %lx dar %lx\n", frame->dsisr, frame->dar);

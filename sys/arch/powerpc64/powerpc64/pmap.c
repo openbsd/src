@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.6 2020/06/08 18:40:06 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.7 2020/06/12 22:01:01 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -779,3 +779,19 @@ pmap_bootstrap(void)
 	copy_dst_page = virtual_avail;
 	virtual_avail += MAXCPUS * PAGE_SIZE;
 }
+
+#ifdef DDB
+/*
+ * DDB will edit the PTE to gain temporary write access to a page in
+ * the read-only kernel text.
+ */
+struct pte *
+pmap_get_kernel_pte(vaddr_t va)
+{
+	struct pte_desc pted;
+
+	pmap_fill_pte(pmap_kernel(), va, 0, &pted, 0, 0);
+	pted.pted_pte.pte_hi |= PTE_VALID;
+	return pmap_ptedinhash(&pted);
+}
+#endif

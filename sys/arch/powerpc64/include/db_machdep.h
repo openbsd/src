@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.3 2020/05/27 22:22:04 gkoehler Exp $*/
+/*	$OpenBSD: db_machdep.h,v 1.4 2020/06/12 22:01:01 gkoehler Exp $*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 
 #include <sys/types.h>
 #include <uvm/uvm_param.h>
+#include <machine/psl.h>
 #include <machine/trap.h>
 
 typedef vaddr_t	db_addr_t;	/* address - unsigned */
@@ -50,11 +51,8 @@ extern db_regs_t ddb_regs;		/* register state */
 #define BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define BKPT_SET(inst)	(BKPT_INST)
 
-#define FIXUP_PC_AFTER_BREAK(regs)	((regs)->srr0 -= 4)
-
-#define SR_SINGLESTEP 0x8000
-#define db_clear_single_step(regs)	((regs)->srr1 &= ~SR_SINGLESTEP)
-#define db_set_single_step(regs)	((regs)->srr1 |=  SR_SINGLESTEP)
+#define db_clear_single_step(regs)	((regs)->srr1 &= ~PSL_SE)
+#define db_set_single_step(regs)	((regs)->srr1 |=  PSL_SE)
 
 #define T_BREAKPOINT	0xffff
 #define IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
