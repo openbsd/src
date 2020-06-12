@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.41 2020/06/11 09:55:47 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.42 2020/06/12 08:35:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -569,6 +569,13 @@ control_write_pending(struct client *c, struct control_pane *cp, size_t limit)
 	}
 
 	while (used != limit && !TAILQ_EMPTY(&cp->blocks)) {
+		if (control_check_age(c, wp, cp)) {
+			if (message != NULL)
+				evbuffer_free(message);
+			message = NULL;
+			break;
+		}
+
 		cb = TAILQ_FIRST(&cp->blocks);
 		if (cb->t < t)
 			age = t - cb->t;
