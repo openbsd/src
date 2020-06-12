@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.117 2020/06/12 06:22:31 remi Exp $	*/
+/*	$OpenBSD: main.c,v 1.118 2020/06/12 08:43:37 remi Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -460,9 +460,10 @@ usage(void)
 	    "       %s [-v] [-M core] [-N system] -P pcbaddr\n"
 	    "       %s [-s] [-M core] [-N system] [-p protocol]\n"
 	    "       %s [-a] [-f address_family] [-i | -I interface]\n"
-	    "       %s [-W interface]\n",
+	    "       %s [-W interface]\n"
+	    "       %s [-R] \n",
 	    __progname, __progname, __progname, __progname,
-	    __progname, __progname, __progname);
+	    __progname, __progname, __progname, __progname);
 	exit(1);
 }
 
