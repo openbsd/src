@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.40 2020/06/11 09:18:43 mpi Exp $	*/
+/*	$OpenBSD: event.h,v 1.41 2020/06/12 09:34:17 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -75,7 +75,7 @@ struct kevent {
 
 #define EV_SYSFLAGS	0xF000		/* reserved by system */
 #define __EV_POLL	0x1000		/* match behavior of poll & select */
-#define __EV_FLAG1	0x2000		/* filter-specific flag */
+#define EV_FLAG1	0x2000		/* filter-specific flag */
 
 /* returned values */
 #define EV_EOF		0x8000		/* EOF detected */

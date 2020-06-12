@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.135 2020/06/11 09:18:43 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.136 2020/06/12 09:34:17 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -268,10 +268,10 @@ filt_procattach(struct knote *kn)
 	/*
 	 * internal flag indicating registration done by kernel
 	 */
-	if (kn->kn_flags & __EV_FLAG1) {
+	if (kn->kn_flags & EV_FLAG1) {
 		kn->kn_data = kn->kn_sdata;		/* ppid */
 		kn->kn_fflags = NOTE_CHILD;
-		kn->kn_flags &= ~__EV_FLAG1;
+		kn->kn_flags &= ~EV_FLAG1;
 	}
 
 	/* XXX lock the proc here while adding to the list? */
@@ -348,7 +348,7 @@ filt_proc(struct knote *kn, long hint)
 		memset(&kev, 0, sizeof(kev));
 		kev.ident = hint & NOTE_PDATAMASK;	/* pid */
 		kev.filter = kn->kn_filter;
-		kev.flags = kn->kn_flags | EV_ADD | EV_ENABLE | __EV_FLAG1;
+		kev.flags = kn->kn_flags | EV_ADD | EV_ENABLE | EV_FLAG1;
 		kev.fflags = kn->kn_sfflags;
 		kev.data = kn->kn_id;			/* parent */
 		kev.udata = kn->kn_kevent.udata;	/* preserve udata */
