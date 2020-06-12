@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.68 2020/05/16 16:02:24 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.69 2020/06/12 10:31:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -56,6 +56,7 @@ struct cmd_run_shell_data {
 	struct session		*s;
 	int			 wp_id;
 	struct event		 timer;
+	int			 flags;
 };
 
 static void
@@ -110,6 +111,8 @@ cmd_run_shell_exec(struct cmd *self, struct cmdq_item *item)
 
 	if (!args_has(args, 'b'))
 		cdata->item = item;
+	else
+		cdata->flags |= JOB_NOWAIT;
 
 	cdata->cwd = xstrdup(server_client_get_cwd(cmdq_get_client(item), s));
 	cdata->s = s;
@@ -144,8 +147,8 @@ cmd_run_shell_timer(__unused int fd, __unused short events, void* arg)
 
 	if (cdata->cmd != NULL) {
 		if (job_run(cdata->cmd, cdata->s, cdata->cwd, NULL,
-		    cmd_run_shell_callback, cmd_run_shell_free, cdata, 0, -1,
-		    -1) == NULL)
+		    cmd_run_shell_callback, cmd_run_shell_free, cdata,
+		    cdata->flags, -1, -1) == NULL)
 			cmd_run_shell_free(cdata);
 	} else {
 		if (cdata->item != NULL)
