@@ -1,4 +1,4 @@
-.\" $OpenBSD: PEM_read_bio_PrivateKey.3,v 1.16 2019/11/02 15:25:34 schwarze Exp $
+.\" $OpenBSD: PEM_read_bio_PrivateKey.3,v 1.17 2020/06/12 11:37:42 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/PEM_read_bio_PrivateKey.pod 18bad535 Apr 9 15:13:55 2019 +0100
 .\" OpenSSL man3/PEM_read_CMS.pod 83cf7abf May 29 13:07:08 2018 +0100
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 2 2019 $
+.Dd $Mdocdate: June 12 2020 $
 .Dt PEM_READ_BIO_PRIVATEKEY 3
 .Os
 .Sh NAME
@@ -770,6 +770,9 @@ will be used to collectively refer to the
 and
 .Fn PEM_write_TYPE
 functions.
+If no set of specific functions exists for a given type,
+.Xr PEM_ASN1_read 3
+can be used instead.
 .Pp
 The
 .Sy PrivateKey
@@ -1266,8 +1269,11 @@ pass_cb(char *buf, int size, int rwflag, void *u)
 .Sh SEE ALSO
 .Xr BIO_new 3 ,
 .Xr DSA_new 3 ,
+.Xr PEM_ASN1_read 3 ,
 .Xr PEM_bytes_read_bio 3 ,
 .Xr PEM_read 3 ,
+.Xr PEM_read_SSL_SESSION 3 ,
+.Xr PEM_write_bio_CMS_stream 3 ,
 .Xr PEM_write_bio_PKCS7_stream 3 ,
 .Xr RSA_new 3 ,
 .Xr X509_CRL_new 3 ,
