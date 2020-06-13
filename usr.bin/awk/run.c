@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.58 2020/06/13 01:19:55 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.59 2020/06/13 01:21:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1581,12 +1581,14 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 {
 	Cell *x, *y;
 	Awkfloat u;
-	int t;
+	int t, sz;
 	Awkfloat tmp;
-	char *buf;
+	char *buf, *fmt;
 	Node *nextarg;
 	FILE *fp;
 	int status = 0;
+	time_t tv;
+	struct tm *tm;
 
 	t = ptoi(a[0]);
 	x = execute(a[1]);
@@ -1738,6 +1740,42 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		else
 			u = fflush(fp);
 		break;
+	case FSYSTIME:
+		u = time((time_t *) 0);
+		break;
+	case FSTRFTIME:
+		/* strftime([format [,timestamp]]) */
+		if (nextarg) {
+			y = execute(nextarg);
+			nextarg = nextarg->nnext;
+			tv = (time_t) getfval(y);
+			tempfree(y);
+		} else
+			tv = time((time_t *) 0);
+		tm = localtime(&tv);
+		if (tm == NULL)
+			FATAL("bad time %ld", (long)tv);
+
+		if (isrec(x)) {
+			/* format argument not provided, use default */
+			fmt = tostring("%a %b %d %H:%M:%S %Z %Y");
+		} else
+			fmt = tostring(getsval(x));
+
+		sz = 32;
+		buf = NULL;
+		do {
+			if ((buf = reallocarray(buf, 2, sz)) == NULL)
+				FATAL("out of memory in strftime");
+			sz *= 2;
+		} while (strftime(buf, sz, fmt, tm) == 0 && fmt[0] != '\0');
+
+		y = gettemp();
+		setsval(y, buf);
+		free(fmt);
+		free(buf);
+
+		return y;
 	default:	/* can't happen */
 		FATAL("illegal function type %d", t);
 		break;
@@ -2116,6 +2154,147 @@ Cell *gsub(Node **a, int nnn)	/* global substitute */
 	x->fval = num;
 	free(buf);
 	return(x);
+}
+
+Cell *gensub(Node **a, int nnn)	/* global selective substitute */
+	/* XXX incomplete - doesn't support backreferences \0 ... \9 */
+{
+	Cell *x, *y, *res, *h;
+	char *rptr;
+	const char *sptr;
+	char *buf, *pb;
+	const char *t, *q;
+	fa *pfa;
+	int mflag, tempstat, num, whichm;
+	int bufsz = recsize;
+
+	if ((buf = malloc(bufsz)) == NULL)
+		FATAL("out of memory in gensub");
+	mflag = 0;	/* if mflag == 0, can replace empty string */
+	num = 0;
+	x = execute(a[4]);	/* source string */
+	t = getsval(x);
+	res = copycell(x);	/* target string - initially copy of source */
+	res->csub = CTEMP;	/* result values are temporary */
+	if (a[0] == 0)		/* 0 => a[1] is already-compiled regexpr */
+		pfa = (fa *) a[1];	/* regular expression */
+	else {
+		y = execute(a[1]);
+		pfa = makedfa(getsval(y), 1);
+		tempfree(y);
+	}
+	y = execute(a[2]);	/* replacement string */
+	h = execute(a[3]);	/* which matches should be replaced */
+	sptr = getsval(h);
+	if (sptr[0] == 'g' || sptr[0] == 'G')
+		whichm = -1;
+	else {
+		/*
+		 * The specified number is index of replacement, starting
+		 * from 1. GNU awk treats index lower than 0 same as
+		 * 1, we do same for compatibility.
+		 */
+		whichm = (int) getfval(h) - 1;
+		if (whichm < 0)
+			whichm = 0;
+	}
+	tempfree(h);
+
+	if (pmatch(pfa, t)) {
+		char *sl;
+
+		tempstat = pfa->initstat;
+		pfa->initstat = 2;
+		pb = buf;
+		rptr = getsval(y);
+		/*
+		 * XXX if there are any backreferences in subst string,
+		 * complain now.
+		 */
+		for (sl = rptr; (sl = strchr(sl, '\\')) && sl[1]; sl++) {
+			if (strchr("0123456789", sl[1])) {
+				FATAL("gensub doesn't support backreferences (subst \"%s\")", rptr);
+			}
+		}
+		
+		do {
+			if (whichm >= 0 && whichm != num) {
+				num++;
+				adjbuf(&buf, &bufsz, (pb - buf) + (patbeg - t) + patlen, recsize, &pb, "gensub");
+
+				/* copy the part of string up to and including
+				 * match to output buffer */
+				while (t < patbeg + patlen)
+					*pb++ = *t++;
+				continue;
+			}
+
+			if (patlen == 0 && *patbeg != 0) {	/* matched empty string */
+				if (mflag == 0) {	/* can replace empty */
+					num++;
+					sptr = rptr;
+					while (*sptr != 0) {
+						adjbuf(&buf, &bufsz, 5+pb-buf, recsize, &pb, "gensub");
+						if (*sptr == '\\') {
+							backsub(&pb, &sptr);
+						} else if (*sptr == '&') {
+							sptr++;
+							adjbuf(&buf, &bufsz, 1+patlen+pb-buf, recsize, &pb, "gensub");
+							for (q = patbeg; q < patbeg+patlen; )
+								*pb++ = *q++;
+						} else
+							*pb++ = *sptr++;
+					}
+				}
+				if (*t == 0)	/* at end */
+					goto done;
+				adjbuf(&buf, &bufsz, 2+pb-buf, recsize, &pb, "gensub");
+				*pb++ = *t++;
+				if (pb > buf + bufsz)	/* BUG: not sure of this test */
+					FATAL("gensub result0 %.30s too big; can't happen", buf);
+				mflag = 0;
+			}
+			else {	/* matched nonempty string */
+				num++;
+				sptr = t;
+				adjbuf(&buf, &bufsz, 1+(patbeg-sptr)+pb-buf, recsize, &pb, "gensub");
+				while (sptr < patbeg)
+					*pb++ = *sptr++;
+				sptr = rptr;
+				while (*sptr != 0) {
+					adjbuf(&buf, &bufsz, 5+pb-buf, recsize, &pb, "gensub");
+					if (*sptr == '\\') {
+						backsub(&pb, &sptr);
+					} else if (*sptr == '&') {
+						sptr++;
+						adjbuf(&buf, &bufsz, 1+patlen+pb-buf, recsize, &pb, "gensub");
+						for (q = patbeg; q < patbeg+patlen; )
+							*pb++ = *q++;
+					} else
+						*pb++ = *sptr++;
+				}
+				t = patbeg + patlen;
+				if (patlen == 0 || *t == 0 || *(t-1) == 0)
+					goto done;
+				if (pb > buf + bufsz)
+					FATAL("gensub result1 %.30s too big; can't happen", buf);
+				mflag = 1;
+			}
+		} while (pmatch(pfa,t));
+		sptr = t;
+		adjbuf(&buf, &bufsz, 1+strlen(sptr)+pb-buf, 0, &pb, "gensub");
+		while ((*pb++ = *sptr++) != 0)
+			;
+	done:	if (pb > buf + bufsz)
+			FATAL("gensub result2 %.30s too big; can't happen", buf);
+		*pb = '\0';
+		setsval(res, buf);
+		pfa->initstat = tempstat;
+	}
+	tempfree(x);
+	tempfree(y);
+	free(buf);
+	return(res);
 }
 
 void backsub(char **pb_ptr, const char **sptr_ptr)	/* handle \\& variations */

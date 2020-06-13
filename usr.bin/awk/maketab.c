@@ -1,4 +1,4 @@
-/*	$OpenBSD: maketab.c,v 1.18 2020/06/10 21:05:50 millert Exp $	*/
+/*	$OpenBSD: maketab.c,v 1.19 2020/06/13 01:21:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -105,6 +105,7 @@ struct xx
 	{ ARG, "arg", "arg" },
 	{ VARNF, "getnf", "NF" },
 	{ GETLINE, "awkgetline", "getline" },
+	{ GENSUB, "gensub", "gensub" },
 	{ 0, "", "" },
 };
 

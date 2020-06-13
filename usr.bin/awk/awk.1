@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.51 2020/06/13 01:19:55 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.52 2020/06/13 01:21:01 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -495,6 +495,62 @@ is omitted, the time of day is used instead.
 .El
 .Ss String Functions
 .Bl -tag -width "split(s, a, fs)"
+.It Fn gensub r s h [t]
+Search the target string
+.Ar t
+for matches of the regular expression
+.Ar r .
+If
+.Ar h
+is a string beginning with
+.Ic g
+or
+.Ic G ,
+then replace all matches of
+.Ar r
+with
+.Ar s .
+Otherwise,
+.Ar h
+is a number indicating which match of
+.Ar r
+to replace.
+If no
+.Ar t
+is supplied,
+.Va $0
+is used instead.
+.\"Within the replacement text
+.\".Ar s ,
+.\"the sequence
+.\".Ar \en ,
+.\"where
+.\".Ar n
+.\"is a digit from 1 to 9, may be used to indicate just the text that
+.\"matched the
+.\".Ar n Ap th
+.\"parenthesized subexpression.
+.\"The sequence
+.\".Ic \e0
+.\"represents the entire text, as does the character
+.\".Ic & .
+Unlike
+.Fn sub
+and
+.Fn gsub ,
+the modified string is returned as the result of the function,
+and the original target is
+.Em not
+changed.
+Note that
+.Ar \en
+sequences within the replacement string
+.Ar s ,
+as supported by GNU
+.Nm ,
+are
+.Em not
+supported at this time.
 .It Fn gsub r t s
 The same as
 .Fn sub
@@ -604,6 +660,37 @@ Returns a copy of
 .Fa str
 with all lower-case characters translated to their
 corresponding upper-case equivalents.
+.El
+.Ss Time Functions
+This version of
+.Nm
+provides the following functions for obtaining and formatting time
+stamps.
+.Bl -tag -width indent
+.It Fn strftime "[format [, timestamp]]"
+Formats
+.Ar timestamp
+according to the string
+.Ar format .
+The format string may contain any of the conversion specifications described
+in the
+.Xr strftime 3
+manual page, as well as any arbitrary text.
+The
+.Ar timestamp
+must be in the same form as a value returned by
+.Fn systime .
+If
+.Ar timestamp
+is not specified, the current time is used.
+If
+.Ar format
+is not specified, a default format equivalent to the output of
+.Xr date 1
+is used.
+.It Fn systime
+Returns the value of time in seconds since 0 hours, 0 minutes,
+0 seconds, January 1, 1970, Coordinated Universal Time (UTC).
 .El
 .Ss Input/Output and General Functions
 .Bl -tag -width "getline [var] < file"
@@ -780,10 +867,12 @@ Print an error message to standard error:
 .Ed
 .Sh SEE ALSO
 .Xr cut 1 ,
+.Xr date 1 ,
 .Xr grep 1 ,
 .Xr lex 1 ,
 .Xr printf 1 ,
 .Xr sed 1 ,
+.Xr strftime 3 ,
 .Xr re_format 7 ,
 .Xr script 7
 .Rs
@@ -813,9 +902,18 @@ The flags
 .Op Fl \&dV
 and
 .Op Fl safe ,
-as well as the commands
-.Cm fflush , compl , and , or ,
-.Cm xor , lshift , rshift ,
+as well as the functions
+.Fn fflush ,
+.Fn gensub ,
+.Fn compl ,
+.Fn and ,
+.Fn or ,
+.Fn xor ,
+.Fn lshift ,
+.Fn rshift ,
+.Fn strftime
+and
+.Fn systime
 are extensions to that specification.
 .Sh HISTORY
 An

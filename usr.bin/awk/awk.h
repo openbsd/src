@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.24 2020/06/13 01:19:55 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.25 2020/06/13 01:21:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -159,6 +159,8 @@ extern Cell	*symtabloc;	/* SYMTAB */
 #define FCOMPL	18
 #define FLSHIFT	19
 #define FRSHIFT	20
+#define FSYSTIME	21
+#define FSTRFTIME	22
 
 /* Node:  parse tree is made of nodes, with Cell's at bottom */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.20 2020/06/13 01:19:55 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.21 2020/06/13 01:21:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -64,6 +64,7 @@ const Keyword keywords[] = {	/* keep sorted: binary searched */
 	{ "for",	FOR,		FOR },
 	{ "func",	FUNC,		FUNC },
 	{ "function",	FUNC,		FUNC },
+	{ "gensub",	GENSUB,		GENSUB },
 	{ "getline",	GETLINE,	GETLINE },
 	{ "gsub",	GSUB,		GSUB },
 	{ "if",		IF,		IF },
@@ -87,9 +88,11 @@ const Keyword keywords[] = {	/* keep sorted: binary searched */
 	{ "sprintf",	SPRINTF,	SPRINTF },
 	{ "sqrt",	FSQRT,		BLTIN },
 	{ "srand",	FSRAND,		BLTIN },
+	{ "strftime",	FSTRFTIME,	BLTIN },
 	{ "sub",	SUB,		SUB },
 	{ "substr",	SUBSTR,		SUBSTR },
 	{ "system",	FSYSTEM,	BLTIN },
+	{ "systime",	FSYSTIME,	BLTIN },
 	{ "tolower",	FTOLOWER,	BLTIN },
 	{ "toupper",	FTOUPPER,	BLTIN },
 	{ "while",	WHILE,		WHILE },

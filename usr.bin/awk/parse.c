@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.9 2020/06/10 21:03:36 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.10 2020/06/13 01:21:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -94,6 +94,20 @@ Node *node4(int a, Node *b, Node *c, Node *d, Node *e)
 	return(x);
 }
 
+Node *node5(int a, Node *b, Node *c, Node *d, Node *e, Node *f)
+{
+	Node *x;
+
+	x = nodealloc(5);
+	x->nobj = a;
+	x->narg[0] = b;
+	x->narg[1] = c;
+	x->narg[2] = d;
+	x->narg[3] = e;
+	x->narg[4] = f;
+	return(x);
+}
+
 Node *stat1(int a, Node *b)
 {
 	Node *x;
@@ -162,6 +176,15 @@ Node *op4(int a, Node *b, Node *c, Node *d, Node *e)
 	Node *x;
 
 	x = node4(a,b,c,d,e);
+	x->ntype = NEXPR;
+	return(x);
+}
+
+Node *op5(int a, Node *b, Node *c, Node *d, Node *e, Node *f)
+{
+	Node *x;
+
+	x = node5(a,b,c,d,e,f);
 	x->ntype = NEXPR;
 	return(x);
 }

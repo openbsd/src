@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.18 2020/06/10 21:06:09 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.19 2020/06/13 01:21:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -75,12 +75,14 @@ extern	Node	*node1(int, Node *);
 extern	Node	*node2(int, Node *, Node *);
 extern	Node	*node3(int, Node *, Node *, Node *);
 extern	Node	*node4(int, Node *, Node *, Node *, Node *);
+extern	Node	*node5(int, Node *, Node *, Node *, Node *, Node *);
 extern	Node	*stat3(int, Node *, Node *, Node *);
 extern	Node	*op2(int, Node *, Node *);
 extern	Node	*op1(int, Node *);
 extern	Node	*stat1(int, Node *);
 extern	Node	*op3(int, Node *, Node *, Node *);
 extern	Node	*op4(int, Node *, Node *, Node *, Node *);
+extern	Node	*op5(int, Node *, Node *, Node *, Node *, Node *);
 extern	Node	*stat2(int, Node *, Node *);
 extern	Node	*stat4(int, Node *, Node *, Node *, Node *);
 extern	Node	*celltonode(Cell *, int);
@@ -198,6 +200,7 @@ extern	Cell	*closefile(Node **, int);
 extern	void	closeall(void);
 extern	Cell	*sub(Node **, int);
 extern	Cell	*gsub(Node **, int);
+extern	Cell	*gensub(Node **, int);
 
 extern	FILE	*popen(const char *, const char *);
 extern	int	pclose(FILE *);
