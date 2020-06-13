@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.52 2020/06/12 11:41:48 deraadt Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.53 2020/06/13 07:09:59 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -523,7 +523,7 @@ struct mcx_cmd_query_pages_out {
 	uint32_t		cmd_syndrome;
 	uint8_t			cmd_reserved1[2];
 	uint16_t		cmd_func_id;
-	uint32_t		cmd_num_pages;
+	int32_t			cmd_num_pages;
 } __packed __aligned(4);
 
 struct mcx_cmd_manage_pages_in {
@@ -3049,7 +3049,7 @@ free:
 
 static int
 mcx_query_pages(struct mcx_softc *sc, uint16_t type,
-    uint32_t *npages, uint16_t *func_id)
+    int32_t *npages, uint16_t *func_id)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_cmd_query_pages_in *in;
@@ -3205,7 +3205,7 @@ free:
 static int
 mcx_pages(struct mcx_softc *sc, struct mcx_hwmem *mhm, uint16_t type)
 {
-	uint32_t npages;
+	int32_t npages;
 	uint16_t func_id;
 
 	if (mcx_query_pages(sc, type, &npages, &func_id) != 0) {
@@ -3213,7 +3213,7 @@ mcx_pages(struct mcx_softc *sc, struct mcx_hwmem *mhm, uint16_t type)
 		return (-1);
 	}
 
-	if (npages == 0)
+	if (npages < 1)
 		return (0);
 
 	if (mcx_hwmem_alloc(sc, mhm, npages) != 0) {
