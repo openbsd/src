@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.5 2020/06/10 19:02:41 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.6 2020/06/13 22:58:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -118,7 +118,8 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t m64window[6];
 	uint32_t m64ranges[2];
 	int i, j, nranges, rangeslen;
-	int32_t window;
+	uint32_t window;
+	uint32_t chip_id;
 	int64_t error;
 
 	if (faa->fa_nreg < 1) {
@@ -131,6 +132,11 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = faa->fa_node;
 	sc->sc_phb_id = OF_getpropint64(sc->sc_node, "ibm,opal-phbid", 0);
 	sc->sc_pe_number = 0;
+
+	if (OF_getproplen(sc->sc_node, "ibm,chip-id") == sizeof(chip_id)) {
+		chip_id = OF_getpropint(sc->sc_node, "ibm,chip-id", 0);
+		printf(": chip 0x%x", chip_id);
+	}
 
 	/*
 	 * Reset the IODA tables.  Should clear any gunk left behind
@@ -473,7 +479,7 @@ phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
 			return NULL;
 
 		cookie = intr_establish(sc->sc_msi_ranges[0] + xive,
-		    IST_EDGE, level, func, arg);
+		    IST_EDGE, level, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 

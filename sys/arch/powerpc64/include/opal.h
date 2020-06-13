@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.8 2020/06/10 19:00:02 kettenis Exp $	*/
+/*	$OpenBSD: opal.h,v 1.9 2020/06/13 22:58:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -41,6 +41,15 @@
 #define OPAL_GET_MSI_64			40
 #define OPAL_PCI_MAP_PE_DMA_WINDOW_REAL	45
 #define OPAL_PCI_RESET			49
+#define OPAL_XIVE_RESET			128
+#define OPAL_XIVE_GET_IRQ_INFO		129
+#define OPAL_XIVE_GET_IRQ_CONFIG	131
+#define OPAL_XIVE_SET_IRQ_CONFIG	131
+#define OPAL_XIVE_GET_QUEUE_INFO	132
+#define OPAL_XIVE_SET_QUEUE_INFO	133
+#define OPAL_XIVE_GET_VP_INFO		137
+#define OPAL_XIVE_SET_VP_INFO		138
+#define OPAL_XIVE_DUMP			142
 
 /* Return codes. */
 #define OPAL_SUCCESS			0
@@ -92,6 +101,35 @@
 #define OPAL_DEASSERT_RESET		0
 #define OPAL_ASSERT_RESET		1
 
+/* OPAL_XIVE_RESET */
+#define OPAL_XIVE_MODE_EMU		0
+#define OPAL_XIVE_MODE_EXPL		1
+
+/* OPAL_XIVE_GET_IRQ_INFO */
+#define OPAL_XIVE_IRQ_TRIGGER_PAGE	0x00000001
+#define OPAL_XIVE_IRQ_STORE_EOI		0x00000002
+#define OPAL_XIVE_IRQ_LSI		0x00000004
+#define OPAL_XIVE_IRQ_SHIFT_BUG		0x00000008
+#define OPAL_XIVE_IRQ_MASK_VIA_FW	0x00000010
+#define OPAL_XIVE_IRQ_EOI_VIA_FW	0x00000020
+
+/* OPAL_XIVE_GET_QUEUE_INFO */
+#define OPAL_XIVE_EQ_ENABLED		0x00000001
+#define OPAL_XIVE_EQ_ALWAYS_NOTIFY	0x00000002
+#define OPAL_XIVE_EQ_ESCALATE		0x00000004
+
+/* OPAL_XIVE_GET_VP_INFO */
+#define OPAL_XIVE_VP_ENABLED		0x00000001
+#define OPAL_XIVE_VP_SINGLE_ESCALATION	0x00000002
+
+/* OPAL_XIVE_DUMP */
+#define XIVE_DUMP_TM_HYP	0x00000000
+#define XIVE_DUMP_TM_POOL	0x00000001
+#define XIVE_DUMP_TM_OS		0x00000002
+#define XIVE_DUMP_TM_USER	0x00000003
+#define XIVE_DUMP_VP		0x00000004
+#define XIVE_DUMP_EMU_STATE	0x00000005
+
 #ifndef _LOCORE
 int64_t	opal_test(uint64_t);
 int64_t	opal_console_write(int64_t, int64_t *, const uint8_t *);
@@ -121,6 +159,19 @@ int64_t	opal_get_msi_64(uint64_t, uint32_t, uint32_t, uint8_t,
 int64_t opal_pci_map_pe_dma_window_real(uint64_t, uint64_t, uint16_t,
 	    uint64_t, uint64_t);
 int64_t opal_pci_reset(uint64_t, uint8_t, uint8_t);
+int64_t	opal_xive_reset(uint64_t);
+int64_t	opal_xive_get_irq_info(uint32_t, uint64_t *, uint64_t *,
+	    uint64_t *, uint32_t *, uint32_t *);
+int64_t	opal_xive_get_irq_config(uint32_t, uint64_t *, uint8_t *, uint32_t *);
+int64_t	opal_xive_set_irq_config(uint32_t, uint64_t, uint8_t, uint32_t);
+int64_t	opal_xive_get_queue_info(uint64_t, uint8_t, uint64_t *,
+	    uint64_t *, uint64_t *, uint32_t *, uint64_t *);
+int64_t	opal_xive_set_queue_info(uint64_t, uint8_t, uint64_t,
+	    uint64_t, uint64_t);
+int64_t	opal_xive_get_vp_info(uint64_t, uint64_t *, uint64_t *,
+	    uint64_t *, uint32_t *);
+int64_t	opal_xive_set_vp_info(uint64_t, uint64_t, uint64_t);
+int64_t	opal_xive_dump(uint32_t, uint32_t);
 
 void	opal_printf(const char *fmt, ...);
 #endif

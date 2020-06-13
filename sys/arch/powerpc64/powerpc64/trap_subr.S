@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.5 2020/06/09 18:57:33 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.6 2020/06/13 22:58:42 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -213,6 +213,32 @@ trapcode:
 	li	%r1, 0xe0
 	blrl
 trapcodeend:
+
+	.globl hvtrapcode, hvtrapcodeend
+hvtrapcode:
+	mtsprg1	%r1
+	mflr	%r1
+	mtsprg2	%r1
+	ld	%r1, TRAP_HVENTRY(0)
+	mtlr	%r1
+	li	%r1, 0xe0
+	blrl
+hvtrapcodeend:
+
+/*
+ * generichvtrap makes a hypervisor trap look like a normal trap.
+ */
+
+	.globl generichvtrap
+generichvtrap:
+	/* Move HSRR0/HSRR1 to SSR0/SRR1 */
+	mtsprg3	%r1
+	mfspr	%r1, 314	/* HSRR0 */
+	mtsrr0	%r1
+	mfspr	%r1, 315	/* HSRR1 */
+	mtsrr1	%r1
+	mfsprg3	%r1
+	/* FALLTHROUGH */
 
 /*
  * generictrap does some standard setup for trap handling to minimize

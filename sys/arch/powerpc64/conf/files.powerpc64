@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.11 2020/06/10 19:06:53 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.12 2020/06/13 22:58:42 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -15,6 +15,7 @@ file	arch/powerpc64/powerpc64/db_interface.c		ddb
 file	arch/powerpc64/powerpc64/db_memrw.c		ddb
 file	arch/powerpc64/powerpc64/db_trace.c		ddb
 file	arch/powerpc64/powerpc64/disksubr.c
+file	arch/powerpc64/powerpc64/intr.c
 file	arch/powerpc64/powerpc64/machdep.c
 file	arch/powerpc64/powerpc64/pmap.c
 file	arch/powerpc64/powerpc64/process_machdep.c
@@ -62,6 +63,10 @@ file	arch/powerpc64/dev/opal.c		opal
 device	phb: pcibus
 attach	phb at fdt
 file	arch/powerpc64/dev/phb.c		phb
+
+device	xive
+attach	xive at fdt
+file	arch/powerpc64/dev/xive.c		xive
 
 # Machine-independent HID support
 include	"dev/hid/files.hid"

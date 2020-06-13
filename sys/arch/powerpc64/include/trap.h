@@ -144,5 +144,6 @@
 
 /* Magic pointer to store trap handler entry point */
 #define	TRAP_ENTRY	0x1f8
+#define	TRAP_HVENTRY	0x1f0
 
 #endif	/* _MACHINE_TRAP_H_ */

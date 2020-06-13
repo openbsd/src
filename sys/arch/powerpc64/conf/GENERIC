@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.5 2020/06/10 15:10:51 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.6 2020/06/13 22:58:42 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -22,6 +22,8 @@ cpu0		at mainbus?
 opal0		at fdt?
 phb*		at fdt?
 pci*		at phb?
+xive*		at fdt?
+
 ppb*		at pci?
 pci*		at ppb?
 ahci*		at pci? disable

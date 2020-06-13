@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 2020/06/12 22:01:01 gkoehler Exp $	*/
+/*	$OpenBSD: locore.S,v 1.12 2020/06/13 22:58:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -99,6 +99,15 @@ OPAL_CALL(OPAL_GET_MSI_32, opal_get_msi_32)
 OPAL_CALL(OPAL_GET_MSI_64, opal_get_msi_64)
 OPAL_CALL(OPAL_PCI_MAP_PE_DMA_WINDOW_REAL, opal_pci_map_pe_dma_window_real)
 OPAL_CALL(OPAL_PCI_RESET, opal_pci_reset)
+OPAL_CALL(OPAL_XIVE_RESET, opal_xive_reset)
+OPAL_CALL(OPAL_XIVE_GET_IRQ_INFO, opal_xive_get_irq_info)
+OPAL_CALL(OPAL_XIVE_GET_IRQ_CONFIG, opal_xive_get_irq_config)
+OPAL_CALL(OPAL_XIVE_SET_IRQ_CONFIG, opal_xive_set_irq_config)
+OPAL_CALL(OPAL_XIVE_GET_QUEUE_INFO, opal_xive_get_queue_info)
+OPAL_CALL(OPAL_XIVE_SET_QUEUE_INFO, opal_xive_set_queue_info)
+OPAL_CALL(OPAL_XIVE_GET_VP_INFO, opal_xive_get_vp_info)
+OPAL_CALL(OPAL_XIVE_SET_VP_INFO, opal_xive_set_vp_info)
+OPAL_CALL(OPAL_XIVE_DUMP, opal_xive_dump)
 
 opal_call:
 	mflr	%r11

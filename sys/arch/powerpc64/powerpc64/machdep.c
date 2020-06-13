@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 2020/06/10 19:06:53 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 2020/06/13 22:58:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -66,7 +66,9 @@ extern uint64_t opal_base;
 extern uint64_t opal_entry;
 
 extern char trapcode[], trapcodeend[];
+extern char hvtrapcode[], hvtrapcodeend[];
 extern char generictrap[];
+extern char generichvtrap[];
 
 struct fdt_reg memreg[VM_PHYSSEG_MAX];
 int nmemreg;
@@ -125,9 +127,15 @@ init_powernv(void *fdt, void *tocbase)
 	 */
 	for (trap = EXC_RST; trap < EXC_LAST; trap += 32)
 		memcpy((void *)trap, trapcode, trapcodeend - trapcode);
-	__syncicache(EXC_RSVD, EXC_LAST - EXC_RSVD);
+
+	/* Hypervisor Virtualization interrupt needs special handling. */
+	memcpy((void *)EXC_HVI, hvtrapcode, hvtrapcodeend - hvtrapcode);
 
 	*((void **)TRAP_ENTRY) = generictrap;
+	*((void **)TRAP_HVENTRY) = generichvtrap;
+
+	/* Make the stubs visible to the CPU. */
+	__syncicache(EXC_RSVD, EXC_LAST - EXC_RSVD);
 
 	/* We're now ready to take traps. */
 	msr = mfmsr();
