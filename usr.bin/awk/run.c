@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.57 2020/06/10 21:05:50 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.58 2020/06/13 01:19:55 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -2122,13 +2122,6 @@ void backsub(char **pb_ptr, const char **sptr_ptr)	/* handle \\& variations */
 {						/* sptr[0] == '\\' */
 	char *pb = *pb_ptr;
 	const char *sptr = *sptr_ptr;
-	static bool first = true;
-	static bool do_posix = false;
-
-	if (first) {
-		first = false;
-		do_posix = (getenv("POSIXLY_CORRECT") != NULL);
-	}
 
 	if (sptr[1] == '\\') {
 		if (sptr[2] == '\\' && sptr[3] == '&') { /* \\\& -> \& */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.50 2020/06/10 21:05:02 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.51 2020/06/13 01:19:55 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2020 $
+.Dd $Mdocdate: June 13 2020 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -805,7 +805,9 @@ string argument for
 .Fn sub
 and
 .Fn gsub
-are not collapsed.
+are not collapsed and a slash
+.Pq Ql /
+does not need to be escaped in a bracket expression.
 .Pp
 The flags
 .Op Fl \&dV

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2020/06/11 13:51:18 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2020/06/13 01:19:55 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -53,7 +53,8 @@ static size_t	maxpfile;	/* max program filename */
 static size_t	npfile;		/* number of filenames */
 static size_t	curpfile;	/* current filename */
 
-bool	safe = false;	/* true => "safe" mode */
+bool	safe = false;		/* true => "safe" mode */
+bool	do_posix = false;	/* true => POSIX mode */
 
 static noreturn void fpecatch(int n
 #ifdef SA_SIGINFO
@@ -161,6 +162,8 @@ int main(int argc, char *argv[])
 #else
 	(void)signal(SIGFPE, fpecatch);
 #endif
+
+	do_posix = (getenv("POSIXLY_CORRECT") != NULL);
 
 	yyin = NULL;
 	symtab = makesymtab(NSYMTAB);

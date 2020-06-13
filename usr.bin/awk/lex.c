@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.19 2020/06/10 21:05:50 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.20 2020/06/13 01:19:55 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -524,12 +524,12 @@ int regexpr(void)
 	int c, openclass = 0;
 	static char *buf = NULL;
 	static int bufsz = 500;
-	char *bp;
+	char *bp, *cstart;
 
 	if (buf == NULL && (buf = malloc(bufsz)) == NULL)
 		FATAL("out of space for rex expr");
 	bp = buf;
-	for ( ; ((c = input()) != '/' || openclass == 1) && c != 0; ) {
+	for ( ; ((c = input()) != '/' || openclass > 0) && c != 0; ) {
 		if (!adjbuf(&buf, &bufsz, bp-buf+3, 500, &bp, "regexpr"))
 			FATAL("out of space for reg expr %.10s...", buf);
 		if (c == '\n') {
@@ -541,10 +541,25 @@ int regexpr(void)
 			*bp++ = '\\';
 			*bp++ = input();
 		} else {
-			if (c == '[')
-				openclass = 1;
-			else if (c == ']')
-				openclass = 0;
+			/*
+			 * POSIX requires a slash in a regexp to be escaped,
+			 * other awks don't require it to be escaped inside
+			 * a character class.
+			 */
+			if (!do_posix) {
+				if (c == '[') {
+					if (++openclass == 1)
+						cstart = bp;
+				} else if (c == ']' && openclass > 0) {
+					/*
+					 * A ']' as the first char in a
+					 * class is treated literally.
+					 */
+					if (cstart != bp - 1 &&
+					    (cstart != bp - 2 || bp[-1] != '^'))
+						openclass--;
+				}
+			}
 			*bp++ = c;
 		}
 	}

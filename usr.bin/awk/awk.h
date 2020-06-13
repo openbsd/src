@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.23 2020/06/10 21:06:09 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.24 2020/06/13 01:19:55 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -62,6 +62,7 @@ extern enum compile_states {
 } compile_time;
 
 extern bool	safe;		/* false => unsafe, true => safe */
+extern bool	do_posix;	/* true if POSIXLY_CORRECT set */
 
 #define	RECSIZE	(8 * 1024)	/* sets limit on records, fields, etc., etc. */
 extern int	recsize;	/* size of current record, orig RECSIZE */
