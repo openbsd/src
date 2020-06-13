@@ -5345,7 +5345,7 @@ int intel_virtual_engine_attach_bond(struct intel_engine_cs *engine,
 	if (!bond)
 		return -ENOMEM;
 
-	memcpy(bond, ve->bonds, sizeof(*bond) * (ve->num_bonds + 1));
+	memcpy(bond, ve->bonds, sizeof(*bond) * ve->num_bonds);
 	kfree(ve->bonds);
 #endif
 
