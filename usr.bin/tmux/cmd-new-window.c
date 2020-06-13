@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.87 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.88 2020/06/13 09:05:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -38,8 +38,8 @@ const struct cmd_entry cmd_new_window_entry = {
 	.name = "new-window",
 	.alias = "neww",
 
-	.args = { "ac:de:F:kn:Pt:", 0, -1 },
-	.usage = "[-adkP] [-c start-directory] [-e environment] [-F format] "
+	.args = { "abc:de:F:kn:Pt:", 0, -1 },
+	.usage = "[-abdkP] [-c start-directory] [-e environment] [-F format] "
 		 "[-n window-name] " CMD_TARGET_WINDOW_USAGE " [command]",
 
 	.target = { 't', CMD_FIND_WINDOW, CMD_FIND_WINDOW_INDEX },
@@ -58,16 +58,20 @@ cmd_new_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct client		*tc = cmdq_get_target_client(item);
 	struct session		*s = target->s;
 	struct winlink		*wl = target->wl;
-	int			 idx = target->idx;
+	int			 idx = target->idx, before;
 	struct winlink		*new_wl;
 	char			*cause = NULL, *cp;
 	const char		*template, *add;
 	struct cmd_find_state	 fs;
 	struct args_value	*value;
 
-	if (args_has(args, 'a') && (idx = winlink_shuffle_up(s, wl)) == -1) {
-		cmdq_error(item, "couldn't get a window index");
-		return (CMD_RETURN_ERROR);
+	before = args_has(args, 'b');
+	if (args_has(args, 'a') || before) {
+		idx = winlink_shuffle_up(s, wl, before);
+		if (idx == -1) {
+			cmdq_error(item, "couldn't get a window index");
+			return (CMD_RETURN_ERROR);
+		}
 	}
 
 	memset(&sc, 0, sizeof sc);

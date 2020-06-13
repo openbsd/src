@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1068 2020/06/11 19:43:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1069 2020/06/13 09:05:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2720,7 +2720,7 @@ void		 window_set_name(struct window *, const char *);
 void		 window_add_ref(struct window *, const char *);
 void		 window_remove_ref(struct window *, const char *);
 void		 winlink_clear_flags(struct winlink *);
-int		 winlink_shuffle_up(struct session *, struct winlink *);
+int		 winlink_shuffle_up(struct session *, struct winlink *, int);
 int		 window_pane_start_input(struct window_pane *,
 		     struct cmdq_item *, char **);
 void		*window_pane_get_new_data(struct window_pane *,
