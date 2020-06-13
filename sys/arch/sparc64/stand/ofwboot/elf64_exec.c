@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.11 2020/05/25 15:31:59 kettenis Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.12 2020/06/13 12:25:09 kn Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -204,11 +204,24 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 		printf("read section headers: %s\n", strerror(errno));
 		return (1);
 	}
+
+	size_t shstrsz = shp[elf->e_shstrndx].sh_size;
+	char *shstr = alloc(shstrsz);
+	if (lseek(fd, (off_t)shp[elf->e_shstrndx].sh_offset, SEEK_SET) == -1) {
+		printf("lseek section header string table: %s\n", strerror(errno));
+		return 1;
+	}
+	if (read(fd, shstr, shstrsz) != shstrsz) {
+		printf("read section header string table: %s\n", strerror(errno));
+		return 1;
+	}
+
 	for (i = 0; i < elf->e_shnum; i++, shp++) {
 		if (shp->sh_type == SHT_NULL)
 			continue;
 		if (shp->sh_type != SHT_SYMTAB
-		    && shp->sh_type != SHT_STRTAB) {
+		    && shp->sh_type != SHT_STRTAB
+		    && strcmp(shstr + shp->sh_name, ELF_CTF)) {
 			shp->sh_offset = 0; 
 			continue;
 		}
@@ -244,7 +257,8 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 	off = size;
 	for (first = 1, i = 0; i < elf->e_shnum; i++, shp++) {
 		if (shp->sh_type == SHT_SYMTAB
-		    || shp->sh_type == SHT_STRTAB) {
+		    || shp->sh_type == SHT_STRTAB
+		    || !strcmp(shstr + shp->sh_name, ELF_CTF)) {
 			if (first)
 				printf("symbols @ 0x%lx ", (u_long)addr);
 			printf("%s%d", first ? "" : "+", (int)shp->sh_size);
@@ -255,6 +269,7 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 			}
 			addr += ELF_ALIGN(shp->sh_size);
 			shp->sh_offset = off;
+			shp->sh_flags |= SHF_ALLOC;
 			off += ELF_ALIGN(shp->sh_size);
 			first = 0;
 		}
