@@ -1,4 +1,4 @@
-/*	$OpenBSD: octboot.c,v 1.2 2020/05/26 13:21:58 visa Exp $	*/
+/*	$OpenBSD: octboot.c,v 1.3 2020/06/13 14:00:50 visa Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -236,7 +236,6 @@ octboot_kexec(struct octboot_kexec_args *kargs, struct proc *p)
 		if (error != 0)
 			goto fail;
 
-		off = roundup(sizeof(Elf_Ehdr) + shsize, sizeof(Elf_Addr));
 		off = maxp - elfp;
 		for (i = 0; i < eh.e_shnum; i++) {
 			if (sh[i].sh_type == SHT_STRTAB ||
