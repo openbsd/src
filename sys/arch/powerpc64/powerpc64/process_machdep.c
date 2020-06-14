@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.1 2020/05/16 17:11:14 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.2 2020/06/14 17:56:54 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 int
 process_set_pc(struct proc *p, caddr_t addr)
 {
-	struct trapframe *tf = trapframe(p);
+	struct trapframe *tf = p->p_md.md_regs;
 	
 	tf->srr0 = (u_int32_t)addr;
 	return 0;

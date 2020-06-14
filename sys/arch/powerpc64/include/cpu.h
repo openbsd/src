@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 2020/06/13 22:58:42 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.11 2020/06/14 17:56:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -102,6 +102,8 @@ void delay(u_int);
 
 #define PROC_STACK(p)		0
 #define PROC_PC(p)		0
+
+void	proc_trampoline(void);
 
 static inline void
 intr_enable(void)

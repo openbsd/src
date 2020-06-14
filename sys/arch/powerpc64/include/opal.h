@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.9 2020/06/13 22:58:42 kettenis Exp $	*/
+/*	$OpenBSD: opal.h,v 1.10 2020/06/14 17:56:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -131,6 +131,9 @@
 #define XIVE_DUMP_EMU_STATE	0x00000005
 
 #ifndef _LOCORE
+
+void	*opal_phys(void *);
+
 int64_t	opal_test(uint64_t);
 int64_t	opal_console_write(int64_t, int64_t *, const uint8_t *);
 int64_t	opal_console_read(int64_t, int64_t *, uint8_t *);
@@ -174,6 +177,7 @@ int64_t	opal_xive_set_vp_info(uint64_t, uint64_t, uint64_t);
 int64_t	opal_xive_dump(uint32_t, uint32_t);
 
 void	opal_printf(const char *fmt, ...);
+
 #endif
 
 #endif /* _MACHINE_OPAL_H_ */

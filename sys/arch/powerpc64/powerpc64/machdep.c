@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 2020/06/14 17:08:17 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 2020/06/14 17:56:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/msgbuf.h>
+#include <sys/proc.h>
 #include <sys/reboot.h>
 
 #include <machine/cpufunc.h>
@@ -70,6 +71,8 @@ extern char hvtrapcode[], hvtrapcodeend[];
 extern char generictrap[];
 extern char generichvtrap[];
 
+extern char initstack[];
+
 struct fdt_reg memreg[VM_PHYSSEG_MAX];
 int nmemreg;
 
@@ -89,6 +92,7 @@ void
 init_powernv(void *fdt, void *tocbase)
 {
 	struct fdt_reg reg;
+	register_t uspace;
 	paddr_t trap;
 	uint64_t msr;
 	void *node;
@@ -220,6 +224,10 @@ init_powernv(void *fdt, void *tocbase)
 	isync();
 
 	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
+
+	proc0paddr = (struct user *)initstack;
+	uspace = (register_t)proc0paddr + USPACE - FRAMELEN;
+	proc0.p_md.md_regs = (struct trapframe *)uspace;
 }
 
 void

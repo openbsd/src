@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.1 2020/05/16 17:11:14 kettenis Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.2 2020/06/14 17:56:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -22,9 +22,9 @@
 #ifdef _KERNEL
 
 #define TCB_GET(p)		\
-	((void *)trapframe(p)->fixreg[2])
+	((void *)(p)->p_md.md_regs->fixreg[2])
 #define TCB_SET(p, addr)	\
-	(trapframe(p)->fixreg[2] = (__register_t)(addr))
+	((p)->p_md.md_regs->fixreg[2] = (__register_t)(addr))
 
 #else /* _KERNEL */
 
@@ -34,7 +34,7 @@
 /* powerpc offsets the TCB pointer 0x7000 bytes after the data */
 #define TCB_OFFSET	0x7000
 
-register void *__tcb __asm__ ("r2");
+register void *__tcb __asm__ ("r13");
 #define TCB_GET()		(__tcb)
 #define TCB_SET(tcb)		((__tcb) = (tcb))
 

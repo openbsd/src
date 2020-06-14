@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 2020/06/13 22:58:42 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.13 2020/06/14 17:56:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "assym.h"
 
 #include <machine/opal.h>
 #include <machine/psl.h>
@@ -55,7 +57,77 @@ cpu_idle_leave:
 
 	.globl cpu_switchto
 cpu_switchto:
+	mflr	%r0
+	std	%r0, 16(%r1)
+	mfcr	%r10
+	stdu	%r1, -SFRAMELEN(%r1)
+	std	%r10, SF_CR(%r1)
+	std	%r14, SF_R14(%r1)
+	std	%r15, SF_R15(%r1)
+	std	%r16, SF_R16(%r1)
+	std	%r17, SF_R17(%r1)
+	std	%r18, SF_R18(%r1)
+	std	%r19, SF_R19(%r1)
+	std	%r20, SF_R20(%r1)
+	std	%r21, SF_R21(%r1)
+	std	%r22, SF_R22(%r1)
+	std	%r23, SF_R23(%r1)
+	std	%r24, SF_R24(%r1)
+	std	%r25, SF_R25(%r1)
+	std	%r26, SF_R26(%r1)
+	std	%r27, SF_R27(%r1)
+	std	%r28, SF_R28(%r1)
+	std	%r29, SF_R29(%r1)
+	std	%r30, SF_R30(%r1)
+	std	%r31, SF_R31(%r1)
+
+	ld	%r31, P_ADDR(%r3)
+	std	%r1, PCB_SP(%r31)
+
+	li	%r31, SONPROC
+	stb	%r31, P_STAT(%r4)
+	std	%r4, CI_CURPROC(%r13)
+
+	ld	%r31, P_ADDR(%r4)
+	ld	%r1, PCB_SP(%r31)
+
+	ld	%r31, SF_R31(%r1)
+	ld	%r30, SF_R30(%r1)
+	ld	%r29, SF_R29(%r1)
+	ld	%r28, SF_R28(%r1)
+	ld	%r27, SF_R27(%r1)
+	ld	%r26, SF_R26(%r1)
+	ld	%r25, SF_R25(%r1)
+	ld	%r24, SF_R24(%r1)
+	ld	%r23, SF_R23(%r1)
+	ld	%r22, SF_R22(%r1)
+	ld	%r21, SF_R21(%r1)
+	ld	%r20, SF_R20(%r1)
+	ld	%r19, SF_R19(%r1)
+	ld	%r18, SF_R18(%r1)
+	ld	%r17, SF_R17(%r1)
+	ld	%r16, SF_R16(%r1)
+	ld	%r15, SF_R15(%r1)
+	ld	%r14, SF_R14(%r1)
+	ld	%r10, SF_CR(%r1)
+	addi	%r1, %r1, SFRAMELEN
+	mtcr	%r10
+	ld	%r0, 16(%r1)
+	mtlr	%r0
 	blr
+
+	.globl proc_trampoline
+proc_trampoline:
+#ifdef MULTIPROCESSOR
+	bl	proc_trampoline_mp
+#endif
+	li	%r3, IPL_NONE
+	bl	splx
+	mr	%r12, %r31
+	mr	%r3, %r30
+	mtctr	%r12
+	bctrl
+	b	trapexit
 
 /*
  * OPAL interfaces

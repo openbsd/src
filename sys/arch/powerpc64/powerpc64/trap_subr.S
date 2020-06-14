@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.6 2020/06/13 22:58:42 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.7 2020/06/14 17:56:54 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -283,5 +283,7 @@ generictrap:
 	addi	%r3, %r1, 48
 	bl	trap
 
+	.globl	trapexit
+trapexit:
 	FRAME_LEAVE(CI_TEMPSAVE)
 	rfid

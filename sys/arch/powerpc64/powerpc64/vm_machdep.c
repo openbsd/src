@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.1 2020/05/16 17:11:14 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.2 2020/06/14 17:56:54 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -67,39 +67,36 @@ void
 cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
-#if 0
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf;
+	struct callframe *cf;
 	struct switchframe *sf;
-
-	// Does any flushing need to be done if process was running?
+	register_t kstack;
 
 	/* Copy the pcb. */
 	*pcb = p1->p_addr->u_pcb;
-	pcb->pcb_fpcpu = NULL;
 
 	pmap_activate(p2);
 
-	tf = (struct trapframe *)((u_long)p2->p_addr
-	    + USPACE
-	    - sizeof(struct trapframe)
-	    - 0x10);
-
-	tf = (struct trapframe *)STACKALIGN(tf);
-	pcb->pcb_tf = tf;
-	*tf = *p1->p_addr->u_pcb.pcb_tf;
+	kstack = (register_t)p2->p_addr + USPACE - FRAMELEN -
+	    (arc4random() & PAGE_MASK & ~_STACKALIGNBYTES);
+	p2->p_md.md_regs = tf = (struct trapframe *)kstack;
+	*tf = *p1->p_md.md_regs;
 
 	if (stack != NULL)
-		tf->tf_sp = STACKALIGN(stack);
+		tf->fixreg[1] = STACKALIGN(stack);
 	if (tcb != NULL)
-		pcb->pcb_tcb = tcb;
+		tf->fixreg[13] = (register_t)tcb;
 
-	sf = (struct switchframe *)tf - 1;
-	sf->sf_x19 = (uint64_t)func;
-	sf->sf_x20 = (uint64_t)arg;
-	sf->sf_lr = (u_int64_t)&proc_trampoline;
-	pcb->pcb_sp = (uint64_t)sf;
-#endif
+	cf = (struct callframe *)tf - 1;
+	memset(cf, 0, sizeof(*cf));
+	cf->cf_lr = (register_t)&proc_trampoline;
+
+	sf = (struct switchframe *)cf - 1;
+	memset(sf, 0, sizeof(*sf));
+	sf->sf_r31 = (register_t)func;
+	sf->sf_r30 = (register_t)arg;
+	pcb->pcb_sp = (register_t)sf;
 }
 
 /*

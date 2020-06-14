@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.c,v 1.1 2020/06/10 15:01:40 kettenis Exp $	*/
+/*	$OpenBSD: opal.c,v 1.2 2020/06/14 17:56:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -88,7 +88,7 @@ opal_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 	int64_t error;
 
 	do {
-		error = opal_rtc_read(&date, &time);
+		error = opal_rtc_read(opal_phys(&date), opal_phys(&time));
 		if (error == OPAL_BUSY_EVENT)
 			opal_poll_events(NULL);
 	} while (error == OPAL_BUSY_EVENT);

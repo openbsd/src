@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.6 2020/06/13 22:58:42 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.7 2020/06/14 17:56:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -383,7 +383,8 @@ phb_conf_read(void *v, pcitag_t tag, int reg)
 	uint16_t pci_error_state;
 	uint8_t freeze_state;
 
-	error = opal_pci_config_read_word(sc->sc_phb_id, tag, reg, &data);
+	error = opal_pci_config_read_word(sc->sc_phb_id,
+	    tag, reg, opal_phys(&data));
 	if (error == OPAL_SUCCESS && data != 0xffffffff)
 		return data;
 
@@ -392,7 +393,7 @@ phb_conf_read(void *v, pcitag_t tag, int reg)
 	 * an error state.  Clear the error.
 	 */
 	error = opal_pci_eeh_freeze_status(sc->sc_phb_id, sc->sc_pe_number,
-	    &freeze_state, &pci_error_state, NULL);
+	    opal_phys(&freeze_state), opal_phys(&pci_error_state), NULL);
 	if (freeze_state)
 		opal_pci_eeh_freeze_clear(sc->sc_phb_id, sc->sc_pe_number,
 		    OPAL_EEH_ACTION_CLEAR_FREEZE_ALL);
@@ -469,11 +470,11 @@ phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
 
 		if (ih.ih_type == PCI_MSI32) {
 			error = opal_get_msi_32(sc->sc_phb_id, 0, xive,
-			    1, &addr32, &data);
+			    1, opal_phys(&addr32), opal_phys(&data));
 			addr = addr32;
 		} else {
 			error = opal_get_msi_64(sc->sc_phb_id, 0, xive,
-			    1, &addr, &data);
+			    1, opal_phys(&addr), opal_phys(&data));
 		}
 		if (error != OPAL_SUCCESS)
 			return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.2 2020/05/22 15:07:47 kettenis Exp $	*/
+/*	$OpenBSD: frame.h,v 1.3 2020/06/14 17:56:54 kettenis Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,37 @@
  * This is to ensure alignment of the stackpointer
  */
 #define	FRAMELEN	roundup(sizeof(struct trapframe) + 32, 16)
-#define	trapframe(p)	((struct trapframe *)NULL)
+
+struct callframe {
+	register_t	cf_sp;
+	register_t	cf_cr;
+	register_t	cf_lr;
+	register_t	cf_toc;
+};
+
+struct switchframe {
+	register_t	sf_sp;
+	register_t	sf_cr;
+	register_t	sf_lr;		/* unused */
+	register_t	sf_toc;		/* unused */
+	register_t	sf_r14;
+	register_t	sf_r15;
+	register_t	sf_r16;
+	register_t	sf_r17;
+	register_t	sf_r18;
+	register_t	sf_r19;
+	register_t	sf_r20;
+	register_t	sf_r21;
+	register_t	sf_r22;
+	register_t	sf_r23;
+	register_t	sf_r24;
+	register_t	sf_r25;
+	register_t	sf_r26;
+	register_t	sf_r27;
+	register_t	sf_r28;
+	register_t	sf_r29;
+	register_t	sf_r30;
+	register_t	sf_r31;
+};
 
 #endif /* _MACHDEP_FRAME_H_ */
