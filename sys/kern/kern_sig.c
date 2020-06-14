@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.256 2020/04/07 13:27:51 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.257 2020/06/14 07:22:55 visa Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1810,7 +1810,6 @@ filt_sigattach(struct knote *kn)
 	kn->kn_ptr.p_process = pr;
 	kn->kn_flags |= EV_CLEAR;		/* automatically set */
 
-	/* XXX lock the proc here while adding to the list? */
 	klist_insert(&pr->ps_klist, kn);
 
 	return (0);

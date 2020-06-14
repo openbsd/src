@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.136 2020/06/12 09:34:17 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.137 2020/06/14 07:22:55 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -274,7 +274,6 @@ filt_procattach(struct knote *kn)
 		kn->kn_flags &= ~EV_FLAG1;
 	}
 
-	/* XXX lock the proc here while adding to the list? */
 	klist_insert(&pr->ps_klist, kn);
 
 	return (0);
@@ -296,7 +295,6 @@ filt_procdetach(struct knote *kn)
 	if (kn->kn_status & KN_DETACHED)
 		return;
 
-	/* XXX locking?  this might modify another process. */
 	klist_remove(&pr->ps_klist, kn);
 }
 
