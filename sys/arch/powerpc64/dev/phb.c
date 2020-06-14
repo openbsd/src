@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.7 2020/06/14 17:56:54 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.8 2020/06/14 19:00:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/extent.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -64,6 +65,9 @@ struct phb_softc {
 	struct machine_bus_dma_tag sc_bus_dmat;
 
 	struct ppc64_pci_chipset sc_pc;
+	struct extent		*sc_busex;
+	struct extent		*sc_memex;
+	struct extent		*sc_ioex;
 	int			sc_bus;
 };
 
@@ -114,6 +118,7 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 	struct phb_softc *sc = (struct phb_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct pcibus_attach_args pba;
+	uint32_t bus_range[2];
 	uint32_t *ranges;
 	uint32_t m64window[6];
 	uint32_t m64ranges[2];
@@ -279,6 +284,34 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 	OF_getpropintarray(sc->sc_node, "ibm,opal-msi-ranges",
 	    sc->sc_msi_ranges, sizeof(sc->sc_msi_ranges));
 
+	/* Create extents for our address spaces. */
+	sc->sc_busex = extent_create("pcibus", 0, 255,
+	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_FILLED);
+	sc->sc_memex = extent_create("pcimem", 0, (u_long)-1,
+	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_FILLED);
+	sc->sc_ioex = extent_create("pciio", 0, 0xffffffff,
+	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_FILLED);
+
+	/* Set up bus range. */
+	if (OF_getpropintarray(sc->sc_node, "bus-range", bus_range,
+	    sizeof(bus_range)) != sizeof(bus_range) ||
+	    bus_range[0] >= 256 || bus_range[1] >= 256) {
+		bus_range[0] = 0;
+		bus_range[1] = 255;
+	}
+	sc->sc_bus = bus_range[0];
+	extent_free(sc->sc_busex, bus_range[0],
+	    bus_range[1] - bus_range[0] + 1, EX_WAITOK);
+
+	/* Set up mmio ranges. */
+	for (i = 0; i < sc->sc_nranges; i++) {
+		if ((sc->sc_ranges[i].flags & 0x02000000) != 0x02000000)
+			continue;
+
+		extent_free(sc->sc_memex, sc->sc_ranges[i].pci_base,
+		    sc->sc_ranges[i].size, EX_WAITOK);
+	}
+
 	printf("\n");
 
 	memcpy(&sc->sc_bus_iot, sc->sc_iot, sizeof(sc->sc_bus_iot));
@@ -327,6 +360,9 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = &sc->sc_bus_memt;
 	pba.pba_dmat = &sc->sc_bus_dmat;
 	pba.pba_pc = &sc->sc_pc;
+	pba.pba_busex = sc->sc_busex;
+	pba.pba_memex = sc->sc_memex;
+	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
 	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
