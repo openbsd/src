@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.67 2020/05/22 10:23:14 patrick Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.68 2020/06/14 18:37:16 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -821,7 +821,7 @@ sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 
 	/* Host controller clears this bit if 1.8V signalling fails. */
 	if (signal_voltage == SDMMC_SIGNAL_VOLTAGE_180 &&
-	    !ISSET(HREAD4(hp, SDHC_HOST_CTL2), SDHC_1_8V_SIGNAL_EN))
+	    !ISSET(HREAD2(hp, SDHC_HOST_CTL2), SDHC_1_8V_SIGNAL_EN))
 		return EIO;
 
 	return 0;
