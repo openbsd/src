@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.92 2020/05/31 06:23:57 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.93 2020/06/14 20:29:13 naddy Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -54,6 +54,7 @@
 #ifdef _KERNEL
 #include <machine/trap.h>
 #include <machine/frame.h>
+#include <machine/reg.h>
 #endif /* _KERNEL */
 
 /*
@@ -237,7 +238,16 @@ int	copy_on_fault(void);
 void	switch_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
-unsigned int cpu_rnd_messybits(void);
+
+static inline unsigned int
+cpu_rnd_messybits(void)
+{
+        unsigned int __itmr;
+
+	__asm volatile("mfctl %1,%0": "=r" (__itmr) : "i" (CR_ITMR));
+
+        return (__itmr);
+}
 
 #ifdef MULTIPROCESSOR
 void	cpu_boot_secondary_processors(void);
