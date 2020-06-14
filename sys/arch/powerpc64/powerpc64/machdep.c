@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 2020/06/14 16:12:09 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.22 2020/06/14 17:08:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -80,6 +80,8 @@ struct fdt_reg initrd_reg;
 void memreg_add(const struct fdt_reg *);
 void memreg_remove(const struct fdt_reg *);
 
+void parse_bootargs(const char *);
+
 paddr_t fdt_pa;
 size_t fdt_size;
 
@@ -89,8 +91,8 @@ init_powernv(void *fdt, void *tocbase)
 	struct fdt_reg reg;
 	paddr_t trap;
 	uint64_t msr;
-	char *prop;
 	void *node;
+	char *prop;
 	int len;
 	int i;
 
@@ -310,6 +312,15 @@ self_reloc(Elf_Dyn *dynamic, Elf_Addr base)
 	}
 }
 
+void *
+opal_phys(void *va)
+{
+	paddr_t pa;
+
+	pmap_extract(pmap_kernel(), (vaddr_t)va, &pa);
+	return (void *)pa;
+}
+
 void
 opal_printf(const char *fmt, ...)
 {
@@ -325,7 +336,7 @@ opal_printf(const char *fmt, ...)
 		 len = sizeof(buf) - 1;
 	va_end(ap);
 
-	opal_console_write(0, &len, buf);
+	opal_console_write(0, opal_phys(&len), opal_phys(buf));
 }
 
 void
@@ -346,7 +357,7 @@ opal_cngetc(dev_t dev)
 
 	for (;;) {
 		len = 1;
-		opal_console_read(0, &len, &ch);
+		opal_console_read(0, opal_phys(&len), opal_phys(&ch));
 		if (len)
 			return ch;
 		opal_poll_events(NULL);
@@ -359,7 +370,7 @@ opal_cnputc(dev_t dev, int c)
 	uint64_t len = 1;
 	char ch = c;
 
-	opal_console_write(0, &len, &ch);
+	opal_console_write(0, opal_phys(&len), opal_phys(&ch));
 }
 
 void
@@ -431,7 +442,10 @@ cpu_startup(void)
 	paddr_t pa, epa;
 	vaddr_t va;
 	void *fdt;
-	
+	void *node;
+	char *prop;
+	int len;
+
 	printf("%s", version);
 
 	bufinit();
@@ -451,6 +465,53 @@ cpu_startup(void)
 		panic("can't remap FDT");
 
 	intr_init();
+
+	node = fdt_find_node("/chosen");
+	if (node) {
+		len = fdt_node_property(node, "bootargs", &prop);
+		if (len > 0)
+			parse_bootargs(prop);
+	}
+
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
+}
+
+void
+parse_bootargs(const char *bootargs)
+{
+	const char *cp = bootargs;
+
+	while (*cp != '-')
+		if (*cp++ == '\0')
+			return;
+	cp++;
+
+	while (*cp != 0) {
+		switch(*cp) {
+		case 'a':
+			boothowto |= RB_ASKNAME;
+			break;
+		case 'c':
+			boothowto |= RB_CONFIG;
+			break;
+		case 'd':
+			boothowto |= RB_KDB;
+			break;
+		case 's':
+			boothowto |= RB_SINGLE;
+			break;
+		default:
+			printf("unknown option `%c'\n", *cp);
+			break;
+		}
+		cp++;
+	}
 }
 
 void
