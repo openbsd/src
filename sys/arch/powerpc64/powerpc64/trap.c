@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 2020/06/13 22:58:42 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 2020/06/14 17:53:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -54,8 +54,6 @@ trap(struct trapframe *frame)
 #endif
 	}
 
-	if (frame->exc == EXC_DSI)
-		printf("dsisr %lx dar %lx\n", frame->dsisr, frame->dar);
-
-	panic("trap type %lx at lr %lx", frame->exc, frame->lr);
+	panic("trap type %lx srr1 %lx at %lx lr %lx",
+	    frame->exc, frame->srr1, frame->srr0, frame->lr);
 }
