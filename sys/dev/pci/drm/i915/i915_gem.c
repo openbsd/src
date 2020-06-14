@@ -316,7 +316,7 @@ shmem_pread(struct vm_page *page, int offset, int len, char __user *user_data,
 
 	ret = __copy_to_user(user_data, vaddr + offset, len);
 
-	kunmap(vaddr);
+	kunmap_va(vaddr);
 
 	return ret ? -EFAULT : 0;
 }
@@ -782,7 +782,7 @@ shmem_pwrite(struct vm_page *page, int offset, int len, char __user *user_data,
 	if (!ret && needs_clflush_after)
 		drm_clflush_virt_range(vaddr + offset, len);
 
-	kunmap(vaddr);
+	kunmap_va(vaddr);
 
 	return ret ? -EFAULT : 0;
 }

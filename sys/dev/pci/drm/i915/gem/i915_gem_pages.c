@@ -163,7 +163,7 @@ static void unmap_object(struct drm_i915_gem_object *obj, void *ptr)
 	if (is_vmalloc_addr(ptr))
 		vunmap(ptr, obj->base.size);
 	else
-		kunmap(kmap_to_page(ptr));
+		kunmap_va(ptr);
 }
 
 struct sg_table *

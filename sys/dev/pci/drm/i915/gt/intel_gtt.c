@@ -336,7 +336,7 @@ static void poison_scratch_page(struct vm_page *page, unsigned long size)
 		kunmap(page);
 #else
 		poison_mem(vaddr, PAGE_SIZE);
-		kunmap(vaddr);
+		kunmap_va(vaddr);
 #endif
 
 		page = pfn_to_page(page_to_pfn(page) + 1);
