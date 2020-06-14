@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 2020/06/13 22:58:42 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.5 2020/06/14 16:12:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -20,19 +20,21 @@
 #define _MACHINE_INTR_H_
 
 #define IPL_NONE	0
-#define IPL_SOFTCLOCK	1
-#define IPL_SOFTNET	2
-#define IPL_SOFTTTY	3
-#define IPL_BIO		4
-#define IPL_NET		5
-#define IPL_TTY		6
+#define IPL_SOFT	1
+#define IPL_SOFTCLOCK	2
+#define IPL_SOFTNET	3
+#define IPL_SOFTTTY	4
+#define IPL_BIO		5
+#define IPL_NET		6
+#define IPL_TTY		7
 #define IPL_VM		IPL_TTY
-#define IPL_AUDIO	7
-#define IPL_CLOCK	8
+#define IPL_AUDIO	8
+#define IPL_CLOCK	9
 #define IPL_STATCLOCK	IPL_CLOCK
 #define IPL_SCHED	IPL_CLOCK
 #define IPL_HIGH	IPL_CLOCK
-#define IPL_IPI		9
+#define IPL_IPI		10
+#define NIPL		11
 
 #define	IPL_MPFLOOR	IPL_TTY
 /* Interrupt priority 'flags'. */
@@ -75,6 +77,8 @@ void splassert_check(int, const char *);
 #define	splassert(wantipl)	do { /* nothing */ } while (0)
 #define	splsoftassert(wantipl)	do { /* nothing */ } while (0)
 #endif
+
+void	intr_init(void);
 
 #define intr_barrier(x)
 

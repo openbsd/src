@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 2020/06/13 22:58:42 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 2020/06/14 16:12:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -449,6 +449,8 @@ cpu_startup(void)
 
 	if (!fdt_init(fdt) || fdt_get_size(fdt) == 0)
 		panic("can't remap FDT");
+
+	intr_init();
 }
 
 void

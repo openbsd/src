@@ -1,7 +1,8 @@
-/*	$OpenBSD: intr.c,v 1.1 2020/06/13 22:58:42 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.2 2020/06/14 16:12:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +50,54 @@ intr_establish(uint32_t girq, int type, int level,
 	return (*_intr_establish)(girq, type, level, func, arg, name);
 }
 
+#define SI_TO_IRQBIT(x) (1 << (x))
+uint32_t intr_smask[NIPL];
+
+void
+intr_init(void)
+{
+	int i;
+
+	for (i = IPL_NONE; i <= IPL_HIGH; i++)  {
+		intr_smask[i] = 0;
+		if (i < IPL_SOFT)
+			intr_smask[i] |= SI_TO_IRQBIT(SIR_SOFT);
+		if (i < IPL_SOFTCLOCK)
+			intr_smask[i] |= SI_TO_IRQBIT(SIR_CLOCK);
+		if (i < IPL_SOFTNET)
+			intr_smask[i] |= SI_TO_IRQBIT(SIR_NET);
+		if (i < IPL_SOFTTTY)
+			intr_smask[i] |= SI_TO_IRQBIT(SIR_TTY);
+	}
+}
+
+void
+intr_do_pending(int new)
+{
+	struct cpu_info *ci = curcpu();
+	u_long msr;
+
+	msr = intr_disable();
+
+#define DO_SOFTINT(si, ipl) \
+	if ((ci->ci_ipending & intr_smask[new]) & SI_TO_IRQBIT(si)) {	\
+		ci->ci_ipending &= ~SI_TO_IRQBIT(si);			\
+		_setipl(ipl);						\
+		intr_restore(msr);					\
+		softintr_dispatch(si);					\
+		msr = intr_disable();					\
+	}
+
+	do {
+		DO_SOFTINT(SIR_TTY, IPL_SOFTTTY);
+		DO_SOFTINT(SIR_NET, IPL_SOFTNET);
+		DO_SOFTINT(SIR_CLOCK, IPL_SOFTCLOCK);
+		DO_SOFTINT(SIR_SOFT, IPL_SOFT);
+	} while (ci->ci_ipending & intr_smask[new]);
+
+	intr_restore(msr);
+}
+
 int
 splraise(int new)
 {
@@ -75,6 +124,9 @@ void
 splx(int new)
 {
 	struct cpu_info *ci = curcpu();
+
+	if (ci->ci_ipending & intr_smask[new])
+		intr_do_pending(new);
 
 	if (ci->ci_cpl != new)
 		(*_setipl)(new);
