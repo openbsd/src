@@ -333,10 +333,11 @@ static void poison_scratch_page(struct vm_page *page, unsigned long size)
 		vaddr = kmap(page);
 #ifdef __linux__
 		memset(vaddr, POISON_FREE, PAGE_SIZE);
+		kunmap(page);
 #else
 		poison_mem(vaddr, PAGE_SIZE);
+		kunmap(vaddr);
 #endif
-		kunmap(page);
 
 		page = pfn_to_page(page_to_pfn(page) + 1);
 		size -= PAGE_SIZE;
