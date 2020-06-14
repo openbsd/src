@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2020/06/09 22:12:22 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 2020/06/14 15:36:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
 #include <sys/systm.h>
 
 void
@@ -35,7 +36,9 @@ cpu_configure(void)
 void
 diskconf(void)
 {
-	printf("%s\n", __func__);
+	int part = 0;
+
+	setroot(NULL, part, RB_USERREQ);
 }
 
 void
