@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdrandom.c,v 1.1 2020/06/14 16:00:11 deraadt Exp $	*/
+/*	$OpenBSD: mdrandom.c,v 1.2 2020/06/15 19:25:16 naddy Exp $	*/
 
 /*
  * Copyright (c) 2020 Theo de Raadt 
@@ -46,9 +46,17 @@ mdrandom(char *buf, size_t buflen)
 	}
 	if (ecx & CPUIDECX_RDRAND) {
 		unsigned long rand;
+		int retries;
+		uint8_t valid;
 
 		for (i = 0; i < buflen / sizeof(rand); i++) {
-			__asm volatile("rdrand	%0\n" : "=r" (rand));
+			retries = 10;
+			do {
+				__asm volatile(
+				    "rdrand	%0;"
+				    "setc	%1;"
+				    : "=r" (rand), "=qm" (valid));
+			} while (!valid && --retries > 0);
 			((unsigned long *)buf)[i] ^= rand;
 		}
 		ret = 0;
@@ -58,9 +66,17 @@ mdrandom(char *buf, size_t buflen)
 		CPUID_LEAF(7, 0, eax, ebx, ecx, edx);
 		if (ebx & SEFF0EBX_RDSEED) {
 			unsigned long rand;
+			int retries;
+			uint8_t valid;
 
 			for (i = 0; i < buflen / sizeof(rand); i++) {
-				__asm volatile("rdseed	%0\n" : "=r" (rand));
+				retries = 10;
+				do {
+					__asm volatile(
+					    "rdseed	%0;"
+					    "setc	%1;"
+					    : "=r" (rand), "=qm" (valid));
+				} while (!valid && --retries > 0);
 				((unsigned long *)buf)[i] ^= rand;
 			}
 			ret = 0;
