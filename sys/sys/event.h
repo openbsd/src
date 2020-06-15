@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.42 2020/06/15 15:29:40 mpi Exp $	*/
+/*	$OpenBSD: event.h,v 1.43 2020/06/15 15:42:11 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -196,6 +196,7 @@ struct knote {
 struct proc;
 
 extern const struct filterops sig_filtops;
+extern const struct filterops dead_filtops;
 
 extern void	knote(struct klist *list, long hint);
 extern void	knote_activate(struct knote *);
