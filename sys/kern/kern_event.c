@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.137 2020/06/14 07:22:55 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.138 2020/06/15 13:18:33 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -246,6 +246,7 @@ int
 filt_procattach(struct knote *kn)
 {
 	struct process *pr;
+	int s;
 
 	if ((curproc->p_p->ps_flags & PS_PLEDGE) &&
 	    (curproc->p_p->ps_pledge & PLEDGE_PROC) == 0)
@@ -274,7 +275,9 @@ filt_procattach(struct knote *kn)
 		kn->kn_flags &= ~EV_FLAG1;
 	}
 
+	s = splhigh();
 	klist_insert(&pr->ps_klist, kn);
+	splx(s);
 
 	return (0);
 }
@@ -291,11 +294,14 @@ void
 filt_procdetach(struct knote *kn)
 {
 	struct process *pr = kn->kn_ptr.p_process;
+	int s;
 
 	if (kn->kn_status & KN_DETACHED)
 		return;
 
+	s = splhigh();
 	klist_remove(&pr->ps_klist, kn);
+	splx(s);
 }
 
 int
@@ -324,10 +330,10 @@ filt_proc(struct knote *kn, long hint)
 
 		s = splhigh();
 		kn->kn_status |= KN_DETACHED;
-		splx(s);
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		kn->kn_data = W_EXITCODE(pr->ps_xexit, pr->ps_xsig);
 		klist_remove(&pr->ps_klist, kn);
+		splx(s);
 		return (1);
 	}
 
