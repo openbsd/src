@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.53 2020/05/26 13:47:29 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.54 2020/06/15 14:43:57 naddy Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -55,7 +55,7 @@ int bootprompt = 1;
 char *kernelfile = KERNEL;		/* can be changed by MD code */
 int boottimeout = 5;			/* can be changed by MD code */
 
-char	rnddata[BOOTRANDOM_MAX];
+char	rnddata[BOOTRANDOM_MAX] __aligned(sizeof(long));
 struct rc4_ctx randomctx;
 
 void
