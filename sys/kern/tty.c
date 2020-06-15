@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.156 2020/05/29 04:42:25 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.157 2020/06/15 15:29:40 mpi Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1155,6 +1155,8 @@ filt_ttyread(struct knote *kn, long hint)
 	splx(s);
 	if (!ISSET(tp->t_cflag, CLOCAL) && !ISSET(tp->t_state, TS_CARR_ON)) {
 		kn->kn_flags |= EV_EOF;
+		if (kn->kn_flags & __EV_POLL)
+			kn->kn_flags |= __EV_HUP;
 		return (1);
 	}
 	return (kn->kn_data > 0);

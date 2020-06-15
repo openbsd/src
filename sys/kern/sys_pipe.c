@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.119 2020/04/07 13:27:51 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.120 2020/06/15 15:29:40 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -967,6 +967,8 @@ filt_piperead(struct knote *kn, long hint)
 		if ((hint & NOTE_SUBMIT) == 0)
 			rw_exit_read(lock);
 		kn->kn_flags |= EV_EOF; 
+		if (kn->kn_flags & __EV_POLL)
+			kn->kn_flags |= __EV_HUP;
 		return (1);
 	}
 
@@ -991,6 +993,8 @@ filt_pipewrite(struct knote *kn, long hint)
 			rw_exit_read(lock);
 		kn->kn_data = 0;
 		kn->kn_flags |= EV_EOF; 
+		if (kn->kn_flags & __EV_POLL)
+			kn->kn_flags |= __EV_HUP;
 		return (1);
 	}
 	kn->kn_data = wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.76 2020/04/08 08:07:52 mpi Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.77 2020/06/15 15:29:40 mpi Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -559,6 +559,10 @@ filt_fiforead(struct knote *kn, long hint)
 	kn->kn_data = so->so_rcv.sb_cc;
 	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
+		if (kn->kn_flags & __EV_POLL) {
+			if (so->so_state & SS_ISDISCONNECTED)
+				kn->kn_flags |= __EV_HUP;
+		}
 		rv = 1;
 	} else {
 		kn->kn_flags &= ~EV_EOF;

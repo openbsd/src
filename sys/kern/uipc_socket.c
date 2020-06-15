@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.244 2020/04/12 16:15:18 anton Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.245 2020/06/15 15:29:40 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2064,6 +2064,10 @@ filt_soread(struct knote *kn, long hint)
 #endif /* SOCKET_SPLICE */
 	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
+		if (kn->kn_flags & __EV_POLL) {
+			if (so->so_state & SS_ISDISCONNECTED)
+				kn->kn_flags |= __EV_HUP;
+		}
 		kn->kn_fflags = so->so_error;
 		rv = 1;
 	} else if (so->so_error) {	/* temporary udp error */
@@ -2102,6 +2106,10 @@ filt_sowrite(struct knote *kn, long hint)
 	kn->kn_data = sbspace(so, &so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
+		if (kn->kn_flags & __EV_POLL) {
+			if (so->so_state & SS_ISDISCONNECTED)
+				kn->kn_flags |= __EV_HUP;
+		}
 		kn->kn_fflags = so->so_error;
 		rv = 1;
 	} else if (so->so_error) {	/* temporary udp error */
