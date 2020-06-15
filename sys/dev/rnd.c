@@ -1,7 +1,7 @@
-/*	$OpenBSD: rnd.c,v 1.220 2020/05/31 06:23:56 dlg Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.221 2020/06/15 14:52:19 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2011 Theo de Raadt.
+ * Copyright (c) 2011,2020 Theo de Raadt.
  * Copyright (c) 2008 Damien Miller.
  * Copyright (c) 1996, 1997, 2000-2002 Michael Shalayeff.
  * Copyright (c) 2013 Markus Friedl.
