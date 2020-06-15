@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.42 2019/06/28 13:35:04 deraadt Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.43 2020/06/15 10:54:29 dlg Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -57,6 +57,7 @@ static void showmbuf(struct if_info *, int, int);
 /* Define fields */
 field_def fields_mbuf[] = {
 	{"IFACE", 8, 16, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
+	{"RING", 8, 8, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
 	{"RXDELAY", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"TXDELAY", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"LIVELOCKS", 5, 10, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
@@ -69,19 +70,20 @@ field_def fields_mbuf[] = {
 
 
 #define FLD_MB_IFACE	FIELD_ADDR(fields_mbuf,0)
-#define FLD_MB_RXDELAY	FIELD_ADDR(fields_mbuf,1)
-#define FLD_MB_TXDELAY	FIELD_ADDR(fields_mbuf,2)
-#define FLD_MB_LLOCKS	FIELD_ADDR(fields_mbuf,3)
-#define FLD_MB_MSIZE	FIELD_ADDR(fields_mbuf,4)
-#define FLD_MB_MALIVE	FIELD_ADDR(fields_mbuf,5)
-#define FLD_MB_MLWM	FIELD_ADDR(fields_mbuf,6)
-#define FLD_MB_MHWM	FIELD_ADDR(fields_mbuf,7)
-#define FLD_MB_MCWM	FIELD_ADDR(fields_mbuf,8)
+#define FLD_MB_RING	FIELD_ADDR(fields_mbuf,1)
+#define FLD_MB_RXDELAY	FIELD_ADDR(fields_mbuf,2)
+#define FLD_MB_TXDELAY	FIELD_ADDR(fields_mbuf,3)
+#define FLD_MB_LLOCKS	FIELD_ADDR(fields_mbuf,4)
+#define FLD_MB_MSIZE	FIELD_ADDR(fields_mbuf,5)
+#define FLD_MB_MALIVE	FIELD_ADDR(fields_mbuf,6)
+#define FLD_MB_MLWM	FIELD_ADDR(fields_mbuf,7)
+#define FLD_MB_MHWM	FIELD_ADDR(fields_mbuf,8)
+#define FLD_MB_MCWM	FIELD_ADDR(fields_mbuf,9)
 
 
 /* Define views */
 field_def *view_mbuf[] = {
-	FLD_MB_IFACE,
+	FLD_MB_IFACE, FLD_MB_RING,
 	FLD_MB_LLOCKS, FLD_MB_MSIZE, FLD_MB_MALIVE, FLD_MB_MLWM, FLD_MB_MHWM,
 	FLD_MB_MCWM, NULL
 };
@@ -173,9 +175,8 @@ initmembufs(void)
 			/* NOTREACHED */
 		}
 
-		snprintf(ifr[mclpool_count].ifr_name,
-		    sizeof(ifr[mclpool_count].ifr_name), "%dk",
-		    pool.pr_size / 1024);
+		strlcpy(ifr[mclpool_count].ifr_name, pname,
+		    sizeof(ifr[mclpool_count].ifr_name));
 		ifr[mclpool_count].ifr_size = pool.pr_size;
 
 		mclpools_index[mclpool_count++] = i;
@@ -367,7 +368,7 @@ print_mb(void)
 
 		for (p = 0; p < ifi->data.ifri_total; p++) {
 			struct if_rxring_info *ifr = &ifi->data.ifri_entries[p];
-			if (ifr->ifr_info.rxr_alive == 0)
+			if (ifr->ifr_info.rxr_hwm == 0)
 				continue;
 			if (n++ >= dispstart) {
 				showmbuf(ifi, p, showif);
@@ -394,6 +395,7 @@ showmbuf(struct if_info *ifi, int p, int showif)
 		print_fld_str(FLD_MB_IFACE, ifi->name);
 
 	if (p == -1 && ifi == interfaces) {
+		print_fld_str(FLD_MB_RING, "mbufs");
 		print_fld_uint(FLD_MB_LLOCKS, mcllivelocks_diff);
 		print_fld_size(FLD_MB_MSIZE, mbpool.pr_size);
 		print_fld_size(FLD_MB_MALIVE, mbpool.pr_nget - mbpool.pr_nput);
@@ -403,6 +405,7 @@ showmbuf(struct if_info *ifi, int p, int showif)
 	if (p >= 0 && p < mclpool_count) {
 		struct if_rxring_info *ifr = &ifi->data.ifri_entries[p];
 		struct if_rxring *rxr= &ifr->ifr_info;
+		print_fld_str(FLD_MB_RING, ifr->ifr_name);
 		print_fld_uint(FLD_MB_MSIZE, ifr->ifr_size);
 		print_fld_uint(FLD_MB_MALIVE, rxr->rxr_alive);
 		if (rxr->rxr_lwm)
