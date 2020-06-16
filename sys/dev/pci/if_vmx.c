@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.56 2020/05/28 07:21:56 jmatthew Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.57 2020/06/16 05:31:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -28,6 +28,7 @@
 
 #include <net/bpf.h>
 #include <net/if.h>
+#include <net/toeplitz.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>
@@ -130,6 +131,7 @@ struct vmxnet3_softc {
 	struct vmxnet3_queue sc_q[VMX_MAX_QUEUES];
 	struct vmxnet3_driver_shared *sc_ds;
 	u_int8_t *sc_mcast;
+	struct vmxnet3_upt1_rss_conf *sc_rss;
 };
 
 #define VMXNET3_STAT
@@ -456,6 +458,33 @@ vmxnet3_dma_init(struct vmxnet3_softc *sc)
 	ds->ictrl = VMXNET3_ICTRL_DISABLE_ALL;
 	for (i = 0; i < sc->sc_nintr; i++)
 		ds->modlevel[i] = UPT1_IMOD_ADAPTIVE;
+
+	if (sc->sc_nqueues > 1) {
+		struct vmxnet3_upt1_rss_conf *rsscfg;
+		bus_addr_t rss_pa;
+
+		rsscfg = vmxnet3_dma_allocmem(sc, sizeof(*rsscfg), 8, &rss_pa);
+
+		rsscfg->hash_type = UPT1_RSS_HASH_TYPE_TCP_IPV4 |
+		    UPT1_RSS_HASH_TYPE_IPV4 |
+		    UPT1_RSS_HASH_TYPE_TCP_IPV6 |
+		    UPT1_RSS_HASH_TYPE_IPV6;
+		rsscfg->hash_func = UPT1_RSS_HASH_FUNC_TOEPLITZ;
+		rsscfg->hash_key_size = sizeof(rsscfg->hash_key);
+		stoeplitz_to_key(rsscfg->hash_key, sizeof(rsscfg->hash_key));
+
+		rsscfg->ind_table_size = sizeof(rsscfg->ind_table);
+		for (i = 0; i < sizeof(rsscfg->ind_table); i++)
+			rsscfg->ind_table[i] = i % sc->sc_nqueues;
+
+		ds->upt_features |= UPT1_F_RSS;
+		ds->rss.version = 1;
+		ds->rss.len = sizeof(*rsscfg);
+		ds->rss.paddr = rss_pa;
+
+		sc->sc_rss = rsscfg;
+	}
+
 	WRITE_BAR1(sc, VMXNET3_BAR1_DSL, ds_pa);
 	WRITE_BAR1(sc, VMXNET3_BAR1_DSH, (u_int64_t)ds_pa >> 32);
 	return 0;
