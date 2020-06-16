@@ -1,4 +1,4 @@
-.\" $OpenBSD: stoeplitz_to_key.9,v 1.1 2020/06/16 05:17:09 dlg Exp $
+.\" $OpenBSD: stoeplitz_to_key.9,v 1.2 2020/06/16 13:57:19 jmc Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -23,7 +23,7 @@
 .Nm stoeplitz_hash_ip4port ,
 .Nm stoeplitz_hash_ip6 ,
 .Nm stoeplitz_hash_ip4port
-.Nd Symmetric Toeplitz Hash API
+.Nd symmetric Toeplitz hash API
 .Sh SYNOPSIS
 .In net/toeplitz.h
 .Ft void
@@ -61,7 +61,7 @@ The resulting hash value can be used as a flow identifier, which
 in turn can be used to consistently select a context for processing
 packets using those fields.
 Traditionally, the Toeplitz hash produces different results depending
-on the order of inputs, ie, adding port 80 then 1234 as inputs would
+on the order of inputs, i.e. adding port 80 then 1234 as inputs would
 produce a different result to hashing port 1234 then 80.
 .Pp
 The symmetric Toeplitz API uses a key selected to generate the same
