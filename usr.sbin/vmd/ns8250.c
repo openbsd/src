@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.26 2020/06/16 06:23:51 pd Exp $ */
+/* $OpenBSD: ns8250.c,v 1.27 2020/06/16 08:46:03 pd Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -55,13 +55,10 @@ static void
 ratelimit(int fd, short type, void *arg)
 {
 	/* Set TXRDY and clear "no pending interrupt" */
-	mutex_lock(&com1_dev.mutex);
 	com1_dev.regs.iir |= IIR_TXRDY;
 	com1_dev.regs.iir &= ~IIR_NOPEND;
-
 	vcpu_assert_pic_irq(com1_dev.vmid, 0, com1_dev.irq);
 	vcpu_deassert_pic_irq(com1_dev.vmid, 0, com1_dev.irq);
-	mutex_unlock(&com1_dev.mutex);
 }
 
 void
@@ -133,26 +130,21 @@ com_rcv_event(int fd, short kind, void *arg)
 	 * has become available now will be moved to the com port later.
 	 */
 	if (com1_dev.rcv_pending) {
-		goto end;
+		mutex_unlock(&com1_dev.mutex);
+		return;
 	}
 
 	if (com1_dev.regs.lsr & LSR_RXRDY)
 		com1_dev.rcv_pending = 1;
 	else {
 		com_rcv(&com1_dev, (uintptr_t)arg, 0);
-	}
 
-end:
-	if (com1_dev.regs.ier & IER_ERXRDY) {
-		com1_dev.regs.iir |= IIR_RXRDY;
-		com1_dev.regs.iir &= ~IIR_NOPEND;
-	}
-
-	/* If pending interrupt, inject */
-	if ((com1_dev.regs.iir & IIR_NOPEND) == 0) {
-		/* XXX: vcpu_id */
-		vcpu_assert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
-		vcpu_deassert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
+		/* If pending interrupt, inject */
+		if ((com1_dev.regs.iir & IIR_NOPEND) == 0) {
+			/* XXX: vcpu_id */
+			vcpu_assert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
+			vcpu_deassert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
+		}
 	}
 
 	mutex_unlock(&com1_dev.mutex);
