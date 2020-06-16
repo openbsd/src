@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.180 2020/06/01 09:43:01 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.181 2020/06/16 08:18:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2347,7 +2347,7 @@ static void
 input_exit_rename(struct input_ctx *ictx)
 {
 	struct window_pane	*wp = ictx->wp;
-	struct options_entry	*oe;
+	struct options_entry	*o;
 
 	if (wp == NULL)
 		return;
@@ -2361,9 +2361,9 @@ input_exit_rename(struct input_ctx *ictx)
 		return;
 
 	if (ictx->input_len == 0) {
-		oe = options_get_only(wp->window->options, "automatic-rename");
-		if (oe != NULL)
-			options_remove(oe);
+		o = options_get_only(wp->window->options, "automatic-rename");
+		if (o != NULL)
+			options_remove_or_default(o, -1, NULL);
 		return;
 	}
 	window_set_name(wp->window, ictx->input_buf);

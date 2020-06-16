@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.784 2020/06/13 09:05:53 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.785 2020/06/16 08:18:34 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2020 $
+.Dd $Mdocdate: June 16 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2031,6 +2031,8 @@ The following keys may be used in customize mode:
 .It Li "s" Ta "Set option value or key attribute"
 .It Li "S" Ta "Set global option value"
 .It Li "w" Ta "Set window option value, if option is for pane and window"
+.It Li "d" Ta "Set an option or key to the default"
+.It Li "D" Ta "Set tagged options and tagged keys to the default"
 .It Li "u" Ta "Unset an option (set to default value if global) or unbind a key"
 .It Li "U" Ta "Unset tagged options and unbind tagged keys"
 .It Li "C-s" Ta "Search by name"

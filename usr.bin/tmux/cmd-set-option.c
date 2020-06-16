@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.136 2020/05/16 16:50:55 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.137 2020/06/16 08:18:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -151,16 +151,7 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'u')) {
 		if (o == NULL)
 			goto out;
-		if (idx == -1) {
-			if (*name == '@')
-				options_remove(o);
-			else if (oo == global_options ||
-			    oo == global_s_options ||
-			    oo == global_w_options)
-				options_default(oo, options_table_entry(o));
-			else
-				options_remove(o);
-		} else if (options_array_set(o, idx, NULL, 0, &cause) != 0) {
+		if (options_remove_or_default(o, idx, &cause) != 0) {
 			cmdq_error(item, "%s", cause);
 			free(cause);
 			goto fail;
