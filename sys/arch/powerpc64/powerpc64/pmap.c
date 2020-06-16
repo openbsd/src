@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 2020/06/12 22:01:01 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.8 2020/06/16 18:09:27 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -171,6 +171,15 @@ pmap_pte2flags(uint64_t pte_lo)
 	    ((pte_lo & PTE_CHG) ? PG_PMAP_MOD : 0));
 }
 
+/*
+ * Return AVA for use us with TLB invalidate instructions.
+ */
+uint64_t
+pmap_ava(uint64_t vsid, vaddr_t va)
+{
+	return ((vsid << ADDR_VSID_SHIFT) | (va & ADDR_PIDX));
+}
+
 static inline uint64_t
 pmap_kernel_vsid(uint64_t esid)
 {
@@ -239,11 +248,39 @@ pmap_ptedinhash(struct pte_desc *pted)
 struct pte_desc *
 pmap_vp_lookup(pmap_t pm, vaddr_t va)
 {
-	/* XXX Hack to bypass this for kernel pmap. */
-	static struct pte_desc pted;
+	return NULL;
+}
 
-	memset(&pted, 0, sizeof(pted));
-	return &pted;
+struct pte *
+pte_lookup(uint64_t vsid, vaddr_t va)
+{
+	uint64_t hash, avpn, pte_hi;
+	struct pte *pte;
+	int idx, i;
+
+	/* Primary hash. */
+	hash = (vsid & VSID_HASH_MASK) ^ ((va & ADDR_PIDX) >> ADDR_PIDX_SHIFT);
+	idx = (hash & pmap_ptab_mask);
+	pte = pmap_ptable + (idx * 8);
+	avpn = (vsid << PTE_VSID_SHIFT) |
+	    (va & ADDR_PIDX) >> (ADDR_VSID_SHIFT - PTE_VSID_SHIFT);
+	pte_hi = (avpn & PTE_AVPN) | PTE_VALID;
+
+	for (i = 0; i < 8; i++) {
+		if (pte[i].pte_hi == pte_hi)
+			return &pte[i];
+	}
+
+	/* Secondary hash. */
+	idx ^= pmap_ptab_mask;
+	pte_hi |= PTE_HID;
+
+	for (i = 0; i < 8; i++) {
+		if (pte[i].pte_hi == pte_hi)
+			return &pte[i];
+	}
+
+	return NULL;
 }
 
 /*
@@ -252,11 +289,11 @@ pmap_vp_lookup(pmap_t pm, vaddr_t va)
  * Note: hash table must be locked.
  */
 void
-pte_del(struct pte *pte, uint64_t vpn)
+pte_del(struct pte *pte, uint64_t ava)
 {
 	pte->pte_hi &= ~PTE_VALID;
 	ptesync();	/* Ensure update completed. */
-	tlbie(vpn);	/* Invalidate old translation. */
+	tlbie(ava);	/* Invalidate old translation. */
 	eieio();	/* Order tlbie before tlbsync. */
 	tlbsync();	/* Ensure tlbie completed on all processors. */
 	ptesync();	/* Ensure tlbsync and update completed. */
@@ -439,36 +476,6 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 #endif
 }
 
-void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
-{
-	pmap_t pm = pmap_kernel();
-	struct pte_desc *pted;
-	struct vm_page *pg;
-	int cache = (pa & PMAP_NOCACHE) ? PMAP_CACHE_CI : PMAP_CACHE_WB;
-
-	pted = pmap_vp_lookup(pm, va);
-	KASSERT(pted);
-
-	if (PTED_VALID(pted))
-		pmap_remove_pted(pm, pted); /* pted is reused */
-
-	pm->pm_stats.resident_count++;
-
-	if (prot & PROT_WRITE) {
-		pg = PHYS_TO_VM_PAGE(pa);
-		if (pg != NULL)
-			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
-	}
-
-	/* Calculate PTE */
-	pmap_fill_pte(pm, va, pa, pted, prot, cache);
-	pted->pted_va |= PTED_VA_WIRED_M;
-
-	/* Insert into HTAB */
-	pte_insert(pted);
-}
-
 extern struct fdt_reg memreg[];
 extern int nmemreg;
 
@@ -546,6 +553,12 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
 int
 pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
+	struct pte_desc *pted;
+
+	pted = pmap_vp_lookup(pm, va);
+	if (pted && PTED_VALID(pted))
+		pmap_remove_pted(pm, pted);
+
 	KASSERT(pm == pmap_kernel());
 	pmap_kenter_pa(va, pa, prot);
 	return 0;
@@ -571,21 +584,49 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 }
 
 void
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+{
+	pmap_t pm = pmap_kernel();
+	struct pte_desc pted;
+	struct vm_page *pg;
+	int cache = (pa & PMAP_NOCACHE) ? PMAP_CACHE_CI : PMAP_CACHE_WB;
+
+	pm->pm_stats.resident_count++;
+
+	if (prot & PROT_WRITE) {
+		pg = PHYS_TO_VM_PAGE(pa);
+		if (pg != NULL)
+			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
+	}
+
+	/* Calculate PTE */
+	pmap_fill_pte(pm, va, pa, &pted, prot, cache);
+	pted.pted_va |= PTED_VA_WIRED_M;
+
+	/* Insert into HTAB */
+	pte_insert(&pted);
+}
+
+void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
+	pmap_t pm = pmap_kernel();
 	vaddr_t eva = va + len;
-	struct pte_desc pted;
 	struct pte *pte;
+	uint64_t vsid;
 	int s;
 
 	while (va < eva) {
-		pmap_fill_pte(pmap_kernel(), va, 0, &pted, 0, 0);
-		pted.pted_pte.pte_hi |= PTE_VALID;
+		vsid = pmap_kernel_vsid(va >> ADDR_ESID_SHIFT);
 
 		PMAP_HASH_LOCK(s);
-		if ((pte = pmap_ptedinhash(&pted)) != NULL)
-			pte_zap(pte, &pted);
+		pte = pte_lookup(vsid, va);
+		if (pte)
+			pte_del(pte, pmap_ava(vsid, va));
 		PMAP_HASH_UNLOCK(s);
+
+		if (pte)
+			pm->pm_stats.resident_count--;
 
 		va += PAGE_SIZE;
 	}
@@ -618,8 +659,8 @@ pmap_clear_modify(struct vm_page *pg)
 int
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 {
-	struct pte_desc pted;
 	struct pte *pte;
+	uint64_t vsid;
 	int s;
 
 	if (pm == pmap_kernel() &&
@@ -628,11 +669,11 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 		return 1;
 	}
 
-	pmap_fill_pte(pm, va, 0, &pted, 0, 0);
-	pted.pted_pte.pte_hi |= PTE_VALID;
+	vsid = pmap_va2vsid(pm, va);
 
 	PMAP_HASH_LOCK(s);
-	if ((pte = pmap_ptedinhash(&pted)) != NULL)
+	pte = pte_lookup(vsid, va);
+	if (pte)
 		*pa = (pte->pte_lo & PTE_RPGN) | (va & PAGE_MASK);
 	PMAP_HASH_UNLOCK(s);
 
@@ -788,10 +829,9 @@ pmap_bootstrap(void)
 struct pte *
 pmap_get_kernel_pte(vaddr_t va)
 {
-	struct pte_desc pted;
+	uint64_t vsid;
 
-	pmap_fill_pte(pmap_kernel(), va, 0, &pted, 0, 0);
-	pted.pted_pte.pte_hi |= PTE_VALID;
-	return pmap_ptedinhash(&pted);
+	vsid = pmap_kernel_vsid(va >> ADDR_ESID_SHIFT);
+	return pte_lookup(vsid, va);
 }
 #endif
