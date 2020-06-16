@@ -1,4 +1,4 @@
-.\" $OpenBSD: stoeplitz_to_key.9,v 1.2 2020/06/16 13:57:19 jmc Exp $
+.\" $OpenBSD: stoeplitz_to_key.9,v 1.3 2020/06/16 15:43:43 naddy Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -22,7 +22,7 @@
 .Nm stoeplitz_hash_ip4 ,
 .Nm stoeplitz_hash_ip4port ,
 .Nm stoeplitz_hash_ip6 ,
-.Nm stoeplitz_hash_ip4port
+.Nm stoeplitz_hash_ip6port
 .Nd symmetric Toeplitz hash API
 .Sh SYNOPSIS
 .In net/toeplitz.h
@@ -54,7 +54,7 @@
 .Fc
 .Sh DESCRIPTION
 The Toeplitz hash algorithm is commonly used by network interface
-controllers to to generate a short hash based on the value of fields
+controllers to generate a short hash based on the value of fields
 in network packet headers.
 .\" mention RSS?
 The resulting hash value can be used as a flow identifier, which
@@ -73,7 +73,7 @@ property.
 The
 .Fn stoeplitz_to_key
 function generates a Toeplitz key for use by a network interface
-controller based on the systems symmetric Toeplitz key.
+controller based on the system's symmetric Toeplitz key.
 A Toeplitz key of
 .Fa keylen
 bytes will be written to the buffer referenced by the
@@ -110,7 +110,7 @@ interrupt context.
 .Fn stoeplitz_hash_ip6 ,
 and
 .Fn stoeplitz_hash_ip6port
-return a 16 bit hash value in host byte order.
+return a 16-bit hash value in host byte order.
 .\" .Sh SEE ALSO
 .\" .Xr mbuf 9 ,
 .\" .Xr spl 9
