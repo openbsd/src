@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.61 2020/05/25 09:55:49 jsg Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.62 2020/06/16 21:49:30 mortimer Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1859,8 +1859,7 @@ rasops_use_font(struct rasops_info *ri, struct wsdisplay_font *font)
 	    WSDISPLAY_FONTORDER_KNOWN) < 0)
 		return EINVAL;
 
-	/* if (ri->ri_wsfcookie >= 0) */
-		wsfont_unlock(ri->ri_wsfcookie);
+	wsfont_unlock(ri->ri_wsfcookie);
 	ri->ri_wsfcookie = wsfcookie;
 	ri->ri_font = wsf;
 	ri->ri_fontscale = ri->ri_font->fontheight * ri->ri_font->stride;
