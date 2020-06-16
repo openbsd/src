@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.8 2020/06/16 14:35:12 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.9 2020/06/16 15:10:03 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -58,6 +58,9 @@
 #define atomic_cmpxchg(p, o, n)	__sync_val_compare_and_swap(p, o, n)
 #define cmpxchg(p, o, n)	__sync_val_compare_and_swap(p, o, n)
 #define atomic_set_release(p, v)	atomic_set((p), (v))
+#define atomic_andnot(bits, p)		atomic_clearbits_int(p,bits)
+#define atomic_fetch_inc(p)		__sync_fetch_and_add(p, 1)
+#define atomic_fetch_xor(n, p)		__sync_fetch_and_xor(p, n)
 
 #define try_cmpxchg(p, op, n)						\
 ({									\
@@ -225,17 +228,6 @@ typedef int32_t atomic_long_t;
 #define atomic_long_cmpxchg(p, o, n)	atomic_cmpxchg(p, o, n)
 #endif
 
-/* FIXME */
-#define atomic_set_int(p, bits)		atomic_setbits_int(p,bits)
-#define atomic_set_mask(bits, p)	atomic_setbits_int(p,bits)
-#define atomic_clear_int(p, bits)	atomic_clearbits_int(p,bits)
-#define atomic_clear_mask(bits, p)	atomic_clearbits_int(p,bits)
-#define atomic_andnot(bits, p)		atomic_clearbits_int(p,bits)
-#define atomic_fetchadd_int(p, n) __sync_fetch_and_add(p, n)
-#define atomic_fetchsub_int(p, n) __sync_fetch_and_sub(p, n)
-#define atomic_fetch_inc(p) __sync_fetch_and_add(p, 1)
-#define atomic_fetch_xor(n, p) __sync_fetch_and_xor(p, n)
-
 static inline atomic_t
 test_and_set_bit(u_int b, volatile void *p)
 {
@@ -247,7 +239,7 @@ test_and_set_bit(u_int b, volatile void *p)
 static inline void
 clear_bit(u_int b, volatile void *p)
 {
-	atomic_clear_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
+	atomic_clearbits_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
 }
 
 static inline void
@@ -260,7 +252,7 @@ clear_bit_unlock(u_int b, volatile void *p)
 static inline void
 set_bit(u_int b, volatile void *p)
 {
-	atomic_set_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
+	atomic_setbits_int(((volatile u_int *)p) + (b >> 5), 1 << (b & 0x1f));
 }
 
 static inline void
