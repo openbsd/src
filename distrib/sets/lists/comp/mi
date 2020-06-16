@@ -1003,6 +1003,7 @@
 ./usr/include/net/route.h
 ./usr/include/net/rtable.h
 ./usr/include/net/slcompress.h
+./usr/include/net/toeplitz.h
 ./usr/include/net/trunklacp.h
 ./usr/include/net80211
 ./usr/include/net80211/ieee80211.h

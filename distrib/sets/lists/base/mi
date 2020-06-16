@@ -2790,6 +2790,7 @@
 ./usr/share/man/man8/userinfo.8
 ./usr/share/man/man8/usermod.8
 ./usr/share/man/man9
+./usr/share/man/man9/stoeplitz_to_key.9
 ./usr/share/man/mandoc.db
 ./usr/share/misc
 ./usr/share/misc/airport
