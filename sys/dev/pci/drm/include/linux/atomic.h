@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.6 2020/06/08 04:48:14 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.7 2020/06/16 14:04:50 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -87,7 +87,7 @@ atomic_xchg(volatile int *v, int n)
 static inline int
 atomic_add_unless(volatile int *v, int n, int u)
 {
-	int o = *v;
+	int o;
 
 	do {
 		o = *v;
