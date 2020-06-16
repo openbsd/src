@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.7 2020/06/16 14:04:50 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.8 2020/06/16 14:35:12 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -97,6 +97,8 @@ atomic_add_unless(volatile int *v, int n, int u)
 
 	return 1;
 }
+
+#define atomic_inc_not_zero(v)	atomic_add_unless((v), 1, 0)
 
 static inline int
 atomic_dec_if_positive(volatile int *v)
@@ -222,16 +224,6 @@ typedef int32_t atomic_long_t;
 #define atomic_long_xchg(v, n)		atomic_xchg(v, n)
 #define atomic_long_cmpxchg(p, o, n)	atomic_cmpxchg(p, o, n)
 #endif
-
-static inline int
-atomic_inc_not_zero(atomic_t *p)
-{
-	if (*p == 0)
-		return (0);
-
-	*(p) += 1;
-	return (*p);
-}
 
 /* FIXME */
 #define atomic_set_int(p, bits)		atomic_setbits_int(p,bits)
