@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.27 2020/06/10 21:05:50 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.28 2020/06/16 16:14:22 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -524,8 +524,9 @@ char *tostringN(const char *s, size_t n)	/* make a copy of string s */
 
 	p = malloc(n);
 	if (p == NULL)
-		FATAL("out of space in tostring on %s", s);
-	strlcpy(p, s, n);
+		FATAL("out of space in tostringN %zu", n);
+	if (strlcpy(p, s, n) >= n)
+		FATAL("out of space in tostringN on %s", s);
 	return(p);
 }
 

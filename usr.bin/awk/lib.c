@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.36 2020/06/11 12:00:51 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.37 2020/06/16 16:14:22 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -122,17 +122,15 @@ void initgetrec(void)
  */
 void savefs(void)
 {
-	size_t len;
-	if ((len = strlen(getsval(fsloc))) < len_inputFS) {
-		strlcpy(inputFS, *FS, len_inputFS);	/* for subsequent field splitting */
-		return;
+	size_t len = strlen(getsval(fsloc));
+	if (len >= len_inputFS) {
+		len_inputFS = len + 1;
+		inputFS = realloc(inputFS, len_inputFS);
+		if (inputFS == NULL)
+			FATAL("field separator %.10s... is too long", *FS);
 	}
-
-	len_inputFS = len + 1;
-	inputFS = realloc(inputFS, len_inputFS);
-	if (inputFS == NULL)
+	if (strlcpy(inputFS, *FS, len_inputFS) >= len_inputFS)
 		FATAL("field separator %.10s... is too long", *FS);
-	memcpy(inputFS, *FS, len_inputFS);
 }
 
 static bool firsttime = true;
@@ -508,6 +506,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 	   DPRINTF( ("into refldbld, rec = <%s>, pat = <%s>\n", rec, fs) );
 	tempstat = pfa->initstat;
 	for (i = 1; ; i++) {
+		const size_t fss_rem = fields + fieldssize + 1 - fr;
 		if (i > nfields)
 			growfldtab(i);
 		if (freeable(fldtab[i]))
@@ -516,15 +515,19 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 		fldtab[i]->sval = fr;
 		   DPRINTF( ("refldbld: i=%d\n", i) );
 		if (nematch(pfa, rec)) {
+			const size_t reclen = patbeg - rec;
 			pfa->initstat = 2;	/* horrible coupling to b.c */
 			   DPRINTF( ("match %s (%d chars)\n", patbeg, patlen) );
-			strncpy(fr, rec, patbeg-rec);
-			fr += patbeg - rec + 1;
-			*(fr-1) = '\0';
+			if (reclen >= fss_rem)
+				FATAL("out of space for fields in refldbld");
+			memcpy(fr, rec, reclen);
+			fr += reclen;
+			*fr++ = '\0';
 			rec = patbeg + patlen;
 		} else {
 			   DPRINTF( ("no match %s\n", rec) );
-			strlcpy(fr, rec, fields + fieldssize - fr);
+			if (strlcpy(fr, rec, fss_rem) >= fss_rem)
+				FATAL("out of space for fields in refldbld");
 			pfa->initstat = tempstat;
 			break;
 		}
