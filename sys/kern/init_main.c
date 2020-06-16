@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.299 2020/05/29 04:42:25 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.300 2020/06/16 05:09:29 dlg Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -100,6 +100,11 @@ extern void kubsan_init(void);
 
 #if defined(NFSSERVER) || defined(NFSCLIENT)
 extern void nfs_init(void);
+#endif
+
+#include "stoeplitz.h"
+#if NSTOEPLITZ > 0
+extern void stoeplitz_init(void);
 #endif
 
 #include "mpath.h"
@@ -239,6 +244,10 @@ main(void *framep)
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
 	 */
 	mbinit();
+
+#if NSTOEPLITZ > 0
+	stoeplitz_init();
+#endif
 
 	/* Initialize sockets. */
 	soinit();

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.686 2020/04/15 09:26:49 patrick Exp $
+#	$OpenBSD: files,v 1.687 2020/06/16 05:09:28 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -62,6 +62,7 @@ define	ether
 define	mpls
 define	sppp
 define	wlan
+define	stoeplitz
 
 # "Chipset" attributes.  These are the machine-independent portions
 # of device drivers.
@@ -826,6 +827,7 @@ file net/if_pair.c			pair
 file net/if_pppx.c			pppx			needs-count
 file net/if_vxlan.c			vxlan			needs-count
 file net/bfd.c				bfd
+file net/toeplitz.c			stoeplitz		needs-flag
 file net80211/ieee80211.c		wlan
 file net80211/ieee80211_amrr.c		wlan
 file net80211/ieee80211_crypto.c	wlan
