@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.1 2020/06/08 18:44:32 kettenis Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.2 2020/06/17 17:54:05 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -457,6 +457,7 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 void
 _dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
+	pmap_kremove((vaddr_t)kva, size);
 	km_free(kva, round_page(size), &kv_any, &kp_none);
 }
 
