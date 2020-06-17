@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.52 2020/06/13 01:21:01 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.53 2020/06/17 15:34:11 tim Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2020 $
+.Dd $Mdocdate: June 17 2020 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -474,6 +474,8 @@ such that
 .Sm off
 .Pf 0 \*(Le Fa n No \*(Lt 1 .
 .Sm on
+Random numbers are non-deterministic unless a seed is explicitly set with
+.Fn srand .
 .It Fn sin x
 Return the sine of
 .Fa x ,
@@ -491,7 +493,9 @@ to
 and returns the previous seed.
 If
 .Fa expr
-is omitted, the time of day is used instead.
+is omitted,
+.Fn rand
+will return non-deterministic random numbers.
 .El
 .Ss String Functions
 .Bl -tag -width "split(s, a, fs)"
@@ -897,6 +901,11 @@ and
 are not collapsed and a slash
 .Pq Ql /
 does not need to be escaped in a bracket expression.
+Also, the behaviour of
+.Fn rand
+and
+.Fn srand
+has been changed to support non-deterministic random numbers.
 .Pp
 The flags
 .Op Fl \&dV
