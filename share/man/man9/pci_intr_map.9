@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci_intr_map.9,v 1.14 2020/06/17 07:45:04 dlg Exp $
+.\"	$OpenBSD: pci_intr_map.9,v 1.15 2020/06/17 07:54:57 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Michael Shalayeff
 .\" All rights reserved.
@@ -21,6 +21,7 @@
 .Sh NAME
 .Nm pci_intr_map ,
 .Nm pci_intr_map_msi ,
+.Nm pci_intr_map_msix ,
 .Nm pci_intr_line ,
 .Nm pci_intr_string ,
 .Nm pci_intr_establish ,
@@ -36,6 +37,12 @@
 .Fn pci_intr_map "struct pci_attach_args *paa" "pci_intr_handle_t *ih"
 .Ft int
 .Fn pci_intr_map_msi "struct pci_attach_args *paa" "pci_intr_handle_t *ih"
+.Ft int
+.Fo pci_intr_map_msix
+.Fa "struct pci_attach_args *paa"
+.Fa "int vector"
+.Fa "pci_intr_handle_t *ih"
+.Fc
 .Ft int
 .Fn pci_intr_line "pci_intr_handle_t ih"
 .Ft const char *
@@ -59,9 +66,10 @@ An architect type is provided by the machine-dependent
 code
 .Va pci_intr_handle_t ,
 to be initialised by
-.Fn pci_intr_map
+.Fn pci_intr_map ,
+.Fn pci_intr_map_msi ,
 or
-.Fn pci_intr_map_msi .
+.Fn pci_intr_map_msix .
 .Pp
 The
 .Fn pci_intr_map
@@ -69,6 +77,7 @@ function should be called first to establish a mapping between a PCI
 pin and the interrupt controller's interrupt vector.
 This process may include resolving the mapping through
 firmware-provided information.
+.Pp
 For devices that support Message Signaled Interrupts (MSI) the
 .Fn pci_intr_map_msi
 function should be called instead.
@@ -77,6 +86,23 @@ system does not support MSI.
 In that case
 .Fn pci_intr_map
 should be called to fall back on classic PCI interrupts.
+.Pp
+For devices that support Extended Message Signaled Interrupts (MSI-X) the
+.Fn pci_intr_map_msix
+function can be called instead.
+This function can fail if the system does not support MSI-X.
+In that case
+.Fn pci_intr_map_msi
+or
+.Fn pci_intr_map
+can be called to fall back on Message Signalled Interrupts or classic
+PCI interrupts respectively.
+MSI-X can provide multiple interrupt vectors per device.
+For each vector, a separate call to
+.Fn pci_intr_map_msix
+is made with the
+.Fa vector
+argument specifying which interrupt vector to map.
 .Pp
 Having initialised the
 .Va pci_intr_handle_t
