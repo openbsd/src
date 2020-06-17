@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.74 2020/05/14 13:07:11 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.75 2020/06/17 06:14:52 dlg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -669,6 +669,14 @@ void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, const char *what)
 {
+	return pci_intr_establish_cpu(pc, ih, level, NULL, func, arg, what);
+}
+
+void *
+pci_intr_establish_cpu(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, struct cpu_info *ci,
+    int (*func)(void *), void *arg, const char *what)
+{
 	int pin, irq;
 	int bus, dev;
 	pcitag_t tag = ih.tag;
@@ -676,11 +684,11 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 
 	if (ih.line & APIC_INT_VIA_MSG) {
 		return intr_establish(-1, &msi_pic, tag, IST_PULSE, level,
-		    func, arg, what);
+		    ci, func, arg, what);
 	}
 	if (ih.line & APIC_INT_VIA_MSGX) {
 		return intr_establish(-1, &msix_pic, tag, IST_PULSE, level,
-		    func, arg, what);
+		    ci, func, arg, what);
 	}
 
 	pci_decompose_tag(pc, ih.tag, &bus, &dev, NULL);
@@ -706,7 +714,8 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	}
 #endif
 
-	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg, what);
+	return intr_establish(irq, pic, pin, IST_LEVEL, level, ci,
+	    func, arg, what);
 }
 
 void

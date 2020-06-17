@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.31 2018/12/21 01:51:07 jsg Exp $	*/
+/*	$OpenBSD: intr.h,v 1.32 2020/06/17 06:14:52 dlg Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -201,8 +201,8 @@ void intr_calculatemasks(struct cpu_info *);
 int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *);
 int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
 	    int *);
-void *intr_establish(int, struct pic *, int, int, int, int (*)(void *),
-	    void *, const char *);
+void *intr_establish(int, struct pic *, int, int, int,
+	    struct cpu_info *, int (*)(void *), void *, const char *);
 void intr_disestablish(struct intrhand *);
 int intr_handler(struct intrframe *, struct intrhand *);
 void cpu_intr_init(struct cpu_info *);
