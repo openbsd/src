@@ -1,4 +1,4 @@
-.\" $OpenBSD: intrmap_create.9,v 1.2 2020/06/17 03:01:26 dlg Exp $
+.\" $OpenBSD: intrmap_create.9,v 1.3 2020/06/17 06:25:41 jmc Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -103,7 +103,7 @@ and
 can be called during autoconf, or from process context.
 .Sh RETURN VALUES
 .Fn intrmap_create
-returns a pointer to a interrupt mapping structure on success, or
+returns a pointer to an interrupt mapping structure on success, or
 .Dv NULL
 on failure.
 .Pp
@@ -112,7 +112,7 @@ returns the number of interrupts that were allocated for the driver
 to use.
 .Pp
 .Fn intrmap_cpu
-returns pointer to the cpu_info structure for the CPU that the
+returns a pointer to the cpu_info structure for the CPU that the
 interrupt should be established on.
 .\" .Sh SEE ALSO
 .\" .Xr pci_intr_establish_cpuid 9
