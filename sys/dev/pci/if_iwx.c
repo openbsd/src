@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.26 2020/06/11 11:27:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.27 2020/06/17 08:18:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -409,6 +409,9 @@ int	iwx_scan(struct iwx_softc *);
 int	iwx_bgscan(struct ieee80211com *);
 int	iwx_umac_scan_abort(struct iwx_softc *);
 int	iwx_scan_abort(struct iwx_softc *);
+int	iwx_rs_rval2idx(uint8_t);
+uint16_t iwx_rs_ht_rates(struct iwx_softc *, struct ieee80211_node *, int);
+int	iwx_rs_init(struct iwx_softc *, struct iwx_node *);
 int	iwx_enable_data_tx_queues(struct iwx_softc *);
 int	iwx_auth(struct iwx_softc *);
 int	iwx_deauth(struct iwx_softc *);
@@ -3775,6 +3778,7 @@ iwx_rx_tx_cmd_single(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 			in->in_mn.retries += tx_resp->failure_frame;
 		if (txfail)
 			in->in_mn.txfail += tx_resp->frame_count;
+#if 0
 		if (ic->ic_state == IEEE80211_S_RUN && !in->ht_force_cck) {
 			int otxmcs = ni->ni_txmcs;
 
@@ -3785,6 +3789,7 @@ iwx_rx_tx_cmd_single(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 			    otxmcs == 0 && ni->ni_txmcs == 0)
 				iwx_enable_ht_cck_fallback(sc, in);
 		}
+#endif
 	}
 
 	if (txfail)
@@ -4294,10 +4299,13 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 	    type != IEEE80211_FC0_TYPE_DATA) {
 		/* for non-data, use the lowest supported rate */
 		ridx = min_ridx;
+		flags |= IWX_TX_FLAGS_CMD_RATE;
 	} else if (ic->ic_fixed_mcs != -1) {
 		ridx = sc->sc_fixed_ridx;
+		flags |= IWX_TX_FLAGS_CMD_RATE;
 	} else if (ic->ic_fixed_rate != -1) {
 		ridx = sc->sc_fixed_ridx;
+		flags |= IWX_TX_FLAGS_CMD_RATE;
 	} else if ((ni->ni_flags & IEEE80211_NODE_HT) && !in->ht_force_cck) {
 		ridx = iwx_mcs2ridx[ni->ni_txmcs];
 	} else {
@@ -4308,7 +4316,7 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 			ridx = min_ridx;
 	}
 
-	flags = (IWX_TX_FLAGS_CMD_RATE | IWX_TX_FLAGS_ENCRYPT_DIS);
+	flags |= IWX_TX_FLAGS_ENCRYPT_DIS;
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    ni->ni_rsn_supp_state == RSNA_SUPP_PTKNEGOTIATING)
 		flags |= IWX_TX_FLAGS_HIGH_PRI;
@@ -5742,6 +5750,120 @@ iwx_enable_data_tx_queues(struct iwx_softc *sc)
 }
 
 int
+iwx_rs_rval2idx(uint8_t rval)
+{
+	/* Firmware expects indices which match our 11g rate set. */
+	const struct ieee80211_rateset *rs = &ieee80211_std_rateset_11g;
+	int i;
+
+	for (i = 0; i < rs->rs_nrates; i++) {
+		if ((rs->rs_rates[i] & IEEE80211_RATE_VAL) == rval)
+			return i;
+	}
+
+	return -1;
+}
+
+uint16_t
+iwx_rs_ht_rates(struct iwx_softc *sc, struct ieee80211_node *ni, int rsidx)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	const struct ieee80211_ht_rateset *rs;
+	uint16_t htrates = 0;
+	int mcs;
+
+	rs = &ieee80211_std_ratesets_11n[rsidx];
+	for (mcs = rs->min_mcs; mcs <= rs->max_mcs; mcs++) {
+		if (!isset(ni->ni_rxmcs, mcs) ||
+		    !isset(ic->ic_sup_mcs, mcs))
+			continue;
+		htrates |= (1 << (mcs - rs->min_mcs));
+	}
+
+	return htrates;
+}
+
+int
+iwx_rs_init(struct iwx_softc *sc, struct iwx_node *in)
+{
+	struct ieee80211_node *ni = &in->in_ni;
+	struct ieee80211_rateset *rs = &ni->ni_rates;
+	struct iwx_tlc_config_cmd cfg_cmd;
+	uint32_t cmd_id;
+	int i;
+
+	memset(&cfg_cmd, 0, sizeof(cfg_cmd));
+
+	for (i = 0; i < rs->rs_nrates; i++) {
+		uint8_t rval = rs->rs_rates[i] & IEEE80211_RATE_VAL;
+		int idx = iwx_rs_rval2idx(rval);
+		if (idx == -1)
+			return EINVAL;
+		cfg_cmd.non_ht_rates |= (1 << idx);
+	}
+
+	if (ni->ni_flags & IEEE80211_NODE_HT) {
+		cfg_cmd.mode = IWX_TLC_MNG_MODE_HT;
+		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_HT_BW_NONE_160] =
+		    iwx_rs_ht_rates(sc, ni, IEEE80211_HT_RATESET_SISO);
+		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_HT_BW_NONE_160] =
+		    iwx_rs_ht_rates(sc, ni, IEEE80211_HT_RATESET_MIMO2);
+	} else
+		cfg_cmd.mode = IWX_TLC_MNG_MODE_NON_HT;
+
+	cfg_cmd.sta_id = IWX_STATION_ID;
+	cfg_cmd.max_ch_width = IWX_RATE_MCS_CHAN_WIDTH_20;
+	cfg_cmd.chains = IWX_TLC_MNG_CHAIN_A_MSK | IWX_TLC_MNG_CHAIN_B_MSK;
+	cfg_cmd.max_mpdu_len = IEEE80211_MAX_LEN;
+	if (ieee80211_node_supports_ht_sgi20(ni))
+		cfg_cmd.sgi_ch_width_supp = (1 << IWX_TLC_MNG_CH_WIDTH_20MHZ);
+
+	cmd_id = iwx_cmd_id(IWX_TLC_MNG_CONFIG_CMD, IWX_DATA_PATH_GROUP, 0);
+	return iwx_send_cmd_pdu(sc, cmd_id, IWX_CMD_ASYNC, sizeof(cfg_cmd),
+	    &cfg_cmd);
+}
+
+void
+iwx_rs_update(struct iwx_softc *sc, struct iwx_tlc_update_notif *notif)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct ieee80211_rateset *rs = &ni->ni_rates;
+	uint32_t rate_n_flags;
+	int i;
+
+	if (notif->sta_id != IWX_STATION_ID ||
+	    (le32toh(notif->flags) & IWX_TLC_NOTIF_FLAG_RATE) == 0)
+		return;
+
+	rate_n_flags = le32toh(notif->rate);
+	if (rate_n_flags & IWX_RATE_MCS_HT_MSK) {
+		ni->ni_txmcs = (rate_n_flags &
+		    (IWX_RATE_HT_MCS_RATE_CODE_MSK |
+		    IWX_RATE_HT_MCS_NSS_MSK));
+	} else {
+		uint8_t plcp = (rate_n_flags & IWX_RATE_LEGACY_RATE_MSK);
+		uint8_t rval = 0;
+		for (i = IWX_RATE_1M_INDEX; i < nitems(iwx_rates); i++) {
+			if (iwx_rates[i].plcp == plcp) {
+				rval = iwx_rates[i].rate;
+				break;
+			}
+		}
+		if (rval) {
+			uint8_t rv;
+			for (i = 0; i < rs->rs_nrates; i++) {
+				rv = rs->rs_rates[i] & IEEE80211_RATE_VAL;
+				if (rv == rval) {
+					ni->ni_txrate = i;
+					break;
+				}
+			}
+		}
+	}
+}
+
+int
 iwx_auth(struct iwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -6025,11 +6147,17 @@ iwx_run(struct iwx_softc *sc)
 	in->in_ni.ni_txrate = 0;
 	in->in_ni.ni_txmcs = 0;
 
-	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_TLC_OFFLOAD))
-		DPRINTF(("%s: TODO: Enable firmware rate scaling?\n",
-		    DEVNAME(sc)));
-
+	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_TLC_OFFLOAD)) {
+		err = iwx_rs_init(sc, in);
+		if (err) {
+			printf("%s: could not init rate scaling (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
+	}
+#if 0
 	timeout_add_msec(&sc->sc_calib_to, 500);
+#endif
 	return 0;
 }
 
@@ -7450,6 +7578,18 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 
 		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP, IWX_RX_NO_DATA_NOTIF):
 			break; /* happens in monitor mode; ignore for now */
+
+		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP, IWX_TLC_MNG_CONFIG_CMD):
+			break;
+
+		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP,
+		    IWX_TLC_MNG_UPDATE_NOTIF): {
+			struct iwx_tlc_update_notif *notif;
+			SYNC_RESP_STRUCT(notif, pkt);
+			if (iwx_rx_packet_payload_len(pkt) == sizeof(*notif))
+				iwx_rs_update(sc, notif);
+			break;
+		}
 
 		default:
 			handled = 0;
