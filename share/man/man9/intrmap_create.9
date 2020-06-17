@@ -1,4 +1,4 @@
-.\" $OpenBSD: intrmap_create.9,v 1.1 2020/06/17 00:28:28 dlg Exp $
+.\" $OpenBSD: intrmap_create.9,v 1.2 2020/06/17 03:01:26 dlg Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -36,7 +36,7 @@
 .Fn intrmap_destroy "struct intrmap *im"
 .Ft unsigned int
 .Fn intrmap_count "struct intrmap *im"
-.Ft unsigned int
+.Ft struct cpu_info *
 .Fn intrmap_cpu "struct intrmap *im" "unsigned int index"
 .Sh DESCRIPTION
 The interrupt to CPU mapping API supports the use of multiple CPUs
@@ -112,8 +112,8 @@ returns the number of interrupts that were allocated for the driver
 to use.
 .Pp
 .Fn intrmap_cpu
-returns an identifier for the CPU that the interrupt should be
-established on.
+returns pointer to the cpu_info structure for the CPU that the
+interrupt should be established on.
 .\" .Sh SEE ALSO
 .\" .Xr pci_intr_establish_cpuid 9
 .Sh HISTORY

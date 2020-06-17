@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_intrmap.c,v 1.1 2020/06/17 00:27:52 dlg Exp $ */
+/* $OpenBSD: kern_intrmap.c,v 1.2 2020/06/17 03:01:26 dlg Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -47,9 +47,9 @@
 #include <sys/intrmap.h>
 
 struct intrmap_cpus {
-	struct refcnt	 ic_refs;
-	unsigned int	 ic_count;
-	unsigned int	*ic_cpumap;
+	struct refcnt	  ic_refs;
+	unsigned int	  ic_count;
+	struct cpu_info **ic_cpumap;
 };
 
 struct intrmap {
@@ -90,7 +90,7 @@ intrmap_cpus_get(void)
 	rw_enter_write(&intrmap_lock);
 	if (intrmap_ncpu != ncpus) {
 		unsigned int icpus = 0;
-		unsigned int *cpumap;
+		struct cpu_info **cpumap;
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *ci;
 
@@ -107,12 +107,12 @@ intrmap_cpus_get(void)
 			if (ci->ci_smt_id > 0)
 				continue;
 #endif
-			cpumap[icpus++] = CPU_INFO_UNIT(ci);
+			cpumap[icpus++] = ci;
 		}
 
 		if (icpus < ncpus) {
 			/* this is mostly about free(9) needing a size */
-			unsigned int *icpumap = mallocarray(icpus,
+			struct cpu_info **icpumap = mallocarray(icpus,
 			    sizeof(*icpumap), M_DEVBUF, M_WAITOK);
 			memcpy(icpumap, cpumap, icpus * sizeof(*icpumap));
 			free(cpumap, M_DEVBUF, ncpus * sizeof(*cpumap));
@@ -334,7 +334,7 @@ intrmap_count(const struct intrmap *im)
 	return (im->im_count);
 }
 
-unsigned int
+struct cpu_info *
 intrmap_cpu(const struct intrmap *im, unsigned int ring)
 {
 	const struct intrmap_cpus *ic = im->im_cpus;
