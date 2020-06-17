@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.97 2020/05/17 14:34:35 anton Exp $
+.\"	$OpenBSD: ddb.4,v 1.98 2020/06/17 10:55:24 sthen Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: May 17 2020 $
+.Dd $Mdocdate: June 17 2020 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -557,6 +557,8 @@ modifier interprets the
 .Ar frameaddr
 argument as the TID of a process and shows the stack trace of
 that process.
+.Ar frameaddr
+is subject to the radix; use the 0t prefix to enter a decimal TID.
 The
 .Cm /t
 modifier is not supported on all platforms.
