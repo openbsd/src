@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci_intr_map.9,v 1.15 2020/06/17 07:54:57 dlg Exp $
+.\"	$OpenBSD: pci_intr_map.9,v 1.16 2020/06/17 07:58:25 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Michael Shalayeff
 .\" All rights reserved.
@@ -105,16 +105,14 @@ is made with the
 argument specifying which interrupt vector to map.
 .Pp
 Having initialised the
-.Va pci_intr_handle_t
+.Fa pci_intr_handle_t
 in the previous step, an interrupt handler can be established using
 .Fn pci_intr_establish
 or converted into printable form using
 .Fn pci_intr_string .
-A handler established using
-.Fn pci_intr_establish
-is always called with the system interrupt priority level set equal to,
-or higher than,
-.Va level .
+An established interrupt handler is always called with the system
+interrupt priority level set equal to, or higher than,
+.Fa level .
 .Pp
 .Fn pci_intr_line
 provides the interrupt line extracted from the MD interrupt handle.
