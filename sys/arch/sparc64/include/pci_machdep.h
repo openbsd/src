@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.36 2019/12/05 12:46:54 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.37 2020/06/17 01:15:32 dlg Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -38,6 +38,8 @@ struct pci_attach_args;
 /*
  * define some bits used to glue into the common PCI code.
  */
+
+#define __HAVE_PCI_MSIX
 
 typedef struct sparc_pci_chipset *pci_chipset_tag_t;
 
@@ -110,6 +112,10 @@ void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 void		pci_msi_enable(pci_chipset_tag_t, pcitag_t, bus_addr_t, int);
 void		pci_msix_enable(pci_chipset_tag_t, pcitag_t, bus_space_tag_t,
 		    int, bus_addr_t, uint32_t);
+int		pci_msix_table_map(pci_chipset_tag_t, pcitag_t,
+		    bus_space_tag_t, bus_space_handle_t *);
+void		pci_msix_table_unmap(pci_chipset_tag_t, pcitag_t,
+		    bus_space_tag_t, bus_space_handle_t);
 
 int		sparc64_pci_enumerate_bus(struct pci_softc *,
 		    int (*match)(struct pci_attach_args *),

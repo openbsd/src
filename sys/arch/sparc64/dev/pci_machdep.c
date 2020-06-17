@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.49 2019/12/05 12:46:54 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.50 2020/06/17 01:15:32 dlg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -611,3 +611,43 @@ pci_msix_enable(pci_chipset_tag_t pc, pcitag_t tag, bus_space_tag_t memt,
 	pci_conf_write(pc, tag, off, reg | PCI_MSIX_MC_MSIXE);
 }
 
+int
+pci_msix_table_map(pci_chipset_tag_t pc, pcitag_t tag,
+    bus_space_tag_t memt, bus_space_handle_t *memh)
+{
+	bus_addr_t base;
+	pcireg_t reg, table, type;
+	int bir, offset;
+	int off, tblsz;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, &reg) == 0)
+		panic("%s: no msix capability", __func__);
+
+	table = pci_conf_read(pc, tag, off + PCI_MSIX_TABLE);
+	bir = (table & PCI_MSIX_TABLE_BIR);
+	offset = (table & PCI_MSIX_TABLE_OFF);
+	tblsz = PCI_MSIX_MC_TBLSZ(reg) + 1;
+
+	bir = PCI_MAPREG_START + bir * 4;
+	type = pci_mapreg_type(pc, tag, bir);
+	if (pci_mapreg_info(pc, tag, bir, type, &base, NULL, NULL) ||
+	    bus_space_map(memt, base + offset, tblsz * 16, 0, memh))
+		return (-1);
+
+	return (0);
+}
+
+void
+pci_msix_table_unmap(pci_chipset_tag_t pc, pcitag_t tag,
+    bus_space_tag_t memt, bus_space_handle_t memh)
+{
+	pcireg_t reg;
+	int tblsz;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
+		panic("%s: no msix capability", __func__);
+
+	tblsz = PCI_MSIX_MC_TBLSZ(reg) + 1;
+
+	bus_space_unmap(memt, memh, tblsz * 16);
+}
