@@ -1,4 +1,4 @@
-/*	$OpenBSD: smr.h,v 1.6 2020/04/12 07:20:33 visa Exp $	*/
+/*	$OpenBSD: smr.h,v 1.7 2020/06/17 14:12:19 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -66,6 +66,8 @@ smr_init(struct smr_entry *smr)
 #define SMR_ASSERT_CRITICAL()		do {} while (0)
 #define SMR_ASSERT_NONCRITICAL()	do {} while (0)
 #endif
+
+#endif /* _KERNEL */
 
 #define SMR_PTR_GET(pptr)		READ_ONCE(*pptr)
 
@@ -434,7 +436,5 @@ struct {								\
 	/* (elm)->field.smr_tqe_next must be left intact to allow	\
 	 * any concurrent readers to proceed iteration. */		\
 } while (0)
-
-#endif /* _KERNEL */
 
 #endif /* !_SYS_SMR_ */
