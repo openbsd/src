@@ -1,4 +1,4 @@
-/*	$OpenBSD: kref.h,v 1.3 2020/06/17 02:06:05 jsg Exp $	*/
+/*	$OpenBSD: kref.h,v 1.4 2020/06/17 02:58:15 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -32,7 +32,7 @@ struct kref {
 static inline void
 kref_init(struct kref *ref)
 {
-	ref->refcount = 1;
+	atomic_set(&ref->refcount, 1);
 }
 
 static inline unsigned int
