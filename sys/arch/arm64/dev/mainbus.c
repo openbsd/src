@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.16 2020/04/22 11:10:07 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.17 2020/06/17 08:00:22 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -38,6 +38,7 @@ int mainbus_match_status(struct device *, void *, void *);
 void mainbus_attach_cpus(struct device *, cfmatch_t);
 int mainbus_match_primary(struct device *, void *, void *);
 int mainbus_match_secondary(struct device *, void *, void *);
+void mainbus_attach_psci(struct device *);
 void mainbus_attach_efi(struct device *);
 void mainbus_attach_apm(struct device *);
 void mainbus_attach_framebuffer(struct device *);
@@ -129,8 +130,13 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 			strlcpy(hw_serial, prop, len);
 	}
 
+	mainbus_attach_psci(self);
+
 	/* Attach primary CPU first. */
 	mainbus_attach_cpus(self, mainbus_match_primary);
+
+	/* Attach secondary CPUs. */
+	mainbus_attach_cpus(self, mainbus_match_secondary);
 
 	mainbus_attach_efi(self);
 
@@ -153,9 +159,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mainbus_attach_node(self, node, NULL);
 	
 	mainbus_attach_framebuffer(self);
-
-	/* Attach secondary CPUs. */
-	mainbus_attach_cpus(self, mainbus_match_secondary);
 
 	thermal_init();
 }
@@ -358,6 +361,20 @@ mainbus_match_secondary(struct device *parent, void *match, void *aux)
 		return 0;
 
 	return (*cf->cf_attach->ca_match)(parent, match, aux);
+}
+
+void
+mainbus_attach_psci(struct device *self)
+{
+	struct mainbus_softc *sc = (struct mainbus_softc *)self;
+	int node = OF_finddevice("/psci");
+
+	if (node == 0)
+		return;
+
+	sc->sc_early = 1;
+	mainbus_attach_node(self, node, NULL);
+	sc->sc_early = 0;
 }
 
 void
