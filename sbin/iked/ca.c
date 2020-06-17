@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.61 2020/05/08 19:33:13 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.62 2020/06/17 19:41:04 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -477,7 +477,7 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 	uint8_t			 type, more;
 	uint8_t			*ptr;
 	size_t			 len;
-	unsigned int		 i, n;
+	unsigned int		 i;
 	X509			*ca = NULL, *cert = NULL;
 	struct ibuf		*buf;
 	struct iked_static_id	 id;
@@ -485,8 +485,8 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 
 	ptr = (uint8_t *)imsg->data;
 	len = IMSG_DATA_SIZE(imsg);
-	i = sizeof(id) + sizeof(uint8_t) + sizeof(sh) + sizeof(more);
-	if (len < i || ((len - i) % SHA_DIGEST_LENGTH) != 0)
+	i = sizeof(id) + sizeof(type) + sizeof(sh) + sizeof(more);
+	if (len < i)
 		return (-1);
 
 	memcpy(&id, ptr, sizeof(id));
@@ -495,6 +495,9 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 	memcpy(&sh, ptr + sizeof(id), sizeof(sh));
 	memcpy(&type, ptr + sizeof(id) + sizeof(sh), sizeof(type));
 	memcpy(&more, ptr + sizeof(id) + sizeof(sh) + sizeof(type), sizeof(more));
+
+	ptr += i;
+	len -= i;
 
 	switch (type) {
 	case IKEV2_CERT_RSA_KEY:
@@ -512,11 +515,17 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 		    print_map(type, ikev2_cert_map));
 		break;
 	case IKEV2_CERT_X509_CERT:
+		if (len == 0 || len % SHA_DIGEST_LENGTH) {
+			log_info("%s: invalid CERTREQ data.",
+			    SPI_SH(&sh, __func__));
+			return (-1);
+		}
+
 		/*
 		 * Find a local certificate signed by any of the CAs
 		 * received in the CERTREQ payload
 		 */
-		for (n = 1; i < len; n++, i += SHA_DIGEST_LENGTH) {
+		for (i = 0; i < len; i += SHA_DIGEST_LENGTH) {
 			if ((ca = ca_by_subjectpubkey(store->ca_cas, ptr + i,
 			    SHA_DIGEST_LENGTH)) == NULL)
 				continue;
