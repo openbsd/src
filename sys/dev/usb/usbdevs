@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.715 2020/05/31 18:12:04 jcs Exp $
+$OpenBSD: usbdevs,v 1.716 2020/06/17 23:43:08 bru Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1701,6 +1701,13 @@ product ELECOM LDUSB20		0x4010	LD-USB20
 product ELECOM UCSGT		0x5003	UC-SGT Serial
 product ELECOM UCSGT0		0x5004	UC-SGT0 Serial
 product ELECOM LDUSBTX3		0xabc1	LD-USB/TX
+product ELECOM MXT3URBK		0x00fb	M-XT3UR BK
+product ELECOM MXT3DRBK		0x00fc	M-XT3DR BK
+product ELECOM MXT4DRBK		0x00fd	M-XT4DR BK
+product ELECOM MDT1URBK		0x00fe	M-DT1UR BK
+product ELECOM MDT1DRBK		0x00ff	M-DT1DR BK
+product ELECOM MHT1URBK		0x010c	M-HT1UR BK
+product ELECOM MHT1DRBK		0x010d	M-HT1DR BK
 
 /* Elektor Electronics products */
 product ELEKTOR FT323R		0x0005	FT323R
