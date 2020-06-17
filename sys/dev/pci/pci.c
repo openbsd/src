@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.115 2020/01/15 14:01:19 cheloha Exp $	*/
+/*	$OpenBSD: pci.c,v 1.116 2020/06/17 01:43:04 dlg Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -1625,7 +1625,18 @@ pci_resume_msix(pci_chipset_tag_t pc, pcitag_t tag,
 	pci_conf_write(pc, tag, off, mc);
 }
 
-#else
+int
+pci_intr_msix_count(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t reg;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
+		return (0);
+
+	return (PCI_MSIX_MC_TBLSZ(reg) + 1);
+}
+
+#else /* __HAVE_PCI_MSIX */
 
 struct msix_vector *
 pci_alloc_msix_table(pci_chipset_tag_t pc, pcitag_t tag)
@@ -1649,6 +1660,12 @@ void
 pci_resume_msix(pci_chipset_tag_t pc, pcitag_t tag,
     bus_space_tag_t memt, pcireg_t mc, struct msix_vector *table)
 {
+}
+
+int
+pci_intr_msix_count(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	return (0);
 }
 
 #endif /* __HAVE_PCI_MSIX */
