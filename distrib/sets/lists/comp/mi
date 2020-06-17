@@ -1316,6 +1316,7 @@
 ./usr/include/sys/gpio.h
 ./usr/include/sys/hibernate.h
 ./usr/include/sys/hotplug.h
+./usr/include/sys/intrmap.h
 ./usr/include/sys/ioccom.h
 ./usr/include/sys/ioctl.h
 ./usr/include/sys/ipc.h
@@ -3027,6 +3028,7 @@
 ./usr/share/man/man9/imax.9
 ./usr/share/man/man9/inittodr.9
 ./usr/share/man/man9/intr_barrier.9
+./usr/share/man/man9/intrmap_create.9
 ./usr/share/man/man9/intro.9
 ./usr/share/man/man9/km_alloc.9
 ./usr/share/man/man9/knote.9
