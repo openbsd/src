@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.9 2020/06/16 15:10:03 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.10 2020/06/17 01:03:57 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -41,8 +41,8 @@
 
 #define ATOMIC_INIT(x)		(x)
 
-#define atomic_set(p, v)	(*(p) = (v))
-#define atomic_read(p)		(*(p))
+#define atomic_set(p, v)	WRITE_ONCE(*(p), (v))
+#define atomic_read(p)		READ_ONCE(*(p))
 #define atomic_inc(p)		__sync_fetch_and_add(p, 1)
 #define atomic_dec(p)		__sync_fetch_and_sub(p, 1)
 #define atomic_add(n, p)	__sync_fetch_and_add(p, n)
@@ -118,15 +118,15 @@ atomic_dec_if_positive(volatile int *v)
 	return r;
 }
 
-#define atomic_long_read(p)	(*(p))
+#define atomic_long_read(p)	READ_ONCE(*(p))
 
 #ifdef __LP64__
 typedef int64_t atomic64_t;
 
 #define ATOMIC64_INIT(x)	(x)
 
-#define atomic64_set(p, v)	(*(p) = (v))
-#define atomic64_read(p)	(*(p))
+#define atomic64_set(p, v)	WRITE_ONCE(*(p), (v))
+#define atomic64_read(p)	READ_ONCE(*(p))
 
 static inline int64_t
 atomic64_xchg(volatile int64_t *v, int64_t n)
