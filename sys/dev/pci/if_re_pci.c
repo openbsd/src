@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.52 2018/04/11 08:02:18 patrick Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.53 2020/06/17 10:48:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -51,7 +51,6 @@ struct re_pci_softc {
 	struct rl_softc sc_rl;
 
 	/* PCI-specific data */
-	void *sc_ih;
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
 
@@ -164,9 +163,9 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE, re_intr,
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE, re_intr,
 	    sc, sc->sc_dev.dv_xname);
-	if (psc->sc_ih == NULL) {
+	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
@@ -211,7 +210,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Call bus-independent attach routine */
 	if (re_attach(sc, intrstr)) {
-		pci_intr_disestablish(pc, psc->sc_ih);
+		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, psc->sc_iosize);
 	}
 }
@@ -236,8 +235,8 @@ re_pci_detach(struct device *self, int flags)
 	if_detach(ifp);
 
 	/* Disable interrupts */
-	if (psc->sc_ih != NULL)
-		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	if (sc->sc_ih != NULL)
+		pci_intr_disestablish(psc->sc_pc, sc->sc_ih);
 
 	/* Free pci resources */
 	bus_space_unmap(sc->rl_btag, sc->rl_bhandle, psc->sc_iosize);
