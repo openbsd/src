@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.120 2020/06/15 15:29:40 mpi Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.121 2020/06/17 18:29:28 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -48,6 +48,12 @@
 #include <uvm/uvm_extern.h>
 
 #include <sys/pipe.h>
+
+struct pipe_pair {
+	struct pipe pp_wpipe;
+	struct pipe pp_rpipe;
+	struct rwlock pp_lock;
+};
 
 /*
  * interfaces to the outside world
@@ -103,13 +109,12 @@ const struct filterops pipe_wfiltops = {
 unsigned int nbigpipe;
 static unsigned int amountpipekva;
 
-struct pool pipe_pool;
-struct pool pipe_lock_pool;
+struct pool pipe_pair_pool;
 
 int	dopipe(struct proc *, int *, int);
 void	pipeselwakeup(struct pipe *);
 
-struct pipe *pipe_create(void);
+int	pipe_create(struct pipe *);
 void	pipe_destroy(struct pipe *);
 int	pipe_rundown(struct pipe *);
 struct pipe *pipe_peer(struct pipe *);
@@ -119,6 +124,8 @@ void	pipe_buffer_free(struct pipe *);
 int	pipe_iolock(struct pipe *);
 void	pipe_iounlock(struct pipe *);
 int	pipe_iosleep(struct pipe *, const char *);
+
+struct pipe_pair *pipe_pair_create(void);
 
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
@@ -153,33 +160,17 @@ dopipe(struct proc *p, int *ufds, int flags)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
+	struct pipe_pair *pp;
 	struct pipe *rpipe, *wpipe = NULL;
-	struct rwlock *lock;
 	int fds[2], cloexec, error;
 
 	cloexec = (flags & O_CLOEXEC) ? UF_EXCLOSE : 0;
 
-	if ((rpipe = pipe_create()) == NULL) {
-		error = ENOMEM;
-		goto free1;
-	}
-
-	/*
-	 * One lock is used per pipe pair in order to obtain exclusive access to
-	 * the pipe pair.
-	 */
-	lock = pool_get(&pipe_lock_pool, PR_WAITOK);
-	rw_init(lock, "pipelk");
-	rpipe->pipe_lock = lock;
-
-	if ((wpipe = pipe_create()) == NULL) {
-		error = ENOMEM;
-		goto free1;
-	}
-	wpipe->pipe_lock = lock;
-
-	rpipe->pipe_peer = wpipe;
-	wpipe->pipe_peer = rpipe;
+	pp = pipe_pair_create();
+	if (pp == NULL)
+		return (ENOMEM);
+	wpipe = &pp->pp_wpipe;
+	rpipe = &pp->pp_rpipe;
 
 	fdplock(fdp);
 
@@ -226,7 +217,6 @@ free3:
 	rpipe = NULL;
 free2:
 	fdpunlock(fdp);
-free1:
 	pipe_destroy(wpipe);
 	pipe_destroy(rpipe);
 	return (error);
@@ -272,19 +262,14 @@ pipe_buffer_realloc(struct pipe *cpipe, u_int size)
 /*
  * initialize and allocate VM and memory for pipe
  */
-struct pipe *
-pipe_create(void)
+int
+pipe_create(struct pipe *cpipe)
 {
-	struct pipe *cpipe;
 	int error;
 
-	cpipe = pool_get(&pipe_pool, PR_WAITOK | PR_ZERO);
-
 	error = pipe_buffer_realloc(cpipe, PIPE_SIZE);
-	if (error != 0) {
-		pool_put(&pipe_pool, cpipe);
-		return (NULL);
-	}
+	if (error != 0)
+		return (error);
 
 	sigio_init(&cpipe->pipe_sigio);
 
@@ -292,7 +277,7 @@ pipe_create(void)
 	cpipe->pipe_atime = cpipe->pipe_ctime;
 	cpipe->pipe_mtime = cpipe->pipe_ctime;
 
-	return (cpipe);
+	return (0);
 }
 
 struct pipe *
@@ -834,7 +819,6 @@ void
 pipe_destroy(struct pipe *cpipe)
 {
 	struct pipe *ppipe;
-	struct rwlock *lock = NULL;
 
 	if (cpipe == NULL)
 		return;
@@ -862,20 +846,13 @@ pipe_destroy(struct pipe *cpipe)
 		ppipe->pipe_state |= PIPE_EOF;
 		wakeup(ppipe);
 		ppipe->pipe_peer = NULL;
-	} else {
-		/*
-		 * Peer already gone. This is last reference to the pipe lock
-		 * and it must therefore be freed below.
-		 */
-		lock = cpipe->pipe_lock;
 	}
 
 	rw_exit_write(cpipe->pipe_lock);
 
 	pipe_buffer_free(cpipe);
-	if (lock != NULL)
-		pool_put(&pipe_lock_pool, lock);
-	pool_put(&pipe_pool, cpipe);
+	if (ppipe == NULL)
+		pool_put(&pipe_pair_pool, cpipe->pipe_pair);
 }
 
 /*
@@ -1008,8 +985,33 @@ filt_pipewrite(struct knote *kn, long hint)
 void
 pipe_init(void)
 {
-	pool_init(&pipe_pool, sizeof(struct pipe), 0, IPL_MPFLOOR, PR_WAITOK,
-	    "pipepl", NULL);
-	pool_init(&pipe_lock_pool, sizeof(struct rwlock), 0, IPL_MPFLOOR,
-	    PR_WAITOK, "pipelkpl", NULL);
+	pool_init(&pipe_pair_pool, sizeof(struct pipe_pair), 0, IPL_MPFLOOR,
+	    PR_WAITOK, "pipepl", NULL);
+}
+
+struct pipe_pair *
+pipe_pair_create(void)
+{
+	struct pipe_pair *pp;
+
+	pp = pool_get(&pipe_pair_pool, PR_WAITOK | PR_ZERO);
+	pp->pp_wpipe.pipe_pair = pp;
+	pp->pp_rpipe.pipe_pair = pp;
+	pp->pp_wpipe.pipe_peer = &pp->pp_rpipe;
+	pp->pp_rpipe.pipe_peer = &pp->pp_wpipe;
+	/*
+	 * One lock is used per pipe pair in order to obtain exclusive access to
+	 * the pipe pair.
+	 */
+	rw_init(&pp->pp_lock, "pipelk");
+	pp->pp_wpipe.pipe_lock = &pp->pp_lock;
+	pp->pp_rpipe.pipe_lock = &pp->pp_lock;
+
+	if (pipe_create(&pp->pp_wpipe) || pipe_create(&pp->pp_rpipe))
+		goto err;
+	return (pp);
+err:
+	pipe_destroy(&pp->pp_wpipe);
+	pipe_destroy(&pp->pp_rpipe);
+	return (NULL);
 }

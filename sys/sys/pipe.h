@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.24 2020/01/24 11:07:41 anton Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.25 2020/06/17 18:29:28 anton Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -67,6 +67,8 @@ struct pipebuf {
 #define PIPE_LOCK	0x100	/* Thread has exclusive I/O access. */
 #define PIPE_LWANT	0x200	/* Thread wants exclusive I/O access. */
 
+struct pipe_pair;
+
 /*
  * Per-pipe data structure.
  * Two of these are linked together to produce bi-directional pipes.
@@ -85,6 +87,7 @@ struct pipe {
 	struct	timespec pipe_ctime;	/* [I] time of status change */
 	struct	sigio_ref pipe_sigio;	/* [S] async I/O registration */
 	struct	pipe *pipe_peer;	/* [p] link with other direction */
+	struct	pipe_pair *pipe_pair;	/* [I] pipe storage */
 	u_int	pipe_state;		/* [p] pipe status info */
 	int	pipe_busy;		/* [p] # readers/writers */
 };
