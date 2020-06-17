@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmxreg.h,v 1.7 2020/06/16 05:24:07 dlg Exp $	*/
+/*	$OpenBSD: if_vmxreg.h,v 1.8 2020/06/17 07:08:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -178,6 +178,7 @@ struct vmxnet3_rxcompdesc {
 #define VMXNET3_RXC_QID_S	16
 #define VMXNET3_RXC_RSSTYPE_M	0x0000000f
 #define VMXNET3_RXC_RSSTYPE_S	26
+#define VMXNET3_RXC_RSSTYPE_NONE 0
 #define VMXNET3_RXC_NOCSUM	0x40000000	/* no checksum calculated */
 #define VMXNET3_RXC_RES1	0x80000000
 

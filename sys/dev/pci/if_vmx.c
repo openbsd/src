@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.58 2020/06/17 06:36:17 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.59 2020/06/17 07:08:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1014,6 +1014,11 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 			m->m_flags |= M_VLANTAG;
 			m->m_pkthdr.ether_vtag = letoh32((rxcd->rxc_word2 >>
 			    VMXNET3_RXC_VLANTAG_S) & VMXNET3_RXC_VLANTAG_M);
+		}
+		if (((letoh32(rxcd->rxc_word0) >> VMXNET3_RXC_RSSTYPE_S) &
+		    VMXNET3_RXC_RSSTYPE_M) != VMXNET3_RXC_RSSTYPE_NONE) {
+			m->m_pkthdr.ph_flowid = letoh32(rxcd->rxc_word1);
+			SET(m->m_pkthdr.csum_flags, M_FLOWID);
 		}
 
 		ml_enqueue(&ml, m);
