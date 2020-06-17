@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.687 2020/06/16 05:09:28 dlg Exp $
+#	$OpenBSD: files,v 1.688 2020/06/17 03:04:16 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -20,6 +20,7 @@ define	i2cbus {}
 define	gpiobus {}
 define	onewirebus {}
 define	video {}
+define	intrmap {}
 
 # filesystem firmware loading attribute
 define firmload
@@ -692,6 +693,7 @@ file kern/kern_resource.c
 file kern/kern_pledge.c
 file kern/kern_unveil.c
 file kern/kern_sched.c
+file kern/kern_intrmap.c		intrmap
 file kern/kern_sensors.c
 file kern/kern_sig.c
 file kern/kern_smr.c
