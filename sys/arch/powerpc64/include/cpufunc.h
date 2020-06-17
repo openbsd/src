@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.4 2020/06/09 18:58:14 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.5 2020/06/17 20:58:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -123,6 +123,14 @@ static inline void
 mtdec(uint32_t value)
 {
 	__asm volatile ("mtdec %0" :: "r"(value));
+}
+
+static inline uint32_t
+mfpvr(void)
+{
+	uint32_t value;
+	__asm volatile ("mfspr %0, 287" : "=r"(value));
+	return value;
 }
 
 static inline uint64_t
