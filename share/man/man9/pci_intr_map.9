@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci_intr_map.9,v 1.16 2020/06/17 07:58:25 dlg Exp $
+.\"	$OpenBSD: pci_intr_map.9,v 1.17 2020/06/17 08:20:42 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Michael Shalayeff
 .\" All rights reserved.
@@ -25,6 +25,7 @@
 .Nm pci_intr_line ,
 .Nm pci_intr_string ,
 .Nm pci_intr_establish ,
+.\" .Nm pci_intr_establish_cpu ,
 .Nm pci_intr_disestablish
 .Nd PCI interrupts
 .Sh SYNOPSIS
@@ -56,6 +57,16 @@
 .Fa "void *arg"
 .Fa "const char *name"
 .Fc
+.\" .Ft void *
+.\" .Fo pci_intr_establish_cpu
+.\" .Fa "pci_chipset_tag_t pc"
+.\" .Fa "pci_intr_handle_t ih"
+.\" .Fa "int level"
+.\" .Fa "struct cpu_info *ci"
+.\" .Fa "int (*func)(void *)"
+.\" .Fa "void *arg"
+.\" .Fa "const char *name"
+.\" .Fc
 .Ft void
 .Fn pci_intr_disestablish "pci_chipset_tag_t pc" "void *v"
 .Sh DESCRIPTION
@@ -107,12 +118,22 @@ argument specifying which interrupt vector to map.
 Having initialised the
 .Fa pci_intr_handle_t
 in the previous step, an interrupt handler can be established using
-.Fn pci_intr_establish
-or converted into printable form using
-.Fn pci_intr_string .
+.Fn pci_intr_establish .
+.\" or
+.\" .Fn pci_intr_establish_cpu .
+.\" .Fn pci_intr_establish_cpu
+.\" establishes an interrupt on the CPU specified in the
+.\" .Fa ci
+.\" argument, while
+.\" .Fn pci_intr_establish
+.\" uses a system selected CPU.
 An established interrupt handler is always called with the system
 interrupt priority level set equal to, or higher than,
 .Fa level .
+.Pp
+A printable string representation of an initialised interrupt mapping
+can be generated with
+.Fn pci_intr_string .
 .Pp
 .Fn pci_intr_line
 provides the interrupt line extracted from the MD interrupt handle.
