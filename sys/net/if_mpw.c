@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.55 2019/06/26 08:13:13 claudio Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.56 2020/06/17 06:45:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -538,7 +538,8 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 
 		flow = MPLS_SHIM2LABEL(shim->shim_label);
 		flow ^= sc->sc_flow;
-		m->m_pkthdr.ph_flowid = M_FLOWID_VALID | flow;
+		SET(m->m_pkthdr.csum_flags, M_FLOWID);
+		m->m_pkthdr.ph_flowid = flow;
 	} else {
 		if (!MPLS_BOS_ISSET(shim->shim_label))
 			goto drop;
@@ -712,8 +713,8 @@ mpw_start(struct ifnet *ifp)
 			if (m0 == NULL)
 				continue;
 
-			if (ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID))
-				flow ^= m->m_pkthdr.ph_flowid & M_FLOWID_MASK;
+			if (ISSET(m->m_pkthdr.csum_flags, M_FLOWID))
+				flow ^= m->m_pkthdr.ph_flowid;
 
 			shim = mtod(m0, struct shim_hdr *);
 			shim->shim_label = htonl(1) & MPLS_TTL_MASK;

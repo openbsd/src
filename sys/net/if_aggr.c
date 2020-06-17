@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.30 2020/06/02 00:58:09 jmatthew Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.31 2020/06/17 06:45:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -660,7 +660,7 @@ aggr_transmit(struct aggr_softc *sc, const struct aggr_map *map, struct mbuf *m)
 	}
 #endif
 
-	if (ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID))
+	if (ISSET(m->m_pkthdr.csum_flags, M_FLOWID))
 		flow = m->m_pkthdr.ph_flowid;
 
 	ifp0 = map->m_ifp0s[flow % AGGR_MAX_PORTS];
@@ -765,10 +765,8 @@ aggr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	if (__predict_false(!p->p_collecting))
 		goto drop;
 
-	if (!ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID)) {
-		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
-		    (ifp0->if_index ^ sc->sc_mix);
-	}
+	if (!ISSET(m->m_pkthdr.csum_flags, M_FLOWID))
+		m->m_pkthdr.ph_flowid = ifp0->if_index ^ sc->sc_mix;
 
 	if_vinput(ifp, m);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.156 2020/04/12 11:56:52 mpi Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.157 2020/06/17 06:45:22 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1167,8 +1167,9 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 		return (IPPROTO_DONE);
 
 	if (tunnel->t_key_mask == GRE_KEY_ENTROPY) {
-		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
-		    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
+		SET(m->m_pkthdr.csum_flags, M_FLOWID);
+		m->m_pkthdr.ph_flowid =
+		    bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY;
 	}
 
 	rxprio = tunnel->t_rxhprio;
@@ -1326,8 +1327,9 @@ egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen, uint8_t otos)
 		return (0);
 
 	if (sc->sc_tunnel.t_key_mask == GRE_KEY_ENTROPY) {
-		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
-		    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
+		SET(m->m_pkthdr.csum_flags, M_FLOWID);
+		m->m_pkthdr.ph_flowid =
+		    bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY;
 	}
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
@@ -1577,8 +1579,8 @@ nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen,
 
 	nvgre_input_map(sc, key, mtod(m, struct ether_header *));
 
-	m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
-	    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
+	SET(m->m_pkthdr.csum_flags, M_FLOWID);
+	m->m_pkthdr.ph_flowid = bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY;
 
 	gre_l2_prio(&sc->sc_tunnel, m, otos);
 
@@ -2132,9 +2134,9 @@ gre_encap_dst(const struct gre_tunnel *tunnel, const union gre_addr *dst,
 		gkh->gre_key = tunnel->t_key;
 
 		if (tunnel->t_key_mask == GRE_KEY_ENTROPY &&
-		    ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID)) {
+		    ISSET(m->m_pkthdr.csum_flags, M_FLOWID)) {
 			gkh->gre_key |= htonl(~GRE_KEY_ENTROPY &
-			    (m->m_pkthdr.ph_flowid & M_FLOWID_MASK));
+			    m->m_pkthdr.ph_flowid);
 		}
 	}
 
@@ -2179,8 +2181,8 @@ gre_encap_dst_ip(const struct gre_tunnel *tunnel, const union gre_addr *dst,
 			return (NULL);
 
 		ip6 = mtod(m, struct ip6_hdr *);
-		ip6->ip6_flow = ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID) ?
-		    htonl(m->m_pkthdr.ph_flowid & M_FLOWID_MASK) : 0;
+		ip6->ip6_flow = ISSET(m->m_pkthdr.csum_flags, M_FLOWID) ?
+		    htonl(m->m_pkthdr.ph_flowid) : 0;
 		ip6->ip6_vfc |= IPV6_VERSION;
 		ip6->ip6_flow |= htonl((uint32_t)tos << 20);
 		ip6->ip6_plen = htons(len);

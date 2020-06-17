@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.128 2019/10/04 05:00:49 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.129 2020/06/17 06:45:22 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -355,8 +355,8 @@ gif_send(struct gif_softc *sc, struct mbuf *m,
 			return (-1);
 
 		flow = otos << 20;
-		if (ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID))
-			flow |= m->m_pkthdr.ph_flowid & M_FLOWID_MASK;
+		if (ISSET(m->m_pkthdr.csum_flags, M_FLOWID))
+			flow |= m->m_pkthdr.ph_flowid;
 
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_flow = htonl(flow);

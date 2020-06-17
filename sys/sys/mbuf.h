@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.246 2020/01/22 22:56:35 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.247 2020/06/17 06:45:22 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -227,13 +227,14 @@ struct mbuf {
 #define	M_ICMP_CSUM_IN_BAD	0x0800	/* ICMP/ICMPv6 checksum bad */
 #define	M_IPV6_DF_OUT		0x1000	/* don't fragment outgoing IPv6 */
 #define	M_TIMESTAMP		0x2000	/* ph_timestamp is set */
+#define	M_FLOWID		0x4000	/* ph_flowid is set */
 
 #ifdef _KERNEL
 #define MCS_BITS \
     ("\20\1IPV4_CSUM_OUT\2TCP_CSUM_OUT\3UDP_CSUM_OUT\4IPV4_CSUM_IN_OK" \
     "\5IPV4_CSUM_IN_BAD\6TCP_CSUM_IN_OK\7TCP_CSUM_IN_BAD\10UDP_CSUM_IN_OK" \
     "\11UDP_CSUM_IN_BAD\12ICMP_CSUM_OUT\13ICMP_CSUM_IN_OK\14ICMP_CSUM_IN_BAD" \
-    "\15IPV6_NODF_OUT" "\16TIMESTAMP")
+    "\15IPV6_NODF_OUT" "\16TIMESTAMP" "\17FLOWID")
 #endif
 
 /* mbuf types */
@@ -246,10 +247,6 @@ struct mbuf {
 #define	MT_CONTROL	6	/* extra-data protocol message */
 #define	MT_OOBDATA	7	/* expedited data  */
 #define	MT_NTYPES	8
-
-/* flowid field */
-#define M_FLOWID_VALID	0x8000	/* is the flowid set */
-#define M_FLOWID_MASK	0x7fff	/* flow id to map to path */
 
 /* flags to m_get/MGET */
 #include <sys/malloc.h>
