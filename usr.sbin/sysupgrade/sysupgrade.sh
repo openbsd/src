@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.37 2020/01/26 22:08:36 benno Exp $
+# $OpenBSD: sysupgrade.sh,v 1.38 2020/06/17 16:29:02 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -177,8 +177,6 @@ if [[ -n ${DL} ]]; then
 	echo Verifying sets.
 	unpriv cksum -qC SHA256 ${DL}
 fi
-
-${KEEP} && > keep
 
 cat <<__EOT >/auto_upgrade.conf
 Location of sets = disk
