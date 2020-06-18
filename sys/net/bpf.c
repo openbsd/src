@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.191 2020/06/18 23:27:58 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.192 2020/06/18 23:32:00 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ int	bpfpoll(dev_t, int, struct proc *);
 int	bpfkqfilter(dev_t, struct knote *);
 void	bpf_wakeup(struct bpf_d *);
 void	bpf_wakeup_cb(void *);
+int	_bpf_mtap(caddr_t, const struct mbuf *, const struct mbuf *, u_int);
 void	bpf_catchpacket(struct bpf_d *, u_char *, size_t, size_t,
 	    const struct bpf_hdr *);
 int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
@@ -1254,6 +1255,13 @@ bpf_mcopy(const void *src_arg, void *dst_arg, size_t len)
 int
 bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction)
 {
+	return _bpf_mtap(arg, m, m, direction);
+}
+
+int
+_bpf_mtap(caddr_t arg, const struct mbuf *mp, const struct mbuf *m,
+    u_int direction)
+{
 	struct bpf_if *bp = (struct bpf_if *)arg;
 	struct bpf_d *d;
 	size_t pktlen, slen;
@@ -1296,11 +1304,11 @@ bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction)
 				struct timeval tv;
 				memset(&tbh, 0, sizeof(tbh));
 
-				if (ISSET(m->m_flags, M_PKTHDR)) {
-					tbh.bh_ifidx = m->m_pkthdr.ph_ifidx;
-					tbh.bh_flowid = m->m_pkthdr.ph_flowid;
-					tbh.bh_flags = m->m_pkthdr.pf.prio;
-					if (ISSET(m->m_pkthdr.csum_flags,
+				if (ISSET(mp->m_flags, M_PKTHDR)) {
+					tbh.bh_ifidx = mp->m_pkthdr.ph_ifidx;
+					tbh.bh_flowid = mp->m_pkthdr.ph_flowid;
+					tbh.bh_flags = mp->m_pkthdr.pf.prio;
+					if (ISSET(mp->m_pkthdr.csum_flags,
 					    M_FLOWID))
 						SET(tbh.bh_flags, BPF_F_FLOWID);
 
@@ -1389,7 +1397,7 @@ bpf_mtap_hdr(caddr_t arg, const void *data, u_int dlen, const struct mbuf *m,
 	} else 
 		m0 = m;
 
-	return bpf_mtap(arg, m0, direction);
+	return _bpf_mtap(arg, m, m0, direction);
 }
 
 /*
