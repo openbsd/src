@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 2020/06/14 17:53:03 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 2020/06/18 22:51:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -17,7 +17,13 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/syscall.h>
+#include <sys/syscall_mi.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -30,13 +36,25 @@ void	hvi_intr(struct trapframe *);
 void
 trap(struct trapframe *frame)
 {
-	switch (frame->exc) {
+	struct cpu_info *ci = curcpu();
+	struct proc *p = curproc;
+	int type = frame->exc;
+
+	switch (type) {
 	case EXC_DECR:
 		decr_intr(frame);
 		return;
 	case EXC_HVI:
 		hvi_intr(frame);
 		return;
+	}
+
+	if (frame->srr1 & PSL_PR) {
+		type |= EXC_USER;
+		refreshcreds(p);
+	}
+
+	switch (type) {
 #ifdef DDB
 	case EXC_PGM:
 		/* At a trap instruction, enter the debugger. */
@@ -52,8 +70,17 @@ trap(struct trapframe *frame)
 		db_ktrap(T_BREAKPOINT, frame); /* single-stepping */
 		return;
 #endif
+	case EXC_AST|EXC_USER:
+		p->p_md.md_astpending = 0;
+		intr_enable();
+		uvmexp.softs++;
+		mi_ast(p, ci->ci_want_resched);
+		break;
+
+	default:
+		panic("trap type %lx srr1 %lx at %lx lr %lx",
+		    frame->exc, frame->srr1, frame->srr0, frame->lr);
 	}
 
-	panic("trap type %lx srr1 %lx at %lx lr %lx",
-	    frame->exc, frame->srr1, frame->srr0, frame->lr);
+	userret(p);
 }

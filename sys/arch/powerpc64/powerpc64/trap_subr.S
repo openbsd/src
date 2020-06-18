@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.8 2020/06/18 21:52:57 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.9 2020/06/18 22:51:38 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -317,10 +317,30 @@ generictrap:
 
 	FRAME_SETUP(CI_TEMPSAVE)
 	GET_TOCBASE(%r2)
+trapagain:
 	addi	%r3, %r1, 48
 	bl	trap
 
 	.globl	trapexit
 trapexit:
+/* Disable interrupts: */
+	mfmsr	%r3
+	andi.	%r3, %r3, ~PSL_EE@l
+	mtmsr	%r3
+	isync
+/* Test AST pending: */
+	ld	%r5,FRAME_SRR1+48(%r1)
+	mtcr	%r5
+	bf	17,1f			/* branch if PSL_PR is false */
+
+	GET_CPUINFO(%r3)		/* get per-CPU pointer */
+	ld	%r4, CI_CURPROC(%r3)
+	lwz	%r4, P_MD_ASTPENDING(%r4)
+	cmpwi	%r4, 0
+	beq	1f
+	li	%r6, EXC_AST
+	std	%r6, FRAME_EXC+48(%r1)
+	b	trapagain
+1:
 	FRAME_LEAVE(CI_TEMPSAVE)
 	rfid

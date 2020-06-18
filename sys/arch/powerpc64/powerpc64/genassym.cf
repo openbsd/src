@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2020/06/18 21:52:57 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2020/06/18 22:51:38 kettenis Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -100,6 +100,7 @@ member	pcb_sp
 struct	proc
 member	p_addr
 member	p_stat
+member	P_MD_ASTPENDING	p_md.md_astpending
 
 export	SONPROC
 
