@@ -61,8 +61,6 @@ ccp_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ccp_softc *sc = (struct ccp_softc *)self;
 	struct pci_attach_args *pa = aux;
-	bus_addr_t basep;
-	bus_size_t sizep;
 	pcireg_t memtype;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, CCP_PCI_BAR);
@@ -70,13 +68,12 @@ ccp_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": wrong memory type\n");
 		return;
 	}
-	
 
 	if (pci_mapreg_map(pa, CCP_PCI_BAR, memtype, 0,
-	    &sc->sc_iot, &sc->sc_ioh, &basep, &sizep, 0) != 0) {
+	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, 0) != 0) {
 		printf(": cannot map registers\n");
 		return;
 	}
-	printf("base/size: %lx %lx\n", basep, sizep);
+
 	ccp_attach(sc);
 }

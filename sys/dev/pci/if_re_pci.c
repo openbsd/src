@@ -195,8 +195,8 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		reg &= ~(PCI_PCIE_LCSR_ASPM_L0S | PCI_PCIE_LCSR_ASPM_L1 |
 		    PCI_PCIE_LCSR_ECPM);
 		pci_conf_write(pc, pa->pa_tag, offset + PCI_PCIE_LCSR, reg);
+		sc->rl_flags |= RL_FLAG_PCIE;
 	}
-	sc->rl_flags |= RL_FLAG_PCIE;
 
 	if (!(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139)) {

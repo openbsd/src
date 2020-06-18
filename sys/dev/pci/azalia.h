@@ -542,7 +542,7 @@ typedef struct {
 } __packed rirb_entry_t;
 
 
-#define AZALIA_DEBUG
+/* #define AZALIA_DEBUG */
 #ifdef AZALIA_DEBUG
 # define DPRINTF(x)	do { printf x; } while (0/*CONSTCOND*/)
 #else

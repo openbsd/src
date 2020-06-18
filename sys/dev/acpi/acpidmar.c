@@ -2181,7 +2181,7 @@ int
 ivhd_issue_command(struct iommu_softc *iommu, const struct ivhd_command *cmd, int wait)
 {
 	struct ivhd_command wq = { 0 };
-	uint64_t wv __aligned(16) = 0xDEADBEEFFEEDC0DELL;
+	uint64_t wv __aligned(16) = 0;
 	paddr_t paddr;
 	int rc, i;
 
@@ -2192,13 +2192,12 @@ ivhd_issue_command(struct iommu_softc *iommu, const struct ivhd_command *cmd, in
 		pmap_extract(pmap_kernel(), (vaddr_t)&wv, &paddr);
 		wq.dw0 = (paddr & ~0x7) | 0x1;
 		wq.dw1 = (COMPLETION_WAIT << CMD_SHIFT) | ((paddr >> 32) & 0xFFFFF);
-		wq.dw2 = 0;
-		wq.dw3 = 0;
+		wq.dw2 = 0xDEADBEEF;
+		wq.dw3 = 0xFEEDC0DE;
 		
 		rc = _ivhd_issue_command(iommu, &wq);
 		/* wv will change to value in dw2/dw3 when command is complete */
-		for (i = 0; i < 1000 && wv; i++) {
-			printf(".. %llx: %i\n", wv, i);
+		for (i = 0; i < 1000 && !wv; i++) {
 			DELAY(1000);
 		}
 		if (i == 1000) {
