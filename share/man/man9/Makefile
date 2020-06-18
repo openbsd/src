@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.302 2020/06/17 00:28:28 dlg Exp $
+#	$OpenBSD: Makefile,v 1.303 2020/06/18 07:06:23 fcambus Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -49,6 +49,6 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	vfs_cache.9 vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
 	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vnode.9 vnsubr.9 \
 	VOP_LOOKUP.9 vput.9 vrecycle.9 vref.9 vrele.9 \
-	vwaitforio.9 vwakeup.9 wdog_register.9
+	vwaitforio.9 vwakeup.9 wdog_register.9 wsfont_init.9
 
 .include <bsd.prog.mk>
