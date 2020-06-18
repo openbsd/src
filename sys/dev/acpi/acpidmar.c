@@ -635,13 +635,11 @@ nomap:
 			    PTE_P | pteflag);
 		}
 	}
-#if 0
 	if ((iommu->cap & CAP_CM) || force_cm) {
 		iommu_flush_tlb(iommu, IOTLB_DOMAIN, dom->did);
 	} else {
 		iommu_flush_write_buffer(iommu);
 	}
-#endif
 }
 
 const char *
