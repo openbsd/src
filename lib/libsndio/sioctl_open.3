@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.6 2020/06/18 14:38:21 schwarze Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.7 2020/06/18 14:49:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -29,24 +29,53 @@
 .Nd interface to audio parameters
 .Sh SYNOPSIS
 .Fd #include <sndio.h>
-.Ft "struct sioctl_hdl *"
-.Fn "sioctl_open" "const char *name" "unsigned int mode" "int nbio_flag"
-.Ft "void"
-.Fn "sioctl_close" "struct sioctl_hdl *hdl"
-.Ft "int"
-.Fn "sioctl_ondesc" "struct sioctl_hdl *hdl" "void (*cb)(void *arg, struct sioctl_desc *desc, int val)" "void *arg"
-.Ft "void"
-.Fn "sioctl_onval" "struct sioctl_hdl *hdl" "void (*cb)(void *arg, unsigned int addr, unsigned int val)" "void *arg"
-.Ft "int"
-.Fn "sioctl_setval" "struct sioctl_hdl *hdl" "unsigned int addr" "unsigned int val"
-.Ft "int"
-.Fn "sioctl_nfds" "struct sioctl_hdl *hdl"
-.Ft "int"
-.Fn "sioctl_pollfd" "struct sioctl_hdl *hdl" "struct pollfd *pfd" "int events"
-.Ft "int"
-.Fn "sioctl_revents" "struct sioctl_hdl *hdl" "struct pollfd *pfd"
-.Ft "int"
-.Fn "sioctl_eof" "struct sioctl_hdl *hdl"
+.Ft struct sioctl_hdl *
+.Fo sioctl_open
+.Fa "const char *name"
+.Fa "unsigned int mode"
+.Fa "int nbio_flag"
+.Fc
+.Ft void
+.Fo sioctl_close
+.Fa "struct sioctl_hdl *hdl"
+.Fc
+.Ft int
+.Fo sioctl_ondesc
+.Fa "struct sioctl_hdl *hdl"
+.Fa "void (*cb)(void *arg, struct sioctl_desc *desc, int val)"
+.Fa "void *arg"
+.Fc
+.Ft void
+.Fo sioctl_onval
+.Fa "struct sioctl_hdl *hdl"
+.Fa "void (*cb)(void *arg, unsigned int addr, unsigned int val)"
+.Fa "void *arg"
+.Fc
+.Ft int
+.Fo sioctl_setval
+.Fa "struct sioctl_hdl *hdl"
+.Fa "unsigned int addr"
+.Fa "unsigned int val"
+.Fc
+.Ft int
+.Fo sioctl_nfds
+.Fa "struct sioctl_hdl *hdl"
+.Fc
+.Ft int
+.Fo sioctl_pollfd
+.Fa "struct sioctl_hdl *hdl"
+.Fa "struct pollfd *pfd"
+.Fa "int events"
+.Fc
+.Ft int
+.Fo sioctl_revents
+.Fa "struct sioctl_hdl *hdl"
+.Fa "struct pollfd *pfd"
+.Fc
+.Ft int
+.Fo sioctl_eof
+.Fa "struct sioctl_hdl *hdl"
+.Fc
 .Sh DESCRIPTION
 Audio devices may expose a number of controls, like the playback volume control.
 Each control has an integer
