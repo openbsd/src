@@ -1,3 +1,5 @@
+/* $OpenBSD: fq_codel.h,v 1.4 2020/06/18 23:29:59 dlg Exp $ */
+
 /*
  * Copyright (c) 2017 Mike Belopuhov
  *
