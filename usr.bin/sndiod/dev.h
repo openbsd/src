@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.26 2020/06/12 15:40:18 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.27 2020/06/18 05:11:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -209,7 +209,12 @@ struct dev {
 #define DEV_INIT	1			/* stopped */
 #define DEV_RUN		2			/* playin & recording */
 	unsigned int pstate;			/* one of above */
-	struct name *path_list;
+	struct dev_alt {
+		struct dev_alt *next;
+		char *name;
+		unsigned int idx;
+	} *alt_list;
+	int alt_num;
 
 	/*
 	 * actual parameters and runtime state (i.e. once opened)
@@ -265,6 +270,7 @@ int dev_reopen(struct dev *);
 struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
     unsigned int, unsigned int, unsigned int, unsigned int);
 struct dev *dev_bynum(int);
+int dev_addname(struct dev *, char *);
 void dev_del(struct dev *);
 void dev_adjpar(struct dev *, int, int, int);
 int  dev_init(struct dev *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.c,v 1.9 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: fdpass.c,v 1.10 2020/06/18 05:11:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -323,6 +323,7 @@ fdpass_in_helper(void *arg)
 	int cmd, num, idx, mode, fd;
 	struct fdpass *f = arg;
 	struct dev *d;
+	struct dev_alt *da;
 	struct port *p;
 	char *path;
 
@@ -339,12 +340,15 @@ fdpass_in_helper(void *arg)
 			fdpass_close(f);
 			return;
 		}
-		path = namelist_byindex(&d->path_list, idx);
-		if (path == NULL) {
-			fdpass_close(f);
-			return;
+		for (da = d->alt_list; ; da = da->next) {
+			if (da == NULL) {
+				fdpass_close(f);
+				return;
+			}
+			if (da->idx == idx)
+				break;
 		}
-		fd = sio_sun_getfd(path, mode, 1);
+		fd = sio_sun_getfd(da->name, mode, 1);
 		break;
 	case FDPASS_OPEN_MIDI:
 		p = port_bynum(num);
@@ -373,12 +377,15 @@ fdpass_in_helper(void *arg)
 			fdpass_close(f);
 			return;
 		}
-		path = namelist_byindex(&d->path_list, idx);
-		if (path == NULL) {
-			fdpass_close(f);
-			return;
+		for (da = d->alt_list; ; da = da->next) {
+			if (da == NULL) {
+				fdpass_close(f);
+				return;
+			}
+			if (da->idx == idx)
+				break;
 		}
-		fd = sioctl_sun_getfd(path, mode, 1);
+		fd = sioctl_sun_getfd(da->name, mode, 1);
 		break;
 	default:
 		fdpass_close(f);
