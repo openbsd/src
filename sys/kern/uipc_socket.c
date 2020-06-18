@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.245 2020/06/15 15:29:40 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.246 2020/06/18 14:05:21 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1200,6 +1200,10 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if ((error = getsock(curproc, fd, &fp)) != 0)
 		return (error);
 	sosp = fp->f_data;
+	if (sosp->so_proto->pr_usrreq != so->so_proto->pr_usrreq) {
+		error = EPROTONOSUPPORT;
+		goto frele;
+	}
 	if (sosp->so_sp == NULL) {
 		sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
 		if (sosp->so_sp == NULL)
@@ -1219,10 +1223,6 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 
 	if (so->so_sp->ssp_socket || sosp->so_sp->ssp_soback) {
 		error = EBUSY;
-		goto release;
-	}
-	if (sosp->so_proto->pr_usrreq != so->so_proto->pr_usrreq) {
-		error = EPROTONOSUPPORT;
 		goto release;
 	}
 	if (sosp->so_options & SO_ACCEPTCONN) {
