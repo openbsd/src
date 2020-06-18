@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.11 2020/05/25 09:14:50 mestre Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.12 2020/06/18 05:28:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -69,15 +69,11 @@ struct info *infolist;
 int i_flag = 0, v_flag = 0, m_flag = 0, n_flag = 0, q_flag = 0;
 
 static inline int
-isname_first(int c)
+isname(int c)
 {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-}
-
-static inline int
-isname_next(int c)
-{
-	return isname_first(c) || (c >= '0' && c <= '9') || (c == '_');
+	return (c == '_') ||
+	    (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+	    (c >= '0' && c <= '9');
 }
 
 static int
@@ -481,11 +477,11 @@ parse_name(char **line, char *name)
 	char *p = *line;
 	unsigned len = 0;
 
-	if (!isname_first(*p)) {
-		fprintf(stderr, "letter expected near '%s'\n", p);
+	if (!isname(*p)) {
+		fprintf(stderr, "letter or digit expected near '%s'\n", p);
 		return 0;
 	}
-	while (isname_next(*p)) {
+	while (isname(*p)) {
 		if (len >= SIOCTL_NAMEMAX - 1) {
 			name[SIOCTL_NAMEMAX - 1] = '\0';
 			fprintf(stderr, "%s...: too long\n", name);
