@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.10 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.11 2020/06/18 04:44:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -104,7 +104,7 @@ struct sioctl_node {
 struct sioctl_desc {
 	unsigned int addr;		/* control address */
 #define SIOCTL_NONE		0	/* deleted */
-#define SIOCTL_NUM		2	/* integer in the 0..127 range */
+#define SIOCTL_NUM		2	/* integer in the 0..maxval range */
 #define SIOCTL_SW		3	/* on/off switch (0 or 1) */
 #define SIOCTL_VEC		4	/* number, element of vector */
 #define SIOCTL_LIST		5	/* switch, element of a list */
@@ -113,7 +113,7 @@ struct sioctl_desc {
 	char group[SIOCTL_NAMEMAX];	/* group this control belongs to */
 	struct sioctl_node node0;	/* affected node */
 	struct sioctl_node node1;	/* dito for SIOCTL_{VEC,LIST} */
-	unsigned int maxval;		/* max value for SIOCTL_{NUM,VEC} */
+	unsigned int maxval;		/* max value */
 	int __pad[3];
 };
 
