@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcamux.4,v 1.1 2020/06/18 19:30:54 kettenis Exp $
+.\"	$OpenBSD: pcamux.4,v 1.2 2020/06/18 20:39:28 jmc Exp $
 .\"
 .\" Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -19,15 +19,15 @@
 .Os
 .Sh NAME
 .Nm pcamux
-.Nd Phillips PCA9548 I2C switch
+.Nd Philips PCA9548 I2C switch
 .Sh SYNOPSIS
 .Cd "pcamux* at iic?"
 .Cd "iic* at pcamux?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Phillips PCA9548 I2C switch to be used
-with the
+driver provides support for the Philips PCA9548 I2C switch,
+which is used with the
 .Xr iic 4
 framework.
 .Sh SEE ALSO
