@@ -112,6 +112,8 @@ void *mapbar(int bar, uint64_t base, uint64_t size) {
 	return va;
 }
 
+void showremap(struct pci_ptd *pd);
+
 void showremap(struct pci_ptd *pd)
 {
 	int i;
@@ -119,7 +121,7 @@ void showremap(struct pci_ptd *pd)
 	fprintf(stderr,"================= device %d\n", pd->id);
 	for (i = 0; i < MAXBAR; i++) {
 		if (pd->barinfo[i].size) {
-			fprintf(stderr,"Bar%d: %.16x/%.16llx -> %.16llx:%p\n",
+			fprintf(stderr,"Bar%d: %.16x/%.8x -> %.16llx:%p\n",
 				i, pci.pci_devices[pd->id].pd_cfg_space[i + 4],
 				pd->barinfo[i].size,
 				pd->barinfo[i].addr,
@@ -214,6 +216,8 @@ int mem_chkint()
 	return intr;
 }
 
+void io_copy(void *dest, void *src, int size);
+
 void io_copy(void *dest, void *src, int size) {
 	if (size == 1) 
 		*(uint8_t *)dest = *(uint8_t *)src;
@@ -227,7 +231,6 @@ void io_copy(void *dest, void *src, int size) {
 
 int pci_memh2(int dir, uint64_t base, uint32_t size, void *data, void *cookie)
 {
-	int dev = (uintptr_t)cookie;
 	uint64_t off, mask, pa;
 	uint8_t barid = (uint8_t)(uintptr_t)cookie;
 	uint8_t *va;
@@ -527,40 +530,13 @@ int ppt_csfn(int dir, uint8_t reg, uint8_t sz, uint32_t *data, void *cookie)
 /* Callback for I/O ports. Map to new I/O port and do it */
 int ppt_iobar(int dir, uint16_t reg, uint32_t *data, uint8_t *intr, void *cookie, uint8_t size)
 {
-	struct vm_pio pio;
-	uint64_t mask;
 	uint8_t barid = PTD_BAR(cookie);
 	uint8_t devid = PTD_DEV(cookie);
 	int hp, gp;
 
 	*intr = 0xFF;
-	if (size == 1)
-		mask = 0xff;
-	else if (size == 2)
-		mask = 0xffff;
-	else if (size == 4)
-		mask = 0xffffffff;
-
 	remap_io(devid, barid, reg, &hp, &gp);
 	do_pio(1, dir, hp, size, data);
-#if 0
-	/* Remap to physical bar address */	
-	pio.dir = dir;
-	pio.size = size;
-	pio.port = hp;
-	if (dir == VEI_DIR_OUT) {
-		fprintf(stderr,"iobar: remap:%.4x out%d(%.4x,%llx)\n",
-			gp, size, hp, *data & mask);
-		pio.data = *data & mask;
-		ioctl(env->vmd_fd, VMM_IOC_PIO, &pio);
-	}
-	else  {
-		ioctl(env->vmd_fd, VMM_IOC_PIO, &pio);
-		*data = (*data & ~mask) | (pio.data & mask);
-		fprintf(stderr,"iobar: remap:%.4x in%d(%.4x,%llx)\n",
-			gp, size, hp, *data & mask);
-	}
-#endif
 	return 0;
 }
 
@@ -593,8 +569,18 @@ void dump(void *ptr, int len)
 void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 {
 	struct vm_barinfo bif;
+	uint32_t id_reg, subid_reg, class_reg;
 	int i, rc;
 
+	id_reg = ptd_conf_read(bus, dev, fun, PCI_ID_REG);
+	if (PCI_VENDOR(id_reg) == PCI_VENDOR_INVALID || PCI_VENDOR(id_reg) == 0x0000) {
+		fprintf(stderr, "Error: No PCI device @ %u:%u:%u\n", bus, dev, fun);
+		return;
+	}
+	subid_reg = ptd_conf_read(bus, dev, fun, PCI_SUBSYS_ID_REG);
+	class_reg = ptd_conf_read(bus, dev, fun, PCI_CLASS_REG);
+
+	/* Unregister previous VMM */
 	for (i = 0; i < MAXBAR; i++) {
 		if (ptd.barinfo[i].va) {
 			unmapbar(ptd.barinfo[i].va, ptd.barinfo[i].size);
@@ -604,6 +590,12 @@ void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 	ptd.dev = dev;
 	ptd.fun = fun;
 
+	pci_add_device(&ptd.id, PCI_VENDOR(id_reg), PCI_PRODUCT(id_reg),
+			PCI_CLASS(class_reg), PCI_SUBCLASS(class_reg),
+			PCI_VENDOR(subid_reg), PCI_PRODUCT(subid_reg),
+			1, NULL, &ptd);
+
+	/* Get BARs of native device */
 	bif.seg = 0;
 	bif.bus = bus;
 	bif.dev = dev;
@@ -613,14 +605,6 @@ void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 		fprintf(stderr, "%d:%d:%d not valid pci device\n", bus, dev, fun);
 		return;
 	}
-	pci_add_device(&ptd.id, PCI_VENDOR(bif.id_reg), PCI_PRODUCT(bif.id_reg),
-			PCI_CLASS(bif.class_reg), PCI_SUBCLASS(bif.class_reg),
-			PCI_VENDOR(bif.subid_reg), PCI_PRODUCT(bif.subid_reg),
-			1, NULL, &ptd);
-	if (dev == 31) {
-		_pcicfgwr32(ptd.id, 0x40, 0x11);
-	}
-	/* Get BARs of native device */
 	for (i = 0; i < MAXBAR; i++) {
 		int type;
 
@@ -639,7 +623,6 @@ void pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 			pci_add_bar(ptd.id, type, ptd.barinfo[i].size, 
 				    ppt_mmiobar, PTD_DEVID(ptd.id, i));
 			ptd.barinfo[i].va = mapbar(i, ptd.barinfo[i].addr, ptd.barinfo[i].size);
-			dump(ptd.barinfo[i].va, 0x100);
 		}
 		else if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 			/* This will get callback via pci_handle_io */
@@ -777,6 +760,18 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	d = (pci.pci_addr_reg >> 11) & 0x1f;
 	f = (pci.pci_addr_reg >> 8) & 0x7;
 	o = (pci.pci_addr_reg & 0xfc);
+
+	if ((o == 0x04 || o == 0x34 || o >= 0x40) && (d == ptd.id && d > 0)) {
+		if (vei->vei.vei_dir == VEI_DIR_IN) {
+			data = ptd_conf_read(ptd.bus, ptd.dev, ptd.fun, o);
+			_pcicfgwr32(d, o, data);
+		}
+		else {
+			data = vei->vei.vei_data;
+			ptd_conf_write(ptd.bus, ptd.dev, ptd.fun, o, data);
+		}
+		fprintf(stderr, "pci_ptdio: %.2x %.8x\n", o, data);
+	}
 
 	wrdata = vei->vei.vei_data;
 	data = 0;

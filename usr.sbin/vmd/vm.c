@@ -1007,7 +1007,7 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
-	int i;
+	size_t i;
 	uint64_t memlo, memhi;
 
 	/* Calculate memory size for NVRAM registers */
@@ -1690,15 +1690,14 @@ struct insn {
   	{ },
 };
 
-extern int mem_chkint();
+extern int mem_chkint(void);
 
 int
 vcpu_exit_eptviolation(struct vm_run_params *vrp)
 {
 	struct vm_exit *ve = vrp->vrp_exit;
-	uint64_t data = 0, gip, gpa;
+	uint64_t gip, gpa;
 	uint8_t instr[4] = { 0 };
-	int mode = 0, size = 0, dir = 0;
 	struct vm_rwregs_params vrwp = { 0 };
 	uint64_t *rax;
 
