@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.169 2020/06/11 00:05:55 patrick Exp $
+# $OpenBSD: GENERIC,v 1.170 2020/06/18 18:05:00 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -436,6 +436,8 @@ ipmi*		at iic?			# IPMI (SIIF)
 islrtc*		at iic?			# ISL1208 RTC
 maxrtc*		at iic?			# DS1307 RTC
 mcprtc*		at iic?			# MCP794XX RTC
+pcamux*		at iic?			# PCA9548 multiplexer
+iic*		at pcamux?
 pcfrtc*		at iic?			# PCF8523 RTC
 pcxrtc*		at iic?			# PCF8563 RTC
 rkpmic*		at iic?			# RK808 PMIC
