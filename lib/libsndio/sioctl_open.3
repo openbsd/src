@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.4 2020/04/19 09:54:56 jmc Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.5 2020/06/18 04:45:03 ratchov Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 19 2020 $
+.Dd $Mdocdate: June 18 2020 $
 .Dt SIOCTL_OPEN 3
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@ struct sioctl_node {
 struct sioctl_desc {
 	unsigned int addr;		/* control address */
 #define SIOCTL_NONE		0	/* deleted */
-#define SIOCTL_NUM		2	/* integer in the 0..127 range */
+#define SIOCTL_NUM		2	/* integer in the maxval range */
 #define SIOCTL_SW		3	/* on/off switch (0 or 1) */
 #define SIOCTL_VEC		4	/* number, element of vector */
 #define SIOCTL_LIST		5	/* switch, element of a list */
@@ -132,6 +132,7 @@ struct sioctl_desc {
 	char group[SIOCTL_NAMEMAX];	/* group this control belongs to */
 	struct sioctl_node node0;	/* affected node */
 	struct sioctl_node node1;	/* dito for SIOCTL_{VEC,LIST} */
+	unsigned int maxval;		/* max value */
 };
 .Ed
 .Pp
@@ -149,7 +150,11 @@ Possible types are:
 .It SIOCTL_NONE
 A previously valid control was deleted.
 .It SIOCTL_NUM
-A continuous control in the 0..SIOCTL_VALMAX range.
+A continuous control in the
+.Sm 0 ..
+.Va maxval
+.Sm
+range.
 For instance the volume of the speaker.
 .It SIOCTL_SW
 A on/off switch control.
@@ -190,6 +195,11 @@ attributes and
 .Va func
 are strings usable as unique identifiers within the the given
 .Va group .
+.Pp
+The
+.Va maxval
+attribute indicates the maximum value of this control.
+For boolean control types it is set to 1.
 .Sh Changing and reading control values
 Controls are changed with the
 .Fn sioctl_setval
@@ -198,7 +208,11 @@ The
 .Fn sioctl_onval
 function can be used to register a call-back which will be invoked whenever
 a control changes.
-Continuous values are in the 0..127 range.
+Continuous values are in the
+.Sm 0 ..
+.Va maxval
+.Sm
+range.
 .Sh "Interface to" Xr poll 2
 The
 .Fn sioctl_pollfd
