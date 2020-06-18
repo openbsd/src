@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.18 2020/04/24 14:56:43 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.19 2020/06/18 10:26:53 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -338,15 +338,8 @@ rules_do(int fd)
 		if ((rlen % sizeof(struct dt_evt)) != 0)
 			err(1, "incorrect read");
 
-
-		for (i = 0; i < nitems(devtbuf); i++) {
-			struct dt_evt *dtev = &devtbuf[i];
-
-			if (dtev->dtev_tid == 0)
-				break;
-
-			rules_apply(dtev);
-		}
+		for (i = 0; i < rlen / sizeof(struct dt_evt); i++)
+			rules_apply(&devtbuf[i]);
 	}
 
 	rules_teardown(fd);
