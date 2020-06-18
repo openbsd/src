@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.7 2020/06/14 17:56:54 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.8 2020/06/18 21:52:57 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -47,6 +47,36 @@
 99:	mflr	r;							\
 	addis	r, r, (.TOC. - 99b)@ha;					\
 	addi	r, r, (.TOC. - 99b)@l;
+
+/*
+ * Restore SRs for a pmap
+ *
+ * Requires that r28-r31 be scratch, with r28 initialized to the SLB cache
+ */
+
+restore_kernsrs:
+	GET_CPUINFO(%r28)
+	addi	%r28, %r28, CI_KERNEL_SLB
+
+	li	%r29, 0			/* Set the counter to zero */
+
+	/* Invalidate entire SLB */
+	slbia
+	slbmfee	%r31, %r29
+	clrrdi	%r31, %r31, 28
+	slbie	%r31
+
+1:	ld	%r31, 0(%r28)		/* Load SLBE */
+	cmpdi	%r31, 0			/* If SLBE is not valid, stop */
+	beqlr
+	ld	%r30, 8(%r28)		/* Load SLBV  */
+	slbmte	%r30, %r31		/* Install SLB entry */
+
+	addi	%r28, %r28, 16		/* Advance pointer */
+	addi	%r29, %r29, 1
+	cmpdi	%r29, 31		/* Repeat if we are not at the end */
+	blt	1b
+	blr
 
 /*
  * FRAME_SETUP assumes:
@@ -277,6 +307,13 @@ generictrap:
 	addi	%r30, %r30, -4 /* The branch instruction, not the next */
 	and	%r30, %r30, %r31
 	mtsprg3	%r30
+
+	/* XXX skip this unless we come for userland */
+	mr	%r27, %r28
+	mtsprg2	%r29
+	bl	restore_kernsrs		/* enable kernel mapping */
+	mfsprg2	%r29
+	mr	%r28, %r27
 
 	FRAME_SETUP(CI_TEMPSAVE)
 	GET_TOCBASE(%r2)

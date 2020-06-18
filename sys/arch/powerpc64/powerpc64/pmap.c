@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 2020/06/17 18:58:55 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.10 2020/06/18 21:52:57 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1168,9 +1168,24 @@ pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 }
 
 void
+pmap_set_kernel_slb(int idx, vaddr_t va)
+{
+	struct cpu_info *ci = curcpu();
+	uint64_t esid, slbe, slbv;
+	
+	esid = va >> ADDR_ESID_SHIFT;
+	kernel_slb_desc[idx].slbd_esid = esid;
+	slbe = (esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx;
+	slbv = pmap_kernel_vsid(esid) << SLBV_VSID_SHIFT;
+	slbmte(slbv, slbe);
+
+	ci->ci_kernel_slb[idx].slb_slbe = slbe;
+	ci->ci_kernel_slb[idx].slb_slbv = slbv;
+}
+
+void
 pmap_bootstrap(void)
 {
-	uint64_t esid, slbe, slbv;
 	paddr_t start, end, pa;
 	vaddr_t va;
 	vm_prot_t prot;
@@ -1228,28 +1243,15 @@ pmap_bootstrap(void)
 	mtptcr((paddr_t)pmap_pat | PATSIZE);
 
 	/* SLB entry for the kernel. */
-	esid = (vaddr_t)_start >> ADDR_ESID_SHIFT;
-	kernel_slb_desc[idx].slbd_esid = esid;
-	slbe = (esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx++;
-	slbv = pmap_kernel_vsid(esid) << SLBV_VSID_SHIFT;
-	slbmte(slbv, slbe);
+	pmap_set_kernel_slb(idx++, (vaddr_t)_start);
 
 	/* SLB entry for the page tables. */
-	esid = (vaddr_t)pmap_ptable >> ADDR_ESID_SHIFT;
-	kernel_slb_desc[idx].slbd_esid = esid;
-	slbe = (esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx++;
-	slbv = pmap_kernel_vsid(esid) << SLBV_VSID_SHIFT;
-	slbmte(slbv, slbe);
+	pmap_set_kernel_slb(idx++, (vaddr_t)pmap_ptable);
 
 	/* SLB entries for kernel VA. */
 	for (va = VM_MIN_KERNEL_ADDRESS; va < VM_MAX_KERNEL_ADDRESS;
-	     va += 256 * 1024 * 1024) {
-		esid = va >> ADDR_ESID_SHIFT;
-		kernel_slb_desc[idx].slbd_esid = esid;
-		slbe = (esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx++;
-		slbv = pmap_kernel_vsid(esid) << SLBV_VSID_SHIFT;
-		slbmte(slbv, slbe);
-	}
+	     va += 256 * 1024 * 1024)
+		pmap_set_kernel_slb(idx++, va);
 
 	zero_page = virtual_avail;
 	virtual_avail += MAXCPUS * PAGE_SIZE;

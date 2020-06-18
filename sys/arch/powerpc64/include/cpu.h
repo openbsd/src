@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.12 2020/06/14 20:15:09 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.13 2020/06/18 21:52:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -35,6 +35,7 @@
 #include <machine/frame.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
+#include <machine/pte.h>
 
 #include <sys/device.h>
 #include <sys/sched.h>
@@ -45,6 +46,8 @@ struct cpu_info {
 	struct schedstate_percpu ci_schedstate;
 
 	struct proc	*ci_curproc;
+
+	struct slb	ci_kernel_slb[32];
 
 #define CPUSAVE_LEN	9
 	register_t	ci_tempsave[CPUSAVE_LEN];
