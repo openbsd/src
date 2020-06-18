@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.785 2020/06/16 08:18:34 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.786 2020/06/18 08:34:22 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 16 2020 $
+.Dd $Mdocdate: June 18 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -989,6 +989,8 @@ output is paused once the pane is
 behind in control mode
 .It read-only
 the client is read-only
+.It wait-exit
+wait for an empty line input before exiting in control mode
 .El
 .Pp
 A leading

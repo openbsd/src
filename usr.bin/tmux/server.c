@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.193 2020/06/01 09:43:01 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.194 2020/06/18 08:34:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -45,7 +45,7 @@ struct clients		 clients;
 
 struct tmuxproc		*server_proc;
 static int		 server_fd = -1;
-static int		 server_client_flags;
+static uint64_t		 server_client_flags;
 static int		 server_exit;
 static struct event	 server_ev_accept;
 
