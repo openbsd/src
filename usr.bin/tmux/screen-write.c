@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.184 2020/06/02 20:51:46 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.185 2020/06/18 08:41:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -103,7 +103,8 @@ screen_write_redraw_cb(const struct tty_ctx *ttyctx)
 {
 	struct window_pane	*wp = ttyctx->arg;
 
-	wp->flags |= PANE_REDRAW;
+	if (wp != NULL)
+		wp->flags |= PANE_REDRAW;
 }
 
 /* Update context for client. */
