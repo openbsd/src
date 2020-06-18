@@ -1,4 +1,4 @@
-/* $OpenBSD: toeplitz.c,v 1.2 2020/06/17 06:36:56 tb Exp $ */
+/* $OpenBSD: toeplitz.c,v 1.3 2020/06/18 03:53:38 tb Exp $ */
 
 /*
  * Copyright (c) 2009 The DragonFly Project.  All rights reserved.
@@ -118,17 +118,18 @@ stoeplitz_hash_ip4(const struct stoeplitz_cache *scache,
 {
 	uint16_t lo, hi;
 
-	lo  = stoeplitz_cache_entry(scache, faddr >> 0);
-	lo ^= stoeplitz_cache_entry(scache, faddr >> 16);
-	lo ^= stoeplitz_cache_entry(scache, laddr >> 0);
-	lo ^= stoeplitz_cache_entry(scache, laddr >> 16);
+	lo  = faddr >> 0;
+	lo ^= faddr >> 16;
+	lo ^= laddr >> 0;
+	lo ^= laddr >> 16;
 
-	hi  = stoeplitz_cache_entry(scache, faddr >> 8);
-	hi ^= stoeplitz_cache_entry(scache, faddr >> 24);
-	hi ^= stoeplitz_cache_entry(scache, laddr >> 8);
-	hi ^= stoeplitz_cache_entry(scache, laddr >> 24);
+	hi  = faddr >> 8;
+	hi ^= faddr >> 24;
+	hi ^= laddr >> 8;
+	hi ^= laddr >> 24;
 
-	return (swap16(lo) ^ hi);
+	return (swap16(stoeplitz_cache_entry(scache, lo))
+	    ^ stoeplitz_cache_entry(scache, hi));
 }
 
 uint16_t
@@ -137,21 +138,22 @@ stoeplitz_hash_ip4port(const struct stoeplitz_cache *scache,
 {
 	uint16_t hi, lo;
 
-	lo  = stoeplitz_cache_entry(scache, faddr >> 0);
-	lo ^= stoeplitz_cache_entry(scache, faddr >> 16);
-	lo ^= stoeplitz_cache_entry(scache, laddr >> 0);
-	lo ^= stoeplitz_cache_entry(scache, laddr >> 16);
-	lo ^= stoeplitz_cache_entry(scache, fport >> 0);
-	lo ^= stoeplitz_cache_entry(scache, lport >> 0);
+	lo  = faddr >> 0;
+	lo ^= faddr >> 16;
+	lo ^= laddr >> 0;
+	lo ^= laddr >> 16;
+	lo ^= fport >> 0;
+	lo ^= lport >> 0;
 
-	hi  = stoeplitz_cache_entry(scache, faddr >> 8);
-	hi ^= stoeplitz_cache_entry(scache, faddr >> 24);
-	hi ^= stoeplitz_cache_entry(scache, laddr >> 8);
-	hi ^= stoeplitz_cache_entry(scache, laddr >> 24);
-	hi ^= stoeplitz_cache_entry(scache, fport >> 8);
-	hi ^= stoeplitz_cache_entry(scache, lport >> 8);
+	hi  = faddr >> 8;
+	hi ^= faddr >> 24;
+	hi ^= laddr >> 8;
+	hi ^= laddr >> 24;
+	hi ^= fport >> 8;
+	hi ^= lport >> 8;
 
-	return (swap16(lo) ^ hi);
+	return (swap16(stoeplitz_cache_entry(scache, lo))
+	    ^ stoeplitz_cache_entry(scache, hi));
 }
 
 #ifdef INET6
@@ -166,18 +168,19 @@ stoeplitz_hash_ip6(const struct stoeplitz_cache *scache,
 		uint32_t faddr = faddr6->s6_addr32[i];
 		uint32_t laddr = laddr6->s6_addr32[i];
 
-		lo ^= stoeplitz_cache_entry(scache, faddr >> 0);
-		lo ^= stoeplitz_cache_entry(scache, faddr >> 16);
-		lo ^= stoeplitz_cache_entry(scache, laddr >> 0);
-		lo ^= stoeplitz_cache_entry(scache, laddr >> 16);
+		lo ^= faddr >> 0;
+		lo ^= faddr >> 16;
+		lo ^= laddr >> 0;
+		lo ^= laddr >> 16;
 
-		hi ^= stoeplitz_cache_entry(scache, faddr >> 8);
-		hi ^= stoeplitz_cache_entry(scache, faddr >> 24);
-		hi ^= stoeplitz_cache_entry(scache, laddr >> 8);
-		hi ^= stoeplitz_cache_entry(scache, laddr >> 24);
+		hi ^= faddr >> 8;
+		hi ^= faddr >> 24;
+		hi ^= laddr >> 8;
+		hi ^= laddr >> 24;
 	}
 
-	return (swap16(lo) ^ hi);
+	return (swap16(stoeplitz_cache_entry(scache, lo))
+	    ^ stoeplitz_cache_entry(scache, hi));
 }
 
 uint16_t
@@ -192,24 +195,25 @@ stoeplitz_hash_ip6port(const struct stoeplitz_cache *scache,
 		uint32_t faddr = faddr6->s6_addr32[i];
 		uint32_t laddr = laddr6->s6_addr32[i];
 
-		lo ^= stoeplitz_cache_entry(scache, faddr >> 0);
-		lo ^= stoeplitz_cache_entry(scache, faddr >> 16);
-		lo ^= stoeplitz_cache_entry(scache, laddr >> 0);
-		lo ^= stoeplitz_cache_entry(scache, laddr >> 16);
+		lo ^= faddr >> 0;
+		lo ^= faddr >> 16;
+		lo ^= laddr >> 0;
+		lo ^= laddr >> 16;
 
-		hi ^= stoeplitz_cache_entry(scache, faddr >> 8);
-		hi ^= stoeplitz_cache_entry(scache, faddr >> 24);
-		hi ^= stoeplitz_cache_entry(scache, laddr >> 8);
-		hi ^= stoeplitz_cache_entry(scache, laddr >> 24);
+		hi ^= faddr >> 8;
+		hi ^= faddr >> 24;
+		hi ^= laddr >> 8;
+		hi ^= laddr >> 24;
 	}
 
-	lo ^= stoeplitz_cache_entry(scache, fport >> 0);
-	lo ^= stoeplitz_cache_entry(scache, lport >> 0);
+	lo ^= fport >> 0;
+	lo ^= lport >> 0;
 
-	hi ^= stoeplitz_cache_entry(scache, fport >> 8);
-	hi ^= stoeplitz_cache_entry(scache, lport >> 8);
+	hi ^= fport >> 8;
+	hi ^= lport >> 8;
 
-	return (swap16(lo) ^ hi);
+	return (swap16(stoeplitz_cache_entry(scache, lo))
+	    ^ stoeplitz_cache_entry(scache, hi));
 }
 #endif /* INET6 */
 
