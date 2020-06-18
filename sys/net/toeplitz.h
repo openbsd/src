@@ -1,4 +1,4 @@
-/*	$OpenBSD: toeplitz.h,v 1.1 2020/06/16 04:46:49 dlg Exp $ */
+/*	$OpenBSD: toeplitz.h,v 1.2 2020/06/18 12:22:39 tb Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -63,6 +63,13 @@ stoeplitz_hash_n16(const struct stoeplitz_cache *scache, uint16_t n16)
 	lo = stoeplitz_cache_entry(scache, n16);
 
 	return (hi ^ swap16(lo));
+}
+
+/* hash a uint32_t in network byte order */
+static __unused inline uint16_t
+stoeplitz_hash_n32(const struct stoeplitz_cache *scache, uint32_t n32)
+{
+	return (stoeplitz_hash_n16(scache, n32 ^ (n32 >> 16)));
 }
 
 /* hash a uint16_t in host byte order */
