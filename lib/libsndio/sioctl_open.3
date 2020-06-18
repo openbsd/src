@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.7 2020/06/18 14:49:46 schwarze Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.8 2020/06/18 16:21:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -82,8 +82,7 @@ Each control has an integer
 .Em address
 and an integer
 .Em value .
-Depending on the control type, its integer value represents either a
-continuous quantity or a boolean.
+Some values are boolean and can only be switched to either 0 (off) or 1 (on).
 Any control may be changed by submitting
 a new value to its address.
 When values change, asynchronous notifications are sent.
@@ -156,7 +155,7 @@ struct sioctl_desc {
 	unsigned int addr;		/* control address */
 #define SIOCTL_NONE		0	/* deleted */
 #define SIOCTL_NUM		2	/* integer in the maxval range */
-#define SIOCTL_SW		3	/* on/off switch (0 or 1) */
+#define SIOCTL_SW		3	/* on/off switch (1 or 0) */
 #define SIOCTL_VEC		4	/* number, element of vector */
 #define SIOCTL_LIST		5	/* switch, element of a list */
 	unsigned int type;		/* one of above */
@@ -182,19 +181,19 @@ Possible types are:
 .It Dv SIOCTL_NONE
 A previously valid control was deleted.
 .It Dv SIOCTL_NUM
-A continuous control in the range from 0 to
+An integer control in the range from 0 to
 .Fa maxval ,
 inclusive.
 For instance the volume of the speaker.
 .It Dv SIOCTL_SW
-A on/off switch control.
+A boolean control.
 For instance the switch to mute the speaker.
 .It Dv SIOCTL_VEC
-Element of an array of continuous controls.
+Element of an array of integer controls.
 For instance the knob to control the amount of signal flowing
 from the line input to the speaker.
 .It Dv SIOCTL_LIST
-An element of an array of on/off switches.
+An element of an array of boolean switches.
 For instance the line-in position of the
 speaker source selector.
 .El
@@ -238,7 +237,7 @@ The
 .Fn sioctl_onval
 function can be used to register a call-back which will be invoked whenever
 a control changes.
-Continuous values are in the range from 0 to
+Integer values are in the range from 0 to
 .Fa maxval .
 .Ss Interface to poll(2)
 The
