@@ -1607,7 +1607,8 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 
 TAILQ_HEAD(,iohandler) memh = TAILQ_HEAD_INITIALIZER(memh);
 
-void register_mem(uint64_t base, uint32_t len, iocb_t handler, void *cookie)
+void
+register_mem(uint64_t base, uint32_t len, iocb_t handler, void *cookie)
 {
 	struct iohandler *mem;
 
@@ -1626,7 +1627,8 @@ void register_mem(uint64_t base, uint32_t len, iocb_t handler, void *cookie)
 	TAILQ_INSERT_TAIL(&memh, mem, next);
 }
 
-void unregister_mem(uint64_t base)
+void
+unregister_mem(uint64_t base)
 {
 	struct iohandler *mem, *tmp;
 
@@ -1639,7 +1641,8 @@ void unregister_mem(uint64_t base)
 	}
 }
 
-int mem_handler(int dir, uint64_t addr, uint32_t size, void *data)
+int
+mem_handler(int dir, uint64_t addr, uint32_t size, void *data)
 {
 	struct iohandler *mem;
 	int rc;
