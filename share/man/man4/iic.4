@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.110 2020/06/11 16:44:15 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.111 2020/06/18 19:30:53 kettenis Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 11 2020 $
+.Dd $Mdocdate: June 18 2020 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@
 .Cd "iic* at gscsio?                # i386"
 .Cd "iic* at ichiic?                # amd64 i386"
 .Cd "iic* at nviic?                 # amd64 i386"
+.Cd "iic* at pcamux?                # arm64"
 .Cd "iic* at pcfiic?                # sparc64"
 .Cd "iic* at piixpm?                # amd64 i386"
 .Cd "iic* at viapm?                 # amd64 i386"
@@ -38,7 +39,7 @@
 .Cd "iic* at gdiumiic?              # loongson"
 .Cd "iic* at tsciic?                # alpha"
 .Cd "iic* at amliic?                # arm64"
-.Cd "iic* at bcmbsc?                # arm64"
+.Cd "iic* at bcmbsc?                # arm64 armv7"
 .Cd "iic* at dwiic?                 # amd64 arm64"
 .Cd "iic* at octiic?                # octeon"
 .Cd "iic* at imxiic?                # arm64 armv7"
@@ -218,6 +219,8 @@ Nuvoton W83795G/ADG temperature, voltage, and fan sensor
 Philips PCA955[4567] GPIO controller
 .It Xr pcaled 4
 Philips PCA9532/9552 GPIO LED dimmer
+.It Xr pcamux 4
+Philips PCA9548 I2C switch
 .It Xr pcfadc 4
 Philips PCF8591 temperature sensor
 .It Xr pcfrtc 4
