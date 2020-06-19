@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdrandom.c,v 1.2 2020/06/15 19:25:16 naddy Exp $	*/
+/*	$OpenBSD: mdrandom.c,v 1.3 2020/06/19 15:00:45 naddy Exp $	*/
 
 /*
  * Copyright (c) 2020 Theo de Raadt 
@@ -33,14 +33,14 @@ mdrandom(char *buf, size_t buflen)
 		goto done;
 	CPUID(1, eax, ebx, ecx, edx);
 	if (edx & CPUID_TSC) {
-		uint32_t hi, lo;
+		uint32_t hi, lo, acc;
 
 		for (i = 0; i < buflen; i++) {
 			__asm volatile("rdtsc" : "=d" (hi), "=a" (lo));
-			hi ^= (hi >> 8) ^ (hi >> 16) ^ (hi >> 24);
-			lo ^= (lo >> 8) ^ (lo >> 16) ^ (lo >> 24);
-			buf[i] ^= hi;
-			buf[i] ^= lo;
+			acc = hi ^ lo;
+			acc ^= acc >> 16;
+			acc ^= acc >>  8;
+			buf[i] ^= acc;
 		}
 		ret = 0;
 	}
