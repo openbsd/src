@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.11 2020/04/15 02:18:39 cheloha Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.12 2020/06/19 19:18:59 krw Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ wd33c93_attach(struct wd33c93_softc *sc, struct scsi_adapter *adapter)
 	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
 	timeout_set(&sc->sc_watchdog, wd33c93_watchdog, sc);
 	wd33c93_init(sc);
-	
+
 	printf(": %s, %d.%d MHz, %s\n",
 	    wd33c93_chip_names[sc->sc_chip],
 	    sc->sc_clkfreq / 10, sc->sc_clkfreq % 10,
