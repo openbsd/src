@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.21 2020/03/16 15:25:13 tb Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.22 2020/06/19 21:26:40 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -145,9 +145,9 @@ tls1_cbc_remove_padding(const SSL* s, SSL3_RECORD_INTERNAL *rec,
 	 * decrypted information. Therefore we always have to check the maximum
 	 * amount of padding possible. (Again, the length of the record is
 	 * public information so we can use it.) */
-	to_check = 255; /* maximum amount of padding. */
-	if (to_check > rec->length - 1)
-		to_check = rec->length - 1;
+	to_check = 256; /* maximum amount of padding, inc length byte. */
+	if (to_check > rec->length)
+		to_check = rec->length;
 
 	for (i = 0; i < to_check; i++) {
 		unsigned char mask = constant_time_ge(padding_length, i);
