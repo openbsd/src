@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.c,v 1.2 2020/06/14 17:56:54 kettenis Exp $	*/
+/*	$OpenBSD: opal.c,v 1.3 2020/06/19 22:20:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -102,7 +102,7 @@ opal_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 	dt.dt_day = FROMBCD((date >> 0) & 0xff);
 	dt.dt_mon = FROMBCD((date >> 8) & 0xff);
 	dt.dt_year = FROMBCD((date >> 16) & 0xff);
-	dt.dt_year |= 100 * FROMBCD((date >> 24) & 0xff);
+	dt.dt_year += 100 * FROMBCD((date >> 24) & 0xff);
 
 	tv->tv_sec = clock_ymdhms_to_secs(&dt);
 	tv->tv_usec = 0;
