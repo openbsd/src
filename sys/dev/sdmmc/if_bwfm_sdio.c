@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.37 2020/05/15 14:09:14 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.38 2020/06/19 20:56:23 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -222,6 +222,7 @@ bwfm_sdio_match(struct device *parent, void *match, void *aux)
 	case 0x4345:
 	case 0x4354:
 	case 0x4356:
+	case 0x4359:
 	case 0xa887:	/* BCM43143 */
 	case 0xa94c:	/* BCM43340 */
 	case 0xa94d:	/* BCM43341 */
@@ -420,6 +421,9 @@ bwfm_sdio_preinit(struct bwfm_softc *bwfm)
 		break;
 	case BRCM_CC_4356_CHIP_ID:
 		chip = "4356";
+		break;
+	case BRCM_CC_4359_CHIP_ID:
+		chip = "4359";
 		break;
 	default:
 		printf("%s: unknown firmware for chip %s\n",

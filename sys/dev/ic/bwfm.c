@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.71 2020/05/15 14:09:14 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.72 2020/06/19 20:56:23 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1417,10 +1417,15 @@ bwfm_chip_tcm_rambase(struct bwfm_softc *sc)
 	case BRCM_CC_43569_CHIP_ID:
 	case BRCM_CC_43570_CHIP_ID:
 	case BRCM_CC_4358_CHIP_ID:
-	case BRCM_CC_4359_CHIP_ID:
 	case BRCM_CC_43602_CHIP_ID:
 	case BRCM_CC_4371_CHIP_ID:
 		sc->sc_chip.ch_rambase = 0x180000;
+		break;
+	case BRCM_CC_4359_CHIP_ID:
+		if (sc->sc_chip.ch_chiprev < 9)
+			sc->sc_chip.ch_rambase = 0x180000;
+		else
+			sc->sc_chip.ch_rambase = 0x160000;
 		break;
 	case BRCM_CC_43465_CHIP_ID:
 	case BRCM_CC_43525_CHIP_ID:
