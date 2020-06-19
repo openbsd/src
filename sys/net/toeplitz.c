@@ -1,4 +1,4 @@
-/* $OpenBSD: toeplitz.c,v 1.6 2020/06/18 12:22:39 tb Exp $ */
+/* $OpenBSD: toeplitz.c,v 1.7 2020/06/19 08:48:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 The DragonFly Project.  All rights reserved.
@@ -159,8 +159,9 @@ stoeplitz_hash_ip6port(const struct stoeplitz_cache *scache,
 #endif /* INET6 */
 
 void
-stoeplitz_to_key(uint8_t *k, size_t klen)
+stoeplitz_to_key(void *key, size_t klen)
 {
+	uint8_t *k = key;
 	uint16_t skey = htons(stoeplitz_keyseed);
 	size_t i;
 

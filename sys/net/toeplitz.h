@@ -1,4 +1,4 @@
-/*	$OpenBSD: toeplitz.h,v 1.2 2020/06/18 12:22:39 tb Exp $ */
+/*	$OpenBSD: toeplitz.h,v 1.3 2020/06/19 08:48:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -96,7 +96,7 @@ stoeplitz_hash_h16(const struct stoeplitz_cache *scache, uint16_t h16)
 
 void		stoeplitz_init(void);
 
-void		stoeplitz_to_key(uint8_t *, size_t)
+void		stoeplitz_to_key(void *, size_t)
 		    __bounded((__buffer__, 1, 2));
 
 extern const struct stoeplitz_cache *const stoeplitz_cache;
