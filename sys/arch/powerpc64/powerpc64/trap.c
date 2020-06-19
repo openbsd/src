@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 2020/06/18 22:51:38 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 2020/06/19 21:24:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -31,7 +31,8 @@
 #include <machine/trap.h>
 
 void	decr_intr(struct trapframe *); /* clock.c */
-void	hvi_intr(struct trapframe *);
+void	hvi_intr(struct trapframe *);  /* intr.c */
+void	syscall(struct trapframe *);   /* syscall.c */
 
 void
 trap(struct trapframe *frame)
@@ -51,6 +52,7 @@ trap(struct trapframe *frame)
 
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
+		p->p_md.md_regs = frame;
 		refreshcreds(p);
 	}
 
@@ -70,6 +72,12 @@ trap(struct trapframe *frame)
 		db_ktrap(T_BREAKPOINT, frame); /* single-stepping */
 		return;
 #endif
+
+	case EXC_SC|EXC_USER:
+		intr_enable();
+		syscall(frame);
+		return;
+
 	case EXC_AST|EXC_USER:
 		p->p_md.md_astpending = 0;
 		intr_enable();
