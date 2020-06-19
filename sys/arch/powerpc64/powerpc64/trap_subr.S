@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.9 2020/06/18 22:51:38 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.10 2020/06/19 17:29:33 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -150,6 +150,7 @@ restore_kernsrs:
 	ld	%r29, (savearea+CPUSAVE_DSISR)(%r2);/* saved DSISR */	\
 	ld	%r30, (savearea+CPUSAVE_SRR0)(%r2); /* saved SRR0 */	\
 	ld	%r31, (savearea+CPUSAVE_SRR1)(%r2); /* saved SRR1 */	\
+	mr	%r13, %r2;						\
 	mfxer	%r3;							\
 	mfctr	%r4;							\
 	mfsprg3	%r5;							\
