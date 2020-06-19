@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.28 2020/06/19 11:12:46 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.29 2020/06/19 11:14:03 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -376,7 +376,7 @@ void	iwx_free_resp(struct iwx_softc *, struct iwx_host_cmd *);
 void	iwx_cmd_done(struct iwx_softc *, int, int, int);
 const struct iwx_rate *iwx_tx_fill_cmd(struct iwx_softc *, struct iwx_node *,
 	    struct ieee80211_frame *, struct iwx_tx_cmd_gen2 *);
-void	iwx_tx_update_byte_tbl(struct iwx_tx_ring *, uint16_t, uint16_t);
+void	iwx_tx_update_byte_tbl(struct iwx_tx_ring *, int, uint16_t, uint16_t);
 int	iwx_tx(struct iwx_softc *, struct mbuf *, struct ieee80211_node *, int);
 int	iwx_flush_tx_path(struct iwx_softc *);
 int	iwx_beacon_filter_send_cmd(struct iwx_softc *,
@@ -1768,6 +1768,10 @@ iwx_reset_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring)
 			data->m = NULL;
 		}
 	}
+
+	/* Clear byte count table. */
+	memset(ring->bc_tbl.vaddr, 0, ring->bc_tbl.size);
+
 	/* Clear TX descriptors. */
 	memset(ring->desc, 0, ring->desc_dma.size);
 	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map, 0,
@@ -3932,6 +3936,7 @@ iwx_rx_tx_cmd(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 
 	iwx_rx_tx_cmd_single(sc, pkt, txd->in, txd->txmcs, txd->txrate);
 	iwx_txd_done(sc, txd);
+	iwx_tx_update_byte_tbl(ring, idx, 0, 0);
 
 	/*
 	 * XXX Sometimes we miss Tx completion interrupts.
@@ -3944,6 +3949,7 @@ iwx_rx_tx_cmd(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 			DPRINTF(("%s: missed Tx completion: tail=%d idx=%d\n",
 			    __func__, ring->tail, idx));
 			iwx_txd_done(sc, txd);
+			iwx_tx_update_byte_tbl(ring, idx, 0, 0);
 			ring->queued--;
 		}
 		ring->tail = (ring->tail + 1) % IWX_TX_RING_COUNT;
@@ -4438,7 +4444,7 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 }
 
 void
-iwx_tx_update_byte_tbl(struct iwx_tx_ring *txq, uint16_t byte_cnt,
+iwx_tx_update_byte_tbl(struct iwx_tx_ring *txq, int idx, uint16_t byte_cnt,
     uint16_t num_tbs)
 {
 	uint8_t filled_tfd_size, num_fetch_chunks;
@@ -4461,7 +4467,7 @@ iwx_tx_update_byte_tbl(struct iwx_tx_ring *txq, uint16_t byte_cnt,
 	/* Before AX210, the HW expects DW */
 	len = howmany(len, 4);
 	bc_ent = htole16(len | (num_fetch_chunks << 12));
-	scd_bc_tbl->tfd_offset[txq->cur] = bc_ent;
+	scd_bc_tbl->tfd_offset[idx] = bc_ent;
 }
 
 int
@@ -4638,7 +4644,7 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	    (char *)(void *)desc - (char *)(void *)ring->desc_dma.vaddr,
 	    sizeof (*desc), BUS_DMASYNC_PREWRITE);
 
-	iwx_tx_update_byte_tbl(ring, totlen, num_tbs);
+	iwx_tx_update_byte_tbl(ring, ring->cur, totlen, num_tbs);
 
 	/* Kick TX ring. */
 	ring->cur = (ring->cur + 1) % IWX_TX_RING_COUNT;
