@@ -1707,6 +1707,7 @@
 ./usr/share/man/man4/pair.4
 ./usr/share/man/man4/pcagpio.4
 ./usr/share/man/man4/pcaled.4
+./usr/share/man/man4/pcamux.4
 ./usr/share/man/man4/pcdisplay.4
 ./usr/share/man/man4/pcfadc.4
 ./usr/share/man/man4/pcfiic.4

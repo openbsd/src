@@ -3133,6 +3133,7 @@
 ./usr/share/man/man9/vwaitforio.9
 ./usr/share/man/man9/vwakeup.9
 ./usr/share/man/man9/wdog_register.9
+./usr/share/man/man9/wsfont_init.9
 ./usr/share/misc/gprof.callg
 ./usr/share/misc/gprof.flat
 ./var/db/libc.tags
