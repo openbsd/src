@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.38 2020/02/17 02:50:23 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.39 2020/06/19 14:51:44 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -490,7 +490,7 @@ siop_ppr_neg(siop_cmd)
 			siop_target->offset = 0;
 			siop_target->period = 0;
 			goto reject;
-		} 
+		}
 		siop_target->flags |= TARF_ISWIDE;
 		sc->targets[target]->id |= (SCNTL3_EWS << 24);
 		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
@@ -775,10 +775,9 @@ siop_sdp(siop_cmd, offset)
 {
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	scr_table_t *table;
-	
-	if ((siop_cmd->xs->flags & (SCSI_DATA_OUT | SCSI_DATA_IN))
-	    == 0)
-	    return; /* no data pointers to save */
+
+	if ((siop_cmd->xs->flags & (SCSI_DATA_OUT | SCSI_DATA_IN))== 0)
+		return; /* no data pointers to save */
 
 	/*
 	 * offset == SIOP_NSG may be a valid condition if we get a Save data
@@ -1013,7 +1012,7 @@ siop_update_xfer_mode(sc, target)
 	struct siop_common_target *siop_target;
 
 	siop_target = sc->targets[target];
-	
+
 	printf("%s: target %d now using %s%s%d bit ",
             sc->sc_dev.dv_xname, target,
 	    (siop_target->flags & TARF_TAG) ? "tagged " : "",
@@ -1054,7 +1053,7 @@ siop_update_xfer_mode(sc, target)
 		}
 		printf(" MHz %d REQ/ACK offset ", siop_target->offset);
 	}
-	
+
 	printf("xfers\n");
 
 	if ((sc->features & SF_CHIP_GEBUG) &&

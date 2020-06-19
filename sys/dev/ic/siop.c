@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.74 2020/02/17 02:50:23 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.75 2020/06/19 14:51:44 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1337,7 +1337,7 @@ siop_handle_reset(sc)
 		printf("cmd %p (status %d) reset",
 		    siop_cmd, siop_cmd->cmd_c.status);
 		if (siop_cmd->cmd_c.status == CMDST_SENSE ||
-		    siop_cmd->cmd_c.status == CMDST_SENSE_ACTIVE) 
+		    siop_cmd->cmd_c.status == CMDST_SENSE_ACTIVE)
 			siop_cmd->cmd_c.status = CMDST_SENSE_DONE;
 		else
 			siop_cmd->cmd_c.status = CMDST_DONE;
@@ -1537,7 +1537,7 @@ siop_scsicmd(xs)
 			    (struct scsi_inquiry_data *)xs->data;
 		 	if ((inqbuf->device & SID_QUAL) == SID_QUAL_BAD_LU)
 				break;
-			/* 
+			/*
 			 * Allocate cbd's to hold maximum openings worth of
 			 * commands. Do this now because doing it dynamically in
 			 * siop_startcmd may cause calls to bus_dma* functions
@@ -1580,7 +1580,7 @@ siop_start(sc)
 	struct siop_xfer *siop_xfer;
 	u_int32_t dsa;
 	int target, lun, tag, slot;
-	int newcmd = 0; 
+	int newcmd = 0;
 	int doingready = 0;
 
 	/*
@@ -1621,7 +1621,7 @@ again:
 		if (siop_cmd->cmd_c.status != CMDST_READY &&
 		    siop_cmd->cmd_c.status != CMDST_SENSE)
 			panic("siop: non-ready cmd in ready list");
-#endif	
+#endif
 		target = siop_cmd->cmd_c.xs->sc_link->target;
 		lun = siop_cmd->cmd_c.xs->sc_link->lun;
 		siop_lun =
@@ -1669,7 +1669,7 @@ again:
 		} else {
 			slot = 0;
 			if (siop_script_read(sc, Ent_script_sched_slot0 / 4)
-			    != 0x80000000) 
+			    != 0x80000000)
 				goto end;
 		}
 
