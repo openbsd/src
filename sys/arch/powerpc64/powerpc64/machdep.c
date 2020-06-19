@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2020/06/14 20:15:09 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 2020/06/19 22:09:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -411,10 +411,23 @@ copyout(const void *src, void *dst, size_t size)
 }
 
 int
-copystr(const void *src, void *dst, size_t len, size_t *lenp)
+copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
 {
-	printf("%s\n", __func__);
-	return EFAULT;
+	const char *src = kfaddr;
+	char *dst = kdaddr;
+	size_t l = 0;
+
+	while (len-- > 0) {
+		l++;
+		if ((*dst++ = *src++) == 0) {
+			if (done)
+				*done = l;
+			return 0;
+		}
+	}
+	if (done)
+		*done = l;
+	return ENAMETOOLONG;
 }
 
 int
@@ -432,10 +445,10 @@ copyoutstr(const void *src, void *dst, size_t size, size_t *lenp)
 }
 
 int
-kcopy(const void *src, void *dst, size_t size)
+kcopy(const void *kfaddr, void *kdaddr, size_t len)
 {
-	printf("%s\n", __func__);
-	return EFAULT;
+	memcpy(kdaddr, kfaddr, len);
+	return 0;
 }
 
 void
