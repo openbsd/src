@@ -54,15 +54,11 @@ module_param_named(fbdev_emulation, drm_fbdev_emulation, bool, 0600);
 MODULE_PARM_DESC(fbdev_emulation,
 		 "Enable legacy fbdev emulation [default=true]");
 
-#ifdef __linux__
 static int drm_fbdev_overalloc = CONFIG_DRM_FBDEV_OVERALLOC;
 module_param(drm_fbdev_overalloc, int, 0444);
 MODULE_PARM_DESC(drm_fbdev_overalloc,
 		 "Overallocation of the fbdev buffer (%) [default="
 		 __MODULE_STRING(CONFIG_DRM_FBDEV_OVERALLOC) "]");
-#else
-static int drm_fbdev_overalloc = 100;
-#endif
 
 /*
  * In order to keep user-space compatibility, we want in certain use-cases
