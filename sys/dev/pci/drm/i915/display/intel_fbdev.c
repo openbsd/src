@@ -301,7 +301,8 @@ static int intelfb_create(struct drm_fb_helper *helper,
 		break;
 	}
 
-	memset(ri->ri_bits, 0, vma->node.size);
+	if (vma->obj->stolen && !prealloc)
+		memset(ri->ri_bits, 0, vma->node.size);
 }
 #endif
 
