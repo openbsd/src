@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.8 2020/06/18 16:21:28 schwarze Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.9 2020/06/20 08:41:37 schwarze Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2020 $
+.Dd $Mdocdate: June 20 2020 $
 .Dt SIOCTL_OPEN 3
 .Os
 .Sh NAME
@@ -87,8 +87,8 @@ Any control may be changed by submitting
 a new value to its address.
 When values change, asynchronous notifications are sent.
 .Pp
-Controls descriptions are available, allowing them to be grouped and
-represented in a human usable form.
+Control descriptions are available, allowing them to be grouped and
+represented in a human readable form.
 .Ss Opening and closing the control device
 First the application must call the
 .Fn sioctl_open
@@ -127,19 +127,22 @@ The
 .Fn sioctl_close
 function closes the control device and frees any allocated resources
 associated with the handle.
-.Ss Controls descriptions
+.Ss Control descriptions
 The
 .Fn sioctl_ondesc
 function can be used to obtain the description of all available controls
 and their initial values.
-It registers a call-back that is immediately invoked for all
+It registers a callback function that is immediately invoked for all
 controls.
-It's called once with a NULL argument to indicate that the full
+It is called once with a
+.Dv NULL
+argument to indicate that the full
 description was sent and that the caller has a consistent
-representation of the controls set.
+representation of the control set.
 .Pp
-Then, whenever a control description changes, the call-back is
-invoked with the updated information followed by a call with a NULL
+Then, whenever a control description changes, the callback is
+invoked with the updated information followed by a call with a
+.Dv NULL
 argument.
 .Pp
 Controls are described by the
@@ -222,7 +225,7 @@ and
 .Fa node1
 attributes and
 .Fa func
-are strings usable as unique identifiers within the the given
+are strings usable as unique identifiers within the given
 .Fa group .
 .Pp
 The
@@ -235,7 +238,7 @@ Controls are changed with the
 function, by giving the index of the control and the new value.
 The
 .Fn sioctl_onval
-function can be used to register a call-back which will be invoked whenever
+function can be used to register a callback which will be invoked whenever
 a control changes.
 Integer values are in the range from 0 to
 .Fa maxval .
@@ -287,7 +290,21 @@ structures the caller must preallocate in order to be sure
 that
 .Fn sioctl_pollfd
 will never overrun.
+.Sh ENVIRONMENT
+.Bl -tag -width AUDIODEVICE
+.It Ev AUDIODEVICE
+The default
+.Xr sndio 7
+device used by
+.Fn sioctl_open .
+.El
 .Sh SEE ALSO
 .Xr sndioctl 1 ,
 .Xr poll 2 ,
+.Xr sio_open 3 ,
 .Xr sndio 7
+.Sh HISTORY
+These functions first appeared in
+.Ox 6.7 .
+.Sh AUTHORS
+.An Alexandre Ratchov Aq Mt ratchov@openbsd.org
