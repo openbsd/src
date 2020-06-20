@@ -144,7 +144,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_mapreg_map(pa, RL_PCI_LOMEM64, PCI_MAPREG_TYPE_MEM |
 	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->rl_btag, &sc->rl_bhandle,
 	    NULL, &psc->sc_iosize, 0)) {
-		if (pci_mapreg_map(pa, RL_PCI_LOMEM64, PCI_MAPREG_TYPE_MEM |
+		if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM |
 		    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->rl_btag, &sc->rl_bhandle,
 		    NULL, &psc->sc_iosize, 0)) {
 			if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO,
@@ -153,16 +153,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 				printf(": can't map mem or i/o space\n");
 				return;
 			}
-			else {
-				printf("MAPIO\n");
-			}
 		}
-		else {
-			printf("MAP32\n");
-		}
-	}
-	else {
-		printf("MAP64\n");
 	}
 
 	/* Allocate interrupt */
