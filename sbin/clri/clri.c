@@ -1,4 +1,4 @@
-/*	$OpenBSD: clri.c,v 1.20 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: clri.c,v 1.21 2020/06/20 07:49:04 otto Exp $	*/
 /*	$NetBSD: clri.c,v 1.19 2005/01/20 15:50:47 xtraeme Exp $	*/
 
 /*
@@ -68,7 +68,8 @@ main(int argc, char *argv[])
 	char *fs, sblock[SBLOCKSIZE];
 	size_t bsize;
 	off_t offset;
-	int i, fd, imax, inonum;
+	int i, fd;
+	ino_t imax, inonum;
 
 	if (argc < 3)
 		usage();

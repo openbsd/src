@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.112 2020/05/29 06:46:15 otto Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.113 2020/06/20 07:49:04 otto Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -63,14 +63,14 @@
 	    (fs)->fs_fsmnt, (cp));				\
 } while (0)
 
-daddr_t		ffs_alloccg(struct inode *, int, daddr_t, int);
-struct buf *	ffs_cgread(struct fs *, struct inode *, int);
+daddr_t		ffs_alloccg(struct inode *, u_int, daddr_t, int);
+struct buf *	ffs_cgread(struct fs *, struct inode *, u_int);
 daddr_t		ffs_alloccgblk(struct inode *, struct buf *, daddr_t);
 ufsino_t	ffs_dirpref(struct inode *);
-daddr_t		ffs_fragextend(struct inode *, int, daddr_t, int, int);
-daddr_t		ffs_hashalloc(struct inode *, int, daddr_t, int,
-		    daddr_t (*)(struct inode *, int, daddr_t, int));
-daddr_t		ffs_nodealloccg(struct inode *, int, daddr_t, int);
+daddr_t		ffs_fragextend(struct inode *, u_int, daddr_t, int, int);
+daddr_t		ffs_hashalloc(struct inode *, u_int, daddr_t, int,
+		    daddr_t (*)(struct inode *, u_int, daddr_t, int));
+daddr_t		ffs_nodealloccg(struct inode *, u_int, daddr_t, int);
 daddr_t		ffs_mapsearch(struct fs *, struct cg *, daddr_t, int);
 
 static const struct timeval	fserr_interval = { 2, 0 };
@@ -102,7 +102,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 	static struct timeval fsfull_last;
 	struct fs *fs;
 	daddr_t bno;
-	int cg;
+	u_int cg;
 	int error;
 
 	*bnp = 0;
@@ -174,7 +174,8 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	struct fs *fs;
 	struct buf *bp = NULL;
 	daddr_t quota_updated = 0;
-	int cg, request, error;
+	int request, error;
+	u_int cg;
 	daddr_t bprev, bno;
 
 	if (bpp != NULL)
@@ -360,7 +361,8 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	struct fs *fs;
 	struct inode *ip;
 	ufsino_t ino, ipref;
-	int cg, error;
+	u_int cg;
+	int error;
 
 	*vpp = NULL;
 	fs = pip->i_fs;
@@ -449,11 +451,12 @@ ufsino_t
 ffs_dirpref(struct inode *pip)
 {
 	struct fs *fs;
-	int	cg, prefcg, dirsize, cgsize;
-	int	avgifree, avgbfree, avgndir, curdirsize;
-	int	minifree, minbfree, maxndir;
-	int	mincg, minndir;
-	int	maxcontigdirs;
+	u_int	cg, prefcg;
+	u_int	dirsize, cgsize;
+	u_int	avgifree, avgbfree, avgndir, curdirsize;
+	u_int	minifree, minbfree, maxndir;
+	u_int	mincg, minndir;
+	u_int	maxcontigdirs;
 
 	fs = pip->i_fs;
 
@@ -592,7 +595,8 @@ int32_t
 ffs1_blkpref(struct inode *ip, daddr_t lbn, int indx, int32_t *bap)
 {
 	struct fs *fs;
-	int cg, inocg, avgbfree, startcg;
+	u_int cg, inocg;
+	u_int avgbfree, startcg;
 	uint32_t pref;
 
 	KASSERT(indx <= 0 || bap != NULL);
@@ -692,7 +696,8 @@ int64_t
 ffs2_blkpref(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
 {
 	struct fs *fs;
-	int cg, inocg, avgbfree, startcg;
+	u_int cg, inocg;
+	u_int avgbfree, startcg;
 	uint64_t pref;
 
 	KASSERT(indx <= 0 || bap != NULL);
@@ -796,12 +801,12 @@ ffs2_blkpref(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
  *   3) brute force search for a free block.
  */
 daddr_t
-ffs_hashalloc(struct inode *ip, int cg, daddr_t pref, int size,
-    daddr_t (*allocator)(struct inode *, int, daddr_t, int))
+ffs_hashalloc(struct inode *ip, u_int cg, daddr_t pref, int size,
+    daddr_t (*allocator)(struct inode *, u_int, daddr_t, int))
 {
 	struct fs *fs;
 	daddr_t result;
-	int i, icg = cg;
+	u_int i, icg = cg;
 
 	fs = ip->i_fs;
 	/*
@@ -839,7 +844,7 @@ ffs_hashalloc(struct inode *ip, int cg, daddr_t pref, int size,
 }
 
 struct buf *
-ffs_cgread(struct fs *fs, struct inode *ip, int cg)
+ffs_cgread(struct fs *fs, struct inode *ip, u_int cg)
 {
 	struct buf *bp;
 
@@ -864,7 +869,7 @@ ffs_cgread(struct fs *fs, struct inode *ip, int cg)
  * if they are, allocate them.
  */
 daddr_t
-ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
+ffs_fragextend(struct inode *ip, u_int cg, daddr_t bprev, int osize, int nsize)
 {
 	struct fs *fs;
 	struct cg *cgp;
@@ -930,7 +935,7 @@ ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
  * and if it is, allocate it.
  */
 daddr_t
-ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
+ffs_alloccg(struct inode *ip, u_int cg, daddr_t bpref, int size)
 {
 	struct fs *fs;
 	struct cg *cgp;
@@ -1085,7 +1090,7 @@ gotit:
 
 /* inode allocation routine */
 daddr_t
-ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
+ffs_nodealloccg(struct inode *ip, u_int cg, daddr_t ipref, int mode)
 {
 	struct fs *fs;
 	struct cg *cgp;
@@ -1379,10 +1384,10 @@ ffs_freefile(struct inode *pip, ufsino_t ino, mode_t mode)
 	struct cg *cgp;
 	struct buf *bp;
 	struct timespec now;
-	int cg;
+	u_int cg;
 
 	fs = pip->i_fs;
-	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
+	if (ino >= fs->fs_ipg * fs->fs_ncg)
 		panic("ffs_freefile: range: dev = 0x%x, ino = %d, fs = %s",
 		    pip->i_dev, ino, fs->fs_fsmnt);
 

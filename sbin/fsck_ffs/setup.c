@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.66 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.67 2020/06/20 07:49:04 otto Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -79,14 +79,15 @@ static const int altsbtry[] = { 32, 64, 128, 144, 160, 192, 256 };
 int
 setup(char *dev, int isfsdb)
 {
-	long cg, size, asked, i, j;
+	long size, asked, i, j;
 	size_t bmapsize;
 	struct disklabel *lp;
 	off_t sizepb;
 	struct stat statb;
 	struct fs proto;
 	int doskipclean;
-	int32_t maxsymlinklen, nindir, inopb;
+	int32_t maxsymlinklen, nindir;
+	uint32_t cg, inopb;
 	u_int64_t maxfilesize;
 	char *realdev;
 
@@ -366,7 +367,7 @@ found:
 	else
 		inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
 	if (INOPB(&sblock) != inopb) {
-		pwarn("INCONSISTENT INOPB=%d\n", INOPB(&sblock));
+		pwarn("INCONSISTENT INOPB=%u\n", INOPB(&sblock));
 		sblock.fs_inopb = inopb;
 		if (preen)
 			printf(" (FIXED)\n");

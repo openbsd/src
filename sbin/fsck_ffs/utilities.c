@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.52 2019/02/06 13:26:13 millert Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.53 2020/06/20 07:49:04 otto Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -581,7 +581,7 @@ dofix(struct inodesc *idesc, char *msg)
 		return (0);
 
 	default:
-		errexit("UNKNOWN INODESC FIX MODE %d\n", idesc->id_fix);
+		errexit("UNKNOWN INODESC FIX MODE %u\n", idesc->id_fix);
 	}
 	/* NOTREACHED */
 }

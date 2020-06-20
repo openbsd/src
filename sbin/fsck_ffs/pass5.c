@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.48 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.49 2020/06/20 07:49:04 otto Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -48,26 +48,28 @@
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
-static int info_cg;
-static int info_maxcg;
+static u_int info_cg;
+static u_int info_maxcg;
 
 static int
 pass5_info(char *buf, size_t buflen)
 {
-	return (snprintf(buf, buflen, "phase 5, cg %d/%d",
+	return (snprintf(buf, buflen, "phase 5, cg %u/%u",
 	    info_cg, info_maxcg) > 0);
 }
 
 void
 pass5(void)
 {
-	int c, blk, frags, basesize, sumsize, mapsize, savednrpos=0;
+	int blk, frags, basesize, sumsize, mapsize, savednrpos=0;
+	u_int c;
 	int inomapsize, blkmapsize;
 	struct fs *fs = &sblock;
 	struct cg *cg = &cgrp;
 	daddr_t dbase, dmax;
 	daddr_t d;
-	long i, j, k, rewritecg = 0;
+	long i, k, rewritecg = 0;
+	ino_t j;
 	struct csum *cs;
 	struct csum_total cstotal;
 	struct inodesc idesc[3];
@@ -179,7 +181,7 @@ pass5(void)
 		info_cg = c;
 		getblk(&cgblk, cgtod(fs, c), fs->fs_cgsize);
 		if (!cg_chkmagic(cg))
-			pfatal("CG %d: BAD MAGIC NUMBER\n", c);
+			pfatal("CG %u: BAD MAGIC NUMBER\n", c);
 		dbase = cgbase(fs, c);
 		dmax = dbase + fs->fs_fpg;
 		if (dmax > fs->fs_size)
@@ -215,7 +217,7 @@ pass5(void)
 				newcg->cg_irotor = cg->cg_irotor;
 		} else {
 			newcg->cg_ncyl = 0;
-			if ((unsigned)cg->cg_initediblk > fs->fs_ipg)
+			if (cg->cg_initediblk > fs->fs_ipg)
 				newcg->cg_initediblk = fs->fs_ipg;
 			else
 				newcg->cg_initediblk = cg->cg_initediblk;
@@ -339,8 +341,8 @@ pass5(void)
 						continue;
 					if (cg_inosused(cg)[i] & (1 << k))
 						continue;
-					pwarn("ALLOCATED INODE %lld MARKED FREE\n",
-					      ((long long)c * fs->fs_ipg + i * 8) + k);
+					pwarn("ALLOCATED INODE %llu MARKED FREE\n",
+					      ((ino_t)c * fs->fs_ipg + i * 8) + k);
 				}
 			}
 			for (i = 0; i < blkmapsize; i++) {
