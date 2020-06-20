@@ -181,7 +181,7 @@ ptd_conf_read(int bus, int dev, int func, uint32_t reg)
 	pio.dev = dev;
 	pio.fun = func;
 	pio.dir = VEI_DIR_IN;
-	pio.reg = reg;
+	pio.reg = reg & ~0x3;
 	ioctl(env->vmd_fd, VMM_IOC_PCIIO, &pio);
 	return pio.val;
 }
@@ -196,7 +196,7 @@ ptd_conf_write(int bus, int dev, int func, uint32_t reg, uint32_t val)
 	pio.dev = dev;
 	pio.fun = func;
 	pio.dir = VEI_DIR_OUT;
-	pio.reg = reg;
+	pio.reg = reg & ~3;
 	pio.val = val;
 	ioctl(env->vmd_fd, VMM_IOC_PCIIO, &pio);
 }
@@ -460,7 +460,7 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 uint64_t
 mbar(uint64_t *base, uint32_t size, uint32_t align)
 {
-	uint64_t mask = align-1;
+	uint64_t mask = size-1;
 	uint64_t cbase;
 
 	cbase = (*base + mask) & ~mask;
@@ -502,39 +502,8 @@ ppt_csfn(int dir, uint8_t reg, uint8_t sz, uint32_t *data, void *cookie)
 {
 	struct pci_ptd *pd = cookie;
 	struct pci_dev *pdev;
-	uint32_t ndata = 0, baridx;
 
 	pdev = &pci.pci_devices[pd->id];
-	if (dir == VEI_DIR_IN) {
-		/* Read direct from cached values */
-		memcpy(data, (uint8_t *)&pdev->pd_cfg_space[reg/4] + (reg & 3), sz);
-	}
-	else if (dir == VEI_DIR_OUT) {
-		/* Read cached value */
-		ndata = pdev->pd_cfg_space[reg/4];
-		if (reg >= 0x10 && reg <= 0x24) {
-			// BAR
-			baridx = (reg - 0x10) / 4;
-			if ((*data & ~0xF) == 0xFFFFFFF0) {
-				printf("modify bar!\n");
-				ndata = ~(pdev->pd_barsize[baridx] - 1);
-			}
-			else if (pdev->pd_bartype[baridx] == PCI_BAR_TYPE_MMIO) {
-				unregister_mem(ndata);
-				register_mem(*data, pdev->pd_barsize[baridx], pci_memh2, 
-				     PTD_DEVID(pd->id, baridx));
-				ndata = *data;
-			}
-			else if (pdev->pd_bartype[baridx] == PCI_BAR_TYPE_IO) {
-				ndata = *data | 1;
-			}
-		}
-		else {
-			memcpy((uint8_t *)&ndata + (reg & 3), data, sz);
-		}
-		/* Write new value */
-		pdev->pd_cfg_space[reg/4] = ndata;
-	}
 	fprintf(stderr, "@pciio: %c:%.2x %d %.8x\n", dir == VEI_DIR_IN ? 'r' : 'w', reg, sz, *data);
 	return 0;
 }
@@ -752,7 +721,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 {
 	struct vm_exit *vei = vrp->vrp_exit;
 	uint8_t b, d, f, o, baridx, ofs, sz;
-	uint32_t data, barval, barsize;
+	uint32_t data, barval, barsize, bartype;
 	uint64_t wrdata;
 	int ret;
 	pci_cs_fn_t csfunc;
@@ -813,56 +782,30 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	 * The guest wrote to the config space location denoted by the current
 	 * value in the address register.
 	 */
-	if (o >= 0x10 && o <= 0x24 && 1 && d == ptd.id)  {
-		fprintf(stderr,"accbar: %c %x.%x.%x %x [%x %x]\n", 
-			vei->vei.vei_dir == VEI_DIR_OUT  ? 'w' : 'r', b,d,f,o,
-			_pcicfgrd32(d, o),
-			wrdata);
-	}
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
-		if ((o >= 0x10 && o <= 0x24) && (wrdata & ~0xF) == 0xfffffff0) {
-			/*
-			 * Compute BAR index:
-			 * o = 0x10 -> baridx = 0
-			 * o = 0x14 -> baridx = 1
-			 * o = 0x18 -> baridx = 2
-			 * o = 0x1c -> baridx = 3
-			 * o = 0x20 -> baridx = 4
-			 * o = 0x24 -> baridx = 5
-			 */
-			baridx = (o / 4) - 4;
-			if (baridx < pci.pci_devices[d].pd_bar_ct && pci.pci_devices[d].pd_barsize[baridx]) {
-				vei->vei.vei_data = ~(pci.pci_devices[d].pd_barsize[baridx] - 1);
-			}
-			else
-				vei->vei.vei_data = 0;
-		}
-
-		/* IOBAR registers must have bit 0 set */
 		if (o >= 0x10 && o <= 0x24) {
 			baridx = (o - 0x10) / 4;
 			barval = pci.pci_devices[d].pd_cfg_space[o/4];
 			barsize = pci.pci_devices[d].pd_barsize[baridx];
+			bartype = pci.pci_devices[d].pd_bartype[baridx];
 
-			if (baridx < pci.pci_devices[d].pd_bar_ct &&
-			    pci.pci_devices[d].pd_bartype[baridx] ==
-			    PCI_BAR_TYPE_IO) {
-				vei->vei.vei_data |= 1;
-				fprintf(stderr, "%.2x old/new: %.8x %.8llx/%.8x ip:%.16llx\n", o,
-					barval, wrdata, barsize,
-					vei->vrs.vrs_gprs[VCPU_REGS_RIP]);
+			if (barsize) {	
+				/* Mask off invalid bits */
+				wrdata &= ~(barsize - 1);
+				if (bartype == PCI_BAR_TYPE_IO)
+					wrdata |= (barval & 0x1);
+				else {
+					/* Modify memory handler */
+					unregister_mem(barval & ~0xF);
+					register_mem(wrdata, barsize, pci_memh2, 
+							PTD_DEVID(d, baridx));	
+					wrdata |= (barval & 0xF);
+				}
 			}
-			if (baridx < pci.pci_devices[d].pd_bar_ct &&
-			    pci.pci_devices[d].pd_bartype[baridx] ==
-			    PCI_BAR_TYPE_MMIO && wrdata != 0xffffffff) {
-#if 1
-				fprintf(stderr, "%.2x old/new: %.8x %.8llx/%.8x ip:%.16llx\n", o,
-					barval,	wrdata, barsize,
-					vei->vrs.vrs_gprs[VCPU_REGS_RIP]);
-#endif
-				unregister_mem(barval);
-				register_mem(wrdata, barsize, pci_memh2, PTD_DEVID(d, baridx));
-			}
+			fprintf(stderr, "%d %.2x val:%.8x/%.8llx new:%.8x [%.8x] ip:%.16llx\n", 
+				d, o, barval, barsize, wrdata, vei->vei.vei_data,
+				vei->vrs.vrs_gprs[VCPU_REGS_RIP]);
+			vei->vei.vei_data = wrdata;
 		}
 
 		/*
@@ -871,8 +814,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		 * writes and copy data to config space registers.
 		 */
 		if (o != PCI_EXROMADDR_0)
-			get_input_data(vei,
-			    &pci.pci_devices[d].pd_cfg_space[o / 4]);
+			get_input_data(vei, &pci.pci_devices[d].pd_cfg_space[o/4]);
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction
