@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.194 2020/02/22 01:00:07 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.195 2020/06/20 09:59:48 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -190,7 +190,7 @@ static int
 file_get(const char *path, const char *outfile)
 {
 	struct stat	 st;
-	int		 fd, out, rval = -1, save_errno;
+	int		 fd, out = -1, rval = -1, save_errno;
 	volatile sig_t	 oldintr, oldinti;
 	const char	*savefile;
 	char		*buf = NULL, *cp;
