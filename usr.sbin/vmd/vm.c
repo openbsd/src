@@ -1637,6 +1637,7 @@ unregister_mem(uint64_t base)
 		if (mem->start == base) {
 			fprintf(stderr, "  removed:%llx-%llx\n", mem->start, mem->end);
 			TAILQ_REMOVE(&memh, mem, next);
+			free(mem);
 		}
 	}
 }
