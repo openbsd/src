@@ -4,6 +4,8 @@ D. J. Bernstein
 Public domain.
 */
 
+#include <sys/systm.h>
+
 typedef unsigned char u8;
 typedef unsigned int u32;
 
@@ -48,6 +50,44 @@ typedef struct
 
 static const char sigma[16] = "expand 32-byte k";
 static const char tau[16] = "expand 16-byte k";
+
+static inline void
+hchacha20(u32 derived_key[8], const u8 nonce[16], const u8 key[32])
+{
+  int i;
+  uint32_t x[] = {
+    U8TO32_LITTLE(sigma + 0),
+    U8TO32_LITTLE(sigma + 4),
+    U8TO32_LITTLE(sigma + 8),
+    U8TO32_LITTLE(sigma + 12),
+    U8TO32_LITTLE(key + 0),
+    U8TO32_LITTLE(key + 4),
+    U8TO32_LITTLE(key + 8),
+    U8TO32_LITTLE(key + 12),
+    U8TO32_LITTLE(key + 16),
+    U8TO32_LITTLE(key + 20),
+    U8TO32_LITTLE(key + 24),
+    U8TO32_LITTLE(key + 28),
+    U8TO32_LITTLE(nonce + 0),
+    U8TO32_LITTLE(nonce + 4),
+    U8TO32_LITTLE(nonce + 8),
+    U8TO32_LITTLE(nonce + 12)
+  };
+
+  for (i = 20;i > 0;i -= 2) {
+    QUARTERROUND( x[0], x[4], x[8],x[12])
+    QUARTERROUND( x[1], x[5], x[9],x[13])
+    QUARTERROUND( x[2], x[6],x[10],x[14])
+    QUARTERROUND( x[3], x[7],x[11],x[15])
+    QUARTERROUND( x[0], x[5],x[10],x[15])
+    QUARTERROUND( x[1], x[6],x[11],x[12])
+    QUARTERROUND( x[2], x[7], x[8],x[13])
+    QUARTERROUND( x[3], x[4], x[9],x[14])
+  }
+
+  memcpy(derived_key + 0, x +  0, sizeof(u32) * 4);
+  memcpy(derived_key + 4, x + 12, sizeof(u32) * 4);
+}
 
 static void
 chacha_keysetup(chacha_ctx *x,const u8 *k,u32 kbits)
