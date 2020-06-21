@@ -61,10 +61,20 @@ struct wg_data {
 uint32_t
 wg_match(const u_char *bp, u_int length)
 {
+	u_int caplen;
 	uint32_t type;
 
-	if (length < 4)
+	if (length < sizeof(type))
 		return 0;
+
+	if (snapend - bp < sizeof(type)) {
+                /*
+		 * we don't have enough bytes to tell if it is wg,
+                 * so don't claim it, and don't claim it's truncated
+                 * wireguard either.
+		 */
+		return (0);
+	}
 
 	type = EXTRACT_LE_32BITS(bp);
 
