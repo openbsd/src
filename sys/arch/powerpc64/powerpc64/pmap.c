@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 2020/06/21 17:05:12 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.14 2020/06/21 18:23:43 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -556,7 +556,7 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	pted->pted_va = va & ~PAGE_MASK;
 	pted->pted_vsid = pmap_va2vsid(pm, va);
 
-	pte->pte_hi = (pmap_pted2avpn(pted) & PTE_AVPN);
+	pte->pte_hi = (pmap_pted2avpn(pted) & PTE_AVPN) | PTE_VALID;
 	pte->pte_lo = (pa & PTE_RPGN);
 
 	if (prot & PROT_WRITE)
@@ -686,8 +686,6 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 {
 	struct pte *pte;
 	int s;
-
-	printf("%s: va 0x%lx\n", __func__, pted->pted_va);
 
 	KASSERT(pm == pted->pted_pmap);
 	PMAP_VP_ASSERT_LOCKED(pm);
