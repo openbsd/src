@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.257 2019/12/06 14:43:14 tobhe Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.258 2020/06/21 05:17:15 dlg Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -583,11 +583,19 @@ bad:
 
 void
 udp_sbappend(struct inpcb *inp, struct mbuf *m, struct ip *ip,
-    struct ip6_hdr *ip6, int iphlen, struct udphdr *uh,
+    struct ip6_hdr *ip6, int hlen, struct udphdr *uh,
     struct sockaddr *srcaddr, u_int32_t ipsecflowinfo)
 {
 	struct socket *so = inp->inp_socket;
 	struct mbuf *opts = NULL;
+
+	hlen += sizeof(*uh);
+
+	if (inp->inp_upcall != NULL) {
+		m = (*inp->inp_upcall)(inp->inp_upcall_arg, m, ip, ip6, uh, hlen);
+		if (m == NULL)
+			return;
+	}
 
 #ifdef INET6
 	if (ip6 && (inp->inp_flags & IN6P_CONTROLOPTS ||
@@ -625,7 +633,7 @@ udp_sbappend(struct inpcb *inp, struct mbuf *m, struct ip *ip,
 		    sizeof(u_int32_t), IP_IPSECFLOWINFO, IPPROTO_IP);
 	}
 #endif
-	m_adj(m, iphlen + sizeof(struct udphdr));
+	m_adj(m, hlen);
 	if (sbappendaddr(so, &so->so_rcv, srcaddr, m, opts) == 0) {
 		udpstat_inc(udps_fullsock);
 		m_freem(m);
