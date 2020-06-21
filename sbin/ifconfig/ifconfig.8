@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.347 2020/06/21 12:20:06 dlg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.348 2020/06/21 13:41:05 matthieu Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -2056,7 +2056,7 @@ Packets on a VLAN interface without a tag set will use a value of
 .Op Cm wgpsk Ar presharedkey
 .Op Fl wgpsk
 .Op Cm wgpka Ar persistent-keepalive
-.Op Cm wgpip Ar ip port
+.Op Cm wgendpoint Ar ip port
 .Op Cm wgaip Ar allowed-ip/prefix
 .Oc
 .Op Fl wgpeerall
@@ -2137,7 +2137,7 @@ By default this functionality is disabled, equivalent to a value of 0.
 This is often used to ensure a peer will be accessible when protected by
 a firewall, as is when behind a NAT address.
 A value of 25 is commonly used.
-.It Cm wgpip Ar ip port
+.It Cm wgendpoint Ar ip port
 Set the IP address and port to send the encapsulated packets to.
 If the peer changes address, the local interface will update the address
 after receiving a correctly authenticated packet.
