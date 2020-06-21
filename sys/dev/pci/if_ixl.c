@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.48 2020/05/09 08:39:11 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.49 2020/06/21 05:15:14 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -80,6 +80,10 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#ifdef __sparc64__
+#include <dev/ofw/openfirm.h>
+#endif
 
 #define I40E_MASK(mask, shift)		((mask) << (shift))
 #define I40E_PF_RESET_WAIT_COUNT	200
@@ -3312,6 +3316,12 @@ ixl_get_mac(struct ixl_softc *sc)
 	struct ixl_aq_desc iaq;
 	struct ixl_aq_mac_addresses *addrs;
 	int rv;
+
+#ifdef __sparc64__
+	if (OF_getprop(PCITAG_NODE(sc->sc_tag), "local-mac-address",
+	    sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN) == ETHER_ADDR_LEN)
+		return (0);
+#endif
 
 	if (ixl_dmamem_alloc(sc, &idm, sizeof(*addrs), 0) != 0) {
 		printf(", unable to allocate mac addresses\n");
