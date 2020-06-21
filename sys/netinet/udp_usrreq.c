@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.258 2020/06/21 05:17:15 dlg Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.259 2020/06/21 05:19:27 dlg Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -592,7 +592,8 @@ udp_sbappend(struct inpcb *inp, struct mbuf *m, struct ip *ip,
 	hlen += sizeof(*uh);
 
 	if (inp->inp_upcall != NULL) {
-		m = (*inp->inp_upcall)(inp->inp_upcall_arg, m, ip, ip6, uh, hlen);
+		m = (*inp->inp_upcall)(inp->inp_upcall_arg, m,
+		    ip, ip6, uh, hlen);
 		if (m == NULL)
 			return;
 	}
