@@ -1,4 +1,4 @@
-.\" $OpenBSD: wg.4,v 1.1 2020/06/21 12:25:47 dlg Exp $
+.\" $OpenBSD: wg.4,v 1.2 2020/06/21 15:23:59 jmc Exp $
 .\" Copyright (c) 2020 Matt Dunwoodie <ncon@noconroy.net>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -47,9 +47,9 @@ The interface itself can be configured with
 Support is also available in the
 .Nm wireguard-tools
 package by using the
-.Xr wg 8
+.Nm wg
 and
-.Xr wg-quick 8
+.Nm wg-quick
 utilities.
 .Pp
 .Nm wg
@@ -79,7 +79,7 @@ The public key is used to identify the interface to other peers.
 In addition to the interface keys, each peer pair can have a
 unique preshared key.
 This key is used in the handshake to provide post-quantum security.
-It is optional, however recommended.
+It is optional, but recommended.
 .It Allowed IPs
 Allowed IPs dictate the tunneled IP addresses each peer is allowed to
 send from.
@@ -118,9 +118,9 @@ as follows:
 .Pp
 .Dl $ openssl rand -base64 32
 .Pp
-Note that not all 32 byte strings are valid Curve25519 keys.
+Note that not all 32-byte strings are valid Curve25519 keys.
 Specific bits must be set in the string.
-All the same, a random 32 string can be passed because
+All the same, a random 32-byte string can be passed because
 the interface automatically sets the required bits.
 This does not apply to the preshared key.
 .Pp
@@ -154,18 +154,16 @@ ifconfig wg2 192.168.5.2/24
 .Ed
 .Pp
 After this, ping one interface from the other:
-.Bd -literal -offset indent
-route -T1 exec ping 192.168.5.2
-.Ed
+.Pp
+.Dl $ route -T1 exec ping 192.168.5.2
 .Pp
 The two interfaces are able to communicate through the UDP tunnel
 which resides in the default
 .Xr rdomain 4 .
 .Pp
 Show the listening sockets:
-.Bd -literal -offset indent
-netstat -ln
-.Ed
+.Pp
+.Dl $ netstat -ln
 .Sh DIAGNOSTICS
 The
 .Nm
@@ -180,7 +178,7 @@ Peer X did not reply to our initiation packet, for example because:
 .Bl -bullet
 .It
 The peer does not have the local interface configured as a peer.
-Peers must be able to mutally authenticate each other.
+Peers must be able to mutually authenticate each other.
 .It
 The peer endpoint IP address is incorrectly configured.
 .It
@@ -220,6 +218,6 @@ The
 driver was developed by
 .An Matt Dunwoodie Aq Mt ncon@noconroy.net
 and
-.An Jason A. Donenfeld Aq Mt Jason@zx2c4.com .
+.An Jason A. Donenfeld Aq Mt Jason@zx2c4.com ,
 based on code written by
 .An Jason A. Donenfeld.
