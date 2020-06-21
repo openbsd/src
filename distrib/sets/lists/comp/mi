@@ -48,6 +48,7 @@
 ./usr/include/crypto
 ./usr/include/crypto/aes.h
 ./usr/include/crypto/arc4.h
+./usr/include/crypto/blake2s.h
 ./usr/include/crypto/blf.h
 ./usr/include/crypto/cast.h
 ./usr/include/crypto/castsb.h
@@ -56,6 +57,7 @@
 ./usr/include/crypto/cmac.h
 ./usr/include/crypto/cryptodev.h
 ./usr/include/crypto/cryptosoft.h
+./usr/include/crypto/curve25519.h
 ./usr/include/crypto/des_locl.h
 ./usr/include/crypto/gmac.h
 ./usr/include/crypto/hmac.h
@@ -989,6 +991,7 @@
 ./usr/include/net/if_var.h
 ./usr/include/net/if_vlan_var.h
 ./usr/include/net/if_vxlan.h
+./usr/include/net/if_wg.h
 ./usr/include/net/ifq.h
 ./usr/include/net/netisr.h
 ./usr/include/net/ofp.h
@@ -1005,6 +1008,8 @@
 ./usr/include/net/slcompress.h
 ./usr/include/net/toeplitz.h
 ./usr/include/net/trunklacp.h
+./usr/include/net/wg_cookie.h
+./usr/include/net/wg_noise.h
 ./usr/include/net80211
 ./usr/include/net80211/ieee80211.h
 ./usr/include/net80211/ieee80211_amrr.h
