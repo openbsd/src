@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 2020/06/18 21:52:57 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.11 2020/06/21 13:23:59 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -107,6 +107,8 @@ struct slb_desc {
 };
 
 struct slb_desc	kernel_slb_desc[32];
+
+struct slb_desc *pmap_slbd_lookup(pmap_t, vaddr_t);
 
 struct pmapvp1 {
 	struct pmapvp2 *vp[VP_IDX1_CNT];
@@ -234,10 +236,16 @@ static inline uint64_t
 pmap_va2vsid(pmap_t pm, vaddr_t va)
 {
 	uint64_t esid = va >> ADDR_ESID_SHIFT;
+	struct slb_desc *slbd;
 
 	if (pm == pmap_kernel())
 		return pmap_kernel_vsid(esid);
-	panic("userland");
+
+	slbd = pmap_slbd_lookup(pm, va);
+	if (slbd)
+		return slbd->slbd_vsid;
+
+	return 0;
 }
 
 void
@@ -285,8 +293,8 @@ pmap_ptedinhash(struct pte_desc *pted)
 struct slb_desc *
 pmap_slbd_lookup(pmap_t pm, vaddr_t va)
 {
-	struct slb_desc *slbd;
 	uint64_t esid = va >> ADDR_ESID_SHIFT;
+	struct slb_desc *slbd;
 
 	LIST_FOREACH(slbd, &pm->pm_slbd, slbd_list) {
 		if (slbd->slbd_esid == esid)
@@ -294,6 +302,68 @@ pmap_slbd_lookup(pmap_t pm, vaddr_t va)
 	}
 
 	return NULL;
+}
+
+int pmap_vsid = 1;
+
+struct slb_desc *
+pmap_slbd_alloc(pmap_t pm, vaddr_t va)
+{
+	uint64_t esid = va >> ADDR_ESID_SHIFT;
+	struct slb_desc *slbd;
+
+	KASSERT(pm != pmap_kernel());
+
+	slbd = pool_get(&pmap_slbd_pool, PR_NOWAIT | PR_ZERO);
+	if (slbd == NULL)
+		return NULL;
+
+	slbd->slbd_esid = esid;
+	slbd->slbd_vsid = pmap_vsid++;
+	LIST_INSERT_HEAD(&pm->pm_slbd, slbd, slbd_list);
+	return slbd;
+}
+
+int
+pmap_set_user_slb(pmap_t pm, vaddr_t va)
+{
+	struct cpu_info *ci = curcpu();
+	struct slb_desc *slbd;
+	uint64_t slbe, slbv;
+
+	KASSERT(pm != pmap_kernel());
+
+	slbd = pmap_slbd_lookup(pm, va);
+	if (slbd == NULL) {
+		slbd = pmap_slbd_alloc(pm, va);
+		if (slbd == NULL)
+			return EFAULT;
+	}
+
+	slbe = (slbd->slbd_esid << SLBE_ESID_SHIFT) | SLBE_VALID | 31;
+	slbv = slbd->slbd_vsid << SLBV_VSID_SHIFT;
+
+	ci->ci_kernel_slb[31].slb_slbe = slbe;
+	ci->ci_kernel_slb[31].slb_slbv = slbv;
+
+	isync();
+	slbmte(slbv, slbe);
+	isync();
+
+	return 0;
+}
+
+void
+pmap_unset_user_slb(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	isync();
+	slbie(ci->ci_kernel_slb[31].slb_slbe);
+	isync();
+	
+	ci->ci_kernel_slb[31].slb_slbe = 0;
+	ci->ci_kernel_slb[31].slb_slbv = 0;
 }
 
 /*
@@ -809,7 +879,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct pte_desc *pted;
 	struct vm_page *pg;
 	int cache = PMAP_CACHE_WB;
-	int error;
+	int error = 0;
 
 	if (pa & PMAP_NOCACHE)
 		cache = PMAP_CACHE_CI;
@@ -847,8 +917,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pg != NULL)
 		pmap_enter_pv(pted, pg); /* only managed mem */
 
-	KASSERT(pm == pmap_kernel());
-	pmap_kenter_pa(va, pa, prot);
+	pte_insert(pted);
+
+	/* XXX PROT_EXEC */
 
 out:
 	PMAP_VP_UNLOCK(pm);
@@ -1105,6 +1176,8 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 	}
 
 	vsid = pmap_va2vsid(pm, va);
+	if (vsid == 0)
+		return 0;
 
 	PMAP_HASH_LOCK(s);
 	pte = pte_lookup(vsid, va);
@@ -1172,7 +1245,7 @@ pmap_set_kernel_slb(int idx, vaddr_t va)
 {
 	struct cpu_info *ci = curcpu();
 	uint64_t esid, slbe, slbv;
-	
+
 	esid = va >> ADDR_ESID_SHIFT;
 	kernel_slb_desc[idx].slbd_esid = esid;
 	slbe = (esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx;

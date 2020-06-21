@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2020/06/18 21:52:57 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 2020/06/21 13:23:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -46,6 +46,7 @@ struct cpu_info {
 	struct schedstate_percpu ci_schedstate;
 
 	struct proc	*ci_curproc;
+	struct pcb	*ci_curpcb;
 
 	struct slb	ci_kernel_slb[32];
 
@@ -92,6 +93,8 @@ register struct cpu_info *__curcpu asm("r13");
 #define cpu_unidle(ci)
 #define CPU_BUSY_CYCLE()	do {} while (0)
 #define signotify(p)		setsoftast()
+
+#define curpcb			curcpu()->ci_curpcb
 
 static inline unsigned int
 cpu_rnd_messybits(void)

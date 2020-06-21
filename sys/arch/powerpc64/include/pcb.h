@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.2 2020/06/14 17:56:54 kettenis Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.3 2020/06/21 13:23:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -20,8 +20,9 @@
 #define _MACHINE_PCB_H_
 
 struct pcb {
-	register_t pcb_sp;
-	u_int	pcb_flags;
+	register_t	pcb_sp;
+	u_int		pcb_flags;
+	caddr_t		pcb_onfault;
 };
 
 #endif /* _MACHINE_PCB_H_ */

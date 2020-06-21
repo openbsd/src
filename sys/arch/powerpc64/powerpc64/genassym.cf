@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2020/06/18 22:51:38 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2020/06/21 13:23:59 kettenis Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -37,6 +37,7 @@ include <machine/intr.h>
 include <machine/pcb.h>
 
 struct	cpu_info
+member	ci_curpcb
 member	ci_curproc
 member	ci_tempsave
 member	ci_kernel_slb

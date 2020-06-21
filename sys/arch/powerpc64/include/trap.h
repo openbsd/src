@@ -142,6 +142,12 @@
 #define	EXC_PGM_PRIV		(1UL << 18)
 #define	EXC_PGM_TRAP		(1UL << 17)
 
+/*
+ * DSISR bits.
+ */
+
+#define DSISR_STORE		(1UL << 25)
+
 /* Magic pointer to store trap handler entry point */
 #define	TRAP_ENTRY	0x1f8
 #define	TRAP_HVENTRY	0x1f0

@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.10 2020/06/19 17:29:33 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.11 2020/06/21 13:23:59 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -309,13 +309,19 @@ generictrap:
 	and	%r30, %r30, %r31
 	mtsprg3	%r30
 
-	/* XXX skip this unless we come for userland */
+	/* Test whether we already had PR set */
+	mfsrr1	%r31
+	mtcr	%r31
+	bf	17, k_trap		/* branch if PSL_PR is false */
+
+u_trap:
 	mr	%r27, %r28
 	mtsprg2	%r29
 	bl	restore_kernsrs		/* enable kernel mapping */
 	mfsprg2	%r29
 	mr	%r28, %r27
 
+k_trap:
 	FRAME_SETUP(CI_TEMPSAVE)
 	GET_TOCBASE(%r2)
 trapagain:
