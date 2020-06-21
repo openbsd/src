@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 2020/06/21 13:23:59 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.12 2020/06/21 14:31:32 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -98,6 +98,8 @@ struct pte_desc {
 #define PTED_VA_MANAGED_M	0x10
 #define PTED_VA_WIRED_M		0x20
 #define PTED_VA_EXEC_M		0x40
+
+void	pmap_pted_syncicache(struct pte_desc *);
 
 struct slb_desc {
 	LIST_ENTRY(slb_desc) slbd_list;
@@ -879,6 +881,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct pte_desc *pted;
 	struct vm_page *pg;
 	int cache = PMAP_CACHE_WB;
+	int need_sync = 0;
 	int error = 0;
 
 	if (pa & PMAP_NOCACHE)
@@ -919,7 +922,28 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	pte_insert(pted);
 
-	/* XXX PROT_EXEC */
+	if (prot & PROT_EXEC) {
+		if (pg != NULL) {
+			need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
+			if (prot & PROT_WRITE)
+				atomic_clearbits_int(&pg->pg_flags,
+				    PG_PMAP_EXE);
+			else
+				atomic_setbits_int(&pg->pg_flags,
+				    PG_PMAP_EXE);
+		} else
+			need_sync = 1;
+	} else {
+		/*
+		 * Should we be paranoid about writeable non-exec 
+		 * mappings ? if so, clear the exec tag
+		 */
+		if ((prot & PROT_WRITE) && (pg != NULL))
+			atomic_clearbits_int(&pg->pg_flags, PG_PMAP_EXE);
+	}
+
+	if (need_sync)
+		pmap_pted_syncicache(pted);
 
 out:
 	PMAP_VP_UNLOCK(pm);
