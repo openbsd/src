@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include <stdio.h>
+#include <stddef.h>
 
 #include "interface.h"
 #include "extract.h"
@@ -90,6 +91,11 @@ wg_print(const u_char *bp, u_int length)
 	struct wg_response	*response = (void *)bp;
 	struct wg_cookie	*cookie = (void *)bp;
 	struct wg_data		*data = (void *)bp;
+	u_int			 caplen;
+
+	caplen = snapend - bp;
+	if (caplen < sizeof(type))
+		goto trunc;
 
 	if ((type = wg_match(bp, length)) == 0) {
 		/* doesn't match */
@@ -99,28 +105,38 @@ wg_print(const u_char *bp, u_int length)
 
 	switch (type) {
 	case INITIATION:
-		printf("[wg] initiation from 0x%08x",
-		    letoh32(initiation->sender));
+		printf("[wg] initiation ");
+		if (caplen < offsetof(struct wg_initiation, fill))
+			goto trunc;
+		printf("from 0x%08x", letoh32(initiation->sender));
 		break;
 	case RESPONSE:
-		printf("[wg] response from 0x%08x to 0x%08x",
+		printf("[wg] response ");
+		if (caplen < offsetof(struct wg_response, fill))
+			goto trunc;
+		printf("from 0x%08x to 0x%08x",
 		    letoh32(response->sender), letoh32(response->receiver));
 		break;
 	case COOKIE:
-		printf("[wg] cookie to 0x%08x",
-		    letoh32(cookie->receiver));
+		printf("[wg] cookie ");
+		if (caplen < offsetof(struct wg_cookie, fill))
+			goto trunc;
+		printf(" to 0x%08x", letoh32(cookie->receiver));
 		break;
 	case DATA:
 		datalength = length - sizeof(struct wg_data);
 		if (datalength != 0)
-			printf("[wg] data to 0x%08x len %llu nonce %llu",
-			    letoh32(data->receiver), datalength,
-			    letoh64(data->nonce));
+			printf("[wg] data length %llu ", datalength);
 		else
-			printf("[wg] keepalive to 0x%08x nonce %llu",
-			    letoh32(data->receiver),
-			    letoh64(data->nonce));
+			printf("[wg] keepalive ");
+		if (caplen < offsetof(struct wg_data, mac))
+			goto trunc;
+		printf("to 0x%08x nonce %llu",
+		    letoh32(data->receiver), letoh64(data->nonce));
 		break;
 	}
 	return;
+
+trunc:
+	printf("[|wg]");
 }
