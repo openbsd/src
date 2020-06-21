@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-wg.c,v 1.4 2020/06/21 07:14:17 tb Exp $ */
+
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
