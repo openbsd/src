@@ -10,9 +10,8 @@
 
 #define DEFINE_MUTEX(x)		struct rwlock x
 
-#define mutex_lock_interruptible(rwl)	-rw_enter(rwl, RW_WRITE | RW_INTR)
 #define mutex_lock_interruptible_nested(rwl, subc) \
-					-rw_enter(rwl, RW_WRITE | RW_INTR)
+					mutex_lock_interruptible(rwl)
 #define mutex_lock(rwl)			rw_enter_write(rwl)
 #define mutex_lock_nest_lock(rwl, sub)	rw_enter_write(rwl)
 #define mutex_lock_nested(rwl, sub)	rw_enter_write(rwl)
@@ -20,6 +19,14 @@
 #define mutex_unlock(rwl)		rw_exit_write(rwl)
 #define mutex_is_locked(rwl)		(rw_status(rwl) != 0)
 #define mutex_destroy(rwl)
+
+static inline int
+mutex_lock_interruptible(struct rwlock *rwl)
+{
+	if (rw_enter(rwl, RW_WRITE | RW_INTR) != 0)
+		return -EINTR;
+	return 0;
+}
 
 enum mutex_trylock_recursive_result {
 	MUTEX_TRYLOCK_FAILED,
