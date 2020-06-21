@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.109 2019/11/06 12:49:50 sthen Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.110 2020/06/21 05:00:18 dlg Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: November 6 2019 $
+.Dd $Mdocdate: June 21 2020 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -262,6 +262,8 @@ Virtual Router Redundancy protocol
 Virtual eXtensible Local Area Network
 .It Cm wb
 distributed White Board
+.It Cm wg
+WireGuard tunnel
 .El
 .It Fl t
 Do not print a timestamp on each dump line.

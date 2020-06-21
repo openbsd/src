@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.54 2020/01/24 22:46:37 procter Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.55 2020/06/21 05:00:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -472,6 +472,9 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 		case PT_TFTP:
 			tftp_print(cp, length);
 			break;
+		case PT_WIREGUARD:
+			wg_print(cp, length);
+			break;
 		}
 		return;
 	}
@@ -573,6 +576,8 @@ udp_print(const u_char *bp, u_int length, const void *iph)
 			wb_print(cp, length);
 		else if (dport == HSRP_PORT)
 			hsrp_print(cp, length);
+		else if (wg_match(cp, length))
+			wg_print(cp, length);
 		else
 			printf("udp %u", length);
 #undef ISPORT
