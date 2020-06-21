@@ -1,4 +1,4 @@
-/*	$OpenBSD: spleen5x8.h,v 1.4 2019/10/03 08:29:18 fcambus Exp $ */
+/*	$OpenBSD: spleen5x8.h,v 1.5 2020/06/21 19:03:29 fcambus Exp $ */
 
 /*
  * Copyright (c) 2018-2019 Frederic Cambus <fcambus@openbsd.org>
@@ -236,7 +236,7 @@ static u_char spleen5x8_data[] = {
 	0x00, 	/* ........ */
 	0xf0, 	/* ****.... */
 	0x80, 	/* *....... */
-	0xf0, 	/* ****.... */
+	0xe0, 	/* ***..... */
 	0x10, 	/* ...*.... */
 	0x10, 	/* ...*.... */
 	0xe0, 	/* ***..... */

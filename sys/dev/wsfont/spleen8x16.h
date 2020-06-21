@@ -1,4 +1,4 @@
-/*	$OpenBSD: spleen8x16.h,v 1.3 2019/06/08 07:44:07 fcambus Exp $ */
+/*	$OpenBSD: spleen8x16.h,v 1.4 2020/06/21 19:03:29 fcambus Exp $ */
 
 /*
  * Copyright (c) 2018-2019 Frederic Cambus <fcambus@openbsd.org>
@@ -3297,11 +3297,11 @@ static u_char spleen8x16_data[] = {
 	0xcc, 	/* **..**.. */
 	0xcc, 	/* **..**.. */
 	0xcc, 	/* **..**.. */
-	0xf8, 	/* *****... */
+	0xd8, 	/* **.**... */
 	0xcc, 	/* **..**.. */
 	0xc6, 	/* **...**. */
 	0xc6, 	/* **...**. */
-	0xe6, 	/* ***..**. */
+	0xd6, 	/* **.*.**. */
 	0xdc, 	/* **.***.. */
 	0x00, 	/* ........ */
 	0x00, 	/* ........ */
