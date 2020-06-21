@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.17 2020/02/14 15:56:47 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.18 2020/06/21 16:46:34 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -129,8 +129,6 @@ void	vioblk_vq_done1(struct vioblk_softc *, struct virtio_softc *,
 void	vioblk_reset(struct vioblk_softc *);
 
 void	vioblk_scsi_cmd(struct scsi_xfer *);
-int	vioblk_dev_probe(struct scsi_link *);
-void	vioblk_dev_free(struct scsi_link *);
 
 void   *vioblk_req_get(void *);
 void	vioblk_req_put(void *, void *);
@@ -152,7 +150,7 @@ struct cfdriver vioblk_cd = {
 };
 
 struct scsi_adapter vioblk_switch = {
-	vioblk_scsi_cmd, NULL, vioblk_dev_probe, vioblk_dev_free, NULL
+	vioblk_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 int vioblk_match(struct device *parent, void *match, void *aux)
@@ -240,9 +238,10 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter = &vioblk_switch;
 	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.adapter_softc = self;
-	sc->sc_link.adapter_buswidth = 2;
+	/* Only valid target/lun is 0/0. */
+	sc->sc_link.adapter_buswidth = 1;
 	sc->sc_link.luns = 1;
-	sc->sc_link.adapter_target = 2;
+	sc->sc_link.adapter_target = sc->sc_link.adapter_buswidth;;
 	DNPRINTF(1, "%s: qsize: %d\n", __func__, qsize);
 	if (virtio_has_feature(vsc, VIRTIO_BLK_F_RO))
 		sc->sc_link.flags |= SDEV_READONLY;
@@ -623,21 +622,6 @@ vioblk_scsi_done(struct scsi_xfer *xs, int error)
 {
 	xs->error = error;
 	scsi_done(xs);
-}
-
-int
-vioblk_dev_probe(struct scsi_link *link)
-{
-	KASSERT(link->lun == 0);
-	if (link->target == 0)
-		return (0);
-	return (ENODEV);
-}
-
-void
-vioblk_dev_free(struct scsi_link *link)
-{
-	printf("%s\n", __func__);
 }
 
 int
