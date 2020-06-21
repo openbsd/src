@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.37 2020/05/12 20:45:32 jmc Exp $
+ * $OpenBSD: calendar.music,v 1.38 2020/06/21 05:59:56 jmc Exp $
  */
 
 #ifndef _calendar_music_
@@ -15,6 +15,7 @@
 01/06	Max Bruch is born in Germany, 1838
 01/06	Alexander Scriabin is born in Moscow, 1872
 01/07	Francis Jean Poulenc is born in Paris, 1899
+01/07	Neil Peart dies in Santa Monica, California, 2020
 01/08	Elvis Presley born in East Tupelo, Mississippi, 1935
 01/08	David Bowie (then David Robert Jones) is born in London, 1947
 01/08	Arcangelo Corelli dies in Italy, 1713
@@ -367,6 +368,7 @@
 09/08	Nicolas de Grigny is baptized, 1672
 09/11	Francois Couperin dies, 1733
 09/12	John-Philippe Rameau dies, 1764
+09/12	Neil Peart is born in Hamilton, Ontario, 1952
 09/13	Arnold Schoenberg is born in Vienna, Austria, 1874
 09/14	Francis Scott Key writes words to "Star Spangled Banner", 1814
 09/15	Anton Webern is shot dead by a drunk US soldier in Austria, 1945
