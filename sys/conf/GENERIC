@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.269 2020/05/09 19:48:45 naddy Exp $
+#	$OpenBSD: GENERIC,v 1.270 2020/06/21 12:30:07 dlg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -109,6 +109,7 @@ pseudo-device	vether		# Virtual ethernet
 pseudo-device	vxlan		# Virtual extensible LAN
 pseudo-device	vlan		# IEEE 802.1Q VLAN
 pseudo-device	switch		# Switch
+#pseudo-device	wg		# WireGuard
 
 pseudo-device	bio	1	# ioctl multiplexing device
 
