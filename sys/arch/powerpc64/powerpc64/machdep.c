@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2020/06/21 13:23:59 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 2020/06/21 16:18:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -508,8 +508,8 @@ need_resched(struct cpu_info *ci)
 void
 cpu_startup(void)
 {
+	vaddr_t minaddr, maxaddr, va;
 	paddr_t pa, epa;
-	vaddr_t va;
 	void *fdt;
 	void *node;
 	char *prop;
@@ -517,6 +517,24 @@ cpu_startup(void)
 
 	printf("%s", version);
 
+	/*
+	 * Allocate a submap for exec arguments.  This map effectively
+	 * limits the number of processes exec'ing at any time.
+	 */
+	minaddr = vm_map_min(kernel_map);
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+
+
+	/*
+	 * Allocate a submap for physio.
+	 */
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
+
+	/*
+	 * Set up buffers, so they can be used to read disk labels.
+	 */
 	bufinit();
 
 	/* Remap the FDT. */
@@ -587,7 +605,7 @@ void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
-	printf("%s\n", __func__);
+	panic("%s", __func__);
 }
 
 void
