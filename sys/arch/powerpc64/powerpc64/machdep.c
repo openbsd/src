@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 2020/06/21 16:18:54 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 2020/06/21 18:39:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -147,7 +147,7 @@ init_powernv(void *fdt, void *tocbase)
 
 	/* We're now ready to take traps. */
 	msr = mfmsr();
-	mtmsr(msr | PSL_RI);
+	mtmsr(msr | (PSL_ME|PSL_RI));
 
 #define LPCR_LPES	0x0000000000000008UL
 #define LPCR_HVICE	0x0000000000000002UL
