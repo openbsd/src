@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.3 2020/06/12 22:01:01 gkoehler Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.4 2020/06/21 21:57:35 kettenis Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -82,6 +82,8 @@ struct db_variable db_regs[] = {
 
 struct db_variable *db_eregs = db_regs + nitems(db_regs);
 
+extern vaddr_t trapexit;
+
 /* stdu r1,_(r1) */
 #define inst_establish_frame(ins) ((ins & 0xffff0003) == 0xf8210001)
 
@@ -148,7 +150,22 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 		/* Go to the next frame. */
 		lastsp = sp;
-		if (!has_frame) {
+
+		if (lr == (vaddr_t)&trapexit) {
+			struct trapframe *frame =
+			    (struct trapframe *)(sp + 48);
+
+			if ((frame->srr1 & PSL_PR) && frame->exc == EXC_SC) {
+				(*pr)("--- syscall (number %ld) ---\n",
+				      frame->fixreg[0]);
+			} else {
+				(*pr)("--- trap (type 0x%x) ---\n",
+				      frame->exc);
+			}
+
+			sp = frame->fixreg[1];
+			lr = frame->srr0 + 4;
+		} else if (!has_frame) {
 			lr = ddb_regs.lr;
 			has_frame = 1;
 		} else {
