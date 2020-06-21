@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.274 2020/01/22 22:56:35 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.275 2020/06/21 05:37:26 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1657,6 +1657,25 @@ mq_init(struct mbuf_queue *mq, u_int maxlen, int ipl)
 	mtx_init(&mq->mq_mtx, ipl);
 	ml_init(&mq->mq_list);
 	mq->mq_maxlen = maxlen;
+}
+
+int
+mq_push(struct mbuf_queue *mq, struct mbuf *m)
+{
+	struct mbuf *dropped = NULL;
+
+	mtx_enter(&mq->mq_mtx);
+	if (mq_len(mq) >= mq->mq_maxlen) {
+		mq->mq_drops++;
+		dropped = ml_dequeue(&mq->mq_list);
+	}
+	ml_enqueue(&mq->mq_list, m);
+	mtx_leave(&mq->mq_mtx);
+
+	if (dropped)
+		m_freem(dropped);
+
+	return (dropped != NULL);
 }
 
 int

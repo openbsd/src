@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.247 2020/06/17 06:45:22 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.248 2020/06/21 05:37:26 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -529,6 +529,7 @@ unsigned int		ml_hdatalen(struct mbuf_list *);
     { MUTEX_INITIALIZER(_ipl), MBUF_LIST_INITIALIZER(), (_maxlen), 0 }
 
 void			mq_init(struct mbuf_queue *, u_int, int);
+int			mq_push(struct mbuf_queue *, struct mbuf *);
 int			mq_enqueue(struct mbuf_queue *, struct mbuf *);
 struct mbuf *		mq_dequeue(struct mbuf_queue *);
 int			mq_enlist(struct mbuf_queue *, struct mbuf_list *);
