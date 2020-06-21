@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.40 2020/06/21 11:44:12 dlg Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.41 2020/06/21 15:25:30 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -125,8 +125,8 @@ processing on output.
 .It PACKET_TAG_WIREGUARD
 Used by the
 .Xr wg 4
-interface to detect loops in processing. The tag contains a pointer to
-the wg peer that already processed the packet.
+interface to detect loops in processing.
+The tag contains a pointer to the wg peer that already processed the packet.
 .It PACKET_TAG_GRE
 Used by the
 .Xr gre 4
