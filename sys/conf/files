@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.688 2020/06/17 03:04:16 dlg Exp $
+#	$OpenBSD: files,v 1.689 2020/06/21 12:14:48 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -568,6 +568,7 @@ pseudo-device vether: ifnet, ether
 pseudo-device pppx: ifnet
 pseudo-device vxlan: ifnet, ether, ifmedia
 pseudo-device switch: ifnet, ether
+pseudo-device wg: ifnet
 
 pseudo-device ksyms
 file	dev/ksyms.c			ksyms needs-flag
@@ -828,6 +829,9 @@ file net/if_vether.c			vether
 file net/if_pair.c			pair
 file net/if_pppx.c			pppx			needs-count
 file net/if_vxlan.c			vxlan			needs-count
+file net/if_wg.c			wg
+file net/wg_noise.c			wg
+file net/wg_cookie.c			wg
 file net/bfd.c				bfd
 file net/toeplitz.c			stoeplitz		needs-flag
 file net80211/ieee80211.c		wlan
@@ -904,6 +908,8 @@ file crypto/idgen.c			inet6 | nfsclient | nfsserver
 file crypto/chachapoly.c		ipsec | crypto
 file crypto/poly1305.c			ipsec | crypto
 file crypto/siphash.c
+file crypto/blake2s.c			wg
+file crypto/curve25519.c		wg
 file netmpls/mpls_input.c		mpls
 file netmpls/mpls_output.c		mpls
 file netmpls/mpls_proto.c		mpls
