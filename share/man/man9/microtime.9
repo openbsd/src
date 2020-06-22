@@ -1,4 +1,4 @@
-.\"	$OpenBSD: microtime.9,v 1.20 2020/05/20 17:21:07 cheloha Exp $
+.\"	$OpenBSD: microtime.9,v 1.21 2020/06/22 21:16:07 cheloha Exp $
 .\"     $NetBSD: microtime.9,v 1.2 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 20 2020 $
+.Dd $Mdocdate: June 22 2020 $
 .Dt MICROTIME 9
 .Os
 .Sh NAME
@@ -46,7 +46,9 @@
 .Nm bintime ,
 .Nm binuptime ,
 .Nm binruntime ,
-.Nm binboottime
+.Nm binboottime ,
+.Nm gettime ,
+.Nm getuptime
 .Nd system clocks
 .Sh SYNOPSIS
 .In sys/time.h
@@ -109,6 +111,14 @@
 .Ft void
 .Fo binboottime
 .Fa "struct bintime *tv"
+.Fc
+.Ft time_t
+.Fo gettime
+.Fa "void"
+.Fc
+.Ft time_t
+.Fo getuptime
+.Fa "void"
 .Fc
 .Sh DESCRIPTION
 This family of functions return different system clocks in various formats.

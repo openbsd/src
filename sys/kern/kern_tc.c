@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.57 2020/05/29 04:42:25 deraadt Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.58 2020/06/22 21:16:07 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -208,6 +208,28 @@ microuptime(struct timeval *tvp)
 	BINTIME_TO_TIMEVAL(&bt, tvp);
 }
 
+time_t
+getuptime(void)
+{
+#if defined(__LP64__)
+	return time_uptime;	/* atomic */
+#else
+	time_t now;
+	struct timehands *th;
+	u_int gen;
+
+	do {
+		th = timehands;
+		gen = th->th_generation;
+		membar_consumer();
+		now = th->th_offset.sec;
+		membar_consumer();
+	} while (gen == 0 || gen != th->th_generation);
+
+	return now;
+#endif
+}
+
 void
 binruntime(struct bintime *bt)
 {
@@ -266,6 +288,28 @@ microtime(struct timeval *tvp)
 
 	bintime(&bt);
 	BINTIME_TO_TIMEVAL(&bt, tvp);
+}
+
+time_t
+gettime(void)
+{
+#if defined(__LP64__)
+	return time_second;	/* atomic */
+#else
+	time_t now;
+	struct timehands *th;
+	u_int gen;
+
+	do {
+		th = timehands;
+		gen = th->th_generation;
+		membar_consumer();
+		now = th->th_microtime.tv_sec;
+		membar_consumer();
+	} while (gen == 0 || gen != th->th_generation);
+
+	return now;
+#endif
 }
 
 void
