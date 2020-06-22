@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.246 2020/06/18 14:05:21 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.247 2020/06/22 13:14:32 mpi Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -93,6 +93,12 @@ const struct filterops sowrite_filtops = {
 	.f_event	= filt_sowrite,
 };
 
+const struct filterops soexcept_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_sordetach,
+	.f_event	= filt_soread,
+};
 
 #ifndef SOMINCONN
 #define SOMINCONN 80
@@ -2026,6 +2032,10 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 		kn->kn_fop = &sowrite_filtops;
 		sb = &so->so_snd;
 		break;
+	case EVFILT_EXCEPT:
+		kn->kn_fop = &soexcept_filtops;
+		sb = &so->so_rcv;
+		break;
 	default:
 		return (EINVAL);
 	}
@@ -2052,7 +2062,7 @@ int
 filt_soread(struct knote *kn, long hint)
 {
 	struct socket *so = kn->kn_fp->f_data;
-	int s, rv;
+	int s, rv = 0;
 
 	if ((hint & NOTE_SUBMIT) == 0)
 		s = solock(so);
@@ -2062,7 +2072,13 @@ filt_soread(struct knote *kn, long hint)
 		rv = 0;
 	} else
 #endif /* SOCKET_SPLICE */
-	if (so->so_state & SS_CANTRCVMORE) {
+	if (kn->kn_sfflags & NOTE_OOB) {
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK)) {
+			kn->kn_fflags |= NOTE_OOB;
+			kn->kn_data -= so->so_oobmark;
+			rv = 1;
+		}
+	} else if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
 		if (kn->kn_flags & __EV_POLL) {
 			if (so->so_state & SS_ISDISCONNECTED)

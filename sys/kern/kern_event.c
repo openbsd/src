@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.139 2020/06/15 15:42:11 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.140 2020/06/22 13:14:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -158,6 +158,7 @@ const struct filterops *const sysfilt_ops[] = {
 	&sig_filtops,			/* EVFILT_SIGNAL */
 	&timer_filtops,			/* EVFILT_TIMER */
 	&file_filtops,			/* EVFILT_DEVICE */
+	&file_filtops,			/* EVFILT_EXCEPT */
 };
 
 void

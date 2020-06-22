@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.100 2020/06/15 15:29:40 mpi Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.101 2020/06/22 13:14:32 mpi Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -668,6 +668,16 @@ filt_ptcread(struct knote *kn, long hint)
 	tp = pti->pt_tty;
 	kn->kn_data = 0;
 
+	if (kn->kn_sfflags & NOTE_OOB) {
+		/* If in packet or user control mode, check for data. */
+		if (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
+		    ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl)) {
+			kn->kn_fflags |= NOTE_OOB;
+			kn->kn_data = 1;
+			return (1);
+		}
+		return (0);
+	}
 	if (ISSET(tp->t_state, TS_ISOPEN)) {
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			kn->kn_data = tp->t_outq.c_cc;
@@ -733,6 +743,13 @@ const struct filterops ptcwrite_filtops = {
 	.f_event	= filt_ptcwrite,
 };
 
+const struct filterops ptcexcept_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_ptcrdetach,
+	.f_event	= filt_ptcread,
+};
+
 int
 ptckqfilter(dev_t dev, struct knote *kn)
 {
@@ -748,6 +765,10 @@ ptckqfilter(dev_t dev, struct knote *kn)
 	case EVFILT_WRITE:
 		klist = &pti->pt_selw.si_note;
 		kn->kn_fop = &ptcwrite_filtops;
+		break;
+	case EVFILT_EXCEPT:
+		klist = &pti->pt_selr.si_note;
+		kn->kn_fop = &ptcexcept_filtops;
 		break;
 	default:
 		return (EINVAL);
