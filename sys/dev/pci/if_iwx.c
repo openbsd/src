@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.31 2020/06/22 07:25:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.32 2020/06/22 07:31:32 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4998,7 +4998,9 @@ iwx_fill_probe_req(struct iwx_softc *sc, struct iwx_scan_probe_req *preq)
 	*(uint16_t *)&wh->i_seq[0] = 0;	/* filled by HW */
 
 	frm = (uint8_t *)(wh + 1);
-	frm = ieee80211_add_ssid(frm, ic->ic_des_essid, ic->ic_des_esslen);
+	*frm++ = IEEE80211_ELEMID_SSID;
+	*frm++ = 0;
+	/* hardware inserts SSID */
 
 	/* Tell the firmware where the MAC header is. */
 	preq->mac_header.offset = 0;
