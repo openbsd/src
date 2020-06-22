@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.716 2020/06/17 23:43:08 bru Exp $
+$OpenBSD: usbdevs,v 1.717 2020/06/22 15:49:37 tobhe Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -420,6 +420,7 @@ vendor USR		0x0baf	U.S. Robotics
 vendor AMBIT		0x0bb2	Ambit Microsystems
 vendor HTC		0x0bb4	HTC
 vendor REALTEK		0x0bda	Realtek
+vendor ERICSSON		0x0bdb  Ericsson
 vendor MEI		0x0bed	MEI
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor FSC		0x0bf8	Fujitsu Siemens Computers
@@ -1766,6 +1767,9 @@ product EPSON DX3800		0x0818	Stylus DX3800
 product EPSON DX5000		0x082b	Stylus DX5000
 product EPSON DX6000		0x082e	Stylus DX6000
 product EPSON DX4000		0x082f	Stylus DX4000
+
+/* Ericsson products */
+product ERICSSON F5521GW	0x1911	Mobile Broadband Module
 
 /* e-TEK Labs products */
 product ETEK 1COM		0x8007	Serial
