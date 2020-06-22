@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 2020/06/22 18:03:22 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 2020/06/22 18:15:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -56,6 +56,9 @@ trap(struct trapframe *frame)
 		return;
 	}
 
+	if (frame->srr1 & PSL_EE)
+		intr_enable();
+
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
 		p->p_md.md_regs = frame;
@@ -110,7 +113,6 @@ trap(struct trapframe *frame)
 		goto fatal;
 
 	case EXC_DSE|EXC_USER:
-		intr_enable();
 		pm = p->p_vmspace->vm_map.pmap;
 		slbd = pmap_slbd_lookup(pm, frame->dar);
 		if (slbd) {
@@ -120,7 +122,6 @@ trap(struct trapframe *frame)
 		/* FALLTHROUGH */
 
 	case EXC_DSI|EXC_USER:
-		intr_enable();
 		map = &p->p_vmspace->vm_map;
 		va = frame->dar;
 		if (frame->dsisr & DSISR_STORE)
@@ -135,7 +136,6 @@ trap(struct trapframe *frame)
 		break;
 
 	case EXC_ISE|EXC_USER:
-		intr_enable();
 		pm = p->p_vmspace->vm_map.pmap;
 		slbd = pmap_slbd_lookup(pm, frame->srr0);
 		if (slbd) {
@@ -145,7 +145,6 @@ trap(struct trapframe *frame)
 		/* FALLTHROUGH */
 
 	case EXC_ISI|EXC_USER:
-		intr_enable();
 		map = &p->p_vmspace->vm_map;
 		va = frame->srr0;
 		ftype = PROT_READ | PROT_EXEC;
@@ -157,13 +156,11 @@ trap(struct trapframe *frame)
 		break;
 
 	case EXC_SC|EXC_USER:
-		intr_enable();
 		syscall(frame);
 		return;
 
 	case EXC_AST|EXC_USER:
 		p->p_md.md_astpending = 0;
-		intr_enable();
 		uvmexp.softs++;
 		mi_ast(p, ci->ci_want_resched);
 		break;
