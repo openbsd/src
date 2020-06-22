@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.850 2020/01/22 05:06:19 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.851 2020/06/22 00:33:28 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -468,6 +468,7 @@ uha*	at eisa?		# UltraStor 24f SCSI controllers
 wds0	at isa? disable port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 vmwpvs*	at pci?			# VMware ParaVirtual SCSI
+nvme*	at pci?			# NVMe controllers
 
 scsibus* at scsi?
 sd*	at scsibus?		# SCSI disk drives
