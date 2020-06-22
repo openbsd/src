@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.88 2020/06/18 14:20:12 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.89 2020/06/22 10:01:03 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -696,14 +696,10 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	pxi->pxi_key.pxik_protocol = req->pr_protocol;
 	pxi->pxi_dev = pxd;
 
-	/* this is safe without splnet since we're not modifying it */
-	if (RBT_FIND(pppx_ifs, &pppx_ifs, pxi) != NULL) {
+	if (RBT_INSERT(pppx_ifs, &pppx_ifs, pxi) != NULL) {
 		error = EADDRINUSE;
 		goto out;
 	}
-
-	if (RBT_INSERT(pppx_ifs, &pppx_ifs, pxi) != NULL)
-		panic("%s: pppx_ifs modified while lock was held", __func__);
 	LIST_INSERT_HEAD(&pxd->pxd_pxis, pxi, pxi_list);
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", "pppx", unit);
@@ -777,7 +773,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 
 remove:
 	if (RBT_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
-		panic("%s: pppx_ifs modified while lock was held", __func__);
+		panic("%s: inconsistent RB tree", __func__);
 	LIST_REMOVE(pxi, pxi_list);
 out:
 	pool_put(pppx_if_pl, pxi);
@@ -871,7 +867,7 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 
 	pipex_rele_session(session);
 	if (RBT_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
-		panic("%s: pppx_ifs modified while lock was held", __func__);
+		panic("%s: inconsistent RB tree", __func__);
 	LIST_REMOVE(pxi, pxi_list);
 
 	pool_put(pppx_if_pl, pxi);
