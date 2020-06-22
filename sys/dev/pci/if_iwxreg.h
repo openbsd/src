@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.13 2020/06/22 08:05:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.14 2020/06/22 08:21:51 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -4863,10 +4863,10 @@ struct iwx_tlc_update_notif {
  *	alignment
  * @TX_CMD_OFFLD_AMSDU: mark TX command is A-MSDU
  */
-#define IWX_TX_CMD_OFFLD_IP_HDR		(1 << 0)
+#define IWX_TX_CMD_OFFLD_IP_HDR(x)	((x) << 0)
 #define IWX_TX_CMD_OFFLD_L4_EN		(1 << 6)
 #define IWX_TX_CMD_OFFLD_L3_EN		(1 << 7)
-#define IWX_TX_CMD_OFFLD_MH_SIZE	(1 << 8)
+#define IWX_TX_CMD_OFFLD_MH_SIZE(x)	((x) << 8)
 #define IWX_TX_CMD_OFFLD_PAD		(1 << 13)
 #define IWX_TX_CMD_OFFLD_AMSDU		(1 << 14)
 #define IWX_TX_CMD_OFFLD_MH_MASK	0x1f
