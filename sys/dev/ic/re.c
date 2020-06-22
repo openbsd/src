@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.204 2019/11/19 06:34:10 kevlo Exp $	*/
+/*	$OpenBSD: re.c,v 1.205 2020/06/22 02:27:04 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1398,10 +1398,12 @@ re_rxeof(struct rl_softc *sc)
 		ml_enqueue(&ml, m);
 	}
 
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->rl_ldata.rl_rx_ring);
+
 	sc->rl_ldata.rl_rx_considx = i;
 	re_rx_list_fill(sc);
 
-	if_input(ifp, &ml);
 
 	return (rx);
 }
