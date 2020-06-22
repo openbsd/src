@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.10 2020/05/22 10:02:30 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.11 2020/06/22 02:23:21 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -1363,9 +1363,10 @@ mvneta_rx_proc(struct mvneta_softc *sc)
 		sc->sc_rx_cons = MVNETA_RX_RING_NEXT(idx);
 	}
 
-	mvneta_fill_rx_ring(sc);
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->sc_rx_ring);
 
-	if_input(ifp, &ml);
+	mvneta_fill_rx_ring(sc);
 }
 
 void

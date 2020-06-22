@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.8 2019/02/06 22:59:06 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.9 2020/06/22 02:23:21 dlg Exp $ */
 /*
  * Copyright (c) 2012-2013,2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -1123,6 +1123,9 @@ fec_rx_proc(struct fec_softc *sc)
 			sc->sc_rx_cons++;
 	}
 
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->sc_rx_ring);
+
 	fec_fill_rx_ring(sc);
 
 	bus_dmamap_sync(sc->sc_dmat, ENET_DMA_MAP(sc->sc_rxring), 0,
@@ -1131,8 +1134,6 @@ fec_rx_proc(struct fec_softc *sc)
 
 	/* rx descriptors are ready */
 	HWRITE4(sc, ENET_RDAR, ENET_RDAR_RDAR);
-
-	if_input(ifp, &ml);
 }
 
 void

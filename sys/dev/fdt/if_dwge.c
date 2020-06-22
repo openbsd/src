@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.2 2019/10/07 00:40:04 jmatthew Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.3 2020/06/22 02:23:21 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -907,13 +907,15 @@ dwge_rx_proc(struct dwge_softc *sc)
 			sc->sc_rx_cons++;
 	}
 
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->sc_rx_ring);
+
 	dwge_fill_rx_ring(sc);
 
 	bus_dmamap_sync(sc->sc_dmat, DWGE_DMA_MAP(sc->sc_rxring), 0,
 	    DWGE_DMA_LEN(sc->sc_rxring),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	if_input(ifp, &ml);
 }
 
 void
