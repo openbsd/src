@@ -1,4 +1,4 @@
-/*	$OpenBSD: completion.h,v 1.7 2020/06/22 05:19:26 jsg Exp $	*/
+/*	$OpenBSD: completion.h,v 1.8 2020/06/22 13:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2015, 2018 Mark Kettenis
  *
@@ -57,7 +57,8 @@ wait_for_completion_timeout(struct completion *x, u_long timo)
 			return 0;
 		}
 	}
-	x->done--;
+	if (x->done != UINT_MAX)
+		x->done--;
 	mtx_leave(&x->wait.lock);
 
 	return 1;
@@ -72,7 +73,8 @@ wait_for_completion(struct completion *x)
 	while (x->done == 0) {
 		msleep_nsec(x, &x->wait.lock, 0, "wfcom", INFSLP);
 	}
-	x->done--;
+	if (x->done != UINT_MAX)
+		x->done--;
 	mtx_leave(&x->wait.lock);
 }
 
@@ -93,7 +95,8 @@ wait_for_completion_interruptible(struct completion *x)
 			return -ERESTARTSYS;
 		}
 	}
-	x->done--;
+	if (x->done != UINT_MAX)
+		x->done--;
 	mtx_leave(&x->wait.lock);
 
 	return 0;
@@ -116,7 +119,8 @@ wait_for_completion_interruptible_timeout(struct completion *x, u_long timo)
 			return -ERESTARTSYS;
 		}
 	}
-	x->done--;
+	if (x->done != UINT_MAX)
+		x->done--;
 	mtx_leave(&x->wait.lock);
 
 	return 1;
@@ -149,7 +153,8 @@ try_wait_for_completion(struct completion *x)
 		mtx_leave(&x->wait.lock);
 		return false;
 	}
-	x->done--;
+	if (x->done != UINT_MAX)
+		x->done--;
 	mtx_leave(&x->wait.lock);
 	return true;
 }
