@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.608 2020/06/21 12:11:26 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.609 2020/06/22 03:07:57 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -231,9 +231,6 @@ int if_cloners_count;
 struct mutex if_hooks_mtx = MUTEX_INITIALIZER(IPL_NONE);
 void	if_hooks_run(struct task_list *);
 
-struct timeout net_tick_to;
-void	net_tick(void *);
-int	net_livelocked(void);
 int	ifq_congestion;
 
 int		 netisr;
@@ -263,15 +260,11 @@ ifinit(void)
 	 */
 	if_idxmap_init(8);
 
-	timeout_set(&net_tick_to, net_tick, &net_tick_to);
-
 	for (i = 0; i < NET_TASKQ; i++) {
 		nettqmp[i] = taskq_create("softnet", 1, IPL_NET, TASKQ_MPSAFE);
 		if (nettqmp[i] == NULL)
 			panic("unable to create network taskq %d", i);
 	}
-
-	net_tick(&net_tick_to);
 }
 
 static struct if_idxmap if_idxmap = {
@@ -3187,30 +3180,6 @@ if_addrhooks_run(struct ifnet *ifp)
 	if_hooks_run(&ifp->if_addrhooks);
 }
 
-int net_ticks;
-u_int net_livelocks;
-
-void
-net_tick(void *null)
-{
-	extern int ticks;
-
-	if (ticks - net_ticks > 1)
-		net_livelocks++;
-
-	net_ticks = ticks;
-
-	timeout_add(&net_tick_to, 1);
-}
-
-int
-net_livelocked(void)
-{
-	extern int ticks;
-
-	return (ticks - net_ticks > 1);
-}
-
 void
 if_rxr_init(struct if_rxring *rxr, u_int lwm, u_int hwm)
 {
@@ -3228,12 +3197,7 @@ if_rxr_adjust_cwm(struct if_rxring *rxr)
 {
 	extern int ticks;
 
-	if (net_livelocked()) {
-		if (rxr->rxr_cwm > rxr->rxr_lwm)
-			rxr->rxr_cwm--;
-		else
-			return;
-	} else if (rxr->rxr_alive >= rxr->rxr_lwm)
+	if (rxr->rxr_alive >= rxr->rxr_lwm)
 		return;
 	else if (rxr->rxr_cwm < rxr->rxr_hwm)
 		rxr->rxr_cwm++;
