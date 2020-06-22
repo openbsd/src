@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.33 2020/06/22 07:39:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.34 2020/06/22 07:52:24 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2357,10 +2357,10 @@ iwx_nic_init(struct iwx_softc *sc)
 
 /* Map ieee80211_edca_ac categories to firmware Tx FIFO. */
 const uint8_t iwx_ac_to_tx_fifo[] = {
-	IWX_TX_FIFO_BE,
-	IWX_TX_FIFO_BK,
-	IWX_TX_FIFO_VI,
-	IWX_TX_FIFO_VO,
+	IWX_GEN2_EDCA_TX_FIFO_BE,
+	IWX_GEN2_EDCA_TX_FIFO_BK,
+	IWX_GEN2_EDCA_TX_FIFO_VI,
+	IWX_GEN2_EDCA_TX_FIFO_VO,
 };
 
 int
