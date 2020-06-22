@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2020/06/21 18:23:43 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.15 2020/06/22 16:58:20 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -313,6 +313,8 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 {
 	uint64_t esid = va >> ADDR_ESID_SHIFT;
 	struct slb_desc *slbd;
+	uint64_t slbe, slbv;
+	int i;
 
 	KASSERT(pm != pmap_kernel());
 
@@ -323,6 +325,20 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 	slbd->slbd_esid = esid;
 	slbd->slbd_vsid = pmap_vsid++;
 	LIST_INSERT_HEAD(&pm->pm_slbd, slbd, slbd_list);
+
+	slbe = (slbd->slbd_esid << SLBE_ESID_SHIFT) | SLBE_VALID | 31;
+	slbv = slbd->slbd_vsid << SLBV_VSID_SHIFT;
+
+	for (i = 0; i < nitems(pm->pm_slb); i++) {
+		if (pm->pm_slb[i].slb_slbe == 0)
+			break;
+	}
+	if (i == nitems(pm->pm_slb))
+		i = arc4random_uniform(nitems(pm->pm_slb));
+
+	pm->pm_slb[i].slb_slbe = slbe;
+	pm->pm_slb[i].slb_slbv = slbv;
+
 	return slbd;
 }
 
@@ -438,8 +454,10 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 	struct pmapvp2 *vp2;
 
 	slbd = pmap_slbd_lookup(pm, va);
-	KASSERT(slbd);
-	/* XXX Allocate SLB descriptors. */
+	if (slbd == NULL) {
+		slbd = pmap_slbd_alloc(pm, va);
+		KASSERT(slbd);
+	}
 
 	vp1 = slbd->slbd_vp;
 	if (vp1 == NULL) {
@@ -844,7 +862,7 @@ pmap_init(void)
 	int i;
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_NONE, 0,
-	    "pmap", NULL);
+	    "pmap", &pool_allocator_single);
 	pool_setlowat(&pmap_pmap_pool, 2);
 	pool_init(&pmap_vp_pool, sizeof(struct pmapvp1), 0, IPL_VM, 0,
 	    "vp", &pool_allocator_single);
@@ -891,8 +909,10 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	PMAP_VP_LOCK(pm);
 	pted = pmap_vp_lookup(pm, va);
-	if (pted && PTED_VALID(pted))
+	if (pted && PTED_VALID(pted)) {
 		pmap_remove_pted(pm, pted);
+		pted = NULL;
+	}
 
 	pm->pm_stats.resident_count++;
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 2020/06/21 13:23:59 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.8 2020/06/22 16:58:20 kettenis Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -41,6 +41,7 @@ member	ci_curpcb
 member	ci_curproc
 member	ci_tempsave
 member	ci_kernel_slb
+member	ci_user_slb_pa
 define	CPUSAVE_SRR0	0
 define	CPUSAVE_SRR1	8
 define	CPUSAVE_R27	16
@@ -102,6 +103,7 @@ struct	proc
 member	p_addr
 member	p_stat
 member	P_MD_ASTPENDING	p_md.md_astpending
+member	P_MD_USER_SLB_PA p_md.md_user_slb_pa
 
 export	SONPROC
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.11 2020/06/21 13:23:59 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.12 2020/06/22 16:58:20 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 
 #include "assym.h"
 
+#include <machine/param.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 
@@ -53,6 +54,29 @@
  *
  * Requires that r28-r31 be scratch, with r28 initialized to the SLB cache
  */
+
+restore_usersrs:
+	GET_CPUINFO(%r28)
+	ld	%r28, CI_USER_SLB_PA(%r28)
+	li	%r29, 0			/* Set the counter to zero */
+
+	/* Invalidate entire SLB */
+	slbia
+	slbmfee	%r31, %r29
+	clrrdi	%r31, %r31, 28
+	slbie	%r31
+
+1:	ld	%r31, 0(%r28)		/* Load SLBE */
+	cmpdi	%r31, 0			/* If SLBE is not valid, stop */
+	beqlr
+	ld	%r30, 8(%r28)		/* Load SLBV  */
+	slbmte	%r30, %r31		/* Install SLB entry */
+
+	addi	%r28, %r28, 16		/* Advance pointer */
+	addi	%r29, %r29, 1
+	cmpdi	%r29, 32		/* Repeat if we are not at the end */
+	blt	1b
+	blr
 
 restore_kernsrs:
 	GET_CPUINFO(%r28)
@@ -221,6 +245,26 @@ restore_kernsrs:
 	andi.	%r3, %r3, ~(PSL_DR|PSL_IR|PSL_ME|PSL_RI)@l;		\
 	mtmsr	%r3;							\
 	isync;								\
+/* Decide whether we return to user mode: */				\
+	GET_CPUINFO(%r3);						\
+	ld	%r3, (savearea+CPUSAVE_SRR1)(%r3);			\
+	mtcr	%r3;							\
+	bf	17,1f;			/* branch if PSL_PR is false */	\
+/* Restore user SRs */							\
+	GET_CPUINFO(%r3);						\
+	std	%r27, (savearea+CPUSAVE_R27)(%r3);			\
+	std	%r28, (savearea+CPUSAVE_R28)(%r3);			\
+	std	%r29, (savearea+CPUSAVE_R29)(%r3);			\
+	std	%r30, (savearea+CPUSAVE_R30)(%r3);			\
+	std	%r31, (savearea+CPUSAVE_R31)(%r3);			\
+	mflr	%r27;			/* preserve LR */		\
+	bl	restore_usersrs;	/* uses r28-r31 */		\
+	mtlr	%r27;							\
+	ld	%r31, (savearea+CPUSAVE_R31)(%r3);			\
+	ld	%r30, (savearea+CPUSAVE_R30)(%r3);			\
+	ld	%r29, (savearea+CPUSAVE_R29)(%r3);			\
+	ld	%r28, (savearea+CPUSAVE_R28)(%r3);			\
+	ld	%r27, (savearea+CPUSAVE_R27)(%r3);			\
 1:	mfsprg2	%r3;			/* restore cr */		\
 	mtcr	%r3;							\
 	GET_CPUINFO(%r3);						\
@@ -315,6 +359,9 @@ generictrap:
 	bf	17, k_trap		/* branch if PSL_PR is false */
 
 u_trap:
+	GET_CPUINFO(%r1)
+	ld	%r1, CI_CURPCB(%r1)
+	addi	%r1, %r1, USPACE
 	mr	%r27, %r28
 	mtsprg2	%r29
 	bl	restore_kernsrs		/* enable kernel mapping */

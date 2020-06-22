@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.2 2020/06/14 17:56:54 kettenis Exp $	*/
+/*	$OpenBSD: proc.h,v 1.3 2020/06/22 16:58:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -39,7 +39,8 @@
  */
 struct mdproc {
 	struct trapframe *md_regs;
-	volatile int md_astpending;
+	volatile int	md_astpending;
+	paddr_t		md_user_slb_pa;
 };
 
 #endif /* _MACHINE_PROC_H_ */

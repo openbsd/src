@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 2020/06/21 13:23:59 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 2020/06/22 16:58:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -43,6 +43,7 @@ trap(struct trapframe *frame)
 	struct vm_map *map;
 	vaddr_t va;
 	int ftype;
+	int error;
 
 	switch (type) {
 	case EXC_DECR:
@@ -105,6 +106,18 @@ trap(struct trapframe *frame)
 
 		printf("dar 0x%lx dsisr 0x%lx\n", frame->dar, frame->dsisr);
 		goto fatal;
+
+	case EXC_ISI|EXC_USER:
+	case EXC_ISE|EXC_USER:
+		intr_enable();
+		map = &p->p_vmspace->vm_map;
+		va = frame->srr0;
+		ftype = PROT_READ | PROT_EXEC;
+		error = uvm_fault(map, trunc_page(va), 0, ftype);
+		KERNEL_UNLOCK();
+		if (error)
+			goto fatal;
+		break;
 
 	case EXC_SC|EXC_USER:
 		intr_enable();

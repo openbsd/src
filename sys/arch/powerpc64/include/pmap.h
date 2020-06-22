@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.5 2020/06/21 13:23:59 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.6 2020/06/22 16:58:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -32,6 +32,7 @@ struct pmap {
 	int			pm_refs;
 	struct pmap_statistics	pm_stats;
 	struct mutex		pm_mtx;
+	struct slb		pm_slb[32];
 };
 
 typedef struct pmap *pmap_t;

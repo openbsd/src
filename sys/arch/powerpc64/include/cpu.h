@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.15 2020/06/22 13:52:40 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.16 2020/06/22 16:58:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -49,6 +49,7 @@ struct cpu_info {
 	struct pcb	*ci_curpcb;
 
 	struct slb	ci_kernel_slb[32];
+	paddr_t		ci_user_slb_pa;
 
 #define CPUSAVE_LEN	9
 	register_t	ci_tempsave[CPUSAVE_LEN];
