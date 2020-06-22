@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.29 2020/06/19 11:14:03 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.30 2020/06/22 07:15:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5017,7 +5017,6 @@ iwx_fill_probe_req(struct iwx_softc *sc, struct iwx_scan_probe_req *preq)
 	frm = ieee80211_add_rates(frm, rs);
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		frm = ieee80211_add_xrates(frm, rs);
-	preq->band_data[0].len = htole16(frm - pos);
 	remain -= frm - pos;
 
 	if (isset(sc->sc_enabled_capa, 
@@ -5029,6 +5028,7 @@ iwx_fill_probe_req(struct iwx_softc *sc, struct iwx_scan_probe_req *preq)
 		*frm++ = 0;
 		remain -= 3;
 	}
+	preq->band_data[0].len = htole16(frm - pos);
 
 	if (sc->sc_nvm.sku_cap_band_52GHz_enable) {
 		/* Fill in 5GHz IEs. */
