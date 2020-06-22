@@ -1132,11 +1132,11 @@ int i915_driver_probe(struct drm_i915_private *i915, const struct pci_device_id 
 	if (ret < 0)
 		goto out_cleanup_irq;
 
+	i915_driver_register(i915);
+
 #ifdef __OpenBSD__
 	inteldrm_init_backlight(i915);
 #endif
-
-	i915_driver_register(i915);
 
 	enable_rpm_wakeref_asserts(&i915->runtime_pm);
 
@@ -2668,22 +2668,36 @@ void
 inteldrm_native_backlight(struct inteldrm_softc *dev_priv)
 {
 	struct drm_device *dev = &dev_priv->drm;
-	struct intel_connector *intel_connector;
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *connector;
 
-	list_for_each_entry(intel_connector,
-	    &dev->mode_config.connector_list, base.head) {
-		struct drm_connector *connector = &intel_connector->base;
-		struct intel_panel *panel = &intel_connector->panel;
-		struct backlight_device *bd = panel->backlight.device;
+	drm_connector_list_iter_begin(dev, &conn_iter);
+	drm_for_each_connector_iter(connector, &conn_iter) {
+		struct intel_connector *intel_connector;
+		struct intel_panel *panel;
+		struct backlight_device *bd;
+
+		if (connector->registration_state != DRM_CONNECTOR_REGISTERED)
+			continue;
+
+		intel_connector = to_intel_connector(connector);
+		panel = &intel_connector->panel;
+		bd = panel->backlight.device;
 
 		if (!panel->backlight.present || bd == NULL)
 			continue;
+
+		dev->registered = false;
+		connector->registration_state = DRM_CONNECTOR_UNREGISTERED;
 
 		connector->backlight_device = bd;
 		connector->backlight_property = drm_property_create_range(dev,
 		    0, "Backlight", 0, bd->props.max_brightness);
 		drm_object_attach_property(&connector->base,
 		    connector->backlight_property, bd->props.brightness);
+
+		connector->registration_state = DRM_CONNECTOR_REGISTERED;
+		dev->registered = true;
 
 		/*
 		 * Use backlight from the first connector that has one
@@ -2692,6 +2706,7 @@ inteldrm_native_backlight(struct inteldrm_softc *dev_priv)
 		if (dev_priv->backlight == NULL)
 			dev_priv->backlight = bd;
 	}
+	drm_connector_list_iter_end(&conn_iter);
 }
 
 void
@@ -2699,7 +2714,8 @@ inteldrm_firmware_backlight(struct inteldrm_softc *dev_priv,
     struct wsdisplay_param *dp)
 {
 	struct drm_device *dev = &dev_priv->drm;
-	struct intel_connector *intel_connector;
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *connector;
 	struct backlight_properties props;
 	struct backlight_device *bd;
 
@@ -2709,21 +2725,29 @@ inteldrm_firmware_backlight(struct inteldrm_softc *dev_priv,
 	bd = backlight_device_register(dev->dev->dv_xname, NULL, NULL,
 	    &inteldrm_backlight_ops, &props);
 
-	list_for_each_entry(intel_connector,
-	    &dev->mode_config.connector_list, base.head) {
-		struct drm_connector *connector = &intel_connector->base;
-
+	drm_connector_list_iter_begin(dev, &conn_iter);
+	drm_for_each_connector_iter(connector, &conn_iter) {
 		if (connector->connector_type != DRM_MODE_CONNECTOR_LVDS &&
 		    connector->connector_type != DRM_MODE_CONNECTOR_eDP &&
 		    connector->connector_type != DRM_MODE_CONNECTOR_DSI)
 			continue;
+
+		if (connector->registration_state != DRM_CONNECTOR_REGISTERED)
+			continue;
+
+		dev->registered = false;
+		connector->registration_state = DRM_CONNECTOR_UNREGISTERED;
 
 		connector->backlight_device = bd;
 		connector->backlight_property = drm_property_create_range(dev,
 		    0, "Backlight", dp->min, dp->max);
 		drm_object_attach_property(&connector->base,
 		    connector->backlight_property, dp->curval);
+
+		connector->registration_state = DRM_CONNECTOR_REGISTERED;
+		dev->registered = true;
 	}
+	drm_connector_list_iter_end(&conn_iter);
 }
 
 void
@@ -2732,15 +2756,11 @@ inteldrm_init_backlight(struct inteldrm_softc *dev_priv)
 	struct drm_device *dev = &dev_priv->drm;
 	struct wsdisplay_param dp;
 
-	drm_modeset_lock(&dev->mode_config.connection_mutex, NULL);
-
 	dp.param = WSDISPLAYIO_PARAM_BRIGHTNESS;
 	if (ws_get_param && ws_get_param(&dp) == 0)
 		inteldrm_firmware_backlight(dev_priv, &dp);
 	else
 		inteldrm_native_backlight(dev_priv);
-
-	drm_modeset_unlock(&dev->mode_config.connection_mutex);
 }
 
 int
