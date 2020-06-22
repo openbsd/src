@@ -1,4 +1,4 @@
-/*	$OpenBSD: completion.h,v 1.6 2020/06/13 06:22:41 jsg Exp $	*/
+/*	$OpenBSD: completion.h,v 1.7 2020/06/22 05:19:26 jsg Exp $	*/
 /*
  * Copyright (c) 2015, 2018 Mark Kettenis
  *
@@ -53,7 +53,8 @@ wait_for_completion_timeout(struct completion *x, u_long timo)
 		ret = msleep(x, &x->wait.lock, 0, "wfct", timo);
 		if (ret) {
 			mtx_leave(&x->wait.lock);
-			return (ret == EWOULDBLOCK) ? 0 : -ret;
+			/* timeout */
+			return 0;
 		}
 	}
 	x->done--;
@@ -62,25 +63,17 @@ wait_for_completion_timeout(struct completion *x, u_long timo)
 	return 1;
 }
 
-static inline u_long
+static inline void
 wait_for_completion(struct completion *x)
 {
-	int ret;
-
 	KASSERT(!cold);
 
 	mtx_enter(&x->wait.lock);
 	while (x->done == 0) {
-		ret = msleep_nsec(x, &x->wait.lock, 0, "wfcom", INFSLP);
-		if (ret) {
-			mtx_leave(&x->wait.lock);
-			return (ret == EWOULDBLOCK) ? 0 : -ret;
-		}
+		msleep_nsec(x, &x->wait.lock, 0, "wfcom", INFSLP);
 	}
 	x->done--;
 	mtx_leave(&x->wait.lock);
-
-	return 0;
 }
 
 static inline u_long
@@ -95,7 +88,9 @@ wait_for_completion_interruptible(struct completion *x)
 		ret = msleep_nsec(x, &x->wait.lock, PCATCH, "wfci", INFSLP);
 		if (ret) {
 			mtx_leave(&x->wait.lock);
-			return (ret == EWOULDBLOCK) ? 0 : -ret;
+			if (ret == EWOULDBLOCK)
+				return 0;
+			return -ERESTARTSYS;
 		}
 	}
 	x->done--;
@@ -116,7 +111,9 @@ wait_for_completion_interruptible_timeout(struct completion *x, u_long timo)
 		ret = msleep(x, &x->wait.lock, PCATCH, "wfcit", timo);
 		if (ret) {
 			mtx_leave(&x->wait.lock);
-			return (ret == EWOULDBLOCK) ? 0 : -ret;
+			if (ret == EWOULDBLOCK)
+				return 0;
+			return -ERESTARTSYS;
 		}
 	}
 	x->done--;
