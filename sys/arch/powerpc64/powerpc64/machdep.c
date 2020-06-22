@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2020/06/21 18:39:38 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 2020/06/22 16:09:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -605,7 +605,14 @@ void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
-	panic("%s", __func__);
+	struct trapframe *frame = p->p_md.md_regs;
+
+	frame->fixreg[1] = stack;
+	frame->srr0 = pack->ep_entry;
+	frame->srr1 = PSL_SF | PSL_HV | PSL_EE | PSL_PR | PSL_ME |
+	    PSL_IR | PSL_DR | PSL_RI;
+
+	retval[1] = 0;
 }
 
 void
