@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2020/06/14 19:09:59 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.8 2020/06/22 21:13:40 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -20,6 +20,7 @@ config		bsd	swap generic
 mainbus0	at root
 cpu0		at mainbus?
 opal0		at fdt?
+opalcons*	at fdt?
 phb*		at fdt?
 pci*		at phb?
 xive*		at fdt?

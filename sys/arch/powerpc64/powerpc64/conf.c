@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2020/06/07 09:34:20 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 2020/06/22 21:13:40 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -46,6 +46,7 @@ struct bdevsw bdevsw[] =
 int	nblkdev = nitems(bdevsw);
 
 #include "pty.h"
+#include "opalcons.h"
 
 struct cdevsw cdevsw[] =
 {
@@ -57,6 +58,7 @@ struct cdevsw cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
 	cdev_ptm_init(NPTY,ptm),	/* XX: pseudo-tty ptm device */
+	cdev_tty_init(NOPALCONS,opalcons), /* XX: OPAL console */
 };
 int	nchrdev = nitems(cdevsw);
 
