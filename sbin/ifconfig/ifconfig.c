@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.422 2020/06/21 12:20:06 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.423 2020/06/22 02:08:43 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -94,7 +94,6 @@
 #include <net/if_vlan_var.h>
 
 #include <netmpls/mpls.h>
-#include <openssl/evp.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -5673,14 +5672,12 @@ setifpriority(const char *id, int param)
  * space.
  */
 #define WG_BASE64_KEY_LEN (4 * ((WG_KEY_LEN + 2) / 3))
-#define WG_TMP_KEY_LEN (WG_BASE64_KEY_LEN / 4 * 3)
 #define WG_LOAD_KEY(dst, src, fn_name) do {				\
-	uint8_t _tmp[WG_TMP_KEY_LEN];					\
+	uint8_t _tmp[WG_KEY_LEN]; int _r;				\
 	if (strlen(src) != WG_BASE64_KEY_LEN)				\
 		errx(1, fn_name " (key): invalid length");		\
-	if (EVP_DecodeBlock(_tmp, src,					\
-	    WG_BASE64_KEY_LEN) != WG_TMP_KEY_LEN)			\
-		errx(1, fn_name " (key): invalid base64");		\
+	if ((_r = b64_pton(src, _tmp, sizeof(_tmp))) != sizeof(_tmp))		\
+		errx(1, fn_name " (key): invalid base64 %d/%zu", _r, sizeof(_tmp));		\
 	memcpy(dst, _tmp, WG_KEY_LEN);					\
 } while (0)
 
@@ -5899,13 +5896,15 @@ wg_status(void)
 	if (wg_interface->i_flags & WG_INTERFACE_HAS_RTABLE)
 		printf("\twgrtable %d\n", wg_interface->i_rtable);
 	if (wg_interface->i_flags & WG_INTERFACE_HAS_PUBLIC) {
-		EVP_EncodeBlock(key, wg_interface->i_public, WG_KEY_LEN);
+		b64_ntop(wg_interface->i_public, WG_KEY_LEN,
+		    key, sizeof(key));
 		printf("\twgpubkey %s\n", key);
 	}
 
 	wg_peer = &wg_interface->i_peers[0];
 	for (i = 0; i < wg_interface->i_peers_count; i++) {
-		EVP_EncodeBlock(key, wg_peer->p_public, WG_KEY_LEN);
+		b64_ntop(wg_peer->p_public, WG_KEY_LEN,
+		    key, sizeof(key));
 		printf("\twgpeer %s\n", key);
 
 		if (wg_peer->p_flags & WG_PEER_HAS_PSK)
