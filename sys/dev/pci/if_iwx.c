@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.30 2020/06/22 07:15:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.31 2020/06/22 07:25:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5266,6 +5266,8 @@ iwx_umac_scan(struct iwx_softc *sc, int bgscan)
 		req->v1.passive_dwell = 110;
 		req->v1.fragmented_dwell = 44;
 		req->v1.extended_dwell = 90;
+
+		req->v1.scan_priority = htole32(IWX_SCAN_PRIORITY_HIGH);
 	}
 
 	if (bgscan) {
@@ -5284,7 +5286,6 @@ iwx_umac_scan(struct iwx_softc *sc, int bgscan)
 		}
 	}
 
-	req->v1.scan_priority = htole32(IWX_SCAN_PRIORITY_HIGH);
 	req->ooc_priority = htole32(IWX_SCAN_PRIORITY_HIGH);
 
 	cmd_data = iwx_get_scan_req_umac_data(sc, req);
