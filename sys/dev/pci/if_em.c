@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.353 2020/06/09 07:36:10 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.354 2020/06/22 02:31:32 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -3008,7 +3008,8 @@ em_rxeof(struct em_queue *que)
 
 	que->rx.sc_rx_desc_tail = i;
 
-	if_input(ifp, &ml);
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&que->rx.sc_rx_ring);
 
 	return (rv);
 }

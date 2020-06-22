@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.189 2017/06/04 04:29:23 dlg Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.190 2020/06/22 02:31:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1637,9 +1637,11 @@ sk_rxeof(struct sk_if_softc *sc_if)
 	}
 	sc_if->sk_cdata.sk_rx_cons = cur;
 
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(rxr);
+
 	sk_fill_rx_ring(sc_if);
 
-	if_input(ifp, &ml);
 }
 
 void

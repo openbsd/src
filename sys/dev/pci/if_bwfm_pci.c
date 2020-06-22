@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.36 2020/03/07 09:56:46 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.37 2020/06/22 02:31:32 dlg Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1914,7 +1914,9 @@ bwfm_pci_intr(void *v)
 		bwfm_pci_ring_rx(sc, &sc->sc_rx_complete, &ml);
 		bwfm_pci_ring_rx(sc, &sc->sc_tx_complete, &ml);
 		bwfm_pci_ring_rx(sc, &sc->sc_ctrl_complete, &ml);
-		if_input(ifp, &ml);
+
+		if (ifiq_input(&ifp->if_rcv, &ml))
+			if_rxr_livelocked(&sc->sc_rxbuf_ring);
 	}
 
 #ifdef BWFM_DEBUG

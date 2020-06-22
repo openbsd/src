@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.389 2020/06/18 17:13:31 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.390 2020/06/22 02:31:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3462,6 +3462,7 @@ bge_rxeof(struct bge_softc *sc)
 	bus_addr_t offset, toff;
 	bus_size_t tlen;
 	int tosync;
+	int livelocked;
 
 	rx_cons = sc->bge_rx_saved_considx;
 	rx_prod = sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx;
@@ -3564,16 +3565,20 @@ bge_rxeof(struct bge_softc *sc)
 
 	sc->bge_rx_saved_considx = rx_cons;
 	bge_writembx(sc, BGE_MBX_RX_CONS0_LO, sc->bge_rx_saved_considx);
+
+	livelocked = ifiq_input(&ifp->if_rcv, &ml);
 	if (stdcnt) {
 		if_rxr_put(&sc->bge_std_ring, stdcnt);
+		if (livelocked)
+			if_rxr_livelocked(&sc->bge_std_ring);
 		bge_fill_rx_ring_std(sc);
 	}
 	if (jumbocnt) {
 		if_rxr_put(&sc->bge_jumbo_ring, jumbocnt);
+		if (livelocked)
+			if_rxr_livelocked(&sc->bge_jumbo_ring);
 		bge_fill_rx_ring_jumbo(sc);
 	}
-
-	if_input(ifp, &ml);
 }
 
 void

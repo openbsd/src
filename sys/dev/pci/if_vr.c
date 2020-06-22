@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.153 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.154 2020/06/22 02:31:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -933,13 +933,14 @@ vr_rxeof(struct vr_softc *sc)
 		ml_enqueue(&ml, m);
 	}
 
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->sc_rxring);
+
 	vr_fill_rx_ring(sc);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap.vrm_map,
 	    0, sc->sc_listmap.vrm_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	if_input(ifp, &ml);
 }
 
 void

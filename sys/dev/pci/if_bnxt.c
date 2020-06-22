@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.24 2020/06/09 07:03:12 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.25 2020/06/22 02:31:32 dlg Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -1345,12 +1345,15 @@ bnxt_intr(void *xsc)
 		if_rxr_put(&sc->sc_rxr[0], rxfree);
 		if_rxr_put(&sc->sc_rxr[1], agfree);
 
+		if (ifiq_input(&sc->sc_ac.ac_if.if_rcv, &ml)) {
+			if_rxr_livelocked(&sc->sc_rxr[0]);
+			if_rxr_livelocked(&sc->sc_rxr[1]);
+		}
+
 		bnxt_rx_fill(sc);
 		if ((sc->sc_rx_cons == sc->sc_rx_prod) ||
 		    (sc->sc_rx_ag_cons == sc->sc_rx_ag_prod))
 			timeout_add(&sc->sc_rx_refill, 0);
-
-		if_input(&sc->sc_ac.ac_if, &ml);
 	}
 	if (txfree != 0) {
 		if (ifq_is_oactive(&ifp->if_snd))

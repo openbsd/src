@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.127 2020/05/17 08:27:51 jsg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.128 2020/06/22 02:31:32 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4467,6 +4467,9 @@ bnx_rx_int_next_rx:
 		    BUS_SPACE_BARRIER_READ);
 	}
 
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->rx_ring);
+
 	/* No new packets to process.  Refill the RX chain and exit. */
 	sc->rx_cons = sw_cons;
 	if (!bnx_fill_rx_chain(sc))
@@ -4477,8 +4480,6 @@ bnx_rx_int_next_rx:
 		    sc->rx_bd_chain_map[i], 0,
 		    sc->rx_bd_chain_map[i]->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
-
-	if_input(ifp, &ml);
 
 	DBPRINT(sc, BNX_INFO_RECV, "%s(exit): rx_prod = 0x%04X, "
 	    "rx_cons = 0x%04X, rx_prod_bseq = 0x%08X\n",

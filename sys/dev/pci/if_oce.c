@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.100 2017/11/27 16:53:04 sthen Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.101 2020/06/22 02:31:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -1639,7 +1639,8 @@ oce_rxeof(struct oce_rq *rq, struct oce_nic_rx_cqe *cqe)
 		ml_enqueue(&ml, m);
 	}
 exit:
-	if_input(ifp, &ml);
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&rq->rxring);
 }
 
 void
