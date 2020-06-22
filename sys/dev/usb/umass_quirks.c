@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.32 2015/06/24 11:32:37 mpi Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.33 2020/06/22 15:54:55 tobhe Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -471,6 +471,14 @@ const struct umass_quirk umass_quirks[] = {
 	 0,
 	 ADEV_NOSENSE,
 	 UMATCH_VENDOR_PRODUCT,
+	 NULL, NULL
+	},
+
+	{ { USB_VENDOR_ERICSSON, USB_PRODUCT_ERICSSON_F5521GW },
+	 UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	 0,
+	 0,
+	 UMATCH_NONE,
 	 NULL, NULL
 	},
 };
