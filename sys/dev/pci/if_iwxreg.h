@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.12 2020/06/22 07:39:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.13 2020/06/22 08:05:52 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -5668,6 +5668,45 @@ struct iwx_scan_config {
 #define IWX_UMAC_SCAN_GEN_FLAGS2_ALLOW_CHNL_REORDER	(1 << 1)
 
 /**
+ * UMAC scan general flags version 2
+ *
+ * The FW flags were reordered and hence the driver introduce version 2
+ *
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_PERIODIC: periodic or scheduled
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_PASS_ALL: pass all probe responses and beacons
+ *                                       during scan iterations
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_NTFY_ITER_COMPLETE: send complete notification
+ *      on every iteration instead of only once after the last iteration
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_FRAGMENTED_LMAC1: fragmented scan LMAC1
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_FRAGMENTED_LMAC2: fragmented scan LMAC2
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_MATCH: does this scan check for profile matching
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_USE_ALL_RX_CHAINS: use all valid chains for RX
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_ADAPTIVE_DWELL: works with adaptive dwell
+ *                                             for active channel
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_PREEMPTIVE: can be preempted by other requests
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_NTF_START: send notification of scan start
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_MULTI_SSID: matching on multiple SSIDs
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_FORCE_PASSIVE: all the channels scanned
+ *                                           as passive
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_TRIGGER_UHB_SCAN: at the end of 2.4GHz and
+ *		5.2Ghz bands scan, trigger scan on 6GHz band to discover
+ *		the reported collocated APs
+ */
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_PERIODIC             (1 << 0)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_PASS_ALL             (1 << 1)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_NTFY_ITER_COMPLETE   (1 << 2)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_FRAGMENTED_LMAC1     (1 << 3)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_FRAGMENTED_LMAC2     (1 << 4)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_MATCH                (1 << 5)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_USE_ALL_RX_CHAINS    (1 << 6)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_ADAPTIVE_DWELL       (1 << 7)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_PREEMPTIVE           (1 << 8)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_NTF_START            (1 << 9)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_MULTI_SSID           (1 << 10)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_FORCE_PASSIVE        (1 << 11)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_TRIGGER_UHB_SCAN     (1 << 12)
+
+/**
  * struct iwx_scan_channel_cfg_umac
  * @flags:		bitmap - 0-19:	directed scan to i'th ssid.
  * @channel_num:	channel number 1-13 etc.
@@ -5676,10 +5715,20 @@ struct iwx_scan_config {
  */
 struct iwx_scan_channel_cfg_umac {
 	uint32_t flags;
-	uint8_t channel_num;
-	uint8_t iter_count;
-	uint16_t iter_interval;
-} __packed; /* SCAN_CHANNEL_CFG_S_VER1 */
+	union {
+		struct {
+			uint8_t channel_num;
+			uint8_t iter_count;
+			uint16_t iter_interval;
+		} v1; /* SCAN_CHANNEL_CFG_S_VER1 */
+		struct {
+			uint8_t channel_num;
+			uint8_t band;
+			uint8_t iter_count;
+			uint8_t iter_interval;
+		} v2; /* SCAN_CHANNEL_CFG_S_VER{2,3,4} */
+	};
+} __packed;
 
 /**
  * struct iwx_scan_umac_schedule

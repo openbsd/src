@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.34 2020/06/22 07:52:24 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.35 2020/06/22 08:05:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4938,12 +4938,26 @@ iwx_umac_scan_fill_channels(struct iwx_softc *sc,
 	    c <= &ic->ic_channels[IEEE80211_CHAN_MAX] &&
 	    nchan < sc->sc_capa_n_scan_channels;
 	    c++) {
+		uint8_t channel_num;
+
 		if (c->ic_flags == 0)
 			continue;
 
-		chan->channel_num = ieee80211_mhz2ieee(c->ic_freq, 0);
-		chan->iter_count = 1;
-		chan->iter_interval = htole16(0);
+		channel_num = ieee80211_mhz2ieee(c->ic_freq, 0);
+		if (isset(sc->sc_ucode_api,
+		    IWX_UCODE_TLV_API_SCAN_EXT_CHAN_VER)) {
+			chan->v2.channel_num = channel_num;
+			if (IEEE80211_IS_CHAN_2GHZ(c))
+				chan->v2.band = IWX_PHY_BAND_24;
+			else
+				chan->v2.band = IWX_PHY_BAND_5;
+			chan->v2.iter_count = 1;
+			chan->v2.iter_interval = 0;
+		} else {
+			chan->v1.channel_num = channel_num;
+			chan->v1.iter_count = 1;
+			chan->v1.iter_interval = htole16(0);
+		}
 		if (n_ssids != 0 && !bgscan)
 			chan->flags = htole32(1 << 0); /* select SSID 0 */
 		chan++;
