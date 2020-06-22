@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.c,v 1.108 2020/04/11 10:16:11 djm Exp $ */
+/* $OpenBSD: sshkey.c,v 1.109 2020/06/22 05:58:35 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -122,6 +122,8 @@ static const struct keytype keytypes[] = {
 	    KEY_ECDSA, NID_secp521r1, 0, 0 },
 	{ "sk-ecdsa-sha2-nistp256@openssh.com", "ECDSA-SK", NULL,
 	    KEY_ECDSA_SK, NID_X9_62_prime256v1, 0, 0 },
+	{ "webauthn-sk-ecdsa-sha2-nistp256@openssh.com", "ECDSA-SK", NULL,
+	    KEY_ECDSA_SK, NID_X9_62_prime256v1, 0, 1 },
 	{ "ssh-rsa-cert-v01@openssh.com", "RSA-CERT", NULL,
 	    KEY_RSA_CERT, 0, 1, 0 },
 	{ "rsa-sha2-256-cert-v01@openssh.com", "RSA-CERT",
