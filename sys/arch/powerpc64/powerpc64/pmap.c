@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 2020/06/22 16:58:20 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.16 2020/06/22 18:03:22 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -306,6 +306,26 @@ pmap_slbd_lookup(pmap_t pm, vaddr_t va)
 	return NULL;
 }
 
+void
+pmap_slbd_cache(pmap_t pm, struct slb_desc *slbd)
+{
+	uint64_t slbe, slbv;
+	int idx;
+
+	for (idx = 0; idx < nitems(pm->pm_slb); idx++) {
+		if (pm->pm_slb[idx].slb_slbe == 0)
+			break;
+	}
+	if (idx == nitems(pm->pm_slb))
+		idx = arc4random_uniform(nitems(pm->pm_slb));
+
+	slbe = (slbd->slbd_esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx;
+	slbv = slbd->slbd_vsid << SLBV_VSID_SHIFT;
+
+	pm->pm_slb[idx].slb_slbe = slbe;
+	pm->pm_slb[idx].slb_slbv = slbv;
+}
+
 int pmap_vsid = 1;
 
 struct slb_desc *
@@ -313,8 +333,6 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 {
 	uint64_t esid = va >> ADDR_ESID_SHIFT;
 	struct slb_desc *slbd;
-	uint64_t slbe, slbv;
-	int i;
 
 	KASSERT(pm != pmap_kernel());
 
@@ -326,18 +344,8 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 	slbd->slbd_vsid = pmap_vsid++;
 	LIST_INSERT_HEAD(&pm->pm_slbd, slbd, slbd_list);
 
-	slbe = (slbd->slbd_esid << SLBE_ESID_SHIFT) | SLBE_VALID | 31;
-	slbv = slbd->slbd_vsid << SLBV_VSID_SHIFT;
-
-	for (i = 0; i < nitems(pm->pm_slb); i++) {
-		if (pm->pm_slb[i].slb_slbe == 0)
-			break;
-	}
-	if (i == nitems(pm->pm_slb))
-		i = arc4random_uniform(nitems(pm->pm_slb));
-
-	pm->pm_slb[i].slb_slbe = slbe;
-	pm->pm_slb[i].slb_slbv = slbv;
+	/* We're almost certainly going to use it soon. */
+	pmap_slbd_cache(pm, slbd);
 
 	return slbd;
 }

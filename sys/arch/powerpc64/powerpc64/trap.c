@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 2020/06/22 16:58:20 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 2020/06/22 18:03:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -41,6 +41,8 @@ trap(struct trapframe *frame)
 	struct proc *p = curproc;
 	int type = frame->exc;
 	struct vm_map *map;
+	struct slb_desc *slbd;
+	pmap_t pm;
 	vaddr_t va;
 	int ftype;
 	int error;
@@ -107,12 +109,47 @@ trap(struct trapframe *frame)
 		printf("dar 0x%lx dsisr 0x%lx\n", frame->dar, frame->dsisr);
 		goto fatal;
 
-	case EXC_ISI|EXC_USER:
+	case EXC_DSE|EXC_USER:
+		intr_enable();
+		pm = p->p_vmspace->vm_map.pmap;
+		slbd = pmap_slbd_lookup(pm, frame->dar);
+		if (slbd) {
+			pmap_slbd_cache(pm, slbd);
+			break;
+		}
+		/* FALLTHROUGH */
+
+	case EXC_DSI|EXC_USER:
+		intr_enable();
+		map = &p->p_vmspace->vm_map;
+		va = frame->dar;
+		if (frame->dsisr & DSISR_STORE)
+			ftype = PROT_READ | PROT_WRITE;
+		else
+			ftype = PROT_READ;
+		KERNEL_LOCK();
+		error = uvm_fault(map, trunc_page(va), 0, ftype);
+		KERNEL_UNLOCK();
+		if (error)
+			goto fatal;
+		break;
+
 	case EXC_ISE|EXC_USER:
+		intr_enable();
+		pm = p->p_vmspace->vm_map.pmap;
+		slbd = pmap_slbd_lookup(pm, frame->srr0);
+		if (slbd) {
+			pmap_slbd_cache(pm, slbd);
+			break;
+		}
+		/* FALLTHROUGH */
+
+	case EXC_ISI|EXC_USER:
 		intr_enable();
 		map = &p->p_vmspace->vm_map;
 		va = frame->srr0;
 		ftype = PROT_READ | PROT_EXEC;
+		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
 		KERNEL_UNLOCK();
 		if (error)
