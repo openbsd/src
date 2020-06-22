@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.372 2020/05/29 01:22:53 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.373 2020/06/22 02:45:18 dlg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -122,7 +122,6 @@ extern int nselcoll, fscale;
 extern struct disklist_head disklist;
 extern fixpt_t ccpu;
 extern  long numvnodes;
-extern u_int net_livelocks;
 #if NAUDIO > 0
 extern int audio_record_enable;
 #endif
@@ -644,7 +643,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			dev = NODEV;
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
 	case KERN_NETLIVELOCKS:
-		return (sysctl_rdint(oldp, oldlenp, newp, net_livelocks));
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 	case KERN_POOL_DEBUG: {
 		int old_pool_debug = pool_debug;
 
