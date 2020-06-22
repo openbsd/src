@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.29 2017/03/03 23:30:57 renato Exp $ */
+/*	$OpenBSD: control.c,v 1.30 2020/06/22 15:09:34 mestre Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -98,11 +98,10 @@ control_listen(void)
 }
 
 void
-control_cleanup(char *path)
+control_cleanup(void)
 {
 	accept_del(control_fd);
 	close(control_fd);
-	unlink(path);
 }
 
 /* ARGSUSED */
