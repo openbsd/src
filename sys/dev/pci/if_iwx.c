@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.36 2020/06/22 16:25:55 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.37 2020/06/22 16:27:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -128,8 +128,6 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>
-#include <net80211/ieee80211_amrr.h>
-#include <net80211/ieee80211_mira.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
@@ -336,9 +334,8 @@ int	iwx_ccmp_decap(struct iwx_softc *, struct mbuf *,
 	    struct ieee80211_node *);
 void	iwx_rx_frame(struct iwx_softc *, struct mbuf *, int, uint32_t, int, int,
 	    uint32_t, struct ieee80211_rxinfo *, struct mbuf_list *);
-void	iwx_enable_ht_cck_fallback(struct iwx_softc *, struct iwx_node *);
 void	iwx_rx_tx_cmd_single(struct iwx_softc *, struct iwx_rx_packet *,
-	    struct iwx_node *, int, int);
+	    struct iwx_node *);
 void	iwx_rx_tx_cmd(struct iwx_softc *, struct iwx_rx_packet *,
 	    struct iwx_rx_data *);
 void	iwx_rx_bmiss(struct iwx_softc *, struct iwx_rx_packet *,
@@ -409,7 +406,6 @@ int	iwx_set_key(struct ieee80211com *, struct ieee80211_node *,
 	    struct ieee80211_key *);
 void	iwx_delete_key(struct ieee80211com *,
 	    struct ieee80211_node *, struct ieee80211_key *);
-void	iwx_calib_timeout(void *);
 int	iwx_media_change(struct ifnet *);
 void	iwx_newstate_task(void *);
 int	iwx_newstate(struct ieee80211com *, enum ieee80211_state, int);
@@ -3480,42 +3476,10 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 }
 
 void
-iwx_enable_ht_cck_fallback(struct iwx_softc *sc, struct iwx_node *in)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = &in->in_ni;
-	struct ieee80211_rateset *rs = &ni->ni_rates;
-	uint8_t rval = (rs->rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL);
-	uint8_t min_rval = ieee80211_min_basic_rate(ic);
-	int i;
-
-	/* Are CCK frames forbidden in our BSS? */
-	if (IWX_RVAL_IS_OFDM(min_rval))
-		return;
-
-	in->ht_force_cck = 1;
-
-	ieee80211_mira_cancel_timeouts(&in->in_mn);
-	ieee80211_mira_node_init(&in->in_mn);
-	ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
-
-	/* Choose initial CCK Tx rate. */
-	ni->ni_txrate = 0;
-	for (i = 0; i < rs->rs_nrates; i++) {
-		rval = (rs->rs_rates[i] & IEEE80211_RATE_VAL);
-		if (rval == min_rval) {
-			ni->ni_txrate = i;
-			break;
-		}
-	}
-}
-
-void
 iwx_rx_tx_cmd_single(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
-    struct iwx_node *in, int txmcs, int txrate)
+    struct iwx_node *in)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = &in->in_ni;
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwx_tx_resp *tx_resp = (void *)pkt->data;
 	int status = le16toh(tx_resp->status.status) & IWX_TX_STATUS_MSK;
@@ -3525,44 +3489,6 @@ iwx_rx_tx_cmd_single(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 
 	txfail = (status != IWX_TX_STATUS_SUCCESS &&
 	    status != IWX_TX_STATUS_DIRECT_DONE);
-
-	/*
-	 * Update rate control statistics.
-	 * Only report frames which were actually queued with the currently
-	 * selected Tx rate. Because Tx queues are relatively long we may
-	 * encounter previously selected rates here during Tx bursts.
-	 * Providing feedback based on such frames can lead to suboptimal
-	 * Tx rate control decisions.
-	 */
-	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0 || in->ht_force_cck) {
-		if (txrate == ni->ni_txrate) {
-			in->in_amn.amn_txcnt++;
-			if (txfail)
-				in->in_amn.amn_retrycnt++;
-			if (tx_resp->failure_frame > 0)
-				in->in_amn.amn_retrycnt++;
-		}
-	} else if (ic->ic_fixed_mcs == -1 && txmcs == ni->ni_txmcs) {
-		in->in_mn.frames += tx_resp->frame_count;
-		in->in_mn.ampdu_size = le16toh(tx_resp->byte_cnt);
-		in->in_mn.agglen = tx_resp->frame_count;
-		if (tx_resp->failure_frame > 0)
-			in->in_mn.retries += tx_resp->failure_frame;
-		if (txfail)
-			in->in_mn.txfail += tx_resp->frame_count;
-#if 0
-		if (ic->ic_state == IEEE80211_S_RUN && !in->ht_force_cck) {
-			int otxmcs = ni->ni_txmcs;
-
-			ieee80211_mira_choose(&in->in_mn, ic, &in->in_ni);
-
-			/* Fall back to CCK rates if MCS 0 is failing. */
-			if (txfail && IEEE80211_IS_CHAN_2GHZ(ni->ni_chan) &&
-			    otxmcs == 0 && ni->ni_txmcs == 0)
-				iwx_enable_ht_cck_fallback(sc, in);
-		}
-#endif
-	}
 
 	if (txfail)
 		ifp->if_oerrors++;
@@ -3605,7 +3531,7 @@ iwx_rx_tx_cmd(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 	if (txd->m == NULL)
 		return;
 
-	iwx_rx_tx_cmd_single(sc, pkt, txd->in, txd->txmcs, txd->txrate);
+	iwx_rx_tx_cmd_single(sc, pkt, txd->in);
 	iwx_txd_done(sc, txd);
 	iwx_tx_update_byte_tbl(ring, idx, 0, 0);
 
@@ -4079,7 +4005,7 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 	} else if (ic->ic_fixed_rate != -1) {
 		ridx = sc->sc_fixed_ridx;
 		flags |= IWX_TX_FLAGS_CMD_RATE;
-	} else if ((ni->ni_flags & IEEE80211_NODE_HT) && !in->ht_force_cck) {
+	} else if (ni->ni_flags & IEEE80211_NODE_HT) {
 		ridx = iwx_mcs2ridx[ni->ni_txmcs];
 	} else {
 		uint8_t rval;
@@ -4275,8 +4201,6 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	}
 	data->m = m;
 	data->in = in;
-	data->txmcs = ni->ni_txmcs;
-	data->txrate = ni->ni_txrate;
 
 	/* Fill TX descriptor. */
 	num_tbs = 2 + data->map->dm_nsegs;
@@ -5934,27 +5858,20 @@ iwx_run(struct iwx_softc *sc)
 		}
 	}
 
-	ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
-	ieee80211_mira_node_init(&in->in_mn);
-
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		return 0;
 
-	/* Start at lowest available bit-rate, AMRR will raise. */
+	/* Start at lowest available bit-rate. Firmware will raise. */
 	in->in_ni.ni_txrate = 0;
 	in->in_ni.ni_txmcs = 0;
 
-	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_TLC_OFFLOAD)) {
-		err = iwx_rs_init(sc, in);
-		if (err) {
-			printf("%s: could not init rate scaling (error %d)\n",
-			    DEVNAME(sc), err);
-			return err;
-		}
+	err = iwx_rs_init(sc, in);
+	if (err) {
+		printf("%s: could not init rate scaling (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
 	}
-#if 0
-	timeout_add_msec(&sc->sc_calib_to, 500);
-#endif
+
 	return 0;
 }
 
@@ -6073,34 +5990,6 @@ iwx_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	cmd.common.sta_id = IWX_STATION_ID;
 
 	iwx_send_cmd_pdu(sc, IWX_ADD_STA_KEY, IWX_CMD_ASYNC, sizeof(cmd), &cmd);
-}
-
-void
-iwx_calib_timeout(void *arg)
-{
-	struct iwx_softc *sc = arg;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwx_node *in = (void *)ic->ic_bss;
-	struct ieee80211_node *ni = &in->in_ni;
-	int s;
-
-	s = splnet();
-	if ((ic->ic_fixed_rate == -1 || ic->ic_fixed_mcs == -1) &&
-	    ((ni->ni_flags & IEEE80211_NODE_HT) == 0 || in->ht_force_cck) &&
-	    ic->ic_opmode == IEEE80211_M_STA && ic->ic_bss) {
-		ieee80211_amrr_choose(&sc->sc_amrr, &in->in_ni, &in->in_amn);
-		if (in->ht_force_cck) {
-			struct ieee80211_rateset *rs = &ni->ni_rates;
-			uint8_t rv;
-			rv = (rs->rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL);
-			if (IWX_RVAL_IS_OFDM(rv))
-				in->ht_force_cck = 0;
-		}
-	}
-
-	splx(s);
-
-	timeout_add_msec(&sc->sc_calib_to, 500);
 }
 
 int
@@ -6240,11 +6129,8 @@ iwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwx_softc *sc = ifp->if_softc;
-	struct iwx_node *in = (void *)ic->ic_bss;
 
 	if (ic->ic_state == IEEE80211_S_RUN) {
-		timeout_del(&sc->sc_calib_to);
-		ieee80211_mira_cancel_timeouts(&in->in_mn);
 		iwx_del_task(sc, systq, &sc->ba_task);
 		iwx_del_task(sc, systq, &sc->htprot_task);
 	}
@@ -6832,8 +6718,6 @@ iwx_stop(struct ifnet *ifp)
 	ifq_clr_oactive(&ifp->if_snd);
 
 	in->in_phyctxt = NULL;
-	if (ic->ic_state == IEEE80211_S_RUN)
-		ieee80211_mira_cancel_timeouts(&in->in_mn); /* XXX refcount? */
 
 	sc->sc_flags &= ~(IWX_FLAG_SCANNING | IWX_FLAG_BGSCAN);
 	sc->sc_flags &= ~IWX_FLAG_MAC_ACTIVE;
@@ -6845,7 +6729,6 @@ iwx_stop(struct ifnet *ifp)
 
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 
-	timeout_del(&sc->sc_calib_to); /* XXX refcount? */
 	ifp->if_timer = sc->sc_tx_timer = 0;
 
 	splx(s);
@@ -8096,9 +7979,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_phyctxt[i].id = i;
 	}
 
-	sc->sc_amrr.amrr_min_success_threshold =  1;
-	sc->sc_amrr.amrr_max_success_threshold = 15;
-
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[1];
 
@@ -8118,7 +7998,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 #if NBPFILTER > 0
 	iwx_radiotap_attach(sc);
 #endif
-	timeout_set(&sc->sc_calib_to, iwx_calib_timeout, sc);
 	task_set(&sc->init_task, iwx_init_task, sc);
 	task_set(&sc->newstate_task, iwx_newstate_task, sc);
 	task_set(&sc->ba_task, iwx_ba_task, sc);

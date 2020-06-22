@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.9 2020/06/22 16:25:55 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.10 2020/06/22 16:27:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -235,8 +235,6 @@ struct iwx_tx_data {
 	bus_addr_t	cmd_paddr;
 	struct mbuf	*m;
 	struct iwx_node *in;
-	int txmcs;
-	int txrate;
 };
 
 struct iwx_tx_ring {
@@ -354,9 +352,6 @@ struct iwx_softc {
 	struct ieee80211com sc_ic;
 	int (*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
 	int sc_newstate_pending;
-
-	struct ieee80211_amrr sc_amrr;
-	struct timeout sc_calib_to;
 
 	struct task		init_task; /* NB: not reference-counted */
 	struct refcnt		task_refs;
@@ -516,13 +511,6 @@ struct iwx_node {
 
 	uint16_t in_id;
 	uint16_t in_color;
-
-	struct ieee80211_amrr_node in_amn;
-	struct ieee80211_mira_node in_mn;
-
-	/* Set in 11n mode if we don't receive ACKs for OFDM frames. */
-	int ht_force_cck;
-
 };
 #define IWX_STATION_ID 0
 #define IWX_AUX_STA_ID 1
