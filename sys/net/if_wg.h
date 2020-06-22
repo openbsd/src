@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_wg.h,v 1.4 2020/06/22 12:20:44 jasper Exp $ */
+
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
