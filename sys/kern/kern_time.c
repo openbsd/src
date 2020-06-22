@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.130 2020/05/20 17:23:01 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.131 2020/06/22 18:25:57 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -778,6 +778,7 @@ ppsratecheck(struct timeval *lasttime, int *curpps, int maxpps)
 }
 
 todr_chip_handle_t todr_handle;
+int inittodr_done;
 
 #define MINYEAR		((OpenBSD / 100) - 1)	/* minimum plausible year */
 
@@ -793,6 +794,8 @@ inittodr(time_t base)
 	struct timeval rtctime;
 	struct timespec ts;
 	int badbase;
+
+	inittodr_done = 1;
 
 	if (base < (MINYEAR - 1970) * SECYR) {
 		printf("WARNING: preposterous time in file system\n");
@@ -856,7 +859,11 @@ resettodr(void)
 {
 	struct timeval rtctime;
 
-	if (time_second == 1)
+	/*
+	 * Skip writing the RTC if inittodr(9) never ran.  We don't
+	 * want to overwrite a reasonable value with a nonsense value.
+	 */
+	if (!inittodr_done)
 		return;
 
 	microtime(&rtctime);
