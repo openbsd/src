@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.118 2020/04/23 21:28:10 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.119 2020/06/22 13:21:29 landry Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: June 22 2020 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -823,6 +823,7 @@ shared object.
 Describe the file as a
 .Ox
 static library.
+.Pp
 .It Cm @unexec Ar command
 Execute
 .Ar command
