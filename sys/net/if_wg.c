@@ -2450,10 +2450,14 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSWG:
+		NET_UNLOCK();
 		ret = wg_ioctl_set(sc, (struct wg_data_io *) data);
+		NET_LOCK();
 		break;
 	case SIOCGWG:
+		NET_UNLOCK();
 		ret = wg_ioctl_get(sc, (struct wg_data_io *) data);
+		NET_LOCK();
 		break;
 	/* Interface IOCTLs */
 	case SIOCSIFADDR:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.609 2020/06/22 03:07:57 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.610 2020/06/22 09:45:13 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2220,13 +2220,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			break;
 
 		/* don't take NET_LOCK because i2c reads take a long time */
-		error = ((*ifp->if_ioctl)(ifp, cmd, data));
-		break;
-	case SIOCSWG:
-	case SIOCGWG:
-		/* Don't take NET_LOCK to allow wg(4) to continue to send and
-		 * receive packets while we're loading a large number of
-		 * peers. wg(4) uses its own lock to serialise access. */
 		error = ((*ifp->if_ioctl)(ifp, cmd, data));
 		break;
 
