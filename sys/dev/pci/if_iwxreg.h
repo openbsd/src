@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.11 2020/06/19 11:12:46 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.12 2020/06/22 07:39:41 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1684,6 +1684,31 @@ struct iwx_phy_cfg_cmd {
 #define IWX_PHY_CFG_RX_CHAIN_A	(1 << 12)
 #define IWX_PHY_CFG_RX_CHAIN_B	(1 << 13)
 #define IWX_PHY_CFG_RX_CHAIN_C	(1 << 14)
+
+#define IWX_MAX_DTS_TRIPS	8
+
+/**
+ * struct iwx_ct_kill_notif - CT-kill entry notification
+ *
+ * @temperature: the current temperature in celsius
+ * @reserved: reserved
+ */
+struct iwx_ct_kill_notif {
+	uint16_t temperature;
+	uint16_t reserved;
+} __packed; /* GRP_PHY_CT_KILL_NTF */
+
+/**
+ * struct iwx_temp_report_ths_cmd - set temperature thresholds
+ * (IWX_TEMP_REPORTING_THRESHOLDS_CMD)
+ *
+ * @num_temps: number of temperature thresholds passed
+ * @thresholds: array with the thresholds to be configured
+ */
+struct iwx_temp_report_ths_cmd {
+	uint32_t num_temps;
+	uint16_t thresholds[IWX_MAX_DTS_TRIPS];
+} __packed; /* GRP_PHY_TEMP_REPORTING_THRESHOLDS_CMD */
 
 #define IWX_NVM_VERSION		0
 

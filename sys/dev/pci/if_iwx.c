@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.32 2020/06/22 07:31:32 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.33 2020/06/22 07:39:41 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -437,6 +437,7 @@ int	iwx_sf_config(struct iwx_softc *, int);
 int	iwx_send_bt_init_conf(struct iwx_softc *);
 int	iwx_send_soc_conf(struct iwx_softc *);
 int	iwx_send_update_mcc_cmd(struct iwx_softc *, const char *);
+int	iwx_send_temp_report_ths_cmd(struct iwx_softc *);
 int	iwx_init_hw(struct iwx_softc *);
 int	iwx_init(struct ifnet *);
 void	iwx_start(struct ifnet *);
@@ -6822,6 +6823,29 @@ out:
 }
 
 int
+iwx_send_temp_report_ths_cmd(struct iwx_softc *sc)
+{
+	struct iwx_temp_report_ths_cmd cmd;
+	int err;
+
+	/*
+	 * In order to give responsibility for critical-temperature-kill
+	 * and TX backoff to FW we need to send an empty temperature
+	 * reporting command at init time.
+	 */
+	memset(&cmd, 0, sizeof(cmd));
+
+	err = iwx_send_cmd_pdu(sc,
+	    IWX_WIDE_ID(IWX_PHY_OPS_GROUP, IWX_TEMP_REPORTING_THRESHOLDS_CMD),
+	    0, sizeof(cmd), &cmd);
+	if (err)
+		printf("%s: TEMP_REPORT_THS_CMD command failed (error %d)\n",
+		    DEVNAME(sc), err);
+
+	return err;
+}
+
+int
 iwx_init_hw(struct iwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -6903,6 +6927,12 @@ iwx_init_hw(struct iwx_softc *sc)
 	if (err) {
 		printf("%s: PCIe LTR configuration failed (error %d)\n",
 		    DEVNAME(sc), err);
+	}
+
+	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_CT_KILL_BY_FW)) {
+		err = iwx_send_temp_report_ths_cmd(sc);
+		if (err)
+			goto err;
 	}
 
 	err = iwx_power_update_device(sc);
@@ -7623,7 +7653,21 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		case IWX_DTS_MEASUREMENT_NOTIFICATION:
 		case IWX_WIDE_ID(IWX_PHY_OPS_GROUP,
 				 IWX_DTS_MEASUREMENT_NOTIF_WIDE):
+		case IWX_WIDE_ID(IWX_PHY_OPS_GROUP,
+				 IWX_TEMP_REPORTING_THRESHOLDS_CMD):
 			break;
+
+		case IWX_WIDE_ID(IWX_PHY_OPS_GROUP,
+		    IWX_CT_KILL_NOTIFICATION): {
+			struct iwx_ct_kill_notif *notif;
+			SYNC_RESP_STRUCT(notif, pkt);
+			printf("%s: device at critical temperature (%u degC), "
+			    "stopping device\n",
+			    DEVNAME(sc), le16toh(notif->temperature));
+			sc->sc_flags |= IWX_FLAG_HW_ERR;
+			task_add(systq, &sc->init_task);
+			break;
+		}
 
 		case IWX_WIDE_ID(IWX_REGULATORY_AND_NVM_GROUP,
 		    IWX_NVM_GET_INFO):
