@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.8 2020/06/11 08:17:32 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.9 2020/06/22 16:25:55 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -181,14 +181,6 @@ struct iwx_nvm_data {
 	int n_hw_addrs;
 	uint8_t hw_addr[ETHER_ADDR_LEN];
 
-	uint8_t calib_version;
-	uint16_t calib_voltage;
-
-	uint16_t raw_temperature;
-	uint16_t kelvin_temperature;
-	uint16_t kelvin_voltage;
-	uint16_t xtal_calib[2];
-
 	int sku_cap_band_24GHz_enable;
 	int sku_cap_band_52GHz_enable;
 	int sku_cap_11n_enable;
@@ -199,14 +191,9 @@ struct iwx_nvm_data {
 	int sku_cap_mimo_disable;
 	int lar_enabled;
 
-	uint8_t radio_cfg_type;
-	uint8_t radio_cfg_step;
-	uint8_t radio_cfg_dash;
-	uint8_t radio_cfg_pnum;
 	uint8_t valid_tx_ant, valid_rx_ant;
 
 	uint16_t nvm_version;
-	uint8_t max_tx_pwr_half_dbm;
 };
 
 /* max bufs per tfd the driver will use */
@@ -459,7 +446,6 @@ struct iwx_softc {
 
 	const char *sc_fwname;
 	bus_size_t sc_fwdmasegsz;
-	size_t sc_nvm_max_section_size;
 	struct iwx_fw_info sc_fw;
 	struct iwx_dma_info fw_mon;
 	int sc_fw_phy_config;
@@ -496,7 +482,6 @@ struct iwx_softc {
 	int sc_noise;
 
 	int sc_ltr_enabled;
-	enum iwx_nvm_type nvm_type;
 
 	int sc_integrated;
 	int sc_tx_with_siso_diversity;

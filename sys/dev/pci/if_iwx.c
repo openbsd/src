@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.35 2020/06/22 08:05:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.36 2020/06/22 16:25:55 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -231,11 +231,6 @@ const int iwx_mcs2ridx[] = {
 	IWX_RATE_MCS_15_INDEX,
 };
 
-struct iwx_nvm_section {
-	uint16_t length;
-	uint8_t *data;
-};
-
 uint8_t	iwx_lookup_cmd_ver(struct iwx_softc *, uint8_t, uint8_t);
 int	iwx_is_mimo_ht_plcp(uint8_t);
 int	iwx_is_mimo_mcs(int);
@@ -301,10 +296,6 @@ void	iwx_post_alive(struct iwx_softc *);
 void	iwx_protect_session(struct iwx_softc *, struct iwx_node *, uint32_t,
 	    uint32_t);
 void	iwx_unprotect_session(struct iwx_softc *, struct iwx_node *);
-int	iwx_nvm_read_chunk(struct iwx_softc *, uint16_t, uint16_t, uint16_t,
-	    uint8_t *, uint16_t *);
-int	iwx_nvm_read_section(struct iwx_softc *, uint16_t, uint8_t *,
-	    uint16_t *, size_t);
 void	iwx_init_channel_map(struct iwx_softc *, uint16_t *, uint32_t *, int);
 void	iwx_setup_ht_rates(struct iwx_softc *);
 int	iwx_mimo_enabled(struct iwx_softc *);
@@ -324,17 +315,9 @@ void	iwx_ampdu_tx_stop(struct ieee80211com *, struct ieee80211_node *,
 #endif
 void	iwx_ba_task(void *);
 
-int	iwx_parse_nvm_data(struct iwx_softc *, const uint16_t *,
-	    const uint16_t *, const uint16_t *,
-	    const uint16_t *, const uint16_t *,
-	    const uint16_t *, int);
 int	iwx_set_mac_addr_from_csr(struct iwx_softc *, struct iwx_nvm_data *);
 int	iwx_is_valid_mac_addr(const uint8_t *);
 int	iwx_nvm_get(struct iwx_softc *);
-void	iwx_set_hw_address_8000(struct iwx_softc *, struct iwx_nvm_data *,
-	    const uint16_t *, const uint16_t *);
-int	iwx_parse_nvm_sections(struct iwx_softc *, struct iwx_nvm_section *);
-int	iwx_nvm_init(struct iwx_softc *);
 int	iwx_load_firmware(struct iwx_softc *);
 int	iwx_start_fw(struct iwx_softc *);
 int	iwx_send_tx_ant_cfg(struct iwx_softc *, uint8_t);
@@ -2550,120 +2533,6 @@ iwx_unprotect_session(struct iwx_softc *sc, struct iwx_node *in)
  * external NVM or writing NVM.
  */
 
-/* list of NVM sections we are allowed/need to read */
-const int iwx_nvm_to_read[] = {
-	IWX_NVM_SECTION_TYPE_SW,
-	IWX_NVM_SECTION_TYPE_REGULATORY,
-	IWX_NVM_SECTION_TYPE_CALIBRATION,
-	IWX_NVM_SECTION_TYPE_PRODUCTION,
-	IWX_NVM_SECTION_TYPE_REGULATORY_SDP,
-	IWX_NVM_SECTION_TYPE_HW_8000,
-	IWX_NVM_SECTION_TYPE_MAC_OVERRIDE,
-	IWX_NVM_SECTION_TYPE_PHY_SKU,
-};
-
-#define IWX_NVM_DEFAULT_CHUNK_SIZE	(2*1024)
-
-#define IWX_NVM_WRITE_OPCODE 1
-#define IWX_NVM_READ_OPCODE 0
-
-int
-iwx_nvm_read_chunk(struct iwx_softc *sc, uint16_t section, uint16_t offset,
-    uint16_t length, uint8_t *data, uint16_t *len)
-{
-	offset = 0;
-	struct iwx_nvm_access_cmd nvm_access_cmd = {
-		.offset = htole16(offset),
-		.length = htole16(length),
-		.type = htole16(section),
-		.op_code = IWX_NVM_READ_OPCODE,
-	};
-	struct iwx_nvm_access_resp *nvm_resp;
-	struct iwx_rx_packet *pkt;
-	struct iwx_host_cmd cmd = {
-		.id = IWX_NVM_ACCESS_CMD,
-		.flags = (IWX_CMD_WANT_RESP | IWX_CMD_SEND_IN_RFKILL),
-		.resp_pkt_len = IWX_CMD_RESP_MAX,
-		.data = { &nvm_access_cmd, },
-	};
-	int err, offset_read;
-	size_t bytes_read;
-	uint8_t *resp_data;
-
-	cmd.len[0] = sizeof(struct iwx_nvm_access_cmd);
-
-	err = iwx_send_cmd(sc, &cmd);
-	if (err)
-		return err;
-
-	pkt = cmd.resp_pkt;
-	if (pkt->hdr.flags & IWX_CMD_FAILED_MSK) {
-		err = EIO;
-		goto exit;
-	}
-
-	/* Extract NVM response */
-	nvm_resp = (void *)pkt->data;
-	if (nvm_resp == NULL)
-		return EIO;
-
-	err = le16toh(nvm_resp->status);
-	bytes_read = le16toh(nvm_resp->length);
-	offset_read = le16toh(nvm_resp->offset);
-	resp_data = nvm_resp->data;
-	if (err) {
-		err = EINVAL;
-		goto exit;
-	}
-
-	if (offset_read != offset) {
-		err = EINVAL;
-		goto exit;
-	}
-
-	if (bytes_read > length) {
-		err = EINVAL;
-		goto exit;
-	}
-
-	memcpy(data + offset, resp_data, bytes_read);
-	*len = bytes_read;
-
- exit:
-	iwx_free_resp(sc, &cmd);
-	return err;
-}
-
-/*
- * Reads an NVM section completely.
- * NICs prior to 7000 family doesn't have a real NVM, but just read
- * section 0 which is the EEPROM. Because the EEPROM reading is unlimited
- * by uCode, we need to manually check in this case that we don't
- * overflow and try to read more than the EEPROM size.
- */
-int
-iwx_nvm_read_section(struct iwx_softc *sc, uint16_t section, uint8_t *data,
-    uint16_t *len, size_t max_len)
-{
-	uint16_t chunklen, seglen;
-	int err = 0;
-
-	chunklen = seglen = IWX_NVM_DEFAULT_CHUNK_SIZE;
-	*len = 0;
-
-	/* Read NVM chunks until exhausted (reading less than requested) */
-	while (seglen == chunklen && *len < max_len) {
-		err = iwx_nvm_read_chunk(sc,
-		    section, *len, chunklen, data, &seglen);
-		if (err)
-			return err;
-
-		*len += seglen;
-	}
-
-	return err;
-}
-
 uint8_t
 iwx_fw_valid_tx_ant(struct iwx_softc *sc)
 {
@@ -3061,205 +2930,6 @@ out:
 	iwx_free_resp(sc, &hcmd);
 	return err;
 }
-
-#if 0
-void
-iwx_set_hw_address_8000(struct iwx_softc *sc, struct iwx_nvm_data *data,
-    const uint16_t *mac_override, const uint16_t *nvm_hw)
-{
-	const uint8_t *hw_addr;
-
-	if (mac_override) {
-		static const uint8_t reserved_mac[] = {
-			0x02, 0xcc, 0xaa, 0xff, 0xee, 0x00
-		};
-
-		hw_addr = (const uint8_t *)(mac_override +
-				 IWX_MAC_ADDRESS_OVERRIDE_8000);
-
-		/*
-		 * Store the MAC address from MAO section.
-		 * No byte swapping is required in MAO section
-		 */
-		memcpy(data->hw_addr, hw_addr, ETHER_ADDR_LEN);
-
-		/*
-		 * Force the use of the OTP MAC address in case of reserved MAC
-		 * address in the NVM, or if address is given but invalid.
-		 */
-		if (memcmp(reserved_mac, hw_addr, ETHER_ADDR_LEN) != 0 &&
-		    (memcmp(etherbroadcastaddr, data->hw_addr,
-		    sizeof(etherbroadcastaddr)) != 0) &&
-		    (memcmp(etheranyaddr, data->hw_addr,
-		    sizeof(etheranyaddr)) != 0) &&
-		    !ETHER_IS_MULTICAST(data->hw_addr))
-			return;
-	}
-
-	if (nvm_hw) {
-		/* Read the mac address from WFMP registers. */
-		uint32_t mac_addr0, mac_addr1;
-
-		if (!iwx_nic_lock(sc))
-			goto out;
-		mac_addr0 = htole32(iwx_read_prph(sc, IWX_WFMP_MAC_ADDR_0));
-		mac_addr1 = htole32(iwx_read_prph(sc, IWX_WFMP_MAC_ADDR_1));
-		iwx_nic_unlock(sc);
-
-		hw_addr = (const uint8_t *)&mac_addr0;
-		data->hw_addr[0] = hw_addr[3];
-		data->hw_addr[1] = hw_addr[2];
-		data->hw_addr[2] = hw_addr[1];
-		data->hw_addr[3] = hw_addr[0];
-
-		hw_addr = (const uint8_t *)&mac_addr1;
-		data->hw_addr[4] = hw_addr[1];
-		data->hw_addr[5] = hw_addr[0];
-
-		return;
-	}
-out:
-	printf("%s: mac address not found\n", DEVNAME(sc));
-	memset(data->hw_addr, 0, sizeof(data->hw_addr));
-}
-
-int
-iwx_parse_nvm_data(struct iwx_softc *sc, const uint16_t *nvm_hw,
-    const uint16_t *nvm_sw, const uint16_t *nvm_calib,
-    const uint16_t *mac_override, const uint16_t *phy_sku,
-    const uint16_t *regulatory, int n_regulatory)
-{
-	struct iwx_nvm_data *data = &sc->sc_nvm;
-	uint32_t sku, radio_cfg;
-	uint16_t lar_config, lar_offset;
-
-	data->nvm_version = le16_to_cpup(nvm_sw + IWX_NVM_VERSION);
-
-	radio_cfg = le32_to_cpup((uint32_t *)(phy_sku + IWX_RADIO_CFG_8000));
-	data->radio_cfg_type = IWX_NVM_RF_CFG_TYPE_MSK_8000(radio_cfg);
-	data->radio_cfg_step = IWX_NVM_RF_CFG_STEP_MSK_8000(radio_cfg);
-	data->radio_cfg_dash = IWX_NVM_RF_CFG_DASH_MSK_8000(radio_cfg);
-	data->radio_cfg_pnum = IWX_NVM_RF_CFG_PNUM_MSK_8000(radio_cfg);
-	data->valid_tx_ant = IWX_NVM_RF_CFG_TX_ANT_MSK_8000(radio_cfg);
-	data->valid_rx_ant = IWX_NVM_RF_CFG_RX_ANT_MSK_8000(radio_cfg);
-
-	sku = le32_to_cpup((uint32_t *)(phy_sku + IWX_SKU_8000));
-	data->sku_cap_band_24GHz_enable = sku & IWX_NVM_SKU_CAP_BAND_24GHZ;
-	data->sku_cap_band_52GHz_enable = sku & IWX_NVM_SKU_CAP_BAND_52GHZ;
-	data->sku_cap_11n_enable = sku & IWX_NVM_SKU_CAP_11N_ENABLE;
-	data->sku_cap_mimo_disable = sku & IWX_NVM_SKU_CAP_MIMO_DISABLE;
-
-	lar_offset = data->nvm_version < 0xE39 ?
-			       IWX_NVM_LAR_OFFSET_8000_OLD :
-			       IWX_NVM_LAR_OFFSET_8000;
-
-	lar_config = le16_to_cpup(regulatory + lar_offset);
-	data->n_hw_addrs = le16_to_cpup(nvm_sw + IWX_N_HW_ADDRS_8000);
-	iwx_set_hw_address_8000(sc, data, mac_override, nvm_hw);
-
-	iwx_init_channel_map(sc, &regulatory[IWX_NVM_CHANNELS_8000],
-	    iwx_nvm_channels_8000,
-	    MIN(n_regulatory, nitems(iwx_nvm_channels_8000)));
-
-	data->calib_version = 255;   /* TODO:
-					this value will prevent some checks from
-					failing, we need to check if this
-					field is still needed, and if it does,
-					where is it in the NVM */
-
-	return 0;
-}
-
-int
-iwx_parse_nvm_sections(struct iwx_softc *sc, struct iwx_nvm_section *sections)
-{
-	const uint16_t *hw, *sw, *calib, *mac_override = NULL, *phy_sku = NULL;
-	const uint16_t *regulatory = NULL;
-	int n_regulatory = 0;
-
-	/* Checking for required sections */
-
-	/* SW and REGULATORY sections are mandatory */
-	if (!sections[IWX_NVM_SECTION_TYPE_SW].data ||
-	    !sections[IWX_NVM_SECTION_TYPE_REGULATORY].data) {
-		return ENOENT;
-	}
-	/* MAC_OVERRIDE or at least HW section must exist */
-	if (!sections[IWX_NVM_SECTION_TYPE_HW_8000].data &&
-	    !sections[IWX_NVM_SECTION_TYPE_MAC_OVERRIDE].data) {
-		return ENOENT;
-	}
-
-	/* PHY_SKU section is mandatory in B0 */
-	if (!sections[IWX_NVM_SECTION_TYPE_PHY_SKU].data) {
-		return ENOENT;
-	}
-
-	regulatory = (const uint16_t *)
-	    sections[IWX_NVM_SECTION_TYPE_REGULATORY].data;
-	n_regulatory = sections[IWX_NVM_SECTION_TYPE_REGULATORY].length;
-	hw = (const uint16_t *)
-	    sections[IWX_NVM_SECTION_TYPE_HW_8000].data;
-	mac_override =
-		(const uint16_t *)
-		sections[IWX_NVM_SECTION_TYPE_MAC_OVERRIDE].data;
-	phy_sku = (const uint16_t *)
-	    sections[IWX_NVM_SECTION_TYPE_PHY_SKU].data;
-
-	sw = (const uint16_t *)sections[IWX_NVM_SECTION_TYPE_SW].data;
-	calib = (const uint16_t *)
-	    sections[IWX_NVM_SECTION_TYPE_CALIBRATION].data;
-
-	/* XXX should pass in the length of every section */
-	return iwx_parse_nvm_data(sc, hw, sw, calib, mac_override,
-	    phy_sku, regulatory, n_regulatory);
-}
-
-int
-iwx_nvm_init(struct iwx_softc *sc)
-{
-	struct iwx_nvm_section nvm_sections[IWX_NVM_NUM_OF_SECTIONS];
-	int i, section, err;
-	uint16_t len;
-	uint8_t *buf;
-	const size_t bufsz = sc->sc_nvm_max_section_size;
-
-	memset(nvm_sections, 0, sizeof(nvm_sections));
-
-	buf = malloc(bufsz, M_DEVBUF, M_WAIT);
-	if (buf == NULL)
-		return ENOMEM;
-
-	for (i = 0; i < nitems(iwx_nvm_to_read); i++) {
-		section = iwx_nvm_to_read[i];
-		KASSERT(section <= nitems(nvm_sections));
-
-		err = iwx_nvm_read_section(sc, section, buf, &len, bufsz);
-		if (err) {
-			err = 0;
-			continue;
-		}
-		nvm_sections[section].data = malloc(len, M_DEVBUF, M_WAIT);
-		if (nvm_sections[section].data == NULL) {
-			err = ENOMEM;
-			break;
-		}
-		memcpy(nvm_sections[section].data, buf, len);
-		nvm_sections[section].length = len;
-	}
-	free(buf, M_DEVBUF, bufsz);
-	if (err == 0)
-		err = iwx_parse_nvm_sections(sc, nvm_sections);
-
-	for (i = 0; i < IWX_NVM_NUM_OF_SECTIONS; i++) {
-		if (nvm_sections[i].data != NULL)
-			free(nvm_sections[i].data, M_DEVBUF,
-			    nvm_sections[i].length);
-	}
-
-	return err;
-}
-#endif
 
 int
 iwx_load_firmware(struct iwx_softc *sc)
@@ -4374,9 +4044,8 @@ iwx_cmd_done(struct iwx_softc *sc, int qid, int idx, int code)
 
 	DPRINTF(("%s: command 0x%x done\n", __func__, code));
 	if (ring->queued == 0) {
-		if (code != IWX_NVM_ACCESS_CMD) 
-			DPRINTF(("%s: unexpected firmware response to command 0x%x\n",
-				DEVNAME(sc), code));
+		DPRINTF(("%s: unexpected firmware response to command 0x%x\n",
+			DEVNAME(sc), code));
 	} else if (ring->queued > 0)
 		ring->queued--;
 }
@@ -7704,7 +7373,6 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		case IWX_REMOVE_STA:
 		case IWX_TXPATH_FLUSH:
 		case IWX_BT_CONFIG:
-		case IWX_NVM_ACCESS_CMD:
 		case IWX_MCC_UPDATE_CMD:
 		case IWX_TIME_EVENT_CMD:
 		case IWX_STATISTICS_CMD:
@@ -8279,7 +7947,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_fwname = "iwx-cc-a0-46";
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
-		sc->sc_nvm_max_section_size = 32768;
 		sc->sc_integrated = 1;
 		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE;
 		sc->sc_low_latency_xtal = 0;
