@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrmap.h,v 1.2 2020/06/17 03:01:26 dlg Exp $ */
+/*	$OpenBSD: intrmap.h,v 1.3 2020/06/23 01:40:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -34,5 +34,6 @@ void		 intrmap_align(const struct device *,
 
 unsigned int	 intrmap_count(const struct intrmap *);
 struct cpu_info	*intrmap_cpu(const struct intrmap *, unsigned int);
+struct cpu_info	*intrmap_one(const struct device *);
 
 #endif /* _SYS_INTRMAP_H_ */

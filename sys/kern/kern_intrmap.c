@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_intrmap.c,v 1.2 2020/06/17 03:01:26 dlg Exp $ */
+/* $OpenBSD: kern_intrmap.c,v 1.3 2020/06/23 01:40:03 dlg Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -344,4 +344,18 @@ intrmap_cpu(const struct intrmap *im, unsigned int ring)
 	KASSERTMSG(icpu < ic->ic_count, "invalid interrupt cpu %u for ring %u"
 	    " (intrmap %p)", icpu, ring, im);
 	return (ic->ic_cpumap[icpu]);
+}
+
+struct cpu_info *
+intrmap_one(const struct device *dv)
+{
+	unsigned int unit = dv->dv_unit;
+	struct intrmap_cpus *ic;
+	struct cpu_info *ci;
+
+	ic = intrmap_cpus_get();
+	ci = ic->ic_cpumap[unit % ic->ic_count];
+	intrmap_cpus_put(ic);
+
+	return (ci);
 }
