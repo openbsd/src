@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.68 2020/06/23 13:40:19 krw Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.69 2020/06/23 16:31:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -430,13 +430,12 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 	return (0);
 
 bail:
-	if (ump->um_hashtbl != NULL)
+	if (ump != NULL) {
 		hashfree(ump->um_hashtbl, UDF_HASHTBLSIZE, M_UDFMOUNT);
-
-	free(ump, M_UDFMOUNT, sizeof(*ump));
-	mp->mnt_data = NULL;
-	mp->mnt_flag &= ~MNT_LOCAL;
-
+		free(ump, M_UDFMOUNT, 0);
+		mp->mnt_data = NULL;
+		mp->mnt_flag &= ~MNT_LOCAL;
+	}
 	if (devvp->v_specinfo)
 		devvp->v_specmountpoint = NULL;
 	if (bp != NULL)
