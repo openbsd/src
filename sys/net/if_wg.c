@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.5 2020/06/22 12:20:44 jasper Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.6 2020/06/23 09:35:17 tobhe Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -2651,6 +2651,7 @@ wg_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_mtu = DEFAULT_MTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_NOARP;
 	ifp->if_xflags = IFXF_CLONED;
+	ifp->if_txmit = 64; /* Keep our workers active for longer. */
 
 	ifp->if_ioctl = wg_ioctl;
 	ifp->if_start = wg_start;
