@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.50 2020/06/17 01:15:32 dlg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.51 2020/06/23 01:21:29 jmatthew Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -523,6 +523,14 @@ pci_intr_establish(pc, ih, level, func, arg, what)
 	void *arg;
 	const char *what;
 {
+	return (pci_intr_establish_cpu(pc, ih, level, NULL, func, arg, what));
+}
+
+void *
+pci_intr_establish_cpu(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, struct cpu_info *ci,
+    int (*func)(void *), void *arg, const char *what)
+{
 	void *cookie;
 	int flags = 0;
 
@@ -531,10 +539,10 @@ pci_intr_establish(pc, ih, level, func, arg, what)
 		level &= ~IPL_MPSAFE;
 	}
 
-	DPRINTF(SPDB_INTR, ("pci_intr_establish: ih %lu; level %d",
-	    (u_long)ih, level));
-	cookie = bus_intr_establish(pc->bustag, ih, level, flags,
-	    func, arg, what);
+	DPRINTF(SPDB_INTR, ("pci_intr_establish_cpu: ih %lu; level %d; ci %p",
+	    (u_long)ih, level, ci));
+	cookie = bus_intr_establish_cpu(pc->bustag, ih, level, flags,
+	    ci, func, arg, what);
 
 	DPRINTF(SPDB_INTR, ("; returning handle %p\n", cookie));
 	return (cookie);

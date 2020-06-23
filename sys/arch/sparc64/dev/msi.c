@@ -1,4 +1,4 @@
-/*	$OpenBSD: msi.c,v 1.4 2015/09/08 10:24:25 deraadt Exp $	*/
+/*	$OpenBSD: msi.c,v 1.5 2020/06/23 01:21:29 jmatthew Exp $	*/
 /*
  * Copyright (c) 2011 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,10 +28,10 @@ struct msi_msg {
 };
 
 struct msi_eq *
-msi_eq_alloc(bus_dma_tag_t t, int msi_eq_size)
+msi_eq_alloc(bus_dma_tag_t t, int msi_eq_size, int num_eq)
 {
 	struct msi_eq *meq;
-	bus_size_t size;
+	bus_size_t eqsize, size;
 	caddr_t va;
 	int nsegs;
 
@@ -39,13 +39,15 @@ msi_eq_alloc(bus_dma_tag_t t, int msi_eq_size)
 	if (meq == NULL)
 		return NULL;
 
-	size = roundup(msi_eq_size * sizeof(struct msi_msg), PAGE_SIZE);
+	eqsize = roundup(msi_eq_size * sizeof(struct msi_msg),
+	    PAGE_SIZE);
+	size = num_eq * eqsize;
 
 	if (bus_dmamap_create(t, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &meq->meq_map) != 0)
 		return (NULL);
 
-	if (bus_dmamem_alloc(t, size, size, 0, &meq->meq_seg, 1,
+	if (bus_dmamem_alloc(t, size, eqsize, 0, &meq->meq_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT) != 0)
 		goto destroy;
 
@@ -59,6 +61,8 @@ msi_eq_alloc(bus_dma_tag_t t, int msi_eq_size)
 
 	meq->meq_va = va;
 	meq->meq_nentries = msi_eq_size;
+	meq->meq_queuesize = eqsize;
+	meq->meq_nqueues = num_eq;
 	return (meq);
 
 unmap:
@@ -74,13 +78,15 @@ destroy:
 void
 msi_eq_free(bus_dma_tag_t t, struct msi_eq *meq)
 {
-	bus_size_t size;
-
-	size = roundup(meq->meq_nentries * sizeof(struct msi_msg), PAGE_SIZE);
-
 	bus_dmamap_unload(t, meq->meq_map);
-	bus_dmamem_unmap(t, meq->meq_va, size);
+	bus_dmamem_unmap(t, meq->meq_va, meq->meq_nqueues * meq->meq_queuesize);
 	bus_dmamem_free(t, &meq->meq_seg, 1);
 	bus_dmamap_destroy(t, meq->meq_map);
 	free(meq, M_DEVBUF, sizeof *meq);
+}
+
+size_t
+msi_eq_offset(struct msi_eq *meq, int eq)
+{
+	return (meq->meq_queuesize * eq);
 }

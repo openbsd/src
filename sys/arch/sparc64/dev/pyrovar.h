@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyrovar.h,v 1.4 2011/07/06 05:48:57 kettenis Exp $	*/
+/*	$OpenBSD: pyrovar.h,v 1.5 2020/06/23 01:21:29 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -44,6 +44,19 @@ struct pyro_range {
 	u_int32_t	size_lo;
 };
 
+struct pyro_eq {
+	char			eq_name[16];
+	struct pyro_pbm		*eq_pbm;
+	void			*eq_ih;
+	bus_size_t		eq_head;
+	bus_size_t		eq_tail;
+	struct pyro_msi_msg	*eq_ring;
+	uint64_t		eq_mask;
+
+	unsigned int		eq_id;
+	unsigned int		eq_intr;
+};
+
 struct pyro_pbm {
 	struct pyro_softc *pp_sc;
 
@@ -65,6 +78,9 @@ struct pyro_pbm {
 	int pp_msinum;
 	struct intrhand **pp_msi;
 
+	unsigned int		pp_neq;
+	struct pyro_eq		*pp_eq;
+
 	int pp_flags;
 };
 
@@ -76,6 +92,10 @@ struct pyro_softc {
 	bus_space_tag_t sc_bust;
 	bus_addr_t sc_csr, sc_xbc;
 	bus_space_handle_t sc_csrh, sc_xbch;
+
+#if 0
+	struct pyro_pbm *sc_pbm;
+#endif
 
 	int sc_oberon;
 };

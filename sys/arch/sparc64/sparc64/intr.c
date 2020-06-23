@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.59 2018/03/21 14:25:14 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.60 2020/06/23 01:21:29 jmatthew Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -202,7 +202,12 @@ intr_establish(int level, struct intrhand *ih)
 	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
-	ih->ih_cpu = cpus;
+	if (ih->ih_cpu == NULL)
+		ih->ih_cpu = curcpu();
+	else if (!ih->ih_mpsafe) {
+		panic("non-mpsafe interrupt \"%s\" "
+		    "established on a specific cpu", ih->ih_name);
+	}
 	if (ih->ih_clr)
 		ih->ih_ack = intr_ack;
 	else
@@ -288,7 +293,7 @@ intr_establish(int level, struct intrhand *ih)
 		*ih->ih_clr = INTCLR_IDLE;
 
 	if (ih->ih_map) {
-		id = CPU_UPAID;
+		id = ih->ih_cpu->ci_upaid;
 		m = *ih->ih_map;
 		if (INTTID(m) != id) {
 #ifdef DEBUG
