@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.258 2020/06/11 19:43:34 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.259 2020/06/23 05:23:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -224,7 +224,7 @@ format_log1(struct format_tree *ft, const char *from, const char *fmt, ...)
 		return;
 
 	va_start(ap, fmt);
-	vasprintf(&s, fmt, ap);
+	xvasprintf(&s, fmt, ap);
 	va_end(ap);
 
 	log_debug("%s: %s", from, s);
