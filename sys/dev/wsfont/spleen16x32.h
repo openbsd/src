@@ -1,4 +1,4 @@
-/*	$OpenBSD: spleen16x32.h,v 1.5 2020/06/21 19:03:29 fcambus Exp $ */
+/*	$OpenBSD: spleen16x32.h,v 1.6 2020/06/23 13:58:34 fcambus Exp $ */
 
 /*
  * Copyright (c) 2018-2019 Frederic Cambus <fcambus@openbsd.org>
@@ -29,18 +29,18 @@
 static u_char spleen16x32_data[];
 
 struct wsdisplay_font spleen16x32 = {
-	"Spleen 16x32",			/* typeface name */
-	0,				/* index */
-	' ',				/* firstchar */
-	256 - ' ',			/* numchars */
-	WSDISPLAY_FONTENC_ISO,		/* encoding */
-	16,				/* width */
-	32,				/* height */
-	2,				/* stride */
-	WSDISPLAY_FONTORDER_L2R,	/* bit order */
-	WSDISPLAY_FONTORDER_L2R,	/* byte order */
-	NULL,				/* cookie */
-	spleen16x32_data		/* data */
+	.name		= "Spleen 16x32",
+	.index		= 0,
+	.firstchar	= ' ',
+	.numchars	= 256 - ' ',
+	.encoding	= WSDISPLAY_FONTENC_ISO,
+	.fontwidth	= 16,
+	.fontheight	= 32,
+	.stride		= 2,
+	.bitorder	= WSDISPLAY_FONTORDER_L2R,
+	.byteorder	= WSDISPLAY_FONTORDER_L2R,
+	.cookie		= NULL,
+	.data		= spleen16x32_data
 };
 
 static u_char spleen16x32_data[] = {
