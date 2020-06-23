@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.6 2020/06/23 09:35:17 tobhe Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.7 2020/06/23 10:03:49 tobhe Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -1832,8 +1832,8 @@ wg_queue_out(struct wg_softc *sc, struct wg_peer *peer)
 
 	/*
 	 * We delist all staged packets and then add them to the queues. This
-	 * can race with wg_start when called from wg_send_keepalive, however
-	 * wg_start will not race as it is serialised.
+	 * can race with wg_qstart when called from wg_send_keepalive, however
+	 * wg_qstart will not race as it is serialised.
 	 */
 	mq_delist(&peer->p_stage_queue, &ml);
 	ml_init(&ml_free);
@@ -2067,8 +2067,9 @@ wg_input(void *_sc, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 }
 
 void
-wg_start(struct ifnet *ifp)
+wg_qstart(struct ifqueue *ifq)
 {
+	struct ifnet		*ifp = ifq->ifq_if;
 	struct wg_softc		*sc = ifp->if_softc;
 	struct wg_peer		*peer;
 	struct wg_tag		*t;
@@ -2079,11 +2080,10 @@ wg_start(struct ifnet *ifp)
 
 	/*
 	 * We should be OK to modify p_start_list, p_start_onlist in this
-	 * function as the interface is not IFXF_MPSAFE and therefore should
-	 * only be one instance of this function running at a time. These
-	 * values are not modified anywhere else.
+	 * function as there should only be one ifp->if_qstart invoked at a
+	 * time.
 	 */
-	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
+	while ((m = ifq_dequeue(ifq)) != NULL) {
 		t = wg_tag_get(m);
 		peer = t->t_peer;
 		if (mq_push(&peer->p_stage_queue, m) != 0)
@@ -2163,7 +2163,7 @@ wg_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	 * delayed packet without doing some refcnting. If a peer is removed
 	 * while a delayed holds a reference, bad things will happen. For the
 	 * time being, delayed packets are unsupported. This may be fixed with
-	 * another aip_lookup in wg_start, or refcnting as mentioned before.
+	 * another aip_lookup in wg_qstart, or refcnting as mentioned before.
 	 */
 	if (m->m_pkthdr.pf.delay > 0) {
 		DPRINTF(sc, "PF Delay Unsupported");
@@ -2178,7 +2178,7 @@ wg_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 
 	/*
 	 * We still have an issue with ifq that will count a packet that gets
-	 * dropped in wg_start, or not encrypted. These get counted as
+	 * dropped in wg_qstart, or not encrypted. These get counted as
 	 * ofails or oqdrops, so the packet gets counted twice.
 	 */
 	return if_enqueue(ifp, m);
@@ -2650,11 +2650,11 @@ wg_clone_create(struct if_clone *ifc, int unit)
 
 	ifp->if_mtu = DEFAULT_MTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_NOARP;
-	ifp->if_xflags = IFXF_CLONED;
+	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
 	ifp->if_txmit = 64; /* Keep our workers active for longer. */
 
 	ifp->if_ioctl = wg_ioctl;
-	ifp->if_start = wg_start;
+	ifp->if_qstart = wg_qstart;
 	ifp->if_output = wg_output;
 
 	ifp->if_type = IFT_WIREGUARD;
