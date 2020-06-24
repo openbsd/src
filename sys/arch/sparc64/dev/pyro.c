@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.34 2020/06/23 01:21:29 jmatthew Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.35 2020/06/24 00:40:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -105,9 +105,6 @@ void pyro_attach(struct device *, struct device *, void *);
 void pyro_init(struct pyro_softc *, int);
 void pyro_init_iommu(struct pyro_softc *, struct pyro_pbm *);
 void pyro_init_msi(struct pyro_softc *, struct pyro_pbm *);
-#if 0
-void pyro_redistribute_msi(struct device *);
-#endif
 int pyro_print(void *, const char *);
 
 pci_chipset_tag_t pyro_alloc_chipset(struct pyro_pbm *, int,
@@ -258,9 +255,6 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pbm->pp_cfgt = pyro_alloc_config_tag(pbm);
 	pbm->pp_dmat = pyro_alloc_dma_tag(pbm);
 
-#if 0
-	sc->sc_pbm = pbm;
-#endif
 	pyro_init_msi(sc, pbm);
 
 	if (bus_space_map(pbm->pp_cfgt, 0, 0x10000000, 0, &pbm->pp_cfgh))
@@ -432,79 +426,11 @@ pyro_init_msi(struct pyro_softc *sc, struct pyro_pbm *pbm)
 
 	pbm->pp_flags |= PCI_FLAGS_MSI_ENABLED;
 
-#if 0
-	/*
-         * XXX some devices may interrupt before a cpu has hatched,
-         * so rather than have their interrupts get dropped because
-         * the other cpu isn't running, point the interrupts at the
-         * boot cpu and redistribute them later on. this assumes that
-         * only msi and msix interrupts get targetted to other CPUs,
-         * so only the msi eqs need to be redistributed.
-	 */
-	config_mountroot(&sc->sc_dv, pyro_redistribute_msi);
-#endif
-
 	return;
 
 free_table:
 	free(pbm->pp_msi, M_DEVBUF, 0);
 }
-
-#if 0
-void
-pyro_redistribute_msi(struct device *dev)
-{
-	struct pyro_softc *sc = (struct pyro_softc *)dev;
-	struct pyro_pbm *pbm = sc->sc_pbm;
-	struct pyro_eq *eq;
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-	uint64_t map, clr;
-	int i;
-
-	CPU_INFO_FOREACH(cii, ci) {
-		unsigned int unit = CPU_INFO_UNIT(ci);
-		struct intrhand *ih;
-
-		eq = &pbm->pp_eq[unit];
-		ih = eq->eq_ih;
-
-		map = bus_space_read_8(sc->sc_bust, sc->sc_csrh,
-		    FIRE_INTR_MAP(eq->eq_intr));
-		CLR(map, INTMAP_V);
-		bus_space_write_8(sc->sc_bust, sc->sc_csrh,
-		    FIRE_INTR_MAP(eq->eq_intr), map);
-
-		/* wait for pending to clear */
-		for (i = 0; i < 10000; i++) {
-			clr = bus_space_read_8(sc->sc_bust, sc->sc_csrh,
-			    FIRE_INTR_CLR(eq->eq_intr));
-			clr &= 0x3;
-			if (clr != 0x3)
-				break;
-
-			delay(10000);
-		}
-
-		if (clr == 0x3) {
-			panic("%s: unable to clear pending state on eq %u",
-			    sc->sc_dv.dv_xname, eq->eq_id);
-		}
-
-		if (sc->sc_oberon) {
-			CLR(map, OBERON_INTRMAP_T_DESTID_MASK);
-			SET(map, ci->ci_upaid << OBERON_INTRMAP_T_DESTID_SHIFT);
-		} else {
-			CLR(map, FIRE_INTRMAP_T_JPID_MASK);
-			SET(map, ci->ci_upaid << FIRE_INTRMAP_T_JPID_SHIFT);
-		}
-		SET(map, INTMAP_V);
-
-		bus_space_write_8(sc->sc_bust, sc->sc_csrh,
-		    FIRE_INTR_MAP(eq->eq_intr), map);
-	}
-}
-#endif
 
 int
 pyro_print(void *aux, const char *p)
