@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.9 2020/06/19 21:29:41 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.10 2020/06/24 06:03:22 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -327,6 +327,7 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     Test("test-encrypt-then-mac-renegotiation.py"),
     Test("test-encrypt-then-mac.py"),
     Test("test-extended-master-secret-extension.py"),
+    Test("test-ffdhe-expected-params.py"),
     Test("test-ffdhe-negotiation.py"),
     # unsupported. Expects the server to send the heartbeat extension
     Test("test-heartbeat.py"),
