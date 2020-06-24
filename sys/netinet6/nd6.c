@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.232 2020/05/27 11:19:29 mpi Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.233 2020/06/24 22:03:44 cheloha Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -67,8 +67,8 @@
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
 
 /* timer values */
-int	nd6_timer_next	= -1;	/* at which time_uptime nd6_timer runs */
-time_t	nd6_expire_next	= -1;	/* at which time_uptime nd6_expire runs */
+int	nd6_timer_next	= -1;	/* at which uptime nd6_timer runs */
+time_t	nd6_expire_next	= -1;	/* at which uptime nd6_expire runs */
 int	nd6_delay	= 5;	/* delay first probe time 5 second */
 int	nd6_umaxtries	= 3;	/* maximum unicast query */
 int	nd6_mmaxtries	= 3;	/* maximum multicast query */
@@ -303,7 +303,7 @@ skip1:
 void
 nd6_llinfo_settimer(struct llinfo_nd6 *ln, unsigned int secs)
 {
-	time_t expire = time_uptime + secs;
+	time_t expire = getuptime() + secs;
 
 	NET_ASSERT_LOCKED();
 	KASSERT(!ISSET(ln->ln_rt->rt_flags, RTF_LOCAL));
@@ -319,14 +319,14 @@ void
 nd6_timer(void *arg)
 {
 	struct llinfo_nd6 *ln, *nln;
-	time_t expire = time_uptime + nd6_gctimer;
+	time_t expire = getuptime() + nd6_gctimer;
 	int secs;
 
 	NET_LOCK();
 	TAILQ_FOREACH_SAFE(ln, &nd6_list, ln_list, nln) {
 		struct rtentry *rt = ln->ln_rt;
 
-		if (rt->rt_expire && rt->rt_expire <= time_uptime)
+		if (rt->rt_expire && rt->rt_expire <= getuptime())
 			if (nd6_llinfo_timer(rt))
 				continue;
 
@@ -334,11 +334,11 @@ nd6_timer(void *arg)
 			expire = rt->rt_expire;
 	}
 
-	secs = expire - time_uptime;
+	secs = expire - getuptime();
 	if (secs < 0)
 		secs = 0;
 	if (!TAILQ_EMPTY(&nd6_list)) {
-		nd6_timer_next = time_uptime + secs;
+		nd6_timer_next = getuptime() + secs;
 		timeout_add_sec(&nd6_timer_to, secs);
 	}
 
@@ -469,7 +469,7 @@ nd6_expire_timer_update(struct in6_ifaddr *ia6)
 
 	if (!timeout_pending(&nd6_expire_timeout) ||
 	    nd6_expire_next > expire_time) {
-		secs = expire_time - time_uptime;
+		secs = expire_time - getuptime();
 		if (secs < 0)
 			secs = 0;
 
@@ -1054,8 +1054,8 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		}
 		expire = ln->ln_rt->rt_expire;
 		if (expire != 0) {
-			expire -= time_uptime;
-			expire += time_second;
+			expire -= getuptime();
+			expire += gettime();
 		}
 
 		nbi->state = ln->ln_state;
@@ -1336,7 +1336,7 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	rt = rt_getll(rt0);
 
 	if (ISSET(rt->rt_flags, RTF_REJECT) &&
-	    (rt->rt_expire == 0 || time_uptime < rt->rt_expire)) {
+	    (rt->rt_expire == 0 || getuptime() < rt->rt_expire)) {
 		m_freem(m);
 		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.113 2020/05/20 06:44:30 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.114 2020/06/24 22:03:42 cheloha Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ pppalloc(pid_t pid)
 	for (i = 0; i < NUM_NP; ++i)
 		sc->sc_npmode[i] = NPMODE_ERROR;
 	ml_init(&sc->sc_npqueue);
-	sc->sc_last_sent = sc->sc_last_recv = time_uptime;
+	sc->sc_last_sent = sc->sc_last_recv = getuptime();
 
 	return sc;
 }
@@ -514,7 +514,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 		break;
 
 	case PPPIOCGIDLE:
-		t = time_uptime;
+		t = getuptime();
 		((struct ppp_idle *)data)->xmit_idle = t - sc->sc_last_sent;
 		((struct ppp_idle *)data)->recv_idle = t - sc->sc_last_recv;
 		break;
@@ -744,14 +744,14 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		if (sc->sc_active_filt.bf_insns == 0 ||
 		    bpf_filter(sc->sc_active_filt.bf_insns, (u_char *)m0,
 		    len, 0))
-			sc->sc_last_sent = time_uptime;
+			sc->sc_last_sent = getuptime();
 
 		*mtod(m0, u_char *) = address;
 #else
 		/*
 		 * Update the time we sent the most recent packet.
 		 */
-		sc->sc_last_sent = time_uptime;
+		sc->sc_last_sent = getuptime();
 #endif
 	}
 
@@ -1356,14 +1356,14 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 		if (sc->sc_active_filt.bf_insns == 0 ||
 		    bpf_filter(sc->sc_active_filt.bf_insns, (u_char *)m,
 		     ilen, 0))
-			sc->sc_last_recv = time_uptime;
+			sc->sc_last_recv = getuptime();
 
 		*mtod(m, u_char *) = adrs;
 #else
 		/*
 		 * Record the time that we received this packet.
 		 */
-		sc->sc_last_recv = time_uptime;
+		sc->sc_last_recv = getuptime();
 #endif
 	}
 

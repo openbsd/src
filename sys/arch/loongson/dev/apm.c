@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.37 2020/05/29 04:42:24 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.38 2020/06/24 22:03:40 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -415,7 +415,7 @@ apm_suspend(int state)
 		if (rv == 0)
 			rv = sys_platform->resume();
 	}
-	inittodr(time_second);	/* Move the clock forward */
+	inittodr(gettime());	/* Move the clock forward */
 	config_suspend_all(DVACT_RESUME);
 
 	cold = 0;

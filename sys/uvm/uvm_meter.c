@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.40 2020/03/24 15:03:59 mpi Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.41 2020/06/24 22:03:45 cheloha Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ void uvm_total(struct vmtotal *);
 void
 uvm_meter(void)
 {
-	if ((time_second % 5) == 0)
+	if ((gettime() % 5) == 0)
 		uvm_loadav(&averunnable);
 	if (proc0.p_slptime > (maxslp / 2))
 		wakeup(&proc0);

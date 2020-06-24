@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.60 2020/06/23 01:21:29 jmatthew Exp $	*/
+/*	$OpenBSD: intr.c,v 1.61 2020/06/24 22:03:40 cheloha Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -102,12 +102,12 @@ strayintr(const struct trapframe64 *fp, int vectored)
 	    "vectored=%d\n", fp->tf_pil, fp->tf_pc, fp->tf_npc,
 	    fp->tf_tstate >> TSTATE_PSTATE_SHIFT, PSTATE_BITS, vectored);
 
-	timesince = time_second - straytime;
+	timesince = gettime() - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 500)
 			panic("crazy interrupts");
 	} else {
-		straytime = time_second;
+		straytime = gettime();
 		nstray = 1;
 	}
 #ifdef DDB

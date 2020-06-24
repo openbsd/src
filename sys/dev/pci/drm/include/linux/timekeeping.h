@@ -3,7 +3,7 @@
 #ifndef _LINUX_TIMEKEEPING_H
 #define _LINUX_TIMEKEEPING_H
 
-#define get_seconds()		time_second
+#define get_seconds()		gettime()
 #define getrawmonotonic(x)	nanouptime(x)
 
 #define ktime_mono_to_real(x) (x)

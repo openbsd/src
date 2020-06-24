@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.352 2020/05/27 11:19:28 mpi Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.353 2020/06/24 22:03:42 cheloha Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1033,9 +1033,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EEXIST;
 		else {
 			pf_status.running = 1;
-			pf_status.since = time_uptime;
+			pf_status.since = getuptime();
 			if (pf_status.stateid == 0) {
-				pf_status.stateid = time_second;
+				pf_status.stateid = gettime();
 				pf_status.stateid = pf_status.stateid << 32;
 			}
 			timeout_add_sec(&pf_purge_to, 1);
@@ -1051,7 +1051,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENOENT;
 		else {
 			pf_status.running = 0;
-			pf_status.since = time_uptime;
+			pf_status.since = getuptime();
 			pf_remove_queues();
 			DPFPRINTF(LOG_NOTICE, "pf: stopped");
 		}
@@ -1793,7 +1793,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		memset(pf_status.counters, 0, sizeof(pf_status.counters));
 		memset(pf_status.fcounters, 0, sizeof(pf_status.fcounters));
 		memset(pf_status.scounters, 0, sizeof(pf_status.scounters));
-		pf_status.since = time_uptime;
+		pf_status.since = getuptime();
 
 		PF_UNLOCK();
 		break;
@@ -2571,7 +2571,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		p = psn->psn_src_nodes;
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
-			int	secs = time_uptime, diff;
+			int	secs = getuptime(), diff;
 
 			if ((nr + 1) * sizeof(*p) > psn->psn_len)
 				break;

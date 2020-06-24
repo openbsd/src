@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.76 2020/04/23 19:38:09 tobhe Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.77 2020/06/24 22:03:43 cheloha Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -135,7 +135,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	 * Register first use if applicable, setup relevant expiration timer.
 	 */
 	if (tdb->tdb_first_use == 0) {
-		tdb->tdb_first_use = time_second;
+		tdb->tdb_first_use = gettime();
 		if (tdb->tdb_flags & TDBF_FIRSTUSE)
 			timeout_add_sec(&tdb->tdb_first_tmo,
 			    tdb->tdb_exp_first_use);
@@ -474,7 +474,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	struct m_tag *mtag;
 	int roff, error;
 
-	tdb->tdb_last_used = time_second;
+	tdb->tdb_last_used = gettime();
 
 	if ((tdb->tdb_flags & TDBF_UDPENCAP) != 0) {
 		struct mbuf *mi;
@@ -698,7 +698,7 @@ ipsec_adjust_mtu(struct mbuf *m, u_int32_t mtu)
 
 		mtu -= adjust;
 		tdbp->tdb_mtu = mtu;
-		tdbp->tdb_mtutimeout = time_second + ip_mtudisc_timeout;
+		tdbp->tdb_mtutimeout = gettime() + ip_mtudisc_timeout;
 		DPRINTF(("ipsec_adjust_mtu: "
 		    "spi %08x mtu %d adjust %ld mbuf %p\n",
 		    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.236 2020/05/27 11:19:29 mpi Exp $	*/
+/*	$OpenBSD: in6.c,v 1.237 2020/06/24 22:03:44 cheloha Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -469,8 +469,8 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 				expire = ia6->ia6_updatetime +
 				    ia6->ia6_lifetime.ia6t_vltime;
 				if (expire != 0) {
-					expire -= time_uptime;
-					expire += time_second;
+					expire -= getuptime();
+					expire += gettime();
 				}
 				retlt->ia6t_expire = expire;
 			} else
@@ -492,8 +492,8 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 				expire = ia6->ia6_updatetime +
 				    ia6->ia6_lifetime.ia6t_pltime;
 				if (expire != 0) {
-					expire -= time_uptime;
-					expire += time_second;
+					expire -= getuptime();
+					expire += gettime();
 				}
 				retlt->ia6t_preferred = expire;
 			} else
@@ -646,7 +646,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia6->ia_ifa.ifa_addr = sin6tosa(&ia6->ia_addr);
 		ia6->ia_addr.sin6_family = AF_INET6;
 		ia6->ia_addr.sin6_len = sizeof(ia6->ia_addr);
-		ia6->ia6_updatetime = time_uptime;
+		ia6->ia6_updatetime = getuptime();
 		if ((ifp->if_flags & (IFF_POINTOPOINT | IFF_LOOPBACK)) != 0) {
 			/*
 			 * XXX: some functions expect that ifa_dstaddr is not
@@ -706,16 +706,16 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * to see if the address is deprecated or invalidated, but initialize
 	 * these members for applications.
 	 */
-	ia6->ia6_updatetime = time_uptime;
+	ia6->ia6_updatetime = getuptime();
 	ia6->ia6_lifetime = ifra->ifra_lifetime;
 	if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
 		ia6->ia6_lifetime.ia6t_expire =
-		    time_uptime + ia6->ia6_lifetime.ia6t_vltime;
+		    getuptime() + ia6->ia6_lifetime.ia6t_vltime;
 	} else
 		ia6->ia6_lifetime.ia6t_expire = 0;
 	if (ia6->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME) {
 		ia6->ia6_lifetime.ia6t_preferred =
-		    time_uptime + ia6->ia6_lifetime.ia6t_pltime;
+		    getuptime() + ia6->ia6_lifetime.ia6t_pltime;
 	} else
 		ia6->ia6_lifetime.ia6t_preferred = 0;
 

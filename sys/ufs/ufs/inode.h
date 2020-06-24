@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.52 2020/05/28 15:48:29 otto Exp $	*/
+/*	$OpenBSD: inode.h,v 1.53 2020/06/24 22:03:45 cheloha Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -320,11 +320,11 @@ struct indir {
 	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
 		(ip)->i_flag |= IN_MODIFIED;				\
 		if ((ip)->i_flag & IN_ACCESS)				\
-			(ip)->i_e2fs_atime = time_second;		\
+			(ip)->i_e2fs_atime = gettime();			\
 		if ((ip)->i_flag & IN_UPDATE)				\
-			(ip)->i_e2fs_mtime = time_second;		\
+			(ip)->i_e2fs_mtime = gettime();			\
 		if ((ip)->i_flag & IN_CHANGE) {				\
-			(ip)->i_e2fs_ctime = time_second;		\
+			(ip)->i_e2fs_ctime = gettime();			\
 			(ip)->i_modrev++;				\
 		}							\
 		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\

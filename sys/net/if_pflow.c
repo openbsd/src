@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.90 2018/07/30 12:22:14 mpi Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.91 2020/06/24 22:03:42 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -734,13 +734,13 @@ copy_flow_ipfix_4_data(struct pflow_ipfix_flow4 *flow1,
 	 * is in the future of the last time a package was seen due to pfsync.
 	 */
 	if (st->creation > st->expire)
-		flow1->flow_start = flow2->flow_start = htobe64((time_second -
-		    time_uptime)*1000);
+		flow1->flow_start = flow2->flow_start = htobe64((gettime() -
+		    getuptime())*1000);
 	else
-		flow1->flow_start = flow2->flow_start = htobe64((time_second -
-		    (time_uptime - st->creation))*1000);
-	flow1->flow_finish = flow2->flow_finish = htobe64((time_second -
-	    (time_uptime - st->expire))*1000);
+		flow1->flow_start = flow2->flow_start = htobe64((gettime() -
+		    (getuptime() - st->creation))*1000);
+	flow1->flow_finish = flow2->flow_finish = htobe64((gettime() -
+	    (getuptime() - st->expire))*1000);
 
 	flow1->protocol = flow2->protocol = sk->proto;
 	flow1->tos = flow2->tos = st->rule.ptr->tos;
@@ -773,13 +773,13 @@ copy_flow_ipfix_6_data(struct pflow_ipfix_flow6 *flow1,
 	 * is in the future of the last time a package was seen due to pfsync.
 	 */
 	if (st->creation > st->expire)
-		flow1->flow_start = flow2->flow_start = htobe64((time_second -
-		    time_uptime)*1000);
+		flow1->flow_start = flow2->flow_start = htobe64((gettime() -
+		    getuptime())*1000);
 	else
-		flow1->flow_start = flow2->flow_start = htobe64((time_second -
-		    (time_uptime - st->creation))*1000);
-	flow1->flow_finish = flow2->flow_finish = htobe64((time_second -
-	    (time_uptime - st->expire))*1000);
+		flow1->flow_start = flow2->flow_start = htobe64((gettime() -
+		    (getuptime() - st->creation))*1000);
+	flow1->flow_finish = flow2->flow_finish = htobe64((gettime() -
+	    (getuptime() - st->expire))*1000);
 
 	flow1->protocol = flow2->protocol = sk->proto;
 	flow1->tos = flow2->tos = st->rule.ptr->tos;
@@ -1082,7 +1082,7 @@ pflow_sendout_v5(struct pflow_softc *sc)
 	h->count = htons(sc->sc_count);
 
 	/* populate pflow_header */
-	h->uptime_ms = htonl(time_uptime * 1000);
+	h->uptime_ms = htonl(getuptime() * 1000);
 
 	getnanotime(&tv);
 	h->time_sec = htonl(tv.tv_sec);			/* XXX 2038 */
@@ -1145,7 +1145,7 @@ pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 	h10 = mtod(m, struct pflow_v10_header *);
 	h10->version = htons(PFLOW_PROTO_10);
 	h10->length = htons(PFLOW_IPFIX_HDRLEN + set_length);
-	h10->time_sec = htonl(time_second);		/* XXX 2038 */
+	h10->time_sec = htonl(gettime());		/* XXX 2038 */
 	h10->flow_sequence = htonl(sc->sc_sequence);
 	sc->sc_sequence += count;
 	h10->observation_dom = htonl(PFLOW_ENGINE_TYPE);
@@ -1186,7 +1186,7 @@ pflow_sendout_ipfix_tmpl(struct pflow_softc *sc)
 	h10->version = htons(PFLOW_PROTO_10);
 	h10->length = htons(PFLOW_IPFIX_HDRLEN + sizeof(struct
 	    pflow_ipfix_tmpl));
-	h10->time_sec = htonl(time_second);		/* XXX 2038 */
+	h10->time_sec = htonl(gettime());		/* XXX 2038 */
 	h10->flow_sequence = htonl(sc->sc_sequence);
 	h10->observation_dom = htonl(PFLOW_ENGINE_TYPE);
 

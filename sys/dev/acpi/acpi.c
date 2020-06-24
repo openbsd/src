@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.387 2020/06/10 22:26:40 jca Exp $ */
+/* $OpenBSD: acpi.c,v 1.388 2020/06/24 22:03:41 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -33,6 +33,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/sensors.h>
+#include <sys/timetc.h>
 
 #ifdef HIBERNATE
 #include <sys/hibernate.h>
@@ -2689,7 +2690,8 @@ fail_suspend:
 	splx(s);
 
 	acpibtn_disable_psw();		/* disable _LID for wakeup */
-	inittodr(time_second);
+
+	inittodr(gettime());
 
 	/* 3rd resume AML step: _TTS(runstate) */
 	aml_node_setval(sc, sc->sc_tts, sc->sc_state);

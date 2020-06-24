@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.70 2020/06/24 18:59:30 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.71 2020/06/24 22:03:41 cheloha Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1966,7 +1966,7 @@ mfii_initialise_firmware(struct mfii_softc *sc)
 	htolem32(&iiq->system_request_frame_base_address_hi,
 	    MFII_DMA_DVA(sc->sc_requests) >> 32);
 
-	iiq->timestamp = htole64(time_uptime);
+	iiq->timestamp = htole64(getuptime());
 
 	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
 	if (ccb == NULL) {

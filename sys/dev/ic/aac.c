@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.77 2020/06/24 18:59:30 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.78 2020/06/24 22:03:41 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1202,7 +1202,7 @@ aac_init(struct aac_softc *sc)
 	/*
 	 * First wait for the adapter to come ready.
 	 */
-	then = time_uptime;
+	then = getuptime();
 	for (i = 0; i < AAC_BOOT_TIMEOUT * 1000; i++) {
 		code = AAC_GET_FWSTATUS(sc);
 		if (code & AAC_SELF_TEST_FAILED) {
@@ -1315,7 +1315,7 @@ aac_init(struct aac_softc *sc)
 		ip->HostPhysMemPages =
 		    (ip->HostPhysMemPages + AAC_PAGE_SIZE) / AAC_PAGE_SIZE;
 	}
-	ip->HostElapsedSeconds = time_uptime; /* reset later if invalid */
+	ip->HostElapsedSeconds = getuptime(); /* reset later if invalid */
 
 	/*
 	 * Initialise FIB queues.  Note that it appears that the layout of the
@@ -1787,7 +1787,7 @@ aac_command_timeout(struct aac_command *cm)
 
 	printf("%s: COMMAND %p (flags=%#x) TIMEOUT AFTER %d SECONDS\n",
 	       sc->aac_dev.dv_xname, cm, cm->cm_flags,
-	       (int)(time_uptime - cm->cm_timestamp));
+	       (int)(getuptime() - cm->cm_timestamp));
 
 	if (cm->cm_flags & AAC_CMD_TIMEDOUT)
 		return;
@@ -1818,7 +1818,7 @@ aac_timeout(struct aac_softc *sc)
 	 * Traverse the busy command list and timeout any commands
 	 * that are past their deadline.
 	 */
-	deadline = time_uptime - AAC_CMD_TIMEOUT;
+	deadline = getuptime() - AAC_CMD_TIMEOUT;
 	TAILQ_FOREACH(cm, &sc->aac_busy, cm_link) {
 		if (cm->cm_timestamp  < deadline)
 			aac_command_timeout(cm);
@@ -2301,7 +2301,7 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 		cm->cm_datalen = xs->datalen;
 		cm->cm_complete = aac_bio_complete;
 		cm->cm_private = xs;
-		cm->cm_timestamp = time_uptime;
+		cm->cm_timestamp = getuptime();
 		cm->cm_queue = AAC_ADAP_NORM_CMD_QUEUE;
 		cm->cm_blkno = blockno;
 		cm->cm_bcount = blockcnt;

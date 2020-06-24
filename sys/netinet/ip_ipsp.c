@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.235 2020/04/23 19:38:08 tobhe Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.236 2020/06/24 22:03:43 cheloha Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -708,7 +708,7 @@ puttdb(struct tdb *tdbp)
 		ipsecstat_inc(ipsec_tunnels);
 #endif /* IPSEC */
 
-	ipsec_last_added = time_uptime;
+	ipsec_last_added = getuptime();
 }
 
 void
@@ -804,7 +804,7 @@ tdb_alloc(u_int rdomain)
 	TAILQ_INIT(&tdbp->tdb_policy_head);
 
 	/* Record establishment time. */
-	tdbp->tdb_established = time_second;
+	tdbp->tdb_established = gettime();
 
 	/* Save routing domain */
 	tdbp->tdb_rdomain = rdomain;

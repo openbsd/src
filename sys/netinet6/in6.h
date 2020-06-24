@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.105 2019/11/11 17:42:29 bluhm Exp $	*/
+/*	$OpenBSD: in6.h,v 1.106 2020/06/24 22:03:44 cheloha Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -280,11 +280,11 @@ struct route_in6 {
 
 #define IFA6_IS_DEPRECATED(a) \
 	((a)->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME && \
-	 (u_int32_t)((time_uptime - (a)->ia6_updatetime)) > \
+	 (u_int32_t)((getuptime() - (a)->ia6_updatetime)) > \
 	 (a)->ia6_lifetime.ia6t_pltime)
 #define IFA6_IS_INVALID(a) \
 	((a)->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME && \
-	 (u_int32_t)((time_uptime - (a)->ia6_updatetime)) > \
+	 (u_int32_t)((getuptime() - (a)->ia6_updatetime)) > \
 	 (a)->ia6_lifetime.ia6t_vltime)
 
 #endif /* _KERNEL */
