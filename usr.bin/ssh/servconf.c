@@ -1,5 +1,5 @@
 
-/* $OpenBSD: servconf.c,v 1.365 2020/05/27 22:37:53 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.366 2020/06/24 15:09:53 markus Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
+#include <sys/stat.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -2324,6 +2325,7 @@ process_server_config_line(ServerOptions *options, char *line,
 void
 load_server_config(const char *filename, struct sshbuf *conf)
 {
+	struct stat st;
 	char *line = NULL, *cp;
 	size_t linesize = 0;
 	FILE *f;
@@ -2335,6 +2337,10 @@ load_server_config(const char *filename, struct sshbuf *conf)
 		exit(1);
 	}
 	sshbuf_reset(conf);
+	/* grow buffer, so realloc is avoided for large config files */
+	if (fstat(fileno(f), &st) == 0 && st.st_size > 0 &&
+            (r = sshbuf_allocate(conf, st.st_size)) != 0)
+		fatal("%s: allocate failed: %s", __func__, ssh_err(r));
 	while (getline(&line, &linesize, f) != -1) {
 		lineno++;
 		/*
