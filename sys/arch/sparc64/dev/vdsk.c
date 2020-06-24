@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.53 2020/02/18 17:20:12 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.54 2020/06/24 01:36:18 krw Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -179,11 +179,9 @@ struct cfdriver vdsk_cd = {
 };
 
 void	vdsk_scsi_cmd(struct scsi_xfer *);
-int	vdsk_dev_probe(struct scsi_link *);
-void	vdsk_dev_free(struct scsi_link *);
 
 struct scsi_adapter vdsk_switch = {
-	vdsk_scsi_cmd, NULL, vdsk_dev_probe, vdsk_dev_free, NULL
+	vdsk_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 int	vdsk_tx_intr(void *);
@@ -349,9 +347,10 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter = &vdsk_switch;
 	sc->sc_link.adapter_softc = self;
-	sc->sc_link.adapter_buswidth = 2;
-	sc->sc_link.luns = 1; /* XXX slices should be presented as luns? */
-	sc->sc_link.adapter_target = 2;
+	/* Only valid target/lun is 0/0. */
+	sc->sc_link.adapter_buswidth = 1;
+	sc->sc_link.luns = 1;
+	sc->sc_link.adapter_target = sc->sc_link.adapter_buswidth;
 	sc->sc_link.openings = sc->sc_vd->vd_nentries - 1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
@@ -1230,19 +1229,3 @@ vdsk_scsi_done(struct scsi_xfer *xs, int error)
 	scsi_done(xs);
 }
 
-int
-vdsk_dev_probe(struct scsi_link *link)
-{
-	KASSERT(link->lun == 0);
-
-	if (link->target == 0)
-		return (0);
-
-	return (ENODEV);
-}
-
-void
-vdsk_dev_free(struct scsi_link *link)
-{
-	printf("%s\n", __func__);
-}
