@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.176 2020/03/21 20:42:23 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.177 2020/06/24 18:33:50 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -774,7 +774,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	sc->sc_link.adapter = &mfi_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_buswidth = sc->sc_info.mci_max_lds;
-	sc->sc_link.adapter_target = -1;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.luns = 1;
 	sc->sc_link.openings = sc->sc_max_cmds - 1;
 	sc->sc_link.pool = &sc->sc_iopool;
@@ -851,7 +851,7 @@ mfi_syspd(struct mfi_softc *sc)
 	link->adapter = &mfi_pd_switch;
 	link->adapter_softc = sc;
 	link->adapter_buswidth = MFI_MAX_PD;
-	link->adapter_target = -1;
+	link->adapter_target = SDEV_NO_ADAPTER_TARGET;
 	link->openings = sc->sc_max_cmds - 1;
 	link->pool = &sc->sc_iopool;
 

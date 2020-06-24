@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.68 2020/03/21 20:42:23 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.69 2020/06/24 18:33:50 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -921,7 +921,7 @@ mfii_syspd(struct mfii_softc *sc)
 	link->adapter = &mfii_pd_switch;
 	link->adapter_softc = sc;
 	link->adapter_buswidth = MFI_MAX_PD;
-	link->adapter_target = -1;
+	link->adapter_target = SDEV_NO_ADAPTER_TARGET;
 	link->openings = sc->sc_max_cmds - 1;
 	link->pool = &sc->sc_iopool;
 
