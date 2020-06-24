@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_generate_prime.3,v 1.18 2019/08/25 19:24:00 schwarze Exp $
+.\" $OpenBSD: BN_generate_prime.3,v 1.19 2020/06/24 18:15:00 jmc Exp $
 .\" full merge up to: OpenSSL f987a4dd Jun 27 10:12:08 2019 +0200
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 25 2019 $
+.Dd $Mdocdate: June 24 2020 $
 .Dt BN_GENERATE_PRIME 3
 .Os
 .Sh NAME
@@ -262,7 +262,7 @@ When the source of the prime is not random or not trusted, the
 number of checks needs to be much higher to reach the same level
 of assurance: It should equal half of the targeted security level
 in bits (rounded up to the next integer if necessary).
-For instance, to reach the 128 bit security level,
+For instance, to reach the 128-bit security level,
 .Fa nchecks
 should be set to 64.
 .Pp

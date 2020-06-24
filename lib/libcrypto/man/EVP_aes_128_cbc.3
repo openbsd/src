@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_aes_128_cbc.3,v 1.3 2019/08/28 10:37:42 schwarze Exp $
+.\" $OpenBSD: EVP_aes_128_cbc.3,v 1.4 2020/06/24 18:15:00 jmc Exp $
 .\" selective merge up to: OpenSSL 7c6d372a Nov 20 13:20:01 2018 +0000
 .\"
 .\" This file was written by Ronald Tse <ronald.tse@ribose.com>
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 28 2019 $
+.Dd $Mdocdate: June 24 2020 $
 .Dt EVP_AES_128_CBC 3
 .Os
 .Sh NAME
@@ -193,7 +193,7 @@ framework.
 .Fn EVP_aes_192_ofb ,
 and
 .Fn EVP_aes_256_ofb
-provide AES for 128, 192, and 256 bit keys in the following modes:
+provide AES for 128, 192, and 256-bit keys in the following modes:
 CBC, CFB with 1-bit shift, CFB with 8-bit shift, CFB with 128-bit shift,
 CTR, ECB, and OFB.
 .Pp
@@ -211,7 +211,7 @@ and
 and
 .Fn EVP_aes_256_cbc_hmac_sha1
 provide authenticated encryption with AES in CBC mode using SHA-1 as HMAC,
-with keys of 128 and 256 bits length respectively.
+with keys of 128 and 256-bit length respectively.
 The authentication tag is 160 bits long.
 This is not intended for usage outside of TLS and requires
 calling of some undocumented control functions.
@@ -224,7 +224,7 @@ These ciphers do not conform to the EVP AEAD interface.
 .Fn EVP_aes_192_gcm ,
 and
 .Fn EVP_aes_256_gcm
-provide AES for 128, 192 and 256 bit keys in CBC-MAC Mode (CCM)
+provide AES for 128, 192 and 256-bit keys in CBC-MAC Mode (CCM)
 and Galois Counter Mode (GCM), respectively.
 These ciphers require additional control operations to function
 correctly; see
@@ -235,7 +235,7 @@ for details.
 .Fn EVP_aes_192_wrap ,
 and
 .Fn EVP_aes_256_wrap
-provide AES key wrap with 128, 192 and 256 bit keys
+provide AES key wrap with 128, 192 and 256-bit keys
 according to RFC 3394 section 2.2.1 ("wrap").
 When the returned
 .Vt EVP_CIPHER

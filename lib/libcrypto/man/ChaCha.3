@@ -1,4 +1,4 @@
-.\" $OpenBSD: ChaCha.3,v 1.1 2020/06/24 17:00:38 schwarze Exp $
+.\" $OpenBSD: ChaCha.3,v 1.2 2020/06/24 18:15:00 jmc Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -71,7 +71,7 @@
 .Fc
 .Sh DESCRIPTION
 These functions provide a low-level implementation
-of the ChaCha stream cipher with 256 and 128 bit keys.
+of the ChaCha stream cipher with 256 and 128-bit keys.
 The number of rounds is hardcoded to 20;
 variants with 8 or 12 rounds are not supported.
 .Pp
@@ -216,16 +216,16 @@ from the first two thirds of
 RFC 8439: ChaCha20 and Poly1305 for IETF Protocols
 .Pp
 Note that the standard specifies
-a 32 bit counter and a 96 bit initialization vector whereas
+a 32-bit counter and a 96-bit initialization vector whereas
 this implementation follows Bernstein's original specification
-and uses a 64 bit counter and a 64 bit initialization vector.
+and uses a 64-bit counter and a 64-bit initialization vector.
 .Pp
 These functions are specific to LibreSSL and not provided by OpenSSL.
 BoringSSL does provide
 .Fn CRYPTO_chacha_20 ,
-but with an incompatible interface, taking a 96 bit
+but with an incompatible interface, taking a 96-bit
 .Fa iv
-and a 32 bit
+and a 32-bit
 .Fa counter .
 .Sh HISTORY
 .Fn ChaCha_set_key ,
