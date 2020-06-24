@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 2020/06/22 18:49:36 kettenis Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 2020/06/24 20:19:14 kettenis Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -97,6 +97,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	char		 c, *cp = modif;
 	Elf_Sym		*sym;
 	int		 has_frame, trace_proc = 0;
+	int		 end_trace = 0;
 
 	while ((c = *cp++) != 0) {
 		if (c == 't')
@@ -163,6 +164,9 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 				      frame->exc);
 			}
 
+			if (frame->srr1 & PSL_PR)
+				end_trace = 1;
+
 			sp = frame->fixreg[1];
 			lr = frame->srr0 + 4;
 		} else if (!has_frame) {
@@ -179,6 +183,11 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			db_read_bytes(sp + 16, sizeof(vaddr_t), (char *)&lr);
 		}
 		callpc = lr - 4;
+
+		if (end_trace) {
+			(*pr)("End of kernel: 0x%lx lr 0x%lx\n", sp, callpc);
+			break;
+		}
 
 		--count;
 	}
