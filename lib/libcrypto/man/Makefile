@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.168 2020/06/12 11:37:42 schwarze Exp $
+# $OpenBSD: Makefile,v 1.169 2020/06/24 16:06:26 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -68,6 +68,7 @@ MAN=	\
 	BN_swap.3 \
 	BN_zero.3 \
 	BUF_MEM_new.3 \
+	CMAC_Init.3 \
 	CMS_ContentInfo_new.3 \
 	CMS_add0_cert.3 \
 	CMS_add1_recipient_cert.3 \
