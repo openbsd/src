@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.49 2020/06/21 05:15:14 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.50 2020/06/24 11:17:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1160,8 +1160,6 @@ struct ixl_softc {
 
 	struct rwlock		 sc_cfg_lock;
 	unsigned int		 sc_dead;
-
-	struct rwlock		 sc_sff_lock;
 
 	uint8_t			 sc_enaddr[ETHER_ADDR_LEN];
 };
