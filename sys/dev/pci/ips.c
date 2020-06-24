@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.118 2020/02/19 01:31:38 cheloha Exp $	*/
+/*	$OpenBSD: ips.c,v 1.119 2020/06/24 18:59:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -721,7 +721,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach SCSI bus */
 	if (sc->sc_nunits > 0)
 		sc->sc_scsi_link.openings = sc->sc_nccbs / sc->sc_nunits;
-	sc->sc_scsi_link.adapter_target = sc->sc_nunits;
+	sc->sc_scsi_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_scsi_link.adapter_buswidth = sc->sc_nunits;
 	sc->sc_scsi_link.adapter = &ips_switch;
 	sc->sc_scsi_link.adapter_softc = sc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.133 2020/02/05 16:29:29 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.134 2020/06/24 18:59:30 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -184,7 +184,7 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_link.adapter_softc = as;
 	as->as_link.adapter_buswidth = aaa->aaa_nports;
 	as->as_link.luns = SATA_PMP_MAX_PORTS;
-	as->as_link.adapter_target = aaa->aaa_nports;
+	as->as_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	as->as_link.openings = 1;
 
 	as->as_host_ports = mallocarray(aaa->aaa_nports,

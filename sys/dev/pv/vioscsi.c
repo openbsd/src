@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.16 2020/02/14 15:56:47 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.17 2020/06/24 18:59:30 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -163,7 +163,7 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter = &vioscsi_switch;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = max_target;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.adapter_buswidth = max_target;
 	sc->sc_link.pool = &sc->sc_iopool;
 

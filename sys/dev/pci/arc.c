@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.110 2020/02/13 15:11:32 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.111 2020/06/24 18:59:30 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -804,7 +804,7 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter = &arc_switch;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = ARC_MAX_TARGET;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.adapter_buswidth = ARC_MAX_TARGET;
 	sc->sc_link.openings = sc->sc_req_count;
 	sc->sc_link.pool = &sc->sc_iopool;

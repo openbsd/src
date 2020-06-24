@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.69 2020/06/24 18:33:50 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.70 2020/06/24 18:59:30 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -784,7 +784,7 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = sc->sc_max_cmds;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &mfii_switch;
-	sc->sc_link.adapter_target = sc->sc_info.mci_max_lds;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.adapter_buswidth = sc->sc_info.mci_max_lds;
 	sc->sc_link.pool = &sc->sc_iopool;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.51 2020/02/15 18:02:00 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.52 2020/06/24 18:59:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -396,7 +396,7 @@ twe_attach(sc)
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &twe_switch;
-	sc->sc_link.adapter_target = TWE_MAX_UNITS;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.openings = TWE_MAXCMDS / nunits;
 	sc->sc_link.adapter_buswidth = TWE_MAX_UNITS;
 	sc->sc_link.pool = &sc->sc_iopool;
