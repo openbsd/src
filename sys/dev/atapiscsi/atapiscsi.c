@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.109 2020/02/13 15:11:32 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.110 2020/06/24 19:35:11 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -219,7 +219,7 @@ atapiscsi_attach(struct device *parent, struct device *self, void *aux)
 	as->chp = chp;
 	as->drive = drvp->drive;
 	as->sc_adapterlink.adapter_softc = as;
-	as->sc_adapterlink.adapter_target = 7;
+	as->sc_adapterlink.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	as->sc_adapterlink.adapter_buswidth = 2;
 	as->sc_adapterlink.adapter = &atapiscsi_switch;
 	as->sc_adapterlink.luns = 1;
