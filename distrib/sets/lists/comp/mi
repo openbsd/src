@@ -1808,6 +1808,7 @@
 ./usr/share/man/man3/BN_swap.3
 ./usr/share/man/man3/BN_zero.3
 ./usr/share/man/man3/BUF_MEM_new.3
+./usr/share/man/man3/CMAC_Init.3
 ./usr/share/man/man3/CMSG_DATA.3
 ./usr/share/man/man3/CMS_ContentInfo_new.3
 ./usr/share/man/man3/CMS_add0_cert.3
