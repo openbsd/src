@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.89 2020/06/22 10:01:03 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.90 2020/06/24 08:52:53 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -854,9 +854,10 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 	struct pipex_session *session;
 
 	NET_ASSERT_LOCKED();
-	pxi->pxi_ready = 0;
 	session = pxi->pxi_session;
 	ifp = &pxi->pxi_if;
+	pxi->pxi_ready = 0;
+	CLR(ifp->if_flags, IFF_RUNNING);
 
 	pipex_unlink_session(session);
 
@@ -910,7 +911,7 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	NET_ASSERT_LOCKED();
 
-	if (!ISSET(ifp->if_flags, IFF_UP)) {
+	if (!ISSET(ifp->if_flags, IFF_RUNNING)) {
 		m_freem(m);
 		error = ENETDOWN;
 		goto out;
@@ -1465,6 +1466,9 @@ pppac_start(struct ifnet *ifp)
 {
 	struct pppac_softc *sc = ifp->if_softc;
 	struct mbuf *m;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return;
 
 	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
 #if NBPFILTER > 0
