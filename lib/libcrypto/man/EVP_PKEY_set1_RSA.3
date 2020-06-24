@@ -1,10 +1,10 @@
-.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.16 2019/09/01 09:10:09 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.17 2020/06/24 19:55:54 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2019, 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 1 2019 $
+.Dd $Mdocdate: June 24 2020 $
 .Dt EVP_PKEY_SET1_RSA 3
 .Os
 .Sh NAME
@@ -89,10 +89,10 @@
 .Nm EVP_PKEY_assign_EC_KEY ,
 .Nm EVP_PKEY_assign_GOST ,
 .Nm EVP_PKEY_assign ,
-.Nm EVP_PKEY_set_type ,
 .Nm EVP_PKEY_base_id ,
 .Nm EVP_PKEY_id ,
-.Nm EVP_PKEY_type
+.Nm EVP_PKEY_type ,
+.Nm EVP_PKEY_set_type
 .Nd EVP_PKEY assignment functions
 .Sh SYNOPSIS
 .In openssl/evp.h
@@ -189,11 +189,6 @@
 .Fa "void *key"
 .Fc
 .Ft int
-.Fo EVP_PKEY_set_type
-.Fa "EVP_PKEY *pkey"
-.Fa "int type"
-.Fc
-.Ft int
 .Fo EVP_PKEY_base_id
 .Fa "EVP_PKEY *pkey"
 .Fc
@@ -203,6 +198,11 @@
 .Fc
 .Ft int
 .Fo EVP_PKEY_type
+.Fa "int type"
+.Fc
+.Ft int
+.Fo EVP_PKEY_set_type
+.Fa "EVP_PKEY *pkey"
 .Fa "int type"
 .Fc
 .Sh DESCRIPTION
@@ -286,6 +286,60 @@ The following types are supported:
 and
 .Dv EVP_PKEY_GOSTR01 .
 .Pp
+.Fn EVP_PKEY_base_id
+returns the type of
+.Fa pkey
+according to the following table:
+.Pp
+.Bl -column -compact -offset 2n EVP_PKEY_GOSTR NID_X9_62_id_ecPublicKey
+.It Sy return value      Ta                               Ta Sy PEM type string
+.It Dv EVP_PKEY_CMAC     Ta = Dv NID_cmac                 Ta CMAC
+.It Dv EVP_PKEY_DH       Ta = Dv NID_dhKeyAgreement       Ta DH
+.It Dv EVP_PKEY_DSA      Ta = Dv NID_dsa                  Ta DSA
+.It Dv EVP_PKEY_EC       Ta = Dv NID_X9_62_id_ecPublicKey Ta EC
+.It Dv EVP_PKEY_GOSTIMIT Ta = Dv NID_id_Gost28147_89_MAC  Ta GOST-MAC
+.It Dv EVP_PKEY_GOSTR01  Ta = Dv NID_id_GostR3410_2001    Ta GOST2001
+.It Dv EVP_PKEY_HMAC     Ta = Dv NID_hmac                 Ta HMAC
+.It Dv EVP_PKEY_RSA      Ta = Dv NID_rsaEncryption        Ta RSA
+.It Dv EVP_PKEY_RSA_PSS  Ta = Dv NID_rsassaPss            Ta RSA-PSS
+.El
+.Pp
+Application programs can support additional key types by calling
+.Xr EVP_PKEY_asn1_add0 3 .
+.Pp
+.Fn EVP_PKEY_id
+returns the actual OID associated with
+.Fa pkey .
+Historically keys using the same algorithm could use different OIDs.
+The following deprecated aliases are still supported:
+.Pp
+.Bl -column -compact -offset 2n EVP_PKEY_GOSTR12_ NID_id_tc26_gost3410_2012_512
+.It Sy return value         Ta                                  Ta Sy alias for
+.It Dv EVP_PKEY_DSA1        Ta = Dv NID_dsa_2                     Ta DSA
+.It Dv EVP_PKEY_DSA2        Ta = Dv NID_dsaWithSHA                Ta DSA
+.It Dv EVP_PKEY_DSA3        Ta = Dv NID_dsaWithSHA1               Ta DSA
+.It Dv EVP_PKEY_DSA4        Ta = Dv NID_dsaWithSHA1_2             Ta DSA
+.It Dv EVP_PKEY_GOSTR12_256 Ta = Dv NID_id_tc26_gost3410_2012_256 Ta GOST2001
+.It Dv EVP_PKEY_GOSTR12_512 Ta = Dv NID_id_tc26_gost3410_2012_512 Ta GOST2001
+.It Dv EVP_PKEY_RSA2        Ta = Dv NID_rsa                       Ta RSA
+.El
+.Pp
+Application programs can support additional alternative OIDs by calling
+.Xr EVP_PKEY_asn1_add_alias 3 .
+.Pp
+Most applications wishing to know a key type will simply call
+.Fn EVP_PKEY_base_id
+and will not care about the actual type,
+which will be identical in almost all cases.
+.Pp
+.Fn EVP_PKEY_type
+returns the underlying type of the NID
+.Fa type .
+For example,
+.Fn EVP_PKEY_type EVP_PKEY_RSA2
+will return
+.Dv EVP_PKEY_RSA .
+.Pp
 .Fn EVP_PKEY_set_type
 frees the key referenced in
 .Fa pkey ,
@@ -296,41 +350,13 @@ to
 without referencing a new key from
 .Fa pkey
 yet.
-.Pp
+For
+.Fa type ,
+any of the possible return values of
 .Fn EVP_PKEY_base_id
-returns the type of
-.Fa pkey .
-For example, an RSA key will return
-.Dv EVP_PKEY_RSA .
-.Pp
+and
 .Fn EVP_PKEY_id
-returns the actual OID associated with
-.Fa pkey .
-Historically keys using the same algorithm could use different OIDs.
-For example, an RSA key could use the OIDs corresponding to the NIDs
-.Dv NID_rsaEncryption
-(equivalent to
-.Dv EVP_PKEY_RSA )
-or
-.Dv NID_rsa
-(equivalent to
-.Dv EVP_PKEY_RSA2 ) .
-The use of alternative non-standard OIDs is now rare, so
-.Dv EVP_PKEY_RSA2
-et al. are not often seen in practice.
-.Pp
-.Fn EVP_PKEY_type
-returns the underlying type of the NID
-.Fa type .
-For example,
-.Fn EVP_PKEY_type EVP_PKEY_RSA2
-will return
-.Dv EVP_PKEY_RSA .
-.Pp
-Most applications wishing to know a key type will simply call
-.Fn EVP_PKEY_base_id
-and will not care about the actual type,
-which will be identical in almost all cases.
+can be passed.
 .Pp
 In accordance with the OpenSSL naming convention, the key obtained from
 or assigned to

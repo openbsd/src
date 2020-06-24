@@ -1,10 +1,10 @@
-.\" $OpenBSD: EVP_PKEY_CTX_new.3,v 1.10 2019/11/01 19:51:09 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_new.3,v 1.11 2020/06/24 19:55:55 schwarze Exp $
 .\" full merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2019, 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 1 2019 $
+.Dd $Mdocdate: June 24 2020 $
 .Dt EVP_PKEY_CTX_NEW 3
 .Os
 .Sh NAME
@@ -123,23 +123,13 @@ It is normally used when no
 .Vt EVP_PKEY
 structure is associated with the operations, for example during
 parameter generation of key generation for some algorithms.
-The following
+The
 .Fa id
-constants are supported:
-.Dv EVP_PKEY_CMAC ,
-.Dv EVP_PKEY_DH ,
-.Dv EVP_PKEY_DSA ,
-.Dv EVP_PKEY_EC ,
-.Dv EVP_PKEY_GOSTIMIT ,
-.Dv EVP_PKEY_GOSTR01 ,
-.Dv EVP_PKEY_HMAC ,
-.Dv EVP_PKEY_RSA ,
+argument can be any of the constants that
+.Xr EVP_PKEY_base_id 3
 and
-.Dv EVP_PKEY_RSA_PSS .
-Application programs can define additional
-.Fa id
-values using
-.Xr EVP_PKEY_meth_new 3 .
+.Xr EVP_PKEY_id 3
+may return.
 .Pp
 .Fn EVP_PKEY_CTX_dup
 duplicates the context
@@ -166,6 +156,7 @@ if an error occurred.
 .Sh SEE ALSO
 .Xr EVP_DigestSignInit 3 ,
 .Xr EVP_DigestVerifyInit 3 ,
+.Xr EVP_PKEY_base_id 3 ,
 .Xr EVP_PKEY_CTX_ctrl 3 ,
 .Xr EVP_PKEY_decrypt 3 ,
 .Xr EVP_PKEY_derive 3 ,
