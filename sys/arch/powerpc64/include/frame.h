@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.3 2020/06/14 17:56:54 kettenis Exp $	*/
+/*	$OpenBSD: frame.h,v 1.4 2020/06/24 20:49:11 kettenis Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,13 @@ struct callframe {
 	register_t	cf_cr;
 	register_t	cf_lr;
 	register_t	cf_toc;
+};
+
+struct sigframe {
+	int		sf_signum;
+	siginfo_t	*sf_sip;
+	struct sigcontext sf_sc;
+	siginfo_t	sf_si;
 };
 
 struct switchframe {

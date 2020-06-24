@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 2020/06/22 16:09:33 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.30 2020/06/24 20:49:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -17,13 +17,16 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/signalvar.h>
+#include <sys/syscallargs.h>
+#include <sys/systm.h>
 #include <sys/user.h>
 
 #include <machine/cpufunc.h>
@@ -601,6 +604,9 @@ parse_bootargs(const char *bootargs)
 	}
 }
 
+#define PSL_USER \
+    (PSL_SF | PSL_HV | PSL_EE | PSL_PR | PSL_ME | PSL_IR | PSL_DR | PSL_RI)
+
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
@@ -609,8 +615,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 
 	frame->fixreg[1] = stack;
 	frame->srr0 = pack->ep_entry;
-	frame->srr1 = PSL_SF | PSL_HV | PSL_EE | PSL_PR | PSL_ME |
-	    PSL_IR | PSL_DR | PSL_RI;
+	frame->srr1 = PSL_USER;
 
 	retval[1] = 0;
 }
@@ -618,13 +623,107 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 void
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
-	printf("%s\n", __func__);
+	struct proc *p = curproc;
+	struct trapframe *tf = p->p_md.md_regs;
+	struct sigframe *fp, frame;
+	struct sigacts *psp = p->p_p->ps_sigacts;
+	siginfo_t *sip = NULL;
+	int i;
+
+	/* Allocate space for the signal handler context. */
+	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
+	    !sigonstack(tf->fixreg[1]) && (psp->ps_sigonstack & sigmask(sig)))
+		fp = (struct sigframe *)
+		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
+	else
+		fp = (struct sigframe *)tf->fixreg[1];
+
+	fp = (struct sigframe *)(STACKALIGN(fp - 1) - 288);
+
+	/* Build stack frame for signal trampoline. */
+	memset(&frame, 0, sizeof(frame));
+	frame.sf_signum = sig;
+
+	/* Save register context. */
+	for (i = 0; i < 32; i++)
+		frame.sf_sc.sc_frame.fixreg[i] = tf->fixreg[i];
+	frame.sf_sc.sc_frame.lr = tf->lr;
+	frame.sf_sc.sc_frame.cr = tf->cr;
+	frame.sf_sc.sc_frame.xer = tf->xer;
+	frame.sf_sc.sc_frame.ctr = tf->ctr;
+	frame.sf_sc.sc_frame.srr0 = tf->srr0;
+	frame.sf_sc.sc_frame.srr1 = tf->srr1;
+
+	/* Save signal mask. */
+	frame.sf_sc.sc_mask = mask;
+
+	if (psp->ps_siginfo & sigmask(sig)) {
+		sip = &fp->sf_si;
+		frame.sf_si = *ksip;
+	}
+
+	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
+	if (copyout(&frame, fp, sizeof(frame)))
+		sigexit(p, SIGILL);
+
+	/*
+	 * Build context to run handler in.
+	 */
+	tf->fixreg[1] = (register_t)fp;
+	tf->fixreg[3] = sig;
+	tf->fixreg[4] = (register_t)sip;
+	tf->fixreg[5] = (register_t)&fp->sf_sc;
+	tf->fixreg[12] = (register_t)catcher;
+
+	tf->srr0 = p->p_p->ps_sigcode;
 }
 
 int
 sys_sigreturn(struct proc *p, void *v, register_t *retval)
 {
-	printf("%s\n", __func__);
+	struct sys_sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap = v;
+	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
+	struct trapframe *tf = p->p_md.md_regs;
+	int error;
+	int i;
+
+	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
+		sigexit(p, SIGILL);
+		return EPERM;
+	}
+
+	if ((error = copyin(scp, &ksc, sizeof ksc)))
+		return error;
+
+	if (ksc.sc_cookie != ((long)scp ^ p->p_p->ps_sigcookie)) {
+		sigexit(p, SIGILL);
+		return EFAULT;
+	}
+
+	/* Prevent reuse of the sigcontext cookie */
+	ksc.sc_cookie = 0;
+	(void)copyout(&ksc.sc_cookie, (caddr_t)scp +
+	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
+
+	/* Make sure the processor mode has not been tampered with. */
+	if (ksc.sc_frame.srr1 != PSL_USER)
+		return EINVAL;
+
+	/* Restore register context. */
+	for (i = 0; i < 32; i++)
+		tf->fixreg[i] = ksc.sc_frame.fixreg[i];
+	tf->lr = ksc.sc_frame.lr;
+	tf->cr = ksc.sc_frame.cr;
+	tf->xer = ksc.sc_frame.xer;
+	tf->ctr = ksc.sc_frame.ctr;
+	tf->srr0 = ksc.sc_frame.srr0;
+	tf->srr1 = ksc.sc_frame.srr1;
+
+	/* Restore signal mask. */
+	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
+
 	return EJUSTRETURN;
 }
 

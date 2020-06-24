@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.18 2020/06/22 18:49:36 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.19 2020/06/24 20:49:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,8 @@
 
 #include "assym.h"
 
+#include <sys/syscall.h>
+
 #include <machine/opal.h>
 #include <machine/psl.h>
 
@@ -28,6 +30,10 @@
 	.globl sigcode
 	.globl sigcoderet
 sigcode:
+	mtctr	%r12
+	bctrl
+	li	%r0, SYS_sigreturn
+	sc
 sigcoderet:
 	blr
 	.globl esigcode
