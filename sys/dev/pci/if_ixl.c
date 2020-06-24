@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.50 2020/06/24 11:17:21 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.51 2020/06/24 22:36:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1629,7 +1629,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = ixl_watchdog;
 	ifp->if_hardmtu = IXL_HARDMTU;
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
-	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
+	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_tx_ring_ndescs);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 #if 0
