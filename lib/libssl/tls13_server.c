@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.58 2020/06/06 01:40:09 beck Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.59 2020/06/24 07:28:38 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -96,6 +96,44 @@ tls13_client_hello_is_legacy(CBS *cbs)
 	return (max_version < TLS1_3_VERSION);
 }
 
+int
+tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
+{
+	SSL *ssl = ctx->ssl;
+
+	/*
+	 * RFC 8446, section 9.2. If the ClientHello has supported_versions
+	 * containing TLSv1.3, presence or absence of some extensions requires
+	 * presence or absence of others.
+	 */
+
+	/*
+	 * supported_groups and key_share must either both be present or
+	 * both be absent.
+	 */
+	if (tlsext_extension_seen(ssl, TLSEXT_TYPE_supported_groups) !=
+	    tlsext_extension_seen(ssl, TLSEXT_TYPE_key_share))
+		return 0;
+
+	/*
+	 * If we got no pre_shared_key, then signature_algorithms and
+	 * supported_groups must both be present.
+	 */
+	if (!tlsext_extension_seen(ssl, TLSEXT_TYPE_pre_shared_key)) {
+		if (!tlsext_extension_seen(ssl, TLSEXT_TYPE_signature_algorithms))
+			return 0;
+		if (!tlsext_extension_seen(ssl, TLSEXT_TYPE_supported_groups))
+			return 0;
+	}
+
+	/*
+	 * XXX - Require server_name from client? If so, we SHOULD enforce
+	 * this here - RFC 8446, 9.2.
+	 */
+
+	return 1;
+}
+
 static const uint8_t tls13_compression_null_only[] = { 0 };
 
 static int
@@ -170,6 +208,11 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 			goto err;
 		}
 		tls13_clienthello_hash_clear(ctx->hs);
+	}
+
+	if (!tls13_client_hello_required_extensions(ctx)) {
+		ctx->alert = TLS13_ALERT_MISSING_EXTENSION;
+		goto err;
 	}
 
 	/*
