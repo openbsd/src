@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.37 2020/06/24 01:35:29 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.38 2020/06/24 18:47:57 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -305,7 +305,7 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 	/* Only valid target/lun is 0/0. */
 	sc->sc_link.adapter_buswidth = 1;
 	sc->sc_link.luns = 1;
-	sc->sc_link.adapter_target = sc->sc_link.adapter_buswidth;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.openings = sc->sc_nccb;
 	sc->sc_link.pool = &sc->sc_iopool;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.60 2020/02/05 16:29:29 krw Exp $ */
+/*	$OpenBSD: qla.c,v 1.61 2020/06/24 18:47:57 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -680,7 +680,7 @@ qla_attach(struct qla_softc *sc)
 	} else {
 		sc->sc_link.adapter_buswidth = QLA_BUSWIDTH;
 	}
-	sc->sc_link.adapter_target = sc->sc_link.adapter_buswidth;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.openings = sc->sc_maxcmds;
 	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.port_wwn = sc->sc_port_name;
