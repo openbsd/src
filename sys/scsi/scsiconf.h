@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.185 2020/02/06 21:06:15 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.186 2020/06/24 16:07:53 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -292,8 +292,9 @@ struct scsi_link {
 	u_int16_t openings;		/* available operations per lun */
 	u_int64_t port_wwn;		/* world wide name of port */
 	u_int64_t node_wwn;		/* world wide name of node */
-	u_int16_t adapter_target;	/* what are we on the scsi bus */
-	u_int16_t adapter_buswidth;	/* 8 (regular) or 16 (wide). (0 becomes 8) */
+	u_int16_t adapter_target;	/* what are we on the scsi bus (don't probe!) */
+#define	SDEV_NO_ADAPTER_TARGET	0xffff	/* we are not a target on the scsi bus */
+	u_int16_t adapter_buswidth;	/* number of targets to probe (0 becomes 8) */
 	u_int16_t flags;		/* flags that all devices have */
 #define	SDEV_REMOVABLE		0x0001	/* media is removable */
 #define	SDEV_MEDIA_LOADED	0x0002	/* device figures are still valid */
