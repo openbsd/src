@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2019/02/13 22:57:08 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.36 2020/06/24 07:20:47 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -83,7 +83,7 @@ int		 host(const char *, const char *,
 		    struct listenerlist *, int, in_port_t, u_int8_t);
 int		 interface(const char *, const char *,
 		    struct listenerlist *, int, in_port_t, u_int8_t);
-int		 load_certfile(struct ldapd_config *, const char *, u_int8_t);
+int		 load_certfile(struct ldapd_config *, const char *, u_int8_t, u_int8_t);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -116,14 +116,14 @@ static struct namespace *current_ns = NULL;
 
 %}
 
-%token	ERROR LISTEN ON TLS LDAPS PORT NAMESPACE ROOTDN ROOTPW INDEX
+%token	ERROR LISTEN ON LEGACY TLS LDAPS PORT NAMESPACE ROOTDN ROOTPW INDEX
 %token	SECURE RELAX STRICT SCHEMA USE COMPRESSION LEVEL
 %token	INCLUDE CERTIFICATE FSYNC CACHE_SIZE INDEX_CACHE_SIZE
 %token	DENY ALLOW READ WRITE BIND ACCESS TO ROOT REFERRAL
 %token	ANY CHILDREN OF ATTRIBUTE IN SUBTREE BY SELF
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.number>	port ssl boolean comp_level
+%type	<v.number>	port ssl boolean comp_level legacy protocol
 %type	<v.number>	aci_type aci_access aci_rights aci_right aci_scope
 %type	<v.string>	aci_target aci_attr aci_subject certname
 %type	<v.aci>		aci
@@ -143,10 +143,17 @@ grammar		: /* empty */
 		| grammar schema '\n'
 		;
 
-ssl		: /* empty */			{ $$ = 0; }
+legacy		: /* empty */			{ $$ = 0; }
+		| LEGACY			{ $$ = F_LEGACY; }
+		;
+
+protocol	: /* empty */			{ $$ = 0; }
 		| TLS				{ $$ = F_STARTTLS; }
 		| LDAPS				{ $$ = F_LDAPS; }
 		| SECURE			{ $$ = F_SECURE; }
+		;
+
+ssl		: legacy protocol		{ $$ = $1 | $2; }
 		;
 
 certname	: /* empty */			{ $$ = NULL; }
@@ -181,7 +188,7 @@ conf_main	: LISTEN ON STRING port ssl certname	{
 			char			*cert;
 
 			if ($4 == 0) {
-				if ($5 == F_LDAPS)
+				if ($5 & F_LDAPS)
 					$4 = htons(LDAPS_PORT);
 				else
 					$4 = htons(LDAP_PORT);
@@ -189,8 +196,8 @@ conf_main	: LISTEN ON STRING port ssl certname	{
 
 			cert = ($6 != NULL) ? $6 : $3;
 
-			if (($5 == F_STARTTLS || $5 == F_LDAPS) &&
-			    load_certfile(conf, cert, F_SCERT) < 0) {
+			if (($5 & F_SSL) &&
+			    load_certfile(conf, cert, F_SCERT, $5) < 0) {
 				yyerror("cannot load certificate: %s", cert);
 				free($6);
 				free($3);
@@ -448,6 +455,7 @@ lookup(char *s)
 		{ "index",		INDEX },
 		{ "index-cache-size",	INDEX_CACHE_SIZE },
 		{ "ldaps",		LDAPS },
+		{ "legacy",		LEGACY },
 		{ "level",		LEVEL },
 		{ "listen",		LISTEN },
 		{ "namespace",		NAMESPACE },
@@ -1225,11 +1233,14 @@ ssl_cmp(struct ssl *s1, struct ssl *s2)
 }
 
 int
-load_certfile(struct ldapd_config *env, const char *name, u_int8_t flags)
+load_certfile(struct ldapd_config *env, const char *name, u_int8_t flags,
+    u_int8_t protocol)
 {
 	struct ssl	*s;
 	struct ssl	 key;
 	char		 certfile[PATH_MAX];
+	uint32_t	 tls_protocols = TLS_PROTOCOLS_DEFAULT;
+	const char	*tls_ciphers = "default";
 
 	if (strlcpy(key.ssl_name, name, sizeof(key.ssl_name))
 	    >= sizeof(key.ssl_name)) {
@@ -1253,12 +1264,16 @@ load_certfile(struct ldapd_config *env, const char *name, u_int8_t flags)
 	if (s->config == NULL)
 		goto err;
 
-	if (tls_config_set_protocols(s->config, TLS_PROTOCOLS_ALL) != 0) {
+	if (protocol & F_LEGACY) {
+		tls_protocols = TLS_PROTOCOLS_ALL;
+		tls_ciphers = "all";
+	}
+	if (tls_config_set_protocols(s->config, tls_protocols) != 0) {
 		log_warn("load_certfile: failed to set tls protocols: %s",
 		    tls_config_error(s->config));
 		goto err;
 	}
-	if (tls_config_set_ciphers(s->config, "all")) {
+	if (tls_config_set_ciphers(s->config, tls_ciphers)) {
 		log_warn("load_certfile: failed to set tls ciphers: %s",
 		    tls_config_error(s->config));
 		goto err;

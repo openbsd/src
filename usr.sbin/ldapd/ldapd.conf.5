@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.26 2020/02/10 13:18:21 schwarze Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.27 2020/06/24 07:20:47 tb Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: June 24 2020 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -79,6 +79,7 @@ is described below.
 .It Xo
 .Ic listen on Ar interface
 .Op Ic port Ar port
+.Op Ic legacy
 .Op Ic tls | ldaps | secure
 .Op Ic certificate Ar name
 .Xc
@@ -97,6 +98,15 @@ by default on port 389,
 or LDAPS
 .Pq Ic ldaps ,
 by default on port 636.
+.Ic tls
+and
+.Ic ldaps
+connections will use the defaults from libtls.
+If compatibility with the insecure TLSv1.0 and TLSv1.1
+protocols and ciphers is required,
+they can be enabled with the
+.Ic legacy
+keyword.
 Creation of certificates is documented in
 .Xr starttls 8 .
 If no certificate
