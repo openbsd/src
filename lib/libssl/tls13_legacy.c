@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.8 2020/05/29 17:47:30 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.9 2020/06/24 18:04:33 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -489,29 +489,30 @@ tls13_legacy_shutdown(SSL *ssl)
 		return 1;
 	}
 
-	/* Send close notify. */
-	if (!(ssl->internal->shutdown & SSL_SENT_SHUTDOWN)) {
-		ssl->internal->shutdown |= SSL_SENT_SHUTDOWN;
-		if ((ret = tls13_send_alert(ctx->rl, TLS13_ALERT_CLOSE_NOTIFY)) < 0)
+	if (!ctx->close_notify_sent) {
+		/* Enqueue and send close notify. */
+		if (!(ssl->internal->shutdown & SSL_SENT_SHUTDOWN)) {
+			ssl->internal->shutdown |= SSL_SENT_SHUTDOWN;
+			if ((ret = tls13_send_alert(ctx->rl,
+			    TLS13_ALERT_CLOSE_NOTIFY)) < 0)
+				return tls13_legacy_return_code(ssl, ret);
+		}
+		if ((ret = tls13_record_layer_send_pending(ctx->rl)) !=
+		    TLS13_IO_SUCCESS)
 			return tls13_legacy_return_code(ssl, ret);
-	}
-
-	/* Ensure close notify has been sent. */
-	if ((ret = tls13_record_layer_send_pending(ctx->rl)) != TLS13_IO_SUCCESS)
-		return tls13_legacy_return_code(ssl, ret);
-
-	/* Receive close notify. */
-	if (!ctx->close_notify_recv) {
+	} else if (!ctx->close_notify_recv) {
 		/*
-		 * If there is still application data pending then we have no
-		 * option but to discard it here. The application should have
-		 * continued to call SSL_read() instead of SSL_shutdown().
+		 * If there is no application data pending, attempt to read more
+		 * data in order to receive a close notify. This should trigger
+		 * a record to be read from the wire, which may be application
+		 * handshake or alert data. Only one attempt is made to match
+		 * previous semantics.
 		 */
-		/* XXX - tls13_drain_application_data()? */
-		if ((ret = tls13_read_application_data(ctx->rl, buf, sizeof(buf))) > 0)
-			ret = TLS13_IO_WANT_POLLIN;
-		if (ret != TLS13_IO_EOF)
-			return tls13_legacy_return_code(ssl, ret);
+		if (tls13_pending_application_data(ctx->rl) == 0) {
+			if ((ret = tls13_read_application_data(ctx->rl, buf,
+			    sizeof(buf))) < 0)
+				return tls13_legacy_return_code(ssl, ret);
+		}
 	}
 
 	if (ctx->close_notify_recv)
