@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.10 2020/06/24 06:03:22 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.11 2020/06/24 07:29:21 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -76,6 +76,7 @@ tls13_tests = TestGroup("TLSv1.3 tests", [
     Test("test-tls13-empty-alert.py"),
     Test("test-tls13-finished-plaintext.py"),
     Test("test-tls13-hrr.py"),
+    Test("test-tls13-keyshare-omitted.py"),
     Test("test-tls13-legacy-version.py"),
     Test("test-tls13-nociphers.py"),
     Test("test-tls13-record-padding.py"),
@@ -127,10 +128,6 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
     # stricter about what keyshares we accept.
     Test("test-tls13-crfg-curves.py"),
     Test("test-tls13-ecdhe-curves.py"),
-
-    # Expects a missing_extensions alert
-    # AssertionError: Unexpected message from peer: Handshake(server_hello)
-    Test("test-tls13-keyshare-omitted.py"),
 
     # https://github.com/openssl/openssl/issues/8369
     Test("test-tls13-obsolete-curves.py"),
