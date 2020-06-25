@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.60 2020/06/24 06:19:06 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.61 2020/06/25 03:19:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1205,6 +1205,34 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 	return 0;
 }
 
+static int
+vmx_rxr_info(struct vmxnet3_softc *sc, struct if_rxrinfo *ifri)
+{
+	struct if_rxring_info *ifrs, *ifr;
+	int error;
+	unsigned int i;
+
+	ifrs = mallocarray(sc->sc_nqueues, sizeof(*ifrs),
+	    M_TEMP, M_WAITOK|M_ZERO|M_CANFAIL);
+	if (ifrs == NULL)
+		return (ENOMEM);
+
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct if_rxring *rxr = &sc->sc_q[i].rx.cmd_ring[0].rxr;
+		ifr = &ifrs[i];
+
+		ifr->ifr_size = JUMBO_LEN;
+		snprintf(ifr->ifr_name, sizeof(ifr->ifr_name), "%u", i);
+		ifr->ifr_info = *rxr;
+	}
+
+	error = if_rxr_info_ioctl(ifri, i, ifrs);
+
+	free(ifrs, M_TEMP, i * sizeof(*ifrs));
+
+	return (error);
+}
+
 int
 vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -1236,8 +1264,7 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 	case SIOCGIFRXR:
-		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
-		    NULL, JUMBO_LEN, &sc->sc_q[0].rx.cmd_ring[0].rxr);
+		error = vmx_rxr_info(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
