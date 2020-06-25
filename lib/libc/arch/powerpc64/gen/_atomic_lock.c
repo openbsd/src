@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.1 2020/06/25 02:03:55 drahn Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.2 2020/06/25 02:22:31 drahn Exp $	*/
 /*
  * Copyright (c) 1998 Dale Rahn <drahn@openbsd.org>
  *
@@ -26,8 +26,8 @@ _atomic_lock(volatile _atomic_lock_t *lock)
 {
 	_atomic_lock_t old;
 
-	__asm__("1: ldarx 0,0,%1   \n"
-		"   stdcx. %2,0,%1 \n"
+	__asm__("1: lwarx 0,0,%1   \n"
+		"   stwcx. %2,0,%1 \n"
 		"   bne- 1b        \n"
 		"   mr %0, 0	   \n"
 		: "=r" (old), "=r" (lock)
@@ -39,9 +39,9 @@ _atomic_lock(volatile _atomic_lock_t *lock)
 	/*
 	 * Dale <drahn@openbsd.org> says:
 	 *   Side note. to prevent two processes from accessing
-	 *   the same address with the ldarx in one instruction
-	 *   and the stdcx in another process, the current powerpc
-	 *   kernel uses a stdcx instruction without the corresponding
+	 *   the same address with the lwarx in one instruction
+	 *   and the stwcx in another process, the current powerpc
+	 *   kernel uses a stwcx instruction without the corresponding
 	 *   lwarx which causes any reservation of a process
 	 *   to be removed.  if a context switch occurs
 	 *   between the two accesses the store will not occur
