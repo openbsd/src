@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.101 2020/06/05 14:47:26 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.102 2020/06/25 13:05:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -32,9 +32,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <openssl/pem.h>
-#include <openssl/evp.h>
-
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -67,11 +64,6 @@ static struct file {
 	int			 lineno;
 	int			 errors;
 } *file, *topfile;
-EVP_PKEY	*wrap_pubkey(FILE *);
-EVP_PKEY	*find_pubkey(const char *);
-int		 set_policy(char *, int, struct iked_policy *);
-int		 set_policy_auth_method(const char *, EVP_PKEY *,
-		     struct iked_policy *);
 struct file	*pushfile(const char *, int);
 int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
@@ -1893,185 +1885,6 @@ get_id_type(char *string)
 		return (IKEV2_ID_FQDN);
 }
 
-EVP_PKEY *
-wrap_pubkey(FILE *fp)
-{
-	EVP_PKEY	*key = NULL;
-	struct rsa_st	*rsa = NULL;
-
-	key = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
-	if (key == NULL) {
-		/* reading PKCS #8 failed, try PEM */
-		rewind(fp);
-		rsa = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
-		fclose(fp);
-		if (rsa == NULL)
-			return (NULL);
-		if ((key = EVP_PKEY_new()) == NULL) {
-			RSA_free(rsa);
-			return (NULL);
-		}
-		if (!EVP_PKEY_set1_RSA(key, rsa)) {
-			RSA_free(rsa);
-			EVP_PKEY_free(key);
-			return (NULL);
-		}
-		/* Always free RSA *rsa */
-		RSA_free(rsa);
-	} else {
-		fclose(fp);
-	}
-
-	return (key);
-}
-
-EVP_PKEY *
-find_pubkey(const char *keyfile)
-{
-	FILE		*fp = NULL;
-	if ((fp = fopen(keyfile, "r")) == NULL)
-		return (NULL);
-
-	return (wrap_pubkey(fp));
-}
-
-int
-set_policy_auth_method(const char *peerid, EVP_PKEY *key,
-    struct iked_policy *pol)
-{
-	struct rsa_st		*rsa;
-	EC_KEY			*ec_key;
-	u_int8_t		 method;
-	u_int8_t		 cert_type;
-	struct iked_auth	*ikeauth;
-
-	method = IKEV2_AUTH_NONE;
-	cert_type = IKEV2_CERT_NONE;
-
-	if (key != NULL) {
-		/* infer policy from key type */
-		if ((rsa = EVP_PKEY_get1_RSA(key)) != NULL) {
-			method = IKEV2_AUTH_RSA_SIG;
-			cert_type = IKEV2_CERT_RSA_KEY;
-			RSA_free(rsa);
-		} else if ((ec_key = EVP_PKEY_get1_EC_KEY(key)) != NULL) {
-			const EC_GROUP *group = EC_KEY_get0_group(ec_key);
-			if (group == NULL) {
-				EC_KEY_free(ec_key);
-				return (-1);
-			}
-			switch (EC_GROUP_get_degree(group)) {
-			case 256:
-				method = IKEV2_AUTH_ECDSA_256;
-				break;
-			case 384:
-				method = IKEV2_AUTH_ECDSA_384;
-				break;
-			case 521:
-				method = IKEV2_AUTH_ECDSA_521;
-				break;
-			default:
-				EC_KEY_free(ec_key);
-				return (-1);
-			}
-			cert_type = IKEV2_CERT_ECDSA;
-			EC_KEY_free(ec_key);
-		}
-
-		if (method == IKEV2_AUTH_NONE || cert_type == IKEV2_CERT_NONE)
-			return (-1);
-	} else {
-		/* default to IKEV2_CERT_X509_CERT otherwise */
-		method = IKEV2_AUTH_SIG;
-		cert_type = IKEV2_CERT_X509_CERT;
-	}
-
-	ikeauth = &pol->pol_auth;
-
-	if (ikeauth->auth_method == IKEV2_AUTH_SHARED_KEY_MIC) {
-		if (key != NULL &&
-		    method != IKEV2_AUTH_RSA_SIG)
-			goto mismatch;
-		return (0);
-	}
-
-	if (ikeauth->auth_method != IKEV2_AUTH_NONE &&
-	    ikeauth->auth_method != IKEV2_AUTH_SIG_ANY &&
-	    ikeauth->auth_method != method)
-		goto mismatch;
-
-	ikeauth->auth_method = method;
-	pol->pol_certreqtype = cert_type;
-
-	log_debug("%s: using %s for peer %s", __func__,
-	    print_xf(method, 0, methodxfs), peerid);
-
-	return (0);
-
- mismatch:
-	log_warnx("%s: ikeauth policy mismatch, %s specified, but only %s "
-	    "possible", __func__, print_xf(ikeauth->auth_method, 0, methodxfs),
-	    print_xf(method, 0, methodxfs));
-	return (-1);
-}
-
-int
-set_policy(char *idstr, int type, struct iked_policy *pol)
-{
-	char		 keyfile[PATH_MAX];
-	const char	*prefix = NULL;
-	EVP_PKEY	*key = NULL;
-
-	switch (type) {
-	case IKEV2_ID_IPV4:
-		prefix = "ipv4";
-		break;
-	case IKEV2_ID_IPV6:
-		prefix = "ipv6";
-		break;
-	case IKEV2_ID_FQDN:
-		prefix = "fqdn";
-		break;
-	case IKEV2_ID_UFQDN:
-		prefix = "ufqdn";
-		break;
-	case IKEV2_ID_ASN1_DN:
-		/* public key authentication is not supported with ASN.1 IDs */
-		goto done;
-	default:
-		/* Unspecified ID or public key not supported for this type */
-		log_debug("%s: unknown type = %d", __func__, type);
-		return (-1);
-	}
-
-	if ((size_t)snprintf(keyfile, sizeof(keyfile),
-	    IKED_CA IKED_PUBKEY_DIR "%s/%s", prefix,
-	    idstr) >= sizeof(keyfile)) {
-		log_warnx("%s: public key path is too long", __func__);
-		return (-1);
-	}
-
-	if ((key = find_pubkey(keyfile)) == NULL) {
-		log_warnx("%s: could not find pubkey for %s", __func__,
-		    keyfile);
-	}
-
- done:
-	if (set_policy_auth_method(keyfile, key, pol) < 0) {
-		EVP_PKEY_free(key);
-		log_warnx("%s: failed to set policy auth method for %s",
-		    __func__, keyfile);
-		return (-1);
-	}
-
-	if (key != NULL) {
-		EVP_PKEY_free(key);
-		log_debug("%s: found pubkey for %s", __func__, keyfile);
-	}
-
-	return (0);
-}
-
 struct ipsec_addr_wrap *
 host(const char *s)
 {
@@ -2757,6 +2570,7 @@ create_ike(char *name, int af, uint8_t ipproto,
 	char			 idstr[IKED_ID_SIZE];
 	unsigned int		 idtype = IKEV2_ID_NONE;
 	struct ipsec_addr_wrap	*ipa, *ipb, *ippn;
+	struct iked_auth	*ikeauth;
 	struct iked_policy	 pol;
 	struct iked_proposal	*p, *ptmp;
 	struct iked_transform	*xf;
@@ -3185,11 +2999,23 @@ create_ike(char *name, int af, uint8_t ipproto,
 		}
 	}
 
-	/* Make sure that we know how to authenticate this peer */
-	if (idtype && set_policy(idstr, idtype, &pol) < 0) {
-		log_debug("%s: set_policy failed", __func__);
-		goto done;
+	ikeauth = &pol.pol_auth;
+	switch (ikeauth->auth_method) {
+	case IKEV2_AUTH_RSA_SIG:
+		pol.pol_certreqtype = IKEV2_CERT_RSA_KEY;
+		break;
+	case IKEV2_AUTH_ECDSA_256:
+	case IKEV2_AUTH_ECDSA_384:
+	case IKEV2_AUTH_ECDSA_521:
+		pol.pol_certreqtype = IKEV2_CERT_ECDSA;
+		break;
+	default:
+		pol.pol_certreqtype = IKEV2_CERT_NONE;
+		break;
 	}
+
+	log_debug("%s: using %s for peer %s", __func__,
+	    print_xf(ikeauth->auth_method, 0, methodxfs), idstr);
 
 	config_setpolicy(env, &pol, PROC_IKEV2);
 	config_setflow(env, &pol, PROC_IKEV2);
