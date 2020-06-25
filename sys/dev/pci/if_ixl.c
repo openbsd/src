@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.53 2020/06/25 04:55:41 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.54 2020/06/25 05:18:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -192,6 +192,10 @@ struct ixl_aq_desc {
 #define IXL_AQ_OP_LLDP_START_AGENT	0x0a06
 #define IXL_AQ_OP_LLDP_GET_CEE_DCBX	0x0a07
 #define IXL_AQ_OP_LLDP_SPECIFIC_AGENT	0x0a09
+#define IXL_AQ_OP_SET_RSS_KEY		0x0b02 /* 722 only */
+#define IXL_AQ_OP_SET_RSS_LUT		0x0b03 /* 722 only */
+#define IXL_AQ_OP_GET_RSS_KEY		0x0b04 /* 722 only */
+#define IXL_AQ_OP_GET_RSS_LUT		0x0b05 /* 722 only */
 
 struct ixl_aq_mac_addresses {
 	uint8_t		pf_lan[ETHER_ADDR_LEN];
@@ -708,6 +712,35 @@ struct ixl_aq_link_status { /* this occupies the iaq_param space */
 #define IXL_AQ_PHY_EV_MODULE_QUAL_FAIL	(1 << 8)
 #define IXL_AQ_PHY_EV_PORT_TX_SUSPENDED	(1 << 9)
 
+struct ixl_aq_rss_lut { /* 722 */
+#define IXL_AQ_SET_RSS_LUT_VSI_VALID	(1 << 15)
+#define IXL_AQ_SET_RSS_LUT_VSI_ID_SHIFT	0
+#define IXL_AQ_SET_RSS_LUT_VSI_ID_MASK	\
+	(0x3FF << IXL_AQ_SET_RSS_LUT_VSI_ID_SHIFT)
+
+	uint16_t	vsi_number;
+#define IXL_AQ_SET_RSS_LUT_TABLE_TYPE_SHIFT 0
+#define IXL_AQ_SET_RSS_LUT_TABLE_TYPE_MASK \
+	(0x1 << IXL_AQ_SET_RSS_LUT_TABLE_TYPE_SHIFT)
+#define IXL_AQ_SET_RSS_LUT_TABLE_TYPE_VSI	0
+#define IXL_AQ_SET_RSS_LUT_TABLE_TYPE_PF	1
+	uint16_t	flags;
+	uint8_t		_reserved[4];
+	uint32_t	addr_hi;
+	uint32_t	addr_lo;
+} __packed __aligned(16);
+
+struct ixl_aq_get_set_rss_key { /* 722 */
+#define IXL_AQ_SET_RSS_KEY_VSI_VALID	(1 << 15)
+#define IXL_AQ_SET_RSS_KEY_VSI_ID_SHIFT	0
+#define IXL_AQ_SET_RSS_KEY_VSI_ID_MASK	\
+	(0x3FF << IXL_AQ_SET_RSS_KEY_VSI_ID_SHIFT)
+	uint16_t	vsi_number;
+	uint8_t		_reserved[6];
+	uint32_t	addr_hi;
+	uint32_t	addr_lo;
+} __packed __aligned(16);
+
 /* aq response codes */
 #define IXL_AQ_RC_OK			0  /* success */
 #define IXL_AQ_RC_EPERM			1  /* Operation not permitted */
@@ -861,6 +894,32 @@ struct ixl_rx_wb_desc_32 {
 #define IXL_AQ_MASK			(IXL_AQ_NUM - 1)
 #define IXL_AQ_ALIGN			64 /* lol */
 #define IXL_AQ_BUFLEN			4096
+
+/* Packet Classifier Types for filters */
+/* bits 0-28 are reserved for future use */
+#define IXL_PCT_NONF_IPV4_UDP_UCAST	(1ULL << 29)	/* 722 */
+#define IXL_PCT_NONF_IPV4_UDP_MCAST	(1ULL << 30)	/* 722 */
+#define IXL_PCT_NONF_IPV4_UDP		(1ULL << 31)
+#define IXL_PCT_NONF_IPV4_TCP_SYN_NOACK	(1ULL << 32)	/* 722 */
+#define IXL_PCT_NONF_IPV4_TCP		(1ULL << 33)
+#define IXL_PCT_NONF_IPV4_SCTP		(1ULL << 34)
+#define IXL_PCT_NONF_IPV4_OTHER		(1ULL << 35)
+#define IXL_PCT_FRAG_IPV4		(1ULL << 36)
+/* bits 37-38 are reserved for future use */
+#define IXL_PCT_NONF_IPV6_UDP_UCAST	(1ULL << 39)	/* 722 */
+#define IXL_PCT_NONF_IPV6_UDP_MCAST	(1ULL << 40)	/* 722 */
+#define IXL_PCT_NONF_IPV6_UDP		(1ULL << 41)
+#define IXL_PCT_NONF_IPV6_TCP_SYN_NOACK	(1ULL << 42)	/* 722 */
+#define IXL_PCT_NONF_IPV6_TCP		(1ULL << 43)
+#define IXL_PCT_NONF_IPV6_SCTP		(1ULL << 44)
+#define IXL_PCT_NONF_IPV6_OTHER		(1ULL << 45)
+#define IXL_PCT_FRAG_IPV6		(1ULL << 46)
+/* bit 47 is reserved for future use */
+#define IXL_PCT_FCOE_OX			(1ULL << 48)
+#define IXL_PCT_FCOE_RX			(1ULL << 49)
+#define IXL_PCT_FCOE_OTHER		(1ULL << 50)
+/* bits 51-62 are reserved for future use */
+#define IXL_PCT_L2_PAYLOAD		(1ULL << 63)
 
 #define IXL_HMC_ROUNDUP			512
 #define IXL_HMC_PGSIZE			4096
