@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.54 2020/06/25 05:18:14 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.55 2020/06/25 05:27:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -921,6 +921,28 @@ struct ixl_rx_wb_desc_32 {
 /* bits 51-62 are reserved for future use */
 #define IXL_PCT_L2_PAYLOAD		(1ULL << 63)
 
+#define IXL_RSS_HENA_BASE_DEFAULT		\
+	IXL_PCT_NONF_IPV4_UDP |			\
+	IXL_PCT_NONF_IPV4_TCP |			\
+	IXL_PCT_NONF_IPV4_SCTP |		\
+	IXL_PCT_NONF_IPV4_OTHER |		\
+	IXL_PCT_FRAG_IPV4 |			\
+	IXL_PCT_NONF_IPV6_UDP |			\
+	IXL_PCT_NONF_IPV6_TCP |			\
+	IXL_PCT_NONF_IPV6_SCTP |		\
+	IXL_PCT_NONF_IPV6_OTHER |		\
+	IXL_PCT_FRAG_IPV6 |			\
+	IXL_PCT_L2_PAYLOAD
+
+#define IXL_RSS_HENA_BASE_710		IXL_RSS_HENA_BASE_DEFAULT
+#define IXL_RSS_HENA_BASE_722		IXL_RSS_HENA_BASE_DEFAULT | \
+	IXL_PCT_NONF_IPV4_UDP_UCAST |		\
+	IXL_PCT_NONF_IPV4_UDP_MCAST |		\
+	IXL_PCT_NONF_IPV6_UDP_UCAST |		\
+	IXL_PCT_NONF_IPV6_UDP_MCAST |		\
+	IXL_PCT_NONF_IPV4_TCP_SYN_NOACK |	\
+	IXL_PCT_NONF_IPV6_TCP_SYN_NOACK
+
 #define IXL_HMC_ROUNDUP			512
 #define IXL_HMC_PGSIZE			4096
 #define IXL_HMC_DVASZ			sizeof(uint64_t)
@@ -1449,15 +1471,15 @@ ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
 static struct rwlock ixl_sff_lock = RWLOCK_INITIALIZER("ixlsff");
 
 struct ixl_chip {
-	const char		*ic_name;
+	uint64_t		 ic_rss_hena;
 };
 
 static const struct ixl_chip ixl_710 = {
-	.ic_name =		"710",
+	.ic_rss_hena = 		IXL_RSS_HENA_BASE_710,
 };
 
 static const struct ixl_chip ixl_722 = {
-	.ic_name =		"722",
+	.ic_rss_hena = 		IXL_RSS_HENA_BASE_722,
 };
 
 struct ixl_device {
