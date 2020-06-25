@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.30 2020/06/23 01:21:29 jmatthew Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.31 2020/06/25 21:43:41 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -554,15 +554,15 @@ vpci_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 
 	for (i = 0; i < pbm->vp_nrange; i++) {
 		bus_addr_t child, paddr;
-		bus_size_t size;
+		bus_size_t rsize;
 
 		if (((pbm->vp_range[i].cspace >> 24) & 0x03) != ss)
 			continue;
 		child = pbm->vp_range[i].child_lo;
 		child |= ((bus_addr_t)pbm->vp_range[i].child_hi) << 32;
-		size = pbm->vp_range[i].size_lo;
-		size |= ((bus_size_t)pbm->vp_range[i].size_hi) << 32;
-		if (offset < child || offset >= child + size)
+		rsize = pbm->vp_range[i].size_lo;
+		rsize |= ((bus_size_t)pbm->vp_range[i].size_hi) << 32;
+		if (offset < child || offset >= child + rsize)
 			continue;
 
 		paddr = pbm->vp_range[i].phys_lo;
