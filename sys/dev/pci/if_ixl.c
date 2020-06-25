@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.56 2020/06/25 06:41:38 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.57 2020/06/25 09:11:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -4898,8 +4898,10 @@ ixl_710_wr_ctl(struct ixl_softc *sc, uint32_t r, uint32_t v)
 	ixl_atq_exec(sc, &iatq, "ixl710wr");
 
 	retval = lemtoh16(&iaq->iaq_retval);
-	if (retval != IXL_AQ_RC_OK)
-		printf("%s: %s failed (%u)\n", DEVNAME(sc), __func__, retval);
+	if (retval != IXL_AQ_RC_OK) {
+		printf("%s: %s %08x=%08x failed (%u)\n",
+		    DEVNAME(sc), __func__, r, v, retval);
+	}
 }
 
 static int
@@ -4919,7 +4921,7 @@ ixl_710_set_rss_lut(struct ixl_softc *sc, const struct ixl_rss_lut_128 *lut)
 	unsigned int i;
 
 	for (i = 0; i < nitems(lut->entries); i++)
-		ixl_710_wr_ctl(sc, I40E_PFQF_HLUT(i), lut->entries[i]);
+		ixl_wr(sc, I40E_PFQF_HLUT(i), lut->entries[i]);
 
 	return (0);
 }
