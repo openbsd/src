@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvmdio.c,v 1.1 2017/08/25 20:09:34 patrick Exp $	*/
+/*	$OpenBSD: mvmdio.c,v 1.2 2020/06/25 12:39:19 patrick Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -37,7 +37,9 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/fdt/if_mvnetareg.h>
@@ -56,15 +58,14 @@ struct mvmdio_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct mutex sc_mtx;
+	struct mii_bus sc_mii;
 };
-
-struct mvmdio_softc *mvmdio_sc;
 
 static int mvmdio_match(struct device *, void *, void *);
 static void mvmdio_attach(struct device *, struct device *, void *);
 
-int mvmdio_miibus_readreg(struct device *, int, int);
-void mvmdio_miibus_writereg(struct device *, int, int, int);
+int mvmdio_smi_readreg(struct device *, int, int);
+void mvmdio_smi_writereg(struct device *, int, int, int);
 
 struct cfdriver mvmdio_cd = {
 	NULL, "mvmdio", DV_DULL
@@ -96,14 +97,19 @@ mvmdio_attach(struct device *parent, struct device *self, void *aux)
 		panic("%s: cannot map registers", sc->sc_dev.dv_xname);
 
 	pinctrl_byname(faa->fa_node, "default");
+	clock_enable_all(faa->fa_node);
 
 	mtx_init(&sc->sc_mtx, IPL_NET);
 
-	mvmdio_sc = sc;
+	sc->sc_mii.md_node = faa->fa_node;
+	sc->sc_mii.md_cookie = sc;
+	sc->sc_mii.md_readreg = mvmdio_smi_readreg;
+	sc->sc_mii.md_writereg = mvmdio_smi_writereg;
+	mii_register(&sc->sc_mii);
 }
 
 int
-mvmdio_miibus_readreg(struct device *dev, int phy, int reg)
+mvmdio_smi_readreg(struct device *dev, int phy, int reg)
 {
 	struct mvmdio_softc *sc = (struct mvmdio_softc *) dev;
 	uint32_t smi, val;
@@ -141,7 +147,7 @@ mvmdio_miibus_readreg(struct device *dev, int phy, int reg)
 }
 
 void
-mvmdio_miibus_writereg(struct device *dev, int phy, int reg, int val)
+mvmdio_smi_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct mvmdio_softc *sc = (struct mvmdio_softc *) dev;
 	uint32_t smi;
