@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.55 2020/06/25 05:27:15 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.56 2020/06/25 06:41:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -70,6 +70,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
+#include <net/toeplitz.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -166,6 +167,8 @@ struct ixl_aq_desc {
 #define IXL_AQ_OP_MAC_ADDRESS_READ	0x0107
 #define IXL_AQ_OP_CLEAR_PXE_MODE	0x0110
 #define IXL_AQ_OP_SWITCH_GET_CONFIG	0x0200
+#define IXL_AQ_OP_RX_CTL_READ		0x0206
+#define IXL_AQ_OP_RX_CTL_WRITE		0x0207
 #define IXL_AQ_OP_ADD_VSI		0x0210
 #define IXL_AQ_OP_UPD_VSI_PARAMS	0x0211
 #define IXL_AQ_OP_GET_VSI_PARAMS	0x0212
@@ -1136,7 +1139,22 @@ static const struct ixl_hmc_pack ixl_hmc_pack_txq[] = {
 
 #define IXL_HMC_TXQ_MINSIZE (94 + (7*128) + 1)
 
+struct ixl_rss_key {
+	uint32_t		 key[13];
+};
+
+struct ixl_rss_lut_128 {
+	uint32_t		 entries[128 / sizeof(uint32_t)];
+};
+
+struct ixl_rss_lut_512 {
+	uint32_t		 entries[512 / sizeof(uint32_t)];
+};
+
+/* driver structures */
+
 struct ixl_vector;
+struct ixl_chip;
 
 struct ixl_tx_map {
 	struct mbuf		*txm_m;
@@ -1203,6 +1221,7 @@ struct ixl_vector {
 
 struct ixl_softc {
 	struct device		 sc_dev;
+	const struct ixl_chip	*sc_chip;
 	struct arpcom		 sc_ac;
 	struct ifmedia		 sc_media;
 	uint64_t		 sc_media_status;
@@ -1470,17 +1489,85 @@ ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
 
 static struct rwlock ixl_sff_lock = RWLOCK_INITIALIZER("ixlsff");
 
+/* deal with differences between chips */
+
 struct ixl_chip {
-	uint64_t		 ic_rss_hena;
+	uint64_t		  ic_rss_hena;
+	uint32_t		(*ic_rd_ctl)(struct ixl_softc *, uint32_t);
+	void			(*ic_wr_ctl)(struct ixl_softc *, uint32_t,
+				      uint32_t);
+
+	int			(*ic_set_rss_key)(struct ixl_softc *,
+				      const struct ixl_rss_key *);
+	int			(*ic_set_rss_lut)(struct ixl_softc *,
+				      const struct ixl_rss_lut_128 *);
 };
+
+static inline uint64_t
+ixl_rss_hena(struct ixl_softc *sc)
+{
+	return (sc->sc_chip->ic_rss_hena);
+}
+
+static inline uint32_t
+ixl_rd_ctl(struct ixl_softc *sc, uint32_t r)
+{
+	return ((*sc->sc_chip->ic_rd_ctl)(sc, r));
+}
+
+static inline void
+ixl_wr_ctl(struct ixl_softc *sc, uint32_t r, uint32_t v)
+{
+	(*sc->sc_chip->ic_wr_ctl)(sc, r, v);
+}
+
+static inline int
+ixl_set_rss_key(struct ixl_softc *sc, const struct ixl_rss_key *rsskey)
+{
+	return ((*sc->sc_chip->ic_set_rss_key)(sc, rsskey));
+}
+
+static inline int
+ixl_set_rss_lut(struct ixl_softc *sc, const struct ixl_rss_lut_128 *lut)
+{
+	return ((*sc->sc_chip->ic_set_rss_lut)(sc, lut));
+}
+
+/* 710 chip specifics */
+
+static uint32_t		ixl_710_rd_ctl(struct ixl_softc *, uint32_t);
+static void		ixl_710_wr_ctl(struct ixl_softc *, uint32_t, uint32_t);
+static int		ixl_710_set_rss_key(struct ixl_softc *,
+			    const struct ixl_rss_key *);
+static int		ixl_710_set_rss_lut(struct ixl_softc *,
+			    const struct ixl_rss_lut_128 *);
 
 static const struct ixl_chip ixl_710 = {
 	.ic_rss_hena = 		IXL_RSS_HENA_BASE_710,
+	.ic_rd_ctl =		ixl_710_rd_ctl,
+	.ic_wr_ctl =		ixl_710_wr_ctl,
+	.ic_set_rss_key =	ixl_710_set_rss_key,
+	.ic_set_rss_lut =	ixl_710_set_rss_lut,
 };
+
+/* 722 chip specifics */
+
+static uint32_t		ixl_722_rd_ctl(struct ixl_softc *, uint32_t);
+static void		ixl_722_wr_ctl(struct ixl_softc *, uint32_t, uint32_t);
+static int		ixl_722_set_rss_key(struct ixl_softc *,
+			    const struct ixl_rss_key *);
+static int		ixl_722_set_rss_lut(struct ixl_softc *,
+			    const struct ixl_rss_lut_128 *);
 
 static const struct ixl_chip ixl_722 = {
 	.ic_rss_hena = 		IXL_RSS_HENA_BASE_722,
+	.ic_rd_ctl =		ixl_722_rd_ctl,
+	.ic_wr_ctl =		ixl_722_wr_ctl,
+	.ic_set_rss_key =	ixl_722_set_rss_key,
+	.ic_set_rss_lut =	ixl_722_set_rss_lut,
 };
+
+/* driver code */
 
 struct ixl_device {
 	const struct ixl_chip	*id_chip;
@@ -1546,6 +1633,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 
 	rw_init(&sc->sc_cfg_lock, "ixlcfg");
 
+	sc->sc_chip = ixl_device_lookup(pa)->id_chip;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
@@ -2053,6 +2141,53 @@ ixl_hmc_len(struct ixl_softc *sc, unsigned int type)
 }
 
 static int
+ixl_configure_rss(struct ixl_softc *sc)
+{
+	struct ixl_rss_key rsskey;
+	struct ixl_rss_lut_128 lut;
+	uint8_t *lute = (uint8_t *)&lut;
+	uint64_t rss_hena;
+	unsigned int i, nqueues;
+	int error;
+
+#if 0
+	/* if we want to do a 512 entry LUT, do this. */
+	uint32_t v = ixl_rd_ctl(sc, I40E_PFQF_CTL_0);
+	SET(v, I40E_PFQF_CTL_0_HASHLUTSIZE_MASK);
+	ixl_wr_ctl(sc, I40E_PFQF_CTL_0, v);
+#endif
+
+	stoeplitz_to_key(&rsskey, sizeof(rsskey));
+
+	nqueues = ixl_nqueues(sc);
+	for (i = 0; i < sizeof(lut); i++) {
+		/*
+                 * ixl must have a power of 2 rings, so using mod
+                 * to populate the table is fine.
+		 */
+		lute[i] = i % nqueues;
+	}
+
+	error = ixl_set_rss_key(sc, &rsskey);
+	if (error != 0)
+		return (error);
+
+	rss_hena = (uint64_t)ixl_rd_ctl(sc, I40E_PFQF_HENA(0));
+	rss_hena |= (uint64_t)ixl_rd_ctl(sc, I40E_PFQF_HENA(1)) << 32;
+	rss_hena |= ixl_rss_hena(sc);
+	ixl_wr_ctl(sc, I40E_PFQF_HENA(0), rss_hena);
+	ixl_wr_ctl(sc, I40E_PFQF_HENA(1), rss_hena >> 32);
+
+	error = ixl_set_rss_lut(sc, &lut);
+	if (error != 0)
+		return (error);
+
+	/* nothing to clena up :( */
+
+	return (0);
+}
+
+static int
 ixl_up(struct ixl_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -2137,6 +2272,8 @@ ixl_up(struct ixl_softc *sc)
 		if (ixl_txr_enabled(sc, txr) != 0)
 			goto down;
 	}
+
+	ixl_configure_rss(sc);
 
 	SET(ifp->if_flags, IFF_RUNNING);
 
@@ -4716,6 +4853,101 @@ ixl_pf_reset(struct ixl_softc *sc)
 			return (-1);
 		}
 	}
+
+	return (0);
+}
+
+static uint32_t
+ixl_710_rd_ctl(struct ixl_softc *sc, uint32_t r)
+{
+	/* XXX this should fall back to registers for api < 1.5 */
+	struct ixl_atq iatq;
+	struct ixl_aq_desc *iaq;
+	uint16_t retval;
+
+	memset(&iatq, 0, sizeof(iatq));
+	iaq = &iatq.iatq_desc;
+	iaq->iaq_opcode = htole16(IXL_AQ_OP_RX_CTL_READ);
+	htolem32(&iaq->iaq_param[1], r);
+
+	ixl_atq_exec(sc, &iatq, "ixl710rd");
+
+	retval = lemtoh16(&iaq->iaq_retval);
+	if (retval != IXL_AQ_RC_OK) {
+		printf("%s: %s failed (%u)\n", DEVNAME(sc), __func__, retval);
+		return (~0U);
+	}
+
+	return (lemtoh32(&iaq->iaq_param[3]));
+}
+
+static void
+ixl_710_wr_ctl(struct ixl_softc *sc, uint32_t r, uint32_t v)
+{
+	/* XXX this should fall back to registers for api < 1.5 */
+	struct ixl_atq iatq;
+	struct ixl_aq_desc *iaq;
+	uint16_t retval;
+
+	memset(&iatq, 0, sizeof(iatq));
+	iaq = &iatq.iatq_desc;
+	iaq->iaq_opcode = htole16(IXL_AQ_OP_RX_CTL_WRITE);
+	htolem32(&iaq->iaq_param[1], r);
+	htolem32(&iaq->iaq_param[3], v);
+
+	ixl_atq_exec(sc, &iatq, "ixl710wr");
+
+	retval = lemtoh16(&iaq->iaq_retval);
+	if (retval != IXL_AQ_RC_OK)
+		printf("%s: %s failed (%u)\n", DEVNAME(sc), __func__, retval);
+}
+
+static int
+ixl_710_set_rss_key(struct ixl_softc *sc, const struct ixl_rss_key *rsskey)
+{
+	unsigned int i;
+
+	for (i = 0; i < nitems(rsskey->key); i++)
+		ixl_710_wr_ctl(sc, I40E_PFQF_HKEY(i), rsskey->key[i]);
+
+	return (0);
+}
+
+static int
+ixl_710_set_rss_lut(struct ixl_softc *sc, const struct ixl_rss_lut_128 *lut)
+{
+	unsigned int i;
+
+	for (i = 0; i < nitems(lut->entries); i++)
+		ixl_710_wr_ctl(sc, I40E_PFQF_HLUT(i), lut->entries[i]);
+
+	return (0);
+}
+
+static uint32_t
+ixl_722_rd_ctl(struct ixl_softc *sc, uint32_t r)
+{
+	return (ixl_rd(sc, r));
+}
+
+static void
+ixl_722_wr_ctl(struct ixl_softc *sc, uint32_t r, uint32_t v)
+{
+	ixl_wr(sc, r, v);
+}
+
+static int
+ixl_722_set_rss_key(struct ixl_softc *sc, const struct ixl_rss_key *rsskey)
+{
+	/* XXX */
+
+	return (0);
+}
+
+static int
+ixl_722_set_rss_lut(struct ixl_softc *sc, const struct ixl_rss_lut_128 *lut)
+{
+	/* XXX */
 
 	return (0);
 }
