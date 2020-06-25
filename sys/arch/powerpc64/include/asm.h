@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.2 2020/06/25 01:55:14 drahn Exp $	*/
+/*	$OpenBSD: asm.h,v 1.3 2020/06/25 09:03:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -22,9 +22,9 @@
 #define _C_LABEL(x)	x
 #define _ASM_LABEL(x)	x
 
-# define _TMP_LABEL(x)	.L_ ## x
-# define _GEP_LABEL(x)  .L_ ## x ## _gep0
-# define _LEP_LABEL(x)  .L_ ## x ## _lep0
+#define _TMP_LABEL(x)	.L_ ## x
+#define _GEP_LABEL(x)	.L_ ## x ## _gep0
+#define _LEP_LABEL(x)	.L_ ## x ## _lep0
 
 #define _ENTRY(x)						\
 	.text; .align 2; .globl x; .type x,@function; x:	\
