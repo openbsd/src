@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.104 2020/06/24 23:56:01 kn Exp $	 */
+/* $OpenBSD: machine.c,v 1.105 2020/06/25 20:38:41 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -64,7 +64,6 @@ static char	**get_proc_args(struct kinfo_proc *);
 
 struct handle {
 	struct kinfo_proc **next_proc;	/* points to next valid proc pointer */
-	int		remaining;	/* number of pointers remaining */
 };
 
 /* what we consider to be process size: */
@@ -493,7 +492,6 @@ get_process_info(struct system_info *si, struct process_select *sel,
 
 	/* pass back a handle */
 	handle.next_proc = pref;
-	handle.remaining = active_procs;
 	return &handle;
 }
 
@@ -539,11 +537,9 @@ format_comm(struct kinfo_proc *kp)
 }
 
 void
-skip_next_process(struct handle *hndl)
+skip_processes(struct handle *hndl, int n)
 {
-	/* find and remember the next proc structure */
-	hndl->next_proc++;
-	hndl->remaining--;
+	hndl->next_proc += n;
 }
 
 char *
@@ -558,7 +554,6 @@ format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
 
 	/* find and remember the next proc structure */
 	pp = *(hndl->next_proc++);
-	hndl->remaining--;
 
 	cputime = pp->p_rtime_sec + ((pp->p_rtime_usec + 500000) / 1000000);
 
