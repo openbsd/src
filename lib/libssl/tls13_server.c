@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.59 2020/06/24 07:28:38 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.60 2020/06/25 07:35:05 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -108,14 +108,6 @@ tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
 	 */
 
 	/*
-	 * supported_groups and key_share must either both be present or
-	 * both be absent.
-	 */
-	if (tlsext_extension_seen(ssl, TLSEXT_TYPE_supported_groups) !=
-	    tlsext_extension_seen(ssl, TLSEXT_TYPE_key_share))
-		return 0;
-
-	/*
 	 * If we got no pre_shared_key, then signature_algorithms and
 	 * supported_groups must both be present.
 	 */
@@ -125,6 +117,14 @@ tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
 		if (!tlsext_extension_seen(ssl, TLSEXT_TYPE_supported_groups))
 			return 0;
 	}
+
+	/*
+	 * supported_groups and key_share must either both be present or
+	 * both be absent.
+	 */
+	if (tlsext_extension_seen(ssl, TLSEXT_TYPE_supported_groups) !=
+	    tlsext_extension_seen(ssl, TLSEXT_TYPE_key_share))
+		return 0;
 
 	/*
 	 * XXX - Require server_name from client? If so, we SHOULD enforce
