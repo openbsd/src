@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 2020/06/22 18:03:22 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 2020/06/25 17:36:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,8 @@
 
 #ifndef _MACHINE_PMAP_H_
 #define _MACHINE_PMAP_H_
+
+#include <machine/pte.h>
 
 /* V->P mapping data */
 #define VP_IDX1_CNT	256
