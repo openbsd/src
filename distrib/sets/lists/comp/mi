@@ -1,3 +1,4 @@
+./usr/include/dev/fdt/if_mvppreg.h
 ./sys
 ./usr/bin/c++filt
 ./usr/bin/cpp
@@ -141,7 +142,6 @@
 ./usr/include/dev/fdt/imxiicvar.h
 ./usr/include/dev/fdt/imxuartreg.h
 ./usr/include/dev/fdt/imxuartvar.h
-./usr/include/dev/fdt/mvmdiovar.h
 ./usr/include/dev/fdt/mvpinctrl_pins.h
 ./usr/include/dev/fdt/pscivar.h
 ./usr/include/dev/fdt/rkclock_clocks.h

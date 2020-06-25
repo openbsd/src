@@ -1651,6 +1651,7 @@
 ./usr/share/man/man4/mviic.4
 ./usr/share/man/man4/mvneta.4
 ./usr/share/man/man4/mvpinctrl.4
+./usr/share/man/man4/mvpp.4
 ./usr/share/man/man4/mvrng.4
 ./usr/share/man/man4/mvrtc.4
 ./usr/share/man/man4/mvspi.4
