@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.52 2020/06/25 04:37:30 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.53 2020/06/25 04:55:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1389,31 +1389,66 @@ ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
 
 static struct rwlock ixl_sff_lock = RWLOCK_INITIALIZER("ixlsff");
 
-static const struct pci_matchid ixl_devices[] = {
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X710_10G_SFP },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XL710_40G_BP },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X710_10G_BP },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XL710_QSFP_1 },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XL710_QSFP_2 },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X710_10G_QSFP },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X710_10G_BASET },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XL710_20G_BP_1 },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XL710_20G_BP_2 },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X710_T4_10G },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XXV710_25G_BP },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XXV710_25G_SFP28 },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X722_10G_KX },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X722_10G_QSFP },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X722_10G_SFP_1 },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X722_1G },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X722_10G_T },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X722_10G_SFP_2 },
+struct ixl_chip {
+	const char		*ic_name;
 };
+
+static const struct ixl_chip ixl_710 = {
+	.ic_name =		"710",
+};
+
+static const struct ixl_chip ixl_722 = {
+	.ic_name =		"722",
+};
+
+struct ixl_device {
+	const struct ixl_chip	*id_chip;
+	pci_vendor_id_t		 id_vid;
+	pci_product_id_t	 id_pid;
+};
+
+static const struct ixl_device ixl_devices[] = {
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X710_10G_SFP },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_40G_BP },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X710_10G_BP, },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_QSFP_1 },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_QSFP_2 },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X710_10G_QSFP },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X710_10G_BASET },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_20G_BP_1 },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XL710_20G_BP_2 },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X710_T4_10G },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XXV710_25G_BP },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XXV710_25G_SFP28, },
+	{ &ixl_722, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X722_10G_KX },
+	{ &ixl_722, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X722_10G_QSFP },
+	{ &ixl_722, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X722_10G_SFP_1 },
+	{ &ixl_722, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X722_1G },
+	{ &ixl_722, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X722_10G_T },
+	{ &ixl_722, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X722_10G_SFP_2 },
+};
+
+static const struct ixl_device *
+ixl_device_lookup(struct pci_attach_args *pa)
+{
+	pci_vendor_id_t vid = PCI_VENDOR(pa->pa_id);
+	pci_product_id_t pid = PCI_PRODUCT(pa->pa_id);
+	const struct ixl_device *id;
+	unsigned int i;
+
+	for (i = 0; i < nitems(ixl_devices); i++) {
+		id = &ixl_devices[i];
+		if (id->id_vid == vid && id->id_pid == pid)
+			return (id);
+	}
+
+	return (NULL);
+}
 
 static int
 ixl_match(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid(aux, ixl_devices, nitems(ixl_devices)));
+	return (ixl_device_lookup(aux) != NULL);
 }
 
 void
