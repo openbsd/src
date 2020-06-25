@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.2 2020/06/25 12:39:19 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.3 2020/06/25 22:10:06 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -3285,7 +3285,7 @@ mvpp2_prs_tcam_first_free(struct mvpp2_softc *sc, uint8_t start, uint8_t end)
 			return tid;
 	}
 
-	return EINVAL;
+	return -1;
 }
 
 void
@@ -3571,7 +3571,7 @@ mvpp2_prs_double_vlan_ai_free_get(struct mvpp2_softc *sc)
 		if (!sc->sc_prs_double_vlans[i])
 			return i;
 
-	return EINVAL;
+	return -1;
 }
 
 struct mvpp2_prs_entry *
