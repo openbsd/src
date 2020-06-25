@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.21 2020/06/10 23:43:06 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.22 2020/06/25 12:35:21 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -683,6 +683,42 @@ dai_byphandle(uint32_t phandle)
 	LIST_FOREACH(dd, &dai_devices, dd_list) {
 		if (dd->dd_phandle == phandle)
 			return dd;
+	}
+
+	return NULL;
+}
+
+/* MII support */
+
+LIST_HEAD(, mii_bus) mii_busses =
+	LIST_HEAD_INITIALIZER(mii_busses);
+
+void
+mii_register(struct mii_bus *md)
+{
+	LIST_INSERT_HEAD(&mii_busses, md, md_list);
+}
+
+struct mii_bus *
+mii_byphandle(uint32_t phandle)
+{
+	struct mii_bus *md;
+	int node;
+
+	if (phandle == 0)
+		return NULL;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return NULL;
+
+	node = OF_parent(node);
+	if (node == 0)
+		return NULL;
+
+	LIST_FOREACH(md, &mii_busses, md_list) {
+		if (md->md_node == node)
+			return md;
 	}
 
 	return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.13 2020/06/10 23:43:06 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.14 2020/06/25 12:35:21 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -212,5 +212,19 @@ struct dai_device *dai_byphandle(uint32_t);
 #define DAI_CLOCK_CBM			(1 << 0)
 #define DAI_CLOCK_CFS			(0 << 1)
 #define DAI_CLOCK_CFM			(1 << 1)
+
+/* MII support */
+
+struct mii_bus {
+	int	md_node;
+	void	*md_cookie;
+	int	(*md_readreg)(struct device *, int, int);
+	void	(*md_writereg)(struct device *, int, int, int);
+
+	LIST_ENTRY(mii_bus) md_list;
+};
+
+void	mii_register(struct mii_bus *);
+struct mii_bus *mii_byphandle(uint32_t);
 
 #endif /* _DEV_OFW_MISC_H_ */
