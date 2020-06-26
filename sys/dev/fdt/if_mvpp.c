@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.4 2020/06/26 09:30:10 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.5 2020/06/26 09:40:42 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -280,6 +280,7 @@ void	mvpp2_rxtick(void *);
 int	mvpp2_link_intr(void *);
 int	mvpp2_intr(void *);
 void	mvpp2_tx_proc(struct mvpp2_port *, uint8_t);
+void	mvpp2_txq_proc(struct mvpp2_port *, struct mvpp2_tx_queue *);
 void	mvpp2_rx_proc(struct mvpp2_port *, uint8_t);
 void	mvpp2_rxq_proc(struct mvpp2_port *, struct mvpp2_rx_queue *);
 
@@ -1967,22 +1968,52 @@ mvpp2_intr(void *arg)
 void
 mvpp2_tx_proc(struct mvpp2_port *sc, uint8_t queues)
 {
-//	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mvpp2_tx_queue *txq;
-	uint32_t reg;
 	int i;
 
 	for (i = 0; i < sc->sc_ntxq; i++) {
 		txq = &sc->sc_txqs[i];
 		if ((queues & (1 << i)) == 0)
 			continue;
-		reg = mvpp2_read(sc->sc, MVPP2_TXQ_SENT_REG(txq->id));
-		printf("%s: txq %u sent reg %u\n", sc->sc_dev.dv_xname,
-		    i, (reg & MVPP2_TRANSMITTED_COUNT_MASK) >>
-		    MVPP2_TRANSMITTED_COUNT_OFFSET);
+		mvpp2_txq_proc(sc, txq);
+	}
+}
+
+void
+mvpp2_txq_proc(struct mvpp2_port *sc, struct mvpp2_tx_queue *txq)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mvpp2_tx_queue *aggr_txq = &sc->sc->sc_aggr_txqs[0];
+	struct mvpp2_buf *txb;
+	int i, idx, nsent;
+
+	nsent = (mvpp2_read(sc->sc, MVPP2_TXQ_SENT_REG(txq->id)) &
+	    MVPP2_TRANSMITTED_COUNT_MASK) >>
+	    MVPP2_TRANSMITTED_COUNT_OFFSET;
+
+	for (i = 0; i < nsent; i++) {
+		idx = aggr_txq->cons;
+		KASSERT(idx < MVPP2_AGGR_TXQ_SIZE);
+
+		txb = &aggr_txq->buf[idx];
+		if (txb->mb_m) {
+			bus_dmamap_sync(sc->sc_dmat, txb->mb_map, 0,
+			    txb->mb_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, txb->mb_map);
+
+			m_freem(txb->mb_m);
+			txb->mb_m = NULL;
+		}
+
+		aggr_txq->cnt--;
+		aggr_txq->cons = (aggr_txq->cons + 1) % MVPP2_AGGR_TXQ_SIZE;
 	}
 
-	/* FIXME: tx done processing */
+	if (aggr_txq->cnt == 0)
+		ifp->if_timer = 0;
+
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 }
 
 void
