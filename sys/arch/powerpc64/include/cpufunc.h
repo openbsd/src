@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.5 2020/06/17 20:58:20 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.6 2020/06/26 11:29:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -35,6 +35,12 @@ static inline void
 ptesync(void)
 {
 	__asm volatile ("ptesync" ::: "memory");
+}
+
+static inline void
+sync(void)
+{
+	__asm volatile ("sync" ::: "memory");
 }
 
 static inline void
