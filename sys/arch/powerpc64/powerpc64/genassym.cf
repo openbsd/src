@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2020/06/22 16:58:20 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2020/06/26 22:32:22 kettenis Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -106,6 +106,9 @@ member	P_MD_ASTPENDING	p_md.md_astpending
 member	P_MD_USER_SLB_PA p_md.md_user_slb_pa
 
 export	SONPROC
+
+struct	sigframe
+member	sf_sc
 
 define	SFRAMELEN	sizeof(struct switchframe)
 struct	switchframe
