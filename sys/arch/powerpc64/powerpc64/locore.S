@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 2020/06/24 20:49:11 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.20 2020/06/26 10:24:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -63,6 +63,9 @@ cpu_idle_leave:
 
 	.globl cpu_switchto
 cpu_switchto:
+	cmpdi	%r3, 0
+	beq	1f
+
 	mflr	%r0
 	std	%r0, 16(%r1)
 	mfcr	%r10
@@ -90,6 +93,7 @@ cpu_switchto:
 	ld	%r31, P_ADDR(%r3)
 	std	%r1, PCB_SP(%r31)
 
+1:
 	li	%r31, SONPROC
 	stb	%r31, P_STAT(%r4)
 	std	%r4, CI_CURPROC(%r13)
