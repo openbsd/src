@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2020/06/22 18:03:22 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.17 2020/06/26 09:06:05 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -897,7 +897,6 @@ void
 pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
     vsize_t len, vaddr_t src_addr)
 {
-	panic(__func__);
 }
 
 int
