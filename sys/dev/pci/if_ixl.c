@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.58 2020/06/26 00:45:54 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.59 2020/06/26 02:51:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -494,7 +494,7 @@ struct ixl_aq_vsi_data {
 #define IXL_AQ_VSI_PVLAN_MODE_SHIFT	0
 #define IXL_AQ_VSI_PVLAN_MODE_MASK	(0x3 << IXL_AQ_VSI_PVLAN_MODE_SHIFT)
 #define IXL_AQ_VSI_PVLAN_MODE_TAGGED	(0x1 << IXL_AQ_VSI_PVLAN_MODE_SHIFT)
-#define IXL_AQ_VSI_PVLAN_MODE_UNTAGGED 	(0x2 << IXL_AQ_VSI_PVLAN_MODE_SHIFT)
+#define IXL_AQ_VSI_PVLAN_MODE_UNTAGGED	(0x2 << IXL_AQ_VSI_PVLAN_MODE_SHIFT)
 #define IXL_AQ_VSI_PVLAN_MODE_ALL	(0x3 << IXL_AQ_VSI_PVLAN_MODE_SHIFT)
 #define IXL_AQ_VSI_PVLAN_INSERT_PVID	(0x4 << IXL_AQ_VSI_PVLAN_MODE_SHIFT)
 #define IXL_AQ_VSI_PVLAN_EMOD_SHIFT	0x3
@@ -848,11 +848,11 @@ struct ixl_rx_wb_desc_16 {
 #define IXL_RX_DESC_UMB_BCAST		(0x2 << IXL_RX_DESC_UMB_SHIFT)
 #define IXL_RX_DESC_UMB_MIRROR		(0x3 << IXL_RX_DESC_UMB_SHIFT)
 #define IXL_RX_DESC_FLM			(1 << 11)
-#define IXL_RX_DESC_FLTSTAT_SHIFT 	12
-#define IXL_RX_DESC_FLTSTAT_MASK 	(0x3 << IXL_RX_DESC_FLTSTAT_SHIFT)
-#define IXL_RX_DESC_FLTSTAT_NODATA 	(0x0 << IXL_RX_DESC_FLTSTAT_SHIFT)
-#define IXL_RX_DESC_FLTSTAT_FDFILTID 	(0x1 << IXL_RX_DESC_FLTSTAT_SHIFT)
-#define IXL_RX_DESC_FLTSTAT_RSS 	(0x3 << IXL_RX_DESC_FLTSTAT_SHIFT)
+#define IXL_RX_DESC_FLTSTAT_SHIFT	12
+#define IXL_RX_DESC_FLTSTAT_MASK	(0x3 << IXL_RX_DESC_FLTSTAT_SHIFT)
+#define IXL_RX_DESC_FLTSTAT_NODATA	(0x0 << IXL_RX_DESC_FLTSTAT_SHIFT)
+#define IXL_RX_DESC_FLTSTAT_FDFILTID	(0x1 << IXL_RX_DESC_FLTSTAT_SHIFT)
+#define IXL_RX_DESC_FLTSTAT_RSS		(0x3 << IXL_RX_DESC_FLTSTAT_SHIFT)
 #define IXL_RX_DESC_LPBK		(1 << 14)
 #define IXL_RX_DESC_IPV6EXTADD		(1 << 15)
 #define IXL_RX_DESC_INT_UDP_0		(1 << 18)
@@ -1468,7 +1468,7 @@ static const struct ixl_aq_regs ixl_pf_aq_regs = {
 #define ixl_dmamem_hi(_ixm)	0
 #endif
 
-#define ixl_dmamem_lo(_ixm) 	(uint32_t)IXL_DMA_DVA(_ixm)
+#define ixl_dmamem_lo(_ixm)	(uint32_t)IXL_DMA_DVA(_ixm)
 
 static inline void
 ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
@@ -1543,7 +1543,7 @@ static int		ixl_710_set_rss_lut(struct ixl_softc *,
 			    const struct ixl_rss_lut_128 *);
 
 static const struct ixl_chip ixl_710 = {
-	.ic_rss_hena = 		IXL_RSS_HENA_BASE_710,
+	.ic_rss_hena =		IXL_RSS_HENA_BASE_710,
 	.ic_rd_ctl =		ixl_710_rd_ctl,
 	.ic_wr_ctl =		ixl_710_wr_ctl,
 	.ic_set_rss_key =	ixl_710_set_rss_key,
@@ -1560,7 +1560,7 @@ static int		ixl_722_set_rss_lut(struct ixl_softc *,
 			    const struct ixl_rss_lut_128 *);
 
 static const struct ixl_chip ixl_722 = {
-	.ic_rss_hena = 		IXL_RSS_HENA_BASE_722,
+	.ic_rss_hena =		IXL_RSS_HENA_BASE_722,
 	.ic_rd_ctl =		ixl_722_rd_ctl,
 	.ic_wr_ctl =		ixl_722_wr_ctl,
 	.ic_set_rss_key =	ixl_722_set_rss_key,
@@ -1709,7 +1709,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	    0, IXL_DMA_LEN(&sc->sc_arq),
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
- 	for (tries = 0; tries < 10; tries++) { 
+	for (tries = 0; tries < 10; tries++) {
 		int rv;
 
 		sc->sc_atq_cons = 0;
@@ -2162,8 +2162,8 @@ ixl_configure_rss(struct ixl_softc *sc)
 	nqueues = ixl_nqueues(sc);
 	for (i = 0; i < sizeof(lut); i++) {
 		/*
-                 * ixl must have a power of 2 rings, so using mod
-                 * to populate the table is fine.
+		 * ixl must have a power of 2 rings, so using mod
+		 * to populate the table is fine.
 		 */
 		lute[i] = i % nqueues;
 	}
@@ -3527,7 +3527,7 @@ ixl_wakeup(struct ixl_softc *sc, void *arg)
 static void
 ixl_atq_exec(struct ixl_softc *sc, struct ixl_atq *iatq, const char *wmesg)
 {
-	struct cond c = COND_INITIALIZER(); 
+	struct cond c = COND_INITIALIZER();
 
 	KASSERT(iatq->iatq_desc.iaq_cookie == 0);
 
@@ -4176,7 +4176,7 @@ ixl_get_vsi(struct ixl_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(vsi), 0, IXL_DMA_LEN(vsi),
 	    BUS_DMASYNC_POSTREAD);
 
-	if (rv != 0) { 
+	if (rv != 0) {
 		printf("%s: GET VSI timeout\n", DEVNAME(sc));
 		return (-1);
 	}
@@ -4236,7 +4236,7 @@ ixl_set_vsi(struct ixl_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(vsi), 0, IXL_DMA_LEN(vsi),
 	    BUS_DMASYNC_POSTWRITE);
 
-	if (rv != 0) { 
+	if (rv != 0) {
 		printf("%s: UPDATE VSI timeout\n", DEVNAME(sc));
 		return (-1);
 	}
@@ -4649,7 +4649,7 @@ ixl_arq_fill(struct ixl_softc *sc)
 	int post = 0;
 
 	n = if_rxr_get(&sc->sc_arq_ring, IXL_AQ_NUM);
- 	arq = IXL_DMA_KVA(&sc->sc_arq);
+	arq = IXL_DMA_KVA(&sc->sc_arq);
 
 	while (n > 0) {
 		aqb = SIMPLEQ_FIRST(&sc->sc_arq_idle);
