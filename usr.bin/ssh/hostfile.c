@@ -1,4 +1,4 @@
-/* $OpenBSD: hostfile.c,v 1.81 2020/06/26 05:02:03 dtucker Exp $ */
+/* $OpenBSD: hostfile.c,v 1.82 2020/06/26 05:42:16 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -463,18 +463,23 @@ hostfile_create_user_ssh_dir(const char *filename, int notify)
 		return;
 	len = p - filename;
 	dotsshdir = tilde_expand_filename("~/" _PATH_SSH_USER_DIR, getuid());
-	if ((strlen(dotsshdir) > len || strncmp(filename, dotsshdir, len) != 0
-	    || stat(dotsshdir, &st)) == 0)
-		; /* do nothing, path not in ~/.ssh or dir already exists */
+	if (strlen(dotsshdir) > len || strncmp(filename, dotsshdir, len) != 0)
+		goto out; /* not ~/.ssh prefixed */
+	if (stat(dotsshdir, &st) == 0)
+		goto out; /* dir already exists */
 	else if (errno != ENOENT)
 		error("Could not stat %s: %s", dotsshdir, strerror(errno));
-	else if (mkdir(dotsshdir, 0700) == -1)
-		error("Could not create directory '%.200s' (%s).",
-		    dotsshdir, strerror(errno));
-	else if (notify)
-		logit("Created directory '%s'.", dotsshdir);
+	else {
+		if (mkdir(dotsshdir, 0700) == -1)
+			error("Could not create directory '%.200s' (%s).",
+			    dotsshdir, strerror(errno));
+		else if (notify)
+			logit("Created directory '%s'.", dotsshdir);
+	}
+ out:
 	free(dotsshdir);
 }
+
 
 /*
  * Appends an entry to the host file.  Returns false if the entry could not
