@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.58 2020/06/22 21:16:07 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.59 2020/06/26 18:48:31 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -113,6 +113,10 @@ static struct timehands *volatile timehands = &th0;		/* [w] */
 struct timecounter *timecounter = &dummy_timecounter;		/* [t] */
 static SLIST_HEAD(, timecounter) tc_list = SLIST_HEAD_INITIALIZER(tc_list);
 
+/*
+ * These are updated from tc_windup().  They are useful when
+ * examining kernel core dumps.
+ */
 volatile time_t time_second = 1;
 volatile time_t time_uptime = 0;
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inittodr.9,v 1.11 2016/04/03 06:43:59 jsg Exp $
+.\"	$OpenBSD: inittodr.9,v 1.12 2020/06/26 18:48:31 cheloha Exp $
 .\"	$NetBSD: inittodr.9,v 1.2 1996/03/27 21:16:06 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2016 $
+.Dd $Mdocdate: June 26 2020 $
 .Dt INITTODR 9
 .Os
 .Sh NAME
@@ -88,8 +88,8 @@ The
 time and the battery-backed clock's time differ by a large amount.
 .El
 .Sh SEE ALSO
-.Xr resettodr 9 ,
-.Xr time_second 9
+.Xr microtime 9 ,
+.Xr resettodr 9
 .Sh BUGS
 Each system's heuristics for picking the correct time are slightly
 different.
