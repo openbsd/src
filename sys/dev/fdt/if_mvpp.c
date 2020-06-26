@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.6 2020/06/26 09:49:51 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.7 2020/06/26 21:02:36 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -2585,7 +2585,7 @@ mvpp2_txq_hw_deinit(struct mvpp2_port *sc, struct mvpp2_tx_queue *txq)
 	reg &= ~MVPP2_TXQ_DRAIN_EN_MASK;
 	mvpp2_write(sc->sc, MVPP2_TXQ_PREF_BUF_REG, reg);
 
-	mvpp2_write(sc->sc, MVPP2_TXQ_SCHED_TOKEN_CNTR_REG(txq->id), 0);
+	mvpp2_write(sc->sc, MVPP2_TXQ_SCHED_TOKEN_CNTR_REG(txq->log_id), 0);
 	mvpp2_write(sc->sc, MVPP2_TXQ_NUM_REG, txq->id);
 	mvpp2_write(sc->sc, MVPP2_TXQ_DESC_ADDR_REG, 0);
 	mvpp2_write(sc->sc, MVPP2_TXQ_DESC_SIZE_REG, 0);
@@ -2766,16 +2766,14 @@ mvpp2_txq_phys(int port, int txq)
 void
 mvpp2_defaults_set(struct mvpp2_port *port)
 {
-	int val, queue, p_txq;
+	int val, queue;
 
 	mvpp2_write(port->sc, MVPP2_TXP_SCHED_PORT_INDEX_REG,
 	    mvpp2_egress_port(port));
 	mvpp2_write(port->sc, MVPP2_TXP_SCHED_CMD_1_REG, 0);
 
-	for (queue = 0; queue < MVPP2_MAX_TXQ; queue++) {
-		p_txq = mvpp2_txq_phys(port->sc_id, queue);
-		mvpp2_write(port->sc, MVPP2_TXQ_SCHED_TOKEN_CNTR_REG(p_txq), 0);
-	}
+	for (queue = 0; queue < MVPP2_MAX_TXQ; queue++)
+		mvpp2_write(port->sc, MVPP2_TXQ_SCHED_TOKEN_CNTR_REG(queue), 0);
 
 	mvpp2_write(port->sc, MVPP2_TXP_SCHED_PERIOD_REG, port->sc->sc_tclk /
 	    (1000 * 1000));
