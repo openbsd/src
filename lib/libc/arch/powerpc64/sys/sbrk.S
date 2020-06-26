@@ -1,4 +1,4 @@
-/* $OpenBSD: sbrk.S,v 1.1 2020/06/25 02:38:28 drahn Exp $ */
+/* $OpenBSD: sbrk.S,v 1.2 2020/06/26 10:31:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -51,13 +51,13 @@ PSEUDO_PREFIX(,sbrk,break)
 	/* check for error */
 	cmpwi	%r0, 0
 	beq+	.L_sbrk_ok
-	stw	%r0, R13_OFFSET_ERRNO(13)
+	stw	%r0, R13_OFFSET_ERRNO(%r13)
 	li	%r3, -1
 	blr
 
 	/* update, __curbrk and return */
 .L_sbrk_ok:
-	stw	%r7, 0(6)	/* # remember, %r6=&__curbrk, %r7=new_curbrk */
+	stw	%r7, 0(%r6)	/* # remember, %r6=&__curbrk, %r7=new_curbrk */
 	mr	%r3, %r5	/* # remember, %r5=old_curbrk */
 	blr
 END(sbrk)

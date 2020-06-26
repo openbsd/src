@@ -1,4 +1,4 @@
-/* $OpenBSD: sigprocmask.S,v 1.1 2020/06/25 02:38:28 drahn Exp $ */
+/* $OpenBSD: sigprocmask.S,v 1.2 2020/06/26 10:31:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -31,35 +31,35 @@
 
 	.text
 PREFIX_HIDDEN(sigprocmask)
-	stdu	1, -32(1)
-	stw	5, 16(1)
+	stdu	%r1, -32(%r1)
+	stw	%r5, 16(%r1)
 	
 	/* check set (new mask value) for null, in which case
 	   fiddle arguments */
-	cmpwi	4, 0
+	cmpwi	%r4, 0
 	bne+	.L_load_set
-	addi	3, 0, 1	/* how = SIG_BLOCK, new mask already 0 */
+	addi	%r3, 0, 1	/* how = SIG_BLOCK, new mask already 0 */
 	b .L_do_call
 .L_load_set:
-	lwz	4, 0(4)	/* get new mask */
+	lwz	%r4, 0(%r4)	/* get new mask */
 .L_do_call:
 	
 	sc
 	
 	/* didnt work? */
-	cmpwi	0, 0
+	cmpwi	%r0, 0
 	beq+	.L_sigprocmask_ok
-	stw	0, R13_OFFSET_ERRNO(13)
-	li	3, -1
+	stw	%r0, R13_OFFSET_ERRNO(%r13)
+	li	%r3, -1
 	blr
 
 .L_sigprocmask_ok:
-	lwz	5, 16(1)
-	cmpwi	5, 0
+	lwz	%r5, 16(%r1)
+	cmpwi	%r5, 0
 	beq+	.L_sigprocmask_done
-	stw	3, 0(5)
+	stw	%r3, 0(%r5)
 .L_sigprocmask_done:
-	li	3, 0
-	addi	1, 1, 32
+	li	%r3, 0
+	addi	%r1, %r1, 32
 	blr
 SYSCALL_END_HIDDEN(sigprocmask)

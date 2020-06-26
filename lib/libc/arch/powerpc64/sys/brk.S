@@ -1,4 +1,4 @@
-/* $OpenBSD: brk.S,v 1.1 2020/06/25 02:38:28 drahn Exp $ */
+/* $OpenBSD: brk.S,v 1.2 2020/06/26 10:31:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -34,10 +34,10 @@
 
 PSEUDO_PREFIX(,brk,break)
 	/* check >= _end, if not make the call for _end */
-	addis 5,2,.LC0@toc@ha
-	ld  5,.LC0@toc@l(5)		/* # 5 = &_end */
+	addis %r5, %r2, .LC0@toc@ha
+	ld  %r5, .LC0@toc@l(%r5)		/* # %r5 = &_end */
 
-	cmplw	%r3,%r5
+	cmplw	%r3, %r5
 	bge+	.L_brk_call
 	mr	%r3, %r5
 
@@ -45,21 +45,21 @@ PSEUDO_PREFIX(,brk,break)
 	mr	%r7, %r3
 	/* call break(size) */
 	addis	%r6, %r2, __curbrk@toc@ha
-	addi	%r6, %r6, __curbrk@toc@l	/* # 6 = &__curbrk */
+	addi	%r6, %r6, __curbrk@toc@l	/* # %r6 = &__curbrk */
 
 	sc
 
 	/* check for error */
 	cmpwi	%r0, 0
 	beq+	.L_brk_ok	/* OK so this is stupid but I haven't read b */
-	stw	%r0, R13_OFFSET_ERRNO(13)
+	stw	%r0, R13_OFFSET_ERRNO(%r13)
 	li	%r3, -1
 	blr
 	nop
 
 	/* update, __curbrk and return */
 .L_brk_ok:
-	stw	%r7, 0(%r6)	/* # remember, 6=&__curbrk, 3= new value */
+	stw	%r7, 0(%r6)	/* # remember, %r6=&__curbrk, %r3=new value */
 	mr	%r3, 0		/* # return 0 */
 	blr
 END(brk)

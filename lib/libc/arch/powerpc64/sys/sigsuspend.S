@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsuspend.S,v 1.1 2020/06/25 02:38:28 drahn Exp $ */
+/* $OpenBSD: sigsuspend.S,v 1.2 2020/06/26 10:31:44 kettenis Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn <drahn@openbsd.org>
@@ -31,7 +31,7 @@
 
 	.text
 PREFIX_HIDDEN(sigsuspend)
-	lwz 3, 0(3)		/* load the mask */
+	lwz %r3, 0(%r3)		/* load the mask */
 	sc
 	PSEUDO_SUFFIX
 SYSCALL_END_HIDDEN(sigsuspend)
