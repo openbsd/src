@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.57 2020/06/26 03:07:10 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.58 2020/06/26 05:05:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -428,6 +428,115 @@ struct mcx_reg_pmlp {
 	uint32_t		rp_lane3_mapping;
 	uint8_t			rp_reserved1[44];
 } __packed __aligned(4);
+
+struct mcx_reg_ppcnt {
+	uint8_t			ppcnt_grp;
+#define MCX_REG_PPCNT_GRP_IEEE8023		0x00
+#define MCX_REG_PPCNT_GRP_RFC2863		0x01
+#define MCX_REG_PPCNT_GRP_RFC2819		0x02
+#define MCX_REG_PPCNT_GRP_RFC3635		0x03
+#define MCX_REG_PPCNT_GRP_PER_PRIO		0x10
+#define MCX_REG_PPCNT_GRP_PER_TC		0x11
+#define MCX_REG_PPCNT_GRP_PER_RX_BUFFER		0x11
+	uint8_t			ppcnt_pnat;
+	uint8_t			ppcnt_local_port;
+	uint8_t			ppcnt_swid;
+
+	uint8_t			ppcnt_prio_tc;
+	uint8_t			ppcnt_reserved1[2];
+	uint8_t			ppcnt_clr;
+#define MCX_REG_PPCNT_CLR			(1 << 7)
+
+	uint8_t			ppcnt_counter_set[248];
+} __packed __aligned(8);
+CTASSERT(sizeof(struct mcx_reg_ppcnt) == 256);
+CTASSERT((offsetof(struct mcx_reg_ppcnt, ppcnt_counter_set) %
+    sizeof(uint64_t)) == 0);
+
+struct mcx_ppcnt_ieee8023 {
+	uint64_t		frames_transmitted_ok;
+	uint64_t		frames_received_ok;
+	uint64_t		frame_check_sequence_errors;
+	uint64_t		alignment_errors;
+	uint64_t		octets_transmitted_ok;
+	uint64_t		octets_received_ok;
+	uint64_t		multicast_frames_xmitted_ok;
+	uint64_t		broadcast_frames_xmitted_ok;
+	uint64_t		multicast_frames_received_ok;
+	uint64_t		broadcast_frames_received_ok;
+	uint64_t		in_range_length_errors;
+	uint64_t		out_of_range_length_field;
+	uint64_t		frame_too_long_errors;
+	uint64_t		symbol_error_during_carrier;
+	uint64_t		mac_control_frames_transmitted;
+	uint64_t		mac_control_frames_received;
+	uint64_t		unsupported_opcodes_received;
+	uint64_t		pause_mac_ctrl_frames_received;
+	uint64_t		pause_mac_ctrl_frames_transmitted;
+};
+CTASSERT(sizeof(struct mcx_ppcnt_ieee8023) == 0x98);
+
+struct mcx_ppcnt_rfc2863 {
+	uint64_t		in_octets;
+	uint64_t		in_ucast_pkts;
+	uint64_t		in_discards;
+	uint64_t		in_errors;
+	uint64_t		in_unknown_protos;
+	uint64_t		out_octets;
+	uint64_t		out_ucast_pkts;
+	uint64_t		out_discards;
+	uint64_t		out_errors;
+	uint64_t		in_multicast_pkts;
+	uint64_t		in_broadcast_pkts;
+	uint64_t		out_multicast_pkts;
+	uint64_t		out_broadcast_pkts;
+};
+CTASSERT(sizeof(struct mcx_ppcnt_rfc2863) == 0x68);
+
+struct mcx_ppcnt_rfc2819 {
+	uint64_t		drop_events;
+	uint64_t		octets;
+	uint64_t		pkts;
+	uint64_t		broadcast_pkts;
+	uint64_t		multicast_pkts;
+	uint64_t		crc_align_errors;
+	uint64_t		undersize_pkts;
+	uint64_t		oversize_pkts;
+	uint64_t		fragments;
+	uint64_t		jabbers;
+	uint64_t		collisions;
+	uint64_t		pkts64octets;
+	uint64_t		pkts65to127octets;
+	uint64_t		pkts128to255octets;
+	uint64_t		pkts256to511octets;
+	uint64_t		pkts512to1023octets;
+	uint64_t		pkts1024to1518octets;
+	uint64_t		pkts1519to2047octets;
+	uint64_t		pkts2048to4095octets;
+	uint64_t		pkts4096to8191octets;
+	uint64_t		pkts8192to10239octets;
+};
+CTASSERT(sizeof(struct mcx_ppcnt_rfc2819) == 0xa8);
+
+struct mcx_ppcnt_rfc3635 {
+	uint64_t		alignment_errors;
+	uint64_t		fcs_errors;
+	uint64_t		single_collision_frames;
+	uint64_t		multiple_collision_frames;
+	uint64_t		sqe_test_errors;
+	uint64_t		deferred_transmissions;
+	uint64_t		late_collisions;
+	uint64_t		excessive_collisions;
+	uint64_t		internal_mac_transmit_errors;
+	uint64_t		carrier_sense_errors;
+	uint64_t		frame_too_longs;
+	uint64_t		internal_mac_receive_errors;
+	uint64_t		symbol_errors;
+	uint64_t		control_in_unknown_opcodes;
+	uint64_t		control_in_pause_frames;
+	uint64_t		control_out_pause_frames;
+};
+CTASSERT(sizeof(struct mcx_ppcnt_rfc3635) == 0x80);
 
 #define MCX_MCIA_EEPROM_BYTES	32
 struct mcx_reg_mcia {
