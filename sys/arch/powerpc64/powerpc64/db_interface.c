@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.1 2020/05/27 22:22:04 gkoehler Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.2 2020/06/26 12:45:22 jsg Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
@@ -57,7 +57,7 @@ db_machine_init(void)
 	 * If an initrd exists, try to load symbols from there.
 	 */
 	node = fdt_find_node("/chosen");
-	if (fdt_node_property(node, "linux,initrd-start", &prop_start) != 8 &&
+	if (fdt_node_property(node, "linux,initrd-start", &prop_start) != 8 ||
 	    fdt_node_property(node, "linux,initrd-end", &prop_end) != 8) {
 		printf("[ no initrd ]\n");
 		return;
