@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.46 2020/01/02 10:16:46 denis Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.47 2020/06/26 19:06:52 bket Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -672,10 +672,7 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 			SIMPLEQ_REMOVE_HEAD(&conf->redist_list, entry);
 			free(r);
 		}
-		while ((r = SIMPLEQ_FIRST(&xconf->redist_list)) != NULL) {
-			SIMPLEQ_REMOVE_HEAD(&xconf->redist_list, entry);
-			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
-		}
+		SIMPLEQ_CONCAT(&conf->redist_list, &xconf->redist_list);
 
 		/* adjust FIB priority if changed */
 		if (conf->fib_priority != xconf->fib_priority) {
