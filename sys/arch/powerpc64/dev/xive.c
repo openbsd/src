@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.3 2020/06/14 19:21:43 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.4 2020/06/26 18:03:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -44,6 +44,8 @@
 #define  XIVE_TM_SPC_ACK_HE_PHYS	0x8000
 
 #define XIVE_ESB_STORE_TRIGGER	0x000
+#define XIVE_ESB_LOAD_EOI	0x000
+#define XIVE_ESB_STORE_EOI	0x400
 #define XIVE_ESB_SET_PQ_00	0xc00
 #define XIVE_ESB_SET_PQ_01	0xd00
 #define XIVE_ESB_SET_PQ_10	0xe00
@@ -126,6 +128,12 @@ static inline uint16_t
 xive_read_2(struct xive_softc *sc, bus_size_t off)
 {
 	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, off);
+}
+
+static inline void
+xive_unmask(struct xive_softc *sc, struct intrhand *ih)
+{
+	bus_space_read_8(sc->sc_iot, ih->ih_esb_eoi, XIVE_ESB_SET_PQ_00);
 }
 
 int	xive_match(struct device *, void *, void *);
@@ -274,8 +282,10 @@ xive_intr_establish(uint32_t girq, int type, int level,
 	ih->ih_esb_eoi = eoi;
 	ih->ih_esb_trig = trig;
 	ih->ih_xive_flags = flags;
-
 	sc->sc_handler[lirq] = ih;
+
+	xive_unmask(sc, ih);
+
 	return ih;
 }
 
@@ -284,10 +294,19 @@ xive_eoi(struct xive_softc *sc, struct intrhand *ih)
 {
 	uint64_t eoi;
 
-	eoi = bus_space_read_8(sc->sc_iot, ih->ih_esb_eoi, XIVE_ESB_SET_PQ_00);
-	if ((eoi & XIVE_ESB_VAL_Q) && ih->ih_esb_trig != 0)
-		bus_space_write_8(sc->sc_iot, ih->ih_esb_trig,
-		    XIVE_ESB_STORE_TRIGGER, 0);
+	if (ih->ih_xive_flags & OPAL_XIVE_IRQ_STORE_EOI) {
+		bus_space_write_8(sc->sc_iot, ih->ih_esb_eoi,
+		    XIVE_ESB_STORE_EOI, 0);
+	} else if (ih->ih_xive_flags & OPAL_XIVE_IRQ_LSI) {
+		eoi = bus_space_read_8(sc->sc_iot, ih->ih_esb_eoi,
+		    XIVE_ESB_LOAD_EOI);
+	} else {
+		eoi = bus_space_read_8(sc->sc_iot, ih->ih_esb_eoi,
+		    XIVE_ESB_SET_PQ_00);
+		if ((eoi & XIVE_ESB_VAL_Q) && ih->ih_esb_trig != 0)
+			bus_space_write_8(sc->sc_iot, ih->ih_esb_trig,
+			    XIVE_ESB_STORE_TRIGGER, 0);
+	}
 }
 
 void
