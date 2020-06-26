@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.3 2020/06/25 22:10:06 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.4 2020/06/26 09:30:10 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1578,7 +1578,7 @@ mvpp2_start(struct ifnet *ifp)
 		return;
 
 	idx = txq->prod;
-	while (txq->cnt < MVPP2_NTXDESC) {
+	while (txq->cnt < MVPP2_AGGR_TXQ_SIZE) {
 		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
@@ -1624,7 +1624,7 @@ mvpp2_encap(struct mvpp2_port *sc, struct mbuf *m, int *idx)
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT))
 		return ENOBUFS;
 
-	if (map->dm_nsegs > (MVPP2_NTXDESC - txq->cnt - 2)) {
+	if (map->dm_nsegs > (MVPP2_AGGR_TXQ_SIZE - txq->cnt - 2)) {
 		bus_dmamap_unload(sc->sc_dmat, map);
 		return ENOBUFS;
 	}
@@ -1655,7 +1655,7 @@ mvpp2_encap(struct mvpp2_port *sc, struct mbuf *m, int *idx)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		last = current;
-		current = (current + 1) % MVPP2_NTXDESC;
+		current = (current + 1) % MVPP2_AGGR_TXQ_SIZE;
 		KASSERT(current != txq->cons);
 	}
 
