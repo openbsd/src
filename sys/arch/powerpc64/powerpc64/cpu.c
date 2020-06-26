@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 2020/06/17 20:58:20 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.8 2020/06/26 12:34:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -86,7 +86,7 @@ void
 cpu_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
-	const char *name;
+	const char *name = NULL;
 	uint32_t pvr;
 	uint32_t iline;
 	uint32_t dline;

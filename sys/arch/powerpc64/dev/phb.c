@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.8 2020/06/14 19:00:12 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.9 2020/06/26 12:34:53 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -483,7 +483,7 @@ phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, char *name)
 {
 	struct phb_softc *sc = v;
-	void *cookie;
+	void *cookie = NULL;
 
 	KASSERT(ih.ih_type != PCI_NONE);
 
