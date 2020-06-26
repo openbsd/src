@@ -1,4 +1,4 @@
-/*	$OpenBSD: opalcons.c,v 1.1 2020/06/22 21:13:40 kettenis Exp $	*/
+/*	$OpenBSD: opalcons.c,v 1.2 2020/06/26 19:13:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -36,6 +36,8 @@ struct opalcons_softc {
 	uint64_t	sc_reg;
 
 	struct tty	*sc_tty;
+	void		*sc_ih;
+	void		*sc_si;
 };
 
 int	opalcons_match(struct device *, void *, void *);
@@ -48,6 +50,9 @@ struct cfattach	opalcons_ca = {
 struct cfdriver opalcons_cd = {
 	NULL, "opalcons", DV_DULL
 };
+
+int	opalcons_intr(void *);
+void	opalcons_softintr(void *);
 
 void	opalconsstart(struct tty *);
 int	opalconsparam(struct tty *, struct termios *);
@@ -79,6 +84,19 @@ opalcons_attach(struct device *parent, struct device *self, void *aux)
 		printf(": console");
 	}
 
+	sc->sc_si = softintr_establish(IPL_TTY, opalcons_softintr, sc);
+	if (sc->sc_si == NULL) {
+		printf(": can't establish soft interrupt");
+		return;
+	}
+
+	sc->sc_ih = opal_intr_establish(OPAL_EVENT_CONSOLE_INPUT, IPL_TTY,
+	    opalcons_intr, sc);
+	if (sc->sc_ih == NULL) {
+		printf(": can't establish interrupt\n");
+		return;
+	}
+
 	printf("\n");
 }
 
@@ -90,6 +108,18 @@ opalcons_sc(dev_t dev)
 	if (unit >= opalcons_cd.cd_ndevs)
 		return NULL;
 	return (struct opalcons_softc *)opalcons_cd.cd_devs[unit];
+}
+
+
+int
+opalcons_intr(void *arg)
+{
+	struct opalcons_softc *sc = arg;
+
+	if (sc->sc_tty)
+		softintr_schedule(sc->sc_si);
+
+	return 1;
 }
 
 void
@@ -245,4 +275,32 @@ opalconsparam(struct tty *tp, struct termios *t)
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
 	return 0;
+}
+
+int
+opalcons_getc(struct opalcons_softc *sc, int *cp)
+{
+	uint64_t len = 1;
+	uint64_t error;
+	char ch;
+
+	error = opal_console_read(sc->sc_reg, opal_phys(&len), opal_phys(&ch));
+	if (error != OPAL_SUCCESS || len != 1)
+		return 0;
+
+	*cp = ch;
+	return 1;
+}
+
+void
+opalcons_softintr(void *arg)
+{
+	struct opalcons_softc *sc = arg;
+	struct tty *tp = sc->sc_tty;
+	int c;
+
+	while (opalcons_getc(sc, &c)) {
+		if (tp->t_state & TS_ISOPEN)
+			(*linesw[tp->t_line].l_rint)(c, tp);
+	}
 }
