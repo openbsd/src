@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 2020/06/22 18:15:50 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 2020/06/26 20:58:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -122,6 +122,7 @@ trap(struct trapframe *frame)
 		/* FALLTHROUGH */
 
 	case EXC_DSI|EXC_USER:
+//		printf("proc %p type %x dar 0x%lx dsisr 0x%lx\n", p, type, frame->dar, frame->dsisr);
 		map = &p->p_vmspace->vm_map;
 		va = frame->dar;
 		if (frame->dsisr & DSISR_STORE)
@@ -131,8 +132,12 @@ trap(struct trapframe *frame)
 		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
 		KERNEL_UNLOCK();
-		if (error)
+		if (error) {
+			printf("type %x dar 0x%lx dsisr 0x%lx\n",
+			    type, frame->dar, frame->dsisr);
+			printf("r29 0x%lx\n", frame->fixreg[29]);
 			goto fatal;
+		}
 		break;
 
 	case EXC_ISE|EXC_USER:
@@ -145,6 +150,7 @@ trap(struct trapframe *frame)
 		/* FALLTHROUGH */
 
 	case EXC_ISI|EXC_USER:
+//		printf("proc %p type %x srr0 0x%lx\n", p, type, frame->srr0);
 		map = &p->p_vmspace->vm_map;
 		va = frame->srr0;
 		ftype = PROT_READ | PROT_EXEC;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2020/06/26 12:24:56 jsg Exp $ */
+/*	$OpenBSD: pmap.c,v 1.19 2020/06/26 20:58:38 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -155,19 +155,19 @@ int pmap_initialized = 0;
 static inline int
 PTED_HID(struct pte_desc *pted)
 {
-	return !!(pted->pted_va & PTED_VA_HID_M); 
+	return !!(pted->pted_va & PTED_VA_HID_M);
 }
 
 static inline int
 PTED_PTEGIDX(struct pte_desc *pted)
 {
-	return !!(pted->pted_va & PTED_VA_PTEGIDX_M); 
+	return (pted->pted_va & PTED_VA_PTEGIDX_M);
 }
 
 static inline int
 PTED_MANAGED(struct pte_desc *pted)
 {
-	return !!(pted->pted_va & PTED_VA_MANAGED_M); 
+	return !!(pted->pted_va & PTED_VA_MANAGED_M);
 }
 
 static inline int
@@ -190,13 +190,21 @@ tlbia(void)
 }
 
 /*
- * Return the lowest 64 bits of the VPN for a PTE descriptor.
+ * Return AVA for use with TLB invalidate instructions.
  */
 static inline uint64_t
-pmap_pted2vpn(struct pte_desc *pted)
+pmap_ava(uint64_t vsid, vaddr_t va)
 {
-	return (pted->pted_vsid << (ADDR_VSID_SHIFT - PAGE_SHIFT) |
-	    (pted->pted_va & ADDR_PIDX) >> PAGE_SHIFT);
+	return ((vsid << ADDR_VSID_SHIFT) | (va & ADDR_PIDX));
+}
+
+/*
+ * Return AVA for a PTE descriptor.
+ */
+static inline uint64_t
+pmap_pted2ava(struct pte_desc *pted)
+{
+	return pmap_ava(pted->pted_vsid, pted->pted_va);
 }
 
 /*
@@ -217,13 +225,11 @@ pmap_pte2flags(uint64_t pte_lo)
 	    ((pte_lo & PTE_CHG) ? PG_PMAP_MOD : 0));
 }
 
-/*
- * Return AVA for use us with TLB invalidate instructions.
- */
-uint64_t
-pmap_ava(uint64_t vsid, vaddr_t va)
+static inline u_int
+pmap_flags2pte(u_int flags)
 {
-	return ((vsid << ADDR_VSID_SHIFT) | (va & ADDR_PIDX));
+	return (((flags & PG_PMAP_REF) ? PTE_REF : 0) |
+	    ((flags & PG_PMAP_MOD) ? PTE_CHG : 0));
 }
 
 static inline uint64_t
@@ -563,7 +569,7 @@ pte_del(struct pte *pte, uint64_t ava)
 void
 pte_zap(struct pte *pte, struct pte_desc *pted)
 {
-	pte_del(pte, pmap_pted2vpn(pted) << PAGE_SHIFT);
+	pte_del(pte, pmap_pted2ava(pted));
 
 	if (!PTED_MANAGED(pted))
 		return;
@@ -581,6 +587,7 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	pted->pted_pmap = pm;
 	pted->pted_va = va & ~PAGE_MASK;
 	pted->pted_vsid = pmap_va2vsid(pm, va);
+	KASSERT(pted->pted_vsid != 0);
 
 	pte->pte_hi = (pmap_pted2avpn(pted) & PTE_AVPN) | PTE_VALID;
 	pte->pte_lo = (pa & PTE_RPGN);
@@ -598,6 +605,73 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 		pte->pte_lo |= PTE_M;
 	else
 		pte->pte_lo |= (PTE_M | PTE_I | PTE_G);
+}
+
+int
+pmap_test_attrs(struct vm_page *pg, u_int flagbit)
+{
+	struct pte_desc *pted;
+	uint64_t ptebit = pmap_flags2pte(flagbit);
+	u_int bits = pg->pg_flags & flagbit;
+	int s;
+
+	if (bits == flagbit)
+		return bits;
+
+	mtx_enter(&pg->mdpage.pv_mtx);
+	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
+		struct pte *pte;
+
+		PMAP_HASH_LOCK(s);
+		if ((pte = pmap_ptedinhash(pted)) != NULL)
+			bits |=	pmap_pte2flags(pte->pte_lo & ptebit);
+		PMAP_HASH_UNLOCK(s);
+
+		if (bits == flagbit)
+			break;
+	}
+	mtx_leave(&pg->mdpage.pv_mtx);
+
+	atomic_setbits_int(&pg->pg_flags,  bits);
+
+	return bits;
+}
+
+int
+pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
+{
+	struct pte_desc *pted;
+	uint64_t ptebit = pmap_flags2pte(flagbit);
+	u_int bits = pg->pg_flags & flagbit;
+	int s;
+
+	mtx_enter(&pg->mdpage.pv_mtx);
+	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
+		struct pte *pte;
+
+		PMAP_HASH_LOCK(s);
+		if ((pte = pmap_ptedinhash(pted)) != NULL) {
+			bits |=	pmap_pte2flags(pte->pte_lo & ptebit);
+
+			pte_del(pte, pmap_pted2ava(pted));
+
+			pte->pte_lo &= ~ptebit;
+			eieio();
+			pte->pte_hi |= PTE_VALID;
+			ptesync();
+		}
+		PMAP_HASH_UNLOCK(s);
+	}
+	mtx_leave(&pg->mdpage.pv_mtx);
+
+	/*
+	 * this is done a second time, because while walking the list
+	 * a bit could have been promoted via pmap_attr_save()
+	 */
+	bits |= pg->pg_flags & flagbit;
+	atomic_clearbits_int(&pg->pg_flags,  flagbit);
+
+	return bits;
 }
 
 void
@@ -644,7 +718,7 @@ pte_insert(struct pte_desc *pted)
 		pte[i].pte_hi |= PTE_VALID;
 		ptesync();	/* Ensure updates completed. */
 
-		if (i > 1)
+		if (i > 6)
 			printf("%s: primary %d\n", __func__, i);
 		goto out;
 	}
@@ -1011,7 +1085,6 @@ pmap_pted_syncicache(struct pte_desc *pted)
 void
 pmap_pted_ro(struct pte_desc *pted, vm_prot_t prot)
 {
-	vaddr_t va = pted->pted_va & ~PAGE_MASK;
 	struct vm_page *pg;
 	struct pte *pte;
 	int s;
@@ -1032,7 +1105,7 @@ pmap_pted_ro(struct pte_desc *pted, vm_prot_t prot)
 
 	PMAP_HASH_LOCK(s);
 	if ((pte = pmap_ptedinhash(pted)) != NULL) {
-		pte_del(pte, va);
+		pte_del(pte, pmap_pted2ava(pted));
 
 		/* XXX Use pte_zap instead? */
 		if (PTED_MANAGED(pted)) {
@@ -1191,25 +1264,25 @@ pmap_kremove(vaddr_t va, vsize_t len)
 int
 pmap_is_referenced(struct vm_page *pg)
 {
-	return 0;
+	return pmap_test_attrs(pg, PG_PMAP_REF);
 }
 
 int
 pmap_is_modified(struct vm_page *pg)
 {
-	return 0;
+	return pmap_test_attrs(pg, PG_PMAP_MOD);
 }
 
 int
 pmap_clear_reference(struct vm_page *pg)
 {
-	return 0;
+	return pmap_clear_attrs(pg, PG_PMAP_REF);
 }
 
 int
 pmap_clear_modify(struct vm_page *pg)
 {
-	return 0;
+	return pmap_clear_attrs(pg, PG_PMAP_MOD);
 }
 
 int

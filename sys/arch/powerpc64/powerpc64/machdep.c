@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2020/06/26 08:57:20 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 2020/06/26 20:58:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -638,6 +638,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	siginfo_t *sip = NULL;
 	int i;
 
+	printf("%s\n", __func__);
+
 	/* Allocate space for the signal handler context. */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->fixreg[1]) && (psp->ps_sigonstack & sigmask(sig)))
@@ -696,6 +698,8 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	int error;
 	int i;
+
+	printf("%s\n", __func__);
 
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
 		sigexit(p, SIGILL);
