@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.52 2020/06/22 21:16:07 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.53 2020/06/26 03:21:46 jsg Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -339,6 +339,13 @@ void clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 #define POSIX_BASE_YEAR 1970
 
 #include <sys/stdint.h>
+
+static inline void
+USEC_TO_TIMEVAL(uint64_t us, struct timeval *tv)
+{
+	tv->tv_sec = us / 1000000;
+	tv->tv_usec = us % 1000000;
+}
 
 static inline void
 NSEC_TO_TIMEVAL(uint64_t ns, struct timeval *tv)
