@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.2 2020/06/14 17:56:54 kettenis Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.3 2020/06/26 08:58:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -22,9 +22,9 @@
 #ifdef _KERNEL
 
 #define TCB_GET(p)		\
-	((void *)(p)->p_md.md_regs->fixreg[2])
+	((void *)(p)->p_md.md_regs->fixreg[13])
 #define TCB_SET(p, addr)	\
-	((p)->p_md.md_regs->fixreg[2] = (__register_t)(addr))
+	((p)->p_md.md_regs->fixreg[13] = (__register_t)(addr))
 
 #else /* _KERNEL */
 
