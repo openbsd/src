@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.43 2019/08/10 16:39:33 stsp Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.44 2020/06/26 07:28:46 stsp Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -893,9 +893,16 @@ edscript(int n)
 			diff_output("%da\n=======\n", de[n].old.to -1);
 		(void)fseek(fp[2], (long)de[n].new.from, SEEK_SET);
 		for (k = de[n].new.to-de[n].new.from; k > 0; k-= j) {
+			size_t r;
 			j = k > BUFSIZ ? BUFSIZ : k;
-			if (fread(block, 1, j, fp[2]) != (size_t)j)
-				return (-1);
+			r = fread(block, 1, j, fp[2]);
+			if (r == 0) {
+				if (feof(fp[2]))
+					break;
+				return -1;
+			}
+			if (r != (size_t)j)
+				j = r;
 			block[j] = '\0';
 			diff_output("%s", block);
 		}
