@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.22 2020/03/30 17:47:48 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.23 2020/06/26 19:00:08 bket Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -433,7 +433,7 @@ main_dispatch_frontend(int fd, short event, void *bula)
 		case IMSG_CTL_LOG_VERBOSE:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
 				fatalx("%s: IMSG_CTL_LOG_VERBOSE wrong length: "
-				    "%lu", __func__, IMSG_DATA_SIZE(imsg));	
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;
@@ -703,8 +703,6 @@ void
 merge_config(struct rad_conf *conf, struct rad_conf *xconf)
 {
 	struct ra_iface_conf	*ra_iface_conf;
-	struct ra_rdnss_conf	*ra_rdnss;
-	struct ra_dnssl_conf	*ra_dnssl;
 
 	/* Remove & discard existing interfaces. */
 	while ((ra_iface_conf = SIMPLEQ_FIRST(&conf->ra_iface_list)) != NULL) {
@@ -718,24 +716,13 @@ merge_config(struct rad_conf *conf, struct rad_conf *xconf)
 	SIMPLEQ_INIT(&conf->ra_options.ra_dnssl_list);
 
 	/* Add new interfaces. */
-	while ((ra_iface_conf = SIMPLEQ_FIRST(&xconf->ra_iface_list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&xconf->ra_iface_list, entry);
-		SIMPLEQ_INSERT_TAIL(&conf->ra_iface_list, ra_iface_conf, entry);
-	}
+	SIMPLEQ_CONCAT(&conf->ra_iface_list, &xconf->ra_iface_list);
 
 	/* Add dns options */
-	while ((ra_rdnss = SIMPLEQ_FIRST(&xconf->ra_options.ra_rdnss_list))
-	    != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&xconf->ra_options.ra_rdnss_list, entry);
-		SIMPLEQ_INSERT_TAIL(&conf->ra_options.ra_rdnss_list, ra_rdnss,
-		    entry);
-	}
-	while ((ra_dnssl = SIMPLEQ_FIRST(&xconf->ra_options.ra_dnssl_list))
-	    != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&xconf->ra_options.ra_dnssl_list, entry);
-		SIMPLEQ_INSERT_TAIL(&conf->ra_options.ra_dnssl_list, ra_dnssl,
-		    entry);
-	}
+	SIMPLEQ_CONCAT(&conf->ra_options.ra_rdnss_list,
+	    &xconf->ra_options.ra_rdnss_list);
+	SIMPLEQ_CONCAT(&conf->ra_options.ra_dnssl_list,
+	    &xconf->ra_options.ra_dnssl_list);
 	free(xconf);
 }
 
