@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.105 2020/06/25 20:38:41 kn Exp $	 */
+/* $OpenBSD: machine.c,v 1.106 2020/06/26 20:55:55 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -202,11 +202,6 @@ machine_init(struct statics *statics)
 	cpu_online = calloc(ncpu, sizeof(*cpu_online));
 	if (cpu_online == NULL)
 		err(1, NULL);
-
-	pbase = NULL;
-	pref = NULL;
-	onproc = -1;
-	nproc = 0;
 
 	/*
 	 * get the page size with "getpagesize" and calculate pageshift from
