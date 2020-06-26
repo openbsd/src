@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.53 2020/06/17 15:34:11 tim Exp $
+.\"	$OpenBSD: awk.1,v 1.54 2020/06/26 21:50:06 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2020 $
+.Dd $Mdocdate: June 26 2020 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -140,6 +140,16 @@ refers to the entire line.
 If
 .Va FS
 is null, the input line is split into one field per character.
+Lines are split into fields using the value of
+.Va FS
+at the time the line is read.
+Because of this,
+.Va FS
+is usually set via the
+.Fl F
+option or inside of a
+.Ic BEGIN
+block.
 .Pp
 Normally, any number of blanks separate fields.
 In order to set the field separator to a single blank, use the
