@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.22 2017/12/07 02:08:44 krw Exp $ */
+/* $OpenBSD: cddb.c,v 1.23 2020/06/26 19:51:14 naddy Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -254,7 +254,7 @@ cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 	int i;
 	const char *errstr;
 
-	s = parse_connect_to(host_port, "cddb");
+	s = parse_connect_to(host_port, "8880");
 	if (s == -1)
 		goto end;
 	s2 = dup(s);
