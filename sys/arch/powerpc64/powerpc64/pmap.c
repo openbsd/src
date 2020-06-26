@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 2020/06/26 09:06:05 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.18 2020/06/26 12:24:56 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -842,7 +842,7 @@ pmap_vp_destroy(pmap_t pm)
 			continue;
 
 		for (i = 0; i < VP_IDX1_CNT; i++) {
-			vp2 = vp1->vp[j];
+			vp2 = vp1->vp[i];
 			if (vp2 == NULL)
 				continue;
 			vp1->vp[i] = NULL;
