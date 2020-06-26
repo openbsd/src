@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.57 2020/06/25 09:11:08 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.58 2020/06/26 00:45:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3324,9 +3324,26 @@ ixl_intr_vector(void *v)
 }
 
 static void
-ixl_link_state_update_done(struct ixl_softc *sc, void *arg)
+ixl_link_state_update_iaq(struct ixl_softc *sc, void *arg)
 {
-	/* IXL_AQ_OP_PHY_LINK_STATUS already posted to admin reply queue */
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ixl_aq_desc *iaq = arg;
+	uint16_t retval;
+	int link_state;
+
+	retval = lemtoh16(&iaq->iaq_retval);
+	if (retval != IXL_AQ_RC_OK) {
+		printf("%s: LINK STATUS error %u\n", DEVNAME(sc), retval);
+		return;
+	}
+
+	NET_LOCK();
+	link_state = ixl_set_link_status(sc, iaq);
+	if (ifp->if_link_state != link_state) {
+		ifp->if_link_state = link_state;
+		if_link_state_change(ifp);
+	}
+	NET_UNLOCK();
 }
 
 static void
@@ -3342,23 +3359,8 @@ ixl_link_state_update(void *xsc)
 	param = (struct ixl_aq_link_param *)iaq->iaq_param;
 	param->notify = IXL_AQ_LINK_NOTIFY;
 
-	ixl_atq_set(&sc->sc_link_state_atq, ixl_link_state_update_done, NULL);
+	ixl_atq_set(&sc->sc_link_state_atq, ixl_link_state_update_iaq, iaq);
 	ixl_atq_post(sc, &sc->sc_link_state_atq);
-}
-
-static void
-ixl_arq_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
-{
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	int link_state;
-
-	NET_LOCK();
-	link_state = ixl_set_link_status(sc, iaq);
-	if (ifp->if_link_state != link_state) {
-		ifp->if_link_state = link_state;
-		if_link_state_change(ifp);
-	}
-	NET_UNLOCK();
 }
 
 #if 0
@@ -3409,7 +3411,7 @@ ixl_arq(void *xsc)
 
 		switch (iaq->iaq_opcode) {
 		case HTOLE16(IXL_AQ_OP_PHY_LINK_STATUS):
-			ixl_arq_link_status(sc, iaq);
+			ixl_link_state_update_iaq(sc, iaq);
 			break;
 		}
 
