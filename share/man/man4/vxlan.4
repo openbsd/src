@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.8 2018/11/22 17:31:11 reyk Exp $
+.\"	$OpenBSD: vxlan.4,v 1.9 2020/06/26 12:04:17 denis Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 22 2018 $
+.Dd $Mdocdate: June 26 2020 $
 .Dt VXLAN 4
 .Os
 .Sh NAME
@@ -176,4 +176,5 @@ decreased MTU of 1450 bytes.
 In any other case, it is commonly recommended to set the MTU of the
 transport interfaces to at least 1600 bytes.
 .Pp
-The implementation does not support IPv6 tunnel endpoints at present.
+The implementation does not support IPv6 multicast tunnel endpoints at
+present.
