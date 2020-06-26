@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.117 2020/06/22 04:11:37 dlg Exp $	*/
+/*	$OpenBSD: pci.c,v 1.118 2020/06/26 10:16:00 dlg Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -1375,6 +1375,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		struct pci_vpd_req *pv = (struct pci_vpd_req *)data;
 		pcireg_t *data;
 		size_t len;
+		unsigned int i;
 		int s;
 
 		CTASSERT(sizeof(*data) == sizeof(*pv->pv_data));
@@ -1393,8 +1394,12 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		len = pv->pv_count * sizeof(*pv->pv_data);
 
-		if (error == 0)
+		if (error == 0) {
+			for (i = 0; i < pv->pv_count; i++)
+				data[i] = letoh32(data[i]);
+
 			error = copyout(data, pv->pv_data, len);
+		}
 
 		free(data, M_TEMP, len);
 		break;
