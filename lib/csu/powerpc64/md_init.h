@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2020/06/25 04:09:39 drahn Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2020/06/26 19:57:02 drahn Exp $ */
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -110,7 +110,7 @@ __asm(									\
 "									\n" \
 "	# restore program arguments 					\n" \
 "	mr %r3, %r15							\n" \
-"	mr %r4, %r30							\n" \
+"	mr %r4, %r16							\n" \
 "	mr %r5, %r17							\n" \
 "	li %r6, 0							\n" \
 "	bl ___start							\n" \
