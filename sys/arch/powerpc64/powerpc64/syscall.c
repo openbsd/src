@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.2 2020/06/19 21:24:01 kettenis Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.3 2020/06/26 09:02:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -72,6 +72,7 @@ syscall(struct trapframe *frame)
 
 	switch (error) {
 	case 0:
+		frame->fixreg[0] = 0;
 		frame->fixreg[3] = rval[0];
 		frame->fixreg[4] = rval[1];
 		frame->cr &= ~0x10000000;
@@ -88,7 +89,7 @@ syscall(struct trapframe *frame)
 	default:
 	bad:
 		frame->fixreg[0] = error;
-		frame->cr &= ~0x10000000;
+		frame->cr |= 0x10000000;
 		break;
 	}
 
