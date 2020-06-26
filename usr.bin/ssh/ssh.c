@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.529 2020/06/05 03:15:26 dtucker Exp $ */
+/* $OpenBSD: ssh.c,v 1.530 2020/06/26 05:02:03 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -629,7 +629,7 @@ main(int ac, char **av)
 	struct ssh *ssh = NULL;
 	int i, r, opt, exit_status, use_syslog, direct, timeout_ms;
 	int was_addr, config_test = 0, opt_terminated = 0, want_final_pass = 0;
-	char *p, *cp, *line, *argv0, buf[PATH_MAX], *logfile;
+	char *p, *cp, *line, *argv0, *logfile;
 	char cname[NI_MAXHOST];
 	struct stat st;
 	struct passwd *pw;
@@ -1549,16 +1549,6 @@ main(int ac, char **av)
 			L_CERT(_PATH_HOST_XMSS_KEY_FILE, 8);
 			L_PUBKEY(_PATH_HOST_XMSS_KEY_FILE, 9);
 		}
-	}
-
-	/* Create ~/.ssh * directory if it doesn't already exist. */
-	if (config == NULL) {
-		r = snprintf(buf, sizeof buf, "%s%s%s", pw->pw_dir,
-		    strcmp(pw->pw_dir, "/") ? "/" : "", _PATH_SSH_USER_DIR);
-		if (r > 0 && (size_t)r < sizeof(buf) && stat(buf, &st) == -1)
-			if (mkdir(buf, 0700) == -1)
-				error("Could not create directory '%.200s'.",
-				    buf);
 	}
 
 	/* load options.identity_files */
