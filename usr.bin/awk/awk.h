@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.25 2020/06/13 01:21:01 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.26 2020/06/26 15:57:39 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -49,10 +49,9 @@ typedef	unsigned char uschar;
 */
 #define	DEBUG
 #ifdef	DEBUG
-			/* uses have to be doubly parenthesized */
-#	define	DPRINTF(x)	if (dbg) printf x
+#	define	DPRINTF(...)	if (dbg) printf(__VA_ARGS__)
 #else
-#	define	DPRINTF(x)
+#	define	DPRINTF(...)
 #endif
 
 extern enum compile_states {

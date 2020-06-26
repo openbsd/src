@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.38 2020/06/26 15:50:06 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.39 2020/06/26 15:57:39 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -146,8 +146,8 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 		firsttime = false;
 		initgetrec();
 	}
-	   DPRINTF( ("RS=<%s>, FS=<%s>, ARGC=%g, FILENAME=%s\n",
-		*RS, *FS, *ARGC, *FILENAME) );
+	DPRINTF("RS=<%s>, FS=<%s>, ARGC=%g, FILENAME=%s\n",
+		*RS, *FS, *ARGC, *FILENAME);
 	if (isrecord) {
 		donefld = false;
 		donerec = true;
@@ -156,7 +156,7 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 	saveb0 = buf[0];
 	buf[0] = 0;
 	while (argno < *ARGC || infile == stdin) {
-		   DPRINTF( ("argno=%d, file=|%s|\n", argno, file) );
+		DPRINTF("argno=%d, file=|%s|\n", argno, file);
 		if (infile == NULL) {	/* have to open a new file */
 			file = getargv(argno);
 			if (file == NULL || *file == '\0') {	/* deleted or zapped */
@@ -169,7 +169,7 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 				continue;
 			}
 			*FILENAME = file;
-			   DPRINTF( ("opening file %s\n", file) );
+			DPRINTF("opening file %s\n", file);
 			if (*file == '-' && *(file+1) == '\0')
 				infile = stdin;
 			else if ((infile = fopen(file, "r")) == NULL)
@@ -270,7 +270,7 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag)	/* read one rec
 	*pbuf = buf;
 	*pbufsize = bufsize;
 	isrec = *buf || !feof(inf);
-	DPRINTF( ("readrec saw <%s>, returns %d\n", buf, isrec) );
+	DPRINTF("readrec saw <%s>, returns %d\n", buf, isrec);
 	return isrec;
 }
 
@@ -285,7 +285,7 @@ char *getargv(int n)	/* get ARGV[n] */
 		return NULL;
 	x = setsymtab(temp, "", 0.0, STR, ARGVtab);
 	s = getsval(x);
-	   DPRINTF( ("getargv(%d) returns |%s|\n", n, s) );
+	DPRINTF("getargv(%d) returns |%s|\n", n, s);
 	return s;
 }
 
@@ -304,7 +304,7 @@ void setclvar(char *s)	/* set var=value from s */
 		q->fval = atof(q->sval);
 		q->tval |= NUM;
 	}
-	   DPRINTF( ("command line set %s to |%s|\n", s, p) );
+	DPRINTF("command line set %s to |%s|\n", s, p);
 }
 
 
@@ -503,7 +503,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 	if (*rec == '\0')
 		return 0;
 	pfa = makedfa(fs, 1);
-	   DPRINTF( ("into refldbld, rec = <%s>, pat = <%s>\n", rec, fs) );
+	DPRINTF("into refldbld, rec = <%s>, pat = <%s>\n", rec, fs);
 	tempstat = pfa->initstat;
 	for (i = 1; ; i++) {
 		const size_t fss_rem = fields + fieldssize + 1 - fr;
@@ -513,11 +513,11 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 			xfree(fldtab[i]->sval);
 		fldtab[i]->tval = FLD | STR | DONTFREE;
 		fldtab[i]->sval = fr;
-		   DPRINTF( ("refldbld: i=%d\n", i) );
+		DPRINTF("refldbld: i=%d\n", i);
 		if (nematch(pfa, rec)) {
 			const size_t reclen = patbeg - rec;
 			pfa->initstat = 2;	/* horrible coupling to b.c */
-			   DPRINTF( ("match %s (%d chars)\n", patbeg, patlen) );
+			DPRINTF("match %s (%d chars)\n", patbeg, patlen);
 			if (reclen >= fss_rem)
 				FATAL("out of space for fields in refldbld");
 			memcpy(fr, rec, reclen);
@@ -525,7 +525,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 			*fr++ = '\0';
 			rec = patbeg + patlen;
 		} else {
-			   DPRINTF( ("no match %s\n", rec) );
+			DPRINTF("no match %s\n", rec);
 			if (strlcpy(fr, rec, fss_rem) >= fss_rem)
 				FATAL("out of space for fields in refldbld");
 			pfa->initstat = tempstat;
@@ -560,15 +560,15 @@ void recbld(void)	/* create $0 from $1..$NF if necessary */
 	if (!adjbuf(&record, &recsize, 2+r-record, recsize, &r, "recbld 3"))
 		FATAL("built giant record `%.30s...'", record);
 	*r = '\0';
-	   DPRINTF( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]) );
+	DPRINTF("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]);
 
 	if (freeable(fldtab[0]))
 		xfree(fldtab[0]->sval);
 	fldtab[0]->tval = REC | STR | DONTFREE;
 	fldtab[0]->sval = record;
 
-	   DPRINTF( ("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]) );
-	   DPRINTF( ("recbld = |%s|\n", record) );
+	DPRINTF("in recbld inputFS=%s, fldtab[0]=%p\n", inputFS, (void*)fldtab[0]);
+	DPRINTF("recbld = |%s|\n", record);
 	donerec = true;
 }
 

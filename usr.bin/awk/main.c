@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2020/06/26 15:50:06 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2020/06/26 15:57:39 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -23,7 +23,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-const char	*version = "version 20200612";
+const char	*version = "version 20200625";
 
 #define DEBUG
 #include <stdio.h>
@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
 				exit(0);
 			FATAL("no program given");
 		}
-		   DPRINTF( ("program = |%s|\n", argv[1]) );
+		DPRINTF("program = |%s|\n", argv[1]);
 		lexprog = argv[1];
 		argc--;
 		argv++;
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
 	syminit();
 	compile_time = COMPILING;
 	argv[0] = cmdname;	/* put prog name at front of arglist */
-	   DPRINTF( ("argc=%d, argv[0]=%s\n", argc, argv[0]) );
+	DPRINTF("argc=%d, argv[0]=%s\n", argc, argv[0]);
 	arginit(argc, argv);
 	if (!safe)
 		envinit(environ);
@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
 #endif
 	if (fs)
 		*FS = qstring(fs, '\0');
-	   DPRINTF( ("errorflag=%d\n", errorflag) );
+	DPRINTF("errorflag=%d\n", errorflag);
 	if (errorflag == 0) {
 		compile_time = RUNNING;
 		run(winner);
