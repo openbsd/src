@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.65 2020/05/13 18:28:51 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.66 2020/06/26 18:56:52 bket Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1682,10 +1682,7 @@ pfkey_timer_cb(int unused, short event, void *arg)
 		}
 	}
 	/* move from retry to postponed */
-	while ((pm = SIMPLEQ_FIRST(&pfkey_retry)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&pfkey_retry, pm_entry);
-		SIMPLEQ_INSERT_TAIL(&pfkey_postponed, pm, pm_entry);
-	}
+	SIMPLEQ_CONCAT(&pfkey_postponed, &pfkey_retry);
 	if (!SIMPLEQ_EMPTY(&pfkey_postponed))
 		evtimer_add(&pfkey_timer_ev, &pfkey_timer_tv);
 }
