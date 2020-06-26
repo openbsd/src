@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.c,v 1.4 2020/06/22 21:13:40 kettenis Exp $	*/
+/*	$OpenBSD: opal.c,v 1.5 2020/06/26 19:06:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -16,8 +16,9 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -28,10 +29,31 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
+#define OPAL_NUM_HANDLERS	4
+
+struct opal_intr {
+	struct opal_softc	*oi_sc;
+	uint32_t		oi_isn;
+};
+
+struct intrhand {
+	uint64_t		ih_events;
+	int			(*ih_func)(void *);
+	void			*ih_arg;
+};
+
 struct opal_softc {
 	struct device		sc_dev;
+
+	struct opal_intr	*sc_intr;
+	int			sc_nintr;
+
+	struct intrhand		*sc_handler[OPAL_NUM_HANDLERS];
+
 	struct todr_chip_handle	sc_todr;
 };
+
+struct opal_softc *opal_sc;
 
 int	opal_match(struct device *, void *, void *);
 void	opal_attach(struct device *, struct device *, void *);
@@ -44,6 +66,7 @@ struct cfdriver opal_cd = {
 	NULL, "opal", DV_DULL
 };
 
+void	opal_attach_deferred(struct device *);
 void	opal_attach_node(struct opal_softc *, int);
 int	opal_gettime(struct todr_chip_handle *, struct timeval *);
 int	opal_settime(struct todr_chip_handle *, struct timeval *);
@@ -61,6 +84,8 @@ opal_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct opal_softc *sc = (struct opal_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	uint32_t *interrupts;
+	int len, i;
 	int node;
 
 	node = OF_getnodebyname(faa->fa_node, "firmware");
@@ -73,7 +98,36 @@ opal_attach(struct device *parent, struct device *self, void *aux)
 		printf(": %s", version);
 	}
 
+	len = OF_getproplen(faa->fa_node, "opal-interrupts");
+	if (len > 0 && (len % sizeof(uint32_t)) != 0) {
+		printf(": can't parse interrupts\n");
+		return;
+	}
+		
 	printf("\n");
+
+	/* There can be only one. */
+	KASSERT(opal_sc == NULL);
+	opal_sc = sc;
+
+	if (len > 0) {
+		interrupts = malloc(len, M_TEMP, M_WAITOK);
+		OF_getpropintarray(faa->fa_node, "opal-interrupts",
+		    interrupts, len);
+		sc->sc_nintr = len / sizeof(uint32_t);
+
+		sc->sc_intr = mallocarray(sc->sc_nintr,
+		    sizeof(struct opal_intr), M_DEVBUF, M_WAITOK);
+
+		for (i = 0; i < sc->sc_nintr; i++) {
+			sc->sc_intr[i].oi_sc = sc;
+			sc->sc_intr[i].oi_isn = interrupts[i];
+		}
+
+		free(interrupts, M_TEMP, len);
+
+		config_defer(self, opal_attach_deferred);
+	}
 
 	sc->sc_todr.todr_gettime = opal_gettime;
 	sc->sc_todr.todr_settime = opal_settime;
@@ -83,6 +137,66 @@ opal_attach(struct device *parent, struct device *self, void *aux)
 	if (node) {
 		for (node = OF_child(node); node; node = OF_peer(node))
 			opal_attach_node(sc, node);
+	}
+}
+
+int
+opal_intr(void *arg)
+{
+	struct opal_intr *oi = arg;
+	struct opal_softc *sc = oi->oi_sc;
+	uint64_t events = 0;
+	int i;
+
+	opal_handle_interrupt(oi->oi_isn, opal_phys(&events));
+
+	/* Handle registered events. */
+	for (i = 0; i < OPAL_NUM_HANDLERS; i++) {
+		struct intrhand *ih = sc->sc_handler[i];
+
+		if (ih == NULL)
+			continue;
+		if ((events & ih->ih_events) == 0)
+			continue;
+
+		ih->ih_func(ih->ih_arg);
+	}
+
+	return 1;
+}
+
+void *
+opal_intr_establish(uint64_t events, int level, int (*func)(void *), void *arg)
+{
+	struct opal_softc *sc = opal_sc;
+	struct intrhand *ih;
+	int i;
+
+	for (i = 0; i < OPAL_NUM_HANDLERS; i++) {
+		if (sc->sc_handler[i] == NULL)
+			break;
+	}
+	if (i == OPAL_NUM_HANDLERS)
+		return NULL;
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih->ih_events = events;
+	ih->ih_func = func;
+	ih->ih_arg = arg;
+	sc->sc_handler[i] = ih;
+
+	return ih;
+}
+
+void
+opal_attach_deferred(struct device *self)
+{
+	struct opal_softc *sc = (struct opal_softc *)self;
+	int i;
+
+	for (i = 0; i < sc->sc_nintr; i++) {
+		intr_establish(sc->sc_intr[i].oi_isn, IST_LEVEL, IPL_BIO,
+		    opal_intr, &sc->sc_intr[i], sc->sc_dev.dv_xname);
 	}
 }
 

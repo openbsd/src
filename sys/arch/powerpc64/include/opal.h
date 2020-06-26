@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.10 2020/06/14 17:56:54 kettenis Exp $	*/
+/*	$OpenBSD: opal.h,v 1.11 2020/06/26 19:06:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -27,6 +27,7 @@
 #define OPAL_RTC_WRITE			4
 #define OPAL_CEC_POWER_DOWN		5
 #define OPAL_CEC_REBOOT			6
+#define OPAL_HANDLE_INTERRUPT		9
 #define OPAL_POLL_EVENTS		10
 #define OPAL_PCI_CONFIG_READ_WORD	15
 #define OPAL_PCI_CONFIG_WRITE_WORD	18
@@ -68,6 +69,9 @@
 #define OPAL_HARDWARE_FROZEN		-13
 #define OPAL_WRONG_STATE		-14
 #define OPAL_ASYNC_COMPLETION		-15
+
+/* OPAL_POLL_EVENT */
+#define OPAL_EVENT_CONSOLE_INPUT	0x00000010
 
 /* OPAL_PCI_EEH_FREEZE_CLEAR */
 #define OPAL_EEH_ACTION_CLEAR_FREEZE_MMIO 1
@@ -141,6 +145,7 @@ int64_t	opal_rtc_read(uint32_t *, uint64_t *);
 int64_t	opal_rtc_write(uint32_t, uint64_t);
 int64_t	opal_cec_power_down(uint64_t);
 int64_t	opal_cec_reboot(void);
+int64_t	opal_handle_interrupt(uint32_t, uint64_t *);
 int64_t	opal_poll_events(uint64_t *);
 int64_t opal_pci_config_read_word(uint64_t, uint64_t, uint64_t, uint32_t *);
 int64_t opal_pci_config_write_word(uint64_t, uint64_t, uint64_t, uint32_t);
@@ -177,6 +182,8 @@ int64_t	opal_xive_set_vp_info(uint64_t, uint64_t, uint64_t);
 int64_t	opal_xive_dump(uint32_t, uint32_t);
 
 void	opal_printf(const char *fmt, ...);
+
+void	*opal_intr_establish(uint64_t, int, int (*)(void *), void *);
 
 #endif
 
