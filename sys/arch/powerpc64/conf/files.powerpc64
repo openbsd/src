@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.15 2020/06/27 21:22:29 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.16 2020/06/27 21:39:05 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -33,6 +33,9 @@ file	arch/powerpc64/dev/pci_machdep.c
 
 file	netinet/in_cksum.c
 file	netinet/in4_cksum.c
+
+pseudo-device	openprom
+file	arch/powerpc64/powerpc64/openprom.c	openprom needs-flag
 
 define	fdt {[early = 0]}
 

@@ -1,8 +1,18 @@
-/*	$OpenBSD: conf.c,v 1.5 2020/06/27 21:39:05 kettenis Exp $	*/
+/*	$OpenBSD: openpromio.h,v 1.1 2020/06/27 21:39:05 kettenis Exp $	*/
+/*	$NetBSD: openpromio.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
 
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,63 +38,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *     @(#)conf.c	7.9 (Berkeley) 5/28/91
+ *	@(#)openpromio.h	8.1 (Berkeley) 6/11/93
  */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/tty.h>
-#include <sys/vnode.h>
-
-#include <machine/conf.h>
-
-struct bdevsw bdevsw[] =
-{
-	bdev_notdef(),
+struct opiocdesc {
+	int	op_nodeid;		/* passed or returned node id */
+	int	op_namelen;		/* length of op_name */
+	char	*op_name;		/* pointer to field name */
+	int	op_buflen;		/* length of op_buf (value-result) */
+	char	*op_buf;		/* pointer to field value */
 };
-int	nblkdev = nitems(bdevsw);
 
-#include "opalcons.h"
-#include "openprom.h"
-#include "pty.h"
-
-struct cdevsw cdevsw[] =
-{
-	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
-	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_notdef(),
-	cdev_notdef(),
-	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
-	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
-	cdev_ptm_init(NPTY,ptm),	/* XX: pseudo-tty ptm device */
-	cdev_tty_init(NOPALCONS,opalcons), /* XX: OPAL console */
-	cdev_openprom_init(NOPENPROM,openprom),	/* XX: /dev/openprom */
-};
-int	nchrdev = nitems(cdevsw);
-
-dev_t	swapdev;
-
-int
-iskmemdev(dev_t dev)
-{
-	return 0;
-}
-
-int
-iszerodev(dev_t dev)
-{
-	return 0;
-}
-
-dev_t
-getnulldev(void)
-{
-	return makedev(0, 0);
-}
-
-int chrtoblktbl[] = {
-	NODEV,
-};
-int nchrtoblktbl = nitems(chrtoblktbl);
+#define	OPIOCGET	_IOWR('O', 1, struct opiocdesc) /* get openprom field */
+#define	OPIOCSET	_IOW('O', 2, struct opiocdesc) /* set openprom field */
+#define	OPIOCNEXTPROP	_IOWR('O', 3, struct opiocdesc) /* get next property */
+#define	OPIOCGETOPTNODE	_IOR('O', 4, int)	/* get openprom field */
+#define	OPIOCGETNEXT	_IOWR('O', 5, int)	/* get next node of node */
+#define	OPIOCGETCHILD	_IOWR('O', 6, int)	/* get first child of node */
