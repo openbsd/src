@@ -822,11 +822,11 @@ CCDLFLAGS		= `echo $ccdlflags|sed -e 's@-bE:.*/perl\.exp@-bE:perl.exp@'`
 LIBPERL_NONSHR		= libperl_nonshr$(LIB_EXT)
 MINIPERL_NONSHR		= miniperl_nonshr$(EXE_EXT)
 
-#$(LIBPERL_NONSHR): $(perllib_objs)
-#	$(RMS) $(LIBPERL_NONSHR)
-#	$(AR) rc $(LIBPERL_NONSHR) $(perllib_objs)
+$(LIBPERL_NONSHR): $(perllib_objs)
+	$(RMS) $(LIBPERL_NONSHR)
+	$(AR) rc $(LIBPERL_NONSHR) $(perllib_objs)
 
-$(MINIPERL_NONSHR): miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT)  perlmini$(OBJ_EXT)
+$(MINIPERL_NONSHR): $(LIBPERL_NONSHR) miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT)  perlmini$(OBJ_EXT)
 	$(CC) $(LDFLAGS) -o $(MINIPERL_NONSHR) miniperlmain$(OBJ_EXT) \
 	    opmini$(OBJ_EXT) perlmini$(OBJ_EXT) $(LIBPERL_NONSHR) $(LIBS)
 
@@ -925,33 +925,33 @@ $(DTRACE_MAIN_O): perldtrace.d perlmain$(OBJ_EXT)
 !NO!SUBS!
 		;;
     esac
-#	$spitshell >>$Makefile <<'!NO!SUBS!'
-#$(LIBPERL): $& $(perllib_dep) $(DYNALOADER) $(LIBPERLEXPORT)
-#!NO!SUBS!
-#	case "$useshrplib" in
-#	true)
-#		$spitshell >>$Makefile <<'!NO!SUBS!'
-#	rm -f $@
-#	$(LD) -o $@ $(SHRPLDFLAGS) $(perllib_objs) $(DYNALOADER) $(libs)
-#!NO!SUBS!
-#		case "$osname" in
-#		aix)
-#			$spitshell >>$Makefile <<'!NO!SUBS!'
-#	rm -f libperl$(OBJ_EXT)
-#	mv $@ libperl$(OBJ_EXT)
-#	$(AR) qv $(LIBPERL) libperl$(OBJ_EXT)
-#!NO!SUBS!
-#			;;
-#		esac
-#		;;
-#	*)
-#		$spitshell >>$Makefile <<'!NO!SUBS!'
-#	rm -f $(LIBPERL)
-#	$(AR) rc $(LIBPERL) $(perllib_objs) $(DYNALOADER)
-#	@$(ranlib) $(LIBPERL)
-#!NO!SUBS!
-#		;;
-#	esac
+	$spitshell >>$Makefile <<'!NO!SUBS!'
+$(LIBPERL): $& $(perllib_dep) $(DYNALOADER) $(LIBPERLEXPORT)
+!NO!SUBS!
+	case "$useshrplib" in
+	true)
+		$spitshell >>$Makefile <<'!NO!SUBS!'
+	rm -f $@
+	$(LD) -o $@ $(SHRPLDFLAGS) $(perllib_objs) $(DYNALOADER) $(libs)
+!NO!SUBS!
+		case "$osname" in
+		aix)
+			$spitshell >>$Makefile <<'!NO!SUBS!'
+	rm -f libperl$(OBJ_EXT)
+	mv $@ libperl$(OBJ_EXT)
+	$(AR) qv $(LIBPERL) libperl$(OBJ_EXT)
+!NO!SUBS!
+			;;
+		esac
+		;;
+	*)
+		$spitshell >>$Makefile <<'!NO!SUBS!'
+	rm -f $(LIBPERL)
+	$(AR) rc $(LIBPERL) $(perllib_objs) $(DYNALOADER)
+	@$(ranlib) $(LIBPERL)
+!NO!SUBS!
+		;;
+	esac
 	$spitshell >>$Makefile <<'!NO!SUBS!'
 
 # How to build executables.
@@ -1017,6 +1017,10 @@ NAMESPACEFLAGS = -force_flat_namespace
 		esac
 		$spitshell >>$Makefile <<'!NO!SUBS!'
 lib/buildcustomize.pl: $& $(miniperl_objs) write_buildcustomize.pl
+	-@rm -f miniperl.xok
+	$(CC) $(CLDFLAGS) $(NAMESPACEFLAGS) -o $(MINIPERL_EXE) \
+	    $(miniperl_objs) $(libs)
+	$(LDLIBPTH) ./miniperl$(HOST_EXE_EXT) -w -Ilib -Idist/Exporter/lib -MExporter -e '<?>' || sh -c 'echo >&2 Failed to build miniperl.  Please run make minitest; exit 1'
 	$(MINIPERL) -f write_buildcustomize.pl
 !NO!SUBS!
 		;;
