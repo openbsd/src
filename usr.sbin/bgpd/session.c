@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.401 2020/05/10 13:38:46 deraadt Exp $ */
+/*	$OpenBSD: session.c,v 1.402 2020/06/27 07:24:42 bket Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2732,12 +2732,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			}
 
 			/* add new listeners */
-			while ((la = TAILQ_FIRST(nconf->listen_addrs)) !=
-			    NULL) {
-				TAILQ_REMOVE(nconf->listen_addrs, la, entry);
-				TAILQ_INSERT_TAIL(conf->listen_addrs, la,
-				    entry);
-			}
+			TAILQ_CONCAT(conf->listen_addrs, nconf->listen_addrs,
+			    entry);
 
 			setup_listeners(listener_cnt);
 			free_config(nconf);
