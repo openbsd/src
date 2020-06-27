@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2020/06/22 21:13:40 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 2020/06/27 21:22:30 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,6 +45,9 @@ struct bdevsw bdevsw[] =
 };
 int	nblkdev = nitems(bdevsw);
 
+#define mmread	mmrw
+#define mmwrite	mmrw
+cdev_decl(mm);
 #include "pty.h"
 #include "opalcons.h"
 
@@ -52,7 +55,7 @@ struct cdevsw cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
-	cdev_notdef(),
+	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
 	cdev_notdef(),
 	cdev_notdef(),
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */

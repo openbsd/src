@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2020/06/26 20:58:38 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.20 2020/06/27 21:22:30 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -817,6 +817,7 @@ extern struct fdt_reg initrd_reg;
 void memreg_add(const struct fdt_reg *);
 void memreg_remove(const struct fdt_reg *);
 
+vaddr_t vmmap;
 vaddr_t zero_page;
 vaddr_t copy_src_page;
 vaddr_t copy_dst_page;
@@ -1449,6 +1450,8 @@ pmap_bootstrap(void)
 	     va += 256 * 1024 * 1024)
 		pmap_set_kernel_slb(idx++, va);
 
+	vmmap = virtual_avail;
+	virtual_avail += PAGE_SIZE;
 	zero_page = virtual_avail;
 	virtual_avail += MAXCPUS * PAGE_SIZE;
 	copy_src_page = virtual_avail;
