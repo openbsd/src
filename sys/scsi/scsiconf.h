@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.186 2020/06/24 16:07:53 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.187 2020/06/27 21:01:20 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -303,7 +303,6 @@ struct scsi_link {
 #define	SDEV_DBX		0x00f0	/* debugging flags (scsi_debug.h) */
 #define	SDEV_EJECTING		0x0100	/* eject on device close */
 #define	SDEV_ATAPI		0x0200	/* device is ATAPI */
-#define	SDEV_2NDBUS		0x0400	/* device is a 'second' bus device */
 #define SDEV_UMASS		0x0800	/* device is UMASS SCSI */
 #define SDEV_VIRTUAL		0x1000	/* device is virtualised on the hba */
 #define SDEV_OWN_IOPL		0x2000	/* scsibus */
