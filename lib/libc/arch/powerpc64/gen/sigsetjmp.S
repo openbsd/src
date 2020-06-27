@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.1 2020/06/25 02:03:55 drahn Exp $ */
+/*	$OpenBSD: sigsetjmp.S,v 1.2 2020/06/27 14:18:42 kettenis Exp $ */
 /*
  * Copyright (c) 2020 Dale Rahn. All rights reserved.
  *
@@ -69,7 +69,7 @@ ENTRY(sigsetjmp)
 	sc
 	nop
 	std	%r3, JMP_sigmask(5)
-
+1:
 	addis	%r7, %r2, __jmpxor@toc@ha
 	addi	%r7, %r7, __jmpxor@toc@l
 	ld	%r8, 0(%r7)		/* xor for r1 */
