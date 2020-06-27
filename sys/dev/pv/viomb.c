@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.5 2019/05/26 15:20:04 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.6 2020/06/27 07:20:57 bket Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -418,7 +418,6 @@ viomb_inflate_intr(struct virtqueue *vq)
 	struct virtio_softc *vsc = vq->vq_owner;
 	struct viomb_softc *sc = (struct viomb_softc *)vsc->sc_child;
 	struct balloon_req *b;
-	struct vm_page *p;
 	u_int64_t nvpages;
 
 	if (viomb_vq_dequeue(vq))
@@ -429,11 +428,7 @@ viomb_inflate_intr(struct virtqueue *vq)
 	bus_dmamap_sync(vsc->sc_dmat, b->bl_dmamap, 0,
 			sizeof(u_int32_t) * nvpages,
 			BUS_DMASYNC_POSTWRITE);
-	while (!TAILQ_EMPTY(&b->bl_pglist)) {
-		p = TAILQ_FIRST(&b->bl_pglist);
-		TAILQ_REMOVE(&b->bl_pglist, p, pageq);
-		TAILQ_INSERT_TAIL(&sc->sc_balloon_pages, p, pageq);
-	}
+	TAILQ_CONCAT(&sc->sc_balloon_pages, &b->bl_pglist, pageq);
 	VIOMBDEBUG(sc, "updating sc->sc_actual from %u to %llu\n",
 		   sc->sc_actual, sc->sc_actual + nvpages);
 	virtio_write_device_config_4(vsc, VIRTIO_BALLOON_CONFIG_ACTUAL,
