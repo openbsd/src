@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.13 2020/06/22 18:49:36 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.14 2020/06/27 14:34:08 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -37,6 +37,8 @@
 #include <machine/param.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+
+#define SPR_VRSAVE	256
 
 	.abiversion 2
 
@@ -178,9 +180,11 @@ restore_kernsrs:
 	mfxer	%r3;							\
 	mfctr	%r4;							\
 	mfsprg3	%r5;							\
+	mfspr	%r6, SPR_VRSAVE;					\
 	std	%r3, FRAME_XER+32(%r1);	/* save xer/ctr/exc */		\
 	std	%r4, FRAME_CTR+32(%r1);					\
 	std	%r5, FRAME_EXC+32(%r1);					\
+	std	%r6, FRAME_VRSAVE+32(%r1);				\
 	std	%r28, FRAME_DAR+32(%r1);				\
 	std	%r29, FRAME_DSISR+32(%r1); /* save dsisr/srr0/srr1 */	\
 	std	%r30, FRAME_SRR0+32(%r1);				\
@@ -202,10 +206,12 @@ restore_kernsrs:
 	std	%r2, (savearea+CPUSAVE_SRR0)(%r7); /* save SRR0 */	\
 	std	%r3, (savearea+CPUSAVE_SRR1)(%r7); /* save SRR1 */	\
 	ld	%r7, FRAME_CR+32(%r1);					\
+	ld	%r8, FRAME_VRSAVE+32(%r1);				\
 	mtctr	%r4;							\
 	mtxer	%r5;							\
 	mtlr	%r6;							\
 	mtsprg2	%r7;							\
+	mtspr	SPR_VRSAVE, %r8;					\
 	ld	%r31, FRAME_31+32(%r1);	/* restore r0-31 */		\
 	ld	%r30, FRAME_30+32(%r1);					\
 	ld	%r29, FRAME_29+32(%r1);					\

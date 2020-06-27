@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.9 2020/06/26 22:32:22 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.10 2020/06/27 14:34:08 kettenis Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -92,6 +92,7 @@ member	ctr
 member	xer
 member	srr0
 member	srr1
+member	vrsave
 member	dar
 member	dsisr
 member	exc

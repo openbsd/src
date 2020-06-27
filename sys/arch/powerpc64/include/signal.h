@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.2 2020/05/22 15:07:47 kettenis Exp $	*/
+/*	$OpenBSD: signal.h,v 1.3 2020/06/27 14:34:08 kettenis Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -59,6 +59,7 @@ struct trapframe {
 	__register_t ctr;
 	__register_t srr0;
 	__register_t srr1;
+	__register_t vrsave;
 	__register_t dar;	/* dar & dsisr are only filled on a DSI trap */
 	__register_t dsisr;
 	__register_t exc;
