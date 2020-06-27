@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.6 2020/03/28 15:42:25 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.7 2020/06/27 07:22:09 bket Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -449,7 +449,6 @@ dt_ioctl_probe_enable(struct dt_softc *sc, struct dtioc_req *dtrq)
 {
 	struct dt_pcb_list plist;
 	struct dt_probe *dtp;
-	struct dt_pcb *dp;
 	int error;
 
 	KASSERT(suser(curproc) == 0);
@@ -473,10 +472,7 @@ dt_ioctl_probe_enable(struct dt_softc *sc, struct dtioc_req *dtrq)
 	    dtrq->dtrq_pbn, (unsigned int)dtrq->dtrq_evtflags, DTEVT_FLAG_BITS);
 
 	/* Append all PCBs to this instance */
-	while ((dp = TAILQ_FIRST(&plist)) != NULL) {
-		TAILQ_REMOVE(&plist, dp, dp_snext);
-		TAILQ_INSERT_HEAD(&sc->ds_pcbs, dp, dp_snext);
-	}
+	TAILQ_CONCAT(&sc->ds_pcbs, &plist, dp_snext);
 
 	return 0;
 }
