@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.36 2020/06/27 14:29:45 krw Exp $ */
+/*	$OpenBSD: qlw.c,v 1.37 2020/06/27 17:28:58 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -267,7 +267,7 @@ qlw_attach(struct qlw_softc *sc)
 			sc->sc_max_queue_depth[bus] = sc->sc_maxrequests;
 	}
 
-	/* 
+	/*
 	 * On some 1020/1040 variants the response queue is limited to
 	 * 256 entries.  We don't really need all that many anyway.
 	 */
@@ -301,7 +301,7 @@ qlw_attach(struct qlw_softc *sc)
 		printf("couldn't set clock rate: %x\n", sc->sc_mbox[0]);
 		return (ENXIO);
 	}
-	
+
 	sc->sc_mbox[0] = QLW_MBOX_SET_RETRY_COUNT;
 	sc->sc_mbox[1] = sc->sc_retry_count[0];
 	sc->sc_mbox[2] = sc->sc_retry_delay[0];
@@ -311,7 +311,7 @@ qlw_attach(struct qlw_softc *sc)
 		printf("couldn't set retry count: %x\n", sc->sc_mbox[0]);
 		return (ENXIO);
 	}
-	
+
 	sc->sc_mbox[0] = QLW_MBOX_SET_ASYNC_DATA_SETUP;
 	sc->sc_mbox[1] = sc->sc_async_data_setup[0];
 	sc->sc_mbox[2] = sc->sc_async_data_setup[1];

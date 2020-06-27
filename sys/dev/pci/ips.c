@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.120 2020/06/27 14:29:45 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.121 2020/06/27 17:28:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1562,7 +1562,7 @@ ips_error(struct ips_softc *sc, struct ips_ccb *ccb)
 			for (i = 0; i < dcdb->senselen; i++)
 				DPRINTF(IPS_D_ERR, (" %x", dcdb->sense[i]));
 		}
-	}		
+	}
 	DPRINTF(IPS_D_ERR, ("\n"));
 
 	switch (gsc) {

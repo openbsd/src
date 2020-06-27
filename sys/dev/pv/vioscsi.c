@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.18 2020/06/27 14:29:45 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.19 2020/06/27 17:28:58 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -328,7 +328,7 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	xs->status = vr->vr_res.status;
 	xs->resid = vr->vr_res.residual;
 
-	DPRINTF("vioscsi_req_done: done %d, %d, %zd\n", 
+	DPRINTF("vioscsi_req_done: done %d, %d, %zd\n",
 	    xs->error, xs->status, xs->resid);
 
 done:

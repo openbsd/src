@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.51 2020/06/27 14:29:45 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.52 2020/06/27 17:28:58 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ umass_scsi_probe(struct scsi_link *link)
 	/*
 	 * Create a fake devid using the vendor and product ids and the last
 	 * 12 characters of serial number, as recommended by Section 4.1.1 of
-	 * the USB Mass Storage Class - Bulk Only Transport spec. 
+	 * the USB Mass Storage Class - Bulk Only Transport spec.
 	 */
 	len = strlen(udi.udi_serial);
 	if (len >= 12) {

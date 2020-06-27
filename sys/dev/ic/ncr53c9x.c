@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.71 2020/06/27 14:29:45 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.72 2020/06/27 17:28:58 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -452,7 +452,7 @@ ncr53c9x_init(sc, doreset)
 #ifdef DEBUG
 		 if (ncr53c9x_notag)
 			 ti->flags &= ~T_TAG;
-#endif 
+#endif
 		ti->period = sc->sc_minsync;
 		ti->offset = 0;
 		ti->cfg3 = 0;
@@ -1197,11 +1197,11 @@ ncr53c9x_dequeue(sc, ecb)
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_ecb *ecb;
 {
-	struct ncr53c9x_tinfo *ti = 
+	struct ncr53c9x_tinfo *ti =
 	    &sc->sc_tinfo[ecb->xs->sc_link->target];
 	struct ncr53c9x_linfo *li;
 	int64_t lun = ecb->xs->sc_link->lun;
-       
+
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
 	if ((!li) || (li->lun != lun))
@@ -1569,7 +1569,7 @@ gotit:
 				 */
 				printf("%s: tagged queuing rejected: target %d\n",
 				    sc->sc_dev.dv_xname, ecb->xs->sc_link->target);
-				
+
 				NCR_MSGS(("(rejected sent tag)"));
 				NCRCMD(sc, NCRCMD_FLUSH);
 				DELAY(1);
@@ -1834,7 +1834,7 @@ ncr53c9x_msgout(sc)
 			    sc->sc_dev.dv_xname, __LINE__);
 		}
 	}
-			
+
 	if (sc->sc_omlen == 0) {
 		/* Pick up highest priority message */
 		sc->sc_msgout = sc->sc_msgpriq & -sc->sc_msgpriq;
@@ -1937,7 +1937,7 @@ ncr53c9x_msgout(sc)
 	}
 #endif
 	if (sc->sc_rev == NCR_VARIANT_FAS366) {
-		/*      
+		/*
 		 * XXX fifo size
 		 */
 		ncr53c9x_flushfifo(sc);
@@ -1994,12 +1994,12 @@ again:
 	 * valid condition, and we let the code check is the
 	 * "NCR_BUSFREE_OK" flag was set before declaring it
 	 * and error.
-	 * 
+	 *
 	 * Also, the status register tells us about "Gross
 	 * Errors" and "Parity errors". Only the Gross Error
-	 * is really bad, and the parity errors are dealt   
+	 * is really bad, and the parity errors are dealt
 	 * with later
-	 * 
+	 *
 	 * TODO
 	 *      If there are too many parity error, go to slow
 	 *      cable mode ?
@@ -2195,7 +2195,7 @@ again:
 
 			/* it may be OK to disconnect */
 			if ((sc->sc_flags & NCR_ABORTING) == 0) {
-				/*  
+				/*
 				 * Section 5.1.1 of the SCSI 2 spec
 				 * suggests issuing a REQUEST SENSE
 				 * following an unexpected disconnect.
@@ -2203,7 +2203,7 @@ again:
 				 * allegiance condition when
 				 * disconnecting, and this is necessary
 				 * to clean up their state.
-				 */     
+				 */
 				printf("%s: unexpected disconnect; ",
 				    sc->sc_dev.dv_xname);
 				if (ecb->flags & ECB_SENSE) {

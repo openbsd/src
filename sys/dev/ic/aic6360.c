@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.32 2020/06/27 14:29:44 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.33 2020/06/27 17:28:58 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -236,7 +236,7 @@ aic_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 	return (1);
 }
 
-/* 
+/*
  * Attach the AIC6360, fill out some high and low level data structures
  */
 void

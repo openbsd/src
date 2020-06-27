@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.243 2020/06/27 14:29:44 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.244 2020/06/27 17:28:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -238,7 +238,7 @@ ami_allocmem(struct ami_softc *sc, size_t size)
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &am->am_map) != 0)
-		goto amfree; 
+		goto amfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &am->am_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
@@ -1055,7 +1055,7 @@ ami_complete(struct ami_softc *sc, struct ami_ccb *ccb, int timeout)
 		s = splbio(); /* interrupt handlers are called at their IPL */
 		ready = ami_intr(sc);
 		splx(s);
-		
+
 		if (ready == 0) {
 			if (timeout-- == 0) {
 				/* XXX */
@@ -1235,7 +1235,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 
 	ccb->ccb_cmd.acc_cmd = AMI_PASSTHRU;
 	ccb->ccb_cmd.acc_passthru.apt_data = ccb->ccb_ptpa;
-	
+
 	ccb->ccb_pt->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
 	ccb->ccb_pt->apt_channel = channel;
 	ccb->ccb_pt->apt_target = target;
@@ -2011,9 +2011,9 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 
 		ch = (i & 0xf0) >> 4;
 		tg = i & 0x0f;
-		if (ami_drv_inq(sc, ch, tg, 0, inqbuf)) 
+		if (ami_drv_inq(sc, ch, tg, 0, inqbuf))
 			goto bail;
-		
+
 		vendp = inqbuf->vendor;
 		bcopy(vendp, vend, sizeof vend - 1);
 
@@ -2170,7 +2170,7 @@ ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 	bv->bv_size *= (uint64_t)512;
 
 	strlcpy(bv->bv_dev, sc->sc_hdr[i].dev, sizeof(bv->bv_dev));
-	
+
 bail:
 	free(p, M_DEVBUF, sizeof *p);
 

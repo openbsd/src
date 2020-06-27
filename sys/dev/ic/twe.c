@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.53 2020/06/27 14:29:45 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.54 2020/06/27 17:28:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -119,7 +119,7 @@ twe_dispose(sc)
 			if (ccb->ccb_dmamap)
 				bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
 	}
-	bus_dmamem_unmap(sc->dmat, sc->sc_cmds, 
+	bus_dmamem_unmap(sc->dmat, sc->sc_cmds,
 	    sizeof(struct twe_cmd) * TWE_MAXCMDS);
 	bus_dmamem_free(sc->dmat, sc->sc_cmdseg, 1);
 }
@@ -1043,6 +1043,6 @@ twe_aen(void *cookie, void *io)
 	}
 
 	aen = *(u_int16_t *)pb->data;
-	if (aen != TWE_AEN_QEMPTY) 
+	if (aen != TWE_AEN_QEMPTY)
 		scsi_ioh_add(&sc->sc_aen);
 }

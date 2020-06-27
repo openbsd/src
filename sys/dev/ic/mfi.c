@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.178 2020/06/27 14:29:45 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.179 2020/06/27 17:28:58 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1224,7 +1224,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	if (xs->flags & SCSI_POLL)
 		mfi_poll(sc, ccb);
-	else 
+	else
 		mfi_start(sc, ccb);
 
 	KERNEL_LOCK();

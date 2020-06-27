@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.51 2020/06/27 14:29:44 krw Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.52 2020/06/27 17:28:58 krw Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -18,7 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>  
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -112,7 +112,7 @@ void		vscsi_ccb_put(void *, void *);
 
 void		filt_vscsidetach(struct knote *);
 int		filt_vscsiread(struct knote *, long);
-  
+
 const struct filterops vscsi_filtops = {
 	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
@@ -588,7 +588,7 @@ filt_vscsidetach(struct knote *kn)
 {
 	struct vscsi_softc *sc = kn->kn_hook;
 	struct klist *klist = &sc->sc_sel.si_note;
- 
+
 	mtx_enter(&sc->sc_sel_mtx);
 	klist_remove(klist, kn);
 	mtx_leave(&sc->sc_sel_mtx);

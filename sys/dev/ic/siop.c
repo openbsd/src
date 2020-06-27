@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.76 2020/06/27 14:29:45 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.77 2020/06/27 17:28:58 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1028,7 +1028,7 @@ scintr:
 			 * case, siop_cmd->saved_offset will have the proper
 			 * value if it got updated by the controller
 			 */
-			if (offset == 0 && 
+			if (offset == 0 &&
 			    siop_cmd->saved_offset != SIOP_NOOFFSET)
 				offset = siop_cmd->saved_offset;
 			siop_update_resid(&siop_cmd->cmd_c, offset);

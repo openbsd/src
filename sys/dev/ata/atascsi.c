@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.135 2020/06/27 14:29:44 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.136 2020/06/27 17:28:58 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -389,7 +389,7 @@ atascsi_probe(struct scsi_link *link)
 		}
 	}
 
-	if (ISSET(letoh16(ap->ap_identify.data_set_mgmt), 
+	if (ISSET(letoh16(ap->ap_identify.data_set_mgmt),
 	    ATA_ID_DATA_SET_MGMT_TRIM))
 		SET(ap->ap_features, ATA_PORT_F_TRIM);
 
@@ -1252,7 +1252,7 @@ ata_identify_blocksize(struct ata_identify *id)
 {
 	u_int			blocksize = 512;
 	u_int16_t		p2l_sect = letoh16(id->p2l_sect);
-	
+
 	if ((p2l_sect & ATA_ID_P2L_SECT_MASK) == ATA_ID_P2L_SECT_VALID &&
 	    ISSET(p2l_sect, ATA_ID_P2L_SECT_SIZESET)) {
 		blocksize = letoh16(id->words_lsec[1]);
@@ -1269,7 +1269,7 @@ ata_identify_block_l2p_exp(struct ata_identify *id)
 {
 	u_int			exponent = 0;
 	u_int16_t		p2l_sect = letoh16(id->p2l_sect);
-	
+
 	if ((p2l_sect & ATA_ID_P2L_SECT_MASK) == ATA_ID_P2L_SECT_VALID &&
 	    ISSET(p2l_sect, ATA_ID_P2L_SECT_SET)) {
 		exponent = (p2l_sect & ATA_ID_P2L_SECT_SIZE);
@@ -1284,7 +1284,7 @@ ata_identify_block_logical_align(struct ata_identify *id)
 	u_int			align = 0;
 	u_int16_t		p2l_sect = letoh16(id->p2l_sect);
 	u_int16_t		logical_align = letoh16(id->logical_align);
-	
+
 	if ((p2l_sect & ATA_ID_P2L_SECT_MASK) == ATA_ID_P2L_SECT_VALID &&
 	    ISSET(p2l_sect, ATA_ID_P2L_SECT_SET) &&
 	    (logical_align & ATA_ID_LALIGN_MASK) == ATA_ID_LALIGN_VALID)
@@ -1347,7 +1347,7 @@ atascsi_disk_capacity16(struct scsi_xfer *xs)
 	if (ISSET(ap->ap_features, ATA_PORT_F_TRIM)) {
 		SET(lowest_aligned, READ_CAP_16_TPE);
 
-		if (ISSET(letoh16(ap->ap_identify.add_support), 
+		if (ISSET(letoh16(ap->ap_identify.add_support),
 		    ATA_ID_ADD_SUPPORT_DRT))
 			SET(lowest_aligned, READ_CAP_16_TPRZ);
 	}

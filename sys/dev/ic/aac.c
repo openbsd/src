@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.79 2020/06/27 14:29:44 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.80 2020/06/27 17:28:58 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -475,13 +475,13 @@ aac_startio(struct aac_softc *sc)
 
 	for (;;) {
 		/*
-		 * Try to get a command that's been put off for lack of 
+		 * Try to get a command that's been put off for lack of
 		 * resources
 		 */
 		cm = aac_dequeue_ready(sc);
 
 		/*
-		 * Try to build a command off the bio queue (ignore error 
+		 * Try to build a command off the bio queue (ignore error
 		 * return)
 		 */
 		if (cm == NULL) {
@@ -594,9 +594,9 @@ aac_command_thread(void *arg)
 		/* Also check to see if the adapter has a command for us. */
 		while (aac_dequeue_fib(sc, AAC_HOST_NORM_CMD_QUEUE,
 				       &fib_size, &fib) == 0) {
-	
+
 			AAC_PRINT_FIB(sc, fib);
-	
+
 			switch (fib->Header.Command) {
 			case AifRequest:
 				//aac_handle_aif(sc, fib);
@@ -622,7 +622,7 @@ aac_command_thread(void *arg)
 					size = sizeof(struct aac_fib);
 					fib->Header.Size = size;
 				}
-		
+
 				/*
 				 * Since we did not generate this command, it
 				 * cannot go through the normal
@@ -709,14 +709,14 @@ aac_bio_command(struct aac_softc *sc, struct aac_command **cmp)
 	/* build the FIB */
 	fib = cm->cm_fib;
 	fib->Header.Size = sizeof(struct aac_fib_header);
-	fib->Header.XferState =  
-		AAC_FIBSTATE_HOSTOWNED   | 
-		AAC_FIBSTATE_INITIALISED | 
-		AAC_FIBSTATE_EMPTY	 | 
+	fib->Header.XferState =
+		AAC_FIBSTATE_HOSTOWNED   |
+		AAC_FIBSTATE_INITIALISED |
+		AAC_FIBSTATE_EMPTY	 |
 		AAC_FIBSTATE_FROMHOST	 |
 		AAC_FIBSTATE_REXPECTED   |
 		AAC_FIBSTATE_NORM	 |
-		AAC_FIBSTATE_ASYNC	 |
+	 	AAC_FIBSTATE_ASYNC	 |
 		AAC_FIBSTATE_FAST_RESPONSE;
 
 	switch(xs->cmd->opcode) {
@@ -730,7 +730,7 @@ aac_bio_command(struct aac_softc *sc, struct aac_command **cmp)
 		break;
 	default:
 		panic("%s: invalid opcode %#x", sc->aac_dev.dv_xname,
-		      xs->cmd->opcode);
+		    xs->cmd->opcode);
 	}
 
 	/* build the read/write request */

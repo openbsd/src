@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.70 2020/06/27 14:29:45 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.71 2020/06/27 17:28:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -582,7 +582,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 		link = xs->sc_link;
 		target = link->target;
 		polled = ISSET(xs->flags, SCSI_POLL);
- 
+
 		if (!gdt_polling && !(xs->flags & SCSI_POLL) &&
 		    sc->sc_test_busy(sc)) {
 			/*
