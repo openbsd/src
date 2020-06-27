@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.22 2020/06/26 22:32:22 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.23 2020/06/27 14:30:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -30,13 +30,15 @@
 	.globl sigcode
 	.globl sigcoderet
 sigcode:
+	addi	%r1, %r1, -32
 	mtctr	%r12
 	bctrl
-	addi	%r3, %r1, SF_SC
+	addi	%r3, %r1, 32+SF_SC
 	li	%r0, SYS_sigreturn
 	sc
 sigcoderet:
-	blr
+	li	%r0, SYS_exit
+	sc
 	.globl esigcode
 esigcode:
 
