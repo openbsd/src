@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2019/05/11 07:18:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2020/06/27 15:35:29 deraadt Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -21,11 +21,11 @@ SRCS += i386_softraid.c
 .endif
 
 .if ${MACHINE} == "arm64"
-SRCS += stubs.c
+SRCS += armv7_installboot.c
 .endif
 
 .if ${MACHINE} == "armv7"
-SRCS += stubs.c
+SRCS += armv7_installboot.c
 .endif
 
 .if ${MACHINE} == "hppa"
@@ -46,7 +46,7 @@ SRCS += landisk_installboot.c
 .endif
 
 .if ${MACHINE} == "loongson"
-SRCS += stubs.c
+SRCS += octeon_installboot.c
 .endif
 
 .if ${MACHINE} == "luna88k"
@@ -54,11 +54,11 @@ SRCS += stubs.c
 .endif
 
 .if ${MACHINE} == "macppc"
-SRCS += stubs.c
+SRCS += macppc_installboot.c
 .endif
 
 .if ${MACHINE} == "octeon"
-SRCS += stubs.c
+SRCS += octeon_installboot.c
 .endif
 
 .if ${MACHINE} == "sgi"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.16 2020/06/08 19:17:12 kn Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.17 2020/06/27 15:35:29 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
@@ -89,7 +89,7 @@ sr_install_bootblk(int devfd, int vol, int disk)
 
 	efipart = findgptefisys(diskfd, &dl);
 	if (efipart != -1) {
-		write_efisystem(&dl, (char)efipart);
+		write_filesystem(&dl, (char)efipart);
 		return;
 	}
 

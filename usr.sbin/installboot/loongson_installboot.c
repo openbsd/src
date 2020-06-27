@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_installboot.c,v 1.5 2020/06/27 15:35:29 deraadt Exp $	*/
+/*	$OpenBSD: loongson_installboot.c,v 1.1 2020/06/27 15:35:29 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -93,8 +93,8 @@ md_installboot(int devfd, char *dev)
 static void
 write_filesystem(struct disklabel *dl, char part)
 {
-	static char *fsckfmt = "/sbin/fsck_msdos %s >/dev/null";
-	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
+	static char *fsckfmt = "/sbin/fsck_ext2fs %s >/dev/null";
+	static char *newfsfmt ="/sbin/newfs_ext2fs %s >/dev/null";
 	struct ufs_args args;
 	char cmd[60];
 	char dst[PATH_MAX];
@@ -110,7 +110,7 @@ write_filesystem(struct disklabel *dl, char part)
 		err(1, "mkdtemp('%s') failed", dst);
 	mntlen = strlen(dst);
 
-	/* Mount <duid>.<part> as msdos filesystem. */
+	/* Mount <duid>.<part> as ext2fs filesystem. */
 	memset(&args, 0, sizeof(args));
 	rslt = asprintf(&args.fspec,
 	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.%c",
@@ -125,7 +125,7 @@ write_filesystem(struct disklabel *dl, char part)
 	args.export_info.ex_root = -2;
 	args.export_info.ex_flags = 0;
 
-	if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
+	if (mount(MOUNT_EXT2FS, dst, 0, &args) == -1) {
 		/* Try fsck'ing it. */
 		rslt = snprintf(cmd, sizeof(cmd), fsckfmt, args.fspec);
 		if (rslt >= sizeof(cmd)) {
@@ -138,7 +138,7 @@ write_filesystem(struct disklabel *dl, char part)
 			warn("system('%s') failed", cmd);
 			goto rmdir;
 		}
-		if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
+		if (mount(MOUNT_EXT2FS, dst, 0, &args) == -1) {
 			/* Try newfs'ing it. */
 			rslt = snprintf(cmd, sizeof(cmd), newfsfmt,
 			    args.fspec);
@@ -152,7 +152,7 @@ write_filesystem(struct disklabel *dl, char part)
 				warn("system('%s') failed", cmd);
 				goto rmdir;
 			}
-			rslt = mount(MOUNT_MSDOS, dst, 0, &args);
+			rslt = mount(MOUNT_EXT2FS, dst, 0, &args);
 			if (rslt == -1) {
 				warn("unable to mount EFI System partition");
 				goto rmdir;
@@ -160,8 +160,8 @@ write_filesystem(struct disklabel *dl, char part)
 		}
 	}
 
-	/* Create "/efi/boot" directory in <duid>.<part>. */
-	if (strlcat(dst, "/efi", sizeof(dst)) >= sizeof(dst)) {
+	/* Create "/boot" directory in <duid>.<part>. */
+	if (strlcat(dst, "/boot", sizeof(dst)) >= sizeof(dst)) {
 		rslt = -1;
 		warn("unable to build /efi directory");
 		goto umount;
@@ -171,48 +171,21 @@ write_filesystem(struct disklabel *dl, char part)
 		warn("mkdir('%s') failed", dst);
 		goto umount;
 	}
+
+	/*
+	 * Copy /usr/mdec/boot to /boot/boot.
+	 */
+	pathlen = strlen(dst);
 	if (strlcat(dst, "/boot", sizeof(dst)) >= sizeof(dst)) {
 		rslt = -1;
-		warn("unable to build /boot directory");
+		warn("unable to build /boot path");
 		goto umount;
 	}
-	rslt = mkdir(dst, 0755);
-	if (rslt == -1 && errno != EEXIST) {
-		warn("mkdir('%s') failed", dst);
-		goto umount;
-	}
-
-#ifdef __aarch64__
-	/*
-	 * Copy BOOTAA64.EFI to /efi/boot/bootaa64.efi.
-	 */
-	pathlen = strlen(dst);
-	if (strlcat(dst, "/bootaa64.efi", sizeof(dst)) >= sizeof(dst)) {
-		rslt = -1;
-		warn("unable to build /bootaa64.efi path");
-		goto umount;
-	}
-	src = fileprefix(root, "/usr/mdec/BOOTAA64.EFI");
+	src = fileprefix(root, "/usr/mdec/boot");
 	if (src == NULL) {
 		rslt = -1;
 		goto umount;
 	}
-#else
-	/*
-	 * Copy BOOTARM.EFI to /efi/boot/bootarm.efi.
-	 */
-	pathlen = strlen(dst);
-	if (strlcat(dst, "/bootarm.efi", sizeof(dst)) >= sizeof(dst)) {
-		rslt = -1;
-		warn("unable to build /bootarm.efi path");
-		goto umount;
-	}
-	src = fileprefix(root, "/usr/mdec/BOOTARM.EFI");
-	if (src == NULL) {
-		rslt = -1;
-		goto umount;
-	}
-#endif
 	srclen = strlen(src);
 	if (verbose)
 		fprintf(stderr, "%s %s to %s\n",
@@ -263,9 +236,7 @@ findmbrfat(int devfd, struct disklabel *dl)
 	for (i = 0; i < NDOSPART; i++) {
 		if (dp[i].dp_typ == DOSPTYP_UNUSED)
 			continue;
-		if (dp[i].dp_typ == DOSPTYP_FAT16L ||
-		    dp[i].dp_typ == DOSPTYP_FAT32L ||
-		    dp[i].dp_typ == DOSPTYP_EFISYS)
+		if (dp[i].dp_typ == DOSPTYP_LINUX)
 			start = dp[i].dp_start;
 	}
 

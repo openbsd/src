@@ -1,5 +1,4 @@
-/*	$OpenBSD: armv7_installboot.c,v 1.5 2020/06/27 15:35:29 deraadt Exp $	*/
-/*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
+/*	$OpenBSD: octeon_installboot.c,v 1.1 2020/06/27 15:35:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -50,6 +49,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <endian.h>
 
 #include "installboot.h"
 
@@ -154,65 +154,26 @@ write_filesystem(struct disklabel *dl, char part)
 			}
 			rslt = mount(MOUNT_MSDOS, dst, 0, &args);
 			if (rslt == -1) {
-				warn("unable to mount EFI System partition");
+				warn("unable to mount MSDOS partition");
 				goto rmdir;
 			}
 		}
 	}
 
-	/* Create "/efi/boot" directory in <duid>.<part>. */
-	if (strlcat(dst, "/efi", sizeof(dst)) >= sizeof(dst)) {
-		rslt = -1;
-		warn("unable to build /efi directory");
-		goto umount;
-	}
-	rslt = mkdir(dst, 0755);
-	if (rslt == -1 && errno != EEXIST) {
-		warn("mkdir('%s') failed", dst);
-		goto umount;
-	}
+	/*
+	 * Copy /usr/mdec/boot to /mnt/boot.
+	 */
+	pathlen = strlen(dst);
 	if (strlcat(dst, "/boot", sizeof(dst)) >= sizeof(dst)) {
 		rslt = -1;
-		warn("unable to build /boot directory");
+		warn("unable to build /boot path");
 		goto umount;
 	}
-	rslt = mkdir(dst, 0755);
-	if (rslt == -1 && errno != EEXIST) {
-		warn("mkdir('%s') failed", dst);
-		goto umount;
-	}
-
-#ifdef __aarch64__
-	/*
-	 * Copy BOOTAA64.EFI to /efi/boot/bootaa64.efi.
-	 */
-	pathlen = strlen(dst);
-	if (strlcat(dst, "/bootaa64.efi", sizeof(dst)) >= sizeof(dst)) {
-		rslt = -1;
-		warn("unable to build /bootaa64.efi path");
-		goto umount;
-	}
-	src = fileprefix(root, "/usr/mdec/BOOTAA64.EFI");
+	src = fileprefix(root, "/usr/mdec/boot");
 	if (src == NULL) {
 		rslt = -1;
 		goto umount;
 	}
-#else
-	/*
-	 * Copy BOOTARM.EFI to /efi/boot/bootarm.efi.
-	 */
-	pathlen = strlen(dst);
-	if (strlcat(dst, "/bootarm.efi", sizeof(dst)) >= sizeof(dst)) {
-		rslt = -1;
-		warn("unable to build /bootarm.efi path");
-		goto umount;
-	}
-	src = fileprefix(root, "/usr/mdec/BOOTARM.EFI");
-	if (src == NULL) {
-		rslt = -1;
-		goto umount;
-	}
-#endif
 	srclen = strlen(src);
 	if (verbose)
 		fprintf(stderr, "%s %s to %s\n",
@@ -265,8 +226,8 @@ findmbrfat(int devfd, struct disklabel *dl)
 			continue;
 		if (dp[i].dp_typ == DOSPTYP_FAT16L ||
 		    dp[i].dp_typ == DOSPTYP_FAT32L ||
-		    dp[i].dp_typ == DOSPTYP_EFISYS)
-			start = dp[i].dp_start;
+		    dp[i].dp_typ == DOSPTYP_FAT16B)
+			start = letoh32(dp[i].dp_start);
 	}
 
 	free(secbuf);
