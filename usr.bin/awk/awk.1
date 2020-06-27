@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.54 2020/06/26 21:50:06 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.55 2020/06/27 14:04:58 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2020 $
+.Dd $Mdocdate: June 27 2020 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -130,26 +130,24 @@ and newlines are used as field separators
 This is convenient when working with multi-line records.
 .Pp
 An input line is normally made up of fields separated by whitespace,
-or by the regular expression
-.Va FS .
+or by the value of the field separator
+.Va FS
+at the time the line is read.
 The fields are denoted
 .Va $1 , $2 , ... ,
 while
 .Va $0
 refers to the entire line.
+.Va FS
+may be set to either a single character or a regular expression.
+As as special case, if
+.Va FS
+is a single space
+.Pq the default ,
+fields will be split by one or more whitespace characters.
 If
 .Va FS
 is null, the input line is split into one field per character.
-Lines are split into fields using the value of
-.Va FS
-at the time the line is read.
-Because of this,
-.Va FS
-is usually set via the
-.Fl F
-option or inside of a
-.Ic BEGIN
-block.
 .Pp
 Normally, any number of blanks separate fields.
 In order to set the field separator to a single blank, use the
@@ -171,6 +169,11 @@ as the field separator, use the
 .Fl F
 option with a value of
 .Sq [t] .
+The field separator is usually set via the
+.Fl F
+option or from inside a
+.Ic BEGIN
+block so that it takes effect before the input is read.
 .Pp
 A pattern-action statement has the form:
 .Pp
@@ -407,9 +410,9 @@ The name of the current input file.
 .It Va FNR
 Ordinal number of the current record in the current file.
 .It Va FS
-Regular expression used to separate fields; also settable
-by option
-.Fl F Ar fs .
+Regular expression used to separate fields (default whitespace);
+also settable by option
+.Fl F Ar fs
 .It Va NF
 Number of fields in the current record.
 .Va $NF
