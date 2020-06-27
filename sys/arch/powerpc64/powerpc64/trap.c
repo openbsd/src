@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 2020/06/26 20:58:38 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 2020/06/27 15:04:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -25,10 +25,12 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/fpu.h>
+#include <machine/trap.h>
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
-#include <machine/trap.h>
 
 void	decr_intr(struct trapframe *); /* clock.c */
 void	hvi_intr(struct trapframe *);  /* intr.c */
@@ -46,6 +48,9 @@ trap(struct trapframe *frame)
 	vaddr_t va;
 	int ftype;
 	int error;
+
+	/* Disable access to floating-point and vector registers. */
+	mtmsr(mfmsr() & ~(PSL_FP|PSL_VEC|PSL_VSX));
 
 	switch (type) {
 	case EXC_DECR:
@@ -169,6 +174,18 @@ trap(struct trapframe *frame)
 		p->p_md.md_astpending = 0;
 		uvmexp.softs++;
 		mi_ast(p, ci->ci_want_resched);
+		break;
+
+	case EXC_FPU|EXC_USER:
+		restore_vsx(p);
+		curpcb->pcb_flags |= PCB_FP;
+		frame->srr1 |= PSL_FP;
+		break;
+
+	case EXC_VEC|EXC_USER:
+		restore_vsx(p);
+		curpcb->pcb_flags |= PCB_VEC;
+		frame->srr1 |= PSL_VEC;
 		break;
 
 	default:

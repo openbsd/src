@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.23 2020/06/27 14:30:49 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.24 2020/06/27 15:04:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -64,8 +64,8 @@ cpu_idle_cycle:
 cpu_idle_leave:
 	blr
 
-	.globl cpu_switchto
-cpu_switchto:
+	.globl cpu_switchto_asm
+cpu_switchto_asm:
 	cmpdi	%r3, 0
 	beq	1f
 

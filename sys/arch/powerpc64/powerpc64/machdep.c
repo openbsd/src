@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 2020/06/26 23:32:47 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.36 2020/06/27 15:04:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/user.h>
 
 #include <machine/cpufunc.h>
+#include <machine/fpu.h>
 #include <machine/opal.h>
 #include <machine/pcb.h>
 #include <machine/psl.h>
@@ -612,6 +613,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
 	struct trapframe *frame = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct ps_strings arginfo;
 
 	copyin((void *)p->p_p->ps_strings, &arginfo, sizeof(arginfo));
@@ -625,6 +627,9 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	frame->fixreg[12] = pack->ep_entry;
 	frame->srr0 = pack->ep_entry;
 	frame->srr1 = PSL_USER;
+
+	memset(&pcb->pcb_fpstate, 0, sizeof(pcb->pcb_fpstate));
+	pcb->pcb_flags = 0;
 }
 
 void
@@ -732,6 +737,25 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
 
 	return EJUSTRETURN;
+}
+
+void	cpu_switchto_asm(struct proc *, struct proc *);
+
+void
+cpu_switchto(struct proc *old, struct proc *new)
+{
+	if (old) {
+		struct pcb *pcb = &old->p_addr->u_pcb;
+		struct trapframe *tf = old->p_md.md_regs;
+
+		if (pcb->pcb_flags & (PCB_FP|PCB_VEC|PCB_VSX) &&
+		    tf->srr1 & (PSL_FP|PSL_VEC|PSL_VSX)) {
+			tf->srr1 &= ~(PSL_FP|PSL_VEC|PSL_VSX);
+			save_vsx(old);
+		}
+	}
+
+	cpu_switchto_asm(old, new);
 }
 
 /*

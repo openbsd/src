@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.13 2020/06/22 21:13:40 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.14 2020/06/27 15:04:49 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -15,6 +15,7 @@ file	arch/powerpc64/powerpc64/db_interface.c		ddb
 file	arch/powerpc64/powerpc64/db_memrw.c		ddb
 file	arch/powerpc64/powerpc64/db_trace.c		ddb
 file	arch/powerpc64/powerpc64/disksubr.c
+file	arch/powerpc64/powerpc64/fpu.c
 file	arch/powerpc64/powerpc64/intr.c
 file	arch/powerpc64/powerpc64/machdep.c
 file	arch/powerpc64/powerpc64/pmap.c
