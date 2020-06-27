@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.79 2020/06/23 14:10:43 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.80 2020/06/27 10:23:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -271,12 +271,18 @@ screen_redraw_type_of_cell(struct client *c, u_int px, u_int py,
 			borders |= 2;
 		if (screen_redraw_cell_border(c, px, py + 1, pane_status))
 			borders |= 1;
-	} else {
+	} else if (pane_status == PANE_STATUS_BOTTOM) {
 		if (py == 0 ||
 		    screen_redraw_cell_border(c, px, py - 1, pane_status))
 			borders |= 2;
 		if (py != sy - 1 &&
 		    screen_redraw_cell_border(c, px, py + 1, pane_status))
+			borders |= 1;
+	} else {
+		if (py == 0 ||
+		    screen_redraw_cell_border(c, px, py - 1, pane_status))
+			borders |= 2;
+		if (screen_redraw_cell_border(c, px, py + 1, pane_status))
 			borders |= 1;
 	}
 
