@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2020/06/27 15:04:49 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2020/06/27 20:44:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
@@ -42,12 +43,13 @@ trap(struct trapframe *frame)
 	struct cpu_info *ci = curcpu();
 	struct proc *p = curproc;
 	int type = frame->exc;
+	union sigval sv;
 	struct vm_map *map;
 	struct slb_desc *slbd;
 	pmap_t pm;
 	vaddr_t va;
 	int ftype;
-	int error;
+	int error, sig, code;
 
 	/* Disable access to floating-point and vector registers. */
 	mtmsr(mfmsr() & ~(PSL_FP|PSL_VEC|PSL_VSX));
@@ -127,7 +129,6 @@ trap(struct trapframe *frame)
 		/* FALLTHROUGH */
 
 	case EXC_DSI|EXC_USER:
-//		printf("proc %p type %x dar 0x%lx dsisr 0x%lx\n", p, type, frame->dar, frame->dsisr);
 		map = &p->p_vmspace->vm_map;
 		va = frame->dar;
 		if (frame->dsisr & DSISR_STORE)
@@ -140,8 +141,30 @@ trap(struct trapframe *frame)
 		if (error) {
 			printf("type %x dar 0x%lx dsisr 0x%lx\n",
 			    type, frame->dar, frame->dsisr);
-			printf("r29 0x%lx\n", frame->fixreg[29]);
-			goto fatal;
+			for (int i = 0; i < 32; i++)
+				printf("r%d 0x%lx\n", i, frame->fixreg[i]);
+			printf("ctr 0x%lx\n", frame->ctr);
+			printf("xer 0x%lx\n", frame->xer);
+			printf("cr 0x%lx\n", frame->cr);
+			printf("lr 0x%lx\n", frame->lr);
+
+			if (error == ENOMEM) {
+				sig = SIGKILL;
+				code = 0;
+			} else if (error == EIO) {
+				sig = SIGBUS;
+				code = BUS_OBJERR;
+			} else if (error == EACCES) {
+				sig = SIGSEGV;
+				code = SEGV_ACCERR;
+			} else {
+				sig = SIGSEGV;
+				code = SEGV_MAPERR;
+			}
+			sv.sival_ptr = (void *)va;
+			KERNEL_LOCK();
+			trapsignal(p, sig, 0, code, sv);
+			KERNEL_UNLOCK();
 		}
 		break;
 
@@ -155,15 +178,39 @@ trap(struct trapframe *frame)
 		/* FALLTHROUGH */
 
 	case EXC_ISI|EXC_USER:
-//		printf("proc %p type %x srr0 0x%lx\n", p, type, frame->srr0);
 		map = &p->p_vmspace->vm_map;
 		va = frame->srr0;
 		ftype = PROT_READ | PROT_EXEC;
 		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
 		KERNEL_UNLOCK();
-		if (error)
-			goto fatal;
+		if (error) {
+			printf("type %x srr0 0x%lx\n", type, frame->srr0);
+			for (int i = 0; i < 32; i++)
+				printf("r%d 0x%lx\n", i, frame->fixreg[i]);
+			printf("ctr 0x%lx\n", frame->ctr);
+			printf("xer 0x%lx\n", frame->xer);
+			printf("cr 0x%lx\n", frame->cr);
+			printf("lr 0x%lx\n", frame->lr);
+
+			if (error == ENOMEM) {
+				sig = SIGKILL;
+				code = 0;
+			} else if (error == EIO) {
+				sig = SIGBUS;
+				code = BUS_OBJERR;
+			} else if (error == EACCES) {
+				sig = SIGSEGV;
+				code = SEGV_ACCERR;
+			} else {
+				sig = SIGSEGV;
+				code = SEGV_MAPERR;
+			}
+			sv.sival_ptr = (void *)va;
+			KERNEL_LOCK();
+			trapsignal(p, sig, 0, code, sv);
+			KERNEL_UNLOCK();
+		}
 		break;
 
 	case EXC_SC|EXC_USER:
@@ -174,6 +221,28 @@ trap(struct trapframe *frame)
 		p->p_md.md_astpending = 0;
 		uvmexp.softs++;
 		mi_ast(p, ci->ci_want_resched);
+		break;
+
+	case EXC_ALI|EXC_USER:
+		sv.sival_ptr = (void *)frame->dar;
+		KERNEL_LOCK();
+		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+		KERNEL_UNLOCK();
+		break;
+
+	case EXC_PGM|EXC_USER:
+		printf("type %x srr0 0x%lx\n", type, frame->srr0);
+		for (int i = 0; i < 32; i++)
+			printf("r%d 0x%lx\n", i, frame->fixreg[i]);
+		printf("ctr 0x%lx\n", frame->ctr);
+		printf("xer 0x%lx\n", frame->xer);
+		printf("cr 0x%lx\n", frame->cr);
+		printf("lr 0x%lx\n", frame->lr);
+
+		sv.sival_ptr = (void *)frame->srr0;
+		KERNEL_LOCK();
+		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
+		KERNEL_UNLOCK();
 		break;
 
 	case EXC_FPU|EXC_USER:
@@ -190,8 +259,8 @@ trap(struct trapframe *frame)
 
 	default:
 	fatal:
-		panic("trap type %lx srr1 %lx at %lx lr %lx",
-		    frame->exc, frame->srr1, frame->srr0, frame->lr);
+		panic("trap type %x srr1 %lx at %lx lr %lx",
+		    type, frame->srr1, frame->srr0, frame->lr);
 	}
 
 	userret(p);
