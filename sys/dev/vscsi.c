@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.50 2020/06/24 18:59:30 krw Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.51 2020/06/27 14:29:44 krw Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -152,7 +152,6 @@ vscsi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = 16;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,

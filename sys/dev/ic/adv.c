@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.42 2020/02/15 18:02:00 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.43 2020/06/27 14:29:44 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -509,7 +509,6 @@ adv_attach(sc)
 		       sc->sc_dev.dv_xname, i, ADV_MAX_CCB);
 	}
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }

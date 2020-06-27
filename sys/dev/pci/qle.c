@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.54 2020/06/27 13:37:51 bket Exp $ */
+/*	$OpenBSD: qle.c,v 1.55 2020/06/27 14:29:45 krw Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -677,7 +677,6 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_link.node_wwn &= ~(0xfULL << 56);
 	}
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/* config_found() returns the scsibus attached to us */

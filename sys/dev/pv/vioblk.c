@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.19 2020/06/24 18:47:57 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.20 2020/06/27 14:29:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -246,7 +246,6 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	if (virtio_has_feature(vsc, VIRTIO_BLK_F_RO))
 		sc->sc_link.flags |= SDEV_READONLY;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 	printf("\n");
 	config_found(self, &saa, scsiprint);

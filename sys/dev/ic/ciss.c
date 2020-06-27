@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.82 2020/06/24 18:59:30 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.83 2020/06/27 14:29:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -360,7 +360,6 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.adapter_buswidth = sc->maxunits;
 	sc->sc_link.pool = &sc->sc_iopool;
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 	scsibus = (struct scsibus_softc *)config_found_sm(&sc->sc_dev,
 	    &saa, scsiprint, NULL);

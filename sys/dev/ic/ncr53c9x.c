@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.70 2020/06/24 22:03:41 cheloha Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.71 2020/06/27 14:29:45 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -271,7 +271,6 @@ ncr53c9x_attach(sc)
 	sc->sc_link.adapter_buswidth = sc->sc_ntarg;
 	sc->sc_link.pool = &ecb_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/*

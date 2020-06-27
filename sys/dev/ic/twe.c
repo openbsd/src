@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.52 2020/06/24 18:59:30 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.53 2020/06/27 14:29:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -401,7 +401,6 @@ twe_attach(sc)
 	sc->sc_link.adapter_buswidth = TWE_MAX_UNITS;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);

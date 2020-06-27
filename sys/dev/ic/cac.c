@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.60 2020/06/24 18:59:30 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.61 2020/06/27 14:29:45 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -245,7 +245,6 @@ cac_init(struct cac_softc *sc, int startfw)
 		sc->sc_link.openings = 4;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dv, &saa, scsiprint);

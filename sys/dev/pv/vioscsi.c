@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.17 2020/06/24 18:59:30 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.18 2020/06/27 14:29:45 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -167,7 +167,6 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_buswidth = max_target;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus *)config_found(self, &saa, scsiprint);

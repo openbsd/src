@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.35 2020/06/24 01:35:29 krw Exp $ */
+/*	$OpenBSD: qlw.c,v 1.36 2020/06/27 14:29:45 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -403,7 +403,6 @@ qlw_attach(struct qlw_softc *sc)
 		sc->sc_link[bus].openings = sc->sc_max_queue_depth[bus];
 		sc->sc_link[bus].pool = &sc->sc_iopool;
 
-		memset(&saa, 0, sizeof(saa));
 		saa.saa_sc_link = &sc->sc_link[bus];
 
 		/* config_found() returns the scsibus attached to us */

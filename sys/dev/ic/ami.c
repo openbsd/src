@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.242 2020/06/24 18:59:30 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.243 2020/06/27 14:29:44 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -544,7 +544,6 @@ ami_attach(struct ami_softc *sc)
 	/* lock around ioctl requests */
 	rw_init(&sc->sc_lock, NULL);
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
@@ -590,7 +589,6 @@ ami_attach(struct ami_softc *sc)
 		rsc->sc_link.adapter_buswidth = 16;
 		rsc->sc_link.pool = &sc->sc_iopool;
 
-		bzero(&saa, sizeof(saa));
 		saa.saa_sc_link = &rsc->sc_link;
 
 		ptbus = (struct scsibus_softc *)config_found(&sc->sc_dev,

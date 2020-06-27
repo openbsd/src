@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.75 2020/06/19 14:51:44 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.76 2020/06/27 14:29:45 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -213,7 +213,6 @@ siop_attach(sc)
 	siop_dump_script(sc);
 #endif
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_c.sc_link;
 
 	config_found((struct device*)sc, &saa, scsiprint);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.13 2020/06/24 22:03:41 cheloha Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.14 2020/06/27 14:29:45 krw Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -210,7 +210,6 @@ wd33c93_attach(struct wd33c93_softc *sc, struct scsi_adapter *adapter)
 	sc->sc_link.luns = SBIC_NLUN;
 	sc->sc_link.pool = &wd33c93_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);

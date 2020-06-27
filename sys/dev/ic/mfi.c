@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.177 2020/06/24 18:33:50 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.178 2020/06/27 14:29:45 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -779,7 +779,6 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	sc->sc_link.openings = sc->sc_max_cmds - 1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus_softc *)
@@ -855,7 +854,6 @@ mfi_syspd(struct mfi_softc *sc)
 	link->openings = sc->sc_max_cmds - 1;
 	link->pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = link;
 
 	sc->sc_pd->pd_scsibus = (struct scsibus_softc *)

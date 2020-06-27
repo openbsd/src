@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.48 2020/06/24 18:59:30 krw Exp $ */
+/*	$OpenBSD: mpath.c,v 1.49 2020/06/27 14:29:45 krw Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -126,7 +126,6 @@ mpath_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.luns = 1;
 	sc->sc_link.openings = 1024; /* XXX magical */
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,

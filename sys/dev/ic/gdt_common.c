@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.69 2020/06/24 18:47:57 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.70 2020/06/27 14:29:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -476,7 +476,6 @@ gdt_attach(struct gdt_softc *sc)
 #endif
 	gdt_cnt++;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);

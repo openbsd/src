@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.26 2020/02/17 02:50:23 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.27 2020/06/27 14:29:45 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -267,7 +267,6 @@ oosiop_attach(struct oosiop_softc *sc)
 	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.quirks = ADEV_NODOORLOCK;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/*

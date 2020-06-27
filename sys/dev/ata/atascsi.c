@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.134 2020/06/24 18:59:30 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.135 2020/06/27 14:29:44 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -190,7 +190,6 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_host_ports = mallocarray(aaa->aaa_nports,
 	    sizeof(struct atascsi_host_port *),	M_DEVBUF, M_WAITOK | M_ZERO);
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &as->as_link;
 
 	/* stash the scsibus so we can do hotplug on it */

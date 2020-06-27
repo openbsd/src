@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.50 2020/02/13 15:11:32 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.51 2020/06/27 14:29:45 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ umass_scsi_attach(struct umass_softc *sc)
 	scbus->sc_link.luns = sc->maxlun + 1;
 	scbus->sc_link.flags = SDEV_UMASS;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &scbus->sc_link;
 
 	switch (sc->sc_cmd) {

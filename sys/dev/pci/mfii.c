@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.71 2020/06/24 22:03:41 cheloha Exp $ */
+/* $OpenBSD: mfii.c,v 1.72 2020/06/27 14:29:45 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -788,7 +788,6 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_buswidth = sc->sc_info.mci_max_lds;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus_softc *)
@@ -925,7 +924,6 @@ mfii_syspd(struct mfii_softc *sc)
 	link->openings = sc->sc_max_cmds - 1;
 	link->pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = link;
 
 	sc->sc_pd->pd_scsibus = (struct scsibus_softc *)

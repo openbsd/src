@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.31 2020/02/05 16:29:29 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.32 2020/06/27 14:29:44 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -272,7 +272,6 @@ aicattach(struct aic_softc *sc)
 	sc->sc_link.openings = 2;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);

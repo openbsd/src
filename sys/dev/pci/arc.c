@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.111 2020/06/24 18:59:30 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.112 2020/06/27 14:29:45 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -809,7 +809,6 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = sc->sc_req_count;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	child = config_found(self, &saa, scsiprint);

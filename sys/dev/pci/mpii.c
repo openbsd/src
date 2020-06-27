@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.129 2020/06/24 18:33:50 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.130 2020/06/27 14:29:45 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -590,7 +590,6 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = sc->sc_max_cmds - 1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.75 2020/03/15 20:50:46 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.76 2020/06/27 14:29:45 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -371,7 +371,6 @@ nvme_attach(struct nvme_softc *sc)
 	sc->sc_link.openings = 64;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,

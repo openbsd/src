@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.62 2020/06/27 13:36:52 bket Exp $ */
+/*	$OpenBSD: qla.c,v 1.63 2020/06/27 14:29:45 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -694,7 +694,6 @@ qla_attach(struct qla_softc *sc)
 		sc->sc_link.node_wwn &= ~(0xfULL << 56);
 	}
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/* config_found() returns the scsibus attached to us */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.60 2020/02/15 18:02:00 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.61 2020/06/27 14:29:44 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -107,7 +107,6 @@ ahc_attach(struct ahc_softc *ahc)
 	if ((ahc->features & AHC_TWIN) && ahc->flags & AHC_RESET_BUS_B)
 		ahc_reset_channel(ahc, 'B', TRUE);
 
-	bzero(&saa, sizeof(saa));
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {
 		saa.saa_sc_link = &ahc->sc_channel;
 		ahc->sc_child = config_found((void *)&ahc->sc_dev,

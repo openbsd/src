@@ -316,7 +316,6 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = sc->sc_nccb;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 	sc->sc_scsibus = config_found(self, &saa, scsiprint);
 

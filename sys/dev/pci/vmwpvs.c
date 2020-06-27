@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.17 2020/06/24 18:33:50 krw Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.18 2020/06/27 14:29:45 krw Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -567,7 +567,6 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = VMWPVS_OPENINGS;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.50 2020/02/15 18:02:00 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.51 2020/06/27 14:29:44 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -120,7 +120,6 @@ ahd_attach(struct ahd_softc *ahd)
 	if (ahd->flags & AHD_RESET_BUS_A)
 		ahd_reset_channel(ahd, 'A', TRUE);
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &ahd->sc_channel;
 
 	ahd->sc_child = config_found((void *)&ahd->sc_dev, &saa, scsiprint);
