@@ -99,18 +99,20 @@ static int intel_fbdev_pan_display(struct fb_var_screeninfo *var,
 	return ret;
 }
 
-#ifdef notyet
 static const struct fb_ops intelfb_ops = {
+#ifdef notyet
 	.owner = THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
+#endif
 	.fb_set_par = intel_fbdev_set_par,
+#ifdef notyet
 	.fb_fillrect = drm_fb_helper_cfb_fillrect,
 	.fb_copyarea = drm_fb_helper_cfb_copyarea,
 	.fb_imageblit = drm_fb_helper_cfb_imageblit,
 	.fb_pan_display = intel_fbdev_pan_display,
 	.fb_blank = intel_fbdev_blank,
-};
 #endif
+};
 
 static int intelfb_alloc(struct drm_fb_helper *helper,
 			 struct drm_fb_helper_surface_size *sizes)
@@ -229,9 +231,9 @@ static int intelfb_create(struct drm_fb_helper *helper,
 
 	ifbdev->helper.fb = &ifbdev->fb->base;
 
-#ifdef __linux__
 	info->fbops = &intelfb_ops;
 
+#ifdef __linux__
 	/* setup aperture base/size for vesafb takeover */
 	info->apertures->ranges[0].base = ggtt->gmadr.start;
 	info->apertures->ranges[0].size = ggtt->mappable_end;
@@ -555,9 +557,9 @@ void intel_fbdev_unregister(struct drm_i915_private *dev_priv)
 #ifdef __linux__
 	if (!current_is_async())
 		intel_fbdev_sync(ifbdev);
+#endif
 
 	drm_fb_helper_unregister_fbi(&ifbdev->helper);
-#endif
 }
 
 void intel_fbdev_fini(struct drm_i915_private *dev_priv)

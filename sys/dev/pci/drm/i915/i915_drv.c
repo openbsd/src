@@ -2559,8 +2559,6 @@ inteldrm_attachhook(struct device *self)
 	printf("%s: %dx%d, %dbpp\n", dev_priv->sc_dev.dv_xname,
 	    ri->ri_width, ri->ri_height, ri->ri_depth);
 
-	intel_fbdev_restore_mode(dev);
-
 	ri->ri_flg = RI_CENTER | RI_WRONLY | RI_VCONS | RI_CLEAR;
 
 	orientation_quirk = drm_get_panel_orientation_quirk(ri->ri_width,
