@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.11 2020/06/28 05:21:38 ratchov Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.12 2020/06/28 05:39:30 ratchov Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -200,9 +200,9 @@ from the line input to the speaker.
 An element of an array of boolean switches.
 For instance the line-in position of the
 speaker source selector.
-.It SIOCTL_SEL
+.It Dv SIOCTL_SEL
 Same as
-.Va SIOCTL_LIST
+.Dv SIOCTL_LIST
 but exactly one element is selected at a time.
 .El
 .Pp
