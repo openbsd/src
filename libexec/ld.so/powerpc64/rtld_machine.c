@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.1 2020/06/25 04:00:58 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.2 2020/06/28 20:52:05 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -74,9 +74,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	if (relrel > numrela)
 		_dl_die("relcount > numrel: %ld > %d", relrel, numrela);
-
-	if (object->Dyn.info[DT_PROC(DT_PPC_GOT)] == 0)
-		_dl_die("unsupported insecure BSS PLT object");
 
 	/* tight loop for leading RELATIVE relocs */
 	for (i = 0; i < relrel; i++, relas++) {
@@ -275,27 +272,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return 0;
 
-	if (!lazy) {
-		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-	} else {
-		Elf_Addr *got;
-		Elf_Addr *plt;
-		int numplt, i;
-
-		/* Relocate processor-specific tags. */
-		object->Dyn.info[DT_PROC(DT_PPC_GOT)] += object->obj_base;
-
-		got = (Elf_Addr *)
-		    (Elf_RelA *)(object->Dyn.info[DT_PROC(DT_PPC_GOT)]);
-		got[1] = (Elf_Addr)_dl_bind_start;
-		got[2] = (Elf_Addr)object;
-
-		plt = (Elf_Addr *)
-		   (Elf_RelA *)(object->Dyn.info[DT_PLTGOT]);
-		numplt = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf_RelA);
-		for (i = 0; i < numplt; i++)
-			plt[i] += object->obj_base;
-	}
+	fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 
 	return fails;
 }
