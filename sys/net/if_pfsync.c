@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.271 2020/06/24 22:03:43 cheloha Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.272 2020/06/28 06:40:14 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -489,7 +489,7 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	struct pf_rule *r = NULL;
 	struct pfi_kif	*kif;
 	int pool_flags;
-	int error;
+	int error = ENOMEM;
 
 	if (sp->creatorid == 0) {
 		DPFPRINTF(LOG_NOTICE, "pfsync_state_import: "
@@ -584,6 +584,16 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 			}
 		} else
 			sks->proto = sp->proto;
+
+		if (((sks->af != AF_INET) && (sks->af != AF_INET6)) ||
+		    ((skw->af != AF_INET) && (skw->af != AF_INET6))) {
+			error = EINVAL;
+			goto cleanup;
+		}
+
+	} else if ((sks->af != AF_INET) && (sks->af != AF_INET6)) {
+		error = EINVAL;
+		goto cleanup;
 	}
 	st->rtableid[PF_SK_WIRE] = ntohl(sp->rtableid[PF_SK_WIRE]);
 	st->rtableid[PF_SK_STACK] = ntohl(sp->rtableid[PF_SK_STACK]);
@@ -657,7 +667,6 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	return (0);
 
  cleanup:
-	error = ENOMEM;
 	if (skw == sks)
 		sks = NULL;
 	if (skw != NULL)
