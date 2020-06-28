@@ -372,6 +372,7 @@ public:
 
     switch (getTriple().getOS()) {
     case llvm::Triple::FreeBSD:
+    case llvm::Triple::OpenBSD:
       LongDoubleWidth = LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEdouble();
       break;
