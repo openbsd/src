@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.28 2020/06/21 20:36:07 pd Exp $ */
+/* $OpenBSD: ns8250.c,v 1.29 2020/06/28 16:52:45 pd Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -37,8 +37,40 @@
 extern char *__progname;
 struct ns8250_dev com1_dev;
 
+/* Flags to distinguish calling threads to com_rcv */
+#define NS8250_DEV_THREAD	0
+#define NS8250_CPU_THREAD 	1
+
+static struct vm_dev_pipe dev_pipe;
+
 static void com_rcv_event(int, short, void *);
-static void com_rcv(struct ns8250_dev *, uint32_t, uint32_t);
+static void com_rcv(struct ns8250_dev *, uint32_t, uint32_t, int);
+
+/*
+ * ns8250_pipe_dispatch
+ *
+ * Reads a message off the pipe, expecting a reguest to reset events after a
+ * zero-byte read from the com device.
+ */
+static void
+ns8250_pipe_dispatch(int fd, short event, void *arg)
+{
+	enum pipe_msg_type msg;
+
+	msg = vm_pipe_recv(&dev_pipe);
+	switch(msg) {
+	case NS8250_ZERO_READ:
+		log_debug("%s: resetting events after zero byte read", __func__);
+		event_del(&com1_dev.event);
+		event_add(&com1_dev.wake, NULL);
+		break;
+	case NS8250_RATELIMIT:
+		evtimer_add(&com1_dev.rate, &com1_dev.rate_tv);
+		break;
+	default:
+		fatalx("%s: unexpected pipe message %d", __func__, msg);
+	}
+}
 
 /*
  * ratelimit
@@ -75,6 +107,7 @@ ns8250_init(int fd, uint32_t vmid)
 		errno = ret;
 		fatal("could not initialize com1 mutex");
 	}
+
 	com1_dev.fd = fd;
 	com1_dev.irq = 4;
 	com1_dev.portid = NS8250_COM1;
@@ -115,6 +148,9 @@ ns8250_init(int fd, uint32_t vmid)
 	timerclear(&com1_dev.rate_tv);
 	com1_dev.rate_tv.tv_usec = 10000;
 	evtimer_set(&com1_dev.rate, ratelimit, NULL);
+
+	vm_pipe_init(&dev_pipe, ns8250_pipe_dispatch);
+	event_add(&dev_pipe.read_ev, NULL);
 }
 
 static void
@@ -137,7 +173,7 @@ com_rcv_event(int fd, short kind, void *arg)
 		if (com1_dev.regs.lsr & LSR_RXRDY)
 			com1_dev.rcv_pending = 1;
 		else
-			com_rcv(&com1_dev, (uintptr_t)arg, 0);
+			com_rcv(&com1_dev, (uintptr_t)arg, 0, NS8250_DEV_THREAD);
 	}
 
 	/* If pending interrupt, inject */
@@ -181,7 +217,7 @@ com_rcv_handle_break(struct ns8250_dev *com, uint8_t cmd)
  * Must be called with the mutex of the com device acquired
  */
 static void
-com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
+com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id, int thread)
 {
 	char buf[2];
 	ssize_t sz;
@@ -201,8 +237,13 @@ com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
 		if (errno != EAGAIN)
 			log_warn("unexpected read error on com device");
 	} else if (sz == 0) {
-		event_del(&com->event);
-		event_add(&com->wake, NULL);
+		if (thread == NS8250_DEV_THREAD) {
+			event_del(&com->event);
+			event_add(&com->wake, NULL);
+		} else {
+			/* Called by vcpu thread, use pipe for event changes */
+			vm_pipe_send(&dev_pipe, NS8250_ZERO_READ);
+		}
 		return;
 	} else if (sz != 1 && sz != 2)
 		log_warnx("unexpected read return value %zd on com device", sz);
@@ -258,8 +299,7 @@ vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 			/* Limit output rate if needed */
 			if (com1_dev.pause_ct > 0 &&
 			    com1_dev.byte_out % com1_dev.pause_ct == 0) {
-					evtimer_add(&com1_dev.rate,
-					    &com1_dev.rate_tv);
+				vm_pipe_send(&dev_pipe, NS8250_RATELIMIT);
 			} else {
 				/* Set TXRDY and clear "no pending interrupt" */
 				com1_dev.regs.iir |= IIR_TXRDY;
@@ -300,7 +340,7 @@ vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 			com1_dev.regs.iir = 0x1;
 
 		if (com1_dev.rcv_pending)
-			com_rcv(&com1_dev, vm_id, vcpu_id);
+			com_rcv(&com1_dev, vm_id, vcpu_id, NS8250_CPU_THREAD);
 	}
 
 	/* If pending interrupt, make sure it gets injected */

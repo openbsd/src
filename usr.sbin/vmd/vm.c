@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.57 2020/04/30 03:50:53 pd Exp $	*/
+/*	$OpenBSD: vm.c,v 1.58 2020/06/28 16:52:45 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -2242,4 +2242,74 @@ translate_gva(struct vm_exit* exit, uint64_t va, uint64_t* pa, int mode)
 	log_debug("%s: final GPA for GVA 0x%llx = 0x%llx\n", __func__, va, *pa);
 
 	return (0);
+}
+
+/*
+ * vm_pipe_init
+ *
+ * Initialize a vm_dev_pipe, setting up its file descriptors and its
+ * event structure with the given callback.
+ *
+ * Parameters:
+ *  p: pointer to vm_dev_pipe struct to initizlize
+ *  cb: callback to use for READ events on the read end of the pipe
+ */
+void
+vm_pipe_init(struct vm_dev_pipe *p, void (*cb)(int, short, void *))
+{
+	int ret;
+	int fds[2];
+
+	memset(p, 0, sizeof(struct vm_dev_pipe));
+
+	ret = pipe(fds);
+	if (ret)
+		fatal("failed to create vm_dev_pipe pipe");
+
+	p->read = fds[0];
+	p->write = fds[1];
+
+	event_set(&p->read_ev, p->read, EV_READ | EV_PERSIST, cb, NULL);
+}
+
+/*
+ * vm_pipe_send
+ *
+ * Send a message to an emulated device vie the provided vm_dev_pipe.
+ *
+ * Parameters:
+ *  p: pointer to initialized vm_dev_pipe
+ *  msg: message to send in the channel
+ */
+void
+vm_pipe_send(struct vm_dev_pipe *p, enum pipe_msg_type msg)
+{
+	size_t n;
+	n = write(p->write, &msg, sizeof(msg));
+	if (n != sizeof(msg))
+		fatal("failed to write to device pipe");
+}
+
+/*
+ * vm_pipe_recv
+ *
+ * Receive a message for an emulated device via the provided vm_dev_pipe.
+ * Returns the message value, otherwise will exit on failure.
+ *
+ * Parameters:
+ *  p: pointer to initialized vm_dev_pipe
+ *
+ * Return values:
+ *  a value of enum pipe_msg_type or fatal exit on read(2) error
+ */
+enum pipe_msg_type
+vm_pipe_recv(struct vm_dev_pipe *p)
+{
+	size_t n;
+	enum pipe_msg_type msg;
+	n = read(p->read, &msg, sizeof(msg));
+	if (n != sizeof(msg))
+		fatal("failed to read from device pipe");
+
+	return msg;
 }
