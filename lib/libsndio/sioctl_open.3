@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.9 2020/06/20 08:41:37 schwarze Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.10 2020/06/28 05:17:25 ratchov Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2020 $
+.Dd $Mdocdate: June 28 2020 $
 .Dt SIOCTL_OPEN 3
 .Os
 .Sh NAME
@@ -161,11 +161,12 @@ struct sioctl_desc {
 #define SIOCTL_SW		3	/* on/off switch (1 or 0) */
 #define SIOCTL_VEC		4	/* number, element of vector */
 #define SIOCTL_LIST		5	/* switch, element of a list */
+#define SIOCTL_SEL		6	/* element of a selector */
 	unsigned int type;		/* one of above */
 	char func[SIOCTL_NAMEMAX];	/* function name, ex. "level" */
 	char group[SIOCTL_NAMEMAX];	/* group this control belongs to */
 	struct sioctl_node node0;	/* affected node */
-	struct sioctl_node node1;	/* dito for SIOCTL_{VEC,LIST} */
+	struct sioctl_node node1;	/* dito for SIOCTL_{VEC,LIST,SEL} */
 	unsigned int maxval;		/* max value */
 };
 .Ed
@@ -199,6 +200,10 @@ from the line input to the speaker.
 An element of an array of boolean switches.
 For instance the line-in position of the
 speaker source selector.
+.It SIOCTL_SEL
+Same as
+.Va SIOCTL_LIST
+but exactly one element is selected at a time.
 .El
 .Pp
 The
@@ -214,9 +219,10 @@ attributes indicate the names of the controlled nodes, typically
 channels of audio streams.
 .Fa node1
 is meaningful for
-.Dv SIOCTL_VEC
+.Dv SIOCTL_VEC ,
+.Dv SIOCTL_LIST ,
 and
-.Dv SIOCTL_LIST
+.Dv SIOCTL_SEL
 only.
 .Pp
 Names in the

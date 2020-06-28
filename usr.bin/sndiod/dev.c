@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.73 2020/06/18 05:11:13 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.74 2020/06/28 05:17:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2296,6 +2296,7 @@ ctl_log(struct ctl *c)
 		break;
 	case CTL_VEC:
 	case CTL_LIST:
+	case CTL_SEL:
 		ctl_node_log(&c->node1);
 		log_puts(":");
 		log_putu(c->curval);
@@ -2320,7 +2321,7 @@ dev_addctl(struct dev *d, char *gstr, int type, int addr,
 	strlcpy(c->group, gstr, CTL_NAMEMAX);
 	strlcpy(c->node0.name, str0, CTL_NAMEMAX);
 	c->node0.unit = unit0;
-	if (c->type == CTL_VEC || c->type == CTL_LIST) {
+	if (c->type == CTL_VEC || c->type == CTL_LIST || c->type == CTL_SEL) {
 		strlcpy(c->node1.name, str1, CTL_NAMEMAX);
 		c->node1.unit = unit1;
 	} else

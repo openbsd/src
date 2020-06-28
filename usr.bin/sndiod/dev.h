@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.27 2020/06/18 05:11:13 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.28 2020/06/28 05:17:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -126,6 +126,7 @@ struct ctl {
 #define CTL_SW		3		/* on/off switch, only bit 7 counts */
 #define CTL_VEC		4		/* number, element of vector */
 #define CTL_LIST	5		/* switch, element of a list */
+#define CTL_SEL		6		/* element of a selector */
 	unsigned int type;		/* one of above */
 	unsigned int addr;		/* control address */
 #define CTL_NAMEMAX	16		/* max name lenght */
