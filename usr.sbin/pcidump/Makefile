@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.12 2020/06/28 15:25:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2020/06/28 19:11:53 drahn Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "arm64" || ${MACHINE} == "armv7" || \
     ${MACHINE} == "hppa" || ${MACHINE} == "i386" || \
     ${MACHINE} == "landisk" || ${MACHINE} == "loongson" || \
     ${MACHINE} == "macppc" || ${MACHINE} == "octeon" || \
-    ${MACHINE} == "sgi" || ${MACHINE} == "sparc64" ||
+    ${MACHINE} == "sgi" || ${MACHINE} == "sparc64" || \
     ${MACHINE} == "powerpc64"
 
 PROG=	pcidump
