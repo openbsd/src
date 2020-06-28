@@ -811,7 +811,6 @@ radeondrm_attachhook(struct device *self)
 #ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #endif
-	drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
 
 #ifndef __sparc64__
 	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;

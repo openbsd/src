@@ -200,6 +200,7 @@ drm_fb_helper_from_client(struct drm_client_dev *client)
  * Helper define to register default implementations of drm_fb_helper
  * functions. To be used in struct fb_ops of drm drivers.
  */
+#ifdef notyet
 #define DRM_FB_HELPER_DEFAULT_OPS \
 	.fb_check_var	= drm_fb_helper_check_var, \
 	.fb_set_par	= drm_fb_helper_set_par, \
@@ -209,6 +210,10 @@ drm_fb_helper_from_client(struct drm_client_dev *client)
 	.fb_debug_enter = drm_fb_helper_debug_enter, \
 	.fb_debug_leave = drm_fb_helper_debug_leave, \
 	.fb_ioctl	= drm_fb_helper_ioctl
+#else
+#define DRM_FB_HELPER_DEFAULT_OPS \
+	.fb_set_par	= drm_fb_helper_set_par
+#endif
 
 #ifdef CONFIG_DRM_FBDEV_EMULATION
 void drm_fb_helper_prepare(struct drm_device *dev, struct drm_fb_helper *helper,

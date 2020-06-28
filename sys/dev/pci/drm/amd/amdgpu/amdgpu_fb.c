@@ -69,8 +69,8 @@ amdgpufb_release(struct fb_info *info, int user)
 	return 0;
 }
 
-#ifdef __linux__
 static const struct fb_ops amdgpufb_ops = {
+#ifdef notyet
 	.owner = THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
 	.fb_open = amdgpufb_open,
@@ -78,8 +78,10 @@ static const struct fb_ops amdgpufb_ops = {
 	.fb_fillrect = drm_fb_helper_cfb_fillrect,
 	.fb_copyarea = drm_fb_helper_cfb_copyarea,
 	.fb_imageblit = drm_fb_helper_cfb_imageblit,
-};
+#else
+	DRM_FB_HELPER_DEFAULT_OPS,
 #endif
+};
 
 void amdgpu_burner_cb(void *);
 
@@ -247,9 +249,7 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 	/* setup helper */
 	rfbdev->helper.fb = fb;
 
-#ifdef __linux__
 	info->fbops = &amdgpufb_ops;
-#endif
 
 	tmp = amdgpu_bo_gpu_offset(abo) - adev->gmc.vram_start;
 #ifdef __linux__
