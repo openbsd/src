@@ -14,6 +14,7 @@ struct fb_cmap;
 struct fb_fillrect;
 struct fb_copyarea;
 struct fb_image;
+struct fb_info;
 
 struct apertures_struct;
 
@@ -23,8 +24,13 @@ struct fb_var_screeninfo {
 	uint32_t height;
 };
 
+struct fb_ops {
+	int (*fb_set_par)(struct fb_info *);
+};
+
 struct fb_info {
 	struct fb_var_screeninfo var;
+	struct fb_ops *fbops;
 	char *screen_buffer;
 	void *par;
 	int fbcon_rotate_hint;
@@ -76,6 +82,8 @@ fb_get_options(const char *name, char **opt)
 static inline int
 register_framebuffer(struct fb_info *fbi)
 {
+	if (fbi->fbops && fbi->fbops->fb_set_par)
+		fbi->fbops->fb_set_par(fbi);
 	return 0;
 }
 
