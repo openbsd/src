@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2020/06/27 15:04:49 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.37 2020/06/28 00:07:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -405,26 +405,15 @@ struct consdev opal_consdev = {
 struct consdev *cn_tab = &opal_consdev;
 
 int
-kcopy(const void *kfaddr, void *kdaddr, size_t len)
-{
-	memcpy(kdaddr, kfaddr, len);
-	return 0;
-}
-
-int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
-	pmap_t pm = curproc->p_p->ps_vmspace->vm_map.pmap;
+	pmap_t pm = curproc->p_vmspace->vm_map.pmap;
 	int error;
 
 	error = pmap_set_user_slb(pm, (vaddr_t)uaddr);
 	if (error)
 		return error;
-
-	curpcb->pcb_onfault = (caddr_t)1;
 	error = kcopy(uaddr, kaddr, len);
-	curpcb->pcb_onfault = NULL;
-
 	pmap_unset_user_slb();
 	return error;
 }
@@ -432,55 +421,27 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
-	pmap_t pm = curproc->p_p->ps_vmspace->vm_map.pmap;
+	pmap_t pm = curproc->p_vmspace->vm_map.pmap;
 	int error;
 
 	error = pmap_set_user_slb(pm, (vaddr_t)uaddr);
 	if (error)
 		return error;
-
-	curpcb->pcb_onfault = (caddr_t)1;
 	error = kcopy(kaddr, uaddr, len);
-	curpcb->pcb_onfault = NULL;
-
 	pmap_unset_user_slb();
 	return error;
 }
 
 int
-copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
-{
-	const char *src = kfaddr;
-	char *dst = kdaddr;
-	size_t l = 0;
-
-	while (len-- > 0) {
-		l++;
-		if ((*dst++ = *src++) == 0) {
-			if (done)
-				*done = l;
-			return 0;
-		}
-	}
-	if (done)
-		*done = l;
-	return ENAMETOOLONG;
-}
-
-int
 copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
-	pmap_t pm = curproc->p_p->ps_vmspace->vm_map.pmap;
+	pmap_t pm = curproc->p_vmspace->vm_map.pmap;
 	int error;
 
 	error = pmap_set_user_slb(pm, (vaddr_t)uaddr);
 	if (error)
 		return error;
-
-	curpcb->pcb_onfault = (caddr_t)1;
 	error = copystr(uaddr, kaddr, len, done);
-	curpcb->pcb_onfault = NULL;
-
 	pmap_unset_user_slb();
 	return error;
 }
@@ -488,17 +449,13 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 int
 copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
-	pmap_t pm = curproc->p_p->ps_vmspace->vm_map.pmap;
+	pmap_t pm = curproc->p_vmspace->vm_map.pmap;
 	int error;
 
 	error = pmap_set_user_slb(pm, (vaddr_t)uaddr);
 	if (error)
 		return error;
-
-	curpcb->pcb_onfault = (caddr_t)1;
 	error = copystr(kaddr, uaddr, len, done);
-	curpcb->pcb_onfault = NULL;
-
 	pmap_unset_user_slb();
 	return error;
 }

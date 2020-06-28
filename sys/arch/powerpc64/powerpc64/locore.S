@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.24 2020/06/27 15:04:49 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.25 2020/06/28 00:07:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include "assym.h"
 
+#include <sys/errno.h>
 #include <sys/syscall.h>
 
 #include <machine/opal.h>
@@ -131,6 +132,68 @@ cpu_switchto_asm:
 	mtcr	%r10
 	ld	%r0, 16(%r1)
 	mtlr	%r0
+	blr
+
+	.globl kcopy
+kcopy:
+	ld	%r6, CI_CURPCB(%r13)
+	ld	%r7, PCB_ONFAULT(%r6)
+	addis	%r8, %r2, .Lkcopyfault@toc@ha
+	addi	%r8, %r8, .Lkcopyfault@toc@l
+	std	%r8, PCB_ONFAULT(%r6)
+
+	addi	%r3, %r3, -1
+	addi	%r4, %r4, -1
+	mtctr	%r5
+1:
+	lbzu	%r5, 1(%r3)
+	stbu	%r5, 1(%r4)
+	bdnz	1b
+	std	%r7, PCB_ONFAULT(%r6)
+	li	%r3, 0
+	blr
+
+.Lkcopyfault:
+	std	%r7, PCB_ONFAULT(%r6)
+	li	%r3, EFAULT
+	blr
+
+	.globl copystr
+copystr:
+	ld	%r7, CI_CURPCB(%r13)
+	ld	%r8, PCB_ONFAULT(%r7)
+	addis	%r9, %r2, .Lcopystrfault@toc@ha
+	addi	%r9, %r9, .Lcopystrfault@toc@l
+	std	%r9, PCB_ONFAULT(%r7)
+
+	addi	%r3, %r3, -1
+	addi	%r4, %r4, -1
+	mtctr	%r5
+	li	%r9, 0
+1:
+	addi	%r9, %r9, 1
+	lbzu	%r5, 1(%r3)
+	stbu	%r5, 1(%r4)
+	cmplwi	%r5, 0
+	beq	.Lcopystrsuccess
+	bdnz	1b
+
+	li	%r3, ENAMETOOLONG
+	b	.Lcopystrcleanup
+
+.Lcopystrfault:
+	li	%r3, EFAULT
+	b	.Lcopystrcleanup
+
+.Lcopystrsuccess:
+	li	%r3, 0
+
+.Lcopystrcleanup:
+	cmpldi	%r6, 0
+	beq	2f
+	std	%r9, 0(%r6)
+2:
+	std	%r8, PCB_ONFAULT(%r7)
 	blr
 
 	.globl proc_trampoline

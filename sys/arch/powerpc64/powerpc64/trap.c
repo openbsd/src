@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 2020/06/27 20:44:49 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 2020/06/28 00:07:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -92,9 +92,8 @@ trap(struct trapframe *frame)
 	case EXC_DSI:
 		map = kernel_map;
 		va = frame->dar;
-		if (curpcb->pcb_onfault && va < VM_MAXUSER_ADDRESS) {
+		if (curpcb->pcb_onfault && va < VM_MAXUSER_ADDRESS)
 			map = &p->p_vmspace->vm_map;
-		}
 		if (frame->dsisr & DSISR_STORE)
 			ftype = PROT_READ | PROT_WRITE;
 		else
@@ -106,15 +105,19 @@ trap(struct trapframe *frame)
 		}
 		KERNEL_UNLOCK();
 
-		if (curpcb->pcb_onfault)
-			printf("DSI onfault\n");
+		if (curpcb->pcb_onfault) {
+			frame->srr0 = curpcb->pcb_onfault;
+			return;
+		}
 
 		printf("dar 0x%lx dsisr 0x%lx\n", frame->dar, frame->dsisr);
 		goto fatal;
 
 	case EXC_DSE:
-		if (curpcb->pcb_onfault)
-			printf("DSE onfault\n");
+		if (curpcb->pcb_onfault) {
+			frame->srr0 = curpcb->pcb_onfault;
+			return;
+		}
 
 		printf("dar 0x%lx dsisr 0x%lx\n", frame->dar, frame->dsisr);
 		goto fatal;
