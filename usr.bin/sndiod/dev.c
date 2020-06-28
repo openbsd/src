@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.74 2020/06/28 05:17:25 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.75 2020/06/28 05:21:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -67,6 +67,7 @@ int dev_init(struct dev *);
 void dev_done(struct dev *);
 struct dev *dev_bynum(int);
 void dev_del(struct dev *);
+void dev_setalt(struct dev *, unsigned int);
 unsigned int dev_roundof(struct dev *, unsigned int);
 void dev_wakeup(struct dev *);
 void dev_sync_attach(struct dev *);
@@ -1088,6 +1089,30 @@ dev_addname(struct dev *d, char *name)
 }
 
 /*
+ * set prefered alt device name
+ */
+void
+dev_setalt(struct dev *d, unsigned int idx)
+{
+	struct dev_alt **pa, *a;
+
+	/* find alt with given index */
+	for (pa = &d->alt_list; (a = *pa)->idx != idx; pa = &a->next)
+		;
+
+	/* detach from list */
+	*pa = a->next;
+
+	/* attach at head */
+	a->next = d->alt_list;
+	d->alt_list = a;
+
+	/* reopen device with the new alt */
+	if (idx != d->alt_num)
+		dev_reopen(d);
+}
+
+/*
  * adjust device parameters and mode
  */
 void
@@ -1176,6 +1201,7 @@ dev_open(struct dev *d)
 {
 	int i;
 	char name[CTL_NAMEMAX];
+	struct dev_alt *a;
 
 	d->master_enabled = 0;
 	d->mode = d->reqmode;
@@ -1207,6 +1233,14 @@ dev_open(struct dev *d)
 		    CTLADDR_SLOT_LEVEL(i),
 		    name, -1, "level",
 		    NULL, -1, 127, d->slot[i].vol);
+	}
+
+	for (a = d->alt_list; a != NULL; a = a->next) {
+		snprintf(name, sizeof(name), "%d", a->idx);
+		dev_addctl(d, "", CTL_SEL,
+		    CTLADDR_ALT_SEL + a->idx,
+		    "server", -1, "device",
+		    name, -1, 1, a->idx == d->alt_num);
 	}
 
 	d->pstate = DEV_INIT;
@@ -2472,7 +2506,13 @@ dev_setctl(struct dev *d, int addr, int val)
 		c->dirty = 1;
 		dev_ref(d);
 	} else {
-		if (addr == CTLADDR_MASTER) {
+		if (addr >= CTLADDR_ALT_SEL) {
+			if (val) {
+				num = addr - CTLADDR_ALT_SEL;
+				dev_setalt(d, num);
+			}
+			return 1;
+		} else if (addr == CTLADDR_MASTER) {
 			if (d->master_enabled) {
 				dev_master(d, val);
 				dev_midi_master(d);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.28 2020/06/28 05:17:26 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.29 2020/06/28 05:21:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,7 +24,8 @@
 
 #define CTLADDR_SLOT_LEVEL(n)	(n)
 #define CTLADDR_MASTER		(DEV_NSLOT)
-#define CTLADDR_END		(DEV_NSLOT + 1)
+#define CTLADDR_ALT_SEL		(CTLADDR_MASTER + 1)
+#define CTLADDR_END		(CTLADDR_ALT_SEL + DEV_NMAX)
 
 /*
  * audio stream state structure

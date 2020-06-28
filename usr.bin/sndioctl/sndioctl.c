@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.14 2020/06/28 05:17:26 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.15 2020/06/28 05:21:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *

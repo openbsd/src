@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.12 2020/06/28 05:17:25 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.13 2020/06/28 05:21:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
