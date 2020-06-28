@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sh.c,v 1.6 2013/03/28 16:27:31 deraadt Exp $	*/
+/*	$OpenBSD: kvm_sh.c,v 1.7 2020/06/28 09:45:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -49,7 +49,7 @@ _kvm_initvtop(kvm_t *kd)
 
 /*
  * Translate a kernel virtual address to a physical address by walking
- * the kernels page table.
+ * the kernel page tables.
  */
 
 /* Stolen from sys/arch/sh/include/pmap.h we can't really include */
