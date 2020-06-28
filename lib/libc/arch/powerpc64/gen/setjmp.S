@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.1 2020/06/25 02:03:55 drahn Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.2 2020/06/28 11:53:20 kettenis Exp $ */
 /*
  * Copyright (c) 2020 Dale Rahn. All rights reserved.
  *
@@ -110,7 +110,7 @@ ENTRY(_setjmp)
 	xor 	%r7, %r6, %r7		/* use and overwrite the lr xor */
 	std	%r7, JMP_lr(%r5)
 	mfcr	%r0
-	stw	%r0, JMP_cr(3)
+	std	%r0, JMP_cr(3)
 	mfctr	%r0
 	std	%r0, JMP_ctr(%r5)
 	mfxer	%r0
