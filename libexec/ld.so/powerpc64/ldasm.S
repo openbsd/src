@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2020/06/25 04:00:58 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.2 2020/06/28 17:58:40 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -42,7 +42,7 @@ _dl_start:
 	addis   %r2, %r30, .TOC.-1b@ha
 	addi    %r2, %r2, .TOC.-1b@l
 
-	stdu	%r1, (-16 -((AUX_entry+3)*8))(1)	# Some space.
+	stdu	%r1, (-64 -((AUX_entry+3)*8))(%r1)	# Some space.
 
 	# squirrel away the arguments for main
 	mr	%r20, %r3	#argc
@@ -60,7 +60,7 @@ _dl_start:
 	mr	%r17, %r4		# save for _dl_boot
 
 	subi	%r3, %r21, 8	# Get stack pointer (arg0 for _dl_boot).
-	addi	%r4, %r1, 8		# dl_data
+	addi	%r4, %r1, 32		# dl_data
 	mr	%r5, %r18		# dynamicp
 
 	bl	_dl_boot_bind
@@ -68,7 +68,7 @@ _dl_start:
 	mr	%r3, %r21		# argv
 	mr	%r4, %r22		# envp
 	mr	%r5, %r17		# loff
-	addi	%r6, %r1, 8		# dl_data
+	addi	%r6, %r1, 32		# dl_data
 
 	bl	_dl_boot
 
@@ -89,39 +89,40 @@ _dl_start:
 END(_dl_start)
 
 ENTRY(_dl_bind_start)
-	stdu	1,-72(1)
-
-	std	%r0,8(1)		# save r0 - cerror ;-)
 	mflr	%r0
-	std	%r0,68(1)		# save	lr
+	std	%r0,16(%r1)		# save	lr
+	std	%r2,24(%r1)		# save	toc
 
-	std	%r3,12(1)		# save	r3-r10, C calling convention
-	std	%r4,20(1)		# r13 - r31 are preserved by called code
-	std	%r5,24(1)
-	std	%r6,28(1)
-	std	%r7,32(1)
-	std	%r8,36(1)
-	std	%r9,40(1)
-	std	%r10,44(1)
+	stdu	1,-104(%r1)
+
+	std	%r3,32(%r1)		# save	r3-r10, C calling convention
+	std	%r4,40(%r1)		# r13 - r31 are preserved by called code
+	std	%r5,48(%r1)
+	std	%r6,56(%r1)
+	std	%r7,64(%r1)
+	std	%r8,72(%r1)
+	std	%r9,80(%r1)
+	std	%r10,96(%r1)
 
 	mr	%r3,%r12		# obj
 	mr	%r4,%r11		# reloff
 	bl	_dl_bind		# _rtld_bind(obj, reloff)
 	mtctr	%r3
+	mr	%r12, %r3
 
-	ld	%r3,12(%r1)
-	ld	%r4,20(%r1)
-	ld	%r5,24(%r1)
-	ld	%r6,28(%r1)
-	ld	%r7,32(%r1)
-	ld	%r8,36(%r1)
-	ld	%r9,40(%r1)
-	ld	%r10,44(%r1)
+	ld	%r3,32(%r1)
+	ld	%r4,40(%r1)
+	ld	%r5,48(%r1)
+	ld	%r6,56(%r1)
+	ld	%r7,64(%r1)
+	ld	%r8,72(%r1)
+	ld	%r9,80(%r1)
+	ld	%r10,96(%r1)
 
-	ld	%r0,68(%r1)		# restore lr
+	addi	%r1,%r1,104
+
+	ld	%r0,16(%r1)		# restore lr
 	mtlr	%r0
-	ld	%r0,8(%r1)
 
-	addi	%r1,%r1,72
 	bctr
 END(_dl_bind_start)
