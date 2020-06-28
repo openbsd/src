@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.41 2020/05/10 00:56:06 guenther Exp $	*/
+/*	$OpenBSD: exec.h,v 1.42 2020/06/28 09:29:57 kettenis Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -288,6 +288,7 @@ struct exec {
 #define	MID_AMD64	157	/* AMD64 */
 #define	MID_MIPS64	158	/* big-endian MIPS64 */
 #define	MID_ARM64	159	/* ARM64 */
+#define	MID_POWERPC64	160	/* big-endian 64-bit PowerPC */
 #define	MID_HP200	200	/* hp200 (68010) BSD binary */
 #define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
 #define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
