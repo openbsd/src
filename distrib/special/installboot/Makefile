@@ -1,74 +1,40 @@
-#	$OpenBSD: Makefile,v 1.12 2020/06/27 15:35:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2020/06/28 14:52:19 deraadt Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
 PROG=		installboot
 SRCS=		installboot.c util.c
+MAN=		installboot.8
 
 CPPFLAGS=	-I${.CURDIR}/../../../usr.sbin/installboot
 LDADD=		-lutil
 DPADD=		${LIBUTIL}
 
-.if ${MACHINE} == "alpha"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "amd64"
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 CFLAGS += -DSOFTRAID
 SRCS += i386_installboot.c
 SRCS += i386_nlist.c
 SRCS += i386_softraid.c
-.endif
-
-.if ${MACHINE} == "arm64"
+.elif ${MACHINE} == "armv7" || ${MACHINE} == "arm64"
 SRCS += armv7_installboot.c
-.endif
-
-.if ${MACHINE} == "armv7"
-SRCS += armv7_installboot.c
-.endif
-
-.if ${MACHINE} == "hppa"
+.elif ${MACHINE} == "hppa"
 CFLAGS += -DBOOTSTRAP
 SRCS += hppa_installboot.c
-.endif
-
-.if ${MACHINE} == "i386"
-CFLAGS += -DSOFTRAID
-SRCS += i386_installboot.c
-SRCS += i386_nlist.c
-SRCS += i386_softraid.c
-.endif
-
-.if ${MACHINE} == "landisk"
+.elif ${MACHINE} == "landisk"
 CFLAGS += -DBOOTSTRAP
 SRCS += landisk_installboot.c
-.endif
-
-.if ${MACHINE} == "loongson"
-SRCS += octeon_installboot.c
-.endif
-
-.if ${MACHINE} == "luna88k"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "macppc"
+.elif ${MACHINE} == "loongson"
+SRCS += loongson_installboot.c
+.elif ${MACHINE} == "macppc"
 SRCS += macppc_installboot.c
-.endif
-
-.if ${MACHINE} == "octeon"
+.elif ${MACHINE} == "octeon"
 SRCS += octeon_installboot.c
-.endif
-
-.if ${MACHINE} == "sgi"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "sparc64"
+.elif ${MACHINE} == "sparc64"
 CFLAGS += -DSOFTRAID
 SRCS += sparc64_installboot.c
 SRCS += sparc64_softraid.c
+.else
+SRCS += stubs.c
 .endif
 
 .if !empty(CFLAGS:M-DBOOTSTRAP)
