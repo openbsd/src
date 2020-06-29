@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2020/06/29 21:17:21 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.11 2020/06/29 21:31:57 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,6 +30,7 @@ ppb*		at pci?
 pci*		at ppb?
 ahci*		at pci?
 bge*		at pci?
+nvme*		at pci?
 xhci*		at pci? disable
 usb*		at xhci?
 
