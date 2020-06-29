@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.152 2020/05/26 07:53:00 mpi Exp $	*/
+/*	$OpenBSD: conf.h,v 1.153 2020/06/29 09:25:23 sthen Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -473,7 +473,7 @@ extern struct cdevsw cdevsw[];
 #define cdev_ipmi_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, selfalse, \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev, 0 }
 
 /* open, close, ioctl, mmap */
