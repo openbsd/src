@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2020/06/29 17:35:13 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2020/06/29 21:16:45 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -95,7 +95,7 @@ cdev_decl(lpt);
 
 #ifdef USER_PCICONF
 #include "pci.h"
-cdev_decl_(pci);
+cdev_decl(pci);
 #endif
 
 struct cdevsw cdevsw[] =
