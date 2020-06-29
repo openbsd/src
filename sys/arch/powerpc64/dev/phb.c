@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.9 2020/06/26 12:34:53 jsg Exp $	*/
+/*	$OpenBSD: phb.c,v 1.10 2020/06/29 21:30:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -522,7 +522,7 @@ phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
 
 		if (ih.ih_type == PCI_MSIX) {
 			pci_msix_enable(ih.ih_pc, ih.ih_tag,
-			    sc->sc_iot, ih.ih_intrpin, addr, data);
+			    &sc->sc_bus_memt, ih.ih_intrpin, addr, data);
 		} else
 			pci_msi_enable(ih.ih_pc, ih.ih_tag, addr, data);
 	}
