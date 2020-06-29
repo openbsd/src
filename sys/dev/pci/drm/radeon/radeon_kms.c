@@ -799,7 +799,6 @@ radeondrm_attachhook(struct device *self)
 	}
 
 {
-	struct drm_fb_helper *fb_helper = (void *)rdev->mode_info.rfbdev;
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &rdev->ro;
 

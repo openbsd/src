@@ -2002,7 +2002,6 @@ amdgpu_attachhook(struct device *self)
 		pm_runtime_put_autosuspend(dev->dev);
 	}
 {
-	struct drm_fb_helper *fb_helper = (void *)adev->mode_info.rfbdev;
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &adev->ro;
 
