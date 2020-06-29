@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 2020/06/29 17:35:13 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.10 2020/06/29 21:17:21 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -14,6 +14,7 @@ include		"../../../conf/GENERIC"
 maxusers	80
 
 option		PCIVERBOSE
+option		USER_PCICONF
 
 config		bsd	swap generic
 
