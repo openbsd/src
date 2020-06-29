@@ -10,8 +10,6 @@
 #define ktime_get_real() ktime_get()
 #define ktime_get_boottime() ktime_get()
 
-#define do_gettimeofday(tv) getmicrouptime(tv)
-
 static inline int64_t
 ktime_get_real_seconds(void)
 {
