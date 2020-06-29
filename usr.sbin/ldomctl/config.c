@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.40 2020/05/24 22:08:54 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.41 2020/06/29 18:25:26 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -1142,6 +1142,8 @@ hvmd_finalize_pcie_device(struct md *md, struct device *device)
 	md_link_node(md, node, parent);
 
 	TAILQ_FOREACH(subdevice, &device->guest->subdevice_list, link) {
+		if (strncmp(path, subdevice->path, strlen(path)) != 0)
+			continue;
 		TAILQ_FOREACH(component, &components, link) {
 			if (strcmp(subdevice->path, component->path) == 0)
 				md_link_node(md, parent, component->hv_node);
