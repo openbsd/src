@@ -4,9 +4,7 @@
 #define _LINUX_TIMEKEEPING_H
 
 #define get_seconds()		gettime()
-#define getrawmonotonic(x)	nanouptime(x)
 
-#define ktime_mono_to_real(x) (x)
 #define ktime_get_real() ktime_get()
 #define ktime_get_boottime() ktime_get()
 
