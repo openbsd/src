@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.3 2020/06/28 07:50:57 kettenis Exp $
+# $OpenBSD: Makefile.inc,v 1.4 2020/06/29 15:32:44 kettenis Exp $
 
 # powerpc-specific libcrypto build rules
 
@@ -10,10 +10,11 @@ SRCS+= aes_core.c aes_cbc.c
 # bf
 SRCS+= bf_enc.c
 # bn
-SSLASM+= bn ppc bn-ppc
-SSLASM+= bn ppc-mont ppc-mont		# bn_mul_mont_int
+SRCS+= bn_asm.c
+#SSLASM+= bn ppc bn-ppc
+#SSLASM+= bn ppc-mont ppc-mont		# bn_mul_mont_int
 #SSLASM+= bn ppc64-mont ppc64-mont	# bn_mul_mont_fpu64
-CFLAGS+= -DOPENSSL_BN_ASM_MONT
+#CFLAGS+= -DOPENSSL_BN_ASM_MONT
 # camellia
 SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # des
@@ -21,10 +22,10 @@ SRCS+= des_enc.c fcrypt_b.c
 # rc4
 SRCS+= rc4_enc.c rc4_skey.c
 # sha
-CFLAGS+= -DSHA1_ASM
-SSLASM+= sha sha1-ppc sha1-ppc
-CFLAGS+= -DSHA256_ASM
-SSLASM+= sha sha512-ppc sha256-ppc
+#CFLAGS+= -DSHA1_ASM
+#SSLASM+= sha sha1-ppc sha1-ppc
+#CFLAGS+= -DSHA256_ASM
+#SSLASM+= sha sha512-ppc sha256-ppc
 # whrlpool
 SRCS+= wp_block.c
 
