@@ -892,7 +892,7 @@ struct inteldrm_softc {
 	struct vga_pci_bar bar;
 	struct vga_pci_bar *vga_regs;
 
-	struct pci_device_id *id;
+	const struct pci_device_id *id;
 
 	int console;
 	int primary;
