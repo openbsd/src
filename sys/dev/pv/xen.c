@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.96 2020/05/29 04:42:25 deraadt Exp $	*/
+/*	$OpenBSD: xen.c,v 1.97 2020/06/29 06:50:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -723,7 +723,7 @@ xen_intr_schedule(xen_intr_handle_t xih)
 
 /*
  * This code achieves two goals: 1) makes sure that *after* masking
- * the interrupt source we're not getting more task_adds: intr_barrier
+ * the interrupt source we're not getting more task_adds: sched_barrier
  * will take care of that, and 2) makes sure that the interrupt task
  * has finished executing the current task and won't be called again:
  * it sets up a barrier task to await completion of the current task
@@ -736,11 +736,7 @@ xen_intr_barrier(xen_intr_handle_t xih)
 	struct xen_softc *sc = xen_sc;
 	struct xen_intsrc *xi;
 
-	/*
-	 * XXX This will need to be revised once intr_barrier starts
-	 * using its argument.
-	 */
-	intr_barrier(NULL);
+	sched_barrier(NULL);
 
 	if ((xi = xen_intsrc_acquire(sc, (evtchn_port_t)xih)) != NULL) {
 		taskq_barrier(xi->xi_taskq);
