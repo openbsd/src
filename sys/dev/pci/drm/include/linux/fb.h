@@ -30,7 +30,7 @@ struct fb_ops {
 
 struct fb_info {
 	struct fb_var_screeninfo var;
-	struct fb_ops *fbops;
+	const struct fb_ops *fbops;
 	char *screen_buffer;
 	void *par;
 	int fbcon_rotate_hint;
