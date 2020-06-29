@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.16 2020/06/27 21:39:05 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.17 2020/06/29 17:35:13 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -56,6 +56,11 @@ include "scsi/files.scsi"
 
 # Machine-independent ATA drivers
 include "dev/ata/files.ata"
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 # MII and PCI
 include "dev/mii/files.mii"

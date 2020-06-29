@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2020/06/22 21:13:40 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.9 2020/06/29 17:35:13 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -40,3 +40,6 @@ uhub*		at usb?			# USB Hubs
 uhub*		at uhub?		# USB Hubs
 
 brgphy*		at mii?			# Broadcom Gigabit PHYs
+
+# Pseudo-Devices
+pseudo-device	openprom
