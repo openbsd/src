@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 2020/06/28 00:07:22 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 2020/06/29 13:19:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -36,6 +36,8 @@
 void	decr_intr(struct trapframe *); /* clock.c */
 void	hvi_intr(struct trapframe *);  /* intr.c */
 void	syscall(struct trapframe *);   /* syscall.c */
+
+void	dumpframe(struct trapframe *);
 
 void
 trap(struct trapframe *frame)
@@ -142,14 +144,9 @@ trap(struct trapframe *frame)
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
 		KERNEL_UNLOCK();
 		if (error) {
-			printf("type %x dar 0x%lx dsisr 0x%lx\n",
-			    type, frame->dar, frame->dsisr);
-			for (int i = 0; i < 32; i++)
-				printf("r%d 0x%lx\n", i, frame->fixreg[i]);
-			printf("ctr 0x%lx\n", frame->ctr);
-			printf("xer 0x%lx\n", frame->xer);
-			printf("cr 0x%lx\n", frame->cr);
-			printf("lr 0x%lx\n", frame->lr);
+			printf("type %x dar 0x%lx dsisr 0x%lx %s\r\n",
+			    type, frame->dar, frame->dsisr, p->p_p->ps_comm);
+			dumpframe(frame);
 
 			if (error == ENOMEM) {
 				sig = SIGKILL;
@@ -188,13 +185,9 @@ trap(struct trapframe *frame)
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
 		KERNEL_UNLOCK();
 		if (error) {
-			printf("type %x srr0 0x%lx\n", type, frame->srr0);
-			for (int i = 0; i < 32; i++)
-				printf("r%d 0x%lx\n", i, frame->fixreg[i]);
-			printf("ctr 0x%lx\n", frame->ctr);
-			printf("xer 0x%lx\n", frame->xer);
-			printf("cr 0x%lx\n", frame->cr);
-			printf("lr 0x%lx\n", frame->lr);
+			printf("type %x srr0 0x%lx %s\r\n",
+			    type, frame->srr0, p->p_p->ps_comm);
+			dumpframe(frame);
 
 			if (error == ENOMEM) {
 				sig = SIGKILL;
@@ -234,13 +227,8 @@ trap(struct trapframe *frame)
 		break;
 
 	case EXC_PGM|EXC_USER:
-		printf("type %x srr0 0x%lx\n", type, frame->srr0);
-		for (int i = 0; i < 32; i++)
-			printf("r%d 0x%lx\n", i, frame->fixreg[i]);
-		printf("ctr 0x%lx\n", frame->ctr);
-		printf("xer 0x%lx\n", frame->xer);
-		printf("cr 0x%lx\n", frame->cr);
-		printf("lr 0x%lx\n", frame->lr);
+		printf("type %x srr0 0x%lx\r\n", type, frame->srr0);
+		dumpframe(frame);
 
 		sv.sival_ptr = (void *)frame->srr0;
 		KERNEL_LOCK();
@@ -267,4 +255,21 @@ trap(struct trapframe *frame)
 	}
 
 	userret(p);
+}
+
+#include <machine/opal.h>
+
+void
+dumpframe(struct trapframe *frame)
+{
+	int i;
+
+	for (i = 0; i < 32; i++)
+		opal_printf("r%d 0x%lx\r\n", i, frame->fixreg[i]);
+	opal_printf("ctr 0x%lx\r\n", frame->ctr);
+	opal_printf("xer 0x%lx\r\n", frame->xer);
+	opal_printf("cr 0x%lx\r\n", frame->cr);
+	opal_printf("lr 0x%lx\r\n", frame->lr);
+	opal_printf("srr0 0x%lx\r\n", frame->srr0);
+	opal_printf("srr1 0x%lx\r\n", frame->srr1);
 }
