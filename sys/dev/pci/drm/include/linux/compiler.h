@@ -36,15 +36,11 @@
 
 /* The Linux code doesn't meet our usual standards! */
 #ifdef __clang__
-#pragma clang diagnostic ignored "-Wenum-conversion"
 #pragma clang diagnostic ignored "-Winitializer-overrides"
 #pragma clang diagnostic ignored "-Wtautological-compare"
 #pragma clang diagnostic ignored "-Wunneeded-internal-declaration"
-#pragma clang diagnostic ignored "-Wunused-const-variable"
-#pragma clang diagnostic ignored "-Wincompatible-pointer-types-discards-qualifiers"
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wparentheses-equality"
 #pragma clang diagnostic ignored "-Wmissing-braces"
 #else
 #pragma GCC diagnostic ignored "-Wformat-zero-length"
