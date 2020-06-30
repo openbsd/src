@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.71 2020/06/24 14:39:21 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.72 2020/06/30 12:52:44 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -148,7 +148,7 @@ struct filepath_tree  fpt = RB_INITIALIZER(&fpt);
 /*
  * Mark that our subprocesses will never return.
  */
-static void	proc_parser(int, int) __attribute__((noreturn));
+static void	proc_parser(int) __attribute__((noreturn));
 static void	proc_rsync(char *, char *, int, int)
 		    __attribute__((noreturn));
 static void	build_chain(const struct auth *, STACK_OF(X509) **);
@@ -892,8 +892,8 @@ proc_parser_roa(struct entity *entp,
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
-    X509_STORE_CTX *ctx, struct auth_tree *auths, struct crl_tree *crlt)
+proc_parser_mft(struct entity *entp, X509_STORE *store, X509_STORE_CTX *ctx,
+	struct auth_tree *auths, struct crl_tree *crlt)
 {
 	struct mft		*mft;
 	X509			*x509;
@@ -902,7 +902,7 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 	STACK_OF(X509)		*chain;
 
 	assert(!entp->has_dgst);
-	if ((mft = mft_parse(&x509, entp->uri, force)) == NULL)
+	if ((mft = mft_parse(&x509, entp->uri)) == NULL)
 		return NULL;
 
 	a = valid_ski_aki(entp->uri, auths, mft->ski, mft->aki);
@@ -1127,7 +1127,7 @@ build_crls(const struct auth *a, struct crl_tree *crlt,
  * The process will exit cleanly only when fd is closed.
  */
 static void
-proc_parser(int fd, int force)
+proc_parser(int fd)
 {
 	struct tal	*tal;
 	struct cert	*cert;
@@ -1249,8 +1249,7 @@ proc_parser(int fd, int force)
 			 */
 			break;
 		case RTYPE_MFT:
-			mft = proc_parser_mft(entp, force,
-			    store, ctx, &auths, &crlt);
+			mft = proc_parser_mft(entp, store, ctx, &auths, &crlt);
 			c = (mft != NULL);
 			io_simple_buffer(&b, &bsz, &bmax, &c, sizeof(int));
 			if (mft != NULL)
@@ -1500,8 +1499,7 @@ int
 main(int argc, char *argv[])
 {
 	int		 rc = 1, c, proc, st, rsync,
-			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0,
-			 force = 0;
+			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0;
 	size_t		 i, j, eid = 1, outsz = 0, talsz = 0;
 	pid_t		 procpid, rsyncpid;
 	int		 fd[2];
@@ -1539,7 +1537,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath fattr proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bcd:e:fjnot:T:v")) != -1)
+	while ((c = getopt(argc, argv, "b:Bcd:e:jnot:T:v")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -1555,9 +1553,6 @@ main(int argc, char *argv[])
 			break;
 		case 'e':
 			rsync_prog = optarg;
-			break;
-		case 'f':
-			force = 1;
 			break;
 		case 'j':
 			outformats |= FORMAT_JSON;
@@ -1634,7 +1629,7 @@ main(int argc, char *argv[])
 			err(1, "%s: unveil", cachedir);
 		if (pledge("stdio rpath", NULL) == -1)
 			err(1, "pledge");
-		proc_parser(fd[0], force);
+		proc_parser(fd[0]);
 		/* NOTREACHED */
 	}
 
@@ -1826,7 +1821,7 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-Bcfjnov] [-b sourceaddr] [-d cachedir]"
+	    "usage: rpki-client [-Bcjnov] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
 	    "                   [-T table] [-t tal] [outputdir]\n");
 	return 1;

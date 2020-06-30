@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.27 2020/05/14 07:12:16 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.28 2020/06/30 12:52:44 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 14 2020 $
+.Dd $Mdocdate: June 30 2020 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd RPKI validator to support BGP Origin Validation
 .Sh SYNOPSIS
 .Nm
-.Op Fl Bcfjnov
+.Op Fl Bcjnov
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
@@ -81,9 +81,6 @@ It must accept the
 and
 .Fl -delete
 flags and connect with rsync-protocol locations.
-.It Fl f
-Accept out-of-date manifests.
-This will still report if a manifest has expired.
 .It Fl j
 Create output in the file
 .Pa json
