@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.26 2020/05/31 21:01:59 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.27 2020/06/30 19:26:40 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -1237,7 +1237,7 @@ snmpc_parseagent(char *agent, char *defaultport)
 			port = defaultport;
 		error = getaddrinfo(hostname, port, &hints, &ai0);
 		if (error) {
-			if (error != EAI_NODATA && port != defaultport)
+			if (error != EAI_NODATA || port == defaultport)
 				errx(1, "%s", gai_strerror(error));
 			*--port = ':';
 			error = getaddrinfo(hostname, defaultport, &hints,
@@ -1252,6 +1252,8 @@ snmpc_parseagent(char *agent, char *defaultport)
 			    connect(s, (struct sockaddr *)ai->ai_addr,
 			    ai->ai_addrlen) != -1)
 				break;
+			close(s);
+			s = -1;
 		}
 	} else {
 		s = socket(AF_UNIX, SOCK_STREAM, 0);
