@@ -2761,6 +2761,7 @@
 ./usr/share/man/man4/luna88k
 ./usr/share/man/man4/macppc
 ./usr/share/man/man4/octeon
+./usr/share/man/man4/powerpc64
 ./usr/share/man/man4/sgi
 ./usr/share/man/man4/sparc64
 ./usr/share/man/man5
@@ -2782,6 +2783,7 @@
 ./usr/share/man/man8/luna88k
 ./usr/share/man/man8/macppc
 ./usr/share/man/man8/octeon
+./usr/share/man/man8/powerpc64
 ./usr/share/man/man8/sgi
 ./usr/share/man/man8/sparc64
 ./usr/share/man/man8/user.8
