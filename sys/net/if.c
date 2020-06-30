@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.610 2020/06/22 09:45:13 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.611 2020/06/30 09:31:38 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2774,7 +2774,7 @@ if_delgroup(struct ifnet *ifp, const char *groupname)
 #if NPF > 0
 		pfi_detach_ifgroup(ifgl->ifgl_group);
 #endif
-		free(ifgl->ifgl_group, M_TEMP, 0);
+		free(ifgl->ifgl_group, M_TEMP, sizeof(*ifgl->ifgl_group));
 	}
 
 	free(ifgl, M_TEMP, sizeof(*ifgl));
