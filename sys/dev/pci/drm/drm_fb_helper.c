@@ -843,8 +843,7 @@ EXPORT_SYMBOL(drm_fb_helper_set_suspend);
 void drm_fb_helper_set_suspend_unlocked(struct drm_fb_helper *fb_helper,
 					bool suspend)
 {
-	STUB();
-#ifdef notyet
+#ifdef __linux__
 	if (!fb_helper || !fb_helper->fbdev)
 		return;
 
