@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.26 2020/06/30 20:09:37 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.27 2020/06/30 20:23:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -105,6 +105,10 @@ cpu_switchto_asm:
 	ld	%r31, P_ADDR(%r4)
 	std	%r31, CI_CURPCB(%r13)
 	ld	%r1, PCB_SP(%r31)
+#if PCB_SP != 0
+	addi	%r31, %r31, PCB_SP
+#endif
+	stdcx.	%r1, 0, %r31	/* clear a possible reservation */
 
 	ld	%r31, P_MD_USER_SLB_PA(%r4)
 	std	%r31, CI_USER_SLB_PA(%r13)
