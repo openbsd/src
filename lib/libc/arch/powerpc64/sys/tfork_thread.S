@@ -1,4 +1,4 @@
-/* $OpenBSD: tfork_thread.S,v 1.1 2020/06/25 02:38:28 drahn Exp $ */
+/* $OpenBSD: tfork_thread.S,v 1.2 2020/06/30 11:12:07 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 Tim Wiess <tim@nop.cx>
@@ -22,6 +22,7 @@ ENTRY(__tfork_thread)
 	/* call __tfork */
 	li	%r0, SYS___tfork
 	sc
+	cmpwi	%r0, 0
 	bne	1f
 	
 	/* check if we are parent or child */
@@ -29,6 +30,7 @@ ENTRY(__tfork_thread)
 	bnelr
 	
 	/* child */
+	mr	%r12, %r5
 	mtlr	%r5		/* fp */
 	mr	%r3, %r6	/* arg */
 	subi	%r1, %r1, 32	/* fixup sp to get headroom */
