@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_sym.c,v 1.24 2019/08/17 15:31:41 krw Exp $ */
+/*	$OpenBSD: mpath_sym.c,v 1.25 2020/06/30 18:43:37 krw Exp $ */
 
 /*
  * Copyright (c) 2010 David Gwynne <dlg@openbsd.org>
@@ -104,7 +104,7 @@ int
 sym_match(struct device *parent, void *match, void *aux)
 {
 	struct scsi_attach_args *sa = aux;
-	struct scsi_inquiry_data *inq = sa->sa_inqbuf;
+	struct scsi_inquiry_data *inq = &sa->sa_sc_link->inqdata;
 	struct sym_device *s;
 	int i;
 
@@ -135,7 +135,7 @@ sym_attach(struct device *parent, struct device *self, void *aux)
 	struct sym_softc *sc = (struct sym_softc *)self;
 	struct scsi_attach_args *sa = aux;
 	struct scsi_link *link = sa->sa_sc_link;
-	struct scsi_inquiry_data *inq = sa->sa_inqbuf;
+	struct scsi_inquiry_data *inq = &link->inqdata;
 	const struct mpath_ops *ops = &sym_mpath_sym_ops;
 	struct sym_device *s;
 	u_int id = 0;

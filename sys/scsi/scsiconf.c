@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.223 2020/02/05 16:29:30 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.224 2020/06/30 18:43:37 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -1013,7 +1013,6 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 		SET(link->flags, SDEV_REMOVABLE);
 
 	sa.sa_sc_link = link;
-	sa.sa_inqbuf = &link->inqdata;
 
 	if ((cf = config_search(scsibussubmatch, (struct device *)sb,
 	    &sa)) == 0) {

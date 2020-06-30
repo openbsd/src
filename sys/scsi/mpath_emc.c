@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_emc.c,v 1.22 2019/08/17 15:31:41 krw Exp $ */
+/*	$OpenBSD: mpath_emc.c,v 1.23 2020/06/30 18:43:37 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -116,7 +116,7 @@ int
 emc_match(struct device *parent, void *match, void *aux)
 {
 	struct scsi_attach_args *sa = aux;
-	struct scsi_inquiry_data *inq = sa->sa_inqbuf;
+	struct scsi_inquiry_data *inq = &sa->sa_sc_link->inqdata;
 	struct emc_device *s;
 	int i;
 

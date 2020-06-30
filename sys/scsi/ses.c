@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.60 2019/12/07 13:03:57 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.61 2020/06/30 18:43:37 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -123,7 +123,7 @@ int
 ses_match(struct device *parent, void *match, void *aux)
 {
 	struct scsi_attach_args		*sa = aux;
-	struct scsi_inquiry_data	*inq = sa->sa_inqbuf;
+	struct scsi_inquiry_data	*inq = &sa->sa_sc_link->inqdata;
 
 	if (inq == NULL)
 		return 0;

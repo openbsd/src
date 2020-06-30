@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.64 2019/12/06 16:57:24 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.65 2020/06/30 18:43:37 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -136,10 +136,10 @@ int
 chmatch(struct device *parent, void *match, void *aux)
 {
 	struct scsi_attach_args		*sa = aux;
+	struct scsi_inquiry_data	*inq = &sa->sa_sc_link->inqdata;
 	int				 priority;
 
-	(void)scsi_inqmatch(sa->sa_inqbuf,
-	    ch_patterns, nitems(ch_patterns),
+	(void)scsi_inqmatch(inq, ch_patterns, nitems(ch_patterns),
 	    sizeof(ch_patterns[0]), &priority);
 
 	return priority;
@@ -163,8 +163,7 @@ chattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Store our our device's quirks.
 	 */
-	ch_get_quirks(sc, sa->sa_inqbuf);
-
+	ch_get_quirks(sc, &link->inqdata);
 }
 
 int

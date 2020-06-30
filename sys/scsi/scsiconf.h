@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.188 2020/06/30 18:05:02 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.189 2020/06/30 18:43:37 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -369,7 +369,6 @@ struct scsibus_softc {
  */
 struct scsi_attach_args {
 	struct scsi_link *sa_sc_link;
-	struct scsi_inquiry_data *sa_inqbuf;
 };
 
 /*

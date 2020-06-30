@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.61 2019/12/07 14:13:49 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.62 2020/06/30 18:43:37 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -110,7 +110,7 @@ safte_match(struct device *parent, void *match, void *aux)
 {
 	struct scsi_inquiry_data	*inqbuf;
 	struct scsi_attach_args		*sa = aux;
-	struct scsi_inquiry_data	*inq = sa->sa_inqbuf;
+	struct scsi_inquiry_data	*inq = &sa->sa_sc_link->inqdata;
 	struct scsi_xfer		*xs;
 	struct safte_inq		*si;
 	int				 error, flags = 0, length;
