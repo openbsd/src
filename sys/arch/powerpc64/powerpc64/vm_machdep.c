@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.3 2020/06/22 16:58:20 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.4 2020/06/30 20:31:54 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -111,12 +111,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 void
 cpu_exit(struct proc *p)
 {
-#if 0
-	/* If we were using the FPU, forget about it. */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		vfp_discard(p);
-#endif
-
 	pmap_deactivate(p);
 	sched_exit(p);
 }
