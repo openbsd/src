@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.237 2020/06/24 22:03:44 cheloha Exp $	*/
+/*	$OpenBSD: in6.c,v 1.238 2020/06/30 21:58:13 benno Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1577,9 +1577,9 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 				 * We should only use a carp address if no
 				 * other interface has a usable address.
 				 * Otherwise, when communicating from a carp
-				 * master to a carp slave, the slave won't
-				 * respond since the carp address is also
-				 * configured as a local address on the slave.
+				 * master to a carp backup, the backup system
+				 * won't respond since the carp address is also
+				 * configured as a local address on the backup.
 				 * Note that carp interfaces in backup state
 				 * were already skipped above.
 				 */
