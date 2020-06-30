@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1927 2020/06/09 22:22:39 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1928 2020/06/30 04:37:24 jmatthew Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -21158,6 +21158,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MELLANOX, PCI_PRODUCT_MELLANOX_MT28908VF,
 	    "ConnectX-6 VF",
+	},
+	{
+	    PCI_VENDOR_MELLANOX, PCI_PRODUCT_MELLANOX_MT2892,
+	    "ConnectX-6 Dx",
 	},
 	{
 	    PCI_VENDOR_MELLANOX, PCI_PRODUCT_MELLANOX_CONNECTX_EN,
