@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.11 2020/06/26 19:06:35 kettenis Exp $	*/
+/*	$OpenBSD: opal.h,v 1.12 2020/06/30 20:09:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -42,6 +42,7 @@
 #define OPAL_GET_MSI_64			40
 #define OPAL_PCI_MAP_PE_DMA_WINDOW_REAL	45
 #define OPAL_PCI_RESET			49
+#define OPAL_CONSOLE_FLUSH		117
 #define OPAL_XIVE_RESET			128
 #define OPAL_XIVE_GET_IRQ_INFO		129
 #define OPAL_XIVE_GET_IRQ_CONFIG	131
@@ -167,6 +168,7 @@ int64_t	opal_get_msi_64(uint64_t, uint32_t, uint32_t, uint8_t,
 int64_t opal_pci_map_pe_dma_window_real(uint64_t, uint64_t, uint16_t,
 	    uint64_t, uint64_t);
 int64_t opal_pci_reset(uint64_t, uint8_t, uint8_t);
+int64_t	opal_console_flush(uint64_t);
 int64_t	opal_xive_reset(uint64_t);
 int64_t	opal_xive_get_irq_info(uint32_t, uint64_t *, uint64_t *,
 	    uint64_t *, uint32_t *, uint32_t *);
