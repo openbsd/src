@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.187 2020/06/27 21:01:20 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.188 2020/06/30 18:05:02 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -282,7 +282,6 @@ struct scsi_link {
 	SLIST_ENTRY(scsi_link)	bus_list;
 
 	u_int		state;
-#define SDEV_S_WAITING		(1<<0)
 #define SDEV_S_DYING		(1<<1)
 
 	u_int8_t scsibus;		/* the Nth scsibus */
