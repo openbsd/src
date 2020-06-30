@@ -1,4 +1,4 @@
-/* $OpenBSD: dwhdmi.h,v 1.3 2020/06/08 04:47:58 jsg Exp $ */
+/* $OpenBSD: dwhdmi.h,v 1.4 2020/06/30 02:19:12 deraadt Exp $ */
 /* $NetBSD: dw_hdmi.h,v 1.6 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*-
@@ -96,10 +96,10 @@ struct dwhdmi_softc {
 	void			(*sc_enable)(struct dwhdmi_softc *);
 	void			(*sc_disable)(struct dwhdmi_softc *);
 	void			(*sc_mode_set)(struct dwhdmi_softc *,
-					       struct drm_display_mode *,
-					       struct drm_display_mode *);
+					       const struct drm_display_mode *,
+					       const struct drm_display_mode *);
 	enum drm_mode_status	(*sc_mode_valid)(struct dwhdmi_softc *,
-						 struct drm_display_mode *);
+						 const struct drm_display_mode *);
 };
 
 #define	to_dwhdmi_connector(x)	container_of(x, struct dwhdmi_connector, base)
@@ -114,7 +114,7 @@ enum drm_connector_status dwhdmi_phy_detect(struct dwhdmi_softc *, int);
 void		dwhdmi_phy_enable(struct dwhdmi_softc *);
 void		dwhdmi_phy_disable(struct dwhdmi_softc *);
 void		dwhdmi_phy_mode_set(struct dwhdmi_softc *,
-				    struct drm_display_mode *,
-				    struct drm_display_mode *);
+				    const struct drm_display_mode *,
+				    const struct drm_display_mode *);
 
 #endif /* !_DEV_IC_DWHDMI_H */

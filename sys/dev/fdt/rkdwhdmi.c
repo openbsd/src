@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdwhdmi.c,v 1.4 2020/06/08 04:47:58 jsg Exp $ */
+/* $OpenBSD: rkdwhdmi.c,v 1.5 2020/06/30 02:19:11 deraadt Exp $ */
 /* $NetBSD: rk_dwhdmi.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $ */
 
 /*-
@@ -95,10 +95,10 @@ int rkdwhdmi_ep_activate(void *, struct endpoint *, void *);
 void *rkdwhdmi_ep_get_cookie(void *, struct endpoint *);
 
 void rkdwhdmi_enable(struct dwhdmi_softc *);
-void rkdwhdmi_mode_set(struct dwhdmi_softc *, struct drm_display_mode *,
-    struct drm_display_mode *);
+void rkdwhdmi_mode_set(struct dwhdmi_softc *, const struct drm_display_mode *,
+    const struct drm_display_mode *);
 enum drm_mode_status rkdwhdmi_mode_valid(struct dwhdmi_softc *,
-    struct drm_display_mode *);
+    const struct drm_display_mode *);
 
 struct cfattach	rkdwhdmi_ca = {
 	sizeof (struct rkdwhdmi_softc), rkdwhdmi_match, rkdwhdmi_attach
@@ -266,7 +266,7 @@ rkdwhdmi_enable(struct dwhdmi_softc *dsc)
 
 void
 rkdwhdmi_mode_set(struct dwhdmi_softc *dsc,
-    struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
+    const struct drm_display_mode *mode, const struct drm_display_mode *adjusted_mode)
 {
 	struct rkdwhdmi_softc *sc = to_rkdwhdmi_softc(dsc);
 	int error;
@@ -284,7 +284,7 @@ rkdwhdmi_mode_set(struct dwhdmi_softc *dsc,
 }
 
 enum drm_mode_status
-rkdwhdmi_mode_valid(struct dwhdmi_softc *dsc, struct drm_display_mode *mode)
+rkdwhdmi_mode_valid(struct dwhdmi_softc *dsc, const struct drm_display_mode *mode)
 {
 	struct rkdwhdmi_softc *sc = to_rkdwhdmi_softc(dsc);
 	int i;
