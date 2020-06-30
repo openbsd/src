@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2020/06/29 13:19:22 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2020/06/30 20:35:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -116,6 +116,17 @@ trap(struct trapframe *frame)
 		goto fatal;
 
 	case EXC_DSE:
+		/*
+		 * If we sleep while handling a fault, we may lose our
+		 * SLB entry.  Enter it again.
+		 */
+		va = frame->dar;
+		if (curpcb->pcb_onfault && va < VM_MAXUSER_ADDRESS) {
+			map = &p->p_vmspace->vm_map;
+			if (pmap_set_user_slb(map->pmap, va) == 0)
+				return;
+		}
+
 		if (curpcb->pcb_onfault) {
 			frame->srr0 = curpcb->pcb_onfault;
 			return;

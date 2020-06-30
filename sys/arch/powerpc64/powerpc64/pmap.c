@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 2020/06/27 21:22:30 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.21 2020/06/30 20:35:53 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -370,6 +370,18 @@ pmap_set_user_slb(pmap_t pm, vaddr_t va)
 		slbd = pmap_slbd_alloc(pm, va);
 		if (slbd == NULL)
 			return EFAULT;
+	}
+	KASSERT(slbd->slbd_esid != 0);
+
+	/*
+	 * We might get here while another process is sleeping while
+	 * handling a page fault.  Kill their SLB entry before
+	 * inserting our own.
+	 */
+	if (ci->ci_kernel_slb[31].slb_slbe != 0) {
+		isync();
+		slbie(ci->ci_kernel_slb[31].slb_slbe);
+		isync();
 	}
 
 	slbe = (slbd->slbd_esid << SLBE_ESID_SHIFT) | SLBE_VALID | 31;
