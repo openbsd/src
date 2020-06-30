@@ -47,7 +47,6 @@
 ./usr/include/mips64/setjmp.h
 ./usr/include/mips64/signal.h
 ./usr/include/mips64/spinlock.h
-./usr/include/mips64/stdarg.h
 ./usr/include/mips64/sysarch.h
 ./usr/include/mips64/tcb.h
 ./usr/include/mips64/trap.h
@@ -102,7 +101,6 @@
 ./usr/include/octeon/setjmp.h
 ./usr/include/octeon/signal.h
 ./usr/include/octeon/spinlock.h
-./usr/include/octeon/stdarg.h
 ./usr/include/octeon/sysarch.h
 ./usr/include/octeon/tcb.h
 ./usr/include/octeon/trap.h

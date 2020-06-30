@@ -43,7 +43,6 @@
 ./usr/include/landisk/setjmp.h
 ./usr/include/landisk/signal.h
 ./usr/include/landisk/spinlock.h
-./usr/include/landisk/stdarg.h
 ./usr/include/landisk/tcb.h
 ./usr/include/landisk/trap.h
 ./usr/include/landisk/vmparam.h
@@ -96,7 +95,6 @@
 ./usr/include/sh/sh_opcode.h
 ./usr/include/sh/signal.h
 ./usr/include/sh/spinlock.h
-./usr/include/sh/stdarg.h
 ./usr/include/sh/tcb.h
 ./usr/include/sh/tmureg.h
 ./usr/include/sh/trap.h
