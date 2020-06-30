@@ -11,9 +11,9 @@ static inline int
 stop_machine(cpu_stop_fn_t fn, void *arg, void *cpus)
 {
 	int r;
-	intr_disable();
+	u_long s = intr_disable();
 	r = (*fn)(arg);
-	intr_enable();
+	intr_restore(s);
 	return r;
 }
 
