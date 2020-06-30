@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.116 2020/06/22 09:38:15 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.117 2020/06/30 14:05:13 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -103,9 +103,6 @@ struct mbuf_queue pipexoutq = MBUF_QUEUE_INITIALIZER(IFQ_MAXLEN, IPL_NET);
 
 /* borrow an mbuf pkthdr field */
 #define ph_ppp_proto ether_vtag
-
-/* from udp_usrreq.c */
-extern int udpcksum;
 
 #ifdef PIPEX_DEBUG
 int pipex_debug = 0;		/* systcl net.inet.ip.pipex_debug */
