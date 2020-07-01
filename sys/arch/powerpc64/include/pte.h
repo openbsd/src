@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.3 2020/06/18 21:52:57 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.4 2020/07/01 16:05:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -68,5 +68,10 @@ struct slb {
 	uint64_t slb_slbe;
 	uint64_t slb_slbv;
 };
+
+#define USER_ADDR	0xcfffffff00000000ULL
+#define USER_ESID	(USER_ADDR >> ADDR_ESID_SHIFT)
+#define SEGMENT_SIZE	(256 * 1024 * 1024)
+#define SEGMENT_MASK 	(SEGMENT_SIZE - 1)
 
 #endif /* _MACHINE_PTE_H_ */

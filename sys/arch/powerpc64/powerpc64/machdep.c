@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2020/06/30 20:09:37 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2020/07/01 16:05:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -415,12 +415,13 @@ int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
 	pmap_t pm = curproc->p_vmspace->vm_map.pmap;
+	vaddr_t kva;
 	int error;
 
-	error = pmap_set_user_slb(pm, (vaddr_t)uaddr);
+	error = pmap_set_user_slb(pm, (vaddr_t)uaddr, len, &kva);
 	if (error)
 		return error;
-	error = kcopy(uaddr, kaddr, len);
+	error = kcopy((const void *)kva, kaddr, len);
 	pmap_unset_user_slb();
 	return error;
 }
@@ -429,12 +430,13 @@ int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
 	pmap_t pm = curproc->p_vmspace->vm_map.pmap;
+	vaddr_t kva;
 	int error;
 
-	error = pmap_set_user_slb(pm, (vaddr_t)uaddr);
+	error = pmap_set_user_slb(pm, (vaddr_t)uaddr, len, &kva);
 	if (error)
 		return error;
-	error = kcopy(kaddr, uaddr, len);
+	error = kcopy(kaddr, (void *)kva, len);
 	pmap_unset_user_slb();
 	return error;
 }
@@ -443,12 +445,13 @@ int
 copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
 	pmap_t pm = curproc->p_vmspace->vm_map.pmap;
+	vaddr_t kva;
 	int error;
 
-	error = pmap_set_user_slb(pm, (vaddr_t)uaddr);
+	error = pmap_set_user_slb(pm, (vaddr_t)uaddr, len, &kva);
 	if (error)
 		return error;
-	error = copystr(uaddr, kaddr, len, done);
+	error = copystr((const void *)kva, kaddr, len, done);
 	pmap_unset_user_slb();
 	return error;
 }
@@ -457,12 +460,13 @@ int
 copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
 	pmap_t pm = curproc->p_vmspace->vm_map.pmap;
+	vaddr_t kva;
 	int error;
 
-	error = pmap_set_user_slb(pm, (vaddr_t)uaddr);
+	error = pmap_set_user_slb(pm, (vaddr_t)uaddr, len, &kva);
 	if (error)
 		return error;
-	error = copystr(kaddr, uaddr, len, done);
+	error = copystr(kaddr, (void *)kva, len, done);
 	pmap_unset_user_slb();
 	return error;
 }

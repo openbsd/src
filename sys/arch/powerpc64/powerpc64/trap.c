@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2020/06/30 20:35:53 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2020/07/01 16:05:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -27,6 +27,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/fpu.h>
+#include <machine/pte.h>
 #include <machine/trap.h>
 
 #ifdef DDB
@@ -94,8 +95,11 @@ trap(struct trapframe *frame)
 	case EXC_DSI:
 		map = kernel_map;
 		va = frame->dar;
-		if (curpcb->pcb_onfault && va < VM_MAXUSER_ADDRESS)
+		if (curpcb->pcb_onfault &&
+		    (va >> ADDR_ESID_SHIFT) == USER_ESID) {
 			map = &p->p_vmspace->vm_map;
+			va = curpcb->pcb_userva | (va & SEGMENT_MASK);
+		}
 		if (frame->dsisr & DSISR_STORE)
 			ftype = PROT_READ | PROT_WRITE;
 		else
@@ -121,9 +125,11 @@ trap(struct trapframe *frame)
 		 * SLB entry.  Enter it again.
 		 */
 		va = frame->dar;
-		if (curpcb->pcb_onfault && va < VM_MAXUSER_ADDRESS) {
+		if (curpcb->pcb_onfault &&
+		    (va >> ADDR_ESID_SHIFT) == USER_ESID) {
 			map = &p->p_vmspace->vm_map;
-			if (pmap_set_user_slb(map->pmap, va) == 0)
+			va = curpcb->pcb_userva | (va & SEGMENT_MASK);
+			if (pmap_set_user_slb(map->pmap, va, 0, NULL) == 0)
 				return;
 		}
 

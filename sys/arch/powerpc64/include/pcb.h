@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.5 2020/06/28 00:07:22 kettenis Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.6 2020/07/01 16:05:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -28,6 +28,7 @@ struct pcb {
 #define PCB_VEC		0x000000002
 #define PCB_VSX		0x000000004
 	vaddr_t		pcb_onfault;
+	vaddr_t		pcb_userva;
 	struct fpreg	pcb_fpstate;
 };
 

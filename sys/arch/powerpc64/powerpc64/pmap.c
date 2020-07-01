@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2020/06/30 20:35:53 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.22 2020/07/01 16:05:48 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -54,6 +54,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
+#include <machine/pcb.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
 
@@ -357,7 +358,7 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 }
 
 int
-pmap_set_user_slb(pmap_t pm, vaddr_t va)
+pmap_set_user_slb(pmap_t pm, vaddr_t va, vsize_t len, vaddr_t *kva)
 {
 	struct cpu_info *ci = curcpu();
 	struct slb_desc *slbd;
@@ -365,13 +366,15 @@ pmap_set_user_slb(pmap_t pm, vaddr_t va)
 
 	KASSERT(pm != pmap_kernel());
 
+	if (len > SEGMENT_SIZE)
+		return EFAULT;
+
 	slbd = pmap_slbd_lookup(pm, va);
 	if (slbd == NULL) {
 		slbd = pmap_slbd_alloc(pm, va);
 		if (slbd == NULL)
 			return EFAULT;
 	}
-	KASSERT(slbd->slbd_esid != 0);
 
 	/*
 	 * We might get here while another process is sleeping while
@@ -384,7 +387,7 @@ pmap_set_user_slb(pmap_t pm, vaddr_t va)
 		isync();
 	}
 
-	slbe = (slbd->slbd_esid << SLBE_ESID_SHIFT) | SLBE_VALID | 31;
+	slbe = (USER_ESID << SLBE_ESID_SHIFT) | SLBE_VALID | 31;
 	slbv = slbd->slbd_vsid << SLBV_VSID_SHIFT;
 
 	ci->ci_kernel_slb[31].slb_slbe = slbe;
@@ -394,6 +397,11 @@ pmap_set_user_slb(pmap_t pm, vaddr_t va)
 	slbmte(slbv, slbe);
 	isync();
 
+	curpcb->pcb_userva = (va & ~SEGMENT_MASK);
+
+	if (kva)
+		*kva = USER_ADDR | (va & SEGMENT_MASK);
+
 	return 0;
 }
 
@@ -401,6 +409,8 @@ void
 pmap_unset_user_slb(void)
 {
 	struct cpu_info *ci = curcpu();
+
+	curpcb->pcb_userva = 0;
 
 	isync();
 	slbie(ci->ci_kernel_slb[31].slb_slbe);
