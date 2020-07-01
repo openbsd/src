@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.27 2020/06/30 20:23:56 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.28 2020/07/01 15:53:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -140,25 +140,45 @@ cpu_switchto_asm:
 
 	.globl kcopy
 kcopy:
-	ld	%r6, CI_CURPCB(%r13)
-	ld	%r7, PCB_ONFAULT(%r6)
-	addis	%r8, %r2, .Lkcopyfault@toc@ha
-	addi	%r8, %r8, .Lkcopyfault@toc@l
-	std	%r8, PCB_ONFAULT(%r6)
+	ld	%r7, CI_CURPCB(%r13)
+	ld	%r8, PCB_ONFAULT(%r7)
+	addis	%r9, %r2, .Lkcopyfault@toc@ha
+	addi	%r9, %r9, .Lkcopyfault@toc@l
+	std	%r9, PCB_ONFAULT(%r7)
+
+	rldicl.	%r6, %r5, 62, 2
+	beq	0, .Lkcopybytes
+
+	addi	%r3, %r3, -4
+	addi	%r4, %r4, -4
+	mtctr	%r6
+1:
+	lwzu	%r6, 4(%r3)
+	stwu	%r6, 4(%r4)
+	bdnz	1b
+
+	addi	%r3, %r3, 4
+	addi	%r4, %r4, 4
+
+.Lkcopybytes:
+	andi.	%r6, %r5, 3
+	beq	0, .Lkcopysuccess
 
 	addi	%r3, %r3, -1
 	addi	%r4, %r4, -1
-	mtctr	%r5
-1:
-	lbzu	%r5, 1(%r3)
-	stbu	%r5, 1(%r4)
-	bdnz	1b
-	std	%r7, PCB_ONFAULT(%r6)
+	mtctr	%r6
+2:
+	lbzu	%r6, 1(%r3)
+	stbu	%r6, 1(%r4)
+	bdnz	2b
+
+.Lkcopysuccess:
+	std	%r8, PCB_ONFAULT(%r7)
 	li	%r3, 0
 	blr
 
 .Lkcopyfault:
-	std	%r7, PCB_ONFAULT(%r6)
+	std	%r8, PCB_ONFAULT(%r7)
 	li	%r3, EFAULT
 	blr
 
