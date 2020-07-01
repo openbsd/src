@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2020/07/01 16:05:48 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2020/07/01 16:58:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -59,10 +59,14 @@ trap(struct trapframe *frame)
 
 	switch (type) {
 	case EXC_DECR:
+		ci->ci_idepth++;
 		decr_intr(frame);
+		ci->ci_idepth--;
 		return;
 	case EXC_HVI:
+		ci->ci_idepth++;
 		hvi_intr(frame);
+		ci->ci_idepth--;
 		return;
 	}
 
