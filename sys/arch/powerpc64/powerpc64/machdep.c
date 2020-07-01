@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 2020/07/01 16:05:48 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 2020/07/01 22:40:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -36,6 +36,7 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 
+#include <net/if.h>
 #include <uvm/uvm_extern.h>
 
 #include <dev/ofw/fdt.h>
@@ -769,14 +770,51 @@ opal_powerdown(void)
 		opal_poll_events(NULL);
 }
 
+int	waittime = -1;
+
 __dead void
 boot(int howto)
 {
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
+	if (cold) {
+		if ((howto & RB_USERREQ) == 0)
+			howto |= RB_HALT;
+		goto haltsys;
+	}
+
+	boothowto = howto;
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		waittime = 0;
+		vfs_shutdown(curproc);
+
+		if ((howto & RB_TIMEBAD) == 0) {
+			resettodr();
+		} else {
+			printf("WARNING: not updating battery clock\n");
+		}
+	}
+	if_downall();
+
+	uvm_shutdown();
+	splhigh();
+	cold = 1;
+
+haltsys:
+	config_suspend_all(DVACT_POWERDOWN);
+
 	if ((howto & RB_HALT) != 0) {
 		if ((howto & RB_POWERDOWN) != 0)
 			opal_powerdown();
+
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cngetc();
 	}
 
+doreset:
 	printf("rebooting...\n");
 	opal_cec_reboot();
 
