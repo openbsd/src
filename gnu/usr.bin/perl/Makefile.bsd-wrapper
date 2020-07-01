@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.110 2020/06/27 20:44:13 afresh1 Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.111 2020/07/01 00:08:06 afresh1 Exp $
 #
 # Build wrapper for Perl
 #
 
-CONFIGURE_ARGS=	-de -Dopenbsd_distribution=defined
+CONFIGURE_ARGS=	-dse -Dopenbsd_distribution=defined
 
 .if !exists(${.OBJDIR}/config.over)
 CONFIGURE_ARGS+= -Dmksymlinks
