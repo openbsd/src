@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.16 2020/06/22 16:58:20 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.17 2020/07/01 16:59:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -83,9 +83,11 @@ register struct cpu_info *__curcpu asm("r13");
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 #define cpu_number()		0
 
-#define CLKF_INTR(frame)	0
-#define CLKF_USERMODE(frame)	0
-#define CLKF_PC(frame)		0
+#define clockframe trapframe
+
+#define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
+#define CLKF_USERMODE(frame)	(frame->srr1 & PSL_PR)
+#define CLKF_PC(frame)		(frame->srr0)
 
 #define aston(p)		((p)->p_md.md_astpending = 1)
 #define need_proftick(p)	aston(p)
