@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.61 2020/07/01 13:26:54 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.62 2020/07/01 13:32:27 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -472,7 +472,7 @@ makearraystring(Node *p, const char *func)
 {
 	char *buf;
 	int bufsz = recsize;
-	size_t blen, seplen;
+	size_t blen;
 
 	if ((buf = malloc(bufsz)) == NULL) {
 		FATAL("%s: out of memory", func);
@@ -480,11 +480,11 @@ makearraystring(Node *p, const char *func)
 
 	blen = 0;
 	buf[blen] = '\0';
-	seplen = strlen(getsval(subseploc));
 
 	for (; p; p = p->nnext) {
 		Cell *x = execute(p);	/* expr */
 		char *s = getsval(x);
+		size_t seplen = strlen(getsval(subseploc));
 		size_t nsub = p->nnext ? seplen : 0;
 		size_t slen = strlen(s);
 		size_t tlen = blen + slen + nsub;
