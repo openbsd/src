@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.77 2020/06/27 17:28:58 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.78 2020/07/01 00:02:08 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ void
 siop_reset(sc)
 	struct siop_softc *sc;
 {
-	int i, j;
+	int i, j, buswidth;
 	struct siop_lunsw *lunsw;
 
 	siop_common_reset(&sc->sc_c);
@@ -298,7 +298,8 @@ siop_reset(sc)
 	}
 	TAILQ_INIT(&sc->lunsw_list);
 	/* restore reselect switch */
-	for (i = 0; i < sc->sc_c.sc_link.adapter_buswidth; i++) {
+	buswidth = (sc->sc_c.features & SF_BUS_WIDE) ? 16 : 8;
+	for (i = 0; i < buswidth; i++) {
 		struct siop_target *target;
 		if (sc->sc_c.targets[i] == NULL)
 			continue;
@@ -1258,7 +1259,7 @@ siop_handle_reset(sc)
 	struct cmd_list reset_list;
 	struct siop_cmd *siop_cmd, *next_siop_cmd;
 	struct siop_lun *siop_lun;
-	int target, lun, tag;
+	int target, lun, tag, buswidth;
 	/*
 	 * scsi bus reset. reset the chip and restart
 	 * the queue. Need to clean up all active commands
@@ -1270,8 +1271,8 @@ siop_handle_reset(sc)
 	/*
 	 * Process all commands: first commands being executed
 	 */
-	for (target = 0; target < sc->sc_c.sc_link.adapter_buswidth;
-	    target++) {
+	buswidth = (sc->sc_c.features & SF_BUS_WIDE) ? 16 : 8;
+	for (target = 0; target < buswidth; target++) {
 		if (sc->sc_c.targets[target] == NULL)
 			continue;
 		for (lun = 0; lun < 8; lun++) {
@@ -2076,7 +2077,7 @@ siop_add_dev(sc, target, lun)
 	struct siop_target *siop_target =
 	    (struct siop_target *)sc->sc_c.targets[target];
 	struct siop_lun *siop_lun = siop_target->siop_lun[lun];
-	int i, ntargets;
+	int i, ntargets, buswidth;
 
 	if (siop_lun->reseloff > 0)
 		return;
@@ -2093,7 +2094,8 @@ siop_add_dev(sc, target, lun)
 		return;
 	}
 	/* count how many free targets we still have to probe */
-	ntargets =  (sc->sc_c.sc_link.adapter_buswidth - 1) - 1 - sc->sc_ntargets;
+	buswidth = (sc->sc_c.features & SF_BUS_WIDE) ? 16 : 8;
+	ntargets =  (buswidth - 1) - 1 - sc->sc_ntargets;
 
 	/*
 	 * we need 8 bytes for the lun sw additional entry, and

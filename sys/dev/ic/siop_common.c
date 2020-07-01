@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.39 2020/06/19 14:51:44 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.40 2020/07/01 00:02:08 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ int
 siop_common_attach(sc)
 	struct siop_common_softc *sc;
 {
-	int error, i;
+	int error, i, buswidth;
 	bus_dma_segment_t seg;
 	int rseg;
 
@@ -103,15 +103,13 @@ siop_common_attach(sc)
 	 * for devices attached to this adapter. It is passed to
 	 * the upper layers in config_found().
 	 */
+	buswidth = (sc->features & SF_BUS_WIDE) ? 16 : 8;
+	sc->sc_id = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCID);
+	if (sc->sc_id == 0 || sc->sc_id >= buswidth)
+		sc->sc_id = SIOP_DEFAULT_TARGET;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_buswidth =
-	    (sc->features & SF_BUS_WIDE) ? 16 : 8;
-	sc->sc_link.adapter_target =
-	    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCID);
-	if (sc->sc_link.adapter_target == 0 ||
-	    sc->sc_link.adapter_target >=
-	    sc->sc_link.adapter_buswidth)
-		sc->sc_link.adapter_target = SIOP_DEFAULT_TARGET;
+	sc->sc_link.adapter_target = sc->sc_id;
+	sc->sc_link.adapter_buswidth = buswidth;
 
 	for (i = 0; i < 16; i++)
 		sc->targets[i] = NULL;
@@ -171,9 +169,9 @@ siop_common_reset(sc)
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STIME0,
 	    (0xb << STIME0_SEL_SHIFT));
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCID,
-	    sc->sc_link.adapter_target | SCID_RRE);
+	    sc->sc_id | SCID_RRE);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_RESPID0,
-	    1 << sc->sc_link.adapter_target);
+	    1 << sc->sc_id);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_DCNTL,
 	    (sc->features & SF_CHIP_PF) ? DCNTL_COM | DCNTL_PFEN : DCNTL_COM);
 	if (sc->features & SF_CHIP_AAIP)

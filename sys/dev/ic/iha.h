@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.21 2020/02/18 17:07:38 krw Exp $ */
+/*	$OpenBSD: iha.h,v 1.22 2020/07/01 00:02:08 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -134,6 +134,7 @@ struct iha_softc {
 	bus_dmamap_t	     sc_dmamap;
 
 	struct	scsi_link    sc_link;
+	u_int16_t	     sc_id;
 
 	void		    *sc_ih;
 

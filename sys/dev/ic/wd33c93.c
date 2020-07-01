@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.14 2020/06/27 14:29:45 krw Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.15 2020/07/01 00:02:08 krw Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ wd33c93_reset(struct wd33c93_softc *sc)
 	if (sc->sc_reset != NULL)
 		(*sc->sc_reset)(sc);
 
-	my_id = sc->sc_link.adapter_target & SBIC_ID_MASK;
+	my_id = sc->sc_id & SBIC_ID_MASK;
 
 	/* Enable advanced features and really(!) advanced features */
 #if 1

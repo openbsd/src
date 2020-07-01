@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.48 2020/02/18 17:08:35 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.49 2020/07/01 00:02:08 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -366,6 +366,7 @@ iha_init_tulip(struct iha_softc *sc)
 	sc->HCS_Semaph	  = ~SEMAPH_IN_MAIN;
 	sc->HCS_JSStatus0 = 0;
 	sc->HCS_ActScb	  = NULL;
+	sc->sc_id	  = pScsi->NVM_SCSI_Id;
 
 	error = iha_alloc_scbs(sc);
 	if (error != 0)
@@ -407,7 +408,7 @@ iha_init_tulip(struct iha_softc *sc)
 	bus_space_write_1(iot, ioh, TUL_SCTRL0, RSMOD);
 
 	/* Program HBA's SCSI ID */
-	bus_space_write_1(iot, ioh, TUL_SID, sc->sc_link.adapter_target << 4);
+	bus_space_write_1(iot, ioh, TUL_SID, sc->sc_id << 4);
 
 	/*
 	 * Configure the channel as requested by the NVRAM settings read
@@ -941,7 +942,7 @@ iha_scsi(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 
 	/* program HBA's SCSI ID & target SCSI ID */
 	bus_space_write_1(iot, ioh, TUL_SID,
-	    (sc->sc_link.adapter_target << 4) | pScb->SCB_Target);
+	    (sc->sc_id << 4) | pScb->SCB_Target);
 
 	if ((pScb->SCB_Flags & SCSI_RESET) == 0) {
 		bus_space_write_1(iot, ioh, TUL_SYNCM, pTcs->TCS_JS_Period);
