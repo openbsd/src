@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.62 2020/07/01 13:32:27 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.63 2020/07/02 19:06:22 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -26,9 +26,9 @@ THIS SOFTWARE.
 #define DEBUG
 #include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
 #include <wchar.h>
 #include <wctype.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <setjmp.h>
 #include <limits.h>
@@ -136,6 +136,7 @@ int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
 
 void run(Node *a)	/* execution of parse tree starts here */
 {
+
 	stdinit();
 	execute(a);
 	closeall();
@@ -925,8 +926,7 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			n = fmtwd;
 		adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, "format5");
 		switch (flag) {
-		case '?':	/* unknown, so dump it too */
-			snprintf(p, BUFSZ(p), "%s", fmt);
+		case '?':	snprintf(p, BUFSZ(p), "%s", fmt);	/* unknown, so dump it too */
 			t = getsval(x);
 			n = strlen(t);
 			if (fmtwd > n)
@@ -1074,10 +1074,10 @@ Cell *arith(Node **a, int n)	/* a[0] + a[1], etc.  also -a[0] */
 	case POWER:
 		if (j >= 0 && modf(j, &v) == 0.0)	/* pos integer exponent */
 			i = ipow(i, (int) j);
-		else {
+               else {
 			errno = 0;
 			i = errcheck(pow(i, j), "pow");
-		}
+               }
 		break;
 	default:	/* can't happen */
 		FATAL("illegal arithmetic operator %d", n);
@@ -1170,10 +1170,10 @@ Cell *assign(Node **a, int n)	/* a[0] = a[1], a[0] += a[1], etc. */
 	case POWEQ:
 		if (yf >= 0 && modf(yf, &v) == 0.0)	/* pos integer exponent */
 			xf = ipow(xf, (int) yf);
-		else {
+               else {
 			errno = 0;
 			xf = errcheck(pow(xf, yf), "pow");
-		}
+               }
 		break;
 	default:
 		FATAL("illegal assignment operator %d", n);
@@ -1602,15 +1602,18 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		break;
 	case FLOG:
 		errno = 0;
-		u = errcheck(log(getfval(x)), "log"); break;
+		u = errcheck(log(getfval(x)), "log");
+		break;
 	case FINT:
 		modf(getfval(x), &u); break;
 	case FEXP:
 		errno = 0;
-		u = errcheck(exp(getfval(x)), "exp"); break;
+		u = errcheck(exp(getfval(x)), "exp");
+		break;
 	case FSQRT:
 		errno = 0;
-		u = errcheck(sqrt(getfval(x)), "sqrt"); break;
+		u = errcheck(sqrt(getfval(x)), "sqrt");
+		break;
 	case FSIN:
 		u = sin(getfval(x)); break;
 	case FCOS:

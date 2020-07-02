@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.35 2020/06/26 15:57:39 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.36 2020/07/02 19:06:22 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,10 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+July 2, 2020:
+	Merge PRs 85 and 86 which fix regressions. Thanks to
+	Tim van der Molen for the fixes.
 
 June 25, 2020:
 	Merge PRs 82 and 84. The latter fixes issue #83. Thanks to
