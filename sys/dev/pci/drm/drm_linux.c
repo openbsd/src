@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.60 2020/06/14 15:20:07 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.61 2020/07/02 11:01:21 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -301,28 +301,6 @@ kthread_stop(struct proc *p)
 	}
 	LIST_REMOVE(thread, next);
 	free(thread, M_DRM, sizeof(*thread));
-}
-
-struct timespec
-ns_to_timespec(const int64_t nsec)
-{
-	struct timespec ts;
-	int32_t rem;
-
-	if (nsec == 0) {
-		ts.tv_sec = 0;
-		ts.tv_nsec = 0;
-		return (ts);
-	}
-
-	ts.tv_sec = nsec / NSEC_PER_SEC;
-	rem = nsec % NSEC_PER_SEC;
-	if (rem < 0) {
-		ts.tv_sec--;
-		rem += NSEC_PER_SEC;
-	}
-	ts.tv_nsec = rem;
-	return (ts);
 }
 
 int64_t

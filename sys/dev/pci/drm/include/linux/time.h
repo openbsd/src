@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.2 2020/06/08 04:48:15 jsg Exp $	*/
+/*	$OpenBSD: time.h,v 1.3 2020/07/02 11:01:21 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -29,7 +29,6 @@
 #define USEC_PER_MSEC	1000L
 #define USEC_PER_SEC	1000000L
 
-extern struct timespec ns_to_timespec(const int64_t);
 extern int64_t timeval_to_ms(const struct timeval *);
 extern int64_t timeval_to_ns(const struct timeval *);
 extern int64_t timeval_to_us(const struct timeval *);
@@ -39,41 +38,5 @@ struct timespec64 {
 	time_t	tv_sec;
 	long	tv_nsec;
 };
-
-static inline struct timespec
-timespec_sub(struct timespec t1, struct timespec t2)
-{
-	struct timespec diff;
-
-	timespecsub(&t1, &t2, &diff);
-	return diff;
-}
-
-static inline void
-set_normalized_timespec(struct timespec *ts, time_t sec, int64_t nsec)
-{
-	while (nsec > NSEC_PER_SEC) {
-		nsec -= NSEC_PER_SEC;
-		sec++;
-	}
-
-	ts->tv_sec = sec;
-	ts->tv_nsec = nsec;
-}
-
-static inline int64_t
-timespec_to_ns(const struct timespec *ts)
-{
-	return ((ts->tv_sec * NSEC_PER_SEC) + ts->tv_nsec);
-}
-
-static inline int
-timespec_valid(const struct timespec *ts)
-{
-	if (ts->tv_sec < 0 || ts->tv_sec > 100000000 ||
-	    ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
-		return (0);
-	return (1);
-}
 
 #endif
