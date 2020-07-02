@@ -315,11 +315,14 @@ extern struct gate_descriptor *idt;
 int vm_pciio(struct vm_pciio *ptd);
 int vm_pio(struct vm_pio *pio);
 int vm_getbar(struct vm_barinfo *bi);
+int vm_getintr(struct vm_getintr *mi);
 
 struct vppt {
 	pci_chipset_tag_t pc;
-	pcitag_t         tag;
+	pcitag_t          tag;
 	pci_intr_handle_t ih;
+	uint32_t	  pending;
+	void		  *cookie;
 	TAILQ_ENTRY(vppt) next;
 };
 TAILQ_HEAD(,vppt) vppts = TAILQ_HEAD_INITIALIZER(vppts);
@@ -361,8 +364,10 @@ int vm_pciio(struct vm_pciio *ptd)
 	} else {
 		ptd->val = pci_conf_read(pc, tag, ptd->reg);
 	}
+#if 0
 	printf("pciio: %d.%d.%d %d reg:%.2x %.8x\n",
 		ptd->bus, ptd->dev, ptd->fun, ptd->dir, ptd->reg, ptd->val);
+#endif
 	return 0;
 }
 
@@ -455,7 +460,25 @@ int vmm_intr(void *arg);
 
 int vmm_intr(void *arg)
 {
-	return 0;
+	struct vppt *ppt = arg;		
+
+	ppt->pending++;
+	return 1;
+}
+
+int vm_getintr(struct vm_getintr *gi)
+{
+	pci_chipset_tag_t pc = NULL;
+	pcitag_t tag;
+	struct vppt *ppt;
+
+	tag = pci_make_tag(pc, gi->bus, gi->dev, gi->func);
+	TAILQ_FOREACH(ppt, &vppts, next) {
+		if (ppt->tag == tag) {
+			gi->pending = ppt->pending;
+		}
+	}
+	return (0);
 }
 
 /* Get PCI/Bar info */
@@ -469,19 +492,17 @@ int vm_getbar(struct vm_barinfo *bi)
 	int i, reg, did;
 	void *dom;
 	struct vm *vm;
+	struct vppt *ppt;
+	uint32_t id_reg;
 
 	tag = pci_make_tag(pc, bi->bus, bi->dev, bi->func);
-	bi->id_reg = pci_conf_read(pc, tag, PCI_ID_REG);
+	id_reg = pci_conf_read(pc, tag, PCI_ID_REG);
 	printf("getbar: %d.%d.%d %x\n",
-		bi->bus, bi->dev, bi->func, bi->id_reg);
-	if (PCI_VENDOR(bi->id_reg) == PCI_VENDOR_INVALID)
+		bi->bus, bi->dev, bi->func, id_reg);
+	if (PCI_VENDOR(id_reg) == PCI_VENDOR_INVALID)
 		return ENODEV;
-	if (PCI_VENDOR(bi->id_reg) == 0)
+	if (PCI_VENDOR(id_reg) == 0)
 		return ENODEV;
-
-	bi->subid_reg = pci_conf_read(pc, tag, PCI_SUBSYS_ID_REG);
-	bi->class_reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
-	bi->intr_reg  = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 
 	memset(&bi->bars, 0, sizeof(bi->bars));
 	for (i = 0, reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; i++, reg += 4) {
@@ -519,17 +540,16 @@ int vm_getbar(struct vm_barinfo *bi)
 				   vm->vm_memranges[i].vmr_size);
 		}
 	}		
-
-	/* Map intr */
-#if 0
+	/* Setup interrupt */
 	TAILQ_FOREACH(ppt, &vppts, next) {
 		if (ppt->tag == tag) {
-			if (pci_intr_establish(ppt->pc, ppt->ih, IPL_BIO, vmm_intr, ppt, "ppt") == NULL) {
-				printf("No intr\n");
+			if (!ppt->cookie) {
+				ppt->cookie = pci_intr_establish(ppt->pc, ppt->ih, IPL_BIO, vmm_intr, ppt, "ppt");
 			}
+			printf("Establish intr : %p\n", ppt->cookie);
+			ppt->pending = 0;
 		}
 	}
-#endif
 	return 0;
 }
 
@@ -739,6 +759,9 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VMM_IOC_BARINFO:
 		ret = vm_getbar((struct vm_barinfo *)data);
 		break;
+	case VMM_IOC_GETINTR:
+		ret = vm_getintr((struct vm_getintr *)data);
+		break;
 	case VMM_IOC_PCIIO:
 		ret = vm_pciio((struct vm_pciio *)data);
 		break;
@@ -788,6 +811,7 @@ pledge_ioctl_vmm(struct proc *p, long com)
 	case VMM_IOC_BARINFO:
 	case VMM_IOC_PCIIO:
 	case VMM_IOC_PIO:
+	case VMM_IOC_GETINTR:
 		return (0);
 	}
 
@@ -5166,7 +5190,7 @@ vmx_handle_intr(struct vcpu *vcpu)
 
 	vec = eii & 0xFF;
 	if (vec != 0x6b)
-	printf("vec: %x\n", vec);
+		printf("vec: %x\n", vec);
 
 	/* XXX check "error valid" code in eii, abort if 0 */
 	idte=&idt[vec];
@@ -7243,7 +7267,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		/* Handle vmd(8) injected interrupts */
 		/* Is there an interrupt pending injection? */
-		if (irq != 0xFFFF && vcpu->vc_irqready) {
+		if (irq != 0xFFFF && vcpu->vc_irqready) {	
 			vmcb->v_eventinj = (irq & 0xFF) | (1 << 31);
 			irq = 0xFFFF;
 		}

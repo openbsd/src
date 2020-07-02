@@ -55,6 +55,7 @@ struct pci_ptd {
 	uint8_t dev;
 	uint8_t fun;
 	uint8_t id;
+	uint32_t pending;
 	
 	struct {
 		uint32_t  type;
@@ -205,21 +206,18 @@ int mem_chkint(void);
 int
 mem_chkint()
 {
-	uint8_t *va;
+	struct vm_setintr si;
 	uint8_t intr = 0xff;
-	uint32_t sts = 0xffffffff;
-	int i;
+	int rc;
 
-	for (i = 0; i < MAXBAR; i++) {
-		va = ptd.barinfo[i].va;
-		if (va) 
-			break;
-	}
-	if (va != NULL) {
-		sts = *(uint16_t *)(va + 0x3E);
-		if (sts != 0 && sts != 0xffff) {
-			intr = pci.pci_devices[ptd.id].pd_irq;
-		}
+	si.bus = ptd.bus;
+	si.dev = ptd.dev;
+	si.func = ptd.fun;
+	rc = ioctl(env->vmd_fd, VMM_IOC_GETINTR, &si);
+	if (ptd.pending != si.pending) {
+		fprintf(stderr, "pend:%d %d\n", ptd.pending, si.pending);
+		intr = pci.pci_devices[ptd.id].pd_irq;
+		ptd.pending = si.pending;
 	}
 	return intr;
 }
@@ -320,6 +318,7 @@ pci_add_bar(uint8_t id, uint32_t type, uint32_t sz, void *barfn, void *cookie)
 		pci.pci_devices[id].pd_bartype[bar_ct] = PCI_BAR_TYPE_MMIO;
 		pci.pci_devices[id].pd_barsize[bar_ct] = sz;
 		pci.pci_devices[id].pd_bar_ct++;
+		pci.pci_devices[id].pd_bartype[bar_ct+1] = PCI_BAR_TYPE_MMIO;
 	} else if (type == PCI_MAPREG_TYPE_MEM) {
 		if (pci.pci_next_mmio_bar + sz >= VMM_PCI_MMIO_BAR_END)
 			return (1);
@@ -553,7 +552,7 @@ void
 pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 {
 	struct vm_barinfo bif;
-	uint32_t id_reg, subid_reg, class_reg;
+	uint32_t id_reg, subid_reg, class_reg, cmd_reg, intr_reg;
 	int i, rc;
 
 	/* Read PCI config space */
@@ -564,6 +563,12 @@ pci_add_pthru(struct vmd_vm *vm, int bus, int dev, int fun)
 	}
 	subid_reg = ptd_conf_read(bus, dev, fun, PCI_SUBSYS_ID_REG);
 	class_reg = ptd_conf_read(bus, dev, fun, PCI_CLASS_REG);
+	cmd_reg = ptd_conf_read(bus, dev, fun, PCI_COMMAND_STATUS_REG);
+	intr_reg = ptd_conf_read(bus, dev, fun, PCI_INTERRUPT_REG);
+
+	fprintf(stderr, "intr: pin:%.2x line:%.2x\n",
+		PCI_INTERRUPT_PIN(intr_reg), PCI_INTERRUPT_LINE(intr_reg));
+	ptd_conf_write(bus, dev, fun, 0x4, cmd_reg & ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE));
 
 	/* Unregister previous VMM */
 	for (i = 0; i < MAXBAR; i++) {
@@ -745,7 +750,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	f = (pci.pci_addr_reg >> 8) & 0x7;
 	o = (pci.pci_addr_reg & 0xfc);
 
-	if ((o == 0x04 || o == 0x34 || o >= 0x40) && (d == ptd.id && d > 0)) {
+	if ((o == 0x04 || o == 0x08 || o == 0x34 || o >= 0x40) && (d == ptd.id && d > 0)) {
 		/* Passthrough PCI Cfg Space */
 		if (vei->vei.vei_dir == VEI_DIR_IN) {
 			data = ptd_conf_read(ptd.bus, ptd.dev, ptd.fun, o);
@@ -782,6 +787,11 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	 * The guest wrote to the config space location denoted by the current
 	 * value in the address register.
 	 */
+	if (o >= 0x10 && o <= 0x24 && 0) {
+		fprintf(stderr, "%d %.2x bar: %c %.8x\n", 
+			d, o, (vei->vei.vei_dir == VEI_DIR_OUT) ? 'w' : 'r',
+			(vei->vei.vei_dir == VEI_DIR_OUT) ? wrdata : data);
+	}			
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
 		if (o >= 0x10 && o <= 0x24) {
 			baridx = (o - 0x10) / 4;
@@ -802,9 +812,13 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 					wrdata |= (barval & 0xF);
 				}
 			}
+			else if (bartype != PCI_BAR_TYPE_MMIO)
+				wrdata = 0;
+#if 0
 			fprintf(stderr, "%d %.2x val:%.8x/%.8llx new:%.8x [%.8x] ip:%.16llx\n", 
 				d, o, barval, barsize, wrdata, vei->vei.vei_data,
 				vei->vrs.vrs_gprs[VCPU_REGS_RIP]);
+#endif
 			vei->vei.vei_data = wrdata;
 		}
 

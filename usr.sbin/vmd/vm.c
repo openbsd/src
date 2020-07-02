@@ -1792,7 +1792,6 @@ vcpu_exit(struct vm_run_params *vrp)
 	case VMX_EXIT_INT_WINDOW:
 	case SVM_VMEXIT_VINTR:
 	case VMX_EXIT_CPUID:
-	case SVM_VMEXIT_INTR:
 	case SVM_VMEXIT_MSR:
 	case SVM_VMEXIT_CPUID:
 		/*
@@ -1803,8 +1802,9 @@ vcpu_exit(struct vm_run_params *vrp)
 		 * in more vmd log spam).
 		 */
 		break;
+	case SVM_VMEXIT_INTR:
 	case VMX_EXIT_EXTINT:
-		fprintf(stderr, "extint...\n");
+		//fprintf(stderr, "extint...\n");
 		break;
 	case VMX_EXIT_EPT_VIOLATION:
 	case SVM_VMEXIT_NPF:

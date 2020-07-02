@@ -584,14 +584,28 @@ struct vm_mprotect_ept_params {
 };
 
 struct vm_pciio {
+	/* input */
 	uint32_t seg;
 	uint32_t bus;
 	uint32_t dev;
-	uint32_t fun;
+	uint32_t func;
 
 	uint32_t dir;
 	uint32_t reg;
+
+	/* output */
 	uint32_t val;
+};
+
+struct vm_getintr {
+	/* input */
+	uint32_t seg;
+	uint32_t bus;
+	uint32_t dev;
+	uint32_t func;
+
+	/* output */
+	uint32_t pending;
 };
 
 #define MAXBAR 6
@@ -602,10 +616,6 @@ struct vm_barinfo {
 	uint32_t func;
 
 	/* output */
-	uint32_t id_reg;
-	uint32_t subid_reg;
-	uint32_t class_reg;
-	uint32_t intr_reg;
 	struct {
 		uint32_t   type;
 		uint32_t   size;
@@ -640,6 +650,7 @@ struct vm_pio {
 #define VMM_IOC_BARINFO	     _IOWR('V', 12, struct vm_barinfo)
 #define VMM_IOC_PCIIO	     _IOWR('V', 13, struct vm_pciio)
 #define VMM_IOC_PIO          _IOWR('V', 14, struct vm_pio)
+#define VMM_IOC_GETINTR      _IOWR('V', 15, struct vm_getintr)
 
 /* CPUID masks */
 /*
