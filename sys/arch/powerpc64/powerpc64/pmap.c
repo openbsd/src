@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2020/07/02 08:47:54 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.25 2020/07/02 14:56:36 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -562,6 +562,7 @@ pte_lookup(uint64_t vsid, vaddr_t va)
 
 	/* Secondary hash. */
 	idx ^= pmap_ptab_mask;
+	pte = pmap_ptable + (idx * 8);
 	pte_hi |= PTE_HID;
 
 	for (i = 0; i < 8; i++) {
@@ -740,8 +741,6 @@ pte_insert(struct pte_desc *pted)
 		pte[i].pte_hi |= PTE_VALID;
 		ptesync();	/* Ensure updates completed. */
 
-		if (i > 6)
-			printf("%s: primary %d\n", __func__, i);
 		goto out;
 	}
 
@@ -760,7 +759,8 @@ pte_insert(struct pte_desc *pted)
 		pte[i].pte_hi |= (PTE_HID|PTE_VALID);
 		ptesync();	/* Ensure updates completed. */
 
-		printf("%s: secondary %d\n", __func__, i);
+		if (i > 6)
+			printf("%s: secondary %d\n", __func__, i);
 		goto out;
 	}
 
