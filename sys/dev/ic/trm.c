@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.39 2020/02/15 18:02:00 krw Exp $
+/*	$OpenBSD: trm.c,v 1.40 2020/07/02 13:29:20 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -74,8 +74,6 @@ u_int8_t trm_get_data(bus_space_tag_t, bus_space_handle_t, u_int8_t);
 
 void	trm_wait_30us(bus_space_tag_t, bus_space_handle_t);
 
-void	trm_scsi_cmd(struct scsi_xfer *);
-
 void	*trm_srb_alloc(void *);
 
 void	trm_DataOutPhase0(struct trm_softc *, struct trm_scsi_req_q *, u_int8_t *);
@@ -123,17 +121,6 @@ void	trm_EnableMsgOut(struct trm_softc *, u_int8_t);
 void	trm_timeout(void *);
 
 void	trm_print_info(struct trm_softc *, struct trm_dcb *);
-
-/*
- * Define structures
- */
-struct  cfdriver trm_cd = {
-        NULL, "trm", DV_DULL
-};
-
-struct scsi_adapter trm_switch = {
-	trm_scsi_cmd, NULL, NULL, NULL, NULL
-};
 
 /*
  * ------------------------------------------------------------
@@ -2411,13 +2398,6 @@ trm_initACB(struct trm_softc *sc, int unit)
 			pDCB->pActiveSRB = NULL;
 		}
 	}
-
-	sc->sc_link.adapter_softc    = sc;
-	sc->sc_link.adapter_target   = sc->sc_AdaptSCSIID;
-	sc->sc_link.openings         = 30; /* So TagMask (32 bit integer) always has space */
-	sc->sc_link.adapter          = &trm_switch;
-	sc->sc_link.adapter_buswidth = ((sc->sc_config & HCC_WIDE_CARD) == 0) ? 8:16;
-	sc->sc_link.pool	     = &sc->sc_iopool;
 
 	trm_reset(sc);
 }
