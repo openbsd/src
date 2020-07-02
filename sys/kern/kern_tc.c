@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.59 2020/06/26 18:48:31 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.60 2020/07/02 23:30:38 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -59,7 +59,7 @@ dummy_get_timecount(struct timecounter *tc)
 {
 	static u_int now;
 
-	return (++now);
+	return atomic_inc_int_nv(&now);
 }
 
 static struct timecounter dummy_timecounter = {
