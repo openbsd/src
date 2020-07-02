@@ -1,7 +1,11 @@
-# $OpenBSD: files.powerpc64,v 1.17 2020/06/29 17:35:13 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.18 2020/07/02 22:15:24 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
+
+major	{rd = 25}
+major	{sd = 26}
+major	{cd = 27}
 
 file	arch/powerpc64/powerpc64/locore.S
 file	arch/powerpc64/powerpc64/autoconf.c
