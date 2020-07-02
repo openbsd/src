@@ -358,7 +358,7 @@ int vm_pciio(struct vm_pciio *ptd)
 
 	if (ptd->reg & 3)
 		return EINVAL;
-	tag = pci_make_tag(pc, ptd->bus, ptd->dev, ptd->fun);
+	tag = pci_make_tag(pc, ptd->bus, ptd->dev, ptd->func);
 	if (ptd->dir == VEI_DIR_OUT) {
 		pci_conf_write(pc, tag, ptd->reg, ptd->val);
 	} else {
@@ -366,7 +366,7 @@ int vm_pciio(struct vm_pciio *ptd)
 	}
 #if 0
 	printf("pciio: %d.%d.%d %d reg:%.2x %.8x\n",
-		ptd->bus, ptd->dev, ptd->fun, ptd->dir, ptd->reg, ptd->val);
+		ptd->bus, ptd->dev, ptd->func, ptd->dir, ptd->reg, ptd->val);
 #endif
 	return 0;
 }

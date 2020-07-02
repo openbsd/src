@@ -180,7 +180,7 @@ ptd_conf_read(int bus, int dev, int func, uint32_t reg)
 	memset(&pio, 0, sizeof(pio));
 	pio.bus = bus;
 	pio.dev = dev;
-	pio.fun = func;
+	pio.func = func;
 	pio.dir = VEI_DIR_IN;
 	pio.reg = reg & ~0x3;
 	ioctl(env->vmd_fd, VMM_IOC_PCIIO, &pio);
@@ -195,7 +195,7 @@ ptd_conf_write(int bus, int dev, int func, uint32_t reg, uint32_t val)
 	memset(&pio, 0, sizeof(pio));
 	pio.bus = bus;
 	pio.dev = dev;
-	pio.fun = func;
+	pio.func = func;
 	pio.dir = VEI_DIR_OUT;
 	pio.reg = reg & ~3;
 	pio.val = val;
@@ -206,7 +206,7 @@ int mem_chkint(void);
 int
 mem_chkint()
 {
-	struct vm_setintr si;
+	struct vm_getintr si;
 	uint8_t intr = 0xff;
 	int rc;
 
