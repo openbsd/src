@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2020/07/02 08:02:04 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.24 2020/07/02 08:47:54 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1042,6 +1042,14 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	if (pg != NULL)
 		pmap_enter_pv(pted, pg); /* only managed mem */
+
+	/*
+	 * XXX Preseed modify bits.  This shouldn't be necessary since
+	 * these bits are implemented in hardware.  But something is
+	 * broken and the bits aren't properly propagated.
+	 */
+	if (pg != NULL && flags & PROT_WRITE)
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_MOD);
 
 	pte_insert(pted);
 
