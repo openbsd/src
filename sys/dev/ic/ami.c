@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.244 2020/06/27 17:28:58 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.245 2020/07/02 15:58:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -517,12 +517,6 @@ ami_attach(struct ami_softc *sc)
 	/* TODO: fetch & print cache strategy */
 	/* TODO: fetch & print scsi and raid info */
 
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &ami_switch;
-	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
-	sc->sc_link.adapter_buswidth = sc->sc_maxunits;
-	sc->sc_link.pool = &sc->sc_iopool;
-
 #ifdef AMI_DEBUG
 	printf(", FW %s, BIOS v%s, %dMB RAM\n"
 	    "%s: %d channels, %d %ss, %d logical drives, "
@@ -543,6 +537,12 @@ ami_attach(struct ami_softc *sc)
 
 	/* lock around ioctl requests */
 	rw_init(&sc->sc_lock, NULL);
+
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter = &ami_switch;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
+	sc->sc_link.adapter_buswidth = sc->sc_maxunits;
+	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
 
