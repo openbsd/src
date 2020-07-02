@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.136 2020/06/27 17:28:58 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.137 2020/07/02 21:59:34 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -179,6 +179,9 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	if (aaa->aaa_minphys != NULL)
 		as->as_switch.dev_minphys = aaa->aaa_minphys;
 
+	as->as_host_ports = mallocarray(aaa->aaa_nports,
+	    sizeof(struct atascsi_host_port *),	M_DEVBUF, M_WAITOK | M_ZERO);
+
 	/* fill in our scsi_link */
 	as->as_link.adapter = &as->as_switch;
 	as->as_link.adapter_softc = as;
@@ -186,9 +189,6 @@ atascsi_attach(struct device *self, struct atascsi_attach_args *aaa)
 	as->as_link.luns = SATA_PMP_MAX_PORTS;
 	as->as_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	as->as_link.openings = 1;
-
-	as->as_host_ports = mallocarray(aaa->aaa_nports,
-	    sizeof(struct atascsi_host_port *),	M_DEVBUF, M_WAITOK | M_ZERO);
 
 	saa.saa_sc_link = &as->as_link;
 
