@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2020/07/01 16:58:07 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2020/07/02 21:51:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -133,7 +133,7 @@ trap(struct trapframe *frame)
 		    (va >> ADDR_ESID_SHIFT) == USER_ESID) {
 			map = &p->p_vmspace->vm_map;
 			va = curpcb->pcb_userva | (va & SEGMENT_MASK);
-			if (pmap_set_user_slb(map->pmap, va, 0, NULL) == 0)
+			if (pmap_set_user_slb(map->pmap, va, NULL, NULL) == 0)
 				return;
 		}
 

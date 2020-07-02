@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.9 2020/07/01 16:05:48 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.10 2020/07/02 21:51:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -78,7 +78,7 @@ void	pmap_bootstrap(void);
 struct slb_desc *pmap_slbd_lookup(pmap_t, vaddr_t);
 void	pmap_slbd_cache(pmap_t, struct slb_desc *);
 
-int	pmap_set_user_slb(pmap_t, vaddr_t, vsize_t, vaddr_t *);
+int	pmap_set_user_slb(pmap_t, vaddr_t, vaddr_t *, vsize_t *);
 void	pmap_unset_user_slb(void);
 
 #ifdef DDB

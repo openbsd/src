@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2020/07/02 14:56:36 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.26 2020/07/02 21:51:05 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -358,16 +358,13 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 }
 
 int
-pmap_set_user_slb(pmap_t pm, vaddr_t va, vsize_t len, vaddr_t *kva)
+pmap_set_user_slb(pmap_t pm, vaddr_t va, vaddr_t *kva, vsize_t *len)
 {
 	struct cpu_info *ci = curcpu();
 	struct slb_desc *slbd;
 	uint64_t slbe, slbv;
 
 	KASSERT(pm != pmap_kernel());
-
-	if (len > SEGMENT_SIZE)
-		return EFAULT;
 
 	slbd = pmap_slbd_lookup(pm, va);
 	if (slbd == NULL) {
@@ -401,6 +398,8 @@ pmap_set_user_slb(pmap_t pm, vaddr_t va, vsize_t len, vaddr_t *kva)
 
 	if (kva)
 		*kva = USER_ADDR | (va & SEGMENT_MASK);
+	if (len)
+		*len = SEGMENT_SIZE - (va & SEGMENT_MASK);
 
 	return 0;
 }
