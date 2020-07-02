@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2020/07/01 16:05:48 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.23 2020/07/02 08:02:04 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -266,7 +266,7 @@ pmap_attr_save(paddr_t pa, uint64_t bits)
 	if (pg == NULL)
 		return;
 
-	atomic_setbits_int(&pg->pg_flags,  pmap_pte2flags(bits));
+	atomic_setbits_int(&pg->pg_flags, pmap_pte2flags(bits));
 }
 
 struct pte *
@@ -691,7 +691,7 @@ pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
 	 * a bit could have been promoted via pmap_attr_save()
 	 */
 	bits |= pg->pg_flags & flagbit;
-	atomic_clearbits_int(&pg->pg_flags,  flagbit);
+	atomic_clearbits_int(&pg->pg_flags, flagbit);
 
 	return bits;
 }
