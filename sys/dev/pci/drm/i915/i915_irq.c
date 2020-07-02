@@ -4172,5 +4172,9 @@ bool intel_irqs_enabled(struct drm_i915_private *dev_priv)
 
 void intel_synchronize_irq(struct drm_i915_private *i915)
 {
+#ifdef __linux__
 	synchronize_irq(i915->drm.pdev->irq);
+#else
+	intr_barrier(i915->irqh);
+#endif
 }

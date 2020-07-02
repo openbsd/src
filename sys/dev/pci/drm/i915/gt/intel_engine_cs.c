@@ -1122,10 +1122,10 @@ bool intel_engine_is_idle(struct intel_engine_cs *engine)
 
 	/* Waiting to drain ELSP? */
 	if (execlists_active(&engine->execlists)) {
-#ifdef notyet
+#ifdef __linux__
 		synchronize_hardirq(engine->i915->drm.pdev->irq);
 #else
-		STUB();
+		intr_barrier(engine->i915->irqh);
 #endif
 
 		intel_engine_flush_submission(engine);
