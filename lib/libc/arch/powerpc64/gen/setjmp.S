@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.2 2020/06/28 11:53:20 kettenis Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.3 2020/07/02 08:59:45 kettenis Exp $ */
 /*
  * Copyright (c) 2020 Dale Rahn. All rights reserved.
  *
@@ -72,13 +72,12 @@ ENTRY(setjmp)
 	li	%r0, SYS_sigprocmask
 	sc
 	std	%r3, JMP_sig(%r5)
-	mr	%r3, %r5
-	b	_setjmp
+	b	1f
 	nop
 
 ENTRY(_setjmp)
 	mr	%r5, %r3		/* save jmpbuf addr in r5 */
-
+1:
 	addis	%r7, %r2, __jmpxor@toc@ha
 	addi	%r7, %r7, __jmpxor@toc@l
 	ld	%r0, 0(%r7)		/* xor for r1 */
@@ -110,7 +109,7 @@ ENTRY(_setjmp)
 	xor 	%r7, %r6, %r7		/* use and overwrite the lr xor */
 	std	%r7, JMP_lr(%r5)
 	mfcr	%r0
-	std	%r0, JMP_cr(3)
+	std	%r0, JMP_cr(%r5)
 	mfctr	%r0
 	std	%r0, JMP_ctr(%r5)
 	mfxer	%r0
