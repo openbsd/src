@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.c,v 1.5 2020/06/26 19:06:35 kettenis Exp $	*/
+/*	$OpenBSD: opal.c,v 1.6 2020/07/02 17:40:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -195,7 +195,7 @@ opal_attach_deferred(struct device *self)
 	int i;
 
 	for (i = 0; i < sc->sc_nintr; i++) {
-		intr_establish(sc->sc_intr[i].oi_isn, IST_LEVEL, IPL_BIO,
+		intr_establish(sc->sc_intr[i].oi_isn, IST_LEVEL, IPL_TTY,
 		    opal_intr, &sc->sc_intr[i], sc->sc_dev.dv_xname);
 	}
 }
