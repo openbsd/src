@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.238 2020/06/30 21:58:13 benno Exp $	*/
+/*	$OpenBSD: in6.c,v 1.239 2020/07/03 17:42:50 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1555,16 +1555,16 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			if (oifp == ifp) {
 				/* Do not replace temporary autoconf addresses
 				 * with non-temporary addresses. */
-				if ((ia6_best->ia6_flags & IN6_IFF_PRIVACY) &&
-				    !(ifatoia6(ifa)->ia6_flags &
-				    IN6_IFF_PRIVACY))
+				if ((ia6_best->ia6_flags & IN6_IFF_TEMPORARY)
+				    && !(ifatoia6(ifa)->ia6_flags &
+				    IN6_IFF_TEMPORARY))
 					continue;
 
 				/* Replace non-temporary autoconf addresses
 				 * with temporary addresses. */
-				if (!(ia6_best->ia6_flags & IN6_IFF_PRIVACY) &&
-				    (ifatoia6(ifa)->ia6_flags &
-				    IN6_IFF_PRIVACY))
+				if (!(ia6_best->ia6_flags & IN6_IFF_TEMPORARY)
+				    && (ifatoia6(ifa)->ia6_flags &
+				    IN6_IFF_TEMPORARY))
 					goto replace;
 			}
 			tlen = in6_matchlen(IFA_IN6(ifa), dst);

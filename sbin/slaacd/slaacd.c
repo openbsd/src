@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.49 2020/05/25 16:52:15 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.50 2020/07/03 17:42:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -695,7 +695,7 @@ configure_interface(struct imsg_configure_address *address)
 	in6_addreq.ifra_flags |= IN6_IFF_AUTOCONF;
 
 	if (address->privacy)
-		in6_addreq.ifra_flags |= IN6_IFF_PRIVACY;
+		in6_addreq.ifra_flags |= IN6_IFF_TEMPORARY;
 
 	log_debug("%s: %s", __func__, if_name);
 

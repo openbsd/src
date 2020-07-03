@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.423 2020/06/22 02:08:43 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.424 2020/07/03 17:42:50 florian Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3670,7 +3670,7 @@ in6_alias(struct in6_ifreq *creq)
 			printf(" deprecated");
 		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_AUTOCONF)
 			printf(" autoconf");
-		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_PRIVACY)
+		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_TEMPORARY)
 			printf(" autoconfprivacy");
 	}
 

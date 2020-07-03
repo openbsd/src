@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.32 2020/04/17 06:27:32 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.33 2020/07/03 17:42:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -587,11 +587,11 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 		}
 
 		if (!(ifr6.ifr_ifru.ifru_flags6 & (IN6_IFF_AUTOCONF |
-		    IN6_IFF_PRIVACY)))
+		    IN6_IFF_TEMPORARY)))
 			continue;
 
 		imsg_addrinfo.privacy = ifr6.ifr_ifru.ifru_flags6 &
-		    IN6_IFF_PRIVACY ? 1 : 0;
+		    IN6_IFF_TEMPORARY ? 1 : 0;
 
 		memset(&ifr6, 0, sizeof(ifr6));
 		(void) strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
@@ -659,7 +659,7 @@ flags_to_str(int flags)
 		(void)strlcat(buf, " deprecated", sizeof(buf));
 	if (flags & IN6_IFF_AUTOCONF)
 		(void)strlcat(buf, " autoconf", sizeof(buf));
-	if (flags & IN6_IFF_PRIVACY)
+	if (flags & IN6_IFF_TEMPORARY)
 		(void)strlcat(buf, " autoconfprivacy", sizeof(buf));
 
 	return (buf);
