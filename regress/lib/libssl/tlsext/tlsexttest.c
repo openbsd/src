@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.40 2020/05/24 20:01:58 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.41 2020/07/03 04:13:41 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2744,7 +2744,7 @@ test_tlsext_clienthello_build(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
-	if (!tlsext_client_build(ssl, &cbb, SSL_TLSEXT_MSG_CH)) {
+	if (!tlsext_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("failed to build clienthello extensions\n");
 		goto err;
 	}
@@ -2780,7 +2780,7 @@ test_tlsext_clienthello_build(void)
 		return 0;
 	}
 
-	if (!tlsext_client_build(ssl, &cbb, SSL_TLSEXT_MSG_CH)) {
+	if (!tlsext_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("failed to build clienthello extensions\n");
 		goto err;
 	}
@@ -2848,7 +2848,7 @@ test_tlsext_serverhello_build(void)
 	S3I(ssl)->hs.new_cipher =
 	    ssl3_get_cipher_by_id(TLS1_CK_RSA_WITH_AES_128_SHA256);
 
-	if (!tlsext_server_build(ssl, &cbb, SSL_TLSEXT_MSG_SH)) {
+	if (!tlsext_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("failed to build serverhello extensions\n");
 		goto err;
 	}
@@ -2885,7 +2885,7 @@ test_tlsext_serverhello_build(void)
 	SSI(ssl)->tlsext_ecpointformatlist[0] =
 	    TLSEXT_ECPOINTFORMAT_uncompressed;
 
-	if (!tlsext_server_build(ssl, &cbb, SSL_TLSEXT_MSG_SH)) {
+	if (!tlsext_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("failed to build serverhello extensions\n");
 		goto err;
 	}
