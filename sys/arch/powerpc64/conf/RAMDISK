@@ -1,0 +1,50 @@
+# $OpenBSD: RAMDISK,v 1.1 2020/07/03 16:28:08 kettenis Exp $
+
+machine		powerpc64
+maxusers	4
+
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		BOOT_CONFIG
+
+option		RAMDISK_HOOKS
+option		MINIROOTSIZE=8192
+
+option		PCIVERBOSE
+option		USBVERBOSE
+
+option		FFS
+option		FFS2
+option		MSDOSFS
+option		INET6
+option		EXT2FS
+option		NFSCLIENT
+option		CRYPTO
+
+config		bsd	root on rd0a swap on rd0b
+
+mainbus0	at root
+cpu0		at mainbus?
+opal0		at fdt?
+opalcons*	at fdt?
+phb*		at fdt?
+pci*		at phb?
+xive*		at fdt?
+
+ppb*		at pci?
+pci*		at ppb?
+ahci*		at pci?
+bge*		at pci?
+nvme*		at pci?
+
+scsibus*	at scsi?
+sd*		at scsibus?
+
+brgphy*		at mii?
+
+pseudo-device	loop 1
+pseudo-device	vlan
+pseudo-device	trunk
+pseudo-device	bpfilter 1
+pseudo-device	rd 1
+pseudo-device	bio 1
