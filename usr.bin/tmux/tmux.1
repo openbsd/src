@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.786 2020/06/18 08:34:22 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.787 2020/07/03 07:07:50 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2020 $
+.Dd $Mdocdate: July 3 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2947,7 +2947,7 @@ specifies a prefix to print before each key and
 .Fl 1
 lists only the first matching key.
 .Fl a
-lists the command for keys that do have a note rather than skipping them.
+lists the command for keys that do not have a note rather than skipping them.
 .It Xo Ic send-keys
 .Op Fl FHlMRX
 .Op Fl N Ar repeat-count
