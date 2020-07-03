@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.41 2020/07/03 04:13:41 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.42 2020/07/03 04:58:41 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -140,7 +140,7 @@ test_tlsext_alpn_client(void)
 		errx(1, "failed to create SSL");
 
 	/* By default, we don't need this */
-	if (tlsext_alpn_client_needs(ssl)) {
+	if (tlsext_alpn_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need ALPN by default\n");
 		goto err;
 	}
@@ -157,14 +157,14 @@ test_tlsext_alpn_client(void)
 		FAIL("should be able to set ALPN to http/1.1\n");
 		goto err;
 	}
-	if (!tlsext_alpn_client_needs(ssl)) {
+	if (!tlsext_alpn_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need ALPN by now\n");
 		goto err;
 	}
 
 	/* Make sure we can build the client with a single proto. */
 
-	if (!tlsext_alpn_client_build(ssl, &cbb)) {
+	if (!tlsext_alpn_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build ALPN\n");
 		goto err;
 	}
@@ -195,7 +195,7 @@ test_tlsext_alpn_client(void)
 
 	CBS_init(&cbs, tlsext_alpn_single_proto,
 	    sizeof(tlsext_alpn_single_proto));
-	if (!tlsext_alpn_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_alpn_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse ALPN\n");
 		goto err;
 	}
@@ -231,12 +231,12 @@ test_tlsext_alpn_client(void)
 		FAIL("should be able to set ALPN to http/1.1\n");
 		goto err;
 	}
-	if (!tlsext_alpn_client_needs(ssl)) {
+	if (!tlsext_alpn_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need ALPN by now\n");
 		goto err;
 	}
 
-	if (!tlsext_alpn_client_build(ssl, &cbb)) {
+	if (!tlsext_alpn_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build ALPN\n");
 		goto err;
 	}
@@ -262,7 +262,7 @@ test_tlsext_alpn_client(void)
 
 	CBS_init(&cbs, tlsext_alpn_multiple_protos,
 	    sizeof(tlsext_alpn_multiple_protos));
-	if (!tlsext_alpn_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_alpn_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse ALPN\n");
 		goto err;
 	}
@@ -297,7 +297,7 @@ test_tlsext_alpn_client(void)
 	ssl->internal->alpn_client_proto_list = NULL;
 	ssl->internal->alpn_client_proto_list_len = 0;
 
-	if (tlsext_alpn_client_needs(ssl)) {
+	if (tlsext_alpn_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need ALPN by default\n");
 		goto err;
 	}
@@ -334,7 +334,7 @@ test_tlsext_alpn_server(void)
 		errx(1, "failed to create SSL");
 
 	/* By default, ALPN isn't needed. */
-	if (tlsext_alpn_server_needs(ssl)) {
+	if (tlsext_alpn_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need ALPN by default\n");
 		goto err;
 	}
@@ -352,14 +352,14 @@ test_tlsext_alpn_server(void)
 	    sizeof(tlsext_alpn_single_proto_name));
 	S3I(ssl)->alpn_selected_len = sizeof(tlsext_alpn_single_proto_name);
 
-	if (!tlsext_alpn_server_needs(ssl)) {
+	if (!tlsext_alpn_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need ALPN after a protocol is selected\n");
 		goto err;
 	}
 
 	/* Make sure we can build a server with one protocol */
 
-	if (!tlsext_alpn_server_build(ssl, &cbb)) {
+	if (!tlsext_alpn_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server should be able to build a response\n");
 		goto err;
 	}
@@ -392,7 +392,7 @@ test_tlsext_alpn_server(void)
 	    sizeof(tlsext_alpn_single_proto));
 
 	/* Shouldn't be able to parse without requesting */
-	if (tlsext_alpn_client_parse(ssl, &cbs, &alert)) {
+	if (tlsext_alpn_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("Should only parse server if we requested it\n");
 		goto err;
 	}
@@ -403,7 +403,7 @@ test_tlsext_alpn_server(void)
 		FAIL("should be able to set ALPN to http/1.1\n");
 		goto err;
 	}
-	if (!tlsext_alpn_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_alpn_server_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("Should be able to parse server when we request it\n");
 		goto err;
 	}
@@ -446,7 +446,7 @@ test_tlsext_alpn_server(void)
 	S3I(ssl)->alpn_selected = NULL;
 	S3I(ssl)->alpn_selected_len = 0;
 
-	if (tlsext_alpn_server_needs(ssl)) {
+	if (tlsext_alpn_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need ALPN by default\n");
 		goto err;
 	}
@@ -519,7 +519,7 @@ test_tlsext_supportedgroups_client(void)
 	/*
 	 * Default ciphers include EC so we need it by default.
 	 */
-	if (!tlsext_supportedgroups_client_needs(ssl)) {
+	if (!tlsext_supportedgroups_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need Ellipticcurves for default "
 		    "ciphers\n");
 		goto err;
@@ -532,7 +532,7 @@ test_tlsext_supportedgroups_client(void)
 		FAIL("client should be able to set cipher list\n");
 		goto err;
 	}
-	if (tlsext_supportedgroups_client_needs(ssl)) {
+	if (tlsext_supportedgroups_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need Ellipticcurves\n");
 		goto err;
 	}
@@ -544,7 +544,7 @@ test_tlsext_supportedgroups_client(void)
 		FAIL("client should be able to set cipher list\n");
 		goto err;
 	}
-	if (!tlsext_supportedgroups_client_needs(ssl)) {
+	if (!tlsext_supportedgroups_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need Ellipticcurves\n");
 		goto err;
 	}
@@ -563,12 +563,12 @@ test_tlsext_supportedgroups_client(void)
 	SSI(ssl)->tlsext_supportedgroups[0] = tls1_ec_nid2curve_id(NID_secp384r1);
 	SSI(ssl)->tlsext_supportedgroups_length = 1;
 
-	if (!tlsext_supportedgroups_client_needs(ssl)) {
+	if (!tlsext_supportedgroups_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need Ellipticcurves\n");
 		goto err;
 	}
 
-	if (!tlsext_supportedgroups_client_build(ssl, &cbb)) {
+	if (!tlsext_supportedgroups_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build Ellipticcurves\n");
 		goto err;
 	}
@@ -606,7 +606,7 @@ test_tlsext_supportedgroups_client(void)
 
 	CBS_init(&cbs, tlsext_supportedgroups_client_secp384r1,
 	    sizeof(tlsext_supportedgroups_client_secp384r1));
-	if (!tlsext_supportedgroups_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_supportedgroups_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client Ellipticcurves\n");
 		goto err;
 	}
@@ -652,12 +652,12 @@ test_tlsext_supportedgroups_client(void)
 	ssl->internal->tlsext_supportedgroups[1] = tls1_ec_nid2curve_id(NID_secp224r1);
 	ssl->internal->tlsext_supportedgroups_length = 2;
 
-	if (!tlsext_supportedgroups_client_needs(ssl)) {
+	if (!tlsext_supportedgroups_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need Ellipticcurves\n");
 		goto err;
 	}
 
-	if (!tlsext_supportedgroups_client_build(ssl, &cbb)) {
+	if (!tlsext_supportedgroups_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build Ellipticcurves\n");
 		goto err;
 	}
@@ -706,7 +706,7 @@ test_tlsext_supportedgroups_client(void)
 
 	CBS_init(&cbs, tlsext_supportedgroups_client_nistp192and224,
 	    sizeof(tlsext_supportedgroups_client_nistp192and224));
-	if (!tlsext_supportedgroups_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_supportedgroups_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client Ellipticcurves\n");
 		goto err;
 	}
@@ -759,7 +759,7 @@ test_tlsext_supportedgroups_server(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
-	if (tlsext_supportedgroups_server_needs(ssl)) {
+	if (tlsext_supportedgroups_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need elliptic_curves\n");
 		goto err;
 	}
@@ -767,7 +767,7 @@ test_tlsext_supportedgroups_server(void)
 	if ((ssl->session = SSL_SESSION_new()) == NULL)
 		errx(1, "failed to create session");
 
-	if (tlsext_supportedgroups_server_needs(ssl)) {
+	if (tlsext_supportedgroups_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need elliptic_curves\n");
 		goto err;
 	}
@@ -837,7 +837,7 @@ test_tlsext_ecpf_client(void)
 	/*
 	 * Default ciphers include EC so we need it by default.
 	 */
-	if (!tlsext_ecpf_client_needs(ssl)) {
+	if (!tlsext_ecpf_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need ECPointFormats for default "
 		    "ciphers\n");
 		goto err;
@@ -850,7 +850,7 @@ test_tlsext_ecpf_client(void)
 		FAIL("client should be able to set cipher list\n");
 		goto err;
 	}
-	if (tlsext_ecpf_client_needs(ssl)) {
+	if (tlsext_ecpf_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need ECPointFormats\n");
 		goto err;
 	}
@@ -862,7 +862,7 @@ test_tlsext_ecpf_client(void)
 		FAIL("client should be able to set cipher list\n");
 		goto err;
 	}
-	if (!tlsext_ecpf_client_needs(ssl)) {
+	if (!tlsext_ecpf_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need ECPointFormats\n");
 		goto err;
 	}
@@ -873,7 +873,7 @@ test_tlsext_ecpf_client(void)
 	if ((ssl->session = SSL_SESSION_new()) == NULL)
 		errx(1, "failed to create session");
 
-	if (!tlsext_ecpf_client_build(ssl, &cbb)) {
+	if (!tlsext_ecpf_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build ECPointFormats\n");
 		goto err;
 	}
@@ -911,7 +911,7 @@ test_tlsext_ecpf_client(void)
 
 	CBS_init(&cbs, tlsext_ecpf_hello_uncompressed,
 	    sizeof(tlsext_ecpf_hello_uncompressed));
-	if (!tlsext_ecpf_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_ecpf_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client ECPointFormats\n");
 		goto err;
 	}
@@ -955,13 +955,13 @@ test_tlsext_ecpf_client(void)
 	ssl->internal->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
 	ssl->internal->tlsext_ecpointformatlist_length = 3;
 
-	if (!tlsext_ecpf_client_needs(ssl)) {
+	if (!tlsext_ecpf_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need ECPointFormats with a custom "
 		    "format\n");
 		goto err;
 	}
 
-	if (!tlsext_ecpf_client_build(ssl, &cbb)) {
+	if (!tlsext_ecpf_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build ECPointFormats\n");
 		goto err;
 	}
@@ -1004,7 +1004,7 @@ test_tlsext_ecpf_client(void)
 
 	CBS_init(&cbs, tlsext_ecpf_hello_prefer_order,
 	    sizeof(tlsext_ecpf_hello_prefer_order));
-	if (!tlsext_ecpf_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_ecpf_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client ECPointFormats\n");
 		goto err;
 	}
@@ -1077,7 +1077,7 @@ test_tlsext_ecpf_server(void)
 	SSI(ssl)->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
 	SSI(ssl)->tlsext_ecpointformatlist_length = 1;
 
-	if (!tlsext_ecpf_server_needs(ssl)) {
+	if (!tlsext_ecpf_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need ECPointFormats now\n");
 		goto err;
 	}
@@ -1086,7 +1086,7 @@ test_tlsext_ecpf_server(void)
 	 * The server will ignore the session list and use either a custom
 	 * list or the default (uncompressed).
 	 */
-	if (!tlsext_ecpf_server_build(ssl, &cbb)) {
+	if (!tlsext_ecpf_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server failed to build ECPointFormats\n");
 		goto err;
 	}
@@ -1124,7 +1124,7 @@ test_tlsext_ecpf_server(void)
 
 	CBS_init(&cbs, tlsext_ecpf_hello_prime,
 	    sizeof(tlsext_ecpf_hello_prime));
-	if (tlsext_ecpf_client_parse(ssl, &cbs, &alert)) {
+	if (tlsext_ecpf_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("must include uncompressed in server ECPointFormats\n");
 		goto err;
 	}
@@ -1164,12 +1164,12 @@ test_tlsext_ecpf_server(void)
 	ssl->internal->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
 	ssl->internal->tlsext_ecpointformatlist_length = 3;
 
-	if (!tlsext_ecpf_server_needs(ssl)) {
+	if (!tlsext_ecpf_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need ECPointFormats\n");
 		goto err;
 	}
 
-	if (!tlsext_ecpf_server_build(ssl, &cbb)) {
+	if (!tlsext_ecpf_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server failed to build ECPointFormats\n");
 		goto err;
 	}
@@ -1212,7 +1212,7 @@ test_tlsext_ecpf_server(void)
 
 	CBS_init(&cbs, tlsext_ecpf_hello_prefer_order,
 	    sizeof(tlsext_ecpf_hello_prefer_order));
-	if (!tlsext_ecpf_client_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_ecpf_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server ECPointFormats\n");
 		goto err;
 	}
@@ -1295,7 +1295,7 @@ test_tlsext_ri_client(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
-	if (tlsext_ri_client_needs(ssl)) {
+	if (tlsext_ri_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need RI\n");
 		goto err;
 	}
@@ -1305,7 +1305,7 @@ test_tlsext_ri_client(void)
 		goto err;
 	}
 
-	if (!tlsext_ri_client_needs(ssl)) {
+	if (!tlsext_ri_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need RI\n");
 		goto err;
 	}
@@ -1316,7 +1316,7 @@ test_tlsext_ri_client(void)
 
 	S3I(ssl)->renegotiate_seen = 0;
 
-	if (!tlsext_ri_client_build(ssl, &cbb)) {
+	if (!tlsext_ri_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build RI\n");
 		goto err;
 	}
@@ -1340,7 +1340,7 @@ test_tlsext_ri_client(void)
 	}
 
 	CBS_init(&cbs, tlsext_ri_client, sizeof(tlsext_ri_client));
-	if (!tlsext_ri_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_ri_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client RI\n");
 		goto err;
 	}
@@ -1364,7 +1364,7 @@ test_tlsext_ri_client(void)
 	S3I(ssl)->renegotiate_seen = 0;
 
 	CBS_init(&cbs, tlsext_ri_client, sizeof(tlsext_ri_client));
-	if (tlsext_ri_server_parse(ssl, &cbs, &alert)) {
+	if (tlsext_ri_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("parsed invalid client RI\n");
 		failure = 1;
 		goto err;
@@ -1408,14 +1408,14 @@ test_tlsext_ri_server(void)
 		errx(1, "failed to create SSL");
 
 	ssl->version = TLS1_2_VERSION;
-	if (tlsext_ri_server_needs(ssl)) {
+	if (tlsext_ri_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need RI\n");
 		goto err;
 	}
 
 	S3I(ssl)->send_connection_binding = 1;
 
-	if (!tlsext_ri_server_needs(ssl)) {
+	if (!tlsext_ri_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need RI\n");
 		goto err;
 	}
@@ -1430,7 +1430,7 @@ test_tlsext_ri_server(void)
 
 	S3I(ssl)->renegotiate_seen = 0;
 
-	if (!tlsext_ri_server_build(ssl, &cbb)) {
+	if (!tlsext_ri_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server failed to build RI\n");
 		goto err;
 	}
@@ -1454,7 +1454,7 @@ test_tlsext_ri_server(void)
 	}
 
 	CBS_init(&cbs, tlsext_ri_server, sizeof(tlsext_ri_server));
-	if (!tlsext_ri_client_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_ri_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server RI\n");
 		goto err;
 	}
@@ -1480,7 +1480,7 @@ test_tlsext_ri_server(void)
 	S3I(ssl)->renegotiate_seen = 0;
 
 	CBS_init(&cbs, tlsext_ri_server, sizeof(tlsext_ri_server));
-	if (tlsext_ri_client_parse(ssl, &cbs, &alert)) {
+	if (tlsext_ri_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("parsed invalid server RI\n");
 		goto err;
 	}
@@ -1532,7 +1532,7 @@ test_tlsext_sigalgs_client(void)
 
 	ssl->client_version = TLS1_1_VERSION;
 
-	if (tlsext_sigalgs_client_needs(ssl)) {
+	if (tlsext_sigalgs_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		fprintf(stderr, "FAIL: client should not need sigalgs\n");
 		failure = 1;
 		goto done;
@@ -1540,13 +1540,13 @@ test_tlsext_sigalgs_client(void)
 
 	ssl->client_version = TLS1_2_VERSION;
 
-	if (!tlsext_sigalgs_client_needs(ssl)) {
+	if (!tlsext_sigalgs_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		fprintf(stderr, "FAIL: client should need sigalgs\n");
 		failure = 1;
 		goto done;
 	}
 
-	if (!tlsext_sigalgs_client_build(ssl, &cbb)) {
+	if (!tlsext_sigalgs_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		fprintf(stderr, "FAIL: client failed to build sigalgs\n");
 		failure = 1;
 		goto done;
@@ -1573,7 +1573,7 @@ test_tlsext_sigalgs_client(void)
 	}
 
 	CBS_init(&cbs, tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
-	if (!tlsext_sigalgs_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_sigalgs_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		fprintf(stderr, "FAIL: failed to parse client SNI\n");
 		failure = 1;
 		goto done;
@@ -1612,13 +1612,13 @@ test_tlsext_sigalgs_server(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
-	if (tlsext_sigalgs_server_needs(ssl)) {
+	if (tlsext_sigalgs_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		fprintf(stderr, "FAIL: server should not need sigalgs\n");
 		failure = 1;
 		goto done;
 	}
 
-	if (tlsext_sigalgs_server_build(ssl, &cbb)) {
+	if (tlsext_sigalgs_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		fprintf(stderr, "FAIL: server should not build sigalgs\n");
 		failure = 1;
 		goto done;
@@ -1628,7 +1628,7 @@ test_tlsext_sigalgs_server(void)
 		errx(1, "failed to finish CBB");
 
 	CBS_init(&cbs, tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
-	if (tlsext_sigalgs_client_parse(ssl, &cbs, &alert)) {
+	if (tlsext_sigalgs_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		fprintf(stderr, "FAIL: server should not parse sigalgs\n");
 		failure = 1;
 		goto done;
@@ -1680,7 +1680,7 @@ test_tlsext_sni_client(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
-	if (tlsext_sni_client_needs(ssl)) {
+	if (tlsext_sni_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need SNI\n");
 		goto err;
 	}
@@ -1690,12 +1690,12 @@ test_tlsext_sni_client(void)
 		goto err;
 	}
 
-	if (!tlsext_sni_client_needs(ssl)) {
+	if (!tlsext_sni_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need SNI\n");
 		goto err;
 	}
 
-	if (!tlsext_sni_client_build(ssl, &cbb)) {
+	if (!tlsext_sni_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build SNI\n");
 		goto err;
 	}
@@ -1724,7 +1724,7 @@ test_tlsext_sni_client(void)
 	ssl->internal->hit = 0;
 
 	CBS_init(&cbs, tlsext_sni_client, sizeof(tlsext_sni_client));
-	if (!tlsext_sni_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_sni_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client SNI\n");
 		goto err;
 	}
@@ -1753,7 +1753,7 @@ test_tlsext_sni_client(void)
 		errx(1, "failed to strdup tlsext_hostname");
 
 	CBS_init(&cbs, tlsext_sni_client, sizeof(tlsext_sni_client));
-	if (tlsext_sni_server_parse(ssl, &cbs, &alert)) {
+	if (tlsext_sni_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("parsed client with mismatched SNI\n");
 		goto err;
 	}
@@ -1793,7 +1793,7 @@ test_tlsext_sni_server(void)
 	if ((ssl->session = SSL_SESSION_new()) == NULL)
 		errx(1, "failed to create session");
 
-	if (tlsext_sni_server_needs(ssl)) {
+	if (tlsext_sni_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need SNI\n");
 		goto err;
 	}
@@ -1807,12 +1807,12 @@ test_tlsext_sni_server(void)
 	    NULL)
 		errx(1, "failed to strdup tlsext_hostname");
 
-	if (!tlsext_sni_server_needs(ssl)) {
+	if (!tlsext_sni_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need SNI\n");
 		goto err;
 	}
 
-	if (!tlsext_sni_server_build(ssl, &cbb)) {
+	if (!tlsext_sni_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server failed to build SNI\n");
 		goto err;
 	}
@@ -1839,7 +1839,7 @@ test_tlsext_sni_server(void)
 	ssl->session->tlsext_hostname = NULL;
 
 	CBS_init(&cbs, tlsext_sni_server, sizeof(tlsext_sni_server));
-	if (!tlsext_sni_client_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_sni_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server SNI\n");
 		goto err;
 	}
@@ -1897,17 +1897,17 @@ test_tlsext_ocsp_client(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
-	if (tlsext_ocsp_client_needs(ssl)) {
+	if (tlsext_ocsp_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need ocsp\n");
 		goto err;
 	}
 	SSL_set_tlsext_status_type(ssl, TLSEXT_STATUSTYPE_ocsp);
 
-	if (!tlsext_ocsp_client_needs(ssl)) {
+	if (!tlsext_ocsp_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need ocsp\n");
 		goto err;
 	}
-	if (!tlsext_ocsp_client_build(ssl, &cbb)) {
+	if (!tlsext_ocsp_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build SNI\n");
 		goto err;
 	}
@@ -1931,7 +1931,7 @@ test_tlsext_ocsp_client(void)
 	}
 	CBS_init(&cbs, tls_ocsp_client_default,
 	    sizeof(tls_ocsp_client_default));
-	if (!tlsext_ocsp_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_ocsp_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse ocsp client\n");
 		goto err;
 	}
@@ -1970,18 +1970,18 @@ test_tlsext_ocsp_server(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
-	if (tlsext_ocsp_server_needs(ssl)) {
+	if (tlsext_ocsp_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need ocsp\n");
 		goto err;
 	}
 
 	ssl->internal->tlsext_status_expected = 1;
 
-	if (!tlsext_ocsp_server_needs(ssl)) {
+	if (!tlsext_ocsp_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need ocsp\n");
 		goto err;
 	}
-	if (!tlsext_ocsp_server_build(ssl, &cbb)) {
+	if (!tlsext_ocsp_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server failed to build ocsp\n");
 		goto err;
 	}
@@ -2037,7 +2037,7 @@ test_tlsext_sessionticket_client(void)
 		errx(1, "failed to create SSL");
 
 	/* Should need a ticket by default. */
-	if (!tlsext_sessionticket_client_needs(ssl)) {
+	if (!tlsext_sessionticket_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need Sessionticket for default "
 		    "ciphers\n");
 		goto err;
@@ -2048,7 +2048,7 @@ test_tlsext_sessionticket_client(void)
 		FAIL("Cannot disable tickets in the TLS connection\n");
 		return 0;
 	}
-	if (tlsext_sessionticket_client_needs(ssl)) {
+	if (tlsext_sessionticket_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need SessionTicket if it was disabled\n");
 		goto err;
 	}
@@ -2058,13 +2058,13 @@ test_tlsext_sessionticket_client(void)
 		FAIL("Cannot re-enable tickets in the TLS connection\n");
 		return 0;
 	}
-	if (!tlsext_sessionticket_client_needs(ssl)) {
+	if (!tlsext_sessionticket_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need SessionTicket if it was disabled\n");
 		goto err;
 	}
 
 	/* Since we don't have a session, we should build an empty ticket. */
-	if (!tlsext_sessionticket_client_build(ssl, &cbb)) {
+	if (!tlsext_sessionticket_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("Cannot build a ticket\n");
 		goto err;
 	}
@@ -2085,11 +2085,11 @@ test_tlsext_sessionticket_client(void)
 	/* With a new session (but no ticket), we should still have 0 length */
 	if ((ssl->session = SSL_SESSION_new()) == NULL)
 		errx(1, "failed to create session");
-	if (!tlsext_sessionticket_client_needs(ssl)) {
+	if (!tlsext_sessionticket_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("Should still want a session ticket with a new session\n");
 		goto err;
 	}
-	if (!tlsext_sessionticket_client_build(ssl, &cbb)) {
+	if (!tlsext_sessionticket_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("Cannot build a ticket\n");
 		goto err;
 	}
@@ -2119,11 +2119,11 @@ test_tlsext_sessionticket_client(void)
 	memcpy(ssl->session->tlsext_tick, dummy, sizeof(dummy));
 	ssl->session->tlsext_ticklen = sizeof(dummy);
 
-	if (!tlsext_sessionticket_client_needs(ssl)) {
+	if (!tlsext_sessionticket_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("Should still want a session ticket with a new session\n");
 		goto err;
 	}
-	if (!tlsext_sessionticket_client_build(ssl, &cbb)) {
+	if (!tlsext_sessionticket_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("Cannot build a ticket\n");
 		goto err;
 	}
@@ -2159,7 +2159,7 @@ test_tlsext_sessionticket_client(void)
 		goto err;
 	}
 	/* Should not need a ticket in this case */
-	if (tlsext_sessionticket_client_needs(ssl)) {
+	if (tlsext_sessionticket_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("Should not want to use session tickets with a NULL custom\n");
 		goto err;
 	}
@@ -2171,7 +2171,7 @@ test_tlsext_sessionticket_client(void)
 	free(ssl->internal->tlsext_session_ticket);
 	ssl->internal->tlsext_session_ticket = NULL;
 
-	if (!tlsext_sessionticket_client_needs(ssl)) {
+	if (!tlsext_sessionticket_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("Should need a session ticket again when the custom one is removed\n");
 		goto err;
 	}
@@ -2182,11 +2182,11 @@ test_tlsext_sessionticket_client(void)
 		FAIL("Should be able to set a custom ticket\n");
 		goto err;
 	}
-	if (!tlsext_sessionticket_client_needs(ssl)) {
+	if (!tlsext_sessionticket_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("Should need a session ticket again when the custom one is not empty\n");
 		goto err;
 	}
-	if (!tlsext_sessionticket_client_build(ssl, &cbb)) {
+	if (!tlsext_sessionticket_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("Cannot build a ticket with a max length random payload\n");
 		goto err;
 	}
@@ -2243,7 +2243,7 @@ test_tlsext_sessionticket_server(void)
 	 * By default, should not need a session ticket since the ticket
 	 * is not yet expected.
 	 */
-	if (tlsext_sessionticket_server_needs(ssl)) {
+	if (tlsext_sessionticket_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need SessionTicket by default\n");
 		goto err;
 	}
@@ -2253,7 +2253,7 @@ test_tlsext_sessionticket_server(void)
 		FAIL("Cannot disable tickets in the TLS connection\n");
 		return 0;
 	}
-	if (tlsext_sessionticket_server_needs(ssl)) {
+	if (tlsext_sessionticket_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need SessionTicket if it was disabled\n");
 		goto err;
 	}
@@ -2263,20 +2263,20 @@ test_tlsext_sessionticket_server(void)
 		FAIL("Cannot re-enable tickets in the TLS connection\n");
 		return 0;
 	}
-	if (tlsext_sessionticket_server_needs(ssl)) {
+	if (tlsext_sessionticket_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need SessionTicket yet\n");
 		goto err;
 	}
 
 	/* Set expected to require it. */
 	ssl->internal->tlsext_ticket_expected = 1;
-	if (!tlsext_sessionticket_server_needs(ssl)) {
+	if (!tlsext_sessionticket_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should now be required for SessionTicket\n");
 		goto err;
 	}
 
 	/* server hello's session ticket should always be 0 length payload. */
-	if (!tlsext_sessionticket_server_build(ssl, &cbb)) {
+	if (!tlsext_sessionticket_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("Cannot build a ticket with a max length random payload\n");
 		goto err;
 	}
@@ -2371,7 +2371,7 @@ test_tlsext_srtp_client(void)
 		errx(1, "failed to create SSL");
 
 	/* By default, we don't need this */
-	if (tlsext_srtp_client_needs(ssl)) {
+	if (tlsext_srtp_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need SRTP by default\n");
 		goto err;
 	}
@@ -2380,14 +2380,14 @@ test_tlsext_srtp_client(void)
 		FAIL("should be able to set a single SRTP\n");
 		goto err;
 	}
-	if (!tlsext_srtp_client_needs(ssl)) {
+	if (!tlsext_srtp_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need SRTP\n");
 		goto err;
 	}
 
 	/* Make sure we can build the client with a single profile. */
 
-	if (!tlsext_srtp_client_build(ssl, &cbb)) {
+	if (!tlsext_srtp_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build SRTP\n");
 		goto err;
 	}
@@ -2422,7 +2422,7 @@ test_tlsext_srtp_client(void)
 	}
 
 	CBS_init(&cbs, tlsext_srtp_single, sizeof(tlsext_srtp_single));
-	if (!tlsext_srtp_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_srtp_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
@@ -2440,7 +2440,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 
-	if (!tlsext_srtp_server_needs(ssl)) {
+	if (!tlsext_srtp_server_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("should send server extension when profile selected\n");
 		goto err;
 	}
@@ -2451,12 +2451,12 @@ test_tlsext_srtp_client(void)
 		FAIL("should be able to set SRTP to multiple profiles\n");
 		goto err;
 	}
-	if (!tlsext_srtp_client_needs(ssl)) {
+	if (!tlsext_srtp_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need SRTP by now\n");
 		goto err;
 	}
 
-	if (!tlsext_srtp_client_build(ssl, &cbb)) {
+	if (!tlsext_srtp_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build SRTP\n");
 		goto err;
 	}
@@ -2489,7 +2489,7 @@ test_tlsext_srtp_client(void)
 
 	CBS_init(&cbs, tlsext_srtp_multiple,
 	    sizeof(tlsext_srtp_multiple));
-	if (!tlsext_srtp_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_srtp_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
@@ -2507,7 +2507,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 
-	if (!tlsext_srtp_server_needs(ssl)) {
+	if (!tlsext_srtp_server_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("should send server extension when profile selected\n");
 		goto err;
 	}
@@ -2520,7 +2520,7 @@ test_tlsext_srtp_client(void)
 
 	CBS_init(&cbs, tlsext_srtp_multiple_one_valid,
 	    sizeof(tlsext_srtp_multiple_one_valid));
-	if (!tlsext_srtp_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_srtp_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
@@ -2538,7 +2538,7 @@ test_tlsext_srtp_client(void)
 		goto err;
 	}
 
-	if (!tlsext_srtp_server_needs(ssl)) {
+	if (!tlsext_srtp_server_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("should send server extension when profile selected\n");
 		goto err;
 	}
@@ -2549,7 +2549,7 @@ test_tlsext_srtp_client(void)
 
 	CBS_init(&cbs, tlsext_srtp_multiple_invalid,
 	    sizeof(tlsext_srtp_multiple_invalid));
-	if (!tlsext_srtp_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_srtp_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("should be able to fall back to negotiated\n");
 		goto err;
 	}
@@ -2563,7 +2563,7 @@ test_tlsext_srtp_client(void)
 		FAIL("should not have selected a profile when none found\n");
 		goto err;
 	}
-	if (tlsext_srtp_server_needs(ssl)) {
+	if (tlsext_srtp_server_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("should not send server tlsext when no profile found\n");
 		goto err;
 	}
@@ -2602,7 +2602,7 @@ test_tlsext_srtp_server(void)
 		errx(1, "failed to create SSL");
 
 	/* By default, we don't need this */
-	if (tlsext_srtp_server_needs(ssl)) {
+	if (tlsext_srtp_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need SRTP by default\n");
 		goto err;
 	}
@@ -2613,14 +2613,14 @@ test_tlsext_srtp_server(void)
 		goto err;
 	}
 	ssl->internal->srtp_profile = prof;
-	if (!tlsext_srtp_server_needs(ssl)) {
+	if (!tlsext_srtp_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need SRTP by now\n");
 		goto err;
 	}
 
 	/* Make sure we can build the server with a single profile. */
 
-	if (!tlsext_srtp_server_build(ssl, &cbb)) {
+	if (!tlsext_srtp_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server failed to build SRTP\n");
 		goto err;
 	}
@@ -2662,7 +2662,7 @@ test_tlsext_srtp_server(void)
 	}
 
 	CBS_init(&cbs, tlsext_srtp_single, sizeof(tlsext_srtp_single));
-	if (!tlsext_srtp_client_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_srtp_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
@@ -2685,7 +2685,7 @@ test_tlsext_srtp_server(void)
 
 	CBS_init(&cbs, tlsext_srtp_multiple,
 	    sizeof(tlsext_srtp_multiple));
-	if (tlsext_srtp_client_parse(ssl, &cbs, &alert)) {
+	if (tlsext_srtp_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("should not find multiple entries from the server\n");
 		goto err;
 	}
@@ -2695,7 +2695,7 @@ test_tlsext_srtp_server(void)
 
 	CBS_init(&cbs, tlsext_srtp_single_invalid,
 	    sizeof(tlsext_srtp_single_invalid));
-	if (tlsext_srtp_client_parse(ssl, &cbs, &alert)) {
+	if (tlsext_srtp_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("should not be able to parse this\n");
 		goto err;
 	}
@@ -2948,7 +2948,7 @@ test_tlsext_versions_client(void)
 
 	S3I(ssl)->hs_tls13.max_version = 0;
 
-	if (tlsext_versions_client_needs(ssl)) {
+	if (tlsext_versions_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need versions\n");
 		failure = 1;
 		goto done;
@@ -2956,7 +2956,7 @@ test_tlsext_versions_client(void)
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_2_VERSION;
 
-	if (tlsext_versions_client_needs(ssl)) {
+	if (tlsext_versions_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need versions\n");
 		failure = 1;
 		goto done;
@@ -2964,7 +2964,7 @@ test_tlsext_versions_client(void)
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_3_VERSION;
 
-	if (!tlsext_versions_client_needs(ssl)) {
+	if (!tlsext_versions_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need versions\n");
 		failure = 1;
 		goto done;
@@ -2972,7 +2972,7 @@ test_tlsext_versions_client(void)
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_3_VERSION;
 	S3I(ssl)->hs_tls13.min_version = 0;
-	if (tlsext_versions_client_build(ssl, &cbb)) {
+	if (tlsext_versions_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client should not have built versions\n");
 		failure = 1;
 		goto done;
@@ -2980,7 +2980,7 @@ test_tlsext_versions_client(void)
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_3_VERSION;
 	S3I(ssl)->hs_tls13.min_version = TLS1_VERSION;
-	if (!tlsext_versions_client_build(ssl, &cbb)) {
+	if (!tlsext_versions_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client should have built versions\n");
 		failure = 1;
 		goto done;
@@ -3000,7 +3000,7 @@ test_tlsext_versions_client(void)
 	}
 
 	CBS_init(&cbs, data, dlen);
-	if (!tlsext_versions_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_versions_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client versions\n");
 		failure = 1;
 		goto done;
@@ -3041,7 +3041,7 @@ test_tlsext_versions_server(void)
 
 	ssl->version = TLS1_2_VERSION;
 
-	if (tlsext_versions_server_needs(ssl)) {
+	if (tlsext_versions_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need versions\n");
 		failure = 1;
 		goto done;
@@ -3049,13 +3049,13 @@ test_tlsext_versions_server(void)
 
 	ssl->version = TLS1_3_VERSION;
 
-	if (!tlsext_versions_server_needs(ssl)) {
+	if (!tlsext_versions_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need versions\n");
 		failure = 1;
 		goto done;
 	}
 
-	if (!tlsext_versions_server_build(ssl, &cbb)) {
+	if (!tlsext_versions_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server should have built versions\n");
 		failure = 1;
 		goto done;
@@ -3075,7 +3075,7 @@ test_tlsext_versions_server(void)
 	}
 
 	CBS_init(&cbs, data, dlen);
-	if (!tlsext_versions_client_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_versions_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse client versions\n");
 		failure = 1;
 		goto done;
@@ -3137,28 +3137,28 @@ test_tlsext_keyshare_client(void)
 
 	S3I(ssl)->hs_tls13.max_version = 0;
 
-	if (tlsext_keyshare_client_needs(ssl)) {
+	if (tlsext_keyshare_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need keyshare\n");
 		failure = 1;
 		goto done;
 	}
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_2_VERSION;
-	if (tlsext_keyshare_client_needs(ssl)) {
+	if (tlsext_keyshare_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need keyshare\n");
 		failure = 1;
 		goto done;
 	}
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_3_VERSION;
-	if (!tlsext_keyshare_client_needs(ssl)) {
+	if (!tlsext_keyshare_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need keyshare\n");
 		failure = 1;
 		goto done;
 	}
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_3_VERSION;
-	if (!tlsext_keyshare_client_build(ssl, &cbb)) {
+	if (!tlsext_keyshare_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client should have built keyshare\n");
 		failure = 1;
 		goto done;
@@ -3180,7 +3180,7 @@ test_tlsext_keyshare_client(void)
 	(ssl)->version = TLS1_3_VERSION;
 	CBS_init(&cbs, data, dlen);
 
-	if (!tlsext_keyshare_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_keyshare_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client keyshare\n");
 		failure = 1;
 		goto done;
@@ -3228,21 +3228,21 @@ test_tlsext_keyshare_server(void)
 		errx(1, "failed to create SSL");
 
 	(ssl)->version = 0;
-	if (tlsext_keyshare_server_needs(ssl)) {
+	if (tlsext_keyshare_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need keyshare\n");
 		failure = 1;
 		goto done;
 	}
 
 	(ssl)->version = TLS1_2_VERSION;
-	if (tlsext_keyshare_server_needs(ssl)) {
+	if (tlsext_keyshare_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need keyshare\n");
 		failure = 1;
 		goto done;
 	}
 
 	ssl->version = TLS1_3_VERSION;
-	if (tlsext_keyshare_server_needs(ssl)) {
+	if (tlsext_keyshare_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("client should not need keyshare\n");
 		failure = 1;
 		goto done;
@@ -3255,13 +3255,13 @@ test_tlsext_keyshare_server(void)
 	}
 	S3I(ssl)->hs.extensions_seen |= (1 << idx);
 
-	if (!tlsext_keyshare_server_needs(ssl)) {
+	if (!tlsext_keyshare_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need keyshare\n");
 		failure = 1;
 		goto done;
 	}
 
-	if (tlsext_keyshare_server_build(ssl, &cbb)) {
+	if (tlsext_keyshare_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server should not have built a keyshare response\n");
 		failure = 1;
 		goto done;
@@ -3281,7 +3281,7 @@ test_tlsext_keyshare_server(void)
 		goto done;
 	}
 
-	if (!tlsext_keyshare_server_build(ssl, &cbb)) {
+	if (!tlsext_keyshare_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server should be able to build a keyshare response\n");
 		failure = 1;
 		goto done;
@@ -3308,7 +3308,7 @@ test_tlsext_keyshare_server(void)
 
 	CBS_init(&cbs, data, dlen);
 
-	if (!tlsext_keyshare_client_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_keyshare_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server keyshare\n");
 		failure = 1;
 		goto done;
@@ -3358,14 +3358,14 @@ test_tlsext_cookie_client(void)
 		errx(1, "failed to create SSL");
 
 	S3I(ssl)->hs_tls13.max_version = 0;
-	if (tlsext_cookie_client_needs(ssl)) {
+	if (tlsext_cookie_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need cookie\n");
 		failure = 1;
 		goto done;
 	}
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_2_VERSION;
-	if (tlsext_cookie_client_needs(ssl)) {
+	if (tlsext_cookie_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need cookie\n");
 		failure = 1;
 		goto done;
@@ -3373,7 +3373,7 @@ test_tlsext_cookie_client(void)
 
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_3_VERSION;
-	if (tlsext_cookie_client_needs(ssl)) {
+	if (tlsext_cookie_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need cookie\n");
 		failure = 1;
 		goto done;
@@ -3383,13 +3383,13 @@ test_tlsext_cookie_client(void)
 	S3I(ssl)->hs_tls13.cookie = strdup(cookie);
 	S3I(ssl)->hs_tls13.cookie_len = strlen(cookie);
 
-	if (!tlsext_cookie_client_needs(ssl)) {
+	if (!tlsext_cookie_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need cookie\n");
 		failure = 1;
 		goto done;
 	}
 
-	if (!tlsext_cookie_client_build(ssl, &cbb)) {
+	if (!tlsext_cookie_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client should have built a cookie response\n");
 		failure = 1;
 		goto done;
@@ -3412,7 +3412,7 @@ test_tlsext_cookie_client(void)
 	CBS_init(&cbs, data, dlen);
 
 	/* Checks cookie against what's in the hs_tls13 */
-	if (!tlsext_cookie_server_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_cookie_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client cookie\n");
 		failure = 1;
 		goto done;
@@ -3453,14 +3453,14 @@ test_tlsext_cookie_server(void)
 		errx(1, "failed to create SSL");
 
 	S3I(ssl)->hs_tls13.max_version = 0;
-	if (tlsext_cookie_server_needs(ssl)) {
+	if (tlsext_cookie_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need cookie\n");
 		failure = 1;
 		goto done;
 	}
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_2_VERSION;
-	if (tlsext_cookie_server_needs(ssl)) {
+	if (tlsext_cookie_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need cookie\n");
 		failure = 1;
 		goto done;
@@ -3468,7 +3468,7 @@ test_tlsext_cookie_server(void)
 
 
 	S3I(ssl)->hs_tls13.max_version = TLS1_3_VERSION;
-	if (tlsext_cookie_server_needs(ssl)) {
+	if (tlsext_cookie_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need cookie\n");
 		failure = 1;
 		goto done;
@@ -3478,13 +3478,13 @@ test_tlsext_cookie_server(void)
 	S3I(ssl)->hs_tls13.cookie = strdup(cookie);
 	S3I(ssl)->hs_tls13.cookie_len = strlen(cookie);
 
-	if (!tlsext_cookie_server_needs(ssl)) {
+	if (!tlsext_cookie_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need cookie\n");
 		failure = 1;
 		goto done;
 	}
 
-	if (!tlsext_cookie_server_build(ssl, &cbb)) {
+	if (!tlsext_cookie_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server have built a cookie response\n");
 		failure = 1;
 		goto done;
@@ -3506,7 +3506,7 @@ test_tlsext_cookie_server(void)
 
 	CBS_init(&cbs, data, dlen);
 
-	if (tlsext_cookie_client_parse(ssl, &cbs, &alert)) {
+	if (tlsext_cookie_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("client should not have parsed server cookie\n");
 		failure = 1;
 		goto done;
@@ -3516,7 +3516,7 @@ test_tlsext_cookie_server(void)
 	S3I(ssl)->hs_tls13.cookie = NULL;
 	S3I(ssl)->hs_tls13.cookie_len = 0;
 
-	if (!tlsext_cookie_client_parse(ssl, &cbs, &alert)) {
+	if (!tlsext_cookie_client_parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server cookie\n");
 		failure = 1;
 		goto done;
