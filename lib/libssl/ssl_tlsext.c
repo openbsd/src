@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.75 2020/06/06 01:40:09 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.76 2020/07/03 04:12:51 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2009,7 +2009,7 @@ tlsext_funcs(struct tls_extension *tlsext, int is_server)
 }
 
 static int
-tlsext_build(SSL *s, CBB *cbb, int is_server, uint16_t msg_type)
+tlsext_build(SSL *s, int is_server, uint16_t msg_type, CBB *cbb)
 {
 	struct tls_extension_funcs *ext;
 	struct tls_extension *tlsext;
@@ -2087,7 +2087,7 @@ tlsext_clienthello_hash_extension(SSL *s, uint16_t type, CBS *cbs)
 }
 
 static int
-tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server, uint16_t msg_type)
+tlsext_parse(SSL *s, int is_server, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	struct tls_extension_funcs *ext;
 	struct tls_extension *tlsext;
@@ -2175,19 +2175,19 @@ tlsext_server_reset_state(SSL *s)
 }
 
 int
-tlsext_server_build(SSL *s, CBB *cbb, uint16_t msg_type)
+tlsext_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
-	return tlsext_build(s, cbb, 1, msg_type);
+	return tlsext_build(s, 1, msg_type, cbb);
 }
 
 int
-tlsext_server_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg_type)
+tlsext_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	/* XXX - this should be done by the caller... */
 	if (msg_type == SSL_TLSEXT_MSG_CH)
 		tlsext_server_reset_state(s);
 
-	return tlsext_parse(s, cbs, alert, 1, msg_type);
+	return tlsext_parse(s, 1, msg_type, cbs, alert);
 }
 
 static void
@@ -2199,17 +2199,17 @@ tlsext_client_reset_state(SSL *s)
 }
 
 int
-tlsext_client_build(SSL *s, CBB *cbb, uint16_t msg_type)
+tlsext_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
-	return tlsext_build(s, cbb, 0, msg_type);
+	return tlsext_build(s, 0, msg_type, cbb);
 }
 
 int
-tlsext_client_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg_type)
+tlsext_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	/* XXX - this should be done by the caller... */
 	if (msg_type == SSL_TLSEXT_MSG_SH)
 		tlsext_client_reset_state(s);
 
-	return tlsext_parse(s, cbs, alert, 0, msg_type);
+	return tlsext_parse(s, 0, msg_type, cbs, alert);
 }

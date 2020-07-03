@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.60 2020/06/25 07:35:05 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.61 2020/07/03 04:12:51 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -191,7 +191,7 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	}
 
-	if (!tlsext_server_parse(s, cbs, &alert_desc, SSL_TLSEXT_MSG_CH)) {
+	if (!tlsext_server_parse(s, SSL_TLSEXT_MSG_CH, cbs, &alert_desc)) {
 		ctx->alert = alert_desc;
 		goto err;
 	}
@@ -330,7 +330,7 @@ tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb, int hrr)
 		goto err;
 	if (!CBB_add_u8(cbb, 0))
 		goto err;
-	if (!tlsext_server_build(s, cbb, tlsext_msg_type))
+	if (!tlsext_server_build(s, tlsext_msg_type, cbb))
 		goto err;
 
 	if (!CBB_flush(cbb))
@@ -511,7 +511,7 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 int
 tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	if (!tlsext_server_build(ctx->ssl, cbb, SSL_TLSEXT_MSG_EE))
+	if (!tlsext_server_build(ctx->ssl, SSL_TLSEXT_MSG_EE, cbb))
 		goto err;
 
 	return 1;
@@ -526,7 +526,7 @@ tls13_server_certificate_request_send(struct tls13_ctx *ctx, CBB *cbb)
 
 	if (!CBB_add_u8_length_prefixed(cbb, &certificate_request_context))
 		goto err;
-	if (!tlsext_server_build(ctx->ssl, cbb, SSL_TLSEXT_MSG_CR))
+	if (!tlsext_server_build(ctx->ssl, SSL_TLSEXT_MSG_CR, cbb))
 		goto err;
 
 	if (!CBB_flush(cbb))

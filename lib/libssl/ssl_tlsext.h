@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.23 2020/05/23 17:13:24 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.24 2020/07/03 04:12:51 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -118,11 +118,11 @@ int tlsext_srtp_server_build(SSL *s, CBB *cbb);
 int tlsext_srtp_server_parse(SSL *s, CBS *cbs, int *alert);
 #endif
 
-int tlsext_client_build(SSL *s, CBB *cbb, uint16_t msg_type);
-int tlsext_client_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg_type);
+int tlsext_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
+int tlsext_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
 
-int tlsext_server_build(SSL *s, CBB *cbb, uint16_t msg_type);
-int tlsext_server_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg_type);
+int tlsext_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
+int tlsext_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
 
 struct tls_extension *tls_extension_find(uint16_t, size_t *);
 int tlsext_extension_seen(SSL *s, uint16_t);
