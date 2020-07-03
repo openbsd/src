@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.77 2020/07/03 04:51:59 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.78 2020/07/03 07:17:26 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2009,7 +2009,7 @@ tlsext_funcs(struct tls_extension *tlsext, int is_server)
 	if (is_server)
 		return &tlsext->server;
 
-	return &tlsext->client;	
+	return &tlsext->client;
 }
 
 static int
