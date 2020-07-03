@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.62 2020/05/26 08:47:50 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.63 2020/07/03 07:00:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -205,7 +205,7 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (c->session != NULL && (c->flags & CLIENT_ACTIVEPANE))
+	if (c != NULL && c->session != NULL && (c->flags & CLIENT_ACTIVEPANE))
 		activewp = server_client_get_pane(c);
 	else
 		activewp = w->active;
@@ -214,7 +214,7 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (window_push_zoom(w, args_has(args, 'Z')))
 		server_redraw_window(w);
 	window_redraw_active_switch(w, wp);
-	if (c->session != NULL && (c->flags & CLIENT_ACTIVEPANE))
+	if (c != NULL && c->session != NULL && (c->flags & CLIENT_ACTIVEPANE))
 		server_client_set_pane(c, wp);
 	else if (window_set_active_pane(w, wp, 1))
 		cmd_find_from_winlink_pane(current, wl, wp, 0);
