@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.17 2020/06/22 12:27:54 pirofti Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.18 2020/07/03 17:54:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -100,9 +100,9 @@ get_tsc_and_timecount(struct timecounter *tc, uint64_t *tsc, uint64_t *count)
 	int i;
 
 	for (i = 0; i < RECALIBRATE_MAX_RETRIES; i++) {
-		tsc1 = rdtsc();
+		tsc1 = rdtsc_lfence();
 		n = (tc->tc_get_timecount(tc) & tc->tc_counter_mask);
-		tsc2 = rdtsc();
+		tsc2 = rdtsc_lfence();
 
 		if ((tsc2 - tsc1) < RECALIBRATE_SMI_THRESHOLD) {
 			*count = n;
@@ -217,7 +217,7 @@ void
 tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 {
 #ifdef TSC_DEBUG
-	printf("%s: TSC skew=%lld observed drift=%lld\n", __func__,
+	printf("%s: TSC skew=%lld observed drift=%lld\n", ci->ci_dev->dv_xname,
 	    (long long)ci->ci_tsc_skew, (long long)tsc_drift_observed);
 #endif
 
@@ -276,12 +276,12 @@ tsc_read_bp(struct cpu_info *ci, uint64_t *bptscp, uint64_t *aptscp)
 
 	/* Flag it and read our TSC. */
 	atomic_setbits_int(&ci->ci_flags, CPUF_SYNCTSC);
-	bptsc = (rdtsc() >> 1);
+	bptsc = (rdtsc_lfence() >> 1);
 
 	/* Wait for remote to complete, and read ours again. */
 	while ((ci->ci_flags & CPUF_SYNCTSC) != 0)
 		membar_consumer();
-	bptsc += (rdtsc() >> 1);
+	bptsc += (rdtsc_lfence() >> 1);
 
 	/* Wait for the results to come in. */
 	while (tsc_sync_cpu == ci)
@@ -317,11 +317,11 @@ tsc_post_ap(struct cpu_info *ci)
 	/* Wait for go-ahead from primary. */
 	while ((ci->ci_flags & CPUF_SYNCTSC) == 0)
 		membar_consumer();
-	tsc = (rdtsc() >> 1);
+	tsc = (rdtsc_lfence() >> 1);
 
 	/* Instruct primary to read its counter. */
 	atomic_clearbits_int(&ci->ci_flags, CPUF_SYNCTSC);
-	tsc += (rdtsc() >> 1);
+	tsc += (rdtsc_lfence() >> 1);
 
 	/* Post result.  Ensure the whole value goes out atomically. */
 	(void)atomic_swap_64(&tsc_sync_val, tsc);
