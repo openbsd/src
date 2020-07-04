@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.50 2020/05/16 16:16:07 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.51 2020/07/04 14:24:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1054,7 +1054,7 @@ window_tree_kill_each(__unused void *modedata, void *itemdata,
 		break;
 	case WINDOW_TREE_WINDOW:
 		if (wl != NULL)
-			server_kill_window(wl->window);
+			server_kill_window(wl->window, 1);
 		break;
 	case WINDOW_TREE_PANE:
 		if (wp != NULL)
