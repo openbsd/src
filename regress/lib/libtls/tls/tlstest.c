@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.11 2020/05/13 17:57:27 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.12 2020/07/04 09:07:02 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -437,6 +437,8 @@ do_tls_ordering_tests(void)
 		failure = 1;
 		goto done;
 	}
+
+	circular_init();
 
 	if (tls_accept_cbs(server, &server_cctx, server_read, server_write,
 	    NULL) == -1)
