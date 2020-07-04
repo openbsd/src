@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.92 2020/03/18 22:38:10 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.93 2020/07/04 10:39:25 mglocker Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -304,7 +304,7 @@ void	pms_proc_elantech_v3(struct pms_softc *);
 void	pms_proc_elantech_v4(struct pms_softc *);
 
 int	synaptics_knock(struct pms_softc *);
-int	synaptics_set_mode(struct pms_softc *, int);
+int	synaptics_set_mode(struct pms_softc *, int, int);
 int	synaptics_query(struct pms_softc *, int, int *);
 int	synaptics_get_hwinfo(struct pms_softc *);
 void	synaptics_sec_proc(struct pms_softc *);
@@ -970,12 +970,12 @@ pmsinput(void *vsc, int data)
 }
 
 int
-synaptics_set_mode(struct pms_softc *sc, int mode)
+synaptics_set_mode(struct pms_softc *sc, int mode, int rate)
 {
 	struct synaptics_softc *syn = sc->synaptics;
 
 	if (pms_spec_cmd(sc, mode) ||
-	    pms_set_rate(sc, SYNAPTICS_CMD_SET_MODE))
+	    pms_set_rate(sc, rate == 0 ? SYNAPTICS_CMD_SET_MODE : rate))
 		return (-1);
 
 	/*
@@ -984,7 +984,8 @@ synaptics_set_mode(struct pms_softc *sc, int mode)
 	 */
 	delay(10000);
 
-	syn->mode = mode;
+	if (rate == 0)
+		syn->mode = mode;
 
 	return (0);
 }
@@ -1208,12 +1209,12 @@ pms_enable_synaptics(struct pms_softc *sc)
 		mode |= SYNAPTICS_W_MODE;
 	else if (SYNAPTICS_ID_MAJOR(syn->identify) >= 4)
 		mode |= SYNAPTICS_DISABLE_GESTURE;
-	if (synaptics_set_mode(sc, mode))
+	if (synaptics_set_mode(sc, mode, 0))
 		goto err;
 
 	if (SYNAPTICS_SUPPORTS_AGM(syn->ext_capabilities) &&
-	    (pms_spec_cmd(sc, SYNAPTICS_QUE_MODEL) ||
-	     pms_set_rate(sc, SYNAPTICS_CMD_SET_ADV_GESTURE_MODE)))
+	    synaptics_set_mode(sc, SYNAPTICS_QUE_MODEL,
+	        SYNAPTICS_CMD_SET_ADV_GESTURE_MODE))
 		goto err;
 
 	return (1);
@@ -1386,7 +1387,7 @@ pms_disable_synaptics(struct pms_softc *sc)
 
 	if (syn->capabilities & SYNAPTICS_CAP_SLEEP)
 		synaptics_set_mode(sc, SYNAPTICS_SLEEP_MODE |
-		    SYNAPTICS_DISABLE_GESTURE);
+		    SYNAPTICS_DISABLE_GESTURE, 0);
 }
 
 int
