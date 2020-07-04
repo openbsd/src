@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.49 2020/06/27 14:29:45 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.50 2020/07/04 18:50:55 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -281,6 +281,9 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 
 	wds_inquire_setup_information(sc);
 
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
+	    IPL_BIO, wdsintr, sc, sc->sc_dev.dv_xname);
+
 	/*
 	 * fill in the prototype scsi_link.
 	 */
@@ -292,9 +295,6 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 	/* It gives Vendor Error 26 whenever I try it.     */
 	sc->sc_link.openings = 1;
 	sc->sc_link.pool = &sc->sc_iopool;
-
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
-	    IPL_BIO, wdsintr, sc, sc->sc_dev.dv_xname);
 
 	saa.saa_sc_link = &sc->sc_link;
 
