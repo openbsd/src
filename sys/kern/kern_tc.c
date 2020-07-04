@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.60 2020/07/02 23:30:38 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.61 2020/07/04 08:06:07 anton Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -69,24 +69,24 @@ static struct timecounter dummy_timecounter = {
 /*
  * Locks used to protect struct members, global variables in this file:
  *	I	immutable after initialization
- *	t	tc_lock
- *	w	windup_mtx
+ *	T	tc_lock
+ *	W	windup_mtx
  */
 
 struct timehands {
 	/* These fields must be initialized by the driver. */
-	struct timecounter	*th_counter;		/* [w] */
-	int64_t			th_adjtimedelta;	/* [tw] */
-	int64_t			th_adjustment;		/* [w] */
-	u_int64_t		th_scale;		/* [w] */
-	u_int	 		th_offset_count;	/* [w] */
-	struct bintime		th_boottime;		/* [tw] */
-	struct bintime		th_offset;		/* [w] */
-	struct bintime		th_naptime;		/* [w] */
-	struct timeval		th_microtime;		/* [w] */
-	struct timespec		th_nanotime;		/* [w] */
+	struct timecounter	*th_counter;		/* [W] */
+	int64_t			th_adjtimedelta;	/* [T,W] */
+	int64_t			th_adjustment;		/* [W] */
+	u_int64_t		th_scale;		/* [W] */
+	u_int	 		th_offset_count;	/* [W] */
+	struct bintime		th_boottime;		/* [T,W] */
+	struct bintime		th_offset;		/* [W] */
+	struct bintime		th_naptime;		/* [W] */
+	struct timeval		th_microtime;		/* [W] */
+	struct timespec		th_nanotime;		/* [W] */
 	/* Fields not to be copied in tc_windup start with th_generation. */
-	volatile u_int		th_generation;		/* [w] */
+	volatile u_int		th_generation;		/* [W] */
 	struct timehands	*th_next;		/* [I] */
 };
 
@@ -109,8 +109,8 @@ struct rwlock tc_lock = RWLOCK_INITIALIZER("tc_lock");
  */
 struct mutex windup_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
 
-static struct timehands *volatile timehands = &th0;		/* [w] */
-struct timecounter *timecounter = &dummy_timecounter;		/* [t] */
+static struct timehands *volatile timehands = &th0;		/* [W] */
+struct timecounter *timecounter = &dummy_timecounter;		/* [T] */
 static SLIST_HEAD(, timecounter) tc_list = SLIST_HEAD_INITIALIZER(tc_list);
 
 /*

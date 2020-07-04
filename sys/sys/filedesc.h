@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.44 2020/01/30 15:33:04 visa Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.45 2020/07/04 08:06:08 anton Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -64,15 +64,15 @@ struct kqueue;
  *	a	atomic operations
  *	f	fd_lock
  *	f/w	fd_lock when writing
- *	k	kernel lock
+ *	K	kernel lock
  *	m	fd_fplock
  */
 struct filedesc {
 	struct	file **fd_ofiles;	/* [f/w,m] file structures for
 					 *     open files */
 	char	*fd_ofileflags;		/* [f] per-process open file flags */
-	struct	vnode *fd_cdir;		/* [k] current directory */
-	struct	vnode *fd_rdir;		/* [k] root directory */
+	struct	vnode *fd_cdir;		/* [K] current directory */
+	struct	vnode *fd_rdir;		/* [K] root directory */
 	int	fd_nfiles;		/* [f] number of open files allocated */
 	int	fd_openfd;		/* [f] number of files currently open */
 	u_int	*fd_himap;		/* [f] each bit points to 32 fds */
@@ -80,7 +80,7 @@ struct filedesc {
 	int	fd_lastfile;		/* [f] high-water mark of fd_ofiles */
 	int	fd_freefile;		/* [f] approx. next free file */
 	u_short	fd_cmask;		/* [f/w] mask for file creation */
-	u_short	fd_refcnt;		/* [k] reference count */
+	u_short	fd_refcnt;		/* [K] reference count */
 	struct rwlock fd_lock;		/* lock for the file descs */
 	struct mutex fd_fplock;		/* lock for reading fd_ofiles without
 					 * fd_lock */

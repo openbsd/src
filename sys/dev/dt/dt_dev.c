@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.7 2020/06/27 07:22:09 bket Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.8 2020/07/04 08:06:07 anton Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -74,19 +74,19 @@
  *
  *  Locks used to protect struct members in this file:
  *	m	per-softc mutex
- *	k	kernel lock
+ *	K	kernel lock
  */
 struct dt_softc {
-	SLIST_ENTRY(dt_softc)	 ds_next;	/* [k] descriptor list */
+	SLIST_ENTRY(dt_softc)	 ds_next;	/* [K] descriptor list */
 	int			 ds_unit;	/* [I] D_CLONE unique unit */
 	pid_t			 ds_pid;	/* [I] PID of tracing program */
 
 	struct mutex		 ds_mtx;
 
-	struct dt_pcb_list	 ds_pcbs;	/* [k] list of enabled PCBs */
-	struct dt_evt		*ds_bufqueue;	/* [k] copy evts to userland */
-	size_t			 ds_bufqlen;	/* [k] length of the queue */
-	int			 ds_recording;	/* [k] currently recording? */
+	struct dt_pcb_list	 ds_pcbs;	/* [K] list of enabled PCBs */
+	struct dt_evt		*ds_bufqueue;	/* [K] copy evts to userland */
+	size_t			 ds_bufqlen;	/* [K] length of the queue */
+	int			 ds_recording;	/* [K] currently recording? */
 	int			 ds_evtcnt;	/* [m] # of readable evts */
 
 	/* Counters */
@@ -94,7 +94,7 @@ struct dt_softc {
 	uint64_t		 ds_dropevt;	/* [m] # of events dropped */
 };
 
-SLIST_HEAD(, dt_softc) dtdev_list;	/* [k] list of open /dev/dt nodes */
+SLIST_HEAD(, dt_softc) dtdev_list;	/* [K] list of open /dev/dt nodes */
 
 /*
  * Probes are created during dt_attach() and never modified/freed during
@@ -104,7 +104,7 @@ unsigned int			dt_nprobes;	/* [I] # of probes available */
 SIMPLEQ_HEAD(, dt_probe)	dt_probe_list;	/* [I] list of probes */
 
 struct rwlock			dt_lock = RWLOCK_INITIALIZER("dtlk");
-volatile uint32_t		dt_tracing = 0;	/* [k] # of processes tracing */
+volatile uint32_t		dt_tracing = 0;	/* [K] # of processes tracing */
 
 void	dtattach(struct device *, struct device *, void *);
 int	dtopen(dev_t, int, int, struct proc *);

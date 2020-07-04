@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetc.h,v 1.10 2019/10/26 21:16:38 cheloha Exp $ */
+/*	$OpenBSD: timetc.h,v 1.11 2020/07/04 08:06:08 anton Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -48,8 +48,8 @@ typedef void timecounter_pps_t(struct timecounter *);
 /*
  * Locks used to protect struct members in this file:
  *	I	immutable after initialization
- *	t	tc_lock
- *	w	windup_mtx
+ *	T	tc_lock
+ *	W	windup_mtx
  */
 
 struct timecounter {
@@ -82,7 +82,7 @@ struct timecounter {
 		/* Pointer to the timecounter's private parts. */
 	SLIST_ENTRY(timecounter) tc_next;		/* [I] */
 		/* Pointer to the next timecounter. */
-	int64_t			tc_freq_adj;		/* [tw] */
+	int64_t			tc_freq_adj;		/* [T,W] */
 		/* Current frequency adjustment. */
 	u_int64_t		tc_precision;		/* [I] */
 		/* Precision of the counter.  Computed in tc_init(). */
