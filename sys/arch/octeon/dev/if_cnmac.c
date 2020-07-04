@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.75 2018/01/07 05:30:03 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.76 2020/07/04 09:00:09 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1046,7 +1046,6 @@ cnmac_reset(struct cnmac_softc *sc)
 	cn30xxgmx_reset_speed(sc->sc_gmx_port);
 	cn30xxgmx_reset_flowctl(sc->sc_gmx_port);
 	cn30xxgmx_reset_timing(sc->sc_gmx_port);
-	cn30xxgmx_reset_board(sc->sc_gmx_port);
 
 	return 0;
 }

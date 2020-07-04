@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmxvar.h,v 1.8 2017/11/03 16:46:17 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmxvar.h,v 1.9 2020/07/04 09:00:09 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -116,7 +116,6 @@ int		cn30xxgmx_port_enable(struct cn30xxgmx_port_softc *, int);
 int		cn30xxgmx_reset_speed(struct cn30xxgmx_port_softc *);
 int		cn30xxgmx_reset_flowctl(struct cn30xxgmx_port_softc *);
 int		cn30xxgmx_reset_timing(struct cn30xxgmx_port_softc *);
-int		cn30xxgmx_reset_board(struct cn30xxgmx_port_softc *);
 void		cn30xxgmx_stats(struct cn30xxgmx_port_softc *);
 uint64_t	cn30xxgmx_get_rx_int_reg(struct cn30xxgmx_port_softc *sc);
 uint64_t	cn30xxgmx_get_tx_int_reg(struct cn30xxgmx_port_softc *sc);
