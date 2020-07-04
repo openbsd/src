@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.1 2020/07/03 16:28:08 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.2 2020/07/04 21:08:11 kettenis Exp $
 
 machine		powerpc64
 maxusers	4
@@ -8,7 +8,7 @@ option		NO_PROPOLICE
 option		BOOT_CONFIG
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=8192
+option		MINIROOTSIZE=16384
 
 option		PCIVERBOSE
 option		USBVERBOSE
