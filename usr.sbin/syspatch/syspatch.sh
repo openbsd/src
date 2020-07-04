@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.161 2020/05/24 16:47:43 tb Exp $
+# $OpenBSD: syspatch.sh,v 1.162 2020/07/04 14:08:27 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -172,6 +172,7 @@ ls_missing()
 
 	# if no earlier version of all files contained in the syspatch exists
 	# on the system, it means a missing set so skip it
+	# XXX pipefail
 	grep -Eo "syspatch${_OSrev}-[[:digit:]]{3}_[[:alnum:]_-]+" ${_sha} |
 		while read _c; do _c=${_c##syspatch${_OSrev}-} &&
 		[[ -n ${_l} ]] && echo ${_c} | grep -qw -- "${_l}" || echo ${_c}
