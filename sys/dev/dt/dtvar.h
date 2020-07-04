@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.4 2020/07/04 08:06:07 anton Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.5 2020/07/04 10:19:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -73,7 +73,6 @@ struct dt_evt {
 #define DTEVT_USTACK	(1 << 1)		/* userland stack */
 #define DTEVT_KSTACK	(1 << 2)		/* kernel stack */
 #define DTEVT_FUNCARGS	(1 << 3)		/* function arguments */
-#define DTEVT_RETVAL	(1 << 4)		/* function retval & error */
 
 #define	DTEVT_FLAG_BITS		\
 	"\020"			\
