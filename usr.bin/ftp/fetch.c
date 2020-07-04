@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.196 2020/07/04 10:18:49 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.197 2020/07/04 11:23:35 kn Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -72,7 +72,6 @@ static int	file_get(const char *, const char *);
 static int	url_get(const char *, const char *, const char *, int);
 static int	save_chunked(FILE *, struct tls *, int , char *, size_t);
 static void	aborthttp(int);
-static void	abortfile(int);
 static char	hextochar(const char *);
 static char	*urldecode(const char *);
 static char	*recode_credentials(const char *_userinfo);
@@ -248,7 +247,7 @@ file_get(const char *path, const char *outfile)
 			(void)signal(SIGINFO, oldinti);
 		goto cleanup_copy;
 	}
-	oldintr = signal(SIGINT, abortfile);
+	oldintr = signal(SIGINT, aborthttp);
 
 	bytes = 0;
 	hashbytes = mark;
@@ -1187,24 +1186,10 @@ save_chunked(FILE *fin, struct tls *tls, int out, char *buf, size_t buflen)
 static void
 aborthttp(int signo)
 {
+	const char errmsg[] = "\nfetch aborted.\n";
 
 	alarmtimer(0);
-	fputs("\nhttp fetch aborted.\n", ttyout);
-	(void)fflush(ttyout);
-	longjmp(httpabort, 1);
-}
-
-/*
- * Abort a http retrieval
- */
-/* ARGSUSED */
-static void
-abortfile(int signo)
-{
-
-	alarmtimer(0);
-	fputs("\nfile fetch aborted.\n", ttyout);
-	(void)fflush(ttyout);
+	write(fileno(ttyout), errmsg, sizeof(errmsg) - 1);
 	longjmp(httpabort, 1);
 }
 
