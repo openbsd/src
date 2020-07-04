@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.19 2020/06/18 10:26:53 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.20 2020/07/04 10:16:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -698,7 +698,7 @@ stmt_insert(struct bt_stmt *bs, struct dt_evt *dtev)
 	    bv_name(bv), bkey, hash, bval);
 
 	bv->bv_value = (struct bt_arg *)map_insert((struct map *)bv->bv_value,
-	    hash, bval);
+	    hash, bval, ba2long(bval, dtev));
 }
 
 /*
@@ -905,6 +905,9 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_BI_NSECS:
 		val = builtin_nsecs(dtev);
 		break;
+	case B_AT_BI_RETVAL:
+		val = (long)dtev->dtev_sysretval[0];
+		break;
 	case B_AT_OP_ADD ... B_AT_OP_DIVIDE:
 		val = baexpr2long(ba, dtev);
 		break;
@@ -962,7 +965,7 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		str = builtin_arg(dtev, ba->ba_type);
 		break;
 	case B_AT_BI_RETVAL:
-		snprintf(buf, sizeof(buf) - 1, "%ld", (long)dtev->dtev_sysretval);
+		snprintf(buf, sizeof(buf) - 1, "%ld", (long)dtev->dtev_sysretval[0]);
 		str = buf;
 		break;
 	case B_AT_MAP:
