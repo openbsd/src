@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.17 2020/06/17 08:00:22 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.18 2020/07/04 13:01:16 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -316,7 +316,7 @@ mainbus_attach_cpus(struct device *self, cfmatch_t match)
 	int acells, scells;
 	char buf[32];
 
-	if (node == 0)
+	if (node == -1)
 		return;
 
 	acells = sc->sc_acells;
@@ -369,7 +369,7 @@ mainbus_attach_psci(struct device *self)
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	int node = OF_finddevice("/psci");
 
-	if (node == 0)
+	if (node == -1)
 		return;
 
 	sc->sc_early = 1;
@@ -384,7 +384,8 @@ mainbus_attach_efi(struct device *self)
 	struct fdt_attach_args fa;
 	int node = OF_finddevice("/chosen");
 
-	if (node == 0 || OF_getproplen(node, "openbsd,uefi-system-table") <= 0)
+	if (node == -1 ||
+	    OF_getproplen(node, "openbsd,uefi-system-table") <= 0)
 		return;
 
 	memset(&fa, 0, sizeof(fa));
@@ -410,7 +411,7 @@ mainbus_attach_framebuffer(struct device *self)
 {
 	int node = OF_finddevice("/chosen");
 
-	if (node == 0)
+	if (node == -1)
 		return;
 
 	for (node = OF_child(node); node != 0; node = OF_peer(node))
