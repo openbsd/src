@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.7 2020/06/23 10:03:49 tobhe Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.8 2020/07/04 06:06:16 procter Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -1660,14 +1660,8 @@ wg_decap(struct wg_softc *sc, struct mbuf *m)
 		goto error;
 	}
 
-	/*
-	 * We can mark incoming packet csum OK. We mark all flags OK
-	 * irrespective to the packet type.
-	 */
-	m->m_pkthdr.csum_flags |= (M_IPV4_CSUM_IN_OK | M_TCP_CSUM_IN_OK |
-	    M_UDP_CSUM_IN_OK | M_ICMP_CSUM_IN_OK);
-	m->m_pkthdr.csum_flags &= ~(M_IPV4_CSUM_IN_BAD | M_TCP_CSUM_IN_BAD |
-	    M_UDP_CSUM_IN_BAD | M_ICMP_CSUM_IN_BAD);
+	/* tunneled packet was not offloaded */
+	m->m_pkthdr.csum_flags = 0;
 
 	m->m_pkthdr.ph_ifidx = sc->sc_if.if_index;
 	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
