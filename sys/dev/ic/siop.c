@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.78 2020/07/01 00:02:08 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.79 2020/07/04 16:41:23 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -190,9 +190,6 @@ siop_attach(sc)
 	TAILQ_INIT(&sc->lunsw_list);
 	scsi_iopool_init(&sc->iopool, sc, siop_cmd_get, siop_cmd_put);
 	sc->sc_currschedslot = 0;
-	sc->sc_c.sc_link.adapter = &siop_switch;
-	sc->sc_c.sc_link.openings = SIOP_NTAG;
-	sc->sc_c.sc_link.pool = &sc->iopool;
 
 	/* Start with one page worth of commands */
 	siop_morecbd(sc);
@@ -212,6 +209,14 @@ siop_attach(sc)
 #ifdef DUMP_SCRIPT
 	siop_dump_script(sc);
 #endif
+
+	sc->sc_c.sc_link.adapter_softc = sc;
+	sc->sc_c.sc_link.adapter = &siop_switch;
+	sc->sc_c.sc_link.openings = SIOP_NTAG;
+	sc->sc_c.sc_link.pool = &sc->iopool;
+	sc->sc_c.sc_link.adapter_target = sc->sc_c.sc_id;
+	sc->sc_c.sc_link.adapter_buswidth = (sc->sc_c.features & SF_BUS_WIDE) ?
+	    16 : 8;
 
 	saa.saa_sc_link = &sc->sc_c.sc_link;
 

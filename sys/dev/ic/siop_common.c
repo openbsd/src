@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.40 2020/07/01 00:02:08 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.41 2020/07/04 16:41:23 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -103,13 +103,9 @@ siop_common_attach(sc)
 	 * for devices attached to this adapter. It is passed to
 	 * the upper layers in config_found().
 	 */
-	buswidth = (sc->features & SF_BUS_WIDE) ? 16 : 8;
 	sc->sc_id = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCID);
 	if (sc->sc_id == 0 || sc->sc_id >= buswidth)
 		sc->sc_id = SIOP_DEFAULT_TARGET;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_id;
-	sc->sc_link.adapter_buswidth = buswidth;
 
 	for (i = 0; i < 16; i++)
 		sc->targets[i] = NULL;
