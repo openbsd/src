@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.195 2020/06/20 09:59:48 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.196 2020/07/04 10:18:49 jca Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -261,6 +261,7 @@ file_get(const char *path, const char *outfile)
 		for (cp = buf; len > 0; len -= wlen, cp += wlen) {
 			if ((wlen = write(out, cp, len)) == -1) {
 				warn("Writing %s", savefile);
+				signal(SIGINT, oldintr);
 				signal(SIGINFO, oldinti);
 				goto cleanup_copy;
 			}
@@ -274,6 +275,7 @@ file_get(const char *path, const char *outfile)
 		}
 	}
 	save_errno = errno;
+	signal(SIGINT, oldintr);
 	signal(SIGINFO, oldinti);
 	if (hash && !progress && bytes > 0) {
 		if (bytes < mark)
@@ -288,7 +290,6 @@ file_get(const char *path, const char *outfile)
 	progressmeter(1, NULL);
 	if (verbose)
 		ptransfer(0);
-	(void)signal(SIGINT, oldintr);
 
 	rval = 0;
 
@@ -1032,6 +1033,7 @@ noslash:
 	oldinti = signal(SIGINFO, psummary);
 	if (chunked) {
 		error = save_chunked(fin, tls, out, buf, buflen);
+		signal(SIGINT, oldintr);
 		signal(SIGINFO, oldinti);
 		if (error == -1)
 			goto cleanup_url_get;
@@ -1041,6 +1043,7 @@ noslash:
 			for (cp = buf; len > 0; len -= wlen, cp += wlen) {
 				if ((wlen = write(out, cp, len)) == -1) {
 					warn("Writing %s", savefile);
+					signal(SIGINT, oldintr);
 					signal(SIGINFO, oldinti);
 					goto cleanup_url_get;
 				}
@@ -1054,6 +1057,7 @@ noslash:
 			}
 		}
 		save_errno = errno;
+		signal(SIGINT, oldintr);
 		signal(SIGINFO, oldinti);
 		if (hash && !progress && bytes > 0) {
 			if (bytes < mark)
@@ -1080,7 +1084,6 @@ noslash:
 
 	if (verbose)
 		ptransfer(0);
-	(void)signal(SIGINT, oldintr);
 
 	rval = 0;
 	goto cleanup_url_get;
