@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.140 2020/06/22 13:14:32 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.141 2020/07/04 08:33:43 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1336,10 +1336,12 @@ knote_processexit(struct proc *p)
 {
 	struct process *pr = p->p_p;
 
+	KASSERT(p == curproc);
+
 	KNOTE(&pr->ps_klist, NOTE_EXIT);
 
 	/* remove other knotes hanging off the process */
-	knote_remove(p, &pr->ps_klist.kl_list);
+	klist_invalidate(&pr->ps_klist);
 }
 
 void
@@ -1446,6 +1448,7 @@ void
 klist_invalidate(struct klist *list)
 {
 	struct knote *kn;
+	struct proc *p = curproc;
 	int s;
 
 	/*
@@ -1460,10 +1463,15 @@ klist_invalidate(struct klist *list)
 			continue;
 		splx(s);
 		kn->kn_fop->f_detach(kn);
-		kn->kn_fop = &dead_filtops;
-		knote_activate(kn);
-		s = splhigh();
-		knote_release(kn);
+		if (kn->kn_fop->f_flags & FILTEROP_ISFD) {
+			kn->kn_fop = &dead_filtops;
+			knote_activate(kn);
+			s = splhigh();
+			knote_release(kn);
+		} else {
+			knote_drop(kn, p);
+			s = splhigh();
+		}
 	}
 	splx(s);
 }
