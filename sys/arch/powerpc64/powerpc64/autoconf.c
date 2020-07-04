@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 2020/06/14 15:36:51 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 2020/07/04 16:49:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -47,5 +47,9 @@ device_register(struct device *dev, void *aux)
 }
 
 struct nam2blk nam2blk[] = {
+	{ "vnd",	1 },
+	{ "rd",		2 },
+	{ "sd",		3 },
+	{ "cd",		4 },
 	{ NULL,		-1 }
 };
