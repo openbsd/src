@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.135 2020/05/25 15:31:59 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.136 2020/07/05 19:20:06 krw Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1458,8 +1458,6 @@ device_register(struct device *dev, void *aux)
 		 */
 		struct scsi_attach_args *sa = aux;
 		struct scsi_link *sl = sa->sa_sc_link;
-		struct scsibus_softc *sbsc =
-		    (struct scsibus_softc *)dev->dv_parent;
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
@@ -1481,7 +1479,7 @@ device_register(struct device *dev, void *aux)
 		}
 
 		/* Check the controller that this scsibus is on. */
-		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
+		if ((bp-1)->dev != sl->bus->sc_dev.dv_parent)
 			return;
 
 		/*
