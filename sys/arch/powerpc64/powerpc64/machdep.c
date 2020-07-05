@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2020/07/05 10:34:08 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 2020/07/05 11:29:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -671,6 +671,7 @@ void
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_p->ps_sigacts;
@@ -686,6 +687,13 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 		fp = (struct sigframe *)tf->fixreg[1];
 
 	fp = (struct sigframe *)(STACKALIGN(fp - 1) - 288);
+
+	/* Save FPU state to PCB if necessary. */
+	if (pcb->pcb_flags & (PCB_FP|PCB_VEC|PCB_VSX) &&
+	    tf->srr1 & (PSL_FP|PSL_VEC|PSL_VSX)) {
+		tf->srr1 &= ~(PSL_FP|PSL_VEC|PSL_VSX);
+		save_vsx(p);
+	}
 
 	/* Build stack frame for signal trampoline. */
 	memset(&frame, 0, sizeof(frame));
