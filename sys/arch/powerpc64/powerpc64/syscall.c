@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.4 2020/06/26 20:58:38 kettenis Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.5 2020/07/05 12:24:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -33,8 +33,6 @@ syscall(struct trapframe *frame)
 	int code, error, nsys;
 	int nap = 8, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
-
-	uvmexp.syscalls++;
 
 	code = frame->fixreg[0];
 	callp = p->p_p->ps_emul->e_sysent;
