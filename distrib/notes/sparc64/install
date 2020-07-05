@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.52 2020/05/17 17:04:28 deraadt Exp $
+dnl	$OpenBSD: install,v 1.53 2020/07/05 22:27:48 tj Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -131,7 +131,7 @@ OpenBSDCongratulations
 
 Net Boot or Diskless Setup Information:
 
-The set up is similar to the diskless setup, but not identical, because
+The setup is similar to the diskless setup, but not identical, because
 the Sun setup assumes that the bootblocks load a kernel image, which then
 uses NFS to access the exported root partition, while the OpenBSD bootblocks
 use internal NFS routines to load the kernel image directly from the

@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.129 2020/05/17 17:04:27 deraadt Exp $
+dnl	$OpenBSD: m4.common,v 1.130 2020/07/05 22:27:46 tj Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -350,7 +350,7 @@ dnl XXX add a MDVLAN feature and document vlan setup
 	  messages.
 
 	After all interfaces have been configured, if there have been
-	any IPv4 interfaces setup, you will be asked for the IPv4 default
+	any IPv4 interfaces set up, you will be asked for the IPv4 default
 	route.  This step is skipped if you only have one IPv4 interface
 	setup, and it is configured with DHCP.
 
@@ -399,7 +399,7 @@ ifelse(MDSERCONS,,,{:-
 -:})dnl
 
 dnl install.sub (install) user_setup()
-	You will now be given the possibility to setup a user account
+	You will now be given the possibility to set up a user account
 	on the forthcoming system.  This user will be added to the
 	"wheel" group.
 
@@ -416,7 +416,7 @@ dnl install.sub (install) user_setup()
 	check that the two passwords match, but you should make sure to
 	use a strong password here as well.
 
-	If you have chosen to setup a user account, and you had chosen
+	If you have chosen to set up a user account, and you had chosen
 	to start sshd(8) on boot, you will be asked if you want to allow
 	sshd(8) logins as root.
 dnl install.sub (install) set_timezone
@@ -530,7 +530,7 @@ define({:-OpenBSDInstallPart6-:},
 	return to the list of available disks to configure.
 
 	You can choose the other disks to use with OpenBSD in
-	any order, and will get to setup their layout similarly
+	any order, and will get to set up their layout similarly
 	to the root disk above. However, for non-root disks,
 	you will not be proposed a default partition layout.
 

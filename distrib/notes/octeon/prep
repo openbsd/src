@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.10 2020/05/17 17:04:28 deraadt Exp $
+dnl	$OpenBSD: prep,v 1.11 2020/07/05 22:27:48 tj Exp $
 By default MACHINE systems are shipped with a Linux (or proprietary) system
 installed on the CompactFlash card or USB drive.
 
@@ -50,7 +50,7 @@ Booting from a CF card or USB:
 
 Booting over the network:
 
-  For TFTP you will first need to setup a TFTP server as described in
+  For TFTP you will first need to set up a TFTP server as described in
   diskless(8). Assuming tftpd(8) chroots into /tftpboot, copy bsd.rd into that
   directory.
 

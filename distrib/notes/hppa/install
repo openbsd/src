@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.28 2020/05/17 17:04:28 deraadt Exp $
+dnl	$OpenBSD: install,v 1.29 2020/07/05 22:27:47 tj Exp $
 dnl lots of texts coming from {mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -59,7 +59,7 @@ Booting from Network:
 
 	Select from menu:
 
-    In this case, you will need to setup rbootd on the server. Start by
+    In this case, you will need to set up rbootd on the server. Start by
     creating an /etc/rbootd.conf file on the bootserver. The format of this
     file is the ethernet address followed by the LIF filename. Here is an
     example:

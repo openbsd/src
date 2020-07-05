@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.34 2014/10/10 13:25:08 krw Exp $
+dnl	$OpenBSD: install,v 1.35 2020/07/05 22:27:47 tj Exp $
 OpenBSDInstallPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -127,7 +127,7 @@ dnl XXX This document really should be converted to mdoc...
 		add new partitions, and change which partition to boot from
 		by default.
 
-		After your OpenBSD MBR partition has been setup, the real
+		After your OpenBSD MBR partition has been set up, the real
 		partition setup can follow.
 
 OpenBSDInstallPart5({:-
@@ -140,7 +140,7 @@ OpenBSDInstallPart5({:-
 	from the installation media into the first HFS(+) partition using
 	Mac OS or Mac OS X.
 	If the disk is partitioned using MBR, the bootloader will be
-	automatically installed if you setup a small (a few MB) MSDOS
+	automatically installed if you set up a small (a few MB) MSDOS
 	partition as position `i' in the label.
 
 OpenBSDInstallPart6({:-CD-ROM, -:})

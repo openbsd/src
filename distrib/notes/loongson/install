@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.15 2019/08/10 17:58:57 deraadt Exp $
+dnl	$OpenBSD: install,v 1.16 2020/07/05 22:27:47 tj Exp $
 OpenBSDInstallPrelude
 
 Booting the installation media:
@@ -63,7 +63,7 @@ dnl OpenBSDInstallMBRPart2
 	will create a small 'Linux files' partition and use the rest of
 	the disk for the OpenBSD installation.
 
-	After your OpenBSD MBR partition has been setup, the real
+	After your OpenBSD MBR partition has been set up, the real
 	partition setup can follow.
 
 OpenBSDInstallPart5({:-

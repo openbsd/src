@@ -1,4 +1,4 @@
-dnl     $OpenBSD: install,v 1.1 2020/07/05 20:01:35 kettenis Exp $
+dnl     $OpenBSD: install,v 1.2 2020/07/05 22:27:48 tj Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -12,7 +12,7 @@ OpenBSDInstallMBRPart1
 dnl OpenBSDInstallMBRPart2(indeed)
 	The fdisk(8) utility will be invoked to let you edit your MBR
 	partitioning.  The current MBR partitions defined will be
-	displayed and you will be allowed to modify them, and add new
+	displayed and you will be allowed to modify them or add new
 	partitions.
 
 	The setup will need two partitions, one 'OpenBSD' for the
@@ -23,7 +23,7 @@ dnl OpenBSDInstallMBRPart2(indeed)
 	will create a small 'MSDOS' partition and use the rest of
 	the disk for the OpenBSD installation.
 
-	After your OpenBSD MBR partition has been setup, the real
+	After your OpenBSD MBR partition has been set up, the real
 	partition setup can follow.
 
 OpenBSDInstallPart5
