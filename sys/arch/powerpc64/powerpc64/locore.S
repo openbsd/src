@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.28 2020/07/01 15:53:42 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.29 2020/07/05 10:34:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -190,6 +190,9 @@ copystr:
 	addi	%r9, %r9, .Lcopystrfault@toc@l
 	std	%r9, PCB_ONFAULT(%r7)
 
+	cmpdi	%r5, 0
+	beq	.Lcopystrtoolong
+
 	addi	%r3, %r3, -1
 	addi	%r4, %r4, -1
 	mtctr	%r5
@@ -202,6 +205,7 @@ copystr:
 	beq	.Lcopystrsuccess
 	bdnz	1b
 
+.Lcopystrtoolong:
 	li	%r3, ENAMETOOLONG
 	b	.Lcopystrcleanup
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2020/07/02 21:51:05 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2020/07/05 10:34:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -475,6 +475,9 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	size_t count, total;
 	int error = 0;
 
+	if (len == 0)
+		return ENAMETOOLONG;
+
 	total = 0;
 	while (len > 0) {
 		error = pmap_set_user_slb(pm, (vaddr_t)uaddr, &kva, &klen);
@@ -507,6 +510,9 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 	vsize_t klen;
 	size_t count, total;
 	int error = 0;
+
+	if (len == 0)
+		return ENAMETOOLONG;
 
 	total = 0;
 	while (len > 0) {
