@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.11 2020/06/29 21:31:57 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.12 2020/07/05 17:31:11 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -15,6 +15,7 @@ maxusers	80
 
 option		PCIVERBOSE
 option		USER_PCICONF
+option		USBVERBOSE
 
 config		bsd	swap generic
 
@@ -31,7 +32,7 @@ pci*		at ppb?
 ahci*		at pci?
 bge*		at pci?
 nvme*		at pci?
-xhci*		at pci? disable
+xhci*		at pci?
 usb*		at xhci?
 
 scsibus*	at scsi?
@@ -40,6 +41,9 @@ sd*		at scsibus?
 # USB devices
 uhub*		at usb?			# USB Hubs
 uhub*		at uhub?		# USB Hubs
+uaudio*		at uhub?		# USB Audio
+audio*		at uaudio?
+umass*		at uhub?		# USB Mass Storage devices
 
 brgphy*		at mii?			# Broadcom Gigabit PHYs
 
