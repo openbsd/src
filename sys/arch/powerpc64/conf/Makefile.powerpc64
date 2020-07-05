@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc64,v 1.5 2020/06/16 17:38:12 kettenis Exp $
+#	$OpenBSD: Makefile.powerpc64,v 1.6 2020/07/05 10:32:22 kettenis Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -9,10 +9,6 @@
 # PROF is set to -pg by config if profiling is requested (config -p).
 
 .include <bsd.own.mk>
-
-# XXX cross compiler
-CC= /usr/local/bin/clang -target powerpc64-openbsd
-LD= ld.lld
 
 SIZE?=	size
 STRIP?=	ctfstrip
