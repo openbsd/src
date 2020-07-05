@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 2020/07/05 11:29:21 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 2020/07/05 12:22:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -542,6 +542,12 @@ void
 need_resched(struct cpu_info *ci)
 {
 	ci->ci_want_resched = 1;
+
+	/* There's a risk we'll be called before the idle threads start */
+	if (ci->ci_curproc) {
+		aston(ci->ci_curproc);
+		cpu_kick(ci);
+	}
 }
 
 void
