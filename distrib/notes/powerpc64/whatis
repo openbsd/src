@@ -1,0 +1,4 @@
+dnl	$OpenBSD: whatis,v 1.1 2020/07/05 20:01:35 kettenis Exp $
+
+OpenBSD/MACHINE runs on systems equiped with IBM POWER9 processors and
+OPAL firmware.
