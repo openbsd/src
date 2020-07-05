@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.189 2020/06/30 18:43:37 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.190 2020/07/05 20:17:25 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -284,7 +284,6 @@ struct scsi_link {
 	u_int		state;
 #define SDEV_S_DYING		(1<<1)
 
-	u_int8_t scsibus;		/* the Nth scsibus */
 	u_int8_t luns;
 	u_int16_t target;		/* targ of this dev */
 	u_int16_t lun;			/* lun of this dev */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_eisa.c,v 1.21 2012/05/12 21:54:39 miod Exp $	*/
+/*	$OpenBSD: ahc_eisa.c,v 1.22 2020/07/05 20:17:25 krw Exp $	*/
 /*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.21 2012/05/12 21:54:39 miod Exp $
+ *	$Id: ahc_eisa.c,v 1.22 2020/07/05 20:17:25 krw Exp $
  */
 
 #include <sys/param.h>
@@ -184,9 +184,9 @@ void *aux;
 
 	/*
 	 * SCSI_IS_SCSIBUS_B() must returns false until sc_channel_b
-	 * has been properly initialized. XXX Breaks if >254 scsi buses.
+	 * has been properly initialized.
 	 */
-	ahc->sc_channel_b.scsibus = 0xff;
+	ahc->sc_channel_b.bus = NULL;
 
 	ahc->channel = 'A';
 	ahc->chip = AHC_AIC7770|AHC_EISA;
