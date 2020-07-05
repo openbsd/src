@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.61 2020/06/27 14:29:44 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.62 2020/07/05 21:54:44 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -109,22 +109,22 @@ ahc_attach(struct ahc_softc *ahc)
 
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {
 		saa.saa_sc_link = &ahc->sc_channel;
-		ahc->sc_child = config_found((void *)&ahc->sc_dev,
-		    &saa, scsiprint);
+		ahc->sc_child = (struct scsibus_softc *)config_found(
+		    (void *)&ahc->sc_dev, &saa, scsiprint);
 		if (ahc->features & AHC_TWIN) {
 			saa.saa_sc_link = &ahc->sc_channel_b;
-			ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
-			    &saa, scsiprint);
+			ahc->sc_child_b = (struct scsibus_softc *)config_found(
+			    (void *)&ahc->sc_dev, &saa, scsiprint);
 		}
 	} else {
 		if (ahc->features & AHC_TWIN) {
 			saa.saa_sc_link = &ahc->sc_channel_b;
-			ahc->sc_child = config_found((void *)&ahc->sc_dev,
-			    &saa, scsiprint);
+			ahc->sc_child = (struct scsibus_softc *)config_found(
+			    (void *)&ahc->sc_dev, &saa, scsiprint);
 		}
 		saa.saa_sc_link = &ahc->sc_channel;
-		ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
-		    &saa, scsiprint);
+		ahc->sc_child_b = (struct scsibus_softc *)config_found(
+		    (void *)&ahc->sc_dev, &saa, scsiprint);
 	}
 
 	splx(s);

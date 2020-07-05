@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_eisa.c,v 1.22 2020/07/05 20:17:25 krw Exp $	*/
+/*	$OpenBSD: ahc_eisa.c,v 1.23 2020/07/05 21:54:44 krw Exp $	*/
 /*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.22 2020/07/05 20:17:25 krw Exp $
+ *	$Id: ahc_eisa.c,v 1.23 2020/07/05 21:54:44 krw Exp $
  */
 
 #include <sys/param.h>
@@ -186,7 +186,7 @@ void *aux;
 	 * SCSI_IS_SCSIBUS_B() must returns false until sc_channel_b
 	 * has been properly initialized.
 	 */
-	ahc->sc_channel_b.bus = NULL;
+	ahc->sc_child_b = NULL;
 
 	ahc->channel = 'A';
 	ahc->chip = AHC_AIC7770|AHC_EISA;

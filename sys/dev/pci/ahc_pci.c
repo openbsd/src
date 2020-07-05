@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.58 2020/07/05 20:17:25 krw Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.59 2020/07/05 21:54:44 krw Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.58 2020/07/05 20:17:25 krw Exp $
+ * $Id: ahc_pci.c,v 1.59 2020/07/05 21:54:44 krw Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -739,7 +739,7 @@ ahc_pci_attach(parent, self, aux)
 	 * SCSI_IS_SCSIBUS_B() must returns false until sc_channel_b
 	 * has been properly initialized.
 	 */
-	ahc->sc_channel_b.bus = NULL;
+	ahc->sc_child_b = NULL;
 
 	ahc->dev_softc = pa;
 

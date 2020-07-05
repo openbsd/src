@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.38 2020/07/05 20:17:25 krw Exp $ */
+/*	$OpenBSD: qlw.c,v 1.39 2020/07/05 21:54:44 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -129,7 +129,7 @@ void		qlw_dump_iocb_segs(struct qlw_softc *, void *, int);
 static inline int
 qlw_xs_bus(struct qlw_softc *sc, struct scsi_xfer *xs)
 {
-	return ((xs->sc_link->bus == sc->sc_link[0].bus) ? 0 : 1);
+	return ((xs->sc_link->bus == sc->sc_scsibus[0]) ? 0 : 1);
 }
 
 static inline u_int16_t
