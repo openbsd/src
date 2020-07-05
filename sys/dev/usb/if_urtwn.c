@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.90 2020/06/11 00:56:12 jmatthew Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.91 2020/07/05 07:47:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1697,6 +1697,7 @@ urtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 		txdp += IEEE80211_CCMP_HDRLEN;
 
 		m_copydata(m, headerlen, m->m_pkthdr.len - headerlen, txdp);
+		m_freem(m);
 	} else {
 		xferlen = (txdp - data->buf) + m->m_pkthdr.len;
 		m_copydata(m, 0, m->m_pkthdr.len, txdp);
