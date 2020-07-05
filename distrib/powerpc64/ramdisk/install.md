@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2020/07/04 21:11:04 kettenis Exp $
+#	$OpenBSD: install.md,v 1.2 2020/07/05 21:03:49 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,8 +34,21 @@
 
 NCPU=$(sysctl -n hw.ncpufound)
 NEWFSARGS_msdos="-F 16 -L boot"
+MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
+	local _disk=/dev/$1
+
+	# Mount MSDOS partition, copy boot kernel and create menu entry
+	mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
+	cp /mnt/bsd /mnt/mnt/boot
+	cat > /mnt/mnt/grub.cfg <<-__EOT
+		menuentry "OpenBSD" {
+			linux /boot
+			initrd /boot
+		}
+	__EOT
+	umount /mnt/mnt
 }
 
 md_prep_fdisk() {
