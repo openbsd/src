@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 2020/07/02 21:51:05 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.27 2020/07/06 07:26:40 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1144,8 +1144,7 @@ pmap_pted_ro(struct pte_desc *pted, vm_prot_t prot)
 		}
 
 		/* Add a Page Table Entry, section 5.10.1.1. */
-		pte->pte_lo &= ~(PTE_CHG|PTE_PP);
-		pte->pte_lo |= PTE_RO;
+		pte->pte_lo = pted->pted_pte.pte_lo;
 		eieio();	/* Order 1st PTE update before 2nd. */
 		pte->pte_hi |= PTE_VALID;
 		ptesync();	/* Ensure updates completed. */
