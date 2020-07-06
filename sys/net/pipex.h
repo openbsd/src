@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.23 2020/06/05 19:50:59 denis Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.24 2020/07/06 20:37:51 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -187,11 +187,11 @@ struct pipex_session;
  *
  * Locks used to protect struct members:
  *      I       immutable after creation
- *      k       kernel lock
+ *      N       net lock
  */
 struct pipex_iface_context {
 	struct	ifnet *ifnet_this;	/* [I] outer interface */
-	u_int	pipexmode;		/* [k] pipex mode */
+	u_int	pipexmode;		/* [N] pipex mode */
 	/* [I] virtual pipex_session entry for multicast routing */
 	struct pipex_session *multicast_session;
 };

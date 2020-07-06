@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.90 2020/06/24 08:52:53 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.91 2020/07/06 20:37:51 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1117,6 +1117,8 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 	ifp->if_output = pppac_output;
 	ifp->if_start = pppac_start;
 	ifp->if_ioctl = pppac_ioctl;
+	/* XXXSMP: be sure pppac_start() called under NET_LOCK() */
+	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
 
 	if_counters_alloc(ifp);
 	if_attach(ifp);

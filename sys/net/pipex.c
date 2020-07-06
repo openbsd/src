@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.118 2020/07/06 20:28:38 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.119 2020/07/06 20:37:51 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -869,6 +869,7 @@ pipex_output(struct mbuf *m0, int af, int off,
 	struct ip ip;
 	struct mbuf *mret;
 
+	NET_ASSERT_LOCKED();
 	session = NULL;
 	mret = NULL;
 	switch (af) {
@@ -961,6 +962,8 @@ Static void
 pipex_ppp_output(struct mbuf *m0, struct pipex_session *session, int proto)
 {
 	u_char *cp, hdr[16];
+
+	NET_ASSERT_LOCKED();
 
 #ifdef PIPEX_MPPE
 	if (pipex_session_is_mppe_enabled(session)) {
@@ -1355,6 +1358,7 @@ pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
 	int hlen;
 	struct pipex_pppoe_header pppoe;
 
+	NET_ASSERT_LOCKED();
 	/* already checked at pipex_pppoe_lookup_session */
 	KASSERT(m0->m_pkthdr.len >= (sizeof(struct ether_header) +
 	    sizeof(pppoe)));
@@ -1586,6 +1590,7 @@ pipex_pptp_input(struct mbuf *m0, struct pipex_session *session)
 	struct pipex_pptp_session *pptp_session;
 	int rewind = 0;
 
+	NET_ASSERT_LOCKED();
 	KASSERT(m0->m_pkthdr.len >= PIPEX_IPGRE_HDRLEN);
 	pptp_session = &session->proto.pptp;
 
@@ -2031,6 +2036,7 @@ pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session,
 	uint16_t flags, ns = 0, nr = 0;
 	int rewind = 0;
 
+	NET_ASSERT_LOCKED();
 	length = offset = ns = nr = 0;
 	l2tp_session = &session->proto.l2tp;
 	l2tp_session->ipsecflowinfo = ipsecflowinfo;
