@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.358 2020/06/18 08:34:22 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.359 2020/07/06 09:14:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1474,11 +1474,13 @@ server_client_check_pane_resize(struct window_pane *wp)
 		 * Otherwise resize to the force size and start the timer.
 		 */
 		if (wp->flags & PANE_RESIZENOW) {
-			log_debug("%s: resizing %%%u after forced resize", __func__, wp->id);
+			log_debug("%s: resizing %%%u after forced resize",
+			    __func__, wp->id);
 			window_pane_send_resize(wp, 0);
 			wp->flags &= ~(PANE_RESIZE|PANE_RESIZEFORCE|PANE_RESIZENOW);
 		} else if (!evtimer_pending(&wp->force_timer, NULL)) {
-			log_debug("%s: forcing resize of %%%u", __func__, wp->id);
+			log_debug("%s: forcing resize of %%%u", __func__,
+			    wp->id);
 			window_pane_send_resize(wp, 1);
 			server_client_start_force_timer(wp);
 		}
