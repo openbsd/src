@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.717 2020/06/22 15:49:37 tobhe Exp $
+$OpenBSD: usbdevs,v 1.718 2020/07/06 10:35:42 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1565,6 +1565,7 @@ product DLINK DWA125D1		0x330f	DWA-125 rev D1
 product DLINK DWA123D1		0x3310	DWA-123 rev D1
 product DLINK DWA137A1		0x3317	DWA-137 rev A1
 product DLINK DWA131E1		0x3319	DWA-131 rev E1
+product DLINK DWA121B1		0x331b	DWA-121 rev B1
 product DLINK DWA182D1		0x331c	DWA-182 rev D1
 product DLINK DWA171C1		0x331d	DWA-171 rev C1
 product DLINK DWL122		0x3700	DWL-122
