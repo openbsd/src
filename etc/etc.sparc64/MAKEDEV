@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.93 2020/05/25 20:27:44 kmos Exp 
-#	OpenBSD: MAKEDEV.common,v 1.110 2020/04/18 21:28:35 ratchov Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.94 2020/07/06 06:11:27 dlg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.111 2020/07/06 06:11:26 dlg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -101,6 +101,7 @@
 #	ldom*	Logical domain services channels
 #	vdsp*	Virtual disk server ports
 #	switch*	Switch driver
+#	kstat	Kernel Statistics
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -247,6 +248,10 @@ std)
 	M openprom	c 70 0 600
 	M mdesc		c 70 1 640 kmem
 	M pri		c 70 2 640 kmem
+	;;
+
+kstat)
+	M kstat c 51 0 640
 	;;
 
 switch*)
@@ -643,8 +648,8 @@ all)
 	R cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
 	R fd0E fd0F fd0G fd0H diskmap vscsi0 ch0 audio0 audio1 audio2
-	R audio3 dt bpf fuse pppac pppx hotplug ptm local wscons pci0
-	R pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
+	R audio3 kstat dt bpf fuse pppac pppx hotplug ptm local wscons
+	R pci0 pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
 	R rmidi5 rmidi6 rmidi7 video0 video1 uk0 random lpa0 lpa1 lpa2
 	R lpt0 lpt1 lpt2 tty00 tty01 tty02 tty03 tty04 tty05 tty06
 	R tty07 tty08 tty09 tty0a tty0b ttyh0 ttyh1 pf wd0 wd1 wd2 wd3

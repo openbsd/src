@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.34 2020/01/23 02:47:28 dlg Exp 
-#	OpenBSD: MAKEDEV.common,v 1.109 2020/01/23 02:47:29 dlg Exp 
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.35 2020/07/06 06:11:27 dlg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.111 2020/07/06 06:11:26 dlg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -72,6 +72,7 @@
 #	vscsi*	Virtual SCSI controller
 #	switch*	Switch driver
 #	xp	HD647180 I/O processor
+#	kstat	Kernel Statistics
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -212,6 +213,10 @@ std)
 	M klog		c 6 0 600
 	;;
 
+
+kstat)
+	M kstat c 51 0 640
+	;;
 
 xp)
 		M xp c 11 0 600 
@@ -411,9 +416,9 @@ all)
 	R xp pcex audio0 lcd ttya switch0 switch1 switch2 switch3
 	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tap0
 	R tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 diskmap vscsi0
-	R ch0 dt bpf fuse pppac pppx ptm local wscons uk0 random tty00
-	R tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a
-	R tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R ch0 kstat dt bpf fuse pppac pppx ptm local wscons uk0 random
+	R tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09
+	R tty0a tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)
