@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 2020/06/29 21:16:45 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 2020/07/06 04:32:25 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -68,6 +68,7 @@ cdev_decl(com);
 #include "ipmi.h"
 #include "kcov.h"
 #include "ksyms.h"
+#include "kstat.h"
 #include "lpt.h"
 cdev_decl(lpt);
 #include "midi.h"
@@ -115,7 +116,7 @@ struct cdevsw cdevsw[] =
 	cdev_random_init(1,random),	/* 12: random data source */
 	cdev_dt_init(NDT,dt),		/* 13: dynamic tracer */
 	cdev_kcov_init(NKCOV,kcov),	/* 14: kcov */
-	cdev_notdef(),			/* 15 */
+	cdev_kstat_init(NKSTAT,kstat),	/* 15: kernel statistics */
 	cdev_notdef(),			/* 16 */
 	cdev_notdef(),			/* 17 */
 	cdev_notdef(),			/* 18 */

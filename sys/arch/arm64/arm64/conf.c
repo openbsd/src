@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 2020/05/25 06:37:52 mpi Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 2020/07/06 04:32:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -113,6 +113,7 @@ cdev_decl(spkr);
 #include "midi.h"
 #include "bktr.h"
 #include "ksyms.h"
+#include "kstat.h"
 #include "usb.h"
 #include "uhid.h"
 #include "fido.h"
@@ -198,7 +199,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 48 */
 	cdev_bktr_init(NBKTR,bktr),     /* 49: Bt848 video capture device */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
-	cdev_notdef(),			/* 51 */
+	cdev_kstat_init(NKSTAT,kstat),	/* 51: kernel statistics */
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
 	cdev_notdef(),			/* 53 was: sequencer I/O */
 	cdev_notdef(),			/* 54 was: RAIDframe disk driver */
