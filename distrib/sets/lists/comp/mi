@@ -14,6 +14,7 @@
 ./usr/bin/yacc
 ./usr/include/FlexLexer.h
 ./usr/include/a.out.h
+./usr/include/amd64/timetc.h
 ./usr/include/ar.h
 ./usr/include/arpa
 ./usr/include/arpa/ftp.h
@@ -3039,6 +3040,8 @@
 ./usr/share/man/man9/intro.9
 ./usr/share/man/man9/km_alloc.9
 ./usr/share/man/man9/knote.9
+./usr/share/man/man9/kstat_create.9
+./usr/share/man/man9/kstat_kv_init.9
 ./usr/share/man/man9/kthread.9
 ./usr/share/man/man9/ktrace.9
 ./usr/share/man/man9/lim_cur.9
