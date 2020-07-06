@@ -141,7 +141,7 @@ struct {
 };
 
 struct timecounter hv_timecounter = {
-	hv_gettime, 0, 0xffffffff, 10000000, "hyperv", 9001
+	hv_gettime, 0, 0xffffffff, 10000000, "hyperv", 9001, NULL, 0
 };
 
 struct cfdriver hyperv_cd = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.61 2020/07/04 08:06:07 anton Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.62 2020/07/06 13:33:09 pirofti Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -63,7 +63,7 @@ dummy_get_timecount(struct timecounter *tc)
 }
 
 static struct timecounter dummy_timecounter = {
-	dummy_get_timecount, 0, ~0u, 1000000, "dummy", -1000000
+	dummy_get_timecount, 0, ~0u, 1000000, "dummy", -1000000, NULL, 0
 };
 
 /*
@@ -527,6 +527,34 @@ tc_setclock(const struct timespec *ts)
 #endif
 }
 
+void
+tc_update_timekeep(void)
+{
+	static struct timecounter *last_tc = NULL;
+	struct timehands *th;
+
+	if (timekeep == NULL)
+		return;
+
+	th = timehands;
+	timekeep->tk_generation = 0;
+	membar_producer();
+	timekeep->tk_scale = th->th_scale;
+	timekeep->tk_offset_count = th->th_offset_count;
+	timekeep->tk_offset = th->th_offset;
+	timekeep->tk_naptime = th->th_naptime;
+	timekeep->tk_boottime = th->th_boottime;
+	if (last_tc != th->th_counter) {
+		timekeep->tk_counter_mask = th->th_counter->tc_counter_mask;
+		timekeep->tk_user = th->th_counter->tc_user;
+		last_tc = th->th_counter;
+	}
+	membar_producer();
+	timekeep->tk_generation = th->th_generation;
+
+	return;
+}
+
 /*
  * Initialize the next struct timehands in the ring and make
  * it the active timehands.  Along the way we might switch to a different
@@ -679,6 +707,8 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	time_uptime = th->th_offset.sec;
 	membar_producer();
 	timehands = th;
+
+	tc_update_timekeep();
 }
 
 /* Report or change the active timecounter hardware. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.23 2020/05/11 19:42:53 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.24 2020/07/06 13:33:06 pirofti Exp $	*/
 /*	$NetBSD: clock.c,v 1.29 2000/06/05 21:47:10 thorpej Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ int clk_irq = 0;
 
 u_int rpcc_get_timecount(struct timecounter *);
 struct timecounter rpcc_timecounter = {
-	rpcc_get_timecount, NULL, ~0u, 0, "rpcc", 0, NULL
+	rpcc_get_timecount, NULL, ~0u, 0, "rpcc", 0, NULL, 0
 };
 
 extern todr_chip_handle_t todr_handle;

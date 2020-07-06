@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.23 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.24 2020/07/06 13:33:08 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -45,7 +45,9 @@ static struct timecounter hpet_timecounter = {
 	0xffffffff,		/* counter_mask (32 bits) */
 	0,			/* frequency */
 	0,			/* name */
-	1000			/* quality */
+	1000,			/* quality */
+	NULL,			/* private bits */
+	0,			/* expose to user */
 };
 
 #define HPET_TIMERS	3

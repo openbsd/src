@@ -1,4 +1,4 @@
-/*	$OpenBSD: timespec_get.c,v 1.1 2018/10/30 16:28:42 guenther Exp $	*/
+/*	$OpenBSD: timespec_get.c,v 1.2 2020/07/06 13:33:06 pirofti Exp $	*/
 /*	$NetBSD: timespec_get.c,v 1.2 2016/10/04 12:48:15 christos Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@ timespec_get(struct timespec *ts, int base)
 {
 	switch (base) {
 	case TIME_UTC:
-		if (clock_gettime(CLOCK_REALTIME, ts) == -1)
+		if (WRAP(clock_gettime)(CLOCK_REALTIME, ts) == -1)
 			return 0;
 		break;
 	default:

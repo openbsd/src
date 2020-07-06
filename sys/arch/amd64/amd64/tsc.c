@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.18 2020/07/03 17:54:27 kettenis Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.19 2020/07/06 13:33:06 pirofti Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -37,6 +37,7 @@ uint64_t	tsc_frequency;
 int		tsc_is_invariant;
 
 #define	TSC_DRIFT_MAX			250
+#define TSC_SKEW_MAX			100
 int64_t	tsc_drift_observed;
 
 volatile int64_t	tsc_sync_val;
@@ -50,7 +51,7 @@ extern u_int32_t lapic_per_second;
 #endif
 
 struct timecounter tsc_timecounter = {
-	tsc_get_timecount, NULL, ~0u, 0, "tsc", -1000, NULL
+	tsc_get_timecount, NULL, ~0u, 0, "tsc", -1000, NULL, TC_TSC
 };
 
 uint64_t
@@ -220,6 +221,11 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 	printf("%s: TSC skew=%lld observed drift=%lld\n", ci->ci_dev->dv_xname,
 	    (long long)ci->ci_tsc_skew, (long long)tsc_drift_observed);
 #endif
+	if (ci->ci_tsc_skew < -TSC_SKEW_MAX || ci->ci_tsc_skew > TSC_SKEW_MAX) {
+		printf("%s: disabling user TSC (skew=%lld)\n",
+		    ci->ci_dev->dv_xname, (long long)ci->ci_tsc_skew);
+		tsc_timecounter.tc_user = 0;
+	}
 
 	if (!(ci->ci_flags & CPUF_PRIMARY) ||
 	    !(ci->ci_flags & CPUF_CONST_TSC) ||
@@ -244,6 +250,7 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 		printf("ERROR: %lld cycle TSC drift observed\n",
 		    (long long)tsc_drift_observed);
 		tsc_timecounter.tc_quality = -1000;
+		tsc_timecounter.tc_user = 0;
 		tsc_is_invariant = 0;
 	}
 

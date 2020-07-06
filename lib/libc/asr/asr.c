@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.63 2020/06/07 16:16:01 deraadt Exp $	*/
+/*	$OpenBSD: asr.c,v 1.64 2020/07/06 13:33:05 pirofti Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -198,11 +198,11 @@ poll_intrsafe(struct pollfd *fds, nfds_t nfds, int timeout)
 	struct timespec pollstart, pollend, elapsed;
 	int r;
 
-	if (clock_gettime(CLOCK_MONOTONIC, &pollstart))
+	if (WRAP(clock_gettime)(CLOCK_MONOTONIC, &pollstart))
 		return -1;
 
 	while ((r = poll(fds, 1, timeout)) == -1 && errno == EINTR) {
-		if (clock_gettime(CLOCK_MONOTONIC, &pollend))
+		if (WRAP(clock_gettime)(CLOCK_MONOTONIC, &pollend))
 			return -1;
 		timespecsub(&pollend, &pollstart, &elapsed);
 		timeout -= elapsed.tv_sec * 1000 + elapsed.tv_nsec / 1000000;
@@ -420,7 +420,7 @@ asr_check_reload(struct asr *asr)
 		asr->a_rtime = 0;
 	}
 
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
+	if (WRAP(clock_gettime)(CLOCK_MONOTONIC, &ts) == -1)
 		return;
 
 	if ((ts.tv_sec - asr->a_rtime) < RELOAD_DELAY && asr->a_rtime != 0)

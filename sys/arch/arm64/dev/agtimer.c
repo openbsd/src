@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.12 2020/06/05 22:14:25 kettenis Exp $ */
+/* $OpenBSD: agtimer.c,v 1.13 2020/07/06 13:33:06 pirofti Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -43,7 +43,7 @@ int32_t agtimer_frequency = TIMER_FREQUENCY;
 u_int agtimer_get_timecount(struct timecounter *);
 
 static struct timecounter agtimer_timecounter = {
-	agtimer_get_timecount, NULL, 0x7fffffff, 0, "agtimer", 0, NULL
+	agtimer_get_timecount, NULL, 0x7fffffff, 0, "agtimer", 0, NULL, 0
 };
 
 struct agtimer_pcpu_softc {

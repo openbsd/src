@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.31 2020/06/30 14:56:10 visa Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.32 2020/07/06 13:33:08 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -273,7 +273,9 @@ struct timecounter cp0_timecounter = {
 	0xffffffff,		/* counter_mask */
 	0,			/* frequency */
 	"CP0",			/* name */
-	0			/* quality */
+	0,			/* quality */
+	NULL,			/* private bits */
+	0,			/* expose to user */
 };
 
 u_int

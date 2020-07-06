@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.7 2019/06/02 01:03:01 guenther Exp $ */
+/*	$OpenBSD: init.c,v 1.8 2020/07/06 13:33:05 pirofti Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <sys/timetc.h>		/* timekeep */
 
 #ifndef PIC
 #include <sys/mman.h>
@@ -45,8 +46,9 @@
 /* XXX should be in an include file shared with csu */
 char	***_csu_finish(char **_argv, char **_envp, void (*_cleanup)(void));
 
-/* provide definition for this */
+/* provide definitions for these */
 int	_pagesize = 0;
+struct timekeep	*_timekeep;
 
 /*
  * In dynamicly linked binaries environ and __progname are overriden by
@@ -105,6 +107,14 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 			phnum = aux->au_v;
 			break;
 #endif /* !PIC */
+		case AUX_openbsd_timekeep:
+			if (_tc_get_timecount) {
+				_timekeep = (void *)aux->au_v;
+				if (_timekeep &&
+				    _timekeep->tk_version != TK_VERSION)
+					_timekeep = NULL;
+			}
+			break;
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.296 2020/07/04 08:06:08 anton Exp $	*/
+/*	$OpenBSD: proc.h,v 1.297 2020/07/06 13:33:09 pirofti Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -242,6 +242,7 @@ struct process {
 	char	ps_comm[MAXCOMLEN+1];
 
 	vaddr_t	ps_strings;		/* User pointers to argv/env */
+	vaddr_t ps_timekeep; 		/* User pointer to timekeep */
 	vaddr_t	ps_sigcode;		/* User pointer to the signal code */
 	vaddr_t ps_sigcoderet;		/* User pointer to sigreturn retPC */
 	u_long	ps_sigcookie;

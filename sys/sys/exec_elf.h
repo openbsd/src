@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.87 2019/12/01 13:10:51 jsg Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.88 2020/07/06 13:33:09 pirofti Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -691,7 +691,8 @@ enum AuxID {
 	AUX_sun_uid = 2000,		/* euid */
 	AUX_sun_ruid = 2001,		/* ruid */
 	AUX_sun_gid = 2002,		/* egid */
-	AUX_sun_rgid = 2003		/* rgid */
+	AUX_sun_rgid = 2003,		/* rgid */
+	AUX_openbsd_timekeep = 4000,	/* userland clock_gettime */
 };
 
 struct elf_args {

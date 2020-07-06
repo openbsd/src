@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.33 2019/06/28 13:32:42 deraadt Exp $ */
+/*	$OpenBSD: clnt_tcp.c,v 1.34 2020/07/06 13:33:06 pirofti Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -393,12 +393,12 @@ readtcp(struct ct_data *ct, caddr_t buf, int len)
 	pfd[0].events = POLLIN;
 	TIMEVAL_TO_TIMESPEC(&ct->ct_wait, &wait);
 	delta = wait;
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	WRAP(clock_gettime)(CLOCK_MONOTONIC, &start);
 	for (;;) {
 		r = ppoll(pfd, 1, &delta, NULL);
 		save_errno = errno;
 
-		clock_gettime(CLOCK_MONOTONIC, &after);
+		WRAP(clock_gettime)(CLOCK_MONOTONIC, &after);
 		timespecsub(&start, &after, &duration);
 		timespecsub(&wait, &duration, &delta);
 		if (delta.tv_sec < 0 || !timespecisset(&delta))

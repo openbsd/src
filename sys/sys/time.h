@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.54 2020/06/26 18:48:31 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.55 2020/07/06 13:33:09 pirofti Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ struct clockinfo {
 };
 #endif /* __BSD_VISIBLE */
 
-#if defined(_KERNEL) || defined(_STANDALONE)
+#if defined(_KERNEL) || defined(_STANDALONE) || defined (_LIBC)
 #include <sys/_time.h>
 
 /* Time expressed as seconds and fractions of a second + operations on it. */
@@ -171,6 +171,9 @@ struct bintime {
 	time_t	sec;
 	uint64_t frac;
 };
+#endif
+
+#if defined(_KERNEL) || defined(_STANDALONE) || defined (_LIBC)
 
 #define bintimecmp(btp, ctp, cmp)					\
 	((btp)->sec == (ctp)->sec ?					\
@@ -249,6 +252,9 @@ TIMEVAL_TO_BINTIME(const struct timeval *tv, struct bintime *bt)
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)18446744073709ULL;
 }
+#endif
+
+#if defined(_KERNEL) || defined(_STANDALONE)
 
 /*
  * Functions for looking at our clocks: [get]{bin,nano,micro}[boot|up]time()
