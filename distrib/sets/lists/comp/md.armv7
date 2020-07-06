@@ -100,6 +100,7 @@
 ./usr/include/armv7/spinlock.h
 ./usr/include/armv7/sysarch.h
 ./usr/include/armv7/tcb.h
+./usr/include/armv7/timetc.h
 ./usr/include/armv7/trap.h
 ./usr/include/armv7/vmparam.h
 ./usr/include/ieeefp.h

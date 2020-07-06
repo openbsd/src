@@ -44,6 +44,7 @@
 ./usr/include/landisk/signal.h
 ./usr/include/landisk/spinlock.h
 ./usr/include/landisk/tcb.h
+./usr/include/landisk/timetc.h
 ./usr/include/landisk/trap.h
 ./usr/include/landisk/vmparam.h
 ./usr/include/sh

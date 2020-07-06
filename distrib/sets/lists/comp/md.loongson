@@ -56,6 +56,7 @@
 ./usr/include/loongson/spinlock.h
 ./usr/include/loongson/sysarch.h
 ./usr/include/loongson/tcb.h
+./usr/include/loongson/timetc.h
 ./usr/include/loongson/trap.h
 ./usr/include/loongson/vmparam.h
 ./usr/include/mips64

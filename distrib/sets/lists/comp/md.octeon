@@ -103,6 +103,7 @@
 ./usr/include/octeon/spinlock.h
 ./usr/include/octeon/sysarch.h
 ./usr/include/octeon/tcb.h
+./usr/include/octeon/timetc.h
 ./usr/include/octeon/trap.h
 ./usr/include/octeon/vmparam.h
 ./usr/include/unwind.h

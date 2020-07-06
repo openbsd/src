@@ -53,6 +53,7 @@
 ./usr/include/luna88k/signal.h
 ./usr/include/luna88k/spinlock.h
 ./usr/include/luna88k/tcb.h
+./usr/include/luna88k/timetc.h
 ./usr/include/luna88k/trap.h
 ./usr/include/luna88k/vmparam.h
 ./usr/include/luna88k/xpio.h

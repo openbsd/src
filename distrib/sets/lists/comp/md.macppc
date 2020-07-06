@@ -51,6 +51,7 @@
 ./usr/include/macppc/signal.h
 ./usr/include/macppc/spinlock.h
 ./usr/include/macppc/tcb.h
+./usr/include/macppc/timetc.h
 ./usr/include/macppc/trap.h
 ./usr/include/macppc/vmparam.h
 ./usr/include/macppc/z8530var.h

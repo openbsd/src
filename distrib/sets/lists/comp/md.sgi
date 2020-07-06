@@ -99,6 +99,7 @@
 ./usr/include/sgi/spinlock.h
 ./usr/include/sgi/sysarch.h
 ./usr/include/sgi/tcb.h
+./usr/include/sgi/timetc.h
 ./usr/include/sgi/trap.h
 ./usr/include/sgi/vmparam.h
 ./usr/include/sgi/z8530var.h
