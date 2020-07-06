@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.117 2020/06/30 14:05:13 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.118 2020/07/06 20:28:38 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -652,7 +652,7 @@ pipex_destroy_session(struct pipex_session *session)
 	}
 
 	pipex_unlink_session(session);
-	pool_put(&pipex_session_pool, session);
+	pipex_rele_session(session);
 
 	return (0);
 }
