@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.44 2020/07/05 12:22:43 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.45 2020/07/06 17:43:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -715,6 +715,14 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	frame.sf_sc.sc_frame.srr0 = tf->srr0;
 	frame.sf_sc.sc_frame.srr1 = tf->srr1;
 
+	/* Copy the saved FPU state into the frame if necessary. */
+	if (pcb->pcb_flags & (PCB_FP|PCB_VEC|PCB_VSX)) {
+		memcpy(frame.sf_sc.sc_vsx, pcb->pcb_fpstate.fp_vsx,
+		    sizeof(pcb->pcb_fpstate.fp_vsx));
+		frame.sf_sc.sc_fpscr = pcb->pcb_fpstate.fp_fpscr;
+		frame.sf_sc.sc_vscr = pcb->pcb_fpstate.fp_vscr;
+	}
+
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = mask;
 
@@ -747,6 +755,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	int error;
 	int i;
 
@@ -781,6 +790,14 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	tf->ctr = ksc.sc_frame.ctr;
 	tf->srr0 = ksc.sc_frame.srr0;
 	tf->srr1 = ksc.sc_frame.srr1;
+
+	/* Write saved FPU state back to PCB if necessary. */
+	if (pcb->pcb_flags & (PCB_FP|PCB_VEC|PCB_VSX)) {
+		memcpy(pcb->pcb_fpstate.fp_vsx, ksc.sc_vsx,
+		    sizeof(pcb->pcb_fpstate.fp_vsx));
+		pcb->pcb_fpstate.fp_fpscr = ksc.sc_fpscr;
+		pcb->pcb_fpstate.fp_vscr = ksc.sc_vscr;
+	}
 
 	/* Restore signal mask. */
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
