@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.10 2020/07/02 21:51:05 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.11 2020/07/06 15:47:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -18,6 +18,8 @@
 
 #ifndef _MACHINE_PMAP_H_
 #define _MACHINE_PMAP_H_
+
+#ifdef _KERNEL
 
 #include <machine/pte.h>
 
@@ -54,16 +56,6 @@ typedef struct pmap *pmap_t;
 #define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
 #define PMAP_NOCACHE	0x1		/* map uncached */
 
-struct vm_page_md {
-	struct mutex pv_mtx;
-	LIST_HEAD(,pte_desc) pv_list;
-};
-
-#define VM_MDPAGE_INIT(pg) do {                 \
-	mtx_init(&(pg)->mdpage.pv_mtx, IPL_VM); \
-	LIST_INIT(&((pg)->mdpage.pv_list)); 	\
-} while (0)
-
 extern struct pmap kernel_pmap_store;
 
 #define pmap_kernel()	(&kernel_pmap_store)
@@ -85,5 +77,20 @@ void	pmap_unset_user_slb(void);
 struct pte;
 struct pte *pmap_get_kernel_pte(vaddr_t);
 #endif
+
+#endif	/* _KERNEL */
+
+#include <sys/mutex.h>
+#include <sys/queue.h>
+
+struct vm_page_md {
+	struct mutex pv_mtx;
+	LIST_HEAD(,pte_desc) pv_list;
+};
+
+#define VM_MDPAGE_INIT(pg) do {                 \
+	mtx_init(&(pg)->mdpage.pv_mtx, IPL_VM); \
+	LIST_INIT(&((pg)->mdpage.pv_list)); 	\
+} while (0)
 
 #endif /* _MACHINE_PMAP_H_ */
