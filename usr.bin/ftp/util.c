@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.92 2019/11/18 04:37:35 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.93 2020/07/06 17:11:29 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -921,7 +921,7 @@ void
 ptransfer(int siginfo)
 {
 	struct timespec now, td;
-	double elapsed;
+	double elapsed, pace;
 	off_t bs;
 	int meg, remaining, hh;
 	char buf[100];
@@ -937,11 +937,13 @@ ptransfer(int siginfo)
 	if (bs > (1024 * 1024))
 		meg = 1;
 
-	/* XXX floating point printf in signal handler */
+	pace = bs / (1024.0 * (meg ? 1024.0 : 1.0));
 	(void)snprintf(buf, sizeof(buf),
-	    "%lld byte%s %s in %.2f seconds (%.2f %sB/s)\n",
-	    (long long)bytes, bytes == 1 ? "" : "s", direction, elapsed,
-	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
+	    "%lld byte%s %s in %lld.%02d seconds (%lld.%02d %sB/s)\n",
+	    (long long)bytes, bytes == 1 ? "" : "s", direction,
+	    (long long)elapsed, (int)(elapsed * 100.0) % 100,
+	    (long long)pace, (int)(pace * 100.0) % 100,
+	    meg ? "M" : "K");
 
 	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0 &&
 	    bytes + restart_point <= filesize) {
