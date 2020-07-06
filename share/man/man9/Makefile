@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.304 2020/06/26 21:08:29 sthen Exp $
+#	$OpenBSD: Makefile,v 1.305 2020/07/06 11:48:03 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -22,7 +22,8 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	ifiq_input.9 ifq_enqueue.9 \
 	ifq_deq_begin.9 imax.9 iic.9 intro.9 inittodr.9 \
 	intr_barrier.9 intrmap_create.9 \
-	KASSERT.9 km_alloc.9 knote.9 kthread.9 ktrace.9 \
+	KASSERT.9 km_alloc.9 knote.9 kstat_create.9 kstat_kv_init.9 \
+	kthread.9 ktrace.9 \
 	lim_cur.9 loadfirmware.9 log.9 \
 	malloc.9 membar_sync.9 memcmp.9 mbuf.9 mbuf_tags.9 md5.9 mi_switch.9 \
 	microtime.9 ml_init.9 mq_init.9 mutex.9 \
