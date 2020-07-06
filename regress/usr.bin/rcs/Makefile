@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2020/06/26 07:55:57 stsp Exp $
+#	$OpenBSD: Makefile,v 1.44 2020/07/06 15:24:11 tb Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -250,28 +250,28 @@ test-merge-eflag: clean
 
 test-merge-noeol: clean
 	@echo "<<<<<<< file1\nline1=======\nline3\n>>>>>>> file3" \
-		> merge-noeol.out
+		> ${.CURDIR}/merge-noeol.out
 	@echo -n "line1" > file1
 	@echo "line2" > file2
 	@echo "line3" > file3
 	@${MERGE} -p -q file1 file2 file3 | \
 	    ${DIFF} ${.CURDIR}/merge-noeol.out -
 	@echo "<<<<<<< file1\nline1\n=======\nline3\n>>>>>>> file3" \
-		> merge-noeol.out
+		> ${.CURDIR}/merge-noeol.out
 	@echo "line1" > file1
 	@echo -n "line2" > file2
 	@echo "line3" > file3
 	@${MERGE} -p -q file1 file2 file3 | \
 	    ${DIFF} ${.CURDIR}/merge-noeol.out -
 	@echo "<<<<<<< file1\nline1\n=======\nline3>>>>>>> file3" \
-		> merge-noeol.out
+		> ${.CURDIR}/merge-noeol.out
 	@echo "line1" > file1
 	@echo "line2" > file2
 	@echo -n "line3" > file3
 	@${MERGE} -p -q file1 file2 file3 | \
 	    ${DIFF} ${.CURDIR}/merge-noeol.out -
 	@echo "<<<<<<< file1\nline1=======\nline3>>>>>>> file3" \
-		> merge-noeol.out
+		> ${.CURDIR}/merge-noeol.out
 	@echo -n "line1" > file1
 	@echo -n "line2" > file2
 	@echo -n "line3" > file3
@@ -625,9 +625,9 @@ test-ci-parse-keywords2: clean
 
 # Check for correct EOF handling in rcs parser
 test-co-parse-truncated: clean
-	@sh -c 'ulimit -d 5000 && ${CO} -q ${.CURDIR}/test-truncated > truncated.out 2>&1' || \
+	@sh -c 'ulimit -d 5000 && ${CO} -q ${.CURDIR}/test-truncated > ${.CURDIR}/truncated.out 2>&1' || \
 	    case "$$?" in 1) exit 0;; esac && exit 1
-	@grep -q 'co: could not parse admin data' truncated.out
+	@grep -q 'co: could not parse admin data' ${.CURDIR}/truncated.out
 
 test-ci-2files: clean
 	@touch foo bar
