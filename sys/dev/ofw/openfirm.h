@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.15 2017/12/27 11:40:14 kettenis Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.16 2020/07/06 15:18:03 kettenis Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -37,6 +37,8 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+
+#define OFMAXPARAM	64
 
 int openfirmware(void *);
 
