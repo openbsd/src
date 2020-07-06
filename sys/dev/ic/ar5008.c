@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.59 2020/05/23 08:42:50 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.60 2020/07/06 11:28:51 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -811,12 +811,20 @@ ar5008_ccmp_decap(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *
 	/* Sanity checks to ensure this is really a key we installed. */
 	entry = (uintptr_t)k->k_priv;
 	if (k->k_flags & IEEE80211_KEY_GROUP) {
-		if (k->k_id > IEEE80211_WEP_NKID ||
+		if (k->k_id >= IEEE80211_WEP_NKID ||
 		    entry != k->k_id)
 			return 1;
-	} else if (entry != IEEE80211_WEP_NKID +
-	    IEEE80211_AID(ni->ni_associd))
-		return 1;
+	} else {
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			if (entry != IEEE80211_WEP_NKID +
+			    IEEE80211_AID(ni->ni_associd))
+				return 1;
+		} else
+#endif
+			if (entry != IEEE80211_WEP_NKID)
+				return 1;
+	}
 
 	/* Check that ExtIV bit is set. */
 	if (!(ivp[3] & IEEE80211_WEP_EXTIV))
