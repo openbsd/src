@@ -1,5 +1,6 @@
 ./usr/bin/addr2line
 ./usr/bin/readelf
+./usr/include/ieeefp.h
 ./usr/include/powerpc64
 ./usr/include/powerpc64/_float.h
 ./usr/include/powerpc64/_types.h
@@ -45,6 +46,5 @@
 ./usr/include/powerpc64/tcb.h
 ./usr/include/powerpc64/trap.h
 ./usr/include/powerpc64/vmparam.h
-./usr/include/ieeefp.h
 ./usr/libdata/ldscripts
 ./usr/share/info/bfd.info

@@ -1,4 +1,3 @@
-./usr/include/dev/fdt/if_mvppreg.h
 ./sys
 ./usr/bin/c++filt
 ./usr/bin/cpp
@@ -137,6 +136,7 @@
 ./usr/include/dev/eisa/eisavar.h
 ./usr/include/dev/fdt
 ./usr/include/dev/fdt/if_mvnetareg.h
+./usr/include/dev/fdt/if_mvppreg.h
 ./usr/include/dev/fdt/imxanatopvar.h
 ./usr/include/dev/fdt/imxccm_clocks.h
 ./usr/include/dev/fdt/imxiicvar.h
@@ -1328,6 +1328,7 @@
 ./usr/include/sys/kcore.h
 ./usr/include/sys/kcov.h
 ./usr/include/sys/kernel.h
+./usr/include/sys/kstat.h
 ./usr/include/sys/kthread.h
 ./usr/include/sys/ktrace.h
 ./usr/include/sys/limits.h
