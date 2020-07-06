@@ -1,6 +1,6 @@
 define(MACHINE,powerpc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.2 2020/06/29 17:39:58 kettenis Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.3 2020/07/06 06:11:27 dlg Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -77,6 +77,7 @@ _DEV(tun, 76)
 _DEV(uk, 70)
 _DEV(vscsi, 83)
 _DEV(switch, 74)
+_DEV(kstat, 15)
 dnl
 divert(__mddivert)dnl
 dnl
