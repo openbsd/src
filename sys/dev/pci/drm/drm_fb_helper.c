@@ -1958,7 +1958,7 @@ EXPORT_SYMBOL(drm_fb_helper_initial_config);
  */
 int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
 {
-	struct fb_info *fbi = fb_helper->fbdev;
+	struct fb_info *fbi;
 	int err = 0;
 
 	if (!drm_fbdev_emulation || !fb_helper)
@@ -1985,6 +1985,7 @@ int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
 	drm_setup_crtcs_fb(fb_helper);
 	mutex_unlock(&fb_helper->lock);
 
+	fbi = fb_helper->fbdev;
 	if (fbi->fbops && fbi->fbops->fb_set_par)
 		fbi->fbops->fb_set_par(fbi);
 	else
