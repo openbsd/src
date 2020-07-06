@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.154 2020/06/29 09:26:12 sthen Exp $	*/
+/*	$OpenBSD: conf.h,v 1.155 2020/07/06 04:11:26 dlg Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -328,6 +328,13 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
 
+/* open, close, ioctl */
+#define cdev_kstat_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, selfalse, \
+	(dev_type_mmap((*))) enodev }
+
 /* open, close, read, write, ioctl, stop, tty, poll, mmap, kqfilter */
 #define	cdev_wsdisplay_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
@@ -605,6 +612,7 @@ cdev_decl(wsmouse);
 cdev_decl(wsmux);
 
 cdev_decl(ksyms);
+cdev_decl(kstat);
 
 cdev_decl(bio);
 cdev_decl(vscsi);
