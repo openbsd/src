@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.214 2020/07/06 13:33:09 pirofti Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.215 2020/07/06 21:41:56 kettenis Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -881,7 +881,7 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 int
 exec_timekeep_map(struct process *pr)
 {
-	size_t timekeep_sz = sizeof(struct timekeep);
+	size_t timekeep_sz = round_page(sizeof(struct timekeep));
 
 	/*
 	 * Similar to the sigcode object, except that there is a single
@@ -893,10 +893,18 @@ exec_timekeep_map(struct process *pr)
 		timekeep_object = uao_create(timekeep_sz, 0);
 		uao_reference(timekeep_object);
 
-		if (uvm_map(kernel_map, &va, round_page(timekeep_sz), timekeep_object,
+		if (uvm_map(kernel_map, &va, timekeep_sz, timekeep_object,
 		    0, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
 		    MAP_INHERIT_SHARE, MADV_RANDOM, 0))) {
 			uao_detach(timekeep_object);
+			timekeep_object = NULL;
+			return (ENOMEM);
+		}
+		if (uvm_fault_wire(kernel_map, va, va + timekeep_sz,
+		    PROT_READ | PROT_WRITE)) {
+			uvm_unmap(kernel_map, va, va + timekeep_sz);
+			uao_detach(timekeep_object);
+			timekeep_object = NULL;
 			return (ENOMEM);
 		}
 
