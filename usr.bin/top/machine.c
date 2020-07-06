@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.106 2020/06/26 20:55:55 kn Exp $	 */
+/* $OpenBSD: machine.c,v 1.107 2020/07/06 16:27:59 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -314,7 +314,8 @@ struct kinfo_proc *
 getprocs(int op, int arg, int *cnt)
 {
 	size_t size;
-	int mib[6] = {CTL_KERN, KERN_PROC, 0, 0, sizeof(struct kinfo_proc), 0};
+	int mib[6] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0,
+	    sizeof(struct kinfo_proc), 0};
 	static int maxslp_mib[] = {CTL_VM, VM_MAXSLP};
 	static struct kinfo_proc *procbase;
 	int st;
