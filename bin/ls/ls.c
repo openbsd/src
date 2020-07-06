@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.52 2020/07/06 00:51:51 millert Exp $	*/
+/*	$OpenBSD: ls.c,v 1.53 2020/07/06 00:55:05 millert Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ traverse(int argc, char *argv[], int options)
 			 */
 			if (output)
 				(void)printf("\n%s:\n", p->fts_path);
-			else if (argc > 1) {
+			else if (f_recursive || argc > 1) {
 				(void)printf("%s:\n", p->fts_path);
 				output = 1;
 			}
