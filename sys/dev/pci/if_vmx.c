@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.61 2020/06/25 03:19:35 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.62 2020/07/07 01:36:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -17,6 +17,7 @@
  */
 
 #include "bpfilter.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -26,6 +27,7 @@
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/intrmap.h>
+#include <sys/kstat.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -98,6 +100,7 @@ struct vmxnet3_txqueue {
 	struct vmxnet3_comp_ring comp_ring;
 	struct vmxnet3_txq_shared *ts;
 	struct ifqueue *ifq;
+	struct kstat *txkstat;
 } __aligned(64);
 
 struct vmxnet3_rxqueue {
@@ -106,6 +109,7 @@ struct vmxnet3_rxqueue {
 	struct vmxnet3_comp_ring comp_ring;
 	struct vmxnet3_rxq_shared *rs;
 	struct ifiqueue *ifiq;
+	struct kstat *rxkstat;
 } __aligned(64);
 
 struct vmxnet3_queue {
@@ -136,24 +140,12 @@ struct vmxnet3_softc {
 	struct vmxnet3_driver_shared *sc_ds;
 	u_int8_t *sc_mcast;
 	struct vmxnet3_upt1_rss_conf *sc_rss;
-};
 
-#define VMXNET3_STAT
-
-#ifdef VMXNET3_STAT
-struct {
-	u_int ntxdesc;
-	u_int nrxdesc;
-	u_int txhead;
-	u_int txdone;
-	u_int maxtxlen;
-	u_int rxdone;
-	u_int rxfill;
-	u_int intr;
-} vmxstat = {
-	NTXDESC, NRXDESC
-};
+#if NKSTAT > 0
+	struct rwlock		sc_kstat_lock;
+	struct timeval		sc_kstat_updated;
 #endif
+};
 
 #define JUMBO_LEN (1024 * 9)
 #define DMAADDR(map) ((map)->dm_segs[0].ds_addr)
@@ -201,6 +193,14 @@ void vmxnet3_watchdog(struct ifnet *);
 void vmxnet3_media_status(struct ifnet *, struct ifmediareq *);
 int vmxnet3_media_change(struct ifnet *);
 void *vmxnet3_dma_allocmem(struct vmxnet3_softc *, u_int, u_int, bus_addr_t *);
+
+#if NKSTAT > 0
+static void	vmx_kstat_init(struct vmxnet3_softc *);
+static void	vmx_kstat_txstats(struct vmxnet3_softc *,
+		    struct vmxnet3_txqueue *, int);
+static void	vmx_kstat_rxstats(struct vmxnet3_softc *,
+		    struct vmxnet3_rxqueue *, int);
+#endif /* NKSTAT > 0 */
 
 const struct pci_matchid vmx_devices[] = {
 	{ PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET_3 }
@@ -388,10 +388,20 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach_queues(ifp, sc->sc_nqueues);
 	if_attach_iqueues(ifp, sc->sc_nqueues);
+
+#if NKSTAT > 0
+	vmx_kstat_init(sc);
+#endif
+
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		ifp->if_ifqs[i]->ifq_softc = &sc->sc_q[i].tx;
 		sc->sc_q[i].tx.ifq = ifp->if_ifqs[i];
 		sc->sc_q[i].rx.ifiq = ifp->if_iqs[i];
+
+#if NKSTAT > 0
+		vmx_kstat_txstats(sc, &sc->sc_q[i].tx, i);
+		vmx_kstat_rxstats(sc, &sc->sc_q[i].rx, i);
+#endif
 	}
 }
 
@@ -1023,9 +1033,6 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		ml_enqueue(&ml, m);
 
 skip_buffer:
-#ifdef VMXNET3_STAT
-		vmxstat.rxdone = idx;
-#endif
 		if (rq->rs->update_rxhead) {
 			u_int qid = letoh32((rxcd->rxc_word0 >>
 			    VMXNET3_RXC_QID_S) & VMXNET3_RXC_QID_M);
@@ -1450,3 +1457,126 @@ vmxnet3_dma_allocmem(struct vmxnet3_softc *sc, u_int size, u_int align, bus_addr
 	bus_dmamap_destroy(t, map);
 	return va;
 }
+
+#if NKSTAT > 0
+/*
+ * "hardware" counters are exported as separate kstats for each tx
+ * and rx ring, but the request for the hypervisor to update the
+ * stats is done once at the controller level. we limit the number
+ * of updates at the controller level to a rate of one per second to
+ * debounce this a bit.
+ */
+static const struct timeval vmx_kstat_rate = { 1, 0 };
+
+/*
+ * all the vmx stats are 64 bit counters, we just need their name and units.
+ */
+struct vmx_kstat_tpl {
+	const char		*name;
+	enum kstat_kv_unit	 unit;
+};
+
+static const struct vmx_kstat_tpl vmx_rx_kstat_tpl[UPT1_RxStats_count] = {
+	{ "LRO packets",	KSTAT_KV_U_PACKETS },
+	{ "LRO bytes",		KSTAT_KV_U_BYTES },
+	{ "ucast packets",	KSTAT_KV_U_PACKETS },
+	{ "ucast bytes",	KSTAT_KV_U_BYTES },
+	{ "mcast packets",	KSTAT_KV_U_PACKETS },
+	{ "mcast bytes",	KSTAT_KV_U_BYTES },
+	{ "bcast packets",	KSTAT_KV_U_PACKETS },
+	{ "bcast bytes",	KSTAT_KV_U_BYTES },
+	{ "no buffers",		KSTAT_KV_U_PACKETS },
+	{ "errors",		KSTAT_KV_U_PACKETS },
+};
+
+static const struct vmx_kstat_tpl vmx_tx_kstat_tpl[UPT1_TxStats_count] = {
+	{ "TSO packets",	KSTAT_KV_U_PACKETS },
+	{ "TSO bytes",		KSTAT_KV_U_BYTES },
+	{ "ucast packets",	KSTAT_KV_U_PACKETS },
+	{ "ucast bytes",	KSTAT_KV_U_BYTES },
+	{ "mcast packets",	KSTAT_KV_U_PACKETS },
+	{ "mcast bytes",	KSTAT_KV_U_BYTES },
+	{ "bcast packets",	KSTAT_KV_U_PACKETS },
+	{ "bcast bytes",	KSTAT_KV_U_BYTES },
+	{ "errors",		KSTAT_KV_U_PACKETS },
+	{ "discards",		KSTAT_KV_U_PACKETS },
+};
+
+static void
+vmx_kstat_init(struct vmxnet3_softc *sc)
+{
+	rw_init(&sc->sc_kstat_lock, "vmxkstat");
+}
+
+static int
+vmx_kstat_read(struct kstat *ks)
+{
+	struct vmxnet3_softc *sc = ks->ks_softc;
+	struct kstat_kv *kvs = ks->ks_data;
+	uint64_t *vs = ks->ks_ptr;
+	unsigned int n, i;
+
+	if (ratecheck(&sc->sc_kstat_updated, &vmx_kstat_rate)) {
+		WRITE_CMD(sc, VMXNET3_CMD_GET_STATS);
+		/* barrier? */
+	}
+
+	n = ks->ks_datalen / sizeof(*kvs);
+	for (i = 0; i < n; i++)
+		kstat_kv_u64(&kvs[i]) = lemtoh64(&vs[i]);
+
+ 	TIMEVAL_TO_TIMESPEC(&sc->sc_kstat_updated, &ks->ks_updated);
+
+	return (0);
+}
+
+static struct kstat *
+vmx_kstat_create(struct vmxnet3_softc *sc, const char *name, unsigned int unit,
+    const struct vmx_kstat_tpl *tpls, unsigned int n, uint64_t *vs)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	unsigned int i;
+
+	ks = kstat_create(sc->sc_dev.dv_xname, 0, name, unit,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return (NULL);
+
+	kvs = mallocarray(n, sizeof(*kvs), M_DEVBUF, M_WAITOK|M_ZERO);
+	for (i = 0; i < n; i++) {
+		const struct vmx_kstat_tpl *tpl = &tpls[i];
+
+		kstat_kv_unit_init(&kvs[i], tpl->name,
+		    KSTAT_KV_T_COUNTER64, tpl->unit);
+	}
+
+	ks->ks_softc = sc;
+	kstat_set_wlock(ks, &sc->sc_kstat_lock);
+	ks->ks_ptr = vs;
+	ks->ks_data = kvs;
+	ks->ks_datalen = n * sizeof(*kvs);
+	ks->ks_read = vmx_kstat_read;
+	TIMEVAL_TO_TIMESPEC(&vmx_kstat_rate, &ks->ks_interval);
+
+	kstat_install(ks);
+
+	return (ks);
+}
+
+static void
+vmx_kstat_txstats(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq,
+    int unit)
+{
+	tq->txkstat = vmx_kstat_create(sc, "vmx-txstats", unit,
+	    vmx_tx_kstat_tpl, nitems(vmx_tx_kstat_tpl), tq->ts->stats);
+}
+
+static void
+vmx_kstat_rxstats(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq,
+    int unit)
+{
+	rq->rxkstat = vmx_kstat_create(sc, "vmx-rxstats", unit,
+	    vmx_rx_kstat_tpl, nitems(vmx_rx_kstat_tpl), rq->rs->stats);
+}
+#endif /* NKSTAT > 0 */
