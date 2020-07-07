@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.73 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.74 2020/07/07 10:33:58 jca Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -147,6 +147,7 @@ const struct option sh_options[] = {
 	{ "notify",	'b',		OF_ANY },
 	{ "nounset",	'u',		OF_ANY },
 	{ "physical",	  0,		OF_ANY }, /* non-standard */
+	{ "pipefail",	  0,		OF_ANY }, /* non-standard */
 	{ "posix",	  0,		OF_ANY }, /* non-standard */
 	{ "privileged",	'p',		OF_ANY },
 	{ "restricted",	'r',	    OF_CMDLINE },
