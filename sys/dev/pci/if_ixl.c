@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.62 2020/07/07 02:45:58 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.63 2020/07/07 12:40:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3882,7 +3882,7 @@ ixl_get_phy_types(struct ixl_softc *sc, uint64_t *phy_types_ptr)
 	int rv;
 
 	if (ixl_dmamem_alloc(sc, &idm, IXL_AQ_BUFLEN, 0) != 0) {
-		printf("%s: unable to allocate switch config buffer\n",
+		printf("%s: unable to allocate phy abilities buffer\n",
 		    DEVNAME(sc));
 		return (-1);
 	}
