@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.217 2020/05/23 12:14:52 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.218 2020/07/07 19:31:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -942,10 +942,20 @@ SSL_is_server(const SSL *s)
 	return s->server;
 }
 
+static long
+ssl_get_default_timeout()
+{
+	/*
+	 * 2 hours, the 24 hours mentioned in the TLSv1 spec
+	 * is way too long for http, the cache would over fill.
+	 */
+	return (2 * 60 * 60);
+}
+
 long
 SSL_get_default_timeout(const SSL *s)
 {
-	return (s->method->internal->get_timeout());
+	return (ssl_get_default_timeout());
 }
 
 int
@@ -1752,7 +1762,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->internal->session_cache_tail = NULL;
 
 	/* We take the system default */
-	ret->session_timeout = meth->internal->get_timeout();
+	ret->session_timeout = ssl_get_default_timeout();
 
 	ret->internal->new_session_cb = 0;
 	ret->internal->remove_session_cb = 0;

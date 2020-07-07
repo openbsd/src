@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.167 2020/05/29 17:39:42 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.168 2020/07/07 19:31:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -137,14 +137,6 @@ SSL3_ENC_METHOD TLSv1_2_enc_data = {
 	.enc_flags = SSL_ENC_FLAG_EXPLICIT_IV|SSL_ENC_FLAG_SIGALGS|
 	    SSL_ENC_FLAG_SHA256_PRF|SSL_ENC_FLAG_TLS1_2_CIPHERS,
 };
-
-long
-tls1_default_timeout(void)
-{
-	/* 2 hours, the 24 hours mentioned in the TLSv1 spec
-	 * is way too long for http, the cache would over fill */
-	return (60 * 60 * 2);
-}
 
 int
 tls1_new(SSL *s)

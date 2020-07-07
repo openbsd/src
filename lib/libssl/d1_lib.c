@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.45 2020/03/12 17:01:53 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.46 2020/07/07 19:31:11 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -75,14 +75,6 @@ static int dtls1_listen(SSL *s, struct sockaddr *client);
 SSL3_ENC_METHOD DTLSv1_enc_data = {
 	.enc_flags = SSL_ENC_FLAG_EXPLICIT_IV,
 };
-
-long
-dtls1_default_timeout(void)
-{
-	/* 2 hours, the 24 hours mentioned in the DTLSv1 spec
-	 * is way too long for http, the cache would over fill */
-	return (60*60*2);
-}
 
 int
 dtls1_new(SSL *s)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.281 2020/07/07 19:24:23 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.282 2020/07/07 19:31:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -384,9 +384,6 @@ typedef struct ssl_method_internal_st {
 	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
 
 	const struct ssl_method_st *(*get_ssl_method)(int version);
-
-	long (*get_timeout)(void);
-	int (*ssl_version)(void);
 
 	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
 } SSL_METHOD_INTERNAL;
@@ -1226,7 +1223,6 @@ int ssl3_record_write(SSL *s, int type);
 void tls1_record_sequence_increment(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
 
-long tls1_default_timeout(void);
 int dtls1_do_write(SSL *s, int type);
 int ssl3_packet_read(SSL *s, int plen);
 int ssl3_packet_extend(SSL *s, int plen);
@@ -1256,7 +1252,6 @@ void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
 void dtls1_build_sequence_number(unsigned char *dst, unsigned char *seq,
     unsigned short epoch);
-long dtls1_default_timeout(void);
 struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft);
 int dtls1_check_timeout_num(SSL *s);
 int dtls1_handle_timeout(SSL *s);
