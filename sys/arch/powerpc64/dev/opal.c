@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.c,v 1.6 2020/07/02 17:40:34 kettenis Exp $	*/
+/*	$OpenBSD: opal.c,v 1.7 2020/07/07 22:43:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -134,6 +134,12 @@ opal_attach(struct device *parent, struct device *self, void *aux)
 	todr_attach(&sc->sc_todr);
 
 	node = OF_getnodebyname(faa->fa_node, "consoles");
+	if (node) {
+		for (node = OF_child(node); node; node = OF_peer(node))
+			opal_attach_node(sc, node);
+	}
+
+	node = OF_getnodebyname(faa->fa_node, "sensors");
 	if (node) {
 		for (node = OF_child(node); node; node = OF_peer(node))
 			opal_attach_node(sc, node);
