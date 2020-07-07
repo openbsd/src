@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.31 2020/05/22 07:02:24 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.32 2020/07/07 00:00:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -20,6 +20,7 @@
 #define _NET_IFQ_H_
 
 struct ifnet;
+struct kstat;
 
 struct ifq_ops;
 
@@ -53,6 +54,8 @@ struct ifqueue {
 	uint64_t		 ifq_qdrops;
 	uint64_t		 ifq_errors;
 	uint64_t		 ifq_mcasts;
+
+	struct kstat		*ifq_kstat;
 
 	/* work serialisation */
 	struct mutex		 ifq_task_mtx;
@@ -91,6 +94,8 @@ struct ifiqueue {
 	uint64_t		 ifiq_errors;
 	uint64_t		 ifiq_mcasts;
 	uint64_t		 ifiq_noproto;
+
+	struct kstat		*ifiq_kstat;
 
 	/* properties */
 	unsigned int		 ifiq_idx;
