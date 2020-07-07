@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.215 2020/07/06 21:41:56 kettenis Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.216 2020/07/07 02:01:43 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 #include <sys/timetc.h>
 
 struct uvm_object *timekeep_object;
-struct timekeep* timekeep;
+struct timekeep *timekeep;
 
 void	unveil_destroy(struct process *ps);
 
