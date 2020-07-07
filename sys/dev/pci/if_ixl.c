@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.61 2020/07/07 02:42:02 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.62 2020/07/07 02:45:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -5222,8 +5222,7 @@ ixl_kstat_tick(void *arg)
 
 	timeout_add_sec(&sc->sc_kstat_tmo, 4);
 
-	if (mtx_enter_try(&sc->sc_kstat_mtx) == 0)
-		return; /* try again later */
+	mtx_enter(&sc->sc_kstat_mtx);
 
 	ixl_kstat_read(sc->sc_port_kstat);
 	ixl_kstat_read(sc->sc_vsi_kstat);
