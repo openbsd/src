@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.59 2020/06/30 04:39:46 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.60 2020/07/07 04:42:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -19,6 +19,7 @@
 
 #include "bpfilter.h"
 #include "vlan.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +43,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NKSTAT > 0
+#include <sys/kstat.h>
 #endif
 
 #include <netinet/in.h>
@@ -142,6 +147,8 @@ CTASSERT(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN == MCX_SQ_INLINE_SIZE);
 #define MCX_REG_PAOS			0x5006
 #define MCX_REG_PFCC			0x5007
 #define MCX_REG_PPCNT			0x5008
+#define MCX_REG_MTCAP			0x9009 /* mgmt temp capabilities */
+#define MCX_REG_MTMP			0x900a /* mgmt temp */
 #define MCX_REG_MCIA			0x9014
 
 #define MCX_ETHER_CAP_SGMII		0
@@ -430,6 +437,9 @@ struct mcx_reg_pmlp {
 } __packed __aligned(4);
 
 struct mcx_reg_ppcnt {
+	uint8_t			ppcnt_swid;
+	uint8_t			ppcnt_local_port;
+	uint8_t			ppcnt_pnat;
 	uint8_t			ppcnt_grp;
 #define MCX_REG_PPCNT_GRP_IEEE8023		0x00
 #define MCX_REG_PPCNT_GRP_RFC2863		0x01
@@ -438,13 +448,10 @@ struct mcx_reg_ppcnt {
 #define MCX_REG_PPCNT_GRP_PER_PRIO		0x10
 #define MCX_REG_PPCNT_GRP_PER_TC		0x11
 #define MCX_REG_PPCNT_GRP_PER_RX_BUFFER		0x11
-	uint8_t			ppcnt_pnat;
-	uint8_t			ppcnt_local_port;
-	uint8_t			ppcnt_swid;
 
-	uint8_t			ppcnt_prio_tc;
-	uint8_t			ppcnt_reserved1[2];
 	uint8_t			ppcnt_clr;
+	uint8_t			ppcnt_reserved1[2];
+	uint8_t			ppcnt_prio_tc;
 #define MCX_REG_PPCNT_CLR			(1 << 7)
 
 	uint8_t			ppcnt_counter_set[248];
@@ -453,90 +460,134 @@ CTASSERT(sizeof(struct mcx_reg_ppcnt) == 256);
 CTASSERT((offsetof(struct mcx_reg_ppcnt, ppcnt_counter_set) %
     sizeof(uint64_t)) == 0);
 
-struct mcx_ppcnt_ieee8023 {
-	uint64_t		frames_transmitted_ok;
-	uint64_t		frames_received_ok;
-	uint64_t		frame_check_sequence_errors;
-	uint64_t		alignment_errors;
-	uint64_t		octets_transmitted_ok;
-	uint64_t		octets_received_ok;
-	uint64_t		multicast_frames_xmitted_ok;
-	uint64_t		broadcast_frames_xmitted_ok;
-	uint64_t		multicast_frames_received_ok;
-	uint64_t		broadcast_frames_received_ok;
-	uint64_t		in_range_length_errors;
-	uint64_t		out_of_range_length_field;
-	uint64_t		frame_too_long_errors;
-	uint64_t		symbol_error_during_carrier;
-	uint64_t		mac_control_frames_transmitted;
-	uint64_t		mac_control_frames_received;
-	uint64_t		unsupported_opcodes_received;
-	uint64_t		pause_mac_ctrl_frames_received;
-	uint64_t		pause_mac_ctrl_frames_transmitted;
-};
-CTASSERT(sizeof(struct mcx_ppcnt_ieee8023) == 0x98);
+enum mcx_ppcnt_ieee8023 {
+	frames_transmitted_ok,
+	frames_received_ok,
+	frame_check_sequence_errors,
+	alignment_errors,
+	octets_transmitted_ok,
+	octets_received_ok,
+	multicast_frames_xmitted_ok,
+	broadcast_frames_xmitted_ok,
+	multicast_frames_received_ok,
+	broadcast_frames_received_ok,
+	in_range_length_errors,
+	out_of_range_length_field,
+	frame_too_long_errors,
+	symbol_error_during_carrier,
+	mac_control_frames_transmitted,
+	mac_control_frames_received,
+	unsupported_opcodes_received,
+	pause_mac_ctrl_frames_received,
+	pause_mac_ctrl_frames_transmitted,
 
-struct mcx_ppcnt_rfc2863 {
-	uint64_t		in_octets;
-	uint64_t		in_ucast_pkts;
-	uint64_t		in_discards;
-	uint64_t		in_errors;
-	uint64_t		in_unknown_protos;
-	uint64_t		out_octets;
-	uint64_t		out_ucast_pkts;
-	uint64_t		out_discards;
-	uint64_t		out_errors;
-	uint64_t		in_multicast_pkts;
-	uint64_t		in_broadcast_pkts;
-	uint64_t		out_multicast_pkts;
-	uint64_t		out_broadcast_pkts;
+	mcx_ppcnt_ieee8023_count
 };
-CTASSERT(sizeof(struct mcx_ppcnt_rfc2863) == 0x68);
+CTASSERT(mcx_ppcnt_ieee8023_count * sizeof(uint64_t) == 0x98);
 
-struct mcx_ppcnt_rfc2819 {
-	uint64_t		drop_events;
-	uint64_t		octets;
-	uint64_t		pkts;
-	uint64_t		broadcast_pkts;
-	uint64_t		multicast_pkts;
-	uint64_t		crc_align_errors;
-	uint64_t		undersize_pkts;
-	uint64_t		oversize_pkts;
-	uint64_t		fragments;
-	uint64_t		jabbers;
-	uint64_t		collisions;
-	uint64_t		pkts64octets;
-	uint64_t		pkts65to127octets;
-	uint64_t		pkts128to255octets;
-	uint64_t		pkts256to511octets;
-	uint64_t		pkts512to1023octets;
-	uint64_t		pkts1024to1518octets;
-	uint64_t		pkts1519to2047octets;
-	uint64_t		pkts2048to4095octets;
-	uint64_t		pkts4096to8191octets;
-	uint64_t		pkts8192to10239octets;
-};
-CTASSERT(sizeof(struct mcx_ppcnt_rfc2819) == 0xa8);
+enum mcx_ppcnt_rfc2863 {
+	in_octets,
+	in_ucast_pkts,
+	in_discards,
+	in_errors,
+	in_unknown_protos,
+	out_octets,
+	out_ucast_pkts,
+	out_discards,
+	out_errors,
+	in_multicast_pkts,
+	in_broadcast_pkts,
+	out_multicast_pkts,
+	out_broadcast_pkts,
 
-struct mcx_ppcnt_rfc3635 {
-	uint64_t		alignment_errors;
-	uint64_t		fcs_errors;
-	uint64_t		single_collision_frames;
-	uint64_t		multiple_collision_frames;
-	uint64_t		sqe_test_errors;
-	uint64_t		deferred_transmissions;
-	uint64_t		late_collisions;
-	uint64_t		excessive_collisions;
-	uint64_t		internal_mac_transmit_errors;
-	uint64_t		carrier_sense_errors;
-	uint64_t		frame_too_longs;
-	uint64_t		internal_mac_receive_errors;
-	uint64_t		symbol_errors;
-	uint64_t		control_in_unknown_opcodes;
-	uint64_t		control_in_pause_frames;
-	uint64_t		control_out_pause_frames;
+	mcx_ppcnt_rfc2863_count
 };
-CTASSERT(sizeof(struct mcx_ppcnt_rfc3635) == 0x80);
+CTASSERT(mcx_ppcnt_rfc2863_count * sizeof(uint64_t) == 0x68);
+
+enum mcx_ppcnt_rfc2819 {
+	drop_events,
+	octets,
+	pkts,
+	broadcast_pkts,
+	multicast_pkts,
+	crc_align_errors,
+	undersize_pkts,
+	oversize_pkts,
+	fragments,
+	jabbers,
+	collisions,
+	pkts64octets,
+	pkts65to127octets,
+	pkts128to255octets,
+	pkts256to511octets,
+	pkts512to1023octets,
+	pkts1024to1518octets,
+	pkts1519to2047octets,
+	pkts2048to4095octets,
+	pkts4096to8191octets,
+	pkts8192to10239octets,
+
+	mcx_ppcnt_rfc2819_count
+};
+CTASSERT((mcx_ppcnt_rfc2819_count * sizeof(uint64_t)) == 0xa8);
+
+enum mcx_ppcnt_rfc3635 {
+	dot3stats_alignment_errors,
+	dot3stats_fcs_errors,
+	dot3stats_single_collision_frames,
+	dot3stats_multiple_collision_frames,
+	dot3stats_sqe_test_errors,
+	dot3stats_deferred_transmissions,
+	dot3stats_late_collisions,
+	dot3stats_excessive_collisions,
+	dot3stats_internal_mac_transmit_errors,
+	dot3stats_carrier_sense_errors,
+	dot3stats_frame_too_longs,
+	dot3stats_internal_mac_receive_errors,
+	dot3stats_symbol_errors,
+	dot3control_in_unknown_opcodes,
+	dot3in_pause_frames,
+	dot3out_pause_frames,
+
+	mcx_ppcnt_rfc3635_count
+};
+CTASSERT((mcx_ppcnt_rfc3635_count * sizeof(uint64_t)) == 0x80);
+
+struct mcx_reg_mtcap {
+	uint8_t			_reserved1[3];
+	uint8_t			mtcap_sensor_count;
+	uint8_t			_reserved2[4];
+
+	uint64_t		mtcap_sensor_map;
+};
+
+struct mcx_reg_mtmp {
+	uint8_t			_reserved1[2];
+	uint16_t		mtmp_sensor_index;
+
+	uint8_t			_reserved2[2];
+	uint16_t		mtmp_temperature;
+
+	uint16_t		mtmp_mte_mtr;
+#define MCX_REG_MTMP_MTE		(1 << 15)
+#define MCX_REG_MTMP_MTR		(1 << 14)
+	uint16_t		mtmp_max_temperature;
+
+	uint16_t		mtmp_tee;
+#define MCX_REG_MTMP_TEE_NOPE		(0 << 14)
+#define MCX_REG_MTMP_TEE_GENERATE	(1 << 14)
+#define MCX_REG_MTMP_TEE_GENERATE_ONE	(2 << 14)
+	uint16_t		mtmp_temperature_threshold_hi;
+
+	uint8_t			_reserved3[2];
+	uint16_t		mtmp_temperature_threshold_lo;
+
+	uint8_t			_reserved4[4];
+
+	uint8_t			mtmp_sensor_name[8];
+};
+CTASSERT(sizeof(struct mcx_reg_mtmp) == 0x20);
+CTASSERT(offsetof(struct mcx_reg_mtmp, mtmp_sensor_name) == 0x18);
 
 #define MCX_MCIA_EEPROM_BYTES	32
 struct mcx_reg_mcia {
@@ -2124,11 +2175,24 @@ struct mcx_softc {
 	unsigned int		 sc_nqueues;
 
 	int			 sc_num_cq;
+
+#if NKSTAT > 0
+	struct kstat		*sc_kstat_ieee8023;
+	struct kstat		*sc_kstat_rfc2863;
+	struct kstat		*sc_kstat_rfc2819;
+	struct kstat		*sc_kstat_rfc3635;
+	unsigned int		 sc_kstat_mtmp_count;
+	struct kstat		**sc_kstat_mtmp;
+#endif
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
 static int	mcx_match(struct device *, void *, void *);
 static void	mcx_attach(struct device *, struct device *, void *);
+
+#if NKSTAT > 0
+static void	mcx_kstat_attach(struct mcx_softc *);
+#endif
 
 static int	mcx_version(struct mcx_softc *);
 static int	mcx_init_wait(struct mcx_softc *);
@@ -2569,6 +2633,10 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_extra_mcast = 0;
 	memset(sc->sc_mcast_flows, 0, sizeof(sc->sc_mcast_flows));
+
+#if NKSTAT > 0
+	mcx_kstat_attach(sc);
+#endif
 	return;
 
 teardown:
@@ -7131,3 +7199,329 @@ mcx_hwmem_free(struct mcx_softc *sc, struct mcx_hwmem *mhm)
 
 	mhm->mhm_npages = 0;
 }
+
+#if NKSTAT > 0
+struct mcx_ppcnt {
+	const char		*name;
+	enum kstat_kv_unit	 unit;
+};
+
+static const struct mcx_ppcnt mcx_ppcnt_ieee8023_tpl[] = {
+	{ "Good Tx",		KSTAT_KV_U_PACKETS, },
+	{ "Good Rx",		KSTAT_KV_U_PACKETS, },
+	{ "FCS errs",		KSTAT_KV_U_PACKETS, },
+	{ "Alignment Errs",	KSTAT_KV_U_PACKETS, },
+	{ "Good Tx",		KSTAT_KV_U_BYTES, },
+	{ "Good Rx",		KSTAT_KV_U_BYTES, },
+	{ "Multicast Tx",	KSTAT_KV_U_PACKETS, },
+	{ "Broadcast Tx",	KSTAT_KV_U_PACKETS, },
+	{ "Multicast Rx",	KSTAT_KV_U_PACKETS, },
+	{ "Broadcast Rx",	KSTAT_KV_U_PACKETS, },
+	{ "In Range Len",	KSTAT_KV_U_PACKETS, },
+	{ "Out Of Range Len",	KSTAT_KV_U_PACKETS, },
+	{ "Frame Too Long",	KSTAT_KV_U_PACKETS, },
+	{ "Symbol Errs",	KSTAT_KV_U_PACKETS, },
+	{ "MAC Ctrl Tx",	KSTAT_KV_U_PACKETS, },
+	{ "MAC Ctrl Rx",	KSTAT_KV_U_PACKETS, },
+	{ "MAC Ctrl Unsup",	KSTAT_KV_U_PACKETS, },
+	{ "Pause Rx",		KSTAT_KV_U_PACKETS, },
+	{ "Pause Tx",		KSTAT_KV_U_PACKETS, },
+};
+CTASSERT(nitems(mcx_ppcnt_ieee8023_tpl) == mcx_ppcnt_ieee8023_count);
+
+static const struct mcx_ppcnt mcx_ppcnt_rfc2863_tpl[] = {
+	{ "Rx Bytes",		KSTAT_KV_U_BYTES, },
+	{ "Rx Unicast",		KSTAT_KV_U_PACKETS, },
+	{ "Rx Discards",	KSTAT_KV_U_PACKETS, },
+	{ "Rx Errors",		KSTAT_KV_U_PACKETS, },
+	{ "Rx Unknown Proto",	KSTAT_KV_U_PACKETS, },
+	{ "Tx Bytes",		KSTAT_KV_U_BYTES, },
+	{ "Tx Unicast",		KSTAT_KV_U_PACKETS, },
+	{ "Tx Discards",	KSTAT_KV_U_PACKETS, },
+	{ "Tx Errors",		KSTAT_KV_U_PACKETS, },
+	{ "Rx Multicast",	KSTAT_KV_U_PACKETS, },
+	{ "Rx Broadcast",	KSTAT_KV_U_PACKETS, },
+	{ "Tx Multicast",	KSTAT_KV_U_PACKETS, },
+	{ "Tx Broadcast",	KSTAT_KV_U_PACKETS, },
+};
+CTASSERT(nitems(mcx_ppcnt_rfc2863_tpl) == mcx_ppcnt_rfc2863_count);
+
+static const struct mcx_ppcnt mcx_ppcnt_rfc2819_tpl[] = {
+	{ "Drop Events",	KSTAT_KV_U_PACKETS, },
+	{ "Octets",		KSTAT_KV_U_BYTES, },
+	{ "Packets",		KSTAT_KV_U_PACKETS, },
+	{ "Broadcasts",		KSTAT_KV_U_PACKETS, },
+	{ "Multicasts",		KSTAT_KV_U_PACKETS, },
+	{ "CRC Align Errs",	KSTAT_KV_U_PACKETS, },
+	{ "Undersize",		KSTAT_KV_U_PACKETS, },
+	{ "Oversize",		KSTAT_KV_U_PACKETS, },
+	{ "Fragments",		KSTAT_KV_U_PACKETS, },
+	{ "Jabbers",		KSTAT_KV_U_PACKETS, },
+	{ "Collisions",		KSTAT_KV_U_NONE, },
+	{ "64B",		KSTAT_KV_U_PACKETS, },
+	{ "65-127B",		KSTAT_KV_U_PACKETS, },
+	{ "128-255B",		KSTAT_KV_U_PACKETS, },
+	{ "256-511B",		KSTAT_KV_U_PACKETS, },
+	{ "512-1023B",		KSTAT_KV_U_PACKETS, },
+	{ "1024-1518B",		KSTAT_KV_U_PACKETS, },
+	{ "1519-2047B",		KSTAT_KV_U_PACKETS, },
+	{ "2048-4095B",		KSTAT_KV_U_PACKETS, },
+	{ "4096-8191B",		KSTAT_KV_U_PACKETS, },
+	{ "8192-10239B",	KSTAT_KV_U_PACKETS, },
+};
+CTASSERT(nitems(mcx_ppcnt_rfc2819_tpl) == mcx_ppcnt_rfc2819_count);
+
+static const struct mcx_ppcnt mcx_ppcnt_rfc3635_tpl[] = {
+	{ "Alignment Errs",	KSTAT_KV_U_PACKETS, },
+	{ "FCS Errs",		KSTAT_KV_U_PACKETS, },
+	{ "Single Colls",	KSTAT_KV_U_PACKETS, },
+	{ "Multiple Colls",	KSTAT_KV_U_PACKETS, },
+	{ "SQE Test Errs",	KSTAT_KV_U_NONE, },
+	{ "Deferred Tx",	KSTAT_KV_U_PACKETS, },
+	{ "Late Colls",		KSTAT_KV_U_NONE, },
+	{ "Exess Colls",	KSTAT_KV_U_NONE, },
+	{ "Int MAC Tx Errs",	KSTAT_KV_U_PACKETS, },
+	{ "CSM Sense Errs",	KSTAT_KV_U_NONE, },
+	{ "Too Long",		KSTAT_KV_U_PACKETS, },
+	{ "Int MAC Rx Errs",	KSTAT_KV_U_PACKETS, },
+	{ "Symbol Errs",	KSTAT_KV_U_NONE, },
+	{ "Unknown Control",	KSTAT_KV_U_PACKETS, },
+	{ "Pause Rx",		KSTAT_KV_U_PACKETS, },
+	{ "Pause Tx",		KSTAT_KV_U_PACKETS, },
+};
+CTASSERT(nitems(mcx_ppcnt_rfc3635_tpl) == mcx_ppcnt_rfc3635_count);
+
+struct mcx_kstat_ppcnt {
+	const char		*ksp_name;
+	const struct mcx_ppcnt	*ksp_tpl;
+	unsigned int		 ksp_n;
+	uint8_t			 ksp_grp;
+};
+
+static const struct mcx_kstat_ppcnt mcx_kstat_ppcnt_ieee8023 = {
+	.ksp_name =		"ieee802.3",
+	.ksp_tpl =		mcx_ppcnt_ieee8023_tpl,
+	.ksp_n =		nitems(mcx_ppcnt_ieee8023_tpl),
+	.ksp_grp =		MCX_REG_PPCNT_GRP_IEEE8023,
+};
+
+static const struct mcx_kstat_ppcnt mcx_kstat_ppcnt_rfc2863 = {
+	.ksp_name =		"rfc2863",
+	.ksp_tpl =		mcx_ppcnt_rfc2863_tpl,
+	.ksp_n =		nitems(mcx_ppcnt_rfc2863_tpl),
+	.ksp_grp =		MCX_REG_PPCNT_GRP_RFC2863,
+};
+
+static const struct mcx_kstat_ppcnt mcx_kstat_ppcnt_rfc2819 = {
+	.ksp_name =		"rfc2819",
+	.ksp_tpl =		mcx_ppcnt_rfc2819_tpl,
+	.ksp_n =		nitems(mcx_ppcnt_rfc2819_tpl),
+	.ksp_grp =		MCX_REG_PPCNT_GRP_RFC2819,
+};
+
+static const struct mcx_kstat_ppcnt mcx_kstat_ppcnt_rfc3635 = {
+	.ksp_name =		"rfc3635",
+	.ksp_tpl =		mcx_ppcnt_rfc3635_tpl,
+	.ksp_n =		nitems(mcx_ppcnt_rfc3635_tpl),
+	.ksp_grp =		MCX_REG_PPCNT_GRP_RFC3635,
+};
+
+static int	mcx_kstat_ppcnt_read(struct kstat *);
+
+static void	mcx_kstat_attach_tmps(struct mcx_softc *sc);
+
+static struct kstat *
+mcx_kstat_attach_ppcnt(struct mcx_softc *sc,
+    const struct mcx_kstat_ppcnt *ksp)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	unsigned int i;
+
+	ks = kstat_create(DEVNAME(sc), 0, ksp->ksp_name, 0, KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return (NULL);
+
+	kvs = mallocarray(ksp->ksp_n, sizeof(*kvs),
+	    M_DEVBUF, M_WAITOK);
+
+	for (i = 0; i < ksp->ksp_n; i++) {
+		const struct mcx_ppcnt *tpl = &ksp->ksp_tpl[i];
+
+		kstat_kv_unit_init(&kvs[i], tpl->name,
+		    KSTAT_KV_T_COUNTER64, tpl->unit);
+	}
+
+	ks->ks_softc = sc;
+	ks->ks_ptr = (void *)ksp;
+	ks->ks_data = kvs;
+	ks->ks_datalen = ksp->ksp_n * sizeof(*kvs);
+	ks->ks_read = mcx_kstat_ppcnt_read;
+
+	kstat_install(ks);
+
+	return (ks);
+}
+
+static void
+mcx_kstat_attach(struct mcx_softc *sc)
+{
+	sc->sc_kstat_ieee8023 = mcx_kstat_attach_ppcnt(sc,
+	    &mcx_kstat_ppcnt_ieee8023);
+	sc->sc_kstat_rfc2863 = mcx_kstat_attach_ppcnt(sc,
+	    &mcx_kstat_ppcnt_rfc2863);
+	sc->sc_kstat_rfc2819 = mcx_kstat_attach_ppcnt(sc,
+	    &mcx_kstat_ppcnt_rfc2819);
+	sc->sc_kstat_rfc3635 = mcx_kstat_attach_ppcnt(sc,
+	    &mcx_kstat_ppcnt_rfc3635);
+
+	mcx_kstat_attach_tmps(sc);
+}
+
+static int
+mcx_kstat_ppcnt_read(struct kstat *ks)
+{
+	struct mcx_softc *sc = ks->ks_softc;
+	struct mcx_kstat_ppcnt *ksp = ks->ks_ptr;
+	struct mcx_reg_ppcnt ppcnt = {
+		.ppcnt_grp = ksp->ksp_grp,
+		.ppcnt_local_port = 1,
+	};
+	struct kstat_kv *kvs = ks->ks_data;
+	uint64_t *vs = (uint64_t *)&ppcnt.ppcnt_counter_set;
+	unsigned int i;
+	int rv;
+
+	KERNEL_LOCK(); /* XXX */
+	rv = mcx_access_hca_reg(sc, MCX_REG_PPCNT, MCX_REG_OP_READ,
+	    &ppcnt, sizeof(ppcnt));
+	KERNEL_UNLOCK();
+	if (rv != 0)
+		return (EIO);
+
+	nanouptime(&ks->ks_updated);
+
+	for (i = 0; i < ksp->ksp_n; i++)
+		kstat_kv_u64(&kvs[i]) = bemtoh64(&vs[i]);
+
+	return (0);
+}
+
+struct mcx_kstat_mtmp {
+	struct kstat_kv		ktmp_name;
+	struct kstat_kv		ktmp_temperature;
+	struct kstat_kv		ktmp_threshold_lo;
+	struct kstat_kv		ktmp_threshold_hi;
+};
+
+static const struct timeval mcx_kstat_mtmp_rate = { 1, 0 };
+
+static int mcx_kstat_mtmp_read(struct kstat *);
+
+static void
+mcx_kstat_attach_tmps(struct mcx_softc *sc)
+{
+	struct kstat *ks;
+	struct mcx_reg_mtcap mtcap;
+	struct mcx_kstat_mtmp *ktmp;
+	uint64_t map;
+	unsigned int i, n;
+
+	memset(&mtcap, 0, sizeof(mtcap));
+
+	if (mcx_access_hca_reg(sc, MCX_REG_MTCAP, MCX_REG_OP_READ,
+	    &mtcap, sizeof(mtcap)) != 0) {
+		/* unable to find temperature sensors */
+		return;
+	}
+
+	sc->sc_kstat_mtmp_count = mtcap.mtcap_sensor_count;
+	sc->sc_kstat_mtmp = mallocarray(sc->sc_kstat_mtmp_count,
+	    sizeof(*sc->sc_kstat_mtmp), M_DEVBUF, M_WAITOK);
+
+	n = 0;
+	map = bemtoh64(&mtcap.mtcap_sensor_map);
+	for (i = 0; i < sizeof(map) * NBBY; i++) {
+		if (!ISSET(map, (1ULL << i)))
+			continue;
+
+		ks = kstat_create(DEVNAME(sc), 0, "temperature", i,
+		    KSTAT_T_KV, 0);
+		if (ks == NULL) {
+			/* unable to attach temperature sensor %u, i */
+			continue;
+		}
+
+		ktmp = malloc(sizeof(*ktmp), M_DEVBUF, M_WAITOK|M_ZERO);
+		kstat_kv_init(&ktmp->ktmp_name, "name", KSTAT_KV_T_ISTR);
+		kstat_kv_init(&ktmp->ktmp_temperature, "temperature",
+		    KSTAT_KV_T_TEMP);
+		kstat_kv_init(&ktmp->ktmp_threshold_lo, "lo threshold",
+		    KSTAT_KV_T_TEMP);
+		kstat_kv_init(&ktmp->ktmp_threshold_hi, "hi threshold",
+		    KSTAT_KV_T_TEMP);
+
+		ks->ks_data = ktmp;
+		ks->ks_datalen = sizeof(*ktmp);
+		TIMEVAL_TO_TIMESPEC(&mcx_kstat_mtmp_rate, &ks->ks_interval);
+		ks->ks_read = mcx_kstat_mtmp_read;
+
+		ks->ks_softc = sc;
+		kstat_install(ks);
+
+		sc->sc_kstat_mtmp[n++] = ks;
+		if (n >= sc->sc_kstat_mtmp_count)
+			break;
+	}
+}
+
+static uint64_t
+mcx_tmp_to_uK(uint16_t *t)
+{
+	int64_t mt = (int16_t)bemtoh16(t); /* 0.125 C units */
+	mt *= 1000000 / 8; /* convert to uC */
+	mt += 273150000; /* convert to uK */
+
+	return (mt);
+}
+
+static int
+mcx_kstat_mtmp_read(struct kstat *ks)
+{
+	struct mcx_softc *sc = ks->ks_softc;
+	struct mcx_kstat_mtmp *ktmp = ks->ks_data;
+	struct mcx_reg_mtmp mtmp;
+	int rv;
+	struct timeval updated;
+
+	TIMESPEC_TO_TIMEVAL(&updated, &ks->ks_updated);
+
+	if (!ratecheck(&updated, &mcx_kstat_mtmp_rate))
+		return (0);
+
+	memset(&mtmp, 0, sizeof(mtmp));
+	htobem16(&mtmp.mtmp_sensor_index, ks->ks_unit);
+
+	KERNEL_LOCK(); /* XXX */
+	rv = mcx_access_hca_reg(sc, MCX_REG_MTMP, MCX_REG_OP_READ,
+	    &mtmp, sizeof(mtmp));
+	KERNEL_UNLOCK();
+	if (rv != 0)
+		return (EIO);
+
+	memset(kstat_kv_istr(&ktmp->ktmp_name), 0,
+	    sizeof(kstat_kv_istr(&ktmp->ktmp_name)));
+	memcpy(kstat_kv_istr(&ktmp->ktmp_name),
+	    mtmp.mtmp_sensor_name, sizeof(mtmp.mtmp_sensor_name));
+	kstat_kv_temp(&ktmp->ktmp_temperature) =
+	    mcx_tmp_to_uK(&mtmp.mtmp_temperature);
+	kstat_kv_temp(&ktmp->ktmp_threshold_lo) =
+	    mcx_tmp_to_uK(&mtmp.mtmp_temperature_threshold_lo);
+	kstat_kv_temp(&ktmp->ktmp_threshold_hi) =
+	    mcx_tmp_to_uK(&mtmp.mtmp_temperature_threshold_hi);
+
+	TIMEVAL_TO_TIMESPEC(&updated, &ks->ks_updated);
+
+	return (0);
+}
+#endif /* NKSTAT > 0 */
