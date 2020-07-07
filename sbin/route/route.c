@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.247 2020/01/15 10:26:25 kn Exp $	*/
+/*	$OpenBSD: route.c,v 1.248 2020/07/07 14:53:36 yasuoka Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -107,7 +107,6 @@ void	 print_rtmsg(struct rt_msghdr *, int);
 void	 pmsg_common(struct rt_msghdr *);
 void	 pmsg_addrs(char *, int);
 void	 bprintf(FILE *, int, char *);
-void	 mask_addr(union sockunion *, union sockunion *, int);
 int	 getaddr(int, int, char *, struct hostent **);
 void	 getmplslabel(char *, int);
 int	 rtmsg(int, int, int, uint8_t);
@@ -767,7 +766,6 @@ void
 inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits)
 {
 	u_int32_t mask;
-	char *cp;
 
 	rtm_addrs |= RTA_NETMASK;
 	if (bits == 0 && net == 0)
@@ -781,12 +779,8 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits)
 	sin->sin_addr.s_addr = htonl(net);
 	sin = &so_mask.sin;
 	sin->sin_addr.s_addr = htonl(mask);
-	sin->sin_len = 0;
-	sin->sin_family = 0;
-	cp = (char *)(&sin->sin_addr + 1);
-	while (*--cp == '\0' && cp > (char *)sin)
-		continue;
-	sin->sin_len = 1 + cp - (char *)sin;
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof(struct sockaddr_in);
 }
 
 /*
@@ -1001,7 +995,8 @@ prefixlen(int af, char *s)
 		memset(&so_mask, 0, sizeof(so_mask));
 		so_mask.sin.sin_family = AF_INET;
 		so_mask.sin.sin_len = sizeof(struct sockaddr_in);
-		so_mask.sin.sin_addr.s_addr = htonl(0xffffffff << (32 - len));
+		if (len != 0)
+			so_mask.sin.sin_addr.s_addr = htonl(0xffffffff << (32 - len));
 		break;
 	case AF_INET6:
 		so_mask.sin6.sin6_family = AF_INET6;
@@ -1088,8 +1083,6 @@ rtmsg(int cmd, int flags, int fmask, uint8_t prio)
 	rtm.rtm_mpls = mpls_flags;
 	rtm.rtm_hdrlen = sizeof(rtm);
 
-	if (rtm_addrs & RTA_NETMASK)
-		mask_addr(&so_dst, &so_mask, RTA_DST);
 	/* store addresses in ascending order of RTA values */
 	NEXTADDR(RTA_DST, so_dst);
 	NEXTADDR(RTA_GATEWAY, so_gate);
@@ -1118,34 +1111,6 @@ rtmsg(int cmd, int flags, int fmask, uint8_t prio)
 	}
 #undef rtm
 	return (0);
-}
-
-void
-mask_addr(union sockunion *addr, union sockunion *mask, int which)
-{
-	int olen = mask->sa.sa_len;
-	char *cp1 = olen + (char *)mask, *cp2;
-
-	for (mask->sa.sa_len = 0; cp1 > (char *)mask; )
-		if (*--cp1 != '\0') {
-			mask->sa.sa_len = 1 + cp1 - (char *)mask;
-			break;
-		}
-	if ((rtm_addrs & which) == 0)
-		return;
-	switch (addr->sa.sa_family) {
-	case AF_INET:
-	case AF_INET6:
-	case AF_UNSPEC:
-		return;
-	}
-	cp1 = mask->sa.sa_len + 1 + (char *)addr;
-	cp2 = addr->sa.sa_len + 1 + (char *)addr;
-	while (cp2 > cp1)
-		*--cp2 = '\0';
-	cp2 = mask->sa.sa_len + 1 + (char *)mask;
-	while (cp1 > addr->sa.sa_data)
-		*--cp1 &= *--cp2;
 }
 
 char *msgtypes[] = {
