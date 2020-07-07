@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.60 2020/07/07 02:38:56 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.61 2020/07/07 02:42:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -5020,26 +5020,6 @@ ixl_dmamem_free(struct ixl_softc *sc, struct ixl_dmamem *ixm)
 }
 
 #if NKSTAT > 0
-
-#if 0
-static uint64_t
-ixl_st64(struct ixl_softc *sc, bus_addr_t r)
-{
-	uint32_t hi, ohi, lo;
-
-	hi = ixl_rd(sc, r + 4);
-	do {
-		ohi = hi;
-		lo = ixl_rd(sc, r);
-		hi = ixl_rd(sc, r + 4);
-	} while (__predict_false(ohi != hi));
-
-	return (((uint64_t)hi << 32) | (uint64_t)lo);
-}
-#endif
-
-#define ixl_st32(_sc, _r)	ixl_rd((_sc), (_r))
-#define ixl_st48(_sc, _r)	ixl_st64((_sc), (_r))
 
 CTASSERT(KSTAT_KV_U_NONE <= 0xffU);
 CTASSERT(KSTAT_KV_U_PACKETS <= 0xffU);
