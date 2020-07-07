@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.62 2020/07/07 01:36:49 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.63 2020/07/07 10:14:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -280,7 +280,7 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 
 				isr = vmxnet3_intr_event;
 				sc->sc_intrmap = intrmap_create(&sc->sc_dev,
-				    msix, VMX_MAX_QUEUES, 0);
+				    msix, VMX_MAX_QUEUES, INTRMAP_POWEROF2);
 				sc->sc_nqueues = intrmap_count(sc->sc_intrmap);
 			}
 			break;
