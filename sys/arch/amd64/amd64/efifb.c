@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.32 2020/05/28 20:26:25 fcambus Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.33 2020/07/07 02:13:13 jcs Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -92,18 +92,11 @@ struct efifb_softc {
 
 int	 efifb_match(struct device *, void *, void *);
 void	 efifb_attach(struct device *, struct device *, void *);
-void	 efifb_rasops_preinit(struct efifb *);
+void	 efifb_rasops_init(struct efifb *, int);
 int	 efifb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	 efifb_mmap(void *, off_t, int);
 int	 efifb_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, uint32_t *);
-void	 efifb_free_screen(void *, void *);
-int	 efifb_show_screen(void *, void *, int, void (*cb) (void *, int, int),
-	    void *);
-int	 efifb_getchar(void *, int, int, struct wsdisplay_charcell *);
-int	 efifb_list_font(void *, struct wsdisplay_font *);
-int	 efifb_load_font(void *, void *, struct wsdisplay_font *);
-void	 efifb_scrollback(void *, void *, int lines);
 void	 efifb_efiinfo_init(struct efifb *);
 void	 efifb_cnattach_common(void);
 vaddr_t	 efifb_early_map(paddr_t);
@@ -132,12 +125,12 @@ struct wsdisplay_accessops efifb_accessops = {
 	.ioctl = efifb_ioctl,
 	.mmap = efifb_mmap,
 	.alloc_screen = efifb_alloc_screen,
-	.free_screen = efifb_free_screen,
-	.show_screen = efifb_show_screen,
-	.getchar = efifb_getchar,
-	.load_font = efifb_load_font,
-	.list_font = efifb_list_font,
-	.scrollback = efifb_scrollback,
+	.free_screen = rasops_free_screen,
+	.show_screen = rasops_show_screen,
+	.getchar = rasops_getchar,
+	.load_font = rasops_load_font,
+	.list_font = rasops_list_font,
+	.scrollback = rasops_scrollback,
 };
 
 struct cfdriver efifb_cd = {
@@ -198,9 +191,7 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 		ri->ri_bits = bus_space_vaddr(iot, ioh);
-		efifb_rasops_preinit(fb);
-		ri->ri_flg = RI_VCONS | RI_CENTER | RI_WRONLY;
-		rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
+		efifb_rasops_init(fb, RI_VCONS);
 		efifb_std_descr.ncols = ri->ri_cols;
 		efifb_std_descr.nrows = ri->ri_rows;
 		efifb_std_descr.textops = &ri->ri_ops;
@@ -218,22 +209,19 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 		ccol = ri->ri_ccol;
 		crow = ri->ri_crow;
 
-		efifb_rasops_preinit(fb);
-		ri->ri_flg &= ~RI_CLEAR;
-		ri->ri_flg |= RI_VCONS | RI_WRONLY;
-
-		rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
+		efifb_rasops_init(fb, RI_VCONS);
 
 		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&efifb_std_descr, ri->ri_active, ccol, crow,
 		    defattr);
 	}
 
+	ri->ri_hw = sc;
 	memset(&aa, 0, sizeof(aa));
 	aa.console = console;
 	aa.scrdata = &efifb_screen_list;
 	aa.accessops = &efifb_accessops;
-	aa.accesscookie = sc;
+	aa.accesscookie = ri;
 	aa.defaultscreens = 0;
 
 	config_found_sm(self, &aa, wsemuldisplaydevprint,
@@ -241,7 +229,7 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-efifb_rasops_preinit(struct efifb *fb)
+efifb_rasops_init(struct efifb *fb, int flags)
 {
 #define bmnum(_x) (fls(_x) - ffs(_x) + 1)
 #define bmpos(_x) (ffs(_x) - 1)
@@ -271,14 +259,16 @@ efifb_rasops_preinit(struct efifb *fb)
 		ri->ri_bpos = bmpos(bios_efiinfo->fb_blue_mask);
 	}
 	ri->ri_bs = efifb_bs;
+	/* if reinitializing, it is important to not clear all the flags */
+	ri->ri_flg &= ~RI_CLEAR;
+	ri->ri_flg |= flags | RI_CENTER | RI_WRONLY;
+	rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
 }
 
 int
 efifb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	struct efifb_softc	*sc = v;
-	struct efifb		*fb = sc->sc_fb;
-	struct rasops_info 	*ri = &fb->rinfo;
+	struct rasops_info	*ri = v;
 	struct wsdisplay_fbinfo	*wdf;
 
 	switch (cmd) {
@@ -338,7 +328,8 @@ efifb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 paddr_t
 efifb_mmap(void *v, off_t off, int prot)
 {
-	struct efifb_softc	*sc = v;
+	struct rasops_info	*ri = v;
+	struct efifb_softc	*sc = ri->ri_hw;
 
 	if (off < 0 || off >= sc->sc_fb->psize)
 		return (-1);
@@ -350,65 +341,9 @@ int
 efifb_alloc_screen(void *v, const struct wsscreen_descr *descr,
     void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
-	struct efifb_softc	*sc = v;
-	struct rasops_info	*ri = &sc->sc_fb->rinfo;
+	struct rasops_info	*ri = v;
 
 	return rasops_alloc_screen(ri, cookiep, curxp, curyp, attrp);
-}
-
-void
-efifb_free_screen(void *v, void *cookie)
-{
-	struct efifb_softc	*sc = v;
-	struct rasops_info	*ri = &sc->sc_fb->rinfo;
-
-	rasops_free_screen(ri, cookie);
-}
-
-int
-efifb_show_screen(void *v, void *cookie, int waitok,
-    void (*cb) (void *, int, int), void *cb_arg)
-{
-	struct efifb_softc	*sc = v;
-	struct rasops_info	*ri = &sc->sc_fb->rinfo;
-
-	return rasops_show_screen(ri, cookie, waitok, cb, cb_arg);
-}
-
-int
-efifb_getchar(void *v, int row, int col, struct wsdisplay_charcell *cell)
-{
-	struct efifb_softc	*sc = v;
-	struct rasops_info	*ri = &sc->sc_fb->rinfo;
-
-	return rasops_getchar(ri, row, col, cell);
-}
-
-int
-efifb_load_font(void *v, void *cookie, struct wsdisplay_font *font)
-{
-	struct efifb_softc	*sc = v;
-	struct rasops_info	*ri = &sc->sc_fb->rinfo;
-
-	return (rasops_load_font(ri, cookie, font));
-}
-
-int
-efifb_list_font(void *v, struct wsdisplay_font *font)
-{
-	struct efifb_softc	*sc = v;
-	struct rasops_info	*ri = &sc->sc_fb->rinfo;
-
-	return (rasops_list_font(ri, font));
-}
-
-void
-efifb_scrollback(void *v, void *cookie, int lines)
-{
-	struct efifb_softc	*sc = v;
-	struct rasops_info	*ri = &sc->sc_fb->rinfo;
-
-	rasops_scrollback(ri, cookie, lines);
 }
 
 int
@@ -445,10 +380,8 @@ efifb_cnattach_common(void)
 
 	ri->ri_bits = (u_char *)efifb_early_map(fb->paddr);
 
-	efifb_rasops_preinit(fb);
+	efifb_rasops_init(fb, RI_CLEAR);
 
-	ri->ri_flg = RI_CLEAR | RI_CENTER | RI_WRONLY;
-	rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
 	efifb_std_descr.ncols = ri->ri_cols;
 	efifb_std_descr.nrows = ri->ri_rows;
 	efifb_std_descr.textops = &ri->ri_ops;
@@ -476,11 +409,7 @@ efifb_cnremap(void)
 		panic("can't remap framebuffer");
 	ri->ri_origbits = bus_space_vaddr(iot, ioh);
 
-	efifb_rasops_preinit(fb);
-	ri->ri_flg &= ~RI_CLEAR;
-	ri->ri_flg |= RI_CENTER | RI_WRONLY;
-
-	rasops_init(ri, EFIFB_HEIGHT, EFIFB_WIDTH);
+	efifb_rasops_init(fb, 0);
 
 	efifb_early_cleanup();
 }
