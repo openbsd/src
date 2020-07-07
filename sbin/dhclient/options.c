@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.122 2020/05/21 01:07:52 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.123 2020/07/07 19:48:31 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -671,13 +671,19 @@ pretty_print_domain_list(unsigned char *src, size_t srclen,
 
 	memset(buf, 0, buflen);
 
-	if (srclen >= DHCP_DOMAIN_SEARCH_LEN || strlen(src) == 0 ||
-	    strlen(src) > DHCP_DOMAIN_SEARCH_LEN)
+	/*
+	 * N.B.: option data is *NOT* guaranteed to be NUL
+	 *	 terminated. Avoid strlen(), strdup(), etc.!
+	 */
+	if (srclen >= DHCP_DOMAIN_SEARCH_LEN || src[0] == '\0')
 		return;
 
-	dupnames = inputstring = strdup(src);
+	inputstring = malloc(srclen + 1);
 	if (inputstring == NULL)
 		fatal("domain name list");
+	memcpy(inputstring, src, srclen);
+	inputstring[srclen] = '\0';
+	dupnames = inputstring;
 
 	count = 0;
 	while ((hn = strsep(&inputstring, " \t")) != NULL) {
@@ -966,7 +972,7 @@ void
 merge_option_data(char *fmt, struct option_data *first,
     struct option_data *second, struct option_data *dest)
 {
-	int		 rslt;
+	int space = 0;
 
 	free(dest->data);
 	dest->data = NULL;
@@ -974,29 +980,22 @@ merge_option_data(char *fmt, struct option_data *first,
 	if (dest->len == 0)
 		return;
 
-	switch (fmt[0]) {
-	case 'D':
-		rslt = asprintf((char **)&dest->data, "%s%s%s",
-		    (first->len > 0) ? (char *)first->data : "",
-		    (first->len > 0 && second->len > 0) ? " " : "",
-		    (second->len > 0) ? (char *)second->data : "");
-		if (rslt == -1)
-			fatal("merged 'D'");
-		dest->len = strlen(dest->data);
-		break;
-	case 't':
-		rslt = asprintf((char **)&dest->data, "%s%s",
-		    (first->len > 0) ? (char *)first->data : "",
-		    (second->len > 0) ? (char *)second->data : "");
-		if (rslt == -1)
-			fatal("merged 't'");
-		break;
-	default:
-		dest->data = calloc(1, dest->len);
-		if (dest->data == NULL)
-			fatal("merged option data");
-		memcpy(dest->data, first->data, first->len);
-		memcpy(dest->data + first->len, second->data, second->len);
-		break;
+	/*
+	 * N.B.: option data is *NOT* guaranteed to be NUL
+	 *	 terminated. Avoid strlen(), strdup(), etc.!
+	 */
+	if (fmt[0] == 'D') {
+		if (first->len > 0 && second->len > 0)
+			space = 1;
 	}
+
+	dest->len += space;
+	dest->data = malloc(dest->len);
+	if (dest->data == NULL)
+		fatal("merged option data");
+
+	memcpy(dest->data, first->data, first->len);
+	if (space == 1)
+		dest->data[first->len] = ' ';
+	memcpy(dest->data + first->len + space, second->data, second->len);
 }
