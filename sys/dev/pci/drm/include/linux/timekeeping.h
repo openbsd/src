@@ -16,7 +16,7 @@ static inline struct timeval
 ktime_get_real(void)
 {
 	struct timeval tv;
-	getmicrotime(&tv);
+	microtime(&tv);
 	return tv;
 }
 
