@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.59 2020/06/26 02:51:12 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.60 2020/07/07 02:38:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -48,6 +48,7 @@
  */
 
 #include "bpfilter.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +75,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NKSTAT > 0
+#include <sys/kstat.h>
 #endif
 
 #include <netinet/in.h>
@@ -1244,6 +1249,7 @@ struct ixl_softc {
 	uint16_t		 sc_vsi_number;		/* le */
 	uint16_t		 sc_seid;
 	unsigned int		 sc_base_queue;
+	unsigned int		 sc_port;
 
 	struct ixl_dmamem	 sc_scratch;
 
@@ -1281,6 +1287,13 @@ struct ixl_softc {
 	unsigned int		 sc_dead;
 
 	uint8_t			 sc_enaddr[ETHER_ADDR_LEN];
+
+#if NKSTAT > 0
+	struct mutex		 sc_kstat_mtx;
+	struct timeout		 sc_kstat_tmo;
+	struct kstat		*sc_port_kstat;
+	struct kstat		*sc_vsi_kstat;
+#endif
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
@@ -1372,6 +1385,10 @@ static int	ixl_rxeof(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxfill(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxrefill(void *);
 static int	ixl_rxrinfo(struct ixl_softc *, struct if_rxrinfo *);
+
+#if NKSTAT > 0
+static void	ixl_kstat_attach(struct ixl_softc *);
+#endif
 
 struct cfdriver ixl_cd = {
 	NULL,
@@ -1663,6 +1680,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	port = ixl_rd(sc, I40E_PFGEN_PORTNUM);
 	port &= I40E_PFGEN_PORTNUM_PORT_NUM_MASK;
 	port >>= I40E_PFGEN_PORTNUM_PORT_NUM_SHIFT;
+	sc->sc_port = port;
 	printf(": port %u", port);
 
 	ari = ixl_rd(sc, I40E_GLPCI_CAPSUP);
@@ -1936,6 +1954,10 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(sc->sc_enaddr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
 	ixl_intr_enable(sc);
+
+#if NKSTAT > 0
+	ixl_kstat_attach(sc);
+#endif
 
 	return;
 free_vectors:
@@ -4996,3 +5018,299 @@ ixl_dmamem_free(struct ixl_softc *sc, struct ixl_dmamem *ixm)
 	bus_dmamem_free(sc->sc_dmat, &ixm->ixm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, ixm->ixm_map);
 }
+
+#if NKSTAT > 0
+
+#if 0
+static uint64_t
+ixl_st64(struct ixl_softc *sc, bus_addr_t r)
+{
+	uint32_t hi, ohi, lo;
+
+	hi = ixl_rd(sc, r + 4);
+	do {
+		ohi = hi;
+		lo = ixl_rd(sc, r);
+		hi = ixl_rd(sc, r + 4);
+	} while (__predict_false(ohi != hi));
+
+	return (((uint64_t)hi << 32) | (uint64_t)lo);
+}
+#endif
+
+#define ixl_st32(_sc, _r)	ixl_rd((_sc), (_r))
+#define ixl_st48(_sc, _r)	ixl_st64((_sc), (_r))
+
+CTASSERT(KSTAT_KV_U_NONE <= 0xffU);
+CTASSERT(KSTAT_KV_U_PACKETS <= 0xffU);
+CTASSERT(KSTAT_KV_U_BYTES <= 0xffU);
+
+struct ixl_counter {
+	const char		*c_name;
+	uint32_t		 c_base;
+	uint8_t			 c_width;
+	uint8_t			 c_type;
+};
+
+const struct ixl_counter ixl_port_counters[] = {
+	/* GORC */
+	{ "rx bytes",		0x00300000, 48, KSTAT_KV_U_BYTES },
+	/* MLFC */
+	{ "mac local errs",	0x00300020, 32, KSTAT_KV_U_NONE },
+	/* MRFC */
+	{ "mac remote errs",	0x00300040, 32, KSTAT_KV_U_NONE },
+	/* MSPDC */
+	{ "mac short",		0x00300060, 32, KSTAT_KV_U_PACKETS },
+	/* CRCERRS */
+	{ "crc errs",		0x00300080, 32, KSTAT_KV_U_PACKETS },
+	/* RLEC */
+	{ "rx len errs",	0x003000a0, 32, KSTAT_KV_U_PACKETS },
+	/* ERRBC */
+	{ "byte errs",		0x003000c0, 32, KSTAT_KV_U_PACKETS },
+	/* ILLERRC */
+	{ "illegal byte",	0x003000d0, 32, KSTAT_KV_U_PACKETS },
+	/* RUC */
+	{ "rx undersize",	0x00300100, 32, KSTAT_KV_U_PACKETS },
+	/* ROC */
+	{ "rx oversize",	0x00300120, 32, KSTAT_KV_U_PACKETS },
+	/* LXONRXCNT */
+	{ "rx link xon",	0x00300140, 32, KSTAT_KV_U_PACKETS },
+	/* LXOFFRXCNT */
+	{ "rx link xoff",	0x00300160, 32, KSTAT_KV_U_PACKETS },
+
+	/* Priority XON Received Count */
+	/* Priority XOFF Received Count */
+	/* Priority XON to XOFF Count */
+
+	/* PRC64 */
+	{ "rx 64B",		0x00300480, 48, KSTAT_KV_U_PACKETS },
+	/* PRC127 */
+	{ "rx 65-127B",		0x003004A0, 48, KSTAT_KV_U_PACKETS },
+	/* PRC255 */
+	{ "rx 128-255B",	0x003004C0, 48, KSTAT_KV_U_PACKETS },
+	/* PRC511 */
+	{ "rx 256-511B",	0x003004E0, 48, KSTAT_KV_U_PACKETS },
+	/* PRC1023 */
+	{ "rx 512-1023B",	0x00300500, 48, KSTAT_KV_U_PACKETS },
+	/* PRC1522 */
+	{ "rx 1024-1522B",	0x00300520, 48, KSTAT_KV_U_PACKETS },
+	/* PRC9522 */
+	{ "rx 1523-9522B",	0x00300540, 48, KSTAT_KV_U_PACKETS },
+	/* ROC */
+	{ "rx fragment",	0x00300560, 32, KSTAT_KV_U_PACKETS },
+	/* RJC */
+	{ "rx jabber",		0x00300580, 32, KSTAT_KV_U_PACKETS },
+	/* UPRC */
+	{ "rx ucasts",		0x003005a0, 48, KSTAT_KV_U_PACKETS },
+	/* MPRC */
+	{ "rx mcasts",		0x003005c0, 48, KSTAT_KV_U_PACKETS },
+	/* BPRC */
+	{ "rx bcasts",		0x003005e0, 48, KSTAT_KV_U_PACKETS },
+	/* RDPC */
+	{ "rx discards",	0x00300600, 32, KSTAT_KV_U_PACKETS },
+	/* LDPC */
+	{ "rx lo discards",	0x00300620, 32, KSTAT_KV_U_PACKETS },
+	/* RUPP */
+	{ "rx no dest",		0x00300660, 32, KSTAT_KV_U_PACKETS },
+
+	/* GOTC */
+	{ "tx bytes",		0x00300680, 48, KSTAT_KV_U_BYTES },
+	/* PTC64 */
+	{ "tx 64B",		0x003006A0, 48, KSTAT_KV_U_PACKETS },
+	/* PTC127 */
+	{ "tx 65-127B",		0x003006C0, 48, KSTAT_KV_U_PACKETS },
+	/* PTC255 */
+	{ "tx 128-255B",	0x003006E0, 48, KSTAT_KV_U_PACKETS },
+	/* PTC511 */
+	{ "tx 256-511B",	0x00300700, 48, KSTAT_KV_U_PACKETS },
+	/* PTC1023 */
+	{ "tx 512-1023B",	0x00300720, 48, KSTAT_KV_U_PACKETS },
+	/* PTC1522 */
+	{ "tx 1024-1522B",	0x00300740, 48, KSTAT_KV_U_PACKETS },
+	/* PTC9522 */
+	{ "tx 1523-9522B",	0x00300760, 48, KSTAT_KV_U_PACKETS },
+
+	/* Priority XON Transmitted Count */
+	/* Priority XOFF Transmitted Count */
+
+	/* LXONTXC */
+	{ "tx link xon",	0x00300980, 48, KSTAT_KV_U_PACKETS },
+	/* LXOFFTXC */
+	{ "tx link xoff",	0x003009a0, 48, KSTAT_KV_U_PACKETS },
+	/* UPTC */
+	{ "tx ucasts",		0x003009c0, 48, KSTAT_KV_U_PACKETS },
+	/* MPTC */
+	{ "tx mcasts",		0x003009e0, 48, KSTAT_KV_U_PACKETS },
+	/* BPTC */
+	{ "tx bcasts",		0x00300a00, 48, KSTAT_KV_U_PACKETS },
+	/* TDOLD */
+	{ "tx link down",	0x00300a20, 48, KSTAT_KV_U_PACKETS },
+};
+
+const struct ixl_counter ixl_vsi_counters[] = {
+	/* VSI RDPC */
+	{ "rx discards",	0x00310000, 32, KSTAT_KV_U_PACKETS },
+	/* VSI GOTC */
+	{ "tx bytes",		0x00328000, 48, KSTAT_KV_U_BYTES },
+	/* VSI UPTC */
+	{ "tx ucasts",		0x0033c000, 48, KSTAT_KV_U_PACKETS },
+	/* VSI MPTC */
+	{ "tx mcasts",		0x0033cc00, 48, KSTAT_KV_U_PACKETS },
+	/* VSI BPTC */
+	{ "tx bcasts",		0x0033d800, 48, KSTAT_KV_U_PACKETS },
+	/* VSI TEPC */
+	{ "tx errs",		0x00344000, 48, KSTAT_KV_U_PACKETS },
+	/* VSI TDPC */
+	{ "tx discards",	0x00348000, 48, KSTAT_KV_U_PACKETS },
+	/* VSI GORC */
+	{ "rx bytes",		0x00358000, 48, KSTAT_KV_U_BYTES },
+	/* VSI UPRC */
+	{ "rx ucasts",		0x0036c000, 48, KSTAT_KV_U_PACKETS },
+	/* VSI MPRC */
+	{ "rx mcasts",		0x0036cc00, 48, KSTAT_KV_U_PACKETS },
+	/* VSI BPRC */
+	{ "rx bcasts",		0x0036d800, 48, KSTAT_KV_U_PACKETS },
+	/* VSI RUPP */
+	{ "rx noproto",		0x0036e400, 32, KSTAT_KV_U_PACKETS },
+};
+
+struct ixl_counter_state {
+	const struct ixl_counter
+				*counters;
+	uint64_t		*values;
+	size_t			 n;
+	uint32_t		 index;
+	unsigned int		 gen;
+};
+
+static void
+ixl_rd_counters(struct ixl_softc *sc, const struct ixl_counter_state *state,
+    uint64_t *vs)
+{
+	const struct ixl_counter *c;
+	bus_addr_t r;
+	uint64_t v;
+	size_t i;
+
+	for (i = 0; i < state->n; i++) {
+		c = &state->counters[i];
+
+		r = c->c_base + (state->index * 8);
+
+		if (c->c_width == 32)
+			v = bus_space_read_4(sc->sc_memt, sc->sc_memh, r);
+		else
+			v = bus_space_read_8(sc->sc_memt, sc->sc_memh, r);
+
+		vs[i] = v;
+	}
+}
+
+static int
+ixl_kstat_read(struct kstat *ks)
+{
+	struct ixl_softc *sc = ks->ks_softc;
+	struct kstat_kv *kvs = ks->ks_data;
+	struct ixl_counter_state *state = ks->ks_ptr;
+	unsigned int gen = (state->gen++) & 1;
+	uint64_t *ovs = state->values + (gen * state->n);
+	uint64_t *nvs = state->values + (!gen * state->n);
+	size_t i;
+
+	ixl_rd_counters(sc, state, nvs);
+	getnanouptime(&ks->ks_updated);
+
+	for (i = 0; i < state->n; i++) {
+		const struct ixl_counter *c = &state->counters[i];
+		uint64_t n = nvs[i], o = ovs[i];
+
+		if (c->c_width < 64) {
+			if (n < o)
+				n += (1ULL << c->c_width);
+		}
+
+		kstat_kv_u64(&kvs[i]) += (n - o);
+	}
+
+	return (0);
+}
+
+static void
+ixl_kstat_tick(void *arg)
+{
+	struct ixl_softc *sc = arg;
+
+	timeout_add_sec(&sc->sc_kstat_tmo, 4);
+
+	if (mtx_enter_try(&sc->sc_kstat_mtx) == 0)
+		return; /* try again later */
+
+	ixl_kstat_read(sc->sc_port_kstat);
+	ixl_kstat_read(sc->sc_vsi_kstat);
+
+	mtx_leave(&sc->sc_kstat_mtx);
+}
+
+static struct kstat *
+ixl_kstat_create(struct ixl_softc *sc, const char *name,
+    const struct ixl_counter *counters, size_t n, uint32_t index)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	struct ixl_counter_state *state;
+	const struct ixl_counter *c;
+	unsigned int i;
+
+	ks = kstat_create(DEVNAME(sc), 0, name, 0, KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		/* unable to create kstats */
+		return (NULL);
+	}
+
+	kvs = mallocarray(n, sizeof(*kvs), M_DEVBUF, M_WAITOK|M_ZERO);
+	for (i = 0; i < n; i++) {
+		c = &counters[i];
+
+		kstat_kv_unit_init(&kvs[i], c->c_name,
+		    KSTAT_KV_T_COUNTER64, c->c_type);
+	}
+
+	ks->ks_data = kvs;
+	ks->ks_datalen = n * sizeof(*kvs);
+	ks->ks_read = ixl_kstat_read;
+
+	state = malloc(sizeof(*state), M_DEVBUF, M_WAITOK|M_ZERO);
+	state->counters = counters;
+	state->n = n;
+	state->values = mallocarray(n * 2, sizeof(*state->values),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+	state->index = index;
+	ks->ks_ptr = state;
+
+	kstat_set_mutex(ks, &sc->sc_kstat_mtx);
+	ks->ks_softc = sc;
+	kstat_install(ks);
+
+	/* fetch a baseline */
+	ixl_rd_counters(sc, state, state->values);
+
+	return (ks);
+}
+
+static void
+ixl_kstat_attach(struct ixl_softc *sc)
+{
+	mtx_init(&sc->sc_kstat_mtx, IPL_SOFTCLOCK);
+	timeout_set(&sc->sc_kstat_tmo, ixl_kstat_tick, sc);
+
+	sc->sc_port_kstat = ixl_kstat_create(sc, "ixl-port",
+	    ixl_port_counters, nitems(ixl_port_counters), sc->sc_port);
+	sc->sc_vsi_kstat = ixl_kstat_create(sc, "ixl-vsi",
+	    ixl_vsi_counters, nitems(ixl_vsi_counters),
+	    lemtoh16(&sc->sc_vsi_number));
+
+	/* ixl counters go up even when the interface is down */
+	timeout_add_sec(&sc->sc_kstat_tmo, 4);
+}
+
+#endif /* NKSTAT > 0 */
