@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2020/07/06 17:43:23 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 2020/07/08 17:48:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -141,7 +141,12 @@ init_powernv(void *fdt, void *tocbase)
 	for (trap = EXC_RST; trap < EXC_LAST; trap += 32)
 		memcpy((void *)trap, trapcode, trapcodeend - trapcode);
 
-	/* Hypervisor Virtualization interrupt needs special handling. */
+	/* Hypervisor interrupts needs special handling. */
+	memcpy((void *)EXC_HDSI, hvtrapcode, hvtrapcodeend - hvtrapcode);
+	memcpy((void *)EXC_HISI, hvtrapcode, hvtrapcodeend - hvtrapcode);
+	memcpy((void *)EXC_HEA, hvtrapcode, hvtrapcodeend - hvtrapcode);
+	memcpy((void *)EXC_HMI, hvtrapcode, hvtrapcodeend - hvtrapcode);
+	memcpy((void *)EXC_HFAC, hvtrapcode, hvtrapcodeend - hvtrapcode);
 	memcpy((void *)EXC_HVI, hvtrapcode, hvtrapcodeend - hvtrapcode);
 
 	*((void **)TRAP_ENTRY) = generictrap;
