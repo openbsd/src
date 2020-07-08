@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.68 2020/05/26 20:24:31 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.69 2020/07/08 21:35:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -293,8 +293,6 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 			timer_add(env, &sa->sa_timer,
 			    IKED_IKE_SA_DELETE_TIMEOUT);
 		}
-		if (sa != NULL)
-			return (-1);
 	}
 
 	if (sa == NULL)
