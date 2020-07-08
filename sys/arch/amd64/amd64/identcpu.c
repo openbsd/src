@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.115 2020/05/27 05:08:53 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.116 2020/07/08 13:01:25 fcambus Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -480,7 +480,7 @@ identifycpu(struct cpu_info *ci)
 		    ci->ci_efeature_ecx, ci->ci_feature_eflags);
 		/* Other bits may clash */
 		ci->ci_feature_flags |= (ci->ci_feature_eflags & CPUID_NXE);
-		if (ci->ci_flags & CPUF_PRIMARY)
+		if (CPU_IS_PRIMARY(ci))
 			ecpu_ecxfeature = ci->ci_efeature_ecx;
 		/* Let cpu_feature be the common bits */
 		cpu_feature &= ci->ci_feature_flags;
@@ -515,7 +515,7 @@ identifycpu(struct cpu_info *ci)
 		    sizeof(mycpu_model));
 
 	/* If primary cpu, fill in the global cpu_model used by sysctl */
-	if (ci->ci_flags & CPUF_PRIMARY)
+	if (CPU_IS_PRIMARY(ci))
 		strlcpy(cpu_model, mycpu_model, sizeof(cpu_model));
 
 	ci->ci_family = (ci->ci_signature >> 8) & 0x0f;
@@ -561,7 +561,7 @@ identifycpu(struct cpu_info *ci)
 		printf(", %llu.%02llu MHz", (freq + 4999) / 1000000,
 		    ((freq + 4999) / 10000) % 100);
 
-	if (ci->ci_flags & CPUF_PRIMARY) {
+	if (CPU_IS_PRIMARY(ci)) {
 		cpuspeed = (freq + 4999) / 1000000;
 		cpu_cpuspeed = cpu_amd64speed;
 	}
@@ -689,7 +689,7 @@ identifycpu(struct cpu_info *ci)
 			    ci->ci_dev->dv_xname);
 	}
 
-	if (ci->ci_flags & CPUF_PRIMARY) {
+	if (CPU_IS_PRIMARY(ci)) {
 #ifndef SMALL_KERNEL
 		if (!strcmp(cpu_vendor, "AuthenticAMD") &&
 		    ci->ci_pnfeatset >= 0x80000007) {
@@ -737,7 +737,7 @@ identifycpu(struct cpu_info *ci)
 #endif
 
 #ifdef CRYPTO
-	if (ci->ci_flags & CPUF_PRIMARY) {
+	if (CPU_IS_PRIMARY(ci)) {
 		if (cpu_ecxfeature & CPUIDECX_PCLMUL)
 			amd64_has_pclmul = 1;
 
