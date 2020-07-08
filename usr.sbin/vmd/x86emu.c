@@ -452,7 +452,7 @@ struct opcode locodes[256] = {
 };
 
 struct istate {
-  uint8_t  op;
+  uint32_t op;
   uint8_t  rep;
   uint8_t  rex;
   uint8_t  mrr;
@@ -523,8 +523,12 @@ decodeop(struct istate *i)
 
   for(;;) {
     op = getb(i);
-
-    o = (op == 0x0f) ? hicodes[op] : locodes[op];
+    if (op == 0x0f) {
+	op = (op << 8) | getb(i);
+	o  = hicodes[op & 0xFF];
+    } else {
+	o = locodes[op];
+    }
     i->flag |= o.flag;
     i->op = op;
 
@@ -540,6 +544,8 @@ decodeop(struct istate *i)
       /* Get operand and address size */
       i->osz = osize(i);
       i->asz = asize(i);
+      if (!o.mnem)
+	o.mnem = "---";
       return o;
     }
   }
@@ -598,7 +604,6 @@ mkreg(struct istate *i, int sz, int vv, int mask) {
 /* Get Embedded or Decoded immediate byte */
 static uint64_t
 mkimm(struct istate *i, int sz, uint64_t val, const char *fmt) {
-  printf("immsz: %c ", (sz >> 16) & 0xFF);
   switch (sz) {
   case SIZE_BYTE:
     val = getb(i);
@@ -641,28 +646,29 @@ mkea(struct istate *i, int sz) {
   }
   switch (i->asz) {
   case SIZE_QWORD:
+    printf("(");
     if (rrr == 4) {
       i->sib = getb(i);
-      printf("sib:%.2x (%d,", i->sib, 1 << sib_ss(i->sib));
+      printf("%d,", 1 << sib_ss(i->sib));
       mkreg(i, SIZE_QWORD, sib_iii(i->sib), REX_X);
       mkreg(i, SIZE_QWORD, sib_bbb(i->sib), REX_B);
-      printf(") ");
     }
     else {
       mkreg(i, SIZE_QWORD, rrr, REX_B);
     }
-    if (mm == 2) {
-      mkimm(i, SIZE_DWORD, 0, "d[$0x%llx] ");
+    if (mm == 1) {
+      mkimm(i, SIZE_BYTE, 0, "b[$0x%llx]");
     }
-    else if (mm == 1) {
-      mkimm(i, SIZE_BYTE, 0, "b[$0x%llx] ");
+    else if (mm == 2) {
+      mkimm(i, SIZE_DWORD, 0, "d[$0x%llx]");
     }
     else if (rrr == 5) {
       /* Special case RIP-relative */
-      mkimm(i, SIZE_DWORD, 0, "%%rip[$0x%llx] ");
+      mkimm(i, SIZE_DWORD, 0, "%%rip[$0x%llx]");
     }
     break;
   }
+  printf(") ");
   return 0;
 }
 
@@ -751,11 +757,11 @@ dodis(uint8_t *ib, struct insn *ix) {
   a0 = decodearg(&i, o.arg0); 
   a1 = decodearg(&i, o.arg1); 
   decodearg(&i, o.arg2); 
-  printf(" : %d %x %x\n", i.nib, a0, a1);
+  printf(" : %d\n", i.nib);
 
-  if (strcmp(o.mnem, "mov"))
-    return 0;
   ix->incr = 0;
+  if (strncmp(o.mnem, "mov", 3))
+    return 0;
   if ((a0 & TYPE_MASK) == TYPE_REG) {
     ix->dir = VEI_DIR_IN;
     ix->size = sz(a0);

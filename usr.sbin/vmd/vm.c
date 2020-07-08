@@ -1719,7 +1719,7 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 	uint8_t instr[16] = { 0 };
 	struct vm_rwregs_params vrwp = { 0 };
 	uint64_t *rax;
-	struct insn ix;
+	struct insn ix, ix2;
 
 	translate_gva(ve, ve->vrs.vrs_gprs[VCPU_REGS_RIP], &gip, PROT_READ);
 	read_mem(gip, instr, sizeof(instr));	
@@ -1754,9 +1754,19 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 	gpa = ve->vee.vee_gpa;
 
 	/* fix: need full emulator. But Scan for sig match for now */
+#if 1
 	ix.incr = 0;
 	dodis(instr, &ix);
-#if 0
+	for (int i = 0; imap[i].size; i++) {
+		ix2 = imap[i];
+		if (memcmp(instr, ix2.sig, ix2.siglen) == 0) {
+			if (ix.dir != ix2.dir ||
+			    ix.reg != ix2.reg ||
+			    ix.incr != ix2.incr ||
+			    ix.size != ix2.size)
+				fprintf(stderr,"mismatch\n");
+		}
+	}
 	if (ix.incr && (gpa >= VMM_PCI_MMIO_BAR_BASE)) {
 		fprintf(stderr, "sighandler\n");
 		rax = &vrwp.vrwp_regs.vrs_gprs[ix.reg];
