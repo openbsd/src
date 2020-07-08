@@ -1,6 +1,6 @@
-/*	$OpenBSD: usertc.c,v 1.1 2020/07/06 13:33:05 pirofti Exp $	*/
+/*	$OpenBSD: usertc.c,v 1.2 2020/07/08 09:20:28 kettenis Exp $	*/
 /*
- * Copyright (c) 2020 Paul Irofti <paul@irofti.net>
+ * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,4 +18,39 @@
 #include <sys/types.h>
 #include <sys/timetc.h>
 
-int (*const _tc_get_timecount)(struct timekeep *, u_int *) = NULL;
+static inline u_int
+tick_get_timecount(struct timecounter *tc)
+{
+	u_int64_t tick;
+
+	__asm volatile("rd %%tick, %0" : "=r" (tick));
+
+	return (tick & ~0u);
+}
+
+static inline u_int
+sys_tick_get_timecount(struct timecounter *tc)
+{
+	u_int64_t tick;
+
+	__asm volatile("rd %%sys_tick, %0" : "=r" (tick));
+
+	return (tick & ~0u);
+}
+
+static int
+tc_get_timecount(struct timekeep *tk, u_int *tc)
+{
+	switch (tk->tk_user) {
+	case TC_TICK:
+		*tc = tick_get_timecount(NULL);
+		return 0;
+	case TC_SYS_TICK:
+		*tc = sys_tick_get_timecount(NULL);
+		return 0;
+	}
+
+	return -1;
+}
+
+int (*const _tc_get_timecount)(struct timekeep *, u_int *) = tc_get_timecount;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.62 2020/07/06 13:33:08 pirofti Exp $	*/
+/*	$OpenBSD: clock.c,v 1.63 2020/07/08 09:20:28 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -109,13 +109,14 @@ struct cfdriver clock_cd = {
 u_int tick_get_timecount(struct timecounter *);
 
 struct timecounter tick_timecounter = {
-	tick_get_timecount, NULL, ~0u, 0, "tick", 0, NULL, 0
+	tick_get_timecount, NULL, ~0u, 0, "tick", 0, NULL, TC_TICK
 };
 
 u_int sys_tick_get_timecount(struct timecounter *);
 
 struct timecounter sys_tick_timecounter = {
-	sys_tick_get_timecount, NULL, ~0u, 0, "sys_tick", 1000, NULL, 0
+	sys_tick_get_timecount, NULL, ~0u, 0, "sys_tick", 1000, NULL,
+	TC_SYS_TICK
 };
 
 /*
@@ -940,7 +941,7 @@ tick_get_timecount(struct timecounter *tc)
 {
 	u_int64_t tick;
 
-	__asm volatile("rd %%tick, %0" : "=r" (tick) :);
+	__asm volatile("rd %%tick, %0" : "=r" (tick));
 
 	return (tick & ~0u);
 }
@@ -950,7 +951,7 @@ sys_tick_get_timecount(struct timecounter *tc)
 {
 	u_int64_t tick;
 
-	__asm volatile("rd %%sys_tick, %0" : "=r" (tick) :);
+	__asm volatile("rd %%sys_tick, %0" : "=r" (tick));
 
 	return (tick & ~0u);
 }

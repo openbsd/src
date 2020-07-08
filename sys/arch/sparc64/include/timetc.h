@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetc.h,v 1.1 2020/07/06 13:33:08 pirofti Exp $ */
+/*	$OpenBSD: timetc.h,v 1.2 2020/07/08 09:20:28 kettenis Exp $ */
 /*
  * Copyright (c) 2020 Paul Irofti <paul@irofti.net>
  *
@@ -18,6 +18,7 @@
 #ifndef _MACHINE_TIMETC_H_
 #define _MACHINE_TIMETC_H_
 
-#define	TC_LAST	0
+#define TC_TICK		1
+#define TC_SYS_TICK	2
 
 #endif	/* _MACHINE_TIMETC_H_ */
