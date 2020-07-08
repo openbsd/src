@@ -49,7 +49,6 @@
 ./usr/include/mips64/spinlock.h
 ./usr/include/mips64/sysarch.h
 ./usr/include/mips64/tcb.h
-./usr/include/mips64/timetc.h
 ./usr/include/mips64/trap.h
 ./usr/include/mips64/vmparam.h
 ./usr/include/octeon
