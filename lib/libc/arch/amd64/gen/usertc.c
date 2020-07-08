@@ -1,4 +1,4 @@
-/*	$OpenBSD: usertc.c,v 1.1 2020/07/06 13:33:05 pirofti Exp $ */
+/*	$OpenBSD: usertc.c,v 1.2 2020/07/08 09:17:48 kettenis Exp $ */
 /*
  * Copyright (c) 2020 Paul Irofti <paul@irofti.net>
  *
@@ -26,16 +26,16 @@ rdtsc(void)
 	return ((uint64_t)lo)|(((uint64_t)hi)<<32);
 }
 
-int
+static int
 tc_get_timecount(struct timekeep *tk, u_int *tc)
 {
-	int tk_user = tk->tk_user;
+	switch (tk->tk_user) {
+	case TC_TSC:
+		*tc = rdtsc();
+		return 0;
+	}
 
-	if (tk_user < 1 || tk_user >= TC_LAST)
-		return -1;
-
-	*tc = rdtsc();
-	return 0;
+	return -1;
 }
-int (*const _tc_get_timecount)(struct timekeep *tk, u_int *tc)
-	= tc_get_timecount;
+
+int (*const _tc_get_timecount)(struct timekeep *, u_int *) = tc_get_timecount;
