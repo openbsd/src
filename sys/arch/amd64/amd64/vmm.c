@@ -342,7 +342,7 @@ void vmm_mapintr(pci_chipset_tag_t pc, struct pci_attach_args *pa)
 	ppt->pc = pc;
 	ppt->tag = pa->pa_tag;
 	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &fun);
-	if (pci_intr_map(pa, &ppt->ih)) {
+	if (pci_intr_map_msi(pa, &ppt->ih) || pci_intr_map(pa, &ppt->ih)) {
 		printf("Couldn't map %d/%d/%d\n", bus, dev, fun);
 		free(ppt, M_DEVBUF, sizeof(*ppt));
 		return;

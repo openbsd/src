@@ -64,6 +64,7 @@
 #include "mc146818.h"
 #include "fw_cfg.h"
 #include "atomicio.h"
+#include "x86emu.h"
 
 #define pledge(x...) 0
 
@@ -1674,23 +1675,37 @@ mem_handler(int dir, uint64_t addr, uint32_t size, void *data)
  *  EAGAIN: a protection fault occured, kill the vm.
  */
 
-struct insn {
-	uint8_t sig[3];
-	int dir;
-	int size;
-	int incr;
-  	int reg;
-} imap[] = {
+struct insn imap[] = {
 	/* bus_space_mem_read_x */
-	{ { 0x8a, 0x04, 0x3e }, VEI_DIR_IN,  1, 3, VCPU_REGS_RAX },
-  	{ { 0x0f, 0xb7, 0x04 }, VEI_DIR_IN,  2, 4, VCPU_REGS_RAX },
-  	{ { 0x8b, 0x04, 0x3e }, VEI_DIR_IN,  4, 3, VCPU_REGS_RAX },
+	{ { 0x8a, 0x04, 0x3e }, 3, VEI_DIR_IN,  1, 3, VCPU_REGS_RAX },
+  	{ { 0x0f, 0xb7, 0x04 }, 3, VEI_DIR_IN,  2, 4, VCPU_REGS_RAX },
+  	{ { 0x8b, 0x04, 0x3e }, 3, VEI_DIR_IN,  4, 3, VCPU_REGS_RAX },
 
 	/* bus_space_mem_write_x */
-  	{ { 0x88, 0x14, 0x3e }, VEI_DIR_OUT, 1, 3, VCPU_REGS_RDX },
-  	{ { 0x66, 0x89, 0x14 }, VEI_DIR_OUT, 2, 3, VCPU_REGS_RDX },
-  	{ { 0x89, 0x14, 0x3e }, VEI_DIR_OUT, 4, 3, VCPU_REGS_RDX },
-
+  	{ { 0x88, 0x14, 0x3e }, 3, VEI_DIR_OUT, 1, 3, VCPU_REGS_RDX },
+  	{ { 0x66, 0x89, 0x14 }, 3, VEI_DIR_OUT, 2, 3, VCPU_REGS_RDX },
+  	{ { 0x89, 0x14, 0x3e }, 3, VEI_DIR_OUT, 4, 3, VCPU_REGS_RDX },
+#if 0
+	/*  linux 
+	 *  88 = eb gb
+	 *  89 = ev gv
+	 *  8a = gb eb
+	 *  8b = gv ev
+	 */
+	{ { 0x8b, 0x70, 0xFF }, 2, VEI_DIR_IN,  4, 3, VCPU_REGS_RSI },
+	{ { 0x89, 0x47, 0xFF }, 2, VEI_DIR_OUT, 4, 3, VCPU_REGS_RAX },
+	{ { 0x66, 0x89, 0x42 }, 3, VEI_DIR_OUT, 2, 4, VCPU_REGS_RAX },
+	{ { 0x41, 0x8b, 0x84 }, 3, VEI_DIR_IN,  4, 8, VCPU_REGS_RAX },
+	{ { 0x41, 0x89, 0x84 }, 3, VEI_DIR_OUT, 4, 8, VCPU_REGS_RAX },
+	{ { 0x8b, 0x40, 0xff }, 2, VEI_DIR_IN,  4, 3, VCPU_REGS_RAX },
+	{ { 0x8a, 0x80, 0xff }, 2, VEI_DIR_IN,  1, 6, VCPU_REGS_RAX },
+	{ { 0x41, 0x8a, 0x44 }, 3, VEI_DIR_IN,  1, 5, VCPU_REGS_RAX },
+	{ { 0x41, 0x88, 0x44 }, 3, VEI_DIR_OUT, 1, 5, VCPU_REGS_RAX },
+	{ { 0x41, 0x8a, 0x84 }, 3, VEI_DIR_IN,  1, 8, VCPU_REGS_RAX },
+	{ { 0x41, 0x88, 0x84 }, 3, VEI_DIR_OUT, 1, 8, VCPU_REGS_RAX },
+	{ { 0x89, 0xb0, 0xff }, 2, VEI_DIR_OUT, 4, 6, VCPU_REGS_RSI },
+	{ { 0x8b, 0x80, 0xff }, 2, VEI_DIR_IN,  4, 6, VCPU_REGS_RAX },
+#endif
   	{ },
 };
 
@@ -1701,15 +1716,16 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 {
 	struct vm_exit *ve = vrp->vrp_exit;
 	uint64_t gip, gpa;
-	uint8_t instr[4] = { 0 };
+	uint8_t instr[16] = { 0 };
 	struct vm_rwregs_params vrwp = { 0 };
 	uint64_t *rax;
+	struct insn ix;
 
 	translate_gva(ve, ve->vrs.vrs_gprs[VCPU_REGS_RIP], &gip, PROT_READ);
 	read_mem(gip, instr, sizeof(instr));	
-#if 0
-	fprintf(stderr, "===============\nept violation: %llx  rip:0x%llx %.2x %.2x %.2x\n",
-		ve->vee.vee_gpa, ve->vrs.vrs_gprs[VCPU_REGS_RIP], instr[0], instr[1], instr[2]);
+	fprintf(stderr, "===============\nept violation: %llx  rip:0x%llx %.2x %.2x %.2x %.2x %.2x\n",
+		ve->vee.vee_gpa, ve->vrs.vrs_gprs[VCPU_REGS_RIP], instr[0], instr[1], instr[2],
+		instr[3], instr[4]);
 	fprintf(stderr, "  rax:0x%.16llx rbx:0x%.16llx rcx:0x%.16llx rdx:0x%.16llx\n",
 		ve->vrs.vrs_gprs[VCPU_REGS_RAX],
 		ve->vrs.vrs_gprs[VCPU_REGS_RBX],
@@ -1730,7 +1746,7 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 		ve->vrs.vrs_gprs[VCPU_REGS_R13],
 		ve->vrs.vrs_gprs[VCPU_REGS_R14],
 		ve->vrs.vrs_gprs[VCPU_REGS_R15]);
-#endif
+
 	vrwp.vrwp_mask = VM_RWREGS_GPRS;
 	vrwp.vrwp_vm_id = vrp->vrp_vm_id;
 	vrwp.vrwp_vcpu_id = vrp->vrp_vcpu_id;
@@ -1738,17 +1754,35 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 	gpa = ve->vee.vee_gpa;
 
 	/* fix: need full emulator. But Scan for sig match for now */
+	ix.incr = 0;
+	dodis(instr, &ix);
+#if 0
+	if (ix.incr && (gpa >= VMM_PCI_MMIO_BAR_BASE)) {
+		fprintf(stderr, "sighandler\n");
+		rax = &vrwp.vrwp_regs.vrs_gprs[ix.reg];
+		mem_handler(ix.dir, gpa, ix.size, rax);
+		/* skip this instruction when returning to vm */
+		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += ix.incr;
+		if (ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp))
+			fprintf(stderr,"writeregs fails\n");
+		return 0;
+	}
+#else
 	for (int i = 0; imap[i].size; i++) {
-		if (memcmp(instr, imap[i].sig, 3) == 0) {
-			rax = &vrwp.vrwp_regs.vrs_gprs[imap[i].reg];
-			mem_handler(imap[i].dir, gpa, imap[i].size, rax);
+		ix = imap[i];
+		if (memcmp(instr, ix.sig, ix.siglen) == 0) {
+			fprintf(stderr, "sighandler\n");
+			rax = &vrwp.vrwp_regs.vrs_gprs[ix.reg];
+			mem_handler(ix.dir, gpa, ix.size, rax);
 			/* skip this instruction when returning to vm */
-			vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += imap[i].incr;
+			vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += ix.incr;
 			if (ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp))
 				fprintf(stderr,"writeregs fails\n");
 			return 0;
 		}
 	}
+#endif
+
 	/*
 	 * vmd may be exiting to vmd to handle a pending interrupt
 	 * but last exit type may have bee VMX_EXIT_EPT_VIOLATION,

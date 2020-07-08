@@ -172,6 +172,7 @@ do_pio(int type, int dir, int port, int size, uint32_t *data)
 	fprintf(stderr, "pio: %d/%.4x %.8x\n", dir, port, *data);
 }
 
+/* Passthrough PCI config read/write */
 uint32_t
 ptd_conf_read(int bus, int dev, int func, uint32_t reg)
 {
@@ -197,7 +198,7 @@ ptd_conf_write(int bus, int dev, int func, uint32_t reg, uint32_t val)
 	pio.dev = dev;
 	pio.func = func;
 	pio.dir = VEI_DIR_OUT;
-	pio.reg = reg & ~3;
+	pio.reg = reg & ~0x3;
 	pio.val = val;
 	ioctl(env->vmd_fd, VMM_IOC_PCIIO, &pio);
 }
@@ -210,12 +211,14 @@ mem_chkint()
 	uint8_t intr = 0xff;
 	int rc;
 
+	if (ptd.id == 0)
+		return intr;
 	si.bus = ptd.bus;
 	si.dev = ptd.dev;
 	si.func = ptd.fun;
 	rc = ioctl(env->vmd_fd, VMM_IOC_GETINTR, &si);
 	if (ptd.pending != si.pending) {
-		fprintf(stderr, "pend:%d %d\n", ptd.pending, si.pending);
+		fprintf(stderr, "pend:%d %d %d\n", ptd.pending, si.pending, rc);
 		intr = pci.pci_devices[ptd.id].pd_irq;
 		ptd.pending = si.pending;
 	}
