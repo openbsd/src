@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.56 2019/07/11 18:07:54 mpi Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.57 2020/07/09 07:45:13 fcambus Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@
 #endif
 
 #if !defined(SMALL_KERNEL) && (defined(__amd64__) || defined(__i386__) || \
-    defined(__arm64__))
+    defined(__arm64__) || defined(__armv7__))
 #define FONT_SPLEEN16x32
 #define FONT_SPLEEN32x64
 #endif
